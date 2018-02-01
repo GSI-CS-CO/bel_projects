@@ -14,12 +14,12 @@
 #define WB_API_VERSION "0.06.0"
 /*
  * Api for wishbone devices for timing receiver nodes. This is not a timing receiver API.
- * 
+ *
  *
  * requires:
  *  - etherbone
  *  - wb_slaves.h
- *  - 1-wire 
+ *  - 1-wire
  *
  * example of usage: see monitoring/eb-mon.c
  *
@@ -59,6 +59,21 @@
 
 #include <inttypes.h>
 #include <etherbone.h>
+
+
+/* struct of FEC info */
+
+struct fec_info {
+  uint32_t config;
+  uint32_t fec_type;
+  uint32_t fec_ethtype;
+  uint32_t eth_ethtype;
+  uint32_t enc_cnt;
+  uint32_t dec_cnt;
+  uint32_t jumbo_rx;
+  uint32_t err_dec;
+  uint32_t err_enc;
+};
 
 /* opens connection to Wishbone bus via Etherbone */
 eb_status_t wb_open(const char *dev,                           /* EB device name */
@@ -124,7 +139,7 @@ eb_status_t wb_wr_get_id(eb_device_t device,                   /* EB device */
 eb_status_t wb_wr_get_temp(eb_device_t device,                 /* EB device */
                            int devIndex,                       /* 0,1,2... - there may be more than 1 device on the WB bus */
                            unsigned int busIndex,              /* index of the physical 1-wire bus */
-                           unsigned int family,                /* family code of 1-wire sensor */                                          
+                           unsigned int family,                /* family code of 1-wire sensor */
                            double *temp                        /* temperature */
                            );
 
@@ -134,5 +149,7 @@ eb_status_t wb_wr_reset(eb_device_t device,                    /* EB device */
                         uint32_t value                         /* value to be written to the reset controller */
                         );
 
+/* read FEC info */
+eb_status_t wb_fec_info(eb_device_t device, int devIndex, struct fec_info *info);
 
 #endif /* wb_api.h */

@@ -139,6 +139,23 @@
 /* register offsets */
 #define FPGA_RESET_RESET             0x0                 /* reset register */
 
+/*** WB_FEC ****/
+#define WB_FEC_VENDOR            WB_GSI              /* vendor ID */
+#define WB_FEC_PRODUCT           0x73f9bb13          /* product ID */
+#define WB_FEC_VMAJOR            1                   /* major revision */
+#define WB_FEC_VMINOR            1                   /* minor revision */
+
+/**** WB_FEC Register ****/
+#define WB_FEC_CONF                     0x0
+#define WB_FEC_TYPE                     0x4
+#define WB_FEC_FEC_ETH_TYPE             0x8
+#define WB_FEC_ETH_ETH_TYPE             0xC
+#define WB_FEC_NUM_ENC_FRAMES           0x10
+#define WB_FEC_NUM_DEC_FRAMES           0x14
+#define WB_FEC_ERR_JUMBO_RX             0x18
+#define WB_FEC_ERR_DEC                  0x1C
+#define WB_FEC_ERR_ENC                  0x20
+
 /* masks */
 
 #endif  /* wb_slaves.h */

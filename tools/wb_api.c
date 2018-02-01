@@ -60,11 +60,10 @@ eb_address_t tlu_addr       = EB_NULL;
 eb_address_t wb4_ram        = EB_NULL;
 eb_address_t wb4_1wire      = EB_NULL;
 eb_address_t reset_addr     = EB_NULL;
+eb_address_t wb_fec_addr    = EB_NULL;
 
 eb_address_t BASE_ONEWIRE;
 extern struct w1_bus wrpc_w1_bus;
-
-
 
 /* private routines */
 static void wb_warn(eb_status_t status, const char* what) {
@@ -103,7 +102,7 @@ eb_status_t wb_open(const char *dev, eb_device_t *device, eb_socket_t *socket)
 
   *device = EB_NULL;
   *socket = EB_NULL;
-  
+
   if ((status = eb_socket_open(EB_ABI_CODE, 0, EB_ADDRX|EB_DATAX, socket)) != EB_OK) return status;
   if ((status = eb_device_open(*socket, dev, EB_ADDRX|EB_DATAX, 10, device)) != EB_OK) return status;
 
@@ -225,6 +224,52 @@ eb_status_t wb_wr_get_time(eb_device_t device, int devIndex, uint64_t *nsecs)
   return (status);
 } /* wb_wr_get_time */
 
+eb_status_t wb_fec_info(eb_device_t device, int devIndex, struct fec_info *info)
+{
+  eb_address_t  address;
+  eb_status_t   status;
+  eb_data_t     tmp;
+
+  if ((status = wb_check_device(device, WB_FEC_VENDOR, WB_FEC_PRODUCT, WB_FEC_VMAJOR, WB_FEC_VMINOR, devIndex, &wb_fec_addr)) != EB_OK) return status;
+
+  address = wb_fec_addr + WB_FEC_CONF;
+  if ((status = eb_device_read(device, address, EB_BIG_ENDIAN|EB_DATA32, &tmp, 0, eb_block)) != EB_OK) return status;
+  info->config = (uint32_t)tmp;
+
+  address = wb_fec_addr + WB_FEC_TYPE;
+  if ((status = eb_device_read(device, address, EB_BIG_ENDIAN|EB_DATA32, &tmp, 0, eb_block)) != EB_OK) return status;
+  info->fec_type = (uint32_t)tmp;
+
+  address = wb_fec_addr + WB_FEC_FEC_ETH_TYPE;
+  if ((status = eb_device_read(device, address, EB_BIG_ENDIAN|EB_DATA32, &tmp, 0, eb_block)) != EB_OK) return status;
+  info->fec_ethtype = (uint32_t)tmp;
+
+  address = wb_fec_addr + WB_FEC_ETH_ETH_TYPE;
+  if ((status = eb_device_read(device, address, EB_BIG_ENDIAN|EB_DATA32, &tmp, 0, eb_block)) != EB_OK) return status;
+  info->eth_ethtype = (uint32_t)tmp;
+
+  address = wb_fec_addr + WB_FEC_NUM_ENC_FRAMES;
+  if ((status = eb_device_read(device, address, EB_BIG_ENDIAN|EB_DATA32, &tmp, 0, eb_block)) != EB_OK) return status;
+  info->enc_cnt = (uint32_t)tmp;
+
+  address = wb_fec_addr + WB_FEC_NUM_DEC_FRAMES;
+  if ((status = eb_device_read(device, address, EB_BIG_ENDIAN|EB_DATA32, &tmp, 0, eb_block)) != EB_OK) return status;
+  info->dec_cnt = (uint32_t)tmp;
+
+  address = wb_fec_addr + WB_FEC_ERR_JUMBO_RX;
+  if ((status = eb_device_read(device, address, EB_BIG_ENDIAN|EB_DATA32, &tmp, 0, eb_block)) != EB_OK) return status;
+  info->jumbo_rx = (uint32_t)tmp;
+
+  address = wb_fec_addr + WB_FEC_ERR_DEC;
+  if ((status = eb_device_read(device, address, EB_BIG_ENDIAN|EB_DATA32, &tmp, 0, eb_block)) != EB_OK) return status;
+  info->err_dec = (uint32_t)tmp;
+
+  address = wb_fec_addr + WB_FEC_ERR_ENC;
+  if ((status = eb_device_read(device, address, EB_BIG_ENDIAN|EB_DATA32, &tmp, 0, eb_block)) != EB_OK) return status;
+  info->err_enc = (uint32_t)tmp;
+
+  return EB_OK;
+}
 
 eb_status_t wb_wr_get_mac(eb_device_t device, int devIndex, uint64_t *mac )
 {
@@ -363,7 +408,7 @@ eb_status_t wb_wr_get_id(eb_device_t device, int devIndex, unsigned int busIndex
       return status;
     } /* if d->rom ... */
   } /* for i */
-  
+
   return EB_OOM;
 } /* wb_wr_get_id */
 
@@ -401,7 +446,7 @@ eb_status_t wb_wr_get_temp(eb_device_t device, int devIndex, unsigned int busInd
       return status;
     } /* if d->rom ... */
   } /* for i */
-  
+
   return EB_OOM; /* no 1-wire temperature sensor at specified WB device and specified 1-wire bus ... */
 } /* wb_wr_get_temp */
 
@@ -414,7 +459,7 @@ eb_status_t wb_wr_reset(eb_device_t device, int devIndex, uint32_t value)
 
 #ifdef WB_SIMULATE
   *ip = 0x1234abcd;
-  
+
   return EB_OK;
 #endif
 
