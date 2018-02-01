@@ -425,6 +425,16 @@
 #define NFLG_PAT_EXIT_LM32_POS    15
 #define NFLG_PAT_EXIT_LM32_SMSK   (NFLG_PAT_EXIT_LM32_MSK << NFLG_PAT_EXIT_LM32_POS)
 
+// Debug 0 Flag - for arbitrary use during debugging
+#define NFLG_DEBUG0_MSK     0x1
+#define NFLG_DEBUG0_POS     16
+#define NFLG_DEBUG0_SMSK    (NFLG_DEBUG0_MSK << NFLG_DEBUG0_POS)
+
+// Debug 10 Flag - for arbitrary use during debugging
+#define NFLG_DEBUG1_MSK     0x1
+#define NFLG_DEBUG1_POS     17
+#define NFLG_DEBUG1_SMSK    (NFLG_DEBUG1_MSK << NFLG_DEBUG1_POS)
+
 // Type dependent Flags ////////////////////////////////////////////////////////////
 #define NFLG_BITS_SPECIFIC_POS  20
 

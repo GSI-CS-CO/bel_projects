@@ -51,7 +51,8 @@ namespace DotStr {
       extern const std::string sDynTef       ;
       extern const std::string sDynRes       ;
       extern const std::string sMeta         ;
-      extern const std::string sAny; 
+      extern const std::string sAny;
+      extern const std::string sDynFlowDst   ; 
     }
   }
 
@@ -181,6 +182,9 @@ namespace DotStr {
         extern const std::string sLookPaintNone;
         extern const std::string sLookPaint0;
         extern const std::string sLookPaint1;
+        extern const std::string sLookDebug0;
+        extern const std::string sLookDebug1;
+        extern const std::string sLookDebug2;
         extern const std::string sLookPatEntry;
         extern const std::string sLookPatExit;
       }  

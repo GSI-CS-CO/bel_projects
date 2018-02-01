@@ -72,7 +72,10 @@ void VisitorVertexWriter::pushCommandInfo(const Command& el) const {
 }
 
 void VisitorVertexWriter::pushPaintedEyecandy(const Node& el) const {
-  pushSingle((el.isPainted() ? ec::Node::Base::sLookPaint0 : ec::Node::Base::sLookPaintNone));
+  if (el.isMarked())  pushSingle(ec::Node::Base::sLookPaint1);
+  else                pushSingle((el.isPainted() ? ec::Node::Base::sLookPaint0 : ec::Node::Base::sLookPaintNone));
+  if (el.isDebug0())  pushSingle(ec::Node::Base::sLookDebug0);
+  if (el.isDebug1())  pushSingle(ec::Node::Base::sLookDebug1);
 }
 
 void VisitorVertexWriter::pushStartEyecandy(const Node& el) const {

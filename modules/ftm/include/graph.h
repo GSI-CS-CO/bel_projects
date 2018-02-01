@@ -139,6 +139,21 @@ struct nameEqualityFilter {
   NameMap names;
   NameMap compNames;
 };
- 
+/*
 
+template <class TypeMap >
+struct staticEdgeFilter {
+    staticEdgeFilter(TypeMap n, vStrC t) : types(n), allowedTypes(t) { }
+  template <typename Vertex>
+  bool operator()(const Vertex& v) const {
+    
+    for(auto& it : allowedTypes ) { if (types[v] == it) return true; } //true if edge is of allowed type
+    return false;  
+  }
+  TypeMap types;
+  vStrC allowedTypes;
+};
+ 
+ vStrC allowedTypes = {sDefDst, sCmdFlowDst, sDynFlowDst};
+*/
 #endif

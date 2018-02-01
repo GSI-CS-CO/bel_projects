@@ -5,12 +5,14 @@
 #include <string>
 #include <inttypes.h>
 #include <boost/graph/graphviz.hpp>
+#include <boost/graph/copy.hpp>
 #include <boost/algorithm/string.hpp>
 
 #include "common.h"
 #include "ftm_shared_mmap.h"
 #include "carpeDM.h"
 #include "minicommand.h"
+#include "propwrite.h"
 
 #include "node.h"
 #include "block.h"
@@ -677,7 +679,7 @@ bool CarpeDM::isSafeToRemove(const std::string& pattern, bool strict)  {
     std::set<vertex_t> sV;
     vStrC ret;
 
-    BOOST_FOREACH( vertex_t v, vertices(g) ) sV.insert(v);
+    BOOST_FOREACH( vertex_t v, vertices(g) ) {sV.insert(v); sLog << "gp " << g[v].name << std::endl;}
 
     for(auto& itV : sV) ret.push_back(getNodePattern(g[itV].name));
 
@@ -769,79 +771,296 @@ bool CarpeDM::isSafeToRemove(const std::string& pattern, bool strict)  {
     }
 
     for (auto& it : possibleQs) {
-      //check their Q counters for unprocessed commands
-      uint32_t wrIdxs = boost::dynamic_pointer_cast<Block>(g[it].np)->getWrIdxs(); 
-      uint32_t rdIdxs = boost::dynamic_pointer_cast<Block>(g[it].np)->getRdIdxs();
-      uint32_t diff = (rdIdxs ^ wrIdxs ) & 0x00ffffff;  
-      
-      if(verbose) sLog << "Checking Block " << g[it].name << std::endl;
-
-      for (uint8_t prio = 0; prio < 3; prio++) {
-        uint32_t bufLstAdr;
-        uint8_t bufLstCpu;
-        AdrType bufLstAdrType; 
-
-        if (!((diff >> (prio*8)) & Q_IDX_MAX_OVF_MSK)) {if(verbose) {sLog << "prio " << (int)prio << " is empty" << std::endl;} break;}
-        if(verbose) sLog << "Checking Prio " << prio << std::endl;  
-        //get Block binary
-        uint8_t* bBlock = g[it].np->getB();
-        bufLstAdr = writeBeBytesToLeNumber<uint32_t>((uint8_t*)&bBlock[BLOCK_CMDQ_LO_PTR + prio * _32b_SIZE_]);
-
-        
-        std::tie(bufLstCpu, bufLstAdrType) = at.adrClassification(bufLstAdr);  
-        //get BufList binary
-        auto bufLst = at.lookupAdr( s2u<uint8_t>(g[it].cpu), at.adrConv(bufLstAdrType, AdrType::MGMT, s2u<uint8_t>(g[it].cpu), bufLstAdr) );
-        if (!(at.isOk(bufLst))) {throw std::runtime_error( "Could not find buffer list in download address table"); return false;}
-        const uint8_t* bBL = bufLst->b;  
-     
-        //get current read cnt
-        uint8_t rdIdx = (rdIdxs >> (prio*8)) & Q_IDX_MAX_MSK;
-        uint8_t wrIdx = (wrIdxs >> (prio*8)) & Q_IDX_MAX_MSK;
-
-        if(verbose) sLog << "rdCnt " << (int)rdIdx << " wrCnt " << (int)wrIdx << std::endl;
-
-        //force wraparound
-        rdIdx >= wrIdx ? wrIdx+=4 : wrIdx;
-
-        //find buffers of all non empty slots
-        for (uint8_t i = rdIdx; i < wrIdx; i++) {
-          uint8_t idx = i & Q_IDX_MAX_MSK;
-          uint32_t bufAdr, dstAdr;
-          uint8_t bufCpu, dstCpu;
-          AdrType bufAdrType, dstAdrType;
-          
-          bufAdr = writeBeBytesToLeNumber<uint32_t>((uint8_t*)&bBL[(idx / 2) * _32b_SIZE_] );
-          std::tie(bufCpu, bufAdrType) = at.adrClassification(bufAdr);  
-
-          uint32_t tmpAdr = at.adrConv(bufAdrType, AdrType::MGMT, s2u<uint8_t>(g[it].cpu), bufAdr);
-
-          auto buf = at.lookupAdr( s2u<uint8_t>(g[it].cpu), tmpAdr );
-          if (!(at.isOk(buf))) {throw std::runtime_error( "Could not find buffer in download address table"); return false;}
-          const uint8_t* b = buf->b;
-
-          if(verbose) sLog << "Scanning Buffer " << (int)(i / 2) << " - " << g[buf->v].name << " at Offset " << (int)(i % 2) << std::endl;
-          // scan pending command for flow to forbidden destination
-          uint32_t act  = writeBeBytesToLeNumber<uint32_t>((uint8_t*)&b[(idx % 2) * _T_CMD_SIZE_ + T_CMD_ACT]);
-          uint8_t type = (act >> ACT_TYPE_POS) & ACT_TYPE_MSK;
-          if(verbose) sLog << "Found Cmd type " << (int)type << std::endl; 
-
-          if (type == ACT_TYPE_FLOW) {
-
-            dstAdr   = writeBeBytesToLeNumber<uint32_t>((uint8_t*)&b[(idx % 2) * _T_CMD_SIZE_ + T_CMD_FLOW_DEST]);
-            if (dstAdr == LM32_NULL_PTR) continue; // pointing to idle is always okay
-            std::tie(dstCpu, dstAdrType) = at.adrClassification(dstAdr);
-
-            auto x = at.lookupAdr( (dstAdrType == AdrType::PEER ? dstCpu : s2u<uint8_t>(g[it].cpu)), at.adrConv(dstAdrType, AdrType::MGMT, (dstAdrType == AdrType::PEER ? dstCpu : s2u<uint8_t>(g[it].cpu)), dstAdr) );
-            if (!(at.isOk(x))) {throw std::runtime_error( "Could not find dst in download address table"); return false;}
-            if(verbose) sLog << "Found flow dst " << g[x->v].name << std::endl;
-            if (x->v == v) return true; //found a pending critical flow command to given destination, abort and report 
-          }
-        }  
-      }  
+      vertex_set_t sVd = getDynamicDestinations(it, g, at);
+      if (sVd.find(v) != sVd.end()) return true;
     }
 
     return false;
   }      
+
+
+bool CarpeDM::isSafeToRemoveAdv(Graph& gRem) {
+  Graph& g        = gDown;
+  AllocTable& at  = atDown;
+  Graph gTmp, gEq;
+  vertex_set_t blacklist, entries, cursors;
+
+  //Init our blacklist of critical nodes. All vertices in the pattern(s) to be removed need to be on it
+  //careful: we can't be sure the vertex indices match with gDown. Go by names
+
+  //BOOST_FOREACH( vertex_t v, vertices(gRem) ) {blacklist.insert(v); sLog << "bl " << gRem[v].name << std::endl;}
+
+  //Find and list all entry nodes of patterns 2B removed
+  for (auto& patternIt : getGraphPatterns(gRem)) {
+    
+    std::string sTmp = getPatternEntryNode(patternIt);
+    sLog << "GPat " << patternIt << " GNode " << sTmp << std::endl;
+    if (hm.lookup(sTmp)) {
+      auto x = at.lookupHash(hm.lookup(sTmp).get());
+      if (!(at.isOk(x))) {throw std::runtime_error( "Could not find entry node"); return false;}
+      entries.insert(x->v);
+    }
+  }
+
+  //make a working copy of the download graph
+  vertex_map_t vertexMapTmp;
+  boost::associative_property_map<vertex_map_t> vertexMapWrapperTmp(vertexMapTmp);
+  copy_graph(g, gTmp, boost::orig_to_copy(vertexMapWrapperTmp));
+
+  for (auto& it : vertexMapTmp) {if (it.first != it.second) sLog << "1 Map Index " << (int)it.first << " was changed !!!" << std::endl;}
+
+  //add static equivalent edges of all pending flow commands to working copy
+  BOOST_FOREACH( vertex_t v, vertices(gTmp) ) {
+    if(gTmp[v].np->isBlock()) {
+      vertex_set_t sVflowDst = getDynamicDestinations(v, gTmp, at);
+      for (auto& it : sVflowDst) {sLog << "AuxEdge: " << gTmp[v].name << " -> " << gTmp[it].name << std::endl; boost::add_edge(v, it, myEdge(det::sDynFlowDst), gTmp);}
+    }
+  }
+  
+  //Generate a filtered view, stripping all edges except default Destinations, resident flow destinations and dynamic flow destinations
+  typedef boost::property_map< Graph, std::string myEdge::* >::type EpMap;
+  boost::filtered_graph <Graph, static_eq<EpMap>, boost::keep_all > fg(gTmp, make_static_eq(boost::get(&myEdge::type, gTmp)), boost::keep_all());
+  //copy filtered view to normal graph to work with
+  vertex_map_t vertexMapEq;
+  boost::associative_property_map<vertex_map_t> vertexMapWrapperEq(vertexMapEq);
+  copy_graph(fg, gEq, boost::orig_to_copy(vertexMapWrapperEq));
+
+  for (auto& it : vertexMapEq) {if (it.first != it.second) sLog << "2 Map Index " << (int)it.first << " was changed !!!" << std::endl;}
+
+  //crawl all reverse trees we can reach from the given entries and add their nodes to the blacklist
+  for (auto& vEntry : entries) {
+    sLog << "Starting Crawler from " << gEq[vEntry].name << std::endl;
+    vertex_set_t tmpTree;
+    getReverseNodeTree(vEntry, tmpTree, gEq);
+    blacklist.insert(tmpTree.begin(), tmpTree.end());
+  }
+
+  //try to get consistent image of active cursors
+  cursors = getAllActiveCursors();
+
+  //Debug Output File
+  BOOST_FOREACH( vertex_t v, vertices(gEq) ) {gEq[v].np->clrFlags(NFLG_PAINT_LM32_SMSK);}
+  for (auto& it : cursors)    { gEq[it].np->setFlags(NFLG_DEBUG1_SMSK); }
+  for (auto& it : entries)    { gEq[it].np->setFlags(NFLG_DEBUG0_SMSK); }
+  for (auto& it : blacklist)  { gEq[it].np->setFlags(NFLG_PAINT_HOST_SMSK);}
+  writeDotFile("debug.dot", gEq, true);
+
+  
+
+  //calculate intersection of cursors and blacklist. If the intersection set is empty, all nodes in gRem can be safely removed
+  vertex_set_t si;
+  set_intersection(blacklist.begin(),blacklist.end(),cursors.begin(),cursors.end(), std::inserter(si,si.begin()));
+  
+  return ( 0 == si.size() );
+
+}
+/*
+bool CarpeDM::isSafeToRemoveAdv(const std::string& pattern) {
+  Graph& g        = gDown;
+  AllocTable& at  = atDown;
+  Graph gTmp, gEq;
+  vertex_set_t blacklist, entries, cursors;
+
+  //Init our blacklist of critical nodes. All vertices in the pattern(s) to be removed need to be on it
+  for (auto& nodeIt : getPatternMembers(pattern)) {
+    if (hm.lookup(nodeIt)) {
+      auto x = at.lookupHash(hm.lookup(nodeIt).get());
+      if (!(at.isOk(x))) {throw std::runtime_error( "Could not find member node"); return false;}
+      blacklist.insert(x->v);
+      sLog << "bl " << g[x->v].name << std::endl;
+    }
+  }
+  
+  //Find and list all entry nodes of patterns 2B removed
+  std::string sTmp = getPatternEntryNode(pattern);
+  sLog << "Pattern -> " << pattern << " Entry " << sTmp << std::endl;
+  if (hm.lookup(sTmp)) {
+    auto x = at.lookupHash(hm.lookup(sTmp).get());
+    if (!(at.isOk(x))) {throw std::runtime_error( "Could not find entry node"); return false;}
+    entries.insert(x->v);
+  }
+  
+
+
+  //make a working copy of the download graph
+  vertex_map_t vertexMapTmp;
+  boost::associative_property_map<vertex_map_t> vertexMapWrapperTmp(vertexMapTmp);
+  copy_graph(g, gTmp, boost::orig_to_copy(vertexMapWrapperTmp));
+
+  for (auto& it : vertexMapTmp) {if (it.first != it.second) sLog << "1 Map Index " << (int)it.first << " was changed !!!" << std::endl;}
+
+  //add static equivalent edges of all pending flow commands to working copy
+  BOOST_FOREACH( vertex_t v, vertices(gTmp) ) {
+    if(gTmp[v].np->isBlock()) {
+      vertex_set_t sVflowDst = getDynamicDestinations(v, gTmp, at);
+      for (auto& it : sVflowDst) {sLog << "AuxEdge: " << gTmp[v].name << " -> " << gTmp[it].name << std::endl; boost::add_edge(v, it, myEdge(det::sDynFlowDst), gTmp);}
+    }
+  }
+  
+  //Generate a filtered view, stripping all edges except default Destinations, resident flow destinations and dynamic flow destinations
+  typedef boost::property_map< Graph, std::string myEdge::* >::type EpMap;
+  boost::filtered_graph <Graph, static_eq<EpMap>, boost::keep_all > fg(gTmp, make_static_eq(boost::get(&myEdge::type, gTmp)), boost::keep_all());
+  //copy filtered view to normal graph to work with
+  vertex_map_t vertexMapEq;
+  boost::associative_property_map<vertex_map_t> vertexMapWrapperEq(vertexMapEq);
+  copy_graph(fg, gEq, boost::orig_to_copy(vertexMapWrapperEq));
+
+  for (auto& it : vertexMapEq) {if (it.first != it.second) sLog << "2 Map Index " << (int)it.first << " was changed !!!" << std::endl;}
+
+  //crawl all reverse trees we can reach from the given entries and add their nodes to the blacklist
+  for (auto& vEntry : entries) {
+    sLog << "Starting Crawler from " << gEq[vEntry].name << std::endl;
+    vertex_set_t tmpTree;
+    getReverseNodeTree(vEntry, tmpTree, gEq);
+    blacklist.insert(tmpTree.begin(), tmpTree.end());
+  }
+
+  //try to get consistent image of active cursors
+  cursors = getAllActiveCursors();
+
+  //Debug Output File
+  for (auto& it : cursors)    { gEq[it].np->setFlags(NFLG_DEBUG1_SMSK); }
+  for (auto& it : entries)    { gEq[it].np->setFlags(NFLG_DEBUG0_SMSK); }
+  for (auto& it : blacklist)  { gEq[it].np->clrFlags(NFLG_PAINT_LM32_SMSK); gEq[it].np->setFlags(NFLG_PAINT_HOST_SMSK);}
+  writeDotFile("debug.dot", gEq, false);
+
+  
+
+  //calculate intersection of cursors and blacklist. If the intersection set is empty, all nodes in gRem can be safely removed
+  vertex_set_t si;
+  set_intersection(blacklist.begin(),blacklist.end(),cursors.begin(),cursors.end(), std::inserter(si,si.begin()));
+  
+  return ( 0 == si.size() );
+
+}  
+*/
+
+//recursively inserts all vertex idxs of the tree reachable (via in edges) from start vertex into the referenced set
+void CarpeDM::getReverseNodeTree(vertex_t v, vertex_set_t& sV, Graph& g) {
+
+  Graph::in_edge_iterator in_begin, in_end, in_cur;
+  //Do the crawl       
+  boost::tie(in_begin, in_end) = in_edges(v,g);
+  for (in_cur = in_begin; in_cur != in_end; ++in_cur) {
+    if (sV.find(source(*in_cur, g)) != sV.end()) break;
+    sV.insert(source(*in_cur, g));
+    sLog << "Adding Tree Node " << g[source(*in_cur, g)].name << std::endl;
+    getReverseNodeTree(source(*in_cur, g), sV, g);
+  }
+}
+
+vertex_set_t CarpeDM::getAllActiveCursors() {
+  vertex_set_t ret;
+
+  //TODO - this is dirty and cumbersome, make it streamlined
+
+
+  for(uint8_t cpu=0; cpu < getCpuQty(); cpu++) { //cycle all CPUs
+    for(uint8_t thr=0; thr < _THR_QTY_; thr++) {
+      uint32_t  adr = ebReadWord(ebd, getThrCurrentNodeAdr(cpu, thr));
+      uint64_t dl = getThrDeadline(cpu, thr); 
+      if (adr == LM32_NULL_PTR || dl == -1) continue; // 
+      auto x = atDown.lookupAdr(cpu, atDown.adrConv(AdrType::INT, AdrType::MGMT,cpu, adr));
+      if (atDown.isOk(x)) ret.insert(x->v);
+    }
+      //add all thread cursors addresses of CPU <i>
+    
+      //create triplicate version to allow majority vote on all values
+    
+      //pass to ebReadCycle
+    
+      //majority vote on results
+    
+      //parse pointers. each pointer successfully translated to a vertex idx goes into the result set
+
+  }
+
+  return ret;
+
+}
+
+
+
+
+vertex_set_t CarpeDM::getDynamicDestinations(vertex_t vQ, Graph& g, AllocTable& at) {
+  vertex_set_t ret;
+
+  if(verbose) sLog << "Searching for pending flows " << g[vQ].name << std::endl;
+ 
+  //check their Q counters for unprocessed commands
+  uint32_t wrIdxs = boost::dynamic_pointer_cast<Block>(g[vQ].np)->getWrIdxs(); 
+  uint32_t rdIdxs = boost::dynamic_pointer_cast<Block>(g[vQ].np)->getRdIdxs();
+  uint32_t diff = (rdIdxs ^ wrIdxs ) & 0x00ffffff;  
+      
+  if(verbose) sLog << "Checking Block " << g[vQ].name << std::endl;
+
+  for (uint8_t prio = 0; prio < 3; prio++) {
+    uint32_t bufLstAdr;
+    uint8_t bufLstCpu;
+    AdrType bufLstAdrType; 
+
+    if (!((diff >> (prio*8)) & Q_IDX_MAX_OVF_MSK)) {if(verbose) {sLog << "prio " << (int)prio << " is empty" << std::endl;} break;}
+    if(verbose) sLog << "Checking Prio " << prio << std::endl;  
+    //get Block binary
+    uint8_t* bBlock = g[vQ].np->getB();
+    bufLstAdr = writeBeBytesToLeNumber<uint32_t>((uint8_t*)&bBlock[BLOCK_CMDQ_LO_PTR + prio * _32b_SIZE_]);
+
+    
+    std::tie(bufLstCpu, bufLstAdrType) = at.adrClassification(bufLstAdr);  
+    //get BufList binary
+    auto bufLst = at.lookupAdr( s2u<uint8_t>(g[vQ].cpu), at.adrConv(bufLstAdrType, AdrType::MGMT, s2u<uint8_t>(g[vQ].cpu), bufLstAdr) );
+    if (!(at.isOk(bufLst))) {throw std::runtime_error( "Could not find buffer list in download address table");}
+    const uint8_t* bBL = bufLst->b;  
+     
+    //get current read cnt
+    uint8_t rdIdx = (rdIdxs >> (prio*8)) & Q_IDX_MAX_MSK;
+    uint8_t wrIdx = (wrIdxs >> (prio*8)) & Q_IDX_MAX_MSK;
+
+    if(verbose) sLog << "rdCnt " << (int)rdIdx << " wrCnt " << (int)wrIdx << std::endl;
+
+    //force wraparound
+    rdIdx >= wrIdx ? wrIdx+=4 : wrIdx;
+
+    //find buffers of all non empty slots
+    for (uint8_t i = rdIdx; i < wrIdx; i++) {
+      uint8_t idx = i & Q_IDX_MAX_MSK;
+      uint32_t bufAdr, dstAdr;
+      uint8_t bufCpu, dstCpu;
+      AdrType bufAdrType, dstAdrType;
+      
+      bufAdr = writeBeBytesToLeNumber<uint32_t>((uint8_t*)&bBL[(idx / 2) * _32b_SIZE_] );
+      std::tie(bufCpu, bufAdrType) = at.adrClassification(bufAdr);  
+
+      uint32_t tmpAdr = at.adrConv(bufAdrType, AdrType::MGMT, s2u<uint8_t>(g[vQ].cpu), bufAdr);
+
+      auto buf = at.lookupAdr( s2u<uint8_t>(g[vQ].cpu), tmpAdr );
+      if (!(at.isOk(buf))) {throw std::runtime_error( "Could not find buffer in download address table");}
+      const uint8_t* b = buf->b;
+
+      if(verbose) sLog << "Scanning Buffer " << (int)(i / 2) << " - " << g[buf->v].name << " at Offset " << (int)(i % 2) << std::endl;
+      // scan pending command for flow to forbidden destination
+      uint32_t act  = writeBeBytesToLeNumber<uint32_t>((uint8_t*)&b[(idx % 2) * _T_CMD_SIZE_ + T_CMD_ACT]);
+      uint8_t type = (act >> ACT_TYPE_POS) & ACT_TYPE_MSK;
+      if(verbose) sLog << "Found Cmd type " << (int)type << std::endl; 
+
+      if (type == ACT_TYPE_FLOW) {
+
+        dstAdr   = writeBeBytesToLeNumber<uint32_t>((uint8_t*)&b[(idx % 2) * _T_CMD_SIZE_ + T_CMD_FLOW_DEST]);
+        if (dstAdr == LM32_NULL_PTR) continue; // pointing to idle is always okay
+        std::tie(dstCpu, dstAdrType) = at.adrClassification(dstAdr);
+
+        auto x = at.lookupAdr( (dstAdrType == AdrType::PEER ? dstCpu : s2u<uint8_t>(g[vQ].cpu)), at.adrConv(dstAdrType, AdrType::MGMT, (dstAdrType == AdrType::PEER ? dstCpu : s2u<uint8_t>(g[vQ].cpu)), dstAdr) );
+        if (!(at.isOk(x))) {throw std::runtime_error( "Could not find dst in download address table");}
+        if(verbose) sLog << "Found flow dst " << g[x->v].name << std::endl;
+        ret.insert(x->v); //found a pending flow, insert its destination
+      }
+    }  
+  }
+
+  return ret;
+}      
+
+
 
 HealthReport& CarpeDM::getHealth(uint8_t cpuIdx, HealthReport &hr) {
   uint32_t const baseAdr = cpuDevs.at(cpuIdx).sdb_component.addr_first + SHARED_OFFS;

@@ -55,6 +55,9 @@ public:
   void     clrFlags(uint32_t flags) {this->flags &= ~flags;}
   //Check if this node is an entry or exit point to a pattern or beamprocess
   const bool isPainted()  const {return (bool)(this->flags & NFLG_PAINT_LM32_SMSK);}
+  const bool isMarked()   const {return (bool)(this->flags & NFLG_PAINT_HOST_SMSK);}
+  const bool isDebug0()   const {return (bool)(this->flags & NFLG_DEBUG0_SMSK);}
+  const bool isDebug1()   const {return (bool)(this->flags & NFLG_DEBUG1_SMSK);}
   const bool isBpEntry()  const {return (bool)(this->flags & NFLG_BP_ENTRY_LM32_SMSK);}
   const bool isBpExit()   const {return (bool)(this->flags & NFLG_BP_EXIT_LM32_SMSK);}
   const bool isPatEntry() const {return (bool)(this->flags & NFLG_PAT_ENTRY_LM32_SMSK);}

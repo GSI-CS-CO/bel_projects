@@ -50,6 +50,7 @@ namespace DotStr {
       const std::string sDynRes       = "dynres";
       const std::string sMeta         = "meta";
       const std::string sAny          = "";
+      const std::string sDynFlowDst   = "dynflowdst";
     }
   }
 
@@ -175,9 +176,13 @@ namespace DotStr {
         const std::string sLookDef       = "style     = \"filled\", fillcolor = \"white\", color = \"black\"";
         const std::string sLookPaintNone = "fillcolor = \"white\"";
         const std::string sLookPaint0    = "fillcolor = \"green\"";
-        const std::string sLookPaint1    = "fillcolor = \"cyan\"";
-        const std::string sLookPatEntry  = "color = \"orange\"";
-        const std::string sLookPatExit   = "color = \"orange\"";
+        const std::string sLookPaint1    = "fillcolor = \"rosybrown1\"";
+        const std::string sLookDebug0    = "fillcolor = \"crimson\", fontname=\"Times-Bold\", fontcolor = \"blue2\"";
+        const std::string sLookDebug1    = "fontname=\"Times-Bold\", fontcolor = \"blue2\"";
+        const std::string sLookDebug2    = "fillcolor = \"cyan\"";
+
+        const std::string sLookPatEntry  = "penwidth=2, color = \"darkorange3\"";
+        const std::string sLookPatExit   = "penwidth=2, color = \"purple\"";
       }
 
       namespace Block {

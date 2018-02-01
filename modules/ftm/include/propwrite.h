@@ -132,6 +132,7 @@ template <class Name>
       else if (type[v] == det::sDynPar1)     out << ec::Edge::sLookArgument;
       else if (type[v] == det::sDynTef)      out << ec::Edge::sLookArgument;
       else if (type[v] == det::sDynRes)      out << ec::Edge::sLookArgument;
+      else if (type[v] == det::sDynFlowDst)  out << ec::Edge::sLookArgument;
       else                                   out << ec::Edge::sLookMeta;
       out <<  "]";   
     }
@@ -146,6 +147,26 @@ template <class Name>
   }
 
 
+  template <class typeMap>
+  struct static_eq {
+    static_eq() { } // necessary ?
+    static_eq(typeMap type) : type(type) {}
+    template <class Edge>
+    bool operator()(const Edge& e) const {
+      vStrC allowedTypes = {det::sDefDst, det::sCmdFlowDst, det::sDynFlowDst};
+      for(auto& it : allowedTypes ) { if (type[e] == it) return true; } //true if edge is of allowed types
+      return false;  
+    }
+    private:
+      typeMap type;
+  };
+
+
+  template <class typeMap>
+  inline static_eq<typeMap> 
+  make_static_eq(typeMap type) {
+    return static_eq<typeMap>(type);
+  }
 
 
 #endif

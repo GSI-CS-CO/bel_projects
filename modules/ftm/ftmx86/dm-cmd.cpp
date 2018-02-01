@@ -36,7 +36,6 @@ static void help(const char *program) {
   fprintf(stderr, "  stop                      Request stop of selected thread\n");
   fprintf(stderr, "  abort                     Immediately aborts selected thread\n");
   fprintf(stderr, "  cursor                    Show name of currently active node of selected thread\n");
-  fprintf(stderr, "  chkrem                    Checks if a pattern can be removed safely\n");
   fprintf(stderr, "\nBlock commands:\n");
   fprintf(stderr, "  noop <target node>                        [Options: lpq]   Placeholder to stall succeeding commands, has no effect itself\n");
   fprintf(stderr, "  flow <target node> <destination node>     [Options: lpqs]  Changes schedule flow to <Destination Node>\n");
@@ -406,13 +405,6 @@ int main(int argc, char* argv[]) {
     }
     else if (cmp == "cursor")  {
       std::cout << "Currently at " << cdm.getThrCursor(cpuIdx, thrIdx) << std::endl;
-      return 0;
-    }
-    else if (cmp == "chkrem")  {
-      bool strictSafe = cdm.isSafeToRemove(targetName, true);
-      //bool safe = cdm.isSafeToRemove(targetName, false);
-      std::cout << std::endl << "Pattern " << targetName << " allows strict safe removal: " << (int)(strictSafe) << std::endl;
-      //std::cout << "Pattern " << targetName << " allows safe removal:        " << (int)(safe) << std::endl;
       return 0;
     }
     else if (cmp == dnt::sCmdStart)  {

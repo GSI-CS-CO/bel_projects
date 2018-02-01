@@ -22,6 +22,7 @@ static void help(const char *program) {
   fprintf(stderr, "  overwrite  <.dot file>    Overwrites all Schedules on DM with the one in the input file, already existing nodes on the DM will be erased. \n");
   fprintf(stderr, "  remove     <.dot file>    Removes the schedule in the input file from the DM, nodes with hashes (names) not present on the DM will be ignored \n");
   fprintf(stderr, "  keep       <.dot file>    Removes everything BUT the schedule in the input file from the DM, nodes with hashes (names) not present on the DM will be ignored.\n");
+  fprintf(stderr, "  chkrem     <.dot file>    Checks if a pattern can be removed safely\n");
   fprintf(stderr, "  -n                        No verify, status will not be read after operation\n");
   fprintf(stderr, "  -o         <.dot file>    Specify output file name, default is '%s'\n", defOutputFilename);
   fprintf(stderr, "  -s                        Show Meta Nodes. Download will not only contain schedules, but also queues, etc. \n");  
@@ -145,6 +146,12 @@ int main(int argc, char* argv[]) {
       if (cmd == "remove")    { cdm.removeDotFile(inputFilename, force); cmdValid = true;}
       if (cmd == "keep")      { cdm.keepDotFile(inputFilename, force); cmdValid = true;}
       if (cmd == "status")    { cdm.downloadDotFile(outputFilename, strip); cmdValid = true;}
+      if (cmd == "chkrem")    {
+        cdm.download(); 
+        std::cout << std::endl << "Dot file " << inputFilename << " content removal safety: " << (int)(cdm.isSafe2RemoveDotFile(inputFilename)) << std::endl;
+        cmdValid = true;
+      }
+
       if(verbose) cdm.showUp(false);
     } catch (std::runtime_error const& err) {
       std::cerr << std::endl << program << ": Failed to execute <"<< cmd << ". Cause: " << err.what() << std::endl;

@@ -76,10 +76,14 @@ private:
 
   bool findDefPath(vertex_t start, vertex_t goal, Graph& g);
   bool hasIncomingDefDsts(const std::string& pattern, vertex_t v, bool strict);
+  vertex_set_t getDynamicDestinations(vertex_t vQ, Graph& g, AllocTable& at);
   bool hasIncomingDynamicFlows(vertex_t v);
   bool hasIncomingResidentFlows(vertex_t v);
+  void getReverseNodeTree(vertex_t v, vertex_set_t& sV, Graph& g);
+  vertex_set_t getAllActiveCursors();
   bool findDefPath(vertex_t start, vertex_t goal);
   vStrC getGraphPatterns(Graph& g);
+  bool isSafeToRemoveAdv(Graph& gRem);
 
 protected:
 
@@ -198,6 +202,8 @@ public:
   //removes all nodes in input file                                            
   int removeDot(const std::string& s, bool force) {Graph gTmp; return remove(parseDot(s, gTmp), force);};
   int removeDotFile(const std::string& fn, bool force) {return removeDot(readTextFile(fn), force);};
+  // Safe removal check
+  bool isSafe2RemoveDotFile(const std::string& fn) {Graph gTmp; return isSafeToRemoveAdv(parseDot(readTextFile(fn), gTmp));};
   //clears all nodes from DM 
   int clear();
 
@@ -279,7 +285,8 @@ std::pair<int, int> findRunningPattern(const std::string& sPattern); //get cpu a
                int setThrPrepTime(uint8_t cpuIdx, uint8_t thrIdx, uint64_t t)            { vEbwrs ew; return send(setThrPrepTime(cpuIdx, thrIdx, t, ew));}
      HealthReport& getHealth(uint8_t cpuIdx, HealthReport &hr);
           uint64_t getDmWrTime();
-              bool isSafeToRemove(const std::string& pattern, bool strict); 
+              bool isSafeToRemove(const std::string& pattern, bool strict);
+
 
                
 
