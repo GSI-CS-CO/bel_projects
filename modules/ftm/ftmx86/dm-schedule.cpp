@@ -147,8 +147,8 @@ int main(int argc, char* argv[]) {
       if (cmd == "keep")      { cdm.keepDotFile(inputFilename, force); cmdValid = true;}
       if (cmd == "status")    { cdm.downloadDotFile(outputFilename, strip); cmdValid = true;}
       if (cmd == "chkrem")    {
-        cdm.download(); 
-        std::cout << std::endl << "Dot file " << inputFilename << " content removal safety: " << (int)(cdm.isSafe2RemoveDotFile(inputFilename)) << std::endl;
+        cdm.download();
+        std::cout << std::endl << "Dot file " << inputFilename << " content removal: " << (( (int)(cdm.isSafe2RemoveDotFile(inputFilename)) ) ? "SAFE" : "FORBIDDEN" ) << std::endl;
         cmdValid = true;
       }
 

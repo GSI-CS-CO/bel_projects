@@ -80,10 +80,12 @@ private:
   bool hasIncomingDynamicFlows(vertex_t v);
   bool hasIncomingResidentFlows(vertex_t v);
   void getReverseNodeTree(vertex_t v, vertex_set_t& sV, Graph& g);
-  vertex_set_t getAllActiveCursors();
+  vertex_set_t getAllCursors(bool activeOnly);
   bool findDefPath(vertex_t start, vertex_t goal);
   vStrC getGraphPatterns(Graph& g);
   bool isSafeToRemoveAdv(Graph& gRem);
+  bool isSafeToRemoveAdv(const std::string& pattern);
+  bool addResidentDestinations(Graph& gEq,  Graph& gOrig, vertex_set_t cursors);
 
 protected:
 

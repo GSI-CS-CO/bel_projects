@@ -52,7 +52,8 @@ namespace DotStr {
       extern const std::string sDynRes       ;
       extern const std::string sMeta         ;
       extern const std::string sAny;
-      extern const std::string sDynFlowDst   ; 
+      extern const std::string sDynFlowDst   ;
+      extern const std::string sResFlowDst   ;  
     }
   }
 
@@ -189,31 +190,33 @@ namespace DotStr {
         extern const std::string sLookPatExit;
       }  
       namespace Block {
-        extern const std::string sLookDef ;
-        extern const std::string sLookFix ;
-        extern const std::string sLookAlign ;
+        extern const std::string sLookDef;
+        extern const std::string sLookFix;
+        extern const std::string sLookAlign;
 
       }
       namespace TMsg {
-        extern const std::string sLookDef ;
+        extern const std::string sLookDef;
       }  
       namespace Cmd {
-        extern const std::string sLookDef ;
+        extern const std::string sLookDef;
 
       }
       namespace Meta {
-        extern const std::string sLookDef ;
+        extern const std::string sLookDef;
       }
     } 
 
     namespace Edge {
    
-      extern const std::string sLookDefDst     ;
-      extern const std::string sLookAltDst     ;
-      extern const std::string sLookMeta       ;
-      extern const std::string sLookTarget     ;
-      extern const std::string sLookArgument   ;
-      extern const std::string sLookbad        ;
+      extern const std::string sLookDefDst;
+      extern const std::string sLookAltDst;
+      extern const std::string sLookMeta;
+      extern const std::string sLookTarget;
+      extern const std::string sLookArgument;
+      extern const std::string sLookDebug0;
+      extern const std::string sLookDebug1;
+      extern const std::string sLookbad;
       
     }   
   }

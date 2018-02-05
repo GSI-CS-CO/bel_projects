@@ -676,12 +676,12 @@ bool CarpeDM::isSafeToRemove(const std::string& pattern, bool strict)  {
   }
 
   vStrC CarpeDM::getGraphPatterns(Graph& g)  {
-    std::set<vertex_t> sV;
+    std::set<std::string> sP;
     vStrC ret;
 
-    BOOST_FOREACH( vertex_t v, vertices(g) ) {sV.insert(v); sLog << "gp " << g[v].name << std::endl;}
+    BOOST_FOREACH( vertex_t v, vertices(g) ) {sP.insert(getNodePattern(g[v].name));}
 
-    for(auto& itV : sV) ret.push_back(getNodePattern(g[itV].name));
+    for(auto& itP : sP) ret.push_back(itP);
 
     return ret;  
 
@@ -778,45 +778,65 @@ bool CarpeDM::isSafeToRemove(const std::string& pattern, bool strict)  {
     return false;
   }      
 
-
 bool CarpeDM::isSafeToRemoveAdv(Graph& gRem) {
+  bool isSafe = true;
+
+  //Find all patterns 2B removed
+  for (auto& patternIt : getGraphPatterns(gRem)) {
+    isSafe &= isSafeToRemoveAdv(patternIt);
+  }
+
+  return isSafe;
+}
+
+
+bool CarpeDM::isSafeToRemoveAdv(const std::string& pattern) {
   Graph& g        = gDown;
   AllocTable& at  = atDown;
   Graph gTmp, gEq;
   vertex_set_t blacklist, entries, cursors;
-
-  //Init our blacklist of critical nodes. All vertices in the pattern(s) to be removed need to be on it
-  //careful: we can't be sure the vertex indices match with gDown. Go by names
-
-  //BOOST_FOREACH( vertex_t v, vertices(gRem) ) {blacklist.insert(v); sLog << "bl " << gRem[v].name << std::endl;}
-
-  //Find and list all entry nodes of patterns 2B removed
-  for (auto& patternIt : getGraphPatterns(gRem)) {
-    
-    std::string sTmp = getPatternEntryNode(patternIt);
-    sLog << "GPat " << patternIt << " GNode " << sTmp << std::endl;
-    if (hm.lookup(sTmp)) {
-      auto x = at.lookupHash(hm.lookup(sTmp).get());
-      if (!(at.isOk(x))) {throw std::runtime_error( "Could not find entry node"); return false;}
-      entries.insert(x->v);
+  
+  //Init our blacklist of critical nodes. All vertices in the pattern to be removed need to be on it
+  
+  for (auto& nodeIt : getPatternMembers(pattern)) {
+    if (hm.lookup(nodeIt)) {
+      auto x = at.lookupHash(hm.lookup(nodeIt).get());
+      if (!(at.isOk(x))) {throw std::runtime_error( "Could not find member node"); return false;}
+      blacklist.insert(x->v);
     }
   }
+  
+  //Find and list all entry nodes of patterns 2B removed
+  std::string sTmp = getPatternEntryNode(pattern);
+  if (hm.lookup(sTmp)) {
+    auto x = at.lookupHash(hm.lookup(sTmp).get());
+    if (!(at.isOk(x))) {throw std::runtime_error( "Could not find entry node"); return false;}
+    entries.insert(x->v);
+  }
+  if(verbose) {sLog << "Pattern <" << pattern << "> (Entrypoint <" << sTmp << "> safe removal analysis" << std::endl;}
 
   //make a working copy of the download graph
   vertex_map_t vertexMapTmp;
   boost::associative_property_map<vertex_map_t> vertexMapWrapperTmp(vertexMapTmp);
   copy_graph(g, gTmp, boost::orig_to_copy(vertexMapWrapperTmp));
 
-  for (auto& it : vertexMapTmp) {if (it.first != it.second) sLog << "1 Map Index " << (int)it.first << " was changed !!!" << std::endl;}
+  for (auto& it : vertexMapTmp) {
+    if (it.first != it.second) {throw std::runtime_error( "CpyGraph Map1 Idx Translation failed! This is beyond bad, contact Dev !");}
+  }
+    
+  //Create static equivalent model
+   
+  //add static equivalent edges of all pending flow commands to working copy  
 
-  //add static equivalent edges of all pending flow commands to working copy
-  BOOST_FOREACH( vertex_t v, vertices(gTmp) ) {
-    if(gTmp[v].np->isBlock()) {
-      vertex_set_t sVflowDst = getDynamicDestinations(v, gTmp, at);
-      for (auto& it : sVflowDst) {sLog << "AuxEdge: " << gTmp[v].name << " -> " << gTmp[it].name << std::endl; boost::add_edge(v, it, myEdge(det::sDynFlowDst), gTmp);}
+  BOOST_FOREACH( vertex_t vChkBlock, vertices(gTmp) ) {
+    //first, find blocks
+    if(gTmp[vChkBlock].np->isBlock()) {
+      //second, inspect their queues and add equivalent edges for pending flows
+      vertex_set_t sVflowDst = getDynamicDestinations(vChkBlock, gTmp, at);
+      for (auto& it : sVflowDst) {if(verbose) {sLog << "Adding DynFlowAuxEdge: " << gTmp[vChkBlock].name << " -> " << gTmp[it].name << std::endl; boost::add_edge(vChkBlock, it, myEdge(det::sDynFlowDst), gTmp);}}
     }
   }
-  
+
   //Generate a filtered view, stripping all edges except default Destinations, resident flow destinations and dynamic flow destinations
   typedef boost::property_map< Graph, std::string myEdge::* >::type EpMap;
   boost::filtered_graph <Graph, static_eq<EpMap>, boost::keep_all > fg(gTmp, make_static_eq(boost::get(&myEdge::type, gTmp)), boost::keep_all());
@@ -825,24 +845,32 @@ bool CarpeDM::isSafeToRemoveAdv(Graph& gRem) {
   boost::associative_property_map<vertex_map_t> vertexMapWrapperEq(vertexMapEq);
   copy_graph(fg, gEq, boost::orig_to_copy(vertexMapWrapperEq));
 
-  for (auto& it : vertexMapEq) {if (it.first != it.second) sLog << "2 Map Index " << (int)it.first << " was changed !!!" << std::endl;}
+  for (auto& it : vertexMapEq) { 
+    if (it.first != it.second) { throw std::runtime_error( "CpyGraph Map2 Idx Translation failed! This is beyond bad, contact Dev !");}
+  }
+    
+  //try to get consistent image of active cursors
+  cursors = getAllCursors(false);
+  
+  //Here comes the problem: resident commands are only of consquence if they AND their target Block are executable
+  //Iteratively find out which cmds are executable and add equivalent edges for them. Do this until no more new edges have to be added
+  if (addResidentDestinations(gEq, gTmp, cursors)) { if(verbose) {sLog << "Added resident equivalents." << std::endl;} }
+
 
   //crawl all reverse trees we can reach from the given entries and add their nodes to the blacklist
   for (auto& vEntry : entries) {
-    sLog << "Starting Crawler from " << gEq[vEntry].name << std::endl;
+    if(verbose) { sLog << "Starting Crawler from " << gEq[vEntry].name << std::endl; }
     vertex_set_t tmpTree;
     getReverseNodeTree(vEntry, tmpTree, gEq);
     blacklist.insert(tmpTree.begin(), tmpTree.end());
   }
 
-  //try to get consistent image of active cursors
-  cursors = getAllActiveCursors();
 
   //Debug Output File
-  BOOST_FOREACH( vertex_t v, vertices(gEq) ) {gEq[v].np->clrFlags(NFLG_PAINT_LM32_SMSK);}
+  BOOST_FOREACH( vertex_t v, vertices(gEq) ) { gEq[v].np->clrFlags(NFLG_PAINT_LM32_SMSK); }
   for (auto& it : cursors)    { gEq[it].np->setFlags(NFLG_DEBUG1_SMSK); }
   for (auto& it : entries)    { gEq[it].np->setFlags(NFLG_DEBUG0_SMSK); }
-  for (auto& it : blacklist)  { gEq[it].np->setFlags(NFLG_PAINT_HOST_SMSK);}
+  for (auto& it : blacklist)  { gEq[it].np->setFlags(NFLG_PAINT_HOST_SMSK); }
   writeDotFile("debug.dot", gEq, true);
 
   
@@ -854,86 +882,7 @@ bool CarpeDM::isSafeToRemoveAdv(Graph& gRem) {
   return ( 0 == si.size() );
 
 }
-/*
-bool CarpeDM::isSafeToRemoveAdv(const std::string& pattern) {
-  Graph& g        = gDown;
-  AllocTable& at  = atDown;
-  Graph gTmp, gEq;
-  vertex_set_t blacklist, entries, cursors;
 
-  //Init our blacklist of critical nodes. All vertices in the pattern(s) to be removed need to be on it
-  for (auto& nodeIt : getPatternMembers(pattern)) {
-    if (hm.lookup(nodeIt)) {
-      auto x = at.lookupHash(hm.lookup(nodeIt).get());
-      if (!(at.isOk(x))) {throw std::runtime_error( "Could not find member node"); return false;}
-      blacklist.insert(x->v);
-      sLog << "bl " << g[x->v].name << std::endl;
-    }
-  }
-  
-  //Find and list all entry nodes of patterns 2B removed
-  std::string sTmp = getPatternEntryNode(pattern);
-  sLog << "Pattern -> " << pattern << " Entry " << sTmp << std::endl;
-  if (hm.lookup(sTmp)) {
-    auto x = at.lookupHash(hm.lookup(sTmp).get());
-    if (!(at.isOk(x))) {throw std::runtime_error( "Could not find entry node"); return false;}
-    entries.insert(x->v);
-  }
-  
-
-
-  //make a working copy of the download graph
-  vertex_map_t vertexMapTmp;
-  boost::associative_property_map<vertex_map_t> vertexMapWrapperTmp(vertexMapTmp);
-  copy_graph(g, gTmp, boost::orig_to_copy(vertexMapWrapperTmp));
-
-  for (auto& it : vertexMapTmp) {if (it.first != it.second) sLog << "1 Map Index " << (int)it.first << " was changed !!!" << std::endl;}
-
-  //add static equivalent edges of all pending flow commands to working copy
-  BOOST_FOREACH( vertex_t v, vertices(gTmp) ) {
-    if(gTmp[v].np->isBlock()) {
-      vertex_set_t sVflowDst = getDynamicDestinations(v, gTmp, at);
-      for (auto& it : sVflowDst) {sLog << "AuxEdge: " << gTmp[v].name << " -> " << gTmp[it].name << std::endl; boost::add_edge(v, it, myEdge(det::sDynFlowDst), gTmp);}
-    }
-  }
-  
-  //Generate a filtered view, stripping all edges except default Destinations, resident flow destinations and dynamic flow destinations
-  typedef boost::property_map< Graph, std::string myEdge::* >::type EpMap;
-  boost::filtered_graph <Graph, static_eq<EpMap>, boost::keep_all > fg(gTmp, make_static_eq(boost::get(&myEdge::type, gTmp)), boost::keep_all());
-  //copy filtered view to normal graph to work with
-  vertex_map_t vertexMapEq;
-  boost::associative_property_map<vertex_map_t> vertexMapWrapperEq(vertexMapEq);
-  copy_graph(fg, gEq, boost::orig_to_copy(vertexMapWrapperEq));
-
-  for (auto& it : vertexMapEq) {if (it.first != it.second) sLog << "2 Map Index " << (int)it.first << " was changed !!!" << std::endl;}
-
-  //crawl all reverse trees we can reach from the given entries and add their nodes to the blacklist
-  for (auto& vEntry : entries) {
-    sLog << "Starting Crawler from " << gEq[vEntry].name << std::endl;
-    vertex_set_t tmpTree;
-    getReverseNodeTree(vEntry, tmpTree, gEq);
-    blacklist.insert(tmpTree.begin(), tmpTree.end());
-  }
-
-  //try to get consistent image of active cursors
-  cursors = getAllActiveCursors();
-
-  //Debug Output File
-  for (auto& it : cursors)    { gEq[it].np->setFlags(NFLG_DEBUG1_SMSK); }
-  for (auto& it : entries)    { gEq[it].np->setFlags(NFLG_DEBUG0_SMSK); }
-  for (auto& it : blacklist)  { gEq[it].np->clrFlags(NFLG_PAINT_LM32_SMSK); gEq[it].np->setFlags(NFLG_PAINT_HOST_SMSK);}
-  writeDotFile("debug.dot", gEq, false);
-
-  
-
-  //calculate intersection of cursors and blacklist. If the intersection set is empty, all nodes in gRem can be safely removed
-  vertex_set_t si;
-  set_intersection(blacklist.begin(),blacklist.end(),cursors.begin(),cursors.end(), std::inserter(si,si.begin()));
-  
-  return ( 0 == si.size() );
-
-}  
-*/
 
 //recursively inserts all vertex idxs of the tree reachable (via in edges) from start vertex into the referenced set
 void CarpeDM::getReverseNodeTree(vertex_t v, vertex_set_t& sV, Graph& g) {
@@ -944,12 +893,12 @@ void CarpeDM::getReverseNodeTree(vertex_t v, vertex_set_t& sV, Graph& g) {
   for (in_cur = in_begin; in_cur != in_end; ++in_cur) {
     if (sV.find(source(*in_cur, g)) != sV.end()) break;
     sV.insert(source(*in_cur, g));
-    sLog << "Adding Tree Node " << g[source(*in_cur, g)].name << std::endl;
+    //sLog << "Adding Tree Node " << g[source(*in_cur, g)].name << std::endl;
     getReverseNodeTree(source(*in_cur, g), sV, g);
   }
 }
 
-vertex_set_t CarpeDM::getAllActiveCursors() {
+vertex_set_t CarpeDM::getAllCursors(bool activeOnly) {
   vertex_set_t ret;
 
   //TODO - this is dirty and cumbersome, make it streamlined
@@ -959,7 +908,7 @@ vertex_set_t CarpeDM::getAllActiveCursors() {
     for(uint8_t thr=0; thr < _THR_QTY_; thr++) {
       uint32_t  adr = ebReadWord(ebd, getThrCurrentNodeAdr(cpu, thr));
       uint64_t dl = getThrDeadline(cpu, thr); 
-      if (adr == LM32_NULL_PTR || dl == -1) continue; // 
+      if (adr == LM32_NULL_PTR || (activeOnly && ((int64_t)dl == -1))) continue; // only active cursors: no dead end idles, no aborted threads
       auto x = atDown.lookupAdr(cpu, atDown.adrConv(AdrType::INT, AdrType::MGMT,cpu, adr));
       if (atDown.isOk(x)) ret.insert(x->v);
     }
@@ -979,7 +928,49 @@ vertex_set_t CarpeDM::getAllActiveCursors() {
 
 }
 
+bool CarpeDM::addResidentDestinations(Graph& gEq, Graph& gOrig, vertex_set_t cursors) {
+  vertex_set_t resCmds; // prepare the set of flow commands to speed things up
+  BOOST_FOREACH( vertex_t vChkResCmd, vertices(gEq) ) {if (gEq[vChkResCmd].type == dnt::sCmdFlow) resCmds.insert(vChkResCmd);}
+  bool addEdge = (resCmds.size() > 0);
+  bool didWork = false;
 
+  while (addEdge) {
+    addEdge = false;
+    for(auto& vRc : resCmds) {
+      vertex_set_t tmpTree, si;
+      vertex_t vBlock = -1, vDst = -1; 
+      Graph::out_edge_iterator out_begin, out_end, out_cur;
+      bool found = false;
+
+      //find out if there is a path from any of the cursors to this command
+      getReverseNodeTree(vRc, tmpTree, gEq);
+      set_intersection(tmpTree.begin(),tmpTree.end(),cursors.begin(),cursors.end(), std::inserter(si,si.begin()));
+      if ( si.size() > 0 ) {
+        //found a path. now check if there already is an equivalent edge between this command's target block and its destination
+        //get block and dst
+        
+        //We now intentionally use the unfiltered graph again (to have target and dst edges). works cause vertex indices are equal.
+        boost::tie(out_begin, out_end) = out_edges(vRc, gOrig);
+        for (out_cur = out_begin; out_cur != out_end; ++out_cur) {
+          if(gOrig[*out_cur].type == det::sCmdTarget)  {vBlock  = target(*out_cur, gOrig);}
+          if(gOrig[*out_cur].type == det::sCmdFlowDst) {vDst    = target(*out_cur, gOrig);}
+        }
+        if ((vBlock  == -1) || (vDst == -1)) {throw std::runtime_error( "Could not find block and dst for resident equivalents");}
+        
+         //check for equivalent resident edges
+        boost::tie(out_begin, out_end) = out_edges(vBlock, gEq);
+        for (out_cur = out_begin; out_cur != out_end; ++out_cur) { if(gEq[*out_cur].type == det::sResFlowDst)  found = true;}
+        if (!found) {
+          if (verbose) { sLog << "Adding ResFlowAuxEdge: " << gEq[vBlock].name << " -> " << gEq[vDst].name << std::endl; }
+          boost::add_edge(vBlock, vDst, myEdge(det::sResFlowDst), gEq);
+          addEdge = true;
+          didWork = true;
+        }
+      }
+    }  
+  }
+  return didWork;
+}
 
 
 vertex_set_t CarpeDM::getDynamicDestinations(vertex_t vQ, Graph& g, AllocTable& at) {

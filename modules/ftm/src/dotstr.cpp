@@ -51,6 +51,7 @@ namespace DotStr {
       const std::string sMeta         = "meta";
       const std::string sAny          = "";
       const std::string sDynFlowDst   = "dynflowdst";
+      const std::string sResFlowDst   = "resflowdst";
     }
   }
 
@@ -177,7 +178,7 @@ namespace DotStr {
         const std::string sLookPaintNone = "fillcolor = \"white\"";
         const std::string sLookPaint0    = "fillcolor = \"green\"";
         const std::string sLookPaint1    = "fillcolor = \"rosybrown1\"";
-        const std::string sLookDebug0    = "fillcolor = \"crimson\", fontname=\"Times-Bold\", fontcolor = \"blue2\"";
+        const std::string sLookDebug0    = "fillcolor = \"crimson\", fontname=\"Times-Bold\", fontcolor = \"cyan\"";
         const std::string sLookDebug1    = "fontname=\"Times-Bold\", fontcolor = \"blue2\"";
         const std::string sLookDebug2    = "fillcolor = \"cyan\"";
 
@@ -213,6 +214,8 @@ namespace DotStr {
       const std::string sLookMeta      = "color     = \"gray\"";
       const std::string sLookTarget    = "color     = \"blue\"";
       const std::string sLookArgument  = "color     = \"pink\"";
+      const std::string sLookDebug0    = "color     = \"maroon3\"";
+      const std::string sLookDebug1    = "color     = \"maroon4\"";
       const std::string sLookbad       = "color     = \"orange\", style     = \"dashed\"";
       
     }   
