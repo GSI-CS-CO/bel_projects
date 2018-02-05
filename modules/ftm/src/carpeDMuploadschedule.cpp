@@ -531,8 +531,8 @@ using namespace DotStr::Misc;
     if ((boost::get_property(g, boost::graph_name)).find(DotStr::Graph::Special::sCmd) != std::string::npos) {throw std::runtime_error("Expected a schedule, but these appear to be commands (Tag '" + DotStr::Graph::Special::sCmd + "' found in graphname)"); return -1;}
     generateBlockMeta(g);
     baseUploadOnDownload();
-    //for(auto& itChk : getGraphPatterns(g)) {if (!(force | isSafeToRemove(itChk, true))) throw std::runtime_error("Pattern " + itChk + " cannot safely be removed\n");}
-    if (!(force | isSafeToRemoveAdv(g))) {throw std::runtime_error("Cannot safely be removed\n");}
+    std::string report; 
+    if (!(force | isSafeToRemove(g, report))) {throw std::runtime_error("Cannot safely be removed\n");}
     subtraction(g);
     //writeUpDotFile("upload.dot", false);
     validate(gUp, atUp);
@@ -564,8 +564,10 @@ using namespace DotStr::Misc;
       if (!found) { boost::add_vertex(myVertex(gUp[w]), gTmpRemove);
       }
     }
-    //for(auto& itChk : getGraphPatterns(gTmpRemove)) {if (!(force | isSafeToRemove(itChk, true))) throw std::runtime_error("Pattern " + itChk + " cannot safely be removed\n");}
-    if (!(force | isSafeToRemoveAdv(gTmpRemove))) {throw std::runtime_error("Cannot safely be removed\n");}
+    
+    std::string report;  
+
+    if (!(force | isSafeToRemove(gTmpRemove, report))) {throw std::runtime_error("Cannot safely be removed\n");}
     subtraction(gTmpRemove);
     //writeUpDotFile("upload.dot", false);
     validate(gUp, atUp);

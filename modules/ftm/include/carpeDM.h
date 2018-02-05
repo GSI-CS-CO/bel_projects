@@ -50,7 +50,7 @@ private:
   
   int sendCommands(Graph &); //Sends a dotfile of commands to the DM
 
-  Graph& parseDot(const std::string& s, Graph& g); //Parse a .dot string to create unprocessed Graph
+
 
   // Upload
   vAdr getUploadAdrs();
@@ -74,18 +74,15 @@ private:
   const std::string& firstString(const vStrC& v) {return ((v.size() > 0) ? *(v.begin()) : DotStr::Misc::sUndefined);}
   boost::optional<std::pair<int, int>> parseCpuAndThr(vertex_t v, Graph& g);
 
-  bool findDefPath(vertex_t start, vertex_t goal, Graph& g);
-  bool hasIncomingDefDsts(const std::string& pattern, vertex_t v, bool strict);
-  vertex_set_t getDynamicDestinations(vertex_t vQ, Graph& g, AllocTable& at);
-  bool hasIncomingDynamicFlows(vertex_t v);
-  bool hasIncomingResidentFlows(vertex_t v);
-  void getReverseNodeTree(vertex_t v, vertex_set_t& sV, Graph& g);
-  vertex_set_t getAllCursors(bool activeOnly);
-  bool findDefPath(vertex_t start, vertex_t goal);
-  vStrC getGraphPatterns(Graph& g);
-  bool isSafeToRemoveAdv(Graph& gRem);
-  bool isSafeToRemoveAdv(const std::string& pattern);
   bool addResidentDestinations(Graph& gEq,  Graph& gOrig, vertex_set_t cursors);
+  bool addDynamicDestinations(Graph& g, AllocTable& at);
+  vertex_set_t getDynamicDestinations(vertex_t vQ, Graph& g, AllocTable& at);
+  void getReverseNodeTree(vertex_t v, vertex_set_t& sV, Graph& g);
+  
+  vertex_set_t getAllCursors(bool activeOnly);
+  vStrC getGraphPatterns(Graph& g);
+
+  
 
 protected:
 
@@ -180,6 +177,7 @@ public:
   std::string  readTextFile(const std::string& fn);
 
   // Graphs to Dot
+    Graph& parseDot(const std::string& s, Graph& g); //Parse a .dot string to create unprocessed Graph
   std::string createDot( Graph& g, bool filterMeta);
   void writeDotFile(const std::string& fn, Graph& g, bool filterMeta) { writeTextFile(fn, createDot(g, filterMeta)); }
   void writeDownDotFile(const std::string& fn, bool filterMeta)       { writeTextFile(fn, createDot(gDown, filterMeta)); }
@@ -205,7 +203,7 @@ public:
   int removeDot(const std::string& s, bool force) {Graph gTmp; return remove(parseDot(s, gTmp), force);};
   int removeDotFile(const std::string& fn, bool force) {return removeDot(readTextFile(fn), force);};
   // Safe removal check
-  bool isSafe2RemoveDotFile(const std::string& fn) {Graph gTmp; return isSafeToRemoveAdv(parseDot(readTextFile(fn), gTmp));};
+  //bool isSafe2RemoveDotFile(const std::string& fn) {Graph gTmp; return isSafeToRemove(parseDot(readTextFile(fn), gTmp));};
   //clears all nodes from DM 
   int clear();
 
@@ -288,7 +286,8 @@ std::pair<int, int> findRunningPattern(const std::string& sPattern); //get cpu a
                int setThrPrepTime(uint8_t cpuIdx, uint8_t thrIdx, uint64_t t)            { vEbwrs ew; return send(setThrPrepTime(cpuIdx, thrIdx, t, ew));}
      HealthReport& getHealth(uint8_t cpuIdx, HealthReport &hr);
           uint64_t getDmWrTime();
-              bool isSafeToRemove(const std::string& pattern, bool strict);
+              bool isSafeToRemove(const std::string& pattern, std::string& report);
+              bool isSafeToRemove(Graph& gRem, std::string& report);
 
 
                

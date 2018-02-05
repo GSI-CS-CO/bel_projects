@@ -148,7 +148,14 @@ int main(int argc, char* argv[]) {
       if (cmd == "status")    { cdm.downloadDotFile(outputFilename, strip); cmdValid = true;}
       if (cmd == "chkrem")    {
         cdm.download();
-        std::cout << std::endl << "Dot file " << inputFilename << " content removal: " << (( (int)(cdm.isSafe2RemoveDotFile(inputFilename)) ) ? "SAFE" : "FORBIDDEN" ) << std::endl;
+
+        std::string report;
+        Graph gTmp0, gTmp1;
+        bool isSafe = cdm.isSafeToRemove(cdm.parseDot(cdm.readTextFile(inputFilename), gTmp0), report);
+        
+        cdm.writeTextFile("debug.dot", report);
+
+        std::cout << std::endl << "Dot file " << inputFilename << " content removal: " << (isSafe ? "SAFE" : "FORBIDDEN" ) << std::endl;
         cmdValid = true;
       }
 
