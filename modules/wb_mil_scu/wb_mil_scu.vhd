@@ -82,6 +82,12 @@ use work.genram_pkg.all;
 --|         |             |             |                                                                                           |
 --|         |             |             |b)  Register reset_mil_macro für SW gesteuerten Reset des wb_mil_scu Macros hinzu          |
 --|         |             |             |                                                                                           |
+--|         |             | 12.01.2018  |    n_tx_req_led,n_rx_avail_led  hinzu                                                     |
+--|         |             |             |    clr_rx_avail_ps, clr_rx_err_ps bei TX_Taskram Write Access hinzu                       |
+--|         |             |             |                                                                                           |
+--|         |             | 29.01.2018  |    clr_rx_err_ps ,clr_rx_avail_ps bei RX_Taskram Read Access wg Performance entfernt      |
+--|         |             |             |    Grund:Die Etherbone Bridge kann (socket-orientiert) ihre Leseaufträge verwürfeln       |
+--|         |             |             |                                                                                           |
 --|         |             |             |                                                                                           |
 --| --------+-------------+-------------+----------------------------------------------------------------------------------------   |
 ENTITY wb_mil_scu IS
@@ -1397,10 +1403,10 @@ BEGIN
                 rx_taskram_rd_a            <= slave_i.adr( 9 DOWNTO 2);
               ELSE                                                                                       --second to present it to scu bus
                 slave_o.dat (15 downto 0)  <= rx_taskram_rd_d;
-                clr_rx_avail_ps(to_integer(unsigned(slave_i.adr( 9 DOWNTO 2))))  <= '1';                 --avail bit will be cleared by scu bus read access
-                clr_rx_err_ps  (to_integer(unsigned(slave_i.adr( 9 DOWNTO 2))))  <= '1';                 --err bit will be cleared by scu bus read access
-                ex_stall                   <= '0';
-                ex_ack                     <= '1';
+                --clr_rx_avail_ps(to_integer(unsigned(slave_i.adr( 9 DOWNTO 2))))  <= '1';               --avail bit will be cleared by scu bus read access
+                --clr_rx_err_ps  (to_integer(unsigned(slave_i.adr( 9 DOWNTO 2))))  <= '1';               --err bit will be cleared by scu bus read access
+                ex_stall                   <= '0';                                                       --the 2 clrs were omitted due to performance optimisation
+                ex_ack                     <= '1';                                                       --Etherbone may re-arange read tasks in same socket, may cause hazards here
               END IF;
           ELSE--write attempts result in DTACK Error
               ex_stall                   <= '0';
