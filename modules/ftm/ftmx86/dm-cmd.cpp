@@ -397,7 +397,7 @@ int main(int argc, char* argv[]) {
     } 
     else if (cmp == dnt::sCmdOrigin)  {
       if( targetName != NULL) {
-        if(!(cdm.isInHashDict( targetName))) {std::cerr << program << ": Target node '" << targetName << "'' was not found on DM" << std::endl; return -1; }
+        if(!(cdm.isInHashDict( targetName)) && targetName != DotStr::Node::Special::sIdle) {std::cerr << program << ": Target node '" << targetName << "'' was not found on DM" << std::endl; return -1; }
         cdm.setThrOrigin(cpuIdx, thrIdx, targetName);
       }
       if( verbose | (targetName == NULL) ) { std::cout << "CPU " << cpuIdx << " Thr " << thrIdx << " origin points to node " << cdm.getThrOrigin(cpuIdx, thrIdx) << std::endl;}
@@ -407,6 +407,11 @@ int main(int argc, char* argv[]) {
       std::cout << "Currently at " << cdm.getThrCursor(cpuIdx, thrIdx) << std::endl;
       return 0;
     }
+    else if (cmp == "force")  {
+      cdm.forceThrCursor(cpuIdx, thrIdx);
+      return 0;
+    }
+
     else if (cmp == dnt::sCmdStart)  {
       //check if a valid origin was assigned before executing
       std::string origin;

@@ -252,6 +252,12 @@ vEbwrs& CarpeDM::createCommandBurst(Graph& g, vEbwrs& ew) {
     else                return DotStr::Misc::sUndefined;  
   }
 
+  //DEBUG ONLY !!! force thread cursor to the value of the corresponding origin
+  void CarpeDM::forceThrCursor(uint8_t cpuIdx, uint8_t thrIdx) {
+    uint32_t cursor = ebReadWord(ebd, getThrInitialNodeAdr(cpuIdx, thrIdx));
+    ebWriteWord(ebd, getThrCurrentNodeAdr(cpuIdx, thrIdx), cursor);
+  } 
+
   //Get bitfield showing running threads
   uint32_t CarpeDM::getThrRun(uint8_t cpuIdx) {
     return ebReadWord(ebd, getThrCmdAdr(cpuIdx) + T_TC_RUNNING); 
