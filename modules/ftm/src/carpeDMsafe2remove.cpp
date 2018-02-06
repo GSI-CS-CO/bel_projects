@@ -19,41 +19,55 @@
 namespace dnt = DotStr::Node::TypeVal;
 namespace det = DotStr::Edge::TypeVal;
 
+
+
+
 bool CarpeDM::isSafeToRemove(Graph& gRem, std::string& report) {
   bool isSafe = true;
+  std::set<std::string> patterns;
 
   //Find all patterns 2B removed
-  for (auto& patternIt : getGraphPatterns(gRem)) {
-    isSafe &= isSafeToRemove(patternIt, report);
-  }
-
-  return isSafe;
+  for (auto& patternIt : getGraphPatterns(gRem)) { patterns.insert(patternIt); }
+    
+  return isSafeToRemove(patterns, report);;
 }
 
-
 bool CarpeDM::isSafeToRemove(const std::string& pattern, std::string& report) {
+  std::set<std::string> p = {pattern};
+  return isSafeToRemove(p, report);
+}  
+
+
+bool CarpeDM::isSafeToRemove(std::set<std::string> patterns, std::string& report) {
   Graph& g        = gDown;
   AllocTable& at  = atDown;
   Graph gTmp, gEq;
   vertex_set_t blacklist, entries, cursors;
+
+  //if(verbose) {sLog << "Pattern <" << pattern << "> (Entrypoint <" << sTmp << "> safe removal analysis" << std::endl;}
+
+  for (auto& patternIt : patterns) {
   
-  // BEGIN Preparations: Entry points, Blacklist and working copy of the Graph
-  //Init our blacklist of critical nodes. All vertices in the pattern to be removed need to be on it
-  for (auto& nodeIt : getPatternMembers(pattern)) {
-    if (hm.lookup(nodeIt)) {
-      auto x = at.lookupHash(hm.lookup(nodeIt).get());
-      if (!(at.isOk(x))) {throw std::runtime_error( "Could not find member node"); return false;}
-      blacklist.insert(x->v);
+    // BEGIN Preparations: Entry points, Blacklist and working copy of the Graph
+    //Init our blacklist of critical nodes. All vertices in the pattern to be removed need to be on it
+    for (auto& nodeIt : getPatternMembers(patternIt)) {
+      if (hm.lookup(nodeIt)) {
+        auto x = at.lookupHash(hm.lookup(nodeIt).get());
+        if (!(at.isOk(x))) {throw std::runtime_error( "Could not find member node"); return false;}
+        blacklist.insert(x->v);
+      }
     }
+    //Find and list all entry nodes of patterns 2B removed
+    std::string sTmp = getPatternEntryNode(patternIt);
+    if (hm.lookup(sTmp)) {
+      auto x = at.lookupHash(hm.lookup(sTmp).get());
+      if (!(at.isOk(x))) {throw std::runtime_error( "Could not find entry node"); return false;}
+      entries.insert(x->v);
+    }
+  
+
   }
-  //Find and list all entry nodes of patterns 2B removed
-  std::string sTmp = getPatternEntryNode(pattern);
-  if (hm.lookup(sTmp)) {
-    auto x = at.lookupHash(hm.lookup(sTmp).get());
-    if (!(at.isOk(x))) {throw std::runtime_error( "Could not find entry node"); return false;}
-    entries.insert(x->v);
-  }
-  if(verbose) {sLog << "Pattern <" << pattern << "> (Entrypoint <" << sTmp << "> safe removal analysis" << std::endl;}
+
   //make a working copy of the download graph
   vertex_map_t vertexMapTmp;
   boost::associative_property_map<vertex_map_t> vertexMapWrapperTmp(vertexMapTmp);
@@ -68,6 +82,9 @@ bool CarpeDM::isSafeToRemove(const std::string& pattern, std::string& report) {
   //add static equivalent edges of all pending flow commands to working copy  
   if (addDynamicDestinations(gTmp, at)) { if(verbose) {sLog << "Added dynamic equivalents." << std::endl;} }
 
+  if(verbose) sLog << "Generating filtered graph view " << std::endl;
+
+
   //Generate a filtered view, stripping all edges except default Destinations, resident flow destinations and dynamic flow destinations
   typedef boost::property_map< Graph, std::string myEdge::* >::type EpMap;
   boost::filtered_graph <Graph, static_eq<EpMap>, boost::keep_all > fg(gTmp, make_static_eq(boost::get(&myEdge::type, gTmp)), boost::keep_all());
@@ -78,6 +95,8 @@ bool CarpeDM::isSafeToRemove(const std::string& pattern, std::string& report) {
   for (auto& it : vertexMapEq) { //check vertex indices
     if (it.first != it.second) { throw std::runtime_error( "CpyGraph Map2 Idx Translation failed! This is beyond bad, contact Dev !");}
   }
+
+  if(verbose) sLog << "Reading Cursors " << std::endl;
   //try to get consistent image of active cursors
   cursors = getAllCursors(false);
   //Here comes the problem: resident commands are only of consquence if they AND their target Block are executable
@@ -85,6 +104,8 @@ bool CarpeDM::isSafeToRemove(const std::string& pattern, std::string& report) {
   if (addResidentDestinations(gEq, gTmp, cursors)) { if(verbose) {sLog << "Added resident equivalents." << std::endl;} }
 
   // END Static Equivalent Model //
+
+
 
   // Crawl and map active areas
   //crawl all reverse trees we can reach from the given entries and add their nodes to the blacklist
@@ -94,7 +115,7 @@ bool CarpeDM::isSafeToRemove(const std::string& pattern, std::string& report) {
     getReverseNodeTree(vEntry, tmpTree, gEq);
     blacklist.insert(tmpTree.begin(), tmpTree.end());
   }
-
+  if(verbose) sLog << "Creating report " << std::endl;
   //Create Debug Output File
   BOOST_FOREACH( vertex_t v, vertices(gEq) ) { gEq[v].np->clrFlags(NFLG_PAINT_LM32_SMSK); }
   for (auto& it : cursors)    { gEq[it].np->setFlags(NFLG_DEBUG1_SMSK); }
@@ -102,6 +123,7 @@ bool CarpeDM::isSafeToRemove(const std::string& pattern, std::string& report) {
   for (auto& it : blacklist)  { gEq[it].np->setFlags(NFLG_PAINT_HOST_SMSK); }
   report += createDot(gEq, true);
 
+  if(verbose) sLog << "Judging safety " << std::endl;
   //calculate intersection of cursors and blacklist. If the intersection set is empty, all nodes in pattern can be safely removed
   vertex_set_t si;
   set_intersection(blacklist.begin(),blacklist.end(),cursors.begin(),cursors.end(), std::inserter(si,si.begin()));

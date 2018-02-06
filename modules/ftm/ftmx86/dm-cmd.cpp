@@ -411,7 +411,13 @@ int main(int argc, char* argv[]) {
       cdm.forceThrCursor(cpuIdx, thrIdx);
       return 0;
     }
-
+    else if (cmp == "chkrem")  {
+      std::string report;
+      bool isSafe = cdm.isSafeToRemove(targetName, report);
+      cdm.writeTextFile("debug.dot", report);
+      std::cout << std::endl << "Pattern " << targetName << " content removal: " << (isSafe ? "SAFE" : "FORBIDDEN" ) << std::endl;
+      return 0;
+    }
     else if (cmp == dnt::sCmdStart)  {
       //check if a valid origin was assigned before executing
       std::string origin;

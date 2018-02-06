@@ -81,7 +81,7 @@ private:
   
   vertex_set_t getAllCursors(bool activeOnly);
   vStrC getGraphPatterns(Graph& g);
-
+  bool isSafeToRemove(std::set<std::string> patterns, std::string& report);
   
 
 protected:
@@ -288,6 +288,7 @@ std::pair<int, int> findRunningPattern(const std::string& sPattern); //get cpu a
           uint64_t getDmWrTime();
               bool isSafeToRemove(const std::string& pattern, std::string& report);
               bool isSafeToRemove(Graph& gRem, std::string& report);
+
 
 
                
