@@ -154,7 +154,7 @@ template <class Name>
     static_eq(typeMap type) : type(type) {}
     template <class Edge>
     bool operator()(const Edge& e) const {
-      vStrC allowedTypes = {det::sDefDst, det::sResFlowDst, det::sDynFlowDst};
+      auto allowedTypes = {det::sDefDst, det::sResFlowDst, det::sDynFlowDst};
       for(auto& it : allowedTypes ) { if (type[e] == it) return true; } //true if edge is of allowed types
       return false;  
     }
