@@ -131,20 +131,20 @@ typedef boost::shared_ptr<Node> node_ptr;
 typedef boost::shared_ptr<MiniCommand> mc_ptr;
 
 
-typedef boost::container::vector<node_ptr> npBuf;
-typedef boost::container::vector<uint8_t> vBuf;
-typedef boost::container::vector<uint32_t> vAdr;
-typedef boost::container::vector<uint32_t> ebBuf;
-typedef boost::container::vector<std::string> vStrC;
+typedef std::vector<node_ptr> npBuf;
+typedef std::vector<uint8_t> vBuf;
+typedef std::vector<uint32_t> vAdr;
+typedef std::vector<uint32_t> ebBuf;
+typedef std::vector<std::string> vStrC;
 typedef struct {
   vAdr va;
   vBuf vb;
 } vEbwrs;
 
 template <typename T>
-boost::container::vector<T> operator+(const boost::container::vector<T> &A, const boost::container::vector<T> &B)
+std::vector<T> operator+(const std::vector<T> &A, const std::vector<T> &B)
 {
-    boost::container::vector<T> AB;
+    std::vector<T> AB;
     AB.reserve( A.size() + B.size() );                // preallocate memory
     AB.insert( AB.end(), A.begin(), A.end() );        // add A;
     AB.insert( AB.end(), B.begin(), B.end() );        // add B;
@@ -152,7 +152,7 @@ boost::container::vector<T> operator+(const boost::container::vector<T> &A, cons
 }
 
 template <typename T>
-boost::container::vector<T> &operator+=(boost::container::vector<T> &A, const boost::container::vector<T> &B)
+std::vector<T> &operator+=(std::vector<T> &A, const std::vector<T> &B)
 {
     A.reserve( A.size() + B.size() );                // preallocate memory without erase original data
     A.insert( A.end(), B.begin(), B.end() );         // add B;
