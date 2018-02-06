@@ -16,3 +16,5 @@ modules = {
     "../../../top/gsi_pmc/control", 
   ]
 }
+
+syn_tool = "quartus"
