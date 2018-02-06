@@ -209,7 +209,7 @@ vertex_set_t CarpeDM::getDynamicDestinations(vertex_t vQ, Graph& g, AllocTable& 
     uint8_t bufLstCpu;
     AdrType bufLstAdrType; 
 
-    if (!((diff >> (prio*8)) & Q_IDX_MAX_OVF_MSK)) {if(verbose) {sLog << "prio " << (int)prio << " is empty" << std::endl;} break;}
+    if (!((diff >> (prio*8)) & Q_IDX_MAX_OVF_MSK)) {if(verbose) {sLog << "prio " << (int)prio << " is empty" << std::endl;} continue;}
     if(verbose) sLog << "Checking Prio " << prio << std::endl;  
     //get Block binary
     uint8_t* bBlock = g[vQ].np->getB();
