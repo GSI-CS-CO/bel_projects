@@ -1,4 +1,4 @@
-create_clock -name {clk_lvt_i}        -period 10.000 [get_ports {clk_lvt_i}       ]
+create_clock -name {clk_lvtio_i}        -period 10.000 [get_ports {clk_lvtio_i}       ]
 
 
 # PCI Clock Settings
@@ -14,7 +14,7 @@ derive_clock_uncertainty
 # Cut the clock domains from each other
 set_clock_groups -asynchronous                           \
  -group { altera_reserved_tck                          } \
- -group { clk_lvt_i                                    } \
+ -group { clk_lvtio_i                                  } \
  -group { PCI_CLOCK                                    } \
  -group { clk_20m_vcxo_i    main|\dmtd_a5:dmtd_inst|*  } \
  -group { clk_125m_local_i  main|\sys_a5:sys_inst|*    } \
