@@ -81,6 +81,7 @@ namespace DotStr {
         const std::string sGenQPrioHi    = "qil";
         const std::string sGenQPrioMd    = "qhi";
         const std::string sGenQPrioLo    = "qlo";
+        const std::string sGenQPrio[]      = {sGenQPrioLo, sGenQPrioMd, sGenQPrioHi};
       }  
 
       namespace TMsg {

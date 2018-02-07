@@ -83,6 +83,7 @@ namespace DotStr {
         extern const std::string sGenQPrioHi ;
         extern const std::string sGenQPrioMd ;
         extern const std::string sGenQPrioLo ;
+        extern const std::string sGenQPrio[] ;
       }  
 
       namespace TMsg {

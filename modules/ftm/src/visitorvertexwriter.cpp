@@ -92,7 +92,9 @@ void VisitorVertexWriter::visit(const Block& el) const  {
   pushNodeInfo((Node&)el); 
   pushPair(dnp::Base::sType, dnt::sBlock);
   pushPair(dnp::Block::sTimePeriod, el.getTPeriod(), FormatNum::DEC);
-  pushMembershipInfo((Node&)el); 
+  pushMembershipInfo((Node&)el);
+  uint32_t qInfo = (el.getFlags() >> NFLG_BLOCK_QS_POS) & NFLG_BLOCK_QS_MSK;
+  for (unsigned prio=PRIO_LO; prio <= PRIO_IL; prio++) pushPair(dnp::Block::sGenQPrio[prio], (qInfo >> prio) & 1, FormatNum::BOOL);
   pushSingle(ec::Node::Block::sLookDef);
   pushPaintedEyecandy((Node&)el);
   pushStopEyecandy((Node&)el);

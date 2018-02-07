@@ -167,9 +167,11 @@ vAdr& VisitorUploadCrawler::childrenAdrs(vertex_set_t vs, vAdr& ret, const unsig
     childrenAdrs(getChildrenByEdgeType(v, det::sDstList), ret);
         
     //search for q lists 
-    for (unsigned idx=0; idx < 3; idx++) childrenAdrs(getChildrenByEdgeType(v, det::sQPrio[idx]), ret);
-
-
+    for (unsigned prio=PRIO_LO; prio <= PRIO_IL; prio++) {
+      vertex_set_t vsQ = getChildrenByEdgeType(v, det::sQPrio[prio]);
+      if (vsQ.size() > 0) g[v].np->setFlags(1 << (NFLG_BLOCK_QS_POS + prio));
+      childrenAdrs(vsQ, ret);
+    }  
 
     return ret;
   }
