@@ -62,8 +62,6 @@ void showStatus(const char *netaddress, CarpeDM& cdm, bool verbose) {
   std::vector<std::string> vsOrigin;
   std::vector<std::string> vsOriginPattern;
   std::vector<uint64_t> vsMsgCnt;
-  uint64_t wrtime = cdm.getDmWrTime();
-
 
   //do this fast to get a most coherent picture, no output
   for(uint8_t cpuIdx=0; cpuIdx < cpuQty; cpuIdx++) {
@@ -86,10 +84,13 @@ void showStatus(const char *netaddress, CarpeDM& cdm, bool verbose) {
   //this is horrible code, but harmless. Does the job for now.
   //TODO: replace this with something more sensible
 
-  const time_t* wrt = (time_t*)&wrtime;
+  char date[40];
+  uint64_t timeWr = cdm.getDmWrTime();
+  strftime(date, sizeof(date), "%Y-%m-%d %H:%M:%S", gmtime((time_t*)&timeWr));
+
 
   printf("\n\u2552"); for(int i=0;i<width;i++) printf("\u2550"); printf("\u2555\n");
-  printf("\u2502 DataMaster: %-83s \u2502 WR-Time: 0x%08x%08x \u2502 %.19s \u2502\n", netaddress, (uint32_t)(wrtime>>32), (uint32_t)wrtime, ctime(wrt));
+  printf("\u2502 DataMaster: %-83s \u2502 WR-Time: 0x%08x%08x \u2502 %.19s \u2502\n", netaddress, (uint32_t)(timeWr>>32), (uint32_t)timeWr, date);
   printf("\u251C"); for(int i=0;i<width;i++) printf("\u2550"); printf("\u2524\n");
   printf("\u2502 %3s \u2502 %3s \u2502 %7s \u2502 %9s \u2502 %55s \u2502 %55s \u2502\n", "Cpu", "Thr", "Running", "MsgCount", "Pattern", "Node");
   printf("\u251C"); for(int i=0;i<width;i++) printf("\u2550"); printf("\u2524\n");
@@ -129,35 +130,41 @@ void showHealth(const char *netaddress, CarpeDM& cdm, bool verbose) {
 
 
   for(uint8_t i=0; i < cpuQty; i++) { cdm.getHealth(i, hr[i]); }  
-  uint64_t wrtime = cdm.getDmWrTime();
-  
-
   const uint16_t width = 160;
   //this is horrible code, but harmless. Does the job for now.
   //TODO: replace this with something more sensible
 
-  const time_t* wrt = (time_t*)&wrtime;
+
+  char date[40];
+  uint64_t timeWr = cdm.getDmWrTime();
+  strftime(date, sizeof(date), "%Y-%m-%d %H:%M:%S", gmtime((time_t*)&timeWr));
+
+  
+  
 
   printf("\n\u2552"); for(int i=0;i<width;i++) printf("\u2550"); printf("\u2555\n");
-  printf("\u2502 DataMaster: %-109s \u2502 WR-Time: %.24s \u2502\n", netaddress, ctime(wrt));
+  printf("\u2502 DataMaster: %-83s \u2502 WR-Time: 0x%08x%08x \u2502 %.19s \u2502\n", netaddress, (uint32_t)(timeWr>>32), (uint32_t)timeWr, date);
   printf("\u251C"); for(int i=0;i<width;i++) printf("\u2550"); printf("\u2524\n");
   printf("\u2502 %3s \u2502 %24s \u2502 %24s \u2502 %8s \u2502 %14s \u2502 %9s \u2502 %9s \u2502 %9s \u2502 %9s \u2502 %9s \u2502 %10s \u2502\n", 
         "Cpu", "BootTime", "Schedule ModTime", "Issuer", "CPU Msg Cnt", "Min dT", "Max dT", "Avg dT", "Thrs dT", "WrnCnt", "State");
   printf("\u251C"); for(int i=0;i<width;i++) printf("\u2550"); printf("\u2524\n");
   
 
-
-  for(uint8_t i=0; i < cpuQty; i++) {   
+   
+  for(uint8_t i=0; i < cpuQty; i++) {
+    char dateBoot[40], dateMod[40];
+    uint64_t timeBoot = hr[i].bootTime / 1000000000ULL, timeMod = hr[i].smodTime / 1000000000ULL;
+    strftime(dateBoot,  sizeof(dateBoot), "%Y-%m-%d %H:%M:%S", gmtime((time_t*)&timeBoot));   
+    strftime(dateMod,   sizeof(dateMod),  "%Y-%m-%d %H:%M:%S", gmtime((time_t*)&timeMod));
     //this is nanoseconds, we need to convert to seconds
-    uint64_t bootTime = hr[i].bootTime / 1000000000ULL;
-    uint64_t smodTime = hr[i].smodTime / 1000000000ULL;
-    char tmpBuf[40];
-    ctime_r((time_t*)&smodTime, tmpBuf);
+    
+    
+    
 
     printf("\u2502 %3u \u2502 %.24s \u2502 %.24s \u2502 %8s \u2502 %14llu \u2502 %9d \u2502 %9d \u2502 %9d \u2502 %9d \u2502 %9u \u2502 0x%08x \u2502\n", 
                                                                                                                     hr[i].cpu,
-                                                                                                                    ctime((time_t*)&bootTime),
-                                                                                                                    tmpBuf,
+                                                                                                                    dateBoot,
+                                                                                                                    dateMod,
                                                                                                                     hr[i].smodIssuer,
                                                                                                                     (unsigned long long int)hr[i].msgCnt,
                                                                                                                     (int)hr[i].minTimeDiff,
@@ -186,7 +193,8 @@ int main(int argc, char* argv[]) {
 
   int opt;
   const char *program = argv[0];
-  const char *netaddress, *targetName = NULL, *cmdFilename = NULL, *typeName = NULL, *para = NULL;
+  const char cTypeName[] = "status"; 
+  const char *netaddress, *targetName = NULL, *cmdFilename = NULL, *typeName = (char*)&cTypeName, *para = NULL;
   int32_t tmp, error=0;
   uint32_t cpuIdx = 0, thrIdx = 0, cmdPrio = PRIO_LO, cmdQty = 1;
   uint64_t cmdTvalid = 0, longtmp;
@@ -257,14 +265,15 @@ int main(int argc, char* argv[]) {
 
 
   if (error) return error;
- 
+  /*
   if (optind+1 >= argc && cmdFilename == NULL) {
 
    std::cerr << program << ": expecting two non-optional arguments + command: <etherbone-device> <command> " << std::endl;
     //help();
     return -4;
-    }
-    
+  }
+  */  
+
   if (optind+0 >= argc && cmdFilename != NULL) {
     std::cerr << program << ": expecting one non-optional arguments: <etherbone-device>" << std::endl;
     //help();
