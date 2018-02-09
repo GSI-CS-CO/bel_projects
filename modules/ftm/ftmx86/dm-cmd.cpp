@@ -284,7 +284,7 @@ int main(int argc, char* argv[]) {
   }
   */  
 
-  if (optind+0 >= argc && cmdFilename != NULL) {
+  if (optind+0 >= argc) {
     std::cerr << program << ": expecting one non-optional arguments: <etherbone-device>" << std::endl;
     //help();
     return -4;
