@@ -18,24 +18,33 @@ static void help(const char *program) {
   fprintf(stderr, "\n");
   fprintf(stderr, "\nSends a command to Thread <n> of CPU Core <m> of the DataMaster (DM), requires dot file of DM's schedule.\nThere are global commands, that influence the whole DM, local commands influencing the whole thread\nand block commands, that only affect one queue in the schedule.\n");
   fprintf(stderr, "\nGeneral Options:\n");
-  fprintf(stderr, "  -c <cpu-idx>              select CPU core by index, default is 0\n");
-  fprintf(stderr, "  -t <thread-idx>           select thread inside selected CPU core by index, default is 0\n");
-  fprintf(stderr, "  -v                        verbose operation, print more details\n");
-  fprintf(stderr, "  -i command .dot file      dot file containing commands\n");
+  fprintf(stderr, "  -c <cpu-idx>              Select CPU core by index, default is 0\n");
+  fprintf(stderr, "  -t <thread-idx>           Select thread inside selected CPU core by index, default is 0\n");
+  fprintf(stderr, "  -v                        Verbose operation, print more details\n");
+  fprintf(stderr, "  -i command .dot file      Dot file containing commands\n");
   fprintf(stderr, "\nGlobal commands:\n");
+  fprintf(stderr, "  status                    Show status of all threads and cores (default)\n");
+  fprintf(stderr, "  details                   Show time statistics and detailed information on uptime and recent changes\n");
   fprintf(stderr, "  gathertime <Time / ns>    [NOT YET IMPLEMENTED] Set msg gathering time for priority queue\n");
   fprintf(stderr, "  maxmsg <Message Quantity> [NOT YET IMPLEMENTED] Set maximum messages in a packet for priority queue\n");
-  fprintf(stderr, "  clear                     [NOT YET IMPLEMENTED] clear all schedule data on this CPU core\n");
-  fprintf(stderr, "  running                   show bitfield of all running threads on this CPU core\n");  
+  fprintf(stderr, "  running                   Show bitfield of all running threads on this CPU core\n");
+  fprintf(stderr, "  heap                      Show current scheduler heap\n");  
   fprintf(stderr, "\nLocal commands:\n");
-  fprintf(stderr, "  preptime <Time / ns>      [NOT YET IMPLEMENTED] Set preparation time (lead) for this thread\n");
+  fprintf(stderr, "  starttime <Time / ns>     Set start time for this thread\n");
+  fprintf(stderr, "  preptime <Time / ns>      Set preparation time (lead) for this thread\n");
+  fprintf(stderr, "  deadline                  Show next deadline for this thread\n");
   fprintf(stderr, "  origin <target node>      Set the node with which selected thread will start\n");
   fprintf(stderr, "  origin                    Return the node with which selected thread will start\n");
   fprintf(stderr, "  hex <target node>         Show hex dump of selected Node \n");
   fprintf(stderr, "  start                     Request start of selected thread. Requires a valid origin.\n");
   fprintf(stderr, "  stop                      Request stop of selected thread\n");
   fprintf(stderr, "  abort                     Immediately aborts selected thread\n");
+  fprintf(stderr, "  startpattern <pattern>    Request start of selected pattern\n");
+  fprintf(stderr, "  stoppattern  <pattern>    Request stop of selected pattern\n");
+  fprintf(stderr, "  abortpattern <pattern>    Try to immediately abort selected pattern\n");
   fprintf(stderr, "  cursor                    Show name of currently active node of selected thread\n");
+  fprintf(stderr, "  force                     Force cursor to match origin\n");
+  
   fprintf(stderr, "\nBlock commands:\n");
   fprintf(stderr, "  noop <target node>                        [Options: lpq]   Placeholder to stall succeeding commands, has no effect itself\n");
   fprintf(stderr, "  flow <target node> <destination node>     [Options: lpqs]  Changes schedule flow to <Destination Node>\n");
@@ -44,10 +53,10 @@ static void help(const char *program) {
   fprintf(stderr, "  flush <target node> <target priorities>   [Options: lp]    [NOT TESTED] Flushes all pending commands (hex 0x0 - 0x7) of lower priority\n");
   fprintf(stderr, "  queue <target node>                       [Options: p]     Show all queue content (unitialised cmd slots will show garbage) \n");
   fprintf(stderr, "Options for Block commands:\n");
-  fprintf(stderr, "  -l <Time / ns>           the absolute time in ns after which the command will become active, default is 0 (immediately)\n");
-  fprintf(stderr, "  -p <priority>            the priority of the command (0 = Low, 1 = High, 2 = Interlock), default is 0\n");
-  fprintf(stderr, "  -q <quantity>            the number of times the command will be inserted into the target queue, default is 1\n");
-  fprintf(stderr, "  -s                       [NOT YET IMPLEMENTED] Changes to the schedule are permanent\n");
+  fprintf(stderr, "  -l <Time / ns>           The absolute time in ns after which the command will become active, default is 0 (immediately)\n");
+  fprintf(stderr, "  -p <priority>            The priority of the command (0 = Low, 1 = High, 2 = Interlock), default is 0\n");
+  fprintf(stderr, "  -q <quantity>            The number of times the command will be inserted into the target queue, default is 1\n");
+  fprintf(stderr, "  -s                       Changes to the schedule are permanent\n");
   fprintf(stderr, "\n");
 }
 
@@ -367,9 +376,12 @@ int main(int argc, char* argv[]) {
     }
     else if (cmp == "status")  {
       showStatus(netaddress, cdm, verbose);
+      return 0;
+    }
+    else if (cmp == "details")  {
       showHealth(netaddress, cdm, verbose);
       return 0;
-    }  
+    }   
     else if (cmp == dnt::sCmdFlow)  {
       if(!(cdm.isInHashDict( targetName))) {std::cerr << program << ": Target node '" << targetName << "'' was not found on DM" << std::endl; return -1; }
       if ((para != NULL) && ((para == DotStr::Node::Special::sIdle ) || cdm.isInHashDict( para))) { 
@@ -463,6 +475,26 @@ int main(int argc, char* argv[]) {
         uint32_t bits = strtol(targetName, NULL, 0);
        cdm.setThrAbort(cpuIdx, bits & ((1<<_THR_QTY_)-1) );
       } else { cdm.abortThr(cpuIdx, thrIdx); }
+      return 0;
+    }
+    else if (cmp == "startpattern")  {
+      //check if a valid origin was assigned before executing
+      if( targetName != NULL) {
+        cdm.startPattern(targetName, thrIdx );
+      } else { std::cout << "Missing valid Pattern name" << std::endl; }
+      return 0;
+    }
+    else if (cmp == "stoppattern")  {
+      if( targetName != NULL) {
+        cdm.stopPattern(targetName);
+      } else { std::cout << "Missing valid Pattern name" << std::endl; }
+      return 0;
+
+    }
+    else if (cmp == "abortpattern")  {
+      if( targetName != NULL) {
+        cdm.abortPattern(targetName); 
+      } else { std::cout << "Missing valid Pattern name" << std::endl; }
       return 0;
     }
     else if (cmp == "running")  {
