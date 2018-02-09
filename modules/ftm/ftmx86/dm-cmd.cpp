@@ -28,7 +28,11 @@ static void help(const char *program) {
   fprintf(stderr, "  gathertime <Time / ns>    [NOT YET IMPLEMENTED] Set msg gathering time for priority queue\n");
   fprintf(stderr, "  maxmsg <Message Quantity> [NOT YET IMPLEMENTED] Set maximum messages in a packet for priority queue\n");
   fprintf(stderr, "  running                   Show bitfield of all running threads on this CPU core\n");
-  fprintf(stderr, "  heap                      Show current scheduler heap\n");  
+  fprintf(stderr, "  heap                      Show current scheduler heap\n");
+  fprintf(stderr, "  startpattern <pattern>    Request start of selected pattern\n");
+  fprintf(stderr, "  stoppattern  <pattern>    Request stop of selected pattern\n");
+  fprintf(stderr, "  abortpattern <pattern>    Try to immediately abort selected pattern\n");  
+  fprintf(stderr, "  chkrem       <pattern>    Check if removal of selected pattern would be safe\n");
   fprintf(stderr, "\nLocal commands:\n");
   fprintf(stderr, "  starttime <Time / ns>     Set start time for this thread\n");
   fprintf(stderr, "  preptime <Time / ns>      Set preparation time (lead) for this thread\n");
@@ -39,9 +43,6 @@ static void help(const char *program) {
   fprintf(stderr, "  start                     Request start of selected thread. Requires a valid origin.\n");
   fprintf(stderr, "  stop                      Request stop of selected thread\n");
   fprintf(stderr, "  abort                     Immediately aborts selected thread\n");
-  fprintf(stderr, "  startpattern <pattern>    Request start of selected pattern\n");
-  fprintf(stderr, "  stoppattern  <pattern>    Request stop of selected pattern\n");
-  fprintf(stderr, "  abortpattern <pattern>    Try to immediately abort selected pattern\n");
   fprintf(stderr, "  cursor                    Show name of currently active node of selected thread\n");
   fprintf(stderr, "  force                     Force cursor to match origin\n");
   
