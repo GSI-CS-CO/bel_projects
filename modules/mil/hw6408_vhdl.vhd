@@ -12,7 +12,8 @@ use ieee.numeric_std.all;
 --+-----------------------------------------------------------------------------------------------------------|
 --| K.Kaiser 13-Oct-2017  A HW6408_rdy signal added which shows that Harris Chip is equipped and working      |
 --+-----------------------------------------------------------------------------------------------------------|
-
+--| K.Kaiser 07-Feb-2018  DSC Denoise now enable signal , no clock signal anymore                             |
+--+-----------------------------------------------------------------------------------------------------------|
 
 
 entity hw6408_vhdl is
@@ -70,94 +71,106 @@ type  t_vw_sm is (
         err_vw
         );
 
-signal  vw_sm: t_vw_sm;
+signal  vw_sm:              t_vw_sm;
 
-signal  vw_set:         std_logic := '0';   -- achtung mit esc getaktet
-signal  rcv_err_set:    std_logic := '0';   -- achtung mit esc getaktet
+signal  vw_set:             std_logic := '0';   -- achtung mit esc getaktet
+signal  rcv_err_set:        std_logic := '0';   -- achtung mit esc getaktet
 
-signal  send_data:      std_logic_vector(15 downto 0) := (others => '0');
-signal  send_init:      std_logic := '0';
-signal  send_cmd:       std_logic := '0';
-signal  par_in_ser_out: std_logic_vector(15 downto 0) := (others => '0');
+signal  send_data:          std_logic_vector(15 downto 0) := (others => '0');
+signal  send_init:          std_logic := '0';
+signal  send_cmd:           std_logic := '0';
+signal  par_in_ser_out:     std_logic_vector(15 downto 0) := (others => '0');
 
-signal  ser_in_par_out: std_logic_vector(15 downto 0) := (others => '0');
-signal  rcv_reg:        std_logic_vector(15 downto 0) := (others => '0');
-signal  vw_reg:         std_logic := '0';
-signal  rcv_err_reg:    std_logic := '0';
-signal  rcv_cmd_reg:    std_logic := '0';
-signal  nrcv_ena_shiftr:std_logic_vector(1 downto 0) := (others => '1');
+signal  ser_in_par_out:     std_logic_vector(15 downto 0) := (others => '0');
+signal  rcv_reg:            std_logic_vector(15 downto 0) := (others => '0');
+signal  vw_reg:             std_logic := '0';
+signal  rcv_err_reg:        std_logic := '0';
+signal  rcv_cmd_reg:        std_logic := '0';
+signal  nrcv_ena_shiftr:    std_logic_vector(1 downto 0) := (others => '1');
 
 
-constant  c_vw_tst_cnt: integer := 16;        -- eigentlich muss c_vw_cnt = 17 sein, es geht aber ein count
-                                              -- durch das Verlassen des states 'idle_vw' verloren.
-constant  c_end_vw_tst: integer := c_vw_tst_cnt + 1;    -- valid word kommt zu spaet, oder garnicht mehr.
-signal    vw_cnt:       integer range 0 to c_end_vw_tst + 1;  -- + 1 damit kein Ueberlauf auftreten kann.
+constant  c_vw_tst_cnt:     integer := 16;                        -- eigentlich muss c_vw_cnt = 17 sein, es geht aber ein count
+                                                                  -- durch das Verlassen des states 'idle_vw' verloren.
+constant  c_end_vw_tst:     integer := c_vw_tst_cnt + 1;          -- valid word kommt zu spaet, oder garnicht mehr.
+signal    vw_cnt:           integer range 0 to c_end_vw_tst + 1;  -- + 1 damit kein Ueberlauf auftreten kann.
 
-signal    s_ee:         std_logic := '0';     -- signal encoder enable
-signal    s_trm_ena:    std_logic := '0';
+signal    s_ee:             std_logic := '0';                     -- signal encoder enable
+signal    s_trm_ena:        std_logic := '0';
 
-signal dsc_sh1:         std_logic;
-signal dsc_sh2:         std_logic;
-signal dsc_denoised:    std_logic;
+signal dsc_sh1:             std_logic;
+signal dsc_sh2:             std_logic;
+signal dsc_sh3:             std_logic;
+signal dsc_denoise_puls_re: std_logic;
+signal dsc_denoise_puls_fe: std_logic;
 
-signal td_sh:           std_logic_vector(3 downto 0);
-signal cds_sh:          std_logic_vector(3 downto 0);
-signal vw_sh:           std_logic_vector(3 downto 0);
-signal sdo_sh:          std_logic_vector(3 downto 0);
-signal dsc_cnt:         integer range 0 to 15; 
+signal td_sh:               std_logic_vector(3 downto 0);
+signal cds_sh:              std_logic_vector(3 downto 0);
+signal vw_sh:               std_logic_vector(3 downto 0);
+signal sdo_sh:              std_logic_vector(3 downto 0);
+signal dsc_cnt:             integer range 0 to 15; 
 	 
 begin
 
 
-p_hw6408_rdy: PROCESS( dsc, nrst_i)      --KK to ensure that MIL Piggy is equipped and in operational state
+p_hw6408_rdy: PROCESS( clk_i, nrst_i)      --KK to ensure that MIL Piggy is equipped and in operational state
 BEGIN
   IF (nrst_i='0') THEN 
-    dsc_cnt      <= 0;
-    hw6408_rdy   <='0';   
-  ELSIF rising_edge(dsc) THEN
-    IF dsc_cnt < dsc_cnt'high THEN   
-      dsc_cnt    <= dsc_cnt + 1;   -- keep ready low for 16 µsek
-      hw6408_rdy <='0';
-    ELSE
-      hw6408_rdy <='1';
-      dsc_cnt    <= dsc_cnt'high;  -- stay at 15 until next reset
-    END IF;
+    dsc_cnt        <= 0;
+    hw6408_rdy     <='0';   
+  ELSIF rising_edge(clk_i) THEN
+    if (dsc_denoise_puls_re = '1') then  
+      IF dsc_cnt < dsc_cnt'high THEN   
+        dsc_cnt    <= dsc_cnt + 1;   -- keep ready low for 16 µsek
+        hw6408_rdy <='0';
+      ELSE
+        dsc_cnt    <= dsc_cnt'high;  -- stay at 15 until next reset or module reset
+        hw6408_rdy <='1';
+      END IF;
+    else 
+      NULL;
+    end if; 
   END IF;
 END PROCESS p_hw6408_rdy; 
 
 p_dsc_denoise : PROCESS (clk_i, nrst_i)   --KK
 BEGIN
   IF (nrst_i = '0') THEN
-   dsc_sh1            <= '0';
-   dsc_sh2            <= '0';
-   dsc_denoised       <= '0';
-	 td_sh              <= (others =>'0');
-	 cds_sh             <= (others =>'0');
-	 vw_sh              <= (others =>'0');
-	 sdo_sh             <= (others =>'0');
+   dsc_sh1                <= '0';
+   dsc_sh2                <= '0';
+   dsc_sh3                <= '0';
+   dsc_denoise_puls_re    <= '0';
+   dsc_denoise_puls_fe    <= '0';
+	 td_sh                  <= (others =>'0');
+	 cds_sh                 <= (others =>'0');
+	 vw_sh                  <= (others =>'0');
+	 sdo_sh                 <= (others =>'0');
   ELSIF rising_edge(clk_i) THEN
-	 td_sh (0)          <= td;
-	 td_sh (3 downto 1) <= td_sh(2 downto 0 ); 
+	 td_sh (0)              <= td;
+	 td_sh (3 downto 1)     <= td_sh(2 downto 0 ); 
+	                    
+	 cds_sh (0)             <= cds;
+	 cds_sh (3 downto 1)    <= cds_sh(2 downto 0 ); 
 	 
-	 cds_sh (0)         <= cds;
-	 cds_sh (3 downto 1)<= cds_sh(2 downto 0 ); 
+	 vw_sh (0)              <= vw;
+	 vw_sh (3 downto 1)     <= vw_sh(2 downto 0 ); 
 	 
-	 vw_sh (0)          <= vw;
-	 vw_sh (3 downto 1) <= vw_sh(2 downto 0 ); 
-	 
-	 sdo_sh (0)         <= sdo;
-	 sdo_sh (3 downto 1)<= sdo_sh(2 downto 0 ); 	
+	 sdo_sh (0)             <= sdo;
+	 sdo_sh (3 downto 1)    <= sdo_sh(2 downto 0 ); 	
 	
-    --dsc rise/fall times are max 8ns, should be stable in 16ns
-    dsc_sh1            <= dsc;
-    dsc_sh2            <= dsc_sh1;
-	 	 
-    IF    dsc_sh1 = '1' AND dsc_sh2 = '1' THEN
-      dsc_denoised <= '1';
-    ELSIF dsc_sh1 = '0' AND dsc_sh2 = '0' THEN
-      dsc_denoised <= '0';
-    ELSE
-      NULL; 
+    --Harris dsc rise/fall times are max 8ns, should be stable in 16ns
+    dsc_sh1               <= dsc;
+    dsc_sh2               <= dsc_sh1;
+	 	dsc_sh3               <= dsc_sh2;
+	 	
+    IF     dsc_sh1 = '1' AND dsc_sh2 = '1' AND dsc_sh3 = '0' THEN  --re=rising edge pulse
+      dsc_denoise_puls_re <= '1';
+      dsc_denoise_puls_fe <= '0';
+    ELSIF  dsc_sh1 = '0' AND dsc_sh2 = '0' AND dsc_sh3 = '1' THEN  --fe=falling edge pulse
+      dsc_denoise_puls_re <= '0';    
+      dsc_denoise_puls_fe <= '1';    
+    ELSE                                                           --other cases: no pulse
+      dsc_denoise_puls_re <= '0';   
+      dsc_denoise_puls_fe <= '0';      
     END IF;
 	 
   END IF;
@@ -265,62 +278,76 @@ p_ee: process (esc, nrst_i, sel_6408)
 ee <= s_ee;
   
   
-p_vw_sm:  process (dsc_denoised, nrst_i)    
-  begin
-    if nrst_i = '0' then
-      vw_sm <= idle_vw;
-      vw_set <= '0';
-      rcv_err_set<= '0';
-      vw_cnt <= 0;            -- clear valid word test counter
- 
-    elsif rising_edge(dsc_denoised) then
+p_vw_sm:  process (clk_i, nrst_i)    
+begin
+  if nrst_i = '0' then
+  
+    vw_sm <= idle_vw;
+    vw_set <= '0';
+    rcv_err_set<= '0';
+    vw_cnt <= 0;            -- clear valid word test counter
+    
+  elsif rising_edge(clk_i) then
+     if (dsc_denoise_puls_re = '1') then    
+       vw_set <= '0';
+       rcv_err_set<= '0';
+       vw_cnt <= vw_cnt + 1;   -- ausser im 'idle_vw'-state, wird valid word test counter immer inkrementiert.
+       
+       case vw_sm is
 
-      vw_set <= '0';
-      rcv_err_set<= '0';
-      vw_cnt <= vw_cnt + 1;   -- ausser im 'idle_vw'-state, wird valid word test counter immer inkrementiert.
-      
-      case vw_sm is
+         when idle_vw =>
+           vw_cnt <= 0;        -- clear valid word test counter
+           if td_sh(3) = '1' then
+             vw_sm <= wait_vw;
+           end if;
+           
+         when wait_vw =>       -- wait for valid word
+           if vw_cnt = c_end_vw_tst then   -- valid word kommt zu spät, oder garnicht.
+             vw_sm <= err_vw;              -- gehe in den Fehlerstate
+           elsif vw_sh(3) = '1' then             -- valid word kommt
+             if vw_cnt = c_vw_tst_cnt then -- es kommt zum richtigen Zeitpunkt
+               vw_set <= '1';              -- valid word set ist fuer einen 'esc'-Takt aktiv.
+               vw_sm <= idle_vw;           -- gehe in den 'idle_vw'-state
+             else
+               vw_sm <= err_vw;            -- valid word kam zu früh, gehe in den Fehlerstate
+             end if;
+           end if;
+           
+         when err_vw =>        -- error state
+           rcv_err_set <= '1';             -- reveive error set ist fuer einen 'esc'-Takt aktiv.
+           vw_sm <= idle_vw;
+         
+         when others => 
+           vw_sm <= idle_vw;
+         
+       end case;
 
-        when idle_vw =>
-          vw_cnt <= 0;        -- clear valid word test counter
-          if td_sh(3) = '1' then
-            vw_sm <= wait_vw;
-          end if;
-          
-        when wait_vw =>       -- wait for valid word
-          if vw_cnt = c_end_vw_tst then   -- valid word kommt zu spät, oder garnicht.
-            vw_sm <= err_vw;              -- gehe in den Fehlerstate
-          elsif vw_sh(3) = '1' then             -- valid word kommt
-            if vw_cnt = c_vw_tst_cnt then -- es kommt zum richtigen Zeitpunkt
-              vw_set <= '1';              -- valid word set ist fuer einen 'esc'-Takt aktiv.
-              vw_sm <= idle_vw;           -- gehe in den 'idle_vw'-state
-            else
-              vw_sm <= err_vw;            -- valid word kam zu früh, gehe in den Fehlerstate
-            end if;
-          end if;
-          
-        when err_vw =>        -- error state
-          rcv_err_set <= '1';             -- reveive error set ist fuer einen 'esc'-Takt aktiv.
-          vw_sm <= idle_vw;
-        
-        when others => 
-          vw_sm <= idle_vw;
-        
-      end case;
-    end if;
-  end process p_vw_sm;
+    else 
+      NULL;
+    end if; 
+    
+  end if;
+end process p_vw_sm;
 
 
-p_ser_par:  process (dsc_denoised, nrst_i, sel_6408)
-  begin
-    if (nrst_i = '0') or (sel_6408 = '0') then
-      ser_in_par_out <= (others => '0');
-    elsif rising_edge(dsc_denoised) then
+p_ser_par:  process (clk_i, nrst_i, sel_6408)
+begin
+  if (nrst_i = '0') or (sel_6408 = '0') then
+    ser_in_par_out <= (others => '0');
+  elsif rising_edge(clk_i) then
+    if (dsc_denoise_puls_re = '1') then  
+  
       if td_sh(3) = '1' then
         ser_in_par_out <= ser_in_par_out(14 downto 0) & sdo_sh(3);
       end if;
+
+    else 
+      NULL;
     end if;
-  end process p_ser_par;
+  end if;
+  
+  
+end process p_ser_par;
 
     
 p_rcv_reg:  process (clk_i, nrst_i, sel_6408)
@@ -334,17 +361,27 @@ p_rcv_reg:  process (clk_i, nrst_i, sel_6408)
 
 data_o <= rcv_reg; 
 
+-- following process was to be found as a "never used" rcv_cmd_reg
+p_rcv_cmd:  process (clk_i, nrst_i, sel_6408, rd_mil)
+begin
+  if (rd_mil = '1') or (nrst_i = '0') or (sel_6408 = '0') then
 
-p_rcv_cmd:  process (dsc_denoised, nrst_i, sel_6408, rd_mil)
-  begin
-    if (rd_mil = '1') or (nrst_i = '0') or (sel_6408 = '0') then
-      rcv_cmd_reg <= '0';
-    elsif falling_edge(dsc_denoised) then
+    rcv_cmd_reg <= '0';
+    
+  elsif rising_edge(clk_i) then
+  
+
+   if (dsc_denoise_puls_fe = '1') then  
+  
       if td_sh(3) = '1' then
         rcv_cmd_reg <= cds_sh(3);
       end if;
+    
+    else 
+      NULL;
     end if;
-  end process p_rcv_cmd;
+  end if;
+end process p_rcv_cmd;
 
   
 p_vw: process (clk_i, nrst_i, sel_6408)  
@@ -363,7 +400,7 @@ p_vw: process (clk_i, nrst_i, sel_6408)
 
 p_rcv_ena: process (esc, nrst_i, sel_6408, s_ee)  
   begin
-    if (nrst_i = '0') or (sel_6408 = '0') or (s_ee = '1') then -- senden (s_ee = '1)' nrcv_ena_shiftr wird inaktive  (='11')
+    if (nrst_i = '0') or (sel_6408 = '0') or (s_ee = '1') then          -- senden (s_ee = '1)' nrcv_ena_shiftr wird inaktive  (='11')
       nrcv_ena_shiftr <= (others => '1');
     elsif falling_edge(esc) then
       nrcv_ena_shiftr <= nrcv_ena_shiftr(0) & (send_init or shift_sd);  -- nach einem senden wird 2 esc-Takte gewartet
