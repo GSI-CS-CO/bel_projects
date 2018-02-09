@@ -23,13 +23,11 @@ namespace det = DotStr::Edge::TypeVal;
 
 
 bool CarpeDM::isSafeToRemove(Graph& gRem, std::string& report) {
-  bool isSafe = true;
   std::set<std::string> patterns;
-
   //Find all patterns 2B removed
   for (auto& patternIt : getGraphPatterns(gRem)) { patterns.insert(patternIt); }
     
-  return isSafeToRemove(patterns, report);;
+  return isSafeToRemove(patterns, report);
 }
 
 bool CarpeDM::isSafeToRemove(const std::string& pattern, std::string& report) {
@@ -178,7 +176,7 @@ bool CarpeDM::addResidentDestinations(Graph& gEq, Graph& gOrig, vertex_set_t cur
           if(gOrig[*out_cur].type == det::sCmdTarget)  {vBlock  = target(*out_cur, gOrig);}
           if(gOrig[*out_cur].type == det::sCmdFlowDst) {vDst    = target(*out_cur, gOrig);}
         }
-        if ((vBlock  == -1) || (vDst == -1)) {throw std::runtime_error( "Could not find block and dst for resident equivalents");}
+        if (((signed)vBlock  == -1) || ((signed)vDst == -1)) {throw std::runtime_error( "Could not find block and dst for resident equivalents");}
         
          //check for equivalent resident edges
         boost::tie(out_begin, out_end) = out_edges(vBlock, gEq);

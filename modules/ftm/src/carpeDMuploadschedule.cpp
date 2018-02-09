@@ -60,7 +60,6 @@ using namespace DotStr::Misc;
       // modification time address (lo/hi)
       modAdrBase = atUp.getMemories()[itMod].extBaseAdr + SHARED_OFFS + SHCTL_DIAG;
 
-      printf("SMODTSAdr 0x%08x\n", modAdrBase + T_DIAG_SMOD_TS);
       ret.push_back(modAdrBase + T_DIAG_SMOD_TS + 0);
       ret.push_back(modAdrBase + T_DIAG_SMOD_TS + _32b_SIZE_);
       ret.push_back(modAdrBase + T_DIAG_SMOD_IID + 0);
@@ -101,14 +100,9 @@ using namespace DotStr::Misc;
     uint8_t b[8];
     writeLeNumberToBeBytes<uint64_t>((uint8_t*)&b[0], modTime);
 
-
-
-    for (auto& itMod : modded) {
-      printf("SMODTSData 0x%08x%08x\n", (uint32_t)(modTime >> 32), (uint32_t)modTime);
-      
+    for (unsigned i=0; i < modded.size(); i++) {
       ret.insert( ret.end(), b, b +  _TS_SIZE_  );
       ret.insert( ret.end(), username, username +  _64b_SIZE_  );
-      
     }
 
     return ret;
