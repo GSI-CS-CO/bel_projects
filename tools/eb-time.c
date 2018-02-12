@@ -58,7 +58,7 @@ int show(uint64_t wrnow, uint32_t wr_status, const char* netaddress) {
   char* pL = (char*)&sLinkState;
   char sSyncState[20];
   char* pS = (char*)&sSyncState;
-  char date[40];
+  
 
   //Generate WR Status
   
@@ -74,8 +74,7 @@ int show(uint64_t wrnow, uint32_t wr_status, const char* netaddress) {
   else                         SNTPRINTF(pS ,"  %s--%s  ", KRED, KNRM);
   
   time_t wrtime = (time_t)wrnow;
-  strftime(date, sizeof(date), "%Y-%m-%d %H:%M:%S", gmtime((time_t*)&wrtime));
-  SNTPRINTF(pSB , "%s%30s%s    PPS: %s TS: %s WR-UTC: %.24s\n", KCYN, netaddress, KNRM, sLinkState, sSyncState, date);
+  SNTPRINTF(pSB , "%s%30s%s    PPS: %s TS: %s WR-UTC: %.24s\n", KCYN, netaddress, KNRM, sLinkState, sSyncState, ctime((time_t*)&wrtime));
 
   printf("%s", (const char*)strBuff);
 
