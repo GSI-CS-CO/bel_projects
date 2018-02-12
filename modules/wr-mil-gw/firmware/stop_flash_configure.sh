@@ -1,8 +1,8 @@
 #!/bin/bash
 
 SHARED_SEGMENT_OFFSET=0x500 #  0x500 is relative start of shared segment
-COMMAND_OFFSET=0x4          #  0x4   is the address of command word counting from start of shared segment
-SOURCE_OFFSET=0x14          #  0x14  is the address of the event source register (has to be written 1 (SIS) or 2 (ESR))
+COMMAND_OFFSET=0x4          #  0x4   is the address of "command word" register counting from start of shared segment
+SOURCE_OFFSET=0x14          #  0x14  is the address of the "event source" register (has to be written 1 (SIS) or 2 (ESR))
 MAGIC_OFFSET=0x0   
 
 # find wishbone address of second LM32 user ram:

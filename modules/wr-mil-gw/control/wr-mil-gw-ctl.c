@@ -46,16 +46,18 @@ const char* event_source_str(uint32_t source)
 void help(const char *program) {
   fprintf(stderr, "Usage: %s [OPTION] <proto/host/port>\n", program);
   fprintf(stderr, "\n");
-  fprintf(stderr, "  -d <delay>     microseconds between trigger event and generated events\n");
-  fprintf(stderr, "  -u <utc-delay> microseconds between 5 generated utc events\n");
-  fprintf(stderr, "  -t <EvtNo>     MIL event number that tirggers generation of UTC events\n");
-  fprintf(stderr, "  -l <latency>   MIL event is generated latency microseconds. default is 100 us\n");
-  fprintf(stderr, "  -e             configure WR-MIL gateway as ESR source\n");
-  fprintf(stderr, "  -s             configure WR-MIL gateway as SIS source\n");
-  fprintf(stderr, "  -r             reset WR-MIL gateway after 1 second pause\n");
-  fprintf(stderr, "  -k             kill WR-MIL gateway, only reset or eb-fwload can recover (useful for eb-fwload)\n");
-  fprintf(stderr, "  -i             print information about the WR-MIL gateway\n");
-  fprintf(stderr, "  -h             display this help and exit\n");
+  fprintf(stderr, "  -d <delay>      microseconds between trigger event and generated events\n");
+  fprintf(stderr, "  -u <utc-delay>  microseconds between 5 generated utc events\n");
+  fprintf(stderr, "  -o <utc-offset> zero of UTC seconds in TAI seconds: MIL-UTC[s] = TAI[s] - <utc-offset> \n");
+  fprintf(stderr, "  -t <EvtNo>      MIL event number that tirggers generation of UTC events\n");
+  fprintf(stderr, "  -l <latency>    MIL event is generated latency microseconds. default is 100 us\n");
+  fprintf(stderr, "  -e              configure WR-MIL gateway as ESR source\n");
+  fprintf(stderr, "  -s              configure WR-MIL gateway as SIS source\n");
+  fprintf(stderr, "  -r              reset WR-MIL gateway after 1 second pause\n");
+  fprintf(stderr, "  -k              kill WR-MIL gateway, only reset or eb-fwload can recover (useful for eb-fwload)\n");
+  fprintf(stderr, "  -i              print information about the WR-MIL gateway (register content)\n");
+  fprintf(stderr, "  -m              monitor gateway status registers and report irregularities on stdout\n");
+  fprintf(stderr, "  -h              display this help and exit\n");
   fprintf(stderr, "\n");
   fprintf(stderr, "Report software bugs to <m.reese@gsi.de>\n");
   fprintf(stderr, "Version: %s\n%s\nLicensed under the LGPL v3.\n", eb_source_version(), eb_build_info());
@@ -68,26 +70,28 @@ int main(int argc, char *argv[])
   eb_socket_t socket;
 
   char *value_end;
-  int value;
-  int delay       = -1;
-  int utc_delay   = -1;
-  int utc_trigger = -1;
-  int latency     =  0;
-  int set_latency =  0;
-  int sis         =  0;
-  int esr         =  0;
-  int reset       =  0;
-  int kill        =  0;
-  int info        =  0;
-  int opt,error   =  0;
+  int64_t value;
+  int     delay       = -1;
+  int     utc_delay   = -1;
+  int64_t utc_offset  = -1;
+  int     utc_trigger = -1;
+  int     latency     =  0;
+  int     set_latency =  0;
+  int     sis         =  0;
+  int     esr         =  0;
+  int     reset       =  0;
+  int     kill        =  0;
+  int     info        =  0;
+  int     monitor     =  0;
+  int     opt,error   =  0;
 
   /* Process the command-line arguments */
-  while ((opt = getopt(argc, argv, "l:d:u:t:sehrki")) != -1) {
+  while ((opt = getopt(argc, argv, "l:d:u:o:t:sehrkim")) != -1) {
     switch (opt) {
     case 'd':
       value = strtol(optarg, &value_end, 0);
       if (*value_end || value < 0) {
-        fprintf(stderr, "%s: invalid number of delay -- '%s'\n", argv[0], optarg);
+        fprintf(stderr, "%s: invalid number for delay -- '%s'\n", argv[0], optarg);
         error = 1;
       }
       delay = value;
@@ -95,10 +99,18 @@ int main(int argc, char *argv[])
     case 'u':
       value = strtol(optarg, &value_end, 0);
       if (*value_end || value < 0) {
-        fprintf(stderr, "%s: invalid number of utc delay -- '%s'\n", argv[0], optarg);
+        fprintf(stderr, "%s: invalid number for utc delay -- '%s'\n", argv[0], optarg);
         error = 1;
       }
       utc_delay = value;
+      break;
+    case 'o':
+      value = strtol(optarg, &value_end, 0);
+      if (*value_end || value < 0) {
+        fprintf(stderr, "%s: invalid number for utc offset -- '%s'\n", argv[0], optarg);
+        error = 1;
+      }
+      utc_offset = value*1000; // convert from seconds to miliseconds
       break;
     case 't':
       value = strtol(optarg, &value_end, 0);
@@ -128,6 +140,9 @@ int main(int argc, char *argv[])
       break;
     case 'e':
       esr = 1;
+      break;
+    case 'm':
+      monitor = 1;
       break;
     case 'i':
       info = 1;
@@ -214,11 +229,16 @@ int main(int argc, char *argv[])
   uint32_t reg_magic_addr           = reg_shared_addr+WR_MIL_GW_REG_MAGIC_NUMBER;
   uint32_t reg_command_addr         = reg_shared_addr+WR_MIL_GW_REG_COMMAND;
   uint32_t reg_utc_trigger_addr     = reg_shared_addr+WR_MIL_GW_REG_UTC_TRIGGER;
-  uint32_t reg_utc_separation_addr  = reg_shared_addr+WR_MIL_GW_REG_UTC_SEPARATION;
   uint32_t reg_utc_delay_addr       = reg_shared_addr+WR_MIL_GW_REG_UTC_DELAY;
+  uint32_t reg_utc_offset_hi_addr   = reg_shared_addr+WR_MIL_GW_REG_UTC_OFFSET_HI;
+  uint32_t reg_utc_offset_lo_addr   = reg_shared_addr+WR_MIL_GW_REG_UTC_OFFSET_LO;
+  uint32_t reg_trig_utc_delay_addr  = reg_shared_addr+WR_MIL_GW_REG_TRIG_UTC_DELAY;
   uint32_t reg_event_source_addr    = reg_shared_addr+WR_MIL_GW_REG_EVENT_SOURCE;
   uint32_t reg_latency_addr         = reg_shared_addr+WR_MIL_GW_REG_LATENCY;
   uint32_t reg_state_addr           = reg_shared_addr+WR_MIL_GW_REG_STATE;
+  uint32_t reg_num_events_hi_addr   = reg_shared_addr+WR_MIL_GW_REG_NUM_EVENTS_HI;
+  uint32_t reg_num_events_lo_addr   = reg_shared_addr+WR_MIL_GW_REG_NUM_EVENTS_LO;
+  uint32_t reg_late_events_addr     = reg_shared_addr+WR_MIL_GW_REG_LATE_EVENTS;
 
   if (reset)
   {
@@ -251,15 +271,23 @@ int main(int argc, char *argv[])
     if (delay >= 0) 
     {
       printf("%s: set delay = %d us\n", argv[0], delay);
-      if ((eb_status = eb_device_write(device, reg_utc_delay_addr, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)delay, 0, eb_block)) != EB_OK) {
-        die(argv[0],"configure register WR_MIL_GW_REG_UTC_DELAY", eb_status);
+      if ((eb_status = eb_device_write(device, reg_trig_utc_delay_addr, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)delay, 0, eb_block)) != EB_OK) {
+        die(argv[0],"configure register WR_MIL_GW_REG_TRIG_UTC_DELAY", eb_status);
       }
     }
     if (utc_delay >= 0) 
     {
       printf("%s: set utc delay = %d us\n", argv[0], utc_delay);
-      if ((eb_status = eb_device_write(device, reg_utc_separation_addr, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)utc_delay, 0, eb_block)) != EB_OK) {
-        die(argv[0],"configure register WR_MIL_GW_REG_UTC_SEPARATION", eb_status);
+      if ((eb_status = eb_device_write(device, reg_utc_delay_addr, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)utc_delay, 0, eb_block)) != EB_OK) {
+        die(argv[0],"configure register WR_MIL_GW_REG_UTC_DELAY", eb_status);
+      }
+    }
+    if (utc_offset >= 0) 
+    {
+      printf("%s: set utc offset = %ld ms\n", argv[0], utc_offset);
+      if ((eb_status = eb_device_write(device, reg_utc_offset_hi_addr, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)((utc_offset>>32) & UINT64_C(0xffffffff)), 0, eb_block)) != EB_OK || 
+          (eb_status = eb_device_write(device, reg_utc_offset_lo_addr, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)( utc_offset      & UINT64_C(0xffffffff)), 0, eb_block)) != EB_OK) {
+        die(argv[0],"configure register WR_MIL_GW_REG_UTC_OFFSET", eb_status);
       }
     }
     if (utc_trigger >= 0)
@@ -295,24 +323,80 @@ int main(int argc, char *argv[])
 
   if (info)
   {
-    printf("%s: WR-MIL status regitster content:\n", argv[0]);
+    printf("%s: WR-MIL regitster content:\n", argv[0]);
     uint32_t value;
+    uint64_t value64_bit;
     eb_status = eb_device_read(device, reg_magic_addr,          EB_BIG_ENDIAN|EB_DATA32, (eb_data_t*)&value, 0, eb_block);
     printf("    WR_MIL_GW_REG_MAGIC_NUMBER:   0x%08x\n", value);
     eb_status = eb_device_read(device, reg_command_addr,        EB_BIG_ENDIAN|EB_DATA32, (eb_data_t*)&value, 0, eb_block);
     printf("    WR_MIL_GW_REG_COMMAND:        0x%08x\n", value);
     eb_status = eb_device_read(device, reg_utc_trigger_addr,    EB_BIG_ENDIAN|EB_DATA32, (eb_data_t*)&value, 0, eb_block);
     printf("    WR_MIL_GW_REG_UTC_TRIGGER:    0x%08x = %d\n", value, value);
-    eb_status = eb_device_read(device, reg_utc_separation_addr, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t*)&value, 0, eb_block);
-    printf("    WR_MIL_GW_REG_UTC_SEPARATION: 0x%08x = %d us\n", value, value);
-    eb_status = eb_device_read(device, reg_utc_delay_addr,      EB_BIG_ENDIAN|EB_DATA32, (eb_data_t*)&value, 0, eb_block);
+    eb_status = eb_device_read(device, reg_utc_delay_addr, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t*)&value, 0, eb_block);
     printf("    WR_MIL_GW_REG_UTC_DELAY:      0x%08x = %d us\n", value, value);
+    eb_status = eb_device_read(device, reg_utc_delay_addr,      EB_BIG_ENDIAN|EB_DATA32, (eb_data_t*)&value, 0, eb_block);
+    printf("    WR_MIL_GW_REG_TRIG_UTC_DELAY: 0x%08x = %d us\n", value, value);
     eb_status = eb_device_read(device, reg_event_source_addr,   EB_BIG_ENDIAN|EB_DATA32, (eb_data_t*)&value, 0, eb_block);
     printf("    WR_MIL_GW_REG_EVENT_SOURCE:   0x%08x = %s\n", value, event_source_str(value));
     eb_status = eb_device_read(device, reg_latency_addr,        EB_BIG_ENDIAN|EB_DATA32, (eb_data_t*)&value, 0, eb_block);
     printf("    WR_MIL_GW_REG_LATENCY:        0x%08x = %d us\n", value, value);
     eb_status = eb_device_read(device, reg_state_addr,          EB_BIG_ENDIAN|EB_DATA32, (eb_data_t*)&value, 0, eb_block);
     printf("    WR_MIL_GW_REG_STATE:          0x%08x = %s\n", value, state_str(value));
+    eb_status = eb_device_read(device, reg_utc_offset_hi_addr,  EB_BIG_ENDIAN|EB_DATA32, (eb_data_t*)&value, 0, eb_block);
+    value64_bit = value;
+    value64_bit <<= 32;
+    printf("    WR_MIL_GW_REG_UTC_OFFSET_HI:  0x%08x\n", value);
+    eb_status = eb_device_read(device, reg_utc_offset_lo_addr,  EB_BIG_ENDIAN|EB_DATA32, (eb_data_t*)&value, 0, eb_block);
+    value64_bit |= value;
+    printf("    WR_MIL_GW_REG_UTC_OFFSET_LO:  0x%08x = %ld s\n", value, value64_bit/1000);
+    eb_status = eb_device_read(device, reg_num_events_hi_addr,  EB_BIG_ENDIAN|EB_DATA32, (eb_data_t*)&value, 0, eb_block);
+    value64_bit = value;
+    value64_bit <<= 32;
+    printf("    WR_MIL_GW_REG_NUM_EVENTS_HI:  0x%08x\n", value);
+    eb_status = eb_device_read(device, reg_num_events_lo_addr,  EB_BIG_ENDIAN|EB_DATA32, (eb_data_t*)&value, 0, eb_block);
+    value64_bit |= value;
+    printf("    WR_MIL_GW_REG_NUM_EVENTS_LO:  0x%08x = %ld\n", value, value64_bit);
+    eb_status = eb_device_read(device, reg_late_events_addr,    EB_BIG_ENDIAN|EB_DATA32, (eb_data_t*)&value, 0, eb_block);
+    printf("    WR_MIL_GW_REG_LATE_EVENTS:    0x%08x = %d\n", value, value);
+  }
+
+  if (monitor)
+  {
+    uint32_t last_late_events = 0;
+    uint64_t last_num_events = 0;
+
+    for (;;)
+    {
+      uint32_t value;
+      uint64_t value64_bit;
+      eb_status = eb_device_read(device, reg_num_events_hi_addr,  EB_BIG_ENDIAN|EB_DATA32, (eb_data_t*)&value, 0, eb_block);
+      value64_bit = value;
+      value64_bit <<= 32;
+      //printf("    WR_MIL_GW_REG_NUM_EVENTS_HI:  0x%08x\n", value);
+      eb_status = eb_device_read(device, reg_num_events_lo_addr,  EB_BIG_ENDIAN|EB_DATA32, (eb_data_t*)&value, 0, eb_block);
+      value64_bit |= value;
+      //printf("    WR_MIL_GW_REG_NUM_EVENTS_LO:  0x%08x = %ld\n", value, value64_bit);
+      eb_status = eb_device_read(device, reg_late_events_addr,    EB_BIG_ENDIAN|EB_DATA32, (eb_data_t*)&value, 0, eb_block);
+      //printf("    WR_MIL_GW_REG_LATE_EVENTS:    0x%08x = %d\n", value, value);
+
+      if (last_num_events && last_num_events == value64_bit)
+      {
+        printf("WR-MIL-GATEWAY WARNING: Number of translated MIL events did not increase!\n"
+               "  Check if wr-mil-gateway and Data Master are both active\n");
+        fflush(stdout);
+      }
+      if (last_late_events < value)
+      {
+        printf("WR-MIL-GATEWAY WARNING: Late MIL event occured!\n"
+               "  Number of delayed events since last message/reset: %d/%d\n", value - last_late_events, value);
+        fflush(stdout);
+      }
+
+      last_late_events = value;
+      last_num_events  = value64_bit;
+
+      sleep(10);
+    }
   }
 
   return 0;
