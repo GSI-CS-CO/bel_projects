@@ -3,7 +3,7 @@
  *
  *  created : 2017
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 31-August-2017
+ *  version : 03-July-2017
  *
  * Command-line interface for dmunipz
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 17-May-2017
  ********************************************************************************************/
-#define DMUNIPZ_X86_VERSION "0.0.7"
+#define DMUNIPZ_X86_VERSION "0.0.6"
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -49,7 +49,7 @@
 #include <etherbone.h>
 
 //ftm
-#include "../../ftm/include/ftm_common.h"  // defs and regs for data master
+#include "../../ftm/ftm_common.h"  // defs and regs for data master
 
 // dm-unipz
 #include <dm-unipz.h>
@@ -263,7 +263,7 @@ int main(int argc, char** argv) {
   uint32_t actTransfers;   // actual number of transfers
   uint32_t actState;       // actual state of gateway
   uint32_t actStatus;      // actual status of gateway
-  // chk uint32_t actStatTrans;   // actual status of ongoing transfer
+  uint32_t actStatTrans;   // actual status of ongoing transfer
   uint32_t sleepTime;      // time to sleep [us]
   uint32_t printFlag;      // flag for printing
 
@@ -421,12 +421,12 @@ int main(int argc, char** argv) {
   } //if command
 
   if (snoop) {
-    printf("dm-unipz: continous monitoring of gateway, loglevel = %d\n", logLevel);
+    printf("dm-unipz: continous monitoring of gateway...\n");
     
     actTransfers = 0;
     actState     = DMUNIPZ_STATE_UNKNOWN;
     actStatus    = DMUNIPZ_STATUS_UNKNOWN;
-    // actStatTrans = DMUNIPZ_TRANS_UNKNOWN; chk
+    actStatTrans = DMUNIPZ_TRANS_UNKNOWN;
 
     while (1) {
       readInfo(&status, &state, &iterations, &transfers, &injections, &virtAcc, &statTrans);  // read info from lm32
@@ -449,7 +449,7 @@ int main(int argc, char** argv) {
       if ((actState     != state)     && (logLevel <= DMUNIPZ_LOGLEVEL_STATE))                                         {printFlag = 1; actState = state;}
       if ((actStatus    != status)    && (logLevel <= DMUNIPZ_LOGLEVEL_STATUS))                                        {printFlag = 1; actStatus = status;}
       if ((actTransfers != transfers) && (logLevel <= DMUNIPZ_LOGLEVEL_COMPLETE) && (statTrans & DMUNIPZ_TRANS_RELTK)) {printFlag = 1; actTransfers = transfers;}
-      if ((actTransfers != transfers) && (logLevel <= DMUNIPZ_LOGLEVEL_ALL))                                           {printFlag = 1; actTransfers = transfers;}
+      if ((actStatTrans != statTrans) && (logLevel <= DMUNIPZ_LOGLEVEL_ALL))                                           {printFlag = 1; actStatTrans = statTrans;}
 
       if (printFlag) {
         printf("dm-unipz: transfer - "); 
