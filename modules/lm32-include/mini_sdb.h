@@ -64,6 +64,7 @@
 #define ECA_CTRL              0x8752bf44
 #define TLU                   0x10051981 
 #define WR_UART               0xe2d13d04
+#define WR_PPS_GEN            0xde0d8ced
 #define SCU_BUS_MASTER        0x9602eb6f
 #define SCU_IRQ_CTRL          0x9602eb70
 #define WB_FG_IRQ_CTRL        0x9602eb71
@@ -81,6 +82,7 @@
 #define WB_REMOTE_UPDATE      0x38956271
 #define WB_ASMI               0x48526423
 #define WB_SCU_REG            0xe2d13d04
+
 
 //periphery device pointers
 volatile uint32_t* pTlu; 
@@ -100,6 +102,7 @@ volatile uint32_t* pCluInfo;
 volatile uint32_t* pCpuMsiBox;
 volatile uint32_t* pMyMsi;
 volatile uint32_t* pUart;
+volatile uint32_t* pPps;
 //volatile uint32_t* BASE_UART;
 volatile uint32_t* pCluCB;
 volatile uint32_t* pOneWire;

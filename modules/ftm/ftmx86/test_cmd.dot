@@ -1,0 +1,13 @@
+digraph g {
+name="123!CMD!";
+
+graph []
+
+  CMD_START   [type="start", pattern="TEST_DO_SIS18_HTP_20171013"];
+  //CMD_START   [type="start", cpu="0", thread="0"];
+  //CMD_ABORT   [type="abort", pattern="TEST_DO_SIS18_HTP_20171013"];
+  //CMD_STOP   [type="stop", pattern="TEST_DO_SIS18_HTP_20171013"];
+
+
+
+}
