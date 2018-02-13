@@ -864,7 +864,7 @@ void dev_sio_handler(int id) {
       //mprintf("state %d\n", task_ptr[id].state);
       /* if timeout reached, proceed with next task */
       if (task_ptr[id].task_timeout_cnt > TASK_TIMEOUT) {
-        mprintf("timeout in dev_sio_handle, state 1, task %d\n", task_ptr[id].i);
+        mprintf("timeout in dev_sio_handle, state 1, taskid %d , index %d\n", id, task_ptr[id].i);
         task_ptr[id].i++;
         task_ptr[id].task_timeout_cnt = 0;
       }
@@ -935,7 +935,7 @@ void dev_sio_handler(int id) {
       //mprintf("state %d\n", task_ptr[id].state);
       /* if timeout reached, proceed with next task */
       if (task_ptr[id].task_timeout_cnt > TASK_TIMEOUT) {
-        mprintf("timeout in dev_sio_handle, state 4, task %d\n", task_ptr[id].i);
+        mprintf("timeout in dev_sio_handle, state 4, taskid %d , index %d\n", id, task_ptr[id].i);
         task_ptr[id].i++;
         task_ptr[id].task_timeout_cnt = 0;
       }
