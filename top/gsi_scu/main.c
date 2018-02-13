@@ -767,7 +767,7 @@ static TaskType tasks[] = {
   { 0, 0, {0}, 0, 0, ALWAYS         , 0, dev_bus_handler    },
   { 0, 0, {0}, 0, 0, ALWAYS         , 0, scu_bus_handler    },
   { 0, 0, {0}, 0, 0, ALWAYS         , 0, ecaHandler         },
-  { 0, 0, {0}, 0, 0, INTERVAL_100MS , 0, channel_watchdog   },
+  //{ 0, 0, {0}, 0, 0, INTERVAL_100MS , 0, channel_watchdog   },
 
 };
 
