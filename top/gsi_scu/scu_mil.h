@@ -75,7 +75,8 @@ int reset_mil(volatile unsigned *base);
 #define CALC_OFFS(SLOT)   (((SLOT) * (1 << 16))) // from slot 1 to slot 12
 #define TASKMIN           1
 #define TASKMAX           254
-#define TASK_TIMEOUT  100
+#define TASK_TIMEOUT 100
+#define BLOCK_TIMEOUT 100
 /*
   +---------------------------------------------+
   |   mil communication error codes             |
