@@ -850,7 +850,7 @@ void dev_sio_handler(int id) {
           dev = (fg_macros[fg_regs[i].macro_number] & 0x00ff0000) >> 16;
           /* test only ifas connected to sio */
           if(((slot & 0xf) == task_ptr[id].slave_nr ) && (slot & DEV_SIO)) {
-            if ((status = scub_set_task_mil(scub_base, task_ptr[id].slave_nr, i + 1, FC_IRQ_ACT_RD | dev)) != OKAY) dev_failure(status, 20);
+            if ((status = scub_set_task_mil(scub_base, task_ptr[id].slave_nr, id + i + 1, FC_IRQ_ACT_RD | dev)) != OKAY) dev_failure(status, 20);
           }
         }
       }
@@ -875,7 +875,7 @@ void dev_sio_handler(int id) {
           dev = (fg_macros[fg_regs[i].macro_number] & 0x00ff0000) >> 16;
           /* test only ifas connected to sio */
           if(((slot & 0xf) == task_ptr[id].slave_nr ) && (slot & DEV_SIO)) {
-            status = scub_get_task_mil(scub_base, task_ptr[id].slave_nr, i + 1, &task_ptr[id].irq_data[i]);
+            status = scub_get_task_mil(scub_base, task_ptr[id].slave_nr, id + i + 1, &task_ptr[id].irq_data[i]);
             if (status != OKAY) {
               if (status == RCV_TASK_BSY) {
                 break; // break from for loop
@@ -913,7 +913,6 @@ void dev_sio_handler(int id) {
           handle(slot, dev, task_ptr[id].irq_data[i]);
           //clear irq pending and end block transfer
           if ((status = scub_write_mil(scub_base, task_ptr[id].slave_nr, 0, FC_IRQ_ACT_WR | dev)) != OKAY) dev_failure(status, 22);
-
         }
       }
       task_ptr[id].state = 3;
@@ -927,7 +926,7 @@ void dev_sio_handler(int id) {
           slot = fg_macros[fg_regs[i].macro_number] >> 24;
           dev = (fg_macros[fg_regs[i].macro_number] & 0x00ff0000) >> 16;
           // non blocking read for DAQ
-          if ((status = scub_set_task_mil(scub_base, task_ptr[id].slave_nr, i + 1, FC_CNTRL_RD | dev)) != OKAY) dev_failure(status, 23);
+          if ((status = scub_set_task_mil(scub_base, task_ptr[id].slave_nr, id + i + 1, FC_CNTRL_RD | dev)) != OKAY) dev_failure(status, 23);
         }
       }
       task_ptr[id].state = 4;
@@ -946,7 +945,7 @@ void dev_sio_handler(int id) {
           slot = fg_macros[fg_regs[i].macro_number] >> 24;
           dev = (fg_macros[fg_regs[i].macro_number] & 0x00ff0000) >> 16;
           // fetch DAQ
-          status = scub_get_task_mil(scub_base, task_ptr[id].slave_nr, i + 1, &dummy_aquisition);
+          status = scub_get_task_mil(scub_base, task_ptr[id].slave_nr, id + i + 1, &dummy_aquisition);
           if (status != OKAY) {
             if (status == RCV_TASK_BSY) {
               break; // break from for loop
@@ -1007,7 +1006,7 @@ void dev_bus_handler(int id) {
           dev = (fg_macros[fg_regs[i].macro_number] & 0x00ff0000) >> 16;
           /* test only ifas connected to mil extension */
           if(slot & DEV_MIL_EXT) {
-            if ((status = set_task_mil(scu_mil_base, i + 1, FC_IRQ_ACT_RD | dev)) != OKAY) dev_failure(status, 20);
+            if ((status = set_task_mil(scu_mil_base, id + i + 1, FC_IRQ_ACT_RD | dev)) != OKAY) dev_failure(status, 20);
           }
         }
       }
@@ -1031,7 +1030,7 @@ void dev_bus_handler(int id) {
           dev = (fg_macros[fg_regs[i].macro_number] & 0x00ff0000) >> 16;
           /* test only ifas connected to mil extension */
           if(slot & DEV_MIL_EXT) {
-            status = get_task_mil(scu_mil_base, i + 1, &task_ptr[id].irq_data[i]);
+            status = get_task_mil(scu_mil_base, id + i + 1, &task_ptr[id].irq_data[i]);
             if (status != OKAY) {
               if (status == RCV_TASK_BSY) {
                 break; // break from for loop
@@ -1083,7 +1082,7 @@ void dev_bus_handler(int id) {
           slot = fg_macros[fg_regs[i].macro_number] >> 24;
           dev = (fg_macros[fg_regs[i].macro_number] & 0x00ff0000) >> 16;
           // non blocking read for DAQ
-          if ((status = set_task_mil(scu_mil_base, i + 1, FC_CNTRL_RD | dev)) != OKAY) dev_failure(status, 23); 
+          if ((status = set_task_mil(scu_mil_base, id + i + 1, FC_CNTRL_RD | dev)) != OKAY) dev_failure(status, 23);
         }
       }
       task_ptr[id].state = 4;
@@ -1101,7 +1100,7 @@ void dev_bus_handler(int id) {
           slot = fg_macros[fg_regs[i].macro_number] >> 24;
           dev = (fg_macros[fg_regs[i].macro_number] & 0x00ff0000) >> 16;
           // fetch DAQ
-          status = get_task_mil(scu_mil_base, i + 1, &dummy_aquisition);
+          status = get_task_mil(scu_mil_base, id +  i + 1, &dummy_aquisition);
           if (status != OKAY) {
             if (status == RCV_TASK_BSY) {
               break; // break from for loop
