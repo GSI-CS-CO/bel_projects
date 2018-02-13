@@ -1,0 +1,1102 @@
+/* Includes */
+/* ==================================================================================================== */
+#include "ssd1325_serial_driver.h" /* Include SSD1325 Header */
+
+/* Lookup table for characters */
+/* ==================================================================================================== */
+#if SSD1325_USE_LOWER_CHARS
+int8_t a_iCharMap[96][SSD1325_PIXELS_PER_CHAR_Y*SSD1325_PIXELS_PER_CHAR_X] =
+#else
+int8_t a_iCharMap[70][SSD1325_PIXELS_PER_CHAR_Y*SSD1325_PIXELS_PER_CHAR_X] =
+#endif
+{
+  {0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00}, /* ' ' */
+  {0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0xf0,0xf0,0xf0,0xf0,0x00,0x00,0xf0,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00}, /* '!' */
+  {0x0f,0x0f,0x0f,0x00,0x00,0x00,0x00,0x00,0x0f,0x0f,0x0f,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00}, /* '"' */
+  {0x0f,0x0f,0xff,0x0f,0xff,0x0f,0x0f,0x00,0x0f,0x0f,0xff,0x0f,0xff,0x0f,0x0f,0x00,0x00,0x00,0xf0,0x00,0xf0,0x00,0x00,0x00}, /* '#' */   
+  {0x00,0x0f,0xf0,0x0f,0x00,0xff,0x00,0x00,0xf0,0xff,0xf0,0xff,0xf0,0xff,0xf0,0x00,0x00,0xf0,0x00,0x00,0xf0,0x00,0x00,0x00}, /* '$' */
+  {0xff,0xff,0x00,0x00,0x0f,0xf0,0x00,0x00,0x00,0x00,0x0f,0xf0,0x00,0x0f,0x0f,0x00,0x00,0xf0,0x00,0x00,0x00,0xf0,0xf0,0x00}, /* '%' */
+  {0x0f,0xf0,0xf0,0x0f,0xf0,0xf0,0x0f,0x00,0xf0,0x0f,0xf0,0x00,0xf0,0x0f,0xf0,0x00,0x00,0xf0,0x00,0x00,0xf0,0x00,0xf0,0x00}, /* '&' */
+  {0x0f,0x00,0x0f,0x00,0x00,0x00,0x00,0x00,0xf0,0xf0,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00}, /* '\'' */
+  {0x00,0x00,0x0f,0x0f,0x0f,0x00,0x00,0x00,0x0f,0xf0,0x00,0x00,0x00,0xf0,0x0f,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00}, /* '(' */
+  {0x0f,0x00,0x00,0x00,0x00,0x00,0x0f,0x00,0x00,0xf0,0x0f,0x0f,0x0f,0xf0,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00}, /* ')' */
+  {0x00,0x00,0xf0,0x0f,0xf0,0x00,0x00,0x00,0x00,0xf0,0xf0,0xff,0xf0,0xf0,0x00,0x00,0x00,0x00,0xf0,0x00,0xf0,0x00,0x00,0x00}, /* '*' */
+  {0x00,0x00,0x00,0xff,0x00,0x00,0x00,0x00,0x00,0xf0,0xf0,0xff,0xf0,0xf0,0x00,0x00,0x00,0x00,0x00,0xf0,0x00,0x00,0x00,0x00}, /* '+' */
+  {0x00,0x00,0x00,0x00,0x0f,0x00,0x0f,0x00,0x00,0x00,0x00,0x00,0xf0,0xf0,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00}, /* ',' */
+  {0x00,0x00,0x00,0xff,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0xff,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0xf0,0x00,0x00,0x00,0x00}, /* '-' */ 
+  {0x00,0x00,0x00,0x00,0x00,0x0f,0x0f,0x00,0x00,0x00,0x00,0x00,0x00,0xf0,0xf0,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00}, /* '.' */ 
+  {0x00,0x00,0x00,0x00,0x0f,0xf0,0x00,0x00,0x00,0x00,0x0f,0xf0,0x00,0x00,0x00,0x00,0x00,0xf0,0x00,0x00,0x00,0x00,0x00,0x00}, /* '/' */ 
+  {0x0f,0xf0,0xf0,0xf0,0xff,0xf0,0x0f,0x00,0xff,0x00,0x0f,0xf0,0x00,0x00,0xff,0x00,0x00,0xf0,0xf0,0xf0,0xf0,0xf0,0x00,0x00}, /* '0' */ 
+  {0x00,0x0f,0x00,0x00,0x00,0x00,0xff,0x00,0xf0,0xf0,0xf0,0xf0,0xf0,0xf0,0xff,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0xf0,0x00}, /* '1' */ 
+  {0x0f,0xf0,0x00,0x00,0x00,0x0f,0xff,0x00,0xff,0x00,0x00,0x0f,0xf0,0x00,0xff,0x00,0x00,0xf0,0xf0,0x00,0x00,0x00,0xf0,0x00}, /* '2' */
+  {0xff,0x00,0x00,0x00,0x00,0xf0,0x0f,0x00,0xff,0x0f,0xf0,0x0f,0x00,0x00,0xff,0x00,0xf0,0x00,0x00,0x00,0xf0,0xf0,0x00,0x00}, /* '3' */
+  {0x00,0x00,0x0f,0xf0,0xff,0x00,0x00,0x00,0x0f,0xff,0x0f,0x0f,0xff,0x0f,0x0f,0x00,0x00,0x00,0x00,0x00,0xf0,0x00,0x00,0x00}, /* '4' */ 
+  {0xff,0xf0,0xff,0x00,0x00,0xf0,0x0f,0x00,0xff,0x00,0xff,0x00,0x00,0x00,0xff,0x00,0xf0,0x00,0x00,0xf0,0xf0,0xf0,0x00,0x00}, /* '5' */ 
+  {0x00,0x0f,0xf0,0xff,0xf0,0xf0,0x0f,0x00,0xff,0x00,0x00,0xff,0x00,0x00,0xff,0x00,0x00,0x00,0x00,0x00,0xf0,0xf0,0x00,0x00}, /* '6' */ 
+  {0xff,0x00,0x00,0x00,0x0f,0x0f,0x0f,0x00,0xff,0x00,0x0f,0xf0,0x00,0x00,0x00,0x00,0xf0,0xf0,0x00,0x00,0x00,0x00,0x00,0x00}, /* '7' */
+  {0x0f,0xf0,0xf0,0x0f,0xf0,0xf0,0x0f,0x00,0xff,0x00,0x00,0xff,0x00,0x00,0xff,0x00,0x00,0xf0,0xf0,0x00,0xf0,0xf0,0x00,0x00}, /* '8' */
+  {0x0f,0xf0,0xf0,0x0f,0x00,0x00,0x0f,0x00,0xff,0x00,0x00,0xff,0x00,0x0f,0xf0,0x00,0x00,0xf0,0xf0,0xf0,0xf0,0x00,0x00,0x00}, /* '9' */
+  {0x00,0x0f,0x0f,0x00,0x0f,0x0f,0x00,0x00,0x00,0xf0,0xf0,0x00,0xf0,0xf0,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00}, /* ':' */
+  {0x00,0x0f,0x0f,0x00,0x0f,0x00,0x0f,0x00,0x00,0xf0,0xf0,0x00,0xf0,0xf0,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00}, /* ';' */
+  {0x00,0x00,0x0f,0xf0,0x0f,0x00,0x00,0x00,0x0f,0xf0,0x00,0x00,0x00,0xf0,0x0f,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00}, /* '<' */
+  {0x00,0x00,0xff,0x00,0xff,0x00,0x00,0x00,0x00,0x00,0xff,0x00,0xff,0x00,0x00,0x00,0x00,0x00,0xf0,0x00,0xf0,0x00,0x00,0x00}, /* '=' */
+  {0x0f,0x00,0x00,0x00,0x00,0x00,0x0f,0x00,0x00,0xf0,0x0f,0x00,0x0f,0xf0,0x00,0x00,0x00,0x00,0x00,0xf0,0x00,0x00,0x00,0x00}, /* '>' */
+  {0x0f,0xf0,0x00,0x00,0x00,0x00,0x00,0x00,0xff,0x00,0x00,0x0f,0xf0,0x00,0xf0,0x00,0x00,0xf0,0xf0,0x00,0x00,0x00,0x00,0x00}, /* '?' */
+  {0x0f,0xf0,0x00,0x0f,0xf0,0xf0,0x0f,0x00,0xff,0x00,0x00,0xf0,0xf0,0xf0,0xff,0x00,0x00,0xf0,0x00,0xf0,0xf0,0xf0,0x00,0x00}, /* '@' */
+  {0x0f,0xf0,0xf0,0xff,0xf0,0xf0,0xf0,0x00,0xff,0x00,0x00,0xff,0x00,0x00,0x00,0x00,0x00,0xf0,0xf0,0xf0,0xf0,0xf0,0xf0,0x00}, /* 'A' */
+  {0xff,0xf0,0xf0,0xff,0xf0,0xf0,0xff,0x00,0xff,0x00,0x00,0xff,0x00,0x00,0xff,0x00,0x00,0xf0,0xf0,0x00,0xf0,0xf0,0x00,0x00}, /* 'B' */
+  {0x0f,0xf0,0xf0,0xf0,0xf0,0xf0,0x0f,0x00,0xff,0x00,0x00,0x00,0x00,0x00,0xff,0x00,0x00,0xf0,0x00,0x00,0x00,0xf0,0x00,0x00}, /* 'C' */
+  {0xff,0xf0,0xf0,0xf0,0xf0,0xf0,0xff,0x00,0xff,0x00,0x00,0x00,0x00,0x00,0xff,0x00,0x00,0xf0,0xf0,0xf0,0xf0,0xf0,0x00,0x00}, /* 'D' */
+  {0xff,0xf0,0xf0,0xff,0xf0,0xf0,0xff,0x00,0xff,0x00,0x00,0xff,0x00,0x00,0xff,0x00,0xf0,0x00,0x00,0xf0,0x00,0x00,0xf0,0x00}, /* 'E' */
+  {0xff,0xf0,0xf0,0xff,0xf0,0xf0,0xf0,0x00,0xff,0x00,0x00,0xff,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00}, /* 'F' */
+  {0xff,0xf0,0xf0,0xf0,0xf0,0xf0,0xff,0x00,0xff,0x00,0x00,0xff,0x00,0x00,0xff,0x00,0xf0,0xf0,0x00,0xf0,0xf0,0xf0,0xf0,0x00}, /* 'G' */
+  {0xf0,0xf0,0xf0,0xff,0xf0,0xf0,0xf0,0x00,0x00,0x00,0x00,0xff,0x00,0x00,0x00,0x00,0xf0,0xf0,0xf0,0xf0,0xf0,0xf0,0xf0,0x00}, /* 'H' */
+  {0xff,0x00,0x00,0x00,0x00,0x00,0xff,0x00,0xff,0xf0,0xf0,0xf0,0xf0,0xf0,0xff,0x00,0xf0,0x00,0x00,0x00,0x00,0x00,0xf0,0x00}, /* 'I' */
+  {0x00,0x00,0x00,0x00,0x00,0xf0,0x0f,0x00,0xff,0x0f,0x0f,0x0f,0x0f,0x0f,0xf0,0x00,0xf0,0x00,0x00,0x00,0x00,0x00,0x00,0x00}, /* 'J' */
+  {0xf0,0xf0,0xf0,0xff,0xf0,0xf0,0xf0,0x00,0x00,0x0f,0xf0,0x00,0xf0,0x0f,0x00,0x00,0xf0,0x00,0x00,0x00,0x00,0x00,0xf0,0x00}, /* 'K' */
+  {0xf0,0xf0,0xf0,0xf0,0xf0,0xf0,0xff,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0xff,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0xf0,0x00}, /* 'L' */
+  {0xf0,0xff,0xf0,0xf0,0xf0,0xf0,0xf0,0x00,0x00,0x0f,0xf0,0xf0,0x00,0x00,0x00,0x00,0xf0,0xf0,0xf0,0xf0,0xf0,0xf0,0xf0,0x00}, /* 'M' */
+  {0xf0,0xf0,0xff,0xf0,0xf0,0xf0,0xf0,0x00,0x00,0x00,0x00,0xf0,0x0f,0x00,0x00,0x00,0xf0,0xf0,0xf0,0xf0,0xf0,0xf0,0xf0,0x00}, /* 'N' */
+  {0x0f,0xf0,0xf0,0xf0,0xf0,0xf0,0x0f,0x00,0xff,0x00,0x00,0x00,0x00,0x00,0xff,0x00,0x00,0xf0,0xf0,0xf0,0xf0,0xf0,0x00,0x00}, /* 'O' */
+  {0xff,0xf0,0xf0,0xff,0xf0,0xf0,0xf0,0x00,0xff,0x00,0x00,0xff,0x00,0x00,0x00,0x00,0x00,0xf0,0xf0,0x00,0x00,0x00,0x00,0x00}, /* 'P' */
+  {0x0f,0xf0,0xf0,0xf0,0xf0,0xf0,0x0f,0x00,0xff,0x00,0x00,0x00,0xf0,0x0f,0xf0,0x00,0x00,0xf0,0x00,0xf0,0xf0,0x00,0xf0,0x00}, /* 'Q' */
+  {0xff,0xf0,0xf0,0xff,0xf0,0xf0,0xf0,0x00,0xff,0x00,0x00,0xff,0xf0,0x0f,0x00,0x00,0x00,0xf0,0xf0,0x00,0x00,0x00,0xf0,0x00}, /* 'R' */
+  {0x0f,0xf0,0xf0,0x0f,0x00,0x00,0xff,0x00,0xff,0x00,0x00,0xff,0x00,0x00,0xff,0x00,0xf0,0x00,0x00,0x00,0xf0,0xf0,0x00,0x00}, /* 'S' */
+  {0xff,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0xff,0xf0,0xf0,0xf0,0xf0,0xf0,0xf0,0x00,0xf0,0x00,0x00,0x00,0x00,0x00,0x00,0x00}, /* 'T' */
+  {0xf0,0xf0,0xf0,0xf0,0xf0,0xf0,0x0f,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0xff,0x00,0xf0,0xf0,0xf0,0xf0,0xf0,0xf0,0x00,0x00}, /* 'U' */
+  {0xf0,0xf0,0xf0,0xf0,0xf0,0x0f,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x0f,0xf0,0x00,0xf0,0xf0,0xf0,0xf0,0xf0,0x00,0x00,0x00}, /* 'V' */
+  {0xf0,0xf0,0xf0,0xf0,0xf0,0xf0,0x0f,0x00,0x00,0x00,0x00,0xf0,0xf0,0xf0,0x0f,0x00,0xf0,0xf0,0xf0,0xf0,0xf0,0xf0,0x00,0x00}, /* 'W' */
+  {0xf0,0xf0,0x0f,0x00,0x0f,0xf0,0xf0,0x00,0x00,0x00,0x0f,0xf0,0x0f,0x00,0x00,0x00,0xf0,0xf0,0x00,0x00,0x00,0xf0,0xf0,0x00}, /* 'X' */
+  {0xf0,0xf0,0xf0,0x0f,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x0f,0xf0,0xf0,0xf0,0x00,0xf0,0xf0,0xf0,0x00,0x00,0x00,0x00,0x00}, /* 'Y' */
+  {0xff,0x00,0x00,0x00,0x0f,0xf0,0xff,0x00,0xff,0x00,0x0f,0xf0,0x00,0x00,0xff,0x00,0xf0,0xf0,0x00,0x00,0x00,0x00,0xf0,0x00}, /* 'Z' */
+  {0xff,0xf0,0xf0,0xf0,0xf0,0xf0,0xff,0x00,0xff,0x00,0x00,0x00,0x00,0x00,0xff,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00}, /* '[' */
+  {0x00,0xf0,0x0f,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0xf0,0x0f,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0xf0,0x00,0x00}, /* '\' */
+  {0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0xff,0x00,0x00,0x00,0x00,0x00,0xff,0x00,0xf0,0xf0,0xf0,0xf0,0xf0,0xf0,0xf0,0x00}, /* ']' */
+  {0x00,0x0f,0xf0,0x00,0x00,0x00,0x00,0x00,0xf0,0x0f,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0xf0,0x00,0x00,0x00,0x00,0x00}, /* '^' */
+  {0x00,0x00,0x00,0x00,0x00,0x00,0xff,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0xff,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0xf0,0x00}, /* '_' */
+  {0x0f,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0xf0,0x0f,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00}, /* '`' */
+#if SSD1325_USE_LOWER_CHARS
+  {0x00,0x00,0x0f,0x00,0x0f,0xf0,0x0f,0x00,0x00,0x00,0xff,0x00,0xff,0x00,0xff,0x00,0x00,0x00,0x00,0xf0,0xf0,0xf0,0xf0,0x00}, /* 'a' */
+  {0xf0,0xf0,0xf0,0xff,0xf0,0xf0,0xff,0x00,0x00,0x00,0xff,0x00,0x00,0x00,0xff,0x00,0x00,0x00,0x00,0xf0,0xf0,0xf0,0x00,0x00}, /* 'b' */
+  {0x00,0x00,0x0f,0xf0,0xf0,0xf0,0x0f,0x00,0x00,0x00,0xff,0x00,0x00,0x00,0xff,0x00,0x00,0x00,0x00,0x00,0x00,0xf0,0x00,0x00}, /* 'c' */
+  {0x00,0x00,0x0f,0xf0,0xf0,0xf0,0x0f,0x00,0x00,0x00,0xf0,0x0f,0x00,0x00,0xff,0x00,0xf0,0xf0,0xf0,0xf0,0xf0,0xf0,0xf0,0x00}, /* 'd' */
+  {0x00,0x00,0x0f,0xf0,0xff,0xf0,0x0f,0x00,0x00,0x00,0xff,0x00,0xff,0x00,0xff,0x00,0x00,0x00,0x00,0xf0,0xf0,0x00,0x00,0x00}, /* 'e' */
+  {0x00,0x0f,0x0f,0xff,0x0f,0x0f,0x0f,0x00,0xff,0x00,0x00,0xf0,0x00,0x00,0x00,0x00,0x00,0xf0,0x00,0x00,0x00,0x00,0x00,0x00}, /* 'f' */
+  {0x00,0x0f,0xf0,0xf0,0x0f,0x00,0x0f,0x00,0x00,0xff,0x00,0x00,0xff,0x00,0xff,0x00,0x00,0xf0,0xf0,0xf0,0xf0,0xf0,0x00,0x00}, /* 'g' */
+  {0xf0,0xf0,0xf0,0xff,0xf0,0xf0,0xf0,0x00,0x00,0x00,0xff,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0xf0,0xf0,0xf0,0xf0,0x00}, /* 'h' */
+  {0x00,0x00,0x0f,0x00,0x00,0x00,0x0f,0x00,0xf0,0x00,0xf0,0xf0,0xf0,0xf0,0xff,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00}, /* 'i' */
+  {0x00,0x00,0x00,0x00,0x00,0xf0,0x0f,0x00,0x0f,0x00,0x0f,0x0f,0x0f,0x0f,0xf0,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00}, /* 'j' */
+  {0xf0,0xf0,0xf0,0xf0,0xff,0xf0,0xf0,0x00,0x00,0x00,0x0f,0xf0,0x00,0xf0,0x0f,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00}, /* 'k' */
+  {0x0f,0x00,0x00,0x00,0x00,0x00,0x0f,0x00,0xf0,0xf0,0xf0,0xf0,0xf0,0xf0,0xff,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00}, /* 'l' */
+  {0x00,0x00,0xff,0xf0,0xf0,0xf0,0xf0,0x00,0x00,0x00,0x0f,0xf0,0xf0,0x00,0x00,0x00,0x00,0x00,0x00,0xf0,0xf0,0xf0,0xf0,0x00}, /* 'm' */
+  {0x00,0x00,0xf0,0xff,0xf0,0xf0,0xf0,0x00,0x00,0x00,0xff,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0xf0,0xf0,0xf0,0xf0,0x00}, /* 'n' */
+  {0x00,0x00,0x0f,0xf0,0xf0,0xf0,0x0f,0x00,0x00,0x00,0xff,0x00,0x00,0x00,0xff,0x00,0x00,0x00,0x00,0xf0,0xf0,0xf0,0x00,0x00}, /* 'o' */
+  {0x00,0x00,0xff,0xf0,0xff,0xf0,0xf0,0x00,0x00,0x00,0xff,0x00,0xff,0x00,0x00,0x00,0x00,0x00,0x00,0xf0,0x00,0x00,0x00,0x00}, /* 'p' */
+  {0x00,0x00,0x0f,0xf0,0x0f,0x00,0x00,0x00,0x00,0x00,0xf0,0x0f,0xff,0x00,0x00,0x00,0x00,0x00,0xf0,0xf0,0xf0,0xf0,0xf0,0x00}, /* 'q' */
+  {0x00,0x00,0xf0,0xff,0xf0,0xf0,0xf0,0x00,0x00,0x00,0xff,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0xf0,0x00,0x00,0x00,0x00}, /* 'r' */
+  {0x00,0x00,0x0f,0xf0,0x0f,0x00,0xff,0x00,0x00,0x00,0xff,0x00,0xff,0x00,0xff,0x00,0x00,0x00,0x00,0x00,0x00,0xf0,0x00,0x00}, /* 's' */
+  {0x0f,0x0f,0xff,0x0f,0x0f,0x0f,0x00,0x00,0x00,0x00,0xf0,0x00,0x00,0x00,0xff,0x00,0x00,0x00,0x00,0x00,0x00,0xf0,0x00,0x00}, /* 't' */
+  {0x00,0x00,0xf0,0xf0,0xf0,0xf0,0x0f,0x00,0x00,0x00,0x00,0x00,0x00,0x0f,0xf0,0x00,0x00,0x00,0xf0,0xf0,0xf0,0xf0,0xf0,0x00}, /* 'u' */
+  {0x00,0x00,0xf0,0xf0,0xf0,0x0f,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x0f,0xf0,0x00,0x00,0x00,0xf0,0xf0,0xf0,0x00,0x00,0x00}, /* 'v' */
+  {0x00,0x00,0xf0,0xf0,0xf0,0xf0,0x0f,0x00,0x00,0x00,0x00,0x00,0xf0,0xf0,0x0f,0x00,0x00,0x00,0xf0,0xf0,0xf0,0xf0,0x00,0x00}, /* 'w' */
+  {0x00,0x00,0xf0,0x0f,0x00,0x0f,0xf0,0x00,0x00,0x00,0x00,0x0f,0xf0,0x0f,0x00,0x00,0x00,0x00,0xf0,0x00,0x00,0x00,0xf0,0x00}, /* 'x' */
+  {0x00,0x00,0xf0,0xf0,0x0f,0x00,0x0f,0x00,0x00,0x00,0x00,0x00,0xff,0x00,0xff,0x00,0x00,0x00,0xf0,0xf0,0xf0,0xf0,0x00,0x00}, /* 'y' */
+  {0x00,0x00,0xff,0x00,0x00,0x0f,0xff,0x00,0x00,0x00,0xff,0x0f,0xf0,0x00,0xff,0x00,0x00,0x00,0xf0,0x00,0x00,0x00,0xf0,0x00}, /* 'z' */
+#endif /* SSD1325_USE_LOWER_CHARS */
+  {0x00,0x00,0x00,0x0f,0x00,0x00,0x00,0x00,0x0f,0xf0,0xf0,0x00,0xf0,0xf0,0x0f,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00}, /* '{' */
+  {0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0xf0,0xf0,0xf0,0xf0,0xf0,0xf0,0xf0,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00}, /* '|' */
+  {0x0f,0x00,0x00,0x00,0x00,0x00,0x0f,0x00,0x00,0xf0,0xf0,0x0f,0xf0,0xf0,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00}, /* '}' */
+  {0x00,0x00,0x0f,0xf0,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0xf0,0x0f,0x00,0x00,0x00,0x00,0x00,0x00,0xf0,0x00,0x00,0x00,0x00}, /* '~' */
+  {0xff,0xf0,0xff,0xf0,0xff,0xf0,0xff,0x00,0xff,0xf0,0xff,0xf0,0xff,0xf0,0xff,0x00,0xf0,0xf0,0xf0,0xf0,0xf0,0xf0,0xf0,0x00}, /* Default sign */
+};
+
+/* Function iSSD1325_GetParameter(...) */
+/* ==================================================================================================== */
+int32_t iSSD1325_GetParameter(e_SSD1325_RegisterArea eParameter, uint32_t *p_uValue)
+{
+  
+#if SSD1325_TARGET_EMBEDDED
+  /* Switch depending on parameter */
+  switch(eParameter)
+  {
+    case eTxFifoDataRegister:
+    {
+      *p_uValue = p_sSSD1325_Area->uTxFifoDataRegister;
+      break;
+    }
+    case eTxFifoStatusRegister:
+    {
+      *p_uValue = p_sSSD1325_Area->uTxFifoStatusRegister;
+      break;
+    }
+    case eTxFifoFillLevelRegister:
+    {
+      *p_uValue = p_sSSD1325_Area->uTxFifoFillLevelRegister;
+      break;
+    }
+    case eControlRegister:
+    {
+      *p_uValue = p_sSSD1325_Area->uControlRegister;
+      break;
+    }
+    default:
+    {
+      return(SSD1325_RETURN_FAILURE_CODE);
+      break;
+    }
+  }
+#else
+  /* Helpers */
+  eb_format_t s_EBFormat = EB_ADDR32|EB_DATA32;
+  eb_status_t s_EBStatus;
+  eb_cycle_t  s_EBCycle;
+  eb_data_t   s_EBData;
+  uint32_t    uRegisterOffset = 0;
+  
+  /* Switch depending on parameter */
+  switch(eParameter)
+  {
+    case eTxFifoDataRegister:
+    {
+      uRegisterOffset = 0;
+      break;
+    }
+    case eTxFifoStatusRegister:
+    {
+      uRegisterOffset = 1;
+      break;
+    }
+    case eTxFifoFillLevelRegister:
+    {
+      uRegisterOffset = 2;
+      break;
+    }
+    case eControlRegister:
+    {
+      uRegisterOffset = 3;
+      break;
+    }
+    default:
+    {
+      return(SSD1325_RETURN_FAILURE_CODE);
+      break;
+    }
+  }
+  
+  /* Get data */
+  if ((s_EBStatus = eb_cycle_open(s_DeviceName, 0, eb_block, &s_EBCycle)) != EB_OK)
+  {
+    printf("Error: Failed to create cycle: %s\n", eb_status(s_EBStatus));
+    return(SSD1325_RETURN_FAILURE_CODE);
+  }
+  eb_cycle_read(s_EBCycle, (eb_address_t)(p_uSSD1325_Area+uRegisterOffset), s_EBFormat, &s_EBData); 
+  eb_cycle_close(s_EBCycle);
+  
+  /* Convert eb_data_t to uint32_t */
+  *p_uValue = (uint32_t) s_EBData;
+#endif
+  
+  /* Operation done */
+  return(SSD1325_RETURN_SUCCESS_CODE);
+  
+}
+
+/* Function iSSD1325_SetParameter(...) */
+/* ==================================================================================================== */
+int32_t iSSD1325_SetParameter(e_SSD1325_RegisterArea eParameter, uint32_t uValue)
+{
+  
+#if SSD1325_TARGET_EMBEDDED
+  /* Switch depending on parameter */
+  switch(eParameter)
+  {
+    case eTxFifoDataRegister:
+    {
+      p_sSSD1325_Area->uTxFifoDataRegister = uValue;
+      break;
+    }
+    case eTxFifoStatusRegister:
+    {
+      p_sSSD1325_Area->uTxFifoStatusRegister = uValue;
+      break;
+    }
+    case eTxFifoFillLevelRegister:
+    {
+      p_sSSD1325_Area->uTxFifoFillLevelRegister = uValue;
+      break;
+    }
+    case eControlRegister:
+    {
+      p_sSSD1325_Area->uControlRegister = uValue;
+      break;
+    }
+    default:
+    {
+      return(SSD1325_RETURN_FAILURE_CODE);
+      break;
+    }
+  }
+#else
+  /* Helpers */
+  eb_format_t s_EBFormat = EB_ADDR32|EB_DATA32;
+  eb_status_t s_EBStatus;
+  eb_cycle_t  s_EBCycle;
+  uint32_t    uRegisterOffset = 0;
+  
+  /* Switch depending on parameter */
+  switch(eParameter)
+  {
+    case eTxFifoDataRegister:
+    {
+      uRegisterOffset = 0;
+      break;
+    }
+    case eTxFifoStatusRegister:
+    {
+      uRegisterOffset = 1;
+      break;
+    }
+    case eTxFifoFillLevelRegister:
+    {
+      uRegisterOffset = 2;
+      break;
+    }
+    case eControlRegister:
+    {
+      uRegisterOffset = 3;
+      break;
+    }
+    default:
+    {
+      return(SSD1325_RETURN_FAILURE_CODE);
+      break;
+    }
+  }
+  
+  /* Write data */
+  if ((s_EBStatus = eb_cycle_open(s_DeviceName, 0, eb_block, &s_EBCycle)) != EB_OK)
+  {
+    printf("Error: Failed to create cycle: %s\n", eb_status(s_EBStatus));
+    return(SSD1325_RETURN_FAILURE_CODE);
+  }
+  eb_cycle_write(s_EBCycle, (eb_address_t)(p_uSSD1325_Area+uRegisterOffset), s_EBFormat, uValue);      
+  eb_cycle_close(s_EBCycle);
+#endif
+  
+  /* Operation done */
+  return(SSD1325_RETURN_SUCCESS_CODE);
+  
+}
+
+/* Function iSSD1325_AutoInitialize(...) */
+/* ==================================================================================================== */
+int32_t iSSD1325_AutoInitialize(void)
+{
+  
+#if SSD1325_TARGET_EMBEDDED
+  /* Find device via common functions */
+  p_sSSD1325_Area = (s_SSD1325_RegisterArea*) find_device_adr(GSI, SSD1325_SER_DRIVER);
+  
+  /* Check if device was found */
+  if(p_sSSD1325_Area == NULL)
+  {
+    /* Device was not found */
+    return(SSD1325_RETURN_FAILURE_CODE);
+  }
+  else
+  {
+    /* Set control register zo zero */
+    iSSD1325_SetParameter(eControlRegister, 0);
+    
+    /* Device was found and resetted */
+    return(SSD1325_RETURN_SUCCESS_CODE);
+  }
+#else
+  /* Helper */
+  struct sdb_device s_SSD1325Display;
+  int32_t iDevicesFound = 1;
+  
+  /* Get device */
+  eb_sdb_find_by_identity(s_DeviceName, SSD1325_GSI_VENDOR_ID, SSD1325_GSI_DEVICE_ID, &s_SSD1325Display, &iDevicesFound);
+  
+  /* Check if device was found */
+  if (!iDevicesFound)
+  { 
+    /* Device was not found */
+    return(SSD1325_RETURN_FAILURE_CODE);
+  }
+  else
+  {
+    /* Device was found */
+    p_uSSD1325_Area = (uint32_t*)(s_SSD1325Display.sdb_component.addr_first);
+    return(SSD1325_RETURN_SUCCESS_CODE);
+  }
+#endif
+  
+}
+
+/* Function iSSD1325_ManualInitialize(...) */
+/* ==================================================================================================== */
+int32_t iSSD1325_ManualInitialize(uint32_t uAreaAddress)
+{
+  
+#if SSD1325_TARGET_EMBEDDED
+  /* Set address directly */
+  p_sSSD1325_Area = (s_SSD1325_RegisterArea*) uAreaAddress;
+    
+  /* Set control register zo zero */
+  iSSD1325_SetParameter(eControlRegister, 0);
+      
+  /* No plausibility check here */
+  return(SSD1325_RETURN_SUCCESS_CODE);  
+#else
+  /* Set address directly */
+  p_uSSD1325_Area = (uint32_t*) uAreaAddress;
+  
+  /* No plausibility check here */
+  return(SSD1325_RETURN_SUCCESS_CODE);
+#endif
+  
+}
+
+/* Function iSSD1325_ResetDevice(...) */
+/* ==================================================================================================== */
+int32_t iSSD1325_ResetDevice(void)
+{
+  
+  /* Helper for read - modify - write */
+  uint32_t uGetControlRegister = 0;
+  
+  /* Read control register and set reset bit to zero */
+  iSSD1325_GetParameter(eControlRegister, &uGetControlRegister); 
+  uGetControlRegister = uGetControlRegister&~SSD1325_REG_CONTROL_BIT_RESET;
+
+  /* Drive reset pin to low */
+  iSSD1325_SetParameter(eControlRegister, uGetControlRegister);
+    
+  /* Drive reset pin to high */
+  uGetControlRegister = uGetControlRegister|SSD1325_REG_CONTROL_BIT_RESET;
+  iSSD1325_SetParameter(eControlRegister, uGetControlRegister);
+  
+  /* No plausibility check here */
+  return(SSD1325_RETURN_SUCCESS_CODE);
+    
+}
+
+/* Function iSSD1325_ResetDevice(...) */
+/* ==================================================================================================== */
+int32_t iSSD1325_ConfigureScreen(void)
+{
+  
+  /* Prepare to send Commands */
+  iSSD1325_PrepareSendCommand();
+  
+  /* Make sure that no transfer is pending before sending next data */
+  if(iSSD1325_WaitUntilTxDone())
+  {
+    return(SSD1325_RETURN_FAILURE_CODE);
+  }
+  
+  /* Initialize sequence */
+#if SSD1325_DEMO_CONFIGURATION
+  /* Demo (UG-2864ASYDT03 - May 15, 2008) configuration */
+  iSSD1325_SetParameter (eTxFifoDataRegister, 0xae); /* Set Display off */
+  iSSD1325_SetParameter (eTxFifoDataRegister, 0xb3); /* Set Display Clock Divide Ratio/Oscillator Frequency */
+  iSSD1325_SetParameter (eTxFifoDataRegister, 0x91); /* <<Subsequent Instruction>> */
+  iSSD1325_SetParameter (eTxFifoDataRegister, 0xa8); /* Set Multiplex Ratio */
+  iSSD1325_SetParameter (eTxFifoDataRegister, 0x42); /* <<Subsequent Instruction>> */
+  iSSD1325_SetParameter (eTxFifoDataRegister, 0xa2); /* Set Display Offset */
+  iSSD1325_SetParameter (eTxFifoDataRegister, 0x4c); /* <<Subsequent Instruction>> */
+  iSSD1325_SetParameter (eTxFifoDataRegister, 0xa1); /* Set Display Start Line */
+  iSSD1325_SetParameter (eTxFifoDataRegister, 0x00); /* <<Subsequent Instruction>> */
+  iSSD1325_SetParameter (eTxFifoDataRegister, 0xad); /* Set Master Configuration */
+  iSSD1325_SetParameter (eTxFifoDataRegister, 0x02); /* <<Subsequent Instruction>> */
+  iSSD1325_SetParameter (eTxFifoDataRegister, 0xa0); /* Set Re-Map */
+  iSSD1325_SetParameter (eTxFifoDataRegister, 0x50); /* <<Subsequent Instruction>> */
+  iSSD1325_SetParameter (eTxFifoDataRegister, 0x86); /* Set Current Range */
+  iSSD1325_SetParameter (eTxFifoDataRegister, 0x81); /* Set Contrast Control */
+  iSSD1325_SetParameter (eTxFifoDataRegister, 0x7f); /* <<Subsequent Instruction>> */
+  iSSD1325_SetParameter (eTxFifoDataRegister, 0xB2); /* Set Row Period */
+  iSSD1325_SetParameter (eTxFifoDataRegister, 0x51); /* <<Subsequent Instruction>> */
+  iSSD1325_SetParameter (eTxFifoDataRegister, 0xB1); /* Set Phase length */
+  iSSD1325_SetParameter (eTxFifoDataRegister, 0x55); /* <<Subsequent Instruction>> */
+  iSSD1325_SetParameter (eTxFifoDataRegister, 0xBC); /* Set Pre-Charge Voltage */
+  iSSD1325_SetParameter (eTxFifoDataRegister, 0x10); /* <<Subsequent Instruction>> */
+  iSSD1325_SetParameter (eTxFifoDataRegister, 0xB4); /* Set Pre-Charge Compensation Level */
+  iSSD1325_SetParameter (eTxFifoDataRegister, 0x02); /* <<Subsequent Instruction>> */
+  iSSD1325_SetParameter (eTxFifoDataRegister, 0xB0); /* Set Pre-Charge Compensation Enable */
+  iSSD1325_SetParameter (eTxFifoDataRegister, 0x28); /* <<Subsequent Instruction>> */
+  iSSD1325_SetParameter (eTxFifoDataRegister, 0xBE); /* Set VCOMH Voltage */
+  iSSD1325_SetParameter (eTxFifoDataRegister, 0x1C); /* <<Subsequent Instruction>> */
+  iSSD1325_SetParameter (eTxFifoDataRegister, 0xBF); /* Set VSL */
+  iSSD1325_SetParameter (eTxFifoDataRegister, 0x0D); /* <<Subsequent Instruction>> */
+  iSSD1325_SetParameter (eTxFifoDataRegister, 0xA4); /* Set Display Mode */
+  iSSD1325_SetParameter (eTxFifoDataRegister, 0xAF); /* Set Display On */
+#else
+  /* Minimal configuration */
+  iSSD1325_SetParameter (eTxFifoDataRegister, SSD1325_CMD_DISPLAY_OFF);
+  iSSD1325_SetParameter (eTxFifoDataRegister, SSD1325_CMD_SET_DISPLAY_OFFSET);
+  iSSD1325_SetParameter (eTxFifoDataRegister, SSD1325_CMD_SET_DISPLAY_OFFSET_0);
+  iSSD1325_SetParameter (eTxFifoDataRegister, SSD1325_CMD_SET_DISPLAY_START_LINE);
+  iSSD1325_SetParameter (eTxFifoDataRegister, SSD1325_CMD_SET_DISPLAY_START_LINE_0);
+  iSSD1325_SetParameter (eTxFifoDataRegister, SSD1325_CMD_SET_DISPLAY_CURRENT_RNG_FR);
+  iSSD1325_SetParameter (eTxFifoDataRegister, SSD1325_CMD_SET_CONTRAST_CONTROL);
+  iSSD1325_SetParameter (eTxFifoDataRegister, SSD1325_CMD_SET_CONTRAST_CONTROL_DEFAULT);
+  iSSD1325_SetParameter (eTxFifoDataRegister, SSD1325_CMD_SET_ROW_PERIOD);
+  iSSD1325_SetParameter (eTxFifoDataRegister, SSD1325_CMD_SET_ROW_PERIOD_DEFAULT);
+  iSSD1325_SetParameter (eTxFifoDataRegister, SSD1325_CMD_SET_PHASE_LENGHT);
+  iSSD1325_SetParameter (eTxFifoDataRegister, SSD1325_CMD_SET_PHASE_LENGHT_DEFAULT);
+  iSSD1325_SetParameter (eTxFifoDataRegister, SSD1325_CMD_SET_PRE_CHARGE_VOLTAGE);
+  iSSD1325_SetParameter (eTxFifoDataRegister, SSD1325_CMD_SET_PRE_CHARGE_VOLTAGE_DEFAULT);
+  iSSD1325_SetParameter (eTxFifoDataRegister, SSD1325_CMD_SET_PRE_CHARGE_COMPENSATION);
+  iSSD1325_SetParameter (eTxFifoDataRegister, SSD1325_CMD_SET_PRE_CHARGE_COMPENSATION_DEFAULT);
+  iSSD1325_SetParameter (eTxFifoDataRegister, SSD1325_CMD_SET_PRE_CHARGE_COMPENSATION_ENABLE);
+  iSSD1325_SetParameter (eTxFifoDataRegister, SSD1325_CMD_SET_PRE_CHARGE_COMPENSATION_ENABLE_DEFAULT);
+  iSSD1325_SetParameter (eTxFifoDataRegister, SSD1325_CMD_SET_VCOMH_VOLTAGE);
+  iSSD1325_SetParameter (eTxFifoDataRegister, SSD1325_CMD_SET_VCOMH_VOLTAGE_DEFAULT);
+  iSSD1325_SetParameter (eTxFifoDataRegister, SSD1325_CMD_SET_VSL);
+  iSSD1325_SetParameter (eTxFifoDataRegister, SSD1325_CMD_SET_VSL_DEFAULT);
+  iSSD1325_SetParameter (eTxFifoDataRegister, SSD1325_CMD_SET_DISPLAY_NORMAL_MODE);
+  iSSD1325_SetParameter (eTxFifoDataRegister, SSD1325_CMD_DISPLAY_ON);
+#endif
+  
+  /* Make sure configuration is done */
+  if(iSSD1325_WaitUntilTxDone())
+  {
+    return(SSD1325_RETURN_FAILURE_CODE);
+  }
+  
+  /* No plausibility check here */
+  return(SSD1325_RETURN_SUCCESS_CODE);  
+  
+}
+
+/* Function iSSD1325_ClearLine(...) */
+/* ==================================================================================================== */
+int32_t iSSD1325_ClearLine(uint32_t uLine, uint32_t uPattern)
+{
+  
+  /* Helpers */
+  volatile uint32_t uPixelPairCounter = 0;
+  volatile uint32_t uColumnCounter = 0;
+
+  /* Prepare to send Commands */
+  iSSD1325_PrepareSendCommand();
+  
+  /* Send configuration */  
+  iSSD1325_SetParameter (eTxFifoDataRegister, SSD1325_CMD_SET_DISPLAY_OFFSET);
+  iSSD1325_SetParameter (eTxFifoDataRegister, SSD1325_CMD_SET_DISPLAY_OFFSET_0);
+  iSSD1325_SetParameter (eTxFifoDataRegister, SSD1325_CMD_SET_DISPLAY_START_LINE);
+  iSSD1325_SetParameter (eTxFifoDataRegister, SSD1325_CMD_SET_DISPLAY_START_LINE_0);
+  iSSD1325_SetParameter (eTxFifoDataRegister, SSD1325_CMD_SET_DISPLAY_RE_MAP);
+  iSSD1325_SetParameter (eTxFifoDataRegister, SSD1325_CMD_SET_DISPLAY_RE_MAP_DEFAULT);
+  iSSD1325_SetParameter (eTxFifoDataRegister, SSD1325_CMD_SET_COLUMN_ADDRESS);
+  iSSD1325_SetParameter (eTxFifoDataRegister, SSD1335_COL_BEGIN_OFFSET);
+  iSSD1325_SetParameter (eTxFifoDataRegister, SSD1335_COL_END_OFFSET);
+  iSSD1325_SetParameter (eTxFifoDataRegister, SSD1325_CMD_SET_ROW_ADDRESS);
+  iSSD1325_SetParameter (eTxFifoDataRegister, SSD1335_ROW_BEGIN_OFFSET+(uLine*SSD1325_ROWS_PER_CHAR));
+  iSSD1325_SetParameter (eTxFifoDataRegister, SSD1335_ROW_END_OFFSET+(uLine*SSD1325_ROWS_PER_CHAR));
+  
+  /* Prepare to send Commands */
+  iSSD1325_PrepareSendData();
+  
+  /* Write each line */
+  for (uColumnCounter=0; uColumnCounter < SSD1325_COL_CHAR_COUNT; uColumnCounter++)
+  {
+    /* Make sure that no transfer is pending before sending next data */
+    if(iSSD1325_WaitUntilTxDone())
+    {
+      return(SSD1325_RETURN_FAILURE_CODE);
+    }
+    
+    /* Begin with data */
+    for (uPixelPairCounter=0; uPixelPairCounter < SSD1325_ROWS_PER_CHAR*SSD1325_COLUMNS_PER_CHAR; uPixelPairCounter++)
+    {
+      iSSD1325_SetParameter (eTxFifoDataRegister, uPattern);
+    }
+  }
+    
+  /* Make sure that no transfer is pending before sending next data */
+  if(iSSD1325_WaitUntilTxDone())
+  {
+    return(SSD1325_RETURN_FAILURE_CODE);
+  }
+  
+  /* Fill the last column */
+  for (uPixelPairCounter=0; uPixelPairCounter < 8+1; uPixelPairCounter++)
+  {
+    iSSD1325_SetParameter (eTxFifoDataRegister, uPattern);  
+  }
+
+  /* Wait for last column */
+  if(iSSD1325_WaitUntilTxDone())
+  {
+    return(SSD1325_RETURN_FAILURE_CODE);
+  }
+    
+  /* No plausibility check here */
+  return(SSD1325_RETURN_SUCCESS_CODE);  
+  
+}
+
+/* Function iSSD1325_ClearChar(...) */
+/* ==================================================================================================== */
+int32_t iSSD1325_ClearChar (uint32_t uPositionX, uint32_t uPositionY, uint32_t uPattern)
+{
+  
+  /* Helpers */
+  volatile uint32_t uPatternPrintCounter = 0;
+  
+  /* Position check */
+  if((uPositionX>SSD1325_COL_CHAR_COUNT) || (uPositionY>SSD1325_ROW_CHAR_COUNT))
+  {
+    return(SSD1325_RETURN_FAILURE_CODE);
+  }
+  
+  /* Prepare to send commands */
+  iSSD1325_PrepareSendCommand();
+  
+  /* Send configuration */  
+  iSSD1325_SetParameter (eTxFifoDataRegister, SSD1325_CMD_SET_DISPLAY_OFFSET);                    
+  iSSD1325_SetParameter (eTxFifoDataRegister, SSD1325_CMD_SET_DISPLAY_OFFSET_0);
+  iSSD1325_SetParameter (eTxFifoDataRegister, SSD1325_CMD_SET_DISPLAY_START_LINE);
+  iSSD1325_SetParameter (eTxFifoDataRegister, SSD1325_CMD_SET_DISPLAY_START_LINE_0);
+  iSSD1325_SetParameter (eTxFifoDataRegister, SSD1325_CMD_SET_DISPLAY_RE_MAP);
+  iSSD1325_SetParameter (eTxFifoDataRegister, SSD1325_CMD_SET_DISPLAY_RE_MAP_DEFAULT);
+  iSSD1325_SetParameter (eTxFifoDataRegister, SSD1325_CMD_SET_COLUMN_ADDRESS);
+  iSSD1325_SetParameter (eTxFifoDataRegister, SSD1335_COL_BEGIN_OFFSET+(uPositionX*SSD1325_COLUMNS_PER_CHAR));
+  iSSD1325_SetParameter (eTxFifoDataRegister, SSD1335_COL_END_OFFSET);
+  iSSD1325_SetParameter (eTxFifoDataRegister, SSD1325_CMD_SET_ROW_ADDRESS);
+  iSSD1325_SetParameter (eTxFifoDataRegister, SSD1335_ROW_BEGIN_OFFSET+(uPositionY*SSD1325_ROWS_PER_CHAR));
+  iSSD1325_SetParameter (eTxFifoDataRegister, SSD1335_ROW_END_OFFSET+(uPositionY*SSD1325_ROWS_PER_CHAR));    
+  
+  /* Wait until transfer is done */  
+  if(iSSD1325_WaitUntilTxDone())
+  {
+    return(SSD1325_RETURN_FAILURE_CODE);
+  }
+  
+  /* Prepare to send pattern */
+  iSSD1325_PrepareSendData();
+    
+  /* Send pattern now */
+  for (uPatternPrintCounter=0; uPatternPrintCounter < SSD1325_ROWS_PER_CHAR*SSD1325_COLUMNS_PER_CHAR; uPatternPrintCounter++)
+  {
+    iSSD1325_SetParameter (eTxFifoDataRegister, uPattern);
+  }
+
+  /* Wait until transfer is done */
+  if(iSSD1325_WaitUntilTxDone())
+  {
+    return(SSD1325_RETURN_FAILURE_CODE);
+  }  
+  
+  /* Pattern is set now */
+  return(SSD1325_RETURN_SUCCESS_CODE);   
+  
+}
+
+/* Function iSSD1325_ClearScreen(...) */
+/* ==================================================================================================== */
+int32_t iSSD1325_ClearScreen(void)
+{
+ 
+  /* Helper */
+  uint32_t uLineCounter = 0;
+  
+  /* Clean each line */
+  for(uLineCounter=0; uLineCounter<SSD1325_ROW_CHAR_COUNT; uLineCounter++)
+  {
+    if(iSSD1325_ClearLine(uLineCounter,0))
+    {
+      return(SSD1325_RETURN_FAILURE_CODE);  
+    }
+  }
+  
+  /* Screen is clear now */
+  return(SSD1325_RETURN_SUCCESS_CODE);  
+
+}
+
+/* Function iSSD1325_PrintChar(...) */
+/* ==================================================================================================== */
+int32_t iSSD1325_PrintChar(char cChar, uint32_t uPositionX, uint32_t uPositionY)
+{
+  
+  /* Helper */
+  uint32_t uLookupPosition = 0;
+  volatile uint32_t uPrintCharCounter = 0;
+  
+  /* Position check */
+  if((uPositionX>SSD1325_COL_CHAR_COUNT) || (uPositionY>SSD1325_ROW_CHAR_COUNT))
+  {
+    return(SSD1325_RETURN_FAILURE_CODE);
+  }
+  
+  /* Get Position at the lookup table */
+  if (cChar >= ' ' && cChar <='`') /* Must be an upper case char or special character */
+  {
+    uLookupPosition = (uint32_t)cChar - 32; 
+  }
+  else if (cChar >= 'a' && cChar <='z')
+  {
+    /* Use upper chars if no lower chars are available */
+#if SSD1325_USE_LOWER_CHARS
+    uLookupPosition = (uint32_t)cChar - 32; 
+#else
+    uLookupPosition = (uint32_t)cChar - (32+32); 
+#endif    
+  }
+  else if (cChar >= '{' && cChar <='~')
+  {
+    /* Use upper chars if no lower chars are available */
+#if SSD1325_USE_LOWER_CHARS
+    uLookupPosition = (uint32_t)cChar - 32; 
+#else
+    uLookupPosition = (uint32_t)cChar - (32+26); 
+#endif    
+  }
+  else
+  {
+    /* Print unknown sign (NUL, SOH, ..., DEL)*/
+#if SSD1325_USE_LOWER_CHARS
+    uLookupPosition = 95;
+#else
+    uLookupPosition = 69;
+#endif    
+  }
+
+  /* Prepare to send commands */
+  iSSD1325_PrepareSendCommand();
+  
+  /* Send configuration */  
+  iSSD1325_SetParameter (eTxFifoDataRegister, SSD1325_CMD_SET_DISPLAY_OFFSET);                    
+  iSSD1325_SetParameter (eTxFifoDataRegister, SSD1325_CMD_SET_DISPLAY_OFFSET_0);
+  iSSD1325_SetParameter (eTxFifoDataRegister, SSD1325_CMD_SET_DISPLAY_START_LINE);
+  iSSD1325_SetParameter (eTxFifoDataRegister, SSD1325_CMD_SET_DISPLAY_START_LINE_0);
+  iSSD1325_SetParameter (eTxFifoDataRegister, SSD1325_CMD_SET_DISPLAY_RE_MAP);
+  iSSD1325_SetParameter (eTxFifoDataRegister, SSD1325_CMD_SET_DISPLAY_RE_MAP_DEFAULT);
+  iSSD1325_SetParameter (eTxFifoDataRegister, SSD1325_CMD_SET_COLUMN_ADDRESS);
+  iSSD1325_SetParameter (eTxFifoDataRegister, SSD1335_COL_BEGIN_OFFSET+(uPositionX*SSD1325_COLUMNS_PER_CHAR));
+  iSSD1325_SetParameter (eTxFifoDataRegister, SSD1335_COL_END_OFFSET);
+  iSSD1325_SetParameter (eTxFifoDataRegister, SSD1325_CMD_SET_ROW_ADDRESS);
+  iSSD1325_SetParameter (eTxFifoDataRegister, SSD1335_ROW_BEGIN_OFFSET+(uPositionY*SSD1325_ROWS_PER_CHAR));
+  iSSD1325_SetParameter (eTxFifoDataRegister, SSD1335_ROW_END_OFFSET+(uPositionY*SSD1325_ROWS_PER_CHAR));    
+  
+  /* Wait until transfer is done */
+  if(iSSD1325_WaitUntilTxDone())
+  {
+    return(SSD1325_RETURN_FAILURE_CODE);
+  }
+  
+  /* Prepare to send data */
+  iSSD1325_PrepareSendData();
+  
+  /* Send data now */
+  for (uPrintCharCounter=0; uPrintCharCounter < SSD1325_ROWS_PER_CHAR*SSD1325_COLUMNS_PER_CHAR; uPrintCharCounter++)
+  {
+    iSSD1325_SetParameter (eTxFifoDataRegister, a_iCharMap[uLookupPosition][uPrintCharCounter]);    
+  }
+
+  /* Wait until transfer is done */
+  if(iSSD1325_WaitUntilTxDone())
+  {
+    return(SSD1325_RETURN_FAILURE_CODE);
+  }
+  
+  /* Finished successfully */
+  return(SSD1325_RETURN_SUCCESS_CODE);     
+  
+}
+
+/* Function iSSD1325_PrintString(...) */
+/* ==================================================================================================== */
+int32_t iSSD1325_PrintString(const char* p_cChar, uint32_t uStartPositionX, uint32_t uStartPositionY)
+{
+  
+  /* Helper */
+  uint32_t uPositionX = uStartPositionX;
+  
+  /* Check for NULL terminator */
+  while(*p_cChar != '\0') 
+  {
+    if(iSSD1325_PrintChar((int8_t)*p_cChar, uPositionX, uStartPositionY))
+    {
+      return(SSD1325_RETURN_FAILURE_CODE);
+    }
+    else
+    {
+      uPositionX++;
+      p_cChar++;
+    }
+  }
+  
+  /* Finished successfully */
+  return(SSD1325_RETURN_SUCCESS_CODE);
+  
+}
+
+/* Function iSSD1325_PrepareSendData(...) */
+/* ==================================================================================================== */
+int32_t iSSD1325_PrepareSendData(void)
+{
+  
+  /* Helper for read - modify - write */
+  uint32_t uGetControlRegister = 0;
+  
+  /* Make sure that no transfer is pending before changing DC */
+  if(iSSD1325_WaitUntilTxDone())
+  {
+    return(SSD1325_RETURN_FAILURE_CODE);
+  }
+  
+  /* Get the control register and set data/command bit to zero */
+  iSSD1325_GetParameter (eControlRegister, &uGetControlRegister);
+  uGetControlRegister = uGetControlRegister|SSD1325_REG_CONTROL_BIT_DATA_COMMAND;
+  iSSD1325_SetParameter (eControlRegister, uGetControlRegister);
+   
+  /* No plausibility check here */
+  return(SSD1325_RETURN_SUCCESS_CODE);  
+  
+}
+
+/* Function iSSD1325_PrepareSendCommand(...) */
+/* ==================================================================================================== */
+int32_t iSSD1325_PrepareSendCommand(void)
+{
+  
+  /* Helper */
+  uint32_t uGetControlRegister = 0;
+  
+  /* Make sure that no transfer is pending before changing DC */
+  if(iSSD1325_WaitUntilTxDone())
+  {
+    return(SSD1325_RETURN_FAILURE_CODE);
+  }
+  
+  /* Get the control register and set data/command bit to one */
+  iSSD1325_GetParameter (eControlRegister, &uGetControlRegister);
+  uGetControlRegister = uGetControlRegister&~SSD1325_REG_CONTROL_BIT_DATA_COMMAND;
+  iSSD1325_SetParameter (eControlRegister, uGetControlRegister);
+  
+  /* No plausibility check here */
+  return(SSD1325_RETURN_SUCCESS_CODE);  
+  
+}
+
+/* Function iSSD1325_WaitUntilTxDone(...) */
+/* ==================================================================================================== */
+int32_t iSSD1325_WaitUntilTxDone(void)
+{
+  
+  /* Helper */
+  volatile uint32_t uTimeout = 0;
+  uint32_t uGetStatusRegister = 0;
+  
+  /* Wait for finish flag or timeout */
+  for(uTimeout = 0; uTimeout < SSD1325_MAX_WAIT_CC_UNTIL_TX_DONE; uTimeout++)
+  {
+    iSSD1325_GetParameter(eTxFifoStatusRegister, &uGetStatusRegister);
+    if((uGetStatusRegister&SSD1325_REG_TX_FIFO_STATUS_BIT_TX_DONE) == SSD1325_REG_TX_FIFO_STATUS_BIT_TX_DONE)
+    {
+      /* Driver finished before timeout */
+      return(SSD1325_RETURN_SUCCESS_CODE);
+    }
+  }
+
+  /* Driver didn't finish */
+  return(SSD1325_RETURN_FAILURE_CODE);
+
+}
+
+/* Function iSSD1325_EnableInterrupt(...) */
+/* ==================================================================================================== */
+int32_t iSSD1325_EnableInterrupt(bool fConfig)
+{
+  
+  /* Helper for read - modify - write */
+  uint32_t uGetControlRegister = 0;
+  
+  /* Get the control register and set data/command bit to zero */
+  iSSD1325_GetParameter(eControlRegister, &uGetControlRegister);
+  
+  /* Enable (fConfig = true) or disable */
+  if(fConfig)
+  {
+    uGetControlRegister = uGetControlRegister|SSD1325_REG_CONTROL_BIT_IRQ_ENABLE;
+  }
+  else
+  {
+    uGetControlRegister = uGetControlRegister&~SSD1325_REG_CONTROL_BIT_IRQ_ENABLE;
+  }
+  
+  /* Write new configuration */
+  iSSD1325_SetParameter(eControlRegister, uGetControlRegister);
+  
+  /* No plausibility check here */
+  return(SSD1325_RETURN_SUCCESS_CODE);  
+  
+}
+
+/* Function iSSD1325_ClearInterrupt(...) */
+/* ==================================================================================================== */
+int32_t iSSD1325_ClearInterrupt(void)
+{
+  
+  /* Helper for read - modify - write */
+  uint32_t uGetControlRegister = 0;
+  
+  /* Get the control register and set the irq clear bit */
+  iSSD1325_GetParameter (eControlRegister, &uGetControlRegister);
+  uGetControlRegister = uGetControlRegister|SSD1325_REG_CONTROL_BIT_IRQ_CLEAR;
+  iSSD1325_SetParameter (eControlRegister, uGetControlRegister);
+    
+  /* No plausibility check here */
+  return(SSD1325_RETURN_SUCCESS_CODE);  
+  
+}
+
+/* Function iSSD1325_DrawRectangle(...) */
+/* ==================================================================================================== */
+int32_t iSSD1325_DrawRectangle(uint32_t uStartPositionX, uint32_t uStartPositionY, 
+                               uint32_t uEndPositionX, uint32_t uEndPositionY, 
+                               uint32_t uPattern)
+{
+  
+  /* Prepare to send commands */
+  iSSD1325_PrepareSendCommand();
+  
+  /* Send configuration */  
+  iSSD1325_SetParameter (eTxFifoDataRegister, SSD1325_CMD_DRAW_RECTANGLE);
+  iSSD1325_SetParameter (eTxFifoDataRegister, uStartPositionX);
+  iSSD1325_SetParameter (eTxFifoDataRegister, SSD1335_ROW_BEGIN_OFFSET+uStartPositionY);
+  iSSD1325_SetParameter (eTxFifoDataRegister, uEndPositionX);
+  iSSD1325_SetParameter (eTxFifoDataRegister, SSD1335_ROW_BEGIN_OFFSET+uEndPositionY);
+  iSSD1325_SetParameter (eTxFifoDataRegister, uPattern);
+
+  /* Wait until transfer is done */
+  if(iSSD1325_WaitUntilTxDone())
+  {
+    return(SSD1325_RETURN_FAILURE_CODE);
+  }
+  
+  /* Prepare to send data */
+  iSSD1325_PrepareSendData();
+  
+  /* No plausibility check here */
+  return(SSD1325_RETURN_SUCCESS_CODE);   
+  
+}
+
+/* Function iSSD1325_DrawBitmap(...) */
+/* ==================================================================================================== */
+int32_t iSSD1325_DrawBitmap(uint32_t uStartPositionX, uint32_t uStartPositionY, 
+                            uint32_t uEndPositionX, uint32_t uEndPositionY, 
+                            int8_t a_iBitmap[])
+{
+
+  /* Helper */
+  volatile uint32_t uPrintCol = 0;
+  uint32_t uSendPattern = 0;
+  
+  /* Prepare to send commands */
+  iSSD1325_PrepareSendCommand();
+  
+  /* Send configuration */  
+  iSSD1325_SetParameter (eTxFifoDataRegister, SSD1325_CMD_SET_DISPLAY_OFFSET);
+  iSSD1325_SetParameter (eTxFifoDataRegister, SSD1325_CMD_SET_DISPLAY_OFFSET_0);
+  iSSD1325_SetParameter (eTxFifoDataRegister, SSD1325_CMD_SET_DISPLAY_START_LINE);
+  iSSD1325_SetParameter (eTxFifoDataRegister, SSD1325_CMD_SET_DISPLAY_START_LINE_0);
+  iSSD1325_SetParameter (eTxFifoDataRegister, SSD1325_CMD_SET_DISPLAY_RE_MAP);
+  iSSD1325_SetParameter (eTxFifoDataRegister, SSD1325_CMD_SET_DISPLAY_RE_MAP_DEFAULT);
+  iSSD1325_SetParameter (eTxFifoDataRegister, SSD1325_CMD_SET_COLUMN_ADDRESS);
+  iSSD1325_SetParameter (eTxFifoDataRegister, SSD1335_COL_BEGIN_OFFSET+uStartPositionX);
+  iSSD1325_SetParameter (eTxFifoDataRegister, (SSD1335_COL_BEGIN_OFFSET+uStartPositionX)+(uEndPositionX-uStartPositionX));
+  iSSD1325_SetParameter (eTxFifoDataRegister, SSD1325_CMD_SET_ROW_ADDRESS);
+  iSSD1325_SetParameter (eTxFifoDataRegister, SSD1335_ROW_BEGIN_OFFSET+uStartPositionY);
+  iSSD1325_SetParameter (eTxFifoDataRegister, (SSD1335_ROW_BEGIN_OFFSET+uStartPositionY)+(uEndPositionY-uStartPositionY));  
+  
+  /* Wait until transfer is done */
+  if(iSSD1325_WaitUntilTxDone())
+  {
+    return(SSD1325_RETURN_FAILURE_CODE);
+  }
+  
+  /* Prepare to send data */
+  iSSD1325_PrepareSendData();
+  
+  /* Send data now */
+  for (uPrintCol=0; uPrintCol < ((uEndPositionY-uStartPositionY)+1)*((uEndPositionX-uStartPositionX)+1); uPrintCol++)
+  {      
+    uSendPattern = (uint32_t) (a_iBitmap[uPrintCol]&0xff);
+    iSSD1325_SetParameter (eTxFifoDataRegister, uSendPattern);
+  }
+
+  /* Wait until transfer is done */
+  if(iSSD1325_WaitUntilTxDone())
+  {
+    return(SSD1325_RETURN_FAILURE_CODE);
+  }
+  
+  /* Finished successfully */
+  return(SSD1325_RETURN_SUCCESS_CODE);     
+
+}
+
+#if SSD1325_TARGET_EMBEDDED==0
+/* Function vSSD1325_InitDisplay(...) */
+/* ==================================================================================================== */
+void vSSD1325_InitDisplay(eb_device_t device)
+{
+
+  /* Helper */
+  static bool fInitDone = false; /* For further use */
+  uint32_t uLineIterator = 0;
+  
+  /* Get the device */
+  s_DeviceName = device;
+  
+  /* Check if display was been initialized already */
+  if (fInitDone)
+  {
+    return;
+  }
+  else
+  {
+    /* Find device */
+    if (iSSD1325_AutoInitialize())
+    {
+      printf("Error: Can't find SDB record!\n");
+    }
+    
+    /* Reset the display */
+    if (iSSD1325_ResetDevice())
+    {
+      printf("Error: Display reset failed!\n");
+    }
+    
+    /* Configure the display */
+    if (iSSD1325_ConfigureScreen())
+    {
+      printf("Error: Display configuration failed!\n");
+    }
+    
+    /* Clear each line */
+    for (uLineIterator=0; uLineIterator<SSD1325_ROW_CHAR_COUNT; uLineIterator++)
+    {
+      if (iSSD1325_ClearLine(uLineIterator,0x00))
+      {
+        printf("Error: Clearing screen failed!\n");
+      }
+    }
+  
+    /* Reset done */
+    fInitDone = true;
+    
+  }
+  
+}
+
+/* Function vSSD1325_HostPutLocC(...) */
+/* ==================================================================================================== */
+void vSSD1325_HostPutLocC(eb_device_t device, char ascii, unsigned char row, unsigned char col)
+{
+  
+  /* Initialize the display */
+  vSSD1325_InitDisplay(device);
+  
+  /* Placeholder according to "simple-display" binary/application */
+  if (iSSD1325_PrintChar(ascii, col, row))
+  {
+    printf("Error: PrintChar(...) failed!\n");
+  }
+  
+}
+
+/* Function vSSD1325_HostPutC(...) */
+/* ==================================================================================================== */
+void vSSD1325_HostPutC(eb_device_t device, char ascii)
+{
+  
+  /* Initialize the display */
+  vSSD1325_InitDisplay(device);
+  
+  /* Placeholder according to "simple-display" binary/application */
+  if (iSSD1325_PrintChar(ascii, 0, 0))
+  {
+    printf("Error: PrintChar(...) failed!\n");
+  }
+
+}
+
+/* Function vSSD1325_HostPutS(...) */
+/* ==================================================================================================== */
+void vSSD1325_HostPutS (eb_device_t device, const char* str)
+{
+  
+  /* Helpers */
+  uint32_t uCurrentCol = 0;
+  uint32_t uCurrentRow = 0;
+  uint32_t uStringIterator = 0;
+  uint32_t uTotalStringLenght = 0;
+  char buffer[8*21];
+  
+  /* Initialize the display */
+  vSSD1325_InitDisplay(device);
+  
+  /* Get string length and copy string to local buffer */
+  while (*str != '\0')
+  {
+    str++; /* Increase pointer directly, because on position 0 comes junk ('\f') */
+    buffer[uTotalStringLenght] = *str; 
+    uTotalStringLenght++;
+  }
+  
+  /* Check if the string contains data */
+  if (uTotalStringLenght>0)
+  {
+  
+    /* Print each character to the correct position */
+    for(uStringIterator=0; uStringIterator<uTotalStringLenght-1; uStringIterator++)
+    {
+    
+      /* Print each character */
+      iSSD1325_PrintChar(buffer[uStringIterator], uCurrentCol, uCurrentRow);
+
+      /* Next position */
+      uCurrentCol++;
+      
+      /* Range check */
+      if (uCurrentCol>SSD1325_COL_CHAR_COUNT-1)
+      { 
+        /* Col correction */
+        uCurrentCol=0; 
+        uCurrentRow++;
+        /* Row correction */
+        if(uCurrentRow>SSD1325_ROW_CHAR_COUNT-1)
+        {
+          uCurrentRow=0;
+        }
+      }
+      
+    } /* Print each character to the correct position */
+  } /* if (uTotalStringLenght>0) */
+
+}
+
+/* Function vSSD1325_HostPutLine(...) */
+/* ==================================================================================================== */
+void vSSD1325_HostPutLine (eb_device_t device, const char *sPtr, unsigned char row)
+{
+  
+  /* Initialize the display */
+  vSSD1325_InitDisplay(device);
+  
+  /* Placeholder according to "simple-display" binary/application */
+  if (iSSD1325_PrintString(sPtr, 0, row))
+  {
+    printf("Error: PrintString(...) failed!\n");
+  }
+  
+}
+#endif
