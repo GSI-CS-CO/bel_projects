@@ -4,239 +4,427 @@ use ieee.numeric_std.all;
 
 library work;
 use work.monster_pkg.all;
+use work.altera_lvds_pkg.all;
+use work.ramsize_pkg.c_lm32_ramsizes;
 
 entity microtca_control is
+  generic( 
+    g_LOAD_SHIFT_REG_EN : boolean := false
+  );
   port(
-    clk_20m_vcxo_i    : in std_logic;  -- 20MHz VCXO clock
-    clk_125m_pllref_i : in std_logic;  -- 125 MHz PLL reference
-    clk_125m_local_i  : in std_logic;  -- local clk from 125Mhz oszillator
-    
     -----------------------------------------
-    -- PCI express pins
+    -- Clocks
     -----------------------------------------
-    pcie_refclk_i  : in  std_logic;
-    pcie_rx_i      : in  std_logic_vector(3 downto 0);
-    pcie_tx_o      : out std_logic_vector(3 downto 0);
-    nPCI_RESET     : in std_logic;
+    clk_20m_vcxo_i    : in std_logic; -- 20MHz VCXO clock (BANK 3A - AF21)
+    clk_125m_pllref_i : in std_logic; -- 125 MHz PLL reference - (clk_125m_wrpll_0  on sch)
+    clk_125m_local_i  : in std_logic; -- local clk from 125Mhz oszillator (clk_osc_1  on sch)
+    clk_sfp_ref_i     : in std_logic; -- SFP clk (clk_125m_wrpll_1 on sch)
+    clk_lvtio_i       : in std_logic; -- LEMO front panel input
+
+--    clk_osc_0_i         : in std_logic;  -- local clk from 100MHz or 125Mhz oscillator
+
+    -----------------------------------------------------------------------
+    -- reset
+    -----------------------------------------------------------------------
+    fpga_res_i        : in std_logic;
+    nres_i            : in std_logic;
     
-    pe_smdat        : inout std_logic; -- !!!
-    pe_snclk        : out std_logic;   -- !!!
-    pe_waken        : out std_logic;   -- !!!
+    -----------------------------------------------------------------------
+    -- SFP 
+    -----------------------------------------------------------------------
+   
+    sfp_tx_dis_o     : out std_logic := '0';
+    sfp_tx_fault_i   : in std_logic;
+    sfp_los_i        : in std_logic;
     
+    sfp_txp_o        : out std_logic;
+    sfp_rxp_i        : in  std_logic;
+    
+    sfp_mod0_i       : in    std_logic;  -- grounded by module
+    sfp_mod1_io      : inout std_logic;  -- SCL
+    sfp_mod2_io      : inout std_logic; -- SDA
+
     ------------------------------------------------------------------------
     -- WR DAC signals
     ------------------------------------------------------------------------
-    dac_sclk       : out std_logic;
-    dac_din        : out std_logic;
-    ndac_cs        : out std_logic_vector(2 downto 1);
+    wr_dac_sclk_o  : out std_logic;
+    wr_dac_din_o   : out std_logic;
+    wr_ndac_cs_o   : out std_logic_vector(2 downto 1);
     
     -----------------------------------------------------------------------
     -- OneWire
     -----------------------------------------------------------------------
-    rom_data        : inout std_logic;
+    rom_data_io     : inout std_logic;
     
     -----------------------------------------------------------------------
     -- lcd display
     -----------------------------------------------------------------------
-    di              : out std_logic_vector(6 downto 0);
-    ai              : in  std_logic_vector(1 downto 0);
-    dout_LCD        : in  std_logic;
-    wrdis           : out std_logic := '0';
-    dres            : out std_logic := '1';
+    dis_di_o        : out std_logic_vector(6 downto 0);
+    dis_ai_i        : in  std_logic_vector(1 downto 0);
+    dis_do_i        : in  std_logic;
+    dis_wr_o        : out std_logic := '0';
+    dis_rst_o       : out std_logic := '1';
     
     -----------------------------------------------------------------------
     -- connector cpld
     -----------------------------------------------------------------------
-    con             : out std_logic_vector(5 downto 1);
+    con             : in std_logic_vector(5 downto 1);
     
     -----------------------------------------------------------------------
-    -- io
+    -- logic analyzer
     -----------------------------------------------------------------------
-    fpga_res        : in std_logic;
-    nres            : in std_logic;
-    pbs2            : in std_logic;
+    hpwck           : out   std_logic := 'Z';
     hpw             : inout std_logic_vector(15 downto 0) := (others => 'Z'); -- logic analyzer
-    ant             : inout std_logic_vector(26 downto 1) := (others => 'Z'); -- trigger bus
+
+    -----------------------------------------------------------------------
+    -- hex switch
+    -----------------------------------------------------------------------
+    hswf_i          : in std_logic_vector(4 downto 1);
     
     -----------------------------------------------------------------------
-    -- lvds/lemos
+    -- push buttons
     -----------------------------------------------------------------------
-    lvds_p_i         : in std_logic_vector(4 downto 0);
-    lvds_n_i         : in std_logic_vector(4 downto 0);
-    lvds_p_o         : out std_logic_vector(4 downto 0);
-    lvds_n_o         : out std_logic_vector(4 downto 0);
-    lvds_ctrl_oen_o  : out std_logic_vector(4 downto 0);
-    lvds_ctrl_term_o : out std_logic_vector(4 downto 0);
-    lvds_led_nact_o  : out std_logic_vector(4 downto 0);
-    lvds_led_ndir_o  : out std_logic_vector(4 downto 0);
-    
+    pbs_f_i         : in std_logic;
+
     -----------------------------------------------------------------------
     -- usb
     -----------------------------------------------------------------------
-    slrd            : out   std_logic;
-    slwr            : out   std_logic;
-    fd              : inout std_logic_vector(7 downto 0) := (others => 'Z');
-    pa              : inout std_logic_vector(7 downto 0) := (others => 'Z');
-    ctl             : in    std_logic_vector(2 downto 0);
-    uclk            : in    std_logic;
-    ures            : out   std_logic;
+    slrd              : out   std_logic;
+    slwr              : out   std_logic;
+    fd                : inout std_logic_vector(7 downto 0) := (others => 'Z');
+    pa                : inout std_logic_vector(7 downto 0) := (others => 'Z');
+    ctl               : in    std_logic_vector(2 downto 0);
+    uclk              : in    std_logic;
+    ures              : out   std_logic;
+    ifclk             : inout std_logic := 'Z';
+    wakeup            : inout std_logic := 'Z';
     
     -----------------------------------------------------------------------
-    -- leds (6 LEDs for WR and FTRN status)
+    -- leds on board - user
     -----------------------------------------------------------------------
-    led             : out std_logic_vector(6 downto 1) := (others => '1');
-    led_user        : out std_logic_vector(8 downto 1) := (others => '1');
+    led_user_o      : out std_logic_vector(8 downto 1) := (others => '0');
     
     -----------------------------------------------------------------------
-    -- leds SFPs
+    -- leds on front panel - status
     -----------------------------------------------------------------------
-    ledsfpr          : out std_logic_vector(4 downto 1);
-    ledsfpg          : out std_logic_vector(4 downto 1);
-    sfp234_ref_clk_i : in  std_logic;
+    led_status_o      : out std_logic_vector(6 downto 1);
 
     -----------------------------------------------------------------------
-    -- SFP1  
+    -- lvds/lvttl lemos on front panel
     -----------------------------------------------------------------------
-    
-    sfp1_tx_disable_o : out std_logic := '0';
-    sfp1_tx_fault     : in std_logic;
-    sfp1_los          : in std_logic;
-    
-    --sfp1_txp_o        : out std_logic;
-    --sfp1_rxp_i        : in  std_logic;
-    
-    sfp1_mod0         : in    std_logic; -- grounded by module
-    sfp1_mod1         : inout std_logic; -- SCL
-    sfp1_mod2         : inout std_logic; -- SDA
-    
+    lvtio_in_n_i     : in  std_logic_vector(5 downto 1);
+    lvtio_in_p_i     : in  std_logic_vector(5 downto 1);
+    lvtio_out_n_o    : out std_logic_vector(5 downto 1);
+    lvtio_out_p_o    : out std_logic_vector(5 downto 1);
+    lvtio_oe_n_o     : out std_logic_vector(5 downto 1);
+    lvtio_term_en_o  : out std_logic_vector(5 downto 1);
+    lvtio_led_act_o  : out std_logic_vector(5 downto 1);
+    lvtio_led_dir_o  : out std_logic_vector(5 downto 1);
+
+    -- enable clock input from front panel LEMO
+    lvtio_in_clk_en_n_o   : out std_logic;
+
+
+
     -----------------------------------------------------------------------
-    -- SFP2
     -----------------------------------------------------------------------
-    
-    sfp2_tx_disable_o : out std_logic := '0';
-    sfp2_tx_fault     : in  std_logic;
-    sfp2_los          : in  std_logic;
-    
-    --sfp2_txp_o        : out std_logic;
-    --sfp2_rxp_i        : in  std_logic;
-    
-    sfp2_mod0         : in    std_logic; -- grounded by module
-    sfp2_mod1         : inout std_logic; -- SCL
-    sfp2_mod2         : inout std_logic; -- SDA
-    
+    -- form factor specific pins/interfaces
     -----------------------------------------------------------------------
-    -- SFP3 
     -----------------------------------------------------------------------
-       
-    sfp3_tx_disable_o : out std_logic := '0';
-    sfp3_tx_fault     : in std_logic;
-    sfp3_los          : in std_logic;
+
+    -----------------------------------------
+    -- host bus interface PCI express pins
+    -----------------------------------------
+    pcie_clk_i     : in  std_logic;
+    pcie_rx_i      : in  std_logic_vector(3 downto 0);
+    pcie_tx_o      : out std_logic_vector(3 downto 0);
     
-    --sfp3_txp_o        : out std_logic;
-    --sfp3_rxp_i        : in  std_logic;
-    
-    sfp3_mod0         : in    std_logic; -- grounded by module
-    sfp3_mod1         : inout std_logic; -- SCL
-    sfp3_mod2         : inout std_logic; -- SDA
-    
+
+
     -----------------------------------------------------------------------
-    -- SFP4 
+    -- lvds/lvds libera triggers on backplane
     -----------------------------------------------------------------------
+    lib_trig_n_o        : out std_logic_vector(3 downto 0);
+    lib_trig_p_o        : out std_logic_vector(3 downto 0);
+    lib_trig_oe_o       : out std_logic;
+
+    -----------------------------------------------------------------------
+    -- lvds/m-lvds MTCA.4 triggers, gates, clocks on backplane
+    -----------------------------------------------------------------------
+    mlvdio_in_n_i       : in  std_logic_vector(8 downto 1);
+    mlvdio_in_p_i       : in  std_logic_vector(8 downto 1);
+    mlvdio_out_n_o      : out std_logic_vector(8 downto 1);
+    mlvdio_out_p_o      : out std_logic_vector(8 downto 1);
+
+    -- enable buffer output towards BACKPLANE (driver enable, active hi)
+    mlvdio_de_o     : out std_logic_vector(8 downto 1);
+    -- enable buffer output towards FPGA      (receiver enable, active lo)
+    mlvdio_re_n_o   : out std_logic_vector(8 downto 1); 
+      -- m-lvds receiver type select ( 0 - type 1, 1 - type 2)
+    mlvdio_fsen_o   : out std_logic;
+      -- m-lvds buffer powerdown, active low
+    mlvdio_pd_n_o   : out std_logic; 
+
+    -----------------------------------------------------------------------
+    -- lvds/lvds MTCA.4 backplane clocks
+    -----------------------------------------------------------------------
+    tclk_in_n_i         : in  std_logic_vector(4 downto 1);
+    tclk_in_p_i         : in  std_logic_vector(4 downto 1);
+    tclk_out_n_o        : out std_logic_vector(4 downto 1);
+    tclk_out_p_o        : out std_logic_vector(4 downto 1);
+    -- enable clock buffer outputs towards BACKPLANE
+    tclk_en_n_o         : out std_logic_vector(4 downto 1);
+    -- enable clock buffer outputs towards FPGA
+    tclk_dir_o          : out std_logic_vector(4 downto 1);
+
+    -----------------------------------------------------------------------
+    -- MTCA.4 high-speed serial connections to neighbouring slots
+    -- foreseen for high speed serial links
+    -----------------------------------------------------------------------
+    hss_rx_n_i          : in  std_logic_vector(4 downto 1);
+    hss_rx_p_i          : in  std_logic_vector(4 downto 1);
+    hss_tx_n_o          : out std_logic_vector(4 downto 1);
+    hss_tx_p_o          : out std_logic_vector(4 downto 1);
+    -- enable hss buffer outputs to/from FPGA 
+    hss_tx_en_o         : out std_logic_vector(4 downto 1);
+    hss_rx_en_o         : out std_logic_vector(4 downto 1);
     
-    sfp4_tx_disable_o : out std_logic := '0';
-    sfp4_tx_fault     : in std_logic;
-    sfp4_los          : in std_logic;
-    
-    sfp4_txp_o        : out std_logic;
-    sfp4_rxp_i        : in  std_logic;
-    
-    sfp4_mod0         : in    std_logic; -- grounded by module
-    sfp4_mod1         : inout std_logic; -- SCL
-    sfp4_mod2         : inout std_logic); -- SDA
-    
+    -- enable Receive Equalization and Transmit Pre-Emphasis
+    hss_tx_pe_en_o      : out std_logic;
+    hss_rx_eq_en_o      : out std_logic;
+     
+    -----------------------------------------------------------------------
+    -- mmc > fpga spi bus, mmc is master
+    -----------------------------------------------------------------------l
+    mmc_spi0_sck_i          : in  std_logic;
+    mmc_spi0_miso_o         : out std_logic;
+    mmc_spi0_mosi_i         : in  std_logic;
+    mmc_spi0_sel_fpga_n_i   : in  std_logic;
+
+    mmc_pcie_en_i           : in  std_logic;
+    mmc_pcie_rst_n_i        : in  std_logic;
+
+    mmc2fpga_usr_io         : inout std_logic_vector(2 downto 1);
+    fpga2mmc_int_io         : inout std_logic; -- used for passing info to MMC if MTCA.4 buffers are enabled
+
+    mmc_quiesce_out_i       : in  std_logic; -- mmc alert to fpga that amc will be powered off
+    mmc_quiesce_in_o        : out std_logic  -- fpga reply to mmc that is ready for power down
+
+);    
 end microtca_control;
 
 architecture rtl of microtca_control is
 
-  -- white rabbits leds
-  signal led_link_up  : std_logic;
-  signal led_link_act : std_logic;
-  signal led_track    : std_logic;
-  signal led_pps      : std_logic;
+  constant c_HWT_EN_BIT       : natural := 8;
+  constant c_IO_CLKIN_EN_BIT  : natural := 9;
+
+  signal clk_sys              : std_logic;
+  signal clk_200m             : std_logic;
   
-  -- front end leds
-  signal s_led_frnt_red  : std_logic;
-  signal s_led_frnt_blue : std_logic;
+  signal s_led_status_monster : std_logic_vector(6 downto 1);
+  signal s_led_user_monster   : std_logic_vector(8 downto 1);
+
+  signal s_led_status         : std_logic_vector(6 downto 1);
+  signal s_led_user           : std_logic_vector(8 downto 1);
+ 
+  signal s_gpio_out           : std_logic_vector(9 downto 0);
+  signal s_gpio_in            : std_logic_vector(9 downto 0);
+  
+  signal s_test_sel           : std_logic_vector( 4 downto 0);  
+  signal core_debug_out       : std_logic_vector(15 downto 0);
+  
+  -- white rabbit status leds
+  signal s_led_link_up    : std_logic;
+  signal s_led_link_act   : std_logic;
+  signal s_led_track      : std_logic;
+  signal s_led_pps        : std_logic;
+  
+  -- front panel io leds
+  signal s_led_frnt_red   : std_logic;
+  signal s_led_frnt_blue  : std_logic;
   
   -- user leds (on board)
-  signal s_leds_user : std_logic_vector(3 downto 0);
+  signal s_leds_user      : std_logic_vector(3 downto 0);
   
-  -- lvds
-  signal s_lvds_p_i     : std_logic_vector(4 downto 0);
-  signal s_lvds_n_i     : std_logic_vector(4 downto 0);
-  signal s_lvds_i_led   : std_logic_vector(4 downto 0);
-  signal s_lvds_p_o     : std_logic_vector(4 downto 0);
-  signal s_lvds_n_o     : std_logic_vector(4 downto 0);
-  signal s_lvds_o_led   : std_logic_vector(4 downto 0);
-  signal s_lvds_oen     : std_logic_vector(4 downto 0);
+  -- monster lvds ios
+  signal s_lvds_p_i     : std_logic_vector(16 downto 0);
+  signal s_lvds_n_i     : std_logic_vector(16 downto 0);
+  signal s_lvds_i_led   : std_logic_vector(16 downto 0);
+  signal s_lvds_term_en : std_logic_vector(16 downto 0);
+
+  signal s_lvds_p_o     : std_logic_vector(20 downto 0);
+  signal s_lvds_n_o     : std_logic_vector(20 downto 0);
+  signal s_lvds_o_led   : std_logic_vector(20 downto 0);
+  signal s_lvds_oe      : std_logic_vector(20 downto 0);
+
+  signal s_lvds_led     : std_logic_vector(20 downto 0);
+
+
+  constant io_mapping_table : t_io_mapping_table_arg_array(0 to 40) := 
+  (
+ -- Name[12 Bytes], Special Purpose, SpecOut, SpecIn, Index, Direction,   Channel,  OutputEnable, Termination, Logic Level
+    ("LED_USR1   ", IO_NONE,         false,   false,  0,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
+    ("LED_USR2   ", IO_NONE,         false,   false,  1,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
+    ("LED_USR3   ", IO_NONE,         false,   false,  2,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
+    ("LED_USR4   ", IO_NONE,         false,   false,  3,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
+    ("LED_USR5   ", IO_NONE,         false,   false,  4,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
+    ("LED_USR6   ", IO_NONE,         false,   false,  5,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
+    ("LED_USR7   ", IO_NONE,         false,   false,  6,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
+    ("LED_USR8   ", IO_NONE,         false,   false,  7,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
+    ("HWT_EN     ", IO_NONE,         false,   false,  8,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL), -- for testing front panel LEDs
+    ("IO_CLKIN_EN", IO_NONE,         true ,   false,  0,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
+
+    ("HSWF1      ", IO_NONE,         false,   false,  0,     IO_INPUT,    IO_GPIO,  false,        false,       IO_TTL),
+    ("HSWF2      ", IO_NONE,         false,   false,  1,     IO_INPUT,    IO_GPIO,  false,        false,       IO_TTL),
+    ("HSWF3      ", IO_NONE,         false,   false,  2,     IO_INPUT,    IO_GPIO,  false,        false,       IO_TTL),
+    ("HSWF4      ", IO_NONE,         false,   false,  3,     IO_INPUT,    IO_GPIO,  false,        false,       IO_TTL),
+
+    ("HSWP1      ", IO_NONE,         false,   false,  4,     IO_INPUT,    IO_GPIO,  false,        false,       IO_TTL),
+    ("HSWP2      ", IO_NONE,         false,   false,  5,     IO_INPUT,    IO_GPIO,  false,        false,       IO_TTL),
+    ("HSWP3      ", IO_NONE,         false,   false,  6,     IO_INPUT,    IO_GPIO,  false,        false,       IO_TTL),
+    ("HSWP4      ", IO_NONE,         false,   false,  7,     IO_INPUT,    IO_GPIO,  false,        false,       IO_TTL),
+
+    ("PBF        ", IO_NONE,         false,   false,  8,     IO_INPUT,    IO_GPIO,  false,        false,       IO_TTL),
+    ("PBP        ", IO_NONE,         false,   false,  9,     IO_INPUT,    IO_GPIO,  false,        false,       IO_TTL),
+
+    ("IO1        ", IO_NONE,         false,   false,  0,     IO_INOUTPUT, IO_LVDS,  true,         true,        IO_LVTTL),
+    ("IO2        ", IO_NONE,         false,   false,  1,     IO_INOUTPUT, IO_LVDS,  true,         true,        IO_LVTTL),
+    ("IO3        ", IO_NONE,         false,   false,  2,     IO_INOUTPUT, IO_LVDS,  true,         true,        IO_LVTTL),
+    ("IO4        ", IO_NONE,         false,   false,  3,     IO_INOUTPUT, IO_LVDS,  true,         true,        IO_LVTTL),
+    ("IO5        ", IO_NONE,         false,   false,  4,     IO_INOUTPUT, IO_LVDS,  true,         true,        IO_LVTTL),
+
+    ("MTCA4_CLK1 ", IO_NONE,         false,   false,  5,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
+    ("MTCA4_CLK2 ", IO_NONE,         false,   false,  6,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
+    ("MTCA4_CLK3 ", IO_NONE,         false,   false,  7,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
+    ("MTCA4_CLK4 ", IO_NONE,         false,   false,  8,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
+
+    ("MTCA4_IO1  ", IO_NONE,         false,   false,  9,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
+    ("MTCA4_IO2  ", IO_NONE,         false,   false, 10,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
+    ("MTCA4_IO3  ", IO_NONE,         false,   false, 11,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
+    ("MTCA4_IO4  ", IO_NONE,         false,   false, 12,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
+    ("MTCA4_IO5  ", IO_NONE,         false,   false, 13,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
+    ("MTCA4_IO6  ", IO_NONE,         false,   false, 14,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
+    ("MTCA4_IO7  ", IO_NONE,         false,   false, 15,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
+    ("MTCA4_IO8  ", IO_NONE,         false,   false, 16,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
+
+    ("LIBERA_TR1 ", IO_NONE,         false,   false, 17,     IO_OUTPUT  , IO_LVDS,  false,        false,       IO_LVDS),
+    ("LIBERA_TR2 ", IO_NONE,         false,   false, 18,     IO_OUTPUT  , IO_LVDS,  false,        false,       IO_LVDS),
+    ("LIBERA_TR3 ", IO_NONE,         false,   false, 19,     IO_OUTPUT  , IO_LVDS,  false,        false,       IO_LVDS),
+    ("LIBERA_TR4 ", IO_NONE,         false,   false, 20,     IO_OUTPUT  , IO_LVDS,  false,        false,       IO_LVDS)
+
+  );
+
   
   constant c_family  : string := "Arria V"; 
   constant c_project : string := "microtca_control";
-  constant c_initf   : string := c_project & ".mif" 
+  constant c_cores      : natural:= 1;
+  constant c_initf_name : string := c_project & "_stub.mif";
+  constant c_profile_name : string := "medium_icache_debug";
   -- projectname is standard to ensure a stub mif that prevents unwanted scanning of the bus 
-  -- multiple init files for n processors are to be seperated by semicolon ';'
+  -- multiple init files for n processors are to be seperated by semicolon ';' 
+  signal s_wr_ext_in    : std_logic;
+  
+  -- logic analyzer
+  signal s_log_oe                 : std_logic_vector(16 downto 0);
+  signal s_log_out                : std_logic_vector(16 downto 0);
+  signal s_log_in                 : std_logic_vector(16 downto 0);
+
+  
+  -- connections from monster
+  signal s_monster_tclk_en        : std_logic_vector(8 downto 1);
+  signal s_monster_tclk_dir       : std_logic_vector(8 downto 1);
+
+  signal s_monster_mlvd_buf_en    : std_logic_vector(8 downto 1);
+  signal s_monster_mlvd_dir       : std_logic_vector(8 downto 1);
+
+  signal s_monster_hss_buf_en     : std_logic_vector(8 downto 1);
+
+  signal s_dis_led_green          : std_logic;
+  signal s_dis_led_red            : std_logic;
+  signal s_dis_led_blue           : std_logic;
+
+  signal s_mmc_in_libera          : std_logic;
+  signal s_mmc_in_libera_slot8    : std_logic;
+
+  signal s_mtca4_bpl_buf_en_sw    : std_logic;
+  signal s_mtca4_bpl_buf_en       : std_logic;
+
+  signal s_libera_trig_buf_en_sw  : std_logic;
+  signal s_libera_trig_buf_en     : std_logic;
+
+  signal s_shift_reg_to_leds      : std_logic_vector(15 downto 0):=(others =>'0');
+ 
   
 begin
 
   main : monster
     generic map(
-      g_family      => c_family,
-      g_project     => c_project,
-      g_flash_bits  => 25,
-      g_gpio_out    => 6, -- 2xfront end+4xuser leds
-      g_lvds_inout  => 5, -- front end lemos
-      g_lvds_invert => true,
-      g_en_pcie     => true,
-      g_en_usb      => true,
-      g_en_lcd      => true,
-      g_lm32_init_files => c_initf
-    )
+      g_family          => c_family,
+      g_project         => c_project,
+      g_flash_bits      => 25,
+      g_lvds_inout      => 17, -- 5 LEMOs on front panel, 8 MTCA4 on BPL, 4 MTCA4 clk on BPL
+      g_lvds_in         => 0,
+      g_lvds_out        => 4,  -- 4 libera triggers at BPL
+      g_gpio_out        => 10,  -- 8 on-boards LEDs, 1 test mode enable, 1 IO5 input clock buffer enable
+      g_gpio_in         => 10, -- 4 FPGA HEX switch, 4 CPLD HEX switch, 1 FPGA button, 1 CPLD button
+      g_fixed           => 0,
+      g_lvds_invert     => false,
+      g_en_usb          => true,
+      g_en_lcd          => true,
+      g_en_user_ow      => false,
+      g_en_tempsens     => true,
+      g_en_pcie         => true,
+      g_io_table        => io_mapping_table,
+      g_lm32_cores      => c_cores,
+      g_lm32_ramsizes   => c_lm32_ramsizes/4,
+      g_lm32_init_files => f_string_list_repeat(c_initf_name, c_cores),
+      g_lm32_profiles   => f_string_list_repeat(c_profile_name, c_cores)
+    )  
     port map(
       core_clk_20m_vcxo_i    => clk_20m_vcxo_i,
       core_clk_125m_pllref_i => clk_125m_pllref_i,
-      core_clk_125m_sfpref_i => sfp234_ref_clk_i,
+      core_clk_125m_sfpref_i => clk_sfp_ref_i,
       core_clk_125m_local_i  => clk_125m_local_i,
-      core_rstn_i            => pbs2,
-      wr_onewire_io          => rom_data,
-      wr_sfp_sda_io          => sfp4_mod2,
-      wr_sfp_scl_io          => sfp4_mod1,
-      wr_sfp_det_i           => sfp4_mod0,
-      wr_sfp_tx_o            => sfp4_txp_o,
-      wr_sfp_rx_i            => sfp4_rxp_i,
-      wr_dac_sclk_o          => dac_sclk,
-      wr_dac_din_o           => dac_din,
-      wr_ndac_cs_o           => ndac_cs,
-      sfp_tx_disable_o       => open,
+      core_rstn_i            => fpga_res_i,
+      core_clk_sys_o         => clk_sys,
+      core_clk_200m_o        => clk_200m,
+      core_debug_o           => core_debug_out,
+
+      wr_onewire_io          => rom_data_io,
+
+      wr_sfp_sda_io          => sfp_mod2_io,
+      wr_sfp_scl_io          => sfp_mod1_io,
+      wr_sfp_det_i           => sfp_mod0_i,
+      wr_sfp_tx_o            => sfp_txp_o,
+      wr_sfp_rx_i            => sfp_rxp_i,
+
+      wr_dac_sclk_o          => wr_dac_sclk_o,
+      wr_dac_din_o           => wr_dac_din_o,
+      wr_ndac_cs_o           => wr_ndac_cs_o,
+      wr_ext_clk_i           => clk_lvtio_i,
+
+      sfp_tx_disable_o       => sfp_tx_dis_o,
       sfp_tx_fault_i         => sfp_tx_fault_i,
       sfp_los_i              => sfp_los_i,
-      gpio_o(5 downto 2)     => s_leds_user(3 downto 0),
-      gpio_o(1)              => s_led_frnt_blue,
-      gpio_o(0)              => s_led_frnt_red,
+
+      gpio_o                 => s_gpio_out,
+      gpio_i                 => s_gpio_in,
+
       lvds_p_i               => s_lvds_p_i,
       lvds_n_i               => s_lvds_n_i,
       lvds_i_led_o           => s_lvds_i_led,
+
       lvds_p_o               => s_lvds_p_o,
       lvds_n_o               => s_lvds_n_o,
       lvds_o_led_o           => s_lvds_o_led,
-      lvds_oen_o             => s_lvds_oen,
-      led_link_up_o          => led_link_up,
-      led_link_act_o         => led_link_act,
-      led_track_o            => led_track,
-      led_pps_o              => led_pps,
-      pcie_refclk_i          => pcie_refclk_i,
-      pcie_rstn_i            => nPCI_RESET,
-      pcie_rx_i              => pcie_rx_i,
-      pcie_tx_o              => pcie_tx_o,
+      lvds_oen_o             => s_lvds_oe,
+      lvds_term_o            => s_lvds_term_en,
+
+      led_link_up_o          => s_led_link_up,
+      led_link_act_o         => s_led_link_act,
+      led_track_o            => s_led_track,
+      led_pps_o              => s_led_pps,
+
       usb_rstn_o             => ures,
       usb_ebcyc_i            => pa(3),
       usb_speed_i            => pa(0),
@@ -250,80 +438,409 @@ begin
       usb_slwrn_o            => slwr,
       usb_pktendn_o          => pa(6),
       usb_fd_io              => fd,
-      lcd_scp_o              => di(3),
-      lcd_lp_o               => di(1),
-      lcd_flm_o              => di(2),
-      lcd_in_o               => di(0));
 
-  -- SFP1-3 are not mounted
-  sfp1_tx_disable_o <= '1';
-  sfp2_tx_disable_o <= '1';
-  sfp3_tx_disable_o <= '1';
-  sfp4_tx_disable_o <= '0';
+      lcd_scp_o              => dis_di_o(3),
+      lcd_lp_o               => dis_di_o(1),
+      lcd_flm_o              => dis_di_o(2),
+      lcd_in_o               => dis_di_o(0),
 
+      pcie_refclk_i          => pcie_clk_i,
+      pcie_rstn_i            => mmc_pcie_rst_n_i,
+      pcie_rx_i              => pcie_rx_i,
+      pcie_tx_o              => pcie_tx_o
+  );
+
+
+  -- hex switches as gpio inputs
+  s_gpio_in(3 downto 0) <= not hswf_i; -- FPGA HEX switch
+  s_gpio_in(7 downto 4) <= con(4 downto 1); -- CPLD HEX switch (already inverted in CPLD)
+
+  -- button as gpio inputs
+  s_gpio_in(8) <= not pbs_f_i; -- FPGA push button
+  s_gpio_in(9) <= con(5);      -- CPLD push button (already inverted in CPLD)
+
+
+  -- test mode select via hex switch or sw
+  -- invert FPGA button and HEX switch
+  s_test_sel(4)          <= s_gpio_out(7)          when s_gpio_out(c_HWT_EN_BIT)='1' else not pbs_f_i;
+  s_test_sel(3 downto 0) <= s_gpio_out(3 downto 0) when s_gpio_out(c_HWT_EN_BIT)='1' else not (hswf_i);
+
+  -- Display
+  dis_wr_o    <= '0';
+  dis_rst_o   <= '1';
+
+  -----------------------------------------------------------
+  -- LEDs
+  -----------------------------------------------------------
+
+  -- WR status LEDs 
+  s_dis_led_green <= s_gpio_out(4) when s_gpio_out(8)='1' else (    s_led_link_up and     s_led_track); -- green
+  s_dis_led_red   <= s_gpio_out(5) when s_gpio_out(8)='1' else (not s_led_link_up                    ); -- red
+  s_dis_led_blue  <= s_gpio_out(6) when s_gpio_out(8)='1' else (    s_led_link_up and not s_led_track); -- blue
+  
+  -- display backlight color - pullups
+  dis_di_o(4) <= '0' when s_dis_led_green = '1' else 'Z'; -- green
+  dis_di_o(5) <= '0' when s_dis_led_red   = '1' else 'Z'; -- red
+  dis_di_o(6) <= '0' when s_dis_led_blue  = '1' else 'Z'; -- blue
+  
   -- Link LEDs
-  wrdis <= '0';
-  dres  <= '1';
-  di(5) <= '0' when (not led_link_up)                   = '1' else 'Z'; -- red
-  di(6) <= '0' when (    led_link_up and not led_track) = '1' else 'Z'; -- blue
-  di(4) <= '0' when (    led_link_up and     led_track) = '1' else 'Z'; -- green
+  s_led_status_monster(6) <= s_led_link_act and s_led_link_up;   -- red   = traffic/no-link
+  s_led_status_monster(5) <= s_led_link_up;                      -- blue  = link
+  s_led_status_monster(4) <= s_led_track;                        -- green = timing valid
+  s_led_status_monster(3) <= s_led_pps;                          -- white = PPS
 
-  -- Front end: 6 LEDs for WR and FTRN status (from left to right: red, blue, green, white, red, blue)
-  led(1)               <= not (led_link_act and led_link_up); -- red   = traffic/no-link
-  led(2)               <= not led_link_up;                    -- blue  = link
-  led(3)               <= not led_track;                      -- green = timing valid
-  led(4)               <= not led_pps;                        -- white = PPS
-  led(5)               <= s_led_frnt_red;                     -- red   = generic front end - gpio0
-  led(6)               <= s_led_frnt_blue;                    -- blue  = generic front end - gpio1
+  -- Front panels user LEDs
+  -- PCI reset indicator
+  s_led_status_monster(2) <= not mmc_pcie_rst_n_i; --(~100ms blink when PCIe reset asserted from MMC)
+  s_led_status_monster(1) <= s_gpio_out(0);
+
+  -- status LED output according to FPGA hex switch position and fpga button
+  with s_test_sel select
+    s_led_status <= "000000"                        	when ('0' & x"F"),   -- FPGA hex sw in position F, button not pressed, led test
+                    "111111"                          when ('1' & x"F"),   -- FPGA hex sw in position F, button     pressed, led test
+                    s_shift_reg_to_leds(15 downto 10) when ('0' & x"A"),   -- FPGA hex sw in position A, button not pressed, led test
+                    (  s_libera_trig_buf_en_sw 
+                     & s_libera_trig_buf_en & '0'
+                     & s_mtca4_bpl_buf_en_sw
+                     & s_mtca4_bpl_buf_en & '0')      when ('0' & x"9"),   -- FPGA hex sw in position 9, button not pressed, backplane buffer enables
+                    s_led_status_monster              when others;         -- driven by monster
+
+  led_status_o <= not s_led_status;                  
+
+  -- USER LED output according to fpga hex switch position and fpga button                  
+  with s_test_sel select
+    s_led_user <= x"00"                       when ('0' & x"F"),   -- FPGA hex sw in position F, button not pressed, led test
+                  x"FF"                       when ('1' & x"F"),   -- FPGA hex sw in position F, button     pressed, led test
+                  ("000" &     con)           when ('0' & x"D"),   -- FPGA hex sw in position D, button not pressed, CPLD HEX SW and button test  
+                  ("000" & not con)           when ('1' & x"D"),   -- FPGA hex sw in position D, button     pressed, CPLD HEX SW and button test  
+                  s_gpio_out(7 downto 0)      when others;         -- driven by monster
+
+  led_user_o <= not s_led_user;
+ 
+
+  -- enable LEMO output buffers (active LO)
+  lvtio_oe_n_o <= not s_lvds_oe(4 downto 0);
+
+  -- LEMO activity LEDs (active HI)
+  s_lvds_led(4 downto 0) <= s_lvds_i_led(4 downto 0) or s_lvds_o_led(4 downto 0);
   
-  -- On board/user leds: 8 leds (from left to right: white, green, blue, red, white, green, blue, red)
-  led_user(1)          <= not (led_link_act and led_link_up); -- red   = traffic/no-link
-  led_user(2)          <= not led_link_up;                    -- blue  = link
-  led_user(3)          <= not led_track;                      -- green = timing valid
-  led_user(4)          <= not led_pps;                        -- white = PPS
-  led_user(8 downto 5) <= s_leds_user;                        -- gpio5 ... gpio2
-  
-  -- sfp leds
-  ledsfpg(3 downto 1) <= (others => '1');
-  ledsfpr(3 downto 1) <= (others => '1');
-  ledsfpg(4) <= not led_link_up;
-  ledsfpr(4) <= not led_link_act;
-  
-  -- wires to CPLD, currently unused
-  con <= (others => 'Z');
-  
-  -- lvds/lemos in/out
-  s_lvds_p_i(4 downto 0) <= lvds_p_i(4 downto 0);
-  s_lvds_n_i(4 downto 0) <= lvds_n_i(4 downto 0);
-  lvds_p_o(4 downto 0)   <= s_lvds_p_o(4 downto 0);
-  lvds_n_o(4 downto 0)   <= s_lvds_n_o(4 downto 0);
-  
-  -- lvds/lemos output enable
-  lvds_ctrl_oen_o(0) <= '0' when s_lvds_oen(0)='0' else 'Z'; -- LVTTL_IO1
-  lvds_ctrl_oen_o(1) <= '0' when s_lvds_oen(1)='0' else 'Z'; -- LVTTL_IO2
-  lvds_ctrl_oen_o(2) <= '0' when s_lvds_oen(2)='0' else 'Z'; -- LVTTL_IO3
-  lvds_ctrl_oen_o(3) <= '0' when s_lvds_oen(3)='0' else 'Z'; -- LVTTL_IO4
-  lvds_ctrl_oen_o(4) <= '0' when s_lvds_oen(4)='0' else 'Z'; -- LVTTL_IO5
-  
-  -- lvds/lemos terminator (terminate on input mode)
-  lvds_ctrl_term_o(0) <= '1' when s_lvds_oen(0)='1' else '0';
-  lvds_ctrl_term_o(1) <= '1' when s_lvds_oen(1)='1' else '0';
-  lvds_ctrl_term_o(2) <= '1' when s_lvds_oen(2)='1' else '0';
-  lvds_ctrl_term_o(3) <= '1' when s_lvds_oen(3)='1' else '0';
-  lvds_ctrl_term_o(4) <= '1' when s_lvds_oen(4)='1' else '0';
-  
-  -- lvds/lemos direction leds (blue)
-  lvds_led_ndir_o(0) <= not(s_lvds_oen(0));
-  lvds_led_ndir_o(1) <= not(s_lvds_oen(1));
-  lvds_led_ndir_o(2) <= not(s_lvds_oen(2));
-  lvds_led_ndir_o(3) <= not(s_lvds_oen(3));
-  lvds_led_ndir_o(4) <= not(s_lvds_oen(4));
-  
-  -- lvds/lemos activity leds (red)
-  lvds_led_nact_o(0) <= not(s_lvds_i_led(0)) or not(s_lvds_o_led(0));
-  lvds_led_nact_o(1) <= not(s_lvds_i_led(1)) or not(s_lvds_o_led(1));
-  lvds_led_nact_o(2) <= not(s_lvds_i_led(2)) or not(s_lvds_o_led(2));
-  lvds_led_nact_o(3) <= not(s_lvds_i_led(3)) or not(s_lvds_o_led(3));
-  lvds_led_nact_o(4) <= not(s_lvds_i_led(4)) or not(s_lvds_o_led(4));
+  -- LVDS termination pins (active hi)
+  with s_test_sel select
+    lvtio_term_en_o <= (others => '0')                 when ('0' & x"E"),   -- FPGA hex sw in position E, button not pressed, termination test
+                       (others => '1')                 when ('1' & x"E"),   -- FPGA hex sw in position E, button     pressed, termination test
+                        s_lvds_term_en(4 downto 0) when others;             -- driven by monster (enable termination when output disabled)
+
+  -- LVDS direction indicator RED LEDs (active hi)
+  with s_test_sel select
+    lvtio_led_dir_o <= (others => '0')                  when ('0' & x"F"),   -- FPGA hex sw in position F, button not pressed, LED test
+                       (others => '1')                  when ('1' & x"F"),   -- FPGA hex sw in position F, button     pressed, LED test
+                        s_shift_reg_to_leds(9 downto 5) when ('0' & x"A"),   -- FPGA hex sw in position A, button not pressed, shift reg to leds
+                        s_lvds_oe(4 downto 0)           when others;         -- driven by monster
+
+  -- LVDS activity indicator BLUE LEDs (active hi)
+  with s_test_sel select
+    lvtio_led_act_o <= (others => '0')                  when ('0' & x"F"),   -- FPGA hex sw in position F, button not pressed, LED test
+                       (others => '1')                  when ('1' & x"F"),   -- FPGA hex sw in position F, button     pressed, LED test
+                        s_shift_reg_to_leds(4 downto 0) when ('0' & x"A"),   -- FPGA hex sw in position A, button not pressed, shift reg to leds
+                        s_lvds_led(4 downto 0)          when others;         -- driven by monster
+
+  -----------------------------------------------------------
+  -- lemo io connectors on front panel to/from monster
+  -----------------------------------------------------------
+  -- lvds/lvttl lemos in/out
+  s_lvds_p_i(4 downto 0) <= lvtio_in_p_i(5 downto 1);
+  s_lvds_n_i(4 downto 0) <= lvtio_in_n_i(5 downto 1);
+
+  lvtio_out_p_o(5 downto 1)   <= s_lvds_p_o(4 downto 0);
+  lvtio_out_n_o(5 downto 1)   <= s_lvds_n_o(4 downto 0);
+
+
+  -- External white rabbit clock input enable (active low)
+  lvtio_in_clk_en_n_o <= not s_gpio_out(c_IO_CLKIN_EN_BIT); 
+
+
+  -----------------------------------------------------------------------
+  -----------------------------------------------------------------------
+  -- form factor specific inputs/outputs
+  -----------------------------------------------------------------------
+  -----------------------------------------------------------------------
+
+  -----------------------------------------------------------
+  -- microTCA.4 backplane triggers, inputs and outputs
+  -----------------------------------------------------------
+
+  -- select receiver input Type for onboard M-LVDS buffers to backplane
+  -- ('0' = Type-1 , '1' = Type-2 )
+  mlvdio_fsen_o <= '1'; 
+
+  -- MTCA.4 bussed trigger lines (PORTS 17-20)
+  s_lvds_n_i(12 downto 5) <= mlvdio_in_n_i(8 downto 1);
+  s_lvds_p_i(12 downto 5) <= mlvdio_in_p_i(8 downto 1);
+
+  mlvdio_out_n_o <= s_lvds_n_o(12 downto 5);
+  mlvdio_out_p_o <= s_lvds_p_o(12 downto 5);
+
+  ----------------------------------------
+  -- MTCA.4 clocks (TCLKA, TCLKB, TCLKC, TCLKD)
+  s_lvds_n_i(16 downto 13) <= tclk_in_n_i;
+  s_lvds_p_i(16 downto 13) <= tclk_in_p_i;
+
+  tclk_out_n_o <= s_lvds_n_o(16 downto 13);
+  tclk_out_p_o <= s_lvds_p_o(16 downto 13);
+
+  -----------------------------------------------------------
+  -- Libera outputs
+  -----------------------------------------------------------
+
+  -- no inputs from Libera backplane, outputs only
+  lib_trig_n_o <= s_lvds_n_o(20 downto 17);
+  lib_trig_p_o <= s_lvds_p_o(20 downto 17);
+
+
+  -----------------------------------------------------------
+  -- SRIO (High-Speed-Serial links) backplane ports 12-15
+  -----------------------------------------------------------
+
+  -- usage of backplane ports 12-15 currently not defined
+  -- therefore only dummy buffers to keep Quartus happy
+  unused_hss_ios: for i in 1 to 4 generate
+    hss_obuf : altera_lvds_obuf
+      generic map(
+        g_family  => c_family)
+      port map(
+        datain    => '0',
+        dataout   => hss_tx_p_o(i),
+        dataout_b => hss_tx_n_o(i)
+      );
+
+    hss_inbuf : altera_lvds_ibuf
+        generic map(
+          g_family  => c_family)
+        port map(
+          datain_b  => hss_rx_n_i(i),
+          datain    => hss_rx_p_i(i),
+          dataout   => open
+        );
+  end generate;
+
+
+  ----------------------------------------------
+  -- mmc alerts fpga that amc will be powered off and
+  -- fpga replies to mmc that is ready for power down.
+  -- If needed, response to mmc can be delayed 
+  -- (for example to finish writing to flash or to complete data transfer, etc)
+  mmc_quiesce_in_o  <= mmc_quiesce_out_i;        
+
+  -----------------------------------------------------------------------
+  -- backplane ports configuration from monster
+  ----------------------------------------------------------------------- 
+  s_monster_tclk_en (4 downto 1)    <= s_lvds_oe(8 downto 5);
+  s_monster_tclk_dir(4 downto 1)    <= s_lvds_oe(8 downto 5);
+  s_monster_mlvd_buf_en(8 downto 1) <= s_lvds_oe(16 downto 9);
+  s_monster_mlvd_dir   (8 downto 1) <= s_lvds_oe(16 downto 9);
+  s_monster_hss_buf_en (4 downto 1) <= (others => '0');
+
+  -----------------------------------------------------------------------
+  -- backplane ports configuration from MMC
+  ----------------------------------------------------------------------- 
+  -- bpl buffer enable generation depends on the crate in wich AMC is (MTCA.0, MTCA.4, Libera)
+
+
+  -----------------------------------------------------------------------
+  -- lvds/lvds libera trigger buffers enable (active HI)
+  -- libera trigger bufferes are disabled by default,
+  -- MMC enables Libera trigger buffer only in Libera Slot 8
+  -- mmc2fpga_usr_io(1): 0 - we are not in Libera, 1 - we are in Libera
+  -- mmc2fpga_usr_io(2): 0 - we are not in Libera Slot8, 1 - we are in Libera Slot8
+  s_mmc_in_libera       <= mmc2fpga_usr_io(1);
+  s_mmc_in_libera_slot8 <= mmc2fpga_usr_io(2);
+
+  -- Libera trigger buffer enable from SW
+  -- USE THIS ONLY when FTRN is not in the crate or is on the AMC extender with cut PORT 6-7 lines!!!
+  s_libera_trig_buf_en_sw <= '1' when (s_gpio_out(3 downto 0) = "0111" and s_gpio_out(8)='1') else '0'; 
+
+  -- enable libera trigger buffers when 
+  -- in Libera Slot8 or when
+  -- not in Libera (outside or MTCA/MTCA.4 - !!! this option is foreseen only for testing libera trigger outputs
+  --                                             on the modified extender board with cut PORT 6-7 lines
+  s_libera_trig_buf_en  <= '1' when (  ( s_mmc_in_libera       = '1' and 
+                                         s_mmc_in_libera_slot8 = '1' and 
+                                         mmc_quiesce_out_i     = '0'
+                                       ) or
+                                       (  s_mmc_in_libera         = '0' and 
+                                          s_libera_trig_buf_en_sw = '1'
+                                       )
+                                    )
+                       else '0';
+
+  lib_trig_oe_o <= s_libera_trig_buf_en;
+
+  -----------------------------------------------------------------------
+  -- MTCA.4 buffers enable generation by software
+  -----------------------------------------------------------------------
+  -- enabled only in MTCA.4 by SW
+  s_mtca4_bpl_buf_en_sw <= '1' when (s_gpio_out(3 downto 0) = "1001" and s_gpio_out(8)='1') else '0';
+
+  -- crosscheck with Libera and quiesce
+  -- because there is no way to know if we are in MTCA or MTCA.4 crate
+  -- it is up to user to ensure that MTCA.4 buffers are not turned on in MTCA crate!
+  s_mtca4_bpl_buf_en <= '1' when (s_mmc_in_libera       = '0' and
+                                  s_mtca4_bpl_buf_en_sw = '1' and 
+                                  mmc_quiesce_out_i     = '0'
+                                 )
+                         else '0'; 
+
+  -- pass state of the MTCA.4 buffer enable to the MMC (in MMC implemented as discrete sensor)
+  fpga2mmc_int_io <= s_mtca4_bpl_buf_en;
+
+  -----------------------------------------------------------------------
+  -- lvds/m-lvds MTCA.4 buffers enable generation
+  -----------------------------------------------------------------------
+  -- m-lvds buffer powerdown (active low) (0 - powered down, 1 - powered up)
+  mlvdio_pd_n_o <= s_mtca4_bpl_buf_en; -- buffer power enable
+
+  -- m-lvds direction
+  gen_mlvd_buf_oe : for i in  1 to 8 generate
+    -- enable buffer output towards BACKPLANE (m-lvds output driver enable, active hi)
+    mlvdio_de_o(i) <= '1' when (s_mtca4_bpl_buf_en        = '1' and 
+                                s_monster_mlvd_buf_en(i)  = '1' and 
+                                s_monster_mlvd_dir(i)     = '1')
+                      else '0';
+                               
+    -- enable buffer output towards FPGA (m-lvds receiver enable, active low)
+    mlvdio_re_n_o(i) <=  '0' when (s_mtca4_bpl_buf_en        = '1' and 
+                                   s_monster_mlvd_buf_en(i)  = '0' and 
+                                   s_monster_mlvd_dir(i)     = '0')
+                          else '1';
+
+  end generate; -- gen_mlvd_buf_oe
+
+
+  -----------------------------------------------------------------------
+  -- lvds/lvds MTCA.4 backplane clock buffers enable, direction generation
+  -----------------------------------------------------------------------
+  gen_tclk_oe_dir : for i in  1 to 4 generate
+    -- enable clock switches, connect FPGA and BACKPLANE (0 - normal operation, 1 - HI-Z shutdown)
+    tclk_en_n_o(i) <= '0' when s_mtca4_bpl_buf_en   = '1' else '1';
+
+    -- clock direction
+    -- A - backplane, B - FPGA clk output, C - FPGA clk input
+    -- dir: 0 - B <> A, 1 - C <> A
+    -- enable clock buffer towards FPGA, switch clock mux to B-A (active )
+    tclk_dir_o(i)<= '0' when (s_mtca4_bpl_buf_en    = '1' and 
+                              s_monster_tclk_en(i)  = '1' and 
+                              s_monster_tclk_dir(i) = '1')
+                     else '1';
+  end generate; -- gen_tclk_oe_dir
+
+  -----------------------------------------------------------------------
+  -- MTCA.4 PORT 12-15 buffers enable generation (active HI)
+  -----------------------------------------------------------------------
+  -- currently not used, keep disabled
+  gen_hss_buf_oe : for i in  1 to 4 generate
+    hss_tx_en_o(i) <= '0';    
+    hss_rx_en_o(i) <= '0';    
+  end generate; -- gen_hss_buf_oe
+
+  -- disable  Transmit Pre-Emphasis and Receive Equalization
+  hss_tx_pe_en_o <= '0';
+  hss_rx_eq_en_o <= '0';
+
+
+  gen_load_shift_reg_true: if g_LOAD_SHIFT_REG_EN = true generate
+
+    -- for testing
+    constant c_LOAD_SHIFT_REG_WIDTH : positive := 16;
+    constant c_LOAD_SHIFT_REG_DEPTH : positive := 6*(2**9);
+
+    type t_bit_array is array (natural range<>) of std_logic_vector(c_LOAD_SHIFT_REG_DEPTH-1 downto 0);
+
+    signal s_reg_blink_counter  : unsigned(27 downto 0);
+
+
+    signal s_load_shift_en      : std_logic;
+    signal s_shift_reg_out      : std_logic_vector(c_LOAD_SHIFT_REG_WIDTH-1 downto 0);
+    signal s_load_shift_reg_arr : t_bit_array(c_LOAD_SHIFT_REG_WIDTH-1 downto 0);
+    signal s_pseudo_rand_reg 	  : std_logic_vector(31 downto 0) := (others => '0');
+    signal s_led_reg_en         : std_logic;
+
+  begin
+    -----------------------------------------------------------------------
+    -- TEST: Shift register to consume resources not used by monster.
+    --       Enabled by SW.
+    -----------------------------------------------------------------------
+    s_load_shift_en <= '1' when s_test_sel = ('0' & x"A") else '0';
+    
+    -- mega shift regitster to use up the rest of resources, input is pseudo random generated vectors
+    p_load_shift_reg: process(clk_200m)
+      -- maximal length 32-bit xnor LFSR based on xilinx app note XAPP210
+	    function lfsr32(x : std_logic_vector(31 downto 0)) return std_logic_vector is
+	    begin
+		   return x(30 downto 0) & (x(0) xnor x(1) xnor x(21) xnor x(31));
+	    end function;
+    begin
+      if rising_edge(clk_200m) then 
+
+        s_pseudo_rand_reg <= lfsr32(s_pseudo_rand_reg);
+          
+        for i in 0 to (c_LOAD_SHIFT_REG_WIDTH- 1) loop
+          if s_load_shift_en = '1' then 
+            s_load_shift_reg_arr(i) <= s_load_shift_reg_arr(i)(c_LOAD_SHIFT_REG_DEPTH-2 downto 0) & s_pseudo_rand_reg(i);
+          else
+            s_load_shift_reg_arr(i) <= s_load_shift_reg_arr(i);
+          end if;
+
+          -- assign shift register output to logic analyzer port
+          s_shift_reg_out(i)     <= s_load_shift_reg_arr(i)(c_LOAD_SHIFT_REG_DEPTH-1);
+			   
+				  if s_led_reg_en = '1' then 
+            s_shift_reg_to_leds(i) <= s_load_shift_reg_arr(i)(c_LOAD_SHIFT_REG_DEPTH-1) ;
+				  else
+            s_shift_reg_to_leds(i) <= s_shift_reg_to_leds(i);
+				  end if;
+        end loop;
+      end if;
+    end process;
+
+    p_reg_blink_counter: process(clk_200m)
+    begin
+      if rising_edge(clk_200m) then
+        if s_led_reg_en = '1' then
+          s_reg_blink_counter <= (others => '0');
+        else
+          s_reg_blink_counter <= s_reg_blink_counter + 1;
+        end if;
+      end if;
+    end process;    
+
+    -- show shift reg output on front panel leds, set refresh rate with CPLD hex switch)
+    s_led_reg_en <= '1' when ((to_integer(s_reg_blink_counter) >=  25_000_000 and con(4 downto 1) = x"0") or
+                              (to_integer(s_reg_blink_counter) >=  50_000_000 and con(4 downto 1) = x"1") or
+                              (to_integer(s_reg_blink_counter) >= 100_000_000 and con(4 downto 1) = x"2")
+                             ) 
+                     else '0';
+    
+    -- assign shift register output also to logic analyzer port
+    hpw <= s_shift_reg_out(hpw'range);
+    
+    s_log_in(15 downto 0) <= (others => '0');
+    s_log_in(16)          <= '0';
+
+  end generate; -- gen_load_shift_reg_true
+
+  gen_load_shift_reg_false: if g_LOAD_SHIFT_REG_EN = false generate
+
+    -- Logic analyzer
+    -- inputs
+    s_log_in(15 downto 0) <= hpw(15 downto 0);
+    s_log_in(16)          <= hpwck;
+
+    -- outputs
+    hpwck     <= s_log_out(16) when s_log_oe(16) = '1' else 'Z';
+    hpw_out : for i in 0 to 15 generate
+      hpw(i)  <= s_log_out(i) when s_log_oe(i) = '1' else 'Z';
+    end generate;  
+  end generate; -- gen_load_shift_reg_false
   
 end rtl;
+

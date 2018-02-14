@@ -1,4 +1,4 @@
-set platform "microtca +db[12] +wrex1"
+set platform "microtca"
 source ../../autogen.tcl
 source ../../../modules/build_id/build_id.tcl
 source ../../../ip_cores/general-cores/platform/altera/networks/arria5.tcl
