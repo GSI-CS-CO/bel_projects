@@ -115,8 +115,10 @@ entity monster is
     core_clk_wr_ref_o      : out   std_logic;
     core_clk_butis_o       : out   std_logic;
     core_clk_butis_t0_o    : out   std_logic;
+    core_clk_sys_o         : out   std_logic;
     core_rstn_wr_ref_o     : out   std_logic;
     core_rstn_butis_o      : out   std_logic;
+    core_clk_200m_o        : out   std_logic;
     core_debug_o           : out   std_logic_vector(15 downto 0) := (others => 'Z');
     -- Required: white rabbit pins
     wr_onewire_io          : inout std_logic;
@@ -363,18 +365,19 @@ architecture rtl of monster is
   constant c_topm_eca_wbm   : natural := 1;
   constant c_topm_pcie      : natural := 2;
   constant c_topm_vme       : natural := 3;
-  constant c_topm_usb       : natural := 4;
-  constant c_topm_prioq     : natural := 5;
-  constant c_topm_pmc       : natural := 6;
+  constant c_topm_pmc       : natural := 4;
+  constant c_topm_usb       : natural := 5;
+  constant c_topm_prioq     : natural := 6;
+
 
   constant c_top_layout_my_masters : t_sdb_record_array(c_top_my_masters-1 downto 0) :=
    (c_topm_ebs     => f_sdb_auto_msi(c_ebs_msi,     false),   -- Need to add MSI support !!!
     c_topm_eca_wbm => f_sdb_auto_msi(c_null_msi,    false),   -- no MSIs for ECA=>WB macro player
     c_topm_pcie    => f_sdb_auto_msi(c_pcie_msi,    g_en_pcie),
     c_topm_vme     => f_sdb_auto_msi(c_vme_msi,     g_en_vme),
+    c_topm_pmc     => f_sdb_auto_msi(c_pmc_msi,     g_en_pmc),
     c_topm_usb     => f_sdb_auto_msi(c_usb_msi,     false), -- Need to add MSI support !!!
-    c_topm_prioq   => f_sdb_auto_msi(c_null_msi,    false),
-    c_topm_pmc     => f_sdb_auto_msi(c_pmc_msi,    g_en_pmc));
+    c_topm_prioq   => f_sdb_auto_msi(c_null_msi,    false));
 
   -- The FTM adds a bunch of masters to this crossbar
   constant c_ftm_masters : t_sdb_record_array := f_lm32_masters_bridge_msis(g_lm32_cores);
@@ -411,7 +414,7 @@ architecture rtl of monster is
   ----------------------------------------------------------------------------------
 
   -- required slaves
-  constant c_dev_slaves          : natural := 28;
+  constant c_dev_slaves          : natural := 29;
   constant c_devs_build_id       : natural := 0;
   constant c_devs_watchdog       : natural := 1;
   constant c_devs_flash          : natural := 2;
@@ -431,17 +434,18 @@ architecture rtl of monster is
   constant c_devs_lcd            : natural := 14;
   constant c_devs_oled           : natural := 15;
   constant c_devs_scubirq        : natural := 16;
-  constant c_devs_mil_ctrl       : natural := 17;
-  constant c_devs_ow             : natural := 18;
-  constant c_devs_ssd1325        : natural := 19;
-  constant c_devs_vme_info       : natural := 20;
-  constant c_devs_CfiPFlash      : natural := 21;
-  constant c_devs_nau8811        : natural := 22;
-  constant c_devs_psram          : natural := 23;
-  constant c_devs_DDR3_if1       : natural := 24;
-  constant c_devs_DDR3_if2       : natural := 25;
-  constant c_devs_DDR3_ctrl      : natural := 26;
-  constant c_devs_tempsens       : natural := 27;
+  constant c_devs_mil            : natural := 17;
+  constant c_devs_mil_ctrl       : natural := 18;
+  constant c_devs_ow             : natural := 19;
+  constant c_devs_ssd1325        : natural := 20;
+  constant c_devs_vme_info       : natural := 21;
+  constant c_devs_CfiPFlash      : natural := 22;
+  constant c_devs_nau8811        : natural := 23;
+  constant c_devs_psram          : natural := 24;
+  constant c_devs_DDR3_if1       : natural := 25;
+  constant c_devs_DDR3_if2       : natural := 26;
+  constant c_devs_DDR3_ctrl      : natural := 27;
+  constant c_devs_tempsens       : natural := 28;
 
   -- We have to specify the values for WRC as they provide no function for this
   constant c_wrcore_bridge_sdb : t_sdb_bridge := f_xwb_bridge_manual_sdb(x"0003ffff", x"00030000");
@@ -465,8 +469,9 @@ architecture rtl of monster is
     c_devs_lcd            => f_sdb_auto_device(c_wb_serial_lcd_sdb,              g_en_lcd),
     c_devs_oled           => f_sdb_auto_device(c_oled_display,                   g_en_oled),
     c_devs_scubirq        => f_sdb_auto_device(c_scu_irq_ctrl_sdb,               g_en_scubus),
-    c_devs_mil_ctrl       => f_sdb_auto_device(c_mil_irq_ctrl_sdb,               g_en_mil),
-    c_devs_ow             => f_sdb_auto_device(c_user_1wire_sdb,                 g_en_user_ow),
+    c_devs_mil            => f_sdb_auto_device(c_xwb_gsi_mil_scu,                g_en_mil),
+    c_devs_mil_ctrl       => f_sdb_auto_device(c_irq_master_ctrl_sdb,            g_en_mil),
+    c_devs_ow             => f_sdb_auto_device(c_wrc_periph2_sdb,                g_en_user_ow),
     c_devs_nau8811        => f_sdb_auto_device(c_nau8811_sdb,                    g_en_nau8811),
     c_devs_vme_info       => f_sdb_auto_device(c_vme_info_sdb,                   g_en_vme),
     c_devs_psram          => f_sdb_auto_device(f_psram_sdb(g_psram_bits),        g_en_psram),
@@ -490,20 +495,18 @@ architecture rtl of monster is
   ----------------------------------------------------------------------------------
 
   -- Only put a slave here if it has critical performance requirements!
-  constant c_top_slaves        : natural := 6;
+  constant c_top_slaves        : natural := 5;
   constant c_tops_eca_event    : natural := 0;
   constant c_tops_scubus       : natural := 1;
   constant c_tops_mbox         : natural := 2;
   constant c_tops_dev          : natural := 3;
-  constant c_tops_mil          : natural := 4;
-  constant c_tops_wr_fast_path : natural := 5;
+  constant c_tops_wr_fast_path : natural := 4;
 
   constant c_top_layout_req_slaves : t_sdb_record_array(c_top_slaves-1 downto 0) :=
    (c_tops_eca_event    => f_sdb_embed_device(c_eca_event_sdb, x"7FFFFFF0"), -- must be located at fixed address
     c_tops_scubus       => f_sdb_auto_device(c_scu_bus_master,                 g_en_scubus),
     c_tops_mbox         => f_sdb_auto_device(c_mbox_sdb,                       true),
     c_tops_dev          => f_sdb_auto_bridge(c_dev_bridge_sdb),
-    c_tops_mil          => f_sdb_auto_device(c_xwb_gsi_mil_scu,                g_en_mil),
     c_tops_wr_fast_path => f_sdb_auto_bridge(c_wrcore_bridge_sdb,              true));
 
   constant c_top_layout      : t_sdb_record_array := f_sdb_auto_layout(c_top_layout_req_masters, c_top_layout_req_slaves);
@@ -542,6 +545,7 @@ architecture rtl of monster is
   signal clk_update       : std_logic;
   signal rstn_sys         : std_logic;
   signal rstn_update      : std_logic;
+  signal clk_200m         : std_logic;
 
   -- Ref PLL from clk_125m_pllref_i
   signal ref_locked       : std_logic;
@@ -575,6 +579,8 @@ architecture rtl of monster is
   signal clk_butis_t0     : std_logic; -- 100KHz
   signal clk_butis_t0_ts  : std_logic; -- 100KHz + timestamp
 
+  signal pci_clk_global   : std_logic;
+  
   -- END OF Clock networks
   ----------------------------------------------------------------------------------
 
@@ -765,8 +771,8 @@ architecture rtl of monster is
   signal lvds_dat_fr_clk_gen  : t_lvds_byte_array(f_sub1(c_eca_lvds) downto 0);
   signal lvds_dat_fr_wr_pps   : t_lvds_byte_array(f_sub1(c_eca_lvds) downto 0);
   signal lvds_dat             : t_lvds_byte_array(f_sub1(c_eca_lvds) downto 0);
-  signal lvds_i               : t_lvds_byte_array(15 downto 0);
-
+  signal lvds_i               : t_lvds_byte_array(f_sub1(g_lvds_inout+g_lvds_in) downto 0);
+  
   signal s_triggers : t_trigger_array(g_gpio_in + g_gpio_inout + g_lvds_inout + g_lvds_in -1 downto 0);
 
   function f_lvds_array_to_trigger_array(lvds : t_lvds_byte_array) return t_trigger_array is
@@ -940,6 +946,11 @@ begin
   -- outclk => clk_butis);
   clk_butis <= clk_ref1;
 
+  c200m_clk : global_region port map(
+    inclk  => clk_ref1,
+    outclk => clk_200m);
+
+
   clk_div: process(clk_ref0)
     variable cnt: integer := 0;
   begin
@@ -984,7 +995,9 @@ begin
   core_clk_butis_t0_o<= clk_butis_t0_ts;
   core_rstn_wr_ref_o <= rstn_ref;
   core_rstn_butis_o  <= rstn_butis;
-
+  core_clk_sys_o     <= clk_sys;
+  core_clk_200m_o    <= clk_200m;
+  
   -- END OF Reset and PLLs
   ----------------------------------------------------------------------------------
 
@@ -1143,8 +1156,8 @@ begin
     top_msi_master_i(c_topm_pmc) <= cc_dummy_slave_out;
   end generate;
  pmc_y : if g_en_pmc generate
-    signal s_pmc_debug_in   : std_logic_vector(7 downto 0);
-    signal s_pmc_debug_out  : std_logic_vector(7 downto 0);
+    signal s_pmc_debug_in   : std_logic_vector(15 downto 0);
+    signal s_pmc_debug_out  : std_logic_vector(15 downto 0);
  begin
     pmc : wb_pmc_host_bridge
     generic map(
@@ -1163,7 +1176,7 @@ begin
       master_i      => top_bus_slave_o (c_topm_pmc),
       slave_i       => top_msi_master_o(c_topm_pmc),
       slave_o       => top_msi_master_i(c_topm_pmc),
-      pci_clk_i     => pmc_pci_clk_i,
+      pci_clk_i     => pci_clk_global,
       pci_rst_i     => pmc_pci_rst_i,
       buf_oe_o      => pmc_buf_oe_o,
       busmode_io    => pmc_busmode_io,
@@ -1185,11 +1198,20 @@ begin
       debug_o       => s_pmc_debug_out
     );
 
-    s_pmc_debug_in(0)          <= gpio_i(0);      -- FPGA push button used to trigger INTx IRQ
-    s_pmc_debug_in(1)          <= gpio_i(1); -- CPLD push button used to trigger MSI IRQ
-    s_pmc_debug_in(7 downto 2) <= (others => '0');
+    core_debug_o <= s_pmc_debug_out;
 
-  end generate;
+
+    s_pmc_debug_in(0)          <= gpio_i(8); -- FPGA push button used to trigger INTx IRQ
+    s_pmc_debug_in(1)          <= gpio_i(9); -- CPLD push button used to trigger MSI IRQ
+    s_pmc_debug_in(7 downto 4) <= gpio_i(3 downto 0); -- FPGA HEX switch
+
+    pci_clk_buf : global_region 
+      port map(
+        inclk  => pmc_pci_clk_i,
+        outclk => pci_clk_global
+      );
+  
+end generate;
 
 
   vme_n : if not g_en_vme generate
@@ -2054,7 +2076,7 @@ begin
   end generate;
 
   mil_n : if not g_en_mil generate
-    top_bus_master_i(c_tops_mil)      <= cc_dummy_slave_out;
+    dev_bus_master_i(c_devs_mil)      <= cc_dummy_slave_out;
     dev_bus_master_i(c_devs_mil_ctrl) <= cc_dummy_slave_out;
     dev_msi_slave_i (c_devs_mil_ctrl) <= cc_dummy_master_out;
   end generate;
@@ -2096,61 +2118,65 @@ begin
 
     mil : wb_mil_scu
       generic map(
-        Clk_in_Hz                 => 62_500_000,
-        slave_i_adr_max           => 14                      --14 for SCU, 17 for SIO
-        )
+        Clk_in_Hz     => 62_500_000)
       port map(
-        clk_i               => clk_sys,
-        nRst_i              => rstn_sys,
-        slave_i             => top_bus_master_o(c_tops_mil),
-        slave_o             => top_bus_master_i(c_tops_mil),
-        nME_BOO             => mil_nme_boo_i,
-        nME_BZO             => mil_nme_bzo_i,
-        ME_SD               => mil_me_sd_i,
-        ME_ESC              => mil_me_esc_i,
-        ME_SDI              => mil_me_sdi_o,
-        ME_EE               => mil_me_ee_o,
-        ME_SS               => mil_me_ss_o,
-        ME_BOI              => mil_me_boi_o,
-        ME_BZI              => mil_me_bzi_o,
-        ME_UDI              => mil_me_udi_o,
-        ME_CDS              => mil_me_cds_i,
-        ME_SDO              => mil_me_sdo_i,
-        ME_DSC              => mil_me_dsc_i,
-        ME_VW               => mil_me_vw_i,
-        ME_TD               => mil_me_td_i,
-        Mil_BOI             => mil_boi_i,
-        Mil_BZI             => mil_bzi_i,
-        Sel_Mil_Drv         => mil_sel_drv_o,
-        nSel_Mil_Rcv        => mil_nsel_rcv_o,
-        Mil_nBOO            => mil_nboo_o,
-        Mil_nBZO            => mil_nbzo_o,
-        nLed_Mil_Rcv        => mil_nled_rcv_o,
-        nLed_Mil_Trm        => mil_nled_trm_o,
-        nLed_Mil_Err        => mil_nled_err_o,
+        clk_i         => clk_sys,
+        nRst_i        => rstn_sys,
+        slave_i       => dev_bus_master_o(c_devs_mil),
+        slave_o       => dev_bus_master_i(c_devs_mil),
+        nME_BOO       => mil_nme_boo_i,
+        nME_BZO       => mil_nme_bzo_i,
+        ME_SD         => mil_me_sd_i,
+        ME_ESC        => mil_me_esc_i,
+        ME_SDI        => mil_me_sdi_o,
+        ME_EE         => mil_me_ee_o,
+        ME_SS         => mil_me_ss_o,
+        ME_BOI        => mil_me_boi_o,
+        ME_BZI        => mil_me_bzi_o,
+        ME_UDI        => mil_me_udi_o,
+        ME_CDS        => mil_me_cds_i,
+        ME_SDO        => mil_me_sdo_i,
+        ME_DSC        => mil_me_dsc_i,
+        ME_VW         => mil_me_vw_i,
+        ME_TD         => mil_me_td_i,
+        Mil_BOI       => mil_boi_i,
+        Mil_BZI       => mil_bzi_i,
+        Sel_Mil_Drv   => mil_sel_drv_o,
+        nSel_Mil_Rcv  => mil_nsel_rcv_o,
+        Mil_nBOO      => mil_nboo_o,
+        Mil_nBZO      => mil_nbzo_o,
+        nLed_Mil_Rcv  => mil_nled_rcv_o,
+        nLed_Mil_Trm  => mil_nled_trm_o,
+        nLed_Mil_Err  => mil_nled_err_o,
         error_limit_reached => open,
         Mil_Decoder_Diag_p  => open,
         Mil_Decoder_Diag_n  => open,
-        timing              => mil_timing_i,
-        dly_intr_o          => mil_dly_intr_o,
-        nLed_Timing         => mil_nled_timing_o,
-        nLed_Fifo_ne        => mil_nled_fifo_ne_o,
-        ev_fifo_ne_intr_o   => mil_ev_fifo_ne_intr_o,
-        Interlock_Intr_i    => mil_interlock_intr_i,
-        Data_Rdy_Intr_i     => mil_data_rdy_intr_i,
-        Data_Req_Intr_i     => mil_data_req_intr_i,
-        Interlock_Intr_o    => mil_interlock_intr_o,
-        Data_Rdy_Intr_o     => mil_data_rdy_intr_o,
-        Data_Req_Intr_o     => mil_data_req_intr_o,
-        nLed_Interl         => mil_nled_interl_o,
-        nLed_drq            => mil_nled_drq_o,
-        nLed_dry            => mil_nled_dry_o,
-        every_ms_intr_o     => mil_every_ms_intr_o,
-        lemo_data_o         => mil_lemo_data_o,
-        lemo_nled_o         => mil_lemo_nled_o, 
-        lemo_out_en_o       => mil_lemo_out_en_o,     
-        lemo_data_i         => mil_lemo_data_i, 
-        nsig_wb_err         => open);
+        timing         => mil_timing_i,
+        dly_intr_o     => mil_dly_intr_o,
+        nLed_Timing    => mil_nled_timing_o,
+        nLed_Fifo_ne   => mil_nled_fifo_ne_o,
+        ev_fifo_ne_intr_o => mil_ev_fifo_ne_intr_o,
+        Interlock_Intr_i => mil_interlock_intr_i,
+        Data_Rdy_Intr_i  => mil_data_rdy_intr_i,
+        Data_Req_Intr_i  => mil_data_req_intr_i,
+        Interlock_Intr_o => mil_interlock_intr_o,
+        Data_Rdy_Intr_o  => mil_data_rdy_intr_o,
+        Data_Req_Intr_o  => mil_data_req_intr_o,
+        nLed_Interl    => mil_nled_interl_o,
+        nLed_drq       => mil_nled_drq_o,
+        nLed_dry       => mil_nled_dry_o,
+        every_ms_intr_o => mil_every_ms_intr_o,
+        lemo_data_o     => mil_lemo_data_o,
+        lemo_nled_o     => mil_lemo_nled_o,
+	     lemo_out_en_o   => mil_lemo_out_en_o,
+        lemo_data_i     => mil_lemo_data_i,
+--        io_1           => mil_io1_o,
+--        io_1_is_in     => mil_io1_is_in_o,
+--        nLed_io_1      => mil_nled_io1_o,
+--        io_2           => mil_io2_o,
+--        io_2_is_in     => mil_io2_is_in_o,
+--        nLed_io_2      => mil_nled_io2_o,
+        nsig_wb_err    => open);
   end generate;
 
 
