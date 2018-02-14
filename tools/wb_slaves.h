@@ -4,9 +4,9 @@
  *
  *  created : 11-Nov-2016
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 01-Dec-2017
+ *  version : 07-Feb-2018
  */
-#define WB_SLAVES_VERSION "0.03.0"
+#define WB_SLAVES_VERSION "0.04.0"
 /*
  *  defines wishbone vendor IDs
  *  defines wishbone device IDs and registers
@@ -140,6 +140,57 @@
 #define FPGA_RESET_RESET             0x0                 /* reset register */
 
 /* masks */
+
+/*** TLU ***/
+//device ID
+#define GSI_TM_LATCH_VENDOR          WB_GSI      //vendor ID
+#define GSI_TM_LATCH_PRODUCT         0x10051981  //product ID
+#define GSI_TM_LATCH_VMAJOR          1           //major revision
+#define GSI_TM_LATCH_VMINOR          1           //minor revision
+
+//clock
+#define GSI_TM_LATCH_CLOCK           8           //clock period [ns]
+
+//register offsets
+#define GSI_TM_LATCH_FIFO_READY      0x000       //n..0 channel(n) timestamp(s) ready       (ro)
+#define GSI_TM_LATCH_FIFO_CLEAR      0x004       //n..0 channel(n) FIFO clear               (wo)
+#define GSI_TM_LATCH_TEST_CHANNELS   0x008       //Generate a test Event                    (wo)
+#define GSI_TM_LATCH_TRIG_ARMSTAT    0x00C       //n..0 channel(n) trigger armed status     (ro)
+#define GSI_TM_LATCH_TRIG_ARMSET     0x010       //n..0 channel(n) trigger set armed        (wo)
+#define GSI_TM_LATCH_TRIG_ARMCLR     0x014       //n..0 channel(n) trigger clr armed        (wo)
+#define GSI_TM_LATCH_TRIG_EDGESTAT   0x018           //n..0 channel(n) trigger edge status  (ro)
+#define GSI_TM_LATCH_TRIG_EDGEPOS    0x01C       //n..0 channel(n) trigger edge set pos     (wo)
+#define GSI_TM_LATCH_TRIG_EDGENEG    0x020       //n..0 channel(n) trigger edge set neg     (wo)
+
+//IRQ
+#define GSI_TM_LATCH_IRQ_ENABLE      0x024       // Enable/Disable Global IRQ               (rw)
+#define GSI_TM_LATCH_IRQ_MASKSTAT    0x028       // Status of   IRQ Channel Mask            
+#define GSI_TM_LATCH_IRQ_MASKSET     0x02C       // n...0 channel(n) IRQ Mask Set           (wo)        
+#define GSI_TM_LATCH_IRQ_MASKCLR     0x030       // n...0 channel(n) IRQ Mask Clear         (wo)
+
+// Channels Related Parameters
+#define GSI_TM_LATCH_CHNS_TOTAL      0x034       // Total Number of Channels in Device      (ro)
+#define GSI_TM_LATCH_CHNS_FIFOSIZE   0x038       // Total size of FIFOs                     (ro)
+
+//Timestamp Read Addresses
+//one must read ATSHI prior to reading ATSLO
+#define GSI_TM_LATCH_ATSHI           0x050       //actual time stamp HIGH words in cycles   (ro)
+#define GSI_TM_LATCH_ATSLO           0x054       //actual time stamp LOW words in cycles    (ro)
+
+// Channel to be selected n....0 and the other operations depend on selected channel
+#define GSI_TM_LATCH_CH_SELECT       0x058       //Channel Select                           (rw)
+
+// *IMP* All operations below depend on the Channel Selection
+#define GSI_TM_LATCH_FIFO_POP        0x05C       //pop the topmost FIFO Q Element           (wo)
+#define GSI_TM_LATCH_FIFO_TEST       0x060       // Generate a test Event Pulse             (wo)
+//pop just adjusts the pointer to the FIFO, it does not re-write a default value
+#define GSI_TM_LATCH_FIFO_CNT        0x064       //FIFO Queue   fill count                  (ro)
+#define GSI_TM_LATCH_FIFO_FTSHI      0x068       //timestamp HIGH words in cycles           (ro)
+#define GSI_TM_LATCH_FIFO_FTSLO      0x06c       //timestamp LOW words in cycles            (ro)
+#define GSI_TM_LATCH_FIFO_FTSSUB     0x070       //timestamp sub-cycle                      (ro)
+
+//masks
+
 
 #endif  /* wb_slaves.h */
 
