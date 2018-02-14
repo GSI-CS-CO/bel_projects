@@ -14,7 +14,7 @@ endif
 ifeq ($(BUILD), linux)
 FLAGS   = -Wall -O2 -g -I../../modules/oled_display
 CFLAGS  = $(FLAGS) -Wmissing-declarations -Wmissing-prototypes -DPLATFORM=$(BUILD)
-SOURCES = main-x86.c disp.c disp-oled.c disp-lcd.c ssd1325_serial_driver.c
+SOURCES = disp.c disp-oled.c disp-lcd.c ssd1325_serial_driver.c
 LIBS    = -Wl,-rpath,$(PREFIX)/lib -letherbone
 DEFINE  = -DSSD1325_TARGET_EMBEDDED=0
 LIBRARY = libetherbone.so
@@ -32,8 +32,12 @@ WCFLAGS = -W -Wall -Wimplicit -Wshadow -Wpointer-arith -Wcast-align -Wwrite-stri
           
 all: simple-display 
 
-simple-display: $(SOURCES)
-	$(CC) $(CFLAGS) $(WCFLAGS) $(DEFINE) -o $@ $^ $(LIBS)
+libsimple-display.a: $(SOURCES)
+	$(CC) $(CFLAGS) $(WCFLAGS) $(DEFINE) -c $^ $(LIBS)
+	ar -cvq $@ *.o
+
+simple-display: libsimple-display.a main-x86.cpp
+	$(CXX) $(CXXFLAGS) $(DEFINE) -o $@ main-x86.cpp -L. -lsimple-display $(LIBS)
 
 simple-display.bin: simple-display.elf
 	lm32-elf-objcopy -O binary $< $@
@@ -42,5 +46,5 @@ simple-display.elf: crt0.o simple-display.o main-lm32.o
 	$(CC) $(CFLAGS) -o $@ -nostdlib -T linker.ld $^
 
 clean:
-	rm -f *.o *.elf *.bin simple-display
+	rm -f *.o *.elf *.bin simple-display libsimple-display.a
 

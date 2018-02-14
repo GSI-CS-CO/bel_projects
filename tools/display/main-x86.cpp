@@ -4,7 +4,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
+#include <iostream>
 #include "disp.h"
+#include "etherbone.h"
 
 /* Global */
 const char* program;
@@ -25,11 +27,13 @@ void die(const char* where, eb_status_t status)
 int main(int argc, char** argv)
 {
   /* Helpers */
-  unsigned int i;
   int opt;
-  char str[170] = "\f";
+
   char givenDisplay = '0';
-  str[169] = '\0';
+  std::string s;
+  const char* pStr = NULL;
+  bool flush = false;
+
 
   /* Etherbone */
   eb_socket_t socket;
@@ -38,15 +42,13 @@ int main(int argc, char** argv)
   
   /* Process the command-line arguments */
   program = argv[0];
-  while ((opt = getopt(argc, argv, "s:d:")) != -1)
+  while ((opt = getopt(argc, argv, "fd:")) != -1)
   {
     switch (opt)
     {
-      case 's':
-      {
-        i=0;
-        while(i<168 && (optarg[i] != '\0')) { str[i+1] = optarg[i]; i++;}
-        str[i+1] = '\0';
+      case 'f':
+      { 
+        flush = true;
         break;
       }
       case 'd':
@@ -80,9 +82,9 @@ int main(int argc, char** argv)
   }
   
   /* Print help depending on arguments */
-  if (optind + 1 != argc)
+  if (optind >= argc)
   {
-    fprintf(stderr, "Usage: %s <protocol/host/port> -s <\"my string\"> -d <device>\n", program);
+    fprintf(stderr, "Usage: %s <protocol/host/port> <\"my string\"> -d <device>\n", program);
     fprintf(stderr, "\n");
     fprintf(stderr, "Devices:\n");
     fprintf(stderr, "  -d %d ... for OLEDisplay \n", OLED);
@@ -93,6 +95,12 @@ int main(int argc, char** argv)
     fprintf(stderr, "  ... will print \"Hello World\" to the LCDisplay\n");
     return 1;
   }
+  if (optind+1 < argc) {
+    pStr = argv[optind+1];
+    if(pStr != NULL) {
+      while(*pStr != '\0') {s.push_back(*pStr++);}
+    }
+  }  
   
   /* Open EB socket and device */
   devName = argv[optind];
@@ -108,7 +116,9 @@ int main(int argc, char** argv)
   }
   else
   {
-    disp_put_s(device, str);
+    if (pStr == NULL) { while(std::cin >> s); }
+    if(flush) s.insert (0, 1, '\f');
+    disp_put_s(device, s.c_str());
   }
     
   /* Close handler cleanly */

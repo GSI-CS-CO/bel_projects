@@ -27,7 +27,7 @@ t_disp_type init_disp(eb_device_t device)
   if (dispsFound)
   { 
     fFoundOLED=true; 
-    printf("%s: Found OLEDisplay... use -d %d\n", program, OLED);
+    printf("%s: Found OLEDisplay\n", program);
 
   }
   
@@ -37,7 +37,7 @@ t_disp_type init_disp(eb_device_t device)
   if (dispsFound) 
   { 
     fFoundLCD=true;
-    printf("%s: Found LCDisplay... use -d %d\n", program, LCD);
+    printf("%s: Found LCDisplay\n", program);
   }
   
   // SSD1325
@@ -46,11 +46,11 @@ t_disp_type init_disp(eb_device_t device)
   if (dispsFound) 
   { 
     fFoundSSD1325=true; 
-    printf("%s: Found SSD1325 Display... use -d %d\n", program, SSD1325);
+    printf("%s: Found SSD1325 Display\n", program);
   }
     
   // Select Display
-  if (fFoundOLED && (desiredDisplay==OLED))
+  if (fFoundOLED && (desiredDisplay==OLED || desiredDisplay==NONE))
   {
     display = (unsigned int*)(myOLEDisplay.sdb_component.addr_first);
     disp_put_loc_c = &oled_disp_put_loc_c;
@@ -60,7 +60,7 @@ t_disp_type init_disp(eb_device_t device)
     printf("%s: Using OLEDisplay @ %p\n", program, display);
     ret = OLED;
   }
-  else if (fFoundLCD && (desiredDisplay==LCD))
+  else if (fFoundLCD && (desiredDisplay==LCD || desiredDisplay==NONE))
   {
     display = (unsigned int*)(myLCDisplay.sdb_component.addr_first);
     disp_put_loc_c = &lcd_disp_put_loc_c;
@@ -70,7 +70,7 @@ t_disp_type init_disp(eb_device_t device)
     printf("%s: Using LCDisplay @ %p\n", program, display);
     ret = LCD;
   }
-  else if (fFoundSSD1325 && (desiredDisplay==SSD1325))
+  else if (fFoundSSD1325 && (desiredDisplay==SSD1325 || desiredDisplay==NONE))
   {
     display = (unsigned int*)(mySSD1325Display.sdb_component.addr_first);
     disp_put_loc_c = &vSSD1325_HostPutLocC;
@@ -79,12 +79,6 @@ t_disp_type init_disp(eb_device_t device)
     disp_put_line  = &vSSD1325_HostPutLine; 
     printf("%s: Using SSD1325 Display @ %p\n", program, display);
     ret = SSD1325;
-  }
-  else if (desiredDisplay==NONE)
-  {
-    // Missing desired display
-    printf("%s: Sorry, no display selected (use -d to specify a device)!\n", program);
-    ret = NONE;
   }
   else
   {
