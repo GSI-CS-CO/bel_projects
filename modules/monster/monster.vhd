@@ -250,7 +250,7 @@ entity monster is
     mil_lemo_nled_o        : out   std_logic_vector(4 downto 1);
     mil_lemo_out_en_o      : out   std_logic_vector(4 downto 1);
     mil_lemo_data_i        : in    std_logic_vector(4 downto 1):= (others => '0');
-  
+
     -- g_en_oled
     oled_rstn_o            : out   std_logic := 'Z';
     oled_dc_o              : out   std_logic := 'Z';
@@ -580,7 +580,7 @@ architecture rtl of monster is
   signal clk_butis_t0_ts  : std_logic; -- 100KHz + timestamp
 
   signal pci_clk_global   : std_logic;
-  
+
   -- END OF Clock networks
   ----------------------------------------------------------------------------------
 
@@ -771,7 +771,7 @@ architecture rtl of monster is
   signal lvds_dat_fr_clk_gen  : t_lvds_byte_array(f_sub1(c_eca_lvds) downto 0);
   signal lvds_dat_fr_wr_pps   : t_lvds_byte_array(f_sub1(c_eca_lvds) downto 0);
   signal lvds_dat             : t_lvds_byte_array(f_sub1(c_eca_lvds) downto 0);
-  signal lvds_i               : t_lvds_byte_array(15 downto 0);
+  signal lvds_i               : t_lvds_byte_array(f_sub1(g_lvds_inout+g_lvds_in) downto 0);
 
   signal s_triggers : t_trigger_array(g_gpio_in + g_gpio_inout + g_lvds_inout + g_lvds_in -1 downto 0);
 
@@ -997,7 +997,7 @@ begin
   core_rstn_butis_o  <= rstn_butis;
   core_clk_sys_o     <= clk_sys;
   core_clk_200m_o    <= clk_200m;
-  
+
   -- END OF Reset and PLLs
   ----------------------------------------------------------------------------------
 
@@ -1206,12 +1206,12 @@ begin
 
     s_pmc_debug_in(7 downto 4) <= gpio_i(3 downto 0); -- FPGA HEX switch
 
-    pci_clk_buf : global_region 
+    pci_clk_buf : global_region
       port map(
         inclk  => pmc_pci_clk_i,
         outclk => pci_clk_global
       );
-  
+
 end generate;
 
 
@@ -2170,12 +2170,12 @@ end generate;
         nLed_dry            => mil_nled_dry_o,
         every_ms_intr_o     => mil_every_ms_intr_o,
         lemo_data_o         => mil_lemo_data_o,
-        lemo_nled_o         => mil_lemo_nled_o, 
-        lemo_out_en_o       => mil_lemo_out_en_o,     
-        lemo_data_i         => mil_lemo_data_i, 
+        lemo_nled_o         => mil_lemo_nled_o,
+        lemo_out_en_o       => mil_lemo_out_en_o,
+        lemo_data_i         => mil_lemo_data_i,
         nsig_wb_err         => open,
         n_tx_req_led        => open,
-        n_rx_avail_led      => open                
+        n_rx_avail_led      => open
         );
   end generate;
 
