@@ -1,0 +1,68 @@
+digraph g {
+name="PPS_Test";
+
+graph []
+edge  [type="defdst"]
+
+subgraph cpu2 {
+  node  [cpu="1"];
+
+
+  Evt_PPS   [type="tmsg",  pattern="P1", patentry="1",  toffs=          0,   fid=1, par="0x123"];
+  Evt_B0   [type="tmsg",  pattern="P1",  toffs=          0,   fid=1, par="0x123"];
+  Evt_B1   [type="tmsg",  pattern="P1",  toffs=          0,   fid=1, par="0x123"];
+  Evt_B2   [type="tmsg",  pattern="P1",  toffs=          0,   fid=1, par="0x123"];
+  Evt_B3   [type="tmsg",  pattern="P1",  toffs=          0,   fid=1, par="0x123"];
+  Evt_B4   [type="tmsg",  pattern="P1",  toffs=          0,   fid=1, par="0x123"];
+  Evt_B5   [type="tmsg",  pattern="P1",  toffs=          0,   fid=1, par="0x123"];
+  Evt_B6   [type="tmsg",  pattern="P1",  toffs=          0,   fid=1, par="0x123"];
+  Evt_B7   [type="tmsg",  pattern="P1",  toffs=          0,   fid=1, par="0x123"];
+  Evt_B8   [type="tmsg",  pattern="P1",  toffs=          0,   fid=1, par="0x123"];
+  Evt_B9   [type="tmsg",  pattern="P1",  toffs=          0,   fid=1, par="0x123"];
+  //Evt_B10   [type="tmsg",  pattern="P1",  toffs=          0,   fid=1, par="0x123"];
+  
+
+  //Evt_PPS2   [type="tmsg", pattern="P1", toffs=          0,   fid=1, par="0x123"];
+  //Evt_PPS2  [type="tmsg",  pattern="P1", beamproc="B2", toffs=          0,   fid=0, gid=5, evtno=205, sid=2, bpid=8, par="0x123"];
+  Dummy1   [type="qinfo"];
+  Dummy2  [type="qbuf"];
+  Dummy3  [type="qbuf"];
+  Dummy21   [type="qinfo"];
+  Dummy22  [type="qbuf"];
+  Dummy23  [type="qbuf"];
+  B_PPS     [type="block", pattern="P1", beamproc="B3", patexit="1", bpexit="1", tperiod=1000000000, qlo="1", qhi="1", qil="1"];
+  Evt_PPS   -> B_PPS -> Evt_PPS;
+  B_PPS -> Evt_B0 [type="altdst"];
+  B_PPS -> Evt_B1 [type="altdst"];
+  B_PPS -> Evt_B2 [type="altdst"];
+  B_PPS -> Evt_B3 [type="altdst"];
+  B_PPS -> Evt_B4 [type="altdst"];
+  B_PPS -> Evt_B5 [type="altdst"];
+  B_PPS -> Evt_B6 [type="altdst"];
+  B_PPS -> Evt_B7 [type="altdst"];
+  B_PPS -> Evt_B8 [type="altdst"];
+  B_PPS -> Evt_B9 [type="altdst"];
+  //B_PPS -> Evt_B10 [type="altdst"];
+  B_PPS -> Dummy1 [type="prioil"];
+  Dummy1 -> Dummy2 [type="meta"];
+  Dummy1 -> Dummy3 [type="meta"];
+  B_PPS -> Dummy21 [type="prioil"];
+  Dummy21 -> Dummy22 [type="meta"];
+  Dummy21 -> Dummy23 [type="meta"];
+  Evt_B0 -> B_PPS; 
+  Evt_B1 -> B_PPS;
+  Evt_B2 -> B_PPS;
+  Evt_B3 -> B_PPS;
+  Evt_B4 -> B_PPS;
+  Evt_B5 -> B_PPS;
+  Evt_B6 -> B_PPS;
+  Evt_B7 -> B_PPS;
+  Evt_B8 -> B_PPS;
+  Evt_B9 -> B_PPS;
+  
+
+}
+
+
+
+}

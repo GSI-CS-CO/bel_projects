@@ -3,10 +3,11 @@ DEVICE		= 5AGXMA3D4
 FLASH		= EPCQ256
 SPI_LANES	= ASx4
 RAM_SIZE	= 49152 
-SHARED_SIZE     = 8K
+SHARED_SIZE     = 16384
 USRCPUCLK       = 125000
-VERSION         = 0.3.1
-VERSION_TOOL    = 0.2.0
+VERSION         = 1.0.0
+VERSION_TOOL    = 0.7.0
+DEBUGLVL  	= 0 
 
 EBMPATH   = ../../../ip_cores/etherbone-core/hdl/eb_master_core
 PRIOPATH  = ../../../modules/prioq2
@@ -14,17 +15,26 @@ PATHFTM   = ../../../modules/ftm
 PATHFW    = $(PATHFTM)/ftmfw
 PATHTOOL  = $(PATHFTM)/ftmx86
 PREFIX    ?= /usr/local
-CFLAGS    = -I$(PATHFW) -I$(PRIOPATH) -I$(EBMPATH)
+CFLAGS    = -I. -I$(PATHFTM)/include -I$(PATHFW) -I$(PRIOPATH) -I$(EBMPATH) -DDEBUGLEVEL=$(DEBUGLVL) -DDIAGNOSTICS -DDM_VERSION="\"$(VERSION)\""
 
 include ../../build.mk
-include $(PATHTOOL)/Makefile
 
-all: $(TARGET).elf tool
+all: $(TARGET).elf tools
 
-$(TARGET).elf: $(PATHFW)/main.c $(PATHFW)/ftm.c $(INCPATH)/ebm.c 
+tools: 
+	$(MAKE) -C $(PATHTOOL) tools
+	cp $(PATHFTM)/bin/dm-sched $(PATHFTM)/bin/dm-cmd $(PATHFTM)/lib/libcarpedm.a .
+
+install: 
+	$(MAKE) -C $(PATHTOOL) install
+
+ 
+
+$(TARGET).elf: $(PATHFW)/main.c $(PATHFW)/dm.c $(INCPATH)/ebm.c 
 
 clean::
-	rm -f $(PATHFW)/*.o $(PATHFW)/*.a $(PATHFW)/*.elf $(PATHFW)/*.bin
+	rm -f $(PATHFW)/*.o $(PATHFW)/*.a $(PATHFW)/*.elf $(PATHFW)/*.bin dm-sched dm-cmd libcarpedm.a
+	$(MAKE) -C $(PATHTOOL) clean
 
 
         

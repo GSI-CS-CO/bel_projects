@@ -1,0 +1,18 @@
+digraph g {
+name="helloadv";
+
+graph []
+edge  [type="defdst"]
+node [qlo="1"]//, qHi="1", qIl="1"];
+
+subgraph cpu0 {
+  node  [cpu="0"];
+
+    B_PPS2     [type="block",  tperiod=1000000000];
+
+    B_PPS -> B_PPS2;
+
+}
+
+
+}
