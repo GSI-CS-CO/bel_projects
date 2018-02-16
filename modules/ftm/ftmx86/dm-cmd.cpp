@@ -2,7 +2,8 @@
 #include <iostream>
 #include <string>
 #include <inttypes.h>
-#include <time.h> 
+#include <time.h>
+#include <unistd.h>
 
 #include "ftm_shared_mmap.h"
 #include "carpeDM.h"
@@ -11,12 +12,16 @@
 #include "minicommand.h"
 #include "dotstr.h"
 #include "strprintf.h"
+#include "filenames.h"
+
+
 
 
 static void help(const char *program) {
   fprintf(stderr, "\nUsage: %s [OPTION] <etherbone-device> <command> [target node] [parameter] \n", program);
   fprintf(stderr, "\n");
   fprintf(stderr, "\nSends a command to Thread <n> of CPU Core <m> of the DataMaster (DM), requires dot file of DM's schedule.\nThere are global commands, that influence the whole DM, local commands influencing the whole thread\nand block commands, that only affect one queue in the schedule.\n");
+  fprintf(stderr, "  -d         <dir>          Use a directory other than the current working path for hashtable and groupstable files\n");
   fprintf(stderr, "\nGeneral Options:\n");
   fprintf(stderr, "  -c <cpu-idx>              Select CPU core by index, default is 0\n");
   fprintf(stderr, "  -t <thread-idx>           Select thread inside selected CPU core by index, default is 0\n");
@@ -205,16 +210,27 @@ int main(int argc, char* argv[]) {
   const char *program = argv[0];
   const char cTypeName[] = "status"; 
   const char *netaddress, *targetName = NULL, *cmdFilename = NULL, *typeName = (char*)&cTypeName, *para = NULL;
+  char dirnameBuff[80];
+  const char *dirname = (const char *)getcwd(dirnameBuff, 80); 
+
+
   int32_t tmp, error=0;
   uint32_t cpuIdx = 0, thrIdx = 0, cmdPrio = PRIO_LO, cmdQty = 1;
   uint64_t cmdTvalid = 0, longtmp;
 
 // start getopt 
-   while ((opt = getopt(argc, argv, "shvc:p:l:t:q:i:")) != -1) {
+   while ((opt = getopt(argc, argv, "shvc:p:l:t:q:i:d:")) != -1) {
       switch (opt) {
           case 'i':
             cmdFilename = optarg;
             break;
+         case 'd':
+            dirname = optarg;
+            if (dirname == NULL) {
+              std::cerr << std::endl << program << ": option -d expects a path" << std::endl;
+            }
+            error = -1;
+            break;     
          case 'v':
             verbose = 1;
             break;
@@ -331,13 +347,15 @@ int main(int argc, char* argv[]) {
     return -40;
   }
 
-  try { cdm.loadHashDictFile("dm.dict"); } catch (std::runtime_error const& err) {
+  try { cdm.loadHashDictFile( std::string(dirname) + "/" + std::string(hashfile) ); } catch (std::runtime_error const& err) {
       std::cerr << std::endl << program << ": Warning - Could not load dictionary file. Cause: " << err.what() << std::endl;
     }
-  try { cdm.loadGroupsDictFile("dm.groups"); } catch (std::runtime_error const& err) {
+  std::cout << std::endl << program << ": Loaded " << cdm.getHashDictSize() << " Node / Hash entries" << std::endl;  
+
+  try { cdm.loadGroupsDictFile( std::string(dirname) + "/" + std::string(groupsfile) ); } catch (std::runtime_error const& err) {
       std::cerr << std::endl << program << ": Warning - Could not load groups file. Cause: " << err.what() << std::endl;
     }
-
+ std::cout << std::endl << program << ": Loaded " << cdm.getGroupsSize() << " Node / Pattern / Beamprocess entries" << std::endl;  
 
  
     
@@ -436,7 +454,7 @@ int main(int argc, char* argv[]) {
     else if (cmp == "chkrem")  {
       std::string report;
       bool isSafe = cdm.isSafeToRemove(targetName, report);
-      cdm.writeTextFile("debug.dot", report);
+      cdm.writeTextFile(std::string(dirname) + "/" + std::string(debugfile), report);
       std::cout << std::endl << "Pattern " << targetName << " content removal: " << (isSafe ? "SAFE" : "FORBIDDEN" ) << std::endl;
       return 0;
     }
@@ -460,6 +478,7 @@ int main(int argc, char* argv[]) {
       return 0;
     }
     else if (cmp == dnt::sCmdStop)  {
+      if (targetName == NULL) {std::cerr << program << ": expected name of target node" << std::endl; return -1; }
       if(!(cdm.isInHashDict( targetName))) {std::cerr << program << ": Target node '" << targetName << "'' was not found on DM" << std::endl; return -1; }
       
         uint32_t adr; 
