@@ -92,12 +92,12 @@ bool CarpeDM::isSafeToRemove(std::set<std::string> patterns, std::string& report
   boost::associative_property_map<vertex_map_t> vertexMapWrapperEq(vertexMapEq);
   copy_graph(fg, gEq, boost::orig_to_copy(vertexMapWrapperEq));
   for (auto& it : vertexMapEq) { //check vertex indices
-    if (it.first != it.second) { throw std::runtime_error( "CpyGraph Map2 Idx Translation failed! This is beyond bad, contact Dev !");}
+    if (it.first != it.second) { throw std::runtime_error(isSafeToRemove::exIntro + "CpyGraph Map2 Idx Translation failed! This is beyond bad, contact Dev !");}
   }
 
   if(verbose) sLog << "Reading Cursors " << std::endl;
   //try to get consistent image of active cursors
-  cursors = getAllCursors(false);
+  cursors = getAllCursors(true);
   //Here comes the problem: resident commands are only of consquence if they AND their target Block are executable
   //Iteratively find out which cmds are executable and add equivalent edges for them. Do this until no more new edges have to be added
   if (addResidentDestinations(gEq, gTmp, cursors)) { if(verbose) {sLog << "Added resident equivalents." << std::endl;} }
