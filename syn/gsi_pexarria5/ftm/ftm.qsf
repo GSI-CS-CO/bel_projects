@@ -15,10 +15,10 @@ set_global_assignment -name POWER_BOARD_THERMAL_MODEL "NONE (CONSERVATIVE)"
 set_global_assignment -name ALLOW_POWER_UP_DONT_CARE OFF
 set_global_assignment -name SYNTH_TIMING_DRIVEN_SYNTHESIS ON
 set_global_assignment -name USE_CONFIGURATION_DEVICE ON
-set_global_assignment -name OUTPUT_IO_TIMING_NEAR_END_VMEAS "HALF VCCIO" -rise
-set_global_assignment -name OUTPUT_IO_TIMING_NEAR_END_VMEAS "HALF VCCIO" -fall
-set_global_assignment -name OUTPUT_IO_TIMING_FAR_END_VMEAS "HALF SIGNAL SWING" -rise
-set_global_assignment -name OUTPUT_IO_TIMING_FAR_END_VMEAS "HALF SIGNAL SWING" -fall
+set_global_assignment -rise -name OUTPUT_IO_TIMING_NEAR_END_VMEAS "HALF VCCIO"
+set_global_assignment -fall -name OUTPUT_IO_TIMING_NEAR_END_VMEAS "HALF VCCIO"
+set_global_assignment -rise -name OUTPUT_IO_TIMING_FAR_END_VMEAS "HALF SIGNAL SWING"
+set_global_assignment -fall -name OUTPUT_IO_TIMING_FAR_END_VMEAS "HALF SIGNAL SWING"
 set_global_assignment -name ACTIVE_SERIAL_CLOCK FREQ_100MHZ
 set_global_assignment -name ENABLE_SIGNALTAP OFF
 set_global_assignment -name STRATIX_DEVICE_IO_STANDARD "2.5 V"
@@ -1034,26 +1034,14 @@ set_global_assignment -name LL_ROUTING_REGION_EXPANSION_SIZE 2147483647 -section
 set_global_assignment -name LL_CORE_ONLY OFF -section_id "wr_arria5:rx"
 set_global_assignment -name LL_CORE_ONLY OFF -section_id "wr_arria5:tx"
 set_global_assignment -name LL_ROUTING_REGION_EXPANSION_SIZE 2147483647 -section_id "wr_arria5:tx"
-set_instance_assignment -name MAX_FANOUT 64 -to "monster:main|wr_tlu:tlu|process_2~0"
-set_instance_assignment -name MAX_FANOUT 64 -to "monster:main|xwb_register_link:dev2top_msi|wb_skidpad:sp|r_full1"
 set_instance_assignment -name MAX_FANOUT 64 -to "monster:main|ftm_lm32_cluster:lm32*"
-set_instance_assignment -name MAX_FANOUT 64 -to "monster:main|eca_ac_wbm:c1"
-set_instance_assignment -name MAX_FANOUT 64 -to "monster:main|eca_queue:c2"
-set_instance_assignment -name MAX_FANOUT 64 -to "monster:main|wr_eca:eca"
-set_instance_assignment -name MAX_FANOUT 64 -to "monster:main|eca_tlu:ecatlu"
-set_instance_assignment -name MAX_FANOUT 64 -to "monster:main|eca_wb_event:ecawb"
-set_instance_assignment -name MAX_FANOUT 64 -to "monster:main|eca_queue:c0"
+set_instance_assignment -name MAX_FANOUT 64 -to "monster:main|wr_eca:eca*"
+set_instance_assignment -name MAX_FANOUT 64 -to "monster:main|wr_tlu:tlu|process_2~0"
 set_instance_assignment -name GLOBAL_SIGNAL GLOBAL_CLOCK -to "monster:main|altera_reset:reset|nresets[3][0]"
 set_instance_assignment -name GLOBAL_SIGNAL GLOBAL_CLOCK -to "monster:main|altera_reset:reset|nresets[1][0]"
-set_instance_assignment -name GLOBAL_SIGNAL GLOBAL_CLOCK -to "monster:main|xwr_core:U_WR_CORE|wr_core:WRPC|wrc_periph:PERIPH|rst_wrc_n_o~0"
 set_instance_assignment -name GLOBAL_SIGNAL REGIONAL_CLOCK -to "monster:main|xwr_core:U_WR_CORE|wr_core:WRPC|wrc_periph:PERIPH|rst_net_n_o"
-set_instance_assignment -name GLOBAL_SIGNAL REGIONAL_CLOCK -to "monster:main|global_region:phase_clk|global_region_altclkctrl_bdh:global_region_altclkctrl_bdh_component|wire_sd1_outclk"
-set_instance_assignment -name GLOBAL_SIGNAL REGIONAL_CLOCK -to pcie_refclk_i*
+set_instance_assignment -name GLOBAL_SIGNAL REGIONAL_CLOCK -to "monster:main|xwr_core:U_WR_CORE|wr_core:WRPC|wrc_periph:PERIPH|rst_wrc_n_o~0"
 set_instance_assignment -name GLOBAL_SIGNAL REGIONAL_CLOCK -to "monster:main|ez_usb:\\usb_y:usb|nreset"
 set_instance_assignment -name GLOBAL_SIGNAL PERIPHERY_CLOCK -to "monster:main|eb_master_slave_wrapper:eb|eb_master_top:\\MS1:U_ebm|s_rst_n"
-
-
+set_instance_assignment -name MAX_FANOUT 64 -to "monster:main|xwb_register_link:dev2top_msi|wb_skidpad:sp|r_full1"
 set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
-set_global_assignment -name OPTIMIZATION_MODE "AGGRESSIVE PERFORMANCE"
-set_global_assignment -name REMOVE_DUPLICATE_REGISTERS OFF
-set_global_assignment -name SYNTHESIS_EFFORT AUTO

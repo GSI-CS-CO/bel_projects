@@ -227,8 +227,7 @@ inline void send_fg_param(int slot, int fg_base, unsigned short cntrl_reg) {
 
   fg_num = (cntrl_reg & 0x3f0) >> 4; // virtual fg number Bits 9..4
   if (cbRead(&fg_buffer[0], &fg_regs[0], fg_num, &pset)) {
-    cntrl_reg_wr = cntrl_reg & ~(0xfc00); // clear freq and step select
-    cntrl_reg_wr = cntrl_reg & ~(0x7);    // clear fg_running and fg_enabled
+    cntrl_reg_wr = cntrl_reg & ~(0xfc07); // clear freq, step select, fg_running and fg_enabled
     cntrl_reg_wr |= ((pset.control & 0x38) << 10) | ((pset.control & 0x7) << 10);
     blk_data[0] = cntrl_reg_wr;
     blk_data[1] = pset.coeff_a;

@@ -126,7 +126,7 @@ begin
       sync_rst            => fg_cntrl_reg(0),
       a_en                => wr_coeff_a or blk_start_h_wr,
       sync_start          => (wr_brc_start or ext_trigger) and fg_cntrl_reg(1),   -- start with broadcast or from external signal
-      load_start          => wr_start_value_h,                  -- when high word was written, load into datapath
+      load_start          => wr_start_value_h or blk_start_h_wr,                  -- when high word was written, load into datapath
       step_sel            => fg_cntrl_reg(12 downto 10),
       shift_b             => to_integer(unsigned(shift_reg(5 downto 0))),
       shift_a             => to_integer(unsigned(shift_reg(11 downto 6))),
