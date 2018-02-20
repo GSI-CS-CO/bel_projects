@@ -23,7 +23,7 @@ all: $(TARGET).elf tools
 
 tools: 
 	$(MAKE) -C $(PATHTOOL) tools
-	cp $(PATHFTM)/bin/dm-sched $(PATHFTM)/bin/dm-cmd $(PATHFTM)/lib/libcarpedm.a .
+	cp $(PATHFTM)/bin/dm-sched $(PATHFTM)/bin/dm-cmd $(PATHFTM)/lib/libcarpedm.so .
 
 install: 
 	$(MAKE) -C $(PATHTOOL) install
@@ -33,7 +33,7 @@ install:
 $(TARGET).elf: $(PATHFW)/main.c $(PATHFW)/dm.c $(INCPATH)/ebm.c 
 
 clean::
-	rm -f $(PATHFW)/*.o $(PATHFW)/*.a $(PATHFW)/*.elf $(PATHFW)/*.bin dm-sched dm-cmd libcarpedm.a
+	rm -f $(PATHFW)/*.o $(PATHFW)/*.a $(PATHFW)/*.elf $(PATHFW)/*.bin dm-sched dm-cmd libcarpedm.so
 	$(MAKE) -C $(PATHTOOL) clean
 
 
