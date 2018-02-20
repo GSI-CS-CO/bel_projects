@@ -18,7 +18,7 @@ INSTALLPATH  = $(PREFIX)/bin
 
 #hack for fuckin lib chaos (both on asl cluster and my computer... )
 
-ifeq ($(findstring asl,$(shell hostname)),asl) 
+ifeq ($(findstring asl,$(shell hostname)),asl)
 	EB_INC=-I/common/export/timing-rte/tg-cherry-v2/x86_64/include
 	EB_LIB=/common/export/timing-rte/tg-cherry-v2/x86_64/lib/libetherbone.so
 else
@@ -30,6 +30,10 @@ else
 	SER_LIB=-lboost_serialization
 endif
 
+# Build server
+ifeq ($(findstring tsl002,$(shell hostname)),tsl002)
+	SER_LIB=-l:libboost_serialization.so.1.62.0
+endif
 
 T_CXX         = g++
 T_CXXFLAGS    = -Wall -g -std=c++11 -I$(FTMPATH)/include $(EB_INC) -I$(FWPATH) -Wfatal-errors -DPLATFORM=$(BUILD) -DTOOL_VER=\"$(VERSION_TOOL)\"  -DEXP_VER=\"$(VERSION)\" -DETHERBONE_THROWS=1
@@ -42,13 +46,13 @@ T_LIBS        = -Wl,-rpath,/usr/local/lib $(EB_LIB) -lboost_graph $(SER_LIB)
 
 all: lib tools
 
-lib: libcarpedm.so  
+lib: libcarpedm.so
 
 tools: $(BINPATH)/dm-sched $(BINPATH)/dm-cmd
-	
+
 
 $(BINPATH)/dm-sched: $(TOOLPATH)/dm-sched
-	mkdir -p $(BINPATH) 
+	mkdir -p $(BINPATH)
 	cp $^ $(BINPATH)
 
 $(BINPATH)/dm-cmd: $(TOOLPATH)/dm-cmd
@@ -60,7 +64,7 @@ $(FWPATH)/ftm_shared_mmap.h:
 	$(MAKE) -C $(FWPATH) ftm_shared_mmap.h
 
 
-libcarpedm.so: $(T_SOURCES) $(FWPATH)/ftm_shared_mmap.h 
+libcarpedm.so: $(T_SOURCES) $(FWPATH)/ftm_shared_mmap.h
 	$(T_CXX) $(T_CXXFLAGS) -fPIC -c $(T_SOURCES) $(T_LIBS)
 	$(T_CXX) -shared -o $@ $(T_OBJECTS)
 	mkdir -p $(LIBPATH)
