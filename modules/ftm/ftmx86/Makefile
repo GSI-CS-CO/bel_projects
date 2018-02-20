@@ -1,6 +1,6 @@
 TOP          ?= ../../..
 
-VERSION      ?= 1.1.1
+VERSION      ?= 1.1.0
 VERSION_TOOL ?= 0.10.1
 
 
