@@ -197,11 +197,14 @@ int main(int argc, char* argv[]) {
     }
   }
 
+  std::string report;
+  bool tabOk = cdm.tableCheck(report);
+
+  if (verbose or !tabOk) std::cout << report << std::endl;
 
   cdm.storeHashDictFile(std::string(dirname) + "/" + std::string(hashfile));  
   cdm.storeGroupsDictFile(std::string(dirname) + "/" + std::string(groupsfile));
 
-  //cdm.showGroupsDict();
 
   cdm.disconnect();
 
