@@ -289,6 +289,7 @@ std::pair<int, int> findRunningPattern(const std::string& sPattern); //get cpu a
           uint64_t getDmWrTime();
               bool isSafeToRemove(const std::string& pattern, std::string& report);
               bool isSafeToRemove(Graph& gRem, std::string& report);
+              bool tableCheck(std::string& report);
 
 
 

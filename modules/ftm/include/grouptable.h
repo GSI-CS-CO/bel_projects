@@ -173,7 +173,7 @@ public:
   vStrC getPatternExitNodes(const std::string& sPattern)     {return getGroupNodes<Groups::Pattern,  &GroupMeta::patternExit>(sPattern); };
   vStrC getBeamprocEntryNodes(const std::string& sBeamproc)  {return getGroupNodes<Groups::Beamproc, &GroupMeta::beamprocEntry>(sBeamproc); };
   vStrC getBeamprocExitNodes(const std::string& sBeamproc)   {return getGroupNodes<Groups::Beamproc, &GroupMeta::beamprocExit>(sBeamproc); };
-
+  vStrC getAllPatterns();
 
 
   
