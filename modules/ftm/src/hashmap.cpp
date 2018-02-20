@@ -5,10 +5,13 @@
 
 
 uint32_t HashMap::hash(const std::string& s) {
-  const char* ps = s.c_str();
-  if (ps[0] != '#') {return fnvHash(ps);} //if the string starts with a '#', its a hash. don't hash it again, just parse to number and copy it in
-  else              {//std::cout << "Found dumped hash, leaving intact" << std::endl;
-                     return s2u<uint32_t>(s.substr(1));}  
+  if(s.find(DotStr::Misc::sHashType, 0) != 0) {return fnvHash(s.c_str());} 
+  else {//std::cout << "Found dumped hash, leaving intact" << std::endl;
+
+    uint32_t hash = s2u<uint32_t>(s.substr(DotStr::Misc::sHashType.size()));
+    std::cout << "Found dumped hash string " << s << ". Hash stays 0x" << std::hex << hash  << std::endl;
+    return hash;
+  }  
 }
 
 uint32_t HashMap::fnvHash(const char* str)

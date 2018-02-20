@@ -15,6 +15,7 @@ namespace DotStr {
     const uint32_t    uUndefined32  = 0xDEADBEEF; //yeah yeah, it's not a string. I know
     const uint64_t    uUndefined64  = 0xD15EA5EDDEADBEEFULL; //yeah yeah, it's not a string. I know
     const std::string sUndefined    = "undefined";
+    const std::string sHashType     = "HASH_";
 
     // tag constants for both nodes and edges
 

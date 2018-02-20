@@ -82,9 +82,9 @@ namespace dnt = DotStr::Node::TypeVal;
 
           stream.str(""); stream.clear();
           stream << "0x" << std::setfill ('0') << std::setw(sizeof(uint32_t)*2) << std::hex << hash;
-          std::string name      = hm.lookup(hash) ? hm.lookup(hash).get() : "#" + stream.str();
           std::string pattern   = gt.lookupOrCreateNode(name)->pattern;
           std::string beamproc  = gt.lookupOrCreateNode(name)->beamproc;
+          std::string name      = hm.lookup(hash) ? hm.lookup(hash).get() : DotStr::Misc::sHashType + stream.str();
           uint32_t    flags     = writeBeBytesToLeNumber<uint32_t>((uint8_t*)&downloadData[localAdr + NODE_FLAGS]); //FIXME what about future requests to hashmap if we improvised the name from hash? those will fail ...
           uint32_t    type      = (flags >> NFLG_TYPE_POS) & NFLG_TYPE_MSK;
           uint8_t     cpu       = i;

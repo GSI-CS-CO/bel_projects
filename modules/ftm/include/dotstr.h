@@ -18,6 +18,7 @@ namespace DotStr {
     extern const uint32_t    uUndefined32 ;
     extern const uint64_t    uUndefined64 ;
     extern const std::string sUndefined   ;
+    extern const std::string sHashType;
 
     // tag constants for both nodes and edges
     extern const std::string sPrioHi       ;
