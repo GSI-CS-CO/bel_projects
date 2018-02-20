@@ -1,0 +1,71 @@
+digraph G {
+name = "blink2";
+graph [label="Blink", root="Evt_POLICE",  rankdir=TB, nodesep=0.6, mindist=0.6, ranksep=0.6, overlap=false]
+node [type="TMsg", shape="rectangle",  style="filled", fillcolor="white", color="black", cpu=0]
+edge [type="defdst", color="red"]
+
+subgraph G0 {
+  color = "none";
+Evt_POLICE0        [type="TMsg",                tOffs=0, id="0x0000000000000110", par="0x123", shape="oval", fillcolor="orange"];
+Evt_POLICE1        [type="TMsg",                tOffs=500, id="0x0000000000000110", par="0x123", shape="oval"];
+Cmd_CALL_FIREF   [shape="oval",             tOffs=300, type="Flow", color="magenta", tValid=0, qty=1];
+B_POLICE          [type="Block",         tPeriod=2000000000];
+Evt_POLICE0 -> Evt_POLICE1 -> Cmd_CALL_FIREF -> B_POLICE -> B_POLICE;
+B_POLICE   -> Evt_POLICE0 [type="altdst", color="black"];
+
+B_POLICE_ListDst [type="ListDst", color="grey", style=dashed, flags=0];
+B_POLICE_QBl_Lo [type="QInfo", color="grey", style=dashed, flags=0];
+B_POLICE_Qb_Lo0 [type="QBuf", color="grey", style=dashed, flags=0];
+B_POLICE_Qb_Lo1 [type="QBuf", color="grey", style=dashed, flags=0];
+B_POLICE->B_POLICE_QBl_Lo [type="priolo", color="grey", style=dashed, label="Lo Qbuf List"];
+B_POLICE_QBl_Lo->B_POLICE_Qb_Lo0 [type="meta", color="grey", style=dashed, label="QBuf"];
+B_POLICE_QBl_Lo->B_POLICE_Qb_Lo1 [type="meta", color="grey", style=dashed, label="QBuf"];
+
+B_POLICE_QBl_Il [type="QInfo", color="grey", style=dashed, flags=0];
+B_POLICE_Qb_Il0 [type="QBuf", color="grey", style=dashed, flags=0];
+B_POLICE_Qb_Il1 [type="QBuf", color="grey", style=dashed, flags=0];
+B_POLICE->B_POLICE_QBl_Il [type="prioIl", color="grey", style=dashed, label="Il Qbuf List"];
+B_POLICE_QBl_Il->B_POLICE_Qb_Il0 [type="meta", color="grey", style=dashed, label="QBuf"];
+B_POLICE_QBl_Il->B_POLICE_Qb_Il1 [type="meta", color="grey", style=dashed, label="QBuf"];
+
+
+B_POLICE->B_POLICE_ListDst [type="listdst", color="grey", style=dashed, label="listdst"];
+
+
+label = "Thread 0"
+}
+
+subgraph G1 {
+  node [cpu="1"];
+Evt_FIREF0         [type="TMsg",              tOffs=0, id="0x0000000000000112", par="0x0", shape="oval", fillcolor="orange"];
+Evt_FIREF1         [type="TMsg",              tOffs=0, id="0x0000000000000112", par="0x0", shape="oval"];
+Cmd_CALL_POLICE   [shape="oval",             tOffs=1000, type="Flow", color="magenta", tValid=0, qty=1];
+B_FIREF           [type="Block",         tPeriod=4000000000];
+B_FIREF_ListDst [type="ListDst", color="grey", style=dashed, flags=0];
+B_FIREF_QBl_Lo [type="QInfo", color="grey", style=dashed, flags=0];
+B_FIREF_Qb_Lo0 [type="QBuf", color="grey", style=dashed, flags=0];
+B_FIREF_Qb_Lo1 [type="QBuf", color="grey", style=dashed, flags=0];
+B_FIREF_QBl_Lo->B_FIREF_Qb_Lo0 [type="meta", color="grey", style=dashed, label="QBuf"];
+B_FIREF_QBl_Lo->B_FIREF_Qb_Lo1 [type="meta", color="grey", style=dashed, label="QBuf"];
+Evt_FIREF0  -> Evt_FIREF1 -> Cmd_CALL_POLICE -> B_FIREF -> B_FIREF;
+B_FIREF   -> Evt_FIREF0 [type="altdst", color="black"];
+B_FIREF->B_FIREF_QBl_Lo [type="priolo", color="grey", style=dashed, label="Lo Qbuf List"];
+B_FIREF->B_FIREF_ListDst [type="listdst", color="grey", style=dashed, label="listdst"];
+color = "none";
+label = "Thread 1"
+}
+
+Cmd_CALL_POLICE  -> B_POLICE [type="target", color="grey", label="change dest..."];
+Cmd_CALL_POLICE  -> Evt_POLICE0 [type="flowdst", color="grey", label="...to"];
+
+
+
+
+
+Cmd_CALL_FIREF  -> B_FIREF [type="target", color="grey", label="change dest..."];
+Cmd_CALL_FIREF  -> Evt_FIREF0 [type="flowdst", color="grey", label="...to"];
+
+
+
+
+}

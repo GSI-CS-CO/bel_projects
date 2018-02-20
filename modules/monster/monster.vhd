@@ -456,13 +456,13 @@ architecture rtl of monster is
     c_devs_flash          => f_sdb_auto_device(f_wb_spi_flash_sdb(g_flash_bits), true),
     c_devs_reset          => f_sdb_auto_device(c_arria_reset,                    true),
     c_devs_ebm            => f_sdb_auto_device(c_ebm_sdb,                        true),
-    c_devs_tlu            => f_sdb_auto_device(c_tlu_sdb,                        true),
+    c_devs_tlu            => f_sdb_auto_device(c_tlu_sdb,                        not g_lm32_are_ftm),
     c_devs_eca_ctl        => f_sdb_auto_device(c_eca_slave_sdb,                  true),
     c_devs_eca_aq         => f_sdb_auto_device(c_eca_queue_slave_sdb,            true),
-    c_devs_eca_tlu        => f_sdb_auto_device(c_eca_tlu_slave_sdb,              true),
-    c_devs_eca_wbm        => f_sdb_auto_device(c_eca_ac_wbm_slave_sdb,           true),
-    c_devs_emb_cpu        => f_sdb_auto_device(c_eca_queue_slave_sdb,            true),
-    c_devs_serdes_clk_gen => f_sdb_auto_device(c_wb_serdes_clk_gen_sdb,          true),
+    c_devs_eca_tlu        => f_sdb_auto_device(c_eca_tlu_slave_sdb,              not g_lm32_are_ftm),
+    c_devs_eca_wbm        => f_sdb_auto_device(c_eca_ac_wbm_slave_sdb,           not g_lm32_are_ftm),
+    c_devs_emb_cpu        => f_sdb_auto_device(c_eca_queue_slave_sdb,            not g_lm32_are_ftm),
+    c_devs_serdes_clk_gen => f_sdb_auto_device(c_wb_serdes_clk_gen_sdb,          not g_lm32_are_ftm),
     c_devs_control        => f_sdb_auto_device(c_io_control_sdb,                 true),
     c_devs_ftm_cluster    => f_sdb_auto_bridge(c_ftm_slaves,                     true),
     c_devs_lcd            => f_sdb_auto_device(c_wb_serial_lcd_sdb,              g_en_lcd),
@@ -671,9 +671,12 @@ architecture rtl of monster is
       1 => c_loc_wb_master,
       2 => c_loc_embedded_cpu,
       3 => c_loc_scubus_tag);
-    constant c_channel_types : t_nat_array(2 downto 0) := c_scu_channel_types(2 downto 0);
+    constant c_channel_types    : t_nat_array(2 downto 0) := c_scu_channel_types(2 downto 0);
+    constant c_dm_channel_types : t_nat_array(0 downto 0) := c_scu_channel_types(0 downto 0);
   begin
-    if g_en_scubus then
+    if g_lm32_are_ftm then
+      return c_dm_channel_types;  
+    elsif g_en_scubus then
       return c_scu_channel_types;
     else
       return c_channel_types;
@@ -686,7 +689,17 @@ architecture rtl of monster is
   signal s_channel_o : t_channel_array(c_channel_types'range);
   signal s_time      : t_time;
 
-  constant c_num_streams : natural := 2;
+
+  function TO_INTEGER(x: boolean ) return integer is
+  begin
+    if x then
+        return 1;
+    else
+        return 0;    
+    end if;    
+  end TO_INTEGER;
+
+  constant c_num_streams : natural := 2 - TO_INTEGER(g_lm32_are_ftm);
   signal s_stream_i : t_stream_array(c_num_streams-1 downto 0);
   signal s_stall_o  : std_logic_vector(c_num_streams-1 downto 0);
 
@@ -1678,6 +1691,7 @@ end generate;
   end generate;
 
   -- Instantiate SERDES clock generator
+  genSerdes : if not g_lm32_are_ftm generate
   cmp_serdes_clk_gen : xwb_serdes_clk_gen
     generic map(
       g_num_serdes_bits       => 8,
@@ -1693,6 +1707,7 @@ end generate;
       rst_ref_n_i  => rstn_ref,
       eca_time_i   => ref_tai8ns,
       serdes_dat_o => lvds_dat_fr_clk_gen);
+  end generate;  
 
   -- LVDS component data input is OR between ECA chan output and SERDES clk. gen.
   gen_lvds_dat : for i in lvds_dat'range generate
@@ -1706,7 +1721,8 @@ end generate;
   tlu_lvds : if (g_lvds_inout + g_lvds_in > 0) generate
    s_triggers(g_gpio_in + g_gpio_inout + g_lvds_inout + g_lvds_in -1 downto g_gpio_in + g_gpio_inout) <= f_lvds_array_to_trigger_array(lvds_i(f_sub1(g_lvds_inout+g_lvds_in) downto 0));
   end generate;
-
+  
+  genTlu : if not g_lm32_are_ftm generate
   tlu : wr_tlu
     generic map(
       g_num_triggers => g_gpio_in + g_gpio_inout + g_lvds_inout + g_lvds_in,
@@ -1722,7 +1738,10 @@ end generate;
       ctrl_slave_o   => dev_bus_master_i(c_devs_tlu),
       irq_master_o   => dev_msi_slave_i (c_devs_tlu),
       irq_master_i   => dev_msi_slave_o (c_devs_tlu));
+   
+   end generate;
 
+  
   ecawb : eca_wb_event
     port map(
       w_clk_i    => clk_sys,
@@ -1733,7 +1752,9 @@ end generate;
       e_rst_n_i  => rstn_ref,
       e_stream_o => s_stream_i(0),
       e_stall_i  => s_stall_o(0));
+  
 
+  genEcatlu : if not g_lm32_are_ftm generate 
   ecatlu : eca_tlu
     generic map(
       g_inputs => c_tlu_io)
@@ -1748,6 +1769,8 @@ end generate;
       a_gpio_i   => s_tlu_io,
       a_stream_o => s_stream_i(1),
       a_stall_i  => s_stall_o(1));
+
+   end generate;
 
   eca : wr_eca
     generic map(
@@ -1824,7 +1847,9 @@ end generate;
       q_slave_i   => dev_bus_master_o(c_devs_eca_aq),
       q_slave_o   => dev_bus_master_i(c_devs_eca_aq));
 
+  
   top_msi_master_i(c_topm_eca_wbm) <= cc_dummy_slave_out; -- does not accept MSIs
+  ecq_wbm : if not g_lm32_are_ftm generate
   c1: eca_ac_wbm
     generic map(
       g_entries  => 16,
@@ -1839,7 +1864,9 @@ end generate;
       slave_o     => dev_bus_master_i(c_devs_eca_wbm),
       master_o    => top_bus_slave_i(c_topm_eca_wbm),
       master_i    => top_bus_slave_o(c_topm_eca_wbm));
+  end generate;
 
+  ecq_lm32 : if not g_lm32_are_ftm generate
   c2 : eca_queue
     generic map(
       g_queue_id  => 2)
@@ -1852,6 +1879,7 @@ end generate;
       q_rst_n_i   => rstn_sys,
       q_slave_i   => dev_bus_master_o(c_devs_emb_cpu),
       q_slave_o   => dev_bus_master_i(c_devs_emb_cpu));
+  end generate;  
 
   eca_scu : if g_en_scubus generate
     c3 : eca_scubus_channel

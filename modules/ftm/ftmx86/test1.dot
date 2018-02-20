@@ -1,0 +1,19 @@
+digraph g {
+name="helloadv";
+
+graph []
+edge  [type="defdst"]
+node [qlo="1"]//, qHi="1", qIl="1"];
+
+subgraph cpu1 {
+  node  [cpu="1"];
+
+  Evt_Bla [type="tmsg",   toffs=           0, id="0x0000000000000001", par="0x0"];
+  B_Bla   [type="block",  tperiod=1000000000];
+
+  Evt_Bla -> B_Bla;
+
+}
+
+
+}

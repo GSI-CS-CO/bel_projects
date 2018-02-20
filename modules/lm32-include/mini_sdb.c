@@ -202,52 +202,53 @@ void discoverPeriphery(void)
   sdb_location found_sdb_w1[2];
   uint32_t idx = 0;
   uint32_t idx_w1 = 0;
-  pCpuMsiBox    = NULL;
+  pCpuMsiBox      = NULL;
   pMyMsi          = NULL; 
 
-  pUart          = find_device_adr(CERN, WR_UART);
+  pUart           = find_device_adr(CERN, WR_UART);
   //pUart          = (uint32_t*)0x84060500;
-  BASE_UART      = (char *)pUart; //make WR happy ...
+  BASE_UART       = (char *)pUart; //make WR happy ...
   
  
-  pCpuId         = find_device_adr(GSI, CPU_INFO_ROM);
-  pCpuAtomic     = find_device_adr(GSI, CPU_ATOM_ACC);
-  pCpuSysTime    = find_device_adr(GSI, CPU_SYSTEM_TIME);
-  pCpuIrqSlave   = find_device_adr(GSI, CPU_MSI_CTRL_IF);
+  pCpuId          = find_device_adr(GSI, CPU_INFO_ROM);
+  pCpuAtomic      = find_device_adr(GSI, CPU_ATOM_ACC);
+  pCpuSysTime     = find_device_adr(GSI, CPU_SYSTEM_TIME);
+  pCpuIrqSlave    = find_device_adr(GSI, CPU_MSI_CTRL_IF);
 
   idx = 0;
 
   find_device_multi(&found_sdb[0], &idx, 1, GSI, MSI_MSG_BOX);   
   if(idx) {
-    pCpuMsiBox     = (uint32_t*)getSdbAdr(&found_sdb[0]); 
-    pMyMsi         = (uint32_t*)getMsiAdr(&found_sdb[0]); 
+    pCpuMsiBox    = (uint32_t*)getSdbAdr(&found_sdb[0]); 
+    pMyMsi        = (uint32_t*)getMsiAdr(&found_sdb[0]); 
   } 
-  pCluCB         = find_device_adr(GSI, LM32_CB_CLUSTER);
-  pCluInfo       = find_device_adr(GSI, CLU_INFO_ROM);
-  pFpqCtrl       = find_device_adr(GSI, FTM_PRIOQ_CTRL); 
-  pFpqData       = find_device_adr(GSI, FTM_PRIOQ_DATA); 
-
-   
-  pOledDisplay   = find_device_adr(GSI, OLED_DISPLAY);  
+  pCluCB          = find_device_adr(GSI, LM32_CB_CLUSTER);
+  pCluInfo        = find_device_adr(GSI, CLU_INFO_ROM);
+  pFpqCtrl        = find_device_adr(GSI, FTM_PRIOQ_CTRL); 
+  pFpqData        = find_device_adr(GSI, FTM_PRIOQ_DATA); 
+  
+    
+  pOledDisplay    = find_device_adr(GSI, OLED_DISPLAY);  
   idx = 0;
   find_device_multi(&found_sdb[0], &idx, 20, GSI, ETHERBONE_MASTER);
-  pEbm           = (uint32_t*)getSdbAdr(&found_sdb[0]);
-  pEbmLast       = (uint32_t*)getSdbAdrLast(&found_sdb[0]);
-  pEbCfg         = find_device_adr(GSI, ETHERBONE_CFG);
-  pEca           = find_device_adr(GSI, ECA_EVENT);
-  pTlu           = find_device_adr(GSI, TLU);
+  pEbm            = (uint32_t*)getSdbAdr(&found_sdb[0]);
+  pEbmLast        = (uint32_t*)getSdbAdrLast(&found_sdb[0]);
+  pEbCfg          = find_device_adr(GSI, ETHERBONE_CFG);
+  pEca            = find_device_adr(GSI, ECA_EVENT);
+  pTlu            = find_device_adr(GSI, TLU);
 
   
-  pCfiPFlash     = find_device_adr(GSI, WR_CFIPFlash);
+  pCfiPFlash      = find_device_adr(GSI, WR_CFIPFlash);
   
-  pDDR3_if1      = find_device_adr(GSI, WB_DDR3_if1);
-  pDDR3_if2      = find_device_adr(GSI, WB_DDR3_if2);
+  pDDR3_if1       = find_device_adr(GSI, WB_DDR3_if1);
+  pDDR3_if2       = find_device_adr(GSI, WB_DDR3_if2);
   
   // Get the second onewire/w1 record (0=white rabbit w1 unit, 1=user w1 unit)
   find_device_multi(&found_sdb_w1[0], &idx_w1, 2, CERN, WR_1Wire);
-  pOneWire         = (uint32_t*)getSdbAdr(&found_sdb_w1[1]);
+  pOneWire        = (uint32_t*)getSdbAdr(&found_sdb_w1[1]);
 
   BASE_SYSCON     = (char *)find_device_adr(CERN, WR_SYS_CON);
+  pPps            = (char *)find_device_adr(CERN, WR_PPS_GEN);
 
 }
 
