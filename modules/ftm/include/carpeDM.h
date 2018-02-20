@@ -120,6 +120,7 @@ protected:
 
   //std::string getFwInfo(uint8_t cpuIdx);
   int parseFwVersionString(const std::string& s);
+  const std::string createFwVersionString(const int fwVer);
   uint64_t read64b(uint32_t startAdr);
   int write64b(uint32_t startAdr, uint64_t d);
 

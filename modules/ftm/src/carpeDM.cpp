@@ -177,7 +177,12 @@ bool CarpeDM::connect(const std::string& en) {
           foundVersion = getFwVersion(cpuIdx);
 
           vFw.push_back(foundVersion);
-          if (expVersion <= foundVersion) {
+          int expVersionMin = expVersion;
+          int expVersionMax = (expVersion / (int)FwId::VERSION_MAJOR_MUL) * (int)FwId::VERSION_MAJOR_MUL 
+                             + 99 * (int)FwId::VERSION_MINOR_MUL
+                             + 99 * (int)FwId::VERSION_REVISION_MUL;
+                         
+          if ( (foundVersion >= expVersionMin) && (foundVersion <= expVersionMax) ) {
             cpuIdxMap[cpuIdx]    = mappedIdx;
             uint32_t extBaseAdr   = cpuDevs[cpuIdx].sdb_component.addr_first;
             uint32_t intBaseAdr   = getIntBaseAdr(cpuIdx);
@@ -357,6 +362,20 @@ bool CarpeDM::connect(const std::string& en) {
     return g;
   }
 
+  const std::string CarpeDM::createFwVersionString(const int fwVer) {
+    
+    unsigned int fwv = (unsigned int)fwVer;
+    std::string ret;
+
+    unsigned int verMaj = fwv / (unsigned int)FwId::VERSION_MAJOR_MUL; fwv %= (unsigned int)FwId::VERSION_MAJOR_MUL;
+    unsigned int verMin = fwv / (unsigned int)FwId::VERSION_MINOR_MUL; fwv %= (unsigned int)FwId::VERSION_MINOR_MUL;
+    unsigned int verRev = fwv;
+    
+    ret = std::to_string(verMaj) + "." + std::to_string(verMin) + "." + std::to_string(verRev);
+    return ret;
+
+  }
+
 
   int CarpeDM::parseFwVersionString(const std::string& s) {
     
@@ -440,25 +459,32 @@ bool CarpeDM::connect(const std::string& en) {
     if (!(at.isOk(x)))  {throw std::runtime_error( "Could not find Node in allocation table"); return LM32_NULL_PTR;}
     else {
       switch (adrT) {
-        case AdrType::MGMT      : return x->adr; break;
+        case AdrType::MGMT : return x->adr; break;
         case AdrType::INT  : return at.adrConv(AdrType::MGMT, AdrType::INT, x->cpu, x->adr); break;
         case AdrType::EXT  : return at.adrConv(AdrType::MGMT, AdrType::EXT, x->cpu, x->adr); break;
-        case AdrType::PEER      : return at.adrConv(AdrType::MGMT, AdrType::PEER, x->cpu, x->adr); break;
-        default                 : throw std::runtime_error( "Unknown Adr Type conversion"); return LM32_NULL_PTR;
+        case AdrType::PEER : return at.adrConv(AdrType::MGMT, AdrType::PEER, x->cpu, x->adr); break;
+        default            : throw std::runtime_error( "Unknown Adr Type conversion"); return LM32_NULL_PTR;
       }
     }  
   }
 
+
+
  
 void CarpeDM::showCpuList() {
-  int expVersion = parseFwVersionString(EXP_VER);
+  int expVersionMin = parseFwVersionString(EXP_VER);
+  int expVersionMax = (expVersionMin / (int)FwId::VERSION_MAJOR_MUL) * (int)FwId::VERSION_MAJOR_MUL 
+                   + 99 * (int)FwId::VERSION_MINOR_MUL
+                   + 99 * (int)FwId::VERSION_REVISION_MUL;
 
-  sLog << std::setfill(' ') << std::setw(7) << "CPU" << std::setfill(' ') << std::setw(11) << "FW found" << std::setfill(' ') << std::setw(10) << "FW exp." << std::endl;
+  sLog << std::endl << std::setfill(' ') << std::setw(7) << "CPU" << std::setfill(' ') << std::setw(11) << "FW found" << std::setfill(' ') << std::setw(10) << "Min" << std::setw(10) << "Max" << std::endl;
   for (int x = 0; x < cpuQty; x++) {
-    if (vFw[x] > expVersion) sLog << " ! ";
-    else if (vFw[x] < expVersion) sLog << " X ";
+   
+    if ((vFw[x] < expVersionMin) || (vFw[x] > expVersionMax)) sLog << " X ";
     else sLog << "   ";
-    sLog << "  " << std::dec << std::setfill(' ') << std::setw(2) << x << "   " << std::setfill('0') << std::setw(6) << vFw[x] << "   " << std::setfill('0') << std::setw(6) << expVersion;
+    sLog << "  " << std::dec << std::setfill(' ') << std::setw(2) << x << "   " << std::setfill(' ') << std::setw(9) << createFwVersionString(vFw[x]) 
+                                                                       << "   " << std::setfill(' ') << std::setw(9) << createFwVersionString(expVersionMin)
+                                                                       << "   " << std::setfill(' ') << std::setw(9) << createFwVersionString(expVersionMax);
     sLog << std::endl;
   }
 
