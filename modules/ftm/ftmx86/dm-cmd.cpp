@@ -101,11 +101,12 @@ void showStatus(const char *netaddress, CarpeDM& cdm, bool verbose) {
 
   char date[40];
   uint64_t timeWr = cdm.getDmWrTime();
+  uint64_t timeWrNs = timeWr * 1000000000ULL;
   strftime(date, sizeof(date), "%Y-%m-%d %H:%M:%S", gmtime((time_t*)&timeWr));
 
 
   printf("\n\u2552"); for(int i=0;i<width;i++) printf("\u2550"); printf("\u2555\n");
-  printf("\u2502 DataMaster: %-83s \u2502 WR-Time: 0x%08x%08x \u2502 %.19s \u2502\n", netaddress, (uint32_t)(timeWr>>32), (uint32_t)timeWr, date);
+  printf("\u2502 DataMaster: %-80s \u2502 WR-Time: 0x%08x%08x ns \u2502 %.19s \u2502\n", netaddress, (uint32_t)(timeWrNs>>32), (uint32_t)timeWrNs, date);
   printf("\u251C"); for(int i=0;i<width;i++) printf("\u2550"); printf("\u2524\n");
   printf("\u2502 %3s \u2502 %3s \u2502 %7s \u2502 %9s \u2502 %55s \u2502 %55s \u2502\n", "Cpu", "Thr", "Running", "MsgCount", "Pattern", "Node");
   printf("\u251C"); for(int i=0;i<width;i++) printf("\u2550"); printf("\u2524\n");
