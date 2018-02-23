@@ -173,8 +173,9 @@ bool CarpeDM::connect(const std::string& en) {
         cpuQty = cpuDevs.size();
 
         for(int cpuIdx = 0; cpuIdx< cpuQty; cpuIdx++) {
-          //only create MemUnits for valid DM CPUs, generate Mapping so we can still use the cpuIdx supplied by User 
-          foundVersion = getFwVersion(cpuIdx);
+          //only create MemUnits for valid DM CPUs, generate Mapping so we can still use the cpuIdx supplied by User
+          const std::string fwIdROM = getFwIdROM(cpuIdx);
+          foundVersion = getFwVersion(fwIdROM);
 
           vFw.push_back(foundVersion);
           int expVersionMin = expVersion;
@@ -183,13 +184,15 @@ bool CarpeDM::connect(const std::string& en) {
                              + 99 * (int)FwId::VERSION_REVISION_MUL;
                          
           if ( (foundVersion >= expVersionMin) && (foundVersion <= expVersionMax) ) {
+            //FIXME check for consequent use of cpu index map!!! I'm sure there'll be absolute chaos throughout the lib if CPUs indices were not continuous
             cpuIdxMap[cpuIdx]    = mappedIdx;
+            
             uint32_t extBaseAdr   = cpuDevs[cpuIdx].sdb_component.addr_first;
-            uint32_t intBaseAdr   = getIntBaseAdr(cpuIdx);
+            uint32_t intBaseAdr   = getIntBaseAdr(fwIdROM);
             uint32_t peerBaseAdr  = WORLD_BASE_ADR  + extBaseAdr;
             uint32_t rawSize      = cpuDevs[cpuIdx].sdb_component.addr_last - cpuDevs[cpuIdx].sdb_component.addr_first;
-            uint32_t sharedOffs   = getSharedOffs(cpuIdx) + _SHCTL_END_; 
-            uint32_t space        = getSharedSize(cpuIdx) - _SHCTL_END_;
+            uint32_t sharedOffs   = getSharedOffs(fwIdROM) + _SHCTL_END_; 
+            uint32_t space        = getSharedSize(fwIdROM) - _SHCTL_END_;
                         
               atUp.addMemory(cpuIdx, extBaseAdr, intBaseAdr, peerBaseAdr, sharedOffs, space, rawSize );
             atDown.addMemory(cpuIdx, extBaseAdr, intBaseAdr, peerBaseAdr, sharedOffs, space, rawSize );
@@ -206,7 +209,6 @@ bool CarpeDM::connect(const std::string& en) {
     }
 
     if(verbose) {
-      showCpuList();
       sLog << " Done."  << std::endl << "Found " << getCpuQty() << " Cores, " << cpuIdxMap.size() << " of them run a valid DM firmware." << std::endl;
     }  
     if (cpuIdxMap.size() == 0) {throw std::runtime_error("No CPUs running a valid DM firmware found"); return false;}
@@ -397,20 +399,16 @@ bool CarpeDM::connect(const std::string& en) {
 
   }
 
-  //returns firmware version as int <xxyyzz> (x Major Version, y Minor Version, z Revison; negative values for error codes)
-  int CarpeDM::getFwVersion(uint8_t cpuIdx) {
+    //returns firmware version as int <xxyyzz> (x Major Version, y Minor Version, z Revison; negative values for error codes)
+  const std::string CarpeDM::getFwIdROM(uint8_t cpuIdx) {
     //FIXME replace with FW ID string constants
     const std::string tagMagic      = "UserLM32";
     const std::string tagProject    = "Project     : ";
     const std::string tagExpName    = "ftm";
-    const std::string tagVersion    = "Version     : ";
-    const std::string tagVersionEnd = "Platform    : ";
     std::string version;
-    size_t pos, posEnd;
+    size_t pos;
     struct  sdb_device& ram = cpuDevs.at(cpuIdx);
     vAdr fwIdAdr;
-
-    if ((ram.sdb_component.addr_last - ram.sdb_component.addr_first + 1) < SHARED_OFFS) { return (int)FwId::FWID_RAM_TOO_SMALL;}
 
     for (uint32_t adr = ram.sdb_component.addr_first + BUILDID_OFFS; adr < ram.sdb_component.addr_first + SHARED_OFFS; adr += 4) fwIdAdr.push_back(adr);
     vBuf fwIdData = ebReadCycle(ebd, fwIdAdr);
@@ -418,20 +416,72 @@ bool CarpeDM::connect(const std::string& en) {
 
     //check for magic word
     pos = 0;
-    if(s.find(tagMagic, 0) == std::string::npos) {return (int)FwId::FWID_BAD_MAGIC;} 
+    if(s.find(tagMagic, 0) == std::string::npos) {throw std::runtime_error( "Bad Firmware Info ROM: Magic word not found\n");} 
     //check for project name
     pos = s.find(tagProject, 0);
-    if (pos == std::string::npos || (s.find(tagExpName, pos + tagProject.length()) != pos + tagProject.length())) {return (int)FwId::FWID_BAD_PROJECT_NAME;} 
+    if (pos == std::string::npos || (s.find(tagExpName, pos + tagProject.length()) != pos + tagProject.length())) {throw std::runtime_error( "Bad Firmware Info ROM: Not a DM project\n");} 
+
+    return s;
+  }
+
+  //returns firmware version as int <xxyyzz> (x Major Version, y Minor Version, z Revison; negative values for error codes)
+  int CarpeDM::getFwVersion(const std::string& fwIdROM) {
+    //FIXME replace with FW ID string constants
     //get Version string xx.yy.zz    
-    pos = s.find(tagVersion, 0);
-    posEnd = s.find(tagVersionEnd, pos + tagVersion.length());
-    if((pos == std::string::npos) || (posEnd == std::string::npos)) {return (int)FwId::FWID_NOT_FOUND;}
-    version = s.substr(pos + tagVersion.length(), posEnd - (pos + tagVersion.length()));
+
+    std::string version = readFwIdROMTag(fwIdROM, "Version     : ", 10, true);
     
     int ret = parseFwVersionString(version);
 
     return ret;
   }
+
+
+  const std::string CarpeDM::readFwIdROMTag(const std::string& fwIdROM, const std::string& tag, size_t maxlen, bool stopAtCr ) {
+    size_t pos, posEnd, tmp;
+    std::string s = fwIdROM;
+  
+    tmp = s.find(tag, 0);
+    if(tmp == std::string::npos) throw std::runtime_error( "Could not find tag <" + tag + ">in FW ID ROM\n");
+    pos = tmp + tag.length();  
+
+    tmp = s.find("\n", pos);
+    if( (tmp == std::string::npos) || (tmp > (pos + maxlen)) ) posEnd = (pos + maxlen);
+    else posEnd = tmp;
+    
+    return s.substr(pos, posEnd - pos);
+
+
+  }
+
+
+
+  uint32_t CarpeDM::getIntBaseAdr(const std::string& fwIdROM) {
+    //FIXME replace with FW ID string constants
+    std::string value = readFwIdROMTag(fwIdROM, "IntAdrOffs  :", 10, true);
+    //sLog << "IntAdrOffs : " << value << " parsed: 0x" << std::hex << s2u<uint32_t>(value) << std::endl;
+    return s2u<uint32_t>(value);
+
+  }
+
+  uint32_t CarpeDM::getSharedOffs(const std::string& fwIdROM) {
+    //FIXME replace with FW ID string constants
+    std::string value = readFwIdROMTag(fwIdROM, "SharedOffs  : ", 10, true);
+    //sLog << "SharedOffs : " << value << " parsed: 0x" << std::hex << s2u<uint32_t>(value) << std::endl;
+    return s2u<uint32_t>(value);
+
+  }
+
+  uint32_t CarpeDM::getSharedSize(const std::string& fwIdROM){
+    std::string value = readFwIdROMTag(fwIdROM, "SharedSize  : ", 10, true);
+    //sLog << "SharedSize : " << value << " parsed: "  << std::dec << s2u<uint32_t>(value) << std::endl;
+    return s2u<uint32_t>(value);
+
+  }
+
+
+
+
 
 
   uint8_t CarpeDM::getNodeCpu(const std::string& name, TransferDir dir) {
@@ -477,14 +527,13 @@ void CarpeDM::showCpuList() {
                    + 99 * (int)FwId::VERSION_MINOR_MUL
                    + 99 * (int)FwId::VERSION_REVISION_MUL;
 
-  sLog << std::endl << std::setfill(' ') << std::setw(7) << "CPU" << std::setfill(' ') << std::setw(11) << "FW found" << std::setfill(' ') << std::setw(10) << "Min" << std::setw(10) << "Max" << std::endl;
+  sLog << std::endl << std::setfill(' ') << std::setw(5) << "CPU" << std::setfill(' ') << std::setw(11) << "FW found" 
+       << std::setfill(' ') << std::setw(11) << "Min" << std::setw(11) << "Max" << std::setw(11) << "Space" << std::setw(11) << "Free" << std::endl;
   for (int x = 0; x < cpuQty; x++) {
-   
-    if ((vFw[x] < expVersionMin) || (vFw[x] > expVersionMax)) sLog << " X ";
-    else sLog << "   ";
-    sLog << "  " << std::dec << std::setfill(' ') << std::setw(2) << x << "   " << std::setfill(' ') << std::setw(9) << createFwVersionString(vFw[x]) 
-                                                                       << "   " << std::setfill(' ') << std::setw(9) << createFwVersionString(expVersionMin)
-                                                                       << "   " << std::setfill(' ') << std::setw(9) << createFwVersionString(expVersionMax);
+    sLog << std::dec << std::setfill(' ') << std::setw(5) << x << std::setfill(' ') << std::setw(11) << createFwVersionString(vFw[x]) 
+                                                                       << std::setfill(' ') << std::setw(11) << createFwVersionString(expVersionMin)
+                                                                       << std::setfill(' ') << std::setw(11) << createFwVersionString(expVersionMax);
+    sLog << std::dec << std::setfill(' ') << std::setw(11) << atDown.getTotalSpace(x) << std::setw(10) << atDown.getFreeSpace(x) * 100 / atDown.getTotalSpace(x) << "%";                                                                       
     sLog << std::endl;
   }
 

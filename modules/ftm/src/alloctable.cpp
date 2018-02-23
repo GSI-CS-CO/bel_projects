@@ -151,18 +151,18 @@
     //std::cerr << "atypes " << debugAdrType(from) << ", " << debugAdrType(to) << std::endl;
 
     switch (ADR_FROM_TO(from,to)) {
-      case ADR_FROM_TO(AdrType::EXT, AdrType::MGMT)      : return a - vPool[cpu].extBaseAdr;
-      case ADR_FROM_TO(AdrType::EXT, AdrType::PEER)      : return a - vPool[cpu].extBaseAdr  + vPool[cpu].peerBaseAdr;
-      case ADR_FROM_TO(AdrType::EXT, AdrType::INT)  : return a - vPool[cpu].extBaseAdr  + vPool[cpu].intBaseAdr;
-      case ADR_FROM_TO(AdrType::INT, AdrType::MGMT)      : return a - vPool[cpu].intBaseAdr;
-      case ADR_FROM_TO(AdrType::INT, AdrType::EXT)  : return a - vPool[cpu].intBaseAdr  + vPool[cpu].extBaseAdr;
-      case ADR_FROM_TO(AdrType::INT, AdrType::PEER)      : return a - vPool[cpu].intBaseAdr  + vPool[cpu].peerBaseAdr;
-      case ADR_FROM_TO(AdrType::PEER,     AdrType::MGMT)      : return a - vPool[cpu].peerBaseAdr;
-      case ADR_FROM_TO(AdrType::PEER,     AdrType::EXT)  : return a - vPool[cpu].peerBaseAdr + vPool[cpu].extBaseAdr;
-      case ADR_FROM_TO(AdrType::PEER,     AdrType::INT)  : return a - vPool[cpu].peerBaseAdr + vPool[cpu].intBaseAdr;
-      case ADR_FROM_TO(AdrType::MGMT,     AdrType::EXT)  : return a + vPool[cpu].extBaseAdr;
-      case ADR_FROM_TO(AdrType::MGMT,     AdrType::INT)  : return a + vPool[cpu].intBaseAdr;
-      case ADR_FROM_TO(AdrType::MGMT,     AdrType::PEER)      : return a + vPool[cpu].peerBaseAdr;
+      case ADR_FROM_TO(AdrType::EXT,  AdrType::MGMT) : return a - vPool[cpu].extBaseAdr;
+      case ADR_FROM_TO(AdrType::EXT,  AdrType::PEER) : return a - vPool[cpu].extBaseAdr  + vPool[cpu].peerBaseAdr;
+      case ADR_FROM_TO(AdrType::EXT,  AdrType::INT)  : return a - vPool[cpu].extBaseAdr  + vPool[cpu].intBaseAdr;
+      case ADR_FROM_TO(AdrType::INT,  AdrType::MGMT) : return a - vPool[cpu].intBaseAdr;
+      case ADR_FROM_TO(AdrType::INT,  AdrType::EXT)  : return a - vPool[cpu].intBaseAdr  + vPool[cpu].extBaseAdr;
+      case ADR_FROM_TO(AdrType::INT,  AdrType::PEER) : return a - vPool[cpu].intBaseAdr  + vPool[cpu].peerBaseAdr;
+      case ADR_FROM_TO(AdrType::PEER, AdrType::MGMT) : return a - vPool[cpu].peerBaseAdr;
+      case ADR_FROM_TO(AdrType::PEER, AdrType::EXT)  : return a - vPool[cpu].peerBaseAdr + vPool[cpu].extBaseAdr;
+      case ADR_FROM_TO(AdrType::PEER, AdrType::INT)  : return a - vPool[cpu].peerBaseAdr + vPool[cpu].intBaseAdr;
+      case ADR_FROM_TO(AdrType::MGMT, AdrType::EXT)  : return a + vPool[cpu].extBaseAdr;
+      case ADR_FROM_TO(AdrType::MGMT, AdrType::INT)  : return a + vPool[cpu].intBaseAdr;
+      case ADR_FROM_TO(AdrType::MGMT, AdrType::PEER) : return a + vPool[cpu].peerBaseAdr;
       default : throw std::runtime_error("bad address conversion perspective"); return 0;
     }
 

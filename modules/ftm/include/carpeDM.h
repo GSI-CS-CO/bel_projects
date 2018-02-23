@@ -83,7 +83,8 @@ private:
   vertex_set_t getAllCursors(bool activeOnly);
   vStrC getGraphPatterns(Graph& g);
   bool isSafeToRemove(std::set<std::string> patterns, std::string& report);
-  
+  const std::string readFwIdROMTag(const std::string& fwIdROM, const std::string& tag, size_t maxlen, bool stopAtCr );
+
 
 protected:
 
@@ -141,11 +142,12 @@ public:
   bool disconnect(); //Close connection
 
   // SDB Functions
-  bool isValidDMCpu(uint8_t cpuIdx) {return (cpuIdxMap.count(cpuIdx) > 0);} //Check if CPU is registered as running a valid firmware  
-  int getFwVersion(uint8_t cpuIdx); //Retrieve the Firmware Version of cpu at sdb dev array idx <cpuIdx>
-  uint32_t getIntBaseAdr(uint8_t cpuIdx) {return INT_BASE_ADR;} //mockup for now, this info should be taken from found firmware binary
-  uint32_t getSharedOffs(uint8_t cpuIdx) {return SHARED_OFFS;}
-  uint32_t getSharedSize(uint8_t cpuIdx) {return SHARED_SIZE;}
+  bool isValidDMCpu(uint8_t cpuIdx) {return (cpuIdxMap.count(cpuIdx) > 0);}; //Check if CPU is registered as running a valid firmware
+  const std::string getFwIdROM(uint8_t cpuIdx);  
+  int getFwVersion(const std::string& fwIdROM); //Retrieve the Firmware Version of cpu at sdb dev array idx <cpuIdx>
+  uint32_t getIntBaseAdr(const std::string& fwIdROM);//mockup for now, this info should be taken from found firmware binary
+  uint32_t getSharedOffs(const std::string& fwIdROM);
+  uint32_t getSharedSize(const std::string& fwIdROM);
   int getCpuQty()   const {return cpuQty;} //Return number of found CPUs (not necessarily valid ones!)
   bool isCpuIdxValid(uint8_t cpuIdx) { if ( cpuIdxMap.find(cpuIdx) != cpuIdxMap.end() ) return true; else return false;}  
 
