@@ -433,9 +433,8 @@ using namespace DotStr::Misc;
     BOOST_FOREACH( vertex_t w, vertices(gTmp) ) {
       //sLog <<  "Looking at " << gTmp[w].name << std::endl;
       found = false;
-      sLog <<  "Searching " << std::hex << " 0x" << gTmp[w].hash << std::endl; 
+      if (verbose) sLog <<  "Searching " << std::hex << " 0x" << gTmp[w].hash << std::endl; 
       BOOST_FOREACH( vertex_t v, vertices(gUp) ) {
-        sLog <<  "... " << std::hex << " 0x" << gUp[v].hash << std::endl;
         if ((gTmp[w].hash == gUp[v].hash)) {
           found = true;
           if (gTmp[w].type != DotStr::Misc::sUndefined) {
@@ -467,7 +466,7 @@ using namespace DotStr::Misc;
       //sLog <<  "Removing Node " << gUp[vertexMap[vd]].name << std::endl;  
       atUp.deallocate(gUp[vertexMap[vd]].hash); //using the hash is independent of vertex descriptors, so no remapping necessary yet
       //remove node from hash and groups dict 
-      sLog <<  "Removing " << gUp[vertexMap[vd]].name << std::endl; 
+      if (verbose) sLog <<  "Removing " << gUp[vertexMap[vd]].name << std::endl; 
       hm.remove(gUp[vertexMap[vd]].name);
       gt.remove<Groups::Node>(gUp[vertexMap[vd]].name); 
       boost::clear_vertex(vertexMap[vd], gUp); 

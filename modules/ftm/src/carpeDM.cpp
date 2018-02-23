@@ -42,7 +42,7 @@ int CarpeDM::ebWriteCycle(Device& dev, vAdr va, vBuf& vb)
       cyc.close();
       cyc.open(dev);  
     }
-    sLog << "Writing @ 0x" << std::hex << std::setfill('0') << std::setw(8) << va[i] << " : 0x" << std::hex << std::setfill('0') << std::setw(8) << veb[i] << std::endl;
+    if (verbose) sLog << "Writing @ 0x" << std::hex << std::setfill('0') << std::setw(8) << va[i] << " : 0x" << std::hex << std::setfill('0') << std::setw(8) << veb[i] << std::endl;
     cyc.write(va[i], EB_BIG_ENDIAN | EB_DATA32, veb[i]);
 
     }
@@ -94,7 +94,7 @@ int CarpeDM::ebWriteWord(Device& dev, uint32_t adr, uint32_t data)
 {
    Cycle cyc;
    //FIXME What about returned eb status ??
-   sLog << "Writing @ 0x" << std::hex << std::setfill('0') << std::setw(8) << adr << " : 0x" << std::hex << std::setfill('0') << std::setw(8) << data << std::endl;
+   if (verbose) sLog << "Writing @ 0x" << std::hex << std::setfill('0') << std::setw(8) << adr << " : 0x" << std::hex << std::setfill('0') << std::setw(8) << data << std::endl;
    try { 
      cyc.open(dev);
      cyc.write(adr, EB_BIG_ENDIAN | EB_DATA32, (eb_data_t)data);
@@ -448,7 +448,7 @@ bool CarpeDM::connect(const std::string& en) {
   }
 
   uint32_t CarpeDM::getNodeAdr(const std::string& name, TransferDir dir, AdrType adrT) {
-    sLog << "Looking up Adr of " << name << std::endl;
+    if (verbose) sLog << "Looking up Adr of " << name << std::endl;
     if(name == DotStr::Node::Special::sIdle) return LM32_NULL_PTR; //idle node is resolved as a null ptr without comment
 
     AllocTable& at = (dir == TransferDir::UPLOAD ? atUp : atDown );
@@ -619,7 +619,7 @@ void CarpeDM::showCpuList() {
     const std::string sSurp   = "Surplus ";
     const std::string sFirst  = "element: ";
     const std::string sOK     = "OK\n";
-    const std::string sERR     = "ERROR\n";
+    const std::string sERR    = "ERROR\n";
 
     // check if  graph node count equals ... 
     auto nQty = boost::vertices(g);

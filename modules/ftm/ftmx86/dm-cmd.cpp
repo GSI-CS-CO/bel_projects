@@ -351,12 +351,12 @@ int main(int argc, char* argv[]) {
   try { cdm.loadHashDictFile( std::string(dirname) + "/" + std::string(hashfile) ); } catch (std::runtime_error const& err) {
       std::cerr << std::endl << program << ": Warning - Could not load dictionary file. Cause: " << err.what() << std::endl;
     }
-  std::cout << std::endl << program << ": Loaded " << cdm.getHashDictSize() << " Node / Hash entries" << std::endl;  
+  if (verbose) std::cout << std::endl << program << ": Loaded " << cdm.getHashDictSize() << " Node / Hash entries" << std::endl;  
 
   try { cdm.loadGroupsDictFile( std::string(dirname) + "/" + std::string(groupsfile) ); } catch (std::runtime_error const& err) {
       std::cerr << std::endl << program << ": Warning - Could not load groups file. Cause: " << err.what() << std::endl;
     }
- std::cout << std::endl << program << ": Loaded " << cdm.getGroupsSize() << " Node / Pattern / Beamprocess entries" << std::endl;  
+  if (verbose) std::cout << std::endl << program << ": Loaded " << cdm.getGroupsSize() << " Node / Pattern / Beamprocess entries" << std::endl;  
 
  
     
