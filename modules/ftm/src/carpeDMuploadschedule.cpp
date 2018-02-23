@@ -509,8 +509,21 @@ using namespace DotStr::Misc;
 
   }
 
-  //high level functions for external interface
+  void CarpeDM::checkTablesForSubgraph(Graph& g) {
+    BOOST_FOREACH( vertex_t v, vertices(g) ) {
+      //Check Hashtable
+      if (!hm.lookup(g[v].name)) {throw std::runtime_error("Node <" + g[v].name + "> was explicitly named for keep/remove, but is unknown to Hashtable!\n");}
+    }
+   
+    BOOST_FOREACH( vertex_t v, vertices(g) ) {
+      //Check Groupstable
+      auto x  = gt.getTable().get<Groups::Node>().equal_range(g[v].name);
+      if (x.first == x.second)   {throw std::runtime_error("Node <" + g[v].name + "> was explicitly named for keep/remove, but is unknown to Grouptable!\n");} 
+    } 
 
+  }
+
+  //high level functions for external interface
   int CarpeDM::add(Graph& g) {
     if ((boost::get_property(g, boost::graph_name)).find(DotStr::Graph::Special::sCmd) != std::string::npos) {throw std::runtime_error("Expected a schedule, but these appear to be commands (Tag '" + DotStr::Graph::Special::sCmd + "' found in graphname)"); return -1;}
     baseUploadOnDownload();
@@ -522,6 +535,7 @@ using namespace DotStr::Misc;
 
   int CarpeDM::remove(Graph& g, bool force) {
     if ((boost::get_property(g, boost::graph_name)).find(DotStr::Graph::Special::sCmd) != std::string::npos) {throw std::runtime_error("Expected a schedule, but these appear to be commands (Tag '" + DotStr::Graph::Special::sCmd + "' found in graphname)"); return -1;}
+    checkTablesForSubgraph(g); //all explicitly named nodes must be known to hash and grouptable. let's check first
     generateBlockMeta(g);
     baseUploadOnDownload();
     std::string report; 
@@ -537,9 +551,8 @@ using namespace DotStr::Misc;
     if ((boost::get_property(g, boost::graph_name)).find(DotStr::Graph::Special::sCmd) != std::string::npos) {throw std::runtime_error("Expected a schedule, but these appear to be commands (Tag '" + DotStr::Graph::Special::sCmd + "' found in graphname)"); return -1;}
     Graph gTmpRemove;
     Graph& gTmpKeep = g;
-
+    checkTablesForSubgraph(g); //all explicitly named nodes must be known to hash and grouptable. let's check first
     generateBlockMeta(gTmpKeep);
-
     //writeDotFile("inspect.dot", gTmpKeep, false);
     baseUploadOnDownload();
     

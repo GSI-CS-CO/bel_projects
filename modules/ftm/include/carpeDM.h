@@ -61,6 +61,7 @@ private:
   const vAdr getDownloadBMPAdrs();
   const vAdr getDownloadAdrs();
   void parseDownloadData(vBuf downloadData);
+  void checkTablesForSubgraph(Graph& g);
   
 
   void baseUploadOnDownload();
