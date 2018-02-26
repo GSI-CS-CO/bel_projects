@@ -32,11 +32,12 @@
 #define SIG_ARMED       4
 #define SIG_DISARMED    5
 
-#define QUEUE_CNT 4
+#define QUEUE_CNT 5
 #define IRQ       0
 #define SCUBUS    1
 #define DEVBUS    2
 #define DEVSIO    3
+#define SWI       4
 
 #define DEVB_MSI      0xdeb50000
 #define SCUB_MSI      0x5cb50000
@@ -107,8 +108,6 @@ volatile uint32_t     *pECAQ           = 0; // WB address of ECA queue
 
 volatile unsigned int param_sent[MAX_FG_CHANNELS];
 volatile int initialized[MAX_SCU_SLAVES] = {0};
-
-void sw_irq_handler(unsigned int, unsigned int);
 
 volatile struct message_buffer msg_buf[QUEUE_CNT] = {0};
 
@@ -582,56 +581,40 @@ void _segfault(int sig)
   return;
 }
 
-void sw_irq_handler(unsigned int adr, unsigned int msg) {
+void sw_irq_handler(int id) {
   int i;
   unsigned int code, value;
-  struct param_set pset;
+  struct msi m;
 
-  if (adr != 0x10)
-    return;
+  if (has_msg(&msg_buf[0], SWI)) {
 
-  code = msg >> 16;
-  value = msg & 0xffff;
+    m = remove_msg(&msg_buf[0], SWI);
+    if (m.adr == 0x10) {
 
-  switch(code) {
-    case 0:
-      init_buffers(&fg_regs[0], msg, &fg_macros[0], scub_base, scu_mil_base);
-      param_sent[value] = 0;
-    break;
-    case 1:
-      //configure_timer(value);
-      //enable_scub_msis(value);
-      //scub_base[OFFS(0xd) + TMR_BASE + TMR_CNTRL] = 0x2; //multicast tmr enable
-    break;
-    case 2:
-      enable_scub_msis(value);
-      configure_fg_macro(value);
-      //print_regs();
-    break;
-    case 3:
-      disable_channel(value);
-    break;
-    case 4:
-      for (i = 0; i < MAX_FG_CHANNELS; i++)
-        mprintf("fg[%d] buffer: %d param_sent: %d\n", i, cbgetCount(&fg_regs[0], i), param_sent[i]);
-    break;
-    case 5:
-      if (value >= 0 && value < MAX_FG_CHANNELS) {
-        if(!cbisEmpty(&fg_regs[0], value)) {
-          cbRead(&fg_buffer[0], &fg_regs[0], value, &pset);
-          mprintf("read buffer[%d]: a %d, l_a %d, b %d, l_b %d, c %d, n %d\n",
-                   value, pset.coeff_a, (pset.control & 0x1f000) >> 12, pset.coeff_b,
-                   (pset.control & 0xfc0) >> 6, pset.coeff_c, (pset.control & 0x7));
-        } else {
-          mprintf("read buffer[%d]: buffer empty!\n", value);
-        }
+      code = m.msg >> 16;
+      value = m.msg & 0xffff;
 
+      switch(code) {
+        case 0:
+          init_buffers(&fg_regs[0], m.msg, &fg_macros[0], scub_base, scu_mil_base);
+          param_sent[value] = 0;
+        break;
+        case 1:
+        break;
+        case 2:
+          enable_scub_msis(value);
+          configure_fg_macro(value);
+        break;
+        case 3:
+          disable_channel(value);
+        break;
+        break;
+        default:
+          mprintf("swi: 0x%x\n", m.adr);
+          mprintf("     0x%x\n", m.msg);
+        break;
       }
-    break;
-    default:
-      mprintf("swi: 0x%x\n", adr);
-      mprintf("     0x%x\n", msg);
-    break;
+    }
   }
 }
 
@@ -767,6 +750,7 @@ static TaskType tasks[] = {
   { 0, 0, {0}, 0, 0, ALWAYS         , 0, dev_bus_handler    },
   { 0, 0, {0}, 0, 0, ALWAYS         , 0, scu_bus_handler    },
   { 0, 0, {0}, 0, 0, ALWAYS         , 0, ecaHandler         },
+  { 0, 0, {0}, 0, 0, ALWAYS         , 0, sw_irq_handler     },
   //{ 0, 0, {0}, 0, 0, INTERVAL_100MS , 0, channel_watchdog   },
 
 };
@@ -1270,7 +1254,7 @@ int main(void) {
 
     // software message from saftlib
     if ((m.adr & 0xff) == 0x10) {
-      sw_irq_handler(m.adr, m.msg);
+      add_msg(&msg_buf[0], SWI, m);
       return;
 
     // message from scu bus
