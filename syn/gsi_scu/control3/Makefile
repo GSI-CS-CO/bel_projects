@@ -1,7 +1,7 @@
 TARGET		    = scu_control
 DEVICE		    = EP2AGX125
 FLASH		      = EPCS128
-RAM_SIZE	    = 96000
+RAM_SIZE	    = 98304
 SHARED_SIZE 	= 26K
 USRCPUCLK     = 125000
 PATHSCU       = ../../../top/gsi_scu
