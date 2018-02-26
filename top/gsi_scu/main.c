@@ -358,19 +358,19 @@ int configure_fg_macro(int channel) {
       scub_base[OFFS(slot) + SLAVE_INT_ENA] |= 0xc000; // enable fg1 and fg2 irq
     } else if (slot & DEV_MIL_EXT) {
       // check for PUR
-      if((status = read_mil(scu_mil_base, &data, FC_IRQ_STAT | dev)) != OKAY)          dev_failure(status, 0, "check PUR"); 
-      if (!(data & 0x100)) {
-        SEND_SIG(SIG_DISARMED);
-        return 0;
-      }
+      //if((status = read_mil(scu_mil_base, &data, FC_IRQ_STAT | dev)) != OKAY)          dev_failure(status, 0, "check PUR"); 
+      //if (!(data & 0x100)) {
+        //SEND_SIG(SIG_DISARMED);
+        //return 0;
+      //}
       if ((status = write_mil(scu_mil_base, 1 << 13, FC_IRQ_MSK | dev)) != OKAY) dev_failure(status, slot & 0xf, "enable dreq"); //enable Data-Request
     } else if (slot & DEV_SIO) {
       // check for PUR
-      if((status = scub_read_mil(scub_base, slot & 0xf, &data, FC_IRQ_STAT | dev)) != OKAY)          dev_failure(status, slot & 0xf, "check PUR"); 
-      if (!(data & 0x100)) {
-        SEND_SIG(SIG_DISARMED);
-        return 0;
-      }
+      //if((status = scub_read_mil(scub_base, slot & 0xf, &data, FC_IRQ_STAT | dev)) != OKAY)          dev_failure(status, slot & 0xf, "check PUR"); 
+      //if (!(data & 0x100)) {
+        //SEND_SIG(SIG_DISARMED);
+        //return 0;
+      //}
       scub_base[SRQ_ENA] |= (1 << ((slot & 0xf)-1));        // enable irqs for the slave
       scub_base[OFFS(slot & 0xf) + SLAVE_INT_ENA] = 0x0010; // enable receiving of drq
       if ((status = scub_write_mil(scub_base, slot & 0xf, 1 << 13, FC_IRQ_MSK | dev)) != OKAY) dev_failure(status, slot & 0xf, "enable dreq"); //enable sending of drq
