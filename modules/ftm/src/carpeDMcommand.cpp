@@ -319,13 +319,24 @@ vEbwrs& CarpeDM::createCommandBurst(Graph& g, vEbwrs& ew) {
     ew.vcs = leadingOne(1);
     return ew;
   }
-/*
-  //hard abort, emergency only
-  void CarpeDM::clrThrRun(uint8_t cpuIdx, uint32_t bits) {
-    uint32_t state = ebReadWord(ebd, getThrCmdAdr(cpuIdx) + T_TC_RUNNING);
-    ebWriteWord(ebd, getThrCmdAdr(cpuIdx) + T_TC_RUNNING, state & ~bits);
+
+  //hard abort everything, emergency only
+  void CarpeDM::halt() {
+    if (verbose) sLog << "Aborting all activity" << std::endl;
+    vEbwrs ew;
+    uint8_t b[4];
+    writeLeNumberToBeBytes<uint32_t>(b, (1 << _THR_QTY_)-1 );
+
+    for(uint8_t cpuIdx=0; cpuIdx < getCpuQty(); cpuIdx++) { 
+      ew.va.push_back(getThrCmdAdr(cpuIdx) + T_TC_ABORT);
+      ew.vb.insert( ew.vb.end(), b, b + sizeof(b));
+      ew.vcs.push_back(true); // each one is a new wb device, so we always need a new eb cycle
+    }
+    
+    ebWriteCycle(ebd, ew.va, ew.vb, ew.vcs);
   }
-*/
+  
+
   bool CarpeDM::isThrRunning(uint8_t cpuIdx, uint8_t thrIdx) {
     return (bool)(getThrRun(cpuIdx) & (1<< thrIdx));
   }

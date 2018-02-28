@@ -48,6 +48,7 @@ static void help(const char *program) {
   fprintf(stderr, "  start                     Request start of selected thread. Requires a valid origin.\n");
   fprintf(stderr, "  stop                      Request stop of selected thread\n");
   fprintf(stderr, "  abort                     Immediately aborts selected thread\n");
+  fprintf(stderr, "  halt                      Immediately aborts all threads on all cpus\n");
   fprintf(stderr, "  cursor                    Show name of currently active node of selected thread\n");
   fprintf(stderr, "  force                     Force cursor to match origin\n");
   
@@ -500,6 +501,10 @@ int main(int argc, char* argv[]) {
         uint32_t bits = strtol(targetName, NULL, 0);
        cdm.setThrAbort(cpuIdx, bits & ((1<<_THR_QTY_)-1) );
       } else { cdm.abortThr(cpuIdx, thrIdx); }
+      return 0;
+    }
+    else if (cmp == "halt")  {
+      cdm.halt();
       return 0;
     }
     else if (cmp == "startpattern")  {

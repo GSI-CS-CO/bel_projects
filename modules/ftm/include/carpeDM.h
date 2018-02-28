@@ -211,7 +211,10 @@ public:
   // Safe removal check
   //bool isSafe2RemoveDotFile(const std::string& fn) {Graph gTmp; return isSafeToRemove(parseDot(readTextFile(fn), gTmp));};
   //clears all nodes from DM 
-  int clear();
+  int clear(bool force);
+
+  //aborts all threads on all cores
+  void halt();
 
   vEbwrs& createCommandBurst(Graph& g, vEbwrs& ew);
   vEbwrs& createCommand(const std::string& targetName, uint8_t cmdPrio, mc_ptr mc, vEbwrs& ew);
