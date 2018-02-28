@@ -560,18 +560,31 @@ using namespace DotStr::Misc;
     return upload();
   }   
 
-  int CarpeDM::clear() {
+  int CarpeDM::clear(bool force) {
     nullify(); // read out current time for upload mod time (seconds, but probably better to use same format as DM FW. Convert to ns)
     modTime = getDmWrTime() * 1000000000ULL;
+    // check if there are any threads still running first
+    uint32_t activity = 0;
+    for(uint8_t cpuIdx=0; cpuIdx < getCpuQty(); cpuIdx++) { 
+      activity |= getThrRun(cpuIdx);
+    }
+    if (!force && activity)  {throw std::runtime_error("Cannot clear, threads are still running. Call stop/abort/halt first\n");}  
+
     return upload();
   }
 
-  int CarpeDM::overwrite(Graph& g) {
+  int CarpeDM::overwrite(Graph& g, bool force) {
     if ((boost::get_property(g, boost::graph_name)).find(DotStr::Graph::Special::sCmd) != std::string::npos) {throw std::runtime_error("Expected a schedule, but these appear to be commands (Tag '" + DotStr::Graph::Special::sCmd + "' found in graphname)"); return -1;}
     nullify();
     addition(g);
     //writeUpDotFile("upload.dot", false);
     validate(gUp, atUp);
+    // check if there are any threads still running first
+    uint32_t activity = 0;
+    for(uint8_t cpuIdx=0; cpuIdx < getCpuQty(); cpuIdx++) { 
+      activity |= getThrRun(cpuIdx);
+    }
+    if (!force && activity)  {throw std::runtime_error("Cannot overwrite, threads are still running. Call stop/abort/halt first\n");} 
     return upload();
 
   }

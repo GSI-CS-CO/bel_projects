@@ -45,7 +45,7 @@ private:
   int add(Graph& g);
   int remove(Graph& g, bool force);
   int keep(Graph& g, bool force);  
-  int overwrite(Graph& g);
+  int overwrite(Graph& g,  bool force);
   bool validate(Graph& g, AllocTable& at);
   
   int sendCommands(Graph &); //Sends a dotfile of commands to the DM
@@ -200,8 +200,8 @@ public:
   int addDot(const std::string& s) {Graph gTmp; return add(parseDot(s, gTmp));};            
   int addDotFile(const std::string& fn) {return addDot(readTextFile(fn));};                 
   //add all nodes and/or edges in dot file                                                                                     
-  int overwriteDot(const std::string& s) {Graph gTmp; return overwrite(parseDot(s, gTmp));};
-  int overwriteDotFile(const std::string& fn) {return overwriteDot(readTextFile(fn));};
+  int overwriteDot(const std::string& s, bool force) {Graph gTmp; return overwrite(parseDot(s, gTmp), force);};
+  int overwriteDotFile(const std::string& fn, bool force) {return overwriteDot(readTextFile(fn), force);};
   //removes all nodes NOT in input file
   int keepDot(const std::string& s, bool force) {Graph gTmp; return keep(parseDot(s, gTmp), force);};
   int keepDotFile(const std::string& fn, bool force) {return keepDot(readTextFile(fn), force);};

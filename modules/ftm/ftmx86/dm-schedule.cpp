@@ -156,9 +156,9 @@ int main(int argc, char* argv[]) {
     if ((cmd == "add" || cmd == "overwrite" || cmd == "remove" || cmd == "keep") && inputFilename == NULL) { std::cerr << std::endl << program << "Command <" << cmd << "> requires a .dot file" << std::endl; return -8; }
     
     try {
-      if (cmd == "clear")     { cdm.clear(); cmdValid = true;}
+      if (cmd == "clear")     { cdm.clear(force); cmdValid = true;}
       if (cmd == "add")       { cdm.addDotFile(inputFilename); cmdValid = true;}
-      if (cmd == "overwrite") { cdm.overwriteDotFile(inputFilename); cmdValid = true;}
+      if (cmd == "overwrite") { cdm.overwriteDotFile(inputFilename, force); cmdValid = true;}
       if (cmd == "remove")    { cdm.removeDotFile(inputFilename, force); cmdValid = true;}
       if (cmd == "keep")      { cdm.keepDotFile(inputFilename, force); cmdValid = true;}
       if (cmd == "status")    { cdm.downloadDotFile(outputFilename, strip); cmdValid = true;}
