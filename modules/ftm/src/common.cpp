@@ -36,3 +36,5 @@ void hexDump (const char *desc, const char* addr, int len) {
 }
 
 void hexDump (const char *desc, vBuf vb) { hexDump(desc, (const char*)&vb[0], vb.size()); }
+
+vBl leadingOne(size_t length) {vBl ret(length, false); *ret.begin() = true; return ret;}

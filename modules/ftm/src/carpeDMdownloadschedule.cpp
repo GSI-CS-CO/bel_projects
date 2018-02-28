@@ -21,37 +21,48 @@ namespace dnt = DotStr::Node::TypeVal;
 
 
   //Generate download Bmp addresses. For downloads, this has to be two pass: get bmps first, then use them to get the node locations to read 
-  const vAdr CarpeDM::getDownloadBMPAdrs() {
+  vEbrds CarpeDM::gatherDownloadBmpVector() {
+    sLog << "Starting download bmp address vectors" << std::endl;
     AllocTable& at = atDown;
-    vAdr ret;
+    vEbrds er;
 
      //add all Bmp addresses to return vector
     for(unsigned int i = 0; i < at.getMemories().size(); i++) {
       //generate addresses of Bmp's address range
-      for (uint32_t adr = at.adrConv(AdrType::MGMT, AdrType::EXT,i, at.getMemories()[i].sharedOffs); adr < at.adrConv(AdrType::MGMT, AdrType::EXT,i, at.getMemories()[i].startOffs); adr += _32b_SIZE_) ret.push_back(adr);
+      for (uint32_t adr = at.adrConv(AdrType::MGMT, AdrType::EXT,i, at.getMemories()[i].sharedOffs); adr < at.adrConv(AdrType::MGMT, AdrType::EXT,i, at.getMemories()[i].startOffs); adr += _32b_SIZE_) {
+        er.va.push_back(adr);
+        er.vcs.push_back(adr == at.adrConv(AdrType::MGMT, AdrType::EXT,i, at.getMemories()[i].sharedOffs));
+      }  
     }
-    return ret;
+    return er;
   }
 
     
 
-  const vAdr CarpeDM::getDownloadAdrs() {
+  vEbrds CarpeDM::gatherDownloadDataVector() {
+    sLog << "Starting download bmp data vectors" << std::endl;
     AllocTable& at = atDown;
-    vAdr ret;
+    vEbrds er;
     //go through Memories
     for(unsigned int i = 0; i < at.getMemories().size(); i++) {
       //go through a memory's bmp bits, starting at number of nodes the bmp itself needs (bmpSize / memblocksize). Otherwise, we'd needlessly download the bmp again
+
+      sLog << "Bmp" << i << ":" << std::endl;
       for(unsigned int bitIdx = at.getMemories()[i].bmpSize / _MEM_BLOCK_SIZE; bitIdx < at.getMemories()[i].bmpBits; bitIdx++) {
         //if the bit says the node is used, we add the node to read addresses
         //sLog << "Bit Idx " << bitIdx << " valid " << at.getMemories()[i].getBmpBit(bitIdx) << " na 0x" << std::hex << at.getMemories()[i].sharedOffs + bitIdx * _MEM_BLOCK_SIZE << std::endl;
+        sLog << (int)at.getMemories()[i].getBmpBit(bitIdx);
         if (at.getMemories()[i].getBmpBit(bitIdx)) {
           uint32_t nodeAdr = at.getMemories()[i].sharedOffs + bitIdx * _MEM_BLOCK_SIZE;
            //generate addresses of node's address range
-          for (uint32_t adr = at.adrConv(AdrType::MGMT, AdrType::EXT,i, nodeAdr); adr < at.adrConv(AdrType::MGMT, AdrType::EXT,i, nodeAdr + _MEM_BLOCK_SIZE); adr += _32b_SIZE_ ) {ret.push_back(adr);}
+          for (uint32_t adr = at.adrConv(AdrType::MGMT, AdrType::EXT,i, nodeAdr); adr < at.adrConv(AdrType::MGMT, AdrType::EXT,i, nodeAdr + _MEM_BLOCK_SIZE); adr += _32b_SIZE_ ) {
+            er.va.push_back(adr);
+            er.vcs.push_back(adr == at.adrConv(AdrType::MGMT, AdrType::EXT,i, nodeAdr));
+          }
         }
       }      
     }
-    return ret;
+    return er;
   }  
     
 
@@ -62,7 +73,7 @@ namespace dnt = DotStr::Node::TypeVal;
     AllocTable& at = atDown;
     std::stringstream stream;
 
-    
+    sLog << "Got " << downloadData.size() << " bytes " << std::endl;
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //create AllocTable and Vertices
@@ -74,11 +85,15 @@ namespace dnt = DotStr::Node::TypeVal;
       //go through Bmp
       for(unsigned int bitIdx = at.getMemories()[i].bmpSize / _MEM_BLOCK_SIZE; bitIdx < at.getMemories()[i].bmpBits; bitIdx++) {
         if (at.getMemories()[i].getBmpBit(bitIdx)) {
-
+          
           uint32_t    localAdr  = nodeCnt * _MEM_BLOCK_SIZE; nodeCnt++; 
           uint32_t    adr       = at.getMemories()[i].sharedOffs + bitIdx * _MEM_BLOCK_SIZE;
+
+          std::string aux = "Node " + std::to_string(bitIdx);
+          hexDump(aux.c_str(), (const char*)&downloadData[localAdr], _MEM_BLOCK_SIZE);
           uint32_t    hash      = writeBeBytesToLeNumber<uint32_t>((uint8_t*)&downloadData[localAdr + NODE_HASH]);
           //sLog << std::dec << "Offset " << localAdr + NODE_HASH << std::endl;
+          
 
           stream.str(""); stream.clear();
           stream << "0x" << std::setfill ('0') << std::setw(sizeof(uint32_t)*2) << std::hex << hash;
@@ -103,14 +118,14 @@ namespace dnt = DotStr::Node::TypeVal;
           
           g[v].bpEntry  = std::to_string((bool)(flags & NFLG_BP_ENTRY_LM32_SMSK));
           g[v].bpExit   = std::to_string((bool)(flags & NFLG_BP_EXIT_LM32_SMSK));
-          g[v].patEntry = std::to_string((bool)(flags &  NFLG_PAT_ENTRY_LM32_SMSK));
-          g[v].patExit  = std::to_string((bool)(flags &  NFLG_PAT_EXIT_LM32_SMSK));
+          g[v].patEntry = std::to_string((bool)(flags & NFLG_PAT_ENTRY_LM32_SMSK));
+          g[v].patExit  = std::to_string((bool)(flags & NFLG_PAT_EXIT_LM32_SMSK));
           
           //std::cout << "atdown cpu " << (int)cpu << " Adr: 0x" << std::hex << adr <<  " Hash 0x" << hash << std::endl;
           //Add allocTable Entry
           //vBuf test(downloadData.begin() + localAdr, downloadData.begin() + localAdr + _MEM_BLOCK_SIZE);
           //vHexDump("TEST ****", test);
-
+          sLog << "trying to add cpu " << (int)cpu << ", @0x" << std::hex << adr << ", #0x" << hash << ", v" << std::dec << v << std::endl; 
           if (!(at.insert(cpu, adr, hash, v, false))) {throw std::runtime_error( std::string("Hash or address collision when adding node ") + name); return;};
 
           // Create node object for Vertex
@@ -175,17 +190,26 @@ namespace dnt = DotStr::Node::TypeVal;
 
    int CarpeDM::download() {
     
-    vAdr vDlBmpA, vlDlA;
+    //vAdr vDlBmpA, vlDlA;
     vBuf vDlBmpD, vDlD;
+    vEbrds erBmp  = gatherDownloadBmpVector();
+    vEbrds erData;
 
     atDown.clear();
     atDown.clearMemories();
     gDown.clear();
     //get all BMPs so we know which nodes to download
     if(verbose) sLog << "Downloading ...";
-    vDlBmpD = ebReadCycle(ebd, getDownloadBMPAdrs());
+    vDlBmpD = ebReadCycle(ebd, erBmp.va, erBmp.vcs);
+    sLog << "Tried to read " << std::dec << erBmp.va.size() << " bmp addresses " << std::endl;
+    sLog << "Got back " << std::dec << vDlBmpD.size() << " bmp bytes " << std::endl;
+    hexDump("bmps", vDlBmpD);
     atDown.setBmps( vDlBmpD );
-    vDlD    = ebReadCycle(ebd, getDownloadAdrs());
+    erData = gatherDownloadDataVector();
+    vDlD    = ebReadCycle(ebd, erData.va, erData.vcs);
+
+    sLog << "Tried to read " << erData.va.size() << " data addresses " << std::endl;
+    sLog << "Got back " << vDlD.size() << " data bytes " << std::endl;
     // read out current time for upload mod time (seconds, but probably better to use same format as DM FW. Convert to ns)
     modTime = getDmWrTime() * 1000000000ULL;
 

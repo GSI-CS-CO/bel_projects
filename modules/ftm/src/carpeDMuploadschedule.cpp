@@ -30,11 +30,11 @@ using namespace DotStr::Misc;
 
   //TODO NC Traffic Verification
 
-  //TODO CPU Load Balancer
 
-     
-  vAdr CarpeDM::getUploadAdrs(){
-    vAdr ret;
+  //TODO CPU Load Balancer
+  vEbwrs CarpeDM::gatherUploadVector() {
+    sLog << "Starting Upload address & data vectors" << std::endl;
+    vEbwrs ew;
     uint32_t adr, modAdrBase;
     std::set<uint8_t> modded;
 
@@ -42,7 +42,12 @@ using namespace DotStr::Misc;
     for(unsigned int i = 0; i < atUp.getMemories().size(); i++) {
       if (!freshDownload || (atUp.getMemories()[i].getBmp() != atDown.getMemories()[i].getBmp()) ) modded.insert(i); // mark cpu as modified if alloctable empty or Bmp Changed 
       //generate addresses of Bmp's address range
-      for (adr = atUp.adrConv(AdrType::MGMT, AdrType::EXT,i, atUp.getMemories()[i].sharedOffs); adr < atUp.adrConv(AdrType::MGMT, AdrType::EXT,i, atUp.getMemories()[i].startOffs); adr += _32b_SIZE_) ret.push_back(adr);
+      for (adr = atUp.adrConv(AdrType::MGMT, AdrType::EXT,i, atUp.getMemories()[i].sharedOffs); adr < atUp.adrConv(AdrType::MGMT, AdrType::EXT,i, atUp.getMemories()[i].startOffs); adr += _32b_SIZE_) {
+        ew.vcs.push_back(adr == atUp.adrConv(AdrType::MGMT, AdrType::EXT,i, atUp.getMemories()[i].sharedOffs));
+        ew.va.push_back(adr);
+      }  
+      //add Bmp to to return vector
+      ew.vb += atUp.getMemories()[i].getBmp(); 
     }
 
     
@@ -51,7 +56,13 @@ using namespace DotStr::Misc;
       //generate address range for all nodes staged for upload
       if(it.staged) {
         modded.insert(it.cpu); // mark cpu as modified if a node is staged
-        for (adr = atUp.adrConv(AdrType::MGMT, AdrType::EXT,it.cpu, it.adr); adr < atUp.adrConv(AdrType::MGMT, AdrType::EXT,it.cpu, it.adr + _MEM_BLOCK_SIZE); adr += _32b_SIZE_ ) ret.push_back(adr);
+        //Address and cycle start
+        for (adr = atUp.adrConv(AdrType::MGMT, AdrType::EXT,it.cpu, it.adr); adr < atUp.adrConv(AdrType::MGMT, AdrType::EXT,it.cpu, it.adr + _MEM_BLOCK_SIZE); adr += _32b_SIZE_ ) {
+          ew.vcs.push_back(adr == atUp.adrConv(AdrType::MGMT, AdrType::EXT,it.cpu, it.adr));
+          ew.va.push_back(adr);
+        }
+        //Data
+        ew.vb.insert( ew.vb.end(), it.b, it.b + _MEM_BLOCK_SIZE );  
       }
     }
 
@@ -59,53 +70,23 @@ using namespace DotStr::Misc;
     for (auto& itMod : modded) {
       // modification time address (lo/hi)
       modAdrBase = atUp.getMemories()[itMod].extBaseAdr + SHARED_OFFS + SHCTL_DIAG;
+      // save modification time, issuer
 
-      ret.push_back(modAdrBase + T_DIAG_SMOD_TS + 0);
-      ret.push_back(modAdrBase + T_DIAG_SMOD_TS + _32b_SIZE_);
-      ret.push_back(modAdrBase + T_DIAG_SMOD_IID + 0);
-      ret.push_back(modAdrBase + T_DIAG_SMOD_IID + _32b_SIZE_);
-      
+      char username[LOGIN_NAME_MAX];
+      getlogin_r(username, LOGIN_NAME_MAX);
+      uint8_t b[8];
+      writeLeNumberToBeBytes<uint64_t>((uint8_t*)&b[0], modTime);  
+
+      ew.vcs += leadingOne(4);
+      ew.va.push_back(modAdrBase + T_DIAG_SMOD_TS + 0);
+      ew.va.push_back(modAdrBase + T_DIAG_SMOD_TS + _32b_SIZE_);
+      ew.va.push_back(modAdrBase + T_DIAG_SMOD_IID + 0);
+      ew.va.push_back(modAdrBase + T_DIAG_SMOD_IID + _32b_SIZE_);
+      ew.vb.insert( ew.vb.end(), b, b +  _TS_SIZE_  );
+      ew.vb.insert( ew.vb.end(), username, username +  _64b_SIZE_  );
     }
-    return ret;
-  }
-
-  vBuf CarpeDM::getUploadData()  {
-    vBuf ret;
-    std::set<uint8_t> modded;
-    ret.clear();
     
-    size_t bmpSum = 0;
-    for(unsigned int i = 0; i < atUp.getMemories().size(); i++) { bmpSum += (_TS_SIZE_ + atUp.getMemories()[i].bmpSize); }
-    ret.reserve( bmpSum + atUp.getSize() * _MEM_BLOCK_SIZE); // preallocate memory for BMPs and all Nodes
-    
-    for(unsigned int i = 0; i < atUp.getMemories().size(); i++) {
-      if (!freshDownload || (atUp.getMemories()[i].getBmp() != atDown.getMemories()[i].getBmp()) ) modded.insert(i); // mark cpu as modified if alloctable empty or Bmp Changed 
-      //add Bmp to to return vector
-      ret += atUp.getMemories()[i].getBmp(); 
-    }  
-    
-    //add all node buffers to return vector
-    
-    for (auto& it : atUp.getTable().get<CpuAdr>()) {
-      if(it.staged) {
-        modded.insert(it.cpu); // mark cpu as modified if a node is staged
-        ret.insert( ret.end(), it.b, it.b + _MEM_BLOCK_SIZE );
-      } // add all nodes staged for upload
-    }
-
-    // save modification time, issuer
-
-    char username[LOGIN_NAME_MAX];
-    getlogin_r(username, LOGIN_NAME_MAX);
-    uint8_t b[8];
-    writeLeNumberToBeBytes<uint64_t>((uint8_t*)&b[0], modTime);
-
-    for (unsigned i=0; i < modded.size(); i++) {
-      ret.insert( ret.end(), b, b +  _TS_SIZE_  );
-      ret.insert( ret.end(), username, username +  _64b_SIZE_  );
-    }
-
-    return ret;
+    return ew;
   }
 
 
@@ -319,14 +300,13 @@ using namespace DotStr::Misc;
   }
 
   int CarpeDM::upload() {
-    vBuf vUlD = getUploadData();
-    vAdr vUlA = getUploadAdrs();
-
+    vEbwrs ew = gatherUploadVector();
+    
     //Upload
-    ebWriteCycle(ebd, vUlA, vUlD);
+    ebWriteCycle(ebd, ew.va, ew.vb, ew.vcs);
     if(verbose) sLog << "Done." << std::endl;
     freshDownload = false;
-    return vUlD.size();
+    return ew.va.size();
   }
 
   void CarpeDM::baseUploadOnDownload() {

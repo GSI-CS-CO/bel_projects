@@ -23,10 +23,11 @@
 
 
 
-int CarpeDM::ebWriteCycle(Device& dev, vAdr va, vBuf& vb)
+int CarpeDM::ebWriteCycle(Device& dev, vAdr va, vBuf& vb, vBl vcs)
 {
   //eb_status_t status;
   //FIXME What about MTU? What about returned eb status ??
+  sLog << "New Write Cycle" << std::endl;
   Cycle cyc;
   eb_data_t veb[va.size()];
 
@@ -37,12 +38,13 @@ int CarpeDM::ebWriteCycle(Device& dev, vAdr va, vBuf& vb)
   try {
     cyc.open(dev);
     for(int i = 0; i < (va.end()-va.begin()); i++) {
-    //FIXME dirty break into cycles
-    if (i && ((va[i] & (RAM_SIZE-1)) ^ (va[i-1] & (RAM_SIZE-1)))) {
+    if (i && vcs[i]) {
       cyc.close();
+      sLog << "New Write Cycle" << std::endl;
       cyc.open(dev);  
     }
-    if (verbose) sLog << "Writing @ 0x" << std::hex << std::setfill('0') << std::setw(8) << va[i] << " : 0x" << std::hex << std::setfill('0') << std::setw(8) << veb[i] << std::endl;
+    
+    if (verbose) sLog << (int)vcs[i] << " Writing @ 0x" << std::hex << std::setfill('0') << std::setw(8) << va[i] << " : 0x" << std::hex << std::setfill('0') << std::setw(8) << veb[i] << std::endl;
     cyc.write(va[i], EB_BIG_ENDIAN | EB_DATA32, veb[i]);
 
     }
@@ -55,24 +57,26 @@ int CarpeDM::ebWriteCycle(Device& dev, vAdr va, vBuf& vb)
 }
 
 
-vBuf CarpeDM::ebReadCycle(Device& dev, vAdr va)
+vBuf CarpeDM::ebReadCycle(Device& dev, vAdr va, vBl vcs)
 {
   //FIXME What about MTU? What about returned eb status ??
   Cycle cyc;
   eb_data_t veb[va.size()];
   vBuf ret = vBuf(va.size() * 4);
-    
+  sLog << "New Read Cycle" << std::endl;  
   //sLog << "Got Adr Vec with " << va.size() << " Adrs" << std::endl;
 
   try {
     cyc.open(dev);
     for(int i = 0; i < (va.end()-va.begin()); i++) {
     //FIXME dirty break into cycles
-    if (i && ((va[i] & (RAM_SIZE-1)) ^ (va[i-1] & (RAM_SIZE-1)))) {
+    if (i && vcs[i]) {
       cyc.close();
+      sLog << "New Read Cycle" << std::endl; 
       cyc.open(dev);  
     }
-    cyc.read(va[i], EB_BIG_ENDIAN | EB_DATA32, veb + i);
+    sLog << (int)vcs[i] << " Reading @ 0x" << std::hex << std::setfill('0') << std::setw(8) << va[i] << std::endl;
+    cyc.read(va[i], EB_BIG_ENDIAN | EB_DATA32, (eb_data_t*)&veb[i]);
     }
     cyc.close();
 

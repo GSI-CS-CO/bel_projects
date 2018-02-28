@@ -172,7 +172,7 @@ vEbwrs& CarpeDM::createCommandBurst(Graph& g, vEbwrs& ew) {
 }  
   
   int CarpeDM::send(vEbwrs& ew) {
-    ebWriteCycle(ebd, ew.va, ew.vb);
+    ebWriteCycle(ebd, ew.va, ew.vb, ew.vcs);
     return ew.vb.size();
   }
 
@@ -188,6 +188,7 @@ vEbwrs& CarpeDM::createCommandBurst(Graph& g, vEbwrs& ew) {
  
     hash        = hm.lookup(targetName).get(); 
     ew.va += getCmdWrAdrs(hash, cmdPrio);
+    ew.vcs = leadingOne(ew.va.size());
     
     cmdWrInc    = getCmdInc(hash, cmdPrio);
     mc->serialise(b);
@@ -218,10 +219,11 @@ vEbwrs& CarpeDM::createCommandBurst(Graph& g, vEbwrs& ew) {
   //Sets the Node the Thread will start from
   vEbwrs& CarpeDM::setThrOrigin(uint8_t cpuIdx, uint8_t thrIdx, const std::string& name, vEbwrs& ew) {
     uint8_t b[4];
-
+    sLog << "set thread origin " << std::endl;
     ew.va.push_back(getThrInitialNodeAdr(cpuIdx, thrIdx));
     writeLeNumberToBeBytes<uint32_t>(b, getNodeAdr(name, TransferDir::DOWNLOAD, AdrType::INT));
     ew.vb.insert( ew.vb.end(), b, b + sizeof(b));
+    ew.vcs = leadingOne(1);
     return ew;
   }
 
@@ -298,10 +300,11 @@ vEbwrs& CarpeDM::createCommandBurst(Graph& g, vEbwrs& ew) {
   //Requests Threads to start
   vEbwrs& CarpeDM::setThrStart(uint8_t cpuIdx, uint32_t bits, vEbwrs& ew) {
     uint8_t b[4];
-
+    sLog << "set thread start " << std::endl;
     ew.va.push_back(getThrCmdAdr(cpuIdx) + T_TC_START);
     writeLeNumberToBeBytes<uint32_t>(b, bits);
     ew.vb.insert( ew.vb.end(), b, b + sizeof(b));
+    ew.vcs = leadingOne(1);
     return ew;
   }
 
@@ -313,6 +316,7 @@ vEbwrs& CarpeDM::createCommandBurst(Graph& g, vEbwrs& ew) {
     ew.va.push_back(getThrCmdAdr(cpuIdx) + T_TC_ABORT);
     writeLeNumberToBeBytes<uint32_t>(b, bits);
     ew.vb.insert( ew.vb.end(), b, b + sizeof(b));
+    ew.vcs = leadingOne(1);
     return ew;
   }
 /*

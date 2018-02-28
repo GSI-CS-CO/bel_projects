@@ -53,13 +53,13 @@ private:
 
 
   // Upload
-  vAdr getUploadAdrs();
-  vBuf getUploadData();
+  vEbwrs gatherUploadVector();
   int upload(); //Upload processed Graph to LM32 SoC via Etherbone
   
   // Download
-  const vAdr getDownloadBMPAdrs();
-  const vAdr getDownloadAdrs();
+  vEbrds gatherDownloadBmpVector();
+  vEbrds gatherDownloadDataVector();
+  
   void parseDownloadData(vBuf downloadData);
   void checkTablesForSubgraph(Graph& g);
   
@@ -114,8 +114,10 @@ protected:
   std::ostream& sLog;
   std::ostream& sErr;
 
-  int   ebWriteCycle(Device& dev, vAdr va, vBuf& vb);
-  vBuf  ebReadCycle(Device& dev, vAdr va);
+  int   ebWriteCycle(Device& dev, vAdr va, vBuf& vb, vBl vcs);
+  int   ebWriteCycle(Device& dev, vAdr va, vBuf& vb) {return  ebWriteCycle(dev, va, vb, leadingOne(va.size()));}
+  vBuf  ebReadCycle(Device& dev, vAdr va, vBl vcs);
+  vBuf  ebReadCycle(Device& dev, vAdr va) {return  ebReadCycle(dev, va, leadingOne(va.size()));}
   int ebWriteWord(Device& dev, uint32_t adr, uint32_t data);
   uint32_t ebReadWord(Device& dev, uint32_t adr);
   boost::dynamic_properties createParser(Graph& g);
