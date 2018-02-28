@@ -27,7 +27,7 @@ int CarpeDM::ebWriteCycle(Device& dev, vAdr va, vBuf& vb, vBl vcs)
 {
   //eb_status_t status;
   //FIXME What about MTU? What about returned eb status ??
-  sLog << "New Write Cycle" << std::endl;
+  if (verbose) sLog << "Starting Write Cycle" << std::endl;
   Cycle cyc;
   eb_data_t veb[va.size()];
 
@@ -38,13 +38,13 @@ int CarpeDM::ebWriteCycle(Device& dev, vAdr va, vBuf& vb, vBl vcs)
   try {
     cyc.open(dev);
     for(int i = 0; i < (va.end()-va.begin()); i++) {
-    if (i && vcs[i]) {
+    if (i && vcs.at(i)) {
       cyc.close();
-      sLog << "New Write Cycle" << std::endl;
+      if (verbose) sLog << "Close and open next Write Cycle" << std::endl;
       cyc.open(dev);  
     }
     
-    if (verbose) sLog << (int)vcs[i] << " Writing @ 0x" << std::hex << std::setfill('0') << std::setw(8) << va[i] << " : 0x" << std::hex << std::setfill('0') << std::setw(8) << veb[i] << std::endl;
+    if (verbose) sLog << " Writing @ 0x" << std::hex << std::setfill('0') << std::setw(8) << va[i] << " : 0x" << std::hex << std::setfill('0') << std::setw(8) << veb[i] << std::endl;
     cyc.write(va[i], EB_BIG_ENDIAN | EB_DATA32, veb[i]);
 
     }
@@ -63,19 +63,19 @@ vBuf CarpeDM::ebReadCycle(Device& dev, vAdr va, vBl vcs)
   Cycle cyc;
   eb_data_t veb[va.size()];
   vBuf ret = vBuf(va.size() * 4);
-  sLog << "New Read Cycle" << std::endl;  
+  if (verbose) sLog << "Starting Read Cycle" << std::endl; 
   //sLog << "Got Adr Vec with " << va.size() << " Adrs" << std::endl;
 
   try {
     cyc.open(dev);
     for(int i = 0; i < (va.end()-va.begin()); i++) {
     //FIXME dirty break into cycles
-    if (i && vcs[i]) {
+    if (i && vcs.at(i)) {
       cyc.close();
-      sLog << "New Read Cycle" << std::endl; 
+      if (verbose) sLog << "Close and open next Read Cycle" << std::endl; 
       cyc.open(dev);  
     }
-    sLog << (int)vcs[i] << " Reading @ 0x" << std::hex << std::setfill('0') << std::setw(8) << va[i] << std::endl;
+    if (verbose) sLog << " Reading @ 0x" << std::hex << std::setfill('0') << std::setw(8) << va[i] << std::endl;
     cyc.read(va[i], EB_BIG_ENDIAN | EB_DATA32, (eb_data_t*)&veb[i]);
     }
     cyc.close();
@@ -195,14 +195,19 @@ bool CarpeDM::connect(const std::string& en) {
             uint32_t intBaseAdr   = getIntBaseAdr(fwIdROM);
             uint32_t peerBaseAdr  = WORLD_BASE_ADR  + extBaseAdr;
             uint32_t rawSize      = cpuDevs[cpuIdx].sdb_component.addr_last - cpuDevs[cpuIdx].sdb_component.addr_first;
-            uint32_t sharedOffs   = getSharedOffs(fwIdROM) + _SHCTL_END_; 
+            uint32_t sharedOffs   = getSharedOffs(fwIdROM); 
             uint32_t space        = getSharedSize(fwIdROM) - _SHCTL_END_;
                         
               atUp.addMemory(cpuIdx, extBaseAdr, intBaseAdr, peerBaseAdr, sharedOffs, space, rawSize );
             atDown.addMemory(cpuIdx, extBaseAdr, intBaseAdr, peerBaseAdr, sharedOffs, space, rawSize );
             mappedIdx++;
           }
-           
+          /*
+          sLog << "#" << (int)cpuIdx << " Shared Offset 0x" << std::hex <<  atDown.getMemories()[cpuIdx].sharedOffs << std::endl;
+          sLog << "#" << (int)cpuIdx << " BmpSize 0x" << std::hex <<  atDown.getMemories()[cpuIdx].bmpSize << std::endl;
+          sLog << "#" << (int)cpuIdx << " SHCTL 0x" << std::hex <<  _SHCTL_END_ << std::endl;
+          sLog << "#" << (int)cpuIdx << " Start Offset 0x" << std::hex <<  atDown.getMemories()[cpuIdx].startOffs << std::endl;
+          */
         }  
         ret = true;
       }
@@ -413,7 +418,7 @@ bool CarpeDM::connect(const std::string& en) {
     size_t pos;
     struct  sdb_device& ram = cpuDevs.at(cpuIdx);
     vAdr fwIdAdr;
-
+    //FIXME get rid of SHARED_OFFS somehow and replace with an end tag and max limit  
     for (uint32_t adr = ram.sdb_component.addr_first + BUILDID_OFFS; adr < ram.sdb_component.addr_first + SHARED_OFFS; adr += 4) fwIdAdr.push_back(adr);
     vBuf fwIdData = ebReadCycle(ebd, fwIdAdr);
     std::string s(fwIdData.begin(),fwIdData.end());
@@ -462,7 +467,8 @@ bool CarpeDM::connect(const std::string& en) {
 
   uint32_t CarpeDM::getIntBaseAdr(const std::string& fwIdROM) {
     //FIXME replace with FW ID string constants
-    std::string value = readFwIdROMTag(fwIdROM, "IntAdrOffs  :", 10, true);
+    //CAREFUL: Get the EXACT position. If you miss out on leading spaces, the parsed number gets truncated!
+    std::string value = readFwIdROMTag(fwIdROM, "IntAdrOffs  : ", 10, true);
     //sLog << "IntAdrOffs : " << value << " parsed: 0x" << std::hex << s2u<uint32_t>(value) << std::endl;
     return s2u<uint32_t>(value);
 
@@ -471,7 +477,7 @@ bool CarpeDM::connect(const std::string& en) {
   uint32_t CarpeDM::getSharedOffs(const std::string& fwIdROM) {
     //FIXME replace with FW ID string constants
     std::string value = readFwIdROMTag(fwIdROM, "SharedOffs  : ", 10, true);
-    //sLog << "SharedOffs : " << value << " parsed: 0x" << std::hex << s2u<uint32_t>(value) << std::endl;
+    //sLog << "Parsing SharedOffs : " << value << " parsed: 0x" << std::hex << s2u<uint32_t>(value) << std::endl;
     return s2u<uint32_t>(value);
 
   }

@@ -30,6 +30,7 @@ class MemPool {
   const uint32_t nodeQty;
   const uint32_t bmpBits;
   const uint32_t bmpSize;
+  const uint32_t bmpOffs;
   const uint32_t startOffs; // baseAddress + bmpLen rounded up to next multiple of MEM_BLOCK_SIZE to accomodate BMP
   const uint32_t endOffs;   // baseAddress + nodeQty rounded down to next multiple of MEM_BLOCK_SIZE, can only use whole blocks 
   vBuf  bmp;
@@ -52,7 +53,8 @@ public:
           nodeQty(space / _MEM_BLOCK_SIZE), 
           bmpBits(nodeQty),
           bmpSize((bmpBits + 8 * _MEM_BLOCK_SIZE -1) / (8 * _MEM_BLOCK_SIZE) * _MEM_BLOCK_SIZE), 
-          startOffs(sharedOffs + bmpSize), 
+          bmpOffs(sharedOffs + _SHCTL_END_), 
+          startOffs(bmpOffs + bmpSize), 
           endOffs(startOffs + (nodeQty * _MEM_BLOCK_SIZE)),
           bmp(bmpSize)
           { init();  }

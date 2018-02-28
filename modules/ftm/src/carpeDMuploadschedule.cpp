@@ -33,7 +33,7 @@ using namespace DotStr::Misc;
 
   //TODO CPU Load Balancer
   vEbwrs CarpeDM::gatherUploadVector() {
-    sLog << "Starting Upload address & data vectors" << std::endl;
+    //sLog << "Starting Upload address & data vectors" << std::endl;
     vEbwrs ew;
     uint32_t adr, modAdrBase;
     std::set<uint8_t> modded;
@@ -42,8 +42,8 @@ using namespace DotStr::Misc;
     for(unsigned int i = 0; i < atUp.getMemories().size(); i++) {
       if (!freshDownload || (atUp.getMemories()[i].getBmp() != atDown.getMemories()[i].getBmp()) ) modded.insert(i); // mark cpu as modified if alloctable empty or Bmp Changed 
       //generate addresses of Bmp's address range
-      for (adr = atUp.adrConv(AdrType::MGMT, AdrType::EXT,i, atUp.getMemories()[i].sharedOffs); adr < atUp.adrConv(AdrType::MGMT, AdrType::EXT,i, atUp.getMemories()[i].startOffs); adr += _32b_SIZE_) {
-        ew.vcs.push_back(adr == atUp.adrConv(AdrType::MGMT, AdrType::EXT,i, atUp.getMemories()[i].sharedOffs));
+      for (adr = atUp.adrConv(AdrType::MGMT, AdrType::EXT,i, atUp.getMemories()[i].bmpOffs); adr < atUp.adrConv(AdrType::MGMT, AdrType::EXT,i, atUp.getMemories()[i].startOffs); adr += _32b_SIZE_) {
+        ew.vcs.push_back(adr == atUp.adrConv(AdrType::MGMT, AdrType::EXT,i, atUp.getMemories()[i].bmpOffs));
         ew.va.push_back(adr);
       }  
       //add Bmp to to return vector
@@ -69,7 +69,7 @@ using namespace DotStr::Misc;
     // save modification time
     for (auto& itMod : modded) {
       // modification time address (lo/hi)
-      modAdrBase = atUp.getMemories()[itMod].extBaseAdr + SHARED_OFFS + SHCTL_DIAG;
+      modAdrBase = atUp.getMemories()[itMod].extBaseAdr + atUp.getMemories()[itMod].sharedOffs + SHCTL_DIAG;
       // save modification time, issuer
 
       char username[LOGIN_NAME_MAX];

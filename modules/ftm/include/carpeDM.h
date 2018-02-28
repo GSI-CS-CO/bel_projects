@@ -63,7 +63,7 @@ private:
   void parseDownloadData(vBuf downloadData);
   void checkTablesForSubgraph(Graph& g);
   
-
+  void resetThrMsgCnt(uint8_t cpuIdx, uint8_t thrIdx);
   void baseUploadOnDownload();
   void prepareUpload(); //Process Graph for uploading to LM32 SoC
   void mergeUploadDuplicates(vertex_t borg, vertex_t victim); 
@@ -118,7 +118,7 @@ protected:
   int   ebWriteCycle(Device& dev, vAdr va, vBuf& vb) {return  ebWriteCycle(dev, va, vb, leadingOne(va.size()));}
   vBuf  ebReadCycle(Device& dev, vAdr va, vBl vcs);
   vBuf  ebReadCycle(Device& dev, vAdr va) {return  ebReadCycle(dev, va, leadingOne(va.size()));}
-  int ebWriteWord(Device& dev, uint32_t adr, uint32_t data);
+  int   ebWriteWord(Device& dev, uint32_t adr, uint32_t data);
   uint32_t ebReadWord(Device& dev, uint32_t adr);
   boost::dynamic_properties createParser(Graph& g);
 
