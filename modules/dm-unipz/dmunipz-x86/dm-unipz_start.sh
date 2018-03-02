@@ -35,12 +35,15 @@ dmunipz-ctl -s2 dev/wbm0 | logger -t dmunipz-ctl -sp local0.info &
  
 # do some write actions to set register values
 echo -e dm-unipz - set MAC and IP of gateway and Data Master
-# development: Programmentwicklungsraum, tsl008, scuxl0033
+# development: Programmentwicklungsraum, integration network, tsl008, scuxl0033
 #dmunipz-ctl dev/wbm0 ebmdm 0x00267b000422 0xc0a80c04
 #dmunipz-ctl dev/wbm0 ebmlocal 0x00267b000321 0xc0a80cea
+# development: Programmentwicklungsraum, development network tsl015, scuxl0033
+dmunipz-ctl dev/wbm0 ebmdm 0x00267b000408 0xc0a88040
+dmunipz-ctl dev/wbm0 ebmlocal 0x00267b000321 0xc0a8a00c
 # production: BG2, tsl017, scuxl0223
-dmunipz-ctl dev/wbm0 ebmdm 0x00267b000407 0xc0a8803f
-dmunipz-ctl dev/wbm0 ebmlocal 0x00267b0003f1 0xc0a8a0e5
+#dmunipz-ctl dev/wbm0 ebmdm 0x00267b000407 0xc0a8803f
+#dmunipz-ctl dev/wbm0 ebmlocal 0x00267b0003f1 0xc0a8a0e5
 
 echo -e dm-unipz - start: make firmware operational
 # send CONFIGURE command to firmware
@@ -56,17 +59,14 @@ dmunipz-ctl dev/wbm0 startop
 ###########################################
 echo -e dm-unipz - start: configure lm32 channel of ECA
 
-# configure ECA for lm32 channel: here action for TK request, tag "0x1"
-# no longer needed, here: prep_dm saft-ecpu-ctl tr0 -c 0x1111000000000000 0xffff000000000000 0 0x5 -d
-
 # configure ECA for lm32 channel: here action for TK request, tag "0x2"
-saft-ecpu-ctl tr0 -c 0x0222000000000000 0xffff000000000000 0 0x2 -d
+saft-ecpu-ctl tr0 -c 0x1fa215e000000000 0xfffffff000000000 0 0x2 -d
 
-# configure ECA for lm32 channel: here action for TK request, tag "0x3"
-saft-ecpu-ctl tr0 -c 0x0333000000000000 0xffff000000000000 0 0x3 -d
+# configure ECA for lm32 channel: here action for beam request, tag "0x3"
+saft-ecpu-ctl tr0 -c 0x1fa2160000000000 0xfffffff000000000 0 0x3 -d
 
-# configure ECA for lm32 channel: here action for TK request, tag "0x4"
-saft-ecpu-ctl tr0 -c 0x0444000000000000 0xffff000000000000 0 0x4 -d
+# configure ECA for lm32 channel: here action for TK release, tag "0x4"
+saft-ecpu-ctl tr0 -c 0x1fa215f000000000 0xfffffff000000000 0 0x4 -d
 
 echo -e dm-unipz - start: startup script finished
 

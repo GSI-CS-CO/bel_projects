@@ -2,7 +2,7 @@ digraph g {
 name="UniPZv01";
 
 graph [rankdir=TB, nodesep=0.6, mindist=0.6, ranksep=0.6, overlap=false]
-node  [type="tmsg",   shape="rectangle", style="filled", fillcolor="white", color="black", cpu="3"]
+node  [type="tmsg",   shape="rectangle", style="filled", fillcolor="white", color="black", cpu="2"]
 edge  [type="defdst", color="red"]
 
 /* Vorbereitung, TK Reservieren etc */
@@ -26,7 +26,7 @@ DMBlk_InjectStart   [type="block",     pattern="UNIPZ_GATEWAY",                 
 /* Injektion (Loop) */
 CMD_WHATEVER_09     [type="tmsg",      pattern="UNIPZ_GATEWAY",                    toffs=        0, id="0x0fa2faa000000012", par="0x456", shape="oval"]; /* start loop         */
 CMD_UNI_BREQ        [type="tmsg",      pattern="UNIPZ_GATEWAY",                    toffs= 30000000, id="0x0fa2fa3000000001", par="0x456", shape="oval"]; /* UNI Beam Request   */
-DMBlk_BREQ          [type="block",     pattern="UNIPZ_GATEWAY",                  tperiod= 30001000];                                 
+DMBlk_BREQ          [type="block",     pattern="UNIPZ_GATEWAY",                  tperiod= 3000100];                                 
 DMBlk_WaitLoop      [type="block",     pattern="UNIPZ_GATEWAY",                  tperiod=    10000, qil="1", qhi="1", qlo="1"];     /* langsamer Warteblock                    */
 DMBlk_FlexWait      [type="block",     pattern="UNIPZ_GATEWAY",                  tperiod=    71111, qil="1", qhi="1", qlo="1"];     /* flexible Wartezeit, Gateway setzt Zeit! */
 CMD_WHATEVER_10     [type="tmsg",      pattern="UNIPZ_GATEWAY",                    toffs=        0, id="0x0fa2faa000000013", par="0x456", shape="oval"]; /* exactly 1ms after EVT_READY_TO_SIS */
