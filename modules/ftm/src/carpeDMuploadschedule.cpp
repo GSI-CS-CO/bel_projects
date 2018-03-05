@@ -347,7 +347,7 @@ using namespace DotStr::Misc;
         if (gTmp[w].hash == gUp[v].hash) { 
           //Check how the duplicate is defined. Implicit (by edge) is okay, explicit is not. necessary to avoid unintentional merge of graph nodes of the same name
           //Check the type: if it's undefined, node definition was implicit
-          if (gTmp[v].type != sUndefined) throw std::runtime_error( "Node " + gTmp[v].name + " already exists. You can only use the name again in an edge descriptor (implicit definition)");
+          if (gTmp[w].type != sUndefined) throw std::runtime_error( "Node " + gTmp[w].name + " already exists. You can only use the name again in an edge descriptor (implicit definition)");
           duplicates[v] = w;
         } 
       }  
