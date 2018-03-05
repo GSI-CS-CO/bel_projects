@@ -1,6 +1,6 @@
 [submodule "ip_cores/fpga-config-space"]
 	path = ip_cores/fpga-config-space
-	url = git://ohwr.org/hdl-core-lib/fpga-config-space.git
+	url = https://github.com/GSI-CS-CO-Forks/fpga-config-space-dev.git
 [submodule "ip_cores/etherbone-core"]
 	path = ip_cores/etherbone-core
 	url = git://ohwr.org/hdl-core-lib/etherbone-core.git
