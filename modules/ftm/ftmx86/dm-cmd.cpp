@@ -14,7 +14,7 @@
 #include "strprintf.h"
 #include "filenames.h"
 
-
+namespace dnt = DotStr::Node::TypeVal;
 
 
 static void help(const char *program) {
@@ -327,6 +327,31 @@ int main(int argc, char* argv[]) {
     std::cerr << program << ": Could not connect to DM. Cause: " << err.what() << std::endl; return -20;
   }
 
+  if (!(cdm.isCpuIdxValid(cpuIdx))) {
+    
+    if (!(cdm.isCpuIdxValid(cpuIdx))) {
+      std::cerr << program << ": CPU Idx " << cpuIdx << " does not refer to a CPU with valid firmware." << std::endl << std::endl;
+       return -30;
+    }  
+  }
+
+  // The global hard abort commands are special - they must work regardless if the schedule download/parse was successful or not
+  if (typeName != NULL ) { 
+
+    std::string tmpGlobalCmds(typeName);
+
+    if (tmpGlobalCmds == dnt::sCmdAbort)  {
+      if( targetName != NULL) {
+        uint32_t bits = strtol(targetName, NULL, 0);
+       cdm.setThrAbort(cpuIdx, bits & ((1<<_THR_QTY_)-1) );
+      } else { cdm.abortThr(cpuIdx, thrIdx); }
+      return 0;
+    }
+    else if (tmpGlobalCmds == "halt")  {
+      cdm.halt();
+      return 0;
+    }
+  }  
 
     try { cdm.loadHashDictFile( std::string(dirname) + "/" + std::string(hashfile) ); } catch (std::runtime_error const& err) {
       std::cerr << std::endl << program << ": Warning - Could not load dictionary file. Cause: " << err.what() << std::endl;
@@ -346,16 +371,7 @@ int main(int argc, char* argv[]) {
     std::cerr << program << ": Download from CPU "<< cpuIdx << " failed. Cause: " << err.what() << std::endl;
     return -7;
   }
-
-  if (!(cdm.isCpuIdxValid(cpuIdx))) {
-    
-    if (!(cdm.isCpuIdxValid(cpuIdx))) {
-      std::cerr << program << ": CPU Idx " << cpuIdx << " does not refer to a CPU with valid firmware." << std::endl << std::endl;
-       return -30;
-    }  
-  }
-
-  namespace dnt = DotStr::Node::TypeVal;
+  
 
   uint32_t globalStatus = cdm.getStatus(0), status = cdm.getStatus(cpuIdx);
 
@@ -495,17 +511,6 @@ int main(int argc, char* argv[]) {
         } 
         mc = (mc_ptr) new MiniFlow(cmdTvalid, cmdPrio, cmdQty, adr, permanent );
 
-    }
-    else if (cmp == dnt::sCmdAbort)  {
-      if( targetName != NULL) {
-        uint32_t bits = strtol(targetName, NULL, 0);
-       cdm.setThrAbort(cpuIdx, bits & ((1<<_THR_QTY_)-1) );
-      } else { cdm.abortThr(cpuIdx, thrIdx); }
-      return 0;
-    }
-    else if (cmp == "halt")  {
-      cdm.halt();
-      return 0;
     }
     else if (cmp == "startpattern")  {
       //check if a valid origin was assigned before executing
