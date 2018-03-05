@@ -3,7 +3,7 @@
  *
  *  created : 2017
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 05-December-2017
+ *  version : 05-March-2018
  *
  *  lm32 program for gateway between UNILAC Pulszentrale and FAIR-style Data Master
  * 
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 25-April-2015
  ********************************************************************************************/
-#define DMUNIPZ_FW_VERSION 0x00000a                     // make this consistent with makefile
+#define DMUNIPZ_FW_VERSION 0x00000b                     // make this consistent with makefile
 
 /* standard includes */
 #include <stdio.h>
@@ -548,11 +548,11 @@ uint32_t findECAQueue() // find WB address of ECA channel for LM32
   }
 
   if (!pECAQ) {DBPRINT1("dm-unipz: can't find ECA queue\n"); return DMUNIPZ_STATUS_ERROR;}
-  else                                                      return DMUNIPZ_STATUS_OK;
+  else                                                       return DMUNIPZ_STATUS_OK;
 } // findECAQueue
 
 
-uint32_t wait4ECAEvent(uint32_t msTimeout, uint32_t *virtAcc, uint32_t *dryRunFlag)  // 1. query ECA for actions, 2. trigger activity
+uint32_t wait4ECAEvent(uint32_t msTimeout, uint32_t *virtAcc, uint32_t *dryRunFlag, uint64_t *deadline)  // 1. query ECA for actions, 2. trigger activity
 {
   uint32_t *pECAFlag;           // address of ECA flag
   uint32_t evtIdHigh;           // high 32bit of eventID   
@@ -581,7 +581,9 @@ uint32_t wait4ECAEvent(uint32_t msTimeout, uint32_t *virtAcc, uint32_t *dryRunFl
       actTag       = *(pECAQ + (ECA_QUEUE_TAG_GET >> 2));
       evtParamHigh = *(pECAQ + (ECA_QUEUE_PARAM_HI_GET >> 2));
       evtParamLow  = *(pECAQ + (ECA_QUEUE_PARAM_LO_GET >> 2));
-    
+
+      *deadline    = ((uint64_t)evtDeadlHigh << 32) + (uint64_t)evtDeadlLow;
+      
       // pop action from channel
       *(pECAQ + (ECA_QUEUE_POP_OWR >> 2)) = 0x1;
 
@@ -606,6 +608,9 @@ uint32_t wait4ECAEvent(uint32_t msTimeout, uint32_t *virtAcc, uint32_t *dryRunFl
         case DMUNIPZ_ECADO_RELTK :
           nextAction = DMUNIPZ_ECADO_RELTK;
           *virtAcc = evtIdLow & 0xf; 
+          break;
+        case DMUNIPZ_ECADO_READY2SIS :
+          nextAction = DMUNIPZ_ECADO_READY2SIS;
           break;
         /* no need to reply to DM after TK request          
         case DMUNIPZ_ECADO_PREPDM :
@@ -852,6 +857,7 @@ uint32_t entryActionConfigured()
   uint32_t dryRunFlag;
   uint32_t i;
   uint32_t data;
+  uint64_t timestamp;
   
   // configure EB master (SRC and DST MAC/IP are set from host)
   if ((status = ebmInit(2000)) != DMUNIPZ_STATUS_OK) {
@@ -892,7 +898,7 @@ uint32_t entryActionConfigured()
 
   // empty ECA queue for lm32
   i = 0;
-  while (wait4ECAEvent(1, &virtAcc, & dryRunFlag) !=  DMUNIPZ_ECADO_TIMEOUT) {i++;}
+  while (wait4ECAEvent(1, &virtAcc, &dryRunFlag, &timestamp) !=  DMUNIPZ_ECADO_TIMEOUT) {i++;}
   DBPRINT1("dm-unipz: ECA queue flushed - removed %d pending entries from ECA queue\n", i);
 
   flexOffset  = *pSharedFlexOffset;
@@ -1016,19 +1022,18 @@ uint32_t doActionOperation(uint32_t *statusTransfer, uint32_t *virtAcc, uint32_t
 {
   uint32_t status, dmStatus, gotEBTimeout;
   uint32_t nextAction;
+  uint32_t latchMIL;
   uint32_t virtAccTmp;
-  uint32_t dryRunFlag;
+  uint32_t dryRunFlag; uint32_t dummy1, dummy2; 
   uint64_t timestamp;
   uint64_t sendT;
   uint32_t sendTsecs;
   uint32_t sendTnsecs;
   uint64_t tempT;
 
-  uint64_t ts1, ts2, ts3; //chk
-
   status = actStatus; 
 
-  nextAction = wait4ECAEvent(DMUNIPZ_DEFAULT_TIMEOUT, &virtAccTmp, &dryRunFlag);   // do action is driven by actions issued by the ECA
+  nextAction = wait4ECAEvent(DMUNIPZ_DEFAULT_TIMEOUT, &virtAccTmp, &dryRunFlag, &timestamp);   // do action is driven by actions issued by the ECA
 
   switch (nextAction) 
     {
@@ -1040,79 +1045,69 @@ uint32_t doActionOperation(uint32_t *statusTransfer, uint32_t *virtAcc, uint32_t
       *nInject        = 0;                                                         // number of injections is reset when DM requests TK
 
       status = requestTK(tkTimeout, virtAccTmp, dryRunFlag);                       // request TK from UNIPZ
-      /* no need to reply to DM after TK request
-      if ((dmStatus = dmPrepCmdCommon(REQTK)) != DMUNIPZ_STATUS_OK)                // prepare common part of command for later use, here: continue after TK request
-        return dmStatus;                                                           // failure of preparation is a severe error!
-        
-      dmPrepCmdFlow(REQTK);                                                        // prepare flow command for later use, here: continue after TK request
-      dmChangeBlock(REQTK);                                                        // modify block within DM for execution of a flow command, here: continue after TK request
-      */
 
       if (status == DMUNIPZ_STATUS_OK) *statusTransfer = *statusTransfer | DMUNIPZ_TRANS_REQTKOK; // update status of transfer
 
       break;
     case DMUNIPZ_ECADO_REQBEAM :                                                   // received command "REQ_BEAM" from data master
-
+      
       *statusTransfer = *statusTransfer | DMUNIPZ_TRANS_REQBEAM;                   // update status of transfer
       (*nInject)++;                                                                // increment number of injections (of current transfer)
 
-      /* if ((dmStatus = dmPrepCmdCommon(REQBEAMA)) != DMUNIPZ_STATUS_OK)             // prepare common part of command for later use, here: continue after beam request 
-         return dmStatus; */                                                          // failure of preparation is a severe error!
-      //hack:
-      gotEBTimeout = 0;
-      dmStatus = dmPrepCmdCommon(REQBEAMA);
-      if (dmStatus == DMUNIPZ_STATUS_EBREADTIMEDOUT) {
+      gotEBTimeout = 0;                                                            
+      dmStatus = dmPrepCmdCommon(REQBEAMA);                                        // try "Schnitzeljagd" in Data Master. Here: first "slow" waiting block
+      if (dmStatus == DMUNIPZ_STATUS_EBREADTIMEDOUT) {                             // in case of timeout, we probably lost a UDP packet: try a 2nd time
         gotEBTimeout = 1;
-        dmStatus = dmPrepCmdCommon(REQBEAMA);    // 2nd chance in case we loose a packet
-      }
-      if (dmStatus != DMUNIPZ_STATUS_OK) return dmStatus;
-      
-      dmPrepCmdFlow(REQBEAMA);                                                     // prepare flow command for later use, here: continue after beam request
-      /*
-      if ((dmStatus = dmPrepCmdCommon(REQBEAMB)) != DMUNIPZ_STATUS_OK)             // prepare common part of command for later use, here: flex wait
-      return dmStatus;                                    */                       // failure of preparation is a severe error!
-      dmStatus = dmPrepCmdCommon(REQBEAMB);
-      if (dmStatus == DMUNIPZ_STATUS_EBREADTIMEDOUT) {
-        gotEBTimeout = 1;
-        dmStatus = dmPrepCmdCommon(REQBEAMB);    // 2nd chance
-      }
-      if (dmStatus != DMUNIPZ_STATUS_OK) return dmStatus;
-      
+        dmStatus = dmPrepCmdCommon(REQBEAMA);
+      } // if EB timeout
+      if (dmStatus != DMUNIPZ_STATUS_OK) return dmStatus;                          // communication with DM failed: give up! 
+      dmPrepCmdFlow(REQBEAMA);                                                     // prepare flow command of first "slow" waiting block for later use
 
-      
-      // NB: we can't prepare the flex wait yet, as we need to timestamp the MIL event from UNIPZ first
+      dmStatus = dmPrepCmdCommon(REQBEAMB);                                        // another "Schnitzeljagd" in Data Master. Here: second "flex" waiting block
+      if (dmStatus == DMUNIPZ_STATUS_EBREADTIMEDOUT) {                             // in case of timeout, we probably lost a UDP packet: try a 2nd time
+        gotEBTimeout = 1;
+        dmStatus = dmPrepCmdCommon(REQBEAMB);                                     
+      } // if EB timeout
+      if (dmStatus != DMUNIPZ_STATUS_OK) return dmStatus;                          // communication with DM failed even after two attempts: give up! 
+      // NB: we can't prepare the "flex" waiting block  yet, as we need to timestamp the MIL event from UNIPZ first
     
       enableFilterEvtMil(pMILPiggy);                                               // enable filter @ MIL piggy
       clearFifoEvtMil(pMILPiggy);                                                  // get rid of junk in FIFO @ MIL piggy
-
+      
       requestBeam(uniTimeout);                                                     // request beam from UNIPZ, note that we can't check for REQ_NOT_OK from here
 
-      status = wait4MILEvt(DMUNIPZ_EVT_READY2SIS, virtAccTmp, uniTimeout);         // wait for MIL Event
-      timestamp = getSysTime();                                                    // get timestamp for MIL event
-      sendT     = timestamp + (uint64_t)flexOffset;                                // add offset to obtain time for "flex wait"
+      latchMIL = wait4ECAEvent(uniTimeout, &dummy1, &dummy2, &timestamp);          // wait for latched MIL Event (TLU -> ECA)
+      status = wait4MILEvt(DMUNIPZ_EVT_READY2SIS, virtAccTmp, uniTimeout);         // get data for MIL Event
 
-      pulseLemo2();                                                                // for hardware debugging with scope
+      if (latchMIL != DMUNIPZ_ECADO_READY2SIS) timestamp = getSysTime();           // timestamp latching of MIL event failed. Plan B: empty SIS cycle using actual systime
+      
+      sendT     = timestamp + (uint64_t)flexOffset;                                // add offset to obtain deadline for "flex" waiting block
+      
+      pulseLemo2();                                                                // blink LED and TTL out of MIL piggy for hardware debugging with scope
 
-      dmPrepFlexWaitCmd(REQBEAMB, sendT);                                          // prepare flex wait command, here: wait until absolute time
-      dmChangeBlock(REQBEAMB);                                                     // modify the "flex wait" block within DM
-      dmChangeBlock(REQBEAMA);                                                     // modify block within DM for execution of a flow command, here: continue after beam request towards "flex wait"
+      dmPrepFlexWaitCmd(REQBEAMB, sendT);                                          // prepare command for "flex" waiting block
+      dmChangeBlock(REQBEAMB);                                                     // modify "flex" waiting block within DM
+      dmChangeBlock(REQBEAMA);                                                     // modify "slow" waiting block within DM
 
-      if (status == DMUNIPZ_STATUS_TIMEDOUT) {                                     // discriminate between 'timeout' and 'REQ_NOT_OK'
+      releaseBeam();                                                               // release beam request at UNIPZ
+      disableFilterEvtMil(pMILPiggy);                                              // disable filter @ MIL piggy to avoid accumulation of junk
+      
+      // handle error: data for MIL event is ok, but latching failed
+      if ((status == DMUNIPZ_STATUS_OK) && (latchMIL == DMUNIPZ_ECADO_TIMEOUT)) status = DMUNIPZ_STATUS_TIMEDOUT;
+      
+      // handle error: timeout requesting beam at UNPZ. Could be due error or timeout   
+      if (status == DMUNIPZ_STATUS_TIMEDOUT) {
         if (checkClearReqNotOk(uniTimeout) != DMUNIPZ_STATUS_OK) status = DMUNIPZ_STATUS_REQBEAMFAILED;
         else                                                     status = DMUNIPZ_STATUS_REQBEAMTIMEDOUT;
       } // if status 
-
-      releaseBeam();                                                               // release beam request
-
-      disableFilterEvtMil(pMILPiggy);                                              // disable filter @ MIL piggy
 
       *statusTransfer = *statusTransfer |  DMUNIPZ_TRANS_RELBEAM;                  // update status of transfer
       if (status == DMUNIPZ_STATUS_OK)                                           
         *statusTransfer = *statusTransfer | DMUNIPZ_TRANS_REQBEAMOK;
 
-      //hack
+      // handle warning in case we needed two attempts for our "Schitzeljagd" within Data Master
       if ((status == DMUNIPZ_STATUS_OK) && gotEBTimeout) status = DMUNIPZ_STATUS_EBREADTIMEDOUT;                                           
-
+          
       break;
     case DMUNIPZ_ECADO_RELTK :                                                     // received command "REL_TK" from data master
 
@@ -1120,11 +1115,6 @@ uint32_t doActionOperation(uint32_t *statusTransfer, uint32_t *virtAcc, uint32_t
       *statusTransfer = *statusTransfer |  DMUNIPZ_TRANS_RELTK;                    // update status of transfer 
 
       break;
-    /* no need to reply to DM after TK request
-    case DMUNIPZ_ECADO_PREPDM:                                                     // received command "PREP_DM" from data master
-
-      break;
-    */
     default: ;
     } // switch nextAction
 
@@ -1175,11 +1165,10 @@ void main(void) {
         if (status != DMUNIPZ_STATUS_OK) reqState = DMUNIPZ_STATE_FATAL;    // failed:  -> FATAL
         else                             reqState = DMUNIPZ_STATE_IDLE;     // success: -> IDLE
         break;
-        case DMUNIPZ_STATE_OPERATION :
+      case DMUNIPZ_STATE_OPERATION :
         status = doActionOperation(&statusTransfer, &virtAcc, &nTransfer, &nInject, status);
         if (status == DMUNIPZ_STATUS_DEVBUSERROR)    reqState = DMUNIPZ_STATE_ERROR;
         if (status == DMUNIPZ_STATUS_ERROR)          reqState = DMUNIPZ_STATE_ERROR;
-        // if (status == DMUNIPZ_STATUS_EBREADTIMEDOUT) reqState = DMUNIPZ_STATE_ERROR; // hack avoid error in case of EBREADTIMEOUT
         break;
       case DMUNIPZ_STATE_FATAL :
         *pSharedState  = actState;

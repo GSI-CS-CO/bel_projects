@@ -55,7 +55,9 @@
 #define  DMUNIPZ_ECADO_REQTK      2           // request the transfer channel (TK), carries info on DM wait after beam request
 #define  DMUNIPZ_ECADO_REQBEAM    3           // request beam from UNIPZ
 #define  DMUNIPZ_ECADO_RELTK      4           // release the transfer channel (TK)
-#define  DMUNIPZ_ECADO_PREPDM     5           // dedicated message from DM, carries info on DM wait after TK request
+#define  DMUNIPZ_ECADO_PREPDM     5           // dedicated message from DM, carries info on DM wait after TK request (deprecated)
+#define  DMUNIPZ_ECADO_READY2SIS  6           // received EVT_READY_TO_SIS (HEX) via TLU
+
 
 // status of transfer (status bits)
 #define DMUNIPZ_TRANS_UNKNOWN     0           // unknown status
