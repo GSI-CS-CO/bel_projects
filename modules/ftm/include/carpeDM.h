@@ -310,7 +310,7 @@ std::pair<int, int> findRunningPattern(const std::string& sPattern); //get cpu a
     show("Download Table" + (filterMeta ? std::string(" (noMeta)") : std::string("")), "download_dict.txt", TransferDir::DOWNLOAD, filterMeta);
   }
   void showCpuList();
-  void dumpQueue(uint8_t cpuIdx, const std::string& blockName, uint8_t cmdPrio); //Show all command fields in a Queue (past and current)
+  std::string& inspectQueues(const std::string& blockName, std::string& report); //Show all command fields in Block Queue 
   void dumpNode(uint8_t cpuIdx, const std::string& name); //hex dump a node
   void verboseOn()  {verbose = true;}  //Turn on Verbose Output
   void verboseOff() {verbose = false;} //Turn off Verbose Output
