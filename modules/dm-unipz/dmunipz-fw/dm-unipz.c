@@ -49,12 +49,53 @@
 #include "ebm.h"
 #include "aux.h"
 #include "dbg.h"
-#include "../../../top/gsi_scu/scu_mil.h"
+#include "../../../top/gsi_scu/scu_mil.h"                             // register layout of 'MIL macro'
 #include "../../../ip_cores/wr-cores/modules/wr_eca/eca_queue_regs.h" // register layout ECA queue
 #include "../../../ip_cores/wr-cores/modules/wr_eca/eca_regs.h"       // register layout ECA control
+#include "../../oled_display/oled_regs.h"                             // register layout of OLED display
 #include "../../../ip_cores/saftlib/drivers/eca_flags.h"              // definitions for ECA queue
 #include "../../ftm/include/ftm_common.h"                             // defs and regs for data master
 #include "../../ftm/ftmfw/ftm_shared_mmap.h"                          // info on shared map for data master lm32 cluster
+
+#include "dm-unipz.h"
+
+const char* dmunipz_status_text(uint32_t code) {
+  switch (code) {
+  case DMUNIPZ_STATUS_UNKNOWN          : return "unknown   ";
+  case DMUNIPZ_STATUS_OK               : return "OK        ";
+  case DMUNIPZ_STATUS_ERROR            : return "error     ";
+  case DMUNIPZ_STATUS_TIMEDOUT         : return "timeout   ";
+  case DMUNIPZ_STATUS_OUTOFRANGE       : return "bad range ";
+  case DMUNIPZ_STATUS_REQTKFAILED      : return "bad TK req";
+  case DMUNIPZ_STATUS_REQTKTIMEOUT     : return "req timout";
+  case DMUNIPZ_STATUS_REQBEAMFAILED    : return "bad BM req";
+  case DMUNIPZ_STATUS_RELTKFAILED      : return "bad TK rel";
+  case DMUNIPZ_STATUS_RELBEAMFAILED    : return "bad BM rel";
+  case DMUNIPZ_STATUS_DEVBUSERROR      : return "devbus err";
+  case DMUNIPZ_STATUS_REQNOTOK         : return "bad req.  ";
+  case DMUNIPZ_STATUS_REQBEAMTIMEDOUT  : return "req timout";
+  case DMUNIPZ_STATUS_NOIP             : return "bad DHCP  ";
+  case DMUNIPZ_STATUS_WRONGIP          : return "bad IP    ";
+  case DMUNIPZ_STATUS_NODM             : return "no DM     ";                     
+  case DMUNIPZ_STATUS_EBREADTIMEDOUT   : return "EB timeout";                     
+  default                              : return "undef err ";
+  }
+}
+
+const char* dmunipz_state_text(uint32_t code) {
+  switch (code) {
+  case DMUNIPZ_STATE_UNKNOWN      : return "UNKNOWN   ";
+  case DMUNIPZ_STATE_S0           : return "S0        ";
+  case DMUNIPZ_STATE_IDLE         : return "IDLE      ";                                       
+  case DMUNIPZ_STATE_CONFIGURED   : return "CONFIGURED";
+  case DMUNIPZ_STATE_OPERATION    : return "opReady   ";
+  case DMUNIPZ_STATE_STOPPING     : return "STOPPING  ";
+  case DMUNIPZ_STATE_ERROR        : return "ERROR     ";
+  case DMUNIPZ_STATE_FATAL        : return "FATAL(RIP)";
+  default                         : return "undefined ";
+  }
+}
+
 
 uint32_t dmExt2BaseAddr(uint32_t extAddr) // data master external address -> external base address
 {
@@ -117,7 +158,8 @@ uint64_t SHARED dummy = 0;
 
 // global variables 
 volatile uint32_t *pECAQ;               // WB address of ECA queue
-volatile uint32_t *pMILPiggy;           // WB address of MIL device bus (MIL piggy)                              
+volatile uint32_t *pMILPiggy;           // WB address of MIL device bus (MIL piggy)
+volatile uint32_t *pOLED;               // WB address of OLED
 volatile uint32_t *pShared;             // pointer to begin of shared memory region                              
 uint32_t *pSharedVersion;               // pointer to a "user defined" u32 register; here: publish version
 uint32_t *pSharedStatus;                // pointer to a "user defined" u32 register; here: publish status
@@ -522,7 +564,19 @@ uint32_t findMILPiggy() //find WB address of MIL Piggy
 
   if (!pMILPiggy) {DBPRINT1("dm-unipz: can't find MIL piggy\n"); return DMUNIPZ_STATUS_ERROR;}
   else                                                           return DMUNIPZ_STATUS_OK;
-} // initMILPiggy
+} // findMILPiggy
+
+
+uint32_t findOLED() //find WB address of OLED
+{
+  pOLED = 0x0;
+  
+  // get Wishbone address for OLED
+  pOLED = find_device_adr(OLED_SDB_VENDOR_ID, OLED_SDB_DEVICE_ID);
+
+  if (!pOLED) {DBPRINT1("dm-unipz: can't find OLED\n"); return DMUNIPZ_STATUS_ERROR;}
+  else                                                  return DMUNIPZ_STATUS_OK;
+} // findOLED
 
 
 uint32_t findECAQueue() // find WB address of ECA channel for LM32
@@ -838,12 +892,43 @@ void pulseLemo2() //for debugging with scope
 } // pulseLemo2
 
 
+void printOLED(char *chars)
+{
+  uint32_t i;
+  
+  for (i=0;i<strlen(chars);i++) *(pOLED + (OLED_UART_OWR >> 2)) = chars[i];
+} // printOLED
+
+void updateOLED(uint32_t statusTransfer, uint32_t virtAcc, uint32_t nTransfer, uint32_t nInject, uint32_t status, uint32_t actState)
+{
+  char     c[32];
+  
+  if (!pOLED) return;                         // no OLED: just return
+
+  *(pOLED + (OLED_UART_OWR >> 2)) = 0xc;      // clear display
+
+  sprintf(c, "%s\n", dmunipz_state_text(actState)); printOLED(c);
+  sprintf(c, "%s\n", dmunipz_status_text(status));  printOLED(c);
+  sprintf(c, "%vA %7d\n", virtAcc);                 printOLED(c);
+  sprintf(c, "nT %7d\n", nTransfer);                printOLED(c);
+  sprintf(c, "sT  %d%d%d%d%d%d\n",
+          ((statusTransfer & DMUNIPZ_TRANS_REQTK    ) > 0),  
+          ((statusTransfer & DMUNIPZ_TRANS_REQTKOK  ) > 0), 
+          ((statusTransfer & DMUNIPZ_TRANS_RELTK    ) > 0),
+          ((statusTransfer & DMUNIPZ_TRANS_REQBEAM  ) > 0),
+          ((statusTransfer & DMUNIPZ_TRANS_REQBEAMOK) > 0),
+          ((statusTransfer & DMUNIPZ_TRANS_RELBEAM  ) > 0)
+          );                                        printOLED(c);
+} // updateOLED
+
+
 uint32_t doActionS0()
 {
   uint32_t status = DMUNIPZ_STATUS_OK;
 
   if (findECAQueue() != DMUNIPZ_STATUS_OK) status = DMUNIPZ_STATUS_ERROR; 
-  if (findMILPiggy() != DMUNIPZ_STATUS_OK) status = DMUNIPZ_STATUS_ERROR; 
+  if (findMILPiggy() != DMUNIPZ_STATUS_OK) status = DMUNIPZ_STATUS_ERROR;
+  if (findOLED()     != DMUNIPZ_STATUS_OK) status = DMUNIPZ_STATUS_OK;     // in case SCU has no OLED: ignore
   initCmds();                    
 
   return status;
@@ -1191,5 +1276,9 @@ void main(void) {
     *pSharedVirtAcc   = virtAcc;
     *pSharedNTransfer = nTransfer;
     *pSharedNInject   = nInject;
+
+    // update OLED display
+    updateOLED(statusTransfer, virtAcc, nTransfer, nInject, status, actState);
+    
   } // while
 } // main
