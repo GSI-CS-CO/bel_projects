@@ -50,23 +50,37 @@ echo -e dm-unipz - start: make firmware operational
 sleep 5
 dmunipz-ctl dev/wbm0 configure
 
-# send START OPERATATION command to firmware
-sleep 5
-dmunipz-ctl dev/wbm0 startop
-
 ###########################################
-# configure ECA
+# configure ECA for DM
 ###########################################
-echo -e dm-unipz - start: configure lm32 channel of ECA
+echo -e dm-unipz - configure ECA for events from DM
 
-# configure ECA for lm32 channel: here action for TK request, tag "0x2"
+# configure ECA for lm32 channel: listen for TK request, tag "0x2"
 saft-ecpu-ctl tr0 -c 0x1fa215e000000000 0xfffffff000000000 0 0x2 -d
 
-# configure ECA for lm32 channel: here action for beam request, tag "0x3"
+# configure ECA for lm32 channel: listen for beam request, tag "0x3"
 saft-ecpu-ctl tr0 -c 0x1fa2160000000000 0xfffffff000000000 0 0x3 -d
 
-# configure ECA for lm32 channel: here action for TK release, tag "0x4"
+# configure ECA for lm32 channel: listen for TK release, tag "0x4"
 saft-ecpu-ctl tr0 -c 0x1fa215f000000000 0xfffffff000000000 0 0x4 -d
+
+
+###########################################
+# configure TLU and ECA for UNIPZ
+# MIL event EVT_READY_TO_SIS is received as TTL
+###########################################
+echo -e dm-unipz - configure TLU and ECA for events from UNIPZ
+
+# configure TLU (input B1, TLU will generate messages with event ID
+saft-io-ctl tr0 -n B1 -b 0xffff100000000000
+
+# configure ECA for lm32 channel: listen for event ID from TLU, tag "0x6"
+saft-ecpu-ctl tr0 -c 0xffff100000000001 0xffffffffffffffff 0 0x6 -d
+
+# send START OPERATATION command to firmware
+sleep 5
+echo -e dm-unipz - start operation
+dmunipz-ctl dev/wbm0 startop
 
 echo -e dm-unipz - start: startup script finished
 
