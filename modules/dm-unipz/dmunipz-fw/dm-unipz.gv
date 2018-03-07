@@ -11,8 +11,8 @@ digraph finite_state_machine {
     IDLE       -> CONFIGURED  [ label = "configure" ];
     CONFIGURED -> IDLE        [ label = "idle" ];
     CONFIGURED -> CONFIGURED  [ label = "configure" ];
-    CONFIGURED -> OPERATION   [ label = "startop" ];
-    OPERATION  -> STOPPING    [ label = "stopop" ];
+    CONFIGURED -> OPREADY     [ label = "startop" ];
+    OPREADY    -> STOPPING    [ label = "stopop" ];
     STOPPING   -> CONFIGURED  [ label = "automatic" ];
     ERROR      -> IDLE        [ label = "recover" ];
     

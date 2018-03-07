@@ -3,7 +3,7 @@
  *
  *  created : 2017
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 05-Dezember-2017
+ *  version : 07-March-2018
  *
  * Command-line interface for dmunipz
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 17-May-2017
  ********************************************************************************************/
-#define DMUNIPZ_X86_VERSION "0.0.10"
+#define DMUNIPZ_X86_VERSION "0.0.12"
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -87,8 +87,6 @@ eb_address_t dmunipz_nBadState;  // # of bad state ("not in operation") incident
 
 eb_data_t   data1;
 
-
-
  
 static void die(const char* where, eb_status_t status) {
   fprintf(stderr, "%s: %s failed: %s\n",
@@ -126,11 +124,11 @@ const char* dmunipz_state_text(uint32_t code) {
   case DMUNIPZ_STATE_S0           : return "S0        ";
   case DMUNIPZ_STATE_IDLE         : return "IDLE      ";                                       
   case DMUNIPZ_STATE_CONFIGURED   : return "CONFIGURED";
-  case DMUNIPZ_STATE_OPERATION    : return "OPERATION ";
+  case DMUNIPZ_STATE_OPREADY      : return "OpReady   ";
   case DMUNIPZ_STATE_STOPPING     : return "STOPPING  ";
   case DMUNIPZ_STATE_ERROR        : return "ERROR     ";
   case DMUNIPZ_STATE_FATAL        : return "FATAL(RIP)";
-  default                         : return "undefined  ";
+  default                         : return "undefined ";
   }
 }
 
@@ -168,10 +166,13 @@ static void help(void) {
   fprintf(stderr, "  tk      <timeout>   command sets timeout value for TK (via UNILAC, default 210) [ms]\n");
   fprintf(stderr, "\n");
   fprintf(stderr, "  configure           command requests state change to CONFIGURED\n");
-  fprintf(stderr, "  startop             command requests state change to OPERATION\n");
+  fprintf(stderr, "  startop             command requests state change to OPREADY\n");
   fprintf(stderr, "  stopop              command requests state change to STOPPING -> CONFIGURED\n");
   fprintf(stderr, "  recover             command tries to recover from ERROR state and transit to IDLE\n");
   fprintf(stderr, "  idle                command requests state change to IDLE\n");
+  fprintf(stderr, "\n");
+  fprintf(stderr, "  reltk               command forces release of TK request at UNILAC\n");
+  fprintf(stderr, "  relbeam             command forces release of beam request at UNILAC\n");  
   fprintf(stderr, "\n");
   fprintf(stderr, "Use this tool to control the DM-UNIPZ gateway from the command line.\n");
   fprintf(stderr, "Example1: '%s dev/wbm0 ebmdm 0x00267b000401 0xc0a80a01' set MAC and IP of Data Master\n", program);
@@ -179,11 +180,11 @@ static void help(void) {
   fprintf(stderr, "Example3: '%s -s0 dev/wbm0 | logger -t TIMING -sp local0.info' monitor firmware and print to screen and to diagnostic logging", program);
   fprintf(stderr, "\n");
   fprintf(stderr, "When using option '-s<n>', the following information is displayed\n");
-  fprintf(stderr, "dm-unipz: transfer - 00000074, 01, 002, 1 1 1 1 1 1, OPERATION (      ), OK (      )\n");
+  fprintf(stderr, "dm-unipz: transfer - 00000074, 01, 002, 1 1 1 1 1 1, OpReady   (      ), OK (      )\n");
   fprintf(stderr, "                            |   |    |  | | | | | |  |          |        |   | \n");
   fprintf(stderr, "                            |   |    |  | | | | | |  |          |        |    - # of bad status incidents\n");
   fprintf(stderr, "                            |   |    |  | | | | | |  |          |         - status\n");
-  fprintf(stderr, "                            |   |    |  | | | | | |  |          - # of '!OPERATION' incidents\n");
+  fprintf(stderr, "                            |   |    |  | | | | | |  |          - # of '!OPREADY' incidents\n");
   fprintf(stderr, "                            |   |    |  | | | | | |   - state\n");
   fprintf(stderr, "                            |   |    |  | | | | | - beam (request) released\n");
   fprintf(stderr, "                            |   |    |  | | | | - beam request succeeded\n");
@@ -527,7 +528,10 @@ int main(int argc, char** argv) {
 
       eb_device_write(device, dmunipz_tkTimeout, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)tkTimeout, 0, eb_block);
     } // "tk"
+    if (!strcasecmp(command, "reltk"))   eb_device_write(device, dmunipz_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)DMUNIPZ_CMD_RELEASETK,   0, eb_block);
+    if (!strcasecmp(command, "relbeam")) eb_device_write(device, dmunipz_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)DMUNIPZ_CMD_RELEASEBEAM, 0, eb_block);
   } //if command
+  
 
   if (snoop) {
     printf("dm-unipz: continous monitoring of gateway, loglevel = %d\n", logLevel);
@@ -541,7 +545,7 @@ int main(int argc, char** argv) {
       readInfo(&status, &state, &iterations, &transfers, &injections, &virtAcc, &statTrans, &nBadStatus, &nBadState);  // read info from lm32
 
       switch(state) {
-      case DMUNIPZ_STATE_OPERATION :
+      case DMUNIPZ_STATE_OPREADY :
         if (actTransfers != transfers) sleepTime = DMUNIPZ_DEFAULT_TIMEOUT * 1000 * 2;        // ongoing transfer: reduce polling rate ...
         else                           sleepTime = DMUNIPZ_DEFAULT_TIMEOUT * 1000;            // sleep for default timeout to catch next REQ_TK
         break;

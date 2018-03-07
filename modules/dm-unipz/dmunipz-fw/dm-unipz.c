@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 25-April-2015
  ********************************************************************************************/
-#define DMUNIPZ_FW_VERSION 0x00000b                     // make this consistent with makefile
+#define DMUNIPZ_FW_VERSION 0x00000c                     // make this consistent with makefile
 
 /* standard includes */
 #include <stdio.h>
@@ -88,7 +88,7 @@ const char* dmunipz_state_text(uint32_t code) {
   case DMUNIPZ_STATE_S0           : return "S0        ";
   case DMUNIPZ_STATE_IDLE         : return "IDLE      ";                                       
   case DMUNIPZ_STATE_CONFIGURED   : return "CONFIGURED";
-  case DMUNIPZ_STATE_OPERATION    : return "opReady   ";
+  case DMUNIPZ_STATE_OPREADY      : return "opReady   ";
   case DMUNIPZ_STATE_STOPPING     : return "STOPPING  ";
   case DMUNIPZ_STATE_ERROR        : return "ERROR     ";
   case DMUNIPZ_STATE_FATAL        : return "FATAL(RIP)";
@@ -1023,26 +1023,34 @@ void cmdHandler(uint32_t *reqState) // handle commands from the outside world
     switch (cmd) {
     case DMUNIPZ_CMD_CONFIGURE :
       *reqState =  DMUNIPZ_STATE_CONFIGURED;
-      DBPRINT3("received cmd %d\n", cmd);
+      DBPRINT3("dm-unipz: received cmd %d\n", cmd);
       break;
     case DMUNIPZ_CMD_STARTOP :
-      *reqState = DMUNIPZ_STATE_OPERATION;
-      DBPRINT3("received cmd %d\n", cmd);
+      *reqState = DMUNIPZ_STATE_OPREADY;
+      DBPRINT3("dm-unipz: received cmd %d\n", cmd);
       break;
     case DMUNIPZ_CMD_STOPOP :
       *reqState = DMUNIPZ_STATE_STOPPING;
-      DBPRINT3("received cmd %d\n", cmd);
+      DBPRINT3("dm-unipz: received cmd %d\n", cmd);
       break;
     case DMUNIPZ_CMD_IDLE :
       *reqState = DMUNIPZ_STATE_IDLE;
-      DBPRINT3("received cmd %d\n", cmd);
+      DBPRINT3("dm-unipz: received cmd %d\n", cmd);
       break;
     case DMUNIPZ_CMD_RECOVER :
       *reqState = DMUNIPZ_STATE_IDLE;
-      DBPRINT3("received cmd %d\n", cmd);
+      DBPRINT3("dm-unipz: received cmd %d\n", cmd);
+      break;
+    case DMUNIPZ_CMD_RELEASETK :
+      releaseTK();   // force release of TK request independently of state or status
+      DBPRINT1("dm-unipz: received cmd %d, forcing release of TK request\n", cmd);
+      break;
+    case DMUNIPZ_CMD_RELEASEBEAM :
+      releaseBeam(); // force release of beam request indpendently of state or status
+      DBPRINT1("dm-unipz: received cmd %d, forcing release of beam request\n", cmd);
       break;
     default:
-      DBPRINT3("cmdHandler: unknown command '0x%08x'\n",*pSharedCmd);
+      DBPRINT3("dm-unipz: received unknown command '0x%08x'\n", cmd);
     } // switch 
     *pSharedCmd = 0x0; // reset cmd value in shared memory 
   } // if command 
@@ -1069,17 +1077,17 @@ uint32_t changeState(uint32_t *actState, uint32_t *reqState, uint32_t actStatus)
       if      (*reqState == DMUNIPZ_STATE_CONFIGURED)  {statusTransition = entryActionConfigured(); nextState = *reqState;}
       break;
     case DMUNIPZ_STATE_CONFIGURED:
-      if      (*reqState == DMUNIPZ_STATE_IDLE)        {                                            nextState = *reqState;}
-      else if (*reqState == DMUNIPZ_STATE_CONFIGURED)  {statusTransition = entryActionConfigured(); nextState = *reqState;}
-      else if (*reqState == DMUNIPZ_STATE_OPERATION)   {statusTransition = entryActionOperation();  nextState = *reqState;}
+      if      (*reqState == DMUNIPZ_STATE_IDLE)       {                                            nextState = *reqState;}
+      else if (*reqState == DMUNIPZ_STATE_CONFIGURED) {statusTransition = entryActionConfigured(); nextState = *reqState;}
+      else if (*reqState == DMUNIPZ_STATE_OPREADY)    {statusTransition = entryActionOperation();  nextState = *reqState;}
       break;
-    case DMUNIPZ_STATE_OPERATION:
-      if      (*reqState == DMUNIPZ_STATE_STOPPING)    {statusTransition = exitActionOperation();   nextState = *reqState;}
+    case DMUNIPZ_STATE_OPREADY:
+      if      (*reqState == DMUNIPZ_STATE_STOPPING)   {statusTransition = exitActionOperation();   nextState = *reqState;}
       break;
     case DMUNIPZ_STATE_STOPPING:
       nextState = DMUNIPZ_STATE_CONFIGURED;      //automatic transition but without entryActionConfigured
     case DMUNIPZ_STATE_ERROR:
-      if      (*reqState == DMUNIPZ_STATE_IDLE)        {statusTransition = exitActionError();       nextState = *reqState;}
+      if      (*reqState == DMUNIPZ_STATE_IDLE)       {statusTransition = exitActionError();       nextState = *reqState;}
       break;
     default: 
       nextState = DMUNIPZ_STATE_S0;
@@ -1250,7 +1258,7 @@ void main(void) {
         if (status != DMUNIPZ_STATUS_OK) reqState = DMUNIPZ_STATE_FATAL;    // failed:  -> FATAL
         else                             reqState = DMUNIPZ_STATE_IDLE;     // success: -> IDLE
         break;
-      case DMUNIPZ_STATE_OPERATION :
+      case DMUNIPZ_STATE_OPREADY :
         status = doActionOperation(&statusTransfer, &virtAcc, &nTransfer, &nInject, status);
         if (status == DMUNIPZ_STATUS_DEVBUSERROR)    reqState = DMUNIPZ_STATE_ERROR;
         if (status == DMUNIPZ_STATUS_ERROR)          reqState = DMUNIPZ_STATE_ERROR;
@@ -1266,8 +1274,8 @@ void main(void) {
       } // switch 
 
     // update shared memory
-    if ((*pSharedStatus == DMUNIPZ_STATUS_OK)       && (status    != DMUNIPZ_STATUS_OK))       {nBadStatus++; *pSharedNBadStatus = nBadStatus;}
-    if ((*pSharedState  == DMUNIPZ_STATE_OPERATION) && (actState  != DMUNIPZ_STATE_OPERATION)) {nBadState++;  *pSharedNBadState  = nBadState;}
+    if ((*pSharedStatus == DMUNIPZ_STATUS_OK)     && (status    != DMUNIPZ_STATUS_OK))     {nBadStatus++; *pSharedNBadStatus = nBadStatus;}
+    if ((*pSharedState  == DMUNIPZ_STATE_OPREADY) && (actState  != DMUNIPZ_STATE_OPREADY)) {nBadState++;  *pSharedNBadState  = nBadState;}
     *pSharedStatus    = status;
     *pSharedState     = actState;
     i++;
