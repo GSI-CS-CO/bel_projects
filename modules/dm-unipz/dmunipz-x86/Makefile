@@ -3,9 +3,10 @@
 # Example usage:
 #   make PREFIX=/usr all
 # Example deploy:
-#   make PREFIX=/usr STAGING=/common/export/timing-rte/dmunipz-dev/x86_64 deploy
+#   make PREFIX=/usr STAGING=/common/export/timing-rte/dmunipz-dev deploy
 PREFIX      ?= /usr/local
 STAGING     ?=
+ARCH        ?= /x86_64
 EB          ?= ../../../ip_cores/etherbone-core/api
 FW          ?=../dmunipz-fw
 TARGETS     := dmunipz-ctl 
@@ -22,8 +23,8 @@ dmunipz-ctl: dmunipz-ctl.c
 clean:
 	rm -f *.o $(TARGETS)
 
-install:
-	mkdir -p $(STAGING)$(PREFIX)/bin
-	cp $(TARGETS) $(STAGING)$(PREFIX)/bin
+deploy:
+	 mkdir -p $(STAGING)$(ARCH)$(PREFIX)/bin
+	cp $(TARGETS) $(STAGING)$(ARCH)$(PREFIX)/bin
 
 .PHONY: all clean
