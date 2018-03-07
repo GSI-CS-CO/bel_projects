@@ -3,6 +3,14 @@
 #include <inttypes.h>
 #include <stdint.h>
 
+/// Debugging Macros
+#define VALUE_TO_STRING(x) #x
+#define VALUE(x) VALUE_TO_STRING(x)
+#define VAR_NAME_VALUE(var) #var "="  VALUE(var)
+///
+
+#define PREPTIME_DEFAULT 1000000ULL // standard preptime offset, sets lead to 1 ms
+
 //basic definitions
 #define _8b_SIZE_               1
 #define _16b_SIZE_              2
