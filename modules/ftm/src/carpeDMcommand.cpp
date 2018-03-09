@@ -310,6 +310,11 @@ vEbwrs& CarpeDM::createCommandBurst(Graph& g, vEbwrs& ew) {
     return ew;
   }
 
+  uint32_t CarpeDM::getThrStart(uint8_t cpuIdx) {
+    return ebReadWord(ebd, getThrCmdAdr(cpuIdx) + T_TC_START);
+  }
+
+
 
   //Requests Threads to stop
   vEbwrs& CarpeDM::setThrAbort(uint8_t cpuIdx, uint32_t bits, vEbwrs& ew) {
@@ -329,7 +334,8 @@ vEbwrs& CarpeDM::createCommandBurst(Graph& g, vEbwrs& ew) {
     uint8_t b[4];
     writeLeNumberToBeBytes<uint32_t>(b, (1 << _THR_QTY_)-1 );
 
-    for(uint8_t cpuIdx=0; cpuIdx < getCpuQty(); cpuIdx++) { 
+    for(uint8_t cpuIdx=0; cpuIdx < getCpuQty(); cpuIdx++) {
+      setThrStart(cpuIdx, 0, ew);
       ew.va.push_back(getThrCmdAdr(cpuIdx) + T_TC_ABORT);
       ew.vb.insert( ew.vb.end(), b, b + sizeof(b));
       ew.vcs.push_back(true); // each one is a new wb device, so we always need a new eb cycle

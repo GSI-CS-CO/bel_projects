@@ -41,11 +41,16 @@ private:
   void addition(Graph& g);
   void subtraction(Graph& g);
   void nullify();
+  
+  //FIXME this ought to be a variadic template
+  int safeguardTransaction(int (CarpeDM::*func)(Graph&, bool), Graph& g, bool force);
+  int safeguardTransaction(int (CarpeDM::*func)(bool), bool force);
 
-  int add(Graph& g);
+  int add(Graph& g, bool force);
   int remove(Graph& g, bool force);
   int keep(Graph& g, bool force);  
   int overwrite(Graph& g,  bool force);
+  int clear_raw(bool force);
   bool validate(Graph& g, AllocTable& at);
   
   int sendCommands(Graph &); //Sends a dotfile of commands to the DM
@@ -197,21 +202,21 @@ public:
   std::string downloadDot(bool filterMeta) {download(); return createDot( gDown, filterMeta);};            
   void downloadDotFile(const std::string& fn, bool filterMeta) {download(); writeDownDotFile(fn, filterMeta);};   
   //add all nodes and/or edges in dot file
-  int addDot(const std::string& s) {Graph gTmp; return add(parseDot(s, gTmp));};            
+  int addDot(const std::string& s) {Graph gTmp; return safeguardTransaction(&CarpeDM::add, parseDot(s, gTmp), false);};            
   int addDotFile(const std::string& fn) {return addDot(readTextFile(fn));};                 
   //add all nodes and/or edges in dot file                                                                                     
-  int overwriteDot(const std::string& s, bool force) {Graph gTmp; return overwrite(parseDot(s, gTmp), force);};
+  int overwriteDot(const std::string& s, bool force) {Graph gTmp; return safeguardTransaction(&CarpeDM::overwrite, parseDot(s, gTmp), force);};
   int overwriteDotFile(const std::string& fn, bool force) {return overwriteDot(readTextFile(fn), force);};
   //removes all nodes NOT in input file
-  int keepDot(const std::string& s, bool force) {Graph gTmp; return keep(parseDot(s, gTmp), force);};
+  int keepDot(const std::string& s, bool force) {Graph gTmp; return safeguardTransaction(&CarpeDM::keep, parseDot(s, gTmp), force);};
   int keepDotFile(const std::string& fn, bool force) {return keepDot(readTextFile(fn), force);};
   //removes all nodes in input file                                            
-  int removeDot(const std::string& s, bool force) {Graph gTmp; return remove(parseDot(s, gTmp), force);};
+  int removeDot(const std::string& s, bool force) {Graph gTmp; return safeguardTransaction(&CarpeDM::remove, parseDot(s, gTmp), force);};
   int removeDotFile(const std::string& fn, bool force) {return removeDot(readTextFile(fn), force);};
   // Safe removal check
   //bool isSafe2RemoveDotFile(const std::string& fn) {Graph gTmp; return isSafeToRemove(parseDot(readTextFile(fn), gTmp));};
   //clears all nodes from DM 
-  int clear(bool force);
+  int clear(bool force) {return safeguardTransaction(&CarpeDM::clear_raw, force);};
 
   //aborts all threads on all cores
   void halt();
@@ -240,6 +245,7 @@ public:
            uint32_t getStatus(uint8_t cpuIdx);
            uint64_t getThrDeadline(uint8_t cpuIdx, uint8_t thrIdx);
            uint64_t getThrStartTime(uint8_t cpuIdx, uint8_t thrIdx);
+           uint32_t getThrStart(uint8_t cpuIdx);
            uint64_t getThrPrepTime(uint8_t cpuIdx, uint8_t thrIdx); 
                bool isThrRunning(uint8_t cpuIdx, uint8_t thrIdx); //true if thread <thrIdx> is running
             

@@ -504,7 +504,8 @@ using namespace DotStr::Misc;
   }
 
   //high level functions for external interface
-  int CarpeDM::add(Graph& g) {
+  int CarpeDM::add(Graph& g, bool force) {
+
     if ((boost::get_property(g, boost::graph_name)).find(DotStr::Graph::Special::sCmd) != std::string::npos) {throw std::runtime_error("Expected a schedule, but these appear to be commands (Tag '" + DotStr::Graph::Special::sCmd + "' found in graphname)"); return -1;}
     baseUploadOnDownload();
     addition(g);
@@ -560,14 +561,19 @@ using namespace DotStr::Misc;
     return upload();
   }   
 
-  int CarpeDM::clear(bool force) {
+  int CarpeDM::clear_raw(bool force) {
     nullify(); // read out current time for upload mod time (seconds, but probably better to use same format as DM FW. Convert to ns)
     modTime = getDmWrTime() * 1000000000ULL;
     // check if there are any threads still running first
-    uint32_t activity = 0;
+    uint32_t activity = 0; 
     for(uint8_t cpuIdx=0; cpuIdx < getCpuQty(); cpuIdx++) { 
-      activity |= getThrRun(cpuIdx);
+      uint32_t s = getThrStart(cpuIdx);
+      uint32_t r = getThrRun(cpuIdx);
+      printf("#%u ThrStartBits: 0x%08x, ThrRunBits: 0x%08x, force=%u\n", cpuIdx, s, r, (int)force );
+      activity |= s | r;
     }
+
+    
     if (!force && activity)  {throw std::runtime_error("Cannot clear, threads are still running. Call stop/abort/halt first\n");}  
 
     return upload();

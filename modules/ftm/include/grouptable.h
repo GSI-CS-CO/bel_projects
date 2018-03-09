@@ -114,6 +114,9 @@ public:
 
   GroupTable(){};
   ~GroupTable(){};
+  GroupTable(GroupTable const &src) : a(src.a) {};
+
+
 
   std::string store();
   void load(const std::string& s);
