@@ -1,9 +1,9 @@
 # PREFIX  controls where programs and libraries get installed
 # Note: during compile (all), PREFIX must be set to the final installation path
 # Example usage:
-#   make PREFIX=/usr all
+#   make PREFIX= all  (hack: leave prefix empty for SCU lib patch)
 # Example deploy:
-#   make PREFIX=/usr STAGING=/common/export/timing-rte/dmunipz-dev deploy
+#   make PREFIX=/usr STAGING=/common/export/timing-rte/dmunipz-dev deploy (hack: but use prefix for deployment)
 PREFIX      ?= /usr/local
 STAGING     ?=
 ARCH        ?= /x86_64
