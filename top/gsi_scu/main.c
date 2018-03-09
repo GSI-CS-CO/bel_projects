@@ -691,8 +691,8 @@ void ecaHandler()
       }
     }
   }
-  if (!dev_mil_armed && !dev_sio_armed)
-    return;
+  //if (!dev_mil_armed && !dev_sio_armed)
+    //return;
 
   // read flag and check if there was an action 
   flag         = *(pECAQ + (ECA_QUEUE_FLAGS_GET >> 2));
