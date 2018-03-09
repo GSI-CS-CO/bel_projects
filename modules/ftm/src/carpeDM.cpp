@@ -96,32 +96,21 @@ vBuf CarpeDM::ebReadCycle(Device& dev, vAdr va, vBl vcs)
 
 int CarpeDM::ebWriteWord(Device& dev, uint32_t adr, uint32_t data)
 {
-   Cycle cyc;
-   //FIXME What about returned eb status ??
-   if (verbose) sLog << "Writing @ 0x" << std::hex << std::setfill('0') << std::setw(8) << adr << " : 0x" << std::hex << std::setfill('0') << std::setw(8) << data << std::endl;
-   try { 
-     cyc.open(dev);
-     cyc.write(adr, EB_BIG_ENDIAN | EB_DATA32, (eb_data_t)data);
-     cyc.close();
-   } catch (etherbone::exception_t const& ex) {
-     throw std::runtime_error("Etherbone " + std::string(ex.method) + " returned " + std::string(eb_status(ex.status)) + "\n" );
-   }
+  uint8_t b[_32b_SIZE_];
+  writeLeNumberToBeBytes(b, data);
+  vAdr vA({adr});
+  vBuf vD(std::begin(b), std::end(b) );
 
-   return 0;
+  return ebWriteCycle(ebd, vA, vD);
 }
 
 uint32_t CarpeDM::ebReadWord(Device& dev, uint32_t adr)
 {
-  eb_data_t data;
-  Cycle cyc;
-  try {
-    cyc.open(dev);
-    cyc.read(adr, EB_BIG_ENDIAN | EB_DATA32, (eb_data_t*)&data);
-    cyc.close();
-  } catch (etherbone::exception_t const& ex) {
-    throw std::runtime_error("Etherbone " + std::string(ex.method) + " returned " + std::string(eb_status(ex.status)) + "\n" );
-  }
-  return (uint32_t)data;
+  vAdr vA({adr});
+  vBuf vD = ebReadCycle(ebd, vA);
+  uint8_t* b = &vD[0];
+
+  return writeBeBytesToLeNumber<uint32_t>(b); 
 }
 
  //Reads and returns a 64 bit word from DM
