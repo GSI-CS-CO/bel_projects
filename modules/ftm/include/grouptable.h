@@ -116,7 +116,11 @@ public:
   ~GroupTable(){};
   GroupTable(GroupTable const &src) : a(src.a) {};
 
-
+  GroupTable &operator=(const GroupTable &src)
+  {
+    a = src.a;
+    return *this;
+  }
 
   std::string store();
   void load(const std::string& s);

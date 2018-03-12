@@ -42,7 +42,12 @@ public:
 
   HashMap()   {};
   ~HashMap()  {};
-  HashMap(HashMap const &src) : hm(src.hm)  {};
+
+  HashMap &operator=(const HashMap &src)
+  {
+    hm = src.hm;
+    return *this;
+  }
 
 
   uint32_t hash(const std::string& s); 

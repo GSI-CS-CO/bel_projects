@@ -744,21 +744,16 @@ void CarpeDM::showCpuList() {
 
   //Improvised Transaction Management: If an upload operation fails for any reason, we roll back the meta tables
   int CarpeDM::safeguardTransaction(int (CarpeDM::*func)(Graph&, bool), Graph& g, bool force) {
-    //FIXME don't abuse the serialiser, use the copy constructor!
-    std::string sGroups = storeGroupsDict();
-    std::string sHashes = storeHashDict();
-    //HashMap hmBak     = HashMap(hm);
-    //GroupTable gtBak  = GroupTable(gt);
+    HashMap hmBak     = hm;
+    GroupTable gtBak  = gt;
     int ret;
  
     try {
       ret = (*this.*func)(g, force);
     } catch(...) {
-      //hm = hmBak;
-      //gt = gtBak;
+      hm = hmBak;
+      gt = gtBak;
       sLog << "Operation FAILED, executing roll back\n" << std::endl;
-      loadGroupsDict(sGroups);
-      loadHashDict(sHashes);
       throw;
     }
 
@@ -767,23 +762,19 @@ void CarpeDM::showCpuList() {
 
   //Improvised Transaction Management: If an upload operation fails for any reason, we roll back the meta tables
   int CarpeDM::safeguardTransaction(int (CarpeDM::*func)(bool), bool force) {
-    //FIXME don't abuse the serialiser, use the copy constructor!
-    std::string sGroups = storeGroupsDict();
-    std::string sHashes = storeHashDict();
-    //HashMap hmBak = HashMap(hm);
-    //GroupTable gtBak = GroupTable(gt);
+    HashMap hmBak     = hm;
+    GroupTable gtBak  = gt;
     int ret;
  
     try {
       ret = (*this.*func)(force);
     } catch(...) {
-      //hm = HashMap(hmBak);
-      //gt = GroupTable(gtBak);
+      hm = hmBak;
+      gt = gtBak;
       sLog << "Operation FAILED, executing roll back\n" << std::endl;
-      loadGroupsDict(sGroups);
-      loadHashDict(sHashes);
       throw;
     }
 
-    return ret;
+    return ret;  
+
   }
