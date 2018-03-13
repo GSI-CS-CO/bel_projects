@@ -69,6 +69,106 @@
     return ALLOC_OK;
   }
 
+
+  int AllocTable::allocateMgmt(vBuf& serialisedContainer) {
+    vAdr ret;
+    
+    //get the size of serialised container and round up to needed mem blocks
+    unsigned neededChunks = (serialisedContainer.size() + payloadPerChunk -1) / payloadPerChunk * payloadPerChunk; //integer round up 
+
+    //while we need mem blocks ...
+    for(unsigned chunk=0; chunk < neededChunks; chunk++) { 
+      //find the cpu with the most free space
+      std::pair<uint8_t, size_t> chosen;
+      chosen.second = 0;
+      for (uint8_t cpuIdx=0; cpuIdx < cpuQty; cpuIdx++) {
+        size_t tmpSize = getFreeSpace(cpuIdx); 
+        if (chosen.second < tmpSize) {
+          chosen.second = tmpSize;  
+          chosen.first  = cpuIdx;  
+        }
+      }
+
+      allocateMgmt(chosen.first);
+    }
+  }    
+
+  int AllocTable::allocateMgmt(uint8_t cpu) {
+
+
+    uint32_t chunkAdr;
+    //std::cout << "Cpu " << (int)cpu << " mempools " << vPool.size() << std::endl;
+    if (cpu >= vPool.size()) {
+      //std::cout << "cpu idx out of range" << std::endl;
+      return ALLOC_NO_SPACE;}
+
+    if (!(vPool[cpu].acquireChunk(chunkAdr))) return ALLOC_NO_SPACE;
+    if (!(insertMgmt(cpu, chunkAdr)))         return ALLOC_ENTRY_EXISTS;
+
+    return ALLOC_OK;
+  
+  }
+
+
+  bool AllocTable::insertMgmt(uint8_t cpu, uint32_t adr) {
+    vPool[cpu].occupyChunk(adr);
+    auto x = m.insert({cpu, adr});
+
+    return x.second;
+  }
+
+  //populate buffers of the management table with payload from serialised container and linked list metadata
+  void AllocTable::populateMgmt(vBuf& serialisedContainer) {
+    const uint32_t nodeType = NODE_TYPE_MGMT; 
+    size_t        bytesLeft = serialisedContainer.size();
+
+    //iterate management table: mark chunk as management node type, add linked list metadata and fill with serialised payload chunks
+    for(auto& it : m) {
+      size_t bytesToCopy = min(bytesLeft, payloadPerChunk);
+      memcpy( (uint8_t*)&it.b[0], (uint8_t*)&serialisedContainer[0], bytesToCopy )                          //copy slice into buffer
+      it.b[NODE_FLAGS + 3] = (uint8_t)NODE_TYPE_MGMT;                                                       //Node Type. +3 is bit 0..7 of NODE_FLAGS word
+      if (bytesToCopy == payloadPerChunk) {
+        writeLeNumberToBeBytes((uint8_t*)&it.b[NODE_DEF_DEST_PTR], adrConv(AdrType::MGMT, AdrType::EXT, it.cpu, it.adr)); //Link to next Element
+      } else {
+        writeLeNumberToBeBytes((uint8_t*)&it.b[NODE_DEF_DEST_PTR], LM32_NULL_PTR); //Last element, null link to next element
+      }
+      bytesLeft -= bytesToCopy;
+    }
+  } 
+
+  //recover payload (serialised container) from buffers of management table
+  vBuf AllocTable::recoverMgmt() {
+    vBuf ret;
+    uint32_t chunkLinkPtr;
+    size_t bytesLeft                    = mgmtSize;
+    std::pair<uint8_t, AdrType> adrDesc = adrClassification(mgmtStartAdr);
+    uint32_t                        adr = adrConv(adrDesc.second, AdrType::MGMT, adrDesc.first, mgmtStartAdr);
+
+    //traverse the linked list by looking up elements in the management table. Copy payload of found elements to return vector
+    while(adr != LM32_NULL_PTR) {
+      size_t bytesToCopy = min(bytesLeft, payloadPerChunk);
+      //lookup entry and fetch buffer content
+      auto aux      = m.get<CpuAdr>().find(boost::make_tuple( adrDesc.first, adr ));
+      auto it       = m.iterator_to( *aux );
+      if (it == m.end()) throw std::runtime_error("MgmtTable: Cannot find entry for CPU " + (int)adrDesc.first + " Adr 0x" +  +"\n"); 
+      //add payload to return vector
+      ret.insert( ret.end(), it->b, it->b + bytesToCopy);
+      //get next entry
+      chunkLinkPtr  = writeBeBytesToLeNumber<uint32_t>((uint8_t*)&it->b[NODE_DEF_DEST_PTR]);
+      adrDesc       = adrClassification(chunkLinkPtr);
+      adr           = adrConv(adrDesc.second, AdrType::MGMT, adrDesc.first, chunkLinkPtr);
+      bytesLeft    -= bytesToCopy;
+    } 
+
+    //recovery of management binary complete, return
+    return ret;
+
+  }
+
+  void AllocTable::deallocateAllMgmt() {
+    for(auto& it : m) { vPool[x.cpu].freeChunk(x.adr); }
+  }
+
   bool AllocTable::deallocate(uint32_t hash) {
 
     auto x = lookupHash(hash);

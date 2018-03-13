@@ -36,6 +36,7 @@ private:
   void generateBlockMeta(Graph& g);
   void generateDstLst(Graph& g, vertex_t v);
   void generateQmeta(Graph& g, vertex_t v, int prio);
+  void generateMgmtData();
   void completeId(vertex_t v, Graph& g);
 
   void addition(Graph& g);

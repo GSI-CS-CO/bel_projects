@@ -66,12 +66,45 @@ typedef boost::multi_index_container<
 
 typedef AllocMeta_set::iterator amI;
 
+struct MgmtMeta {
+  uint8_t     cpu;
+  uint32_t    adr;
+  uint8_t     b[_MEM_BLOCK_SIZE];
+ 
+
+
+  MgmtMeta(uint8_t cpu, uint32_t adr) : cpu(cpu), adr(adr) {std::memset(b, 0, sizeof b);}
+  MgmtMeta(uint8_t cpu, uint32_t adr, uint8_t* src) : cpu(cpu), adr(adr) {std::memcpy(b, 0, sizeof b);}
+  
+  // Multiindexed Elements are immutable, must use the modify function of the container to change attributes
+};
+
+
+
+typedef boost::multi_index_container<
+  MgmtMeta,
+  indexed_by<
+    ordered_unique<
+      tag<CpuAdr>,
+      composite_key<
+        MgmtMeta,
+        BOOST_MULTI_INDEX_MEMBER(MgmtMeta,uint8_t,cpu),
+        BOOST_MULTI_INDEX_MEMBER(MgmtMeta,uint32_t,adr)
+      >
+    >
+  >    
+ > MgmtMeta_set;
+
+typedef MgmtMeta_set::iterator mmI;
+
+
 
 class AllocTable {
 
   AllocMeta_set a;
+  MgmtMeta_set  m;
   std::vector<MemPool> vPool;
-  
+  const size_t payloadPerChunk = _MEM_BLOCK_SIZE - 1 - _PTR_SIZE_;
   
 
 public:
@@ -108,7 +141,7 @@ public:
 // TODO - Maybe better with pair <iterator, bool> to get a direct handle on the inserted/allocated element?
   int allocate(uint8_t cpu, uint32_t hash, vertex_t v, bool staged);
   int allocate(uint8_t cpu, uint32_t hash, vertex_t v) {return allocate(cpu, hash, v, true); }
-  
+
 
   bool deallocate(uint32_t hash);
 
@@ -121,7 +154,8 @@ public:
   void stageAll()   {for (amI it = a.begin(); it != a.end(); it++) setStaged(it);  }
   void unstageAll() {for (amI it = a.begin(); it != a.end(); it++) clrStaged(it); }
 
-  void clear() { a.clear(); }
+  void clear() { a.clear(); m.clear(); clearMemories(); } // clears everything including management
+
 
   //FIXME would like iterator range to a.get<Adr>() better, but no time to figure out the syntax right now
   const AllocMeta_set& getTable() const { return a; }
@@ -141,6 +175,14 @@ public:
   const std::pair<uint8_t, AdrType> adrClassification(const uint32_t a) const;
 
   void debug(std::ostream& os);
+
+  // Management Table. Handles all nodes used in the linked list of the management binary
+  int allocateMgmt(vBuf& serialisedContainer);
+  int allocateMgmt(uint8_t cpu);
+  bool insertMgmt(uint8_t cpu, uint32_t adr);
+  void deallocateAllMgmt() {m.clear(); mgmtStart = LM32_NULL_PTR; mgmtSize = 0;} //no individual deallocation, makes no sense cause we wrap an unknown binary. We always clear the whole table
+  void populateMgmt(vBuf& serialisedContainer);
+  vBuf recoverMgmt();
 
 };
 

@@ -50,6 +50,9 @@ using namespace DotStr::Misc;
       ew.vb += atUp.getMemories()[i].getBmp(); 
     }
 
+    //add all management node addresses to return vector
+    ///***
+    ///
     
     //add all Node addresses to return vector
     for (auto& it : atUp.getTable().get<CpuAdr>()) {
@@ -65,6 +68,8 @@ using namespace DotStr::Misc;
         ew.vb.insert( ew.vb.end(), it.b, it.b + _MEM_BLOCK_SIZE );  
       }
     }
+
+
 
     // save modification time
     for (auto& itMod : modded) {
@@ -94,6 +99,8 @@ using namespace DotStr::Misc;
   void CarpeDM::generateDstLst(Graph& g, vertex_t v) {
     const std::string name = g[v].name + dnm::sDstListSuffix;
     hm.add(name);
+    //FIXME add to grouptable
+
     vertex_t vD = boost::add_vertex(myVertex(name, g[v].cpu, hm.lookup(name).get(), nullptr, dnt::sDstList, DotStr::Misc::sHexZero), g);
     boost::add_edge(v,   vD, myEdge(det::sDstList), g);
   }  
@@ -105,6 +112,7 @@ using namespace DotStr::Misc;
     hm.add(nameBl);
     hm.add(nameB0);
     hm.add(nameB1);
+    //FIXME add to grouptable
     vertex_t vBl = boost::add_vertex(myVertex(nameBl, g[v].cpu, hm.lookup(nameBl).get(), nullptr, dnt::sQInfo, DotStr::Misc::sHexZero), g);
     vertex_t vB0 = boost::add_vertex(myVertex(nameB0, g[v].cpu, hm.lookup(nameB0).get(), nullptr, dnt::sQBuf,  DotStr::Misc::sHexZero), g);
     vertex_t vB1 = boost::add_vertex(myVertex(nameB1, g[v].cpu, hm.lookup(nameB1).get(), nullptr, dnt::sQBuf,  DotStr::Misc::sHexZero), g);
@@ -473,6 +481,14 @@ using namespace DotStr::Misc;
     prepareUpload();
     atUp.updateBmps();  
     
+  }
+
+
+  void CarpeDM::generateMgmtData() {
+    vBuf mgmtBinary = compress(gt.storeBin());
+    atUp.allocateMgmt(mgmtBinary);
+    atUp.populateMgmt(mgmtBinary);
+    atUp.updateBmps();
   }
 
   void CarpeDM::nullify() {

@@ -8,6 +8,7 @@
 #define VALUE(x) VALUE_TO_STRING(x)
 #define VAR_NAME_VALUE(var) #var "="  VALUE(var)
 ///
+#define ROUND_UP(N, S) ((((N) + (S) - 1) / (S)) * (S))
 
 #define PREPTIME_DEFAULT 1000000ULL // standard preptime offset, sets lead to 1 ms
 
@@ -120,6 +121,13 @@
 #define T_DIAG_WAR_CNT      (T_DIAG_DIF_WTH  + _TS_SIZE_  ) //Diff warning counter
 #define _T_DIAG_SIZE_       (T_DIAG_WAR_CNT  + _64b_SIZE_ ) 
 
+
+#define T_META_START_PTR  (0)                               //same for all cpus, can be on any CPU. External view, read/write for host only. Must lie within bitmap range
+#define T_META_CON_SIZE   (T_META_START_PTR + _PTR_SIZE_)   //container size in byte
+#define T_META_FLAGS      (T_META_CON_SIZE  + _32b_SIZE_)   //size in byte
+#define _T_META_SIZE_     (T_META_FLAGS     + _32b_SIZE_)   //
+
+
 //////////////////////////////////////////////////////////////////////
 // Control Interface                                                //
 //////////////////////////////////////////////////////////////////////
@@ -127,14 +135,18 @@
 #define _SHCTL_START_    0
 #define SHCTL_HEAP       (_SHCTL_START_)                              //Scheduler Heap  
 #define SHCTL_STATUS     (SHCTL_HEAP    + _THR_QTY_ * _PTR_SIZE_)     //Status Registers
-#define SHCTL_DIAG       (SHCTL_STATUS  + _32b_SIZE_ )                //Diagnostic Registers
+#define SHCTL_META       (SHCTL_STATUS  + _32b_SIZE_ )                //Group/Node Name Meta Information
+#define SHCTL_DIAG       (SHCTL_META    + _T_META_SIZE_ )             //Diagnostic Registers
 #define SHCTL_CMD        (SHCTL_DIAG    + _T_DIAG_SIZE_ )             //Command Register
 #define SHCTL_TGATHER    (SHCTL_CMD     + _32b_SIZE_ )                //Gather Time (HW Priority Queue Config) Register 
 #define SHCTL_THR_CTL    (SHCTL_TGATHER + _TS_SIZE_  )                //Thread Control Registers (Start Stop Status) 
 #define SHCTL_THR_STA    (SHCTL_THR_CTL + _T_TC_SIZE_  )              //Thread Start Staging Area (1 per Thread )
 #define SHCTL_THR_DAT    (SHCTL_THR_STA + _THR_QTY_ * _T_TS_SIZE_  )  //Thread Runtime Data (1 per Thread )
 #define SHCTL_INBOXES    (SHCTL_THR_DAT + _THR_QTY_ * _T_TD_SIZE_  )  //Inboxes for MSI (1 per Core in System )
-#define _SHCTL_END_      (SHCTL_INBOXES + _THR_QTY_ * _32b_SIZE_) 
+#define _SHCTL_END_      ROUND_UP((SHCTL_INBOXES + _THR_QTY_ * _32b_SIZE_), 2 * _MEM_BLOCK_SIZE) // set fixed size so firmware updates stay backward compatible // 
+  
+
+
 //////////////////////////////////////////////////////////////////////
 
 // Global Status field bits
@@ -394,7 +406,8 @@
 //Host only Meta Type Enums
 #define NODE_TYPE_ALTDST        (NODE_TYPE_SHARE        +1)   // lists all alternative destinations of a decision block
 #define NODE_TYPE_SYNC          (NODE_TYPE_ALTDST       +1)   // used to denote the time offset for pattern rows
-#define _NODE_TYPE_END_         (NODE_TYPE_SYNC         +1)   // Node type Quantity
+#define NODE_TYPE_MGMT          (NODE_TYPE_SYNC         +1)   // contain the part of the groups and node name table in compressed form
+#define _NODE_TYPE_END_         (NODE_TYPE_MGMT         +1)   // Node type Quantity
 //Node type
 #define NFLG_TYPE_MSK           0xff
 #define NFLG_TYPE_POS           0
