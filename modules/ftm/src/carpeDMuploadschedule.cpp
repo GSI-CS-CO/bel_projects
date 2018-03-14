@@ -38,6 +38,8 @@ using namespace DotStr::Misc;
     uint32_t adr, modAdrBase;
     std::set<uint8_t> modded;
 
+    //TODO if this was sorted by CPU, it would be way more efficient!!
+
     //add all Bmp addresses to return vector
     for(unsigned int i = 0; i < atUp.getMemories().size(); i++) {
       if (!freshDownload || (atUp.getMemories()[i].getBmp() != atDown.getMemories()[i].getBmp()) ) modded.insert(i); // mark cpu as modified if alloctable empty or Bmp Changed 
@@ -50,11 +52,9 @@ using namespace DotStr::Misc;
       ew.vb += atUp.getMemories()[i].getBmp(); 
     }
 
-    //add all management node addresses to return vector
-    ///***
-    ///
+
     
-    //add all Node addresses to return vector
+    //add all Nodes to return vector
     for (auto& it : atUp.getTable().get<CpuAdr>()) {
       //generate address range for all nodes staged for upload
       if(it.staged) {
@@ -69,6 +69,18 @@ using namespace DotStr::Misc;
       }
     }
 
+    //add all Mgmt Nodes to return vector
+    for (auto& it : atUp.getMgmtTable().get<CpuAdr>()) {
+      //generate address range for all nodes
+        //Address and cycle start
+        for (adr = atUp.adrConv(AdrType::MGMT, AdrType::EXT,it.cpu, it.adr); adr < atUp.adrConv(AdrType::MGMT, AdrType::EXT,it.cpu, it.adr + _MEM_BLOCK_SIZE); adr += _32b_SIZE_ ) {
+          ew.vcs.push_back(adr == atUp.adrConv(AdrType::MGMT, AdrType::EXT, it.cpu, it.adr));
+          ew.va.push_back(adr);
+        }
+        //Data
+        ew.vb.insert( ew.vb.end(), it.b, it.b + _MEM_BLOCK_SIZE );  
+      
+    }
 
 
     // save modification time
@@ -90,6 +102,18 @@ using namespace DotStr::Misc;
       ew.vb.insert( ew.vb.end(), b, b +  _TS_SIZE_  );
       ew.vb.insert( ew.vb.end(), username, username +  _64b_SIZE_  );
     }
+
+    // save global meta info for management linked list
+    uint8_t b[8];
+    //enough to write it to cpu 0 
+    modAdrBase = atUp.getMemories()[0].extBaseAdr + atUp.getMemories()[0].sharedOffs + SHCTL_META;
+    writeLeNumberToBeBytes<uint32_t>((uint8_t*)&b[T_META_START_PTR], atUp.getMgmtLLstartAdr());  
+    writeLeNumberToBeBytes<uint32_t>((uint8_t*)&b[T_META_CON_SIZE],  atUp.getMgmtLLsize());  
+    ew.vcs += leadingOne(2);
+    ew.va.push_back(modAdrBase + T_META_START_PTR);
+    ew.va.push_back(modAdrBase + T_META_CON_SIZE);
+    ew.vb.insert( ew.vb.end(), b, b + 2 * _32b_SIZE_ );
+    
     
     return ew;
   }
@@ -99,9 +123,11 @@ using namespace DotStr::Misc;
   void CarpeDM::generateDstLst(Graph& g, vertex_t v) {
     const std::string name = g[v].name + dnm::sDstListSuffix;
     hm.add(name);
-    //FIXME add to grouptable
+    
 
     vertex_t vD = boost::add_vertex(myVertex(name, g[v].cpu, hm.lookup(name).get(), nullptr, dnt::sDstList, DotStr::Misc::sHexZero), g);
+    //FIXME add to grouptable
+    g[vD].patName = g[v].patName;
     boost::add_edge(v,   vD, myEdge(det::sDstList), g);
   }  
 
@@ -116,6 +142,9 @@ using namespace DotStr::Misc;
     vertex_t vBl = boost::add_vertex(myVertex(nameBl, g[v].cpu, hm.lookup(nameBl).get(), nullptr, dnt::sQInfo, DotStr::Misc::sHexZero), g);
     vertex_t vB0 = boost::add_vertex(myVertex(nameB0, g[v].cpu, hm.lookup(nameB0).get(), nullptr, dnt::sQBuf,  DotStr::Misc::sHexZero), g);
     vertex_t vB1 = boost::add_vertex(myVertex(nameB1, g[v].cpu, hm.lookup(nameB1).get(), nullptr, dnt::sQBuf,  DotStr::Misc::sHexZero), g);
+    g[vBl].patName = g[v].patName;
+    g[vB0].patName = g[v].patName;
+    g[vB1].patName = g[v].patName;
     boost::add_edge(v,   vBl, myEdge(det::sQPrio[prio]), g);
     boost::add_edge(vBl, vB0, myEdge(det::sMeta),    g);
     boost::add_edge(vBl, vB1, myEdge(det::sMeta),    g);
@@ -485,9 +514,13 @@ using namespace DotStr::Misc;
 
 
   void CarpeDM::generateMgmtData() {
-    vBuf mgmtBinary = compress(gt.storeBin());
+    //workaround string serialiser for the moment in favour of easy switching to binary serialiser later
+    std::string tmpStrBuf = gt.store();
+    vBuf tmpBuf(tmpStrBuf.begin(), tmpStrBuf.end());
+    vBuf mgmtBinary = compress(tmpBuf);
     atUp.allocateMgmt(mgmtBinary);
     atUp.populateMgmt(mgmtBinary);
+    atUp.debugMgmt(sLog);
     atUp.updateBmps();
   }
 
@@ -527,6 +560,7 @@ using namespace DotStr::Misc;
     addition(g);
     //writeUpDotFile("upload.dot", false);
     validate(gUp, atUp);
+    generateMgmtData();
     return upload();
   } 
 
@@ -540,6 +574,7 @@ using namespace DotStr::Misc;
     subtraction(g);
     //writeUpDotFile("upload.dot", false);
     validate(gUp, atUp);
+    generateMgmtData();
     return upload();
   }
 
@@ -574,6 +609,7 @@ using namespace DotStr::Misc;
     subtraction(gTmpRemove);
     //writeUpDotFile("upload.dot", false);
     validate(gUp, atUp);
+    generateMgmtData();
     return upload();
   }   
 
@@ -606,7 +642,11 @@ using namespace DotStr::Misc;
     for(uint8_t cpuIdx=0; cpuIdx < getCpuQty(); cpuIdx++) { 
       activity |= getThrRun(cpuIdx);
     }
-    if (!force && activity)  {throw std::runtime_error("Cannot overwrite, threads are still running. Call stop/abort/halt first\n");} 
+    if (!force && activity)  {throw std::runtime_error("Cannot overwrite, threads are still running. Call stop/abort/halt first\n");}
+    generateMgmtData();
     return upload();
 
   }
+
+
+

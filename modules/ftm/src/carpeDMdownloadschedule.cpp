@@ -64,10 +64,64 @@ namespace dnt = DotStr::Node::TypeVal;
     return er;
   }  
     
+   void CarpeDM::parseDownloadMgmt(const vBuf& downloadData) {
+    AllocTable& at = atDown;
+    
+
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //create MgmtTable
+    //sLog << std::dec << "dl size " << downloadData.size() << std::endl;
+    uint32_t found = 0;
+
+    uint32_t nodeCnt = 0;
+    //go through Memories
+    for(unsigned int i = 0; i < at.getMemories().size(); i++) {
+      //go through Bmp
+      for(unsigned int bitIdx = at.getMemories()[i].bmpSize / _MEM_BLOCK_SIZE; bitIdx < at.getMemories()[i].bmpBits; bitIdx++) {
+        if (at.getMemories()[i].getBmpBit(bitIdx)) {
+          
+          uint32_t    localAdr  = nodeCnt * _MEM_BLOCK_SIZE; nodeCnt++;
+          uint32_t    flags     = writeBeBytesToLeNumber<uint32_t>((uint8_t*)&downloadData[localAdr + NODE_FLAGS]); 
+          uint32_t    type      = (flags >> NFLG_TYPE_POS) & NFLG_TYPE_MSK;
+          if (type != NODE_TYPE_MGMT) continue; // skip all non mgmt nodes
+          uint8_t     cpu       = i;
+          uint32_t    adr       = at.getMemories()[i].bmpOffs + bitIdx * _MEM_BLOCK_SIZE;
+
+          //we need to conform to the allocation rules and register our management nodes
+          if (!(at.insertMgmt(cpu, adr, (uint8_t*)&downloadData[localAdr]))) {throw std::runtime_error( std::string("Address collision when adding mgmt node at "));};
+          found++;
+        }
+      }
+    }
+
+    sLog << "Mgmt found " << found << " data chunks. Trying to recover GroupTable ..." << std::endl;
+
+    // recover container
+    vBuf tmpMgmtRecovery = decompress(atDown.recoverMgmt());
+
+
+    // Rebuild Grouptable
+    GroupTable gtTmp;
+    std::string tmpStr = std::string(tmpMgmtRecovery.begin(), tmpMgmtRecovery.end());
+    sLog << "Bytes expected: " << atDown.getMgmtLLsize() << ", recovered: " << found << std::endl << std::endl;
+    sLog << tmpStr << std::endl;
+    if (tmpStr.size()) gtTmp.load(tmpStr); 
+    gt = gtTmp;
+    // Rebuild HashMap from Grouptable
+    hm.clear();
+    for(auto& it : gt.getTable()) {
+      hm.add(it.node);
+    }
+    // clean up
+    atDown.deallocateAllMgmt();
+    //atDown.updateBmps(); NOT ALLOWED: the nodes were downloaded in sequences, we cannot skip any during processing!
+    //pool and bmp diverge from here on, but for the greater good.
+
+  } 
 
 
 
-  void CarpeDM::parseDownloadData(vBuf downloadData) {
+  void CarpeDM::parseDownloadData(const vBuf& downloadData) {
     Graph& g = gDown;
     AllocTable& at = atDown;
     std::stringstream stream;
@@ -87,6 +141,12 @@ namespace dnt = DotStr::Node::TypeVal;
           uint32_t    adr       = at.getMemories()[i].bmpOffs + bitIdx * _MEM_BLOCK_SIZE;
           //sLog << "THE adr : 0x" << std::hex << adr << std::endl; 
           uint32_t    hash      = writeBeBytesToLeNumber<uint32_t>((uint8_t*)&downloadData[localAdr + NODE_HASH]);
+          uint32_t    flags     = writeBeBytesToLeNumber<uint32_t>((uint8_t*)&downloadData[localAdr + NODE_FLAGS]); //FIXME what about future requests to hashmap if we improvised the name from hash? those will fail ...
+          uint32_t    type      = (flags >> NFLG_TYPE_POS) & NFLG_TYPE_MSK;
+          uint8_t     cpu       = i;
+
+          // IMPORTANT: skip all mgmt nodes
+          if (type == NODE_TYPE_MGMT) continue; 
 
           stream.str(""); stream.clear();
           stream << "0x" << std::setfill ('0') << std::setw(sizeof(uint32_t)*2) << std::hex << hash;
@@ -95,9 +155,6 @@ namespace dnt = DotStr::Node::TypeVal;
           std::string pattern   = (xPat.first != xPat.second ? xPat.first->pattern : DotStr::Misc::sUndefined);    
           auto xBp  = gt.getTable().get<Groups::Node>().equal_range(name);
           std::string beamproc  = (xBp.first != xBp.second ? xPat.first->beamproc : DotStr::Misc::sUndefined);
-          uint32_t    flags     = writeBeBytesToLeNumber<uint32_t>((uint8_t*)&downloadData[localAdr + NODE_FLAGS]); //FIXME what about future requests to hashmap if we improvised the name from hash? those will fail ...
-          uint32_t    type      = (flags >> NFLG_TYPE_POS) & NFLG_TYPE_MSK;
-          uint8_t     cpu       = i;
           
           //Vertex needs flags as a std::string. Convert to hex
           stream.str(""); stream.clear();
@@ -119,7 +176,11 @@ namespace dnt = DotStr::Node::TypeVal;
           //vBuf test(downloadData.begin() + localAdr, downloadData.begin() + localAdr + _MEM_BLOCK_SIZE);
           //vHexDump("TEST ****", test);
          
-          if (!(at.insert(cpu, adr, hash, v, false))) {throw std::runtime_error( std::string("Hash or address collision when adding node ") + name); return;};
+          if (!(at.insert(cpu, adr, hash, v, false))) {
+            sLog << "Offending Node at: CPU " << (int)cpu << " 0x" << std::hex << adr << std::endl;
+            hexDump("Dump", (char*)&downloadData[localAdr], _MEM_BLOCK_SIZE );
+            throw std::runtime_error( std::string("Hash or address collision when adding node ") + name);
+          };
 
           // Create node object for Vertex
           auto src = downloadData.begin() + localAdr;
@@ -180,13 +241,31 @@ namespace dnt = DotStr::Node::TypeVal;
 
     //TODO assign to CPUs/threads
 
-
-   int CarpeDM::download() {
+  void CarpeDM::readMgmtLLMeta() {
+    vEbrds er;
+    vBuf vDl;
+    uint32_t modAdrBase = atDown.getMemories()[0].extBaseAdr + atDown.getMemories()[0].sharedOffs + SHCTL_META;
+    er.va.push_back(modAdrBase + T_META_START_PTR);
+    er.va.push_back(modAdrBase + T_META_CON_SIZE);
+    er.vcs += leadingOne(2);
     
-    //vAdr vDlBmpA, vlDlA;
+    vDl = ebReadCycle(ebd, er.va, er.vcs);
+    atDown.setMgmtLLstartAdr(writeBeBytesToLeNumber<uint32_t>((uint8_t*)&vDl[T_META_START_PTR]));
+    atDown.setMgmtLLsize(writeBeBytesToLeNumber<uint32_t>((uint8_t*)&vDl[T_META_CON_SIZE]));
+
+
+
+  }
+
+  int CarpeDM::download() {
     vBuf vDlBmpD, vDlD;
-    vEbrds erBmp  = gatherDownloadBmpVector();
+    //FIXME get mgmt linked list meta data
+    
+
+    
+    vEbrds erBmp = gatherDownloadBmpVector();
     vEbrds erData;
+
 
     atDown.clear();
     atDown.clearMemories();
@@ -201,7 +280,7 @@ namespace dnt = DotStr::Node::TypeVal;
     */
     atDown.setBmps( vDlBmpD );
     erData = gatherDownloadDataVector();
-    vDlD    = ebReadCycle(ebd, erData.va, erData.vcs);
+    vDlD   = ebReadCycle(ebd, erData.va, erData.vcs);
     /*
     sLog << "Tried to read " << erData.va.size() << " data addresses " << std::endl;
     sLog << "Got back " << vDlD.size() << " data bytes " << std::endl;
@@ -210,6 +289,8 @@ namespace dnt = DotStr::Node::TypeVal;
     modTime = getDmWrTime() * 1000000000ULL;
 
     if(verbose) sLog << "Done." << std::endl << "Parsing ...";
+    readMgmtLLMeta(); // we have to do this before parsing
+    parseDownloadMgmt(vDlD);
     parseDownloadData(vDlD);
     if(verbose) sLog << "Done." << std::endl;
     

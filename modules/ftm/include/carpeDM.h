@@ -66,7 +66,8 @@ private:
   vEbrds gatherDownloadBmpVector();
   vEbrds gatherDownloadDataVector();
   
-  void parseDownloadData(vBuf downloadData);
+  void parseDownloadData(const vBuf& downloadData);
+  void parseDownloadMgmt(const vBuf& downloadData);
   void checkTablesForSubgraph(Graph& g);
   
   void resetThrMsgCnt(uint8_t cpuIdx, uint8_t thrIdx);
@@ -91,6 +92,10 @@ private:
   bool isSafeToRemove(std::set<std::string> patterns, std::string& report);
   const std::string readFwIdROMTag(const std::string& fwIdROM, const std::string& tag, size_t maxlen, bool stopAtCr );
 
+  vBuf compress(vBuf in)   {return in;} //dummy
+  vBuf decompress(vBuf in) {return in;} //dummy
+
+  void readMgmtLLMeta();
 
 protected:
 
@@ -117,6 +122,7 @@ protected:
   bool freshDownload = false;
 
   bool verbose = false;
+  bool debug   = false;
   std::ostream& sLog;
   std::ostream& sErr;
 
@@ -322,7 +328,9 @@ std::pair<int, int> findRunningPattern(const std::string& sPattern); //get cpu a
   void verboseOn()  {verbose = true;}  //Turn on Verbose Output
   void verboseOff() {verbose = false;} //Turn off Verbose Output
   bool isVerbose()  const {return verbose;} //Tell if Output is set to Verbose 
-
+  void debugOn()  {debug = true;}  //Turn on Verbose Output
+  void debugOff() {debug = false;} //Turn off Verbose Output
+  bool isDebug()  const {return debug;} //Tell if Output is set to Verbose 
 };
 
 #endif

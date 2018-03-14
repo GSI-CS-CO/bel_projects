@@ -74,7 +74,7 @@ struct MgmtMeta {
 
 
   MgmtMeta(uint8_t cpu, uint32_t adr) : cpu(cpu), adr(adr) {std::memset(b, 0, sizeof b);}
-  MgmtMeta(uint8_t cpu, uint32_t adr, uint8_t* src) : cpu(cpu), adr(adr) {std::memcpy(b, 0, sizeof b);}
+  MgmtMeta(uint8_t cpu, uint32_t adr, uint8_t* src) : cpu(cpu), adr(adr) {std::copy(src, src + sizeof b, b);}
   
   // Multiindexed Elements are immutable, must use the modify function of the container to change attributes
 };
@@ -105,7 +105,11 @@ class AllocTable {
   MgmtMeta_set  m;
   std::vector<MemPool> vPool;
   const size_t payloadPerChunk = _MEM_BLOCK_SIZE - 1 - _PTR_SIZE_;
+  uint32_t mgmtStartAdr;
+  uint32_t mgmtSize;
   
+
+
 
 public:
 
@@ -114,6 +118,17 @@ public:
 
    //deep copy
   AllocTable(AllocTable const &src);
+
+  AllocTable &operator=(const AllocTable &src)
+  {
+    //mgmt table is NOT copied!!!
+    a = src.a;
+    syncToAtBmps(src);
+    updatePools();
+
+    return *this;
+  }
+
 
   std::vector<MemPool>& getMemories() {return vPool;}
   void addMemory(uint8_t cpu, uint32_t extBaseAdr, uint32_t intBaseAdr, uint32_t peerBaseAdr, uint32_t sharedOffs, uint32_t space, uint32_t rawSize) {vPool.push_back(MemPool(cpu, extBaseAdr, intBaseAdr, peerBaseAdr, sharedOffs, space, rawSize)); }
@@ -154,14 +169,14 @@ public:
   void stageAll()   {for (amI it = a.begin(); it != a.end(); it++) setStaged(it);  }
   void unstageAll() {for (amI it = a.begin(); it != a.end(); it++) clrStaged(it); }
 
-  void clear() { a.clear(); m.clear(); clearMemories(); } // clears everything including management
+  void clear() { a.clear(); m.clear(); mgmtStartAdr = LM32_NULL_PTR; mgmtSize = 0; clearMemories(); } // clears everything including management
 
 
   //FIXME would like iterator range to a.get<Adr>() better, but no time to figure out the syntax right now
   const AllocMeta_set& getTable() const { return a; }
   const size_t getSize()          const { return a.size(); }
 
-  amI  lookupVertex(vertex_t v)   const;
+  amI lookupVertex(vertex_t v)   const;
   amI lookupHash(uint32_t hash)  const;
   amI lookupAdr(uint8_t cpu, uint32_t adr)    const;
 
@@ -171,18 +186,28 @@ public:
   const uint32_t adrConv(AdrType from, AdrType to, const uint8_t cpu, const uint32_t a) const;
 
 
-  //identify an address found in downloaded binary
+  //identify an address found in downloaded binary (cpuIdx, int/peer)
   const std::pair<uint8_t, AdrType> adrClassification(const uint32_t a) const;
+  const uint8_t getCpuFromExtAdr(const uint32_t a);
 
   void debug(std::ostream& os);
 
   // Management Table. Handles all nodes used in the linked list of the management binary
-  int allocateMgmt(vBuf& serialisedContainer);
-  int allocateMgmt(uint8_t cpu);
-  bool insertMgmt(uint8_t cpu, uint32_t adr);
-  void deallocateAllMgmt() {m.clear(); mgmtStart = LM32_NULL_PTR; mgmtSize = 0;} //no individual deallocation, makes no sense cause we wrap an unknown binary. We always clear the whole table
+  int  allocateMgmt(vBuf& serialisedContainer);
+  int  allocateMgmt(uint8_t cpu);
+  bool insertMgmt(uint8_t cpu, uint32_t adr, uint8_t* buf);
+  void deallocateAllMgmt(); //no individual deallocation, makes no sense cause we wrap an unknown binary. We always clear the whole table
   void populateMgmt(vBuf& serialisedContainer);
   vBuf recoverMgmt();
+
+  void setMgmtLLstartAdr(uint32_t startAdr) {mgmtStartAdr = startAdr;}
+  void setMgmtLLsize(uint32_t size) {mgmtSize = size;}
+  uint32_t getMgmtLLstartAdr() {return mgmtStartAdr;}
+  uint32_t getMgmtLLsize() {return mgmtSize;}
+  void debugMgmt(std::ostream& os);
+  const MgmtMeta_set& getMgmtTable() const { return m; }
+  const size_t getMgmtSize()          const { return m.size(); }
+
 
 };
 
