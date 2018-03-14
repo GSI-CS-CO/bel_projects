@@ -2,7 +2,8 @@
 #include <iostream>
 #include <string>
 #include <inttypes.h>
-#include <time.h> 
+#include <time.h>
+#include <unistd.h>
 
 #include "ftm_shared_mmap.h"
 #include "carpeDM.h"
@@ -11,12 +12,16 @@
 #include "minicommand.h"
 #include "dotstr.h"
 #include "strprintf.h"
+#include "filenames.h"
+
+namespace dnt = DotStr::Node::TypeVal;
 
 
 static void help(const char *program) {
   fprintf(stderr, "\nUsage: %s [OPTION] <etherbone-device> <command> [target node] [parameter] \n", program);
   fprintf(stderr, "\n");
   fprintf(stderr, "\nSends a command to Thread <n> of CPU Core <m> of the DataMaster (DM), requires dot file of DM's schedule.\nThere are global commands, that influence the whole DM, local commands influencing the whole thread\nand block commands, that only affect one queue in the schedule.\n");
+  fprintf(stderr, "  -d         <dir>          Use a directory other than the current working path for hashtable and groupstable files\n");
   fprintf(stderr, "\nGeneral Options:\n");
   fprintf(stderr, "  -c <cpu-idx>              Select CPU core by index, default is 0\n");
   fprintf(stderr, "  -t <thread-idx>           Select thread inside selected CPU core by index, default is 0\n");
@@ -43,6 +48,7 @@ static void help(const char *program) {
   fprintf(stderr, "  start                     Request start of selected thread. Requires a valid origin.\n");
   fprintf(stderr, "  stop                      Request stop of selected thread\n");
   fprintf(stderr, "  abort                     Immediately aborts selected thread\n");
+  fprintf(stderr, "  halt                      Immediately aborts all threads on all cpus\n");
   fprintf(stderr, "  cursor                    Show name of currently active node of selected thread\n");
   fprintf(stderr, "  force                     Force cursor to match origin\n");
   
@@ -64,6 +70,7 @@ static void help(const char *program) {
 
 void showStatus(const char *netaddress, CarpeDM& cdm, bool verbose) {
   std::string show;
+  cdm.showCpuList();
   uint8_t cpuQty = cdm.getCpuQty();
   uint8_t thrQty = _THR_QTY_;
 
@@ -206,16 +213,27 @@ int main(int argc, char* argv[]) {
   const char *program = argv[0];
   const char cTypeName[] = "status"; 
   const char *netaddress, *targetName = NULL, *cmdFilename = NULL, *typeName = (char*)&cTypeName, *para = NULL;
+  char dirnameBuff[80];
+  const char *dirname = (const char *)getcwd(dirnameBuff, 80); 
+
+
   int32_t tmp, error=0;
   uint32_t cpuIdx = 0, thrIdx = 0, cmdPrio = PRIO_LO, cmdQty = 1;
   uint64_t cmdTvalid = 0, longtmp;
 
 // start getopt 
-   while ((opt = getopt(argc, argv, "shvc:p:l:t:q:i:")) != -1) {
+   while ((opt = getopt(argc, argv, "shvc:p:l:t:q:i:d:")) != -1) {
       switch (opt) {
           case 'i':
             cmdFilename = optarg;
             break;
+         case 'd':
+            dirname = optarg;
+            if (dirname == NULL) {
+              std::cerr << std::endl << program << ": option -d expects a path" << std::endl;
+            }
+            error = -1;
+            break;     
          case 'v':
             verbose = 1;
             break;
@@ -309,14 +327,51 @@ int main(int argc, char* argv[]) {
     std::cerr << program << ": Could not connect to DM. Cause: " << err.what() << std::endl; return -20;
   }
 
-
   if (!(cdm.isCpuIdxValid(cpuIdx))) {
-    std::cerr << program << ": CPU Idx " << cpuIdx << " does not refer to a CPU with valid firmware." << std::endl << std::endl;
-    cdm.showCpuList();
-    return -30;
+    
+    if (!(cdm.isCpuIdxValid(cpuIdx))) {
+      std::cerr << program << ": CPU Idx " << cpuIdx << " does not refer to a CPU with valid firmware." << std::endl << std::endl;
+       return -30;
+    }  
   }
 
-  namespace dnt = DotStr::Node::TypeVal;
+  // The global hard abort commands are special - they must work regardless if the schedule download/parse was successful or not
+  if (typeName != NULL ) { 
+
+    std::string tmpGlobalCmds(typeName);
+
+    if (tmpGlobalCmds == dnt::sCmdAbort)  {
+      if( targetName != NULL) {
+        uint32_t bits = strtol(targetName, NULL, 0);
+       cdm.setThrAbort(cpuIdx, bits & ((1<<_THR_QTY_)-1) );
+      } else { cdm.abortThr(cpuIdx, thrIdx); }
+      return 0;
+    }
+    else if (tmpGlobalCmds == "halt")  {
+      cdm.halt();
+      return 0;
+    }
+  }  
+
+    try { cdm.loadHashDictFile( std::string(dirname) + "/" + std::string(hashfile) ); } catch (std::runtime_error const& err) {
+      std::cerr << std::endl << program << ": Warning - Could not load dictionary file. Cause: " << err.what() << std::endl;
+    }
+  if (verbose) std::cout << std::endl << program << ": Loaded " << cdm.getHashDictSize() << " Node / Hash entries" << std::endl;  
+
+  try { cdm.loadGroupsDictFile( std::string(dirname) + "/" + std::string(groupsfile) ); } catch (std::runtime_error const& err) {
+      std::cerr << std::endl << program << ": Warning - Could not load groups file. Cause: " << err.what() << std::endl;
+    }
+  if (verbose) std::cout << std::endl << program << ": Loaded " << cdm.getGroupsSize() << " Node / Pattern / Beamprocess entries" << std::endl;  
+
+ 
+    
+  try { 
+    cdm.download();
+  } catch (std::runtime_error const& err) {
+    std::cerr << program << ": Download from CPU "<< cpuIdx << " failed. Cause: " << err.what() << std::endl;
+    return -7;
+  }
+  
 
   uint32_t globalStatus = cdm.getStatus(0), status = cdm.getStatus(cpuIdx);
 
@@ -327,28 +382,12 @@ int main(int argc, char* argv[]) {
     if (!(globalStatus & SHCTL_STATUS_EBM_INIT_SMSK)) std::cerr << "EB Master could not be configured. Does the DM have a valid IP?" << std::endl;
     if (!(globalStatus & SHCTL_STATUS_PQ_INIT_SMSK))  std::cerr << "Priority Queue could not be configured" << std::endl;
     if (!(status & SHCTL_STATUS_UART_INIT_SMSK))      std::cerr << "CPU " << cpuIdx << "'s UART is not functional" << std::endl;
-    if (!(status & SHCTL_STATUS_DM_INIT_SMSK))      std::cerr << "CPU " << cpuIdx << " could not be initialised" << std::endl;
+    if (!(status & SHCTL_STATUS_DM_INIT_SMSK))        std::cerr << "CPU " << cpuIdx << " could not be initialised" << std::endl;
     //if (!(status & SHCTL_STATUS_WR_INIT_SMSK))      std::cerr << "CPU " << cpuIdx << "'s WR time could not be initialised" << std::endl;
     return -40;
   }
 
-  try { cdm.loadHashDictFile("dm.dict"); } catch (std::runtime_error const& err) {
-      std::cerr << std::endl << program << ": Warning - Could not load dictionary file. Cause: " << err.what() << std::endl;
-    }
-  try { cdm.loadGroupsDictFile("dm.groups"); } catch (std::runtime_error const& err) {
-      std::cerr << std::endl << program << ": Warning - Could not load groups file. Cause: " << err.what() << std::endl;
-    }
 
-
- 
-    
-  try { 
-    cdm.download();
-    if(verbose) cdm.showDown(false);
-  } catch (std::runtime_error const& err) {
-    std::cerr << program << ": Download from CPU "<< cpuIdx << " failed. Cause: " << err.what() << std::endl;
-    return -7;
-  }
  
   vAdr cmdAdrs;
   vBuf cmdData;
@@ -415,7 +454,8 @@ int main(int argc, char* argv[]) {
     }
     else if (cmp == "queue") {
         if(!(cdm.isInHashDict( targetName))) {std::cerr << program << ": Target node '" << targetName << "'' was not found on DM" << std::endl; return -1; }
-        cdm.dumpQueue(cpuIdx, targetName, cmdPrio);
+        std::string report;
+        std::cout << cdm.inspectQueues(targetName, report) << std::endl;
         return 0;
     } 
     else if (cmp == dnt::sCmdOrigin)  {
@@ -437,7 +477,7 @@ int main(int argc, char* argv[]) {
     else if (cmp == "chkrem")  {
       std::string report;
       bool isSafe = cdm.isSafeToRemove(targetName, report);
-      cdm.writeTextFile("debug.dot", report);
+      cdm.writeTextFile(std::string(dirname) + "/" + std::string(debugfile), report);
       std::cout << std::endl << "Pattern " << targetName << " content removal: " << (isSafe ? "SAFE" : "FORBIDDEN" ) << std::endl;
       return 0;
     }
@@ -461,6 +501,7 @@ int main(int argc, char* argv[]) {
       return 0;
     }
     else if (cmp == dnt::sCmdStop)  {
+      if (targetName == NULL) {std::cerr << program << ": expected name of target node" << std::endl; return -1; }
       if(!(cdm.isInHashDict( targetName))) {std::cerr << program << ": Target node '" << targetName << "'' was not found on DM" << std::endl; return -1; }
       
         uint32_t adr; 
@@ -471,13 +512,6 @@ int main(int argc, char* argv[]) {
         } 
         mc = (mc_ptr) new MiniFlow(cmdTvalid, cmdPrio, cmdQty, adr, permanent );
 
-    }
-    else if (cmp == dnt::sCmdAbort)  {
-      if( targetName != NULL) {
-        uint32_t bits = strtol(targetName, NULL, 0);
-       cdm.setThrAbort(cpuIdx, bits & ((1<<_THR_QTY_)-1) );
-      } else { cdm.abortThr(cpuIdx, thrIdx); }
-      return 0;
     }
     else if (cmp == "startpattern")  {
       //check if a valid origin was assigned before executing

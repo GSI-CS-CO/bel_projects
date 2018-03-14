@@ -1,0 +1,8 @@
+digraph g {
+name="UNIPZ!CMD!";
+
+graph []
+
+CMD_STOP  [type="stop", pattern="UNIPZ_GATEWAY"];
+
+}

@@ -114,6 +114,13 @@ public:
 
   GroupTable(){};
   ~GroupTable(){};
+  GroupTable(GroupTable const &src) : a(src.a) {};
+
+  GroupTable &operator=(const GroupTable &src)
+  {
+    a = src.a;
+    return *this;
+  }
 
   std::string store();
   void load(const std::string& s);
@@ -173,7 +180,7 @@ public:
   vStrC getPatternExitNodes(const std::string& sPattern)     {return getGroupNodes<Groups::Pattern,  &GroupMeta::patternExit>(sPattern); };
   vStrC getBeamprocEntryNodes(const std::string& sBeamproc)  {return getGroupNodes<Groups::Beamproc, &GroupMeta::beamprocEntry>(sBeamproc); };
   vStrC getBeamprocExitNodes(const std::string& sBeamproc)   {return getGroupNodes<Groups::Beamproc, &GroupMeta::beamprocExit>(sBeamproc); };
-
+  vStrC getAllPatterns();
 
 
   

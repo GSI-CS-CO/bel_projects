@@ -99,7 +99,7 @@ void dmInit() {
     *(uint64_t*)&tp[T_TD_CURRTIME >> 2] = -1ULL;
     *(uint64_t*)&tp[T_TD_DEADLINE >> 2] = -1ULL;
     *(uint32_t*)&tp[T_TD_FLAGS >> 2]    = i;
-    *(uint64_t*)(p + (( SHCTL_THR_STA + i * _T_TS_SIZE_ + T_TS_PREPTIME  ) >> 2)) = 500000ULL;
+    *(uint64_t*)(p + (( SHCTL_THR_STA + i * _T_TS_SIZE_ + T_TS_PREPTIME  ) >> 2)) = PREPTIME_DEFAULT;
     *(uint64_t*)(p + (( SHCTL_THR_STA + i * _T_TS_SIZE_ + T_TS_STARTTIME ) >> 2)) = 0ULL;
     //add thread to heap
     hp[i] = tp;
@@ -286,8 +286,7 @@ uint32_t* block(uint32_t* node, uint32_t* thrData) {
   uint32_t *ardOffs = node + (BLOCK_CMDQ_RD_IDXS >> 2), *awrOffs = node + (BLOCK_CMDQ_WR_IDXS >> 2);
   uint32_t bufOffs, elOffs, prio, actTmp, atype;
   uint32_t qty;
-  
-  
+   
   node[NODE_FLAGS >> 2] |= NFLG_PAINT_LM32_SMSK; // set paint bit to mark this node as visited
 
   //3 ringbuffers -> 3 wr indices, 3 rd indices (one per priority). If any differ, there's work to do
@@ -316,22 +315,20 @@ uint32_t* block(uint32_t* node, uint32_t* thrData) {
     
     DBPRINT2("#%02u: pending Cmd @ Prio: %u, awdIdx: 0x%08x, 0x%02x, ardIdx: 0x%08x, 0x%02x, buf: %u, el: %u, BufList: 0x%08x, Buf: 0x%08x, Element: 0x%08x, type: %u\n", cpuId, prio, *awrOffs, *wrIdx, *ardOffs, *rdIdx, (*rdIdx & Q_IDX_MAX_OVF_MSK) / (_MEM_BLOCK_SIZE / _T_CMD_SIZE_  ), 
       (*rdIdx & Q_IDX_MAX_OVF_MSK) % (_MEM_BLOCK_SIZE / _T_CMD_SIZE_  ), (uint32_t)bl, (uint32_t)b, (uint32_t)cmd, atype );
-    
-    
-    ret = actionFuncs[atype](node, cmd, thrData);       //carry out the type specific action
-
-  
-    
     DBPRINT3("#%02u: Act 0x%08x, Qty is at %d\n", cpuId, *act, qty);
     
-    //if qty <= 1, this cmd is now exhausted. pop and increment read offset (technically == 1, but better safe than sorry)
-    if(qty <= 1) { *(rdIdx) = (*rdIdx + 1) & Q_IDX_MAX_OVF_MSK; DBPRINT3("#%02u: Qty reached zero, popping\n", cpuId);}
-    //decrement qty bitfield in working copy and write back to action field in any case 
-    actTmp &= ~ACT_QTY_SMSK; //clear qty
-    actTmp |= ((--qty) & ACT_QTY_MSK) << ACT_QTY_POS; 
-    *act = actTmp;
+    if(qty) {
+      ret = actionFuncs[atype](node, cmd, thrData);       //carry out the type specific action
+      //decrement qty bitfield in working copy and write back to action field
+      actTmp &= ~ACT_QTY_SMSK; //clear qty
+      actTmp |= ((--qty) & ACT_QTY_MSK) << ACT_QTY_POS;
+      *act    = actTmp;
+    }
 
-    
+    *(rdIdx) = (*rdIdx + (uint8_t)(qty == 0) ) & Q_IDX_MAX_OVF_MSK; //pop element if qty exhausted
+
+    if (qty==0) DBPRINT3("#%02u: Qty reached zero, popping\n", cpuId);
+
   } else {
     DBPRINT3(" nothing pending\n");
     

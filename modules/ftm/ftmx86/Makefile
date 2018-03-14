@@ -1,7 +1,7 @@
 TOP          ?= ../../..
 
-VERSION      ?= 1.1.0
-VERSION_TOOL ?= 0.10.0
+VERSION      ?= 1.2.0
+VERSION_TOOL ?= 0.12.0
 
 
 EBMPATH      ?= $(TOP)/ip_cores/etherbone-core/hdl/eb_master_core
@@ -48,8 +48,7 @@ all: lib tools
 
 lib: libcarpedm.so
 
-tools: $(BINPATH)/dm-sched $(BINPATH)/dm-cmd
-
+tools: $(BINPATH)/dm-sched $(BINPATH)/dm-cmd $(BINPATH)/dm-test
 
 $(BINPATH)/dm-sched: $(TOOLPATH)/dm-sched
 	mkdir -p $(BINPATH)
@@ -59,6 +58,9 @@ $(BINPATH)/dm-cmd: $(TOOLPATH)/dm-cmd
 	mkdir -p $(BINPATH)
 	cp $^ $(BINPATH)
 
+$(BINPATH)/dm-cmd: $(TOOLPATH)/dm-test
+	mkdir -p $(BINPATH)
+	cp $^ $(BINPATH)
 
 $(FWPATH)/ftm_shared_mmap.h:
 	$(MAKE) -C $(FWPATH) ftm_shared_mmap.h
@@ -77,6 +79,9 @@ $(TOOLPATH)/dm-sched: libcarpedm.so
 
 $(TOOLPATH)/dm-cmd: libcarpedm.so
 	$(T_CXX) $(T_CXXFLAGS) -o $@ $(TOOLPATH)/dm-cmd.cpp $^ $(T_LIBS) -L$(LIBPATH) -lcarpedm
+
+$(TOOLPATH)/dm-test: libcarpedm.so
+	$(T_CXX) $(T_CXXFLAGS) -o $@ $(TOOLPATH)/dm-test.cpp $^ $(T_LIBS) -L$(LIBPATH) -lcarpedm
 
 foo: libcarpedm.so
 	$(T_CXX) $(T_CXXFLAGS) -o $@ $(TOOLPATH)/foo.cpp $^ $(T_LIBS) -L$(LIBPATH) -lcarpedm

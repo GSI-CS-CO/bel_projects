@@ -93,7 +93,7 @@ vEbwrs& CarpeDM::createCommandBurst(Graph& g, vEbwrs& ew) {
     uint8_t  cmdPrio    = s2u<uint8_t>(g[v].prio);
     uint8_t cpu, thr;
 
-   sLog << "Command <" << g[v].name << ">, type <" << g[v].type << "> pat <" << g[v].patName << "> destPat <" << g[v].cmdDestPat << "> target <" << g[v].cmdTarget << "> dest <" << g[v].cmdDest << ">" << std::endl;
+    sLog << "Command <" << g[v].name << ">, type <" << g[v].type << ">" << std::endl;
     
 
     // Commands with optional target
@@ -153,7 +153,9 @@ vEbwrs& CarpeDM::createCommandBurst(Graph& g, vEbwrs& ew) {
 
                                               mc = (mc_ptr) new MiniFlow(cmdTvalid, cmdPrio, cmdQty, adr, s2u<bool>(g[v].perma) );
                                             }
-    else if (g[v].type == dnt::sCmdFlush)   { mc = (mc_ptr) new MiniFlush(cmdTvalid, cmdPrio, s2u<bool>(g[v].qIl), s2u<bool>(g[v].qHi), s2u<bool>(g[v].qLo));}
+    else if (g[v].type == dnt::sCmdFlush)   { sLog << " Flushing <" << target << "> Queues IL " << s2u<int>(g[v].qIl) << " HI " << s2u<int>(g[v].qHi) << " LO " << s2u<int>(g[v].qLo) <<  std::endl;
+                                              mc = (mc_ptr) new MiniFlush(cmdTvalid, cmdPrio, s2u<bool>(g[v].qIl), s2u<bool>(g[v].qHi), s2u<bool>(g[v].qLo));
+                                            }
     else if (g[v].type == dnt::sCmdWait)    { uint64_t cmdTwait  = s2u<uint64_t>(g[v].tWait);
                                               mc = (mc_ptr) new MiniWait(cmdTvalid, cmdPrio, cmdTwait, false, false );
                                             }
@@ -165,14 +167,13 @@ vEbwrs& CarpeDM::createCommandBurst(Graph& g, vEbwrs& ew) {
 
   }
 
-  
 
   return ew;
 
 }  
   
   int CarpeDM::send(vEbwrs& ew) {
-    ebWriteCycle(ebd, ew.va, ew.vb);
+    ebWriteCycle(ebd, ew.va, ew.vb, ew.vcs);
     return ew.vb.size();
   }
 
@@ -187,7 +188,9 @@ vEbwrs& CarpeDM::createCommandBurst(Graph& g, vEbwrs& ew) {
     
  
     hash        = hm.lookup(targetName).get(); 
-    ew.va += getCmdWrAdrs(hash, cmdPrio);
+    vAdr tmp = getCmdWrAdrs(hash, cmdPrio);
+    ew.va += tmp;
+    ew.vcs += leadingOne(tmp.size());
     
     cmdWrInc    = getCmdInc(hash, cmdPrio);
     mc->serialise(b);
@@ -201,27 +204,28 @@ vEbwrs& CarpeDM::createCommandBurst(Graph& g, vEbwrs& ew) {
 
   //Returns the external address of a thread's command register area
   uint32_t CarpeDM::getThrCmdAdr(uint8_t cpuIdx) {
-    return cpuDevs.at(cpuIdx).sdb_component.addr_first + SHARED_OFFS + SHCTL_THR_CTL;
+    return cpuDevs.at(cpuIdx).sdb_component.addr_first + atDown.getMemories()[cpuIdx].sharedOffs + SHCTL_THR_CTL;
   }
 
   //Returns the external address of a thread's initial node register 
   uint32_t CarpeDM::getThrInitialNodeAdr(uint8_t cpuIdx, uint8_t thrIdx) {
-    return cpuDevs.at(cpuIdx).sdb_component.addr_first + SHARED_OFFS + SHCTL_THR_STA + thrIdx * _T_TS_SIZE_ + T_TS_NODE_PTR;
+    return cpuDevs.at(cpuIdx).sdb_component.addr_first + atDown.getMemories()[cpuIdx].sharedOffs + SHCTL_THR_STA + thrIdx * _T_TS_SIZE_ + T_TS_NODE_PTR;
   }
 
   //Returns the external address of a thread's cursor pointer
   uint32_t CarpeDM::getThrCurrentNodeAdr(uint8_t cpuIdx, uint8_t thrIdx) {
-    return cpuDevs.at(cpuIdx).sdb_component.addr_first + SHARED_OFFS + SHCTL_THR_DAT + thrIdx * _T_TD_SIZE_ + T_TD_NODE_PTR;
+    return cpuDevs.at(cpuIdx).sdb_component.addr_first + atDown.getMemories()[cpuIdx].sharedOffs + SHCTL_THR_DAT + thrIdx * _T_TD_SIZE_ + T_TD_NODE_PTR;
   }
   
 
   //Sets the Node the Thread will start from
   vEbwrs& CarpeDM::setThrOrigin(uint8_t cpuIdx, uint8_t thrIdx, const std::string& name, vEbwrs& ew) {
     uint8_t b[4];
-
+    
     ew.va.push_back(getThrInitialNodeAdr(cpuIdx, thrIdx));
     writeLeNumberToBeBytes<uint32_t>(b, getNodeAdr(name, TransferDir::DOWNLOAD, AdrType::INT));
     ew.vb.insert( ew.vb.end(), b, b + sizeof(b));
+    ew.vcs += leadingOne(1);
     return ew;
   }
 
@@ -265,7 +269,7 @@ vEbwrs& CarpeDM::createCommandBurst(Graph& g, vEbwrs& ew) {
 
   //Get bifield showing running threads
   uint32_t CarpeDM::getStatus(uint8_t cpuIdx) {
-    return ebReadWord(ebd, cpuDevs.at(cpuIdx).sdb_component.addr_first + SHARED_OFFS + SHCTL_STATUS); 
+    return ebReadWord(ebd, cpuDevs.at(cpuIdx).sdb_component.addr_first + atDown.getMemories()[cpuIdx].sharedOffs + SHCTL_STATUS); 
   }
 
   void CarpeDM::inspectHeap(uint8_t cpuIdx) {
@@ -273,7 +277,7 @@ vEbwrs& CarpeDM::createCommandBurst(Graph& g, vEbwrs& ew) {
     vBuf heap;
     
 
-    uint32_t baseAdr = cpuDevs.at(cpuIdx).sdb_component.addr_first + SHARED_OFFS;
+    uint32_t baseAdr = cpuDevs.at(cpuIdx).sdb_component.addr_first + atDown.getMemories()[cpuIdx].sharedOffs;
     uint32_t heapAdr = baseAdr + SHCTL_HEAP;
     uint32_t thrAdr  = baseAdr + SHCTL_THR_DAT;
 
@@ -298,12 +302,18 @@ vEbwrs& CarpeDM::createCommandBurst(Graph& g, vEbwrs& ew) {
   //Requests Threads to start
   vEbwrs& CarpeDM::setThrStart(uint8_t cpuIdx, uint32_t bits, vEbwrs& ew) {
     uint8_t b[4];
-
+    
     ew.va.push_back(getThrCmdAdr(cpuIdx) + T_TC_START);
     writeLeNumberToBeBytes<uint32_t>(b, bits);
     ew.vb.insert( ew.vb.end(), b, b + sizeof(b));
+    ew.vcs += leadingOne(1);
     return ew;
   }
+
+  uint32_t CarpeDM::getThrStart(uint8_t cpuIdx) {
+    return ebReadWord(ebd, getThrCmdAdr(cpuIdx) + T_TC_START);
+  }
+
 
 
   //Requests Threads to stop
@@ -313,15 +323,28 @@ vEbwrs& CarpeDM::createCommandBurst(Graph& g, vEbwrs& ew) {
     ew.va.push_back(getThrCmdAdr(cpuIdx) + T_TC_ABORT);
     writeLeNumberToBeBytes<uint32_t>(b, bits);
     ew.vb.insert( ew.vb.end(), b, b + sizeof(b));
+    ew.vcs += leadingOne(1);
     return ew;
   }
-/*
-  //hard abort, emergency only
-  void CarpeDM::clrThrRun(uint8_t cpuIdx, uint32_t bits) {
-    uint32_t state = ebReadWord(ebd, getThrCmdAdr(cpuIdx) + T_TC_RUNNING);
-    ebWriteWord(ebd, getThrCmdAdr(cpuIdx) + T_TC_RUNNING, state & ~bits);
+
+  //hard abort everything, emergency only
+  void CarpeDM::halt() {
+    if (verbose) sLog << "Aborting all activity" << std::endl;
+    vEbwrs ew;
+    uint8_t b[4];
+    writeLeNumberToBeBytes<uint32_t>(b, (1 << _THR_QTY_)-1 );
+
+    for(uint8_t cpuIdx=0; cpuIdx < getCpuQty(); cpuIdx++) {
+      setThrStart(cpuIdx, 0, ew);
+      ew.va.push_back(getThrCmdAdr(cpuIdx) + T_TC_ABORT);
+      ew.vb.insert( ew.vb.end(), b, b + sizeof(b));
+      ew.vcs.push_back(true); // each one is a new wb device, so we always need a new eb cycle
+    }
+    
+    ebWriteCycle(ebd, ew.va, ew.vb, ew.vcs);
   }
-*/
+  
+
   bool CarpeDM::isThrRunning(uint8_t cpuIdx, uint8_t thrIdx) {
     return (bool)(getThrRun(cpuIdx) & (1<< thrIdx));
   }
@@ -341,90 +364,131 @@ vEbwrs& CarpeDM::createCommandBurst(Graph& g, vEbwrs& ew) {
     return setThrAbort(cpuIdx, (1<<thrIdx), ew);
   }
 
-  void CarpeDM::dumpQueue(uint8_t cpuIdx, const std::string& blockName, uint8_t cmdPrio) {
-    
-    Graph& g    = gUp;
+  std::string& CarpeDM::inspectQueues(const std::string& blockName, std::string& report) {
 
-    uint64_t vTime, wTime;     
-    uint32_t type, qty, prio, flPrio, flMode, act, dest;// flRngHiLo, flRngIl;
-    bool abs, perm, found;
- 
-    const std::string sPrio[] = {"      Low", "     High", "Interlock"};
-    const std::string sType[] = {"Unknown", "   Noop", "   Flow", "  Flush", "   Wait"};
-    boost::optional<std::string> name; 
-    
-    //FIXME the safeguards for the maps are total crap. Include some decent checks, not everything is worth an exception!!!
-    auto block = atDown.lookupHash(hm.lookup(blockName).get());
-    sLog << std::endl;
+    Graph& g = gDown;
+    AllocTable& at = atDown;
+    std::string const exIntro = "inspectQueues: ";
+    std::string const nodeNotFound = "Unknown block name <" + blockName + ">\n";
+    vertex_t vQ;
 
-    sLog << "     IlHiLo" << std::endl;
-    sLog << "WR 0x" << std::setfill('0') << std::setw(6) << std::hex << writeBeBytesToLeNumber<uint32_t>((uint8_t*)&block->b[BLOCK_CMDQ_WR_IDXS]) << std::endl;
-    sLog << "RD 0x" << std::setfill('0') << std::setw(6) << std::hex << writeBeBytesToLeNumber<uint32_t>((uint8_t*)&block->b[BLOCK_CMDQ_RD_IDXS]) << std::endl;
+    if (!(hm.lookup(blockName))) throw std::runtime_error(exIntro + nodeNotFound); 
+    auto x = at.lookupHash(hm.lookup(blockName).get());
+    if (!(at.isOk(x))) throw std::runtime_error(nodeNotFound);
+    vQ = x->v;
 
-    Graph::out_edge_iterator out_begin, out_end, out_cur;
-    boost::tie(out_begin, out_end) = out_edges(block->v,g);
-    
-    //Get Buffer List of requested priority
-    for (out_cur = out_begin; out_cur != out_end; ++out_cur) { if (g[target(*out_cur,g)].np->isMeta() && g[*out_cur].type == det::sQPrio[cmdPrio]) {found = true; break;} }
-    if (!(found)) {throw std::runtime_error("Block " + blockName + " does not have a " + det::sQPrio[cmdPrio] + " queue"); return;}            
-    auto bufList = atDown.lookupVertex(target(*out_cur,g));    
-    if (!(atDown.isOk(bufList))) {return;}
-    
-
-    boost::tie(out_begin, out_end) = out_edges(bufList->v,g);
-    
-    // Iterate Buffers
-    for (out_cur = out_begin; out_cur != out_end; ++out_cur) {
-      
-
-      sLog << std::endl;
-
-      hexDump(g[target(*out_cur,g)].name.c_str(), (const char*)g[target(*out_cur,g)].np->getB(), _MEM_BLOCK_SIZE);
-
-      //output commands
-      for(int i=0; i< _MEM_BLOCK_SIZE / _T_CMD_SIZE_; i ++ ) {
-        uint8_t* b = g[target(*out_cur,g)].np->getB();
-
-        vTime = writeBeBytesToLeNumber<uint64_t>((uint8_t*)&b[i * _T_CMD_SIZE_ + T_CMD_TIME]);
-        act   = writeBeBytesToLeNumber<uint32_t>((uint8_t*)&b[i * _T_CMD_SIZE_ + T_CMD_ACT]);
-        type = ( ((act >> ACT_TYPE_POS)  & ACT_TYPE_MSK) < _ACT_TYPE_END_ ? ((act >> ACT_TYPE_POS)  & ACT_TYPE_MSK) : ACT_TYPE_UNKNOWN);
-        prio = ( ((act >> ACT_PRIO_POS)  & ACT_PRIO_MSK) < 3 ? ((act >> ACT_PRIO_POS)  & ACT_PRIO_MSK) : PRIO_LO);
-        qty  = (act >> ACT_QTY_POS) & ACT_QTY_MSK;
-        perm = (act >> ACT_CHP_POS) & ACT_CHP_MSK;
-        //type specific
-        abs = (act >> ACT_WAIT_ABS_POS) & ACT_WAIT_ABS_MSK;
-        flPrio = (act >> ACT_FLUSH_PRIO_POS) & ACT_FLUSH_PRIO_MSK;
-        flMode = (act >> ACT_FLUSH_MODE_POS) & ACT_FLUSH_MODE_MSK;
-        wTime  = writeBeBytesToLeNumber<uint64_t>((uint8_t*)&b[i * _T_CMD_SIZE_ + T_CMD_WAIT_TIME]);
-        dest   = writeBeBytesToLeNumber<uint32_t>((uint8_t*)&b[i * _T_CMD_SIZE_ + T_CMD_FLOW_DEST]);
+    //check their Q counters for unprocessed commands
+    uint32_t wrIdxs = boost::dynamic_pointer_cast<Block>(g[vQ].np)->getWrIdxs(); 
+    uint32_t rdIdxs = boost::dynamic_pointer_cast<Block>(g[vQ].np)->getRdIdxs();
+    //uint32_t diff   = (rdIdxs ^ wrIdxs ) & 0x00ffffff;  
         
-        //write output
-        sLog << std::endl << "Cmd #" << i << ": " << std::endl;
-        if(type == ACT_TYPE_UNKNOWN) {sLog << "Unknown Format / not initialised" << std::endl; continue;}
-        if(type == ACT_TYPE_NOOP || type == ACT_TYPE_FLOW) sLog << std::dec << qty << " x ";
-        else                                               sLog << "1 x ";
-        sLog << sType[type] << " @ > " << vTime << " ns, " << sPrio[prio] << " priority";
-        if (((type == ACT_TYPE_FLOW) || ((type == ACT_TYPE_WAIT) && !(abs))) && perm) sLog << ", changes are permanent" << std::endl;
-        else sLog << ", changes are temporary" << std::endl;
+    report += "Inspecting Queues of Block " + g[vQ].name + "\n";
+
+    for (uint8_t prio = 0; prio < 3; prio++) {
+      
+      uint32_t bufLstAdr;
+      uint8_t bufLstCpu;
+      AdrType bufLstAdrType; 
+      
+      //if (!((diff >> (prio*8)) & Q_IDX_MAX_OVF_MSK)) {if(verbose) {sLog << "prio " << (int)prio << " is empty" << std::endl;} continue;}
+
+      //get Block binary
+      uint8_t* bBlock = g[vQ].np->getB();
+      bufLstAdr = writeBeBytesToLeNumber<uint32_t>((uint8_t*)&bBlock[BLOCK_CMDQ_LO_PTR + prio * _32b_SIZE_]);
+
+      
+      std::tie(bufLstCpu, bufLstAdrType) = at.adrClassification(bufLstAdr);  
+      //get BufList binary
+      auto bufLst = at.lookupAdr( s2u<uint8_t>(g[vQ].cpu), at.adrConv(bufLstAdrType, AdrType::MGMT, s2u<uint8_t>(g[vQ].cpu), bufLstAdr) );
+      if (!(at.isOk(bufLst))) {report += "Priority " + std::to_string((int)prio) + " (" + dnt::sQPrio[prio] + "): No queue buffers found\n"; continue;}
+      const uint8_t* bBL = bufLst->b;  
+       
+      //get current read cnt
+      uint8_t auxRd = (rdIdxs >> (prio*8)) & Q_IDX_MAX_OVF_MSK;
+      uint8_t auxWr = (wrIdxs >> (prio*8)) & Q_IDX_MAX_OVF_MSK;
+
+      uint8_t rdIdx = auxRd & Q_IDX_MAX_MSK;
+      uint8_t wrIdx = auxWr & Q_IDX_MAX_MSK;
+      uint8_t pendingCnt = (auxWr > auxRd) ? auxWr - auxRd : auxRd - auxWr;
+      
+      report += "Priority " + std::to_string((int)prio) + " (" + dnt::sQPrio[prio] + ") RdCnt: " + std::to_string((int)auxRd) + "    WrCnt: " + std::to_string((int)auxWr) + "    Pending: " + std::to_string((int)pendingCnt) + "\n";
+      report += "Content:\n";
+      //force wraparound
+      rdIdx >= wrIdx ? wrIdx+=4 : wrIdx;
+
+      if (rdIdx == wrIdx) report += "--- EMPTY ---\n";
+      else {report += "rd " + std::to_string(rdIdx) + " wr " + std::to_string(wrIdx) + "\n"; }
+      //find buffers of all non empty slots
+      for (uint8_t i = rdIdx; i < wrIdx; i++) {
+        uint8_t idx = i & Q_IDX_MAX_MSK;
+        uint32_t bufAdr;
+        uint8_t bufCpu, dstCpu;
+        AdrType bufAdrType, dstAdrType;
+        report += "#" + std::to_string(i - rdIdx) + "    ";
+
+        bufAdr = writeBeBytesToLeNumber<uint32_t>((uint8_t*)&bBL[(idx / 2) * _32b_SIZE_] );
+        std::tie(bufCpu, bufAdrType) = at.adrClassification(bufAdr);  
+
+        uint32_t tmpAdr = at.adrConv(bufAdrType, AdrType::MGMT, s2u<uint8_t>(g[vQ].cpu), bufAdr);
+
+        auto buf = at.lookupAdr( s2u<uint8_t>(g[vQ].cpu), tmpAdr );
+        if (!(at.isOk(buf))) {report += "Could not find buffer in download address table\n"; continue;}
+        const uint8_t* b = buf->b;
+
+        if(verbose) sLog << "Scanning Buffer " << (int)(i / 2) << " - " << g[buf->v].name << " at Offset " << (int)(i % 2) << std::endl;
+ 
+        uint32_t act = writeBeBytesToLeNumber<uint32_t>((uint8_t*)&b[(idx % 2) * _T_CMD_SIZE_ + T_CMD_ACT]);
+        uint8_t type = (act >> ACT_TYPE_POS) & ACT_TYPE_MSK;
+        //uint8_t prio = ( ((act >> ACT_PRIO_POS)  & ACT_PRIO_MSK) < 3 ? ((act >> ACT_PRIO_POS)  & ACT_PRIO_MSK) : PRIO_LO);
+        uint64_t vTime = writeBeBytesToLeNumber<uint64_t>((uint8_t*)&b[(idx % 2) * _T_CMD_SIZE_ + T_CMD_TIME]);
 
         //type specific
-        switch(type) {
-          case ACT_TYPE_NOOP  : break;
-          case ACT_TYPE_FLOW  : sLog << "Destination: ";
-                                try { 
-                                  auto y = atDown.lookupAdr(cpuIdx, atDown.adrConv(AdrType::INT, AdrType::MGMT,cpuIdx, dest));
-                                  if(atDown.isOk(y)) name = hm.lookup(y->hash);
-                                  else name = "INVALID"; 
-                                } catch (...) {throw; name = "INVALID";}
-                                sLog << name.get()  << std::endl; break;
-          case ACT_TYPE_FLUSH : sLog << "Priority to Flush: " << flPrio << " Mode: " << flMode << std::endl; break;
-          case ACT_TYPE_WAIT  : if (abs) {sLog << "Wait until " << wTime << std::endl;} else {sLog << "Make Block Period " << wTime << std::endl;} break;
+        report += "Valid Time: " + std::to_string(vTime) + "    CmdType: ";
 
-        }
+        std::string const sYes  = "YES";
+        std::string const sNo   = "NO ";
+        switch(type) {
+          case ACT_TYPE_NOOP  : {
+                                  report += "Noop    Qty: " + std::to_string((act >> ACT_QTY_POS) & ACT_QTY_MSK) + "\n";
+                                  break;
+                                }
+          case ACT_TYPE_FLOW  : {
+                                  uint32_t dstAdr   = writeBeBytesToLeNumber<uint32_t>((uint8_t*)&b[(idx % 2) * _T_CMD_SIZE_ + T_CMD_FLOW_DEST]);
+                                  bool perm = (act >> ACT_CHP_POS) & ACT_CHP_MSK;
+                                  std::string sDst;
+                                  if (dstAdr == LM32_NULL_PTR) { sDst = "Idle"; }// pointing to idle is always okay
+                                  else {
+                                    std::tie(dstCpu, dstAdrType) = at.adrClassification(dstAdr);
+                                    auto dst = at.lookupAdr( (dstAdrType == AdrType::PEER ? dstCpu : s2u<uint8_t>(g[vQ].cpu)), at.adrConv(dstAdrType, AdrType::MGMT, (dstAdrType == AdrType::PEER ? dstCpu : s2u<uint8_t>(g[vQ].cpu)), dstAdr) );
+                                    if (!(at.isOk(dst))) {char tmpBuf[9]; sprintf(tmpBuf, "%08x", dstAdr); sDst = "Unknown Address <0x" + std::string(tmpBuf) + ">";}
+                                    else {sDst = g[dst->v].name;}
+                                  }    
+                                  report += "Flow    Permanent: " + (perm ? sYes : sNo) + "    Qty: " + std::to_string((act >> ACT_QTY_POS) & ACT_QTY_MSK) + "    " + g[vQ].name + " --> " + sDst + " \n";
+                                  break;
+                                }
+          case ACT_TYPE_FLUSH : {
+                                  uint8_t flPrio = (act >> ACT_FLUSH_PRIO_POS) & ACT_FLUSH_PRIO_MSK;
+                                  //uint8_t flMode = (act >> ACT_FLUSH_MODE_POS) & ACT_FLUSH_MODE_MSK;
+                                  report += "Flush    Priorities: 0 (" + dnt::sQPrio[0] + "): " + ((flPrio & (1<<0)) ? sYes : sNo) + "    1 (" + dnt::sQPrio[1] + "): " + ((flPrio & (1<<1)) ? sYes : sNo) + "\n"; 
+                                  break;
+                                }
+          case ACT_TYPE_WAIT  : {
+                                  bool abs = (act >> ACT_WAIT_ABS_POS) & ACT_WAIT_ABS_MSK;
+                                  uint64_t wTime  = writeBeBytesToLeNumber<uint64_t>((uint8_t*)&b[i * _T_CMD_SIZE_ + T_CMD_WAIT_TIME]);
+                                  report += (abs ? "Wait until " : "Make Block Period ") + std::to_string(wTime) + "ns\n";
+                                  break;
+                                }
+          default             : {
+                                  report += "Unknown Format / Not initialised\n";
+                                  break;
+                                }
+        }  
 
       }
+      
     }
-    sLog << std::endl;
+
+    return report;  
   }      
 
 void CarpeDM::dumpNode(uint8_t cpuIdx, const std::string& name) {
@@ -440,78 +504,87 @@ void CarpeDM::dumpNode(uint8_t cpuIdx, const std::string& name) {
 
 
 uint64_t CarpeDM::getThrMsgCnt(uint8_t cpuIdx, uint8_t thrIdx) {
-  return read64b(cpuDevs.at(cpuIdx).sdb_component.addr_first + SHARED_OFFS + SHCTL_THR_DAT + thrIdx * _T_TD_SIZE_ + T_TD_MSG_CNT);   
-} 
-
-uint64_t CarpeDM::getThrDeadline(uint8_t cpuIdx, uint8_t thrIdx) {
-  return read64b(cpuDevs.at(cpuIdx).sdb_component.addr_first + SHARED_OFFS + SHCTL_THR_DAT + thrIdx * _T_TD_SIZE_ + T_TD_DEADLINE);
+  return read64b(cpuDevs.at(cpuIdx).sdb_component.addr_first + atDown.getMemories()[cpuIdx].sharedOffs + SHCTL_THR_DAT + thrIdx * _T_TD_SIZE_ + T_TD_MSG_CNT);   
 }
 
+
+void  CarpeDM::resetThrMsgCnt(uint8_t cpuIdx, uint8_t thrIdx) {
+  write64b(cpuDevs.at(cpuIdx).sdb_component.addr_first + atDown.getMemories()[cpuIdx].sharedOffs + SHCTL_THR_DAT + thrIdx * _T_TD_SIZE_ + T_TD_MSG_CNT, 0ULL);
+  
+}
+
+
+uint64_t CarpeDM::getThrDeadline(uint8_t cpuIdx, uint8_t thrIdx) {
+  return read64b(cpuDevs.at(cpuIdx).sdb_component.addr_first + atDown.getMemories()[cpuIdx].sharedOffs + SHCTL_THR_DAT + thrIdx * _T_TD_SIZE_ + T_TD_DEADLINE);
+}
+
+//FIXME wtf ... this doesnt queue anything!
 vEbwrs&  CarpeDM::setThrStartTime(uint8_t cpuIdx, uint8_t thrIdx, uint64_t t, vEbwrs& ew) {
-  write64b(cpuDevs.at(cpuIdx).sdb_component.addr_first + SHARED_OFFS + SHCTL_THR_STA + thrIdx * _T_TS_SIZE_ + T_TS_STARTTIME, t);
+  write64b(cpuDevs.at(cpuIdx).sdb_component.addr_first + atDown.getMemories()[cpuIdx].sharedOffs + SHCTL_THR_STA + thrIdx * _T_TS_SIZE_ + T_TS_STARTTIME, t);
   return ew;
 }
 
 uint64_t CarpeDM::getThrStartTime(uint8_t cpuIdx, uint8_t thrIdx) {
-  return read64b(cpuDevs.at(cpuIdx).sdb_component.addr_first + SHARED_OFFS + SHCTL_THR_STA + thrIdx * _T_TS_SIZE_ + T_TS_STARTTIME);
+  return read64b(cpuDevs.at(cpuIdx).sdb_component.addr_first + atDown.getMemories()[cpuIdx].sharedOffs + SHCTL_THR_STA + thrIdx * _T_TS_SIZE_ + T_TS_STARTTIME);
 }
 
+//FIXME wtf ... this doesnt queue anything!
 vEbwrs&  CarpeDM::setThrPrepTime(uint8_t cpuIdx, uint8_t thrIdx, uint64_t t, vEbwrs& ew) {
-  write64b(cpuDevs.at(cpuIdx).sdb_component.addr_first + SHARED_OFFS + SHCTL_THR_STA + thrIdx * _T_TS_SIZE_ + T_TS_PREPTIME, t);
+  write64b(cpuDevs.at(cpuIdx).sdb_component.addr_first + atDown.getMemories()[cpuIdx].sharedOffs + SHCTL_THR_STA + thrIdx * _T_TS_SIZE_ + T_TS_PREPTIME, t);
   return ew;
 }
 
 uint64_t CarpeDM::getThrPrepTime(uint8_t cpuIdx, uint8_t thrIdx) {
-  return read64b(cpuDevs.at(cpuIdx).sdb_component.addr_first + SHARED_OFFS + SHCTL_THR_STA + thrIdx * _T_TS_SIZE_ + T_TS_PREPTIME);
+  return read64b(cpuDevs.at(cpuIdx).sdb_component.addr_first + atDown.getMemories()[cpuIdx].sharedOffs + SHCTL_THR_STA + thrIdx * _T_TS_SIZE_ + T_TS_PREPTIME);
 }
 
-  const vAdr CarpeDM::getCmdWrAdrs(uint32_t hash, uint8_t prio) {
-    vAdr ret;  
+const vAdr CarpeDM::getCmdWrAdrs(uint32_t hash, uint8_t prio) {
+  vAdr ret;  
 
-    //find the address corresponding to given name
-    auto it = atDown.lookupHash(hash);
+  //find the address corresponding to given name
+  auto it = atDown.lookupHash(hash);
 
-    if (!(atDown.isOk(it))) {throw std::runtime_error( "Could not find target block in download address table"); return ret;}
-    auto* x = (AllocMeta*)&(*it);
+  if (!(atDown.isOk(it))) {throw std::runtime_error( "Could not find target block in download address table"); return ret;}
+  auto* x = (AllocMeta*)&(*it);
 
-    //Check if requested queue priority level exists
-    uint32_t blAdr = writeBeBytesToLeNumber<uint32_t>((uint8_t*)&x->b[BLOCK_CMDQ_PTRS + prio * _PTR_SIZE_]); 
-    //sLog << "Block BListAdr 0x" << std::hex << blAdr << std::endl;
-    if(blAdr == LM32_NULL_PTR) {throw std::runtime_error( "Block Node does not have requested queue"); return ret; }
-    
-      //get Write and Read indices
-    uint8_t eWrIdx = ( writeBeBytesToLeNumber<uint32_t>((uint8_t*)&x->b[BLOCK_CMDQ_WR_IDXS]) >> (prio * 8)) & Q_IDX_MAX_OVF_MSK;
-    uint8_t wrIdx  = eWrIdx & Q_IDX_MAX_MSK;
-    uint8_t eRdIdx = ( writeBeBytesToLeNumber<uint32_t>((uint8_t*)&x->b[BLOCK_CMDQ_RD_IDXS]) >> (prio * 8)) & Q_IDX_MAX_OVF_MSK;
-    uint8_t rdIdx  = eRdIdx & Q_IDX_MAX_MSK;
-    
-    //Check if queue is not full
-    //sLog << "wrIdx " << (int)wrIdx << " rdIdx " << (int)rdIdx << " ewrIdx " << (int)eWrIdx << " rdIdx " << (int)rdIdx << " eRdIdx " << eRdIdx << std::endl;
-    if ((wrIdx == rdIdx) && (eWrIdx != eRdIdx)) {throw std::runtime_error( "Block queue is full, can't write. "); return ret; }
-    //lookup Buffer List                                                        
-    it = atDown.lookupAdr(x->cpu, atDown.adrConv(AdrType::INT, AdrType::MGMT, x->cpu, blAdr));
-    if (!(atDown.isOk(it))) {throw std::runtime_error( "Could not find target queue in download address table"); return ret;}
-    auto* pmBl = (AllocMeta*)&(*it);
+  //Check if requested queue priority level exists
+  uint32_t blAdr = writeBeBytesToLeNumber<uint32_t>((uint8_t*)&x->b[BLOCK_CMDQ_PTRS + prio * _PTR_SIZE_]); 
+  //sLog << "Block BListAdr 0x" << std::hex << blAdr << std::endl;
+  if(blAdr == LM32_NULL_PTR) {throw std::runtime_error( "Block Node does not have requested queue"); return ret; }
+  
+    //get Write and Read indices
+  uint8_t eWrIdx = ( writeBeBytesToLeNumber<uint32_t>((uint8_t*)&x->b[BLOCK_CMDQ_WR_IDXS]) >> (prio * 8)) & Q_IDX_MAX_OVF_MSK;
+  uint8_t wrIdx  = eWrIdx & Q_IDX_MAX_MSK;
+  uint8_t eRdIdx = ( writeBeBytesToLeNumber<uint32_t>((uint8_t*)&x->b[BLOCK_CMDQ_RD_IDXS]) >> (prio * 8)) & Q_IDX_MAX_OVF_MSK;
+  uint8_t rdIdx  = eRdIdx & Q_IDX_MAX_MSK;
+  
+  //Check if queue is not full
+  //sLog << "wrIdx " << (int)wrIdx << " rdIdx " << (int)rdIdx << " ewrIdx " << (int)eWrIdx << " rdIdx " << (int)rdIdx << " eRdIdx " << eRdIdx << std::endl;
+  if ((wrIdx == rdIdx) && (eWrIdx != eRdIdx)) {throw std::runtime_error( "Block queue is full, can't write. "); return ret; }
+  //lookup Buffer List                                                        
+  it = atDown.lookupAdr(x->cpu, atDown.adrConv(AdrType::INT, AdrType::MGMT, x->cpu, blAdr));
+  if (!(atDown.isOk(it))) {throw std::runtime_error( "Could not find target queue in download address table"); return ret;}
+  auto* pmBl = (AllocMeta*)&(*it);
 
-    //calculate write offset                                                     
+  //calculate write offset                                                     
 
-    ptrdiff_t bufIdx   = wrIdx / (_MEM_BLOCK_SIZE / _T_CMD_SIZE_  );
-    ptrdiff_t elemIdx  = wrIdx % (_MEM_BLOCK_SIZE / _T_CMD_SIZE_  );
+  ptrdiff_t bufIdx   = wrIdx / (_MEM_BLOCK_SIZE / _T_CMD_SIZE_  );
+  ptrdiff_t elemIdx  = wrIdx % (_MEM_BLOCK_SIZE / _T_CMD_SIZE_  );
 
-    //sLog << "bIdx " << bufIdx << " eIdx " << elemIdx << " @ 0x" << std::hex << pmBl->adr << std::endl;
-    uint32_t  startAdr = atDown.adrConv(AdrType::INT, AdrType::EXT,pmBl->cpu, writeBeBytesToLeNumber<uint32_t>((uint8_t*)&pmBl->b[bufIdx * _PTR_SIZE_])) + elemIdx * _T_CMD_SIZE_;
+  //sLog << "bIdx " << bufIdx << " eIdx " << elemIdx << " @ 0x" << std::hex << pmBl->adr << std::endl;
+  uint32_t  startAdr = atDown.adrConv(AdrType::INT, AdrType::EXT,pmBl->cpu, writeBeBytesToLeNumber<uint32_t>((uint8_t*)&pmBl->b[bufIdx * _PTR_SIZE_])) + elemIdx * _T_CMD_SIZE_;
 
-    //sLog << "Current BufAdr 0x" << std::hex << startAdr << std::endl;
+  //sLog << "Current BufAdr 0x" << std::hex << startAdr << std::endl;
 
-    //generate command address range
-    for(uint32_t adr = startAdr; adr < startAdr + _T_CMD_SIZE_; adr += _32b_SIZE_) ret.push_back(adr);
+  //generate command address range
+  for(uint32_t adr = startAdr; adr < startAdr + _T_CMD_SIZE_; adr += _32b_SIZE_) ret.push_back(adr);
 
-    //and insert address for wr idx increment
-    ret.push_back(atDown.adrConv(AdrType::MGMT, AdrType::EXT, x->cpu, x->adr) + BLOCK_CMDQ_WR_IDXS);
-    return ret;
+  //and insert address for wr idx increment
+  ret.push_back(atDown.adrConv(AdrType::MGMT, AdrType::EXT, x->cpu, x->adr) + BLOCK_CMDQ_WR_IDXS);
+  return ret;
 
 
-  } 
+} 
 
 
   const uint32_t CarpeDM::getCmdInc(uint32_t hash, uint8_t prio) {
@@ -686,7 +759,7 @@ vertex_set_t CarpeDM::getAllCursors(bool activeOnly) {
 
 
 HealthReport& CarpeDM::getHealth(uint8_t cpuIdx, HealthReport &hr) {
-  uint32_t const baseAdr = cpuDevs.at(cpuIdx).sdb_component.addr_first + SHARED_OFFS;
+  uint32_t const baseAdr = cpuDevs.at(cpuIdx).sdb_component.addr_first + atDown.getMemories()[cpuIdx].sharedOffs;
 
   vAdr diagAdr;
   vBuf diagBuf;

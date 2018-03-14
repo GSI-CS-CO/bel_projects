@@ -136,10 +136,21 @@ typedef std::vector<uint8_t> vBuf;
 typedef std::vector<uint32_t> vAdr;
 typedef std::vector<uint32_t> ebBuf;
 typedef std::vector<std::string> vStrC;
+typedef std::vector<bool> vBl;
+
 typedef struct {
   vAdr va;
   vBuf vb;
+  vBl  vcs;
 } vEbwrs;
+
+typedef struct {
+  vAdr va;
+  vBl  vcs;
+} vEbrds;
+
+
+vBl leadingOne(size_t length);
 
 template <typename T>
 std::vector<T> operator+(const std::vector<T> &A, const std::vector<T> &B)
@@ -158,9 +169,6 @@ std::vector<T> &operator+=(std::vector<T> &A, const std::vector<T> &B)
     A.insert( A.end(), B.begin(), B.end() );         // add B;
     return A;                                        // here A could be named AB
 }
-
-
-
 
 template<typename T>
 inline void writeLeNumberToBeBytes(uint8_t* pB, T val) {
@@ -187,7 +195,6 @@ template<typename T>
 inline T writeLeBytesToBeNumber(uint8_t* pB) {
   return endian_reverse(*((T*)pB));
 }
-
 
 template<typename T>
 inline T s2u(const std::string& s) {
