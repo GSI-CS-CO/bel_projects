@@ -94,17 +94,18 @@ namespace dnt = DotStr::Node::TypeVal;
       }
     }
 
-    sLog << "Mgmt found " << found << " data chunks. Trying to recover GroupTable ..." << std::endl;
+    if(verbose) sLog << "Mgmt found " << std::dec << found << " data chunks. Trying to recover GroupTable ..." << std::endl;
 
     // recover container
-    vBuf tmpMgmtRecovery = decompress(atDown.recoverMgmt());
+    vBuf aux = atDown.recoverMgmt();
+    vBuf tmpMgmtRecovery = decompress(aux);
 
 
     // Rebuild Grouptable
     GroupTable gtTmp;
     std::string tmpStr = std::string(tmpMgmtRecovery.begin(), tmpMgmtRecovery.end());
-    sLog << "Bytes expected: " << atDown.getMgmtLLsize() << ", recovered: " << found << std::endl << std::endl;
-    sLog << tmpStr << std::endl;
+    if(verbose) sLog << "Bytes expected: " << std::dec << atDown.getMgmtLLsize() << ", recovered: " << std::dec << aux.size() << std::endl << std::endl;
+    //sLog << tmpStr << std::endl;
     if (tmpStr.size()) gtTmp.load(tmpStr); 
     gt = gtTmp;
     // Rebuild HashMap from Grouptable

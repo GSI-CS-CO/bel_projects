@@ -129,23 +129,6 @@ int main(int argc, char* argv[]) {
    std::cerr << std::endl << program << ": Failed to connect to DM: " << err.what() << std::endl; return -20;
   }
 
-  try { cdm.loadHashDictFile(std::string(dirname) + "/" + std::string(hashfile)); } catch (std::runtime_error const& err) {
-      std::cerr << std::endl << program << ": Warning - Could not load dictionary file. Cause: " << err.what() << std::endl;
-    }
-  if (verbose) std::cout << std::endl << program << ": Loaded " << cdm.getHashDictSize() << " Node / Hash entries" << std::endl;  
-
-  try { cdm.loadGroupsDictFile(std::string(dirname) + "/" + std::string(groupsfile)); } catch (std::runtime_error const& err) {
-      std::cerr << std::endl << program << ": Warning - Could not load groups file. Cause: " << err.what() << std::endl;
-    }
-
-  if (verbose) std::cout << std::endl << program << ": Loaded " << cdm.getGroupsSize() << " Node / Pattern / Beamprocess entries" << std::endl;    
-
-
-  if (inputFilename == NULL) {
-    if (cdm.isHashDictEmpty()) std::cerr << std::endl << program << ": Warning - No Nodename/Hash dictionary available. Your download will show only hashes." << std::endl;
-  }
-
-
 
 
   if (cmdName != NULL ) {
@@ -201,9 +184,6 @@ int main(int argc, char* argv[]) {
   bool tabOk = cdm.tableCheck(report);
 
   if (verbose or !tabOk) std::cout << report << std::endl;
-
-  cdm.storeHashDictFile(std::string(dirname) + "/" + std::string(hashfile));  
-  cdm.storeGroupsDictFile(std::string(dirname) + "/" + std::string(groupsfile));
 
 
   cdm.disconnect();

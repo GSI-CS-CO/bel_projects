@@ -17,11 +17,11 @@
 int main(int argc, char* argv[]) {
 
   Graph g;
-  char dirnameBuff[80];
+  
 
-  bool update = true, verbose = false, strip=true, cmdValid = false, force = false;
+  
 
-  int opt;
+  
   const char *program = argv[0];
 
 

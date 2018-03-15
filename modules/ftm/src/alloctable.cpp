@@ -167,7 +167,7 @@
     uint32_t chunkLinkPtr = mgmtStartAdr;
     size_t   bytesLeft    = mgmtSize;
 
-    std::cout << "recovery. Bytes expected: " << std::dec << bytesLeft << ", starting at 0x" << std::hex << chunkLinkPtr << std::endl;
+    //std::cout << "recovery. Bytes expected: " << std::dec << bytesLeft << ", starting at 0x" << std::hex << chunkLinkPtr << std::endl;
 
     unsigned cnt = 0;
     //traverse the linked list by looking up elements in the management table. Copy payload of found elements to return vector
@@ -176,13 +176,13 @@
       
       uint8_t  cpu = getCpuFromExtAdr(chunkLinkPtr);
       uint32_t adr = adrConv(AdrType::EXT, AdrType::MGMT, cpu, chunkLinkPtr);
-      std::cout << "recovery. Bytes to copy: " << std::dec << bytesToCopy << ", parsing at 0x" << std::hex << chunkLinkPtr << " (CPU " << std::dec << (int)cpu << ", 0x" << std::hex << adr << std::endl;
+      //std::cout << "recovery. Bytes to copy: " << std::dec << bytesToCopy << ", parsing at 0x" << std::hex << chunkLinkPtr << " (CPU " << std::dec << (int)cpu << ", 0x" << std::hex << adr << std::endl;
       //lookup entry and fetch buffer content
       auto aux      = m.get<CpuAdr>().find(boost::make_tuple( cpu, adr ));
       auto it       = m.iterator_to( *aux );
       if (it == m.end()) throw std::runtime_error("MgmtTable: Cannot find entry for CPU " + std::to_string((int)cpu) + " Adr " + std::to_string(adr)  + "\n"); 
       
-      hexDump((std::string("MGMT") + std::to_string(cnt)).c_str(), (char*)it->b, _MEM_BLOCK_SIZE );
+      //hexDump((std::string("MGMT") + std::to_string(cnt)).c_str(), (char*)it->b, _MEM_BLOCK_SIZE );
 
       //add payload to return vector
       ret.insert( ret.end(), it->b, it->b + bytesToCopy);

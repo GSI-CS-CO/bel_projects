@@ -116,6 +116,7 @@ typedef struct {
   uint64_t  bootTime;
   uint64_t  smodTime;
   char      smodIssuer[9];
+  char      smodHost[9];
   int64_t   minTimeDiff;
   int64_t   maxTimeDiff;
   int64_t   avgTimeDiff;

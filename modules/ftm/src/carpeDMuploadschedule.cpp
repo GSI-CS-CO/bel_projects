@@ -521,13 +521,12 @@ using namespace DotStr::Misc;
 
 
   void CarpeDM::generateMgmtData() {
-    //workaround string serialiser for the moment in favour of easy switching to binary serialiser later
     std::string tmpStrBuf = gt.store();
     vBuf tmpBuf(tmpStrBuf.begin(), tmpStrBuf.end());
     vBuf mgmtBinary = compress(tmpBuf);
     atUp.allocateMgmt(mgmtBinary);
     atUp.populateMgmt(mgmtBinary);
-    atUp.debugMgmt(sLog);
+    //atUp.debugMgmt(sLog);
     atUp.updateBmps();
   }
 
@@ -628,7 +627,7 @@ using namespace DotStr::Misc;
     for(uint8_t cpuIdx=0; cpuIdx < getCpuQty(); cpuIdx++) { 
       uint32_t s = getThrStart(cpuIdx);
       uint32_t r = getThrRun(cpuIdx);
-      printf("#%u ThrStartBits: 0x%08x, ThrRunBits: 0x%08x, force=%u\n", cpuIdx, s, r, (int)force );
+      //printf("#%u ThrStartBits: 0x%08x, ThrRunBits: 0x%08x, force=%u\n", cpuIdx, s, r, (int)force );
       activity |= s | r;
     }
 

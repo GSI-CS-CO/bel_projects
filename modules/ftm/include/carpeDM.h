@@ -92,8 +92,8 @@ private:
   bool isSafeToRemove(std::set<std::string> patterns, std::string& report);
   const std::string readFwIdROMTag(const std::string& fwIdROM, const std::string& tag, size_t maxlen, bool stopAtCr );
 
-  vBuf compress(vBuf in)   {return in;} //dummy
-  vBuf decompress(vBuf in) {return in;} //dummy
+  vBuf compress(const vBuf& in); 
+  vBuf decompress(const vBuf& in);
 
   void readMgmtLLMeta();
 

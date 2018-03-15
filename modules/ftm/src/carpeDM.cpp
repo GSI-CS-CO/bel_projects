@@ -14,14 +14,15 @@
 #include "minicommand.h"
 #include "dotstr.h"
 #include "idformat.h"
+#include "lzmaCompression.h"
 
   namespace dgp = DotStr::Graph::Prop;
   namespace dnp = DotStr::Node::Prop;
   namespace dep = DotStr::Edge::Prop;
 
 
-
-
+vBuf CarpeDM::compress(const vBuf& in) {return lzmaCompress(in);}
+vBuf CarpeDM::decompress(const vBuf& in) {return lzmaDecompress(in);}
 
 int CarpeDM::ebWriteCycle(Device& dev, vAdr va, vBuf& vb, vBl vcs)
 {
