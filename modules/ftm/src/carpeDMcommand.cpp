@@ -787,7 +787,12 @@ HealthReport& CarpeDM::getHealth(uint8_t cpuIdx, HealthReport &hr) {
     char c = *(char*)(b + T_DIAG_SMOD_IID + i);
     hr.smodIssuer[i] = (((c > 32) && (c < 126)) ? c : '\00');
   }
-  hr.smodIssuer[8] = '\00';  
+  hr.smodIssuer[8] = '\00';
+  for (int i = 0; i<8; i++) { //copy and sanitize issuer machine name
+    char c = *(char*)(b + T_DIAG_SMOD_MID + i);
+    hr.smodHost[i] = (((c > 32) && (c < 126)) ? c : '\00');
+  }
+  hr.smodHost[8] = '\00';  
   hr.minTimeDiff      =  writeBeBytesToLeNumber<int64_t>(b + T_DIAG_DIF_MIN);  
   hr.maxTimeDiff      =  writeBeBytesToLeNumber<int64_t>(b + T_DIAG_DIF_MAX);
   hr.avgTimeDiff      = (hr.msgCnt ? writeBeBytesToLeNumber<int64_t>(b + T_DIAG_DIF_SUM) / (int64_t)hr.msgCnt : 0);   

@@ -74,8 +74,16 @@
     vAdr ret;
     
     //get the size of serialised container and round up to needed mem blocks
-    unsigned neededChunks = (serialisedContainer.size() + payloadPerChunk -1) / payloadPerChunk; //integer round up 
-    std::cout << "MGMT needs to wrap " << serialisedContainer.size() << " bytes, using " << neededChunks << " data chunks" << std::endl;
+    unsigned neededChunks = (serialisedContainer.size() + payloadPerChunk -1) / payloadPerChunk; //integer round up
+
+
+    //check if there is enough free space
+    size_t availableSpace = 0;
+    for (uint8_t cpuIdx=0; cpuIdx < vPool.size(); cpuIdx++) { availableSpace += getFreeSpace(cpuIdx); }
+    if (availableSpace < (neededChunks * _MEM_BLOCK_SIZE)) 
+      throw std::runtime_error("MgmtTable: Not enough space for management data. " + std::to_string(availableSpace) 
+                             + " available across all cores, needed " + std::to_string(neededChunks * _MEM_BLOCK_SIZE)
+                             + ". Pro Tip: Remove some schedules.\n");
 
     //while we need mem blocks ...
     for(unsigned chunk=0; chunk < neededChunks; chunk++) { 
@@ -90,7 +98,7 @@
         }
       }
 
-      allocateMgmt(chosen.first);
+      if (allocateMgmt(chosen.first) != ALLOC_OK) throw std::runtime_error("MgmtTable: Could not allocate node\n");
     }
     //FIXME get rid of this crap
     return 0;
@@ -126,9 +134,7 @@
                    mgmtSize = serialisedContainer.size();
 
     //iterate management table: mark chunk as management node type, add linked list metadata and fill with serialised payload chunks
-    
-    unsigned cnt = 0;
-
+ 
     //multiindex iterators are not forward iterators. If we want a fixed order, we need to make it ourselves. Create a vector
     std::vector<mmI> itVec;
     for(mmI it = m.begin(); it != m.end(); it++) itVec.push_back(it);

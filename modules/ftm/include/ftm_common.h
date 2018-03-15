@@ -108,7 +108,8 @@
 #define T_DIAG_BOOT_TS      (T_DIAG_MSG_CNT  + _64b_SIZE_ ) //Timestamp of Uptime beginning
 #define T_DIAG_SMOD_TS      (T_DIAG_BOOT_TS  + _TS_SIZE_  ) //Timestamp of last schedule modification
 #define T_DIAG_SMOD_IID     (T_DIAG_SMOD_TS  + _TS_SIZE_  ) //Issuer ID of last schedule modification
-#define T_DIAG_SMOD_HSH     (T_DIAG_SMOD_IID + _64b_SIZE_ ) //Hash of last schedule modification
+#define T_DIAG_SMOD_MID     (T_DIAG_SMOD_IID + _64b_SIZE_ ) //Machine ID of last schedule modification
+#define T_DIAG_SMOD_HSH     (T_DIAG_SMOD_MID + _64b_SIZE_ ) //Hash of last schedule modification
 #define T_DIAG_SMOD_CNT     (T_DIAG_SMOD_HSH + _32b_SIZE_ ) //schedule modification counter
 #define T_DIAG_CMD_TS       (T_DIAG_SMOD_CNT + _32b_SIZE_ ) //Timestamp of last command batch
 #define T_DIAG_CMD_IID      (T_DIAG_CMD_TS   + _TS_SIZE_  ) //Issuer ID of last command batch

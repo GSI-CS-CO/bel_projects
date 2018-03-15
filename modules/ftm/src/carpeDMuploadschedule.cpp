@@ -91,16 +91,23 @@ using namespace DotStr::Misc;
 
       char username[LOGIN_NAME_MAX];
       getlogin_r(username, LOGIN_NAME_MAX);
+      char machinename[HOST_NAME_MAX];
+      gethostname(machinename, HOST_NAME_MAX);
+
+
       uint8_t b[8];
       writeLeNumberToBeBytes<uint64_t>((uint8_t*)&b[0], modTime);  
 
-      ew.vcs += leadingOne(4);
+      ew.vcs += leadingOne(6);
       ew.va.push_back(modAdrBase + T_DIAG_SMOD_TS + 0);
       ew.va.push_back(modAdrBase + T_DIAG_SMOD_TS + _32b_SIZE_);
       ew.va.push_back(modAdrBase + T_DIAG_SMOD_IID + 0);
       ew.va.push_back(modAdrBase + T_DIAG_SMOD_IID + _32b_SIZE_);
+      ew.va.push_back(modAdrBase + T_DIAG_SMOD_MID + 0);
+      ew.va.push_back(modAdrBase + T_DIAG_SMOD_MID + _32b_SIZE_);
       ew.vb.insert( ew.vb.end(), b, b +  _TS_SIZE_  );
       ew.vb.insert( ew.vb.end(), username, username +  _64b_SIZE_  );
+      ew.vb.insert( ew.vb.end(), machinename, machinename +  _64b_SIZE_  );
     }
 
     // save global meta info for management linked list
