@@ -17,7 +17,7 @@ SOURCES  = main-x86.c disp.c disp-oled.c disp-lcd.c ssd1325_serial_driver.c
 
 DEFINE   = -DSSD1325_TARGET_EMBEDDED=0
 EXTRA_FLAGS ?=
-CFLAGS      ?= $(EXTRA_FLAGS) -Wall -O2 -I $(EB)
+CFLAGS      ?= $(EXTRA_FLAGS) -Wall -O2 -I $(EB) -static-libstdc++
 LIBS        ?= -L $(EB)/.libs -Wl,-rpath,$(PREFIX)/lib -letherbone -lm
 
 all: simple-display
