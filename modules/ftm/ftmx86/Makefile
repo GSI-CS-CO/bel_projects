@@ -62,10 +62,15 @@ $(BINPATH)/dm-cmd: $(TOOLPATH)/dm-test
 $(FWPATH)/ftm_shared_mmap.h:
 	$(MAKE) -C $(FWPATH) ftm_shared_mmap.h
 
+#lzma.a: $(LZMAPATH)/LzmaEnc.c $(LZMAPATH)/LzmaDec.c $(LZMAPATH)/LzFind.c $(SRCPATH)/lzmaCompression.cpp
+#	$(T_CXX) $(T_CXXFLAGS) -D_7ZIP_ST -fPIC -c $^
+#	ar crf $@ $(subst .cpp,.o, $($^:$(LZMAPATH)/%=%))
 
-libcarpedm.so: $(T_SOURCES) $(FWPATH)/ftm_shared_mmap.h 
-	$(T_CXX) $(T_CXXFLAGS) -fPIC -c $(T_SOURCES) $(T_LIBS)
-	$(T_CXX) -shared -o $@ $(T_OBJECTS)
+	
+
+libcarpedm.so: $(T_SOURCES) $(FWPATH)/ftm_shared_mmap.h
+	$(T_CXX) $(T_CXXFLAGS) -D_7ZIP_ST -fPIC -c $(T_SOURCES) $(LZMAPATH)/LzmaEnc.c $(LZMAPATH)/LzmaDec.c $(LZMAPATH)/LzFind.c $(SRCPATH)/lzmaCompression.cpp $(T_LIBS)
+	$(T_CXX) -shared -o $@ $(T_OBJECTS) LzmaEnc.o LzmaDec.o LzFind.o lzmaCompression.o
 	mkdir -p $(LIBPATH)
 	cp $@ $(LIBPATH)
 
