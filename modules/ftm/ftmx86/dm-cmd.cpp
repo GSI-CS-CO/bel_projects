@@ -21,11 +21,11 @@ static void help(const char *program) {
   fprintf(stderr, "\nUsage: %s [OPTION] <etherbone-device> <command> [target node] [parameter] \n", program);
   fprintf(stderr, "\n");
   fprintf(stderr, "\nSends a command to Thread <n> of CPU Core <m> of the DataMaster (DM), requires dot file of DM's schedule.\nThere are global commands, that influence the whole DM, local commands influencing the whole thread\nand block commands, that only affect one queue in the schedule.\n");
-  fprintf(stderr, "  -d         <dir>          Use a directory other than the current working path for hashtable and groupstable files\n");
   fprintf(stderr, "\nGeneral Options:\n");
   fprintf(stderr, "  -c <cpu-idx>              Select CPU core by index, default is 0\n");
   fprintf(stderr, "  -t <thread-idx>           Select thread inside selected CPU core by index, default is 0\n");
   fprintf(stderr, "  -v                        Verbose operation, print more details\n");
+  fprintf(stderr, "  -d                        Debug operation, print everything\n");
   fprintf(stderr, "  -i command .dot file      Dot file containing commands\n");
   fprintf(stderr, "\nGlobal commands:\n");
   fprintf(stderr, "  status                    Show status of all threads and cores (default)\n");
@@ -163,8 +163,8 @@ void showHealth(const char *netaddress, CarpeDM& cdm, bool verbose) {
   printf("\n\u2552"); for(int i=0;i<width;i++) printf("\u2550"); printf("\u2555\n");
   printf("\u2502 DataMaster: %-83s \u2502 WR-Time: 0x%08x%08x \u2502 %.19s \u2502\n", netaddress, (uint32_t)(timeWr>>32), (uint32_t)timeWr, date);
   printf("\u251C"); for(int i=0;i<width;i++) printf("\u2550"); printf("\u2524\n");
-  printf("\u2502 %3s \u2502 %24s \u2502 %24s \u2502 %8s \u2502 %14s \u2502 %9s \u2502 %9s \u2502 %9s \u2502 %9s \u2502 %9s \u2502 %10s \u2502\n", 
-        "Cpu", "BootTime", "Schedule ModTime", "Issuer", "CPU Msg Cnt", "Min dT", "Max dT", "Avg dT", "Thrs dT", "WrnCnt", "State");
+  printf("\u2502 %3s \u2502 %19s \u2502 %19s \u2502 %8s \u2502 %8s \u2502 %14s \u2502 %9s \u2502 %9s \u2502 %9s \u2502 %9s \u2502 %9s \u2502 %10s \u2502\n", 
+        "Cpu", "BootTime", "Schedule ModTime", "Issuer", "Host", "CPU Msg Cnt", "Min dT", "Max dT", "Avg dT", "Thrs dT", "WrnCnt", "State");
   printf("\u251C"); for(int i=0;i<width;i++) printf("\u2550"); printf("\u2524\n");
   
 
@@ -179,11 +179,12 @@ void showHealth(const char *netaddress, CarpeDM& cdm, bool verbose) {
     
     
 
-    printf("\u2502 %3u \u2502 %.24s \u2502 %.24s \u2502 %8s \u2502 %14llu \u2502 %9d \u2502 %9d \u2502 %9d \u2502 %9d \u2502 %9u \u2502 0x%08x \u2502\n", 
+    printf("\u2502 %3u \u2502 %.19s \u2502 %.19s \u2502 %8s \u2502 %8s \u2502 %14llu \u2502 %9d \u2502 %9d \u2502 %9d \u2502 %9d \u2502 %9u \u2502 0x%08x \u2502\n", 
                                                                                                                     hr[i].cpu,
                                                                                                                     dateBoot,
                                                                                                                     dateMod,
                                                                                                                     hr[i].smodIssuer,
+                                                                                                                    hr[i].smodHost,
                                                                                                                     (unsigned long long int)hr[i].msgCnt,
                                                                                                                     (int)hr[i].minTimeDiff,
                                                                                                                     (int)hr[i].maxTimeDiff,
@@ -207,7 +208,7 @@ int main(int argc, char* argv[]) {
 
 
 
-  bool verbose = false, permanent = false;
+  bool verbose = false, permanent = false, debug=false;
 
   int opt;
   const char *program = argv[0];
@@ -222,18 +223,14 @@ int main(int argc, char* argv[]) {
   uint64_t cmdTvalid = 0, longtmp;
 
 // start getopt 
-   while ((opt = getopt(argc, argv, "shvc:p:l:t:q:i:d:")) != -1) {
+   while ((opt = getopt(argc, argv, "shvc:p:l:t:q:i:d")) != -1) {
       switch (opt) {
           case 'i':
             cmdFilename = optarg;
             break;
          case 'd':
-            dirname = optarg;
-            if (dirname == NULL) {
-              std::cerr << std::endl << program << ": option -d expects a path" << std::endl;
-            }
-            error = -1;
-            break;     
+            debug = true;
+            break;    
          case 'v':
             verbose = 1;
             break;
@@ -320,6 +317,7 @@ int main(int argc, char* argv[]) {
   CarpeDM cdm = CarpeDM();
 
   if(verbose) cdm.verboseOn();
+  if(debug)   cdm.debugOn();
 
   try {
     cdm.connect(std::string(netaddress));
@@ -355,8 +353,8 @@ int main(int argc, char* argv[]) {
 
  
     
-  try { 
-    cdm.download();
+  try {
+   cdm.download();
   } catch (std::runtime_error const& err) {
     std::cerr << program << ": Download from CPU "<< cpuIdx << " failed. Cause: " << err.what() << std::endl;
     return -7;
