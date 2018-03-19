@@ -32,17 +32,16 @@ using namespace DotStr::Misc;
 
 
   //TODO CPU Load Balancer
-  vEbwrs CarpeDM::gatherUploadVector() {
+  vEbwrs CarpeDM::gatherUploadVector(std::set<uint8_t> moddedCpus, uint32_t modCnt, uint8_t opType) {
     //sLog << "Starting Upload address & data vectors" << std::endl;
     vEbwrs ew;
     uint32_t adr, modAdrBase;
-    std::set<uint8_t> modded;
+
 
     //TODO if this was sorted by CPU, it would be way more efficient!!
 
     //add all Bmp addresses to return vector
     for(unsigned int i = 0; i < atUp.getMemories().size(); i++) {
-      if (!freshDownload || (atUp.getMemories()[i].getBmp() != atDown.getMemories()[i].getBmp()) ) modded.insert(i); // mark cpu as modified if alloctable empty or Bmp Changed 
       //generate addresses of Bmp's address range
       for (adr = atUp.adrConv(AdrType::MGMT, AdrType::EXT,i, atUp.getMemories()[i].bmpOffs); adr < atUp.adrConv(AdrType::MGMT, AdrType::EXT,i, atUp.getMemories()[i].startOffs); adr += _32b_SIZE_) {
         ew.vcs.push_back(adr == atUp.adrConv(AdrType::MGMT, AdrType::EXT,i, atUp.getMemories()[i].bmpOffs));
@@ -58,7 +57,7 @@ using namespace DotStr::Misc;
     for (auto& it : atUp.getTable().get<CpuAdr>()) {
       //generate address range for all nodes staged for upload
       if(it.staged) {
-        modded.insert(it.cpu); // mark cpu as modified if a node is staged
+        moddedCpus.insert(it.cpu); // mark cpu as modified if a node is staged
         //Address and cycle start
         for (adr = atUp.adrConv(AdrType::MGMT, AdrType::EXT,it.cpu, it.adr); adr < atUp.adrConv(AdrType::MGMT, AdrType::EXT,it.cpu, it.adr + _MEM_BLOCK_SIZE); adr += _32b_SIZE_ ) {
           ew.vcs.push_back(adr == atUp.adrConv(AdrType::MGMT, AdrType::EXT,it.cpu, it.adr));
@@ -83,32 +82,8 @@ using namespace DotStr::Misc;
     }
 
 
-    // save modification time
-    for (auto& itMod : modded) {
-      // modification time address (lo/hi)
-      modAdrBase = atUp.getMemories()[itMod].extBaseAdr + atUp.getMemories()[itMod].sharedOffs + SHCTL_DIAG;
-      // save modification time, issuer
-
-      char username[LOGIN_NAME_MAX];
-      getlogin_r(username, LOGIN_NAME_MAX);
-      char machinename[HOST_NAME_MAX];
-      gethostname(machinename, HOST_NAME_MAX);
-
-
-      uint8_t b[8];
-      writeLeNumberToBeBytes<uint64_t>((uint8_t*)&b[0], modTime);  
-
-      ew.vcs += leadingOne(6);
-      ew.va.push_back(modAdrBase + T_DIAG_SMOD_TS + 0);
-      ew.va.push_back(modAdrBase + T_DIAG_SMOD_TS + _32b_SIZE_);
-      ew.va.push_back(modAdrBase + T_DIAG_SMOD_IID + 0);
-      ew.va.push_back(modAdrBase + T_DIAG_SMOD_IID + _32b_SIZE_);
-      ew.va.push_back(modAdrBase + T_DIAG_SMOD_MID + 0);
-      ew.va.push_back(modAdrBase + T_DIAG_SMOD_MID + _32b_SIZE_);
-      ew.vb.insert( ew.vb.end(), b, b +  _TS_SIZE_  );
-      ew.vb.insert( ew.vb.end(), username, username +  _64b_SIZE_  );
-      ew.vb.insert( ew.vb.end(), machinename, machinename +  _64b_SIZE_  );
-    }
+    // save modification infos
+    for (auto& itMod : moddedCpus) { createSchedModInfo(itMod, modCnt, opType, ew); }
 
     // save global meta info for management linked list
     uint8_t b[8];
@@ -343,8 +318,16 @@ using namespace DotStr::Misc;
 
   }
 
-  int CarpeDM::upload() {
-    vEbwrs ew = gatherUploadVector();
+
+  int CarpeDM::upload( uint8_t opType) {
+    modTime   = getDmWrTime() * 1000000000ULL;
+    //we only regard modifications by order as modded, so we need to check for changed content before we generate the management data
+    std::set<uint8_t> moddedCpus;
+    for(unsigned int i = 0; i < atUp.getMemories().size(); i++) {
+      if (!freshDownload || (atUp.getMemories()[i].getBmp() != atDown.getMemories()[i].getBmp()) ) moddedCpus.insert(i); // mark cpu as modified if alloctable empty or Bmp Changed
+    }
+    generateMgmtData();
+    vEbwrs ew = gatherUploadVector(moddedCpus, 0, opType); //TODO not using modCnt right now, maybe implement later
     
     //Upload
     ebWriteCycle(ebd, ew.va, ew.vb, ew.vcs);
@@ -566,8 +549,7 @@ using namespace DotStr::Misc;
     addition(g);
     //writeUpDotFile("upload.dot", false);
     validate(gUp, atUp);
-    generateMgmtData();
-    return upload();
+    return upload(OP_TYPE_SCH_ADD);
   } 
 
   int CarpeDM::remove(Graph& g, bool force) {
@@ -580,8 +562,8 @@ using namespace DotStr::Misc;
     subtraction(g);
     //writeUpDotFile("upload.dot", false);
     validate(gUp, atUp);
-    generateMgmtData();
-    return upload();
+    
+    return upload(OP_TYPE_SCH_REMOVE);
   }
 
 
@@ -615,13 +597,11 @@ using namespace DotStr::Misc;
     subtraction(gTmpRemove);
     //writeUpDotFile("upload.dot", false);
     validate(gUp, atUp);
-    generateMgmtData();
-    return upload();
+    return upload(OP_TYPE_SCH_KEEP);
   }   
 
   int CarpeDM::clear_raw(bool force) {
     nullify(); // read out current time for upload mod time (seconds, but probably better to use same format as DM FW. Convert to ns)
-    modTime = getDmWrTime() * 1000000000ULL;
     // check if there are any threads still running first
     uint32_t activity = 0; 
     for(uint8_t cpuIdx=0; cpuIdx < getCpuQty(); cpuIdx++) { 
@@ -633,8 +613,7 @@ using namespace DotStr::Misc;
 
     
     if (!force && activity)  {throw std::runtime_error("Cannot clear, threads are still running. Call stop/abort/halt first\n");}  
-
-    return upload();
+    return upload(OP_TYPE_SCH_CLEAR);
   }
 
   int CarpeDM::overwrite(Graph& g, bool force) {
@@ -649,10 +628,9 @@ using namespace DotStr::Misc;
       activity |= getThrRun(cpuIdx);
     }
     if (!force && activity)  {throw std::runtime_error("Cannot overwrite, threads are still running. Call stop/abort/halt first\n");}
-    generateMgmtData();
-    return upload();
+
+    return upload(OP_TYPE_SCH_OVERWRITE);
 
   }
-
 
 

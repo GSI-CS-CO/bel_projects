@@ -53,13 +53,16 @@
 
 
 
+
+
 //////////////////////////////////////////////////////////////////////
 //"struct" types                                                    //
 //////////////////////////////////////////////////////////////////////
 
 //Thread Control bits
 #define T_TC_START              (0)                     //WR Host, RW LM32
-#define T_TC_ABORT              (T_TC_START     + _32b_SIZE_) //WR Host, RW LM32
+#define T_TC_CEASE              (T_TC_START     + _32b_SIZE_) //WR Host, RW LM32
+#define T_TC_ABORT              (T_TC_CEASE     + _32b_SIZE_) //WR Host, RW LM32
 #define T_TC_RUNNING            (T_TC_ABORT     + _32b_SIZE_) //RD Host, WR LM32
 #define _T_TC_SIZE_             (T_TC_RUNNING   + _32b_SIZE_) 
 
@@ -103,24 +106,23 @@
 #define _T_CMD_SIZE_             (_TS_SIZE_ + _32b_SIZE_ + _64b_SIZE_)
 
 
+#define T_MOD_INFO_TS      (0)                             //Timestamp of last modification
+#define T_MOD_INFO_IID     (T_MOD_INFO_TS   + _TS_SIZE_  ) //Issuer ID of last modification
+#define T_MOD_INFO_MID     (T_MOD_INFO_IID  + _64b_SIZE_ ) //Machine ID of last modification
+#define T_MOD_INFO_TYPE    (T_MOD_INFO_MID  + _64b_SIZE_ ) //Type of last modification
+#define T_MOD_INFO_CNT     (T_MOD_INFO_TYPE + _32b_SIZE_ ) //Modification counter
+#define _T_MOD_INFO_SIZE   (T_MOD_INFO_CNT  + _32b_SIZE_ ) //Struct size
 
-#define T_DIAG_MSG_CNT      (0)                             //CPU wide timing message counter
-#define T_DIAG_BOOT_TS      (T_DIAG_MSG_CNT  + _64b_SIZE_ ) //Timestamp of Uptime beginning
-#define T_DIAG_SMOD_TS      (T_DIAG_BOOT_TS  + _TS_SIZE_  ) //Timestamp of last schedule modification
-#define T_DIAG_SMOD_IID     (T_DIAG_SMOD_TS  + _TS_SIZE_  ) //Issuer ID of last schedule modification
-#define T_DIAG_SMOD_MID     (T_DIAG_SMOD_IID + _64b_SIZE_ ) //Machine ID of last schedule modification
-#define T_DIAG_SMOD_HSH     (T_DIAG_SMOD_MID + _64b_SIZE_ ) //Hash of last schedule modification
-#define T_DIAG_SMOD_CNT     (T_DIAG_SMOD_HSH + _32b_SIZE_ ) //schedule modification counter
-#define T_DIAG_CMD_TS       (T_DIAG_SMOD_CNT + _32b_SIZE_ ) //Timestamp of last command batch
-#define T_DIAG_CMD_IID      (T_DIAG_CMD_TS   + _TS_SIZE_  ) //Issuer ID of last command batch
-#define T_DIAG_CMD_HSH      (T_DIAG_CMD_IID  + _64b_SIZE_ ) //Hash of last command batch
-#define T_DIAG_CMD_CNT      (T_DIAG_CMD_HSH  + _32b_SIZE_ ) //Command batch counter
-#define T_DIAG_DIF_MIN      (T_DIAG_CMD_CNT  + _32b_SIZE_ ) //All time min diff between dispatch time and deadline   (signed!)
-#define T_DIAG_DIF_MAX      (T_DIAG_DIF_MIN  + _TS_SIZE_  ) //All time max diff between dispatch time and deadline   (signed!)
-#define T_DIAG_DIF_SUM      (T_DIAG_DIF_MAX  + _TS_SIZE_  ) //Running sum of diff between dispatch time and deadline (signed!)
-#define T_DIAG_DIF_WTH      (T_DIAG_DIF_SUM  + _64b_SIZE_ ) //Diff Threshold between dispatch time and deadline which will trigger a warning (signed!)
-#define T_DIAG_WAR_CNT      (T_DIAG_DIF_WTH  + _TS_SIZE_  ) //Diff warning counter
-#define _T_DIAG_SIZE_       (T_DIAG_WAR_CNT  + _64b_SIZE_ ) 
+#define T_DIAG_MSG_CNT      (0)                              //CPU wide timing message counter
+#define T_DIAG_BOOT_TS      (T_DIAG_MSG_CNT   + _64b_SIZE_ ) //Timestamp of Uptime beginning
+#define T_DIAG_SCH_MOD      (T_DIAG_BOOT_TS   + _TS_SIZE_  ) //Schedule modification info
+#define T_DIAG_CMD_MOD      (T_DIAG_SCH_MOD   + _T_MOD_INFO_SIZE ) //Cmd modification info
+#define T_DIAG_DIF_MIN      (T_DIAG_CMD_MOD   + _T_MOD_INFO_SIZE ) //All time min diff between dispatch time and deadline   (signed!)
+#define T_DIAG_DIF_MAX      (T_DIAG_DIF_MIN   + _TS_SIZE_  ) //All time max diff between dispatch time and deadline   (signed!)
+#define T_DIAG_DIF_SUM      (T_DIAG_DIF_MAX   + _TS_SIZE_  ) //Running sum of diff between dispatch time and deadline (signed!)
+#define T_DIAG_DIF_WTH      (T_DIAG_DIF_SUM   + _64b_SIZE_ ) //Diff Threshold between dispatch time and deadline which will trigger a warning (signed!)
+#define T_DIAG_WAR_CNT      (T_DIAG_DIF_WTH   + _TS_SIZE_  ) //Diff warning counter
+#define _T_DIAG_SIZE_       (T_DIAG_WAR_CNT   + _64b_SIZE_ ) 
 
 
 #define T_META_START_PTR  (0)                               //same for all cpus, can be on any CPU. External view, read/write for host only. Must lie within bitmap range
@@ -145,8 +147,11 @@
 #define SHCTL_THR_DAT    (SHCTL_THR_STA + _THR_QTY_ * _T_TS_SIZE_  )  //Thread Runtime Data (1 per Thread )
 #define SHCTL_INBOXES    (SHCTL_THR_DAT + _THR_QTY_ * _T_TD_SIZE_  )  //Inboxes for MSI (1 per Core in System )
 #define _SHCTL_END_      ROUND_UP((SHCTL_INBOXES + _THR_QTY_ * _32b_SIZE_), 2 * _MEM_BLOCK_SIZE) // set fixed size so firmware updates stay backward compatible // 
-  
-
+/*
+#pragma message(VAR_NAME_VALUE(SHCTL_DIAG))
+#pragma message(VAR_NAME_VALUE(SHCTL_DIAG + T_DIAG_SCH_MOD))
+#pragma message(VAR_NAME_VALUE(SHCTL_DIAG + T_DIAG_CMD_MOD))
+*/
 
 //////////////////////////////////////////////////////////////////////
 
@@ -513,6 +518,24 @@
 #define NFLG_BLOCK_QS_POS   (NFLG_BITS_SPECIFIC_POS + 0)
 #define NFLG_BLOCK_QS_SMSK  (NFLG_BLOCK_QS_MSK << NFLG_BLOCK_QS_POS)
 
+
+#define OP_TYPE_SCH_BASE            0x10
+#define OP_TYPE_SCH_CLEAR           0x11
+#define OP_TYPE_SCH_ADD             0x12
+#define OP_TYPE_SCH_OVERWRITE       0x13
+#define OP_TYPE_SCH_REMOVE          0x14
+#define OP_TYPE_SCH_KEEP            0x15
+
+#define OP_TYPE_CMD_BASE            0x20
+#define OP_TYPE_CMD_FLOW            (OP_TYPE_CMD_BASE + ACT_TYPE_FLOW)
+#define OP_TYPE_CMD_NOP             (OP_TYPE_CMD_BASE + ACT_TYPE_NOOP)
+#define OP_TYPE_CMD_WAIT            (OP_TYPE_CMD_BASE + ACT_TYPE_WAIT)
+#define OP_TYPE_CMD_FLUSH           (OP_TYPE_CMD_BASE + ACT_TYPE_FLUSH)
+#define OP_TYPE_CMD_START           (OP_TYPE_CMD_BASE + 0x10)
+#define OP_TYPE_CMD_STOP            (OP_TYPE_CMD_BASE + 0x11)
+#define OP_TYPE_CMD_CEASE           (OP_TYPE_CMD_BASE + 0x12)
+#define OP_TYPE_CMD_ABORT           (OP_TYPE_CMD_BASE + 0x13)
+#define OP_TYPE_CMD_HALT            (OP_TYPE_CMD_BASE + 0x14)
 
 #endif
 

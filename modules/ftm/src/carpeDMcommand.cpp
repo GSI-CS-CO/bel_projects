@@ -86,12 +86,13 @@ vEbwrs& CarpeDM::createCommandBurst(Graph& g, vEbwrs& ew) {
     //use the destPattern and destBeamprocess tags to determine the destination
     if (g[v].cmdDestPat  != DotStr::Misc::sUndefined)      { destination = getPatternEntryNode(g[v].cmdDestPat); }
     else  if (g[v].cmdDestBp != DotStr::Misc::sUndefined)  { destination = getBeamprocEntryNode(g[v].cmdDestBp); }
-    else                                                    {destination = g[v].cmdDest;}
+    else                                                   { destination = g[v].cmdDest;}
      
 
     uint64_t cmdTvalid  = s2u<uint64_t>(g[v].tValid);
     uint8_t  cmdPrio    = s2u<uint8_t>(g[v].prio);
     uint8_t cpu, thr;
+    
 
     sLog << "Command <" << g[v].name << ">, type <" << g[v].type << ">" << std::endl;
     
@@ -103,9 +104,9 @@ vEbwrs& CarpeDM::createCommandBurst(Graph& g, vEbwrs& ew) {
         std::tie(cpu, thr) = parseCpuAndThr(v, g).get();
         sLog << " Starting cpu=" << (int)cpu << ", thr=" << (int)thr << std::endl;  startThr(cpu, thr, ew); 
       } else {
-        target = getPatternEntryNode(g[v].patName); 
+        target = getPatternEntryNode(g[v].patName);
         if (hm.lookup(target)) {sLog << " Starting at <" << target << ">" << std::endl; startNodeOrigin(target, ew);  }
-        else throw std::runtime_error("Cannot execute command '" + g[v].type + "' No valid cpu/thr provided and '" + target + "' is not a valid node name\n"); 
+        else throw std::runtime_error("Cannot execute command '" + g[v].type + "' No valid cpu/thr provided and '" + target + "' is not a valid node name\n");
       }
       continue;
     }
@@ -115,7 +116,7 @@ vEbwrs& CarpeDM::createCommandBurst(Graph& g, vEbwrs& ew) {
         sLog << " Stopping (trying) cpu=" << (int)cpu << ", thr=" << (int)thr << std::endl;  stopPattern(getNodePattern(getThrCursor(cpu, thr)), ew); 
       } else {
         if (hm.lookup(target)) { sLog << " Stopping at <" << target << ">" << std::endl; stopNodeOrigin(target, ew); }
-        else throw std::runtime_error("Cannot execute command '" + g[v].type + "' No valid cpu/thr provided and '" + target + "' is not a valid node name\n");  
+        else throw std::runtime_error("Cannot execute command '" + g[v].type + "' No valid cpu/thr provided and '" + target + "' is not a valid node name\n");
       }
       continue;
     }  
@@ -125,7 +126,7 @@ vEbwrs& CarpeDM::createCommandBurst(Graph& g, vEbwrs& ew) {
         sLog << " Aborting cpu=" << (int)cpu << ", thr=" << (int)thr << std::endl; abortThr(cpu, thr, ew); 
       } else {
         if (hm.lookup(target)) {sLog << " Aborting (trying) at <" << target << ">" << std::endl; abortNodeOrigin(target, ew); }
-        else throw std::runtime_error("Cannot execute command '" + g[v].type + "'. No valid cpu/thr provided and '" + target + "' is not a valid node name\n"); 
+        else throw std::runtime_error("Cannot execute command '" + g[v].type + "'. No valid cpu/thr provided and '" + target + "' is not a valid node name\n");
       }
       continue;  
     }
@@ -141,31 +142,34 @@ vEbwrs& CarpeDM::createCommandBurst(Graph& g, vEbwrs& ew) {
     }
 
     // Commands targeted at cmd queue of individual blocks, using miniCommand (mc) class
-         if (g[v].type == dnt::sCmdNoop)    { uint32_t cmdQty = s2u<uint32_t>(g[v].qty);
-                                              mc = (mc_ptr) new MiniNoop(cmdTvalid, cmdPrio, cmdQty );
+         if (g[v].type == dnt::sCmdNoop)  { uint32_t cmdQty = s2u<uint32_t>(g[v].qty);
+                                            mc = (mc_ptr) new MiniNoop(cmdTvalid, cmdPrio, cmdQty );
+                                          }
+    else if (g[v].type == dnt::sCmdFlow)  { uint32_t cmdQty = s2u<uint32_t>(g[v].qty);
+                                            sLog << " Flowing from <" << target << "> to <" << destination << ">, permanent defDest change='" << s2u<bool>(g[v].perma) << "'" << std::endl;
+                                            uint32_t adr = LM32_NULL_PTR;
+                                            try { adr = getNodeAdr(destination, TransferDir::DOWNLOAD, AdrType::INT); } catch (std::runtime_error const& err) {
+                                              throw std::runtime_error("Destination '" + destination + "'' invalid: " + std::string(err.what()));
                                             }
-    else if (g[v].type == dnt::sCmdFlow)    { uint32_t cmdQty = s2u<uint32_t>(g[v].qty);
-                                              sLog << " Flowing from <" << target << "> to <" << destination << ">, permanent defDest change='" << s2u<bool>(g[v].perma) << "'" << std::endl;
-                                              uint32_t adr = LM32_NULL_PTR;
-                                              try { adr = getNodeAdr(destination, TransferDir::DOWNLOAD, AdrType::INT); } catch (std::runtime_error const& err) {
-                                                throw std::runtime_error("Destination '" + destination + "'' invalid: " + std::string(err.what()));
-                                              }
 
-                                              mc = (mc_ptr) new MiniFlow(cmdTvalid, cmdPrio, cmdQty, adr, s2u<bool>(g[v].perma) );
-                                            }
-    else if (g[v].type == dnt::sCmdFlush)   { sLog << " Flushing <" << target << "> Queues IL " << s2u<int>(g[v].qIl) << " HI " << s2u<int>(g[v].qHi) << " LO " << s2u<int>(g[v].qLo) <<  std::endl;
-                                              mc = (mc_ptr) new MiniFlush(cmdTvalid, cmdPrio, s2u<bool>(g[v].qIl), s2u<bool>(g[v].qHi), s2u<bool>(g[v].qLo));
-                                            }
-    else if (g[v].type == dnt::sCmdWait)    { uint64_t cmdTwait  = s2u<uint64_t>(g[v].tWait);
-                                              mc = (mc_ptr) new MiniWait(cmdTvalid, cmdPrio, cmdTwait, false, false );
-                                            }
-    else                                    { throw std::runtime_error("Command <" + g[v].name + ">'s type <" + g[v].type + "> is not supported!\n");} 
+                                            mc = (mc_ptr) new MiniFlow(cmdTvalid, cmdPrio, cmdQty, adr, s2u<bool>(g[v].perma) );
+                                          }
+    else if (g[v].type == dnt::sCmdFlush) { sLog << " Flushing <" << target << "> Queues IL " << s2u<int>(g[v].qIl) << " HI " << s2u<int>(g[v].qHi) << " LO " << s2u<int>(g[v].qLo) <<  std::endl;
+                                            mc = (mc_ptr) new MiniFlush(cmdTvalid, cmdPrio, s2u<bool>(g[v].qIl), s2u<bool>(g[v].qHi), s2u<bool>(g[v].qLo));
+                                          }
+    else if (g[v].type == dnt::sCmdWait)  { uint64_t cmdTwait  = s2u<uint64_t>(g[v].tWait);
+                                            mc = (mc_ptr) new MiniWait(cmdTvalid, cmdPrio, cmdTwait, false, false );
+                                          }
+    else                                  { throw std::runtime_error("Command <" + g[v].name + ">'s type <" + g[v].type + "> is not supported!\n");} 
     
     sLog << std::endl;
-    //send miniCommand
+    //create miniCommand
     createCommand(target, cmdPrio, mc, ew);
-
+    
   }
+
+ 
+
 
 
   return ew;
@@ -179,25 +183,31 @@ vEbwrs& CarpeDM::createCommandBurst(Graph& g, vEbwrs& ew) {
 
 
   vEbwrs& CarpeDM::createCommand(const std::string& targetName, uint8_t cmdPrio, mc_ptr mc, vEbwrs& ew) {
-    
 
     uint32_t cmdWrInc, hash;
     uint8_t b[_T_CMD_SIZE_ + _32b_SIZE_];
     
     if (!hm.lookup(targetName)) throw std::runtime_error("Command target <" + targetName + "> is not valid\n");
-    
+
  
-    hash        = hm.lookup(targetName).get(); 
+    hash     = hm.lookup(targetName).get(); 
     vAdr tmp = getCmdWrAdrs(hash, cmdPrio);
-    ew.va += tmp;
-    ew.vcs += leadingOne(tmp.size());
+    ew.va   += tmp;
+    ew.vcs  += leadingOne(tmp.size());
     
-    cmdWrInc    = getCmdInc(hash, cmdPrio);
+    cmdWrInc = getCmdInc(hash, cmdPrio);
     mc->serialise(b);
     writeLeNumberToBeBytes(b + (ptrdiff_t)_T_CMD_SIZE_, cmdWrInc);
     ew.vb.insert( ew.vb.end(), b, b + _T_CMD_SIZE_ + _32b_SIZE_);
+    //Save mod information for minicommands
     
+    //special treatment for stop (flow to idle == type flow && dst LM32_NULL_PTR)
+    uint8_t opType = OP_TYPE_CMD_BASE + ((mc->getAct() >> ACT_TYPE_POS) & ACT_TYPE_MSK); 
+    if ((((mc->getAct() >> ACT_TYPE_POS) & ACT_TYPE_MSK) == ACT_TYPE_FLOW) 
+     && (boost::dynamic_pointer_cast<MiniFlow>(mc)->getDst() == LM32_NULL_PTR)) { opType = OP_TYPE_CMD_STOP; }
     
+    createCmdModInfo(getNodeCpu(targetName, TransferDir::DOWNLOAD), 0, opType, ew);
+
     return ew;
   }
 
@@ -307,6 +317,7 @@ vEbwrs& CarpeDM::createCommandBurst(Graph& g, vEbwrs& ew) {
     writeLeNumberToBeBytes<uint32_t>(b, bits);
     ew.vb.insert( ew.vb.end(), b, b + sizeof(b));
     ew.vcs += leadingOne(1);
+    createCmdModInfo(cpuIdx, 0, OP_TYPE_CMD_START, ew);
     return ew;
   }
 
@@ -324,6 +335,7 @@ vEbwrs& CarpeDM::createCommandBurst(Graph& g, vEbwrs& ew) {
     writeLeNumberToBeBytes<uint32_t>(b, bits);
     ew.vb.insert( ew.vb.end(), b, b + sizeof(b));
     ew.vcs += leadingOne(1);
+    createCmdModInfo(cpuIdx, 0, OP_TYPE_CMD_ABORT, ew);
     return ew;
   }
 
@@ -334,11 +346,13 @@ vEbwrs& CarpeDM::createCommandBurst(Graph& g, vEbwrs& ew) {
     uint8_t b[4];
     writeLeNumberToBeBytes<uint32_t>(b, (1 << _THR_QTY_)-1 );
 
+
     for(uint8_t cpuIdx=0; cpuIdx < getCpuQty(); cpuIdx++) {
       setThrStart(cpuIdx, 0, ew);
       ew.va.push_back(getThrCmdAdr(cpuIdx) + T_TC_ABORT);
       ew.vb.insert( ew.vb.end(), b, b + sizeof(b));
       ew.vcs.push_back(true); // each one is a new wb device, so we always need a new eb cycle
+      createCmdModInfo(cpuIdx, 0, OP_TYPE_CMD_HALT, ew);
     }
     
     ebWriteCycle(ebd, ew.va, ew.vb, ew.vcs);
@@ -756,7 +770,18 @@ vertex_set_t CarpeDM::getAllCursors(bool activeOnly) {
 
 }
 
-
+ 
+  uint64_t  smodTime;
+  char      smodIssuer[9];
+  char      smodHost[9];
+  std::string smodOpType;
+  uint32_t  smodCnt;
+  uint64_t  cmodTime;
+  char      cmodIssuer[9];
+  char      cmodHost[9];
+  std::string cmodOpType;
+  uint32_t  cmodCnt;
+  
 
 HealthReport& CarpeDM::getHealth(uint8_t cpuIdx, HealthReport &hr) {
   uint32_t const baseAdr = cpuDevs.at(cpuIdx).sdb_component.addr_first + atDown.getMemories()[cpuIdx].sharedOffs;
@@ -773,26 +798,74 @@ HealthReport& CarpeDM::getHealth(uint8_t cpuIdx, HealthReport &hr) {
 
   //hexDump("TEST", diagBuf );
 
-  //hexDump("boot", (const char*)(b + T_DIAG_BOOT_TS), 8 );
-  //hexDump("smod", (const char*)(b + T_DIAG_SMOD_TS), 8 );
 
   hr.cpu              = cpuIdx;
   hr.msgCnt           = writeBeBytesToLeNumber<uint64_t>(b + T_DIAG_MSG_CNT); 
   hr.bootTime         = writeBeBytesToLeNumber<uint64_t>(b + T_DIAG_BOOT_TS); 
-  //TODO Schedule modfication issuer, hash ...
-  //TODO Command time, modfication issuer, hash ...
-  //printf("bootnum, 0x%016x \n", hr.bootTime);
-  hr.smodTime         = writeBeBytesToLeNumber<uint64_t>(b + T_DIAG_SMOD_TS);
+
+
+  hr.smodTime         = writeBeBytesToLeNumber<uint64_t>(b + T_DIAG_SCH_MOD + T_MOD_INFO_TS);
   for (int i = 0; i<8; i++) { //copy and sanitize issuer name
-    char c = *(char*)(b + T_DIAG_SMOD_IID + i);
+    char c = *(char*)(b + T_DIAG_SCH_MOD + T_MOD_INFO_IID + i);
     hr.smodIssuer[i] = (((c > 32) && (c < 126)) ? c : '\00');
   }
   hr.smodIssuer[8] = '\00';
   for (int i = 0; i<8; i++) { //copy and sanitize issuer machine name
-    char c = *(char*)(b + T_DIAG_SMOD_MID + i);
+    char c = *(char*)(b + T_DIAG_SCH_MOD + T_MOD_INFO_MID + i);
     hr.smodHost[i] = (((c > 32) && (c < 126)) ? c : '\00');
   }
-  hr.smodHost[8] = '\00';  
+  hr.smodHost[8] = '\00';
+
+  uint8_t schOpType = writeBeBytesToLeNumber<uint32_t>(b + T_DIAG_SCH_MOD + T_MOD_INFO_TYPE);   //there may be more info here later, so don't use byte offsets, just mask (by cast now)
+  
+  //printf("Schedule Optype 0x%02x @ 0x%08x\n", schOpType, T_DIAG_SCH_MOD + T_MOD_INFO_TYPE);
+
+  switch(schOpType) {
+    case OP_TYPE_SCH_CLEAR      : hr.smodOpType = "Clear"; break;
+    case OP_TYPE_SCH_ADD        : hr.smodOpType = "Add"; break;
+    case OP_TYPE_SCH_OVERWRITE  : hr.smodOpType = "Overwrite"; break;
+    case OP_TYPE_SCH_REMOVE     : hr.smodOpType = "Remove"; break;
+    case OP_TYPE_SCH_KEEP       : hr.smodOpType = "Keep"; break;
+    default                     : hr.smodOpType = "    ?"; break;
+  }
+
+   
+  hr.smodCnt     =  writeBeBytesToLeNumber<uint32_t>(b + T_DIAG_SCH_MOD + T_MOD_INFO_CNT);
+
+
+  hr.cmodTime         = writeBeBytesToLeNumber<uint64_t>(b + T_DIAG_CMD_MOD + + T_MOD_INFO_TS);
+  for (int i = 0; i<8; i++) { //copy and sanitize issuer name
+    char c = *(char*)(b + T_DIAG_CMD_MOD + T_MOD_INFO_IID + i);
+    hr.cmodIssuer[i] = (((c > 32) && (c < 126)) ? c : '\00');
+  }
+  hr.cmodIssuer[8] = '\00';
+  for (int i = 0; i<8; i++) { //copy and sanitize issuer machine name
+    char c = *(char*)(b + T_DIAG_CMD_MOD + T_MOD_INFO_MID + i);
+    hr.cmodHost[i] = (((c > 32) && (c < 126)) ? c : '\00');
+  }
+  hr.cmodHost[8] = '\00';  
+  
+
+
+  uint8_t cmdOpType = writeBeBytesToLeNumber<uint32_t>(b + T_DIAG_CMD_MOD + T_MOD_INFO_TYPE);   //there may be more info here later, so don't use byte offsets, just mask (by cast now)
+  //printf("Cmd Optype %02x @ 0x%08x, Flow would be %02x\n", cmdOpType, T_DIAG_CMD_MOD + T_MOD_INFO_TYPE, OP_TYPE_CMD_FLOW);
+
+  switch(cmdOpType) {
+    case OP_TYPE_CMD_FLOW  : hr.cmodOpType = "Flow"; break;
+    case OP_TYPE_CMD_NOP   : hr.cmodOpType = "No Op"; break;
+    case OP_TYPE_CMD_WAIT  : hr.cmodOpType = "Wait"; break;
+    case OP_TYPE_CMD_FLUSH : hr.cmodOpType = "Flush"; break;
+    case OP_TYPE_CMD_START : hr.cmodOpType = "Start"; break;
+    case OP_TYPE_CMD_STOP  : hr.cmodOpType = "Stop"; break;
+    case OP_TYPE_CMD_CEASE : hr.cmodOpType = "Cease"; break;
+    case OP_TYPE_CMD_ABORT : hr.cmodOpType = "Abort"; break;
+    default                : hr.cmodOpType = "    ?";
+  }
+
+
+  hr.cmodCnt          = (uint8_t)writeBeBytesToLeNumber<uint32_t>(b + T_DIAG_CMD_MOD + T_MOD_INFO_CNT);
+
+
   hr.minTimeDiff      =  writeBeBytesToLeNumber<int64_t>(b + T_DIAG_DIF_MIN);  
   hr.maxTimeDiff      =  writeBeBytesToLeNumber<int64_t>(b + T_DIAG_DIF_MAX);
   hr.avgTimeDiff      = (hr.msgCnt ? writeBeBytesToLeNumber<int64_t>(b + T_DIAG_DIF_SUM) / (int64_t)hr.msgCnt : 0);   

@@ -126,7 +126,7 @@ int main(int argc, char* argv[]) {
    std::cerr << std::endl << program << ": Failed to connect to DM: " << err.what() << std::endl; return -20;
   }
 
-
+  cdm.updateModTime();
 
   if (cmdName != NULL ) {
 

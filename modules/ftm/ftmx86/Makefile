@@ -12,7 +12,7 @@ GRAPH_LIB       =-lboost_graph
 
 TOP            ?= ../../..
 
-VERSION        ?= 1.3.0
+VERSION        ?= 1.4.0
 VERSION_TOOL   ?= 0.14.0
 
 

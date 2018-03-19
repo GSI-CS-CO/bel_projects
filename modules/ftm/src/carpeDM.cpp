@@ -779,3 +779,40 @@ void CarpeDM::showCpuList() {
     return ret;  
 
   }
+
+
+  vEbwrs& CarpeDM::createModInfo(uint8_t cpu, uint32_t modCnt, uint8_t opType, vEbwrs& ew, uint32_t adrOffs) {
+    printf("Creating info \n");
+    // modification time address (lo/hi)
+    uint32_t modAdrBase = atUp.getMemories()[cpu].extBaseAdr + atUp.getMemories()[cpu].sharedOffs + SHCTL_DIAG + adrOffs;
+    // save modification time, issuer
+
+    char username[LOGIN_NAME_MAX];
+    getlogin_r(username, LOGIN_NAME_MAX);
+    char machinename[HOST_NAME_MAX];
+    gethostname(machinename, HOST_NAME_MAX);
+
+
+    uint8_t b[8];
+ 
+
+    ew.vcs += leadingOne(8); // add 8 words
+    ew.va.push_back(modAdrBase + T_MOD_INFO_TS    + 0);
+    ew.va.push_back(modAdrBase + T_MOD_INFO_TS    + _32b_SIZE_);
+    ew.va.push_back(modAdrBase + T_MOD_INFO_IID   + 0);
+    ew.va.push_back(modAdrBase + T_MOD_INFO_IID   + _32b_SIZE_);
+    ew.va.push_back(modAdrBase + T_MOD_INFO_MID   + 0);
+    ew.va.push_back(modAdrBase + T_MOD_INFO_MID   + _32b_SIZE_);
+    ew.va.push_back(modAdrBase + T_MOD_INFO_TYPE  );
+    ew.va.push_back(modAdrBase + T_MOD_INFO_CNT   );
+    writeLeNumberToBeBytes<uint64_t>((uint8_t*)&b[0], modTime);
+    ew.vb.insert( ew.vb.end(), b, b +  _TS_SIZE_  );
+    ew.vb.insert( ew.vb.end(), username, username +  _64b_SIZE_  );
+    ew.vb.insert( ew.vb.end(), machinename, machinename +  _64b_SIZE_  );
+    writeLeNumberToBeBytes<uint32_t>((uint8_t*)&b[0], opType);
+    ew.vb.insert( ew.vb.end(), b, b +  _32b_SIZE_  );
+    writeLeNumberToBeBytes<uint32_t>((uint8_t*)&b[0], modCnt);
+    ew.vb.insert( ew.vb.end(), b, b +  _32b_SIZE_  );
+
+    return ew;
+  }

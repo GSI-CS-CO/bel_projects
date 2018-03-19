@@ -59,8 +59,11 @@ private:
 
 
   // Upload
-  vEbwrs gatherUploadVector();
-  int upload(); //Upload processed Graph to LM32 SoC via Etherbone
+  vEbwrs gatherUploadVector(std::set<uint8_t> moddedCpus, uint32_t modCnt, uint8_t opType);
+  vEbwrs& createModInfo     (uint8_t cpu, uint32_t modCnt, uint8_t opType, vEbwrs& ew, uint32_t adrOffs);
+  vEbwrs& createSchedModInfo(uint8_t cpu, uint32_t modCnt, uint8_t opType, vEbwrs& ew) { return createModInfo(cpu, modCnt, opType, ew, T_DIAG_SCH_MOD); };
+  vEbwrs& createCmdModInfo  (uint8_t cpu, uint32_t modCnt, uint8_t opType, vEbwrs& ew) { return createModInfo(cpu, modCnt, opType, ew, T_DIAG_CMD_MOD); };
+  int upload(uint8_t opType); //Upload processed Graph to LM32 SoC via Etherbone
   
   // Download
   vEbrds gatherDownloadBmpVector();
@@ -96,6 +99,8 @@ private:
   vBuf decompress(const vBuf& in);
 
   void readMgmtLLMeta();
+
+
 
 protected:
 
@@ -330,7 +335,8 @@ std::pair<int, int> findRunningPattern(const std::string& sPattern); //get cpu a
   bool isVerbose()  const {return verbose;} //Tell if Output is set to Verbose 
   void debugOn()  {debug = true;}  //Turn on Verbose Output
   void debugOff() {debug = false;} //Turn off Verbose Output
-  bool isDebug()  const {return debug;} //Tell if Output is set to Verbose 
+  bool isDebug()  const {return debug;} //Tell if Output is set to Verbose
+  void updateModTime() { modTime = getDmWrTime() * 1000000000ULL; } 
 };
 
 #endif

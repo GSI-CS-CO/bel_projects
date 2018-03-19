@@ -107,11 +107,11 @@ void showStatus(const char *netaddress, CarpeDM& cdm, bool verbose) {
   strftime(date, sizeof(date), "%Y-%m-%d %H:%M:%S", gmtime((time_t*)&timeWr));
 
 
-  printf("\n\u2552"); for(int i=0;i<width;i++) printf("\u2550"); printf("\u2555\n");
-  printf("\u2502 DataMaster: %-80s \u2502 WR-Time: 0x%08x%08x ns \u2502 %.19s \u2502\n", netaddress, (uint32_t)(timeWrNs>>32), (uint32_t)timeWrNs, date);
-  printf("\u251C"); for(int i=0;i<width;i++) printf("\u2550"); printf("\u2524\n");
-  printf("\u2502 %3s \u2502 %3s \u2502 %7s \u2502 %9s \u2502 %55s \u2502 %55s \u2502\n", "Cpu", "Thr", "Running", "MsgCount", "Pattern", "Node");
-  printf("\u251C"); for(int i=0;i<width;i++) printf("\u2550"); printf("\u2524\n");
+  printf("\n\u2554"); for(int i=0;i<width;i++) printf("\u2550"); printf("\u2557\n");
+  printf("\u2551 DataMaster: %-80s \u2502 WR-Time: 0x%08x%08x ns \u2502 %.19s \u2551\n", netaddress, (uint32_t)(timeWrNs>>32), (uint32_t)timeWrNs, date);
+  printf("\u2560"); for(int i=0;i<width;i++) printf("\u2550"); printf("\u2563\n");
+  printf("\u2551 %3s \u2502 %3s \u2502 %7s \u2502 %9s \u2502 %55s \u2502 %55s \u2551\n", "Cpu", "Thr", "Running", "MsgCount", "Pattern", "Node");
+  printf("\u2560"); for(int i=0;i<width;i++) printf("\u2550"); printf("\u2563\n");
   
   bool toggle=false;
 
@@ -119,12 +119,12 @@ void showStatus(const char *netaddress, CarpeDM& cdm, bool verbose) {
   for(uint8_t cpuIdx=0; cpuIdx < cpuQty; cpuIdx++) {
     for(uint8_t thrIdx=0; thrIdx < thrQty; thrIdx++) {
       if (verbose || ((cdm.getThrRun(cpuIdx) >> thrIdx) & 1)) {
-        //if (!first) {printf("\u251C"); for(int i=0;i<width;i++) printf("\u2500"); printf("\u2524\n");
+        //if (!first) {printf("\u2560"); for(int i=0;i<width;i++) printf("\u2500"); printf("\u2563\n");
         std::string running = (((cdm.getThrRun(cpuIdx) >> thrIdx) & 1) ? std::string(KGRN) + std::string("yes") : std::string(KRED) + std::string(" no")) + std::string(KNRM);
         std::string originPattern = vsOriginPattern[cpuIdx * thrQty + thrIdx];
         std::string origin        = vsOrigin[cpuIdx * thrQty + thrIdx];
 
-        printf("\u2502%s %2u  \u2502 %2u  \u2502   %3s%s   \u2502 %9llu \u2502 %55s \u2502 %55s %s\u2502\n", (toggle ? BLGR : ""), cpuIdx, thrIdx, running.c_str(), 
+        printf("\u2551%s %2u  \u2502 %2u  \u2502   %3s%s   \u2502 %9llu \u2502 %55s \u2502 %55s %s\u2551\n", (toggle ? BLGR : ""), cpuIdx, thrIdx, running.c_str(), 
           (toggle ? BLGR : ""),
           (unsigned long long int)vsMsgCnt[cpuIdx * thrQty + thrIdx],
           vsCursorPattern[cpuIdx * thrQty + thrIdx].c_str(),  
@@ -136,7 +136,7 @@ void showStatus(const char *netaddress, CarpeDM& cdm, bool verbose) {
     } 
   }
 
-  printf("\u2514"); for(int i=0;i<width;i++) printf("\u2500"); printf("\u2518\n");
+  printf("\u255A"); for(int i=0;i<width;i++) printf("\u2550"); printf("\u255D\n");
 
 }
 
@@ -148,7 +148,7 @@ void showHealth(const char *netaddress, CarpeDM& cdm, bool verbose) {
 
 
   for(uint8_t i=0; i < cpuQty; i++) { cdm.getHealth(i, hr[i]); }  
-  const uint16_t width = 160;
+  const uint16_t width = 80;
   //this is horrible code, but harmless. Does the job for now.
   //TODO: replace this with something more sensible
 
@@ -156,47 +156,66 @@ void showHealth(const char *netaddress, CarpeDM& cdm, bool verbose) {
   char date[40];
   uint64_t timeWr = cdm.getDmWrTime();
   strftime(date, sizeof(date), "%Y-%m-%d %H:%M:%S", gmtime((time_t*)&timeWr));
+  unsigned netStrLen;
+  for(netStrLen = 0; netStrLen < width; netStrLen++) {if (netaddress[netStrLen] == '\00') break;}
+
+  printf("\n\u2554"); for(int i=0;i<width;i++) printf("\u2550"); printf("\u2557\n");
+  printf("\u2551 DM: %s", netaddress); for(uint8_t i=0; i < (width - 5 - netStrLen); i++) printf(" "); printf("\u2551\n");
+  printf("\u2560"); for(int i=0;i<width;i++) printf("\u2550"); printf("\u2563\n");
+  printf("\u2551 WR-Time: 0x%08x%08x \u2502 %.19s %32s\n", (uint32_t)(timeWr>>32), (uint32_t)timeWr, date, "\u2551");
 
   
-  
-
-  printf("\n\u2552"); for(int i=0;i<width;i++) printf("\u2550"); printf("\u2555\n");
-  printf("\u2502 DataMaster: %-83s \u2502 WR-Time: 0x%08x%08x \u2502 %.19s \u2502\n", netaddress, (uint32_t)(timeWr>>32), (uint32_t)timeWr, date);
-  printf("\u251C"); for(int i=0;i<width;i++) printf("\u2550"); printf("\u2524\n");
-  printf("\u2502 %3s \u2502 %19s \u2502 %19s \u2502 %8s \u2502 %8s \u2502 %14s \u2502 %9s \u2502 %9s \u2502 %9s \u2502 %9s \u2502 %9s \u2502 %10s \u2502\n", 
-        "Cpu", "BootTime", "Schedule ModTime", "Issuer", "Host", "CPU Msg Cnt", "Min dT", "Max dT", "Avg dT", "Thrs dT", "WrnCnt", "State");
-  printf("\u251C"); for(int i=0;i<width;i++) printf("\u2550"); printf("\u2524\n");
-  
-
-   
+  // Boot Time and Msg Count
+  printf("\u2560"); for(int i=0;i<width;i++) printf("\u2550"); printf("\u2563\n");
+  printf("\u2551 %3s \u2502 %19s \u2502 %14s \u2502 %37s\n", 
+      "Cpu", "BootTime", "CPU Msg Cnt", "\u2551");
+  printf("\u2560"); for(int i=0;i<width;i++) printf("\u2550"); printf("\u2563\n");
   for(uint8_t i=0; i < cpuQty; i++) {
-    char dateBoot[40], dateMod[40];
-    uint64_t timeBoot = hr[i].bootTime / 1000000000ULL, timeMod = hr[i].smodTime / 1000000000ULL;
-    strftime(dateBoot,  sizeof(dateBoot), "%Y-%m-%d %H:%M:%S", gmtime((time_t*)&timeBoot));   
-    strftime(dateMod,   sizeof(dateMod),  "%Y-%m-%d %H:%M:%S", gmtime((time_t*)&timeMod));
-    //this is nanoseconds, we need to convert to seconds
-    
-    
-    
+    char date[40];
+    uint64_t timeval = hr[i].bootTime / 1000000000ULL; //all times are in nanoseconds, we need to convert to seconds
+    strftime(date,  sizeof(date), "%Y-%m-%d %H:%M:%S", gmtime((time_t*)&timeval)); //human readable date
+    printf("\u2551 %3u \u2502 %.19s \u2502 %14llu \u2502 %37s\n", hr[i].cpu, date, (long long unsigned int)hr[i].msgCnt, "\u2551");    
+  }
 
-    printf("\u2502 %3u \u2502 %.19s \u2502 %.19s \u2502 %8s \u2502 %8s \u2502 %14llu \u2502 %9d \u2502 %9d \u2502 %9d \u2502 %9d \u2502 %9u \u2502 0x%08x \u2502\n", 
-                                                                                                                    hr[i].cpu,
-                                                                                                                    dateBoot,
-                                                                                                                    dateMod,
-                                                                                                                    hr[i].smodIssuer,
-                                                                                                                    hr[i].smodHost,
-                                                                                                                    (unsigned long long int)hr[i].msgCnt,
-                                                                                                                    (int)hr[i].minTimeDiff,
-                                                                                                                    (int)hr[i].maxTimeDiff,
-                                                                                                                    (int)hr[i].avgTimeDiff,
-                                                                                                                    (int)hr[i].warningThreshold,
-                                                                                                                    hr[i].warningCnt,
-                                                                                                                    hr[i].stat);
+  // Most recent schedule modification (time, issuer, type of operation)
+  printf("\u2560"); for(int i=0;i<width;i++) printf("\u2550"); printf("\u2563\n");
+  printf("\u2551 %3s \u2502 %19s \u2502 %8s \u2502 %8s \u2502 %10s \u2502 %19s\n", "Cpu",  "Schedule ModTime", "Issuer", "Host", "Op Type", "\u2551");
+  printf("\u2560"); for(int i=0;i<width;i++) printf("\u2550"); printf("\u2563\n");
+  for(uint8_t i=0; i < cpuQty; i++) {
+    char date[40];
+    uint64_t timeval = hr[i].smodTime / 1000000000ULL;
+    strftime(date,  sizeof(date), "%Y-%m-%d %H:%M:%S", gmtime((time_t*)&timeval));
+    printf("\u2551 %3u \u2502 %19s \u2502 %8s \u2502 %8s \u2502 %10s \u2502 %19s\n", hr[i].cpu, date, hr[i].smodIssuer, hr[i].smodHost, hr[i].smodOpType.c_str(), "\u2551");
   }  
   
+  // Most recent command (time, issuer, type of operation)
+  printf("\u2560"); for(int i=0;i<width;i++) printf("\u2550"); printf("\u2563\n");
+  printf("\u2551 %3s \u2502 %19s \u2502 %8s \u2502 %8s \u2502 %10s \u2502 %19s\n", "Cpu",  "Command ModTime", "Issuer", "Host", "Op Type", "\u2551");
+  printf("\u2560"); for(int i=0;i<width;i++) printf("\u2550"); printf("\u2563\n");
+  for(uint8_t i=0; i < cpuQty; i++) {
+    char date[40];
+    uint64_t timeval = hr[i].cmodTime / 1000000000ULL;
+    strftime(date,  sizeof(date), "%Y-%m-%d %H:%M:%S", gmtime((time_t*)&timeval));
+    printf("\u2551 %3u \u2502 %19s \u2502 %8s \u2502 %8s \u2502 %10s \u2502 %19s\n", hr[i].cpu, date, hr[i].cmodIssuer, hr[i].cmodHost, hr[i].cmodOpType.c_str(), "\u2551");
+  } 
 
-
-  printf("\u2514"); for(int i=0;i<width;i++) printf("\u2500"); printf("\u2518\n");
+  //LM32 message ispatch statistics (min lead, max lead, avg lead, lead warning threshold, warning count, status register)
+  printf("\u2560"); for(int i=0;i<width;i++) printf("\u2550"); printf("\u2563\n");
+  printf("\u2551 %3s \u2502 %9s \u2502 %9s \u2502 %9s \u2502 %9s \u2502 %9s \u2502 %10s   %3s\n", 
+      "Cpu", "Min dT", "Max dT", "Avg dT", "Thrs dT", "WrnCnt", "State", "\u2551");
+  printf("\u2560"); for(int i=0;i<width;i++) printf("\u2550"); printf("\u2563\n");
+  for(uint8_t i=0; i < cpuQty; i++) {
+    printf("\u2551 %3u \u2502 %9d \u2502 %9d \u2502 %9d \u2502 %9d \u2502 %9u \u2502 0x%08x   %3s\n", 
+      hr[i].cpu,
+      (int)hr[i].minTimeDiff,
+      (int)hr[i].maxTimeDiff,
+      (int)hr[i].avgTimeDiff,
+      (int)hr[i].warningThreshold,
+      hr[i].warningCnt,
+      hr[i].stat, "\u2551");
+  }
+    
+  printf("\u255A"); for(int i=0;i<width;i++) printf("\u2550"); printf("\u255D\n");
 
 }
 
@@ -319,6 +338,8 @@ int main(int argc, char* argv[]) {
   if(verbose) cdm.verboseOn();
   if(debug)   cdm.debugOn();
 
+
+
   try {
     cdm.connect(std::string(netaddress));
   } catch (std::runtime_error const& err) {
@@ -332,6 +353,8 @@ int main(int argc, char* argv[]) {
        return -30;
     }  
   }
+
+  cdm.updateModTime();
 
   // The global hard abort commands are special - they must work regardless if the schedule download/parse was successful or not
   if (typeName != NULL ) { 
