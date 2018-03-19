@@ -782,7 +782,6 @@ void CarpeDM::showCpuList() {
 
 
   vEbwrs& CarpeDM::createModInfo(uint8_t cpu, uint32_t modCnt, uint8_t opType, vEbwrs& ew, uint32_t adrOffs) {
-    printf("Creating info \n");
     // modification time address (lo/hi)
     uint32_t modAdrBase = atUp.getMemories()[cpu].extBaseAdr + atUp.getMemories()[cpu].sharedOffs + SHCTL_DIAG + adrOffs;
     // save modification time, issuer
