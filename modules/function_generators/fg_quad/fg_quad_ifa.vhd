@@ -116,12 +116,15 @@ architecture fg_quad_scu_bus_arch of fg_quad_ifa is
 begin
   quad_fg: fg_quad_datapath 
     generic map (
-      ClK_in_hz => clk_in_hz)
+      ClK_in_hz => clk_in_hz,
+      ACU => false
+      )
     port map (
       data_a              => coeff_a_reg,
       data_b              => coeff_b_reg,
       data_c              => start_value_reg(31 downto 0),
       clk                 => clk,
+      sysclk              => '0',
       nrst                => nReset,
       sync_rst            => fg_cntrl_reg(0),
       a_en                => wr_coeff_a or blk_start_h_wr,

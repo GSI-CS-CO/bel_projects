@@ -11,7 +11,8 @@ entity fg_quad_scu_bus is
     Base_addr:            unsigned(15 downto 0);
     clk_in_hz:            integer := 50_000_000;        -- 50Mhz
     diag_on_is_1:         integer range 0 to 1 := 0;    -- if 1 then diagnosic information is generated during compilation
-    fw_version:           integer range 0 to 65535 := 3
+    fw_version:           integer range 0 to 65535 := 4;
+    ACU:                  boolean := false
     );
   port (
     -- SCUB interface
@@ -22,6 +23,7 @@ entity fg_quad_scu_bus is
     Ext_Wr_active:      in    std_logic;                      -- '1' => Wr-Cycle is active
     user_rd_active:     out   std_logic;                      -- '1' = read data available at 'Data_to_SCUB'-output
     clk:                in    std_logic;                      -- should be the same clk, used by SCU_Bus_Slave
+    sysclk:             in    std_logic;                      -- 12.5 MHz Backplane clock
     nReset:             in    std_logic;
     tag:                in    std_logic_vector(31 downto 0);  -- 32Bit tag from timing 
     tag_valid:          in    std_logic;                      -- tag valid
@@ -98,12 +100,15 @@ architecture fg_quad_scu_bus_arch of fg_quad_scu_bus is
 begin
   quad_fg: fg_quad_datapath 
     generic map (
-      ClK_in_hz => clk_in_hz)
+                 ClK_in_hz => clk_in_hz,
+                       ACU => ACU
+                 )
     port map (
       data_a              => coeff_a_reg,
       data_b              => coeff_b_reg,
       data_c              => start_value_reg(31 downto 0),
       clk                 => clk,
+      sysclk              => sysclk,
       nrst                => nReset,
       sync_rst            => fg_cntrl_reg(0),
       a_en                => wr_coeff_a,
