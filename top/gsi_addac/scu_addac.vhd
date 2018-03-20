@@ -571,7 +571,8 @@ fg_1: fg_quad_scu_bus
   generic map (
     Base_addr     => c_fg1_base,
     clk_in_hz     => clk_sys_in_Hz,
-    diag_on_is_1  => 0 -- if 1 then diagnosic information is generated during compilation
+    diag_on_is_1 => 0, -- if 1 then diagnosic information is generated during compilation
+    ACU => false
     )
   port map (
 
@@ -582,6 +583,7 @@ fg_1: fg_quad_scu_bus
     Ext_Rd_active     => Ext_Rd_active,         -- in, '1' => Rd-Cycle is active
     Ext_Wr_active     => Ext_Wr_active,         -- in, '1' => Wr-Cycle is active
     clk               => clk_sys,               -- in, should be the same clk, used by SCU_Bus_Slave
+    sysclk            => '0',                   -- in, only used for ACU implementation
     nReset            => rstn_sys,              -- in, '0' => resets the fg_1
     Rd_Port           => fg_1_data_to_SCUB,     -- out, connect read sources (over multiplexer) to SCUB-Macro
     user_rd_active    => fg_1_rd_active,        -- '1' = read data available at 'Rd_Port'-output
@@ -600,7 +602,8 @@ fg_2: fg_quad_scu_bus
   generic map (
     Base_addr     => c_fg2_base,
     clk_in_hz     => clk_sys_in_Hz,
-    diag_on_is_1  => 0 -- if 1 then diagnosic information is generated during compilation
+    diag_on_is_1 => 0, -- if 1 then diagnosic information is generated during compilation
+    ACU => false
     )
   port map (
 
@@ -611,6 +614,7 @@ fg_2: fg_quad_scu_bus
     Ext_Rd_active     => Ext_Rd_active,         -- in, '1' => Rd-Cycle is active
     Ext_Wr_active     => Ext_Wr_active,         -- in, '1' => Wr-Cycle is active
     clk               => clk_sys,               -- in, should be the same clk, used by SCU_Bus_Slave
+    sysclk            => '0',                   -- in, only used for ACU implementation
     nReset            => rstn_sys,              -- in, '0' => resets the fg_1
     Rd_Port           => fg_2_data_to_SCUB,     -- out, connect read sources (over multiplexer) to SCUB-Macro
     user_rd_active    => fg_2_rd_active,        -- '1' = read data available at 'Rd_Port'-output
