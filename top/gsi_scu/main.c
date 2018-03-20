@@ -392,6 +392,7 @@ int configure_fg_macro(int channel) {
     if ((slot & 0xf0) == 0) {                                      //scu bus slave
       scub_base[OFFS(slot) + dac_base + DAC_CNTRL] = 0x10;        // set FG mode
       //scub_base[OFFS(slot) + fg_base + FG_CNTRL] = 0x1;           // reset fg
+      scub_base[OFFS(slot) + fg_base + FG_RAMP_CNT_LO] = 0;       // reset ramp counter
     } else if (slot & DEV_MIL_EXT) {
       if ((status = write_mil(scu_mil_base, 0x1, FC_IFAMODE_WR | dev)) != OKAY) dev_failure (status, 0, "set FG mode"); // set FG mode
       //if ((status = write_mil(scu_mil_base, 0x1, FC_CNTRL_WR | dev)) != OKAY)   dev_failure (status, 0, "reset FG"); // reset fg
