@@ -789,7 +789,7 @@ set_global_assignment -name AUTO_MERGE_PLLS OFF
 set_global_assignment -name BLOCK_RAM_TO_MLAB_CELL_CONVERSION OFF
 set_global_assignment -name OPTIMIZE_SSN "NORMAL COMPILATION"
 set_global_assignment -name FINAL_PLACEMENT_OPTIMIZATION ALWAYS
-set_global_assignment -name FITTER_AGGRESSIVE_ROUTABILITY_OPTIMIZATION NEVER
+set_global_assignment -name FITTER_AGGRESSIVE_ROUTABILITY_OPTIMIZATION AUTOMATICALLY
 set_global_assignment -name ENABLE_BENEFICIAL_SKEW_OPTIMIZATION OFF
 set_global_assignment -name FORCE_FITTER_TO_AVOID_PERIPHERY_PLACEMENT_WARNINGS ON
 set_global_assignment -name ENABLE_LOGIC_ANALYZER_INTERFACE OFF
@@ -1395,3 +1395,5 @@ set_global_assignment -name QIP_FILE ../../../modules/pll/arria2/dmtd_pll.qip
 set_global_assignment -name QIP_FILE ../../../modules/ddr3/arria2/scu_ddr3.qip
 set_global_assignment -name QIP_FILE "../../../ip_cores/wr-cores/platform/altera/wr_arria2_phy/arria2_phy.qip"
 set_global_assignment -name QIP_FILE "../../../ip_cores/wr-cores/platform/altera/wr_arria2_phy/arria2_phy_reconf.qip"
+set_global_assignment -name OPTIMIZATION_MODE "AGGRESSIVE PERFORMANCE"
+set_global_assignment -name FIT_ATTEMPTS_TO_SKIP 0

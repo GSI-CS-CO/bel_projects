@@ -57,7 +57,7 @@ set_global_assignment -name LL_WIDTH 1 -section_id flash
 set_global_assignment -name LL_WIDTH 2 -section_id "wr_arria5:rx"
 set_global_assignment -name MAX_CORE_JUNCTION_TEMP 100
 set_global_assignment -name MIN_CORE_JUNCTION_TEMP "-40"
-set_global_assignment -name OPTIMIZATION_MODE "AGGRESSIVE POWER"
+set_global_assignment -name OPTIMIZATION_MODE "AGGRESSIVE PERFORMANCE"
 set_global_assignment -name OPTIMIZATION_TECHNIQUE SPEED
 set_global_assignment -name OPTIMIZE_HOLD_TIMING "ALL PATHS"
 set_global_assignment -name OPTIMIZE_MULTI_CORNER_TIMING ON
@@ -874,7 +874,7 @@ set_global_assignment -name OPTIMIZE_TIMING "NORMAL COMPILATION"
 set_global_assignment -name MUX_RESTRUCTURE AUTO
 set_global_assignment -name SYNTHESIS_EFFORT AUTO
 set_global_assignment -name MLAB_ADD_TIMING_CONSTRAINTS_FOR_MIXED_PORT_FEED_THROUGH_MODE_SETTING_DONT_CARE OFF
-set_global_assignment -name PLACEMENT_EFFORT_MULTIPLIER 2
+set_global_assignment -name PLACEMENT_EFFORT_MULTIPLIER 4
 set_global_assignment -name ECO_OPTIMIZE_TIMING ON
 set_global_assignment -name OPTIMIZE_IOC_REGISTER_PLACEMENT_FOR_TIMING NORMAL
 set_global_assignment -name FINAL_PLACEMENT_OPTIMIZATION ALWAYS
