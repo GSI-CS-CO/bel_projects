@@ -139,6 +139,7 @@ bool CarpeDM::connect(const std::string& en) {
     bool  ret = false;
     uint8_t mappedIdx = 0;
     int expVersion = parseFwVersionString(EXP_VER), foundVersion;
+    int foundVersionMax = -1;
 
     if (expVersion <= 0) {throw std::runtime_error("Bad required minimum firmware version string received from Makefile"); return false;}
 
@@ -166,11 +167,12 @@ bool CarpeDM::connect(const std::string& en) {
       if (cpuDevs.size() >= 1) { 
         cpuQty = cpuDevs.size();
 
+        
         for(int cpuIdx = 0; cpuIdx< cpuQty; cpuIdx++) {
           //only create MemUnits for valid DM CPUs, generate Mapping so we can still use the cpuIdx supplied by User
           const std::string fwIdROM = getFwIdROM(cpuIdx);
           foundVersion = getFwVersion(fwIdROM);
-
+          foundVersionMax = foundVersionMax < foundVersion ? foundVersion : foundVersionMax; 
           vFw.push_back(foundVersion);
           int expVersionMin = expVersion;
           int expVersionMax = (expVersion / (int)FwId::VERSION_MAJOR_MUL) * (int)FwId::VERSION_MAJOR_MUL 
@@ -209,8 +211,9 @@ bool CarpeDM::connect(const std::string& en) {
 
     if(verbose) {
       sLog << " Done."  << std::endl << "Found " << getCpuQty() << " Cores, " << cpuIdxMap.size() << " of them run a valid DM firmware." << std::endl;
-    }  
-    if (cpuIdxMap.size() == 0) {throw std::runtime_error("No CPUs running a valid DM firmware found"); return false;}
+    }
+    std::string fwCause = foundVersionMax == -1 ? "" : "Requires FW v" + createFwVersionString(expVersion) + ", found " + createFwVersionString(foundVersionMax);
+    if (cpuIdxMap.size() == 0) {throw std::runtime_error("No CPUs running a valid DM firmware found. " + fwCause);}
 
 
     return ret;
