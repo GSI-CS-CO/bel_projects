@@ -959,7 +959,8 @@ set_global_assignment -name QIP_FILE "../../../ip_cores/wr-cores/platform/altera
 set_global_assignment -name QIP_FILE "../../../ip_cores/wr-cores/platform/altera/wr_arria5_phy/arria5_phy16.qip"
 set_global_assignment -name QIP_FILE "../../../ip_cores/wr-cores/platform/altera/wr_arria5_phy/arria5_phy_reconf.qip"
 set_global_assignment -name ROUTER_TIMING_OPTIMIZATION_LEVEL MAXIMUM
-set_global_assignment -name PLACEMENT_EFFORT_MULTIPLIER 4
+set_global_assignment -name PLACEMENT_EFFORT_MULTIPLIER 10
 set_global_assignment -name OPTIMIZE_SSN OFF
 set_global_assignment -name FINAL_PLACEMENT_OPTIMIZATION ALWAYS
 set_global_assignment -name FITTER_AGGRESSIVE_ROUTABILITY_OPTIMIZATION AUTOMATICALLY
+set_global_assignment -name ECO_OPTIMIZE_TIMING ON

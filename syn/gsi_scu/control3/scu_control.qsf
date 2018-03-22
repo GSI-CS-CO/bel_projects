@@ -1549,3 +1549,5 @@ set_global_assignment -name QIP_FILE ../../../modules/pll/arria2/dmtd_pll.qip
 set_global_assignment -name QIP_FILE "../../../ip_cores/wr-cores/platform/altera/wr_arria2_phy/arria2_phy.qip"
 set_global_assignment -name QIP_FILE "../../../ip_cores/wr-cores/platform/altera/wr_arria2_phy/arria2_phy_reconf.qip"
 set_global_assignment -name OPTIMIZATION_MODE "AGGRESSIVE PERFORMANCE"
+set_global_assignment -name PLACEMENT_EFFORT_MULTIPLIER 10
+set_global_assignment -name ECO_OPTIMIZE_TIMING ON

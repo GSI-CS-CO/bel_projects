@@ -1055,9 +1055,9 @@ set_global_assignment -name SYNCHRONIZATION_REGISTER_CHAIN_LENGTH 3
 set_global_assignment -name OPTIMIZE_POWER_DURING_SYNTHESIS "NORMAL COMPILATION"
 set_global_assignment -name SYNTHESIS_EFFORT AUTO
 set_global_assignment -name ROUTER_TIMING_OPTIMIZATION_LEVEL MAXIMUM
-set_global_assignment -name PLACEMENT_EFFORT_MULTIPLIER 4
+set_global_assignment -name PLACEMENT_EFFORT_MULTIPLIER 10
 set_global_assignment -name OPTIMIZE_TIMING "NORMAL COMPILATION"
-set_global_assignment -name ECO_OPTIMIZE_TIMING OFF
+set_global_assignment -name ECO_OPTIMIZE_TIMING ON
 set_global_assignment -name OPTIMIZE_IOC_REGISTER_PLACEMENT_FOR_TIMING NORMAL
 set_global_assignment -name FINAL_PLACEMENT_OPTIMIZATION ALWAYS
 set_global_assignment -name FITTER_AGGRESSIVE_ROUTABILITY_OPTIMIZATION AUTOMATICALLY

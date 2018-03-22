@@ -874,7 +874,7 @@ set_global_assignment -name OPTIMIZE_TIMING "NORMAL COMPILATION"
 set_global_assignment -name MUX_RESTRUCTURE AUTO
 set_global_assignment -name SYNTHESIS_EFFORT AUTO
 set_global_assignment -name MLAB_ADD_TIMING_CONSTRAINTS_FOR_MIXED_PORT_FEED_THROUGH_MODE_SETTING_DONT_CARE OFF
-set_global_assignment -name PLACEMENT_EFFORT_MULTIPLIER 4
+set_global_assignment -name PLACEMENT_EFFORT_MULTIPLIER 10
 set_global_assignment -name ECO_OPTIMIZE_TIMING ON
 set_global_assignment -name OPTIMIZE_IOC_REGISTER_PLACEMENT_FOR_TIMING NORMAL
 set_global_assignment -name FINAL_PLACEMENT_OPTIMIZATION ALWAYS

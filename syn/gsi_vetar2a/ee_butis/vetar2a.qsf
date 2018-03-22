@@ -1031,3 +1031,5 @@ set_global_assignment -name PRE_FLOW_SCRIPT_FILE "quartus_sh:vetar2a_ee_butis.tc
 set_global_assignment -name OPTIMIZATION_MODE "AGGRESSIVE PERFORMANCE"
 set_global_assignment -name FINAL_PLACEMENT_OPTIMIZATION ALWAYS
 set_global_assignment -name IO_PLACEMENT_OPTIMIZATION ON
+set_global_assignment -name PLACEMENT_EFFORT_MULTIPLIER 10
+set_global_assignment -name ECO_OPTIMIZE_TIMING ON

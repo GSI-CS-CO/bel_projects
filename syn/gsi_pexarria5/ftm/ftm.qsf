@@ -1060,3 +1060,5 @@ set_global_assignment -name SYNTHESIS_EFFORT AUTO
 set_global_assignment -name ROUTER_TIMING_OPTIMIZATION_LEVEL MAXIMUM
 set_global_assignment -name FINAL_PLACEMENT_OPTIMIZATION ALWAYS
 set_global_assignment -name FITTER_AGGRESSIVE_ROUTABILITY_OPTIMIZATION AUTOMATICALLY
+set_global_assignment -name PLACEMENT_EFFORT_MULTIPLIER 10
+set_global_assignment -name ECO_OPTIMIZE_TIMING ON
