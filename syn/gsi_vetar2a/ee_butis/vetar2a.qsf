@@ -328,6 +328,7 @@ set_location_assignment PIN_W4 -to vme_irq_n_o[6]
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to vme_irq_n_o[6]
 set_location_assignment PIN_H1 -to vme_iackin_n_i
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to vme_iackin_n_i
+set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to vme_iackin_n_i
 set_location_assignment PIN_E1 -to vme_iackout_n_o
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to vme_iackout_n_o
 set_location_assignment PIN_K3 -to vme_iack_n_i
