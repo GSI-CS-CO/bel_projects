@@ -700,7 +700,7 @@ begin
   -- MTCA.4 buffers enable generation by software
   -----------------------------------------------------------------------
   -- enabled only in MTCA.4 by SW
-  s_mtca4_bpl_buf_en_sw <= '1' when (s_gpio_out(6 downto 4) = "100" and s_gpio_out(c_HWT_EN_BIT)='1') else '0';
+  s_mtca4_bpl_buf_en_sw <= '1' when (s_gpio_out(6 downto 4) = "110" and s_gpio_out(c_HWT_EN_BIT)='1') else '0';
 
   -- crosscheck with Libera and quiesce.
   -- because there is no way to know if we are in MTCA or MTCA.4 crate
