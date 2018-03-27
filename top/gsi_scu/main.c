@@ -21,6 +21,7 @@
 #include "dow_crc.h"
 #include "../../../ip_cores/wr-cores/modules/wr_eca/eca_queue_regs.h"
 #include "../../../ip_cores/saftlib/drivers/eca_flags.h"
+#include "history.h"
 
 #define MSI_SLAVE 0
 #define MSI_WB_FG 2
@@ -96,6 +97,7 @@ uint32_t SHARED fg_buffer_size     = BUFFER_SIZE;
 uint32_t SHARED fg_macros[MAX_FG_MACROS] = {0}; // hi..lo bytes: slot, device, version, output-bits
 struct channel_regs SHARED fg_regs[MAX_FG_CHANNELS];
 struct channel_buffer SHARED fg_buffer[MAX_FG_CHANNELS];
+HistItem SHARED histbuf[HISTSIZE];
 
 volatile unsigned short* scub_base     = 0;
 volatile unsigned int* scub_irq_base   = 0;
@@ -281,20 +283,26 @@ inline void handle(int slot, unsigned fg_base, short irq_act_reg) {
 
     if ((slot & 0xf0) == 0) {
       if (!(cntrl_reg  & FG_RUNNING)) {       // fg stopped
-        if (cbisEmpty(&fg_regs[0], channel))
+        if (cbisEmpty(&fg_regs[0], channel)) {
           SEND_SIG(SIG_STOP_EMPTY);           // normal stop
-        else
+          hist_addx(HISTORY_XYZ_MODULE, "sig_stop_empty", channel);
+        } else {
           SEND_SIG(SIG_STOP_NEMPTY);          // something went wrong
+          hist_addx(HISTORY_XYZ_MODULE, "sig_stop_nempty", channel);
+        }
         disable_slave_irq(channel);
         fg_regs[channel].state = STATE_STOPPED;
       }
     } else {
       if (!(irq_act_reg  & FG_RUNNING)) {     // fg stopped
         fg_regs[channel].ramp_count--;
-        if (cbisEmpty(&fg_regs[0], channel))
+        if (cbisEmpty(&fg_regs[0], channel)) {
           SEND_SIG(SIG_STOP_EMPTY);           // normal stop
-        else
+          hist_addx(HISTORY_XYZ_MODULE, "sig_stop_empty", channel);
+        } else {
           SEND_SIG(SIG_STOP_NEMPTY);          // something went wrong
+          hist_addx(HISTORY_XYZ_MODULE, "sig_stop_nempty", channel);
+        }
         disable_slave_irq(channel);
         fg_regs[channel].state = STATE_STOPPED;
       }
@@ -304,6 +312,7 @@ inline void handle(int slot, unsigned fg_base, short irq_act_reg) {
       if ((cntrl_reg & FG_RUNNING) && !(cntrl_reg & FG_DREQ)) {
         fg_regs[channel].state = STATE_ACTIVE;
         SEND_SIG(SIG_START); // fg has received the tag or brc message
+          hist_addx(HISTORY_XYZ_MODULE, "sig_start", channel);
         if (cbgetCount(&fg_regs[0], channel) == THRESHOLD)
           SEND_SIG(SIG_REFILL);
         send_fg_param(slot, fg_base, cntrl_reg);
@@ -316,6 +325,7 @@ inline void handle(int slot, unsigned fg_base, short irq_act_reg) {
       if ((irq_act_reg & FG_RUNNING) && (irq_act_reg & DEV_STATE_IRQ)){
         fg_regs[channel].state = STATE_ACTIVE;
         SEND_SIG(SIG_START); // fg has received the tag or brc message
+          hist_addx(HISTORY_XYZ_MODULE, "sig_start", channel);
         if (cbgetCount(&fg_regs[0], channel) == THRESHOLD)
           SEND_SIG(SIG_REFILL);
         send_fg_param(slot, fg_base, irq_act_reg);
@@ -460,6 +470,7 @@ int configure_fg_macro(int channel) {
     timeout[channel] = 0;
     fg_regs[channel].state = STATE_ARMED;
     SEND_SIG(SIG_ARMED);
+    hist_addx(HISTORY_XYZ_MODULE, "sig_armed", channel);
   }
   return 0;
 }
@@ -569,6 +580,7 @@ void init_irq_table() {
 
 void init() {
   int i;
+  hist_init(HISTORY_XYZ_MODULE);
   for (i=0; i < MAX_FG_CHANNELS; i++)
     fg_regs[i].macro_number = -1;     //no macros assigned to channels at startup
   updateTemp();                       //update 1Wire ID and temperatures
@@ -609,6 +621,8 @@ void sw_irq_handler(int id) {
         case 3:
           disable_channel(value);
         break;
+        case 4:
+          hist_print(1);
         break;
         default:
           mprintf("swi: 0x%x\n", m.adr);
@@ -1188,6 +1202,10 @@ void addExecutionTime(int id, uint64_t time) {
 }
 
 
+static uint64_t tick = 0;               // system tick
+uint64_t getTick() {
+  return tick;
+}
 
 int main(void) {
   int i, mb_slot;
@@ -1272,7 +1290,6 @@ int main(void) {
     return;
   }
 
-  static uint64_t tick = 0;               // system tick
   static TaskType *task_ptr;              // task pointer
 
   static int taskIndex = 0;               // task index
