@@ -401,7 +401,7 @@ vEbwrs& CarpeDM::createCommandBurst(Graph& g, vEbwrs& ew) {
         
     report += "Inspecting Queues of Block " + g[vQ].name + "\n";
 
-    for (uint8_t prio = 0; prio < 3; prio++) {
+    for (uint8_t prio = PRIO_LO; prio <= PRIO_IL; prio++) {
       
       uint32_t bufLstAdr;
       uint8_t bufLstCpu;
@@ -430,20 +430,22 @@ vEbwrs& CarpeDM::createCommandBurst(Graph& g, vEbwrs& ew) {
       
       report += "Priority " + std::to_string((int)prio) + " (" + dnt::sQPrio[prio] + ") RdCnt: " + std::to_string((int)auxRd) + "    WrCnt: " + std::to_string((int)auxWr) + "    Pending: " + std::to_string((int)pendingCnt) + "\n";
       report += "Content:\n";
-      //force wraparound
-      rdIdx >= wrIdx ? wrIdx+=4 : wrIdx;
+      
+      //set of all pending command indices
+      std::set<uint8_t> pendingIdx;
+      if (auxRd != auxWr) {for(uint8_t pidx = rdIdx; pidx < (rdIdx + pendingCnt); pidx++) {pendingIdx.insert( pidx & Q_IDX_MAX_MSK);}}
 
-      if (rdIdx == wrIdx) report += "--- EMPTY ---\n";
-      else {report += "rd " + std::to_string(rdIdx) + " wr " + std::to_string(wrIdx) + "\n"; }
+
       //find buffers of all non empty slots
-      for (uint8_t i = rdIdx; i < wrIdx; i++) {
-        uint8_t idx = i & Q_IDX_MAX_MSK;
+      for (uint8_t i = 0; i <= Q_IDX_MAX_MSK; i++) {
         uint32_t bufAdr;
         uint8_t bufCpu, dstCpu;
         AdrType bufAdrType, dstAdrType;
-        report += "#" + std::to_string(i - rdIdx) + "    ";
+        report += "#" + std::to_string(i) + " ";
+        //if it is pending, say so
+        report += (pendingIdx.count(i) ? "pending " : "    -   ");
 
-        bufAdr = writeBeBytesToLeNumber<uint32_t>((uint8_t*)&bBL[(idx / 2) * _32b_SIZE_] );
+        bufAdr = writeBeBytesToLeNumber<uint32_t>((uint8_t*)&bBL[(i / 2) * _32b_SIZE_] );
         std::tie(bufCpu, bufAdrType) = at.adrClassification(bufAdr);  
 
         uint32_t tmpAdr = at.adrConv(bufAdrType, AdrType::MGMT, s2u<uint8_t>(g[vQ].cpu), bufAdr);
@@ -454,14 +456,17 @@ vEbwrs& CarpeDM::createCommandBurst(Graph& g, vEbwrs& ew) {
 
         if(verbose) sLog << "Scanning Buffer " << (int)(i / 2) << " - " << g[buf->v].name << " at Offset " << (int)(i % 2) << std::endl;
  
-        uint32_t act = writeBeBytesToLeNumber<uint32_t>((uint8_t*)&b[(idx % 2) * _T_CMD_SIZE_ + T_CMD_ACT]);
+        uint32_t act = writeBeBytesToLeNumber<uint32_t>((uint8_t*)&b[(i % 2) * _T_CMD_SIZE_ + T_CMD_ACT]);
         uint8_t type = (act >> ACT_TYPE_POS) & ACT_TYPE_MSK;
         //uint8_t prio = ( ((act >> ACT_PRIO_POS)  & ACT_PRIO_MSK) < 3 ? ((act >> ACT_PRIO_POS)  & ACT_PRIO_MSK) : PRIO_LO);
-        uint64_t vTime = writeBeBytesToLeNumber<uint64_t>((uint8_t*)&b[(idx % 2) * _T_CMD_SIZE_ + T_CMD_TIME]);
+        uint64_t vTime = writeBeBytesToLeNumber<uint64_t>((uint8_t*)&b[(i % 2) * _T_CMD_SIZE_ + T_CMD_TIME]);
 
+        
+        std::stringstream auxstream;
+        auxstream << std::hex << vTime;
+
+        report += "Valid Time: 0x" + auxstream.str() + "    CmdType: ";
         //type specific
-        report += "Valid Time: " + std::to_string(vTime) + "    CmdType: ";
-
         std::string const sYes  = "YES";
         std::string const sNo   = "NO ";
         switch(type) {
@@ -470,7 +475,7 @@ vEbwrs& CarpeDM::createCommandBurst(Graph& g, vEbwrs& ew) {
                                   break;
                                 }
           case ACT_TYPE_FLOW  : {
-                                  uint32_t dstAdr   = writeBeBytesToLeNumber<uint32_t>((uint8_t*)&b[(idx % 2) * _T_CMD_SIZE_ + T_CMD_FLOW_DEST]);
+                                  uint32_t dstAdr   = writeBeBytesToLeNumber<uint32_t>((uint8_t*)&b[(i % 2) * _T_CMD_SIZE_ + T_CMD_FLOW_DEST]);
                                   bool perm = (act >> ACT_CHP_POS) & ACT_CHP_MSK;
                                   std::string sDst;
                                   if (dstAdr == LM32_NULL_PTR) { sDst = "Idle"; }// pointing to idle is always okay
@@ -491,7 +496,7 @@ vEbwrs& CarpeDM::createCommandBurst(Graph& g, vEbwrs& ew) {
                                 }
           case ACT_TYPE_WAIT  : {
                                   bool abs = (act >> ACT_WAIT_ABS_POS) & ACT_WAIT_ABS_MSK;
-                                  uint64_t wTime  = writeBeBytesToLeNumber<uint64_t>((uint8_t*)&b[i * _T_CMD_SIZE_ + T_CMD_WAIT_TIME]);
+                                  uint64_t wTime  = writeBeBytesToLeNumber<uint64_t>((uint8_t*)&b[(i % 2) * _T_CMD_SIZE_ + T_CMD_WAIT_TIME]);
                                   report += (abs ? "Wait until " : "Make Block Period ") + std::to_string(wTime) + "ns\n";
                                   break;
                                 }
