@@ -148,9 +148,18 @@
 #define SHCTL_INBOXES    (SHCTL_THR_DAT + _THR_QTY_ * _T_TD_SIZE_  )  //Inboxes for MSI (1 per Core in System )
 #define _SHCTL_END_      ROUND_UP((SHCTL_INBOXES + _THR_QTY_ * _32b_SIZE_), 2 * _MEM_BLOCK_SIZE) // set fixed size so firmware updates stay backward compatible // 
 /*
-#pragma message(VAR_NAME_VALUE(SHCTL_DIAG))
-#pragma message(VAR_NAME_VALUE(SHCTL_DIAG + T_DIAG_SCH_MOD))
-#pragma message(VAR_NAME_VALUE(SHCTL_DIAG + T_DIAG_CMD_MOD))
+#pragma message(VAR_NAME_VALUE(_SHCTL_START_))
+#pragma message(VAR_NAME_VALUE(SHCTL_HEAP   ))
+#pragma message(VAR_NAME_VALUE(SHCTL_STATUS ))
+#pragma message(VAR_NAME_VALUE(SHCTL_META   ))
+#pragma message(VAR_NAME_VALUE(SHCTL_DIAG   ))
+#pragma message(VAR_NAME_VALUE(SHCTL_CMD    ))
+#pragma message(VAR_NAME_VALUE(SHCTL_TGATHER))
+#pragma message(VAR_NAME_VALUE(SHCTL_THR_CTL))
+#pragma message(VAR_NAME_VALUE(SHCTL_THR_STA))
+#pragma message(VAR_NAME_VALUE(SHCTL_THR_DAT))
+#pragma message(VAR_NAME_VALUE(SHCTL_INBOXES))
+#pragma message(VAR_NAME_VALUE(_SHCTL_END_  ))
 */
 
 //////////////////////////////////////////////////////////////////////

@@ -35,6 +35,7 @@ static void help(const char *program) {
   fprintf(stderr, "  running                   Show bitfield of all running threads on this CPU core\n");
   fprintf(stderr, "  heap                      Show current scheduler heap\n");
   fprintf(stderr, "  startpattern <pattern>    Request start of selected pattern\n");
+  //fprintf(stderr, "  flowpattern <patternFrom> <patternTo>  Flow from first to second pattern\n");
   fprintf(stderr, "  stoppattern  <pattern>    Request stop of selected pattern\n");
   fprintf(stderr, "  abortpattern <pattern>    Try to immediately abort selected pattern\n");  
   fprintf(stderr, "  chkrem       <pattern>    Check if removal of selected pattern would be safe\n");
@@ -46,12 +47,12 @@ static void help(const char *program) {
   fprintf(stderr, "  origin                    Return the node with which selected thread will start\n");
   fprintf(stderr, "  hex <target node>         Show hex dump of selected Node \n");
   fprintf(stderr, "  start                     Request start of selected thread. Requires a valid origin.\n");
-  fprintf(stderr, "  stop                      Request stop of selected thread\n");
-  fprintf(stderr, "  abort                     Immediately aborts selected thread\n");
+  fprintf(stderr, "  stop                      Request stop of selected thread. Does reverse lookup of current pattern, prone to race condition\n");
+  //fprintf(stderr, "  cease                   Cease thread at pattern end.\n");
+  fprintf(stderr, "  abort                     Immediately abort selected thread.\n");
   fprintf(stderr, "  halt                      Immediately aborts all threads on all cpus\n");
   fprintf(stderr, "  cursor                    Show name of currently active node of selected thread\n");
   fprintf(stderr, "  force                     Force cursor to match origin\n");
-  
   fprintf(stderr, "\nBlock commands:\n");
   fprintf(stderr, "  stop <target node>                        [Options: laps]   Request stop at selected block (flow to idle)\n");
   fprintf(stderr, "  noop <target node>                        [Options: lapq]   Placeholder to stall succeeding commands, has no effect itself\n");
