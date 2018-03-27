@@ -69,6 +69,8 @@ void VisitorVertexWriter::pushEventInfo(const Event& el) const {
 
 void VisitorVertexWriter::pushCommandInfo(const Command& el) const {
   pushPair(dnp::Cmd::sTimeValid, el.getTValid(), FormatNum::DEC);
+  pushPair(dnp::Cmd::sVabs,      el.getVabs(),   FormatNum::BOOL);
+
 }
 
 void VisitorVertexWriter::pushPaintedEyecandy(const Node& el) const {

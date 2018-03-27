@@ -111,6 +111,7 @@ namespace DotStr {
       namespace Cmd {
      
         const std::string sTimeValid   = "tvalid";        // time after which command becomes valid in ns
+        const std::string sVabs        = "vabs";          // valid time is absolute (True) or relative (false)
         const std::string sPrio        = "prio";          // priority of this command
         const std::string sQty         = "qty";           // quantity (repetitions) of this command
         const std::string sTimeWait    = "twait";         // wait time (wait commands only) in ns

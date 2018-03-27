@@ -108,10 +108,11 @@ namespace DotStr {
 
       namespace Cmd {
      
-        extern const std::string sTimeValid    ;
-        extern const std::string sPrio     ;
-        extern const std::string sQty      ;
-        extern const std::string sTimeWait ;
+        extern const std::string sTimeValid;
+        extern const std::string sVabs;
+        extern const std::string sPrio;
+        extern const std::string sQty;
+        extern const std::string sTimeWait;
         extern const std::string sTarget;
         extern const std::string sDst  ;
         extern const std::string sDstPattern;

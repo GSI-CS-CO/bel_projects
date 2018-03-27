@@ -337,6 +337,8 @@ std::pair<int, int> findRunningPattern(const std::string& sPattern); //get cpu a
   void debugOff() {debug = false;} //Turn off Verbose Output
   bool isDebug()  const {return debug;} //Tell if Output is set to Verbose
   void updateModTime() { modTime = getDmWrTime() * 1000000000ULL; } 
+  uint64_t getModTime() { return modTime; }
+
 };
 
 #endif

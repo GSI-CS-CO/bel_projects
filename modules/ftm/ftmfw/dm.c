@@ -227,9 +227,27 @@ uint32_t* cmd(uint32_t* node, uint32_t* thrData) {
 
   DBPRINT3("#%02u: Prio: %u, pre: 0x%08x, base: 0x%08x, wrIdx: 0x%08x, target: 0x%08x, BufList: 0x%08x, Buf: 0x%08x, Element: 0x%08x\n", cpuId, prio, adrPrefix, INT_BASE_ADR, (uint32_t)wrIdx, (uint32_t)tg, (uint32_t)bl, (uint32_t)b, (uint32_t)e );
 
-  for(uint32_t offs = T_CMD_TIME; offs < T_CMD_TIME + _T_CMD_SIZE_; offs += _32b_SIZE_ ) { //write Cmd
-    e[offs >> 2] = node[(CMD_VALID_TIME + offs) >> 2];
+  //modify valid time according to VABS (valid time absolute) bit
+  //if VABS eq 0, tvalid = cmdtime + deadline, if VABS eq 1, tvalid = cmdtime + 0 
+  uint64_t vabsMsk  = (uint64_t)((node[CMD_ACT  >> 2] >> ACT_VABS_POS) & ACT_VABS_MSK) -1;
+  uint64_t tvalid   = *(uint64_t*)&node[CMD_VALID_TIME >> 2] + (*(uint64_t*)&thrData[T_TD_DEADLINE >> 2] & vabsMsk);
+  
+  //copy cmd data to target queue
+  e[(T_CMD_TIME + 0)          >> 2]  = (uint32_t)(tvalid >> 32);
+  e[(T_CMD_TIME + _32b_SIZE_) >> 2]  = (uint32_t)(tvalid);
+  
+  e[(T_CMD_ACT + 0 * _32b_SIZE_) >> 2]  = node[(CMD_ACT + 0 * _32b_SIZE_) >> 2];
+  e[(T_CMD_ACT + 1 * _32b_SIZE_) >> 2]  = node[(CMD_ACT + 1 * _32b_SIZE_) >> 2];
+  e[(T_CMD_ACT + 2 * _32b_SIZE_) >> 2]  = node[(CMD_ACT + 2 * _32b_SIZE_) >> 2];
+  
+  //FIXME WTF ... why doesn't this work with this loop ???
+  /*
+  //0, 4 , 8
+  // !!! CAREFUL: this must be post-increment, use '=+' instead of '+=' !!!
+  for(uint32_t offs = 0; offs < (_T_CMD_SIZE_ - _T_TS_SIZE_); offs =+ _32b_SIZE_ ) { 
+    e[(T_CMD_ACT + offs) >> 2] = node[(CMD_ACT + offs) >> 2];
   }
+  */
   
   *wrIdx = (*wrIdx + 1) & Q_IDX_MAX_OVF_MSK; //increase write index
 

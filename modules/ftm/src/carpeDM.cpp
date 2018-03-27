@@ -322,6 +322,7 @@ bool CarpeDM::connect(const std::string& en) {
     dp.property(dnp::TMsg::sTef,                boost::get(&myVertex::tef,        g));
     //Command
     dp.property(dnp::Cmd::sTimeValid,           boost::get(&myVertex::tValid,     g));
+    dp.property(dnp::Cmd::sVabs,                boost::get(&myVertex::vabs,       g));
     dp.property(dnp::Cmd::sPrio,                boost::get(&myVertex::prio,       g));
     dp.property(dnp::Cmd::sQty,                 boost::get(&myVertex::qty,        g));
     dp.property(dnp::Cmd::sTimeWait,            boost::get(&myVertex::tWait,      g));

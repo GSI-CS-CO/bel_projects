@@ -53,14 +53,16 @@ static void help(const char *program) {
   fprintf(stderr, "  force                     Force cursor to match origin\n");
   
   fprintf(stderr, "\nBlock commands:\n");
-  fprintf(stderr, "  noop <target node>                        [Options: lpq]   Placeholder to stall succeeding commands, has no effect itself\n");
-  fprintf(stderr, "  flow <target node> <destination node>     [Options: lpqs]  Changes schedule flow to <Destination Node>\n");
-  fprintf(stderr, "  relwait <target node> <wait time / ns>    [Options: lps]   Changes Block period to <wait time>\n");
-  fprintf(stderr, "  abswait <target node> <wait time / ns>    [Options: lp]    Stretches Block period until <wait time>\n");
-  fprintf(stderr, "  flush <target node> <target priorities>   [Options: lp]    [NOT TESTED] Flushes all pending commands (hex 0x0 - 0x7) of lower priority\n");
-  fprintf(stderr, "  queue <target node>                       [Options: p]     Show all queue content (unitialised cmd slots will show garbage) \n");
+  fprintf(stderr, "  stop <target node>                        [Options: laps]   Request stop at selected block (flow to idle)\n");
+  fprintf(stderr, "  noop <target node>                        [Options: lapq]   Placeholder to stall succeeding commands, has no effect itself\n");
+  fprintf(stderr, "  flow <target node> <destination node>     [Options: lapqs]  Changes schedule flow to <Destination Node>\n");
+  fprintf(stderr, "  relwait <target node> <wait time / ns>    [Options: laps]   Changes Block period to <wait time>\n");
+  fprintf(stderr, "  abswait <target node> <wait time / ns>    [Options: lap]    Stretches Block period until <wait time>\n");
+  fprintf(stderr, "  flush <target node> <target priorities>   [Options: lap]    Flushes all pending commands (hex 0x0 - 0x7) of lower priority\n");
+  fprintf(stderr, "  queue <target node>                                         Show content of all queues (unitialised cmd slots might show garbage) \n");
   fprintf(stderr, "Options for Block commands:\n");
-  fprintf(stderr, "  -l <Time / ns>           The absolute time in ns after which the command will become active, default is 0 (immediately)\n");
+  fprintf(stderr, "  -l <Time / ns>           Time in ns after which the command will become active, default is 0 (immediately)\n");
+  fprintf(stderr, "  -a                       Interprete valid time of command as absolute. Default is relative (current WR time is added)\n");
   fprintf(stderr, "  -p <priority>            The priority of the command (0 = Low, 1 = High, 2 = Interlock), default is 0\n");
   fprintf(stderr, "  -q <quantity>            The number of times the command will be inserted into the target queue, default is 1\n");
   fprintf(stderr, "  -s                       Changes to the schedule are permanent\n");
@@ -227,7 +229,7 @@ int main(int argc, char* argv[]) {
 
 
 
-  bool verbose = false, permanent = false, debug=false;
+  bool verbose = false, permanent = false, debug=false, vabs=false;
 
   int opt;
   const char *program = argv[0];
@@ -242,8 +244,11 @@ int main(int argc, char* argv[]) {
   uint64_t cmdTvalid = 0, longtmp;
 
 // start getopt 
-   while ((opt = getopt(argc, argv, "shvc:p:l:t:q:i:d")) != -1) {
+   while ((opt = getopt(argc, argv, "shvc:p:l:t:q:i:da")) != -1) {
       switch (opt) {
+          case 'a':
+            vabs = true;
+            break;
           case 'i':
             cmdFilename = optarg;
             break;
@@ -414,6 +419,11 @@ int main(int argc, char* argv[]) {
     return 0;
       
   }
+
+  uint64_t tvalidOffs = cdm.getModTime();
+  std::cout << "tValOrig 0x" << std::hex << cmdTvalid << ", Offs 0x" << tvalidOffs << ", sum 0x" << cmdTvalid  + tvalidOffs << std::dec << std::endl;
+  if (verbose) { std::cout << "Command valid time is 0x" << (vabs ? "absolute" : "relative") << std::hex << cmdTvalid << " @ " << cmdTvalid  + tvalidOffs << std::dec << std::endl;}
+  if(!vabs) cmdTvalid += tvalidOffs;
 
 
   if (typeName != NULL ) {  

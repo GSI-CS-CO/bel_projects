@@ -67,8 +67,9 @@ vEbwrs& CarpeDM::createCommandBurst(Graph& g, vEbwrs& ew) {
 
   if ((boost::get_property(g, boost::graph_name)).find(DotStr::Graph::Special::sCmd) == std::string::npos) {throw std::runtime_error("Expected a series of commands, but this appears to be a schedule (Tag '" + DotStr::Graph::Special::sCmd + "' not found in graphname)");}
   
-  //FIXME This is bad, global commands (start/abort, currently also stop) are always sent first ! Queue them normally!!!!
- 
+  //it is vital that the modTime TS is current to handle relative command-valid-times.
+  //this might redundantly be done by the implementing FESA class, but better safe than sorry.
+  updateModTime();
 
   BOOST_FOREACH( vertex_t v, vertices(g) ) {
 
@@ -89,7 +90,9 @@ vEbwrs& CarpeDM::createCommandBurst(Graph& g, vEbwrs& ew) {
     else                                                   { destination = g[v].cmdDest;}
      
 
-    uint64_t cmdTvalid  = s2u<uint64_t>(g[v].tValid);
+    bool vabs = s2u<bool>(g[v].vabs);
+    uint64_t cmdTvalid  = (vabs ? s2u<uint64_t>(g[v].tValid) : s2u<uint64_t>(g[v].tValid) + modTime);
+    sLog << "Command valid time is " << (vabs ? "absolute" : "relative") << s2u<uint64_t>(g[v].tValid) << " @ " << cmdTvalid << std::endl;
     uint8_t  cmdPrio    = s2u<uint8_t>(g[v].prio);
     uint8_t cpu, thr;
     

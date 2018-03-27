@@ -360,6 +360,11 @@
 #define ACT_PRIO_POS            24
 #define ACT_PRIO_SMSK           (ACT_PRIO_MSK << ACT_PRIO_POS)
 
+//Valid time is absolute (0) or relative (1) 
+#define ACT_VABS_MSK             0x1
+#define ACT_VABS_POS             26
+#define ACT_VABS_SMSK            (ACT_VABS_MSK << ACT_VABS_POS)
+
 //Action changes are permanent (1) or temporary (0) (Flow -> DEF_DEST_PTR, Wait -> BLOCK_PERIOD (only use with relative wait!))
 #define ACT_CHP_MSK             0x1
 #define ACT_CHP_POS             27
