@@ -114,7 +114,8 @@ set_instance_assignment -name GLOBAL_SIGNAL REGIONAL_CLOCK -to "monster:main|glo
 set_instance_assignment -name GLOBAL_SIGNAL REGIONAL_CLOCK -to "monster:main|xwr_core:U_WR_CORE|wr_core:WRPC|wrc_periph:PERIPH|rst_net_n_o"
 set_instance_assignment -name INPUT_TERMINATION DIFFERENTIAL -to clk_125m_local_i
 set_instance_assignment -name INPUT_TERMINATION DIFFERENTIAL -to clk_125m_pllref_i
-set_instance_assignment -name INPUT_TERMINATION DIFFERENTIAL -to clk_lvtio_i
+set_instance_assignment -name INPUT_TERMINATION DIFFERENTIAL -to clk_lvtio_p_i
+set_instance_assignment -name INPUT_TERMINATION DIFFERENTIAL -to clk_lvtio_n_i
 set_instance_assignment -name INPUT_TERMINATION DIFFERENTIAL -to hss_rx_n_i[1]
 set_instance_assignment -name INPUT_TERMINATION DIFFERENTIAL -to hss_rx_n_i[2]
 set_instance_assignment -name INPUT_TERMINATION DIFFERENTIAL -to hss_rx_n_i[3]
@@ -301,11 +302,11 @@ set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to wr_dac_sclk_o
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to wr_ndac_cs_o[1]
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to wr_ndac_cs_o[2]
 set_instance_assignment -name IO_STANDARD LVDS -to "clk_125m_pllref_i(n)"
-set_instance_assignment -name IO_STANDARD LVDS -to "clk_lvtio_i(n)"
+set_instance_assignment -name IO_STANDARD LVDS -to "clk_lvtio_n_i"
 set_instance_assignment -name IO_STANDARD LVDS -to "clk_sfp_ref_i(n)"
 set_instance_assignment -name IO_STANDARD LVDS -to clk_125m_local_i
 set_instance_assignment -name IO_STANDARD LVDS -to clk_125m_pllref_i
-set_instance_assignment -name IO_STANDARD LVDS -to clk_lvtio_i
+set_instance_assignment -name IO_STANDARD LVDS -to clk_lvtio_p_i
 set_instance_assignment -name IO_STANDARD LVDS -to clk_sfp_ref_i
 set_instance_assignment -name IO_STANDARD LVDS -to hss_rx_n_i[1]
 set_instance_assignment -name IO_STANDARD LVDS -to hss_rx_n_i[2]
@@ -529,7 +530,7 @@ set_location_assignment PIN_B1 -to hpw[0]
 set_location_assignment PIN_B10 -to mlvdio_in_p_i[8]
 set_location_assignment PIN_B12 -to mlvdio_in_p_i[5]
 set_location_assignment PIN_B13 -to mlvdio_in_n_i[3]
-set_location_assignment PIN_B15 -to clk_lvtio_i
+set_location_assignment PIN_B15 -to clk_lvtio_p_i
 set_location_assignment PIN_B16 -to tclk_in_p_i[2]
 set_location_assignment PIN_B18 -to lib_trig_p_o[2]
 set_location_assignment PIN_B19 -to sfp_mod2_io
@@ -543,7 +544,7 @@ set_location_assignment PIN_C10 -to mlvdio_in_n_i[8]
 set_location_assignment PIN_C11 -to mlvdio_out_p_o[5]
 set_location_assignment PIN_C12 -to mlvdio_in_n_i[5]
 set_location_assignment PIN_C14 -to mlvdio_out_p_o[2]
-set_location_assignment PIN_C15 -to "clk_lvtio_i(n)"
+set_location_assignment PIN_C15 -to clk_lvtio_n_i
 set_location_assignment PIN_C17 -to tclk_in_n_i[2]
 set_location_assignment PIN_C18 -to tclk_in_n_i[3]
 set_location_assignment PIN_C19 -to sfp_los_i
