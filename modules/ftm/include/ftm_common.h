@@ -213,9 +213,14 @@
 #define BLOCK_CMDQ_LO_PTR       (BLOCK_ALT_DEST_PTR + _PTR_SIZE_)   
 #define BLOCK_CMDQ_HI_PTR       (BLOCK_CMDQ_LO_PTR  + _PTR_SIZE_)   
 #define BLOCK_CMDQ_IL_PTR       (BLOCK_CMDQ_HI_PTR  + _PTR_SIZE_)   
-#define BLOCK_CMDQ_WR_IDXS      (BLOCK_CMDQ_IL_PTR  + _PTR_SIZE_)   
+#define BLOCK_CMDQ_WR_IDXS      (BLOCK_CMDQ_IL_PTR  + _PTR_SIZE_)
 #define BLOCK_CMDQ_RD_IDXS      (BLOCK_CMDQ_WR_IDXS + _32b_SIZE_)   
 #define BLOCK_CMDQ_PTRS          BLOCK_CMDQ_LO_PTR
+
+#define BLOCK_CMDQ_IDX_IL    (3 - PRIO_IL)
+#define BLOCK_CMDQ_IDX_HI    (3 - PRIO_HI)
+#define BLOCK_CMDQ_IDX_LO    (3 - PRIO_LO)
+
 
 #define Q_IDX_MAX_OVF          3
 #define Q_IDX_MAX              2

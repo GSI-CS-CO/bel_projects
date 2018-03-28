@@ -117,6 +117,8 @@ private:
   vEbwrs& setThrPrepTime(uint8_t cpuIdx, uint8_t thrIdx, uint64_t t, vEbwrs& ew);
   int send(vEbwrs& ew);
 
+  vEbwrs& staticFlush(const std::string& sBlock, bool prioIl, bool prioHi, bool prioLo, vEbwrs& ew, bool force);
+
 protected:
 
   std::string ebdevname;
@@ -207,12 +209,12 @@ public:
   void storeGroupsDictFile(const std::string& fn) {writeTextFile(fn, storeGroupsDict());};
   void loadGroupsDictFile(const std::string& fn) {loadGroupsDict(readTextFile(fn));}; 
   void clearGroupsDict() {gt.clear();}; //Clear pattern table
- int getGroupsSize() {return gt.getSize();};
- void showGroupsDict() {gt.debug(sLog);};
+   int getGroupsSize() {return gt.getSize();};
+  void showGroupsDict() {gt.debug(sLog);};
 
   // Text File IO /////////////////////////////////////////////////////////////////////////////////
   void writeTextFile(const std::string& fn, const std::string& s);
-  std::string  readTextFile(const std::string& fn);
+  std::string readTextFile(const std::string& fn);
 
   // Graphs to Dot
     Graph& parseDot(const std::string& s, Graph& g); //Parse a .dot string to create unprocessed Graph
@@ -282,8 +284,8 @@ public:
   const std::string getNodePattern (const std::string& sNode);
   const std::string getNodeBeamproc(const std::string& sNode);
               vStrC getPatternMembers (const std::string& sPattern);
- const std::string getPatternEntryNode(const std::string& sPattern);
- const std::string getPatternExitNode(const std::string& sPattern);
+  const std::string getPatternEntryNode(const std::string& sPattern);
+  const std::string getPatternExitNode(const std::string& sPattern);
               vStrC getBeamprocMembers(const std::string& sBeamproc);
   const std::string getBeamprocEntryNode(const std::string& sBeamproc);
   const std::string getBeamprocExitNode(const std::string& sBeamproc);
@@ -295,48 +297,47 @@ std::pair<int, int> findRunningPattern(const std::string& sPattern); //get cpu a
                bool isPatternRunning(const std::string& sPattern); //true if Pattern <x> is running
 
                //direct send wrappers. bit cumbersome, can possibly be done by a template
-               int startThr(uint8_t cpuIdx, uint8_t thrIdx);                              // Requests Thread to start
-               int startPattern(const std::string& sPattern, uint8_t thrIdx);             // Requests Pattern to start
-               int startPattern(const std::string& sPattern);                             // Requests Pattern to start on first free thread
-               int startNodeOrigin(const std::string& sNode, uint8_t thrIdx);             // Requests thread <thrIdx> to start at node <sNode>
-               int startNodeOrigin(const std::string& sNode);                             // Requests a start at node <sNode>
-               int stopPattern(const std::string& sPattern);                              // Requests Pattern to stop
-               int stopNodeOrigin(const std::string& sNode);                              // Requests stop at node <sNode> (flow to idle)
-               int abortPattern(const std::string& sPattern);                             // Immediately aborts a Pattern
-               int abortNodeOrigin(const std::string& sNode);                             // Immediately aborts the thread whose pattern <sNode> belongs to
-               int abortThr(uint8_t cpuIdx, uint8_t thrIdx);                              // Immediately aborts a Thread
-               int setThrStart(uint8_t cpuIdx, uint32_t bits);                            // Requests Threads to start
-               int setThrAbort(uint8_t cpuIdx, uint32_t bits);                            // Immediately aborts Threads
-               int setThrOrigin(uint8_t cpuIdx, uint8_t thrIdx, const std::string& name); // Sets the Node the Thread will start from
-               int setThrStartTime(uint8_t cpuIdx, uint8_t thrIdx, uint64_t t);
-               int setThrPrepTime(uint8_t cpuIdx, uint8_t thrIdx, uint64_t t);
-     HealthReport& getHealth(uint8_t cpuIdx, HealthReport &hr);
-          uint64_t getDmWrTime();
-              bool isSafeToRemove(const std::string& pattern, std::string& report);
-              bool isSafeToRemove(Graph& gRem, std::string& report);
-              bool tableCheck(std::string& report);
+                int startThr(uint8_t cpuIdx, uint8_t thrIdx);                              // Requests Thread to start
+                int startPattern(const std::string& sPattern, uint8_t thrIdx);             // Requests Pattern to start
+                int startPattern(const std::string& sPattern);                             // Requests Pattern to start on first free thread
+                int startNodeOrigin(const std::string& sNode, uint8_t thrIdx);             // Requests thread <thrIdx> to start at node <sNode>
+                int startNodeOrigin(const std::string& sNode);                             // Requests a start at node <sNode>
+                int stopPattern(const std::string& sPattern);                              // Requests Pattern to stop
+                int stopNodeOrigin(const std::string& sNode);                              // Requests stop at node <sNode> (flow to idle)
+                int abortPattern(const std::string& sPattern);                             // Immediately aborts a Pattern
+                int abortNodeOrigin(const std::string& sNode);                             // Immediately aborts the thread whose pattern <sNode> belongs to
+                int abortThr(uint8_t cpuIdx, uint8_t thrIdx);                              // Immediately aborts a Thread
+                int setThrStart(uint8_t cpuIdx, uint32_t bits);                            // Requests Threads to start
+                int setThrAbort(uint8_t cpuIdx, uint32_t bits);                            // Immediately aborts Threads
+                int setThrOrigin(uint8_t cpuIdx, uint8_t thrIdx, const std::string& name); // Sets the Node the Thread will start from
+                int setThrStartTime(uint8_t cpuIdx, uint8_t thrIdx, uint64_t t);
+                int setThrPrepTime(uint8_t cpuIdx, uint8_t thrIdx, uint64_t t);
+      HealthReport& getHealth(uint8_t cpuIdx, HealthReport &hr);
+           uint64_t getDmWrTime();
+               bool isSafeToRemove(const std::string& pattern, std::string& report);
+               bool isSafeToRemove(Graph& gRem, std::string& report);
+               bool tableCheck(std::string& report);
 
+               // Screen Output //////////////////////////////////////////////////////////////
+               void show(const std::string& title, const std::string& logDictFile, TransferDir dir, bool filterMeta );
+               void showUp(bool filterMeta) {show("Upload Table", "upload_dict.txt", TransferDir::UPLOAD, false);} //show a CPU's Upload address table
+               void showDown(bool filterMeta) {  //show a CPU's Download address table
+                 show("Download Table" + (filterMeta ? std::string(" (noMeta)") : std::string("")), "download_dict.txt", TransferDir::DOWNLOAD, filterMeta);
+               }
+               void showCpuList();
+       std::string& inspectQueues(const std::string& blockName, std::string& report); //Show all command fields in Block Queue 
+               void dumpNode(uint8_t cpuIdx, const std::string& name); //hex dump a node
+               void verboseOn()  {verbose = true;}  //Turn on Verbose Output
+               void verboseOff() {verbose = false;} //Turn off Verbose Output
+               bool isVerbose()  const {return verbose;} //Tell if Output is set to Verbose 
+               void debugOn()  {debug = true;}  //Turn on Verbose Output
+               void debugOff() {debug = false;} //Turn off Verbose Output
+               bool isDebug()  const {return debug;} //Tell if Output is set to Verbose
+               void updateModTime() { modTime = getDmWrTime() * 1000000000ULL; } 
+           uint64_t getModTime() { return modTime; }
+                int staticFlushPattern(const std::string& sPattern, bool prioIl, bool prioHi, bool prioLo, bool force);
+                int staticFlushBlock(const std::string& sBlock, bool prioIl, bool prioHi, bool prioLo, bool force);
 
-
-               
-
-  // Screen Output //////////////////////////////////////////////////////////////
-  void show(const std::string& title, const std::string& logDictFile, TransferDir dir, bool filterMeta );
-  void showUp(bool filterMeta) {show("Upload Table", "upload_dict.txt", TransferDir::UPLOAD, false);} //show a CPU's Upload address table
-  void showDown(bool filterMeta) {  //show a CPU's Download address table
-    show("Download Table" + (filterMeta ? std::string(" (noMeta)") : std::string("")), "download_dict.txt", TransferDir::DOWNLOAD, filterMeta);
-  }
-  void showCpuList();
-  std::string& inspectQueues(const std::string& blockName, std::string& report); //Show all command fields in Block Queue 
-  void dumpNode(uint8_t cpuIdx, const std::string& name); //hex dump a node
-  void verboseOn()  {verbose = true;}  //Turn on Verbose Output
-  void verboseOff() {verbose = false;} //Turn off Verbose Output
-  bool isVerbose()  const {return verbose;} //Tell if Output is set to Verbose 
-  void debugOn()  {debug = true;}  //Turn on Verbose Output
-  void debugOff() {debug = false;} //Turn off Verbose Output
-  bool isDebug()  const {return debug;} //Tell if Output is set to Verbose
-  void updateModTime() { modTime = getDmWrTime() * 1000000000ULL; } 
-  uint64_t getModTime() { return modTime; }
 
 };
 

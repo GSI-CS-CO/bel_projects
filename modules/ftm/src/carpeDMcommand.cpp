@@ -578,10 +578,10 @@ vertex_set_t CarpeDM::getAllCursors(bool activeOnly) {
   //TODO - this is dirty and cumbersome, make it streamlined
 
 
-  for(uint8_t cpu=0; cpu < getCpuQty(); cpu++) { //cycle all CPUs
-    for(uint8_t thr=0; thr < _THR_QTY_; thr++) {
-      uint32_t  adr = ebReadWord(ebd, getThrCurrentNodeAdr(cpu, thr));
-      uint64_t dl = getThrDeadline(cpu, thr); 
+  for(uint8_t cpu = 0; cpu < getCpuQty(); cpu++) { //cycle all CPUs
+    for(uint8_t thr = 0; thr < _THR_QTY_; thr++) {
+      uint32_t adr = ebReadWord(ebd, getThrCurrentNodeAdr(cpu, thr));
+      uint64_t  dl = getThrDeadline(cpu, thr); 
       if (adr == LM32_NULL_PTR || (activeOnly && ((int64_t)dl == -1))) continue; // only active cursors: no dead end idles, no aborted threads
       auto x = atDown.lookupAdr(cpu, atDown.adrConv(AdrType::INT, AdrType::MGMT,cpu, adr));
       if (atDown.isOk(x)) ret.insert(x->v);
@@ -602,3 +602,69 @@ vertex_set_t CarpeDM::getAllCursors(bool activeOnly) {
 
 }
 
+
+int CarpeDM::staticFlushPattern(const std::string& sPattern, bool prioIl, bool prioHi, bool prioLo, bool force) {
+  Graph& g = gDown;
+  AllocTable& at = atDown;
+  vEbwrs ew;
+
+  for (auto& nodeIt : getPatternMembers(sPattern)) {
+    if (hm.lookup(nodeIt) ) {
+      auto x = at.lookupHash(hm.lookup(nodeIt).get());
+      if (!(at.isOk(x))) {throw std::runtime_error("staticFlush: Could not find pattern <" + sPattern + "> block node <" + nodeIt + ">");}
+      if (g[x->v].np->isBlock()) { staticFlush(g[x->v].name, prioIl, prioHi, prioLo, ew, force); }  
+    }
+  } 
+
+  send(ew);
+  return ew.va.size();
+} 
+
+int CarpeDM::staticFlushBlock(const std::string& sBlock, bool prioIl, bool prioHi, bool prioLo, bool force) {
+  vEbwrs ew; 
+  send(staticFlush(sBlock, prioIl, prioHi, prioLo, ew, force));
+  return ew.va.size();
+}  
+
+
+vEbwrs& CarpeDM::staticFlush(const std::string& sBlock, bool prioIl, bool prioHi, bool prioLo, vEbwrs& ew, bool force) {
+  Graph& g = gDown;
+  AllocTable& at = atDown;
+
+  //check if the block can safely be modified
+  //call safe2remove on the block's pattern. If remove is ok, so is Flushing
+  std::string dbgReport;
+  if ( (!isSafeToRemove(getNodePattern(sBlock), dbgReport)) && !force)  {
+    if(debug) sLog << dbgReport << std::endl;
+    return ew;
+  }
+
+  if(debug) sLog << "Trying to flush block <" << sBlock << ">" << std::endl;
+    
+  //get the block
+  if (!hm.lookup(sBlock)) {throw std::runtime_error( "staticFlush: Could not find target block name");}
+  auto x = at.lookupHash(hm.lookup(sBlock).get());
+  if (!at.isOk(x)) {throw std::runtime_error( "staticFlush: Could not find target block in download address table");}
+  uint32_t cpyMsk = 0;
+  uint32_t wrIdxs = boost::dynamic_pointer_cast<Block>(g[x->v].np)->getWrIdxs(); 
+  uint32_t rdIdxs = boost::dynamic_pointer_cast<Block>(g[x->v].np)->getRdIdxs();
+
+  if (prioIl) cpyMsk |= (0xff << (PRIO_IL*8));
+  if (prioHi) cpyMsk |= (0xff << (PRIO_HI*8));
+  if (prioLo) cpyMsk |= (0xff << (PRIO_LO*8));
+    
+  if (!cpyMsk) return ew; //no queues to flush, abort
+
+  //create new rdIdx values
+  uint8_t bTmp[4];
+  uint32_t newRdIdxs = (rdIdxs & ~cpyMsk) | (wrIdxs & cpyMsk);
+  writeLeNumberToBeBytes(bTmp, newRdIdxs);
+  
+  //add to etherbone write
+  ew.va.push_back(at.adrConv(AdrType::MGMT, AdrType::EXT, x->cpu, x->adr) + BLOCK_CMDQ_RD_IDXS); //ext address of this block + BLOCK_CMDQ_RD_IDXS
+  ew.vcs += leadingOne(1);
+  ew.vb.insert( ew.vb.end(), bTmp, bTmp + _32b_SIZE_);
+
+  return ew;
+
+}
