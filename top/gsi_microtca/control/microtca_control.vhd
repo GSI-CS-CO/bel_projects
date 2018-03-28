@@ -6,6 +6,7 @@ library work;
 use work.monster_pkg.all;
 use work.altera_lvds_pkg.all;
 use work.ramsize_pkg.c_lm32_ramsizes;
+use work.altera_networks_pkg.all;
 
 entity microtca_control is
   generic( 
@@ -19,7 +20,8 @@ entity microtca_control is
     clk_125m_pllref_i : in std_logic; -- 125 MHz PLL reference - (clk_125m_wrpll_0  on sch)
     clk_125m_local_i  : in std_logic; -- local clk from 125Mhz oszillator (clk_osc_1  on sch)
     clk_sfp_ref_i     : in std_logic; -- SFP clk (clk_125m_wrpll_1 on sch)
-    clk_lvtio_i       : in std_logic; -- LEMO front panel input
+    clk_lvtio_p_i     : in std_logic; -- LEMO front panel clock input
+    clk_lvtio_n_i     : in std_logic; -- LEMO front panel clock input
 
 --    clk_osc_0_i         : in std_logic;  -- local clk from 100MHz or 125Mhz oscillator
 
@@ -358,6 +360,13 @@ architecture rtl of microtca_control is
   signal s_libera_trig_buf_en     : std_logic;
 
   signal s_shift_reg_to_leds      : std_logic_vector(15 downto 0):=(others =>'0');
+
+  signal clk_lvtio                : std_logic;
+  signal clk_lvtio_global         : std_logic;
+
+  signal lvtio_clk_divider        : unsigned(23 downto 0);
+
+  signal hss_rx                   : std_logic_vector(4 downto 1);
  
   
 begin
@@ -406,7 +415,7 @@ begin
       wr_dac_sclk_o          => wr_dac_sclk_o,
       wr_dac_din_o           => wr_dac_din_o,
       wr_ndac_cs_o           => wr_ndac_cs_o,
-      wr_ext_clk_i           => clk_lvtio_i,
+      wr_ext_clk_i           => '0',
 
       sfp_tx_disable_o       => sfp_tx_dis_o,
       sfp_tx_fault_i         => sfp_tx_fault_i,
@@ -458,7 +467,7 @@ begin
 
   -- hex switches as gpio inputs
   s_gpio_in(3 downto 0) <= not hswf_i; -- FPGA HEX switch
-  s_gpio_in(7 downto 4) <= con(4 downto 1); -- CPLD HEX switch (already inverted in CPLD)
+  s_gpio_in(7 downto 4) <= hss_rx when s_gpio_out(c_HWT_EN_BIT)='1' else con(4 downto 1); -- CPLD HEX switch (already inverted in CPLD)
 
   -- button as gpio inputs
   s_gpio_in(8) <= not pbs_f_i; -- FPGA push button
@@ -549,10 +558,11 @@ begin
     lvtio_led_dir_o <= (others => '0')                          when ('0' & x"F"),   -- FPGA hex sw in position F, button not pressed, LED test
                        (others => '1')                          when ('1' & x"F"),   -- FPGA hex sw in position F, button     pressed, LED test
                         s_shift_reg_to_leds(9 downto 5)         when ('0' & x"A"),   -- FPGA hex sw in position A, button not pressed, shift reg to leds
-                        "00000"                                 when ('0' & x"8"),   -- FPGA hex sw in position 8, button not pressed, off
+                        '0' & hss_rx                            when ('0' & x"8"),   -- FPGA hex sw in position 8, button not pressed, hss rx inputs showing libera trigger lines (AC-coupled)
                         '0' & mlvdio_de(8 downto 5)             when ('0' & x"7"),   -- FPGA hex sw in position 7, button not pressed, mtca4io output enable 8-5
                         '0' & mlvdio_de(4 downto 1)             when ('0' & x"6"),   -- FPGA hex sw in position 6, button not pressed, mtca4io output enable 4-1
                         '0' & s_monster_tclk_dir(4 downto 1)    when ('0' & x"5"),   -- FPGA hex sw in position 5, button not pressed, mtca4 clk direction
+                        std_logic_vector(lvtio_clk_divider(4 downto 0))           when ('0' & x"4"),   -- FPGA hex sw in position 4, button not pressed, lvtio clk divider
                         s_lvds_oe(4 downto 0)                   when others;         -- LEMO IO direction
 
   -- LVDS activity indicator BLUE LEDs (active hi)
@@ -564,6 +574,7 @@ begin
                         '0' & s_lvds_act_led_mtca4_io(8 downto 5)   when ('0' & x"7"),   -- FPGA hex sw in position 7, button not pressed, mtca4io 5-8 activity to front io leds
                         '0' & s_lvds_act_led_mtca4_io(4 downto 1)   when ('0' & x"6"),   -- FPGA hex sw in position 6, button not pressed, mtca4io 1-4 activity to front io leds
                         '0' & s_lvds_act_led_mtca4_clk              when ('0' & x"5"),   -- FPGA hex sw in position 5, button not pressed, mtca4 clk activity
+                        std_logic_vector(lvtio_clk_divider(23 downto 19))             when ('0' & x"4"),   -- FPGA hex sw in position 4, button not pressed, lvtio clk divider
                         s_lvds_act_led_lvtio                        when others;         -- LEMO IO activity
 
   -----------------------------------------------------------
@@ -580,6 +591,34 @@ begin
   -- External white rabbit clock input enable (active low)
   lvtio_in_clk_en_n_o <= not s_gpio_out(c_IO_CLKIN_EN_BIT); 
 
+
+  ------------------------------------------------------------
+  -- IO5 clk input 
+  ------------------------------------------------------------
+  lvtio_clk_inbuf : altera_lvds_ibuf
+  generic map(
+    g_family  => c_family)
+  port map(
+    datain_b  => clk_lvtio_n_i,
+    datain    => clk_lvtio_p_i,
+    dataout   => clk_lvtio
+  );
+
+  lvtio_clk_buf : global_region
+  port map(
+    inclk  => clk_lvtio,
+    outclk => clk_lvtio_global
+  );
+
+  p_lvtio_clk_div: process(clk_lvtio_global)
+  begin 
+    if rising_edge(clk_lvtio_global) then
+      lvtio_clk_divider <= lvtio_clk_divider + 1;
+    else
+      lvtio_clk_divider <= lvtio_clk_divider ;
+    end if;
+  end process;
+  
 
   -----------------------------------------------------------------------
   -----------------------------------------------------------------------
@@ -641,7 +680,7 @@ begin
         port map(
           datain_b  => hss_rx_n_i(i),
           datain    => hss_rx_p_i(i),
-          dataout   => open
+          dataout   => hss_rx(i)
         );
   end generate;
 
