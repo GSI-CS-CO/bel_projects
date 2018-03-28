@@ -230,7 +230,7 @@ uint32_t* cmd(uint32_t* node, uint32_t* thrData) {
   //modify valid time according to VABS (valid time absolute) bit
   //if VABS eq 0, tvalid = cmdtime + deadline, if VABS eq 1, tvalid = cmdtime + 0 
   uint64_t vabsMsk  = (uint64_t)((node[CMD_ACT  >> 2] >> ACT_VABS_POS) & ACT_VABS_MSK) -1;
-  uint64_t tvalid   = *(uint64_t*)&node[CMD_VALID_TIME >> 2] + (*(uint64_t*)&thrData[T_TD_DEADLINE >> 2] & vabsMsk);
+  uint64_t tvalid   = *(uint64_t*)&node[CMD_VALID_TIME >> 2] + (*(uint64_t*)&thrData[T_TD_CURRTIME >> 2] & vabsMsk);
   
   //copy cmd data to target queue
   e[(T_CMD_TIME + 0)          >> 2]  = (uint32_t)(tvalid >> 32);
