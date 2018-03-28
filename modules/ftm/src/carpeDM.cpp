@@ -413,7 +413,7 @@ bool CarpeDM::connect(const std::string& en) {
     struct  sdb_device& ram = cpuDevs.at(cpuIdx);
     vAdr fwIdAdr;
     //FIXME get rid of SHARED_OFFS somehow and replace with an end tag and max limit  
-    for (uint32_t adr = ram.sdb_component.addr_first + BUILDID_OFFS; adr < ram.sdb_component.addr_first + SHARED_OFFS; adr += 4) fwIdAdr.push_back(adr);
+    for (uint32_t adr = ram.sdb_component.addr_first + BUILDID_OFFS; adr < ram.sdb_component.addr_first + BUILDID_OFFS + BUILDID_SIZE; adr += 4) fwIdAdr.push_back(adr);
     vBuf fwIdData = ebReadCycle(ebd, fwIdAdr);
     std::string s(fwIdData.begin(),fwIdData.end());
 

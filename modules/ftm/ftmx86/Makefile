@@ -9,12 +9,12 @@ else
 endif
 SER_LIB         =-lboost_serialization
 GRAPH_LIB       =-lboost_graph
-
 TOP            ?= ../../..
 
-VERSION        ?= 2.0.0
-VERSION_TOOL   ?= 0.14.0
-
+VERSION_FW     = 2.1.0
+VERSION_TOOL   = 0.15.0
+BUILD_ID_ROM_ADR = 0x100
+BUILD_ID_ROM_SIZE = 0x400
 
 EBMPATH        ?= $(TOP)/ip_cores/etherbone-core/hdl/eb_master_core
 PRIOPATH       ?= $(TOP)/modules/prioq2
@@ -29,7 +29,8 @@ PREFIX         ?= /usr/local
 INSTALLPATH     = $(PREFIX)/bin
 
 T_CXX           = g++
-T_CXXFLAGS      = -Wall -g -std=c++11 -fPIC -I$(FTMPATH)/include $(EB_INC) -I$(FWPATH) -I$(LZMAPATH) -Wfatal-errors -DPLATFORM=$(BUILD) -DTOOL_VER=\"$(VERSION_TOOL)\"  -DEXP_VER=\"$(VERSION)\" -DETHERBONE_THROWS=1
+T_CXXFLAGS      = -Wall -g -std=c++11 -fPIC -I$(FTMPATH)/include $(EB_INC) -I$(LZMAPATH) -Wfatal-errors
+T_CXXFLAGS_CDM  = -DTOOL_VER=\"$(VERSION_TOOL)\"  -DEXP_VER=\"$(VERSION_FW)\" -DETHERBONE_THROWS=1 -DBUILDID_OFFS=$(BUILD_ID_ROM_ADR) -DBUILDID_SIZE=$(BUILD_ID_ROM_SIZE)
 T_CC            = gcc
 T_CFLAGS        = -Wall -g -I$(LZMAPATH) -fPIC -Wfatal-errors -D_7ZIP_ST
 
@@ -47,11 +48,12 @@ all: lib tools
 lib: libcarpedm.so  
 
 tools: $(TOOLS)
-	
-$(FWPATH)/ftm_shared_mmap.h:
-	$(MAKE) -C $(FWPATH) ftm_shared_mmap.h
 
-%.o: 	$(SRCPATH)/%.cpp $(FWPATH)/ftm_shared_mmap.h
+
+carpeDM.o: $(SRCPATH)/carpeDM.cpp
+	$(T_CXX) $(T_CXXFLAGS) $(T_CXXFLAGS_CDM) -c $< -o $@ $(T_LIBS)
+	
+%.o: 	$(SRCPATH)/%.cpp
 	$(T_CXX) $(T_CXXFLAGS) -c $< -o $@ $(T_LIBS)
 
 %.o: 	$(LZMAPATH)/%.c
