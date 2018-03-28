@@ -656,97 +656,6 @@ void CarpeDM::showCpuList() {
   }
 
 
-  //check if all tables are in sync
-  bool CarpeDM::tableCheck(std::string& report) {
-    Graph& g        = gDown;
-    AllocTable& at  = atDown;
-    bool qtyIsOk  = true, allocIsOk = true, hashIsOk = true, groupsIsOk = true, isOk;
-
-    std::string    intro = "*** Table Status:  ",
-                qtyIntro = "*** Element Count: ", 
-              allocIntro = "*** Alloctable:    ",
-             groupsIntro = "*** GroupTable:    ",
-             hashIntro   = "*** Hashtable:     ";
-    std::string qtyReport, allocReport, groupsReport, hashReport;         
-    const std::string sMiss   = "Missing ";
-    const std::string sSurp   = "Surplus ";
-    const std::string sFirst  = "element: ";
-    const std::string sOK     = "OK\n";
-    const std::string sERR    = "ERROR\n";
-
-    // check if  graph node count equals ... 
-    auto nQty = boost::vertices(g);
-    size_t nodeQty  = nQty.second - nQty.first;
-
-    // ... alloctable entry count
-    size_t allocEntryQty     = at.getSize();
-    // ... groupstable entry count
-    size_t groupsEntryQty    = gt.getSize();
-    // ... hashtable entry count
-    size_t hashEntryQty      = hm.size();
-
-    qtyIsOk &= ((nodeQty == allocEntryQty) & (nodeQty == allocEntryQty) & (nodeQty == groupsEntryQty) & (nodeQty == hashEntryQty));
-
-  
-      qtyReport += "Nodes:        " + std::to_string(nodeQty) + "\nAllocEntries: " + std::to_string(allocEntryQty)
-                +  "\nHashEntries:  " + std::to_string(hashEntryQty) +  "\nGroupEntries: " + std::to_string(groupsEntryQty) + "\n";
-   
-    // check if all graph nodes are known to all tables
-    BOOST_FOREACH( vertex_t v, vertices(g) ) {
-      //Check Hashtable
-      if (!hm.lookup(g[v].name)) {hashIsOk = false; hashReport += sMiss + sFirst + g[v].name + "\n";}
-    }
-    BOOST_FOREACH( vertex_t v, vertices(g) ) {
-      //Check Alloctable
-      auto x = at.lookupVertex(v);
-      if (!at.isOk(x))           {allocIsOk = false; allocReport += sMiss + sFirst + g[v].name + "\n";}
-    }
-    BOOST_FOREACH( vertex_t v, vertices(g) ) {
-      //Check Groupstable
-      auto x  = gt.getTable().get<Groups::Node>().equal_range(g[v].name);
-      if (x.first == x.second)   {groupsIsOk = false; groupsReport += sMiss + sFirst + g[v].name + "\n";} 
-    } 
-
-    // Let's assume hashmap is okay if all node names are accounted for
-
-    // Let's assume alloctable is okay if all nodes are accounted for
-
-    // check if all groupstable entries are present in graph
-    bool notFound;
-    for (auto& patternIt : gt.getAllPatterns()) { //NOTE: use the pattern list in GroupTable, not the list in the Graph!
-      //std::cout << "Pattern " << patternIt << std::endl;
-      for (auto& nodeIt : getPatternMembers(patternIt)) {
-        notFound = true; 
-        BOOST_FOREACH( vertex_t v, vertices(g) ) {
-          if (g[v].name == nodeIt) { notFound = false; break; }
-        }
-        if (notFound) {
-          //std::cout << nodeIt << " was not found " << std::endl; 
-          groupsIsOk = false; groupsReport += sSurp + sFirst + nodeIt + "\n"; 
-        }
-      }
-      
-    }
-    isOk = qtyIsOk & allocIsOk & hashIsOk & groupsIsOk;
-    
-    intro       += (isOk       ? sOK : sERR);
-    qtyIntro    += (qtyIsOk    ? sOK : sERR);
-    allocIntro  += (allocIsOk  ? sOK : sERR);
-    hashIntro   += (hashIsOk   ? sOK : sERR);
-    groupsIntro += (groupsIsOk ? sOK : sERR);
-
-    
-    report = intro
-           + qtyIntro     + qtyReport     + "\n" 
-           + allocIntro   + allocReport   + "\n"
-           + hashIntro    + hashReport    + "\n"
-           + groupsIntro  + groupsReport  + "\n";
-    
-
-    return isOk;      
-  }
-
-
   //Improvised Transaction Management: If an upload operation fails for any reason, we roll back the meta tables
   int CarpeDM::safeguardTransaction(int (CarpeDM::*func)(Graph&, bool), Graph& g, bool force) {
     HashMap hmBak     = hm;
@@ -819,3 +728,19 @@ void CarpeDM::showCpuList() {
 
     return ew;
   }
+
+  int CarpeDM::startThr(uint8_t cpuIdx, uint8_t thrIdx)                              { vEbwrs ew; return send(startThr(cpuIdx, thrIdx, ew));} //Requests Thread to start
+  int CarpeDM::startPattern(const std::string& sPattern, uint8_t thrIdx)             { vEbwrs ew; return send(startPattern(sPattern, thrIdx, ew));}//Requests Pattern to start
+  int CarpeDM::startPattern(const std::string& sPattern)                             { vEbwrs ew; return send(startPattern(sPattern, ew));}//Requests Pattern to start on first free thread
+  int CarpeDM::startNodeOrigin(const std::string& sNode, uint8_t thrIdx)             { vEbwrs ew; return send(startNodeOrigin(sNode, thrIdx, ew));}//Requests thread <thrIdx> to start at node <sNode>
+  int CarpeDM::startNodeOrigin(const std::string& sNode)                             { vEbwrs ew; return send(startNodeOrigin(sNode, ew));}//Requests a start at node <sNode>
+  int CarpeDM::stopPattern(const std::string& sPattern)                              { vEbwrs ew; return send(stopPattern(sPattern, ew));}//Requests Pattern to stop
+  int CarpeDM::stopNodeOrigin(const std::string& sNode)                              { vEbwrs ew; return send(stopNodeOrigin(sNode, ew));}//Requests stop at node <sNode> (flow to idle)
+  int CarpeDM::abortPattern(const std::string& sPattern)                             { vEbwrs ew; return send(abortPattern(sPattern, ew));}//Immediately aborts a Pattern
+  int CarpeDM::abortNodeOrigin(const std::string& sNode)                             { vEbwrs ew; return send(abortNodeOrigin(sNode, ew));}//Immediately aborts the thread whose pattern <sNode> belongs to
+  int CarpeDM::abortThr(uint8_t cpuIdx, uint8_t thrIdx)                              { vEbwrs ew; return send(abortThr(cpuIdx, thrIdx, ew));} //Immediately aborts a Thread
+  int CarpeDM::setThrStart(uint8_t cpuIdx, uint32_t bits)                            { vEbwrs ew; return send(setThrStart(cpuIdx, bits, ew));} //Requests Threads to start
+  int CarpeDM::setThrAbort(uint8_t cpuIdx, uint32_t bits)                            { vEbwrs ew; return send(setThrAbort(cpuIdx, bits, ew));}//Immediately aborts Threads
+  int CarpeDM::setThrOrigin(uint8_t cpuIdx, uint8_t thrIdx, const std::string& name) { vEbwrs ew; return send(setThrOrigin(cpuIdx, thrIdx, name, ew));}//Sets the Node the Thread will start from
+  int CarpeDM::setThrStartTime(uint8_t cpuIdx, uint8_t thrIdx, uint64_t t)           { vEbwrs ew; return send(setThrStartTime(cpuIdx, thrIdx, t, ew));}
+  int CarpeDM::setThrPrepTime(uint8_t cpuIdx, uint8_t thrIdx, uint64_t t)            { vEbwrs ew; return send(setThrPrepTime(cpuIdx, thrIdx, t, ew));}

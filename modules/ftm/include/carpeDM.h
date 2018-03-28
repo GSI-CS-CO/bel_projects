@@ -100,7 +100,22 @@ private:
 
   void readMgmtLLMeta();
 
-
+  vEbwrs& startThr(uint8_t cpuIdx, uint8_t thrIdx, vEbwrs& ew); //Requests Thread to start
+  vEbwrs& startPattern(const std::string& sPattern, uint8_t thrIdx, vEbwrs& ew); //Requests Pattern to start
+  vEbwrs& startPattern(const std::string& sPattern, vEbwrs& ew); //Requests Pattern to start on first free thread
+  vEbwrs& startNodeOrigin(const std::string& sNode, uint8_t thrIdx, vEbwrs& ew); //Requests thread <thrIdx> to start at node <sNode>
+  vEbwrs& startNodeOrigin(const std::string& sNode, vEbwrs& ew); //Requests a start at node <sNode>
+  vEbwrs& stopPattern(const std::string& sPattern, vEbwrs& ew); //Requests Pattern to stop
+  vEbwrs& stopNodeOrigin(const std::string& sNode, vEbwrs& ew); //Requests stop at node <sNode> (flow to idle)
+  vEbwrs& abortPattern(const std::string& sPattern, vEbwrs& ew); //Immediately aborts a Pattern
+  vEbwrs& abortNodeOrigin(const std::string& sNode, vEbwrs& ew); //Immediately aborts the thread whose pattern <sNode> belongs to
+  vEbwrs& abortThr(uint8_t cpuIdx, uint8_t thrIdx, vEbwrs& ew); //Immediately aborts a Thread
+  vEbwrs& setThrStart(uint8_t cpuIdx, uint32_t bits, vEbwrs& ew); //Requests Threads to start
+  vEbwrs& setThrAbort(uint8_t cpuIdx, uint32_t bits, vEbwrs& ew); //Immediately aborts Threads
+  vEbwrs& setThrOrigin(uint8_t cpuIdx, uint8_t thrIdx, const std::string& name, vEbwrs& ew); //Sets the Node the Thread will start from
+  vEbwrs& setThrStartTime(uint8_t cpuIdx, uint8_t thrIdx, uint64_t t, vEbwrs& ew);
+  vEbwrs& setThrPrepTime(uint8_t cpuIdx, uint8_t thrIdx, uint64_t t, vEbwrs& ew);
+  int send(vEbwrs& ew);
 
 protected:
 
@@ -278,39 +293,23 @@ public:
   // The very lazy interface ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 std::pair<int, int> findRunningPattern(const std::string& sPattern); //get cpu and thread assignment of running pattern
                bool isPatternRunning(const std::string& sPattern); //true if Pattern <x> is running
-               vEbwrs& startThr(uint8_t cpuIdx, uint8_t thrIdx, vEbwrs& ew); //Requests Thread to start
-               vEbwrs& startPattern(const std::string& sPattern, uint8_t thrIdx, vEbwrs& ew); //Requests Pattern to start
-               vEbwrs& startPattern(const std::string& sPattern, vEbwrs& ew); //Requests Pattern to start on first free thread
-               vEbwrs& startNodeOrigin(const std::string& sNode, uint8_t thrIdx, vEbwrs& ew); //Requests thread <thrIdx> to start at node <sNode>
-               vEbwrs& startNodeOrigin(const std::string& sNode, vEbwrs& ew); //Requests a start at node <sNode>
-               vEbwrs& stopPattern(const std::string& sPattern, vEbwrs& ew); //Requests Pattern to stop
-               vEbwrs& stopNodeOrigin(const std::string& sNode, vEbwrs& ew); //Requests stop at node <sNode> (flow to idle)
-               vEbwrs& abortPattern(const std::string& sPattern, vEbwrs& ew); //Immediately aborts a Pattern
-               vEbwrs& abortNodeOrigin(const std::string& sNode, vEbwrs& ew); //Immediately aborts the thread whose pattern <sNode> belongs to
-               vEbwrs& abortThr(uint8_t cpuIdx, uint8_t thrIdx, vEbwrs& ew); //Immediately aborts a Thread
-               vEbwrs& setThrStart(uint8_t cpuIdx, uint32_t bits, vEbwrs& ew); //Requests Threads to start
-               vEbwrs& setThrAbort(uint8_t cpuIdx, uint32_t bits, vEbwrs& ew); //Immediately aborts Threads
-               vEbwrs& setThrOrigin(uint8_t cpuIdx, uint8_t thrIdx, const std::string& name, vEbwrs& ew); //Sets the Node the Thread will start from
-               vEbwrs& setThrStartTime(uint8_t cpuIdx, uint8_t thrIdx, uint64_t t, vEbwrs& ew);
-               vEbwrs& setThrPrepTime(uint8_t cpuIdx, uint8_t thrIdx, uint64_t t, vEbwrs& ew);
-               int send(vEbwrs& ew); 
 
                //direct send wrappers. bit cumbersome, can possibly be done by a template
-               int startThr(uint8_t cpuIdx, uint8_t thrIdx)                              { vEbwrs ew; return send(startThr(cpuIdx, thrIdx, ew));} //Requests Thread to start
-               int startPattern(const std::string& sPattern, uint8_t thrIdx)             { vEbwrs ew; return send(startPattern(sPattern, thrIdx, ew));}//Requests Pattern to start
-               int startPattern(const std::string& sPattern)                             { vEbwrs ew; return send(startPattern(sPattern, ew));}//Requests Pattern to start on first free thread
-               int startNodeOrigin(const std::string& sNode, uint8_t thrIdx)             { vEbwrs ew; return send(startNodeOrigin(sNode, thrIdx, ew));}//Requests thread <thrIdx> to start at node <sNode>
-               int startNodeOrigin(const std::string& sNode)                             { vEbwrs ew; return send(startNodeOrigin(sNode, ew));}//Requests a start at node <sNode>
-               int stopPattern(const std::string& sPattern)                              { vEbwrs ew; return send(stopPattern(sPattern, ew));}//Requests Pattern to stop
-               int stopNodeOrigin(const std::string& sNode)                              { vEbwrs ew; return send(stopNodeOrigin(sNode, ew));}//Requests stop at node <sNode> (flow to idle)
-               int abortPattern(const std::string& sPattern)                             { vEbwrs ew; return send(abortPattern(sPattern, ew));}//Immediately aborts a Pattern
-               int abortNodeOrigin(const std::string& sNode)                             { vEbwrs ew; return send(abortNodeOrigin(sNode, ew));}//Immediately aborts the thread whose pattern <sNode> belongs to
-               int abortThr(uint8_t cpuIdx, uint8_t thrIdx)                              { vEbwrs ew; return send(abortThr(cpuIdx, thrIdx, ew));} //Immediately aborts a Thread
-               int setThrStart(uint8_t cpuIdx, uint32_t bits)                            { vEbwrs ew; return send(setThrStart(cpuIdx, bits, ew));} //Requests Threads to start
-               int setThrAbort(uint8_t cpuIdx, uint32_t bits)                            { vEbwrs ew; return send(setThrAbort(cpuIdx, bits, ew));}//Immediately aborts Threads
-               int setThrOrigin(uint8_t cpuIdx, uint8_t thrIdx, const std::string& name) { vEbwrs ew; return send(setThrOrigin(cpuIdx, thrIdx, name, ew));}//Sets the Node the Thread will start from
-               int setThrStartTime(uint8_t cpuIdx, uint8_t thrIdx, uint64_t t)           { vEbwrs ew; return send(setThrStartTime(cpuIdx, thrIdx, t, ew));}
-               int setThrPrepTime(uint8_t cpuIdx, uint8_t thrIdx, uint64_t t)            { vEbwrs ew; return send(setThrPrepTime(cpuIdx, thrIdx, t, ew));}
+               int startThr(uint8_t cpuIdx, uint8_t thrIdx);                              // Requests Thread to start
+               int startPattern(const std::string& sPattern, uint8_t thrIdx);             // Requests Pattern to start
+               int startPattern(const std::string& sPattern);                             // Requests Pattern to start on first free thread
+               int startNodeOrigin(const std::string& sNode, uint8_t thrIdx);             // Requests thread <thrIdx> to start at node <sNode>
+               int startNodeOrigin(const std::string& sNode);                             // Requests a start at node <sNode>
+               int stopPattern(const std::string& sPattern);                              // Requests Pattern to stop
+               int stopNodeOrigin(const std::string& sNode);                              // Requests stop at node <sNode> (flow to idle)
+               int abortPattern(const std::string& sPattern);                             // Immediately aborts a Pattern
+               int abortNodeOrigin(const std::string& sNode);                             // Immediately aborts the thread whose pattern <sNode> belongs to
+               int abortThr(uint8_t cpuIdx, uint8_t thrIdx);                              // Immediately aborts a Thread
+               int setThrStart(uint8_t cpuIdx, uint32_t bits);                            // Requests Threads to start
+               int setThrAbort(uint8_t cpuIdx, uint32_t bits);                            // Immediately aborts Threads
+               int setThrOrigin(uint8_t cpuIdx, uint8_t thrIdx, const std::string& name); // Sets the Node the Thread will start from
+               int setThrStartTime(uint8_t cpuIdx, uint8_t thrIdx, uint64_t t);
+               int setThrPrepTime(uint8_t cpuIdx, uint8_t thrIdx, uint64_t t);
      HealthReport& getHealth(uint8_t cpuIdx, HealthReport &hr);
           uint64_t getDmWrTime();
               bool isSafeToRemove(const std::string& pattern, std::string& report);
