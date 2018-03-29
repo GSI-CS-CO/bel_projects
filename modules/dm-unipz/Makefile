@@ -1,9 +1,9 @@
 # PREFIX  controls where programs and libraries get installed
 # Note: during compile (all), PREFIX must be set to the final installation path
 # Example usage:
-#   make PREFIX=/usr all
+#   make PREFIX= all  (hack: leave prefix empty for SCU lib path)
 # Example deploy:
-#   make PREFIX=/usr STAGING=/common/export/timing-rte/dmunipz-dev deploy
+#   make PREFIX= STAGING=/common/export/timing-rte/dmunipz-dev deploy (hack: leave prefix empty for SCU lib path)
 PREFIX      ?= /usr/local
 STAGING     ?=
 ARCH        ?= /x86_64
@@ -30,12 +30,12 @@ clean:
 	$(MAKE) -C $(FW) clean
 
 deploy: 
-	mkdir -p $(STAGING)$(ARCH)$(PREFIX)/bin
+	mkdir -p $(STAGING)$(ARCH)$(PREFIX)/usr/bin # '/usr' is a hack
 	mkdir -p $(STAGING)/firmware
-	cp ../../tools/eb-fwload $(STAGING)$(ARCH)$(PREFIX)/bin
+	cp ../../tools/eb-fwload $(STAGING)$(ARCH)$(PREFIX)/usr/bin # '/usr' is a hack
 	cp $(ASL)/dmunipz.sh $(STAGING)
-	cp $(SW)/dm-unipz_start.sh $(STAGING)$(ARCH)$(PREFIX)/bin
-	cp $(SW)/dmunipz-ctl $(STAGING)$(ARCH)$(PREFIX)/bin
+	cp $(SW)/dm-unipz_start.sh $(STAGING)$(ARCH)$(PREFIX)/usr/bin # '/usr' is a hack
+	cp $(SW)/dmunipz-ctl $(STAGING)$(ARCH)$(PREFIX)/usr/bin # '/usr' is a hack
 	cp $(FW)/dmunipz.bin $(STAGING)/firmware
 #	script /common/export/nfsinit/global/timing-rte-dmunipz-dev is _here_ in sub-folder dmunipz-asl 
 

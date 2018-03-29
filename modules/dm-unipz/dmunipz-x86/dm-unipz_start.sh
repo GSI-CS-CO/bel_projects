@@ -26,47 +26,82 @@ eb-fwload dev/wbm0 u 0x0 dmunipz.bin
 # start software on hostsystem 
 ###########################################
 # to be implemented: command with pipe to logger (logstash)
-echo - dm-unipz - start monitoring
+echo dm-unipz - start monitoring
 dmunipz-ctl -s2 dev/wbm0 | logger -t dmunipz-ctl -sp local0.info &
 
 ###########################################
 # configure firmware and make it operational 
 ###########################################
- 
+
+# convention: test system (tsl404 as DM) uses:
+# - 192.168.11.2 ( c0a80b02 ) has ip for SCU, MAC check with eb-mon 
+# - 192.168.11.1 ( c0a80b01 ) has ip for DM,  MAC tsl404: 0x00267b000455
+#
+# some data masters
+# dmunipz-ctl dev/wbm0 ebmdm 0x00267b000408 0xc0a88040 (tsl015, user network) 
+# dmunipz-ctl dev/wbm0 ebmdm 0x00267b000407 0xc0a8803f (tsl017, production network)
+# dmunipz-ctl dev/wbm0 ebmdm 0x00267b000422 0xc0a80c04 (tsl008, 'Hanno network')
+# dmunipz-ctl dev/wbm0 ebmdm 0x00267b000455 0xc0a80b01 (tsl404, 'Testnetz Dietrich')
+#
+# some SCUs
+# dmunipz-ctl dev/wbm0 ebmlocal 0x00267b000321 0xc0a8a00c (scuxl0033, user network)
+# dmunipz-ctl dev/wbm0 ebmlocal 0x00267b0003f1 0xc0a8a0e5 (scuxl0223, production network)
+# dmunipz-ctl dev/wbm0 ebmlocal 0x00267b000321 0xc0a80cea (scuxl0033, 'Hanno network',     need to set static IP with eb-console)
+# dmunipz-ctl dev/wbm0 ebmlocal 0x00267b000321 0xc0a80b02 (scuxl0033, 'Testnetz Dietrich', need to set static IP with eb-console)
+# dmunipz-ctl dev/wbm0 ebmlocal 0x00267b0003f1 0xc0a80b02 (scuxl0223, 'Testnetz Dietrich', need to set static IP with eb-console)
+
 # do some write actions to set register values
 echo -e dm-unipz - set MAC and IP of gateway and Data Master
-# development: Programmentwicklungsraum, integration network, tsl008, scuxl0033
-#dmunipz-ctl dev/wbm0 ebmdm 0x00267b000422 0xc0a80c04
-#dmunipz-ctl dev/wbm0 ebmlocal 0x00267b000321 0xc0a80cea
-# development: Programmentwicklungsraum, development network tsl015, scuxl0033
-dmunipz-ctl dev/wbm0 ebmdm 0x00267b000408 0xc0a88040
-dmunipz-ctl dev/wbm0 ebmlocal 0x00267b000321 0xc0a8a00c
-# production: BG2, tsl017, scuxl0223
-#dmunipz-ctl dev/wbm0 ebmdm 0x00267b000407 0xc0a8803f
-#dmunipz-ctl dev/wbm0 ebmlocal 0x00267b0003f1 0xc0a8a0e5
+
+PROSCU=scuxl0223
+
+if  [ $(hostname) == $PROSCU ]; then   # production network
+    echo -e dm-unipz - configuring for PRODUCTION network on $(hostname)
+    dmunipz-ctl dev/wbm0 ebmdm 0x00267b000407 0xc0a8803f
+    dmunipz-ctl dev/wbm0 ebmlocal 0x00267b0003f1 0xc0a8a0e5
+else                                  # test or development
+    echo -e dm-unipz - configuring for TEST or DEVELOPMENT network on $(hostname)
+    dmunipz-ctl dev/wbm0 ebmlocal 0x00267b000321 0xc0a80b02
+    dmunipz-ctl dev/wbm0 ebmdm 0x00267b000455 0xc0a80b01
+fi
 
 echo -e dm-unipz - start: make firmware operational
+
 # send CONFIGURE command to firmware
 sleep 5
 dmunipz-ctl dev/wbm0 configure
 
-# send START OPERATATION command to firmware
-sleep 5
-dmunipz-ctl dev/wbm0 startop
-
 ###########################################
-# configure ECA
+# configure ECA for DM
 ###########################################
-echo -e dm-unipz - start: configure lm32 channel of ECA
+echo -e dm-unipz - configure ECA for events from DM
 
-# configure ECA for lm32 channel: here action for TK request, tag "0x2"
+# configure ECA for lm32 channel: listen for TK request, tag "0x2"
 saft-ecpu-ctl tr0 -c 0x1fa215e000000000 0xfffffff000000000 0 0x2 -d
 
-# configure ECA for lm32 channel: here action for beam request, tag "0x3"
+# configure ECA for lm32 channel: listen for beam request, tag "0x3"
 saft-ecpu-ctl tr0 -c 0x1fa2160000000000 0xfffffff000000000 0 0x3 -d
 
-# configure ECA for lm32 channel: here action for TK release, tag "0x4"
+# configure ECA for lm32 channel: listen for TK release, tag "0x4"
 saft-ecpu-ctl tr0 -c 0x1fa215f000000000 0xfffffff000000000 0 0x4 -d
+
+
+###########################################
+# configure TLU and ECA for UNIPZ
+# MIL event EVT_READY_TO_SIS is received as TTL
+###########################################
+echo -e dm-unipz - configure TLU and ECA for events from UNIPZ
+
+# configure TLU (input B1, TLU will generate messages with event ID
+saft-io-ctl tr0 -n B1 -b 0xffff100000000000
+
+# configure ECA for lm32 channel: listen for event ID from TLU, tag "0x6"
+saft-ecpu-ctl tr0 -c 0xffff100000000001 0xffffffffffffffff 0 0x6 -d
+
+# send START OPERATATION command to firmware
+sleep 5
+echo -e dm-unipz - start operation
+dmunipz-ctl dev/wbm0 startop
 
 echo -e dm-unipz - start: startup script finished
 
