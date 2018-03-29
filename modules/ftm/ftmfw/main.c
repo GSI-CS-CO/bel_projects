@@ -99,15 +99,13 @@ void init()
 
 
 void main(void) {
+
    
   int i,j;
 
   uint32_t* tp;
   uint32_t** np;
   
-  uint64_t now;
-  uint64_t *currTime, *deadline;     
- 
 
   init();
 
@@ -136,27 +134,32 @@ void main(void) {
   if (getMsiBoxCpuSlot(cpuId, 0) == -1) {mprintf("#%02u: Mail box slot acquisition failed\n", cpuId);}
   
    while (1) {
-    
-    //for (j = 0; j < ((125000000/4)); ++j) { asm("nop"); }
-    uint8_t thrIdx = *(uint32_t*)(pT(hp) + (T_TD_FLAGS >> 2)) & 0x7; 
 
+
+    // Hard abort is an emergency and gets priority over everything else
+    if (*abort1) {
+      *running &= ~(*abort1);   // clear all aborted running bits
+      for(i=0; i<_THR_QTY_; i++) {
+        uint64_t* deadline  = (uint64_t*)&p[( SHCTL_THR_DAT + i * _T_TD_SIZE_ + T_TD_DEADLINE ) >> 2];
+        *deadline |= (~((uint64_t)*abort1 >> i) & 1) -1;  // if abort bit was set, move deadline to infinity
+      }
+      heapify(); // re-sort all threads in schedulder (necessary because multiple threads may have been aborted
+      *abort1 = 0; // clear abort bits
+    }
+
+    uint8_t thrIdx = *(uint32_t*)(pT(hp) + (T_TD_FLAGS >> 2)) & 0x7;
     if (DL(pT(hp))  <= getSysTime() + *(uint64_t*)(p + (( SHCTL_THR_STA + thrIdx * _T_TS_SIZE_ + T_TS_PREPTIME   ) >> 2) )) {
 
-
-      *pncN(hp)   = (uint32_t)nodeFuncs[getNodeType(pN(hp))](pN(hp), pT(hp)); //process node and return thread's next node
-      
+      *pncN(hp)   = (uint32_t)nodeFuncs[getNodeType(pN(hp))](pN(hp), pT(hp));       //process node and return thread's next node
       DL(pT(hp))  = (uint64_t)deadlineFuncs[getNodeType(pN(hp))](pN(hp), pT(hp));   // return thread's next deadline (returns infinity on upcoming NULL ptr)
-      DL(pT(hp)) |= (~((uint64_t)*abort1 >> thrIdx) & 1) -1;  // if abort bit was set, move deadline to infinity
-      *running   &= ~((DL(pT(hp)) == -1ULL) << thrIdx);       // clear running bit if deadline is at infinity
-      *abort1    &= ~(1 << thrIdx);                           // clear abort bit
-
-      heapReplace(0); // call scheduler, re-sort only current thread
+      *running   &= ~((DL(pT(hp)) == -1ULL) << thrIdx);                             // clear running bit if deadline is at infinity
+      heapReplace(0);                                                               // call scheduler, re-sort only current thread
       
     } else {
       //nothing due right now. did the host request any new threads to be started?
       
       if(*start) {
-        for(i=0;i<8;i++) {
+        for(i=0;i<_THR_QTY_;i++) {
           if (*start & (1<<i)) {
             uint64_t* startTime = (uint64_t*)&p[( SHCTL_THR_STA + i * _T_TS_SIZE_ + T_TS_STARTTIME) >> 2];
             uint64_t* prepTime  = (uint64_t*)&p[( SHCTL_THR_STA + i * _T_TS_SIZE_ + T_TS_PREPTIME ) >> 2];

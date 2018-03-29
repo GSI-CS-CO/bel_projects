@@ -49,6 +49,7 @@ myVertex::myVertex(myVertex const &src) {
 
   //Command
   this->tValid = src.tValid;
+  this->vabs   = src.vabs;
 
 
   // Flush

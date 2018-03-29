@@ -1,89 +1,82 @@
-TOP          ?= ../../..
-
-VERSION      ?= 1.1.0
-VERSION_TOOL ?= 0.10.1
-
-
-EBMPATH      ?= $(TOP)/ip_cores/etherbone-core/hdl/eb_master_core
-PRIOPATH     ?= $(TOP)/modules/prioq2
-FTMPATH      ?= $(TOP)/modules/ftm
-SRCPATH      = $(FTMPATH)/src
-BINPATH      = $(FTMPATH)/bin
-LIBPATH      = $(FTMPATH)/lib
-FWPATH       ?= $(FTMPATH)/ftmfw
-TOOLPATH     ?= $(FTMPATH)/ftmx86
-PREFIX       ?= /usr/local
-INSTALLPATH  = $(PREFIX)/bin
-
 
 #hack for fuckin lib chaos (both on asl cluster and my computer... )
 
 ifeq ($(findstring asl,$(shell hostname)),asl) 
-	EB_INC=-I/common/export/timing-rte/tg-cherry-v2/x86_64/include
-	EB_LIB=/common/export/timing-rte/tg-cherry-v2/x86_64/lib/libetherbone.so
+  EB_INC        =-I/common/export/timing-rte/tg-cherry-v2/x86_64/include
+  EB_LIB        =/common/export/timing-rte/tg-cherry-v2/x86_64/lib/libetherbone.so
 else
-	EB_LIB=-letherbone
+  EB_LIB        =-letherbone
 endif
-ifeq ($(findstring Pulsar,$(shell hostname)),Pulsar)
-	SER_LIB=-l:libboost_serialization.so.1.62.0
-else
-	SER_LIB=-lboost_serialization
-endif
+SER_LIB         =-lboost_serialization
+GRAPH_LIB       =-lboost_graph
+TOP            ?= ../../..
 
-#hack for /opt
-EB_INC=-I/opt/usr/include
+VERSION_FW     = 2.1.0
+VERSION_TOOL   = 0.15.0
+BUILD_ID_ROM_ADR = 0x100
+BUILD_ID_ROM_SIZE = 0x400
 
+EBMPATH        ?= $(TOP)/ip_cores/etherbone-core/hdl/eb_master_core
+PRIOPATH       ?= $(TOP)/modules/prioq2
+FTMPATH        ?= $(TOP)/modules/ftm
+SRCPATH         = $(FTMPATH)/src
+LZMAPATH        = $(SRCPATH)/lzma/C
+BINPATH         = $(FTMPATH)/bin
+LIBPATH         = $(FTMPATH)/lib
+FWPATH         ?= $(FTMPATH)/ftmfw
+TOOLPATH       ?= $(FTMPATH)/ftmx86
+PREFIX         ?= /usr/local
+INSTALLPATH     = $(PREFIX)/bin
 
-T_CXX         = g++
-T_CXXFLAGS    = -Wall -g -std=c++11 -I$(FTMPATH)/include $(EB_INC) -I$(FWPATH) -Wfatal-errors -DPLATFORM=$(BUILD) -DTOOL_VER=\"$(VERSION_TOOL)\"  -DEXP_VER=\"$(VERSION)\" -DETHERBONE_THROWS=1 -L/opt/usr/lib
+T_CXX           = g++
+T_CXXFLAGS      = -Wall -g -std=c++11 -fPIC -I$(FTMPATH)/include $(EB_INC) -I$(LZMAPATH) -Wfatal-errors
+T_CXXFLAGS_CDM  = -DTOOL_VER=\"$(VERSION_TOOL)\"  -DEXP_VER=\"$(VERSION_FW)\" -DETHERBONE_THROWS=1 -DBUILDID_OFFS=$(BUILD_ID_ROM_ADR) -DBUILDID_SIZE=$(BUILD_ID_ROM_SIZE)
+T_CC            = gcc
+T_CFLAGS        = -Wall -g -I$(LZMAPATH) -fPIC -Wfatal-errors -D_7ZIP_ST
 
-SRC_FILES     = event.cpp meta.cpp block.cpp visitoruploadcrawler.cpp visitordownloadcrawler.cpp visitorvertexwriter.cpp hashmap.cpp carpeDM.cpp carpeDMcommand.cpp carpeDMuploadschedule.cpp carpeDMdownloadschedule.cpp graph.cpp alloctable.cpp mempool.cpp dotstr.cpp idformat.cpp grouptable.cpp validation.cpp visitorvalidation.cpp common.cpp carpeDMsafe2remove.cpp
-T_SOURCES     = $(addprefix $(SRCPATH)/, $(SRC_FILES))
-T_OBJECTS     = $(subst .cpp,.o,$(SRC_FILES))
-T_LIBS        = -Wl,-rpath,/usr/local/lib $(EB_LIB) -lboost_graph $(SER_LIB)
+LZMA_SRC_FILES  = LzmaEnc.c LzmaDec.c LzFind.c
+CDM_SRC_FILES   = event.cpp meta.cpp block.cpp visitoruploadcrawler.cpp visitordownloadcrawler.cpp visitorvertexwriter.cpp hashmap.cpp carpeDM.cpp carpeDMcommand.cpp carpeDMuploadschedule.cpp carpeDMdownloadschedule.cpp carpeDMdiagnostics.cpp graph.cpp alloctable.cpp mempool.cpp dotstr.cpp idformat.cpp grouptable.cpp validation.cpp visitorvalidation.cpp common.cpp carpeDMsafe2remove.cpp lzmaCompression.cpp
 
+T_SOURCES       = $(addprefix $(SRCPATH)/, $(CDM_SRC_FILES)) $(addprefix $(LZMAPATH)/, $(LZMA_SRC_FILES))
+T_OBJECTS       = $(subst .c,.o,$(LZMA_SRC_FILES)) $(subst .cpp,.o,$(CDM_SRC_FILES))
+T_LIBS          = -Wl,-rpath,/usr/local/lib $(EB_LIB) $(GRAPH_LIB) $(SER_LIB)
+EXECS           = dm-sched dm-cmd dm-test
+TOOLS           = $(addprefix $(TOOLPATH)/, $(EXECS))
+BINS            = $(addprefix $(BINPATH)/, $(EXECS))
 
 all: lib tools
 
 lib: libcarpedm.so  
 
-tools: $(BINPATH)/dm-sched $(BINPATH)/dm-cmd
+tools: $(TOOLS)
+
+
+carpeDM.o: $(SRCPATH)/carpeDM.cpp
+	$(T_CXX) $(T_CXXFLAGS) $(T_CXXFLAGS_CDM) -c $< -o $@ $(T_LIBS)
 	
+%.o: 	$(SRCPATH)/%.cpp
+	$(T_CXX) $(T_CXXFLAGS) -c $< -o $@ $(T_LIBS)
 
-$(BINPATH)/dm-sched: $(TOOLPATH)/dm-sched
-	mkdir -p $(BINPATH) 
-	cp $^ $(BINPATH)
-
-$(BINPATH)/dm-cmd: $(TOOLPATH)/dm-cmd
-	mkdir -p $(BINPATH)
-	cp $^ $(BINPATH)
+%.o: 	$(LZMAPATH)/%.c
+	$(T_CC) $(T_CFLAGS) -fPIC -c $^ -o $@
 
 
-$(FWPATH)/ftm_shared_mmap.h:
-	$(MAKE) -C $(FWPATH) ftm_shared_mmap.h
-
-
-libcarpedm.so: $(T_SOURCES) $(FWPATH)/ftm_shared_mmap.h 
-	$(T_CXX) $(T_CXXFLAGS) -fPIC -c $(T_SOURCES) $(T_LIBS)
-	$(T_CXX) -shared -o $@ $(T_OBJECTS)
+libcarpedm.so: $(T_OBJECTS)
+	$(T_CXX) $(T_CXXFLAGS) -shared -o $@ $^ $(T_LIBS)
 	mkdir -p $(LIBPATH)
 	cp $@ $(LIBPATH)
 
-
-$(TOOLPATH)/dm-sched: libcarpedm.so
-	$(T_CXX) $(T_CXXFLAGS) -o $@ $(TOOLPATH)/dm-schedule.cpp $^ $(T_LIBS) -L$(LIBPATH) -lcarpedm
-
-
-$(TOOLPATH)/dm-cmd: libcarpedm.so
-	$(T_CXX) $(T_CXXFLAGS) -o $@ $(TOOLPATH)/dm-cmd.cpp $^ $(T_LIBS) -L$(LIBPATH) -lcarpedm
-
-foo: libcarpedm.so
-	$(T_CXX) $(T_CXXFLAGS) -o $@ $(TOOLPATH)/foo.cpp $^ $(T_LIBS) -L$(LIBPATH) -lcarpedm
-
-
-install: $(BINPATH)/dm-sched $(BINPATH)/dm-cmd
-	cp $(BINPATH)/dm-sched $(BINPATH)/dm-cmd $(INSTALLPATH)
+install: $(BINS)
+	cp $(BINS) $(INSTALLPATH)
 	cp $(LIBPATH)/libcarpedm.so $(PREFIX)/lib
 
 clean::
 	rm -f $(TOOLPATH)/*.o $(TOOLPATH)/*.a $(TOOLPATH)/*.so $(TOOLPATH)/*.elf $(BINPATH)/dm-sched $(BINPATH)/dm-cmd $(LIBPATH)/libcarpedm.so
+
+.SECONDEXPANSION:
+$(TOOLS): $$@.cpp libcarpedm.so
+	$(T_CXX) $(T_CXXFLAGS) -o $@ $< $(T_LIBS) -L$(LIBPATH) -lcarpedm
+	mkdir -p $(BINPATH)
+	cp $@ $(BINPATH)
+
+

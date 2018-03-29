@@ -4,7 +4,7 @@
 #include <inttypes.h>
 #include <unistd.h>
 
-#include "ftm_shared_mmap.h"
+
 #include "carpeDM.h"
 #include "filenames.h"
 
@@ -16,7 +16,6 @@ static void help(const char *program) {
   fprintf(stderr, "\nUsage: %s <etherbone-device> <Command> <.dot file> \n", program);
   fprintf(stderr, "\n");
   fprintf(stderr, "\nSchedule Generator. Creates Binary Data for the DataMaster (DM) from Schedule Graphs (.dot files) and\nuploads/downloads to/from CPU Core <m> of the DM (CPU currently specified in schedule as cpu=<m>).\n");
-  fprintf(stderr, "  -d         <dir>          Use a directory other than the current working path for hashtable and groupstable files\n");
   fprintf(stderr, "\nCommands:\n");
   fprintf(stderr, "  status                    Gets current DM schedule state (default) \n");
   fprintf(stderr, "  clear                     Clear DM, existing nodes will be erased. \n");
@@ -29,6 +28,7 @@ static void help(const char *program) {
   fprintf(stderr, "  -o         <.dot file>    Specify output file name, default is '%s'\n", outfile);
   fprintf(stderr, "  -s                        Show Meta Nodes. Download will not only contain schedules, but also queues, etc. \n");  
   fprintf(stderr, "  -v                        Verbose operation, print more details\n");
+  fprintf(stderr, "  -d                        Debug operation, print everything\n");
   fprintf(stderr, "  -f                        Force, overrides the safety check for remove and keep\n");
 
   fprintf(stderr, "\n");
@@ -39,7 +39,7 @@ int main(int argc, char* argv[]) {
   Graph g;
   char dirnameBuff[80];
 
-  bool update = true, verbose = false, strip=true, cmdValid = false, force = false;
+  bool update = true, verbose = false, strip=true, cmdValid = false, force = false, debug=false;
 
   int opt;
   const char *program = argv[0];
@@ -49,7 +49,7 @@ int main(int argc, char* argv[]) {
 
 
 // start getopt 
-   while ((opt = getopt(argc, argv, "fnshvo:d:")) != -1) {
+   while ((opt = getopt(argc, argv, "fnshvo:d")) != -1) {
       switch (opt) {
  
          case 'o':
@@ -60,11 +60,7 @@ int main(int argc, char* argv[]) {
             error = -1;
             break;
          case 'd':
-            dirname = optarg;
-            if (dirname == NULL) {
-              std::cerr << std::endl << program << ": option -d expects a path" << std::endl;
-            }
-            error = -1;
+            debug = true;
             break;   
 
          case 'n':
@@ -121,6 +117,7 @@ int main(int argc, char* argv[]) {
 
 
   if(verbose) cdm.verboseOn();
+  if(debug)   cdm.debugOn();
 
 
   try {
@@ -129,24 +126,7 @@ int main(int argc, char* argv[]) {
    std::cerr << std::endl << program << ": Failed to connect to DM: " << err.what() << std::endl; return -20;
   }
 
-  try { cdm.loadHashDictFile(std::string(dirname) + "/" + std::string(hashfile)); } catch (std::runtime_error const& err) {
-      std::cerr << std::endl << program << ": Warning - Could not load dictionary file. Cause: " << err.what() << std::endl;
-    }
-  if (verbose) std::cout << std::endl << program << ": Loaded " << cdm.getHashDictSize() << " Node / Hash entries" << std::endl;  
-
-  try { cdm.loadGroupsDictFile(std::string(dirname) + "/" + std::string(groupsfile)); } catch (std::runtime_error const& err) {
-      std::cerr << std::endl << program << ": Warning - Could not load groups file. Cause: " << err.what() << std::endl;
-    }
-
-  if (verbose) std::cout << std::endl << program << ": Loaded " << cdm.getGroupsSize() << " Node / Pattern / Beamprocess entries" << std::endl;    
-
-
-  if (inputFilename == NULL) {
-    if (cdm.isHashDictEmpty()) std::cerr << std::endl << program << ": Warning - No Nodename/Hash dictionary available. Your download will show only hashes." << std::endl;
-  }
-
-
-
+  cdm.updateModTime();
 
   if (cmdName != NULL ) {
 
@@ -157,10 +137,10 @@ int main(int argc, char* argv[]) {
     
     try {
       if (cmd == "clear")     { cdm.clear(force); cmdValid = true;}
-      if (cmd == "add")       { cdm.addDotFile(inputFilename); cmdValid = true;}
+      if (cmd == "add")       { cdm.download(); cdm.addDotFile(inputFilename); cmdValid = true;}
       if (cmd == "overwrite") { cdm.overwriteDotFile(inputFilename, force); cmdValid = true;}
-      if (cmd == "remove")    { cdm.removeDotFile(inputFilename, force); cmdValid = true;}
-      if (cmd == "keep")      { cdm.keepDotFile(inputFilename, force); cmdValid = true;}
+      if (cmd == "remove")    { cdm.download(); cdm.removeDotFile(inputFilename, force); cmdValid = true;}
+      if (cmd == "keep")      { cdm.download(); cdm.keepDotFile(inputFilename, force); cmdValid = true;}
       if (cmd == "status")    { cdm.downloadDotFile(outputFilename, strip); cmdValid = true;}
       if (cmd == "chkrem")    {
         cdm.download();
@@ -201,9 +181,6 @@ int main(int argc, char* argv[]) {
   bool tabOk = cdm.tableCheck(report);
 
   if (verbose or !tabOk) std::cout << report << std::endl;
-
-  cdm.storeHashDictFile(std::string(dirname) + "/" + std::string(hashfile));  
-  cdm.storeGroupsDictFile(std::string(dirname) + "/" + std::string(groupsfile));
 
 
   cdm.disconnect();

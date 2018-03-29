@@ -75,7 +75,7 @@ public:
   //Command
 
   std::string tValid = sZero;
-
+  std::string vabs   = sFalse;
 
   // Flush
 

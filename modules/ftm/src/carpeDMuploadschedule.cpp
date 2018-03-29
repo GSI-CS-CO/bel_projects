@@ -32,15 +32,16 @@ using namespace DotStr::Misc;
 
 
   //TODO CPU Load Balancer
-  vEbwrs CarpeDM::gatherUploadVector() {
+  vEbwrs CarpeDM::gatherUploadVector(std::set<uint8_t> moddedCpus, uint32_t modCnt, uint8_t opType) {
     //sLog << "Starting Upload address & data vectors" << std::endl;
     vEbwrs ew;
     uint32_t adr, modAdrBase;
-    std::set<uint8_t> modded;
+
+
+    //TODO if this was sorted by CPU, it would be way more efficient!!
 
     //add all Bmp addresses to return vector
     for(unsigned int i = 0; i < atUp.getMemories().size(); i++) {
-      if (!freshDownload || (atUp.getMemories()[i].getBmp() != atDown.getMemories()[i].getBmp()) ) modded.insert(i); // mark cpu as modified if alloctable empty or Bmp Changed 
       //generate addresses of Bmp's address range
       for (adr = atUp.adrConv(AdrType::MGMT, AdrType::EXT,i, atUp.getMemories()[i].bmpOffs); adr < atUp.adrConv(AdrType::MGMT, AdrType::EXT,i, atUp.getMemories()[i].startOffs); adr += _32b_SIZE_) {
         ew.vcs.push_back(adr == atUp.adrConv(AdrType::MGMT, AdrType::EXT,i, atUp.getMemories()[i].bmpOffs));
@@ -50,12 +51,13 @@ using namespace DotStr::Misc;
       ew.vb += atUp.getMemories()[i].getBmp(); 
     }
 
+
     
-    //add all Node addresses to return vector
+    //add all Nodes to return vector
     for (auto& it : atUp.getTable().get<CpuAdr>()) {
       //generate address range for all nodes staged for upload
       if(it.staged) {
-        modded.insert(it.cpu); // mark cpu as modified if a node is staged
+        moddedCpus.insert(it.cpu); // mark cpu as modified if a node is staged
         //Address and cycle start
         for (adr = atUp.adrConv(AdrType::MGMT, AdrType::EXT,it.cpu, it.adr); adr < atUp.adrConv(AdrType::MGMT, AdrType::EXT,it.cpu, it.adr + _MEM_BLOCK_SIZE); adr += _32b_SIZE_ ) {
           ew.vcs.push_back(adr == atUp.adrConv(AdrType::MGMT, AdrType::EXT,it.cpu, it.adr));
@@ -66,25 +68,34 @@ using namespace DotStr::Misc;
       }
     }
 
-    // save modification time
-    for (auto& itMod : modded) {
-      // modification time address (lo/hi)
-      modAdrBase = atUp.getMemories()[itMod].extBaseAdr + atUp.getMemories()[itMod].sharedOffs + SHCTL_DIAG;
-      // save modification time, issuer
-
-      char username[LOGIN_NAME_MAX];
-      getlogin_r(username, LOGIN_NAME_MAX);
-      uint8_t b[8];
-      writeLeNumberToBeBytes<uint64_t>((uint8_t*)&b[0], modTime);  
-
-      ew.vcs += leadingOne(4);
-      ew.va.push_back(modAdrBase + T_DIAG_SMOD_TS + 0);
-      ew.va.push_back(modAdrBase + T_DIAG_SMOD_TS + _32b_SIZE_);
-      ew.va.push_back(modAdrBase + T_DIAG_SMOD_IID + 0);
-      ew.va.push_back(modAdrBase + T_DIAG_SMOD_IID + _32b_SIZE_);
-      ew.vb.insert( ew.vb.end(), b, b +  _TS_SIZE_  );
-      ew.vb.insert( ew.vb.end(), username, username +  _64b_SIZE_  );
+    //add all Mgmt Nodes to return vector
+    for (auto& it : atUp.getMgmtTable().get<CpuAdr>()) {
+      //generate address range for all nodes
+        //Address and cycle start
+        for (adr = atUp.adrConv(AdrType::MGMT, AdrType::EXT,it.cpu, it.adr); adr < atUp.adrConv(AdrType::MGMT, AdrType::EXT,it.cpu, it.adr + _MEM_BLOCK_SIZE); adr += _32b_SIZE_ ) {
+          ew.vcs.push_back(adr == atUp.adrConv(AdrType::MGMT, AdrType::EXT, it.cpu, it.adr));
+          ew.va.push_back(adr);
+        }
+        //Data
+        ew.vb.insert( ew.vb.end(), it.b, it.b + _MEM_BLOCK_SIZE );  
+      
     }
+
+
+    // save modification infos
+    for (auto& itMod : moddedCpus) { createSchedModInfo(itMod, modCnt, opType, ew); }
+
+    // save global meta info for management linked list
+    uint8_t b[8];
+    //enough to write it to cpu 0 
+    modAdrBase = atUp.getMemories()[0].extBaseAdr + atUp.getMemories()[0].sharedOffs + SHCTL_META;
+    writeLeNumberToBeBytes<uint32_t>((uint8_t*)&b[T_META_START_PTR], atUp.getMgmtLLstartAdr());  
+    writeLeNumberToBeBytes<uint32_t>((uint8_t*)&b[T_META_CON_SIZE],  atUp.getMgmtLLsize());  
+    ew.vcs += leadingOne(2);
+    ew.va.push_back(modAdrBase + T_META_START_PTR);
+    ew.va.push_back(modAdrBase + T_META_CON_SIZE);
+    ew.vb.insert( ew.vb.end(), b, b + 2 * _32b_SIZE_ );
+    
     
     return ew;
   }
@@ -94,7 +105,11 @@ using namespace DotStr::Misc;
   void CarpeDM::generateDstLst(Graph& g, vertex_t v) {
     const std::string name = g[v].name + dnm::sDstListSuffix;
     hm.add(name);
+    
+
     vertex_t vD = boost::add_vertex(myVertex(name, g[v].cpu, hm.lookup(name).get(), nullptr, dnt::sDstList, DotStr::Misc::sHexZero), g);
+    //FIXME add to grouptable
+    g[vD].patName = g[v].patName;
     boost::add_edge(v,   vD, myEdge(det::sDstList), g);
   }  
 
@@ -105,9 +120,13 @@ using namespace DotStr::Misc;
     hm.add(nameBl);
     hm.add(nameB0);
     hm.add(nameB1);
+    //FIXME add to grouptable
     vertex_t vBl = boost::add_vertex(myVertex(nameBl, g[v].cpu, hm.lookup(nameBl).get(), nullptr, dnt::sQInfo, DotStr::Misc::sHexZero), g);
     vertex_t vB0 = boost::add_vertex(myVertex(nameB0, g[v].cpu, hm.lookup(nameB0).get(), nullptr, dnt::sQBuf,  DotStr::Misc::sHexZero), g);
     vertex_t vB1 = boost::add_vertex(myVertex(nameB1, g[v].cpu, hm.lookup(nameB1).get(), nullptr, dnt::sQBuf,  DotStr::Misc::sHexZero), g);
+    g[vBl].patName = g[v].patName;
+    g[vB0].patName = g[v].patName;
+    g[vB1].patName = g[v].patName;
     boost::add_edge(v,   vBl, myEdge(det::sQPrio[prio]), g);
     boost::add_edge(vBl, vB0, myEdge(det::sMeta),    g);
     boost::add_edge(vBl, vB1, myEdge(det::sMeta),    g);
@@ -258,12 +277,13 @@ using namespace DotStr::Misc;
             // FIXME most of this shit should be in constructor
              if (cmp == dnt::sTMsg)        {completeId(v, gUp); // create ID from SubId fields or vice versa
                                             gUp[v].np = (node_ptr) new  TimingMsg(gUp[v].name, gUp[v].patName, gUp[v].bpName, x->hash, x->cpu, x->b, flags, s2u<uint64_t>(gUp[v].tOffs), s2u<uint64_t>(gUp[v].id), s2u<uint64_t>(gUp[v].par), s2u<uint32_t>(gUp[v].tef), s2u<uint32_t>(gUp[v].res)); }
-        else if (cmp == dnt::sCmdNoop)     {gUp[v].np = (node_ptr) new       Noop(gUp[v].name, gUp[v].patName, gUp[v].bpName, x->hash, x->cpu, x->b, flags, s2u<uint64_t>(gUp[v].tOffs), s2u<uint64_t>(gUp[v].tValid), s2u<uint8_t>(gUp[v].prio), s2u<uint32_t>(gUp[v].qty)); }
-        else if (cmp == dnt::sCmdFlow)     {gUp[v].np = (node_ptr) new       Flow(gUp[v].name, gUp[v].patName, gUp[v].bpName, x->hash, x->cpu, x->b, flags, s2u<uint64_t>(gUp[v].tOffs), s2u<uint64_t>(gUp[v].tValid), s2u<uint8_t>(gUp[v].prio), s2u<uint32_t>(gUp[v].qty), s2u<bool>(gUp[v].perma)); }
+        else if (cmp == dnt::sCmdNoop)     {gUp[v].np = (node_ptr) new       Noop(gUp[v].name, gUp[v].patName, gUp[v].bpName, x->hash, x->cpu, x->b, flags, s2u<uint64_t>(gUp[v].tOffs), s2u<uint64_t>(gUp[v].tValid), s2u<uint8_t>(gUp[v].prio), s2u<uint32_t>(gUp[v].qty), s2u<bool>(gUp[v].vabs)); }
+        else if (cmp == dnt::sCmdFlow)     {std::cout << "string tvalid: " << gUp[v].tValid << std::endl;
+          gUp[v].np = (node_ptr) new       Flow(gUp[v].name, gUp[v].patName, gUp[v].bpName, x->hash, x->cpu, x->b, flags, s2u<uint64_t>(gUp[v].tOffs), s2u<uint64_t>(gUp[v].tValid), s2u<uint8_t>(gUp[v].prio), s2u<uint32_t>(gUp[v].qty), s2u<bool>(gUp[v].vabs), s2u<bool>(gUp[v].perma)); }
         else if (cmp == dnt::sCmdFlush)    {gUp[v].np = (node_ptr) new      Flush(gUp[v].name, gUp[v].patName, gUp[v].bpName, x->hash, x->cpu, x->b, flags, s2u<uint64_t>(gUp[v].tOffs), s2u<uint64_t>(gUp[v].tValid), s2u<uint8_t>(gUp[v].prio),
-                                                                              s2u<bool>(gUp[v].qIl), s2u<bool>(gUp[v].qHi), s2u<bool>(gUp[v].qLo), s2u<uint8_t>(gUp[v].frmIl), s2u<uint8_t>(gUp[v].toIl), s2u<uint8_t>(gUp[v].frmHi),
+                                                                              s2u<bool>(gUp[v].qIl), s2u<bool>(gUp[v].qHi), s2u<bool>(gUp[v].qLo), s2u<bool>(gUp[v].vabs), s2u<uint8_t>(gUp[v].frmIl), s2u<uint8_t>(gUp[v].toIl), s2u<uint8_t>(gUp[v].frmHi),
                                                                               s2u<uint8_t>(gUp[v].toHi), s2u<uint8_t>(gUp[v].frmLo), s2u<uint8_t>(gUp[v].toLo) ); }
-        else if (cmp == dnt::sCmdWait)     {gUp[v].np = (node_ptr) new       Wait(gUp[v].name, gUp[v].patName, gUp[v].bpName, x->hash, x->cpu, x->b, flags, s2u<uint64_t>(gUp[v].tOffs), s2u<uint64_t>(gUp[v].tValid), s2u<uint8_t>(gUp[v].prio), s2u<uint64_t>(gUp[v].tWait)); }
+        else if (cmp == dnt::sCmdWait)     {gUp[v].np = (node_ptr) new       Wait(gUp[v].name, gUp[v].patName, gUp[v].bpName, x->hash, x->cpu, x->b, flags, s2u<uint64_t>(gUp[v].tOffs), s2u<uint64_t>(gUp[v].tValid), s2u<uint8_t>(gUp[v].prio), s2u<uint64_t>(gUp[v].tWait), s2u<bool>(gUp[v].vabs)); }
         else if (cmp == dnt::sBlock)       {gUp[v].np = (node_ptr) new BlockFixed(gUp[v].name, gUp[v].patName, gUp[v].bpName, x->hash, x->cpu, x->b, flags, s2u<uint64_t>(gUp[v].tPeriod) ); }
         else if (cmp == dnt::sBlockFixed)  {gUp[v].np = (node_ptr) new BlockFixed(gUp[v].name, gUp[v].patName, gUp[v].bpName, x->hash, x->cpu, x->b, flags, s2u<uint64_t>(gUp[v].tPeriod) ); }
         else if (cmp == dnt::sBlockAlign)  {gUp[v].np = (node_ptr) new BlockAlign(gUp[v].name, gUp[v].patName, gUp[v].bpName, x->hash, x->cpu, x->b, flags, s2u<uint64_t>(gUp[v].tPeriod) ); }
@@ -299,8 +319,16 @@ using namespace DotStr::Misc;
 
   }
 
-  int CarpeDM::upload() {
-    vEbwrs ew = gatherUploadVector();
+
+  int CarpeDM::upload( uint8_t opType) {
+    modTime   = getDmWrTime() * 1000000000ULL;
+    //we only regard modifications by order as modded, so we need to check for changed content before we generate the management data
+    std::set<uint8_t> moddedCpus;
+    for(unsigned int i = 0; i < atUp.getMemories().size(); i++) {
+      if (!freshDownload || (atUp.getMemories()[i].getBmp() != atDown.getMemories()[i].getBmp()) ) moddedCpus.insert(i); // mark cpu as modified if alloctable empty or Bmp Changed
+    }
+    generateMgmtData();
+    vEbwrs ew = gatherUploadVector(moddedCpus, 0, opType); //TODO not using modCnt right now, maybe implement later
     
     //Upload
     ebWriteCycle(ebd, ew.va, ew.vb, ew.vcs);
@@ -475,6 +503,17 @@ using namespace DotStr::Misc;
     
   }
 
+
+  void CarpeDM::generateMgmtData() {
+    std::string tmpStrBuf = gt.store();
+    vBuf tmpBuf(tmpStrBuf.begin(), tmpStrBuf.end());
+    vBuf mgmtBinary = compress(tmpBuf);
+    atUp.allocateMgmt(mgmtBinary);
+    atUp.populateMgmt(mgmtBinary);
+    //atUp.debugMgmt(sLog);
+    atUp.updateBmps();
+  }
+
   void CarpeDM::nullify() {
     gUp.clear(); 
     atUp.clear();
@@ -504,13 +543,14 @@ using namespace DotStr::Misc;
   }
 
   //high level functions for external interface
-  int CarpeDM::add(Graph& g) {
+  int CarpeDM::add(Graph& g, bool force) {
+
     if ((boost::get_property(g, boost::graph_name)).find(DotStr::Graph::Special::sCmd) != std::string::npos) {throw std::runtime_error("Expected a schedule, but these appear to be commands (Tag '" + DotStr::Graph::Special::sCmd + "' found in graphname)"); return -1;}
     baseUploadOnDownload();
     addition(g);
     //writeUpDotFile("upload.dot", false);
     validate(gUp, atUp);
-    return upload();
+    return upload(OP_TYPE_SCH_ADD);
   } 
 
   int CarpeDM::remove(Graph& g, bool force) {
@@ -523,7 +563,8 @@ using namespace DotStr::Misc;
     subtraction(g);
     //writeUpDotFile("upload.dot", false);
     validate(gUp, atUp);
-    return upload();
+    
+    return upload(OP_TYPE_SCH_REMOVE);
   }
 
 
@@ -557,20 +598,23 @@ using namespace DotStr::Misc;
     subtraction(gTmpRemove);
     //writeUpDotFile("upload.dot", false);
     validate(gUp, atUp);
-    return upload();
+    return upload(OP_TYPE_SCH_KEEP);
   }   
 
-  int CarpeDM::clear(bool force) {
+  int CarpeDM::clear_raw(bool force) {
     nullify(); // read out current time for upload mod time (seconds, but probably better to use same format as DM FW. Convert to ns)
-    modTime = getDmWrTime() * 1000000000ULL;
     // check if there are any threads still running first
-    uint32_t activity = 0;
+    uint32_t activity = 0; 
     for(uint8_t cpuIdx=0; cpuIdx < getCpuQty(); cpuIdx++) { 
-      activity |= getThrRun(cpuIdx);
+      uint32_t s = getThrStart(cpuIdx);
+      uint32_t r = getThrRun(cpuIdx);
+      //printf("#%u ThrStartBits: 0x%08x, ThrRunBits: 0x%08x, force=%u\n", cpuIdx, s, r, (int)force );
+      activity |= s | r;
     }
-    if (!force && activity)  {throw std::runtime_error("Cannot clear, threads are still running. Call stop/abort/halt first\n");}  
 
-    return upload();
+    
+    if (!force && activity)  {throw std::runtime_error("Cannot clear, threads are still running. Call stop/abort/halt first\n");}  
+    return upload(OP_TYPE_SCH_CLEAR);
   }
 
   int CarpeDM::overwrite(Graph& g, bool force) {
@@ -584,7 +628,10 @@ using namespace DotStr::Misc;
     for(uint8_t cpuIdx=0; cpuIdx < getCpuQty(); cpuIdx++) { 
       activity |= getThrRun(cpuIdx);
     }
-    if (!force && activity)  {throw std::runtime_error("Cannot overwrite, threads are still running. Call stop/abort/halt first\n");} 
-    return upload();
+    if (!force && activity)  {throw std::runtime_error("Cannot overwrite, threads are still running. Call stop/abort/halt first\n");}
+
+    return upload(OP_TYPE_SCH_OVERWRITE);
 
   }
+
+

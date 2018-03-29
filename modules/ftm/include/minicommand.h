@@ -15,7 +15,7 @@ protected:
 public:
   
   ~MiniCommand() {};
-
+  virtual uint32_t getAct() const {return this->act;};
   virtual void serialise(uint8_t* b) const {
     writeLeNumberToBeBytes(b + (ptrdiff_t)T_CMD_TIME, this->tValid);
     writeLeNumberToBeBytes(b + (ptrdiff_t)T_CMD_ACT,  this->act); 
@@ -46,7 +46,7 @@ public:
       : MiniCommand(tValid, (ACT_TYPE_FLOW << ACT_TYPE_POS) | (prio & ACT_PRIO_MSK) << ACT_PRIO_POS | (qty & ACT_QTY_MSK) << ACT_QTY_POS | ( permanent & ACT_CHP_MSK) << ACT_CHP_POS ), destAdr(destAdr) {}
   ~MiniFlow() {};
 
-
+  uint32_t getDst() {return destAdr;}
   void serialise(uint8_t* b) const {
     MiniCommand::serialise(b);
     writeLeNumberToBeBytes(b + (ptrdiff_t)T_CMD_FLOW_DEST, this->destAdr);
