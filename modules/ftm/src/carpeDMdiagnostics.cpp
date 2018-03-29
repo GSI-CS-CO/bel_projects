@@ -117,125 +117,55 @@ namespace det = DotStr::Edge::TypeVal;
 
   std::string& CarpeDM::inspectQueues(const std::string& blockName, std::string& report) {
 
-    Graph& g = gDown;
-    AllocTable& at = atDown;
-    std::string const exIntro = "inspectQueues: ";
-    std::string const nodeNotFound = "Unknown block name <" + blockName + ">\n";
-    vertex_t vQ;
-
-    if (!(hm.lookup(blockName))) throw std::runtime_error(exIntro + nodeNotFound); 
-    auto x = at.lookupHash(hm.lookup(blockName).get());
-    if (!(at.isOk(x))) throw std::runtime_error(nodeNotFound);
-    vQ = x->v;
-
-    //check their Q counters for unprocessed commands
-    uint32_t wrIdxs = boost::dynamic_pointer_cast<Block>(g[vQ].np)->getWrIdxs(); 
-    uint32_t rdIdxs = boost::dynamic_pointer_cast<Block>(g[vQ].np)->getRdIdxs();
-    //uint32_t diff   = (rdIdxs ^ wrIdxs ) & 0x00ffffff;  
+    QueueReport qr;
+    qr = getQReport(blockName, qr);
         
-    report += "Inspecting Queues of Block " + g[vQ].name + "\n";
+    report += "Inspecting Queues of Block " + blockName + "\n";
 
-    for (uint8_t prio = PRIO_LO; prio <= PRIO_IL; prio++) {
+    for (int8_t prio = PRIO_IL; prio >= PRIO_LO; prio--) {
       
-      uint32_t bufLstAdr;
-      uint8_t bufLstCpu;
-      AdrType bufLstAdrType; 
+      report += "Priority " + std::to_string((int)prio) + " (" + dnt::sQPrio[prio] + ") ";
+      if (!qr.hasQ[prio]) {report += " Not instantiated\n"; continue;}
+
+      report += " RdCnt: " + std::to_string((int)qr.aQ[prio].rdIdx) 
+              + " WrCnt: " + std::to_string((int)qr.aQ[prio].wrIdx) 
+              + "    Pending: " + std::to_string((int)qr.aQ[prio].pendingCnt) + "\n";
       
-      //if (!((diff >> (prio*8)) & Q_IDX_MAX_OVF_MSK)) {if(verbose) {sLog << "prio " << (int)prio << " is empty" << std::endl;} continue;}
-
-      //get Block binary
-      uint8_t* bBlock = g[vQ].np->getB();
-      bufLstAdr = writeBeBytesToLeNumber<uint32_t>((uint8_t*)&bBlock[BLOCK_CMDQ_LO_PTR + prio * _32b_SIZE_]);
-
-      
-      std::tie(bufLstCpu, bufLstAdrType) = at.adrClassification(bufLstAdr);  
-      //get BufList binary
-      auto bufLst = at.lookupAdr( s2u<uint8_t>(g[vQ].cpu), at.adrConv(bufLstAdrType, AdrType::MGMT, s2u<uint8_t>(g[vQ].cpu), bufLstAdr) );
-      if (!(at.isOk(bufLst))) {report += "Priority " + std::to_string((int)prio) + " (" + dnt::sQPrio[prio] + "): No queue buffers found\n"; continue;}
-      const uint8_t* bBL = bufLst->b;  
-       
-      //get current read cnt
-      uint8_t auxRd = (rdIdxs >> (prio*8)) & Q_IDX_MAX_OVF_MSK;
-      uint8_t auxWr = (wrIdxs >> (prio*8)) & Q_IDX_MAX_OVF_MSK;
-
-      uint8_t rdIdx = auxRd & Q_IDX_MAX_MSK;
-      uint8_t wrIdx = auxWr & Q_IDX_MAX_MSK;
-      uint8_t pendingCnt = (auxWr > auxRd) ? auxWr - auxRd : auxRd - auxWr;
-      
-      report += "Priority " + std::to_string((int)prio) + " (" + dnt::sQPrio[prio] + ") RdCnt: " + std::to_string((int)auxRd) + "    WrCnt: " + std::to_string((int)auxWr) + "    Pending: " + std::to_string((int)pendingCnt) + "\n";
-      report += "Content:\n";
-      
-      //set of all pending command indices
-      std::set<uint8_t> pendingIdx;
-      if (auxRd != auxWr) {for(uint8_t pidx = rdIdx; pidx < (rdIdx + pendingCnt); pidx++) {pendingIdx.insert( pidx & Q_IDX_MAX_MSK);}}
-
-
       //find buffers of all non empty slots
       for (uint8_t i = 0; i <= Q_IDX_MAX_MSK; i++) {
-        uint32_t bufAdr;
-        uint8_t bufCpu, dstCpu;
-        AdrType bufAdrType, dstAdrType;
+        QueueElement& qe = qr.aQ[prio].aQe[i];
+
         report += "#" + std::to_string(i) + " ";
         //if it is pending, say so
-        report += (pendingIdx.count(i) ? "pending " : "    -   ");
+        report += (qe.pending ? "pending " : "empty   ");
 
-        bufAdr = writeBeBytesToLeNumber<uint32_t>((uint8_t*)&bBL[(i / 2) * _32b_SIZE_] );
-        std::tie(bufCpu, bufAdrType) = at.adrClassification(bufAdr);  
+        if (!(verbose | qe.pending)) { report += "-\n"; continue;}
 
-        uint32_t tmpAdr = at.adrConv(bufAdrType, AdrType::MGMT, s2u<uint8_t>(g[vQ].cpu), bufAdr);
-
-        auto buf = at.lookupAdr( s2u<uint8_t>(g[vQ].cpu), tmpAdr );
-        if (!(at.isOk(buf))) {report += "Could not find buffer in download address table\n"; continue;}
-        const uint8_t* b = buf->b;
-
-        if(verbose) sLog << "Scanning Buffer " << (int)(i / 2) << " - " << g[buf->v].name << " at Offset " << (int)(i % 2) << std::endl;
- 
-        uint32_t act    = writeBeBytesToLeNumber<uint32_t>((uint8_t*)&b[(i % 2) * _T_CMD_SIZE_ + T_CMD_ACT]);
-        uint8_t type    = (act >> ACT_TYPE_POS) & ACT_TYPE_MSK;
-        //uint8_t prio = ( ((act >> ACT_PRIO_POS)  & ACT_PRIO_MSK) < 3 ? ((act >> ACT_PRIO_POS)  & ACT_PRIO_MSK) : PRIO_LO);
-        uint64_t vTime  = writeBeBytesToLeNumber<uint64_t>((uint8_t*)&b[(i % 2) * _T_CMD_SIZE_ + T_CMD_TIME]);
-
-        
         std::stringstream auxstream;
-        auxstream << std::hex << vTime;
+        auxstream << std::setfill('0') << std::setw(16) << std::hex << qe.validTime;
 
         report += "Valid Time: 0x" + auxstream.str() + "    CmdType: ";
         //type specific
         std::string const sYes  = "YES";
         std::string const sNo   = "NO ";
-        switch(type) {
-          case ACT_TYPE_NOOP  : {
-                                  report += "Noop    Qty: " + std::to_string((act >> ACT_QTY_POS) & ACT_QTY_MSK) + "\n";
+        switch(qe.type) {
+          case ACT_TYPE_NOOP  : { report += qe.sType + "    Qty: " + std::to_string(qe.qty) + "\n";
                                   break;
                                 }
-          case ACT_TYPE_FLOW  : {
-                                  uint32_t dstAdr   = writeBeBytesToLeNumber<uint32_t>((uint8_t*)&b[(i % 2) * _T_CMD_SIZE_ + T_CMD_FLOW_DEST]);
-                                  bool perm = (act >> ACT_CHP_POS) & ACT_CHP_MSK;
-                                  std::string sDst;
-                                  if (dstAdr == LM32_NULL_PTR) { sDst = "Idle"; }// pointing to idle is always okay
-                                  else {
-                                    std::tie(dstCpu, dstAdrType) = at.adrClassification(dstAdr);
-                                    auto dst = at.lookupAdr( (dstAdrType == AdrType::PEER ? dstCpu : s2u<uint8_t>(g[vQ].cpu)), at.adrConv(dstAdrType, AdrType::MGMT, (dstAdrType == AdrType::PEER ? dstCpu : s2u<uint8_t>(g[vQ].cpu)), dstAdr) );
-                                    if (!(at.isOk(dst))) {char tmpBuf[9]; sprintf(tmpBuf, "%08x", dstAdr); sDst = "Unknown Address <0x" + std::string(tmpBuf) + ">";}
-                                    else {sDst = g[dst->v].name;}
-                                  }    
-                                  report += "Flow    Permanent: " + (perm ? sYes : sNo) + "    Qty: " + std::to_string((act >> ACT_QTY_POS) & ACT_QTY_MSK) + "    " + g[vQ].name + " --> " + sDst + " \n";
+          case ACT_TYPE_FLOW  : { report += qe.sType + "    Permanent: " + (qe.flowPerma ? sYes : sNo) + "    Qty: " + std::to_string(qe.qty) + "    " + blockName + " --> " + qe.flowDst + " \n";
                                   break;
                                 }
-          case ACT_TYPE_FLUSH : {
-                                  uint8_t flPrio = (act >> ACT_FLUSH_PRIO_POS) & ACT_FLUSH_PRIO_MSK;
-                                  //uint8_t flMode = (act >> ACT_FLUSH_MODE_POS) & ACT_FLUSH_MODE_MSK;
-                                  report += "Flush    Priorities: 0 (" + dnt::sQPrio[0] + "): " + ((flPrio & (1<<0)) ? sYes : sNo) + "    1 (" + dnt::sQPrio[1] + "): " + ((flPrio & (1<<1)) ? sYes : sNo) + "\n"; 
+          case ACT_TYPE_FLUSH : { report += qe.sType + "    Flushing:"  
+                                                                 + "   2 (" + dnt::sQPrio[2] + "): " + (qe.flushIl ? sYes : sNo)
+                                                                 + "   1 (" + dnt::sQPrio[1] + "): " + (qe.flushHi ? sYes : sNo)
+                                                                 + "   0 (" + dnt::sQPrio[0] + "): " + (qe.flushLo ? sYes : sNo) 
+                                                                 + "\n"; 
                                   break;
                                 }
-          case ACT_TYPE_WAIT  : {
-                                  bool abs = (act >> ACT_WAIT_ABS_POS) & ACT_WAIT_ABS_MSK;
-                                  uint64_t wTime  = writeBeBytesToLeNumber<uint64_t>((uint8_t*)&b[(i % 2) * _T_CMD_SIZE_ + T_CMD_WAIT_TIME]);
-                                  report += (abs ? "Wait until " : "Make Block Period ") + std::to_string(wTime) + "ns\n";
+          case ACT_TYPE_WAIT  : { report += qe.sType + (qe.waitAbs ? " - until " : " - make block period ") + std::to_string(qe.waitTime) + "ns\n";
                                   break;
                                 }
-          default             : {
-                                  report += "Unknown Format / Not initialised\n";
+          default             : { report += "Unknown Format / Not initialised\n";
                                   break;
                                 }
         }  
@@ -245,7 +175,140 @@ namespace det = DotStr::Edge::TypeVal;
     }
 
     return report;  
-  }      
+  }
+
+
+  
+
+  QueueReport& CarpeDM::getQReport(const std::string& blockName, QueueReport& qr) {
+    Graph& g = gDown;
+    AllocTable& at = atDown;
+    
+    const std::string exIntro = " getQReport: ";
+    const std::string nodeNotFound = " Node could not be found: ";
+
+    if (!(hm.lookup(blockName))) throw std::runtime_error(exIntro + nodeNotFound + blockName); 
+    auto x = at.lookupHash(hm.lookup(blockName).get()); // x is the blocks alloctable entry
+    if (!(at.isOk(x))) throw std::runtime_error(" allocTable: " + nodeNotFound + blockName);
+
+    //check their Q counters for unprocessed commands
+    uint32_t wrIdxs = boost::dynamic_pointer_cast<Block>(g[x->v].np)->getWrIdxs(); 
+    uint32_t rdIdxs = boost::dynamic_pointer_cast<Block>(g[x->v].np)->getRdIdxs();
+
+    for (uint8_t prio = PRIO_LO; prio <= PRIO_IL; prio++) {
+      
+      uint32_t bufLstAdr;
+      uint8_t bufLstCpu;
+      AdrType bufLstAdrType; 
+      
+      //get Block binary
+      uint8_t* bBlock = (uint8_t*)&(x->b);
+      bufLstAdr = writeBeBytesToLeNumber<uint32_t>((uint8_t*)&bBlock[BLOCK_CMDQ_LO_PTR + prio * _32b_SIZE_]);
+      std::tie(bufLstCpu, bufLstAdrType) = at.adrClassification(bufLstAdr);  
+      //get BufList binary
+      auto bufLst = at.lookupAdr( x->cpu, at.adrConv(bufLstAdrType, AdrType::MGMT, x->cpu, bufLstAdr) ); //buffer list cpu is the same as block cpu
+      if (!(at.isOk(bufLst))) { continue; }
+      else                    { qr.hasQ[prio] = true; }
+
+      const uint8_t* bBL = bufLst->b;  
+       
+      //get current read cnt
+      uint8_t auxRd = (rdIdxs >> (prio*8)) & Q_IDX_MAX_OVF_MSK;
+      uint8_t auxWr = (wrIdxs >> (prio*8)) & Q_IDX_MAX_OVF_MSK;
+
+      uint8_t rdIdx = auxRd & Q_IDX_MAX_MSK;
+      //uint8_t wrIdx = auxWr & Q_IDX_MAX_MSK; no use for it right now
+      uint8_t pendingCnt = (auxWr > auxRd) ? auxWr - auxRd : auxRd - auxWr;
+         
+      //set of all pending command indices
+      std::set<uint8_t> pendingIdx;
+      if (auxRd != auxWr) {for(uint8_t pidx = rdIdx; pidx < (rdIdx + pendingCnt); pidx++) {pendingIdx.insert( pidx & Q_IDX_MAX_MSK);}}
+
+      qr.aQ[prio].wrIdx   = auxWr;
+      qr.aQ[prio].rdIdx   = auxRd;
+      qr.aQ[prio].pendingCnt = pendingIdx.size();
+
+      //find buffers of all non empty slots
+      for (uint8_t i = 0; i <= Q_IDX_MAX_MSK; i++) {
+        uint8_t bufCpu;
+        AdrType bufAdrType;
+        
+        uint32_t bufAdr = writeBeBytesToLeNumber<uint32_t>((uint8_t*)&bBL[(i / 2) * _32b_SIZE_] );
+        std::tie(bufCpu, bufAdrType) = at.adrClassification(bufAdr);  
+        auto buf = at.lookupAdr( x->cpu, at.adrConv(bufAdrType, AdrType::MGMT, x->cpu, bufAdr) ); //buffer cpu is the same as block cpu
+        if (!(at.isOk(buf))) {continue;}
+
+        qr.aQ[prio].aQe[i] = getQelement(pendingIdx.count(i), buf, qr.aQ[prio].aQe[i]);
+      }
+    }
+      
+    return qr;
+  }
+
+  QueueElement& CarpeDM::getQelement(bool pending, amI allocIt, QueueElement& qe) {
+    //TODO might cleaner as deserialisers for MiniCommand Class
+    Graph&       g  = gDown;
+    AllocTable& at  = atDown;
+    uint8_t*     b  = (uint8_t*)&(allocIt->b);
+    uint8_t    cpu  = allocIt->cpu;
+    uint32_t   act  = writeBeBytesToLeNumber<uint32_t>((uint8_t*)&b[T_CMD_ACT]);
+    uint8_t   type  = (act >> ACT_TYPE_POS) & ACT_TYPE_MSK;
+
+    qe.pending      = pending;
+    qe.validTime    = writeBeBytesToLeNumber<uint64_t>((uint8_t*)&b[T_CMD_TIME]);
+    qe.qty          = (act >> ACT_QTY_POS) & ACT_QTY_MSK;
+    qe.type         = type; //for conevenient use of case statements
+
+    //type specific
+    switch(type) {
+      case ACT_TYPE_NOOP  : { qe.sType = dnt::sCmdNoop;
+                              break;
+                            }
+      case ACT_TYPE_FLOW  : {
+                              uint32_t dstAdr = writeBeBytesToLeNumber<uint32_t>((uint8_t*)&b[T_CMD_FLOW_DEST]);
+                              std::string sDst;
+                              
+                              if (dstAdr == LM32_NULL_PTR) { sDst = DotStr::Node::Special::sIdle; }// pointing to idle is always okay
+                              else {
+                                //Find out if Destination is on this core ('cpu') or on a peer core ('dstCpuAux')
+                                uint8_t dstCpuAux, dstCpu;
+                                AdrType dstAdrType;
+                                std::tie(dstCpuAux, dstAdrType) = at.adrClassification(dstAdr);
+                                dstCpu = (dstAdrType == AdrType::PEER ? dstCpuAux : cpu);
+                                //get allocentry of the destination by its cpu idx and memory address
+                                auto dst = at.lookupAdr( dstCpu, at.adrConv(dstAdrType, AdrType::MGMT, dstCpu, dstAdr) );
+                                if (!(at.isOk(dst)))  {sDst = DotStr::Misc::sUndefined;}
+                                else                  {sDst = g[dst->v].name;}
+                              }    
+                              qe.sType          = dnt::sCmdFlow;
+                              qe.flowPerma      = (act >> ACT_CHP_POS) & ACT_CHP_MSK;
+                              qe.flowDst        = sDst;
+                              qe.flowDstPattern = getNodePattern(sDst);
+                              break;
+                            }
+      case ACT_TYPE_FLUSH : {
+                              uint8_t flPrio = (act >> ACT_FLUSH_PRIO_POS) & ACT_FLUSH_PRIO_MSK;
+                              qe.sType   = dnt::sCmdFlush;
+                              qe.flushIl = flPrio & (1<<PRIO_IL);
+                              qe.flushHi = flPrio & (1<<PRIO_HI);
+                              qe.flushLo = flPrio & (1<<PRIO_LO);
+                              break;
+                            }
+      case ACT_TYPE_WAIT  : {
+                              qe.sType    = dnt::sCmdWait;
+                              qe.waitAbs  = (act >> ACT_WAIT_ABS_POS) & ACT_WAIT_ABS_MSK;
+                              qe.waitTime = writeBeBytesToLeNumber<uint64_t>((uint8_t*)&b[T_CMD_WAIT_TIME]);
+                              break;
+                            }
+      default             : {
+                              break;
+                            }
+    }
+
+    return qe;
+  }
+
+
 
 void CarpeDM::dumpNode(uint8_t cpuIdx, const std::string& name) {
   

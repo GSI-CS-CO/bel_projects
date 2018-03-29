@@ -119,6 +119,8 @@ private:
 
   vEbwrs& staticFlush(const std::string& sBlock, bool prioIl, bool prioHi, bool prioLo, vEbwrs& ew, bool force);
 
+  QueueElement& getQelement(bool pending, amI allocIt, QueueElement& qe);
+
 protected:
 
   std::string ebdevname;
@@ -312,7 +314,8 @@ std::pair<int, int> findRunningPattern(const std::string& sPattern); //get cpu a
                 int setThrOrigin(uint8_t cpuIdx, uint8_t thrIdx, const std::string& name); // Sets the Node the Thread will start from
                 int setThrStartTime(uint8_t cpuIdx, uint8_t thrIdx, uint64_t t);
                 int setThrPrepTime(uint8_t cpuIdx, uint8_t thrIdx, uint64_t t);
-      HealthReport& getHealth(uint8_t cpuIdx, HealthReport &hr);
+      HealthReport& getHealth(uint8_t cpuIdx, HealthReport &hr); //FIXME why reference in, reference out ? its not like you can add to this report ...
+       QueueReport& getQReport(const std::string& blockName, QueueReport& qr); //FIXME why reference in, reference out ? its not like you can add to this report ...
            uint64_t getDmWrTime();
                bool isSafeToRemove(const std::string& pattern, std::string& report);
                bool isSafeToRemove(Graph& gRem, std::string& report);
