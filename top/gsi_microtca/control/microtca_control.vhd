@@ -385,7 +385,7 @@ begin
       g_lvds_invert     => false,
       g_en_usb          => true,
       g_en_lcd          => true,
-      g_en_user_ow      => false,
+      g_en_user_ow      => true,
       g_en_tempsens     => true,
       g_en_pcie         => true,
       g_io_table        => io_mapping_table,
