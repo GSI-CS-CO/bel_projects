@@ -425,7 +425,6 @@ int main(int argc, char* argv[]) {
   }
 
   uint64_t tvalidOffs = cdm.getModTime();
-  std::cout << "tValOrig 0x" << std::hex << cmdTvalid << ", Offs 0x" << tvalidOffs << ", sum 0x" << cmdTvalid  + tvalidOffs << std::dec << std::endl;
   if (verbose) { std::cout << "Command valid time is 0x" << (vabs ? "absolute" : "relative") << std::hex << cmdTvalid << " @ " << cmdTvalid  + tvalidOffs << std::dec << std::endl;}
   if(!vabs) cmdTvalid += tvalidOffs;
 
@@ -474,15 +473,14 @@ int main(int argc, char* argv[]) {
         if(!(cdm.isInHashDict( targetName))) {std::cerr << program << ": Target node '" << targetName << "'' was not found on DM" << std::endl; return -1; }
         if (para == NULL) {std::cerr << program << ": Queues to be flushed are missing, require 3 bit as hex (IL HI LO 0x0 - 0x7)" << std::endl; return -1; }  
         uint32_t queuePrio = strtol(para, NULL, 0) & 0x7;
-        std::cout << "qprio " << para << " 0x" << std::hex << queuePrio << std::endl;
         mc = (mc_ptr) new MiniFlush(cmdTvalid, cmdPrio, (bool)(queuePrio >> PRIO_IL & 1), (bool)(queuePrio >> PRIO_HI & 1), (bool)(queuePrio >> PRIO_LO & 1));
     }
     else if (cmp == "staticflush") {
       if(!(cdm.isInHashDict( targetName))) {std::cerr << program << ": Target node '" << targetName << "'' was not found on DM" << std::endl; return -1; }
       if (para == NULL) {std::cerr << program << ": Queues to be flushed are missing, require 3 bit as hex (IL HI LO 0x0 - 0x7)" << std::endl; return -1; }  
       uint32_t queuePrio = strtol(para, NULL, 0) & 0x7;
-      std::cout << "qprio " << para << " 0x" << std::hex << queuePrio << std::endl;
-      cdm.staticFlushBlock(targetName, (bool)(queuePrio >> PRIO_IL & 1), (bool)(queuePrio >> PRIO_HI & 1), (bool)(queuePrio >> PRIO_LO & 1), force); 
+      cdm.staticFlushBlock(targetName, (bool)(queuePrio >> PRIO_IL & 1), (bool)(queuePrio >> PRIO_HI & 1), (bool)(queuePrio >> PRIO_LO & 1), force);
+      return 0;
     }
     else if (cmp == "queue") {
         if(!(cdm.isInHashDict( targetName))) {std::cerr << program << ": Target node '" << targetName << "'' was not found on DM" << std::endl; return -1; }
@@ -569,7 +567,6 @@ int main(int argc, char* argv[]) {
       if( targetName != NULL) {
         if (para == NULL) {std::cerr << program << ": Queues to be flushed are missing, require 3 bit as hex (IL HI LO 0x0 - 0x7)" << std::endl; return -1; }  
         uint32_t queuePrio = strtol(para, NULL, 0) & 0x7;
-        std::cout << "qprio " << para << " 0x" << std::hex << queuePrio << std::endl;
         cdm.staticFlushPattern(targetName, (bool)(queuePrio >> PRIO_IL & 1), (bool)(queuePrio >> PRIO_HI & 1), (bool)(queuePrio >> PRIO_LO & 1), force); 
       } else { std::cout << "Missing valid Pattern name" << std::endl; }
       return 0;

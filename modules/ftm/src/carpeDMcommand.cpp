@@ -608,13 +608,17 @@ int CarpeDM::staticFlushPattern(const std::string& sPattern, bool prioIl, bool p
   AllocTable& at = atDown;
   vEbwrs ew;
 
+  bool found = false;
+
   for (auto& nodeIt : getPatternMembers(sPattern)) {
     if (hm.lookup(nodeIt) ) {
+      found = true;
       auto x = at.lookupHash(hm.lookup(nodeIt).get());
       if (!(at.isOk(x))) {throw std::runtime_error("staticFlush: Could not find pattern <" + sPattern + "> block node <" + nodeIt + ">");}
       if (g[x->v].np->isBlock()) { staticFlush(g[x->v].name, prioIl, prioHi, prioLo, ew, force); }  
     }
   } 
+  if (!found) {throw std::runtime_error( "staticFlush: No member nodes found for pattern <" + sPattern + ">. Wrong name?");}
 
   send(ew);
   return ew.va.size();
@@ -634,12 +638,13 @@ vEbwrs& CarpeDM::staticFlush(const std::string& sBlock, bool prioIl, bool prioHi
   //check if the block can safely be modified
   //call safe2remove on the block's pattern. If remove is ok, so is Flushing
   std::string dbgReport;
-  if ( (!isSafeToRemove(getNodePattern(sBlock), dbgReport)) && !force)  {
+  const std::string sPattern = getNodePattern(sBlock);
+  if ( (!isSafeToRemove(sPattern, dbgReport)) && !force)  {
     if(debug) sLog << dbgReport << std::endl;
-    return ew;
+    throw std::runtime_error("staticFlush: Pattern <" + sPattern + "> of block member <" + sBlock + "> is active, static flush not safely possible!");
   }
 
-  if(debug) sLog << "Trying to flush block <" << sBlock << ">" << std::endl;
+  if(verbose) sLog << "Trying to flush block <" << sBlock << ">" << std::endl;
     
   //get the block
   if (!hm.lookup(sBlock)) {throw std::runtime_error( "staticFlush: Could not find target block name");}
