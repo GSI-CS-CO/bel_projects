@@ -758,7 +758,7 @@ void ecaHandler()
       //mprintf("EvtID: 0x%08x%08x; deadline: 0x%08x%08x; flag: 0x%08x\n", evtIdHigh, evtIdLow, evtDeadlHigh, evtDeadlLow, flag);
       break;
     default:
-      mprintf("ecaHandler: unknown tag\n");
+      break;
     } // switch
 
   } // if data is valid
