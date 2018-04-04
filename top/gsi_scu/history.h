@@ -7,7 +7,9 @@
 typedef struct {
    uint64_t timeStamp;
    char *message;
-   unsigned int associatedData;
+   char padding;
+   char padding1;
+   unsigned char associatedData;
    /* add more fields here Š */
 } HistItem;
 /*
@@ -20,7 +22,7 @@ typedef struct {
 
 
 /* Variable value used in history events with no associated data */	
-#define NOVAL				0xdeadbeef
+#define NOVAL				0xff
 
 typedef unsigned int UINT32;
 
@@ -33,7 +35,7 @@ extern "C" {
    void hist_enableSubsystem(UINT32 bit);
    void hist_disableSubsystem(UINT32 bit);
    void hist_add(UINT32 subsystem, char *msg);
-   void hist_addx(UINT32 subsystem, char *msg, UINT32 data);
+   void hist_addx(UINT32 subsystem, char *msg, unsigned char data);
    void hist_print(int doReturn);
 #ifdef __cplusplus
 }

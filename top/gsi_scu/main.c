@@ -91,9 +91,9 @@ uint32_t SHARED backplane_temp     = -1;
 uint32_t SHARED fg_magic_number    = 0xdeadbeef;
 uint32_t SHARED fg_version         = 0x3; // 0x2 saftlib,
                                           // 0x3 new msi system with mailbox
-uint32_t SHARED fg_mb_slot         = -1;
-uint32_t SHARED fg_num_channels    = MAX_FG_CHANNELS;
-uint32_t SHARED fg_buffer_size     = BUFFER_SIZE;
+uint32_t SHARED fg_mb_slot               = -1;
+uint32_t SHARED fg_num_channels          = MAX_FG_CHANNELS;
+uint32_t SHARED fg_buffer_size           = BUFFER_SIZE;
 uint32_t SHARED fg_macros[MAX_FG_MACROS] = {0}; // hi..lo bytes: slot, device, version, output-bits
 struct channel_regs SHARED fg_regs[MAX_FG_CHANNELS];
 struct channel_buffer SHARED fg_buffer[MAX_FG_CHANNELS];

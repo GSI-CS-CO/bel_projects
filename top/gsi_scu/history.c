@@ -15,7 +15,7 @@ extern uint64_t getTick();
 
 
 /* Allocate space for the circular history buffer */
-extern HistItem histbuf[HISTSIZE];
+HistItem histbuf[HISTSIZE];
 
 /* Variables used to maintain the circular history buffer */
 UINT32 histidx; 			/* next empty slot */
@@ -40,7 +40,7 @@ void hist_disableSubsystem(UINT32 bit)
    histSubsystemsEnabled &= ~bit;
 }
 
-void hist_addx(UINT32 subsystem, char *msg, UINT32 data)
+void hist_addx(UINT32 subsystem, char *msg, unsigned char data)
 {
    //UINT32 interruptEnabledState = disableInterrupts();
    if ( subsystem & histSubsystemsEnabled ) {
@@ -72,7 +72,7 @@ void hist_print(int doReturn)
    {
       PRINTF("%u :%s",(unsigned int)((histbuf[idx].timeStamp)/1000ULL),histbuf[idx].message);
       if ( histbuf[idx].associatedData != NOVAL ) {
-         PRINTF(":0x%08x",histbuf[idx].associatedData);
+         PRINTF(":0x%02x",histbuf[idx].associatedData);
       }
       PRINTF("\n\r");
       idx++;
