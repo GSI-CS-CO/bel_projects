@@ -449,8 +449,14 @@ void CarpeDM::show(const std::string& title, const std::string& logDictFile, Tra
   AllocTable& at  = (dir == TransferDir::UPLOAD ? atUp : atDown);
 
   sLog << std::endl << title << std::endl;
-  sLog << std::endl << std::setfill(' ') << std::setw(4) << "Idx" << "   " << std::setfill(' ') << std::setw(4) << "S/R" << "   " << std::setfill(' ') << std::setw(4) << "Cpu" << "   " << std::setw(30) << "Name" << "   " << std::setw(10) << "Hash" << "   " << std::setw(10)  <<  "Int. Adr   "  << "   " << std::setw(10) << "Ext. Adr   " << std::endl;
-  sLog << std::endl; 
+  sLog << std::endl << "Patterns:" << std::endl;
+
+  for (auto& it : gt.getAllPatterns()) sLog <<  it << std::endl;
+
+  sLog << std::endl << std::setfill(' ') << std::setw(4) << "Idx" << "   " << std::setfill(' ') << std::setw(4) << "S/R" << "   " 
+                    << std::setfill(' ') << std::setw(4) << "Cpu" << "   " << std::setw(30) << "Name" << "   " 
+                    << std::setw(10) << "Hash" << "   " << std::setw(10)  <<  "Int. Adr   "  << "   " << std::setw(10) << "Ext. Adr   " << std::endl;
+  sLog << " " << std::endl; 
 
   BOOST_FOREACH( vertex_t v, vertices(g) ) {
     auto x = at.lookupVertex(v);
