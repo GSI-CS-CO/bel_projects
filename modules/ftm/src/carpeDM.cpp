@@ -21,6 +21,9 @@
   namespace dep = DotStr::Edge::Prop;
 
 
+  Graph& CarpeDM::getUpGraph()   {return gUp;}   //Returns the Upload Graph for CPU <cpuIdx>
+  Graph& CarpeDM::getDownGraph() {return gDown;} //Returns the Download Graph for CPU <cpuIdx>
+
 vBuf CarpeDM::compress(const vBuf& in) {return lzmaCompress(in);}
 vBuf CarpeDM::decompress(const vBuf& in) {return lzmaDecompress(in);}
 
@@ -56,6 +59,9 @@ int CarpeDM::ebWriteCycle(Device& dev, vAdr va, vBuf& vb, vBl vcs)
 
    return 0;
 }
+
+int   CarpeDM::ebWriteCycle(Device& dev, vAdr va, vBuf& vb) {return  ebWriteCycle(dev, va, vb, leadingOne(va.size()));}
+
 
 
 vBuf CarpeDM::ebReadCycle(Device& dev, vAdr va, vBl vcs)
@@ -94,6 +100,8 @@ vBuf CarpeDM::ebReadCycle(Device& dev, vAdr va, vBl vcs)
 
   return ret;
 }
+
+vBuf CarpeDM::ebReadCycle(Device& dev, vAdr va) {return  ebReadCycle(dev, va, leadingOne(va.size()));}
 
 int CarpeDM::ebWriteWord(Device& dev, uint32_t adr, uint32_t data)
 {
@@ -279,12 +287,12 @@ bool CarpeDM::connect(const std::string& en) {
       }  
     }
     
-  }  
+  }
+
+  const std::string& CarpeDM::firstString(const vStrC& v) {return ((v.size() > 0) ? *(v.begin()) : DotStr::Misc::sUndefined);}  
 
 
-    boost::dynamic_properties CarpeDM::createParser(Graph& g) {
-
-
+  boost::dynamic_properties CarpeDM::createParser(Graph& g) {
 
     boost::dynamic_properties dp(boost::ignore_other_properties);
     boost::ref_property_map<Graph *, std::string> gname( boost::get_property(g, boost::graph_name));
@@ -335,10 +343,6 @@ bool CarpeDM::connect(const std::string& en) {
     dp.property(dnp::Cmd::sDstBeamproc,         boost::get(&myVertex::cmdDestBp,  g));
     dp.property(dnp::Base::sThread,             boost::get(&myVertex::thread,     g));
     
-
-  
-
-
     return (const boost::dynamic_properties)dp;
   }   
 
@@ -457,6 +461,11 @@ bool CarpeDM::connect(const std::string& en) {
 
   }
 
+  // SDB Functions
+  bool CarpeDM::isValidDMCpu(uint8_t cpuIdx) {return (cpuIdxMap.count(cpuIdx) > 0);}; //Check if CPU is registered as running a valid firmware
+  int CarpeDM::getCpuQty()   const {return cpuQty;} //Return number of found CPUs (not necessarily valid ones!)
+  bool CarpeDM::isCpuIdxValid(uint8_t cpuIdx) { if ( cpuIdxMap.find(cpuIdx) != cpuIdxMap.end() ) return true; else return false;}  
+
 
 
   uint32_t CarpeDM::getIntBaseAdr(const std::string& fwIdROM) {
@@ -555,32 +564,61 @@ void CarpeDM::showCpuList() {
     return (atDown.isOk(atDown.lookupHash(hm.lookup(name).get())));
   }  
 
-  void CarpeDM::show(const std::string& title, const std::string& logDictFile, TransferDir dir, bool filterMeta ) {
+  // Name/Hash Dict ///////////////////////////////////////////////////////////////////////////////
+  //Add all nodes in .dot file to name/hash dictionary
+  void CarpeDM::clearHashDict() {hm.clear();}; //Clear the dictionary
+  std::string CarpeDM::storeHashDict() {return hm.store();}; 
+  void CarpeDM::loadHashDict(const std::string& s) {hm.load(s);}
+  void CarpeDM::storeHashDictFile(const std::string& fn) {writeTextFile(fn, storeHashDict());};
+  void CarpeDM::loadHashDictFile(const std::string& fn) {loadHashDict(readTextFile(fn));};
+  bool CarpeDM::isHashDictEmpty() {return (bool)(hm.size() == 0);};
+  int  CarpeDM::getHashDictSize() {return hm.size();};
+  void CarpeDM::showHashDict() {hm.debug(sLog);};
 
-    Graph& g        = (dir == TransferDir::UPLOAD ? gUp  : gDown);
-    AllocTable& at  = (dir == TransferDir::UPLOAD ? atUp : atDown);
+  // Group/Entry/Exit Table ///////////////////////////////////////////////////////////////////////////////
+  std::string CarpeDM::storeGroupsDict() {return gt.store();}; 
+  void CarpeDM::loadGroupsDict(const std::string& s) {gt.load(s);}
+  void CarpeDM::storeGroupsDictFile(const std::string& fn) {writeTextFile(fn, storeGroupsDict());};
+  void CarpeDM::loadGroupsDictFile(const std::string& fn) {loadGroupsDict(readTextFile(fn));}; 
+  void CarpeDM::clearGroupsDict() {gt.clear();}; //Clear pattern table
+   int CarpeDM::getGroupsSize() {return gt.getSize();};
+  void CarpeDM::showGroupsDict() {gt.debug(sLog);};
 
-    sLog << std::endl << title << std::endl;
-    sLog << std::endl << std::setfill(' ') << std::setw(4) << "Idx" << "   " << std::setfill(' ') << std::setw(4) << "S/R" << "   " << std::setfill(' ') << std::setw(4) << "Cpu" << "   " << std::setw(30) << "Name" << "   " << std::setw(10) << "Hash" << "   " << std::setw(10)  <<  "Int. Adr   "  << "   " << std::setw(10) << "Ext. Adr   " << std::endl;
-    sLog << std::endl; 
 
-    BOOST_FOREACH( vertex_t v, vertices(g) ) {
-      auto x = at.lookupVertex(v);
-      
-      if( !(filterMeta) || (filterMeta & !(g[v].np->isMeta())) ) {
-        sLog   << std::setfill(' ') << std::setw(4) << std::dec << v 
-        << "   "    << std::setfill(' ') << std::setw(2) << std::dec << (int)(at.isOk(x) && (int)(at.isStaged(x)))  
-        << " "      << std::setfill(' ') << std::setw(1) << std::dec << (int)(!(at.isOk(x)))
-        << "   "    << std::setfill(' ') << std::setw(4) << std::dec << (at.isOk(x) ? (int)x->cpu : -1 )  
-        << "   "    << std::setfill(' ') << std::setw(40) << std::left << g[v].name 
-        << "   0x"  << std::hex << std::setfill('0') << std::setw(8) << (at.isOk(x) ? x->hash  : 0 )
-        << "   0x"  << std::hex << std::setfill('0') << std::setw(8) << (at.isOk(x) ? at.adrConv(AdrType::MGMT, AdrType::INT, x->cpu, x->adr)  : 0 ) 
-        << "   0x"  << std::hex << std::setfill('0') << std::setw(8) << (at.isOk(x) ? at.adrConv(AdrType::MGMT, AdrType::EXT, x->cpu, x->adr)  : 0 )  << std::endl;
-      }
-    }  
+  void CarpeDM::writeDotFile(const std::string& fn, Graph& g, bool filterMeta) { writeTextFile(fn, createDot(g, filterMeta)); }
+  void CarpeDM::writeDownDotFile(const std::string& fn, bool filterMeta)       { writeTextFile(fn, createDot(gDown, filterMeta)); }
+  void CarpeDM::writeUpDotFile(const std::string& fn, bool filterMeta)         { writeTextFile(fn, createDot(gUp, filterMeta)); }
 
-    sLog << std::endl;  
-  }
+  // Schedule Manipulation and Dispatch ///////////////////////////////////////////////////////////
+  //TODO assign a cpu to each node object. Currently taken from input .dot
+  int CarpeDM::assignNodesToCpus() {return 0;};
+  //get all nodes from DM
+  std::string CarpeDM::downloadDot(bool filterMeta) {download(); return createDot( gDown, filterMeta);};            
+  void CarpeDM::downloadDotFile(const std::string& fn, bool filterMeta) {download(); writeDownDotFile(fn, filterMeta);};   
+  //add all nodes and/or edges in dot file
+  int CarpeDM::addDot(const std::string& s) {Graph gTmp; return safeguardTransaction(&CarpeDM::add, parseDot(s, gTmp), false);};            
+  int CarpeDM::addDotFile(const std::string& fn) {return addDot(readTextFile(fn));};                 
+  //add all nodes and/or edges in dot file                                                                                     
+  int CarpeDM::overwriteDot(const std::string& s, bool force) {Graph gTmp; return safeguardTransaction(&CarpeDM::overwrite, parseDot(s, gTmp), force);};
+  int CarpeDM::overwriteDotFile(const std::string& fn, bool force) {return overwriteDot(readTextFile(fn), force);};
+  //removes all nodes NOT in input file
+  int CarpeDM::keepDot(const std::string& s, bool force) {Graph gTmp; return safeguardTransaction(&CarpeDM::keep, parseDot(s, gTmp), force);};
+  int CarpeDM::keepDotFile(const std::string& fn, bool force) {return keepDot(readTextFile(fn), force);};
+  //removes all nodes in input file                                            
+  int CarpeDM::removeDot(const std::string& s, bool force) {Graph gTmp; return safeguardTransaction(&CarpeDM::remove, parseDot(s, gTmp), force);};
+  int CarpeDM::removeDotFile(const std::string& fn, bool force) {return removeDot(readTextFile(fn), force);};
+  // Safe removal check
+  //bool isSafe2RemoveDotFile(const std::string& fn) {Graph gTmp; return isSafeToRemove(parseDot(readTextFile(fn), gTmp));};
+  //clears all nodes from DM 
+  int CarpeDM::clear(bool force) {return safeguardTransaction(&CarpeDM::clear_raw, force);};
+
+
+  // Command Generation and Dispatch //////////////////////////////////////////////////////////////
+  int CarpeDM::sendCommandsDot(const std::string& s) {Graph gTmp; vEbwrs ew; return send(createCommandBurst(parseDot(s, gTmp), ew));}; //Sends a dotfile of commands to the DM
+  int CarpeDM::sendCommandsDotFile(const std::string& fn) {Graph gTmp; vEbwrs ew; return send(createCommandBurst(parseDot(readTextFile(fn), gTmp), ew));};
+  //Send a command to Block <targetName> on CPU <cpuIdx> via Etherbone
+  int CarpeDM::sendCommand(const std::string& targetName, uint8_t cmdPrio, mc_ptr mc) {vEbwrs ew; return send(createCommand(targetName, cmdPrio, mc, ew));}; 
+
 
    //write out dotstringfrom download graph
   std::string CarpeDM::createDot(Graph& g, bool filterMeta) {
@@ -729,6 +767,9 @@ void CarpeDM::showCpuList() {
     return ew;
   }
 
+  vEbwrs& CarpeDM::createSchedModInfo(uint8_t cpu, uint32_t modCnt, uint8_t opType, vEbwrs& ew) { return createModInfo(cpu, modCnt, opType, ew, T_DIAG_SCH_MOD); };
+  vEbwrs& CarpeDM::createCmdModInfo  (uint8_t cpu, uint32_t modCnt, uint8_t opType, vEbwrs& ew) { return createModInfo(cpu, modCnt, opType, ew, T_DIAG_CMD_MOD); };
+
   int CarpeDM::startThr(uint8_t cpuIdx, uint8_t thrIdx)                              { vEbwrs ew; return send(startThr(cpuIdx, thrIdx, ew));} //Requests Thread to start
   int CarpeDM::startPattern(const std::string& sPattern, uint8_t thrIdx)             { vEbwrs ew; return send(startPattern(sPattern, thrIdx, ew));}//Requests Pattern to start
   int CarpeDM::startPattern(const std::string& sPattern)                             { vEbwrs ew; return send(startPattern(sPattern, ew));}//Requests Pattern to start on first free thread
@@ -744,3 +785,17 @@ void CarpeDM::showCpuList() {
   int CarpeDM::setThrOrigin(uint8_t cpuIdx, uint8_t thrIdx, const std::string& name) { vEbwrs ew; return send(setThrOrigin(cpuIdx, thrIdx, name, ew));}//Sets the Node the Thread will start from
   int CarpeDM::setThrStartTime(uint8_t cpuIdx, uint8_t thrIdx, uint64_t t)           { vEbwrs ew; return send(setThrStartTime(cpuIdx, thrIdx, t, ew));}
   int CarpeDM::setThrPrepTime(uint8_t cpuIdx, uint8_t thrIdx, uint64_t t)            { vEbwrs ew; return send(setThrPrepTime(cpuIdx, thrIdx, t, ew));}
+
+
+  void CarpeDM::showUp(bool filterMeta) {show("Upload Table", "upload_dict.txt", TransferDir::UPLOAD, false);} //show a CPU's Upload address table
+  void CarpeDM::showDown(bool filterMeta) {  //show a CPU's Download address table
+    show("Download Table" + (filterMeta ? std::string(" (noMeta)") : std::string("")), "download_dict.txt", TransferDir::DOWNLOAD, filterMeta);
+  }
+  void CarpeDM::verboseOn()  {verbose = true;}  //Turn on Verbose Output
+  void CarpeDM::verboseOff() {verbose = false;} //Turn off Verbose Output
+  bool CarpeDM::isVerbose()  const {return verbose;} //Tell if Output is set to Verbose 
+  void CarpeDM::debugOn()  {debug = true;}  //Turn on Verbose Output
+  void CarpeDM::debugOff() {debug = false;} //Turn off Verbose Output
+  bool CarpeDM::isDebug()  const {return debug;} //Tell if Output is set to Verbose
+  void CarpeDM::updateModTime() { modTime = getDmWrTime() * 1000000000ULL; } 
+  uint64_t CarpeDM::getModTime() { return modTime; }

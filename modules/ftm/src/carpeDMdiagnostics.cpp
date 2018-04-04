@@ -441,4 +441,31 @@ HealthReport& CarpeDM::getHealth(uint8_t cpuIdx, HealthReport &hr) {
   
   return hr;
   
-} 
+}
+
+void CarpeDM::show(const std::string& title, const std::string& logDictFile, TransferDir dir, bool filterMeta ) {
+
+  Graph& g        = (dir == TransferDir::UPLOAD ? gUp  : gDown);
+  AllocTable& at  = (dir == TransferDir::UPLOAD ? atUp : atDown);
+
+  sLog << std::endl << title << std::endl;
+  sLog << std::endl << std::setfill(' ') << std::setw(4) << "Idx" << "   " << std::setfill(' ') << std::setw(4) << "S/R" << "   " << std::setfill(' ') << std::setw(4) << "Cpu" << "   " << std::setw(30) << "Name" << "   " << std::setw(10) << "Hash" << "   " << std::setw(10)  <<  "Int. Adr   "  << "   " << std::setw(10) << "Ext. Adr   " << std::endl;
+  sLog << std::endl; 
+
+  BOOST_FOREACH( vertex_t v, vertices(g) ) {
+    auto x = at.lookupVertex(v);
+    
+    if( !(filterMeta) || (filterMeta & !(g[v].np->isMeta())) ) {
+      sLog   << std::setfill(' ') << std::setw(4) << std::dec << v 
+      << "   "    << std::setfill(' ') << std::setw(2) << std::dec << (int)(at.isOk(x) && (int)(at.isStaged(x)))  
+      << " "      << std::setfill(' ') << std::setw(1) << std::dec << (int)(!(at.isOk(x)))
+      << "   "    << std::setfill(' ') << std::setw(4) << std::dec << (at.isOk(x) ? (int)x->cpu : -1 )  
+      << "   "    << std::setfill(' ') << std::setw(40) << std::left << g[v].name 
+      << "   0x"  << std::hex << std::setfill('0') << std::setw(8) << (at.isOk(x) ? x->hash  : 0 )
+      << "   0x"  << std::hex << std::setfill('0') << std::setw(8) << (at.isOk(x) ? at.adrConv(AdrType::MGMT, AdrType::INT, x->cpu, x->adr)  : 0 ) 
+      << "   0x"  << std::hex << std::setfill('0') << std::setw(8) << (at.isOk(x) ? at.adrConv(AdrType::MGMT, AdrType::EXT, x->cpu, x->adr)  : 0 )  << std::endl;
+    }
+  }  
+
+  sLog << std::endl;  
+}
