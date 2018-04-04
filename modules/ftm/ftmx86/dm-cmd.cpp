@@ -35,7 +35,6 @@ static void help(const char *program) {
   fprintf(stderr, "  running                   Show bitfield of all running threads on this CPU core\n");
   fprintf(stderr, "  heap                      Show current scheduler heap\n");
   fprintf(stderr, "  startpattern <pattern>    Request start of selected pattern\n");
-  //fprintf(stderr, "  flowpattern <patternFrom> <patternTo>  Flow from first to second pattern\n");
   fprintf(stderr, "  stoppattern  <pattern>    Request stop of selected pattern\n");
   fprintf(stderr, "  abortpattern <pattern>    Try to immediately abort selected pattern\n");  
   fprintf(stderr, "  chkrem       <pattern>    Check if removal of selected pattern would be safe\n");
@@ -57,6 +56,7 @@ static void help(const char *program) {
   fprintf(stderr, "  stop <target node>                        [Options: laps]   Request stop at selected block (flow to idle)\n");
   fprintf(stderr, "  noop <target node>                        [Options: lapq]   Placeholder to stall succeeding commands, has no effect itself\n");
   fprintf(stderr, "  flow <target node> <destination node>     [Options: lapqs]  Changes schedule flow to <Destination Node>\n");
+  fprintf(stderr, "  flowpattern <target pat.> <dst pat.>      [Options: lapqs]  Changes schedule flow to <Destination Pattern>\n");
   fprintf(stderr, "  relwait <target node> <wait time / ns>    [Options: laps]   Changes Block period to <wait time>\n");
   fprintf(stderr, "  abswait <target node> <wait time / ns>    [Options: lap]    Stretches Block period until <wait time>\n");
   fprintf(stderr, "  flush <target node> <target priorities>   [Options: lap]    Flushes all pending commands (hex 0x0 - 0x7) of lower priority\n");
@@ -425,7 +425,7 @@ int main(int argc, char* argv[]) {
   }
 
   uint64_t tvalidOffs = cdm.getModTime();
-  if (verbose) { std::cout << "Command valid time is 0x" << (vabs ? "absolute" : "relative") << std::hex << cmdTvalid << " @ " << cmdTvalid  + tvalidOffs << std::dec << std::endl;}
+  //if (verbose) { std::cout << "Command valid time is 0x" << (vabs ? "absolute" : "relative") << std::hex << cmdTvalid << " @ " << cmdTvalid  + tvalidOffs << std::dec << std::endl;}
   if(!vabs) cmdTvalid += tvalidOffs;
 
 
@@ -446,6 +446,23 @@ int main(int argc, char* argv[]) {
     else if (cmp == "details")  {
       showHealth(netaddress, cdm, verbose);
       return 0;
+    }
+    else if (cmp == "flowpattern")  {
+      if ((targetName == NULL) || (para == NULL)) {std::cerr << program << ": Need valid target and destination pattern names " << std::endl; return -1; }
+
+      std::string fromNode = cdm.getPatternExitNode(targetName);
+      std::string toNode   = (para == DotStr::Node::Special::sIdle ) ? DotStr::Node::Special::sIdle : cdm.getPatternEntryNode(para);
+      
+      if ( cdm.isInHashDict( fromNode ) && ( (toNode == DotStr::Node::Special::sIdle ) || cdm.isInHashDict( toNode )  )) { 
+        uint32_t adr; 
+        try {
+          adr = cdm.getNodeAdr(toNode, TransferDir::DOWNLOAD, AdrType::INT);
+        } catch (std::runtime_error const& err) {
+          std::cerr << program << ": Could not obtain address of destination node " << toNode << ". Cause: " << err.what() << std::endl;
+        } 
+        mc = (mc_ptr) new MiniFlow(cmdTvalid, cmdPrio, cmdQty, adr, permanent );
+      } else {std::cerr << program << ": Destination Node '" << toNode << "'' was not found on DM" << std::endl; return -1; }
+      targetName = (char*)&(fromNode[0]);
     }   
     else if (cmp == dnt::sCmdFlow)  {
       if(!(cdm.isInHashDict( targetName))) {std::cerr << program << ": Target node '" << targetName << "'' was not found on DM" << std::endl; return -1; }
