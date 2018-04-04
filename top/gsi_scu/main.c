@@ -594,6 +594,24 @@ void _segfault(int sig)
   return;
 }
 
+void reset_sio(int slot) {
+  struct msi m;
+  if (slot & DEV_SIO) {
+    // create swi
+    m.msg = (slot & 0xf) - 1;
+    m.adr = 0;
+    irq_disable();
+    add_msg(&msg_buf[0], DEVSIO, m);
+    irq_enable();
+  } else if (slot & DEV_MIL_EXT) {
+    m.msg = 0;
+    m.adr = 0;
+    irq_disable();
+    add_msg(&msg_buf[0], DEVBUS, m);
+    irq_enable();
+  }
+}
+
 void sw_irq_handler(int id) {
   int i;
   unsigned int code, value;
@@ -623,6 +641,9 @@ void sw_irq_handler(int id) {
         break;
         case 4:
           hist_print(1);
+        break;
+        case 5:
+          reset_sio(value);
         break;
         default:
           mprintf("swi: 0x%x\n", m.adr);
@@ -844,14 +865,15 @@ void dev_sio_handler(int id) {
       //mprintf("state %d\n", task_ptr[id].state);
       /* poll all pending regs on the dev bus; non blocking read operation */
       for (i = 0; i < MAX_FG_CHANNELS; i++) {
-        if (fg_regs[i].state > STATE_STOPPED) {
+        //if (fg_regs[i].state > STATE_STOPPED) {
+        //if (fg_regs[i].state > STATE_STOPPED) {
           slot = fg_macros[fg_regs[i].macro_number] >> 24;
           dev = (fg_macros[fg_regs[i].macro_number] & 0x00ff0000) >> 16;
           /* test only ifas connected to sio */
           if(((slot & 0xf) == task_ptr[id].slave_nr ) && (slot & DEV_SIO)) {
             if ((status = scub_set_task_mil(scub_base, task_ptr[id].slave_nr, id + i + 1, FC_IRQ_ACT_RD | dev)) != OKAY) dev_failure(status, 20, "dev_sio set task");
           }
-        }
+        //}
       }
       // clear old irq data
       for (i = 0; i < MAX_FG_CHANNELS; i++)
@@ -869,7 +891,7 @@ void dev_sio_handler(int id) {
       }
       /* fetch status from dev bus controller; */
       for (i = task_ptr[id].i; i < MAX_FG_CHANNELS; i++) {
-        if (fg_regs[i].state > STATE_STOPPED) {
+        //if (fg_regs[i].state > STATE_STOPPED) {
           slot = fg_macros[fg_regs[i].macro_number] >> 24;
           dev = (fg_macros[fg_regs[i].macro_number] & 0x00ff0000) >> 16;
           /* test only ifas connected to sio */
@@ -887,7 +909,7 @@ void dev_sio_handler(int id) {
               }
             }
           }
-        }
+        //}
       }
       if (status == RCV_TASK_BSY) {
         //mprintf("yield\n");
@@ -1000,14 +1022,14 @@ void dev_bus_handler(int id) {
       //mprintf("state %d\n", task_ptr[id].state);
       /* poll all pending regs on the dev bus; non blocking read operation */
       for (i = 0; i < MAX_FG_CHANNELS; i++) {
-        if (fg_regs[i].state > STATE_STOPPED) {
+        //if (fg_regs[i].state > STATE_STOPPED) {
           slot = fg_macros[fg_regs[i].macro_number] >> 24;
           dev = (fg_macros[fg_regs[i].macro_number] & 0x00ff0000) >> 16;
           /* test only ifas connected to mil extension */
           if(slot & DEV_MIL_EXT) {
             if ((status = set_task_mil(scu_mil_base, id + i + 1, FC_IRQ_ACT_RD | dev)) != OKAY) dev_failure(status, 20, "");
           }
-        }
+        //}
       }
       // clear old irq data
       for (i = 0; i < MAX_FG_CHANNELS; i++)
@@ -1024,7 +1046,7 @@ void dev_bus_handler(int id) {
       }
       /* fetch status from dev bus controller; */
       for (i = task_ptr[id].i; i < MAX_FG_CHANNELS; i++) {
-        if (fg_regs[i].state > STATE_STOPPED) {
+        //if (fg_regs[i].state > STATE_STOPPED) {
           slot = fg_macros[fg_regs[i].macro_number] >> 24;
           dev = (fg_macros[fg_regs[i].macro_number] & 0x00ff0000) >> 16;
           /* test only ifas connected to mil extension */
@@ -1043,7 +1065,7 @@ void dev_bus_handler(int id) {
             }
 
           }
-        }
+        //}
       }
       if (status == RCV_TASK_BSY) {
         //mprintf("yield\n");
@@ -1134,6 +1156,7 @@ void dev_bus_handler(int id) {
   return;
 
 }
+
 
 void channel_watchdog(int id) {
   unsigned short status;
