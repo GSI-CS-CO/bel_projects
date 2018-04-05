@@ -21,6 +21,7 @@
 #include "dow_crc.h"
 #include "../../../ip_cores/wr-cores/modules/wr_eca/eca_queue_regs.h"
 #include "../../../ip_cores/saftlib/drivers/eca_flags.h"
+#include "history.h"
 
 #define MSI_SLAVE 0
 #define MSI_WB_FG 2
@@ -90,12 +91,13 @@ uint32_t SHARED backplane_temp     = -1;
 uint32_t SHARED fg_magic_number    = 0xdeadbeef;
 uint32_t SHARED fg_version         = 0x3; // 0x2 saftlib,
                                           // 0x3 new msi system with mailbox
-uint32_t SHARED fg_mb_slot         = -1;
-uint32_t SHARED fg_num_channels    = MAX_FG_CHANNELS;
-uint32_t SHARED fg_buffer_size     = BUFFER_SIZE;
+uint32_t SHARED fg_mb_slot               = -1;
+uint32_t SHARED fg_num_channels          = MAX_FG_CHANNELS;
+uint32_t SHARED fg_buffer_size           = BUFFER_SIZE;
 uint32_t SHARED fg_macros[MAX_FG_MACROS] = {0}; // hi..lo bytes: slot, device, version, output-bits
 struct channel_regs SHARED fg_regs[MAX_FG_CHANNELS];
 struct channel_buffer SHARED fg_buffer[MAX_FG_CHANNELS];
+HistItem SHARED histbuf[HISTSIZE];
 
 volatile unsigned short* scub_base     = 0;
 volatile unsigned int* scub_irq_base   = 0;
@@ -281,20 +283,26 @@ inline void handle(int slot, unsigned fg_base, short irq_act_reg) {
 
     if ((slot & 0xf0) == 0) {
       if (!(cntrl_reg  & FG_RUNNING)) {       // fg stopped
-        if (cbisEmpty(&fg_regs[0], channel))
+        if (cbisEmpty(&fg_regs[0], channel)) {
           SEND_SIG(SIG_STOP_EMPTY);           // normal stop
-        else
+          hist_addx(HISTORY_XYZ_MODULE, "sig_stop_empty", channel);
+        } else {
           SEND_SIG(SIG_STOP_NEMPTY);          // something went wrong
+          hist_addx(HISTORY_XYZ_MODULE, "sig_stop_nempty", channel);
+        }
         disable_slave_irq(channel);
         fg_regs[channel].state = STATE_STOPPED;
       }
     } else {
       if (!(irq_act_reg  & FG_RUNNING)) {     // fg stopped
         fg_regs[channel].ramp_count--;
-        if (cbisEmpty(&fg_regs[0], channel))
+        if (cbisEmpty(&fg_regs[0], channel)) {
           SEND_SIG(SIG_STOP_EMPTY);           // normal stop
-        else
+          hist_addx(HISTORY_XYZ_MODULE, "sig_stop_empty", channel);
+        } else {
           SEND_SIG(SIG_STOP_NEMPTY);          // something went wrong
+          hist_addx(HISTORY_XYZ_MODULE, "sig_stop_nempty", channel);
+        }
         disable_slave_irq(channel);
         fg_regs[channel].state = STATE_STOPPED;
       }
@@ -304,6 +312,7 @@ inline void handle(int slot, unsigned fg_base, short irq_act_reg) {
       if ((cntrl_reg & FG_RUNNING) && !(cntrl_reg & FG_DREQ)) {
         fg_regs[channel].state = STATE_ACTIVE;
         SEND_SIG(SIG_START); // fg has received the tag or brc message
+          hist_addx(HISTORY_XYZ_MODULE, "sig_start", channel);
         if (cbgetCount(&fg_regs[0], channel) == THRESHOLD)
           SEND_SIG(SIG_REFILL);
         send_fg_param(slot, fg_base, cntrl_reg);
@@ -316,6 +325,7 @@ inline void handle(int slot, unsigned fg_base, short irq_act_reg) {
       if ((irq_act_reg & FG_RUNNING) && (irq_act_reg & DEV_STATE_IRQ)){
         fg_regs[channel].state = STATE_ACTIVE;
         SEND_SIG(SIG_START); // fg has received the tag or brc message
+          hist_addx(HISTORY_XYZ_MODULE, "sig_start", channel);
         if (cbgetCount(&fg_regs[0], channel) == THRESHOLD)
           SEND_SIG(SIG_REFILL);
         send_fg_param(slot, fg_base, irq_act_reg);
@@ -460,6 +470,7 @@ int configure_fg_macro(int channel) {
     timeout[channel] = 0;
     fg_regs[channel].state = STATE_ARMED;
     SEND_SIG(SIG_ARMED);
+    hist_addx(HISTORY_XYZ_MODULE, "sig_armed", channel);
   }
   return 0;
 }
@@ -569,6 +580,7 @@ void init_irq_table() {
 
 void init() {
   int i;
+  hist_init(HISTORY_XYZ_MODULE);
   for (i=0; i < MAX_FG_CHANNELS; i++)
     fg_regs[i].macro_number = -1;     //no macros assigned to channels at startup
   updateTemp();                       //update 1Wire ID and temperatures
@@ -580,6 +592,24 @@ void _segfault(int sig)
   mprintf("KABOOM!\n");
   //while (1) {}
   return;
+}
+
+void reset_sio(int slot) {
+  struct msi m;
+  if (slot & DEV_SIO) {
+    // create swi
+    m.msg = (slot & 0xf) - 1;
+    m.adr = 0;
+    irq_disable();
+    add_msg(&msg_buf[0], DEVSIO, m);
+    irq_enable();
+  } else if (slot & DEV_MIL_EXT) {
+    m.msg = 0;
+    m.adr = 0;
+    irq_disable();
+    add_msg(&msg_buf[0], DEVBUS, m);
+    irq_enable();
+  }
 }
 
 void sw_irq_handler(int id) {
@@ -609,6 +639,11 @@ void sw_irq_handler(int id) {
         case 3:
           disable_channel(value);
         break;
+        case 4:
+          hist_print(1);
+        break;
+        case 5:
+          reset_sio(value);
         break;
         default:
           mprintf("swi: 0x%x\n", m.adr);
@@ -723,7 +758,7 @@ void ecaHandler()
       //mprintf("EvtID: 0x%08x%08x; deadline: 0x%08x%08x; flag: 0x%08x\n", evtIdHigh, evtIdLow, evtDeadlHigh, evtDeadlLow, flag);
       break;
     default:
-      mprintf("ecaHandler: unknown tag\n");
+      break;
     } // switch
 
   } // if data is valid
@@ -830,14 +865,15 @@ void dev_sio_handler(int id) {
       //mprintf("state %d\n", task_ptr[id].state);
       /* poll all pending regs on the dev bus; non blocking read operation */
       for (i = 0; i < MAX_FG_CHANNELS; i++) {
-        if (fg_regs[i].state > STATE_STOPPED) {
+        //if (fg_regs[i].state > STATE_STOPPED) {
+        //if (fg_regs[i].state > STATE_STOPPED) {
           slot = fg_macros[fg_regs[i].macro_number] >> 24;
           dev = (fg_macros[fg_regs[i].macro_number] & 0x00ff0000) >> 16;
           /* test only ifas connected to sio */
           if(((slot & 0xf) == task_ptr[id].slave_nr ) && (slot & DEV_SIO)) {
             if ((status = scub_set_task_mil(scub_base, task_ptr[id].slave_nr, id + i + 1, FC_IRQ_ACT_RD | dev)) != OKAY) dev_failure(status, 20, "dev_sio set task");
           }
-        }
+        //}
       }
       // clear old irq data
       for (i = 0; i < MAX_FG_CHANNELS; i++)
@@ -855,7 +891,7 @@ void dev_sio_handler(int id) {
       }
       /* fetch status from dev bus controller; */
       for (i = task_ptr[id].i; i < MAX_FG_CHANNELS; i++) {
-        if (fg_regs[i].state > STATE_STOPPED) {
+        //if (fg_regs[i].state > STATE_STOPPED) {
           slot = fg_macros[fg_regs[i].macro_number] >> 24;
           dev = (fg_macros[fg_regs[i].macro_number] & 0x00ff0000) >> 16;
           /* test only ifas connected to sio */
@@ -873,7 +909,7 @@ void dev_sio_handler(int id) {
               }
             }
           }
-        }
+        //}
       }
       if (status == RCV_TASK_BSY) {
         //mprintf("yield\n");
@@ -986,14 +1022,14 @@ void dev_bus_handler(int id) {
       //mprintf("state %d\n", task_ptr[id].state);
       /* poll all pending regs on the dev bus; non blocking read operation */
       for (i = 0; i < MAX_FG_CHANNELS; i++) {
-        if (fg_regs[i].state > STATE_STOPPED) {
+        //if (fg_regs[i].state > STATE_STOPPED) {
           slot = fg_macros[fg_regs[i].macro_number] >> 24;
           dev = (fg_macros[fg_regs[i].macro_number] & 0x00ff0000) >> 16;
           /* test only ifas connected to mil extension */
           if(slot & DEV_MIL_EXT) {
             if ((status = set_task_mil(scu_mil_base, id + i + 1, FC_IRQ_ACT_RD | dev)) != OKAY) dev_failure(status, 20, "");
           }
-        }
+        //}
       }
       // clear old irq data
       for (i = 0; i < MAX_FG_CHANNELS; i++)
@@ -1010,7 +1046,7 @@ void dev_bus_handler(int id) {
       }
       /* fetch status from dev bus controller; */
       for (i = task_ptr[id].i; i < MAX_FG_CHANNELS; i++) {
-        if (fg_regs[i].state > STATE_STOPPED) {
+        //if (fg_regs[i].state > STATE_STOPPED) {
           slot = fg_macros[fg_regs[i].macro_number] >> 24;
           dev = (fg_macros[fg_regs[i].macro_number] & 0x00ff0000) >> 16;
           /* test only ifas connected to mil extension */
@@ -1029,7 +1065,7 @@ void dev_bus_handler(int id) {
             }
 
           }
-        }
+        //}
       }
       if (status == RCV_TASK_BSY) {
         //mprintf("yield\n");
@@ -1121,6 +1157,7 @@ void dev_bus_handler(int id) {
 
 }
 
+
 void channel_watchdog(int id) {
   unsigned short status;
   int i, slot, dev;
@@ -1188,6 +1225,10 @@ void addExecutionTime(int id, uint64_t time) {
 }
 
 
+static uint64_t tick = 0;               // system tick
+uint64_t getTick() {
+  return tick;
+}
 
 int main(void) {
   int i, mb_slot;
@@ -1272,7 +1313,6 @@ int main(void) {
     return;
   }
 
-  static uint64_t tick = 0;               // system tick
   static TaskType *task_ptr;              // task pointer
 
   static int taskIndex = 0;               // task index
