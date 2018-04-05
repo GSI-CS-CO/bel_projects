@@ -127,12 +127,13 @@ namespace det = DotStr::Edge::TypeVal;
       report += "Priority " + std::to_string((int)prio) + " (" + dnt::sQPrio[prio] + ") ";
       if (!qr.hasQ[prio]) {report += " Not instantiated\n"; continue;}
 
-      report += " RdCnt: " + std::to_string((int)qr.aQ[prio].rdIdx) 
-              + " WrCnt: " + std::to_string((int)qr.aQ[prio].wrIdx) 
+      report += " RdIdx: " + std::to_string((int)qr.aQ[prio].rdIdx) 
+              + " WrIdx: " + std::to_string((int)qr.aQ[prio].wrIdx) 
               + "    Pending: " + std::to_string((int)qr.aQ[prio].pendingCnt) + "\n";
       
       //find buffers of all non empty slots
-      for (uint8_t i = 0; i <= Q_IDX_MAX_MSK; i++) {
+      for (uint8_t i, idx = qr.aQ[prio].rdIdx; idx < qr.aQ[prio].rdIdx + 4; idx++) {
+        i = idx & Q_IDX_MAX_MSK;
         QueueElement& qe = qr.aQ[prio].aQe[i];
 
         report += "#" + std::to_string(i) + " ";
@@ -216,17 +217,21 @@ namespace det = DotStr::Edge::TypeVal;
       uint8_t auxRd = (rdIdxs >> (prio*8)) & Q_IDX_MAX_OVF_MSK;
       uint8_t auxWr = (wrIdxs >> (prio*8)) & Q_IDX_MAX_OVF_MSK;
 
-      uint8_t rdIdx = auxRd & Q_IDX_MAX_MSK;
-      //uint8_t wrIdx = auxWr & Q_IDX_MAX_MSK; no use for it right now
-      uint8_t pendingCnt = (auxWr > auxRd) ? auxWr - auxRd : auxRd - auxWr;
-         
+      int8_t rdIdx = auxRd & Q_IDX_MAX_MSK;
+      int8_t wrIdx = auxWr & Q_IDX_MAX_MSK;
+      int8_t diff  = (wrIdx >= rdIdx) ? wrIdx - rdIdx : wrIdx - rdIdx + 4;
+      bool          full = ((auxRd != auxWr) & (rdIdx == wrIdx));
+      uint8_t pendingCnt = full ? 4 : diff;
+      
+      qr.aQ[prio].wrIdx       = auxWr;
+      qr.aQ[prio].rdIdx       = auxRd;
+      qr.aQ[prio].pendingCnt  = pendingCnt;
+
       //set of all pending command indices
       std::set<uint8_t> pendingIdx;
-      if (auxRd != auxWr) {for(uint8_t pidx = rdIdx; pidx < (rdIdx + pendingCnt); pidx++) {pendingIdx.insert( pidx & Q_IDX_MAX_MSK);}}
+      if (pendingCnt) {for(uint8_t pidx = rdIdx; pidx < (rdIdx + pendingCnt); pidx++) {pendingIdx.insert( pidx & Q_IDX_MAX_MSK);}}
 
-      qr.aQ[prio].wrIdx   = auxWr;
-      qr.aQ[prio].rdIdx   = auxRd;
-      qr.aQ[prio].pendingCnt = pendingIdx.size();
+      
 
       //find buffers of all non empty slots
       for (uint8_t i = 0; i <= Q_IDX_MAX_MSK; i++) {
@@ -237,24 +242,23 @@ namespace det = DotStr::Edge::TypeVal;
         std::tie(bufCpu, bufAdrType) = at.adrClassification(bufAdr);  
         auto buf = at.lookupAdr( x->cpu, at.adrConv(bufAdrType, AdrType::MGMT, x->cpu, bufAdr) ); //buffer cpu is the same as block cpu
         if (!(at.isOk(buf))) {continue;}
-
-        qr.aQ[prio].aQe[i] = getQelement(pendingIdx.count(i), buf, qr.aQ[prio].aQe[i]);
+        qr.aQ[prio].aQe[i].pending = (bool)pendingIdx.count(i);
+        getQelement(i, buf, qr.aQ[prio].aQe[i]);
       }
     }
       
     return qr;
   }
 
-  QueueElement& CarpeDM::getQelement(bool pending, amI allocIt, QueueElement& qe) {
+  QueueElement& CarpeDM::getQelement(uint8_t idx, amI allocIt, QueueElement& qe) {
     //TODO might cleaner as deserialisers for MiniCommand Class
     Graph&       g  = gDown;
     AllocTable& at  = atDown;
-    uint8_t*     b  = (uint8_t*)&(allocIt->b);
+    uint8_t*  bAux  = (uint8_t*)&(allocIt->b);
+    uint8_t*     b  = (uint8_t*)&bAux[(idx % 2) * _T_CMD_SIZE_];
     uint8_t    cpu  = allocIt->cpu;
     uint32_t   act  = writeBeBytesToLeNumber<uint32_t>((uint8_t*)&b[T_CMD_ACT]);
     uint8_t   type  = (act >> ACT_TYPE_POS) & ACT_TYPE_MSK;
-
-    qe.pending      = pending;
     qe.validTime    = writeBeBytesToLeNumber<uint64_t>((uint8_t*)&b[T_CMD_TIME]);
     qe.qty          = (act >> ACT_QTY_POS) & ACT_QTY_MSK;
     qe.type         = type; //for conevenient use of case statements
@@ -456,7 +460,7 @@ void CarpeDM::show(const std::string& title, const std::string& logDictFile, Tra
   sLog << std::endl << std::setfill(' ') << std::setw(4) << "Idx" << "   " << std::setfill(' ') << std::setw(4) << "S/R" << "   " 
                     << std::setfill(' ') << std::setw(4) << "Cpu" << "   " << std::setw(30) << "Name" << "   " 
                     << std::setw(10) << "Hash" << "   " << std::setw(10)  <<  "Int. Adr   "  << "   " << std::setw(10) << "Ext. Adr   " << std::endl;
-  sLog << " " << std::endl; 
+  //sLog << " " << std::endl; 
 
   BOOST_FOREACH( vertex_t v, vertices(g) ) {
     auto x = at.lookupVertex(v);

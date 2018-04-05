@@ -84,8 +84,6 @@ private:
   
   int sendCommands(Graph &); //Sends a dotfile of commands to the DM
 
-
-
   // Upload
   vEbwrs gatherUploadVector(std::set<uint8_t> moddedCpus, uint32_t modCnt, uint8_t opType);
   vEbwrs& createModInfo     (uint8_t cpu, uint32_t modCnt, uint8_t opType, vEbwrs& ew, uint32_t adrOffs);
@@ -150,7 +148,7 @@ private:
 
   vEbwrs& staticFlush(const std::string& sBlock, bool prioIl, bool prioHi, bool prioLo, vEbwrs& ew, bool force);
 
-  QueueElement& getQelement(bool pending, amI allocIt, QueueElement& qe);
+  QueueElement& getQelement(uint8_t idx, amI allocIt, QueueElement& qe);
 
 
   int   ebWriteCycle(Device& dev, vAdr va, vBuf& vb, vBl vcs);
