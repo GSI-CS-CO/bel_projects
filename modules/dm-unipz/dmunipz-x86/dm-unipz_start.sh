@@ -13,8 +13,9 @@ sleep 5
 dmunipz-ctl dev/wbm0 idle
 sleep 5
 echo -e dm-unipz - start: destroy all unowned conditions for lm32 channel of ECA
-saft-ecpu-ctl baseboard -x
-
+saft-ecpu-ctl tr0 -x
+echo -e dm-unipz - start: disable all events from I/O inputs to ECA
+saft-io-ctl tr0 -w
 
 ###########################################
 # load firmware to lm32
@@ -25,8 +26,9 @@ eb-fwload dev/wbm0 u 0x0 dmunipz.bin
 ###########################################
 # start software on hostsystem 
 ###########################################
-# to be implemented: command with pipe to logger (logstash)
-echo dm-unipz - start monitoring
+echo dm-unipz - start: kill monitoring process
+killall dmunipz-ctl
+echo dm-unipz - start: start  monitoring
 dmunipz-ctl -s2 dev/wbm0 | logger -t dmunipz-ctl -sp local0.info &
 
 ###########################################
@@ -51,16 +53,16 @@ dmunipz-ctl -s2 dev/wbm0 | logger -t dmunipz-ctl -sp local0.info &
 # dmunipz-ctl dev/wbm0 ebmlocal 0x00267b0003f1 0xc0a80b02 (scuxl0223, 'Testnetz Dietrich', need to set static IP with eb-console)
 
 # do some write actions to set register values
-echo -e dm-unipz - set MAC and IP of gateway and Data Master
+echo -e dm-unipz - start: set MAC and IP of gateway and Data Master
 
 PROSCU=scuxl0223
 
 if  [ $(hostname) == $PROSCU ]; then   # production network
-    echo -e dm-unipz - configuring for PRODUCTION network on $(hostname)
+    echo -e dm-unipz - start: configuring for PRODUCTION network on $(hostname)
     dmunipz-ctl dev/wbm0 ebmdm 0x00267b000407 0xc0a8803f
     dmunipz-ctl dev/wbm0 ebmlocal 0x00267b0003f1 0xc0a8a0e5
 else                                  # test or development
-    echo -e dm-unipz - configuring for TEST or DEVELOPMENT network on $(hostname)
+    echo -e dm-unipz - start: configuring for TEST or DEVELOPMENT network on $(hostname)
     dmunipz-ctl dev/wbm0 ebmlocal 0x00267b000321 0xc0a80b02
     dmunipz-ctl dev/wbm0 ebmdm 0x00267b000455 0xc0a80b01
 fi
@@ -74,23 +76,23 @@ dmunipz-ctl dev/wbm0 configure
 ###########################################
 # configure ECA for DM
 ###########################################
-echo -e dm-unipz - configure ECA for events from DM
+echo -e dm-unipz - start: configure ECA for events from DM
 
 # configure ECA for lm32 channel: listen for TK request, tag "0x2"
-saft-ecpu-ctl tr0 -c 0x1fa215e000000000 0xfffffff000000000 0 0x2 -d
+saft-ecpu-ctl tr0 -c 0x112c15e000000000 0xfffffff000000000 0 0x2 -d
 
 # configure ECA for lm32 channel: listen for beam request, tag "0x3"
-saft-ecpu-ctl tr0 -c 0x1fa2160000000000 0xfffffff000000000 0 0x3 -d
+saft-ecpu-ctl tr0 -c 0x112c160000000000 0xfffffff000000000 0 0x3 -d
 
 # configure ECA for lm32 channel: listen for TK release, tag "0x4"
-saft-ecpu-ctl tr0 -c 0x1fa215f000000000 0xfffffff000000000 0 0x4 -d
+saft-ecpu-ctl tr0 -c 0x112c15f000000000 0xfffffff000000000 0 0x4 -d
 
 
 ###########################################
 # configure TLU and ECA for UNIPZ
 # MIL event EVT_READY_TO_SIS is received as TTL
 ###########################################
-echo -e dm-unipz - configure TLU and ECA for events from UNIPZ
+echo -e dm-unipz - start: configure TLU and ECA for I/O events from UNIPZ
 
 # configure TLU (input B1, TLU will generate messages with event ID
 saft-io-ctl tr0 -n B1 -b 0xffff100000000000
@@ -100,7 +102,7 @@ saft-ecpu-ctl tr0 -c 0xffff100000000001 0xffffffffffffffff 0 0x6 -d
 
 # send START OPERATATION command to firmware
 sleep 5
-echo -e dm-unipz - start operation
+echo -e dm-unipz - start: start operation
 dmunipz-ctl dev/wbm0 startop
 
 echo -e dm-unipz - start: startup script finished
