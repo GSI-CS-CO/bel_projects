@@ -214,10 +214,12 @@ using namespace DotStr::Misc;
     Graph::out_edge_iterator out_begin, out_end, out_cur;
     boost::tie(out_begin, out_end) = out_edges(victim, g);
     
+    std::vector<edge_t> vEdges2remove;
+
     // out edges
     for (out_cur = out_begin; out_cur != out_end; ++out_cur) {
+      vEdges2remove.push_back(*out_cur);
       boost::add_edge(borg, target(*out_cur,g), (myEdge){boost::get(&myEdge::type, g, *out_cur)}, g);
-      boost::remove_edge(*out_cur, g);
       updateStaging(borg, *out_cur); 
     }  
     
@@ -225,10 +227,11 @@ using namespace DotStr::Misc;
     Graph::in_edge_iterator in_begin, in_end, in_cur;
     boost::tie(in_begin, in_end) = in_edges(victim, g);
     for (in_cur = in_begin; in_cur != in_end; ++in_cur) {
+      vEdges2remove.push_back(*in_cur);
       boost::add_edge(source(*in_cur,g), borg, (myEdge){boost::get(&myEdge::type, g, *in_cur)}, g);
-      boost::remove_edge(*in_cur, g);
-       
     }
+
+    for (auto eRm : vEdges2remove) boost::remove_edge(eRm, g);
   }
 
   void CarpeDM::prepareUpload() {
@@ -278,8 +281,7 @@ using namespace DotStr::Misc;
              if (cmp == dnt::sTMsg)        {completeId(v, gUp); // create ID from SubId fields or vice versa
                                             gUp[v].np = (node_ptr) new  TimingMsg(gUp[v].name, gUp[v].patName, gUp[v].bpName, x->hash, x->cpu, x->b, flags, s2u<uint64_t>(gUp[v].tOffs), s2u<uint64_t>(gUp[v].id), s2u<uint64_t>(gUp[v].par), s2u<uint32_t>(gUp[v].tef), s2u<uint32_t>(gUp[v].res)); }
         else if (cmp == dnt::sCmdNoop)     {gUp[v].np = (node_ptr) new       Noop(gUp[v].name, gUp[v].patName, gUp[v].bpName, x->hash, x->cpu, x->b, flags, s2u<uint64_t>(gUp[v].tOffs), s2u<uint64_t>(gUp[v].tValid), s2u<uint8_t>(gUp[v].prio), s2u<uint32_t>(gUp[v].qty), s2u<bool>(gUp[v].vabs)); }
-        else if (cmp == dnt::sCmdFlow)     {std::cout << "string tvalid: " << gUp[v].tValid << std::endl;
-          gUp[v].np = (node_ptr) new       Flow(gUp[v].name, gUp[v].patName, gUp[v].bpName, x->hash, x->cpu, x->b, flags, s2u<uint64_t>(gUp[v].tOffs), s2u<uint64_t>(gUp[v].tValid), s2u<uint8_t>(gUp[v].prio), s2u<uint32_t>(gUp[v].qty), s2u<bool>(gUp[v].vabs), s2u<bool>(gUp[v].perma)); }
+        else if (cmp == dnt::sCmdFlow)     {gUp[v].np = (node_ptr) new       Flow(gUp[v].name, gUp[v].patName, gUp[v].bpName, x->hash, x->cpu, x->b, flags, s2u<uint64_t>(gUp[v].tOffs), s2u<uint64_t>(gUp[v].tValid), s2u<uint8_t>(gUp[v].prio), s2u<uint32_t>(gUp[v].qty), s2u<bool>(gUp[v].vabs), s2u<bool>(gUp[v].perma)); }
         else if (cmp == dnt::sCmdFlush)    {gUp[v].np = (node_ptr) new      Flush(gUp[v].name, gUp[v].patName, gUp[v].bpName, x->hash, x->cpu, x->b, flags, s2u<uint64_t>(gUp[v].tOffs), s2u<uint64_t>(gUp[v].tValid), s2u<uint8_t>(gUp[v].prio),
                                                                               s2u<bool>(gUp[v].qIl), s2u<bool>(gUp[v].qHi), s2u<bool>(gUp[v].qLo), s2u<bool>(gUp[v].vabs), s2u<uint8_t>(gUp[v].frmIl), s2u<uint8_t>(gUp[v].toIl), s2u<uint8_t>(gUp[v].frmHi),
                                                                               s2u<uint8_t>(gUp[v].toHi), s2u<uint8_t>(gUp[v].frmLo), s2u<uint8_t>(gUp[v].toLo) ); }
