@@ -40,5 +40,16 @@
     return x.first;
   }
 
+  vStrC GroupTable::getAllPatterns() {
+    std::set<std::string> st;
+    vStrC ret; // bad type really, but a little workaround with a set does it
+    for (auto& it : a.get<Groups::Pattern>()) {
+      st.insert(it.pattern);
+    }
+    for (auto& it : st) ret.push_back(it);
+
+    return ret;
+
+  }
 
   

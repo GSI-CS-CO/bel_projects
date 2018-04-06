@@ -259,6 +259,11 @@ architecture rtl of microtca_control is
 
   signal s_lvds_led     : std_logic_vector(20 downto 0);
 
+  signal s_lvds_act_led_lvtio       : std_logic_vector(5 downto 1);
+  signal s_lvds_act_led_mtca4_io    : std_logic_vector(8 downto 1);
+  signal s_lvds_act_led_mtca4_clk   : std_logic_vector(4 downto 1);
+  signal s_lvds_act_led_libera      : std_logic_vector(4 downto 1);
+
 
   constant io_mapping_table : t_io_mapping_table_arg_array(0 to 40) := 
   (
@@ -335,7 +340,7 @@ architecture rtl of microtca_control is
   signal s_monster_tclk_dir       : std_logic_vector(8 downto 1);
 
   signal s_monster_mlvd_buf_en    : std_logic_vector(8 downto 1);
-  signal s_monster_mlvd_dir       : std_logic_vector(8 downto 1);
+  signal mlvdio_de                : std_logic_vector(8 downto 1);
 
   signal s_monster_hss_buf_en     : std_logic_vector(8 downto 1);
 
@@ -463,7 +468,7 @@ begin
   -- test mode select via hex switch or sw
   -- invert FPGA button and HEX switch
   s_test_sel(4)          <= s_gpio_out(7)          when s_gpio_out(c_HWT_EN_BIT)='1' else not pbs_f_i;
-  s_test_sel(3 downto 0) <= s_gpio_out(3 downto 0) when s_gpio_out(c_HWT_EN_BIT)='1' else not (hswf_i);
+  s_test_sel(3 downto 0) <= s_gpio_out(3 downto 0) when s_gpio_out(c_HWT_EN_BIT)='1' else not hswf_i ;
 
   -- Display
   dis_wr_o    <= '0';
@@ -522,7 +527,16 @@ begin
   lvtio_oe_n_o <= not s_lvds_oe(4 downto 0);
 
   -- LEMO activity LEDs (active HI)
-  s_lvds_led(4 downto 0) <= s_lvds_i_led(4 downto 0) or s_lvds_o_led(4 downto 0);
+  s_lvds_act_led_lvtio  <= s_lvds_i_led( 4 downto  0) or s_lvds_o_led( 4 downto  0);
+
+  -- MTCA.4 CLK activity LEDs (active HI)
+  s_lvds_act_led_mtca4_clk  <= s_lvds_i_led(8 downto 5) or s_lvds_o_led(8 downto 5);
+
+  -- MTCA.4 IO activity LEDs (active HI)
+  s_lvds_act_led_mtca4_io  <= s_lvds_i_led(16 downto  9) or s_lvds_o_led(16 downto  9);
+
+  -- Libera out activity LEDs (active HI)
+  s_lvds_act_led_libera <= s_lvds_o_led(20 downto 17);
   
   -- LVDS termination pins (active hi)
   with s_test_sel select
@@ -532,17 +546,25 @@ begin
 
   -- LVDS direction indicator RED LEDs (active hi)
   with s_test_sel select
-    lvtio_led_dir_o <= (others => '0')                  when ('0' & x"F"),   -- FPGA hex sw in position F, button not pressed, LED test
-                       (others => '1')                  when ('1' & x"F"),   -- FPGA hex sw in position F, button     pressed, LED test
-                        s_shift_reg_to_leds(9 downto 5) when ('0' & x"A"),   -- FPGA hex sw in position A, button not pressed, shift reg to leds
-                        s_lvds_oe(4 downto 0)           when others;         -- driven by monster
+    lvtio_led_dir_o <= (others => '0')                          when ('0' & x"F"),   -- FPGA hex sw in position F, button not pressed, LED test
+                       (others => '1')                          when ('1' & x"F"),   -- FPGA hex sw in position F, button     pressed, LED test
+                        s_shift_reg_to_leds(9 downto 5)         when ('0' & x"A"),   -- FPGA hex sw in position A, button not pressed, shift reg to leds
+                        "00000"                                 when ('0' & x"8"),   -- FPGA hex sw in position 8, button not pressed, off
+                        '0' & mlvdio_de(8 downto 5)             when ('0' & x"7"),   -- FPGA hex sw in position 7, button not pressed, mtca4io output enable 8-5
+                        '0' & mlvdio_de(4 downto 1)             when ('0' & x"6"),   -- FPGA hex sw in position 6, button not pressed, mtca4io output enable 4-1
+                        '0' & s_monster_tclk_dir(4 downto 1)    when ('0' & x"5"),   -- FPGA hex sw in position 5, button not pressed, mtca4 clk direction
+                        s_lvds_oe(4 downto 0)                   when others;         -- LEMO IO direction
 
   -- LVDS activity indicator BLUE LEDs (active hi)
   with s_test_sel select
-    lvtio_led_act_o <= (others => '0')                  when ('0' & x"F"),   -- FPGA hex sw in position F, button not pressed, LED test
-                       (others => '1')                  when ('1' & x"F"),   -- FPGA hex sw in position F, button     pressed, LED test
-                        s_shift_reg_to_leds(4 downto 0) when ('0' & x"A"),   -- FPGA hex sw in position A, button not pressed, shift reg to leds
-                        s_lvds_led(4 downto 0)          when others;         -- driven by monster
+    lvtio_led_act_o <= (others => '0')                              when ('0' & x"F"),   -- FPGA hex sw in position F, button not pressed, LED test
+                       (others => '1')                              when ('1' & x"F"),   -- FPGA hex sw in position F, button     pressed, LED test
+                        s_shift_reg_to_leds(4 downto 0)             when ('0' & x"A"),   -- FPGA hex sw in position A, button not pressed, shift reg to leds
+                        '0' & s_lvds_act_led_libera                 when ('0' & x"8"),   -- FPGA hex sw in position 8, button not pressed, libera out activity to front io leds
+                        '0' & s_lvds_act_led_mtca4_io(8 downto 5)   when ('0' & x"7"),   -- FPGA hex sw in position 7, button not pressed, mtca4io 5-8 activity to front io leds
+                        '0' & s_lvds_act_led_mtca4_io(4 downto 1)   when ('0' & x"6"),   -- FPGA hex sw in position 6, button not pressed, mtca4io 1-4 activity to front io leds
+                        '0' & s_lvds_act_led_mtca4_clk              when ('0' & x"5"),   -- FPGA hex sw in position 5, button not pressed, mtca4 clk activity
+                        s_lvds_act_led_lvtio                        when others;         -- LEMO IO activity
 
   -----------------------------------------------------------
   -- lemo io connectors on front panel to/from monster
@@ -571,22 +593,22 @@ begin
 
   -- select receiver input Type for onboard M-LVDS buffers to backplane
   -- ('0' = Type-1 , '1' = Type-2 )
-  mlvdio_fsen_o <= '1'; 
+  mlvdio_fsen_o <= s_gpio_out(7); 
 
   -- MTCA.4 bussed trigger lines (PORTS 17-20)
-  s_lvds_n_i(12 downto 5) <= mlvdio_in_n_i(8 downto 1);
-  s_lvds_p_i(12 downto 5) <= mlvdio_in_p_i(8 downto 1);
+  s_lvds_n_i(16 downto 9) <= mlvdio_in_n_i(8 downto 1);
+  s_lvds_p_i(16 downto 9) <= mlvdio_in_p_i(8 downto 1);
 
-  mlvdio_out_n_o <= s_lvds_n_o(12 downto 5);
-  mlvdio_out_p_o <= s_lvds_p_o(12 downto 5);
+  mlvdio_out_n_o <= s_lvds_n_o(16 downto 9);
+  mlvdio_out_p_o <= s_lvds_p_o(16 downto 9);
 
   ----------------------------------------
   -- MTCA.4 clocks (TCLKA, TCLKB, TCLKC, TCLKD)
-  s_lvds_n_i(16 downto 13) <= tclk_in_n_i;
-  s_lvds_p_i(16 downto 13) <= tclk_in_p_i;
+  s_lvds_n_i(8 downto 5) <= tclk_in_n_i;
+  s_lvds_p_i(8 downto 5) <= tclk_in_p_i;
 
-  tclk_out_n_o <= s_lvds_n_o(16 downto 13);
-  tclk_out_p_o <= s_lvds_p_o(16 downto 13);
+  tclk_out_n_o <= s_lvds_n_o(8 downto 5);
+  tclk_out_p_o <= s_lvds_p_o(8 downto 5);
 
   -----------------------------------------------------------
   -- Libera outputs
@@ -637,7 +659,6 @@ begin
   s_monster_tclk_en (4 downto 1)    <= s_lvds_oe(8 downto 5);
   s_monster_tclk_dir(4 downto 1)    <= s_lvds_oe(8 downto 5);
   s_monster_mlvd_buf_en(8 downto 1) <= s_lvds_oe(16 downto 9);
-  s_monster_mlvd_dir   (8 downto 1) <= s_lvds_oe(16 downto 9);
   s_monster_hss_buf_en (4 downto 1) <= (others => '0');
 
   -----------------------------------------------------------------------
@@ -657,7 +678,7 @@ begin
 
   -- Libera trigger buffer enable from SW
   -- USE THIS ONLY when FTRN is not in the crate or is on the AMC extender with cut PORT 6-7 lines!!!
-  s_libera_trig_buf_en_sw <= '1' when (s_gpio_out(3 downto 0) = "0111" and s_gpio_out(8)='1') else '0'; 
+  s_libera_trig_buf_en_sw <= '1' when (s_gpio_out(6 downto 4) = "101" and s_gpio_out(c_HWT_EN_BIT)='1') else '0'; 
 
   -- enable libera trigger buffers when 
   -- in Libera Slot8 or when
@@ -679,9 +700,9 @@ begin
   -- MTCA.4 buffers enable generation by software
   -----------------------------------------------------------------------
   -- enabled only in MTCA.4 by SW
-  s_mtca4_bpl_buf_en_sw <= '1' when (s_gpio_out(3 downto 0) = "1001" and s_gpio_out(8)='1') else '0';
+  s_mtca4_bpl_buf_en_sw <= '1' when (s_gpio_out(6 downto 4) = "100" and s_gpio_out(c_HWT_EN_BIT)='1') else '0';
 
-  -- crosscheck with Libera and quiesce
+  -- crosscheck with Libera and quiesce.
   -- because there is no way to know if we are in MTCA or MTCA.4 crate
   -- it is up to user to ensure that MTCA.4 buffers are not turned on in MTCA crate!
   s_mtca4_bpl_buf_en <= '1' when (s_mmc_in_libera       = '0' and
@@ -702,16 +723,14 @@ begin
   -- m-lvds direction
   gen_mlvd_buf_oe : for i in  1 to 8 generate
     -- enable buffer output towards BACKPLANE (m-lvds output driver enable, active hi)
-    mlvdio_de_o(i) <= '1' when (s_mtca4_bpl_buf_en        = '1' and 
-                                s_monster_mlvd_buf_en(i)  = '1' and 
-                                s_monster_mlvd_dir(i)     = '1')
+    mlvdio_de(i) <= '1' when (s_mtca4_bpl_buf_en        = '1' and 
+                              s_monster_mlvd_buf_en(i)  = '1')
                       else '0';
+
+    mlvdio_de_o(i) <= mlvdio_de(i);
                                
     -- enable buffer output towards FPGA (m-lvds receiver enable, active low)
-    mlvdio_re_n_o(i) <=  '0' when (s_mtca4_bpl_buf_en        = '1' and 
-                                   s_monster_mlvd_buf_en(i)  = '0' and 
-                                   s_monster_mlvd_dir(i)     = '0')
-                          else '1';
+    mlvdio_re_n_o(i) <=  '0'; -- always on (listen while talk)
 
   end generate; -- gen_mlvd_buf_oe
 

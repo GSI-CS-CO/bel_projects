@@ -23,10 +23,11 @@
 
 
 
-int CarpeDM::ebWriteCycle(Device& dev, vAdr va, vBuf& vb)
+int CarpeDM::ebWriteCycle(Device& dev, vAdr va, vBuf& vb, vBl vcs)
 {
   //eb_status_t status;
   //FIXME What about MTU? What about returned eb status ??
+  if (verbose) sLog << "Starting Write Cycle" << std::endl;
   Cycle cyc;
   eb_data_t veb[va.size()];
 
@@ -37,12 +38,13 @@ int CarpeDM::ebWriteCycle(Device& dev, vAdr va, vBuf& vb)
   try {
     cyc.open(dev);
     for(int i = 0; i < (va.end()-va.begin()); i++) {
-    //FIXME dirty break into cycles
-    if (i && ((va[i] & (RAM_SIZE-1)) ^ (va[i-1] & (RAM_SIZE-1)))) {
+    if (i && vcs.at(i)) {
       cyc.close();
+      if (verbose) sLog << "Close and open next Write Cycle" << std::endl;
       cyc.open(dev);  
     }
-    sLog << "Writing @ 0x" << std::hex << std::setfill('0') << std::setw(8) << va[i] << " : 0x" << std::hex << std::setfill('0') << std::setw(8) << veb[i] << std::endl;
+    
+    if (verbose) sLog << " Writing @ 0x" << std::hex << std::setfill('0') << std::setw(8) << va[i] << " : 0x" << std::hex << std::setfill('0') << std::setw(8) << veb[i] << std::endl;
     cyc.write(va[i], EB_BIG_ENDIAN | EB_DATA32, veb[i]);
 
     }
@@ -55,24 +57,26 @@ int CarpeDM::ebWriteCycle(Device& dev, vAdr va, vBuf& vb)
 }
 
 
-vBuf CarpeDM::ebReadCycle(Device& dev, vAdr va)
+vBuf CarpeDM::ebReadCycle(Device& dev, vAdr va, vBl vcs)
 {
   //FIXME What about MTU? What about returned eb status ??
   Cycle cyc;
   eb_data_t veb[va.size()];
   vBuf ret = vBuf(va.size() * 4);
-    
+  if (verbose) sLog << "Starting Read Cycle" << std::endl; 
   //sLog << "Got Adr Vec with " << va.size() << " Adrs" << std::endl;
 
   try {
     cyc.open(dev);
     for(int i = 0; i < (va.end()-va.begin()); i++) {
     //FIXME dirty break into cycles
-    if (i && ((va[i] & (RAM_SIZE-1)) ^ (va[i-1] & (RAM_SIZE-1)))) {
+    if (i && vcs.at(i)) {
       cyc.close();
+      if (verbose) sLog << "Close and open next Read Cycle" << std::endl; 
       cyc.open(dev);  
     }
-    cyc.read(va[i], EB_BIG_ENDIAN | EB_DATA32, veb + i);
+    if (verbose) sLog << " Reading @ 0x" << std::hex << std::setfill('0') << std::setw(8) << va[i] << std::endl;
+    cyc.read(va[i], EB_BIG_ENDIAN | EB_DATA32, (eb_data_t*)&veb[i]);
     }
     cyc.close();
 
@@ -92,32 +96,21 @@ vBuf CarpeDM::ebReadCycle(Device& dev, vAdr va)
 
 int CarpeDM::ebWriteWord(Device& dev, uint32_t adr, uint32_t data)
 {
-   Cycle cyc;
-   //FIXME What about returned eb status ??
-   sLog << "Writing @ 0x" << std::hex << std::setfill('0') << std::setw(8) << adr << " : 0x" << std::hex << std::setfill('0') << std::setw(8) << data << std::endl;
-   try { 
-     cyc.open(dev);
-     cyc.write(adr, EB_BIG_ENDIAN | EB_DATA32, (eb_data_t)data);
-     cyc.close();
-   } catch (etherbone::exception_t const& ex) {
-     throw std::runtime_error("Etherbone " + std::string(ex.method) + " returned " + std::string(eb_status(ex.status)) + "\n" );
-   }
+  uint8_t b[_32b_SIZE_];
+  writeLeNumberToBeBytes(b, data);
+  vAdr vA({adr});
+  vBuf vD(std::begin(b), std::end(b) );
 
-   return 0;
+  return ebWriteCycle(ebd, vA, vD);
 }
 
 uint32_t CarpeDM::ebReadWord(Device& dev, uint32_t adr)
 {
-  eb_data_t data;
-  Cycle cyc;
-  try {
-    cyc.open(dev);
-    cyc.read(adr, EB_BIG_ENDIAN | EB_DATA32, (eb_data_t*)&data);
-    cyc.close();
-  } catch (etherbone::exception_t const& ex) {
-    throw std::runtime_error("Etherbone " + std::string(ex.method) + " returned " + std::string(eb_status(ex.status)) + "\n" );
-  }
-  return (uint32_t)data;
+  vAdr vA({adr});
+  vBuf vD = ebReadCycle(ebd, vA);
+  uint8_t* b = &vD[0];
+
+  return writeBeBytesToLeNumber<uint32_t>(b); 
 }
 
  //Reads and returns a 64 bit word from DM
@@ -173,24 +166,37 @@ bool CarpeDM::connect(const std::string& en) {
         cpuQty = cpuDevs.size();
 
         for(int cpuIdx = 0; cpuIdx< cpuQty; cpuIdx++) {
-          //only create MemUnits for valid DM CPUs, generate Mapping so we can still use the cpuIdx supplied by User 
-          foundVersion = getFwVersion(cpuIdx);
+          //only create MemUnits for valid DM CPUs, generate Mapping so we can still use the cpuIdx supplied by User
+          const std::string fwIdROM = getFwIdROM(cpuIdx);
+          foundVersion = getFwVersion(fwIdROM);
 
           vFw.push_back(foundVersion);
-          if (expVersion <= foundVersion) {
+          int expVersionMin = expVersion;
+          int expVersionMax = (expVersion / (int)FwId::VERSION_MAJOR_MUL) * (int)FwId::VERSION_MAJOR_MUL 
+                             + 99 * (int)FwId::VERSION_MINOR_MUL
+                             + 99 * (int)FwId::VERSION_REVISION_MUL;
+                         
+          if ( (foundVersion >= expVersionMin) && (foundVersion <= expVersionMax) ) {
+            //FIXME check for consequent use of cpu index map!!! I'm sure there'll be absolute chaos throughout the lib if CPUs indices were not continuous
             cpuIdxMap[cpuIdx]    = mappedIdx;
+            
             uint32_t extBaseAdr   = cpuDevs[cpuIdx].sdb_component.addr_first;
-            uint32_t intBaseAdr   = getIntBaseAdr(cpuIdx);
+            uint32_t intBaseAdr   = getIntBaseAdr(fwIdROM);
             uint32_t peerBaseAdr  = WORLD_BASE_ADR  + extBaseAdr;
             uint32_t rawSize      = cpuDevs[cpuIdx].sdb_component.addr_last - cpuDevs[cpuIdx].sdb_component.addr_first;
-            uint32_t sharedOffs   = getSharedOffs(cpuIdx) + _SHCTL_END_; 
-            uint32_t space        = getSharedSize(cpuIdx) - _SHCTL_END_;
+            uint32_t sharedOffs   = getSharedOffs(fwIdROM); 
+            uint32_t space        = getSharedSize(fwIdROM) - _SHCTL_END_;
                         
               atUp.addMemory(cpuIdx, extBaseAdr, intBaseAdr, peerBaseAdr, sharedOffs, space, rawSize );
             atDown.addMemory(cpuIdx, extBaseAdr, intBaseAdr, peerBaseAdr, sharedOffs, space, rawSize );
             mappedIdx++;
           }
-           
+          /*
+          sLog << "#" << (int)cpuIdx << " Shared Offset 0x" << std::hex <<  atDown.getMemories()[cpuIdx].sharedOffs << std::endl;
+          sLog << "#" << (int)cpuIdx << " BmpSize 0x" << std::hex <<  atDown.getMemories()[cpuIdx].bmpSize << std::endl;
+          sLog << "#" << (int)cpuIdx << " SHCTL 0x" << std::hex <<  _SHCTL_END_ << std::endl;
+          sLog << "#" << (int)cpuIdx << " Start Offset 0x" << std::hex <<  atDown.getMemories()[cpuIdx].startOffs << std::endl;
+          */
         }  
         ret = true;
       }
@@ -201,7 +207,6 @@ bool CarpeDM::connect(const std::string& en) {
     }
 
     if(verbose) {
-      showCpuList();
       sLog << " Done."  << std::endl << "Found " << getCpuQty() << " Cores, " << cpuIdxMap.size() << " of them run a valid DM firmware." << std::endl;
     }  
     if (cpuIdxMap.size() == 0) {throw std::runtime_error("No CPUs running a valid DM firmware found"); return false;}
@@ -357,6 +362,20 @@ bool CarpeDM::connect(const std::string& en) {
     return g;
   }
 
+  const std::string CarpeDM::createFwVersionString(const int fwVer) {
+    
+    unsigned int fwv = (unsigned int)fwVer;
+    std::string ret;
+
+    unsigned int verMaj = fwv / (unsigned int)FwId::VERSION_MAJOR_MUL; fwv %= (unsigned int)FwId::VERSION_MAJOR_MUL;
+    unsigned int verMin = fwv / (unsigned int)FwId::VERSION_MINOR_MUL; fwv %= (unsigned int)FwId::VERSION_MINOR_MUL;
+    unsigned int verRev = fwv;
+    
+    ret = std::to_string(verMaj) + "." + std::to_string(verMin) + "." + std::to_string(verRev);
+    return ret;
+
+  }
+
 
   int CarpeDM::parseFwVersionString(const std::string& s) {
     
@@ -378,41 +397,90 @@ bool CarpeDM::connect(const std::string& en) {
 
   }
 
-  //returns firmware version as int <xxyyzz> (x Major Version, y Minor Version, z Revison; negative values for error codes)
-  int CarpeDM::getFwVersion(uint8_t cpuIdx) {
+    //returns firmware version as int <xxyyzz> (x Major Version, y Minor Version, z Revison; negative values for error codes)
+  const std::string CarpeDM::getFwIdROM(uint8_t cpuIdx) {
     //FIXME replace with FW ID string constants
     const std::string tagMagic      = "UserLM32";
     const std::string tagProject    = "Project     : ";
     const std::string tagExpName    = "ftm";
-    const std::string tagVersion    = "Version     : ";
-    const std::string tagVersionEnd = "Platform    : ";
     std::string version;
-    size_t pos, posEnd;
+    size_t pos;
     struct  sdb_device& ram = cpuDevs.at(cpuIdx);
     vAdr fwIdAdr;
-
-    if ((ram.sdb_component.addr_last - ram.sdb_component.addr_first + 1) < SHARED_OFFS) { return (int)FwId::FWID_RAM_TOO_SMALL;}
-
+    //FIXME get rid of SHARED_OFFS somehow and replace with an end tag and max limit  
     for (uint32_t adr = ram.sdb_component.addr_first + BUILDID_OFFS; adr < ram.sdb_component.addr_first + SHARED_OFFS; adr += 4) fwIdAdr.push_back(adr);
     vBuf fwIdData = ebReadCycle(ebd, fwIdAdr);
     std::string s(fwIdData.begin(),fwIdData.end());
 
     //check for magic word
     pos = 0;
-    if(s.find(tagMagic, 0) == std::string::npos) {return (int)FwId::FWID_BAD_MAGIC;} 
+    if(s.find(tagMagic, 0) == std::string::npos) {throw std::runtime_error( "Bad Firmware Info ROM: Magic word not found\n");} 
     //check for project name
     pos = s.find(tagProject, 0);
-    if (pos == std::string::npos || (s.find(tagExpName, pos + tagProject.length()) != pos + tagProject.length())) {return (int)FwId::FWID_BAD_PROJECT_NAME;} 
+    if (pos == std::string::npos || (s.find(tagExpName, pos + tagProject.length()) != pos + tagProject.length())) {throw std::runtime_error( "Bad Firmware Info ROM: Not a DM project\n");} 
+
+    return s;
+  }
+
+  //returns firmware version as int <xxyyzz> (x Major Version, y Minor Version, z Revison; negative values for error codes)
+  int CarpeDM::getFwVersion(const std::string& fwIdROM) {
+    //FIXME replace with FW ID string constants
     //get Version string xx.yy.zz    
-    pos = s.find(tagVersion, 0);
-    posEnd = s.find(tagVersionEnd, pos + tagVersion.length());
-    if((pos == std::string::npos) || (posEnd == std::string::npos)) {return (int)FwId::FWID_NOT_FOUND;}
-    version = s.substr(pos + tagVersion.length(), posEnd - (pos + tagVersion.length()));
+
+    std::string version = readFwIdROMTag(fwIdROM, "Version     : ", 10, true);
     
     int ret = parseFwVersionString(version);
 
     return ret;
   }
+
+
+  const std::string CarpeDM::readFwIdROMTag(const std::string& fwIdROM, const std::string& tag, size_t maxlen, bool stopAtCr ) {
+    size_t pos, posEnd, tmp;
+    std::string s = fwIdROM;
+  
+    tmp = s.find(tag, 0);
+    if(tmp == std::string::npos) throw std::runtime_error( "Could not find tag <" + tag + ">in FW ID ROM\n");
+    pos = tmp + tag.length();  
+
+    tmp = s.find("\n", pos);
+    if( (tmp == std::string::npos) || (tmp > (pos + maxlen)) ) posEnd = (pos + maxlen);
+    else posEnd = tmp;
+    
+    return s.substr(pos, posEnd - pos);
+
+
+  }
+
+
+
+  uint32_t CarpeDM::getIntBaseAdr(const std::string& fwIdROM) {
+    //FIXME replace with FW ID string constants
+    //CAREFUL: Get the EXACT position. If you miss out on leading spaces, the parsed number gets truncated!
+    std::string value = readFwIdROMTag(fwIdROM, "IntAdrOffs  : ", 10, true);
+    //sLog << "IntAdrOffs : " << value << " parsed: 0x" << std::hex << s2u<uint32_t>(value) << std::endl;
+    return s2u<uint32_t>(value);
+
+  }
+
+  uint32_t CarpeDM::getSharedOffs(const std::string& fwIdROM) {
+    //FIXME replace with FW ID string constants
+    std::string value = readFwIdROMTag(fwIdROM, "SharedOffs  : ", 10, true);
+    //sLog << "Parsing SharedOffs : " << value << " parsed: 0x" << std::hex << s2u<uint32_t>(value) << std::endl;
+    return s2u<uint32_t>(value);
+
+  }
+
+  uint32_t CarpeDM::getSharedSize(const std::string& fwIdROM){
+    std::string value = readFwIdROMTag(fwIdROM, "SharedSize  : ", 10, true);
+    //sLog << "SharedSize : " << value << " parsed: "  << std::dec << s2u<uint32_t>(value) << std::endl;
+    return s2u<uint32_t>(value);
+
+  }
+
+
+
+
 
 
   uint8_t CarpeDM::getNodeCpu(const std::string& name, TransferDir dir) {
@@ -429,7 +497,7 @@ bool CarpeDM::connect(const std::string& en) {
   }
 
   uint32_t CarpeDM::getNodeAdr(const std::string& name, TransferDir dir, AdrType adrT) {
-    sLog << "Looking up Adr of " << name << std::endl;
+    if (verbose) sLog << "Looking up Adr of " << name << std::endl;
     if(name == DotStr::Node::Special::sIdle) return LM32_NULL_PTR; //idle node is resolved as a null ptr without comment
 
     AllocTable& at = (dir == TransferDir::UPLOAD ? atUp : atDown );
@@ -440,25 +508,31 @@ bool CarpeDM::connect(const std::string& en) {
     if (!(at.isOk(x)))  {throw std::runtime_error( "Could not find Node in allocation table"); return LM32_NULL_PTR;}
     else {
       switch (adrT) {
-        case AdrType::MGMT      : return x->adr; break;
+        case AdrType::MGMT : return x->adr; break;
         case AdrType::INT  : return at.adrConv(AdrType::MGMT, AdrType::INT, x->cpu, x->adr); break;
         case AdrType::EXT  : return at.adrConv(AdrType::MGMT, AdrType::EXT, x->cpu, x->adr); break;
-        case AdrType::PEER      : return at.adrConv(AdrType::MGMT, AdrType::PEER, x->cpu, x->adr); break;
-        default                 : throw std::runtime_error( "Unknown Adr Type conversion"); return LM32_NULL_PTR;
+        case AdrType::PEER : return at.adrConv(AdrType::MGMT, AdrType::PEER, x->cpu, x->adr); break;
+        default            : throw std::runtime_error( "Unknown Adr Type conversion"); return LM32_NULL_PTR;
       }
     }  
   }
 
+
+
  
 void CarpeDM::showCpuList() {
-  int expVersion = parseFwVersionString(EXP_VER);
+  int expVersionMin = parseFwVersionString(EXP_VER);
+  int expVersionMax = (expVersionMin / (int)FwId::VERSION_MAJOR_MUL) * (int)FwId::VERSION_MAJOR_MUL 
+                   + 99 * (int)FwId::VERSION_MINOR_MUL
+                   + 99 * (int)FwId::VERSION_REVISION_MUL;
 
-  sLog << std::setfill(' ') << std::setw(7) << "CPU" << std::setfill(' ') << std::setw(11) << "FW found" << std::setfill(' ') << std::setw(10) << "FW exp." << std::endl;
+  sLog << std::endl << std::setfill(' ') << std::setw(5) << "CPU" << std::setfill(' ') << std::setw(11) << "FW found" 
+       << std::setfill(' ') << std::setw(11) << "Min" << std::setw(11) << "Max" << std::setw(11) << "Space" << std::setw(11) << "Free" << std::endl;
   for (int x = 0; x < cpuQty; x++) {
-    if (vFw[x] > expVersion) sLog << " ! ";
-    else if (vFw[x] < expVersion) sLog << " X ";
-    else sLog << "   ";
-    sLog << "  " << std::dec << std::setfill(' ') << std::setw(2) << x << "   " << std::setfill('0') << std::setw(6) << vFw[x] << "   " << std::setfill('0') << std::setw(6) << expVersion;
+    sLog << std::dec << std::setfill(' ') << std::setw(5) << x << std::setfill(' ') << std::setw(11) << createFwVersionString(vFw[x]) 
+                                                                       << std::setfill(' ') << std::setw(11) << createFwVersionString(expVersionMin)
+                                                                       << std::setfill(' ') << std::setw(11) << createFwVersionString(expVersionMax);
+    sLog << std::dec << std::setfill(' ') << std::setw(11) << atDown.getTotalSpace(x) << std::setw(10) << atDown.getFreeSpace(x) * 100 / atDown.getTotalSpace(x) << "%";                                                                       
     sLog << std::endl;
   }
 
@@ -577,4 +651,130 @@ void CarpeDM::showCpuList() {
   }
 
 
+  //check if all tables are in sync
+  bool CarpeDM::tableCheck(std::string& report) {
+    Graph& g        = gDown;
+    AllocTable& at  = atDown;
+    bool qtyIsOk  = true, allocIsOk = true, hashIsOk = true, groupsIsOk = true, isOk;
+
+    std::string    intro = "*** Table Status:  ",
+                qtyIntro = "*** Element Count: ", 
+              allocIntro = "*** Alloctable:    ",
+             groupsIntro = "*** GroupTable:    ",
+             hashIntro   = "*** Hashtable:     ";
+    std::string qtyReport, allocReport, groupsReport, hashReport;         
+    const std::string sMiss   = "Missing ";
+    const std::string sSurp   = "Surplus ";
+    const std::string sFirst  = "element: ";
+    const std::string sOK     = "OK\n";
+    const std::string sERR    = "ERROR\n";
+
+    // check if  graph node count equals ... 
+    auto nQty = boost::vertices(g);
+    size_t nodeQty  = nQty.second - nQty.first;
+
+    // ... alloctable entry count
+    size_t allocEntryQty     = at.getSize();
+    // ... groupstable entry count
+    size_t groupsEntryQty    = gt.getSize();
+    // ... hashtable entry count
+    size_t hashEntryQty      = hm.size();
+
+    qtyIsOk &= ((nodeQty == allocEntryQty) & (nodeQty == allocEntryQty) & (nodeQty == groupsEntryQty) & (nodeQty == hashEntryQty));
+
   
+      qtyReport += "Nodes:        " + std::to_string(nodeQty) + "\nAllocEntries: " + std::to_string(allocEntryQty)
+                +  "\nHashEntries:  " + std::to_string(hashEntryQty) +  "\nGroupEntries: " + std::to_string(groupsEntryQty) + "\n";
+   
+    // check if all graph nodes are known to all tables
+    BOOST_FOREACH( vertex_t v, vertices(g) ) {
+      //Check Hashtable
+      if (!hm.lookup(g[v].name)) {hashIsOk = false; hashReport += sMiss + sFirst + g[v].name + "\n";}
+    }
+    BOOST_FOREACH( vertex_t v, vertices(g) ) {
+      //Check Alloctable
+      auto x = at.lookupVertex(v);
+      if (!at.isOk(x))           {allocIsOk = false; allocReport += sMiss + sFirst + g[v].name + "\n";}
+    }
+    BOOST_FOREACH( vertex_t v, vertices(g) ) {
+      //Check Groupstable
+      auto x  = gt.getTable().get<Groups::Node>().equal_range(g[v].name);
+      if (x.first == x.second)   {groupsIsOk = false; groupsReport += sMiss + sFirst + g[v].name + "\n";} 
+    } 
+
+    // Let's assume hashmap is okay if all node names are accounted for
+
+    // Let's assume alloctable is okay if all nodes are accounted for
+
+    // check if all groupstable entries are present in graph
+    bool notFound;
+    for (auto& patternIt : gt.getAllPatterns()) { //NOTE: use the pattern list in GroupTable, not the list in the Graph!
+      //std::cout << "Pattern " << patternIt << std::endl;
+      for (auto& nodeIt : getPatternMembers(patternIt)) {
+        notFound = true; 
+        BOOST_FOREACH( vertex_t v, vertices(g) ) {
+          if (g[v].name == nodeIt) { notFound = false; break; }
+        }
+        if (notFound) {
+          //std::cout << nodeIt << " was not found " << std::endl; 
+          groupsIsOk = false; groupsReport += sSurp + sFirst + nodeIt + "\n"; 
+        }
+      }
+      
+    }
+    isOk = qtyIsOk & allocIsOk & hashIsOk & groupsIsOk;
+    
+    intro       += (isOk       ? sOK : sERR);
+    qtyIntro    += (qtyIsOk    ? sOK : sERR);
+    allocIntro  += (allocIsOk  ? sOK : sERR);
+    hashIntro   += (hashIsOk   ? sOK : sERR);
+    groupsIntro += (groupsIsOk ? sOK : sERR);
+
+    
+    report = intro
+           + qtyIntro     + qtyReport     + "\n" 
+           + allocIntro   + allocReport   + "\n"
+           + hashIntro    + hashReport    + "\n"
+           + groupsIntro  + groupsReport  + "\n";
+    
+
+    return isOk;      
+  }
+
+
+  //Improvised Transaction Management: If an upload operation fails for any reason, we roll back the meta tables
+  int CarpeDM::safeguardTransaction(int (CarpeDM::*func)(Graph&, bool), Graph& g, bool force) {
+    HashMap hmBak     = hm;
+    GroupTable gtBak  = gt;
+    int ret;
+ 
+    try {
+      ret = (*this.*func)(g, force);
+    } catch(...) {
+      hm = hmBak;
+      gt = gtBak;
+      sLog << "Operation FAILED, executing roll back\n" << std::endl;
+      throw;
+    }
+
+    return ret;
+  }
+
+  //Improvised Transaction Management: If an upload operation fails for any reason, we roll back the meta tables
+  int CarpeDM::safeguardTransaction(int (CarpeDM::*func)(bool), bool force) {
+    HashMap hmBak     = hm;
+    GroupTable gtBak  = gt;
+    int ret;
+ 
+    try {
+      ret = (*this.*func)(force);
+    } catch(...) {
+      hm = hmBak;
+      gt = gtBak;
+      sLog << "Operation FAILED, executing roll back\n" << std::endl;
+      throw;
+    }
+
+    return ret;  
+
+  }

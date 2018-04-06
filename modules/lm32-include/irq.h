@@ -120,11 +120,12 @@ inline void irq_set_mask( uint32_t im)
 inline  uint32_t  irq_get_enable(void)
 {
     //read global IRQ enable bit
-    uint32_t ie;
+    uint32_t eie;
     asm ( "rcsr %0, ie\n"  \
+          "srui %0, %0, 1\n" \
           "andi %0, %0, 1" \
-         : "=&r" (ie));
-    return ie;                   
+         : "=&r" (eie));
+    return eie;
 }
 
 inline void irq_disable(void)

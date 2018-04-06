@@ -41,11 +41,16 @@ private:
   void addition(Graph& g);
   void subtraction(Graph& g);
   void nullify();
+  
+  //FIXME this ought to be a variadic template
+  int safeguardTransaction(int (CarpeDM::*func)(Graph&, bool), Graph& g, bool force);
+  int safeguardTransaction(int (CarpeDM::*func)(bool), bool force);
 
-  int add(Graph& g);
+  int add(Graph& g, bool force);
   int remove(Graph& g, bool force);
   int keep(Graph& g, bool force);  
-  int overwrite(Graph& g);
+  int overwrite(Graph& g,  bool force);
+  int clear_raw(bool force);
   bool validate(Graph& g, AllocTable& at);
   
   int sendCommands(Graph &); //Sends a dotfile of commands to the DM
@@ -53,16 +58,17 @@ private:
 
 
   // Upload
-  vAdr getUploadAdrs();
-  vBuf getUploadData();
+  vEbwrs gatherUploadVector();
   int upload(); //Upload processed Graph to LM32 SoC via Etherbone
   
   // Download
-  const vAdr getDownloadBMPAdrs();
-  const vAdr getDownloadAdrs();
-  void parseDownloadData(vBuf downloadData);
+  vEbrds gatherDownloadBmpVector();
+  vEbrds gatherDownloadDataVector();
   
-
+  void parseDownloadData(vBuf downloadData);
+  void checkTablesForSubgraph(Graph& g);
+  
+  void resetThrMsgCnt(uint8_t cpuIdx, uint8_t thrIdx);
   void baseUploadOnDownload();
   void prepareUpload(); //Process Graph for uploading to LM32 SoC
   void mergeUploadDuplicates(vertex_t borg, vertex_t victim); 
@@ -82,7 +88,8 @@ private:
   vertex_set_t getAllCursors(bool activeOnly);
   vStrC getGraphPatterns(Graph& g);
   bool isSafeToRemove(std::set<std::string> patterns, std::string& report);
-  
+  const std::string readFwIdROMTag(const std::string& fwIdROM, const std::string& tag, size_t maxlen, bool stopAtCr );
+
 
 protected:
 
@@ -112,14 +119,17 @@ protected:
   std::ostream& sLog;
   std::ostream& sErr;
 
-  int   ebWriteCycle(Device& dev, vAdr va, vBuf& vb);
-  vBuf  ebReadCycle(Device& dev, vAdr va);
-  int ebWriteWord(Device& dev, uint32_t adr, uint32_t data);
+  int   ebWriteCycle(Device& dev, vAdr va, vBuf& vb, vBl vcs);
+  int   ebWriteCycle(Device& dev, vAdr va, vBuf& vb) {return  ebWriteCycle(dev, va, vb, leadingOne(va.size()));}
+  vBuf  ebReadCycle(Device& dev, vAdr va, vBl vcs);
+  vBuf  ebReadCycle(Device& dev, vAdr va) {return  ebReadCycle(dev, va, leadingOne(va.size()));}
+  int   ebWriteWord(Device& dev, uint32_t adr, uint32_t data);
   uint32_t ebReadWord(Device& dev, uint32_t adr);
   boost::dynamic_properties createParser(Graph& g);
 
   //std::string getFwInfo(uint8_t cpuIdx);
   int parseFwVersionString(const std::string& s);
+  const std::string createFwVersionString(const int fwVer);
   uint64_t read64b(uint32_t startAdr);
   int write64b(uint32_t startAdr, uint64_t d);
 
@@ -139,11 +149,12 @@ public:
   bool disconnect(); //Close connection
 
   // SDB Functions
-  bool isValidDMCpu(uint8_t cpuIdx) {return (cpuIdxMap.count(cpuIdx) > 0);} //Check if CPU is registered as running a valid firmware  
-  int getFwVersion(uint8_t cpuIdx); //Retrieve the Firmware Version of cpu at sdb dev array idx <cpuIdx>
-  uint32_t getIntBaseAdr(uint8_t cpuIdx) {return INT_BASE_ADR;} //mockup for now, this info should be taken from found firmware binary
-  uint32_t getSharedOffs(uint8_t cpuIdx) {return SHARED_OFFS;}
-  uint32_t getSharedSize(uint8_t cpuIdx) {return SHARED_SIZE;}
+  bool isValidDMCpu(uint8_t cpuIdx) {return (cpuIdxMap.count(cpuIdx) > 0);}; //Check if CPU is registered as running a valid firmware
+  const std::string getFwIdROM(uint8_t cpuIdx);  
+  int getFwVersion(const std::string& fwIdROM); //Retrieve the Firmware Version of cpu at sdb dev array idx <cpuIdx>
+  uint32_t getIntBaseAdr(const std::string& fwIdROM);//mockup for now, this info should be taken from found firmware binary
+  uint32_t getSharedOffs(const std::string& fwIdROM);
+  uint32_t getSharedSize(const std::string& fwIdROM);
   int getCpuQty()   const {return cpuQty;} //Return number of found CPUs (not necessarily valid ones!)
   bool isCpuIdxValid(uint8_t cpuIdx) { if ( cpuIdxMap.find(cpuIdx) != cpuIdxMap.end() ) return true; else return false;}  
 
@@ -191,21 +202,24 @@ public:
   std::string downloadDot(bool filterMeta) {download(); return createDot( gDown, filterMeta);};            
   void downloadDotFile(const std::string& fn, bool filterMeta) {download(); writeDownDotFile(fn, filterMeta);};   
   //add all nodes and/or edges in dot file
-  int addDot(const std::string& s) {Graph gTmp; return add(parseDot(s, gTmp));};            
+  int addDot(const std::string& s) {Graph gTmp; return safeguardTransaction(&CarpeDM::add, parseDot(s, gTmp), false);};            
   int addDotFile(const std::string& fn) {return addDot(readTextFile(fn));};                 
   //add all nodes and/or edges in dot file                                                                                     
-  int overwriteDot(const std::string& s) {Graph gTmp; return overwrite(parseDot(s, gTmp));};
-  int overwriteDotFile(const std::string& fn) {return overwriteDot(readTextFile(fn));};
+  int overwriteDot(const std::string& s, bool force) {Graph gTmp; return safeguardTransaction(&CarpeDM::overwrite, parseDot(s, gTmp), force);};
+  int overwriteDotFile(const std::string& fn, bool force) {return overwriteDot(readTextFile(fn), force);};
   //removes all nodes NOT in input file
-  int keepDot(const std::string& s, bool force) {Graph gTmp; return keep(parseDot(s, gTmp), force);};
+  int keepDot(const std::string& s, bool force) {Graph gTmp; return safeguardTransaction(&CarpeDM::keep, parseDot(s, gTmp), force);};
   int keepDotFile(const std::string& fn, bool force) {return keepDot(readTextFile(fn), force);};
   //removes all nodes in input file                                            
-  int removeDot(const std::string& s, bool force) {Graph gTmp; return remove(parseDot(s, gTmp), force);};
+  int removeDot(const std::string& s, bool force) {Graph gTmp; return safeguardTransaction(&CarpeDM::remove, parseDot(s, gTmp), force);};
   int removeDotFile(const std::string& fn, bool force) {return removeDot(readTextFile(fn), force);};
   // Safe removal check
   //bool isSafe2RemoveDotFile(const std::string& fn) {Graph gTmp; return isSafeToRemove(parseDot(readTextFile(fn), gTmp));};
   //clears all nodes from DM 
-  int clear();
+  int clear(bool force) {return safeguardTransaction(&CarpeDM::clear_raw, force);};
+
+  //aborts all threads on all cores
+  void halt();
 
   vEbwrs& createCommandBurst(Graph& g, vEbwrs& ew);
   vEbwrs& createCommand(const std::string& targetName, uint8_t cmdPrio, mc_ptr mc, vEbwrs& ew);
@@ -231,6 +245,7 @@ public:
            uint32_t getStatus(uint8_t cpuIdx);
            uint64_t getThrDeadline(uint8_t cpuIdx, uint8_t thrIdx);
            uint64_t getThrStartTime(uint8_t cpuIdx, uint8_t thrIdx);
+           uint32_t getThrStart(uint8_t cpuIdx);
            uint64_t getThrPrepTime(uint8_t cpuIdx, uint8_t thrIdx); 
                bool isThrRunning(uint8_t cpuIdx, uint8_t thrIdx); //true if thread <thrIdx> is running
             
@@ -288,6 +303,7 @@ std::pair<int, int> findRunningPattern(const std::string& sPattern); //get cpu a
           uint64_t getDmWrTime();
               bool isSafeToRemove(const std::string& pattern, std::string& report);
               bool isSafeToRemove(Graph& gRem, std::string& report);
+              bool tableCheck(std::string& report);
 
 
 
@@ -300,7 +316,7 @@ std::pair<int, int> findRunningPattern(const std::string& sPattern); //get cpu a
     show("Download Table" + (filterMeta ? std::string(" (noMeta)") : std::string("")), "download_dict.txt", TransferDir::DOWNLOAD, filterMeta);
   }
   void showCpuList();
-  void dumpQueue(uint8_t cpuIdx, const std::string& blockName, uint8_t cmdPrio); //Show all command fields in a Queue (past and current)
+  std::string& inspectQueues(const std::string& blockName, std::string& report); //Show all command fields in Block Queue 
   void dumpNode(uint8_t cpuIdx, const std::string& name); //hex dump a node
   void verboseOn()  {verbose = true;}  //Turn on Verbose Output
   void verboseOff() {verbose = false;} //Turn off Verbose Output

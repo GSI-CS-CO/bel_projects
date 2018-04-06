@@ -42,6 +42,14 @@ public:
 
   HashMap()   {};
   ~HashMap()  {};
+
+  HashMap &operator=(const HashMap &src)
+  {
+    hm = src.hm;
+    return *this;
+  }
+
+
   uint32_t hash(const std::string& s); 
   uint32_t fnvHash(const char* str);
   boost::optional<const uint32_t&> add(const std::string& name);

@@ -2,12 +2,13 @@
 #include <iostream>
 #include <string>
 #include <inttypes.h>
+#include <unistd.h>
 
 #include "ftm_shared_mmap.h"
 #include "carpeDM.h"
+#include "filenames.h"
 
 
-const char defOutputFilename[] = "download.dot";
 
 
 
@@ -15,6 +16,7 @@ static void help(const char *program) {
   fprintf(stderr, "\nUsage: %s <etherbone-device> <Command> <.dot file> \n", program);
   fprintf(stderr, "\n");
   fprintf(stderr, "\nSchedule Generator. Creates Binary Data for the DataMaster (DM) from Schedule Graphs (.dot files) and\nuploads/downloads to/from CPU Core <m> of the DM (CPU currently specified in schedule as cpu=<m>).\n");
+  fprintf(stderr, "  -d         <dir>          Use a directory other than the current working path for hashtable and groupstable files\n");
   fprintf(stderr, "\nCommands:\n");
   fprintf(stderr, "  status                    Gets current DM schedule state (default) \n");
   fprintf(stderr, "  clear                     Clear DM, existing nodes will be erased. \n");
@@ -24,32 +26,46 @@ static void help(const char *program) {
   fprintf(stderr, "  keep       <.dot file>    Removes everything BUT the schedule in the input file from the DM, nodes with hashes (names) not present on the DM will be ignored.\n");
   fprintf(stderr, "  chkrem     <.dot file>    Checks if all patterns in given dot can be removed safely\n");
   fprintf(stderr, "  -n                        No verify, status will not be read after operation\n");
-  fprintf(stderr, "  -o         <.dot file>    Specify output file name, default is '%s'\n", defOutputFilename);
+  fprintf(stderr, "  -o         <.dot file>    Specify output file name, default is '%s'\n", outfile);
   fprintf(stderr, "  -s                        Show Meta Nodes. Download will not only contain schedules, but also queues, etc. \n");  
   fprintf(stderr, "  -v                        Verbose operation, print more details\n");
   fprintf(stderr, "  -f                        Force, overrides the safety check for remove and keep\n");
+
   fprintf(stderr, "\n");
 }
 
 int main(int argc, char* argv[]) {
 
   Graph g;
+  char dirnameBuff[80];
 
   bool update = true, verbose = false, strip=true, cmdValid = false, force = false;
 
   int opt;
   const char *program = argv[0];
-  const char *netaddress, *inputFilename = NULL, *cmdName = NULL, *outputFilename = defOutputFilename;
+  const char *netaddress, *inputFilename = NULL, *cmdName = NULL, *outputFilename = outfile;
+  const char *dirname = (const char *)getcwd(dirnameBuff, 80); 
   int32_t error=0;
 
 
 // start getopt 
-   while ((opt = getopt(argc, argv, "fnshvo:")) != -1) {
+   while ((opt = getopt(argc, argv, "fnshvo:d:")) != -1) {
       switch (opt) {
  
          case 'o':
             outputFilename  = optarg;
+            if (outputFilename == NULL) {
+              std::cerr << std::endl << program << ": option -o expects a filename" << std::endl;
+            }
+            error = -1;
             break;
+         case 'd':
+            dirname = optarg;
+            if (dirname == NULL) {
+              std::cerr << std::endl << program << ": option -d expects a path" << std::endl;
+            }
+            error = -1;
+            break;   
 
          case 'n':
             update = false;
@@ -113,17 +129,16 @@ int main(int argc, char* argv[]) {
    std::cerr << std::endl << program << ": Failed to connect to DM: " << err.what() << std::endl; return -20;
   }
 
-  //TODO we need a dictionary independent of dot files, otherwise, how do we update?
-
-  try { cdm.loadHashDictFile("dm.dict"); } catch (std::runtime_error const& err) {
+  try { cdm.loadHashDictFile(std::string(dirname) + "/" + std::string(hashfile)); } catch (std::runtime_error const& err) {
       std::cerr << std::endl << program << ": Warning - Could not load dictionary file. Cause: " << err.what() << std::endl;
     }
-  std::cout << std::endl << program << ": Loaded " << cdm.getHashDictSize() << " Node / Hash entries" << std::endl;  
+  if (verbose) std::cout << std::endl << program << ": Loaded " << cdm.getHashDictSize() << " Node / Hash entries" << std::endl;  
 
-  try { cdm.loadGroupsDictFile("dm.groups"); } catch (std::runtime_error const& err) {
+  try { cdm.loadGroupsDictFile(std::string(dirname) + "/" + std::string(groupsfile)); } catch (std::runtime_error const& err) {
       std::cerr << std::endl << program << ": Warning - Could not load groups file. Cause: " << err.what() << std::endl;
     }
-  std::cout << std::endl << program << ": Loaded " << cdm.getGroupsSize() << " Node / Pattern / Beamprocess entries" << std::endl;    
+
+  if (verbose) std::cout << std::endl << program << ": Loaded " << cdm.getGroupsSize() << " Node / Pattern / Beamprocess entries" << std::endl;    
 
 
   if (inputFilename == NULL) {
@@ -141,9 +156,9 @@ int main(int argc, char* argv[]) {
     if ((cmd == "add" || cmd == "overwrite" || cmd == "remove" || cmd == "keep") && inputFilename == NULL) { std::cerr << std::endl << program << "Command <" << cmd << "> requires a .dot file" << std::endl; return -8; }
     
     try {
-      if (cmd == "clear")     { cdm.clear(); cmdValid = true;}
+      if (cmd == "clear")     { cdm.clear(force); cmdValid = true;}
       if (cmd == "add")       { cdm.addDotFile(inputFilename); cmdValid = true;}
-      if (cmd == "overwrite") { cdm.overwriteDotFile(inputFilename); cmdValid = true;}
+      if (cmd == "overwrite") { cdm.overwriteDotFile(inputFilename, force); cmdValid = true;}
       if (cmd == "remove")    { cdm.removeDotFile(inputFilename, force); cmdValid = true;}
       if (cmd == "keep")      { cdm.keepDotFile(inputFilename, force); cmdValid = true;}
       if (cmd == "status")    { cdm.downloadDotFile(outputFilename, strip); cmdValid = true;}
@@ -154,7 +169,7 @@ int main(int argc, char* argv[]) {
         Graph gTmp0, gTmp1;
         bool isSafe = cdm.isSafeToRemove(cdm.parseDot(cdm.readTextFile(inputFilename), gTmp0), report);
         
-        cdm.writeTextFile("debug.dot", report);
+        cdm.writeTextFile(std::string(dirname) + "/" + std::string(debugfile), report);
 
         std::cout << std::endl << "Dot file " << inputFilename << " content removal: " << (isSafe ? "SAFE" : "FORBIDDEN" ) << std::endl;
         cmdValid = true;
@@ -182,11 +197,14 @@ int main(int argc, char* argv[]) {
     }
   }
 
+  std::string report;
+  bool tabOk = cdm.tableCheck(report);
 
-  cdm.storeHashDictFile("dm.dict");  
-  cdm.storeGroupsDictFile("dm.groups");
+  if (verbose or !tabOk) std::cout << report << std::endl;
 
-  //cdm.showGroupsDict();
+  cdm.storeHashDictFile(std::string(dirname) + "/" + std::string(hashfile));  
+  cdm.storeGroupsDictFile(std::string(dirname) + "/" + std::string(groupsfile));
+
 
   cdm.disconnect();
 

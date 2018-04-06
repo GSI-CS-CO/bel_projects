@@ -5,6 +5,7 @@
 #define  DMUNIPZ_MS_ASMNOP        31 * 1000   // # of asm("nop") operations per microsecond
 #define  DMUNIPZ_DEFAULT_TIMEOUT  100         // default timeout used by main loop [ms]
 #define  DMUNIPZ_UNITIMEOUT       1000        // timeout used when requesting things from UNILAC [ms]
+#define  DMUNIPZ_TKTIMEOUT        210         // timeout used when requesting TK from UNILAC [ms]
 #define  DMUNIPZ_OFFSETFLEX       1000000     // offset added to obtain TS "flex wait" [ns]
 #define  DMUNIPZ_EVT_READY2SIS    0x1e        // event number EVT_READY_TO_SIS (HEX)
 #define  DMUNIPZ_ECA_ADDRESS      0x7ffffff0  // address of ECA input
@@ -54,7 +55,9 @@
 #define  DMUNIPZ_ECADO_REQTK      2           // request the transfer channel (TK), carries info on DM wait after beam request
 #define  DMUNIPZ_ECADO_REQBEAM    3           // request beam from UNIPZ
 #define  DMUNIPZ_ECADO_RELTK      4           // release the transfer channel (TK)
-#define  DMUNIPZ_ECADO_PREPDM     5           // dedicated message from DM, carries info on DM wait after TK request
+#define  DMUNIPZ_ECADO_PREPDM     5           // dedicated message from DM, carries info on DM wait after TK request (deprecated)
+#define  DMUNIPZ_ECADO_READY2SIS  6           // received EVT_READY_TO_SIS (HEX) via TLU
+
 
 // status of transfer (status bits)
 #define DMUNIPZ_TRANS_UNKNOWN     0           // unknown status

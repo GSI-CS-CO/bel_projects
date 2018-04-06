@@ -19,7 +19,9 @@
 namespace dnt = DotStr::Node::TypeVal;
 namespace det = DotStr::Edge::TypeVal;
 
-
+namespace isSafeToRemove {
+  const std::string exIntro = "isSafeToRemove: ";
+}
 
 
 bool CarpeDM::isSafeToRemove(Graph& gRem, std::string& report) {
@@ -45,13 +47,12 @@ bool CarpeDM::isSafeToRemove(std::set<std::string> patterns, std::string& report
   //if(verbose) {sLog << "Pattern <" << pattern << "> (Entrypoint <" << sTmp << "> safe removal analysis" << std::endl;}
 
   for (auto& patternIt : patterns) {
-  
     // BEGIN Preparations: Entry points, Blacklist and working copy of the Graph
     //Init our blacklist of critical nodes. All vertices in the pattern to be removed need to be on it
     for (auto& nodeIt : getPatternMembers(patternIt)) {
       if (hm.lookup(nodeIt)) {
         auto x = at.lookupHash(hm.lookup(nodeIt).get());
-        if (!(at.isOk(x))) {throw std::runtime_error( "Could not find member node"); return false;}
+        if (!(at.isOk(x))) {throw std::runtime_error(isSafeToRemove::exIntro +  "Could not find pattern <" + patternIt + "> member node <" + nodeIt + ">"); return false;}
         blacklist.insert(x->v);
       }
     }
@@ -59,7 +60,7 @@ bool CarpeDM::isSafeToRemove(std::set<std::string> patterns, std::string& report
     std::string sTmp = getPatternEntryNode(patternIt);
     if (hm.lookup(sTmp)) {
       auto x = at.lookupHash(hm.lookup(sTmp).get());
-      if (!(at.isOk(x))) {throw std::runtime_error( "Could not find entry node"); return false;}
+      if (!(at.isOk(x))) {throw std::runtime_error(isSafeToRemove::exIntro + "Could not find pattern <" + patternIt + "> entry node <" + sTmp + ">"); return false;}
       entries.insert(x->v);
     }
   
@@ -71,7 +72,7 @@ bool CarpeDM::isSafeToRemove(std::set<std::string> patterns, std::string& report
   boost::associative_property_map<vertex_map_t> vertexMapWrapperTmp(vertexMapTmp);
   copy_graph(g, gTmp, boost::orig_to_copy(vertexMapWrapperTmp));
   for (auto& it : vertexMapTmp) { //check vertex indices
-    if (it.first != it.second) {throw std::runtime_error( "CpyGraph Map1 Idx Translation failed! This is beyond bad, contact Dev !");}
+    if (it.first != it.second) {throw std::runtime_error(isSafeToRemove::exIntro +  "CpyGraph Map1 Idx Translation failed! This is beyond bad, contact Dev !");}
   }
   
   // End Preparations
@@ -91,12 +92,12 @@ bool CarpeDM::isSafeToRemove(std::set<std::string> patterns, std::string& report
   boost::associative_property_map<vertex_map_t> vertexMapWrapperEq(vertexMapEq);
   copy_graph(fg, gEq, boost::orig_to_copy(vertexMapWrapperEq));
   for (auto& it : vertexMapEq) { //check vertex indices
-    if (it.first != it.second) { throw std::runtime_error( "CpyGraph Map2 Idx Translation failed! This is beyond bad, contact Dev !");}
+    if (it.first != it.second) { throw std::runtime_error(isSafeToRemove::exIntro + "CpyGraph Map2 Idx Translation failed! This is beyond bad, contact Dev !");}
   }
 
   if(verbose) sLog << "Reading Cursors " << std::endl;
   //try to get consistent image of active cursors
-  cursors = getAllCursors(false);
+  cursors = getAllCursors(true);
   //Here comes the problem: resident commands are only of consquence if they AND their target Block are executable
   //Iteratively find out which cmds are executable and add equivalent edges for them. Do this until no more new edges have to be added
   if (addResidentDestinations(gEq, gTmp, cursors)) { if(verbose) {sLog << "Added resident equivalents." << std::endl;} }
@@ -176,7 +177,7 @@ bool CarpeDM::addResidentDestinations(Graph& gEq, Graph& gOrig, vertex_set_t cur
           if(gOrig[*out_cur].type == det::sCmdTarget)  {vBlock  = target(*out_cur, gOrig);}
           if(gOrig[*out_cur].type == det::sCmdFlowDst) {vDst    = target(*out_cur, gOrig);}
         }
-        if (((signed)vBlock  == -1) || ((signed)vDst == -1)) {throw std::runtime_error( "Could not find block and dst for resident equivalents");}
+        if (((signed)vBlock  == -1) || ((signed)vDst == -1)) {throw std::runtime_error(isSafeToRemove::exIntro + "Could not find block and dst for resident equivalents");}
         
          //check for equivalent resident edges
         boost::tie(out_begin, out_end) = out_edges(vBlock, gEq);
@@ -239,7 +240,7 @@ vertex_set_t CarpeDM::getDynamicDestinations(vertex_t vQ, Graph& g, AllocTable& 
     std::tie(bufLstCpu, bufLstAdrType) = at.adrClassification(bufLstAdr);  
     //get BufList binary
     auto bufLst = at.lookupAdr( s2u<uint8_t>(g[vQ].cpu), at.adrConv(bufLstAdrType, AdrType::MGMT, s2u<uint8_t>(g[vQ].cpu), bufLstAdr) );
-    if (!(at.isOk(bufLst))) {throw std::runtime_error( "Could not find buffer list in download address table");}
+    if (!(at.isOk(bufLst))) {throw std::runtime_error(isSafeToRemove::exIntro + "Could not find buffer list in download address table");}
     const uint8_t* bBL = bufLst->b;  
      
     //get current read cnt
@@ -264,7 +265,7 @@ vertex_set_t CarpeDM::getDynamicDestinations(vertex_t vQ, Graph& g, AllocTable& 
       uint32_t tmpAdr = at.adrConv(bufAdrType, AdrType::MGMT, s2u<uint8_t>(g[vQ].cpu), bufAdr);
 
       auto buf = at.lookupAdr( s2u<uint8_t>(g[vQ].cpu), tmpAdr );
-      if (!(at.isOk(buf))) {throw std::runtime_error( "Could not find buffer in download address table");}
+      if (!(at.isOk(buf))) {throw std::runtime_error(isSafeToRemove::exIntro + "Could not find buffer in download address table");}
       const uint8_t* b = buf->b;
 
       if(verbose) sLog << "Scanning Buffer " << (int)(i / 2) << " - " << g[buf->v].name << " at Offset " << (int)(i % 2) << std::endl;
@@ -280,7 +281,7 @@ vertex_set_t CarpeDM::getDynamicDestinations(vertex_t vQ, Graph& g, AllocTable& 
         std::tie(dstCpu, dstAdrType) = at.adrClassification(dstAdr);
 
         auto x = at.lookupAdr( (dstAdrType == AdrType::PEER ? dstCpu : s2u<uint8_t>(g[vQ].cpu)), at.adrConv(dstAdrType, AdrType::MGMT, (dstAdrType == AdrType::PEER ? dstCpu : s2u<uint8_t>(g[vQ].cpu)), dstAdr) );
-        if (!(at.isOk(x))) {throw std::runtime_error( "Could not find dst in download address table");}
+        if (!(at.isOk(x))) {throw std::runtime_error(isSafeToRemove::exIntro + "Could not find dst in download address table");}
         if(verbose) sLog << "Found flow dst " << g[x->v].name << std::endl;
         ret.insert(x->v); //found a pending flow, insert its destination
       }

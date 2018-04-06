@@ -86,6 +86,10 @@ public:
   void addMemory(uint8_t cpu, uint32_t extBaseAdr, uint32_t intBaseAdr, uint32_t peerBaseAdr, uint32_t sharedOffs, uint32_t space, uint32_t rawSize) {vPool.push_back(MemPool(cpu, extBaseAdr, intBaseAdr, peerBaseAdr, sharedOffs, space, rawSize)); }
   void clearMemories() { for (unsigned int i = 0; i < vPool.size(); i++ ) vPool[i].init(); }
   void removeMemories() { vPool.clear(); }
+  uint32_t getTotalSpace(uint8_t cpu)    const { return vPool[cpu].getTotalSpace(); }
+  uint32_t getFreeSpace(uint8_t cpu)     const { return vPool[cpu].getFreeSpace(); }
+  uint32_t getUsedSpace(uint8_t cpu)     const { return vPool[cpu].getUsedSpace(); }
+
 
   void updateBmps()  {for (unsigned int i = 0; i < vPool.size(); i++ ) vPool[i].syncBmpToPool();}
   void updatePools() {for (unsigned int i = 0; i < vPool.size(); i++ ) vPool[i].syncPoolToBmp();}
