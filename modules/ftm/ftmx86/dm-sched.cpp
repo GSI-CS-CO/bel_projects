@@ -13,9 +13,9 @@
 
 
 static void help(const char *program) {
+  fprintf(stderr, "\ndm-sched v%s\nCreates Binary Data for the DataMaster (DM) from Schedule Graphs (.dot files) and\nuploads/downloads to/from CPU Core <m> of the DM (CPU currently specified in schedule as cpu=<m>).\n", TOOL_VER);
   fprintf(stderr, "\nUsage: %s <etherbone-device> <Command> <.dot file> \n", program);
   fprintf(stderr, "\n");
-  fprintf(stderr, "\nSchedule Generator. Creates Binary Data for the DataMaster (DM) from Schedule Graphs (.dot files) and\nuploads/downloads to/from CPU Core <m> of the DM (CPU currently specified in schedule as cpu=<m>).\n");
   fprintf(stderr, "\nCommands:\n");
   fprintf(stderr, "  status                    Gets current DM schedule state (default) \n");
   fprintf(stderr, "  clear                     Clear DM, existing nodes will be erased. \n");
@@ -29,7 +29,7 @@ static void help(const char *program) {
   fprintf(stderr, "  -s                        Show Meta Nodes. Download will not only contain schedules, but also queues, etc. \n");  
   fprintf(stderr, "  -v                        Verbose operation, print more details\n");
   fprintf(stderr, "  -d                        Debug operation, print everything\n");
-  fprintf(stderr, "  -f                        Force, overrides the safety check for remove and keep\n");
+  fprintf(stderr, "  -f                        Force, overrides the safety check for clear, remove, overwrite and keep\n");
 
   fprintf(stderr, "\n");
 }

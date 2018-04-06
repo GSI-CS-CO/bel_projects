@@ -12,7 +12,7 @@ GRAPH_LIB       =-lboost_graph
 TOP            ?= ../../..
 
 VERSION_FW     = 2.1.0
-VERSION_TOOL   = 0.15.0
+VERSION_TOOL   = 0.15.2
 BUILD_ID_ROM_ADR = 0x100
 BUILD_ID_ROM_SIZE = 0x400
 
@@ -75,7 +75,7 @@ clean::
 
 .SECONDEXPANSION:
 $(TOOLS): $$@.cpp libcarpedm.so
-	$(T_CXX) $(T_CXXFLAGS) -o $@ $< $(T_LIBS) -L$(LIBPATH) -lcarpedm
+	$(T_CXX) $(T_CXXFLAGS) $(T_CXXFLAGS_CDM) -o $@ $< $(T_LIBS) -L$(LIBPATH) -lcarpedm
 	mkdir -p $(BINPATH)
 	cp $@ $(BINPATH)
 
