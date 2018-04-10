@@ -279,7 +279,7 @@ architecture rtl of microtca_control is
     ("LED_USR7   ", IO_NONE,         false,   false,  6,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
     ("LED_USR8   ", IO_NONE,         false,   false,  7,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
     ("HWT_EN     ", IO_NONE,         false,   false,  8,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL), -- for testing front panel LEDs
-    ("IO_CLKIN_EN", IO_NONE,         true ,   false,  0,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
+    ("IO_CLKIN_EN", IO_NONE,         true ,   false,  9,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
 
     ("HSWF1      ", IO_NONE,         false,   false,  0,     IO_INPUT,    IO_GPIO,  false,        false,       IO_TTL),
     ("HSWF2      ", IO_NONE,         false,   false,  1,     IO_INPUT,    IO_GPIO,  false,        false,       IO_TTL),
@@ -385,7 +385,7 @@ begin
       g_lvds_invert     => false,
       g_en_usb          => true,
       g_en_lcd          => true,
-      g_en_user_ow      => true,
+      g_en_user_ow      => false,
       g_en_tempsens     => true,
       g_en_pcie         => true,
       g_io_table        => io_mapping_table,
@@ -797,7 +797,7 @@ begin
   -- currently not used, keep disabled
   gen_hss_buf_oe : for i in  1 to 4 generate
     hss_tx_en_o(i) <= '0';    
-    hss_rx_en_o(i) <= '0';    
+    hss_rx_en_o(i) <= s_gpio_out(c_HWT_EN_BIT);    
   end generate; -- gen_hss_buf_oe
 
   -- disable  Transmit Pre-Emphasis and Receive Equalization
