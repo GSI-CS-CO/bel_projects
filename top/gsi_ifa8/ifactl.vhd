@@ -247,9 +247,32 @@ begin
             
           when c_rst_buildid =>
             s_rst_buildid <= '1';
-            
-          when x"c" & "----" =>
+
+          -- c0 - c8 , status read from vg backplane connector
+          when x"c0" =>
             s_rd_sts <= '1';
+          when x"c1" =>
+            s_rd_sts <= '1';
+          when x"c2" =>
+            s_rd_sts <= '1';
+          when x"c3" =>
+            s_rd_sts <= '1';
+          when x"c4" =>
+            s_rd_sts <= '1';
+          when x"c5" =>
+            s_rd_sts <= '1';
+          when x"c6" =>
+            s_rd_sts <= '1';
+          when x"c7" =>
+            s_rd_sts <= '1';
+          when x"c8" =>
+            s_rd_sts <= '1';
+            
+            
+            
+            
+            
+            
             
           when c_rd_echo =>
             s_rd_echo <= '1';
