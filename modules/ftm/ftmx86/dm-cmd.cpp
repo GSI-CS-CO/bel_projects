@@ -105,8 +105,8 @@ void showStatus(const char *netaddress, CarpeDM& cdm, bool verbose) {
   //TODO: replace this with something more sensible
 
   char date[40];
-  uint64_t timeWr = cdm.getDmWrTime();
-  uint64_t timeWrNs = timeWr * 1000000000ULL;
+  uint64_t timeWrNs = cdm.getDmWrTime();
+  uint64_t timeWr = timeWrNs / 1000000000ULL;
   strftime(date, sizeof(date), "%Y-%m-%d %H:%M:%S", gmtime((time_t*)&timeWr));
 
 
@@ -157,7 +157,7 @@ void showHealth(const char *netaddress, CarpeDM& cdm, bool verbose) {
 
 
   char date[40];
-  uint64_t timeWr = cdm.getDmWrTime();
+  uint64_t timeWr = cdm.getDmWrTime() / 1000000000ULL ;
   strftime(date, sizeof(date), "%Y-%m-%d %H:%M:%S", gmtime((time_t*)&timeWr));
   unsigned netStrLen;
   for(netStrLen = 0; netStrLen < width; netStrLen++) {if (netaddress[netStrLen] == '\00') break;}

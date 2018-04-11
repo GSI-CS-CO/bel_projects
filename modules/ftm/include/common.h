@@ -99,15 +99,13 @@ enum class FwId { FWID_RAM_TOO_SMALL      = -1,
                   VERSION_MINOR_MUL       = 100,
                   VERSION_REVISION_MUL    = 1};  
 
-namespace PPS {
-  const uint32_t CNTR_UTCLO_REG  = 0x08;
-  const uint32_t CNTR_UTCHI_REG  = 0x0C;
-  const uint32_t STATE_REG       = 0x1C;
-  const uint32_t PPS_VALID_MSK   = (1<<2);
-  const uint32_t TS_VALID_MSK    = (1<<3);
-  const uint32_t STATE_MSK       = PPS_VALID_MSK | TS_VALID_MSK; 
-  const uint64_t vendID          = 0x000000000000ce42ULL;
-  const uint32_t devID           = 0xde0d8ced;
+
+namespace ECA {
+  //TODO import values from eca_regs.h
+  const uint32_t timeHiW = 0x18;
+  const uint32_t timeLoW = 0x1c;
+  const uint64_t vendID  = 0x00000651;
+  const uint32_t devID   = 0xb2afc251;
 }
 
 typedef struct {

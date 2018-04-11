@@ -166,8 +166,8 @@ bool CarpeDM::connect(const std::string& en) {
     try { 
       ebs.open(0, EB_DATAX|EB_ADDRX);
       ebd.open(ebs, ebdevname.c_str(), EB_DATAX|EB_ADDRX, 3);
-      ebd.sdb_find_by_identity(PPS::vendID, PPS::devID, ppsDev);
-      if (ppsDev.size() < 1) throw std::runtime_error("Could not find a WR PPS Generator device. Something is wrong\n");
+      ebd.sdb_find_by_identity(ECA::vendID, ECA::devID, ecaDevs);
+      if (ecaDevs.size() < 1) throw std::runtime_error("Could not find ECA on DM (needed for WR time). Something is wrong\n");
  
 
 
@@ -669,32 +669,35 @@ void CarpeDM::showCpuList() {
 
 
   uint64_t CarpeDM::getDmWrTime() {
-    uint32_t ppsAdr = ppsDev.at(0).sdb_component.addr_first;
-    //uint32_t state;
-    uint64_t wr_time;
-    vAdr va;
-    vBuf vb;
-    uint8_t* b;
-    uint8_t tmp;
-  
-    va.push_back(ppsAdr + PPS::CNTR_UTCLO_REG);
-    va.push_back(ppsAdr + PPS::CNTR_UTCHI_REG);
-    vb = ebReadCycle(ebd, va);
-    //awkward: module excepts read on low word first, then high, which leaves us with words in wrong order. swap words
+    /* get time from ECA */
+    eb_data_t    nsHi0, nsLo, nsHi1;
+    Cycle cyc;
+    uint64_t wrTime;
+    uint32_t ecaAddr = ecaDevs[0].sdb_component.addr_first;
     
-    b = (uint8_t*)&vb[0];
-    //hexDump("b4", (const char*)b, 8);
-    for(int i = 0; i<4; i++) {tmp = vb[4+i]; vb[4+i] = vb[i]; vb[i] = tmp;}
-    for(int i = 0; i<3; i++) {vb[i] = 0;} // equal HiWord & 0xff. That wr pps gen is bloody awkward...
+    do {
+      try {
+        cyc.open(ebd);
+        cyc.read( ecaAddr + ECA::timeHiW, EB_BIG_ENDIAN|EB_DATA32, &nsHi0);
+        cyc.read( ecaAddr + ECA::timeLoW, EB_BIG_ENDIAN|EB_DATA32, &nsLo);
+        cyc.read( ecaAddr + ECA::timeHiW, EB_BIG_ENDIAN|EB_DATA32, &nsHi1);
+        cyc.close();
+      } catch (etherbone::exception_t const& ex) {
+        throw std::runtime_error("Etherbone " + std::string(ex.method) + " returned " + std::string(eb_status(ex.status)) + "\n" );
+      }
+    } while (nsHi0 != nsHi1);
+  
+    /* time */
+    wrTime = (uint64_t)nsHi0 << 32;
+    wrTime = wrTime + (uint64_t)nsLo;
+  
 
-    //state   = writeBeBytesToLeNumber<uint32_t>(b + 0) & PPS::STATE_MSK;
-    wr_time = writeBeBytesToLeNumber<uint64_t>(b);
 
-    return wr_time;
+    return wrTime;
   }
 
 
-  //Improvised Transaction Management: If an upload operation fails for any reason, we roll back the meta tables
+  //Improvised Transaction Management: If an upload preparation operation fails for any reason, we roll back the meta tables
   int CarpeDM::safeguardTransaction(int (CarpeDM::*func)(Graph&, bool), Graph& g, bool force) {
     HashMap hmBak     = hm;
     GroupTable gtBak  = gt;
@@ -797,5 +800,5 @@ void CarpeDM::showCpuList() {
   void CarpeDM::debugOn()  {debug = true;}  //Turn on Verbose Output
   void CarpeDM::debugOff() {debug = false;} //Turn off Verbose Output
   bool CarpeDM::isDebug()  const {return debug;} //Tell if Output is set to Verbose
-  void CarpeDM::updateModTime() { modTime = getDmWrTime() * 1000000000ULL; } 
+  void CarpeDM::updateModTime() { modTime = getDmWrTime(); } 
   uint64_t CarpeDM::getModTime() { return modTime; }

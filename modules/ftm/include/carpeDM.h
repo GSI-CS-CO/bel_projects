@@ -40,7 +40,7 @@ private:
   Socket ebs;
   Device ebd;  
   std::vector<struct sdb_device> cpuDevs;  
-  std::vector<struct sdb_device> ppsDev; 
+  std::vector<struct sdb_device> ecaDevs; 
 
   int cpuQty = -1;
   HashMap hm;
