@@ -179,11 +179,13 @@ namespace det = DotStr::Edge::TypeVal;
   }
 
 
-  
-
   QueueReport& CarpeDM::getQReport(const std::string& blockName, QueueReport& qr) {
     Graph& g = gDown;
     AllocTable& at = atDown;
+    return getQReport(g, at, blockName, qr);
+  }  
+
+  QueueReport& CarpeDM::getQReport(Graph& g, AllocTable& at, const std::string& blockName, QueueReport& qr) {
     
     const std::string exIntro = " getQReport: ";
     const std::string nodeNotFound = " Node could not be found: ";
@@ -243,17 +245,15 @@ namespace det = DotStr::Edge::TypeVal;
         auto buf = at.lookupAdr( x->cpu, at.adrConv(bufAdrType, AdrType::MGMT, x->cpu, bufAdr) ); //buffer cpu is the same as block cpu
         if (!(at.isOk(buf))) {continue;}
         qr.aQ[prio].aQe[i].pending = (bool)pendingIdx.count(i);
-        getQelement(i, buf, qr.aQ[prio].aQe[i]);
+        getQelement(g, at, i, buf, qr.aQ[prio].aQe[i]);
       }
     }
       
     return qr;
   }
 
-  QueueElement& CarpeDM::getQelement(uint8_t idx, amI allocIt, QueueElement& qe) {
+  QueueElement& CarpeDM::getQelement(Graph& g, AllocTable& at, uint8_t idx, amI allocIt, QueueElement& qe) {
     //TODO might cleaner as deserialisers for MiniCommand Class
-    Graph&       g  = gDown;
-    AllocTable& at  = atDown;
     uint8_t*  bAux  = (uint8_t*)&(allocIt->b);
     uint8_t*     b  = (uint8_t*)&bAux[(idx % 2) * _T_CMD_SIZE_];
     uint8_t    cpu  = allocIt->cpu;

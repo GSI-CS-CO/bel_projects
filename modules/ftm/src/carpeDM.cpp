@@ -16,6 +16,7 @@
 #include "idformat.h"
 #include "lzmaCompression.h"
 
+
   namespace dgp = DotStr::Graph::Prop;
   namespace dnp = DotStr::Node::Prop;
   namespace dep = DotStr::Edge::Prop;

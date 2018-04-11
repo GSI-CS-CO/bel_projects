@@ -113,6 +113,8 @@ private:
 
   bool addResidentDestinations(Graph& gEq,  Graph& gOrig, vertex_set_t cursors);
   bool addDynamicDestinations(Graph& g, AllocTable& at);
+  bool updateStaleDefaultDestinations(Graph& g, AllocTable& at);
+  vertex_set_t getDominantFlowDst(vertex_t vQ, Graph& g, AllocTable& at);
   vertex_set_t getDynamicDestinations(vertex_t vQ, Graph& g, AllocTable& at);
   void getReverseNodeTree(vertex_t v, vertex_set_t& sV, Graph& g);
   
@@ -148,7 +150,8 @@ private:
 
   vEbwrs& staticFlush(const std::string& sBlock, bool prioIl, bool prioHi, bool prioLo, vEbwrs& ew, bool force);
 
-  QueueElement& getQelement(uint8_t idx, amI allocIt, QueueElement& qe);
+  QueueElement& getQelement(Graph& g, AllocTable& at, uint8_t idx, amI allocIt, QueueElement& qe);
+  QueueReport& getQReport(Graph& g, AllocTable& at, const std::string& blockName, QueueReport& qr);
 
 
   int   ebWriteCycle(Device& dev, vAdr va, vBuf& vb, vBl vcs);

@@ -77,7 +77,7 @@ bool CarpeDM::isSafeToRemove(std::set<std::string> patterns, std::string& report
   
   // End Preparations
 
-  //BEGIN Static equivalent model //
+  //BEGIN Basic Static equivalent model //
   //add static equivalent edges of all pending flow commands to working copy  
   if (addDynamicDestinations(gTmp, at)) { if(verbose) {sLog << "Added dynamic equivalents." << std::endl;} }
 
@@ -97,14 +97,31 @@ bool CarpeDM::isSafeToRemove(std::set<std::string> patterns, std::string& report
 
   if(verbose) sLog << "Reading Cursors " << std::endl;
   //try to get consistent image of active cursors
+  updateModTime();
   cursors = getAllCursors(true);
-  //Here comes the problem: resident commands are only of consquence if they AND their target Block are executable
+  //Here comes the problem: resident commands are only of consquence if they AND their target Block are active
   //Iteratively find out which cmds are executable and add equivalent edges for them. Do this until no more new edges have to be added
   if (addResidentDestinations(gEq, gTmp, cursors)) { if(verbose) {sLog << "Added resident equivalents." << std::endl;} }
 
-  // END Static Equivalent Model //
+  // END Basic Static Equivalent Model //
 
+  // BEGIN Optimised Static Equivalent Model
+  // Under certain conditions, (offending) default destinations can be replaced. These are:
+  // 1. The block has Queue(s)
+  // 2. The Queue(s) contains at least one permanent flow to a different destination than the blocks current default
+  // 3. The default destination will never be called again. This is the case if:
+  // 3.1 The permanent flow is pending
+  // 3.2 The permanent flow is valid; its valid time is in the past compared to the modtime read before the cursor read
+  // 3.3 Queue always overrides default until permanent flow sets new default. This happens if:
+  // 3.3.1  The permanent flow is the next due element over all queues (pole position)
+  // 3.3.2  The permanent flow is preceded by an unbroken streak of flows over all queues (all pending and valid)
+  // 3.3.2.1  Any other type of command before the permanent flow signifies a broken streak
+  // 3.3.2.2  Flushes are considered to have no effect except being a break in the streak
 
+  if (updateStaleDefaultDestinations(gEq, at)) { if(verbose) {sLog << "Updated stale Default Destinations to reduce wait time." << std::endl;} }
+  
+
+  // END Optimised Static Equivalent Model
 
   // Crawl and map active areas
   //crawl all reverse trees we can reach from the given entries and add their nodes to the blacklist
@@ -194,6 +211,79 @@ bool CarpeDM::addResidentDestinations(Graph& gEq, Graph& gOrig, vertex_set_t cur
   return didWork;
 }
 
+bool CarpeDM::updateStaleDefaultDestinations(Graph& g, AllocTable& at) {
+  bool didWork = false;
+  edge_t edgeToDelete;
+
+  BOOST_FOREACH( vertex_t vChkBlock, vertices(g) ) {
+    //first, find blocks
+    if(g[vChkBlock].np->isBlock()) {
+      //second, inspect their queues and see if default dest is made stale by a dominant flow
+      vertex_set_t sVflowDst = getDominantFlowDst(vChkBlock, g, at);
+      for (auto& it : sVflowDst) {
+        
+        if (sVflowDst.size() > 1) {throw std::runtime_error(isSafeToRemove::exIntro + "updateStaleDefDst: found more than one dominant flow, must be 0..1");}
+        if(it != -1) { boost::add_edge(vChkBlock, it, myEdge(det::sDefDst), g); }
+        else { if (verbose)  sLog << "updateStaleDefDst: New default would be idle, skipping edge creation" << std::endl; }
+        //find old default edge and mark for deletion
+        Graph::out_edge_iterator out_begin, out_end, out_cur;
+        boost::tie(out_begin, out_end) = out_edges(vChkBlock, g);
+        for (out_cur = out_begin; out_cur != out_end; ++out_cur) { 
+          if(g[*out_cur].type == det::sDefDst) {
+            if (verbose) sLog << "updateStaleDefDst: Found old default dst <" << g[target(*out_cur, g)].name << "> of block <" << g[vChkBlock].name << std::endl;
+            didWork = true;
+            edgeToDelete = *out_cur;
+          } 
+        }
+
+      }
+    }
+  }
+  if (didWork) boost::remove_edge(edgeToDelete, g);
+  return didWork;
+}
+
+vertex_set_t CarpeDM::getDominantFlowDst(vertex_t vQ, Graph& g, AllocTable& at) {
+  vertex_set_t ret;
+
+  if(verbose) sLog << "Searching for dominant flows " << g[vQ].name << std::endl;
+
+  QueueReport qr;
+  qr = getQReport(g, at, g[vQ].name, qr);
+        
+  for (int8_t prio = PRIO_IL; prio >= PRIO_LO; prio--) {
+    if (!qr.hasQ[prio]) {continue;} // if the priority doesn't exist, Ignore
+
+    for (uint8_t i, idx = qr.aQ[prio].rdIdx; idx < qr.aQ[prio].rdIdx + 4; idx++) {
+      i = idx & Q_IDX_MAX_MSK;
+      QueueElement& qe = qr.aQ[prio].aQe[i];
+
+      // we're going through in order. If element has a valid time in the future (> modTime), stop right here. it and all following are possibly yet unprocessed
+      if(qe.validTime > modTime) {return ret;} 
+
+      if (qe.type != ACT_TYPE_FLOW) { 
+        //if the command is not a flow, we can stop here: It means the default will be used at least once, thus there is no dominant flow
+        return ret;
+      }  
+      // if flow is not pending, it can't be dominant. Ignore
+      if (!qe.pending) {continue;} 
+      //found a pending flow to idle, insert bogus vertex index to show that.
+      if (qe.flowDst == DotStr::Node::Special::sIdle) {ret.insert(-1); if(verbose) sLog << "updateStaleDefDst: Found dominant flow dst idle" << std::endl; continue;} 
+      // we ruled out that the flow leads to idle. If it's not permanent, it can't be dominant. Ignore
+      if (!qe.flowPerma) {continue;} 
+      //found a dominant flow, insert its destination
+      auto x = at.lookupHash(hm.lookup(qe.flowDst).get());
+      if (!(at.isOk(x))) {throw std::runtime_error(isSafeToRemove::exIntro + "updateStaleDefDst: Could not find dst in download allocation table");}
+      if(verbose) sLog << "updateStaleDefDst: Found dominant flow dst " << g[x->v].name << std::endl;
+      ret.insert(x->v); 
+      
+    }
+  }    
+  return ret;
+}      
+
+
+
 bool CarpeDM::addDynamicDestinations(Graph& g, AllocTable& at) {
   bool didWork = false;
 
@@ -214,74 +304,28 @@ bool CarpeDM::addDynamicDestinations(Graph& g, AllocTable& at) {
 
 
 vertex_set_t CarpeDM::getDynamicDestinations(vertex_t vQ, Graph& g, AllocTable& at) {
+
+
   vertex_set_t ret;
 
   if(verbose) sLog << "Searching for pending flows " << g[vQ].name << std::endl;
- 
-  //check their Q counters for unprocessed commands
-  uint32_t wrIdxs = boost::dynamic_pointer_cast<Block>(g[vQ].np)->getWrIdxs(); 
-  uint32_t rdIdxs = boost::dynamic_pointer_cast<Block>(g[vQ].np)->getRdIdxs();
-  uint32_t diff = (rdIdxs ^ wrIdxs ) & 0x00ffffff;  
-      
-  if(verbose) sLog << "Checking Block " << g[vQ].name << std::endl;
 
-  for (uint8_t prio = 0; prio < 3; prio++) {
-    uint32_t bufLstAdr;
-    uint8_t bufLstCpu;
-    AdrType bufLstAdrType; 
-
-    if (!((diff >> (prio*8)) & Q_IDX_MAX_OVF_MSK)) {if(verbose) {sLog << "prio " << (int)prio << " is empty" << std::endl;} continue;}
-    if(verbose) sLog << "Checking Prio " << prio << std::endl;  
-    //get Block binary
-    uint8_t* bBlock = g[vQ].np->getB();
-    bufLstAdr = writeBeBytesToLeNumber<uint32_t>((uint8_t*)&bBlock[BLOCK_CMDQ_LO_PTR + prio * _32b_SIZE_]);
-
-    
-    std::tie(bufLstCpu, bufLstAdrType) = at.adrClassification(bufLstAdr);  
-    //get BufList binary
-    auto bufLst = at.lookupAdr( s2u<uint8_t>(g[vQ].cpu), at.adrConv(bufLstAdrType, AdrType::MGMT, s2u<uint8_t>(g[vQ].cpu), bufLstAdr) );
-    if (!(at.isOk(bufLst))) {throw std::runtime_error(isSafeToRemove::exIntro + "Could not find buffer list in download address table");}
-    const uint8_t* bBL = bufLst->b;  
-     
-    //get current read cnt
-    uint8_t rdIdx = (rdIdxs >> (prio*8)) & Q_IDX_MAX_MSK;
-    uint8_t wrIdx = (wrIdxs >> (prio*8)) & Q_IDX_MAX_MSK;
-
-    if(verbose) sLog << "rdCnt " << (int)rdIdx << " wrCnt " << (int)wrIdx << std::endl;
-
-    //force wraparound
-    rdIdx >= wrIdx ? wrIdx+=4 : wrIdx;
+  QueueReport qr;
+  qr = getQReport(g, at, g[vQ].name, qr);
+        
+  for (int8_t prio = PRIO_IL; prio >= PRIO_LO; prio--) {
+    if (!qr.hasQ[prio]) {continue;}
 
     //find buffers of all non empty slots
-    for (uint8_t i = rdIdx; i < wrIdx; i++) {
-      uint8_t idx = i & Q_IDX_MAX_MSK;
-      uint32_t bufAdr, dstAdr;
-      uint8_t bufCpu, dstCpu;
-      AdrType bufAdrType, dstAdrType;
-      
-      bufAdr = writeBeBytesToLeNumber<uint32_t>((uint8_t*)&bBL[(idx / 2) * _32b_SIZE_] );
-      std::tie(bufCpu, bufAdrType) = at.adrClassification(bufAdr);  
+    for (uint8_t i, idx = qr.aQ[prio].rdIdx; idx < qr.aQ[prio].rdIdx + 4; idx++) {
+      i = idx & Q_IDX_MAX_MSK;
+      QueueElement& qe = qr.aQ[prio].aQe[i];
 
-      uint32_t tmpAdr = at.adrConv(bufAdrType, AdrType::MGMT, s2u<uint8_t>(g[vQ].cpu), bufAdr);
-
-      auto buf = at.lookupAdr( s2u<uint8_t>(g[vQ].cpu), tmpAdr );
-      if (!(at.isOk(buf))) {throw std::runtime_error(isSafeToRemove::exIntro + "Could not find buffer in download address table");}
-      const uint8_t* b = buf->b;
-
-      if(verbose) sLog << "Scanning Buffer " << (int)(i / 2) << " - " << g[buf->v].name << " at Offset " << (int)(i % 2) << std::endl;
-      // scan pending command for flow to forbidden destination
-      uint32_t act  = writeBeBytesToLeNumber<uint32_t>((uint8_t*)&b[(idx % 2) * _T_CMD_SIZE_ + T_CMD_ACT]);
-      uint8_t type = (act >> ACT_TYPE_POS) & ACT_TYPE_MSK;
-      if(verbose) sLog << "Found Cmd type " << (int)type << std::endl; 
-
-      if (type == ACT_TYPE_FLOW) {
-
-        dstAdr   = writeBeBytesToLeNumber<uint32_t>((uint8_t*)&b[(idx % 2) * _T_CMD_SIZE_ + T_CMD_FLOW_DEST]);
-        if (dstAdr == LM32_NULL_PTR) continue; // pointing to idle is always okay
-        std::tie(dstCpu, dstAdrType) = at.adrClassification(dstAdr);
-
-        auto x = at.lookupAdr( (dstAdrType == AdrType::PEER ? dstCpu : s2u<uint8_t>(g[vQ].cpu)), at.adrConv(dstAdrType, AdrType::MGMT, (dstAdrType == AdrType::PEER ? dstCpu : s2u<uint8_t>(g[vQ].cpu)), dstAdr) );
-        if (!(at.isOk(x))) {throw std::runtime_error(isSafeToRemove::exIntro + "Could not find dst in download address table");}
+      if (!qe.pending) {continue;}
+      if (qe.type == ACT_TYPE_FLOW) {
+        if (qe.flowDst == DotStr::Node::Special::sIdle) {continue;}
+        auto x = at.lookupHash(hm.lookup(qe.flowDst).get());
+        if (!(at.isOk(x))) {throw std::runtime_error(isSafeToRemove::exIntro + "Could not find dst in download allocation table");}
         if(verbose) sLog << "Found flow dst " << g[x->v].name << std::endl;
         ret.insert(x->v); //found a pending flow, insert its destination
       }
