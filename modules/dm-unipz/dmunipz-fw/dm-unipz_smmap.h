@@ -3,7 +3,7 @@
 
 #include "dmunipz_shared_mmap.h"
 
-#define DMUNIPZ_SHARED_DATA_4EB_SIZE  40     // size of shared memory used to receive EB return values; size is in bytes
+#define DMUNIPZ_SHARED_DATA_4EB_SIZE  68     // size of shared memory used to receive EB return values; size is in bytes
 
 /* the following values must be added to the offset of the shared memory */
 #define DMUNIPZ_SHARED_STATUS         0x00   // error status                       
