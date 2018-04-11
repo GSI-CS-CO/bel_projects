@@ -120,7 +120,7 @@ private:
   
   vertex_set_t getAllCursors(bool activeOnly);
   vStrC getGraphPatterns(Graph& g);
-  bool isSafeToRemove(std::set<std::string> patterns, std::string& report);
+  bool isSafeToRemove(std::set<std::string> patterns, std::string& report, bool optimise=false);
   const std::string readFwIdROMTag(const std::string& fwIdROM, const std::string& tag, size_t maxlen, bool stopAtCr );
 
   vBuf compress(const vBuf& in); 
@@ -275,8 +275,8 @@ public:
            uint32_t getThrStart(uint8_t cpuIdx);
            uint64_t getThrPrepTime(uint8_t cpuIdx, uint8_t thrIdx); 
                bool isThrRunning(uint8_t cpuIdx, uint8_t thrIdx);                   // true if thread <thrIdx> is running
-               bool isSafeToRemove(const std::string& pattern, std::string& report);
-               bool isSafeToRemove(Graph& gRem, std::string& report);
+               bool isSafeToRemove(const std::string& pattern, std::string& report, bool optimise=false);
+               bool isSafeToRemove(Graph& gRem, std::string& report, bool optimise=false);
 std::pair<int, int> findRunningPattern(const std::string& sPattern); // get cpu and thread assignment of running pattern
                bool isPatternRunning(const std::string& sPattern);                  // true if Pattern <x> is running
                void updateModTime();

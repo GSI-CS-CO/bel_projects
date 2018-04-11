@@ -560,8 +560,11 @@ using namespace DotStr::Misc;
     checkTablesForSubgraph(g); //all explicitly named nodes must be known to hash and grouptable. let's check first
     generateBlockMeta(g);
     baseUploadOnDownload();
-    std::string report; 
+    std::string report, reportOptimised; 
+    if (!isSafeToRemove(g, report, false)) {printf("Cannot safely be removed (normal)\n"); writeTextFile("safetyReportNormal", report); }
+    if (!isSafeToRemove(g, reportOptimised, true)) {printf("Cannot safely be removed (optimised)\n"); writeTextFile("safetyReportOptimised", reportOptimised); }
     if (!(force | isSafeToRemove(g, report))) {throw std::runtime_error("Cannot safely be removed\n");}
+    
     subtraction(g);
     //writeUpDotFile("upload.dot", false);
     validate(gUp, atUp);
@@ -594,7 +597,9 @@ using namespace DotStr::Misc;
       }
     }
     
-    std::string report;  
+    std::string report, reportOptimised; 
+    if (!isSafeToRemove(g, report, false)) {printf("Cannot safely be removed (normal)\n"); writeTextFile("safetyReportNormal.dot", report); }
+    if (!isSafeToRemove(g, reportOptimised, true)) {printf("Cannot safely be removed (optimised)\n"); writeTextFile("safetyReportOptimised.dot", reportOptimised); }  
 
     if (!(force | isSafeToRemove(gTmpRemove, report))) {throw std::runtime_error("Cannot safely be removed\n");}
     subtraction(gTmpRemove);

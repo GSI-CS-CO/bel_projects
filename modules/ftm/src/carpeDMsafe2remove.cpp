@@ -24,21 +24,21 @@ namespace isSafeToRemove {
 }
 
 
-bool CarpeDM::isSafeToRemove(Graph& gRem, std::string& report) {
+bool CarpeDM::isSafeToRemove(Graph& gRem, std::string& report, bool optimise) {
   std::set<std::string> patterns;
   //Find all patterns 2B removed
   for (auto& patternIt : getGraphPatterns(gRem)) { patterns.insert(patternIt); }
     
-  return isSafeToRemove(patterns, report);
+  return isSafeToRemove(patterns, report, optimise);
 }
 
-bool CarpeDM::isSafeToRemove(const std::string& pattern, std::string& report) {
+bool CarpeDM::isSafeToRemove(const std::string& pattern, std::string& report, bool optimise) {
   std::set<std::string> p = {pattern};
-  return isSafeToRemove(p, report);
+  return isSafeToRemove(p, report, optimise);
 }  
 
 
-bool CarpeDM::isSafeToRemove(std::set<std::string> patterns, std::string& report) {
+bool CarpeDM::isSafeToRemove(std::set<std::string> patterns, std::string& report, bool optimise) {
   Graph& g        = gDown;
   AllocTable& at  = atDown;
   Graph gTmp, gEq;
@@ -117,9 +117,10 @@ bool CarpeDM::isSafeToRemove(std::set<std::string> patterns, std::string& report
   // 3.3.2  The permanent flow is preceded by an unbroken streak of flows over all queues (all pending and valid)
   // 3.3.2.1  Any other type of command before the permanent flow signifies a broken streak
   // 3.3.2.2  Flushes are considered to have no effect except being a break in the streak
-
-  if (updateStaleDefaultDestinations(gEq, at)) { if(verbose) {sLog << "Updated stale Default Destinations to reduce wait time." << std::endl;} }
-  
+  if (optimise) {
+    if(verbose) {sLog << "Starting Optimiser (Update stale defDst" << std::endl;}
+    if (updateStaleDefaultDestinations(gEq, at)) { if(verbose) {sLog << "Updated stale Default Destinations to reduce wait time." << std::endl;} }
+  }
 
   // END Optimised Static Equivalent Model
 

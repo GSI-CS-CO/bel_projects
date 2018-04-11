@@ -650,7 +650,11 @@ vEbwrs& CarpeDM::staticFlush(const std::string& sBlock, bool prioIl, bool prioHi
   //check if the block can safely be modified
   //call safe2remove on the block's pattern. If remove is ok, so is Flushing
   std::string dbgReport;
+  std::string report, reportOptimised; 
   const std::string sPattern = getNodePattern(sBlock);
+  if (!isSafeToRemove(sPattern, report, false)) {printf("Cannot safely be removed (normal)\n"); writeTextFile("safetyReportNormal.dot", report); }
+  if (!isSafeToRemove(sPattern, reportOptimised, true)) {printf("Cannot safely be removed (optimised)\n"); writeTextFile("safetyReportOptimised.dot", reportOptimised); }  
+  
   if ( (!isSafeToRemove(sPattern, dbgReport)) && !force)  {
     if(debug) sLog << dbgReport << std::endl;
     throw std::runtime_error("staticFlush: Pattern <" + sPattern + "> of block member <" + sBlock + "> is active, static flush not safely possible!");
