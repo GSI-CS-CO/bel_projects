@@ -11,7 +11,7 @@ SER_LIB         =-lboost_serialization
 GRAPH_LIB       =-lboost_graph
 TOP            ?= ../../..
 
-VERSION_FW     = 2.1.0
+VERSION_FW     = 2.2.0
 VERSION_TOOL   = 0.15.2
 BUILD_ID_ROM_ADR = 0x100
 BUILD_ID_ROM_SIZE = 0x400

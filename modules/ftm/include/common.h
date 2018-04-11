@@ -108,6 +108,8 @@ namespace ECA {
   const uint32_t devID   = 0xb2afc251;
 }
 
+const uint64_t processingTimeMargin = 100000000ULL; // 100 ms
+
 typedef struct {
   uint8_t   cpu; 
   uint64_t  msgCnt;

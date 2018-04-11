@@ -48,11 +48,10 @@
 
 #define _THR_QTY_               8
 #define _HEAP_SIZE_             (_THR_QTY_)
-#define _T_GRID_OFFS_           0ULL
-#define _T_GRID_SIZE_           10000ULL
 
-
-
+#define _T_GRID_OFFS_           0ULL      //Origin of time grid for align blocks in ns
+#define _T_GRID_SIZE_           10000ULL  //grid size for align blocks ns
+#define _T_TVALID_OFFS_         50000ULL  //Min offset from 'now' for validTime when generating a command
 
 
 //////////////////////////////////////////////////////////////////////

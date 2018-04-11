@@ -54,6 +54,14 @@ boost::optional<std::pair<int, int>> CarpeDM::parseCpuAndThr(vertex_t v, Graph& 
 }
 
 
+void CarpeDM::adjustValidTime(uint64_t tValid, bool abs) {
+    uint64_t t = modTime + processingTimeMargin, tmpTvalid = tValid;
+    if (abs) { if (tmpTvalid > t) t  = tmpTvalid; } // if its absolute, the floor is modTime + processingTimeMargin 
+    else      {                   t += tmpTvalid; } // if its relative, we add the relative offset to modTime + processingTimeMargin
+    tValid = t;
+}
+
+
 vEbwrs& CarpeDM::createCommandBurst(Graph& g, vEbwrs& ew) {
 
   
@@ -83,10 +91,14 @@ vEbwrs& CarpeDM::createCommandBurst(Graph& g, vEbwrs& ew) {
     else  if (g[v].cmdDestBp != DotStr::Misc::sUndefined)  { destination = getBeamprocEntryNode(g[v].cmdDestBp); }
     else                                                   { destination = g[v].cmdDest;}
      
-
+    
+    
     bool vabs = s2u<bool>(g[v].vabs);
-    uint64_t cmdTvalid  = (vabs ? s2u<uint64_t>(g[v].tValid) : s2u<uint64_t>(g[v].tValid) + modTime);
-    sLog << "Command valid time is " << (vabs ? "absolute" : "relative") << s2u<uint64_t>(g[v].tValid) << " @ " << cmdTvalid << std::endl;
+    uint64_t cmdTvalid = s2u<uint64_t>(g[v].tValid);
+    //we need tValid always to be set slightly in the future so we can do some checks in the safeToRemove functions
+    adjustValidTime(cmdTvalid, vabs);
+   
+    //sLog << "Command valid time is " << (vabs ? "absolute" : "relative") << tmpTvalid << " @ " << cmdTvalid << std::endl;
     uint8_t  cmdPrio    = s2u<uint8_t>(g[v].prio);
     uint8_t cpu, thr;
     

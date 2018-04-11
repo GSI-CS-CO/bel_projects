@@ -425,8 +425,7 @@ int main(int argc, char* argv[]) {
   }
 
   uint64_t tvalidOffs = cdm.getModTime();
-  //if (verbose) { std::cout << "Command valid time is 0x" << (vabs ? "absolute" : "relative") << std::hex << cmdTvalid << " @ " << cmdTvalid  + tvalidOffs << std::dec << std::endl;}
-  if(!vabs) cmdTvalid += tvalidOffs;
+  if(!vabs) cmdTvalid += tvalidOffs; // already added modTime when !vabs, so when calling cdm.adjustValidTime, we'll always say tvalid is absolute 
 
 
   if (typeName != NULL ) {  
@@ -437,6 +436,7 @@ int main(int argc, char* argv[]) {
 
     if      (cmp == dnt::sCmdNoop)  {
       if(!(cdm.isInHashDict( targetName))) {std::cerr << program << ": Target node '" << targetName << "'' was not found on DM" << std::endl; return -1; }
+      cdm.adjustValidTime(cmdTvalid, false);
       mc = (mc_ptr) new MiniNoop(cmdTvalid, cmdPrio, cmdQty );
     }
     else if (cmp == "status")  {
@@ -459,7 +459,8 @@ int main(int argc, char* argv[]) {
           adr = cdm.getNodeAdr(toNode, TransferDir::DOWNLOAD, AdrType::INT);
         } catch (std::runtime_error const& err) {
           std::cerr << program << ": Could not obtain address of destination node " << toNode << ". Cause: " << err.what() << std::endl;
-        } 
+        }
+        cdm.adjustValidTime(cmdTvalid, true);  
         mc = (mc_ptr) new MiniFlow(cmdTvalid, cmdPrio, cmdQty, adr, permanent );
       } else {std::cerr << program << ": Destination Node '" << toNode << "'' was not found on DM" << std::endl; return -1; }
       targetName = fromNode.c_str();
@@ -472,24 +473,28 @@ int main(int argc, char* argv[]) {
           adr = cdm.getNodeAdr(para, TransferDir::DOWNLOAD, AdrType::INT);
         } catch (std::runtime_error const& err) {
           std::cerr << program << ": Could not obtain address of destination node " << para << ". Cause: " << err.what() << std::endl;
-        } 
+        }
+        cdm.adjustValidTime(cmdTvalid, true); 
         mc = (mc_ptr) new MiniFlow(cmdTvalid, cmdPrio, cmdQty, adr, permanent );
       } else {std::cerr << program << ": Destination Node '" << para << "'' was not found on DM" << std::endl; return -1; }
     }
     else if (cmp == "relwait")  {
       if(!(cdm.isInHashDict( targetName))) {std::cerr << program << ": Target node '" << targetName << "'' was not found on DM" << std::endl; return -1; }
       if (para == NULL) {std::cerr << program << ": Wait time in ns is missing" << std::endl; return -1; }
+      cdm.adjustValidTime(cmdTvalid, true); 
       mc = (mc_ptr) new MiniWait(cmdTvalid, cmdPrio, strtoll(para, NULL, 0), permanent, false );
     }
     else if (cmp == "abswait")  {
       if(!(cdm.isInHashDict( targetName))) {std::cerr << program << ": Target node '" << targetName << "'' was not found on DM" << std::endl; return -1; }
       if (para == NULL) {std::cerr << program << ": Wait time in ns is missing" << std::endl; return -1; }
-        mc = (mc_ptr) new MiniWait(cmdTvalid, cmdPrio, strtoll(para, NULL, 0), permanent, true ); 
+      cdm.adjustValidTime(cmdTvalid, true); 
+      mc = (mc_ptr) new MiniWait(cmdTvalid, cmdPrio, strtoll(para, NULL, 0), permanent, true ); 
     }
     else if (cmp == dnt::sCmdFlush) {
         if(!(cdm.isInHashDict( targetName))) {std::cerr << program << ": Target node '" << targetName << "'' was not found on DM" << std::endl; return -1; }
         if (para == NULL) {std::cerr << program << ": Queues to be flushed are missing, require 3 bit as hex (IL HI LO 0x0 - 0x7)" << std::endl; return -1; }  
         uint32_t queuePrio = strtol(para, NULL, 0) & 0x7;
+        cdm.adjustValidTime(cmdTvalid, true); 
         mc = (mc_ptr) new MiniFlush(cmdTvalid, cmdPrio, (bool)(queuePrio >> PRIO_IL & 1), (bool)(queuePrio >> PRIO_HI & 1), (bool)(queuePrio >> PRIO_LO & 1));
     }
     else if (cmp == "staticflush") {

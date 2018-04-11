@@ -277,6 +277,7 @@ public:
 std::pair<int, int> findRunningPattern(const std::string& sPattern); // get cpu and thread assignment of running pattern
                bool isPatternRunning(const std::string& sPattern);                  // true if Pattern <x> is running
                void updateModTime();
+               void adjustValidTime(uint64_t tValid, bool abs);                            // Makes sure the given valid time is slightly in the future. Uses modTime as 'now'
 
   // Commands to DM hardware ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
                void forceThrCursor(uint8_t cpuIdx, uint8_t thrIdx); //DEBUG ONLY !!!
