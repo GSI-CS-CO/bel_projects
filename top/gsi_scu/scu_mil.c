@@ -295,6 +295,15 @@ int16_t echoTestDevMil(volatile uint32_t *base, uint16_t  ifbAddr, uint16_t data
   else               return MIL_STAT_OK;
 } //echoTestDevMil
 
+int16_t resetPiggyDevMil(volatile uint32_t *base)
+{
+  // just a wrapper for the function of the original library
+  // replace code once original library becomes deprecated
+  
+  return (int16_t)reset_mil((unsigned int *)base);
+  
+} //resetPiggyDevMil
+
 
 int16_t clearFilterEvtMil(volatile uint32_t *base)
 {

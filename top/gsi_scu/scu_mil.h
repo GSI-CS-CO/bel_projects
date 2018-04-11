@@ -236,6 +236,9 @@ int16_t echoTestDevMil(volatile uint32_t *base,         // Wishbone address seen
                     uint16_t  data                      // data                                            
                     );
 
+// reset device bus part of MIL piggy
+int16_t resetPiggyDevMil(volatile uint32_t *base);      // Wishbone address seen from the CPUs perspective 
+
 /***********************************************************
 * routines for MIL event bus receiver (bipolar LEMO socket)
 ************************************************************/

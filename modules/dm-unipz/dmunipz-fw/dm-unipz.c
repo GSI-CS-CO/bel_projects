@@ -1000,7 +1000,13 @@ uint32_t entryActionConfigured()
   }
 
   DBPRINT1("dm-unipz: connection to DM ok - 0x%08x\n", data);
-     
+
+  // reset MIL piggy
+  if ((status = resetPiggyDevMil(pMILPiggy))  != MIL_STAT_OK) {
+    DBPRINT1("dm-unipz: ERROR - can't reset MIL Piggy\n");
+    return DMUNIPZ_STATUS_DEVBUSERROR;
+  } 
+   
   // check if modulbus I/O is ok
   if ((status = echoTestDevMil(pMILPiggy, IFB_ADDRESS_SIS, 0xbabe)) != MIL_STAT_OK) {
     DBPRINT1("dm-unipz: ERROR - modulbus SIS IFK not available!\n");
