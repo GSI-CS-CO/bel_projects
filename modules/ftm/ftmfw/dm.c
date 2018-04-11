@@ -311,6 +311,7 @@ uint32_t* block(uint32_t* node, uint32_t* thrData) {
   if( (*awrOffs & 0x00ffffff) != (*ardOffs & 0x00ffffff) ) {
     //only process one command, and that of the highest priority. default is low, check up
     prio = PRIO_LO;
+    //MSB first: bit 31 is at byte offset 0!
     if (*((uint8_t *)node + BLOCK_CMDQ_RD_IDXS + _32b_SIZE_ - PRIO_HI - 1) ^ *((uint8_t *)node + BLOCK_CMDQ_WR_IDXS + _32b_SIZE_ - PRIO_HI - 1)) { prio = PRIO_HI; }
     if (*((uint8_t *)node + BLOCK_CMDQ_RD_IDXS + _32b_SIZE_ - PRIO_IL - 1) ^ *((uint8_t *)node + BLOCK_CMDQ_WR_IDXS + _32b_SIZE_ - PRIO_IL - 1)) { prio = PRIO_IL; }
     //correct prio found, create shortcuts to control data of corresponding queue

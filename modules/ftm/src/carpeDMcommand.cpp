@@ -446,7 +446,7 @@ const vAdr CarpeDM::getCmdWrAdrs(uint32_t hash, uint8_t prio) {
     //get incremented Write index of requested prio
     eWrIdx = ( writeBeBytesToLeNumber<uint32_t>((uint8_t*)&x->b[BLOCK_CMDQ_WR_IDXS]) >> (prio * 8)) & Q_IDX_MAX_OVF_MSK;
     //assign to index vector
-    newIdxs = ( writeBeBytesToLeNumber<uint32_t>((uint8_t*)&x->b[BLOCK_CMDQ_WR_IDXS]) & ~(0xff << prio * 8)) | (((eWrIdx +1)  & Q_IDX_MAX_OVF_MSK) << (prio * 8));
+    newIdxs = ( writeBeBytesToLeNumber<uint32_t>((uint8_t*)&x->b[BLOCK_CMDQ_WR_IDXS]) & ~(0xff << (prio * 8))) | (((eWrIdx +1)  & Q_IDX_MAX_OVF_MSK) << (prio * 8));
     //write back so next call will find correct value without need for another download
     writeLeNumberToBeBytes<uint32_t>((uint8_t*)&x->b[BLOCK_CMDQ_WR_IDXS], newIdxs);
 
