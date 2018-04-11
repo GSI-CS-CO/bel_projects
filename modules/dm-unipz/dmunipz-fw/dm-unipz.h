@@ -82,8 +82,8 @@ typedef struct {                              // group together all information 
   uint32_t dynpar1;                           // receive from DM: 2nd 32 bit of param field
   uint32_t cmdAddr;                           // write to DM: external address of a command
   uint32_t cmdData[_T_CMD_SIZE_];             // write to DM: data of a command
-  uint32_t blockWrIdxAddr;                    // write to DM: external address of wrIdx within block
-  uint32_t blockWrIdx;                        // write to DM: updated value of wrIdx
+  uint32_t blockWrIdxsAddr;                   // write to DM: external address ofs wrIdxs within block
+  uint32_t blockWrIdxs;                       // write to DM: updated value of wrIdxs
 } dmComm;
 
 
