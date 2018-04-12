@@ -323,7 +323,7 @@ using namespace DotStr::Misc;
 
 
   int CarpeDM::upload( uint8_t opType) {
-    modTime   = getDmWrTime() * 1000000000ULL;
+    updateModTime();
     //we only regard modifications by order as modded, so we need to check for changed content before we generate the management data
     std::set<uint8_t> moddedCpus;
     for(unsigned int i = 0; i < atUp.getMemories().size(); i++) {

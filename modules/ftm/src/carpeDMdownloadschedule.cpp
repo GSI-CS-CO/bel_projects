@@ -287,7 +287,7 @@ namespace dnt = DotStr::Node::TypeVal;
     sLog << "Got back " << vDlD.size() << " data bytes " << std::endl;
     */
     // read out current time for upload mod time (seconds, but probably better to use same format as DM FW. Convert to ns)
-    modTime = getDmWrTime() * 1000000000ULL;
+    updateModTime();
 
     if(verbose) sLog << "Done." << std::endl << "Parsing ...";
     readMgmtLLMeta(); // we have to do this before parsing
