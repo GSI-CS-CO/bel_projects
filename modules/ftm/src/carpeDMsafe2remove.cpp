@@ -221,6 +221,7 @@ bool CarpeDM::updateStaleDefaultDestinations(Graph& g, AllocTable& at) {
     if(g[vChkBlock].np->isBlock()) {
       //second, inspect their queues and see if default dest is made stale by a dominant flow
       vertex_set_t sVflowDst = getDominantFlowDst(vChkBlock, g, at);
+      if(verbose) sLog << std::endl;
       for (auto& it : sVflowDst) {
         
         if (sVflowDst.size() > 1) {throw std::runtime_error(isSafeToRemove::exIntro + "updateStaleDefDst: found more than one dominant flow, must be 0..1");}
@@ -247,36 +248,51 @@ bool CarpeDM::updateStaleDefaultDestinations(Graph& g, AllocTable& at) {
 vertex_set_t CarpeDM::getDominantFlowDst(vertex_t vQ, Graph& g, AllocTable& at) {
   vertex_set_t ret;
 
-  if(verbose) sLog << "Searching for dominant flows " << g[vQ].name << std::endl;
+  //if(verbose) sLog << "Searching for dominant flows " << g[vQ].name << std::endl;
+
+  if(verbose) sLog << std::setfill(' ') << std::setw(20) << g[vQ].name;
 
   QueueReport qr;
   qr = getQReport(g, at, g[vQ].name, qr);
         
   for (int8_t prio = PRIO_IL; prio >= PRIO_LO; prio--) {
-    if (!qr.hasQ[prio]) {continue;} // if the priority doesn't exist, Ignore
+    if(verbose) sLog << "->P" << std::to_string((int)prio);
+    if (!qr.hasQ[prio]) {if(verbose) sLog << "->xX->xX->xX->xX"; continue;} // if the priority doesn't exist, Ignore
 
     for (uint8_t i, idx = qr.aQ[prio].rdIdx; idx < qr.aQ[prio].rdIdx + 4; idx++) {
       i = idx & Q_IDX_MAX_MSK;
       QueueElement& qe = qr.aQ[prio].aQe[i];
 
-      // we're going through in order. If element has a valid time in the future (> modTime), stop right here. it and all following are possibly yet unprocessed
-      if(qe.validTime > modTime) {return ret;} 
+      // if flow at read idx is not pending, this queue is empty.
+      if (!qe.pending) {if(verbose) sLog << "->eE"; continue;} 
 
-      if (qe.type != ACT_TYPE_FLOW) { 
+      // we're going through in order. If element has a valid time in the future (> modTime), stop right here. it and all following are possibly yet unprocessed
+      if(qe.validTime > modTime) {if(verbose) sLog << "->v" << std::to_string((int)qe.type) << std::endl; 
+        if(verbose) sLog << "vTime " << std::hex << qe.validTime << "mTime " << modTime << std::endl;
+        return ret;
+      } 
+
+      if (qe.type != ACT_TYPE_FLOW) {
+        if(verbose) sLog << "->t" << std::to_string((int)qe.type);
         //if the command is not a flow, we can stop here: It means the default will be used at least once, thus there is no dominant flow
         return ret;
       }  
-      // if flow is not pending, it can't be dominant. Ignore
-      if (!qe.pending) {continue;} 
+      
       //found a pending flow to idle, insert bogus vertex index to show that.
-      if (qe.flowDst == DotStr::Node::Special::sIdle) {ret.insert(-1); if(verbose) sLog << "updateStaleDefDst: Found dominant flow dst idle" << std::endl; continue;} 
+      if (qe.flowDst == DotStr::Node::Special::sIdle) {
+        ret.insert(-1); 
+        if(verbose) sLog << "->i" << std::to_string((int)qe.type);
+        //if(verbose) sLog << "updateStaleDefDst: Found dominant flow dst idle" << std::endl;
+        continue;
+      } 
       // we ruled out that the flow leads to idle. If it's not permanent, it can't be dominant. Ignore
-      if (!qe.flowPerma) {continue;} 
+      if (!qe.flowPerma) {if(verbose) sLog << "->p" << std::to_string((int)qe.type); continue;} 
       //found a dominant flow, insert its destination
       auto x = at.lookupHash(hm.lookup(qe.flowDst).get());
       if (!(at.isOk(x))) {throw std::runtime_error(isSafeToRemove::exIntro + "updateStaleDefDst: Could not find dst in download allocation table");}
-      if(verbose) sLog << "updateStaleDefDst: Found dominant flow dst " << g[x->v].name << std::endl;
-      ret.insert(x->v); 
+      //if(verbose) sLog << "updateStaleDefDst: Found dominant flow dst " << g[x->v].name << std::endl;
+      ret.insert(x->v);
+      if(verbose) sLog << "->D" << std::to_string((int)qe.type); 
       
     }
   }    
