@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 25-April-2015
  ********************************************************************************************/
-#define DMUNIPZ_FW_VERSION 0x00000f                     // make this consistent with makefile
+#define DMUNIPZ_FW_VERSION 0x000064                     // make this consistent with makefile
 
 /* standard includes */
 #include <stdio.h>
