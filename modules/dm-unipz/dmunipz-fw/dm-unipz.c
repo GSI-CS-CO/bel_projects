@@ -3,7 +3,7 @@
  *
  *  created : 2017
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 10-April-2018
+ *  version : 12-April-2018
  *
  *  lm32 program for gateway between UNILAC Pulszentrale and FAIR-style Data Master
  * 
@@ -437,7 +437,8 @@ uint32_t dmPrepCmdFlow(uint32_t blk) // prepare flow CMD for DM - need to call d
   //             |TS valid Lo|
   //             |action     |
   //             |flow dest. |
-  //             |reserved   |               
+  //             |res        | 
+  //             |...        |               
 
   uint32_t cmdAction;                                          // action flags of command
   uint32_t cmdFlowDestAddr;                                    // address of flow destination
@@ -471,6 +472,7 @@ uint32_t dmPrepCmdFlush(uint32_t blk) // prepare flush CMD for DM - need to call
   // dmCmdAddr-->|TS valid Hi  |
   //             |TS valid Lo  |
   //             |action       |
+  //             |...          | 
 
 
   uint32_t cmdAction;                                          // action flags of command
@@ -496,7 +498,8 @@ uint32_t dmPrepFlexWaitCmd(uint32_t blk, uint64_t timestamp) // prepare flexible
   //             |TS valid Lo|
   //             |action     |
   //             |TS wait Hi |
-  //             |TS wait Lo | 
+  //             |TS wait Lo |
+  //             |...        | 
 
   uint32_t cmdAction;                                          // action flags of command
   uint32_t cmdWaitTimeHi;                                      // waiting time, hi 32 bits
@@ -741,12 +744,15 @@ int16_t writeToPZU(uint16_t ifbAddr, uint16_t modAddr, uint16_t data) // write b
     
   // select module
   wData     = (modAddr << 8) | C_IO32_KANAL_0;
-  if ((busStatus = writeDevMil(pMILPiggy, ifbAddr, IFB_ADR_BUS_W, wData)) != MIL_STAT_OK) return busStatus;
+  if ((busStatus = writeDevMil(pMILPiggy, ifbAddr, IFB_ADR_BUS_W, wData)) != MIL_STAT_OK) {
+    DBPRINT1("dm-unipz: writeToPZU failed (address), MIL error code %d\n", busStatus);
+    return busStatus;
+  } // if busStatus not ok
 
   // write data word
   wData     = data;
   busStatus = writeDevMil(pMILPiggy, ifbAddr, IFB_DATA_BUS_W, wData);
-  // DBPRINT1("dm-unipz: writeToPZU, wrote wData %d\n", wData);
+  if (busStatus != MIL_STAT_OK) DBPRINT1("dm-unipz: writeToPZU failed (data), MIL error code %d\n", busStatus);
   
   return (busStatus);
 } // writeToPZU
@@ -760,10 +766,14 @@ int16_t readFromPZU(uint16_t ifbAddr, uint16_t modAddr, uint16_t *data) // read 
   
   // select module
   wData     = (modAddr << 8) | C_IO32_KANAL_0;
-  if ((busStatus = writeDevMil(pMILPiggy, ifbAddr, IFB_ADR_BUS_W, wData))  != MIL_STAT_OK) return busStatus;
+  if ((busStatus = writeDevMil(pMILPiggy, ifbAddr, IFB_ADR_BUS_W, wData))  != MIL_STAT_OK) {
+    DBPRINT1("dm-unipz: readFromPZU failed (address), MIL error code %d\n", busStatus);
+    return busStatus;
+  } // if busStatus not ok
 
   // read data
   if ((busStatus = readDevMil(pMILPiggy, ifbAddr, IFB_DATA_BUS_R, &rData)) == MIL_STAT_OK) *data = rData;
+  if (busStatus != MIL_STAT_OK) DBPRINT1("dm-unipz: readFromPZU failed (data), MIL error code %d\n", busStatus);
   
   return(busStatus);
 } // readFromPZU 
@@ -1001,15 +1011,15 @@ uint32_t entryActionConfigured()
 
   DBPRINT1("dm-unipz: connection to DM ok - 0x%08x\n", data);
 
-  // reset MIL piggy
+  // reset MIL piggy and wait
   if ((status = resetPiggyDevMil(pMILPiggy))  != MIL_STAT_OK) {
     DBPRINT1("dm-unipz: ERROR - can't reset MIL Piggy\n");
     return DMUNIPZ_STATUS_DEVBUSERROR;
   } 
-   
+  
   // check if modulbus I/O is ok
   if ((status = echoTestDevMil(pMILPiggy, IFB_ADDRESS_SIS, 0xbabe)) != MIL_STAT_OK) {
-    DBPRINT1("dm-unipz: ERROR - modulbus SIS IFK not available!\n");
+    DBPRINT1("dm-unipz: ERROR - modulbus SIS IFK not available at (ext) base address 0x%08x! Error code is %d\n", ((uint32_t)pMILPiggy & 0x7FFFFFFF), status);
     return DMUNIPZ_STATUS_DEVBUSERROR;
   }
   
