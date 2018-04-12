@@ -300,7 +300,12 @@ int16_t resetPiggyDevMil(volatile uint32_t *base)
   // just a wrapper for the function of the original library
   // replace code once original library becomes deprecated
   
-  return (int16_t)reset_mil((unsigned int *)base);
+  reset_mil((unsigned int *)base);
+
+  int i;
+  for (i = 0; i < (100 * 31 * 1000); i++) { asm("nop"); } //this is a workaround for lm32 code, see https://github.com/GSI-CS-CO/bel_projects/issues/79
+  
+  return MIL_STAT_OK;
   
 } //resetPiggyDevMil
 
