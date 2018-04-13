@@ -41,7 +41,7 @@ dmunipz-ctl -s2 dev/wbm0 | logger -t dmunipz-ctl -sp local0.info &
 #
 # some data masters
 # dmunipz-ctl dev/wbm0 ebmdm 0x00267b000408 0xc0a88040 (tsl015, user network) 
-# dmunipz-ctl dev/wbm0 ebmdm 0x00267b000407 0xc0a8803f (tsl017, production network)
+# dmunipz-ctl dev/wbm0 ebmdm 0x00267b00046b 0xc0a880f7 (tsl017, production network)
 # dmunipz-ctl dev/wbm0 ebmdm 0x00267b000422 0xc0a80c04 (tsl008, 'Hanno network')
 # dmunipz-ctl dev/wbm0 ebmdm 0x00267b000455 0xc0a80b01 (tsl404, 'Testnetz Dietrich')
 #
@@ -59,7 +59,7 @@ PROSCU=scuxl0223
 
 if  [ $(hostname) == $PROSCU ]; then   # production network
     echo -e dm-unipz - start: configuring for PRODUCTION network on $(hostname)
-    dmunipz-ctl dev/wbm0 ebmdm 0x00267b000407 0xc0a8803f
+    dmunipz-ctl dev/wbm0 ebmdm 0x00267b00046b 0xc0a880f7
     dmunipz-ctl dev/wbm0 ebmlocal 0x00267b0003f1 0xc0a8a0e5
 else                                  # test or development
     echo -e dm-unipz - start: configuring for TEST or DEVELOPMENT network on $(hostname)
