@@ -43,6 +43,7 @@ bool CarpeDM::isSafeToRemove(std::set<std::string> patterns, std::string& report
   AllocTable& at  = atDown;
   Graph gTmp, gEq;
   vertex_set_t blacklist, entries, cursors;
+  std::string optmisedAnalysisReport;
 
   //if(verbose) {sLog << "Pattern <" << pattern << "> (Entrypoint <" << sTmp << "> safe removal analysis" << std::endl;}
 
@@ -119,7 +120,7 @@ bool CarpeDM::isSafeToRemove(std::set<std::string> patterns, std::string& report
   // 3.3.2.2  Flushes are considered to have no effect except being a break in the streak
   if (optimise) {
     if(verbose) {sLog << "Starting Optimiser (Update stale defDst" << std::endl;}
-    if (updateStaleDefaultDestinations(gEq, at)) { if(verbose) {sLog << "Updated stale Default Destinations to reduce wait time." << std::endl;} }
+    if (updateStaleDefaultDestinations(gEq, at, optmisedAnalysisReport)) { if(verbose) {sLog << "Updated stale Default Destinations to reduce wait time." << std::endl;} }
   }
 
   // END Optimised Static Equivalent Model
@@ -139,6 +140,7 @@ bool CarpeDM::isSafeToRemove(std::set<std::string> patterns, std::string& report
   for (auto& it : entries)    { gEq[it].np->setFlags(NFLG_DEBUG0_SMSK); }
   for (auto& it : blacklist)  { gEq[it].np->setFlags(NFLG_PAINT_HOST_SMSK); }
   report += createDot(gEq, true);
+  report += optmisedAnalysisReport;
 
   if(verbose) sLog << "Judging safety " << std::endl;
   //calculate intersection of cursors and blacklist. If the intersection set is empty, all nodes in pattern can be safely removed
@@ -151,6 +153,11 @@ bool CarpeDM::isSafeToRemove(std::set<std::string> patterns, std::string& report
   return ( 0 == si.size() );
 }
 
+bool CarpeDM::isTraversibleEdge(edge_t e, Graph& g) {
+  std::string s = g[e].type;
+  return  (s == det::sDefDst) | (s == det::sDynFlowDst) | (s == det::sResFlowDst);
+}
+
 
 //recursively inserts all vertex idxs of the tree reachable (via in edges) from start vertex into the referenced set
 void CarpeDM::getReverseNodeTree(vertex_t v, vertex_set_t& sV, Graph& g) {
@@ -159,10 +166,12 @@ void CarpeDM::getReverseNodeTree(vertex_t v, vertex_set_t& sV, Graph& g) {
   //Do the crawl       
   boost::tie(in_begin, in_end) = in_edges(v,g);
   for (in_cur = in_begin; in_cur != in_end; ++in_cur) {
-    if (sV.find(source(*in_cur, g)) != sV.end()) break;
-    sV.insert(source(*in_cur, g));
-    //sLog << "Adding Tree Node " << g[source(*in_cur, g)].name << std::endl;
-    getReverseNodeTree(source(*in_cur, g), sV, g);
+    if (isTraversibleEdge(*in_cur, g)) { // if its not traversible, ignore it
+      if (sV.find(source(*in_cur, g)) != sV.end()) break;
+      sV.insert(source(*in_cur, g));
+      //sLog << "Adding Tree Node " << g[source(*in_cur, g)].name << std::endl;
+      getReverseNodeTree(source(*in_cur, g), sV, g);
+    }
   }
 }
 
@@ -212,7 +221,7 @@ bool CarpeDM::addResidentDestinations(Graph& gEq, Graph& gOrig, vertex_set_t cur
   return didWork;
 }
 
-bool CarpeDM::updateStaleDefaultDestinations(Graph& g, AllocTable& at) {
+bool CarpeDM::updateStaleDefaultDestinations(Graph& g, AllocTable& at, std::string& qAnalysis) {
   bool didWork = false;
   edge_t edgeToDelete;
 
@@ -220,12 +229,12 @@ bool CarpeDM::updateStaleDefaultDestinations(Graph& g, AllocTable& at) {
     //first, find blocks
     if(g[vChkBlock].np->isBlock()) {
       //second, inspect their queues and see if default dest is made stale by a dominant flow
-      vertex_set_t sVflowDst = getDominantFlowDst(vChkBlock, g, at);
+      vertex_set_t sVflowDst = getDominantFlowDst(vChkBlock, g, at, qAnalysis);
       if(verbose) sLog << std::endl;
       for (auto& it : sVflowDst) {
         
         if (sVflowDst.size() > 1) {throw std::runtime_error(isSafeToRemove::exIntro + "updateStaleDefDst: found more than one dominant flow, must be 0..1");}
-        if(it != -1) { boost::add_edge(vChkBlock, it, myEdge(det::sDefDst), g); }
+        if(it != -1) { boost::add_edge(vChkBlock, it, myEdge(det::sDomFlowDst), g); if (verbose)  sLog << "updateStaleDefDst: Adding edge to " << g[it].name << std::endl; }
         else { if (verbose)  sLog << "updateStaleDefDst: New default would be idle, skipping edge creation" << std::endl; }
         //find old default edge and mark for deletion
         Graph::out_edge_iterator out_begin, out_end, out_cur;
@@ -234,46 +243,47 @@ bool CarpeDM::updateStaleDefaultDestinations(Graph& g, AllocTable& at) {
           if(g[*out_cur].type == det::sDefDst) {
             if (verbose) sLog << "updateStaleDefDst: Found old default dst <" << g[target(*out_cur, g)].name << "> of block <" << g[vChkBlock].name << std::endl;
             didWork = true;
-            edgeToDelete = *out_cur;
+            //edgeToDelete = *out_cur;
+            g[*out_cur].type = det::sBadDefDst;
           } 
         }
 
       }
     }
   }
-  if (didWork) boost::remove_edge(edgeToDelete, g);
+  //if (didWork) boost::remove_edge(edgeToDelete, g);
   return didWork;
 }
 
-vertex_set_t CarpeDM::getDominantFlowDst(vertex_t vQ, Graph& g, AllocTable& at) {
+vertex_set_t CarpeDM::getDominantFlowDst(vertex_t vQ, Graph& g, AllocTable& at, std::string& qAnalysis) {
   vertex_set_t ret;
 
   //if(verbose) sLog << "Searching for dominant flows " << g[vQ].name << std::endl;
 
-  if(verbose) sLog << std::setfill(' ') << std::setw(20) << g[vQ].name;
+  qAnalysis += "//" + g[vQ].name;
 
   QueueReport qr;
   qr = getQReport(g, at, g[vQ].name, qr);
         
   for (int8_t prio = PRIO_IL; prio >= PRIO_LO; prio--) {
-    if(verbose) sLog << "->P" << std::to_string((int)prio);
-    if (!qr.hasQ[prio]) {if(verbose) sLog << "->xX->xX->xX->xX"; continue;} // if the priority doesn't exist, Ignore
+    qAnalysis += "#P" + std::to_string((int)prio);
+    if (!qr.hasQ[prio]) {qAnalysis += "->xX->xX->xX->xX"; continue;} // if the priority doesn't exist, Ignore
 
     for (uint8_t i, idx = qr.aQ[prio].rdIdx; idx < qr.aQ[prio].rdIdx + 4; idx++) {
       i = idx & Q_IDX_MAX_MSK;
       QueueElement& qe = qr.aQ[prio].aQe[i];
 
       // if flow at read idx is not pending, this queue is empty.
-      if (!qe.pending) {if(verbose) sLog << "->eE"; continue;} 
+      if (!qe.pending) {qAnalysis +="->eE"; continue;} 
 
       // we're going through in order. If element has a valid time in the future (> modTime), stop right here. it and all following are possibly yet unprocessed
-      if(qe.validTime > modTime) {if(verbose) sLog << "->v" << std::to_string((int)qe.type) << std::endl; 
-        if(verbose) sLog << "vTime " << std::hex << qe.validTime << "mTime " << modTime << std::endl;
+      if(qe.validTime > modTime) {qAnalysis += "->v" + std::to_string((int)qe.type) + "\n"; 
+        qAnalysis += "//vTime " + std::to_string((int)qe.validTime) + " mTime " + std::to_string((int)modTime);
         return ret;
       } 
 
       if (qe.type != ACT_TYPE_FLOW) {
-        if(verbose) sLog << "->t" << std::to_string((int)qe.type);
+        qAnalysis += "->t" + std::to_string((int)qe.type);
         //if the command is not a flow, we can stop here: It means the default will be used at least once, thus there is no dominant flow
         return ret;
       }  
@@ -281,21 +291,22 @@ vertex_set_t CarpeDM::getDominantFlowDst(vertex_t vQ, Graph& g, AllocTable& at) 
       //found a pending flow to idle, insert bogus vertex index to show that.
       if (qe.flowDst == DotStr::Node::Special::sIdle) {
         ret.insert(-1); 
-        if(verbose) sLog << "->i" << std::to_string((int)qe.type);
+        qAnalysis += "->i" + std::to_string((int)qe.type);
         //if(verbose) sLog << "updateStaleDefDst: Found dominant flow dst idle" << std::endl;
         continue;
       } 
       // we ruled out that the flow leads to idle. If it's not permanent, it can't be dominant. Ignore
-      if (!qe.flowPerma) {if(verbose) sLog << "->p" << std::to_string((int)qe.type); continue;} 
+      if (!qe.flowPerma) {qAnalysis +=  "->p" + std::to_string((int)qe.type); continue;} 
       //found a dominant flow, insert its destination
       auto x = at.lookupHash(hm.lookup(qe.flowDst).get());
       if (!(at.isOk(x))) {throw std::runtime_error(isSafeToRemove::exIntro + "updateStaleDefDst: Could not find dst in download allocation table");}
       //if(verbose) sLog << "updateStaleDefDst: Found dominant flow dst " << g[x->v].name << std::endl;
       ret.insert(x->v);
-      if(verbose) sLog << "->D" << std::to_string((int)qe.type); 
+      qAnalysis +=  "->D" + std::to_string((int)qe.type); 
       
     }
-  }    
+  }
+  qAnalysis += "\n"; 
   return ret;
 }      
 

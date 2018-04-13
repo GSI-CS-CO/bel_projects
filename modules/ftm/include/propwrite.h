@@ -134,6 +134,7 @@ template <class Name>
       else if (type[v] == det::sDynRes)      out << ec::Edge::sLookArgument;
       else if (type[v] == det::sDynFlowDst)  out << ec::Edge::sLookDebug0;
       else if (type[v] == det::sResFlowDst)  out << ec::Edge::sLookDebug1;
+      else if (type[v] == det::sDomFlowDst)  out << ec::Edge::sLookDebug2;
       else                                   out << ec::Edge::sLookMeta;
       out <<  "]";   
     }

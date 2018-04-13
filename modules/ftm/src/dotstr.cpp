@@ -56,6 +56,7 @@ namespace DotStr {
       const std::string sAny          = "";           // Wildcard type (carpeDM internal)
       const std::string sDynFlowDst   = "dynflowdst"; // Auxiliary dynamic type for safe removal check  (carpeDM internal)
       const std::string sResFlowDst   = "resflowdst"; // Auxiliary resident type for safe removal check  (carpeDM internal)
+      const std::string sDomFlowDst   = "domflowdst"; // Auxiliary dominant type for safe removal check  (carpeDM internal)
     }
   }
 
@@ -187,8 +188,8 @@ namespace DotStr {
         const std::string sLookPaint0    = "fillcolor = \"green\"";
         const std::string sLookPaint1    = "fillcolor = \"rosybrown1\"";
         const std::string sLookDebug0    = "fillcolor = \"crimson\", fontname=\"Times-Bold\", fontcolor = \"cyan\"";
-        const std::string sLookDebug1    = "fontname=\"Times-Bold\", fontcolor = \"blue2\"";
-        const std::string sLookDebug2    = "fillcolor = \"cyan\"";
+        const std::string sLookDebug1    = "fontname=\"Times-Bold\", fontcolor = \"blue2\", fontsize=\"16\"";
+        const std::string sLookDebug2    = "fontname=\"Times-Bold\", fillcolor = \"cyan\"";
 
         const std::string sLookPatEntry  = "penwidth=2, color = \"darkorange3\"";
         const std::string sLookPatExit   = "penwidth=2, color = \"purple\"";
@@ -224,6 +225,7 @@ namespace DotStr {
       const std::string sLookArgument  = "color     = \"pink\"";
       const std::string sLookDebug0    = "color     = \"maroon3\"";
       const std::string sLookDebug1    = "color     = \"maroon4\"";
+      const std::string sLookDebug2    = "color     = \"cyan\"";
       const std::string sLookbad       = "color     = \"orange\", style     = \"dashed\"";
       
     }   

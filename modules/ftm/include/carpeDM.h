@@ -113,10 +113,11 @@ private:
 
   bool addResidentDestinations(Graph& gEq,  Graph& gOrig, vertex_set_t cursors);
   bool addDynamicDestinations(Graph& g, AllocTable& at);
-  bool updateStaleDefaultDestinations(Graph& g, AllocTable& at);
-  vertex_set_t getDominantFlowDst(vertex_t vQ, Graph& g, AllocTable& at);
+  bool updateStaleDefaultDestinations(Graph& g, AllocTable& at, std::string& qAnalysis);
+  vertex_set_t getDominantFlowDst(vertex_t vQ, Graph& g, AllocTable& at, std::string& qAnalysis);
   vertex_set_t getDynamicDestinations(vertex_t vQ, Graph& g, AllocTable& at);
   void getReverseNodeTree(vertex_t v, vertex_set_t& sV, Graph& g);
+  bool isTraversibleEdge(edge_t e, Graph& g);
   
   vertex_set_t getAllCursors(bool activeOnly);
   vStrC getGraphPatterns(Graph& g);

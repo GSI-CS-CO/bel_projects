@@ -54,7 +54,8 @@ namespace DotStr {
       extern const std::string sMeta;
       extern const std::string sAny;
       extern const std::string sDynFlowDst;
-      extern const std::string sResFlowDst;  
+      extern const std::string sResFlowDst;
+      extern const std::string sDomFlowDst;
     }
   }
 
@@ -219,6 +220,7 @@ namespace DotStr {
       extern const std::string sLookArgument;
       extern const std::string sLookDebug0;
       extern const std::string sLookDebug1;
+      extern const std::string sLookDebug2;
       extern const std::string sLookbad;
       
     }   
