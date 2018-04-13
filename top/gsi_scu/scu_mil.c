@@ -234,6 +234,8 @@ int scub_reset_mil(volatile unsigned short *base, int slot) {
   usleep(1000);
   base[CALC_OFFS(slot) + MIL_SIO3_RST] = 0xff;
   usleep(100);      // added by db; if not, an subsequent write/read results in an error -3
+
+  return OKAY; 
   //for (i = TASKMIN; i <= TASKMAX; i++) {
     //data = 0xffff & base[CALC_OFFS(slot) + MIL_SIO3_RX_TASK1 + i - 1];
   ////}
