@@ -3,7 +3,7 @@
  *
  *  created : 2017
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 12-April-2018
+ *  version : 13-April-2018
  *
  * Command-line interface for dmunipz
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 17-May-2017
  ********************************************************************************************/
-#define DMUNIPZ_X86_VERSION "0.1.0"
+#define DMUNIPZ_X86_VERSION "0.1.1"
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -449,7 +449,7 @@ int main(int argc, char** argv) {
   if (getVersion) {
     eb_device_read(device, dmunipz_version, EB_BIG_ENDIAN|EB_DATA32, &data, 0, eb_block);
     version = data;
-    printf("dm-unipz: software (firmware) version %s (%06d)\n",  DMUNIPZ_X86_VERSION, version);     
+    printf("dm-unipz: software (firmware) version %s (%06x)\n",  DMUNIPZ_X86_VERSION, version);     
   } // if getEBVersion
 
   if (getInfo) {

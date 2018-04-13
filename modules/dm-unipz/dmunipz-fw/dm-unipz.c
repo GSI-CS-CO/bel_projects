@@ -3,7 +3,7 @@
  *
  *  created : 2017
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 12-April-2018
+ *  version : 13-April-2018
  *
  *  lm32 program for gateway between UNILAC Pulszentrale and FAIR-style Data Master
  * 
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 25-April-2015
  ********************************************************************************************/
-#define DMUNIPZ_FW_VERSION 0x000064                     // make this consistent with makefile
+#define DMUNIPZ_FW_VERSION 0x000101                                   // make this consistent with makefile
 
 /* standard includes */
 #include <stdio.h>
@@ -539,9 +539,12 @@ void dmChangeBlock(uint32_t blk)     // alter a block within the Data Master on-
 
 void init() // typical init for lm32
 {
-  discoverPeriphery();           // mini-sdb ...
-  uart_init_hw();                
+  discoverPeriphery();        // mini-sdb ...
+  uart_init_hw();             // needed by WR console   
   cpuId = getCpuIdx();
+
+  timer_init(1);              // needed by usleep_init() 
+  usleep_init();              // needed by scu_mil.c
 
   // set MSI IRQ handler
   isr_table_clr();
@@ -1072,7 +1075,7 @@ uint32_t exitActionError()
 } // exitActionError
 
 
-void cmdHandler(uint32_t *reqState) // handle commands from the outside world
+void cmdHandler(uint32_t *reqState, uint32_t *statusTransfer) // handle commands from the outside world
 {
   uint32_t cmd;
 
@@ -1102,10 +1105,12 @@ void cmdHandler(uint32_t *reqState) // handle commands from the outside world
       break;
     case DMUNIPZ_CMD_RELEASETK :
       releaseTK();   // force release of TK request independently of state or status
+      *statusTransfer = *statusTransfer |  DMUNIPZ_TRANS_RELTK;
       DBPRINT1("dm-unipz: received cmd %d, forcing release of TK request\n", cmd);
       break;
     case DMUNIPZ_CMD_RELEASEBEAM :
       releaseBeam(); // force release of beam request indpendently of state or status
+      *statusTransfer = *statusTransfer |  DMUNIPZ_TRANS_RELBEAM;   
       DBPRINT1("dm-unipz: received cmd %d, forcing release of beam request\n", cmd);
       break;
     default:
@@ -1308,7 +1313,7 @@ void main(void) {
   initSharedMem();                                                          // initialize shared memory
 
   while (1) {
-    cmdHandler(&reqState);                                                  // check for commands and possibly request state changes
+    cmdHandler(&reqState, &statusTransfer);                                 // check for commands and possibly request state changes
     status = changeState(&actState, &reqState, status);                     // handle requested state changes
     switch(actState)                                                        // state specific do actions
       {
