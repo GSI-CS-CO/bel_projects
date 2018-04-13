@@ -525,9 +525,6 @@ using namespace DotStr::Misc;
     atDown.clearMemories();
     gt.clear();
     hm.clear();
-   
-
-
   }
 
   void CarpeDM::checkTablesForSubgraph(Graph& g) {
@@ -561,9 +558,11 @@ using namespace DotStr::Misc;
     generateBlockMeta(g);
     baseUploadOnDownload();
     std::string report, reportOptimised; 
-    if (!isSafeToRemove(g, report, false)) {printf("Cannot safely be removed (normal)\n"); writeTextFile("safetyReportNormal", report); }
-    if (!isSafeToRemove(g, reportOptimised, true)) {printf("Cannot safely be removed (optimised)\n"); writeTextFile("safetyReportOptimised", reportOptimised); }
-    if (!(force | isSafeToRemove(g, report))) {throw std::runtime_error("Cannot safely be removed\n");}
+    bool conservative = isSafeToRemove(g, report, false), optimised = isSafeToRemove(g, reportOptimised, true);
+    //writeTextFile("safetyReportNormal.dot", report);
+    //writeTextFile("safetyReportOptimised.dot", reportOptimised); 
+    if (verbose) sErr << "Conservative Safe2Remove: " << (int)conservative << std::endl << report << std::endl << "Optimised Safe2Remove: " << (int)optimised << std::endl << reportOptimised << std::endl;
+    if (!(force | (optimised))) {throw std::runtime_error("Cannot safely be removed\n");}
     
     subtraction(g);
     //writeUpDotFile("upload.dot", false);
@@ -597,11 +596,13 @@ using namespace DotStr::Misc;
       }
     }
     
-    std::string report, reportOptimised; 
-    if (!isSafeToRemove(g, report, false)) {printf("Cannot safely be removed (normal)\n"); writeTextFile("safetyReportNormal.dot", report); }
-    if (!isSafeToRemove(g, reportOptimised, true)) {printf("Cannot safely be removed (optimised)\n"); writeTextFile("safetyReportOptimised.dot", reportOptimised); }  
+    std::string report, reportOptimised;
+    bool conservative = isSafeToRemove(g, report, false), optimised = isSafeToRemove(g, reportOptimised, true);
+    //writeTextFile("safetyReportNormal.dot", report);
+    //writeTextFile("safetyReportOptimised.dot", reportOptimised); 
+    if (verbose) sErr << "Conservative Safe2Remove: " << (int)conservative << std::endl << report << std::endl << "Optimised Safe2Remove: " << (int)optimised << std::endl << reportOptimised << std::endl;
+    if (!(force | (optimised))) {throw std::runtime_error("Cannot safely be removed\n");}
 
-    if (!(force | isSafeToRemove(gTmpRemove, report))) {throw std::runtime_error("Cannot safely be removed\n");}
     subtraction(gTmpRemove);
     //writeUpDotFile("upload.dot", false);
     validate(gUp, atUp);
