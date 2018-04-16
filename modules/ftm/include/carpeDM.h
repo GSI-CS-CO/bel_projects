@@ -81,8 +81,6 @@ private:
   int overwrite(Graph& g,  bool force);
   int clear_raw(bool force);
   bool validate(Graph& g, AllocTable& at);
-  
-  int sendCommands(Graph &); //Sends a dotfile of commands to the DM
 
   // Upload
   vEbwrs gatherUploadVector(std::set<uint8_t> moddedCpus, uint32_t modCnt, uint8_t opType);
@@ -281,7 +279,7 @@ public:
 std::pair<int, int> findRunningPattern(const std::string& sPattern); // get cpu and thread assignment of running pattern
                bool isPatternRunning(const std::string& sPattern);                  // true if Pattern <x> is running
                void updateModTime();
-               void adjustValidTime(uint64_t tValid, bool abs);                            // Makes sure the given valid time is slightly in the future. Uses modTime as 'now'
+               void adjustValidTime(uint64_t& tValid, bool abs);                            // Makes sure the given valid time is slightly in the future. Uses modTime as 'now'
 
   // Commands to DM hardware ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
                void forceThrCursor(uint8_t cpuIdx, uint8_t thrIdx); //DEBUG ONLY !!!
