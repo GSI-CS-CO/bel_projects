@@ -559,8 +559,8 @@ using namespace DotStr::Misc;
     baseUploadOnDownload();
     std::string report, reportOptimised; 
     bool conservative = isSafeToRemove(g, report, false), optimised = isSafeToRemove(g, reportOptimised, true);
-    //writeTextFile("safetyReportNormal.dot", report);
-    //writeTextFile("safetyReportOptimised.dot", reportOptimised); 
+    writeTextFile("safetyReportNormal.dot", report);
+    writeTextFile("safetyReportOptimised.dot", reportOptimised); 
     if (verbose) sErr << "Conservative Safe2Remove: " << (int)conservative << std::endl << report << std::endl << "Optimised Safe2Remove: " << (int)optimised << std::endl << reportOptimised << std::endl;
     if (!(force | (optimised))) {throw std::runtime_error("Cannot safely be removed\n");}
     

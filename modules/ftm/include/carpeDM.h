@@ -17,6 +17,7 @@
 #include "hashmap.h"
 #include "alloctable.h"
 #include "grouptable.h"
+#include "covenanttable.h"
 #include "validation.h"
 
 
@@ -45,6 +46,7 @@ private:
   int cpuQty = -1;
   HashMap hm;
   GroupTable gt;
+  CovenantTable ct;
   AllocTable atUp;
   Graph gUp;
   AllocTable atDown;
@@ -111,11 +113,12 @@ private:
 
   bool addResidentDestinations(Graph& gEq,  Graph& gOrig, vertex_set_t cursors);
   bool addDynamicDestinations(Graph& g, AllocTable& at);
-  bool updateStaleDefaultDestinations(Graph& g, AllocTable& at, std::string& qAnalysis);
-  vertex_set_t getDominantFlowDst(vertex_t vQ, Graph& g, AllocTable& at, std::string& qAnalysis);
+  bool updateStaleDefaultDestinations(Graph& g, AllocTable& at, CovenantTable& cov, std::string& qAnalysis);
+  vertex_set_t getDominantFlowDst(vertex_t vQ, Graph& g, AllocTable& at, CovenantTable& covTab, std::string& qAnalysis);
   vertex_set_t getDynamicDestinations(vertex_t vQ, Graph& g, AllocTable& at);
-  void getReverseNodeTree(vertex_t v, vertex_set_t& sV, Graph& g);
-  bool isTraversibleEdge(edge_t e, Graph& g);
+  void getReverseNodeTree(vertex_t v, vertex_set_t& sV, Graph& g, vertex_set_map_t& covenantsPerVertex, vertex_t covenant = null_vertex);
+  bool isOptimisableEdge(edge_t e, Graph& g);
+  bool isSafetyCritical(vertex_set_t& covenants);
   
   vertex_set_t getAllCursors(bool activeOnly);
   vStrC getGraphPatterns(Graph& g);

@@ -39,11 +39,14 @@ bool CarpeDM::isSafeToRemove(const std::string& pattern, std::string& report, bo
 
 
 bool CarpeDM::isSafeToRemove(std::set<std::string> patterns, std::string& report, bool optimise) {
+  bool isSafe = true;
   Graph& g        = gDown;
   AllocTable& at  = atDown;
+  CovenantTable ctAux; //Global CovenantTable is called ct
   Graph gTmp, gEq;
-  vertex_set_t blacklist, entries, cursors;
-  std::string optmisedAnalysisReport;
+  vertex_set_t blacklist, entries, cursors, covenants; //hashes of all covenants
+  vertex_set_map_t covenantsPerVertex;
+  std::string optmisedAnalysisReport, covenantReport;
 
   //if(verbose) {sLog << "Pattern <" << pattern << "> (Entrypoint <" << sTmp << "> safe removal analysis" << std::endl;}
 
@@ -108,68 +111,113 @@ bool CarpeDM::isSafeToRemove(std::set<std::string> patterns, std::string& report
   // END Basic Static Equivalent Model //
 
   // BEGIN Optimised Static Equivalent Model
-  // Under certain conditions, (offending) default destinations can be replaced. These are:
-  // 1. The block has Queue(s)
-  // 2. The Queue(s) contains at least one permanent flow to a different destination than the blocks current default
-  // 3. The default destination will never be called again. This is the case if:
-  // 3.1 The permanent flow is pending
-  // 3.2 The permanent flow is valid; its valid time is in the past compared to the modtime read before the cursor read
-  // 3.3 Queue always overrides default until permanent flow sets new default. This happens if:
-  // 3.3.1  The permanent flow is the next due element over all queues (pole position)
-  // 3.3.2  The permanent flow is preceded by an unbroken streak of flows over all queues (all pending and valid)
-  // 3.3.2.1  Any other type of command before the permanent flow signifies a broken streak
-  // 3.3.2.2  Flushes are considered to have no effect except being a break in the streak
+  // Under certain conditions, (offending) default destinations can be replaced
   if (optimise) {
     if(verbose) {sLog << "Starting Optimiser (Update stale defDst)" << std::endl;}
-    if (updateStaleDefaultDestinations(gEq, at, optmisedAnalysisReport)) { if(verbose) {sLog << "Updated stale Default Destinations to reduce wait time." << std::endl;} }
+    if (updateStaleDefaultDestinations(gEq, at, ctAux, optmisedAnalysisReport)) { if(verbose) {sLog << "Updated stale Default Destinations to reduce wait time." << std::endl;} }
   }
 
   // END Optimised Static Equivalent Model
+
+  //covenant: promise not to clear/reorder a given block's queues
 
   // Crawl and map active areas
   //crawl all reverse trees we can reach from the given entries and add their nodes to the blacklist
   for (auto& vEntry : entries) {
     if(verbose) { sLog << "Starting Crawler from " << gEq[vEntry].name << std::endl; }
     vertex_set_t tmpTree;
-    getReverseNodeTree(vEntry, tmpTree, gEq);
+    getReverseNodeTree(vEntry, tmpTree, gEq, covenantsPerVertex);
     blacklist.insert(tmpTree.begin(), tmpTree.end());
   }
-  if(verbose) sLog << "Creating report " << std::endl;
-  //Create Debug Output File
-  BOOST_FOREACH( vertex_t v, vertices(gEq) ) { gEq[v].np->clrFlags(NFLG_PAINT_LM32_SMSK); }
-  for (auto& it : cursors)    { gEq[it].np->setFlags(NFLG_DEBUG1_SMSK); }
-  for (auto& it : entries)    { gEq[it].np->setFlags(NFLG_DEBUG0_SMSK); }
-  for (auto& it : blacklist)  { gEq[it].np->setFlags(NFLG_PAINT_HOST_SMSK); }
-  report += createDot(gEq, true);
-  report += optmisedAnalysisReport;
 
   if(verbose) sLog << "Judging safety " << std::endl;
   //calculate intersection of cursors and blacklist. If the intersection set is empty, all nodes in pattern can be safely removed
   vertex_set_t si;
   set_intersection(blacklist.begin(),blacklist.end(),cursors.begin(),cursors.end(), std::inserter(si,si.begin()));
 
-  return ( 0 == si.size() );
+  //create set of all covenants which must be honoured so the prediction will hold. Because of the propagation along reverse trees, doing it for intersection members is sufficient
+  for (auto& it : si)  { 
+    covenants.insert(covenantsPerVertex[it].begin(), covenantsPerVertex[it].end()); 
+    if (verbose) { 
+      sLog << gEq[it].name << "-- > {";
+
+      for (auto& itPv : covenantsPerVertex[it]) { sLog << ((itPv != null_vertex) ? gEq[itPv].name : "NULL") << ", "; }
+      sLog << std::endl;
+    }
+
+  }
+
+
+  if(isSafetyCritical(covenants)) isSafe = false; // if a safety critical node (cov set contains NO_COVENANT) is on the intersection with cursor set, it's unsafe
+ 
+  if(verbose) sLog << "Creating report " << std::endl;
+  //Create Debug Output File
+  BOOST_FOREACH( vertex_t v, vertices(gEq) ) { gEq[v].np->clrFlags(NFLG_PAINT_LM32_SMSK); }
+  for (auto& it : cursors)    { gEq[it].np->setFlags(NFLG_DEBUG1_SMSK); }
+  for (auto& it : entries)    { gEq[it].np->setFlags(NFLG_DEBUG0_SMSK); }
+  for (auto& it : blacklist)  {
+    if(!optimise || (optimise && isSafetyCritical(covenantsPerVertex[it]))) gEq[it].np->setFlags(NFLG_PAINT_HOST_SMSK);
+  }
+  report += createDot(gEq, true);
+  
+  if (optimise) {
+    report += optmisedAnalysisReport;
+
+    //if(isSafe) { //Showing a list of covenants only makes sense if they'd do us any good
+      //if (covenants.size() > 0) {
+        report += "//Covenants to honour:\n";
+        //}
+      for (auto& it : covenants)  {
+        if (it == null_vertex) {report += "//None\n"; continue;}
+        std::string covName = gEq[it].name;
+        //find covname in ctAux and copy found entry to ct watchlist
+        auto x = ctAux.lookup(covName);
+        if (!ctAux.isOk(x)) { throw std::runtime_error(isSafeToRemove::exIntro + ": Lookup of <" + covName + "> in covenantAuxTable failed\n");}
+        if (!ct.insert(x))  { throw std::runtime_error(isSafeToRemove::exIntro + ": Insertion of <" + covName + "> in covenantTable failed\n");} ;
+        //and report
+        report += "//" + covName + " p " + std::to_string(x->prio) + " s " + std::to_string(x->slot) + " chk 0x" + std::to_string(x->chkSum) + "\n";
+      }
+      report += covenantReport;
+    //}
+  }
+
+  return isSafe;
 }
 
-bool CarpeDM::isTraversibleEdge(edge_t e, Graph& g) {
-  std::string s = g[e].type;
-  return  (s == det::sDefDst) | (s == det::sDynFlowDst) | (s == det::sResFlowDst);
+bool CarpeDM::isOptimisableEdge(edge_t e, Graph& g) {
+  return (g[e].type == det::sBadDefDst);
+}
+
+bool CarpeDM::isSafetyCritical(vertex_set_t& c) {
+  if (c.find(null_vertex) != c.end()) return true;
+  else return false;
 }
 
 
 //recursively inserts all vertex idxs of the tree reachable (via in edges) from start vertex into the referenced set
-void CarpeDM::getReverseNodeTree(vertex_t v, vertex_set_t& sV, Graph& g) {
+void CarpeDM::getReverseNodeTree(vertex_t v, vertex_set_t& sV, Graph& g, vertex_set_map_t& covenantsPerVertex, vertex_t covenant) {
 
   Graph::in_edge_iterator in_begin, in_end, in_cur;
   //Do the crawl       
   boost::tie(in_begin, in_end) = in_edges(v,g);
   for (in_cur = in_begin; in_cur != in_end; ++in_cur) {
-    if (isTraversibleEdge(*in_cur, g)) { // if its not traversible, ignore it
-      if (sV.find(source(*in_cur, g)) != sV.end()) break;
-      sV.insert(source(*in_cur, g));
-      //sLog << "Adding Tree Node " << g[source(*in_cur, g)].name << std::endl;
-      getReverseNodeTree(source(*in_cur, g), sV, g);
-    }
+    
+    if (sV.find(source(*in_cur, g)) != sV.end()) break;
+    if (verbose) { sLog << g[source(*in_cur, g)].name << "-- " << g[*in_cur].type << " -->" << g[target(*in_cur, g)].name << std::endl; }
+    if (isOptimisableEdge(*in_cur, g)) {
+    
+      if (verbose) { sLog << " Optimisable:  " << g[source(*in_cur, g)].name << "->" << g[target(*in_cur, g)].name << std::endl; }
+      if (covenant == null_vertex) { 
+        covenant = source(*in_cur, g); 
+        if (verbose) sLog << "Setting covenant " << g[source(*in_cur, g)].name << std::endl;
+      } //acquire the first covenant we come accross and propagate it
+     
+    }  
+    covenantsPerVertex[source(*in_cur, g)].insert(covenant);
+    sV.insert(source(*in_cur, g));
+    //sLog << "Adding Tree Node " << g[source(*in_cur, g)].name << std::endl;
+    getReverseNodeTree(source(*in_cur, g), sV, g, covenantsPerVertex, covenant);
+    
   }
 }
 
@@ -177,6 +225,7 @@ void CarpeDM::getReverseNodeTree(vertex_t v, vertex_set_t& sV, Graph& g) {
 
 bool CarpeDM::addResidentDestinations(Graph& gEq, Graph& gOrig, vertex_set_t cursors) {
   vertex_set_t resCmds; // prepare the set of flow commands to speed things up
+  vertex_set_map_t dummy; // this doesn't need to look out for covenant sets, ignore
   BOOST_FOREACH( vertex_t vChkResCmd, vertices(gEq) ) {if (gEq[vChkResCmd].type == dnt::sCmdFlow) resCmds.insert(vChkResCmd);}
   bool addEdge = (resCmds.size() > 0);
   bool didWork = false;
@@ -190,7 +239,7 @@ bool CarpeDM::addResidentDestinations(Graph& gEq, Graph& gOrig, vertex_set_t cur
       bool found = false;
 
       //find out if there is a path from any of the cursors to this command
-      getReverseNodeTree(vRc, tmpTree, gEq);
+      getReverseNodeTree(vRc, tmpTree, gEq, dummy);
       set_intersection(tmpTree.begin(),tmpTree.end(),cursors.begin(),cursors.end(), std::inserter(si,si.begin()));
       if ( si.size() > 0 ) {
         //found a path. now check if there already is an equivalent edge between this command's target block and its destination
@@ -219,7 +268,7 @@ bool CarpeDM::addResidentDestinations(Graph& gEq, Graph& gOrig, vertex_set_t cur
   return didWork;
 }
 
-bool CarpeDM::updateStaleDefaultDestinations(Graph& g, AllocTable& at, std::string& qAnalysis) {
+bool CarpeDM::updateStaleDefaultDestinations(Graph& g, AllocTable& at, CovenantTable& covTab, std::string& qAnalysis) {
   bool didWork = false;
   edge_t edgeToDelete;
 
@@ -227,7 +276,7 @@ bool CarpeDM::updateStaleDefaultDestinations(Graph& g, AllocTable& at, std::stri
     //first, find blocks
     if(g[vChkBlock].np->isBlock()) {
       //second, inspect their queues and see if default dest is made stale by a dominant flow
-      vertex_set_t sVflowDst = getDominantFlowDst(vChkBlock, g, at, qAnalysis);
+      vertex_set_t sVflowDst = getDominantFlowDst(vChkBlock, g, at, covTab, qAnalysis);
       if(verbose) sLog << std::endl;
       for (auto& it : sVflowDst) {
         
@@ -251,7 +300,7 @@ bool CarpeDM::updateStaleDefaultDestinations(Graph& g, AllocTable& at, std::stri
   return didWork;
 }
 
-vertex_set_t CarpeDM::getDominantFlowDst(vertex_t vQ, Graph& g, AllocTable& at, std::string& qAnalysis) {
+vertex_set_t CarpeDM::getDominantFlowDst(vertex_t vQ, Graph& g, AllocTable& at, CovenantTable& covTab, std::string& qAnalysis) {
   vertex_set_t ret;
 
   
@@ -298,6 +347,7 @@ vertex_set_t CarpeDM::getDominantFlowDst(vertex_t vQ, Graph& g, AllocTable& at, 
       if (!(at.isOk(x))) {throw std::runtime_error(isSafeToRemove::exIntro + "updateStaleDefDst: Could not find dst in download allocation table");}
       if(verbose) sLog << "updateStaleDefDst: Found dominant flow dst " << g[x->v].name << std::endl;
       ret.insert(x->v);
+      covTab.insert(g[vQ].name, (uint8_t)prio, i, qe); //save which element in which queue of which block is eligible to save our arse
       qAnalysis +=  "->D" + std::to_string((int)qe.type); 
     }
   }

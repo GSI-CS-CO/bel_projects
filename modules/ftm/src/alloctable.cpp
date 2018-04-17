@@ -155,6 +155,8 @@
         auto* next = (MgmtMeta*)&(*(itVec[idx+1])); // //TODO: Find a more sensible solution. Workaround: cast this, otherwise bloody multi-index container won't let me write to my own buffers !
         writeLeNumberToBeBytes((uint8_t*)&(x->b[NODE_DEF_DEST_PTR]), adrConv(AdrType::MGMT, AdrType::EXT, next->cpu, next->adr)); //Link to next Element
       } else {
+        //insert covenant
+
         writeLeNumberToBeBytes((uint8_t*)&(x->b[NODE_DEF_DEST_PTR]), LM32_NULL_PTR); //Last element, null link to next element
       }
       bytesLeft -= bytesToCopy;
