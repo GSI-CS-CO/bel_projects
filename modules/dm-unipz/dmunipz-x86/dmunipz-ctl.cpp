@@ -55,6 +55,28 @@
 #include <dm-unipz.h>
 #include <dm-unipz_smmap.h>
 
+// MASP
+#ifdef USEMASP
+#include "MASP/Emitter/StatusEmitter.h"
+#include "MASP/StatusDefinition/DeviceStatus.h"
+#include "MASP/Util/Logger.h"
+#include "MASP/Common/StatusNames.h"
+#include <boost/thread/thread.hpp> // (sleep)
+#include <iostream>
+#include <string>
+
+MASP::StatusEmitterConfig get_config() {
+  std::string source_id = "huhu.scuxl0033";    // provide a unique emitter name
+  bool productive = false;                     // send to pro/dev masp
+  MASP::StatusEmitterConfig config = MASP::StatusEmitterConfig(
+                                                               MASP::StatusEmitterConfig::CUSTOM_EMITTER_DEFAULT(),
+                                                               source_id,
+                                                               productive
+                                                               );
+  return config;
+}
+#endif
+
 const char* program;
 static int getInfo    = 0;
 static int getConfig  = 0;
@@ -541,6 +563,10 @@ int main(int argc, char** argv) {
     actStatus    = DMUNIPZ_STATUS_UNKNOWN;
     // actStatTrans = DMUNIPZ_TRANS_UNKNOWN; chk
 
+#ifdef USEMASP 
+    MASP::StatusEmitter emitter(get_config());
+#endif
+
     while (1) {
       readInfo(&status, &state, &iterations, &transfers, &injections, &virtAcc, &statTrans, &nBadStatus, &nBadState);  // read info from lm32
 
@@ -571,6 +597,15 @@ int main(int argc, char** argv) {
       } // if printFlag
 
       fflush(stdout);                                                                         // required for immediate writing (if stdout is piped to syslog)
+
+#ifdef USEMASP
+      std::string nomen = "TEST";
+
+      MASP::DeviceStatus my_status = MASP::DeviceStatus(
+                                                        MASP::DeviceStatusId(nomen,MASP::StatusNames::OP_READY),
+                                                        MASP::STATUS::OK);
+      emitter.setStatusAndEmit(my_status);
+#endif
 
       //sleep 
       usleep(sleepTime);
