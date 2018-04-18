@@ -130,8 +130,8 @@
 
   //populate buffers of the management table with payload from serialised container and linked list metadata
   void AllocTable::populateMgmt(vBuf& serialisedContainer) {
-    size_t        bytesLeft = serialisedContainer.size();
-                   mgmtSize = serialisedContainer.size();
+    size_t        bytesLeft     = serialisedContainer.size();
+                  mgmtTotalSize = serialisedContainer.size();
 
     //iterate management table: mark chunk as management node type, add linked list metadata and fill with serialised payload chunks
  
@@ -167,9 +167,9 @@
   vBuf AllocTable::recoverMgmt() {
     vBuf ret;
     uint32_t chunkLinkPtr = mgmtStartAdr;
-    size_t   bytesLeft    = mgmtSize;
+    size_t   bytesLeft    = mgmtTotalSize;
 
-    //std::cout << "recovery. Bytes expected: " << std::dec << bytesLeft << ", starting at 0x" << std::hex << chunkLinkPtr << std::endl;
+    std::cout << "recovery. Bytes expected: " << std::dec << bytesLeft << ", starting at 0x" << std::hex << chunkLinkPtr << std::endl;
 
     unsigned cnt = 0;
     //traverse the linked list by looking up elements in the management table. Copy payload of found elements to return vector
@@ -202,7 +202,7 @@
   void AllocTable::deallocateAllMgmt() {
     for(auto& it : m) { vPool[it.cpu].freeChunk(it.adr); }
     m.clear();
-    mgmtStartAdr = LM32_NULL_PTR; mgmtSize = 0;
+    mgmtStartAdr = LM32_NULL_PTR; mgmtTotalSize = 0; mgmtGrpSize = 0; mgmtCovSize = 0;
   }
 
   bool AllocTable::deallocate(uint32_t hash) {
@@ -346,7 +346,11 @@
   void AllocTable::debugMgmt(std::ostream& os) {
     unsigned cnt = 0;
 
-    os << "Mgmt StartAdr: 0x" << std::hex << mgmtStartAdr << " , Size: " << std::dec << mgmtSize << std::endl;
+    os << "Mgmt StartAdr: 0x" << std::hex << mgmtStartAdr << " , Size: " << std::dec << mgmtTotalSize << std::endl;
+    os << "Grp  StartAdr: 0x" << std::hex << 0 << " , Size: " << std::dec << mgmtGrpSize << std::endl;
+    os << "Cov  StartAdr: 0x" << std::hex << mgmtGrpSize << " , Size: " << std::dec << mgmtCovSize << std::endl;
+
+
     for (mmI x = m.begin(); x != m.end(); x++) {
 
       os  << "   "    << std::setfill(' ') << std::setw(4) << std::dec << (int)x->cpu

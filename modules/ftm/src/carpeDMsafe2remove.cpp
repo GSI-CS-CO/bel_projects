@@ -58,6 +58,7 @@ bool CarpeDM::isSafeToRemove(std::set<std::string> patterns, std::string& report
         auto x = at.lookupHash(hm.lookup(nodeIt).get());
         if (!(at.isOk(x))) {throw std::runtime_error(isSafeToRemove::exIntro +  "Could not find pattern <" + patternIt + "> member node <" + nodeIt + ">"); return false;}
         blacklist.insert(x->v);
+        covenantsPerVertex[x->v].insert(null_vertex);
       }
     }
     //Find and list all entry nodes of patterns 2B removed
@@ -135,6 +136,16 @@ bool CarpeDM::isSafeToRemove(std::set<std::string> patterns, std::string& report
   vertex_set_t si;
   set_intersection(blacklist.begin(),blacklist.end(),cursors.begin(),cursors.end(), std::inserter(si,si.begin()));
 
+  for (auto& it : blacklist)  { 
+    if (verbose) { 
+      sLog << gEq[it].name << "-- > {";
+
+      for (auto& itPv : covenantsPerVertex[it]) { sLog << ((itPv != null_vertex) ? gEq[itPv].name : "NULL") << ", "; }
+      sLog << std::endl;
+    }
+
+  }
+
   //create set of all covenants which must be honoured so the prediction will hold. Because of the propagation along reverse trees, doing it for intersection members is sufficient
   for (auto& it : si)  { 
     covenants.insert(covenantsPerVertex[it].begin(), covenantsPerVertex[it].end()); 
@@ -174,11 +185,21 @@ bool CarpeDM::isSafeToRemove(std::set<std::string> patterns, std::string& report
         auto x = ctAux.lookup(covName);
         if (!ctAux.isOk(x)) { throw std::runtime_error(isSafeToRemove::exIntro + ": Lookup of <" + covName + "> in covenantAuxTable failed\n");}
         if (!ct.insert(x))  { throw std::runtime_error(isSafeToRemove::exIntro + ": Insertion of <" + covName + "> in covenantTable failed\n");} ;
+
+        auto y = ct.lookup(covName);
+        if (!ct.isOk(y)) { throw std::runtime_error(isSafeToRemove::exIntro + ": Lookup of <" + covName + "> in covenantTable failed\n");}
+        
         //and report
-        report += "//" + covName + " p " + std::to_string(x->prio) + " s " + std::to_string(x->slot) + " chk 0x" + std::to_string(x->chkSum) + "\n";
+        report += "//" + covName + " p " + std::to_string(y->prio) + " s " + std::to_string(y->slot) + " chk 0x" + std::to_string(y->chkSum) + "\n";
       }
       report += covenantReport;
     //}
+  }
+
+  sLog << report << std::endl;
+
+  for (auto& it : blacklist)  {
+    sLog << gEq[it].name << " covP " << isCovenantPending(gEq[it].name) << std::endl;
   }
 
   return isSafe;
@@ -187,6 +208,37 @@ bool CarpeDM::isSafeToRemove(std::set<std::string> patterns, std::string& report
 bool CarpeDM::isOptimisableEdge(edge_t e, Graph& g) {
   return (g[e].type == det::sBadDefDst);
 }
+
+bool CarpeDM::isCovenantPending(const std::string& covName) {
+  bool ret = false;
+  cmI x = ct.lookup(covName);
+  if (!ct.isOk(x)) { sLog << "DBG unknonwn"; return false;} //throw std::runtime_error(isSafeToRemove::exIntro + ": Lookup of <" + covName + "> in covenantTable failed\n");
+  return isCovenantPending(x);
+}
+
+bool CarpeDM::isCovenantPending(cmI cov) {
+  QueueReport qr;
+  getQReport(cov->name, qr);
+  QueueElement& qe = qr.aQ[cov->prio].aQe[cov->slot];
+    
+  if (cov->chkSum == ct.genChecksum(qe))  return true;
+  else                                    return false;
+}
+/*
+unsigned CarpeDM::updateCovenants() {
+
+  unsigned cnt = 0;
+  vStrC toDelete;
+  for (auto it : ct.getTable()) {
+    if (!isCovenantPending(it)) toDelete.push_back(it->name);
+    cnt++;
+  }
+
+  for (auto it : toDelete) { ct.removed(it); }
+
+  return cnt;
+}
+*/
 
 bool CarpeDM::isSafetyCritical(vertex_set_t& c) {
   if (c.find(null_vertex) != c.end()) return true;
@@ -201,21 +253,30 @@ void CarpeDM::getReverseNodeTree(vertex_t v, vertex_set_t& sV, Graph& g, vertex_
   //Do the crawl       
   boost::tie(in_begin, in_end) = in_edges(v,g);
   for (in_cur = in_begin; in_cur != in_end; ++in_cur) {
-    
-    if (sV.find(source(*in_cur, g)) != sV.end()) break;
-    if (verbose) { sLog << g[source(*in_cur, g)].name << "-- " << g[*in_cur].type << " -->" << g[target(*in_cur, g)].name << std::endl; }
+    if (verbose) { sLog << g[target(*in_cur, g)].name << "<-- " << g[*in_cur].type << " --" << g[source(*in_cur, g)].name  << std::endl; }
+    vertex_set_t& cpvs = covenantsPerVertex[source(*in_cur, g)];   
+
     if (isOptimisableEdge(*in_cur, g)) {
     
       if (verbose) { sLog << " Optimisable:  " << g[source(*in_cur, g)].name << "->" << g[target(*in_cur, g)].name << std::endl; }
-      if (covenant == null_vertex) { 
+      //if (covenant == null_vertex) { 
         covenant = source(*in_cur, g); 
         if (verbose) sLog << "Setting covenant " << g[source(*in_cur, g)].name << std::endl;
-      } //acquire the first covenant we come accross and propagate it
+      //} //acquire the first covenant we come accross and propagate it
      
     }  
-    covenantsPerVertex[source(*in_cur, g)].insert(covenant);
     sV.insert(source(*in_cur, g));
-    //sLog << "Adding Tree Node " << g[source(*in_cur, g)].name << std::endl;
+    if (cpvs.find(covenant) != cpvs.end()) { 
+      std::string covName = (covenant == null_vertex) ? "NULL" : g[covenant].name;
+      sLog << g[source(*in_cur, g)].name <<  "'s covenant with " << covName << " already in tree, breaking" << std::endl; 
+      break;
+    }
+    cpvs.insert(covenant);
+
+    //if (sV.find(source(*in_cur, g)) != sV.end()) { sLog << g[source(*in_cur, g)].name <<  " already in tree, breaking" << std::endl; break;}
+    
+    sLog << "Adding to BlkList " << g[source(*in_cur, g)].name << std::endl;
+
     getReverseNodeTree(source(*in_cur, g), sV, g, covenantsPerVertex, covenant);
     
   }

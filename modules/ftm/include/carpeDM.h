@@ -118,6 +118,8 @@ private:
   vertex_set_t getDynamicDestinations(vertex_t vQ, Graph& g, AllocTable& at);
   void getReverseNodeTree(vertex_t v, vertex_set_t& sV, Graph& g, vertex_set_map_t& covenantsPerVertex, vertex_t covenant = null_vertex);
   bool isOptimisableEdge(edge_t e, Graph& g);
+  bool isCovenantPending(const std::string& covName);
+  bool isCovenantPending(cmI cov);
   bool isSafetyCritical(vertex_set_t& covenants);
   
   vertex_set_t getAllCursors(bool activeOnly);

@@ -124,10 +124,12 @@
 #define _T_DIAG_SIZE_       (T_DIAG_WAR_CNT   + _64b_SIZE_ ) 
 
 
-#define T_META_START_PTR  (0)                               //same for all cpus, can be on any CPU. External view, read/write for host only. Must lie within bitmap range
-#define T_META_CON_SIZE   (T_META_START_PTR + _PTR_SIZE_)   //container size in byte
-#define T_META_FLAGS      (T_META_CON_SIZE  + _32b_SIZE_)   //size in byte
-#define _T_META_SIZE_     (T_META_FLAGS     + _32b_SIZE_)   //
+#define T_META_START_PTR    (0)                               //same for all cpus, can be on any CPU. External view, read/write for host only. Must lie within bitmap range
+#define T_META_CON_SIZE     (T_META_START_PTR   + _PTR_SIZE_) //container size in byte ( is groupsTable + covenantTable size)
+#define T_META_GRPTAB_SIZE  (T_META_CON_SIZE    + _32b_SIZE_) //groupsTable size in byte
+#define T_META_COVTAB_SIZE  (T_META_GRPTAB_SIZE + _32b_SIZE_) //covenantTable size in byte
+#define T_META_FLAGS        (T_META_COVTAB_SIZE + _32b_SIZE_) //
+#define _T_META_SIZE_       (T_META_FLAGS       + _32b_SIZE_)   
 
 
 //////////////////////////////////////////////////////////////////////

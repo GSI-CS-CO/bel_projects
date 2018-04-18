@@ -101,23 +101,28 @@ namespace dnt = DotStr::Node::TypeVal;
     vBuf tmpMgmtRecovery = decompress(aux);
 
 
+    if(verbose) sLog << "Bytes expected: " << std::dec << atDown.getMgmtTotalSize() << ", recovered: " << std::dec << aux.size() << std::endl << std::endl;
+
     // Rebuild Grouptable
+
+
     GroupTable gtTmp;
-    std::string tmpStr = std::string(tmpMgmtRecovery.begin(), tmpMgmtRecovery.end());
-    if(verbose) sLog << "Bytes expected: " << std::dec << atDown.getMgmtLLsize() << ", recovered: " << std::dec << aux.size() << std::endl << std::endl;
-    //sLog << tmpStr << std::endl;
-    if (tmpStr.size()) gtTmp.load(tmpStr); 
+    std::string tmpStrGrouptab = std::string(tmpMgmtRecovery.begin(), tmpMgmtRecovery.begin() + atDown.getMgmtGrpSize());
+    if (tmpStrGrouptab.size()) gtTmp.load(tmpStrGrouptab); 
     gt = gtTmp;
     // Rebuild HashMap from Grouptable
     hm.clear();
     for(auto& it : gt.getTable()) {
       hm.add(it.node);
     }
+    // Rebuild Covenanttable
+    CovenantTable ctTmp;
+    std::string tmpStrCovtab = std::string(tmpMgmtRecovery.begin() + atDown.getMgmtGrpSize(), tmpMgmtRecovery.end());
+    if (tmpStrCovtab.size()) ctTmp.load(tmpStrCovtab); 
+    ct = ctTmp;
+  
     // clean up
     atDown.deallocateAllMgmt();
-    //atDown.updateBmps(); NOT ALLOWED: the nodes were downloaded in sequences, we cannot skip any during processing!
-    //pool and bmp diverge from here on, but for the greater good.
-
   } 
 
 
@@ -248,11 +253,18 @@ namespace dnt = DotStr::Node::TypeVal;
     uint32_t modAdrBase = atDown.getMemories()[0].extBaseAdr + atDown.getMemories()[0].sharedOffs + SHCTL_META;
     er.va.push_back(modAdrBase + T_META_START_PTR);
     er.va.push_back(modAdrBase + T_META_CON_SIZE);
-    er.vcs += leadingOne(2);
+    er.va.push_back(modAdrBase + T_META_GRPTAB_SIZE);
+    er.va.push_back(modAdrBase + T_META_COVTAB_SIZE);
+    er.vcs += leadingOne(4);
     
     vDl = ebReadCycle(ebd, er.va, er.vcs);
     atDown.setMgmtLLstartAdr(writeBeBytesToLeNumber<uint32_t>((uint8_t*)&vDl[T_META_START_PTR]));
-    atDown.setMgmtLLsize(writeBeBytesToLeNumber<uint32_t>((uint8_t*)&vDl[T_META_CON_SIZE]));
+    
+    uint32_t grp, cov;
+    atDown.setMgmtTotalSize(writeBeBytesToLeNumber<uint32_t>((uint8_t*)&vDl[T_META_CON_SIZE]));
+    grp = writeBeBytesToLeNumber<uint32_t>((uint8_t*)&vDl[T_META_GRPTAB_SIZE]);
+    cov = writeBeBytesToLeNumber<uint32_t>((uint8_t*)&vDl[T_META_COVTAB_SIZE]);
+    atDown.setMgmtLLSizes(grp, cov);
 
 
 
@@ -296,6 +308,10 @@ namespace dnt = DotStr::Node::TypeVal;
     if(verbose) sLog << "Done." << std::endl;
     
     freshDownload = true;
+
+    gt.debug(sLog);
+
+    ct.debug(sLog);
 
     return vDlD.size();
   }

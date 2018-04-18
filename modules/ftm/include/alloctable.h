@@ -106,7 +106,9 @@ class AllocTable {
   std::vector<MemPool> vPool;
   const size_t payloadPerChunk = _MEM_BLOCK_SIZE - 1 - _PTR_SIZE_;
   uint32_t mgmtStartAdr;
-  uint32_t mgmtSize;
+  uint32_t mgmtTotalSize;
+  uint32_t mgmtGrpSize;
+  uint32_t mgmtCovSize;
   
 
 
@@ -169,7 +171,7 @@ public:
   void stageAll()   {for (amI it = a.begin(); it != a.end(); it++) setStaged(it);  }
   void unstageAll() {for (amI it = a.begin(); it != a.end(); it++) clrStaged(it); }
 
-  void clear() { a.clear(); m.clear(); mgmtStartAdr = LM32_NULL_PTR; mgmtSize = 0; clearMemories(); } // clears everything including management
+  void clear() { a.clear(); m.clear(); mgmtStartAdr = LM32_NULL_PTR; mgmtTotalSize = 0; mgmtGrpSize = 0; mgmtCovSize = 0; clearMemories(); } // clears everything including management
 
 
   //FIXME would like iterator range to a.get<Adr>() better, but no time to figure out the syntax right now
@@ -201,9 +203,12 @@ public:
   vBuf recoverMgmt();
 
   void setMgmtLLstartAdr(uint32_t startAdr) {mgmtStartAdr = startAdr;}
-  void setMgmtLLsize(uint32_t size) {mgmtSize = size;}
-  uint32_t getMgmtLLstartAdr() {return mgmtStartAdr;}
-  uint32_t getMgmtLLsize() {return mgmtSize;}
+  void setMgmtLLSizes(uint32_t grpSize, uint32_t covSize) {mgmtGrpSize = grpSize; mgmtCovSize = covSize;}
+  uint32_t getMgmtLLstartAdr()  {return mgmtStartAdr;}
+  void setMgmtTotalSize(uint32_t totSize)      {mgmtTotalSize = totSize;}
+  uint32_t getMgmtTotalSize()      {return mgmtTotalSize;}
+  uint32_t getMgmtGrpSize()      {return mgmtGrpSize;}
+  uint32_t getMgmtCovSize()      {return mgmtCovSize;}
   void debugMgmt(std::ostream& os);
   const MgmtMeta_set& getMgmtTable() const { return m; }
   const size_t getMgmtSize()          const { return m.size(); }

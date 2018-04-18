@@ -86,15 +86,19 @@ using namespace DotStr::Misc;
     for (auto& itMod : moddedCpus) { createSchedModInfo(itMod, modCnt, opType, ew); }
 
     // save global meta info for management linked list
-    uint8_t b[8];
+    uint8_t b[4 * _32b_SIZE_];
     //enough to write it to cpu 0 
     modAdrBase = atUp.getMemories()[0].extBaseAdr + atUp.getMemories()[0].sharedOffs + SHCTL_META;
     writeLeNumberToBeBytes<uint32_t>((uint8_t*)&b[T_META_START_PTR], atUp.getMgmtLLstartAdr());  
-    writeLeNumberToBeBytes<uint32_t>((uint8_t*)&b[T_META_CON_SIZE],  atUp.getMgmtLLsize());  
-    ew.vcs += leadingOne(2);
+    writeLeNumberToBeBytes<uint32_t>((uint8_t*)&b[T_META_CON_SIZE],  atUp.getMgmtTotalSize());
+    writeLeNumberToBeBytes<uint32_t>((uint8_t*)&b[T_META_GRPTAB_SIZE],  atUp.getMgmtGrpSize());
+    writeLeNumberToBeBytes<uint32_t>((uint8_t*)&b[T_META_COVTAB_SIZE],  atUp.getMgmtCovSize());
+    ew.vcs += leadingOne(4);
     ew.va.push_back(modAdrBase + T_META_START_PTR);
     ew.va.push_back(modAdrBase + T_META_CON_SIZE);
-    ew.vb.insert( ew.vb.end(), b, b + 2 * _32b_SIZE_ );
+    ew.va.push_back(modAdrBase + T_META_GRPTAB_SIZE);
+    ew.va.push_back(modAdrBase + T_META_COVTAB_SIZE);
+    ew.vb.insert( ew.vb.end(), b, b + 4 * _32b_SIZE_ );
     
     
     return ew;
@@ -507,12 +511,17 @@ using namespace DotStr::Misc;
 
 
   void CarpeDM::generateMgmtData() {
-    std::string tmpStrBuf = gt.store();
+    std::string tmpStrBufGrp = gt.store();
+    std::string tmpStrBufCov = ct.store();
+    atUp.setMgmtLLSizes(tmpStrBufGrp.size(), tmpStrBufCov.size());
+    std::string tmpStrBuf = tmpStrBufGrp + tmpStrBufCov;
+
+
     vBuf tmpBuf(tmpStrBuf.begin(), tmpStrBuf.end());
     vBuf mgmtBinary = compress(tmpBuf);
     atUp.allocateMgmt(mgmtBinary);
     atUp.populateMgmt(mgmtBinary);
-    //atUp.debugMgmt(sLog);
+    atUp.debugMgmt(sLog);
     atUp.updateBmps();
   }
 
