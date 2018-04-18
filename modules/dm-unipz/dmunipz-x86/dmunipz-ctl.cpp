@@ -3,7 +3,7 @@
  *
  *  created : 2017
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 07-March-2018
+ *  version : 17-April-2018
  *
  * Command-line interface for dmunipz
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 17-May-2017
  ********************************************************************************************/
-#define DMUNIPZ_X86_VERSION "0.0.12"
+#define DMUNIPZ_X86_VERSION "0.1.2"
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -54,6 +54,41 @@
 // dm-unipz
 #include <dm-unipz.h>
 #include <dm-unipz_smmap.h>
+
+// USE MASP
+#ifdef USEMASP
+// includes for MASP
+#include "MASP/Emitter/StatusEmitter.h"
+#include "MASP/StatusDefinition/DeviceStatus.h"
+#include "MASP/Util/Logger.h"
+#include "MASP/Common/StatusNames.h"
+#include <boost/thread/thread.hpp> // (sleep)
+#include <iostream>
+#include <string>
+
+// includes for unipz
+#include <limits.h>
+
+std::string   maspNomen = std::string(DMUNIPZ_MASP_NOMEN);
+std::string   maspSourceId; 
+bool          maspProductive;     // send to pro/dev masp
+
+MASP::StatusEmitterConfig get_config() {
+  char   hostname[HOST_NAME_MAX];
+
+  gethostname(hostname, HOST_NAME_MAX);
+  maspSourceId = maspNomen + "." + std::string(hostname);
+
+#ifdef PRODUCTIVE
+  maspProductive = true;
+#else
+  maspProductive = false;
+#endif
+
+  MASP::StatusEmitterConfig config = MASP::StatusEmitterConfig(MASP::StatusEmitterConfig::CUSTOM_EMITTER_DEFAULT(), maspSourceId, maspProductive);
+  return config;
+}
+#endif
 
 const char* program;
 static int getInfo    = 0;
@@ -449,7 +484,7 @@ int main(int argc, char** argv) {
   if (getVersion) {
     eb_device_read(device, dmunipz_version, EB_BIG_ENDIAN|EB_DATA32, &data, 0, eb_block);
     version = data;
-    printf("dm-unipz: software (firmware) version %s (%06d)\n",  DMUNIPZ_X86_VERSION, version);     
+    printf("dm-unipz: software (firmware) version %s (%06x)\n",  DMUNIPZ_X86_VERSION, version);     
   } // if getEBVersion
 
   if (getInfo) {
@@ -541,6 +576,17 @@ int main(int argc, char** argv) {
     actStatus    = DMUNIPZ_STATUS_UNKNOWN;
     // actStatTrans = DMUNIPZ_TRANS_UNKNOWN; chk
 
+#ifdef USEMASP 
+    // optional: disable masp logging (default: log to stdout, can be customized)
+    MASP::no_logger no_log;
+    MASP::Logger::middleware_logger = &no_log;
+    MASP::STATUS    maspStatus;
+
+    MASP::StatusEmitter emitter(get_config());
+    std::cout << "dm-unipz: emmitting to MASP as sourceId: " << maspSourceId << ", using nomen: " << maspNomen << ", environment pro: " << maspProductive << std::endl;
+    
+#endif // USEMASP
+
     while (1) {
       readInfo(&status, &state, &iterations, &transfers, &injections, &virtAcc, &statTrans, &nBadStatus, &nBadState);  // read info from lm32
 
@@ -571,6 +617,15 @@ int main(int argc, char** argv) {
       } // if printFlag
 
       fflush(stdout);                                                                         // required for immediate writing (if stdout is piped to syslog)
+
+#ifdef USEMASP
+      if (actState == DMUNIPZ_STATE_OPREADY) maspStatus = MASP::STATUS::OK;
+      else                                   maspStatus = MASP::STATUS::NOT_OK;
+
+
+      MASP::DeviceStatus maspDeviceStatus = MASP::DeviceStatus(MASP::DeviceStatusId(maspNomen, MASP::StatusNames::OP_READY), maspStatus);
+      emitter.setStatusAndEmit(maspDeviceStatus);
+#endif
 
       //sleep 
       usleep(sleepTime);
