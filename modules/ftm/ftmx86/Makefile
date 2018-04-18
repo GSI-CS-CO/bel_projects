@@ -7,6 +7,15 @@ ifeq ($(findstring asl,$(shell hostname)),asl)
 else
   EB_LIB        =-letherbone
 endif
+
+# support for installations with /opt/usr
+OPTPATH       ?= NO
+
+ifneq ($(OPTPATH), NO) 
+EB_INC        =-I$(OPTPATH)/include
+EB_LIB        =$(OPTPATH)/lib/libetherbone.so
+endif
+
 SER_LIB         =-lboost_serialization
 GRAPH_LIB       =-lboost_graph
 TOP            ?= ../../..
