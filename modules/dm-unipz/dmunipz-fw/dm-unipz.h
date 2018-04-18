@@ -30,6 +30,9 @@
 #define  DMUNIPZ_STATUS_NODM            15    // Data Master unreachable                                     
 #define  DMUNIPZ_STATUS_EBREADTIMEDOUT  16    // EB read via WR network timed out                           
 
+// MASP 
+#define  DMUNIPZ_MASP_NOMEN       "U_DMUNIPZ" // nomen for gateway
+
                                 
 // commands from the outside
 #define  DMUNIPZ_CMD_NOCMD        0           // no command ...
