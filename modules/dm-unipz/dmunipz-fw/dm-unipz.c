@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 25-April-2015
  ********************************************************************************************/
-#define DMUNIPZ_FW_VERSION 0x000101                                   // make this consistent with makefile
+#define DMUNIPZ_FW_VERSION 0x000102                                   // make this consistent with makefile
 
 /* standard includes */
 #include <stdio.h>
@@ -55,7 +55,7 @@
 #include "../../oled_display/oled_regs.h"                             // register layout of OLED display
 #include "../../../ip_cores/saftlib/drivers/eca_flags.h"              // definitions for ECA queue
 #include "../../ftm/include/ftm_common.h"                             // defs and regs for data master
-#include "../../ftm/ftmfw/ftm_shared_mmap.h"                          // info on shared map for data master lm32 cluster
+#include "../../../syn/gsi_pexarria5/ftm/ftm_shared_mmap.h"           // info on shared map for data master lm32 cluster
 
 #include "dm-unipz.h"                                                 // defs
 #include "dm-unipz_smmap.h"                                           // shared memory map for communication via Wishbone
