@@ -564,7 +564,8 @@ begin
                         '0' & mlvdio_de(8 downto 5)             when ('0' & x"7"),   -- FPGA hex sw in position 7, button not pressed, mtca4io output enable 8-5
                         '0' & mlvdio_de(4 downto 1)             when ('0' & x"6"),   -- FPGA hex sw in position 6, button not pressed, mtca4io output enable 4-1
                         '0' & s_monster_tclk_dir(4 downto 1)    when ('0' & x"5"),   -- FPGA hex sw in position 5, button not pressed, mtca4 clk direction
-                        std_logic_vector(lvtio_clk_divider(4 downto 0))           when ('0' & x"4"),   -- FPGA hex sw in position 4, button not pressed, lvtio clk divider
+                        std_logic_vector(lvtio_clk_divider(4 downto 0))   when ('0' & x"4"),   -- FPGA hex sw in position 4, button not pressed, lvtio clk divider
+                        std_logic_vector(hss_io_clk_divider(4 downto 0))  when ('0' & x"3"),   -- FPGA hex sw in position 4, button not pressed, lvtio clk divider
                         s_lvds_oe(4 downto 0)                   when others;         -- LEMO IO direction
 
   -- LVDS activity indicator BLUE LEDs (active hi)
@@ -576,7 +577,8 @@ begin
                         '0' & s_lvds_act_led_mtca4_io(8 downto 5)   when ('0' & x"7"),   -- FPGA hex sw in position 7, button not pressed, mtca4io 5-8 activity to front io leds
                         '0' & s_lvds_act_led_mtca4_io(4 downto 1)   when ('0' & x"6"),   -- FPGA hex sw in position 6, button not pressed, mtca4io 1-4 activity to front io leds
                         '0' & s_lvds_act_led_mtca4_clk              when ('0' & x"5"),   -- FPGA hex sw in position 5, button not pressed, mtca4 clk activity
-                        std_logic_vector(lvtio_clk_divider(23 downto 19))             when ('0' & x"4"),   -- FPGA hex sw in position 4, button not pressed, lvtio clk divider
+                        std_logic_vector(lvtio_clk_divider(23 downto 19))   when ('0' & x"4"),   -- FPGA hex sw in position 4, button not pressed, lvtio clk divider
+                        std_logic_vector(hss_io_clk_divider(23 downto 19))  when ('0' & x"3"),   -- FPGA hex sw in position 4, button not pressed, lvtio clk divider
                         s_lvds_act_led_lvtio                        when others;         -- LEMO IO activity
 
   -----------------------------------------------------------
@@ -700,7 +702,7 @@ begin
       
       hss_rx_in <= hss_rx(4) & hss_rx_in(1);
 
-      if hss_rx_in = '1' then  
+      if hss_rx_in(0) = '1' then  
         hss_io_clk_divider <= hss_io_clk_divider + 1;
       else
         hss_io_clk_divider <= hss_io_clk_divider ;
