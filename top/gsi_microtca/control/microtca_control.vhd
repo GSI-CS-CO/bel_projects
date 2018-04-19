@@ -666,7 +666,7 @@ begin
   -- SRIO (High-Speed-Serial links) backplane ports 12-15
   -----------------------------------------------------------
 
-  hss_tx(1) <= core_debug_out;
+  hss_tx(1) <= clk_sys;
 
   -- usage of backplane ports 12-15 currently not defined
   -- therefore only dummy buffers to keep Quartus happy
