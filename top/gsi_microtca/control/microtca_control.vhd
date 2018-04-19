@@ -369,6 +369,7 @@ architecture rtl of microtca_control is
 
   signal hss_rx                   : std_logic_vector(4 downto 1);
   signal hss_tx                   : std_logic_vector(5 downto 1);
+  signal hss_rx_in                : std_logic_vector(1 downto 0);
  
   
 begin
