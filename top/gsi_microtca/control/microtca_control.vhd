@@ -365,8 +365,10 @@ architecture rtl of microtca_control is
   signal clk_lvtio_global         : std_logic;
 
   signal lvtio_clk_divider        : unsigned(23 downto 0);
+  signal hss_io_clk_divider       : unsigned(23 downto 0);
 
   signal hss_rx                   : std_logic_vector(4 downto 1);
+  signal hss_tx                   : std_logic_vector(5 downto 1);
  
   
 begin
@@ -662,17 +664,23 @@ begin
   -- SRIO (High-Speed-Serial links) backplane ports 12-15
   -----------------------------------------------------------
 
+  hss_tx(1) <= core_debug_out;
+
   -- usage of backplane ports 12-15 currently not defined
   -- therefore only dummy buffers to keep Quartus happy
-  unused_hss_ios: for i in 1 to 4 generate
+  hss_ios: for i in 1 to 4 generate
+
     hss_obuf : altera_lvds_obuf
       generic map(
         g_family  => c_family)
       port map(
-        datain    => '0',
+        datain    => hss_tx(i),
         dataout   => hss_tx_p_o(i),
         dataout_b => hss_tx_n_o(i)
       );
+
+    -- internall bridge to next channel
+    hss_tx(i+1) <= hss_rx(i);
 
     hss_inbuf : altera_lvds_ibuf
         generic map(
@@ -682,7 +690,23 @@ begin
           datain    => hss_rx_p_i(i),
           dataout   => hss_rx(i)
         );
+
   end generate;
+
+
+  p_hss_clk_div: process(clk_200m)
+  begin 
+    if rising_edge(clk_200m) then
+      
+      hss_rx_in <= hss_rx(4) & hss_rx_in(1);
+
+      if hss_rx_in = '1' then  
+        hss_io_clk_divider <= hss_io_clk_divider + 1;
+      else
+        hss_io_clk_divider <= hss_io_clk_divider ;
+      end if;
+    end if;
+  end process;
 
 
   ----------------------------------------------
@@ -717,7 +741,7 @@ begin
 
   -- Libera trigger buffer enable from SW
   -- USE THIS ONLY when FTRN is not in the crate or is on the AMC extender with cut PORT 6-7 lines!!!
-  s_libera_trig_buf_en_sw <= '1' when (s_gpio_out(6 downto 4) = "101" and s_gpio_out(c_HWT_EN_BIT)='1') else '0'; 
+  s_libera_trig_buf_en_sw <= '1' when (s_gpio_out(5) = '1' and s_gpio_out(4) = '0' and s_gpio_out(c_HWT_EN_BIT)='1') else '0'; 
 
   -- enable libera trigger buffers when 
   -- in Libera Slot8 or when
@@ -739,7 +763,7 @@ begin
   -- MTCA.4 buffers enable generation by software
   -----------------------------------------------------------------------
   -- enabled only in MTCA.4 by SW
-  s_mtca4_bpl_buf_en_sw <= '1' when (s_gpio_out(6 downto 4) = "110" and s_gpio_out(c_HWT_EN_BIT)='1') else '0';
+  s_mtca4_bpl_buf_en_sw <= '1' when (s_gpio_out(6) = '1' and s_gpio_out(4) = '0' and s_gpio_out(c_HWT_EN_BIT)='1') else '0';
 
   -- crosscheck with Libera and quiesce.
   -- because there is no way to know if we are in MTCA or MTCA.4 crate
@@ -794,9 +818,9 @@ begin
   -----------------------------------------------------------------------
   -- MTCA.4 PORT 12-15 buffers enable generation (active HI)
   -----------------------------------------------------------------------
-  -- currently not used, keep disabled
+  -- currently not used, enable from SW for testing
   gen_hss_buf_oe : for i in  1 to 4 generate
-    hss_tx_en_o(i) <= '0';    
+    hss_tx_en_o(i) <= s_gpio_out(c_HWT_EN_BIT);    
     hss_rx_en_o(i) <= s_gpio_out(c_HWT_EN_BIT);    
   end generate; -- gen_hss_buf_oe
 
