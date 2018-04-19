@@ -1,7 +1,7 @@
 /** @file eb-flash.c
  *  @brief Program a flash device using Etherbone.
  *
- *  Copyright (C) 2013 GSI Helmholtz Centre for Heavy Ion Research GmbH 
+ *  Copyright (C) 2013 GSI Helmholtz Centre for Heavy Ion Research GmbH
  *
  *  A complete skeleton of an application using the Etherbone library.
  *
@@ -17,7 +17,7 @@
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *  Lesser General Public License for more details.
- *  
+ *
  *  You should have received a copy of the GNU Lesser General Public
  *  License along with this library. If not, see <http://www.gnu.org/licenses/>.
  *******************************************************************************
@@ -109,19 +109,19 @@ static void bitmask_set(int offset, int value) {
 static eb_data_t flip_bits(eb_data_t x) {
   eb_data_t mask;
   if (!invert) return x;
-  
+
   /* 0x0F0F */
   mask = mask_0f;;
   x = ((x >> 4) & mask) | ((x & mask) << 4);
-  
+
   /* 0x0F0F -> 0x3333 */
   mask ^= (mask << 2);
   x = ((x >> 2) & mask) | ((x & mask) << 2);
-  
+
   /* 0x3333 -> 0x5555 */
   mask ^= (mask << 1);
   x = ((x >> 1) & mask) | ((x & mask) << 1);
-  
+
   return x;
 }
 
@@ -129,17 +129,17 @@ static eb_status_t erase_sector(eb_device_t device, eb_address_t sector) {
   eb_cycle_t cycle;
   eb_format_t control;
   eb_status_t status;
-  
+
   control = (format&EB_ENDIAN_MASK) | EB_DATA32;
-  
+
   if (old_erase)
     return eb_device_write(device, erase_address, control, sector, 0, eb_block);
-  
+
   if ((status = eb_cycle_open(device, 0, eb_block, &cycle)) != EB_OK) return status;
   eb_cycle_write(cycle, erase_address, control, 0x6);        /* write enable */
   eb_cycle_write(cycle, erase_address, control, 0x80000000); /* execute */
   eb_cycle_write(cycle, erase_address, control, 0xD8);       /* sector erase */
-  if (((erase_address-address) >> 24) != 0) 
+  if (((erase_address-address) >> 24) != 0)
     eb_cycle_write(cycle, erase_address, control, (sector >> 24) & 0xFF);
   eb_cycle_write(cycle, erase_address, control, (sector >> 16) & 0xFF);
   eb_cycle_write(cycle, erase_address, control, (sector >>  8) & 0xFF);
@@ -152,13 +152,13 @@ static void wait_for_busy(eb_device_t device, long interval) {
   long delay, used;
   eb_status_t status;
   eb_data_t result;
-  
+
   do {
     /* Sleep as requested */
     for (delay = interval; delay > 0; delay -= used) {
       used = eb_socket_run(eb_device_socket(device), delay);
     }
-    
+
     result = 0;
     status = eb_device_read(device, erase_address, (format&EB_ENDIAN_MASK)|EB_DATA32, &result, 0, eb_block);
     if (status != EB_OK && status != EB_SEGFAULT) {
@@ -171,23 +171,23 @@ static void wait_for_busy(eb_device_t device, long interval) {
 static void find_sector_size(eb_user_data_t user, eb_device_t dev, eb_operation_t op, eb_status_t status) {
   eb_address_t* sector_size = (eb_address_t*)user;
   eb_address_t result;
-  
+
   if (status != EB_OK) {
     fprintf(stderr, "%s: pattern read failed: %s\n", program, eb_status(status));
     exit(1);
   }
-  
+
   result = page_size;
   for (; op != EB_NULL; op = eb_operation_next(op)) {
     if (eb_operation_had_error(op)) {
       fprintf(stderr, "%s: wishbone segfault reading %s %s bits from address 0x%"EB_ADDR_FMT"\n",
-                      program, 
-                      eb_width_data(eb_operation_format(op)), 
-                      eb_format_endian(eb_operation_format(op)), 
+                      program,
+                      eb_width_data(eb_operation_format(op)),
+                      eb_format_endian(eb_operation_format(op)),
                       eb_operation_address(op));
       exit(1);
     }
-    
+
     /* If the data is 0, then it was erased */
     if (eb_operation_data(op) != 0) {
       result <<= 1;
@@ -195,7 +195,7 @@ static void find_sector_size(eb_user_data_t user, eb_device_t dev, eb_operation_
       break;
     }
   }
-  
+
   *sector_size = result;
 }
 
@@ -206,7 +206,7 @@ static eb_address_t detect_sector_size(eb_device_t device) {
   eb_address_t end;
   eb_status_t  status;
   eb_cycle_t   cycle;
-  
+
   /* Plan:
    *   0- Find largest possible sector that fits between start and end
    *   1- Write 0s at positions 2^x-1 inside that sector
@@ -214,16 +214,16 @@ static eb_address_t detect_sector_size(eb_device_t device) {
    *   3- Read the values at all the addresses that were zeroed.
    *   4- The last non-zero seen determines the sector size
    */
-  
+
   if (!quiet) {
     printf("Autodetecting sector size ... ");
     fflush(stdout);
   }
-  
+
   /* Find largest sector that fits by aligning target */
   end = address + firmware_length-1;
   target = address + firmware_length/2;
-  
+
   sector_size = page_size;
   target &= ~(sector_size-1);
   while (address <= target && target+sector_size-1 <= end) {
@@ -231,10 +231,10 @@ static eb_address_t detect_sector_size(eb_device_t device) {
     target &= ~(sector_size-1);
     if (sector_size >= MAX_SECTOR_SIZE) break; /* faster */
   }
-  
+
   max_size = sector_size >> 1;
   target = (address + firmware_length/2) & ~(max_size-1);
-  
+
   /* Start writing test pattern */
   for (sector_size = page_size; sector_size < max_size; sector_size <<= 1) {
     if (!quiet) {
@@ -248,7 +248,7 @@ static eb_address_t detect_sector_size(eb_device_t device) {
     }
     wait_for_busy(device, 0);
   }
-  
+
   if (!quiet) {
     printf("\rAutodetecting sector size: erasing 0x%"EB_ADDR_FMT" ... ", target);
     fflush(stdout);
@@ -257,9 +257,9 @@ static eb_address_t detect_sector_size(eb_device_t device) {
     fprintf(stderr, "\r%s: failed to erase test sector 0x%"EB_ADDR_FMT": %s\n", program, target, eb_status(status));
     exit(1);
   }
-  
+
   wait_for_busy(device, wait_us);
-  
+
   if (!quiet) {
     printf("\rAutodetecting sector size: scanning ...            ");
     fflush(stdout);
@@ -268,43 +268,61 @@ static eb_address_t detect_sector_size(eb_device_t device) {
     fprintf(stderr, "\r%s: could not create cycle: %s\n", program, eb_status(status));
     exit(1);
   }
-  
+
   for (sector_size = page_size; sector_size < max_size; sector_size <<= 1) {
     eb_cycle_read(cycle, target+sector_size, format, 0);
   }
-  
+
   sector_size = 0;
   eb_cycle_close(cycle);
   while (sector_size == 0) {
     eb_socket_run(eb_device_socket(device), -1);
   }
-  
+
+  /* Catch suspicious sector size */
+  if ((sector_size != 0x10000) && (sector_size != 0x40000))
+  {
+    printf("\n@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
+    printf("\n@     WARNING: SUSPICIOUS SECTOR SIZE FOUND!     @");
+    printf("\n@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
+    printf("\nSector size found = 0x%"EB_ADDR_FMT"\n", sector_size);
+    printf("\nPlease specify the sector size and poll interval (while erasing) manually!");
+    printf("\n");
+    printf("\n-- For ARRIA2 (SCU2/3, Vetar2x, ...) use -s 0x40000 -w 3");
+    printf("\n   -- Example: %s -s 0x40000 -w 3 %s %s", program, device_address, firmware);
+    printf("\n");
+    printf("\n-- For ARRIAV (Pexarria5, Exploder5, uTCA, PMC, ...) use -s 0x10000 -w 3");
+    printf("\n   -- Example: %s -s 0x10000 -w 3 %s %s", program, device_address, firmware);
+    printf("\n");
+    exit(1);
+  }
+
   if (!quiet) {
     printf("\rAutodetecting sector size: found = 0x%"EB_ADDR_FMT"\n", sector_size);
   }
-  
+
   return sector_size;
 }
 
 static void detect_decrement(eb_user_data_t user, eb_device_t dev, eb_operation_t op, eb_status_t status) {
   int* counter = (int*)user;
   --*counter;
-  
+
   if (status != EB_OK) {
     fprintf(stderr, "%s: scan operation failed: %s\n", program, eb_status(status));
     exit(1);
   }
-  
+
   for (; op != EB_NULL; op = eb_operation_next(op)) {
     if (eb_operation_had_error(op)) {
       fprintf(stderr, "%s: wishbone segfault reading %s %s bits from address 0x%"EB_ADDR_FMT"\n",
-                      program, 
-                      eb_width_data(eb_operation_format(op)), 
-                      eb_format_endian(eb_operation_format(op)), 
+                      program,
+                      eb_width_data(eb_operation_format(op)),
+                      eb_format_endian(eb_operation_format(op)),
                       eb_operation_address(op));
       exit(1);
     }
-    
+
     /* If the data is not FFFFFF, then set the bit indicating we must erase it */
     if (eb_operation_data(op) != ffs) {
       bitmask_set((eb_operation_address(op) - address) / sector_size, 1);
@@ -325,55 +343,55 @@ static void quick_scan_gap(eb_device_t device, eb_address_t offset, eb_address_t
   int size;
   int ops;
   int inflight;
-  
+
   size = format & EB_DATAX;
   ops = 0;
   inflight = 0;
-  
+
   if ((status = eb_cycle_open(device, &inflight, detect_decrement, &cycle)) != EB_OK) {
     fprintf(stderr, "\r%s: could not create cycle: %s\n", program, eb_status(status));
   }
-  
+
   first_sector = (address/sector_size) * sector_size;
   last_sector = ((address+firmware_length+sector_size-1)/sector_size)*sector_size;
-  
+
   i = 0;
   for (sector = first_sector; sector != last_sector; sector += sector_size) {
     if (bitmask_get(i++)) continue;
-    
+
     last_position = sector+offset+len;
     for (position = sector+offset; position != last_position; position += size) {
       eb_cycle_read(cycle, position, format, 0);
-      
+
       if (!quiet && (++scan_count % 65536) == 0) {
         scan_count = 0;
         printf("\rScanning offset 0x%"EB_ADDR_FMT" ... ", position);
         fflush(stdout);
       }
-      
+
       /* use the same number of operations per cycle as programming/verifying */
       if (++ops == (page_size/size)) {
         ops = 0;
         ++inflight;
         eb_cycle_close(cycle);
-        
+
         if ((status = eb_cycle_open(device, &inflight, detect_decrement, &cycle)) != EB_OK) {
           fprintf(stderr, "\r%s: could not create cycle: %s\n", program, eb_status(status));
         }
-        
+
         while (inflight >= cycles_per_poll)
           eb_socket_run(eb_device_socket(device), -1);
       }
     }
   }
-  
+
   if (ops > 0) {
     ++inflight;
     eb_cycle_close(cycle);
   } else {
     eb_cycle_abort(cycle);
   }
-  
+
   while (inflight > 0) {
     eb_socket_run(eb_device_socket(device), -1);
   }
@@ -381,20 +399,20 @@ static void quick_scan_gap(eb_device_t device, eb_address_t offset, eb_address_t
 
 static void quick_scan(eb_device_t device) {
   eb_address_t offset, gap;
-  
+
   if (!quiet) {
     printf("Scanning flash ... ");
     fflush(stdout);
   }
-  
+
   gap = 8;
   scan_count = 0;
   quick_scan_gap(device, 0, gap);
-  
+
   for (offset = gap; offset != sector_size; offset += gap, gap += gap) {
     quick_scan_gap(device, offset, gap);
   }
-  
+
   if (!quiet) printf("done!\n");
 }
 
@@ -406,46 +424,46 @@ static void erase_flash(eb_device_t device) {
   int i;
   first_sector = (address/sector_size) * sector_size;
   last_sector = ((address+firmware_length+sector_size-1)/sector_size)*sector_size;
-  
+
   if (!quiet)
     printf("Erasing flash ... ");
-  
+
   i = 0;
   for (sector = first_sector; sector != last_sector; sector += sector_size) {
     if (!quiet) {
       printf("\rErasing 0x%"EB_ADDR_FMT" ... ", sector);
       fflush(stdout);
     }
-    
+
     if (!bitmask_get(i++)) continue;
-    
+
     if ((status = erase_sector(device, sector)) != EB_OK) {
       fprintf(stderr, "\r%s: failed to erase 0x%"EB_ADDR_FMT": %s\n", program, sector, eb_status(status));
       exit(1);
     }
-    
+
     wait_for_busy(device, wait_us);
   }
-  
+
   if (!quiet) printf("done!\n");
-  
+
 }
 
 static void program_decrement(eb_user_data_t user, eb_device_t dev, eb_operation_t op, eb_status_t status) {
   int* counter = (int*)user;
   --*counter;
-  
+
   if (status != EB_OK) {
     fprintf(stderr, "%s: program operation failed: %s\n", program, eb_status(status));
     exit(1);
   }
-  
+
   for (; op != EB_NULL; op = eb_operation_next(op)) {
     if (eb_operation_had_error(op)) {
       fprintf(stderr, "%s: wishbone segfault writing %s %s bits to address 0x%"EB_ADDR_FMT"\n",
-                      program, 
-                      eb_width_data(eb_operation_format(op)), 
-                      eb_format_endian(eb_operation_format(op)), 
+                      program,
+                      eb_width_data(eb_operation_format(op)),
+                      eb_format_endian(eb_operation_format(op)),
                       eb_operation_address(op));
       exit(1);
     }
@@ -469,20 +487,20 @@ static void program_flash(eb_device_t device) {
   ops = 0;
   inflight = 0;
   may_skip_ffs = 1;
-  
+
   if (!quiet) printf("Programming flash ... ");
-  
+
   if ((status = eb_cycle_open(device, &inflight, program_decrement, &cycle)) != EB_OK) {
     fprintf(stderr, "\r%s: could not create cycle: %s\n", program, eb_status(status));
   }
-  
+
   stop_offset = address + firmware_length;
   for (offset = address; offset != stop_offset; offset += size) {
     if (fread(buf, 1, size, firmware_f) != size) {
       fprintf(stderr, "\r%s: short read from '%s'\n", program, firmware);
       exit(1);
     }
-    
+
     data = 0;
     if ((format & EB_ENDIAN_MASK) == EB_BIG_ENDIAN) {
       for (byte = 0; byte < size; ++byte) {
@@ -495,58 +513,58 @@ static void program_flash(eb_device_t device) {
         data |= buf[byte];
       }
     }
-    
+
     if (!quiet && offset % 65536 == 0) {
       printf("\rProgramming 0x%"EB_ADDR_FMT"... ", offset);
       fflush(stdout);
     }
-    
+
     /* Don't write pages of FFs; skip them */
     if (may_skip_ffs && data == ffs) {
       continue;
     }
-    
+
     if (offset == erase_address) {
       if (!quiet)
         fprintf(stderr, "\r%s: warning: firmware tried to write to erase address!\n", program);
       continue;
     }
-    
+
     /* Flip bits in the bytes? */
     data = flip_bits(data);
-    
+
     eb_cycle_write(cycle, offset, format, data);
     may_skip_ffs = 0;
     ++ops;
-    
+
     /* Align cycles to page boundaries */
     if ((offset+size) % page_size == 0) {
       ops = 0;
       may_skip_ffs = 1;
-      
+
       ++inflight;
       eb_cycle_close(cycle);
-      
+
       if ((status = eb_cycle_open(device, &inflight, program_decrement, &cycle)) != EB_OK) {
         fprintf(stderr, "\r%s: could not create cycle: %s\n", program, eb_status(status));
       }
-      
+
       while (inflight >= cycles_per_poll)
         eb_socket_run(eb_device_socket(device), -1);
     }
   }
-  
+
   if (ops > 0) {
     ++inflight;
     eb_cycle_close(cycle);
   } else {
     eb_cycle_abort(cycle);
   }
-  
+
   while (inflight > 0) {
     eb_socket_run(eb_device_socket(device), -1);
   }
-  
+
   if (!quiet) printf("done!\n");
 }
 
@@ -557,35 +575,35 @@ static void verify_decrement(eb_user_data_t user, eb_device_t dev, eb_operation_
   int byte, size;
   int* counter = (int*)user;
   --*counter;
-  
+
   if (status != EB_OK) {
     fprintf(stderr, "%s: verify operation failed: %s\n", program, eb_status(status));
     exit(1);
   }
-  
+
   for (; op != EB_NULL; op = eb_operation_next(op)) {
     if (eb_operation_had_error(op)) {
       fprintf(stderr, "%s: wishbone segfault reading %s %s bits from address 0x%"EB_ADDR_FMT"\n",
-                      program, 
-                      eb_width_data(eb_operation_format(op)), 
-                      eb_format_endian(eb_operation_format(op)), 
+                      program,
+                      eb_width_data(eb_operation_format(op)),
+                      eb_format_endian(eb_operation_format(op)),
                       eb_operation_address(op));
       exit(1);
     }
-    
+
     if (last_offset != eb_operation_address(op)) {
       last_offset = eb_operation_address(op);
       fseeko(firmware_f, last_offset-address, SEEK_SET);
     }
-    
+
     size = eb_operation_format(op) & EB_DATAX;
-    
+
     if (fread(buf, 1, size, firmware_f) != size) {
       fprintf(stderr, "\r%s: short verify read from '%s'\n", program, firmware);
       exit(1);
     }
     last_offset += size;
-    
+
     data = 0;
     if ((format & EB_ENDIAN_MASK) == EB_BIG_ENDIAN) {
       for (byte = 0; byte < size; ++byte) {
@@ -598,9 +616,9 @@ static void verify_decrement(eb_user_data_t user, eb_device_t dev, eb_operation_
         data |= buf[byte];
       }
     }
-    
+
     data = flip_bits(data);
-    
+
     if (eb_operation_data(op) != data) {
       fprintf(stderr, "%s: verify failed at address 0x%"EB_ADDR_FMT" (0x%"EB_DATA_FMT" != 0x%"EB_DATA_FMT")\n",
                       program, eb_operation_address(op), eb_operation_data(op), data);
@@ -621,48 +639,48 @@ static void verify_flash(eb_device_t device) {
   size = format & EB_DATAX;
   ops = 0;
   inflight = 0;
-  
+
   if (!quiet) printf("Verifying flash ... ");
-  
+
   if ((status = eb_cycle_open(device, &inflight, verify_decrement, &cycle)) != EB_OK) {
     fprintf(stderr, "\r%s: could not create cycle: %s\n", program, eb_status(status));
   }
-  
+
   stop_offset = address + firmware_length;
   for (offset = address; offset != stop_offset; offset += size) {
     if (offset % 65536 == 0) {
       if (!quiet) printf("\rVerifying 0x%"EB_ADDR_FMT"... ", offset);
       fflush(stdout);
     }
-    
+
     eb_cycle_read(cycle, offset, format, 0);
     ++ops;
-    
+
     if ((offset+size) % page_size == 0) {
       ops = 0;
       ++inflight;
       eb_cycle_close(cycle);
-      
+
       if ((status = eb_cycle_open(device, &inflight, verify_decrement, &cycle)) != EB_OK) {
         fprintf(stderr, "\r%s: could not create cycle: %s\n", program, eb_status(status));
       }
-      
+
       while (inflight >= cycles_per_poll)
         eb_socket_run(eb_device_socket(device), -1);
     }
   }
-  
+
   if (ops > 0) {
     ++inflight;
     eb_cycle_close(cycle);
   } else {
     eb_cycle_abort(cycle);
   }
-  
+
   while (inflight > 0) {
     eb_socket_run(eb_device_socket(device), -1);
   }
-  
+
   if (!quiet) printf("done!\n");
 }
 
@@ -670,13 +688,13 @@ int main(int argc, char** argv) {
   long value;
   char* value_end;
   int opt, error, i;
-  
+
   eb_socket_t socket;
   eb_status_t status;
   eb_device_t device;
   eb_width_t line_width;
   eb_width_t device_support;
-  
+
   /* Default arguments */
   program = argv[0];
   address = 0;
@@ -698,7 +716,7 @@ int main(int argc, char** argv) {
   verbose = 0;
   quiet = 0;
   erase_only = 0;
-  
+
   /* Process the command-line arguments */
   error = 0;
   while ((opt = getopt(argc, argv, "t:e:a:d:bli:s:w:c:r:fpnzvqh")) != -1) {
@@ -811,50 +829,50 @@ int main(int argc, char** argv) {
       error = 1;
     }
   }
-  
+
   if (error) return 1;
-  
+
   if (optind + 2 != argc) {
     fprintf(stderr, "%s: expecting two non-optional arguments: <proto/host/port> <firmware(rpd file)>\n", program);
     return 1;
   }
-  
+
   device_address = argv[optind];
-  
+
   firmware = argv[optind+1];
-  
+
   if ((firmware_f = fopen(firmware, "r")) == 0) {
     fprintf(stderr, "%s: fopen, %s -- '%s'\n",
                     program, strerror(errno), firmware);
     return 1;
   }
-  
+
   if (fseeko(firmware_f, 0, SEEK_END) != 0) {
     fprintf(stderr, "%s: fseeko, %s -- '%s'\n",
                     program, strerror(errno), firmware);
     return 1;
   }
-  
+
   firmware_length = ftello(firmware_f);
   fseeko(firmware_f, 0, SEEK_SET);
-  
+
   if (firmware_length % page_size != 0) {
     fprintf(stderr, "%s: invalid firmware image -- '%s'; must be aligned to a %d-byte page\n",
                     program, firmware, (int)page_size);
     return 1;
   }
 
-  erase_bitmap_size = firmware_length / page_size / 8;  
+  erase_bitmap_size = firmware_length / page_size / 8;
   erase_bitmap = (uint8_t*)calloc(erase_bitmap_size, 1);
   if (!erase_bitmap) {
     fprintf(stderr, "%s: could not allocate erase bitmap (%d bytes)\n",
                     program, erase_bitmap_size);
     return 1;
   }
-  
-  if (verbose) 
+
+  if (verbose)
     printf("Opened '%s' with 0x%"EB_ADDR_FMT" bytes of data\n", firmware, firmware_length);
-  
+
   if (invert == -1) {
     if (strlen(firmware) > 4 && !strcmp(firmware+strlen(firmware)-4, ".rpd")) {
       invert = 1;
@@ -864,33 +882,33 @@ int main(int argc, char** argv) {
     if (verbose)
       printf("  based on filename, WILL%s invert bits within bytes\n", invert?"":" NOT");
   }
-  
+
   if (verbose)
-    fprintf(stdout, "Opening socket with %s-bit address and %s-bit data widths\n", 
+    fprintf(stdout, "Opening socket with %s-bit address and %s-bit data widths\n",
                     eb_width_address(address_width), eb_width_data(data_width));
-  
+
   if ((status = eb_socket_open(EB_ABI_CODE, 0, address_width|data_width, &socket)) != EB_OK) {
     fprintf(stderr, "%s: failed to open Etherbone socket: %s\n", program, eb_status(status));
     return 1;
   }
-  
+
   if (verbose)
     fprintf(stdout, "Connecting to '%s' with %d retry attempts...\n", device_address, retries);
-  
+
   if ((status = eb_device_open(socket, device_address, EB_ADDRX|EB_DATAX, retries, &device)) != EB_OK) {
     fprintf(stderr, "%s: failed to open Etherbone device: %s\n", program, eb_status(status));
     return 1;
   }
-  
+
   line_width = eb_device_width(device);
   if (verbose)
-    fprintf(stdout, "  negotiated %s-bit address and %s-bit data session.\n", 
+    fprintf(stdout, "  negotiated %s-bit address and %s-bit data session.\n",
                     eb_width_address(line_width), eb_width_data(line_width));
-  
+
   if (probe) {
     struct sdb_device info;
     int num;
-    
+
     if (verbose)
       fprintf(stdout, "Scanning remote bus for Wishbone devices...\n");
 
@@ -908,7 +926,7 @@ int main(int argc, char** argv) {
         fprintf(stderr, "%s: found %d flash devices -- choose one with '-t'.\n", program, num);
         return 1;
       }
-      
+
       address = info.sdb_component.addr_first;
       address_set = 1;
       if (verbose)
@@ -919,20 +937,20 @@ int main(int argc, char** argv) {
         return 1;
       }
     }
-    
+
     if ((info.bus_specific & SDB_WISHBONE_LITTLE_ENDIAN) != 0)
       device_support = EB_LITTLE_ENDIAN;
     else
       device_support = EB_BIG_ENDIAN;
     device_support |= info.bus_specific & EB_DATAX;
-    
+
     if (!erase_address_set) {
       erase_address = info.sdb_component.addr_last-3;
       erase_address_set = 1;
       if (verbose)
         fprintf(stdout, "  using 0x%"EB_ADDR_FMT" as erase register\n", erase_address);
     }
-    
+
     if (info.abi_ver_major == 1 && info.abi_ver_minor == 0) {
       if (!quiet) fprintf(stderr, "warning: old flash firmware detected! (falling back to slow erase)\n");
       if (wait_us < 4000000) {
@@ -948,43 +966,43 @@ int main(int argc, char** argv) {
   } else {
     device_support = endian | EB_DATAX;
   }
-  
+
   /* If unset by user and SDB */
   if (!address_set) {
     fprintf(stderr, "%s: could not auto-detect target flash address\n", program);
     return 1;
   }
-  
+
   if (!erase_address_set) {
     fprintf(stderr, "%s: could not auto-detect erase register address\n", program);
     return 1;
   }
-  
+
   if (address % page_size != 0) {
     fprintf(stderr, "%s: invalid target address -- 0x%"EB_ADDR_FMT"; must be aligned to a %d-byte page\n",
                     program, address, (int)page_size);
     return 1;
   }
-  
+
   /* Did the user request a bad endian? We use it anyway, but issue warning. */
   if (endian != 0 && (device_support & EB_ENDIAN_MASK) != endian) {
     if (!quiet)
       fprintf(stderr, "%s: warning: target device is %s (writing as %s).\n",
                       program, eb_format_endian(device_support), eb_format_endian(endian));
   }
-  
+
   if (endian == 0) {
     /* Select the probed endian. May still be 0 if device not found. */
     endian = device_support & EB_ENDIAN_MASK;
   }
-  
+
   /* We need to know the endian */
   if (endian == 0) {
     fprintf(stderr, "%s: error: must know endian to program firmware\n",
                     program);
     return 1;
   }
-  
+
   /* What widths does the connection support? */
   line_width &= EB_DATAX;
   line_width |= line_width-1;
@@ -994,13 +1012,13 @@ int main(int argc, char** argv) {
   format |= format >> 1;
   format |= format >> 2;
   format = (format+1) >> 1;
-  
+
   if (format == 0) {
-    fprintf(stderr, "%s: device widths %s do not fit this connection (widths %s)\n", 
+    fprintf(stderr, "%s: device widths %s do not fit this connection (widths %s)\n",
                     program, eb_width_data(device_support), eb_width_data(line_width));
     return 1;
   }
-  
+
   /* If the page size is smaller than the write format... wtf? */
   if (page_size < format) {
     fprintf(stderr, "%s: page size %d is smaller than device write size %d!\n",
@@ -1012,40 +1030,40 @@ int main(int argc, char** argv) {
   if (verbose)
     printf("Will operate using %s bit %s operations\n",
       eb_format_data(format), eb_format_endian(format));
-  
+
   if (!sector_size) {
     sector_size = detect_sector_size(device);
   }
-  
+
   ffs = 0;
   ffs = ~ffs;
   ffs >>= (sizeof(eb_data_t) - (format&EB_DATAX))*8;
-  
+
   mask_0f = 0x0f;
   for (i = 0; i < sizeof(eb_data_t); ++i)
     mask_0f |= mask_0f << 8;
-  
+
   if (full) {
     memset(erase_bitmap, 0xFF, erase_bitmap_size);
   } else {
     quick_scan(device);
   }
-  
+
   erase_flash(device);
   if (erase_only) return 0;
-    
+
   program_flash(device);
   if (verify) verify_flash(device);
-  
+
   if ((status = eb_device_close(device)) != EB_OK) {
     fprintf(stderr, "%s: failed to close Etherbone device: %s\n", program, eb_status(status));
     return 1;
   }
-  
+
   if ((status = eb_socket_close(socket)) != EB_OK) {
     fprintf(stderr, "%s: failed to close Etherbone socket: %s\n", program, eb_status(status));
     return 1;
   }
-  
+
   return 0;
 }
