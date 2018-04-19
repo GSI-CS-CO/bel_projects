@@ -702,6 +702,7 @@ void CarpeDM::showCpuList() {
   int CarpeDM::safeguardTransaction(int (CarpeDM::*func)(Graph&, bool), Graph& g, bool force) {
     HashMap hmBak     = hm;
     GroupTable gtBak  = gt;
+    CovenantTable ctBak = ct;
     int ret;
  
     try {
@@ -709,6 +710,7 @@ void CarpeDM::showCpuList() {
     } catch(...) {
       hm = hmBak;
       gt = gtBak;
+      ct = ctBak;
       sLog << "Operation FAILED, executing roll back\n" << std::endl;
       throw;
     }
@@ -720,6 +722,7 @@ void CarpeDM::showCpuList() {
   int CarpeDM::safeguardTransaction(int (CarpeDM::*func)(bool), bool force) {
     HashMap hmBak     = hm;
     GroupTable gtBak  = gt;
+    CovenantTable ctBak = ct;
     int ret;
  
     try {
@@ -727,6 +730,7 @@ void CarpeDM::showCpuList() {
     } catch(...) {
       hm = hmBak;
       gt = gtBak;
+      ct = ctBak;
       sLog << "Operation FAILED, executing roll back\n" << std::endl;
       throw;
     }
