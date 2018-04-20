@@ -16,16 +16,14 @@
 
 #define ALLOC_OK             (0)
 #define ALLOC_NO_SPACE      (-1)
-#define ALLOC_ENTRY_EXISTS  (-2)
+#define ALLOC_ENTRY_EXISTS  (-2) 
 
 using boost::multi_index_container;
 using namespace boost::multi_index;
 
 #define ADR_FROM_TO(from,to) ( (((uint8_t)from & 0xf) << 4) | ((uint8_t)to   & 0xf) )
-
+ 
 //enum class AdrType {EXT = 0, INT = 1, PEER = 2, MGMT = 3};
-
-enum class AllocPoolMode {WITHOUT_MGMT = 0, WITH_MGMT = 1};
 
 struct AllocMeta {
   uint8_t     cpu;
@@ -39,7 +37,7 @@ struct AllocMeta {
   AllocMeta(uint8_t cpu, uint32_t adr, uint32_t hash) : cpu(cpu), adr(adr), hash(hash) {std::memset(b, 0, sizeof b);}
   AllocMeta(uint8_t cpu, uint32_t adr, uint32_t hash, vertex_t v) : cpu(cpu), adr(adr), hash(hash), v(v), staged(false) {std::memset(b, 0, sizeof b);}
   AllocMeta(uint8_t cpu, uint32_t adr, uint32_t hash, vertex_t v, bool staged) : cpu(cpu), adr(adr), hash(hash), v(v), staged(staged) {std::memset(b, 0, sizeof b);}
-
+  
   // Multiindexed Elements are immutable, must use the modify function of the container to change attributes
 };
 
@@ -55,7 +53,7 @@ typedef boost::multi_index_container<
     hashed_unique<
       tag<Vertex>,  BOOST_MULTI_INDEX_MEMBER(AllocMeta,vertex_t,v)>,
     hashed_unique<
-      tag<Hash>,  BOOST_MULTI_INDEX_MEMBER(AllocMeta,uint32_t,hash)>,
+      tag<Hash>,  BOOST_MULTI_INDEX_MEMBER(AllocMeta,uint32_t,hash)>,  
     ordered_unique<
       tag<CpuAdr>,
       composite_key<
@@ -64,7 +62,7 @@ typedef boost::multi_index_container<
         BOOST_MULTI_INDEX_MEMBER(AllocMeta,uint32_t,adr)
       >
     >
-  >
+  >    
  > AllocMeta_set;
 
 typedef AllocMeta_set::iterator amI;
@@ -73,12 +71,12 @@ struct MgmtMeta {
   uint8_t     cpu;
   uint32_t    adr;
   uint8_t     b[_MEM_BLOCK_SIZE];
-
+ 
 
 
   MgmtMeta(uint8_t cpu, uint32_t adr) : cpu(cpu), adr(adr) {std::memset(b, 0, sizeof b);}
   MgmtMeta(uint8_t cpu, uint32_t adr, uint8_t* src) : cpu(cpu), adr(adr) {std::copy(src, src + sizeof b, b);}
-
+  
   // Multiindexed Elements are immutable, must use the modify function of the container to change attributes
 };
 
@@ -95,7 +93,7 @@ typedef boost::multi_index_container<
         BOOST_MULTI_INDEX_MEMBER(MgmtMeta,uint32_t,adr)
       >
     >
-  >
+  >    
  > MgmtMeta_set;
 
 typedef MgmtMeta_set::iterator mmI;
@@ -112,7 +110,7 @@ class AllocTable {
   uint32_t mgmtTotalSize;
   uint32_t mgmtGrpSize;
   uint32_t mgmtCovSize;
-
+  
 
 
 
@@ -124,9 +122,16 @@ public:
    //deep copy
   AllocTable(AllocTable const &src);
 
-  AllocTable &operator=(const AllocTable &src);
+  AllocTable &operator=(const AllocTable &src)
+  {
+    //mgmt table is NOT copied!!!
+    a = src.a;
+    syncToAtBmps(src);
+    updatePools();
 
-  void cpyWithoutMgmt(AllocTable const &src);
+    return *this;
+  }
+
 
   std::vector<MemPool>& getMemories() {return vPool;}
   void addMemory(uint8_t cpu, uint32_t extBaseAdr, uint32_t intBaseAdr, uint32_t peerBaseAdr, uint32_t sharedOffs, uint32_t space, uint32_t rawSize) {vPool.push_back(MemPool(cpu, extBaseAdr, intBaseAdr, peerBaseAdr, sharedOffs, space, rawSize)); }
@@ -137,10 +142,10 @@ public:
   uint32_t getUsedSpace(uint8_t cpu)     const { return vPool[cpu].getUsedSpace(); }
 
 
-  void syncBmpsToPools(); // generate BMP from Pool
-  void recreatePools(AllocPoolMode mode);
+  void updateBmps()  {for (unsigned int i = 0; i < vPool.size(); i++ ) vPool[i].syncBmpToPool();} 
+  void updatePools() {for (unsigned int i = 0; i < vPool.size(); i++ ) vPool[i].syncPoolToBmp();} //FIXME do this from table !!!!
 
-
+  bool syncToAtBmps(AllocTable const &src);
   bool setBmps(vBuf bmpData);
   vBuf getBmps();
 
@@ -148,7 +153,7 @@ public:
   void setStaged(amI it) { a.modify(it, [](AllocMeta& e){e.staged = true;}); }
   void clrStaged(amI it) { a.modify(it, [](AllocMeta& e){e.staged = false;}); }
   bool isStaged(amI it)  { return it->staged; }
-  void modV(amI it, vertex_t vNew) { a.modify(it, [vNew](AllocMeta& e){e.v = vNew;}); }
+  void modV(amI it, vertex_t vNew) { a.modify(it, [vNew](AllocMeta& e){e.v = vNew;}); } 
 
   //Allocation functions
 // TODO - Maybe better with pair <iterator, bool> to get a direct handle on the inserted/allocated element?
@@ -212,4 +217,4 @@ public:
 
 };
 
-#endif
+#endif 
