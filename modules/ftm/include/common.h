@@ -189,6 +189,8 @@ typedef struct {
 } vEbrds;
 
 
+
+
 vBl leadingOne(size_t length);
 
 template <typename T>
