@@ -11,6 +11,7 @@
 #include <boost/multi_index/ordered_index.hpp>
 #include <boost/multi_index/composite_key.hpp>
 #include "graph.h"
+#include "common.h"
 #include "mempool.h"
 
 #define ALLOC_OK             (0)
@@ -141,8 +142,8 @@ public:
   uint32_t getUsedSpace(uint8_t cpu)     const { return vPool[cpu].getUsedSpace(); }
 
 
-  void updateBmps()  {for (unsigned int i = 0; i < vPool.size(); i++ ) vPool[i].syncBmpToPool();}
-  void updatePools() {for (unsigned int i = 0; i < vPool.size(); i++ ) vPool[i].syncPoolToBmp();}
+  void updateBmps()  {for (unsigned int i = 0; i < vPool.size(); i++ ) vPool[i].syncBmpToPool();} 
+  void updatePools() {for (unsigned int i = 0; i < vPool.size(); i++ ) vPool[i].syncPoolToBmp();} //FIXME do this from table !!!!
 
   bool syncToAtBmps(AllocTable const &src);
   bool setBmps(vBuf bmpData);
