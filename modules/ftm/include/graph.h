@@ -4,7 +4,6 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
-#include <boost/shared_ptr.hpp>
 #include <boost/bind.hpp>
 #include <boost/graph/graphviz.hpp>
 #include "ftm_common.h"
@@ -106,6 +105,8 @@ public:
   //deep copy
   myVertex(myVertex const &aSource);
 
+  ~myVertex() = default;
+
 };
 
 
@@ -141,6 +142,27 @@ struct nameEqualityFilter {
   NameMap names;
   NameMap compNames;
 };
+
+template <typename T>
+Graph& mycopy_graph(const T& original, Graph& cpy, vertex_map_t& vmap) {
+  //std::cout << "STARTING SUPER SIMPLY COPY" << std::endl;
+  BOOST_FOREACH( vertex_t v, vertices(original) ) {
+    //std::cout << "copying " << original[v].name << std::endl;
+    vertex_t i = boost::add_vertex(original[v], cpy);
+    vmap[v] = i; // must keep track of descriptors as they can differ between graphs
+  }  
+  BOOST_FOREACH( vertex_t v, vertices(original) ) {
+    typename T::out_edge_iterator out_begin, out_end, out_cur;
+    boost::tie(out_begin, out_end) = out_edges(v, original);
+    for (out_cur = out_begin; out_cur != out_end; ++out_cur) {
+      boost::add_edge(vmap[v], vmap[target(*out_cur, original)], myEdge(original[*out_cur].type), cpy);
+    }  
+  }
+  //std::cout << "ENDING SUPER SIMPLY COPY" << std::endl;  
+  return cpy;
+}
+
+
 /*
 
 template <class TypeMap >

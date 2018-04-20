@@ -18,6 +18,7 @@
 
 namespace dnt = DotStr::Node::TypeVal;
 namespace det = DotStr::Edge::TypeVal;
+typedef boost::property_map< Graph, std::string myEdge::* >::type EpMap;
 
 namespace isSafeToRemove {
   const std::string exIntro = "isSafeToRemove: ";
@@ -74,8 +75,16 @@ bool CarpeDM::isSafeToRemove(std::set<std::string> patterns, std::string& report
 
   //make a working copy of the download graph
   vertex_map_t vertexMapTmp;
-  boost::associative_property_map<vertex_map_t> vertexMapWrapperTmp(vertexMapTmp);
-  copy_graph(g, gTmp, boost::orig_to_copy(vertexMapWrapperTmp));
+  //boost::associative_property_map<vertex_map_t> vertexMapWrapperTmp(vertexMapTmp);
+  //std::cout << "SAFE2REMOVE **************** START COPY GRAPH Tmp " << std::endl;
+  //std::cout << "G VERTICES ***********************" << std::endl;
+  //BOOST_FOREACH( vertex_t v, vertices(g) ) std::cout << g[v].name << std::endl;
+  //copy_graph(g, gTmp, boost::orig_to_copy(vertexMapWrapperTmp));
+  mycopy_graph<Graph>(g, gTmp, vertexMapTmp);
+  //  std::cout << "G VERTICES ***********************" << std::endl;
+  //BOOST_FOREACH( vertex_t v, vertices(gTmp) ) std::cout << gTmp[v].name << std::endl;
+  //std::cout << "SAFE2REMOVE **************** END COPY GRAPH Tmp" << std::endl;
+  
   for (auto& it : vertexMapTmp) { //check vertex indices
     if (it.first != it.second) {throw std::runtime_error(isSafeToRemove::exIntro +  "CpyGraph Map1 Idx Translation failed! This is beyond bad, contact Dev !");}
   }
@@ -92,12 +101,15 @@ bool CarpeDM::isSafeToRemove(std::set<std::string> patterns, std::string& report
 
 
   //Generate a filtered view, stripping all edges except default Destinations, resident flow destinations and dynamic flow destinations
-  typedef boost::property_map< Graph, std::string myEdge::* >::type EpMap;
+
   boost::filtered_graph <Graph, static_eq<EpMap>, boost::keep_all > fg(gTmp, make_static_eq(boost::get(&myEdge::type, gTmp)), boost::keep_all());
   //copy filtered view to normal graph to work with
   vertex_map_t vertexMapEq;
-  boost::associative_property_map<vertex_map_t> vertexMapWrapperEq(vertexMapEq);
-  copy_graph(fg, gEq, boost::orig_to_copy(vertexMapWrapperEq));
+  //boost::associative_property_map<vertex_map_t> vertexMapWrapperEq(vertexMapEq);
+  //std::cout << "SAFE2REMOVE **************** START COPY GRAPH Eq " << std::endl;
+  //copy_graph(fg, gEq, boost::orig_to_copy(vertexMapWrapperEq));
+  mycopy_graph<boost::filtered_graph <Graph, static_eq<EpMap>, boost::keep_all >>(fg, gEq, vertexMapEq);
+  //std::cout << "SAFE2REMOVE **************** END COPY GRAPH Eq" << std::endl;
   for (auto& it : vertexMapEq) { //check vertex indices
     if (it.first != it.second) { throw std::runtime_error(isSafeToRemove::exIntro + "CpyGraph Map2 Idx Translation failed! This is beyond bad, contact Dev !");}
   }

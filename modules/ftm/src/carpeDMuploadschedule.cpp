@@ -364,7 +364,8 @@ using namespace DotStr::Misc;
     atUp = atDown;
     // for some reason, copy_graph does not copy the name
     //boost::set_property(gTmp, boost::graph_name, boost::get_property(g, boost::graph_name));
-    copy_graph(gDown, gUp);
+    vertex_map_t vmap;
+    mycopy_graph<Graph>(gDown, gUp, vmap);
     //now, we need to change the buffer pointers in the copied nodes, as they still point to buffers in upload allocation table
 
     BOOST_FOREACH( vertex_t v, vertices(gUp) ) {
@@ -400,8 +401,9 @@ using namespace DotStr::Misc;
     }
 
     //merge graphs (will lead to disjunct trees with duplicates at overlaps), but keep the mapping for vertex merge
-    boost::associative_property_map<vertex_map_t> vertexMapWrapper(vertexMap);
-    copy_graph(gTmp, gUp, boost::orig_to_copy(vertexMapWrapper));
+    //boost::associative_property_map<vertex_map_t> vertexMapWrapper(vertexMap);
+    //copy_graph(gTmp, gUp, boost::orig_to_copy(vertexMapWrapper));
+    mycopy_graph<Graph>(gTmp, gUp, vertexMap);
     //for(auto& it : vertexMap ) {sLog <<  "gTmp " << gTmp[it.first].name << " @ " << it.first << " gUp " << it.second << std::endl; }
     //merge duplicate nodes
     for(auto& it : duplicates ) { 
