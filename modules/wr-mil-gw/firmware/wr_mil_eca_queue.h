@@ -34,6 +34,6 @@ void ECAQueue_actionPop(volatile uint32_t *queue);
 //    milTelegram: correcly formatted MIL telegram that can be passed to the mil piggy 
 //
 // return value: is nonzero if the event code must be forwarded to MIL event bus, zero otherwise
-uint32_t ECAQueue_getMilEventData(volatile uint32_t *queue, uint32_t *evtCode, uint32_t *milTelegram);
+uint32_t ECAQueue_getMilEventData(volatile uint32_t *queue, uint32_t *evtCode, uint32_t *milTelegram, uint32_t evtSource);
 
 #endif

@@ -1,0 +1,8 @@
+digraph g {
+name="UNIPZ!CMD!";
+
+graph []
+
+CMD_ABORT  [type="abort", cpu="2", thread="0"];
+
+}

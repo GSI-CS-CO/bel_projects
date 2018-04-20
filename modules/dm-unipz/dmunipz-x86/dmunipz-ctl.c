@@ -3,7 +3,7 @@
  *
  *  created : 2017
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 03-July-2017
+ *  version : 05-Dezember-2017
  *
  * Command-line interface for dmunipz
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 17-May-2017
  ********************************************************************************************/
-#define DMUNIPZ_X86_VERSION "0.0.6"
+#define DMUNIPZ_X86_VERSION "0.0.10"
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -49,16 +49,18 @@
 #include <etherbone.h>
 
 //ftm
-#include "../../ftm/ftm_common.h"  // defs and regs for data master
+#include "../../ftm/include/ftm_common.h"  // defs and regs for data master
 
 // dm-unipz
 #include <dm-unipz.h>
 #include <dm-unipz_smmap.h>
 
 const char* program;
-static int getInfo = 0;
-static int snoop = 0;
-static int logLevel=0;
+static int getInfo    = 0;
+static int getConfig  = 0;
+static int getVersion = 0;
+static int snoop      = 0;
+static int logLevel   = 0;
 
 eb_device_t  device;             // keep this and below global
 eb_address_t lm32_base;          // base address of lm32
@@ -79,6 +81,12 @@ eb_address_t dmunipz_dstMacLo;   // ebm dst mac, write
 eb_address_t dmunipz_dstIp;      // ebm dst ip, write
 eb_address_t dmunipz_flexOffset; // offset added to timestamp of MIL event for schedule continuation
 eb_address_t dmunipz_uniTimeout; // timeout value for UNILAC
+eb_address_t dmunipz_tkTimeout;  // timeout value for TK (via UNILAC)
+eb_address_t dmunipz_nBadStatus; // # of bad status ("ERROR") incidents
+eb_address_t dmunipz_nBadState;  // # of bad state ("not in operation") incidents
+
+eb_data_t   data1;
+
 
 
  
@@ -144,6 +152,8 @@ static void help(void) {
   fprintf(stderr, "Usage: %s [OPTION] <etherbone-device> [COMMAND]\n", program);
   fprintf(stderr, "\n");
   fprintf(stderr, "  -h                  display this help and exit\n");
+  fprintf(stderr, "  -c                  display configuration of gateway\n");
+  fprintf(stderr, "  -e                  display version\n");
   fprintf(stderr, "  -i                  display information on gateway\n");
   fprintf(stderr, "  -s<n>               snoop gateway for information continuously\n");
   fprintf(stderr, "                      0: print all messages (default)\n");
@@ -154,7 +164,8 @@ static void help(void) {
   fprintf(stderr, "  ebmlocal <mac> <ip> command sets local WR MAC and IP for EB master (values in hex)\n");
   fprintf(stderr, "  ebmdm    <mac> <ip> command sets DM WR MAC and IP for EB master (values in hex)\n");
   fprintf(stderr, "  flex    <offset>    command sets offset added to timestamp (WR) of UNILAC event READY_TO_SIS [ns]\n");
-  fprintf(stderr, "  uni     <timeout>   command sets timeout value for UNILAC [ms]\n");
+  fprintf(stderr, "  uni     <timeout>   command sets timeout value for UNILAC (default 1000ms) [ms]\n");
+  fprintf(stderr, "  tk      <timeout>   command sets timeout value for TK (via UNILAC, default 210) [ms]\n");
   fprintf(stderr, "\n");
   fprintf(stderr, "  configure           command requests state change to CONFIGURED\n");
   fprintf(stderr, "  startop             command requests state change to OPERATION\n");
@@ -168,9 +179,11 @@ static void help(void) {
   fprintf(stderr, "Example3: '%s -s0 dev/wbm0 | logger -t TIMING -sp local0.info' monitor firmware and print to screen and to diagnostic logging", program);
   fprintf(stderr, "\n");
   fprintf(stderr, "When using option '-s<n>', the following information is displayed\n");
-  fprintf(stderr, "dm-unipz: transfer - 00000074, 01, 002, 1 1 1 1 1 1, OPERATION , OK\n");
-  fprintf(stderr, "                            |   |    |  | | | | | |  |           |\n");
-  fprintf(stderr, "                            |   |    |  | | | | | |  |           - status\n");
+  fprintf(stderr, "dm-unipz: transfer - 00000074, 01, 002, 1 1 1 1 1 1, OPERATION (      ), OK (      )\n");
+  fprintf(stderr, "                            |   |    |  | | | | | |  |          |        |   | \n");
+  fprintf(stderr, "                            |   |    |  | | | | | |  |          |        |    - # of bad status incidents\n");
+  fprintf(stderr, "                            |   |    |  | | | | | |  |          |         - status\n");
+  fprintf(stderr, "                            |   |    |  | | | | | |  |          - # of '!OPERATION' incidents\n");
   fprintf(stderr, "                            |   |    |  | | | | | |   - state\n");
   fprintf(stderr, "                            |   |    |  | | | | | - beam (request) released\n");
   fprintf(stderr, "                            |   |    |  | | | | - beam request succeeded\n");
@@ -190,33 +203,91 @@ int readTransfers(uint32_t *transfers)
 {
   eb_cycle_t  cycle;
   eb_status_t eb_status;
+  eb_data_t   data;
   
-  if ((eb_status = eb_cycle_open(device, 0, eb_block, &cycle)) != EB_OK) die("EP eb_cycle_open", eb_status);
-  eb_cycle_read(cycle, dmunipz_transfers,   EB_BIG_ENDIAN|EB_DATA32, (eb_data_t *)transfers);
-  if ((eb_status = eb_cycle_close(cycle)) != EB_OK) die("EP eb_cycle_close", eb_status);
+  if ((eb_status = eb_cycle_open(device, 0, eb_block, &cycle)) != EB_OK) die("dm-unipz: eb_cycle_open", eb_status);
+  eb_cycle_read(cycle, dmunipz_transfers,   EB_BIG_ENDIAN|EB_DATA32, &data);
+  if ((eb_status = eb_cycle_close(cycle)) != EB_OK) die("dm-unipz: eb_cycle_close", eb_status);
+
+  *transfers = data;
 
   return eb_status;
 } // getInfo
 
 
-int readInfo(uint32_t *status, uint32_t *state, uint32_t *iterations, uint32_t *transfers, uint32_t *injections, uint32_t *virtAcc, uint32_t *statTrans)
+int readInfo(uint32_t *status, uint32_t *state, uint32_t *iterations, uint32_t *transfers, uint32_t *injections, uint32_t *virtAcc, uint32_t *statTrans, uint32_t *nBadStatus, uint32_t *nBadState)
 {
   eb_cycle_t  cycle;
   eb_status_t eb_status;
+  eb_data_t   data[10];
   
-  if ((eb_status = eb_cycle_open(device, 0, eb_block, &cycle)) != EB_OK) die("EP eb_cycle_open", eb_status);
+  if ((eb_status = eb_cycle_open(device, 0, eb_block, &cycle)) != EB_OK) die("dm-unipz: eb_cycle_open", eb_status);
 
-  eb_cycle_read(cycle, dmunipz_status,      EB_BIG_ENDIAN|EB_DATA32, (eb_data_t *)status);
-  eb_cycle_read(cycle, dmunipz_state,       EB_BIG_ENDIAN|EB_DATA32, (eb_data_t *)state);
-  eb_cycle_read(cycle, dmunipz_iterations,  EB_BIG_ENDIAN|EB_DATA32, (eb_data_t *)iterations);
-  eb_cycle_read(cycle, dmunipz_transfers,   EB_BIG_ENDIAN|EB_DATA32, (eb_data_t *)transfers);
-  eb_cycle_read(cycle, dmunipz_injections,  EB_BIG_ENDIAN|EB_DATA32, (eb_data_t *)injections);
-  eb_cycle_read(cycle, dmunipz_virtAcc,     EB_BIG_ENDIAN|EB_DATA32, (eb_data_t *)virtAcc);
-  eb_cycle_read(cycle, dmunipz_statTrans,   EB_BIG_ENDIAN|EB_DATA32, (eb_data_t *)statTrans);
-  if ((eb_status = eb_cycle_close(cycle)) != EB_OK) die("EP eb_cycle_close", eb_status);
+  eb_cycle_read(cycle, dmunipz_status,      EB_BIG_ENDIAN|EB_DATA32, &(data[0]));
+  eb_cycle_read(cycle, dmunipz_state,       EB_BIG_ENDIAN|EB_DATA32, &(data[1]));
+  eb_cycle_read(cycle, dmunipz_iterations,  EB_BIG_ENDIAN|EB_DATA32, &(data[2]));
+  eb_cycle_read(cycle, dmunipz_nBadStatus,  EB_BIG_ENDIAN|EB_DATA32, &(data[3]));
+  eb_cycle_read(cycle, dmunipz_nBadState,   EB_BIG_ENDIAN|EB_DATA32, &(data[4]));
+  eb_cycle_read(cycle, dmunipz_transfers,   EB_BIG_ENDIAN|EB_DATA32, &(data[5]));
+  eb_cycle_read(cycle, dmunipz_injections,  EB_BIG_ENDIAN|EB_DATA32, &(data[6]));
+  eb_cycle_read(cycle, dmunipz_virtAcc,     EB_BIG_ENDIAN|EB_DATA32, &(data[7]));
+  eb_cycle_read(cycle, dmunipz_statTrans,   EB_BIG_ENDIAN|EB_DATA32, &(data[8]));
+  if ((eb_status = eb_cycle_close(cycle)) != EB_OK) die("dm-unipz: eb_cycle_close", eb_status);
+
+  *status       = data[0];
+  *state        = data[1];
+  *iterations   = data[2];
+  *nBadStatus   = data[3];
+  *nBadState    = data[4];
+  *transfers    = data[5];
+  *injections   = data[6];
+  *virtAcc      = data[7];
+  *statTrans    = data[8];
+    
+  return eb_status;
+} // readInfo
+
+int readConfig(uint32_t *flexOffset, uint32_t *uniTimeout, uint32_t *tkTimeout, uint64_t *srcMac, uint32_t *srcIp, uint64_t *dstMac, uint32_t *dstIp)
+{
+  eb_cycle_t  cycle;
+  eb_status_t eb_status;
+  eb_data_t   data[10];
+
+  uint32_t srcMacHi, srcMacLo, dstMacHi, dstMacLo;
+
+  if ((eb_status = eb_cycle_open(device, 0, eb_block, &cycle)) != EB_OK) die("dm-unipz: eb_cycle_open", eb_status);
+
+  eb_cycle_read(cycle, dmunipz_srcMacHi,   EB_BIG_ENDIAN|EB_DATA32, &(data[0]));
+  eb_cycle_read(cycle, dmunipz_srcMacLo,   EB_BIG_ENDIAN|EB_DATA32, &(data[1]));
+  eb_cycle_read(cycle, dmunipz_srcIp,      EB_BIG_ENDIAN|EB_DATA32, &(data[2]));
+  eb_cycle_read(cycle, dmunipz_dstMacHi,   EB_BIG_ENDIAN|EB_DATA32, &(data[3]));
+  eb_cycle_read(cycle, dmunipz_dstMacLo,   EB_BIG_ENDIAN|EB_DATA32, &(data[4]));
+  eb_cycle_read(cycle, dmunipz_dstIp,      EB_BIG_ENDIAN|EB_DATA32, &(data[5]));
+  eb_cycle_read(cycle, dmunipz_flexOffset, EB_BIG_ENDIAN|EB_DATA32, &(data[6]));
+  eb_cycle_read(cycle, dmunipz_uniTimeout, EB_BIG_ENDIAN|EB_DATA32, &(data[7]));
+  eb_cycle_read(cycle, dmunipz_tkTimeout,  EB_BIG_ENDIAN|EB_DATA32, &(data[8]));
+  if ((eb_status = eb_cycle_close(cycle)) != EB_OK) die("dm-unipz: eb_cycle_close", eb_status);
+
+  srcMacHi      = data[0];
+  srcMacLo      = data[1];  
+  *srcIp        = data[2];
+  dstMacHi      = data[3];
+  dstMacLo      = data[4];
+  *dstIp        = data[5];
+  *flexOffset   = data[6];
+  *uniTimeout   = data[7];
+  *tkTimeout    = data[8];
+  
+  *srcMac = srcMacHi;
+  *srcMac = (*srcMac << 32);
+  *srcMac = *srcMac + srcMacLo;
+
+  *dstMac = dstMacHi;
+  *dstMac = (*dstMac << 32);
+  *dstMac = *dstMac + dstMacLo;
 
   return eb_status;
-} // getInfo
+} //readConfig
 
 
 void printTransfer(uint32_t transfers, uint32_t injections, uint32_t virtAcc, uint32_t statTrans)
@@ -239,6 +310,7 @@ int main(int argc, char** argv) {
   
   eb_status_t         eb_status;
   eb_socket_t         socket;
+  eb_data_t           data;
 
   struct sdb_device   sdbDevice;          // instantiated lm32 core
   int                 nDevices;           // number of instantiated cores
@@ -252,33 +324,45 @@ int main(int argc, char** argv) {
   char *tail;
 
   uint32_t status;    
-  uint32_t state;     
+  uint32_t state;
+  uint32_t nBadStatus;
+  uint32_t nBadState;
   uint32_t iterations;
   uint32_t transfers; 
   uint32_t injections;
   uint32_t virtAcc;   
   uint32_t statTrans; 
-  uint32_t version; 
+  uint32_t version;
 
   uint32_t actTransfers;   // actual number of transfers
   uint32_t actState;       // actual state of gateway
   uint32_t actStatus;      // actual status of gateway
-  uint32_t actStatTrans;   // actual status of ongoing transfer
+  // chk uint32_t actStatTrans;   // actual status of ongoing transfer
   uint32_t sleepTime;      // time to sleep [us]
   uint32_t printFlag;      // flag for printing
 
-  uint64_t mac;            // mac for config of EB master
+  uint64_t srcMac;         // mac for config of EB master (this gateway)
+  uint64_t dstMac;         // mac for config of EB master (Data Master)
+  uint32_t srcIp;          // ip for config of EB master (this gateway)
+  uint32_t dstIp;          // ip for config of EB master (Data Master)
   uint32_t macHi;          // high 32bit of mac
   uint32_t macLo;          // low 32 bit of mac
   uint32_t ip;             // ip for config of EB master
   uint32_t flexOffset;     // offset value added to MIL EVent timestamp
   uint32_t uniTimeout;     // timeout value for UNILAC
+  uint32_t tkTimeout;      // timeout value for TK (via UNILAC)
   
 
   program = argv[0];    
 
-  while ((opt = getopt(argc, argv, "s:ih")) != -1) {
+  while ((opt = getopt(argc, argv, "s:ceih")) != -1) {
     switch (opt) {
+    case 'c':
+      getConfig = 1;
+      break;
+    case 'e':
+      getVersion = 1;
+      break;
     case 'i':
       getInfo = 1;
       break;
@@ -347,21 +431,38 @@ int main(int argc, char** argv) {
   dmunipz_dstIp      = lm32_base + SHARED_OFFS + DMUNIPZ_SHARED_DSTIP;
   dmunipz_flexOffset = lm32_base + SHARED_OFFS + DMUNIPZ_SHARED_OFFSETFLEX;
   dmunipz_uniTimeout = lm32_base + SHARED_OFFS + DMUNIPZ_SHARED_UNITIMEOUT;
+  dmunipz_tkTimeout  = lm32_base + SHARED_OFFS + DMUNIPZ_SHARED_TKTIMEOUT;
+  dmunipz_nBadStatus = lm32_base + SHARED_OFFS + DMUNIPZ_SHARED_NBADSTATUS;
+  dmunipz_nBadState  = lm32_base + SHARED_OFFS + DMUNIPZ_SHARED_NBADSTATE;
+
+  // printf("dm-unipz: lm32_base 0x%08x, 0x%08x\n", lm32_base, dmunipz_iterations);
+
+  if (getConfig) {
+    readConfig(&flexOffset, &uniTimeout, &tkTimeout, &srcMac, &srcIp, &dstMac, &dstIp);
+    printf("dm-unipz: the values below are applied if the gateway becomes 'CONFIGURED'\n");
+    printf("dm-unipz: flexOffset %"PRIu32" ns, uniTimeout %"PRIu32" ms, tkTimeout %"PRIu32" ms\n", flexOffset, uniTimeout, tkTimeout);
+    printf("dm-unipz: EB Master (local): mac 0x%012"PRIx64", ip %03d.%03d.%03d.%03d\n", srcMac, (srcIp & 0xff000000) >> 24, (srcIp & 0x00ff0000) >> 16, (srcIp & 0x0000ff00) >> 8, (srcIp & 0x000000ff));
+    printf("dm-unipz: EB Master (DM   ): mac 0x%012"PRIx64", ip %03d.%03d.%03d.%03d\n", dstMac, (dstIp & 0xff000000) >> 24, (dstIp & 0x00ff0000) >> 16, (dstIp & 0x0000ff00) >> 8, (dstIp & 0x000000ff));
+  } // if getConfig
+
+  if (getVersion) {
+    eb_device_read(device, dmunipz_version, EB_BIG_ENDIAN|EB_DATA32, &data, 0, eb_block);
+    version = data;
+    printf("dm-unipz: software (firmware) version %s (%06d)\n",  DMUNIPZ_X86_VERSION, version);     
+  } // if getEBVersion
 
   if (getInfo) {
-    // version info
-    eb_device_read(device, dmunipz_version, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t *)(&version), 0, eb_block);
-    printf("dm-unipz: software (firmware) version %s (%06x)\n",  DMUNIPZ_X86_VERSION, version); 
-
-    eb_device_read(device, dmunipz_flexOffset, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t *)(&flexOffset), 0, eb_block);
-    eb_device_read(device, dmunipz_uniTimeout, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t *)(&uniTimeout), 0, eb_block);
-    printf("dm-unipz: flexOffset %"PRIu32" ns, uniTimeout %"PRIu32" ms (if 'CONFIGURED')\n", flexOffset, uniTimeout);
-
     // status
-    readInfo(&status, &state, &iterations, &transfers, &injections, &virtAcc, &statTrans);
-    printf("dm-unipz: state %s, status %s, iterations %d\n",dmunipz_state_text(state),  dmunipz_status_text(status), iterations);
-    printf("dm-unipz: "); printTransfer(transfers, injections, virtAcc, statTrans); printf("\n");
-    printf("          # of transfers, # of injections, virtAcc, status transfer\n");
+    readInfo(&status, &state, &iterations, &transfers, &injections, &virtAcc, &statTrans, &nBadStatus, &nBadState);
+
+    printf("dm-unipz: iterations %d, transfer - ", iterations); 
+    printTransfer(transfers, injections, virtAcc, statTrans); 
+    printf(", %s (%6u), %s (%6u)\n", dmunipz_state_text(state), nBadState, dmunipz_status_text(status), nBadStatus);
+
+    
+    //printf("dm-unipz: state %s, status %s, iterations %d\n",dmunipz_state_text(state),  dmunipz_status_text(status), iterations);
+    //printf("dm-unipz: "); printTransfer(transfers, injections, virtAcc, statTrans); printf("\n");
+    //printf("          # of transfers, # of injections, virtAcc, status transfer\n");
   } // if getInfo
 
   if (command) {
@@ -373,14 +474,14 @@ int main(int argc, char** argv) {
     if (!strcasecmp(command, "ebmlocal")) {
       if (optind+3  != argc) {printf("dm-unipz: expecting exactly two arguments: ebmlocal <mac> <ip>\n"); return 1;} 
 
-      mac = strtoull(argv[optind+1], &tail, 0);
+      srcMac = strtoull(argv[optind+1], &tail, 0);
       if (*tail != 0)        {printf("dm-unipz: invalid mac -- %s\n", argv[optind+2]); return 1;} 
 
       ip = strtoull(argv[optind+2], &tail, 0);
       if (*tail != 0)        {printf("dm-unipz: invalid ip -- %sn", argv[optind+3]); return 1;}       
 
-      macHi = (uint32_t)(mac >> 32);
-      macLo = (uint32_t)(mac & 0xffffffff);
+      macHi = (uint32_t)(srcMac >> 32);
+      macLo = (uint32_t)(srcMac & 0xffffffff);
 
       eb_device_write(device, dmunipz_srcMacHi, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)macHi, 0, eb_block); // todo: all writes in one cycle
       eb_device_write(device, dmunipz_srcMacLo, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)macLo, 0, eb_block);
@@ -389,14 +490,14 @@ int main(int argc, char** argv) {
     if (!strcasecmp(command, "ebmdm")) {
       if (optind+3  != argc) {printf("dm-unipz: expecting exactly two arguments: ebmdm <mac> <ip>\n"); return 1;} 
 
-      mac = strtoull(argv[optind+1], &tail, 0);
+      dstMac = strtoull(argv[optind+1], &tail, 0);
       if (*tail != 0)        {printf("dm-unipz: invalid mac -- %s\n", argv[optind+2]); return 1;} 
 
       ip = strtoull(argv[optind+2], &tail, 0);
       if (*tail != 0)        {printf("dm-unipz: invalid ip -- %sn", argv[optind+3]); return 1;}       
 
-      macHi = (uint32_t)(mac >> 32);
-      macLo = (uint32_t)(mac & 0xffffffff);
+      macHi = (uint32_t)(dstMac >> 32);
+      macLo = (uint32_t)(dstMac & 0xffffffff);
 
       eb_device_write(device, dmunipz_dstMacHi, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)macHi, 0, eb_block); // todo: all writes in one cycle
       eb_device_write(device, dmunipz_dstMacLo, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)macLo, 0, eb_block);
@@ -418,18 +519,26 @@ int main(int argc, char** argv) {
 
       eb_device_write(device, dmunipz_uniTimeout, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)uniTimeout, 0, eb_block);
     } // "uni"
+    if (!strcasecmp(command, "tk")) {
+      if (optind+2  != argc) {printf("dm-unipz: expecting exactly one argument: tk <timeout>\n"); return 1;} 
+
+      tkTimeout = strtoul(argv[optind+1], &tail, 0);
+      if (*tail != 0)        {printf("dm-unipz: invalid timeout -- %s\n", argv[optind+2]); return 1;} 
+
+      eb_device_write(device, dmunipz_tkTimeout, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)tkTimeout, 0, eb_block);
+    } // "tk"
   } //if command
 
   if (snoop) {
-    printf("dm-unipz: continous monitoring of gateway...\n");
+    printf("dm-unipz: continous monitoring of gateway, loglevel = %d\n", logLevel);
     
     actTransfers = 0;
     actState     = DMUNIPZ_STATE_UNKNOWN;
     actStatus    = DMUNIPZ_STATUS_UNKNOWN;
-    actStatTrans = DMUNIPZ_TRANS_UNKNOWN;
+    // actStatTrans = DMUNIPZ_TRANS_UNKNOWN; chk
 
     while (1) {
-      readInfo(&status, &state, &iterations, &transfers, &injections, &virtAcc, &statTrans);  // read info from lm32
+      readInfo(&status, &state, &iterations, &transfers, &injections, &virtAcc, &statTrans, &nBadStatus, &nBadState);  // read info from lm32
 
       switch(state) {
       case DMUNIPZ_STATE_OPERATION :
@@ -449,12 +558,12 @@ int main(int argc, char** argv) {
       if ((actState     != state)     && (logLevel <= DMUNIPZ_LOGLEVEL_STATE))                                         {printFlag = 1; actState = state;}
       if ((actStatus    != status)    && (logLevel <= DMUNIPZ_LOGLEVEL_STATUS))                                        {printFlag = 1; actStatus = status;}
       if ((actTransfers != transfers) && (logLevel <= DMUNIPZ_LOGLEVEL_COMPLETE) && (statTrans & DMUNIPZ_TRANS_RELTK)) {printFlag = 1; actTransfers = transfers;}
-      if ((actStatTrans != statTrans) && (logLevel <= DMUNIPZ_LOGLEVEL_ALL))                                           {printFlag = 1; actStatTrans = statTrans;}
+      if ((actTransfers != transfers) && (logLevel <= DMUNIPZ_LOGLEVEL_ALL))                                           {printFlag = 1; actTransfers = transfers;}
 
       if (printFlag) {
         printf("dm-unipz: transfer - "); 
         printTransfer(transfers, injections, virtAcc, statTrans); 
-        printf(", %s, %s\n", dmunipz_state_text(state), dmunipz_status_text(status));
+        printf(", %s (%6u), %s (%6u)\n", dmunipz_state_text(state), nBadState, dmunipz_status_text(status), nBadStatus);
       } // if printFlag
 
       fflush(stdout);                                                                         // required for immediate writing (if stdout is piped to syslog)

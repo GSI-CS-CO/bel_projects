@@ -18,37 +18,37 @@ t_disp_type init_disp(eb_device_t device)
   bool fFoundSSD1325 = false;
   t_disp_type ret    = NONE;
   int dispsFound     = 0;
-  
+
   // Check for available displays
-  
+
   // OLED
-  dispsFound = 1;   
+  dispsFound = 1;
   eb_sdb_find_by_identity(device, OLED_SDB_VENDOR_ID, OLED_SDB_DEVICE_ID, &myOLEDisplay, &dispsFound);
   if (dispsFound)
-  { 
-    fFoundOLED=true; 
+  {
+    fFoundOLED=true;
     printf("%s: Found OLEDisplay... use -d %d\n", program, OLED);
 
   }
-  
+
   // LCD
-  dispsFound = 1; 
+  dispsFound = 1;
   eb_sdb_find_by_identity(device, vendID_GSI, devID_disp_lcd, &myLCDisplay, &dispsFound);
-  if (dispsFound) 
-  { 
+  if (dispsFound)
+  {
     fFoundLCD=true;
     printf("%s: Found LCDisplay... use -d %d\n", program, LCD);
   }
-  
+
   // SSD1325
-  dispsFound = 1; 
+  dispsFound = 1;
   eb_sdb_find_by_identity(device, vendID_GSI, devID_disp_ssd1325, &mySSD1325Display, &dispsFound);
-  if (dispsFound) 
-  { 
-    fFoundSSD1325=true; 
+  if (dispsFound)
+  {
+    fFoundSSD1325=true;
     printf("%s: Found SSD1325 Display... use -d %d\n", program, SSD1325);
   }
-    
+
   // Select Display
   if (fFoundOLED && (desiredDisplay==OLED))
   {
@@ -76,7 +76,7 @@ t_disp_type init_disp(eb_device_t device)
     disp_put_loc_c = &vSSD1325_HostPutLocC;
     disp_put_c     = &vSSD1325_HostPutC;
     disp_put_s     = &vSSD1325_HostPutS;
-    disp_put_line  = &vSSD1325_HostPutLine; 
+    disp_put_line  = &vSSD1325_HostPutLine;
     printf("%s: Using SSD1325 Display @ %p\n", program, display);
     ret = SSD1325;
   }
@@ -90,14 +90,10 @@ t_disp_type init_disp(eb_device_t device)
   {
     // No display was found
     printf("%s: Sorry, can't find any known/selected display(s)!\n", program);
-    ret = NONE; 
+    ret = NONE;
   }
-  
+
   // Done
   return ret;
 
 }
-
-
-
- 

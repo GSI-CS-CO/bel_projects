@@ -22,3 +22,6 @@
 [submodule "ip_cores/pci-core"]
 	path = ip_cores/pci-core
 	url = git://ohwr.org/hdl-core-lib/pci-core.git
+[submodule "ip_cores/mtca_mmc_firmware"]
+	path = ip_cores/mtca_mmc_firmware
+	url = https://github.com/GSI-CS-CO/mtca_mmc_firmware.git

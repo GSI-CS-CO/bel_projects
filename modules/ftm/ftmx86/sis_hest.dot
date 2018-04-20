@@ -1,0 +1,66 @@
+digraph g {
+  
+name="SIS18";
+
+graph [];
+edge  [type="defdst"];
+
+  subgraph cpu1 {
+    node  [cpu="1"];
+
+    EVT_01 [type="tmsg", fid="0", gid="300", evtno="257", sid="1", bpid="9",  par="0x40000000000", toffs="0"];
+    
+    EVT_02 [type="tmsg", fid="0", gid="500", evtno="257", sid="1", bpid="3",  par="0x40000000000", toffs="0"];
+    EVT_03 [type="tmsg", fid="0", gid="505", evtno="257", sid="1", bpid="12", par="0x40000000000", toffs="0"];
+    EVT_04 [type="tmsg", fid="0", gid="506", evtno="257", sid="1", bpid="14", par="0x40000000000", toffs="0"];
+    EVT_05 [type="tmsg", fid="0", gid="300", evtno="32",  sid="1", bpid="9",  par="0x40000000000", toffs="28000000"];
+    EVT_06 [type="tmsg", fid="0", gid="300", evtno="312", sid="1", bpid="9",  par="0x40000000000", toffs="28000000"];
+    EVT_07 [type="tmsg", fid="0", gid="300", evtno="75",  sid="1", bpid="9",  par="0x40000000000", toffs="28070000"];
+    EVT_08 [type="tmsg", fid="0", gid="300", evtno="70",  sid="1", bpid="9",  par="0x40000000000", toffs="28140000"];
+    EVT_09 [type="tmsg", fid="0", gid="300", evtno="103", sid="1", bpid="9",  par="0x40000000000", toffs="69930000"];
+    EVT_10 [type="tmsg", fid="0", gid="300", evtno="44",  sid="1", bpid="9",  par="0x40000000000", toffs="69965000"];
+    EVT_11 [type="tmsg", fid="0", gid="300", evtno="36",  sid="1", bpid="9",  par="0x40000000000", toffs="139965000"];
+    EVT_12 [type="tmsg", fid="0", gid="300", evtno="256", sid="2", bpid="7",  par="0x40000000000", toffs="140000000"];
+    EVT_13 [type="tmsg", fid="0", gid="300", evtno="312", sid="2", bpid="7",  par="0x40000000000", toffs="168000000"];
+    EVT_14 [type="tmsg", fid="0", gid="300", evtno="109", sid="2", bpid="7",  par="0x40000000000", toffs="168035000"];
+    EVT_15 [type="tmsg", fid="0", gid="300", evtno="39",  sid="2", bpid="7",  par="0x40000000000", toffs="265600000"];
+    EVT_16 [type="tmsg", fid="0", gid="300", evtno="107", sid="2", bpid="7",  par="0x40000000000", toffs="267300000"];
+    EVT_17 [type="tmsg", fid="0", gid="300", evtno="40",  sid="2", bpid="7",  par="0x40000000000", toffs="267400000"];
+    EVT_18 [type="tmsg", fid="0", gid="300", evtno="518", sid="2", bpid="7",  par="0x40000000000", toffs="267460000"];
+    EVT_19 [type="tmsg", fid="0", gid="300", evtno="256", sid="3", bpid="8",  par="0x40000000000", toffs="268000000"];
+    EVT_20 [type="tmsg", fid="0", gid="300", evtno="43",  sid="3", bpid="8",  par="0x40000000000", toffs="296000000"];
+    EVT_21 [type="tmsg", fid="0", gid="300", evtno="312", sid="3", bpid="8",  par="0x40000000000", toffs="296000000"];
+    EVT_22 [type="tmsg", fid="0", gid="300", evtno="256", sid="4", bpid="10", par="0x40000000000", toffs="328000000"];
+    EVT_23 [type="tmsg", fid="0", gid="300", evtno="312", sid="4", bpid="10", par="0x40000000000", toffs="356000000"];
+    EVT_24 [type="tmsg", fid="0", gid="300", evtno="256", sid="1", bpid="15", par="0x40000000000", toffs="716000000"];
+    EVT_25 [type="tmsg", fid="0", gid="500", evtno="256", sid="1", bpid="17", par="0x40000000000", toffs="716000000"];
+    EVT_26 [type="tmsg", fid="0", gid="505", evtno="256", sid="1", bpid="2",  par="0x40000000000", toffs="716000000"];
+    EVT_27 [type="tmsg", fid="0", gid="506", evtno="256", sid="1", bpid="13", par="0x40000000000", toffs="716000000"];
+    EVT_28 [type="tmsg", fid="0", gid="300", evtno="45",  sid="4", bpid="10", par="0x40000000000", toffs="743965000"];
+    EVT_29 [type="tmsg", fid="0", gid="300", evtno="57",  sid="1", bpid="15", par="0x40000000000", toffs="744000000"];
+    EVT_30 [type="tmsg", fid="0", gid="300", evtno="312", sid="1", bpid="15", par="0x40000000000", toffs="744000000"];
+    EVT_31 [type="tmsg", fid="0", gid="300", evtno="47",  sid="2", bpid="16", par="0x40000000000", toffs="745000000"];
+    EVT_32 [type="tmsg", fid="0", gid="300", evtno="256", sid="2", bpid="16", par="0x40000000000", toffs="752000000"];
+    EVT_33 [type="tmsg", fid="0", gid="300", evtno="49",  sid="2", bpid="16", par="0x40000000000", toffs="780000000"];
+    EVT_34 [type="tmsg", fid="0", gid="300", evtno="312", sid="2", bpid="16", par="0x40000000000", toffs="780000000"];
+    EVT_35 [type="tmsg", fid="0", gid="300", evtno="520", sid="2", bpid="16", par="0x40000000000", toffs="780035000"];
+    EVT_36 [type="tmsg", fid="0", gid="300", evtno="256", sid="3", bpid="1",  par="0x40000000000", toffs="788000000"];
+    EVT_37 [type="tmsg", fid="0", gid="300", evtno="51",  sid="3", bpid="1",  par="0x40000000000", toffs="816000000"];
+    EVT_38 [type="tmsg", fid="0", gid="300", evtno="312", sid="3", bpid="1",  par="0x40000000000", toffs="816000000"];
+    EVT_39 [type="tmsg", fid="0", gid="300", evtno="256", sid="1", bpid="4",  par="0x40000000000", toffs="824000000"];
+    EVT_40 [type="tmsg", fid="0", gid="500", evtno="256", sid="1", bpid="11", par="0x40000000000", toffs="824000000"];
+    EVT_41 [type="tmsg", fid="0", gid="505", evtno="256", sid="1", bpid="6",  par="0x40000000000", toffs="824000000"];
+    EVT_42 [type="tmsg", fid="0", gid="506", evtno="256", sid="1", bpid="5",  par="0x40000000000", toffs="824000000"];
+    EVT_43 [type="tmsg", fid="0", gid="300", evtno="52",  sid="1", bpid="4",  par="0x40000000000", toffs="852000000"];
+    EVT_44 [type="tmsg", fid="0", gid="300", evtno="312", sid="1", bpid="4",  par="0x40000000000", toffs="852000000"];
+    EVT_45 [type="tmsg", fid="0", gid="300", evtno="55",  sid="1", bpid="4",  par="0x40000000000", toffs="1340000000"];
+    B_00 [type="block"  , tperiod="1340000000"];
+
+    EVT_01 -> EVT_02 -> EVT_03 -> EVT_04 -> EVT_05 -> EVT_06 -> EVT_07 -> EVT_08 -> EVT_09 -> EVT_10 -> EVT_11 -> EVT_12 -> EVT_13 -> EVT_14;
+    EVT_14 -> EVT_15 -> EVT_16 -> EVT_17 -> EVT_18 -> EVT_19 -> EVT_20 -> EVT_21 -> EVT_22 -> EVT_23 -> EVT_24 -> EVT_25 -> EVT_26 -> EVT_27;
+    EVT_27 -> EVT_28 -> EVT_29 -> EVT_30 -> EVT_31 -> EVT_32 -> EVT_33 -> EVT_34 -> EVT_35 -> EVT_36 -> EVT_37 -> EVT_38 -> EVT_39 -> EVT_40;
+    EVT_40 -> EVT_41 -> EVT_42 -> EVT_43 -> EVT_44 -> EVT_45 -> B_00   -> EVT_01;
+  
+  } 
+
+} 

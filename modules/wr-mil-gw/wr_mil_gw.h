@@ -18,11 +18,16 @@
 #define WR_MIL_GW_REG_MAGIC_NUMBER   0x00  // command to be executed
 #define WR_MIL_GW_REG_COMMAND        0x04  // command to be executed
 #define WR_MIL_GW_REG_UTC_TRIGGER    0x08  // the MIL event that triggers the generation of UTC events
-#define WR_MIL_GW_REG_UTC_SEPARATION 0x0C  // delay [us] between the 5 generated UTC MIL events
-#define WR_MIL_GW_REG_UTC_DELAY      0x10  // delay [us] between the trigger event and the first UTC (and other) generated events
+#define WR_MIL_GW_REG_UTC_DELAY      0x0C  // delay [us] between the 5 generated UTC MIL events
+#define WR_MIL_GW_REG_TRIG_UTC_DELAY 0x10  // delay [us] between the trigger event and the first UTC (and other) generated events
 #define WR_MIL_GW_REG_EVENT_SOURCE   0x14  // for internal use: register to hold the source configuration: 1 = SIS ; 2 = ESR ; 0 not configured
 #define WR_MIL_GW_REG_LATENCY        0x18  // MIL event is generated 100us+latency after the WR event. The value of latency can be negative
 #define WR_MIL_GW_REG_STATE          0x1C  // for internal use: state of the program: INITIAL, UNCONFIGURED, CONFIGURED
+#define WR_MIL_GW_REG_UTC_OFFSET_HI  0x20  // delay [ms] between the TAI and the MIL-UTC, high word 
+#define WR_MIL_GW_REG_UTC_OFFSET_LO  0x24  // delay [ms] between the trigger the MIL-UTC, low  word
+#define WR_MIL_GW_REG_NUM_EVENTS_HI  0x28  // number of translated events from WR to MIL, high word
+#define WR_MIL_GW_REG_NUM_EVENTS_LO  0x2C  // number of translated events from WR to MIL, low word
+#define WR_MIL_GW_REG_LATE_EVENTS    0x30  // number of translated events that could not be delivered in time
 
 // states of the software
 #define WR_MIL_GW_STATE_INIT         0
