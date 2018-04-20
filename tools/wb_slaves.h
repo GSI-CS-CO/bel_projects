@@ -4,9 +4,9 @@
 //
 //  created : 11-Nov-2016
 //  author  : Dietrich Beck, GSI-Darmstadt
-//  version : 15-Feb-2018
+//  version : 20-Apr-2018
 //
-#define WB_SLAVES_VERSION "0.05.0"
+#define WB_SLAVES_VERSION "0.06.0"
 //
 //  defines wishbone vendor IDs
 //  defines wishbone device IDs and registers
@@ -151,7 +151,10 @@
 #define FPGA_RESET_VMINOR            1                   // minor revision
 
 // register offsets
-#define FPGA_RESET_RESET             0x0                 // reset register
+#define FPGA_RESET_RESET             0x0000              // reset register of FPGA
+#define FPGA_RESET_USERLM32_GET      0x0004              // get reset status of user lm32, one bit per CPU, bit 0 is CPU 0
+#define FPGA_RESET_USERLM32_SET      0x0008              // puts user lm32 into RESET, one bit per CPU, bit 0 is CPU 0
+#define FPGA_RESET_USERLM32_CLEAR    0x000c              // clears RESET of user lm32, one bit per CPU, bit 0 is CPU 0
 
 // masks
 

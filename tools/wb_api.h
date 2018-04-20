@@ -9,9 +9,9 @@
 //            -- Wesley W. Terpstra <w.terpstra@gsi.de>
 //            -- Alessandro Rubini <rubini@gnudd.com>
 //            -- Tomasz Wlostowski <tomasz.wlostowski@cern.ch>
-//  version : 15-Feb-2018
+//  version : 20-Apr-2018
 //
-#define WB_API_VERSION "0.07.0"
+#define WB_API_VERSION "0.08.0"
 //
 // Api for wishbone devices for timing receiver nodes. This is not a timing receiver API.
 // 
@@ -136,5 +136,23 @@ eb_status_t wb_wr_reset(eb_device_t device,                    // EB device
                         uint32_t value                         // value to be written to the reset controller
                         );
 
+
+// puts user lm32 into reset state
+eb_status_t wb_cpu_halt(eb_device_t device,                    // EB device
+                        int devIndex,                          // 0,1,2... - there may be more than 1 device on the WB bus
+                        uint32_t value                         // number 0..31 of a single cpu, 0xff for all 
+                        );
+
+// releases user lm32 from reset state
+eb_status_t wb_cpu_resume(eb_device_t device,                  // EB device
+                          int devIndex,                        // 0,1,2... - there may be more than 1 device on the WB bus
+                          uint32_t value                       // number 0..31 of a single cpu, 0xff for all 
+                          );
+
+// gets reset state of all lm32 
+eb_status_t wb_cpu_status(eb_device_t device,                  // EB device
+                          int devIndex,                        // 0,1,2... - there may be more than 1 device on the WB bus
+                          uint32_t *value                      // one bit per CPU; CPU 0 is rightmost bit
+                          );
 
 #endif // wb_api.h
