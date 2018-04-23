@@ -309,9 +309,9 @@ namespace dnt = DotStr::Node::TypeVal;
     
     freshDownload = true;
 
-    gt.debug(sLog);
+    //gt.debug(sLog);
 
-    ct.debug(sLog);
+    //ct.debug(sLog);
 
     return vDlD.size();
   }

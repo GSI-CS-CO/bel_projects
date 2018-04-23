@@ -164,7 +164,6 @@ typedef struct {
 } QueueReport;
 
 
-
 class Node;
 class MiniCommand;
 

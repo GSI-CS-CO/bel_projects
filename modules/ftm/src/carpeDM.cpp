@@ -6,6 +6,7 @@
 #include <inttypes.h>
 #include <boost/graph/graphviz.hpp>
 #include <boost/algorithm/string.hpp>
+#include <sys/time.h>
 
 #include "common.h"
 #include "propwrite.h"
@@ -28,10 +29,95 @@
 vBuf CarpeDM::compress(const vBuf& in) {return lzmaCompress(in);}
 vBuf CarpeDM::decompress(const vBuf& in) {return lzmaDecompress(in);}
 
+void CarpeDM::simAdrTranslation (uint32_t a, uint8_t& cpu, uint32_t& arIdx) {
+  //get cpu
+  /*
+   if (debug) sLog << "cpuQty "  << getCpuQty() << std::endl;
+  for (uint8_t cpuIdx = 0; cpuIdx < getCpuQty(); cpuIdx++) {
+    if (debug) sLog << "a : " << std::hex << a << ", cmpA " << simRamAdrMap[cpuIdx] << " cpu " << (int)cpuIdx << " arIdx "  << arIdx << std::endl;
+    if (simRamAdrMap[cpuIdx] > a) break;
+    cpu = cpuIdx;
+  }
+  */
+  cpu = ((a >> 17) & 0x7) -1;
+  arIdx = atDown.adrConv(AdrType::EXT, AdrType::MGMT, cpu, a) >> 2;
+}
+
+void CarpeDM::simRamWrite (uint32_t a, eb_data_t d) {
+  uint8_t cpu = -1;
+  uint32_t arIdx;
+  if (debug) sLog << "cpu : " << (int)cpu << " arIdx " << std::hex << arIdx << std::endl;
+  simAdrTranslation (a, cpu, arIdx);
+  simRam[cpu][arIdx] = d;
+}
+
+
+void CarpeDM::simRamRead (uint32_t a, eb_data_t* d) {
+  uint8_t cpu;
+  uint32_t arIdx;
+  simAdrTranslation (a, cpu, arIdx);
+  *d = simRam[cpu][arIdx];
+}
+
+int CarpeDM::simWriteCycle(vAdr va, vBuf& vb) {
+  if (debug) sLog << "Starting Write Cycle" << std::endl;
+  eb_data_t veb[va.size()];
+
+  for(int i = 0; i < (va.end()-va.begin()); i++) {
+   uint32_t data = vb[i*4 + 0] << 24 | vb[i*4 + 1] << 16 | vb[i*4 + 2] << 8 | vb[i*4 + 3];
+   veb[i] = (eb_data_t)data;
+  } 
+  
+  
+  for(int i = 0; i < (va.end()-va.begin()); i++) {
+  
+    if (debug) sLog << " Writing @ 0x" << std::hex << std::setfill('0') << std::setw(8) << va[i] << " : 0x" << std::hex << std::setfill('0') << std::setw(8) << veb[i] << std::endl;
+    simRamWrite(va[i], veb[i]);
+  }
+  
+
+  return 0;
+
+}
+
+
+
+
+
+vBuf CarpeDM::simReadCycle(vAdr va)
+{
+  
+
+  eb_data_t veb[va.size()];
+  vBuf ret = vBuf(va.size() * 4);
+  if (debug) sLog << "Starting Read Cycle" << std::endl; 
+  //sLog << "Got Adr Vec with " << va.size() << " Adrs" << std::endl;
+
+  
+  for(int i = 0; i < (va.end()-va.begin()); i++) {
+    if (debug) sLog << " Reading @ 0x" << std::hex << std::setfill('0') << std::setw(8) << va[i] << std::endl;
+    simRamRead(va[i], (eb_data_t*)&veb[i]);
+  }
+
+  //FIXME use endian functions
+  for(unsigned int i = 0; i < va.size(); i++) { 
+    ret[i * 4]     = (uint8_t)(veb[i] >> 24);
+    ret[i * 4 + 1] = (uint8_t)(veb[i] >> 16);
+    ret[i * 4 + 2] = (uint8_t)(veb[i] >> 8);
+    ret[i * 4 + 3] = (uint8_t)(veb[i] >> 0);
+  } 
+
+  return ret;
+}
+
+
+
 int CarpeDM::ebWriteCycle(Device& dev, vAdr va, vBuf& vb, vBl vcs)
 {
+  if (sim) {return simWriteCycle(va, vb); }
   //eb_status_t status;
   //FIXME What about MTU? What about returned eb status ??
+
   if (debug) sLog << "Starting Write Cycle" << std::endl;
   Cycle cyc;
   eb_data_t veb[va.size()];
@@ -67,7 +153,10 @@ int   CarpeDM::ebWriteCycle(Device& dev, vAdr va, vBuf& vb) {return  ebWriteCycl
 
 vBuf CarpeDM::ebReadCycle(Device& dev, vAdr va, vBl vcs)
 {
+  if (sim) {return simReadCycle(va); }
   //FIXME What about MTU? What about returned eb status ??
+
+
   Cycle cyc;
   eb_data_t veb[va.size()];
   vBuf ret = vBuf(va.size() * 4);
@@ -142,8 +231,57 @@ int CarpeDM::write64b(uint32_t startAdr, uint64_t d) {
 
 }
 
+bool CarpeDM::simConnect() {
+    ebdevname = "simDummy"; //copy to avoid mem trouble later
+    bool  ret = false;
+    uint8_t mappedIdx = 0;
+    int expVersion = 010000, foundVersion = 010000, foundVersionMax = 010000;
+    uint32_t const intBaseAdr   = 0x1000000;
+    uint32_t const sharedSize   = 98304;
+    uint32_t const rawSize      = 131072;
+    uint32_t const sharedOffs   = 0x500; 
+    uint32_t const devBaseAdr   = 0x4120000;
+    cpuQty = 4;
 
-bool CarpeDM::connect(const std::string& en) {
+    atUp.clear();
+    atUp.removeMemories();
+    gUp.clear();
+    atDown.clear();
+    atDown.removeMemories();
+    gDown.clear();
+    cpuIdxMap.clear();
+    cpuDevs.clear();
+
+
+    
+
+    if(verbose) sLog << "Connecting to Sim... ";
+    simRam.reserve(cpuQty); 
+       
+    for(int cpuIdx = 0; cpuIdx< cpuQty; cpuIdx++) {
+      simRam[cpuIdx]        = new uint32_t [(rawSize + _32b_SIZE_ -1) >> 2];
+      cpuIdxMap[cpuIdx]     = mappedIdx;
+      uint32_t extBaseAdr   = devBaseAdr + cpuIdx * rawSize;
+      simRamAdrMap[cpuIdx]  = extBaseAdr;
+      uint32_t peerBaseAdr  = WORLD_BASE_ADR  + extBaseAdr;
+      uint32_t space        = sharedSize - _SHCTL_END_;
+                  
+      atUp.addMemory(cpuIdx, extBaseAdr, intBaseAdr, peerBaseAdr, sharedOffs, space, rawSize );
+      atDown.addMemory(cpuIdx, extBaseAdr, intBaseAdr, peerBaseAdr, sharedOffs, space, rawSize );
+      mappedIdx++;
+    }  
+    if(verbose) sLog << "done" << std::endl;
+    return true;
+
+}
+
+
+bool CarpeDM::connect(const std::string& en, bool simulation) {
+    sim = simulation;
+    simRam.clear();
+    simRamAdrMap.clear();
+    if (sim) {return simConnect(); }
+
     ebdevname = std::string(en); //copy to avoid mem trouble later
     bool  ret = false;
     uint8_t mappedIdx = 0;
@@ -230,19 +368,25 @@ bool CarpeDM::connect(const std::string& en) {
   }
 
   bool CarpeDM::disconnect() {
+
+
     bool ret = false;
 
     if(verbose) sLog << "Disconnecting ... ";
-    try { 
-      ebd.close();
-      ebs.close();
-      cpuQty = -1;
-      ret = true;
-    } catch (etherbone::exception_t const& ex) {
-      throw std::runtime_error("Etherbone " + std::string(ex.method) + " returned " + std::string(eb_status(ex.status)) + "\n" );
-      //TODO report why we could not disconnect
+    if (sim) {simRam.clear(); ret = true;}
+    else {
+      try { 
+        ebd.close();
+        ebs.close();
+        cpuQty = -1;
+        ret = true;
+      } catch (etherbone::exception_t const& ex) {
+        throw std::runtime_error("Etherbone " + std::string(ex.method) + " returned " + std::string(eb_status(ex.status)) + "\n" );
+        //TODO report why we could not disconnect
+      }
     }
     if(verbose) sLog << " Done" << std::endl;
+    sim = false;
     return ret;
   }
 
@@ -671,9 +815,22 @@ void CarpeDM::showCpuList() {
 
   uint64_t CarpeDM::getDmWrTime() {
     /* get time from ECA */
+    uint64_t wrTime;
+
+    if (sim) {
+      timeval ts;   
+      gettimeofday(&ts, NULL);
+
+      wrTime = (uint64_t)ts.tv_sec * 1000000000ULL + (uint64_t)ts.tv_usec * 1000ULL;
+      
+      return wrTime;
+
+    }
+  
     eb_data_t    nsHi0, nsLo, nsHi1;
     Cycle cyc;
-    uint64_t wrTime;
+
+
     uint32_t ecaAddr = ecaDevs[0].sdb_component.addr_first;
     
     do {

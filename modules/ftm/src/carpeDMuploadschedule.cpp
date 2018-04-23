@@ -521,7 +521,7 @@ using namespace DotStr::Misc;
     vBuf mgmtBinary = compress(tmpBuf);
     atUp.allocateMgmt(mgmtBinary);
     atUp.populateMgmt(mgmtBinary);
-    atUp.debugMgmt(sLog);
+    //atUp.debugMgmt(sLog);
     atUp.updateBmps();
   }
 

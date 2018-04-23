@@ -133,6 +133,8 @@
     size_t        bytesLeft     = serialisedContainer.size();
                   mgmtTotalSize = serialisedContainer.size();
 
+
+
     //iterate management table: mark chunk as management node type, add linked list metadata and fill with serialised payload chunks
  
     //multiindex iterators are not forward iterators. If we want a fixed order, we need to make it ourselves. Create a vector
@@ -169,7 +171,7 @@
     uint32_t chunkLinkPtr = mgmtStartAdr;
     size_t   bytesLeft    = mgmtTotalSize;
 
-    std::cout << "recovery. Bytes expected: " << std::dec << bytesLeft << ", starting at 0x" << std::hex << chunkLinkPtr << std::endl;
+    //std::cout << "recovery. Bytes expected: " << std::dec << bytesLeft << ", starting at 0x" << std::hex << chunkLinkPtr << std::endl;
 
     unsigned cnt = 0;
     //traverse the linked list by looking up elements in the management table. Copy payload of found elements to return vector

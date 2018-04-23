@@ -34,40 +34,34 @@ int main(int argc, char* argv[]) {
    std::cerr << std::endl << program << ": Failed to connect to DM: " << err.what() << std::endl; return -20;
   }
 
-  try { cdm.loadHashDictFile("./dm.hashes"); } catch (std::runtime_error const& err) {}
-
-  try { cdm.loadHashDictFile("./dm.groups"); }  catch (std::runtime_error const& err) {}
 
 
   //cdm.verboseOn();
+  uint64_t before, after, sum, average;
+  sum = 0;
+  for (unsigned i=0; i < 10; i++) {
 
-  cdm.addDotFile("pps.dot");
-  cdm.download();
-  cdm.sendCommandsDotFile("pps_cmd_start.dot");
-  printf("waiting 1 sec\n");
-  std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-  printf("done\n");
-  cdm.showGroupsDict();
-  try {
-    printf("trying to clear while running\n");
-    cdm.clear(false);
-  }  catch (...) {
-    printf("clear told us to fuck off\n");
+    before = cdm.getDmWrTime();
+    cdm.overwriteDotFile("debug_sloppy_safe2remove.dot", true);
+    cdm.download();
+    cdm.setThrOrigin(0, 0, "B_BLOCK");
+    cdm.forceThrCursor(0, 0);
+    cdm.sendCommandsDotFile("debug_cmd_flow_sloppy_safe2remove.dot");
+    cdm.download();
+    std::string report;
+    try{ 
+      cdm.isSafeToRemove("E", report, true);
+      cdm.writeTextFile("./" + std::string(debugfile), report);
+    } catch (...) {
+      std::cout << "FUCKUP" << std::endl << report << std::endl;
+      
 
-  }  
-  cdm.showGroupsDict();
-  
-  try {
-    printf("trying to stop\n");
-    cdm.sendCommandsDotFile("pps_cmd_stop.dot");
-  }  catch (...) {
-    printf("stop went south, cleaning up\n");
-
-    cdm.halt();
-    cdm.clear(false);
+    }  
+    after = cdm.getDmWrTime();
+    sum += (after - before);
   }
-
-   
+  sum /= 1000;
+  std::cout << "Time Avg: " << sum << std::endl;
 
 
   cdm.disconnect();

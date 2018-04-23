@@ -103,7 +103,7 @@ vEbwrs& CarpeDM::createCommandBurst(Graph& g, vEbwrs& ew) {
     uint8_t cpu, thr;
     
 
-    sLog << "Command <" << g[v].name << ">, type <" << g[v].type << ">" << std::endl;
+    //sLog << "Command <" << g[v].name << ">, type <" << g[v].type << ">" << std::endl;
     
 
     // Commands with optional target
@@ -111,7 +111,7 @@ vEbwrs& CarpeDM::createCommandBurst(Graph& g, vEbwrs& ew) {
     if (g[v].type == dnt::sCmdStart)   {
       if(parseCpuAndThr(v, g)) {
         std::tie(cpu, thr) = parseCpuAndThr(v, g).get();
-        sLog << " Starting cpu=" << (int)cpu << ", thr=" << (int)thr << std::endl;  startThr(cpu, thr, ew); 
+        //sLog << " Starting cpu=" << (int)cpu << ", thr=" << (int)thr << std::endl;  startThr(cpu, thr, ew); 
       } else {
         target = getPatternEntryNode(g[v].patName);
         if (hm.lookup(target)) {sLog << " Starting at <" << target << ">" << std::endl; startNodeOrigin(target, ew);  }
@@ -122,7 +122,7 @@ vEbwrs& CarpeDM::createCommandBurst(Graph& g, vEbwrs& ew) {
     if (g[v].type == dnt::sCmdStop)    {
       if(parseCpuAndThr(v, g)) {
         std::tie(cpu, thr) = parseCpuAndThr(v, g).get();
-        sLog << " Stopping (trying) cpu=" << (int)cpu << ", thr=" << (int)thr << std::endl;  stopPattern(getNodePattern(getThrCursor(cpu, thr)), ew); 
+        //sLog << " Stopping (trying) cpu=" << (int)cpu << ", thr=" << (int)thr << std::endl;  stopPattern(getNodePattern(getThrCursor(cpu, thr)), ew); 
       } else {
         if (hm.lookup(target)) { sLog << " Stopping at <" << target << ">" << std::endl; stopNodeOrigin(target, ew); }
         else throw std::runtime_error("Cannot execute command '" + g[v].type + "' No valid cpu/thr provided and '" + target + "' is not a valid node name\n");
@@ -132,7 +132,7 @@ vEbwrs& CarpeDM::createCommandBurst(Graph& g, vEbwrs& ew) {
     else if (g[v].type == dnt::sCmdAbort)   {
       if(parseCpuAndThr(v, g)) {
         std::tie(cpu, thr) = parseCpuAndThr(v, g).get();
-        sLog << " Aborting cpu=" << (int)cpu << ", thr=" << (int)thr << std::endl; abortThr(cpu, thr, ew); 
+        //sLog << " Aborting cpu=" << (int)cpu << ", thr=" << (int)thr << std::endl; abortThr(cpu, thr, ew); 
       } else {
         if (hm.lookup(target)) {sLog << " Aborting (trying) at <" << target << ">" << std::endl; abortNodeOrigin(target, ew); }
         else throw std::runtime_error("Cannot execute command '" + g[v].type + "'. No valid cpu/thr provided and '" + target + "' is not a valid node name\n");
@@ -155,7 +155,7 @@ vEbwrs& CarpeDM::createCommandBurst(Graph& g, vEbwrs& ew) {
                                             mc = (mc_ptr) new MiniNoop(cmdTvalid, cmdPrio, cmdQty );
                                           }
     else if (g[v].type == dnt::sCmdFlow)  { uint32_t cmdQty = s2u<uint32_t>(g[v].qty);
-                                            sLog << " Flowing from <" << target << "> to <" << destination << ">, permanent defDest change='" << s2u<bool>(g[v].perma) << "'" << std::endl;
+                                            //sLog << " Flowing from <" << target << "> to <" << destination << ">, permanent defDest change='" << s2u<bool>(g[v].perma) << "'" << std::endl;
                                             uint32_t adr = LM32_NULL_PTR;
                                             try { adr = getNodeAdr(destination, TransferDir::DOWNLOAD, AdrType::INT); } catch (std::runtime_error const& err) {
                                               throw std::runtime_error("Destination '" + destination + "'' invalid: " + std::string(err.what()));
@@ -163,7 +163,7 @@ vEbwrs& CarpeDM::createCommandBurst(Graph& g, vEbwrs& ew) {
 
                                             mc = (mc_ptr) new MiniFlow(cmdTvalid, cmdPrio, cmdQty, adr, s2u<bool>(g[v].perma) );
                                           }
-    else if (g[v].type == dnt::sCmdFlush) { sLog << " Flushing <" << target << "> Queues IL " << s2u<int>(g[v].qIl) << " HI " << s2u<int>(g[v].qHi) << " LO " << s2u<int>(g[v].qLo) <<  std::endl;
+    else if (g[v].type == dnt::sCmdFlush) { // << " Flushing <" << target << "> Queues IL " << s2u<int>(g[v].qIl) << " HI " << s2u<int>(g[v].qHi) << " LO " << s2u<int>(g[v].qLo) <<  std::endl;
                                             mc = (mc_ptr) new MiniFlush(cmdTvalid, cmdPrio, s2u<bool>(g[v].qIl), s2u<bool>(g[v].qHi), s2u<bool>(g[v].qLo));
                                           }
     else if (g[v].type == dnt::sCmdWait)  { uint64_t cmdTwait  = s2u<uint64_t>(g[v].tWait);
@@ -171,7 +171,7 @@ vEbwrs& CarpeDM::createCommandBurst(Graph& g, vEbwrs& ew) {
                                           }
     else                                  { throw std::runtime_error("Command <" + g[v].name + ">'s type <" + g[v].type + "> is not supported!\n");} 
     
-    sLog << std::endl;
+    //sLog << std::endl;
     //create miniCommand
     createCommand(target, cmdPrio, mc, ew);
     
@@ -223,17 +223,17 @@ vEbwrs& CarpeDM::createCommandBurst(Graph& g, vEbwrs& ew) {
 
   //Returns the external address of a thread's command register area
   uint32_t CarpeDM::getThrCmdAdr(uint8_t cpuIdx) {
-    return cpuDevs.at(cpuIdx).sdb_component.addr_first + atDown.getMemories()[cpuIdx].sharedOffs + SHCTL_THR_CTL;
+    return atDown.getMemories()[cpuIdx].extBaseAdr + atDown.getMemories()[cpuIdx].sharedOffs + SHCTL_THR_CTL;
   }
 
   //Returns the external address of a thread's initial node register 
   uint32_t CarpeDM::getThrInitialNodeAdr(uint8_t cpuIdx, uint8_t thrIdx) {
-    return cpuDevs.at(cpuIdx).sdb_component.addr_first + atDown.getMemories()[cpuIdx].sharedOffs + SHCTL_THR_STA + thrIdx * _T_TS_SIZE_ + T_TS_NODE_PTR;
+    return atDown.getMemories()[cpuIdx].extBaseAdr + atDown.getMemories()[cpuIdx].sharedOffs + SHCTL_THR_STA + thrIdx * _T_TS_SIZE_ + T_TS_NODE_PTR;
   }
 
   //Returns the external address of a thread's cursor pointer
   uint32_t CarpeDM::getThrCurrentNodeAdr(uint8_t cpuIdx, uint8_t thrIdx) {
-    return cpuDevs.at(cpuIdx).sdb_component.addr_first + atDown.getMemories()[cpuIdx].sharedOffs + SHCTL_THR_DAT + thrIdx * _T_TD_SIZE_ + T_TD_NODE_PTR;
+    return atDown.getMemories()[cpuIdx].extBaseAdr + atDown.getMemories()[cpuIdx].sharedOffs + SHCTL_THR_DAT + thrIdx * _T_TD_SIZE_ + T_TD_NODE_PTR;
   }
   
 
@@ -288,7 +288,7 @@ vEbwrs& CarpeDM::createCommandBurst(Graph& g, vEbwrs& ew) {
 
   //Get bifield showing running threads
   uint32_t CarpeDM::getStatus(uint8_t cpuIdx) {
-    return ebReadWord(ebd, cpuDevs.at(cpuIdx).sdb_component.addr_first + atDown.getMemories()[cpuIdx].sharedOffs + SHCTL_STATUS); 
+    return ebReadWord(ebd, atDown.getMemories()[cpuIdx].extBaseAdr + atDown.getMemories()[cpuIdx].sharedOffs + SHCTL_STATUS); 
   }
 
   //Requests Threads to start
@@ -364,36 +364,36 @@ vEbwrs& CarpeDM::createCommandBurst(Graph& g, vEbwrs& ew) {
 
 
 void  CarpeDM::resetThrMsgCnt(uint8_t cpuIdx, uint8_t thrIdx) {
-  write64b(cpuDevs.at(cpuIdx).sdb_component.addr_first + atDown.getMemories()[cpuIdx].sharedOffs + SHCTL_THR_DAT + thrIdx * _T_TD_SIZE_ + T_TD_MSG_CNT, 0ULL);
+  write64b(atDown.getMemories()[cpuIdx].extBaseAdr + atDown.getMemories()[cpuIdx].sharedOffs + SHCTL_THR_DAT + thrIdx * _T_TD_SIZE_ + T_TD_MSG_CNT, 0ULL);
   
 }
 
 uint64_t CarpeDM::getThrMsgCnt(uint8_t cpuIdx, uint8_t thrIdx) {
-  return read64b(cpuDevs.at(cpuIdx).sdb_component.addr_first + atDown.getMemories()[cpuIdx].sharedOffs + SHCTL_THR_DAT + thrIdx * _T_TD_SIZE_ + T_TD_MSG_CNT);   
+  return read64b(atDown.getMemories()[cpuIdx].extBaseAdr + atDown.getMemories()[cpuIdx].sharedOffs + SHCTL_THR_DAT + thrIdx * _T_TD_SIZE_ + T_TD_MSG_CNT);   
 }
 
 uint64_t CarpeDM::getThrDeadline(uint8_t cpuIdx, uint8_t thrIdx) {
-  return read64b(cpuDevs.at(cpuIdx).sdb_component.addr_first + atDown.getMemories()[cpuIdx].sharedOffs + SHCTL_THR_DAT + thrIdx * _T_TD_SIZE_ + T_TD_DEADLINE);
+  return read64b(atDown.getMemories()[cpuIdx].extBaseAdr + atDown.getMemories()[cpuIdx].sharedOffs + SHCTL_THR_DAT + thrIdx * _T_TD_SIZE_ + T_TD_DEADLINE);
 }
 
 //FIXME wtf ... this doesnt queue anything!
 vEbwrs&  CarpeDM::setThrStartTime(uint8_t cpuIdx, uint8_t thrIdx, uint64_t t, vEbwrs& ew) {
-  write64b(cpuDevs.at(cpuIdx).sdb_component.addr_first + atDown.getMemories()[cpuIdx].sharedOffs + SHCTL_THR_STA + thrIdx * _T_TS_SIZE_ + T_TS_STARTTIME, t);
+  write64b(atDown.getMemories()[cpuIdx].extBaseAdr + atDown.getMemories()[cpuIdx].sharedOffs + SHCTL_THR_STA + thrIdx * _T_TS_SIZE_ + T_TS_STARTTIME, t);
   return ew;
 }
 
 uint64_t CarpeDM::getThrStartTime(uint8_t cpuIdx, uint8_t thrIdx) {
-  return read64b(cpuDevs.at(cpuIdx).sdb_component.addr_first + atDown.getMemories()[cpuIdx].sharedOffs + SHCTL_THR_STA + thrIdx * _T_TS_SIZE_ + T_TS_STARTTIME);
+  return read64b(atDown.getMemories()[cpuIdx].extBaseAdr + atDown.getMemories()[cpuIdx].sharedOffs + SHCTL_THR_STA + thrIdx * _T_TS_SIZE_ + T_TS_STARTTIME);
 }
 
 //FIXME wtf ... this doesnt queue anything!
 vEbwrs&  CarpeDM::setThrPrepTime(uint8_t cpuIdx, uint8_t thrIdx, uint64_t t, vEbwrs& ew) {
-  write64b(cpuDevs.at(cpuIdx).sdb_component.addr_first + atDown.getMemories()[cpuIdx].sharedOffs + SHCTL_THR_STA + thrIdx * _T_TS_SIZE_ + T_TS_PREPTIME, t);
+  write64b(atDown.getMemories()[cpuIdx].extBaseAdr + atDown.getMemories()[cpuIdx].sharedOffs + SHCTL_THR_STA + thrIdx * _T_TS_SIZE_ + T_TS_PREPTIME, t);
   return ew;
 }
 
 uint64_t CarpeDM::getThrPrepTime(uint8_t cpuIdx, uint8_t thrIdx) {
-  return read64b(cpuDevs.at(cpuIdx).sdb_component.addr_first + atDown.getMemories()[cpuIdx].sharedOffs + SHCTL_THR_STA + thrIdx * _T_TS_SIZE_ + T_TS_PREPTIME);
+  return read64b(atDown.getMemories()[cpuIdx].extBaseAdr + atDown.getMemories()[cpuIdx].sharedOffs + SHCTL_THR_STA + thrIdx * _T_TS_SIZE_ + T_TS_PREPTIME);
 }
 
 const vAdr CarpeDM::getCmdWrAdrs(uint32_t hash, uint8_t prio) {

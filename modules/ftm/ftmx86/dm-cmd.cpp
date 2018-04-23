@@ -528,7 +528,7 @@ int main(int argc, char* argv[]) {
     }
     else if (cmp == "chkrem")  {
       std::string report;
-      bool isSafe = cdm.isSafeToRemove(targetName, report);
+      bool isSafe = cdm.isSafeToRemove(targetName, report, true);
       cdm.writeTextFile(std::string(dirname) + "/" + std::string(debugfile), report);
       std::cout << std::endl << "Pattern " << targetName << " content removal: " << (isSafe ? "SAFE" : "FORBIDDEN" ) << std::endl;
       return 0;

@@ -39,7 +39,7 @@ bool CarpeDM::isSafeToRemove(const std::string& pattern, std::string& report, bo
 
 
 bool CarpeDM::isSafeToRemove(std::set<std::string> patterns, std::string& report, bool optimise) {
-  bool isSafe = true;
+  bool isSafe = true, isSafe2ndOpinion = true;
   Graph& g        = gDown;
   AllocTable& at  = atDown;
   CovenantTable ctAux; //Global CovenantTable is called ct
@@ -103,7 +103,7 @@ bool CarpeDM::isSafeToRemove(std::set<std::string> patterns, std::string& report
   if(verbose) sLog << "Reading Cursors " << std::endl;
   //try to get consistent image of active cursors
   updateModTime();
-  cursors = getAllCursors(true); // Set to false for debugging system behaviour with static cursors
+  cursors = getAllCursors(false); // Set to false for debugging system behaviour with static cursors
 
   //Here comes the problem: resident commands are only of consquence if they AND their target Block are active
   //Iteratively find out which cmds are executable and add equivalent edges for them. Do this until no more new edges have to be added
@@ -159,8 +159,17 @@ bool CarpeDM::isSafeToRemove(std::set<std::string> patterns, std::string& report
   }
 
 
-  if(isSafetyCritical(covenants)) isSafe = false; // if a safety critical node (cov set contains NO_COVENANT) is on the intersection with cursor set, it's unsafe
- 
+  isSafe = !isSafetyCritical(covenants); // if a safety critical node (cov set contains NO_COVENANT) is on the intersection with cursor set, it's unsafe
+  
+  for (auto& itCur : cursors) {
+    for (auto& itEntry : entries) {
+      vertex_set_t tmpTree;
+      isSafe2ndOpinion &= verifySafety(itCur, itEntry, tmpTree, gEq);
+    }  
+  }
+  
+
+
   if(verbose) sLog << "Creating report " << std::endl;
   //Create Debug Output File
   BOOST_FOREACH( vertex_t v, vertices(gEq) ) { gEq[v].np->clrFlags(NFLG_PAINT_LM32_SMSK); }
@@ -171,7 +180,7 @@ bool CarpeDM::isSafeToRemove(std::set<std::string> patterns, std::string& report
   }
   report += createDot(gEq, true);
   
-  if (optimise) {
+  if (optimise && isSafe) {
     report += optmisedAnalysisReport;
 
     //if(isSafe) { //Showing a list of covenants only makes sense if they'd do us any good
@@ -196,11 +205,13 @@ bool CarpeDM::isSafeToRemove(std::set<std::string> patterns, std::string& report
     //}
   }
 
-  sLog << report << std::endl;
+  //sLog << report << std::endl;
 
   for (auto& it : blacklist)  {
-    sLog << gEq[it].name << " covP " << isCovenantPending(gEq[it].name) << std::endl;
+    //sLog << gEq[it].name << " covP " << isCovenantPending(gEq[it].name) << std::endl;
   }
+
+  if (isSafe != isSafe2ndOpinion) {throw std::runtime_error(isSafeToRemove::exIntro + " ERROR in algorithm detected: crawler found path from cursor to forbidden entry node");}
 
   return isSafe;
 }
@@ -212,7 +223,9 @@ bool CarpeDM::isOptimisableEdge(edge_t e, Graph& g) {
 bool CarpeDM::isCovenantPending(const std::string& covName) {
   bool ret = false;
   cmI x = ct.lookup(covName);
-  if (!ct.isOk(x)) { sLog << "DBG unknonwn"; return false;} //throw std::runtime_error(isSafeToRemove::exIntro + ": Lookup of <" + covName + "> in covenantTable failed\n");
+  if (!ct.isOk(x)) { 
+  //sLog << "DBG unknonwn"; 
+  return false;} //throw std::runtime_error(isSafeToRemove::exIntro + ": Lookup of <" + covName + "> in covenantTable failed\n");
   return isCovenantPending(x);
 }
 
@@ -268,18 +281,42 @@ void CarpeDM::getReverseNodeTree(vertex_t v, vertex_set_t& sV, Graph& g, vertex_
     sV.insert(source(*in_cur, g));
     if (cpvs.find(covenant) != cpvs.end()) { 
       std::string covName = (covenant == null_vertex) ? "NULL" : g[covenant].name;
-      sLog << g[source(*in_cur, g)].name <<  "'s covenant with " << covName << " already in tree, breaking" << std::endl; 
-      break;
+      //sLog << g[source(*in_cur, g)].name <<  "'s covenant with " << covName << " already in tree, skipping edge" << std::endl;
+      covenant = (isSafetyCritical(cpvs) ? null_vertex : covenant);
+      continue;
     }
     cpvs.insert(covenant);
 
     //if (sV.find(source(*in_cur, g)) != sV.end()) { sLog << g[source(*in_cur, g)].name <<  " already in tree, breaking" << std::endl; break;}
     
-    sLog << "Adding to BlkList " << g[source(*in_cur, g)].name << std::endl;
+    //sLog << "Adding to BlkList " << g[source(*in_cur, g)].name << ", cpvs ";
+    //for (auto& it : cpvs) {sLog << ((it == null_vertex) ? "NULL" : g[it].name) << ", ";}
+    //sLog << std::endl;
 
     getReverseNodeTree(source(*in_cur, g), sV, g, covenantsPerVertex, covenant);
     
   }
+}
+
+//if we can construct a path between start and goal (not using optimised edges), this is not safe
+bool CarpeDM::verifySafety(vertex_t v, vertex_t goal, vertex_set_t& sV, Graph& g ) {
+  bool isSafe = true;
+  Graph::out_edge_iterator out_begin, out_end, out_cur;
+  //Do the crawl       
+  boost::tie(out_begin, out_end) = out_edges(v,g);
+  for (out_cur = out_begin; out_cur != out_end; ++out_cur) {
+    if (isOptimisableEdge(*out_cur, g)) { continue; }  
+    
+    if (sV.find(target(*out_cur, g)) != sV.end()) { continue; }
+    if (target(*out_cur, g) == goal ) { return false; }
+    sV.insert(target(*out_cur, g));
+
+
+    isSafe &= verifySafety(target(*out_cur, g), goal, sV, g);
+    
+  }
+
+  return isSafe;
 }
 
 

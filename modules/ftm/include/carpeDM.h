@@ -51,14 +51,26 @@ private:
   Graph gUp;
   AllocTable atDown;
   Graph gDown;
+
+  std::vector<uint32_t *> simRam;
+  std::map<uint8_t, uint32_t> simRamAdrMap;
+
   uint64_t modTime;
   bool freshDownload = false;
 
   bool verbose = false;
   bool debug   = false;
+  bool sim   = false;
   std::ostream& sLog;
   std::ostream& sErr;
 
+  bool simConnect();
+  bool simDisconnect();
+  void simAdrTranslation (uint32_t a, uint8_t& cpu, uint32_t& arIdx);
+  void simRamWrite (uint32_t a, eb_data_t d);
+  void simRamRead (uint32_t a, eb_data_t* d); 
+  int  simWriteCycle(vAdr va, vBuf& vb);
+  vBuf simReadCycle(vAdr va);
 
   void updateListDstStaging(vertex_t v);
   void updateStaging(vertex_t v, edge_t e);
@@ -121,6 +133,7 @@ private:
   bool isCovenantPending(const std::string& covName);
   bool isCovenantPending(cmI cov);
   bool isSafetyCritical(vertex_set_t& covenants);
+  bool verifySafety(vertex_t v, vertex_t goal, vertex_set_t& sV, Graph& g );
   
   vertex_set_t getAllCursors(bool activeOnly);
   vStrC getGraphPatterns(Graph& g);
@@ -186,7 +199,7 @@ public:
   ~CarpeDM() {};
 
 // Etherbone interface
-               bool connect(const std::string& en); //Open connection to a DM via Etherbone
+               bool connect(const std::string& en, bool simulation=true); //Open connection to a DM via Etherbone
                bool disconnect(); //Close connection
                // SDB and DM HW detection Functions
                bool isValidDMCpu(uint8_t cpuIdx);              // Check if CPU is registered as running a valid firmware
@@ -314,6 +327,7 @@ std::pair<int, int> findRunningPattern(const std::string& sPattern); // get cpu 
                void debugOn();                                                             // Turn on Verbose Output
                void debugOff();                                                            // Turn off Verbose Output
                bool isDebug()  const;                                                      // Tell if Output is set to Verbose
+               bool isSim()  const {return sim;}                                           // Tell if this is a simulation
       HealthReport& getHealth(uint8_t cpuIdx, HealthReport &hr);                           // FIXME why reference in, reference out ? its not like you can add to this report ...
        QueueReport& getQReport(const std::string& blockName, QueueReport& qr);             // FIXME why reference in, reference out ? its not like you can add to this report ...
            uint64_t getDmWrTime();
