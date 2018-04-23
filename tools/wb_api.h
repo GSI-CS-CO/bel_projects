@@ -9,7 +9,7 @@
 //            -- Wesley W. Terpstra <w.terpstra@gsi.de>
 //            -- Alessandro Rubini <rubini@gnudd.com>
 //            -- Tomasz Wlostowski <tomasz.wlostowski@cern.ch>
-//  version : 20-Apr-2018
+//  version : 23-Apr-2018
 //
 #define WB_API_VERSION "0.08.0"
 //
@@ -78,7 +78,8 @@ eb_status_t wb_get_device_address(eb_device_t device,          // EB device
                                   uint8_t  ver_major,          // major version
                                   uint8_t  ver_minor,          // minor version
                                   int      devIndex,           // 0,1,2... - there may be more than 1 device on the WB bus
-                                  eb_address_t *address        // start address of WB device
+                                  eb_address_t *address,       // start address of WB device
+                                  int *nDevices                // number of WB devices of this type
                                   );
 
 // gets the actual UTC or TAI time (depends on configuration of clock master)
