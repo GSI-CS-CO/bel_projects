@@ -3,7 +3,7 @@
 //
 //  created : Apr 10, 2013
 //  author  : Dietrich Beck, GSI-Darmstadt
-//  version : 23-Apr-2018
+//  version : 24-Apr-2018
 //
 // Api for wishbone devices for timing receiver nodes. This is not a timing receiver API,
 // but only a temporary solution.
@@ -360,6 +360,29 @@ eb_status_t wb_wr_get_sync_state(eb_device_t device, int devIndex, int *syncStat
   return status;
 } // wb_wr_get_sync_state 
 
+
+eb_status_t wb_wr_get_uptime(eb_device_t device, int devIndex, uint32_t *uptime)
+{
+  eb_address_t address;
+  eb_data_t    data;
+  eb_status_t  status;
+
+#ifdef WB_SIMULATE
+  *uptime = 4711;
+
+  return EB_OK;
+#endif
+
+  *uptime  = 0;
+
+  if ((status = wb_check_device(device, WB4_BLOCKRAM_VENDOR, WB4_BLOCKRAM_PRODUCT, WB4_BLOCKRAM_VMAJOR, WB4_BLOCKRAM_VMINOR, devIndex, &wb4_ram)) != EB_OK) return status;
+
+  address = wb4_ram + WB4_BLOCKRAM_WR_UPTIME;
+  if ((status = eb_device_read(device, address, EB_BIG_ENDIAN|EB_DATA32, &data, 0, eb_block)) != EB_OK) return status;
+  *uptime = data;
+
+  return status;
+} // wb_wr_get_uptime
 
 
 eb_status_t wb_1wire_get_id(eb_device_t device, int devIndex, unsigned int busIndex, unsigned int family, short isUserFlag, uint64_t *id)

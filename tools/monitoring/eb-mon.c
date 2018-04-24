@@ -3,7 +3,7 @@
 //
 //  created : 2015
 //  author  : Dietrich Beck, GSI-Darmstadt
-//  version : 15-Feb-2018
+//  version : 24-Apr-2018
 //
 // Command-line interface for WR monitoring via Etherbone.
 //
@@ -34,7 +34,7 @@
 // For all questions and ideas contact: d.beck@gsi.de
 // Last update: 25-April-2015
 //////////////////////////////////////////////////////////////////////////////////////////////
-#define EBMON_VERSION "1.4.0"
+#define EBMON_VERSION "1.5.0"
 
 // standard includes
 #include <unistd.h> // getopt
@@ -82,6 +82,7 @@ static void help(void) {
   fprintf(stderr, "  -u<index>        user 1-wire: specify WB device in case multiple WB devices of the same type exist (default: u0)\n");
   fprintf(stderr, "  -v               display verbose information\n");
   fprintf(stderr, "  -w<index>        WR 1-wire: specify WB device in case multiple WB devices of the same type exist (default: u0)\n");
+  fprintf(stderr, "  -z               display FPGA uptime [h]\n");
   fprintf(stderr, "\n");
   fprintf(stderr, "Use this tool to get some info about WR enabled hardware.\n");
   fprintf(stderr, "Example1: '%s -v dev/wbm0' display typical information.\n", program);
@@ -116,6 +117,7 @@ int main(int argc, char** argv) {
   int         getBoardID=0;
   int         getBoardTemp=0;
   int         getWRDateOther=0;
+  int         getWRUptime=0;
   int         exitCode=0;
 
   unsigned int family = 0;       // 1-Wire: familyCode
@@ -130,6 +132,7 @@ int main(int argc, char** argv) {
   int64_t     offset;
   uint64_t    mac;
   int         link;
+  uint32_t    uptime;
   int         syncState;
   int         ip;
   uint64_t    id;
@@ -146,7 +149,7 @@ int main(int argc, char** argv) {
 
   program = argv[0];
 
-  while ((opt = getopt(argc, argv, "t:u:w:f:b:c:dosmlievh")) != -1) {
+  while ((opt = getopt(argc, argv, "t:u:w:f:b:c:dosmlievhz")) != -1) {
     switch (opt) {
     case 'b':
       getBoardID=1;
@@ -185,6 +188,9 @@ int main(int argc, char** argv) {
     case 's':
       getWRSync=1;
       break;
+    case 'z':
+      getWRUptime=1;
+      break;
     case 't':
       getBoardTemp=1;
       busIndex = strtol(optarg, &tail, 0);
@@ -211,6 +217,7 @@ int main(int argc, char** argv) {
       getWRMac=1;
       getWRLink=1;
       getWRIP=1;
+      getWRUptime=1;
       getEBVersion=1;
       verbose=1;
       break;
@@ -377,13 +384,19 @@ int main(int argc, char** argv) {
     if (verbose) fprintf(stdout, "Link Status: ");
     fprintf(stdout, "%s\n", linkStr);
   }
-  
+
   if (getWRIP) {
     if ((status = wb_wr_get_ip(device, devIndex, &ip)) != EB_OK) die("WR get IP", status);
     if (verbose) fprintf(stdout, "IP: ");
     fprintf(stdout, "%d.%d.%d.%d\n", (ip & 0xFF000000) >> 24, (ip & 0x00FF0000) >> 16, (ip & 0x0000FF00) >> 8, ip & 0x000000FF);
   }
   
+  if (getWRUptime) {
+    if ((status = wb_wr_get_uptime(device, devIndex, &uptime)) != EB_OK) die("WR get uptime", status);
+    if (verbose) fprintf(stdout, "FPGA uptime [h]: ");
+    fprintf(stdout, "%013.2f\n", (double)uptime / 3600.0 );
+  } 
+
   if (getBoardID) {
     if (!family) die("family code not specified (1-wire)", EB_OOM);
     if ((status = wb_1wire_get_id(device, devIndex, busIndex, family, user1Wire, &id)) != EB_OK) die("WR get board ID", status);
