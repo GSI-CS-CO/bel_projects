@@ -24,6 +24,11 @@
 namespace dnt = DotStr::Node::TypeVal;
 namespace det = DotStr::Edge::TypeVal;
 
+std::map<uint8_t, std::string> patName;
+std::map<std::string, vertex_t> patEntry;
+std::map<std::string, vertex_t> patExit;
+
+
   //check if all tables are in sync
   bool CarpeDM::tableCheck(std::string& report) {
     Graph& g        = gDown;
@@ -478,4 +483,152 @@ void CarpeDM::show(const std::string& title, const std::string& logDictFile, Tra
   }  
 
   sLog << std::endl;  
+}
+
+  
+  
+
+
+void CarpeDM::coverageUpload3(uint64_t seed ) {
+  Graph g, gCmd;
+  vEbwrs tmpWr;
+  patName.clear();
+  patName[0] = "A";
+  patName[1] = "B";
+  patName[2] = "C";
+  patName[3] = "idle";
+
+  coverageGenerateBase3(g);
+  coverageGenerateStatic3(g, seed );
+  BOOST_FOREACH( vertex_t v, vertices(g) ) { g[v].hash = hm.hash(g[v].name); } //generate hash to complete vertex information
+  //writeDotFile("coverage.dot", g, false);
+  overwrite(g, true);
+  download();
+  writeDownDotFile("coverage.dot", false);
+
+  coverageGenerateDynamic3(gCmd, seed );
+  send(createCommandBurst(gCmd, tmpWr));
+  setThrOrigin(0, 0, coverageGenerateCursor3(g, seed));
+  forceThrCursor(0, 0);
+  download();
+
+
+  
+}
+ 
+
+std::string CarpeDM::coverageGenerateCursor3(Graph& g, uint64_t seed ) {
+  //cursor position 3 bit (4b)
+  uint32_t curInit  = seed & 0x7; 
+  std::string cursor = (curInit & 1) ? g[patExit[patName[curInit >> 1]]].name : g[patEntry[patName[curInit >> 1]]].name;
+
+  return cursor;
+}
+
+Graph& CarpeDM::coverageGenerateBase3(Graph& g) {
+  patEntry.clear();
+  patExit.clear();
+
+  for (unsigned i = 0; i < 3; i++) {
+    vertex_t v = boost::add_vertex(g);
+    patEntry[patName[i]] = v;
+    g[v].name      = patName[i] + "_M";
+    g[v].cpu       = "0";
+    g[v].patEntry  = "true";
+    g[v].type      = dnt::sTMsg;
+    g[v].patName   = patName[i];
+    g[v].tOffs     = "0";
+    g[v].id_fid    = "1";
+    g[v].id_gid    = "4048";
+    g[v].id_sid    = "0";
+    g[v].id_bpid   = "0";
+    g[v].id_evtno  = std::to_string(i);
+    g[v].par       = "0";
+
+    
+  }
+
+  for (unsigned i = 0; i < 3; i++) {
+    vertex_t v = boost::add_vertex(g);
+    patExit[patName[i]] = v;
+    g[v].name      = patName[i] + "_B";
+    g[v].cpu       = "0";
+    g[v].patExit   = "true";
+    g[v].type      = dnt::sBlockFixed;
+    g[v].patName   = patName[i];
+    g[v].tPeriod   = "50000"; 
+    g[v].qLo       = "true"; 
+    
+  }
+
+  return g;
+}
+
+
+
+Graph& CarpeDM::coverageGenerateStatic3(Graph& g, uint64_t seed ) {
+  //cursor position 3 bit (4b)
+  //default Link onehot A -> x (0 | A | B | C), B -> y, C -> z,   3 tri -> 6 bit (12b)
+  //queue Link   matrix ABC x ABC -> ABC0ABC1ABC2 9 tri -> 18 bit (24b)
+  
+
+  uint32_t defInit  = (seed >> 4)        & 0xfff;
+
+
+
+  //since only one default successor is allowed, we can onehot encode successors, reducing permuations from 2^9 to 4^3 
+
+  // symbols 0-3 -> (0 | A | B | C)
+  //bit indices
+  //from A to: 0, from B to: 4, from C to: 8 
+
+
+  //generate default links
+  for (unsigned auxFrom = 0; auxFrom < 3; auxFrom++) {
+    vertex_t vMsg  = patEntry[patName[auxFrom]];  //link from msg to its block
+    vertex_t vFrom  = patExit[patName[auxFrom]];  //from is always a pattern exit
+    boost::add_edge(vMsg, vFrom, myEdge(det::sDefDst), g);
+    unsigned auxTo = (defInit >> (auxFrom * 4)) & 0xf;
+    if (auxTo < 3) { // do nothing if it's zero (idle)
+      vertex_t vTo = patEntry[patName[auxTo]]; //to is always a pattern entry
+      boost::add_edge(vFrom, vTo, myEdge(det::sDefDst), g);
+    }  
+  }
+
+  return g;
+}
+
+
+Graph& CarpeDM::coverageGenerateDynamic3(Graph& g, uint64_t seed) {
+  //cursor position 3 bit (4b)
+  //queue Link   matrix ABC x ABC -> ABC0ABC1ABC2 9 tri -> 18 bit (24b)
+  uint32_t qInit  = (seed >> 16) & 0xffffff;
+
+   // symbols 0-2 -> (0 | tempLink | permaLink)
+  // convert index positions into vertex_descriptors
+  // bitpos = indpexpos * 2
+  //      to A:  to B:  to C:
+  //from A:  0      2      4
+  //from B:  6      8     10
+  //from C: 12     14     16
+  
+  boost::set_property(g, boost::graph_name, DotStr::Graph::Special::sCmd);
+
+  for (unsigned auxFrom = 0; auxFrom < 3; auxFrom++) {
+    for (unsigned auxTo = 0; auxTo < 3; auxTo++) {
+      uint8_t type = qInit >> ((auxFrom * 3 + auxTo) * 2) & 0x3;
+      if(type) {
+        vertex_t v = boost::add_vertex(g);
+        g[v].type       = dnt::sCmdFlow;
+        g[v].patName    = patName[auxFrom];
+        g[v].cmdDestPat = patName[auxTo];
+        g[v].prio       = "0";
+        g[v].tValid     = std::to_string(getDmWrTime()); 
+        g[v].qty        = "1";
+        g[v].perma      = (type == 2) ? "true" : "false";
+      }  
+    }
+  }
+
+  return g;
 }

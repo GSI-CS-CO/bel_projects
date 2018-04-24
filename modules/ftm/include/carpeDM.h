@@ -134,6 +134,11 @@ private:
   bool isCovenantPending(cmI cov);
   bool isSafetyCritical(vertex_set_t& covenants);
   bool verifySafety(vertex_t v, vertex_t goal, vertex_set_t& sV, Graph& g );
+  //Coverage Tests for safe2remove
+  Graph& coverageGenerateBase3(Graph& g);
+  Graph& coverageGenerateStatic3(Graph& g, uint64_t seed);
+  Graph& coverageGenerateDynamic3(Graph& g, uint64_t seed);   
+  std::string coverageGenerateCursor3(Graph& g, uint64_t seed );
   
   vertex_set_t getAllCursors(bool activeOnly);
   vStrC getGraphPatterns(Graph& g);
@@ -341,6 +346,7 @@ std::pair<int, int> findRunningPattern(const std::string& sPattern); // get cpu 
                void showHashDict();
                void showGroupsDict();
                bool tableCheck(std::string& report);
+               void coverageUpload3(uint64_t seed );
 
 
 };

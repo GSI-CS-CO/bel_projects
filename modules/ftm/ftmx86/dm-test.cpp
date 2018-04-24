@@ -19,7 +19,7 @@ int main(int argc, char* argv[]) {
   Graph g;
   
 
-  
+  int opt, error;
 
   
   const char *program = argv[0];
@@ -28,14 +28,49 @@ int main(int argc, char* argv[]) {
   CarpeDM cdm = CarpeDM();
 
 
+
   try {
-    cdm.connect("tcp/tsl403.acc.gsi.de");
+    cdm.connect("", true);
   } catch (std::runtime_error const& err) {
    std::cerr << std::endl << program << ": Failed to connect to DM: " << err.what() << std::endl; return -20;
   }
 
+    uint64_t cursor = 0x2ULL;
+  uint64_t defInit  = 0x012ULL;
+  uint64_t dynInit  = 0x012012ULL;
+
+  uint64_t seed = (dynInit << (12 + 4)) | (defInit << 4) | cursor; 
+
+  // start getopt 
+  while ((opt = getopt(argc, argv, "s:")) != -1) {
+     switch (opt) {
+       case 's':
+          seed  = (uint64_t)strtol(optarg, NULL, 0);
+         break;  
+       case ':':
+       
+       case '?':
+          error = -2;
+          break;
+          
+       default:
+          std::cerr << program << ": bad getopt result" << std::endl; 
+          error = -3;
+     }
+   }
 
 
+
+
+
+
+  cdm.coverageUpload3(seed);
+  std::string report;
+  bool isSafe = cdm.isSafeToRemove("A", report, true);
+  cdm.writeTextFile("./debug.dot", report);
+  std::cout << "0x" << std::setfill('0') << std::setw(10) <<  std::hex << seed << " - " << isSafe << std::endl;
+
+/*
   //cdm.verboseOn();
   uint64_t before, after, sum, average;
   sum = 0;
@@ -62,7 +97,7 @@ int main(int argc, char* argv[]) {
   }
   sum /= 1000;
   std::cout << "Time Avg: " << sum << std::endl;
-
+*/
 
   cdm.disconnect();
 

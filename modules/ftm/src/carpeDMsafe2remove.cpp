@@ -165,7 +165,10 @@ bool CarpeDM::isSafeToRemove(std::set<std::string> patterns, std::string& report
     for (auto& itEntry : entries) {
       vertex_set_t tmpTree;
       isSafe2ndOpinion &= verifySafety(itCur, itEntry, tmpTree, gEq);
-    }  
+    }
+    for  (auto& itPat : patterns) {
+      isSafe2ndOpinion &= (itPat != getNodePattern(gEq[itCur].name));
+    }
   }
   
 
@@ -211,7 +214,10 @@ bool CarpeDM::isSafeToRemove(std::set<std::string> patterns, std::string& report
     //sLog << gEq[it].name << " covP " << isCovenantPending(gEq[it].name) << std::endl;
   }
 
-  if (isSafe != isSafe2ndOpinion) {throw std::runtime_error(isSafeToRemove::exIntro + " ERROR in algorithm detected: crawler found path from cursor to forbidden entry node");}
+  if (isSafe != isSafe2ndOpinion) {
+    writeTextFile("./debug.dot", report);
+    throw std::runtime_error(isSafeToRemove::exIntro + " ERROR in algorithm detected: safe2remove says " + (isSafe ? "safe" : "unsafe") + ", crawler says " + (isSafe2ndOpinion ? "safe" : "unsafe") + "\n");
+  }
 
   return isSafe;
 }
