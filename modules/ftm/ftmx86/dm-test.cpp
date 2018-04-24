@@ -40,13 +40,16 @@ int main(int argc, char* argv[]) {
   uint64_t dynInit  = 0x012012ULL;
 
   uint64_t seed = (dynInit << (12 + 4)) | (defInit << 4) | cursor; 
-
+  uint64_t reps = 1;
   // start getopt 
-  while ((opt = getopt(argc, argv, "s:")) != -1) {
+  while ((opt = getopt(argc, argv, "s:r:")) != -1) {
      switch (opt) {
        case 's':
           seed  = (uint64_t)strtol(optarg, NULL, 0);
-         break;  
+         break;
+       case 'r':
+          reps  = (uint64_t)strtol(optarg, NULL, 0);
+         break;    
        case ':':
        
        case '?':
@@ -64,40 +67,25 @@ int main(int argc, char* argv[]) {
 
 
 
-  cdm.coverageUpload3(seed);
-  std::string report;
-  bool isSafe = cdm.isSafeToRemove("A", report, true);
-  cdm.writeTextFile("./debug.dot", report);
-  std::cout << "0x" << std::setfill('0') << std::setw(10) <<  std::hex << seed << " - " << isSafe << std::endl;
 
-/*
-  //cdm.verboseOn();
+
   uint64_t before, after, sum, average;
   sum = 0;
-  for (unsigned i=0; i < 10; i++) {
-
+  for (unsigned i=0; i < reps; i++) {
+    uint64_t thisSeed = seed + i;
     before = cdm.getDmWrTime();
-    cdm.overwriteDotFile("debug_sloppy_safe2remove.dot", true);
-    cdm.download();
-    cdm.setThrOrigin(0, 0, "B_BLOCK");
-    cdm.forceThrCursor(0, 0);
-    cdm.sendCommandsDotFile("debug_cmd_flow_sloppy_safe2remove.dot");
-    cdm.download();
+    cdm.coverageUpload3(thisSeed);
     std::string report;
-    try{ 
-      cdm.isSafeToRemove("E", report, true);
-      cdm.writeTextFile("./" + std::string(debugfile), report);
-    } catch (...) {
-      std::cout << "FUCKUP" << std::endl << report << std::endl;
-      
-
-    }  
+    bool isSafe = cdm.isSafeToRemove("A", report, true);
+    cdm.writeTextFile("./debug.dot", report);
+    std::cout << "0x" << std::setfill('0') << std::setw(10) <<  std::hex << thisSeed << " - " << isSafe << std::endl;
+    
     after = cdm.getDmWrTime();
     sum += (after - before);
   }
-  sum /= 1000;
-  std::cout << "Time Avg: " << sum << std::endl;
-*/
+  average = sum / reps;
+  std::cout << "Time Avg: " << std::dec << average << std::endl;
+
 
   cdm.disconnect();
 

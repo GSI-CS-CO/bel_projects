@@ -24,9 +24,28 @@
 namespace dnt = DotStr::Node::TypeVal;
 namespace det = DotStr::Edge::TypeVal;
 
-std::map<uint8_t, std::string> patName;
-std::map<std::string, vertex_t> patEntry;
-std::map<std::string, vertex_t> patExit;
+
+
+namespace coverage {
+  std::map<uint8_t, std::string> patName;
+  std::map<std::string, vertex_t> patEntry;
+  std::map<std::string, vertex_t> patExit;
+  const uint64_t cursorPos  = 0;  
+  const uint64_t cursorBits = 3;
+  const uint64_t cursorMsk  = (1<<cursorBits) -1;
+  
+  const uint64_t staticPos  = cursorPos + cursorBits;  
+  const uint64_t staticBits = 6;
+  const uint64_t staticMsk  = (1<<staticBits) -1;
+  const uint64_t staticDigitBits = 2;
+  const uint64_t staticDigitMsk  = (1<<staticDigitBits) -1;
+  
+  const uint64_t dynPos  = staticPos + staticBits;  
+  const uint64_t dynBits = 18;
+  const uint64_t dynMsk  = (1<<dynBits) -1;
+  const uint64_t dynDigitBits = 2;
+  const uint64_t dynDigitMsk  = (1<<dynDigitBits) -1;
+}
 
 
   //check if all tables are in sync
@@ -490,13 +509,20 @@ void CarpeDM::show(const std::string& title, const std::string& logDictFile, Tra
 
 
 void CarpeDM::coverageUpload3(uint64_t seed ) {
+/*
+  bool noCase = false;
+  noCase | ((seed & cursorMsk) > 5);
+  for 
+*/
+  std::cout << "F 0x" << std::setfill('0') << std::setw(10) <<  std::hex << seed << std::endl;
+
   Graph g, gCmd;
   vEbwrs tmpWr;
-  patName.clear();
-  patName[0] = "A";
-  patName[1] = "B";
-  patName[2] = "C";
-  patName[3] = "idle";
+  coverage::patName.clear();
+  coverage::patName[0] = "A";
+  coverage::patName[1] = "B";
+  coverage::patName[2] = "C";
+  coverage::patName[3] = "idle";
 
   coverageGenerateBase3(g);
   coverageGenerateStatic3(g, seed );
@@ -515,28 +541,30 @@ void CarpeDM::coverageUpload3(uint64_t seed ) {
 
   
 }
- 
+
+
 
 std::string CarpeDM::coverageGenerateCursor3(Graph& g, uint64_t seed ) {
-  //cursor position 3 bit (4b)
-  uint32_t curInit  = seed & 0x7; 
-  std::string cursor = (curInit & 1) ? g[patExit[patName[curInit >> 1]]].name : g[patEntry[patName[curInit >> 1]]].name;
+  //cursor position 3 bit 
+  uint32_t curInit  = (seed >> coverage::cursorPos & coverage::cursorMsk) > 5 ? 5 : (seed & coverage::cursorMsk);
+  std::cout << "curInit 0x" << std::hex << curInit << std::endl; 
+  std::string cursor = (curInit & 1) ? g[coverage::patExit[coverage::patName[curInit >> 1]]].name : g[coverage::patEntry[coverage::patName[curInit >> 1]]].name;
 
   return cursor;
 }
 
 Graph& CarpeDM::coverageGenerateBase3(Graph& g) {
-  patEntry.clear();
-  patExit.clear();
+  coverage::patEntry.clear();
+  coverage::patExit.clear();
 
   for (unsigned i = 0; i < 3; i++) {
     vertex_t v = boost::add_vertex(g);
-    patEntry[patName[i]] = v;
-    g[v].name      = patName[i] + "_M";
+    coverage::patEntry[coverage::patName[i]] = v;
+    g[v].name      = coverage::patName[i] + "_M";
     g[v].cpu       = "0";
     g[v].patEntry  = "true";
     g[v].type      = dnt::sTMsg;
-    g[v].patName   = patName[i];
+    g[v].patName   = coverage::patName[i];
     g[v].tOffs     = "0";
     g[v].id_fid    = "1";
     g[v].id_gid    = "4048";
@@ -550,12 +578,12 @@ Graph& CarpeDM::coverageGenerateBase3(Graph& g) {
 
   for (unsigned i = 0; i < 3; i++) {
     vertex_t v = boost::add_vertex(g);
-    patExit[patName[i]] = v;
-    g[v].name      = patName[i] + "_B";
+    coverage::patExit[coverage::patName[i]] = v;
+    g[v].name      = coverage::patName[i] + "_B";
     g[v].cpu       = "0";
     g[v].patExit   = "true";
     g[v].type      = dnt::sBlockFixed;
-    g[v].patName   = patName[i];
+    g[v].patName   = coverage::patName[i];
     g[v].tPeriod   = "50000"; 
     g[v].qLo       = "true"; 
     
@@ -568,12 +596,12 @@ Graph& CarpeDM::coverageGenerateBase3(Graph& g) {
 
 Graph& CarpeDM::coverageGenerateStatic3(Graph& g, uint64_t seed ) {
   //cursor position 3 bit (4b)
-  //default Link onehot A -> x (0 | A | B | C), B -> y, C -> z,   3 tri -> 6 bit (12b)
-  //queue Link   matrix ABC x ABC -> ABC0ABC1ABC2 9 tri -> 18 bit (24b)
+  //default Link onehot A -> x ( A | B | C | idle), B -> y, C -> z,   3 tri -> 6 bit (12b)
+
   
 
-  uint32_t defInit  = (seed >> 4)        & 0xfff;
-
+  uint32_t defInit  = (seed >> coverage::staticPos) & coverage::staticMsk;
+  std::cout << "defInit 0x" << std::hex << defInit << " pos " << coverage::staticPos << " Msk " << coverage::staticMsk << std::endl;
 
 
   //since only one default successor is allowed, we can onehot encode successors, reducing permuations from 2^9 to 4^3 
@@ -585,12 +613,12 @@ Graph& CarpeDM::coverageGenerateStatic3(Graph& g, uint64_t seed ) {
 
   //generate default links
   for (unsigned auxFrom = 0; auxFrom < 3; auxFrom++) {
-    vertex_t vMsg  = patEntry[patName[auxFrom]];  //link from msg to its block
-    vertex_t vFrom  = patExit[patName[auxFrom]];  //from is always a pattern exit
+    vertex_t vMsg  = coverage::patEntry[coverage::patName[auxFrom]];  //link from msg to its block
+    vertex_t vFrom  = coverage::patExit[coverage::patName[auxFrom]];  //from is always a pattern exit
     boost::add_edge(vMsg, vFrom, myEdge(det::sDefDst), g);
-    unsigned auxTo = (defInit >> (auxFrom * 4)) & 0xf;
+    unsigned auxTo = (defInit >> (auxFrom * coverage::staticDigitBits)) & coverage::staticDigitMsk;
     if (auxTo < 3) { // do nothing if it's zero (idle)
-      vertex_t vTo = patEntry[patName[auxTo]]; //to is always a pattern entry
+      vertex_t vTo = coverage::patEntry[coverage::patName[auxTo]]; //to is always a pattern entry
       boost::add_edge(vFrom, vTo, myEdge(det::sDefDst), g);
     }  
   }
@@ -601,9 +629,9 @@ Graph& CarpeDM::coverageGenerateStatic3(Graph& g, uint64_t seed ) {
 
 Graph& CarpeDM::coverageGenerateDynamic3(Graph& g, uint64_t seed) {
   //cursor position 3 bit (4b)
-  //queue Link   matrix ABC x ABC -> ABC0ABC1ABC2 9 tri -> 18 bit (24b)
-  uint32_t qInit  = (seed >> 16) & 0xffffff;
-
+  //queue Link   matrix ABC x ABC -> ABC0ABC1ABC2 9 tri -> 18 bit 
+  uint32_t qInit  = (seed >> coverage::dynPos) & coverage::dynMsk;
+  std::cout << "qInit 0x" << std::hex << qInit << std::endl;
    // symbols 0-2 -> (0 | tempLink | permaLink)
   // convert index positions into vertex_descriptors
   // bitpos = indpexpos * 2
@@ -616,12 +644,12 @@ Graph& CarpeDM::coverageGenerateDynamic3(Graph& g, uint64_t seed) {
 
   for (unsigned auxFrom = 0; auxFrom < 3; auxFrom++) {
     for (unsigned auxTo = 0; auxTo < 3; auxTo++) {
-      uint8_t type = qInit >> ((auxFrom * 3 + auxTo) * 2) & 0x3;
+      uint8_t type = qInit >> ((auxFrom * 3 + auxTo) * coverage::dynDigitBits) & coverage::dynDigitMsk;
       if(type) {
         vertex_t v = boost::add_vertex(g);
         g[v].type       = dnt::sCmdFlow;
-        g[v].patName    = patName[auxFrom];
-        g[v].cmdDestPat = patName[auxTo];
+        g[v].patName    = coverage::patName[auxFrom];
+        g[v].cmdDestPat = coverage::patName[auxTo];
         g[v].prio       = "0";
         g[v].tValid     = std::to_string(getDmWrTime()); 
         g[v].qty        = "1";
