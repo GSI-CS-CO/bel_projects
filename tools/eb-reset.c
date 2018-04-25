@@ -3,7 +3,7 @@
  *
  *  created : 2017
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 23-Apr-2018
+ *  version : 25-Apr-2018
  *
  * Command-line interface for resetting a FPGA. This forces a restart using the image stored
  * in the local flash of the timing receiver.
@@ -35,7 +35,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 01-December-2017
  ********************************************************************************************/
-#define EBRESET_VERSION "1.0.0"
+#define EBRESET_VERSION "1.0.1"
 
 // standard includes
 #include <unistd.h> // getopt
@@ -69,20 +69,20 @@ static void help(void) {
   fprintf(stderr, "Usage: %s [OPTION] <etherbone-device> [command]\n", program);
   fprintf(stderr, "\n");
   fprintf(stderr, "  -e               display etherbone version\n");
-  fprintf(stderr, "  -p<t>            after reset, wait for the specified time [s] and probe device\n");
+  fprintf(stderr, "  -p<t>            after FPGA reset, wait for the specified time [s] and probe device\n");
   fprintf(stderr, "  -h               display this help and exit\n");
   fprintf(stderr, "\n");
   fprintf(stderr, "  cpuhalt <cpu>    halts a user lm32 CPU\n");
   fprintf(stderr, "                   specify a single CPU (0..31) or all CPUs (0xff)\n");
-  fprintf(stderr, "  cpureset <cpu>   reset a user lm32 CPU, firmware restarts.\n");
+  fprintf(stderr, "  cpureset <cpu>   resets a user lm32 CPU, firmware restarts.\n");
   fprintf(stderr, "                   specify a single CPU (0..31) or all CPUs (0xff)\n");
   fprintf(stderr, "  cpustatus        get the 'halt status' of all user lm32 (rightmost bit: CPU 0)\n");
-  fprintf(stderr, "  fpgareset        recycles the entire FPGA (see below)\n");
+  fprintf(stderr, "  fpgareset        resets the entire FPGA (see below)\n");
   fprintf(stderr, "\n");
   fprintf(stderr, "Use this tool to reset a FPGA or lm32 user CPU(s).\n");
   fprintf(stderr, "\n");
   fprintf(stderr, "The command 'fpgareset' forces a restart of the entire FPGA using the image stored in the \n");
-  fprintf(stderr, "flash of the device. Only use this command if the flash contains a valid image (otherwiese\n");
+  fprintf(stderr, "flash of the device. Don't use this command unless the flash contains a valid image (otherwiese\n");
   fprintf(stderr, "your devices becomes bricked).\n");
   fprintf(stderr, "\n");
   fprintf(stderr, "Report software bugs to <d.beck@gsi.de>\n");
@@ -164,7 +164,6 @@ int main(int argc, char** argv) {
 
 
   if (command) {
-
     // open Etherbone device and socket 
     if ((status = wb_open(devName, &device, &socket)) != EB_OK) {
       fprintf(stderr, "can't open connection to device %s \n", devName);
@@ -236,6 +235,7 @@ int main(int argc, char** argv) {
 
     if (!cmdExecuted) printf("eb-reset: unknonwn command %s\n", command);
   } // if command
+  else printf("eb-reset: no action on FPGA or lm32, use option '-h' to learn about commands\n");
   
   return exitCode;
 } // main
