@@ -135,10 +135,12 @@ private:
   bool isSafetyCritical(vertex_set_t& covenants);
   bool verifySafety(vertex_t v, vertex_t goal, vertex_set_t& sV, Graph& g );
   //Coverage Tests for safe2remove
-  Graph& coverageGenerateBase3(Graph& g);
-  Graph& coverageGenerateStatic3(Graph& g, uint64_t seed);
-  Graph& coverageGenerateDynamic3(Graph& g, uint64_t seed);   
-  std::string coverageGenerateCursor3(Graph& g, uint64_t seed );
+  
+  bool coverage3IsSeedValid(uint64_t seed);
+  Graph& coverage3GenerateBase(Graph& g);
+  Graph& coverage3GenerateStatic(Graph& g, uint64_t seed);
+  Graph& coverage3GenerateDynamic(Graph& g, uint64_t seed);   
+  std::string coverage3GenerateCursor(Graph& g, uint64_t seed );
   
   vertex_set_t getAllCursors(bool activeOnly);
   vStrC getGraphPatterns(Graph& g);
@@ -191,7 +193,7 @@ private:
   int write64b(uint32_t startAdr, uint64_t d);
 
   Graph& getUpGraph(); //Returns the Upload Graph for CPU <cpuIdx>
-  Graph& getDownGraph(); //Returns the Download Graph for CPU <cpuIdx>
+  
 protected:
 
 
@@ -346,7 +348,9 @@ std::pair<int, int> findRunningPattern(const std::string& sPattern); // get cpu 
                void showHashDict();
                void showGroupsDict();
                bool tableCheck(std::string& report);
-               void coverageUpload3(uint64_t seed );
+               void coverage3Upload(uint64_t seed );
+               std::vector<std::vector<uint64_t>> coverage3TestData(uint64_t seedStart, uint64_t cases, uint8_t parts );
+               Graph& getDownGraph(); //Returns the Download Graph for CPU <cpuIdx>
 
 
 };

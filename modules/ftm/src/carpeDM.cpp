@@ -233,9 +233,7 @@ int CarpeDM::write64b(uint32_t startAdr, uint64_t d) {
 
 bool CarpeDM::simConnect() {
     ebdevname = "simDummy"; //copy to avoid mem trouble later
-    bool  ret = false;
     uint8_t mappedIdx = 0;
-    int expVersion = 010000, foundVersion = 010000, foundVersionMax = 010000;
     uint32_t const intBaseAdr   = 0x1000000;
     uint32_t const sharedSize   = 98304;
     uint32_t const rawSize      = 131072;
@@ -255,7 +253,7 @@ bool CarpeDM::simConnect() {
 
     
 
-    if(verbose) sLog << "Connecting to Sim... ";
+    sLog << "Connecting to Sim... ";
     simRam.reserve(cpuQty); 
        
     for(int cpuIdx = 0; cpuIdx< cpuQty; cpuIdx++) {
@@ -270,7 +268,7 @@ bool CarpeDM::simConnect() {
       atDown.addMemory(cpuIdx, extBaseAdr, intBaseAdr, peerBaseAdr, sharedOffs, space, rawSize );
       mappedIdx++;
     }  
-    if(verbose) sLog << "done" << std::endl;
+    sLog << "done" << std::endl;
     return true;
 
 }
@@ -688,9 +686,11 @@ void CarpeDM::showCpuList() {
   sLog << std::endl << std::setfill(' ') << std::setw(5) << "CPU" << std::setfill(' ') << std::setw(11) << "FW found" 
        << std::setfill(' ') << std::setw(11) << "Min" << std::setw(11) << "Max" << std::setw(11) << "Space" << std::setw(11) << "Free" << std::endl;
   for (int x = 0; x < cpuQty; x++) {
+    if(!sim) {
     sLog << std::dec << std::setfill(' ') << std::setw(5) << x << std::setfill(' ') << std::setw(11) << createFwVersionString(vFw[x]) 
                                                                        << std::setfill(' ') << std::setw(11) << createFwVersionString(expVersionMin)
                                                                        << std::setfill(' ') << std::setw(11) << createFwVersionString(expVersionMax);
+    }                                                                       
     sLog << std::dec << std::setfill(' ') << std::setw(11) << atDown.getTotalSpace(x) << std::setw(10) << atDown.getFreeSpace(x) * 100 / atDown.getTotalSpace(x) << "%";                                                                       
     sLog << std::endl;
   }

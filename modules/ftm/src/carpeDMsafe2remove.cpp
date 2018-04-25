@@ -183,14 +183,15 @@ bool CarpeDM::isSafeToRemove(std::set<std::string> patterns, std::string& report
   }
   report += createDot(gEq, true);
   
-  if (optimise && isSafe) {
     report += optmisedAnalysisReport;
+  if (optimise && isSafe) {
 
     //if(isSafe) { //Showing a list of covenants only makes sense if they'd do us any good
       //if (covenants.size() > 0) {
-        report += "//Covenants to honour:\n";
         //}
       for (auto& it : covenants)  {
+        report += "//Covenants to honour:\n";
+        //std::cout << "Was optimised" << std::endl;
         if (it == null_vertex) {report += "//None\n"; continue;}
         std::string covName = gEq[it].name;
         //find covname in ctAux and copy found entry to ct watchlist
@@ -215,7 +216,7 @@ bool CarpeDM::isSafeToRemove(std::set<std::string> patterns, std::string& report
   }
 
   if (isSafe != isSafe2ndOpinion) {
-    writeTextFile("./debug.dot", report);
+    //writeTextFile("./debug.dot", report);
     throw std::runtime_error(isSafeToRemove::exIntro + " ERROR in algorithm detected: safe2remove says " + (isSafe ? "safe" : "unsafe") + ", crawler says " + (isSafe2ndOpinion ? "safe" : "unsafe") + "\n");
   }
 
@@ -223,11 +224,19 @@ bool CarpeDM::isSafeToRemove(std::set<std::string> patterns, std::string& report
 }
 
 bool CarpeDM::isOptimisableEdge(edge_t e, Graph& g) {
-  return (g[e].type == det::sBadDefDst);
+  
+  vertex_t toBeChecked = target(e, g);
+  Graph::in_edge_iterator in_begin, in_end, in_cur;
+  boost::tie(in_begin, in_end) = in_edges(toBeChecked,g);
+  for (in_cur = in_begin; in_cur != in_end; ++in_cur) {
+    //it's only optimisable if there are no other types of connection to the source of  the inedge we are to check!
+    if ( (source(*in_cur, g) == source(e, g)) && (g[*in_cur].type != det::sBadDefDst)) return false;
+  }  
+  return true;
 }
 
 bool CarpeDM::isCovenantPending(const std::string& covName) {
-  bool ret = false;
+  
   cmI x = ct.lookup(covName);
   if (!ct.isOk(x)) { 
   //sLog << "DBG unknonwn"; 
@@ -272,11 +281,10 @@ void CarpeDM::getReverseNodeTree(vertex_t v, vertex_set_t& sV, Graph& g, vertex_
   //Do the crawl       
   boost::tie(in_begin, in_end) = in_edges(v,g);
   for (in_cur = in_begin; in_cur != in_end; ++in_cur) {
-    if (verbose) { sLog << g[target(*in_cur, g)].name << "<-- " << g[*in_cur].type << " --" << g[source(*in_cur, g)].name  << std::endl; }
+    if (verbose) { sLog << g[target(*in_cur, g)].name << "<-- " << g[*in_cur].type << " --" << g[source(*in_cur, g)].name  << " propcov " << ((covenant == null_vertex) ? "NULL" : g[covenant].name) << std::endl; }
     vertex_set_t& cpvs = covenantsPerVertex[source(*in_cur, g)];   
 
     if (isOptimisableEdge(*in_cur, g)) {
-    
       if (verbose) { sLog << " Optimisable:  " << g[source(*in_cur, g)].name << "->" << g[target(*in_cur, g)].name << std::endl; }
       //if (covenant == null_vertex) { 
         covenant = source(*in_cur, g); 
@@ -288,7 +296,7 @@ void CarpeDM::getReverseNodeTree(vertex_t v, vertex_set_t& sV, Graph& g, vertex_
     if (cpvs.find(covenant) != cpvs.end()) { 
       std::string covName = (covenant == null_vertex) ? "NULL" : g[covenant].name;
       //sLog << g[source(*in_cur, g)].name <<  "'s covenant with " << covName << " already in tree, skipping edge" << std::endl;
-      covenant = (isSafetyCritical(cpvs) ? null_vertex : covenant);
+      covenant = (isSafetyCritical(covenantsPerVertex[target(*in_cur, g)]) ? null_vertex : covenant);
       continue;
     }
     cpvs.insert(covenant);
@@ -426,8 +434,10 @@ vertex_set_t CarpeDM::getDominantFlowDst(vertex_t vQ, Graph& g, AllocTable& at, 
       if (!qe.pending) {qAnalysis +="->eE"; continue;} 
 
       // we're going through in order. If element has a valid time in the future (> modTime), stop right here. it and all following are possibly yet unprocessed
-      if(qe.validTime > modTime) {qAnalysis += "->v" + std::to_string((int)qe.type) + "\n"; 
-        qAnalysis += "//vTime " + std::to_string((int)qe.validTime) + " mTime " + std::to_string((int)modTime);
+      if(qe.validTime > modTime) {qAnalysis += "->v" + std::to_string((int)qe.type) + "\n";
+        std::stringstream auxstream;
+        auxstream << "//tVal 0x" << std::setfill('0') << std::setw(10) << std::hex << qe.validTime << " tMod 0x" << std::setfill('0') << std::setw(10) << std::hex << modTime << std::endl;
+        qAnalysis += auxstream.str();
         return ret;
       } 
 

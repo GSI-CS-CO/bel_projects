@@ -395,8 +395,8 @@ int main(int argc, char* argv[]) {
 
   uint32_t globalStatus = cdm.getStatus(0), status = cdm.getStatus(cpuIdx);
 
-  if ( !(globalStatus & (SHCTL_STATUS_EBM_INIT_SMSK | SHCTL_STATUS_PQ_INIT_SMSK))
-    || !(status & (SHCTL_STATUS_UART_INIT_SMSK | SHCTL_STATUS_DM_INIT_SMSK)) ) 
+  if (!force && ( !(globalStatus & (SHCTL_STATUS_EBM_INIT_SMSK | SHCTL_STATUS_PQ_INIT_SMSK))
+    || !(status & (SHCTL_STATUS_UART_INIT_SMSK | SHCTL_STATUS_DM_INIT_SMSK)) )) 
     {
     std::cerr << program << ": DM is not fully initialised. Cause: " << std::endl;
     if (!(globalStatus & SHCTL_STATUS_EBM_INIT_SMSK)) std::cerr << "EB Master could not be configured. Does the DM have a valid IP?" << std::endl;

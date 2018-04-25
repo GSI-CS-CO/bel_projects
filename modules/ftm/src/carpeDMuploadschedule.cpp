@@ -533,6 +533,7 @@ using namespace DotStr::Misc;
     atDown.clear();
     atDown.clearMemories();
     gt.clear();
+    ct.clear();
     hm.clear();
   }
 

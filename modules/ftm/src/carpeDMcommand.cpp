@@ -103,7 +103,7 @@ vEbwrs& CarpeDM::createCommandBurst(Graph& g, vEbwrs& ew) {
     uint8_t cpu, thr;
     
 
-    //sLog << "Command <" << g[v].name << ">, type <" << g[v].type << ">" << std::endl;
+    if(verbose) sLog << "Command <" << g[v].name << ">, type <" << g[v].type << ">" << std::endl;
     
 
     // Commands with optional target

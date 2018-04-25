@@ -45,6 +45,15 @@ namespace coverage {
   const uint64_t dynMsk  = (1<<dynBits) -1;
   const uint64_t dynDigitBits = 2;
   const uint64_t dynDigitMsk  = (1<<dynDigitBits) -1;
+
+  const uint64_t maxSeed = (1 << (cursorBits + staticBits + dynBits));
+
+  struct config3 {
+    uint8_t cursor;
+    uint8_t def[3];
+    uint8_t dyn[9];
+  };
+
 }
 
 
@@ -354,7 +363,7 @@ void CarpeDM::inspectHeap(uint8_t cpuIdx) {
   vBuf heap;
   
 
-  uint32_t baseAdr = cpuDevs.at(cpuIdx).sdb_component.addr_first + atDown.getMemories()[cpuIdx].sharedOffs;
+  uint32_t baseAdr = atDown.getMemories()[cpuIdx].extBaseAdr + atDown.getMemories()[cpuIdx].sharedOffs;
   uint32_t heapAdr = baseAdr + SHCTL_HEAP;
   uint32_t thrAdr  = baseAdr + SHCTL_THR_DAT;
 
@@ -378,7 +387,7 @@ void CarpeDM::inspectHeap(uint8_t cpuIdx) {
 
 
 HealthReport& CarpeDM::getHealth(uint8_t cpuIdx, HealthReport &hr) {
-  uint32_t const baseAdr = cpuDevs.at(cpuIdx).sdb_component.addr_first + atDown.getMemories()[cpuIdx].sharedOffs;
+  uint32_t const baseAdr = atDown.getMemories()[cpuIdx].extBaseAdr + atDown.getMemories()[cpuIdx].sharedOffs;
 
   vAdr diagAdr;
   vBuf diagBuf;
@@ -506,35 +515,64 @@ void CarpeDM::show(const std::string& title, const std::string& logDictFile, Tra
 
   
   
+using namespace coverage;
 
 
-void CarpeDM::coverageUpload3(uint64_t seed ) {
-/*
-  bool noCase = false;
-  noCase | ((seed & cursorMsk) > 5);
-  for 
-*/
-  std::cout << "F 0x" << std::setfill('0') << std::setw(10) <<  std::hex << seed << std::endl;
+std::vector<std::vector<uint64_t>> CarpeDM::coverage3TestData(uint64_t seedStart, uint64_t cases, uint8_t parts ) {
+
+  patName.clear();
+  patName[0] = "A";
+  patName[1] = "B";
+  patName[2] = "C";
+  patName[3] = "idle";
+
+  uint64_t seed = seedStart;
+  std::vector<std::vector<uint64_t>> ret(parts);
+  std::vector<uint64_t> tmp;
+  //generate
+  while( (tmp.size() < cases) && (seed < maxSeed) ) {
+    if( coverage3IsSeedValid(seed) ) { tmp.push_back(seed); }
+    seed++;
+  }
+
+  //split
+  uint64_t partSize = tmp.size() / parts;
+  std::cout << " cnt " << tmp.size() << " parts " << (int)parts << " partsize " << partSize << std::endl;
+
+  for(unsigned i=0; i < parts; i++) {
+    size_t thisOffs = (size_t)((i+0)*partSize);
+    size_t nextOffs = (size_t)((i+1)*partSize);
+    ret[i].insert( ret[i].end(), tmp.begin() + thisOffs, (((tmp.begin() + nextOffs) <= tmp.end()) ? (tmp.begin() + nextOffs) : tmp.end()) );
+  }
+
+  return ret;
+
+}
+
+
+
+
+
+void CarpeDM::coverage3Upload(uint64_t seed ) {
+
+  //std::cout << "F 0x" << std::setfill('0') << std::setw(10) <<  std::hex << seed << std::endl;
 
   Graph g, gCmd;
   vEbwrs tmpWr;
-  coverage::patName.clear();
-  coverage::patName[0] = "A";
-  coverage::patName[1] = "B";
-  coverage::patName[2] = "C";
-  coverage::patName[3] = "idle";
 
-  coverageGenerateBase3(g);
-  coverageGenerateStatic3(g, seed );
+
+  coverage3GenerateBase(g);
+  coverage3GenerateStatic(g, seed );
+  //nullify();
   BOOST_FOREACH( vertex_t v, vertices(g) ) { g[v].hash = hm.hash(g[v].name); } //generate hash to complete vertex information
-  //writeDotFile("coverage.dot", g, false);
+  updateModTime();
   overwrite(g, true);
   download();
-  writeDownDotFile("coverage.dot", false);
+  //writeDownDotFile("coverage.dot", false);
 
-  coverageGenerateDynamic3(gCmd, seed );
+  coverage3GenerateDynamic(gCmd, seed );
   send(createCommandBurst(gCmd, tmpWr));
-  setThrOrigin(0, 0, coverageGenerateCursor3(g, seed));
+  setThrOrigin(0, 0, coverage3GenerateCursor(g, seed));
   forceThrCursor(0, 0);
   download();
 
@@ -544,27 +582,61 @@ void CarpeDM::coverageUpload3(uint64_t seed ) {
 
 
 
-std::string CarpeDM::coverageGenerateCursor3(Graph& g, uint64_t seed ) {
-  //cursor position 3 bit 
-  uint32_t curInit  = (seed >> coverage::cursorPos & coverage::cursorMsk) > 5 ? 5 : (seed & coverage::cursorMsk);
-  std::cout << "curInit 0x" << std::hex << curInit << std::endl; 
-  std::string cursor = (curInit & 1) ? g[coverage::patExit[coverage::patName[curInit >> 1]]].name : g[coverage::patEntry[coverage::patName[curInit >> 1]]].name;
+bool CarpeDM::coverage3IsSeedValid(uint64_t seed) {
+  uint32_t curInit  = (seed >> cursorPos) & cursorMsk;
+  uint32_t defInit  = (seed >> staticPos) & staticMsk;
+  uint32_t qInit    = (seed >> dynPos)    & dynMsk;
 
+  //std::cout << "curInit 0x" << std::hex << curInit << std::endl; 
+  //std::cout << "defInit 0x" << std::hex << defInit << std::endl;
+
+  //check cursor is valid
+  if (curInit > 6) return false;
+  //cfg.cursor = curInit; 
+
+  //defInit is power of 2 and thus always valid
+  //std::cout << "defInit " << std::dec;
+  for (unsigned i=0; i < (staticBits / staticDigitBits); i++) {
+    unsigned digit = (defInit >> (i * staticDigitBits)) & staticDigitMsk;
+    //cfg.def[i] = digit;
+    //std::cout << digit << ", ";
+  }
+  //std::cout << std::endl;
+
+  //check qInit is valid
+  //std::cout << "qInit " << std::dec;
+  for (unsigned i=0; i< (dynBits / dynDigitBits); i++) {
+    unsigned digit = (qInit >> (i * dynDigitBits)) & dynDigitMsk;
+    //std::cout << digit << ", ";
+    //cfg.dyn[i] = digit;
+    if (digit > 2) return false;
+  }  
+  //std::cout << std::endl;
+  return true;
+}
+
+std::string CarpeDM::coverage3GenerateCursor(Graph& g, uint64_t seed ) {
+  //cursor position 3 bit 
+  uint32_t curInit  = (seed >> cursorPos) & cursorMsk;
+  std::string cursor;
+  if (curInit == 6) { cursor = patName[3]; }
+  else {              cursor = (curInit & 1) ? g[patExit[patName[curInit >> 1]]].name : g[patEntry[patName[curInit >> 1]]].name; }
+  
   return cursor;
 }
 
-Graph& CarpeDM::coverageGenerateBase3(Graph& g) {
-  coverage::patEntry.clear();
-  coverage::patExit.clear();
+Graph& CarpeDM::coverage3GenerateBase(Graph& g) {
+  patEntry.clear();
+  patExit.clear();
 
   for (unsigned i = 0; i < 3; i++) {
     vertex_t v = boost::add_vertex(g);
-    coverage::patEntry[coverage::patName[i]] = v;
-    g[v].name      = coverage::patName[i] + "_M";
+    patEntry[patName[i]] = v;
+    g[v].name      = patName[i] + "_M";
     g[v].cpu       = "0";
     g[v].patEntry  = "true";
     g[v].type      = dnt::sTMsg;
-    g[v].patName   = coverage::patName[i];
+    g[v].patName   = patName[i];
     g[v].tOffs     = "0";
     g[v].id_fid    = "1";
     g[v].id_gid    = "4048";
@@ -578,12 +650,12 @@ Graph& CarpeDM::coverageGenerateBase3(Graph& g) {
 
   for (unsigned i = 0; i < 3; i++) {
     vertex_t v = boost::add_vertex(g);
-    coverage::patExit[coverage::patName[i]] = v;
-    g[v].name      = coverage::patName[i] + "_B";
+    patExit[patName[i]] = v;
+    g[v].name      = patName[i] + "_B";
     g[v].cpu       = "0";
     g[v].patExit   = "true";
     g[v].type      = dnt::sBlockFixed;
-    g[v].patName   = coverage::patName[i];
+    g[v].patName   = patName[i];
     g[v].tPeriod   = "50000"; 
     g[v].qLo       = "true"; 
     
@@ -594,14 +666,14 @@ Graph& CarpeDM::coverageGenerateBase3(Graph& g) {
 
 
 
-Graph& CarpeDM::coverageGenerateStatic3(Graph& g, uint64_t seed ) {
+Graph& CarpeDM::coverage3GenerateStatic(Graph& g, uint64_t seed ) {
   //cursor position 3 bit (4b)
   //default Link onehot A -> x ( A | B | C | idle), B -> y, C -> z,   3 tri -> 6 bit (12b)
 
   
 
-  uint32_t defInit  = (seed >> coverage::staticPos) & coverage::staticMsk;
-  std::cout << "defInit 0x" << std::hex << defInit << " pos " << coverage::staticPos << " Msk " << coverage::staticMsk << std::endl;
+  uint32_t defInit  = (seed >> staticPos) & staticMsk;
+  
 
 
   //since only one default successor is allowed, we can onehot encode successors, reducing permuations from 2^9 to 4^3 
@@ -613,12 +685,12 @@ Graph& CarpeDM::coverageGenerateStatic3(Graph& g, uint64_t seed ) {
 
   //generate default links
   for (unsigned auxFrom = 0; auxFrom < 3; auxFrom++) {
-    vertex_t vMsg  = coverage::patEntry[coverage::patName[auxFrom]];  //link from msg to its block
-    vertex_t vFrom  = coverage::patExit[coverage::patName[auxFrom]];  //from is always a pattern exit
+    vertex_t vMsg  = patEntry[patName[auxFrom]];  //link from msg to its block
+    vertex_t vFrom  = patExit[patName[auxFrom]];  //from is always a pattern exit
     boost::add_edge(vMsg, vFrom, myEdge(det::sDefDst), g);
-    unsigned auxTo = (defInit >> (auxFrom * coverage::staticDigitBits)) & coverage::staticDigitMsk;
+    unsigned auxTo = (defInit >> (auxFrom * staticDigitBits)) & staticDigitMsk;
     if (auxTo < 3) { // do nothing if it's zero (idle)
-      vertex_t vTo = coverage::patEntry[coverage::patName[auxTo]]; //to is always a pattern entry
+      vertex_t vTo = patEntry[patName[auxTo]]; //to is always a pattern entry
       boost::add_edge(vFrom, vTo, myEdge(det::sDefDst), g);
     }  
   }
@@ -627,11 +699,10 @@ Graph& CarpeDM::coverageGenerateStatic3(Graph& g, uint64_t seed ) {
 }
 
 
-Graph& CarpeDM::coverageGenerateDynamic3(Graph& g, uint64_t seed) {
+Graph& CarpeDM::coverage3GenerateDynamic(Graph& g, uint64_t seed) {
   //cursor position 3 bit (4b)
   //queue Link   matrix ABC x ABC -> ABC0ABC1ABC2 9 tri -> 18 bit 
-  uint32_t qInit  = (seed >> coverage::dynPos) & coverage::dynMsk;
-  std::cout << "qInit 0x" << std::hex << qInit << std::endl;
+  uint32_t qInit  = (seed >> dynPos) & dynMsk;
    // symbols 0-2 -> (0 | tempLink | permaLink)
   // convert index positions into vertex_descriptors
   // bitpos = indpexpos * 2
@@ -644,19 +715,23 @@ Graph& CarpeDM::coverageGenerateDynamic3(Graph& g, uint64_t seed) {
 
   for (unsigned auxFrom = 0; auxFrom < 3; auxFrom++) {
     for (unsigned auxTo = 0; auxTo < 3; auxTo++) {
-      uint8_t type = qInit >> ((auxFrom * 3 + auxTo) * coverage::dynDigitBits) & coverage::dynDigitMsk;
+      uint8_t type = (qInit >> ((auxFrom * 3 + auxTo) * dynDigitBits)) & dynDigitMsk;
       if(type) {
         vertex_t v = boost::add_vertex(g);
+        g[v].name       = "Flow_" + std::to_string(auxFrom * 3);
         g[v].type       = dnt::sCmdFlow;
-        g[v].patName    = coverage::patName[auxFrom];
-        g[v].cmdDestPat = coverage::patName[auxTo];
+        g[v].patName    = patName[auxFrom];
+        g[v].cmdDestPat = patName[auxTo];
         g[v].prio       = "0";
-        g[v].tValid     = std::to_string(getDmWrTime()); 
+        g[v].tValid     = "0"; 
         g[v].qty        = "1";
         g[v].perma      = (type == 2) ? "true" : "false";
       }  
     }
   }
 
+
   return g;
 }
+
+
