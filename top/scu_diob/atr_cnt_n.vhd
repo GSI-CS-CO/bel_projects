@@ -7,16 +7,15 @@ USE IEEE.numeric_std.all;
 ENTITY atr_cnt_n IS
 		
 	port(
-    clk:                IN  STD_LOGIC;
-    nReset:             IN  STD_LOGIC;
-    clk_250mhz:         IN  STD_LOGIC;
-    nReset_250mhz:      IN  STD_LOGIC;
-    ATR_cnt_puls:       IN  STD_LOGIC;
-    ATR_res_counter:    IN  STD_LOGIC;   -- Reset Counter
-    ATR_res_cnt_err:    IN  STD_LOGIC;   -- Reset Error-Flag
+    clk:                    IN  STD_LOGIC;
+    nReset:                 IN  STD_LOGIC;
+    clk_250mhz:             IN  STD_LOGIC;
+    nReset_250mhz:          IN  STD_LOGIC;
+    ATR_cnt_puls:           IN  STD_LOGIC;
+    ATR_comp_cnt_err_res:   IN  STD_LOGIC;   -- Reset Counter
 --
-    ATR_counter:        OUT STD_LOGIC_VECTOR(15 DOWNTO 0);
-    ATR_cnt_err:        OUT STD_LOGIC
+    ATR_counter:            OUT STD_LOGIC_VECTOR(15 DOWNTO 0);
+    ATR_cnt_err:            OUT STD_LOGIC
 		);	
 	end atr_cnt_n;
 
@@ -111,9 +110,9 @@ P_Counter:  process (clk_250mhz, nReset_250mhz, ATR_cnt_puls_syn)
 
   
   
-P_Save:	PROCESS (clk_250mhz, nReset_250mhz, ATR_res_counter)
+P_Save:	PROCESS (clk_250mhz, nReset_250mhz, ATR_comp_cnt_err_res)
 	BEGIN
-		IF  ((nReset_250mhz = '0') or (ATR_res_counter = '1')) THEN
+		IF  ((nReset_250mhz = '0') or (ATR_comp_cnt_err_res = '1')) THEN
         ATR_counter <= (OTHERS => '0');     
        
 		ELSIF rising_edge(clk_250mhz) THEN
@@ -123,9 +122,9 @@ P_Save:	PROCESS (clk_250mhz, nReset_250mhz, ATR_res_counter)
 		END IF;
 	END PROCESS P_Save;
   
-P_Error:	PROCESS (clk_250mhz, nReset_250mhz, ATR_res_cnt_err)
+P_Error:	PROCESS (clk_250mhz, nReset_250mhz, ATR_comp_cnt_err_res)
 	BEGIN
-		IF  ((nReset_250mhz = '0') or (ATR_res_cnt_err = '1')) THEN
+		IF  ((nReset_250mhz = '0') or (ATR_comp_cnt_err_res = '1')) THEN
         ATR_cnt_err <= '0';     
 
 		ELSIF rising_edge(clk_250mhz) THEN

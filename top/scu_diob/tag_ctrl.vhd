@@ -1,4 +1,4 @@
---TITLE "'tag_ctrl' Autor: R.Hartmann, Stand: 08.02.2016 ";
+--TITLE "'tag_ctrl' Autor: R.Hartmann, Stand: 30.05.2017 ";
 --
 library IEEE;
 USE IEEE.std_logic_1164.all;
@@ -157,21 +157,12 @@ constant  i_Tag_Prescale:     INTEGER := 6; -- Index Tag_Array: Vorteiler für: 
 constant  i_Tag_Trigger:      INTEGER := 7; -- Index Tag_Array: Input-Trigger-Sel für:  D[11..8] = Input-Reg-Nr.,
 constant  i_Tag_Level:        INTEGER := 8; -- Index Tag-Register
 
-constant  i_Tag0:             INTEGER := 0; -- Index Tag_Array: Tag-Nr0
-constant  i_Tag1:             INTEGER := 1; -- Index Tag_Array: Tag-Nr1
-constant  i_Tag2:             INTEGER := 2; -- Index Tag_Array: Tag-Nr2
-constant  i_Tag3:             INTEGER := 3; -- Index Tag_Array: Tag-Nr3
-constant  i_Tag4:             INTEGER := 4; -- Index Tag_Array: Tag-Nr4
-constant  i_Tag5:             INTEGER := 5; -- Index Tag_Array: Tag-Nr5
-constant  i_Tag6:             INTEGER := 6; -- Index Tag_Array: Tag-Nr6
-constant  i_Tag7:             INTEGER := 7; -- Index Tag_Array: Tag-Nr7
-
 
 TYPE   t_Tag_Element    is array (0 to 15) of std_logic_vector(15 downto 0);
 TYPE   t_Tag_Array      is array (0 to 7)  of t_Tag_Element;
-TYPE   t_Word_Array     is array (1 to 7)  of std_logic_vector(15 downto 0);
+TYPE   t_Word_Array     is array (0 to 7)  of std_logic_vector(15 downto 0);
 TYPE   t_Byte_Array     is array (0 to 7)  of std_logic;
-TYPE   t_Boolean_Array  is array (1 to 7)  of boolean;
+TYPE   t_Boolean_Array  is array (0 to 7)  of boolean;
 Type   t_Count          is array (0 to 7)  of integer range 0 to 65535;  -- 0-FFFF
 Type   t_Prescale       is array (0 to 7)  of integer range 0 to 255;    -- 0-FF
  
@@ -186,55 +177,12 @@ Type   t_Int_0_to_31    is array (0 to 7)  of integer range 0 to 31;
 
 signal  Tag_Array:              t_Tag_Array;                    -- Init über den SCU-Bus
 signal  Tag_Out_Reg_Array:      t_IO_Reg_1_to_7_Array;          -- Copy der AWOut-Register
-signal  Tag_New_AWOut_Data:     t_Boolean_Array;                -- Flag's für New Data von Register 1-7 
 
-signal  Tag0_Reg_Nr:            integer range 0 to 7;           -- AWOut-Reg-Nummer 
-signal  Tag0_New_AWOut_Data:    boolean; 
-signal  Tag0_Maske_Hi_Bits:     std_logic_vector(15 downto 0);   -- Maske für "High-Aktive" Bits im Ausgangs-Register
-signal  Tag0_Maske_Lo_Bits:     std_logic_vector(15 downto 0);   -- Maske für "Low-Aktive"  Bits im Ausgangs-Register
-signal  Tag0_LA:                std_logic_vector(15 downto 0); 
-
-signal  Tag1_Reg_Nr:            integer range 0 to 7;           -- AWOut-Reg-Nummer 
-signal  Tag1_New_AWOut_Data:    boolean; 
-signal  Tag1_Maske_Hi_Bits:     std_logic_vector(15 downto 0);   -- Maske für "High-Aktive" Bits im Ausgangs-Register
-signal  Tag1_Maske_Lo_Bits:     std_logic_vector(15 downto 0);   -- Maske für "Low-Aktive"  Bits im Ausgangs-Register
-signal  Tag1_LA:                std_logic_vector(15 downto 0); 
-
-signal  Tag2_Reg_Nr:            integer range 0 to 7;           -- AWOut-Reg-Nummer 
-signal  Tag2_New_AWOut_Data:    boolean; 
-signal  Tag2_Maske_Hi_Bits:     std_logic_vector(15 downto 0);   -- Maske für "High-Aktive" Bits im Ausgangs-Register
-signal  Tag2_Maske_Lo_Bits:     std_logic_vector(15 downto 0);   -- Maske für "Low-Aktive"  Bits im Ausgangs-Register
-signal  Tag2_LA:                std_logic_vector(15 downto 0); 
-
-signal  Tag3_Reg_Nr:            integer range 0 to 7;           -- AWOut-Reg-Nummer 
-signal  Tag3_New_AWOut_Data:    boolean; 
-signal  Tag3_Maske_Hi_Bits:     std_logic_vector(15 downto 0);   -- Maske für "High-Aktive" Bits im Ausgangs-Register
-signal  Tag3_Maske_Lo_Bits:     std_logic_vector(15 downto 0);   -- Maske für "Low-Aktive"  Bits im Ausgangs-Register
-signal  Tag3_LA:                std_logic_vector(15 downto 0); 
-
-signal  Tag4_Reg_Nr:            integer range 0 to 7;           -- AWOut-Reg-Nummer 
-signal  Tag4_New_AWOut_Data:    boolean; 
-signal  Tag4_Maske_Hi_Bits:     std_logic_vector(15 downto 0);   -- Maske für "High-Aktive" Bits im Ausgangs-Register
-signal  Tag4_Maske_Lo_Bits:     std_logic_vector(15 downto 0);   -- Maske für "Low-Aktive"  Bits im Ausgangs-Register
-signal  Tag4_LA:                std_logic_vector(15 downto 0); 
-
-signal  Tag5_Reg_Nr:            integer range 0 to 7;           -- AWOut-Reg-Nummer 
-signal  Tag5_New_AWOut_Data:    boolean; 
-signal  Tag5_Maske_Hi_Bits:     std_logic_vector(15 downto 0);   -- Maske für "High-Aktive" Bits im Ausgangs-Register
-signal  Tag5_Maske_Lo_Bits:     std_logic_vector(15 downto 0);   -- Maske für "Low-Aktive"  Bits im Ausgangs-Register
-signal  Tag5_LA:                std_logic_vector(15 downto 0); 
-
-signal  Tag6_Reg_Nr:            integer range 0 to 7;           -- AWOut-Reg-Nummer 
-signal  Tag6_New_AWOut_Data:    boolean; 
-signal  Tag6_Maske_Hi_Bits:     std_logic_vector(15 downto 0);   -- Maske für "High-Aktive" Bits im Ausgangs-Register
-signal  Tag6_Maske_Lo_Bits:     std_logic_vector(15 downto 0);   -- Maske für "Low-Aktive"  Bits im Ausgangs-Register
-signal  Tag6_LA:                std_logic_vector(15 downto 0); 
-
-signal  Tag7_Reg_Nr:            integer range 0 to 7;           -- AWOut-Reg-Nummer 
-signal  Tag7_New_AWOut_Data:    boolean; 
-signal  Tag7_Maske_Hi_Bits:     std_logic_vector(15 downto 0);   -- Maske für "High-Aktive" Bits im Ausgangs-Register
-signal  Tag7_Maske_Lo_Bits:     std_logic_vector(15 downto 0);   -- Maske für "Low-Aktive"  Bits im Ausgangs-Register
-signal  Tag7_LA:                std_logic_vector(15 downto 0); 
+signal  Reg_Nr_Tag:            t_Int_0_to_7;           -- AWOut-Reg-Nummer 
+signal  New_AWOut_Data_Tag:    t_Boolean_Array; 
+signal  Maske_Hi_Bits_Tag:     t_Word_Array;   -- Maske für "High-Aktive" Bits im Ausgangs-Register
+signal  Maske_Lo_Bits_Tag:     t_Word_Array;   -- Maske für "Low-Aktive"  Bits im Ausgangs-Register
+signal  LA_Tag:                t_Word_Array; 
 
 
 signal  DIOB_Sts1:              std_logic_vector(15 downto 0); 
@@ -267,14 +215,14 @@ attribute   keep: boolean;
 --attribute   keep of Tag_Level: signal is true;
 
 
-signal  Tag_Loop:           integer range 0 to 3 := 0;      -- Loop-Counter
-signal  Tag_Reg_Error:      std_logic_vector(7 downto 0);   -- Tag Auswerte-Loop
-
-
-signal  Tag_Code_Base:      std_logic_vector(31 downto 0);  -- Basis Tag-Code
-signal  Tag_Code_Compare:   std_logic_vector(31 downto 0);  -- Compare Tag-Code
-signal  Tag_Reg_Base:       std_logic_vector(3 downto 0);   -- Basis Tag_Register
-signal  Tag_Reg_Compare:    std_logic_vector(3 downto 0);   -- Compare Tag_Register
+signal  Tag_Loop:             integer range 0 to 3 := 0;      -- Loop-Counter
+signal  Tag_Reg_Error:        std_logic_vector(7 downto 0);   -- Tag Auswerte-Loop
+  
+  
+signal  Tag_Code_Base:        std_logic_vector(31 downto 0);  -- Basis Tag-Code
+signal  Tag_Code_Compare:     std_logic_vector(31 downto 0);  -- Compare Tag-Code
+signal  Tag_Reg_Base:         std_logic_vector(3 downto 0);   -- Basis Tag_Register
+signal  Tag_Reg_Compare:      std_logic_vector(3 downto 0);   -- Compare Tag_Register
 
 
 
@@ -283,19 +231,19 @@ signal Tag_Base_Wr_Strobe_i:  std_logic;        -- input
 signal Tag_Base_Wr_Strobe_o:  std_logic;        -- Output 
 signal Tag_Base_Wr_shift:     std_logic_vector(2  downto 0); -- Shift-Reg.
 
-signal Spare0_Out:          std_logic_vector(15 downto 0); -- Zwischenspeicher
-signal Spare0_Strobe:       std_logic;        -- Output 
-signal Spare0_shift:        std_logic_vector(2  downto 0); -- Shift-Reg.
-    
-signal Spare1_Out:          std_logic_vector(15 downto 0); -- Zwischenspeicher
-signal Spare1_Strobe:       std_logic;        -- Output 
-signal Spare1_shift:        std_logic_vector(2  downto 0); -- Shift-Reg.
-
-signal Ext_Adr_Val_Out:     std_logic_vector(15 downto 0); -- Zwischenspeicher
-signal Ext_Adr_Val_Strobe:  std_logic;        -- Output 
-signal Ext_Adr_Val_shift:   std_logic_vector(2  downto 0); -- Shift-Reg.
-
-signal Tag_Test_Wait:       integer range 0 to 100 := 0; -- Loop-Counter
+signal Spare0_Out:            std_logic_vector(15 downto 0); -- Zwischenspeicher
+signal Spare0_Strobe:         std_logic;        -- Output 
+signal Spare0_shift:          std_logic_vector(2  downto 0); -- Shift-Reg.
+      
+signal Spare1_Out:            std_logic_vector(15 downto 0); -- Zwischenspeicher
+signal Spare1_Strobe:         std_logic;        -- Output 
+signal Spare1_shift:          std_logic_vector(2  downto 0); -- Shift-Reg.
+  
+signal Ext_Adr_Val_Out:       std_logic_vector(15 downto 0); -- Zwischenspeicher
+signal Ext_Adr_Val_Strobe:    std_logic;        -- Output 
+signal Ext_Adr_Val_shift:     std_logic_vector(2  downto 0); -- Shift-Reg.
+  
+signal Tag_Test_Wait:         integer range 0 to 100 := 0; -- Loop-Counter
 
 type state_t is   (idle,  Test_Wait,  TReg_Loop,  Error,  Weiter);
 signal state:      state_t := idle;
@@ -320,6 +268,9 @@ signal  Tag_Conf_Err:       std_logic := '0'; -- Tag Auswerte-Loop
 signal Sum_Reg_MSK:   t_IO_Reg_1_to_7_Array;
 
 signal s_Tag_Aktiv:   std_logic_vector(7 downto 0); -- Flag: Bit7 = Tag7 (aktiv) --- Bit0 = Tag0 (aktiv)
+
+signal Register_Nr  : integer range 0 to 7  := 0;
+
 
 begin
 
@@ -625,435 +576,954 @@ p_Spare1:  PROCESS (clk, nReset, Spare1)
 --  +============================================================================================================================+
 --  |                                   Anfang: Daten I/O für Tag0-Tag7 (Component(Tag_n)                                        |
 --  +============================================================================================================================+
-tag0: tag_n     
-port map  (     
-    clk                   =>    clk,                   -- should be the same clk, used by SCU_Bus_Slave        
-    nReset                =>    nReset,   
-    Timing_Pattern_LA     =>    Timing_Pattern_LA,     -- latched timing pattern from SCU_Bus for external user functions
-    Timing_Pattern_RCV    =>    Timing_Pattern_RCV,    -- timing pattern received
-    Tag_n_hw              =>   (Tag_Array(i_Tag0)(i_tag_hw)),           --+ 
-    Tag_n_lw              =>   (Tag_Array(i_Tag0)(i_tag_lw)),           --| 
-    Tag_n_Maske           =>   (Tag_Array(i_Tag0)(i_Tag_Maske)),        --| 
-    Tag_n_Register        =>   (Tag_Array(i_Tag0)(i_Tag_Register)),     --+-----> Tag-Array 
-    Tag_n_Level           =>   (Tag_Array(i_Tag0)(i_Tag_Level)),        --| 
-    Tag_n_Delay_Cnt       =>   (Tag_Array(i_Tag0)(i_Tag_Delay_Cnt)),    --| 
-    Tag_n_Puls_Width      =>   (Tag_Array(i_Tag0)(i_Tag_Puls_Width)),   --| 
-    Tag_n_Prescale        =>   (Tag_Array(i_Tag0)(i_Tag_Prescale)),     --| 
-    Tag_n_Trigger         =>   (Tag_Array(i_Tag0)(i_Tag_Trigger)),      --+ 
-    SCU_AW_Input_Reg      =>    SCU_AW_Input_Reg,             -- Input-Reg. SCU_AW_Input_Reg
-    Max_AWOut_Reg_Nr      =>    Max_AWOut_Reg_Nr,         -- Maximale AWOut-Reg-Nummer der Anwendung
-    Max_AWIn_Reg_Nr       =>    Max_AWIn_Reg_Nr,          -- Maximale AWIn-Reg-Nummer der Anwendung
-    Spare0_Strobe         =>    Spare0_Strobe,            -- 
-    Spare1_Strobe         =>    Spare1_Strobe,            -- 
-      
-    Tag_n_Reg_Nr          =>    Tag0_Reg_Nr,              -- AWOut-Reg-Pointer 
-    Tag_n_New_AWOut_Data  =>    Tag0_New_AWOut_Data,      -- AWOut-Reg. werden mit AWOut_Reg_Array-Daten überschrieben
-    Tag_n_Maske_Hi_Bits   =>    Tag0_Maske_Hi_Bits,       -- Maske für "High-Aktive" Bits im Ausgangs-Register
-    Tag_n_Maske_Lo_Bits   =>    Tag0_Maske_Lo_Bits,       -- Maske für "Low-Aktive"  Bits im Ausgangs-Register
-    Tag_n_Reg_Err         =>    Tag_n_Reg_Err(0),         -- Config-Error: TAG-Reg-Nr
-    Tag_n_Reg_max_Err     =>    Tag_n_Reg_Max_Err(0),     -- Config-Error: TAG_Max_Reg_Nr
-    Tag_n_Trig_Err        =>    Tag_n_Trig_Err(0),        -- Config-Error: Trig-Reg
-    Tag_n_Trig_max_Err    =>    Tag_n_Trig_Max_Err(0),    -- Config-Error: Trig_Max_Reg_Nr
-    Tag_n_Timeout         =>    Tag_n_Timeout(0),         -- Timeout-Error ext. Trigger, Spare0/Spare1
-    Tag_n_ext_Trig_Strobe =>    Tag_n_ext_Trig_Strobe(0), -- ext. Trigger-Eingang, aus Input-Register-Bit
-    Tag_n_FG_Start        =>    Tag_n_FG_Start(0),        -- Funktionsgenerator Start
-    Tag_n_LA              =>    Tag0_LA      
-  );  
 
-tag1: tag_n     
-port map  (     
-    clk                   =>    clk,                   -- should be the same clk, used by SCU_Bus_Slave        
-    nReset                =>    nReset,   
-    Timing_Pattern_LA     =>    Timing_Pattern_LA,     -- latched timing pattern from SCU_Bus for external user functions
-    Timing_Pattern_RCV    =>    Timing_Pattern_RCV,    -- timing pattern received
-    Tag_n_hw              =>   (Tag_Array(i_Tag1)(i_tag_hw)),           --+ 
-    Tag_n_lw              =>   (Tag_Array(i_Tag1)(i_tag_lw)),           --| 
-    Tag_n_Maske           =>   (Tag_Array(i_Tag1)(i_Tag_Maske)),        --| 
-    Tag_n_Register        =>   (Tag_Array(i_Tag1)(i_Tag_Register)),     --+-----> Tag-Array 
-    Tag_n_Level           =>   (Tag_Array(i_Tag1)(i_Tag_Level)),        --| 
-    Tag_n_Delay_Cnt       =>   (Tag_Array(i_Tag1)(i_Tag_Delay_Cnt)),    --| 
-    Tag_n_Puls_Width      =>   (Tag_Array(i_Tag1)(i_Tag_Puls_Width)),   --| 
-    Tag_n_Prescale        =>   (Tag_Array(i_Tag1)(i_Tag_Prescale)),     --| 
-    Tag_n_Trigger         =>   (Tag_Array(i_Tag1)(i_Tag_Trigger)),      --+ 
-    Max_AWOut_Reg_Nr      =>    Max_AWOut_Reg_Nr,         -- Maximale AWOut-Reg-Nummer der Anwendung
-    Max_AWIn_Reg_Nr       =>    Max_AWIn_Reg_Nr,          -- Maximale AWIn-Reg-Nummer der Anwendung
-    SCU_AW_Input_Reg      =>    SCU_AW_Input_Reg,             -- Input-Reg. SCU_AW_Input_Reg
-    Spare0_Strobe         =>    Spare0_Strobe,            -- 
-    Spare1_Strobe         =>    Spare1_Strobe,            -- 
-      
-    Tag_n_Reg_Nr          =>    Tag1_Reg_Nr,              -- AWOut-Reg-Pointer 
-    Tag_n_New_AWOut_Data  =>    Tag1_New_AWOut_Data,      -- AWOut-Reg. werden mit AWOut_Reg_Array-Daten überschrieben
-    Tag_n_Maske_Hi_Bits   =>    Tag1_Maske_Hi_Bits,       -- Maske für "High-Aktive" Bits im Ausgangs-Register
-    Tag_n_Maske_Lo_Bits   =>    Tag1_Maske_Lo_Bits,       -- Maske für "Low-Aktive"  Bits im Ausgangs-Register
-    Tag_n_Reg_Err         =>    Tag_n_Reg_Err(1),         -- Config-Error: TAG-Reg-Nr
-    Tag_n_Reg_max_Err     =>    Tag_n_Reg_Max_Err(1),     -- Config-Error: TAG_Max_Reg_Nr
-    Tag_n_Trig_Err        =>    Tag_n_Trig_Err(1),        -- Config-Error: Trig-Reg
-    Tag_n_Trig_max_Err    =>    Tag_n_Trig_Max_Err(1),    -- Config-Error: Trig_Max_Reg_Nr
-    Tag_n_Timeout         =>    Tag_n_Timeout(1),         -- Timeout-Error ext. Trigger, Spare0/Spare1
-    Tag_n_ext_Trig_Strobe =>    Tag_n_ext_Trig_Strobe(1), -- ext. Trigger-Eingang, aus Input-Register-Bit
-    Tag_n_FG_Start        =>    Tag_n_FG_Start(1),        -- Funktionsgenerator Start
-    Tag_n_LA              =>    Tag1_LA      
-  );  
 
-tag2: tag_n     
-port map  (     
-    clk                   =>    clk,                   -- should be the same clk, used by SCU_Bus_Slave        
-    nReset                =>    nReset,   
-    Timing_Pattern_LA     =>    Timing_Pattern_LA,     -- latched timing pattern from SCU_Bus for external user functions
-    Timing_Pattern_RCV    =>    Timing_Pattern_RCV,    -- timing pattern received
-    Tag_n_hw              =>   (Tag_Array(i_Tag2)(i_tag_hw)),           --+ 
-    Tag_n_lw              =>   (Tag_Array(i_Tag2)(i_tag_lw)),           --| 
-    Tag_n_Maske           =>   (Tag_Array(i_Tag2)(i_Tag_Maske)),        --| 
-    Tag_n_Register        =>   (Tag_Array(i_Tag2)(i_Tag_Register)),     --+-----> Tag-Array 
-    Tag_n_Level           =>   (Tag_Array(i_Tag2)(i_Tag_Level)),        --| 
-    Tag_n_Delay_Cnt       =>   (Tag_Array(i_Tag2)(i_Tag_Delay_Cnt)),    --| 
-    Tag_n_Puls_Width      =>   (Tag_Array(i_Tag2)(i_Tag_Puls_Width)),   --| 
-    Tag_n_Prescale        =>   (Tag_Array(i_Tag2)(i_Tag_Prescale)),     --| 
-    Tag_n_Trigger         =>   (Tag_Array(i_Tag2)(i_Tag_Trigger)),      --+ 
-    SCU_AW_Input_Reg      =>    SCU_AW_Input_Reg,         -- Input-Reg. SCU_AW_Input_Reg
-    Max_AWOut_Reg_Nr      =>    Max_AWOut_Reg_Nr,         -- Maximale AWOut-Reg-Nummer der Anwendung
-    Max_AWIn_Reg_Nr       =>    Max_AWIn_Reg_Nr,          -- Maximale AWIn-Reg-Nummer der Anwendung
-    Spare0_Strobe         =>    Spare0_Strobe,            -- 
-    Spare1_Strobe         =>    Spare1_Strobe,            -- 
+Tag:  for N in 0 to 7 generate
+    I:  tag_n
+    
+    port map  (     
+        clk                   =>    clk,                   -- should be the same clk, used by SCU_Bus_Slave        
+        nReset                =>    nReset,   
+        Timing_Pattern_LA     =>    Timing_Pattern_LA,     -- latched timing pattern from SCU_Bus for external user functions
+        Timing_Pattern_RCV    =>    Timing_Pattern_RCV,    -- timing pattern received
+        Tag_n_hw              =>   (Tag_Array(N)(i_tag_hw)),           --+ 
+        Tag_n_lw              =>   (Tag_Array(N)(i_tag_lw)),           --| 
+        Tag_n_Maske           =>   (Tag_Array(N)(i_Tag_Maske)),        --| 
+        Tag_n_Register        =>   (Tag_Array(N)(i_Tag_Register)),     --+-----> Tag-Array 
+        Tag_n_Level           =>   (Tag_Array(N)(i_Tag_Level)),        --| 
+        Tag_n_Delay_Cnt       =>   (Tag_Array(N)(i_Tag_Delay_Cnt)),    --| 
+        Tag_n_Puls_Width      =>   (Tag_Array(N)(i_Tag_Puls_Width)),   --| 
+        Tag_n_Prescale        =>   (Tag_Array(N)(i_Tag_Prescale)),     --| 
+        Tag_n_Trigger         =>   (Tag_Array(N)(i_Tag_Trigger)),      --+ 
+        SCU_AW_Input_Reg      =>    SCU_AW_Input_Reg,             -- Input-Reg. SCU_AW_Input_Reg
+        Max_AWOut_Reg_Nr      =>    Max_AWOut_Reg_Nr,         -- Maximale AWOut-Reg-Nummer der Anwendung
+        Max_AWIn_Reg_Nr       =>    Max_AWIn_Reg_Nr,          -- Maximale AWIn-Reg-Nummer der Anwendung
+        Spare0_Strobe         =>    Spare0_Strobe,            -- 
+        Spare1_Strobe         =>    Spare1_Strobe,            -- 
           
-    Tag_n_Reg_Nr          =>    Tag2_Reg_Nr,              -- AWOut-Reg-Pointer 
-    Tag_n_New_AWOut_Data  =>    Tag2_New_AWOut_Data,      -- AWOut-Reg. werden mit AWOut_Reg_Array-Daten überschrieben
-    Tag_n_Maske_Hi_Bits   =>    Tag2_Maske_Hi_Bits,       -- Maske für "High-Aktive" Bits im Ausgangs-Register
-    Tag_n_Maske_Lo_Bits   =>    Tag2_Maske_Lo_Bits,       -- Maske für "Low-Aktive"  Bits im Ausgangs-Register
-    Tag_n_Reg_Err         =>    Tag_n_Reg_Err(2),         -- Config-Error: TAG-Reg-Nr
-    Tag_n_Reg_max_Err     =>    Tag_n_Reg_Max_Err(2),     -- Config-Error: TAG_Max_Reg_Nr
-    Tag_n_Trig_Err        =>    Tag_n_Trig_Err(2),        -- Config-Error: Trig-Reg
-    Tag_n_Trig_max_Err    =>    Tag_n_Trig_Max_Err(2),    -- Config-Error: Trig_Max_Reg_Nr
-    Tag_n_Timeout         =>    Tag_n_Timeout(2),         -- Timeout-Error ext. Trigger, Spare0/Spare1
-    Tag_n_ext_Trig_Strobe =>    Tag_n_ext_Trig_Strobe(2), -- ext. Trigger-Eingang, aus Input-Register-Bit
-    Tag_n_FG_Start        =>    Tag_n_FG_Start(2),        -- Funktionsgenerator Start
-    Tag_n_LA              =>    Tag2_LA      
-  );  
-
-tag3: tag_n     
-port map  (     
-    clk                   =>    clk,                   -- should be the same clk, used by SCU_Bus_Slave        
-    nReset                =>    nReset,   
-    Timing_Pattern_LA     =>    Timing_Pattern_LA,     -- latched timing pattern from SCU_Bus for external user functions
-    Timing_Pattern_RCV    =>    Timing_Pattern_RCV,    -- timing pattern received
-    Tag_n_hw              =>   (Tag_Array(i_Tag3)(i_tag_hw)),           --+ 
-    Tag_n_lw              =>   (Tag_Array(i_Tag3)(i_tag_lw)),           --| 
-    Tag_n_Maske           =>   (Tag_Array(i_Tag3)(i_Tag_Maske)),        --| 
-    Tag_n_Register        =>   (Tag_Array(i_Tag3)(i_Tag_Register)),     --+-----> Tag-Array 
-    Tag_n_Level           =>   (Tag_Array(i_Tag3)(i_Tag_Level)),        --| 
-    Tag_n_Delay_Cnt       =>   (Tag_Array(i_Tag3)(i_Tag_Delay_Cnt)),    --| 
-    Tag_n_Puls_Width      =>   (Tag_Array(i_Tag3)(i_Tag_Puls_Width)),   --| 
-    Tag_n_Prescale        =>   (Tag_Array(i_Tag3)(i_Tag_Prescale)),     --| 
-    Tag_n_Trigger         =>   (Tag_Array(i_Tag3)(i_Tag_Trigger)),      --+ 
-    Max_AWOut_Reg_Nr      =>    Max_AWOut_Reg_Nr,         -- Maximale AWOut-Reg-Nummer der Anwendung
-    Max_AWIn_Reg_Nr       =>    Max_AWIn_Reg_Nr,          -- Maximale AWIn-Reg-Nummer der Anwendung
-    SCU_AW_Input_Reg      =>    SCU_AW_Input_Reg,         -- Input-Reg. SCU_AW_Input_Reg
-    Spare0_Strobe         =>    Spare0_Strobe,            -- 
-    Spare1_Strobe         =>    Spare1_Strobe,            -- 
-      
-    Tag_n_Reg_Nr          =>    Tag3_Reg_Nr,              -- AWOut-Reg-Pointer 
-    Tag_n_New_AWOut_Data  =>    Tag3_New_AWOut_Data,      -- AWOut-Reg. werden mit AWOut_Reg_Array-Daten überschrieben
-    Tag_n_Maske_Hi_Bits   =>    Tag3_Maske_Hi_Bits,       -- Maske für "High-Aktive" Bits im Ausgangs-Register
-    Tag_n_Maske_Lo_Bits   =>    Tag3_Maske_Lo_Bits,       -- Maske für "Low-Aktive"  Bits im Ausgangs-Register
-    Tag_n_Reg_Err         =>    Tag_n_Reg_Err(3),         -- Config-Error: TAG-Reg-Nr
-    Tag_n_Reg_max_Err     =>    Tag_n_Reg_Max_Err(3),     -- Config-Error: TAG_Max_Reg_Nr
-    Tag_n_Trig_Err        =>    Tag_n_Trig_Err(3),        -- Config-Error: Trig-Reg
-    Tag_n_Trig_max_Err    =>    Tag_n_Trig_Max_Err(3),    -- Config-Error: Trig_Max_Reg_Nr
-    Tag_n_Timeout         =>    Tag_n_Timeout(3),         -- Timeout-Error ext. Trigger, Spare0/Spare1
-    Tag_n_ext_Trig_Strobe =>    Tag_n_ext_Trig_Strobe(3), -- ext. Trigger-Eingang, aus Input-Register-Bit
-    Tag_n_FG_Start        =>    Tag_n_FG_Start(3),        -- Funktionsgenerator Start
-    Tag_n_LA              =>    Tag3_LA      
-  );  
-
-tag4: tag_n     
-port map  (     
-    clk                   =>    clk,                   -- should be the same clk, used by SCU_Bus_Slave        
-    nReset                =>    nReset,   
-    Timing_Pattern_LA     =>    Timing_Pattern_LA,     -- latched timing pattern from SCU_Bus for external user functions
-    Timing_Pattern_RCV    =>    Timing_Pattern_RCV,    -- timing pattern received
-    Tag_n_hw              =>   (Tag_Array(i_Tag4)(i_tag_hw)),          --+ 
-    Tag_n_lw              =>   (Tag_Array(i_Tag4)(i_tag_lw)),          --| 
-    Tag_n_Maske           =>   (Tag_Array(i_Tag4)(i_Tag_Maske)),       --| 
-    Tag_n_Register        =>   (Tag_Array(i_Tag4)(i_Tag_Register)),    --+-----> Tag-Array 
-    Tag_n_Level           =>   (Tag_Array(i_Tag4)(i_Tag_Level)),       --| 
-    Tag_n_Delay_Cnt       =>   (Tag_Array(i_Tag4)(i_Tag_Delay_Cnt)),   --| 
-    Tag_n_Puls_Width      =>   (Tag_Array(i_Tag4)(i_Tag_Puls_Width)),  --| 
-    Tag_n_Prescale        =>   (Tag_Array(i_Tag4)(i_Tag_Prescale)),    --| 
-    Tag_n_Trigger         =>   (Tag_Array(i_Tag4)(i_Tag_Trigger)),     --+ 
-    SCU_AW_Input_Reg      =>    SCU_AW_Input_Reg,          -- Input-Reg. SCU_AW_Input_Reg
-    Max_AWOut_Reg_Nr      =>    Max_AWOut_Reg_Nr,      -- Maximale AWOut-Reg-Nummer der Anwendung
-    Max_AWIn_Reg_Nr       =>    Max_AWIn_Reg_Nr,       -- Maximale AWIn-Reg-Nummer der Anwendung
-    Spare0_Strobe         =>    Spare0_Strobe,         -- 
-    Spare1_Strobe         =>    Spare1_Strobe,         -- 
-      
-    Tag_n_Reg_Nr          =>    Tag4_Reg_Nr,          -- AWOut-Reg-Pointer 
-    Tag_n_New_AWOut_Data  =>    Tag4_New_AWOut_Data,  -- AWOut-Reg. werden mit AWOut_Reg_Array-Daten überschrieben
-    Tag_n_Maske_Hi_Bits   =>    Tag4_Maske_Hi_Bits,       -- Maske für "High-Aktive" Bits im Ausgangs-Register
-    Tag_n_Maske_Lo_Bits   =>    Tag4_Maske_Lo_Bits,       -- Maske für "Low-Aktive"  Bits im Ausgangs-Register
-    Tag_n_Reg_Err         =>    Tag_n_Reg_Err(4),         -- Config-Error: TAG-Reg-Nr
-    Tag_n_Reg_max_Err     =>    Tag_n_Reg_Max_Err(4),     -- Config-Error: TAG_Max_Reg_Nr
-    Tag_n_Trig_Err        =>    Tag_n_Trig_Err(4),        -- Config-Error: Trig-Reg
-    Tag_n_Trig_max_Err    =>    Tag_n_Trig_Max_Err(4),    -- Config-Error: Trig_Max_Reg_Nr
-    Tag_n_Timeout         =>    Tag_n_Timeout(4),         -- Timeout-Error ext. Trigger, Spare0/Spare1
-    Tag_n_ext_Trig_Strobe =>    Tag_n_ext_Trig_Strobe(4), -- ext. Trigger-Eingang, aus Input-Register-Bit
-    Tag_n_FG_Start        =>    Tag_n_FG_Start(4),        -- Funktionsgenerator Start
-    Tag_n_LA              =>    Tag4_LA      
-  );  
-
-tag5: tag_n     
-port map  (     
-    clk                   =>    clk,                   -- should be the same clk, used by SCU_Bus_Slave        
-    nReset                =>    nReset,   
-    Timing_Pattern_LA     =>    Timing_Pattern_LA,     -- latched timing pattern from SCU_Bus for external user functions
-    Timing_Pattern_RCV    =>    Timing_Pattern_RCV,    -- timing pattern received
-    Tag_n_hw              =>   (Tag_Array(i_Tag5)(i_tag_hw)),          --+ 
-    Tag_n_lw              =>   (Tag_Array(i_Tag5)(i_tag_lw)),          --| 
-    Tag_n_Maske           =>   (Tag_Array(i_Tag5)(i_Tag_Maske)),       --| 
-    Tag_n_Register        =>   (Tag_Array(i_Tag5)(i_Tag_Register)),    --+-----> Tag-Array 
-    Tag_n_Level           =>   (Tag_Array(i_Tag5)(i_Tag_Level)),       --| 
-    Tag_n_Delay_Cnt       =>   (Tag_Array(i_Tag5)(i_Tag_Delay_Cnt)),   --| 
-    Tag_n_Puls_Width      =>   (Tag_Array(i_Tag5)(i_Tag_Puls_Width)),  --| 
-    Tag_n_Prescale        =>   (Tag_Array(i_Tag5)(i_Tag_Prescale)),    --| 
-    Tag_n_Trigger         =>   (Tag_Array(i_Tag5)(i_Tag_Trigger)),     --+ 
-    Max_AWOut_Reg_Nr      =>    Max_AWOut_Reg_Nr,         -- Maximale AWOut-Reg-Nummer der Anwendung
-    Max_AWIn_Reg_Nr       =>    Max_AWIn_Reg_Nr,          -- Maximale AWIn-Reg-Nummer der Anwendung
-    SCU_AW_Input_Reg      =>    SCU_AW_Input_Reg,             -- Input-Reg. SCU_AW_Input_Reg
-    Spare0_Strobe         =>    Spare0_Strobe,            -- 
-    Spare1_Strobe         =>    Spare1_Strobe,            -- 
-          
-    Tag_n_Reg_Nr          =>    Tag5_Reg_Nr,              -- AWOut-Reg-Pointer 
-    Tag_n_New_AWOut_Data  =>    Tag5_New_AWOut_Data,      -- AWOut-Reg. werden mit AWOut_Reg_Array-Daten überschrieben
-    Tag_n_Maske_Hi_Bits   =>    Tag5_Maske_Hi_Bits,       -- Maske für "High-Aktive" Bits im Ausgangs-Register
-    Tag_n_Maske_Lo_Bits   =>    Tag5_Maske_Lo_Bits,       -- Maske für "Low-Aktive"  Bits im Ausgangs-Register
-    Tag_n_Reg_Err         =>    Tag_n_Reg_Err(5),         -- Config-Error: TAG-Reg-Nr
-    Tag_n_Reg_max_Err     =>    Tag_n_Reg_Max_Err(5),     -- Config-Error: TAG_Max_Reg_Nr
-    Tag_n_Trig_Err        =>    Tag_n_Trig_Err(5),        -- Config-Error: Trig-Reg
-    Tag_n_Trig_max_Err    =>    Tag_n_Trig_Max_Err(5),    -- Config-Error: Trig_Max_Reg_Nr
-    Tag_n_Timeout         =>    Tag_n_Timeout(5),         -- Timeout-Error ext. Trigger, Spare0/Spare1
-    Tag_n_ext_Trig_Strobe =>    Tag_n_ext_Trig_Strobe(5), -- ext. Trigger-Eingang, aus Input-Register-Bit
-    Tag_n_FG_Start        =>    Tag_n_FG_Start(5),        -- Funktionsgenerator Start
-    Tag_n_LA              =>    Tag5_LA      
-  );  
-
-tag6: tag_n     
-port map  (     
-    clk                   =>    clk,                   -- should be the same clk, used by SCU_Bus_Slave        
-    nReset                =>    nReset,   
-    Timing_Pattern_LA     =>    Timing_Pattern_LA,     -- latched timing pattern from SCU_Bus for external user functions
-    Timing_Pattern_RCV    =>    Timing_Pattern_RCV,    -- timing pattern received
-    Tag_n_hw              =>   (Tag_Array(i_Tag6)(i_tag_hw)),          --+ 
-    Tag_n_lw              =>   (Tag_Array(i_Tag6)(i_tag_lw)),          --| 
-    Tag_n_Maske           =>   (Tag_Array(i_Tag6)(i_Tag_Maske)),       --| 
-    Tag_n_Register        =>   (Tag_Array(i_Tag6)(i_Tag_Register)),    --+-----> Tag-Array 
-    Tag_n_Level           =>   (Tag_Array(i_Tag6)(i_Tag_Level)),       --| 
-    Tag_n_Delay_Cnt       =>   (Tag_Array(i_Tag6)(i_Tag_Delay_Cnt)),   --| 
-    Tag_n_Puls_Width      =>   (Tag_Array(i_Tag6)(i_Tag_Puls_Width)),  --| 
-    Tag_n_Prescale        =>   (Tag_Array(i_Tag6)(i_Tag_Prescale)),    --| 
-    Tag_n_Trigger         =>   (Tag_Array(i_Tag6)(i_Tag_Trigger)),     --+ 
-    Max_AWOut_Reg_Nr      =>    Max_AWOut_Reg_Nr,         -- Maximale AWOut-Reg-Nummer der Anwendung
-    Max_AWIn_Reg_Nr       =>    Max_AWIn_Reg_Nr,          -- Maximale AWIn-Reg-Nummer der Anwendung
-    SCU_AW_Input_Reg      =>    SCU_AW_Input_Reg,         -- Input-Reg. SCU_AW_Input_Reg
-    Spare0_Strobe         =>    Spare0_Strobe,            -- 
-    Spare1_Strobe         =>    Spare1_Strobe,            -- 
-          
-    Tag_n_Reg_Nr          =>    Tag6_Reg_Nr,              -- AWOut-Reg-Pointer 
-    Tag_n_New_AWOut_Data  =>    Tag6_New_AWOut_Data,      -- AWOut-Reg. werden mit AWOut_Reg_Array-Daten überschrieben
-    Tag_n_Maske_Hi_Bits   =>    Tag6_Maske_Hi_Bits,       -- Maske für "High-Aktive" Bits im Ausgangs-Register
-    Tag_n_Maske_Lo_Bits   =>    Tag6_Maske_Lo_Bits,       -- Maske für "Low-Aktive"  Bits im Ausgangs-Register
-    Tag_n_Reg_Err         =>    Tag_n_Reg_Err(6),         -- Config-Error: TAG-Reg-Nr
-    Tag_n_Reg_max_Err     =>    Tag_n_Reg_Max_Err(6),     -- Config-Error: TAG_Max_Reg_Nr
-    Tag_n_Trig_Err        =>    Tag_n_Trig_Err(6),        -- Config-Error: Trig-Reg
-    Tag_n_Trig_max_Err    =>    Tag_n_Trig_Max_Err(6),    -- Config-Error: Trig_Max_Reg_Nr
-    Tag_n_Timeout         =>    Tag_n_Timeout(6),         -- Timeout-Error ext. Trigger, Spare0/Spare1
-    Tag_n_ext_Trig_Strobe =>    Tag_n_ext_Trig_Strobe(6), -- ext. Trigger-Eingang, aus Input-Register-Bit
-    Tag_n_FG_Start        =>    Tag_n_FG_Start(6),        -- Funktionsgenerator Start
-    Tag_n_LA              =>    Tag6_LA      
-  );  
-
-tag7: tag_n     
-port map  (     
-    clk                   =>    clk,                   -- should be the same clk, used by SCU_Bus_Slave        
-    nReset                =>    nReset,   
-    Timing_Pattern_LA     =>    Timing_Pattern_LA,     -- latched timing pattern from SCU_Bus for external user functions
-    Timing_Pattern_RCV    =>    Timing_Pattern_RCV,    -- timing pattern received
-    Tag_n_hw              =>   (Tag_Array(i_Tag7)(i_tag_hw)),          --+ 
-    Tag_n_lw              =>   (Tag_Array(i_Tag7)(i_tag_lw)),          --| 
-    Tag_n_Maske           =>   (Tag_Array(i_Tag7)(i_Tag_Maske)),       --| 
-    Tag_n_Register        =>   (Tag_Array(i_Tag7)(i_Tag_Register)),    --+-----> Tag-Array 
-    Tag_n_Level           =>   (Tag_Array(i_Tag7)(i_Tag_Level)),       --| 
-    Tag_n_Delay_Cnt       =>   (Tag_Array(i_Tag7)(i_Tag_Delay_Cnt)),   --| 
-    Tag_n_Puls_Width      =>   (Tag_Array(i_Tag7)(i_Tag_Puls_Width)),  --| 
-    Tag_n_Prescale        =>   (Tag_Array(i_Tag7)(i_Tag_Prescale)),    --| 
-    Tag_n_Trigger         =>   (Tag_Array(i_Tag7)(i_Tag_Trigger)),     --+ 
-    SCU_AW_Input_Reg      =>    SCU_AW_Input_Reg,         -- Input-Reg. SCU_AW_Input_Reg
-    Max_AWOut_Reg_Nr      =>    Max_AWOut_Reg_Nr,         -- Maximale AWOut-Reg-Nummer der Anwendung
-    Max_AWIn_Reg_Nr       =>    Max_AWIn_Reg_Nr,          -- Maximale AWIn-Reg-Nummer der Anwendung
-    Spare0_Strobe         =>    Spare0_Strobe,            -- 
-    Spare1_Strobe         =>    Spare1_Strobe,            -- 
-          
-    Tag_n_Reg_Nr          =>    Tag7_Reg_Nr,              -- AWOut-Reg-Pointer 
-    Tag_n_New_AWOut_Data  =>    Tag7_New_AWOut_Data,      -- AWOut-Reg. werden mit AWOut_Reg_Array-Daten überschrieben
-    Tag_n_Maske_Hi_Bits   =>    Tag7_Maske_Hi_Bits,       -- Maske für "High-Aktive" Bits im Ausgangs-Register
-    Tag_n_Maske_Lo_Bits   =>    Tag7_Maske_Lo_Bits,       -- Maske für "Low-Aktive"  Bits im Ausgangs-Register
-    Tag_n_Reg_Err         =>    Tag_n_Reg_Err(7),         -- Config-Error: TAG-Reg-Nr
-    Tag_n_Reg_max_Err     =>    Tag_n_Reg_Max_Err(7),     -- Config-Error: TAG_Max_Reg_Nr
-    Tag_n_Trig_Err        =>    Tag_n_Trig_Err(7),        -- Config-Error: Trig-Reg
-    Tag_n_Trig_max_Err    =>    Tag_n_Trig_Max_Err(7),    -- Config-Error: Trig_Max_Reg_Nr
-    Tag_n_Timeout         =>    Tag_n_Timeout(7),         -- Timeout-Error ext. Trigger, Spare0/Spare1
-    Tag_n_ext_Trig_Strobe =>    Tag_n_ext_Trig_Strobe(7), -- ext. Trigger-Eingang, aus Input-Register-Bit
-    Tag_n_FG_Start        =>    Tag_n_FG_Start(7),        -- Funktionsgenerator Start
-    Tag_n_LA              =>    Tag7_LA      
-  );  
+        Tag_n_Reg_Nr          =>    Reg_Nr_Tag(N),            -- AWOut-Reg-Pointer 
+        Tag_n_New_AWOut_Data  =>    New_AWOut_Data_Tag(N),    -- AWOut-Reg. werden mit AWOut_Reg_Array-Daten überschrieben
+        Tag_n_Maske_Hi_Bits   =>    Maske_Hi_Bits_Tag(N),     -- Maske für "High-Aktive" Bits im Ausgangs-Register
+        Tag_n_Maske_Lo_Bits   =>    Maske_Lo_Bits_Tag(N),     -- Maske für "Low-Aktive"  Bits im Ausgangs-Register
+        Tag_n_Reg_Err         =>    Tag_n_Reg_Err(N),         -- Config-Error: TAG-Reg-Nr
+        Tag_n_Reg_max_Err     =>    Tag_n_Reg_Max_Err(N),     -- Config-Error: TAG_Max_Reg_Nr
+        Tag_n_Trig_Err        =>    Tag_n_Trig_Err(N),        -- Config-Error: Trig-Reg
+        Tag_n_Trig_max_Err    =>    Tag_n_Trig_Max_Err(N),    -- Config-Error: Trig_Max_Reg_Nr
+        Tag_n_Timeout         =>    Tag_n_Timeout(N),         -- Timeout-Error ext. Trigger, Spare0/Spare1
+        Tag_n_ext_Trig_Strobe =>    Tag_n_ext_Trig_Strobe(N), -- ext. Trigger-Eingang, aus Input-Register-Bit
+        Tag_n_FG_Start        =>    Tag_n_FG_Start(N),        -- Funktionsgenerator Start
+        Tag_n_LA              =>    LA_Tag(N)   
+      );  
+    end generate Tag;
+    
 
 --  +============================================================================================================================+
 --  |                                     Ende: Daten I/O für Tag0-Tag7 (Component(Tag_n)                                        |
 --  +============================================================================================================================+
 
-
-
+  
+  
 --  +============================================================================================================================+
---  |                           Übernahme der Daten aus Component Tag_n, für Tag0- Tag7 und Eintrag in                           |
---  |                        Tag_Out_Reg_Array und Tag_New_AWOut_Data, zum überschreiben der Output-Register.                    |
---  |                                       "Veroderung" der Output-Masken für Tag0- Tag7.                                       |
+--  |       Übernahme der Daten aus Component Tag_n, für Tag0- Tag7 und Eintrag in Tag_Out_Reg_Array und Tag_New_AWOut_Data      |
+--  +============================================================================================================================+
+--  | Problem:                                                                                                                   |
+--  | 1. Mehrere TAGs können auf das gleiche Outputregister zugreifen (aber nicht auf das gleiche Bit).                          |
+--  | 2. zB.: TAG1 kann im Outputreg1 Bit 13 setzen, TAG3 aber Bit 13 zurücksetzen.                                              |
+--  | 3. Wenn TAGx und TAGy das gleiche Bit setzen/rücksetzen wollen --> Fehler.                                                 |
+--  | 4. New_AWOut_Data_TAGn ist ein Synclock aktiv und zeigt die Änderung an (Maske, Level high/low)                            |
+--  | 5. Alle TAGs könennen als Ziel das gleiche Outputregister haben.                                                           |
+--  |                                                                                                                            |
+--  | Lösung:                                                                                                                    |
+--  | Abfrage aller Änderungen (aus den TAGs) auf die Bits in den Outputregistern.                                               |
+--  | Die "erste" gültige IF Abfrage für jedes Bit ist wirksam, die Anderen gültigen gehen verloren.            "K.Kaiser"       |
+--  |                                                                                                                            |
 --  +============================================================================================================================+
 
-P_AWOut_Array:  process (nReset, clk,
-                         Tag0_New_AWOut_Data, Tag1_New_AWOut_Data, Tag2_New_AWOut_Data, Tag3_New_AWOut_Data,
-                         Tag4_New_AWOut_Data, Tag5_New_AWOut_Data, Tag6_New_AWOut_Data, Tag7_New_AWOut_Data,
-                         Tag0_Maske_Hi_Bits, Tag1_Maske_Hi_Bits, Tag2_Maske_Hi_Bits, Tag3_Maske_Hi_Bits,
-                         Tag0_Maske_Lo_Bits, Tag1_Maske_Lo_Bits, Tag2_Maske_Lo_Bits, Tag3_Maske_Lo_Bits,
-                         Tag4_Maske_Hi_Bits, Tag5_Maske_Hi_Bits, Tag6_Maske_Hi_Bits, Tag7_Maske_Hi_Bits,
-                         Tag4_Maske_Lo_Bits, Tag5_Maske_Lo_Bits, Tag6_Maske_Lo_Bits, Tag7_Maske_Lo_Bits,
-                         Tag_Array, Clr_Tag_Config)
-  begin
-    if nReset = '0' then
-     
-      Tag_Out_Reg_Array   <= (others => (others => '0'));   --
-      Tag_New_AWOut_Data  <= (others => false);             --  
-      Sum_Reg_MSK         <= (others => (others => '0'));  -- Summen-Maske für alle Tag-Register
+
+P_TAG_AWOut_REG: 
+  for Register_Nr in 1 to 7 generate  -- für Outputregister 1 bis 7
+
+--  +====================================================================================================================+
+--  |     Process zum setzen/rücksetzen Bit(0-15) und setzen der Maske für "ein" Register, ensprechend TAG(0-7)          |
+--  +====================================================================================================================+
+
+  
+  P_TAG_REG:  process (nReset, clk, New_AWOut_Data_Tag, Maske_Hi_Bits_Tag, Maske_Lo_Bits_Tag, Tag_Array, Clr_Tag_Config)
+    begin
+      if nReset = '0' then
       
+        Tag_Out_Reg_Array(Register_Nr)   <= (others => '0');  -- Daten für Output-Register
+        Sum_Reg_MSK(Register_Nr)         <= (others => '0');  -- Clear Summen-Maske für das Output-Register
       elsif rising_edge(clk) then
 
-        if Clr_Tag_Config = '1'   then
-          Sum_Reg_MSK         <= (others => (others => '0'));  -- Clear alle Summen-Maske für die Tag-Register
+      if Clr_Tag_Config = '1'   then
+         Tag_Out_Reg_Array(Register_Nr)   <= (others => '0');  -- Daten für Output-Register
+         Sum_Reg_MSK(Register_Nr)         <= (others => '0');  -- Clear Summen-Maske für das Output-Register
+      end if;
 
-        -------------------------- Tag "0" ------------------------
-
-        elsif Tag0_New_AWOut_Data = true   then
-          s_Tag_Aktiv(0)                 <= '1';
-
-          FOR Bit_Nr in 0 to 15 loop       -- Das der Maske entsprechende Bit wird im Output-Register gesetzt oder gelöscht
-            if     Tag0_Maske_Hi_Bits(Bit_Nr)  = '1'  then Tag_Out_Reg_Array(Tag0_Reg_Nr)(Bit_Nr) <= '1';    -- Set "H-Bits"
-            elsif  Tag0_Maske_Lo_Bits(Bit_Nr)  = '1'  then Tag_Out_Reg_Array(Tag0_Reg_Nr)(Bit_Nr) <= '0';    -- Set "L-Bits"
-            end if;
-          end loop;  
-
-          Sum_Reg_MSK(Tag0_Reg_Nr)       <= (Sum_Reg_MSK(Tag0_Reg_Nr) or (Tag_Array(i_Tag0)(i_Tag_Maske))); -- "Oder" Maske für Outputregister
-
-        -------------------------- Tag "1" ------------------------
-
-        elsif Tag1_New_AWOut_Data = true   then
-          s_Tag_Aktiv(1)                 <= '1';
-
-          FOR Bit_Nr in 0 to 15 loop       -- Das der Maske entsprechende Bit wird im Output-Register gesetzt oder gelöscht
-            if     Tag1_Maske_Hi_Bits(Bit_Nr)  = '1'  then Tag_Out_Reg_Array(Tag1_Reg_Nr)(Bit_Nr) <= '1';    -- Set "H-Bits"
-            elsif  Tag1_Maske_Lo_Bits(Bit_Nr)  = '1'  then Tag_Out_Reg_Array(Tag1_Reg_Nr)(Bit_Nr) <= '0';    -- Set "L-Bits"
-            end if;
-          end loop;  
-
-          Sum_Reg_MSK(Tag1_Reg_Nr)       <= (Sum_Reg_MSK(Tag1_Reg_Nr) or (Tag_Array(i_Tag1)(i_Tag_Maske))); -- "Oder" Maske für Outputregister
+          
+--        FOR Bit_Nr in 0 to 15 loop
+--  +====================================== Register n, Bit 0 ===========================================================+
   
-
-        -------------------------- Tag "2" ------------------------
-
-        elsif Tag2_New_AWOut_Data = true   then
-          s_Tag_Aktiv(2)                 <= '1';
-
-          FOR Bit_Nr in 0 to 15 loop       -- Das der Maske entsprechende Bit wird im Output-Register gesetzt oder gelöscht
-            if     Tag2_Maske_Hi_Bits(Bit_Nr)  = '1'  then Tag_Out_Reg_Array(Tag2_Reg_Nr)(Bit_Nr) <= '1';    -- Set "H-Bits"
-            elsif  Tag2_Maske_Lo_Bits(Bit_Nr)  = '1'  then Tag_Out_Reg_Array(Tag2_Reg_Nr)(Bit_Nr) <= '0';    -- Set "L-Bits"
-            end if;
-          end loop;  
-
-          Sum_Reg_MSK(Tag2_Reg_Nr)       <= (Sum_Reg_MSK(Tag2_Reg_Nr) or (Tag_Array(i_Tag2)(i_Tag_Maske))); -- "Oder" Maske für Outputregister
-  
-
-        -------------------------- Tag "3" ------------------------
-
-        elsif Tag3_New_AWOut_Data = true   then
-          s_Tag_Aktiv(3)                 <= '1';
-
-          FOR Bit_Nr in 0 to 15 loop       -- Das der Maske entsprechende Bit wird im Output-Register gesetzt oder gelöscht
-            if     Tag3_Maske_Hi_Bits(Bit_Nr)  = '1'  then Tag_Out_Reg_Array(Tag3_Reg_Nr)(Bit_Nr) <= '1';    -- Set "H-Bits"
-            elsif  Tag3_Maske_Lo_Bits(Bit_Nr)  = '1'  then Tag_Out_Reg_Array(Tag3_Reg_Nr)(Bit_Nr) <= '0';    -- Set "L-Bits"
-            end if;
-          end loop;  
-
-          Sum_Reg_MSK(Tag3_Reg_Nr)       <= (Sum_Reg_MSK(Tag3_Reg_Nr) or (Tag_Array(i_Tag3)(i_Tag_Maske))); -- "Oder" Maske für Outputregister
-  
-
-        -------------------------- Tag "4" ------------------------
-
-        elsif Tag4_New_AWOut_Data = true   then
-          s_Tag_Aktiv(4)                 <= '1';
-
-          FOR Bit_Nr in 0 to 15 loop       -- Das der Maske entsprechende Bit wird im Output-Register gesetzt oder gelöscht
-            if     Tag4_Maske_Hi_Bits(Bit_Nr)  = '1'  then Tag_Out_Reg_Array(Tag4_Reg_Nr)(Bit_Nr) <= '1';    -- Set "H-Bits"
-            elsif  Tag4_Maske_Lo_Bits(Bit_Nr)  = '1'  then Tag_Out_Reg_Array(Tag4_Reg_Nr)(Bit_Nr) <= '0';    -- Set "L-Bits"
-            end if;
-          end loop;  
-
-          Sum_Reg_MSK(Tag4_Reg_Nr)       <= (Sum_Reg_MSK(Tag4_Reg_Nr) or (Tag_Array(i_Tag4)(i_Tag_Maske))); -- "Oder" Maske für Outputregister
-  
-
-        -------------------------- Tag "5" ------------------------
-
-        elsif Tag5_New_AWOut_Data = true   then
-          s_Tag_Aktiv(5)                 <= '1';
-
-          FOR Bit_Nr in 0 to 15 loop       -- Das der Maske entsprechende Bit wird im Output-Register gesetzt oder gelöscht
-            if     Tag5_Maske_Hi_Bits(Bit_Nr)  = '1'  then Tag_Out_Reg_Array(Tag5_Reg_Nr)(Bit_Nr) <= '1';    -- Set "H-Bits"
-            elsif  Tag5_Maske_Lo_Bits(Bit_Nr)  = '1'  then Tag_Out_Reg_Array(Tag5_Reg_Nr)(Bit_Nr) <= '0';    -- Set "L-Bits"
-            end if;
-          end loop;  
-
-          Sum_Reg_MSK(Tag5_Reg_Nr)       <= (Sum_Reg_MSK(Tag5_Reg_Nr) or (Tag_Array(i_Tag5)(i_Tag_Maske))); -- "Oder" Maske für Outputregister
-  
-
-        -------------------------- Tag "6" ------------------------
-
-        elsif Tag6_New_AWOut_Data = true   then
-          s_Tag_Aktiv(6)                 <= '1';
-
-          FOR Bit_Nr in 0 to 15 loop       -- Das der Maske entsprechende Bit wird im Output-Register gesetzt oder gelöscht
-            if     Tag6_Maske_Hi_Bits(Bit_Nr)  = '1'  then Tag_Out_Reg_Array(Tag6_Reg_Nr)(Bit_Nr) <= '1';    -- Set "H-Bits"
-            elsif  Tag6_Maske_Lo_Bits(Bit_Nr)  = '1'  then Tag_Out_Reg_Array(Tag6_Reg_Nr)(Bit_Nr) <= '0';    -- Set "L-Bits"
-            end if;
-          end loop;  
-
-          Sum_Reg_MSK(Tag6_Reg_Nr)       <= (Sum_Reg_MSK(Tag6_Reg_Nr) or (Tag_Array(i_Tag6)(i_Tag_Maske))); -- "Oder" Maske für Outputregister
-
-
-        -------------------------- Tag "7" ------------------------
-
-        elsif Tag7_New_AWOut_Data = true   then
-          s_Tag_Aktiv(7)                 <= '1';
-
-          FOR Bit_Nr in 0 to 15 loop       -- Das der Maske entsprechende Bit wird im Output-Register gesetzt oder gelöscht
-            if     Tag7_Maske_Hi_Bits(Bit_Nr)  = '1'  then Tag_Out_Reg_Array(Tag7_Reg_Nr)(Bit_Nr) <= '1';    -- Set "H-Bits"
-            elsif  Tag7_Maske_Lo_Bits(Bit_Nr)  = '1'  then Tag_Out_Reg_Array(Tag7_Reg_Nr)(Bit_Nr) <= '0';    -- Set "L-Bits"
-            end if;
-          end loop;  
-
-          Sum_Reg_MSK(Tag7_Reg_Nr)       <= (Sum_Reg_MSK(Tag7_Reg_Nr) or (Tag_Array(i_Tag7)(i_Tag_Maske))); -- "Oder" Maske für Outputregister
-
-        else
-          Tag_New_AWOut_Data  <= (others => false);
-          s_Tag_Aktiv         <= (others => '0'  );
+       --    (---------Tag_0 = aktiv------)---------( Register=Register_Nr)-----------  -(---Bit-0 der Maske = 1)--------
+      if     ((New_AWOut_Data_Tag(0) = true) AND (Reg_Nr_Tag(0) = Register_Nr) AND (Tag_Array(0)(i_Tag_Maske)(0) = '1'))  then
+        if       Maske_Hi_Bits_Tag(0)(0)    = '1'  then Tag_Out_Reg_Array(Register_Nr)(0) <= '1';    -- Set "H-Bit"
+        else                                            Tag_Out_Reg_Array(Register_Nr)(0) <= '0';    -- Set "L-Bit"
         end if;
+        Sum_Reg_MSK(Register_Nr)(0)       <= '1'; -- set Masken-Bit
+   
+      elsif   ((New_AWOut_Data_Tag(1) = true) AND (Reg_Nr_Tag(1) = Register_Nr) AND (Tag_Array(1)(i_Tag_Maske)(0) = '1'))  then
+        if       Maske_Hi_Bits_Tag(1)(0)    = '1'   then Tag_Out_Reg_Array(Register_Nr)(0) <= '1';    -- Set "H-Bit"
+        else                                             Tag_Out_Reg_Array(Register_Nr)(0) <= '0';    -- Set "L-Bit"
+        end if;
+        Sum_Reg_MSK(Register_Nr)(0)       <= '1'; -- set Masken-Bit
+
+      elsif   ((New_AWOut_Data_Tag(2) = true) AND (Reg_Nr_Tag(2) = Register_Nr) AND (Tag_Array(2)(i_Tag_Maske)(0) = '1'))  then
+        if       Maske_Hi_Bits_Tag(2)(0)    = '1'   then Tag_Out_Reg_Array(Register_Nr)(0) <= '1';    -- Set "H-Bits"
+        else                                             Tag_Out_Reg_Array(Register_Nr)(0) <= '0';    -- Set "L-Bit"
+        end if;
+        Sum_Reg_MSK(Register_Nr)(0)       <= '1'; -- set Masken-Bit
+
+      elsif   ((New_AWOut_Data_Tag(3) = true) AND (Reg_Nr_Tag(3) = Register_Nr) AND (Tag_Array(3)(i_Tag_Maske)(0) = '1'))  then
+        if       Maske_Hi_Bits_Tag(3)(0)    = '1'   then Tag_Out_Reg_Array(Register_Nr)(0) <= '1';    -- Set "H-Bits"
+        else                                             Tag_Out_Reg_Array(Register_Nr)(0) <= '0';    -- Set "L-Bit"
+        end if;
+        Sum_Reg_MSK(Register_Nr)(0)       <= '1'; -- set Masken-Bit
+
+      elsif   ((New_AWOut_Data_Tag(4) = true) AND (Reg_Nr_Tag(4) = Register_Nr) AND (Tag_Array(4)(i_Tag_Maske)(0) = '1'))  then
+        if       Maske_Hi_Bits_Tag(4)(0)    = '1'   then Tag_Out_Reg_Array(Register_Nr)(0) <= '1';         -- Set "H-Bits"
+        else                                             Tag_Out_Reg_Array(Register_Nr)(0) <= '0';         -- Set "L-Bit"
+        end if;
+        Sum_Reg_MSK(Register_Nr)(0)       <= '1'; -- set Masken-Bit
+
+      elsif   ((New_AWOut_Data_Tag(5) = true) AND (Reg_Nr_Tag(5) = Register_Nr) AND (Tag_Array(5)(i_Tag_Maske)(0) = '1'))  then
+        if       Maske_Hi_Bits_Tag(5)(0)    = '1'   then Tag_Out_Reg_Array(Register_Nr)(0) <= '1';    -- Set "H-Bits"
+        else                                             Tag_Out_Reg_Array(Register_Nr)(0) <= '0';    -- Set "L-Bit"
+        end if;
+        Sum_Reg_MSK(Register_Nr)(0)       <= '1'; -- set Masken-Bit
+
+      elsif   ((New_AWOut_Data_Tag(6) = true) AND (Reg_Nr_Tag(6) = Register_Nr) AND (Tag_Array(6)(i_Tag_Maske)(0) = '1'))  then
+        if       Maske_Hi_Bits_Tag(6)(0)    = '1'   then Tag_Out_Reg_Array(Register_Nr)(0) <= '1';    -- Set "H-Bits"
+        else                                             Tag_Out_Reg_Array(Register_Nr)(0) <= '0';    -- Set "L-Bit"
+        end if;
+        Sum_Reg_MSK(Register_Nr)(0)       <= '1'; -- set Masken-Bit
+
+      elsif   ((New_AWOut_Data_Tag(7) = true) AND (Reg_Nr_Tag(7) = Register_Nr) AND (Tag_Array(7)(i_Tag_Maske)(0) = '1'))  then
+        if       Maske_Hi_Bits_Tag(7)(0)    = '1'   then Tag_Out_Reg_Array(Register_Nr)(0) <= '1';    -- Set "H-Bits"
+        else                                             Tag_Out_Reg_Array(Register_Nr)(0) <= '0';    -- Set "L-Bit"
+        end if;
+        Sum_Reg_MSK(Register_Nr)(0)     <= '1'; -- set Masken-Bit
+      end if;
+
+    
+--  +====================================== Register n, Bit 1 ===========================================================+
+
+       --    (---------Tag_0 = aktiv------)---------( Register=Register_Nr)-----------  -(---Bit-0 der Maske = 1)--------
+      if      ((New_AWOut_Data_Tag(0) = true) AND (Reg_Nr_Tag(0) = Register_Nr) AND (Tag_Array(0)(i_Tag_Maske)(1) = '1'))  then
+        if       Maske_Hi_Bits_Tag(0)(1)    = '1'   then Tag_Out_Reg_Array(Register_Nr)(1) <= '1';    -- Set "H-Bit"
+        else                                             Tag_Out_Reg_Array(Register_Nr)(1) <= '0';    -- Set "L-Bit"
+        end if;
+        Sum_Reg_MSK(Register_Nr)(1)       <= '1'; -- set Masken-Bit
+   
+      elsif   ((New_AWOut_Data_Tag(1) = true) AND (Reg_Nr_Tag(1) = Register_Nr) AND (Tag_Array(1)(i_Tag_Maske)(1) = '1'))  then
+        if       Maske_Hi_Bits_Tag(1)(1)    = '1'   then Tag_Out_Reg_Array(Register_Nr)(1) <= '1';    -- Set "H-Bit"
+         else                                            Tag_Out_Reg_Array(Register_Nr)(1) <= '0';    -- Set "L-Bit"
+        end if;
+        Sum_Reg_MSK(Register_Nr)(1)       <= '1'; -- set Masken-Bit
+
+      elsif   ((New_AWOut_Data_Tag(2) = true) AND (Reg_Nr_Tag(2) = Register_Nr) AND (Tag_Array(2)(i_Tag_Maske)(1) = '1'))  then
+        if       Maske_Hi_Bits_Tag(2)(1)    = '1'   then Tag_Out_Reg_Array(Register_Nr)(1) <= '1';    -- Set "H-Bits"
+        else                                             Tag_Out_Reg_Array(Register_Nr)(1) <= '0';    -- Set "L-Bit"
+        end if;
+        Sum_Reg_MSK(Register_Nr)(1)       <= '1'; -- set Masken-Bit
+
+      elsif   ((New_AWOut_Data_Tag(3) = true) AND (Reg_Nr_Tag(3) = Register_Nr) AND (Tag_Array(3)(i_Tag_Maske)(1) = '1'))  then
+        if       Maske_Hi_Bits_Tag(3)(1)    = '1'   then Tag_Out_Reg_Array(Register_Nr)(1) <= '1';    -- Set "H-Bits"
+        else                                             Tag_Out_Reg_Array(Register_Nr)(1) <= '0';    -- Set "L-Bit"
+        end if;
+        Sum_Reg_MSK(Register_Nr)(1)       <= '1'; -- set Masken-Bit
+
+      elsif   ((New_AWOut_Data_Tag(4) = true) AND (Reg_Nr_Tag(4) = Register_Nr) AND (Tag_Array(4)(i_Tag_Maske)(1) = '1'))  then
+        if       Maske_Hi_Bits_Tag(4)(1)    = '1'   then Tag_Out_Reg_Array(Register_Nr)(1) <= '1';         -- Set "H-Bits"
+        else                                             Tag_Out_Reg_Array(Register_Nr)(1) <= '0';         -- Set "L-Bit"
+        end if;
+        Sum_Reg_MSK(Register_Nr)(1)       <= '1'; -- set Masken-Bit
+
+      elsif   ((New_AWOut_Data_Tag(5) = true) AND (Reg_Nr_Tag(5) = Register_Nr) AND (Tag_Array(5)(i_Tag_Maske)(1) = '1'))  then
+        if       Maske_Hi_Bits_Tag(5)(1)    = '1'   then Tag_Out_Reg_Array(Register_Nr)(1) <= '1';    -- Set "H-Bits"
+        else                                             Tag_Out_Reg_Array(Register_Nr)(1) <= '0';    -- Set "L-Bit"
+        end if;
+        Sum_Reg_MSK(Register_Nr)(1)       <= '1'; -- set Masken-Bit
+
+      elsif   ((New_AWOut_Data_Tag(6) = true) AND (Reg_Nr_Tag(6) = Register_Nr) AND (Tag_Array(6)(i_Tag_Maske)(1) = '1'))  then
+        if       Maske_Hi_Bits_Tag(6)(1)    = '1'   then Tag_Out_Reg_Array(Register_Nr)(1) <= '1';    -- Set "H-Bits"
+        else                                             Tag_Out_Reg_Array(Register_Nr)(1) <= '0';    -- Set "L-Bit"
+        end if;
+        Sum_Reg_MSK(Register_Nr)(1)       <= '1'; -- set Masken-Bit
+
+      elsif   ((New_AWOut_Data_Tag(7) = true) AND (Reg_Nr_Tag(7) = Register_Nr) AND (Tag_Array(7)(i_Tag_Maske)(1) = '1'))  then
+        if       Maske_Hi_Bits_Tag(7)(1)    = '1'   then Tag_Out_Reg_Array(Register_Nr)(1) <= '1';    -- Set "H-Bits"
+        else                                             Tag_Out_Reg_Array(Register_Nr)(1) <= '0';    -- Set "L-Bit"
+        end if;
+        Sum_Reg_MSK(Register_Nr)(1)     <= '1'; -- set Masken-Bit
+      end if;
+
+    
+--  +====================================== Register n, Bit 2 ===========================================================+
+
+       --    (---------Tag_0 = aktiv------)---------( Register=Register_Nr)-----------  -(---Bit-0 der Maske = 1)--------
+      if     ((New_AWOut_Data_Tag(0) = true) AND (Reg_Nr_Tag(0) = Register_Nr) AND (Tag_Array(0)(i_Tag_Maske)(2) = '1'))  then
+        if      Maske_Hi_Bits_Tag(0)(2)    = '1'   then Tag_Out_Reg_Array(Register_Nr)(2) <= '1';    -- Set "H-Bit"
+        else                                            Tag_Out_Reg_Array(Register_Nr)(2) <= '0';    -- Set "L-Bit"
+        end if;
+        Sum_Reg_MSK(Register_Nr)(2)       <= '1'; -- set Masken-Bit
+    
+      elsif   ((New_AWOut_Data_Tag(1) = true) AND (Reg_Nr_Tag(1) = Register_Nr) AND (Tag_Array(1)(i_Tag_Maske)(2) = '1'))  then
+        if       Maske_Hi_Bits_Tag(1)(2)    = '1'   then Tag_Out_Reg_Array(Register_Nr)(2) <= '1';    -- Set "H-Bit"
+        else                                             Tag_Out_Reg_Array(Register_Nr)(2) <= '0';    -- Set "L-Bit"
+        end if;
+        Sum_Reg_MSK(Register_Nr)(2)       <= '1'; -- set Masken-Bit
+
+      elsif   ((New_AWOut_Data_Tag(2) = true) AND (Reg_Nr_Tag(2) = Register_Nr) AND (Tag_Array(2)(i_Tag_Maske)(2) = '1'))  then
+        if       Maske_Hi_Bits_Tag(2)(2)    = '1'   then Tag_Out_Reg_Array(Register_Nr)(2) <= '1';    -- Set "H-Bits"
+        else                                             Tag_Out_Reg_Array(Register_Nr)(2) <= '0';    -- Set "L-Bit"
+        end if;
+        Sum_Reg_MSK(Register_Nr)(2)       <= '1'; -- set Masken-Bit
+
+      elsif   ((New_AWOut_Data_Tag(3) = true) AND (Reg_Nr_Tag(3) = Register_Nr) AND (Tag_Array(3)(i_Tag_Maske)(2) = '1'))  then
+        if       Maske_Hi_Bits_Tag(3)(2)    = '1'   then Tag_Out_Reg_Array(Register_Nr)(2) <= '1';    -- Set "H-Bits"
+        else                                             Tag_Out_Reg_Array(Register_Nr)(2) <= '0';    -- Set "L-Bit"
+        end if;
+        Sum_Reg_MSK(Register_Nr)(2)       <= '1'; -- set Masken-Bit
+
+      elsif   ((New_AWOut_Data_Tag(4) = true) AND (Reg_Nr_Tag(4) = Register_Nr) AND (Tag_Array(4)(i_Tag_Maske)(2) = '1'))  then
+        if       Maske_Hi_Bits_Tag(4)(2)    = '1'   then Tag_Out_Reg_Array(Register_Nr)(2) <= '1';         -- Set "H-Bits"
+        else                                             Tag_Out_Reg_Array(Register_Nr)(2) <= '0';         -- Set "L-Bit"
+        end if;
+        Sum_Reg_MSK(Register_Nr)(2)       <= '1'; -- set Masken-Bit
+
+      elsif   ((New_AWOut_Data_Tag(5) = true) AND (Reg_Nr_Tag(5) = Register_Nr) AND (Tag_Array(5)(i_Tag_Maske)(2) = '1'))  then
+        if       Maske_Hi_Bits_Tag(5)(2)    = '1'   then Tag_Out_Reg_Array(Register_Nr)(2) <= '1';    -- Set "H-Bits"
+        else                                             Tag_Out_Reg_Array(Register_Nr)(2) <= '0';    -- Set "L-Bit"
+        end if;
+        Sum_Reg_MSK(Register_Nr)(2)       <= '1'; -- set Masken-Bit
+
+      elsif   ((New_AWOut_Data_Tag(6) = true) AND (Reg_Nr_Tag(6) = Register_Nr) AND (Tag_Array(6)(i_Tag_Maske)(2) = '1'))  then
+        if       Maske_Hi_Bits_Tag(6)(2)    = '1'   then Tag_Out_Reg_Array(Register_Nr)(2) <= '1';    -- Set "H-Bits"
+        else                                             Tag_Out_Reg_Array(Register_Nr)(2) <= '0';    -- Set "L-Bit"
+        end if;
+        Sum_Reg_MSK(Register_Nr)(2)       <= '1'; -- set Masken-Bit
+
+      elsif   ((New_AWOut_Data_Tag(7) = true) AND (Reg_Nr_Tag(7) = Register_Nr) AND (Tag_Array(7)(i_Tag_Maske)(2) = '1'))  then
+        if       Maske_Hi_Bits_Tag(7)(2)    = '1'   then Tag_Out_Reg_Array(Register_Nr)(2) <= '1';    -- Set "H-Bits"
+        else                                             Tag_Out_Reg_Array(Register_Nr)(2) <= '0';    -- Set "L-Bit"
+        end if;
+        Sum_Reg_MSK(Register_Nr)(2)     <= '1'; -- set Masken-Bit
+      end if;
+
+    
+--  +====================================== Register n, Bit 3 ===========================================================+
+
+       --    (---------Tag_0 = aktiv------)---------( Register=Register_Nr)-----------  -(---Bit-0 der Maske = 1)--------
+      if      ((New_AWOut_Data_Tag(0) = true) AND (Reg_Nr_Tag(0) = Register_Nr) AND (Tag_Array(0)(i_Tag_Maske)(3) = '1'))  then
+        if       Maske_Hi_Bits_Tag(0)(3)    = '1'   then Tag_Out_Reg_Array(Register_Nr)(3) <= '1';    -- Set "H-Bit"
+        else                                             Tag_Out_Reg_Array(Register_Nr)(3) <= '0';    -- Set "L-Bit"
+        end if;
+        Sum_Reg_MSK(Register_Nr)(3)       <= '1'; -- set Masken-Bit
+   
+      elsif   ((New_AWOut_Data_Tag(1) = true) AND (Reg_Nr_Tag(1) = Register_Nr) AND (Tag_Array(1)(i_Tag_Maske)(3) = '1'))  then
+        if       Maske_Hi_Bits_Tag(1)(3)    = '1'   then Tag_Out_Reg_Array(Register_Nr)(3) <= '1';    -- Set "H-Bit"
+        else                                             Tag_Out_Reg_Array(Register_Nr)(3) <= '0';    -- Set "L-Bit"
+        end if;
+        Sum_Reg_MSK(Register_Nr)(3)       <= '1'; -- set Masken-Bit
+
+      elsif   ((New_AWOut_Data_Tag(2) = true) AND (Reg_Nr_Tag(2) = Register_Nr) AND (Tag_Array(2)(i_Tag_Maske)(3) = '1'))  then
+        if       Maske_Hi_Bits_Tag(2)(3)    = '1'   then Tag_Out_Reg_Array(Register_Nr)(3) <= '1';    -- Set "H-Bits"
+        else                                             Tag_Out_Reg_Array(Register_Nr)(3) <= '0';    -- Set "L-Bit"
+        end if;
+        Sum_Reg_MSK(Register_Nr)(3)       <= '1'; -- set Masken-Bit
+
+      elsif   ((New_AWOut_Data_Tag(3) = true) AND (Reg_Nr_Tag(3) = Register_Nr) AND (Tag_Array(3)(i_Tag_Maske)(3) = '1'))  then
+        if       Maske_Hi_Bits_Tag(3)(3)    = '1'   then Tag_Out_Reg_Array(Register_Nr)(3) <= '1';    -- Set "H-Bits"
+        else                                             Tag_Out_Reg_Array(Register_Nr)(3) <= '0';    -- Set "L-Bit"
+        end if;
+        Sum_Reg_MSK(Register_Nr)(3)       <= '1'; -- set Masken-Bit
+
+      elsif   ((New_AWOut_Data_Tag(4) = true) AND (Reg_Nr_Tag(4) = Register_Nr) AND (Tag_Array(4)(i_Tag_Maske)(3) = '1'))  then
+        if       Maske_Hi_Bits_Tag(4)(3)    = '1'   then Tag_Out_Reg_Array(Register_Nr)(3) <= '1';         -- Set "H-Bits"
+        else                                             Tag_Out_Reg_Array(Register_Nr)(3) <= '0';         -- Set "L-Bit"
+        end if;
+        Sum_Reg_MSK(Register_Nr)(3)       <= '1'; -- set Masken-Bit
+
+      elsif   ((New_AWOut_Data_Tag(5) = true) AND (Reg_Nr_Tag(5) = Register_Nr) AND (Tag_Array(5)(i_Tag_Maske)(3) = '1'))  then
+        if       Maske_Hi_Bits_Tag(5)(3)    = '1'   then Tag_Out_Reg_Array(Register_Nr)(3) <= '1';    -- Set "H-Bits"
+        else                                             Tag_Out_Reg_Array(Register_Nr)(3) <= '0';    -- Set "L-Bit"
+        end if;
+        Sum_Reg_MSK(Register_Nr)(3)       <= '1'; -- set Masken-Bit
+
+      elsif   ((New_AWOut_Data_Tag(6) = true) AND (Reg_Nr_Tag(6) = Register_Nr) AND (Tag_Array(6)(i_Tag_Maske)(3) = '1'))  then
+        if       Maske_Hi_Bits_Tag(6)(3)    = '1'   then Tag_Out_Reg_Array(Register_Nr)(3) <= '1';    -- Set "H-Bits"
+        else                                             Tag_Out_Reg_Array(Register_Nr)(3) <= '0';    -- Set "L-Bit"
+        end if;
+        Sum_Reg_MSK(Register_Nr)(3)       <= '1'; -- set Masken-Bit
+
+      elsif   ((New_AWOut_Data_Tag(7) = true) AND (Reg_Nr_Tag(7) = Register_Nr) AND (Tag_Array(7)(i_Tag_Maske)(3) = '1'))  then
+        if       Maske_Hi_Bits_Tag(7)(3)    = '1'   then Tag_Out_Reg_Array(Register_Nr)(3) <= '1';    -- Set "H-Bits"
+        else                                             Tag_Out_Reg_Array(Register_Nr)(3) <= '0';    -- Set "L-Bit"
+        end if;
+        Sum_Reg_MSK(Register_Nr)(3)     <= '1'; -- set Masken-Bit
+      end if;
+
+    
+--  +====================================== Register n, Bit 4 ===========================================================+
+
+       --    (---------Tag_0 = aktiv------)---------( Register=Register_Nr)-----------  -(---Bit-0 der Maske = 1)--------
+      if      ((New_AWOut_Data_Tag(0) = true) AND (Reg_Nr_Tag(0) = Register_Nr) AND (Tag_Array(0)(i_Tag_Maske)(4) = '1'))  then
+        if       Maske_Hi_Bits_Tag(0)(4)    = '1'   then Tag_Out_Reg_Array(Register_Nr)(4) <= '1';    -- Set "H-Bit"
+        else                                             Tag_Out_Reg_Array(Register_Nr)(4) <= '0';    -- Set "L-Bit"
+        end if;
+        Sum_Reg_MSK(Register_Nr)(4)       <= '1'; -- set Masken-Bit
+   
+      elsif   ((New_AWOut_Data_Tag(1) = true) AND (Reg_Nr_Tag(1) = Register_Nr) AND (Tag_Array(1)(i_Tag_Maske)(4) = '1'))  then
+        if       Maske_Hi_Bits_Tag(1)(4)    = '1'   then Tag_Out_Reg_Array(Register_Nr)(4) <= '1';    -- Set "H-Bit"
+        else                                             Tag_Out_Reg_Array(Register_Nr)(4) <= '0';    -- Set "L-Bit"
+        end if;
+        Sum_Reg_MSK(Register_Nr)(4)       <= '1'; -- set Masken-Bit
+
+      elsif   ((New_AWOut_Data_Tag(2) = true) AND (Reg_Nr_Tag(2) = Register_Nr) AND (Tag_Array(2)(i_Tag_Maske)(4) = '1'))  then
+        if       Maske_Hi_Bits_Tag(2)(4)    = '1'   then Tag_Out_Reg_Array(Register_Nr)(4) <= '1';    -- Set "H-Bits"
+        else                                             Tag_Out_Reg_Array(Register_Nr)(4) <= '0';    -- Set "L-Bit"
+        end if;
+        Sum_Reg_MSK(Register_Nr)(4)       <= '1'; -- set Masken-Bit
+
+      elsif   ((New_AWOut_Data_Tag(3) = true) AND (Reg_Nr_Tag(3) = Register_Nr) AND (Tag_Array(3)(i_Tag_Maske)(4) = '1'))  then
+        if       Maske_Hi_Bits_Tag(3)(4)    = '1'   then Tag_Out_Reg_Array(Register_Nr)(4) <= '1';    -- Set "H-Bits"
+        else                                             Tag_Out_Reg_Array(Register_Nr)(4) <= '0';    -- Set "L-Bit"
+        end if;
+        Sum_Reg_MSK(Register_Nr)(4)       <= '1'; -- set Masken-Bit
+
+      elsif   ((New_AWOut_Data_Tag(4) = true) AND (Reg_Nr_Tag(4) = Register_Nr) AND (Tag_Array(4)(i_Tag_Maske)(4) = '1'))  then
+        if       Maske_Hi_Bits_Tag(4)(4)    = '1'   then Tag_Out_Reg_Array(Register_Nr)(4) <= '1';         -- Set "H-Bits"
+        else                                             Tag_Out_Reg_Array(Register_Nr)(4) <= '0';         -- Set "L-Bit"
+        end if;
+        Sum_Reg_MSK(Register_Nr)(4)       <= '1'; -- set Masken-Bit
+
+      elsif   ((New_AWOut_Data_Tag(5) = true) AND (Reg_Nr_Tag(5) = Register_Nr) AND (Tag_Array(5)(i_Tag_Maske)(4) = '1'))  then
+        if       Maske_Hi_Bits_Tag(5)(4)    = '1'   then Tag_Out_Reg_Array(Register_Nr)(4) <= '1';    -- Set "H-Bits"
+        else                                             Tag_Out_Reg_Array(Register_Nr)(4) <= '0';    -- Set "L-Bit"
+        end if;
+        Sum_Reg_MSK(Register_Nr)(4)       <= '1'; -- set Masken-Bit
+
+      elsif   ((New_AWOut_Data_Tag(6) = true) AND (Reg_Nr_Tag(6) = Register_Nr) AND (Tag_Array(6)(i_Tag_Maske)(4) = '1'))  then
+        if       Maske_Hi_Bits_Tag(6)(4)    = '1'   then Tag_Out_Reg_Array(Register_Nr)(4) <= '1';    -- Set "H-Bits"
+        else                                             Tag_Out_Reg_Array(Register_Nr)(4) <= '0';    -- Set "L-Bit"
+        end if;
+        Sum_Reg_MSK(Register_Nr)(4)       <= '1'; -- set Masken-Bit
+
+      elsif   ((New_AWOut_Data_Tag(7) = true) AND (Reg_Nr_Tag(7) = Register_Nr) AND (Tag_Array(7)(i_Tag_Maske)(4) = '1'))  then
+        if       Maske_Hi_Bits_Tag(7)(4)    = '1'   then Tag_Out_Reg_Array(Register_Nr)(4) <= '1';    -- Set "H-Bits"
+        else                                             Tag_Out_Reg_Array(Register_Nr)(4) <= '0';    -- Set "L-Bit"
+        end if;
+        Sum_Reg_MSK(Register_Nr)(4)     <= '1'; -- set Masken-Bit
+      end if;
+
+    
+--  +====================================== Register n, Bit 5 ===========================================================+
+
+       --    (---------Tag_0 = aktiv------)---------( Register=Register_Nr)-----------  -(---Bit-0 der Maske = 1)--------
+      if      ((New_AWOut_Data_Tag(0) = true) AND (Reg_Nr_Tag(0) = Register_Nr) AND (Tag_Array(0)(i_Tag_Maske)(5) = '1'))  then
+        if       Maske_Hi_Bits_Tag(0)(5)    = '1'   then Tag_Out_Reg_Array(Register_Nr)(5) <= '1';    -- Set "H-Bit"
+        else                                             Tag_Out_Reg_Array(Register_Nr)(5) <= '0';    -- Set "L-Bit"
+        end if;
+        Sum_Reg_MSK(Register_Nr)(5)       <= '1'; -- set Masken-Bit
+   
+      elsif   ((New_AWOut_Data_Tag(1) = true) AND (Reg_Nr_Tag(1) = Register_Nr) AND (Tag_Array(1)(i_Tag_Maske)(5) = '1'))  then
+        if       Maske_Hi_Bits_Tag(1)(5)    = '1'   then Tag_Out_Reg_Array(Register_Nr)(5) <= '1';    -- Set "H-Bit"
+        else                                             Tag_Out_Reg_Array(Register_Nr)(5) <= '0';    -- Set "L-Bit"
+        end if;
+        Sum_Reg_MSK(Register_Nr)(5)       <= '1'; -- set Masken-Bit
+
+      elsif   ((New_AWOut_Data_Tag(2) = true) AND (Reg_Nr_Tag(2) = Register_Nr) AND (Tag_Array(2)(i_Tag_Maske)(5) = '1'))  then
+        if       Maske_Hi_Bits_Tag(2)(5)    = '1'   then Tag_Out_Reg_Array(Register_Nr)(5) <= '1';    -- Set "H-Bits"
+        else                                             Tag_Out_Reg_Array(Register_Nr)(5) <= '0';    -- Set "L-Bit"
+        end if;
+        Sum_Reg_MSK(Register_Nr)(5)       <= '1'; -- set Masken-Bit
+
+      elsif   ((New_AWOut_Data_Tag(3) = true) AND (Reg_Nr_Tag(3) = Register_Nr) AND (Tag_Array(3)(i_Tag_Maske)(5) = '1'))  then
+        if       Maske_Hi_Bits_Tag(3)(5)    = '1'   then Tag_Out_Reg_Array(Register_Nr)(5) <= '1';    -- Set "H-Bits"
+        else                                             Tag_Out_Reg_Array(Register_Nr)(5) <= '0';    -- Set "L-Bit"
+        end if;
+        Sum_Reg_MSK(Register_Nr)(5)       <= '1'; -- set Masken-Bit
+
+      elsif   ((New_AWOut_Data_Tag(4) = true) AND (Reg_Nr_Tag(4) = Register_Nr) AND (Tag_Array(4)(i_Tag_Maske)(5) = '1'))  then
+        if       Maske_Hi_Bits_Tag(4)(5)    = '1'   then Tag_Out_Reg_Array(Register_Nr)(5) <= '1';         -- Set "H-Bits"
+        else                                             Tag_Out_Reg_Array(Register_Nr)(5) <= '0';         -- Set "L-Bit"
+        end if;
+        Sum_Reg_MSK(Register_Nr)(5)       <= '1'; -- set Masken-Bit
+
+      elsif   ((New_AWOut_Data_Tag(5) = true) AND (Reg_Nr_Tag(5) = Register_Nr) AND (Tag_Array(5)(i_Tag_Maske)(5) = '1'))  then
+        if       Maske_Hi_Bits_Tag(5)(5)    = '1'   then Tag_Out_Reg_Array(Register_Nr)(5) <= '1';    -- Set "H-Bits"
+        else                                             Tag_Out_Reg_Array(Register_Nr)(5) <= '0';    -- Set "L-Bit"
+        end if;
+        Sum_Reg_MSK(Register_Nr)(5)       <= '1'; -- set Masken-Bit
+
+      elsif   ((New_AWOut_Data_Tag(6) = true) AND (Reg_Nr_Tag(6) = Register_Nr) AND (Tag_Array(6)(i_Tag_Maske)(5) = '1'))  then
+        if       Maske_Hi_Bits_Tag(6)(5)    = '1'   then Tag_Out_Reg_Array(Register_Nr)(5) <= '1';    -- Set "H-Bits"
+        else                                             Tag_Out_Reg_Array(Register_Nr)(5) <= '0';    -- Set "L-Bit"
+        end if;
+        Sum_Reg_MSK(Register_Nr)(5)       <= '1'; -- set Masken-Bit
+
+      elsif   ((New_AWOut_Data_Tag(7) = true) AND (Reg_Nr_Tag(7) = Register_Nr) AND (Tag_Array(7)(i_Tag_Maske)(5) = '1'))  then
+        if       Maske_Hi_Bits_Tag(7)(5)    = '1'   then Tag_Out_Reg_Array(Register_Nr)(5) <= '1';    -- Set "H-Bits"
+        else                                             Tag_Out_Reg_Array(Register_Nr)(5) <= '0';    -- Set "L-Bit"
+        end if;
+        Sum_Reg_MSK(Register_Nr)(5)     <= '1'; -- set Masken-Bit
+      end if;
+
+    
+--  +====================================== Register n, Bit 6 ===========================================================+
+
+       --    (---------Tag_0 = aktiv------)---------( Register=Register_Nr)-----------  -(---Bit-0 der Maske = 1)--------
+      if      ((New_AWOut_Data_Tag(0) = true) AND (Reg_Nr_Tag(0) = Register_Nr) AND (Tag_Array(0)(i_Tag_Maske)(6) = '1'))  then
+        if       Maske_Hi_Bits_Tag(0)(6)    = '1'   then Tag_Out_Reg_Array(Register_Nr)(6) <= '1';    -- Set "H-Bit"
+        else                                             Tag_Out_Reg_Array(Register_Nr)(6) <= '0';    -- Set "L-Bit"
+        end if;
+        Sum_Reg_MSK(Register_Nr)(6)       <= '1'; -- set Masken-Bit
+   
+      elsif   ((New_AWOut_Data_Tag(1) = true) AND (Reg_Nr_Tag(1) = Register_Nr) AND (Tag_Array(1)(i_Tag_Maske)(6) = '1'))  then
+        if       Maske_Hi_Bits_Tag(1)(6)    = '1'   then Tag_Out_Reg_Array(Register_Nr)(6) <= '1';    -- Set "H-Bit"
+        else                                             Tag_Out_Reg_Array(Register_Nr)(6) <= '0';    -- Set "L-Bit"
+        end if;
+        Sum_Reg_MSK(Register_Nr)(6)       <= '1'; -- set Masken-Bit
+
+      elsif   ((New_AWOut_Data_Tag(2) = true) AND (Reg_Nr_Tag(2) = Register_Nr) AND (Tag_Array(2)(i_Tag_Maske)(6) = '1'))  then
+        if       Maske_Hi_Bits_Tag(2)(6)    = '1'   then Tag_Out_Reg_Array(Register_Nr)(6) <= '1';    -- Set "H-Bits"
+        else                                             Tag_Out_Reg_Array(Register_Nr)(6) <= '0';    -- Set "L-Bit"
+        end if;
+        Sum_Reg_MSK(Register_Nr)(6)       <= '1'; -- set Masken-Bit
+
+      elsif   ((New_AWOut_Data_Tag(3) = true) AND (Reg_Nr_Tag(3) = Register_Nr) AND (Tag_Array(3)(i_Tag_Maske)(6) = '1'))  then
+        if       Maske_Hi_Bits_Tag(3)(6)    = '1'   then Tag_Out_Reg_Array(Register_Nr)(6) <= '1';    -- Set "H-Bits"
+        else                                             Tag_Out_Reg_Array(Register_Nr)(6) <= '0';    -- Set "L-Bit"
+        end if;
+        Sum_Reg_MSK(Register_Nr)(6)       <= '1'; -- set Masken-Bit
+
+      elsif   ((New_AWOut_Data_Tag(4) = true) AND (Reg_Nr_Tag(4) = Register_Nr) AND (Tag_Array(4)(i_Tag_Maske)(6) = '1'))  then
+        if       Maske_Hi_Bits_Tag(4)(6)    = '1'   then Tag_Out_Reg_Array(Register_Nr)(6) <= '1';         -- Set "H-Bits"
+        else                                             Tag_Out_Reg_Array(Register_Nr)(6) <= '0';         -- Set "L-Bit"
+        end if;
+        Sum_Reg_MSK(Register_Nr)(6)       <= '1'; -- set Masken-Bit
+
+      elsif   ((New_AWOut_Data_Tag(5) = true) AND (Reg_Nr_Tag(5) = Register_Nr) AND (Tag_Array(5)(i_Tag_Maske)(6) = '1'))  then
+        if       Maske_Hi_Bits_Tag(5)(6)    = '1'   then Tag_Out_Reg_Array(Register_Nr)(6) <= '1';    -- Set "H-Bits"
+        else                                             Tag_Out_Reg_Array(Register_Nr)(6) <= '0';    -- Set "L-Bit"
+        end if;
+        Sum_Reg_MSK(Register_Nr)(6)       <= '1'; -- set Masken-Bit
+
+      elsif   ((New_AWOut_Data_Tag(6) = true) AND (Reg_Nr_Tag(6) = Register_Nr) AND (Tag_Array(6)(i_Tag_Maske)(6) = '1'))  then
+        if       Maske_Hi_Bits_Tag(6)(6)    = '1'   then Tag_Out_Reg_Array(Register_Nr)(6) <= '1';    -- Set "H-Bits"
+        else                                             Tag_Out_Reg_Array(Register_Nr)(6) <= '0';    -- Set "L-Bit"
+        end if;
+        Sum_Reg_MSK(Register_Nr)(6)       <= '1'; -- set Masken-Bit
+
+      elsif   ((New_AWOut_Data_Tag(7) = true) AND (Reg_Nr_Tag(7) = Register_Nr) AND (Tag_Array(7)(i_Tag_Maske)(6) = '1'))  then
+        if       Maske_Hi_Bits_Tag(7)(6)    = '1'   then Tag_Out_Reg_Array(Register_Nr)(6) <= '1';    -- Set "H-Bits"
+        else                                             Tag_Out_Reg_Array(Register_Nr)(6) <= '0';    -- Set "L-Bit"
+        end if;
+        Sum_Reg_MSK(Register_Nr)(6)     <= '1'; -- set Masken-Bit
+      end if;
+
+    
+--  +====================================== Register n, Bit 7 ===========================================================+
+
+       --    (---------Tag_0 = aktiv------)---------( Register=Register_Nr)-----------  -(---Bit-0 der Maske = 1)--------
+      if      ((New_AWOut_Data_Tag(0) = true) AND (Reg_Nr_Tag(0) = Register_Nr) AND (Tag_Array(0)(i_Tag_Maske)(7) = '1'))  then
+        if       Maske_Hi_Bits_Tag(0)(7)    = '1'   then Tag_Out_Reg_Array(Register_Nr)(7) <= '1';    -- Set "H-Bit"
+        else                                             Tag_Out_Reg_Array(Register_Nr)(7) <= '0';    -- Set "L-Bit"
+        end if;
+        Sum_Reg_MSK(Register_Nr)(7)       <= '1'; -- set Masken-Bit
+   
+      elsif   ((New_AWOut_Data_Tag(1) = true) AND (Reg_Nr_Tag(1) = Register_Nr) AND (Tag_Array(1)(i_Tag_Maske)(7) = '1'))  then
+        if       Maske_Hi_Bits_Tag(1)(7)    = '1'   then Tag_Out_Reg_Array(Register_Nr)(7) <= '1';    -- Set "H-Bit"
+        else                                             Tag_Out_Reg_Array(Register_Nr)(7) <= '0';    -- Set "L-Bit"
+        end if;
+        Sum_Reg_MSK(Register_Nr)(7)       <= '1'; -- set Masken-Bit
+
+      elsif   ((New_AWOut_Data_Tag(2) = true) AND (Reg_Nr_Tag(2) = Register_Nr) AND (Tag_Array(2)(i_Tag_Maske)(7) = '1'))  then
+        if       Maske_Hi_Bits_Tag(2)(7)    = '1'   then Tag_Out_Reg_Array(Register_Nr)(7) <= '1';    -- Set "H-Bits"
+        else                                             Tag_Out_Reg_Array(Register_Nr)(7) <= '0';    -- Set "L-Bit"
+        end if;
+        Sum_Reg_MSK(Register_Nr)(7)       <= '1'; -- set Masken-Bit
+
+      elsif   ((New_AWOut_Data_Tag(3) = true) AND (Reg_Nr_Tag(3) = Register_Nr) AND (Tag_Array(3)(i_Tag_Maske)(7) = '1'))  then
+        if       Maske_Hi_Bits_Tag(3)(7)    = '1'   then Tag_Out_Reg_Array(Register_Nr)(7) <= '1';    -- Set "H-Bits"
+        else                                             Tag_Out_Reg_Array(Register_Nr)(7) <= '0';    -- Set "L-Bit"
+        end if;
+        Sum_Reg_MSK(Register_Nr)(7)       <= '1'; -- set Masken-Bit
+
+      elsif   ((New_AWOut_Data_Tag(4) = true) AND (Reg_Nr_Tag(4) = Register_Nr) AND (Tag_Array(4)(i_Tag_Maske)(7) = '1'))  then
+        if       Maske_Hi_Bits_Tag(4)(7)    = '1'   then Tag_Out_Reg_Array(Register_Nr)(7) <= '1';         -- Set "H-Bits"
+        else                                             Tag_Out_Reg_Array(Register_Nr)(7) <= '0';         -- Set "L-Bit"
+        end if;
+        Sum_Reg_MSK(Register_Nr)(7)       <= '1'; -- set Masken-Bit
+
+      elsif   ((New_AWOut_Data_Tag(5) = true) AND (Reg_Nr_Tag(5) = Register_Nr) AND (Tag_Array(5)(i_Tag_Maske)(7) = '1'))  then
+        if       Maske_Hi_Bits_Tag(5)(7)    = '1'   then Tag_Out_Reg_Array(Register_Nr)(7) <= '1';    -- Set "H-Bits"
+        else                                             Tag_Out_Reg_Array(Register_Nr)(7) <= '0';    -- Set "L-Bit"
+        end if;
+        Sum_Reg_MSK(Register_Nr)(7)       <= '1'; -- set Masken-Bit
+
+      elsif   ((New_AWOut_Data_Tag(6) = true) AND (Reg_Nr_Tag(6) = Register_Nr) AND (Tag_Array(6)(i_Tag_Maske)(7) = '1'))  then
+        if       Maske_Hi_Bits_Tag(6)(7)    = '1'   then Tag_Out_Reg_Array(Register_Nr)(7) <= '1';    -- Set "H-Bits"
+        else                                             Tag_Out_Reg_Array(Register_Nr)(7) <= '0';    -- Set "L-Bit"
+        end if;
+        Sum_Reg_MSK(Register_Nr)(7)       <= '1'; -- set Masken-Bit
+
+      elsif   ((New_AWOut_Data_Tag(7) = true) AND (Reg_Nr_Tag(7) = Register_Nr) AND (Tag_Array(7)(i_Tag_Maske)(7) = '1'))  then
+        if       Maske_Hi_Bits_Tag(7)(7)    = '1'   then Tag_Out_Reg_Array(Register_Nr)(7) <= '1';    -- Set "H-Bits"
+        else                                             Tag_Out_Reg_Array(Register_Nr)(7) <= '0';    -- Set "L-Bit"
+        end if;
+        Sum_Reg_MSK(Register_Nr)(7)     <= '1'; -- set Masken-Bit
+      end if;
+
+    
+--  +====================================== Register n, Bit 8 ===========================================================+
+
+       --    (---------Tag_0 = aktiv------)---------( Register=Register_Nr)-----------  -(---Bit-0 der Maske = 1)--------
+      if      ((New_AWOut_Data_Tag(0) = true) AND (Reg_Nr_Tag(0) = Register_Nr) AND (Tag_Array(0)(i_Tag_Maske)(8) = '1'))  then
+        if       Maske_Hi_Bits_Tag(0)(8)    = '1'  then  Tag_Out_Reg_Array(Register_Nr)(8) <= '1';    -- Set "H-Bit"
+        else                                             Tag_Out_Reg_Array(Register_Nr)(8) <= '0';    -- Set "L-Bit"
+        end if;
+        Sum_Reg_MSK(Register_Nr)(8)       <= '1'; -- set Masken-Bit
+   
+      elsif   ((New_AWOut_Data_Tag(1) = true) AND (Reg_Nr_Tag(1) = Register_Nr) AND (Tag_Array(1)(i_Tag_Maske)(8) = '1'))  then
+        if       Maske_Hi_Bits_Tag(1)(8)    = '1'  then  Tag_Out_Reg_Array(Register_Nr)(8) <= '1';    -- Set "H-Bit"
+        else                                             Tag_Out_Reg_Array(Register_Nr)(8) <= '0';    -- Set "L-Bit"
+        end if;
+        Sum_Reg_MSK(Register_Nr)(8)       <= '1'; -- set Masken-Bit
+
+      elsif ((New_AWOut_Data_Tag(2) = true) AND   (Reg_Nr_Tag(2) = Register_Nr) AND (Tag_Array(2)(i_Tag_Maske)(8) = '1'))  then
+        if     Maske_Hi_Bits_Tag(2)(8)     = '1'   then  Tag_Out_Reg_Array(Register_Nr)(8) <= '1';    -- Set "H-Bits"
+        else                                             Tag_Out_Reg_Array(Register_Nr)(8) <= '0';    -- Set "L-Bit"
+        end if;
+        Sum_Reg_MSK(Register_Nr)(8)       <= '1'; -- set Masken-Bit
+
+      elsif ((New_AWOut_Data_Tag(3) = true) AND   (Reg_Nr_Tag(3) = Register_Nr) AND (Tag_Array(3)(i_Tag_Maske)(8) = '1'))  then
+        if     Maske_Hi_Bits_Tag(3)(8)     = '1'   then  Tag_Out_Reg_Array(Register_Nr)(8) <= '1';    -- Set "H-Bits"
+        else                                             Tag_Out_Reg_Array(Register_Nr)(8) <= '0';    -- Set "L-Bit"
+        end if;
+        Sum_Reg_MSK(Register_Nr)(8)       <= '1'; -- set Masken-Bit
+
+      elsif ((New_AWOut_Data_Tag(4) = true) AND   (Reg_Nr_Tag(4) = Register_Nr) AND (Tag_Array(4)(i_Tag_Maske)(8) = '1'))  then
+        if     Maske_Hi_Bits_Tag(4)(8)     = '1'   then  Tag_Out_Reg_Array(Register_Nr)(8) <= '1';    -- Set "H-Bits"
+        else                                             Tag_Out_Reg_Array(Register_Nr)(8) <= '0';    -- Set "L-Bit"
+        end if;
+        Sum_Reg_MSK(Register_Nr)(8)       <= '1'; -- set Masken-Bit
+
+      elsif ((New_AWOut_Data_Tag(5) = true) AND   (Reg_Nr_Tag(5) = Register_Nr) AND (Tag_Array(5)(i_Tag_Maske)(8) = '1'))  then
+        if     Maske_Hi_Bits_Tag(5)(8)     = '1'   then  Tag_Out_Reg_Array(Register_Nr)(8) <= '1';    -- Set "H-Bits"
+        else                                             Tag_Out_Reg_Array(Register_Nr)(8) <= '0';    -- Set "L-Bit"
+        end if;
+        Sum_Reg_MSK(Register_Nr)(8)       <= '1'; -- set Masken-Bit
+
+      elsif ((New_AWOut_Data_Tag(6) = true) AND   (Reg_Nr_Tag(6) = Register_Nr) AND (Tag_Array(6)(i_Tag_Maske)(8) = '1'))  then
+        if     Maske_Hi_Bits_Tag(6)(8)     = '1'   then  Tag_Out_Reg_Array(Register_Nr)(8) <= '1';    -- Set "H-Bits"
+        else                                             Tag_Out_Reg_Array(Register_Nr)(8) <= '0';    -- Set "L-Bit"
+        end if;
+        Sum_Reg_MSK(Register_Nr)(8)       <= '1'; -- set Masken-Bit
+
+      elsif ((New_AWOut_Data_Tag(7) = true) AND   (Reg_Nr_Tag(7) = Register_Nr) AND (Tag_Array(7)(i_Tag_Maske)(8) = '1'))  then
+        if     Maske_Hi_Bits_Tag(7)(8)     = '1'   then  Tag_Out_Reg_Array(Register_Nr)(8) <= '1';    -- Set "H-Bits"
+        else                                             Tag_Out_Reg_Array(Register_Nr)(8) <= '0';    -- Set "L-Bit"
+        end if;
+        Sum_Reg_MSK(Register_Nr)(8)     <= '1'; -- set Masken-Bit
+      end if;
+
+    
+--  +====================================== Register n, Bit 9 ===========================================================+
+
+       --    (---------Tag_0 = aktiv------)---------( Register=Register_Nr)-----------  -(---Bit-0 der Maske = 1)--------
+      if     ((New_AWOut_Data_Tag(0) = true) AND (Reg_Nr_Tag(0) = Register_Nr) AND (Tag_Array(0)(i_Tag_Maske)(9) = '1'))  then
+        if      Maske_Hi_Bits_Tag(0)(9)    = '1'   then Tag_Out_Reg_Array(Register_Nr)(9) <= '1';    -- Set "H-Bit"
+        else                                            Tag_Out_Reg_Array(Register_Nr)(9) <= '0';    -- Set "L-Bit"
+        end if;
+        Sum_Reg_MSK(Register_Nr)(9)       <= '1'; -- set Masken-Bit
+   
+      elsif  ((New_AWOut_Data_Tag(1) = true) AND (Reg_Nr_Tag(1) = Register_Nr) AND (Tag_Array(1)(i_Tag_Maske)(9) = '1'))  then
+        if      Maske_Hi_Bits_Tag(1)(9)    = '1'   then Tag_Out_Reg_Array(Register_Nr)(9) <= '1';    -- Set "H-Bit"
+        else                                            Tag_Out_Reg_Array(Register_Nr)(9) <= '0';    -- Set "L-Bit"
+        end if;
+        Sum_Reg_MSK(Register_Nr)(9)       <= '1'; -- set Masken-Bit
+
+      elsif  ((New_AWOut_Data_Tag(2) = true) AND (Reg_Nr_Tag(2) = Register_Nr) AND (Tag_Array(2)(i_Tag_Maske)(9) = '1'))  then
+        if      Maske_Hi_Bits_Tag(2)(9)    = '1'   then Tag_Out_Reg_Array(Register_Nr)(9) <= '1';    -- Set "H-Bits"
+        else                                            Tag_Out_Reg_Array(Register_Nr)(9) <= '0';    -- Set "L-Bit"
+        end if;
+        Sum_Reg_MSK(Register_Nr)(9)       <= '1'; -- set Masken-Bit
+
+      elsif  ((New_AWOut_Data_Tag(3) = true) AND (Reg_Nr_Tag(3) = Register_Nr) AND (Tag_Array(3)(i_Tag_Maske)(9) = '1'))  then
+        if      Maske_Hi_Bits_Tag(3)(9)    = '1'   then Tag_Out_Reg_Array(Register_Nr)(9) <= '1';    -- Set "H-Bits"
+        else                                            Tag_Out_Reg_Array(Register_Nr)(9) <= '0';    -- Set "L-Bit"
+        end if;
+        Sum_Reg_MSK(Register_Nr)(9)       <= '1'; -- set Masken-Bit
+
+      elsif  ((New_AWOut_Data_Tag(4) = true) AND (Reg_Nr_Tag(4) = Register_Nr) AND (Tag_Array(4)(i_Tag_Maske)(9) = '1'))  then
+        if      Maske_Hi_Bits_Tag(4)(9)    = '1'   then Tag_Out_Reg_Array(Register_Nr)(9) <= '1';         -- Set "H-Bits"
+        else                                            Tag_Out_Reg_Array(Register_Nr)(9) <= '0';         -- Set "L-Bit"
+        end if;
+        Sum_Reg_MSK(Register_Nr)(9)       <= '1'; -- set Masken-Bit
+
+      elsif  ((New_AWOut_Data_Tag(5) = true) AND (Reg_Nr_Tag(5) = Register_Nr) AND (Tag_Array(5)(i_Tag_Maske)(9) = '1'))  then
+        if      Maske_Hi_Bits_Tag(5)(9)    = '1'   then Tag_Out_Reg_Array(Register_Nr)(9) <= '1';    -- Set "H-Bits"
+        else                                            Tag_Out_Reg_Array(Register_Nr)(9) <= '0';    -- Set "L-Bit"
+        end if;
+        Sum_Reg_MSK(Register_Nr)(9)       <= '1'; -- set Masken-Bit
+
+      elsif  ((New_AWOut_Data_Tag(6) = true) AND (Reg_Nr_Tag(6) = Register_Nr) AND (Tag_Array(6)(i_Tag_Maske)(9) = '1'))  then
+        if      Maske_Hi_Bits_Tag(6)(9)    = '1'   then Tag_Out_Reg_Array(Register_Nr)(9) <= '1';    -- Set "H-Bits"
+        else                                            Tag_Out_Reg_Array(Register_Nr)(9) <= '0';    -- Set "L-Bit"
+        end if;
+        Sum_Reg_MSK(Register_Nr)(9)       <= '1'; -- set Masken-Bit
+
+      elsif  ((New_AWOut_Data_Tag(7) = true) AND (Reg_Nr_Tag(7) = Register_Nr) AND (Tag_Array(7)(i_Tag_Maske)(9) = '1'))  then
+        if      Maske_Hi_Bits_Tag(7)(9)    = '1'   then Tag_Out_Reg_Array(Register_Nr)(9) <= '1';    -- Set "H-Bits"
+        else                                            Tag_Out_Reg_Array(Register_Nr)(9) <= '0';    -- Set "L-Bit"
+        end if;
+        Sum_Reg_MSK(Register_Nr)(9)     <= '1'; -- set Masken-Bit
+      end if;
+
+    
+--  +====================================== Register n, Bit 10 ===========================================================+
+
+       --    (---------Tag_0 = aktiv------)---------( Register=Register_Nr)-----------  -(---Bit-0 der Maske = 1)--------
+      if      ((New_AWOut_Data_Tag(0) = true) AND (Reg_Nr_Tag(0) = Register_Nr) AND (Tag_Array(0)(i_Tag_Maske)(10) = '1'))  then
+        if       Maske_Hi_Bits_Tag(0)(10)    = '1' then Tag_Out_Reg_Array(Register_Nr)(10) <= '1';    -- Set "H-Bit"
+        else                                            Tag_Out_Reg_Array(Register_Nr)(10) <= '0';    -- Set "L-Bit"
+        end if;
+        Sum_Reg_MSK(Register_Nr)(10)       <= '1'; -- set Masken-Bit
+   
+      elsif   ((New_AWOut_Data_Tag(1) = true) AND (Reg_Nr_Tag(1) = Register_Nr) AND (Tag_Array(1)(i_Tag_Maske)(10) = '1'))  then
+        if       Maske_Hi_Bits_Tag(1)(10)    = '1' then Tag_Out_Reg_Array(Register_Nr)(10) <= '1';    -- Set "H-Bit"
+        else                                            Tag_Out_Reg_Array(Register_Nr)(10) <= '0';    -- Set "L-Bit"
+        end if;
+        Sum_Reg_MSK(Register_Nr)(10)       <= '1'; -- set Masken-Bit
+
+      elsif   ((New_AWOut_Data_Tag(2) = true) AND (Reg_Nr_Tag(2) = Register_Nr) AND (Tag_Array(2)(i_Tag_Maske)(10) = '1'))  then
+        if      Maske_Hi_Bits_Tag(2)(10)    = '1'  then Tag_Out_Reg_Array(Register_Nr)(10) <= '1';    -- Set "H-Bits"
+        else                                            Tag_Out_Reg_Array(Register_Nr)(10) <= '0';    -- Set "L-Bit"
+        end if;
+        Sum_Reg_MSK(Register_Nr)(10)       <= '1'; -- set Masken-Bit
+
+      elsif   ((New_AWOut_Data_Tag(3) = true) AND (Reg_Nr_Tag(3) = Register_Nr) AND (Tag_Array(3)(i_Tag_Maske)(10) = '1'))  then
+        if      Maske_Hi_Bits_Tag(3)(10)    = '1'  then Tag_Out_Reg_Array(Register_Nr)(10) <= '1';    -- Set "H-Bits"
+        else                                            Tag_Out_Reg_Array(Register_Nr)(10) <= '0';    -- Set "L-Bit"
+        end if;
+        Sum_Reg_MSK(Register_Nr)(10)       <= '1'; -- set Masken-Bit
+
+      elsif   ((New_AWOut_Data_Tag(4) = true) AND (Reg_Nr_Tag(4) = Register_Nr) AND (Tag_Array(4)(i_Tag_Maske)(10) = '1'))  then
+        if      Maske_Hi_Bits_Tag(4)(10)    = '1'  then Tag_Out_Reg_Array(Register_Nr)(10) <= '1';         -- Set "H-Bits"
+        else                                            Tag_Out_Reg_Array(Register_Nr)(10) <= '0';         -- Set "L-Bit"
+        end if;
+        Sum_Reg_MSK(Register_Nr)(10)       <= '1'; -- set Masken-Bit
+
+      elsif   ((New_AWOut_Data_Tag(5) = true) AND (Reg_Nr_Tag(5) = Register_Nr) AND (Tag_Array(5)(i_Tag_Maske)(10) = '1'))  then
+        if      Maske_Hi_Bits_Tag(5)(10)    = '1'  then Tag_Out_Reg_Array(Register_Nr)(10) <= '1';    -- Set "H-Bits"
+        else                                            Tag_Out_Reg_Array(Register_Nr)(10) <= '0';    -- Set "L-Bit"
+        end if;
+        Sum_Reg_MSK(Register_Nr)(10)       <= '1'; -- set Masken-Bit
+
+      elsif   ((New_AWOut_Data_Tag(6) = true) AND (Reg_Nr_Tag(6) = Register_Nr) AND (Tag_Array(6)(i_Tag_Maske)(10) = '1'))  then
+        if      Maske_Hi_Bits_Tag(6)(10)    = '1'  then Tag_Out_Reg_Array(Register_Nr)(10) <= '1';    -- Set "H-Bits"
+        else                                            Tag_Out_Reg_Array(Register_Nr)(10) <= '0';    -- Set "L-Bit"
+        end if;
+        Sum_Reg_MSK(Register_Nr)(10)       <= '1'; -- set Masken-Bit
+
+      elsif   ((New_AWOut_Data_Tag(7) = true) AND (Reg_Nr_Tag(7) = Register_Nr) AND (Tag_Array(7)(i_Tag_Maske)(10) = '1'))  then
+        if      Maske_Hi_Bits_Tag(7)(10)    = '1'  then Tag_Out_Reg_Array(Register_Nr)(10) <= '1';    -- Set "H-Bits"
+        else                                            Tag_Out_Reg_Array(Register_Nr)(10) <= '0';    -- Set "L-Bit"
+        end if;
+        Sum_Reg_MSK(Register_Nr)(10)     <= '1'; -- set Masken-Bit
+      end if;
+
+    
+--  +====================================== Register n, Bit 11 ===========================================================+
+
+       --    (---------Tag_0 = aktiv------)---------( Register=Register_Nr)-----------  -(---Bit-0 der Maske = 1)--------
+      if      ((New_AWOut_Data_Tag(0) = true) AND (Reg_Nr_Tag(0) = Register_Nr) AND (Tag_Array(0)(i_Tag_Maske)(11) = '1'))  then
+        if       Maske_Hi_Bits_Tag(0)(11)    = '1' then Tag_Out_Reg_Array(Register_Nr)(11) <= '1';    -- Set "H-Bit"
+        else                                            Tag_Out_Reg_Array(Register_Nr)(11) <= '0';    -- Set "L-Bit"
+        end if;
+        Sum_Reg_MSK(Register_Nr)(11)       <= '1'; -- set Masken-Bit
+   
+      elsif   ((New_AWOut_Data_Tag(1) = true) AND (Reg_Nr_Tag(1) = Register_Nr) AND (Tag_Array(1)(i_Tag_Maske)(11) = '1'))  then
+        if       Maske_Hi_Bits_Tag(1)(11)    = '1' then Tag_Out_Reg_Array(Register_Nr)(11) <= '1';    -- Set "H-Bit"
+        else                                            Tag_Out_Reg_Array(Register_Nr)(11) <= '0';    -- Set "L-Bit"
+        end if;
+        Sum_Reg_MSK(Register_Nr)(11)       <= '1'; -- set Masken-Bit
+
+      elsif   ((New_AWOut_Data_Tag(2) = true) AND (Reg_Nr_Tag(2) = Register_Nr) AND (Tag_Array(2)(i_Tag_Maske)(11) = '1'))  then
+        if      Maske_Hi_Bits_Tag(2)(11)    = '1'  then Tag_Out_Reg_Array(Register_Nr)(11) <= '1';    -- Set "H-Bits"
+        else                                            Tag_Out_Reg_Array(Register_Nr)(11) <= '0';    -- Set "L-Bit"
+        end if;
+        Sum_Reg_MSK(Register_Nr)(11)       <= '1'; -- set Masken-Bit
+
+      elsif   ((New_AWOut_Data_Tag(3) = true) AND (Reg_Nr_Tag(3) = Register_Nr) AND (Tag_Array(3)(i_Tag_Maske)(11) = '1'))  then
+        if      Maske_Hi_Bits_Tag(3)(11)    = '1'  then Tag_Out_Reg_Array(Register_Nr)(11) <= '1';    -- Set "H-Bits"
+        else                                                Tag_Out_Reg_Array(Register_Nr)(11) <= '0';    -- Set "L-Bit"
+        end if;
+        Sum_Reg_MSK(Register_Nr)(11)       <= '1'; -- set Masken-Bit
+
+      elsif   ((New_AWOut_Data_Tag(4) = true) AND (Reg_Nr_Tag(4) = Register_Nr) AND (Tag_Array(4)(i_Tag_Maske)(11) = '1'))  then
+        if      Maske_Hi_Bits_Tag(4)(11)    = '1'  then Tag_Out_Reg_Array(Register_Nr)(11) <= '1';         -- Set "H-Bits"
+        else                                            Tag_Out_Reg_Array(Register_Nr)(11) <= '0';         -- Set "L-Bit"
+        end if;
+        Sum_Reg_MSK(Register_Nr)(11)       <= '1'; -- set Masken-Bit
+
+      elsif   ((New_AWOut_Data_Tag(5) = true) AND (Reg_Nr_Tag(5) = Register_Nr) AND (Tag_Array(5)(i_Tag_Maske)(11) = '1'))  then
+        if      Maske_Hi_Bits_Tag(5)(11)    = '1'  then Tag_Out_Reg_Array(Register_Nr)(11) <= '1';    -- Set "H-Bits"
+        else                                            Tag_Out_Reg_Array(Register_Nr)(11) <= '0';    -- Set "L-Bit"
+        end if;
+        Sum_Reg_MSK(Register_Nr)(11)       <= '1'; -- set Masken-Bit
+
+      elsif   ((New_AWOut_Data_Tag(6) = true) AND (Reg_Nr_Tag(6) = Register_Nr) AND (Tag_Array(6)(i_Tag_Maske)(11) = '1'))  then
+        if      Maske_Hi_Bits_Tag(6)(11)    = '1'  then Tag_Out_Reg_Array(Register_Nr)(11) <= '1';    -- Set "H-Bits"
+        else                                            Tag_Out_Reg_Array(Register_Nr)(11) <= '0';    -- Set "L-Bit"
+        end if;
+        Sum_Reg_MSK(Register_Nr)(11)       <= '1'; -- set Masken-Bit
+
+      elsif   ((New_AWOut_Data_Tag(7) = true) AND (Reg_Nr_Tag(7) = Register_Nr) AND (Tag_Array(7)(i_Tag_Maske)(11) = '1'))  then
+        if      Maske_Hi_Bits_Tag(7)(11)    = '1'  then Tag_Out_Reg_Array(Register_Nr)(11) <= '1';    -- Set "H-Bits"
+        else                                            Tag_Out_Reg_Array(Register_Nr)(11) <= '0';    -- Set "L-Bit"
+        end if;
+        Sum_Reg_MSK(Register_Nr)(11)     <= '1'; -- set Masken-Bit
+      end if;
+
+    
+--  +====================================== Register n, Bit 12 ===========================================================+
+
+       --    (---------Tag_0 = aktiv------)---------( Register=Register_Nr)-----------  -(---Bit-0 der Maske = 1)--------
+      if      ((New_AWOut_Data_Tag(0) = true) AND (Reg_Nr_Tag(0) = Register_Nr) AND (Tag_Array(0)(i_Tag_Maske)(12) = '1'))  then
+        if       Maske_Hi_Bits_Tag(0)(12)    = '1' then Tag_Out_Reg_Array(Register_Nr)(12) <= '1';    -- Set "H-Bit"
+        else                                            Tag_Out_Reg_Array(Register_Nr)(12) <= '0';    -- Set "L-Bit"
+        end if;
+        Sum_Reg_MSK(Register_Nr)(12)       <= '1'; -- set Masken-Bit
+   
+      elsif   ((New_AWOut_Data_Tag(1) = true) AND (Reg_Nr_Tag(1) = Register_Nr) AND (Tag_Array(1)(i_Tag_Maske)(12) = '1'))  then
+        if       Maske_Hi_Bits_Tag(1)(12)    = '1' then Tag_Out_Reg_Array(Register_Nr)(12) <= '1';    -- Set "H-Bit"
+        else                                                Tag_Out_Reg_Array(Register_Nr)(12) <= '0';    -- Set "L-Bit"
+        end if;
+        Sum_Reg_MSK(Register_Nr)(12)       <= '1'; -- set Masken-Bit
+
+      elsif   ((New_AWOut_Data_Tag(2) = true) AND (Reg_Nr_Tag(2) = Register_Nr) AND (Tag_Array(2)(i_Tag_Maske)(12) = '1'))  then
+        if      Maske_Hi_Bits_Tag(2)(12)    = '1'  then Tag_Out_Reg_Array(Register_Nr)(12) <= '1';    -- Set "H-Bits"
+        else                                                Tag_Out_Reg_Array(Register_Nr)(12) <= '0';    -- Set "L-Bit"
+        end if;
+        Sum_Reg_MSK(Register_Nr)(12)       <= '1'; -- set Masken-Bit
+
+      elsif   ((New_AWOut_Data_Tag(3) = true) AND (Reg_Nr_Tag(3) = Register_Nr) AND (Tag_Array(3)(i_Tag_Maske)(12) = '1'))  then
+        if      Maske_Hi_Bits_Tag(3)(12)    = '1'  then Tag_Out_Reg_Array(Register_Nr)(12) <= '1';    -- Set "H-Bits"
+        else                                            Tag_Out_Reg_Array(Register_Nr)(12) <= '0';    -- Set "L-Bit"
+        end if;
+        Sum_Reg_MSK(Register_Nr)(12)       <= '1'; -- set Masken-Bit
+
+      elsif   ((New_AWOut_Data_Tag(4) = true) AND (Reg_Nr_Tag(4) = Register_Nr) AND (Tag_Array(4)(i_Tag_Maske)(12) = '1'))  then
+        if      Maske_Hi_Bits_Tag(4)(12)    = '1'  then Tag_Out_Reg_Array(Register_Nr)(12) <= '1';         -- Set "H-Bits"
+        else                                            Tag_Out_Reg_Array(Register_Nr)(12) <= '0';         -- Set "L-Bit"
+        end if;
+        Sum_Reg_MSK(Register_Nr)(12)       <= '1'; -- set Masken-Bit
+
+      elsif   ((New_AWOut_Data_Tag(5) = true) AND (Reg_Nr_Tag(5) = Register_Nr) AND (Tag_Array(5)(i_Tag_Maske)(12) = '1'))  then
+        if      Maske_Hi_Bits_Tag(5)(12)    = '1'  then Tag_Out_Reg_Array(Register_Nr)(12) <= '1';    -- Set "H-Bits"
+        else                                            Tag_Out_Reg_Array(Register_Nr)(12) <= '0';    -- Set "L-Bit"
+        end if;
+        Sum_Reg_MSK(Register_Nr)(12)       <= '1'; -- set Masken-Bit
+
+      elsif   ((New_AWOut_Data_Tag(6) = true) AND (Reg_Nr_Tag(6) = Register_Nr) AND (Tag_Array(6)(i_Tag_Maske)(12) = '1'))  then
+        if      Maske_Hi_Bits_Tag(6)(12)    = '1'  then Tag_Out_Reg_Array(Register_Nr)(12) <= '1';    -- Set "H-Bits"
+        else                                            Tag_Out_Reg_Array(Register_Nr)(12) <= '0';    -- Set "L-Bit"
+        end if;
+        Sum_Reg_MSK(Register_Nr)(12)       <= '1'; -- set Masken-Bit
+
+      elsif   ((New_AWOut_Data_Tag(7) = true) AND (Reg_Nr_Tag(7) = Register_Nr) AND (Tag_Array(7)(i_Tag_Maske)(12) = '1'))  then
+        if      Maske_Hi_Bits_Tag(7)(12)    = '1'  then Tag_Out_Reg_Array(Register_Nr)(12) <= '1';    -- Set "H-Bits"
+        else                                            Tag_Out_Reg_Array(Register_Nr)(12) <= '0';    -- Set "L-Bit"
+        end if;
+        Sum_Reg_MSK(Register_Nr)(12)     <= '1'; -- set Masken-Bit
+      end if;
+
+    
+--  +====================================== Register n, Bit 13 ===========================================================+
+
+       --    (---------Tag_0 = aktiv------)---------( Register=Register_Nr)-----------  -(---Bit-0 der Maske = 1)--------
+      if      ((New_AWOut_Data_Tag(0) = true) AND (Reg_Nr_Tag(0) = Register_Nr) AND (Tag_Array(0)(i_Tag_Maske)(13) = '1'))  then
+        if       Maske_Hi_Bits_Tag(0)(13)    = '1' then Tag_Out_Reg_Array(Register_Nr)(13) <= '1';    -- Set "H-Bit"
+        else                                            Tag_Out_Reg_Array(Register_Nr)(13) <= '0';    -- Set "L-Bit"
+        end if;
+        Sum_Reg_MSK(Register_Nr)(13)       <= '1'; -- set Masken-Bit
+   
+      elsif   ((New_AWOut_Data_Tag(1) = true) AND (Reg_Nr_Tag(1) = Register_Nr) AND (Tag_Array(1)(i_Tag_Maske)(13) = '1'))  then
+        if       Maske_Hi_Bits_Tag(1)(13)    = '1' then Tag_Out_Reg_Array(Register_Nr)(13) <= '1';    -- Set "H-Bit"
+        else                                            Tag_Out_Reg_Array(Register_Nr)(13) <= '0';    -- Set "L-Bit"
+        end if;
+        Sum_Reg_MSK(Register_Nr)(13)       <= '1'; -- set Masken-Bit
+
+      elsif   ((New_AWOut_Data_Tag(2) = true) AND (Reg_Nr_Tag(2) = Register_Nr) AND (Tag_Array(2)(i_Tag_Maske)(13) = '1'))  then
+        if      Maske_Hi_Bits_Tag(2)(13)    = '1'  then Tag_Out_Reg_Array(Register_Nr)(13) <= '1';    -- Set "H-Bits"
+        else                                            Tag_Out_Reg_Array(Register_Nr)(13) <= '0';    -- Set "L-Bit"
+        end if;
+        Sum_Reg_MSK(Register_Nr)(13)       <= '1'; -- set Masken-Bit
+
+      elsif   ((New_AWOut_Data_Tag(3) = true) AND (Reg_Nr_Tag(3) = Register_Nr) AND (Tag_Array(3)(i_Tag_Maske)(13) = '1'))  then
+        if      Maske_Hi_Bits_Tag(3)(13)    = '1'  then Tag_Out_Reg_Array(Register_Nr)(13) <= '1';    -- Set "H-Bits"
+        else                                            Tag_Out_Reg_Array(Register_Nr)(13) <= '0';    -- Set "L-Bit"
+        end if;
+        Sum_Reg_MSK(Register_Nr)(13)       <= '1'; -- set Masken-Bit
+
+      elsif   ((New_AWOut_Data_Tag(4) = true) AND (Reg_Nr_Tag(4) = Register_Nr) AND (Tag_Array(4)(i_Tag_Maske)(13) = '1'))  then
+        if      Maske_Hi_Bits_Tag(4)(13)    = '1'  then Tag_Out_Reg_Array(Register_Nr)(13) <= '1';         -- Set "H-Bits"
+        else                                            Tag_Out_Reg_Array(Register_Nr)(13) <= '0';         -- Set "L-Bit"
+        end if;
+        Sum_Reg_MSK(Register_Nr)(13)       <= '1'; -- set Masken-Bit
+
+      elsif   ((New_AWOut_Data_Tag(5) = true) AND (Reg_Nr_Tag(5) = Register_Nr) AND (Tag_Array(5)(i_Tag_Maske)(13) = '1'))  then
+        if      Maske_Hi_Bits_Tag(5)(13)    = '1'  then Tag_Out_Reg_Array(Register_Nr)(13) <= '1';    -- Set "H-Bits"
+        else                                            Tag_Out_Reg_Array(Register_Nr)(13) <= '0';    -- Set "L-Bit"
+        end if;
+        Sum_Reg_MSK(Register_Nr)(13)       <= '1'; -- set Masken-Bit
+
+      elsif   ((New_AWOut_Data_Tag(6) = true) AND (Reg_Nr_Tag(6) = Register_Nr) AND (Tag_Array(6)(i_Tag_Maske)(13) = '1'))  then
+        if      Maske_Hi_Bits_Tag(6)(13)    = '1'  then Tag_Out_Reg_Array(Register_Nr)(13) <= '1';    -- Set "H-Bits"
+        else                                            Tag_Out_Reg_Array(Register_Nr)(13) <= '0';    -- Set "L-Bit"
+        end if;
+        Sum_Reg_MSK(Register_Nr)(13)       <= '1'; -- set Masken-Bit
+
+      elsif   ((New_AWOut_Data_Tag(7) = true) AND (Reg_Nr_Tag(7) = Register_Nr) AND (Tag_Array(7)(i_Tag_Maske)(13) = '1'))  then
+        if      Maske_Hi_Bits_Tag(7)(13)    = '1'  then Tag_Out_Reg_Array(Register_Nr)(13) <= '1';    -- Set "H-Bits"
+        else                                            Tag_Out_Reg_Array(Register_Nr)(13) <= '0';    -- Set "L-Bit"
+        end if;
+        Sum_Reg_MSK(Register_Nr)(13)     <= '1'; -- set Masken-Bit
+      end if;
+
+    
+--  +====================================== Register n, Bit 14 ===========================================================+
+
+       --    (---------Tag_0 = aktiv------)---------( Register=Register_Nr)-----------  -(---Bit-0 der Maske = 1)--------
+      if      ((New_AWOut_Data_Tag(0) = true) AND (Reg_Nr_Tag(0) = Register_Nr) AND (Tag_Array(0)(i_Tag_Maske)(14) = '1'))  then
+        if       Maske_Hi_Bits_Tag(0)(14)    = '1' then Tag_Out_Reg_Array(Register_Nr)(14) <= '1';    -- Set "H-Bit"
+        else                                            Tag_Out_Reg_Array(Register_Nr)(14) <= '0';    -- Set "L-Bit"
+        end if;
+        Sum_Reg_MSK(Register_Nr)(14)       <= '1'; -- set Masken-Bit
+   
+      elsif   ((New_AWOut_Data_Tag(1) = true) AND (Reg_Nr_Tag(1) = Register_Nr) AND (Tag_Array(1)(i_Tag_Maske)(14) = '1'))  then
+        if       Maske_Hi_Bits_Tag(1)(14)    = '1' then Tag_Out_Reg_Array(Register_Nr)(14) <= '1';    -- Set "H-Bit"
+        else                                            Tag_Out_Reg_Array(Register_Nr)(14) <= '0';    -- Set "L-Bit"
+        end if;
+        Sum_Reg_MSK(Register_Nr)(14)       <= '1'; -- set Masken-Bit
+
+      elsif   ((New_AWOut_Data_Tag(2) = true) AND (Reg_Nr_Tag(2) = Register_Nr) AND (Tag_Array(2)(i_Tag_Maske)(14) = '1'))  then
+        if      Maske_Hi_Bits_Tag(2)(14)    = '1'  then Tag_Out_Reg_Array(Register_Nr)(14) <= '1';    -- Set "H-Bits"
+        else                                            Tag_Out_Reg_Array(Register_Nr)(14) <= '0';    -- Set "L-Bit"
+        end if;
+        Sum_Reg_MSK(Register_Nr)(14)       <= '1'; -- set Masken-Bit
+
+      elsif   ((New_AWOut_Data_Tag(3) = true) AND (Reg_Nr_Tag(3) = Register_Nr) AND (Tag_Array(3)(i_Tag_Maske)(14) = '1'))  then
+        if      Maske_Hi_Bits_Tag(3)(14)    = '1'  then Tag_Out_Reg_Array(Register_Nr)(14) <= '1';    -- Set "H-Bits"
+        else                                            Tag_Out_Reg_Array(Register_Nr)(14) <= '0';    -- Set "L-Bit"
+        end if;
+        Sum_Reg_MSK(Register_Nr)(14)       <= '1'; -- set Masken-Bit
+
+      elsif   ((New_AWOut_Data_Tag(4) = true) AND (Reg_Nr_Tag(4) = Register_Nr) AND (Tag_Array(4)(i_Tag_Maske)(14) = '1'))  then
+        if      Maske_Hi_Bits_Tag(4)(14)    = '1'  then Tag_Out_Reg_Array(Register_Nr)(14) <= '1';         -- Set "H-Bits"
+        else                                            Tag_Out_Reg_Array(Register_Nr)(14) <= '0';         -- Set "L-Bit"
+        end if;
+        Sum_Reg_MSK(Register_Nr)(14)       <= '1'; -- set Masken-Bit
+
+      elsif   ((New_AWOut_Data_Tag(5) = true) AND (Reg_Nr_Tag(5) = Register_Nr) AND (Tag_Array(5)(i_Tag_Maske)(14) = '1'))  then
+        if      Maske_Hi_Bits_Tag(5)(14)    = '1'  then Tag_Out_Reg_Array(Register_Nr)(14) <= '1';    -- Set "H-Bits"
+        else                                            Tag_Out_Reg_Array(Register_Nr)(14) <= '0';    -- Set "L-Bit"
+        end if;
+        Sum_Reg_MSK(Register_Nr)(14)       <= '1'; -- set Masken-Bit
+
+      elsif   ((New_AWOut_Data_Tag(6) = true) AND (Reg_Nr_Tag(6) = Register_Nr) AND (Tag_Array(6)(i_Tag_Maske)(14) = '1'))  then
+        if      Maske_Hi_Bits_Tag(6)(14)    = '1'  then Tag_Out_Reg_Array(Register_Nr)(14) <= '1';    -- Set "H-Bits"
+        else                                            Tag_Out_Reg_Array(Register_Nr)(14) <= '0';    -- Set "L-Bit"
+        end if;
+        Sum_Reg_MSK(Register_Nr)(14)       <= '1'; -- set Masken-Bit
+
+      elsif   ((New_AWOut_Data_Tag(7) = true) AND (Reg_Nr_Tag(7) = Register_Nr) AND (Tag_Array(7)(i_Tag_Maske)(14) = '1'))  then
+        if      Maske_Hi_Bits_Tag(7)(14)    = '1'  then Tag_Out_Reg_Array(Register_Nr)(14) <= '1';    -- Set "H-Bits"
+        else                                            Tag_Out_Reg_Array(Register_Nr)(14) <= '0';    -- Set "L-Bit"
+        end if;
+        Sum_Reg_MSK(Register_Nr)(14)     <= '1'; -- set Masken-Bit
+      end if;
+
+    
+--  +====================================== Register n, Bit 15 ===========================================================+
+
+       --    (---------Tag_0 = aktiv------)---------( Register=Register_Nr)-----------  -(---Bit-0 der Maske = 1)--------
+      if      ((New_AWOut_Data_Tag(0) = true) AND (Reg_Nr_Tag(0) = Register_Nr) AND (Tag_Array(0)(i_Tag_Maske)(15) = '1'))  then
+        if       Maske_Hi_Bits_Tag(0)(15)    = '1' then Tag_Out_Reg_Array(Register_Nr)(15) <= '1';    -- Set "H-Bit"
+        else                                            Tag_Out_Reg_Array(Register_Nr)(15) <= '0';    -- Set "L-Bit"
+        end if;
+        Sum_Reg_MSK(Register_Nr)(15)       <= '1'; -- set Masken-Bit
+   
+      elsif   ((New_AWOut_Data_Tag(1) = true) AND (Reg_Nr_Tag(1) = Register_Nr) AND (Tag_Array(1)(i_Tag_Maske)(15) = '1'))  then
+        if       Maske_Hi_Bits_Tag(1)(15)    = '1' then Tag_Out_Reg_Array(Register_Nr)(15) <= '1';    -- Set "H-Bit"
+        else                                            Tag_Out_Reg_Array(Register_Nr)(15) <= '0';    -- Set "L-Bit"
+        end if;
+        Sum_Reg_MSK(Register_Nr)(15)       <= '1'; -- set Masken-Bit
+
+      elsif   ((New_AWOut_Data_Tag(2) = true) AND (Reg_Nr_Tag(2) = Register_Nr) AND (Tag_Array(2)(i_Tag_Maske)(15) = '1'))  then
+        if      Maske_Hi_Bits_Tag(2)(15)    = '1'  then Tag_Out_Reg_Array(Register_Nr)(15) <= '1';    -- Set "H-Bits"
+        else                                            Tag_Out_Reg_Array(Register_Nr)(15) <= '0';    -- Set "L-Bit"
+        end if;
+        Sum_Reg_MSK(Register_Nr)(15)       <= '1'; -- set Masken-Bit
+
+      elsif   ((New_AWOut_Data_Tag(3) = true) AND (Reg_Nr_Tag(3) = Register_Nr) AND (Tag_Array(3)(i_Tag_Maske)(15) = '1'))  then
+        if      Maske_Hi_Bits_Tag(3)(15)    = '1'  then Tag_Out_Reg_Array(Register_Nr)(15) <= '1';    -- Set "H-Bits"
+        else                                            Tag_Out_Reg_Array(Register_Nr)(15) <= '0';    -- Set "L-Bit"
+        end if;
+        Sum_Reg_MSK(Register_Nr)(15)       <= '1'; -- set Masken-Bit
+
+      elsif   ((New_AWOut_Data_Tag(4) = true) AND (Reg_Nr_Tag(4) = Register_Nr) AND (Tag_Array(4)(i_Tag_Maske)(15) = '1'))  then
+        if      Maske_Hi_Bits_Tag(4)(15)    = '1'  then Tag_Out_Reg_Array(Register_Nr)(15) <= '1';         -- Set "H-Bits"
+        else                                            Tag_Out_Reg_Array(Register_Nr)(15) <= '0';         -- Set "L-Bit"
+        end if;
+        Sum_Reg_MSK(Register_Nr)(15)       <= '1'; -- set Masken-Bit
+
+      elsif   ((New_AWOut_Data_Tag(5) = true) AND (Reg_Nr_Tag(5) = Register_Nr) AND (Tag_Array(5)(i_Tag_Maske)(15) = '1'))  then
+        if      Maske_Hi_Bits_Tag(5)(15)    = '1'  then Tag_Out_Reg_Array(Register_Nr)(15) <= '1';    -- Set "H-Bits"
+        else                                            Tag_Out_Reg_Array(Register_Nr)(15) <= '0';    -- Set "L-Bit"
+        end if;
+        Sum_Reg_MSK(Register_Nr)(15)       <= '1'; -- set Masken-Bit
+
+      elsif   ((New_AWOut_Data_Tag(6) = true) AND (Reg_Nr_Tag(6) = Register_Nr) AND (Tag_Array(6)(i_Tag_Maske)(15) = '1'))  then
+        if      Maske_Hi_Bits_Tag(6)(15)    = '1'  then Tag_Out_Reg_Array(Register_Nr)(15) <= '1';    -- Set "H-Bits"
+        else                                            Tag_Out_Reg_Array(Register_Nr)(15) <= '0';    -- Set "L-Bit"
+        end if;
+        Sum_Reg_MSK(Register_Nr)(15)       <= '1'; -- set Masken-Bit
+
+      elsif   ((New_AWOut_Data_Tag(7) = true) AND (Reg_Nr_Tag(7) = Register_Nr) AND (Tag_Array(7)(i_Tag_Maske)(15) = '1'))  then
+        if      Maske_Hi_Bits_Tag(7)(15)    = '1'  then Tag_Out_Reg_Array(Register_Nr)(15) <= '1';    -- Set "H-Bits"
+        else                                            Tag_Out_Reg_Array(Register_Nr)(15) <= '0';    -- Set "L-Bit"
+        end if;
+        Sum_Reg_MSK(Register_Nr)(15)     <= '1'; -- set Masken-Bit
+      end if;
+
+        --   END: FOR Bit_Nr in 0 to 15 loop
+--  +====================================== Register n, Bit 0 ===========================================================+
+       
+      else
+--    s_Tag_Aktiv         <= (others => '0'  );
+
     end if;
-  end process P_AWOut_Array;
-  
+  end process P_TAG_REG;
+
+END GENERATE;
+
+
+
+
 
 --  +============================================================================================================================+
 --  |                         Die Output-Daten vom SCU-Bus werden in die jeweiligen Register geschrieben.                        |
@@ -1142,7 +1612,7 @@ P_AWOut_Reg:  process (clk, nReset, Clr_Tag_Config,
 
 p_summe:  PROCESS (clk, nReset, Tag_n_FG_Start, Tag_n_Reg_Err, Tag_n_Reg_max_Err,
                    Tag_n_Trig_Err, Tag_n_Trig_max_Err, Tag_n_Timeout, Tag_n_ext_Trig_Strobe,
-                   Tag_LA_Dummy, Tag0_LA, Tag1_LA, Tag2_LA, Tag3_LA, Tag4_LA, Tag5_LA, Tag6_LA, Tag7_LA)
+                   Tag_LA_Dummy, LA_Tag)
   BEGin
     IF  nReset               = '0' then
 
@@ -1199,8 +1669,8 @@ p_summe:  PROCESS (clk, nReset, Tag_n_FG_Start, Tag_n_Reg_Err, Tag_n_Reg_max_Err
         Tag_ext_Trig_Strobe      <= '1';       
       end if;
 
-      if ((Tag0_LA = x"0000") and (Tag1_LA = x"0000") and (Tag2_LA = x"0000") and (Tag3_LA = x"0000") and
-          (Tag4_LA = x"0000") and (Tag5_LA = x"0000") and (Tag6_LA = x"0000") and (Tag7_LA = x"0000")) then   -- alle LA-Outputs = 0
+      if ((LA_Tag(0) = x"0000") and (LA_Tag(1) = x"0000") and (LA_Tag(2) = x"0000") and (LA_Tag(3) = x"0000") and
+          (LA_Tag(4) = x"0000") and (LA_Tag(5) = x"0000") and (LA_Tag(6) = x"0000") and (LA_Tag(7) = x"0000")) then   -- alle LA-Outputs = 0
         Tag_LA_Dummy             <= '0';       
       else         
         Tag_LA_Dummy             <= '1';       

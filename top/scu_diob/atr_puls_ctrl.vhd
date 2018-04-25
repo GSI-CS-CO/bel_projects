@@ -30,6 +30,7 @@ ENTITY atr_puls_ctrl IS
     ATR_comp_puls:        in  STD_LOGIC_VECTOR(7 DOWNTO 0);   -- Ausgänge von den Comperatoren für die Triggereingänge
     ATR_to_conf_err:  		out std_logic;								      -- Time-Out: Configurations-Error
 		ATR_Timeout:  		    out	std_logic;								      -- Time-Out: Maximalzeit zwischen Start und Zündpuls überschritten.
+    ATR_Timeout_err_res:  IN  STD_LOGIC;                      -- Reset Error-Flags
 --
 		Reg_rd_active:		    out	std_logic;								      -- read data available at 'Data_to_SCUB'-INL_Out
 		Data_to_SCUB:		      out	std_logic_vector(15 downto 0);	-- connect read sources to SCUB-Macro
@@ -729,12 +730,41 @@ P_read_mux:	process (	s_ATR_verz_rd,     s_ATR_verz,        s_ATR_pulsw_rd, s_AT
 		end if;
 	end process P_Read_mux;
 
+
+
+
+--  ATR_to_conf_err <= s_config_err;	-- Time-Out: Configurations-Error
+--  ATR_Timeout  		<= s_timeout;			-- Time-Out: Maximalzeit zwischen Start und Zündpuls überschritten.
+
+P_Save_Config_err:	PROCESS (clk_250mhz, nReset_250mhz, ATR_Timeout_err_res)
+	BEGIN
+		IF  ((nReset_250mhz = '0') or (ATR_Timeout_err_res = '1')) THEN
+          ATR_to_conf_err <= '0';     
+
+		ELSIF rising_edge(clk_250mhz) THEN
+			IF s_config_err      = '1'  THEN  -- Save Error
+        ATR_to_conf_err   <= '1';       -- set Error-Flag 
+			END IF;
+		END IF;
+	END PROCESS P_Save_Config_err;
+
+P_Save_Timeout:	PROCESS (clk_250mhz, nReset_250mhz, ATR_Timeout_err_res)
+	BEGIN
+		IF  ((nReset_250mhz = '0') or (ATR_Timeout_err_res = '1')) THEN
+          ATR_Timeout <= '0';     
+
+		ELSIF rising_edge(clk_250mhz) THEN
+			IF s_timeout      = '1'     THEN -- Save Error
+        ATR_Timeout    <= '1';         -- set Error-Flag 
+			END IF;
+		END IF;
+	END PROCESS P_Save_Timeout;
+
+
 	
 Dtack_to_SCUB   <= S_Dtack;
 Data_to_SCUB    <= S_Read_Port;
 
-ATR_to_conf_err <= s_config_err;	-- Time-Out: Configurations-Error
-ATR_Timeout  		<= s_timeout;			-- Time-Out: Maximalzeit zwischen Start und Zündpuls überschritten.
 
 
 end Arch_atr_puls_ctrl;
