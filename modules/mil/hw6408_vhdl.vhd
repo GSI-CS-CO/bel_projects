@@ -1,6 +1,7 @@
 LIBRARY ieee;
 use ieee.std_logic_1164.all; 
 use ieee.numeric_std.all;
+use work.altera_networks_pkg.all;
 
 --+-----------------------------------------------------------------------------------------------------------+
 --| "hw6408_vhdl" realisiert das Interface zu einem externen Manchester-En-Decoder-Baustein, Type 6408.       |
@@ -99,6 +100,7 @@ signal    s_trm_ena:    std_logic := '0';
 signal dsc_sh1:         std_logic;
 signal dsc_sh2:         std_logic;
 signal dsc_denoised:    std_logic;
+signal dsc_clk:         std_logic;
 
 signal td_sh:           std_logic_vector(3 downto 0);
 signal cds_sh:          std_logic_vector(3 downto 0);
@@ -162,8 +164,10 @@ BEGIN
 	 
   END IF;
 END PROCESS p_dsc_denoise;
-  
-  
+
+dsc_denoised_clk : single_region port map(
+  inclk  => dsc_denoised,
+  outclk => dsc_clk);
 
 p_res_6408:  process(clk_i, nrst_i, sel_6408)
 
@@ -265,7 +269,7 @@ p_ee: process (esc, nrst_i, sel_6408)
 ee <= s_ee;
   
   
-p_vw_sm:  process (dsc_denoised, nrst_i)    
+p_vw_sm:  process (dsc_clk, nrst_i)
   begin
     if nrst_i = '0' then
       vw_sm <= idle_vw;
@@ -273,7 +277,7 @@ p_vw_sm:  process (dsc_denoised, nrst_i)
       rcv_err_set<= '0';
       vw_cnt <= 0;            -- clear valid word test counter
  
-    elsif rising_edge(dsc_denoised) then
+    elsif rising_edge(dsc_clk) then
 
       vw_set <= '0';
       rcv_err_set<= '0';
@@ -311,11 +315,11 @@ p_vw_sm:  process (dsc_denoised, nrst_i)
   end process p_vw_sm;
 
 
-p_ser_par:  process (dsc_denoised, nrst_i, sel_6408)
+p_ser_par:  process (dsc_clk, nrst_i, sel_6408)
   begin
     if (nrst_i = '0') or (sel_6408 = '0') then
       ser_in_par_out <= (others => '0');
-    elsif rising_edge(dsc_denoised) then
+    elsif rising_edge(dsc_clk) then
       if td_sh(3) = '1' then
         ser_in_par_out <= ser_in_par_out(14 downto 0) & sdo_sh(3);
       end if;
@@ -335,11 +339,11 @@ p_rcv_reg:  process (clk_i, nrst_i, sel_6408)
 data_o <= rcv_reg; 
 
 
-p_rcv_cmd:  process (dsc_denoised, nrst_i, sel_6408, rd_mil)
+p_rcv_cmd:  process (dsc_clk, nrst_i, sel_6408, rd_mil)
   begin
     if (rd_mil = '1') or (nrst_i = '0') or (sel_6408 = '0') then
       rcv_cmd_reg <= '0';
-    elsif falling_edge(dsc_denoised) then
+    elsif falling_edge(dsc_clk) then
       if td_sh(3) = '1' then
         rcv_cmd_reg <= cds_sh(3);
       end if;
