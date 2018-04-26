@@ -30,8 +30,8 @@ DMBlk_BREQ          [type="block",     pattern="UNIPZ_GATEWAY",                 
 DMCmd_Wait10s       [type="flow",      pattern="UNIPZ_GATEWAY",                    toffs=        0, tValid=0, qty=1000000, color="magenta", shape="oval"]; /* 1e6 reps of 10us is timeout */
 DMBlk_WaitLoop      [type="block",     pattern="UNIPZ_GATEWAY",                  tperiod=    10000, qil="1", qhi="1", qlo="1"];     /* langsamer Warteblock                    */
 DMBlk_FlexWait      [type="block",     pattern="UNIPZ_GATEWAY",                  tperiod=    71111, qil="1", qhi="1", qlo="1"];     /* flexible Wartezeit, Gateway setzt Zeit! */
-CMD_WHATEVER_10     [type="tmsg",      pattern="UNIPZ_GATEWAY",                    toffs=        0, id="0x112cfaa000000013", par="0x456", shape="oval"]; /* exactly 1ms after EVT_READY_TO_SIS */
-Evt_MB_LOAD         [type="tmsg",      pattern="UNIPZ_GATEWAY",                    toffs=  9000000, id="0x112cfaa000000014", par="0x456", shape="oval"]; /* exactly 9ms after EVT_READY_TO_SIS */
+CMD_WHATEVER_10     [type="tmsg",      pattern="UNIPZ_GATEWAY",                    toffs=        0, id="0x112cfaa000000013", par="0x456", shape="oval"]; /* exactly 1.5ms after EVT_READY_TO_SIS */
+Evt_MB_LOAD         [type="tmsg",      pattern="UNIPZ_GATEWAY",                    toffs=  8500000, id="0x112c027000000014", par="0x456", shape="oval"]; /* exactly 10 ms after EVT_READY_TO_SIS */
 CMD_WHATEVER_11     [type="tmsg",      pattern="UNIPZ_GATEWAY",                    toffs= 25000000, id="0x112cfaa000000015", par="0x456", shape="oval"];
 EVT_MB_TRIGGER      [type="tmsg",      pattern="UNIPZ_GATEWAY",                    toffs= 25000010, id="0x112cfaa000000016", par="0x456", shape="oval"]; /* Bumper runter      */
 DMBlk_InjectionEnd  [type="blockalign",pattern="UNIPZ_GATEWAY",                  tperiod= 26000000, qil="1", qhi="1", qlo="1"];                          /* Ende Injektion     */
