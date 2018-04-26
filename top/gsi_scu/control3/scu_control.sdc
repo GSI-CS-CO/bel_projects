@@ -55,3 +55,6 @@ set_false_path -from * -to [get_ports "DDR3_RES_n"]
 set_false_path -from [get_clocks {main|\DDR3_y:DDR3_inst|*|clk[0]}] -to [get_clocks {main|\sys_a2:sys_inst|*|clk[0]}]
 set_false_path -from [get_clocks {main|\sys_a2:sys_inst|*|clk[0]}]  -to [get_clocks {main|\DDR3_y:DDR3_inst|*|clk[0]}]
 
+# SERDES Digital Reset inputs are asynchronous
+set_false_path -to {*|arria2_pcie_hip_serdes:serdes|*|tx_digitalreset_reg0c[0]}
+set_false_path -to {*|arria2_pcie_hip_serdes:serdes|*|rx_digitalreset_reg0c[0]}
