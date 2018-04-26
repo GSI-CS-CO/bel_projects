@@ -9,8 +9,7 @@
 #include "filenames.h"
 #include <chrono>
 #include <thread>
-
-
+#include <sys/stat.h>
 
 
 
@@ -20,32 +19,24 @@ int main(int argc, char* argv[]) {
   
 
   int opt, error;
+  std::string dirname, netaddress;
+  int dir_err, rem_err;
 
-  
   const char *program = argv[0];
-
-
-  CarpeDM cdm = CarpeDM();
-
-
-
-  try {
-    cdm.connect("dev/ttyUSB0", true);
-  } catch (std::runtime_error const& err) {
-   std::cerr << std::endl << program << ": Failed to connect to DM: " << err.what() << std::endl; return -20;
-  }
-
-
-
   uint64_t seed   = (0x20800 << (6 + 3)) | (0x1 << 3) | 0x2; //test with optimisable edges for new safe2remove
-  uint64_t reps   = 1;
-  uint64_t parts  = 1;
+  uint64_t reps   = 1;   //repetitions (cases) to test 
+  uint64_t parts  = 1;   //parts to split testdata into
+  uint64_t sample = 200; //sample interval
   uint64_t beginning, before, after, sum=0, average;
-  bool verbose = false;
+  bool sim = false, verbose = false;
+
 
   // start getopt 
-  while ((opt = getopt(argc, argv, "s:r:p:v")) != -1) {
+  while ((opt = getopt(argc, argv, "s:r:p:v:c:")) != -1) {
      switch (opt) {
+       case 'c':
+          sample  = (uint64_t)strtol(optarg, NULL, 0);
+          break;
        case 's':
           seed  = (uint64_t)strtol(optarg, NULL, 0);
          break;
@@ -70,30 +61,75 @@ int main(int argc, char* argv[]) {
      }
    }
 
+  if (optind+1 >= argc) {
+   std::cerr << std::endl << program << ": expecting one non-optional arguments: <etherbone/simulation-device> <filepath>" << std::endl;
+   exit(4);
+   }
+
+
+
+
+  const uint64_t maxSeed = (1 << (27))-1;
+
+
+  if (seed > maxSeed) {
+    std::cerr << std::endl << program << ": Seed must be less or equal " <<  std::setfill('0') << std::setw(10) << std::hex << maxSeed << std::endl;
+    exit(5);
+  }
+
+  netaddress = std::string(argv[optind]);
+  dirname = std::string(argv[optind+1]);
+
+ 
+  dir_err = mkdir(dirname.c_str(), ACCESSPERMS);
+
+ 
+
+  if (netaddress == "sim") sim = true;
+
+
+
+
+  CarpeDM cdm = CarpeDM();
+  try {
+    cdm.connect(netaddress.c_str(), sim, true);
+  } catch (std::runtime_error const& err) {
+   std::cerr << std::endl << program << ": Failed to connect to DM: " << err.what() << std::endl; return -20;
+  }
+
   beginning = cdm.getDmWrTime();
 
   before = cdm.getDmWrTime();
+  std::cout << "Given Startseed 0x" <<  std::setfill('0') << std::setw(10) << std::hex << seed <<  std::endl;
   std::vector<std::vector<uint64_t>> testData = cdm.coverage3TestData(seed, reps, parts );
   after = cdm.getDmWrTime();
-  size_t cases = 0;
+  size_t cases = 0, partCnt = 0;
   for (auto& itThr : testData) {
-    //std::cout << "Part --- " << std::endl;
+    partCnt++;
+    std::cout << "Part " << std::dec << partCnt << " - Elements " << itThr.size() << " - Startseed 0x" <<  std::setfill('0') << std::setw(10) << std::hex << *itThr.begin() <<  std::endl;
     cases += itThr.size();
-    //for (auto& itVal : itThr) {
-    //  std::cout << std::hex << "0x" << itVal << std::endl;
-    //}  
   }
 
-  std::string dirname = "dm-test-250418";
-  std::string cmd = "exec rm -r " + dirname + "/*";
-  system(cmd.c_str());
+  
+  std::string cmd = "exec rm " + dirname + "/*";
+  if (dir_err == -1) rem_err = system(cmd.c_str());
+  else {std::cout << "Created directory" << dirname << std::endl;}
+
+  if (rem_err == 0) std::cout << "Cleared directory" << dirname << std::endl;
+  
+  if (dir_err == -1 && rem_err != 0) 
+  {
+    std::cerr << "Error creating/clearing directory" << dirname << std::endl;
+    exit(1);
+  }
+
   std::ofstream outfile;
   outfile.open(dirname + "/dm-test.log");
   //  
   //outfile << "Created " << std::dec << cases << " test cases in " << std::dec << ((after - before) / 1000000ULL) << " ms" << std::endl;
   std::cout << "Created " << std::dec << cases << " test cases in " << std::dec << ((after - before) / 1000000ULL) << " ms" << std::endl;
 
-  const uint64_t sample = 200;
+ 
   uint64_t sampleCnt = 0;
   uint64_t fuckUpCnt = 0;
 
@@ -119,8 +155,8 @@ int main(int argc, char* argv[]) {
       } catch (const std::runtime_error& re) {
         std::stringstream auxstream;
         auxstream << "0x" << std::setfill('0') << std::setw(10) << std::hex << itVal;
-        cdm.writeTextFile(dirname + "/debug_" + auxstream.str() + ".dot", report);
-        cdm.writeDotFile(dirname + "/coverage_" + auxstream.str() + ".dot", cdm.getDownGraph(), false);
+        cdm.writeTextFile(dirname + "/debug_" + auxstream.str() + "_fuckup.dot", report);
+        cdm.writeDotFile(dirname + "/coverage_" + auxstream.str() + "_fuckup.dot", cdm.getDownGraph(), false);
         fuckUpCnt++;
         outfile << "Sample " << std::dec << std::setfill('0') << std::setw(8) << sampleCnt << " 0x" << std::setfill('0') << std::setw(10) <<  std::hex << itVal << " - FUCKUP" << std::endl;
         outfile << re.what() << std::endl;
@@ -128,22 +164,25 @@ int main(int argc, char* argv[]) {
         std::cout << re.what() << std::endl;
         std::flush(outfile);
       }
+      after = cdm.getDmWrTime();
+      sum += (after - before);
+      sampleCnt++;
 
       cdm.verboseOff();
       if ((sampleCnt % sample) == 0) {
+        average = sum / sampleCnt;
         std::stringstream auxstream;
         auxstream << "0x" << std::setfill('0') << std::setw(10) << std::hex << itVal;
         cdm.writeTextFile(dirname + "/debug_" + auxstream.str() + "_sample.dot", report);
-        cdm.writeDotFile(dirname + "/coverage_" + auxstream.str() + "_sample.dot", cdm.getDownGraph(), false);
-        std::cout << "Sample " << std::dec << sampleCnt << " 0x" << std::setfill('0') << std::setw(10) <<  std::hex << itVal << " - " << isSafe << std::endl;
-        outfile << "Sample " << std::dec << sampleCnt << " 0x" << std::setfill('0') << std::setw(10) <<  std::hex << itVal << " - " << isSafe << std::endl;
+        cdm.writeDotFile(dirname + "/coverage_" + auxstream.str() + "_sample.dot", cdm.getDownGraph(), true);
+        std::cout << "Sample " << std::dec << sampleCnt << " 0x" << std::setfill('0') << std::setw(10) <<  std::hex << itVal << " - " << isSafe;
+        std::cout << " Time Total: " << std::dec << ((after - beginning) / 1000000ULL) << " Avg: " << std::dec << (average / 1000000ULL) << " ms"  << std::endl;
+        outfile << "Sample " << std::dec << sampleCnt << " 0x" << std::setfill('0') << std::setw(10) <<  std::hex << itVal << " - " << isSafe;
+        outfile << " Time Total: " << std::dec << ((after - beginning) / 1000000ULL) << " Avg: " << std::dec << (average / 1000000ULL) << " ms"  << std::endl;
         std::flush(outfile);
       }
-      sampleCnt++;
       
       
-      after = cdm.getDmWrTime();
-      sum += (after - before);
     }
   }  
   average = sum / sampleCnt;

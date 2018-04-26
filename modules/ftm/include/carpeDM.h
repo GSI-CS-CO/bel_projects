@@ -58,9 +58,10 @@ private:
   uint64_t modTime;
   bool freshDownload = false;
 
-  bool verbose = false;
-  bool debug   = false;
-  bool sim   = false;
+  bool verbose  = false;
+  bool debug    = false;
+  bool sim      = false;
+  bool testmode = false;
   std::ostream& sLog;
   std::ostream& sErr;
 
@@ -206,7 +207,7 @@ public:
   ~CarpeDM() {};
 
 // Etherbone interface
-               bool connect(const std::string& en, bool simulation=true); //Open connection to a DM via Etherbone
+               bool connect(const std::string& en, bool simulation=false, bool test=false); //Open connection to a DM via Etherbone
                bool disconnect(); //Close connection
                // SDB and DM HW detection Functions
                bool isValidDMCpu(uint8_t cpuIdx);              // Check if CPU is registered as running a valid firmware
@@ -335,6 +336,9 @@ std::pair<int, int> findRunningPattern(const std::string& sPattern); // get cpu 
                void debugOff();                                                            // Turn off Verbose Output
                bool isDebug()  const;                                                      // Tell if Output is set to Verbose
                bool isSim()  const {return sim;}                                           // Tell if this is a simulation
+               void testOn()  {testmode = true;}                                           // Turn on Testmode
+               void testOff() {testmode = false;}                                          // Turn off Testmode
+               bool isTest() {return testmode;}                                            // Tell if Testmode is on
       HealthReport& getHealth(uint8_t cpuIdx, HealthReport &hr);                           // FIXME why reference in, reference out ? its not like you can add to this report ...
        QueueReport& getQReport(const std::string& blockName, QueueReport& qr);             // FIXME why reference in, reference out ? its not like you can add to this report ...
            uint64_t getDmWrTime();

@@ -55,7 +55,7 @@ boost::optional<std::pair<int, int>> CarpeDM::parseCpuAndThr(vertex_t v, Graph& 
 
 
 void CarpeDM::adjustValidTime(uint64_t& tValid, bool abs) {
-    uint64_t t = modTime + processingTimeMargin, tmpTvalid = tValid;
+    uint64_t t = modTime + (testmode ? 0ULL : processingTimeMargin), tmpTvalid = tValid; // no margin for sim, otherwise coverage testing is too slow.
     if (abs) { if (tmpTvalid > t) t  = tmpTvalid; } // if its absolute, the floor is modTime + processingTimeMargin 
     else      {                   t += tmpTvalid; } // if its relative, we add the relative offset to modTime + processingTimeMargin
     tValid = t;

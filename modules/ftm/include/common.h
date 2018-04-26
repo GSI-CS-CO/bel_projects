@@ -108,7 +108,7 @@ namespace ECA {
   const uint32_t devID   = 0xb2afc251;
 }
 
-const uint64_t processingTimeMargin = 0;//100000000ULL; // 100 ms
+const uint64_t processingTimeMargin = 100000000ULL; // 100 ms. Is set to 0 when testmode is on to speed coverage test
 
 typedef struct {
   uint8_t   cpu; 

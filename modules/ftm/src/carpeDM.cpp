@@ -274,7 +274,7 @@ bool CarpeDM::simConnect() {
 }
 
 
-bool CarpeDM::connect(const std::string& en, bool simulation) {
+bool CarpeDM::connect(const std::string& en, bool simulation, bool test) {
     sim = simulation;
     simRam.clear();
     simRamAdrMap.clear();
@@ -330,7 +330,7 @@ bool CarpeDM::connect(const std::string& en, bool simulation) {
             
             uint32_t extBaseAdr   = cpuDevs[cpuIdx].sdb_component.addr_first;
             uint32_t intBaseAdr   = getIntBaseAdr(fwIdROM);
-            uint32_t peerBaseAdr  = WORLD_BASE_ADR  + extBaseAdr;
+            uint32_t peerBaseAdr  = WORLD_BASE_ADR + extBaseAdr;
             uint32_t rawSize      = cpuDevs[cpuIdx].sdb_component.addr_last - cpuDevs[cpuIdx].sdb_component.addr_first;
             uint32_t sharedOffs   = getSharedOffs(fwIdROM); 
             uint32_t space        = getSharedSize(fwIdROM) - _SHCTL_END_;
@@ -686,11 +686,11 @@ void CarpeDM::showCpuList() {
   sLog << std::endl << std::setfill(' ') << std::setw(5) << "CPU" << std::setfill(' ') << std::setw(11) << "FW found" 
        << std::setfill(' ') << std::setw(11) << "Min" << std::setw(11) << "Max" << std::setw(11) << "Space" << std::setw(11) << "Free" << std::endl;
   for (int x = 0; x < cpuQty; x++) {
-    if(!sim) {
-    sLog << std::dec << std::setfill(' ') << std::setw(5) << x << std::setfill(' ') << std::setw(11) << createFwVersionString(vFw[x]) 
-                                                                       << std::setfill(' ') << std::setw(11) << createFwVersionString(expVersionMin)
-                                                                       << std::setfill(' ') << std::setw(11) << createFwVersionString(expVersionMax);
-    }                                                                       
+    
+    sLog << std::dec << std::setfill(' ') << std::setw(5) << x << std::setfill(' ') << std::setw(11) << (sim ? "Sim" : createFwVersionString(vFw[x])) 
+                                                                       << std::setfill(' ') << std::setw(11) << (sim ? "Sim" : createFwVersionString(expVersionMin))
+                                                                       << std::setfill(' ') << std::setw(11) << (sim ? "Sim" : createFwVersionString(expVersionMax));
+                                                                           
     sLog << std::dec << std::setfill(' ') << std::setw(11) << atDown.getTotalSpace(x) << std::setw(10) << atDown.getFreeSpace(x) * 100 / atDown.getTotalSpace(x) << "%";                                                                       
     sLog << std::endl;
   }

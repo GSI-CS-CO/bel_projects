@@ -39,7 +39,7 @@ bool CarpeDM::isSafeToRemove(const std::string& pattern, std::string& report, bo
 
 
 bool CarpeDM::isSafeToRemove(std::set<std::string> patterns, std::string& report, bool optimise) {
-  bool isSafe = true, isSafe2ndOpinion = true;
+  bool isSafe = true, isSafe2ndOpinion = true, allCovenantsUncritical = true;
   Graph& g        = gDown;
   AllocTable& at  = atDown;
   CovenantTable ctAux; //Global CovenantTable is called ct
@@ -103,7 +103,7 @@ bool CarpeDM::isSafeToRemove(std::set<std::string> patterns, std::string& report
   if(verbose) sLog << "Reading Cursors " << std::endl;
   //try to get consistent image of active cursors
   updateModTime();
-  cursors = getAllCursors(false); // Set to false for debugging system behaviour with static cursors
+  cursors = getAllCursors(testmode); // Set to false for debugging system behaviour with static cursors
 
   //Here comes the problem: resident commands are only of consquence if they AND their target Block are active
   //Iteratively find out which cmds are executable and add equivalent edges for them. Do this until no more new edges have to be added
@@ -181,31 +181,29 @@ bool CarpeDM::isSafeToRemove(std::set<std::string> patterns, std::string& report
   for (auto& it : blacklist)  {
     if(!optimise || (optimise && isSafetyCritical(covenantsPerVertex[it]))) gEq[it].np->setFlags(NFLG_PAINT_HOST_SMSK);
   }
+
   report += createDot(gEq, true);
-  
-    report += optmisedAnalysisReport;
+  report += optmisedAnalysisReport;
+
   if (optimise && isSafe) {
+    for (auto& it : covenants)  {
+      allCovenantsUncritical &= ~isSafetyCritical(covenantsPerVertex[it]);
+      report += "//Covenants to honour:\n";
+      //std::cout << "Was optimised" << std::endl;
+      if (it == null_vertex) {report += "//None\n"; continue;}
+      std::string covName = gEq[it].name;
+      //find covname in ctAux and copy found entry to ct watchlist
+      auto x = ctAux.lookup(covName);
+      if (!ctAux.isOk(x)) { throw std::runtime_error(isSafeToRemove::exIntro + ": Lookup of <" + covName + "> in covenantAuxTable failed\n");}
+      if (!ct.insert(x))  { throw std::runtime_error(isSafeToRemove::exIntro + ": Insertion of <" + covName + "> in covenantTable failed\n");} ;
 
-    //if(isSafe) { //Showing a list of covenants only makes sense if they'd do us any good
-      //if (covenants.size() > 0) {
-        //}
-      for (auto& it : covenants)  {
-        report += "//Covenants to honour:\n";
-        //std::cout << "Was optimised" << std::endl;
-        if (it == null_vertex) {report += "//None\n"; continue;}
-        std::string covName = gEq[it].name;
-        //find covname in ctAux and copy found entry to ct watchlist
-        auto x = ctAux.lookup(covName);
-        if (!ctAux.isOk(x)) { throw std::runtime_error(isSafeToRemove::exIntro + ": Lookup of <" + covName + "> in covenantAuxTable failed\n");}
-        if (!ct.insert(x))  { throw std::runtime_error(isSafeToRemove::exIntro + ": Insertion of <" + covName + "> in covenantTable failed\n");} ;
-
-        auto y = ct.lookup(covName);
-        if (!ct.isOk(y)) { throw std::runtime_error(isSafeToRemove::exIntro + ": Lookup of <" + covName + "> in covenantTable failed\n");}
-        
-        //and report
-        report += "//" + covName + " p " + std::to_string(y->prio) + " s " + std::to_string(y->slot) + " chk 0x" + std::to_string(y->chkSum) + "\n";
-      }
-      report += covenantReport;
+      auto y = ct.lookup(covName);
+      if (!ct.isOk(y)) { throw std::runtime_error(isSafeToRemove::exIntro + ": Lookup of <" + covName + "> in covenantTable failed\n");}
+      
+      //and report
+      report += "//" + covName + " p " + std::to_string(y->prio) + " s " + std::to_string(y->slot) + " chk 0x" + std::to_string(y->chkSum) + "\n";
+    }
+    report += covenantReport;
     //}
   }
 
@@ -218,6 +216,9 @@ bool CarpeDM::isSafeToRemove(std::set<std::string> patterns, std::string& report
   if (isSafe != isSafe2ndOpinion) {
     //writeTextFile("./debug.dot", report);
     throw std::runtime_error(isSafeToRemove::exIntro + " ERROR in algorithm detected: safe2remove says " + (isSafe ? "safe" : "unsafe") + ", crawler says " + (isSafe2ndOpinion ? "safe" : "unsafe") + "\n");
+  }
+  if (allCovenantsUncritical == false) {
+    throw std::runtime_error(isSafeToRemove::exIntro + " ERROR in algorithm detected: a block listed as a covenant was safety critical itself\n");
   }
 
   return isSafe;
@@ -276,7 +277,7 @@ bool CarpeDM::isSafetyCritical(vertex_set_t& c) {
 
 //recursively inserts all vertex idxs of the tree reachable (via in edges) from start vertex into the referenced set
 void CarpeDM::getReverseNodeTree(vertex_t v, vertex_set_t& sV, Graph& g, vertex_set_map_t& covenantsPerVertex, vertex_t covenant) {
-
+  vertex_t nextCovenant;
   Graph::in_edge_iterator in_begin, in_end, in_cur;
   //Do the crawl       
   boost::tie(in_begin, in_end) = in_edges(v,g);
@@ -284,30 +285,20 @@ void CarpeDM::getReverseNodeTree(vertex_t v, vertex_set_t& sV, Graph& g, vertex_
     if (verbose) { sLog << g[target(*in_cur, g)].name << "<-- " << g[*in_cur].type << " --" << g[source(*in_cur, g)].name  << " propcov " << ((covenant == null_vertex) ? "NULL" : g[covenant].name) << std::endl; }
     vertex_set_t& cpvs = covenantsPerVertex[source(*in_cur, g)];   
 
+    sV.insert(source(*in_cur, g));
+    if (cpvs.find(covenant) != cpvs.end()) { continue; }
+
     if (isOptimisableEdge(*in_cur, g)) {
       if (verbose) { sLog << " Optimisable:  " << g[source(*in_cur, g)].name << "->" << g[target(*in_cur, g)].name << std::endl; }
-      //if (covenant == null_vertex) { 
-        covenant = source(*in_cur, g); 
-        if (verbose) sLog << "Setting covenant " << g[source(*in_cur, g)].name << std::endl;
-      //} //acquire the first covenant we come accross and propagate it
-     
+      nextCovenant = source(*in_cur, g);
+    } else {
+      nextCovenant = covenant;
     }  
-    sV.insert(source(*in_cur, g));
-    if (cpvs.find(covenant) != cpvs.end()) { 
-      std::string covName = (covenant == null_vertex) ? "NULL" : g[covenant].name;
-      //sLog << g[source(*in_cur, g)].name <<  "'s covenant with " << covName << " already in tree, skipping edge" << std::endl;
-      covenant = (isSafetyCritical(covenantsPerVertex[target(*in_cur, g)]) ? null_vertex : covenant);
-      continue;
-    }
-    cpvs.insert(covenant);
+      
+    cpvs.insert(nextCovenant);
+    getReverseNodeTree(source(*in_cur, g), sV, g, covenantsPerVertex, nextCovenant);
 
-    //if (sV.find(source(*in_cur, g)) != sV.end()) { sLog << g[source(*in_cur, g)].name <<  " already in tree, breaking" << std::endl; break;}
-    
-    //sLog << "Adding to BlkList " << g[source(*in_cur, g)].name << ", cpvs ";
-    //for (auto& it : cpvs) {sLog << ((it == null_vertex) ? "NULL" : g[it].name) << ", ";}
-    //sLog << std::endl;
 
-    getReverseNodeTree(source(*in_cur, g), sV, g, covenantsPerVertex, covenant);
     
   }
 }
