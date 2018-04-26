@@ -364,6 +364,7 @@ int main(int argc, char *argv[])
   {
     uint32_t last_late_events = 0;
     uint64_t last_num_events = 0;
+    uint32_t missing_events_message_written = 0;
 
     for (;;)
     {
@@ -381,9 +382,23 @@ int main(int argc, char *argv[])
 
       if (last_num_events && last_num_events == value64_bit)
       {
-        printf("WR-MIL-GATEWAY WARNING: Number of translated MIL events did not increase!\n"
-               "  Check if wr-mil-gateway and Data Master are both active\n");
-        fflush(stdout);
+        if (!missing_events_message_written)
+        { // complain that no events are arriving, but complain only once
+          printf("WR-MIL-GATEWAY WARNING: Number of translated MIL events did not increase!\n"
+                 "  If lack of MIL events is not intentional: check if wr-mil-gateway and Data Master are both active\n");
+          fflush(stdout);
+          missing_events_message_written = 1;
+        }
+      }
+      else
+      {
+        if (missing_events_message_written)
+        {
+          // the number of translated MIL events increased, we can reset the message indicator and log that MIL events are back
+          printf("WR-MIL-GATEWAY: I see MIL events again!\n");
+          fflush(stdout);
+          missing_events_message_written = 0;
+        }
       }
       if (last_late_events < value)
       {
@@ -395,7 +410,7 @@ int main(int argc, char *argv[])
       last_late_events = value;
       last_num_events  = value64_bit;
 
-      sleep(10);
+      sleep(60);
     }
   }
 
