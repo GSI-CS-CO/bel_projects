@@ -1,9 +1,9 @@
 /******************************************************************************
- *  dmunipz-ctl.c
+ *  dmunipz-ctl.cpp
  *
  *  created : 2017
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 17-April-2018
+ *  version : 26-April-2018
  *
  * Command-line interface for dmunipz
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 17-May-2017
  ********************************************************************************************/
-#define DMUNIPZ_X86_VERSION "0.1.2"
+#define DMUNIPZ_X86_VERSION "0.1.3"
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -58,7 +58,8 @@
 // USE MASP
 #ifdef USEMASP
 // includes for MASP
-#include "MASP/Emitter/StatusEmitter.h"
+//#include "MASP/Emitter/StatusEmitter.h"
+#include "MASP/Emitter/End_of_scope_status_emitter.h"
 #include "MASP/StatusDefinition/DeviceStatus.h"
 #include "MASP/Util/Logger.h"
 #include "MASP/Common/StatusNames.h"
@@ -72,12 +73,14 @@
 std::string   maspNomen = std::string(DMUNIPZ_MASP_NOMEN);
 std::string   maspSourceId; 
 bool          maspProductive;     // send to pro/dev masp
+bool          maspSigOpReady;     // value for MASP signal OP_READY
+bool          maspSigTransfer;    // value for MASP signal TRANSFER (custom emitter)
 
 MASP::StatusEmitterConfig get_config() {
   char   hostname[HOST_NAME_MAX];
 
   gethostname(hostname, HOST_NAME_MAX);
-  maspSourceId = maspNomen + "." + std::string(hostname);
+  maspSourceId   = maspNomen + "." + std::string(hostname);
 
 #ifdef PRODUCTIVE
   maspProductive = true;
@@ -580,11 +583,9 @@ int main(int argc, char** argv) {
     // optional: disable masp logging (default: log to stdout, can be customized)
     MASP::no_logger no_log;
     MASP::Logger::middleware_logger = &no_log;
-    MASP::STATUS    maspStatus;
 
     MASP::StatusEmitter emitter(get_config());
     std::cout << "dm-unipz: emmitting to MASP as sourceId: " << maspSourceId << ", using nomen: " << maspNomen << ", environment pro: " << maspProductive << std::endl;
-    
 #endif // USEMASP
 
     while (1) {
@@ -619,12 +620,18 @@ int main(int argc, char** argv) {
       fflush(stdout);                                                                         // required for immediate writing (if stdout is piped to syslog)
 
 #ifdef USEMASP
-      if (actState == DMUNIPZ_STATE_OPREADY) maspStatus = MASP::STATUS::OK;
-      else                                   maspStatus = MASP::STATUS::NOT_OK;
+      if (actState  == DMUNIPZ_STATE_OPREADY) maspSigOpReady  = true;
+      else                                    maspSigOpReady  = false;
 
+      if (actStatus == DMUNIPZ_STATUS_OK)     maspSigTransfer = true;
+      else                                    maspSigTransfer = false;
 
-      MASP::DeviceStatus maspDeviceStatus = MASP::DeviceStatus(MASP::DeviceStatusId(maspNomen, MASP::StatusNames::OP_READY), maspStatus);
-      emitter.setStatusAndEmit(maspDeviceStatus);
+      // use masp end of scope emitter
+      {  
+        MASP::End_of_scope_status_emitter scoped_emitter(maspNomen, emitter);
+        scoped_emitter.set_OP_READY(maspSigOpReady);
+        scoped_emitter.set_custom_status(DMUNIPZ_MASP_CUSTOMSIG, maspSigTransfer);
+      } // <--- status is send when the End_of_scope_emitter goes out of scope  
 #endif
 
       //sleep 
