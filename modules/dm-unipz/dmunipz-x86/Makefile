@@ -29,7 +29,7 @@ BOOST_LIBPATH = -L $(BOOST_HOME)/lib/$(ARCH)
 BOOST_LIBS    = -lboost_thread -lboost_system -lboost_atomic -lboost_chrono -lboost_filesystem -lboost_program_options
 
 
-MASP_VERSION = 1.0.3
+MASP_VERSION = 1.0.5
 MASP_DIR      = /common/usr/cscofe/opt/MASP/$(MASP_VERSION)
 MASP_INCL     = -I $(MASP_DIR)/include
 MASP_LIBPATH  = -L $(MASP_DIR)/lib/$(ARCH) 
