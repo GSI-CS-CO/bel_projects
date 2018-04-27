@@ -78,6 +78,15 @@ uint32_t mil_piggy_write_event(volatile uint32_t *piggy, uint32_t cmd)
   return 0;
 }
 
+uint32_t mil_piggy_reset(volatile uint32_t *piggy)
+{
+  piggy[MIL_SIO3_RST] = 0x0;
+  DELAY1000us;
+  piggy[MIL_SIO3_RST] = 0xff;
+  DELAY100us;
+  return 0;
+}
+
 // convert 64-bit TAI from WR into an array of five MIL events (EVT_UTC_1/2/3/4/5 events with evtNr 0xE0 - 0xE4)
 // arguments:
 //   TAI:     a 64-bit WR-TAI value
@@ -187,7 +196,6 @@ void eventHandler(volatile uint32_t    *eca,
 void main(void) 
 {
   init();   
-
   // MilPiggy 
   volatile uint32_t *mil_piggy = (volatile uint32_t*) find_device_adr(GSI, SCU_MIL);
 
@@ -208,6 +216,8 @@ void main(void)
   TAI_t nowTAI; 
   ECACtrl_getTAI(eca_ctrl, &nowTAI);
   mprintf("TAI now: 0x%08x%08x\n", nowTAI.part.hi, nowTAI.part.lo);
+
+  mil_piggy_reset(mil_piggy);
 
   while (1) {
     //poll user commands
