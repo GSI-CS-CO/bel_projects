@@ -518,7 +518,7 @@ void CarpeDM::show(const std::string& title, const std::string& logDictFile, Tra
 using namespace coverage;
 
 
-std::vector<std::vector<uint64_t>> CarpeDM::coverage3TestData(uint64_t seedStart, uint64_t cases, uint8_t parts ) {
+std::vector<std::vector<uint64_t>> CarpeDM::coverage3TestData(uint64_t seedStart, uint64_t cases, uint8_t parts, uint8_t percentage ) {
 
   patName.clear();
   patName[0] = "A";
@@ -526,12 +526,24 @@ std::vector<std::vector<uint64_t>> CarpeDM::coverage3TestData(uint64_t seedStart
   patName[2] = "C";
   patName[3] = "idle";
 
+  const int range_from  = 0;
+  const int range_to    = 99;
+  std::random_device                  rand_dev;
+  std::mt19937                        generator(rand_dev());
+  std::uniform_int_distribution<int>  distr(range_from, range_to);
+
+  
+
   uint64_t seed = seedStart;
   std::vector<std::vector<uint64_t>> ret(parts);
   std::vector<uint64_t> tmp;
   //generate
-  while( (tmp.size() < cases) && (seed < maxSeed) ) {
-    if( coverage3IsSeedValid(seed) ) { tmp.push_back(seed); }
+  while( (tmp.size() < (( cases * percentage) / 100 ) ) && (seed < maxSeed) ) {
+    if( coverage3IsSeedValid(seed) ) {
+      int rnd = distr(generator);
+      //std::cout << "rnd " << rnd << " thr " << (int)percentage << " " << ((rnd < (int)percentage) ? "YES" : "NO" ) <<  std::endl; 
+      if (rnd < (int)percentage) tmp.push_back(seed); 
+    }
     seed++;
   }
 
