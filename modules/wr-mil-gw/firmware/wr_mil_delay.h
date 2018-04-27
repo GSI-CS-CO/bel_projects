@@ -20,7 +20,7 @@ void delay_96plus32n_ns(uint32_t n);
 #define DELAY40us   delay_96plus32n_ns(1247)
 #define DELAY50us   delay_96plus32n_ns(1560)
 #define DELAY100us  delay_96plus32n_ns(3122)
-#define DELAY1000us delay_96plus32n_ns(31220)
+#define DELAY1000us delay_96plus32n_ns(31247)
 
 
 
