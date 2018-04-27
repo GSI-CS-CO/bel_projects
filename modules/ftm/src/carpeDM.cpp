@@ -276,6 +276,7 @@ bool CarpeDM::simConnect() {
 
 bool CarpeDM::connect(const std::string& en, bool simulation, bool test) {
     sim = simulation;
+    testmode = test;
     simRam.clear();
     simRamAdrMap.clear();
     if (sim) {return simConnect(); }
