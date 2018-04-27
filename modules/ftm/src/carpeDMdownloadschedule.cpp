@@ -308,6 +308,7 @@ namespace dnt = DotStr::Node::TypeVal;
     if(verbose) sLog << "Done." << std::endl;
     
     freshDownload = true;
+    if(optimisedS2R) updateCovenants();
 
     //gt.debug(sLog);
 

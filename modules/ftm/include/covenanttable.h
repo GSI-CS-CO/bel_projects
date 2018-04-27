@@ -126,10 +126,16 @@ public:
     return (it != a.end() ? true : false);
   };
 
+  bool remove(cmI e) {
+    auto it = a.get<Name>().erase(e); 
+    return (it != a.end() ? true : false);
+  };
+
+
   void clear() { a.clear(); }
 
   void debug(std::ostream& os) {
-    os << "Covenants:" << std::endl; 
+    os << "Active Covenants:" << std::endl; 
     for (cmI x = a.begin(); x != a.end(); x++) { 
       os << x->name << " prio: " << std::dec << (int)x->prio <<  ", slot: " <<  (int)x->slot <<  ", ChkSum: 0x" << std::hex <<  x->chkSum << std::endl;       
     }

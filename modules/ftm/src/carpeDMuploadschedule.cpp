@@ -333,6 +333,7 @@ using namespace DotStr::Misc;
     for(unsigned int i = 0; i < atUp.getMemories().size(); i++) {
       if (!freshDownload || (atUp.getMemories()[i].getBmp() != atDown.getMemories()[i].getBmp()) ) moddedCpus.insert(i); // mark cpu as modified if alloctable empty or Bmp Changed
     }
+
     generateMgmtData();
     vEbwrs ew = gatherUploadVector(moddedCpus, 0, opType); //TODO not using modCnt right now, maybe implement later
     
@@ -567,12 +568,10 @@ using namespace DotStr::Misc;
     checkTablesForSubgraph(g); //all explicitly named nodes must be known to hash and grouptable. let's check first
     generateBlockMeta(g);
     baseUploadOnDownload();
-    std::string report, reportOptimised; 
-    bool conservative = isSafeToRemove(g, report, false), optimised = isSafeToRemove(g, reportOptimised, true);
-    writeTextFile("safetyReportNormal.dot", report);
-    writeTextFile("safetyReportOptimised.dot", reportOptimised); 
-    if (verbose) sErr << "Conservative Safe2Remove: " << (int)conservative << std::endl << report << std::endl << "Optimised Safe2Remove: " << (int)optimised << std::endl << reportOptimised << std::endl;
-    if (!(force | (optimised))) {throw std::runtime_error("Cannot safely be removed\n");}
+    std::string report;
+    bool isSafe =  isSafeToRemove(g, report);
+    //writeTextFile("safetyReportNormal.dot", report);
+    if (!(force | (isSafe))) {throw std::runtime_error("Cannot safely be removed\n");}
     
     subtraction(g);
     //writeUpDotFile("upload.dot", false);
@@ -606,12 +605,10 @@ using namespace DotStr::Misc;
       }
     }
     
-    std::string report, reportOptimised;
-    bool conservative = isSafeToRemove(g, report, false), optimised = isSafeToRemove(g, reportOptimised, true);
+    std::string report;
+    bool isSafe =  isSafeToRemove(g, report);
     //writeTextFile("safetyReportNormal.dot", report);
-    //writeTextFile("safetyReportOptimised.dot", reportOptimised); 
-    if (verbose) sErr << "Conservative Safe2Remove: " << (int)conservative << std::endl << report << std::endl << "Optimised Safe2Remove: " << (int)optimised << std::endl << reportOptimised << std::endl;
-    if (!(force | (optimised))) {throw std::runtime_error("Cannot safely be removed\n");}
+    if (!(force | (isSafe))) {throw std::runtime_error("Cannot safely be removed\n");}
 
     subtraction(gTmpRemove);
     //writeUpDotFile("upload.dot", false);

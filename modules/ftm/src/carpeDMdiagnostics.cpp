@@ -608,11 +608,13 @@ bool CarpeDM::coverage3IsSeedValid(uint64_t seed) {
 
   //defInit is power of 2 and thus always valid
   //std::cout << "defInit " << std::dec;
+  /*
   for (unsigned i=0; i < (staticBits / staticDigitBits); i++) {
     unsigned digit = (defInit >> (i * staticDigitBits)) & staticDigitMsk;
     //cfg.def[i] = digit;
     //std::cout << digit << ", ";
   }
+  */
   //std::cout << std::endl;
 
   //check qInit is valid

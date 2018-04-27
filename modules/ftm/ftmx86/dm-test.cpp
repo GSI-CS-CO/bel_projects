@@ -18,7 +18,7 @@ int main(int argc, char* argv[]) {
   Graph g;
   
 
-  int opt, error;
+  int opt, error = 0;
   std::string dirname, netaddress;
   int dir_err, rem_err;
 
@@ -70,7 +70,10 @@ int main(int argc, char* argv[]) {
    exit(4);
    }
 
-
+   if(error != 0) {
+    std::cerr << std::endl << program << ": unknown parameters" << std::endl;
+    exit(1);
+  }
 
 
   const uint64_t maxSeed = (1 << (27))-1;
@@ -157,7 +160,7 @@ int main(int argc, char* argv[]) {
 
       try {
         cdm.updateModTime();
-        isSafe = cdm.isSafeToRemove("A", report, true);
+        isSafe = cdm.isSafeToRemove("A", report);
         //outfile << "Sample " << std::dec << intervalCnt << "0x" << std::setfill('0') << std::setw(10) <<  std::hex << itVal << " - " << isSafe << std::endl;
       } catch (const std::runtime_error& re) {
         std::stringstream auxstream;

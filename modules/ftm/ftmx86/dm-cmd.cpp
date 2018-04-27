@@ -74,6 +74,7 @@ static void help(const char *program) {
 void showStatus(const char *netaddress, CarpeDM& cdm, bool verbose) {
   std::string show;
   cdm.showCpuList();
+  cdm.dirtyCtShow();
   uint8_t cpuQty = cdm.getCpuQty();
   uint8_t thrQty = _THR_QTY_;
 
@@ -501,7 +502,12 @@ int main(int argc, char* argv[]) {
       if(!(cdm.isInHashDict( targetName))) {std::cerr << program << ": Target node '" << targetName << "'' was not found on DM" << std::endl; return -1; }
       if (para == NULL) {std::cerr << program << ": Queues to be flushed are missing, require 3 bit as hex (IL HI LO 0x0 - 0x7)" << std::endl; return -1; }  
       uint32_t queuePrio = strtol(para, NULL, 0) & 0x7;
-      cdm.staticFlushBlock(targetName, (bool)(queuePrio >> PRIO_IL & 1), (bool)(queuePrio >> PRIO_HI & 1), (bool)(queuePrio >> PRIO_LO & 1), force);
+      try {
+          cdm.staticFlushBlock(targetName, (bool)(queuePrio >> PRIO_IL & 1), (bool)(queuePrio >> PRIO_HI & 1), (bool)(queuePrio >> PRIO_LO & 1), force);
+        } catch (std::runtime_error const& err) {
+          std::cerr << program << ": Could not statically flush " << targetName << ". Cause: " << err.what() << std::endl;
+        }
+
       return 0;
     }
     else if (cmp == "queue") {
@@ -528,7 +534,7 @@ int main(int argc, char* argv[]) {
     }
     else if (cmp == "chkrem")  {
       std::string report;
-      bool isSafe = cdm.isSafeToRemove(targetName, report, true);
+      bool isSafe = cdm.isSafeToRemove(targetName, report);
       cdm.writeTextFile(std::string(dirname) + "/" + std::string(debugfile), report);
       std::cout << std::endl << "Pattern " << targetName << " content removal: " << (isSafe ? "SAFE" : "FORBIDDEN" ) << std::endl;
       return 0;

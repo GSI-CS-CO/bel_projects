@@ -77,7 +77,7 @@ vEbwrs& CarpeDM::createCommandBurst(Graph& g, vEbwrs& ew) {
 
     std::string target, destination;
     
-    
+ 
 
     //use the pattern and beamprocess tags to determine the target. Pattern overrides Beamprocess overrides cpu/thread
           if (g[v].patName  != DotStr::Misc::sUndefined)    { target = getPatternExitNode(g[v].patName); }
@@ -197,6 +197,18 @@ vEbwrs& CarpeDM::createCommandBurst(Graph& g, vEbwrs& ew) {
     uint8_t b[_T_CMD_SIZE_ + _32b_SIZE_];
     
     if (!hm.lookup(targetName)) throw std::runtime_error("Command target <" + targetName + "> is not valid\n");
+
+    //check for covenants
+    if(optimisedS2R) {
+      cmI x = ct.lookup(targetName);
+      if (ct.isOk(x) && isCovenantPending(x)) { 
+        //there is covenant. lets see if we are a danger to it
+        if(x->prio < cmdPrio) throw std::runtime_error("Command preemption (prio " + std::to_string((int)cmdPrio) + ") at block <" + targetName + "> would violate a safe2remove-covenant!");
+      } 
+      
+    }
+
+
 
  
     hash     = hm.lookup(targetName).get(); 
@@ -650,15 +662,20 @@ vEbwrs& CarpeDM::staticFlush(const std::string& sBlock, bool prioIl, bool prioHi
   //check if the block can safely be modified
   //call safe2remove on the block's pattern. If remove is ok, so is Flushing
   std::string dbgReport;
-  std::string report, reportOptimised; 
+  std::string report; 
   const std::string sPattern = getNodePattern(sBlock);
-  if (!isSafeToRemove(sPattern, report, false)) {printf("Cannot safely be removed (normal)\n"); writeTextFile("safetyReportNormal.dot", report); }
-  if (!isSafeToRemove(sPattern, reportOptimised, true)) {printf("Cannot safely be removed (optimised)\n"); writeTextFile("safetyReportOptimised.dot", reportOptimised); }  
+  //if (!isSafeToRemove(sPattern, report,)) {printf("Cannot safely be removed\n"); writeTextFile("safetyReportNormal.dot", report); }
+  
   
   if ( (!isSafeToRemove(sPattern, dbgReport)) && !force)  {
     if(debug) sLog << dbgReport << std::endl;
     throw std::runtime_error("staticFlush: Pattern <" + sPattern + "> of block member <" + sBlock + "> is active, static flush not safely possible!");
   }
+
+  //check against covenants
+
+  if(optimisedS2R && isCovenantPending(sBlock)) throw std::runtime_error("staticFlush: Static flushing block <" + sBlock + "> would violate a safe2remove-covenant!");
+  
 
   if(verbose) sLog << "Trying to flush block <" << sBlock << ">" << std::endl;
     

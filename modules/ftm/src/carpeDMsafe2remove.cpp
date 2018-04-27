@@ -24,21 +24,24 @@ namespace isSafeToRemove {
 }
 
 
-bool CarpeDM::isSafeToRemove(Graph& gRem, std::string& report, bool optimise) {
+bool CarpeDM::isSafeToRemove(Graph& gRem, std::string& report) {
   std::set<std::string> patterns;
   //Find all patterns 2B removed
   for (auto& patternIt : getGraphPatterns(gRem)) { patterns.insert(patternIt); }
     
-  return isSafeToRemove(patterns, report, optimise);
+  return isSafeToRemove(patterns, report);
 }
 
-bool CarpeDM::isSafeToRemove(const std::string& pattern, std::string& report, bool optimise) {
+bool CarpeDM::isSafeToRemove(const std::string& pattern, std::string& report) {
   std::set<std::string> p = {pattern};
-  return isSafeToRemove(p, report, optimise);
+  return isSafeToRemove(p, report);
 }  
 
 
-bool CarpeDM::isSafeToRemove(std::set<std::string> patterns, std::string& report, bool optimise) {
+bool CarpeDM::isSafeToRemove(std::set<std::string> patterns, std::string& report) {
+  //std::cout << "verbose " << (int)verbose << " debug " << (int)debug << " sim " << (int)sim << " testmode " << (int)testmode << " optimisedS2R " << (int)optimisedS2R << std::endl; 
+  
+
   bool isSafe = true, isSafe2ndOpinion = true, allCovenantsUncritical = true;
   Graph& g        = gDown;
   AllocTable& at  = atDown;
@@ -103,7 +106,7 @@ bool CarpeDM::isSafeToRemove(std::set<std::string> patterns, std::string& report
   if(verbose) sLog << "Reading Cursors " << std::endl;
   //try to get consistent image of active cursors
   updateModTime();
-  cursors = getAllCursors(testmode); // Set to false for debugging system behaviour with static cursors
+  cursors = getAllCursors(!testmode); // Set to false for debugging system behaviour with static cursors
 
   //Here comes the problem: resident commands are only of consquence if they AND their target Block are active
   //Iteratively find out which cmds are executable and add equivalent edges for them. Do this until no more new edges have to be added
@@ -113,7 +116,7 @@ bool CarpeDM::isSafeToRemove(std::set<std::string> patterns, std::string& report
 
   // BEGIN Optimised Static Equivalent Model
   // Under certain conditions, (offending) default destinations can be replaced
-  if (optimise) {
+  if (optimisedS2R) {
     if(verbose) {sLog << "Starting Optimiser (Update stale defDst)" << std::endl;}
     if (updateStaleDefaultDestinations(gEq, at, ctAux, optmisedAnalysisReport)) { if(verbose) {sLog << "Updated stale Default Destinations to reduce wait time." << std::endl;} }
   }
@@ -179,13 +182,13 @@ bool CarpeDM::isSafeToRemove(std::set<std::string> patterns, std::string& report
   for (auto& it : cursors)    { gEq[it].np->setFlags(NFLG_DEBUG1_SMSK); }
   for (auto& it : entries)    { gEq[it].np->setFlags(NFLG_DEBUG0_SMSK); }
   for (auto& it : blacklist)  {
-    if(!optimise || (optimise && isSafetyCritical(covenantsPerVertex[it]))) gEq[it].np->setFlags(NFLG_PAINT_HOST_SMSK);
+    if(isSafetyCritical(covenantsPerVertex[it])) gEq[it].np->setFlags(NFLG_PAINT_HOST_SMSK);
   }
 
   report += createDot(gEq, true);
   report += optmisedAnalysisReport;
 
-  if (optimise && isSafe) {
+  if (optimisedS2R && isSafe) {
     for (auto& it : covenants)  {
       allCovenantsUncritical &= ~isSafetyCritical(covenantsPerVertex[it]);
       report += "//Covenants to honour:\n";
@@ -253,21 +256,24 @@ bool CarpeDM::isCovenantPending(cmI cov) {
   if (cov->chkSum == ct.genChecksum(qe))  return true;
   else                                    return false;
 }
-/*
+
 unsigned CarpeDM::updateCovenants() {
 
   unsigned cnt = 0;
   vStrC toDelete;
-  for (auto it : ct.getTable()) {
-    if (!isCovenantPending(it)) toDelete.push_back(it->name);
+  for (cmI it = ct.getTable().begin(); it != ct.getTable().end(); it++ ) {
+    if (!isCovenantPending(it)) {
+      if(verbose) std::cout << "Covenant " << it->name << " complete, removing from table" << std::endl;
+      toDelete.push_back(it->name);
+    }  
     cnt++;
   }
 
-  for (auto it : toDelete) { ct.removed(it); }
+  for (auto it : toDelete) { ct.remove(it); }
 
   return cnt;
 }
-*/
+
 
 bool CarpeDM::isSafetyCritical(vertex_set_t& c) {
   if (c.find(null_vertex) != c.end()) return true;

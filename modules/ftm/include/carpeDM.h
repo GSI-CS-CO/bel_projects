@@ -62,6 +62,7 @@ private:
   bool debug    = false;
   bool sim      = false;
   bool testmode = false;
+  bool optimisedS2R = true;
   std::ostream& sLog;
   std::ostream& sErr;
 
@@ -133,6 +134,8 @@ private:
   bool isOptimisableEdge(edge_t e, Graph& g);
   bool isCovenantPending(const std::string& covName);
   bool isCovenantPending(cmI cov);
+  unsigned updateCovenants();
+
   bool isSafetyCritical(vertex_set_t& covenants);
   bool verifySafety(vertex_t v, vertex_t goal, vertex_set_t& sV, Graph& g );
   //Coverage Tests for safe2remove
@@ -145,7 +148,7 @@ private:
   
   vertex_set_t getAllCursors(bool activeOnly);
   vStrC getGraphPatterns(Graph& g);
-  bool isSafeToRemove(std::set<std::string> patterns, std::string& report, bool optimise=false);
+  bool isSafeToRemove(std::set<std::string> patterns, std::string& report);
   const std::string readFwIdROMTag(const std::string& fwIdROM, const std::string& tag, size_t maxlen, bool stopAtCr );
 
   vBuf compress(const vBuf& in); 
@@ -300,8 +303,8 @@ public:
            uint32_t getThrStart(uint8_t cpuIdx);
            uint64_t getThrPrepTime(uint8_t cpuIdx, uint8_t thrIdx); 
                bool isThrRunning(uint8_t cpuIdx, uint8_t thrIdx);                   // true if thread <thrIdx> is running
-               bool isSafeToRemove(const std::string& pattern, std::string& report, bool optimise=false);
-               bool isSafeToRemove(Graph& gRem, std::string& report, bool optimise=false);
+               bool isSafeToRemove(const std::string& pattern, std::string& report);
+               bool isSafeToRemove(Graph& gRem, std::string& report);
 std::pair<int, int> findRunningPattern(const std::string& sPattern); // get cpu and thread assignment of running pattern
                bool isPatternRunning(const std::string& sPattern);                  // true if Pattern <x> is running
                void updateModTime();
@@ -339,6 +342,9 @@ std::pair<int, int> findRunningPattern(const std::string& sPattern); // get cpu 
                void testOn()  {testmode = true;}                                           // Turn on Testmode
                void testOff() {testmode = false;}                                          // Turn off Testmode
                bool isTest() {return testmode;}                                            // Tell if Testmode is on
+               void optimisedS2ROn();                                                      // Optimised Safe2remove on
+               void optimisedS2ROff();                                                     // Optimised Safe2remove off
+               bool isOptimisedS2R() {return optimisedS2R;}                                // tell if Safe2remove optimisation is on or off
       HealthReport& getHealth(uint8_t cpuIdx, HealthReport &hr);                           // FIXME why reference in, reference out ? its not like you can add to this report ...
        QueueReport& getQReport(const std::string& blockName, QueueReport& qr);             // FIXME why reference in, reference out ? its not like you can add to this report ...
            uint64_t getDmWrTime();
@@ -354,7 +360,8 @@ std::pair<int, int> findRunningPattern(const std::string& sPattern); // get cpu 
                bool tableCheck(std::string& report);
                void coverage3Upload(uint64_t seed );
                std::vector<std::vector<uint64_t>> coverage3TestData(uint64_t seedStart, uint64_t cases, uint8_t parts, uint8_t percentage );
-               Graph& getDownGraph(); //Returns the Download Graph for CPU <cpuIdx>
+               Graph& getDownGraph(); //Returns the Download Graph for CPU <cpuIdx
+               void dirtyCtShow() {ct.debug(sLog);}
 
 
 };
