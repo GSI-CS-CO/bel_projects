@@ -74,7 +74,7 @@ static void help(const char *program) {
 void showStatus(const char *netaddress, CarpeDM& cdm, bool verbose) {
   std::string show;
   cdm.showCpuList();
-  cdm.dirtyCtShow();
+  if(cdm.isOptimisedS2R()) cdm.dirtyCtShow();
   uint8_t cpuQty = cdm.getCpuQty();
   uint8_t thrQty = _THR_QTY_;
 

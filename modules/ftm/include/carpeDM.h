@@ -258,7 +258,7 @@ public:
               vStrC getBeamprocMembers(const std::string& sBeamproc);
   const std::string getBeamprocEntryNode(const std::string& sBeamproc);
   const std::string getBeamprocExitNode(const std::string& sBeamproc);
-           uint64_t getModTime();
+           uint64_t getModTime() { return modTime; }
  
 // Text File IO /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
                void writeTextFile(const std::string& fn, const std::string& s);
@@ -332,22 +332,23 @@ std::pair<int, int> findRunningPattern(const std::string& sPattern); // get cpu 
                 int staticFlushBlock(const std::string& sBlock, bool prioIl, bool prioHi, bool prioLo, bool force);
 
 // Diagnostics //////////////////////////////////////////////////////////////
-               void verboseOn();                                                           // Turn on Verbose Output
-               void verboseOff();                                                          // Turn off Verbose Output
-               bool isVerbose()  const;                                                    // Tell if Output is set to Verbose
-               void debugOn();                                                             // Turn on Verbose Output
-               void debugOff();                                                            // Turn off Verbose Output
-               bool isDebug()  const;                                                      // Tell if Output is set to Verbose
-               bool isSim()  const {return sim;}                                           // Tell if this is a simulation
-               void testOn()  {testmode = true;}                                           // Turn on Testmode
-               void testOff() {testmode = false;}                                          // Turn off Testmode
-               bool isTest() {return testmode;}                                            // Tell if Testmode is on
-               void optimisedS2ROn();                                                      // Optimised Safe2remove on
-               void optimisedS2ROff();                                                     // Optimised Safe2remove off
-               bool isOptimisedS2R() {return optimisedS2R;}                                // tell if Safe2remove optimisation is on or off
-      HealthReport& getHealth(uint8_t cpuIdx, HealthReport &hr);                           // FIXME why reference in, reference out ? its not like you can add to this report ...
-       QueueReport& getQReport(const std::string& blockName, QueueReport& qr);             // FIXME why reference in, reference out ? its not like you can add to this report ...
+               void verboseOn()  {verbose = true;}                              // Turn on Verbose Output
+               void verboseOff() {verbose = false;}                             // Turn off Verbose Output
+               bool isVerbose()  const {return verbose;}                        // Tell if Output is set to Verbose 
+               void debugOn()  {debug = true;}                                  // Turn on Verbose Output
+               void debugOff() {debug = false;}                                 // Turn off Verbose Output
+               bool isDebug()  const {return debug;}                            // Tell if Output is set to Verbose
+               bool isSim()  const {return sim;}                                // Tell if this is a simulation. Cannot change while connected !!!
+               void testOn()  {testmode = true;}                                // Turn on Testmode
+               void testOff() {testmode = false;}                               // Turn off Testmode
+               bool isTest() const {return testmode;}                           // Tell if Testmode is on
+               void optimisedS2ROn() {optimisedS2R = true;}                     // Optimised Safe2remove on
+               void optimisedS2ROff(){optimisedS2R = false;}                    // Optimised Safe2remove off
+               bool isOptimisedS2R() const {return optimisedS2R;}               // tell if Safe2remove optimisation is on or off
+      HealthReport& getHealth(uint8_t cpuIdx, HealthReport &hr);                // FIXME why reference in, reference out ? its not like you can add to this report ...
+       QueueReport& getQReport(const std::string& blockName, QueueReport& qr);  // FIXME why reference in, reference out ? its not like you can add to this report ...
            uint64_t getDmWrTime();
+
        std::string& inspectQueues(const std::string& blockName, std::string& report);      // Show all command fields in Block Queue
                void show(const std::string& title, const std::string& logDictFile, TransferDir dir, bool filterMeta );
                void showUp(bool filterMeta);                                               // show a CPU's Upload address table

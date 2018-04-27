@@ -957,11 +957,6 @@ void CarpeDM::showCpuList() {
   void CarpeDM::showDown(bool filterMeta) {  //show a CPU's Download address table
     show("Download Table" + (filterMeta ? std::string(" (noMeta)") : std::string("")), "download_dict.txt", TransferDir::DOWNLOAD, filterMeta);
   }
-  void CarpeDM::verboseOn()  {verbose = true;}  //Turn on Verbose Output
-  void CarpeDM::verboseOff() {verbose = false;} //Turn off Verbose Output
-  bool CarpeDM::isVerbose()  const {return verbose;} //Tell if Output is set to Verbose 
-  void CarpeDM::debugOn()  {debug = true;}  //Turn on Verbose Output
-  void CarpeDM::debugOff() {debug = false;} //Turn off Verbose Output
-  bool CarpeDM::isDebug()  const {return debug;} //Tell if Output is set to Verbose
+
   void CarpeDM::updateModTime() { modTime = getDmWrTime(); } 
-  uint64_t CarpeDM::getModTime() { return modTime; }
+  

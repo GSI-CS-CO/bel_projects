@@ -135,7 +135,7 @@ public:
   void clear() { a.clear(); }
 
   void debug(std::ostream& os) {
-    os << "Active Covenants:" << std::endl; 
+    os << "Active Safe2remove-Covenants:" << std::endl; 
     for (cmI x = a.begin(); x != a.end(); x++) { 
       os << x->name << " prio: " << std::dec << (int)x->prio <<  ", slot: " <<  (int)x->slot <<  ", ChkSum: 0x" << std::hex <<  x->chkSum << std::endl;       
     }
