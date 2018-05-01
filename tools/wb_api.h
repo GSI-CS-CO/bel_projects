@@ -9,9 +9,9 @@
 //            -- Wesley W. Terpstra <w.terpstra@gsi.de>
 //            -- Alessandro Rubini <rubini@gnudd.com>
 //            -- Tomasz Wlostowski <tomasz.wlostowski@cern.ch>
-//  version : 24-Apr-2018
+//  version : 01-May-2018
 //
-#define WB_API_VERSION "0.09.0"
+#define WB_API_VERSION "010.0"
 //
 // Api for wishbone devices for timing receiver nodes. This is not a timing receiver API.
 // 
@@ -143,22 +143,28 @@ eb_status_t wb_wr_reset(eb_device_t device,                    // EB device
                         );
 
 
-// puts user lm32 into reset state
+// put user lm32 into reset state
 eb_status_t wb_cpu_halt(eb_device_t device,                    // EB device
                         int devIndex,                          // 0,1,2... - there may be more than 1 device on the WB bus
                         uint32_t value                         // number 0..31 of a single cpu, 0xff for all 
                         );
 
-// releases user lm32 from reset state
+// release user lm32 from reset state
 eb_status_t wb_cpu_resume(eb_device_t device,                  // EB device
                           int devIndex,                        // 0,1,2... - there may be more than 1 device on the WB bus
                           uint32_t value                       // number 0..31 of a single cpu, 0xff for all 
                           );
 
-// gets reset state of all lm32 
+// get reset state of all lm32 
 eb_status_t wb_cpu_status(eb_device_t device,                  // EB device
                           int devIndex,                        // 0,1,2... - there may be more than 1 device on the WB bus
                           uint32_t *value                      // one bit per CPU; CPU 0 is rightmost bit
                           );
+
+// get gateware build type 
+eb_status_t wb_get_build_type(eb_device_t device,              // EB device
+                              int size,                        // array size of builtType
+                              char *buildType                  // build Type 
+                              );
 
 #endif // wb_api.h

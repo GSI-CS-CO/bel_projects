@@ -34,7 +34,7 @@
 // For all questions and ideas contact: d.beck@gsi.de
 // Last update: 25-April-2015
 //////////////////////////////////////////////////////////////////////////////////////////////
-#define EBMON_VERSION "1.5.0"
+#define EBMON_VERSION "1.6.0"
 
 // standard includes
 #include <unistd.h> // getopt
@@ -67,6 +67,7 @@ static void die(const char* where, eb_status_t status) {
 static void help(void) {
   fprintf(stderr, "Usage: %s [OPTION] <etherbone-device>\n", program);
   fprintf(stderr, "\n");
+  fprintf(stderr, "  -a               display gateware 'build type'\n");
   fprintf(stderr, "  -b<busIndex>     display ID (ID of slave on the specified 1-wire bus)\n");
   fprintf(stderr, "  -c<eb-device>    compare timestamp with the one of <eb-device> and display the result\n");
   fprintf(stderr, "  -d               display WR time\n");
@@ -94,6 +95,8 @@ static void help(void) {
 
 
 int main(int argc, char** argv) {
+  #define BUILDTYPELEN 256
+
   eb_status_t       status;
   eb_socket_t       socket;
   int               devIndex=-1;  // 0,1,2... - there may be more than 1 device on the WB bus
@@ -118,6 +121,7 @@ int main(int argc, char** argv) {
   int         getBoardTemp=0;
   int         getWRDateOther=0;
   int         getWRUptime=0;
+  int         getBuildType=0;
   int         exitCode=0;
 
   unsigned int family = 0;       // 1-Wire: familyCode
@@ -140,6 +144,7 @@ int main(int argc, char** argv) {
   char linkStr[64];
   char syncStr[64];
   char timestr[60];
+  char buildType[BUILDTYPELEN];
   time_t secs;
   const struct tm* tm;
   struct timeval htm;
@@ -149,8 +154,11 @@ int main(int argc, char** argv) {
 
   program = argv[0];
 
-  while ((opt = getopt(argc, argv, "t:u:w:f:b:c:dosmlievhz")) != -1) {
+  while ((opt = getopt(argc, argv, "t:u:w:f:b:c:adosmlievhz")) != -1) {
     switch (opt) {
+    case 'a':
+      getBuildType=1;
+      break;
     case 'b':
       getBoardID=1;
       busIndex = strtol(optarg, &tail, 0);
@@ -219,6 +227,7 @@ int main(int argc, char** argv) {
       getWRIP=1;
       getWRUptime=1;
       getEBVersion=1;
+      getBuildType=1;
       verbose=1;
       break;
     case 'w':
@@ -396,6 +405,12 @@ int main(int argc, char** argv) {
     if (verbose) fprintf(stdout, "FPGA uptime [h]: ");
     fprintf(stdout, "%013.2f\n", (double)uptime / 3600.0 );
   } 
+
+  if (getBuildType) {
+    if ((status = wb_get_build_type(device, BUILDTYPELEN, buildType)) != EB_OK) die("WB get build type", status);
+    if (verbose) fprintf(stdout, "FPGA build type: ");
+    fprintf(stdout, "%s\n", buildType);
+  }
 
   if (getBoardID) {
     if (!family) die("family code not specified (1-wire)", EB_OOM);

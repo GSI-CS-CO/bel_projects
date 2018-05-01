@@ -3,7 +3,7 @@
 //
 //  created : Apr 10, 2013
 //  author  : Dietrich Beck, GSI-Darmstadt
-//  version : 24-Apr-2018
+//  version : 01-May-2018
 //
 // Api for wishbone devices for timing receiver nodes. This is not a timing receiver API,
 // but only a temporary solution.
@@ -12,8 +12,8 @@
 // License Agreement for this software:
 //
 // Copyright (C) 2013  Dietrich Beck
-// GSI Helmholtzzentrum für Schwerionenforschung GmbH
-// Planckstraße 1
+// GSI Helmholtzzentrum fuer Schwerionenforschung GmbH
+// Planckstrasse 1
 // D-64291 Darmstadt
 // Germany
 //
@@ -37,6 +37,7 @@
 // standard includes
 #include <string.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 // etherbone
 #include <etherbone.h>
@@ -61,6 +62,7 @@ eb_address_t wb4_ram        = EB_NULL;
 eb_address_t wb4_1wire      = EB_NULL;
 eb_address_t user_1wire     = EB_NULL;
 eb_address_t reset_addr     = EB_NULL;
+eb_address_t brom_addr      = EB_NULL;
 
 eb_address_t BASE_ONEWIRE;
 extern struct w1_bus wrpc_w1_bus;
@@ -139,7 +141,7 @@ eb_status_t wb_open(const char *dev, eb_device_t *device, eb_socket_t *socket)
   *socket = EB_NULL;
   
   if ((status = eb_socket_open(EB_ABI_CODE, 0, EB_ADDRX|EB_DATAX, socket)) != EB_OK) return status;
-  if ((status = eb_device_open(*socket, dev, EB_ADDRX|EB_DATAX, 10, device)) != EB_OK) return status;
+  if ((status = eb_device_open(*socket, dev, EB_ADDRX|EB_DATAX, 2, device)) != EB_OK) return status;
 
   known_sock = *socket;
 
@@ -595,3 +597,57 @@ eb_status_t wb_cpu_status(eb_device_t device, int devIndex, uint32_t *value)
   return status;
 } // wb_cpu_status
 
+
+eb_status_t wb_get_build_type(eb_device_t device, int size, char *buildType)
+{
+  eb_data_t    *data = NULL;
+  char         *text = NULL;
+  char         *ptr  = NULL;
+  eb_status_t  status;
+  eb_cycle_t   cycle;
+  struct sdb_device sdb;
+  int i,j;
+  int datalen  = 0;
+  int textlen  = 0;
+  int devIndex = 1;
+
+#ifdef WB_SIMULATE
+  if (size > 3) sprintf(builtType, "N/A");
+  return EB_OK;
+#endif
+  if ((status = eb_sdb_find_by_identity(device, FPGA_BUILDROM_VENDOR, FPGA_BUILDROM_PRODUCT, &sdb, &devIndex)) != EB_OK) return status;
+  if (devIndex != 1) return EB_OOM;
+  if ((status = eb_cycle_open(device, 0, 0, &cycle)) == EB_OK) {
+    datalen = ((sdb.sdb_component.addr_last - sdb.sdb_component.addr_first) + 1) / 4;
+    brom_addr = sdb.sdb_component.addr_first;
+    if ((data = malloc(datalen * sizeof(eb_data_t))) == 0) return EB_OOM;
+    for (i = 0; i < datalen; ++i) eb_cycle_read(cycle, brom_addr + i*4, EB_DATA32|EB_BIG_ENDIAN, &data[i]);
+  } // if cycle open
+  eb_cycle_close(cycle);
+  
+  textlen = datalen * 4 * sizeof(eb_data_t);
+  if ((text = malloc(textlen)) == 0) return EB_OOM;
+
+  j = 0;
+  for (i = 0; i < datalen; i++) {
+    text[j] = (char)(data[i] >> 24) & 0xff; j++;
+    text[j] = (char)(data[i] >> 16) & 0xff; j++;
+    text[j] = (char)(data[i] >>  8) & 0xff; j++;
+    text[j] = (char)(data[i]      ) & 0xff; j++;
+  }
+  text[j+1] = '\0';
+
+  ptr = strstr(text, "Build type  : "); 
+  if (ptr != NULL) ptr = &(ptr[strlen("Build type  : ")]);
+  //if (ptr != NULL) ptr = strstr(ptr, "-v");
+  //if (ptr != NULL) ptr = &(ptr[strlen("-v")]);
+  if (ptr != NULL) ptr = strtok(ptr, "\n");
+  if ((ptr != NULL) && (strlen(ptr) < size)) sprintf(buildType, "%s", ptr);
+  else                                       buildType[0] = '\0';
+ 
+  if (data != NULL) free(data);
+  free(text);
+
+  return EB_OK;
+  
+} // wb_build_type

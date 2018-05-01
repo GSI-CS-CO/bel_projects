@@ -165,6 +165,19 @@
 
 // masks
 
+
+//-- BUILD ROM  --
+// device ID
+#define FPGA_BUILDROM_VENDOR         WB_GSI              // vendor ID
+#define FPGA_BUILDROM_PRODUCT        0x2d39fa8b          // product ID
+#define FPGA_BUILDROM_VMAJOR         1                   // major revision
+#define FPGA_BUILDROM_VMINOR         1                   // minor revision
+
+// register offsets
+
+// masks
+
+
 //-- TLU --
 //device ID
 #define GSI_TM_LATCH_VENDOR          WB_GSI      //vendor ID
