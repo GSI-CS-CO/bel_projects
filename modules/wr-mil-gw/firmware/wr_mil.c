@@ -109,7 +109,7 @@ void make_mil_timestamp(uint64_t TAI, uint32_t *EVT_UTC, uint64_t UTC_offset_ms)
   uint32_t mil_sec          = mil_timestamp_ms / 1000;
 
   // The following converion code for the UTC timestamps is based on 
-  // some sample code that was kinkly provided by Peter Kainberger.
+  // some sample code that was kindly provided by Peter Kainberger.
   union UTCtime_t
   {
     uint8_t bytes[8];
