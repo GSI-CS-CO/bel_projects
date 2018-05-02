@@ -26,7 +26,7 @@ eb-massmon: eb-massmon.c
 	$(CC) $(CFLAGS) $(WBFLAG) $(WBDIR)/wb_api.c $(WRPC)/dev/w1.c $(WRPC)/dev/w1-temp.c $(WRPC)/dev/w1-eeprom.c $(WRPC)/tools/eb-w1.c -o eb-massmon eb-massmon.c $(LIBS)
 
 clean:
-	rm -f *.o eb-mon
+	rm -f *.o eb-mon eb-massmon
 
 install:
 	mkdir -p $(STAGING)$(PREFIX)/bin

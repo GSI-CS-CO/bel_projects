@@ -3,7 +3,7 @@
 //
 //  created : 2018
 //  author  : Dietrich Beck, GSI-Darmstadt
-//  version : 27-Apr-2018
+//  version : 02-May-2018
 //
 // Command-line interface for WR monitoring of many nodes via Etherbone.
 //
@@ -34,7 +34,7 @@
 // For all questions and ideas contact: d.beck@gsi.de
 // Last update: 27-April-2018
 //////////////////////////////////////////////////////////////////////////////////////////////
-#define EBMASSMON_VERSION "0.0.0"
+#define EBMASSMON_VERSION "0.0.1"
 
 // standard includes
 #include <unistd.h> // getopt
@@ -54,13 +54,20 @@
 #include <wb_slaves.h>
 
 const char* program;
-static int verbose=0;
-eb_device_t device;        // needs to be global for 1-wire stuff
+static int  verbose=0;
+eb_device_t device;           // needs to be global for 1-wire stuff
 
-#define    MAXNODES 1024   // max number of nodes
-#define    MAXLEN   1024   // max length of an array
+#define     MAXNODES  1024    // max number of nodes
+#define     MAXLEN    1024    // max length of an array
+#define     UTCOFFSET 37000   // UTC offset @ 2018; hm... configurable as option?
 
+const char  *networkTypeNames[]  = {"all", "Production", "User", "Timing"};
+#define     MAXNETWORKTYPES      4
 
+const char  *nodeTypeNames[]     = {"all", "scuxl", "pexaria", "vmel", "expl"};
+#define     MAXNODETYPES         5
+
+#define     MAXFILEFORMATS       2 // only 0, and 1 
 
 static void die(const char* where, eb_status_t status) {
   fprintf(stderr, "%s: %s failed: %s\n",
@@ -83,7 +90,7 @@ static void help(void) {
   fprintf(stderr, "  -l               include WR link status\n");
   fprintf(stderr, "  -m               include WR MAC\n");
   fprintf(stderr, "  -o               include offset between WR time and system time [ms]\n");
-  fprintf(stderr, "  -q               justs parse file and list defices. No hardwar access. Useful for ATD file analysis\n");
+  fprintf(stderr, "  -q               justs parse file and list nodes. No hardware access. Useful for ATD file analysis\n");
   fprintf(stderr, "  -s               include WR sync status\n");
   fprintf(stderr, "  -t               display table with all nodes\n");
   fprintf(stderr, "  -u               display statistics for all nodes\n");
@@ -104,15 +111,21 @@ static void help(void) {
   fprintf(stderr, "Use this tool to get some WR related info of many timing receiver nodes.\n");
   fprintf(stderr, "Warning: This tool is causing some traffic on the network. Use with care.\n");
   fprintf(stderr, "\n");
-  fprintf(stderr, "Example: '%s udp allTimingDevices.txt timing.acc.gsi.de -f1 -x1 -y1 -o -l -s -z -t -q'\n", program);
-  fprintf(stderr, "         query all SCUs of production network; here: silent mode (option '-q')\n");
+  fprintf(stderr, "Example: '%s udp allTimingDevices.txt timing.acc.gsi.de -f1 -x0 -y0 -t -u -q'\n", program);
+  fprintf(stderr, "          don't query (option '-q') but only display all nodes of all networks\n");
+  fprintf(stderr, "\n");
+  fprintf(stderr, "Example: '%s udp allTimingDevices.txt timing.acc.gsi.de -f1 -x1 -y1 -t -u -d -o -l -s -a -z'\n", program);
+  fprintf(stderr, "          display info on all SCUs of the production network queried via the White Rabbit network\n");
+  fprintf(stderr, "\n");
+  fprintf(stderr, "Example: '%s tcp allTimingDevices.txt acc.gsi.de -f1 -x1 -y1 -t -u -d -o -l -s -a -z'\n", program);
+  fprintf(stderr, "          display info on all SCUs of the production network queried via the ACC network\n");
   fprintf(stderr, "\n");
   fprintf(stderr, "Report software bugs to <d.beck@gsi.de>\n");
   fprintf(stderr, "Version %s. Licensed under the LGPL v3.\n", EBMASSMON_VERSION);
 } //help
 
 
-eb_status_t checkDevGetDateOffset(eb_device_t device, int devIndex, uint64_t *nsecs, uint64_t *offset, uint32_t timeout)
+static eb_status_t checkDevGetDateOffset(eb_device_t device, int devIndex, uint64_t *nsecs, uint64_t *offset, uint32_t timeout)
 {
   eb_status_t    status;
   struct timeval htm;
@@ -137,17 +150,11 @@ eb_status_t checkDevGetDateOffset(eb_device_t device, int devIndex, uint64_t *ns
   return status;
 } // checkDevGetDateOffset
 
-int deviceNameOk(const char* proto, char* name)
+
+static int deviceNameOk(const char* proto, char* name)
 {
   int   type_ok  = 0;  // device type ok?
   int   proto_ok = 0;  // EB proto ok?
-  char  *ptr;
-
-  // white list: check for known node types
-  if (strstr(name, "scuxl")   != NULL)  type_ok = 1;
-  if (strstr(name, "pexaria") != NULL)  type_ok = 1;
-  if (strstr(name, "vmel")    != NULL)  type_ok = 1;
-  if (strstr(name, "expl")    != NULL)  type_ok = 1;
 
   // white list: only allow upd and tcp
   if (strstr(proto, "udp")    != NULL)  proto_ok = 1;
@@ -156,10 +163,10 @@ int deviceNameOk(const char* proto, char* name)
   // strip trailing "t" from name in case proto is "tcp"
   // check: this fails in case node future names may contain a non-trainling "t". But ok for now ...
   if (strstr(proto, "tcp") != NULL) {
-    ptr = strtok(name, "t");
-    sprintf(name, "%s", ptr);
-  }
+    if (name[strlen(name) - 1] == 't') name[strlen(name) - 1] = '\0';
+  } // if proto is tcp
 
+  type_ok = 1;
   // exclude unreasonable length of name ("pexaria1234t" is 12 chars and longest name)
   if(strlen(name) > 12) type_ok =  0;    
 
@@ -172,29 +179,38 @@ int deviceNameOk(const char* proto, char* name)
   else                     return 0;
 } //deviceNameOk
 
-int nodeTypeOk(char *node, int nodeType)
-{
-  int type_ok = 1;
 
-  // exclude node in case nodeType != 0 (0: all node types)
-  if (nodeType != 0) {
-    if ((strstr(node, "scuxl")   != NULL)  && (nodeType != 1)) type_ok = 0;
-    if ((strstr(node, "pexaria") != NULL)  && (nodeType != 2)) type_ok = 0;
-    if ((strstr(node, "vmel")    != NULL)  && (nodeType != 3)) type_ok = 0;
-    if ((strstr(node, "expl")    != NULL)  && (nodeType != 4)) type_ok = 0;
-  } // if exclude nodes
+static int nodeTypeOk(char *node, int nodeType)
+{
+  int type_ok = 0;
+  int i;
+
+  switch (nodeType) {
+  case 0 :
+    // all known node types
+    for (i = 1; i < MAXNODETYPES; i++) if (strstr(node, nodeTypeNames[i]) != NULL) type_ok = 1;
+    break;
+  case 1 ... (MAXNODETYPES - 1) :
+    // node is not of respective type
+    type_ok = 1;
+    if (strstr(node, nodeTypeNames[nodeType]) == NULL) type_ok = 0;
+    break;
+  default: ;
+  } // switch network type
 
   return type_ok;
 } // nodeTypeOk
 
-int protoOk(const char *proto, int nodeType)
+
+static int protoOk(const char *proto, int nodeType)
 {
   // exclude tcp and non-SCU 
-  if ((strstr(proto, "tcp")    != NULL) && (nodeType != 1)) return 0;
-  else                                                      return 1;
+  if ((strstr(proto, "tcp") != NULL) && (nodeType != 1)) return 0;
+  else                                                   return 1;
 } // protoOk
 
-void removeNonAlphaNumeric(char *text)                                                  
+
+static void removeNonAlphaNumeric(char *text)                                                  
 {
   int  i = 0;
   int  j = 0;
@@ -207,14 +223,16 @@ void removeNonAlphaNumeric(char *text)
   text[j] = '\0';
 } // removeNonAlphaNumeric
 
-int parseSimpleLineOk(char* fileLine, char* node)
+
+static int parseSimpleLineOk(char* fileLine, char* node)
 {
   removeNonAlphaNumeric(fileLine);
   sprintf(node, "%s", fileLine);
   return 1;
-} // parseSimpleLine
+} // parseSimpleLineOk
 
-int parseATDLineOk(char* fileLine, char* network, char* node)
+
+static int parseATDLineOk(char* fileLine, char* network, char* node)
 {
   // format '00:26:7b:00:03:ff,id:timing,192.168.161.1,scuxl0249t       #NW Production; SCU; ...
   char* ptr1;
@@ -245,33 +263,31 @@ int parseATDLineOk(char* fileLine, char* network, char* node)
   } // valid hostname
 
   removeNonAlphaNumeric(node);
+  removeNonAlphaNumeric(network);
   
   if (node_ok && network_ok) return 1;
   else                       return 0;
-} // parseATDLine
+} // parseATDLineOk
 
-int networkOk(char* network, int networkType)
+
+static int networkOk(char* network, int networkType)
 {
-  int allow = 1;
+  int network_ok = 1;
 
   switch (networkType) {
   case 0 :
-    // all all nodes
+    // all networks
     break;
-  case 1 :
-    if (strcmp(network, "Production") != 0) allow = 0;
-    break;
-  case 2 :
-    if (strcmp(network, "User")       != 0) allow = 0;
-    break;
-  case 3 :
-    if (strcmp(network, "Timing")     != 0) allow = 0;
+  case 1 ... (MAXNETWORKTYPES - 1) :
+    // node is not in respective network
+    if (strcmp(network, networkTypeNames[networkType]) != 0) network_ok = 0;
     break;
   default: ;
   } // switch network type
   
-  return allow;
-} // network ok
+  return network_ok;
+} // networkOk
+
 
 static void printDate(uint64_t nsecs)
 {
@@ -279,11 +295,13 @@ static void printDate(uint64_t nsecs)
   else             fprintf(stdout, ", %10lu", (nsecs / 1000000000));
 } // printDate
 
+
 static void printOffset(uint64_t offset)
 {
   if (offset == ~0) fprintf(stdout, ", %13s", "---");
   else              fprintf(stdout, ", %13lu", (offset));
 } // printOffset
+
 
 static void printSyncState(uint32_t syncState)
 {
@@ -296,6 +314,7 @@ static void printSyncState(uint32_t syncState)
   }
 } // printSyncState
 
+
 static void printLink(uint32_t link)
 {
   if (link == ~0) fprintf(stdout, ", %4s", "---");
@@ -305,11 +324,13 @@ static void printLink(uint32_t link)
   }
 } // printLink
 
+
 static void printUptime(uint32_t uptime)
 {
   if (uptime == ~0) fprintf(stdout, ", %9s", "---");
   else              fprintf(stdout, ", %9.2f", ((double)uptime / 3600.0));
 } // printOffset
+
 
 static void printBuildVer(char *buildType)
 {
@@ -331,17 +352,20 @@ static void printMac(uint64_t mac)
   else           fprintf(stdout, ", %012llx", (long long unsigned)mac);
 } // printMac
 
+
 static void printIp(uint32_t ip)
 {
   if (ip == ~0) fprintf(stdout, ", %15s", "---");
   else          fprintf(stdout, ", %03d.%03d.%03d.%03d", (ip & 0xFF000000) >> 24, (ip & 0x00FF0000) >> 16, (ip & 0x0000FF00) >> 8, ip & 0x000000FF);
 } // printIp
 
+
 static void printUp(uint32_t exist)
 {
   if (exist == ~0) fprintf(stdout, ", %2s", "--");
   else             fprintf(stdout, ", %2d", exist);
 } // printUp
+
 
 static void printEbStat(eb_status_t status)
 {
@@ -359,10 +383,7 @@ static void printEbStat(eb_status_t status)
     fprintf(stdout, ", %8s", "BUSY");
     break;
   case EB_TIMEOUT :
-    fprintf(stdout, ", %8s", "---");
-    break;
-  case EB_OOM :
-    fprintf(stdout, ", %8s", "NO RAM");
+    fprintf(stdout, ", %8s", "TIMEOUT");
     break;
   case EB_ABI :
     fprintf(stdout, ", %8s", "EBLIBERR");
@@ -375,12 +396,14 @@ static void printEbStat(eb_status_t status)
   } // switch
 } // print eb state
 
+
 static void printHeader(int wrDate, int wrOffset, int wrSync, int wrMac, int wrLink, int wrIp, int wrUptime, int buildVer)
 {
   // always print header
-  fprintf(stdout,   "%15s",  "node");
-  fprintf(stdout,   ", %8s", "ebStatus");
-  fprintf(stdout,   ", %2s", "up");
+  fprintf(stdout,   "%15s",   "node");
+  fprintf(stdout,   ", %10s", "network");
+  fprintf(stdout,   ", %8s" , "ebStatus");
+  fprintf(stdout,   ", %2s" , "up");
 
   // depends on request
   if (wrDate)   fprintf(stdout, ", %10s", "time [s]");
@@ -397,63 +420,61 @@ static void printHeader(int wrDate, int wrOffset, int wrSync, int wrMac, int wrL
 } // print Header
 
 int main(int argc, char** argv) {
-  eb_status_t       status;
-  eb_socket_t       socket;
-  int               devIndex=0;       // grab 1st device on the WB bus
-  char              devName[MAXLEN];
-  char              network[MAXLEN];
-  char              node[MAXLEN];
+  eb_status_t  status;                 // EB status
+  eb_socket_t  socket;                 // EB socket
+  char         devName[MAXLEN];        // full EB device name
+  char*        ebProto;                // EB protocol 'udp' ...
+  int          devIndex=0;             // always grab 1st device on the WB bus
 
-  const char* ebProto;                // EB protocol
-  const char* fileName;
-  const char* domain;                 // domain '.gsi.de'
-  FILE*       file;                   // file with node names
-  char        fileLine[MAXLEN];       // line in file
-  int         nNodes;                 // number of nodes
-  int         nodeOk;                 // flag a node (if it is ok: syntax, combination...
+  char*        fileName;               // file name 
+  char         node[MAXLEN];           // node name 'scuxl0815'
+  char         network[MAXLEN];        // network name 'Producton', 'User' ...
+  char*        domain;                 // domain '.gsi.de' ...
 
-  int         getEBVersion = 0;
-  int         getWRDate    = 0;
-  int         getWROffset  = 0;
-  int         getWRSync    = 0;
-  int         getWRMac     = 0;
-  int         getWRLink    = 0;
-  int         getWRIP      = 0;
-  int         getWRUptime  = 0;
-  int         getBuildVer  = 0;
-  int         exitCode     = 0;
-  int         timeout      = 1000000; // [us]
+  FILE*        file;                   // file with nodes
+  char         fileLine[MAXLEN];       // one line of the file
+  int          nNodes;                 // number of nodes
+  int          nodeOk;                 // flag (if it is ok: syntax, combination...)
 
-  int         fileFormat   = 0;         // 0: text file, one hostname per line
-  int         printTable   = 0;         
-  int         printStats   = 0;
-  int         networkType  = 0;
-  int         nodeType     = 0;
-  int         quietMode    = 0;
+  int          getEBVersion = 0;       // option '-e'
+  int          getWRDate    = 0;       // option '-d'
+  int          getWROffset  = 0;       // option '-o'
+  int          getWRSync    = 0;       // option '-s'
+  int          getWRMac     = 0;       // option '-m'
+  int          getWRLink    = 0;       // option '-l'
+  int          getWRIP      = 0;       // option '-i'
+  int          getWRUptime  = 0;       // option '-z'
+  int          getBuildVer  = 0;       // option '-a'
+  int          timeout      = 1000000; // option '-w'; internal representation is [us]
+  int          fileFormat   = 0;       // option '-f'
+  int          printTable   = 0;       // option '-t'  
+  int          printStats   = 0;       // option '-u'
+  int          networkType  = 0;       // option '-x'
+  int          nodeType     = 0;       // option '-y'
+  int          quietMode    = 0;       // option '-q'
 
-  uint64_t    tmp64;
-  uint32_t    tmp32;
-  int         tmp;
-  char        tmpStr[MAXLEN];
-  char        nodeName[MAXNODES][MAXLEN];      
-  char        buildType[MAXNODES][MAXLEN];      
-  uint64_t    nodeNsecs64[MAXNODES];
-  uint64_t    nodeOffset[MAXNODES];
-  uint64_t    nodeMac[MAXNODES];
-  uint32_t    nodeLink[MAXNODES];
-  uint32_t    nodeUptime[MAXNODES];
-  uint32_t    nodeSyncState[MAXNODES];
-  uint32_t    nodeIp[MAXNODES];
-  uint32_t    nodeUp[MAXNODES];
-  eb_status_t nodeEbStat[MAXNODES];
+  char         nodeName[MAXNODES][MAXLEN];      
+  char         buildType[MAXNODES][MAXLEN];      
+  uint64_t     nodeNsecs64[MAXNODES];
+  uint64_t     nodeOffset[MAXNODES];
+  uint64_t     nodeMac[MAXNODES];
+  uint32_t     nodeLink[MAXNODES];
+  uint32_t     nodeUptime[MAXNODES];
+  uint32_t     nodeSyncState[MAXNODES];
+  uint32_t     nodeIp[MAXNODES];
+  uint32_t     nodeUp[MAXNODES];
+  char         nodeNetwork[MAXNODES][MAXLEN];
+  eb_status_t  nodeEbStat[MAXNODES];
 
-  uint64_t    nsecs;
-  uint64_t    offset;
+  int          i,j,k,l,m,nReachable;
+  uint64_t     tmp64, temp64;
+  uint32_t     tmp32;
+  int          tmp;
+  char         tmpStr[MAXLEN];
 
-  int i;
-
-  int opt, error=0;
-  char *tail;
+  int          exitCode     = 0;
+  int          opt, error=0;
+  char         *tail;
 
   program = argv[0];
 
@@ -470,8 +491,12 @@ int main(int argc, char** argv) {
       break;
     case 'f':
       fileFormat = strtol(optarg, &tail, 0);
+      if ((fileFormat < 0) || (fileFormat > MAXFILEFORMATS - 1)) {
+        fprintf(stderr, "option file format: '%s' is out of range !\n", optarg);
+        exit(1);
+      }
       if (*tail != 0) {
-        fprintf(stderr, "Specify a proper number, not '%s'!\n", optarg);
+        fprintf(stderr, "option file format: pecify a proper number, not '%s'!\n", optarg);
         exit(1);
       } // if *tail
       break;
@@ -506,21 +531,29 @@ int main(int argc, char** argv) {
       timeout = strtol(optarg, &tail, 0);
       timeout = timeout * 1000; // ms -> us
       if (*tail != 0) {
-        fprintf(stderr, "Specify a proper number, not '%s'!\n", optarg);
+        fprintf(stderr, "option timeout: specify a proper timeout value, not '%s'!\n", optarg);
         exit(1);
       } // if *tail
       break;
     case 'x' :
       networkType = strtol(optarg, &tail, 0);
+      if ((networkType < 0) || (networkType > MAXNETWORKTYPES - 1)) {
+        fprintf(stderr, "option network type: '%s' is out of range !\n", optarg);
+        exit(1);
+      }
       if (*tail != 0) {
-        fprintf(stderr, "Specify a proper number, not '%s'!\n", optarg);
+        fprintf(stderr, "option network type: specify a proper number, not '%s'!\n", optarg);
         exit(1);
       } // if *tail
       break;
     case 'y' :
       nodeType = strtol(optarg, &tail, 0);
+      if ((nodeType < 0) || (nodeType > MAXNODETYPES - 1)) {
+        fprintf(stderr, "option node type: '%s' is out of range !\n", optarg);
+        exit(1);
+      }
       if (*tail != 0) {
-        fprintf(stderr, "Specify a proper number, not '%s'!\n", optarg);
+        fprintf(stderr, "option node type: specify a proper number, not '%s'!\n", optarg);
         exit(1);
       } // if *tail
       break;
@@ -550,6 +583,15 @@ int main(int argc, char** argv) {
   }
 
   ebProto  = argv[optind];
+  if ((strstr(ebProto, "tcp") != NULL) && (nodeType != 1)){
+    fprintf(stderr, "usage of protocol 'tcp' with non-SCU is not allowed; use option '-y1'\n");
+    return 1;
+  } // usage of tcp with non-SCU is not allowed
+  if ((strstr(ebProto, "udp") != NULL) && (networkType == 0) && !quietMode){
+    fprintf(stderr, "usage of protocol 'udp' for 'all' networks is not allowed; use option '-xn' with non-zero 'n'\n");
+    return 1;
+  } // usage of tcp with non-SCU is not allowed
+
   fileName = argv[optind+1];
   domain   = argv[optind+2];
   // finished with getopt stuff
@@ -562,8 +604,9 @@ int main(int argc, char** argv) {
   // init data
   nNodes = 0;
   for (i=0; i < MAXNODES; i++) {
-    sprintf(nodeName[i] , "N/A");
-    sprintf(buildType[i], "N/A");
+    sprintf(nodeName[i]   , "N/A");
+    sprintf(buildType[i]  , "N/A");
+    sprintf(nodeNetwork[i], "N/A");
     nodeNsecs64[i]   = ~0;
     nodeOffset[i]    = ~0;
     nodeMac[i]       = ~0;
@@ -602,14 +645,15 @@ int main(int argc, char** argv) {
         fprintf(stdout, "%s...", node); fflush(stdout);
         sprintf(devName, "%s/%s.%s", ebProto, node, domain);
         sprintf(nodeName[nNodes], "%s", node);
+        sprintf(nodeNetwork[nNodes], "%s", network);
         if (!quietMode) {
           // open EB device
           if ((nodeEbStat[nNodes] = wb_open(devName, &device, &socket)) == EB_OK) {
             // check if device is required due to possible unknown MAC addresses in WRS RTU
-            if ((status = checkDevGetDateOffset(device, devIndex, &nsecs, &offset, timeout)) == EB_OK) {
-              nodeNsecs64[nNodes] = nsecs;
-              nodeOffset[nNodes]  = offset;
-              nodeUp[nNodes]   = 1;
+            if ((status = checkDevGetDateOffset(device, devIndex, &tmp64, &temp64, timeout)) == EB_OK) {
+              nodeNsecs64[nNodes] = tmp64;
+              nodeOffset[nNodes]  = temp64;
+              nodeUp[nNodes]      = 1;
               if (getWRSync)   {if ((status = wb_wr_get_sync_state(device, devIndex, &tmp)) == EB_OK) nodeSyncState[nNodes] = tmp;}
               if (getWRMac)    {if ((status = wb_wr_get_mac(device, devIndex, &tmp64)) == EB_OK)      nodeMac[nNodes]       = tmp64;}
               if (getWRLink)   {if ((status = wb_wr_get_link(device, devIndex, &tmp)) == EB_OK)       nodeLink[nNodes]      = tmp;}
@@ -626,12 +670,14 @@ int main(int argc, char** argv) {
   } // while not EOF
   fclose(file);
   fprintf(stdout, "\n");
-  fprintf(stdout, "querried data from %d nodes\n", nNodes);
-
+  
   if (printTable) {
+    fprintf(stdout, "\nqueried data from %d nodes in network '%s'\n", nNodes, networkTypeNames[networkType]);
+    
     printHeader(getWRDate, getWROffset, getWRSync, getWRMac, getWRLink, getWRIP, getWRUptime, getBuildVer);
     for (i=0; i<nNodes; i++) {
       fprintf(stdout, "%15s", nodeName[i]);
+      fprintf(stdout, ", %10s", nodeNetwork[i]);
       printEbStat(nodeEbStat[i]);
       printUp(nodeUp[i]);
       if (getWRDate)   printDate(nodeNsecs64[i]);
@@ -642,12 +688,87 @@ int main(int argc, char** argv) {
       if (getBuildVer) printBuildVer(buildType[i]);
       if (getWRMac)    printMac(nodeMac[i]);
       if (getWRIP)     printIp(nodeIp[i]);
-      fprintf(stdout,"\n");
-      
+      fprintf(stdout,"\n");      
     } // for all nodes
-      
   } // if printStats
+  
+  if (printStats) {
+    fprintf(stdout, "\nqueried data from %d nodes in network '%s'\n", nNodes, networkTypeNames[networkType]);    
+    // eb status
+    j = 0;
+    k = 0;
+    l = 0;
+    for (i = 0; i < nNodes; i++) {
+      if (nodeEbStat[i] == EB_OK)      j++;
+      if (nodeEbStat[i] == EB_ADDRESS) k++;
+      if (nodeEbStat[i] == EB_TIMEOUT) l++;
+    } // for i
+    fprintf(stdout, "\n");
+    fprintf(stdout, "EB status of nodes\n");
+    fprintf(stdout, "----------------------------\n");    
+    fprintf(stdout, "ok                     : %d\n", j); 
+    fprintf(stdout, "timed out              : %d\n", l);
+    fprintf(stdout, "unknown address        : %d\n", k);
+    fprintf(stdout, "other errors           : %d\n", (nNodes -j - k -l));
+    fprintf(stdout, "\n");
+    nReachable = j;
+
+    // nodes
+    j = 0;
+    k = 0;
+    l = 0;
+    m = 0;
+    for (i = 0; i < nNodes; i++) {
+      if (strstr(nodeName[i], nodeTypeNames[1]) != NULL)  j++;
+      if (strstr(nodeName[i], nodeTypeNames[2]) != NULL)  k++;
+      if (strstr(nodeName[i], nodeTypeNames[3]) != NULL)  l++;
+      if (strstr(nodeName[i], nodeTypeNames[4]) != NULL)  m++;
+    }
+    fprintf(stdout, "\n");
+    fprintf(stdout, "type of nodes\n");
+    fprintf(stdout, "----------------------------\n");    
+    fprintf(stdout, "%-10s             : %d\n", nodeTypeNames[1], j); 
+    fprintf(stdout, "%-10s             : %d\n", nodeTypeNames[2], k); 
+    fprintf(stdout, "%-10s             : %d\n", nodeTypeNames[3], l); 
+    fprintf(stdout, "%-10s             : %d\n", nodeTypeNames[4], m); 
+    fprintf(stdout, "\n");
     
+    // link up
+    if (getWRLink) {
+      j = 0;
+      for (i = 0; i < nNodes; i++) if (nodeLink[i] == 1) j++;
+      fprintf(stdout, "\n");
+      fprintf(stdout, "WR link status of nodes\n");
+      fprintf(stdout, "----------------------------\n");    
+      fprintf(stdout, "link up                : %d\n", j);
+      fprintf(stdout, "link down              : %d\n", nReachable - j);
+      fprintf(stdout, "\n");
+    } // if getWRLink
+ 
+    // WR state
+    if (getWRSync) {
+      j = 0;
+      for (i = 0; i < nNodes; i++) if ((nodeUp[i] == 1) && ( nodeSyncState[i] == WR_PPS_GEN_ESCR_MASK)) j++;
+      fprintf(stdout, "\n");
+      fprintf(stdout, "WR state of nodes\n");
+      fprintf(stdout, "----------------------------\n");    
+      fprintf(stdout, "track phase            : %d\n", j);
+      fprintf(stdout, "bad                    : %d\n", nReachable - j);
+      fprintf(stdout, "\n");
+    } // if getWRSync
+
+    // WR offset
+    if (getWROffset) {
+      j = 0;
+      for (i = 0; i < nNodes; i++) if (abs(nodeOffset [i] - UTCOFFSET) < 10) j++;
+      fprintf(stdout, "\n");
+      fprintf(stdout, "PTP time of nodes \n");
+      fprintf(stdout, "----------------------------\n");    
+      fprintf(stdout, "looks reasonable       : %d\n", j);
+      fprintf(stdout, "bad                    : %d\n", nReachable - j);
+      fprintf(stdout, "\n");
+    } // if getWROffset
+  } // print stats 
     
   return exitCode;
 }
