@@ -73,6 +73,8 @@ void config_command_handler(volatile WrMilConfig *config)
           mprintf("wr-mil-gw configured as ESR event source\n");
         }
         break;
+      case WR_MIL_GW_CMD_TEST: // do nothing 
+        break;
       default:
         mprintf("wr-mil-gw unknown command %08x\n", config->cmd);
         break;

@@ -324,10 +324,14 @@ int main(int argc, char *argv[])
   if (info)
   {
     printf("%s: WR-MIL regitster content:\n", argv[0]);
+    uint32_t magic_number;
+    uint32_t gateway_state;
+    uint32_t event_source;
     uint32_t value;
     uint64_t value64_bit;
     eb_status = eb_device_read(device, reg_magic_addr,          EB_BIG_ENDIAN|EB_DATA32, (eb_data_t*)&value, 0, eb_block);
     printf("    WR_MIL_GW_REG_MAGIC_NUMBER:   0x%08x\n", value);
+    magic_number = value; // is used later
     eb_status = eb_device_read(device, reg_command_addr,        EB_BIG_ENDIAN|EB_DATA32, (eb_data_t*)&value, 0, eb_block);
     printf("    WR_MIL_GW_REG_COMMAND:        0x%08x\n", value);
     eb_status = eb_device_read(device, reg_utc_trigger_addr,    EB_BIG_ENDIAN|EB_DATA32, (eb_data_t*)&value, 0, eb_block);
@@ -338,10 +342,12 @@ int main(int argc, char *argv[])
     printf("    WR_MIL_GW_REG_TRIG_UTC_DELAY: 0x%08x = %d us\n", value, value);
     eb_status = eb_device_read(device, reg_event_source_addr,   EB_BIG_ENDIAN|EB_DATA32, (eb_data_t*)&value, 0, eb_block);
     printf("    WR_MIL_GW_REG_EVENT_SOURCE:   0x%08x = %s\n", value, event_source_str(value));
+    event_source = value;
     eb_status = eb_device_read(device, reg_latency_addr,        EB_BIG_ENDIAN|EB_DATA32, (eb_data_t*)&value, 0, eb_block);
     printf("    WR_MIL_GW_REG_LATENCY:        0x%08x = %d us\n", value, value);
     eb_status = eb_device_read(device, reg_state_addr,          EB_BIG_ENDIAN|EB_DATA32, (eb_data_t*)&value, 0, eb_block);
     printf("    WR_MIL_GW_REG_STATE:          0x%08x = %s\n", value, state_str(value));
+    gateway_state = value;
     eb_status = eb_device_read(device, reg_utc_offset_hi_addr,  EB_BIG_ENDIAN|EB_DATA32, (eb_data_t*)&value, 0, eb_block);
     value64_bit = value;
     value64_bit <<= 32;
@@ -358,6 +364,28 @@ int main(int argc, char *argv[])
     printf("    WR_MIL_GW_REG_NUM_EVENTS_LO:  0x%08x = %ld\n", value, value64_bit);
     eb_status = eb_device_read(device, reg_late_events_addr,    EB_BIG_ENDIAN|EB_DATA32, (eb_data_t*)&value, 0, eb_block);
     printf("    WR_MIL_GW_REG_LATE_EVENTS:    0x%08x = %d\n", value, value);
+
+    // see if the firmware is running (it should reset the CMD register to 0 after a command is put there)
+    // submit a test command 
+    if ((eb_status = eb_device_write(device, reg_command_addr, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)WR_MIL_GW_CMD_CONFIG_SIS, 0, eb_block)) != EB_OK) {
+      die(argv[0],"command WR_MIL_GW_CMD_CONFIG_SIS", eb_status);
+    }
+    struct timespec ts = {0, 5000000}; // 5 ms;
+    nanosleep(CLOCK_REALTIME, &ts);
+    eb_device_read(device, reg_command_addr,  EB_BIG_ENDIAN|EB_DATA32, (eb_data_t*)&value, 0, eb_block);
+    if (magic_number == WR_MIL_GW_MAGIC_NUMBER)
+    {
+      printf("\nWR-MIL-GATEWAY firmware was found. \n");
+      if (value) printf("  firmware : not running!\n");
+      else       printf("  firmware : running\n");
+      printf("  state    : %s\n", state_str(gateway_state));
+      printf("  source   : %s\n", event_source_str(event_source));
+    }
+    else
+    {
+      printf("\nNo WR-MIL-GATEWAY firmware was found\n");
+    }
+   
   }
 
   if (monitor)
