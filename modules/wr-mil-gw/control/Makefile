@@ -9,13 +9,13 @@ FW          ?= ..
 TARGETS     := wr-mil-gw-ctl
 
 EXTRA_FLAGS ?=
-CFLAGS      ?= $(EXTRA_FLAGS) -Wall -O2 -I $(EB) -I $(FW) -std=c99
+CFLAGS      ?= $(EXTRA_FLAGS) -Wall -O2 -I $(EB) -I $(FW) 
 LIBS        ?= -L $(EB)/.libs -Wl,-rpath,$(PREFIX)/lib -letherbone -lm
 
 all: $(TARGETS)
 
-wr-mil-gw-ctl: wr-mil-gw-ctl.c
-	$(CC) $(CFLAGS) -o wr-mil-gw-ctl wr-mil-gw-ctl.c $(LIBS)
+wr-mil-gw-ctl: wr-mil-gw-ctl.cpp
+	$(CC) $(CFLAGS) -o wr-mil-gw-ctl wr-mil-gw-ctl.cpp $(LIBS)
 
 clean:
 	rm -f *.o wr-mil-gw-ctl

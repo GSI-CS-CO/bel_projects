@@ -12,6 +12,7 @@
 #define WR_MIL_GW_CMD_RESET          0x2   // command to stop the LM32 for 1sec and go into initial state
 #define WR_MIL_GW_CMD_CONFIG_SIS     0x3   // command to configure the gateway for SIS operation
 #define WR_MIL_GW_CMD_CONFIG_ESR     0x4   // command to configure the gateway for ESR operation
+#define WR_MIL_GW_CMD_TEST           0x5   // command that does nothing. it is useful to initiate to see if the firmware cleans the command register (see if the firmware runs at all)
 
 
 // Configuration register mapping in shared memory region
