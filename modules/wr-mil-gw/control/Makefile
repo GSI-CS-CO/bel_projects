@@ -8,14 +8,67 @@ EB          ?= ../../ip_cores/etherbone-core/api
 FW          ?= ..
 TARGETS     := wr-mil-gw-ctl
 
-EXTRA_FLAGS ?=
-CFLAGS      ?= $(EXTRA_FLAGS) -Wall -O2 -I $(EB) -I $(FW) 
-LIBS        ?= -L $(EB)/.libs -Wl,-rpath,$(PREFIX)/lib -letherbone -lm
+# set MASP to YES, if dmunipz-ctl should function as status emitter to MASP (when in monitoring mode)
+MASP        ?= NO              
+# set PRO to YES, if dmunipz-ctl should function as status emitter to MASP PRO(otherwise: MASP DEV)
+PRO         ?= NO
+
+# stuff below required for MASP support
+ifeq ($(MASP), YES)
+
+SYSTEM_HOME ?= /usr
+
+CPU ?= x86_64
+ifeq ($(CPU),x86_64)
+	SYSTEM_LIB=lib64
+endif
+ifeq ($(CPU),i686)
+	SYSTEM_LIB=lib
+endif
+
+GENERAL_LIBS += -L$(SYSTEM_HOME)/$(SYSTEM_LIB)
+GENERAL_LIBS += -lm -lrt -lpthread
+GENERAL_INCL = -I.
+
+GSI_3RDPARTY_LOCATION ?= /opt/gsi/3rdparty
+BOOST_VERSION = 1.54.0
+BOOST_HOME ?= $(GSI_3RDPARTY_LOCATION)/boost/$(BOOST_VERSION)
+BOOST_INCL += -isystem$(BOOST_HOME)/include
+BOOST_LIBS += -L$(BOOST_HOME)/lib/$(CPU)
+BOOST_LIBS += -lboost_thread -lboost_system -lboost_atomic -lboost_chrono -lboost_filesystem -lboost_program_options
+
+MASP_VERSION = 1.0.5
+MASP_DIR = /common/usr/cscofe/opt/MASP/$(MASP_VERSION)
+MASP_INCL += -I$(MASP_DIR)/include
+MASP_LIBS += -L$(MASP_DIR)/lib/$(CPU) -lmasp_emitter -lmasp_status -lmasp_core
+
+INCLUDES += $(BOOST_INCL) $(GENERAL_INCL) $(MASP_INCL)
+MASP_LIBS +=  $(BOOST_LIBS) $(GENERAL_LIBS)
+
+USEMASP        = -D USEMASP
+
+ifeq ($(PRO), YES)
+PRODUCTIVE     = -D PRODUCTIVE
+endif
+
+endif
+# stuff above required for MASP support
+
+
+EXTRA_FLAGS ?= $(USEMASP) $(PRODUCTIVE)
+CFLAGS      ?= $(EXTRA_FLAGS) -Wall -O2 -g -I $(EB) -I $(FW) $(BOOST_INCL) $(MASP_INCL) 
+LIBS        ?= -L $(EB)/.libs $(BOOST_LIBPATH) $(MASP_LIBPATH) -Wl,-rpath,$(PREFIX)/lib -letherbone -lm $(MASP_LIBS) $(GENERAL_LIBS) $(BOOST_LIBS) 
+CC          = g++ 
+
+#EXTRA_FLAGS ?=
+#CFLAGS      ?= $(EXTRA_FLAGS) -Wall -O2 -I $(EB) -I $(FW) -I. 
+#LIBS        ?= -L $(EB)/.libs -Wl,-rpath,$(PREFIX)/lib -letherbone -lm
+
 
 all: $(TARGETS)
 
 wr-mil-gw-ctl: wr-mil-gw-ctl.cpp
-	$(CC) $(CFLAGS) -o wr-mil-gw-ctl wr-mil-gw-ctl.cpp $(LIBS)
+	$(CC) $(CFLAGS) -o wr-mil-gw-ctl wr-mil-gw-ctl.cpp  $(LIBS)
 
 clean:
 	rm -f *.o wr-mil-gw-ctl
