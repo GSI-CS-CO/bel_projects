@@ -27,6 +27,10 @@ saft-ecpu-ctl tr0 -z -g -c 0x1154000000000000 20 100000 4 -d
 # trigger UTC timestamps on event 255 ( EVT_COMMAND )
 wr-mil-gw-ctl dev/wbm0 -t 255
 
+# no delay between trigger event and UTC timestamp generataion
+wr-mil-gw-ctl dev/wbm0 -u 0
+wr-mil-gw-ctl dev/wbm0 -d 0
+
 # configure as ESR gateway and run it
 sleep 1
 wr-mil-gw-ctl dev/wbm0 -e
