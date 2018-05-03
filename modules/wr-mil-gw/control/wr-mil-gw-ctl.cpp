@@ -6,6 +6,7 @@
 #include <string.h>
 #include <stdint.h>
 #include <time.h>
+#include <ctime>
 #include <sys/time.h>
 
 // Etherbone
@@ -60,7 +61,7 @@ void help(const char *program) {
   fprintf(stderr, "  -h              display this help and exit\n");
   fprintf(stderr, "\n");
   fprintf(stderr, "Report software bugs to <m.reese@gsi.de>\n");
-  fprintf(stderr, "Version: %s\n%s\nLicensed under the LGPL v3.\n", eb_source_version(), eb_build_info());
+  fprintf(stderr, "Version: %s\n%s\nLicensed under the LGPL v3.\n");//, eb_source_version(), eb_build_info());
 }
 
 int main(int argc, char *argv[])
@@ -366,11 +367,10 @@ int main(int argc, char *argv[])
 
     // see if the firmware is running (it should reset the CMD register to 0 after a command is put there)
     // submit a test command 
-    if ((eb_status = eb_device_write(device, reg_command_addr, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)WR_MIL_GW_CMD_CONFIG_SIS, 0, eb_block)) != EB_OK) {
-      die(argv[0],"command WR_MIL_GW_CMD_CONFIG_SIS", eb_status);
+    if ((eb_status = eb_device_write(device, reg_command_addr, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)WR_MIL_GW_CMD_TEST, 0, eb_block)) != EB_OK) {
+      die(argv[0],"command WR_MIL_GW_CMD_TEST", eb_status);
     }
-    struct timespec ts = {0, 5000000}; // 5 ms;
-    nanosleep(CLOCK_REALTIME, &ts);
+    usleep(50000);
     eb_device_read(device, reg_command_addr,  EB_BIG_ENDIAN|EB_DATA32, (eb_data_t*)&value, 0, eb_block);
     if (magic_number == WR_MIL_GW_MAGIC_NUMBER)
     {
@@ -392,6 +392,20 @@ int main(int argc, char *argv[])
     uint32_t last_late_events = 0;
     uint64_t last_num_events = 0;
     uint32_t missing_events_message_written = 0;
+
+#ifdef USEMASP
+        // send MASP status
+        printf ("prepare MASP status emitter\n");
+        MASP::StatusEmitter emitter(MASP::StatusEmitterConfig(
+            MASP::StatusEmitterConfig::CUSTOM_EMITTER_DEFAULT(),
+            "wr-mil-gateway.scuxl0068",
+#ifdef PRODUCTIVE
+            true
+#else 
+            false
+#endif //PRODUCTIVE
+         ));
+#endif  // USEMASP
 
     for (;;)
     {
@@ -422,7 +436,7 @@ int main(int argc, char *argv[])
         if (missing_events_message_written)
         {
           // the number of translated MIL events increased, we can reset the message indicator and log that MIL events are back
-          printf("WR-MIL-GATEWAY: I see MIL events again!\n");
+          printf("WR-MIL-GATEWAY: There are MIL events again!\n");
           fflush(stdout);
           missing_events_message_written = 0;
         }
@@ -437,7 +451,36 @@ int main(int argc, char *argv[])
       last_late_events = value;
       last_num_events  = value64_bit;
 
-      sleep(60);
+
+      // wait for 10 s until the number of events is checked again
+      for (int i = 0; i < 60; ++i) 
+      {
+        // check if the firmware is still running (it should reset the CMD register to 0 after a command is put there)
+        // submit a test command 
+        if ((eb_status = eb_device_write(device, reg_command_addr, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)WR_MIL_GW_CMD_TEST, 0, eb_block)) != EB_OK) {
+          die(argv[0],"command WR_MIL_GW_CMD_TEST", eb_status);
+        }
+        fflush(stdout);
+        sleep(1);
+        eb_device_read(device, reg_command_addr,  EB_BIG_ENDIAN|EB_DATA32, (eb_data_t*)&value, 0, eb_block);
+        // the firmware should have set value to 0, if not the firmware is not running
+        if (value) 
+        { // the firmware is not running. This schould not happen!
+          printf("WR-MIL-GATEWAY: firmware not running!\n");
+        }
+#ifdef USEMASP
+          // send MASP status
+          printf ("send MASP message\n");
+          {
+              bool op_ready = false;
+              if (value == 0) op_ready = true;
+              MASP::End_of_scope_status_emitter scoped_emitter(nomen,emitter);
+              scoped_emitter.set_OP_READY(op_ready);
+              scoped_emitter.set_custom_status("TEST_SIGNAL",true);
+          } // <--- status is send when the End_of_scope_emitter goes out of scope
+#endif  // USEMASP          
+
+      }
     }
   }
 
