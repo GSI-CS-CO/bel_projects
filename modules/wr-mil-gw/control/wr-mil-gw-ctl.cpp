@@ -8,12 +8,24 @@
 #include <time.h>
 #include <ctime>
 #include <sys/time.h>
+#include <string>
 
 // Etherbone
 #include <etherbone.h>
 
 // dm-unipz
 #include <wr_mil_gw.h>
+
+#ifdef USEMASP
+#include "MASP/Emitter/StatusEmitter.h"
+#include "MASP/StatusDefinition/DeviceStatus.h"
+#include "MASP/Util/Logger.h"
+#include "MASP/Common/StatusNames.h"
+#include "MASP/Emitter/End_of_scope_status_emitter.h"
+#include <boost/thread/thread.hpp> // (sleep)
+#include <iostream>
+#include <string>
+#endif // USEMASP
 
 void die(const char *program, const char* where, eb_status_t status) {
   fprintf(stderr, "%s: %s failed: %s\n",
@@ -58,10 +70,13 @@ void help(const char *program) {
   fprintf(stderr, "  -k              kill WR-MIL gateway, only reset or eb-fwload can recover (useful for eb-fwload)\n");
   fprintf(stderr, "  -i              print information about the WR-MIL gateway (register content)\n");
   fprintf(stderr, "  -m              monitor gateway status registers and report irregularities on stdout\n");
+#ifdef USEMASP
+  fprintf(stderr, "  -M SIS|ESR      monitor gateway status registers and send MASP status as SIS or ESR nomen\n");
+#endif // USEMASP
   fprintf(stderr, "  -h              display this help and exit\n");
   fprintf(stderr, "\n");
   fprintf(stderr, "Report software bugs to <m.reese@gsi.de>\n");
-  fprintf(stderr, "Version: %s\n%s\nLicensed under the LGPL v3.\n");//, eb_source_version(), eb_build_info());
+  fprintf(stderr, "Licensed under the LGPL v3.\n");//, eb_source_version(), eb_build_info());
 }
 
 int main(int argc, char *argv[])
@@ -86,8 +101,13 @@ int main(int argc, char *argv[])
   int     monitor     =  0;
   int     opt,error   =  0;
 
+#ifdef USEMASP
+  std::string MASP_SIS_ESR;
+#endif // USEMASP
+
+
   /* Process the command-line arguments */
-  while ((opt = getopt(argc, argv, "l:d:u:o:t:sehrkim")) != -1) {
+  while ((opt = getopt(argc, argv, "l:d:u:o:t:sehrkimM:")) != -1) {
     switch (opt) {
     case 'd':
       value = strtol(optarg, &value_end, 0);
@@ -145,6 +165,24 @@ int main(int argc, char *argv[])
     case 'm':
       monitor = 1;
       break;
+#ifdef USEMASP
+    case 'M':
+      monitor = 1;
+      if (!optarg)
+      {
+        fprintf(stderr, "%s: specify MASP nomen \"%s\", use SIS or ESR\n", argv[0], optarg);
+        error = 1;
+        break;
+      }
+      printf("optarg = %s\n", optarg);
+      MASP_SIS_ESR = std::string(optarg);
+      if (MASP_SIS_ESR != "SIS" && MASP_SIS_ESR != "ESR")
+      {
+        fprintf(stderr, "%s: invalid MASP nomen \"%s\", use SIS or ESR\n", argv[0], optarg);
+        error = 1;
+      }
+      break;
+#endif // USEMASP
     case 'i':
       info = 1;
       break;
@@ -395,16 +433,31 @@ int main(int argc, char *argv[])
 
 #ifdef USEMASP
         // send MASP status
-        printf ("prepare MASP status emitter\n");
+        std::string nomen("WR_MIL_GW");
+        nomen.append("_");
+        nomen.append(MASP_SIS_ESR);
+        char hostname_cstr[100];
+        gethostname(hostname_cstr,100);
+        std::string hostname(hostname_cstr);
+        std::string source_id(nomen);
+        source_id.append(".");
+        source_id.append(hostname);
+        bool masp_productive = 
+#ifdef PRODUCTIVE
+            true;
+#else 
+            false;
+#endif //PRODUCTIVE
+
         MASP::StatusEmitter emitter(MASP::StatusEmitterConfig(
             MASP::StatusEmitterConfig::CUSTOM_EMITTER_DEFAULT(),
-            "wr-mil-gateway.scuxl0068",
-#ifdef PRODUCTIVE
-            true
-#else 
-            false
-#endif //PRODUCTIVE
-         ));
+            source_id, masp_productive ));
+        //printf ("prepare MASP status emitter with source_id: %s, nomen: %s, productive: %\n");
+        std::cout << "prepare MASP status emitter with "
+                  << "source_id: " << source_id 
+                  << ",  nomen: " << nomen
+                  << ",  productive: " << (masp_productive?"true":"false")
+                  << std::endl;
 #endif  // USEMASP
 
     for (;;)
@@ -463,21 +516,47 @@ int main(int argc, char *argv[])
         fflush(stdout);
         sleep(1);
         eb_device_read(device, reg_command_addr,  EB_BIG_ENDIAN|EB_DATA32, (eb_data_t*)&value, 0, eb_block);
+        bool firmware_running = (value==0);
         // the firmware should have set value to 0, if not the firmware is not running
-        if (value) 
+        if (!firmware_running) 
         { // the firmware is not running. This schould not happen!
           printf("WR-MIL-GATEWAY: firmware not running!\n");
         }
+        // read gateway state
+        eb_status = eb_device_read(device, reg_state_addr,          EB_BIG_ENDIAN|EB_DATA32, (eb_data_t*)&value, 0, eb_block);
+        int gateway_state = value;
+        bool gateway_active = (gateway_state==WR_MIL_GW_STATE_CONFIGURED);
+        if (!gateway_active) 
+        { // the firmware is not running. This schould not happen!
+          printf("WR-MIL-GATEWAY: gateway is not active!\n");
+        }
+
 #ifdef USEMASP
+        // read gateway source type
+        eb_status = eb_device_read(device, reg_event_source_addr,   EB_BIG_ENDIAN|EB_DATA32, (eb_data_t*)&value, 0, eb_block);
+        int event_source = value;
+        bool correct_source_type = false;
+        if (MASP_SIS_ESR == "ESR" && event_source == WR_MIL_GW_EVENT_SOURCE_ESR) correct_source_type = true;
+        if (MASP_SIS_ESR == "SIS" && event_source == WR_MIL_GW_EVENT_SOURCE_SIS) correct_source_type = true;
+
+        if (!correct_source_type) 
+        { // the firmware is not running. This schould not happen!
+          printf("WR-MIL-GATEWAY: gateway has wrong source type!\n");
+        }
           // send MASP status
-          printf ("send MASP message\n");
+          if (MASP_SIS_ESR == "ESR" || MASP_SIS_ESR == "SIS")
           {
-              bool op_ready = false;
-              if (value == 0) op_ready = true;
-              MASP::End_of_scope_status_emitter scoped_emitter(nomen,emitter);
-              scoped_emitter.set_OP_READY(op_ready);
-              scoped_emitter.set_custom_status("TEST_SIGNAL",true);
-          } // <--- status is send when the End_of_scope_emitter goes out of scope
+            //printf ("send MASP message\n");
+            {
+                bool op_ready = false;
+                // send OP_READY only if firmware is running and the gateway is configured as the correct source type
+                if (firmware_running && gateway_active && correct_source_type) op_ready = true;
+                MASP::End_of_scope_status_emitter scoped_emitter(nomen,emitter);
+                scoped_emitter.set_OP_READY(op_ready);
+                std::cout << "send op_ready " << op_ready << std::endl;
+                //scoped_emitter.set_custom_status("TEST_SIGNAL",true);
+            } // <--- status is send when the End_of_scope_emitter goes out of scope
+          }
 #endif  // USEMASP          
 
       }
