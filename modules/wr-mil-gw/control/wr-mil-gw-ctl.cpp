@@ -20,25 +20,25 @@ void die(const char *program, const char* where, eb_status_t status) {
   exit(1);
 } //die
 
-const char* state_str(uint32_t state)
+const char* state_str(uint32_t state, bool human_readable = false)
 {
   switch(state)
   {
-    case WR_MIL_GW_STATE_INIT:         return "WR_MIL_GW_STATE_INIT";
-    case WR_MIL_GW_STATE_UNCONFIGURED: return "WR_MIL_GW_STATE_UNCONFIGURED";
-    case WR_MIL_GW_STATE_CONFIGURED:   return "WR_MIL_GW_STATE_CONFIGURED";
-    case WR_MIL_GW_STATE_PAUSED:       return "WR_MIL_GW_STATE_PAUSED";
+    case WR_MIL_GW_STATE_INIT:         return human_readable?"initial":"WR_MIL_GW_STATE_INIT";
+    case WR_MIL_GW_STATE_UNCONFIGURED: return human_readable?"unconfigured":"WR_MIL_GW_STATE_UNCONFIGURED";
+    case WR_MIL_GW_STATE_CONFIGURED:   return human_readable?"configured":"WR_MIL_GW_STATE_CONFIGURED";
+    case WR_MIL_GW_STATE_PAUSED:       return human_readable?"paused":"WR_MIL_GW_STATE_PAUSED";
   }
   return "";
 }
 
-const char* event_source_str(uint32_t source)
+const char* event_source_str(uint32_t source, bool human_readable = false)
 {
   switch(source)
   {
-    case WR_MIL_GW_EVENT_SOURCE_UNKNOWN:  return "WR_MIL_GW_EVENT_SOURCE_UNKNOWN";
-    case WR_MIL_GW_EVENT_SOURCE_SIS:      return "WR_MIL_GW_EVENT_SOURCE_SIS";
-    case WR_MIL_GW_EVENT_SOURCE_ESR:      return "WR_MIL_GW_EVENT_SOURCE_ESR";
+    case WR_MIL_GW_EVENT_SOURCE_UNKNOWN:  return human_readable?"unknown":"WR_MIL_GW_EVENT_SOURCE_UNKNOWN";
+    case WR_MIL_GW_EVENT_SOURCE_SIS:      return human_readable?"SIS":"WR_MIL_GW_EVENT_SOURCE_SIS";
+    case WR_MIL_GW_EVENT_SOURCE_ESR:      return human_readable?"ESR":"WR_MIL_GW_EVENT_SOURCE_ESR";
   }
   return "";
 }
@@ -180,16 +180,15 @@ int main(int argc, char *argv[])
   if ((eb_status = eb_socket_open(EB_ABI_CODE, 0, EB_ADDR32|EB_DATA32, &socket)) != EB_OK) die(argv[0], "eb_socket_open", eb_status);
   if ((eb_status = eb_device_open(socket, devName, EB_ADDR32|EB_DATA32, 3, &device)) != EB_OK) die(argv[0], "eb_device_open", eb_status);
 
+  // find user LM32 devices
   #define MAX_DEVICES 8
   struct sdb_device devices[MAX_DEVICES];
   int num_devices = MAX_DEVICES;
   eb_sdb_find_by_identity(device, UINT64_C(0x651), UINT32_C(0x54111351), devices, &num_devices);
-  //eb_sdb_find_by_identity(device, UINT64_C(0x651), UINT32_C(0xaa7bfb3c), &devices[0], &num_devices);
   if (num_devices == 0) {
     fprintf(stderr, "%s: no matching devices found\n", argv[0]);
     return 1;
   }
-
 
   //printf("found %d devices\n", num_devices);
   int device_idx = -1;
@@ -323,7 +322,7 @@ int main(int argc, char *argv[])
 
   if (info)
   {
-    printf("%s: WR-MIL regitster content:\n", argv[0]);
+    printf("WR-MIL shared memory regitster content:\n");
     uint32_t magic_number;
     uint32_t gateway_state;
     uint32_t event_source;
@@ -375,11 +374,11 @@ int main(int argc, char *argv[])
     eb_device_read(device, reg_command_addr,  EB_BIG_ENDIAN|EB_DATA32, (eb_data_t*)&value, 0, eb_block);
     if (magic_number == WR_MIL_GW_MAGIC_NUMBER)
     {
-      printf("\nWR-MIL-GATEWAY firmware was found. \n");
+      printf("\nWR-MIL-GATEWAY firmware was found on user LM32[%d]. \n", device_idx);
       if (value) printf("  firmware : not running!\n");
       else       printf("  firmware : running\n");
-      printf("  state    : %s\n", state_str(gateway_state));
-      printf("  source   : %s\n", event_source_str(event_source));
+      printf("  state    : %s\n", state_str(gateway_state,true));
+      printf("  source   : %s\n", event_source_str(event_source,true));
     }
     else
     {
