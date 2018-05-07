@@ -3,7 +3,7 @@
  *
  *  created : 2017
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 26-April-2018
+ *  version : 07-May-2018
  *
  * Command-line interface for dmunipz
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 17-May-2017
  ********************************************************************************************/
-#define DMUNIPZ_X86_VERSION "0.1.3"
+#define DMUNIPZ_X86_VERSION "0.1.4"
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -623,9 +623,8 @@ int main(int argc, char** argv) {
       if (actState  == DMUNIPZ_STATE_OPREADY) maspSigOpReady  = true;
       else                                    maspSigOpReady  = false;
 
-      if (actStatus == DMUNIPZ_STATUS_OK)     maspSigTransfer = true;
-      else                                    maspSigTransfer = false;
-
+      maspSigTransfer = true;   // ok, this is dummy for now, e.g. in case of MIL troubles or so
+      
       // use masp end of scope emitter
       {  
         MASP::End_of_scope_status_emitter scoped_emitter(maspNomen, emitter);
