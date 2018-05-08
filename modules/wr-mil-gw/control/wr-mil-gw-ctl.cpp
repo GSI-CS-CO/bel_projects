@@ -279,15 +279,15 @@ int main(int argc, char *argv[])
     return 1;
   }
 
-  // find addr of OLED display
-  eb_sdb_find_by_identity(device, UINT64_C(0x651), UINT32_C(0x93a6f3c4), devices, &num_devices);
-  if (num_devices == 0) {
-    fprintf(stderr, "%s: no matching OLED display found\n", argv[0]);
-    return 1;
-  }
-  uint32_t oled_reg_reset          = devices[0].sdb_component.addr_first;
+  // // find addr of OLED display
+  // eb_sdb_find_by_identity(device, UINT64_C(0x651), UINT32_C(0x93a6f3c4), devices, &num_devices);
+  // if (num_devices == 0) {
+  //   fprintf(stderr, "%s: no matching OLED display found\n", argv[0]);
+  //   return 1;
+  // }
+  // uint32_t oled_reg_reset          = devices[0].sdb_component.addr_first;
 
-  fill_display_content(device, oled_reg_reset, 0, "   ", 42, 41);
+  // fill_display_content(device, oled_reg_reset, 0, "   ", 42, 41);
 
 
 
@@ -587,7 +587,7 @@ int main(int argc, char *argv[])
               if (firmware_running && gateway_active && correct_source_type) op_ready = true;
 
               // update display
-              fill_display_content(device, oled_reg_reset, op_ready, MASP_SIS_ESR.c_str(), last_num_events, last_late_events);
+              //fill_display_content(device, oled_reg_reset, op_ready, MASP_SIS_ESR.c_str(), last_num_events, last_late_events);
 
 #ifdef USEMASP
               MASP::End_of_scope_status_emitter scoped_emitter(nomen,emitter);
