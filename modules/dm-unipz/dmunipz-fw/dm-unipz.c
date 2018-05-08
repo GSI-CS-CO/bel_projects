@@ -1235,7 +1235,10 @@ uint32_t doActionOperation(uint32_t *statusTransfer, uint32_t *virtAcc, uint32_t
 
       latchMIL = wait4ECAEvent(uniTimeout, &dummy1, &dummy2, &timestamp);          // wait for latched MIL Event (TLU -> ECA)
       status = wait4MILEvt(DMUNIPZ_EVT_READY2SIS, virtAccTmp, uniTimeout);         // get data for MIL Event
-
+      /* there is a bug in the line below
+         - either the statement is wrong or
+         - getSysTime gives a wrong time
+      */
       if (latchMIL != DMUNIPZ_ECADO_READY2SIS) timestamp = getSysTime();           // timestamp latching of MIL event failed. Plan B: empty SIS cycle using actual systime
       
       sendT     = timestamp + (uint64_t)flexOffset;                                // add offset to obtain deadline for "flex" waiting block
