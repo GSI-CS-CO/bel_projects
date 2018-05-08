@@ -193,7 +193,7 @@ int main(int argc, char *argv[])
       }
       printf("optarg = %s\n", optarg);
       MASP_SIS_ESR = std::string(optarg);
-      if (MASP_SIS_ESR != "SIS" && MASP_SIS_ESR != "ESR")
+      if (MASP_SIS_ESR != "SIS18" && MASP_SIS_ESR != "ESR")
       {
         fprintf(stderr, "%s: invalid MASP nomen \"%s\", use SIS or ESR\n", argv[0], optarg);
         error = 1;
@@ -463,7 +463,7 @@ int main(int argc, char *argv[])
 
 #ifdef USEMASP
         // send MASP status
-        std::string nomen("WR_MIL_GW");
+        std::string nomen("U_WR2MIL");
         nomen.append("_");
         nomen.append(MASP_SIS_ESR);
         char hostname_cstr[100];
@@ -571,14 +571,14 @@ int main(int argc, char *argv[])
         int event_source = value;
         bool correct_source_type = false;
         if (MASP_SIS_ESR == "ESR" && event_source == WR_MIL_GW_EVENT_SOURCE_ESR) correct_source_type = true;
-        if (MASP_SIS_ESR == "SIS" && event_source == WR_MIL_GW_EVENT_SOURCE_SIS) correct_source_type = true;
+        if (MASP_SIS_ESR == "SIS18" && event_source == WR_MIL_GW_EVENT_SOURCE_SIS) correct_source_type = true;
 
         if (!correct_source_type) 
         { // the monitor tool is started on the wrong gateway
           printf("WR-MIL-GATEWAY: gateway has wrong source type!\n");
         }
         // send MASP status
-        if (MASP_SIS_ESR == "ESR" || MASP_SIS_ESR == "SIS")
+        if (MASP_SIS_ESR == "ESR" || MASP_SIS_ESR == "SIS18")
         {
           //printf ("send MASP message\n");
           {
