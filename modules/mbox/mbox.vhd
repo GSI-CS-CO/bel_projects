@@ -90,7 +90,7 @@ begin
       r_adr <= (others => '-');
       r_dat <= (others => '-');
     elsif rising_edge(clk_i) then
-      if msi_master_i.ack = '1' then
+      if msi_master_i.ack = '1'  or msi_master_i.err = '1' then
         r_cyc <= '0';
       end if;
       if msi_master_i.stall = '0' then

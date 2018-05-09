@@ -1,64 +1,81 @@
-library IEEE;
-use IEEE.STD_LOGIC_1164.ALL;
-use IEEE.STD_LOGIC_UNSIGNED.ALL;
--- for PEXARIA5
-entity prog1 is
-    Port (	
---........................................
-		cdone	  	: in std_logic; -- from FPGA, low during configuration
-		confix	: inout std_logic; -- input from reset chip (on schematics CONFIG)
-		config1	: in std_logic; -- input from reset chip (on schematics CONFIG1)
-		con	  	: in std_logic_vector(5 downto 1); -- connection to/from fpga
-		pgclk 	: in std_logic; -- clock from 50 MHz oscillator
---
-		sel_clk	: inout std_logic_vector(3 downto 0); -- output to gbit switch
---		
-		hsw	  	: in std_logic_vector(4 downto 1); -- input from hex switch
-		m	  		: out std_logic_vector(4 downto 0); -- config mode to FPGA 
-		fpga_res	: in std_logic; -- output to FPGA, optional reset
-		pled	  	: inout std_logic_vector(5 downto 1); -- 4 leds
-		nstat 	: in std_logic; -- status to/from fpga
-		mres	  	: in std_logic; -- reset output to reset chip then to FPGA reconfig
-		mres1	  	: in std_logic; -- reset output to reset chip then to FPGA "nres"
-		pbs1 		: in std_logic -- input from push button
+-- Libraries
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.std_logic_unsigned.all;
 
+Library
+UNISIM;
+use UNISIM.vcomponents.all;
 
---.............................................................
-		);
-end prog1;
---
-	architecture rtl of prog1 is
-	signal countx 		: std_logic_vector(26 downto 0); -- counter	
----------------------------------------------------------------------------------------
-	begin
---......................................................................................
--- mode ASx1 and x4 fast 		= 10010
--- mode ASx1 and x4 standard 	= 10011
-		m 					<= b"10010"; -- master SPI
---		m 					<= b"01000"; -- master BPI
-		sel_clk(0)		<= '1'; -- in1 to q0 SW1
-		sel_clk(1)		<= '1'; -- in1 to q1 SW1
-		sel_clk(2)		<= '0'; -- in0 to q0 SW2
-		sel_clk(3)		<= '0'; --	in1 to q1 SW2	
---
---		confix		<= config1; -- 200ms reset pulse to FPGA
-		confix		<= '1'; -- immediaty ready
---		mres				<= '1';
---.......................................................................................
---
-	process(pgclk) begin
-		if (rising_edge(pgclk)) then 
-   			countx <= countx + 1;
-		end if;
-	end process;
-	--
-	pled(1)  <= not cdone;	-- yellow
-	pled(2)  <= confix;		-- red
---	pled(1)  <= countx(22);	-- yellow
---	pled(2)  <= countx(23);		-- red
-	pled(3)  <= '1'; -- countx(24); -- white
-	pled(4)  <= '1'; -- countx(25); -- blue
-	pled(5)  <= '1'; -- countx(26); -- green
---	
-----------------------------------------------------------------------------------------
-	end;	
+-- AMC-TR Entity
+entity microtca_cpld is
+  Port (
+    pgclk_i         : in    std_logic;                    -- clock from 50 MHz oscillator
+    CONFIG_SPV_i    : in    std_logic;                    -- input from reset chip (on schematics CONFIG_SPV)
+
+    mres1_o         : out   std_logic;                    -- reset output to reset chip then to FPGA "nres"
+
+    CONF_DONE_i     : in    std_logic;                    -- from FPGA, low during configuration
+    nCONFIG_PROG_io : inout std_logic;                    -- input from reset chip (on schematics CONFIG)
+    fpga_con_io     : out   std_logic_vector(5 downto 1); -- connection to/from fpga
+    sel_clk_o       : out   std_logic_vector(1 downto 0); -- output to gbit switch
+    config_mode_o   : out   std_logic_vector(4 downto 0); -- config mode to FPGA 
+    fpga_res_o      : out   std_logic;                    -- output to FPGA, optional reset
+    pled_o          : inout std_logic_vector(5 downto 1); -- 5 leds
+    nstatus_i       : in    std_logic;                    -- status to/from fpga
+    hsw_i           : in    std_logic_vector(4 downto 1); -- input from hex switch
+    pbf1_i          : in    std_logic                     -- input from push button
+  );
+end microtca_cpld;
+
+-- AMC-TR Architecture
+architecture rtl of microtca_cpld is
+
+  -- internal signals
+  signal clk     : std_logic;
+  signal countx  : std_logic_vector(26 downto 0); -- counter
+  signal leds    : std_logic_vector(5 downto 1);  
+  
+begin
+
+  i_BUFG_clk : BUFG
+  port map (
+    I => pgclk_i,  -- Clock buffer input
+    O => clk -- Clock buffer output
+  );
+ 
+  
+  -- fixed configuration
+  config_mode_o   <= b"10010"; -- master SPI
+  sel_clk_o(0)    <= '1';      -- in1 to q0 SW1
+  sel_clk_o(1)    <= '1';      -- in1 to q1 SW1
+  nCONFIG_PROG_io <= '1';      -- immediaty ready
+  
+  -- reset outputs
+  mres1_o     <= '1';
+  fpga_res_o  <= '1';
+  
+  -- counter
+  process(clk) begin
+    if (rising_edge(clk)) then 
+      countx <= countx + 1;
+    end if;
+  end process;
+  
+  -- leds
+  leds(1) <= not(CONF_DONE_i);  -- yellow
+  leds(2) <= nCONFIG_PROG_io;   -- red
+  leds(3) <= CONFIG_SPV_i;      -- white
+  leds(4) <= nstatus_i;         -- blue
+  leds(5) <= countx(26);        -- green
+
+  
+  -- when CPLD button pressed then show CPLD hex switch state
+  pled_o <= (countx(24) & hsw_i) when pbf1_i = '0' else leds;
+  
+  -- connection to fpga
+  fpga_con_io(4 downto 1) <= not hsw_i;
+  fpga_con_io(5)          <= not pbf1_i;
+  
+end;
+

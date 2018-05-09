@@ -115,8 +115,10 @@ entity monster is
     core_clk_wr_ref_o      : out   std_logic;
     core_clk_butis_o       : out   std_logic;
     core_clk_butis_t0_o    : out   std_logic;
+    core_clk_sys_o         : out   std_logic;
     core_rstn_wr_ref_o     : out   std_logic;
     core_rstn_butis_o      : out   std_logic;
+    core_clk_200m_o        : out   std_logic;
     core_debug_o           : out   std_logic_vector(15 downto 0) := (others => 'Z');
     -- Required: white rabbit pins
     wr_onewire_io          : inout std_logic;
@@ -248,7 +250,7 @@ entity monster is
     mil_lemo_nled_o        : out   std_logic_vector(4 downto 1);
     mil_lemo_out_en_o      : out   std_logic_vector(4 downto 1);
     mil_lemo_data_i        : in    std_logic_vector(4 downto 1):= (others => '0');
-  
+
     -- g_en_oled
     oled_rstn_o            : out   std_logic := 'Z';
     oled_dc_o              : out   std_logic := 'Z';
@@ -363,18 +365,19 @@ architecture rtl of monster is
   constant c_topm_eca_wbm   : natural := 1;
   constant c_topm_pcie      : natural := 2;
   constant c_topm_vme       : natural := 3;
-  constant c_topm_usb       : natural := 4;
-  constant c_topm_prioq     : natural := 5;
-  constant c_topm_pmc       : natural := 6;
+  constant c_topm_pmc       : natural := 4;
+  constant c_topm_usb       : natural := 5;
+  constant c_topm_prioq     : natural := 6;
+
 
   constant c_top_layout_my_masters : t_sdb_record_array(c_top_my_masters-1 downto 0) :=
    (c_topm_ebs     => f_sdb_auto_msi(c_ebs_msi,     false),   -- Need to add MSI support !!!
     c_topm_eca_wbm => f_sdb_auto_msi(c_null_msi,    false),   -- no MSIs for ECA=>WB macro player
     c_topm_pcie    => f_sdb_auto_msi(c_pcie_msi,    g_en_pcie),
     c_topm_vme     => f_sdb_auto_msi(c_vme_msi,     g_en_vme),
+    c_topm_pmc     => f_sdb_auto_msi(c_pmc_msi,     g_en_pmc),
     c_topm_usb     => f_sdb_auto_msi(c_usb_msi,     false), -- Need to add MSI support !!!
-    c_topm_prioq   => f_sdb_auto_msi(c_null_msi,    false),
-    c_topm_pmc     => f_sdb_auto_msi(c_pmc_msi,    g_en_pmc));
+    c_topm_prioq   => f_sdb_auto_msi(c_null_msi,    false));
 
   -- The FTM adds a bunch of masters to this crossbar
   constant c_ftm_masters : t_sdb_record_array := f_lm32_masters_bridge_msis(g_lm32_cores);
@@ -542,6 +545,7 @@ architecture rtl of monster is
   signal clk_update       : std_logic;
   signal rstn_sys         : std_logic;
   signal rstn_update      : std_logic;
+  signal clk_200m         : std_logic;
 
   -- Ref PLL from clk_125m_pllref_i
   signal ref_locked       : std_logic;
@@ -574,6 +578,8 @@ architecture rtl of monster is
   -- BuTiS T0 clocks
   signal clk_butis_t0     : std_logic; -- 100KHz
   signal clk_butis_t0_ts  : std_logic; -- 100KHz + timestamp
+
+  signal pci_clk_global   : std_logic;
 
   -- END OF Clock networks
   ----------------------------------------------------------------------------------
@@ -778,7 +784,7 @@ architecture rtl of monster is
   signal lvds_dat_fr_clk_gen  : t_lvds_byte_array(f_sub1(c_eca_lvds) downto 0);
   signal lvds_dat_fr_wr_pps   : t_lvds_byte_array(f_sub1(c_eca_lvds) downto 0);
   signal lvds_dat             : t_lvds_byte_array(f_sub1(c_eca_lvds) downto 0);
-  signal lvds_i               : t_lvds_byte_array(15 downto 0);
+  signal lvds_i               : t_lvds_byte_array(f_sub1(g_lvds_inout+g_lvds_in) downto 0);
 
   signal s_triggers : t_trigger_array(g_gpio_in + g_gpio_inout + g_lvds_inout + g_lvds_in -1 downto 0);
 
@@ -953,6 +959,11 @@ begin
   -- outclk => clk_butis);
   clk_butis <= clk_ref1;
 
+  c200m_clk : global_region port map(
+    inclk  => clk_ref1,
+    outclk => clk_200m);
+
+
   clk_div: process(clk_ref0)
     variable cnt: integer := 0;
   begin
@@ -997,6 +1008,8 @@ begin
   core_clk_butis_t0_o<= clk_butis_t0_ts;
   core_rstn_wr_ref_o <= rstn_ref;
   core_rstn_butis_o  <= rstn_butis;
+  core_clk_sys_o     <= clk_sys;
+  core_clk_200m_o    <= clk_200m;
 
   -- END OF Reset and PLLs
   ----------------------------------------------------------------------------------
@@ -1156,8 +1169,8 @@ begin
     top_msi_master_i(c_topm_pmc) <= cc_dummy_slave_out;
   end generate;
  pmc_y : if g_en_pmc generate
-    signal s_pmc_debug_in   : std_logic_vector(7 downto 0);
-    signal s_pmc_debug_out  : std_logic_vector(7 downto 0);
+    signal s_pmc_debug_in   : std_logic_vector(15 downto 0);
+    signal s_pmc_debug_out  : std_logic_vector(15 downto 0);
  begin
     pmc : wb_pmc_host_bridge
     generic map(
@@ -1176,7 +1189,7 @@ begin
       master_i      => top_bus_slave_o (c_topm_pmc),
       slave_i       => top_msi_master_o(c_topm_pmc),
       slave_o       => top_msi_master_i(c_topm_pmc),
-      pci_clk_i     => pmc_pci_clk_i,
+      pci_clk_i     => pci_clk_global,
       pci_rst_i     => pmc_pci_rst_i,
       buf_oe_o      => pmc_buf_oe_o,
       busmode_io    => pmc_busmode_io,
@@ -1198,11 +1211,21 @@ begin
       debug_o       => s_pmc_debug_out
     );
 
-    s_pmc_debug_in(0)          <= gpio_i(0);      -- FPGA push button used to trigger INTx IRQ
-    s_pmc_debug_in(1)          <= gpio_i(1); -- CPLD push button used to trigger MSI IRQ
-    s_pmc_debug_in(7 downto 2) <= (others => '0');
+    core_debug_o <= s_pmc_debug_out;
 
-  end generate;
+
+    s_pmc_debug_in(0)          <= gpio_i(8); -- FPGA push button used to trigger INTx IRQ
+    s_pmc_debug_in(1)          <= gpio_i(9); -- CPLD push button used to trigger MSI IRQ
+
+    s_pmc_debug_in(7 downto 4) <= gpio_i(3 downto 0); -- FPGA HEX switch
+
+    pci_clk_buf : global_region
+      port map(
+        inclk  => pmc_pci_clk_i,
+        outclk => pci_clk_global
+      );
+
+end generate;
 
 
   vme_n : if not g_en_vme generate
@@ -2175,10 +2198,13 @@ begin
         nLed_dry            => mil_nled_dry_o,
         every_ms_intr_o     => mil_every_ms_intr_o,
         lemo_data_o         => mil_lemo_data_o,
-        lemo_nled_o         => mil_lemo_nled_o, 
-        lemo_out_en_o       => mil_lemo_out_en_o,     
-        lemo_data_i         => mil_lemo_data_i, 
-        nsig_wb_err         => open);
+        lemo_nled_o         => mil_lemo_nled_o,
+        lemo_out_en_o       => mil_lemo_out_en_o,
+        lemo_data_i         => mil_lemo_data_i,
+        nsig_wb_err         => open,
+        n_tx_req_led        => open,
+        n_rx_avail_led      => open
+        );
   end generate;
 
 

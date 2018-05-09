@@ -1,43 +1,43 @@
-/******************************************************************************
- *  eb-mon.c (previously wr-mon.c)
- *
- *  created : 2015
- *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 2-Aug-2017
- *
- * Command-line interface for WR monitoring via Etherbone.
- *
- * -------------------------------------------------------------------------------------------
- * License Agreement for this software:
- *
- * Copyright (C) 2013  Dietrich Beck
- * GSI Helmholtzzentrum für Schwerionenforschung GmbH
- * Planckstraße 1
- * D-64291 Darmstadt
- * Germany
- *
- * Contact: d.beck@gsi.de
- *
- *  This library is free software; you can redistribute it and/or
- *  modify it under the terms of the GNU Lesser General Public
- *  License as published by the Free Software Foundation; either
- *  version 3 of the License, or (at your option) any later version.
- *
- *  This library is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- *  Lesser General Public License for more details.
- *  
- *  You should have received a copy of the GNU Lesser General Public
- *  License along with this library. If not, see <http://www.gnu.org/licenses/>.
- *
- * For all questions and ideas contact: d.beck@gsi.de
- * Last update: 25-April-2015
- ********************************************************************************************/
-#define EBMON_VERSION "1.3.0"
+///////////////////////////////////////////////////////////////////////////////
+//  eb-mon.c (previously wr-mon.c)
+//
+//  created : 2015
+//  author  : Dietrich Beck, GSI-Darmstadt
+//  version : 24-Apr-2018
+//
+// Command-line interface for WR monitoring via Etherbone.
+//
+// -------------------------------------------------------------------------------------------
+// License Agreement for this software:
+//
+// Copyright (C) 2013  Dietrich Beck
+// GSI Helmholtzzentrum für Schwerionenforschung GmbH
+// Planckstraße 1
+// D-64291 Darmstadt
+// Germany
+//
+// Contact: d.beck@gsi.de
+//
+//  This library is free software; you can redistribute it and/or
+//  modify it under the terms of the GNU Lesser General Public
+//  License as published by the Free Software Foundation; either
+//  version 3 of the License, or (at your option) any later version.
+//
+//  This library is distributed in the hope that it will be useful,
+//  but WITHOUT ANY WARRANTY; without even the implied warranty of
+//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+//  Lesser General Public License for more details.
+//  
+//  You should have received a copy of the GNU Lesser General Public
+//  License along with this library. If not, see <http://www.gnu.org/licenses/>.
+//
+// For all questions and ideas contact: d.beck@gsi.de
+// Last update: 25-April-2015
+//////////////////////////////////////////////////////////////////////////////////////////////
+#define EBMON_VERSION "1.6.0"
 
-/* standard includes */
-#include <unistd.h> /* getopt */
+// standard includes
+#include <unistd.h> // getopt
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -45,17 +45,17 @@
 #include <time.h>
 #include <sys/time.h>
 
-/* Etherbone */
+// Etherbone
 #include <etherbone.h>
 
-/* Wishbone api */
+// Wishbone api
 #include <wb_api.h>
 #include <wb_slaves.h>
 
 const char* program;
 static int verbose=0;
-eb_device_t device;        /* needs to be global for 1-wire stuff */
-eb_device_t deviceOther;   /* other EB device for comparing timestamps */
+eb_device_t device;        // needs to be global for 1-wire stuff
+eb_device_t deviceOther;   // other EB device for comparing timestamps
 
 
 static void die(const char* where, eb_status_t status) {
@@ -67,6 +67,7 @@ static void die(const char* where, eb_status_t status) {
 static void help(void) {
   fprintf(stderr, "Usage: %s [OPTION] <etherbone-device>\n", program);
   fprintf(stderr, "\n");
+  fprintf(stderr, "  -a               display gateware 'build type'\n");
   fprintf(stderr, "  -b<busIndex>     display ID (ID of slave on the specified 1-wire bus)\n");
   fprintf(stderr, "  -c<eb-device>    compare timestamp with the one of <eb-device> and display the result\n");
   fprintf(stderr, "  -d               display WR time\n");
@@ -79,12 +80,14 @@ static void help(void) {
   fprintf(stderr, "  -o               display offset between WR time and system time [ms]\n");
   fprintf(stderr, "  -s               display WR sync status\n");
   fprintf(stderr, "  -t<busIndex>     display temperature of sensor on the specified 1-wire bus\n");
+  fprintf(stderr, "  -u<index>        user 1-wire: specify WB device in case multiple WB devices of the same type exist (default: u0)\n");
   fprintf(stderr, "  -v               display verbose information\n");
-  fprintf(stderr, "  -w<index>        specify WB device in case multiple WB devices of the same type exist (default: 0)\n");
+  fprintf(stderr, "  -w<index>        WR 1-wire: specify WB device in case multiple WB devices of the same type exist (default: u0)\n");
+  fprintf(stderr, "  -z               display FPGA uptime [h]\n");
   fprintf(stderr, "\n");
   fprintf(stderr, "Use this tool to get some info about WR enabled hardware.\n");
   fprintf(stderr, "Example1: '%s -v dev/wbm0' display typical information.\n", program);
-  fprintf(stderr, "Example2: '%s -b0 -f0x43 dev/wbm0' read ID of EEPROM connected to 1st 1-wire bus\n", program);
+  fprintf(stderr, "Example2: '%s -b0 -f0x43 dev/wbm0' read ID of EEPROM connected to 1st (user) 1-wire bus\n", program);
   fprintf(stderr, "\n");
   fprintf(stderr, "Report software bugs to <d.beck@gsi.de>\n");
   fprintf(stderr, "Version %s. Licensed under the LGPL v3.\n", EBMON_VERSION);
@@ -92,18 +95,20 @@ static void help(void) {
 
 
 int main(int argc, char** argv) {
+  #define BUILDTYPELEN 256
+
   eb_status_t       status;
   eb_socket_t       socket;
-  int               devIndex=-1;  /* 0,1,2... - there may be more than 1 device on the WB bus */
-  unsigned int      busIndex=-1;  /* index of 1-wire bus connected to a controller*/
+  int               devIndex=-1;  // 0,1,2... - there may be more than 1 device on the WB bus
+  unsigned int      busIndex=-1;  // index of 1-wire bus connected to a controller
 
-  int               i;            /* counter for comparing WR time with other device */
-  int               nCompare = 5; /* number of compares                              */
+  int               i;            // counter for comparing WR time with other device
+  int               nCompare = 5; // number of compares
   uint64_t          nsecsDiff64;
   int               diffIsPositive;               
 
   const char* devName;
-  const char* devNameOther;
+  const char* devNameOther=NULL;
 
   int         getEBVersion=0;
   int         getWRDate=0;
@@ -115,9 +120,12 @@ int main(int argc, char** argv) {
   int         getBoardID=0;
   int         getBoardTemp=0;
   int         getWRDateOther=0;
+  int         getWRUptime=0;
+  int         getBuildType=0;
   int         exitCode=0;
 
-  unsigned int family = 0;
+  unsigned int family = 0;       // 1-Wire: familyCode
+  unsigned int user1Wire = 1;    // 1-Wire: 1 - User-1Wire; 0 - WR-Periph-1Wire
 
   uint64_t    nsecs64, nsecsOther64;
   uint64_t    nsecsSum64, nsecsSumOther64;
@@ -128,6 +136,7 @@ int main(int argc, char** argv) {
   int64_t     offset;
   uint64_t    mac;
   int         link;
+  uint32_t    uptime;
   int         syncState;
   int         ip;
   uint64_t    id;
@@ -135,6 +144,7 @@ int main(int argc, char** argv) {
   char linkStr[64];
   char syncStr[64];
   char timestr[60];
+  char buildType[BUILDTYPELEN];
   time_t secs;
   const struct tm* tm;
   struct timeval htm;
@@ -144,15 +154,18 @@ int main(int argc, char** argv) {
 
   program = argv[0];
 
-  while ((opt = getopt(argc, argv, "t:w:f:b:c:dosmlievh")) != -1) {
+  while ((opt = getopt(argc, argv, "t:u:w:f:b:c:adosmlievhz")) != -1) {
     switch (opt) {
+    case 'a':
+      getBuildType=1;
+      break;
     case 'b':
       getBoardID=1;
       busIndex = strtol(optarg, &tail, 0);
       if (*tail != 0) {
         fprintf(stderr, "Specify a proper number, not '%s'!\n", optarg);
         exit(1);
-      } /* if *tail */
+      } // if *tail
       break;
     case 'c':
       getWRDateOther=1;
@@ -166,7 +179,7 @@ int main(int argc, char** argv) {
       if (*tail != 0) {
         fprintf(stderr, "Specify a proper number, not '%s'!\n", optarg);
         exit(1);
-      } /* if *tail */
+      } // if *tail
       break;
     case 'o':
       getWROffset=1;
@@ -183,16 +196,27 @@ int main(int argc, char** argv) {
     case 's':
       getWRSync=1;
       break;
+    case 'z':
+      getWRUptime=1;
+      break;
     case 't':
       getBoardTemp=1;
       busIndex = strtol(optarg, &tail, 0);
       if (*tail != 0) {
         fprintf(stderr, "Specify a proper number, not '%s'!\n", optarg);
         exit(1);
-      } /* if *tail */
+      } // if *tail
       break;
     case 'e':
       getEBVersion=1;
+      break;
+    case 'u':
+      user1Wire = 1;
+      devIndex  = strtol(optarg, &tail, 0);
+      if (*tail != 0) {
+        fprintf(stderr, "Specify a proper number, not '%s'!\n", optarg);
+        exit(1);
+      } // if *tail
       break;
     case 'v':
       getWRDate=1;
@@ -201,15 +225,18 @@ int main(int argc, char** argv) {
       getWRMac=1;
       getWRLink=1;
       getWRIP=1;
+      getWRUptime=1;
       getEBVersion=1;
+      getBuildType=1;
       verbose=1;
       break;
     case 'w':
-      devIndex = strtol(optarg, &tail, 0);
+      user1Wire = 0;
+      devIndex  = strtol(optarg, &tail, 0);
       if (*tail != 0) {
         fprintf(stderr, "Specify a proper number, not '%s'!\n", optarg);
         exit(1);
-      } /* if *tail */
+      } // if *tail
       break;
     case 'h':
       help();
@@ -221,8 +248,8 @@ int main(int argc, char** argv) {
     default:
       fprintf(stderr, "%s: bad getopt result\n", program);
       return 1;
-    } /* switch opt */
-  } /* while opt */
+    } // switch opt
+  } // while opt
 
   if (error) {
     help();
@@ -237,14 +264,14 @@ int main(int argc, char** argv) {
   }
 
   devName = argv[optind];
-  if (devIndex < 0) devIndex = 0; /* default: grab first device of the requested type on the wishbone bus */
+  if (devIndex < 0) devIndex = 0; // default: grab first device of the requested type on the wishbone bus
   
   if (getEBVersion) {
     if (verbose) fprintf(stdout, "EB version / EB source: ");
     fprintf(stdout, "%s / %s\n", eb_source_version(), eb_build_info());
   }
 
-  /* open Etherbone device and socket */
+  // open Etherbone device and socket
   if ((status = wb_open(devName, &device, &socket)) != EB_OK) {
     fprintf(stderr, "can't open connection to device %s \n", devName);
     return (1);
@@ -318,7 +345,7 @@ int main(int argc, char** argv) {
     msecs64  = nsecs64 / 1000000.0;
 
     if (getWROffset) {
-      /* get system time */
+      // get system time
       gettimeofday(&htm, NULL);
       hostmsecs64 = htm.tv_sec*1000 + htm.tv_usec/1000;
       offset      = msecs64 - hostmsecs64;
@@ -327,7 +354,7 @@ int main(int argc, char** argv) {
     }
 
     if (getWRDate) {
-      /* Format the date */
+      // Format the date
       tm = gmtime(&secs);
       strftime(timestr, sizeof(timestr), "%Y-%m-%d %H:%M:%S %Z", tm);
       
@@ -366,23 +393,35 @@ int main(int argc, char** argv) {
     if (verbose) fprintf(stdout, "Link Status: ");
     fprintf(stdout, "%s\n", linkStr);
   }
-  
+
   if (getWRIP) {
     if ((status = wb_wr_get_ip(device, devIndex, &ip)) != EB_OK) die("WR get IP", status);
     if (verbose) fprintf(stdout, "IP: ");
-    fprintf(stdout, "%d.%d.%d.%d\n", (ip & 0xFF000000) >> 24, (ip & 0x00FF0000) >> 16, (ip & 0x0000FF00) >> 8, ip & 0x000000FF);
+    fprintf(stdout, "%03d.%03d.%03d.%03d\n", (ip & 0xFF000000) >> 24, (ip & 0x00FF0000) >> 16, (ip & 0x0000FF00) >> 8, ip & 0x000000FF);
   }
   
+  if (getWRUptime) {
+    if ((status = wb_wr_get_uptime(device, devIndex, &uptime)) != EB_OK) die("WR get uptime", status);
+    if (verbose) fprintf(stdout, "FPGA uptime [h]: ");
+    fprintf(stdout, "%013.2f\n", (double)uptime / 3600.0 );
+  } 
+
+  if (getBuildType) {
+    if ((status = wb_get_build_type(device, BUILDTYPELEN, buildType)) != EB_OK) die("WB get build type", status);
+    if (verbose) fprintf(stdout, "FPGA build type: ");
+    fprintf(stdout, "%s\n", buildType);
+  }
+
   if (getBoardID) {
     if (!family) die("family code not specified (1-wire)", EB_OOM);
-    if ((status = wb_wr_get_id(device, devIndex, busIndex, family, &id)) != EB_OK) die("WR get board ID", status);
+    if ((status = wb_1wire_get_id(device, devIndex, busIndex, family, user1Wire, &id)) != EB_OK) die("WR get board ID", status);
     if (verbose) fprintf(stdout, "ID: ");
     fprintf(stdout, "0x%016"PRIx64"\n", id);
   }
 
  if (getBoardTemp) {
    if (!family) die("family code not specified (1-wire)", EB_OOM);
-   if ((status = wb_wr_get_temp(device, devIndex, busIndex, family, &temp)) != EB_OK) die("WR get board temperature", status);
+   if ((status = wb_1wire_get_temp(device, devIndex, busIndex, family, user1Wire, &temp)) != EB_OK) die("WR get board temperature", status);
    if (verbose) fprintf(stdout, "temp: ");
    fprintf(stdout, "%.4f\n", (float)temp);
  } 

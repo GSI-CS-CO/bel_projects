@@ -220,7 +220,9 @@ port  (
     lemo_nled_o:        out     std_logic_vector(4 downto 1);
     lemo_out_en_o:      out     std_logic_vector(4 downto 1);  
     lemo_data_i:        in      std_logic_vector(4 downto 1):= (others => '0');
-    nsig_wb_err:        out     std_logic                           -- '0' => gestretchte wishbone access Fehlermeldung
+    nsig_wb_err:        out     std_logic                   ;  -- '0' => gestretchte wishbone access Fehlermeldung
+    n_tx_req_led :      OUT     STD_LOGIC                   ;  -- low solange mindestens ein txreq ansteht
+    n_rx_avail_led:     OUT     STD_LOGIC               
     );
 end component wb_mil_scu;
 

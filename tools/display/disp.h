@@ -2,7 +2,6 @@
 #define _DISP_H_
 
 
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -26,21 +25,11 @@ volatile unsigned int desiredDisplay;
 extern const char* program;
 extern const char* netaddress;
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 t_disp_type init_disp(eb_device_t device);
 
 void (*disp_put_loc_c)(eb_device_t device, char ascii, unsigned char row, unsigned char col);
 void (*disp_put_c)(eb_device_t device, char ascii);
 void (*disp_put_s)(eb_device_t device, const char* str);
 void (*disp_put_line)(eb_device_t device, const char *sPtr, unsigned char row);
-
-#ifdef __cplusplus
-}
-#endif
-
-
 
 #endif

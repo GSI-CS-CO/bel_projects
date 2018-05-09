@@ -304,9 +304,8 @@ A_nLEMO_3_LED    <= lemo_nled_o(3);
 A_nLEMO_4_LED    <= lemo_nled_o(4);
 
 nLED(3)             <= not A_UMIL15V;
-nLED(14 downto 11)  <= "1111";
 nLED(7)             <= not A_UMIL5V;
-
+nLED(14 downto 13)  <= "11";
 
 
 TristateDrivers: for i in 0 to 15 generate
@@ -526,6 +525,8 @@ mil_slave_1: wb_mil_wrapper_sio
     nLed_Dry            =>  nLed(0),            -- out  
     nLed_Drq            =>  nLed(1),            -- out
     every_ms_intr_o     =>  every_ms_intr_o,    -- out
+    n_tx_req_led        =>  nLED(12),           -- out
+    n_rx_avail_led      =>  nLED(11),
     -- lemo I/F        
     lemo_data_o         => lemo_data_o,         -- out
     lemo_nled_o         => lemo_nled_o,         -- out

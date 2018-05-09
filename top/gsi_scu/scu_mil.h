@@ -75,7 +75,8 @@ int reset_mil(volatile unsigned *base);
 #define CALC_OFFS(SLOT)   (((SLOT) * (1 << 16))) // from slot 1 to slot 12
 #define TASKMIN           1
 #define TASKMAX           254
-#define TASK_TIMEOUT  100
+#define TASK_TIMEOUT 150
+#define BLOCK_TIMEOUT 150
 /*
   +---------------------------------------------+
   |   mil communication error codes             |
@@ -156,7 +157,7 @@ inline int scub_write_mil_blk(volatile unsigned short *base, int slot, short *da
 }
 
 inline int scub_write_mil(volatile unsigned short *base, int slot, short data, short fc_ifc_addr) {
-  atomic_on();
+    atomic_on();
     base[CALC_OFFS(slot) + MIL_SIO3_TX_DATA ] = data;
     base[CALC_OFFS(slot) + MIL_SIO3_TX_CMD] = fc_ifc_addr;
     atomic_off();
