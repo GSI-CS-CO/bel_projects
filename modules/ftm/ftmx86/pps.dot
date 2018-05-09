@@ -9,10 +9,10 @@ subgraph cpu2 {
   node  [cpu="1"];
 
 
-  Evt_PPS   [type="tmsg",  pattern="P1", beamproc="B1", patentry="1", bpentry="1", toffs=          0,   fid=1, gid=5, evtno=205, sid=2, bpid=8, par="0x123"];
-  Evt_PPS2  [type="tmsg",  pattern="P1", beamproc="B2", toffs=          0,   fid=0, gid=5, evtno=205, sid=2, bpid=8, par="0x123"];
+  Evt_PPS   [type="tmsg",  pattern="PPS_TEST", beamproc="B1", patentry="1", bpentry="1", toffs=          0,   fid=1, gid=5, evtno=205, sid=2, bpid=8, par="0x123"];
+  Evt_PPS2  [type="tmsg",  pattern="PPS_TEST", beamproc="B2", toffs=          0,   fid=0, gid=5, evtno=205, sid=2, bpid=8, par="0x123"];
 
-  B_PPS     [type="block", pattern="P1", beamproc="B3", patexit="1", bpexit="1", tperiod=1000000000, qlo="1"];
+  B_PPS     [type="block", pattern="PPS_TEST", beamproc="B3", patexit="1", bpexit="1", tperiod=1000000000, qlo="1"];
   Evt_PPS   -> B_PPS -> Evt_PPS2 -> Evt_PPS;
 
 }

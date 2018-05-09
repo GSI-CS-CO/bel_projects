@@ -6,6 +6,7 @@
 #include <inttypes.h>
 #include <boost/graph/graphviz.hpp>
 #include <boost/algorithm/string.hpp>
+#include <sys/time.h>
 
 #include "common.h"
 #include "propwrite.h"
@@ -14,20 +15,110 @@
 #include "minicommand.h"
 #include "dotstr.h"
 #include "idformat.h"
+#include "lzmaCompression.h"
+
 
   namespace dgp = DotStr::Graph::Prop;
   namespace dnp = DotStr::Node::Prop;
   namespace dep = DotStr::Edge::Prop;
 
 
+  Graph& CarpeDM::getUpGraph()   {return gUp;}   //Returns the Upload Graph for CPU <cpuIdx>
+  Graph& CarpeDM::getDownGraph() {return gDown;} //Returns the Download Graph for CPU <cpuIdx>
+
+vBuf CarpeDM::compress(const vBuf& in) {return lzmaCompress(in);}
+vBuf CarpeDM::decompress(const vBuf& in) {return lzmaDecompress(in);}
+
+void CarpeDM::simAdrTranslation (uint32_t a, uint8_t& cpu, uint32_t& arIdx) {
+  //get cpu
+  /*
+   if (debug) sLog << "cpuQty "  << getCpuQty() << std::endl;
+  for (uint8_t cpuIdx = 0; cpuIdx < getCpuQty(); cpuIdx++) {
+    if (debug) sLog << "a : " << std::hex << a << ", cmpA " << simRamAdrMap[cpuIdx] << " cpu " << (int)cpuIdx << " arIdx "  << arIdx << std::endl;
+    if (simRamAdrMap[cpuIdx] > a) break;
+    cpu = cpuIdx;
+  }
+  */
+  cpu = ((a >> 17) & 0x7) -1;
+  arIdx = atDown.adrConv(AdrType::EXT, AdrType::MGMT, cpu, a) >> 2;
+}
+
+void CarpeDM::simRamWrite (uint32_t a, eb_data_t d) {
+  uint8_t cpu = -1;
+  uint32_t arIdx;
+  if (debug) sLog << "cpu : " << (int)cpu << " arIdx " << std::hex << arIdx << std::endl;
+  simAdrTranslation (a, cpu, arIdx);
+  simRam[cpu][arIdx] = d;
+}
+
+
+void CarpeDM::simRamRead (uint32_t a, eb_data_t* d) {
+  uint8_t cpu;
+  uint32_t arIdx;
+  simAdrTranslation (a, cpu, arIdx);
+  *d = simRam[cpu][arIdx];
+}
+
+int CarpeDM::simWriteCycle(vAdr va, vBuf& vb) {
+  if (debug) sLog << "Starting Write Cycle" << std::endl;
+  eb_data_t veb[va.size()];
+
+  for(int i = 0; i < (va.end()-va.begin()); i++) {
+   uint32_t data = vb[i*4 + 0] << 24 | vb[i*4 + 1] << 16 | vb[i*4 + 2] << 8 | vb[i*4 + 3];
+   veb[i] = (eb_data_t)data;
+  } 
+  
+  
+  for(int i = 0; i < (va.end()-va.begin()); i++) {
+  
+    if (debug) sLog << " Writing @ 0x" << std::hex << std::setfill('0') << std::setw(8) << va[i] << " : 0x" << std::hex << std::setfill('0') << std::setw(8) << veb[i] << std::endl;
+    simRamWrite(va[i], veb[i]);
+  }
+  
+
+  return 0;
+
+}
+
+
+
+
+
+vBuf CarpeDM::simReadCycle(vAdr va)
+{
+  
+
+  eb_data_t veb[va.size()];
+  vBuf ret = vBuf(va.size() * 4);
+  if (debug) sLog << "Starting Read Cycle" << std::endl; 
+  //sLog << "Got Adr Vec with " << va.size() << " Adrs" << std::endl;
+
+  
+  for(int i = 0; i < (va.end()-va.begin()); i++) {
+    if (debug) sLog << " Reading @ 0x" << std::hex << std::setfill('0') << std::setw(8) << va[i] << std::endl;
+    simRamRead(va[i], (eb_data_t*)&veb[i]);
+  }
+
+  //FIXME use endian functions
+  for(unsigned int i = 0; i < va.size(); i++) { 
+    ret[i * 4]     = (uint8_t)(veb[i] >> 24);
+    ret[i * 4 + 1] = (uint8_t)(veb[i] >> 16);
+    ret[i * 4 + 2] = (uint8_t)(veb[i] >> 8);
+    ret[i * 4 + 3] = (uint8_t)(veb[i] >> 0);
+  } 
+
+  return ret;
+}
 
 
 
 int CarpeDM::ebWriteCycle(Device& dev, vAdr va, vBuf& vb, vBl vcs)
 {
+  if (sim) {return simWriteCycle(va, vb); }
   //eb_status_t status;
   //FIXME What about MTU? What about returned eb status ??
-  if (verbose) sLog << "Starting Write Cycle" << std::endl;
+
+  if (debug) sLog << "Starting Write Cycle" << std::endl;
   Cycle cyc;
   eb_data_t veb[va.size()];
 
@@ -40,11 +131,11 @@ int CarpeDM::ebWriteCycle(Device& dev, vAdr va, vBuf& vb, vBl vcs)
     for(int i = 0; i < (va.end()-va.begin()); i++) {
     if (i && vcs.at(i)) {
       cyc.close();
-      if (verbose) sLog << "Close and open next Write Cycle" << std::endl;
+      if (debug) sLog << "Close and open next Write Cycle" << std::endl;
       cyc.open(dev);  
     }
     
-    if (verbose) sLog << " Writing @ 0x" << std::hex << std::setfill('0') << std::setw(8) << va[i] << " : 0x" << std::hex << std::setfill('0') << std::setw(8) << veb[i] << std::endl;
+    if (debug) sLog << " Writing @ 0x" << std::hex << std::setfill('0') << std::setw(8) << va[i] << " : 0x" << std::hex << std::setfill('0') << std::setw(8) << veb[i] << std::endl;
     cyc.write(va[i], EB_BIG_ENDIAN | EB_DATA32, veb[i]);
 
     }
@@ -56,14 +147,20 @@ int CarpeDM::ebWriteCycle(Device& dev, vAdr va, vBuf& vb, vBl vcs)
    return 0;
 }
 
+int   CarpeDM::ebWriteCycle(Device& dev, vAdr va, vBuf& vb) {return  ebWriteCycle(dev, va, vb, leadingOne(va.size()));}
+
+
 
 vBuf CarpeDM::ebReadCycle(Device& dev, vAdr va, vBl vcs)
 {
+  if (sim) {return simReadCycle(va); }
   //FIXME What about MTU? What about returned eb status ??
+
+
   Cycle cyc;
   eb_data_t veb[va.size()];
   vBuf ret = vBuf(va.size() * 4);
-  if (verbose) sLog << "Starting Read Cycle" << std::endl; 
+  if (debug) sLog << "Starting Read Cycle" << std::endl; 
   //sLog << "Got Adr Vec with " << va.size() << " Adrs" << std::endl;
 
   try {
@@ -72,10 +169,10 @@ vBuf CarpeDM::ebReadCycle(Device& dev, vAdr va, vBl vcs)
     //FIXME dirty break into cycles
     if (i && vcs.at(i)) {
       cyc.close();
-      if (verbose) sLog << "Close and open next Read Cycle" << std::endl; 
+      if (debug) sLog << "Close and open next Read Cycle" << std::endl; 
       cyc.open(dev);  
     }
-    if (verbose) sLog << " Reading @ 0x" << std::hex << std::setfill('0') << std::setw(8) << va[i] << std::endl;
+    if (debug) sLog << " Reading @ 0x" << std::hex << std::setfill('0') << std::setw(8) << va[i] << std::endl;
     cyc.read(va[i], EB_BIG_ENDIAN | EB_DATA32, (eb_data_t*)&veb[i]);
     }
     cyc.close();
@@ -93,6 +190,8 @@ vBuf CarpeDM::ebReadCycle(Device& dev, vAdr va, vBl vcs)
 
   return ret;
 }
+
+vBuf CarpeDM::ebReadCycle(Device& dev, vAdr va) {return  ebReadCycle(dev, va, leadingOne(va.size()));}
 
 int CarpeDM::ebWriteWord(Device& dev, uint32_t adr, uint32_t data)
 {
@@ -132,12 +231,61 @@ int CarpeDM::write64b(uint32_t startAdr, uint64_t d) {
 
 }
 
+bool CarpeDM::simConnect() {
+    ebdevname = "simDummy"; //copy to avoid mem trouble later
+    uint8_t mappedIdx = 0;
+    uint32_t const intBaseAdr   = 0x1000000;
+    uint32_t const sharedSize   = 98304;
+    uint32_t const rawSize      = 131072;
+    uint32_t const sharedOffs   = 0x500; 
+    uint32_t const devBaseAdr   = 0x4120000;
+    cpuQty = 4;
 
-bool CarpeDM::connect(const std::string& en) {
+    atUp.clear();
+    atUp.removeMemories();
+    gUp.clear();
+    atDown.clear();
+    atDown.removeMemories();
+    gDown.clear();
+    cpuIdxMap.clear();
+    cpuDevs.clear();
+
+
+    
+
+    sLog << "Connecting to Sim... ";
+    simRam.reserve(cpuQty); 
+       
+    for(int cpuIdx = 0; cpuIdx< cpuQty; cpuIdx++) {
+      simRam[cpuIdx]        = new uint32_t [(rawSize + _32b_SIZE_ -1) >> 2];
+      cpuIdxMap[cpuIdx]     = mappedIdx;
+      uint32_t extBaseAdr   = devBaseAdr + cpuIdx * rawSize;
+      simRamAdrMap[cpuIdx]  = extBaseAdr;
+      uint32_t peerBaseAdr  = WORLD_BASE_ADR  + extBaseAdr;
+      uint32_t space        = sharedSize - _SHCTL_END_;
+                  
+      atUp.addMemory(cpuIdx, extBaseAdr, intBaseAdr, peerBaseAdr, sharedOffs, space, rawSize );
+      atDown.addMemory(cpuIdx, extBaseAdr, intBaseAdr, peerBaseAdr, sharedOffs, space, rawSize );
+      mappedIdx++;
+    }  
+    sLog << "done" << std::endl;
+    return true;
+
+}
+
+
+bool CarpeDM::connect(const std::string& en, bool simulation, bool test) {
+    sim = simulation;
+    testmode = test;
+    simRam.clear();
+    simRamAdrMap.clear();
+    if (sim) {return simConnect(); }
+
     ebdevname = std::string(en); //copy to avoid mem trouble later
     bool  ret = false;
     uint8_t mappedIdx = 0;
     int expVersion = parseFwVersionString(EXP_VER), foundVersion;
+    int foundVersionMax = -1;
 
     if (expVersion <= 0) {throw std::runtime_error("Bad required minimum firmware version string received from Makefile"); return false;}
 
@@ -156,8 +304,8 @@ bool CarpeDM::connect(const std::string& en) {
     try { 
       ebs.open(0, EB_DATAX|EB_ADDRX);
       ebd.open(ebs, ebdevname.c_str(), EB_DATAX|EB_ADDRX, 3);
-      ebd.sdb_find_by_identity(PPS::vendID, PPS::devID, ppsDev);
-      if (ppsDev.size() < 1) throw std::runtime_error("Could not find a WR PPS Generator device. Something is wrong\n");
+      ebd.sdb_find_by_identity(ECA::vendID, ECA::devID, ecaDevs);
+      if (ecaDevs.size() < 1) throw std::runtime_error("Could not find ECA on DM (needed for WR time). Something is wrong\n");
  
 
 
@@ -165,11 +313,12 @@ bool CarpeDM::connect(const std::string& en) {
       if (cpuDevs.size() >= 1) { 
         cpuQty = cpuDevs.size();
 
+        
         for(int cpuIdx = 0; cpuIdx< cpuQty; cpuIdx++) {
           //only create MemUnits for valid DM CPUs, generate Mapping so we can still use the cpuIdx supplied by User
           const std::string fwIdROM = getFwIdROM(cpuIdx);
           foundVersion = getFwVersion(fwIdROM);
-
+          foundVersionMax = foundVersionMax < foundVersion ? foundVersion : foundVersionMax; 
           vFw.push_back(foundVersion);
           int expVersionMin = expVersion;
           int expVersionMax = (expVersion / (int)FwId::VERSION_MAJOR_MUL) * (int)FwId::VERSION_MAJOR_MUL 
@@ -182,7 +331,7 @@ bool CarpeDM::connect(const std::string& en) {
             
             uint32_t extBaseAdr   = cpuDevs[cpuIdx].sdb_component.addr_first;
             uint32_t intBaseAdr   = getIntBaseAdr(fwIdROM);
-            uint32_t peerBaseAdr  = WORLD_BASE_ADR  + extBaseAdr;
+            uint32_t peerBaseAdr  = WORLD_BASE_ADR + extBaseAdr;
             uint32_t rawSize      = cpuDevs[cpuIdx].sdb_component.addr_last - cpuDevs[cpuIdx].sdb_component.addr_first;
             uint32_t sharedOffs   = getSharedOffs(fwIdROM); 
             uint32_t space        = getSharedSize(fwIdROM) - _SHCTL_END_;
@@ -208,8 +357,9 @@ bool CarpeDM::connect(const std::string& en) {
 
     if(verbose) {
       sLog << " Done."  << std::endl << "Found " << getCpuQty() << " Cores, " << cpuIdxMap.size() << " of them run a valid DM firmware." << std::endl;
-    }  
-    if (cpuIdxMap.size() == 0) {throw std::runtime_error("No CPUs running a valid DM firmware found"); return false;}
+    }
+    std::string fwCause = foundVersionMax == -1 ? "" : "Requires FW v" + createFwVersionString(expVersion) + ", found " + createFwVersionString(foundVersionMax);
+    if (cpuIdxMap.size() == 0) {throw std::runtime_error("No CPUs running a valid DM firmware found. " + fwCause);}
 
 
     return ret;
@@ -217,19 +367,25 @@ bool CarpeDM::connect(const std::string& en) {
   }
 
   bool CarpeDM::disconnect() {
+
+
     bool ret = false;
 
     if(verbose) sLog << "Disconnecting ... ";
-    try { 
-      ebd.close();
-      ebs.close();
-      cpuQty = -1;
-      ret = true;
-    } catch (etherbone::exception_t const& ex) {
-      throw std::runtime_error("Etherbone " + std::string(ex.method) + " returned " + std::string(eb_status(ex.status)) + "\n" );
-      //TODO report why we could not disconnect
+    if (sim) {simRam.clear(); ret = true;}
+    else {
+      try { 
+        ebd.close();
+        ebs.close();
+        cpuQty = -1;
+        ret = true;
+      } catch (etherbone::exception_t const& ex) {
+        throw std::runtime_error("Etherbone " + std::string(ex.method) + " returned " + std::string(eb_status(ex.status)) + "\n" );
+        //TODO report why we could not disconnect
+      }
     }
     if(verbose) sLog << " Done" << std::endl;
+    sim = false;
     return ret;
   }
 
@@ -275,12 +431,12 @@ bool CarpeDM::connect(const std::string& en) {
       }  
     }
     
-  }  
+  }
+
+  const std::string& CarpeDM::firstString(const vStrC& v) {return ((v.size() > 0) ? *(v.begin()) : DotStr::Misc::sUndefined);}  
 
 
-    boost::dynamic_properties CarpeDM::createParser(Graph& g) {
-
-
+  boost::dynamic_properties CarpeDM::createParser(Graph& g) {
 
     boost::dynamic_properties dp(boost::ignore_other_properties);
     boost::ref_property_map<Graph *, std::string> gname( boost::get_property(g, boost::graph_name));
@@ -318,6 +474,7 @@ bool CarpeDM::connect(const std::string& en) {
     dp.property(dnp::TMsg::sTef,                boost::get(&myVertex::tef,        g));
     //Command
     dp.property(dnp::Cmd::sTimeValid,           boost::get(&myVertex::tValid,     g));
+    dp.property(dnp::Cmd::sVabs,                boost::get(&myVertex::vabs,       g));
     dp.property(dnp::Cmd::sPrio,                boost::get(&myVertex::prio,       g));
     dp.property(dnp::Cmd::sQty,                 boost::get(&myVertex::qty,        g));
     dp.property(dnp::Cmd::sTimeWait,            boost::get(&myVertex::tWait,      g));
@@ -330,10 +487,6 @@ bool CarpeDM::connect(const std::string& en) {
     dp.property(dnp::Cmd::sDstBeamproc,         boost::get(&myVertex::cmdDestBp,  g));
     dp.property(dnp::Base::sThread,             boost::get(&myVertex::thread,     g));
     
-
-  
-
-
     return (const boost::dynamic_properties)dp;
   }   
 
@@ -408,7 +561,7 @@ bool CarpeDM::connect(const std::string& en) {
     struct  sdb_device& ram = cpuDevs.at(cpuIdx);
     vAdr fwIdAdr;
     //FIXME get rid of SHARED_OFFS somehow and replace with an end tag and max limit  
-    for (uint32_t adr = ram.sdb_component.addr_first + BUILDID_OFFS; adr < ram.sdb_component.addr_first + SHARED_OFFS; adr += 4) fwIdAdr.push_back(adr);
+    for (uint32_t adr = ram.sdb_component.addr_first + BUILDID_OFFS; adr < ram.sdb_component.addr_first + BUILDID_OFFS + BUILDID_SIZE; adr += 4) fwIdAdr.push_back(adr);
     vBuf fwIdData = ebReadCycle(ebd, fwIdAdr);
     std::string s(fwIdData.begin(),fwIdData.end());
 
@@ -451,6 +604,11 @@ bool CarpeDM::connect(const std::string& en) {
 
 
   }
+
+  // SDB Functions
+  bool CarpeDM::isValidDMCpu(uint8_t cpuIdx) {return (cpuIdxMap.count(cpuIdx) > 0);}; //Check if CPU is registered as running a valid firmware
+  int CarpeDM::getCpuQty()   const {return cpuQty;} //Return number of found CPUs (not necessarily valid ones!)
+  bool CarpeDM::isCpuIdxValid(uint8_t cpuIdx) { if ( cpuIdxMap.find(cpuIdx) != cpuIdxMap.end() ) return true; else return false;}  
 
 
 
@@ -529,9 +687,11 @@ void CarpeDM::showCpuList() {
   sLog << std::endl << std::setfill(' ') << std::setw(5) << "CPU" << std::setfill(' ') << std::setw(11) << "FW found" 
        << std::setfill(' ') << std::setw(11) << "Min" << std::setw(11) << "Max" << std::setw(11) << "Space" << std::setw(11) << "Free" << std::endl;
   for (int x = 0; x < cpuQty; x++) {
-    sLog << std::dec << std::setfill(' ') << std::setw(5) << x << std::setfill(' ') << std::setw(11) << createFwVersionString(vFw[x]) 
-                                                                       << std::setfill(' ') << std::setw(11) << createFwVersionString(expVersionMin)
-                                                                       << std::setfill(' ') << std::setw(11) << createFwVersionString(expVersionMax);
+    
+    sLog << std::dec << std::setfill(' ') << std::setw(5) << x << std::setfill(' ') << std::setw(11) << (sim ? "Sim" : createFwVersionString(vFw[x])) 
+                                                                       << std::setfill(' ') << std::setw(11) << (sim ? "Sim" : createFwVersionString(expVersionMin))
+                                                                       << std::setfill(' ') << std::setw(11) << (sim ? "Sim" : createFwVersionString(expVersionMax));
+                                                                           
     sLog << std::dec << std::setfill(' ') << std::setw(11) << atDown.getTotalSpace(x) << std::setw(10) << atDown.getFreeSpace(x) * 100 / atDown.getTotalSpace(x) << "%";                                                                       
     sLog << std::endl;
   }
@@ -550,32 +710,61 @@ void CarpeDM::showCpuList() {
     return (atDown.isOk(atDown.lookupHash(hm.lookup(name).get())));
   }  
 
-  void CarpeDM::show(const std::string& title, const std::string& logDictFile, TransferDir dir, bool filterMeta ) {
+  // Name/Hash Dict ///////////////////////////////////////////////////////////////////////////////
+  //Add all nodes in .dot file to name/hash dictionary
+  void CarpeDM::clearHashDict() {hm.clear();}; //Clear the dictionary
+  std::string CarpeDM::storeHashDict() {return hm.store();}; 
+  void CarpeDM::loadHashDict(const std::string& s) {hm.load(s);}
+  void CarpeDM::storeHashDictFile(const std::string& fn) {writeTextFile(fn, storeHashDict());};
+  void CarpeDM::loadHashDictFile(const std::string& fn) {loadHashDict(readTextFile(fn));};
+  bool CarpeDM::isHashDictEmpty() {return (bool)(hm.size() == 0);};
+  int  CarpeDM::getHashDictSize() {return hm.size();};
+  void CarpeDM::showHashDict() {hm.debug(sLog);};
 
-    Graph& g        = (dir == TransferDir::UPLOAD ? gUp  : gDown);
-    AllocTable& at  = (dir == TransferDir::UPLOAD ? atUp : atDown);
+  // Group/Entry/Exit Table ///////////////////////////////////////////////////////////////////////////////
+  std::string CarpeDM::storeGroupsDict() {return gt.store();}; 
+  void CarpeDM::loadGroupsDict(const std::string& s) {gt.load(s);}
+  void CarpeDM::storeGroupsDictFile(const std::string& fn) {writeTextFile(fn, storeGroupsDict());};
+  void CarpeDM::loadGroupsDictFile(const std::string& fn) {loadGroupsDict(readTextFile(fn));}; 
+  void CarpeDM::clearGroupsDict() {gt.clear();}; //Clear pattern table
+   int CarpeDM::getGroupsSize() {return gt.getSize();};
+  void CarpeDM::showGroupsDict() {gt.debug(sLog);};
 
-    sLog << std::endl << title << std::endl;
-    sLog << std::endl << std::setfill(' ') << std::setw(4) << "Idx" << "   " << std::setfill(' ') << std::setw(4) << "S/R" << "   " << std::setfill(' ') << std::setw(4) << "Cpu" << "   " << std::setw(30) << "Name" << "   " << std::setw(10) << "Hash" << "   " << std::setw(10)  <<  "Int. Adr   "  << "   " << std::setw(10) << "Ext. Adr   " << std::endl;
-    sLog << std::endl; 
 
-    BOOST_FOREACH( vertex_t v, vertices(g) ) {
-      auto x = at.lookupVertex(v);
-      
-      if( !(filterMeta) || (filterMeta & !(g[v].np->isMeta())) ) {
-        sLog   << std::setfill(' ') << std::setw(4) << std::dec << v 
-        << "   "    << std::setfill(' ') << std::setw(2) << std::dec << (int)(at.isOk(x) && (int)(at.isStaged(x)))  
-        << " "      << std::setfill(' ') << std::setw(1) << std::dec << (int)(!(at.isOk(x)))
-        << "   "    << std::setfill(' ') << std::setw(4) << std::dec << (at.isOk(x) ? (int)x->cpu : -1 )  
-        << "   "    << std::setfill(' ') << std::setw(40) << std::left << g[v].name 
-        << "   0x"  << std::hex << std::setfill('0') << std::setw(8) << (at.isOk(x) ? x->hash  : 0 )
-        << "   0x"  << std::hex << std::setfill('0') << std::setw(8) << (at.isOk(x) ? at.adrConv(AdrType::MGMT, AdrType::INT, x->cpu, x->adr)  : 0 ) 
-        << "   0x"  << std::hex << std::setfill('0') << std::setw(8) << (at.isOk(x) ? at.adrConv(AdrType::MGMT, AdrType::EXT, x->cpu, x->adr)  : 0 )  << std::endl;
-      }
-    }  
+  void CarpeDM::writeDotFile(const std::string& fn, Graph& g, bool filterMeta) { writeTextFile(fn, createDot(g, filterMeta)); }
+  void CarpeDM::writeDownDotFile(const std::string& fn, bool filterMeta)       { writeTextFile(fn, createDot(gDown, filterMeta)); }
+  void CarpeDM::writeUpDotFile(const std::string& fn, bool filterMeta)         { writeTextFile(fn, createDot(gUp, filterMeta)); }
 
-    sLog << std::endl;  
-  }
+  // Schedule Manipulation and Dispatch ///////////////////////////////////////////////////////////
+  //TODO assign a cpu to each node object. Currently taken from input .dot
+  int CarpeDM::assignNodesToCpus() {return 0;};
+  //get all nodes from DM
+  std::string CarpeDM::downloadDot(bool filterMeta) {download(); return createDot( gDown, filterMeta);};            
+  void CarpeDM::downloadDotFile(const std::string& fn, bool filterMeta) {download(); writeDownDotFile(fn, filterMeta);};   
+  //add all nodes and/or edges in dot file
+  int CarpeDM::addDot(const std::string& s) {Graph gTmp; return safeguardTransaction(&CarpeDM::add, parseDot(s, gTmp), false);};            
+  int CarpeDM::addDotFile(const std::string& fn) {return addDot(readTextFile(fn));};                 
+  //add all nodes and/or edges in dot file                                                                                     
+  int CarpeDM::overwriteDot(const std::string& s, bool force) {Graph gTmp; return safeguardTransaction(&CarpeDM::overwrite, parseDot(s, gTmp), force);};
+  int CarpeDM::overwriteDotFile(const std::string& fn, bool force) {return overwriteDot(readTextFile(fn), force);};
+  //removes all nodes NOT in input file
+  int CarpeDM::keepDot(const std::string& s, bool force) {Graph gTmp; return safeguardTransaction(&CarpeDM::keep, parseDot(s, gTmp), force);};
+  int CarpeDM::keepDotFile(const std::string& fn, bool force) {return keepDot(readTextFile(fn), force);};
+  //removes all nodes in input file                                            
+  int CarpeDM::removeDot(const std::string& s, bool force) {Graph gTmp; return safeguardTransaction(&CarpeDM::remove, parseDot(s, gTmp), force);};
+  int CarpeDM::removeDotFile(const std::string& fn, bool force) {return removeDot(readTextFile(fn), force);};
+  // Safe removal check
+  //bool isSafe2RemoveDotFile(const std::string& fn) {Graph gTmp; return isSafeToRemove(parseDot(readTextFile(fn), gTmp));};
+  //clears all nodes from DM 
+  int CarpeDM::clear(bool force) {return safeguardTransaction(&CarpeDM::clear_raw, force);};
+
+
+  // Command Generation and Dispatch //////////////////////////////////////////////////////////////
+  int CarpeDM::sendCommandsDot(const std::string& s) {Graph gTmp; vEbwrs ew; return send(createCommandBurst(parseDot(s, gTmp), ew));}; //Sends a dotfile of commands to the DM
+  int CarpeDM::sendCommandsDotFile(const std::string& fn) {Graph gTmp; vEbwrs ew; return send(createCommandBurst(parseDot(readTextFile(fn), gTmp), ew));};
+  //Send a command to Block <targetName> on CPU <cpuIdx> via Etherbone
+  int CarpeDM::sendCommand(const std::string& targetName, uint8_t cmdPrio, mc_ptr mc) {vEbwrs ew; return send(createCommand(targetName, cmdPrio, mc, ew));}; 
+
 
    //write out dotstringfrom download graph
   std::string CarpeDM::createDot(Graph& g, bool filterMeta) {
@@ -626,126 +815,52 @@ void CarpeDM::showCpuList() {
 
 
   uint64_t CarpeDM::getDmWrTime() {
-    uint32_t ppsAdr = ppsDev.at(0).sdb_component.addr_first;
-    //uint32_t state;
-    uint64_t wr_time;
-    vAdr va;
-    vBuf vb;
-    uint8_t* b;
-    uint8_t tmp;
-  
-    va.push_back(ppsAdr + PPS::CNTR_UTCLO_REG);
-    va.push_back(ppsAdr + PPS::CNTR_UTCHI_REG);
-    vb = ebReadCycle(ebd, va);
-    //awkward: module excepts read on low word first, then high, which leaves us with words in wrong order. swap words
-    
-    b = (uint8_t*)&vb[0];
-    //hexDump("b4", (const char*)b, 8);
-    for(int i = 0; i<4; i++) {tmp = vb[4+i]; vb[4+i] = vb[i]; vb[i] = tmp;}
-    for(int i = 0; i<3; i++) {vb[i] = 0;} // equal HiWord & 0xff. That wr pps gen is bloody awkward...
+    /* get time from ECA */
+    uint64_t wrTime;
 
-    //state   = writeBeBytesToLeNumber<uint32_t>(b + 0) & PPS::STATE_MSK;
-    wr_time = writeBeBytesToLeNumber<uint64_t>(b);
+    if (sim) {
+      timeval ts;   
+      gettimeofday(&ts, NULL);
 
-    return wr_time;
-  }
-
-
-  //check if all tables are in sync
-  bool CarpeDM::tableCheck(std::string& report) {
-    Graph& g        = gDown;
-    AllocTable& at  = atDown;
-    bool qtyIsOk  = true, allocIsOk = true, hashIsOk = true, groupsIsOk = true, isOk;
-
-    std::string    intro = "*** Table Status:  ",
-                qtyIntro = "*** Element Count: ", 
-              allocIntro = "*** Alloctable:    ",
-             groupsIntro = "*** GroupTable:    ",
-             hashIntro   = "*** Hashtable:     ";
-    std::string qtyReport, allocReport, groupsReport, hashReport;         
-    const std::string sMiss   = "Missing ";
-    const std::string sSurp   = "Surplus ";
-    const std::string sFirst  = "element: ";
-    const std::string sOK     = "OK\n";
-    const std::string sERR    = "ERROR\n";
-
-    // check if  graph node count equals ... 
-    auto nQty = boost::vertices(g);
-    size_t nodeQty  = nQty.second - nQty.first;
-
-    // ... alloctable entry count
-    size_t allocEntryQty     = at.getSize();
-    // ... groupstable entry count
-    size_t groupsEntryQty    = gt.getSize();
-    // ... hashtable entry count
-    size_t hashEntryQty      = hm.size();
-
-    qtyIsOk &= ((nodeQty == allocEntryQty) & (nodeQty == allocEntryQty) & (nodeQty == groupsEntryQty) & (nodeQty == hashEntryQty));
-
-  
-      qtyReport += "Nodes:        " + std::to_string(nodeQty) + "\nAllocEntries: " + std::to_string(allocEntryQty)
-                +  "\nHashEntries:  " + std::to_string(hashEntryQty) +  "\nGroupEntries: " + std::to_string(groupsEntryQty) + "\n";
-   
-    // check if all graph nodes are known to all tables
-    BOOST_FOREACH( vertex_t v, vertices(g) ) {
-      //Check Hashtable
-      if (!hm.lookup(g[v].name)) {hashIsOk = false; hashReport += sMiss + sFirst + g[v].name + "\n";}
-    }
-    BOOST_FOREACH( vertex_t v, vertices(g) ) {
-      //Check Alloctable
-      auto x = at.lookupVertex(v);
-      if (!at.isOk(x))           {allocIsOk = false; allocReport += sMiss + sFirst + g[v].name + "\n";}
-    }
-    BOOST_FOREACH( vertex_t v, vertices(g) ) {
-      //Check Groupstable
-      auto x  = gt.getTable().get<Groups::Node>().equal_range(g[v].name);
-      if (x.first == x.second)   {groupsIsOk = false; groupsReport += sMiss + sFirst + g[v].name + "\n";} 
-    } 
-
-    // Let's assume hashmap is okay if all node names are accounted for
-
-    // Let's assume alloctable is okay if all nodes are accounted for
-
-    // check if all groupstable entries are present in graph
-    bool notFound;
-    for (auto& patternIt : gt.getAllPatterns()) { //NOTE: use the pattern list in GroupTable, not the list in the Graph!
-      //std::cout << "Pattern " << patternIt << std::endl;
-      for (auto& nodeIt : getPatternMembers(patternIt)) {
-        notFound = true; 
-        BOOST_FOREACH( vertex_t v, vertices(g) ) {
-          if (g[v].name == nodeIt) { notFound = false; break; }
-        }
-        if (notFound) {
-          //std::cout << nodeIt << " was not found " << std::endl; 
-          groupsIsOk = false; groupsReport += sSurp + sFirst + nodeIt + "\n"; 
-        }
-      }
+      wrTime = (uint64_t)ts.tv_sec * 1000000000ULL + (uint64_t)ts.tv_usec * 1000ULL;
       
+      return wrTime;
+
     }
-    isOk = qtyIsOk & allocIsOk & hashIsOk & groupsIsOk;
-    
-    intro       += (isOk       ? sOK : sERR);
-    qtyIntro    += (qtyIsOk    ? sOK : sERR);
-    allocIntro  += (allocIsOk  ? sOK : sERR);
-    hashIntro   += (hashIsOk   ? sOK : sERR);
-    groupsIntro += (groupsIsOk ? sOK : sERR);
+  
+    eb_data_t    nsHi0, nsLo, nsHi1;
+    Cycle cyc;
 
-    
-    report = intro
-           + qtyIntro     + qtyReport     + "\n" 
-           + allocIntro   + allocReport   + "\n"
-           + hashIntro    + hashReport    + "\n"
-           + groupsIntro  + groupsReport  + "\n";
-    
 
-    return isOk;      
+    uint32_t ecaAddr = ecaDevs[0].sdb_component.addr_first;
+    
+    do {
+      try {
+        cyc.open(ebd);
+        cyc.read( ecaAddr + ECA::timeHiW, EB_BIG_ENDIAN|EB_DATA32, &nsHi0);
+        cyc.read( ecaAddr + ECA::timeLoW, EB_BIG_ENDIAN|EB_DATA32, &nsLo);
+        cyc.read( ecaAddr + ECA::timeHiW, EB_BIG_ENDIAN|EB_DATA32, &nsHi1);
+        cyc.close();
+      } catch (etherbone::exception_t const& ex) {
+        throw std::runtime_error("Etherbone " + std::string(ex.method) + " returned " + std::string(eb_status(ex.status)) + "\n" );
+      }
+    } while (nsHi0 != nsHi1);
+  
+    /* time */
+    wrTime = (uint64_t)nsHi0 << 32;
+    wrTime = wrTime + (uint64_t)nsLo;
+  
+
+
+    return wrTime;
   }
 
 
-  //Improvised Transaction Management: If an upload operation fails for any reason, we roll back the meta tables
+  //Improvised Transaction Management: If an upload preparation operation fails for any reason, we roll back the meta tables
   int CarpeDM::safeguardTransaction(int (CarpeDM::*func)(Graph&, bool), Graph& g, bool force) {
     HashMap hmBak     = hm;
     GroupTable gtBak  = gt;
+    CovenantTable ctBak = ct;
     int ret;
  
     try {
@@ -753,6 +868,7 @@ void CarpeDM::showCpuList() {
     } catch(...) {
       hm = hmBak;
       gt = gtBak;
+      ct = ctBak;
       sLog << "Operation FAILED, executing roll back\n" << std::endl;
       throw;
     }
@@ -764,6 +880,7 @@ void CarpeDM::showCpuList() {
   int CarpeDM::safeguardTransaction(int (CarpeDM::*func)(bool), bool force) {
     HashMap hmBak     = hm;
     GroupTable gtBak  = gt;
+    CovenantTable ctBak = ct;
     int ret;
  
     try {
@@ -771,6 +888,7 @@ void CarpeDM::showCpuList() {
     } catch(...) {
       hm = hmBak;
       gt = gtBak;
+      ct = ctBak;
       sLog << "Operation FAILED, executing roll back\n" << std::endl;
       throw;
     }
@@ -778,3 +896,67 @@ void CarpeDM::showCpuList() {
     return ret;  
 
   }
+
+
+  vEbwrs& CarpeDM::createModInfo(uint8_t cpu, uint32_t modCnt, uint8_t opType, vEbwrs& ew, uint32_t adrOffs) {
+    // modification time address (lo/hi)
+    uint32_t modAdrBase = atUp.getMemories()[cpu].extBaseAdr + atUp.getMemories()[cpu].sharedOffs + SHCTL_DIAG + adrOffs;
+    // save modification time, issuer
+
+    char username[LOGIN_NAME_MAX];
+    getlogin_r(username, LOGIN_NAME_MAX);
+    char machinename[HOST_NAME_MAX];
+    gethostname(machinename, HOST_NAME_MAX);
+
+
+    uint8_t b[8];
+ 
+
+    ew.vcs += leadingOne(8); // add 8 words
+    ew.va.push_back(modAdrBase + T_MOD_INFO_TS    + 0);
+    ew.va.push_back(modAdrBase + T_MOD_INFO_TS    + _32b_SIZE_);
+    ew.va.push_back(modAdrBase + T_MOD_INFO_IID   + 0);
+    ew.va.push_back(modAdrBase + T_MOD_INFO_IID   + _32b_SIZE_);
+    ew.va.push_back(modAdrBase + T_MOD_INFO_MID   + 0);
+    ew.va.push_back(modAdrBase + T_MOD_INFO_MID   + _32b_SIZE_);
+    ew.va.push_back(modAdrBase + T_MOD_INFO_TYPE  );
+    ew.va.push_back(modAdrBase + T_MOD_INFO_CNT   );
+    writeLeNumberToBeBytes<uint64_t>((uint8_t*)&b[0], modTime);
+    ew.vb.insert( ew.vb.end(), b, b +  _TS_SIZE_  );
+    ew.vb.insert( ew.vb.end(), username, username +  _64b_SIZE_  );
+    ew.vb.insert( ew.vb.end(), machinename, machinename +  _64b_SIZE_  );
+    writeLeNumberToBeBytes<uint32_t>((uint8_t*)&b[0], opType);
+    ew.vb.insert( ew.vb.end(), b, b +  _32b_SIZE_  );
+    writeLeNumberToBeBytes<uint32_t>((uint8_t*)&b[0], modCnt);
+    ew.vb.insert( ew.vb.end(), b, b +  _32b_SIZE_  );
+
+    return ew;
+  }
+
+  vEbwrs& CarpeDM::createSchedModInfo(uint8_t cpu, uint32_t modCnt, uint8_t opType, vEbwrs& ew) { return createModInfo(cpu, modCnt, opType, ew, T_DIAG_SCH_MOD); };
+  vEbwrs& CarpeDM::createCmdModInfo  (uint8_t cpu, uint32_t modCnt, uint8_t opType, vEbwrs& ew) { return createModInfo(cpu, modCnt, opType, ew, T_DIAG_CMD_MOD); };
+
+  int CarpeDM::startThr(uint8_t cpuIdx, uint8_t thrIdx)                              { vEbwrs ew; return send(startThr(cpuIdx, thrIdx, ew));} //Requests Thread to start
+  int CarpeDM::startPattern(const std::string& sPattern, uint8_t thrIdx)             { vEbwrs ew; return send(startPattern(sPattern, thrIdx, ew));}//Requests Pattern to start
+  int CarpeDM::startPattern(const std::string& sPattern)                             { vEbwrs ew; return send(startPattern(sPattern, ew));}//Requests Pattern to start on first free thread
+  int CarpeDM::startNodeOrigin(const std::string& sNode, uint8_t thrIdx)             { vEbwrs ew; return send(startNodeOrigin(sNode, thrIdx, ew));}//Requests thread <thrIdx> to start at node <sNode>
+  int CarpeDM::startNodeOrigin(const std::string& sNode)                             { vEbwrs ew; return send(startNodeOrigin(sNode, ew));}//Requests a start at node <sNode>
+  int CarpeDM::stopPattern(const std::string& sPattern)                              { vEbwrs ew; return send(stopPattern(sPattern, ew));}//Requests Pattern to stop
+  int CarpeDM::stopNodeOrigin(const std::string& sNode)                              { vEbwrs ew; return send(stopNodeOrigin(sNode, ew));}//Requests stop at node <sNode> (flow to idle)
+  int CarpeDM::abortPattern(const std::string& sPattern)                             { vEbwrs ew; return send(abortPattern(sPattern, ew));}//Immediately aborts a Pattern
+  int CarpeDM::abortNodeOrigin(const std::string& sNode)                             { vEbwrs ew; return send(abortNodeOrigin(sNode, ew));}//Immediately aborts the thread whose pattern <sNode> belongs to
+  int CarpeDM::abortThr(uint8_t cpuIdx, uint8_t thrIdx)                              { vEbwrs ew; return send(abortThr(cpuIdx, thrIdx, ew));} //Immediately aborts a Thread
+  int CarpeDM::setThrStart(uint8_t cpuIdx, uint32_t bits)                            { vEbwrs ew; return send(setThrStart(cpuIdx, bits, ew));} //Requests Threads to start
+  int CarpeDM::setThrAbort(uint8_t cpuIdx, uint32_t bits)                            { vEbwrs ew; return send(setThrAbort(cpuIdx, bits, ew));}//Immediately aborts Threads
+  int CarpeDM::setThrOrigin(uint8_t cpuIdx, uint8_t thrIdx, const std::string& name) { vEbwrs ew; return send(setThrOrigin(cpuIdx, thrIdx, name, ew));}//Sets the Node the Thread will start from
+  int CarpeDM::setThrStartTime(uint8_t cpuIdx, uint8_t thrIdx, uint64_t t)           { vEbwrs ew; return send(setThrStartTime(cpuIdx, thrIdx, t, ew));}
+  int CarpeDM::setThrPrepTime(uint8_t cpuIdx, uint8_t thrIdx, uint64_t t)            { vEbwrs ew; return send(setThrPrepTime(cpuIdx, thrIdx, t, ew));}
+
+
+  void CarpeDM::showUp(bool filterMeta) {show("Upload Table", "upload_dict.txt", TransferDir::UPLOAD, false);} //show a CPU's Upload address table
+  void CarpeDM::showDown(bool filterMeta) {  //show a CPU's Download address table
+    show("Download Table" + (filterMeta ? std::string(" (noMeta)") : std::string("")), "download_dict.txt", TransferDir::DOWNLOAD, filterMeta);
+  }
+
+  void CarpeDM::updateModTime() { modTime = getDmWrTime(); } 
+  

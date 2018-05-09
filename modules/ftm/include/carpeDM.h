@@ -17,8 +17,9 @@
 #include "hashmap.h"
 #include "alloctable.h"
 #include "grouptable.h"
+#include "covenanttable.h"
 #include "validation.h"
-#include "ftm_shared_mmap.h"
+
 
 
 
@@ -30,12 +31,56 @@ using namespace etherbone;
 class CarpeDM {
 
 private:
+  std::string ebdevname;
+  std::string outputfilename;
+  std::string inputfilename;
+
+  std::vector<int> vFw;
+  std::map<uint8_t, uint8_t> cpuIdxMap;
+
+  Socket ebs;
+  Device ebd;  
+  std::vector<struct sdb_device> cpuDevs;  
+  std::vector<struct sdb_device> ecaDevs; 
+
+  int cpuQty = -1;
+  HashMap hm;
+  GroupTable gt;
+  CovenantTable ct;
+  AllocTable atUp;
+  Graph gUp;
+  AllocTable atDown;
+  Graph gDown;
+
+  std::vector<uint32_t *> simRam;
+  std::map<uint8_t, uint32_t> simRamAdrMap;
+
+  uint64_t modTime;
+  bool freshDownload = false;
+
+  bool verbose  = false;
+  bool debug    = false;
+  bool sim      = false;
+  bool testmode = false;
+  bool optimisedS2R = true;
+  std::ostream& sLog;
+  std::ostream& sErr;
+
+  bool simConnect();
+  bool simDisconnect();
+  void simAdrTranslation (uint32_t a, uint8_t& cpu, uint32_t& arIdx);
+  void simRamWrite (uint32_t a, eb_data_t d);
+  void simRamRead (uint32_t a, eb_data_t* d); 
+  int  simWriteCycle(vAdr va, vBuf& vb);
+  vBuf simReadCycle(vAdr va);
+
   void updateListDstStaging(vertex_t v);
   void updateStaging(vertex_t v, edge_t e);
   void pushMetaNeighbours(vertex_t v, Graph& g, vertex_set_t& s);
   void generateBlockMeta(Graph& g);
   void generateDstLst(Graph& g, vertex_t v);
   void generateQmeta(Graph& g, vertex_t v, int prio);
+  void generateMgmtData();
   void completeId(vertex_t v, Graph& g);
 
   void addition(Graph& g);
@@ -52,20 +97,20 @@ private:
   int overwrite(Graph& g,  bool force);
   int clear_raw(bool force);
   bool validate(Graph& g, AllocTable& at);
-  
-  int sendCommands(Graph &); //Sends a dotfile of commands to the DM
-
-
 
   // Upload
-  vEbwrs gatherUploadVector();
-  int upload(); //Upload processed Graph to LM32 SoC via Etherbone
+  vEbwrs gatherUploadVector(std::set<uint8_t> moddedCpus, uint32_t modCnt, uint8_t opType);
+  vEbwrs& createModInfo     (uint8_t cpu, uint32_t modCnt, uint8_t opType, vEbwrs& ew, uint32_t adrOffs);
+  vEbwrs& createSchedModInfo(uint8_t cpu, uint32_t modCnt, uint8_t opType, vEbwrs& ew);
+  vEbwrs& createCmdModInfo  (uint8_t cpu, uint32_t modCnt, uint8_t opType, vEbwrs& ew);
+  int upload(uint8_t opType); //Upload processed Graph to LM32 SoC via Etherbone
   
   // Download
   vEbrds gatherDownloadBmpVector();
   vEbrds gatherDownloadDataVector();
   
-  void parseDownloadData(vBuf downloadData);
+  void parseDownloadData(const vBuf& downloadData);
+  void parseDownloadMgmt(const vBuf& downloadData);
   void checkTablesForSubgraph(Graph& g);
   
   void resetThrMsgCnt(uint8_t cpuIdx, uint8_t thrIdx);
@@ -77,52 +122,70 @@ private:
   void removeFromDict(Graph& g);
   int getIdleThread(uint8_t cpuIdx);
 
-  const std::string& firstString(const vStrC& v) {return ((v.size() > 0) ? *(v.begin()) : DotStr::Misc::sUndefined);}
+  const std::string& firstString(const vStrC& v);
   boost::optional<std::pair<int, int>> parseCpuAndThr(vertex_t v, Graph& g);
 
   bool addResidentDestinations(Graph& gEq,  Graph& gOrig, vertex_set_t cursors);
   bool addDynamicDestinations(Graph& g, AllocTable& at);
+  bool updateStaleDefaultDestinations(Graph& g, AllocTable& at, CovenantTable& cov, std::string& qAnalysis);
+  vertex_set_t getDominantFlowDst(vertex_t vQ, Graph& g, AllocTable& at, CovenantTable& covTab, std::string& qAnalysis);
   vertex_set_t getDynamicDestinations(vertex_t vQ, Graph& g, AllocTable& at);
-  void getReverseNodeTree(vertex_t v, vertex_set_t& sV, Graph& g);
+  void getReverseNodeTree(vertex_t v, vertex_set_t& sV, Graph& g, vertex_set_map_t& covenantsPerVertex, vertex_t covenant = null_vertex);
+  bool isOptimisableEdge(edge_t e, Graph& g);
+  bool isCovenantPending(const std::string& covName);
+  bool isCovenantPending(cmI cov);
+  unsigned updateCovenants();
+
+  bool isSafetyCritical(vertex_set_t& covenants);
+  bool verifySafety(vertex_t v, vertex_t goal, vertex_set_t& sV, Graph& g );
+  //Coverage Tests for safe2remove
+  
+  bool coverage3IsSeedValid(uint64_t seed);
+  Graph& coverage3GenerateBase(Graph& g);
+  Graph& coverage3GenerateStatic(Graph& g, uint64_t seed);
+  Graph& coverage3GenerateDynamic(Graph& g, uint64_t seed);   
+  std::string coverage3GenerateCursor(Graph& g, uint64_t seed );
   
   vertex_set_t getAllCursors(bool activeOnly);
   vStrC getGraphPatterns(Graph& g);
   bool isSafeToRemove(std::set<std::string> patterns, std::string& report);
   const std::string readFwIdROMTag(const std::string& fwIdROM, const std::string& tag, size_t maxlen, bool stopAtCr );
 
+  vBuf compress(const vBuf& in); 
+  vBuf decompress(const vBuf& in);
 
-protected:
+  void readMgmtLLMeta();
 
-  std::string ebdevname;
-  std::string outputfilename;
-  std::string inputfilename;
+  vEbwrs& startThr(uint8_t cpuIdx, uint8_t thrIdx, vEbwrs& ew); //Requests Thread to start
+  vEbwrs& startPattern(const std::string& sPattern, uint8_t thrIdx, vEbwrs& ew); //Requests Pattern to start
+  vEbwrs& startPattern(const std::string& sPattern, vEbwrs& ew); //Requests Pattern to start on first free thread
+  vEbwrs& startNodeOrigin(const std::string& sNode, uint8_t thrIdx, vEbwrs& ew); //Requests thread <thrIdx> to start at node <sNode>
+  vEbwrs& startNodeOrigin(const std::string& sNode, vEbwrs& ew); //Requests a start at node <sNode>
+  vEbwrs& stopPattern(const std::string& sPattern, vEbwrs& ew); //Requests Pattern to stop
+  vEbwrs& stopNodeOrigin(const std::string& sNode, vEbwrs& ew); //Requests stop at node <sNode> (flow to idle)
+  vEbwrs& abortPattern(const std::string& sPattern, vEbwrs& ew); //Immediately aborts a Pattern
+  vEbwrs& abortNodeOrigin(const std::string& sNode, vEbwrs& ew); //Immediately aborts the thread whose pattern <sNode> belongs to
+  vEbwrs& abortThr(uint8_t cpuIdx, uint8_t thrIdx, vEbwrs& ew); //Immediately aborts a Thread
+  vEbwrs& setThrStart(uint8_t cpuIdx, uint32_t bits, vEbwrs& ew); //Requests Threads to start
+  vEbwrs& setThrAbort(uint8_t cpuIdx, uint32_t bits, vEbwrs& ew); //Immediately aborts Threads
+  vEbwrs& setThrOrigin(uint8_t cpuIdx, uint8_t thrIdx, const std::string& name, vEbwrs& ew); //Sets the Node the Thread will start from
+  vEbwrs& setThrStartTime(uint8_t cpuIdx, uint8_t thrIdx, uint64_t t, vEbwrs& ew);
+  vEbwrs& setThrPrepTime(uint8_t cpuIdx, uint8_t thrIdx, uint64_t t, vEbwrs& ew);
+  vEbwrs& createCommandBurst(Graph& g, vEbwrs& ew);
+  vEbwrs& createCommand(const std::string& targetName, uint8_t cmdPrio, mc_ptr mc, vEbwrs& ew);
 
-  std::vector<int> vFw;
-  std::map<uint8_t, uint8_t> cpuIdxMap;
+  int send(vEbwrs& ew);
 
-  Socket ebs;
-  Device ebd;  
-  std::vector<struct sdb_device> cpuDevs;  
-  std::vector<struct sdb_device> ppsDev; 
+  vEbwrs& staticFlush(const std::string& sBlock, bool prioIl, bool prioHi, bool prioLo, vEbwrs& ew, bool force);
 
-  int cpuQty = -1;
-  HashMap hm;
-  GroupTable gt;
-  AllocTable atUp;
-  Graph gUp;
-  AllocTable atDown;
-  Graph gDown;
-  uint64_t modTime;
-  bool freshDownload = false;
+  QueueElement& getQelement(Graph& g, AllocTable& at, uint8_t idx, amI allocIt, QueueElement& qe);
+  QueueReport& getQReport(Graph& g, AllocTable& at, const std::string& blockName, QueueReport& qr);
 
-  bool verbose = false;
-  std::ostream& sLog;
-  std::ostream& sErr;
 
   int   ebWriteCycle(Device& dev, vAdr va, vBuf& vb, vBl vcs);
-  int   ebWriteCycle(Device& dev, vAdr va, vBuf& vb) {return  ebWriteCycle(dev, va, vb, leadingOne(va.size()));}
+  int   ebWriteCycle(Device& dev, vAdr va, vBuf& vb);
   vBuf  ebReadCycle(Device& dev, vAdr va, vBl vcs);
-  vBuf  ebReadCycle(Device& dev, vAdr va) {return  ebReadCycle(dev, va, leadingOne(va.size()));}
+  vBuf  ebReadCycle(Device& dev, vAdr va);
   int   ebWriteWord(Device& dev, uint32_t adr, uint32_t data);
   uint32_t ebReadWord(Device& dev, uint32_t adr);
   boost::dynamic_properties createParser(Graph& g);
@@ -133,194 +196,174 @@ protected:
   uint64_t read64b(uint32_t startAdr);
   int write64b(uint32_t startAdr, uint64_t d);
 
-  Graph& getUpGraph()   {return gUp;}   //Returns the Upload Graph for CPU <cpuIdx>
-  Graph& getDownGraph() {return gDown;} //Returns the Download Graph for CPU <cpuIdx>
+  Graph& getUpGraph(); //Returns the Upload Graph for CPU <cpuIdx>
+  
+protected:
+
 
 
 
 public:
-  CarpeDM() : sLog(std::cout), sErr(std::cerr) {Validation::init();} 
-  CarpeDM(std::ostream& sLog) : sLog(sLog), sErr(std::cerr)   {Validation::init();} 
-  CarpeDM(std::ostream& sLog, std::ostream& sErr) : sLog(sLog), sErr(sErr){Validation::init();}
+  CarpeDM()                                        : sLog(std::cout),  sErr(std::cerr) {Validation::init();} 
+  CarpeDM(std::ostream& sLog)                      : sLog(sLog),       sErr(std::cerr) {Validation::init();} 
+  CarpeDM(std::ostream& sLog, std::ostream& sErr)  : sLog(sLog),       sErr(sErr)      {Validation::init();}
   ~CarpeDM() {};
 
-  // Etherbone interface
-  bool connect(const std::string& en); //Open connection to a DM via Etherbone
-  bool disconnect(); //Close connection
-
-  // SDB Functions
-  bool isValidDMCpu(uint8_t cpuIdx) {return (cpuIdxMap.count(cpuIdx) > 0);}; //Check if CPU is registered as running a valid firmware
+// Etherbone interface
+               bool connect(const std::string& en, bool simulation=false, bool test=false); //Open connection to a DM via Etherbone
+               bool disconnect(); //Close connection
+               // SDB and DM HW detection Functions
+               bool isValidDMCpu(uint8_t cpuIdx);              // Check if CPU is registered as running a valid firmware
   const std::string getFwIdROM(uint8_t cpuIdx);  
-  int getFwVersion(const std::string& fwIdROM); //Retrieve the Firmware Version of cpu at sdb dev array idx <cpuIdx>
-  uint32_t getIntBaseAdr(const std::string& fwIdROM);//mockup for now, this info should be taken from found firmware binary
-  uint32_t getSharedOffs(const std::string& fwIdROM);
-  uint32_t getSharedSize(const std::string& fwIdROM);
-  int getCpuQty()   const {return cpuQty;} //Return number of found CPUs (not necessarily valid ones!)
-  bool isCpuIdxValid(uint8_t cpuIdx) { if ( cpuIdxMap.find(cpuIdx) != cpuIdxMap.end() ) return true; else return false;}  
+                int getFwVersion(const std::string& fwIdROM);  // Retrieve the Firmware Version of cpu at sdb dev array idx <cpuIdx>
+           uint32_t getIntBaseAdr(const std::string& fwIdROM); // mockup for now, this info should be taken from found firmware binary
+           uint32_t getSharedOffs(const std::string& fwIdROM);
+           uint32_t getSharedSize(const std::string& fwIdROM);
+                int getCpuQty()   const;                       // Return number of found CPUs (not necessarily valid ones!)
+               bool isCpuIdxValid(uint8_t cpuIdx);  
 
-
-  //Wrappers for everything
-
-  // Name/Hash Dict ///////////////////////////////////////////////////////////////////////////////
-  //Add all nodes in .dot file to name/hash dictionary
-  void clearHashDict() {hm.clear();}; //Clear the dictionary
-  std::string storeHashDict() {return hm.store();}; 
-  void loadHashDict(const std::string& s) {hm.load(s);}
-  void storeHashDictFile(const std::string& fn) {writeTextFile(fn, storeHashDict());};
-  void loadHashDictFile(const std::string& fn) {loadHashDict(readTextFile(fn));};
-  bool isInHashDict(const uint32_t hash);
-  bool isInHashDict(const std::string& name);
-  bool isHashDictEmpty() {return (bool)(hm.size() == 0);};
-  int  getHashDictSize() {return hm.size();};
-  void showHashDict() {hm.debug(sLog);};
-
-  // Group/Entry/Exit Table ///////////////////////////////////////////////////////////////////////////////
-  std::string storeGroupsDict() {return gt.store();}; 
-  void loadGroupsDict(const std::string& s) {gt.load(s);}
-  void storeGroupsDictFile(const std::string& fn) {writeTextFile(fn, storeGroupsDict());};
-  void loadGroupsDictFile(const std::string& fn) {loadGroupsDict(readTextFile(fn));}; 
-  void clearGroupsDict() {gt.clear();}; //Clear pattern table
- int getGroupsSize() {return gt.getSize();};
- void showGroupsDict() {gt.debug(sLog);};
-
-  // Text File IO /////////////////////////////////////////////////////////////////////////////////
-  void writeTextFile(const std::string& fn, const std::string& s);
-  std::string  readTextFile(const std::string& fn);
-
-  // Graphs to Dot
-    Graph& parseDot(const std::string& s, Graph& g); //Parse a .dot string to create unprocessed Graph
-  std::string createDot( Graph& g, bool filterMeta);
-  void writeDotFile(const std::string& fn, Graph& g, bool filterMeta) { writeTextFile(fn, createDot(g, filterMeta)); }
-  void writeDownDotFile(const std::string& fn, bool filterMeta)       { writeTextFile(fn, createDot(gDown, filterMeta)); }
-  void writeUpDotFile(const std::string& fn, bool filterMeta)         { writeTextFile(fn, createDot(gUp, filterMeta)); }
-
-  // Schedule Manipulation and Dispatch ///////////////////////////////////////////////////////////
-  //TODO assign a cpu to each node object. Currently taken from input .dot
-  int assignNodesToCpus() {return 0;};
-  //get all nodes from DM
-  int download();  //Download binary from LM32 SoC and create Graph
-  std::string downloadDot(bool filterMeta) {download(); return createDot( gDown, filterMeta);};            
-  void downloadDotFile(const std::string& fn, bool filterMeta) {download(); writeDownDotFile(fn, filterMeta);};   
-  //add all nodes and/or edges in dot file
-  int addDot(const std::string& s) {Graph gTmp; return safeguardTransaction(&CarpeDM::add, parseDot(s, gTmp), false);};            
-  int addDotFile(const std::string& fn) {return addDot(readTextFile(fn));};                 
-  //add all nodes and/or edges in dot file                                                                                     
-  int overwriteDot(const std::string& s, bool force) {Graph gTmp; return safeguardTransaction(&CarpeDM::overwrite, parseDot(s, gTmp), force);};
-  int overwriteDotFile(const std::string& fn, bool force) {return overwriteDot(readTextFile(fn), force);};
-  //removes all nodes NOT in input file
-  int keepDot(const std::string& s, bool force) {Graph gTmp; return safeguardTransaction(&CarpeDM::keep, parseDot(s, gTmp), force);};
-  int keepDotFile(const std::string& fn, bool force) {return keepDot(readTextFile(fn), force);};
-  //removes all nodes in input file                                            
-  int removeDot(const std::string& s, bool force) {Graph gTmp; return safeguardTransaction(&CarpeDM::remove, parseDot(s, gTmp), force);};
-  int removeDotFile(const std::string& fn, bool force) {return removeDot(readTextFile(fn), force);};
-  // Safe removal check
-  //bool isSafe2RemoveDotFile(const std::string& fn) {Graph gTmp; return isSafeToRemove(parseDot(readTextFile(fn), gTmp));};
-  //clears all nodes from DM 
-  int clear(bool force) {return safeguardTransaction(&CarpeDM::clear_raw, force);};
-
-  //aborts all threads on all cores
-  void halt();
-
-  vEbwrs& createCommandBurst(Graph& g, vEbwrs& ew);
-  vEbwrs& createCommand(const std::string& targetName, uint8_t cmdPrio, mc_ptr mc, vEbwrs& ew);
-
-  // Command Generation and Dispatch //////////////////////////////////////////////////////////////
-  int sendCommandsDot(const std::string& s) {Graph gTmp; vEbwrs ew; return send(createCommandBurst(parseDot(s, gTmp), ew));}; //Sends a dotfile of commands to the DM
-  int sendCommandsDotFile(const std::string& fn) {Graph gTmp; vEbwrs ew; return send(createCommandBurst(parseDot(readTextFile(fn), gTmp), ew));};
-  //Send a command to Block <targetName> on CPU <cpuIdx> via Etherbone
-  int sendCommand(const std::string& targetName, uint8_t cmdPrio, mc_ptr mc) {vEbwrs ew; return send(createCommand(targetName, cmdPrio, mc, ew));}; 
-
-
-
-         const vAdr getCmdWrAdrs(uint32_t hash, uint8_t prio); 
+//Internal Hash and Groupstable ///////////////////////////////////////////////////////////////////////////////////////////////
+               // Name/Hash Dict 
+               void clearHashDict();                          //Clear hash table
+        std::string storeHashDict();                          //save hash table to serialised string
+               void loadHashDict(const std::string& s);       //initiallise hash table from serialised string
+               void storeHashDictFile(const std::string& fn); //save hash table to file
+               void loadHashDictFile(const std::string& fn);  //load hash table from file
+               bool isInHashDict(const uint32_t hash);
+               bool isInHashDict(const std::string& name);
+               bool isHashDictEmpty();
+                int getHashDictSize();
+             
+               // Group/Entry/Exit Table 
+               std::string storeGroupsDict(); 
+               void loadGroupsDict(const std::string& s);
+               void storeGroupsDictFile(const std::string& fn);
+               void loadGroupsDictFile(const std::string& fn); 
+               void clearGroupsDict(); //Clear pattern table
+                int getGroupsSize();
+              
+// Aux Infos from Table lookups and static computation  /////////////////////////////////////////////////////////////////////////////////////////////////////
      const uint32_t getCmdInc(uint32_t hash, uint8_t prio);
-           uint32_t getThrCmdAdr(uint8_t cpuIdx);  //Returns the external address of a thread's command register area
-           uint32_t getThrInitialNodeAdr(uint8_t cpuIdx, uint8_t thrIdx); //Returns the external address of a thread's initial node register
-           uint32_t getThrCurrentNodeAdr(uint8_t cpuIdx, uint8_t thrIdx); //Returns the external address of a thread's current node register 
-  const std::string getThrOrigin(uint8_t cpuIdx, uint8_t thrIdx); //Returns the Node the Thread will start from
-  const std::string getThrCursor(uint8_t cpuIdx, uint8_t thrIdx); //Returns the Node the Thread is currently processing
-               void forceThrCursor(uint8_t cpuIdx, uint8_t thrIdx); //DEBUG ONLY !!!
+           uint32_t getThrCmdAdr(uint8_t cpuIdx);                                       // Returns the external address of a thread's command register area
+           uint32_t getThrInitialNodeAdr(uint8_t cpuIdx, uint8_t thrIdx);               // Returns the external address of a thread's initial node register
+           uint32_t getThrCurrentNodeAdr(uint8_t cpuIdx, uint8_t thrIdx);               // Returns the external address of a thread's current node register
+         const vAdr getCmdWrAdrs(uint32_t hash, uint8_t prio); 
+            uint8_t getNodeCpu(const std::string& name, TransferDir dir);               // shortcut to obtain a node's cpu by its name
+           uint32_t getNodeAdr(const std::string& name, TransferDir dir, AdrType adrT); // shortcut to obtain a node's address by its name
+  const std::string getNodePattern (const std::string& sNode);
+  const std::string getNodeBeamproc(const std::string& sNode);
+              vStrC getPatternMembers (const std::string& sPattern);
+  const std::string getPatternEntryNode(const std::string& sPattern);
+  const std::string getPatternExitNode(const std::string& sPattern);
+              vStrC getBeamprocMembers(const std::string& sBeamproc);
+  const std::string getBeamprocEntryNode(const std::string& sBeamproc);
+  const std::string getBeamprocExitNode(const std::string& sBeamproc);
+           uint64_t getModTime() { return modTime; }
+ 
+// Text File IO /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+               void writeTextFile(const std::string& fn, const std::string& s);
+        std::string readTextFile(const std::string& fn);
+              
+// Graphs to Dot
+             Graph& parseDot(const std::string& s, Graph& g); //Parse a .dot string to create unprocessed Graph
+        std::string createDot( Graph& g, bool filterMeta);
+               void writeDotFile(const std::string& fn, Graph& g, bool filterMeta);
+               void writeDownDotFile(const std::string& fn, bool filterMeta);
+               void writeUpDotFile(const std::string& fn, bool filterMeta);
+              
+// Schedule Manipulation ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+                int assignNodesToCpus();                            // NOT YET IMPLEMENTED // TODO assign a cpu to each node object. Currently taken from input .dot
+                int download();                                     // Download binary from LM32 SoC and create Graph
+        std::string downloadDot(bool filterMeta);
+               void downloadDotFile(const std::string& fn, bool filterMeta);
+                int addDot(const std::string& s);                   // add all nodes and/or edges in dot file
+                int addDotFile(const std::string& fn);
+                int overwriteDot(const std::string& s, bool force); // add all nodes and/or edges in dot file
+                int overwriteDotFile(const std::string& fn, bool force);
+                int keepDot(const std::string& s, bool force);      // removes all nodes NOT in input file
+                int keepDotFile(const std::string& fn, bool force);
+                int removeDot(const std::string& s, bool force);    // removes all nodes in input file
+                int removeDotFile(const std::string& fn, bool force);
+                int clear(bool force);                              // clears all nodes from DM
+
+// Command Generation and Dispatch ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+                int sendCommandsDot(const std::string& s); //Sends a dotfile of commands to the DM
+                int sendCommandsDotFile(const std::string& fn);
+                int sendCommand(const std::string& targetName, uint8_t cmdPrio, mc_ptr mc); //Send a command to Block <targetName> on CPU <cpuIdx> via Etherbone
+
+
+  // Short Live Infos from DM hardware reads /////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  const std::string getThrOrigin(uint8_t cpuIdx, uint8_t thrIdx);      // Returns the Node the Thread will start from
+  const std::string getThrCursor(uint8_t cpuIdx, uint8_t thrIdx);      // Returns the Node the Thread is currently processing
            uint64_t getThrMsgCnt(uint8_t cpuIdx, uint8_t thrIdx);
-           uint32_t getThrRun(uint8_t cpuIdx); //Get bitfield showing running threads
+           uint32_t getThrRun(uint8_t cpuIdx);                                  // Get bitfield showing running threads
            uint32_t getStatus(uint8_t cpuIdx);
            uint64_t getThrDeadline(uint8_t cpuIdx, uint8_t thrIdx);
            uint64_t getThrStartTime(uint8_t cpuIdx, uint8_t thrIdx);
            uint32_t getThrStart(uint8_t cpuIdx);
            uint64_t getThrPrepTime(uint8_t cpuIdx, uint8_t thrIdx); 
-               bool isThrRunning(uint8_t cpuIdx, uint8_t thrIdx); //true if thread <thrIdx> is running
-            
-// The lazy interface ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-            uint8_t getNodeCpu(const std::string& name, TransferDir dir); //shortcut to obtain a node's cpu by its name 
-           uint32_t getNodeAdr(const std::string& name, TransferDir dir, AdrType adrT); //shortcut to obtain a node's address by its name
-  const std::string getNodePattern (const std::string& sNode);
-  const std::string getNodeBeamproc(const std::string& sNode);
-              vStrC getPatternMembers (const std::string& sPattern);
- const std::string getPatternEntryNode(const std::string& sPattern);
- const std::string getPatternExitNode(const std::string& sPattern);
-              vStrC getBeamprocMembers(const std::string& sBeamproc);
-  const std::string getBeamprocEntryNode(const std::string& sBeamproc);
-  const std::string getBeamprocExitNode(const std::string& sBeamproc);
+               bool isThrRunning(uint8_t cpuIdx, uint8_t thrIdx);                   // true if thread <thrIdx> is running
+               bool isSafeToRemove(const std::string& pattern, std::string& report);
+               bool isSafeToRemove(Graph& gRem, std::string& report);
+std::pair<int, int> findRunningPattern(const std::string& sPattern); // get cpu and thread assignment of running pattern
+               bool isPatternRunning(const std::string& sPattern);                  // true if Pattern <x> is running
+               void updateModTime();
+               void adjustValidTime(uint64_t& tValid, bool abs);                            // Makes sure the given valid time is slightly in the future. Uses modTime as 'now'
+
+  // Commands to DM hardware ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+               void forceThrCursor(uint8_t cpuIdx, uint8_t thrIdx); //DEBUG ONLY !!!
+                int startThr(uint8_t cpuIdx, uint8_t thrIdx);                              // Requests Thread to start
+                int startPattern(const std::string& sPattern, uint8_t thrIdx);             // Requests Pattern to start
+                int startPattern(const std::string& sPattern);                             // Requests Pattern to start on first free thread
+                int startNodeOrigin(const std::string& sNode, uint8_t thrIdx);             // Requests thread <thrIdx> to start at node <sNode>
+                int startNodeOrigin(const std::string& sNode);                             // Requests a start at node <sNode>
+                int stopPattern(const std::string& sPattern);                              // Requests Pattern to stop
+                int stopNodeOrigin(const std::string& sNode);                              // Requests stop at node <sNode> (flow to idle)
+                int abortPattern(const std::string& sPattern);                             // Immediately aborts a Pattern
+                int abortNodeOrigin(const std::string& sNode);                             // Immediately aborts the thread whose pattern <sNode> belongs to
+                int abortThr(uint8_t cpuIdx, uint8_t thrIdx);                              // Immediately aborts a Thread
+               void halt();                                                                // Immediately aborts all threads on all cores
+                int setThrStart(uint8_t cpuIdx, uint32_t bits);                            // Requests Threads to start
+                int setThrAbort(uint8_t cpuIdx, uint32_t bits);                            // Immediately aborts Threads
+                int setThrOrigin(uint8_t cpuIdx, uint8_t thrIdx, const std::string& name); // Sets the Node the Thread will start from
+                int setThrStartTime(uint8_t cpuIdx, uint8_t thrIdx, uint64_t t);
+                int setThrPrepTime(uint8_t cpuIdx, uint8_t thrIdx, uint64_t t);
+                int staticFlushPattern(const std::string& sPattern, bool prioIl, bool prioHi, bool prioLo, bool force);
+                int staticFlushBlock(const std::string& sBlock, bool prioIl, bool prioHi, bool prioLo, bool force);
+
+// Diagnostics //////////////////////////////////////////////////////////////
+               void verboseOn()  {verbose = true;}                              // Turn on Verbose Output
+               void verboseOff() {verbose = false;}                             // Turn off Verbose Output
+               bool isVerbose()  const {return verbose;}                        // Tell if Output is set to Verbose 
+               void debugOn()  {debug = true;}                                  // Turn on Verbose Output
+               void debugOff() {debug = false;}                                 // Turn off Verbose Output
+               bool isDebug()  const {return debug;}                            // Tell if Output is set to Verbose
+               bool isSim()  const {return sim;}                                // Tell if this is a simulation. Cannot change while connected !!!
+               void testOn()  {testmode = true;}                                // Turn on Testmode
+               void testOff() {testmode = false;}                               // Turn off Testmode
+               bool isTest() const {return testmode;}                           // Tell if Testmode is on
+               void optimisedS2ROn() {optimisedS2R = true;}                     // Optimised Safe2remove on
+               void optimisedS2ROff(){optimisedS2R = false;}                    // Optimised Safe2remove off
+               bool isOptimisedS2R() const {return optimisedS2R;}               // tell if Safe2remove optimisation is on or off
+      HealthReport& getHealth(uint8_t cpuIdx, HealthReport &hr);                // FIXME why reference in, reference out ? its not like you can add to this report ...
+       QueueReport& getQReport(const std::string& blockName, QueueReport& qr);  // FIXME why reference in, reference out ? its not like you can add to this report ...
+           uint64_t getDmWrTime();
+
+       std::string& inspectQueues(const std::string& blockName, std::string& report);      // Show all command fields in Block Queue
+               void show(const std::string& title, const std::string& logDictFile, TransferDir dir, bool filterMeta );
+               void showUp(bool filterMeta);                                               // show a CPU's Upload address table
+               void showDown(bool filterMeta);
+               void showCpuList();
+               void dumpNode(uint8_t cpuIdx, const std::string& name);                     // hex dump a node
                void inspectHeap(uint8_t cpuIdx);
+               void showHashDict();
+               void showGroupsDict();
+               bool tableCheck(std::string& report);
+               void coverage3Upload(uint64_t seed );
+               std::vector<std::vector<uint64_t>> coverage3TestData(uint64_t seedStart, uint64_t cases, uint8_t parts, uint8_t percentage );
+               Graph& getDownGraph(); //Returns the Download Graph for CPU <cpuIdx
+               void dirtyCtShow() {ct.debug(sLog);}
 
-
-  // The very lazy interface ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-std::pair<int, int> findRunningPattern(const std::string& sPattern); //get cpu and thread assignment of running pattern
-               bool isPatternRunning(const std::string& sPattern); //true if Pattern <x> is running
-               vEbwrs& startThr(uint8_t cpuIdx, uint8_t thrIdx, vEbwrs& ew); //Requests Thread to start
-               vEbwrs& startPattern(const std::string& sPattern, uint8_t thrIdx, vEbwrs& ew); //Requests Pattern to start
-               vEbwrs& startPattern(const std::string& sPattern, vEbwrs& ew); //Requests Pattern to start on first free thread
-               vEbwrs& startNodeOrigin(const std::string& sNode, uint8_t thrIdx, vEbwrs& ew); //Requests thread <thrIdx> to start at node <sNode>
-               vEbwrs& startNodeOrigin(const std::string& sNode, vEbwrs& ew); //Requests a start at node <sNode>
-               vEbwrs& stopPattern(const std::string& sPattern, vEbwrs& ew); //Requests Pattern to stop
-               vEbwrs& stopNodeOrigin(const std::string& sNode, vEbwrs& ew); //Requests stop at node <sNode> (flow to idle)
-               vEbwrs& abortPattern(const std::string& sPattern, vEbwrs& ew); //Immediately aborts a Pattern
-               vEbwrs& abortNodeOrigin(const std::string& sNode, vEbwrs& ew); //Immediately aborts the thread whose pattern <sNode> belongs to
-               vEbwrs& abortThr(uint8_t cpuIdx, uint8_t thrIdx, vEbwrs& ew); //Immediately aborts a Thread
-               vEbwrs& setThrStart(uint8_t cpuIdx, uint32_t bits, vEbwrs& ew); //Requests Threads to start
-               vEbwrs& setThrAbort(uint8_t cpuIdx, uint32_t bits, vEbwrs& ew); //Immediately aborts Threads
-               vEbwrs& setThrOrigin(uint8_t cpuIdx, uint8_t thrIdx, const std::string& name, vEbwrs& ew); //Sets the Node the Thread will start from
-               vEbwrs& setThrStartTime(uint8_t cpuIdx, uint8_t thrIdx, uint64_t t, vEbwrs& ew);
-               vEbwrs& setThrPrepTime(uint8_t cpuIdx, uint8_t thrIdx, uint64_t t, vEbwrs& ew);
-               int send(vEbwrs& ew); 
-
-               //direct send wrappers. bit cumbersome, can possibly be done by a template
-               int startThr(uint8_t cpuIdx, uint8_t thrIdx)                              { vEbwrs ew; return send(startThr(cpuIdx, thrIdx, ew));} //Requests Thread to start
-               int startPattern(const std::string& sPattern, uint8_t thrIdx)             { vEbwrs ew; return send(startPattern(sPattern, thrIdx, ew));}//Requests Pattern to start
-               int startPattern(const std::string& sPattern)                             { vEbwrs ew; return send(startPattern(sPattern, ew));}//Requests Pattern to start on first free thread
-               int startNodeOrigin(const std::string& sNode, uint8_t thrIdx)             { vEbwrs ew; return send(startNodeOrigin(sNode, thrIdx, ew));}//Requests thread <thrIdx> to start at node <sNode>
-               int startNodeOrigin(const std::string& sNode)                             { vEbwrs ew; return send(startNodeOrigin(sNode, ew));}//Requests a start at node <sNode>
-               int stopPattern(const std::string& sPattern)                              { vEbwrs ew; return send(stopPattern(sPattern, ew));}//Requests Pattern to stop
-               int stopNodeOrigin(const std::string& sNode)                              { vEbwrs ew; return send(stopNodeOrigin(sNode, ew));}//Requests stop at node <sNode> (flow to idle)
-               int abortPattern(const std::string& sPattern)                             { vEbwrs ew; return send(abortPattern(sPattern, ew));}//Immediately aborts a Pattern
-               int abortNodeOrigin(const std::string& sNode)                             { vEbwrs ew; return send(abortNodeOrigin(sNode, ew));}//Immediately aborts the thread whose pattern <sNode> belongs to
-               int abortThr(uint8_t cpuIdx, uint8_t thrIdx)                              { vEbwrs ew; return send(abortThr(cpuIdx, thrIdx, ew));} //Immediately aborts a Thread
-               int setThrStart(uint8_t cpuIdx, uint32_t bits)                            { vEbwrs ew; return send(setThrStart(cpuIdx, bits, ew));} //Requests Threads to start
-               int setThrAbort(uint8_t cpuIdx, uint32_t bits)                            { vEbwrs ew; return send(setThrAbort(cpuIdx, bits, ew));}//Immediately aborts Threads
-               int setThrOrigin(uint8_t cpuIdx, uint8_t thrIdx, const std::string& name) { vEbwrs ew; return send(setThrOrigin(cpuIdx, thrIdx, name, ew));}//Sets the Node the Thread will start from
-               int setThrStartTime(uint8_t cpuIdx, uint8_t thrIdx, uint64_t t)           { vEbwrs ew; return send(setThrStartTime(cpuIdx, thrIdx, t, ew));}
-               int setThrPrepTime(uint8_t cpuIdx, uint8_t thrIdx, uint64_t t)            { vEbwrs ew; return send(setThrPrepTime(cpuIdx, thrIdx, t, ew));}
-     HealthReport& getHealth(uint8_t cpuIdx, HealthReport &hr);
-          uint64_t getDmWrTime();
-              bool isSafeToRemove(const std::string& pattern, std::string& report);
-              bool isSafeToRemove(Graph& gRem, std::string& report);
-              bool tableCheck(std::string& report);
-
-
-
-               
-
-  // Screen Output //////////////////////////////////////////////////////////////
-  void show(const std::string& title, const std::string& logDictFile, TransferDir dir, bool filterMeta );
-  void showUp(bool filterMeta) {show("Upload Table", "upload_dict.txt", TransferDir::UPLOAD, false);} //show a CPU's Upload address table
-  void showDown(bool filterMeta) {  //show a CPU's Download address table
-    show("Download Table" + (filterMeta ? std::string(" (noMeta)") : std::string("")), "download_dict.txt", TransferDir::DOWNLOAD, filterMeta);
-  }
-  void showCpuList();
-  std::string& inspectQueues(const std::string& blockName, std::string& report); //Show all command fields in Block Queue 
-  void dumpNode(uint8_t cpuIdx, const std::string& name); //hex dump a node
-  void verboseOn()  {verbose = true;}  //Turn on Verbose Output
-  void verboseOff() {verbose = false;} //Turn off Verbose Output
-  bool isVerbose()  const {return verbose;} //Tell if Output is set to Verbose 
 
 };
 

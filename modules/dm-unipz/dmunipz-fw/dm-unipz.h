@@ -38,13 +38,16 @@
 #define  DMUNIPZ_CMD_STOPOP       3           // stops operation
 #define  DMUNIPZ_CMD_IDLE         4           // requests gateway to enter idle state
 #define  DMUNIPZ_CMD_RECOVER      5           // recovery from error state
+#define  DMUNIPZ_CMD_RELEASETK    6           // release TK request at UNILAC
+#define  DMUNIPZ_CMD_RELEASEBEAM  7           // release beam request at UNILAC
+
 
 // states; implicitely, all states may transit to the ERROR or FATAL state
 #define  DMUNIPZ_STATE_UNKNOWN    0           // unknown state
 #define  DMUNIPZ_STATE_S0         1           // initial state -> IDLE (automatic)
 #define  DMUNIPZ_STATE_IDLE       2           // idle state -> CONFIGURED (by command "configure")
-#define  DMUNIPZ_STATE_CONFIGURED 3           // configured state -> IDLE ("idle"), CONFIGURED ("configure"), OPERATION ("startop")
-#define  DMUNIPZ_STATE_OPERATION  4           // gateway in operation -> STOPPING ("stopop")
+#define  DMUNIPZ_STATE_CONFIGURED 3           // configured state -> IDLE ("idle"), CONFIGURED ("configure"), OPREADY ("startop")
+#define  DMUNIPZ_STATE_OPREADY    4           // gateway in operation -> STOPPING ("stopop")
 #define  DMUNIPZ_STATE_STOPPING   5           // gateway in operation -> CONFIGURED (automatic)
 #define  DMUNIPZ_STATE_ERROR      6           // gateway in error -> IDLE ("recover")
 #define  DMUNIPZ_STATE_FATAL      7           // gateway in fatal error; RIP                                                             

@@ -29,8 +29,8 @@ private:
       ar & BOOST_SERIALIZATION_NVP(hm);
   }
 
-  const unsigned int FNV_PRIME     = 16777619u;
-  const unsigned int OFFSET_BASIS  = 2166136261u;
+  static const unsigned int FNV_PRIME     = 16777619u;
+  static const unsigned int OFFSET_BASIS  = 2166136261u;
   hBiMap hm;
 
 
@@ -50,8 +50,8 @@ public:
   }
 
 
-  uint32_t hash(const std::string& s); 
-  uint32_t fnvHash(const char* str);
+  static uint32_t hash(const std::string& s); 
+  static uint32_t fnvHash(const char* str);
   boost::optional<const uint32_t&> add(const std::string& name);
   bool remove(const std::string& name);
   bool remove(const uint32_t hash);

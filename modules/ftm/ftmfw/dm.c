@@ -227,9 +227,37 @@ uint32_t* cmd(uint32_t* node, uint32_t* thrData) {
 
   DBPRINT3("#%02u: Prio: %u, pre: 0x%08x, base: 0x%08x, wrIdx: 0x%08x, target: 0x%08x, BufList: 0x%08x, Buf: 0x%08x, Element: 0x%08x\n", cpuId, prio, adrPrefix, INT_BASE_ADR, (uint32_t)wrIdx, (uint32_t)tg, (uint32_t)bl, (uint32_t)b, (uint32_t)e );
 
-  for(uint32_t offs = T_CMD_TIME; offs < T_CMD_TIME + _T_CMD_SIZE_; offs += _32b_SIZE_ ) { //write Cmd
-    e[offs >> 2] = node[(CMD_VALID_TIME + offs) >> 2];
+  // Important !!! So the host can verify if a command is active as seen from an LM32 by comparing with cursor timestamping,
+  // we cannot place ANY tvalids into the past. All tValids must be placed sufficiently into the future so that this here function
+  // terminates before tValid is reached
+
+  // !!! CAVEAT !!! when tvalid is used as relative offset in multiple commands to synchronise them, the sum of block start (current time sume) + tvalid
+  // must always be greater than tMinimum, else the commands get differing tvalids assigned and will no longer synchronously become valid !!!
+  
+  uint64_t* ptValid   = (uint64_t*)&node[CMD_VALID_TIME   >> 2];
+  uint64_t* ptCurrent = (uint64_t*)&thrData[T_TD_CURRTIME >> 2];
+  uint64_t vabsMsk    = (uint64_t)((node[CMD_ACT  >> 2] >> ACT_VABS_POS) & ACT_VABS_MSK) -1; // abs -> 0x0, !abs -> 0xfff..f
+  uint64_t tMinimum   = getSysTime() + _T_TVALID_OFFS_;                 // minimum timestamp that we consider 'future'
+  uint64_t tValidCalc = *ptValid + *ptCurrent & vabsMsk;                // if tValid is relative offset (not absolute), add current time sum
+  uint64_t tMinMsk    = (uint64_t)(tMinimum < tValidCalc) -1;           // min < calc -> 0x0, min >= calc -> 0xfff..f
+  uint64_t tValid     = (tMinimum & tMinMsk) | (tValidCalc & ~tMinMsk); // equiv. tValid = (tMinimum < tvalidCalc) ? tvalidCalc : tMinimum;
+
+  //copy cmd data to target queue
+  e[(T_CMD_TIME + 0)          >> 2]  = (uint32_t)(tValid >> 32);
+  e[(T_CMD_TIME + _32b_SIZE_) >> 2]  = (uint32_t)(tValid);
+  
+  e[(T_CMD_ACT + 0 * _32b_SIZE_) >> 2]  = node[(CMD_ACT + 0 * _32b_SIZE_) >> 2];
+  e[(T_CMD_ACT + 1 * _32b_SIZE_) >> 2]  = node[(CMD_ACT + 1 * _32b_SIZE_) >> 2];
+  e[(T_CMD_ACT + 2 * _32b_SIZE_) >> 2]  = node[(CMD_ACT + 2 * _32b_SIZE_) >> 2];
+  
+  //FIXME WTF ... why doesn't this work with this loop ???
+  /*
+  //0, 4 , 8
+  // !!! CAREFUL: this must be post-increment, use '=+' instead of '+=' !!!
+  for(uint32_t offs = 0; offs < (_T_CMD_SIZE_ - _T_TS_SIZE_); offs =+ _32b_SIZE_ ) { 
+    e[(T_CMD_ACT + offs) >> 2] = node[(CMD_ACT + offs) >> 2];
   }
+  */
   
   *wrIdx = (*wrIdx + 1) & Q_IDX_MAX_OVF_MSK; //increase write index
 
@@ -293,6 +321,7 @@ uint32_t* block(uint32_t* node, uint32_t* thrData) {
   if( (*awrOffs & 0x00ffffff) != (*ardOffs & 0x00ffffff) ) {
     //only process one command, and that of the highest priority. default is low, check up
     prio = PRIO_LO;
+    //MSB first: bit 31 is at byte offset 0!
     if (*((uint8_t *)node + BLOCK_CMDQ_RD_IDXS + _32b_SIZE_ - PRIO_HI - 1) ^ *((uint8_t *)node + BLOCK_CMDQ_WR_IDXS + _32b_SIZE_ - PRIO_HI - 1)) { prio = PRIO_HI; }
     if (*((uint8_t *)node + BLOCK_CMDQ_RD_IDXS + _32b_SIZE_ - PRIO_IL - 1) ^ *((uint8_t *)node + BLOCK_CMDQ_WR_IDXS + _32b_SIZE_ - PRIO_IL - 1)) { prio = PRIO_IL; }
     //correct prio found, create shortcuts to control data of corresponding queue
