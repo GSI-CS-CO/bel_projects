@@ -414,7 +414,7 @@ const vAdr CarpeDM::getCmdWrAdrs(uint32_t hash, uint8_t prio) {
   //find the address corresponding to given name
   auto it = atDown.lookupHash(hash);
 
-  if (!(atDown.isOk(it))) {throw std::runtime_error( "Could not find target block in download address table"); return ret;}
+  if (!(atDown.isOk(it))) {throw std::runtime_error( "Could not find target block in download address table");}
   auto* x = (AllocMeta*)&(*it);
 
   //Check if requested queue priority level exists
@@ -430,10 +430,10 @@ const vAdr CarpeDM::getCmdWrAdrs(uint32_t hash, uint8_t prio) {
   
   //Check if queue is not full
   //sLog << "wrIdx " << (int)wrIdx << " rdIdx " << (int)rdIdx << " ewrIdx " << (int)eWrIdx << " rdIdx " << (int)rdIdx << " eRdIdx " << eRdIdx << std::endl;
-  if ((wrIdx == rdIdx) && (eWrIdx != eRdIdx)) {throw std::runtime_error( "Block queue is full, can't write. "); return ret; }
+  if ((wrIdx == rdIdx) && (eWrIdx != eRdIdx)) {throw std::runtime_error( gDown[x->v].name + " queue of prio " + std::to_string((int)prio) + " is full, can't write.\n");}
   //lookup Buffer List                                                        
   it = atDown.lookupAdr(x->cpu, atDown.adrConv(AdrType::INT, AdrType::MGMT, x->cpu, blAdr));
-  if (!(atDown.isOk(it))) {throw std::runtime_error( "Could not find target queue in download address table"); return ret;}
+  if (!(atDown.isOk(it))) {throw std::runtime_error( "Could not find target queue in download address table");}
   auto* pmBl = (AllocMeta*)&(*it);
 
   //calculate write offset                                                     
