@@ -86,7 +86,9 @@ bool CarpeDM::isSafeToRemove(std::set<std::string> patterns, std::string& report
   // End Preparations
 
   //BEGIN Basic Static equivalent model //
-  //add static equivalent edges of all pending flow commands to working copy  
+  //add static equivalent edges of all pending flow commands to working copy
+
+  //FIXME shouldn't this also be iteratively done ???  
   if (addDynamicDestinations(gTmp, at)) { if(verbose) {sLog << "Added dynamic equivalents." << std::endl;} }
 
   if(verbose) sLog << "Generating filtered graph view " << std::endl;
@@ -343,7 +345,7 @@ bool CarpeDM::addResidentDestinations(Graph& gEq, Graph& gOrig, vertex_set_t cur
     addEdge = false;
     for(auto& vRc : resCmds) {
       vertex_set_t tmpTree, si;
-      vertex_t vBlock = -1, vDst = -1; 
+      vertex_t vBlock = null_vertex, vDst = null_vertex; 
       Graph::out_edge_iterator out_begin, out_end, out_cur;
       bool found = false;
 
@@ -360,7 +362,7 @@ bool CarpeDM::addResidentDestinations(Graph& gEq, Graph& gOrig, vertex_set_t cur
           if(gOrig[*out_cur].type == det::sCmdTarget)  {vBlock  = target(*out_cur, gOrig);}
           if(gOrig[*out_cur].type == det::sCmdFlowDst) {vDst    = target(*out_cur, gOrig);}
         }
-        if (((signed)vBlock  == -1) || ((signed)vDst == -1)) {throw std::runtime_error(isSafeToRemove::exIntro + "Could not find block and dst for resident equivalents");}
+        if ((vBlock  == null_vertex) || (vDst == null_vertex)) {throw std::runtime_error(isSafeToRemove::exIntro + "Could not find block and dst for resident equivalents");}
         
          //check for equivalent resident edges
         boost::tie(out_begin, out_end) = out_edges(vBlock, gEq);

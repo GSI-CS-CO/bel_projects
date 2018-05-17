@@ -571,7 +571,7 @@ using namespace DotStr::Misc;
     std::string report;
     bool isSafe =  isSafeToRemove(g, report);
     //writeTextFile("safetyReportNormal.dot", report);
-    if (!(force | (isSafe))) {throw std::runtime_error("Cannot safely be removed\n");}
+    if (!(force | (isSafe))) {throw std::runtime_error("//Subgraph cannot safely be removed!\n\n" + report);}
     
     subtraction(g);
     //writeUpDotFile("upload.dot", false);
@@ -606,9 +606,9 @@ using namespace DotStr::Misc;
     }
     
     std::string report;
-    bool isSafe =  isSafeToRemove(g, report);
+    bool isSafe =  isSafeToRemove(gTmpRemove, report);
     //writeTextFile("safetyReportNormal.dot", report);
-    if (!(force | (isSafe))) {throw std::runtime_error("Cannot safely be removed\n");}
+    if (!(force | (isSafe))) {throw std::runtime_error("//Subgraph cannot safely be removed!\n\n" + report);}
 
     subtraction(gTmpRemove);
     //writeUpDotFile("upload.dot", false);
