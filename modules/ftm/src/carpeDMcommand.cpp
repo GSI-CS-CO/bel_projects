@@ -24,7 +24,9 @@
 namespace dnt = DotStr::Node::TypeVal;
 namespace det = DotStr::Edge::TypeVal;
 
-
+namespace carpeDMcommand {
+  const std::string exIntro = "carpeDMcommand: ";
+}
 
 boost::optional<std::pair<int, int>> CarpeDM::parseCpuAndThr(vertex_t v, Graph& g) {
 
@@ -196,8 +198,6 @@ vEbwrs& CarpeDM::createCommandBurst(Graph& g, vEbwrs& ew) {
     uint32_t cmdWrInc, hash;
     uint8_t b[_T_CMD_SIZE_ + _32b_SIZE_];
     
-    if (!hm.lookup(targetName)) throw std::runtime_error("Command target <" + targetName + "> is not valid\n");
-
     //check for covenants
     if(optimisedS2R) {
       cmI x = ct.lookup(targetName);
@@ -208,10 +208,7 @@ vEbwrs& CarpeDM::createCommandBurst(Graph& g, vEbwrs& ew) {
       
     }
 
-
-
- 
-    hash     = hm.lookup(targetName).get(); 
+    hash     = hm.lookup(targetName, "createCommand: unknown target "); 
     vAdr tmp = getCmdWrAdrs(hash, cmdPrio);
     ew.va   += tmp;
     ew.vcs  += leadingOne(tmp.size());
@@ -262,15 +259,17 @@ vEbwrs& CarpeDM::createCommandBurst(Graph& g, vEbwrs& ew) {
 
   //Returns the Node the Thread will start from
   const std::string CarpeDM::getThrOrigin(uint8_t cpuIdx, uint8_t thrIdx) {
-     uint32_t adr;
+    uint32_t adr;
      
-     adr = ebReadWord(ebd, getThrInitialNodeAdr(cpuIdx, thrIdx));
+    adr = ebReadWord(ebd, getThrInitialNodeAdr(cpuIdx, thrIdx));
 
-     if (adr == LM32_NULL_PTR) return DotStr::Node::Special::sIdle;
-
-     auto x = atDown.lookupAdr(cpuIdx, atDown.adrConv(AdrType::INT, AdrType::MGMT,cpuIdx, adr));
-     if (atDown.isOk(x))  return gDown[x->v].name;
-     else                 return DotStr::Misc::sUndefined;
+    if (adr == LM32_NULL_PTR) return DotStr::Node::Special::sIdle;
+    try {
+      auto x = atDown.lookupAdr(cpuIdx, atDown.adrConv(AdrType::INT, AdrType::MGMT,cpuIdx, adr));
+      return gDown[x->v].name;
+    } catch (...) {   
+      return DotStr::Misc::sUndefined;
+    }
   }
 
  
@@ -281,10 +280,12 @@ vEbwrs& CarpeDM::createCommandBurst(Graph& g, vEbwrs& ew) {
     adr = ebReadWord(ebd, getThrCurrentNodeAdr(cpuIdx, thrIdx));
 
     if (adr == LM32_NULL_PTR) return DotStr::Node::Special::sIdle;
-
-    auto x = atDown.lookupAdr(cpuIdx, atDown.adrConv(AdrType::INT, AdrType::MGMT,cpuIdx, adr));
-    if (atDown.isOk(x)) return gDown[x->v].name;
-    else                return DotStr::Misc::sUndefined;  
+    try {
+      auto x = atDown.lookupAdr(cpuIdx, atDown.adrConv(AdrType::INT, AdrType::MGMT,cpuIdx, adr));
+      return gDown[x->v].name;
+    } catch (...) {  
+      return DotStr::Misc::sUndefined;
+    }  
   }
 
   //DEBUG ONLY !!! force thread cursor to the value of the corresponding origin
@@ -412,9 +413,7 @@ const vAdr CarpeDM::getCmdWrAdrs(uint32_t hash, uint8_t prio) {
   vAdr ret;  
 
   //find the address corresponding to given name
-  auto it = atDown.lookupHash(hash);
-
-  if (!(atDown.isOk(it))) {throw std::runtime_error( "Could not find target block in download address table");}
+  auto it = atDown.lookupHash(hash, carpeDMcommand::exIntro);
   auto* x = (AllocMeta*)&(*it);
 
   //Check if requested queue priority level exists
@@ -432,8 +431,7 @@ const vAdr CarpeDM::getCmdWrAdrs(uint32_t hash, uint8_t prio) {
   //sLog << "wrIdx " << (int)wrIdx << " rdIdx " << (int)rdIdx << " ewrIdx " << (int)eWrIdx << " rdIdx " << (int)rdIdx << " eRdIdx " << eRdIdx << std::endl;
   if ((wrIdx == rdIdx) && (eWrIdx != eRdIdx)) {throw std::runtime_error( gDown[x->v].name + " queue of prio " + std::to_string((int)prio) + " is full, can't write.\n");}
   //lookup Buffer List                                                        
-  it = atDown.lookupAdr(x->cpu, atDown.adrConv(AdrType::INT, AdrType::MGMT, x->cpu, blAdr));
-  if (!(atDown.isOk(it))) {throw std::runtime_error( "Could not find target queue in download address table");}
+  it = atDown.lookupAdr(x->cpu, atDown.adrConv(AdrType::INT, AdrType::MGMT, x->cpu, blAdr), carpeDMcommand::exIntro);
   auto* pmBl = (AllocMeta*)&(*it);
 
   //calculate write offset                                                     
@@ -462,9 +460,7 @@ const vAdr CarpeDM::getCmdWrAdrs(uint32_t hash, uint8_t prio) {
     uint8_t  eWrIdx;
 
     //find the address corresponding to given name
-    auto it = atDown.lookupHash(hash);
-
-    if (!(atDown.isOk(it))) {throw std::runtime_error( "Could not find target block in download address table"); return 0;}
+    auto it = atDown.lookupHash(hash, carpeDMcommand::exIntro);
     auto* x = (AllocMeta*)&(*it);
         //sLog << "indices: 0x" << std::hex << writeBeBytesToLeNumber<uint32_t>((uint8_t*)&x->b[BLOCK_CMDQ_WR_IDXS]) << std::endl;
     //get incremented Write index of requested prio
@@ -607,8 +603,10 @@ vertex_set_t CarpeDM::getAllCursors(bool activeOnly) {
       uint32_t adr = ebReadWord(ebd, getThrCurrentNodeAdr(cpu, thr));
       uint64_t  dl = getThrDeadline(cpu, thr); 
       if (adr == LM32_NULL_PTR || (activeOnly && ((int64_t)dl == -1))) continue; // only active cursors: no dead end idles, no aborted threads
-      auto x = atDown.lookupAdr(cpu, atDown.adrConv(AdrType::INT, AdrType::MGMT,cpu, adr));
-      if (atDown.isOk(x)) ret.insert(x->v);
+      try {
+        auto x = atDown.lookupAdr(cpu, atDown.adrConv(AdrType::INT, AdrType::MGMT,cpu, adr));
+        ret.insert(x->v);
+      } catch(...) {}  
     }
       //add all thread cursors addresses of CPU <i>
     
@@ -635,10 +633,9 @@ int CarpeDM::staticFlushPattern(const std::string& sPattern, bool prioIl, bool p
   bool found = false;
 
   for (auto& nodeIt : getPatternMembers(sPattern)) {
-    if (hm.lookup(nodeIt) ) {
+    if (hm.contains(nodeIt) ) {
       found = true;
-      auto x = at.lookupHash(hm.lookup(nodeIt).get());
-      if (!(at.isOk(x))) {throw std::runtime_error("staticFlush: Could not find pattern <" + sPattern + "> block node <" + nodeIt + ">");}
+      auto x = at.lookupHash(hm.lookup(nodeIt), carpeDMcommand::exIntro);
       if (g[x->v].np->isBlock()) { staticFlush(g[x->v].name, prioIl, prioHi, prioLo, ew, force); }  
     }
   } 
@@ -669,20 +666,18 @@ vEbwrs& CarpeDM::staticFlush(const std::string& sBlock, bool prioIl, bool prioHi
   
   if ( (!isSafeToRemove(sPattern, dbgReport)) && !force)  {
     if(debug) sLog << dbgReport << std::endl;
-    throw std::runtime_error("staticFlush: Pattern <" + sPattern + "> of block member <" + sBlock + "> is active, static flush not safely possible!");
+    throw std::runtime_error(carpeDMcommand::exIntro + "staticFlush: Pattern <" + sPattern + "> of block member <" + sBlock + "> is active, static flush not safely possible!");
   }
 
   //check against covenants
 
-  if(optimisedS2R && isCovenantPending(sBlock)) throw std::runtime_error("staticFlush: Static flushing block <" + sBlock + "> would violate a safe2remove-covenant!");
+  if(optimisedS2R && isCovenantPending(sBlock)) throw std::runtime_error(carpeDMcommand::exIntro + "staticFlush: cannot flush, block <" + sBlock + "> is in a safe2remove-covenant!");
   
 
   if(verbose) sLog << "Trying to flush block <" << sBlock << ">" << std::endl;
     
   //get the block
-  if (!hm.lookup(sBlock)) {throw std::runtime_error( "staticFlush: Could not find target block name");}
-  auto x = at.lookupHash(hm.lookup(sBlock).get());
-  if (!at.isOk(x)) {throw std::runtime_error( "staticFlush: Could not find target block in download address table");}
+  auto x = at.lookupHash(hm.lookup(sBlock, carpeDMcommand::exIntro));
   uint32_t cpyMsk = 0;
   uint32_t wrIdxs = boost::dynamic_pointer_cast<Block>(g[x->v].np)->getWrIdxs(); 
   uint32_t rdIdxs = boost::dynamic_pointer_cast<Block>(g[x->v].np)->getRdIdxs();

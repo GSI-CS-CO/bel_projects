@@ -95,12 +95,13 @@ namespace coverage {
     // check if all graph nodes are known to all tables
     BOOST_FOREACH( vertex_t v, vertices(g) ) {
       //Check Hashtable
-      if (!hm.lookup(g[v].name)) {hashIsOk = false; hashReport += sMiss + sFirst + g[v].name + "\n";}
+      if (!hm.contains(g[v].name)) {hashIsOk = false; hashReport += sMiss + sFirst + g[v].name + "\n";}
     }
     BOOST_FOREACH( vertex_t v, vertices(g) ) {
       //Check Alloctable
-      auto x = at.lookupVertex(v);
-      if (!at.isOk(x))           {allocIsOk = false; allocReport += sMiss + sFirst + g[v].name + "\n";}
+      try {
+        auto x = at.lookupVertex(v);
+      } catch (...) {allocIsOk = false; allocReport += sMiss + sFirst + g[v].name + "\n";}
     }
     BOOST_FOREACH( vertex_t v, vertices(g) ) {
       //Check Groupstable
@@ -221,11 +222,9 @@ namespace coverage {
   QueueReport& CarpeDM::getQReport(Graph& g, AllocTable& at, const std::string& blockName, QueueReport& qr) {
     
     const std::string exIntro = " getQReport: ";
-    const std::string nodeNotFound = " Node could not be found: ";
+    
 
-    if (!(hm.lookup(blockName))) throw std::runtime_error(exIntro + nodeNotFound + blockName); 
-    auto x = at.lookupHash(hm.lookup(blockName).get()); // x is the blocks alloctable entry
-    if (!(at.isOk(x))) throw std::runtime_error(" allocTable: " + nodeNotFound + blockName);
+    auto x = at.lookupHash(hm.lookup(blockName, exIntro)); // x is the blocks alloctable entry
 
     //check their Q counters for unprocessed commands
     uint32_t wrIdxs = boost::dynamic_pointer_cast<Block>(g[x->v].np)->getWrIdxs(); 
@@ -242,12 +241,14 @@ namespace coverage {
       bufLstAdr = writeBeBytesToLeNumber<uint32_t>((uint8_t*)&bBlock[BLOCK_CMDQ_LO_PTR + prio * _32b_SIZE_]);
       std::tie(bufLstCpu, bufLstAdrType) = at.adrClassification(bufLstAdr);  
       //get BufList binary
-      auto bufLst = at.lookupAdr( x->cpu, at.adrConv(bufLstAdrType, AdrType::MGMT, x->cpu, bufLstAdr) ); //buffer list cpu is the same as block cpu
-      if (!(at.isOk(bufLst))) { continue; }
-      else                    { qr.hasQ[prio] = true; }
+      const uint8_t* bBL;
+      try {
+        auto bufLst = at.lookupAdr( x->cpu, at.adrConv(bufLstAdrType, AdrType::MGMT, x->cpu, bufLstAdr) ); //buffer list cpu is the same as block cpu
+        qr.hasQ[prio] = true;
+        bBL = bufLst->b;
+      } catch (...) { continue; }
 
-      const uint8_t* bBL = bufLst->b;  
-       
+      
       //get current read cnt
       uint8_t auxRd = (rdIdxs >> (prio*8)) & Q_IDX_MAX_OVF_MSK;
       uint8_t auxWr = (wrIdxs >> (prio*8)) & Q_IDX_MAX_OVF_MSK;
@@ -274,11 +275,12 @@ namespace coverage {
         AdrType bufAdrType;
         
         uint32_t bufAdr = writeBeBytesToLeNumber<uint32_t>((uint8_t*)&bBL[(i / 2) * _32b_SIZE_] );
-        std::tie(bufCpu, bufAdrType) = at.adrClassification(bufAdr);  
-        auto buf = at.lookupAdr( x->cpu, at.adrConv(bufAdrType, AdrType::MGMT, x->cpu, bufAdr) ); //buffer cpu is the same as block cpu
-        if (!(at.isOk(buf))) {continue;}
-        qr.aQ[prio].aQe[i].pending = (bool)pendingIdx.count(i);
-        getQelement(g, at, i, buf, qr.aQ[prio].aQe[i]);
+        std::tie(bufCpu, bufAdrType) = at.adrClassification(bufAdr);
+        try {  
+          auto buf = at.lookupAdr( x->cpu, at.adrConv(bufAdrType, AdrType::MGMT, x->cpu, bufAdr) ); //buffer cpu is the same as block cpu
+          qr.aQ[prio].aQe[i].pending = (bool)pendingIdx.count(i);
+          getQelement(g, at, i, buf, qr.aQ[prio].aQe[i]);
+        } catch (...) {continue;}
       }
     }
       
@@ -313,9 +315,10 @@ namespace coverage {
                                 std::tie(dstCpuAux, dstAdrType) = at.adrClassification(dstAdr);
                                 dstCpu = (dstAdrType == AdrType::PEER ? dstCpuAux : cpu);
                                 //get allocentry of the destination by its cpu idx and memory address
-                                auto dst = at.lookupAdr( dstCpu, at.adrConv(dstAdrType, AdrType::MGMT, dstCpu, dstAdr) );
-                                if (!(at.isOk(dst)))  {sDst = DotStr::Misc::sUndefined;}
-                                else                  {sDst = g[dst->v].name;}
+                                try {
+                                  auto dst = at.lookupAdr( dstCpu, at.adrConv(dstAdrType, AdrType::MGMT, dstCpu, dstAdr) );
+                                  sDst = g[dst->v].name;
+                                } catch (...) { sDst = DotStr::Misc::sUndefined;}
                               }    
                               qe.sType          = dnt::sCmdFlow;
                               qe.flowPerma      = (act >> ACT_CHP_POS) & ACT_CHP_MSK;
@@ -350,12 +353,11 @@ namespace coverage {
 void CarpeDM::dumpNode(uint8_t cpuIdx, const std::string& name) {
   
   Graph& g = gDown;
- 
-    auto it = atDown.lookupHash(hm.lookup(name).get());
-    if (atDown.isOk(it)) {
-      auto* x = (AllocMeta*)&(*it);  
-      hexDump(g[x->v].name.c_str(), (const char*)x->b, _MEM_BLOCK_SIZE); 
-    }
+  if (hm.contains(name)) {   
+    auto it = atDown.lookupHash(hm.lookup(name));
+    auto* x = (AllocMeta*)&(*it);  
+    hexDump(g[x->v].name.c_str(), (const char*)x->b, _MEM_BLOCK_SIZE); 
+  }  
 }
 
 void CarpeDM::inspectHeap(uint8_t cpuIdx) {
@@ -500,13 +502,12 @@ void CarpeDM::show(const std::string& title, const std::string& logDictFile, Tra
     
     if( !(filterMeta) || (filterMeta & !(g[v].np->isMeta())) ) {
       sLog   << std::setfill(' ') << std::setw(4) << std::dec << v 
-      << "   "    << std::setfill(' ') << std::setw(2) << std::dec << (int)(at.isOk(x) && (int)(at.isStaged(x)))  
-      << " "      << std::setfill(' ') << std::setw(1) << std::dec << (int)(!(at.isOk(x)))
-      << "   "    << std::setfill(' ') << std::setw(4) << std::dec << (at.isOk(x) ? (int)x->cpu : -1 )  
+      << "   "    << std::setfill(' ') << std::setw(2) << std::dec << (int)(at.isStaged(x))  
+      << "   "    << std::setfill(' ') << std::setw(4) << std::dec << (int)x->cpu  
       << "   "    << std::setfill(' ') << std::setw(40) << std::left << g[v].name 
-      << "   0x"  << std::hex << std::setfill('0') << std::setw(8) << (at.isOk(x) ? x->hash  : 0 )
-      << "   0x"  << std::hex << std::setfill('0') << std::setw(8) << (at.isOk(x) ? at.adrConv(AdrType::MGMT, AdrType::INT, x->cpu, x->adr)  : 0 ) 
-      << "   0x"  << std::hex << std::setfill('0') << std::setw(8) << (at.isOk(x) ? at.adrConv(AdrType::MGMT, AdrType::EXT, x->cpu, x->adr)  : 0 )  << std::endl;
+      << "   0x"  << std::hex << std::setfill('0') << std::setw(8) << x->hash
+      << "   0x"  << std::hex << std::setfill('0') << std::setw(8) << at.adrConv(AdrType::MGMT, AdrType::INT, x->cpu, x->adr) 
+      << "   0x"  << std::hex << std::setfill('0') << std::setw(8) << at.adrConv(AdrType::MGMT, AdrType::EXT, x->cpu, x->adr)  << std::endl;
     }
   }  
 

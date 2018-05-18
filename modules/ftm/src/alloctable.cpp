@@ -39,19 +39,29 @@
 
   }
 
-  amI AllocTable::lookupVertex(vertex_t v) const  {
+  amI AllocTable::lookupVertex(vertex_t v, const std::string& exMsg) const  {
+    amI ret;
     auto it = a.get<Vertex>().find(v);
-    return a.iterator_to( *it );
+    ret = a.iterator_to( *it );
+    if (!isOk(ret)) {throw std::runtime_error(exMsg + "unknown vertex descriptor " + std::to_string(v));}
+    return ret; 
   }
 
-  amI AllocTable::lookupHash(uint32_t hash) const  {
+  amI AllocTable::lookupHash(uint32_t hash, const std::string& exMsg) const  {
+    amI ret;
     auto it = a.get<Hash>().find(hash);
-    return a.iterator_to( *it );
+    ret = a.iterator_to( *it );
+    if (!isOk(ret)) {throw std::runtime_error(exMsg + "unknown hash " + std::to_string(hash) + " (dec)");}
+    return ret; 
   }
 
-  amI AllocTable::lookupAdr(uint8_t cpu, uint32_t adr) const {
+  amI AllocTable::lookupAdr(uint8_t cpu, uint32_t adr, const std::string& exMsg) const {
+    
+    amI ret;
     auto it = a.get<CpuAdr>().find(boost::make_tuple( cpu, adr ));
-    return a.iterator_to( *it );
+    ret = a.iterator_to( *it );
+    if (!isOk(ret)) {throw std::runtime_error(exMsg + "unknown cpu/adr combo " + std::to_string((int)cpu) + " " + std::to_string((int)adr) + " (dec)");}
+    return ret; 
     
   }
 

@@ -645,12 +645,9 @@ bool CarpeDM::connect(const std::string& en, bool simulation, bool test) {
      
     AllocTable& at = (dir == TransferDir::UPLOAD ? atUp : atDown );
     uint32_t hash;
-    if (!(hm.lookup(name))) {throw std::runtime_error( "Unknown Node Name '" + name + "' when lookup up hosting cpu"); return -1;} 
-    hash = hm.lookup(name).get(); //just pass it on
+    hash = hm.lookup(name); //just pass it on
     
     auto x = at.lookupHash(hash);
-    if (!(at.isOk(x)))  {throw std::runtime_error( "Could not find Node '" + name + "' in allocation table"); return -1;}
-    
     return x->cpu;
   }
 
@@ -660,19 +657,18 @@ bool CarpeDM::connect(const std::string& en, bool simulation, bool test) {
 
     AllocTable& at = (dir == TransferDir::UPLOAD ? atUp : atDown );
     uint32_t hash;
-    if (!(hm.lookup(name))) {throw std::runtime_error( "Unknown Node Name '" + name + "' when lookup up address"); return LM32_NULL_PTR;} 
-    hash = hm.lookup(name).get(); //just pass it on
+    
+    hash = hm.lookup(name); //just pass it on
     auto x = at.lookupHash(hash);
-    if (!(at.isOk(x)))  {throw std::runtime_error( "Could not find Node in allocation table"); return LM32_NULL_PTR;}
-    else {
-      switch (adrT) {
-        case AdrType::MGMT : return x->adr; break;
-        case AdrType::INT  : return at.adrConv(AdrType::MGMT, AdrType::INT, x->cpu, x->adr); break;
-        case AdrType::EXT  : return at.adrConv(AdrType::MGMT, AdrType::EXT, x->cpu, x->adr); break;
-        case AdrType::PEER : return at.adrConv(AdrType::MGMT, AdrType::PEER, x->cpu, x->adr); break;
-        default            : throw std::runtime_error( "Unknown Adr Type conversion"); return LM32_NULL_PTR;
-      }
-    }  
+    
+    switch (adrT) {
+      case AdrType::MGMT : return x->adr; break;
+      case AdrType::INT  : return at.adrConv(AdrType::MGMT, AdrType::INT, x->cpu, x->adr); break;
+      case AdrType::EXT  : return at.adrConv(AdrType::MGMT, AdrType::EXT, x->cpu, x->adr); break;
+      case AdrType::PEER : return at.adrConv(AdrType::MGMT, AdrType::PEER, x->cpu, x->adr); break;
+      default            : throw std::runtime_error( "Unknown Adr Type conversion"); return LM32_NULL_PTR;
+    }
+      
   }
 
 
@@ -707,7 +703,7 @@ void CarpeDM::showCpuList() {
 
   bool CarpeDM::isInHashDict(const std::string& name) {
     if (!(hm.contains(name))) return false;
-    return (atDown.isOk(atDown.lookupHash(hm.lookup(name).get())));
+    return (atDown.isOk(atDown.lookupHash(hm.lookup(name))));
   }  
 
   // Name/Hash Dict ///////////////////////////////////////////////////////////////////////////////

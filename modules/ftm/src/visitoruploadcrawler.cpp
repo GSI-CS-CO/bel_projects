@@ -76,7 +76,6 @@ vAdr& VisitorUploadCrawler::childrenAdrs(vertex_set_t vs, vAdr& ret, const unsig
   for (auto& itVs : vs ) {
     if (ret.size() >= results + maxResults) break;
     auto x = at.lookupVertex(itVs);
-    if (!at.isOk(x)) throw std::runtime_error( exIntro + "Node " + g[itVs].name + " of type " + g[itVs].type + " was found unallocated\n");
     if (!allowPeers & (x->cpu != cpu)) throw std::runtime_error( exIntro + "Child " + g[x->v].name + "'s CPU must not differ from parent " + g[v].name + "'s CPU\n");
 
     AdrType aTmp = (x->cpu == cpu ? AdrType::INT : AdrType::PEER);
@@ -115,14 +114,14 @@ vAdr& VisitorUploadCrawler::childrenAdrs(vertex_set_t vs, vAdr& ret, const unsig
           if (aId != LM32_NULL_PTR) {sErr << "Found more than one dynamic id source" << std::endl; break;
           } else {
             auto x = at.lookupVertex(target(*out_cur,g));
-            if (at.isOk(x)) { aId = at.adrConv(AdrType::MGMT, AdrType::EXT, x->cpu, x->adr); g[v].np->setFlags(NFLG_TMSG_DYN_ID_SMSK);}
+            aId = at.adrConv(AdrType::MGMT, AdrType::EXT, x->cpu, x->adr); g[v].np->setFlags(NFLG_TMSG_DYN_ID_SMSK);
           }
         }
         if (g[*out_cur].type == det::sDynPar0) {
           if (aPar0 != LM32_NULL_PTR) {sErr << "Found more than one dynamic par0 source" << std::endl; break;
           } else {
             auto x = at.lookupVertex(target(*out_cur,g));
-            if (at.isOk(x)) { aPar0 = at.adrConv(AdrType::MGMT, AdrType::EXT, x->cpu, x->adr); g[v].np->setFlags(NFLG_TMSG_DYN_PAR0_SMSK);}
+            aPar0 = at.adrConv(AdrType::MGMT, AdrType::EXT, x->cpu, x->adr); g[v].np->setFlags(NFLG_TMSG_DYN_PAR0_SMSK);
             //sLog << "DynAdr 0 0x" << std::hex << aPar0 << std::endl;
           }
         }
@@ -130,7 +129,7 @@ vAdr& VisitorUploadCrawler::childrenAdrs(vertex_set_t vs, vAdr& ret, const unsig
           if (aPar1 != LM32_NULL_PTR) {sErr << "Found more than one dynamic par1 source" << std::endl; break;
           } else {
             auto x = at.lookupVertex(target(*out_cur,g));
-            if (at.isOk(x)) { aPar1 = at.adrConv(AdrType::MGMT, AdrType::EXT, x->cpu, x->adr); g[v].np->setFlags(NFLG_TMSG_DYN_PAR1_SMSK);}
+            aPar1 = at.adrConv(AdrType::MGMT, AdrType::EXT, x->cpu, x->adr); g[v].np->setFlags(NFLG_TMSG_DYN_PAR1_SMSK);
             //sLog << "DynAdr 1 0x" << std::hex << aPar1 << std::endl;
           }
         }
@@ -138,14 +137,14 @@ vAdr& VisitorUploadCrawler::childrenAdrs(vertex_set_t vs, vAdr& ret, const unsig
           if (aTef != LM32_NULL_PTR) {sErr << "Found more than one dynamic tef source" << std::endl; break;
           } else {
             auto x = at.lookupVertex(target(*out_cur,g));
-            if (at.isOk(x)) { aTef = at.adrConv(AdrType::MGMT, AdrType::EXT, x->cpu, x->adr); g[v].np->setFlags(NFLG_TMSG_DYN_TEF_SMSK);}
+            aTef = at.adrConv(AdrType::MGMT, AdrType::EXT, x->cpu, x->adr); g[v].np->setFlags(NFLG_TMSG_DYN_TEF_SMSK);
           }
         }
         if (g[*out_cur].type == det::sDynRes) {
           if (aRes != LM32_NULL_PTR) {sErr << "Found more than one dynamic res source" << std::endl; break;
           } else {
             auto x = at.lookupVertex(target(*out_cur,g));
-            if (at.isOk(x)) { aRes = at.adrConv(AdrType::MGMT, AdrType::EXT, x->cpu, x->adr); g[v].np->setFlags(NFLG_TMSG_DYN_RES_SMSK);}
+            aRes = at.adrConv(AdrType::MGMT, AdrType::EXT, x->cpu, x->adr); g[v].np->setFlags(NFLG_TMSG_DYN_RES_SMSK);
           }
         }
       }
@@ -203,12 +202,10 @@ vAdr VisitorUploadCrawler::getFlowDst() const {
   vertex_set_t vsTgt = getChildrenByEdgeType(v, det::sCmdTarget);
   //command cross over to other CPUs is okay. Find out what Cpu the command target is on
   auto tgt = at.lookupVertex(*vsTgt.begin());
-  if (!at.isOk(tgt)) throw std::runtime_error( exIntro + "Node " + g[*vsTgt.begin()].name + " of type " + g[*vsTgt.begin()].type + " was found unallocated\n");
   
   vertex_set_t vsDst = getChildrenByEdgeType(v, det::sCmdFlowDst);
   auto x = at.lookupVertex(*vsDst.begin());
 
-  if (!at.isOk(x)) throw std::runtime_error( exIntro + "Node " + g[*vsDst.begin()].name + " of type " + g[*vsDst.begin()].type + " was found unallocated\n");
   if (x->cpu != tgt->cpu) throw std::runtime_error(  exIntro + "Target " + g[*vsTgt.begin()].name + "'s CPU must not differ from Dst " + g[*vsDst.begin()].name + "'s CPU\n");
  
   ret.push_back(at.adrConv(AdrType::MGMT, AdrType::INT, x->cpu, x->adr));

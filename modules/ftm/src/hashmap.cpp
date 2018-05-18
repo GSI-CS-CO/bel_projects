@@ -31,7 +31,7 @@ boost::optional<const uint32_t&> HashMap::add(const std::string& name) {
   try {
     hm.insert( hashValue(hash, name) ); 
   } catch (...) {
-    if(lookup(hash)) throw std::runtime_error("'" + name + "' would cause a hash collision with '" + lookup(hash).get() + "'");
+    if(contains(hash)) throw std::runtime_error("'" + name + "' would cause a hash collision with '" + lookup(hash) + "'");
     else throw; 
     return boost::optional<const uint32_t&>();
   } 
@@ -49,12 +49,13 @@ bool HashMap::remove(const uint32_t hash) {
   return false;
 }
 
-boost::optional<const std::string&> HashMap::lookup(const uint32_t hash)     const  { try { return hm.left.at(hash);}  catch (...) {//throw std::runtime_error("Hash " + std::to_string(hash) + " not found"); 
-                                                                                                                                    return boost::optional<const std::string&>(); }  
-                                                                                                                                   }
+const std::string& HashMap::lookup(const uint32_t hash, const std::string& exMsg)     const  {
+  try { return hm.left.at(hash);}  catch (...) {throw std::runtime_error(exMsg + "HashTable: Hash " + std::to_string(hash) + " (dec) not found");}
+}
 
-boost::optional<const uint32_t&>    HashMap::lookup(const std::string& name) const  { try { return hm.right.at(name);} catch (...) {//throw std::runtime_error("Name " + name + " not found"); 
-                                                                                                                                    return boost::optional<const uint32_t&>();    }  }  
+const uint32_t&    HashMap::lookup(const std::string& name, const std::string& exMsg) const  {
+ try { return hm.right.at(name);} catch (...) {throw std::runtime_error(exMsg + "HashTable: Name " + name + " not found");}
+}                                                                                                                                       
 
 bool HashMap::contains(const uint32_t hash)     const {if (hm.left.count(hash)  > 0) {return true;} else {return false;} };
 
