@@ -111,7 +111,7 @@ using namespace DotStr::Misc;
     hm.add(name);
     
 
-    vertex_t vD = boost::add_vertex(myVertex(name, g[v].cpu, hm.lookup(name).get(), nullptr, dnt::sDstList, DotStr::Misc::sHexZero), g);
+    vertex_t vD = boost::add_vertex(myVertex(name, g[v].cpu, hm.lookup(name), nullptr, dnt::sDstList, DotStr::Misc::sHexZero), g);
     //FIXME add to grouptable
     g[vD].patName = g[v].patName;
     boost::add_edge(v,   vD, myEdge(det::sDstList), g);
@@ -125,9 +125,9 @@ using namespace DotStr::Misc;
     hm.add(nameB0);
     hm.add(nameB1);
     //FIXME add to grouptable
-    vertex_t vBl = boost::add_vertex(myVertex(nameBl, g[v].cpu, hm.lookup(nameBl).get(), nullptr, dnt::sQInfo, DotStr::Misc::sHexZero), g);
-    vertex_t vB0 = boost::add_vertex(myVertex(nameB0, g[v].cpu, hm.lookup(nameB0).get(), nullptr, dnt::sQBuf,  DotStr::Misc::sHexZero), g);
-    vertex_t vB1 = boost::add_vertex(myVertex(nameB1, g[v].cpu, hm.lookup(nameB1).get(), nullptr, dnt::sQBuf,  DotStr::Misc::sHexZero), g);
+    vertex_t vBl = boost::add_vertex(myVertex(nameBl, g[v].cpu, hm.lookup(nameBl), nullptr, dnt::sQInfo, DotStr::Misc::sHexZero), g);
+    vertex_t vB0 = boost::add_vertex(myVertex(nameB0, g[v].cpu, hm.lookup(nameB0), nullptr, dnt::sQBuf,  DotStr::Misc::sHexZero), g);
+    vertex_t vB1 = boost::add_vertex(myVertex(nameB1, g[v].cpu, hm.lookup(nameB1), nullptr, dnt::sQBuf,  DotStr::Misc::sHexZero), g);
     g[vBl].patName = g[v].patName;
     g[vB0].patName = g[v].patName;
     g[vB1].patName = g[v].patName;
@@ -181,10 +181,9 @@ using namespace DotStr::Misc;
     for (out_cur = out_begin; out_cur != out_end; ++out_cur) {
       if (g[*out_cur].type == det::sDstList) {
         auto dst = at.lookupVertex(target(*out_cur, g));
-        if (at.isOk(dst)) { at.setStaged(dst); 
+        at.setStaged(dst); 
         //std::cout << "staged " << g[dst->v].name  << std::endl; 
-        }// if we found a Dst List, stage it
-        else throw std::runtime_error("Dst List '" + g[dst->v].name + "' was not allocated, this is very bad");
+        // if we found a Dst List, stage it
         break;
       }
     }
@@ -202,10 +201,7 @@ using namespace DotStr::Misc;
     
     if (g[e].type != det::sAltDst ) {
       auto x = at.lookupVertex(v);
-      if(at.isOk(x)) {at.setStaged(x); 
-        //std::cout << "staged " << g[v].name  << std::endl;
-      }
-      else throw std::runtime_error("Node '" + g[v].name + "' was not allocated, this is very bad");
+      at.setStaged(x); 
     }
 
   }
@@ -261,9 +257,10 @@ using namespace DotStr::Misc;
             | ((s2u<bool>(gUp[v].patEntry)) << NFLG_PAT_ENTRY_LM32_POS)
             | ((s2u<bool>(gUp[v].patExit))  << NFLG_PAT_EXIT_LM32_POS);
 
-      amI it = atUp.lookupHash(hash); //if we already have a download entry, keep allocation, but update vertex index
-      if (!(atUp.isOk(it))) {
-        //  
+      amI it;
+      try {            
+        it = atUp.lookupHash(hash); //if we already have a download entry, keep allocation, but update vertex index
+      } catch (...) {
         //sLog << "Adding " << name << std::endl;
         allocState = atUp.allocate(cpu, hash, v, true);
         if (allocState == ALLOC_NO_SPACE)         {throw std::runtime_error("Not enough space in CPU " + std::to_string(cpu) + " memory pool"); return; }

@@ -178,9 +178,9 @@ public:
   const AllocMeta_set& getTable() const { return a; }
   const size_t getSize()          const { return a.size(); }
 
-  amI lookupVertex(vertex_t v)   const;
-  amI lookupHash(uint32_t hash)  const;
-  amI lookupAdr(uint8_t cpu, uint32_t adr)    const;
+  amI lookupVertex(vertex_t v, const std::string& exMsg = "")   const;
+  amI lookupHash(uint32_t hash, const std::string& exMsg = "")  const;
+  amI lookupAdr(uint8_t cpu, uint32_t adr, const std::string& exMsg = "")    const;
 
   bool isOk(amI it) const {return (it != a.end()); }
 

@@ -156,7 +156,7 @@ namespace dnt = DotStr::Node::TypeVal;
 
           stream.str(""); stream.clear();
           stream << "0x" << std::setfill ('0') << std::setw(sizeof(uint32_t)*2) << std::hex << hash;
-          std::string name      = hm.lookup(hash) ? hm.lookup(hash).get() : DotStr::Misc::sHashType + stream.str();
+          std::string name      = hm.contains(hash) ? hm.lookup(hash) : DotStr::Misc::sHashType + stream.str();
           auto xPat  = gt.getTable().get<Groups::Node>().equal_range(name);
           std::string pattern   = (xPat.first != xPat.second ? xPat.first->pattern : DotStr::Misc::sUndefined);    
           auto xBp  = gt.getTable().get<Groups::Node>().equal_range(name);
@@ -190,11 +190,8 @@ namespace dnt = DotStr::Node::TypeVal;
 
           // Create node object for Vertex
           auto src = downloadData.begin() + localAdr;
-
-          auto it  = at.lookupAdr(cpu, adr);
-          if (!(at.isOk(it))) {throw std::runtime_error( std::string("Node at (dec) ") + std::to_string(adr) + std::string(", hash (dec) ") + std::to_string(hash) + std::string("not found. This is weird")); return;}
-          
-          auto* x = (AllocMeta*)&(*it);
+          auto  it = at.lookupAdr(cpu, adr);
+          auto*  x = (AllocMeta*)&(*it);
 
           std::copy(src, src + _MEM_BLOCK_SIZE, (uint8_t*)&(x->b[0]));
         

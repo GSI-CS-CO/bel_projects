@@ -57,22 +57,15 @@ bool CarpeDM::isSafeToRemove(std::set<std::string> patterns, std::string& report
     // BEGIN Preparations: Entry points, Blacklist and working copy of the Graph
     //Init our blacklist of critical nodes. All vertices in the pattern to be removed need to be on it
     for (auto& nodeIt : getPatternMembers(patternIt)) {
-      if (hm.lookup(nodeIt)) {
-        auto x = at.lookupHash(hm.lookup(nodeIt).get());
-        if (!(at.isOk(x))) {throw std::runtime_error(isSafeToRemove::exIntro +  "Could not find pattern <" + patternIt + "> member node <" + nodeIt + ">"); return false;}
-        blacklist.insert(x->v);
-        covenantsPerVertex[x->v].insert(null_vertex);
-      }
+      auto x = at.lookupHash(hm.lookup(nodeIt, isSafeToRemove::exIntro), isSafeToRemove::exIntro +  "Could not find pattern <" + patternIt + "> member node");
+      blacklist.insert(x->v);
+      covenantsPerVertex[x->v].insert(null_vertex);
     }
     //Find and list all entry nodes of patterns 2B removed
     std::string sTmp = getPatternEntryNode(patternIt);
-    if (hm.lookup(sTmp)) {
-      auto x = at.lookupHash(hm.lookup(sTmp).get());
-      if (!(at.isOk(x))) {throw std::runtime_error(isSafeToRemove::exIntro + "Could not find pattern <" + patternIt + "> entry node <" + sTmp + ">"); return false;}
-      entries.insert(x->v);
-    }
-  
-
+    auto x = at.lookupHash(hm.lookup(sTmp, isSafeToRemove::exIntro), isSafeToRemove::exIntro +  "Could not find pattern <" + patternIt + "> entry node");
+    entries.insert(x->v);
+    
   }
 
   //make a working copy of the download graph
@@ -392,7 +385,7 @@ bool CarpeDM::updateStaleDefaultDestinations(Graph& g, AllocTable& at, CovenantT
       for (auto& it : sVflowDst) {
         
         //if (sVflowDst.size() > 1) {throw std::runtime_error(isSafeToRemove::exIntro + "updateStaleDefDst: found more than one dominant flow, must be 0..1");}
-        if((signed)it != -1) { boost::add_edge(vChkBlock, it, myEdge(det::sDomFlowDst), g); if (verbose)  sLog << "updateStaleDefDst: Adding edge to " << g[it].name << std::endl; }
+        if(it != null_vertex) { boost::add_edge(vChkBlock, it, myEdge(det::sDomFlowDst), g); if (verbose)  sLog << "updateStaleDefDst: Adding edge to " << g[it].name << std::endl; }
         else { if (verbose)  sLog << "updateStaleDefDst: New default would be idle, skipping edge creation" << std::endl; }
         //find old default edge and mark for deletion
         Graph::out_edge_iterator out_begin, out_end, out_cur;
@@ -448,7 +441,7 @@ vertex_set_t CarpeDM::getDominantFlowDst(vertex_t vQ, Graph& g, AllocTable& at, 
       
       //found a pending flow to idle, insert bogus vertex index to show that.
       if (qe.flowDst == DotStr::Node::Special::sIdle) {
-        ret.insert(-1); 
+        ret.insert(null_vertex); 
         qAnalysis += "->i" + std::to_string((int)qe.type) + "\n";
         if(verbose) sLog << "updateStaleDefDst: Found dominant flow dst idle" << std::endl;
         return ret;
@@ -456,8 +449,7 @@ vertex_set_t CarpeDM::getDominantFlowDst(vertex_t vQ, Graph& g, AllocTable& at, 
       // we ruled out that the flow leads to idle. If it's not permanent, it can't be dominant. Ignore
       if (!qe.flowPerma) {qAnalysis +=  "->p" + std::to_string((int)qe.type); continue;} 
       //found a dominant flow, insert its destination
-      auto x = at.lookupHash(hm.lookup(qe.flowDst).get());
-      if (!(at.isOk(x))) {throw std::runtime_error(isSafeToRemove::exIntro + "updateStaleDefDst: Could not find dst in download allocation table");}
+      auto x = at.lookupHash(hm.lookup(qe.flowDst, isSafeToRemove::exIntro + "updateStaleDefDst: unknown dst"), isSafeToRemove::exIntro + "updateStaleDefDst: unknown dst");
       if(verbose) sLog << "updateStaleDefDst: Found dominant flow dst " << g[x->v].name << std::endl;
       ret.insert(x->v);
       covTab.insert(g[vQ].name, (uint8_t)prio, i, qe); //save which element in which queue of which block is eligible to save our arse
@@ -510,8 +502,7 @@ vertex_set_t CarpeDM::getDynamicDestinations(vertex_t vQ, Graph& g, AllocTable& 
       if (!qe.pending) {continue;}
       if (qe.type == ACT_TYPE_FLOW) {
         if (qe.flowDst == DotStr::Node::Special::sIdle) {continue;}
-        auto x = at.lookupHash(hm.lookup(qe.flowDst).get());
-        if (!(at.isOk(x))) {throw std::runtime_error(isSafeToRemove::exIntro + "Could not find dst in download allocation table");}
+        auto x = at.lookupHash(hm.lookup(qe.flowDst, isSafeToRemove::exIntro), isSafeToRemove::exIntro);
         if(verbose) sLog << "Found flow dst " << g[x->v].name << std::endl;
         ret.insert(x->v); //found a pending flow, insert its destination
       }

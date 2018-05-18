@@ -25,7 +25,6 @@ void VisitorDownloadCrawler::setDefDst() const {
   auto x = at.lookupAdr(cpu, tmpAdr);
   if (tmpAdr == LM32_NULL_PTR) return;
   //sLog << "cpu " << cpu << "InAdr: 0x" << std::hex << auxAdr << " Adr: 0x" << std::hex << tmpAdr <<  std::endl;
-  if (!(at.isOk(x))) throw std::runtime_error( exIntro + "Node " + g[v].name + " of type " + g[v].type + " was found unallocated\n");
   boost::add_edge(v, x->v, myEdge(det::sDefDst), g);
 
 }
@@ -113,7 +112,6 @@ void VisitorDownloadCrawler::visit(const CmdQMeta& el) const {
     tmpAdr = at.adrConv(AdrType::INT, AdrType::MGMT,cpu, writeBeBytesToLeNumber<uint32_t>(b + offs ));
     if (tmpAdr != LM32_NULL_PTR) {
       auto x = at.lookupAdr(cpu, tmpAdr);
-      if (!(at.isOk(x))) throw std::runtime_error( exIntro + "Node " + g[v].name + " of type " + g[v].type + " was found unallocated\n");
       boost::add_edge(v, x->v, (myEdge){det::sMeta}, g);
     }  
   }
@@ -148,19 +146,21 @@ void VisitorDownloadCrawler::visit(const DestList& el) const {
       else sType = det::sAltDst;
 
       if (tmpAdr != LM32_NULL_PTR) {
-        auto x = at.lookupAdr(cpu, tmpAdr);
-        if (at.isOk(x)) {
+        try {
+          auto x = at.lookupAdr(cpu, tmpAdr);
           boost::add_edge(vPblock, x->v, (myEdge){sType}, g);
-        }
+        } catch (...) {}
       }  
     }
     if (!defaultValid) { //default destination was not in alt dest list. that shouldnt happen ... draw it in
       sErr << "!!! DefDest not in AltDestList. Means someone set an arbitrary pointer for DefDest !!!" << std::endl;
       if (defAdr != LM32_NULL_PTR) {
-        auto x = at.lookupAdr(cpu, defAdr);
-        if (at.isOk(x)) {
+        try {
+          auto x = at.lookupAdr(cpu, defAdr);
           boost::add_edge(vPblock, x->v, (myEdge){det::sBadDefDst}, g);
-        } else boost::add_edge(vPblock, vPblock, (myEdge){det::sBadDefDst}, g);
+        } catch(...) {
+          boost::add_edge(vPblock, vPblock, (myEdge){det::sBadDefDst}, g);
+        }
       }
     }
   } else {
