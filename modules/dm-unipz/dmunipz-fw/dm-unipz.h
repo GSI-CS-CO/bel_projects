@@ -6,7 +6,7 @@
 #define  DMUNIPZ_DEFAULT_TIMEOUT  100         // default timeout used by main loop [ms]
 #define  DMUNIPZ_UNITIMEOUT       1000        // timeout used when requesting things from UNILAC [ms]
 #define  DMUNIPZ_TKTIMEOUT        210         // timeout used when requesting TK from UNILAC [ms]
-#define  DMUNIPZ_OFFSETFLEX       1000000     // offset added to obtain TS "flex wait" [ns]
+#define  DMUNIPZ_OFFSETFLEX       1500000     // offset added to obtain TS "flex wait" [ns]
 #define  DMUNIPZ_EVT_READY2SIS    0x1e        // event number EVT_READY_TO_SIS (HEX)
 #define  DMUNIPZ_ECA_ADDRESS      0x7ffffff0  // address of ECA input
 #define  DMUNIPZ_EB_HACKISH       0x12345678  // value for EB read handshake
@@ -29,6 +29,10 @@
 #define  DMUNIPZ_STATUS_WRONGIP         14    // IP received via DHCP does not match local config            
 #define  DMUNIPZ_STATUS_NODM            15    // Data Master unreachable                                     
 #define  DMUNIPZ_STATUS_EBREADTIMEDOUT  16    // EB read via WR network timed out                           
+
+// MASP 
+#define  DMUNIPZ_MASP_NOMEN      "U_DM_UNIPZ" // nomen for gateway
+#define  DMUNIPZ_MASP_CUSTOMSIG  "TRANSFER"   // custom signal for MASP
 
                                 
 // commands from the outside
@@ -82,8 +86,8 @@ typedef struct {                              // group together all information 
   uint32_t dynpar1;                           // receive from DM: 2nd 32 bit of param field
   uint32_t cmdAddr;                           // write to DM: external address of a command
   uint32_t cmdData[_T_CMD_SIZE_];             // write to DM: data of a command
-  uint32_t blockWrIdxAddr;                    // write to DM: external address of wrIdx within block
-  uint32_t blockWrIdx;                        // write to DM: updated value of wrIdx
+  uint32_t blockWrIdxsAddr;                   // write to DM: external address ofs wrIdxs within block
+  uint32_t blockWrIdxs;                       // write to DM: updated value of wrIdxs
 } dmComm;
 
 
