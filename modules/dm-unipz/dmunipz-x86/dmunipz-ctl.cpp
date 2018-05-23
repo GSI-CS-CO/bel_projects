@@ -630,7 +630,7 @@ int main(int argc, char** argv) {
       {  
         MASP::End_of_scope_status_emitter scoped_emitter(maspNomen, emitter);
         scoped_emitter.set_OP_READY(maspSigOpReady);
-        scoped_emitter.set_custom_status(DMUNIPZ_MASP_CUSTOMSIG, maspSigTransfer);
+        // scoped_emitter.set_custom_status(DMUNIPZ_MASP_CUSTOMSIG, maspSigTransfer); disabled as our boss did not like it
       } // <--- status is send when the End_of_scope_emitter goes out of scope  
 #endif
 
