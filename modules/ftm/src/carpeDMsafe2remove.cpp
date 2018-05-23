@@ -54,16 +54,17 @@ bool CarpeDM::isSafeToRemove(std::set<std::string> patterns, std::string& report
   //if(verbose) {sLog << "Pattern <" << pattern << "> (Entrypoint <" << sTmp << "> safe removal analysis" << std::endl;}
 
   for (auto& patternIt : patterns) {
+    std::cout << "PatName: " << patternIt << std::endl;
     // BEGIN Preparations: Entry points, Blacklist and working copy of the Graph
     //Init our blacklist of critical nodes. All vertices in the pattern to be removed need to be on it
     for (auto& nodeIt : getPatternMembers(patternIt)) {
-      auto x = at.lookupHash(hm.lookup(nodeIt, isSafeToRemove::exIntro), isSafeToRemove::exIntro +  "Could not find pattern <" + patternIt + "> member node");
+      auto x = at.lookupHash(hm.lookup(nodeIt, isSafeToRemove::exIntro +  "Could not find pattern <" + patternIt + "> member node "), isSafeToRemove::exIntro +  "Could not find pattern <" + patternIt + "> member node ! ");
       blacklist.insert(x->v);
       covenantsPerVertex[x->v].insert(null_vertex);
     }
     //Find and list all entry nodes of patterns 2B removed
     std::string sTmp = getPatternEntryNode(patternIt);
-    auto x = at.lookupHash(hm.lookup(sTmp, isSafeToRemove::exIntro), isSafeToRemove::exIntro +  "Could not find pattern <" + patternIt + "> entry node");
+    auto x = at.lookupHash(hm.lookup(sTmp, isSafeToRemove::exIntro +  "Could not find pattern <" + patternIt + "> entry node"), isSafeToRemove::exIntro +  "Could not find pattern <" + patternIt + "> entry node");
     entries.insert(x->v);
     
   }
@@ -502,7 +503,7 @@ vertex_set_t CarpeDM::getDynamicDestinations(vertex_t vQ, Graph& g, AllocTable& 
       if (!qe.pending) {continue;}
       if (qe.type == ACT_TYPE_FLOW) {
         if (qe.flowDst == DotStr::Node::Special::sIdle) {continue;}
-        auto x = at.lookupHash(hm.lookup(qe.flowDst, isSafeToRemove::exIntro), isSafeToRemove::exIntro);
+        auto x = at.lookupHash(hm.lookup(qe.flowDst, isSafeToRemove::exIntro + "dyn flow dst not found"), isSafeToRemove::exIntro + "dyn flow dst not found");
         if(verbose) sLog << "Found flow dst " << g[x->v].name << std::endl;
         ret.insert(x->v); //found a pending flow, insert its destination
       }
