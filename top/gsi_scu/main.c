@@ -80,6 +80,7 @@ void dev_bus_handler(int);
 void scu_bus_handler(int);
 void cleanup_sio_dev(int);
 void channel_watchdog(int);
+void clear_handler_state(int);
 
 #define SHARED __attribute__((section(".shared")))
 uint64_t SHARED board_id           = -1;
@@ -110,6 +111,7 @@ volatile uint32_t     *pECAQ           = 0; // WB address of ECA queue
 
 volatile unsigned int param_sent[MAX_FG_CHANNELS];
 volatile int initialized[MAX_SCU_SLAVES] = {0};
+int clear_is_active[MAX_SCU_SLAVES + 1] = {0};
 
 volatile struct message_buffer msg_buf[QUEUE_CNT] = {0};
 
@@ -352,6 +354,7 @@ int configure_fg_macro(int channel) {
   int slot, dev, fg_base, dac_base;
   unsigned short cntrl_reg_wr;
   unsigned short data;
+  unsigned short dreq_status;
   struct param_set pset;
   short blk_data[6];
   int status;
@@ -360,6 +363,40 @@ int configure_fg_macro(int channel) {
     /* actions per slave card */
     slot = fg_macros[fg_regs[channel].macro_number] >> 24;          //dereference slot number
     dev =  (fg_macros[fg_regs[channel].macro_number] >> 16) & 0xff; //dereference dev number
+
+    if (slot & DEV_SIO) {
+      scub_status_mil(scub_base, slot & 0xf, &dreq_status);
+    } else if (slot & DEV_MIL_EXT) {
+      status_mil(scu_mil_base, &dreq_status);
+    }
+
+    // if dreq is active
+    if (dreq_status & MIL_DATA_REQ_INTR) {
+      if (slot & DEV_SIO) {
+        if (clear_is_active[slot & 0xf] == 0) {
+          clear_handler_state(slot);
+          hist_addx(HISTORY_XYZ_MODULE, "clear_handler_state", slot);
+          clear_is_active[slot & 0xf] = 1;
+        }
+        // yield
+        return -1;
+      } else if (slot & DEV_MIL_EXT) {
+        if (clear_is_active[MAX_SCU_SLAVES] == 0) {
+          clear_handler_state(slot);
+          hist_addx(HISTORY_XYZ_MODULE, "clear_handler_state", slot);
+          clear_is_active[MAX_SCU_SLAVES] = 1;
+        }
+        // yield
+        return -1;
+      }
+    } else {
+      // reset clear flag
+      if (slot & DEV_SIO) {
+        clear_is_active[slot & 0xf] = 0;
+      } else if (slot & DEV_MIL_EXT) {
+        clear_is_active[MAX_SCU_SLAVES] = 0;
+      }
+    }
 
     /* enable irqs */
     if ((slot & 0xf0) == 0) {                                      //scu bus slave
@@ -594,7 +631,7 @@ void _segfault(int sig)
   return;
 }
 
-void reset_sio(int slot) {
+void clear_handler_state(int slot) {
   struct msi m;
   if (slot & DEV_SIO) {
     // create swi
@@ -643,7 +680,7 @@ void sw_irq_handler(int id) {
           hist_print(1);
         break;
         case 5:
-          reset_sio(value);
+          clear_handler_state(value);
         break;
         default:
           mprintf("swi: 0x%x\n", m.adr);
@@ -787,7 +824,6 @@ static TaskType tasks[] = {
   { 0, 0, {0}, 0, 0, ALWAYS         , 0, scu_bus_handler    },
   { 0, 0, {0}, 0, 0, ALWAYS         , 0, ecaHandler         },
   { 0, 0, {0}, 0, 0, ALWAYS         , 0, sw_irq_handler     },
-  //{ 0, 0, {0}, 0, 0, INTERVAL_100MS , 0, channel_watchdog   },
 
 };
 
@@ -1156,74 +1192,6 @@ void dev_bus_handler(int id) {
   return;
 
 }
-
-
-void channel_watchdog(int id) {
-  unsigned short status;
-  int i, slot, dev;
-  static TaskType *task_ptr;              // task pointer
-  task_ptr = tsk_getConfig();             // get a pointer to the task configuration
-  struct msi m;
-
-  i = task_ptr[id].i % MAX_FG_CHANNELS;
-  // if channel is armed or active
-  if (fg_regs[i].state > STATE_STOPPED) {
-    slot = fg_macros[fg_regs[i].macro_number] >> 24;
-    dev = (fg_macros[fg_regs[i].macro_number] & 0x00ff0000) >> 16;
-
-    if (slot & DEV_SIO) {
-      scub_status_mil(scub_base, slot & 0xf, &status);
-    } else if (slot & DEV_MIL_EXT) {
-      status_mil(scu_mil_base, &status);
-    } else {
-      // channel is on scu bus, no watchdog needed
-      // yield and test another channel next time
-      task_ptr[id].i++;
-      return;
-    }
-
-    // if dreq is high
-    if (status & MIL_DATA_REQ_INTR) {
-      //mprintf("channel %d is active\n", i);
-      // is there already a timeout set?
-      if (timeout[i] > 0) {
-        //  was dreq high for more then 84ms?
-        if ((timeout[i] + INTERVAL_84MS) < getSysTime()) {
-          if (slot & DEV_SIO) {
-            // create swi
-            m.msg = (slot & 0xf) - 1;
-            m.adr = 0;
-            irq_disable();
-            add_msg(&msg_buf[0], DEVSIO, m);
-            irq_enable();
-          } else if (slot & DEV_MIL_EXT) {
-            m.msg = 0;
-            m.adr = 0;
-            irq_disable();
-            add_msg(&msg_buf[0], DEVBUS, m);
-            irq_enable();
-          }
-
-          timeout[i] = 0;
-        }
-      } else {
-        // start watchdog
-        timeout[i] = getSysTime();
-      }
-    } else {
-      // dreq is low, reset watchdog
-      timeout[i] = 0;
-    }
-  }
-  //yield and test another channel next time
-  task_ptr[id].i++;
-  return;
-}
-
-void addExecutionTime(int id, uint64_t time) {
-  //mprintf("Task %d finished in: %d us.\n", id, (int)(time / 1000ULL));
-}
-
 
 static uint64_t tick = 0;               // system tick
 uint64_t getTick() {
