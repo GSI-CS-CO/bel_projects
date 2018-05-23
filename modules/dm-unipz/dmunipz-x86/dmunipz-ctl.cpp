@@ -3,7 +3,7 @@
  *
  *  created : 2017
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 07-May-2018
+ *  version : 23-May-2018
  *
  * Command-line interface for dmunipz
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 17-May-2017
  ********************************************************************************************/
-#define DMUNIPZ_X86_VERSION "0.1.4"
+#define DMUNIPZ_X86_VERSION "0.1.5"
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -151,7 +151,8 @@ const char* dmunipz_status_text(uint32_t code) {
   case DMUNIPZ_STATUS_NOIP             : return "DHCP request via WR network failed";
   case DMUNIPZ_STATUS_WRONGIP          : return "IP received via DHCP does not match local config";
   case DMUNIPZ_STATUS_NODM             : return "Data Master unreachable";                     
-  case DMUNIPZ_STATUS_EBREADTIMEDOUT   : return "EB read via WR network timed out";                     
+  case DMUNIPZ_STATUS_EBREADTIMEDOUT   : return "EB read via WR network timed out";
+  case DMUNIPZ_STATUS_WRONGVIRTACC     : return "received EVT_READY_TO_SIS for wrong virtual accelerator";
   default                              : return "dm-unipz: undefined error code";
   }
 }

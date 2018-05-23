@@ -28,7 +28,9 @@
 #define  DMUNIPZ_STATUS_NOIP            13    // DHCP request via WR network failed                                
 #define  DMUNIPZ_STATUS_WRONGIP         14    // IP received via DHCP does not match local config            
 #define  DMUNIPZ_STATUS_NODM            15    // Data Master unreachable                                     
-#define  DMUNIPZ_STATUS_EBREADTIMEDOUT  16    // EB read via WR network timed out                           
+#define  DMUNIPZ_STATUS_EBREADTIMEDOUT  16    // EB read via WR network timed out
+#define  DMUNIPZ_STATUS_WRONGVIRTACC    17    // received EVT_READY_TO_SIS with wrong virt acc number
+
 
 // MASP 
 #define  DMUNIPZ_MASP_NOMEN      "U_DM_UNIPZ" // nomen for gateway
