@@ -3,7 +3,7 @@
  *
  *  created : 2017
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 22-May-2018
+ *  version : 24-May-2018
  *
  *  lm32 program for gateway between UNILAC Pulszentrale and FAIR-style Data Master
  * 
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 25-April-2015
  ********************************************************************************************/
-#define DMUNIPZ_FW_VERSION 0x000105                                   // make this consistent with makefile
+#define DMUNIPZ_FW_VERSION 0x000106                                   // make this consistent with makefile
 
 /* standard includes */
 #include <stdio.h>
@@ -1235,7 +1235,7 @@ uint32_t doActionOperation(uint32_t *statusTransfer, uint32_t *virtAcc, uint32_t
 
       milEvtRecFlag = 0;                                                                                   // initialize flag 
       if (wait4ECAEvent(uniTimeout, &dummy1, &dummy2, &timestamp) == DMUNIPZ_ECADO_READY2SIS) {            // received EVT_READY_TO_SIS via TLU -> ECA
-        if (wait4MILEvent(DMUNIPZ_EVT_READY2SIS, virtAccTmp, 1)  == DMUNIPZ_STATUS_OK) {                   // event number and virtAcc are ok
+        if (wait4MILEvent(DMUNIPZ_EVT_READY2SIS, virtAccTmp, DMUNIPZ_QUERYTIMEOUT) == DMUNIPZ_STATUS_OK) { // query/check event number and virtAcc in MIL FIFO
           milEvtRecFlag = 1;                                                                               // set flag
           status        = DMUNIPZ_STATUS_OK;
         } // if wait4MILEvt

@@ -3,7 +3,7 @@
  *
  *  created : 2017
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 23-May-2018
+ *  version : 24-May-2018
  *
  * Command-line interface for dmunipz
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 17-May-2017
  ********************************************************************************************/
-#define DMUNIPZ_X86_VERSION "0.1.5"
+#define DMUNIPZ_X86_VERSION "0.1.6"
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -152,7 +152,7 @@ const char* dmunipz_status_text(uint32_t code) {
   case DMUNIPZ_STATUS_WRONGIP          : return "IP received via DHCP does not match local config";
   case DMUNIPZ_STATUS_NODM             : return "Data Master unreachable";                     
   case DMUNIPZ_STATUS_EBREADTIMEDOUT   : return "EB read via WR network timed out";
-  case DMUNIPZ_STATUS_WRONGVIRTACC     : return "received EVT_READY_TO_SIS for wrong virtual accelerator";
+  case DMUNIPZ_STATUS_WRONGVIRTACC     : return "mismatching virtual accelerator for EVT_READY_TO_SIS from UNIPZ";
   default                              : return "dm-unipz: undefined error code";
   }
 }
@@ -200,30 +200,31 @@ static void help(void) {
   fprintf(stderr, "\n");
   fprintf(stderr, "  ebmlocal <mac> <ip> command sets local WR MAC and IP for EB master (values in hex)\n");
   fprintf(stderr, "  ebmdm    <mac> <ip> command sets DM WR MAC and IP for EB master (values in hex)\n");
-  fprintf(stderr, "  flex    <offset>    command sets offset added to timestamp (WR) of UNILAC event READY_TO_SIS [ns]\n");
-  fprintf(stderr, "  uni     <timeout>   command sets timeout value for UNILAC (default 1000ms) [ms]\n");
-  fprintf(stderr, "  tk      <timeout>   command sets timeout value for TK (via UNILAC, default 210) [ms]\n");
+  fprintf(stderr, "  flex     <offset>   command sets offset [ns] added to timestamp of READY_TO_SIS event (default 1500000 ns)\n");
+  fprintf(stderr, "  uni      <timeout>  command sets timeout [ms] value for UNILAC (default 1000ms)\n");
+  fprintf(stderr, "  tk       <timeout>  command sets timeout [ms] value for TK (via UNILAC, default 210 ms)\n");
+  fprintf(stderr, "  IMPORTANT: values set by the above commands get applied by the 'configure' command");
   fprintf(stderr, "\n");
-  fprintf(stderr, "  configure           command requests state change to CONFIGURED\n");
-  fprintf(stderr, "  startop             command requests state change to OPREADY\n");
-  fprintf(stderr, "  stopop              command requests state change to STOPPING -> CONFIGURED\n");
-  fprintf(stderr, "  recover             command tries to recover from ERROR state and transit to IDLE\n");
-  fprintf(stderr, "  idle                command requests state change to IDLE\n");
+  fprintf(stderr, "  configure           command requests state change from states IDLE or CONFIGURED to stae CONFIGURED\n");
+  fprintf(stderr, "  startop             command requests state change from state CONFIGURED to state OPREADY\n");
+  fprintf(stderr, "  stopop              command requests state change from state OPREADY to state STOPPING -> CONFIGURED\n");
+  fprintf(stderr, "  recover             command tries to recover from state ERROR and transit to state IDLE\n");
+  fprintf(stderr, "  idle                command requests state change to state IDLE\n");
   fprintf(stderr, "\n");
   fprintf(stderr, "  reltk               command forces release of TK request at UNILAC\n");
   fprintf(stderr, "  relbeam             command forces release of beam request at UNILAC\n");  
   fprintf(stderr, "\n");
-  fprintf(stderr, "Use this tool to control the DM-UNIPZ gateway from the command line.\n");
+  fprintf(stderr, "Use this tool to control the DM-UNIPZ gateway from the command line\n");
   fprintf(stderr, "Example1: '%s dev/wbm0 ebmdm 0x00267b000401 0xc0a80a01' set MAC and IP of Data Master\n", program);
-  fprintf(stderr, "Example2: '%s -i dev/wbm0' display typical information.\n", program);
-  fprintf(stderr, "Example3: '%s -s0 dev/wbm0 | logger -t TIMING -sp local0.info' monitor firmware and print to screen and to diagnostic logging", program);
+  fprintf(stderr, "Example2: '%s -i dev/wbm0' display typical information\n", program);
+  fprintf(stderr, "Example3: '%s -s1 dev/wbm0 | logger -t TIMING -sp local0.info' monitor firmware and print to screen and to diagnostic logging", program);
   fprintf(stderr, "\n");
   fprintf(stderr, "When using option '-s<n>', the following information is displayed\n");
   fprintf(stderr, "dm-unipz: transfer - 00000074, 01, 002, 1 1 1 1 1 1, OpReady   (      ), OK (      )\n");
   fprintf(stderr, "                            |   |    |  | | | | | |  |          |        |   | \n");
-  fprintf(stderr, "                            |   |    |  | | | | | |  |          |        |    - # of bad status incidents\n");
+  fprintf(stderr, "                            |   |    |  | | | | | |  |          |        |    - # of 'bad status' incidents\n");
   fprintf(stderr, "                            |   |    |  | | | | | |  |          |         - status\n");
-  fprintf(stderr, "                            |   |    |  | | | | | |  |          - # of '!OPREADY' incidents\n");
+  fprintf(stderr, "                            |   |    |  | | | | | |  |          - # of '!OpReady' incidents\n");
   fprintf(stderr, "                            |   |    |  | | | | | |   - state\n");
   fprintf(stderr, "                            |   |    |  | | | | | - beam (request) released\n");
   fprintf(stderr, "                            |   |    |  | | | | - beam request succeeded\n");
