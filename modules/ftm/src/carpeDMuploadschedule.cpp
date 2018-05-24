@@ -100,6 +100,7 @@ using namespace DotStr::Misc;
     ew.va.push_back(modAdrBase + T_META_COVTAB_SIZE);
     ew.vb.insert( ew.vb.end(), b, b + 4 * _32b_SIZE_ );
     
+
     
     return ew;
   }
@@ -114,23 +115,34 @@ using namespace DotStr::Misc;
     vertex_t vD = boost::add_vertex(myVertex(name, g[v].cpu, hm.lookup(name), nullptr, dnt::sDstList, DotStr::Misc::sHexZero), g);
     //FIXME add to grouptable
     g[vD].patName = g[v].patName;
+    gt.setPattern(g[vD].name, g[vD].patName, false, false);
     boost::add_edge(v,   vD, myEdge(det::sDstList), g);
   }  
 
   void CarpeDM::generateQmeta(Graph& g, vertex_t v, int prio) {
+    std::cout << "generating " << g[v].name << ", patname " << g[v].patName << " prio " << (int)prio << std::endl;
+
     const std::string nameBl = g[v].name + dnm::sQBufListTag + dnm::sQPrioPrefix[prio];
     const std::string nameB0 = g[v].name + dnm::sQBufTag     + dnm::sQPrioPrefix[prio] + dnm::s1stQBufSuffix;
     const std::string nameB1 = g[v].name + dnm::sQBufTag     + dnm::sQPrioPrefix[prio] + dnm::s2ndQBufSuffix;
     hm.add(nameBl);
     hm.add(nameB0);
     hm.add(nameB1);
-    //FIXME add to grouptable
+
     vertex_t vBl = boost::add_vertex(myVertex(nameBl, g[v].cpu, hm.lookup(nameBl), nullptr, dnt::sQInfo, DotStr::Misc::sHexZero), g);
     vertex_t vB0 = boost::add_vertex(myVertex(nameB0, g[v].cpu, hm.lookup(nameB0), nullptr, dnt::sQBuf,  DotStr::Misc::sHexZero), g);
     vertex_t vB1 = boost::add_vertex(myVertex(nameB1, g[v].cpu, hm.lookup(nameB1), nullptr, dnt::sQBuf,  DotStr::Misc::sHexZero), g);
+
+    std::cout << g[vBl].name << " -1-> " << getNodePattern(g[vBl].name) << std::endl;
     g[vBl].patName = g[v].patName;
+    //gt.setBeamproc(nameBl, g[v].bpName, false, false);
+    gt.setPattern(g[vBl].name, g[vBl].patName, false, false);
     g[vB0].patName = g[v].patName;
+    gt.setPattern(g[vB0].name, g[vB0].patName, false, false);
     g[vB1].patName = g[v].patName;
+    gt.setPattern(g[vB1].name, g[vB1].patName, false, false);
+
+    std::cout << g[vBl].name << " -2-> " << getNodePattern(g[vBl].name) << std::endl;
     boost::add_edge(v,   vBl, myEdge(det::sQPrio[prio]), g);
     boost::add_edge(vBl, vB0, myEdge(det::sMeta),    g);
     boost::add_edge(vBl, vB1, myEdge(det::sMeta),    g);
@@ -144,6 +156,7 @@ using namespace DotStr::Misc;
       std::string cmp = g[v].type;
       
       if ((cmp == dnt::sBlockFixed) || (cmp == dnt::sBlockAlign) || (cmp == dnt::sBlock) ) {
+        std::cout << "Scanning Block " << g[v].name << std::endl;
         boost::tie(out_begin, out_end) = out_edges(v,g);
         //check if it already has queue links / Destination List
         bool  genIl       = s2u<bool>(g[v].qIl),  hasIl = false, 
@@ -161,7 +174,8 @@ using namespace DotStr::Misc;
           if (g[*out_cur].type == det::sDstList)        hasDstLst   = true;
         }
 
-        
+        std::cout << "IL " << (int)genIl << hasIl << "HI " << (int)genHi << hasHi << "LO " << (int)genLo << hasLo << std::endl;
+
         //create requested Queues / Destination List
         if (genIl && !hasIl ) { generateQmeta(g, v, PRIO_IL); }
         if (genHi && !hasHi ) { generateQmeta(g, v, PRIO_HI); }
@@ -323,7 +337,7 @@ using namespace DotStr::Misc;
   }
 
 
-  int CarpeDM::upload( uint8_t opType) {
+  int CarpeDM::upload( uint8_t opType, std::vector<QueueReport>& vQr) {
     updateModTime();
     //we only regard modifications by order as modded, so we need to check for changed content before we generate the management data
     std::set<uint8_t> moddedCpus;
@@ -333,7 +347,7 @@ using namespace DotStr::Misc;
 
     generateMgmtData();
     vEbwrs ew = gatherUploadVector(moddedCpus, 0, opType); //TODO not using modCnt right now, maybe implement later
-    
+    deactivateOrphanedCommands(vQr, ew);
     //Upload
     ebWriteCycle(ebd, ew.va, ew.vb, ew.vcs);
     if(verbose) sLog << "Done." << std::endl;
@@ -563,10 +577,14 @@ using namespace DotStr::Misc;
   int CarpeDM::remove(Graph& g, bool force) {
     if ((boost::get_property(g, boost::graph_name)).find(DotStr::Graph::Special::sCmd) != std::string::npos) {throw std::runtime_error("Expected a schedule, but these appear to be commands (Tag '" + DotStr::Graph::Special::sCmd + "' found in graphname)"); return -1;}
     checkTablesForSubgraph(g); //all explicitly named nodes must be known to hash and grouptable. let's check first
-    generateBlockMeta(g);
+
+    //FIXME fuckin dangerous stuff, both change the global grouptable. For this to work, it must be 1st baseUploadOnDownload, generateBlockMeta must be 2nd. This is horrible
     baseUploadOnDownload();
+    generateBlockMeta(g);
+
     std::string report;
-    bool isSafe =  isSafeToRemove(g, report);
+    std::vector<QueueReport> vQr;
+    bool isSafe =  isSafeToRemove(g, report, vQr);
     //writeTextFile("safetyReportNormal.dot", report);
     if (!(force | (isSafe))) {throw std::runtime_error("//Subgraph cannot safely be removed!\n\n" + report);}
     
@@ -574,7 +592,7 @@ using namespace DotStr::Misc;
     //writeUpDotFile("upload.dot", false);
     validate(gUp, atUp);
     
-    return upload(OP_TYPE_SCH_REMOVE);
+    return upload(OP_TYPE_SCH_REMOVE, vQr);
   }
 
 
@@ -583,9 +601,11 @@ using namespace DotStr::Misc;
     Graph gTmpRemove;
     Graph& gTmpKeep = g;
     checkTablesForSubgraph(g); //all explicitly named nodes must be known to hash and grouptable. let's check first
-    generateBlockMeta(gTmpKeep);
     //writeDotFile("inspect.dot", gTmpKeep, false);
+    
+    //FIXME fuckin dangerous stuff, both change the global grouptable. For this to work, it must be 1st baseUploadOnDownload, generateBlockMeta must be 2nd. This is horrible
     baseUploadOnDownload();
+    generateBlockMeta(gTmpKeep);
     
     bool found; 
     BOOST_FOREACH( vertex_t w, vertices(gUp) ) {
@@ -603,14 +623,16 @@ using namespace DotStr::Misc;
     }
     
     std::string report;
-    bool isSafe =  isSafeToRemove(gTmpRemove, report);
+    std::vector<QueueReport> vQr;
+    bool isSafe =  isSafeToRemove(gTmpRemove, report, vQr);
     //writeTextFile("safetyReportNormal.dot", report);
     if (!(force | (isSafe))) {throw std::runtime_error("//Subgraph cannot safely be removed!\n\n" + report);}
 
     subtraction(gTmpRemove);
     //writeUpDotFile("upload.dot", false);
     validate(gUp, atUp);
-    return upload(OP_TYPE_SCH_KEEP);
+
+    return upload(OP_TYPE_SCH_KEEP, vQr);
   }   
 
   int CarpeDM::clear_raw(bool force) {
