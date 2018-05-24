@@ -24,21 +24,21 @@ namespace isSafeToRemove {
 }
 
 
-bool CarpeDM::isSafeToRemove(Graph& gRem, std::string& report) {
+bool CarpeDM::isSafeToRemove(Graph& gRem, std::string& report, std::vector<QueueReport>& vQr) {
   std::set<std::string> patterns;
   //Find all patterns 2B removed
   for (auto& patternIt : getGraphPatterns(gRem)) { patterns.insert(patternIt); }
     
-  return isSafeToRemove(patterns, report);
+  return isSafeToRemove(patterns, report, vQr);
 }
 
-bool CarpeDM::isSafeToRemove(const std::string& pattern, std::string& report) {
+bool CarpeDM::isSafeToRemove(const std::string& pattern, std::string& report, std::vector<QueueReport>& vQr) {
   std::set<std::string> p = {pattern};
-  return isSafeToRemove(p, report);
+  return isSafeToRemove(p, report, vQr);
 }  
 
 
-bool CarpeDM::isSafeToRemove(std::set<std::string> patterns, std::string& report) {
+bool CarpeDM::isSafeToRemove(std::set<std::string> patterns, std::string& report, std::vector<QueueReport>& vQr ) {
   //std::cout << "verbose " << (int)verbose << " debug " << (int)debug << " sim " << (int)sim << " testmode " << (int)testmode << " optimisedS2R " << (int)optimisedS2R << std::endl; 
   
 
@@ -119,6 +119,9 @@ bool CarpeDM::isSafeToRemove(std::set<std::string> patterns, std::string& report
 
   // END Optimised Static Equivalent Model
 
+  
+
+
   //covenant: promise not to clear/reorder a given block's queues
 
   // Crawl and map active areas
@@ -129,6 +132,9 @@ bool CarpeDM::isSafeToRemove(std::set<std::string> patterns, std::string& report
     getReverseNodeTree(vEntry, tmpTree, gEq, covenantsPerVertex);
     blacklist.insert(tmpTree.begin(), tmpTree.end());
   }
+
+
+  
 
   if(verbose) sLog << "Judging safety " << std::endl;
   //calculate intersection of cursors and blacklist. If the intersection set is empty, all nodes in pattern can be safely removed
@@ -170,6 +176,32 @@ bool CarpeDM::isSafeToRemove(std::set<std::string> patterns, std::string& report
     }
   }
   
+  //Find all orphaned commands for later treatment
+
+  //find inactive blocks which have a connection to our entry points
+  if (isSafe) {
+    vStrC entryNames;
+    for (vertex_t vEntry : entries) { entryNames.push_back(gEq[vEntry].name);}
+
+    vertex_set_map_t cpV;
+    for ( vertex_t vBlock : blacklist ) { 
+      if (gEq[vBlock].np->isBlock()) {
+        vertex_set_t tmpTree, si;
+        getReverseNodeTree(vBlock, tmpTree, gEq, cpV);
+        set_intersection(tmpTree.begin(),tmpTree.end(),cursors.begin(),cursors.end(), std::inserter(si,si.begin()));
+        //if the intersection of its reverse tree with the cursors is empty, this block is inactive
+        if (si.size() == 0) {
+          // for each inactive block, get qeue reports to check flow destination against all entry points we want removed
+          // all flows pointing to an orphan or future orphan will be marked. 
+          for (vertex_t vEntry : entries) {
+            QueueReport qr;
+            getQReport(g, at, gEq[vBlock].name, qr, entryNames);
+            vQr.push_back(qr);
+          }
+        }   
+      }
+    }
+  }
 
 
   if(verbose) sLog << "Creating report " << std::endl;
@@ -413,7 +445,8 @@ vertex_set_t CarpeDM::getDominantFlowDst(vertex_t vQ, Graph& g, AllocTable& at, 
   qAnalysis += "//" + g[vQ].name;
 
   QueueReport qr;
-  qr = getQReport(g, at, g[vQ].name, qr);
+  vStrC fo;
+  qr = getQReport(g, at, g[vQ].name, qr, fo);
         
   for (int8_t prio = PRIO_IL; prio >= PRIO_LO; prio--) {
     qAnalysis += "#P" + std::to_string((int)prio);
@@ -490,7 +523,8 @@ vertex_set_t CarpeDM::getDynamicDestinations(vertex_t vQ, Graph& g, AllocTable& 
   if(verbose) sLog << "Searching for pending flows " << g[vQ].name << std::endl;
 
   QueueReport qr;
-  qr = getQReport(g, at, g[vQ].name, qr);
+  vStrC fo;
+  qr = getQReport(g, at, g[vQ].name, qr, fo);
         
   for (int8_t prio = PRIO_IL; prio >= PRIO_LO; prio--) {
     if (!qr.hasQ[prio]) {continue;}

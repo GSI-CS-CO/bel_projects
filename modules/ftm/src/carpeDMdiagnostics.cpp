@@ -216,10 +216,11 @@ namespace coverage {
   QueueReport& CarpeDM::getQReport(const std::string& blockName, QueueReport& qr) {
     Graph& g = gDown;
     AllocTable& at = atDown;
-    return getQReport(g, at, blockName, qr);
+    vStrC futureOrphan;
+    return getQReport(g, at, blockName, qr, futureOrphan);
   }  
 
-  QueueReport& CarpeDM::getQReport(Graph& g, AllocTable& at, const std::string& blockName, QueueReport& qr) {
+  QueueReport& CarpeDM::getQReport(Graph& g, AllocTable& at, const std::string& blockName, QueueReport& qr, const vStrC& futureOrphan) {
     
     const std::string exIntro = " getQReport: ";
     
@@ -279,7 +280,7 @@ namespace coverage {
         try {  
           auto buf = at.lookupAdr( x->cpu, at.adrConv(bufAdrType, AdrType::MGMT, x->cpu, bufAdr) ); //buffer cpu is the same as block cpu
           qr.aQ[prio].aQe[i].pending = (bool)pendingIdx.count(i);
-          getQelement(g, at, i, buf, qr.aQ[prio].aQe[i]);
+          getQelement(g, at, i, buf, qr.aQ[prio].aQe[i], futureOrphan );
         } catch (...) {continue;}
       }
     }
@@ -287,7 +288,7 @@ namespace coverage {
     return qr;
   }
 
-  QueueElement& CarpeDM::getQelement(Graph& g, AllocTable& at, uint8_t idx, amI allocIt, QueueElement& qe) {
+  QueueElement& CarpeDM::getQelement(Graph& g, AllocTable& at, uint8_t idx, amI allocIt, QueueElement& qe, const vStrC& futureOrphan) {
     //TODO might cleaner as deserialisers for MiniCommand Class
     uint8_t*  bAux  = (uint8_t*)&(allocIt->b);
     uint8_t*     b  = (uint8_t*)&bAux[(idx % 2) * _T_CMD_SIZE_];
@@ -297,6 +298,8 @@ namespace coverage {
     qe.validTime    = writeBeBytesToLeNumber<uint64_t>((uint8_t*)&b[T_CMD_TIME]);
     qe.qty          = (act >> ACT_QTY_POS) & ACT_QTY_MSK;
     qe.type         = type; //for conevenient use of case statements
+    // calculate ext address for direct surgical modification
+    qe.extAdr       = at.adrConv(AdrType::MGMT, AdrType::EXT, allocIt->cpu, allocIt->adr) + (idx % 2) * _T_CMD_SIZE_; 
 
     //type specific
     switch(type) {
@@ -318,7 +321,14 @@ namespace coverage {
                                 try {
                                   auto dst = at.lookupAdr( dstCpu, at.adrConv(dstAdrType, AdrType::MGMT, dstCpu, dstAdr) );
                                   sDst = g[dst->v].name;
-                                } catch (...) { sDst = DotStr::Misc::sUndefined;}
+                                  for (auto& itOrphan : futureOrphan) {
+                                    if (sDst == itOrphan) {qe.orphaned = true; break;} 
+                                  }
+                                } catch (...) { 
+                                  sDst = DotStr::Misc::sUndefined;
+                                  qe.orphaned = true;
+                                }
+                                
                               }    
                               qe.sType          = dnt::sCmdFlow;
                               qe.flowPerma      = (act >> ACT_CHP_POS) & ACT_CHP_MSK;

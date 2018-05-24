@@ -580,7 +580,11 @@ vEbwrs& CarpeDM::abortNodeOrigin(const std::string& sNode, vEbwrs& ew) {
     std::set<std::string> sP;
     vStrC ret;
 
-    BOOST_FOREACH( vertex_t v, vertices(g) ) {sP.insert(getNodePattern(g[v].name));}
+    BOOST_FOREACH( vertex_t v, vertices(g) ) {
+      std::cout << g[v].name << " ---> " << getNodePattern(g[v].name) << std::endl;
+      sP.insert(getNodePattern(g[v].name));
+
+    }
 
     for(auto& itP : sP) ret.push_back(itP);
 
@@ -700,4 +704,31 @@ vEbwrs& CarpeDM::staticFlush(const std::string& sBlock, bool prioIl, bool prioHi
 
   return ew;
 
+}
+
+vEbwrs& CarpeDM::deactivateOrphanedCommands(std::vector<QueueReport>& vQr, vEbwrs& ew) {
+  for (auto& qr : vQr) {
+     for (int8_t prio = PRIO_IL; prio >= PRIO_LO; prio--) {
+        
+      if (!qr.hasQ[prio]) {continue;}
+      //find buffers of all non empty slots
+      for (uint8_t i, idx = qr.aQ[prio].rdIdx; idx < qr.aQ[prio].rdIdx + 4; idx++) {
+        i = idx & Q_IDX_MAX_MSK;
+        QueueElement& qe = qr.aQ[prio].aQe[i];
+
+        if(qe.orphaned) {
+          qe.qty = 0; // deactivate command execution
+          //reconstruct action field from report. bit awkward, but not really bad either.
+          uint32_t action = qe.flowPerma;// qe.validAbs qe.type qe.qty
+          ew.va.push_back(qe.extAdr); //ext address of this block + BLOCK_CMDQ_RD_IDXS
+          ew.vcs += leadingOne(1);
+          uint8_t bTmp[4];
+          writeLeNumberToBeBytes(bTmp, action);
+          ew.vb.insert( ew.vb.end(), bTmp, bTmp + _32b_SIZE_);
+        }
+      }
+    }    
+  }
+
+  return ew;
 }
