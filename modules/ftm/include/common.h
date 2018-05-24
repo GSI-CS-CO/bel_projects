@@ -134,8 +134,11 @@ typedef struct {
 
 
 typedef struct {
+  uint32_t     extAdr = LM32_NULL_PTR;
+  bool       orphaned = false;
   bool        pending = false;
   uint64_t  validTime = 0;
+  bool       validAbs = false;
   uint8_t        type = 0;
   std::string   sType = DotStr::Misc::sUndefined;
   uint32_t        qty = 0;
