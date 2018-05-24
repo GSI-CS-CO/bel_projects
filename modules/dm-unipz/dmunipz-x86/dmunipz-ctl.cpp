@@ -203,13 +203,13 @@ static void help(void) {
   fprintf(stderr, "  flex     <offset>   command sets offset [ns] added to timestamp of READY_TO_SIS event (default 1500000 ns)\n");
   fprintf(stderr, "  uni      <timeout>  command sets timeout [ms] value for UNILAC (default 1000ms)\n");
   fprintf(stderr, "  tk       <timeout>  command sets timeout [ms] value for TK (via UNILAC, default 210 ms)\n");
-  fprintf(stderr, "  IMPORTANT: values set by the above commands get applied by the 'configure' command");
+  fprintf(stderr, "  IMPORTANT: values set by the above commands get applied by the 'configure' command\n");
   fprintf(stderr, "\n");
-  fprintf(stderr, "  configure           command requests state change from states IDLE or CONFIGURED to stae CONFIGURED\n");
-  fprintf(stderr, "  startop             command requests state change from state CONFIGURED to state OPREADY\n");
-  fprintf(stderr, "  stopop              command requests state change from state OPREADY to state STOPPING -> CONFIGURED\n");
+  fprintf(stderr, "  configure           command requests state change from IDLE or CONFIGURED to CONFIGURED\n");
+  fprintf(stderr, "  startop             command requests state change from CONFIGURED to OPREADY\n");
+  fprintf(stderr, "  stopop              command requests state change from OPREADY to STOPPING -> CONFIGURED\n");
   fprintf(stderr, "  recover             command tries to recover from state ERROR and transit to state IDLE\n");
-  fprintf(stderr, "  idle                command requests state change to state IDLE\n");
+  fprintf(stderr, "  idle                command requests state change to IDLE\n");
   fprintf(stderr, "\n");
   fprintf(stderr, "  reltk               command forces release of TK request at UNILAC\n");
   fprintf(stderr, "  relbeam             command forces release of beam request at UNILAC\n");  
