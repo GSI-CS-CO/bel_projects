@@ -542,7 +542,7 @@ vertex_set_t CarpeDM::getDynamicDestinations(vertex_t vQ, Graph& g, AllocTable& 
       i = idx & Q_IDX_MAX_MSK;
       QueueElement& qe = qr.aQ[prio].aQe[i];
 
-      if (!qe.pending) {continue;}
+      if (!qe.pending || qe.qty == 0) {continue;}
       if (qe.type == ACT_TYPE_FLOW) {
         if (qe.flowDst == DotStr::Node::Special::sIdle) {continue;}
         auto x = at.lookupHash(hm.lookup(qe.flowDst, isSafeToRemove::exIntro + "dyn flow dst not found"), isSafeToRemove::exIntro + "dyn flow dst not found");
