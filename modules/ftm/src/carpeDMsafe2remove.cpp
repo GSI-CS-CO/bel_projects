@@ -26,9 +26,13 @@ namespace isSafeToRemove {
 
 bool CarpeDM::isSafeToRemove(Graph& gRem, std::string& report, std::vector<QueueReport>& vQr) {
   std::set<std::string> patterns;
+  bool warnUndefined = false;
   //Find all patterns 2B removed
-  for (auto& patternIt : getGraphPatterns(gRem)) { patterns.insert(patternIt); }
-    
+  for (auto& patternIt : getGraphPatterns(gRem)) { 
+    if (patternIt == DotStr::Misc::sUndefined) warnUndefined = true;
+    else patterns.insert(patternIt); 
+  }
+  if (warnUndefined) sErr << "Warning: isSafeToRemove was handed a graph containing nodes claiming to belong to pattern '" << DotStr::Misc::sUndefined << "'." << std::endl << "These nodes will be ignored for analysis and removal!" << std::endl;
   return isSafeToRemove(patterns, report, vQr);
 }
 
@@ -54,7 +58,6 @@ bool CarpeDM::isSafeToRemove(std::set<std::string> patterns, std::string& report
   //if(verbose) {sLog << "Pattern <" << pattern << "> (Entrypoint <" << sTmp << "> safe removal analysis" << std::endl;}
 
   for (auto& patternIt : patterns) {
-    std::cout << "PatName: " << patternIt << std::endl;
     // BEGIN Preparations: Entry points, Blacklist and working copy of the Graph
     //Init our blacklist of critical nodes. All vertices in the pattern to be removed need to be on it
     for (auto& nodeIt : getPatternMembers(patternIt)) {
@@ -181,7 +184,13 @@ bool CarpeDM::isSafeToRemove(std::set<std::string> patterns, std::string& report
   //find inactive blocks which have a connection to our entry points
   if (isSafe) {
     vStrC entryNames;
-    for (vertex_t vEntry : entries) { entryNames.push_back(gEq[vEntry].name);}
+    if(verbose) { sLog << "Checking for orphaned flow commands checks against following entry points: " << std::endl; }
+    for (vertex_t vEntry : entries) { 
+      std::cout << gEq[vEntry].name << std::endl;
+      entryNames.push_back(gEq[vEntry].name);
+    }
+
+
 
     vertex_set_map_t cpV;
     for ( vertex_t vBlock : blacklist ) { 
@@ -191,13 +200,12 @@ bool CarpeDM::isSafeToRemove(std::set<std::string> patterns, std::string& report
         set_intersection(tmpTree.begin(),tmpTree.end(),cursors.begin(),cursors.end(), std::inserter(si,si.begin()));
         //if the intersection of its reverse tree with the cursors is empty, this block is inactive
         if (si.size() == 0) {
+          if(verbose) { sLog <<  "Checking for orphaned commands... found inactive connected block " << gEq[vBlock].name << std::endl; }
           // for each inactive block, get qeue reports to check flow destination against all entry points we want removed
           // all flows pointing to an orphan or future orphan will be marked. 
-          for (vertex_t vEntry : entries) {
-            QueueReport qr;
-            getQReport(g, at, gEq[vBlock].name, qr, entryNames);
-            vQr.push_back(qr);
-          }
+          QueueReport qr;
+          getQReport(g, at, gEq[vBlock].name, qr, entryNames);
+          vQr.push_back(qr);
         }   
       }
     }

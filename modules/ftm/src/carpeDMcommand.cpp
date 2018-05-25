@@ -577,17 +577,23 @@ vEbwrs& CarpeDM::abortNodeOrigin(const std::string& sNode, vEbwrs& ew) {
 
 
   vStrC CarpeDM::getGraphPatterns(Graph& g)  {
-    std::set<std::string> sP;
+    std::set<std::string> sP, log;
     vStrC ret;
 
     BOOST_FOREACH( vertex_t v, vertices(g) ) {
-      std::cout << g[v].name << " ---> " << getNodePattern(g[v].name) << std::endl;
-      sP.insert(getNodePattern(g[v].name));
+
+      //std::cout << g[v].name << " ---> " << getNodePattern(g[v].name) << std::endl;
+      std::string tmpPatName = g[v].patName;
+      if (tmpPatName == DotStr::Misc::sUndefined) log.insert(g[v].name);
+      sP.insert(tmpPatName);
 
     }
 
     for(auto& itP : sP) ret.push_back(itP);
-
+    if (log.size() > 0) {
+      sErr << "Warning: getGraphPatterns found no valid patterns for the following nodes:" << std::endl;
+      for(auto& itL : log) sErr << itL << std::endl;  
+    }
     return ret;  
 
 
@@ -717,10 +723,11 @@ vEbwrs& CarpeDM::deactivateOrphanedCommands(std::vector<QueueReport>& vQr, vEbwr
         QueueElement& qe = qr.aQ[prio].aQe[i];
 
         if(qe.orphaned) {
+          if (verbose) sLog << "Deactivating orphaned command @ " << qr.name << " prio " << std::dec << (int)prio << " slot " << (int)i << std::hex << ", adr of action field is 0x" << qe.extAdr + T_CMD_ACT << std::endl;
           qe.qty = 0; // deactivate command execution
           //reconstruct action field from report. bit awkward, but not really bad either.
-          uint32_t action = qe.flowPerma;// qe.validAbs qe.type qe.qty
-          ew.va.push_back(qe.extAdr); //ext address of this block + BLOCK_CMDQ_RD_IDXS
+          uint32_t action = (qe.type << ACT_TYPE_POS) | ((prio & ACT_PRIO_MSK) << ACT_PRIO_POS) | ((qe.qty & ACT_QTY_MSK) << ACT_QTY_POS) | (qe.validAbs << ACT_VABS_POS) | (qe.flowPerma << ACT_CHP_POS );
+          ew.va.push_back(qe.extAdr + T_CMD_ACT); 
           ew.vcs += leadingOne(1);
           uint8_t bTmp[4];
           writeLeNumberToBeBytes(bTmp, action);
