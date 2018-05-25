@@ -224,12 +224,16 @@ namespace coverage {
     
     const std::string exIntro = " getQReport: ";
     
+    
 
     auto x = at.lookupHash(hm.lookup(blockName, exIntro)); // x is the blocks alloctable entry
+    qr.name = blockName;
 
     //check their Q counters for unprocessed commands
     uint32_t wrIdxs = boost::dynamic_pointer_cast<Block>(g[x->v].np)->getWrIdxs(); 
     uint32_t rdIdxs = boost::dynamic_pointer_cast<Block>(g[x->v].np)->getRdIdxs();
+
+    if (verbose) sLog << "Check for orphaned commands is scanning Queue @ " << blockName << std::endl;
 
     for (uint8_t prio = PRIO_LO; prio <= PRIO_IL; prio++) {
       
@@ -269,6 +273,7 @@ namespace coverage {
       if (pendingCnt) {for(uint8_t pidx = rdIdx; pidx < (rdIdx + pendingCnt); pidx++) {pendingIdx.insert( pidx & Q_IDX_MAX_MSK);}}
 
       
+      if (verbose) sLog << "Prio " << (int)prio << std::endl;
 
       //find buffers of all non empty slots
       for (uint8_t i = 0; i <= Q_IDX_MAX_MSK; i++) {
@@ -322,9 +327,13 @@ namespace coverage {
                                   auto dst = at.lookupAdr( dstCpu, at.adrConv(dstAdrType, AdrType::MGMT, dstCpu, dstAdr) );
                                   sDst = g[dst->v].name;
                                   for (auto& itOrphan : futureOrphan) {
-                                    if (sDst == itOrphan) {qe.orphaned = true; break;} 
+                                    if (sDst == itOrphan) {
+                                      if (verbose) sLog << "found orphaned command pointing to " << itOrphan << " in slot " << (int)idx << std::endl;
+                                      qe.orphaned = true;
+                                      break;} 
                                   }
-                                } catch (...) { 
+                                } catch (...) {
+                                  if (verbose) sLog << "found orphaned command pointing to unknown destination (#" << std::dec << (int)dstCpu << " 0x" << std::hex << dstAdr << std::dec << " in slot " << (int)idx << std::endl; 
                                   sDst = DotStr::Misc::sUndefined;
                                   qe.orphaned = true;
                                 }

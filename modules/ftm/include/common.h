@@ -162,6 +162,7 @@ typedef struct {
 } QueueBuffer;
 
 typedef struct {
+  std::string name;
   bool hasQ[3] = {false, false, false};
   QueueBuffer aQ[3];
 } QueueReport;
