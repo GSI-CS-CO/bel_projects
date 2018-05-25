@@ -120,7 +120,7 @@ using namespace DotStr::Misc;
   }  
 
   void CarpeDM::generateQmeta(Graph& g, vertex_t v, int prio) {
-    std::cout << "generating " << g[v].name << ", patname " << g[v].patName << " prio " << (int)prio << std::endl;
+    //std::cout << "generating " << g[v].name << ", patname " << g[v].patName << " prio " << (int)prio << std::endl;
 
     const std::string nameBl = g[v].name + dnm::sQBufListTag + dnm::sQPrioPrefix[prio];
     const std::string nameB0 = g[v].name + dnm::sQBufTag     + dnm::sQPrioPrefix[prio] + dnm::s1stQBufSuffix;
@@ -133,7 +133,7 @@ using namespace DotStr::Misc;
     vertex_t vB0 = boost::add_vertex(myVertex(nameB0, g[v].cpu, hm.lookup(nameB0), nullptr, dnt::sQBuf,  DotStr::Misc::sHexZero), g);
     vertex_t vB1 = boost::add_vertex(myVertex(nameB1, g[v].cpu, hm.lookup(nameB1), nullptr, dnt::sQBuf,  DotStr::Misc::sHexZero), g);
 
-    std::cout << g[vBl].name << " -1-> " << getNodePattern(g[vBl].name) << std::endl;
+    //std::cout << g[vBl].name << " -1-> " << getNodePattern(g[vBl].name) << std::endl;
     g[vBl].patName = g[v].patName;
     //gt.setBeamproc(nameBl, g[v].bpName, false, false);
     gt.setPattern(g[vBl].name, g[vBl].patName, false, false);
@@ -142,7 +142,7 @@ using namespace DotStr::Misc;
     g[vB1].patName = g[v].patName;
     gt.setPattern(g[vB1].name, g[vB1].patName, false, false);
 
-    std::cout << g[vBl].name << " -2-> " << getNodePattern(g[vBl].name) << std::endl;
+    //std::cout << g[vBl].name << " -2-> " << getNodePattern(g[vBl].name) << std::endl;
     boost::add_edge(v,   vBl, myEdge(det::sQPrio[prio]), g);
     boost::add_edge(vBl, vB0, myEdge(det::sMeta),    g);
     boost::add_edge(vBl, vB1, myEdge(det::sMeta),    g);
@@ -156,7 +156,7 @@ using namespace DotStr::Misc;
       std::string cmp = g[v].type;
       
       if ((cmp == dnt::sBlockFixed) || (cmp == dnt::sBlockAlign) || (cmp == dnt::sBlock) ) {
-        std::cout << "Scanning Block " << g[v].name << std::endl;
+        //std::cout << "Scanning Block " << g[v].name << std::endl;
         boost::tie(out_begin, out_end) = out_edges(v,g);
         //check if it already has queue links / Destination List
         bool  genIl       = s2u<bool>(g[v].qIl),  hasIl = false, 
@@ -174,7 +174,7 @@ using namespace DotStr::Misc;
           if (g[*out_cur].type == det::sDstList)        hasDstLst   = true;
         }
 
-        std::cout << "IL " << (int)genIl << hasIl << "HI " << (int)genHi << hasHi << "LO " << (int)genLo << hasLo << std::endl;
+        //std::cout << "IL " << (int)genIl << hasIl << "HI " << (int)genHi << hasHi << "LO " << (int)genLo << hasLo << std::endl;
 
         //create requested Queues / Destination List
         if (genIl && !hasIl ) { generateQmeta(g, v, PRIO_IL); }
@@ -324,7 +324,7 @@ using namespace DotStr::Misc;
 
       bool foundUninitialised = (n != std::string::npos);
 
-      if(verbose || foundUninitialised) {
+      if(debug || foundUninitialised) {
         sLog << std::endl;
         hexDump(gUp[v].name.c_str(), haystack.c_str(), _MEM_BLOCK_SIZE);
       }
