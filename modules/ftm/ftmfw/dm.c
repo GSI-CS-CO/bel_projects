@@ -378,6 +378,12 @@ uint32_t* block(uint32_t* node, uint32_t* thrData) {
     }
 
     *(rdIdx) = (*rdIdx + (uint8_t)(qty == 0) ) & Q_IDX_MAX_OVF_MSK; //pop element if qty exhausted
+    
+    //If we could skip and there are more cmds pending, exit and let the scheduler come back directly to this block for the next cmd in our queue
+    if( skipOne && ((*awrOffs & 0x00ffffff) != (*ardOffs & 0x00ffffff)) ) {
+      DBPRINT2("#%02u: Found more pending commands, skip deactivated cmd and process next cmd\n" );
+      return node;
+    }  
 
     //If we could skip and there are more cmds pending, exit and let the scheduler come back directly to this block for the next cmd in our queue
     if( skipOne && ((*awrOffs & 0x00ffffff) != (*ardOffs & 0x00ffffff)) ) {
