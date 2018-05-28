@@ -52,7 +52,7 @@ bool CarpeDM::isSafeToRemove(std::set<std::string> patterns, std::string& report
   AllocTable& at  = atDown;
   CovenantTable ctAux; //Global CovenantTable is called ct
   Graph gTmp, gEq;
-  vertex_set_t blacklist, entries, cursors, covenants; //hashes of all covenants
+  vertex_set_t blacklist, remlist, entries, cursors, covenants; //hashes of all covenants
   vertex_set_map_t covenantsPerVertex;
   std::string optmisedAnalysisReport, covenantReport;
 
@@ -63,7 +63,7 @@ bool CarpeDM::isSafeToRemove(std::set<std::string> patterns, std::string& report
     //Init our blacklist of critical nodes. All vertices in the pattern to be removed need to be on it
     for (auto& nodeIt : getPatternMembers(patternIt)) {
       auto x = at.lookupHash(hm.lookup(nodeIt, isSafeToRemove::exIntro +  "Could not find pattern <" + patternIt + "> member node "), isSafeToRemove::exIntro +  "Could not find pattern <" + patternIt + "> member node ! ");
-      blacklist.insert(x->v);
+      remlist.insert(x->v);
       covenantsPerVertex[x->v].insert(null_vertex);
     }
     //Find and list all entry nodes of patterns 2B removed
@@ -72,6 +72,8 @@ bool CarpeDM::isSafeToRemove(std::set<std::string> patterns, std::string& report
     entries.insert(x->v);
     
   }
+
+  blacklist = remlist;
 
   //make a working copy of the download graph
   vertex_map_t vertexMapTmp;
@@ -192,17 +194,15 @@ bool CarpeDM::isSafeToRemove(std::set<std::string> patterns, std::string& report
   }
   
   //Find all orphaned commands for later treatment
-  /*
-  //find inactive blocks which have a connection to our entry points
-  */
-  //FIXME shouldn't we do this for ALL blocks ? whoever has an orphaned command can become a danger. We must deactive those commands!
+ 
+  //orphaned command check means: check all queues for flow commands with a destination node inside the pattern 2B removed 
   
   if (isSafe) {
-    vStrC entryNames;
-    if(verbose) { sLog << "Checking for orphaned flow commands checks against following entry points: " << std::endl; }
-    for (vertex_t vEntry : entries) { 
-      std::cout << g[vEntry].name << std::endl;
-      entryNames.push_back(g[vEntry].name);
+    vStrC chkNames;
+    if(verbose) { sLog << "Checking for orphaned flow commands checks against following nodes: " << std::endl; }
+    for (vertex_t vChk : remlist ) { 
+      if (verbose) std::cout << g[vChk].name << std::endl;
+      chkNames.push_back(g[vChk].name);
     }
     
     BOOST_FOREACH( vertex_t vBlock, vertices(g) ) {
@@ -211,32 +211,11 @@ bool CarpeDM::isSafeToRemove(std::set<std::string> patterns, std::string& report
         // for each inactive block, get qeue reports to check flow destination against all entry points we want removed
         // all flows pointing to an orphan or future orphan will be marked. 
         QueueReport qr;
-        getQReport(g, at, g[vBlock].name, qr, entryNames);
+        getQReport(g, at, g[vBlock].name, qr, chkNames);
         vQr.push_back(qr);
       }  
     } 
     
-    
-    /*
-    vertex_set_map_t cpV;
-    for ( vertex_t vBlock : blacklist ) { 
-      if (gEq[vBlock].np->isBlock()) {
-        vertex_set_t tmpTree, si;
-        getReverseNodeTree(vBlock, tmpTree, gEq, cpV);
-        set_intersection(tmpTree.begin(),tmpTree.end(),cursors.begin(),cursors.end(), std::inserter(si,si.begin()));
-        //if the intersection of its reverse tree with the cursors is empty, this block is inactive
-        if (si.size() == 0) {
-
-          if(verbose) { sLog <<  "Checking for orphaned commands... found inactive connected block " << gEq[vBlock].name << std::endl; }
-          // for each inactive block, get qeue reports to check flow destination against all entry points we want removed
-          // all flows pointing to an orphan or future orphan will be marked. 
-          QueueReport qr;
-          getQReport(g, at, gEq[vBlock].name, qr, entryNames);
-          vQr.push_back(qr);
-        }   
-      }
-    }
-    */
   }
 
 
