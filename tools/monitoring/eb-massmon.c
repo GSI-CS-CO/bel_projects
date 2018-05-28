@@ -3,7 +3,7 @@
 //
 //  created : 2018
 //  author  : Dietrich Beck, GSI-Darmstadt
-//  version : 04-May-2018
+//  version : 28-May-2018
 //
 // Command-line interface for WR monitoring of many nodes via Etherbone.
 //
@@ -34,7 +34,7 @@
 // For all questions and ideas contact: d.beck@gsi.de
 // Last update: 27-April-2018
 //////////////////////////////////////////////////////////////////////////////////////////////
-#define EBMASSMON_VERSION "0.0.2"
+#define EBMASSMON_VERSION "0.0.3"
 
 // standard includes
 #include <unistd.h> // getopt
@@ -64,8 +64,8 @@ eb_device_t device;           // needs to be global for 1-wire stuff
 const char  *networkTypeNames[]  = {"all", "Production", "User", "Timing"};
 #define     MAXNETWORKTYPES      4
 
-const char  *nodeTypeNames[]     = {"all", "scuxl", "pexaria", "vmel", "expl"};
-#define     MAXNODETYPES         5
+const char  *nodeTypeNames[]     = {"all", "scuxl", "pexaria", "vmel", "expl", "amc", "pmc"};
+#define     MAXNODETYPES         7
 
 #define     MAXFILEFORMATS       2 // only 0, and 1 
 
@@ -108,6 +108,8 @@ static void help(void) {
   fprintf(stderr, "                   2: PEXARIA\n");
   fprintf(stderr, "                   3: VETAR\n");
   fprintf(stderr, "                   4: EXPLODER\n");
+  fprintf(stderr, "                   5: AMC\n");
+  fprintf(stderr, "                   6: PMC\n");
   fprintf(stderr, "  -z               include FPGA uptime [h]\n");
   fprintf(stderr, "\n");
   fprintf(stderr, "Use this tool to get some WR related info of many timing receiver nodes.\n");
@@ -563,7 +565,7 @@ int main(int argc, char** argv) {
   char         nodeInfo[MAXNODES][MAXLEN+1];
   eb_status_t  nodeEbStat[MAXNODES];
 
-  int          i,j,k,l,m,nReachable;
+  int          i,j,k,l,m,n,o,nReachable;
   uint64_t     tmp64, temp64, atdTmp64=0;
   uint32_t     tmp32, atdTmp32=0;
   int          tmp;
@@ -844,11 +846,15 @@ int main(int argc, char** argv) {
     k = 0;
     l = 0;
     m = 0;
+    n = 0;
+    o = 0;
     for (i = 0; i < nNodes; i++) {
       if (strstr(nodeName[i], nodeTypeNames[1]) != NULL)  j++;
       if (strstr(nodeName[i], nodeTypeNames[2]) != NULL)  k++;
       if (strstr(nodeName[i], nodeTypeNames[3]) != NULL)  l++;
       if (strstr(nodeName[i], nodeTypeNames[4]) != NULL)  m++;
+      if (strstr(nodeName[i], nodeTypeNames[5]) != NULL)  n++;
+      if (strstr(nodeName[i], nodeTypeNames[6]) != NULL)  o++;
     }
     fprintf(stdout, "\n");
     fprintf(stdout, "type of nodes\n");
@@ -857,6 +863,8 @@ int main(int argc, char** argv) {
     fprintf(stdout, "%-10s             : %d\n", nodeTypeNames[2], k); 
     fprintf(stdout, "%-10s             : %d\n", nodeTypeNames[3], l); 
     fprintf(stdout, "%-10s             : %d\n", nodeTypeNames[4], m); 
+    fprintf(stdout, "%-10s             : %d\n", nodeTypeNames[5], n); 
+    fprintf(stdout, "%-10s             : %d\n", nodeTypeNames[6], o); 
     fprintf(stdout, "\n");
     
     // link up
