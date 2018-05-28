@@ -180,18 +180,32 @@ bool CarpeDM::isSafeToRemove(std::set<std::string> patterns, std::string& report
   }
   
   //Find all orphaned commands for later treatment
-
+  /*
   //find inactive blocks which have a connection to our entry points
+  */
+  //FIXME shouldn't we do this for ALL blocks ? whoever has an orphaned command can become a danger. We must deactive those commands!
+  
   if (isSafe) {
     vStrC entryNames;
     if(verbose) { sLog << "Checking for orphaned flow commands checks against following entry points: " << std::endl; }
     for (vertex_t vEntry : entries) { 
-      std::cout << gEq[vEntry].name << std::endl;
-      entryNames.push_back(gEq[vEntry].name);
+      std::cout << g[vEntry].name << std::endl;
+      entryNames.push_back(g[vEntry].name);
     }
-
-
-
+    
+    BOOST_FOREACH( vertex_t vBlock, vertices(g) ) {
+      if (g[vBlock].np->isBlock()) {
+        if(verbose) { sLog <<  "Checking for orphaned commands at block " << g[vBlock].name << std::endl; }
+        // for each inactive block, get qeue reports to check flow destination against all entry points we want removed
+        // all flows pointing to an orphan or future orphan will be marked. 
+        QueueReport qr;
+        getQReport(g, at, g[vBlock].name, qr, entryNames);
+        vQr.push_back(qr);
+      }  
+    } 
+    
+    
+    /*
     vertex_set_map_t cpV;
     for ( vertex_t vBlock : blacklist ) { 
       if (gEq[vBlock].np->isBlock()) {
@@ -200,6 +214,7 @@ bool CarpeDM::isSafeToRemove(std::set<std::string> patterns, std::string& report
         set_intersection(tmpTree.begin(),tmpTree.end(),cursors.begin(),cursors.end(), std::inserter(si,si.begin()));
         //if the intersection of its reverse tree with the cursors is empty, this block is inactive
         if (si.size() == 0) {
+
           if(verbose) { sLog <<  "Checking for orphaned commands... found inactive connected block " << gEq[vBlock].name << std::endl; }
           // for each inactive block, get qeue reports to check flow destination against all entry points we want removed
           // all flows pointing to an orphan or future orphan will be marked. 
@@ -209,18 +224,20 @@ bool CarpeDM::isSafeToRemove(std::set<std::string> patterns, std::string& report
         }   
       }
     }
+    */
   }
 
 
   if(verbose) sLog << "Creating report " << std::endl;
   //Create Debug Output File
+  
   BOOST_FOREACH( vertex_t v, vertices(gEq) ) { gEq[v].np->clrFlags(NFLG_PAINT_LM32_SMSK); }
   for (auto& it : cursors)    { gEq[it].np->setFlags(NFLG_DEBUG1_SMSK); }
   for (auto& it : entries)    { gEq[it].np->setFlags(NFLG_DEBUG0_SMSK); }
   for (auto& it : blacklist)  {
     if(isSafetyCritical(covenantsPerVertex[it])) gEq[it].np->setFlags(NFLG_PAINT_HOST_SMSK);
   }
-
+  
   report += createDot(gEq, true);
   report += optmisedAnalysisReport;
 
@@ -542,7 +559,7 @@ vertex_set_t CarpeDM::getDynamicDestinations(vertex_t vQ, Graph& g, AllocTable& 
       i = idx & Q_IDX_MAX_MSK;
       QueueElement& qe = qr.aQ[prio].aQe[i];
 
-      if (!qe.pending || qe.qty == 0) {continue;}
+      if (!qe.pending || qe.qty == 0) {continue;} // if command is not pending or has no charges left, it is ignored.
       if (qe.type == ACT_TYPE_FLOW) {
         if (qe.flowDst == DotStr::Node::Special::sIdle) {continue;}
         auto x = at.lookupHash(hm.lookup(qe.flowDst, isSafeToRemove::exIntro + "dyn flow dst not found"), isSafeToRemove::exIntro + "dyn flow dst not found");
