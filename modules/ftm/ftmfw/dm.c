@@ -310,6 +310,7 @@ uint32_t* block(uint32_t* node, uint32_t* thrData) {
   uint32_t *ret = (uint32_t*)node[NODE_DEF_DEST_PTR >> 2];
   uint32_t *bl, *b, *cmd, *act;
   uint8_t  *rdIdx,*wrIdx;
+  uint8_t skipOne = 0;
 
   uint32_t *ardOffs = node + (BLOCK_CMDQ_RD_IDXS >> 2), *awrOffs = node + (BLOCK_CMDQ_WR_IDXS >> 2);
   uint32_t bufOffs, elOffs, prio, actTmp, atype;
@@ -352,9 +353,18 @@ uint32_t* block(uint32_t* node, uint32_t* thrData) {
       actTmp &= ~ACT_QTY_SMSK; //clear qty
       actTmp |= ((--qty) & ACT_QTY_MSK) << ACT_QTY_POS;
       *act    = actTmp;
+    } else {
+      skipOne = 1; //qty was exhausted before decrement, can be skipped
+      DBPRINT2("#%02u: Found deactivated command\n" );
     }
 
     *(rdIdx) = (*rdIdx + (uint8_t)(qty == 0) ) & Q_IDX_MAX_OVF_MSK; //pop element if qty exhausted
+    
+    //If we could skip and there are more cmds pending, exit and let the scheduler come back directly to this block for the next cmd in our queue
+    if( skipOne && ((*awrOffs & 0x00ffffff) != (*ardOffs & 0x00ffffff)) ) {
+      DBPRINT2("#%02u: Found more pending commands, skip deactivated cmd and process next cmd\n" );
+      return node;
+    }  
 
     if (qty==0) DBPRINT3("#%02u: Qty reached zero, popping\n", cpuId);
 
