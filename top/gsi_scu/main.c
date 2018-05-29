@@ -582,6 +582,7 @@ void disable_channel(unsigned int channel) {
 
 
   if (fg_regs[channel].state == STATE_ACTIVE) {    // hw is running
+    hist_addx(HISTORY_XYZ_MODULE, "flush circular buffer", channel);
     fg_regs[channel].rd_ptr = fg_regs[channel].wr_ptr;
   } else {
     fg_regs[channel].state = STATE_STOPPED;
@@ -664,6 +665,7 @@ void sw_irq_handler(int id) {
 
       switch(code) {
         case 0:
+          hist_addx(HISTORY_XYZ_MODULE, "init_buffers", m.msg);
           init_buffers(&fg_regs[0], m.msg, &fg_macros[0], scub_base, scu_mil_base);
           param_sent[value] = 0;
         break;
