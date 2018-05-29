@@ -22,9 +22,11 @@ void VisitorDownloadCrawler::setDefDst() const {
 
   auxAdr = writeBeBytesToLeNumber<uint32_t>(b + NODE_DEF_DEST_PTR);
   tmpAdr = at.adrConv(AdrType::INT, AdrType::MGMT,cpu, auxAdr);
-  auto x = at.lookupAdr(cpu, tmpAdr);
+
   if (tmpAdr == LM32_NULL_PTR) return;
-  //sLog << "cpu " << cpu << "InAdr: 0x" << std::hex << auxAdr << " Adr: 0x" << std::hex << tmpAdr <<  std::endl;
+  auto x = at.lookupAdr(cpu, tmpAdr);
+
+ 
   boost::add_edge(v, x->v, myEdge(det::sDefDst), g);
 
 }
