@@ -6,6 +6,7 @@
 #include "common.h"
 #include "graph.h"
 #include "alloctable.h"
+#include "covenanttable.h"
 
 
 class Event;
@@ -29,6 +30,7 @@ class DestList;
     Graph&          g;
     vertex_t        v;
     AllocTable&     at;
+    CovenantTable&  ct;
     std::ostream& sLog;
     std::ostream& sErr;
     uint8_t*        b;
@@ -39,7 +41,7 @@ class DestList;
     static const std::string exIntro;
 
   public:
-    VisitorDownloadCrawler(Graph& g, vertex_t v, AllocTable& at, std::ostream& sLog, std::ostream& sErr)  : g(g), v(v), at(at), sLog(sLog), sErr(sErr) { auto x = at.lookupVertex(v); if (at.isOk(x)) {cpu = x->cpu; b = ((AllocMeta*)&(*x))->b;} };
+    VisitorDownloadCrawler(Graph& g, vertex_t v, AllocTable& at, CovenantTable& ct, std::ostream& sLog, std::ostream& sErr)  : g(g), v(v), at(at), ct(ct), sLog(sLog), sErr(sErr) { auto x = at.lookupVertex(v); if (at.isOk(x)) {cpu = x->cpu; b = ((AllocMeta*)&(*x))->b;} };
     ~VisitorDownloadCrawler() {};
     virtual void visit(const Block& el) const;
     virtual void visit(const TimingMsg& el) const;

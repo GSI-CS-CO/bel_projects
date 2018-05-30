@@ -24,10 +24,16 @@ void VisitorDownloadCrawler::setDefDst() const {
   tmpAdr = at.adrConv(AdrType::INT, AdrType::MGMT,cpu, auxAdr);
 
   if (tmpAdr == LM32_NULL_PTR) return;
-  auto x = at.lookupAdr(cpu, tmpAdr);
-
- 
-  boost::add_edge(v, x->v, myEdge(det::sDefDst), g);
+  // try to lookup address and create edge
+  try {
+    auto x = at.lookupAdr(cpu, tmpAdr);
+    boost::add_edge(v, x->v, myEdge(det::sDefDst), g);
+  } catch(...) {
+    // it is possible that a covenant will cause carpeDM to intentionally leave an orphaned def dst to avoid contesting the DM's future changes
+    // So if there is a covenant registered for the node we're just processing, ignore the exception. Otherwise rethrow
+    if (!ct.isOk(ct.lookup(g[v].name))) { throw; }
+    else {sLog << "setDefDst: Node <" << g[v].name << "> has an invalid def dst, ignoring because of active covenant" << std::endl;}
+  }  
 
 }
 
@@ -151,7 +157,11 @@ void VisitorDownloadCrawler::visit(const DestList& el) const {
         try {
           auto x = at.lookupAdr(cpu, tmpAdr);
           boost::add_edge(vPblock, x->v, (myEdge){sType}, g);
-        } catch (...) {}
+        } catch (...) {
+          if (!ct.isOk(ct.lookup(g[vPblock].name))) { throw; }
+          else {sLog << "visitDstList: Node <" << g[vPblock].name << "> has an invalid def dst, ignoring because of active covenant" << std::endl;}
+
+        }
       }  
     }
     if (!defaultValid) { //default destination was not in alt dest list. that shouldnt happen ... draw it in

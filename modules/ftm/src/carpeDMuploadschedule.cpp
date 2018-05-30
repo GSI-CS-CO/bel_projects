@@ -215,7 +215,13 @@ using namespace DotStr::Misc;
     
     if (g[e].type != det::sAltDst ) {
       auto x = at.lookupVertex(v);
-      at.setStaged(x); 
+
+      // !!! only stage if there is no covenant for this node, otherwise we run into a race condition:
+      // A covenant means the DM will change the default dst to a safe value in the near future.
+      // If we'd also change def dst, doing it before DM does has no effect, and doing it after the DM did would overwrite the safe def dst
+      if(!isCovenantPending(g[x->v].name)) at.setStaged(x);
+      else {sLog << "Node <" << g[v].name << "> has an active covenant. Skipping staging to avoid race condition." << std::endl;}
+      
     }
 
   }
