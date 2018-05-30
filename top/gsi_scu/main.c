@@ -753,6 +753,7 @@ void ecaHandler()
   uint8_t dev_mil_armed = 0;
   uint8_t dev_sio_armed = 0;
   uint8_t slot;
+  uint32_t active_sios = 0;     // bitmap with active sios
 
   /* check if there are armed fgs */
   for (i = 0; i < MAX_FG_CHANNELS; i++) {
@@ -762,12 +763,11 @@ void ecaHandler()
       if(slot & DEV_MIL_EXT) {
         dev_mil_armed = 1;
       } else if (slot & DEV_SIO) {
+        active_sios |= (1 << ((slot & 0xf) - 1));
         dev_sio_armed = 1;
       }
     }
   }
-  //if (!dev_mil_armed && !dev_sio_armed)
-    //return;
 
   // read flag and check if there was an action 
   flag         = *(pECAQ + (ECA_QUEUE_FLAGS_GET >> 2));
@@ -787,10 +787,10 @@ void ecaHandler()
     case MY_ECA_TAG:
       // send broadcast start to mil extension
       if (dev_mil_armed) scu_mil_base[MIL_SIO3_TX_CMD] = 0x20ff;
-      // send broadcast start to all scu bus slaves
+      // send broadcast start to active sio slaves
       if (dev_sio_armed) {
-        // select all scu slaves
-        scub_base[OFFS(0) + MULTI_SLAVE_SEL] = 0xfff;
+        // select active sio slaves
+        scub_base[OFFS(0) + MULTI_SLAVE_SEL] = active_sios;
         // send broadcast
         scub_base[OFFS(13) + MIL_SIO3_TX_CMD] = 0x20ff;
       }
