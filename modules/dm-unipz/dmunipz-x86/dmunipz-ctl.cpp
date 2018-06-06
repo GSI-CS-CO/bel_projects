@@ -155,6 +155,7 @@ const char* dmunipz_status_text(uint32_t code) {
   case DMUNIPZ_STATUS_NODM             : return "Data Master unreachable";                     
   case DMUNIPZ_STATUS_EBREADTIMEDOUT   : return "EB read via WR network timed out";
   case DMUNIPZ_STATUS_WRONGVIRTACC     : return "mismatching virtual accelerator for EVT_READY_TO_SIS from UNIPZ";
+  case DMUNIPZ_STATUS_LONGPROCESSING   : return "processing after receiving the EVT_READY2SIS took too long";
   default                              : return "dm-unipz: undefined error code";
   }
 }
@@ -222,20 +223,20 @@ static void help(void) {
   fprintf(stderr, "Example3: '%s -s1 dev/wbm0 | logger -t TIMING -sp local0.info' monitor firmware and print to screen and to diagnostic logging", program);
   fprintf(stderr, "\n");
   fprintf(stderr, "When using option '-s<n>', the following information is displayed\n");
-  fprintf(stderr, "dm-unipz: transfer - 00000074, 01, 002, 002, 0, 1 1 1 1 1 1, OpReady   (      ), OK (      )\n");
-  fprintf(stderr, "                            |   |    |    |  |  | | | | | |  |          |        |   | \n");
-  fprintf(stderr, "                            |   |    |    |  |  | | | | | |  |          |        |    - # of 'bad status' incidents\n");
-  fprintf(stderr, "                            |   |    |    |  |  | | | | | |  |          |         - status\n");
-  fprintf(stderr, "                            |   |    |    |  |  | | | | | |  |          - # of '!OpReady' incidents\n");
-  fprintf(stderr, "                            |   |    |    |  |  | | | | | |   - state\n");
-  fprintf(stderr, "                            |   |    |    |  |  | | | | | - beam (request) released\n");
-  fprintf(stderr, "                            |   |    |    |  |  | | | | - beam request succeeded\n");
-  fprintf(stderr, "                            |   |    |    |  |  | | | - beam requested\n");
-  fprintf(stderr, "                            |   |    |    |  |  | | - TK (request) released -> transfer completed\n");
-  fprintf(stderr, "                            |   |    |    |  |  | - TK request succeeded\n");
-  fprintf(stderr, "                            |   |    |    |  |   - TK requested\n");
-  fprintf(stderr, "                            |   |    |    |   - 'no beam' flag\n");
-  fprintf(stderr, "                            |   |    |     - number of virtual accelerator received\n");
+  fprintf(stderr, "dm-unipz: transfer - 00000074, 01, 002, 00002, 0, 1 1 1 1 1 1, OpReady   (      ), OK (      )\n");
+  fprintf(stderr, "                            |   |    |      |  |  | | | | | |  |          |        |   | \n");
+  fprintf(stderr, "                            |   |    |      |  |  | | | | | |  |          |        |    - # of 'bad status' incidents\n");
+  fprintf(stderr, "                            |   |    |      |  |  | | | | | |  |          |         - status\n");
+  fprintf(stderr, "                            |   |    |      |  |  | | | | | |  |          - # of '!OpReady' incidents\n");
+  fprintf(stderr, "                            |   |    |      |  |  | | | | | |   - state\n");
+  fprintf(stderr, "                            |   |    |      |  |  | | | | | - beam (request) released\n");
+  fprintf(stderr, "                            |   |    |      |  |  | | | | - beam request succeeded\n");
+  fprintf(stderr, "                            |   |    |      |  |  | | | - beam requested\n");
+  fprintf(stderr, "                            |   |    |      |  |  | | - TK (request) released -> transfer completed\n");
+  fprintf(stderr, "                            |   |    |      |  |  | - TK request succeeded\n");
+  fprintf(stderr, "                            |   |    |      |  |   - TK requested\n");
+  fprintf(stderr, "                            |   |    |      |   - 'no beam' flag\n");
+  fprintf(stderr, "                            |   |    |     - last 2 digits: number of virtual accelerator received\n");
   fprintf(stderr, "                            |   |    - number of virtual accelerator requested\n");
   fprintf(stderr, "                            |    - number of injections in current transfer\n");
   fprintf(stderr, "                            - number of transfers\n");
@@ -341,7 +342,7 @@ int readConfig(uint32_t *flexOffset, uint32_t *uniTimeout, uint32_t *tkTimeout, 
 
 void printTransfer(uint32_t transfers, uint32_t injections, uint32_t virtAccReq, uint32_t virtAccRec, uint32_t noBeam, uint32_t statTrans)
 {
-  printf("%08d, %02d, %03d, %03d, %01d, %d %d %d %d %d %d", transfers, injections, virtAccReq, virtAccRec, noBeam,  
+  printf("%08d, %02d, %03d, %05d, %01d, %d %d %d %d %d %d", transfers, injections, virtAccReq, virtAccRec, noBeam,  
          ((statTrans & DMUNIPZ_TRANS_REQTK    ) > 0),  
          ((statTrans & DMUNIPZ_TRANS_REQTKOK  ) > 0), 
          ((statTrans & DMUNIPZ_TRANS_RELTK    ) > 0),
