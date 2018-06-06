@@ -913,30 +913,30 @@ uint32_t configMILEvent(uint16_t evtCode) // configure SoC to receive events via
 } // configMILEvent
 
 
-uint32_t wait4MILEvent(uint16_t evtCode, uint16_t virtAccReq, uint32_t *virtAccRec, uint32_t msTimeout)  // wait for MIL event or timeout
+uint32_t wait4MILEvent(uint16_t evtCode, uint16_t virtAccReq, uint32_t *virtAccRec, uint32_t usTimeout)  // wait for MIL event or timeout
 {
   uint32_t evtDataRec;         // data of one MIL event
   uint32_t evtCodeRec;         // "event number"
-  uint32_t virtAccTmp;         // virtual accelerator
   uint64_t timeoutT;           // when to time out
+  uint32_t virtAccTmp;         // temp value for virtAcc
 
-  timeoutT    = getSysTime() + (uint64_t)msTimeout * 10000000;
-  *virtAccRec = 0xff;
-
-  // for debugging: mprintf("dm-unipz: huhu evtCode 0x%04x, virtAcc 0x%04x\n", evtCode, virtAccReq);
+  timeoutT    = getSysTime() + (uint64_t)usTimeout * 1000;
+  *virtAccRec = 0;            // last two digis: virtacc; count other junk in FIFO by increasing by 100;
 
   while(getSysTime() < timeoutT) {              // while not timed out...
     while (fifoNotemptyEvtMil(pMILPiggy)) {     // while fifo contains data
       popFifoEvtMil(pMILPiggy, &evtDataRec);    
-      evtCodeRec = evtDataRec & 0x000000ff;     // extract event code
-      virtAccTmp = (evtDataRec >> 8) & 0x0f;    // extract virtual accelerator (assuming event message)
+      evtCodeRec  = evtDataRec & 0x000000ff;    // extract event code
+      virtAccTmp  = (evtDataRec >> 8) & 0x0f;   // extract virtual accelerator (assuming event message)
 
       if (evtCodeRec == evtCode) {
-        *virtAccRec = virtAccTmp;               // matching event but mismatching virtAcc is an error: remember virtAcc received from UNIPZ
+        *virtAccRec += virtAccTmp;
         if (virtAccTmp == virtAccReq) return DMUNIPZ_STATUS_OK;
+        else                          return DMUNIPZ_STATUS_WRONGVIRTACC;
       } // if evtCode
-      // chck mprintf("dm-unipz: virtAcc %03d, evtCode %03d\n", virtAcc, evtCodeRec);
+      else  *virtAccRec += 100;                 // increase by 100 for each junk event
 
+      // chck mprintf("dm-unipz: virtAcc %03d, evtCode %03d\n", virtAcc, evtCodeRec);
     } // while fifo contains data
     asm("nop");                                 // wait a bit...
   } // while not timed out
@@ -1186,7 +1186,7 @@ uint32_t changeState(uint32_t *actState, uint32_t *reqState, uint32_t actStatus)
 
 uint32_t doActionOperation(uint32_t *statusTransfer, uint32_t *virtAccReq, uint32_t *virtAccRec, uint32_t *noBeam, uint32_t *nTransfer, uint32_t *nInject, uint32_t actStatus)
 {
-  uint32_t status, dmStatus, gotEBTimeout;
+  uint32_t status, dmStatus, milStatus, gotEBTimeout;
   uint32_t nextAction;
   uint32_t milEvtRecFlag;
   uint32_t virtAccTmp;
@@ -1242,14 +1242,14 @@ uint32_t doActionOperation(uint32_t *statusTransfer, uint32_t *virtAccReq, uint3
       clearFifoEvtMil(pMILPiggy);                                                  // get rid of junk in FIFO @ MIL piggy
       
       requestBeam(uniTimeout);                                                     // request beam from UNIPZ, note that we can't check for REQ_NOT_OK from here
-      *virtAccRec   = 256;                                                                                             // set to 'illegal' value
+      *virtAccRec   = 42;                                                                                              // set to 'illegal' value
       milEvtRecFlag = 0;                                                                                               // initialize flag 
       if (wait4ECAEvent(uniTimeout, &dummy1, &dummy2, &timestamp) == DMUNIPZ_ECADO_READY2SIS) {                        // received EVT_READY_TO_SIS via TLU -> ECA
-        if (wait4MILEvent(DMUNIPZ_EVT_READY2SIS, virtAccTmp, virtAccRec, DMUNIPZ_QUERYTIMEOUT) == DMUNIPZ_STATUS_OK) { // query/check event number and virtAcc in MIL FIFO
+        if ((milStatus = wait4MILEvent(DMUNIPZ_EVT_READY2SIS, virtAccTmp, virtAccRec, DMUNIPZ_QUERYTIMEOUT)) == DMUNIPZ_STATUS_OK) { // query/check event number and virtAcc in MIL FIFO
           milEvtRecFlag = 1;                                                                                           // set flag
           status        = DMUNIPZ_STATUS_OK;
         } // if wait4MILEvt
-        else status = DMUNIPZ_STATUS_WRONGVIRTACC;                                                                     // received EVT_READY_TO_SIS, but virtAcc does not fit
+        else status = milStatus;                                                                                       // received EVT_READY_TO_SIS, but virtAcc does not fit
       } // if wait4ECAEvt
       else {                                                                                                           // did not receive EVT_READY_TO_SIS via TLU -> ECA
         if (checkClearReqNotOk(uniTimeout) != DMUNIPZ_STATUS_OK) status = DMUNIPZ_STATUS_REQBEAMFAILED;                // UNIPZ says: beam request was not ok
@@ -1261,7 +1261,12 @@ uint32_t doActionOperation(uint32_t *statusTransfer, uint32_t *virtAccReq, uint3
         pulseLemo2();                                                              // blink LED and TTL out of MIL piggy for hardware debugging with scope
       } // if MIL event was received
       else sendT = getSysTime() + (uint64_t)flexOffset;                            // did not receive MIL event: Plan B is to continue with actual time plus offset
-      
+
+      if (sendT < getSysTime() + (uint64_t)(flexOffset - DMUNIPZ_QUERYTIMEOUT*1000)) {  // this is a bit paranoid maybe...
+        sendT  = getSysTime() + (uint64_t)flexOffset;
+        status = DMUNIPZ_STATUS_LONGPROCESSING;
+      } // if sendT
+
       dmPrepFlexWaitCmd(REQBEAMB, sendT);                                          // prepare command for "flex" waiting block
       dmChangeBlock(REQBEAMB);                                                     // modify "flex" waiting block within DM
       dmChangeBlock(REQBEAMA);                                                     // modify "slow" waiting block within DM
