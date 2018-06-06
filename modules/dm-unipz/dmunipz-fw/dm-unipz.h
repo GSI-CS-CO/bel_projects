@@ -4,9 +4,9 @@
 #define  DMUNIPZ_US_ASMNOP        31          // # of asm("nop") operations per microsecond
 #define  DMUNIPZ_MS_ASMNOP        31 * 1000   // # of asm("nop") operations per microsecond
 #define  DMUNIPZ_DEFAULT_TIMEOUT  100         // default timeout used by main loop [ms]
-#define  DMUNIPZ_UNITIMEOUT       1100        // timeout used when requesting things from UNILAC [ms]
+#define  DMUNIPZ_UNITIMEOUT       1000        // timeout used when requesting things from UNILAC [ms]
 #define  DMUNIPZ_TKTIMEOUT        210         // timeout used when requesting TK from UNILAC [ms]
-#define  DMUNIPZ_QUERYTIMEOUT     5           // timeout for querying virt acc from MIL Piggy FIFO. 
+#define  DMUNIPZ_QUERYTIMEOUT     500         // timeout for querying virt acc from MIL Piggy FIFO [us] 
                                               // Ludwig: we have 10ms time; here: use 5 ms to be on the safe side
 #define  DMUNIPZ_OFFSETFLEX       1500000     // offset added to obtain TS "flex wait" [ns]
 #define  DMUNIPZ_EVT_READY2SIS    0x1e        // event number EVT_READY_TO_SIS (HEX)
@@ -32,6 +32,7 @@
 #define  DMUNIPZ_STATUS_NODM            15    // Data Master unreachable                                     
 #define  DMUNIPZ_STATUS_EBREADTIMEDOUT  16    // EB read via WR network timed out
 #define  DMUNIPZ_STATUS_WRONGVIRTACC    17    // received EVT_READY_TO_SIS with wrong virt acc number
+#define  DMUNIPZ_STATUS_LONGPROCESSING  18    // processing after receiving the EVT_READY2SIS took too long
 
 
 // MASP 
