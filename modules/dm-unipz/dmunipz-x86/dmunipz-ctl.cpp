@@ -3,7 +3,7 @@
  *
  *  created : 2017
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 24-May-2018
+ *  version : 06-June-2018
  *
  * Command-line interface for dmunipz
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 17-May-2017
  ********************************************************************************************/
-#define DMUNIPZ_X86_VERSION "0.1.6"
+#define DMUNIPZ_X86_VERSION "0.1.7"
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -107,7 +107,9 @@ eb_address_t dmunipz_state;      // state, read
 eb_address_t dmunipz_iterations; // number of iterations of main loop, read
 eb_address_t dmunipz_transfers;  // number of transfers from UNILAC to SIS, read
 eb_address_t dmunipz_injections; // number of injections in ongoing transfer
-eb_address_t dmunipz_virtAcc;    // number of virtual accelerator of ongoing or last transfer, read
+eb_address_t dmunipz_virtAccReq; // number of requested virtual accelerator of ongoing or last transfer, read
+eb_address_t dmunipz_virtAccRec; // number of received virtual accelerator of ongoing or last transfer, read
+eb_address_t dmunipz_noBeam;     // requested 'noBeam' flag, read
 eb_address_t dmunipz_statTrans;  // status of ongoing or last transfer, read
 eb_address_t dmunipz_cmd;        // command, write
 eb_address_t dmunipz_version;    // version, read
@@ -220,20 +222,22 @@ static void help(void) {
   fprintf(stderr, "Example3: '%s -s1 dev/wbm0 | logger -t TIMING -sp local0.info' monitor firmware and print to screen and to diagnostic logging", program);
   fprintf(stderr, "\n");
   fprintf(stderr, "When using option '-s<n>', the following information is displayed\n");
-  fprintf(stderr, "dm-unipz: transfer - 00000074, 01, 002, 1 1 1 1 1 1, OpReady   (      ), OK (      )\n");
-  fprintf(stderr, "                            |   |    |  | | | | | |  |          |        |   | \n");
-  fprintf(stderr, "                            |   |    |  | | | | | |  |          |        |    - # of 'bad status' incidents\n");
-  fprintf(stderr, "                            |   |    |  | | | | | |  |          |         - status\n");
-  fprintf(stderr, "                            |   |    |  | | | | | |  |          - # of '!OpReady' incidents\n");
-  fprintf(stderr, "                            |   |    |  | | | | | |   - state\n");
-  fprintf(stderr, "                            |   |    |  | | | | | - beam (request) released\n");
-  fprintf(stderr, "                            |   |    |  | | | | - beam request succeeded\n");
-  fprintf(stderr, "                            |   |    |  | | | - beam requested\n");
-  fprintf(stderr, "                            |   |    |  | | - TK (request) released -> transfer completed\n");
-  fprintf(stderr, "                            |   |    |  | - TK request succeeded\n");
-  fprintf(stderr, "                            |   |    |  - TK requested\n");
-  fprintf(stderr, "                            |   |    - number of virtual accelerator\n");
-  fprintf(stderr, "                            |   |- number of injections in current transfer\n");
+  fprintf(stderr, "dm-unipz: transfer - 00000074, 01, 002, 002, 0, 1 1 1 1 1 1, OpReady   (      ), OK (      )\n");
+  fprintf(stderr, "                            |   |    |    |  |  | | | | | |  |          |        |   | \n");
+  fprintf(stderr, "                            |   |    |    |  |  | | | | | |  |          |        |    - # of 'bad status' incidents\n");
+  fprintf(stderr, "                            |   |    |    |  |  | | | | | |  |          |         - status\n");
+  fprintf(stderr, "                            |   |    |    |  |  | | | | | |  |          - # of '!OpReady' incidents\n");
+  fprintf(stderr, "                            |   |    |    |  |  | | | | | |   - state\n");
+  fprintf(stderr, "                            |   |    |    |  |  | | | | | - beam (request) released\n");
+  fprintf(stderr, "                            |   |    |    |  |  | | | | - beam request succeeded\n");
+  fprintf(stderr, "                            |   |    |    |  |  | | | - beam requested\n");
+  fprintf(stderr, "                            |   |    |    |  |  | | - TK (request) released -> transfer completed\n");
+  fprintf(stderr, "                            |   |    |    |  |  | - TK request succeeded\n");
+  fprintf(stderr, "                            |   |    |    |  |   - TK requested\n");
+  fprintf(stderr, "                            |   |    |    |   - 'no beam' flag\n");
+  fprintf(stderr, "                            |   |    |     - number of virtual accelerator received\n");
+  fprintf(stderr, "                            |   |    - number of virtual accelerator requested\n");
+  fprintf(stderr, "                            |    - number of injections in current transfer\n");
   fprintf(stderr, "                            - number of transfers\n");
   fprintf(stderr, "Report software bugs to <d.beck@gsi.de>\n");
   fprintf(stderr, "Version %s. Licensed under the LGPL v3.\n", DMUNIPZ_X86_VERSION);
@@ -256,11 +260,11 @@ int readTransfers(uint32_t *transfers)
 } // getInfo
 
 
-int readInfo(uint32_t *status, uint32_t *state, uint32_t *iterations, uint32_t *transfers, uint32_t *injections, uint32_t *virtAcc, uint32_t *statTrans, uint32_t *nBadStatus, uint32_t *nBadState)
+int readInfo(uint32_t *status, uint32_t *state, uint32_t *iterations, uint32_t *transfers, uint32_t *injections, uint32_t *virtAccReq, uint32_t *virtAccRec, uint32_t *noBeam, uint32_t *statTrans, uint32_t *nBadStatus, uint32_t *nBadState)
 {
   eb_cycle_t  cycle;
   eb_status_t eb_status;
-  eb_data_t   data[10];
+  eb_data_t   data[20];
   
   if ((eb_status = eb_cycle_open(device, 0, eb_block, &cycle)) != EB_OK) die("dm-unipz: eb_cycle_open", eb_status);
 
@@ -271,8 +275,10 @@ int readInfo(uint32_t *status, uint32_t *state, uint32_t *iterations, uint32_t *
   eb_cycle_read(cycle, dmunipz_nBadState,   EB_BIG_ENDIAN|EB_DATA32, &(data[4]));
   eb_cycle_read(cycle, dmunipz_transfers,   EB_BIG_ENDIAN|EB_DATA32, &(data[5]));
   eb_cycle_read(cycle, dmunipz_injections,  EB_BIG_ENDIAN|EB_DATA32, &(data[6]));
-  eb_cycle_read(cycle, dmunipz_virtAcc,     EB_BIG_ENDIAN|EB_DATA32, &(data[7]));
-  eb_cycle_read(cycle, dmunipz_statTrans,   EB_BIG_ENDIAN|EB_DATA32, &(data[8]));
+  eb_cycle_read(cycle, dmunipz_virtAccReq,  EB_BIG_ENDIAN|EB_DATA32, &(data[7]));
+  eb_cycle_read(cycle, dmunipz_virtAccRec,  EB_BIG_ENDIAN|EB_DATA32, &(data[8]));
+  eb_cycle_read(cycle, dmunipz_noBeam,      EB_BIG_ENDIAN|EB_DATA32, &(data[9]));
+  eb_cycle_read(cycle, dmunipz_statTrans,   EB_BIG_ENDIAN|EB_DATA32, &(data[10]));
   if ((eb_status = eb_cycle_close(cycle)) != EB_OK) die("dm-unipz: eb_cycle_close", eb_status);
 
   *status       = data[0];
@@ -282,8 +288,10 @@ int readInfo(uint32_t *status, uint32_t *state, uint32_t *iterations, uint32_t *
   *nBadState    = data[4];
   *transfers    = data[5];
   *injections   = data[6];
-  *virtAcc      = data[7];
-  *statTrans    = data[8];
+  *virtAccReq   = data[7];
+  *virtAccRec   = data[8];
+  *noBeam       = data[9];
+  *statTrans    = data[10];
     
   return eb_status;
 } // readInfo
@@ -331,9 +339,9 @@ int readConfig(uint32_t *flexOffset, uint32_t *uniTimeout, uint32_t *tkTimeout, 
 } //readConfig
 
 
-void printTransfer(uint32_t transfers, uint32_t injections, uint32_t virtAcc, uint32_t statTrans)
+void printTransfer(uint32_t transfers, uint32_t injections, uint32_t virtAccReq, uint32_t virtAccRec, uint32_t noBeam, uint32_t statTrans)
 {
-  printf("%08d, %02d, %03d, %d %d %d %d %d %d", transfers, injections, virtAcc, 
+  printf("%08d, %02d, %03d, %03d, %01d, %d %d %d %d %d %d", transfers, injections, virtAccReq, virtAccRec, noBeam,  
          ((statTrans & DMUNIPZ_TRANS_REQTK    ) > 0),  
          ((statTrans & DMUNIPZ_TRANS_REQTKOK  ) > 0), 
          ((statTrans & DMUNIPZ_TRANS_RELTK    ) > 0),
@@ -371,7 +379,9 @@ int main(int argc, char** argv) {
   uint32_t iterations;
   uint32_t transfers; 
   uint32_t injections;
-  uint32_t virtAcc;   
+  uint32_t virtAccReq;   
+  uint32_t virtAccRec;   
+  uint32_t noBeam;   
   uint32_t statTrans; 
   uint32_t version;
 
@@ -460,7 +470,9 @@ int main(int argc, char** argv) {
   dmunipz_iterations = lm32_base + SHARED_OFFS + DMUNIPZ_SHARED_NITERMAIN;
   dmunipz_transfers  = lm32_base + SHARED_OFFS + DMUNIPZ_SHARED_TRANSN;
   dmunipz_injections = lm32_base + SHARED_OFFS + DMUNIPZ_SHARED_INJECTN;
-  dmunipz_virtAcc    = lm32_base + SHARED_OFFS + DMUNIPZ_SHARED_TRANSVIRTACC;
+  dmunipz_virtAccReq = lm32_base + SHARED_OFFS + DMUNIPZ_SHARED_TRANSVIRTACC;
+  dmunipz_virtAccRec = lm32_base + SHARED_OFFS + DMUNIPZ_SHARED_RECVIRTACC;
+  dmunipz_noBeam     = lm32_base + SHARED_OFFS + DMUNIPZ_SHARED_TRANSNOBEAM;
   dmunipz_statTrans  = lm32_base + SHARED_OFFS + DMUNIPZ_SHARED_TRANSSTATUS;
   dmunipz_cmd        = lm32_base + SHARED_OFFS + DMUNIPZ_SHARED_CMD;
   dmunipz_version    = lm32_base + SHARED_OFFS + DMUNIPZ_SHARED_VERSION;
@@ -494,10 +506,10 @@ int main(int argc, char** argv) {
 
   if (getInfo) {
     // status
-    readInfo(&status, &state, &iterations, &transfers, &injections, &virtAcc, &statTrans, &nBadStatus, &nBadState);
+    readInfo(&status, &state, &iterations, &transfers, &injections, &virtAccReq, &virtAccRec, &noBeam, &statTrans, &nBadStatus, &nBadState);
 
     printf("dm-unipz: iterations %d, transfer - ", iterations); 
-    printTransfer(transfers, injections, virtAcc, statTrans); 
+    printTransfer(transfers, injections, virtAccReq, virtAccRec, noBeam, statTrans); 
     printf(", %s (%6u), %s (%6u)\n", dmunipz_state_text(state), nBadState, dmunipz_status_text(status), nBadStatus);
 
     
@@ -591,7 +603,7 @@ int main(int argc, char** argv) {
 #endif // USEMASP
 
     while (1) {
-      readInfo(&status, &state, &iterations, &transfers, &injections, &virtAcc, &statTrans, &nBadStatus, &nBadState);  // read info from lm32
+      readInfo(&status, &state, &iterations, &transfers, &injections, &virtAccReq, &virtAccRec, &noBeam, &statTrans, &nBadStatus, &nBadState);  // read info from lm32
 
       switch(state) {
       case DMUNIPZ_STATE_OPREADY :
@@ -615,7 +627,7 @@ int main(int argc, char** argv) {
 
       if (printFlag) {
         printf("dm-unipz: transfer - "); 
-        printTransfer(transfers, injections, virtAcc, statTrans); 
+        printTransfer(transfers, injections, virtAccReq, virtAccRec, noBeam, statTrans); 
         printf(", %s (%6u), %s (%6u)\n", dmunipz_state_text(state), nBadState, dmunipz_status_text(status), nBadStatus);
       } // if printFlag
 

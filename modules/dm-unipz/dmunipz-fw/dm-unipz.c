@@ -3,7 +3,7 @@
  *
  *  created : 2017
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 24-May-2018
+ *  version : 06-Jun-2018
  *
  *  lm32 program for gateway between UNILAC Pulszentrale and FAIR-style Data Master
  * 
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 25-April-2015
  ********************************************************************************************/
-#define DMUNIPZ_FW_VERSION 0x000106                                   // make this consistent with makefile
+#define DMUNIPZ_FW_VERSION 0x000107                                   // make this consistent with makefile
 
 /* standard includes */
 #include <stdio.h>
@@ -164,7 +164,9 @@ uint32_t *pSharedStatus;                // pointer to a "user defined" u32 regis
 uint32_t *pSharedNIterMain;             // pointer to a "user defined" u32 register; here: publish # of iterations of main loop
 uint32_t *pSharedNTransfer;             // pointer to a "user defined" u32 register; here: publish # of transfers
 uint32_t *pSharedNInject;               // pointer to a "user defined" u32 register; here: publish # of injections (of current transfer)
-uint32_t *pSharedVirtAcc;               // pointer to a "user defined" u32 register; here: publish # of virtual accelerator
+uint32_t *pSharedVirtAcc;               // pointer to a "user defined" u32 register; here: publish # of virtual accelerator requested by Data Master
+uint32_t *pSharedVirtAccRec;            // pointer to a "user defined" u32 register; here: publish # of virtual accelerator received from UNIPZ
+uint32_t *pSharedNoBeam;                // pointer to a "user defined" u32 register; here: publish 'no beam' flag requested by Data Master
 uint32_t *pSharedStatTrans;             // pointer to a "user defined" u32 register; here: publish status of ongoing transfer
 uint32_t *pSharedNBadStatus;            // pointer to a "user defined" u32 register; here: publish # of bad status (=error) incidents
 uint32_t *pSharedNBadState;             // pointer to a "user defined" u32 register; here: publish # of bad state (=FATAL, ERROR, UNKNOWN) incidents
@@ -572,6 +574,8 @@ void initSharedMem() // determine address and clear shared mem
   pSharedNTransfer   = (uint32_t *)(pShared + (DMUNIPZ_SHARED_TRANSN >> 2));
   pSharedNInject     = (uint32_t *)(pShared + (DMUNIPZ_SHARED_INJECTN >> 2));
   pSharedVirtAcc     = (uint32_t *)(pShared + (DMUNIPZ_SHARED_TRANSVIRTACC >> 2));
+  pSharedNoBeam      = (uint32_t *)(pShared + (DMUNIPZ_SHARED_TRANSNOBEAM >> 2));
+  pSharedVirtAccRec  = (uint32_t *)(pShared + (DMUNIPZ_SHARED_RECVIRTACC >> 2));
   pSharedStatTrans   = (uint32_t *)(pShared + (DMUNIPZ_SHARED_TRANSSTATUS >> 2));
   pSharedData4EB     = (uint32_t *)(pShared + (DMUNIPZ_SHARED_DATA_4EB_START >> 2));
   pSharedSrcMacHi    = (uint32_t *)(pShared + (DMUNIPZ_SHARED_SRCMACHI >> 2));
@@ -909,32 +913,37 @@ uint32_t configMILEvent(uint16_t evtCode) // configure SoC to receive events via
 } // configMILEvent
 
 
-uint16_t wait4MILEvent(uint16_t evtCode, uint16_t virtAcc, uint32_t msTimeout)  // wait for MIL event or timeout
+uint32_t wait4MILEvent(uint16_t evtCode, uint16_t virtAccReq, uint32_t *virtAccRec, uint32_t msTimeout)  // wait for MIL event or timeout
 {
   uint32_t evtDataRec;         // data of one MIL event
   uint32_t evtCodeRec;         // "event number"
-  uint32_t virtAccRec;         // virtual accelerator
+  uint32_t virtAccTmp;         // virtual accelerator
   uint64_t timeoutT;           // when to time out
 
-  timeoutT = getSysTime() + (uint64_t)msTimeout * 10000000;      
+  timeoutT    = getSysTime() + (uint64_t)msTimeout * 10000000;
+  *virtAccRec = 0xff;
 
-  // for debugging: mprintf("dm-unipz: huhu evtCode 0x%04x, virtAcc 0x%04x\n", evtCode, virtAcc);
+  // for debugging: mprintf("dm-unipz: huhu evtCode 0x%04x, virtAcc 0x%04x\n", evtCode, virtAccReq);
 
   while(getSysTime() < timeoutT) {              // while not timed out...
     while (fifoNotemptyEvtMil(pMILPiggy)) {     // while fifo contains data
       popFifoEvtMil(pMILPiggy, &evtDataRec);    
-      evtCodeRec  = evtDataRec & 0x000000ff;    // extract event code
-      virtAccRec  = (evtDataRec >> 8) & 0x0f;   // extract virtual accelerator (assuming event message)
+      evtCodeRec = evtDataRec & 0x000000ff;     // extract event code
+      virtAccTmp = (evtDataRec >> 8) & 0x0f;    // extract virtual accelerator (assuming event message)
 
-      if ((evtCodeRec == evtCode) && (virtAccRec == virtAcc)) return DMUNIPZ_STATUS_OK;
-
-      // chck mprintf("dm-unipz: virtAcc %03d, evtCode %03d\n", virtAccRec, evtCodeRec);
+      if (evtCodeRec == evtCode) {
+        *virtAccRec = virtAccTmp;               // matching event but mismatching virtAcc is an error: remember virtAcc received from UNIPZ
+        if (virtAccTmp == virtAccReq) return DMUNIPZ_STATUS_OK;
+      } // if evtCode
+      // chck mprintf("dm-unipz: virtAcc %03d, evtCode %03d\n", virtAcc, evtCodeRec);
 
     } // while fifo contains data
     asm("nop");                                 // wait a bit...
   } // while not timed out
 
-  return DMUNIPZ_STATUS_TIMEDOUT;
+  // up to here: no matching evtCode AND matching virtAcc 
+
+  return DMUNIPZ_STATUS_TIMEDOUT;  
 } //wait4MILEvent
 
 
@@ -1175,7 +1184,7 @@ uint32_t changeState(uint32_t *actState, uint32_t *reqState, uint32_t actStatus)
 } //changeState
 
 
-uint32_t doActionOperation(uint32_t *statusTransfer, uint32_t *virtAcc, uint32_t *nTransfer, uint32_t *nInject, uint32_t actStatus)
+uint32_t doActionOperation(uint32_t *statusTransfer, uint32_t *virtAccReq, uint32_t *virtAccRec, uint32_t *noBeam, uint32_t *nTransfer, uint32_t *nInject, uint32_t actStatus)
 {
   uint32_t status, dmStatus, gotEBTimeout;
   uint32_t nextAction;
@@ -1196,7 +1205,8 @@ uint32_t doActionOperation(uint32_t *statusTransfer, uint32_t *virtAcc, uint32_t
     {
     case DMUNIPZ_ECADO_REQTK :                                                     // received command "REQ_TK" from data master
 
-      *virtAcc        = virtAccTmp;                                                // number of virtual accelerator is set when DM requests TK
+      *virtAccReq     = virtAccTmp;                                                // number of virtual accelerator is set when DM requests TK
+      *noBeam         = dryRunFlag;                                                // UNILAC requested without beam
       *statusTransfer = DMUNIPZ_TRANS_REQTK;                                       // update status of transfer
       (*nTransfer)++;                                                              // increment number of transfers
       *nInject        = 0;                                                         // number of injections is reset when DM requests TK
@@ -1232,18 +1242,18 @@ uint32_t doActionOperation(uint32_t *statusTransfer, uint32_t *virtAcc, uint32_t
       clearFifoEvtMil(pMILPiggy);                                                  // get rid of junk in FIFO @ MIL piggy
       
       requestBeam(uniTimeout);                                                     // request beam from UNIPZ, note that we can't check for REQ_NOT_OK from here
-
-      milEvtRecFlag = 0;                                                                                   // initialize flag 
-      if (wait4ECAEvent(uniTimeout, &dummy1, &dummy2, &timestamp) == DMUNIPZ_ECADO_READY2SIS) {            // received EVT_READY_TO_SIS via TLU -> ECA
-        if (wait4MILEvent(DMUNIPZ_EVT_READY2SIS, virtAccTmp, DMUNIPZ_QUERYTIMEOUT) == DMUNIPZ_STATUS_OK) { // query/check event number and virtAcc in MIL FIFO
-          milEvtRecFlag = 1;                                                                               // set flag
+      *virtAccRec   = 256;                                                                                             // set to 'illegal' value
+      milEvtRecFlag = 0;                                                                                               // initialize flag 
+      if (wait4ECAEvent(uniTimeout, &dummy1, &dummy2, &timestamp) == DMUNIPZ_ECADO_READY2SIS) {                        // received EVT_READY_TO_SIS via TLU -> ECA
+        if (wait4MILEvent(DMUNIPZ_EVT_READY2SIS, virtAccTmp, virtAccRec, DMUNIPZ_QUERYTIMEOUT) == DMUNIPZ_STATUS_OK) { // query/check event number and virtAcc in MIL FIFO
+          milEvtRecFlag = 1;                                                                                           // set flag
           status        = DMUNIPZ_STATUS_OK;
         } // if wait4MILEvt
-        else status = DMUNIPZ_STATUS_WRONGVIRTACC;                                                         // received EVT_READY_TO_SIS, but virtAcc does not fit
+        else status = DMUNIPZ_STATUS_WRONGVIRTACC;                                                                     // received EVT_READY_TO_SIS, but virtAcc does not fit
       } // if wait4ECAEvt
-      else {                                                                                               // did not receive EVT_READY_TO_SIS via TLU -> ECA
-        if (checkClearReqNotOk(uniTimeout) != DMUNIPZ_STATUS_OK) status = DMUNIPZ_STATUS_REQBEAMFAILED;    // UNIPZ says: beam request was not ok
-        else                                                     status = DMUNIPZ_STATUS_REQBEAMTIMEDOUT;  // UNIPZ says: beam request was ok
+      else {                                                                                                           // did not receive EVT_READY_TO_SIS via TLU -> ECA
+        if (checkClearReqNotOk(uniTimeout) != DMUNIPZ_STATUS_OK) status = DMUNIPZ_STATUS_REQBEAMFAILED;                // UNIPZ says: beam request was not ok
+        else                                                     status = DMUNIPZ_STATUS_REQBEAMTIMEDOUT;              // UNIPZ says: beam request was ok
       } // else wait4ECAEvent
 
       if (milEvtRecFlag) {                                                                  
@@ -1292,7 +1302,9 @@ void main(void) {
   uint32_t statusTransfer;                      // status of transfer
   uint32_t nTransfer;                           // number of transfers
   uint32_t nInject;                             // number of injections within current transfer
-  uint32_t virtAcc;                             // number of virtual accelerator
+  uint32_t virtAccReq;                          // number of virtual accelerator requested by Data Master
+  uint32_t virtAccRec;                          // number of virtual accelerator received from UNIPZ
+  uint32_t noBeam;                              // no beam flag requested by Data Master
 
   mprintf("\n");
   mprintf("dm-unipz: ***** firmware v %06d started from scratch *****\n", DMUNIPZ_FW_VERSION);
@@ -1301,8 +1313,10 @@ void main(void) {
   // init local variables
   i              = 0;
   nTransfer      = 0;                           
-  nInject        = 0;                           
-  virtAcc        = 0xff;                        
+  nInject        = 0;
+  noBeam         = 0;
+  virtAccReq     = 0xff;
+  virtAccRec     = 0xff;
   statusTransfer = DMUNIPZ_TRANS_UNKNOWN;       
   reqState       = DMUNIPZ_STATE_S0;
   actState       = DMUNIPZ_STATE_UNKNOWN;
@@ -1324,7 +1338,7 @@ void main(void) {
         else                             reqState = DMUNIPZ_STATE_IDLE;     // success: -> IDLE
         break;
       case DMUNIPZ_STATE_OPREADY :
-        status = doActionOperation(&statusTransfer, &virtAcc, &nTransfer, &nInject, status);
+        status = doActionOperation(&statusTransfer, &virtAccReq, &virtAccRec, &noBeam, &nTransfer, &nInject, status);
         if (status == DMUNIPZ_STATUS_DEVBUSERROR)    reqState = DMUNIPZ_STATE_ERROR;
         if (status == DMUNIPZ_STATUS_ERROR)          reqState = DMUNIPZ_STATE_ERROR;
         break;
@@ -1341,17 +1355,19 @@ void main(void) {
     // update shared memory
     if ((*pSharedStatus == DMUNIPZ_STATUS_OK)     && (status    != DMUNIPZ_STATUS_OK))     {nBadStatus++; *pSharedNBadStatus = nBadStatus;}
     if ((*pSharedState  == DMUNIPZ_STATE_OPREADY) && (actState  != DMUNIPZ_STATE_OPREADY)) {nBadState++;  *pSharedNBadState  = nBadState;}
-    *pSharedStatus    = status;
-    *pSharedState     = actState;
+    *pSharedStatus     = status;
+    *pSharedState      = actState;
     i++;
-    *pSharedNIterMain = i;
-    *pSharedStatTrans = statusTransfer;
-    *pSharedVirtAcc   = virtAcc;
-    *pSharedNTransfer = nTransfer;
-    *pSharedNInject   = nInject;
+    *pSharedNIterMain  = i;
+    *pSharedStatTrans  = statusTransfer;
+    *pSharedVirtAcc    = virtAccReq;
+    *pSharedVirtAccRec = virtAccRec;
+    *pSharedNoBeam     = noBeam;
+    *pSharedNTransfer  = nTransfer;
+    *pSharedNInject    = nInject;
 
     // update OLED display
-    updateOLED(statusTransfer, virtAcc, nTransfer, nInject, status, actState);
+    updateOLED(statusTransfer, virtAccReq, nTransfer, nInject, status, actState);
     
   } // while
 } // main
