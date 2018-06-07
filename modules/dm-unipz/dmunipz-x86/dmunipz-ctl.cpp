@@ -347,7 +347,7 @@ int readConfig(uint32_t *flexOffset, uint32_t *uniTimeout, uint32_t *tkTimeout, 
 
 void printTransfer(uint32_t transfers, uint32_t injections, uint32_t virtAccReq, uint32_t virtAccRec, uint32_t noBeam, uint32_t dtStart, uint32_t statTrans)
 {
-  printf("%08d, %02d, %03d, %05d, %04d, %01d, %d %d %d %d %d %d", transfers, injections, virtAccReq, virtAccRec, noBeam,  (uint32_t)((double)dtStart / 1000.0),
+  printf("%08d, %02d, %03d, %05d, %01d, %04d, %d %d %d %d %d %d", transfers, injections, virtAccReq, virtAccRec, noBeam,  (uint32_t)((double)dtStart / 1000.0),
          ((statTrans & DMUNIPZ_TRANS_REQTK    ) > 0),  
          ((statTrans & DMUNIPZ_TRANS_REQTKOK  ) > 0), 
          ((statTrans & DMUNIPZ_TRANS_RELTK    ) > 0),
