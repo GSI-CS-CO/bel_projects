@@ -27,7 +27,9 @@
 #define DMUNIPZ_SHARED_TRANSVIRTACC   0x48   // # requested virtual accelerator 0..F
 #define DMUNIPZ_SHARED_TRANSSTATUS    0x4C   // # status of transfer
 #define DMUNIPZ_SHARED_TRANSNOBEAM    0x50   // # UNILAC requested without beam
-#define DMUNIPZ_SHARED_RECVIRTACC     0x54   // # received virtual accelerator 0..F from UNIPZ
+#define DMUNIPZ_SHARED_RECVIRTACC     0x54   // # last 2 digits: received virtual accelerator 0..F from UNIPZ, leading digits: number of received MIL events
+#define DMUNIPZ_SHARED_DTSTART        0x58   // difference between actual time and flextime @ DM
+
 // 0x58-0x5F: reserved
 #define DMUNIPZ_SHARED_DATA_4EB_START 0x60    // start of shared memory for EB return values
 #define DMUNIPZ_SHARED_DATA_4EB_END   DMUNIPZ_SHARED_DATA_4EB_START + DMUNIPZ_SHARED_DATA_4EB_SIZE // end of shared memory area for EB return values

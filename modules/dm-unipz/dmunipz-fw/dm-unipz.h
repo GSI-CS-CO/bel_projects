@@ -6,7 +6,7 @@
 #define  DMUNIPZ_DEFAULT_TIMEOUT  100         // default timeout used by main loop [ms]
 #define  DMUNIPZ_UNITIMEOUT       1000        // timeout used when requesting things from UNILAC [ms]
 #define  DMUNIPZ_TKTIMEOUT        210         // timeout used when requesting TK from UNILAC [ms]
-#define  DMUNIPZ_QUERYTIMEOUT     1           // timeout for querying virt acc from MIL Piggy FIFO [us] 
+#define  DMUNIPZ_QUERYTIMEOUT     1           // timeout for querying virt acc from MIL Piggy FIFO [ms] 
                                               // Ludwig: we have 10ms time; here: use 5 ms to be on the safe side
 #define  DMUNIPZ_SAFETYMARGIN     1000000     // saftey margin required by DM+network, 1ms @ 2018
 #define  DMUNIPZ_OFFSETFLEX       1500000     // offset added to obtain TS "flex wait" [ns]

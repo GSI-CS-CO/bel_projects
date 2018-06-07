@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 25-April-2015
  ********************************************************************************************/
-#define DMUNIPZ_FW_VERSION 0x000109                                   // make this consistent with makefile
+#define DMUNIPZ_FW_VERSION 0x000110                                   // make this consistent with makefile
 
 /* standard includes */
 #include <stdio.h>
@@ -169,6 +169,7 @@ uint32_t *pSharedNInject;               // pointer to a "user defined" u32 regis
 uint32_t *pSharedVirtAcc;               // pointer to a "user defined" u32 register; here: publish # of virtual accelerator requested by Data Master
 uint32_t *pSharedVirtAccRec;            // pointer to a "user defined" u32 register; here: publish # of virtual accelerator received from UNIPZ
 uint32_t *pSharedNoBeam;                // pointer to a "user defined" u32 register; here: publish 'no beam' flag requested by Data Master
+uint32_t *pSharedDtStart;               // pointer to a "user defined" u32 register; here: publish  difference between actual time and flextime @ DM
 uint32_t *pSharedStatTrans;             // pointer to a "user defined" u32 register; here: publish status of ongoing transfer
 uint32_t *pSharedNBadStatus;            // pointer to a "user defined" u32 register; here: publish # of bad status (=error) incidents
 uint32_t *pSharedNBadState;             // pointer to a "user defined" u32 register; here: publish # of bad state (=FATAL, ERROR, UNKNOWN) incidents
@@ -577,6 +578,7 @@ void initSharedMem() // determine address and clear shared mem
   pSharedNInject     = (uint32_t *)(pShared + (DMUNIPZ_SHARED_INJECTN >> 2));
   pSharedVirtAcc     = (uint32_t *)(pShared + (DMUNIPZ_SHARED_TRANSVIRTACC >> 2));
   pSharedNoBeam      = (uint32_t *)(pShared + (DMUNIPZ_SHARED_TRANSNOBEAM >> 2));
+  pSharedDtStart     = (uint32_t *)(pShared + (DMUNIPZ_SHARED_DTSTART >> 2));
   pSharedVirtAccRec  = (uint32_t *)(pShared + (DMUNIPZ_SHARED_RECVIRTACC >> 2));
   pSharedStatTrans   = (uint32_t *)(pShared + (DMUNIPZ_SHARED_TRANSSTATUS >> 2));
   pSharedData4EB     = (uint32_t *)(pShared + (DMUNIPZ_SHARED_DATA_4EB_START >> 2));
@@ -679,8 +681,8 @@ uint32_t wait4ECAEvent(uint32_t msTimeout, uint32_t *virtAcc, uint32_t *dryRunFl
   uint32_t nextAction;          // describes what to do next
   uint64_t timeoutT;            // when to time out
 
-  *virtAcc    = 0xff;           // 0xff: virt acc is not yet set
-  *dryRunFlag = 0xff;           // 0xff: "dry run flag" not yet set
+  *virtAcc    = 20;             // 20: virt acc is not yet set
+  *dryRunFlag = 2;              //  2: "dry run flag" not yet set
   pECAFlag    = (uint32_t *)(pECAQ + (ECA_QUEUE_FLAGS_GET >> 2));   // address of ECA flag
   timeoutT    = getSysTime() + (uint64_t)msTimeout * 1000000;
 
@@ -923,7 +925,7 @@ uint32_t wait4MILEvent(uint16_t evtCode, uint16_t virtAccReq, uint32_t *virtAccR
   uint32_t virtAccTmp;         // temp value for virtAcc
 
   timeoutT    = getSysTime() + (uint64_t)msTimeout * 1000000;
-  *virtAccRec = 0;            // last two digis: virtacc; count other junk in FIFO by increasing by 100;
+  *virtAccRec = 0;             // last two digits: virtacc; count other junk in FIFO by increasing by 100;
 
   while(getSysTime() < timeoutT) {              // while not timed out...
     while (fifoNotemptyEvtMil(pMILPiggy)) {     // while fifo contains data
@@ -1187,7 +1189,7 @@ uint32_t changeState(uint32_t *actState, uint32_t *reqState, uint32_t actStatus)
 } //changeState
 
 
-uint32_t doActionOperation(uint32_t *statusTransfer, uint32_t *virtAccReq, uint32_t *virtAccRec, uint32_t *noBeam, uint32_t *nTransfer, uint32_t *nInject, uint32_t actStatus)
+uint32_t doActionOperation(uint32_t *statusTransfer, uint32_t *virtAccReq, uint32_t *virtAccRec, uint32_t *noBeam, uint32_t *dtStart, uint32_t *nTransfer, uint32_t *nInject, uint32_t actStatus)
 {
   uint32_t status, dmStatus, milStatus, gotEBTimeout;
   uint32_t nextAction;
@@ -1265,7 +1267,7 @@ uint32_t doActionOperation(uint32_t *statusTransfer, uint32_t *virtAccReq, uint3
       } // if MIL event was received
       else sendT = getSysTime() + (uint64_t)flexOffset;                            // did not receive MIL event: Plan B is to continue with actual time plus offset
 
-      if (sendT < getSysTime() + (uint64_t)(DMUNIPZ_SAFETYMARGIN)) {               // code to suffice my paranoia. It will result in beam loss, but we must prevent late messages at all cost
+      if (sendT < (getSysTime() + (uint64_t)DMUNIPZ_SAFETYMARGIN)) {               // code to suffice my paranoia. Meeting the condition will result in beam loss, but we must prevent late messages at all cost
         sendT  = getSysTime()   + (uint64_t)flexOffset;
         status = DMUNIPZ_STATUS_SAFETYMARGIN;
       } // if sendT
@@ -1273,6 +1275,9 @@ uint32_t doActionOperation(uint32_t *statusTransfer, uint32_t *virtAccReq, uint3
       dmPrepFlexWaitCmd(REQBEAMB, sendT);                                          // prepare command for "flex" waiting block
       dmChangeBlock(REQBEAMB);                                                     // modify "flex" waiting block within DM
       dmChangeBlock(REQBEAMA);                                                     // modify "slow" waiting block within DM
+
+      *dtStart = (uint32_t)(sendT - getSysTime());                                 // more code to suffice my paranoia
+
 
       releaseBeam();                                                               // release beam request at UNIPZ
       disableFilterEvtMil(pMILPiggy);                                              // disable filter @ MIL piggy to avoid accumulation of junk
@@ -1313,6 +1318,7 @@ void main(void) {
   uint32_t virtAccReq;                          // number of virtual accelerator requested by Data Master
   uint32_t virtAccRec;                          // number of virtual accelerator received from UNIPZ
   uint32_t noBeam;                              // no beam flag requested by Data Master
+  uint32_t dtStart;                             // difference between actual time and flextime @ DM
 
   mprintf("\n");
   mprintf("dm-unipz: ***** firmware v %06d started from scratch *****\n", DMUNIPZ_FW_VERSION);
@@ -1323,8 +1329,9 @@ void main(void) {
   nTransfer      = 0;                           
   nInject        = 0;
   noBeam         = 0;
-  virtAccReq     = 0xff;
-  virtAccRec     = 0xff;
+  dtStart        = 0;
+  virtAccReq     = 0x17;
+  virtAccRec     = 0x17;
   statusTransfer = DMUNIPZ_TRANS_UNKNOWN;       
   reqState       = DMUNIPZ_STATE_S0;
   actState       = DMUNIPZ_STATE_UNKNOWN;
@@ -1346,7 +1353,7 @@ void main(void) {
         else                             reqState = DMUNIPZ_STATE_IDLE;     // success: -> IDLE
         break;
        case DMUNIPZ_STATE_OPREADY :
-        status = doActionOperation(&statusTransfer, &virtAccReq, &virtAccRec, &noBeam, &nTransfer, &nInject, status);
+         status = doActionOperation(&statusTransfer, &virtAccReq, &virtAccRec, &noBeam, &dtStart, &nTransfer, &nInject, status);
         if (status == DMUNIPZ_STATUS_DEVBUSERROR)    reqState = DMUNIPZ_STATE_ERROR;
         if (status == DMUNIPZ_STATUS_ERROR)          reqState = DMUNIPZ_STATE_ERROR;
         break;
@@ -1371,6 +1378,7 @@ void main(void) {
     *pSharedVirtAcc    = virtAccReq;
     *pSharedVirtAccRec = virtAccRec;
     *pSharedNoBeam     = noBeam;
+    *pSharedDtStart    = dtStart; 
     *pSharedNTransfer  = nTransfer;
     *pSharedNInject    = nInject;
 
