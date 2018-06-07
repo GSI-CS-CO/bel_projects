@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 17-May-2017
  ********************************************************************************************/
-#define DMUNIPZ_X86_VERSION "0.1.8"
+#define DMUNIPZ_X86_VERSION "0.1.9"
 
 // standard includes 
 #include <unistd.h> // getopt

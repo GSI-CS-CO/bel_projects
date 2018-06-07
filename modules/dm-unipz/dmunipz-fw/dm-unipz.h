@@ -6,7 +6,7 @@
 #define  DMUNIPZ_DEFAULT_TIMEOUT  100         // default timeout used by main loop [ms]
 #define  DMUNIPZ_UNITIMEOUT       1000        // timeout used when requesting things from UNILAC [ms]
 #define  DMUNIPZ_TKTIMEOUT        210         // timeout used when requesting TK from UNILAC [ms]
-#define  DMUNIPZ_QUERYTIMEOUT     1000        // timeout for querying virt acc from MIL Piggy FIFO [us] 
+#define  DMUNIPZ_QUERYTIMEOUT     1           // timeout for querying virt acc from MIL Piggy FIFO [us] 
                                               // Ludwig: we have 10ms time; here: use 5 ms to be on the safe side
 #define  DMUNIPZ_SAFETYMARGIN     1000000     // saftey margin required by DM+network, 1ms @ 2018
 #define  DMUNIPZ_OFFSETFLEX       1500000     // offset added to obtain TS "flex wait" [ns]
@@ -33,7 +33,7 @@
 #define  DMUNIPZ_STATUS_NODM            15    // Data Master unreachable                                     
 #define  DMUNIPZ_STATUS_EBREADTIMEDOUT  16    // EB read via WR network timed out
 #define  DMUNIPZ_STATUS_WRONGVIRTACC    17    // received EVT_READY_TO_SIS with wrong virt acc number
-#define  DMUNIPZ_STATUS_SAFETYMARGIN    18    // safety margin for data master and timing network exceeded
+#define  DMUNIPZ_STATUS_SAFETYMARGIN    18    // violation of safety margin for data master and timing network
 
 // MASP 
 #define  DMUNIPZ_MASP_NOMEN      "U_DM_UNIPZ" // nomen for gateway

@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 25-April-2015
  ********************************************************************************************/
-#define DMUNIPZ_FW_VERSION 0x000108                                   // make this consistent with makefile
+#define DMUNIPZ_FW_VERSION 0x000109                                   // make this consistent with makefile
 
 /* standard includes */
 #include <stdio.h>
@@ -915,14 +915,14 @@ uint32_t configMILEvent(uint16_t evtCode) // configure SoC to receive events via
 } // configMILEvent
 
 
-uint32_t wait4MILEvent(uint16_t evtCode, uint16_t virtAccReq, uint32_t *virtAccRec, uint32_t usTimeout)  // wait for MIL event or timeout
+uint32_t wait4MILEvent(uint16_t evtCode, uint16_t virtAccReq, uint32_t *virtAccRec, uint32_t msTimeout)  // wait for MIL event or timeout
 {
   uint32_t evtDataRec;         // data of one MIL event
   uint32_t evtCodeRec;         // "event number"
   uint64_t timeoutT;           // when to time out
   uint32_t virtAccTmp;         // temp value for virtAcc
 
-  timeoutT    = getSysTime() + (uint64_t)usTimeout * 1000;
+  timeoutT    = getSysTime() + (uint64_t)msTimeout * 1000000;
   *virtAccRec = 0;            // last two digis: virtacc; count other junk in FIFO by increasing by 100;
 
   while(getSysTime() < timeoutT) {              // while not timed out...
@@ -1334,18 +1334,18 @@ void main(void) {
 
   init();                                                                   // initialize stuff for lm32
   initSharedMem();                                                          // initialize shared memory
-
+  
   while (1) {
     cmdHandler(&reqState, &statusTransfer);                                 // check for commands and possibly request state changes
     status = changeState(&actState, &reqState, status);                     // handle requested state changes
     switch(actState)                                                        // state specific do actions
       {
-      case DMUNIPZ_STATE_S0 :
+        case DMUNIPZ_STATE_S0 :
         status = doActionS0();                                              // important initialization that must succeed!
         if (status != DMUNIPZ_STATUS_OK) reqState = DMUNIPZ_STATE_FATAL;    // failed:  -> FATAL
         else                             reqState = DMUNIPZ_STATE_IDLE;     // success: -> IDLE
         break;
-      case DMUNIPZ_STATE_OPREADY :
+       case DMUNIPZ_STATE_OPREADY :
         status = doActionOperation(&statusTransfer, &virtAccReq, &virtAccRec, &noBeam, &nTransfer, &nInject, status);
         if (status == DMUNIPZ_STATUS_DEVBUSERROR)    reqState = DMUNIPZ_STATE_ERROR;
         if (status == DMUNIPZ_STATUS_ERROR)          reqState = DMUNIPZ_STATE_ERROR;
@@ -1360,7 +1360,7 @@ void main(void) {
         for (j = 0; j < (DMUNIPZ_DEFAULT_TIMEOUT * DMUNIPZ_MS_ASMNOP); j++) { asm("nop"); }
       } // switch 
 
-    // update shared memory
+      // update shared memory */
     if ((*pSharedStatus == DMUNIPZ_STATUS_OK)     && (status    != DMUNIPZ_STATUS_OK))     {nBadStatus++; *pSharedNBadStatus = nBadStatus;}
     if ((*pSharedState  == DMUNIPZ_STATE_OPREADY) && (actState  != DMUNIPZ_STATE_OPREADY)) {nBadState++;  *pSharedNBadState  = nBadState;}
     *pSharedStatus     = status;
