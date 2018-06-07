@@ -3,7 +3,7 @@
  *
  *  created : 2017
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 06-Jun-2018
+ *  version : 07-Jun-2018
  *
  *  lm32 program for gateway between UNILAC Pulszentrale and FAIR-style Data Master
  * 
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 25-April-2015
  ********************************************************************************************/
-#define DMUNIPZ_FW_VERSION 0x000107                                   // make this consistent with makefile
+#define DMUNIPZ_FW_VERSION 0x000108                                   // make this consistent with makefile
 
 /* standard includes */
 #include <stdio.h>
@@ -78,7 +78,9 @@ const char* dmunipz_status_text(uint32_t code) {
   case DMUNIPZ_STATUS_NOIP             : return "bad DHCP  ";
   case DMUNIPZ_STATUS_WRONGIP          : return "bad IP    ";
   case DMUNIPZ_STATUS_NODM             : return "no DM     ";                     
-  case DMUNIPZ_STATUS_EBREADTIMEDOUT   : return "EB timeout";                     
+  case DMUNIPZ_STATUS_EBREADTIMEDOUT   : return "EB timeout";
+  case DMUNIPZ_STATUS_WRONGVIRTACC     : return "bad vAcc  ";
+  case DMUNIPZ_STATUS_SAFETYMARGIN     : return "margin exc";
   default                              : return "undef err ";
   }
 }
@@ -929,12 +931,13 @@ uint32_t wait4MILEvent(uint16_t evtCode, uint16_t virtAccReq, uint32_t *virtAccR
       evtCodeRec  = evtDataRec & 0x000000ff;    // extract event code
       virtAccTmp  = (evtDataRec >> 8) & 0x0f;   // extract virtual accelerator (assuming event message)
 
+      *virtAccRec += 100;                       // increase by 100 for each FIFO entry
+      
       if (evtCodeRec == evtCode) {
         *virtAccRec += virtAccTmp;
         if (virtAccTmp == virtAccReq) return DMUNIPZ_STATUS_OK;
         else                          return DMUNIPZ_STATUS_WRONGVIRTACC;
       } // if evtCode
-      else  *virtAccRec += 100;                 // increase by 100 for each junk event
 
       // chck mprintf("dm-unipz: virtAcc %03d, evtCode %03d\n", virtAcc, evtCodeRec);
     } // while fifo contains data
@@ -1262,9 +1265,9 @@ uint32_t doActionOperation(uint32_t *statusTransfer, uint32_t *virtAccReq, uint3
       } // if MIL event was received
       else sendT = getSysTime() + (uint64_t)flexOffset;                            // did not receive MIL event: Plan B is to continue with actual time plus offset
 
-      if (sendT < getSysTime() + (uint64_t)(flexOffset - DMUNIPZ_QUERYTIMEOUT*1000)) {  // this is a bit paranoid maybe...
-        sendT  = getSysTime() + (uint64_t)flexOffset;
-        status = DMUNIPZ_STATUS_LONGPROCESSING;
+      if (sendT < getSysTime() + (uint64_t)(DMUNIPZ_SAFETYMARGIN)) {               // code to suffice my paranoia. It will result in beam loss, but we must prevent late messages at all cost
+        sendT  = getSysTime()   + (uint64_t)flexOffset;
+        status = DMUNIPZ_STATUS_SAFETYMARGIN;
       } // if sendT
 
       dmPrepFlexWaitCmd(REQBEAMB, sendT);                                          // prepare command for "flex" waiting block
