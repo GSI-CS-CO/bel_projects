@@ -3,7 +3,7 @@
  *
  *  created : 2017
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 06-June-2018
+ *  version : 07-June-2018
  *
  * Command-line interface for dmunipz
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 17-May-2017
  ********************************************************************************************/
-#define DMUNIPZ_X86_VERSION "0.1.7"
+#define DMUNIPZ_X86_VERSION "0.1.8"
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -155,7 +155,7 @@ const char* dmunipz_status_text(uint32_t code) {
   case DMUNIPZ_STATUS_NODM             : return "Data Master unreachable";                     
   case DMUNIPZ_STATUS_EBREADTIMEDOUT   : return "EB read via WR network timed out";
   case DMUNIPZ_STATUS_WRONGVIRTACC     : return "mismatching virtual accelerator for EVT_READY_TO_SIS from UNIPZ";
-  case DMUNIPZ_STATUS_LONGPROCESSING   : return "processing after receiving the EVT_READY2SIS took too long";
+  case DMUNIPZ_STATUS_SAFETYMARGIN     : return "violation of safety margin for data master and timing network";
   default                              : return "dm-unipz: undefined error code";
   }
 }
@@ -224,20 +224,21 @@ static void help(void) {
   fprintf(stderr, "\n");
   fprintf(stderr, "When using option '-s<n>', the following information is displayed\n");
   fprintf(stderr, "dm-unipz: transfer - 00000074, 01, 002, 00002, 0, 1 1 1 1 1 1, OpReady   (      ), OK (      )\n");
-  fprintf(stderr, "                            |   |    |      |  |  | | | | | |  |          |        |   | \n");
-  fprintf(stderr, "                            |   |    |      |  |  | | | | | |  |          |        |    - # of 'bad status' incidents\n");
-  fprintf(stderr, "                            |   |    |      |  |  | | | | | |  |          |         - status\n");
-  fprintf(stderr, "                            |   |    |      |  |  | | | | | |  |          - # of '!OpReady' incidents\n");
-  fprintf(stderr, "                            |   |    |      |  |  | | | | | |   - state\n");
-  fprintf(stderr, "                            |   |    |      |  |  | | | | | - beam (request) released\n");
-  fprintf(stderr, "                            |   |    |      |  |  | | | | - beam request succeeded\n");
-  fprintf(stderr, "                            |   |    |      |  |  | | | - beam requested\n");
-  fprintf(stderr, "                            |   |    |      |  |  | | - TK (request) released -> transfer completed\n");
-  fprintf(stderr, "                            |   |    |      |  |  | - TK request succeeded\n");
-  fprintf(stderr, "                            |   |    |      |  |   - TK requested\n");
-  fprintf(stderr, "                            |   |    |      |   - 'no beam' flag\n");
-  fprintf(stderr, "                            |   |    |     - last 2 digits: number of virtual accelerator received\n");
-  fprintf(stderr, "                            |   |    - number of virtual accelerator requested\n");
+  fprintf(stderr, "                            |   |    |    | |  |  | | | | | |  |          |        |   | \n");
+  fprintf(stderr, "                            |   |    |    | |  |  | | | | | |  |          |        |    - # of 'bad status' incidents\n");
+  fprintf(stderr, "                            |   |    |    | |  |  | | | | | |  |          |         - status\n");
+  fprintf(stderr, "                            |   |    |    | |  |  | | | | | |  |          - # of '!OpReady' incidents\n");
+  fprintf(stderr, "                            |   |    |    | |  |  | | | | | |   - state\n");
+  fprintf(stderr, "                            |   |    |    | |  |  | | | | | - beam (request) released\n");
+  fprintf(stderr, "                            |   |    |    | |  |  | | | | - beam request succeeded\n");
+  fprintf(stderr, "                            |   |    |    | |  |  | | | - beam requested\n");
+  fprintf(stderr, "                            |   |    |    | |  |  | | - TK (request) released -> transfer completed\n");
+  fprintf(stderr, "                            |   |    |    | |  |  | - TK request succeeded\n");
+  fprintf(stderr, "                            |   |    |    | |  |   - TK requested\n");
+  fprintf(stderr, "                            |   |    |    | |   - 'no beam' flag\n");
+  fprintf(stderr, "                            |   |    |    |  -number of virtual accelerator received\n");
+  fprintf(stderr, "                            |   |    |     - number of MIL events read from FIFO\n");
+  fprintf(stderr, "                            |   |     - number of virtual accelerator requested\n");
   fprintf(stderr, "                            |    - number of injections in current transfer\n");
   fprintf(stderr, "                            - number of transfers\n");
   fprintf(stderr, "Report software bugs to <d.beck@gsi.de>\n");
