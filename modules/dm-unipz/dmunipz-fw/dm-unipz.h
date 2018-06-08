@@ -9,6 +9,7 @@
 #define  DMUNIPZ_QUERYTIMEOUT     1           // timeout for querying virt acc from MIL Piggy FIFO [ms] 
                                               // Ludwig: we have 10ms time; here: use 5 ms to be on the safe side
 #define  DMUNIPZ_SAFETYMARGIN     1000000     // saftey margin required by DM+network, 1ms @ 2018
+#define  DMUNIPZ_MATCHWINDOW       100000     // TS from TLU->ECA matches event from FIFO, if it is within window (sysTime-MATCHWINDOW) <--> sysTime
 #define  DMUNIPZ_OFFSETFLEX       1500000     // offset added to obtain TS "flex wait" [ns]
 #define  DMUNIPZ_EVT_READY2SIS    0x1e        // event number EVT_READY_TO_SIS (HEX)
 #define  DMUNIPZ_ECA_ADDRESS      0x7ffffff0  // address of ECA input
@@ -34,6 +35,8 @@
 #define  DMUNIPZ_STATUS_EBREADTIMEDOUT  16    // EB read via WR network timed out
 #define  DMUNIPZ_STATUS_WRONGVIRTACC    17    // received EVT_READY_TO_SIS with wrong virt acc number
 #define  DMUNIPZ_STATUS_SAFETYMARGIN    18    // violation of safety margin for data master and timing network
+#define  DMUNIPZ_STATUS_NOTIMESTAMP     19    // received EVT_READY_TO_SIS in MIL FIFO but not via TLU -> ECA
+#define  DMUNIPZ_STATUS_BADTIMESTAMP    20    // TS from TLU->ECA does not coincide with MIL Event from FIFO
 
 // MASP 
 #define  DMUNIPZ_MASP_NOMEN      "U_DM_UNIPZ" // nomen for gateway

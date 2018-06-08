@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 25-April-2015
  ********************************************************************************************/
-#define DMUNIPZ_FW_VERSION 0x000111                                   // make this consistent with makefile
+#define DMUNIPZ_FW_VERSION 0x000200                                   // make this consistent with makefile
 
 /* standard includes */
 #include <stdio.h>
@@ -81,6 +81,8 @@ const char* dmunipz_status_text(uint32_t code) {
   case DMUNIPZ_STATUS_EBREADTIMEDOUT   : return "EB timeout";
   case DMUNIPZ_STATUS_WRONGVIRTACC     : return "bad vAcc  ";
   case DMUNIPZ_STATUS_SAFETYMARGIN     : return "margin exc";
+  case DMUNIPZ_STATUS_NOTIMESTAMP      : return "no TLU TS ";
+  case DMUNIPZ_STATUS_BADTIMESTAMP     : return "bad TLU TS";
   default                              : return "undef err ";
   }
 }
@@ -946,8 +948,8 @@ uint32_t wait4MILEvent(uint16_t evtCode, uint16_t virtAccReq, uint32_t *virtAccR
     asm("nop");                                 // wait a bit...
   } // while not timed out
 
-  // up to here: no matching evtCode AND matching virtAcc 
-
+  // up to here: no matching evtCode AND matching virtAcc
+  *virtAccRec += 42;                            // mark with illegal virtAcc number
   return DMUNIPZ_STATUS_TIMEDOUT;  
 } //wait4MILEvent
 
@@ -1193,7 +1195,7 @@ uint32_t doActionOperation(uint32_t *statusTransfer, uint32_t *virtAccReq, uint3
 {
   uint32_t status, dmStatus, milStatus, gotEBTimeout;
   uint32_t nextAction;
-  uint32_t milEvtRecFlag;
+  uint32_t evtValidFlag;
   uint32_t virtAccTmp;
   uint32_t dryRunFlag; uint32_t dummy1, dummy2; 
   uint64_t timestamp;
@@ -1247,21 +1249,40 @@ uint32_t doActionOperation(uint32_t *statusTransfer, uint32_t *virtAccReq, uint3
       clearFifoEvtMil(pMILPiggy);                                                  // get rid of junk in FIFO @ MIL piggy
       
       requestBeam(uniTimeout);                                                     // request beam from UNIPZ, note that we can't check for REQ_NOT_OK from here
-      *virtAccRec   = 42;                                                                                              // set to 'illegal' value
-      milEvtRecFlag = 0;                                                                                               // initialize flag 
-      if (wait4ECAEvent(uniTimeout, &dummy1, &dummy2, &timestamp) == DMUNIPZ_ECADO_READY2SIS) {                        // received EVT_READY_TO_SIS via TLU -> ECA
+
+      // ----->>>> wait for EVT_READY_TO_SIS
+      /* old implementation: Problem: FIFO size is 255, but there are 6 MIL Events / 20ms background (UTC, EVT_CMD) ==>  FIFO will run over after < 850ms
+      milEvtRecFlag = 0;                                                                                                 // initialize flag 
+      if (wait4ECAEvent(uniTimeout, &dummy1, &dummy2, &timestamp) == DMUNIPZ_ECADO_READY2SIS) {                          // received EVT_READY_TO_SIS via TLU -> ECA
         if ((milStatus = wait4MILEvent(DMUNIPZ_EVT_READY2SIS, virtAccTmp, virtAccRec, DMUNIPZ_QUERYTIMEOUT)) == DMUNIPZ_STATUS_OK) { // query/check event number and virtAcc in MIL FIFO
-          milEvtRecFlag = 1;                                                                                           // set flag
+          milEvtRecFlag = 1;                                                                                             // set flag
           status        = DMUNIPZ_STATUS_OK;
         } // if wait4MILEvt
-        else status = milStatus;                                                                                       // received EVT_READY_TO_SIS, but virtAcc does not fit
+        else status = milStatus;                                                                                         // received EVT_READY_TO_SIS, but virtAcc does not fit
       } // if wait4ECAEvt
-      else {                                                                                                           // did not receive EVT_READY_TO_SIS via TLU -> ECA
-        if (checkClearReqNotOk(uniTimeout) != DMUNIPZ_STATUS_OK) status = DMUNIPZ_STATUS_REQBEAMFAILED;                // UNIPZ says: beam request was not ok
-        else                                                     status = DMUNIPZ_STATUS_REQBEAMTIMEDOUT;              // UNIPZ says: beam request was ok
+      else {                                                                                                             // did not receive EVT_READY_TO_SIS via TLU -> ECA
+        if (checkClearReqNotOk(uniTimeout) != DMUNIPZ_STATUS_OK) status = DMUNIPZ_STATUS_REQBEAMFAILED;                  // UNIPZ says: beam request was not ok
+        else                                                     status = DMUNIPZ_STATUS_REQBEAMTIMEDOUT;                // UNIPZ says: beam request was ok
+        } // else wait4ECAEvent */
+
+      evtValidFlag = 0;                                                                                                  // flag: valid MIL event from UNIPZ received 
+      if ((milStatus = wait4MILEvent(DMUNIPZ_EVT_READY2SIS, virtAccTmp, virtAccRec, uniTimeout)) == DMUNIPZ_STATUS_OK) { // wait for event in MIL FIFO
+        if (wait4ECAEvent(DMUNIPZ_QUERYTIMEOUT, &dummy1, &dummy2, &timestamp) == DMUNIPZ_ECADO_READY2SIS) {              // check for corresponding TS of EVT_READY_TO_SIS via TLU -> ECA
+          if ((getSysTime() - timestamp) < DMUNIPZ_MATCHWINDOW) {                                                        // check TS from TLU: only accept reasonably recent TS
+            evtValidFlag = 1;                                                                                            // set flag for successful event reception
+            status        = DMUNIPZ_STATUS_OK;
+          } // if matchwindow
+          else  status = DMUNIPZ_STATUS_BADTIMESTAMP;                                                                    // error: timestamp too old
+        } // if wait4ECAEvt
+        else status = DMUNIPZ_STATUS_NOTIMESTAMP;                                                                        // error: eceived EVT_READY_TO_SIS, but no timestamp via TLU -> ECA
+      } // if wait4MILEvt
+      else {                                                                                                             // did not receive EVT_READY_TO_SIS in MIL FIFO
+        status = milStatus;
+        if (status == DMUNIPZ_STATUS_TIMEDOUT)                   status = DMUNIPZ_STATUS_REQBEAMTIMEDOUT;                // error: timeout
+        if (checkClearReqNotOk(uniTimeout) != DMUNIPZ_STATUS_OK) status = DMUNIPZ_STATUS_REQBEAMFAILED;                  // error reported by UNIPZ: beam request was not ok
       } // else wait4ECAEvent
 
-      if (milEvtRecFlag) {                                                                  
+      if (evtValidFlag) {                                                                  
         sendT    = timestamp    + (uint64_t)flexOffset;                            // add offset to obtain deadline for "flex" waiting block
         pulseLemo2();                                                              // blink LED and TTL out of MIL piggy for hardware debugging with scope
       } // if MIL event was received
@@ -1276,8 +1297,7 @@ uint32_t doActionOperation(uint32_t *statusTransfer, uint32_t *virtAccReq, uint3
       dmChangeBlock(REQBEAMB);                                                     // modify "flex" waiting block within DM
       dmChangeBlock(REQBEAMA);                                                     // modify "slow" waiting block within DM
 
-      *dtStart = (uint32_t)(sendT - getSysTime());                                 // more code to suffice my paranoia
-
+      *dtStart = (uint32_t)(sendT - getSysTime());                                 // more code to suffice my paranoia: after executing all the code above, I want to know how much of flexoffset is left.
 
       releaseBeam();                                                               // release beam request at UNIPZ
       disableFilterEvtMil(pMILPiggy);                                              // disable filter @ MIL piggy to avoid accumulation of junk
