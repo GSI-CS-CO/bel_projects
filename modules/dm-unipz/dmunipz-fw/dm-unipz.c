@@ -3,7 +3,7 @@
  *
  *  created : 2017
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 07-Jun-2018
+ *  version : 08-Jun-2018
  *
  *  lm32 program for gateway between UNILAC Pulszentrale and FAIR-style Data Master
  * 
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 25-April-2015
  ********************************************************************************************/
-#define DMUNIPZ_FW_VERSION 0x000110                                   // make this consistent with makefile
+#define DMUNIPZ_FW_VERSION 0x000111                                   // make this consistent with makefile
 
 /* standard includes */
 #include <stdio.h>
@@ -169,7 +169,7 @@ uint32_t *pSharedNInject;               // pointer to a "user defined" u32 regis
 uint32_t *pSharedVirtAcc;               // pointer to a "user defined" u32 register; here: publish # of virtual accelerator requested by Data Master
 uint32_t *pSharedVirtAccRec;            // pointer to a "user defined" u32 register; here: publish # of virtual accelerator received from UNIPZ
 uint32_t *pSharedNoBeam;                // pointer to a "user defined" u32 register; here: publish 'no beam' flag requested by Data Master
-uint32_t *pSharedDtStart;               // pointer to a "user defined" u32 register; here: publish  difference between actual time and flextime @ DM
+uint32_t *pSharedDtStart;               // pointer to a "user defined" u32 register; here: publish difference between actual time and flextime @ DM
 uint32_t *pSharedStatTrans;             // pointer to a "user defined" u32 register; here: publish status of ongoing transfer
 uint32_t *pSharedNBadStatus;            // pointer to a "user defined" u32 register; here: publish # of bad status (=error) incidents
 uint32_t *pSharedNBadState;             // pointer to a "user defined" u32 register; here: publish # of bad state (=FATAL, ERROR, UNKNOWN) incidents
@@ -848,7 +848,7 @@ uint32_t requestTK(uint32_t msTimeout, uint32_t virtAcc, uint32_t dryRunFlag)
     if ((status = checkClearReqNotOk(msTimeout)) == DMUNIPZ_STATUS_REQNOTOK) return DMUNIPZ_STATUS_REQTKFAILED;                       // check for 'request not ok'
   } // while not timed out
 
-  return DMUNIPZ_STATUS_TIMEDOUT;
+  return DMUNIPZ_STATUS_REQTKTIMEOUT;
 } // requestTK
 
 
