@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 17-May-2017
  ********************************************************************************************/
-#define DMUNIPZ_X86_VERSION "0.1.11"
+#define DMUNIPZ_X86_VERSION "0.2.00"
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -157,6 +157,8 @@ const char* dmunipz_status_text(uint32_t code) {
   case DMUNIPZ_STATUS_EBREADTIMEDOUT   : return "EB read via WR network timed out";
   case DMUNIPZ_STATUS_WRONGVIRTACC     : return "mismatching virtual accelerator for EVT_READY_TO_SIS from UNIPZ";
   case DMUNIPZ_STATUS_SAFETYMARGIN     : return "violation of safety margin for data master and timing network";
+  case DMUNIPZ_STATUS_NOTIMESTAMP      : return "received EVT_READY_TO_SIS in MIL FIFO but no TS via TLU -> ECA";
+  case DMUNIPZ_STATUS_BADTIMESTAMP     : return "TS from TLU->ECA does not coincide with MIL Event from FIFO";
   default                              : return "dm-unipz: undefined error code";
   }
 }
@@ -236,7 +238,7 @@ static void help(void) {
   fprintf(stderr, "                            |   |    |    | |  |     | | | - TK (request) released -> transfer completed\n");
   fprintf(stderr, "                            |   |    |    | |  |     | | - TK request succeeded\n");
   fprintf(stderr, "                            |   |    |    | |  |     |  - TK requested\n");
-  fprintf(stderr, "                            |   |    |    | |         - difference between actual time and flextime @ DM [us], min value is 1000us @ 2018'\n");
+  fprintf(stderr, "                            |   |    |    | |  |      - difference between actual time and flextime @ DM [us], min value is '1000us'\n");
   fprintf(stderr, "                            |   |    |    | |   - 'no beam' flag\n");
   fprintf(stderr, "                            |   |    |    |  -number of virtual accelerator received\n");
   fprintf(stderr, "                            |   |    |     - number of MIL events read from FIFO\n");
