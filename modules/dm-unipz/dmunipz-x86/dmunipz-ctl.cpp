@@ -238,10 +238,10 @@ static void help(void) {
   fprintf(stderr, "                            |   |    |    | |  |     | | | - TK (request) released -> transfer completed\n");
   fprintf(stderr, "                            |   |    |    | |  |     | | - TK request succeeded\n");
   fprintf(stderr, "                            |   |    |    | |  |     |  - TK requested\n");
-  fprintf(stderr, "                            |   |    |    | |  |      - difference between actual time and flextime @ DM [us], min value is '1000us'\n");
+  fprintf(stderr, "                            |   |    |    | |  |      - remaining time budget for data master [us] (min 1000us)\n");
   fprintf(stderr, "                            |   |    |    | |   - 'no beam' flag\n");
-  fprintf(stderr, "                            |   |    |    |  -number of virtual accelerator received\n");
-  fprintf(stderr, "                            |   |    |     - number of MIL events read from FIFO\n");
+  fprintf(stderr, "                            |   |    |    |  -number of virtual accelerator received (last 2 digits)\n");
+  fprintf(stderr, "                            |   |    |     - number of MIL events read from FIFO (leading 3 digits)\n");
   fprintf(stderr, "                            |   |     - number of virtual accelerator requested\n");
   fprintf(stderr, "                            |    - number of injections in current transfer\n");
   fprintf(stderr, "                            - number of transfers\n");
