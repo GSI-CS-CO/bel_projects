@@ -3,7 +3,7 @@
  *
  *  created : 2017
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 07-June-2018
+ *  version : 08-June-2018
  *
  * Command-line interface for dmunipz
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 17-May-2017
  ********************************************************************************************/
-#define DMUNIPZ_X86_VERSION "0.1.10"
+#define DMUNIPZ_X86_VERSION "0.1.11"
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -392,25 +392,25 @@ int main(int argc, char** argv) {
   uint32_t statTrans; 
   uint32_t version;
 
-  uint32_t actTransfers;   // actual number of transfers
-  uint32_t actState;       // actual state of gateway
-  uint32_t actStatus;      // actual status of gateway
-  // chk uint32_t actStatTrans;   // actual status of ongoing transfer
-  uint32_t sleepTime;      // time to sleep [us]
-  uint32_t printFlag;      // flag for printing
+  uint32_t actTransfers;                       // actual number of transfers
+  uint32_t actState = DMUNIPZ_STATE_UNKNOWN;   // actual state of gateway
+  uint32_t actStatus;                          // actual status of gateway
+  // chk uint32_t actStatTrans;                // actual status of ongoing transfer
+  uint32_t sleepTime;                          // time to sleep [us]
+  uint32_t printFlag;                          // flag for printing
 
-  uint64_t srcMac;         // mac for config of EB master (this gateway)
-  uint64_t dstMac;         // mac for config of EB master (Data Master)
-  uint32_t srcIp;          // ip for config of EB master (this gateway)
-  uint32_t dstIp;          // ip for config of EB master (Data Master)
-  uint32_t macHi;          // high 32bit of mac
-  uint32_t macLo;          // low 32 bit of mac
-  uint32_t ip;             // ip for config of EB master
-  uint32_t flexOffset;     // offset value added to MIL EVent timestamp
-  uint32_t uniTimeout;     // timeout value for UNILAC
-  uint32_t tkTimeout;      // timeout value for TK (via UNILAC)
+  uint64_t srcMac;                             // mac for config of EB master (this gateway)
+  uint64_t dstMac;                             // mac for config of EB master (Data Master)
+  uint32_t srcIp;                              // ip for config of EB master (this gateway)
+  uint32_t dstIp;                              // ip for config of EB master (Data Master)
+  uint32_t macHi;                              // high 32bit of mac
+  uint32_t macLo;                              // low 32 bit of mac
+  uint32_t ip;                                 // ip for config of EB master
+  uint32_t flexOffset;                         // offset value added to MIL EVent timestamp
+  uint32_t uniTimeout;                         // timeout value for UNILAC
+  uint32_t tkTimeout;                          // timeout value for TK (via UNILAC)
   
-
+    
   program = argv[0];    
 
   while ((opt = getopt(argc, argv, "s:ceih")) != -1) {
@@ -527,11 +527,31 @@ int main(int argc, char** argv) {
   } // if getInfo
 
   if (command) {
-    if (!strcasecmp(command, "configure")) eb_device_write(device, dmunipz_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)DMUNIPZ_CMD_CONFIGURE, 0, eb_block);
-    if (!strcasecmp(command, "startop"))   eb_device_write(device, dmunipz_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)DMUNIPZ_CMD_STARTOP  , 0, eb_block);
-    if (!strcasecmp(command, "stopop"))    eb_device_write(device, dmunipz_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)DMUNIPZ_CMD_STOPOP   , 0, eb_block);
-    if (!strcasecmp(command, "recover"))   eb_device_write(device, dmunipz_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)DMUNIPZ_CMD_RECOVER  , 0, eb_block);
-    if (!strcasecmp(command, "idle"))      eb_device_write(device, dmunipz_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)DMUNIPZ_CMD_IDLE     , 0, eb_block);
+    // state required to give proper warnings
+    eb_device_read(device, dmunipz_state, EB_BIG_ENDIAN|EB_DATA32, &data, 0, eb_block);
+    state = data;
+
+    if (!strcasecmp(command, "configure")) {
+      eb_device_write(device, dmunipz_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)DMUNIPZ_CMD_CONFIGURE, 0, eb_block);
+      if ((state != DMUNIPZ_STATE_CONFIGURED) && (state != DMUNIPZ_STATE_IDLE)) printf("dm-unipz: WARNING command has not effect (not in state CONFIGURED or IDLE)\n");
+    } // "configure"
+    if (!strcasecmp(command, "startop")) {
+      eb_device_write(device, dmunipz_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)DMUNIPZ_CMD_STARTOP  , 0, eb_block);
+      if (state != DMUNIPZ_STATE_CONFIGURED) printf("dm-unipz: WARNING command has not effect (not in state CONFIGURED)\n");
+    } // "startop"
+    if (!strcasecmp(command, "stopop")) {
+      eb_device_write(device, dmunipz_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)DMUNIPZ_CMD_STOPOP   , 0, eb_block);
+      if (state != DMUNIPZ_STATE_OPREADY) printf("dm-unipz: WARNING command has not effect (not in state OPREADY)\n");
+    } // "startop"
+    if (!strcasecmp(command, "recover")) {
+      eb_device_write(device, dmunipz_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)DMUNIPZ_CMD_RECOVER  , 0, eb_block);
+      if (state != DMUNIPZ_STATE_ERROR) printf("dm-unipz: WARNING command has not effect (not in state ERROR)\n");
+    } // "recover"
+    if (!strcasecmp(command, "idle")) {
+      eb_device_write(device, dmunipz_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)DMUNIPZ_CMD_IDLE     , 0, eb_block);
+      if (state != DMUNIPZ_STATE_CONFIGURED) printf("dm-unipz: WARNING command has not effect (not in state CONFIGURED)\n");
+    } // "idle"
+    
     if (!strcasecmp(command, "ebmlocal")) {
       if (optind+3  != argc) {printf("dm-unipz: expecting exactly two arguments: ebmlocal <mac> <ip>\n"); return 1;} 
 
@@ -547,6 +567,8 @@ int main(int argc, char** argv) {
       eb_device_write(device, dmunipz_srcMacHi, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)macHi, 0, eb_block); // todo: all writes in one cycle
       eb_device_write(device, dmunipz_srcMacLo, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)macLo, 0, eb_block);
       eb_device_write(device, dmunipz_srcIp,    EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)ip , 0, eb_block);
+
+      printf("dm-unipz: setting will become active upon the next 'configure' command\n");
     } // "ebmlocal"
     if (!strcasecmp(command, "ebmdm")) {
       if (optind+3  != argc) {printf("dm-unipz: expecting exactly two arguments: ebmdm <mac> <ip>\n"); return 1;} 
@@ -563,6 +585,7 @@ int main(int argc, char** argv) {
       eb_device_write(device, dmunipz_dstMacHi, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)macHi, 0, eb_block); // todo: all writes in one cycle
       eb_device_write(device, dmunipz_dstMacLo, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)macLo, 0, eb_block);
       eb_device_write(device, dmunipz_dstIp,    EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)ip , 0, eb_block);
+      printf("dm-unipz: setting will become active upon the next 'configure' command\n");
     } // "ebmdm"
     if (!strcasecmp(command, "flex")) {
       if (optind+2  != argc) {printf("dm-unipz: expecting exactly one argument: flex <offset>\n"); return 1;} 
@@ -571,6 +594,7 @@ int main(int argc, char** argv) {
       if (*tail != 0)        {printf("dm-unipz: invalid offset -- %s\n", argv[optind+2]); return 1;} 
 
       eb_device_write(device, dmunipz_flexOffset, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)flexOffset, 0, eb_block);
+      printf("dm-unipz: setting will become active upon the next 'configure' command\n");
     } // "flex"
     if (!strcasecmp(command, "uni")) {
       if (optind+2  != argc) {printf("dm-unipz: expecting exactly one argument: uni <timeout>\n"); return 1;} 
@@ -579,6 +603,7 @@ int main(int argc, char** argv) {
       if (*tail != 0)        {printf("dm-unipz: invalid timeout -- %s\n", argv[optind+2]); return 1;} 
 
       eb_device_write(device, dmunipz_uniTimeout, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)uniTimeout, 0, eb_block);
+      printf("dm-unipz: setting will become active upon the next 'configure' command\n");
     } // "uni"
     if (!strcasecmp(command, "tk")) {
       if (optind+2  != argc) {printf("dm-unipz: expecting exactly one argument: tk <timeout>\n"); return 1;} 
@@ -587,6 +612,7 @@ int main(int argc, char** argv) {
       if (*tail != 0)        {printf("dm-unipz: invalid timeout -- %s\n", argv[optind+2]); return 1;} 
 
       eb_device_write(device, dmunipz_tkTimeout, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)tkTimeout, 0, eb_block);
+      printf("dm-unipz: setting will become active upon the next 'configure' command\n");
     } // "tk"
     if (!strcasecmp(command, "reltk"))   eb_device_write(device, dmunipz_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)DMUNIPZ_CMD_RELEASETK,   0, eb_block);
     if (!strcasecmp(command, "relbeam")) eb_device_write(device, dmunipz_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)DMUNIPZ_CMD_RELEASEBEAM, 0, eb_block);
