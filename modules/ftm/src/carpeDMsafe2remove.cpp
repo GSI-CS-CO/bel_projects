@@ -251,15 +251,16 @@ bool CarpeDM::isSafeToRemove(std::set<std::string> patterns, std::string& report
       report += "//" + covName + " p " + std::to_string(y->prio) + " s " + std::to_string(y->slot) + " chk 0x" + std::to_string(y->chkSum) + "\n";
     }
     report += covenantReport;
-    //}
+    
   }
-
-  //sLog << report << std::endl;
-
+  /*
+  sLog << report << std::endl;
+  
   for (auto& it : blacklist)  {
-    //sLog << gEq[it].name << " covP " << isCovenantPending(gEq[it].name) << std::endl;
+    sLog << gEq[it].name << " covP " << isCovenantPending(gEq[it].name) << std::endl;
   }
-
+  */
+  
   if (isSafe != isSafe2ndOpinion) {
     //writeTextFile("./debug.dot", report);
     throw std::runtime_error(isSafeToRemove::exIntro + " ERROR in algorithm detected: safe2remove says " + (isSafe ? "safe" : "unsafe") + ", crawler says " + (isSafe2ndOpinion ? "safe" : "unsafe") + "\n");

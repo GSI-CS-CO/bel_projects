@@ -100,7 +100,8 @@ namespace coverage {
     BOOST_FOREACH( vertex_t v, vertices(g) ) {
       //Check Alloctable
       try {
-        auto x = at.lookupVertex(v);
+        auto dummy = at.lookupVertex(v);
+        (void) dummy; struct dummy; // suppress gcc warning about unused variable
       } catch (...) {allocIsOk = false; allocReport += sMiss + sFirst + g[v].name + "\n";}
     }
     BOOST_FOREACH( vertex_t v, vertices(g) ) {
@@ -531,6 +532,13 @@ void CarpeDM::show(const std::string& title, const std::string& logDictFile, Tra
   }  
 
   sLog << std::endl;  
+
+  if(debug) {
+    BOOST_FOREACH( vertex_t v, vertices(g) ) {
+      auto x = at.lookupVertex(v);
+      dumpNode(x->cpu, g[x->v].name);
+    }
+  }  
 }
 
   
@@ -616,7 +624,7 @@ void CarpeDM::coverage3Upload(uint64_t seed ) {
 
 bool CarpeDM::coverage3IsSeedValid(uint64_t seed) {
   uint32_t curInit  = (seed >> cursorPos) & cursorMsk;
-  uint32_t defInit  = (seed >> staticPos) & staticMsk;
+  //uint32_t defInit  = (seed >> staticPos) & staticMsk;
   uint32_t qInit    = (seed >> dynPos)    & dynMsk;
 
   //std::cout << "curInit 0x" << std::hex << curInit << std::endl; 
