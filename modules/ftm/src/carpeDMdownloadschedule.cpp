@@ -72,15 +72,14 @@ namespace dnt = DotStr::Node::TypeVal;
     //create MgmtTable
     //sLog << std::dec << "dl size " << downloadData.size() << std::endl;
     uint32_t found = 0;
-
     uint32_t nodeCnt = 0;
     //go through Memories
     for(unsigned int i = 0; i < at.getMemories().size(); i++) {
       //go through Bmp
       for(unsigned int bitIdx = at.getMemories()[i].bmpSize / _MEM_BLOCK_SIZE; bitIdx < at.getMemories()[i].bmpBits; bitIdx++) {
         if (at.getMemories()[i].getBmpBit(bitIdx)) {
-          
-          uint32_t    localAdr  = nodeCnt * _MEM_BLOCK_SIZE; nodeCnt++;
+          uint32_t    localAdr  = nodeCnt * _MEM_BLOCK_SIZE; 
+          nodeCnt++;
           uint32_t    flags     = writeBeBytesToLeNumber<uint32_t>((uint8_t*)&downloadData[localAdr + NODE_FLAGS]); 
           uint32_t    type      = (flags >> NFLG_TYPE_POS) & NFLG_TYPE_MSK;
           if (type != NODE_TYPE_MGMT) continue; // skip all non mgmt nodes
@@ -90,16 +89,17 @@ namespace dnt = DotStr::Node::TypeVal;
           //we need to conform to the allocation rules and register our management nodes
           if (!(at.insertMgmt(cpu, adr, (uint8_t*)&downloadData[localAdr]))) {throw std::runtime_error( std::string("Address collision when adding mgmt node at "));};
           found++;
+          at.getMemories()[i].clrBmpBit(bitIdx); // clear bit so parseDownloadData doesnt have to deal with this node again. 
+          //IMPORTANT: this saves a little bit of work, but also means the bmp is out of sync until we leave this function
         }
       }
     }
 
-    if(verbose) sLog << "Mgmt found " << std::dec << found << " data chunks. Trying to recover GroupTable ..." << std::endl;
+    if(verbose) sLog << "Mgmt found " << std::dec << found << " data chunks. Total " << nodeCnt << " nodes scanned. Trying to recover GroupTable ..." << std::endl;
 
     // recover container
     vBuf aux = atDown.recoverMgmt();
     vBuf tmpMgmtRecovery = decompress(aux);
-
 
     if(verbose) sLog << "Bytes expected: " << std::dec << atDown.getMgmtTotalSize() << ", recovered: " << std::dec << aux.size() << std::endl << std::endl;
 
@@ -121,8 +121,10 @@ namespace dnt = DotStr::Node::TypeVal;
     if (tmpStrCovtab.size()) ctTmp.load(tmpStrCovtab); 
     ct = ctTmp;
   
-    // clean up
+    // clean up - remove now obsolete management data (we need a fresh set anyway once upload data is set)
     atDown.deallocateAllMgmt();
+    // Tables and Pools match Bitmap again. As far as parseDownloadData is concerned, we were never here.
+
   } 
 
 
@@ -152,7 +154,7 @@ namespace dnt = DotStr::Node::TypeVal;
           uint8_t     cpu       = i;
 
           // IMPORTANT: skip all mgmt nodes
-          if (type == NODE_TYPE_MGMT) continue; 
+          if (type == NODE_TYPE_MGMT) {sErr << "WARNING: parseDownloadData encountered a management node, this should not happen! Skipping..." << std::endl; continue; }
 
           stream.str(""); stream.clear();
           stream << "0x" << std::setfill ('0') << std::setw(sizeof(uint32_t)*2) << std::hex << hash;
@@ -227,7 +229,7 @@ namespace dnt = DotStr::Node::TypeVal;
 
       } else {
 
-        if  (!(g[it.v].np->isMeta())) g[it.v].np->accept(VisitorDownloadCrawler(g, it.v, at, sLog, sErr));
+        if  (!(g[it.v].np->isMeta())) g[it.v].np->accept(VisitorDownloadCrawler(g, it.v, at, ct, sLog, sErr));
       }  
     }
     //second, iterate all meta-types
@@ -235,7 +237,7 @@ namespace dnt = DotStr::Node::TypeVal;
       // handled by visitor
       if (g[it.v].np == nullptr) {throw std::runtime_error( std::string("Node ") + g[it.v].name + std::string("not initialised")); return; 
       } else {
-        if  (g[it.v].np->isMeta()) g[it.v].np->accept(VisitorDownloadCrawler(g, it.v, at, sLog, sErr));
+        if  (g[it.v].np->isMeta()) g[it.v].np->accept(VisitorDownloadCrawler(g, it.v, at, ct, sLog, sErr));
       }  
     }
 

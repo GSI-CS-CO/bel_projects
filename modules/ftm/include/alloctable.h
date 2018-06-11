@@ -25,6 +25,8 @@ using namespace boost::multi_index;
  
 //enum class AdrType {EXT = 0, INT = 1, PEER = 2, MGMT = 3};
 
+enum class AllocPoolMode {WITHOUT_MGMT = 0, WITH_MGMT = 1};
+
 struct AllocMeta {
   uint8_t     cpu;
   uint32_t    adr;
@@ -122,16 +124,9 @@ public:
    //deep copy
   AllocTable(AllocTable const &src);
 
-  AllocTable &operator=(const AllocTable &src)
-  {
-    //mgmt table is NOT copied!!!
-    a = src.a;
-    syncToAtBmps(src);
-    updatePools();
+  AllocTable &operator=(const AllocTable &src);
 
-    return *this;
-  }
-
+  void cpyWithoutMgmt(AllocTable const &src);
 
   std::vector<MemPool>& getMemories() {return vPool;}
   void addMemory(uint8_t cpu, uint32_t extBaseAdr, uint32_t intBaseAdr, uint32_t peerBaseAdr, uint32_t sharedOffs, uint32_t space, uint32_t rawSize) {vPool.push_back(MemPool(cpu, extBaseAdr, intBaseAdr, peerBaseAdr, sharedOffs, space, rawSize)); }
@@ -140,12 +135,12 @@ public:
   uint32_t getTotalSpace(uint8_t cpu)    const { return vPool[cpu].getTotalSpace(); }
   uint32_t getFreeSpace(uint8_t cpu)     const { return vPool[cpu].getFreeSpace(); }
   uint32_t getUsedSpace(uint8_t cpu)     const { return vPool[cpu].getUsedSpace(); }
+  
 
+  void syncBmpsToPools(); // generate BMP from Pool
+  void recreatePools(AllocPoolMode mode);
 
-  void updateBmps()  {for (unsigned int i = 0; i < vPool.size(); i++ ) vPool[i].syncBmpToPool();} 
-  void updatePools() {for (unsigned int i = 0; i < vPool.size(); i++ ) vPool[i].syncPoolToBmp();} //FIXME do this from table !!!!
-
-  bool syncToAtBmps(AllocTable const &src);
+  
   bool setBmps(vBuf bmpData);
   vBuf getBmps();
 
