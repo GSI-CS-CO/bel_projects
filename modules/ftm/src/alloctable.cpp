@@ -1,6 +1,24 @@
 #include "alloctable.h"
 
-  
+  AllocTable::AllocTable(AllocTable const &src) {
+    a = src.a;
+    m = src.m;
+
+    recreatePools(AllocPoolMode::WITH_MGMT);
+    syncBmpsToPools();
+  }
+
+  AllocTable &AllocTable::operator=(const AllocTable &src)
+  {
+    a = src.a;
+    m = src.m;
+
+    recreatePools(AllocPoolMode::WITH_MGMT);
+    syncBmpsToPools();
+
+    return *this;
+  }
+
 
   bool AllocTable::insert(uint8_t cpu, uint32_t adr, uint32_t hash, vertex_t v, bool staged) {
    /*
@@ -239,12 +257,13 @@
 
   }
 
-  bool AllocTable::syncToAtBmps(AllocTable const &src) {
-    //check of the number of memories is identical
-    if(vPool.size() != src.vPool.size()) {return false;}
-    for (unsigned int i = 0; i < vPool.size(); i++ ) { vPool[i].setBmp(src.vPool[i].getBmp());}
-    return true;
-  }
+  void AllocTable::syncBmpsToPools()  {for (unsigned int i = 0; i < vPool.size(); i++ ) vPool[i].syncBmpToPool();} // generate BMPs from Pools
+  void AllocTable::recreatePools(AllocPoolMode mode) {
+    for (unsigned int i = 0; i < vPool.size(); i++ ) vPool[i].init();
+    for (auto& e : a) { vPool[e.cpu].occupyChunk(e.adr); }
+    if(mode == AllocPoolMode::WITH_MGMT) for (auto& e : m) { vPool[e.cpu].occupyChunk(e.adr); }
+  }  
+
 
   bool AllocTable::setBmps(vBuf bmpData) {
     size_t bmpSum = 0;
@@ -275,10 +294,14 @@
     return ret;
   }
 
-  AllocTable::AllocTable(AllocTable const &src) {
+  
+
+  void AllocTable::cpyWithoutMgmt(AllocTable const &src) {
     this->a = src.a;
-    this->syncToAtBmps(src);
-    this->updatePools();
+    this->m.clear();
+
+    this->recreatePools(AllocPoolMode::WITHOUT_MGMT);
+    this->syncBmpsToPools();
   }
 
   void AllocTable::debug(std::ostream& os) {

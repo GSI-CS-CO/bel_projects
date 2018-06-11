@@ -365,9 +365,8 @@ using namespace DotStr::Misc;
     //init up graph from down
     gUp.clear(); //Necessary?
     atUp.clear();
-    atUp.clearMemories();
     download();
-    atUp = atDown;
+    atUp.cpyWithoutMgmt(atDown);
     // for some reason, copy_graph does not copy the name
     //boost::set_property(gTmp, boost::graph_name, boost::get_property(g, boost::graph_name));
     vertex_map_t vmap;
@@ -434,7 +433,7 @@ using namespace DotStr::Misc;
     //writeUpDotFile("inspect.dot", false);
 
     prepareUpload();
-    atUp.updateBmps();
+    atUp.syncBmpsToPools();
   
   }
 
@@ -492,6 +491,7 @@ using namespace DotStr::Misc;
       boost::tie(in_begin, in_end) = in_edges(vertexMap[vd], gUp);  
       for (in_cur = in_begin; in_cur != in_end; ++in_cur) { 
         updateStaging(source(*in_cur, gUp), *in_cur);
+        
       }
     }
     
@@ -525,7 +525,7 @@ using namespace DotStr::Misc;
     }
     
     prepareUpload();
-    atUp.updateBmps();  
+    atUp.syncBmpsToPools();  
     
   }
 
@@ -542,16 +542,14 @@ using namespace DotStr::Misc;
     atUp.allocateMgmt(mgmtBinary);
     atUp.populateMgmt(mgmtBinary);
     //atUp.debugMgmt(sLog);
-    atUp.updateBmps();
+    atUp.syncBmpsToPools();
   }
 
   void CarpeDM::nullify() {
     gUp.clear(); 
-    atUp.clear();
-    atUp.clearMemories();
     gDown.clear(); 
+    atUp.clear();
     atDown.clear();
-    atDown.clearMemories();
     gt.clear();
     ct.clear();
     hm.clear();
