@@ -2,9 +2,34 @@
 
 //FIXME this is fuckin crude, replace with somewthing better! only merit is that is does the job ...
 
+
+std::string errCode(int status) {
+  std::string errCode;
+  switch (status) {
+    case  SZ_OK:                errCode = "OK"; break;
+    case  SZ_ERROR_DATA:        errCode = "DATA"; break;
+    case  SZ_ERROR_MEM:         errCode = "MEM"; break;
+    case  SZ_ERROR_CRC:         errCode = "CRC"; break;
+    case  SZ_ERROR_UNSUPPORTED: errCode = "UNSUPPORTED"; break;
+    case  SZ_ERROR_PARAM:       errCode = "PARAM"; break;
+    case  SZ_ERROR_INPUT_EOF:   errCode = "INPUT_EOF"; break;
+    case  SZ_ERROR_OUTPUT_EOF:  errCode = "OUTPUT_EOF"; break;
+    case  SZ_ERROR_READ:        errCode = "READ"; break;
+    case  SZ_ERROR_WRITE:       errCode = "WRITE"; break;
+    case  SZ_ERROR_PROGRESS:    errCode = "PROGRESS"; break;
+    case  SZ_ERROR_FAIL:        errCode = "FAIL"; break;
+    case  SZ_ERROR_THREAD:      errCode = "THREAD"; break;
+    case  SZ_ERROR_ARCHIVE:     errCode = "ARCHIVE"; break;
+    case  SZ_ERROR_NO_ARCHIVE:  errCode = "NO_ARCHIVE"; break;
+    default:                    errCode = "!UNDEFINED!";
+  }
+  return errCode;  
+}
+
 vBuf lzmaCompress(const vBuf& input) {
   uint8_t b[input.size() * 2];
   vBuf result;
+  int lzmaStatus;
 
   // set up properties
   CLzmaEncProps props;
@@ -30,7 +55,7 @@ vBuf lzmaCompress(const vBuf& input) {
     outputSize64 = 1024;
   
 
-  int lzmaStatus = LzmaEncode(
+  lzmaStatus = LzmaEncode(
     b, &outputSize64, input.data(), input.size(),
     &props, propsEncoded, &propsSize, 0,
     NULL,
@@ -51,6 +76,8 @@ vBuf lzmaCompress(const vBuf& input) {
       result.push_back( (input.size() >> (i * 8)) & 0xFF ) ;
     //memcpy(resultData + 13, output.data(), outputSize64);
     result.insert(result.end(), output.begin(), output.end());
+  } else {
+    throw std::runtime_error("Compression: LZMA reported ERROR " + errCode(lzmaStatus) + " (" + std::to_string(lzmaStatus) + ")\n"); 
   }
   //printf("ResultSize = %u\n", (unsigned)result.size());
   return result;
@@ -60,7 +87,7 @@ vBuf lzmaCompress(const vBuf& input) {
 vBuf lzmaDecompress(const vBuf& input) {
   vBuf result, blob;
   uint8_t b[input.size() * 50];
-
+  int status;
   //printf("Decompress InputSize = %u\n", (unsigned)input.size());
 
   if (input.size() < 13)
@@ -76,7 +103,7 @@ vBuf lzmaDecompress(const vBuf& input) {
 
     ELzmaStatus lzmaStatus;
     SizeT procOutSize = size, procInSize = input.size() - 13;
-    int status = LzmaDecode(b, &procOutSize, (uint8_t*)&input[13], &procInSize, input.data(), 5, LZMA_FINISH_END, &lzmaStatus, &_allocFuncs);
+    status = LzmaDecode(b, &procOutSize, (uint8_t*)&input[13], &procInSize, input.data(), 5, LZMA_FINISH_END, &lzmaStatus, &_allocFuncs);
 
     if (status == SZ_OK && procOutSize == size) {
       //blob.resize(*outputSize);
@@ -85,5 +112,8 @@ vBuf lzmaDecompress(const vBuf& input) {
     }
   }
 
+  if (status != SZ_OK) {
+    throw std::runtime_error("Decompression: LZMA reported ERROR " + errCode(status) + " (" + std::to_string(status) + ")\n"); 
+  }    
   return result;
 }
