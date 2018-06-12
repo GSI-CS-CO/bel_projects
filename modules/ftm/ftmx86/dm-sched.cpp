@@ -13,7 +13,7 @@
 
 
 static void help(const char *program) {
-  fprintf(stderr, "\ndm-sched v%s\nCreates Binary Data for the DataMaster (DM) from Schedule Graphs (.dot files) and\nuploads/downloads to/from CPU Core <m> of the DM (CPU currently specified in schedule as cpu=<m>).\n", TOOL_VER);
+  fprintf(stderr, "\ndm-sched v%s, build date %s\nCreates Binary Data for the DataMaster (DM) from Schedule Graphs (.dot files) and\nuploads/downloads to/from CPU Core <m> of the DM (CPU currently specified in schedule as cpu=<m>).\n", TOOL_VER, BUILD_DATE);
   fprintf(stderr, "\nUsage: %s <etherbone-device> <Command> <.dot file> \n", program);
   fprintf(stderr, "\n");
   fprintf(stderr, "\nCommands:\n");
