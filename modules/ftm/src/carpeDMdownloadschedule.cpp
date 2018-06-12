@@ -89,7 +89,7 @@ namespace dnt = DotStr::Node::TypeVal;
           //we need to conform to the allocation rules and register our management nodes
           if (!(at.insertMgmt(cpu, adr, (uint8_t*)&downloadData[localAdr]))) {throw std::runtime_error( std::string("Address collision when adding mgmt node at "));};
           found++;
-          at.getMemories()[i].clrBmpBit(bitIdx); // clear bit so parseDownloadData doesnt have to deal with this node again. 
+          //at.getMemories()[i].clrBmpBit(bitIdx); // clear bit so parseDownloadData doesnt have to deal with this node again. 
           //IMPORTANT: this saves a little bit of work, but also means the bmp is out of sync until we leave this function
         }
       }
@@ -154,7 +154,7 @@ namespace dnt = DotStr::Node::TypeVal;
           uint8_t     cpu       = i;
 
           // IMPORTANT: skip all mgmt nodes
-          if (type == NODE_TYPE_MGMT) {sErr << "WARNING: parseDownloadData encountered a management node, this should not happen! Skipping..." << std::endl; continue; }
+          if (type == NODE_TYPE_MGMT) {continue; }
 
           stream.str(""); stream.clear();
           stream << "0x" << std::setfill ('0') << std::setw(sizeof(uint32_t)*2) << std::hex << hash;
