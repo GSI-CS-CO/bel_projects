@@ -18,7 +18,7 @@ namespace dnt = DotStr::Node::TypeVal;
 
 
 static void help(const char *program) {
-  fprintf(stderr, "\ndm-cmd v%s\nSends a command or dotfile of commands to the DM\nThere are global, local and queued commands\n", TOOL_VER);
+  fprintf(stderr, "\ndm-cmd v%s, build date %s\nSends a command or dotfile of commands to the DM\nThere are global, local and queued commands\n", TOOL_VER, BUILD_DATE);
   fprintf(stderr, "\nUsage: %s [OPTION] <etherbone-device> <command> [target node] [parameter] \n", program);
   fprintf(stderr, "\n");
   fprintf(stderr, "\nGeneral Options:\n");
