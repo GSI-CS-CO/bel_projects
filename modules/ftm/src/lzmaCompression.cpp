@@ -1,6 +1,6 @@
 #include "lzmaCompression.h"
 
-//FIXME this is fuckin crude, replace with somewthing better! only merit is that is does the job ...
+
 
 
 std::string errCode(int status) {
@@ -26,7 +26,9 @@ std::string errCode(int status) {
   return errCode;  
 }
 
+
 vBuf lzmaCompress(const vBuf& input) {
+  // TODO: add decent memory management for compression
   uint8_t b[input.size() * 2];
   vBuf result;
   int lzmaStatus;
