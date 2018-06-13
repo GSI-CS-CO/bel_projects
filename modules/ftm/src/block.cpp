@@ -3,17 +3,17 @@
 #include "block.h"
 #include "ftm_common.h"
 
-void Block::deserialise()  {
+void Block::deserialise(uint8_t* b)  {
   this->tPeriod  = writeBeBytesToLeNumber<uint64_t>((uint8_t*)&b[BLOCK_PERIOD]);
   setWrIdxs(writeBeBytesToLeNumber<uint32_t>((uint8_t*)&b[BLOCK_CMDQ_WR_IDXS]));
   setRdIdxs(writeBeBytesToLeNumber<uint32_t>((uint8_t*)&b[BLOCK_CMDQ_RD_IDXS]));
 }
 
-void Block::serialise(const vAdr &va) const {
+void Block::serialise(const vAdr &va, uint8_t* b) const {
 
  
     
-  Node::serialise(va);
+  Node::serialise(va, b);
   writeLeNumberToBeBytes(b + (ptrdiff_t)BLOCK_PERIOD,  this->tPeriod);
   writeLeNumberToBeBytes(b + (ptrdiff_t)BLOCK_ALT_DEST_PTR,  va[ADR_BLOCK_DST_LST]);  
   writeLeNumberToBeBytes(b + (ptrdiff_t)BLOCK_CMDQ_IL_PTR,   va[ADR_BLOCK_Q_IL]); 

@@ -18,8 +18,8 @@ protected:
 public:
 
   
-  Event(const std::string& name, const std::string&  pattern, const std::string&  beamproc, const uint32_t& hash, const uint8_t& cpu, uint8_t* b, uint32_t flags) : Node(name, pattern, beamproc, hash, cpu, b, flags) {}
-  Event(const std::string& name, const std::string&  pattern, const std::string&  beamproc, const uint32_t& hash, const uint8_t& cpu, uint8_t* b, uint32_t flags, uint64_t tOffs) : Node(name, pattern, beamproc, hash, cpu, b, flags), tOffs(tOffs) {}
+  Event(const std::string& name, const std::string&  pattern, const std::string&  beamproc, const uint32_t& hash, const uint8_t& cpu, uint32_t flags) : Node(name, pattern, beamproc, hash, cpu, flags) {}
+  Event(const std::string& name, const std::string&  pattern, const std::string&  beamproc, const uint32_t& hash, const uint8_t& cpu, uint32_t flags, uint64_t tOffs) : Node(name, pattern, beamproc, hash, cpu, flags), tOffs(tOffs) {}
   Event(const Event& src) : Node(src), tOffs(src.tOffs) {}
   virtual ~Event() = default;
   virtual node_ptr clone() const = 0;
@@ -33,8 +33,8 @@ public:
   virtual void accept(const VisitorValidation& v)         const = 0;
   const uint64_t getTOffs() const {return this->tOffs;}
   bool isEvent(void) const {return true;}
-  virtual void serialise(const vAdr &va) const;
-  virtual void deserialise();
+  virtual void serialise(const vAdr &va, uint8_t* b) const;
+  virtual void deserialise(uint8_t* b);
   
 };
 
@@ -46,9 +46,9 @@ class TimingMsg : public Event {
   uint32_t res;
 
 public:
-  TimingMsg(const std::string& name, const std::string&  pattern, const std::string&  beamproc, const uint32_t& hash, const uint8_t& cpu, uint8_t* b, uint32_t flags) : Event(name, pattern, beamproc, hash, cpu, b, flags) {}
-  TimingMsg(const std::string& name, const std::string&  pattern, const std::string&  beamproc, const uint32_t& hash, const uint8_t& cpu, uint8_t* b, uint32_t flags, uint64_t tOffs,  uint64_t id, uint64_t par, uint32_t tef, uint32_t res) 
-  : Event (name, pattern, beamproc, hash, cpu, b, ((flags & ~NFLG_TYPE_SMSK) | (NODE_TYPE_TMSG << NFLG_TYPE_POS)), tOffs), id(id), par(par), tef(tef), res(res) {}
+  TimingMsg(const std::string& name, const std::string&  pattern, const std::string&  beamproc, const uint32_t& hash, const uint8_t& cpu, uint32_t flags) : Event(name, pattern, beamproc, hash, cpu, flags) {}
+  TimingMsg(const std::string& name, const std::string&  pattern, const std::string&  beamproc, const uint32_t& hash, const uint8_t& cpu, uint32_t flags, uint64_t tOffs,  uint64_t id, uint64_t par, uint32_t tef, uint32_t res) 
+  : Event (name, pattern, beamproc, hash, cpu, ((flags & ~NFLG_TYPE_SMSK) | (NODE_TYPE_TMSG << NFLG_TYPE_POS)), tOffs), id(id), par(par), tef(tef), res(res) {}
   ~TimingMsg()  {};
   TimingMsg(const TimingMsg& src) : Event(src), id(src.id), par(src.par), tef(src.tef), res(src.res) {
   //  std::cout << "TMSG CLONE " << this->name << std::endl;
@@ -58,8 +58,8 @@ public:
 
   void show(void)                                       const;
   void show(uint32_t cnt, const char* sPrefix)          const;
-  void serialise(const vAdr &va) const;
-  void deserialise();
+  void serialise(const vAdr &va, uint8_t* b) const;
+  void deserialise(uint8_t* b);
   virtual void accept(const VisitorVertexWriter& v)     const override { v.visit(*this); }
   virtual void accept(const VisitorUploadCrawler& v)    const override { v.visit(*this); }
   virtual void accept(const VisitorDownloadCrawler& v)  const override { v.visit(*this); }
@@ -78,8 +78,8 @@ protected:
   uint32_t act;
 
 
-  Command(const std::string& name, const std::string&  pattern, const std::string&  beamproc, const uint32_t& hash, const uint8_t& cpu, uint8_t* b, uint32_t flags) : Event(name, pattern, beamproc, hash, cpu, b, flags), tValid(0), act(0) {}
-  Command(const std::string& name, const std::string&  pattern, const std::string&  beamproc, const uint32_t& hash, const uint8_t& cpu, uint8_t* b, uint32_t flags, uint64_t tOffs, uint64_t tValid, uint32_t act) : Event (name, pattern, beamproc, hash, cpu, b, flags, tOffs), tValid(tValid), act(act) {}
+  Command(const std::string& name, const std::string&  pattern, const std::string&  beamproc, const uint32_t& hash, const uint8_t& cpu, uint32_t flags) : Event(name, pattern, beamproc, hash, cpu, flags), tValid(0), act(0) {}
+  Command(const std::string& name, const std::string&  pattern, const std::string&  beamproc, const uint32_t& hash, const uint8_t& cpu, uint32_t flags, uint64_t tOffs, uint64_t tValid, uint32_t act) : Event (name, pattern, beamproc, hash, cpu, flags, tOffs), tValid(tValid), act(act) {}
   Command(const Command& src) : Event(src), tValid(src.tValid), act(src.act) {}
 public:
   
@@ -92,8 +92,8 @@ public:
   virtual void accept(const VisitorUploadCrawler& v)    const = 0;
   virtual void accept(const VisitorDownloadCrawler& v)  const = 0;
   virtual void accept(const VisitorValidation& v)       const = 0;
-  virtual void serialise(const vAdr &va) const;
-  virtual void deserialise();
+  virtual void serialise(const vAdr &va, uint8_t* b) const;
+  virtual void deserialise(uint8_t* b);
   virtual const uint64_t getTValid()  const {return this->tValid;}
   virtual const uint32_t getAct()     const {return this->act;}
   virtual const void setAct(uint32_t act) {this->act |= act;}
@@ -109,17 +109,17 @@ class Noop : public Command {
 
 
 public:
-  Noop(const std::string& name, const std::string&  pattern, const std::string&  beamproc, const uint32_t& hash, const uint8_t& cpu, uint8_t* b, uint32_t flags) : Command(name, pattern, beamproc, hash, cpu, b, flags) {}
-  Noop(const std::string& name, const std::string&  pattern, const std::string&  beamproc, const uint32_t& hash, const uint8_t& cpu, uint8_t* b, uint32_t flags, uint64_t tOffs, uint64_t tValid, uint8_t prio, uint32_t qty, bool vabs) 
-  : Command(name, pattern, beamproc, hash, cpu, b, ((flags & ~NFLG_TYPE_SMSK) | (NODE_TYPE_CNOOP << NFLG_TYPE_POS)), tOffs, tValid, (ACT_TYPE_NOOP << ACT_TYPE_POS) | (prio & ACT_PRIO_MSK) << ACT_PRIO_POS | (qty & ACT_QTY_MSK) << ACT_QTY_POS | vabs << ACT_VABS_POS) {}
+  Noop(const std::string& name, const std::string&  pattern, const std::string&  beamproc, const uint32_t& hash, const uint8_t& cpu, uint32_t flags) : Command(name, pattern, beamproc, hash, cpu, flags) {}
+  Noop(const std::string& name, const std::string&  pattern, const std::string&  beamproc, const uint32_t& hash, const uint8_t& cpu, uint32_t flags, uint64_t tOffs, uint64_t tValid, uint8_t prio, uint32_t qty, bool vabs) 
+  : Command(name, pattern, beamproc, hash, cpu, ((flags & ~NFLG_TYPE_SMSK) | (NODE_TYPE_CNOOP << NFLG_TYPE_POS)), tOffs, tValid, (ACT_TYPE_NOOP << ACT_TYPE_POS) | (prio & ACT_PRIO_MSK) << ACT_PRIO_POS | (qty & ACT_QTY_MSK) << ACT_QTY_POS | vabs << ACT_VABS_POS) {}
   Noop(const Noop& src) : Command(src) {}
   ~Noop() {};
   node_ptr clone() const override { return boost::make_shared<Noop>(Noop(*this)); }
 
   void show(void) const;
   void show(uint32_t cnt, const char* sPrefix) const;
-  void serialise(const vAdr &va) const;
-  void deserialise();
+  void serialise(const vAdr &va, uint8_t* b) const;
+  void deserialise(uint8_t* b);
   virtual void accept(const VisitorVertexWriter& v)     const override { v.visit(*this); }
   virtual void accept(const VisitorUploadCrawler& v)    const override { v.visit(*this); }
   virtual void accept(const VisitorDownloadCrawler& v)  const override { v.visit(*this); }
@@ -132,17 +132,17 @@ public:
 class Flow : public Command {
 
 public:
-  Flow(const std::string& name, const std::string&  pattern, const std::string&  beamproc, const uint32_t& hash, const uint8_t& cpu, uint8_t* b, uint32_t flags) : Command(name, pattern, beamproc, hash, cpu, b, flags) {}
-  Flow(const std::string& name, const std::string&  pattern, const std::string&  beamproc, const uint32_t& hash, const uint8_t& cpu, uint8_t* b, uint32_t flags, uint64_t tOffs, uint64_t tValid, uint8_t prio, uint32_t qty, bool vabs, bool permanent)
-      : Command(name, pattern, beamproc, hash, cpu, b, ((flags & ~NFLG_TYPE_SMSK) | (NODE_TYPE_CFLOW << NFLG_TYPE_POS)), tOffs, tValid, (ACT_TYPE_FLOW << ACT_TYPE_POS) | (prio & ACT_PRIO_MSK) << ACT_PRIO_POS | (qty & ACT_QTY_MSK) << ACT_QTY_POS | vabs << ACT_VABS_POS | permanent << ACT_CHP_POS )   {}
+  Flow(const std::string& name, const std::string&  pattern, const std::string&  beamproc, const uint32_t& hash, const uint8_t& cpu, uint32_t flags) : Command(name, pattern, beamproc, hash, cpu, flags) {}
+  Flow(const std::string& name, const std::string&  pattern, const std::string&  beamproc, const uint32_t& hash, const uint8_t& cpu, uint32_t flags, uint64_t tOffs, uint64_t tValid, uint8_t prio, uint32_t qty, bool vabs, bool permanent)
+      : Command(name, pattern, beamproc, hash, cpu, ((flags & ~NFLG_TYPE_SMSK) | (NODE_TYPE_CFLOW << NFLG_TYPE_POS)), tOffs, tValid, (ACT_TYPE_FLOW << ACT_TYPE_POS) | (prio & ACT_PRIO_MSK) << ACT_PRIO_POS | (qty & ACT_QTY_MSK) << ACT_QTY_POS | vabs << ACT_VABS_POS | permanent << ACT_CHP_POS )   {}
   Flow(const Flow& src) : Command(src) {}
   ~Flow() {};
     node_ptr clone() const override { return boost::make_shared<Flow>(Flow(*this)); }
 
   void show(void) const;
   void show(uint32_t cnt, const char* sPrefix) const;
-  void serialise(const vAdr &va) const;
-  void deserialise();
+  void serialise(const vAdr &va, uint8_t* b) const;
+  void deserialise(uint8_t* b);
   virtual void accept(const VisitorVertexWriter& v)     const override { v.visit(*this); }
   virtual void accept(const VisitorUploadCrawler& v)    const override { v.visit(*this); }
   virtual void accept(const VisitorDownloadCrawler& v)  const override { v.visit(*this); }
@@ -155,9 +155,9 @@ public:
 class Wait : public Command {
   uint64_t tWait;
 public:
-  Wait(const std::string& name, const std::string&  pattern, const std::string&  beamproc, const uint32_t& hash, const uint8_t& cpu, uint8_t* b, uint32_t flags) : Command(name, pattern, beamproc, hash, cpu, b, flags) {}
-  Wait(const std::string& name, const std::string&  pattern, const std::string&  beamproc, const uint32_t& hash, const uint8_t& cpu, uint8_t* b, uint32_t flags, uint64_t tOffs, uint64_t tValid,  uint8_t prio, uint64_t tWait, bool vabs) 
-  : Command(name, pattern, beamproc, hash, cpu, b, ((flags & ~NFLG_TYPE_SMSK) | (NODE_TYPE_CWAIT << NFLG_TYPE_POS)), tOffs, tValid, (ACT_TYPE_WAIT << ACT_TYPE_POS) | (prio & ACT_PRIO_MSK) << ACT_PRIO_POS | 1 << ACT_QTY_POS | vabs << ACT_VABS_POS), tWait(tWait) {}
+  Wait(const std::string& name, const std::string&  pattern, const std::string&  beamproc, const uint32_t& hash, const uint8_t& cpu, uint32_t flags) : Command(name, pattern, beamproc, hash, cpu, flags) {}
+  Wait(const std::string& name, const std::string&  pattern, const std::string&  beamproc, const uint32_t& hash, const uint8_t& cpu, uint32_t flags, uint64_t tOffs, uint64_t tValid,  uint8_t prio, uint64_t tWait, bool vabs) 
+  : Command(name, pattern, beamproc, hash, cpu, ((flags & ~NFLG_TYPE_SMSK) | (NODE_TYPE_CWAIT << NFLG_TYPE_POS)), tOffs, tValid, (ACT_TYPE_WAIT << ACT_TYPE_POS) | (prio & ACT_PRIO_MSK) << ACT_PRIO_POS | 1 << ACT_QTY_POS | vabs << ACT_VABS_POS), tWait(tWait) {}
   Wait(const Wait& src) : Command(src), tWait(src.tWait) {}
   ~Wait() {};
   node_ptr clone() const override { return boost::make_shared<Wait>(Wait(*this)); }
@@ -165,8 +165,8 @@ public:
   void show(void) const;
   void show(uint32_t cnt, const char* sPrefix) const;
   virtual const uint64_t getTWait()  const {return this->tWait;}
-  void serialise(const vAdr &va) const;
-  void deserialise();
+  void serialise(const vAdr &va, uint8_t* b) const;
+  void deserialise(uint8_t* b);
   virtual void accept(const VisitorVertexWriter& v)     const override { v.visit(*this); }
   virtual void accept(const VisitorUploadCrawler& v)    const override { v.visit(*this); }
   virtual void accept(const VisitorDownloadCrawler& v)  const override { v.visit(*this); }
@@ -186,11 +186,11 @@ class Flush : public Command {
 
 
 public:
-  Flush(const std::string& name, const std::string&  pattern, const std::string&  beamproc, const uint32_t& hash, const uint8_t& cpu, uint8_t* b, uint32_t flags) : Command(name, pattern, beamproc, hash, cpu, b, flags) {}
-  Flush(const std::string& name, const std::string&  pattern, const std::string&  beamproc, const uint32_t& hash, const uint8_t& cpu, uint8_t* b, uint32_t flags, uint64_t tOffs, uint64_t tValid, uint8_t prio, bool qIl, bool qHi, bool qLo, bool vabs ) 
-        : Command(name, pattern, beamproc, hash, cpu, b, ((flags & ~NFLG_TYPE_SMSK) | (NODE_TYPE_CFLUSH << NFLG_TYPE_POS)), tOffs, tValid, (ACT_TYPE_FLUSH << ACT_TYPE_POS) | (prio & ACT_PRIO_MSK) << ACT_PRIO_POS | (1 & ACT_QTY_MSK) << ACT_QTY_POS | vabs << ACT_VABS_POS), qIl(qIl), qHi(qHi), qLo(qLo), frmIl(0), toIl(0), frmHi(0), toHi(0), frmLo(0), toLo(0) {}
-  Flush(const std::string& name, const std::string&  pattern, const std::string&  beamproc, const uint32_t& hash, const uint8_t& cpu, uint8_t* b, uint32_t flags, uint64_t tOffs, uint64_t tValid, uint8_t prio, bool qIl, bool qHi, bool qLo, bool vabs, uint8_t frmIl, uint8_t toIl, uint8_t frmHi, uint8_t toHi, uint8_t frmLo, uint8_t toLo) 
-        : Command(name, pattern, beamproc, hash, cpu, b, ((flags & ~NFLG_TYPE_SMSK) | (NODE_TYPE_CFLUSH << NFLG_TYPE_POS)), tOffs, tValid, (ACT_TYPE_FLUSH << ACT_TYPE_POS) | (prio & ACT_PRIO_MSK) << ACT_PRIO_POS | (1 & ACT_QTY_MSK) << ACT_QTY_POS | vabs << ACT_VABS_POS), qIl(qIl), qHi(qHi), qLo(qLo), frmIl(frmIl), toIl(toIl), frmHi(frmHi), toHi(toHi), frmLo(frmLo), toLo(toLo) {}
+  Flush(const std::string& name, const std::string&  pattern, const std::string&  beamproc, const uint32_t& hash, const uint8_t& cpu, uint32_t flags) : Command(name, pattern, beamproc, hash, cpu, flags) {}
+  Flush(const std::string& name, const std::string&  pattern, const std::string&  beamproc, const uint32_t& hash, const uint8_t& cpu, uint32_t flags, uint64_t tOffs, uint64_t tValid, uint8_t prio, bool qIl, bool qHi, bool qLo, bool vabs ) 
+        : Command(name, pattern, beamproc, hash, cpu, ((flags & ~NFLG_TYPE_SMSK) | (NODE_TYPE_CFLUSH << NFLG_TYPE_POS)), tOffs, tValid, (ACT_TYPE_FLUSH << ACT_TYPE_POS) | (prio & ACT_PRIO_MSK) << ACT_PRIO_POS | (1 & ACT_QTY_MSK) << ACT_QTY_POS | vabs << ACT_VABS_POS), qIl(qIl), qHi(qHi), qLo(qLo), frmIl(0), toIl(0), frmHi(0), toHi(0), frmLo(0), toLo(0) {}
+  Flush(const std::string& name, const std::string&  pattern, const std::string&  beamproc, const uint32_t& hash, const uint8_t& cpu, uint32_t flags, uint64_t tOffs, uint64_t tValid, uint8_t prio, bool qIl, bool qHi, bool qLo, bool vabs, uint8_t frmIl, uint8_t toIl, uint8_t frmHi, uint8_t toHi, uint8_t frmLo, uint8_t toLo) 
+        : Command(name, pattern, beamproc, hash, cpu, ((flags & ~NFLG_TYPE_SMSK) | (NODE_TYPE_CFLUSH << NFLG_TYPE_POS)), tOffs, tValid, (ACT_TYPE_FLUSH << ACT_TYPE_POS) | (prio & ACT_PRIO_MSK) << ACT_PRIO_POS | (1 & ACT_QTY_MSK) << ACT_QTY_POS | vabs << ACT_VABS_POS), qIl(qIl), qHi(qHi), qLo(qLo), frmIl(frmIl), toIl(toIl), frmHi(frmHi), toHi(toHi), frmLo(frmLo), toLo(toLo) {}
   Flush(const Flush& src) : Command(src), prio(src.prio), mode(src.mode), qIl(src.qIl), qHi(src.qHi), qLo(src.qLo), frmIl(src.frmIl), toIl(src.toIl), frmHi(src.frmHi), toHi(src.toHi), frmLo(src.frmLo), toLo(src.toLo) {}
   ~Flush() {};
     node_ptr clone() const override { return boost::make_shared<Flush>(Flush(*this)); }
@@ -201,8 +201,8 @@ public:
   const uint8_t getMode(void)       const {return ((this->act >> ACT_FLUSH_MODE_POS) & ACT_FLUSH_MODE_MSK);}
   const uint16_t getRng(uint8_t q) const;
 
-  void serialise(const vAdr &va) const;
-  void deserialise();
+  void serialise(const vAdr &va, uint8_t* b) const;
+  void deserialise(uint8_t* b);
   virtual void accept(const VisitorVertexWriter& v)     const override { v.visit(*this); }
   virtual void accept(const VisitorUploadCrawler& v)    const override { v.visit(*this); }
   virtual void accept(const VisitorDownloadCrawler& v)  const override { v.visit(*this); }

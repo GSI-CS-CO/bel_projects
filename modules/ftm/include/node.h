@@ -28,8 +28,6 @@ protected:
  
   const uint32_t     hash;
   const uint8_t      cpu;
-
-  uint8_t* b;
   uint32_t      flags;
   
 
@@ -38,9 +36,9 @@ protected:
 
 public:
   //Node(const std::string& name, const uint32_t& hash, const uint8_t& cpu, uint8_t* b, uint32_t flags) : name(name), pattern(sUndefined), beamproc(sUndefined), hash(hash), cpu(cpu), b(b), flags(flags)  {}
-  Node(const std::string& name, const std::string&  pattern, const std::string&  beamproc, const uint32_t& hash, const uint8_t& cpu, uint8_t* b, uint32_t flags) 
-  : name(name), pattern(pattern), beamproc(beamproc), hash(hash), cpu(cpu), b(b), flags(flags)  {} 
-  Node(const Node& src) : name(src.name), pattern(src.pattern), beamproc(src.beamproc), hash(src.hash), cpu(src.cpu), b(src.b), flags(src.flags) {}
+  Node(const std::string& name, const std::string&  pattern, const std::string&  beamproc, const uint32_t& hash, const uint8_t& cpu, uint32_t flags) 
+  : name(name), pattern(pattern), beamproc(beamproc), hash(hash), cpu(cpu), flags(flags)  {} 
+  Node(const Node& src) : name(src.name), pattern(src.pattern), beamproc(src.beamproc), hash(src.hash), cpu(src.cpu), flags(src.flags) {}
   virtual ~Node() = default;
   virtual node_ptr clone() const = 0; 
   
@@ -63,8 +61,7 @@ public:
   const bool isBpExit()   const {return (bool)(this->flags & NFLG_BP_EXIT_LM32_SMSK);}
   const bool isPatEntry() const {return (bool)(this->flags & NFLG_PAT_ENTRY_LM32_SMSK);}
   const bool isPatExit()  const {return (bool)(this->flags & NFLG_PAT_EXIT_LM32_SMSK);}
-  uint8_t* getB() {return this->b;}
-  const void setB(uint8_t* b) {this->b = b;}
+
 
   virtual void show(void)                               const = 0;
   virtual void show(uint32_t cnt, const char* sPrefix)  const = 0;
@@ -75,8 +72,8 @@ public:
   virtual bool isMeta(void) const {return false;}
   virtual bool isBlock(void) const {return false;}
   virtual bool isEvent(void) const {return false;}
-  virtual void deserialise() = 0;
-  virtual void serialise(const vAdr &va) const {
+  virtual void deserialise(uint8_t* b) = 0;
+  virtual void serialise(const vAdr &va, uint8_t* b) const {
     std::memset(b, 0, _MEM_BLOCK_SIZE);
     writeLeNumberToBeBytes(b + (ptrdiff_t)NODE_DEF_DEST_PTR,  va[ADR_DEF_DST]);
     writeLeNumberToBeBytes(b + (ptrdiff_t)NODE_HASH,   this->hash);

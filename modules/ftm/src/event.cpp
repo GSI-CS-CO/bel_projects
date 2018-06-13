@@ -4,25 +4,25 @@
 #include "ftm_common.h"
 
 
-void Event::deserialise() {
+void Event::deserialise(uint8_t* b) {
   this->tOffs = writeBeBytesToLeNumber<uint64_t>((uint8_t*)&b[EVT_OFFS_TIME]);
 }
 
-void Event::serialise(const vAdr &va) const {
-  Node::serialise(va);
+void Event::serialise(const vAdr &va, uint8_t* b) const {
+  Node::serialise(va, b);
   writeLeNumberToBeBytes(b + (ptrdiff_t)EVT_OFFS_TIME, this->tOffs);
 }
 
-void TimingMsg::deserialise() {
-  Event::deserialise();
+void TimingMsg::deserialise(uint8_t* b) {
+  Event::deserialise(b);
   this->id  = writeBeBytesToLeNumber<uint64_t>((uint8_t*)&b[TMSG_ID]);
   this->par = writeBeBytesToLeNumber<uint64_t>((uint8_t*)&b[TMSG_PAR]);
   this->tef = writeBeBytesToLeNumber<uint32_t>((uint8_t*)&b[TMSG_TEF]);
   this->res = writeBeBytesToLeNumber<uint32_t>((uint8_t*)&b[TMSG_RES]);
 }
 
-void TimingMsg::serialise(const vAdr &va) const {
-  Event::serialise(va);
+void TimingMsg::serialise(const vAdr &va, uint8_t* b) const {
+  Event::serialise(va, b);
 
   uint64_t id  = this->id;
   uint64_t par = this->par;
@@ -44,52 +44,52 @@ void TimingMsg::serialise(const vAdr &va) const {
   writeLeNumberToBeBytes(b + (ptrdiff_t)TMSG_RES, res);    
 }
 
-void Command::deserialise()  {
-  Event::deserialise();
+void Command::deserialise(uint8_t* b)   {
+  Event::deserialise(b);
   this->tValid  = writeBeBytesToLeNumber<uint64_t>((uint8_t*)&b[CMD_VALID_TIME]);
   this->act     = writeBeBytesToLeNumber<uint32_t>((uint8_t*)&b[CMD_ACT]);
 }
 
-void Command::serialise(const vAdr &va) const {
-  Event::serialise(va);
+void Command::serialise(const vAdr &va, uint8_t* b) const {
+  Event::serialise(va, b);
   writeLeNumberToBeBytes(b + (ptrdiff_t)CMD_TARGET,     va[ADR_CMD_TARGET]);
   writeLeNumberToBeBytes(b + (ptrdiff_t)CMD_VALID_TIME, this->tValid);
   writeLeNumberToBeBytes(b + (ptrdiff_t)CMD_ACT,        this->act); 
 
 }
 
-void Noop::deserialise()  {
-  Command::deserialise();
+void Noop::deserialise(uint8_t* b)  {
+  Command::deserialise(b);
   
 }
 
-void Noop::serialise(const vAdr &va) const {
-  Command::serialise(va);
+void Noop::serialise(const vAdr &va, uint8_t* b) const {
+  Command::serialise(va, b);
   
 }
 
-void Flow::deserialise()  {
-  Command::deserialise();
+void Flow::deserialise(uint8_t* b)  {
+  Command::deserialise(b);
 }
 
-void Flow::serialise(const vAdr &va) const {
-  Command::serialise(va);
+void Flow::serialise(const vAdr &va, uint8_t* b) const {
+  Command::serialise(va, b);
   writeLeNumberToBeBytes(b + (ptrdiff_t)CMD_FLOW_DEST, va[ADR_CMD_FLOW_DEST]); 
 }
 
-void Wait::deserialise()  {
-  Command::deserialise();
+void Wait::deserialise(uint8_t* b)  {
+  Command::deserialise(b);
   this->tWait = writeBeBytesToLeNumber<uint64_t>((uint8_t*)&b[CMD_WAIT_TIME]);
 }
 
-void Wait::serialise(const vAdr &va) const {
-  Command::serialise(va);
+void Wait::serialise(const vAdr &va, uint8_t* b) const {
+  Command::serialise(va, b);
   writeLeNumberToBeBytes(b + (ptrdiff_t)CMD_WAIT_TIME, this->tWait);  
 
 }
 
-void Flush::deserialise()  {
-  Command::deserialise();
+void Flush::deserialise(uint8_t* b)  {
+  Command::deserialise(b);
   this->frmIl  = b[CMD_FLUSHRNG_IL_FRM];
   this->toIl   = b[CMD_FLUSHRNG_IL_TO];
   this->frmHi  = b[CMD_FLUSHRNG_HI_FRM];
@@ -98,8 +98,8 @@ void Flush::deserialise()  {
   this->toLo   = b[CMD_FLUSHRNG_LO_TO];
 }
 
-void Flush::serialise(const vAdr &va) const {
-  Command::serialise(va);
+void Flush::serialise(const vAdr &va, uint8_t* b) const {
+  Command::serialise(va, b);
   b[CMD_FLUSHRNG_IL_FRM]  = this->frmIl;
   b[CMD_FLUSHRNG_IL_TO]   = this->toIl;
   b[CMD_FLUSHRNG_HI_FRM]  = this->frmHi;
