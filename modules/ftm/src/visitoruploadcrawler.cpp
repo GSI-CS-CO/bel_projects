@@ -16,39 +16,39 @@ const std::string VisitorUploadCrawler::exIntro = "VisitorUploadCrawler: ";
 //FIXME Dear future self, the code duplication in here is appalling. Create some proper helper functions for crying out loud !
 
 void VisitorUploadCrawler::visit(const Block& el) const {
-  el.serialise(getDefDst() + getQInfo());
+  el.serialise(getDefDst() + getQInfo(), b);
 }
 
 void VisitorUploadCrawler::visit(const TimingMsg& el) const  {
-  el.serialise(getDefDst() + getDynSrc() );
+  el.serialise(getDefDst() + getDynSrc(), b);
 }
 
 void VisitorUploadCrawler::visit(const Flow& el) const  {
-  el.serialise( getDefDst() + getCmdTarget((Command&)el) + getFlowDst() );
+  el.serialise( getDefDst() + getCmdTarget((Command&)el) + getFlowDst(), b);
 }
 
 void VisitorUploadCrawler::visit(const Flush& el) const {
-  el.serialise( getDefDst() + getCmdTarget((Command&)el) );
+  el.serialise( getDefDst() + getCmdTarget((Command&)el), b);
 }
 
 void VisitorUploadCrawler::visit(const Noop& el) const {
-  el.serialise( getDefDst() + getCmdTarget((Command&)el) );
+  el.serialise( getDefDst() + getCmdTarget((Command&)el), b);
 }
 
 void VisitorUploadCrawler::visit(const Wait& el) const {
-  el.serialise( getDefDst() + getCmdTarget((Command&)el) );
+  el.serialise( getDefDst() + getCmdTarget((Command&)el), b);
 }
 
 void VisitorUploadCrawler::visit(const CmdQMeta& el) const {
-  el.serialise( getDefDst() + getQBuf() );
+  el.serialise( getDefDst() + getQBuf(), b);
 }
 
 void VisitorUploadCrawler::visit(const CmdQBuffer& el) const {
-  el.serialise(getDefDst());
+  el.serialise(getDefDst(), b);
 }
 
 void VisitorUploadCrawler::visit(const DestList& el) const {
-  el.serialise(getListDst());
+  el.serialise(getListDst(), b);
 }
 
 
