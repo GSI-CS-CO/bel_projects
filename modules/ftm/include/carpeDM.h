@@ -176,6 +176,7 @@ private:
   vEbwrs& createCommandBurst(Graph& g, vEbwrs& ew);
   vEbwrs& createCommand(const std::string& targetName, uint8_t cmdPrio, mc_ptr mc, vEbwrs& ew);
   vEbwrs& deactivateOrphanedCommands(std::vector<QueueReport>& vQr, vEbwrs& ew);
+  vEbwrs& clearHealth(uint8_t cpuIdx, vEbwrs& ew);
 
   int send(vEbwrs& ew);
 
@@ -354,6 +355,8 @@ std::pair<int, int> findRunningPattern(const std::string& sPattern); // get cpu 
                void optimisedS2ROff(){optimisedS2R = false;}                    // Optimised Safe2remove off
                bool isOptimisedS2R() const {return optimisedS2R;}               // tell if Safe2remove optimisation is on or off
       HealthReport& getHealth(uint8_t cpuIdx, HealthReport &hr);                // FIXME why reference in, reference out ? its not like you can add to this report ...
+               void clearHealth(uint8_t cpuIdx);
+               void clearHealth();
        QueueReport& getQReport(const std::string& blockName, QueueReport& qr);  // FIXME why reference in, reference out ? its not like you can add to this report ...
            uint64_t getDmWrTime();
 
