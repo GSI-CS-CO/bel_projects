@@ -408,6 +408,60 @@ void CarpeDM::inspectHeap(uint8_t cpuIdx) {
 }
 
 
+void CarpeDM::clearHealth(uint8_t cpuIdx) {
+  vEbwrs ew;
+  clearHealth(cpuIdx, ew);
+  ebWriteCycle(ebd, ew.va, ew.vb, ew.vcs);
+}
+
+void CarpeDM::clearHealth() {
+  vEbwrs ew;
+  for(int cpuIdx = 0; cpuIdx < getCpuQty(); cpuIdx++) { clearHealth(cpuIdx, ew); }
+  ebWriteCycle(ebd, ew.va, ew.vb, ew.vcs);
+}
+
+vEbwrs& CarpeDM::clearHealth(uint8_t cpuIdx, vEbwrs& ew) {
+  uint32_t const baseAdr = atDown.getMemories()[cpuIdx].extBaseAdr + atDown.getMemories()[cpuIdx].sharedOffs;
+  
+  const vBuf zeroes32b = {0x00, 0x00, 0x00, 0x00};
+  const vBuf zeroes64b = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+  const vBuf ones32b   = {0xff, 0xff, 0xff, 0xff};
+  const vBuf basicState = {0x00, 0x00, 0x00, 0x0f};
+
+  // reset diagnostic values aggregate
+
+  ew.va.push_back(baseAdr + SHCTL_DIAG + T_DIAG_MSG_CNT + 0);  // 64b counter
+  ew.va.push_back(baseAdr + SHCTL_DIAG + T_DIAG_MSG_CNT + _32b_SIZE_);
+  ew.vb += zeroes64b;
+
+  // skip boot timestamp, we did not reboot
+
+  // iterate over remaining fields of the aggregate
+  for (uint32_t offs = T_DIAG_SCH_MOD; offs < T_DIAG_DIF_WTH; offs += _32b_SIZE_) {
+    ew.va.push_back(baseAdr + SHCTL_DIAG + offs);
+    //min diff value must be initialised with -inf instead of 0
+    if ( (offs == T_DIAG_DIF_MIN + 0) || (offs == T_DIAG_DIF_MIN + _32b_SIZE_)) { ew.vb += ones32b; }
+    else                                                                        { ew.vb += zeroes32b; }
+  }
+
+  //skip Dif Warning Threshold, that stays as it is
+
+  ew.va.push_back(baseAdr + SHCTL_DIAG + T_DIAG_WAR_CNT + 0); // 64b counter
+  ew.va.push_back(baseAdr + SHCTL_DIAG + T_DIAG_WAR_CNT + _32b_SIZE_); // 64b counter
+  ew.vb += zeroes64b;
+
+  // clear status value
+  ew.va.push_back(baseAdr + SHCTL_STATUS);
+  ew.vb += basicState;
+
+  //insert EB flow control vector
+  ew.vcs += leadingOne(ew.va.size());
+
+  return ew;
+
+}
+
+
 HealthReport& CarpeDM::getHealth(uint8_t cpuIdx, HealthReport &hr) {
   uint32_t const baseAdr = atDown.getMemories()[cpuIdx].extBaseAdr + atDown.getMemories()[cpuIdx].sharedOffs;
 
