@@ -673,6 +673,10 @@ int main(int argc, char* argv[]) {
     else if (cmp == "deadline")  {
       std::cout << "CPU " << cpuIdx << " Thr " << thrIdx << " Deadline " << cdm.getThrDeadline(cpuIdx, thrIdx) << std::endl;
       return 0;
+    }  
+    else if (cmp == "clearstats")  {
+      cdm.clearHealth(cpuIdx);
+      return 0;
     }
     else if (cmp == "cleardiag")  {
       cdm.clearHealth();
@@ -711,6 +715,7 @@ int main(int argc, char* argv[]) {
       }
       return 0;
     }
+
 
 
 
