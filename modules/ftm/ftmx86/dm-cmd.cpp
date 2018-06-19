@@ -29,6 +29,7 @@ static void help(const char *program) {
   fprintf(stderr, "  -i command .dot file      Run commands from dot file\n");
   fprintf(stderr, "  status                    Show status of all threads and cores (default)\n");
   fprintf(stderr, "  details                   Show time statistics and detailed information on uptime and recent changes\n");
+  fprintf(stderr, "  clearstats                Clear all status and statistics info\n");
   fprintf(stderr, "  gathertime <Time / ns>    [NOT YET IMPLEMENTED] Set msg gathering time for priority queue\n");
   fprintf(stderr, "  maxmsg <Message Quantity> [NOT YET IMPLEMENTED] Set maximum messages in a packet for priority queue\n");
   fprintf(stderr, "  running                   Show bitfield of all running threads on this CPU core\n");
@@ -629,7 +630,12 @@ int main(int argc, char* argv[]) {
     else if (cmp == "deadline")  {
       std::cout << "CPU " << cpuIdx << " Thr " << thrIdx << " Deadline " << cdm.getThrDeadline(cpuIdx, thrIdx) << std::endl;
       return 0;
+    }  
+    else if (cmp == "clearstats")  {
+      cdm.clearHealth(cpuIdx);
+      return 0;
     }
+
 
     //all the block commands set mc, so...
     if (mc != NULL) {
