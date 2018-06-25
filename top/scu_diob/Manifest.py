@@ -17,6 +17,7 @@ files = [
    "atr_cnt_n.vhd",
    "atr_puls_ctrl.vhd",
    "atr_puls_n.vhd",
+   "atr_timeout.vhd",
    "fg901040.vhd",
    "in_reg.vhd"
 ]

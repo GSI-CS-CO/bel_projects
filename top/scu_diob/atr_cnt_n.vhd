@@ -25,12 +25,12 @@ ARCHITECTURE Arch_atr_cnt_n OF atr_cnt_n IS
 
 signal ATR_cnt_puls_syn1    : std_logic;
 signal ATR_cnt_puls_syn     : std_logic;
-signal ATR_cnt_puls_syn_t   : std_logic;
+-- signal ATR_cnt_puls_syn_t   : std_logic;
 
 type state_t is   (idle, count, save, error, w_end);
 signal state:      state_t := idle;
 
-signal Count_error     : std_logic; -- Error bei Zählerüberlauf
+-- signal Count_error     : std_logic; -- Error bei Zählerüberlauf  kk Not used
 
 signal counter:       integer range 0 to 131071;       -- Counter Delay
 signal s_save_cnt:    STD_LOGIC;                       -- Save Counter
@@ -46,11 +46,11 @@ begin
   if ( nReset_250mhz       = '0') then
     ATR_cnt_puls_syn1     <= '0';
     ATR_cnt_puls_syn      <= '0';
-    ATR_cnt_puls_syn_t    <= '0';
+    --ATR_cnt_puls_syn_t    <= '0';  --kk not used 
   elsif (rising_edge(clk_250mhz)) then
     ATR_cnt_puls_syn1     <= ATR_cnt_puls;
     ATR_cnt_puls_syn      <= ATR_cnt_puls_syn1;  -- Synchroner Comperator Puls
-    ATR_cnt_puls_syn_t    <= ATR_cnt_puls_syn;   -- Synchroner Comperator Puls, um 1 Takt verzögert
+   -- ATR_cnt_puls_syn_t    <= ATR_cnt_puls_syn;   -- Synchroner Comperator Puls, um 1 Takt verzögert --kk not used
     end if;
 end process;
 
@@ -61,7 +61,7 @@ P_Counter:  process (clk_250mhz, nReset_250mhz, ATR_cnt_puls_syn)
     begin
       if (nReset_250mhz    = '0') then
         state             <= idle;
-        Count_error       <= '0';   -- Error bei Zählerüberlauf
+        --Count_error       <= '0';   -- Error bei Zählerüberlauf kk not used
         Counter           <=  0 ;
         s_save_cnt        <= '0';   -- Save Counter
         s_ATR_cnt_err     <= '0';   -- Error-Flag
@@ -69,7 +69,7 @@ P_Counter:  process (clk_250mhz, nReset_250mhz, ATR_cnt_puls_syn)
       ELSIF rising_edge(clk_250mhz) then
       case state is
          when idle      =>  Counter                  <=  0 ;  -- Counter
-                            Count_error              <= '0';   -- Counter_Error
+                            --Count_error              <= '0';   -- Counter_Error  kk not used
                             if     (ATR_cnt_puls_syn  = '1')  then 
                                   state  <= count;
                             else  state  <= idle;
