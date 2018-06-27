@@ -43,7 +43,6 @@ Port(
   tm_tai8ns_i                   : std_logic_vector(63 downto 0) := (others => '0');
   cyc_diag_i                    : std_logic_vector(g_cores-1 downto 0);
   stall_diag_i                  : std_logic_vector(g_cores-1 downto 0);
-  wr_lock_i                     : std_logic;
   
   ctrl_i                        : in  t_wishbone_slave_in;
   ctrl_o                        : out t_wishbone_slave_out
@@ -54,7 +53,9 @@ end dm_diag;
 
 architecture rtl of dm_diag is
 
-  -- Regs/Sigs WB interface
+  type u32_array is array (natural range <>) of unsigned(31 downto 0);
+  type u64_array is array (natural range <>) of unsigned(63 downto 0);
+
   signal s_ctrl_reset_o                       : std_logic_vector(1-1 downto 0)  := (others => '0'); -- Resets/clears the diagnostic
   signal s_ctrl_enable_o                      : std_logic_vector(1-1 downto 0)  := (others => '0'); -- Enables/disables update. Default is enabled
   signal s_ctrl_time_observation_interval_o   : std_logic_vector(64-1 downto 0) := (others => '0'); -- TAI time observation interval in ns
@@ -69,39 +70,29 @@ architecture rtl of dm_diag is
   signal s_ctrl_stall_cnt_i                   : std_logic_vector(32-1 downto 0) := (others => '0'); -- Stall time within observation interval in cycles
   signal s_ctrl_stall_max_ts_i                : std_logic_vector(64-1 downto 0) := (others => '0'); -- Timestamp of last max update
 
-  -- Regs/Sigs Diagnostics Module
-  type u32_array is array (natural range <>) of unsigned(31 downto 0);
-  type u64_array is array (natural range <>) of unsigned(63 downto 0);
-  
+
   signal r_tai_observer_cnt                   : unsigned(63 downto 0) := (others => '0');
   signal s_tai_observer_dec                   : unsigned(63 downto 0) := (others => '0');
-  signal r_tai_old                            : signed(63 downto 0)   := (others => '0');
+  signal r_tai_old                            : signed(63 downto 0) := (others => '0');
   signal r_time_dif, r_time_dif_pos, 
-         r_time_dif_neg                       : signed(63 downto 0)             := (others => '0');
+         r_time_dif_neg                       : signed(63 downto 0) := (others => '0');
   signal r_time_dif_pos_ts                    : std_logic_vector(64-1 downto 0) := (others => '0'); -- (approximate) timestamp of last pos dif update
   signal r_time_dif_neg_ts                    : std_logic_vector(64-1 downto 0) := (others => '0'); -- (approximate) timestamp of last neg dif update
 
-  signal r_wr_lock_acqu_last_ts, r_wr_lock_loss_last_ts : std_logic_vector(64-1 downto 0) := (others => '0');
-  signal s_wr_lock_cnt_i                      : std_logic_vector(64-1 downto 0) := (others => '0');
-  signal r_wr_lock_cnt                        : unsigned(64-1 downto 0)         := (others => '0');
-  signal r_wr_lock, s_wr_lock_loss, 
-         s_wr_lock_acqu                       : std_logic := '0';
-
-  signal s_stall_observation_cycles           : unsigned(31 downto 0)           := (others => '0');
+  signal s_stall_observation_cycles           : unsigned(31 downto 0) := (others => '0');
   signal ra_stall_cnt, ra_stall_observer_cnt, 
-         ra_stall_max                         : u32_array(g_cores-1 downto 0)   := (others => (others => '0'));
-  signal s_stall_observer_dec, s_stall_inc    : std_logic_vector(g_cores-1 downto 0) := (others => '0');
-  signal ra_stall_max_ts                      : u64_array(g_cores-1 downto 0)   := (others => (others => '0')); -- Timestamp of last max update
+         ra_stall_max                         : u32_array(g_cores-1 downto 0) := (others => (others => '0'));
+  signal s_stall_observer_dec, s_stall_inc    : std_logic_vector(g_cores-1 downto 0);
+  signal ra_stall_max_ts                      : u64_array(g_cores-1 downto 0) := (others => (others => '0')); -- Timestamp of last max update
     
   signal s_selector                           : natural;
-
 
 begin
 
 
 
   --Decrement for TAI observer process
-  s_tai_observer_dec        <= resize(unsigned(s_ctrl_enable_o(0 downto 0)), r_tai_observer_cnt'length); --divide by 8 ns, as we cannot count faster than clock period
+  s_tai_observer_dec        <= resize(unsigned(s_ctrl_enable_o), r_tai_observer_cnt'length); 
   s_ctrl_time_dif_pos_i     <= std_logic_vector(r_time_dif_pos);
   s_ctrl_time_dif_pos_ts_i  <= r_time_dif_pos_ts;
   s_ctrl_time_dif_neg_i     <= std_logic_vector(r_time_dif_neg);
@@ -119,11 +110,10 @@ begin
         r_time_dif_pos    <= (others => '0');
         r_time_dif_pos_ts <= tm_tai8ns_i;
         r_time_dif        <= (others => '0');
-        r_tai_observer_cnt <= (others => '1'); -- this makes sure s_ctrl_time_observation_interval_o is always copied 1 cycle after clear
       else
         if (r_tai_observer_cnt(r_tai_observer_cnt'left) = '1') then
           --re-init observer count down
-          r_tai_observer_cnt <= "000" & unsigned(s_ctrl_time_observation_interval_o(63 downto 3)); -- ticks are 8ns, shift by 3b
+          r_tai_observer_cnt <= unsigned(s_ctrl_time_observation_interval_o);
           
           --assign new extreme values penending on diff sign, timestamp the update (probably not exact, but enough to correlate with other log files)
           if (r_time_dif > r_time_dif_pos) then
@@ -168,7 +158,7 @@ begin
         if(rst_ref_n_i = '0' OR s_ctrl_reset_o(0) = '1') then
           ra_stall_max(I)          <= (others => '0');
           ra_stall_cnt(I)          <= (others => '0');
-          ra_stall_observer_cnt(I) <= (others => '1');
+          ra_stall_observer_cnt(I) <= unsigned(s_ctrl_stall_observation_interval_o);
           ra_stall_max_ts(I)       <= unsigned(tm_tai8ns_i);
         else
           if (ra_stall_observer_cnt(I)(ra_stall_observer_cnt(I)'left) = '1') then -- observer count down is over
@@ -193,33 +183,6 @@ begin
 
   end generate G1;   
 
- 
- -- --WR state observer process
-  s_wr_lock_loss  <= not wr_lock_i and     r_wr_lock; --falling edge of wr state is lock lost
-  s_wr_lock_acqu  <=     wr_lock_i and not r_wr_lock; --rising edge of wr state is lock acquired
-  s_wr_lock_cnt_i <= std_logic_vector(r_wr_lock_cnt);
-
- 
-  wr_observer : process (clk_ref_i)
-  begin
-    if rising_edge(clk_ref_i) then
-      r_wr_lock <= wr_lock_i;
-      if(rst_ref_n_i = '0' OR s_ctrl_reset_o(0) = '1' ) then
-        r_wr_lock_cnt          <= (others => '0'); 
-        r_wr_lock_loss_last_ts <= (others => '0');
-        r_wr_lock_acqu_last_ts <= (others => '0');
-      else
-        if (s_wr_lock_loss = '1') then
-          r_wr_lock_cnt <= r_wr_lock_cnt + 1;
-          r_wr_lock_loss_last_ts <= tm_tai8ns_i; 
-        end if;
-        if (s_wr_lock_acqu = '1') then
-          r_wr_lock_acqu_last_ts <= tm_tai8ns_i;
-        end if;
-      end if;
-    end if;
-  end process;
-
 
     INST_dm_diag_auto : dm_diag_auto
   port map (
@@ -238,12 +201,6 @@ begin
     time_dif_neg_i                => s_ctrl_time_dif_neg_i,
     time_dif_neg_ts_V_i           => "1",
     time_dif_neg_ts_i             => s_ctrl_time_dif_neg_ts_i,
-    wr_lock_acqu_last_ts_i        => r_wr_lock_acqu_last_ts, 
-    wr_lock_acqu_last_ts_V_i      => "1",
-    wr_lock_cnt_i                 => s_wr_lock_cnt_i, 
-    wr_lock_cnt_V_i               => "1", 
-    wr_lock_loss_last_ts_i        => r_wr_lock_loss_last_ts, 
-    wr_lock_loss_last_ts_V_i      => "1", 
     stall_observation_interval_o  => s_ctrl_stall_observation_interval_o,
     stall_stat_select_WR_o        => s_ctrl_stall_stat_select_WR_o,
     stall_stat_select_RD_o        => open,
