@@ -129,6 +129,9 @@ typedef struct {
   int64_t   avgTimeDiff;
   int64_t   warningThreshold;
   uint32_t  warningCnt;
+  std::string warningNode;
+  uint64_t  warningTime;
+  uint32_t  maxBacklog;
   uint32_t  stat;
 } HealthReport;
 

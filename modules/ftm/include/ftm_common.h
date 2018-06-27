@@ -121,7 +121,10 @@
 #define T_DIAG_DIF_SUM      (T_DIAG_DIF_MAX   + _TS_SIZE_  ) //Running sum of diff between dispatch time and deadline (signed!)
 #define T_DIAG_DIF_WTH      (T_DIAG_DIF_SUM   + _64b_SIZE_ ) //Diff Threshold between dispatch time and deadline which will trigger a warning (signed!)
 #define T_DIAG_WAR_CNT      (T_DIAG_DIF_WTH   + _TS_SIZE_  ) //Diff warning counter
-#define _T_DIAG_SIZE_       (T_DIAG_WAR_CNT   + _64b_SIZE_ ) 
+#define T_DIAG_WAR_1ST_HASH (T_DIAG_WAR_CNT   + _32b_SIZE_ ) //Hash of node at first diff warning
+#define T_DIAG_WAR_1ST_TS   (T_DIAG_WAR_1ST_HASH + _32b_SIZE_ ) //TS at first diff warning
+#define T_DIAG_BCKLOG_STRK  (T_DIAG_WAR_1ST_TS   + _TS_SIZE_  ) //Maximum Backlog streak size
+#define _T_DIAG_SIZE_       (T_DIAG_BCKLOG_STRK  + _32b_SIZE_ )
 
 
 #define T_META_START_PTR    (0)                               //same for all cpus, can be on any CPU. External view, read/write for host only. Must lie within bitmap range
@@ -166,25 +169,34 @@
 //////////////////////////////////////////////////////////////////////
 
 // Global Status field bits
-#define SHCTL_STATUS_UART_INIT_MSK    0x1
-#define SHCTL_STATUS_UART_INIT_POS    0
-#define SHCTL_STATUS_UART_INIT_SMSK   (SHCTL_STATUS_UART_INIT_MSK << SHCTL_STATUS_UART_INIT_POS)
+#define SHCTL_STATUS_UART_INIT_MSK      0x1
+#define SHCTL_STATUS_UART_INIT_POS      0
+#define SHCTL_STATUS_UART_INIT_SMSK     (SHCTL_STATUS_UART_INIT_MSK << SHCTL_STATUS_UART_INIT_POS)
 
-#define SHCTL_STATUS_EBM_INIT_MSK     0x1
-#define SHCTL_STATUS_EBM_INIT_POS     1
-#define SHCTL_STATUS_EBM_INIT_SMSK    (SHCTL_STATUS_EBM_INIT_MSK << SHCTL_STATUS_EBM_INIT_POS)
+#define SHCTL_STATUS_EBM_INIT_MSK       0x1
+#define SHCTL_STATUS_EBM_INIT_POS       1
+#define SHCTL_STATUS_EBM_INIT_SMSK      (SHCTL_STATUS_EBM_INIT_MSK << SHCTL_STATUS_EBM_INIT_POS)
 
-#define SHCTL_STATUS_PQ_INIT_MSK      0x1
-#define SHCTL_STATUS_PQ_INIT_POS      2
-#define SHCTL_STATUS_PQ_INIT_SMSK     (SHCTL_STATUS_PQ_INIT_MSK << SHCTL_STATUS_PQ_INIT_POS)
+#define SHCTL_STATUS_PQ_INIT_MSK        0x1
+#define SHCTL_STATUS_PQ_INIT_POS        2
+#define SHCTL_STATUS_PQ_INIT_SMSK       (SHCTL_STATUS_PQ_INIT_MSK << SHCTL_STATUS_PQ_INIT_POS)
 
-#define SHCTL_STATUS_DM_INIT_MSK      0x1
-#define SHCTL_STATUS_DM_INIT_POS      3
-#define SHCTL_STATUS_DM_INIT_SMSK     (SHCTL_STATUS_DM_INIT_MSK << SHCTL_STATUS_DM_INIT_POS)
+#define SHCTL_STATUS_DM_INIT_MSK        0x1
+#define SHCTL_STATUS_DM_INIT_POS        3
+#define SHCTL_STATUS_DM_INIT_SMSK       (SHCTL_STATUS_DM_INIT_MSK << SHCTL_STATUS_DM_INIT_POS)
 
-#define SHCTL_STATUS_DM_ERROR_MSK      0x1
-#define SHCTL_STATUS_DM_ERROR_POS      8
-#define SHCTL_STATUS_DM_ERROR_SMSK     (SHCTL_STATUS_DM_ERROR_MSK << SHCTL_STATUS_DM_ERROR_POS)
+#define SHCTL_STATUS_DM_ERROR_MSK       0x1
+#define SHCTL_STATUS_DM_ERROR_POS       8
+#define SHCTL_STATUS_DM_ERROR_SMSK      (SHCTL_STATUS_DM_ERROR_MSK << SHCTL_STATUS_DM_ERROR_POS)
+
+#define SHCTL_STATUS_BAD_NODE_TYPE_MSK  0x1
+#define SHCTL_STATUS_BAD_NODE_TYPE_POS  12
+#define SHCTL_STATUS_BAD_NODE_TYPE_SMSK (SHCTL_STATUS_BAD_ACT_TYPE_MSK << SHCTL_STATUS_BAD_ACT_TYPE_POS)
+
+#define SHCTL_STATUS_BAD_ACT_TYPE_MSK   0x1
+#define SHCTL_STATUS_BAD_ACT_TYPE_POS   13
+#define SHCTL_STATUS_BAD_ACT_TYPE_SMSK  (SHCTL_STATUS_BAD_ACT_TYPE_MSK << SHCTL_STATUS_BAD_ACT_TYPE_POS)
+
 
 //####################################################################
 // #########################  Nodes  #################################

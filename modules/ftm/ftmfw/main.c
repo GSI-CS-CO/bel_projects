@@ -105,6 +105,7 @@ void main(void) {
 
   uint32_t* tp;
   uint32_t** np;
+  uint32_t backlog = 0;
   
 
   init();
@@ -149,7 +150,7 @@ void main(void) {
 
     uint8_t thrIdx = *(uint32_t*)(pT(hp) + (T_TD_FLAGS >> 2)) & 0x7;
     if (DL(pT(hp))  <= getSysTime() + *(uint64_t*)(p + (( SHCTL_THR_STA + thrIdx * _T_TS_SIZE_ + T_TS_PREPTIME   ) >> 2) )) {
-
+      backlog++;
       *pncN(hp)   = (uint32_t)nodeFuncs[getNodeType(pN(hp))](pN(hp), pT(hp));       //process node and return thread's next node
       DL(pT(hp))  = (uint64_t)deadlineFuncs[getNodeType(pN(hp))](pN(hp), pT(hp));   // return thread's next deadline (returns infinity on upcoming NULL ptr)
       *running   &= ~((DL(pT(hp)) == -1ULL) << thrIdx);                             // clear running bit if deadline is at infinity
@@ -157,7 +158,9 @@ void main(void) {
       
     } else {
       //nothing due right now. did the host request any new threads to be started?
-      
+      *bcklogmax   = ((backlog > *bcklogmax) ? backlog : *bcklogmax);
+      backlog = 0;
+
       if(*start) {
         for(i=0;i<_THR_QTY_;i++) {
           if (*start & (1<<i)) {

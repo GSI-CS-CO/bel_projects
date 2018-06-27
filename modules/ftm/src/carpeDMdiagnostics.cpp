@@ -423,39 +423,73 @@ void CarpeDM::clearHealth() {
 vEbwrs& CarpeDM::clearHealth(uint8_t cpuIdx, vEbwrs& ew) {
   uint32_t const baseAdr = atDown.getMemories()[cpuIdx].extBaseAdr + atDown.getMemories()[cpuIdx].sharedOffs;
   
-  const vBuf zeroes32b = {0x00, 0x00, 0x00, 0x00};
-  const vBuf zeroes64b = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
-  const vBuf ones32b   = {0xff, 0xff, 0xff, 0xff};
+  uint8_t buf[8];
+  
+  
+  
+
   const vBuf basicState = {0x00, 0x00, 0x00, 0x0f};
+
+
+
+  //reset thread message counters
+  //printf("VA size before %u, VCS size \n", ew.va.size(), ew.vcs.size());
+  for (uint8_t thrIdx = 0; thrIdx < _THR_QTY_; thrIdx++) {
+
+    resetThrMsgCnt(cpuIdx, thrIdx, ew);
+    //printf("VA size %u, VCS size \n", ew.va.size(), ew.vcs.size());
+  }
+
+  size_t oldContent = ew.va.size();
 
   // reset diagnostic values aggregate
 
   ew.va.push_back(baseAdr + SHCTL_DIAG + T_DIAG_MSG_CNT + 0);  // 64b counter
   ew.va.push_back(baseAdr + SHCTL_DIAG + T_DIAG_MSG_CNT + _32b_SIZE_);
-  ew.vb += zeroes64b;
+  ew.vb.insert(ew.vb.end(), _64b_SIZE_, 0x00);
 
   // skip boot timestamp, we did not reboot
 
-  // iterate over remaining fields of the aggregate
-  for (uint32_t offs = T_DIAG_SCH_MOD; offs < T_DIAG_DIF_WTH; offs += _32b_SIZE_) {
+  // iterate over fields of the aggregate
+  for (uint32_t offs = T_DIAG_SCH_MOD; offs < T_DIAG_DIF_MIN; offs += _32b_SIZE_) {
     ew.va.push_back(baseAdr + SHCTL_DIAG + offs);
-    //min diff value must be initialised with -inf instead of 0
-    if ( (offs == T_DIAG_DIF_MIN + 0) || (offs == T_DIAG_DIF_MIN + _32b_SIZE_)) { ew.vb += ones32b; }
-    else                                                                        { ew.vb += zeroes32b; }
+    //min diff value must be initialised with max, max diff with min
+    ew.vb.insert(ew.vb.end(), _32b_SIZE_, 0x00);
   }
+
+  //Min dif
+  ew.va.push_back(baseAdr + SHCTL_DIAG + T_DIAG_DIF_MIN + 0);  // 64b counter
+  ew.va.push_back(baseAdr + SHCTL_DIAG + T_DIAG_DIF_MIN + _32b_SIZE_);
+  writeLeNumberToBeBytes(buf, std::numeric_limits<int64_t>::max());
+  ew.vb.insert(ew.vb.end(), buf, buf +_64b_SIZE_);
+
+  //Max dif
+  ew.va.push_back(baseAdr + SHCTL_DIAG + T_DIAG_DIF_MAX + 0);  // 64b counter
+  ew.va.push_back(baseAdr + SHCTL_DIAG + T_DIAG_DIF_MAX + _32b_SIZE_);
+  writeLeNumberToBeBytes(buf, std::numeric_limits<int64_t>::min());
+  ew.vb.insert(ew.vb.end(), buf, buf +_64b_SIZE_);
+
+  //Running Sum
+  ew.va.push_back(baseAdr + SHCTL_DIAG + T_DIAG_DIF_SUM + 0);  // 64b counter
+  ew.va.push_back(baseAdr + SHCTL_DIAG + T_DIAG_DIF_SUM + _32b_SIZE_);
+  ew.vb.insert(ew.vb.end(), _64b_SIZE_, 0x00);
+
+  
 
   //skip Dif Warning Threshold, that stays as it is
 
-  ew.va.push_back(baseAdr + SHCTL_DIAG + T_DIAG_WAR_CNT + 0); // 64b counter
-  ew.va.push_back(baseAdr + SHCTL_DIAG + T_DIAG_WAR_CNT + _32b_SIZE_); // 64b counter
-  ew.vb += zeroes64b;
+  // iterate over fields of the aggregate
+  for (uint32_t offs = T_DIAG_WAR_CNT; offs < _T_DIAG_SIZE_; offs += _32b_SIZE_) {
+    ew.va.push_back(baseAdr + SHCTL_DIAG + offs);
+    ew.vb.insert(ew.vb.end(), _32b_SIZE_, 0x00);
+  }
 
   // clear status value
   ew.va.push_back(baseAdr + SHCTL_STATUS);
   ew.vb += basicState;
 
   //insert EB flow control vector
-  ew.vcs += leadingOne(ew.va.size());
+  ew.vcs += leadingOne(ew.va.size() - oldContent);
 
   return ew;
 
@@ -464,6 +498,9 @@ vEbwrs& CarpeDM::clearHealth(uint8_t cpuIdx, vEbwrs& ew) {
 
 HealthReport& CarpeDM::getHealth(uint8_t cpuIdx, HealthReport &hr) {
   uint32_t const baseAdr = atDown.getMemories()[cpuIdx].extBaseAdr + atDown.getMemories()[cpuIdx].sharedOffs;
+
+
+
 
   vAdr diagAdr;
   vBuf diagBuf;
@@ -544,12 +581,15 @@ HealthReport& CarpeDM::getHealth(uint8_t cpuIdx, HealthReport &hr) {
 
   hr.cmodCnt          = (uint8_t)writeBeBytesToLeNumber<uint32_t>(b + T_DIAG_CMD_MOD + T_MOD_INFO_CNT);
 
-
   hr.minTimeDiff      =  writeBeBytesToLeNumber<int64_t>(b + T_DIAG_DIF_MIN);  
   hr.maxTimeDiff      =  writeBeBytesToLeNumber<int64_t>(b + T_DIAG_DIF_MAX);
   hr.avgTimeDiff      = (hr.msgCnt ? writeBeBytesToLeNumber<int64_t>(b + T_DIAG_DIF_SUM) / (int64_t)hr.msgCnt : 0);   
   hr.warningThreshold =  writeBeBytesToLeNumber<int64_t>(b + T_DIAG_DIF_WTH);
   hr.warningCnt       = writeBeBytesToLeNumber<uint64_t>(b + T_DIAG_WAR_CNT);
+  uint32_t warningHash = writeBeBytesToLeNumber<uint32_t>(b + T_DIAG_WAR_1ST_HASH);
+  hr.warningNode      = hm.contains(warningHash) ? hm.lookup(warningHash) : "?";
+  hr.warningTime      = writeBeBytesToLeNumber<uint64_t>(b + T_DIAG_WAR_1ST_TS);
+  hr.maxBacklog       = writeBeBytesToLeNumber<uint32_t>(b + T_DIAG_BCKLOG_STRK);
   hr.stat             = writeBeBytesToLeNumber<uint32_t>(b + _T_DIAG_SIZE_); // stat comes after last element of T_DIAG
   
   return hr;
