@@ -177,6 +177,7 @@ private:
   vEbwrs& createCommand(const std::string& targetName, uint8_t cmdPrio, mc_ptr mc, vEbwrs& ew);
   vEbwrs& deactivateOrphanedCommands(std::vector<QueueReport>& vQr, vEbwrs& ew);
   vEbwrs& clearHealth(uint8_t cpuIdx, vEbwrs& ew);
+  vEbwrs& resetThrMsgCnt(uint8_t cpuIdx, uint8_t thrIdx, vEbwrs& ew);
 
   int send(vEbwrs& ew);
 

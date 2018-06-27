@@ -114,6 +114,9 @@ vBuf CarpeDM::simReadCycle(vAdr va)
 
 int CarpeDM::ebWriteCycle(Device& dev, vAdr va, vBuf& vb, vBl vcs)
 {
+  if ( (va.size() != vcs.size()) || ( va.size() * _32b_SIZE_ != vb.size() ) ) 
+    throw std::runtime_error(" EB write cycle Adr / Data / Flow control vector lengths (" + std::to_string(va.size()) + "/" + std::to_string(vb.size() /  _32b_SIZE_) + "/" + std::to_string(vcs.size()) +") do not match\n");
+
   if (sim) {return simWriteCycle(va, vb); }
   //eb_status_t status;
   //FIXME What about MTU? What about returned eb status ??
@@ -153,6 +156,8 @@ int   CarpeDM::ebWriteCycle(Device& dev, vAdr va, vBuf& vb) {return  ebWriteCycl
 
 vBuf CarpeDM::ebReadCycle(Device& dev, vAdr va, vBl vcs)
 {
+  if (va.size() != vcs.size()) throw std::runtime_error(" EB Read cycle Adr / Flow control vector lengths (" + std::to_string(va.size()) + "/" + std::to_string(vcs.size()) + ") do not match\n");
+
   if (sim) {return simReadCycle(va); }
   //FIXME What about MTU? What about returned eb status ??
 

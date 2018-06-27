@@ -25,11 +25,14 @@ uint32_t* const status    = (uint32_t*)&_startshared[SHCTL_STATUS >> 2];
 uint64_t* const count     = (uint64_t*)&_startshared[(SHCTL_DIAG  + T_DIAG_MSG_CNT)  >> 2];
 uint64_t* const boottime  = (uint64_t*)&_startshared[(SHCTL_DIAG  + T_DIAG_BOOT_TS)  >> 2];
 #ifdef DIAGNOSTICS
-int64_t* const diffsum   = (int64_t*) &_startshared[(SHCTL_DIAG   + T_DIAG_DIF_SUM ) >> 2];
-int64_t* const diffmax   = (int64_t*) &_startshared[(SHCTL_DIAG   + T_DIAG_DIF_MAX ) >> 2];
-int64_t* const diffmin   = (int64_t*) &_startshared[(SHCTL_DIAG   + T_DIAG_DIF_MIN ) >> 2];
-int64_t* const diffwth   = (int64_t*) &_startshared[(SHCTL_DIAG   + T_DIAG_DIF_WTH ) >> 2];
-int64_t* const diffwcnt  = (int64_t*) &_startshared[(SHCTL_DIAG   + T_DIAG_WAR_CNT ) >> 2];
+int64_t* const diffsum    = (int64_t*) &_startshared[(SHCTL_DIAG  + T_DIAG_DIF_SUM ) >> 2];
+int64_t* const diffmax    = (int64_t*) &_startshared[(SHCTL_DIAG  + T_DIAG_DIF_MAX ) >> 2];
+int64_t* const diffmin    = (int64_t*) &_startshared[(SHCTL_DIAG  + T_DIAG_DIF_MIN ) >> 2];
+int64_t* const diffwth    = (int64_t*) &_startshared[(SHCTL_DIAG  + T_DIAG_DIF_WTH ) >> 2];
+uint32_t* const diffwcnt  = (uint32_t*) &_startshared[(SHCTL_DIAG + T_DIAG_WAR_CNT ) >> 2];
+uint32_t* const diffwhash = (uint32_t*) &_startshared[(SHCTL_DIAG + T_DIAG_WAR_1ST_HASH ) >> 2];
+uint64_t* const diffwts   = (uint64_t*) &_startshared[(SHCTL_DIAG + T_DIAG_WAR_1ST_TS ) >> 2];
+uint32_t* const bcklogmax = (uint32_t*) &_startshared[(SHCTL_DIAG + T_DIAG_BCKLOG_STRK )  >> 2];
 #endif
 uint32_t* const start   = (uint32_t*)&_startshared[(SHCTL_THR_CTL + T_TC_START)   >> 2];
 uint32_t* const running = (uint32_t*)&_startshared[(SHCTL_THR_CTL + T_TC_RUNNING) >> 2];
@@ -106,10 +109,13 @@ void dmInit() {
   }
   #ifdef DIAGNOSTICS
     *diffsum   = 0;
-    *diffmax   = INT64_MIN;
-    *diffmin   = INT64_MAX;
+    *diffmax   = 0xffffffffffffffffLL;
+    *diffmin   = 0x7fffffffffffffffLL;
     *diffwth   = 50000LL;
     *diffwcnt  = 0;
+    *diffwhash = 0;
+    *diffwts   = 0;
+    *bcklogmax = 0;
     *boottime  = getSysTime();
   #endif  
 
@@ -128,9 +134,9 @@ uint8_t wrTimeValid() {
 
 }
 
-uint32_t* dummyNodeFunc (uint32_t* node, uint32_t* thrData)                   { return LM32_NULL_PTR;}
-uint64_t  dummyDeadlineFunc (uint32_t* node, uint32_t* thrData)               { return -1ULL; } //return infinity
-uint32_t* dummyActionFunc (uint32_t* node, uint32_t* cmd, uint32_t* thrData)  { return LM32_NULL_PTR;}
+uint32_t* dummyNodeFunc (uint32_t* node, uint32_t* thrData)                   { *status |= SHCTL_STATUS_BAD_NODE_TYPE_SMSK; return LM32_NULL_PTR;}
+uint64_t  dummyDeadlineFunc (uint32_t* node, uint32_t* thrData)               { *status |= SHCTL_STATUS_BAD_NODE_TYPE_SMSK; return -1ULL; } //return infinity
+uint32_t* dummyActionFunc (uint32_t* node, uint32_t* cmd, uint32_t* thrData)  { *status |= SHCTL_STATUS_BAD_ACT_TYPE_SMSK; return LM32_NULL_PTR;}
 
 uint8_t getNodeType(uint32_t* node) {
   uint32_t* tmpType;
@@ -272,9 +278,10 @@ uint32_t* tmsg(uint32_t* node, uint32_t* thrData) {
   uint64_t tmpPar = *(uint64_t*)&node[TMSG_PAR >> 2];
   
   #ifdef DIAGNOSTICS
+    int64_t now = getSysTime();
     //Diagnostic Event? insert PQ Message counter. Different device, can't be placed inside atomic!
     if (*(uint64_t*)&node[TMSG_ID >> 2] == DIAG_PQ_MSG_CNT) tmpPar = *(uint64_t*)&pFpqCtrl[PRIO_CNT_OUT_ALL_GET_0>>2];
-    int64_t diff  = *(uint64_t*)&thrData[T_TD_DEADLINE >> 2] - getSysTime();
+    int64_t diff  = *(uint64_t*)&thrData[T_TD_DEADLINE >> 2] - now;
     uint8_t overflow = (diff >= 0) & (*diffsum >= 0) & ((diff + *diffsum)  < 0)
                      | (diff <  0) & (*diffsum <  0) & ((diff + *diffsum) >= 0);
     *diffsum   = (overflow          ? diff    : *diffsum + diff);
@@ -282,7 +289,9 @@ uint32_t* tmsg(uint32_t* node, uint32_t* thrData) {
     *diffmin   = ((diff < *diffmin) ? diff    : *diffmin);
     *diffmax   = ((diff > *diffmax) ? diff    : *diffmax);
     *count     = (overflow          ? 0       : *count);   // necessary for calculating average: if sum resets, count must also reset
-    *diffwcnt += (int64_t)(diff < *diffwth); //inc diff warning counter when diff below threshold 
+    *diffwcnt += (int64_t)(diff < *diffwth); //inc diff warning counter when diff below threshold
+    *diffwhash = ((int64_t)(diff < *diffwth) && !*diffwhash) ? node[NODE_HASH >> 2] : *diffwhash; //save node hash of first warning
+    *diffwts   = ((int64_t)(diff < *diffwth) && !*diffwts)   ? now : *diffwts; //save time of first warning
   #endif
 
   //disptach timing message to priority queue

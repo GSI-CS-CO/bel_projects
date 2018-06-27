@@ -53,7 +53,10 @@ extern int64_t*  const diffsum;
 extern int64_t*  const diffmax;
 extern int64_t*  const diffmin;
 extern int64_t*  const diffwth;
-extern int64_t*  const diffwcnt;
+extern uint32_t* const diffwcnt;
+extern uint32_t* const diffwhash;
+extern uint64_t* const diffwts;
+extern uint32_t* const bcklogmax;
 #endif
 extern uint32_t* const start;
 extern uint32_t* const running;

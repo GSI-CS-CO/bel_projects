@@ -172,14 +172,14 @@ void showHealth(const char *netaddress, CarpeDM& cdm, bool verbose) {
   
   // Boot Time and Msg Count
   printf("\u2560"); for(int i=0;i<width;i++) printf("\u2550"); printf("\u2563\n");
-  printf("\u2551 %3s \u2502 %19s \u2502 %14s \u2502 %37s\n", 
-      "Cpu", "BootTime", "CPU Msg Cnt", "\u2551");
+  printf("\u2551 %3s \u2502 %19s \u2502 %14s \u2502 %10s \u2502 %24s\n", 
+      "Cpu", "BootTime", "CPU Msg Cnt", "State", "\u2551");
   printf("\u2560"); for(int i=0;i<width;i++) printf("\u2550"); printf("\u2563\n");
   for(uint8_t i=0; i < cpuQty; i++) {
     char date[40];
     uint64_t timeval = hr[i].bootTime / 1000000000ULL; //all times are in nanoseconds, we need to convert to seconds
     strftime(date,  sizeof(date), "%Y-%m-%d %H:%M:%S", gmtime((time_t*)&timeval)); //human readable date
-    printf("\u2551 %3u \u2502 %.19s \u2502 %14llu \u2502 %37s\n", hr[i].cpu, date, (long long unsigned int)hr[i].msgCnt, "\u2551");    
+    printf("\u2551 %3u \u2502 %.19s \u2502 %14llu \u2502 0x%08x \u2502 %24s\n", hr[i].cpu, date, (long long unsigned int)hr[i].msgCnt, hr[i].stat, "\u2551");    
   }
 
   // Most recent schedule modification (time, issuer, type of operation)
@@ -206,18 +206,30 @@ void showHealth(const char *netaddress, CarpeDM& cdm, bool verbose) {
 
   //LM32 message ispatch statistics (min lead, max lead, avg lead, lead warning threshold, warning count, status register)
   printf("\u2560"); for(int i=0;i<width;i++) printf("\u2550"); printf("\u2563\n");
-  printf("\u2551 %3s \u2502 %9s \u2502 %9s \u2502 %9s \u2502 %9s \u2502 %9s \u2502 %10s   %3s\n", 
-      "Cpu", "Min dT", "Max dT", "Avg dT", "Thrs dT", "WrnCnt", "State", "\u2551");
+  printf("\u2551 %3s \u2502 %9s \u2502 %9s \u2502 %9s \u2502 %9s \u2502 %9s \u2502 %9s %4s\n", 
+      "Cpu", "Min dT", "Max dT", "Avg dT", "Thrs dT", "Warnings", "Max Backlog", "\u2551");
   printf("\u2560"); for(int i=0;i<width;i++) printf("\u2550"); printf("\u2563\n");
   for(uint8_t i=0; i < cpuQty; i++) {
-    printf("\u2551 %3u \u2502 %9d \u2502 %9d \u2502 %9d \u2502 %9d \u2502 %9u \u2502 0x%08x   %3s\n", 
+    printf("\u2551 %3u \u2502 %9d \u2502 %9d \u2502 %9d \u2502 %9d \u2502 %9u \u2502 %9u %6s\n", 
       hr[i].cpu,
       (int)hr[i].minTimeDiff,
       (int)hr[i].maxTimeDiff,
       (int)hr[i].avgTimeDiff,
       (int)hr[i].warningThreshold,
       hr[i].warningCnt,
-      hr[i].stat, "\u2551");
+      hr[i].maxBacklog, 
+      "\u2551");
+  }
+  //
+  printf("\u2560"); for(int i=0;i<width;i++) printf("\u2550"); printf("\u2563\n");
+  printf("\u2551 %3s \u2502 %19s \u2502 %50s %3s\n", "Cpu",  "1st Warning", "Location", "\u2551");
+  printf("\u2560"); for(int i=0;i<width;i++) printf("\u2550"); printf("\u2563\n");
+  
+  for(uint8_t i=0; i < cpuQty; i++) {
+    char date[40];
+    uint64_t timeval = hr[i].warningTime / 1000000000ULL;
+    strftime(date,  sizeof(date), "%Y-%m-%d %H:%M:%S", gmtime((time_t*)&timeval));
+    printf("\u2551 %3u \u2502 %19s \u2502 %50s %3s\n", hr[i].cpu, date, hr[i].warningNode.c_str(), "\u2551");
   }
     
   printf("\u255A"); for(int i=0;i<width;i++) printf("\u2550"); printf("\u255D\n");
