@@ -40,6 +40,7 @@ use work.ftm_pkg.all;
 use work.prio_pkg.all;
 use work.etherbone_pkg.all;
 
+
 entity ftm_lm32_cluster is
 generic(
   g_is_dm         : boolean := false;
@@ -94,16 +95,10 @@ architecture rtl of ftm_lm32_cluster is
   --**************************************************************************--
   -- Cluster CROSSBAR
   ------------------------------------------------------------------------------
-  constant c_clu_slaves     : natural := 2 + g_cores; -- info rom, prioq ctrl, rams
-  constant c_clu_masters    : natural := 1;
-
-  --sdb
-  constant c_clu_info_rom   : natural := 0;
-  constant c_clu_prioq_ctrl : natural := 1;
-  --RAMs are done in generate
+  -- can't be done in package :(
+  constant c_clu_slaves     : natural := c_static_cluster_slaves + g_cores; -- info rom, prioq ctrl, diag, rams
    
-  --msi  
-  constant c_msi_slave      : natural := 0;
+  
 
   --layout
   constant c_clu_layout_req_slaves  : t_sdb_record_array(c_clu_slaves-1 downto 0)  :=
@@ -139,6 +134,8 @@ architecture rtl of ftm_lm32_cluster is
          r_rst_lm32_n0,
          r_rst_lm32_n1    : std_logic_vector(g_cores-1 downto 0);            
   signal s_clu_info       : t_wishbone_master_in;
+  signal stall_diag       : std_logic_vector(g_cores-1 downto 0); 
+  signal cycle_diag       : std_logic_vector(g_cores-1 downto 0);
 
 begin
 
@@ -151,15 +148,17 @@ begin
       g_world_bridge_sdb               => g_world_bridge_sdb,
       g_profile                        => f_substr(g_profiles, I, ';'),
       g_init_file                      => f_substr(g_init_files, I, ';'),
-		g_is_dm                          => g_is_dm
+		  g_is_dm                          => g_is_dm
     ) 
     port map(
       clk_sys_i      => clk_ref_i,
       rst_n_i        => rst_ref_n_i,
       rst_lm32_n_i   => s_rst_lm32_n(I),
 
-      tm_tai8ns_i    => tm_tai8ns_i,            
+      tm_tai8ns_i    => tm_tai8ns_i,
 
+      stall_diag_o   => stall_diag(I),          
+      cycle_diag_o   => cycle_diag(I),
       --LM32               
       world_master_o => lm32_masters_out(I),
       world_master_i => lm32_masters_in(I),
@@ -170,8 +169,8 @@ begin
       msi_slave_i    => lm32_msi_slaves_in (I),
       msi_slave_o    => lm32_msi_slaves_out (I),       
       --2nd RAM port               
-      ram_slave_o    => clu_cb_masterport_in(2+I),                      
-      ram_slave_i    => clu_cb_masterport_out(2+I)
+      ram_slave_o    => clu_cb_masterport_in(c_static_cluster_slaves + I),                      
+      ram_slave_i    => clu_cb_masterport_out(c_static_cluster_slaves + I)
     );
    
     -- CPUs, RAMs and PrioQ live in Ref domain. Sync CPU bus to Sys domain - wb master & MSI slave.
@@ -237,8 +236,8 @@ begin
     -- Master reader port
     master_clk_i   => clk_ref_i,
     master_rst_n_i => rst_ref_n_i,
-    master_i       => clu_cb_slaveport_out(0),
-    master_o       => clu_cb_slaveport_in(0));
+    master_i       => clu_cb_slaveport_out(c_clu_info_rom),
+    master_o       => clu_cb_slaveport_in(c_clu_info_rom));
 
   clu_msi_sys2ref : xwb_clock_crossing
   port map(
@@ -269,8 +268,8 @@ begin
 
       time_i        => tm_tai8ns_i,
 
-      ctrl_i        => clu_cb_masterport_out(c_clu_prioq_ctrl),
-      ctrl_o        => clu_cb_masterport_in(c_clu_prioq_ctrl),
+      ctrl_i        => clu_cb_masterport_out(c_clu_pq_ctrl),
+      ctrl_o        => clu_cb_masterport_in(c_clu_pq_ctrl),
       slaves_i      => prioq_slaves_in,
       slaves_o      => prioq_slaves_out,
       master_o      => s_prio_data_out,
@@ -292,6 +291,23 @@ begin
       master_rst_n_i => rst_sys_n_i,
       master_i       => dm_prioq_master_i,
       master_o       => dm_prioq_master_o
+    );
+
+    -- Diagnostic module lives completely in REF domain, no sync to clu CB, TAI time or LM32 bus lines necessary
+
+    diagnostics :  dm_diag
+    generic map(
+      g_cores => g_cores --CPU cores
+    )
+    port map(
+      clk_ref_i      => clk_ref_i,
+      rst_ref_n_i    => rst_ref_n_i,
+      tm_tai8ns_i    => tm_tai8ns_i,
+      cyc_diag_i     => cycle_diag,
+      stall_diag_i   => stall_diag,
+      
+      ctrl_i         => clu_cb_masterport_out(c_clu_diag),
+      ctrl_o         => clu_cb_masterport_in(c_clu_diag)
     );
 
   end generate;
@@ -339,6 +355,5 @@ begin
   end process;  
 
   s_rst_lm32_n <= r_rst_lm32_n1;
-  
 
 end architecture rtl;

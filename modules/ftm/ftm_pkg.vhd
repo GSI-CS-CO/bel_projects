@@ -6,6 +6,7 @@ use ieee.numeric_std.all;
 library work;
 use work.wishbone_pkg.all;
 use work.wb_irq_pkg.all;
+use work.dm_diag_auto_pkg.c_dm_diag_ctrl_sdb;
 
 package ftm_pkg is
 
@@ -30,8 +31,19 @@ package ftm_pkg is
   function f_lm32_masters_bridge_msis(cores : natural) return t_sdb_record_array;
   function f_cluster_sdb(cores : natural; ramPerCore  : natural;  is_dm : boolean ) return t_sdb_record_array;
   function f_cluster_bridge(msi_slave : t_sdb_msi; cores : natural; ramPerCore  : natural;  is_dm : boolean ) return t_sdb_bridge;
-                        
-                        
+
+  constant c_static_cluster_slaves : natural := 3;                        
+  --sadly, we can't push generics into packages. declare in ftm_lm32_cluster.vhd
+  --constant c_clu_slaves     : natural := c_static_cluster_slaves + g_cores; -- info rom, prioq ctrl, diag, rams
+  constant c_clu_masters    : natural := 1;
+
+  --sdb
+  constant c_clu_info_rom   : natural := 0;
+  constant c_clu_pq_ctrl    : natural := 1;
+  constant c_clu_diag       : natural := 2;                    
+  constant c_msi_slave      : natural := 0;
+
+
   constant c_dummy_bridge : t_sdb_bridge := (
   sdb_child    => (others => '0'),
   sdb_component => (
@@ -47,6 +59,7 @@ package ftm_pkg is
   constant c_dummy_slave_in : t_wishbone_slave_in := ('0', '0', x"00000000", x"F", '0', x"00000000"); 
   constant c_dummy_slave_out : t_wishbone_slave_out := ('0', '0', '0', '0', '0', x"00000000");
   
+  
 
   component ftm_lm32 is
   generic(
@@ -61,6 +74,9 @@ package ftm_pkg is
     rst_n_i         : in  std_logic;  -- reset, active low 
     rst_lm32_n_i    : in  std_logic;  -- reset, active low
     tm_tai8ns_i     : in std_logic_vector(63 downto 0) := (others => '0');
+
+    stall_diag_o   : out std_logic;
+    cycle_diag_o   : out std_logic;
       
     -- wb world interface of the lm32
     world_master_o  : out t_wishbone_master_out; 
@@ -155,6 +171,22 @@ package ftm_pkg is
     src_o     : out t_wishbone_master_out;
     src_i     : in  t_wishbone_master_in
     
+  );
+  end component;
+
+  component dm_diag is
+  generic(
+    g_cores : natural := 16 --CPU cores
+  );
+  Port(
+    clk_ref_i                     : std_logic;                            -- Clock input for ref domain
+    rst_ref_n_i                   : std_logic;                            -- Reset input (active low) for ref domain
+    tm_tai8ns_i                   : std_logic_vector(63 downto 0) := (others => '0');
+    cyc_diag_i                    : std_logic_vector(g_cores-1 downto 0);
+    stall_diag_i                  : std_logic_vector(g_cores-1 downto 0);
+    
+    ctrl_i                        : in  t_wishbone_slave_in;
+    ctrl_o                        : out t_wishbone_slave_out
   );
   end component;
   
@@ -415,15 +447,18 @@ package body ftm_pkg is
   end f_substr_end;   
   
 
+  
+
   function f_cluster_sdb(cores : natural; ramPerCore  : natural;  is_dm : boolean )
   return t_sdb_record_array is
-    variable v_clu_req :  t_sdb_record_array((2 + cores) -1 downto 0);
+    variable v_clu_req :  t_sdb_record_array((c_static_cluster_slaves + cores) -1 downto 0);
     variable i : natural;
   begin
-    -- add info rom, prioq ctrl, rams 
-    v_clu_req(0) := f_sdb_auto_device(c_cluster_info_sdb,        true);
-    v_clu_req(1) := f_sdb_auto_device(c_pq_ctrl_sdb,             is_dm);
-    for i in 2 to v_clu_req'length-1 loop
+    -- add info rom, diagnostics, prioq ctrl, rams 
+    v_clu_req(c_clu_info_rom) := f_sdb_auto_device(c_cluster_info_sdb,        true);
+    v_clu_req(c_clu_pq_ctrl)  := f_sdb_auto_device(c_pq_ctrl_sdb,             is_dm);
+    v_clu_req(c_clu_diag)     := f_sdb_auto_device(c_dm_diag_ctrl_sdb,        true);
+    for i in c_static_cluster_slaves to v_clu_req'length-1 loop
       v_clu_req(i) := f_sdb_auto_device( f_xwb_dpram_userlm32(ramPerCore), true);
     end loop;
 
@@ -469,11 +504,11 @@ package body ftm_pkg is
   function f_cluster_bridge(msi_slave : t_sdb_msi; cores : natural; ramPerCore  : natural;  is_dm : boolean )
   return t_sdb_bridge is 
     variable v_ret      :  t_sdb_bridge;
-    variable v_clu_req_slaves  :  t_sdb_record_array((cores + 2)-1 downto 0);
-	 variable v_clu_req_masters :  t_sdb_record_array(0 downto 0); 
+    variable v_clu_req_slaves  :  t_sdb_record_array(c_static_cluster_slaves + cores-1 downto 0);
+	  variable v_clu_req_masters :  t_sdb_record_array(c_clu_masters-1 downto 0); 
   begin
     v_clu_req_slaves  :=  f_cluster_sdb(cores, ramPerCore, is_dm);
-    v_clu_req_masters :=  (0 =>  f_sdb_auto_msi(msi_slave, true));
+    v_clu_req_masters :=  (c_msi_slave =>  f_sdb_auto_msi(msi_slave, true));
 
     v_ret  := f_xwb_bridge_layout_sdb(
             true, 
