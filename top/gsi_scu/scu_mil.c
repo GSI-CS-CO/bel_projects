@@ -21,7 +21,6 @@ int write_mil(volatile unsigned int *base, short data, short fc_ifc_addr) {
   return OKAY;
 }
 
-
 int write_mil_blk(volatile unsigned int *base, short *data, short fc_ifc_addr) {
   int i;
   atomic_on();
@@ -60,22 +59,22 @@ int read_mil(volatile unsigned int *base, short *data, short fc_ifc_addr) {
 
   // wait for task to start (tx fifo full or other tasks running)
   rx_req = base[MIL_SIO3_TX_REQ];
-  while(!(rx_req & 0x4) && (timeout < TASK_TIMEOUT)) {
+  while(!(rx_req & 0x4) && (timeout < BLOCK_TIMEOUT)) {
     usleep(1);
     rx_req = base[MIL_SIO3_TX_REQ];
     timeout++;
   }
-  if (timeout > TASK_TIMEOUT)
+  if (timeout > BLOCK_TIMEOUT)
     return RCV_TIMEOUT;
 
   // wait for task to finish, a read over the dev bus needs at least 40us
   rx_data_avail = base[MIL_SIO3_D_RCVD];
-  while(!(rx_data_avail & 0x4) && (timeout < TASK_TIMEOUT)) {
+  while(!(rx_data_avail & 0x4) && (timeout < BLOCK_TIMEOUT)) {
     usleep(1);
     rx_data_avail = base[MIL_SIO3_D_RCVD];
     timeout++;
   }
-  if (timeout > TASK_TIMEOUT)
+  if (timeout > BLOCK_TIMEOUT)
     return RCV_TIMEOUT;
 
   // task finished
@@ -196,22 +195,22 @@ int scub_read_mil(volatile unsigned short *base, int slot, short *data, short fc
 
   // wait for task to start (tx fifo full or other tasks running)
   rx_req = base[CALC_OFFS(slot) + MIL_SIO3_TX_REQ];
-  while(!(rx_req & 0x4) && (timeout < TASK_TIMEOUT)) {
+  while(!(rx_req & 0x4) && (timeout < BLOCK_TIMEOUT)) {
     usleep(1);
     rx_req = base[CALC_OFFS(slot) + MIL_SIO3_TX_REQ];
     timeout++;
   }
-  if (timeout > TASK_TIMEOUT)
+  if (timeout > BLOCK_TIMEOUT)
     return RCV_TIMEOUT;
 
   // wait for task to finish, a read over the dev bus needs at least 40us
   rx_data_avail = base[CALC_OFFS(slot) + MIL_SIO3_D_RCVD];
-  while(!(rx_data_avail & 0x4) && (timeout < TASK_TIMEOUT)) {
+  while(!(rx_data_avail & 0x4) && (timeout < BLOCK_TIMEOUT)) {
     usleep(1);
     rx_data_avail = base[CALC_OFFS(slot) + MIL_SIO3_D_RCVD];
     timeout++;
   }
-  if (timeout > TASK_TIMEOUT)
+  if (timeout > BLOCK_TIMEOUT)
     return RCV_TIMEOUT;
 
   // task finished

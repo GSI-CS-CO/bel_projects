@@ -11,7 +11,7 @@ entity fg_quad_scu_bus is
     Base_addr:            unsigned(15 downto 0);
     clk_in_hz:            integer := 50_000_000;        -- 50Mhz
     diag_on_is_1:         integer range 0 to 1 := 0;    -- if 1 then diagnosic information is generated during compilation
-    fw_version:           integer range 0 to 65535 := 2
+    fw_version:           integer range 0 to 65535 := 3
     );
   port (
     -- SCUB interface
@@ -79,6 +79,7 @@ architecture fg_quad_scu_bus_arch of fg_quad_scu_bus is
   signal  wr_brc_start:     std_logic;
   signal  rd_ramp_cnt_lo:   std_logic;
   signal  rd_ramp_cnt_hi:   std_logic;
+  signal  wr_ramp_cnt_lo:   std_logic;
   signal  wr_tag_low:       std_logic;
   signal  wr_tag_high:      std_logic;
   signal  rd_tag_low:       std_logic;
@@ -135,6 +136,7 @@ adr_decoder: process (clk, nReset)
       rd_start_value_l  <= '0';
       wr_shift          <= '0';
       rd_shift          <= '0';
+      wr_ramp_cnt_lo    <= '0';
       rd_ramp_cnt_lo    <= '0';
       rd_ramp_cnt_hi    <= '0';
       wr_tag_low        <= '0';
@@ -157,6 +159,7 @@ adr_decoder: process (clk, nReset)
       rd_start_value_l  <= '0';
       wr_shift          <= '0';
       rd_shift          <= '0';
+      wr_ramp_cnt_lo    <= '0';
       rd_ramp_cnt_lo    <= '0';
       rd_ramp_cnt_hi    <= '0';
       wr_tag_low        <= '0';
@@ -226,7 +229,10 @@ adr_decoder: process (clk, nReset)
             end if;
             
           when ramp_cnt_lo_adr =>
-            if Ext_Rd_active = '1' then
+            if Ext_Wr_active = '1' then
+              wr_ramp_cnt_lo  <= '1';
+              dtack           <= '1';
+            elsif Ext_Rd_active = '1' then
               rd_ramp_cnt_lo  <= '1';
               dtack       <= '1';
             end if;
@@ -405,6 +411,10 @@ begin
       
       if rd_ramp_cnt_lo = '1' then -- save counter to shadow register
         ramp_cnt_shadow <= ramp_cnt_reg;
+      end if;
+
+      if wr_ramp_cnt_lo = '1' then
+        ramp_cnt_reg <= (others => '0');
       end if;
       
     end if;
