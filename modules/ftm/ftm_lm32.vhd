@@ -51,6 +51,8 @@ port(
   rst_n_i        : in  std_logic;  -- reset, active low 
   rst_lm32_n_i   : in  std_logic;  -- reset, active low
   tm_tai8ns_i    : in std_logic_vector(63 downto 0) := (others => '0');
+  stall_diag_o   : out std_logic;
+  cycle_diag_o   : out std_logic;
     
   -- wb world interface of the lm32
   world_master_o  : out t_wishbone_master_out; 
@@ -326,5 +328,10 @@ begin
    lm32_cb_master_in(c_lm32_world_bridge) <= world_master_i;
    msi_cb_slave_in  (c_lm32_world_bridge) <= msi_slave_i;
    msi_slave_o <= msi_cb_slave_out(c_lm32_world_bridge);
+
+
+   stall_diag_o <= lm32_idwb_master_in(0).stall;
+   cycle_diag_o <= lm32_idwb_master_out(0).cyc;
+
 
 end rtl;
