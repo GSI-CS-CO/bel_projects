@@ -377,7 +377,20 @@ vEbwrs& CarpeDM::createCommandBurst(Graph& g, vEbwrs& ew) {
 
 
 void  CarpeDM::resetThrMsgCnt(uint8_t cpuIdx, uint8_t thrIdx) {
-  write64b(atDown.getMemories()[cpuIdx].extBaseAdr + atDown.getMemories()[cpuIdx].sharedOffs + SHCTL_THR_DAT + thrIdx * _T_TD_SIZE_ + T_TD_MSG_CNT, 0ULL);
+  vEbwrs ew;
+  resetThrMsgCnt(cpuIdx, thrIdx, ew);
+  ebWriteCycle(ebd, ew.va, ew.vb, ew.vcs);  
+}
+
+vEbwrs& CarpeDM::resetThrMsgCnt(uint8_t cpuIdx, uint8_t thrIdx, vEbwrs& ew) {
+  uint32_t msgCntAdr = atDown.getMemories()[cpuIdx].extBaseAdr + atDown.getMemories()[cpuIdx].sharedOffs + SHCTL_THR_DAT + thrIdx * _T_TD_SIZE_ + T_TD_MSG_CNT;
+
+  ew.va.push_back(msgCntAdr + 0);
+  ew.va.push_back(msgCntAdr + _32b_SIZE_);
+  ew.vb.insert(ew.vb.end(), _64b_SIZE_, 0x00);
+  ew.vcs += leadingOne(2);
+
+  return ew;
   
 }
 
