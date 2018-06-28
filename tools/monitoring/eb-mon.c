@@ -3,7 +3,7 @@
 //
 //  created : 2015
 //  author  : Dietrich Beck, GSI-Darmstadt
-//  version : 15-Feb-2018
+//  version : 24-Apr-2018
 //
 // Command-line interface for WR monitoring via Etherbone.
 //
@@ -34,7 +34,7 @@
 // For all questions and ideas contact: d.beck@gsi.de
 // Last update: 25-April-2015
 //////////////////////////////////////////////////////////////////////////////////////////////
-#define EBMON_VERSION "1.4.0"
+#define EBMON_VERSION "1.6.0"
 
 // standard includes
 #include <unistd.h> // getopt
@@ -67,6 +67,7 @@ static void die(const char* where, eb_status_t status) {
 static void help(void) {
   fprintf(stderr, "Usage: %s [OPTION] <etherbone-device>\n", program);
   fprintf(stderr, "\n");
+  fprintf(stderr, "  -a               display gateware 'build type'\n");
   fprintf(stderr, "  -b<busIndex>     display ID (ID of slave on the specified 1-wire bus)\n");
   fprintf(stderr, "  -c<eb-device>    compare timestamp with the one of <eb-device> and display the result\n");
   fprintf(stderr, "  -d               display WR time\n");
@@ -82,6 +83,7 @@ static void help(void) {
   fprintf(stderr, "  -u<index>        user 1-wire: specify WB device in case multiple WB devices of the same type exist (default: u0)\n");
   fprintf(stderr, "  -v               display verbose information\n");
   fprintf(stderr, "  -w<index>        WR 1-wire: specify WB device in case multiple WB devices of the same type exist (default: u0)\n");
+  fprintf(stderr, "  -z               display FPGA uptime [h]\n");
   fprintf(stderr, "\n");
   fprintf(stderr, "Use this tool to get some info about WR enabled hardware.\n");
   fprintf(stderr, "Example1: '%s -v dev/wbm0' display typical information.\n", program);
@@ -93,6 +95,8 @@ static void help(void) {
 
 
 int main(int argc, char** argv) {
+  #define BUILDTYPELEN 256
+
   eb_status_t       status;
   eb_socket_t       socket;
   int               devIndex=-1;  // 0,1,2... - there may be more than 1 device on the WB bus
@@ -116,6 +120,8 @@ int main(int argc, char** argv) {
   int         getBoardID=0;
   int         getBoardTemp=0;
   int         getWRDateOther=0;
+  int         getWRUptime=0;
+  int         getBuildType=0;
   int         exitCode=0;
 
   unsigned int family = 0;       // 1-Wire: familyCode
@@ -130,6 +136,7 @@ int main(int argc, char** argv) {
   int64_t     offset;
   uint64_t    mac;
   int         link;
+  uint32_t    uptime;
   int         syncState;
   int         ip;
   uint64_t    id;
@@ -137,6 +144,7 @@ int main(int argc, char** argv) {
   char linkStr[64];
   char syncStr[64];
   char timestr[60];
+  char buildType[BUILDTYPELEN];
   time_t secs;
   const struct tm* tm;
   struct timeval htm;
@@ -146,8 +154,11 @@ int main(int argc, char** argv) {
 
   program = argv[0];
 
-  while ((opt = getopt(argc, argv, "t:u:w:f:b:c:dosmlievh")) != -1) {
+  while ((opt = getopt(argc, argv, "t:u:w:f:b:c:adosmlievhz")) != -1) {
     switch (opt) {
+    case 'a':
+      getBuildType=1;
+      break;
     case 'b':
       getBoardID=1;
       busIndex = strtol(optarg, &tail, 0);
@@ -185,6 +196,9 @@ int main(int argc, char** argv) {
     case 's':
       getWRSync=1;
       break;
+    case 'z':
+      getWRUptime=1;
+      break;
     case 't':
       getBoardTemp=1;
       busIndex = strtol(optarg, &tail, 0);
@@ -211,7 +225,9 @@ int main(int argc, char** argv) {
       getWRMac=1;
       getWRLink=1;
       getWRIP=1;
+      getWRUptime=1;
       getEBVersion=1;
+      getBuildType=1;
       verbose=1;
       break;
     case 'w':
@@ -377,13 +393,25 @@ int main(int argc, char** argv) {
     if (verbose) fprintf(stdout, "Link Status: ");
     fprintf(stdout, "%s\n", linkStr);
   }
-  
+
   if (getWRIP) {
     if ((status = wb_wr_get_ip(device, devIndex, &ip)) != EB_OK) die("WR get IP", status);
     if (verbose) fprintf(stdout, "IP: ");
-    fprintf(stdout, "%d.%d.%d.%d\n", (ip & 0xFF000000) >> 24, (ip & 0x00FF0000) >> 16, (ip & 0x0000FF00) >> 8, ip & 0x000000FF);
+    fprintf(stdout, "%03d.%03d.%03d.%03d\n", (ip & 0xFF000000) >> 24, (ip & 0x00FF0000) >> 16, (ip & 0x0000FF00) >> 8, ip & 0x000000FF);
   }
   
+  if (getWRUptime) {
+    if ((status = wb_wr_get_uptime(device, devIndex, &uptime)) != EB_OK) die("WR get uptime", status);
+    if (verbose) fprintf(stdout, "FPGA uptime [h]: ");
+    fprintf(stdout, "%013.2f\n", (double)uptime / 3600.0 );
+  } 
+
+  if (getBuildType) {
+    if ((status = wb_get_build_type(device, BUILDTYPELEN, buildType)) != EB_OK) die("WB get build type", status);
+    if (verbose) fprintf(stdout, "FPGA build type: ");
+    fprintf(stdout, "%s\n", buildType);
+  }
+
   if (getBoardID) {
     if (!family) die("family code not specified (1-wire)", EB_OOM);
     if ((status = wb_1wire_get_id(device, devIndex, busIndex, family, user1Wire, &id)) != EB_OK) die("WR get board ID", status);

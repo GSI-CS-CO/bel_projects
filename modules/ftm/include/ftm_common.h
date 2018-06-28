@@ -8,6 +8,7 @@
 #define VALUE(x) VALUE_TO_STRING(x)
 #define VAR_NAME_VALUE(var) #var "="  VALUE(var)
 ///
+#define ROUND_UP(N, S) ((((N) + (S) - 1) / (S)) * (S))
 
 #define PREPTIME_DEFAULT 1000000ULL // standard preptime offset, sets lead to 1 ms
 
@@ -47,9 +48,10 @@
 
 #define _THR_QTY_               8
 #define _HEAP_SIZE_             (_THR_QTY_)
-#define _T_GRID_OFFS_           0ULL
-#define _T_GRID_SIZE_           10000ULL
 
+#define _T_GRID_OFFS_           0ULL      //Origin of time grid for align blocks in ns
+#define _T_GRID_SIZE_           10000ULL  //grid size for align blocks ns
+#define _T_TVALID_OFFS_         50000ULL  //Min offset from 'now' for validTime when generating a command
 
 
 //////////////////////////////////////////////////////////////////////
@@ -58,7 +60,8 @@
 
 //Thread Control bits
 #define T_TC_START              (0)                     //WR Host, RW LM32
-#define T_TC_ABORT              (T_TC_START     + _32b_SIZE_) //WR Host, RW LM32
+#define T_TC_CEASE              (T_TC_START     + _32b_SIZE_) //WR Host, RW LM32
+#define T_TC_ABORT              (T_TC_CEASE     + _32b_SIZE_) //WR Host, RW LM32
 #define T_TC_RUNNING            (T_TC_ABORT     + _32b_SIZE_) //RD Host, WR LM32
 #define _T_TC_SIZE_             (T_TC_RUNNING   + _32b_SIZE_) 
 
@@ -102,23 +105,32 @@
 #define _T_CMD_SIZE_             (_TS_SIZE_ + _32b_SIZE_ + _64b_SIZE_)
 
 
+#define T_MOD_INFO_TS      (0)                             //Timestamp of last modification
+#define T_MOD_INFO_IID     (T_MOD_INFO_TS   + _TS_SIZE_  ) //Issuer ID of last modification
+#define T_MOD_INFO_MID     (T_MOD_INFO_IID  + _64b_SIZE_ ) //Machine ID of last modification
+#define T_MOD_INFO_TYPE    (T_MOD_INFO_MID  + _64b_SIZE_ ) //Type of last modification
+#define T_MOD_INFO_CNT     (T_MOD_INFO_TYPE + _32b_SIZE_ ) //Modification counter
+#define _T_MOD_INFO_SIZE   (T_MOD_INFO_CNT  + _32b_SIZE_ ) //Struct size
 
-#define T_DIAG_MSG_CNT      (0)                             //CPU wide timing message counter
-#define T_DIAG_BOOT_TS      (T_DIAG_MSG_CNT  + _64b_SIZE_ ) //Timestamp of Uptime beginning
-#define T_DIAG_SMOD_TS      (T_DIAG_BOOT_TS  + _TS_SIZE_  ) //Timestamp of last schedule modification
-#define T_DIAG_SMOD_IID     (T_DIAG_SMOD_TS  + _TS_SIZE_  ) //Issuer ID of last schedule modification
-#define T_DIAG_SMOD_HSH     (T_DIAG_SMOD_IID + _64b_SIZE_ ) //Hash of last schedule modification
-#define T_DIAG_SMOD_CNT     (T_DIAG_SMOD_HSH + _32b_SIZE_ ) //schedule modification counter
-#define T_DIAG_CMD_TS       (T_DIAG_SMOD_CNT + _32b_SIZE_ ) //Timestamp of last command batch
-#define T_DIAG_CMD_IID      (T_DIAG_CMD_TS   + _TS_SIZE_  ) //Issuer ID of last command batch
-#define T_DIAG_CMD_HSH      (T_DIAG_CMD_IID  + _64b_SIZE_ ) //Hash of last command batch
-#define T_DIAG_CMD_CNT      (T_DIAG_CMD_HSH  + _32b_SIZE_ ) //Command batch counter
-#define T_DIAG_DIF_MIN      (T_DIAG_CMD_CNT  + _32b_SIZE_ ) //All time min diff between dispatch time and deadline   (signed!)
-#define T_DIAG_DIF_MAX      (T_DIAG_DIF_MIN  + _TS_SIZE_  ) //All time max diff between dispatch time and deadline   (signed!)
-#define T_DIAG_DIF_SUM      (T_DIAG_DIF_MAX  + _TS_SIZE_  ) //Running sum of diff between dispatch time and deadline (signed!)
-#define T_DIAG_DIF_WTH      (T_DIAG_DIF_SUM  + _64b_SIZE_ ) //Diff Threshold between dispatch time and deadline which will trigger a warning (signed!)
-#define T_DIAG_WAR_CNT      (T_DIAG_DIF_WTH  + _TS_SIZE_  ) //Diff warning counter
-#define _T_DIAG_SIZE_       (T_DIAG_WAR_CNT  + _64b_SIZE_ ) 
+#define T_DIAG_MSG_CNT      (0)                              //CPU wide timing message counter
+#define T_DIAG_BOOT_TS      (T_DIAG_MSG_CNT   + _64b_SIZE_ ) //Timestamp of Uptime beginning
+#define T_DIAG_SCH_MOD      (T_DIAG_BOOT_TS   + _TS_SIZE_  ) //Schedule modification info
+#define T_DIAG_CMD_MOD      (T_DIAG_SCH_MOD   + _T_MOD_INFO_SIZE ) //Cmd modification info
+#define T_DIAG_DIF_MIN      (T_DIAG_CMD_MOD   + _T_MOD_INFO_SIZE ) //All time min diff between dispatch time and deadline   (signed!)
+#define T_DIAG_DIF_MAX      (T_DIAG_DIF_MIN   + _TS_SIZE_  ) //All time max diff between dispatch time and deadline   (signed!)
+#define T_DIAG_DIF_SUM      (T_DIAG_DIF_MAX   + _TS_SIZE_  ) //Running sum of diff between dispatch time and deadline (signed!)
+#define T_DIAG_DIF_WTH      (T_DIAG_DIF_SUM   + _64b_SIZE_ ) //Diff Threshold between dispatch time and deadline which will trigger a warning (signed!)
+#define T_DIAG_WAR_CNT      (T_DIAG_DIF_WTH   + _TS_SIZE_  ) //Diff warning counter
+#define _T_DIAG_SIZE_       (T_DIAG_WAR_CNT   + _64b_SIZE_ ) 
+
+
+#define T_META_START_PTR    (0)                               //same for all cpus, can be on any CPU. External view, read/write for host only. Must lie within bitmap range
+#define T_META_CON_SIZE     (T_META_START_PTR   + _PTR_SIZE_) //container size in byte ( is groupsTable + covenantTable size)
+#define T_META_GRPTAB_SIZE  (T_META_CON_SIZE    + _32b_SIZE_) //groupsTable size in byte
+#define T_META_COVTAB_SIZE  (T_META_GRPTAB_SIZE + _32b_SIZE_) //covenantTable size in byte
+#define T_META_FLAGS        (T_META_COVTAB_SIZE + _32b_SIZE_) //
+#define _T_META_SIZE_       (T_META_FLAGS       + _32b_SIZE_)   
+
 
 //////////////////////////////////////////////////////////////////////
 // Control Interface                                                //
@@ -127,14 +139,30 @@
 #define _SHCTL_START_    0
 #define SHCTL_HEAP       (_SHCTL_START_)                              //Scheduler Heap  
 #define SHCTL_STATUS     (SHCTL_HEAP    + _THR_QTY_ * _PTR_SIZE_)     //Status Registers
-#define SHCTL_DIAG       (SHCTL_STATUS  + _32b_SIZE_ )                //Diagnostic Registers
+#define SHCTL_META       (SHCTL_STATUS  + _32b_SIZE_ )                //Group/Node Name Meta Information
+#define SHCTL_DIAG       (SHCTL_META    + _T_META_SIZE_ )             //Diagnostic Registers
 #define SHCTL_CMD        (SHCTL_DIAG    + _T_DIAG_SIZE_ )             //Command Register
 #define SHCTL_TGATHER    (SHCTL_CMD     + _32b_SIZE_ )                //Gather Time (HW Priority Queue Config) Register 
 #define SHCTL_THR_CTL    (SHCTL_TGATHER + _TS_SIZE_  )                //Thread Control Registers (Start Stop Status) 
 #define SHCTL_THR_STA    (SHCTL_THR_CTL + _T_TC_SIZE_  )              //Thread Start Staging Area (1 per Thread )
 #define SHCTL_THR_DAT    (SHCTL_THR_STA + _THR_QTY_ * _T_TS_SIZE_  )  //Thread Runtime Data (1 per Thread )
 #define SHCTL_INBOXES    (SHCTL_THR_DAT + _THR_QTY_ * _T_TD_SIZE_  )  //Inboxes for MSI (1 per Core in System )
-#define _SHCTL_END_      (SHCTL_INBOXES + _THR_QTY_ * _32b_SIZE_) 
+#define _SHCTL_END_      ROUND_UP((SHCTL_INBOXES + _THR_QTY_ * _32b_SIZE_), 2 * _MEM_BLOCK_SIZE) // set fixed size so firmware updates stay backward compatible // 
+/*
+#pragma message(VAR_NAME_VALUE(_SHCTL_START_))
+#pragma message(VAR_NAME_VALUE(SHCTL_HEAP   ))
+#pragma message(VAR_NAME_VALUE(SHCTL_STATUS ))
+#pragma message(VAR_NAME_VALUE(SHCTL_META   ))
+#pragma message(VAR_NAME_VALUE(SHCTL_DIAG   ))
+#pragma message(VAR_NAME_VALUE(SHCTL_CMD    ))
+#pragma message(VAR_NAME_VALUE(SHCTL_TGATHER))
+#pragma message(VAR_NAME_VALUE(SHCTL_THR_CTL))
+#pragma message(VAR_NAME_VALUE(SHCTL_THR_STA))
+#pragma message(VAR_NAME_VALUE(SHCTL_THR_DAT))
+#pragma message(VAR_NAME_VALUE(SHCTL_INBOXES))
+#pragma message(VAR_NAME_VALUE(_SHCTL_END_  ))
+*/
+
 //////////////////////////////////////////////////////////////////////
 
 // Global Status field bits
@@ -186,9 +214,14 @@
 #define BLOCK_CMDQ_LO_PTR       (BLOCK_ALT_DEST_PTR + _PTR_SIZE_)   
 #define BLOCK_CMDQ_HI_PTR       (BLOCK_CMDQ_LO_PTR  + _PTR_SIZE_)   
 #define BLOCK_CMDQ_IL_PTR       (BLOCK_CMDQ_HI_PTR  + _PTR_SIZE_)   
-#define BLOCK_CMDQ_WR_IDXS      (BLOCK_CMDQ_IL_PTR  + _PTR_SIZE_)   
+#define BLOCK_CMDQ_WR_IDXS      (BLOCK_CMDQ_IL_PTR  + _PTR_SIZE_)
 #define BLOCK_CMDQ_RD_IDXS      (BLOCK_CMDQ_WR_IDXS + _32b_SIZE_)   
 #define BLOCK_CMDQ_PTRS          BLOCK_CMDQ_LO_PTR
+
+#define BLOCK_CMDQ_IDX_IL    (3 - PRIO_IL)
+#define BLOCK_CMDQ_IDX_HI    (3 - PRIO_HI)
+#define BLOCK_CMDQ_IDX_LO    (3 - PRIO_LO)
+
 
 #define Q_IDX_MAX_OVF          3
 #define Q_IDX_MAX              2
@@ -342,6 +375,11 @@
 #define ACT_PRIO_POS            24
 #define ACT_PRIO_SMSK           (ACT_PRIO_MSK << ACT_PRIO_POS)
 
+//Valid time is absolute (0) or relative (1) 
+#define ACT_VABS_MSK             0x1
+#define ACT_VABS_POS             26
+#define ACT_VABS_SMSK            (ACT_VABS_MSK << ACT_VABS_POS)
+
 //Action changes are permanent (1) or temporary (0) (Flow -> DEF_DEST_PTR, Wait -> BLOCK_PERIOD (only use with relative wait!))
 #define ACT_CHP_MSK             0x1
 #define ACT_CHP_POS             27
@@ -394,7 +432,9 @@
 //Host only Meta Type Enums
 #define NODE_TYPE_ALTDST        (NODE_TYPE_SHARE        +1)   // lists all alternative destinations of a decision block
 #define NODE_TYPE_SYNC          (NODE_TYPE_ALTDST       +1)   // used to denote the time offset for pattern rows
-#define _NODE_TYPE_END_         (NODE_TYPE_SYNC         +1)   // Node type Quantity
+#define NODE_TYPE_MGMT          (NODE_TYPE_SYNC         +1)   // contain the part of the groups and node name table in compressed form
+#define NODE_TYPE_COVENANT      (NODE_TYPE_MGMT         +1)   // contain the addresses of commands (in queues) which the user agrees not to preempt if optimised safe2remove is to work
+#define _NODE_TYPE_END_         (NODE_TYPE_COVENANT     +1)   // Node type Quantity
 //Node type
 #define NFLG_TYPE_MSK           0xff
 #define NFLG_TYPE_POS           0
@@ -499,6 +539,24 @@
 #define NFLG_BLOCK_QS_POS   (NFLG_BITS_SPECIFIC_POS + 0)
 #define NFLG_BLOCK_QS_SMSK  (NFLG_BLOCK_QS_MSK << NFLG_BLOCK_QS_POS)
 
+
+#define OP_TYPE_SCH_BASE            0x10
+#define OP_TYPE_SCH_CLEAR           0x11
+#define OP_TYPE_SCH_ADD             0x12
+#define OP_TYPE_SCH_OVERWRITE       0x13
+#define OP_TYPE_SCH_REMOVE          0x14
+#define OP_TYPE_SCH_KEEP            0x15
+
+#define OP_TYPE_CMD_BASE            0x20
+#define OP_TYPE_CMD_FLOW            (OP_TYPE_CMD_BASE + ACT_TYPE_FLOW)
+#define OP_TYPE_CMD_NOP             (OP_TYPE_CMD_BASE + ACT_TYPE_NOOP)
+#define OP_TYPE_CMD_WAIT            (OP_TYPE_CMD_BASE + ACT_TYPE_WAIT)
+#define OP_TYPE_CMD_FLUSH           (OP_TYPE_CMD_BASE + ACT_TYPE_FLUSH)
+#define OP_TYPE_CMD_START           (OP_TYPE_CMD_BASE + 0x10)
+#define OP_TYPE_CMD_STOP            (OP_TYPE_CMD_BASE + 0x11)
+#define OP_TYPE_CMD_CEASE           (OP_TYPE_CMD_BASE + 0x12)
+#define OP_TYPE_CMD_ABORT           (OP_TYPE_CMD_BASE + 0x13)
+#define OP_TYPE_CMD_HALT            (OP_TYPE_CMD_BASE + 0x14)
 
 #endif
 

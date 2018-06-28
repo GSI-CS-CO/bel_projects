@@ -99,16 +99,16 @@ enum class FwId { FWID_RAM_TOO_SMALL      = -1,
                   VERSION_MINOR_MUL       = 100,
                   VERSION_REVISION_MUL    = 1};  
 
-namespace PPS {
-  const uint32_t CNTR_UTCLO_REG  = 0x08;
-  const uint32_t CNTR_UTCHI_REG  = 0x0C;
-  const uint32_t STATE_REG       = 0x1C;
-  const uint32_t PPS_VALID_MSK   = (1<<2);
-  const uint32_t TS_VALID_MSK    = (1<<3);
-  const uint32_t STATE_MSK       = PPS_VALID_MSK | TS_VALID_MSK; 
-  const uint64_t vendID          = 0x000000000000ce42ULL;
-  const uint32_t devID           = 0xde0d8ced;
+
+namespace ECA {
+  //TODO import values from eca_regs.h
+  const uint32_t timeHiW = 0x18;
+  const uint32_t timeLoW = 0x1c;
+  const uint64_t vendID  = 0x00000651;
+  const uint32_t devID   = 0xb2afc251;
 }
+
+const uint64_t processingTimeMargin = 100000000ULL; // 100 ms. Is set to 0 when testmode is on to speed coverage test
 
 typedef struct {
   uint8_t   cpu; 
@@ -116,6 +116,14 @@ typedef struct {
   uint64_t  bootTime;
   uint64_t  smodTime;
   char      smodIssuer[9];
+  char      smodHost[9];
+  std::string smodOpType;
+  uint32_t  smodCnt;
+  uint64_t  cmodTime;
+  char      cmodIssuer[9];
+  char      cmodHost[9];
+  std::string cmodOpType;
+  uint32_t  cmodCnt;
   int64_t   minTimeDiff;
   int64_t   maxTimeDiff;
   int64_t   avgTimeDiff;
@@ -123,6 +131,38 @@ typedef struct {
   uint32_t  warningCnt;
   uint32_t  stat;
 } HealthReport;
+
+
+typedef struct {
+  bool        pending = false;
+  uint64_t  validTime = 0;
+  uint8_t        type = 0;
+  std::string   sType = DotStr::Misc::sUndefined;
+  uint32_t        qty = 0;
+  //Flow properties
+  std::string        flowDst = DotStr::Misc::sUndefined;
+  std::string flowDstPattern = DotStr::Misc::sUndefined;
+  bool flowPerma = false;
+  //Flush Properties
+  bool flushIl = false;
+  bool flushHi = false;
+  bool flushLo = false;
+  //wait Properties
+  uint64_t waitTime = 0;
+  bool      waitAbs = false;
+} QueueElement;
+
+
+typedef struct {
+  uint8_t wrIdx, rdIdx, pendingCnt;
+  QueueElement aQe[4];
+} QueueBuffer;
+
+typedef struct {
+  bool hasQ[3] = {false, false, false};
+  QueueBuffer aQ[3];
+} QueueReport;
+
 
 class Node;
 class MiniCommand;

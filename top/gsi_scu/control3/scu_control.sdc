@@ -4,6 +4,7 @@ create_clock -period 125Mhz -name clk_125m_local_i  [get_ports {clk_125m_local_i
 create_clock -period 125Mhz -name sfp2_ref_clk_i    [get_ports {sfp2_ref_clk_i}]
 create_clock -period 1Mhz   -name mil_dsc           [get_ports {IO_2_5V[4]}]
 create_clock -period 1Mhz   -name mil_esc           [get_ports {IO_2_5V[9]}]
+create_clock -period 1Mhz   -name dsc_denoised      { *|hw6408_vhdl:hw6408|dsc_denoised }
 
 derive_pll_clocks -create_base_clocks
 derive_clock_uncertainty
@@ -37,7 +38,8 @@ set_clock_groups -asynchronous                           \
  -group { main|\pcie_y:pcie|*|rx_cdr_pll3|*              \
           main|\pcie_y:pcie|*|receive_pma3|*           } \
  -group { mil_dsc                                      } \
- -group { mil_esc                                      }
+ -group { mil_esc                                      } \
+ -group { dsc_denoised                                 }
 
 # cut: wb sys <=> wb flash   (different frequencies and using xwb_clock_crossing)
 set_false_path -from [get_clocks {main|\sys_a2:sys_inst|*|clk[0]}] -to [get_clocks {main|\sys_a2:sys_inst|*|clk[1]}]
@@ -55,3 +57,6 @@ set_false_path -from * -to [get_ports "DDR3_RES_n"]
 set_false_path -from [get_clocks {main|\DDR3_y:DDR3_inst|*|clk[0]}] -to [get_clocks {main|\sys_a2:sys_inst|*|clk[0]}]
 set_false_path -from [get_clocks {main|\sys_a2:sys_inst|*|clk[0]}]  -to [get_clocks {main|\DDR3_y:DDR3_inst|*|clk[0]}]
 
+# SERDES Digital Reset inputs are asynchronous
+set_false_path -to {*|arria2_pcie_hip_serdes:serdes|*|tx_digitalreset_reg0c[0]}
+set_false_path -to {*|arria2_pcie_hip_serdes:serdes|*|rx_digitalreset_reg0c[0]}

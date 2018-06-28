@@ -1,11 +1,12 @@
 # PREFIX  controls where programs and libraries get installed
 # Note: during compile (all), PREFIX must be set to the final installation path
 # Example usage:
-#   make PREFIX=/usr all
+#   make PREFIX= all                                                     (hack: leave PREFIX empty for SCU path)
 # Example deploy:
-#   make PREFIX=/usr STAGING=/common/export/timing-rte/dmunipz-dev/x86_64 deploy
+#   make PREFIX= STAGING=/common/export/timing-rte/dmunipz-dev deploy    (hack: leave PREFIX empty for SCU path)
 PREFIX      ?= /usr/local
 STAGING     ?=
+ARCH        ?= /x86_64
 EB          ?= ../../../ip_cores/etherbone-core/api
 FW          ?=../dmunipz-fw
 TARGETS     := dmunipz-ctl 
@@ -22,8 +23,8 @@ dmunipz-ctl: dmunipz-ctl.c
 clean:
 	rm -f *.o $(TARGETS)
 
-install:
-	mkdir -p $(STAGING)$(PREFIX)/bin
-	cp $(TARGETS) $(STAGING)$(PREFIX)/bin
+deploy:
+	 mkdir -p $(STAGING)$(ARCH)$(PREFIX)/bin
+	cp $(TARGETS) $(STAGING)$(ARCH)$(PREFIX)/bin
 
 .PHONY: all clean

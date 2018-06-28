@@ -39,10 +39,17 @@ bool CarpeDM::isSafeToRemove(const std::string& pattern, std::string& report) {
 
 
 bool CarpeDM::isSafeToRemove(std::set<std::string> patterns, std::string& report) {
+  //std::cout << "verbose " << (int)verbose << " debug " << (int)debug << " sim " << (int)sim << " testmode " << (int)testmode << " optimisedS2R " << (int)optimisedS2R << std::endl; 
+  
+
+  bool isSafe = true, isSafe2ndOpinion = true, allCovenantsUncritical = true;
   Graph& g        = gDown;
   AllocTable& at  = atDown;
+  CovenantTable ctAux; //Global CovenantTable is called ct
   Graph gTmp, gEq;
-  vertex_set_t blacklist, entries, cursors;
+  vertex_set_t blacklist, entries, cursors, covenants; //hashes of all covenants
+  vertex_set_map_t covenantsPerVertex;
+  std::string optmisedAnalysisReport, covenantReport;
 
   //if(verbose) {sLog << "Pattern <" << pattern << "> (Entrypoint <" << sTmp << "> safe removal analysis" << std::endl;}
 
@@ -54,6 +61,7 @@ bool CarpeDM::isSafeToRemove(std::set<std::string> patterns, std::string& report
         auto x = at.lookupHash(hm.lookup(nodeIt).get());
         if (!(at.isOk(x))) {throw std::runtime_error(isSafeToRemove::exIntro +  "Could not find pattern <" + patternIt + "> member node <" + nodeIt + ">"); return false;}
         blacklist.insert(x->v);
+        covenantsPerVertex[x->v].insert(null_vertex);
       }
     }
     //Find and list all entry nodes of patterns 2B removed
@@ -77,7 +85,7 @@ bool CarpeDM::isSafeToRemove(std::set<std::string> patterns, std::string& report
   
   // End Preparations
 
-  //BEGIN Static equivalent model //
+  //BEGIN Basic Static equivalent model //
   //add static equivalent edges of all pending flow commands to working copy  
   if (addDynamicDestinations(gTmp, at)) { if(verbose) {sLog << "Added dynamic equivalents." << std::endl;} }
 
@@ -97,61 +105,236 @@ bool CarpeDM::isSafeToRemove(std::set<std::string> patterns, std::string& report
 
   if(verbose) sLog << "Reading Cursors " << std::endl;
   //try to get consistent image of active cursors
-  cursors = getAllCursors(true);
-  //Here comes the problem: resident commands are only of consquence if they AND their target Block are executable
+  updateModTime();
+  cursors = getAllCursors(!testmode); // Set to false for debugging system behaviour with static cursors
+
+  //Here comes the problem: resident commands are only of consquence if they AND their target Block are active
   //Iteratively find out which cmds are executable and add equivalent edges for them. Do this until no more new edges have to be added
   if (addResidentDestinations(gEq, gTmp, cursors)) { if(verbose) {sLog << "Added resident equivalents." << std::endl;} }
 
-  // END Static Equivalent Model //
+  // END Basic Static Equivalent Model //
 
+  // BEGIN Optimised Static Equivalent Model
+  // Under certain conditions, (offending) default destinations can be replaced
+  if (optimisedS2R) {
+    if(verbose) {sLog << "Starting Optimiser (Update stale defDst)" << std::endl;}
+    if (updateStaleDefaultDestinations(gEq, at, ctAux, optmisedAnalysisReport)) { if(verbose) {sLog << "Updated stale Default Destinations to reduce wait time." << std::endl;} }
+  }
 
+  // END Optimised Static Equivalent Model
+
+  //covenant: promise not to clear/reorder a given block's queues
 
   // Crawl and map active areas
   //crawl all reverse trees we can reach from the given entries and add their nodes to the blacklist
   for (auto& vEntry : entries) {
     if(verbose) { sLog << "Starting Crawler from " << gEq[vEntry].name << std::endl; }
     vertex_set_t tmpTree;
-    getReverseNodeTree(vEntry, tmpTree, gEq);
+    getReverseNodeTree(vEntry, tmpTree, gEq, covenantsPerVertex);
     blacklist.insert(tmpTree.begin(), tmpTree.end());
   }
-  if(verbose) sLog << "Creating report " << std::endl;
-  //Create Debug Output File
-  BOOST_FOREACH( vertex_t v, vertices(gEq) ) { gEq[v].np->clrFlags(NFLG_PAINT_LM32_SMSK); }
-  for (auto& it : cursors)    { gEq[it].np->setFlags(NFLG_DEBUG1_SMSK); }
-  for (auto& it : entries)    { gEq[it].np->setFlags(NFLG_DEBUG0_SMSK); }
-  for (auto& it : blacklist)  { gEq[it].np->setFlags(NFLG_PAINT_HOST_SMSK); }
-  report += createDot(gEq, true);
 
   if(verbose) sLog << "Judging safety " << std::endl;
   //calculate intersection of cursors and blacklist. If the intersection set is empty, all nodes in pattern can be safely removed
   vertex_set_t si;
   set_intersection(blacklist.begin(),blacklist.end(),cursors.begin(),cursors.end(), std::inserter(si,si.begin()));
+
+  for (auto& it : blacklist)  { 
+    if (verbose) { 
+      sLog << gEq[it].name << "-- > {";
+
+      for (auto& itPv : covenantsPerVertex[it]) { sLog << ((itPv != null_vertex) ? gEq[itPv].name : "NULL") << ", "; }
+      sLog << std::endl;
+    }
+
+  }
+
+  //create set of all covenants which must be honoured so the prediction will hold. Because of the propagation along reverse trees, doing it for intersection members is sufficient
+  for (auto& it : si)  { 
+    covenants.insert(covenantsPerVertex[it].begin(), covenantsPerVertex[it].end()); 
+    if (verbose) { 
+      sLog << gEq[it].name << "-- > {";
+
+      for (auto& itPv : covenantsPerVertex[it]) { sLog << ((itPv != null_vertex) ? gEq[itPv].name : "NULL") << ", "; }
+      sLog << std::endl;
+    }
+
+  }
+
+
+  isSafe = !isSafetyCritical(covenants); // if a safety critical node (cov set contains NO_COVENANT) is on the intersection with cursor set, it's unsafe
+  
+  for (auto& itCur : cursors) {
+    for (auto& itEntry : entries) {
+      vertex_set_t tmpTree;
+      isSafe2ndOpinion &= verifySafety(itCur, itEntry, tmpTree, gEq);
+    }
+    for  (auto& itPat : patterns) {
+      isSafe2ndOpinion &= (itPat != getNodePattern(gEq[itCur].name));
+    }
+  }
   
 
 
+  if(verbose) sLog << "Creating report " << std::endl;
+  //Create Debug Output File
+  BOOST_FOREACH( vertex_t v, vertices(gEq) ) { gEq[v].np->clrFlags(NFLG_PAINT_LM32_SMSK); }
+  for (auto& it : cursors)    { gEq[it].np->setFlags(NFLG_DEBUG1_SMSK); }
+  for (auto& it : entries)    { gEq[it].np->setFlags(NFLG_DEBUG0_SMSK); }
+  for (auto& it : blacklist)  {
+    if(isSafetyCritical(covenantsPerVertex[it])) gEq[it].np->setFlags(NFLG_PAINT_HOST_SMSK);
+  }
 
-  return ( 0 == si.size() );
+  report += createDot(gEq, true);
+  report += optmisedAnalysisReport;
+
+  if (optimisedS2R && isSafe) {
+    for (auto& it : covenants)  {
+      allCovenantsUncritical &= ~isSafetyCritical(covenantsPerVertex[it]);
+      report += "//Covenants to honour:\n";
+      //std::cout << "Was optimised" << std::endl;
+      if (it == null_vertex) {report += "//None\n"; continue;}
+      std::string covName = gEq[it].name;
+      //find covname in ctAux and copy found entry to ct watchlist
+      auto x = ctAux.lookup(covName);
+      if (!ctAux.isOk(x)) { throw std::runtime_error(isSafeToRemove::exIntro + ": Lookup of <" + covName + "> in covenantAuxTable failed\n");}
+      if (!ct.insert(x))  { throw std::runtime_error(isSafeToRemove::exIntro + ": Insertion of <" + covName + "> in covenantTable failed\n");} ;
+
+      auto y = ct.lookup(covName);
+      if (!ct.isOk(y)) { throw std::runtime_error(isSafeToRemove::exIntro + ": Lookup of <" + covName + "> in covenantTable failed\n");}
+      
+      //and report
+      report += "//" + covName + " p " + std::to_string(y->prio) + " s " + std::to_string(y->slot) + " chk 0x" + std::to_string(y->chkSum) + "\n";
+    }
+    report += covenantReport;
+    //}
+  }
+
+  //sLog << report << std::endl;
+
+  for (auto& it : blacklist)  {
+    //sLog << gEq[it].name << " covP " << isCovenantPending(gEq[it].name) << std::endl;
+  }
+
+  if (isSafe != isSafe2ndOpinion) {
+    //writeTextFile("./debug.dot", report);
+    throw std::runtime_error(isSafeToRemove::exIntro + " ERROR in algorithm detected: safe2remove says " + (isSafe ? "safe" : "unsafe") + ", crawler says " + (isSafe2ndOpinion ? "safe" : "unsafe") + "\n");
+  }
+  if (allCovenantsUncritical == false) {
+    throw std::runtime_error(isSafeToRemove::exIntro + " ERROR in algorithm detected: a block listed as a covenant was safety critical itself\n");
+  }
+
+  return isSafe;
+}
+
+bool CarpeDM::isOptimisableEdge(edge_t e, Graph& g) {
+  
+  vertex_t toBeChecked = target(e, g);
+  Graph::in_edge_iterator in_begin, in_end, in_cur;
+  boost::tie(in_begin, in_end) = in_edges(toBeChecked,g);
+  for (in_cur = in_begin; in_cur != in_end; ++in_cur) {
+    //it's only optimisable if there are no other types of connection to the source of  the inedge we are to check!
+    if ( (source(*in_cur, g) == source(e, g)) && (g[*in_cur].type != det::sBadDefDst)) return false;
+  }  
+  return true;
+}
+
+bool CarpeDM::isCovenantPending(const std::string& covName) {
+  
+  cmI x = ct.lookup(covName);
+  if (!ct.isOk(x)) { 
+  //sLog << "DBG unknonwn"; 
+  return false;} //throw std::runtime_error(isSafeToRemove::exIntro + ": Lookup of <" + covName + "> in covenantTable failed\n");
+  return isCovenantPending(x);
+}
+
+bool CarpeDM::isCovenantPending(cmI cov) {
+  QueueReport qr;
+  getQReport(cov->name, qr);
+  QueueElement& qe = qr.aQ[cov->prio].aQe[cov->slot];
+    
+  if (cov->chkSum == ct.genChecksum(qe))  return true;
+  else                                    return false;
+}
+
+unsigned CarpeDM::updateCovenants() {
+
+  unsigned cnt = 0;
+  vStrC toDelete;
+  for (cmI it = ct.getTable().begin(); it != ct.getTable().end(); it++ ) {
+    if (!isCovenantPending(it)) {
+      if(verbose) std::cout << "Covenant " << it->name << " complete, removing from table" << std::endl;
+      toDelete.push_back(it->name);
+    }  
+    cnt++;
+  }
+
+  for (auto it : toDelete) { ct.remove(it); }
+
+  return cnt;
+}
+
+
+bool CarpeDM::isSafetyCritical(vertex_set_t& c) {
+  if (c.find(null_vertex) != c.end()) return true;
+  else return false;
 }
 
 
 //recursively inserts all vertex idxs of the tree reachable (via in edges) from start vertex into the referenced set
-void CarpeDM::getReverseNodeTree(vertex_t v, vertex_set_t& sV, Graph& g) {
-
+void CarpeDM::getReverseNodeTree(vertex_t v, vertex_set_t& sV, Graph& g, vertex_set_map_t& covenantsPerVertex, vertex_t covenant) {
+  vertex_t nextCovenant;
   Graph::in_edge_iterator in_begin, in_end, in_cur;
   //Do the crawl       
   boost::tie(in_begin, in_end) = in_edges(v,g);
   for (in_cur = in_begin; in_cur != in_end; ++in_cur) {
-    if (sV.find(source(*in_cur, g)) != sV.end()) break;
+    if (verbose) { sLog << g[target(*in_cur, g)].name << "<-- " << g[*in_cur].type << " --" << g[source(*in_cur, g)].name  << " propcov " << ((covenant == null_vertex) ? "NULL" : g[covenant].name) << std::endl; }
+    vertex_set_t& cpvs = covenantsPerVertex[source(*in_cur, g)];   
+
     sV.insert(source(*in_cur, g));
-    //sLog << "Adding Tree Node " << g[source(*in_cur, g)].name << std::endl;
-    getReverseNodeTree(source(*in_cur, g), sV, g);
+    if (cpvs.find(covenant) != cpvs.end()) { continue; }
+
+    if (isOptimisableEdge(*in_cur, g)) {
+      if (verbose) { sLog << " Optimisable:  " << g[source(*in_cur, g)].name << "->" << g[target(*in_cur, g)].name << std::endl; }
+      nextCovenant = source(*in_cur, g);
+    } else {
+      nextCovenant = covenant;
+    }  
+      
+    cpvs.insert(nextCovenant);
+    getReverseNodeTree(source(*in_cur, g), sV, g, covenantsPerVertex, nextCovenant);
+
+
+    
   }
+}
+
+//if we can construct a path between start and goal (not using optimised edges), this is not safe
+bool CarpeDM::verifySafety(vertex_t v, vertex_t goal, vertex_set_t& sV, Graph& g ) {
+  bool isSafe = true;
+  Graph::out_edge_iterator out_begin, out_end, out_cur;
+  //Do the crawl       
+  boost::tie(out_begin, out_end) = out_edges(v,g);
+  for (out_cur = out_begin; out_cur != out_end; ++out_cur) {
+    if (isOptimisableEdge(*out_cur, g)) { continue; }  
+    
+    if (sV.find(target(*out_cur, g)) != sV.end()) { continue; }
+    if (target(*out_cur, g) == goal ) { return false; }
+    sV.insert(target(*out_cur, g));
+
+
+    isSafe &= verifySafety(target(*out_cur, g), goal, sV, g);
+    
+  }
+
+  return isSafe;
 }
 
 
 
 bool CarpeDM::addResidentDestinations(Graph& gEq, Graph& gOrig, vertex_set_t cursors) {
   vertex_set_t resCmds; // prepare the set of flow commands to speed things up
+  vertex_set_map_t dummy; // this doesn't need to look out for covenant sets, ignore
   BOOST_FOREACH( vertex_t vChkResCmd, vertices(gEq) ) {if (gEq[vChkResCmd].type == dnt::sCmdFlow) resCmds.insert(vChkResCmd);}
   bool addEdge = (resCmds.size() > 0);
   bool didWork = false;
@@ -165,7 +348,7 @@ bool CarpeDM::addResidentDestinations(Graph& gEq, Graph& gOrig, vertex_set_t cur
       bool found = false;
 
       //find out if there is a path from any of the cursors to this command
-      getReverseNodeTree(vRc, tmpTree, gEq);
+      getReverseNodeTree(vRc, tmpTree, gEq, dummy);
       set_intersection(tmpTree.begin(),tmpTree.end(),cursors.begin(),cursors.end(), std::inserter(si,si.begin()));
       if ( si.size() > 0 ) {
         //found a path. now check if there already is an equivalent edge between this command's target block and its destination
@@ -194,6 +377,97 @@ bool CarpeDM::addResidentDestinations(Graph& gEq, Graph& gOrig, vertex_set_t cur
   return didWork;
 }
 
+bool CarpeDM::updateStaleDefaultDestinations(Graph& g, AllocTable& at, CovenantTable& covTab, std::string& qAnalysis) {
+  bool didWork = false;
+  edge_t edgeToDelete;
+
+  BOOST_FOREACH( vertex_t vChkBlock, vertices(g) ) {
+    //first, find blocks
+    if(g[vChkBlock].np->isBlock()) {
+      //second, inspect their queues and see if default dest is made stale by a dominant flow
+      vertex_set_t sVflowDst = getDominantFlowDst(vChkBlock, g, at, covTab, qAnalysis);
+      if(verbose) sLog << std::endl;
+      for (auto& it : sVflowDst) {
+        
+        //if (sVflowDst.size() > 1) {throw std::runtime_error(isSafeToRemove::exIntro + "updateStaleDefDst: found more than one dominant flow, must be 0..1");}
+        if((signed)it != -1) { boost::add_edge(vChkBlock, it, myEdge(det::sDomFlowDst), g); if (verbose)  sLog << "updateStaleDefDst: Adding edge to " << g[it].name << std::endl; }
+        else { if (verbose)  sLog << "updateStaleDefDst: New default would be idle, skipping edge creation" << std::endl; }
+        //find old default edge and mark for deletion
+        Graph::out_edge_iterator out_begin, out_end, out_cur;
+        boost::tie(out_begin, out_end) = out_edges(vChkBlock, g);
+        for (out_cur = out_begin; out_cur != out_end; ++out_cur) { 
+          if(g[*out_cur].type == det::sDefDst) {
+            if (verbose) sLog << "updateStaleDefDst: Found old default dst <" << g[target(*out_cur, g)].name << "> of block <" << g[vChkBlock].name << ">, changing type to non traversible" << std::endl;
+            didWork = true;
+            g[*out_cur].type = det::sBadDefDst;
+          } 
+        }
+      }
+    }
+  }
+  
+  return didWork;
+}
+
+vertex_set_t CarpeDM::getDominantFlowDst(vertex_t vQ, Graph& g, AllocTable& at, CovenantTable& covTab, std::string& qAnalysis) {
+  vertex_set_t ret;
+
+  
+
+  qAnalysis += "//" + g[vQ].name;
+
+  QueueReport qr;
+  qr = getQReport(g, at, g[vQ].name, qr);
+        
+  for (int8_t prio = PRIO_IL; prio >= PRIO_LO; prio--) {
+    qAnalysis += "#P" + std::to_string((int)prio);
+    if (!qr.hasQ[prio]) {qAnalysis += "->xX->xX->xX->xX"; continue;} // if the priority doesn't exist, Ignore
+
+    for (uint8_t i, idx = qr.aQ[prio].rdIdx; idx < qr.aQ[prio].rdIdx + 4; idx++) {
+      i = idx & Q_IDX_MAX_MSK;
+      QueueElement& qe = qr.aQ[prio].aQe[i];
+
+      // if flow at read idx is not pending, this queue is empty.
+      if (!qe.pending) {qAnalysis +="->eE"; continue;} 
+
+      // we're going through in order. If element has a valid time in the future (> modTime), stop right here. it and all following are possibly yet unprocessed
+      if(qe.validTime > modTime) {qAnalysis += "->v" + std::to_string((int)qe.type) + "\n";
+        std::stringstream auxstream;
+        auxstream << "//tVal 0x" << std::setfill('0') << std::setw(10) << std::hex << qe.validTime << " tMod 0x" << std::setfill('0') << std::setw(10) << std::hex << modTime << std::endl;
+        qAnalysis += auxstream.str();
+        return ret;
+      } 
+
+      if (qe.type != ACT_TYPE_FLOW) {
+        qAnalysis += "->t" + std::to_string((int)qe.type) + "\n";
+        //if the command is not a flow, we can stop here: It means the default will be used at least once, thus there is no dominant flow
+        return ret;
+      }  
+      
+      //found a pending flow to idle, insert bogus vertex index to show that.
+      if (qe.flowDst == DotStr::Node::Special::sIdle) {
+        ret.insert(-1); 
+        qAnalysis += "->i" + std::to_string((int)qe.type) + "\n";
+        if(verbose) sLog << "updateStaleDefDst: Found dominant flow dst idle" << std::endl;
+        return ret;
+      } 
+      // we ruled out that the flow leads to idle. If it's not permanent, it can't be dominant. Ignore
+      if (!qe.flowPerma) {qAnalysis +=  "->p" + std::to_string((int)qe.type); continue;} 
+      //found a dominant flow, insert its destination
+      auto x = at.lookupHash(hm.lookup(qe.flowDst).get());
+      if (!(at.isOk(x))) {throw std::runtime_error(isSafeToRemove::exIntro + "updateStaleDefDst: Could not find dst in download allocation table");}
+      if(verbose) sLog << "updateStaleDefDst: Found dominant flow dst " << g[x->v].name << std::endl;
+      ret.insert(x->v);
+      covTab.insert(g[vQ].name, (uint8_t)prio, i, qe); //save which element in which queue of which block is eligible to save our arse
+      qAnalysis +=  "->D" + std::to_string((int)qe.type); 
+    }
+  }
+  qAnalysis += "\n"; 
+  return ret;
+}      
+
+
+
 bool CarpeDM::addDynamicDestinations(Graph& g, AllocTable& at) {
   bool didWork = false;
 
@@ -214,74 +488,28 @@ bool CarpeDM::addDynamicDestinations(Graph& g, AllocTable& at) {
 
 
 vertex_set_t CarpeDM::getDynamicDestinations(vertex_t vQ, Graph& g, AllocTable& at) {
+
+
   vertex_set_t ret;
 
   if(verbose) sLog << "Searching for pending flows " << g[vQ].name << std::endl;
- 
-  //check their Q counters for unprocessed commands
-  uint32_t wrIdxs = boost::dynamic_pointer_cast<Block>(g[vQ].np)->getWrIdxs(); 
-  uint32_t rdIdxs = boost::dynamic_pointer_cast<Block>(g[vQ].np)->getRdIdxs();
-  uint32_t diff = (rdIdxs ^ wrIdxs ) & 0x00ffffff;  
-      
-  if(verbose) sLog << "Checking Block " << g[vQ].name << std::endl;
 
-  for (uint8_t prio = 0; prio < 3; prio++) {
-    uint32_t bufLstAdr;
-    uint8_t bufLstCpu;
-    AdrType bufLstAdrType; 
-
-    if (!((diff >> (prio*8)) & Q_IDX_MAX_OVF_MSK)) {if(verbose) {sLog << "prio " << (int)prio << " is empty" << std::endl;} continue;}
-    if(verbose) sLog << "Checking Prio " << prio << std::endl;  
-    //get Block binary
-    uint8_t* bBlock = g[vQ].np->getB();
-    bufLstAdr = writeBeBytesToLeNumber<uint32_t>((uint8_t*)&bBlock[BLOCK_CMDQ_LO_PTR + prio * _32b_SIZE_]);
-
-    
-    std::tie(bufLstCpu, bufLstAdrType) = at.adrClassification(bufLstAdr);  
-    //get BufList binary
-    auto bufLst = at.lookupAdr( s2u<uint8_t>(g[vQ].cpu), at.adrConv(bufLstAdrType, AdrType::MGMT, s2u<uint8_t>(g[vQ].cpu), bufLstAdr) );
-    if (!(at.isOk(bufLst))) {throw std::runtime_error(isSafeToRemove::exIntro + "Could not find buffer list in download address table");}
-    const uint8_t* bBL = bufLst->b;  
-     
-    //get current read cnt
-    uint8_t rdIdx = (rdIdxs >> (prio*8)) & Q_IDX_MAX_MSK;
-    uint8_t wrIdx = (wrIdxs >> (prio*8)) & Q_IDX_MAX_MSK;
-
-    if(verbose) sLog << "rdCnt " << (int)rdIdx << " wrCnt " << (int)wrIdx << std::endl;
-
-    //force wraparound
-    rdIdx >= wrIdx ? wrIdx+=4 : wrIdx;
+  QueueReport qr;
+  qr = getQReport(g, at, g[vQ].name, qr);
+        
+  for (int8_t prio = PRIO_IL; prio >= PRIO_LO; prio--) {
+    if (!qr.hasQ[prio]) {continue;}
 
     //find buffers of all non empty slots
-    for (uint8_t i = rdIdx; i < wrIdx; i++) {
-      uint8_t idx = i & Q_IDX_MAX_MSK;
-      uint32_t bufAdr, dstAdr;
-      uint8_t bufCpu, dstCpu;
-      AdrType bufAdrType, dstAdrType;
-      
-      bufAdr = writeBeBytesToLeNumber<uint32_t>((uint8_t*)&bBL[(idx / 2) * _32b_SIZE_] );
-      std::tie(bufCpu, bufAdrType) = at.adrClassification(bufAdr);  
+    for (uint8_t i, idx = qr.aQ[prio].rdIdx; idx < qr.aQ[prio].rdIdx + 4; idx++) {
+      i = idx & Q_IDX_MAX_MSK;
+      QueueElement& qe = qr.aQ[prio].aQe[i];
 
-      uint32_t tmpAdr = at.adrConv(bufAdrType, AdrType::MGMT, s2u<uint8_t>(g[vQ].cpu), bufAdr);
-
-      auto buf = at.lookupAdr( s2u<uint8_t>(g[vQ].cpu), tmpAdr );
-      if (!(at.isOk(buf))) {throw std::runtime_error(isSafeToRemove::exIntro + "Could not find buffer in download address table");}
-      const uint8_t* b = buf->b;
-
-      if(verbose) sLog << "Scanning Buffer " << (int)(i / 2) << " - " << g[buf->v].name << " at Offset " << (int)(i % 2) << std::endl;
-      // scan pending command for flow to forbidden destination
-      uint32_t act  = writeBeBytesToLeNumber<uint32_t>((uint8_t*)&b[(idx % 2) * _T_CMD_SIZE_ + T_CMD_ACT]);
-      uint8_t type = (act >> ACT_TYPE_POS) & ACT_TYPE_MSK;
-      if(verbose) sLog << "Found Cmd type " << (int)type << std::endl; 
-
-      if (type == ACT_TYPE_FLOW) {
-
-        dstAdr   = writeBeBytesToLeNumber<uint32_t>((uint8_t*)&b[(idx % 2) * _T_CMD_SIZE_ + T_CMD_FLOW_DEST]);
-        if (dstAdr == LM32_NULL_PTR) continue; // pointing to idle is always okay
-        std::tie(dstCpu, dstAdrType) = at.adrClassification(dstAdr);
-
-        auto x = at.lookupAdr( (dstAdrType == AdrType::PEER ? dstCpu : s2u<uint8_t>(g[vQ].cpu)), at.adrConv(dstAdrType, AdrType::MGMT, (dstAdrType == AdrType::PEER ? dstCpu : s2u<uint8_t>(g[vQ].cpu)), dstAdr) );
-        if (!(at.isOk(x))) {throw std::runtime_error(isSafeToRemove::exIntro + "Could not find dst in download address table");}
+      if (!qe.pending) {continue;}
+      if (qe.type == ACT_TYPE_FLOW) {
+        if (qe.flowDst == DotStr::Node::Special::sIdle) {continue;}
+        auto x = at.lookupHash(hm.lookup(qe.flowDst).get());
+        if (!(at.isOk(x))) {throw std::runtime_error(isSafeToRemove::exIntro + "Could not find dst in download allocation table");}
         if(verbose) sLog << "Found flow dst " << g[x->v].name << std::endl;
         ret.insert(x->v); //found a pending flow, insert its destination
       }

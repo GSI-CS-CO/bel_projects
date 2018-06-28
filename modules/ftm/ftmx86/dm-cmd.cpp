@@ -5,7 +5,7 @@
 #include <time.h>
 #include <unistd.h>
 
-#include "ftm_shared_mmap.h"
+
 #include "carpeDM.h"
 #include "node.h"
 #include "block.h"
@@ -18,16 +18,15 @@ namespace dnt = DotStr::Node::TypeVal;
 
 
 static void help(const char *program) {
+  fprintf(stderr, "\ndm-cmd v%s\nSends a command or dotfile of commands to the DM\nThere are global, local and queued commands\n", TOOL_VER);
   fprintf(stderr, "\nUsage: %s [OPTION] <etherbone-device> <command> [target node] [parameter] \n", program);
   fprintf(stderr, "\n");
-  fprintf(stderr, "\nSends a command to Thread <n> of CPU Core <m> of the DataMaster (DM), requires dot file of DM's schedule.\nThere are global commands, that influence the whole DM, local commands influencing the whole thread\nand block commands, that only affect one queue in the schedule.\n");
-  fprintf(stderr, "  -d         <dir>          Use a directory other than the current working path for hashtable and groupstable files\n");
   fprintf(stderr, "\nGeneral Options:\n");
   fprintf(stderr, "  -c <cpu-idx>              Select CPU core by index, default is 0\n");
   fprintf(stderr, "  -t <thread-idx>           Select thread inside selected CPU core by index, default is 0\n");
   fprintf(stderr, "  -v                        Verbose operation, print more details\n");
-  fprintf(stderr, "  -i command .dot file      Dot file containing commands\n");
-  fprintf(stderr, "\nGlobal commands:\n");
+  fprintf(stderr, "  -d                        Debug operation, print everything\n");
+  fprintf(stderr, "  -i command .dot file      Run commands from dot file\n");
   fprintf(stderr, "  status                    Show status of all threads and cores (default)\n");
   fprintf(stderr, "  details                   Show time statistics and detailed information on uptime and recent changes\n");
   fprintf(stderr, "  gathertime <Time / ns>    [NOT YET IMPLEMENTED] Set msg gathering time for priority queue\n");
@@ -35,32 +34,36 @@ static void help(const char *program) {
   fprintf(stderr, "  running                   Show bitfield of all running threads on this CPU core\n");
   fprintf(stderr, "  heap                      Show current scheduler heap\n");
   fprintf(stderr, "  startpattern <pattern>    Request start of selected pattern\n");
-  fprintf(stderr, "  stoppattern  <pattern>    Request stop of selected pattern\n");
   fprintf(stderr, "  abortpattern <pattern>    Try to immediately abort selected pattern\n");  
   fprintf(stderr, "  chkrem       <pattern>    Check if removal of selected pattern would be safe\n");
-  fprintf(stderr, "\nLocal commands:\n");
   fprintf(stderr, "  starttime <Time / ns>     Set start time for this thread\n");
   fprintf(stderr, "  preptime <Time / ns>      Set preparation time (lead) for this thread\n");
   fprintf(stderr, "  deadline                  Show next deadline for this thread\n");
-  fprintf(stderr, "  origin <target node>      Set the node with which selected thread will start\n");
+  fprintf(stderr, "  origin <target>           Set the node with which selected thread will start\n");
   fprintf(stderr, "  origin                    Return the node with which selected thread will start\n");
-  fprintf(stderr, "  hex <target node>         Show hex dump of selected Node \n");
-  fprintf(stderr, "  start                     Request start of selected thread. Requires a valid origin.\n");
-  fprintf(stderr, "  stop                      Request stop of selected thread\n");
-  fprintf(stderr, "  abort                     Immediately aborts selected thread\n");
-  fprintf(stderr, "  halt                      Immediately aborts all threads on all cpus\n");
   fprintf(stderr, "  cursor                    Show name of currently active node of selected thread\n");
-  fprintf(stderr, "  force                     Force cursor to match origin\n");
-  
-  fprintf(stderr, "\nBlock commands:\n");
-  fprintf(stderr, "  noop <target node>                        [Options: lpq]   Placeholder to stall succeeding commands, has no effect itself\n");
-  fprintf(stderr, "  flow <target node> <destination node>     [Options: lpqs]  Changes schedule flow to <Destination Node>\n");
-  fprintf(stderr, "  relwait <target node> <wait time / ns>    [Options: lps]   Changes Block period to <wait time>\n");
-  fprintf(stderr, "  abswait <target node> <wait time / ns>    [Options: lp]    Stretches Block period until <wait time>\n");
-  fprintf(stderr, "  flush <target node> <target priorities>   [Options: lp]    [NOT TESTED] Flushes all pending commands (hex 0x0 - 0x7) of lower priority\n");
-  fprintf(stderr, "  queue <target node>                       [Options: p]     Show all queue content (unitialised cmd slots will show garbage) \n");
-  fprintf(stderr, "Options for Block commands:\n");
-  fprintf(stderr, "  -l <Time / ns>           The absolute time in ns after which the command will become active, default is 0 (immediately)\n");
+  fprintf(stderr, "  hex <target>              Show hex dump of selected Node \n");
+  fprintf(stderr, "  queue <target>            Show content of all queues\n");
+  fprintf(stderr, "  start                     Request start of selected thread. Requires a valid origin.\n");
+  fprintf(stderr, "  stop                      Request stop of selected thread. Does reverse lookup of current pattern, prone to race condition\n");
+  //fprintf(stderr, "  cease                   Cease thread at pattern end.\n");
+  fprintf(stderr, "  abort                     Immediately abort selected thread.\n");
+  fprintf(stderr, "  halt                      Immediately aborts all threads on all cpus\n");
+  //fprintf(stderr, "  force                     Force cursor to match origin\n");
+  fprintf(stderr, "  staticflush <target> <prios>                  Flushes all pending commands of given priorities (3b Hi-Md-Lo -> 0x0..0x7) in an inactive (static) block of the schedule\n");
+  fprintf(stderr, "  staticflushpattern <pattern> <prios>          Flushes all pending commands of given priorities (3b Hi-Md-Lo -> 0x0..0x7) in an inactive (static) pattern of the schedule\n");
+  fprintf(stderr, "\nQueued commands (viable options in square brackets):\n");
+  fprintf(stderr, "  stop <target>                        [laps]   Request stop at selected block (flow to idle)\n");
+  fprintf(stderr, "  stoppattern  <pattern>               [laps]   Request stop of selected pattern\n");
+  fprintf(stderr, "  noop <target>                        [lapq]   Placeholder to stall succeeding commands, has no effect itself\n");
+  fprintf(stderr, "  flow <target> <destination node>     [lapqs]  Changes schedule flow to <Destination Node>\n");
+  fprintf(stderr, "  flowpattern <target pat.> <dst pat.> [lapqs]  Changes schedule flow to <Destination Pattern>\n");
+  fprintf(stderr, "  relwait <target> <wait time / ns>    [laps]   Changes Block period to <wait time>\n");
+  fprintf(stderr, "  abswait <target> <wait time / ns>    [lap]    Stretches Block period until <wait time>\n");
+  fprintf(stderr, "  flush <target> <prios>               [lap]    Flushes all pending commands of given priorities (3b, 0x0..0x7) le cmd priority\n");
+  fprintf(stderr, "Options for queued commands:\n");
+  fprintf(stderr, "  -l <Time / ns>           Time in ns after which the command will become active, default is 0 (immediately)\n");
+  fprintf(stderr, "  -a                       Interprete valid time of command as absolute. Default is relative (current WR time is added)\n");
   fprintf(stderr, "  -p <priority>            The priority of the command (0 = Low, 1 = High, 2 = Interlock), default is 0\n");
   fprintf(stderr, "  -q <quantity>            The number of times the command will be inserted into the target queue, default is 1\n");
   fprintf(stderr, "  -s                       Changes to the schedule are permanent\n");
@@ -71,6 +74,7 @@ static void help(const char *program) {
 void showStatus(const char *netaddress, CarpeDM& cdm, bool verbose) {
   std::string show;
   cdm.showCpuList();
+  if(cdm.isOptimisedS2R()) cdm.dirtyCtShow();
   uint8_t cpuQty = cdm.getCpuQty();
   uint8_t thrQty = _THR_QTY_;
 
@@ -102,16 +106,16 @@ void showStatus(const char *netaddress, CarpeDM& cdm, bool verbose) {
   //TODO: replace this with something more sensible
 
   char date[40];
-  uint64_t timeWr = cdm.getDmWrTime();
-  uint64_t timeWrNs = timeWr * 1000000000ULL;
+  uint64_t timeWrNs = cdm.getDmWrTime();
+  uint64_t timeWr = timeWrNs / 1000000000ULL;
   strftime(date, sizeof(date), "%Y-%m-%d %H:%M:%S", gmtime((time_t*)&timeWr));
 
 
-  printf("\n\u2552"); for(int i=0;i<width;i++) printf("\u2550"); printf("\u2555\n");
-  printf("\u2502 DataMaster: %-80s \u2502 WR-Time: 0x%08x%08x ns \u2502 %.19s \u2502\n", netaddress, (uint32_t)(timeWrNs>>32), (uint32_t)timeWrNs, date);
-  printf("\u251C"); for(int i=0;i<width;i++) printf("\u2550"); printf("\u2524\n");
-  printf("\u2502 %3s \u2502 %3s \u2502 %7s \u2502 %9s \u2502 %55s \u2502 %55s \u2502\n", "Cpu", "Thr", "Running", "MsgCount", "Pattern", "Node");
-  printf("\u251C"); for(int i=0;i<width;i++) printf("\u2550"); printf("\u2524\n");
+  printf("\n\u2554"); for(int i=0;i<width;i++) printf("\u2550"); printf("\u2557\n");
+  printf("\u2551 DataMaster: %-80s \u2502 WR-Time: 0x%08x%08x ns \u2502 %.19s \u2551\n", netaddress, (uint32_t)(timeWrNs>>32), (uint32_t)timeWrNs, date);
+  printf("\u2560"); for(int i=0;i<width;i++) printf("\u2550"); printf("\u2563\n");
+  printf("\u2551 %3s \u2502 %3s \u2502 %7s \u2502 %9s \u2502 %55s \u2502 %55s \u2551\n", "Cpu", "Thr", "Running", "MsgCount", "Pattern", "Node");
+  printf("\u2560"); for(int i=0;i<width;i++) printf("\u2550"); printf("\u2563\n");
   
   bool toggle=false;
 
@@ -119,12 +123,12 @@ void showStatus(const char *netaddress, CarpeDM& cdm, bool verbose) {
   for(uint8_t cpuIdx=0; cpuIdx < cpuQty; cpuIdx++) {
     for(uint8_t thrIdx=0; thrIdx < thrQty; thrIdx++) {
       if (verbose || ((cdm.getThrRun(cpuIdx) >> thrIdx) & 1)) {
-        //if (!first) {printf("\u251C"); for(int i=0;i<width;i++) printf("\u2500"); printf("\u2524\n");
+        //if (!first) {printf("\u2560"); for(int i=0;i<width;i++) printf("\u2500"); printf("\u2563\n");
         std::string running = (((cdm.getThrRun(cpuIdx) >> thrIdx) & 1) ? std::string(KGRN) + std::string("yes") : std::string(KRED) + std::string(" no")) + std::string(KNRM);
         std::string originPattern = vsOriginPattern[cpuIdx * thrQty + thrIdx];
         std::string origin        = vsOrigin[cpuIdx * thrQty + thrIdx];
 
-        printf("\u2502%s %2u  \u2502 %2u  \u2502   %3s%s   \u2502 %9llu \u2502 %55s \u2502 %55s %s\u2502\n", (toggle ? BLGR : ""), cpuIdx, thrIdx, running.c_str(), 
+        printf("\u2551%s %2u  \u2502 %2u  \u2502   %3s%s   \u2502 %9llu \u2502 %55s \u2502 %55s %s\u2551\n", (toggle ? BLGR : ""), cpuIdx, thrIdx, running.c_str(), 
           (toggle ? BLGR : ""),
           (unsigned long long int)vsMsgCnt[cpuIdx * thrQty + thrIdx],
           vsCursorPattern[cpuIdx * thrQty + thrIdx].c_str(),  
@@ -136,7 +140,7 @@ void showStatus(const char *netaddress, CarpeDM& cdm, bool verbose) {
     } 
   }
 
-  printf("\u2514"); for(int i=0;i<width;i++) printf("\u2500"); printf("\u2518\n");
+  printf("\u255A"); for(int i=0;i<width;i++) printf("\u2550"); printf("\u255D\n");
 
 }
 
@@ -148,54 +152,74 @@ void showHealth(const char *netaddress, CarpeDM& cdm, bool verbose) {
 
 
   for(uint8_t i=0; i < cpuQty; i++) { cdm.getHealth(i, hr[i]); }  
-  const uint16_t width = 160;
+  const uint16_t width = 80;
   //this is horrible code, but harmless. Does the job for now.
   //TODO: replace this with something more sensible
 
 
   char date[40];
-  uint64_t timeWr = cdm.getDmWrTime();
+  uint64_t timeWr = cdm.getDmWrTime() / 1000000000ULL ;
   strftime(date, sizeof(date), "%Y-%m-%d %H:%M:%S", gmtime((time_t*)&timeWr));
+  unsigned netStrLen;
+  for(netStrLen = 0; netStrLen < width; netStrLen++) {if (netaddress[netStrLen] == '\00') break;}
+
+  printf("\n\u2554"); for(int i=0;i<width;i++) printf("\u2550"); printf("\u2557\n");
+  printf("\u2551 DM: %s", netaddress); for(uint8_t i=0; i < (width - 5 - netStrLen); i++) printf(" "); printf("\u2551\n");
+  printf("\u2560"); for(int i=0;i<width;i++) printf("\u2550"); printf("\u2563\n");
+  printf("\u2551 WR-Time: 0x%08x%08x \u2502 %.19s %32s\n", (uint32_t)(timeWr>>32), (uint32_t)timeWr, date, "\u2551");
 
   
-  
-
-  printf("\n\u2552"); for(int i=0;i<width;i++) printf("\u2550"); printf("\u2555\n");
-  printf("\u2502 DataMaster: %-83s \u2502 WR-Time: 0x%08x%08x \u2502 %.19s \u2502\n", netaddress, (uint32_t)(timeWr>>32), (uint32_t)timeWr, date);
-  printf("\u251C"); for(int i=0;i<width;i++) printf("\u2550"); printf("\u2524\n");
-  printf("\u2502 %3s \u2502 %24s \u2502 %24s \u2502 %8s \u2502 %14s \u2502 %9s \u2502 %9s \u2502 %9s \u2502 %9s \u2502 %9s \u2502 %10s \u2502\n", 
-        "Cpu", "BootTime", "Schedule ModTime", "Issuer", "CPU Msg Cnt", "Min dT", "Max dT", "Avg dT", "Thrs dT", "WrnCnt", "State");
-  printf("\u251C"); for(int i=0;i<width;i++) printf("\u2550"); printf("\u2524\n");
-  
-
-   
+  // Boot Time and Msg Count
+  printf("\u2560"); for(int i=0;i<width;i++) printf("\u2550"); printf("\u2563\n");
+  printf("\u2551 %3s \u2502 %19s \u2502 %14s \u2502 %37s\n", 
+      "Cpu", "BootTime", "CPU Msg Cnt", "\u2551");
+  printf("\u2560"); for(int i=0;i<width;i++) printf("\u2550"); printf("\u2563\n");
   for(uint8_t i=0; i < cpuQty; i++) {
-    char dateBoot[40], dateMod[40];
-    uint64_t timeBoot = hr[i].bootTime / 1000000000ULL, timeMod = hr[i].smodTime / 1000000000ULL;
-    strftime(dateBoot,  sizeof(dateBoot), "%Y-%m-%d %H:%M:%S", gmtime((time_t*)&timeBoot));   
-    strftime(dateMod,   sizeof(dateMod),  "%Y-%m-%d %H:%M:%S", gmtime((time_t*)&timeMod));
-    //this is nanoseconds, we need to convert to seconds
-    
-    
-    
+    char date[40];
+    uint64_t timeval = hr[i].bootTime / 1000000000ULL; //all times are in nanoseconds, we need to convert to seconds
+    strftime(date,  sizeof(date), "%Y-%m-%d %H:%M:%S", gmtime((time_t*)&timeval)); //human readable date
+    printf("\u2551 %3u \u2502 %.19s \u2502 %14llu \u2502 %37s\n", hr[i].cpu, date, (long long unsigned int)hr[i].msgCnt, "\u2551");    
+  }
 
-    printf("\u2502 %3u \u2502 %.24s \u2502 %.24s \u2502 %8s \u2502 %14llu \u2502 %9d \u2502 %9d \u2502 %9d \u2502 %9d \u2502 %9u \u2502 0x%08x \u2502\n", 
-                                                                                                                    hr[i].cpu,
-                                                                                                                    dateBoot,
-                                                                                                                    dateMod,
-                                                                                                                    hr[i].smodIssuer,
-                                                                                                                    (unsigned long long int)hr[i].msgCnt,
-                                                                                                                    (int)hr[i].minTimeDiff,
-                                                                                                                    (int)hr[i].maxTimeDiff,
-                                                                                                                    (int)hr[i].avgTimeDiff,
-                                                                                                                    (int)hr[i].warningThreshold,
-                                                                                                                    hr[i].warningCnt,
-                                                                                                                    hr[i].stat);
+  // Most recent schedule modification (time, issuer, type of operation)
+  printf("\u2560"); for(int i=0;i<width;i++) printf("\u2550"); printf("\u2563\n");
+  printf("\u2551 %3s \u2502 %19s \u2502 %8s \u2502 %8s \u2502 %10s \u2502 %19s\n", "Cpu",  "Schedule ModTime", "Issuer", "Host", "Op Type", "\u2551");
+  printf("\u2560"); for(int i=0;i<width;i++) printf("\u2550"); printf("\u2563\n");
+  for(uint8_t i=0; i < cpuQty; i++) {
+    char date[40];
+    uint64_t timeval = hr[i].smodTime / 1000000000ULL;
+    strftime(date,  sizeof(date), "%Y-%m-%d %H:%M:%S", gmtime((time_t*)&timeval));
+    printf("\u2551 %3u \u2502 %19s \u2502 %8s \u2502 %8s \u2502 %10s \u2502 %19s\n", hr[i].cpu, date, hr[i].smodIssuer, hr[i].smodHost, hr[i].smodOpType.c_str(), "\u2551");
   }  
   
+  // Most recent command (time, issuer, type of operation)
+  printf("\u2560"); for(int i=0;i<width;i++) printf("\u2550"); printf("\u2563\n");
+  printf("\u2551 %3s \u2502 %19s \u2502 %8s \u2502 %8s \u2502 %10s \u2502 %19s\n", "Cpu",  "Command ModTime", "Issuer", "Host", "Op Type", "\u2551");
+  printf("\u2560"); for(int i=0;i<width;i++) printf("\u2550"); printf("\u2563\n");
+  for(uint8_t i=0; i < cpuQty; i++) {
+    char date[40];
+    uint64_t timeval = hr[i].cmodTime / 1000000000ULL;
+    strftime(date,  sizeof(date), "%Y-%m-%d %H:%M:%S", gmtime((time_t*)&timeval));
+    printf("\u2551 %3u \u2502 %19s \u2502 %8s \u2502 %8s \u2502 %10s \u2502 %19s\n", hr[i].cpu, date, hr[i].cmodIssuer, hr[i].cmodHost, hr[i].cmodOpType.c_str(), "\u2551");
+  } 
 
-
-  printf("\u2514"); for(int i=0;i<width;i++) printf("\u2500"); printf("\u2518\n");
+  //LM32 message ispatch statistics (min lead, max lead, avg lead, lead warning threshold, warning count, status register)
+  printf("\u2560"); for(int i=0;i<width;i++) printf("\u2550"); printf("\u2563\n");
+  printf("\u2551 %3s \u2502 %9s \u2502 %9s \u2502 %9s \u2502 %9s \u2502 %9s \u2502 %10s   %3s\n", 
+      "Cpu", "Min dT", "Max dT", "Avg dT", "Thrs dT", "WrnCnt", "State", "\u2551");
+  printf("\u2560"); for(int i=0;i<width;i++) printf("\u2550"); printf("\u2563\n");
+  for(uint8_t i=0; i < cpuQty; i++) {
+    printf("\u2551 %3u \u2502 %9d \u2502 %9d \u2502 %9d \u2502 %9d \u2502 %9u \u2502 0x%08x   %3s\n", 
+      hr[i].cpu,
+      (int)hr[i].minTimeDiff,
+      (int)hr[i].maxTimeDiff,
+      (int)hr[i].avgTimeDiff,
+      (int)hr[i].warningThreshold,
+      hr[i].warningCnt,
+      hr[i].stat, "\u2551");
+  }
+    
+  printf("\u255A"); for(int i=0;i<width;i++) printf("\u2550"); printf("\u255D\n");
 
 }
 
@@ -207,7 +231,7 @@ int main(int argc, char* argv[]) {
 
 
 
-  bool verbose = false, permanent = false;
+  bool verbose = false, permanent = false, debug=false, vabs=false, force=false;
 
   int opt;
   const char *program = argv[0];
@@ -222,18 +246,20 @@ int main(int argc, char* argv[]) {
   uint64_t cmdTvalid = 0, longtmp;
 
 // start getopt 
-   while ((opt = getopt(argc, argv, "shvc:p:l:t:q:i:d:")) != -1) {
+   while ((opt = getopt(argc, argv, "shvc:p:l:t:q:i:daf")) != -1) {
       switch (opt) {
+          case 'f':
+            force = true;
+            break;   
+          case 'a':
+            vabs = true;
+            break;
           case 'i':
             cmdFilename = optarg;
             break;
          case 'd':
-            dirname = optarg;
-            if (dirname == NULL) {
-              std::cerr << std::endl << program << ": option -d expects a path" << std::endl;
-            }
-            error = -1;
-            break;     
+            debug = true;
+            break;    
          case 'v':
             verbose = 1;
             break;
@@ -320,6 +346,9 @@ int main(int argc, char* argv[]) {
   CarpeDM cdm = CarpeDM();
 
   if(verbose) cdm.verboseOn();
+  if(debug)   cdm.debugOn();
+
+
 
   try {
     cdm.connect(std::string(netaddress));
@@ -334,6 +363,8 @@ int main(int argc, char* argv[]) {
        return -30;
     }  
   }
+
+  cdm.updateModTime();
 
   // The global hard abort commands are special - they must work regardless if the schedule download/parse was successful or not
   if (typeName != NULL ) { 
@@ -353,20 +384,10 @@ int main(int argc, char* argv[]) {
     }
   }  
 
-    try { cdm.loadHashDictFile( std::string(dirname) + "/" + std::string(hashfile) ); } catch (std::runtime_error const& err) {
-      std::cerr << std::endl << program << ": Warning - Could not load dictionary file. Cause: " << err.what() << std::endl;
-    }
-  if (verbose) std::cout << std::endl << program << ": Loaded " << cdm.getHashDictSize() << " Node / Hash entries" << std::endl;  
-
-  try { cdm.loadGroupsDictFile( std::string(dirname) + "/" + std::string(groupsfile) ); } catch (std::runtime_error const& err) {
-      std::cerr << std::endl << program << ": Warning - Could not load groups file. Cause: " << err.what() << std::endl;
-    }
-  if (verbose) std::cout << std::endl << program << ": Loaded " << cdm.getGroupsSize() << " Node / Pattern / Beamprocess entries" << std::endl;  
-
  
     
-  try { 
-    cdm.download();
+  try {
+   cdm.download();
   } catch (std::runtime_error const& err) {
     std::cerr << program << ": Download from CPU "<< cpuIdx << " failed. Cause: " << err.what() << std::endl;
     return -7;
@@ -375,8 +396,8 @@ int main(int argc, char* argv[]) {
 
   uint32_t globalStatus = cdm.getStatus(0), status = cdm.getStatus(cpuIdx);
 
-  if ( !(globalStatus & (SHCTL_STATUS_EBM_INIT_SMSK | SHCTL_STATUS_PQ_INIT_SMSK))
-    || !(status & (SHCTL_STATUS_UART_INIT_SMSK | SHCTL_STATUS_DM_INIT_SMSK)) ) 
+  if (!force && ( !(globalStatus & (SHCTL_STATUS_EBM_INIT_SMSK | SHCTL_STATUS_PQ_INIT_SMSK))
+    || !(status & (SHCTL_STATUS_UART_INIT_SMSK | SHCTL_STATUS_DM_INIT_SMSK)) )) 
     {
     std::cerr << program << ": DM is not fully initialised. Cause: " << std::endl;
     if (!(globalStatus & SHCTL_STATUS_EBM_INIT_SMSK)) std::cerr << "EB Master could not be configured. Does the DM have a valid IP?" << std::endl;
@@ -404,6 +425,9 @@ int main(int argc, char* argv[]) {
       
   }
 
+  uint64_t tvalidOffs = cdm.getModTime();
+  if(!vabs) cmdTvalid += tvalidOffs; // already added modTime when !vabs, so when calling cdm.adjustValidTime, we'll always say tvalid is absolute 
+
 
   if (typeName != NULL ) {  
 
@@ -413,6 +437,7 @@ int main(int argc, char* argv[]) {
 
     if      (cmp == dnt::sCmdNoop)  {
       if(!(cdm.isInHashDict( targetName))) {std::cerr << program << ": Target node '" << targetName << "'' was not found on DM" << std::endl; return -1; }
+      cdm.adjustValidTime(cmdTvalid, false);
       mc = (mc_ptr) new MiniNoop(cmdTvalid, cmdPrio, cmdQty );
     }
     else if (cmp == "status")  {
@@ -422,6 +447,24 @@ int main(int argc, char* argv[]) {
     else if (cmp == "details")  {
       showHealth(netaddress, cdm, verbose);
       return 0;
+    }
+    else if (cmp == "flowpattern")  {
+      if ((targetName == NULL) || (para == NULL)) {std::cerr << program << ": Need valid target and destination pattern names " << std::endl; return -1; }
+
+      std::string fromNode = cdm.getPatternExitNode(targetName);
+      std::string toNode   = (para == DotStr::Node::Special::sIdle ) ? DotStr::Node::Special::sIdle : cdm.getPatternEntryNode(para);
+      
+      if ( cdm.isInHashDict( fromNode ) && ( (toNode == DotStr::Node::Special::sIdle ) || cdm.isInHashDict( toNode )  )) { 
+        uint32_t adr; 
+        try {
+          adr = cdm.getNodeAdr(toNode, TransferDir::DOWNLOAD, AdrType::INT);
+        } catch (std::runtime_error const& err) {
+          std::cerr << program << ": Could not obtain address of destination node " << toNode << ". Cause: " << err.what() << std::endl;
+        }
+        cdm.adjustValidTime(cmdTvalid, true);  
+        mc = (mc_ptr) new MiniFlow(cmdTvalid, cmdPrio, cmdQty, adr, permanent );
+      } else {std::cerr << program << ": Destination Node '" << toNode << "'' was not found on DM" << std::endl; return -1; }
+      targetName = fromNode.c_str();
     }   
     else if (cmp == dnt::sCmdFlow)  {
       if(!(cdm.isInHashDict( targetName))) {std::cerr << program << ": Target node '" << targetName << "'' was not found on DM" << std::endl; return -1; }
@@ -431,26 +474,41 @@ int main(int argc, char* argv[]) {
           adr = cdm.getNodeAdr(para, TransferDir::DOWNLOAD, AdrType::INT);
         } catch (std::runtime_error const& err) {
           std::cerr << program << ": Could not obtain address of destination node " << para << ". Cause: " << err.what() << std::endl;
-        } 
+        }
+        cdm.adjustValidTime(cmdTvalid, true); 
         mc = (mc_ptr) new MiniFlow(cmdTvalid, cmdPrio, cmdQty, adr, permanent );
       } else {std::cerr << program << ": Destination Node '" << para << "'' was not found on DM" << std::endl; return -1; }
     }
     else if (cmp == "relwait")  {
       if(!(cdm.isInHashDict( targetName))) {std::cerr << program << ": Target node '" << targetName << "'' was not found on DM" << std::endl; return -1; }
       if (para == NULL) {std::cerr << program << ": Wait time in ns is missing" << std::endl; return -1; }
+      cdm.adjustValidTime(cmdTvalid, true); 
       mc = (mc_ptr) new MiniWait(cmdTvalid, cmdPrio, strtoll(para, NULL, 0), permanent, false );
     }
     else if (cmp == "abswait")  {
       if(!(cdm.isInHashDict( targetName))) {std::cerr << program << ": Target node '" << targetName << "'' was not found on DM" << std::endl; return -1; }
       if (para == NULL) {std::cerr << program << ": Wait time in ns is missing" << std::endl; return -1; }
-        mc = (mc_ptr) new MiniWait(cmdTvalid, cmdPrio, strtoll(para, NULL, 0), permanent, true ); 
+      cdm.adjustValidTime(cmdTvalid, true); 
+      mc = (mc_ptr) new MiniWait(cmdTvalid, cmdPrio, strtoll(para, NULL, 0), permanent, true ); 
     }
     else if (cmp == dnt::sCmdFlush) {
         if(!(cdm.isInHashDict( targetName))) {std::cerr << program << ": Target node '" << targetName << "'' was not found on DM" << std::endl; return -1; }
         if (para == NULL) {std::cerr << program << ": Queues to be flushed are missing, require 3 bit as hex (IL HI LO 0x0 - 0x7)" << std::endl; return -1; }  
         uint32_t queuePrio = strtol(para, NULL, 0) & 0x7;
-        std::cout << "qprio " << para << " 0x" << std::hex << queuePrio << std::endl;
+        cdm.adjustValidTime(cmdTvalid, true); 
         mc = (mc_ptr) new MiniFlush(cmdTvalid, cmdPrio, (bool)(queuePrio >> PRIO_IL & 1), (bool)(queuePrio >> PRIO_HI & 1), (bool)(queuePrio >> PRIO_LO & 1));
+    }
+    else if (cmp == "staticflush") {
+      if(!(cdm.isInHashDict( targetName))) {std::cerr << program << ": Target node '" << targetName << "'' was not found on DM" << std::endl; return -1; }
+      if (para == NULL) {std::cerr << program << ": Queues to be flushed are missing, require 3 bit as hex (IL HI LO 0x0 - 0x7)" << std::endl; return -1; }  
+      uint32_t queuePrio = strtol(para, NULL, 0) & 0x7;
+      try {
+          cdm.staticFlushBlock(targetName, (bool)(queuePrio >> PRIO_IL & 1), (bool)(queuePrio >> PRIO_HI & 1), (bool)(queuePrio >> PRIO_LO & 1), force);
+        } catch (std::runtime_error const& err) {
+          std::cerr << program << ": Could not statically flush " << targetName << ". Cause: " << err.what() << std::endl;
+        }
+
+      return 0;
     }
     else if (cmp == "queue") {
         if(!(cdm.isInHashDict( targetName))) {std::cerr << program << ": Target node '" << targetName << "'' was not found on DM" << std::endl; return -1; }
@@ -530,6 +588,14 @@ int main(int argc, char* argv[]) {
     else if (cmp == "abortpattern")  {
       if( targetName != NULL) {
         cdm.abortPattern(targetName); 
+      } else { std::cout << "Missing valid Pattern name" << std::endl; }
+      return 0;
+    }
+    else if (cmp == "staticflushpattern")  {
+      if( targetName != NULL) {
+        if (para == NULL) {std::cerr << program << ": Queues to be flushed are missing, require 3 bit as hex (IL HI LO 0x0 - 0x7)" << std::endl; return -1; }  
+        uint32_t queuePrio = strtol(para, NULL, 0) & 0x7;
+        cdm.staticFlushPattern(targetName, (bool)(queuePrio >> PRIO_IL & 1), (bool)(queuePrio >> PRIO_HI & 1), (bool)(queuePrio >> PRIO_LO & 1), force); 
       } else { std::cout << "Missing valid Pattern name" << std::endl; }
       return 0;
     }
