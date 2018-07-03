@@ -242,28 +242,30 @@ void showHealth(const char *netaddress, CarpeDM& cdm, bool verbose) {
 
   // Hardware Delay Report
   printf("\u2560"); for(int i=0;i<width;i++) printf("\u2550"); printf("\u2563\n");
-  printf("\u2551 %10s \u2502 %10s \u2502 %19s \u2502 %10s \u2502 %19s %3s\n", "T observ",  "maxPosDif", "MaxPosUpdate", "minNegDif", "minNegUpdate","\u2551");
+  printf("\u2551 %10s \u2502 %9s \u2502 %19s \u2502 %9s \u2502 %19s %3s\n", "T observ",  "maxPosDif", "MaxPosUpdate", "minNegDif", "minNegUpdate","\u2551");
   printf("\u2560"); for(int i=0;i<width;i++) printf("\u2550"); printf("\u2563\n");
   
   
   char dateMaUD[40]; char dateMiUD[40];
   uint64_t tval0 = hwdr.timeMaxPosUDts / 1000000000ULL;
+
+
   strftime(dateMaUD,  sizeof(dateMaUD), "%Y-%m-%d %H:%M:%S", gmtime((time_t*)&tval0));
   uint64_t tval1 = hwdr.timeMinNegUDts / 1000000000ULL;
   strftime(dateMiUD,  sizeof(dateMiUD), "%Y-%m-%d %H:%M:%S", gmtime((time_t*)&tval1));
-  printf("\u2551 %10llu \u2502 %10lld \u2502 %19s \u2502 %10lld \u2502 %19s %3s\n", 
-    hwdr.timeObservIntvl, hwdr.timeMaxPosDif, dateMaUD, hwdr.timeMinNegDif, dateMiUD, "\u2551");
+  printf("\u2551 %10llu \u2502 %9lld \u2502 %19s \u2502 %9lld \u2502 %19s %3s\n", 
+    (unsigned long long)hwdr.timeObservIntvl, (signed long long)hwdr.timeMaxPosDif, dateMaUD, (signed long long)hwdr.timeMinNegDif, dateMiUD, "\u2551");
     
   
   printf("\u2560"); for(int i=0;i<width;i++) printf("\u2550"); printf("\u2563\n");
-  printf("\u2551 %3s \u2502 %10s \u2502 %10s \u2502 %10s \u2502 %19s %4s\n", 
-      "Cpu", "T Stall Obs", "MaxStreak", "Current", "\u2551");
+  printf("\u2551 %3s \u2502 %9s \u2502 %9s \u2502 %9s \u2502 %19s \u2502 %18s\n", 
+      "Cpu", "STL obs.", "MaxStreak",  "Current", "MaxStreakUpdate", "\u2551");
   printf("\u2560"); for(int i=0;i<width;i++) printf("\u2550"); printf("\u2563\n");
   for(uint8_t i=0; i < cpuQty; i++) {
     char dateSUD[40];
     uint64_t tval3 = hwdr.sdr[i].stallStreakMaxUDts / 1000000000ULL;
     strftime(dateSUD,  sizeof(dateSUD), "%Y-%m-%d %H:%M:%S", gmtime((time_t*)&tval3));
-    printf("\u2551 %3u \u2502 %10u \u2502 %10u \u2502 %10u \u2502 %19s %4s\n", 
+    printf("\u2551 %3u \u2502 %9u \u2502 %9u \u2502 %9u \u2502 %19s \u2502 %18s\n", 
       (int)i,
       hwdr.stallObservIntvl,
       hwdr.sdr[i].stallStreakMax,
@@ -685,13 +687,45 @@ int main(int argc, char* argv[]) {
       std::cout << "CPU " << cpuIdx << " Thr " << thrIdx << " Deadline " << cdm.getThrDeadline(cpuIdx, thrIdx) << std::endl;
       return 0;
     }  
-    else if (cmp == "clearstats")  {
-
+    else if (cmp == "cleardiag")  {
+      cdm.clearHealth();
       cdm.clearHwDiagnostics();
-      cdm.configHwDiagnostics(1000000ULL, 100000);
+      return 0;
+    }
+    else if (cmp == "clearhwdiag")  {
+      cdm.clearHwDiagnostics();
+      return 0;
+    }
+    else if (cmp == "starthwdiag") {
+      cdm.startStopHwDiagnostics(true);
+      return 0;  
+    }
+    else if (cmp == "stophwdiag") {
+      cdm.startStopHwDiagnostics(false);
+      return 0;  
+    }  
+    else if (cmp == "clearcpudiag")  {
       cdm.clearHealth(cpuIdx);
       return 0;
     }
+    else if (cmp == "cfghwdiag") {
+      if( (targetName != NULL) && (para != NULL) ) {
+        cdm.configHwDiagnostics(strtoll(targetName, NULL, 0), strtoll(para, NULL, 0));
+      } else {
+        std::cerr << program << ": Needs valid values for both TAI time observation interval and stall observation interval" << std::endl; return -1;
+      }
+      return 0;  
+    }
+    else if (cmp == "cfgcpudiag") {
+      if(targetName != NULL) {
+        cdm.configFwDiagnostics(strtoll(targetName, NULL, 0));
+      } else {
+        std::cerr << program << ": Needs valid value for lead warning threshold" << std::endl; return -1;
+      }
+      return 0;  
+    }  
+
+    
 
 
     //all the block commands set mc, so...
