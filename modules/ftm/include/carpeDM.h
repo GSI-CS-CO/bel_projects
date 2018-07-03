@@ -3,6 +3,7 @@
 
 #define SDB_VENDOR_GSI      0x0000000000000651ULL
 #define SDB_DEVICE_LM32_RAM 0x54111351
+#define SDB_DEVICE_DIAG     0x18060200
 
 #include <stdio.h>
 #include <iostream>
@@ -41,7 +42,8 @@ private:
   Socket ebs;
   Device ebd;  
   std::vector<struct sdb_device> cpuDevs;  
-  std::vector<struct sdb_device> ecaDevs; 
+  std::vector<struct sdb_device> ecaDevs;
+  std::vector<struct sdb_device> diagDevs; 
 
   int cpuQty = -1;
   HashMap hm;
@@ -360,6 +362,10 @@ std::pair<int, int> findRunningPattern(const std::string& sPattern); // get cpu 
                void clearHealth();
        QueueReport& getQReport(const std::string& blockName, QueueReport& qr);  // FIXME why reference in, reference out ? its not like you can add to this report ...
            uint64_t getDmWrTime();
+    HwDelayReport& getHwDelayReport(HwDelayReport& hdr);
+               void clearHwDiagnostics();
+               void startStopHwDiagnostics(bool enable);
+               void configHwDiagnostics(uint64_t timeIntvl, uint32_t stallIntvl);
 
        std::string& inspectQueues(const std::string& blockName, std::string& report);      // Show all command fields in Block Queue
                void show(const std::string& title, const std::string& logDictFile, TransferDir dir, bool filterMeta );

@@ -28,6 +28,7 @@ BUILD_ID_ROM_SIZE = 0x400
 
 EBMPATH        ?= $(TOP)/ip_cores/etherbone-core/hdl/eb_master_core
 PRIOPATH       ?= $(TOP)/modules/prioq2
+DIAGPATH       ?= $(TOP)/modules/dm_diag
 FTMPATH        ?= $(TOP)/modules/ftm
 SRCPATH         = $(FTMPATH)/src
 LZMAPATH        = $(SRCPATH)/lzma/C
@@ -39,13 +40,13 @@ PREFIX         ?= /usr/local
 INSTALLPATH     = $(PREFIX)/bin
 
 T_CXX           = g++
-T_CXXFLAGS      = -Wall -g -std=c++11 -fPIC -I$(FTMPATH)/include $(EB_INC) -I$(LZMAPATH) -Wfatal-errors
+T_CXXFLAGS      = -Wall -g -std=c++11 -fPIC -I$(FTMPATH)/include $(EB_INC) -I$(DIAGPATH) -I$(LZMAPATH) -Wfatal-errors
 T_CXXFLAGS_CDM  = -DBUILD_DATE=\"$(BUILD_DATE)\" -DTOOL_VER=\"$(VERSION_TOOL)\"  -DEXP_VER=\"$(VERSION_FW)\" -DETHERBONE_THROWS=1 -DBUILDID_OFFS=$(BUILD_ID_ROM_ADR) -DBUILDID_SIZE=$(BUILD_ID_ROM_SIZE)
 T_CC            = gcc
 T_CFLAGS        = -Wall -g -I$(LZMAPATH) -fPIC -Wfatal-errors -D_7ZIP_ST
 
 LZMA_SRC_FILES  = LzmaEnc.c LzmaDec.c LzFind.c
-CDM_SRC_FILES   = event.cpp meta.cpp block.cpp visitoruploadcrawler.cpp visitordownloadcrawler.cpp visitorvertexwriter.cpp hashmap.cpp carpeDM.cpp carpeDMcommand.cpp carpeDMuploadschedule.cpp carpeDMdownloadschedule.cpp carpeDMdiagnostics.cpp graph.cpp alloctable.cpp mempool.cpp dotstr.cpp idformat.cpp grouptable.cpp validation.cpp visitorvalidation.cpp common.cpp carpeDMsafe2remove.cpp lzmaCompression.cpp
+CDM_SRC_FILES   = event.cpp meta.cpp block.cpp visitoruploadcrawler.cpp visitordownloadcrawler.cpp visitorvertexwriter.cpp hashmap.cpp carpeDM.cpp carpeDMcommand.cpp carpeDMuploadschedule.cpp carpeDMdownloadschedule.cpp carpeDMdiagnostics.cpp graph.cpp alloctable.cpp mempool.cpp dotstr.cpp idformat.cpp grouptable.cpp validation.cpp visitorvalidation.cpp common.cpp carpeDMsafe2remove.cpp lzmaCompression.cpp delayDiagnostics.cpp
 
 T_SOURCES       = $(addprefix $(SRCPATH)/, $(CDM_SRC_FILES)) $(addprefix $(LZMAPATH)/, $(LZMA_SRC_FILES))
 T_OBJECTS       = $(subst .c,.o,$(LZMA_SRC_FILES)) $(subst .cpp,.o,$(CDM_SRC_FILES))

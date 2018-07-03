@@ -108,6 +108,9 @@ namespace ECA {
   const uint32_t devID   = 0xb2afc251;
 }
 
+
+
+
 const uint64_t processingTimeMargin = 100000000ULL; // 100 ms. Is set to 0 when testmode is on to speed coverage test
 
 typedef struct {
@@ -134,6 +137,25 @@ typedef struct {
   uint32_t  maxBacklog;
   uint32_t  stat;
 } HealthReport;
+
+typedef struct {
+  uint32_t  stallStreakMax;
+  uint32_t  stallStreakCurrent;
+  uint64_t  stallStreakMaxUDts;
+} StallDelayReport;
+
+typedef struct {
+  bool      enabled;
+  uint64_t  timeObservIntvl;
+  int64_t   timeMaxPosDif;
+  uint64_t  timeMaxPosUDts;
+  int64_t   timeMinNegDif;
+  uint64_t  timeMinNegUDts;
+  uint32_t  stallObservIntvl;
+  std::vector<StallDelayReport> sdr;
+} HwDelayReport;
+
+
 
 
 typedef struct {
