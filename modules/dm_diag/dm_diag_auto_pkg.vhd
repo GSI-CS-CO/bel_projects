@@ -1,7 +1,7 @@
 --! @file        dm_diag_auto_pkg.vhd
 --  DesignUnit   dm_diag_auto
 --! @author      M. Kreider <m.kreider@gsi.de>
---! @date        28/06/2018
+--! @date        03/07/2018
 --! @version     0.0.1
 --! @copyright   2018 GSI Helmholtz Centre for Heavy Ion Research GmbH
 --!
@@ -40,22 +40,22 @@ package dm_diag_auto_pkg is
 
   constant c_reset_OWR                      : natural := 16#000#; -- wo,  1 b, Resets/clears the diagnostic
   constant c_enable_RW                      : natural := 16#004#; -- rw,  1 b, Enables/disables update. Default is enabled
-  constant c_time_observation_interval_RW_0 : natural := 16#008#; -- rw, 32 b, TAI time observation interval in ns
-  constant c_time_observation_interval_RW_1 : natural := 16#00c#; -- rw, 32 b, TAI time observation interval in ns
-  constant c_time_dif_pos_GET_0             : natural := 16#010#; -- ro, 32 b, Observed max pos. ECA time difference in ns between ref clock ticks
-  constant c_time_dif_pos_GET_1             : natural := 16#014#; -- ro, 32 b, Observed max pos. ECA time difference in ns between ref clock ticks
-  constant c_time_dif_pos_ts_GET_0          : natural := 16#018#; -- ro, 32 b, (approximate) timestamp of last pos dif update
-  constant c_time_dif_pos_ts_GET_1          : natural := 16#01c#; -- ro, 32 b, (approximate) timestamp of last pos dif update
-  constant c_time_dif_neg_GET_0             : natural := 16#020#; -- ro, 32 b, Observed max neg. ECA time difference in ns between ref clock ticks
-  constant c_time_dif_neg_GET_1             : natural := 16#024#; -- ro, 32 b, Observed max neg. ECA time difference in ns between ref clock ticks
-  constant c_time_dif_neg_ts_GET_0          : natural := 16#028#; -- ro, 32 b, (approximate) timestamp of last neg dif update
-  constant c_time_dif_neg_ts_GET_1          : natural := 16#02c#; -- ro, 32 b, (approximate) timestamp of last neg dif update
+  constant c_time_observation_interval_RW_1 : natural := 16#008#; -- rw, 32 b, TAI time observation interval in ns
+  constant c_time_observation_interval_RW_0 : natural := 16#00c#; -- rw, 32 b, TAI time observation interval in ns
+  constant c_time_dif_pos_GET_1             : natural := 16#010#; -- ro, 32 b, Observed max pos. ECA time difference in ns between ref clock ticks
+  constant c_time_dif_pos_GET_0             : natural := 16#014#; -- ro, 32 b, Observed max pos. ECA time difference in ns between ref clock ticks
+  constant c_time_dif_pos_ts_GET_1          : natural := 16#018#; -- ro, 32 b, (approximate) timestamp of last pos dif update
+  constant c_time_dif_pos_ts_GET_0          : natural := 16#01c#; -- ro, 32 b, (approximate) timestamp of last pos dif update
+  constant c_time_dif_neg_GET_1             : natural := 16#020#; -- ro, 32 b, Observed max neg. ECA time difference in ns between ref clock ticks
+  constant c_time_dif_neg_GET_0             : natural := 16#024#; -- ro, 32 b, Observed max neg. ECA time difference in ns between ref clock ticks
+  constant c_time_dif_neg_ts_GET_1          : natural := 16#028#; -- ro, 32 b, (approximate) timestamp of last neg dif update
+  constant c_time_dif_neg_ts_GET_0          : natural := 16#02c#; -- ro, 32 b, (approximate) timestamp of last neg dif update
   constant c_stall_observation_interval_RW  : natural := 16#030#; -- rw, 32 b, Stall observation interval in cycles
   constant c_stall_stat_select_RW           : natural := 16#034#; -- rw,  8 b, Page selector register for Stall observers
   constant c_stall_streak_max_GET           : natural := 16#100#; -- ro, 32 b, Observed max continuous stall in cycles
   constant c_stall_cnt_GET                  : natural := 16#104#; -- ro, 32 b, Stall time within observation interval in cycles
-  constant c_stall_max_ts_GET_0             : natural := 16#108#; -- ro, 32 b, Timestamp of last max update
-  constant c_stall_max_ts_GET_1             : natural := 16#10c#; -- ro, 32 b, Timestamp of last max update
+  constant c_stall_max_ts_GET_1             : natural := 16#108#; -- ro, 32 b, Timestamp of last max update
+  constant c_stall_max_ts_GET_0             : natural := 16#10c#; -- ro, 32 b, Timestamp of last max update
 
   --| Component ----------------------- dm_diag_auto ------------------------------------------|
   component dm_diag_auto is
@@ -109,7 +109,7 @@ package dm_diag_auto_pkg is
   vendor_id     => x"0000000000000651",
   device_id     => x"18060200",
   version       => x"00000001",
-  date          => x"20180628",
+  date          => x"20180703",
   name          => "DM-Diagnostics     ")));
 
 end dm_diag_auto_pkg;

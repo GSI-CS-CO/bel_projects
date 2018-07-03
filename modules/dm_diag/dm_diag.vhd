@@ -53,9 +53,7 @@ end dm_diag;
 
 architecture rtl of dm_diag is
 
-  type u32_array is array (natural range <>) of unsigned(31 downto 0);
-  type u64_array is array (natural range <>) of unsigned(63 downto 0);
-
+  -- Regs/Sigs WB interface
   signal s_ctrl_reset_o                       : std_logic_vector(1-1 downto 0)  := (others => '0'); -- Resets/clears the diagnostic
   signal s_ctrl_enable_o                      : std_logic_vector(1-1 downto 0)  := (others => '0'); -- Enables/disables update. Default is enabled
   signal s_ctrl_time_observation_interval_o   : std_logic_vector(64-1 downto 0) := (others => '0'); -- TAI time observation interval in ns
@@ -70,20 +68,23 @@ architecture rtl of dm_diag is
   signal s_ctrl_stall_cnt_i                   : std_logic_vector(32-1 downto 0) := (others => '0'); -- Stall time within observation interval in cycles
   signal s_ctrl_stall_max_ts_i                : std_logic_vector(64-1 downto 0) := (others => '0'); -- Timestamp of last max update
 
-
+  -- Regs/Sigs Diagnostics Module
+  type u32_array is array (natural range <>) of unsigned(31 downto 0);
+  type u64_array is array (natural range <>) of unsigned(63 downto 0);
+  
   signal r_tai_observer_cnt                   : unsigned(63 downto 0) := (others => '0');
   signal s_tai_observer_dec                   : unsigned(63 downto 0) := (others => '0');
-  signal r_tai_old                            : signed(63 downto 0) := (others => '0');
+  signal r_tai_old                            : signed(63 downto 0)   := (others => '0');
   signal r_time_dif, r_time_dif_pos, 
-         r_time_dif_neg                       : signed(63 downto 0) := (others => '0');
+         r_time_dif_neg                       : signed(63 downto 0)             := (others => '0');
   signal r_time_dif_pos_ts                    : std_logic_vector(64-1 downto 0) := (others => '0'); -- (approximate) timestamp of last pos dif update
   signal r_time_dif_neg_ts                    : std_logic_vector(64-1 downto 0) := (others => '0'); -- (approximate) timestamp of last neg dif update
 
-  signal s_stall_observation_cycles           : unsigned(31 downto 0) := (others => '0');
+  signal s_stall_observation_cycles           : unsigned(31 downto 0)           := (others => '0');
   signal ra_stall_cnt, ra_stall_observer_cnt, 
-         ra_stall_max                         : u32_array(g_cores-1 downto 0) := (others => (others => '0'));
-  signal s_stall_observer_dec, s_stall_inc    : std_logic_vector(g_cores-1 downto 0);
-  signal ra_stall_max_ts                      : u64_array(g_cores-1 downto 0) := (others => (others => '0')); -- Timestamp of last max update
+         ra_stall_max                         : u32_array(g_cores-1 downto 0)   := (others => (others => '0'));
+  signal s_stall_observer_dec, s_stall_inc    : std_logic_vector(g_cores-1 downto 0) := (others => '0');
+  signal ra_stall_max_ts                      : u64_array(g_cores-1 downto 0)   := (others => (others => '0')); -- Timestamp of last max update
     
   signal s_selector                           : natural;
 
@@ -92,7 +93,7 @@ begin
 
 
   --Decrement for TAI observer process
-  s_tai_observer_dec        <= resize(unsigned(s_ctrl_enable_o), r_tai_observer_cnt'length); 
+  s_tai_observer_dec        <= resize(unsigned(s_ctrl_enable_o(63 downto 3)), r_tai_observer_cnt'length); --divide by 8 ns, as we cannot count faster than clock period
   s_ctrl_time_dif_pos_i     <= std_logic_vector(r_time_dif_pos);
   s_ctrl_time_dif_pos_ts_i  <= r_time_dif_pos_ts;
   s_ctrl_time_dif_neg_i     <= std_logic_vector(r_time_dif_neg);
@@ -110,6 +111,7 @@ begin
         r_time_dif_pos    <= (others => '0');
         r_time_dif_pos_ts <= tm_tai8ns_i;
         r_time_dif        <= (others => '0');
+        r_tai_observer_cnt <= (others => '1');
       else
         if (r_tai_observer_cnt(r_tai_observer_cnt'left) = '1') then
           --re-init observer count down
@@ -158,7 +160,7 @@ begin
         if(rst_ref_n_i = '0' OR s_ctrl_reset_o(0) = '1') then
           ra_stall_max(I)          <= (others => '0');
           ra_stall_cnt(I)          <= (others => '0');
-          ra_stall_observer_cnt(I) <= unsigned(s_ctrl_stall_observation_interval_o);
+          ra_stall_observer_cnt(I) <= (others => '1');
           ra_stall_max_ts(I)       <= unsigned(tm_tai8ns_i);
         else
           if (ra_stall_observer_cnt(I)(ra_stall_observer_cnt(I)'left) = '1') then -- observer count down is over
