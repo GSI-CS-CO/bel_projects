@@ -312,7 +312,7 @@ bool CarpeDM::connect(const std::string& en, bool simulation, bool test) {
       ebd.sdb_find_by_identity(ECA::vendID, ECA::devID, ecaDevs);
       if (ecaDevs.size() < 1) throw std::runtime_error("Could not find ECA on DM (needed for WR time). Something is wrong\n");
  
-
+      ebd.sdb_find_by_identity(SDB_VENDOR_GSI,SDB_DEVICE_DIAG, diagDevs);
 
       ebd.sdb_find_by_identity(SDB_VENDOR_GSI,SDB_DEVICE_LM32_RAM, cpuDevs);
       if (cpuDevs.size() >= 1) { 
