@@ -150,9 +150,14 @@ void showHealth(const char *netaddress, CarpeDM& cdm, bool verbose) {
   uint8_t cpuQty = cdm.getCpuQty();
 
   HealthReport *hr = new HealthReport[cpuQty];
+  
+  HwDelayReport hwdr;
 
 
-  for(uint8_t i=0; i < cpuQty; i++) { cdm.getHealth(i, hr[i]); }  
+  for(uint8_t i=0; i < cpuQty; i++) { cdm.getHealth(i, hr[i]); }
+  printf("*****!\n"); 
+  cdm.getHwDelayReport(hwdr);
+  printf("*****!\n");
   const uint16_t width = 80;
   //this is horrible code, but harmless. Does the job for now.
   //TODO: replace this with something more sensible
@@ -231,6 +236,43 @@ void showHealth(const char *netaddress, CarpeDM& cdm, bool verbose) {
     strftime(date,  sizeof(date), "%Y-%m-%d %H:%M:%S", gmtime((time_t*)&timeval));
     printf("\u2551 %3u \u2502 %19s \u2502 %50s %3s\n", hr[i].cpu, date, hr[i].warningNode.c_str(), "\u2551");
   }
+    
+  
+
+
+  // Hardware Delay Report
+  printf("\u2560"); for(int i=0;i<width;i++) printf("\u2550"); printf("\u2563\n");
+  printf("\u2551 %10s \u2502 %10s \u2502 %19s \u2502 %10s \u2502 %19s %3s\n", "T observ",  "maxPosDif", "MaxPosUpdate", "minNegDif", "minNegUpdate","\u2551");
+  printf("\u2560"); for(int i=0;i<width;i++) printf("\u2550"); printf("\u2563\n");
+  
+  
+  char dateMaUD[40]; char dateMiUD[40];
+  uint64_t tval0 = hwdr.timeMaxPosUDts / 1000000000ULL;
+  strftime(dateMaUD,  sizeof(dateMaUD), "%Y-%m-%d %H:%M:%S", gmtime((time_t*)&tval0));
+  uint64_t tval1 = hwdr.timeMinNegUDts / 1000000000ULL;
+  strftime(dateMiUD,  sizeof(dateMiUD), "%Y-%m-%d %H:%M:%S", gmtime((time_t*)&tval1));
+  printf("\u2551 %10llu \u2502 %10lld \u2502 %19s \u2502 %10lld \u2502 %19s %3s\n", 
+    hwdr.timeObservIntvl, hwdr.timeMaxPosDif, dateMaUD, hwdr.timeMinNegDif, dateMiUD, "\u2551");
+    
+  
+  printf("\u2560"); for(int i=0;i<width;i++) printf("\u2550"); printf("\u2563\n");
+  printf("\u2551 %3s \u2502 %10s \u2502 %10s \u2502 %10s \u2502 %19s %4s\n", 
+      "Cpu", "T Stall Obs", "MaxStreak", "Current", "\u2551");
+  printf("\u2560"); for(int i=0;i<width;i++) printf("\u2550"); printf("\u2563\n");
+  for(uint8_t i=0; i < cpuQty; i++) {
+    char dateSUD[40];
+    uint64_t tval3 = hwdr.sdr[i].stallStreakMaxUDts / 1000000000ULL;
+    strftime(dateSUD,  sizeof(dateSUD), "%Y-%m-%d %H:%M:%S", gmtime((time_t*)&tval3));
+    printf("\u2551 %3u \u2502 %10u \u2502 %10u \u2502 %10u \u2502 %19s %4s\n", 
+      (int)i,
+      hwdr.stallObservIntvl,
+      hwdr.sdr[i].stallStreakMax,
+      hwdr.sdr[i].stallStreakCurrent,
+      dateSUD,
+      "\u2551");
+  }
+
+  
     
   printf("\u255A"); for(int i=0;i<width;i++) printf("\u2550"); printf("\u255D\n");
 
@@ -644,6 +686,9 @@ int main(int argc, char* argv[]) {
       return 0;
     }  
     else if (cmp == "clearstats")  {
+
+      cdm.clearHwDiagnostics();
+      cdm.configHwDiagnostics(1000000ULL, 100000);
       cdm.clearHealth(cpuIdx);
       return 0;
     }
