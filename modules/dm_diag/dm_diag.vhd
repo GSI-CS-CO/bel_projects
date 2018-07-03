@@ -93,7 +93,7 @@ begin
 
 
   --Decrement for TAI observer process
-  s_tai_observer_dec        <= resize(unsigned(s_ctrl_enable_o(63 downto 3)), r_tai_observer_cnt'length); --divide by 8 ns, as we cannot count faster than clock period
+  s_tai_observer_dec        <= resize(unsigned(s_ctrl_enable_o(0 downto 0)), r_tai_observer_cnt'length); --divide by 8 ns, as we cannot count faster than clock period
   s_ctrl_time_dif_pos_i     <= std_logic_vector(r_time_dif_pos);
   s_ctrl_time_dif_pos_ts_i  <= r_time_dif_pos_ts;
   s_ctrl_time_dif_neg_i     <= std_logic_vector(r_time_dif_neg);
@@ -111,11 +111,11 @@ begin
         r_time_dif_pos    <= (others => '0');
         r_time_dif_pos_ts <= tm_tai8ns_i;
         r_time_dif        <= (others => '0');
-        r_tai_observer_cnt <= (others => '1');
+        r_tai_observer_cnt <= (others => '1'); -- this makes sure s_ctrl_time_observation_interval_o is always copied 1 cycle after clear
       else
         if (r_tai_observer_cnt(r_tai_observer_cnt'left) = '1') then
           --re-init observer count down
-          r_tai_observer_cnt <= unsigned(s_ctrl_time_observation_interval_o);
+          r_tai_observer_cnt <= "000" & unsigned(s_ctrl_time_observation_interval_o(63 downto 3)); -- ticks are 8ns, shift by 3b
           
           --assign new extreme values penending on diff sign, timestamp the update (probably not exact, but enough to correlate with other log files)
           if (r_time_dif > r_time_dif_pos) then

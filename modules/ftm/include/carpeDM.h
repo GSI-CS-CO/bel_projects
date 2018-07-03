@@ -366,6 +366,7 @@ std::pair<int, int> findRunningPattern(const std::string& sPattern); // get cpu 
                void clearHwDiagnostics();
                void startStopHwDiagnostics(bool enable);
                void configHwDiagnostics(uint64_t timeIntvl, uint32_t stallIntvl);
+               void configFwDiagnostics(uint64_t warnThrshld);
 
        std::string& inspectQueues(const std::string& blockName, std::string& report);      // Show all command fields in Block Queue
                void show(const std::string& title, const std::string& logDictFile, TransferDir dir, bool filterMeta );
