@@ -111,7 +111,7 @@ namespace ECA {
 
 
 
-const uint64_t processingTimeMargin = 100000000ULL; // 100 ms. Is set to 0 when testmode is on to speed coverage test
+const uint64_t processingTimeMargin = 500000000ULL; // 500 ms. Is set to 0 when testmode is on to speed coverage test
 
 typedef struct {
   uint8_t   cpu; 
