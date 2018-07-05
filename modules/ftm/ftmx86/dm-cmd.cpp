@@ -68,7 +68,16 @@ static void help(const char *program) {
   fprintf(stderr, "  -p <priority>            The priority of the command (0 = Low, 1 = High, 2 = Interlock), default is 0\n");
   fprintf(stderr, "  -q <quantity>            The number of times the command will be inserted into the target queue, default is 1\n");
   fprintf(stderr, "  -s                       Changes to the schedule are permanent\n");
+  fprintf(stderr, "\nDiagnostics:\n");
+  fprintf(stderr, "  diag                               Show time statistics and detailed information on uptime and recent changes\n");
+  fprintf(stderr, "  cleardiag                          Clears all CPU and HW statistics and details \n");
+  fprintf(stderr, "  cfghwdiag <TAI / ns> <Stall / ns>  Sets observation window for ECA TAI time continuity and CPU stall streaks\n");
+  fprintf(stderr, "  starthwdiag                        Starts HW diagnostic data acquisition\n");
+  fprintf(stderr, "  stophwdiag                         Stops HW diagnostic data acquisition\n");
+  fprintf(stderr, "  cfgcpudiag <Warn. Threshold / ns>  Globally sets warning threshold for minimum message dispatch lead\n");
+  fprintf(stderr, "  clearcpudiag                       Clears CPU statistics for given index\n");
   fprintf(stderr, "\n");
+
 }
 
 
@@ -155,10 +164,10 @@ void showHealth(const char *netaddress, CarpeDM& cdm, bool verbose) {
 
 
   for(uint8_t i=0; i < cpuQty; i++) { cdm.getHealth(i, hr[i]); }
-  printf("*****!\n"); 
   cdm.getHwDelayReport(hwdr);
-  printf("*****!\n");
+ 
   const uint16_t width = 80;
+ 
   //this is horrible code, but harmless. Does the job for now.
   //TODO: replace this with something more sensible
 
@@ -501,7 +510,7 @@ int main(int argc, char* argv[]) {
       showStatus(netaddress, cdm, verbose);
       return 0;
     }
-    else if (cmp == "details")  {
+    else if ( (cmp == "details") || (cmp == "diag")) {
       showHealth(netaddress, cdm, verbose);
       return 0;
     }
