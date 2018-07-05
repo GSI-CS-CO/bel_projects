@@ -602,26 +602,27 @@ void CarpeDM::show(const std::string& title, const std::string& logDictFile, Tra
   AllocTable& at  = (dir == TransferDir::UPLOAD ? atUp : atDown);
 
   sLog << std::endl << title << std::endl;
-  sLog << std::endl << "Patterns:" << std::endl;
 
-  for (auto& it : gt.getAllPatterns()) sLog <<  it << std::endl;
+  // find max name length for alignment
+  size_t maxLen = 0;
+  BOOST_FOREACH( vertex_t v, vertices(g) ) { maxLen = std::max(maxLen, g[v].name.length()); }
 
-  sLog << std::endl << std::setfill(' ') << std::setw(4) << "Idx" << "   " << std::setfill(' ') << std::setw(4) << "S/R" << "   " 
-                    << std::setfill(' ') << std::setw(4) << "Cpu" << "   " << std::setw(30) << "Name" << "   " 
-                    << std::setw(10) << "Hash" << "   " << std::setw(10)  <<  "Int. Adr   "  << "   " << std::setw(10) << "Ext. Adr   " << std::endl;
-  //sLog << " " << std::endl; 
+
+  sLog << std::endl << std::left << std::setfill(' ') << std::setw(3) << "Idx" << "   " << std::setfill(' ') << std::setw(3) << "S/R" << "   " 
+                    << std::setfill(' ') << std::setw(3) << "Cpu" << "   " << std::setw(maxLen) << "Name" << "   " 
+                    << std::setw(10) << "Hash" << "   " << std::setw(10)  <<  "Int. Adr"  << "   " << std::setw(10) << "Ext. Adr" << std::endl;
 
   BOOST_FOREACH( vertex_t v, vertices(g) ) {
     auto x = at.lookupVertex(v);
     
     if( !(filterMeta) || (filterMeta & !(g[v].np->isMeta())) ) {
-      sLog   << std::setfill(' ') << std::setw(4) << std::dec << v 
+      sLog   << std::right << std::setfill(' ') << std::setw(4) << std::dec << v 
       << "   "    << std::setfill(' ') << std::setw(2) << std::dec << (int)(at.isStaged(x))  
-      << "   "    << std::setfill(' ') << std::setw(4) << std::dec << (int)x->cpu  
-      << "   "    << std::setfill(' ') << std::setw(40) << std::left << g[v].name 
-      << "   0x"  << std::hex << std::setfill('0') << std::setw(8) << x->hash
-      << "   0x"  << std::hex << std::setfill('0') << std::setw(8) << at.adrConv(AdrType::MGMT, AdrType::INT, x->cpu, x->adr) 
-      << "   0x"  << std::hex << std::setfill('0') << std::setw(8) << at.adrConv(AdrType::MGMT, AdrType::EXT, x->cpu, x->adr)  << std::endl;
+      << "   "    << std::setfill(' ') << std::setw(3) << std::dec << (int)x->cpu  
+      << "   "    << std::setfill(' ') << std::setw(maxLen) << std::left << g[v].name 
+      << "   0x"  << std::right << std::hex << std::setfill('0') << std::setw(8) << x->hash
+      << "   0x"  << std::right << std::hex << std::setfill('0') << std::setw(8) << at.adrConv(AdrType::MGMT, AdrType::INT, x->cpu, x->adr) 
+      << "   0x"  << std::right << std::hex << std::setfill('0') << std::setw(8) << at.adrConv(AdrType::MGMT, AdrType::EXT, x->cpu, x->adr) << std::endl;
     }
   }  
 
@@ -632,7 +633,13 @@ void CarpeDM::show(const std::string& title, const std::string& logDictFile, Tra
       auto x = at.lookupVertex(v);
       dumpNode(x->cpu, g[x->v].name);
     }
-  }  
+  }
+
+  sLog << std::endl << "Patterns:" << std::endl;
+
+  for (auto& it : gt.getAllPatterns()) sLog <<  it << std::endl; 
+
+  sLog << std::endl; 
 }
 
 
