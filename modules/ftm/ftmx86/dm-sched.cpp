@@ -40,6 +40,7 @@ int main(int argc, char* argv[]) {
   char dirnameBuff[80];
 
   bool update = true, verbose = false, strip=true, cmdValid = false, force = false, debug=false;
+  bool reqStatus = false;
 
   int opt;
   const char *program = argv[0];
@@ -141,7 +142,7 @@ int main(int argc, char* argv[]) {
       if (cmd == "overwrite") { cdm.overwriteDotFile(inputFilename, force); cmdValid = true;}
       if (cmd == "remove")    { cdm.download(); cdm.removeDotFile(inputFilename, force); cmdValid = true;}
       if (cmd == "keep")      { cdm.download(); cdm.keepDotFile(inputFilename, force); cmdValid = true;}
-      if (cmd == "status")    { cdm.downloadDotFile(outputFilename, strip); cmdValid = true;}
+      if (cmd == "status")    { cdm.downloadDotFile(outputFilename, strip); cmdValid = true; reqStatus = true;}
       if (cmd == "chkrem")    {
         cdm.download();
 
@@ -162,14 +163,14 @@ int main(int argc, char* argv[]) {
     }
   }
   
-  if (cmdName == NULL ) cmdValid = true;
+  if (cmdName == NULL ) { cmdValid = true;reqStatus = true; }
 
   if ( ! cmdValid ) { std::cerr << std::endl << program << ": Unknown command <" << std::string(cmdName) << ">" << std::endl; return -8; }
 
   if ( update ) {
     try { 
       cdm.downloadDotFile(outputFilename, strip);
-      if(verbose) cdm.showDown(false);
+      if(verbose || reqStatus) cdm.showDown(false);
 
     } catch (std::runtime_error const& err) {
       std::cerr << std::endl << program << ": Failed to execute <status>. Cause: " << err.what() << std::endl;
@@ -180,7 +181,7 @@ int main(int argc, char* argv[]) {
   std::string report;
   bool tabOk = cdm.tableCheck(report);
 
-  if (verbose or !tabOk) std::cout << report << std::endl;
+  if (debug or !tabOk) std::cout << report << std::endl;
 
 
   cdm.disconnect();
