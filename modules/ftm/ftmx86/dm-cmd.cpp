@@ -80,6 +80,15 @@ static void help(const char *program) {
 
 }
 
+std::string nsTimeToDate(uint64_t t) {
+  char date[40];
+  uint64_t tAux = t / 1000000000ULL;
+  strftime(date, sizeof(date), "%Y-%m-%d %H:%M:%S", gmtime((time_t*)&tAux));
+  std::string ret(date);
+
+  return ret;
+}
+
 
 void showStatus(const char *netaddress, CarpeDM& cdm, bool verbose) {
   std::string show;
@@ -115,14 +124,10 @@ void showStatus(const char *netaddress, CarpeDM& cdm, bool verbose) {
   //this is horrible code, but harmless. Does the job for now.
   //TODO: replace this with something more sensible
 
-  char date[40];
   uint64_t timeWrNs = cdm.getDmWrTime();
-  uint64_t timeWr = timeWrNs / 1000000000ULL;
-  strftime(date, sizeof(date), "%Y-%m-%d %H:%M:%S", gmtime((time_t*)&timeWr));
-
 
   printf("\n\u2554"); for(int i=0;i<width;i++) printf("\u2550"); printf("\u2557\n");
-  printf("\u2551 DataMaster: %-80s \u2502 WR-Time: 0x%08x%08x ns \u2502 %.19s \u2551\n", netaddress, (uint32_t)(timeWrNs>>32), (uint32_t)timeWrNs, date);
+  printf("\u2551 DataMaster: %-80s \u2502 WR-Time: 0x%08x%08x ns \u2502 %.19s \u2551\n", netaddress, (uint32_t)(timeWrNs>>32), (uint32_t)timeWrNs, nsTimeToDate(timeWrNs).c_str() );
   printf("\u2560"); for(int i=0;i<width;i++) printf("\u2550"); printf("\u2563\n");
   printf("\u2551 %3s \u2502 %3s \u2502 %7s \u2502 %9s \u2502 %55s \u2502 %55s \u2551\n", "Cpu", "Thr", "Running", "MsgCount", "Pattern", "Node");
   printf("\u2560"); for(int i=0;i<width;i++) printf("\u2550"); printf("\u2563\n");
@@ -172,16 +177,16 @@ void showHealth(const char *netaddress, CarpeDM& cdm, bool verbose) {
   //TODO: replace this with something more sensible
 
 
-  char date[40];
-  uint64_t timeWr = cdm.getDmWrTime() / 1000000000ULL ;
-  strftime(date, sizeof(date), "%Y-%m-%d %H:%M:%S", gmtime((time_t*)&timeWr));
+  
+  uint64_t timeWr = cdm.getDmWrTime();
+
   unsigned netStrLen;
   for(netStrLen = 0; netStrLen < width; netStrLen++) {if (netaddress[netStrLen] == '\00') break;}
 
   printf("\n\u2554"); for(int i=0;i<width;i++) printf("\u2550"); printf("\u2557\n");
   printf("\u2551 DM: %s", netaddress); for(uint8_t i=0; i < (width - 5 - netStrLen); i++) printf(" "); printf("\u2551\n");
   printf("\u2560"); for(int i=0;i<width;i++) printf("\u2550"); printf("\u2563\n");
-  printf("\u2551 WR-Time: 0x%08x%08x \u2502 %.19s %32s\n", (uint32_t)(timeWr>>32), (uint32_t)timeWr, date, "\u2551");
+  printf("\u2551 WR-Time: 0x%08x%08x \u2502 %.19s %32s\n", (uint32_t)(timeWr>>32), (uint32_t)timeWr, nsTimeToDate(timeWr).c_str(), "\u2551");
 
   
   // Boot Time and Msg Count
@@ -190,10 +195,7 @@ void showHealth(const char *netaddress, CarpeDM& cdm, bool verbose) {
       "Cpu", "BootTime", "CPU Msg Cnt", "State", "\u2551");
   printf("\u2560"); for(int i=0;i<width;i++) printf("\u2550"); printf("\u2563\n");
   for(uint8_t i=0; i < cpuQty; i++) {
-    char date[40];
-    uint64_t timeval = hr[i].bootTime / 1000000000ULL; //all times are in nanoseconds, we need to convert to seconds
-    strftime(date,  sizeof(date), "%Y-%m-%d %H:%M:%S", gmtime((time_t*)&timeval)); //human readable date
-    printf("\u2551 %3u \u2502 %.19s \u2502 %14llu \u2502 0x%08x \u2502 %24s\n", hr[i].cpu, date, (long long unsigned int)hr[i].msgCnt, hr[i].stat, "\u2551");    
+    printf("\u2551 %3u \u2502 %.19s \u2502 %14llu \u2502 0x%08x \u2502 %24s\n", hr[i].cpu, nsTimeToDate(hr[i].bootTime).c_str(), (long long unsigned int)hr[i].msgCnt, hr[i].stat, "\u2551");    
   }
 
   // Most recent schedule modification (time, issuer, type of operation)
@@ -201,10 +203,7 @@ void showHealth(const char *netaddress, CarpeDM& cdm, bool verbose) {
   printf("\u2551 %3s \u2502 %19s \u2502 %8s \u2502 %8s \u2502 %10s \u2502 %19s\n", "Cpu",  "Schedule ModTime", "Issuer", "Host", "Op Type", "\u2551");
   printf("\u2560"); for(int i=0;i<width;i++) printf("\u2550"); printf("\u2563\n");
   for(uint8_t i=0; i < cpuQty; i++) {
-    char date[40];
-    uint64_t timeval = hr[i].smodTime / 1000000000ULL;
-    strftime(date,  sizeof(date), "%Y-%m-%d %H:%M:%S", gmtime((time_t*)&timeval));
-    printf("\u2551 %3u \u2502 %19s \u2502 %8s \u2502 %8s \u2502 %10s \u2502 %19s\n", hr[i].cpu, date, hr[i].smodIssuer, hr[i].smodHost, hr[i].smodOpType.c_str(), "\u2551");
+    printf("\u2551 %3u \u2502 %19s \u2502 %8s \u2502 %8s \u2502 %10s \u2502 %19s\n", hr[i].cpu, nsTimeToDate(hr[i].smodTime).c_str(), hr[i].smodIssuer, hr[i].smodHost, hr[i].smodOpType.c_str(), "\u2551");
   }  
   
   // Most recent command (time, issuer, type of operation)
@@ -212,10 +211,7 @@ void showHealth(const char *netaddress, CarpeDM& cdm, bool verbose) {
   printf("\u2551 %3s \u2502 %19s \u2502 %8s \u2502 %8s \u2502 %10s \u2502 %19s\n", "Cpu",  "Command ModTime", "Issuer", "Host", "Op Type", "\u2551");
   printf("\u2560"); for(int i=0;i<width;i++) printf("\u2550"); printf("\u2563\n");
   for(uint8_t i=0; i < cpuQty; i++) {
-    char date[40];
-    uint64_t timeval = hr[i].cmodTime / 1000000000ULL;
-    strftime(date,  sizeof(date), "%Y-%m-%d %H:%M:%S", gmtime((time_t*)&timeval));
-    printf("\u2551 %3u \u2502 %19s \u2502 %8s \u2502 %8s \u2502 %10s \u2502 %19s\n", hr[i].cpu, date, hr[i].cmodIssuer, hr[i].cmodHost, hr[i].cmodOpType.c_str(), "\u2551");
+    printf("\u2551 %3u \u2502 %19s \u2502 %8s \u2502 %8s \u2502 %10s \u2502 %19s\n", hr[i].cpu, nsTimeToDate(hr[i].cmodTime).c_str(), hr[i].cmodIssuer, hr[i].cmodHost, hr[i].cmodOpType.c_str(), "\u2551");
   } 
 
   //LM32 message ispatch statistics (min lead, max lead, avg lead, lead warning threshold, warning count, status register)
@@ -240,46 +236,28 @@ void showHealth(const char *netaddress, CarpeDM& cdm, bool verbose) {
   printf("\u2560"); for(int i=0;i<width;i++) printf("\u2550"); printf("\u2563\n");
   
   for(uint8_t i=0; i < cpuQty; i++) {
-    char date[40];
-    uint64_t timeval = hr[i].warningTime / 1000000000ULL;
-    strftime(date,  sizeof(date), "%Y-%m-%d %H:%M:%S", gmtime((time_t*)&timeval));
-    printf("\u2551 %3u \u2502 %19s \u2502 %50s %3s\n", hr[i].cpu, date, hr[i].warningNode.c_str(), "\u2551");
+    printf("\u2551 %3u \u2502 %19s \u2502 %50s %3s\n", hr[i].cpu, nsTimeToDate(hr[i].warningTime).c_str(), hr[i].warningNode.c_str(), "\u2551");
   }
-    
   
-
-
   // Hardware Delay Report
   printf("\u2560"); for(int i=0;i<width;i++) printf("\u2550"); printf("\u2563\n");
   printf("\u2551 %10s \u2502 %9s \u2502 %19s \u2502 %9s \u2502 %19s %3s\n", "T observ",  "maxPosDif", "MaxPosUpdate", "minNegDif", "minNegUpdate","\u2551");
   printf("\u2560"); for(int i=0;i<width;i++) printf("\u2550"); printf("\u2563\n");
-  
-  
-  char dateMaUD[40]; char dateMiUD[40];
-  uint64_t tval0 = hwdr.timeMaxPosUDts / 1000000000ULL;
-
-
-  strftime(dateMaUD,  sizeof(dateMaUD), "%Y-%m-%d %H:%M:%S", gmtime((time_t*)&tval0));
-  uint64_t tval1 = hwdr.timeMinNegUDts / 1000000000ULL;
-  strftime(dateMiUD,  sizeof(dateMiUD), "%Y-%m-%d %H:%M:%S", gmtime((time_t*)&tval1));
   printf("\u2551 %10llu \u2502 %9lld \u2502 %19s \u2502 %9lld \u2502 %19s %3s\n", 
-    (unsigned long long)hwdr.timeObservIntvl, (signed long long)hwdr.timeMaxPosDif, dateMaUD, (signed long long)hwdr.timeMinNegDif, dateMiUD, "\u2551");
+    (unsigned long long)hwdr.timeObservIntvl, (signed long long)hwdr.timeMaxPosDif, nsTimeToDate(hwdr.timeMaxPosUDts).c_str(),
+    (signed long long)hwdr.timeMinNegDif, nsTimeToDate(hwdr.timeMinNegUDts).c_str(), "\u2551");
     
-  
   printf("\u2560"); for(int i=0;i<width;i++) printf("\u2550"); printf("\u2563\n");
   printf("\u2551 %3s \u2502 %9s \u2502 %9s \u2502 %9s \u2502 %19s \u2502 %18s\n", 
       "Cpu", "STL obs.", "MaxStreak",  "Current", "MaxStreakUpdate", "\u2551");
   printf("\u2560"); for(int i=0;i<width;i++) printf("\u2550"); printf("\u2563\n");
   for(uint8_t i=0; i < cpuQty; i++) {
-    char dateSUD[40];
-    uint64_t tval3 = hwdr.sdr[i].stallStreakMaxUDts / 1000000000ULL;
-    strftime(dateSUD,  sizeof(dateSUD), "%Y-%m-%d %H:%M:%S", gmtime((time_t*)&tval3));
     printf("\u2551 %3u \u2502 %9u \u2502 %9u \u2502 %9u \u2502 %19s \u2502 %18s\n", 
       (int)i,
       hwdr.stallObservIntvl,
       hwdr.sdr[i].stallStreakMax,
       hwdr.sdr[i].stallStreakCurrent,
-      dateSUD,
+      nsTimeToDate(hwdr.sdr[i].stallStreakMaxUDts).c_str(),
       "\u2551");
   }
 
