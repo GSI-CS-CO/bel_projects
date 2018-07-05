@@ -344,7 +344,7 @@ uint32_t* block(uint32_t* node, uint32_t* thrData) {
     cmd     = (uint32_t*)&b[elOffs  >> 2];                                                  // pointer to active command data 
     
     
-    if (getSysTime() < *((uint64_t*)((void*)cmd + T_CMD_TIME))) return node;                //if chosen command is not yet valid, return to scheduler
+    if (getSysTime() < *((uint64_t*)((void*)cmd + T_CMD_TIME))) return ret;                 // if chosen command is not yet valid, directly return to scheduler
 
     
     act     = (uint32_t*)&cmd[T_CMD_ACT >> 2];          //pointer to command's action
