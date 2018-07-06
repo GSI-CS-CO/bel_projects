@@ -138,7 +138,7 @@ int main(int argc, char* argv[]) {
     
     try {
       if (cmd == "clear")     { cdm.clear(force); cmdValid = true;}
-      if (cmd == "add")       { cdm.download(); cdm.addDotFile(inputFilename); cmdValid = true;}
+      if (cmd == "add")       { cdm.download(); cdm.addDotFile(inputFilename, force); cmdValid = true;}
       if (cmd == "overwrite") { cdm.overwriteDotFile(inputFilename, force); cmdValid = true;}
       if (cmd == "remove")    { cdm.download(); cdm.removeDotFile(inputFilename, force); cmdValid = true;}
       if (cmd == "keep")      { cdm.download(); cdm.keepDotFile(inputFilename, force); cmdValid = true;}
