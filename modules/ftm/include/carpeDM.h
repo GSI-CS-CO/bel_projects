@@ -98,7 +98,7 @@ private:
   int keep(Graph& g, bool force);  
   int overwrite(Graph& g,  bool force);
   int clear_raw(bool force);
-  bool validate(Graph& g, AllocTable& at);
+  bool validate(Graph& g, AllocTable& at, bool force);
 
   // Upload
   vEbwrs gatherUploadVector(std::set<uint8_t> moddedCpus, uint32_t modCnt, uint8_t opType);
@@ -286,8 +286,8 @@ public:
                 int download();                                     // Download binary from LM32 SoC and create Graph
         std::string downloadDot(bool filterMeta);
                void downloadDotFile(const std::string& fn, bool filterMeta);
-                int addDot(const std::string& s);                   // add all nodes and/or edges in dot file
-                int addDotFile(const std::string& fn);
+                int addDot(const std::string& s, bool force);                   // add all nodes and/or edges in dot file
+                int addDotFile(const std::string& fn, bool force);
                 int overwriteDot(const std::string& s, bool force); // add all nodes and/or edges in dot file
                 int overwriteDotFile(const std::string& fn, bool force);
                 int keepDot(const std::string& s, bool force);      // removes all nodes NOT in input file

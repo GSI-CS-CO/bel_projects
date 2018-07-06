@@ -572,7 +572,7 @@ using namespace DotStr::Misc;
     baseUploadOnDownload();
     addition(g);
     //writeUpDotFile("upload.dot", false);
-    validate(gUp, atUp);
+    validate(gUp, atUp, force);
     return upload(OP_TYPE_SCH_ADD);
   } 
 
@@ -592,7 +592,7 @@ using namespace DotStr::Misc;
     
     subtraction(g);
     //writeUpDotFile("upload.dot", false);
-    validate(gUp, atUp);
+    validate(gUp, atUp, force);
     
     return upload(OP_TYPE_SCH_REMOVE, vQr);
   }
@@ -632,7 +632,7 @@ using namespace DotStr::Misc;
 
     subtraction(gTmpRemove);
     //writeUpDotFile("upload.dot", false);
-    validate(gUp, atUp);
+    validate(gUp, atUp, force);
 
     return upload(OP_TYPE_SCH_KEEP, vQr);
   }   
@@ -658,7 +658,7 @@ using namespace DotStr::Misc;
     nullify();
     addition(g);
     //writeUpDotFile("upload.dot", false);
-    validate(gUp, atUp);
+    validate(gUp, atUp, force);
     // check if there are any threads still running first
     uint32_t activity = 0;
     for(uint8_t cpuIdx=0; cpuIdx < getCpuQty(); cpuIdx++) { 

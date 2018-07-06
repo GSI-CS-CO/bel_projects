@@ -743,8 +743,8 @@ void CarpeDM::showCpuList() {
   std::string CarpeDM::downloadDot(bool filterMeta) {download(); return createDot( gDown, filterMeta);};            
   void CarpeDM::downloadDotFile(const std::string& fn, bool filterMeta) {download(); writeDownDotFile(fn, filterMeta);};   
   //add all nodes and/or edges in dot file
-  int CarpeDM::addDot(const std::string& s) {Graph gTmp; return safeguardTransaction(&CarpeDM::add, parseDot(s, gTmp), false);};            
-  int CarpeDM::addDotFile(const std::string& fn) {return addDot(readTextFile(fn));};                 
+  int CarpeDM::addDot(const std::string& s, bool force) {Graph gTmp; return safeguardTransaction(&CarpeDM::add, parseDot(s, gTmp), force);};
+  int CarpeDM::addDotFile(const std::string& fn, bool force) {return addDot(readTextFile(fn), force);};
   //add all nodes and/or edges in dot file                                                                                     
   int CarpeDM::overwriteDot(const std::string& s, bool force) {Graph gTmp; return safeguardTransaction(&CarpeDM::overwrite, parseDot(s, gTmp), force);};
   int CarpeDM::overwriteDotFile(const std::string& fn, bool force) {return overwriteDot(readTextFile(fn), force);};
@@ -802,13 +802,13 @@ void CarpeDM::showCpuList() {
     if (verbose) sLog << "Done.";
   }
 
-  bool CarpeDM::validate(Graph& g, AllocTable& at) {
+  bool CarpeDM::validate(Graph& g, AllocTable& at, bool force) {
     try { 
           BOOST_FOREACH( vertex_t v, vertices(g) ) { Validation::neighbourhoodCheck(v, g);  }
           
           BOOST_FOREACH( vertex_t v, vertices(g) ) { 
             if (g[v].np == nullptr) throw std::runtime_error("Validation of Sequence: Node '" + g[v].name + "' was not allocated" );
-            g[v].np->accept(VisitorValidation(g, v, at)); 
+            g[v].np->accept(VisitorValidation(g, v, at, force)); 
           }
     } catch (std::runtime_error const& err) { throw std::runtime_error("Validation of " + std::string(err.what()) ); }
     return true;
