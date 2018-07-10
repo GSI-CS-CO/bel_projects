@@ -195,8 +195,10 @@ uint32_t* execWait(uint32_t* node, uint32_t* cmd, uint32_t* thrData) {
   // we must therefore subtract it here if we modify current time, as execWait is optional
 
   if ( cmd[T_CMD_ACT >> 2] & ACT_WAIT_ABS_SMSK) {
-    *(uint64_t*)&thrData[T_TD_CURRTIME >> 2] = *(uint64_t*)&cmd[T_CMD_WAIT_TIME >> 2] - *(uint64_t*)&node[BLOCK_PERIOD >> 2]; //1. set absolute value - block period
-    DBPRINT2("#%02u: Wait, Absolute to 0x%08x%08x\n", cpuId, (uint32_t)(*(uint64_t*)&cmd[T_CMD_WAIT_TIME >> 2] >> 32), (uint32_t)*(uint64_t*)&cmd[T_CMD_WAIT_TIME >> 2]);  
+    if (*(uint64_t*)&thrData[T_TD_CURRTIME >> 2] < (*(uint64_t*)&cmd[T_CMD_WAIT_TIME >> 2] - *(uint64_t*)&node[BLOCK_PERIOD >> 2])) {
+      *(uint64_t*)&thrData[T_TD_CURRTIME >> 2] = *(uint64_t*)&cmd[T_CMD_WAIT_TIME >> 2] - *(uint64_t*)&node[BLOCK_PERIOD >> 2]; //1. set absolute value - block period
+      DBPRINT2("#%02u: Wait, Absolute to 0x%08x%08x\n", cpuId, (uint32_t)(*(uint64_t*)&cmd[T_CMD_WAIT_TIME >> 2] >> 32), (uint32_t)*(uint64_t*)&cmd[T_CMD_WAIT_TIME >> 2]);  
+    }
   } else {
     if( cmd[T_CMD_ACT >> 2] & ACT_CHP_SMSK) {
       DBPRINT2("#%02u: Wait, Permanent relative to 0x%08x%08x\n", cpuId, (uint32_t)(*(uint64_t*)&cmd[T_CMD_WAIT_TIME >> 2] >> 32), (uint32_t)*(uint64_t*)&cmd[T_CMD_WAIT_TIME >> 2]);  
