@@ -10,7 +10,7 @@ CMD_SEQ_START       [type="tmsg",      pattern="UNIPZ_GATEWAY", patentry="true",
 CMD_WHATEVER_01     [type="tmsg",      pattern="UNIPZ_GATEWAY",                    toffs=      100, id="0x112cfaa000000002", par="0x456", shape="oval"];
 DMCmd_InjectMulti   [type="flow",      pattern="UNIPZ_GATEWAY",                    toffs=      300, tValid=0, qty=1, color="magenta",     shape="oval"]; /* N Injektion = 2    */
 CMD_WHATEVER_02     [type="tmsg",      pattern="UNIPZ_GATEWAY",                    toffs=      400, id="0x112cfaa000000003", par="0x456", shape="oval"];
-CMD_UNI_TKREQ       [type="tmsg",      pattern="UNIPZ_GATEWAY",                    toffs=      500, id="0x112c15e000000001", par="0x0",   shape="oval"]; /* TK Request         */
+CMD_UNI_TKREQ       [type="tmsg",      pattern="UNIPZ_GATEWAY",                    toffs=      500, id="0x112c15e000000010", par="0x0",   shape="oval"]; /* TK Request         */
 CMD_WHATEVER_03     [type="tmsg",      pattern="UNIPZ_GATEWAY",                    toffs=     1000, id="0x112cfaa000000004", par="0x456", shape="oval"];
 CMD_SYNC1           [type="tmsg",      pattern="UNIPZ_GATEWAY",                    toffs= 28000000, id="0x112cfaa000000005", par="0x456", shape="oval"]; /* 28 ms FG Vorlauf   */
 CMD_WHATEVER_04     [type="tmsg",      pattern="UNIPZ_GATEWAY",                    toffs= 30000000, id="0x112cfaa000000006", par="0x456", shape="oval"]; /* FG + FG Nachlauf   */
@@ -25,7 +25,7 @@ CMD_WHATEVER_08     [type="tmsg",      pattern="UNIPZ_GATEWAY",                 
 DMBlk_InjectStart   [type="block",     pattern="UNIPZ_GATEWAY",                  tperiod= 75000000];                                   
 /* Injektion (Loop) */
 CMD_WHATEVER_09     [type="tmsg",      pattern="UNIPZ_GATEWAY",                    toffs=        0, id="0x112cfaa000000012", par="0x456", shape="oval"]; /* start loop         */
-CMD_UNI_BREQ        [type="tmsg",      pattern="UNIPZ_GATEWAY",                    toffs= 30000000, id="0x112c160000000001", par="0x456", shape="oval"]; /* UNI Beam Request   */
+CMD_UNI_BREQ        [type="tmsg",      pattern="UNIPZ_GATEWAY",                    toffs= 30000000, id="0x112c160000000010", par="0x456", shape="oval"]; /* UNI Beam Request   */
 DMBlk_BREQ          [type="block",     pattern="UNIPZ_GATEWAY",                  tperiod= 30001000];                                 
 DMCmd_Wait10s       [type="flow",      pattern="UNIPZ_GATEWAY",                    toffs=        0, tValid=0, qty=1000000, color="magenta", shape="oval"]; /* 1e6 reps of 10us is timeout */
 DMBlk_WaitLoop      [type="block",     pattern="UNIPZ_GATEWAY",                  tperiod=    10000, qil="1", qhi="1", qlo="1"];     /* langsamer Warteblock                    */
@@ -40,7 +40,7 @@ DMBlk_InjectionEnd  [type="blockalign",pattern="UNIPZ_GATEWAY",                 
 CMD_BP_START2       [type="tmsg",      pattern="UNIPZ_GATEWAY",                    toffs=      500, id="0x112cfaa000000017", par="0x456", shape="oval"]; /* ARMFG=1            */
 CMD_WHATEVER_12     [type="tmsg",      pattern="UNIPZ_GATEWAY",                    toffs=     1000, id="0x112cfaa000000018", par="0x456", shape="oval"];
 CMD_SYNC2           [type="tmsg",      pattern="UNIPZ_GATEWAY",                    toffs= 28000000, id="0x112cfaa000000019", par="0x456", shape="oval"]; /* 28 ms FG Vorlauf   */
-CMD_UNI_TKREL       [type="tmsg",      pattern="UNIPZ_GATEWAY",                    toffs= 30000000, id="0x112c15f000000001", par="0x456", shape="oval"]; /* TK Release         */
+CMD_UNI_TKREL       [type="tmsg",      pattern="UNIPZ_GATEWAY",                    toffs= 30000000, id="0x112c15f000000010", par="0x456", shape="oval"]; /* TK Release         */
 CMD_WHATEVER_13     [type="tmsg",      pattern="UNIPZ_GATEWAY",                    toffs=200000000, id="0x112cfaa000000021", par="0x456", shape="oval"];
 CMD_BP_START3       [type="tmsg",      pattern="UNIPZ_GATEWAY",                    toffs=500000000, id="0x112cfaa000000022", par="0x456", shape="oval"]; /* ARMFG=0            */
 CMD_WHATEVER_14     [type="tmsg",      pattern="UNIPZ_GATEWAY",                    toffs=500000100, id="0x112cfaa000000023", par="0x456", shape="oval"];

@@ -3,7 +3,7 @@
  *
  *  created : 2017
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 08-Jun-2018
+ *  version : 11-Jul-2018
  *
  *  lm32 program for gateway between UNILAC Pulszentrale and FAIR-style Data Master
  * 
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 25-April-2015
  ********************************************************************************************/
-#define DMUNIPZ_FW_VERSION 0x000200                                   // make this consistent with makefile
+#define DMUNIPZ_FW_VERSION 0x000300                                   // make this consistent with makefile
 
 /* standard includes */
 #include <stdio.h>
@@ -83,6 +83,7 @@ const char* dmunipz_status_text(uint32_t code) {
   case DMUNIPZ_STATUS_SAFETYMARGIN     : return "margin exc";
   case DMUNIPZ_STATUS_NOTIMESTAMP      : return "no TLU TS ";
   case DMUNIPZ_STATUS_BADTIMESTAMP     : return "bad TLU TS";
+  case DMUNIPZ_STATUS_DMQNOTEMPTY      : return "DMQ nEmpty";
   default                              : return "undef err ";
   }
 }
@@ -310,7 +311,7 @@ uint32_t ebmWriteN(uint32_t address, uint32_t *data, uint32_t n32BitWords)
 } // ebmWriteN
 
 
-uint32_t dmPrepCmdCommon(uint32_t blk, uint32_t prio) // prepare data common to all commands
+uint32_t dmPrepCmdCommon(uint32_t blk, uint32_t prio, uint32_t checkEmptyQ) // prepare data common to all commands
 {
   // simplified memory layout at DM
   //
@@ -381,6 +382,11 @@ uint32_t dmPrepCmdCommon(uint32_t blk, uint32_t prio) // prepare data common to 
   wrIdx        = (uint8_t)(wrIdxs >> (prio * 8));
   rdIdx        = (uint8_t)(rdIdxs >> (prio * 8));
 
+  // check if Q is empty
+  if (checkEmptyQ) {
+    if (wrIdx != rdIdx) return DMUNIPZ_STATUS_DMQNOTEMPTY;
+  } // if checkEmptyQ
+
   // don't mess up DM: verify queue of relevant prio is _not_ full. In that case we are not allowed to write to queue and we have to give up
   if (((wrIdx & Q_IDX_MAX_OVF_MSK) != (rdIdx & Q_IDX_MAX_OVF_MSK)) && ((wrIdx & Q_IDX_MAX_MSK) == (rdIdx & Q_IDX_MAX_MSK))) {
     DBPRINT1("dm-unipz: prep cmd error: queue for priority %d full\n", prio);
@@ -391,7 +397,7 @@ uint32_t dmPrepCmdCommon(uint32_t blk, uint32_t prio) // prepare data common to 
   buffListAddrOffs = (wrIdx & Q_IDX_MAX_MSK) / (_MEM_BLOCK_SIZE / _T_CMD_SIZE_ ) * _PTR_SIZE_;
   cmdListAddrOffs  = (wrIdx & Q_IDX_MAX_MSK) % (_MEM_BLOCK_SIZE / _T_CMD_SIZE_ ) * _T_CMD_SIZE_; 
   
-  // buffer list according to prio, conert to external perspective, add offset
+  // buffer list according to prio, convert to external perspective, add offset
   switch (prio) {
   case 2 :
     buffListAddr   = buffListAddrIL;
@@ -1228,42 +1234,28 @@ uint32_t doActionOperation(uint32_t *statusTransfer, uint32_t *virtAccReq, uint3
       *statusTransfer = *statusTransfer | DMUNIPZ_TRANS_REQBEAM;                   // update status of transfer
       (*nInject)++;                                                                // increment number of injections (of current transfer)
 
-      gotEBTimeout = 0;                                                            
-      dmStatus = dmPrepCmdCommon(REQBEAMA, 1);                                     // try "Schnitzeljagd" in Data Master. Here: first "slow" waiting block
+      gotEBTimeout = 0;                                                            // this is a 'warning flag'
+
+      dmStatus = dmPrepCmdCommon(REQBEAMB, 0, 1);                                  // try "Schnitzeljagd" in Data Master. Here: second "flex" waiting block
       if (dmStatus == DMUNIPZ_STATUS_EBREADTIMEDOUT) {                             // in case of timeout, we probably lost a UDP packet: try a 2nd time
         gotEBTimeout = 1;
-        dmStatus = dmPrepCmdCommon(REQBEAMA, 1);
+        dmStatus = dmPrepCmdCommon(REQBEAMB, 0, 1);                                     
+      } // if EB timeout
+      if (dmStatus != DMUNIPZ_STATUS_OK) return dmStatus;                          // communication with DM failed even after two attempts: give up! 
+      // NB: we can't prepare the "flex" wait command  yet, as we need to timestamp the MIL event from UNIPZ first
+
+      dmStatus = dmPrepCmdCommon(REQBEAMA, 1, 1);                                  // try "Schnitzeljagd" in Data Master. Here: first "slow" waiting block
+      if (dmStatus == DMUNIPZ_STATUS_EBREADTIMEDOUT) {                             // in case of timeout, we probably lost a UDP packet: try a 2nd time
+        gotEBTimeout = 1;
+        dmStatus = dmPrepCmdCommon(REQBEAMA, 1, 1);
       } // if EB timeout
       if (dmStatus != DMUNIPZ_STATUS_OK) return dmStatus;                          // communication with DM failed: give up! 
       dmPrepCmdFlush(REQBEAMA);                                                    // prepare flush command for first "timeout" waiting block for later use
 
-      dmStatus = dmPrepCmdCommon(REQBEAMB, 0);                                     // another "Schnitzeljagd" in Data Master. Here: second "flex" waiting block
-      if (dmStatus == DMUNIPZ_STATUS_EBREADTIMEDOUT) {                             // in case of timeout, we probably lost a UDP packet: try a 2nd time
-        gotEBTimeout = 1;
-        dmStatus = dmPrepCmdCommon(REQBEAMB, 0);                                     
-      } // if EB timeout
-      if (dmStatus != DMUNIPZ_STATUS_OK) return dmStatus;                          // communication with DM failed even after two attempts: give up! 
-      // NB: we can't prepare the "flex" wait command  yet, as we need to timestamp the MIL event from UNIPZ first
-    
       enableFilterEvtMil(pMILPiggy);                                               // enable filter @ MIL piggy
       clearFifoEvtMil(pMILPiggy);                                                  // get rid of junk in FIFO @ MIL piggy
       
       requestBeam(uniTimeout);                                                     // request beam from UNIPZ, note that we can't check for REQ_NOT_OK from here
-
-      // ----->>>> wait for EVT_READY_TO_SIS
-      /* old implementation: Problem: FIFO size is 255, but there are 6 MIL Events / 20ms background (UTC, EVT_CMD) ==>  FIFO will run over after < 850ms
-      milEvtRecFlag = 0;                                                                                                 // initialize flag 
-      if (wait4ECAEvent(uniTimeout, &dummy1, &dummy2, &timestamp) == DMUNIPZ_ECADO_READY2SIS) {                          // received EVT_READY_TO_SIS via TLU -> ECA
-        if ((milStatus = wait4MILEvent(DMUNIPZ_EVT_READY2SIS, virtAccTmp, virtAccRec, DMUNIPZ_QUERYTIMEOUT)) == DMUNIPZ_STATUS_OK) { // query/check event number and virtAcc in MIL FIFO
-          milEvtRecFlag = 1;                                                                                             // set flag
-          status        = DMUNIPZ_STATUS_OK;
-        } // if wait4MILEvt
-        else status = milStatus;                                                                                         // received EVT_READY_TO_SIS, but virtAcc does not fit
-      } // if wait4ECAEvt
-      else {                                                                                                             // did not receive EVT_READY_TO_SIS via TLU -> ECA
-        if (checkClearReqNotOk(uniTimeout) != DMUNIPZ_STATUS_OK) status = DMUNIPZ_STATUS_REQBEAMFAILED;                  // UNIPZ says: beam request was not ok
-        else                                                     status = DMUNIPZ_STATUS_REQBEAMTIMEDOUT;                // UNIPZ says: beam request was ok
-        } // else wait4ECAEvent */
 
       evtValidFlag = 0;                                                                                                  // flag: valid MIL event from UNIPZ received 
       if ((milStatus = wait4MILEvent(DMUNIPZ_EVT_READY2SIS, virtAccTmp, virtAccRec, uniTimeout)) == DMUNIPZ_STATUS_OK) { // wait for event in MIL FIFO
