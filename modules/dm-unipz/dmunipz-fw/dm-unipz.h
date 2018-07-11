@@ -41,7 +41,7 @@
 #define  DMUNIPZ_STATUS_DMQNOTEMPTY     21    // Data Master: Q not empty
 #define  DMUNIPZ_STATUS_LATEEVENT       22    // received 'late event' from Data Master
 #define  DMUNIPZ_STATUS_TKNOTRESERVED   23    // TK is not reserved
-#define  DMUNIPZ_STATUS_DMTIMEOUT       24    // beam request did not succeed within timeout at DM
+#define  DMUNIPZ_STATUS_DMTIMEOUT       24    // beam request did not succeed within 10s timeout at DM
 
 // MASP 
 #define  DMUNIPZ_MASP_NOMEN      "U_DM_UNIPZ" // nomen for gateway
