@@ -279,6 +279,8 @@ vEbwrs& CarpeDM::createCommandBurst(Graph& g, vEbwrs& ew) {
     
     adr = ebReadWord(ebd, getThrCurrentNodeAdr(cpuIdx, thrIdx));
 
+    //std::cout << "#" << (int) cpuIdx << ", " << (int)thrIdx << std::hex << " 0x" << adr << std::endl;
+
     if (adr == LM32_NULL_PTR) return DotStr::Node::Special::sIdle;
     try {
       auto x = atDown.lookupAdr(cpuIdx, atDown.adrConv(AdrType::INT, AdrType::MGMT,cpuIdx, adr));

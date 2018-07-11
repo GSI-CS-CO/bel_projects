@@ -207,8 +207,7 @@ vAdr VisitorUploadCrawler::getFlowDst() const {
   auto x = at.lookupVertex(*vsDst.begin());
 
   if (x->cpu != tgt->cpu) throw std::runtime_error(  exIntro + "Target " + g[*vsTgt.begin()].name + "'s CPU must not differ from Dst " + g[*vsDst.begin()].name + "'s CPU\n");
- 
-  ret.push_back(at.adrConv(AdrType::MGMT, AdrType::INT, x->cpu, x->adr));
+  ret.push_back(at.adrConv(AdrType::MGMT, AdrType::INT , x->cpu, x->adr));
 
   return ret;
 }
