@@ -162,7 +162,7 @@ const char* dmunipz_status_text(uint32_t code) {
   case DMUNIPZ_STATUS_DMQNOTEMPTY      : return "Data Master: Q not empty";
   case DMUNIPZ_STATUS_LATEEVENT        : return "received 'late event' from Data Master";
   case DMUNIPZ_STATUS_TKNOTRESERVED    : return "TK is not reserved";
-  case DMUNIPZ_STATUS_DMTIMEOUT        : return "beam request did not succeed within timeout at DM";
+  case DMUNIPZ_STATUS_DMTIMEOUT        : return "beam request did not succeed within 10s timeout at DM";
   default                              : return "dm-unipz: undefined error code";
   }
 }
