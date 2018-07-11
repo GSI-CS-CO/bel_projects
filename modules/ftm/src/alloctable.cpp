@@ -78,7 +78,11 @@
     amI ret;
     auto it = a.get<CpuAdr>().find(boost::make_tuple( cpu, adr ));
     ret = a.iterator_to( *it );
-    if (!isOk(ret)) {throw std::runtime_error(exMsg + "unknown cpu/adr combo " + std::to_string((int)cpu) + " " + std::to_string((int)adr) + " (dec)");}
+
+    std::stringstream auxstream;
+    auxstream << exMsg << "unknown cpu/adr combo " << (int)cpu << " 0x" << std::setfill('0') << std::setw(8) << std::hex << (int)adr << std::endl;
+
+    if (!isOk(ret)) {throw std::runtime_error(auxstream.str());}
     return ret; 
     
   }

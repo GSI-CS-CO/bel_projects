@@ -79,13 +79,15 @@ void VisitorDownloadCrawler::visit(const TimingMsg& el) const  {
 std::pair<uint8_t, AdrType> VisitorDownloadCrawler::createCmd(const Command& el) const {
   uint8_t targetCpu; 
   AdrType adrT;
-  uint32_t tmpAdr;  
-  
-  std::tie(targetCpu, adrT) = at.adrClassification(writeBeBytesToLeNumber<uint32_t>(b + CMD_TARGET ));
+  uint32_t tmpAdr, auxAdr;
+  auxAdr = writeBeBytesToLeNumber<uint32_t>(b + CMD_TARGET );  
+
+  std::tie(targetCpu, adrT) = at.adrClassification(auxAdr);
+  targetCpu = (adrT == AdrType::PEER ? targetCpu : cpu); // Internal address type does not know which cpu it belongs to
 
   setDefDst();
-  tmpAdr = at.adrConv(adrT, AdrType::MGMT, targetCpu, writeBeBytesToLeNumber<uint32_t>(b + CMD_TARGET ));
-  if (tmpAdr != LM32_NULL_PTR) boost::add_edge(v, ((AllocMeta*)&(*(at.lookupAdr(cpu, tmpAdr))))->v, myEdge(det::sCmdTarget),    g);
+  tmpAdr = at.adrConv(adrT, AdrType::MGMT, targetCpu, auxAdr);
+  if (tmpAdr != LM32_NULL_PTR) boost::add_edge(v, ((AllocMeta*)&(*(at.lookupAdr(targetCpu, tmpAdr))))->v, myEdge(det::sCmdTarget),    g);
 
   return std::make_pair(targetCpu, adrT);
 }
@@ -96,9 +98,13 @@ void VisitorDownloadCrawler::visit(const Flow& el) const  {
   uint32_t tmpAdr;  
 
   std::tie(targetCpu, adrT) = createCmd((Command&)el);
+  uint32_t rawAdr = writeBeBytesToLeNumber<uint32_t>(b + CMD_FLOW_DEST );
+  
 
-  tmpAdr = at.adrConv(AdrType::INT, AdrType::MGMT, targetCpu, writeBeBytesToLeNumber<uint32_t>(b + CMD_FLOW_DEST ));
-  if (tmpAdr != LM32_NULL_PTR) boost::add_edge(v, ((AllocMeta*)&(*(at.lookupAdr(cpu, tmpAdr))))->v, myEdge(det::sCmdFlowDst),   g);
+  tmpAdr = at.adrConv(AdrType::INT, AdrType::MGMT, targetCpu, rawAdr);
+
+  
+  if (tmpAdr != LM32_NULL_PTR) boost::add_edge(v, ((AllocMeta*)&(*(at.lookupAdr(targetCpu, tmpAdr))))->v, myEdge(det::sCmdFlowDst),   g);
 
 }
 
