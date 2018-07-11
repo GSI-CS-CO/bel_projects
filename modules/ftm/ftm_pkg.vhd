@@ -29,8 +29,8 @@ package ftm_pkg is
   function f_lm32_masters_req return t_sdb_record_array; 
 
   function f_lm32_masters_bridge_msis(cores : natural) return t_sdb_record_array;
-  function f_cluster_sdb(cores : natural; ramPerCore  : natural;  is_dm : boolean ) return t_sdb_record_array;
-  function f_cluster_bridge(msi_slave : t_sdb_msi; cores : natural; ramPerCore  : natural;  is_dm : boolean ) return t_sdb_bridge;
+  function f_cluster_sdb(cores : natural; ramPerCore  : natural;  is_dm : boolean; has_diagnostics : boolean ) return t_sdb_record_array;
+  function f_cluster_bridge(msi_slave : t_sdb_msi; cores : natural; ramPerCore  : natural;  is_dm : boolean; has_diagnostics : boolean ) return t_sdb_bridge;
 
   constant c_static_cluster_slaves : natural := 3;                        
   --sadly, we can't push generics into packages. declare in ftm_lm32_cluster.vhd
@@ -97,13 +97,14 @@ package ftm_pkg is
   
   component ftm_lm32_cluster is
   generic(
-    g_is_dm         : boolean := false;
-    g_cores         : natural := 1;
-    g_ram_per_core  : natural := 32768/4;
-    g_profiles      : string  := "medium_icache_debug";
-    g_init_files    : string;   
-    g_world_bridge_sdb : t_sdb_bridge;   -- inferior sdb crossbar         
-    g_clu_msi_sdb      : t_sdb_msi       -- superior msi crossbar          
+    g_is_dm             : boolean := false;
+    g_delay_diagnostics : boolean := false;
+    g_cores             : natural := 1;
+    g_ram_per_core      : natural := 32768/4;
+    g_profiles          : string  := "medium_icache_debug";
+    g_init_files        : string;   
+    g_world_bridge_sdb  : t_sdb_bridge;   -- inferior sdb crossbar         
+    g_clu_msi_sdb       : t_sdb_msi    -- superior msi crossbar             
   );
   port(
     clk_ref_i      : in  std_logic;
@@ -449,7 +450,7 @@ package body ftm_pkg is
 
   
 
-  function f_cluster_sdb(cores : natural; ramPerCore  : natural;  is_dm : boolean )
+  function f_cluster_sdb(cores : natural; ramPerCore  : natural;  is_dm : boolean; has_diagnostics : boolean )
   return t_sdb_record_array is
     variable v_clu_req :  t_sdb_record_array((c_static_cluster_slaves + cores) -1 downto 0);
     variable i : natural;
@@ -457,7 +458,7 @@ package body ftm_pkg is
     -- add info rom, diagnostics, prioq ctrl, rams 
     v_clu_req(c_clu_info_rom) := f_sdb_auto_device(c_cluster_info_sdb,        true);
     v_clu_req(c_clu_pq_ctrl)  := f_sdb_auto_device(c_pq_ctrl_sdb,             is_dm);
-    v_clu_req(c_clu_diag)     := f_sdb_auto_device(c_dm_diag_ctrl_sdb,        true);
+    v_clu_req(c_clu_diag)     := f_sdb_auto_device(c_dm_diag_ctrl_sdb,        has_diagnostics);
     for i in c_static_cluster_slaves to v_clu_req'length-1 loop
       v_clu_req(i) := f_sdb_auto_device( f_xwb_dpram_userlm32(ramPerCore), true);
     end loop;
@@ -501,13 +502,13 @@ package body ftm_pkg is
   end f_lm32_masters_bridge_msis;
 
 
-  function f_cluster_bridge(msi_slave : t_sdb_msi; cores : natural; ramPerCore  : natural;  is_dm : boolean )
+  function f_cluster_bridge(msi_slave : t_sdb_msi; cores : natural; ramPerCore  : natural;  is_dm : boolean; has_diagnostics : boolean )
   return t_sdb_bridge is 
     variable v_ret      :  t_sdb_bridge;
     variable v_clu_req_slaves  :  t_sdb_record_array(c_static_cluster_slaves + cores-1 downto 0);
 	  variable v_clu_req_masters :  t_sdb_record_array(c_clu_masters-1 downto 0); 
   begin
-    v_clu_req_slaves  :=  f_cluster_sdb(cores, ramPerCore, is_dm);
+    v_clu_req_slaves  :=  f_cluster_sdb(cores, ramPerCore, is_dm, has_diagnostics);
     v_clu_req_masters :=  (c_msi_slave =>  f_sdb_auto_msi(msi_slave, true));
 
     v_ret  := f_xwb_bridge_layout_sdb(
