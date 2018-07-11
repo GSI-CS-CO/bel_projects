@@ -101,9 +101,10 @@ entity monster is
     g_lm32_MSIs            : natural;
     g_lm32_ramsizes        : natural;
     g_lm32_init_files      : string;
-	 g_lm32_profiles        : string;
+	g_lm32_profiles        : string;
     g_lm32_are_ftm         : boolean;
-    g_en_tempsens          : boolean);
+    g_en_tempsens          : boolean;
+    g_delay_diagnostics    : boolean);
   port(
     -- Required: core signals
     core_clk_20m_vcxo_i    : in    std_logic;
@@ -448,7 +449,7 @@ architecture rtl of monster is
 
   -- We have to specify the values for WRC as they provide no function for this
   constant c_wrcore_bridge_sdb : t_sdb_bridge := f_xwb_bridge_manual_sdb(x"0003ffff", x"00030000");
-  constant c_ftm_slaves : t_sdb_bridge := f_cluster_bridge(c_dev_bridge_msi, g_lm32_cores, g_lm32_ramsizes, g_lm32_are_ftm);
+  constant c_ftm_slaves : t_sdb_bridge := f_cluster_bridge(c_dev_bridge_msi, g_lm32_cores, g_lm32_ramsizes, g_lm32_are_ftm, g_delay_diagnostics);
 
   constant c_dev_layout_req_slaves : t_sdb_record_array(c_dev_slaves-1 downto 0) :=
    (c_devs_build_id       => f_sdb_auto_device(c_build_id_sdb,                   true),
@@ -1113,13 +1114,14 @@ begin
 
   lm32 : ftm_lm32_cluster
     generic map(
-      g_is_dm            => g_lm32_are_ftm,
-      g_cores            => g_lm32_cores,
-      g_ram_per_core     => g_lm32_ramsizes,
-      g_world_bridge_sdb => c_top_bridge_sdb,
-      g_clu_msi_sdb      => c_dev_bridge_msi,
-      g_init_files       => g_lm32_init_files,
-		g_profiles         => g_lm32_profiles)
+      g_is_dm               => g_lm32_are_ftm,
+      g_delay_diagnostics   => g_delay_diagnostics,
+      g_cores               => g_lm32_cores,
+      g_ram_per_core        => g_lm32_ramsizes,
+      g_world_bridge_sdb    => c_top_bridge_sdb,
+      g_clu_msi_sdb         => c_dev_bridge_msi,
+      g_init_files          => g_lm32_init_files,
+      g_profiles            => g_lm32_profiles)
     port map(
       clk_ref_i          => clk_ref,
       rst_ref_n_i        => rstn_ref,

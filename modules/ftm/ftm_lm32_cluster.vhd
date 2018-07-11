@@ -43,13 +43,14 @@ use work.etherbone_pkg.all;
 
 entity ftm_lm32_cluster is
 generic(
-  g_is_dm         : boolean := false;
-  g_cores         : natural := 1;
-  g_ram_per_core  : natural := 32768/4;
-  g_profiles      : string  := "medium_icache_debug";
-  g_init_files    : string;   
-  g_world_bridge_sdb : t_sdb_bridge;   -- inferior sdb crossbar         
-  g_clu_msi_sdb      : t_sdb_msi    -- superior msi crossbar          
+  g_is_dm             : boolean := false;
+  g_delay_diagnostics : boolean := false;
+  g_cores             : natural := 1;
+  g_ram_per_core      : natural := 32768/4;
+  g_profiles          : string  := "medium_icache_debug";
+  g_init_files        : string;   
+  g_world_bridge_sdb  : t_sdb_bridge;   -- inferior sdb crossbar         
+  g_clu_msi_sdb       : t_sdb_msi    -- superior msi crossbar          
 );
 port(
   clk_ref_i      : in  std_logic;
@@ -102,7 +103,7 @@ architecture rtl of ftm_lm32_cluster is
 
   --layout
   constant c_clu_layout_req_slaves  : t_sdb_record_array(c_clu_slaves-1 downto 0)  :=
-           f_cluster_sdb(g_cores, g_ram_per_core, g_is_dm);
+           f_cluster_sdb(g_cores, g_ram_per_core, g_is_dm, g_delay_diagnostics);
 
   constant c_clu_layout_req_masters : t_sdb_record_array(c_clu_masters-1 downto 0) := 
            (c_msi_slave =>  f_sdb_auto_msi(g_clu_msi_sdb, true));
@@ -293,7 +294,14 @@ begin
       master_o       => dm_prioq_master_o
     );
 
-    -- Diagnostic module lives completely in REF domain, no sync to clu CB, TAI time or LM32 bus lines necessary
+    
+
+    
+
+  end generate;
+
+  genDiag : if(g_delay_diagnostics) generate
+  -- Diagnostic module lives completely in REF domain, no sync to clu CB, TAI time or LM32 bus lines necessary
 
     diagnostics :  dm_diag
     generic map(
@@ -309,9 +317,9 @@ begin
       ctrl_i         => clu_cb_masterport_out(c_clu_diag),
       ctrl_o         => clu_cb_masterport_in(c_clu_diag)
     );
-
+  
   end generate;
- 
+
   cluster_info_rom : process(clk_ref_i)
   variable vIdx : natural;
   begin
