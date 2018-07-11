@@ -357,15 +357,11 @@
     //printf("a 0x%08x, world 0x%08x\n", a, WORLD_BASE_ADR);
 
     if (a >= WORLD_BASE_ADR) { //peer address class
-      
       for (uint8_t i = 0; i < vPool.size(); i++) { //no iterator used because we need the cpu idx for later
-        //printf("a 0x%08x, peer %u start 0x%08x end 0x%08x\n", a, i, vPool[cpu].peerBaseAdr, vPool[i].peerBaseAdr + vPool[i].rawSize);
         if ( (a >= vPool[i].peerBaseAdr) && (a <= vPool[i].peerBaseAdr + vPool[i].rawSize) ) {cpu = i; adrT = AdrType::PEER; break;}
       } 
     } else { //internal address class
-      
       for (uint8_t i = 0; i < vPool.size(); i++) { //no iterator used because we need the cpu idx for later
-        //printf("a 0x%08x, int %u start 0x%08x end 0x%08x\n", a, i, vPool[i].intBaseAdr, vPool[i].intBaseAdr + vPool[i].rawSize);
         if ( (a >= vPool[i].intBaseAdr) && (a <= vPool[i].intBaseAdr + vPool[i].rawSize) ) {cpu = i; adrT = AdrType::INT; break;}
       } 
     }

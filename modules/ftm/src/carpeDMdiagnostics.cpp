@@ -537,12 +537,12 @@ HealthReport& CarpeDM::getHealth(uint8_t cpuIdx, HealthReport &hr) {
   //printf("Schedule Optype 0x%02x @ 0x%08x\n", schOpType, T_DIAG_SCH_MOD + T_MOD_INFO_TYPE);
 
   switch(schOpType) {
-    case OP_TYPE_SCH_CLEAR      : hr.smodOpType = "Clear"; break;
-    case OP_TYPE_SCH_ADD        : hr.smodOpType = "Add"; break;
+    case OP_TYPE_SCH_CLEAR      : hr.smodOpType = "Clear";     break;
+    case OP_TYPE_SCH_ADD        : hr.smodOpType = "Add";       break;
     case OP_TYPE_SCH_OVERWRITE  : hr.smodOpType = "Overwrite"; break;
-    case OP_TYPE_SCH_REMOVE     : hr.smodOpType = "Remove"; break;
-    case OP_TYPE_SCH_KEEP       : hr.smodOpType = "Keep"; break;
-    default                     : hr.smodOpType = "    ?"; break;
+    case OP_TYPE_SCH_REMOVE     : hr.smodOpType = "Remove";    break;
+    case OP_TYPE_SCH_KEEP       : hr.smodOpType = "Keep";      break;
+    default                     : hr.smodOpType = "    ?";     break;
   }
 
    
@@ -567,30 +567,29 @@ HealthReport& CarpeDM::getHealth(uint8_t cpuIdx, HealthReport &hr) {
   //printf("Cmd Optype %02x @ 0x%08x, Flow would be %02x\n", cmdOpType, T_DIAG_CMD_MOD + T_MOD_INFO_TYPE, OP_TYPE_CMD_FLOW);
 
   switch(cmdOpType) {
-    case OP_TYPE_CMD_FLOW  : hr.cmodOpType = "Flow"; break;
+    case OP_TYPE_CMD_FLOW  : hr.cmodOpType = "Flow";  break;
     case OP_TYPE_CMD_NOP   : hr.cmodOpType = "No Op"; break;
-    case OP_TYPE_CMD_WAIT  : hr.cmodOpType = "Wait"; break;
+    case OP_TYPE_CMD_WAIT  : hr.cmodOpType = "Wait";  break;
     case OP_TYPE_CMD_FLUSH : hr.cmodOpType = "Flush"; break;
     case OP_TYPE_CMD_START : hr.cmodOpType = "Start"; break;
-    case OP_TYPE_CMD_STOP  : hr.cmodOpType = "Stop"; break;
+    case OP_TYPE_CMD_STOP  : hr.cmodOpType = "Stop";  break;
     case OP_TYPE_CMD_CEASE : hr.cmodOpType = "Cease"; break;
     case OP_TYPE_CMD_ABORT : hr.cmodOpType = "Abort"; break;
     default                : hr.cmodOpType = "    ?";
   }
 
 
-  hr.cmodCnt          = (uint8_t)writeBeBytesToLeNumber<uint32_t>(b + T_DIAG_CMD_MOD + T_MOD_INFO_CNT);
-
-  hr.minTimeDiff      =  writeBeBytesToLeNumber<int64_t>(b + T_DIAG_DIF_MIN);  
-  hr.maxTimeDiff      =  writeBeBytesToLeNumber<int64_t>(b + T_DIAG_DIF_MAX);
-  hr.avgTimeDiff      = (hr.msgCnt ? writeBeBytesToLeNumber<int64_t>(b + T_DIAG_DIF_SUM) / (int64_t)hr.msgCnt : 0);   
-  hr.warningThreshold =  writeBeBytesToLeNumber<int64_t>(b + T_DIAG_DIF_WTH);
-  hr.warningCnt       = writeBeBytesToLeNumber<uint64_t>(b + T_DIAG_WAR_CNT);
+  hr.cmodCnt           = (uint8_t)writeBeBytesToLeNumber<uint32_t>(b + T_DIAG_CMD_MOD + T_MOD_INFO_CNT);
+  hr.minTimeDiff       = writeBeBytesToLeNumber<int64_t>(b + T_DIAG_DIF_MIN);
+  hr.maxTimeDiff       = writeBeBytesToLeNumber<int64_t>(b + T_DIAG_DIF_MAX);
+  hr.avgTimeDiff       = (hr.msgCnt ? writeBeBytesToLeNumber<int64_t>(b + T_DIAG_DIF_SUM) / (int64_t)hr.msgCnt : 0);
+  hr.warningThreshold  = writeBeBytesToLeNumber<int64_t>(b + T_DIAG_DIF_WTH);
+  hr.warningCnt        = writeBeBytesToLeNumber<uint64_t>(b + T_DIAG_WAR_CNT);
   uint32_t warningHash = writeBeBytesToLeNumber<uint32_t>(b + T_DIAG_WAR_1ST_HASH);
-  hr.warningNode      = hm.contains(warningHash) ? hm.lookup(warningHash) : "?";
-  hr.warningTime      = writeBeBytesToLeNumber<uint64_t>(b + T_DIAG_WAR_1ST_TS);
-  hr.maxBacklog       = writeBeBytesToLeNumber<uint32_t>(b + T_DIAG_BCKLOG_STRK);
-  hr.stat             = writeBeBytesToLeNumber<uint32_t>(b + _T_DIAG_SIZE_); // stat comes after last element of T_DIAG
+  hr.warningNode       = hm.contains(warningHash) ? hm.lookup(warningHash) : "?";
+  hr.warningTime       = writeBeBytesToLeNumber<uint64_t>(b + T_DIAG_WAR_1ST_TS);
+  hr.maxBacklog        = writeBeBytesToLeNumber<uint32_t>(b + T_DIAG_BCKLOG_STRK);
+  hr.stat              = writeBeBytesToLeNumber<uint32_t>(b + _T_DIAG_SIZE_); // stat comes after last element of T_DIAG
   
   return hr;
   
