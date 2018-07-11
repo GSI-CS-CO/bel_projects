@@ -244,12 +244,19 @@ uint32_t* cmd(uint32_t* node, uint32_t* thrData) {
   
   uint64_t* ptValid   = (uint64_t*)&node[CMD_VALID_TIME   >> 2];
   uint64_t* ptCurrent = (uint64_t*)&thrData[T_TD_CURRTIME >> 2];
+  uint64_t tValid;
+
+  if((node[CMD_ACT  >> 2] >> ACT_VABS_POS) & ACT_VABS_MSK) tValid = *ptValid;
+  else                                                     tValid = getSysTime() + *ptValid; //FIXME this should be ptCurrent, not getSysTime
+
+//TODO: find out what's wrong with this code
+/*
   uint64_t vabsMsk    = (uint64_t)((node[CMD_ACT  >> 2] >> ACT_VABS_POS) & ACT_VABS_MSK) -1; // abs -> 0x0, !abs -> 0xfff..f
   uint64_t tMinimum   = getSysTime() + _T_TVALID_OFFS_;                 // minimum timestamp that we consider 'future'
   uint64_t tValidCalc = *ptValid + *ptCurrent & vabsMsk;                // if tValid is relative offset (not absolute), add current time sum
   uint64_t tMinMsk    = (uint64_t)(tMinimum < tValidCalc) -1;           // min < calc -> 0x0, min >= calc -> 0xfff..f
   uint64_t tValid     = (tMinimum & tMinMsk) | (tValidCalc & ~tMinMsk); // equiv. tValid = (tMinimum < tvalidCalc) ? tvalidCalc : tMinimum;
-
+*/
   //copy cmd data to target queue
   e[(T_CMD_TIME + 0)          >> 2]  = (uint32_t)(tValid >> 32);
   e[(T_CMD_TIME + _32b_SIZE_) >> 2]  = (uint32_t)(tValid);
