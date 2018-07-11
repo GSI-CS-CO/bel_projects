@@ -159,6 +159,10 @@ const char* dmunipz_status_text(uint32_t code) {
   case DMUNIPZ_STATUS_SAFETYMARGIN     : return "violation of safety margin for data master and timing network";
   case DMUNIPZ_STATUS_NOTIMESTAMP      : return "received EVT_READY_TO_SIS in MIL FIFO but no TS via TLU -> ECA";
   case DMUNIPZ_STATUS_BADTIMESTAMP     : return "TS from TLU->ECA does not coincide with MIL Event from FIFO";
+  case DMUNIPZ_STATUS_DMQNOTEMPTY      : return "Data Master: Q not empty";
+  case DMUNIPZ_STATUS_LATEEVENT        : return "received 'late event' from Data Master";
+  case DMUNIPZ_STATUS_TKNOTRESERVED    : return "TK is not reserved";
+  case DMUNIPZ_STATUS_DMTIMEOUT        : return "beam request did not succeed within timeout at DM";
   default                              : return "dm-unipz: undefined error code";
   }
 }
