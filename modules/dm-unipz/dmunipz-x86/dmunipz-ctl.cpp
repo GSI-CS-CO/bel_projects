@@ -3,7 +3,7 @@
  *
  *  created : 2017
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 08-June-2018
+ *  version : 11-June-2018
  *
  * Command-line interface for dmunipz
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 17-May-2017
  ********************************************************************************************/
-#define DMUNIPZ_X86_VERSION "0.2.00"
+#define DMUNIPZ_X86_VERSION "0.3.00"
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -207,7 +207,7 @@ static void help(void) {
   fprintf(stderr, "  ebmlocal <mac> <ip> command sets local WR MAC and IP for EB master (values in hex)\n");
   fprintf(stderr, "  ebmdm    <mac> <ip> command sets DM WR MAC and IP for EB master (values in hex)\n");
   fprintf(stderr, "  flex     <offset>   command sets offset [ns] added to timestamp of READY_TO_SIS event (default 1500000 ns)\n");
-  fprintf(stderr, "  uni      <timeout>  command sets timeout [ms] value for UNILAC (default 1000ms)\n");
+  fprintf(stderr, "  uni      <timeout>  command sets timeout [ms] value for UNILAC (default 2000ms)\n");
   fprintf(stderr, "  tk       <timeout>  command sets timeout [ms] value for TK (via UNILAC, default 210 ms)\n");
   fprintf(stderr, "  IMPORTANT: values set by the above commands get applied by the 'configure' command\n");
   fprintf(stderr, "\n");

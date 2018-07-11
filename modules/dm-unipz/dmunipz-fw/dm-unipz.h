@@ -4,7 +4,7 @@
 #define  DMUNIPZ_US_ASMNOP        31          // # of asm("nop") operations per microsecond
 #define  DMUNIPZ_MS_ASMNOP        31 * 1000   // # of asm("nop") operations per microsecond
 #define  DMUNIPZ_DEFAULT_TIMEOUT  100         // default timeout used by main loop [ms]
-#define  DMUNIPZ_UNITIMEOUT       1000        // timeout used when requesting things from UNILAC [ms]
+#define  DMUNIPZ_UNITIMEOUT       2000        // timeout used when requesting things from UNILAC [ms]
 #define  DMUNIPZ_TKTIMEOUT        210         // timeout used when requesting TK from UNILAC [ms]
 #define  DMUNIPZ_QUERYTIMEOUT     1           // timeout for querying virt acc from MIL Piggy FIFO [ms] 
                                               // Ludwig: we have 10ms time; here: use 5 ms to be on the safe side
