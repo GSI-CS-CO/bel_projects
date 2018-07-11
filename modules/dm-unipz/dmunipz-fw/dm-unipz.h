@@ -37,6 +37,7 @@
 #define  DMUNIPZ_STATUS_SAFETYMARGIN    18    // violation of safety margin for data master and timing network
 #define  DMUNIPZ_STATUS_NOTIMESTAMP     19    // received EVT_READY_TO_SIS in MIL FIFO but not via TLU -> ECA
 #define  DMUNIPZ_STATUS_BADTIMESTAMP    20    // TS from TLU->ECA does not coincide with MIL Event from FIFO
+#define  DMUNIPZ_STATUS_DMQNOTEMPTY     21    // Data Master: Q not empty
 
 // MASP 
 #define  DMUNIPZ_MASP_NOMEN      "U_DM_UNIPZ" // nomen for gateway
