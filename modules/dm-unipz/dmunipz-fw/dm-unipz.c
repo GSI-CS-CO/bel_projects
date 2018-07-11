@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 25-April-2015
  ********************************************************************************************/
-#define DMUNIPZ_FW_VERSION 0x000300                                   // make this consistent with makefile
+#define DMUNIPZ_FW_VERSION 0x000301                                   // make this consistent with makefile
 
 /* standard includes */
 #include <stdio.h>
@@ -84,6 +84,9 @@ const char* dmunipz_status_text(uint32_t code) {
   case DMUNIPZ_STATUS_NOTIMESTAMP      : return "no TLU TS ";
   case DMUNIPZ_STATUS_BADTIMESTAMP     : return "bad TLU TS";
   case DMUNIPZ_STATUS_DMQNOTEMPTY      : return "DMQ nEmpty";
+  case DMUNIPZ_STATUS_LATEEVENT        : return "ECA late  ";
+  case DMUNIPZ_STATUS_TKNOTRESERVED    : return "NO TK     ";
+  case DMUNIPZ_STATUS_DMTIMEOUT        : return "DM timoeut";
   default                              : return "undef err ";
   }
 }
@@ -311,7 +314,7 @@ uint32_t ebmWriteN(uint32_t address, uint32_t *data, uint32_t n32BitWords)
 } // ebmWriteN
 
 
-uint32_t dmPrepCmdCommon(uint32_t blk, uint32_t prio, uint32_t checkEmptyQ) // prepare data common to all commands
+uint32_t dmPrepCmdCommon(uint32_t blk, uint32_t prio, uint32_t checkEmptyQ, uint64_t cmdValidTime) // prepare data common to all commands
 {
   // simplified memory layout at DM
   //
@@ -348,7 +351,6 @@ uint32_t dmPrepCmdCommon(uint32_t blk, uint32_t prio, uint32_t checkEmptyQ) // p
   uint32_t cmdListAddrOffs;                                    // where to find the relevant command  within the command list
   uint32_t cmdAddr;                                            // address of relevant command; cmdListAddr + cmdListAddrOffs
   
-  uint64_t timestamp;                                          // actual time
   uint32_t cmdValidTSHi;                                       // time when command becomes valid, high32 bit
   uint32_t cmdValidTSLo;                                       // time when command becomes valid, low32 bit
   
@@ -417,11 +419,9 @@ uint32_t dmPrepCmdCommon(uint32_t blk, uint32_t prio, uint32_t checkEmptyQ) // p
   cmdListAddr      = dmInt2ExtAddr(cmdListAddr, extBaseAddr);
   cmdAddr          = cmdListAddr + cmdListAddrOffs;
 
-  // set timestamp when command shall become valid. This should happen as soon as possible.
-  // To ease debugging, we use the actual system time instead of 0x0.
-  timestamp        = getSysTime();
-  cmdValidTSHi     = (uint32_t)(timestamp >> 32);
-  cmdValidTSLo     = (uint32_t)(timestamp & 0xffffffff); 
+  // timestamp when command shall become valid
+  cmdValidTSHi     = (uint32_t)(cmdValidTime >> 32);
+  cmdValidTSLo     = (uint32_t)(cmdValidTime & 0xffffffff); 
 
   // update value for write index
   wrIdxs            = wrIdxs & ~(0xff << (prio * 8));                                 // clear current value of write index for relevant priority
@@ -676,7 +676,7 @@ uint32_t findECAQueue() // find WB address of ECA channel for LM32
 } // findECAQueue
 
 
-uint32_t wait4ECAEvent(uint32_t msTimeout, uint32_t *virtAcc, uint32_t *dryRunFlag, uint64_t *deadline)  // 1. query ECA for actions, 2. trigger activity
+uint32_t wait4ECAEvent(uint32_t msTimeout, uint32_t *virtAcc, uint32_t *dryRunFlag, uint64_t *deadline, uint32_t *isLate)  // 1. query ECA for actions, 2. trigger activity
 {
   uint32_t *pECAFlag;           // address of ECA flag
   uint32_t evtIdHigh;           // high 32bit of eventID   
@@ -695,7 +695,7 @@ uint32_t wait4ECAEvent(uint32_t msTimeout, uint32_t *virtAcc, uint32_t *dryRunFl
   timeoutT    = getSysTime() + (uint64_t)msTimeout * 1000000;
 
   while (getSysTime() < timeoutT) {
-    if (*pECAFlag & (0x0001 << ECA_VALID)) {                         // if ECA data is valid
+    if (*pECAFlag & (0x0001 << ECA_VALID)) {                        // if ECA data is valid
       
       // read data
       evtIdHigh    = *(pECAQ + (ECA_QUEUE_EVENT_ID_HI_GET >> 2));
@@ -705,6 +705,7 @@ uint32_t wait4ECAEvent(uint32_t msTimeout, uint32_t *virtAcc, uint32_t *dryRunFl
       actTag       = *(pECAQ + (ECA_QUEUE_TAG_GET >> 2));
       evtParamHigh = *(pECAQ + (ECA_QUEUE_PARAM_HI_GET >> 2));
       evtParamLow  = *(pECAQ + (ECA_QUEUE_PARAM_LO_GET >> 2));
+      *isLate      = *pECAFlag & (0x0001 << ECA_LATE);
 
       *deadline    = ((uint64_t)evtDeadlHigh << 32) + (uint64_t)evtDeadlLow;
       
@@ -1021,6 +1022,7 @@ uint32_t entryActionConfigured()
   uint32_t i;
   uint32_t data;
   uint64_t timestamp;
+  uint32_t isLate;
   
   // configure EB master (SRC and DST MAC/IP are set from host)
   if ((status = ebmInit(2000)) != DMUNIPZ_STATUS_OK) {
@@ -1067,7 +1069,7 @@ uint32_t entryActionConfigured()
 
   // empty ECA queue for lm32
   i = 0;
-  while (wait4ECAEvent(1, &virtAcc, &dryRunFlag, &timestamp) !=  DMUNIPZ_ECADO_TIMEOUT) {i++;}
+  while (wait4ECAEvent(1, &virtAcc, &dryRunFlag, &timestamp, &isLate) !=  DMUNIPZ_ECADO_TIMEOUT) {i++;}
   DBPRINT1("dm-unipz: ECA queue flushed - removed %d pending entries from ECA queue\n", i);
 
   flexOffset  = *pSharedFlexOffset;
@@ -1205,18 +1207,23 @@ uint32_t doActionOperation(uint32_t *statusTransfer, uint32_t *virtAccReq, uint3
   uint32_t virtAccTmp;
   uint32_t dryRunFlag; uint32_t dummy1, dummy2; 
   uint64_t timestamp;
+  uint64_t dmTimeoutT;
+  uint32_t isLate;
   uint64_t sendT;
   uint32_t sendTsecs;
   uint32_t sendTnsecs;
   uint64_t tempT;
+  uint64_t cmdValidT;
 
   status = actStatus; 
 
-  nextAction = wait4ECAEvent(DMUNIPZ_DEFAULT_TIMEOUT, &virtAccTmp, &dryRunFlag, &timestamp);   // do action is driven by actions issued by the ECA
+  nextAction = wait4ECAEvent(DMUNIPZ_DEFAULT_TIMEOUT, &virtAccTmp, &dryRunFlag, &timestamp, &isLate);   // do action is driven by actions issued by the ECA
 
   switch (nextAction) 
     {
     case DMUNIPZ_ECADO_REQTK :                                                     // received command "REQ_TK" from data master
+
+      if (isLate) return DMUNIPZ_STATUS_LATEEVENT;                                 // never request TK in case of a late event
 
       *virtAccReq     = virtAccTmp;                                                // number of virtual accelerator is set when DM requests TK
       *noBeam         = dryRunFlag;                                                // UNILAC requested without beam
@@ -1230,36 +1237,43 @@ uint32_t doActionOperation(uint32_t *statusTransfer, uint32_t *virtAccReq, uint3
 
       break;
     case DMUNIPZ_ECADO_REQBEAM :                                                   // received command "REQ_BEAM" from data master
+
+      if (isLate) return DMUNIPZ_STATUS_LATEEVENT;                                 // never request beam in case of a late event
+      if (!((*statusTransfer & DMUNIPZ_TRANS_REQTKOK)                              // check if TK is reserved
+          && !(*statusTransfer & DMUNIPZ_TRANS_RELTK))
+          ) return DMUNIPZ_STATUS_TKNOTRESERVED; 
       
-      *statusTransfer = *statusTransfer | DMUNIPZ_TRANS_REQBEAM;                   // update status of transfer
-      (*nInject)++;                                                                // increment number of injections (of current transfer)
-
       gotEBTimeout = 0;                                                            // this is a 'warning flag'
+      cmdValidT    = getSysTime();                                                 // time when commands for DM shall become valid
+      dmTimeoutT   = timestamp + (uint64_t)DMUNIPZ_DMTIMEOUT * (uint64_t)1000000;  // absoulute time, until we have to reply to DM
 
-      dmStatus = dmPrepCmdCommon(REQBEAMB, 0, 1);                                  // try "Schnitzeljagd" in Data Master. Here: second "flex" waiting block
+      dmStatus = dmPrepCmdCommon(REQBEAMB, 0, 1, cmdValidT);                       // try "Schnitzeljagd" in Data Master. Here: second "flex" waiting block
       if (dmStatus == DMUNIPZ_STATUS_EBREADTIMEDOUT) {                             // in case of timeout, we probably lost a UDP packet: try a 2nd time
         gotEBTimeout = 1;
-        dmStatus = dmPrepCmdCommon(REQBEAMB, 0, 1);                                     
+        dmStatus = dmPrepCmdCommon(REQBEAMB, 0, 1, cmdValidT);                                     
       } // if EB timeout
       if (dmStatus != DMUNIPZ_STATUS_OK) return dmStatus;                          // communication with DM failed even after two attempts: give up! 
       // NB: we can't prepare the "flex" wait command  yet, as we need to timestamp the MIL event from UNIPZ first
 
-      dmStatus = dmPrepCmdCommon(REQBEAMA, 1, 1);                                  // try "Schnitzeljagd" in Data Master. Here: first "slow" waiting block
+      dmStatus = dmPrepCmdCommon(REQBEAMA, 1, 1, cmdValidT);                       // try "Schnitzeljagd" in Data Master. Here: first "slow" waiting block
       if (dmStatus == DMUNIPZ_STATUS_EBREADTIMEDOUT) {                             // in case of timeout, we probably lost a UDP packet: try a 2nd time
         gotEBTimeout = 1;
-        dmStatus = dmPrepCmdCommon(REQBEAMA, 1, 1);
+        dmStatus = dmPrepCmdCommon(REQBEAMA, 1, 1, cmdValidT);
       } // if EB timeout
       if (dmStatus != DMUNIPZ_STATUS_OK) return dmStatus;                          // communication with DM failed: give up! 
       dmPrepCmdFlush(REQBEAMA);                                                    // prepare flush command for first "timeout" waiting block for later use
 
       enableFilterEvtMil(pMILPiggy);                                               // enable filter @ MIL piggy
       clearFifoEvtMil(pMILPiggy);                                                  // get rid of junk in FIFO @ MIL piggy
-      
+
+      *statusTransfer = *statusTransfer | DMUNIPZ_TRANS_REQBEAM;                   // update status of transfer
+      (*nInject)++;                                                                // increment number of injections (of current transfer)
+
       requestBeam(uniTimeout);                                                     // request beam from UNIPZ, note that we can't check for REQ_NOT_OK from here
 
       evtValidFlag = 0;                                                                                                  // flag: valid MIL event from UNIPZ received 
       if ((milStatus = wait4MILEvent(DMUNIPZ_EVT_READY2SIS, virtAccTmp, virtAccRec, uniTimeout)) == DMUNIPZ_STATUS_OK) { // wait for event in MIL FIFO
-        if (wait4ECAEvent(DMUNIPZ_QUERYTIMEOUT, &dummy1, &dummy2, &timestamp) == DMUNIPZ_ECADO_READY2SIS) {              // check for corresponding TS of EVT_READY_TO_SIS via TLU -> ECA
+        if (wait4ECAEvent(DMUNIPZ_QUERYTIMEOUT, &dummy1, &dummy2, &timestamp, &isLate) == DMUNIPZ_ECADO_READY2SIS) {     // check for corresponding TS of EVT_READY_TO_SIS via TLU -> ECA
           if ((getSysTime() - timestamp) < DMUNIPZ_MATCHWINDOW) {                                                        // check TS from TLU: only accept reasonably recent TS
             evtValidFlag = 1;                                                                                            // set flag for successful event reception
             status        = DMUNIPZ_STATUS_OK;
@@ -1286,8 +1300,12 @@ uint32_t doActionOperation(uint32_t *statusTransfer, uint32_t *virtAccReq, uint3
       } // if sendT
 
       dmPrepFlexWaitCmd(REQBEAMB, sendT);                                          // prepare command for "flex" waiting block
-      dmChangeBlock(REQBEAMB);                                                     // modify "flex" waiting block within DM
-      dmChangeBlock(REQBEAMA);                                                     // modify "slow" waiting block within DM
+
+      if (getSysTime() < dmTimeoutT) {
+        dmChangeBlock(REQBEAMB);                                                   // modify "flex" waiting block within DM
+        dmChangeBlock(REQBEAMA);                                                   // modify "slow" waiting block within DM
+      }
+      else status = DMUNIPZ_STATUS_DMTIMEOUT;
 
       *dtStart = (uint32_t)(sendT - getSysTime());                                 // more code to suffice my paranoia: after executing all the code above, I want to know how much of flexoffset is left.
 

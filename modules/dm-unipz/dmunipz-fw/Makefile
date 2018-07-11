@@ -6,7 +6,7 @@ SPI_LANES	= ASx4
 RAM_SIZE	= 65536 
 SHARED_SIZE     = 8K
 USRCPUCLK       = 125000
-VERSION         = 00.03.00
+VERSION         = 00.03.01
 
 PATHFW 	 = .
 PATHPKG	 = $(shell python2.7 ../../../ip_cores/hdl-make/hdlmake list-mods | grep -G '^[^\#]' | grep top | grep -o '^\S*')
