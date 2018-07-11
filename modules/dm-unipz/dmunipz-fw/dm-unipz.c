@@ -227,7 +227,7 @@ uint32_t ebmInit(uint32_t msTimeout) // intialize Etherbone master
   uint64_t timeoutT;
   uint64_t dstMac, srcMac;
 
-  timeoutT = getSysTime() + (uint64_t)msTimeout * 1000000;
+  timeoutT = getSysTime() + (uint64_t)msTimeout * (uint64_t)1000000;
   while (timeoutT < getSysTime()) {
     if (*(pEbCfg + (EBC_SRC_IP>>2)) == EBC_DEFAULT_IP) asm("nop");
     else break;
@@ -283,7 +283,7 @@ uint32_t ebmReadN(uint32_t msTimeout, uint32_t address, uint32_t *data, uint32_t
                                 ebm_op(address      , (uint32_t)(&(pCpuRamExternalData4EB[handshakeIdx])), EBM_READ); // handshake data
   ebm_flush();                                                                                       // commit EB cycle via the network
   
-  timeoutT = getSysTime() + (uint64_t)msTimeout * 1000000;                                                     
+  timeoutT = getSysTime() + (uint64_t)msTimeout * (uint64_t)1000000;                                                     
   while (getSysTime() < timeoutT) {                                                                  // wait for received data until timeout
     if (pSharedData4EB[handshakeIdx] != DMUNIPZ_EB_HACKISH) {                                        // hackish solution to determine if a reply value has been received
       for (i=0; i<n32BitWords; i++) data[i] = pSharedData4EB[i];
@@ -692,7 +692,7 @@ uint32_t wait4ECAEvent(uint32_t msTimeout, uint32_t *virtAcc, uint32_t *dryRunFl
   *virtAcc    = 20;             // 20: virt acc is not yet set
   *dryRunFlag = 2;              //  2: "dry run flag" not yet set
   pECAFlag    = (uint32_t *)(pECAQ + (ECA_QUEUE_FLAGS_GET >> 2));   // address of ECA flag
-  timeoutT    = getSysTime() + (uint64_t)msTimeout * 1000000;
+  timeoutT    = getSysTime() + (uint64_t)msTimeout * (uint64_t)1000000;
 
   while (getSysTime() < timeoutT) {
     if (*pECAFlag & (0x0001 << ECA_VALID)) {                        // if ECA data is valid
@@ -805,7 +805,7 @@ uint32_t checkClearReqNotOk(uint32_t msTimeout)      // check for 'Req not OK' f
   int16_t          status;       // status MIL device bus operation
   uint64_t         timeoutT;     // when to time out
 
-  timeoutT = getSysTime() + (uint64_t)msTimeout * 1000000;
+  timeoutT = getSysTime() + (uint64_t)msTimeout * (uint64_t)1000000;
 
   if ((status = readFromPZU(IFB_ADDRESS_SIS, IO_MODULE_3, &(readPZUData.uword))) != MIL_STAT_OK) return DMUNIPZ_STATUS_DEVBUSERROR;    
   if (readPZUData.bits.Req_not_ok == true) {                                                                                            // check for 'req not ok'
@@ -841,7 +841,7 @@ uint32_t requestTK(uint32_t msTimeout, uint32_t virtAcc, uint32_t dryRunFlag)
     return DMUNIPZ_STATUS_OUTOFRANGE;
   } // if number of virtual accelerator illegal
 
-  timeoutT = getSysTime() + (uint64_t)msTimeout * 1000000;
+  timeoutT = getSysTime() + (uint64_t)msTimeout * (uint64_t)1000000;
 
   // send request to modulbus I/O (UNIPZ)
   writePZUData.uword               = 0x0;
@@ -933,7 +933,7 @@ uint32_t wait4MILEvent(uint16_t evtCode, uint16_t virtAccReq, uint32_t *virtAccR
   uint64_t timeoutT;           // when to time out
   uint32_t virtAccTmp;         // temp value for virtAcc
 
-  timeoutT    = getSysTime() + (uint64_t)msTimeout * 1000000;
+  timeoutT    = getSysTime() + (uint64_t)msTimeout * (uint64_t)1000000;
   *virtAccRec = 0;             // last two digits: virtacc; count other junk in FIFO by increasing by 100;
 
   while(getSysTime() < timeoutT) {              // while not timed out...
