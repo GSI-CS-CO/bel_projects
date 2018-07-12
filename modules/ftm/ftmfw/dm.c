@@ -201,21 +201,18 @@ uint32_t* execWait(uint32_t* node, uint32_t* cmd, uint32_t* thrData) {
   // the block period is added in blockFixed or blockAligned.
   // we must therefore subtract it here if we modify current time, as execWait is optional
 
-  if ( cmd[T_CMD_ACT >> 2] & ACT_WAIT_ABS_SMSK) {
-    //if (*(uint64_t*)&thrData[T_TD_CURRTIME >> 2] < (*(uint64_t*)&cmd[T_CMD_WAIT_TIME >> 2] - *(uint64_t*)&node[BLOCK_PERIOD >> 2])) {
-      *(uint64_t*)&thrData[T_TD_CURRTIME >> 2] = *(uint64_t*)&cmd[T_CMD_WAIT_TIME >> 2] - *(uint64_t*)&node[BLOCK_PERIOD >> 2]; //1. set absolute value - block period
-      DBPRINT2("#%02u: Wait, Absolute to 0x%08x%08x\n", cpuId, (uint32_t)(*(uint64_t*)&cmd[T_CMD_WAIT_TIME >> 2] >> 32), (uint32_t)*(uint64_t*)&cmd[T_CMD_WAIT_TIME >> 2]);  
-    //}
-  } else {
-    if( cmd[T_CMD_ACT >> 2] & ACT_CHP_SMSK) {
-      DBPRINT2("#%02u: Wait, Permanent relative to 0x%08x%08x\n", cpuId, (uint32_t)(*(uint64_t*)&cmd[T_CMD_WAIT_TIME >> 2] >> 32), (uint32_t)*(uint64_t*)&cmd[T_CMD_WAIT_TIME >> 2]);  
-      *(uint64_t*)&node[BLOCK_PERIOD >> 2] = *(uint64_t*)&cmd[T_CMD_WAIT_TIME >> 2];                                          //2. set new block period
-    } else {
+  uint64_t  tWait = *(uint64_t*)&cmd[T_CMD_WAIT_TIME >> 2] - *(uint64_t*)&node[BLOCK_PERIOD >> 2];
+  uint64_t*  tCur = (uint64_t*)&thrData[T_TD_CURRTIME >> 2];
+  uint32_t    act = cmd[T_CMD_ACT >> 2];
 
-      DBPRINT2("#%02u: Wait, temp relative to 0x%08x%08x\n", cpuId, (uint32_t)(*(uint64_t*)&cmd[T_CMD_WAIT_TIME >> 2] >> 32), (uint32_t)*(uint64_t*)&cmd[T_CMD_WAIT_TIME >> 2]);  
-      *(uint64_t*)&thrData[T_TD_CURRTIME >> 2] += (*(uint64_t*)&cmd[T_CMD_WAIT_TIME >> 2] - *(uint64_t*)&node[BLOCK_PERIOD]); //3. add temporary block period - block period
-      
-    }      
+  if ( act & ACT_WAIT_ABS_SMSK) {
+    // absolute wait time. Replaces current time sum
+    if ( getSysTime() < tWait ) { *tCur = tWait; } //1.1 if wait time is greater than Now, proceed
+    else                        {                } //1.2 wait time is in the past, this is bad. Skip and increase bad wait counter
+  } else {
+    // relative wait time. replaces current block period
+    if( act & ACT_CHP_SMSK) { *(uint64_t*)&node[BLOCK_PERIOD >> 2] = *(uint64_t*)&cmd[T_CMD_WAIT_TIME >> 2]; }  // 2. permanently change this block's period
+    else                    { *tCur += tWait; }                                                                 // 3. temporarily change this block's period (inc. current time sum by waittime - blockperiod)
   }
    
   return (uint32_t*)node[NODE_DEF_DEST_PTR >> 2];
@@ -248,7 +245,7 @@ uint32_t* cmd(uint32_t* node, uint32_t* thrData) {
 
   // Important !!! So the host can verify if a command is active as seen from an LM32 by comparing with cursor timestamping,
   // we cannot place ANY tvalids into the past. All tValids must be placed sufficiently into the future so that this here function
-  // terminates before tValid is reached
+  // terminates before tValid is reached. This is the responsibility of carpeDM!
 
   // !!! CAVEAT !!! when tvalid is used as relative offset in multiple commands to synchronise them, the sum of block start (current time sume) + tvalid
   // must always be greater than tMinimum, else the commands get differing tvalids assigned and will no longer synchronously become valid !!!
@@ -258,7 +255,7 @@ uint32_t* cmd(uint32_t* node, uint32_t* thrData) {
   uint64_t tValid;
 
   if((node[CMD_ACT  >> 2] >> ACT_VABS_POS) & ACT_VABS_MSK) tValid = *ptValid;
-  else                                                     tValid = getSysTime() + *ptValid; //FIXME this should be ptCurrent, not getSysTime
+  else                                                     tValid = *ptCurrent + *ptValid;
 
 //TODO: find out what's wrong with this code
 /*
