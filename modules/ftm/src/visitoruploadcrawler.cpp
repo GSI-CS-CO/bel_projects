@@ -103,6 +103,7 @@ vAdr& VisitorUploadCrawler::childrenAdrs(vertex_set_t vs, vAdr& ret, const unsig
     uint32_t aPar1 = LM32_NULL_PTR;
     uint32_t aTef  = LM32_NULL_PTR;
     uint32_t aRes  = LM32_NULL_PTR;
+    uint32_t hashXor = 0;
 
     
     for (out_cur = out_begin; out_cur != out_end; ++out_cur)
@@ -115,6 +116,7 @@ vAdr& VisitorUploadCrawler::childrenAdrs(vertex_set_t vs, vAdr& ret, const unsig
           } else {
             auto x = at.lookupVertex(target(*out_cur,g));
             aId = at.adrConv(AdrType::MGMT, AdrType::EXT, x->cpu, x->adr); g[v].np->setFlags(NFLG_TMSG_DYN_ID_SMSK);
+            hashXor ^= x->hash;
           }
         }
         if (g[*out_cur].type == det::sDynPar0) {
@@ -123,6 +125,7 @@ vAdr& VisitorUploadCrawler::childrenAdrs(vertex_set_t vs, vAdr& ret, const unsig
             auto x = at.lookupVertex(target(*out_cur,g));
             aPar0 = at.adrConv(AdrType::MGMT, AdrType::EXT, x->cpu, x->adr); g[v].np->setFlags(NFLG_TMSG_DYN_PAR0_SMSK);
             //sLog << "DynAdr 0 0x" << std::hex << aPar0 << std::endl;
+            hashXor ^= x->hash;
           }
         }
         if (g[*out_cur].type == det::sDynPar1) {
@@ -131,6 +134,7 @@ vAdr& VisitorUploadCrawler::childrenAdrs(vertex_set_t vs, vAdr& ret, const unsig
             auto x = at.lookupVertex(target(*out_cur,g));
             aPar1 = at.adrConv(AdrType::MGMT, AdrType::EXT, x->cpu, x->adr); g[v].np->setFlags(NFLG_TMSG_DYN_PAR1_SMSK);
             //sLog << "DynAdr 1 0x" << std::hex << aPar1 << std::endl;
+            hashXor ^= x->hash;
           }
         }
         if (g[*out_cur].type == det::sDynTef) {
@@ -138,8 +142,11 @@ vAdr& VisitorUploadCrawler::childrenAdrs(vertex_set_t vs, vAdr& ret, const unsig
           } else {
             auto x = at.lookupVertex(target(*out_cur,g));
             aTef = at.adrConv(AdrType::MGMT, AdrType::EXT, x->cpu, x->adr); g[v].np->setFlags(NFLG_TMSG_DYN_TEF_SMSK);
+            hashXor ^= x->hash;
           }
         }
+        // Use Res field for checksum. Exor the hashes of all dyndata children and add here
+        /*
         if (g[*out_cur].type == det::sDynRes) {
           if (aRes != LM32_NULL_PTR) {sErr << "Found more than one dynamic res source" << std::endl; break;
           } else {
@@ -147,8 +154,12 @@ vAdr& VisitorUploadCrawler::childrenAdrs(vertex_set_t vs, vAdr& ret, const unsig
             aRes = at.adrConv(AdrType::MGMT, AdrType::EXT, x->cpu, x->adr); g[v].np->setFlags(NFLG_TMSG_DYN_RES_SMSK);
           }
         }
+        */ 
       }
     }
+    aRes = hashXor;
+
+    
 
     ret.push_back(aId);  
     ret.push_back(aPar0);
