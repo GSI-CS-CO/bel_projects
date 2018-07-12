@@ -216,7 +216,7 @@ uint32_t* execWait(uint32_t* node, uint32_t* cmd, uint32_t* thrData) {
 }
 
 uint32_t* cmd(uint32_t* node, uint32_t* thrData) {
-
+        uint32_t *ret = (uint32_t*)node[NODE_DEF_DEST_PTR >> 2];
   const uint32_t prio = (node[CMD_ACT >> 2] >> ACT_PRIO_POS) & ACT_PRIO_MSK;
   const uint32_t *tg  = (uint32_t*)node[CMD_TARGET >> 2];
   const uint32_t adrPrefix = (uint32_t)tg & 0xffff0000; // if target is on a different RAM, all ptrs must be translated from the local to our (peer) perspective
@@ -226,6 +226,10 @@ uint32_t* cmd(uint32_t* node, uint32_t* thrData) {
   uint32_t bufOffs, elOffs;
   node[NODE_FLAGS >> 2] |= NFLG_PAINT_LM32_SMSK; // set paint bit to mark this node as visited  
   
+  if(tg == LM32_NULL_PTR) { // check if the target is a null pointer. Used to allow removal of pattern containing target nodes
+    return ret;
+  }
+
   wrIdx   = ((uint8_t *)tg + BLOCK_CMDQ_WR_IDXS + _32b_SIZE_  - prio -1);                           // calculate pointer (8b) to current write index
   bufOffs = (*wrIdx & Q_IDX_MAX_MSK) / (_MEM_BLOCK_SIZE / _T_CMD_SIZE_  ) * _PTR_SIZE_;             // calculate Offsets
   elOffs  = (*wrIdx & Q_IDX_MAX_MSK) % (_MEM_BLOCK_SIZE / _T_CMD_SIZE_  ) * _T_CMD_SIZE_; 
@@ -265,19 +269,10 @@ uint32_t* cmd(uint32_t* node, uint32_t* thrData) {
   e[(T_CMD_ACT + 1 * _32b_SIZE_) >> 2]  = node[(CMD_ACT + 1 * _32b_SIZE_) >> 2];
   e[(T_CMD_ACT + 2 * _32b_SIZE_) >> 2]  = node[(CMD_ACT + 2 * _32b_SIZE_) >> 2];
   
-  //FIXME WTF ... why doesn't this work with this loop ???
-  /*
-  //0, 4 , 8
-  // !!! CAREFUL: this must be post-increment, use '=+' instead of '+=' !!!
-  for(uint32_t offs = 0; offs < (_T_CMD_SIZE_ - _T_TS_SIZE_); offs =+ _32b_SIZE_ ) { 
-    e[(T_CMD_ACT + offs) >> 2] = node[(CMD_ACT + offs) >> 2];
-  }
-  */
-  
   *wrIdx = (*wrIdx + 1) & Q_IDX_MAX_OVF_MSK; //increase write index
 
   DBPRINT2("#%02u: Sending Cmd 0x%08x, Target: 0x%08x, next: 0x%08x\n", cpuId, node[NODE_HASH >> 2], (uint32_t)tg, node[NODE_DEF_DEST_PTR >> 2]);
-  return (uint32_t*)node[NODE_DEF_DEST_PTR >> 2];
+  return ret;
 }
 
 uint32_t* tmsg(uint32_t* node, uint32_t* thrData) {
