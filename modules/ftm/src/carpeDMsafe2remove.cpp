@@ -142,14 +142,15 @@ bool CarpeDM::isSafeToRemove(std::set<std::string> patterns, std::string& report
   //covenant: promise not to clear/reorder a given block's queues
 
   // Crawl and map active areas
-  //crawl all reverse trees we can reach from the given entries and add their nodes to the blacklist
-  for (auto& vEntry : entries) {
-    if(verbose) { sLog << "Starting Crawler from " << gEq[vEntry].name << std::endl; }
+  // crawl all reverse trees we can reach from the given elements to be removed (used to be just the entry ndoes,
+  // but that doesn't suffice for resident commands pointing into patterns to be removed) and add their nodes to the blacklist
+  for (auto& vRem : remlist) {
+    if(verbose) { sLog << "Starting Crawler from " << gEq[vRem].name << std::endl; }
     vertex_set_t tmpTree;
-    getReverseNodeTree(vEntry, tmpTree, gEq, covenantsPerVertex);
+    getReverseNodeTree(vRem, tmpTree, gEq, covenantsPerVertex);
     blacklist.insert(tmpTree.begin(), tmpTree.end());
   }
-
+  if(verbose) { sLog << "Blacklist complete" << std::endl; }
 
   
 

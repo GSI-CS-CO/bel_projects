@@ -201,7 +201,7 @@ vAdr VisitorUploadCrawler::getCmdTarget(Command& el) const {
   
   vAdr ret;
   //search for cmd target
-  childrenAdrs(getChildrenByEdgeType(v, det::sCmdTarget), ret, 1, 1, true);
+  childrenAdrs(getChildrenByEdgeType(v, det::sCmdTarget), ret, 1, 1, true); // if this command is not connected, return a null pointer as target
 
   return ret;
 }
@@ -215,6 +215,8 @@ vAdr VisitorUploadCrawler::getFlowDst() const {
   auto tgt = at.lookupVertex(*vsTgt.begin());
   
   vertex_set_t vsDst = getChildrenByEdgeType(v, det::sCmdFlowDst);
+  if((vsTgt.size() == 0) || (vsDst.size() == 0)) { ret.push_back(LM32_NULL_PTR); return ret;}// if this command is not connected, return a null pointer as flowdst
+
   auto x = at.lookupVertex(*vsDst.begin());
 
   if (x->cpu != tgt->cpu) throw std::runtime_error(  exIntro + "Target " + g[*vsTgt.begin()].name + "'s CPU must not differ from Dst " + g[*vsDst.begin()].name + "'s CPU\n");
