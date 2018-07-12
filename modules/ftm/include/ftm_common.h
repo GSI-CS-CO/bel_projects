@@ -446,7 +446,8 @@
 #define NODE_TYPE_SYNC          (NODE_TYPE_ALTDST       +1)   // used to denote the time offset for pattern rows
 #define NODE_TYPE_MGMT          (NODE_TYPE_SYNC         +1)   // contain the part of the groups and node name table in compressed form
 #define NODE_TYPE_COVENANT      (NODE_TYPE_MGMT         +1)   // contain the addresses of commands (in queues) which the user agrees not to preempt if optimised safe2remove is to work
-#define _NODE_TYPE_END_         (NODE_TYPE_COVENANT     +1)   // Node type Quantity
+#define NODE_TYPE_NULL          (NODE_TYPE_COVENANT     +1)   // type returned by getNodeType if the node ptr was NULL. Intentionally not 0x000...
+#define _NODE_TYPE_END_         (NODE_TYPE_NULL         +1)   // Node type Quantity
 //Node type
 #define NFLG_TYPE_MSK           0xff
 #define NFLG_TYPE_POS           0

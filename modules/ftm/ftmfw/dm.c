@@ -71,6 +71,7 @@ void dmInit() {
   nodeFuncs[NODE_TYPE_SHARE]            = dummyNodeFunc; 
   nodeFuncs[NODE_TYPE_ALTDST]           = dummyNodeFunc; 
   nodeFuncs[NODE_TYPE_SYNC]             = dummyNodeFunc;
+  nodeFuncs[NODE_TYPE_NULL]             = nodeNull;
 
   //deadline updater. Return infinity (-1) if no or unsupported node was given
   deadlineFuncs[NODE_TYPE_UNKNOWN ]     = dummyDeadlineFunc;
@@ -87,6 +88,7 @@ void dmInit() {
   deadlineFuncs[NODE_TYPE_SHARE]        = dummyDeadlineFunc; 
   deadlineFuncs[NODE_TYPE_ALTDST]       = dummyDeadlineFunc; 
   deadlineFuncs[NODE_TYPE_SYNC]         = dummyDeadlineFunc;
+  deadlineFuncs[NODE_TYPE_NULL]         = deadlineNull;
 
 
   actionFuncs[ACT_TYPE_UNKNOWN]         = dummyActionFunc;
@@ -134,9 +136,13 @@ uint8_t wrTimeValid() {
 
 }
 
-uint32_t* dummyNodeFunc (uint32_t* node, uint32_t* thrData)                   { *status |= SHCTL_STATUS_BAD_NODE_TYPE_SMSK; return LM32_NULL_PTR;}
-uint64_t  dummyDeadlineFunc (uint32_t* node, uint32_t* thrData)               { *status |= SHCTL_STATUS_BAD_NODE_TYPE_SMSK; return -1ULL; } //return infinity
-uint32_t* dummyActionFunc (uint32_t* node, uint32_t* cmd, uint32_t* thrData)  { *status |= SHCTL_STATUS_BAD_ACT_TYPE_SMSK; return LM32_NULL_PTR;}
+
+uint32_t* nodeNull (uint32_t* node, uint32_t* thrData)                        { return LM32_NULL_PTR;}
+uint64_t  deadlineNull (uint32_t* node, uint32_t* thrData)                    { return -1ULL; } //return infinity
+
+uint32_t* dummyNodeFunc (uint32_t* node, uint32_t* thrData)                   { *status |= SHCTL_STATUS_BAD_NODE_TYPE_SMSK; return nodeNull(node, thrData); }
+uint64_t  dummyDeadlineFunc (uint32_t* node, uint32_t* thrData)               { *status |= SHCTL_STATUS_BAD_NODE_TYPE_SMSK; return deadlineNull(node, thrData); } //return infinity
+uint32_t* dummyActionFunc (uint32_t* node, uint32_t* cmd, uint32_t* thrData)  { *status |= SHCTL_STATUS_BAD_ACT_TYPE_SMSK;  return LM32_NULL_PTR;}
 
 uint8_t getNodeType(uint32_t* node) {
   uint32_t* tmpType;
@@ -150,7 +156,8 @@ uint8_t getNodeType(uint32_t* node) {
     msk       = -(type < _NODE_TYPE_END_);
     type     &= msk; //optional boundary check, if out of bounds, type will equal NODE_TYPE_UNKNOWN  
   } else {
-    DBPRINT2("#%02u: Null ptr detected \n", cpuId);  
+    DBPRINT2("#%02u: Null ptr detected \n", cpuId);
+    return NODE_TYPE_NULL;  
   }
 
   return type;
