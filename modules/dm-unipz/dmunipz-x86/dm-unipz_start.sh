@@ -48,7 +48,7 @@ dmunipz-ctl -s2 dev/wbm0 | logger -t dmunipz-ctl -sp local0.info &
 # some SCUs
 # dmunipz-ctl dev/wbm0 ebmlocal 0x00267b000321 0xc0a8a00c (scuxl0033, user network)
 # dmunipz-ctl dev/wbm0 ebmlocal 0x00267b0003f1 0xc0a8a0e5 (scuxl0223, production network)
-# dmunipz-ctl dev/wbm0 ebmlocal 0x00267b000321 0xc0a80cea (scuxl0033, 'Hanno network',     need to set static IP with eb-console)
+# dmunipz-ctl dev/wbm0 ebmlocal 0x00267b000321 0xc0a80cea (scuxl0033, 'Hanno network')
 # dmunipz-ctl dev/wbm0 ebmlocal 0x00267b000321 0xc0a80b02 (scuxl0033, 'Testnetz Dietrich', need to set static IP with eb-console)
 # dmunipz-ctl dev/wbm0 ebmlocal 0x00267b0003f1 0xc0a80b02 (scuxl0223, 'Testnetz Dietrich', need to set static IP with eb-console)
 
@@ -63,8 +63,8 @@ if  [ $(hostname) == $PROSCU ]; then   # production network
     dmunipz-ctl dev/wbm0 ebmlocal 0x00267b0003f1 0xc0a8a0e5
 else                                  # test or development
     echo -e dm-unipz - start: configuring for TEST or DEVELOPMENT network on $(hostname)
-    dmunipz-ctl dev/wbm0 ebmlocal 0x00267b000321 0xc0a80b02
-    dmunipz-ctl dev/wbm0 ebmdm 0x00267b000455 0xc0a80b01
+    dmunipz-ctl dev/wbm0 ebmlocal 0x00267b000321 0xc0a80cea
+    dmunipz-ctl dev/wbm0 ebmdm 0x00267b000422 0xc0a80c04
 fi
 
 echo -e dm-unipz - start: make firmware operational
@@ -86,6 +86,9 @@ saft-ecpu-ctl tr0 -c 0x112c160000000000 0xfffffff000000000 0 0x3 -d
 
 # configure ECA for lm32 channel: listen for TK release, tag "0x4"
 saft-ecpu-ctl tr0 -c 0x112c15f000000000 0xfffffff000000000 0 0x4 -d
+
+# configure ECA for lm32 channel: listen for MB Load (TK 7 Chopper), tag "0x7"
+saft-ecpu-ctl tr0 -c 0x112c028000000000 0xfffffff000000000 0 0x7 -d
 
 
 ###########################################
