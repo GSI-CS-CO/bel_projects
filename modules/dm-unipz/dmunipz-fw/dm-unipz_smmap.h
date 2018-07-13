@@ -17,7 +17,7 @@
 #define DMUNIPZ_SHARED_DSTMACHI       0x20   // WR MAC of data master, bits 31..16 unused
 #define DMUNIPZ_SHARED_DSTMACLO       0x24   // WR MAC of data master
 #define DMUNIPZ_SHARED_DSTIP          0x28   // IP of data master
-#define DMUNIPZ_SHARED_OFFSETFLEX     0x2C   // TS_FLEXWAIT = OFFSETFLEX + TS_MILEVENT; values in ns
+#define DMUNIPZ_SHARED_OFFSETFLEX     0x2C   // TS_FLEXWAIT = OFFSETFLEX + TS_EVT_READY_TO_SIS; value in ns
 #define DMUNIPZ_SHARED_UNITIMEOUT     0x30   // timeout for UNILAC
 #define DMUNIPZ_SHARED_TKTIMEOUT      0x34   // timeout for TK (via UNILAC)
 #define DMUNIPZ_SHARED_NBADSTATUS     0x38   // # of bad status (=error) incidents
@@ -29,9 +29,11 @@
 #define DMUNIPZ_SHARED_TRANSNOBEAM    0x50   // # UNILAC requested without beam
 #define DMUNIPZ_SHARED_RECVIRTACC     0x54   // # last 2 digits: received virtual accelerator 0..F from UNIPZ, leading digits: number of received MIL events
 #define DMUNIPZ_SHARED_DTSTART        0x58   // difference between actual time and flextime @ DM
+#define DMUNIPZ_SHARED_DTSYNC         0x5C   // time difference between EVT_READY_TO_SIS and EVT_MB_TRIGGER; value in ns
 
-// 0x58-0x5F: reserved
-#define DMUNIPZ_SHARED_DATA_4EB_START 0x60    // start of shared memory for EB return values
+
+// 0x60-0x6F: reserved
+#define DMUNIPZ_SHARED_DATA_4EB_START 0x70    // start of shared memory for EB return values
 #define DMUNIPZ_SHARED_DATA_4EB_END   DMUNIPZ_SHARED_DATA_4EB_START + DMUNIPZ_SHARED_DATA_4EB_SIZE // end of shared memory area for EB return values
 
 #endif

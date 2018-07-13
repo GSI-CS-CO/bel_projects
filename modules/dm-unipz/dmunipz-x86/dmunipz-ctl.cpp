@@ -111,6 +111,7 @@ eb_address_t dmunipz_virtAccReq; // number of requested virtual accelerator of o
 eb_address_t dmunipz_virtAccRec; // number of received virtual accelerator of ongoing or last transfer, read
 eb_address_t dmunipz_noBeam;     // requested 'noBeam' flag, read
 eb_address_t dmunipz_dtStart;    // difference between actual time and flextime @ DM
+eb_address_t dmunipz_dtSync;     // time difference between EVT_READY_TO_SIS and EVT_MB_LOAD
 eb_address_t dmunipz_statTrans;  // status of ongoing or last transfer, read
 eb_address_t dmunipz_cmd;        // command, write
 eb_address_t dmunipz_version;    // version, read
@@ -163,6 +164,7 @@ const char* dmunipz_status_text(uint32_t code) {
   case DMUNIPZ_STATUS_LATEEVENT        : return "received 'late event' from Data Master";
   case DMUNIPZ_STATUS_TKNOTRESERVED    : return "TK is not reserved";
   case DMUNIPZ_STATUS_DMTIMEOUT        : return "beam request did not succeed within 10s timeout at DM";
+  case DMUNIPZ_STATUS_BADSYNC          : return "bad synchronisation: t(EVT_READY_TO_SIS) + 10ms != t(EVT_MB_TRIGGER)";
   default                              : return "dm-unipz: undefined error code";
   }
 }
@@ -230,19 +232,20 @@ static void help(void) {
   fprintf(stderr, "Example3: '%s -s1 dev/wbm0 | logger -t TIMING -sp local0.info' monitor firmware and print to screen and to diagnostic logging", program);
   fprintf(stderr, "\n");
   fprintf(stderr, "When using option '-s<n>', the following information is displayed\n");
-  fprintf(stderr, "dm-unipz: transfer - 00000074, 01, 002, 00002, 0, 1456 1 1 1 1 1 1, OpReady   (      ), OK (      )\n");
-  fprintf(stderr, "                            |   |    |    | |  |     | | | | | | |  |          |        |   | \n");
-  fprintf(stderr, "                            |   |    |    | |  |     | | | | | | |  |          |        |    - # of 'bad status' incidents\n");
-  fprintf(stderr, "                            |   |    |    | |  |     | | | | | | |  |          |         - status\n");
-  fprintf(stderr, "                            |   |    |    | |  |     | | | | | | |  |          - # of '!OpReady' incidents\n");
-  fprintf(stderr, "                            |   |    |    | |  |     | | | | | | |   - state\n");
-  fprintf(stderr, "                            |   |    |    | |  |     | | | | | | - beam (request) released\n");
-  fprintf(stderr, "                            |   |    |    | |  |     | | | | | - beam request succeeded\n");
-  fprintf(stderr, "                            |   |    |    | |  |     | | | | - beam requested\n");
-  fprintf(stderr, "                            |   |    |    | |  |     | | | - TK (request) released -> transfer completed\n");
-  fprintf(stderr, "                            |   |    |    | |  |     | | - TK request succeeded\n");
-  fprintf(stderr, "                            |   |    |    | |  |     |  - TK requested\n");
-  fprintf(stderr, "                            |   |    |    | |  |      - remaining time budget for data master [us] (min 1000us)\n");
+  fprintf(stderr, "m-unipz: transfer - 00000073, 01, 000, 01100, 0, 1452, 09959, 1 1 1 1 1 1, OpReady    (     0), OK (    15)\n");
+  fprintf(stderr, "                            |   |    |    | |  |    |      |   | | | | | |  |          |        |   | \n");
+  fprintf(stderr, "                            |   |    |    | |  |    |      |   | | | | | |  |          |        |    - # of 'bad status' incidents\n");
+  fprintf(stderr, "                            |   |    |    | |  |    |      |   | | | | | |  |          |         - status\n");
+  fprintf(stderr, "                            |   |    |    | |  |    |      |   | | | | | |  |          - # of '!OpReady' incidents\n");
+  fprintf(stderr, "                            |   |    |    | |  |    |      |   | | | | | |   - state\n");
+  fprintf(stderr, "                            |   |    |    | |  |    |      |   | | | | | - beam (request) released\n");
+  fprintf(stderr, "                            |   |    |    | |  |    |      |   | | | | - beam request succeeded\n");
+  fprintf(stderr, "                            |   |    |    | |  |    |      |   | | | - beam requested\n");
+  fprintf(stderr, "                            |   |    |    | |  |    |      |   | | - TK (request) released -> transfer completed\n");
+  fprintf(stderr, "                            |   |    |    | |  |    |      |   | - TK request succeeded\n");
+  fprintf(stderr, "                            |   |    |    | |  |    |      |    - TK requested\n");
+  fprintf(stderr, "                            |   |    |    | |  |    |       - difference dt=t(MB_TRIGGER)-t(UNI_READY_TO_SIS) [us] (expected 10000us)\n");
+  fprintf(stderr, "                            |   |    |    | |  |     - remaining time budget for data master [us] (min 1000us)\n");
   fprintf(stderr, "                            |   |    |    | |   - 'no beam' flag\n");
   fprintf(stderr, "                            |   |    |    |  -number of virtual accelerator received (last 2 digits)\n");
   fprintf(stderr, "                            |   |    |     - number of MIL events read from FIFO (leading 3 digits)\n");
@@ -270,7 +273,7 @@ int readTransfers(uint32_t *transfers)
 } // getInfo
 
 
-int readInfo(uint32_t *status, uint32_t *state, uint32_t *iterations, uint32_t *transfers, uint32_t *injections, uint32_t *virtAccReq, uint32_t *virtAccRec, uint32_t *noBeam, uint32_t *dtStart, uint32_t *statTrans, uint32_t *nBadStatus, uint32_t *nBadState)
+int readInfo(uint32_t *status, uint32_t *state, uint32_t *iterations, uint32_t *transfers, uint32_t *injections, uint32_t *virtAccReq, uint32_t *virtAccRec, uint32_t *noBeam, uint32_t *dtStart, uint32_t *dtSync, uint32_t *statTrans, uint32_t *nBadStatus, uint32_t *nBadState)
 {
   eb_cycle_t  cycle;
   eb_status_t eb_status;
@@ -290,6 +293,7 @@ int readInfo(uint32_t *status, uint32_t *state, uint32_t *iterations, uint32_t *
   eb_cycle_read(cycle, dmunipz_noBeam,      EB_BIG_ENDIAN|EB_DATA32, &(data[9]));
   eb_cycle_read(cycle, dmunipz_dtStart,     EB_BIG_ENDIAN|EB_DATA32, &(data[10]));
   eb_cycle_read(cycle, dmunipz_statTrans,   EB_BIG_ENDIAN|EB_DATA32, &(data[11]));
+  eb_cycle_read(cycle, dmunipz_dtSync,      EB_BIG_ENDIAN|EB_DATA32, &(data[12]));
   if ((eb_status = eb_cycle_close(cycle)) != EB_OK) die("dm-unipz: eb_cycle_close", eb_status);
 
   *status       = data[0];
@@ -304,7 +308,8 @@ int readInfo(uint32_t *status, uint32_t *state, uint32_t *iterations, uint32_t *
   *noBeam       = data[9];
   *dtStart      = data[10];
   *statTrans    = data[11];
-    
+  *dtSync       = data[12];
+  
   return eb_status;
 } // readInfo
 
@@ -351,9 +356,9 @@ int readConfig(uint32_t *flexOffset, uint32_t *uniTimeout, uint32_t *tkTimeout, 
 } //readConfig
 
 
-void printTransfer(uint32_t transfers, uint32_t injections, uint32_t virtAccReq, uint32_t virtAccRec, uint32_t noBeam, uint32_t dtStart, uint32_t statTrans)
+void printTransfer(uint32_t transfers, uint32_t injections, uint32_t virtAccReq, uint32_t virtAccRec, uint32_t noBeam, uint32_t dtStart, uint32_t dtSync, uint32_t statTrans)
 {
-  printf("%08d, %02d, %03d, %05d, %01d, %04d, %d %d %d %d %d %d", transfers, injections, virtAccReq, virtAccRec, noBeam,  (uint32_t)((double)dtStart / 1000.0),
+  printf("%08d, %02d, %03d, %05d, %01d, %04d, %05d, %d %d %d %d %d %d", transfers, injections, virtAccReq, virtAccRec, noBeam, (uint32_t)((double)dtStart / 1000.0), (uint32_t)((double)dtSync / 1000.0),
          ((statTrans & DMUNIPZ_TRANS_REQTK    ) > 0),  
          ((statTrans & DMUNIPZ_TRANS_REQTKOK  ) > 0), 
          ((statTrans & DMUNIPZ_TRANS_RELTK    ) > 0),
@@ -395,6 +400,7 @@ int main(int argc, char** argv) {
   uint32_t virtAccRec;   
   uint32_t noBeam;
   uint32_t dtStart;
+  uint32_t dtSync;
   uint32_t statTrans; 
   uint32_t version;
 
@@ -487,6 +493,7 @@ int main(int argc, char** argv) {
   dmunipz_virtAccRec = lm32_base + SHARED_OFFS + DMUNIPZ_SHARED_RECVIRTACC;
   dmunipz_noBeam     = lm32_base + SHARED_OFFS + DMUNIPZ_SHARED_TRANSNOBEAM;
   dmunipz_dtStart    = lm32_base + SHARED_OFFS + DMUNIPZ_SHARED_DTSTART;
+  dmunipz_dtSync     = lm32_base + SHARED_OFFS + DMUNIPZ_SHARED_DTSYNC;
   dmunipz_statTrans  = lm32_base + SHARED_OFFS + DMUNIPZ_SHARED_TRANSSTATUS;
   dmunipz_cmd        = lm32_base + SHARED_OFFS + DMUNIPZ_SHARED_CMD;
   dmunipz_version    = lm32_base + SHARED_OFFS + DMUNIPZ_SHARED_VERSION;
@@ -520,10 +527,10 @@ int main(int argc, char** argv) {
 
   if (getInfo) {
     // status
-    readInfo(&status, &state, &iterations, &transfers, &injections, &virtAccReq, &virtAccRec, &noBeam, &dtStart, &statTrans, &nBadStatus, &nBadState);
+    readInfo(&status, &state, &iterations, &transfers, &injections, &virtAccReq, &virtAccRec, &noBeam, &dtStart, &dtSync, &statTrans, &nBadStatus, &nBadState);
 
     printf("dm-unipz: iterations %d, transfer - ", iterations); 
-    printTransfer(transfers, injections, virtAccReq, virtAccRec, noBeam, dtStart, statTrans); 
+    printTransfer(transfers, injections, virtAccReq, virtAccRec, noBeam, dtStart, dtSync, statTrans); 
     printf(", %s (%6u), %s (%6u)\n", dmunipz_state_text(state), nBadState, dmunipz_status_text(status), nBadStatus);
 
     
@@ -643,7 +650,7 @@ int main(int argc, char** argv) {
 #endif // USEMASP
 
     while (1) {
-      readInfo(&status, &state, &iterations, &transfers, &injections, &virtAccReq, &virtAccRec, &noBeam, &dtStart, &statTrans, &nBadStatus, &nBadState);  // read info from lm32
+      readInfo(&status, &state, &iterations, &transfers, &injections, &virtAccReq, &virtAccRec, &noBeam, &dtStart, &dtSync, &statTrans, &nBadStatus, &nBadState);  // read info from lm32
 
       switch(state) {
       case DMUNIPZ_STATE_OPREADY :
@@ -667,7 +674,7 @@ int main(int argc, char** argv) {
 
       if (printFlag) {
         printf("dm-unipz: transfer - "); 
-        printTransfer(transfers, injections, virtAccReq, virtAccRec, noBeam, dtStart, statTrans); 
+        printTransfer(transfers, injections, virtAccReq, virtAccRec, noBeam, dtStart, dtSync, statTrans); 
         printf(", %s (%6u), %s (%6u)\n", dmunipz_state_text(state), nBadState, dmunipz_status_text(status), nBadStatus);
       } // if printFlag
 
