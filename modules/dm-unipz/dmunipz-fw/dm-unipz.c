@@ -3,7 +3,7 @@
  *
  *  created : 2017
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 13-Jul-2018
+ *  version : 16-Jul-2018
  *
  *  lm32 program for gateway between UNILAC Pulszentrale and FAIR-style Data Master
  * 
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 25-April-2015
  ********************************************************************************************/
-#define DMUNIPZ_FW_VERSION 0x000301                                   // make this consistent with makefile
+#define DMUNIPZ_FW_VERSION 0x000302                                   // make this consistent with makefile
 
 /* standard includes */
 #include <stdio.h>
@@ -88,7 +88,8 @@ const char* dmunipz_status_text(uint32_t code) {
   case DMUNIPZ_STATUS_TKNOTRESERVED    : return "NO TK     ";
   case DMUNIPZ_STATUS_DMTIMEOUT        : return "DM timoeut";
   case DMUNIPZ_STATUS_BADSYNC          : return "bad sync  ";
-  case DMUNIPZ_STATUS_WAIT4UNIEVENT    : return "no MIL evt";   
+  case DMUNIPZ_STATUS_WAIT4UNIEVENT    : return "no MIL evt";
+  case DMUNIPZ_STATUS_BADSCHEDULE      : return "bad sched ";
   default                              : return "undef err ";
   }
 }
@@ -179,6 +180,7 @@ uint32_t *pSharedVirtAccRec;            // pointer to a "user defined" u32 regis
 uint32_t *pSharedNoBeam;                // pointer to a "user defined" u32 register; here: publish 'no beam' flag requested by Data Master
 uint32_t *pSharedDtStart;               // pointer to a "user defined" u32 register; here: publish difference between actual time and flextime @ DM
 uint32_t *pSharedDtSync;                // pointer to a "user defined" u32 register; here: publish time difference between EVT_READY_TO_SIS and EVT_MB_TRIGGER
+uint32_t *pSharedDtInject;              // pointer to a "user defined" u32 register; here: publish time difference between CMD_UNI_BREQ and EVT_MB_TRIGGER
 uint32_t *pSharedStatTrans;             // pointer to a "user defined" u32 register; here: publish status of ongoing transfer
 uint32_t *pSharedNBadStatus;            // pointer to a "user defined" u32 register; here: publish # of bad status (=error) incidents
 uint32_t *pSharedNBadState;             // pointer to a "user defined" u32 register; here: publish # of bad state (=FATAL, ERROR, UNKNOWN) incidents
@@ -205,7 +207,10 @@ uint32_t uniTimeout;                    // timeout value for UNIPZ
 uint32_t tkTimeout;                     // timeout value for TK (via UNIPZ)
 uint32_t nBadStatus;                    // # of bad status (=error) incidents
 uint32_t nBadState;                     // # of bad state (=FATAL, ERROR, UNKNOWN) incidents
-uint64_t tReady2SIS;                    // time, when EVT_READY_TO_SIS was received
+uint64_t tReady2Sis;                    // time, when EVT_READY_TO_SIS was received
+uint64_t tBreq;                         // time, when CMD_UNI_BREQ was received
+uint32_t flagTkReq;                     // flag: set to '1', when CMD_UNI_TCREQ is received; set to '0', when CMD_UNI_TCREL is received
+
 
 #define DM_NBLOCKS       2              // max number of blocks withing the Data Master to be treated
 dmComm  dmData[DM_NBLOCKS];             // data for treatment of blocks
@@ -592,6 +597,7 @@ void initSharedMem() // determine address and clear shared mem
   pSharedNoBeam      = (uint32_t *)(pShared + (DMUNIPZ_SHARED_TRANSNOBEAM >> 2));
   pSharedDtStart     = (uint32_t *)(pShared + (DMUNIPZ_SHARED_DTSTART >> 2));
   pSharedDtSync      = (uint32_t *)(pShared + (DMUNIPZ_SHARED_DTSYNC >> 2));
+  pSharedDtInject    = (uint32_t *)(pShared + (DMUNIPZ_SHARED_DTINJECT >> 2));
   pSharedVirtAccRec  = (uint32_t *)(pShared + (DMUNIPZ_SHARED_RECVIRTACC >> 2));
   pSharedStatTrans   = (uint32_t *)(pShared + (DMUNIPZ_SHARED_TRANSSTATUS >> 2));
   pSharedData4EB     = (uint32_t *)(pShared + (DMUNIPZ_SHARED_DATA_4EB_START >> 2));
@@ -838,23 +844,6 @@ uint32_t checkClearReqNotOk(uint32_t msTimeout)      // check for 'Req not OK' f
 } // checkClearReqNotOk
 
 
-uint32_t checkReqAck(uint32_t msTimeout)      // check for 'SIS_Req_Ack' 
-{
-  ReadFromPZU_Type readPZUData;  // Modulbus SIS, I/O-Modul 3, Bits 0..15
-  int16_t          status;       // status MIL device bus operation
-  uint64_t         timeoutT;     // when to time out
-
-  timeoutT = getSysTime() + (uint64_t)msTimeout * (uint64_t)1000000;
-
-  while (getSysTime() < timeoutT) {                                                                                                   // check for timeout
-    if ((status = readFromPZU(IFB_ADDRESS_SIS, IO_MODULE_3, &(readPZUData.uword))) != MIL_STAT_OK) return DMUNIPZ_STATUS_DEVBUSERROR;    
-    if (readPZUData.bits.SIS_Req_Ack == true)                                                      return DMUNIPZ_STATUS_OK;          // check for 'req Ack'      
-  } // while not timed out
-  
-  return DMUNIPZ_STATUS_REQBEAMTIMEDOUT;
-} // checkReqAck
-
-
 uint32_t requestTK(uint32_t msTimeout, uint32_t virtAcc, uint32_t dryRunFlag)
 {
   ReadFromPZU_Type readPZUData;  // Modulbus SIS, I/O-Modul 3, Bits 0..15
@@ -912,11 +901,12 @@ uint32_t requestBeam(uint32_t msTimeout)
   
   timeoutT = getSysTime() + (uint64_t)msTimeout * (uint64_t)1000000;
 
-  while (getSysTime() < timeoutT) {                                                                                                   // check for timeout
-    if ((status = readFromPZU(IFB_ADDRESS_SIS, IO_MODULE_3, &(readPZUData.uword))) != MIL_STAT_OK) return DMUNIPZ_STATUS_DEVBUSERROR;    
-    if (readPZUData.bits.SIS_Req_Ack == true)                                                      return DMUNIPZ_STATUS_OK;          // check for 'req Ack'      
+  while (getSysTime() < timeoutT) {                                                                                                    // check for timeout
+    if ((status = readFromPZU(IFB_ADDRESS_SIS, IO_MODULE_3, &(readPZUData.uword))) != MIL_STAT_OK) return DMUNIPZ_STATUS_DEVBUSERROR;   
+    if (readPZUData.bits.SIS_Req_Ack == true)                                                      return DMUNIPZ_STATUS_OK;           
+    if (readPZUData.bits.Req_not_ok == true)                                                       return DMUNIPZ_STATUS_REQBEAMFAILED; 
   } // while not timed out
-  
+
   return DMUNIPZ_STATUS_REQBEAMTIMEDOUT;
 } // requestBeam
 
@@ -1232,70 +1222,77 @@ uint32_t changeState(uint32_t *actState, uint32_t *reqState, uint32_t actStatus)
 } //changeState
 
 
-uint32_t doActionOperation(uint32_t *statusTransfer, uint32_t *virtAccReq, uint32_t *virtAccRec, uint32_t *noBeam, uint32_t *dtStart, uint32_t *dtSync, uint32_t *nTransfer, uint32_t *nInject, uint32_t actStatus)
+uint32_t doActionOperation(uint32_t *statusTransfer,          // status bits indicating status of transfer
+                           uint32_t *virtAccReq,              // virtual accelerator requested from Data Master
+                           uint32_t *virtAccRec,              // virtual accelerator received from UNIPZ
+                           uint32_t *noBeam,                  // 'no beam' flag from Data Master: UNILAC requested but without beam
+                           uint32_t *dtStart,                 // remaining time budget for DM after 'flex command' has been sent, minimum value is 1ms
+                           uint32_t *dtSync,                  // time difference between EVT_READY_2_SIS and EVT_MB_TRIGGER, should be 10ms exactly
+                           uint32_t *dtInject,                // time difference between CMD_UNI_BREQ and EVT_MB_TRIGGER, must be larger than 10ms
+                           uint32_t *nTransfer,               // total number of transfers since start of firmware
+                           uint32_t *nInject,                 // number of injections withing ongoing transfer
+                           uint32_t actStatus)                // actual status of firmware
 {
-  uint32_t status, dmStatus, milStatus, gotEBTimeout;
-  uint32_t nextAction;
-  uint32_t evtValidFlag;
-  uint32_t virtAccTmp;
-  uint32_t dryRunFlag; uint32_t dummy1, dummy2; 
+  uint32_t status, dmStatus, milStatus;                                            // status returned by routines
+  uint32_t flagEBTimeout;                                                          // flag indicating EB communication with DM timed out
+  uint32_t flagMilEvtValid;                                                        // flag indicating that we recevied a valid MIL event
+  uint32_t flagDryRun;                                                             // flag indicating that UNILAC is requested but without beam
+  uint32_t flagIsLate;                                                             // flag indicating that a 'late event' was received from data master
+  uint32_t nextAction;                                                             // action triggered by event received from ECA
+  uint32_t virtAcc;                                                                // # of virtual accelerator in event received from ECA
+  uint32_t dummy1, dummy2;                                                         // dummy variables
   uint64_t deadline;                                                               // deadline of event received via ECA
-  uint64_t dmTimeoutT;
-  uint32_t isLate;
-  uint64_t sendT;
-  uint32_t sendTsecs;
-  uint32_t sendTnsecs;
-  uint64_t tempT;
-  uint64_t cmdValidT;
+  uint64_t tDmTimeout;                                                             // time, when beam request at DM will timeout
+  uint64_t tCmdFlex;                                                               // time, when DM is requested to continue its schedule after flex wait
+  uint64_t tCmdValid;                                                              // time, when commands sent to DM shall become valid
 
   status = actStatus; 
 
-  nextAction = wait4ECAEvent(DMUNIPZ_DEFAULT_TIMEOUT, &virtAccTmp, &dryRunFlag, &deadline, &isLate);   // do action is driven by actions issued by the ECA
+  nextAction = wait4ECAEvent(DMUNIPZ_DEFAULT_TIMEOUT, &virtAcc, &flagDryRun, &deadline, &flagIsLate);  // 'do action' is driven by actions issued by the ECA
 
   switch (nextAction) 
     {
     case DMUNIPZ_ECADO_REQTK :                                                     // received command "REQ_TK" from data master
 
-      if (isLate) return DMUNIPZ_STATUS_LATEEVENT;                                 // never request TK in case of a late event
+      if (flagIsLate) return DMUNIPZ_STATUS_LATEEVENT;                             // never request TK in case of a late event
 
-      *virtAccReq     = virtAccTmp;                                                // number of virtual accelerator is set when DM requests TK
-      *noBeam         = dryRunFlag;                                                // UNILAC requested without beam
+      *virtAccReq     = virtAcc;                                                   // number of virtual accelerator is set when DM requests TK
+      *noBeam         = flagDryRun;                                                // UNILAC requested without beam
       *statusTransfer = DMUNIPZ_TRANS_REQTK;                                       // update status of transfer
       (*nTransfer)++;                                                              // increment number of transfers
       *nInject        = 0;                                                         // number of injections is reset when DM requests TK
       *dtSync         = 0;                                                         // time difference between EVT_READY_TO_SIS and EVT_MB_TRIGGER
+      flagTkReq       = 1;
+      tBreq           = 0;
 
-      status = requestTK(tkTimeout, virtAccTmp, dryRunFlag);                       // request TK from UNIPZ
+      status = requestTK(tkTimeout, virtAcc, flagDryRun);                          // request TK from UNIPZ
 
       if (status == DMUNIPZ_STATUS_OK) *statusTransfer = *statusTransfer | DMUNIPZ_TRANS_REQTKOK; // update status of transfer
 
       break;
-    case DMUNIPZ_ECADO_REQBEAM :                                                   // received command "REQ_BEAM" from data master
+    case DMUNIPZ_ECADO_REQBEAM :                                                   // received command "EVT_UNI_BREQ" from data master
 
-      if (isLate) return DMUNIPZ_STATUS_LATEEVENT;                                 // never request beam in case of a late event
-      /* debug
-      if (!((*statusTransfer & DMUNIPZ_TRANS_REQTKOK)                              // check if TK is reserved but not yet released
-          && !(*statusTransfer & DMUNIPZ_TRANS_RELTK))
-          ) return DMUNIPZ_STATUS_TKNOTRESERVED; 
-      */
-      gotEBTimeout = 0;                                                            // this is a 'warning flag'
-      cmdValidT    = getSysTime();                                                 // time when commands for DM shall become valid
-      dmTimeoutT   = deadline + (uint64_t)DMUNIPZ_DMTIMEOUT * (uint64_t)1000000;   // absoulute time until we have to reply to DM
-      evtValidFlag = 0;                                                            // flag: valid MIL event from UNIPZ received
-      tReady2SIS   = 0;                                                            // init value for timestamp of EVT_READY_TO_SIS
+      if (flagIsLate) return DMUNIPZ_STATUS_LATEEVENT;                             // never request beam in case of a 'late event'
+
+      flagEBTimeout   = 0;                                                         // this is a 'warning flag'
+      tCmdValid       = getSysTime();                                              // time when commands for DM shall become valid
+      tDmTimeout      = deadline + (uint64_t)DMUNIPZ_DMTIMEOUT * (uint64_t)1000000;// absoulute time until we have to reply to DM
+      tBreq           = deadline;                                                  // 
+      flagMilEvtValid = 0;                                                         // flag: valid MIL event from UNIPZ received
+      tReady2Sis      = 0;                                                         // init value for timestamp of EVT_READY_TO_SIS
             
-      dmStatus = dmPrepCmdCommon(REQBEAMB, 0, 1, cmdValidT);                       // try "Schnitzeljagd" in Data Master. Here: second "flex" waiting block
+      dmStatus = dmPrepCmdCommon(REQBEAMB, 0, 1, tCmdValid);                       // try "Schnitzeljagd" in Data Master. Here: second "flex" waiting block
       if (dmStatus == DMUNIPZ_STATUS_EBREADTIMEDOUT) {                             // in case of timeout, we probably lost a UDP packet: try a 2nd time
-        gotEBTimeout = 1;
-        dmStatus = dmPrepCmdCommon(REQBEAMB, 0, 1, cmdValidT);                                     
+        flagEBTimeout = 1;
+        dmStatus = dmPrepCmdCommon(REQBEAMB, 0, 1, tCmdValid);                                     
       } // if EB timeout
       if (dmStatus != DMUNIPZ_STATUS_OK) return dmStatus;                          // communication with DM failed even after two attempts: give up! 
       // NB: we can't prepare the "flex" wait command  yet, as we need to timestamp the MIL event from UNIPZ first
 
-      dmStatus = dmPrepCmdCommon(REQBEAMA, 1, 1, cmdValidT);                       // try "Schnitzeljagd" in Data Master. Here: first "slow" waiting block
+      dmStatus = dmPrepCmdCommon(REQBEAMA, 1, 1, tCmdValid);                       // try "Schnitzeljagd" in Data Master. Here: first "slow" waiting block
       if (dmStatus == DMUNIPZ_STATUS_EBREADTIMEDOUT) {                             // in case of timeout, we probably lost a UDP packet: try a 2nd time
-        gotEBTimeout = 1;
-        dmStatus = dmPrepCmdCommon(REQBEAMA, 1, 1, cmdValidT);
+        flagEBTimeout = 1;
+        dmStatus = dmPrepCmdCommon(REQBEAMA, 1, 1, tCmdValid);
       } // if EB timeout
       if (dmStatus != DMUNIPZ_STATUS_OK) return dmStatus;                          // communication with DM failed: give up! 
       dmPrepCmdFlush(REQBEAMA);                                                    // prepare flush command for first "timeout" waiting block for later use
@@ -1307,44 +1304,44 @@ uint32_t doActionOperation(uint32_t *statusTransfer, uint32_t *virtAccReq, uint3
       (*nInject)++;                                                                // increment number of injections (of current transfer)
 
       if ((status = requestBeam(uniTimeout)) == DMUNIPZ_STATUS_OK) {               // request beam from UNIPZ
-        if ((milStatus = wait4MILEvent(DMUNIPZ_EVT_READY2SIS, virtAccTmp, virtAccRec, uniTimeout)) == DMUNIPZ_STATUS_OK) { // wait for event in MIL FIFO
-          if (wait4ECAEvent(DMUNIPZ_QUERYTIMEOUT, &dummy1, &dummy2, &tReady2SIS, &isLate) == DMUNIPZ_ECADO_READY2SIS) {    // check for corresponding TS of EVT_READY_TO_SIS via TLU -> ECA
-            if ((getSysTime() - tReady2SIS) < DMUNIPZ_MATCHWINDOW) {                                                       // check TS from TLU: only accept reasonably recent TS
-              evtValidFlag = 1;                                                                                            // set flag for successful event reception
-              status        = DMUNIPZ_STATUS_OK;
+        if ((milStatus = wait4MILEvent(DMUNIPZ_EVT_READY2SIS, virtAcc, virtAccRec, uniTimeout)) == DMUNIPZ_STATUS_OK) {       // wait for event in MIL FIFO
+          if (wait4ECAEvent(DMUNIPZ_QUERYTIMEOUT, &dummy1, &dummy2, &tReady2Sis, &flagIsLate) == DMUNIPZ_ECADO_READY2SIS) {   // check for corresponding TS of EVT_READY_TO_SIS via TLU -> ECA
+            if ((getSysTime() - tReady2Sis) < DMUNIPZ_MATCHWINDOW) {                                                          // check TS from TLU: only accept reasonably recent TS
+              flagMilEvtValid = 1;                                                                                            // set flag for successful event reception
+              status       = DMUNIPZ_STATUS_OK;
             } // if matchwindow
-            else  status = DMUNIPZ_STATUS_BADTIMESTAMP;                                                                    // error: timestamp too old
+            else  status = DMUNIPZ_STATUS_BADTIMESTAMP;                                                                       // error: timestamp too old
           } // if wait4ECAEvt
-          else status = DMUNIPZ_STATUS_NOTIMESTAMP;                                                                        // error: eceived EVT_READY_TO_SIS, but no timestamp via TLU -> ECA
+          else status = DMUNIPZ_STATUS_NOTIMESTAMP;                                                                           // error: eceived EVT_READY_TO_SIS, but no timestamp via TLU -> ECA
         } // if wait4MILEvt
         else {                                                                                                            
           status = milStatus;
-          if (status == DMUNIPZ_STATUS_TIMEDOUT)                   status = DMUNIPZ_STATUS_WAIT4UNIEVENT;                  // error: EVT_READY_TO_SIS was not received in MIL FIFO
-          if (checkClearReqNotOk(uniTimeout) != DMUNIPZ_STATUS_OK) status = DMUNIPZ_STATUS_REQBEAMFAILED;                  // error reported by UNIPZ: beam request refused
+          if (status == DMUNIPZ_STATUS_TIMEDOUT) status = DMUNIPZ_STATUS_WAIT4UNIEVENT;                                       // error: EVT_READY_TO_SIS was not received in MIL FIFO
+          checkClearReqNotOk(uniTimeout);                                                                                     // clear 'req not ok' flag
         } // else wait4ECAEvent
       } // if request beam
       else checkClearReqNotOk(uniTimeout);                                         // clear 'req not ok' flag
 
-      if (evtValidFlag) {                                                                  
-        sendT    = tReady2SIS   + (uint64_t)flexOffset;                            // add offset to obtain deadline for "flex" waiting block
+      if (flagMilEvtValid) {                                                                  
+        tCmdFlex    = tReady2Sis   + (uint64_t)flexOffset;                         // add offset to obtain deadline for "flex" waiting block
         pulseLemo2();                                                              // blink LED and TTL out of MIL piggy for hardware debugging with scope
       } // if MIL event was received
-      else sendT = getSysTime() + (uint64_t)flexOffset;                            // did not receive MIL event: Plan B is to continue with actual time plus offset
+      else tCmdFlex = getSysTime() + (uint64_t)flexOffset;                         // did not receive MIL event: Plan B is to continue with actual time plus offset
         
-      if (sendT < (getSysTime() + (uint64_t)DMUNIPZ_SAFETYMARGIN)) {               // code to suffice my paranoia: We must avoid late messages at all cost! (we sacrifice the beam)
-        sendT  = getSysTime()   + (uint64_t)flexOffset;
+      if (tCmdFlex < (getSysTime() + (uint64_t)DMUNIPZ_SAFETYMARGIN)) {            // code to suffice my paranoia: We must avoid late messages at all cost! (we sacrifice the beam)
+        tCmdFlex  = getSysTime()   + (uint64_t)flexOffset;
         status = DMUNIPZ_STATUS_SAFETYMARGIN;
-      } // if sendT
+      } // if tCmdFlex
 
-      dmPrepFlexWaitCmd(REQBEAMB, sendT);                                          // prepare command for "flex" waiting block
+      dmPrepFlexWaitCmd(REQBEAMB, tCmdFlex);                                       // prepare command for "flex" waiting block
             
-      if (getSysTime() < dmTimeoutT) {                                             // more code to suffice my paranoia: We may only send commands to DM, while DM is still waiting for us
+      if (getSysTime() < tDmTimeout) {                                             // more code to suffice my paranoia: We may only send commands to DM, while DM is still waiting for us
         dmChangeBlock(REQBEAMB);                                                   // modify "flex" waiting block within DM
         dmChangeBlock(REQBEAMA);                                                   // modify "slow" waiting block within DM
       } // if getSysTime
       else status = DMUNIPZ_STATUS_DMTIMEOUT;
 
-      *dtStart = (uint32_t)(sendT - getSysTime());                                 // more code to suffice my paranoia: we want to know how much of flexoffset is left (just to avoid the discussion), its a nice feature too
+      *dtStart = (uint32_t)(tCmdFlex - getSysTime());                              // more code to suffice my paranoia: we want to know how much of flexoffset is left (just to avoid the discussion), its a nice feature too
 
       releaseBeam();                                                               // release beam request at UNIPZ
       disableFilterEvtMil(pMILPiggy);                                              // disable filter @ MIL piggy to avoid accumulation of junk
@@ -1352,26 +1349,37 @@ uint32_t doActionOperation(uint32_t *statusTransfer, uint32_t *virtAccReq, uint3
       *statusTransfer = *statusTransfer |  DMUNIPZ_TRANS_RELBEAM;                  // update status of transfer
       if (status == DMUNIPZ_STATUS_OK) *statusTransfer = *statusTransfer | DMUNIPZ_TRANS_REQBEAMOK;
 
-      // handle warning in case we needed two attempts for our "Schitzeljagd" within Data Master
-      if ((status == DMUNIPZ_STATUS_OK) && gotEBTimeout) status = DMUNIPZ_STATUS_EBREADTIMEDOUT;                                           
+      // handle warning in case we needed two attempts for our "Schnitzeljagd" within Data Master
+      if ((status == DMUNIPZ_STATUS_OK) && flagEBTimeout) status = DMUNIPZ_STATUS_EBREADTIMEDOUT;                                           
           
       break;
     case DMUNIPZ_ECADO_RELTK :                                                     // received command "REL_TK" from data master
 
       releaseTK();                                                                 // release TK
-      *statusTransfer = *statusTransfer |  DMUNIPZ_TRANS_RELTK;                    // update status of transfer 
+      *statusTransfer = *statusTransfer |  DMUNIPZ_TRANS_RELTK;                    // update status of transfer
+      flagTkReq = 0;
 
       break;
     case DMUNIPZ_ECADO_MBTRIGGER :                                                 // received MBTRIGGER: convenience feature to check valid synchronisation
 
       // calculate time difference between EVT_READY_TO_SIS and EVT_MB_TRIGGER
-      if (tReady2SIS == 0x0) *dtSync = 0xffffffff;                                 // no valid timestamp for EVT_READY_TO_SIS
-      else                   *dtSync = (uint32_t)(deadline - tReady2SIS);          // we got a valid timestamp
+      if (tReady2Sis == 0) *dtSync = 0xffffffff;                                   // no valid timestamp for EVT_READY_TO_SIS
+      else                 *dtSync = (uint32_t)(deadline - tReady2Sis);            // we got a valid timestamp
+
+      // calculate time difference between CMD_UNI_BREQ and EVT_MB_TRIGGER
+      if (tBreq == 0)      *dtInject = 0xffffffff;                                 // no valid timestamp for EVT_READY_TO_SIS
+      else                 *dtInject = (uint32_t)(deadline - tBreq);               // we got a valid timestamp
 
       if (status == DMUNIPZ_STATUS_OK) {                                           // we don't want to overwrite an already existing bad status
         // check if time difference is not reasonable. It must be within a small window around the value DMUNIPZ_OFFSETINJECT.
         if ((*dtSync < (uint32_t)(DMUNIPZ_OFFSETINJECT - 50000)) || (*dtSync > (uint32_t)(DMUNIPZ_OFFSETINJECT + 50000))) status = DMUNIPZ_STATUS_BADSYNC;
       } // if status
+
+      if (status == DMUNIPZ_STATUS_OK) {                                           // we don't want to overwrite an already existing bad status
+        // check if time difference is not reasonable. It must be larger than 10ms. A shorter difference indicates failure/missing '10s waiting block' at DM
+        if (*dtInject < (uint32_t)(DMUNIPZ_OFFSETINJECT - 50000)) status = DMUNIPZ_STATUS_BADSCHEDULE;
+      } // if status
+      
       break;
     default: ;
     } // switch nextAction
@@ -1395,8 +1403,9 @@ void main(void) {
   uint32_t virtAccReq;                          // number of virtual accelerator requested by Data Master
   uint32_t virtAccRec;                          // number of virtual accelerator received from UNIPZ
   uint32_t noBeam;                              // no beam flag requested by Data Master
-  uint32_t dtStart;                             // difference between actual time and flextime @ DM
+  uint32_t dtStart;                             // remaining time budget for DM after 'flex command' has been sent, minimum value is 1ms
   uint32_t dtSync;                              // time difference between EVT_READY_TO_SIS and EVT_MB_LOAD
+  uint32_t dtInject;                            // time difference between CMD_UNI_BREQ and EVT_MB_TRIGGER, must be larger than 10ms
 
   mprintf("\n");
   mprintf("dm-unipz: ***** firmware v %06d started from scratch *****\n", DMUNIPZ_FW_VERSION);
@@ -1409,6 +1418,7 @@ void main(void) {
   noBeam         = 0;
   dtStart        = 0;
   dtSync         = 0;
+  dtInject       = 0;
   virtAccReq     = 0x17;
   virtAccRec     = 0x17;
   statusTransfer = DMUNIPZ_TRANS_UNKNOWN;       
@@ -1417,6 +1427,9 @@ void main(void) {
   status         = DMUNIPZ_STATUS_UNKNOWN;
   nBadState      = 0;
   nBadStatus     = 0;
+  flagTkReq      = 0;
+  tBreq          = 0;
+  tReady2Sis     = 0;
 
   init();                                                                   // initialize stuff for lm32
   initSharedMem();                                                          // initialize shared memory
@@ -1432,7 +1445,7 @@ void main(void) {
         else                             reqState = DMUNIPZ_STATE_IDLE;     // success: -> IDLE
         break;
        case DMUNIPZ_STATE_OPREADY :
-         status = doActionOperation(&statusTransfer, &virtAccReq, &virtAccRec, &noBeam, &dtStart, &dtSync, &nTransfer, &nInject, status);
+         status = doActionOperation(&statusTransfer, &virtAccReq, &virtAccRec, &noBeam, &dtStart, &dtSync, &dtInject, &nTransfer, &nInject, status);
         if (status == DMUNIPZ_STATUS_DEVBUSERROR)    reqState = DMUNIPZ_STATE_ERROR;
         if (status == DMUNIPZ_STATUS_ERROR)          reqState = DMUNIPZ_STATE_ERROR;
         break;
@@ -1459,6 +1472,7 @@ void main(void) {
     *pSharedNoBeam     = noBeam;
     *pSharedDtStart    = dtStart;
     *pSharedDtSync     = dtSync;    
+    *pSharedDtInject   = dtInject;    
     *pSharedNTransfer  = nTransfer;
     *pSharedNInject    = nInject;
 
