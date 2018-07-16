@@ -8,7 +8,7 @@
 #define  DMUNIPZ_TKTIMEOUT        210         // timeout used when requesting TK from UNILAC [ms]
 #define  DMUNIPZ_QUERYTIMEOUT     1           // timeout for querying virt acc from MIL Piggy FIFO [ms] 
                                               // Ludwig: we have 10ms time; here: use 5 ms to be on the safe side
-#define  DMUNIPZ_DMTIMEOUT        900         // after receiving ReqBeam from DM, this is the amount of time available within we must reply to the DM [ms]
+#define  DMUNIPZ_DMTIMEOUT           9000     // after receiving ReqBeam from DM, this is the amount of time available within we must reply to the DM [ms]
 #define  DMUNIPZ_SAFETYMARGIN     1000000     // saftey margin required by DM+network, 1ms @ 2018
 #define  DMUNIPZ_MATCHWINDOW       100000     // TS from TLU->ECA matches event from FIFO, if it is within window (sysTime-MATCHWINDOW) <--> sysTime
 #define  DMUNIPZ_OFFSETFLEX       1500000     // offset added to obtain TS "flex wait" [ns]
@@ -44,6 +44,7 @@
 #define  DMUNIPZ_STATUS_TKNOTRESERVED   23    // TK is not reserved
 #define  DMUNIPZ_STATUS_DMTIMEOUT       24    // beam request did not succeed within 10s timeout at DM
 #define  DMUNIPZ_STATUS_BADSYNC         25    // t(EVT_READY_TO_SIS) + 10ms != t(EVT_MB_TRIGGER)
+#define  DMUNIPZ_STATUS_WAIT4UNIEVENT   26    // timeout while waiting for EVT_READY_TO_SIS
 
 
 // MASP 
