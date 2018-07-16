@@ -3,7 +3,7 @@
  *
  *  created : 2017
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 11-June-2018
+ *  version : 13-June-2018
  *
  * Command-line interface for dmunipz
  *
@@ -165,6 +165,7 @@ const char* dmunipz_status_text(uint32_t code) {
   case DMUNIPZ_STATUS_TKNOTRESERVED    : return "TK is not reserved";
   case DMUNIPZ_STATUS_DMTIMEOUT        : return "beam request did not succeed within 10s timeout at DM";
   case DMUNIPZ_STATUS_BADSYNC          : return "bad synchronisation: t(EVT_READY_TO_SIS) + 10ms != t(EVT_MB_TRIGGER)";
+  case DMUNIPZ_STATUS_WAIT4UNIEVENT    : return "timeout while waiting for EVT_READY_TO_SIS";
   default                              : return "dm-unipz: undefined error code";
   }
 }
