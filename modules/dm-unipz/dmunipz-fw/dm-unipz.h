@@ -43,8 +43,9 @@
 #define  DMUNIPZ_STATUS_LATEEVENT       22    // received 'late event' from Data Master
 #define  DMUNIPZ_STATUS_TKNOTRESERVED   23    // TK is not reserved
 #define  DMUNIPZ_STATUS_DMTIMEOUT       24    // beam request did not succeed within 10s timeout at DM
-#define  DMUNIPZ_STATUS_BADSYNC         25    // t(EVT_READY_TO_SIS) + 10ms != t(EVT_MB_TRIGGER)
+#define  DMUNIPZ_STATUS_BADSYNC         25    // t(EVT_MB_TRIGGER) - t(EVT_READY_TO_SIS) != 10ms
 #define  DMUNIPZ_STATUS_WAIT4UNIEVENT   26    // timeout while waiting for EVT_READY_TO_SIS
+#define  DMUNIPZ_STATUS_BADSCHEDULE     27    // t(EVT_MB_TRIGGER) - t(CMD_UNI_BREQ) < 10ms
 
 
 // MASP 

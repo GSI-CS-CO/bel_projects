@@ -30,6 +30,7 @@
 #define DMUNIPZ_SHARED_RECVIRTACC     0x54   // # last 2 digits: received virtual accelerator 0..F from UNIPZ, leading digits: number of received MIL events
 #define DMUNIPZ_SHARED_DTSTART        0x58   // difference between actual time and flextime @ DM
 #define DMUNIPZ_SHARED_DTSYNC         0x5C   // time difference between EVT_READY_TO_SIS and EVT_MB_TRIGGER; value in ns
+#define DMUNIPZ_SHARED_DTINJECT       0x60   // time difference between CMD_UNI_BREQ and EVT_MB_TRIGGER; value in ns
 
 
 // 0x60-0x6F: reserved
