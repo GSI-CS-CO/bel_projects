@@ -113,18 +113,24 @@
 #define _T_MOD_INFO_SIZE   (T_MOD_INFO_CNT  + _32b_SIZE_ ) //Struct size
 
 #define T_DIAG_MSG_CNT      (0)                              //CPU wide timing message counter
-#define T_DIAG_BOOT_TS      (T_DIAG_MSG_CNT   + _64b_SIZE_ ) //Timestamp of Uptime beginning
-#define T_DIAG_SCH_MOD      (T_DIAG_BOOT_TS   + _TS_SIZE_  ) //Schedule modification info
-#define T_DIAG_CMD_MOD      (T_DIAG_SCH_MOD   + _T_MOD_INFO_SIZE ) //Cmd modification info
-#define T_DIAG_DIF_MIN      (T_DIAG_CMD_MOD   + _T_MOD_INFO_SIZE ) //All time min diff between dispatch time and deadline   (signed!)
-#define T_DIAG_DIF_MAX      (T_DIAG_DIF_MIN   + _TS_SIZE_  ) //All time max diff between dispatch time and deadline   (signed!)
-#define T_DIAG_DIF_SUM      (T_DIAG_DIF_MAX   + _TS_SIZE_  ) //Running sum of diff between dispatch time and deadline (signed!)
-#define T_DIAG_DIF_WTH      (T_DIAG_DIF_SUM   + _64b_SIZE_ ) //Diff Threshold between dispatch time and deadline which will trigger a warning (signed!)
-#define T_DIAG_WAR_CNT      (T_DIAG_DIF_WTH   + _TS_SIZE_  ) //Diff warning counter
-#define T_DIAG_WAR_1ST_HASH (T_DIAG_WAR_CNT   + _32b_SIZE_ ) //Hash of node at first diff warning
-#define T_DIAG_WAR_1ST_TS   (T_DIAG_WAR_1ST_HASH + _32b_SIZE_ ) //TS at first diff warning
-#define T_DIAG_BCKLOG_STRK  (T_DIAG_WAR_1ST_TS   + _TS_SIZE_  ) //Maximum Backlog streak size
-#define _T_DIAG_SIZE_       (T_DIAG_BCKLOG_STRK  + _32b_SIZE_ )
+#define T_DIAG_BOOT_TS      (T_DIAG_MSG_CNT       + _64b_SIZE_ ) //Timestamp of Uptime beginning
+#define T_DIAG_SCH_MOD      (T_DIAG_BOOT_TS       + _TS_SIZE_  ) //Schedule modification info
+#define T_DIAG_CMD_MOD      (T_DIAG_SCH_MOD       + _T_MOD_INFO_SIZE ) //Cmd modification info
+#define T_DIAG_DIF_MIN      (T_DIAG_CMD_MOD       + _T_MOD_INFO_SIZE ) //All time min diff between dispatch time and deadline   (signed!)
+#define T_DIAG_DIF_MAX      (T_DIAG_DIF_MIN       + _TS_SIZE_  ) //All time max diff between dispatch time and deadline   (signed!)
+#define T_DIAG_DIF_SUM      (T_DIAG_DIF_MAX       + _TS_SIZE_  ) //Running sum of diff between dispatch time and deadline (signed!)
+#define T_DIAG_DIF_WTH      (T_DIAG_DIF_SUM       + _64b_SIZE_ ) //Diff Threshold between dispatch time and deadline which will trigger a warning (signed!)
+#define T_DIAG_WAR_CNT      (T_DIAG_DIF_WTH       + _TS_SIZE_  ) //Diff warning counter
+#define T_DIAG_WAR_1ST_HASH (T_DIAG_WAR_CNT       + _32b_SIZE_ ) //Hash of node at first diff warning
+#define T_DIAG_WAR_1ST_TS   (T_DIAG_WAR_1ST_HASH  + _32b_SIZE_ ) //TS at first diff warning
+#define T_DIAG_BCKLOG_STRK  (T_DIAG_WAR_1ST_TS    + _TS_SIZE_  ) //Maximum Backlog streak size
+#define T_DIAG_BAD_WAIT_CNT (T_DIAG_BCKLOG_STRK   + _32b_SIZE_ ) //Maximum Backlog streak size
+#define _T_DIAG_SIZE_       (256)
+
+#if _T_DIAG_SIZE_ < (T_DIAG_BAD_WAIT_CNT + _32b_SIZE_)
+  #error Actual diagnostics area size exceeds fixed _T_DIAG_SIZE_
+#endif  
+
 
 
 #define T_META_START_PTR    (0)                               //same for all cpus, can be on any CPU. External view, read/write for host only. Must lie within bitmap range
@@ -150,7 +156,7 @@
 #define SHCTL_THR_STA    (SHCTL_THR_CTL + _T_TC_SIZE_  )              //Thread Start Staging Area (1 per Thread )
 #define SHCTL_THR_DAT    (SHCTL_THR_STA + _THR_QTY_ * _T_TS_SIZE_  )  //Thread Runtime Data (1 per Thread )
 #define SHCTL_INBOXES    (SHCTL_THR_DAT + _THR_QTY_ * _T_TD_SIZE_  )  //Inboxes for MSI (1 per Core in System )
-#define _SHCTL_END_      ROUND_UP((SHCTL_INBOXES + _THR_QTY_ * _32b_SIZE_), 2 * _MEM_BLOCK_SIZE) // set fixed size so firmware updates stay backward compatible // 
+#define _SHCTL_END_      (SHCTL_INBOXES + _THR_QTY_ * _32b_SIZE_)
 /*
 #pragma message(VAR_NAME_VALUE(_SHCTL_START_))
 #pragma message(VAR_NAME_VALUE(SHCTL_HEAP   ))

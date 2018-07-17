@@ -57,6 +57,7 @@ extern uint32_t* const diffwcnt;
 extern uint32_t* const diffwhash;
 extern uint64_t* const diffwts;
 extern uint32_t* const bcklogmax;
+extern uint32_t* const badwaitcnt;
 #endif
 extern uint32_t* const start;
 extern uint32_t* const running;

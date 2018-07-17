@@ -589,6 +589,7 @@ HealthReport& CarpeDM::getHealth(uint8_t cpuIdx, HealthReport &hr) {
   hr.warningNode       = hm.contains(warningHash) ? hm.lookup(warningHash) : "?";
   hr.warningTime       = writeBeBytesToLeNumber<uint64_t>(b + T_DIAG_WAR_1ST_TS);
   hr.maxBacklog        = writeBeBytesToLeNumber<uint32_t>(b + T_DIAG_BCKLOG_STRK);
+  hr.badWaitCnt        = writeBeBytesToLeNumber<uint32_t>(b + T_DIAG_BAD_WAIT_CNT);
   hr.stat              = writeBeBytesToLeNumber<uint32_t>(b + _T_DIAG_SIZE_); // stat comes after last element of T_DIAG
   
   return hr;
