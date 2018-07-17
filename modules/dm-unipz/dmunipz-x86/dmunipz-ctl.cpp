@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 17-May-2017
  ********************************************************************************************/
-#define DMUNIPZ_X86_VERSION "0.3.02"
+#define DMUNIPZ_X86_VERSION "0.3.03"
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -100,33 +100,39 @@ static int getVersion = 0;
 static int snoop      = 0;
 static int logLevel   = 0;
 
-eb_device_t  device;             // keep this and below global
-eb_address_t lm32_base;          // base address of lm32
-eb_address_t dmunipz_status;     // status of dmunipz, read
-eb_address_t dmunipz_state;      // state, read
-eb_address_t dmunipz_iterations; // number of iterations of main loop, read
-eb_address_t dmunipz_transfers;  // number of transfers from UNILAC to SIS, read
-eb_address_t dmunipz_injections; // number of injections in ongoing transfer
-eb_address_t dmunipz_virtAccReq; // number of requested virtual accelerator of ongoing or last transfer, read
-eb_address_t dmunipz_virtAccRec; // number of received virtual accelerator of ongoing or last transfer, read
-eb_address_t dmunipz_noBeam;     // requested 'noBeam' flag, read
-eb_address_t dmunipz_dtStart;    // difference between actual time and flextime @ DM
-eb_address_t dmunipz_dtSync;     // time difference between EVT_READY_TO_SIS and EVT_MB_LOAD
-eb_address_t dmunipz_dtInject;   // time difference between CM_UNI_BREQ and EVT_MB_LOAD
-eb_address_t dmunipz_statTrans;  // status of ongoing or last transfer, read
-eb_address_t dmunipz_cmd;        // command, write
-eb_address_t dmunipz_version;    // version, read
-eb_address_t dmunipz_srcMacHi;   // ebm src mac, write
-eb_address_t dmunipz_srcMacLo;   // ebm src mac, write
-eb_address_t dmunipz_srcIp;      // ebm src ip, write
-eb_address_t dmunipz_dstMacHi;   // ebm dst mac, write
-eb_address_t dmunipz_dstMacLo;   // ebm dst mac, write
-eb_address_t dmunipz_dstIp;      // ebm dst ip, write
-eb_address_t dmunipz_flexOffset; // offset added to timestamp of MIL event for schedule continuation
-eb_address_t dmunipz_uniTimeout; // timeout value for UNILAC
-eb_address_t dmunipz_tkTimeout;  // timeout value for TK (via UNILAC)
-eb_address_t dmunipz_nBadStatus; // # of bad status ("ERROR") incidents
-eb_address_t dmunipz_nBadState;  // # of bad state ("not in operation") incidents
+eb_device_t  device;               // keep this and below global
+eb_address_t lm32_base;            // base address of lm32
+eb_address_t dmunipz_status;       // status of dmunipz, read
+eb_address_t dmunipz_state;        // state, read
+eb_address_t dmunipz_iterations;   // # of iterations of main loop, read
+eb_address_t dmunipz_transfers;    // # of transfers from UNILAC to SIS, read
+eb_address_t dmunipz_injections;   // # of injections in ongoing transfer
+eb_address_t dmunipz_virtAccReq;   // # of requested virtual accelerator of ongoing or last transfer, read
+eb_address_t dmunipz_virtAccRec;   // # of received virtual accelerator of ongoing or last transfer, read
+eb_address_t dmunipz_noBeam;       // requested 'noBeam' flag, read
+eb_address_t dmunipz_dtStart;      // difference between actual time and flextime @ DM
+eb_address_t dmunipz_dtSync;       // time difference between EVT_READY_TO_SIS and EVT_MB_LOAD
+eb_address_t dmunipz_dtInject;     // time difference between CM_UNI_BREQ and EVT_MB_LOAD
+eb_address_t dmunipz_dtTransfer;   // time difference between CM_UNI_TKREQ and EVT_MB_LOAD
+eb_address_t dmunipz_dtTkreq;      // time difference between CMD_UNI_TKREQ and reply from UNIPZ
+eb_address_t dmunipz_dtBreq;       // time difference between CMD_UNI_BREQ and reply from UNIPZ
+eb_address_t dmunipz_dtReady2Sis;  // time difference between CMD_UNI_BREQ and EVT_READY_TO_SIS
+eb_address_t dmunipz_nR2sTransfer; // # of EVT_READY_TO_SIS events in between CMD_UNI_TKREQ and CMD_UNI_TKREL
+eb_address_t dmunipz_nR2sCycle;    // # of EVT_READY_TO_SIS events in between CMD_UNI_TKRELand the following CMD_UNI_TKREL
+eb_address_t dmunipz_statTrans;    // status of ongoing or last transfer, read
+eb_address_t dmunipz_cmd;          // command, write
+eb_address_t dmunipz_version;      // version, read
+eb_address_t dmunipz_srcMacHi;     // ebm src mac, write
+eb_address_t dmunipz_srcMacLo;     // ebm src mac, write
+eb_address_t dmunipz_srcIp;        // ebm src ip, write
+eb_address_t dmunipz_dstMacHi;     // ebm dst mac, write
+eb_address_t dmunipz_dstMacLo;     // ebm dst mac, write
+eb_address_t dmunipz_dstIp;        // ebm dst ip, write
+eb_address_t dmunipz_flexOffset;   // offset added to timestamp of MIL event for schedule continuation
+eb_address_t dmunipz_uniTimeout;   // timeout value for UNILAC
+eb_address_t dmunipz_tkTimeout;    // timeout value for TK (via UNILAC)
+eb_address_t dmunipz_nBadStatus;   // # of bad status ("ERROR") incidents
+eb_address_t dmunipz_nBadState;    // # of bad state ("not in operation") incidents
 
 eb_data_t   data1;
 
@@ -276,44 +282,56 @@ int readTransfers(uint32_t *transfers)
 } // getInfo
 
 
-int readInfo(uint32_t *status, uint32_t *state, uint32_t *iterations, uint32_t *transfers, uint32_t *injections, uint32_t *virtAccReq, uint32_t *virtAccRec, uint32_t *noBeam, uint32_t *dtStart, uint32_t *dtSync, uint32_t *dtInject, uint32_t *statTrans, uint32_t *nBadStatus, uint32_t *nBadState)
+int readInfo(uint32_t *status, uint32_t *state, uint32_t *iterations, uint32_t *transfers, uint32_t *injections, uint32_t *virtAccReq, uint32_t *virtAccRec, uint32_t *noBeam, uint32_t *dtStart, uint32_t *dtSync, uint32_t *dtInject, uint32_t *dtTransfer, uint32_t *dtTkreq, uint32_t *dtBreq, uint32_t *dtReady2Sis, uint32_t *nR2sTransfer, uint32_t *nR2sCycle, uint32_t *statTrans, uint32_t *nBadStatus, uint32_t *nBadState)
 {
   eb_cycle_t  cycle;
   eb_status_t eb_status;
-  eb_data_t   data[20];
+  eb_data_t   data[30];
   
   if ((eb_status = eb_cycle_open(device, 0, eb_block, &cycle)) != EB_OK) die("dm-unipz: eb_cycle_open", eb_status);
 
-  eb_cycle_read(cycle, dmunipz_status,      EB_BIG_ENDIAN|EB_DATA32, &(data[0]));
-  eb_cycle_read(cycle, dmunipz_state,       EB_BIG_ENDIAN|EB_DATA32, &(data[1]));
-  eb_cycle_read(cycle, dmunipz_iterations,  EB_BIG_ENDIAN|EB_DATA32, &(data[2]));
-  eb_cycle_read(cycle, dmunipz_nBadStatus,  EB_BIG_ENDIAN|EB_DATA32, &(data[3]));
-  eb_cycle_read(cycle, dmunipz_nBadState,   EB_BIG_ENDIAN|EB_DATA32, &(data[4]));
-  eb_cycle_read(cycle, dmunipz_transfers,   EB_BIG_ENDIAN|EB_DATA32, &(data[5]));
-  eb_cycle_read(cycle, dmunipz_injections,  EB_BIG_ENDIAN|EB_DATA32, &(data[6]));
-  eb_cycle_read(cycle, dmunipz_virtAccReq,  EB_BIG_ENDIAN|EB_DATA32, &(data[7]));
-  eb_cycle_read(cycle, dmunipz_virtAccRec,  EB_BIG_ENDIAN|EB_DATA32, &(data[8]));
-  eb_cycle_read(cycle, dmunipz_noBeam,      EB_BIG_ENDIAN|EB_DATA32, &(data[9]));
-  eb_cycle_read(cycle, dmunipz_dtStart,     EB_BIG_ENDIAN|EB_DATA32, &(data[10]));
-  eb_cycle_read(cycle, dmunipz_statTrans,   EB_BIG_ENDIAN|EB_DATA32, &(data[11]));
-  eb_cycle_read(cycle, dmunipz_dtSync,      EB_BIG_ENDIAN|EB_DATA32, &(data[12]));
-  eb_cycle_read(cycle, dmunipz_dtInject,    EB_BIG_ENDIAN|EB_DATA32, &(data[13]));
+  eb_cycle_read(cycle, dmunipz_status,        EB_BIG_ENDIAN|EB_DATA32, &(data[0]));
+  eb_cycle_read(cycle, dmunipz_state,         EB_BIG_ENDIAN|EB_DATA32, &(data[1]));
+  eb_cycle_read(cycle, dmunipz_iterations,    EB_BIG_ENDIAN|EB_DATA32, &(data[2]));
+  eb_cycle_read(cycle, dmunipz_nBadStatus,    EB_BIG_ENDIAN|EB_DATA32, &(data[3]));
+  eb_cycle_read(cycle, dmunipz_nBadState,     EB_BIG_ENDIAN|EB_DATA32, &(data[4]));
+  eb_cycle_read(cycle, dmunipz_transfers,     EB_BIG_ENDIAN|EB_DATA32, &(data[5]));
+  eb_cycle_read(cycle, dmunipz_injections,    EB_BIG_ENDIAN|EB_DATA32, &(data[6]));
+  eb_cycle_read(cycle, dmunipz_virtAccReq,    EB_BIG_ENDIAN|EB_DATA32, &(data[7]));
+  eb_cycle_read(cycle, dmunipz_virtAccRec,    EB_BIG_ENDIAN|EB_DATA32, &(data[8]));
+  eb_cycle_read(cycle, dmunipz_noBeam,        EB_BIG_ENDIAN|EB_DATA32, &(data[9]));
+  eb_cycle_read(cycle, dmunipz_dtStart,       EB_BIG_ENDIAN|EB_DATA32, &(data[10]));
+  eb_cycle_read(cycle, dmunipz_statTrans,     EB_BIG_ENDIAN|EB_DATA32, &(data[11]));
+  eb_cycle_read(cycle, dmunipz_dtSync,        EB_BIG_ENDIAN|EB_DATA32, &(data[12]));
+  eb_cycle_read(cycle, dmunipz_dtInject,      EB_BIG_ENDIAN|EB_DATA32, &(data[13]));
+  eb_cycle_read(cycle, dmunipz_dtTransfer,    EB_BIG_ENDIAN|EB_DATA32, &(data[14]));
+  eb_cycle_read(cycle, dmunipz_dtTkreq,       EB_BIG_ENDIAN|EB_DATA32, &(data[15]));
+  eb_cycle_read(cycle, dmunipz_dtBreq,        EB_BIG_ENDIAN|EB_DATA32, &(data[16]));  
+  eb_cycle_read(cycle, dmunipz_dtReady2Sis,   EB_BIG_ENDIAN|EB_DATA32, &(data[17]));
+  eb_cycle_read(cycle, dmunipz_nR2sTransfer,  EB_BIG_ENDIAN|EB_DATA32, &(data[18]));
+  eb_cycle_read(cycle, dmunipz_nR2sCycle,     EB_BIG_ENDIAN|EB_DATA32, &(data[19]));
   if ((eb_status = eb_cycle_close(cycle)) != EB_OK) die("dm-unipz: eb_cycle_close", eb_status);
 
-  *status       = data[0];
-  *state        = data[1];
-  *iterations   = data[2];
-  *nBadStatus   = data[3];
-  *nBadState    = data[4];
-  *transfers    = data[5];
-  *injections   = data[6];
-  *virtAccReq   = data[7];
-  *virtAccRec   = data[8];
-  *noBeam       = data[9];
-  *dtStart      = data[10];
-  *statTrans    = data[11];
-  *dtSync       = data[12];
-  *dtInject     = data[13];
+  *status        = data[0];
+  *state         = data[1];
+  *iterations    = data[2];
+  *nBadStatus    = data[3];
+  *nBadState     = data[4];
+  *transfers     = data[5];
+  *injections    = data[6];
+  *virtAccReq    = data[7];
+  *virtAccRec    = data[8];
+  *noBeam        = data[9];
+  *dtStart       = data[10];
+  *statTrans     = data[11];
+  *dtSync        = data[12];
+  *dtInject      = data[13];
+  *dtTransfer    = data[14];
+  *dtTkreq       = data[15];
+  *dtBreq        = data[16];
+  *dtReady2Sis   = data[17];
+  *nR2sTransfer  = data[18];
+  *nR2sCycle     = data[19];
   
   return eb_status;
 } // readInfo
@@ -361,10 +379,10 @@ int readConfig(uint32_t *flexOffset, uint32_t *uniTimeout, uint32_t *tkTimeout, 
 } //readConfig
 
 
-void printTransfer(uint32_t transfers, uint32_t injections, uint32_t virtAccReq, uint32_t virtAccRec, uint32_t noBeam, uint32_t dtStart, uint32_t dtSync, uint32_t dtInject, uint32_t statTrans)
+void printTransfer(uint32_t transfers, uint32_t injections, uint32_t virtAccReq, uint32_t virtAccRec, uint32_t noBeam, uint32_t dtStart, uint32_t dtSync, uint32_t dtInject, uint32_t dtTransfer, uint32_t dtTkreq, uint32_t dtBreq, uint32_t dtReady2Sis, uint32_t nR2sTransfer, uint32_t nR2sCycle, uint32_t statTrans)
 {
-  printf("%08d, %02d, %03d, %05d, %01d, %04d, %05d, %07d, %d %d %d %d %d %d", transfers, injections, virtAccReq, virtAccRec, noBeam,
-         (uint32_t)((double)dtStart / 1000.0), (uint32_t)((double)dtSync / 1000.0),  (uint32_t)((double)dtInject / 1000.0),
+  printf("%08d, %02d(%02d, %02d), %03d, %05d, %01d, %04d, %05d, %07d, %07d, %06d, %05d, %07d, %d %d %d %d %d %d", transfers, injections, nR2sTransfer, nR2sCycle, virtAccReq, virtAccRec, noBeam,
+         (uint32_t)((double)dtStart / 1000.0), (uint32_t)((double)dtSync / 1000.0),  (uint32_t)((double)dtInject / 1000.0), (uint32_t)((double)dtTransfer / 1000.0), (uint32_t)((double)dtTkreq / 1000.0),  (uint32_t)((double)dtBreq / 1000.0),   (uint32_t)((double)dtReady2Sis / 1000.0), 
          ((statTrans & DMUNIPZ_TRANS_REQTK    ) > 0),  
          ((statTrans & DMUNIPZ_TRANS_REQTKOK  ) > 0), 
          ((statTrans & DMUNIPZ_TRANS_RELTK    ) > 0),
@@ -408,6 +426,12 @@ int main(int argc, char** argv) {
   uint32_t dtStart;
   uint32_t dtSync;
   uint32_t dtInject;  
+  uint32_t dtTransfer;  
+  uint32_t dtTkreq;  
+  uint32_t dtBreq;  
+  uint32_t dtReady2Sis;  
+  uint32_t nR2sTransfer;  
+  uint32_t nR2sCycle;  
   uint32_t statTrans; 
   uint32_t version;
 
@@ -491,31 +515,37 @@ int main(int argc, char** argv) {
   if ((eb_status = eb_sdb_find_by_identity(device, GSI, LM32_RAM_USER, &sdbDevice, &nDevices)) != EB_OK) die("find lm32", eb_status);
   lm32_base =  sdbDevice.sdb_component.addr_first;
 
-  dmunipz_status     = lm32_base + SHARED_OFFS + DMUNIPZ_SHARED_STATUS;
-  dmunipz_state      = lm32_base + SHARED_OFFS + DMUNIPZ_SHARED_STATE;;
-  dmunipz_iterations = lm32_base + SHARED_OFFS + DMUNIPZ_SHARED_NITERMAIN;
-  dmunipz_transfers  = lm32_base + SHARED_OFFS + DMUNIPZ_SHARED_TRANSN;
-  dmunipz_injections = lm32_base + SHARED_OFFS + DMUNIPZ_SHARED_INJECTN;
-  dmunipz_virtAccReq = lm32_base + SHARED_OFFS + DMUNIPZ_SHARED_TRANSVIRTACC;
-  dmunipz_virtAccRec = lm32_base + SHARED_OFFS + DMUNIPZ_SHARED_RECVIRTACC;
-  dmunipz_noBeam     = lm32_base + SHARED_OFFS + DMUNIPZ_SHARED_TRANSNOBEAM;
-  dmunipz_dtStart    = lm32_base + SHARED_OFFS + DMUNIPZ_SHARED_DTSTART;
-  dmunipz_dtSync     = lm32_base + SHARED_OFFS + DMUNIPZ_SHARED_DTSYNC;
-  dmunipz_dtInject   = lm32_base + SHARED_OFFS + DMUNIPZ_SHARED_DTINJECT;
-  dmunipz_statTrans  = lm32_base + SHARED_OFFS + DMUNIPZ_SHARED_TRANSSTATUS;
-  dmunipz_cmd        = lm32_base + SHARED_OFFS + DMUNIPZ_SHARED_CMD;
-  dmunipz_version    = lm32_base + SHARED_OFFS + DMUNIPZ_SHARED_VERSION;
-  dmunipz_srcMacHi   = lm32_base + SHARED_OFFS + DMUNIPZ_SHARED_SRCMACHI;
-  dmunipz_srcMacLo   = lm32_base + SHARED_OFFS + DMUNIPZ_SHARED_SRCMACLO;
-  dmunipz_srcIp      = lm32_base + SHARED_OFFS + DMUNIPZ_SHARED_SRCIP;
-  dmunipz_dstMacHi   = lm32_base + SHARED_OFFS + DMUNIPZ_SHARED_DSTMACHI;
-  dmunipz_dstMacLo   = lm32_base + SHARED_OFFS + DMUNIPZ_SHARED_DSTMACLO;
-  dmunipz_dstIp      = lm32_base + SHARED_OFFS + DMUNIPZ_SHARED_DSTIP;
-  dmunipz_flexOffset = lm32_base + SHARED_OFFS + DMUNIPZ_SHARED_OFFSETFLEX;
-  dmunipz_uniTimeout = lm32_base + SHARED_OFFS + DMUNIPZ_SHARED_UNITIMEOUT;
-  dmunipz_tkTimeout  = lm32_base + SHARED_OFFS + DMUNIPZ_SHARED_TKTIMEOUT;
-  dmunipz_nBadStatus = lm32_base + SHARED_OFFS + DMUNIPZ_SHARED_NBADSTATUS;
-  dmunipz_nBadState  = lm32_base + SHARED_OFFS + DMUNIPZ_SHARED_NBADSTATE;
+  dmunipz_status       = lm32_base + SHARED_OFFS + DMUNIPZ_SHARED_STATUS;
+  dmunipz_state        = lm32_base + SHARED_OFFS + DMUNIPZ_SHARED_STATE;;
+  dmunipz_iterations   = lm32_base + SHARED_OFFS + DMUNIPZ_SHARED_NITERMAIN;
+  dmunipz_transfers    = lm32_base + SHARED_OFFS + DMUNIPZ_SHARED_TRANSN;
+  dmunipz_injections   = lm32_base + SHARED_OFFS + DMUNIPZ_SHARED_INJECTN;
+  dmunipz_virtAccReq   = lm32_base + SHARED_OFFS + DMUNIPZ_SHARED_TRANSVIRTACC;
+  dmunipz_virtAccRec   = lm32_base + SHARED_OFFS + DMUNIPZ_SHARED_RECVIRTACC;
+  dmunipz_noBeam       = lm32_base + SHARED_OFFS + DMUNIPZ_SHARED_TRANSNOBEAM;
+  dmunipz_dtStart      = lm32_base + SHARED_OFFS + DMUNIPZ_SHARED_DTSTART;
+  dmunipz_dtSync       = lm32_base + SHARED_OFFS + DMUNIPZ_SHARED_DTSYNC;
+  dmunipz_dtInject     = lm32_base + SHARED_OFFS + DMUNIPZ_SHARED_DTINJECT;
+  dmunipz_dtTransfer   = lm32_base + SHARED_OFFS + DMUNIPZ_SHARED_DTTRANSFER;
+  dmunipz_dtTkreq      = lm32_base + SHARED_OFFS + DMUNIPZ_SHARED_DTTKREQ;
+  dmunipz_dtBreq       = lm32_base + SHARED_OFFS + DMUNIPZ_SHARED_DTBREQ;
+  dmunipz_dtReady2Sis  = lm32_base + SHARED_OFFS + DMUNIPZ_SHARED_DTREADY2SIS;
+  dmunipz_nR2sTransfer = lm32_base + SHARED_OFFS + DMUNIPZ_SHARED_NR2STRANSFER;
+  dmunipz_nR2sCycle    = lm32_base + SHARED_OFFS + DMUNIPZ_SHARED_NR2SCYCLE;
+  dmunipz_statTrans    = lm32_base + SHARED_OFFS + DMUNIPZ_SHARED_TRANSSTATUS;
+  dmunipz_cmd          = lm32_base + SHARED_OFFS + DMUNIPZ_SHARED_CMD;
+  dmunipz_version      = lm32_base + SHARED_OFFS + DMUNIPZ_SHARED_VERSION;
+  dmunipz_srcMacHi     = lm32_base + SHARED_OFFS + DMUNIPZ_SHARED_SRCMACHI;
+  dmunipz_srcMacLo     = lm32_base + SHARED_OFFS + DMUNIPZ_SHARED_SRCMACLO;
+  dmunipz_srcIp        = lm32_base + SHARED_OFFS + DMUNIPZ_SHARED_SRCIP;
+  dmunipz_dstMacHi     = lm32_base + SHARED_OFFS + DMUNIPZ_SHARED_DSTMACHI;
+  dmunipz_dstMacLo     = lm32_base + SHARED_OFFS + DMUNIPZ_SHARED_DSTMACLO;
+  dmunipz_dstIp        = lm32_base + SHARED_OFFS + DMUNIPZ_SHARED_DSTIP;
+  dmunipz_flexOffset   = lm32_base + SHARED_OFFS + DMUNIPZ_SHARED_OFFSETFLEX;
+  dmunipz_uniTimeout   = lm32_base + SHARED_OFFS + DMUNIPZ_SHARED_UNITIMEOUT;
+  dmunipz_tkTimeout    = lm32_base + SHARED_OFFS + DMUNIPZ_SHARED_TKTIMEOUT;
+  dmunipz_nBadStatus   = lm32_base + SHARED_OFFS + DMUNIPZ_SHARED_NBADSTATUS;
+  dmunipz_nBadState    = lm32_base + SHARED_OFFS + DMUNIPZ_SHARED_NBADSTATE;
 
   // printf("dm-unipz: lm32_base 0x%08x, 0x%08x\n", lm32_base, dmunipz_iterations);
 
@@ -535,10 +565,10 @@ int main(int argc, char** argv) {
 
   if (getInfo) {
     // status
-    readInfo(&status, &state, &iterations, &transfers, &injections, &virtAccReq, &virtAccRec, &noBeam, &dtStart, &dtSync, &dtInject, &statTrans, &nBadStatus, &nBadState);
+    readInfo(&status, &state, &iterations, &transfers, &injections, &virtAccReq, &virtAccRec, &noBeam, &dtStart, &dtSync, &dtInject, &dtTransfer, &dtTkreq, &dtBreq, &dtReady2Sis, &nR2sTransfer, &nR2sCycle, &statTrans, &nBadStatus, &nBadState);
 
     printf("dm-unipz: iterations %d, transfer - ", iterations); 
-    printTransfer(transfers, injections, virtAccReq, virtAccRec, noBeam, dtStart, dtSync, dtInject, statTrans); 
+    printTransfer(transfers, injections, virtAccReq, virtAccRec, noBeam, dtStart, dtSync, dtInject, dtTransfer, dtTkreq, dtBreq, dtReady2Sis, nR2sTransfer, nR2sCycle, statTrans); 
     printf(", %s (%6u), %s (%6u)\n", dmunipz_state_text(state), nBadState, dmunipz_status_text(status), nBadStatus);
 
     
@@ -658,7 +688,7 @@ int main(int argc, char** argv) {
 #endif // USEMASP
 
     while (1) {
-      readInfo(&status, &state, &iterations, &transfers, &injections, &virtAccReq, &virtAccRec, &noBeam, &dtStart, &dtSync, &dtInject, &statTrans, &nBadStatus, &nBadState);  // read info from lm32
+      readInfo(&status, &state, &iterations, &transfers, &injections, &virtAccReq, &virtAccRec, &noBeam, &dtStart, &dtSync, &dtInject, &dtTransfer, &dtTkreq, &dtBreq, &dtReady2Sis, &nR2sTransfer, &nR2sCycle, &statTrans, &nBadStatus, &nBadState);  // read info from lm32
 
       switch(state) {
       case DMUNIPZ_STATE_OPREADY :
@@ -682,7 +712,7 @@ int main(int argc, char** argv) {
 
       if (printFlag) {
         printf("dm-unipz: transfer - "); 
-        printTransfer(transfers, injections, virtAccReq, virtAccRec, noBeam, dtStart, dtSync, dtInject, statTrans); 
+        printTransfer(transfers, injections, virtAccReq, virtAccRec, noBeam, dtStart, dtSync, dtInject, dtTransfer, dtTkreq, dtBreq, dtReady2Sis, nR2sTransfer, nR2sCycle, statTrans); 
         printf(", %s (%6u), %s (%6u)\n", dmunipz_state_text(state), nBadState, dmunipz_status_text(status), nBadStatus);
       } // if printFlag
 
