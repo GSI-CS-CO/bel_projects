@@ -135,6 +135,7 @@ typedef struct {
   std::string warningNode;
   uint64_t  warningTime;
   uint32_t  maxBacklog;
+  uint32_t  badWaitCnt;
   uint32_t  stat;
 } HealthReport;
 
