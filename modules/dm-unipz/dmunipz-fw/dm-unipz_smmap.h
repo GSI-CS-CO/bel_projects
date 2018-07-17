@@ -31,10 +31,16 @@
 #define DMUNIPZ_SHARED_DTSTART        0x58   // difference between actual time and flextime @ DM
 #define DMUNIPZ_SHARED_DTSYNC         0x5C   // time difference between EVT_READY_TO_SIS and EVT_MB_TRIGGER; value in ns
 #define DMUNIPZ_SHARED_DTINJECT       0x60   // time difference between CMD_UNI_BREQ and EVT_MB_TRIGGER; value in ns
+#define DMUNIPZ_SHARED_DTTRANSFER     0x64   // time difference between CMD_UNI_TKREQ and EVT_MB_TRIGGER; value in ns
+#define DMUNIPZ_SHARED_DTTKREQ        0x68   // time difference between CMD_UNI_TKREQ and reply from UNIPZ
+#define DMUNIPZ_SHARED_DTBREQ         0x6c   // time difference between CMD_UNI_BREQ and reply from UNIPZ
+#define DMUNIPZ_SHARED_DTREADY2SIS    0x70   // time difference between CMD_UNI_BREQ and EVT_READY_TO_SIS
+#define DMUNIPZ_SHARED_NR2STRANSFER   0x74   // # of EVT_READY_TO_SIS events in between CMD_UNI_TKREQ and CMD_UNI_TKREL
+#define DMUNIPZ_SHARED_NR2SCYCLE      0x78   // # of EVT_READY_TO_SIS events in between CMD_UNI_TKREL and the following CMD_UNI_TKREL
 
 
-// 0x60-0x6F: reserved
-#define DMUNIPZ_SHARED_DATA_4EB_START 0x70    // start of shared memory for EB return values
+// 0x7C-0x7F: reserved
+#define DMUNIPZ_SHARED_DATA_4EB_START 0x80    // start of shared memory for EB return values
 #define DMUNIPZ_SHARED_DATA_4EB_END   DMUNIPZ_SHARED_DATA_4EB_START + DMUNIPZ_SHARED_DATA_4EB_SIZE // end of shared memory area for EB return values
 
 #endif
