@@ -127,7 +127,7 @@ void showStatus(const char *netaddress, CarpeDM& cdm, bool verbose) {
   uint64_t timeWrNs = cdm.getDmWrTime();
 
   printf("\n\u2554"); for(int i=0;i<width;i++) printf("\u2550"); printf("\u2557\n");
-  printf("\u2551 DataMaster: %-80s \u2502 WR-Time: 0x%08x%08x ns \u2502 %.19s \u2551\n", netaddress, (uint32_t)(timeWrNs>>32), (uint32_t)timeWrNs, nsTimeToDate(timeWrNs).c_str() );
+  printf("\u2551 DataMaster: %-80s \u2502 ECA-Time: 0x%08x%08x ns \u2502 %.19s \u2551\n", netaddress, (uint32_t)(timeWrNs>>32), (uint32_t)timeWrNs, nsTimeToDate(timeWrNs).c_str() );
   printf("\u2560"); for(int i=0;i<width;i++) printf("\u2550"); printf("\u2563\n");
   printf("\u2551 %3s \u2502 %3s \u2502 %7s \u2502 %9s \u2502 %55s \u2502 %55s \u2551\n", "Cpu", "Thr", "Running", "MsgCount", "Pattern", "Node");
   printf("\u2560"); for(int i=0;i<width;i++) printf("\u2550"); printf("\u2563\n");
@@ -184,7 +184,7 @@ void showHealth(const char *netaddress, CarpeDM& cdm, bool verbose) {
   for(netStrLen = 0; netStrLen < width; netStrLen++) {if (netaddress[netStrLen] == '\00') break;}
 
   printf("\n\u2554"); for(int i=0;i<width;i++) printf("\u2550"); printf("\u2557\n");
-  printf("\u2551 DM: %s", netaddress); for(uint8_t i=0; i < (width - 5 - netStrLen); i++) printf(" "); printf("\u2551\n");
+  printf("\u2551 DataMaster: %30s %40s", netaddress, "\u2551\n"); 
   printf("\u2560"); for(int i=0;i<width;i++) printf("\u2550"); printf("\u2563\n");
   printf("\u2551 ECA-Time: 0x%08x%08x \u2502 %.19s %31s\n", (uint32_t)(timeWr>>32), (uint32_t)timeWr, nsTimeToDate(timeWr).c_str(), "\u2551");
 

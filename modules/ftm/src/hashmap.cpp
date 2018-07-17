@@ -71,7 +71,7 @@ std::string HashMap::store() {
 
 void HashMap::load(const std::string& s) {
   std::stringstream is;
-  is.str(s);
+  is.str(fixArchiveVersion(s));
   
   boost::archive::text_iarchive ia(is);
   //boost::archive::xml_iarchive ia(ifs);
