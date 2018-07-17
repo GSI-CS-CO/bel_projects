@@ -93,7 +93,7 @@ public:
 
   void load(const std::string& s){
     std::stringstream is;
-    is.str(s);
+    is.str(fixArchiveVersion(s));
     boost::archive::text_iarchive ia(is);
     ia >> BOOST_SERIALIZATION_NVP(*this);
   }

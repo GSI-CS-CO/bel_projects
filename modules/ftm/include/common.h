@@ -284,5 +284,7 @@ void hexDump (const char *desc, const char* addr, int len);
 
 void hexDump (const char *desc, vBuf vb);
 
+std::string fixArchiveVersion(const std::string& s);
+
 
 #endif
