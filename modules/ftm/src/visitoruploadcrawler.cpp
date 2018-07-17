@@ -145,7 +145,7 @@ vAdr& VisitorUploadCrawler::childrenAdrs(vertex_set_t vs, vAdr& ret, const unsig
             hashXor ^= x->hash;
           }
         }
-        // Use Res field for checksum. Exor the hashes of all dyndata children and add here
+        
         /*
         if (g[*out_cur].type == det::sDynRes) {
           if (aRes != LM32_NULL_PTR) {sErr << "Found more than one dynamic res source" << std::endl; break;
@@ -157,7 +157,9 @@ vAdr& VisitorUploadCrawler::childrenAdrs(vertex_set_t vs, vAdr& ret, const unsig
         */ 
       }
     }
-    aRes = hashXor;
+
+    // Use Res field for checksum. Exor the hashes of all dyndata children and add here
+    aTef = hashXor;
 
     
 
