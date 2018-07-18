@@ -29,12 +29,12 @@
 #define DMUNIPZ_SHARED_TRANSNOBEAM    0x50   // # UNILAC requested without beam
 #define DMUNIPZ_SHARED_RECVIRTACC     0x54   // # last 2 digits: received virtual accelerator 0..F from UNIPZ, leading digits: number of received MIL events
 #define DMUNIPZ_SHARED_DTSTART        0x58   // difference between actual time and flextime @ DM
-#define DMUNIPZ_SHARED_DTSYNC         0x5C   // time difference between EVT_READY_TO_SIS and EVT_MB_TRIGGER; value in ns
-#define DMUNIPZ_SHARED_DTINJECT       0x60   // time difference between CMD_UNI_BREQ and EVT_MB_TRIGGER; value in ns
-#define DMUNIPZ_SHARED_DTTRANSFER     0x64   // time difference between CMD_UNI_TKREQ and EVT_MB_TRIGGER; value in ns
-#define DMUNIPZ_SHARED_DTTKREQ        0x68   // time difference between CMD_UNI_TKREQ and reply from UNIPZ
-#define DMUNIPZ_SHARED_DTBREQ         0x6c   // time difference between CMD_UNI_BREQ and reply from UNIPZ
-#define DMUNIPZ_SHARED_DTREADY2SIS    0x70   // time difference between CMD_UNI_BREQ and EVT_READY_TO_SIS
+#define DMUNIPZ_SHARED_DTSYNC         0x5C   // time difference between EVT_READY_TO_SIS and EVT_MB_TRIGGER; value in us
+#define DMUNIPZ_SHARED_DTINJECT       0x60   // time difference between CMD_UNI_BREQ and EVT_MB_TRIGGER; value in us
+#define DMUNIPZ_SHARED_DTTRANSFER     0x64   // time difference between CMD_UNI_TKREQ and EVT_MB_TRIGGER; value in us
+#define DMUNIPZ_SHARED_DTTKREQ        0x68   // time difference between CMD_UNI_TKREQ and reply from UNIPZ; value in us
+#define DMUNIPZ_SHARED_DTBREQ         0x6c   // time difference between CMD_UNI_BREQ and reply from UNIPZ; value in us
+#define DMUNIPZ_SHARED_DTREADY2SIS    0x70   // time difference between CMD_UNI_BREQ and EVT_READY_TO_SIS; value in us
 #define DMUNIPZ_SHARED_NR2STRANSFER   0x74   // # of EVT_READY_TO_SIS events in between CMD_UNI_TKREQ and CMD_UNI_TKREL
 #define DMUNIPZ_SHARED_NR2SCYCLE      0x78   // # of EVT_READY_TO_SIS events in between CMD_UNI_TKREL and the following CMD_UNI_TKREL
 

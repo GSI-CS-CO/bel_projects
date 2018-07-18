@@ -3,7 +3,7 @@
  *
  *  created : 2017
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 16-July-2018
+ *  version : 18-July-2018
  *
  * Command-line interface for dmunipz
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 17-May-2017
  ********************************************************************************************/
-#define DMUNIPZ_X86_VERSION "0.3.03"
+#define DMUNIPZ_X86_VERSION "0.3.04"
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -42,6 +42,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
+#include <math.h>
 #include <time.h>
 #include <sys/time.h>
 
@@ -173,7 +174,9 @@ const char* dmunipz_status_text(uint32_t code) {
   case DMUNIPZ_STATUS_DMTIMEOUT        : return "beam request did not succeed within 10s timeout at DM";
   case DMUNIPZ_STATUS_BADSYNC          : return "t(EVT_MB_TRIGGER) - t(EVT_READY_TO_SIS) != 10ms";
   case DMUNIPZ_STATUS_WAIT4UNIEVENT    : return "timeout while waiting for EVT_READY_TO_SIS";
-  case DMUNIPZ_STATUS_BADSCHEDULE      : return "t(EVT_MB_TRIGGER) - t(CMD_UNI_BREQ) < 10ms";
+  case DMUNIPZ_STATUS_BADSCHEDULEA     : return "t(EVT_MB_TRIGGER) - t(CMD_UNI_BREQ) < 10ms";
+  case DMUNIPZ_STATUS_BADSCHEDULEB     : return "unexpected event";
+  case DMUNIPZ_STATUS_INVALIDBLKADDR   : return "invalid address of block for Data Master";
   default                              : return "dm-unipz: undefined error code";
   }
 }
@@ -381,8 +384,11 @@ int readConfig(uint32_t *flexOffset, uint32_t *uniTimeout, uint32_t *tkTimeout, 
 
 void printTransfer(uint32_t transfers, uint32_t injections, uint32_t virtAccReq, uint32_t virtAccRec, uint32_t noBeam, uint32_t dtStart, uint32_t dtSync, uint32_t dtInject, uint32_t dtTransfer, uint32_t dtTkreq, uint32_t dtBreq, uint32_t dtReady2Sis, uint32_t nR2sTransfer, uint32_t nR2sCycle, uint32_t statTrans)
 {
-  printf("%08d, %02d(%02d, %02d), %03d, %05d, %01d, %04d, %05d, %07d, %07d, %06d, %05d, %07d, %d %d %d %d %d %d", transfers, injections, nR2sTransfer, nR2sCycle, virtAccReq, virtAccRec, noBeam,
-         (uint32_t)((double)dtStart / 1000.0), (uint32_t)((double)dtSync / 1000.0),  (uint32_t)((double)dtInject / 1000.0), (uint32_t)((double)dtTransfer / 1000.0), (uint32_t)((double)dtTkreq / 1000.0),  (uint32_t)((double)dtBreq / 1000.0),   (uint32_t)((double)dtReady2Sis / 1000.0), 
+  printf("trans %08d, %4dms, vA %2d(%2d)/%1d; ", transfers, (uint32_t)((double)dtTransfer / 1000.0), virtAccReq, virtAccRec - (uint32_t)(100 * floor(virtAccRec / 100)), noBeam);
+  printf("inj %02d(%02d/%02d), %4dms; ", injections, nR2sTransfer, nR2sCycle, (uint32_t)((double)dtInject/1000.0));
+  printf("wait TKRq %3dms, BRq %2dms, B %4dms; ", (uint32_t)((double)dtTkreq / 1000.0),  (uint32_t)((double)dtBreq / 1000.0),   (uint32_t)((double)dtReady2Sis / 1000.0));
+  printf("sync mgn %5.3fms, MBT %6.3fms; ", (double)dtStart / 1000.0, (double)dtSync / 1000.0);
+  printf("%d %d %d %d %d %d", 
          ((statTrans & DMUNIPZ_TRANS_REQTK    ) > 0),  
          ((statTrans & DMUNIPZ_TRANS_REQTKOK  ) > 0), 
          ((statTrans & DMUNIPZ_TRANS_RELTK    ) > 0),
@@ -390,7 +396,6 @@ void printTransfer(uint32_t transfers, uint32_t injections, uint32_t virtAccReq,
          ((statTrans & DMUNIPZ_TRANS_REQBEAMOK) > 0),
          ((statTrans & DMUNIPZ_TRANS_RELBEAM  ) > 0)
          );
-  
 } // printTransfer
 
 int main(int argc, char** argv) {
@@ -567,7 +572,7 @@ int main(int argc, char** argv) {
     // status
     readInfo(&status, &state, &iterations, &transfers, &injections, &virtAccReq, &virtAccRec, &noBeam, &dtStart, &dtSync, &dtInject, &dtTransfer, &dtTkreq, &dtBreq, &dtReady2Sis, &nR2sTransfer, &nR2sCycle, &statTrans, &nBadStatus, &nBadState);
 
-    printf("dm-unipz: iterations %d, transfer - ", iterations); 
+    printf("dm-unipz: iterations %d, ", iterations); 
     printTransfer(transfers, injections, virtAccReq, virtAccRec, noBeam, dtStart, dtSync, dtInject, dtTransfer, dtTkreq, dtBreq, dtReady2Sis, nR2sTransfer, nR2sCycle, statTrans); 
     printf(", %s (%6u), %s (%6u)\n", dmunipz_state_text(state), nBadState, dmunipz_status_text(status), nBadStatus);
 
@@ -711,7 +716,7 @@ int main(int argc, char** argv) {
       if ((actTransfers != transfers) && (logLevel <= DMUNIPZ_LOGLEVEL_ALL))                                           {printFlag = 1; actTransfers = transfers;}
 
       if (printFlag) {
-        printf("dm-unipz: transfer - "); 
+        printf("dm-unipz: "); 
         printTransfer(transfers, injections, virtAccReq, virtAccRec, noBeam, dtStart, dtSync, dtInject, dtTransfer, dtTkreq, dtBreq, dtReady2Sis, nR2sTransfer, nR2sCycle, statTrans); 
         printf(", %s (%6u), %s (%6u)\n", dmunipz_state_text(state), nBadState, dmunipz_status_text(status), nBadStatus);
       } // if printFlag
