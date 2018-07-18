@@ -284,8 +284,8 @@
 #define TMSG_PAR                (TMSG_ID      + _64b_SIZE_)
 #define TMSG_PAR_HI             (TMSG_PAR     + 0)   
 #define TMSG_PAR_LO             (TMSG_PAR_HI  + _32b_SIZE_)          
-#define TMSG_TEF                (TMSG_PAR     + _64b_SIZE_)          
-#define TMSG_RES                (TMSG_TEF     + _32b_SIZE_)          
+#define TMSG_RES                (TMSG_PAR     + _64b_SIZE_)          
+#define TMSG_TEF                (TMSG_RES     + _32b_SIZE_)          
                                                                
    
 //////////////////////////////////////////////////////////////////////

@@ -310,8 +310,8 @@ uint32_t* tmsg(uint32_t* node, uint32_t* thrData) {
   *(pFpqData + (PRIO_DAT_STD   >> 2))  = node[TMSG_ID_LO  >> 2];
   *(pFpqData + (PRIO_DAT_STD   >> 2))  = hiW(tmpPar);
   *(pFpqData + (PRIO_DAT_STD   >> 2))  = loW(tmpPar);
-  *(pFpqData + (PRIO_DAT_STD   >> 2))  = node[TMSG_TEF    >> 2];
   *(pFpqData + (PRIO_DAT_STD   >> 2))  = node[TMSG_RES    >> 2];
+  *(pFpqData + (PRIO_DAT_STD   >> 2))  = node[TMSG_TEF    >> 2];
   *(pFpqData + (PRIO_DAT_TS_HI >> 2))  = thrData[T_TD_DEADLINE_HI >> 2];
   *(pFpqData + (PRIO_DAT_TS_LO >> 2))  = thrData[T_TD_DEADLINE_LO >> 2];
   atomic_off();
