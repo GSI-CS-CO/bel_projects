@@ -10,9 +10,9 @@
                                               // Ludwig: we have 10ms time; here: use 5 ms to be on the safe side
 #define  DMUNIPZ_DMTIMEOUT           9000     // after receiving ReqBeam from DM, this is the amount of time available within we must reply to the DM [ms]
 #define  DMUNIPZ_SAFETYMARGIN     1000000     // saftey margin required by DM+network, 1ms @ 2018
-#define  DMUNIPZ_MATCHWINDOW       100000     // TS from TLU->ECA matches event from FIFO, if it is within window (sysTime-MATCHWINDOW) <--> sysTime
+#define  DMUNIPZ_MATCHWINDOW       100000     // used for comparing timestamps: 1 TS from TLU->ECA matches event from MIL FIFO, 2: synch EVT_MB_TRIGGER, ...
 #define  DMUNIPZ_OFFSETFLEX       1500000     // offset added to obtain TS "flex wait" [ns]
-#define  DMUNIPZ_OFFSETINJECT       10000     // offset added to obtain time of injection [us]
+#define  DMUNIPZ_OFFSETINJECT    10000000     // offset added to obtain expected time of injection [ns], used for diagnostic only
 #define  DMUNIPZ_EVT_READY2SIS    0x1e        // event number EVT_READY_TO_SIS (HEX)
 #define  DMUNIPZ_ECA_ADDRESS      0x7ffffff0  // address of ECA input
 #define  DMUNIPZ_EB_HACKISH       0x12345678  // value for EB read handshake
