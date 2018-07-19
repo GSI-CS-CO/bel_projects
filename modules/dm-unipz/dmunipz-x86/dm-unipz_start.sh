@@ -29,7 +29,7 @@ eb-fwload dev/wbm0 u 0x0 dmunipz.bin
 echo dm-unipz - start: kill monitoring process
 killall dmunipz-ctl
 echo dm-unipz - start: start  monitoring
-dmunipz-ctl -s2 dev/wbm0 | logger -t dmunipz-ctl -sp local0.info &
+dmunipz-ctl -s1 dev/wbm0 | logger -t dmunipz-ctl -sp local0.info &
 
 ###########################################
 # configure firmware and make it operational 
