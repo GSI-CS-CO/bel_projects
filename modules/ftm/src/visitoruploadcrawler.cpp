@@ -119,21 +119,21 @@ vAdr& VisitorUploadCrawler::childrenAdrs(vertex_set_t vs, vAdr& ret, const unsig
             hashXor ^= x->hash;
           }
         }
-        if (g[*out_cur].type == det::sDynPar0) {
-          if (aPar0 != LM32_NULL_PTR) {sErr << "Found more than one dynamic par0 source" << std::endl; break;
-          } else {
-            auto x = at.lookupVertex(target(*out_cur,g));
-            aPar0 = at.adrConv(AdrType::MGMT, AdrType::EXT, x->cpu, x->adr); g[v].np->setFlags(NFLG_TMSG_DYN_PAR0_SMSK);
-            //sLog << "DynAdr 0 0x" << std::hex << aPar0 << std::endl;
-            hashXor ^= x->hash;
-          }
-        }
         if (g[*out_cur].type == det::sDynPar1) {
           if (aPar1 != LM32_NULL_PTR) {sErr << "Found more than one dynamic par1 source" << std::endl; break;
           } else {
             auto x = at.lookupVertex(target(*out_cur,g));
             aPar1 = at.adrConv(AdrType::MGMT, AdrType::EXT, x->cpu, x->adr); g[v].np->setFlags(NFLG_TMSG_DYN_PAR1_SMSK);
             //sLog << "DynAdr 1 0x" << std::hex << aPar1 << std::endl;
+            hashXor ^= x->hash;
+          }
+        }
+        if (g[*out_cur].type == det::sDynPar0) {
+          if (aPar0 != LM32_NULL_PTR) {sErr << "Found more than one dynamic par0 source" << std::endl; break;
+          } else {
+            auto x = at.lookupVertex(target(*out_cur,g));
+            aPar0 = at.adrConv(AdrType::MGMT, AdrType::EXT, x->cpu, x->adr); g[v].np->setFlags(NFLG_TMSG_DYN_PAR0_SMSK);
+            //sLog << "DynAdr 0 0x" << std::hex << aPar0 << std::endl;
             hashXor ^= x->hash;
           }
         }
@@ -161,11 +161,11 @@ vAdr& VisitorUploadCrawler::childrenAdrs(vertex_set_t vs, vAdr& ret, const unsig
     // Use Res field for checksum. Exor the hashes of all dyndata children and add here
     aTef = hashXor;
 
-    
+    //FIXME this ought to be reserve + indexes, push_back order is too error prone
 
     ret.push_back(aId);  
-    ret.push_back(aPar0);
     ret.push_back(aPar1);
+    ret.push_back(aPar0);
     ret.push_back(aTef);
     ret.push_back(aRes);       
 
