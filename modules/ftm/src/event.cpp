@@ -32,10 +32,10 @@ void TimingMsg::serialise(const vAdr &va, uint8_t* b) const {
   //Careful - the fact that these can be pointers does not mean the LM32 has to interprete them!
   //That still depends on the flags
   if (va[ADR_DYN_ID]    != LM32_NULL_PTR) id  &= ~0xffffffffULL; id   |= va[ADR_DYN_ID];;
-  if (va[ADR_DYN_PAR0]  != LM32_NULL_PTR) par &= ~(0xffffffffULL << 32); par  |= ((uint64_t)va[ADR_DYN_PAR0] << 32);
-  if (va[ADR_DYN_PAR1]  != LM32_NULL_PTR) par &= ~0xffffffffULL; par  |= va[ADR_DYN_PAR1];
-  if (va[ADR_DYN_RES]   != LM32_NULL_PTR) res  = va[ADR_DYN_RES];
+  if (va[ADR_DYN_PAR1]  != LM32_NULL_PTR) par &= ~(0xffffffffULL << 32); par  |= ((uint64_t)va[ADR_DYN_PAR1] << 32);
+  if (va[ADR_DYN_PAR0]  != LM32_NULL_PTR) par &= ~0xffffffffULL; par  |= va[ADR_DYN_PAR0];
   if (va[ADR_DYN_TEF]   != LM32_NULL_PTR) tef  = va[ADR_DYN_TEF];
+  if (va[ADR_DYN_RES]   != LM32_NULL_PTR) res  = va[ADR_DYN_RES];
 
 
   writeLeNumberToBeBytes(b + (ptrdiff_t)TMSG_ID,  id);

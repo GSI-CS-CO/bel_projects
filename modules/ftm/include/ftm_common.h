@@ -350,8 +350,8 @@
 //
 // Timing Message
 #define ADR_DYN_ID         1
-#define ADR_DYN_PAR0       2
-#define ADR_DYN_PAR1       3
+#define ADR_DYN_PAR1       2
+#define ADR_DYN_PAR0       3
 #define ADR_DYN_TEF        4
 #define ADR_DYN_RES        5
 
