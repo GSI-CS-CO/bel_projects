@@ -463,6 +463,8 @@ uint32_t dmPrepCmdCommon(uint32_t blk, uint32_t prio, uint32_t checkEmptyQ, uint
   wrIdx        = (uint8_t)(wrIdxs >> (prio * 8));
   rdIdx        = (uint8_t)(rdIdxs >> (prio * 8));
 
+  //mprintf("debug: blk %d, blkaddr 0x%x, wrIdx %d, rdIdx %d %d\n", blk, blockAddr, wrIdx, rdIdx, prio);
+
   // check if Q is empty
   if (checkEmptyQ) {
     if (wrIdx != rdIdx) return DMUNIPZ_STATUS_DMQNOTEMPTY;
@@ -810,10 +812,10 @@ uint32_t wait4ECAEvent(uint32_t msTimeout, uint32_t *virtAcc, uint32_t *dryRunFl
           nextAction  = DMUNIPZ_ECADO_REQTK;
           *virtAcc    = evtIdLow & 0xf;  
           *dryRunFlag = (evtIdLow & 0x10) != 0;
-          dmData[REQBEAMA].dynpar0  = evtParamHigh;                  // address of block (slow wait with timeout)
-          dmData[REQBEAMA].dynpar1  = evtParamLow;                   // address of block (fast flex wait)
+          dmData[REQBEAMA].dynpar0  = evtParamLow;                   // address of block (slow wait with timeout)
+          dmData[REQBEAMA].dynpar1  = evtParamHigh;                  // address of block (fast flex wait)
           dmData[REQBEAMA].tef      = evtTef;                        // TEF field
-          dmData[REQBEAMB].dynpar0  = evtParamLow;                   // address of block (fast flex wait)
+          dmData[REQBEAMB].dynpar0  = evtParamHigh;                  // address of block (fast flex wait)
           dmData[REQBEAMB].dynpar1  = 0x0;
           dmData[REQBEAMB].tef      = evtTef;                        // TEF field
           DBPRINT3("dm-unipz: received ECA event request TK\n");
