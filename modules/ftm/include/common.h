@@ -100,12 +100,11 @@ enum class FwId { FWID_RAM_TOO_SMALL      = -1,
                   VERSION_REVISION_MUL    = 1};  
 
 
-namespace ECA {
-  //TODO import values from eca_regs.h
-  const uint32_t timeHiW = 0x18;
-  const uint32_t timeLoW = 0x1c;
+namespace CluTime {
+  const uint32_t timeHiW = 0x0;
+  const uint32_t timeLoW = 0x4;
   const uint64_t vendID  = 0x00000651;
-  const uint32_t devID   = 0xb2afc251;
+  const uint32_t devID   = 0x10041233;
 }
 
 

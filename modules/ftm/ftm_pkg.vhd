@@ -32,7 +32,7 @@ package ftm_pkg is
   function f_cluster_sdb(cores : natural; ramPerCore  : natural;  is_dm : boolean; has_diagnostics : boolean ) return t_sdb_record_array;
   function f_cluster_bridge(msi_slave : t_sdb_msi; cores : natural; ramPerCore  : natural;  is_dm : boolean; has_diagnostics : boolean ) return t_sdb_bridge;
 
-  constant c_static_cluster_slaves : natural := 3;                        
+  constant c_static_cluster_slaves : natural := 4;                        
   --sadly, we can't push generics into packages. declare in ftm_lm32_cluster.vhd
   --constant c_clu_slaves     : natural := c_static_cluster_slaves + g_cores; -- info rom, prioq ctrl, diag, rams
   constant c_clu_masters    : natural := 1;
@@ -41,6 +41,7 @@ package ftm_pkg is
   constant c_clu_info_rom   : natural := 0;
   constant c_clu_pq_ctrl    : natural := 1;
   constant c_clu_diag       : natural := 2;                    
+  constant c_clu_time   : natural := 3;
   constant c_msi_slave      : natural := 0;
 
 
@@ -240,6 +241,22 @@ package ftm_pkg is
     version       => x"00000001",
     date          => x"20131009",
     name          => "TAI-Time-8ns       ")));
+
+  constant c_clu_time_sdb : t_sdb_device := (
+    abi_class     => x"0000", -- undocumented device
+    abi_ver_major => x"01",
+    abi_ver_minor => x"01",
+    wbd_endian    => c_sdb_endian_big,
+    wbd_width     => x"7", -- 8/16/32-bit port granularity
+    sdb_component => (
+    addr_first    => x"0000000000000000",
+    addr_last     => x"0000000000000007",
+    product => (
+    vendor_id     => x"0000000000000651", -- GSI
+    device_id     => x"10041233",
+    version       => x"00000001",
+    date          => x"20180720",
+    name          => "Cluster-TAI-Time   ")));
   
   constant c_cpu_info_sdb : t_sdb_device := (
     abi_class     => x"0000", -- undocumented device
@@ -459,6 +476,8 @@ package body ftm_pkg is
     v_clu_req(c_clu_info_rom) := f_sdb_auto_device(c_cluster_info_sdb,        true);
     v_clu_req(c_clu_pq_ctrl)  := f_sdb_auto_device(c_pq_ctrl_sdb,             is_dm);
     v_clu_req(c_clu_diag)     := f_sdb_auto_device(c_dm_diag_ctrl_sdb,        has_diagnostics);
+    v_clu_req(c_clu_time)     := f_sdb_auto_device(c_clu_time_sdb,            is_dm);
+    
     for i in c_static_cluster_slaves to v_clu_req'length-1 loop
       v_clu_req(i) := f_sdb_auto_device( f_xwb_dpram_userlm32(ramPerCore), true);
     end loop;
