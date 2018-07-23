@@ -1,0 +1,30 @@
+ _dm-sched() 
+{
+    
+
+    local cur prev opts 
+  	COMPREPLY=()
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    prev="${COMP_WORDS[COMP_CWORD-1]}"
+    opts="add remove keep overwrite clear status dump chkrem"
+    
+
+    if [ $COMP_CWORD -eq 1 ]; then
+      dm_devlist=`history | cut -c 8- | grep -v "grep" | grep "\(dm\-\)[a-zA-Z0-9\-\-]*" | grep -o -E "(dev|tcp|udp)\/.[a-zA-Z0-9]*"`
+    	COMPREPLY=( $(compgen -W "${dm_devlist}" -- $cur) )
+    elif [ $COMP_CWORD -eq 2 ]; then
+    	COMPREPLY=( $(compgen -W "${opts}" -- $cur) )
+		elif [ $COMP_CWORD -eq 3 ]; then
+  	  case "$prev" in
+  	   	add|remove|keep|overwrite|chkrem)
+  	   		COMPREPLY=( $( compgen -f -X '!*.dot' -- $cur ) )
+    		;;
+  	    *)
+  	    ;;
+  	  esac
+  	fi
+
+    return 0
+   
+}
+complete -o filenames -F _dm-sched dm-sched
