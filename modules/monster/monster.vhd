@@ -33,6 +33,7 @@ use work.monster_pkg.all;
 use work.wr_fabric_pkg.all;
 use work.wishbone_pkg.all;
 use work.eca_pkg.all;
+use work.eca_internals_pkg.eca_wr_time;
 use work.tlu_pkg.all;
 use work.pcie_wb_pkg.all;
 use work.wr_altera_pkg.all;
@@ -458,8 +459,8 @@ architecture rtl of monster is
     c_devs_reset          => f_sdb_auto_device(c_arria_reset,                    true),
     c_devs_ebm            => f_sdb_auto_device(c_ebm_sdb,                        true),
     c_devs_tlu            => f_sdb_auto_device(c_tlu_sdb,                        not g_lm32_are_ftm),
-    c_devs_eca_ctl        => f_sdb_auto_device(c_eca_slave_sdb,                  true),
-    c_devs_eca_aq         => f_sdb_auto_device(c_eca_queue_slave_sdb,            true),
+    c_devs_eca_ctl        => f_sdb_auto_device(c_eca_slave_sdb,                  not g_lm32_are_ftm),
+    c_devs_eca_aq         => f_sdb_auto_device(c_eca_queue_slave_sdb,            not g_lm32_are_ftm),
     c_devs_eca_tlu        => f_sdb_auto_device(c_eca_tlu_slave_sdb,              not g_lm32_are_ftm),
     c_devs_eca_wbm        => f_sdb_auto_device(c_eca_ac_wbm_slave_sdb,           not g_lm32_are_ftm),
     c_devs_emb_cpu        => f_sdb_auto_device(c_eca_queue_slave_sdb,            not g_lm32_are_ftm),
@@ -1724,163 +1725,182 @@ end generate;
    s_triggers(g_gpio_in + g_gpio_inout + g_lvds_inout + g_lvds_in -1 downto g_gpio_in + g_gpio_inout) <= f_lvds_array_to_trigger_array(lvds_i(f_sub1(g_lvds_inout+g_lvds_in) downto 0));
   end generate;
   
-  genTlu : if not g_lm32_are_ftm generate
-  tlu : wr_tlu
-    generic map(
-      g_num_triggers => g_gpio_in + g_gpio_inout + g_lvds_inout + g_lvds_in,
-      g_fifo_depth   => g_tlu_fifo_size)
+  -- FTM - NO ECA --
+  genEcaTimeWoEca : if g_lm32_are_ftm generate
+
+    ftm_eca_time : eca_wr_time
     port map(
-      clk_ref_i      => clk_ref,
-      rst_ref_n_i    => rstn_ref,
-      clk_sys_i      => clk_sys,
-      rst_sys_n_i    => rstn_sys,
-      triggers_i     => s_triggers,
-      tm_tai_cyc_i   => ref_tai8ns,
-      ctrl_slave_i   => dev_bus_master_o(c_devs_tlu),
-      ctrl_slave_o   => dev_bus_master_i(c_devs_tlu),
-      irq_master_o   => dev_msi_slave_i (c_devs_tlu),
-      irq_master_i   => dev_msi_slave_o (c_devs_tlu));
-   
+      clk_i     => clk_ref,
+      rst_n_i   => rstn_ref,
+      tai_i     => tm_tai,
+      cycles_i  => tm_cycles,
+      time_o    => s_time);
+
+    -- Legacy 8ns time
+    ref_tai8ns <= "000" & s_time(63 downto 3);
+
+    top_msi_master_i(c_topm_eca_wbm) <= cc_dummy_slave_out; -- does not accept MSIs
    end generate;
 
-  
-  ecawb : eca_wb_event
-    port map(
-      w_clk_i    => clk_sys,
-      w_rst_n_i  => rstn_sys,
-      w_slave_i  => top_bus_master_o(c_tops_eca_event),
-      w_slave_o  => top_bus_master_i(c_tops_eca_event),
-      e_clk_i    => clk_ref,
-      e_rst_n_i  => rstn_ref,
-      e_stream_o => s_stream_i(0),
-      e_stall_i  => s_stall_o(0));
-  
+   genEcaStuff : if not g_lm32_are_ftm generate
+      tlu : wr_tlu
+        generic map(
+          g_num_triggers => g_gpio_in + g_gpio_inout + g_lvds_inout + g_lvds_in,
+          g_fifo_depth   => g_tlu_fifo_size)
+        port map(
+          clk_ref_i      => clk_ref,
+          rst_ref_n_i    => rstn_ref,
+          clk_sys_i      => clk_sys,
+          rst_sys_n_i    => rstn_sys,
+          triggers_i     => s_triggers,
+          tm_tai_cyc_i   => ref_tai8ns,
+          ctrl_slave_i   => dev_bus_master_o(c_devs_tlu),
+          ctrl_slave_o   => dev_bus_master_i(c_devs_tlu),
+          irq_master_o   => dev_msi_slave_i (c_devs_tlu),
+          irq_master_i   => dev_msi_slave_o (c_devs_tlu));
+       
 
-  genEcatlu : if not g_lm32_are_ftm generate 
-  ecatlu : eca_tlu
-    generic map(
-      g_inputs => c_tlu_io)
-    port map(
-      c_clk_i    => clk_sys,
-      c_rst_n_i  => rstn_sys,
-      c_slave_i  => dev_bus_master_o(c_devs_eca_tlu),
-      c_slave_o  => dev_bus_master_i(c_devs_eca_tlu),
-      a_clk_i    => clk_ref,
-      a_rst_n_i  => rstn_ref,
-      a_time_i   => s_time,
-      a_gpio_i   => s_tlu_io,
-      a_stream_o => s_stream_i(1),
-      a_stall_i  => s_stall_o(1));
 
-   end generate;
+      
+      ecawb : eca_wb_event
+        port map(
+          w_clk_i    => clk_sys,
+          w_rst_n_i  => rstn_sys,
+          w_slave_i  => top_bus_master_o(c_tops_eca_event),
+          w_slave_o  => top_bus_master_i(c_tops_eca_event),
+          e_clk_i    => clk_ref,
+          e_rst_n_i  => rstn_ref,
+          e_stream_o => s_stream_i(0),
+          e_stall_i  => s_stall_o(0));
+      
 
-  eca : wr_eca
-    generic map(
-      g_channel_types  => c_channel_types,
-      g_num_streams    => c_num_streams,
-      g_num_ios        => c_eca_io,
-      g_log_table_size => 8,
-      g_log_queue_size => 8) -- any smaller and g_log_latency must be decreased
-    port map(
-      c_clk_i     => clk_sys,
-      c_rst_n_i   => rstn_sys,
-      c_slave_i   => dev_bus_master_o(c_devs_eca_ctl),
-      c_slave_o   => dev_bus_master_i(c_devs_eca_ctl),
-      a_clk_i     => clk_ref,
-      a_rst_n_i   => rstn_ref,
-      a_tai_i     => tm_tai,
-      a_cycles_i  => tm_cycles,
-      a_time_o    => s_time,
-      a_stream_i  => s_stream_i,
-      a_stall_o   => s_stall_o,
-      a_stall_i   => s_stall_i,
-      a_channel_o => s_channel_o,
-      a_io_o      => s_eca_io,
-      i_clk_i     => clk_sys,
-      i_rst_n_i   => rstn_sys,
-      i_master_i  => dev_msi_slave_o(c_devs_eca_ctl),
-      i_master_o  => dev_msi_slave_i(c_devs_eca_ctl));
+      
+      ecatlu : eca_tlu
+        generic map(
+          g_inputs => c_tlu_io)
+        port map(
+          c_clk_i    => clk_sys,
+          c_rst_n_i  => rstn_sys,
+          c_slave_i  => dev_bus_master_o(c_devs_eca_tlu),
+          c_slave_o  => dev_bus_master_i(c_devs_eca_tlu),
+          a_clk_i    => clk_ref,
+          a_rst_n_i  => rstn_ref,
+          a_time_i   => s_time,
+          a_gpio_i   => s_tlu_io,
+          a_stream_o => s_stream_i(1),
+          a_stall_i  => s_stall_o(1));
 
-  -- Legacy 8ns time
-  ref_tai8ns <= "000" & s_time(63 downto 3);
+      
 
-  -- GPIO output from the ECA
-  gpio1 : if c_eca_gpio > 0 generate
-    gpio : for i in 0 to c_eca_gpio-1 generate
-      s_gpio_src_eca(i) <= s_eca_io(i)(0);
-    end generate;
-  end generate;
 
-  -- LVDS output from the ECA
-  lvds1 : if c_eca_lvds > 0 generate
-    lvds : for i in 0 to c_eca_lvds-1 generate
-      bits : for b in 0 to 7 generate -- 0 goes first for ECA, 7 goes first for serdes
-        lvds_dat_fr_eca_chan(i)(b) <= s_eca_io(i+c_eca_gpio)(7-b);
+      eca : wr_eca
+        generic map(
+          g_channel_types  => c_channel_types,
+          g_num_streams    => c_num_streams,
+          g_num_ios        => c_eca_io,
+          g_log_table_size => 8,
+          g_log_queue_size => 8) -- any smaller and g_log_latency must be decreased
+        port map(
+          c_clk_i     => clk_sys,
+          c_rst_n_i   => rstn_sys,
+          c_slave_i   => dev_bus_master_o(c_devs_eca_ctl),
+          c_slave_o   => dev_bus_master_i(c_devs_eca_ctl),
+          a_clk_i     => clk_ref,
+          a_rst_n_i   => rstn_ref,
+          a_tai_i     => tm_tai,
+          a_cycles_i  => tm_cycles,
+          a_time_o    => s_time,
+          a_stream_i  => s_stream_i,
+          a_stall_o   => s_stall_o,
+          a_stall_i   => s_stall_i,
+          a_channel_o => s_channel_o,
+          a_io_o      => s_eca_io,
+          i_clk_i     => clk_sys,
+          i_rst_n_i   => rstn_sys,
+          i_master_i  => dev_msi_slave_o(c_devs_eca_ctl),
+          i_master_o  => dev_msi_slave_i(c_devs_eca_ctl));
+
+      -- Legacy 8ns time
+      ref_tai8ns <= "000" & s_time(63 downto 3);
+
+      -- GPIO output from the ECA
+      gpio1 : if c_eca_gpio > 0 generate
+        gpio : for i in 0 to c_eca_gpio-1 generate
+          s_gpio_src_eca(i) <= s_eca_io(i)(0);
+        end generate;
       end generate;
-    end generate;
-  end generate;
 
-  -- GPIO input to the TLU
-  gpi1 : if c_tlu_gpio > 0 generate
-    gpio : for i in 0 to c_tlu_gpio-1 generate
-      s_tlu_io(i) <= (others => gpio_i(i));
-    end generate;
-  end generate;
-
-  -- LVDS input to the TLU
-  lvd1 : if c_tlu_lvds > 0 generate
-    lvds : for i in 0 to c_tlu_lvds-1 generate
-      bits : for b in 0 to 7 generate -- 0 goes first for ECA
-        s_tlu_io(i+c_tlu_gpio)(b) <= lvds_i(i)(7-b);
+      -- LVDS output from the ECA
+      lvds1 : if c_eca_lvds > 0 generate
+        lvds : for i in 0 to c_eca_lvds-1 generate
+          bits : for b in 0 to 7 generate -- 0 goes first for ECA, 7 goes first for serdes
+            lvds_dat_fr_eca_chan(i)(b) <= s_eca_io(i+c_eca_gpio)(7-b);
+          end generate;
+        end generate;
       end generate;
-    end generate;
-  end generate;
 
-  c0 : eca_queue
-    generic map(
-      g_queue_id  => 0)
-    port map(
-      a_clk_i     => clk_ref,
-      a_rst_n_i   => rstn_ref,
-      a_stall_o   => s_stall_i(0),
-      a_channel_i => s_channel_o(0),
-      q_clk_i     => clk_sys,
-      q_rst_n_i   => rstn_sys,
-      q_slave_i   => dev_bus_master_o(c_devs_eca_aq),
-      q_slave_o   => dev_bus_master_i(c_devs_eca_aq));
+      -- GPIO input to the TLU
+      gpi1 : if c_tlu_gpio > 0 generate
+        gpio : for i in 0 to c_tlu_gpio-1 generate
+          s_tlu_io(i) <= (others => gpio_i(i));
+        end generate;
+      end generate;
 
+      -- LVDS input to the TLU
+      lvd1 : if c_tlu_lvds > 0 generate
+        lvds : for i in 0 to c_tlu_lvds-1 generate
+          bits : for b in 0 to 7 generate -- 0 goes first for ECA
+            s_tlu_io(i+c_tlu_gpio)(b) <= lvds_i(i)(7-b);
+          end generate;
+        end generate;
+      end generate;
+
+      c0 : eca_queue
+        generic map(
+          g_queue_id  => 0)
+        port map(
+          a_clk_i     => clk_ref,
+          a_rst_n_i   => rstn_ref,
+          a_stall_o   => s_stall_i(0),
+          a_channel_i => s_channel_o(0),
+          q_clk_i     => clk_sys,
+          q_rst_n_i   => rstn_sys,
+          q_slave_i   => dev_bus_master_o(c_devs_eca_aq),
+          q_slave_o   => dev_bus_master_i(c_devs_eca_aq));
+
+      
+      top_msi_master_i(c_topm_eca_wbm) <= cc_dummy_slave_out; -- does not accept MSIs
+
+      c1: eca_ac_wbm
+        generic map(
+          g_entries  => 16,
+          g_ram_size => 128)
+        port map(
+          clk_ref_i   => clk_ref,
+          rst_ref_n_i => rstn_ref,
+          channel_i   => s_channel_o(1),
+          clk_sys_i   => clk_sys,
+          rst_sys_n_i => rstn_sys,
+          slave_i     => dev_bus_master_o(c_devs_eca_wbm),
+          slave_o     => dev_bus_master_i(c_devs_eca_wbm),
+          master_o    => top_bus_slave_i(c_topm_eca_wbm),
+          master_i    => top_bus_slave_o(c_topm_eca_wbm));
+      
+
+
+      c2 : eca_queue
+        generic map(
+          g_queue_id  => 2)
+        port map(
+          a_clk_i     => clk_ref,
+          a_rst_n_i   => rstn_ref,
+          a_stall_o   => s_stall_i(2),
+          a_channel_i => s_channel_o(2),
+          q_clk_i     => clk_sys,
+          q_rst_n_i   => rstn_sys,
+          q_slave_i   => dev_bus_master_o(c_devs_emb_cpu),
+          q_slave_o   => dev_bus_master_i(c_devs_emb_cpu));
   
-  top_msi_master_i(c_topm_eca_wbm) <= cc_dummy_slave_out; -- does not accept MSIs
-  ecq_wbm : if not g_lm32_are_ftm generate
-  c1: eca_ac_wbm
-    generic map(
-      g_entries  => 16,
-      g_ram_size => 128)
-    port map(
-      clk_ref_i   => clk_ref,
-      rst_ref_n_i => rstn_ref,
-      channel_i   => s_channel_o(1),
-      clk_sys_i   => clk_sys,
-      rst_sys_n_i => rstn_sys,
-      slave_i     => dev_bus_master_o(c_devs_eca_wbm),
-      slave_o     => dev_bus_master_i(c_devs_eca_wbm),
-      master_o    => top_bus_slave_i(c_topm_eca_wbm),
-      master_i    => top_bus_slave_o(c_topm_eca_wbm));
-  end generate;
-
-  ecq_lm32 : if not g_lm32_are_ftm generate
-  c2 : eca_queue
-    generic map(
-      g_queue_id  => 2)
-    port map(
-      a_clk_i     => clk_ref,
-      a_rst_n_i   => rstn_ref,
-      a_stall_o   => s_stall_i(2),
-      a_channel_i => s_channel_o(2),
-      q_clk_i     => clk_sys,
-      q_rst_n_i   => rstn_sys,
-      q_slave_i   => dev_bus_master_o(c_devs_emb_cpu),
-      q_slave_o   => dev_bus_master_i(c_devs_emb_cpu));
   end generate;  
 
   eca_scu : if g_en_scubus generate

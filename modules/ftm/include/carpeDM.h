@@ -42,7 +42,7 @@ private:
   Socket ebs;
   Device ebd;  
   std::vector<struct sdb_device> cpuDevs;  
-  std::vector<struct sdb_device> ecaDevs;
+  std::vector<struct sdb_device> cluTimeDevs;
   std::vector<struct sdb_device> diagDevs; 
 
   int cpuQty = -1;

@@ -309,8 +309,8 @@ bool CarpeDM::connect(const std::string& en, bool simulation, bool test) {
     try { 
       ebs.open(0, EB_DATAX|EB_ADDRX);
       ebd.open(ebs, ebdevname.c_str(), EB_DATAX|EB_ADDRX, 3);
-      ebd.sdb_find_by_identity(ECA::vendID, ECA::devID, ecaDevs);
-      if (ecaDevs.size() < 1) throw std::runtime_error("Could not find ECA on DM (needed for WR time). Something is wrong\n");
+      ebd.sdb_find_by_identity(CluTime::vendID, CluTime::devID, cluTimeDevs);
+      if (cluTimeDevs.size() < 1) throw std::runtime_error("Could not find Cluster Time Module on DM (needed for WR time). Something is wrong\n");
  
       ebd.sdb_find_by_identity(SDB_VENDOR_GSI,SDB_DEVICE_DIAG, diagDevs);
 
@@ -357,7 +357,7 @@ bool CarpeDM::connect(const std::string& en, bool simulation, bool test) {
     } catch (etherbone::exception_t const& ex) {
       throw std::runtime_error("Etherbone " + std::string(ex.method) + " returned " + std::string(eb_status(ex.status)) + "\n" );
     } catch(...) {
-      throw std::runtime_error("Could not find CPUs running valid DM Firmware\n" );
+      throw;// std::runtime_error("Could not find CPUs running valid DM Firmware\n" );
     }
 
     if(verbose) {
@@ -816,7 +816,7 @@ void CarpeDM::showCpuList() {
 
 
   uint64_t CarpeDM::getDmWrTime() {
-    /* get time from ECA */
+    /* get time from Cluster Time Module (ECA Time with or wo ECA) */
     uint64_t wrTime;
 
     if (sim) {
@@ -829,26 +829,25 @@ void CarpeDM::showCpuList() {
 
     }
   
-    eb_data_t    nsHi0, nsLo, nsHi1;
+    eb_data_t    nsHi, nsLo;
     Cycle cyc;
 
 
-    uint32_t ecaAddr = ecaDevs[0].sdb_component.addr_first;
+    uint32_t cluTimeAddr = cluTimeDevs[0].sdb_component.addr_first;
     
-    do {
+    
       try {
         cyc.open(ebd);
-        cyc.read( ecaAddr + ECA::timeHiW, EB_BIG_ENDIAN|EB_DATA32, &nsHi0);
-        cyc.read( ecaAddr + ECA::timeLoW, EB_BIG_ENDIAN|EB_DATA32, &nsLo);
-        cyc.read( ecaAddr + ECA::timeHiW, EB_BIG_ENDIAN|EB_DATA32, &nsHi1);
+        cyc.read( cluTimeAddr + CluTime::timeHiW, EB_BIG_ENDIAN|EB_DATA32, &nsHi);
+        cyc.read( cluTimeAddr + CluTime::timeLoW, EB_BIG_ENDIAN|EB_DATA32, &nsLo);
         cyc.close();
       } catch (etherbone::exception_t const& ex) {
         throw std::runtime_error("Etherbone " + std::string(ex.method) + " returned " + std::string(eb_status(ex.status)) + "\n" );
       }
-    } while (nsHi0 != nsHi1);
+    
   
     /* time */
-    wrTime = (uint64_t)nsHi0 << 32;
+    wrTime = (uint64_t)nsHi << 32;
     wrTime = wrTime + (uint64_t)nsLo;
   
 

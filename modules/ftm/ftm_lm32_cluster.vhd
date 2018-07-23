@@ -135,8 +135,11 @@ architecture rtl of ftm_lm32_cluster is
          r_rst_lm32_n0,
          r_rst_lm32_n1    : std_logic_vector(g_cores-1 downto 0);            
   signal s_clu_info       : t_wishbone_master_in;
+  signal s_clu_time       : t_wishbone_master_in;
   signal stall_diag       : std_logic_vector(g_cores-1 downto 0); 
   signal cycle_diag       : std_logic_vector(g_cores-1 downto 0);
+  signal r_tai_8ns_HI : std_logic_vector(31 downto 0);
+  signal r_tai_8ns_LO, r_time_freeze_LO : std_logic_vector(31 downto 0);
 
 begin
 
@@ -351,7 +354,40 @@ begin
 
   clu_cb_masterport_in(c_clu_info_rom) <= s_clu_info;
 
-  
+  altEcaTime : if(g_is_dm) generate
+
+    sys_time : process(clk_ref_i)
+    variable vIdx : natural;
+    begin
+      vIdx := c_lm32_sys_time;
+      if rising_edge(clk_ref_i) then
+        if(rst_ref_n_i = '0') then
+            s_clu_time <= ('0', '0', '0', '0', '0', (others => '0'));
+        else
+           -- rom is an easy solution for a device that never stalls:
+           s_clu_time.ack <= clu_cb_masterport_out(vIdx).cyc and clu_cb_masterport_out(vIdx).stb and not clu_cb_masterport_out(vIdx).we;
+           s_clu_time.err <= clu_cb_masterport_out(vIdx).cyc and clu_cb_masterport_out(vIdx).stb and     clu_cb_masterport_out(vIdx).we;
+           s_clu_time.dat <= (others => '0');
+           
+           r_tai_8ns_HI <= tm_tai8ns_i(63 downto 32);  --register hi and low to reduce load on fan out       
+           r_tai_8ns_LO <= tm_tai8ns_i(31 downto 0);
+    
+           if(clu_cb_masterport_out(vIdx).cyc = '1' and clu_cb_masterport_out(vIdx).stb = '1') then
+              if(clu_cb_masterport_out(vIdx).adr(2) = '0') then 
+                 s_clu_time.dat   <= r_tai_8ns_HI;
+                 r_time_freeze_LO <= r_tai_8ns_LO;
+              else  
+                 s_clu_time.dat   <= r_time_freeze_LO;
+              end if;
+           end if;
+         end if;   
+      end if;
+    end process;  
+
+    clu_cb_masterport_in(c_clu_time) <= s_clu_time;
+
+  end generate;
+
   sync_individual_resets : process(clk_ref_i)
   begin
     -- no need to sync vector, just individual bits.
