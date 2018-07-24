@@ -10,7 +10,7 @@
     
 
     if [ $COMP_CWORD -eq 1 ]; then
-      dm_devlist=`history | cut -c 8- | grep -v "grep" | grep "\(dm\-\)[a-zA-Z0-9\-\-]*" | grep -o -E "(dev|tcp|udp)\/.[a-zA-Z0-9]*"`
+      dm_devlist=`history | cut -c 8- | grep -v "grep" | grep "\(dm\-\)[a-zA-Z0-9\-\-]*" | grep -o -E "(dev|tcp|udp)\/.[a-zA-Z0-9\_\-\.]*"`
     	COMPREPLY=( $(compgen -W "${dm_devlist}" -- $cur) )
     elif [ $COMP_CWORD -eq 2 ]; then
     	COMPREPLY=( $(compgen -W "${opts}" -- $cur) )

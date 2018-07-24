@@ -1,12 +1,13 @@
+#!/bin/bash
 
-_get-eb-dev() 
+_get_eb_dev() 
 {
 	local dm_devlist
-	dm_devlist=`history | cut -c 8- | grep -v "grep" | grep "\(eb\-\)[a-zA-Z0-9\-\-]*" | grep -o -E "(dev|tcp|udp)\/.[a-zA-Z0-9]*"`
+	dm_devlist=`history | cut -c 8- | grep -v "grep" | grep "\(eb\-\)[a-zA-Z0-9\-\_]*" | grep -o -E "(dev|tcp|udp)\/.[a-zA-Z0-9\_\-\.]*"`
 
 	echo $dm_devlist
 }
- _eb-tools() 
+ _eb_tools() 
 {
     
 
@@ -17,7 +18,7 @@ _get-eb-dev()
     
 
     if [ $COMP_CWORD -eq 1 ]; then
-    	dm_devlist=$(_get-eb-dev)
+    	dm_devlist=$(_get_eb_dev);
     	COMPREPLY=( $(compgen -W "${dm_devlist}" -- $cur) )
    	fi
 
@@ -25,7 +26,7 @@ _get-eb-dev()
    
 }
 
- _eb-flash() 
+ _eb_flash() 
 {
     local cur prev dm_devlist
   	COMPREPLY=()
@@ -33,7 +34,7 @@ _get-eb-dev()
     prev="${COMP_WORDS[COMP_CWORD-1]}"
     
     if [ $COMP_CWORD -eq 1 ]; then
-    	dm_devlist=$(_get-eb-dev)
+    	dm_devlist=$(_get_eb_dev)
     	COMPREPLY=( $(compgen -W "${dm_devlist}" -- $cur) )
 		elif [ $COMP_CWORD -eq 2 ]; then
     	COMPREPLY=( $( compgen -f -X '!*.rpd' -- $cur ) )
@@ -43,9 +44,9 @@ _get-eb-dev()
    
 }
 
- _eb-fwload() 
+ _eb_flash() 
 {
-		_get-eb-dev    
+		_get_eb_dev    
 
     local cur prev dm_devlist
   	COMPREPLY=()
@@ -53,7 +54,7 @@ _get-eb-dev()
     prev="${COMP_WORDS[COMP_CWORD-1]}"
     
     if [ $COMP_CWORD -eq 1 ]; then
-    	dm_devlist=$(_get-eb-dev)
+    	dm_devlist=$(_get_eb_dev)
     	COMPREPLY=( $(compgen -W "${dm_devlist}" -- $cur) )
 		elif [ $COMP_CWORD -eq 2 ]; then
     	COMPREPLY=()
@@ -67,12 +68,12 @@ _get-eb-dev()
    
 }
 
-complete -F _eb-tools eb-ls
-complete -F _eb-tools eb-info
-complete -F _eb-tools eb-console
-complete -F _eb-tools eb-mon
-complete -F _eb-tools eb-reset
+complete -F _eb_tools eb-ls
+complete -F _eb_tools eb-info
+complete -F _eb_tools eb-console
+complete -F _eb_tools eb-mon
+complete -F _eb_tools eb-reset
 
-complete -o filenames -F _eb-flash eb-flash
-complete -o filenames -F _eb-fwload eb-fwload
+complete -o filenames -F _eb_flash eb_flash
+complete -o filenames -F _eb_flash eb_flash
 
