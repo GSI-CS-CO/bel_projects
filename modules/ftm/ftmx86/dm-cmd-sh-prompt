@@ -20,7 +20,7 @@ __dm_cmd_choice=''
     	dm_devlist=`history | cut -c 8- | grep -v "grep" | grep "\(dm\-\)[a-zA-Z0-9\-\-]*" | grep -o -E "(dev|tcp|udp)\/.[a-zA-Z0-9]*"`
     	COMPREPLY=( $(compgen -W "${dm_devlist}" -- $cur) )
     elif [ $COMP_CWORD -eq 2 ]; then
-    	opts="halt start abort stop flow startpattern abortpattern stoppattern flowpattern staticflushpattern queue hex origin "
+    	opts="halt start abort stop flow flush noop startpattern abortpattern stoppattern flowpattern staticflushpattern queue hex origin diag cfghwdiag cfgcpudiag cleardiag clearhwdiag clearcpudiag starthwdiag stophwdiag"
   		COMPREPLY=( $(compgen -W "${opts}" -- $cur) )
   		__dm_cmd_choice="${COMPREPLY}"
   		if [ -z "$__dm_schedule_dump" ]; then
@@ -34,16 +34,17 @@ __dm_cmd_choice=''
 			__dm_schedule_dump='' # clear schedule dump for next call
   		COMPREPLY=( $(compgen -W "${dm_nodes}" -- $cur) )	
   	  case "$prev" in
-  	   	startpattern|stoppattern|abortpattern|flowpattern|staticflushpattern)
+  	   	startpattern|stoppattern|abortpattern|flowpattern|flushpattern|staticflushpattern)
   	   		COMPREPLY=( $(compgen -W "${__dm_patterns}" -- $cur) )
   	    ;;
-  	  	flow|stop|queue)
+  	  	flow|stop|flush|staticflush|noop|queue)
   	    	COMPREPLY=( $(compgen -W "${dm_blocks}" -- $cur) )
   	    ;;
   	   	hex)
   	    	COMPREPLY=( $(compgen -W "${dm_nodes}" -- $cur) )
   	    ;;   
   	    *)
+          COMPREPLY=()
   	    ;;
   	  esac
   	elif [ $COMP_CWORD -eq 4 ]; then
@@ -55,7 +56,8 @@ __dm_cmd_choice=''
   	     	COMPREPLY=( $(compgen -W "${__dm_nodes}" -- $cur) )
   	    ;;
   	   *)
-  	     ;;
+        COMPREPLY=()
+  	    ;;
   	  esac
   	fi
 
