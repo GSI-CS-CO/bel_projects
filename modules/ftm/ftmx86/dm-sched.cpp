@@ -18,6 +18,7 @@ static void help(const char *program) {
   fprintf(stderr, "\n");
   fprintf(stderr, "\nCommands:\n");
   fprintf(stderr, "  status                    Gets current DM schedule state (default) \n");
+  fprintf(stderr, "  dump                      Gets current DM schedule\n");
   fprintf(stderr, "  clear                     Clear DM, existing nodes will be erased. \n");
   fprintf(stderr, "  add        <.dot file>    Add a Schedule from input file to DM, nodes with identical hashes (names) on the DM will be ignored.\n");
   fprintf(stderr, "  overwrite  <.dot file>    Overwrites all Schedules on DM with the one in the input file, already existing nodes on the DM will be erased. \n");
@@ -143,6 +144,7 @@ int main(int argc, char* argv[]) {
       if (cmd == "remove")    { cdm.download(); cdm.removeDotFile(inputFilename, force); cmdValid = true;}
       if (cmd == "keep")      { cdm.download(); cdm.keepDotFile(inputFilename, force); cmdValid = true;}
       if (cmd == "status")    { cdm.downloadDotFile(outputFilename, strip); cmdValid = true; reqStatus = true;}
+      if (cmd == "dump")      { cdm.download(); std::cout << cdm.createDot(cdm.getDownGraph(), strip) << std::endl; cmdValid = true; reqStatus = false; update=false;}
       if (cmd == "chkrem")    {
         cdm.download();
 
