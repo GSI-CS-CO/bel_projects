@@ -995,16 +995,32 @@ uint32_t requestBeam(uint32_t msTimeout)
 } // requestBeam
 
 
-uint32_t releaseBeam()
+uint32_t releaseBeam(uint32_t msTimeout)
 {
   int16_t          status;       // status MIL device bus operation
+  ReadFromPZU_Type readPZUData;  // Modulbus SIS, I/O-Modul 3, Bits 0..15
+  uint64_t         timeoutT;     // when to time out
 
   // send request to modulbus I/O (UNIPZ)
   writePZUData.bits.SIS_Request  = false;
   writePZUData.bits.ReqNoBeam    = false;
   if ((status = writeToPZU(IFB_ADDRESS_SIS, IO_MODULE_1, writePZUData.uword)) != MIL_STAT_OK) return DMUNIPZ_STATUS_DEVBUSERROR;
- 
-  return DMUNIPZ_STATUS_OK;
+
+  usleep(20000); // as code below does not work, just wait for 20ms to be sure UNIPZ realized that we have taken back the beam request
+
+  // query UNIPZ for '!(rerq Ack)'
+  
+  /*  the code does not seem to work. It seems that SIS_Req_Ack is only reset once TK release is sent chk!!!
+
+  timeoutT = getSysTime() + (uint64_t)msTimeout * (uint64_t)1000000;
+
+  while (getSysTime() < timeoutT) {                                                                                                    // check for timeout
+    if ((status = readFromPZU(IFB_ADDRESS_SIS, IO_MODULE_3, &(readPZUData.uword))) != MIL_STAT_OK) return DMUNIPZ_STATUS_DEVBUSERROR;   
+    if (readPZUData.bits.SIS_Req_Ack == false)                                                     return DMUNIPZ_STATUS_OK;           
+  } // while not timed out
+  */
+
+  return DMUNIPZ_STATUS_RELBEAMFAILED;
 } // releaseBeam
 
  
@@ -1240,7 +1256,7 @@ void cmdHandler(uint32_t *reqState, uint32_t *statusTransfer) // handle commands
       DBPRINT1("dm-unipz: received cmd %d, forcing release of TK request\n", cmd);
       break;
     case DMUNIPZ_CMD_RELEASEBEAM :
-      releaseBeam(); // force release of beam request indpendently of state or status
+      releaseBeam(uniTimeout); // force release of beam request indpendently of state or status
       *statusTransfer = *statusTransfer |  DMUNIPZ_TRANS_RELBEAM;   
       DBPRINT1("dm-unipz: received cmd %d, forcing release of beam request\n", cmd);
       break;
@@ -1481,7 +1497,7 @@ uint32_t doActionOperation(uint32_t *statusTransfer,          // status bits ind
       *dtStart     = tCmdFlex - getSysTime();                                      // diagnostics: we want to know how much of flexoffset for Data Masteris left (just to avoid the discussion), its a nice feature too
 
       //---- release beam and un-arm MIL piggy
-      releaseBeam();                                                               // release beam request at UNIPZ
+      releaseBeam(uniTimeout);                                                     // release beam request at UNIPZ
       checkClearReqNotOk(uniTimeout);                                              // check and possibly clear 'req not ok' flag at UNIPZ
       disableFilterEvtMil(pMILPiggy);                                              // disable filter @ MIL piggy to avoid accumulation of junk
 
