@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 25-April-2015
  ********************************************************************************************/
-#define DMUNIPZ_FW_VERSION 0x000402                                   // make this consistent with makefile
+#define DMUNIPZ_FW_VERSION 0x000403                                   // make this consistent with makefile
 
 /* standard includes */
 #include <stdio.h>
@@ -1449,7 +1449,7 @@ uint32_t doActionOperation(uint32_t *statusTransfer,          // status bits ind
           if (status == DMUNIPZ_STATUS_TIMEDOUT) status = DMUNIPZ_STATUS_WAIT4UNIEVENT; 
         } // else wait4MilEvent
       } // if request beam
-      else *dtBreq = getSysTime() - deadline;                                      // error: beam request at UNIPZ failed; diagnostics: time difference between CMD_UNI_BREQ and reply from UNIPZ                          
+      else *dtBreq = getSysTime() - deadline;                                      // error: beam request at UNIPZ failed; diagnostics: time difference between CMD_UNI_BREQ and reply from UNIPZ
 
       //---- analyse the situation 
       if (flagMilEvtValid) {                                                                  
@@ -1525,8 +1525,10 @@ uint32_t doActionOperation(uint32_t *statusTransfer,          // status bits ind
       else                 *dtTransfer = deadline - tTkreq;                        // we got a valid timestamp
 
       if (status == DMUNIPZ_STATUS_OK) {                                           // we don't want to overwrite an already existing bad status
-        // check if time difference is not reasonable. It must be within a small window around the value DMUNIPZ_OFFSETINJECT.
-        if ((*dtSync < (uint64_t)(DMUNIPZ_OFFSETINJECT - DMUNIPZ_MATCHWINDOW)) || (*dtSync > (uint64_t)(DMUNIPZ_OFFSETINJECT + DMUNIPZ_MATCHWINDOW))) status = DMUNIPZ_STATUS_BADSYNC;
+        if (flagTkReq) {                                                           // only do this test, if TK is reserved (if TK is not reserved, synchronization with UNILAC is not included in the schedule)
+          // check if time difference is not reasonable. It must be within a small window around the value DMUNIPZ_OFFSETINJECT.
+          if ((*dtSync < (uint64_t)(DMUNIPZ_OFFSETINJECT - DMUNIPZ_MATCHWINDOW)) || (*dtSync > (uint64_t)(DMUNIPZ_OFFSETINJECT + DMUNIPZ_MATCHWINDOW))) status = DMUNIPZ_STATUS_BADSYNC;
+        } // if flagTKReq
       } // if status
 
       if (status == DMUNIPZ_STATUS_OK) {                                           // we don't want to overwrite an already existing bad status
