@@ -3,7 +3,7 @@
  *
  *  created : 2017
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 19-Jul-2018
+ *  version : 26-Jul-2018
  *
  *  lm32 program for gateway between UNILAC Pulszentrale and FAIR-style Data Master
  * 
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 25-April-2015
  ********************************************************************************************/
-#define DMUNIPZ_FW_VERSION 0x000401                                   // make this consistent with makefile
+#define DMUNIPZ_FW_VERSION 0x000402                                   // make this consistent with makefile
 
 /* standard includes */
 #include <stdio.h>
