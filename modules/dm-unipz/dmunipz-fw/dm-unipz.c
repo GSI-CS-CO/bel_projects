@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 25-April-2015
  ********************************************************************************************/
-#define DMUNIPZ_FW_VERSION 0x000403                                   // make this consistent with makefile
+#define DMUNIPZ_FW_VERSION 0x000404                                   // make this consistent with makefile
 
 /* standard includes */
 #include <stdio.h>
@@ -49,16 +49,22 @@
 #include "ebm.h"
 #include "aux.h"
 #include "dbg.h"
-#include "../../../top/gsi_scu/scu_mil.h"                             // register layout of 'MIL macro'
-#include "../../../ip_cores/wr-cores/modules/wr_eca/eca_queue_regs.h" // register layout ECA queue
-#include "../../../ip_cores/wr-cores/modules/wr_eca/eca_regs.h"       // register layout ECA control
-#include "../../oled_display/oled_regs.h"                             // register layout of OLED display
-#include "../../../ip_cores/saftlib/drivers/eca_flags.h"              // definitions for ECA queue
-#include "../../ftm/include/ftm_common.h"                             // defs and regs for data master
-#include "../../../syn/gsi_pexarria5/ftm/ftm_shared_mmap.h"           // info on shared map for data master lm32 cluster
+#include "../../../top/gsi_scu/scu_mil.h"                               // register layout of 'MIL macro'
+#include "../../../ip_cores/wr-cores/modules/wr_eca/eca_queue_regs.h"   // register layout ECA queue
+#include "../../../ip_cores/wr-cores/modules/wr_eca/eca_regs.h"         // register layout ECA control
+/*                                                                      
+#include "../../../ip_cores/wr-cores/modules/wr_pps_gen/pps_gen_regs.h" // useless register layout, I can't handle this wbgen stuff here
+*/
+#define WR_PPS_GEN_ESCR         0x1c                                    // External Sync Control Register
+#define WR_PPS_GEN_ESCR_MASK    0xC                                     // bit 2: PPS valid, bit 3: timestamp valid
 
-#include "dm-unipz.h"                                                 // defs
-#include "dm-unipz_smmap.h"                                           // shared memory map for communication via Wishbone
+#include "../../oled_display/oled_regs.h"                               // register layout of OLED display
+#include "../../../ip_cores/saftlib/drivers/eca_flags.h"                // definitions for ECA queue
+#include "../../ftm/include/ftm_common.h"                               // defs and regs for data master
+#include "../../../syn/gsi_pexarria5/ftm/ftm_shared_mmap.h"             // info on shared map for data master lm32 cluster
+
+#include "dm-unipz.h"                                                   // defs
+#include "dm-unipz_smmap.h"                                             // shared memory map for communication via Wishbone
 
 const char* dmunipz_status_text(uint32_t code) {
   switch (code) {
@@ -92,6 +98,8 @@ const char* dmunipz_status_text(uint32_t code) {
   case DMUNIPZ_STATUS_BADSCHEDULEA     : return "bad sched ";
   case DMUNIPZ_STATUS_BADSCHEDULEB     : return "evt unexpt";
   case DMUNIPZ_STATUS_INVALIDBLKADDR   : return "invld addr";
+  case DMUNIPZ_STATUS_WRBADSYNC        : return "WR !TrackP";
+  case DMUNIPZ_STATUS_AUTORECOVERY     : return "Recovery!!";
   default                              : return "undef err ";
   }
 }
@@ -169,6 +177,7 @@ uint64_t SHARED dummy = 0;
 
 // global variables 
 volatile uint32_t *pECAQ;               // WB address of ECA queue
+volatile uint32_t *pPPSGen;             // WB address of WR PPS gen
 volatile uint32_t *pMILPiggy;           // WB address of MIL device bus (MIL piggy)
 volatile uint32_t *pOLED;               // WB address of OLED
 volatile uint32_t *pShared;             // pointer to begin of shared memory region                              
@@ -632,6 +641,18 @@ void dmChangeBlock(uint32_t blk)     // alter a block within the Data Master on-
 } // dmChangeBlock
 
 
+uint32_t wrCheckSyncState() //check status of White Rabbit (link up, tracking)
+{
+  uint32_t syncState;
+
+  syncState =  *(pPPSGen + (WR_PPS_GEN_ESCR >> 2));                         // read status
+  syncState = syncState & WR_PPS_GEN_ESCR_MASK;                             // apply mask
+
+  if ((syncState == WR_PPS_GEN_ESCR_MASK)) return DMUNIPZ_STATUS_OK;        // check if all relevant bits are set
+  else                                     return DMUNIPZ_STATUS_WRBADSYNC;
+} //wrCheckStatus
+
+
 void init() // typical init for lm32
 {
   discoverPeriphery();        // mini-sdb ...
@@ -738,6 +759,18 @@ uint32_t findOLED() //find WB address of OLED
   if (!pOLED) {DBPRINT1("dm-unipz: can't find OLED\n"); return DMUNIPZ_STATUS_ERROR;}
   else                                                  return DMUNIPZ_STATUS_OK;
 } // findOLED
+
+
+uint32_t findPPSGen() //find WB address of WR PPS Gen
+{
+  pPPSGen = 0x0;
+  
+  // get Wishbone address for PPS Gen
+  pPPSGen = find_device_adr(CERN, WR_PPS_GEN);
+
+  if (!pPPSGen) {DBPRINT1("dm-unipz: can't find WR PPS Gen\n"); return DMUNIPZ_STATUS_ERROR;}
+  else                                                          return DMUNIPZ_STATUS_OK;
+} // findPPSGen
 
 
 uint32_t findECAQueue() // find WB address of ECA channel for LM32
@@ -1029,7 +1062,7 @@ uint32_t configMILEvent(uint16_t evtCode) // configure SoC to receive events via
   uint32_t i;
 
   // initialize status and command register with initial values; disable event filtering; clear filter RAM
-  if (writeCtrlStatRegEvtMil(pMILPiggy, MIL_CTRL_STAT_ENDECODER_FPGA | MIL_CTRL_STAT_INTR_DEB_ON) != MIL_STAT_OK) return DMUNIPZ_STATUS_ERROR;
+  if (writeCtrlStatRegEvtMil(pMILPiggy, MIL_CTRL_STAT_ENDECODER_FPGA | MIL_CTRL_STAT_INTR_DEB_ON) != MIL_STAT_OK) return DMUNIPZ_STATUS_ERROR; //chk sure we go for status error?
 
   // clean up 
   if (disableLemoEvtMil(pMILPiggy, 1) != MIL_STAT_OK) return DMUNIPZ_STATUS_ERROR;
@@ -1130,6 +1163,7 @@ uint32_t doActionS0()
 
   if (findECAQueue() != DMUNIPZ_STATUS_OK) status = DMUNIPZ_STATUS_ERROR; 
   if (findMILPiggy() != DMUNIPZ_STATUS_OK) status = DMUNIPZ_STATUS_ERROR;
+  if (findPPSGen()   != DMUNIPZ_STATUS_OK) status = DMUNIPZ_STATUS_ERROR;
   if (findOLED()     != DMUNIPZ_STATUS_OK) status = DMUNIPZ_STATUS_OK;     // in case SCU has no OLED: ignore
   initCmds();                    
 
@@ -1560,11 +1594,35 @@ uint32_t doActionOperation(uint32_t *statusTransfer,          // status bits ind
 
       break;
     
-    default: ;
+    default:
+      return wrCheckSyncState();
     } // switch nextAction
 
   return status;
-} //doActionOperation
+} // doActionOperation
+
+uint32_t doAutoRecovery(uint32_t actState, uint32_t *reqState)                    // do autorecovery from error state
+{
+  switch (actState)
+    {
+    case DMUNIPZ_STATE_ERROR :
+      DBPRINT3("dm-unipz: attempting autorecovery ERROR -> IDLE\n");
+      usleep(5000000);
+      *reqState = DMUNIPZ_STATE_IDLE; 
+      break;
+    case DMUNIPZ_STATE_IDLE :
+      DBPRINT3("dm-unipz: attempting autorecovery IDLE -> CONFIGURED\n");
+      usleep(1000000);
+      *reqState =  DMUNIPZ_STATE_CONFIGURED;
+      break;
+    case DMUNIPZ_STATE_CONFIGURED :
+      DBPRINT3("dm-unipz: attempting autorecovery CONFIGURED -> OPREADY\n");
+      usleep(1000000);
+      *reqState =  DMUNIPZ_STATE_OPREADY;
+      break;
+    default : ;
+    } // switch actState
+} // doAutoRecovery
 
 
 void main(void) {
@@ -1575,6 +1633,7 @@ void main(void) {
   uint32_t status;                              // (error) status
   uint32_t actState;                            // actual FSM state
   uint32_t reqState;                            // requested FSM state
+  uint32_t flagRecover;                         // flag indicating auto-recovery from error state;
 
   uint32_t statusTransfer;                      // status of transfer
   uint32_t nTransfer;                           // number of transfers
@@ -1588,7 +1647,7 @@ void main(void) {
   uint64_t dtTransfer;                          // time difference between CMD_UNI_TKREQ and EVT_MB_TRIGGER
   uint64_t dtTkreq;                             // time difference between CMD_UNI_TKREQ and reply from UNIPZ
   uint64_t dtBreq;                              // time difference between CMD_UNI_BREQ and reply from UNIPZ
-  uint64_t dtBprep;                            // time difference between CMD_UNI_BREQ and begin to request at UNIPZ
+  uint64_t dtBprep;                             // time difference between CMD_UNI_BREQ and begin to request at UNIPZ
   uint64_t dtReady2Sis;                         // time difference between CMD_UNI_BREQ and EVT_READY_TO_SIS
 
   mprintf("\n");
@@ -1621,6 +1680,7 @@ void main(void) {
   nBadState      = 0;
   nBadStatus     = 0;
   flagTkReq      = 0;
+  flagRecover    = 0;
   tBreq          = 0;
   tReady2Sis     = 0;
 
@@ -1632,16 +1692,21 @@ void main(void) {
     status = changeState(&actState, &reqState, status);                     // handle requested state changes
     switch(actState)                                                        // state specific do actions
       {
-        case DMUNIPZ_STATE_S0 :
+      case DMUNIPZ_STATE_S0 :
         status = doActionS0();                                              // important initialization that must succeed!
         if (status != DMUNIPZ_STATUS_OK) reqState = DMUNIPZ_STATE_FATAL;    // failed:  -> FATAL
         else                             reqState = DMUNIPZ_STATE_IDLE;     // success: -> IDLE
         break;
-       case DMUNIPZ_STATE_OPREADY :
-         status = doActionOperation(&statusTransfer, &virtAccReq, &virtAccRec, &noBeam, &dtStart, &dtSync, &dtInject, &dtTransfer, &dtTkreq, &dtBreq, &dtBprep, &dtReady2Sis, &nTransfer, &nInject, status);
-        if (status == DMUNIPZ_STATUS_DEVBUSERROR)    reqState = DMUNIPZ_STATE_ERROR;
+      case DMUNIPZ_STATE_OPREADY :
+        flagRecover = 0;
+        status = doActionOperation(&statusTransfer, &virtAccReq, &virtAccRec, &noBeam, &dtStart, &dtSync, &dtInject, &dtTransfer, &dtTkreq, &dtBreq, &dtBprep, &dtReady2Sis, &nTransfer, &nInject, status);
+        if (status == DMUNIPZ_STATUS_WRBADSYNC)      reqState = DMUNIPZ_STATE_ERROR;
+        if (status == DMUNIPZ_STATUS_DEVBUSERROR)    reqState = DMUNIPZ_STATE_ERROR; // chk
         if (status == DMUNIPZ_STATUS_ERROR)          reqState = DMUNIPZ_STATE_ERROR;
         break;
+      case DMUNIPZ_STATE_ERROR :
+        flagRecover = 1;                                                    // start autorecovery
+        break; 
       case DMUNIPZ_STATE_FATAL :
         *pSharedState  = actState;
         *pSharedStatus = status;
@@ -1650,9 +1715,12 @@ void main(void) {
         break;
       default :                                                             // avoid flooding WB bus with unnecessary activity
         for (j = 0; j < (DMUNIPZ_DEFAULT_TIMEOUT * DMUNIPZ_MS_ASMNOP); j++) { asm("nop"); }
-      } // switch 
+      } // switch
 
-      // update shared memory */
+    // autorecovery from state ERROR
+    if (flagRecover) doAutoRecovery(actState, &reqState);
+
+    // update shared memory */
     if ((*pSharedStatus == DMUNIPZ_STATUS_OK)     && (status    != DMUNIPZ_STATUS_OK))     {nBadStatus++; *pSharedNBadStatus = nBadStatus;}
     if ((*pSharedState  == DMUNIPZ_STATE_OPREADY) && (actState  != DMUNIPZ_STATE_OPREADY)) {nBadState++;  *pSharedNBadState  = nBadState;}
     *pSharedStatus       = status;

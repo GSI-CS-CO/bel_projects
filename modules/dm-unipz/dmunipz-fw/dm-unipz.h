@@ -46,8 +46,10 @@
 #define  DMUNIPZ_STATUS_BADSYNC         25    // t(EVT_MB_TRIGGER) - t(EVT_READY_TO_SIS) != 10ms
 #define  DMUNIPZ_STATUS_WAIT4UNIEVENT   26    // timeout while waiting for EVT_READY_TO_SIS
 #define  DMUNIPZ_STATUS_BADSCHEDULEA    27    // t(EVT_MB_TRIGGER) - t(CMD_UNI_BREQ) < 10ms
-#define  DMUNIPZ_STATUS_BADSCHEDULEB    28    // unexpected event
+#define  DMUNIPZ_STATUS_BADSCHEDULEB    28    // unexpected even
 #define  DMUNIPZ_STATUS_INVALIDBLKADDR  29    // invalid address of block for Data Master
+#define  DMUNIPZ_STATUS_WRBADSYNC       30    // White Rabbit: not in 'TRACK_PHASE'
+#define  DMUNIPZ_STATUS_AUTORECOVERY    31    // trying auto-recovery from state ERROR
 
 
 // MASP 
