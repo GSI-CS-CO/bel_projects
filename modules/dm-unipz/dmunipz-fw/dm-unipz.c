@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 25-April-2015
  ********************************************************************************************/
-#define DMUNIPZ_FW_VERSION 0x000404                                   // make this consistent with makefile
+#define DMUNIPZ_FW_VERSION 0x000405                                   // make this consistent with makefile
 
 /* standard includes */
 #include <stdio.h>
@@ -1038,8 +1038,6 @@ uint32_t releaseBeam(uint32_t msTimeout)
   writePZUData.bits.SIS_Request  = false;
   writePZUData.bits.ReqNoBeam    = false;
   if ((status = writeToPZU(IFB_ADDRESS_SIS, IO_MODULE_1, writePZUData.uword)) != MIL_STAT_OK) return DMUNIPZ_STATUS_DEVBUSERROR;
-
-  usleep(20000); // as code below does not work, just wait for 20ms to be sure UNIPZ realized that we have taken back the beam request
 
   timeoutT = getSysTime() + (uint64_t)msTimeout * (uint64_t)1000000;
 
