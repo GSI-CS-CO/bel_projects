@@ -3,7 +3,7 @@
  *
  *  created : 2017
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 25-July-2018
+ *  version : 26-July-2018
  *
  * Command-line interface for dmunipz
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 17-May-2017
  ********************************************************************************************/
-#define DMUNIPZ_X86_VERSION "0.4.02"
+#define DMUNIPZ_X86_VERSION "0.4.4"
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -181,7 +181,7 @@ const char* dmunipz_status_text(uint32_t code) {
   case DMUNIPZ_STATUS_BADSCHEDULEB     : sprintf(message, "error %d, %s",    code, "unexpected event"); break;
   case DMUNIPZ_STATUS_INVALIDBLKADDR   : sprintf(message, "error %d, %s",    code, "invalid address of block for Data Master"); break;
   case DMUNIPZ_STATUS_WRBADSYNC        : sprintf(message, "error %d, %s",    code, "White Rabbit: not in 'TRACK_PHASE'"); break;
-  case DMUNIPZ_STATUS_AUTORECOVERY     : sprintf(message, "errorFix %d, %s", code, "attempting auto-recovery from state ERROR"); break
+  case DMUNIPZ_STATUS_AUTORECOVERY     : sprintf(message, "errorFix %d, %s", code, "attempting auto-recovery from state ERROR"); break;
   default                              : sprintf(message, "error %d, %s",    code, "dm-unipz: undefined error code"); break;
   }
 
@@ -523,6 +523,7 @@ int main(int argc, char** argv) {
   uint32_t version;
 
   uint32_t actTransfers;                       // actual number of transfers
+  uint32_t actInjections;                      // actual number of injections
   uint32_t actState = DMUNIPZ_STATE_UNKNOWN;   // actual state of gateway
   uint32_t actStatus;                          // actual status of gateway
   // chk uint32_t actStatTrans;                // actual status of ongoing transfer
@@ -760,9 +761,10 @@ int main(int argc, char** argv) {
   if (snoop) {
     printf("dm-unipz: continous monitoring of gateway, loglevel = %d\n", logLevel);
     
-    actTransfers = 0;
-    actState     = DMUNIPZ_STATE_UNKNOWN;
-    actStatus    = DMUNIPZ_STATUS_UNKNOWN;
+    actTransfers  = 0;
+    actInjections = 0;
+    actState      = DMUNIPZ_STATE_UNKNOWN;
+    actStatus     = DMUNIPZ_STATUS_UNKNOWN;
     // actStatTrans = DMUNIPZ_TRANS_UNKNOWN; chk
 
 #ifdef USEMASP 
@@ -797,7 +799,8 @@ int main(int argc, char** argv) {
       if ((actState     != state)     && (logLevel <= DMUNIPZ_LOGLEVEL_STATE))                                         {printFlag = 1; actState = state;}
       if ((actStatus    != status)    && (logLevel <= DMUNIPZ_LOGLEVEL_STATUS))                                        {printFlag = 1; actStatus = status;}
       if ((actTransfers != transfers) && (logLevel <= DMUNIPZ_LOGLEVEL_COMPLETE) && (statTrans & DMUNIPZ_TRANS_RELTK)) {printFlag = 1; actTransfers = transfers;}
-      if ((actTransfers != transfers) && (logLevel <= DMUNIPZ_LOGLEVEL_ALL))                                           {printFlag = 1; actTransfers = transfers;}
+      if (((actTransfers != transfers) || ((actInjections != injections) && (statTrans & DMUNIPZ_TRANS_RELBEAM)))
+          && (logLevel <= DMUNIPZ_LOGLEVEL_ALL))                                                                       {printFlag = 1; actTransfers = transfers; actInjections = injections;}
 
       if (printFlag) {
         printTransfer(transfers, injections, virtAccReq, virtAccRec, noBeam, dtStart, dtSync, dtInject, dtTransfer, dtTkreq, dtBreq, dtBprep, dtReady2Sis, nR2sTransfer, nR2sCycle, statTrans); 

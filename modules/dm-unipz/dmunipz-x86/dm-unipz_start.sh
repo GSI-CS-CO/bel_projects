@@ -46,10 +46,10 @@ dmunipz-ctl -s1 dev/wbm0 | logger -t dmunipz-ctl -sp local0.info &
 # dmunipz-ctl dev/wbm0 ebmdm 0x00267b000455 0xc0a80b01 (tsl404, 'Testnetz Dietrich')
 #
 # some SCUs
-# dmunipz-ctl dev/wbm0 ebmlocal 0x00267b000321 0xc0a8a00c (scuxl0033, user network)
+# dmunipz-ctl dev/wbm0 ebmlocal 0x00267b000621 0xc0a8a0a3 (scuxl0157, user network)
 # dmunipz-ctl dev/wbm0 ebmlocal 0x00267b0003f1 0xc0a8a0e5 (scuxl0223, production network)
-# dmunipz-ctl dev/wbm0 ebmlocal 0x00267b000321 0xc0a80cea (scuxl0033, 'Hanno network')
-# dmunipz-ctl dev/wbm0 ebmlocal 0x00267b000321 0xc0a80b02 (scuxl0033, 'Testnetz Dietrich', need to set static IP with eb-console)
+# dmunipz-ctl dev/wbm0 ebmlocal 0x00267b000621 0xc0a80ceb (scuxl0157, 'Hanno network')
+# dmunipz-ctl dev/wbm0 ebmlocal 0x00267b000621 0xc0a80b02 (scuxl0157, 'Testnetz Dietrich', need to set static IP with eb-console)
 # dmunipz-ctl dev/wbm0 ebmlocal 0x00267b0003f1 0xc0a80b02 (scuxl0223, 'Testnetz Dietrich', need to set static IP with eb-console)
 
 # do some write actions to set register values
@@ -63,8 +63,8 @@ if  [ $(hostname) == $PROSCU ]; then   # production network
     dmunipz-ctl dev/wbm0 ebmlocal 0x00267b0003f1 0xc0a8a0e5
 else                                  # test or development
     echo -e dm-unipz - start: configuring for TEST or DEVELOPMENT network on $(hostname)
-    dmunipz-ctl dev/wbm0 ebmlocal 0x00267b000321 0xc0a80cea
-    dmunipz-ctl dev/wbm0 ebmdm 0x00267b000422 0xc0a80c04
+    dmunipz-ctl dev/wbm0 ebmlocal 0x00267b000621 0xc0a80b02
+    dmunipz-ctl dev/wbm0 ebmdm 0x00267b000455 0xc0a80b01
 fi
 
 echo -e dm-unipz - start: make firmware operational
