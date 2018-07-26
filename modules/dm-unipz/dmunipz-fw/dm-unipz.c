@@ -1041,18 +1041,13 @@ uint32_t releaseBeam(uint32_t msTimeout)
 
   usleep(20000); // as code below does not work, just wait for 20ms to be sure UNIPZ realized that we have taken back the beam request
 
-  // query UNIPZ for '!(rerq Ack)'
-  
-  /*  the code does not seem to work. It seems that SIS_Req_Ack is only reset once TK release is sent chk!!!
-
   timeoutT = getSysTime() + (uint64_t)msTimeout * (uint64_t)1000000;
 
   while (getSysTime() < timeoutT) {                                                                                                    // check for timeout
     if ((status = readFromPZU(IFB_ADDRESS_SIS, IO_MODULE_3, &(readPZUData.uword))) != MIL_STAT_OK) return DMUNIPZ_STATUS_DEVBUSERROR;   
     if (readPZUData.bits.SIS_Req_Ack == false)                                                     return DMUNIPZ_STATUS_OK;           
   } // while not timed out
-  */
-
+  
   return DMUNIPZ_STATUS_RELBEAMFAILED;
 } // releaseBeam
 
@@ -1607,17 +1602,17 @@ uint32_t doAutoRecovery(uint32_t actState, uint32_t *reqState)                  
     {
     case DMUNIPZ_STATE_ERROR :
       DBPRINT3("dm-unipz: attempting autorecovery ERROR -> IDLE\n");
-      usleep(5000000);
+      usleep(10000000);
       *reqState = DMUNIPZ_STATE_IDLE; 
       break;
     case DMUNIPZ_STATE_IDLE :
       DBPRINT3("dm-unipz: attempting autorecovery IDLE -> CONFIGURED\n");
-      usleep(1000000);
+      usleep(5000000);
       *reqState =  DMUNIPZ_STATE_CONFIGURED;
       break;
     case DMUNIPZ_STATE_CONFIGURED :
       DBPRINT3("dm-unipz: attempting autorecovery CONFIGURED -> OPREADY\n");
-      usleep(1000000);
+      usleep(5000000);
       *reqState =  DMUNIPZ_STATE_OPREADY;
       break;
     default : ;
