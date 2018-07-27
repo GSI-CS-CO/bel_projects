@@ -37,7 +37,7 @@
 #define DMUNIPZ_SHARED_DTREADY2SIS    0x70   // time difference between CMD_UNI_BREQ and EVT_READY_TO_SIS; value in us
 #define DMUNIPZ_SHARED_NR2STRANSFER   0x74   // # of EVT_READY_TO_SIS events in between CMD_UNI_TKREQ and CMD_UNI_TKREL
 #define DMUNIPZ_SHARED_NR2SCYCLE      0x78   // # of EVT_READY_TO_SIS events in between CMD_UNI_TKREL and the following CMD_UNI_TKREL
-#define DMUNIPZ_SHARED_DTBPREP        0x7C   // time difference between CMD_UNI_BREQ and start of request at UNIPZ; value in ns
+#define DMUNIPZ_SHARED_DTBPREP        0x7C   // time difference between CMD_UNI_BREQ and start of request at UNIPZ; value in us
 
 
 // 0x8a-0x8f: reserved
