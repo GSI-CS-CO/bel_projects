@@ -18,7 +18,7 @@ namespace dnt = DotStr::Node::TypeVal;
 
 
 static void help(const char *program) {
-  fprintf(stderr, "\ndm-cmd v%s\nSends a command or dotfile of commands to the DM\nThere are global, local and queued commands\n", TOOL_VER);
+  fprintf(stderr, "\ndm-cmd v%s, build date %s\nSends a command or dotfile of commands to the DM\nThere are global, local and queued commands\n", TOOL_VER, BUILD_DATE);
   fprintf(stderr, "\nUsage: %s [OPTION] <etherbone-device> <command> [target node] [parameter] \n", program);
   fprintf(stderr, "\n");
   fprintf(stderr, "\nGeneral Options:\n");
@@ -29,6 +29,7 @@ static void help(const char *program) {
   fprintf(stderr, "  -i command .dot file      Run commands from dot file\n");
   fprintf(stderr, "  status                    Show status of all threads and cores (default)\n");
   fprintf(stderr, "  details                   Show time statistics and detailed information on uptime and recent changes\n");
+  fprintf(stderr, "  clearstats                Clear all status and statistics info\n");
   fprintf(stderr, "  gathertime <Time / ns>    [NOT YET IMPLEMENTED] Set msg gathering time for priority queue\n");
   fprintf(stderr, "  maxmsg <Message Quantity> [NOT YET IMPLEMENTED] Set maximum messages in a packet for priority queue\n");
   fprintf(stderr, "  running                   Show bitfield of all running threads on this CPU core\n");
@@ -67,7 +68,25 @@ static void help(const char *program) {
   fprintf(stderr, "  -p <priority>            The priority of the command (0 = Low, 1 = High, 2 = Interlock), default is 0\n");
   fprintf(stderr, "  -q <quantity>            The number of times the command will be inserted into the target queue, default is 1\n");
   fprintf(stderr, "  -s                       Changes to the schedule are permanent\n");
+  fprintf(stderr, "\nDiagnostics:\n");
+  fprintf(stderr, "  diag                               Show time statistics and detailed information on uptime and recent changes\n");
+  fprintf(stderr, "  cleardiag                          Clears all CPU and HW statistics and details \n");
+  fprintf(stderr, "  cfghwdiag <TAI / ns> <Stall / ns>  Sets observation window for ECA TAI time continuity and CPU stall streaks\n");
+  fprintf(stderr, "  starthwdiag                        Starts HW diagnostic data acquisition\n");
+  fprintf(stderr, "  stophwdiag                         Stops HW diagnostic data acquisition\n");
+  fprintf(stderr, "  cfgcpudiag <Warn. Threshold / ns>  Globally sets warning threshold for minimum message dispatch lead\n");
+  fprintf(stderr, "  clearcpudiag                       Clears CPU statistics for given index\n");
   fprintf(stderr, "\n");
+
+}
+
+std::string nsTimeToDate(uint64_t t) {
+  char date[40];
+  uint64_t tAux = t / 1000000000ULL;
+  strftime(date, sizeof(date), "%Y-%m-%d %H:%M:%S", gmtime((time_t*)&tAux));
+  std::string ret(date);
+
+  return ret;
 }
 
 
@@ -105,14 +124,10 @@ void showStatus(const char *netaddress, CarpeDM& cdm, bool verbose) {
   //this is horrible code, but harmless. Does the job for now.
   //TODO: replace this with something more sensible
 
-  char date[40];
   uint64_t timeWrNs = cdm.getDmWrTime();
-  uint64_t timeWr = timeWrNs / 1000000000ULL;
-  strftime(date, sizeof(date), "%Y-%m-%d %H:%M:%S", gmtime((time_t*)&timeWr));
-
 
   printf("\n\u2554"); for(int i=0;i<width;i++) printf("\u2550"); printf("\u2557\n");
-  printf("\u2551 DataMaster: %-80s \u2502 WR-Time: 0x%08x%08x ns \u2502 %.19s \u2551\n", netaddress, (uint32_t)(timeWrNs>>32), (uint32_t)timeWrNs, date);
+  printf("\u2551 DataMaster: %-80s \u2502 ECA-Time: 0x%08x%08x ns \u2502 %.19s \u2551\n", netaddress, (uint32_t)(timeWrNs>>32), (uint32_t)timeWrNs, nsTimeToDate(timeWrNs).c_str() );
   printf("\u2560"); for(int i=0;i<width;i++) printf("\u2550"); printf("\u2563\n");
   printf("\u2551 %3s \u2502 %3s \u2502 %7s \u2502 %9s \u2502 %55s \u2502 %55s \u2551\n", "Cpu", "Thr", "Running", "MsgCount", "Pattern", "Node");
   printf("\u2560"); for(int i=0;i<width;i++) printf("\u2550"); printf("\u2563\n");
@@ -149,36 +164,38 @@ void showHealth(const char *netaddress, CarpeDM& cdm, bool verbose) {
   uint8_t cpuQty = cdm.getCpuQty();
 
   HealthReport *hr = new HealthReport[cpuQty];
+  
+  HwDelayReport hwdr;
 
 
-  for(uint8_t i=0; i < cpuQty; i++) { cdm.getHealth(i, hr[i]); }  
+  for(uint8_t i=0; i < cpuQty; i++) { cdm.getHealth(i, hr[i]); }
+  cdm.getHwDelayReport(hwdr);
+ 
   const uint16_t width = 80;
+ 
   //this is horrible code, but harmless. Does the job for now.
   //TODO: replace this with something more sensible
 
 
-  char date[40];
-  uint64_t timeWr = cdm.getDmWrTime() / 1000000000ULL ;
-  strftime(date, sizeof(date), "%Y-%m-%d %H:%M:%S", gmtime((time_t*)&timeWr));
+  
+  uint64_t timeWr = cdm.getDmWrTime();
+
   unsigned netStrLen;
   for(netStrLen = 0; netStrLen < width; netStrLen++) {if (netaddress[netStrLen] == '\00') break;}
 
   printf("\n\u2554"); for(int i=0;i<width;i++) printf("\u2550"); printf("\u2557\n");
-  printf("\u2551 DM: %s", netaddress); for(uint8_t i=0; i < (width - 5 - netStrLen); i++) printf(" "); printf("\u2551\n");
+  printf("\u2551 DataMaster: %30s %40s", netaddress, "\u2551\n"); 
   printf("\u2560"); for(int i=0;i<width;i++) printf("\u2550"); printf("\u2563\n");
-  printf("\u2551 WR-Time: 0x%08x%08x \u2502 %.19s %32s\n", (uint32_t)(timeWr>>32), (uint32_t)timeWr, date, "\u2551");
+  printf("\u2551 ECA-Time: 0x%08x%08x \u2502 %.19s %31s\n", (uint32_t)(timeWr>>32), (uint32_t)timeWr, nsTimeToDate(timeWr).c_str(), "\u2551");
 
   
   // Boot Time and Msg Count
   printf("\u2560"); for(int i=0;i<width;i++) printf("\u2550"); printf("\u2563\n");
-  printf("\u2551 %3s \u2502 %19s \u2502 %14s \u2502 %37s\n", 
-      "Cpu", "BootTime", "CPU Msg Cnt", "\u2551");
+  printf("\u2551 %3s \u2502 %19s \u2502 %14s \u2502 %10s \u2502 %20s %2s\n", 
+      "Cpu", "BootTime", "CPU Msg Cnt", "State", "Bad Wait-Time Cnt", "\u2551");
   printf("\u2560"); for(int i=0;i<width;i++) printf("\u2550"); printf("\u2563\n");
   for(uint8_t i=0; i < cpuQty; i++) {
-    char date[40];
-    uint64_t timeval = hr[i].bootTime / 1000000000ULL; //all times are in nanoseconds, we need to convert to seconds
-    strftime(date,  sizeof(date), "%Y-%m-%d %H:%M:%S", gmtime((time_t*)&timeval)); //human readable date
-    printf("\u2551 %3u \u2502 %.19s \u2502 %14llu \u2502 %37s\n", hr[i].cpu, date, (long long unsigned int)hr[i].msgCnt, "\u2551");    
+    printf("\u2551 %3u \u2502 %.19s \u2502 %14llu \u2502 0x%08x \u2502 %20u %2s\n", hr[i].cpu, nsTimeToDate(hr[i].bootTime).c_str(), (long long unsigned int)hr[i].msgCnt, hr[i].stat, hr[i].badWaitCnt, "\u2551");    
   }
 
   // Most recent schedule modification (time, issuer, type of operation)
@@ -186,10 +203,7 @@ void showHealth(const char *netaddress, CarpeDM& cdm, bool verbose) {
   printf("\u2551 %3s \u2502 %19s \u2502 %8s \u2502 %8s \u2502 %10s \u2502 %19s\n", "Cpu",  "Schedule ModTime", "Issuer", "Host", "Op Type", "\u2551");
   printf("\u2560"); for(int i=0;i<width;i++) printf("\u2550"); printf("\u2563\n");
   for(uint8_t i=0; i < cpuQty; i++) {
-    char date[40];
-    uint64_t timeval = hr[i].smodTime / 1000000000ULL;
-    strftime(date,  sizeof(date), "%Y-%m-%d %H:%M:%S", gmtime((time_t*)&timeval));
-    printf("\u2551 %3u \u2502 %19s \u2502 %8s \u2502 %8s \u2502 %10s \u2502 %19s\n", hr[i].cpu, date, hr[i].smodIssuer, hr[i].smodHost, hr[i].smodOpType.c_str(), "\u2551");
+    printf("\u2551 %3u \u2502 %19s \u2502 %8s \u2502 %8s \u2502 %10s \u2502 %19s\n", hr[i].cpu, nsTimeToDate(hr[i].smodTime).c_str(), hr[i].smodIssuer, hr[i].smodHost, hr[i].smodOpType.c_str(), "\u2551");
   }  
   
   // Most recent command (time, issuer, type of operation)
@@ -197,27 +211,57 @@ void showHealth(const char *netaddress, CarpeDM& cdm, bool verbose) {
   printf("\u2551 %3s \u2502 %19s \u2502 %8s \u2502 %8s \u2502 %10s \u2502 %19s\n", "Cpu",  "Command ModTime", "Issuer", "Host", "Op Type", "\u2551");
   printf("\u2560"); for(int i=0;i<width;i++) printf("\u2550"); printf("\u2563\n");
   for(uint8_t i=0; i < cpuQty; i++) {
-    char date[40];
-    uint64_t timeval = hr[i].cmodTime / 1000000000ULL;
-    strftime(date,  sizeof(date), "%Y-%m-%d %H:%M:%S", gmtime((time_t*)&timeval));
-    printf("\u2551 %3u \u2502 %19s \u2502 %8s \u2502 %8s \u2502 %10s \u2502 %19s\n", hr[i].cpu, date, hr[i].cmodIssuer, hr[i].cmodHost, hr[i].cmodOpType.c_str(), "\u2551");
+    printf("\u2551 %3u \u2502 %19s \u2502 %8s \u2502 %8s \u2502 %10s \u2502 %19s\n", hr[i].cpu, nsTimeToDate(hr[i].cmodTime).c_str(), hr[i].cmodIssuer, hr[i].cmodHost, hr[i].cmodOpType.c_str(), "\u2551");
   } 
 
   //LM32 message ispatch statistics (min lead, max lead, avg lead, lead warning threshold, warning count, status register)
   printf("\u2560"); for(int i=0;i<width;i++) printf("\u2550"); printf("\u2563\n");
-  printf("\u2551 %3s \u2502 %9s \u2502 %9s \u2502 %9s \u2502 %9s \u2502 %9s \u2502 %10s   %3s\n", 
-      "Cpu", "Min dT", "Max dT", "Avg dT", "Thrs dT", "WrnCnt", "State", "\u2551");
+  printf("\u2551 %3s \u2502 %9s \u2502 %9s \u2502 %9s \u2502 %9s \u2502 %9s \u2502 %9s %4s\n", 
+      "Cpu", "Min dT", "Max dT", "Avg dT", "Thrs dT", "Warnings", "Max Backlog", "\u2551");
   printf("\u2560"); for(int i=0;i<width;i++) printf("\u2550"); printf("\u2563\n");
   for(uint8_t i=0; i < cpuQty; i++) {
-    printf("\u2551 %3u \u2502 %9d \u2502 %9d \u2502 %9d \u2502 %9d \u2502 %9u \u2502 0x%08x   %3s\n", 
+    printf("\u2551 %3u \u2502 %9d \u2502 %9d \u2502 %9d \u2502 %9d \u2502 %9u \u2502 %9u %6s\n", 
       hr[i].cpu,
       (int)hr[i].minTimeDiff,
       (int)hr[i].maxTimeDiff,
       (int)hr[i].avgTimeDiff,
       (int)hr[i].warningThreshold,
       hr[i].warningCnt,
-      hr[i].stat, "\u2551");
+      hr[i].maxBacklog, 
+      "\u2551");
   }
+  //
+  printf("\u2560"); for(int i=0;i<width;i++) printf("\u2550"); printf("\u2563\n");
+  printf("\u2551 %3s \u2502 %19s \u2502 %50s %3s\n", "Cpu",  "1st Warning", "Location", "\u2551");
+  printf("\u2560"); for(int i=0;i<width;i++) printf("\u2550"); printf("\u2563\n");
+  
+  for(uint8_t i=0; i < cpuQty; i++) {
+    printf("\u2551 %3u \u2502 %19s \u2502 %50s %3s\n", hr[i].cpu, nsTimeToDate(hr[i].warningTime).c_str(), hr[i].warningNode.c_str(), "\u2551");
+  }
+  
+  // Hardware Delay Report
+  printf("\u2560"); for(int i=0;i<width;i++) printf("\u2550"); printf("\u2563\n");
+  printf("\u2551 %10s \u2502 %9s \u2502 %19s \u2502 %9s \u2502 %19s %3s\n", "T observ",  "maxPosDif", "MaxPosUpdate", "minNegDif", "minNegUpdate","\u2551");
+  printf("\u2560"); for(int i=0;i<width;i++) printf("\u2550"); printf("\u2563\n");
+  printf("\u2551 %10llu \u2502 %9lld \u2502 %19s \u2502 %9lld \u2502 %19s %3s\n", 
+    (unsigned long long)hwdr.timeObservIntvl, (signed long long)hwdr.timeMaxPosDif, nsTimeToDate(hwdr.timeMaxPosUDts).c_str(),
+    (signed long long)hwdr.timeMinNegDif, nsTimeToDate(hwdr.timeMinNegUDts).c_str(), "\u2551");
+    
+  printf("\u2560"); for(int i=0;i<width;i++) printf("\u2550"); printf("\u2563\n");
+  printf("\u2551 %3s \u2502 %9s \u2502 %9s \u2502 %9s \u2502 %19s \u2502 %18s\n", 
+      "Cpu", "STL obs.", "MaxStreak",  "Current", "MaxStreakUpdate", "\u2551");
+  printf("\u2560"); for(int i=0;i<width;i++) printf("\u2550"); printf("\u2563\n");
+  for(uint8_t i=0; i < cpuQty; i++) {
+    printf("\u2551 %3u \u2502 %9u \u2502 %9u \u2502 %9u \u2502 %19s \u2502 %18s\n", 
+      (int)i,
+      hwdr.stallObservIntvl,
+      hwdr.sdr[i].stallStreakMax,
+      hwdr.sdr[i].stallStreakCurrent,
+      nsTimeToDate(hwdr.sdr[i].stallStreakMaxUDts).c_str(),
+      "\u2551");
+  }
+
+  
     
   printf("\u255A"); for(int i=0;i<width;i++) printf("\u2550"); printf("\u255D\n");
 
@@ -444,7 +488,7 @@ int main(int argc, char* argv[]) {
       showStatus(netaddress, cdm, verbose);
       return 0;
     }
-    else if (cmp == "details")  {
+    else if ( (cmp == "details") || (cmp == "diag")) {
       showHealth(netaddress, cdm, verbose);
       return 0;
     }
@@ -629,7 +673,47 @@ int main(int argc, char* argv[]) {
     else if (cmp == "deadline")  {
       std::cout << "CPU " << cpuIdx << " Thr " << thrIdx << " Deadline " << cdm.getThrDeadline(cpuIdx, thrIdx) << std::endl;
       return 0;
+    }  
+    else if (cmp == "cleardiag")  {
+      cdm.clearHealth();
+      cdm.clearHwDiagnostics();
+      return 0;
     }
+    else if (cmp == "clearhwdiag")  {
+      cdm.clearHwDiagnostics();
+      return 0;
+    }
+    else if (cmp == "starthwdiag") {
+      cdm.startStopHwDiagnostics(true);
+      return 0;  
+    }
+    else if (cmp == "stophwdiag") {
+      cdm.startStopHwDiagnostics(false);
+      return 0;  
+    }  
+    else if (cmp == "clearcpudiag")  {
+      cdm.clearHealth(cpuIdx);
+      return 0;
+    }
+    else if (cmp == "cfghwdiag") {
+      if( (targetName != NULL) && (para != NULL) ) {
+        cdm.configHwDiagnostics(strtoll(targetName, NULL, 0), strtoll(para, NULL, 0));
+      } else {
+        std::cerr << program << ": Needs valid values for both TAI time observation interval and stall observation interval" << std::endl; return -1;
+      }
+      return 0;  
+    }
+    else if (cmp == "cfgcpudiag") {
+      if(targetName != NULL) {
+        cdm.configFwDiagnostics(strtoll(targetName, NULL, 0));
+      } else {
+        std::cerr << program << ": Needs valid value for lead warning threshold" << std::endl; return -1;
+      }
+      return 0;  
+    }  
+
+    
+
 
     //all the block commands set mc, so...
     if (mc != NULL) {

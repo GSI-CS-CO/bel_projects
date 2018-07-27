@@ -38,3 +38,16 @@ void hexDump (const char *desc, const char* addr, int len) {
 void hexDump (const char *desc, vBuf vb) { hexDump(desc, (const char*)&vb[0], vb.size()); }
 
 vBl leadingOne(size_t length) {vBl ret(length, false); *ret.begin() = true; return ret;}
+
+std::string fixArchiveVersion(const std::string& s) {
+    //hack to ensure correct boost textarchive version
+    //not nice, but I'm fed up to here with the crappy boost archive documentation
+    const std::string tag = "serialization::archive ";
+    const std::string myVer = "10"; // Boost Version 1.53 Archiver Version is 10
+    std::string sRet = s;
+    size_t pos = sRet.find(tag, 0) + tag.length();
+    sRet.replace(pos, myVer.length(), myVer); 
+
+    return sRet;
+
+}

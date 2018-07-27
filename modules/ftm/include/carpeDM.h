@@ -3,6 +3,7 @@
 
 #define SDB_VENDOR_GSI      0x0000000000000651ULL
 #define SDB_DEVICE_LM32_RAM 0x54111351
+#define SDB_DEVICE_DIAG     0x18060200
 
 #include <stdio.h>
 #include <iostream>
@@ -41,7 +42,8 @@ private:
   Socket ebs;
   Device ebd;  
   std::vector<struct sdb_device> cpuDevs;  
-  std::vector<struct sdb_device> ecaDevs; 
+  std::vector<struct sdb_device> cluTimeDevs;
+  std::vector<struct sdb_device> diagDevs; 
 
   int cpuQty = -1;
   HashMap hm;
@@ -96,15 +98,15 @@ private:
   int keep(Graph& g, bool force);  
   int overwrite(Graph& g,  bool force);
   int clear_raw(bool force);
-  bool validate(Graph& g, AllocTable& at);
+  bool validate(Graph& g, AllocTable& at, bool force);
 
   // Upload
   vEbwrs gatherUploadVector(std::set<uint8_t> moddedCpus, uint32_t modCnt, uint8_t opType);
   vEbwrs& createModInfo     (uint8_t cpu, uint32_t modCnt, uint8_t opType, vEbwrs& ew, uint32_t adrOffs);
   vEbwrs& createSchedModInfo(uint8_t cpu, uint32_t modCnt, uint8_t opType, vEbwrs& ew);
   vEbwrs& createCmdModInfo  (uint8_t cpu, uint32_t modCnt, uint8_t opType, vEbwrs& ew);
-  int upload(uint8_t opType); //Upload processed Graph to LM32 SoC via Etherbone
-  
+  int upload(uint8_t opType, std::vector<QueueReport>& vQr); //Upload processed Graph to LM32 SoC via Etherbone
+  int upload(uint8_t opType) {std::vector<QueueReport> vQr; return upload(opType, vQr);} 
   // Download
   vEbrds gatherDownloadBmpVector();
   vEbrds gatherDownloadDataVector();
@@ -148,7 +150,9 @@ private:
   
   vertex_set_t getAllCursors(bool activeOnly);
   vStrC getGraphPatterns(Graph& g);
-  bool isSafeToRemove(std::set<std::string> patterns, std::string& report);
+
+  bool isSafeToRemove(std::set<std::string> patterns, std::string& report, std::vector<QueueReport>& vQr);
+  bool isSafeToRemove(std::set<std::string> patterns, std::string& report) {std::vector<QueueReport> vQr; return isSafeToRemove(patterns, report, vQr);}
   const std::string readFwIdROMTag(const std::string& fwIdROM, const std::string& tag, size_t maxlen, bool stopAtCr );
 
   vBuf compress(const vBuf& in); 
@@ -173,13 +177,19 @@ private:
   vEbwrs& setThrPrepTime(uint8_t cpuIdx, uint8_t thrIdx, uint64_t t, vEbwrs& ew);
   vEbwrs& createCommandBurst(Graph& g, vEbwrs& ew);
   vEbwrs& createCommand(const std::string& targetName, uint8_t cmdPrio, mc_ptr mc, vEbwrs& ew);
+  vEbwrs& deactivateOrphanedCommands(std::vector<QueueReport>& vQr, vEbwrs& ew);
+  vEbwrs& clearHealth(uint8_t cpuIdx, vEbwrs& ew);
+  vEbwrs& resetThrMsgCnt(uint8_t cpuIdx, uint8_t thrIdx, vEbwrs& ew);
 
   int send(vEbwrs& ew);
 
   vEbwrs& staticFlush(const std::string& sBlock, bool prioIl, bool prioHi, bool prioLo, vEbwrs& ew, bool force);
 
-  QueueElement& getQelement(Graph& g, AllocTable& at, uint8_t idx, amI allocIt, QueueElement& qe);
-  QueueReport& getQReport(Graph& g, AllocTable& at, const std::string& blockName, QueueReport& qr);
+  QueueElement& getQelement(Graph& g, AllocTable& at, uint8_t idx, amI allocIt, QueueElement& qe, const vStrC& futureOrphan);
+  QueueElement& getQelement(Graph& g, AllocTable& at, uint8_t idx, amI allocIt, QueueElement& qe) {vStrC fo; return getQelement(g, at, idx, allocIt, qe, fo);} 
+
+  QueueReport& getQReport(Graph& g, AllocTable& at, const std::string& blockName, QueueReport& qr, const vStrC& futureOrphan);
+
 
 
   int   ebWriteCycle(Device& dev, vAdr va, vBuf& vb, vBl vcs);
@@ -276,8 +286,8 @@ public:
                 int download();                                     // Download binary from LM32 SoC and create Graph
         std::string downloadDot(bool filterMeta);
                void downloadDotFile(const std::string& fn, bool filterMeta);
-                int addDot(const std::string& s);                   // add all nodes and/or edges in dot file
-                int addDotFile(const std::string& fn);
+                int addDot(const std::string& s, bool force);                   // add all nodes and/or edges in dot file
+                int addDotFile(const std::string& fn, bool force);
                 int overwriteDot(const std::string& s, bool force); // add all nodes and/or edges in dot file
                 int overwriteDotFile(const std::string& fn, bool force);
                 int keepDot(const std::string& s, bool force);      // removes all nodes NOT in input file
@@ -303,8 +313,10 @@ public:
            uint32_t getThrStart(uint8_t cpuIdx);
            uint64_t getThrPrepTime(uint8_t cpuIdx, uint8_t thrIdx); 
                bool isThrRunning(uint8_t cpuIdx, uint8_t thrIdx);                   // true if thread <thrIdx> is running
-               bool isSafeToRemove(const std::string& pattern, std::string& report);
-               bool isSafeToRemove(Graph& gRem, std::string& report);
+               bool isSafeToRemove(const std::string& pattern, std::string& report, std::vector<QueueReport>& vQr);
+               bool isSafeToRemove(const std::string& pattern, std::string& report) {std::vector<QueueReport> vQr; return isSafeToRemove(pattern, report, vQr); }
+               bool isSafeToRemove(Graph& gRem, std::string& report, std::vector<QueueReport>& vQr);
+               bool isSafeToRemove(Graph& gRem, std::string& report) {std::vector<QueueReport> vQr; return isSafeToRemove(gRem, report, vQr);}
 std::pair<int, int> findRunningPattern(const std::string& sPattern); // get cpu and thread assignment of running pattern
                bool isPatternRunning(const std::string& sPattern);                  // true if Pattern <x> is running
                void updateModTime();
@@ -346,8 +358,15 @@ std::pair<int, int> findRunningPattern(const std::string& sPattern); // get cpu 
                void optimisedS2ROff(){optimisedS2R = false;}                    // Optimised Safe2remove off
                bool isOptimisedS2R() const {return optimisedS2R;}               // tell if Safe2remove optimisation is on or off
       HealthReport& getHealth(uint8_t cpuIdx, HealthReport &hr);                // FIXME why reference in, reference out ? its not like you can add to this report ...
+               void clearHealth(uint8_t cpuIdx);
+               void clearHealth();
        QueueReport& getQReport(const std::string& blockName, QueueReport& qr);  // FIXME why reference in, reference out ? its not like you can add to this report ...
            uint64_t getDmWrTime();
+    HwDelayReport& getHwDelayReport(HwDelayReport& hdr);
+               void clearHwDiagnostics();
+               void startStopHwDiagnostics(bool enable);
+               void configHwDiagnostics(uint64_t timeIntvl, uint32_t stallIntvl);
+               void configFwDiagnostics(uint64_t warnThrshld);
 
        std::string& inspectQueues(const std::string& blockName, std::string& report);      // Show all command fields in Block Queue
                void show(const std::string& title, const std::string& logDictFile, TransferDir dir, bool filterMeta );

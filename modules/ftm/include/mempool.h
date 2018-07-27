@@ -69,6 +69,8 @@ public:
   bool syncBmpToPool();
 
   bool getBmpBit(unsigned int bitIdx) {return bmp[bitIdx / 8] & (1 << (7 - bitIdx % 8));}
+  void setBmpBit(unsigned int bitIdx) {bmp[bitIdx / 8] |=  (1 << (7 - bitIdx % 8));}
+  void clrBmpBit(unsigned int bitIdx) {bmp[bitIdx / 8] &= ~(1 << (7 - bitIdx % 8));}
 
 
   void setBmp(const vBuf& aBmp) { bmp = aBmp;}

@@ -95,12 +95,14 @@ namespace coverage {
     // check if all graph nodes are known to all tables
     BOOST_FOREACH( vertex_t v, vertices(g) ) {
       //Check Hashtable
-      if (!hm.lookup(g[v].name)) {hashIsOk = false; hashReport += sMiss + sFirst + g[v].name + "\n";}
+      if (!hm.contains(g[v].name)) {hashIsOk = false; hashReport += sMiss + sFirst + g[v].name + "\n";}
     }
     BOOST_FOREACH( vertex_t v, vertices(g) ) {
       //Check Alloctable
-      auto x = at.lookupVertex(v);
-      if (!at.isOk(x))           {allocIsOk = false; allocReport += sMiss + sFirst + g[v].name + "\n";}
+      try {
+        auto dummy = at.lookupVertex(v);
+        (void) dummy; struct dummy; // suppress gcc warning about unused variable
+      } catch (...) {allocIsOk = false; allocReport += sMiss + sFirst + g[v].name + "\n";}
     }
     BOOST_FOREACH( vertex_t v, vertices(g) ) {
       //Check Groupstable
@@ -215,21 +217,24 @@ namespace coverage {
   QueueReport& CarpeDM::getQReport(const std::string& blockName, QueueReport& qr) {
     Graph& g = gDown;
     AllocTable& at = atDown;
-    return getQReport(g, at, blockName, qr);
+    vStrC futureOrphan;
+    return getQReport(g, at, blockName, qr, futureOrphan);
   }  
 
-  QueueReport& CarpeDM::getQReport(Graph& g, AllocTable& at, const std::string& blockName, QueueReport& qr) {
+  QueueReport& CarpeDM::getQReport(Graph& g, AllocTable& at, const std::string& blockName, QueueReport& qr, const vStrC& futureOrphan) {
     
     const std::string exIntro = " getQReport: ";
-    const std::string nodeNotFound = " Node could not be found: ";
+    
+    
 
-    if (!(hm.lookup(blockName))) throw std::runtime_error(exIntro + nodeNotFound + blockName); 
-    auto x = at.lookupHash(hm.lookup(blockName).get()); // x is the blocks alloctable entry
-    if (!(at.isOk(x))) throw std::runtime_error(" allocTable: " + nodeNotFound + blockName);
+    auto x = at.lookupHash(hm.lookup(blockName, exIntro)); // x is the blocks alloctable entry
+    qr.name = blockName;
 
     //check their Q counters for unprocessed commands
     uint32_t wrIdxs = boost::dynamic_pointer_cast<Block>(g[x->v].np)->getWrIdxs(); 
     uint32_t rdIdxs = boost::dynamic_pointer_cast<Block>(g[x->v].np)->getRdIdxs();
+
+    if (verbose) sLog << "Check for orphaned commands is scanning Queue @ " << blockName << std::endl;
 
     for (uint8_t prio = PRIO_LO; prio <= PRIO_IL; prio++) {
       
@@ -242,12 +247,14 @@ namespace coverage {
       bufLstAdr = writeBeBytesToLeNumber<uint32_t>((uint8_t*)&bBlock[BLOCK_CMDQ_LO_PTR + prio * _32b_SIZE_]);
       std::tie(bufLstCpu, bufLstAdrType) = at.adrClassification(bufLstAdr);  
       //get BufList binary
-      auto bufLst = at.lookupAdr( x->cpu, at.adrConv(bufLstAdrType, AdrType::MGMT, x->cpu, bufLstAdr) ); //buffer list cpu is the same as block cpu
-      if (!(at.isOk(bufLst))) { continue; }
-      else                    { qr.hasQ[prio] = true; }
+      const uint8_t* bBL;
+      try {
+        auto bufLst = at.lookupAdr( x->cpu, at.adrConv(bufLstAdrType, AdrType::MGMT, x->cpu, bufLstAdr) ); //buffer list cpu is the same as block cpu
+        qr.hasQ[prio] = true;
+        bBL = bufLst->b;
+      } catch (...) { continue; }
 
-      const uint8_t* bBL = bufLst->b;  
-       
+      
       //get current read cnt
       uint8_t auxRd = (rdIdxs >> (prio*8)) & Q_IDX_MAX_OVF_MSK;
       uint8_t auxWr = (wrIdxs >> (prio*8)) & Q_IDX_MAX_OVF_MSK;
@@ -267,6 +274,7 @@ namespace coverage {
       if (pendingCnt) {for(uint8_t pidx = rdIdx; pidx < (rdIdx + pendingCnt); pidx++) {pendingIdx.insert( pidx & Q_IDX_MAX_MSK);}}
 
       
+      if (verbose) sLog << "Prio " << (int)prio << std::endl;
 
       //find buffers of all non empty slots
       for (uint8_t i = 0; i <= Q_IDX_MAX_MSK; i++) {
@@ -274,18 +282,19 @@ namespace coverage {
         AdrType bufAdrType;
         
         uint32_t bufAdr = writeBeBytesToLeNumber<uint32_t>((uint8_t*)&bBL[(i / 2) * _32b_SIZE_] );
-        std::tie(bufCpu, bufAdrType) = at.adrClassification(bufAdr);  
-        auto buf = at.lookupAdr( x->cpu, at.adrConv(bufAdrType, AdrType::MGMT, x->cpu, bufAdr) ); //buffer cpu is the same as block cpu
-        if (!(at.isOk(buf))) {continue;}
-        qr.aQ[prio].aQe[i].pending = (bool)pendingIdx.count(i);
-        getQelement(g, at, i, buf, qr.aQ[prio].aQe[i]);
+        std::tie(bufCpu, bufAdrType) = at.adrClassification(bufAdr);
+        try {  
+          auto buf = at.lookupAdr( x->cpu, at.adrConv(bufAdrType, AdrType::MGMT, x->cpu, bufAdr) ); //buffer cpu is the same as block cpu
+          qr.aQ[prio].aQe[i].pending = (bool)pendingIdx.count(i);
+          getQelement(g, at, i, buf, qr.aQ[prio].aQe[i], futureOrphan );
+        } catch (...) {continue;}
       }
     }
       
     return qr;
   }
 
-  QueueElement& CarpeDM::getQelement(Graph& g, AllocTable& at, uint8_t idx, amI allocIt, QueueElement& qe) {
+  QueueElement& CarpeDM::getQelement(Graph& g, AllocTable& at, uint8_t idx, amI allocIt, QueueElement& qe, const vStrC& futureOrphan) {
     //TODO might cleaner as deserialisers for MiniCommand Class
     uint8_t*  bAux  = (uint8_t*)&(allocIt->b);
     uint8_t*     b  = (uint8_t*)&bAux[(idx % 2) * _T_CMD_SIZE_];
@@ -295,6 +304,8 @@ namespace coverage {
     qe.validTime    = writeBeBytesToLeNumber<uint64_t>((uint8_t*)&b[T_CMD_TIME]);
     qe.qty          = (act >> ACT_QTY_POS) & ACT_QTY_MSK;
     qe.type         = type; //for conevenient use of case statements
+    // calculate ext address for direct surgical modification
+    qe.extAdr       = at.adrConv(AdrType::MGMT, AdrType::EXT, allocIt->cpu, allocIt->adr) + (idx % 2) * _T_CMD_SIZE_; 
 
     //type specific
     switch(type) {
@@ -313,9 +324,21 @@ namespace coverage {
                                 std::tie(dstCpuAux, dstAdrType) = at.adrClassification(dstAdr);
                                 dstCpu = (dstAdrType == AdrType::PEER ? dstCpuAux : cpu);
                                 //get allocentry of the destination by its cpu idx and memory address
-                                auto dst = at.lookupAdr( dstCpu, at.adrConv(dstAdrType, AdrType::MGMT, dstCpu, dstAdr) );
-                                if (!(at.isOk(dst)))  {sDst = DotStr::Misc::sUndefined;}
-                                else                  {sDst = g[dst->v].name;}
+                                try {
+                                  auto dst = at.lookupAdr( dstCpu, at.adrConv(dstAdrType, AdrType::MGMT, dstCpu, dstAdr) );
+                                  sDst = g[dst->v].name;
+                                  for (auto& itOrphan : futureOrphan) {
+                                    if (sDst == itOrphan) {
+                                      if (verbose) sLog << "found orphaned command pointing to " << itOrphan << " in slot " << (int)idx << std::endl;
+                                      qe.orphaned = true;
+                                      break;} 
+                                  }
+                                } catch (...) {
+                                  if (verbose) sLog << "found orphaned command pointing to unknown destination (#" << std::dec << (int)dstCpu << " 0x" << std::hex << dstAdr << std::dec << " in slot " << (int)idx << std::endl; 
+                                  sDst = DotStr::Misc::sUndefined;
+                                  qe.orphaned = true;
+                                }
+                                
                               }    
                               qe.sType          = dnt::sCmdFlow;
                               qe.flowPerma      = (act >> ACT_CHP_POS) & ACT_CHP_MSK;
@@ -350,12 +373,11 @@ namespace coverage {
 void CarpeDM::dumpNode(uint8_t cpuIdx, const std::string& name) {
   
   Graph& g = gDown;
- 
-    auto it = atDown.lookupHash(hm.lookup(name).get());
-    if (atDown.isOk(it)) {
-      auto* x = (AllocMeta*)&(*it);  
-      hexDump(g[x->v].name.c_str(), (const char*)x->b, _MEM_BLOCK_SIZE); 
-    }
+  if (hm.contains(name)) {   
+    auto it = atDown.lookupHash(hm.lookup(name));
+    auto* x = (AllocMeta*)&(*it);  
+    hexDump(g[x->v].name.c_str(), (const char*)x->b, _MEM_BLOCK_SIZE); 
+  }  
 }
 
 void CarpeDM::inspectHeap(uint8_t cpuIdx) {
@@ -386,8 +408,99 @@ void CarpeDM::inspectHeap(uint8_t cpuIdx) {
 }
 
 
+void CarpeDM::clearHealth(uint8_t cpuIdx) {
+  vEbwrs ew;
+  clearHealth(cpuIdx, ew);
+  ebWriteCycle(ebd, ew.va, ew.vb, ew.vcs);
+}
+
+void CarpeDM::clearHealth() {
+  vEbwrs ew;
+  for(int cpuIdx = 0; cpuIdx < getCpuQty(); cpuIdx++) { clearHealth(cpuIdx, ew); }
+  ebWriteCycle(ebd, ew.va, ew.vb, ew.vcs);
+}
+
+vEbwrs& CarpeDM::clearHealth(uint8_t cpuIdx, vEbwrs& ew) {
+  uint32_t const baseAdr = atDown.getMemories()[cpuIdx].extBaseAdr + atDown.getMemories()[cpuIdx].sharedOffs;
+  
+  uint8_t buf[8];
+  
+  
+  
+
+  const vBuf basicState = {0x00, 0x00, 0x00, 0x0f};
+
+
+
+  //reset thread message counters
+  //printf("VA size before %u, VCS size \n", ew.va.size(), ew.vcs.size());
+  for (uint8_t thrIdx = 0; thrIdx < _THR_QTY_; thrIdx++) {
+
+    resetThrMsgCnt(cpuIdx, thrIdx, ew);
+    //printf("VA size %u, VCS size \n", ew.va.size(), ew.vcs.size());
+  }
+
+  size_t oldContent = ew.va.size();
+
+  // reset diagnostic values aggregate
+
+  ew.va.push_back(baseAdr + SHCTL_DIAG + T_DIAG_MSG_CNT + 0);  // 64b counter
+  ew.va.push_back(baseAdr + SHCTL_DIAG + T_DIAG_MSG_CNT + _32b_SIZE_);
+  ew.vb.insert(ew.vb.end(), _64b_SIZE_, 0x00);
+
+  // skip boot timestamp, we did not reboot
+
+  // iterate over fields of the aggregate
+  for (uint32_t offs = T_DIAG_SCH_MOD; offs < T_DIAG_DIF_MIN; offs += _32b_SIZE_) {
+    ew.va.push_back(baseAdr + SHCTL_DIAG + offs);
+    //min diff value must be initialised with max, max diff with min
+    ew.vb.insert(ew.vb.end(), _32b_SIZE_, 0x00);
+  }
+
+  //Min dif
+  ew.va.push_back(baseAdr + SHCTL_DIAG + T_DIAG_DIF_MIN + 0);  // 64b counter
+  ew.va.push_back(baseAdr + SHCTL_DIAG + T_DIAG_DIF_MIN + _32b_SIZE_);
+  writeLeNumberToBeBytes(buf, std::numeric_limits<int64_t>::max());
+  ew.vb.insert(ew.vb.end(), buf, buf +_64b_SIZE_);
+
+  //Max dif
+  ew.va.push_back(baseAdr + SHCTL_DIAG + T_DIAG_DIF_MAX + 0);  // 64b counter
+  ew.va.push_back(baseAdr + SHCTL_DIAG + T_DIAG_DIF_MAX + _32b_SIZE_);
+  writeLeNumberToBeBytes(buf, std::numeric_limits<int64_t>::min());
+  ew.vb.insert(ew.vb.end(), buf, buf +_64b_SIZE_);
+
+  //Running Sum
+  ew.va.push_back(baseAdr + SHCTL_DIAG + T_DIAG_DIF_SUM + 0);  // 64b counter
+  ew.va.push_back(baseAdr + SHCTL_DIAG + T_DIAG_DIF_SUM + _32b_SIZE_);
+  ew.vb.insert(ew.vb.end(), _64b_SIZE_, 0x00);
+
+  
+
+  //skip Dif Warning Threshold, that stays as it is
+
+  // iterate over fields of the aggregate
+  for (uint32_t offs = T_DIAG_WAR_CNT; offs < _T_DIAG_SIZE_; offs += _32b_SIZE_) {
+    ew.va.push_back(baseAdr + SHCTL_DIAG + offs);
+    ew.vb.insert(ew.vb.end(), _32b_SIZE_, 0x00);
+  }
+
+  // clear status value
+  ew.va.push_back(baseAdr + SHCTL_STATUS);
+  ew.vb += basicState;
+
+  //insert EB flow control vector
+  ew.vcs += leadingOne(ew.va.size() - oldContent);
+
+  return ew;
+
+}
+
+
 HealthReport& CarpeDM::getHealth(uint8_t cpuIdx, HealthReport &hr) {
   uint32_t const baseAdr = atDown.getMemories()[cpuIdx].extBaseAdr + atDown.getMemories()[cpuIdx].sharedOffs;
+
+
+
 
   vAdr diagAdr;
   vBuf diagBuf;
@@ -424,12 +537,12 @@ HealthReport& CarpeDM::getHealth(uint8_t cpuIdx, HealthReport &hr) {
   //printf("Schedule Optype 0x%02x @ 0x%08x\n", schOpType, T_DIAG_SCH_MOD + T_MOD_INFO_TYPE);
 
   switch(schOpType) {
-    case OP_TYPE_SCH_CLEAR      : hr.smodOpType = "Clear"; break;
-    case OP_TYPE_SCH_ADD        : hr.smodOpType = "Add"; break;
+    case OP_TYPE_SCH_CLEAR      : hr.smodOpType = "Clear";     break;
+    case OP_TYPE_SCH_ADD        : hr.smodOpType = "Add";       break;
     case OP_TYPE_SCH_OVERWRITE  : hr.smodOpType = "Overwrite"; break;
-    case OP_TYPE_SCH_REMOVE     : hr.smodOpType = "Remove"; break;
-    case OP_TYPE_SCH_KEEP       : hr.smodOpType = "Keep"; break;
-    default                     : hr.smodOpType = "    ?"; break;
+    case OP_TYPE_SCH_REMOVE     : hr.smodOpType = "Remove";    break;
+    case OP_TYPE_SCH_KEEP       : hr.smodOpType = "Keep";      break;
+    default                     : hr.smodOpType = "    ?";     break;
   }
 
    
@@ -454,27 +567,30 @@ HealthReport& CarpeDM::getHealth(uint8_t cpuIdx, HealthReport &hr) {
   //printf("Cmd Optype %02x @ 0x%08x, Flow would be %02x\n", cmdOpType, T_DIAG_CMD_MOD + T_MOD_INFO_TYPE, OP_TYPE_CMD_FLOW);
 
   switch(cmdOpType) {
-    case OP_TYPE_CMD_FLOW  : hr.cmodOpType = "Flow"; break;
+    case OP_TYPE_CMD_FLOW  : hr.cmodOpType = "Flow";  break;
     case OP_TYPE_CMD_NOP   : hr.cmodOpType = "No Op"; break;
-    case OP_TYPE_CMD_WAIT  : hr.cmodOpType = "Wait"; break;
+    case OP_TYPE_CMD_WAIT  : hr.cmodOpType = "Wait";  break;
     case OP_TYPE_CMD_FLUSH : hr.cmodOpType = "Flush"; break;
     case OP_TYPE_CMD_START : hr.cmodOpType = "Start"; break;
-    case OP_TYPE_CMD_STOP  : hr.cmodOpType = "Stop"; break;
+    case OP_TYPE_CMD_STOP  : hr.cmodOpType = "Stop";  break;
     case OP_TYPE_CMD_CEASE : hr.cmodOpType = "Cease"; break;
     case OP_TYPE_CMD_ABORT : hr.cmodOpType = "Abort"; break;
     default                : hr.cmodOpType = "    ?";
   }
 
 
-  hr.cmodCnt          = (uint8_t)writeBeBytesToLeNumber<uint32_t>(b + T_DIAG_CMD_MOD + T_MOD_INFO_CNT);
-
-
-  hr.minTimeDiff      =  writeBeBytesToLeNumber<int64_t>(b + T_DIAG_DIF_MIN);  
-  hr.maxTimeDiff      =  writeBeBytesToLeNumber<int64_t>(b + T_DIAG_DIF_MAX);
-  hr.avgTimeDiff      = (hr.msgCnt ? writeBeBytesToLeNumber<int64_t>(b + T_DIAG_DIF_SUM) / (int64_t)hr.msgCnt : 0);   
-  hr.warningThreshold =  writeBeBytesToLeNumber<int64_t>(b + T_DIAG_DIF_WTH);
-  hr.warningCnt       = writeBeBytesToLeNumber<uint64_t>(b + T_DIAG_WAR_CNT);
-  hr.stat             = writeBeBytesToLeNumber<uint32_t>(b + _T_DIAG_SIZE_); // stat comes after last element of T_DIAG
+  hr.cmodCnt           = (uint8_t)writeBeBytesToLeNumber<uint32_t>(b + T_DIAG_CMD_MOD + T_MOD_INFO_CNT);
+  hr.minTimeDiff       = writeBeBytesToLeNumber<int64_t>(b + T_DIAG_DIF_MIN);
+  hr.maxTimeDiff       = writeBeBytesToLeNumber<int64_t>(b + T_DIAG_DIF_MAX);
+  hr.avgTimeDiff       = (hr.msgCnt ? writeBeBytesToLeNumber<int64_t>(b + T_DIAG_DIF_SUM) / (int64_t)hr.msgCnt : 0);
+  hr.warningThreshold  = writeBeBytesToLeNumber<int64_t>(b + T_DIAG_DIF_WTH);
+  hr.warningCnt        = writeBeBytesToLeNumber<uint64_t>(b + T_DIAG_WAR_CNT);
+  uint32_t warningHash = writeBeBytesToLeNumber<uint32_t>(b + T_DIAG_WAR_1ST_HASH);
+  hr.warningNode       = hm.contains(warningHash) ? hm.lookup(warningHash) : "?";
+  hr.warningTime       = writeBeBytesToLeNumber<uint64_t>(b + T_DIAG_WAR_1ST_TS);
+  hr.maxBacklog        = writeBeBytesToLeNumber<uint32_t>(b + T_DIAG_BCKLOG_STRK);
+  hr.badWaitCnt        = writeBeBytesToLeNumber<uint32_t>(b + T_DIAG_BAD_WAIT_CNT);
+  hr.stat              = writeBeBytesToLeNumber<uint32_t>(b + _T_DIAG_SIZE_); // stat comes after last element of T_DIAG
   
   return hr;
   
@@ -486,32 +602,46 @@ void CarpeDM::show(const std::string& title, const std::string& logDictFile, Tra
   AllocTable& at  = (dir == TransferDir::UPLOAD ? atUp : atDown);
 
   sLog << std::endl << title << std::endl;
-  sLog << std::endl << "Patterns:" << std::endl;
 
-  for (auto& it : gt.getAllPatterns()) sLog <<  it << std::endl;
+  // find max name length for alignment
+  size_t maxLen = 0;
+  BOOST_FOREACH( vertex_t v, vertices(g) ) { maxLen = std::max(maxLen, g[v].name.length()); }
 
-  sLog << std::endl << std::setfill(' ') << std::setw(4) << "Idx" << "   " << std::setfill(' ') << std::setw(4) << "S/R" << "   " 
-                    << std::setfill(' ') << std::setw(4) << "Cpu" << "   " << std::setw(30) << "Name" << "   " 
-                    << std::setw(10) << "Hash" << "   " << std::setw(10)  <<  "Int. Adr   "  << "   " << std::setw(10) << "Ext. Adr   " << std::endl;
-  //sLog << " " << std::endl; 
+
+  sLog << std::endl << std::left << std::setfill(' ') << std::setw(3) << "Idx" << "   " << std::setfill(' ') << std::setw(3) << "S/R" << "   " 
+                    << std::setfill(' ') << std::setw(3) << "Cpu" << "   " << std::setw(maxLen) << "Name" << "   " 
+                    << std::setw(10) << "Hash" << "   " << std::setw(10)  <<  "Int. Adr"  << "   " << std::setw(10) << "Ext. Adr" << std::endl;
 
   BOOST_FOREACH( vertex_t v, vertices(g) ) {
     auto x = at.lookupVertex(v);
     
     if( !(filterMeta) || (filterMeta & !(g[v].np->isMeta())) ) {
-      sLog   << std::setfill(' ') << std::setw(4) << std::dec << v 
-      << "   "    << std::setfill(' ') << std::setw(2) << std::dec << (int)(at.isOk(x) && (int)(at.isStaged(x)))  
-      << " "      << std::setfill(' ') << std::setw(1) << std::dec << (int)(!(at.isOk(x)))
-      << "   "    << std::setfill(' ') << std::setw(4) << std::dec << (at.isOk(x) ? (int)x->cpu : -1 )  
-      << "   "    << std::setfill(' ') << std::setw(40) << std::left << g[v].name 
-      << "   0x"  << std::hex << std::setfill('0') << std::setw(8) << (at.isOk(x) ? x->hash  : 0 )
-      << "   0x"  << std::hex << std::setfill('0') << std::setw(8) << (at.isOk(x) ? at.adrConv(AdrType::MGMT, AdrType::INT, x->cpu, x->adr)  : 0 ) 
-      << "   0x"  << std::hex << std::setfill('0') << std::setw(8) << (at.isOk(x) ? at.adrConv(AdrType::MGMT, AdrType::EXT, x->cpu, x->adr)  : 0 )  << std::endl;
+      sLog   << std::right << std::setfill(' ') << std::setw(4) << std::dec << v 
+      << "   "    << std::setfill(' ') << std::setw(2) << std::dec << (int)(at.isStaged(x))  
+      << "   "    << std::setfill(' ') << std::setw(3) << std::dec << (int)x->cpu  
+      << "   "    << std::setfill(' ') << std::setw(maxLen) << std::left << g[v].name 
+      << "   0x"  << std::right << std::hex << std::setfill('0') << std::setw(8) << x->hash
+      << "   0x"  << std::right << std::hex << std::setfill('0') << std::setw(8) << at.adrConv(AdrType::MGMT, AdrType::INT, x->cpu, x->adr) 
+      << "   0x"  << std::right << std::hex << std::setfill('0') << std::setw(8) << at.adrConv(AdrType::MGMT, AdrType::EXT, x->cpu, x->adr) << std::endl;
     }
   }  
 
   sLog << std::endl;  
+
+  if(debug) {
+    BOOST_FOREACH( vertex_t v, vertices(g) ) {
+      auto x = at.lookupVertex(v);
+      dumpNode(x->cpu, g[x->v].name);
+    }
+  }
+
+  sLog << std::endl << "Patterns:" << std::endl;
+
+  for (auto& it : gt.getAllPatterns()) sLog <<  it << std::endl; 
+
+  sLog << std::endl; 
 }
+
 
   
   
@@ -596,7 +726,7 @@ void CarpeDM::coverage3Upload(uint64_t seed ) {
 
 bool CarpeDM::coverage3IsSeedValid(uint64_t seed) {
   uint32_t curInit  = (seed >> cursorPos) & cursorMsk;
-  uint32_t defInit  = (seed >> staticPos) & staticMsk;
+  //uint32_t defInit  = (seed >> staticPos) & staticMsk;
   uint32_t qInit    = (seed >> dynPos)    & dynMsk;
 
   //std::cout << "curInit 0x" << std::hex << curInit << std::endl; 

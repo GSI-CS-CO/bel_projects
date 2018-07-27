@@ -3,7 +3,7 @@
 
 #include "dmunipz_shared_mmap.h"
 
-#define DMUNIPZ_SHARED_DATA_4EB_SIZE  40     // size of shared memory used to receive EB return values; size is in bytes
+#define DMUNIPZ_SHARED_DATA_4EB_SIZE  68     // size of shared memory used to receive EB return values; size is in bytes
 
 /* the following values must be added to the offset of the shared memory */
 #define DMUNIPZ_SHARED_STATUS         0x00   // error status                       
@@ -17,19 +17,31 @@
 #define DMUNIPZ_SHARED_DSTMACHI       0x20   // WR MAC of data master, bits 31..16 unused
 #define DMUNIPZ_SHARED_DSTMACLO       0x24   // WR MAC of data master
 #define DMUNIPZ_SHARED_DSTIP          0x28   // IP of data master
-#define DMUNIPZ_SHARED_OFFSETFLEX     0x2C   // TS_FLEXWAIT = OFFSETFLEX + TS_MILEVENT; values in ns
+#define DMUNIPZ_SHARED_OFFSETFLEX     0x2C   // TS_FLEXWAIT = OFFSETFLEX + TS_EVT_READY_TO_SIS; value in ns
 #define DMUNIPZ_SHARED_UNITIMEOUT     0x30   // timeout for UNILAC
 #define DMUNIPZ_SHARED_TKTIMEOUT      0x34   // timeout for TK (via UNILAC)
 #define DMUNIPZ_SHARED_NBADSTATUS     0x38   // # of bad status (=error) incidents
 #define DMUNIPZ_SHARED_NBADSTATE      0x3C   // # of bad state (=FATAL, ERROR, UNKNOWN) incidents
-
-// 0x3C-0x3F: reserved
 #define DMUNIPZ_SHARED_TRANSN         0x40   // # N of transfers
 #define DMUNIPZ_SHARED_INJECTN        0x44   // # N of injections (of current transfer)
 #define DMUNIPZ_SHARED_TRANSVIRTACC   0x48   // # requested virtual accelerator 0..F
 #define DMUNIPZ_SHARED_TRANSSTATUS    0x4C   // # status of transfer
-// 0x50-0x5F: reserved
-#define DMUNIPZ_SHARED_DATA_4EB_START 0x60    // start of shared memory for EB return values
+#define DMUNIPZ_SHARED_TRANSNOBEAM    0x50   // # UNILAC requested without beam
+#define DMUNIPZ_SHARED_RECVIRTACC     0x54   // # last 2 digits: received virtual accelerator 0..F from UNIPZ, leading digits: number of received MIL events
+#define DMUNIPZ_SHARED_DTSTART        0x58   // difference between actual time and flextime @ DM
+#define DMUNIPZ_SHARED_DTSYNC         0x5C   // time difference between EVT_READY_TO_SIS and EVT_MB_TRIGGER; value in us
+#define DMUNIPZ_SHARED_DTINJECT       0x60   // time difference between CMD_UNI_BREQ and EVT_MB_TRIGGER; value in us
+#define DMUNIPZ_SHARED_DTTRANSFER     0x64   // time difference between CMD_UNI_TKREQ and EVT_MB_TRIGGER; value in us
+#define DMUNIPZ_SHARED_DTTKREQ        0x68   // time difference between CMD_UNI_TKREQ and reply from UNIPZ; value in us
+#define DMUNIPZ_SHARED_DTBREQ         0x6c   // time difference between CMD_UNI_BREQ and reply from UNIPZ; value in us
+#define DMUNIPZ_SHARED_DTREADY2SIS    0x70   // time difference between CMD_UNI_BREQ and EVT_READY_TO_SIS; value in us
+#define DMUNIPZ_SHARED_NR2STRANSFER   0x74   // # of EVT_READY_TO_SIS events in between CMD_UNI_TKREQ and CMD_UNI_TKREL
+#define DMUNIPZ_SHARED_NR2SCYCLE      0x78   // # of EVT_READY_TO_SIS events in between CMD_UNI_TKREL and the following CMD_UNI_TKREL
+#define DMUNIPZ_SHARED_DTBPREP        0x7C   // time difference between CMD_UNI_BREQ and start of request at UNIPZ; value in us
+
+
+// 0x8a-0x8f: reserved
+#define DMUNIPZ_SHARED_DATA_4EB_START 0x90    // start of shared memory for EB return values
 #define DMUNIPZ_SHARED_DATA_4EB_END   DMUNIPZ_SHARED_DATA_4EB_START + DMUNIPZ_SHARED_DATA_4EB_SIZE // end of shared memory area for EB return values
 
 #endif

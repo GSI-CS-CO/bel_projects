@@ -72,15 +72,14 @@ namespace dnt = DotStr::Node::TypeVal;
     //create MgmtTable
     //sLog << std::dec << "dl size " << downloadData.size() << std::endl;
     uint32_t found = 0;
-
     uint32_t nodeCnt = 0;
     //go through Memories
     for(unsigned int i = 0; i < at.getMemories().size(); i++) {
       //go through Bmp
       for(unsigned int bitIdx = at.getMemories()[i].bmpSize / _MEM_BLOCK_SIZE; bitIdx < at.getMemories()[i].bmpBits; bitIdx++) {
         if (at.getMemories()[i].getBmpBit(bitIdx)) {
-          
-          uint32_t    localAdr  = nodeCnt * _MEM_BLOCK_SIZE; nodeCnt++;
+          uint32_t    localAdr  = nodeCnt * _MEM_BLOCK_SIZE; 
+          nodeCnt++;
           uint32_t    flags     = writeBeBytesToLeNumber<uint32_t>((uint8_t*)&downloadData[localAdr + NODE_FLAGS]); 
           uint32_t    type      = (flags >> NFLG_TYPE_POS) & NFLG_TYPE_MSK;
           if (type != NODE_TYPE_MGMT) continue; // skip all non mgmt nodes
@@ -90,16 +89,17 @@ namespace dnt = DotStr::Node::TypeVal;
           //we need to conform to the allocation rules and register our management nodes
           if (!(at.insertMgmt(cpu, adr, (uint8_t*)&downloadData[localAdr]))) {throw std::runtime_error( std::string("Address collision when adding mgmt node at "));};
           found++;
+          //at.getMemories()[i].clrBmpBit(bitIdx); // clear bit so parseDownloadData doesnt have to deal with this node again. 
+          //IMPORTANT: this saves a little bit of work, but also means the bmp is out of sync until we leave this function
         }
       }
     }
 
-    if(verbose) sLog << "Mgmt found " << std::dec << found << " data chunks. Trying to recover GroupTable ..." << std::endl;
+    if(verbose) sLog << "Mgmt found " << std::dec << found << " data chunks. Total " << nodeCnt << " nodes scanned. Trying to recover GroupTable ..." << std::endl;
 
     // recover container
     vBuf aux = atDown.recoverMgmt();
     vBuf tmpMgmtRecovery = decompress(aux);
-
 
     if(verbose) sLog << "Bytes expected: " << std::dec << atDown.getMgmtTotalSize() << ", recovered: " << std::dec << aux.size() << std::endl << std::endl;
 
@@ -121,8 +121,10 @@ namespace dnt = DotStr::Node::TypeVal;
     if (tmpStrCovtab.size()) ctTmp.load(tmpStrCovtab); 
     ct = ctTmp;
   
-    // clean up
+    // clean up - remove now obsolete management data (we need a fresh set anyway once upload data is set)
     atDown.deallocateAllMgmt();
+    // Tables and Pools match Bitmap again. As far as parseDownloadData is concerned, we were never here.
+
   } 
 
 
@@ -135,7 +137,6 @@ namespace dnt = DotStr::Node::TypeVal;
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //create AllocTable and Vertices
     //sLog << std::dec << "dl size " << downloadData.size() << std::endl;
-
     uint32_t nodeCnt = 0;
     //go through Memories
     for(unsigned int i = 0; i < at.getMemories().size(); i++) {
@@ -152,11 +153,11 @@ namespace dnt = DotStr::Node::TypeVal;
           uint8_t     cpu       = i;
 
           // IMPORTANT: skip all mgmt nodes
-          if (type == NODE_TYPE_MGMT) continue; 
+          if (type == NODE_TYPE_MGMT) {continue; }
 
           stream.str(""); stream.clear();
           stream << "0x" << std::setfill ('0') << std::setw(sizeof(uint32_t)*2) << std::hex << hash;
-          std::string name      = hm.lookup(hash) ? hm.lookup(hash).get() : DotStr::Misc::sHashType + stream.str();
+          std::string name      = hm.contains(hash) ? hm.lookup(hash) : DotStr::Misc::sHashType + stream.str();
           auto xPat  = gt.getTable().get<Groups::Node>().equal_range(name);
           std::string pattern   = (xPat.first != xPat.second ? xPat.first->pattern : DotStr::Misc::sUndefined);    
           auto xBp  = gt.getTable().get<Groups::Node>().equal_range(name);
@@ -190,25 +191,22 @@ namespace dnt = DotStr::Node::TypeVal;
 
           // Create node object for Vertex
           auto src = downloadData.begin() + localAdr;
-
-          auto it  = at.lookupAdr(cpu, adr);
-          if (!(at.isOk(it))) {throw std::runtime_error( std::string("Node at (dec) ") + std::to_string(adr) + std::string(", hash (dec) ") + std::to_string(hash) + std::string("not found. This is weird")); return;}
-          
-          auto* x = (AllocMeta*)&(*it);
+          auto  it = at.lookupAdr(cpu, adr);
+          auto*  x = (AllocMeta*)&(*it);
 
           std::copy(src, src + _MEM_BLOCK_SIZE, (uint8_t*)&(x->b[0]));
         
           switch(type) {
-            case NODE_TYPE_TMSG         : g[v].np = (node_ptr) new  TimingMsg(g[v].name, g[v].patName, g[v].bpName, x->hash, x->cpu, x->b, flags); g[v].type = dnt::sTMsg;       g[v].np->deserialise(); break;
-            case NODE_TYPE_CNOOP        : g[v].np = (node_ptr) new       Noop(g[v].name, g[v].patName, g[v].bpName, x->hash, x->cpu, x->b, flags); g[v].type = dnt::sCmdNoop;    g[v].np->deserialise(); break;
-            case NODE_TYPE_CFLOW        : g[v].np = (node_ptr) new       Flow(g[v].name, g[v].patName, g[v].bpName, x->hash, x->cpu, x->b, flags); g[v].type = dnt::sCmdFlow;    g[v].np->deserialise(); break;
-            case NODE_TYPE_CFLUSH       : g[v].np = (node_ptr) new      Flush(g[v].name, g[v].patName, g[v].bpName, x->hash, x->cpu, x->b, flags); g[v].type = dnt::sCmdFlush;   g[v].np->deserialise(); break;
-            case NODE_TYPE_CWAIT        : g[v].np = (node_ptr) new       Wait(g[v].name, g[v].patName, g[v].bpName, x->hash, x->cpu, x->b, flags); g[v].type = dnt::sCmdWait;    g[v].np->deserialise(); break;
-            case NODE_TYPE_BLOCK_FIXED  : g[v].np = (node_ptr) new BlockFixed(g[v].name, g[v].patName, g[v].bpName, x->hash, x->cpu, x->b, flags); g[v].type = dnt::sBlockFixed; g[v].np->deserialise(); break;
-            case NODE_TYPE_BLOCK_ALIGN  : g[v].np = (node_ptr) new BlockAlign(g[v].name, g[v].patName, g[v].bpName, x->hash, x->cpu, x->b, flags); g[v].type = dnt::sBlockAlign; g[v].np->deserialise(); break;
-            case NODE_TYPE_QUEUE        : g[v].np = (node_ptr) new   CmdQMeta(g[v].name, g[v].patName, g[v].bpName, x->hash, x->cpu, x->b, flags); g[v].type = dnt::sQInfo;    g[v].np->deserialise(); break;
-            case NODE_TYPE_ALTDST       : g[v].np = (node_ptr) new   DestList(g[v].name, g[v].patName, g[v].bpName, x->hash, x->cpu, x->b, flags); g[v].type = dnt::sDstList;  g[v].np->deserialise(); break;
-            case NODE_TYPE_QBUF         : g[v].np = (node_ptr) new CmdQBuffer(g[v].name, g[v].patName, g[v].bpName, x->hash, x->cpu, x->b, flags); g[v].type = dnt::sQBuf; break;
+            case NODE_TYPE_TMSG         : g[v].np = (node_ptr) new  TimingMsg(g[v].name, g[v].patName, g[v].bpName, x->hash, x->cpu, flags); g[v].type = dnt::sTMsg;       g[v].np->deserialise((uint8_t*)x->b); break;
+            case NODE_TYPE_CNOOP        : g[v].np = (node_ptr) new       Noop(g[v].name, g[v].patName, g[v].bpName, x->hash, x->cpu, flags); g[v].type = dnt::sCmdNoop;    g[v].np->deserialise((uint8_t*)x->b); break;
+            case NODE_TYPE_CFLOW        : g[v].np = (node_ptr) new       Flow(g[v].name, g[v].patName, g[v].bpName, x->hash, x->cpu, flags); g[v].type = dnt::sCmdFlow;    g[v].np->deserialise((uint8_t*)x->b); break;
+            case NODE_TYPE_CFLUSH       : g[v].np = (node_ptr) new      Flush(g[v].name, g[v].patName, g[v].bpName, x->hash, x->cpu, flags); g[v].type = dnt::sCmdFlush;   g[v].np->deserialise((uint8_t*)x->b); break;
+            case NODE_TYPE_CWAIT        : g[v].np = (node_ptr) new       Wait(g[v].name, g[v].patName, g[v].bpName, x->hash, x->cpu, flags); g[v].type = dnt::sCmdWait;    g[v].np->deserialise((uint8_t*)x->b); break;
+            case NODE_TYPE_BLOCK_FIXED  : g[v].np = (node_ptr) new BlockFixed(g[v].name, g[v].patName, g[v].bpName, x->hash, x->cpu, flags); g[v].type = dnt::sBlockFixed; g[v].np->deserialise((uint8_t*)x->b); break;
+            case NODE_TYPE_BLOCK_ALIGN  : g[v].np = (node_ptr) new BlockAlign(g[v].name, g[v].patName, g[v].bpName, x->hash, x->cpu, flags); g[v].type = dnt::sBlockAlign; g[v].np->deserialise((uint8_t*)x->b); break;
+            case NODE_TYPE_QUEUE        : g[v].np = (node_ptr) new   CmdQMeta(g[v].name, g[v].patName, g[v].bpName, x->hash, x->cpu, flags); g[v].type = dnt::sQInfo;      g[v].np->deserialise((uint8_t*)x->b); break;
+            case NODE_TYPE_ALTDST       : g[v].np = (node_ptr) new   DestList(g[v].name, g[v].patName, g[v].bpName, x->hash, x->cpu, flags); g[v].type = dnt::sDstList;    g[v].np->deserialise((uint8_t*)x->b); break;
+            case NODE_TYPE_QBUF         : g[v].np = (node_ptr) new CmdQBuffer(g[v].name, g[v].patName, g[v].bpName, x->hash, x->cpu, flags); g[v].type = dnt::sQBuf; break;
             case NODE_TYPE_UNKNOWN      : sErr << "not yet implemented " << g[v].type << std::endl; break;
             default                     : sErr << "Node type 0x" << std::hex << type << " not supported! " << std::endl;
           }
@@ -230,7 +228,7 @@ namespace dnt = DotStr::Node::TypeVal;
 
       } else {
 
-        if  (!(g[it.v].np->isMeta())) g[it.v].np->accept(VisitorDownloadCrawler(g, it.v, at, sLog, sErr));
+        if  (!(g[it.v].np->isMeta())) g[it.v].np->accept(VisitorDownloadCrawler(g, it.v, at, ct, sLog, sErr));
       }  
     }
     //second, iterate all meta-types
@@ -238,7 +236,7 @@ namespace dnt = DotStr::Node::TypeVal;
       // handled by visitor
       if (g[it.v].np == nullptr) {throw std::runtime_error( std::string("Node ") + g[it.v].name + std::string("not initialised")); return; 
       } else {
-        if  (g[it.v].np->isMeta()) g[it.v].np->accept(VisitorDownloadCrawler(g, it.v, at, sLog, sErr));
+        if  (g[it.v].np->isMeta()) g[it.v].np->accept(VisitorDownloadCrawler(g, it.v, at, ct, sLog, sErr));
       }  
     }
 

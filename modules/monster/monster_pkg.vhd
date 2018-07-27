@@ -112,9 +112,10 @@ package monster_pkg is
       g_lm32_MSIs            : natural := 1;
       g_lm32_ramsizes        : natural := 131072/4; -- in 32b words
       g_lm32_init_files      : string; -- multiple init files must be seperated by a semicolon ';'
-		g_lm32_profiles        : string; -- multiple profiles must be seperated by a semicolon ';'
+	g_lm32_profiles        : string; -- multiple profiles must be seperated by a semicolon ';'
       g_lm32_are_ftm         : boolean := false;
-      g_en_tempsens          : boolean := false
+      g_en_tempsens          : boolean := false;
+      g_delay_diagnostics    : boolean := false
     );
     port(
       -- Required: core signals
@@ -258,9 +259,9 @@ package monster_pkg is
       mil_nled_interl_o      : out   std_logic;
       mil_nled_dry_o         : out   std_logic;
       mil_nled_drq_o         : out   std_logic;
-	   mil_lemo_data_o        : out   std_logic_vector(4 downto 1);
+	mil_lemo_data_o        : out   std_logic_vector(4 downto 1);
       mil_lemo_nled_o        : out   std_logic_vector(4 downto 1);
-	   mil_lemo_out_en_o      : out   std_logic_vector(4 downto 1);
+	mil_lemo_out_en_o      : out   std_logic_vector(4 downto 1);
       mil_lemo_data_i        : in    std_logic_vector(4 downto 1):= (others => '0');	
 		
 --      mil_io1_o              : out   std_logic;

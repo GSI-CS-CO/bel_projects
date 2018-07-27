@@ -25,14 +25,14 @@ void init() {
         cRules.insert(ConstellationRule(n::sTMsg,        e::sDynPar0,    cNonMeta,  0, 1  ));
         cRules.insert(ConstellationRule(n::sTMsg,        e::sDynPar1,    cNonMeta,  0, 1  ));
         cRules.insert(ConstellationRule(n::sCmdNoop,     e::sDefDst,     cNonMeta, 0, 1  ));
-        cRules.insert(ConstellationRule(n::sCmdNoop,     e::sCmdTarget,  {n::sBlock, n::sBlockFixed, n::sBlockAlign},  1, 1  ));
+        cRules.insert(ConstellationRule(n::sCmdNoop,     e::sCmdTarget,  {n::sBlock, n::sBlockFixed, n::sBlockAlign},  0, 1  ));
         cRules.insert(ConstellationRule(n::sCmdFlow,     e::sDefDst,     cNonMeta, 0, 1  ));
-        cRules.insert(ConstellationRule(n::sCmdFlow,     e::sCmdTarget,  {n::sBlock, n::sBlockFixed, n::sBlockAlign},  1, 1  ));
-        cRules.insert(ConstellationRule(n::sCmdFlow,     e::sCmdFlowDst, cNonMeta, 1, 1  ));
+        cRules.insert(ConstellationRule(n::sCmdFlow,     e::sCmdTarget,  {n::sBlock, n::sBlockFixed, n::sBlockAlign},  0, 1  ));
+        cRules.insert(ConstellationRule(n::sCmdFlow,     e::sCmdFlowDst, cNonMeta, 0, 1  ));
         cRules.insert(ConstellationRule(n::sCmdFlush,    e::sDefDst,     cNonMeta, 1, 1  ));
-        cRules.insert(ConstellationRule(n::sCmdFlush,    e::sCmdTarget,  {n::sBlock, n::sBlockFixed, n::sBlockAlign},  1, 1  ));
+        cRules.insert(ConstellationRule(n::sCmdFlush,    e::sCmdTarget,  {n::sBlock, n::sBlockFixed, n::sBlockAlign},  0, 1  ));
         cRules.insert(ConstellationRule(n::sCmdWait,     e::sDefDst,     cNonMeta, 0, 1  ));
-        cRules.insert(ConstellationRule(n::sCmdWait,     e::sCmdTarget,  {n::sBlock, n::sBlockFixed, n::sBlockAlign},  1, 1  ));
+        cRules.insert(ConstellationRule(n::sCmdWait,     e::sCmdTarget,  {n::sBlock, n::sBlockFixed, n::sBlockAlign},  0, 1  ));
         cRules.insert(ConstellationRule(n::sBlockFixed,  e::sDefDst,     cNonMeta, 0, 1  ));
         cRules.insert(ConstellationRule(n::sBlockFixed,  e::sAltDst,     cNonMeta, 0, 10 ));
         cRules.insert(ConstellationRule(n::sBlockFixed,  e::sDstList,    {n::sDstList},                                0, 1  ));
@@ -113,7 +113,7 @@ void init() {
   }
 
   //check if event sequence is well behaved
-  void eventSequenceCheck(vertex_t v, Graph& g) {
+  void eventSequenceCheck(vertex_t v, Graph& g, bool force) {
     Graph::out_edge_iterator out_begin, out_end, out_cur;
     vertex_t vcurrent = v, vnext = v;
     unsigned int infiniteLoopGuard = 0;;
@@ -140,11 +140,12 @@ void init() {
 
         if (g[vcurrent].np == nullptr) throw std::runtime_error(g[vcurrent].name  + " is not allocated\n"); 
         if (g[vnext].np == nullptr) throw std::runtime_error(g[vnext].name  + " is not allocated\n"); 
-
-        //assumption: successors are either of class Event or Block (neighbourhoodCheck ensures this)
-        if (boost::dynamic_pointer_cast<Event>(g[vcurrent].np)->getTOffs() >= boost::dynamic_pointer_cast<Block>(g[vnext].np)->getTPeriod() ) { // time offset greater or equal block period 
-          throw std::runtime_error(exIntro  + "have a time offset greater of equal than the period of its terminating block\n");
-        } 
+        if (!force) { // this allows negative values for time offsets to provoke specific late events
+          //assumption: successors are either of class Event or Block (neighbourhoodCheck ensures this)
+          if (boost::dynamic_pointer_cast<Event>(g[vcurrent].np)->getTOffs() >= boost::dynamic_pointer_cast<Block>(g[vnext].np)->getTPeriod() ) { // time offset greater or equal block period 
+            throw std::runtime_error(exIntro  + "have a time offset greater of equal than the period of its terminating block\n");
+          } 
+        }
         return; // found a valid block, we're done.
       }
 
@@ -155,10 +156,11 @@ void init() {
       if (vnext == v) { // loop to original vertex without encountering block termination
         throw std::runtime_error(exIntro  + "be part of a loop without a terminating block\n"); 
       }
-      if (boost::dynamic_pointer_cast<Event>(g[vcurrent].np)->getTOffs() > boost::dynamic_pointer_cast<Event>(g[vnext].np)->getTOffs()) { // non monotonically increasing time offsets
-        throw std::runtime_error(exIntro  + "have a time offset greater than its successor's\n");   
+      if (!force) { // this allows negative values for time offsets to provoke specific late events
+        if (boost::dynamic_pointer_cast<Event>(g[vcurrent].np)->getTOffs() > boost::dynamic_pointer_cast<Event>(g[vnext].np)->getTOffs()) { // non monotonically increasing time offsets
+          throw std::runtime_error(exIntro  + "have a time offset greater than its successor's\n");   
+        }
       }
-     
       
       vcurrent = vnext;
       infiniteLoopGuard++;

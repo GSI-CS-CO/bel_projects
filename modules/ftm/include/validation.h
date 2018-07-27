@@ -108,7 +108,7 @@ extern ConstellationRule_set cRules;
 void init(); //workaround for boost v1.53 which doesn't support aggregate initalization
 
 
-void eventSequenceCheck(vertex_t v, Graph& g); //check if event sequence is well behaved
+void eventSequenceCheck(vertex_t v, Graph& g, bool force); //check if event sequence is well behaved
 void metaSequenceCheck(vertex_t v, Graph& g); //check if meta tree is well behaved
 void neighbourhoodCheck(vertex_t v, Graph& g); //check if all outedge (nodetype/edgetype/childtype) tupels are valid and occurrence count is within valid bounds
 

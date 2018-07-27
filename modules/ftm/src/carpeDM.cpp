@@ -114,6 +114,9 @@ vBuf CarpeDM::simReadCycle(vAdr va)
 
 int CarpeDM::ebWriteCycle(Device& dev, vAdr va, vBuf& vb, vBl vcs)
 {
+  if ( (va.size() != vcs.size()) || ( va.size() * _32b_SIZE_ != vb.size() ) ) 
+    throw std::runtime_error(" EB write cycle Adr / Data / Flow control vector lengths (" + std::to_string(va.size()) + "/" + std::to_string(vb.size() /  _32b_SIZE_) + "/" + std::to_string(vcs.size()) +") do not match\n");
+
   if (sim) {return simWriteCycle(va, vb); }
   //eb_status_t status;
   //FIXME What about MTU? What about returned eb status ??
@@ -153,6 +156,8 @@ int   CarpeDM::ebWriteCycle(Device& dev, vAdr va, vBuf& vb) {return  ebWriteCycl
 
 vBuf CarpeDM::ebReadCycle(Device& dev, vAdr va, vBl vcs)
 {
+  if (va.size() != vcs.size()) throw std::runtime_error(" EB Read cycle Adr / Flow control vector lengths (" + std::to_string(va.size()) + "/" + std::to_string(vcs.size()) + ") do not match\n");
+
   if (sim) {return simReadCycle(va); }
   //FIXME What about MTU? What about returned eb status ??
 
@@ -304,10 +309,10 @@ bool CarpeDM::connect(const std::string& en, bool simulation, bool test) {
     try { 
       ebs.open(0, EB_DATAX|EB_ADDRX);
       ebd.open(ebs, ebdevname.c_str(), EB_DATAX|EB_ADDRX, 3);
-      ebd.sdb_find_by_identity(ECA::vendID, ECA::devID, ecaDevs);
-      if (ecaDevs.size() < 1) throw std::runtime_error("Could not find ECA on DM (needed for WR time). Something is wrong\n");
+      ebd.sdb_find_by_identity(CluTime::vendID, CluTime::devID, cluTimeDevs);
+      if (cluTimeDevs.size() < 1) throw std::runtime_error("Could not find Cluster Time Module on DM (needed for WR time). Something is wrong\n");
  
-
+      ebd.sdb_find_by_identity(SDB_VENDOR_GSI,SDB_DEVICE_DIAG, diagDevs);
 
       ebd.sdb_find_by_identity(SDB_VENDOR_GSI,SDB_DEVICE_LM32_RAM, cpuDevs);
       if (cpuDevs.size() >= 1) { 
@@ -352,7 +357,7 @@ bool CarpeDM::connect(const std::string& en, bool simulation, bool test) {
     } catch (etherbone::exception_t const& ex) {
       throw std::runtime_error("Etherbone " + std::string(ex.method) + " returned " + std::string(eb_status(ex.status)) + "\n" );
     } catch(...) {
-      throw std::runtime_error("Could not find CPUs running valid DM Firmware\n" );
+      throw;// std::runtime_error("Could not find CPUs running valid DM Firmware\n" );
     }
 
     if(verbose) {
@@ -645,12 +650,9 @@ bool CarpeDM::connect(const std::string& en, bool simulation, bool test) {
      
     AllocTable& at = (dir == TransferDir::UPLOAD ? atUp : atDown );
     uint32_t hash;
-    if (!(hm.lookup(name))) {throw std::runtime_error( "Unknown Node Name '" + name + "' when lookup up hosting cpu"); return -1;} 
-    hash = hm.lookup(name).get(); //just pass it on
+    hash = hm.lookup(name); //just pass it on
     
     auto x = at.lookupHash(hash);
-    if (!(at.isOk(x)))  {throw std::runtime_error( "Could not find Node '" + name + "' in allocation table"); return -1;}
-    
     return x->cpu;
   }
 
@@ -660,19 +662,18 @@ bool CarpeDM::connect(const std::string& en, bool simulation, bool test) {
 
     AllocTable& at = (dir == TransferDir::UPLOAD ? atUp : atDown );
     uint32_t hash;
-    if (!(hm.lookup(name))) {throw std::runtime_error( "Unknown Node Name '" + name + "' when lookup up address"); return LM32_NULL_PTR;} 
-    hash = hm.lookup(name).get(); //just pass it on
+    
+    hash = hm.lookup(name); //just pass it on
     auto x = at.lookupHash(hash);
-    if (!(at.isOk(x)))  {throw std::runtime_error( "Could not find Node in allocation table"); return LM32_NULL_PTR;}
-    else {
-      switch (adrT) {
-        case AdrType::MGMT : return x->adr; break;
-        case AdrType::INT  : return at.adrConv(AdrType::MGMT, AdrType::INT, x->cpu, x->adr); break;
-        case AdrType::EXT  : return at.adrConv(AdrType::MGMT, AdrType::EXT, x->cpu, x->adr); break;
-        case AdrType::PEER : return at.adrConv(AdrType::MGMT, AdrType::PEER, x->cpu, x->adr); break;
-        default            : throw std::runtime_error( "Unknown Adr Type conversion"); return LM32_NULL_PTR;
-      }
-    }  
+    
+    switch (adrT) {
+      case AdrType::MGMT : return x->adr; break;
+      case AdrType::INT  : return at.adrConv(AdrType::MGMT, AdrType::INT, x->cpu, x->adr); break;
+      case AdrType::EXT  : return at.adrConv(AdrType::MGMT, AdrType::EXT, x->cpu, x->adr); break;
+      case AdrType::PEER : return at.adrConv(AdrType::MGMT, AdrType::PEER, x->cpu, x->adr); break;
+      default            : throw std::runtime_error( "Unknown Adr Type conversion"); return LM32_NULL_PTR;
+    }
+      
   }
 
 
@@ -707,7 +708,7 @@ void CarpeDM::showCpuList() {
 
   bool CarpeDM::isInHashDict(const std::string& name) {
     if (!(hm.contains(name))) return false;
-    return (atDown.isOk(atDown.lookupHash(hm.lookup(name).get())));
+    return (atDown.isOk(atDown.lookupHash(hm.lookup(name))));
   }  
 
   // Name/Hash Dict ///////////////////////////////////////////////////////////////////////////////
@@ -742,8 +743,8 @@ void CarpeDM::showCpuList() {
   std::string CarpeDM::downloadDot(bool filterMeta) {download(); return createDot( gDown, filterMeta);};            
   void CarpeDM::downloadDotFile(const std::string& fn, bool filterMeta) {download(); writeDownDotFile(fn, filterMeta);};   
   //add all nodes and/or edges in dot file
-  int CarpeDM::addDot(const std::string& s) {Graph gTmp; return safeguardTransaction(&CarpeDM::add, parseDot(s, gTmp), false);};            
-  int CarpeDM::addDotFile(const std::string& fn) {return addDot(readTextFile(fn));};                 
+  int CarpeDM::addDot(const std::string& s, bool force) {Graph gTmp; return safeguardTransaction(&CarpeDM::add, parseDot(s, gTmp), force);};
+  int CarpeDM::addDotFile(const std::string& fn, bool force) {return addDot(readTextFile(fn), force);};
   //add all nodes and/or edges in dot file                                                                                     
   int CarpeDM::overwriteDot(const std::string& s, bool force) {Graph gTmp; return safeguardTransaction(&CarpeDM::overwrite, parseDot(s, gTmp), force);};
   int CarpeDM::overwriteDotFile(const std::string& fn, bool force) {return overwriteDot(readTextFile(fn), force);};
@@ -801,13 +802,13 @@ void CarpeDM::showCpuList() {
     if (verbose) sLog << "Done.";
   }
 
-  bool CarpeDM::validate(Graph& g, AllocTable& at) {
+  bool CarpeDM::validate(Graph& g, AllocTable& at, bool force) {
     try { 
           BOOST_FOREACH( vertex_t v, vertices(g) ) { Validation::neighbourhoodCheck(v, g);  }
           
           BOOST_FOREACH( vertex_t v, vertices(g) ) { 
             if (g[v].np == nullptr) throw std::runtime_error("Validation of Sequence: Node '" + g[v].name + "' was not allocated" );
-            g[v].np->accept(VisitorValidation(g, v, at)); 
+            g[v].np->accept(VisitorValidation(g, v, at, force)); 
           }
     } catch (std::runtime_error const& err) { throw std::runtime_error("Validation of " + std::string(err.what()) ); }
     return true;
@@ -815,7 +816,7 @@ void CarpeDM::showCpuList() {
 
 
   uint64_t CarpeDM::getDmWrTime() {
-    /* get time from ECA */
+    /* get time from Cluster Time Module (ECA Time with or wo ECA) */
     uint64_t wrTime;
 
     if (sim) {
@@ -828,26 +829,25 @@ void CarpeDM::showCpuList() {
 
     }
   
-    eb_data_t    nsHi0, nsLo, nsHi1;
+    eb_data_t    nsHi, nsLo;
     Cycle cyc;
 
 
-    uint32_t ecaAddr = ecaDevs[0].sdb_component.addr_first;
+    uint32_t cluTimeAddr = cluTimeDevs[0].sdb_component.addr_first;
     
-    do {
+    
       try {
         cyc.open(ebd);
-        cyc.read( ecaAddr + ECA::timeHiW, EB_BIG_ENDIAN|EB_DATA32, &nsHi0);
-        cyc.read( ecaAddr + ECA::timeLoW, EB_BIG_ENDIAN|EB_DATA32, &nsLo);
-        cyc.read( ecaAddr + ECA::timeHiW, EB_BIG_ENDIAN|EB_DATA32, &nsHi1);
+        cyc.read( cluTimeAddr + CluTime::timeHiW, EB_BIG_ENDIAN|EB_DATA32, &nsHi);
+        cyc.read( cluTimeAddr + CluTime::timeLoW, EB_BIG_ENDIAN|EB_DATA32, &nsLo);
         cyc.close();
       } catch (etherbone::exception_t const& ex) {
         throw std::runtime_error("Etherbone " + std::string(ex.method) + " returned " + std::string(eb_status(ex.status)) + "\n" );
       }
-    } while (nsHi0 != nsHi1);
+    
   
     /* time */
-    wrTime = (uint64_t)nsHi0 << 32;
+    wrTime = (uint64_t)nsHi << 32;
     wrTime = wrTime + (uint64_t)nsLo;
   
 

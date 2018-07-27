@@ -8,12 +8,12 @@
 
 
 
-void Meta::serialise(const vAdr &va) const {
-  Node::serialise(va);
+void Meta::serialise(const vAdr &va, uint8_t* b) const {
+  Node::serialise(va, b);
 };
 
-void CmdQMeta::serialise(const vAdr &va) const {
-  Meta::serialise(va);
+void CmdQMeta::serialise(const vAdr &va, uint8_t* b) const {
+  Meta::serialise(va, b);
   auto startIt = va.begin() + ADR_CMDQ_BUF_ARRAY;
   //FIXME size check !
   for(auto it = startIt; it < va.end(); it++) {
@@ -22,12 +22,12 @@ void CmdQMeta::serialise(const vAdr &va) const {
    
 };
 
-void CmdQBuffer::serialise(const vAdr &va) const {
-  Meta::serialise(va);
+void CmdQBuffer::serialise(const vAdr &va, uint8_t* b) const {
+  Meta::serialise(va, b);
 };
 
-void DestList::serialise(const vAdr &va) const {
-  Meta::serialise(va);
+void DestList::serialise(const vAdr &va, uint8_t* b) const {
+  Meta::serialise(va, b);
 
 
 

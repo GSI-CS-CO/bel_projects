@@ -100,6 +100,7 @@ using namespace DotStr::Misc;
     ew.va.push_back(modAdrBase + T_META_COVTAB_SIZE);
     ew.vb.insert( ew.vb.end(), b, b + 4 * _32b_SIZE_ );
     
+
     
     return ew;
   }
@@ -111,26 +112,37 @@ using namespace DotStr::Misc;
     hm.add(name);
     
 
-    vertex_t vD = boost::add_vertex(myVertex(name, g[v].cpu, hm.lookup(name).get(), nullptr, dnt::sDstList, DotStr::Misc::sHexZero), g);
+    vertex_t vD = boost::add_vertex(myVertex(name, g[v].cpu, hm.lookup(name), nullptr, dnt::sDstList, DotStr::Misc::sHexZero), g);
     //FIXME add to grouptable
     g[vD].patName = g[v].patName;
+    gt.setPattern(g[vD].name, g[vD].patName, false, false);
     boost::add_edge(v,   vD, myEdge(det::sDstList), g);
   }  
 
   void CarpeDM::generateQmeta(Graph& g, vertex_t v, int prio) {
+    //std::cout << "generating " << g[v].name << ", patname " << g[v].patName << " prio " << (int)prio << std::endl;
+
     const std::string nameBl = g[v].name + dnm::sQBufListTag + dnm::sQPrioPrefix[prio];
     const std::string nameB0 = g[v].name + dnm::sQBufTag     + dnm::sQPrioPrefix[prio] + dnm::s1stQBufSuffix;
     const std::string nameB1 = g[v].name + dnm::sQBufTag     + dnm::sQPrioPrefix[prio] + dnm::s2ndQBufSuffix;
     hm.add(nameBl);
     hm.add(nameB0);
     hm.add(nameB1);
-    //FIXME add to grouptable
-    vertex_t vBl = boost::add_vertex(myVertex(nameBl, g[v].cpu, hm.lookup(nameBl).get(), nullptr, dnt::sQInfo, DotStr::Misc::sHexZero), g);
-    vertex_t vB0 = boost::add_vertex(myVertex(nameB0, g[v].cpu, hm.lookup(nameB0).get(), nullptr, dnt::sQBuf,  DotStr::Misc::sHexZero), g);
-    vertex_t vB1 = boost::add_vertex(myVertex(nameB1, g[v].cpu, hm.lookup(nameB1).get(), nullptr, dnt::sQBuf,  DotStr::Misc::sHexZero), g);
+
+    vertex_t vBl = boost::add_vertex(myVertex(nameBl, g[v].cpu, hm.lookup(nameBl), nullptr, dnt::sQInfo, DotStr::Misc::sHexZero), g);
+    vertex_t vB0 = boost::add_vertex(myVertex(nameB0, g[v].cpu, hm.lookup(nameB0), nullptr, dnt::sQBuf,  DotStr::Misc::sHexZero), g);
+    vertex_t vB1 = boost::add_vertex(myVertex(nameB1, g[v].cpu, hm.lookup(nameB1), nullptr, dnt::sQBuf,  DotStr::Misc::sHexZero), g);
+
+    //std::cout << g[vBl].name << " -1-> " << getNodePattern(g[vBl].name) << std::endl;
     g[vBl].patName = g[v].patName;
+    //gt.setBeamproc(nameBl, g[v].bpName, false, false);
+    gt.setPattern(g[vBl].name, g[vBl].patName, false, false);
     g[vB0].patName = g[v].patName;
+    gt.setPattern(g[vB0].name, g[vB0].patName, false, false);
     g[vB1].patName = g[v].patName;
+    gt.setPattern(g[vB1].name, g[vB1].patName, false, false);
+
+    //std::cout << g[vBl].name << " -2-> " << getNodePattern(g[vBl].name) << std::endl;
     boost::add_edge(v,   vBl, myEdge(det::sQPrio[prio]), g);
     boost::add_edge(vBl, vB0, myEdge(det::sMeta),    g);
     boost::add_edge(vBl, vB1, myEdge(det::sMeta),    g);
@@ -144,6 +156,7 @@ using namespace DotStr::Misc;
       std::string cmp = g[v].type;
       
       if ((cmp == dnt::sBlockFixed) || (cmp == dnt::sBlockAlign) || (cmp == dnt::sBlock) ) {
+        //std::cout << "Scanning Block " << g[v].name << std::endl;
         boost::tie(out_begin, out_end) = out_edges(v,g);
         //check if it already has queue links / Destination List
         bool  genIl       = s2u<bool>(g[v].qIl),  hasIl = false, 
@@ -161,7 +174,8 @@ using namespace DotStr::Misc;
           if (g[*out_cur].type == det::sDstList)        hasDstLst   = true;
         }
 
-        
+        //std::cout << "IL " << (int)genIl << hasIl << "HI " << (int)genHi << hasHi << "LO " << (int)genLo << hasLo << std::endl;
+
         //create requested Queues / Destination List
         if (genIl && !hasIl ) { generateQmeta(g, v, PRIO_IL); }
         if (genHi && !hasHi ) { generateQmeta(g, v, PRIO_HI); }
@@ -181,10 +195,9 @@ using namespace DotStr::Misc;
     for (out_cur = out_begin; out_cur != out_end; ++out_cur) {
       if (g[*out_cur].type == det::sDstList) {
         auto dst = at.lookupVertex(target(*out_cur, g));
-        if (at.isOk(dst)) { at.setStaged(dst); 
+        at.setStaged(dst); 
         //std::cout << "staged " << g[dst->v].name  << std::endl; 
-        }// if we found a Dst List, stage it
-        else throw std::runtime_error("Dst List '" + g[dst->v].name + "' was not allocated, this is very bad");
+        // if we found a Dst List, stage it
         break;
       }
     }
@@ -202,10 +215,13 @@ using namespace DotStr::Misc;
     
     if (g[e].type != det::sAltDst ) {
       auto x = at.lookupVertex(v);
-      if(at.isOk(x)) {at.setStaged(x); 
-        //std::cout << "staged " << g[v].name  << std::endl;
-      }
-      else throw std::runtime_error("Node '" + g[v].name + "' was not allocated, this is very bad");
+
+      // !!! only stage if there is no covenant for this node, otherwise we run into a race condition:
+      // A covenant means the DM will change the default dst to a safe value in the near future.
+      // If we'd also change def dst, doing it before DM does has no effect, and doing it after the DM did would overwrite the safe def dst
+      if(!isCovenantPending(g[x->v].name)) at.setStaged(x);
+      else {sLog << "Node <" << g[v].name << "> has an active covenant. Skipping staging to avoid race condition." << std::endl;}
+      
     }
 
   }
@@ -261,9 +277,10 @@ using namespace DotStr::Misc;
             | ((s2u<bool>(gUp[v].patEntry)) << NFLG_PAT_ENTRY_LM32_POS)
             | ((s2u<bool>(gUp[v].patExit))  << NFLG_PAT_EXIT_LM32_POS);
 
-      amI it = atUp.lookupHash(hash); //if we already have a download entry, keep allocation, but update vertex index
-      if (!(atUp.isOk(it))) {
-        //  
+      amI it;
+      try {            
+        it = atUp.lookupHash(hash); //if we already have a download entry, keep allocation, but update vertex index
+      } catch (...) {
         //sLog << "Adding " << name << std::endl;
         allocState = atUp.allocate(cpu, hash, v, true);
         if (allocState == ALLOC_NO_SPACE)         {throw std::runtime_error("Not enough space in CPU " + std::to_string(cpu) + " memory pool"); return; }
@@ -283,19 +300,19 @@ using namespace DotStr::Misc;
 
             // FIXME most of this shit should be in constructor
              if (cmp == dnt::sTMsg)        {completeId(v, gUp); // create ID from SubId fields or vice versa
-                                            gUp[v].np = (node_ptr) new  TimingMsg(gUp[v].name, gUp[v].patName, gUp[v].bpName, x->hash, x->cpu, x->b, flags, s2u<uint64_t>(gUp[v].tOffs), s2u<uint64_t>(gUp[v].id), s2u<uint64_t>(gUp[v].par), s2u<uint32_t>(gUp[v].tef), s2u<uint32_t>(gUp[v].res)); }
-        else if (cmp == dnt::sCmdNoop)     {gUp[v].np = (node_ptr) new       Noop(gUp[v].name, gUp[v].patName, gUp[v].bpName, x->hash, x->cpu, x->b, flags, s2u<uint64_t>(gUp[v].tOffs), s2u<uint64_t>(gUp[v].tValid), s2u<uint8_t>(gUp[v].prio), s2u<uint32_t>(gUp[v].qty), s2u<bool>(gUp[v].vabs)); }
-        else if (cmp == dnt::sCmdFlow)     {gUp[v].np = (node_ptr) new       Flow(gUp[v].name, gUp[v].patName, gUp[v].bpName, x->hash, x->cpu, x->b, flags, s2u<uint64_t>(gUp[v].tOffs), s2u<uint64_t>(gUp[v].tValid), s2u<uint8_t>(gUp[v].prio), s2u<uint32_t>(gUp[v].qty), s2u<bool>(gUp[v].vabs), s2u<bool>(gUp[v].perma)); }
-        else if (cmp == dnt::sCmdFlush)    {gUp[v].np = (node_ptr) new      Flush(gUp[v].name, gUp[v].patName, gUp[v].bpName, x->hash, x->cpu, x->b, flags, s2u<uint64_t>(gUp[v].tOffs), s2u<uint64_t>(gUp[v].tValid), s2u<uint8_t>(gUp[v].prio),
+                                            gUp[v].np = (node_ptr) new  TimingMsg(gUp[v].name, gUp[v].patName, gUp[v].bpName, x->hash, x->cpu, flags, s2u<uint64_t>(gUp[v].tOffs), s2u<uint64_t>(gUp[v].id), s2u<uint64_t>(gUp[v].par), s2u<uint32_t>(gUp[v].tef), s2u<uint32_t>(gUp[v].res)); }
+        else if (cmp == dnt::sCmdNoop)     {gUp[v].np = (node_ptr) new       Noop(gUp[v].name, gUp[v].patName, gUp[v].bpName, x->hash, x->cpu, flags, s2u<uint64_t>(gUp[v].tOffs), s2u<uint64_t>(gUp[v].tValid), s2u<uint8_t>(gUp[v].prio), s2u<uint32_t>(gUp[v].qty), s2u<bool>(gUp[v].vabs)); }
+        else if (cmp == dnt::sCmdFlow)     {gUp[v].np = (node_ptr) new       Flow(gUp[v].name, gUp[v].patName, gUp[v].bpName, x->hash, x->cpu, flags, s2u<uint64_t>(gUp[v].tOffs), s2u<uint64_t>(gUp[v].tValid), s2u<uint8_t>(gUp[v].prio), s2u<uint32_t>(gUp[v].qty), s2u<bool>(gUp[v].vabs), s2u<bool>(gUp[v].perma)); }
+        else if (cmp == dnt::sCmdFlush)    {gUp[v].np = (node_ptr) new      Flush(gUp[v].name, gUp[v].patName, gUp[v].bpName, x->hash, x->cpu, flags, s2u<uint64_t>(gUp[v].tOffs), s2u<uint64_t>(gUp[v].tValid), s2u<uint8_t>(gUp[v].prio),
                                                                               s2u<bool>(gUp[v].qIl), s2u<bool>(gUp[v].qHi), s2u<bool>(gUp[v].qLo), s2u<bool>(gUp[v].vabs), s2u<uint8_t>(gUp[v].frmIl), s2u<uint8_t>(gUp[v].toIl), s2u<uint8_t>(gUp[v].frmHi),
                                                                               s2u<uint8_t>(gUp[v].toHi), s2u<uint8_t>(gUp[v].frmLo), s2u<uint8_t>(gUp[v].toLo) ); }
-        else if (cmp == dnt::sCmdWait)     {gUp[v].np = (node_ptr) new       Wait(gUp[v].name, gUp[v].patName, gUp[v].bpName, x->hash, x->cpu, x->b, flags, s2u<uint64_t>(gUp[v].tOffs), s2u<uint64_t>(gUp[v].tValid), s2u<uint8_t>(gUp[v].prio), s2u<uint64_t>(gUp[v].tWait), s2u<bool>(gUp[v].vabs)); }
-        else if (cmp == dnt::sBlock)       {gUp[v].np = (node_ptr) new BlockFixed(gUp[v].name, gUp[v].patName, gUp[v].bpName, x->hash, x->cpu, x->b, flags, s2u<uint64_t>(gUp[v].tPeriod) ); }
-        else if (cmp == dnt::sBlockFixed)  {gUp[v].np = (node_ptr) new BlockFixed(gUp[v].name, gUp[v].patName, gUp[v].bpName, x->hash, x->cpu, x->b, flags, s2u<uint64_t>(gUp[v].tPeriod) ); }
-        else if (cmp == dnt::sBlockAlign)  {gUp[v].np = (node_ptr) new BlockAlign(gUp[v].name, gUp[v].patName, gUp[v].bpName, x->hash, x->cpu, x->b, flags, s2u<uint64_t>(gUp[v].tPeriod) ); }
-        else if (cmp == dnt::sQInfo)       {gUp[v].np = (node_ptr) new   CmdQMeta(gUp[v].name, gUp[v].patName, gUp[v].bpName, x->hash, x->cpu, x->b, flags);}
-        else if (cmp == dnt::sDstList)     {gUp[v].np = (node_ptr) new   DestList(gUp[v].name, gUp[v].patName, gUp[v].bpName, x->hash, x->cpu, x->b, flags);}
-        else if (cmp == dnt::sQBuf)        {gUp[v].np = (node_ptr) new CmdQBuffer(gUp[v].name, gUp[v].patName, gUp[v].bpName, x->hash, x->cpu, x->b, flags);}
+        else if (cmp == dnt::sCmdWait)     {gUp[v].np = (node_ptr) new       Wait(gUp[v].name, gUp[v].patName, gUp[v].bpName, x->hash, x->cpu, flags, s2u<uint64_t>(gUp[v].tOffs), s2u<uint64_t>(gUp[v].tValid), s2u<uint8_t>(gUp[v].prio), s2u<uint64_t>(gUp[v].tWait), s2u<bool>(gUp[v].vabs)); }
+        else if (cmp == dnt::sBlock)       {gUp[v].np = (node_ptr) new BlockFixed(gUp[v].name, gUp[v].patName, gUp[v].bpName, x->hash, x->cpu, flags, s2u<uint64_t>(gUp[v].tPeriod) ); }
+        else if (cmp == dnt::sBlockFixed)  {gUp[v].np = (node_ptr) new BlockFixed(gUp[v].name, gUp[v].patName, gUp[v].bpName, x->hash, x->cpu, flags, s2u<uint64_t>(gUp[v].tPeriod) ); }
+        else if (cmp == dnt::sBlockAlign)  {gUp[v].np = (node_ptr) new BlockAlign(gUp[v].name, gUp[v].patName, gUp[v].bpName, x->hash, x->cpu, flags, s2u<uint64_t>(gUp[v].tPeriod) ); }
+        else if (cmp == dnt::sQInfo)       {gUp[v].np = (node_ptr) new   CmdQMeta(gUp[v].name, gUp[v].patName, gUp[v].bpName, x->hash, x->cpu, flags);}
+        else if (cmp == dnt::sDstList)     {gUp[v].np = (node_ptr) new   DestList(gUp[v].name, gUp[v].patName, gUp[v].bpName, x->hash, x->cpu, flags);}
+        else if (cmp == dnt::sQBuf)        {gUp[v].np = (node_ptr) new CmdQBuffer(gUp[v].name, gUp[v].patName, gUp[v].bpName, x->hash, x->cpu, flags);}
         else if (cmp == dnt::sMeta)        {throw std::runtime_error("Pure meta type not yet implemented"); return;}
         //FIXME try to get info from download
         else                        {throw std::runtime_error("Node <" + gUp[v].name + ">'s type <" + cmp + "> is not supported!\nMost likely you forgot to set the type attribute or accidentally created the node by a typo in an edge definition."); return;}
@@ -308,12 +325,13 @@ using namespace DotStr::Misc;
       gUp[v].np->accept(VisitorUploadCrawler(gUp, v, atUp, sLog, sErr)); 
       
       //Check if all mandatory fields were properly initialised
-      std::string haystack(gUp[v].np->getB(), gUp[v].np->getB() + _MEM_BLOCK_SIZE);
+      auto x = atUp.lookupVertex(v);
+      std::string haystack(x->b, x->b + _MEM_BLOCK_SIZE);
       std::size_t n = haystack.find(DotStr::Misc::needle);
 
       bool foundUninitialised = (n != std::string::npos);
 
-      if(verbose || foundUninitialised) {
+      if(debug || foundUninitialised) {
         sLog << std::endl;
         hexDump(gUp[v].name.c_str(), haystack.c_str(), _MEM_BLOCK_SIZE);
       }
@@ -326,7 +344,7 @@ using namespace DotStr::Misc;
   }
 
 
-  int CarpeDM::upload( uint8_t opType) {
+  int CarpeDM::upload( uint8_t opType, std::vector<QueueReport>& vQr) {
     updateModTime();
     //we only regard modifications by order as modded, so we need to check for changed content before we generate the management data
     std::set<uint8_t> moddedCpus;
@@ -336,7 +354,7 @@ using namespace DotStr::Misc;
 
     generateMgmtData();
     vEbwrs ew = gatherUploadVector(moddedCpus, 0, opType); //TODO not using modCnt right now, maybe implement later
-    
+    deactivateOrphanedCommands(vQr, ew);
     //Upload
     ebWriteCycle(ebd, ew.va, ew.vb, ew.vcs);
     if(verbose) sLog << "Done." << std::endl;
@@ -348,18 +366,13 @@ using namespace DotStr::Misc;
     //init up graph from down
     gUp.clear(); //Necessary?
     atUp.clear();
-    atUp.clearMemories();
     download();
-    atUp = atDown;
+    atUp.cpyWithoutMgmt(atDown);
     // for some reason, copy_graph does not copy the name
     //boost::set_property(gTmp, boost::graph_name, boost::get_property(g, boost::graph_name));
-    copy_graph(gDown, gUp);
-    //now, we need to change the buffer pointers in the copied nodes, as they still point to buffers in upload allocation table
-
-    BOOST_FOREACH( vertex_t v, vertices(gUp) ) {
-      auto* x = (AllocMeta*)&(*atUp.lookupVertex(v));
-      gUp[v].np->setB(x->b);
-    } 
+    vertex_map_t vmap;
+    mycopy_graph<Graph>(gDown, gUp, vmap);
+   
   }
 
   void CarpeDM::addition(Graph& gTmp) {
@@ -389,8 +402,9 @@ using namespace DotStr::Misc;
     }
 
     //merge graphs (will lead to disjunct trees with duplicates at overlaps), but keep the mapping for vertex merge
-    boost::associative_property_map<vertex_map_t> vertexMapWrapper(vertexMap);
-    copy_graph(gTmp, gUp, boost::orig_to_copy(vertexMapWrapper));
+    //boost::associative_property_map<vertex_map_t> vertexMapWrapper(vertexMap);
+    //copy_graph(gTmp, gUp, boost::orig_to_copy(vertexMapWrapper));
+    mycopy_graph<Graph>(gTmp, gUp, vertexMap);
     //for(auto& it : vertexMap ) {sLog <<  "gTmp " << gTmp[it.first].name << " @ " << it.first << " gUp " << it.second << std::endl; }
     //merge duplicate nodes
     for(auto& it : duplicates ) { 
@@ -415,7 +429,7 @@ using namespace DotStr::Misc;
     //writeUpDotFile("inspect.dot", false);
 
     prepareUpload();
-    atUp.updateBmps();
+    atUp.syncBmpsToPools();
   
   }
 
@@ -473,6 +487,7 @@ using namespace DotStr::Misc;
       boost::tie(in_begin, in_end) = in_edges(vertexMap[vd], gUp);  
       for (in_cur = in_begin; in_cur != in_end; ++in_cur) { 
         updateStaging(source(*in_cur, gUp), *in_cur);
+        
       }
     }
     
@@ -506,7 +521,7 @@ using namespace DotStr::Misc;
     }
     
     prepareUpload();
-    atUp.updateBmps();  
+    atUp.syncBmpsToPools();  
     
   }
 
@@ -523,16 +538,14 @@ using namespace DotStr::Misc;
     atUp.allocateMgmt(mgmtBinary);
     atUp.populateMgmt(mgmtBinary);
     //atUp.debugMgmt(sLog);
-    atUp.updateBmps();
+    atUp.syncBmpsToPools();
   }
 
   void CarpeDM::nullify() {
     gUp.clear(); 
-    atUp.clear();
-    atUp.clearMemories();
     gDown.clear(); 
+    atUp.clear();
     atDown.clear();
-    atDown.clearMemories();
     gt.clear();
     ct.clear();
     hm.clear();
@@ -559,25 +572,29 @@ using namespace DotStr::Misc;
     baseUploadOnDownload();
     addition(g);
     //writeUpDotFile("upload.dot", false);
-    validate(gUp, atUp);
+    validate(gUp, atUp, force);
     return upload(OP_TYPE_SCH_ADD);
   } 
 
   int CarpeDM::remove(Graph& g, bool force) {
     if ((boost::get_property(g, boost::graph_name)).find(DotStr::Graph::Special::sCmd) != std::string::npos) {throw std::runtime_error("Expected a schedule, but these appear to be commands (Tag '" + DotStr::Graph::Special::sCmd + "' found in graphname)"); return -1;}
     checkTablesForSubgraph(g); //all explicitly named nodes must be known to hash and grouptable. let's check first
-    generateBlockMeta(g);
+
+    //FIXME fuckin dangerous stuff, both change the global grouptable. For this to work, it must be 1st baseUploadOnDownload, generateBlockMeta must be 2nd. This is horrible
     baseUploadOnDownload();
+    generateBlockMeta(g);
+
     std::string report;
-    bool isSafe =  isSafeToRemove(g, report);
+    std::vector<QueueReport> vQr;
+    bool isSafe =  isSafeToRemove(g, report, vQr);
     //writeTextFile("safetyReportNormal.dot", report);
-    if (!(force | (isSafe))) {throw std::runtime_error("Cannot safely be removed\n");}
+    if (!(force | (isSafe))) {throw std::runtime_error("//Subgraph cannot safely be removed!\n\n" + report);}
     
     subtraction(g);
     //writeUpDotFile("upload.dot", false);
-    validate(gUp, atUp);
+    validate(gUp, atUp, force);
     
-    return upload(OP_TYPE_SCH_REMOVE);
+    return upload(OP_TYPE_SCH_REMOVE, vQr);
   }
 
 
@@ -586,9 +603,11 @@ using namespace DotStr::Misc;
     Graph gTmpRemove;
     Graph& gTmpKeep = g;
     checkTablesForSubgraph(g); //all explicitly named nodes must be known to hash and grouptable. let's check first
-    generateBlockMeta(gTmpKeep);
     //writeDotFile("inspect.dot", gTmpKeep, false);
+    
+    //FIXME fuckin dangerous stuff, both change the global grouptable. For this to work, it must be 1st baseUploadOnDownload, generateBlockMeta must be 2nd. This is horrible
     baseUploadOnDownload();
+    generateBlockMeta(gTmpKeep);
     
     bool found; 
     BOOST_FOREACH( vertex_t w, vertices(gUp) ) {
@@ -606,14 +625,16 @@ using namespace DotStr::Misc;
     }
     
     std::string report;
-    bool isSafe =  isSafeToRemove(g, report);
+    std::vector<QueueReport> vQr;
+    bool isSafe =  isSafeToRemove(gTmpRemove, report, vQr);
     //writeTextFile("safetyReportNormal.dot", report);
-    if (!(force | (isSafe))) {throw std::runtime_error("Cannot safely be removed\n");}
+    if (!(force | (isSafe))) {throw std::runtime_error("//Subgraph cannot safely be removed!\n\n" + report);}
 
     subtraction(gTmpRemove);
     //writeUpDotFile("upload.dot", false);
-    validate(gUp, atUp);
-    return upload(OP_TYPE_SCH_KEEP);
+    validate(gUp, atUp, force);
+
+    return upload(OP_TYPE_SCH_KEEP, vQr);
   }   
 
   int CarpeDM::clear_raw(bool force) {
@@ -637,7 +658,7 @@ using namespace DotStr::Misc;
     nullify();
     addition(g);
     //writeUpDotFile("upload.dot", false);
-    validate(gUp, atUp);
+    validate(gUp, atUp, force);
     // check if there are any threads still running first
     uint32_t activity = 0;
     for(uint8_t cpuIdx=0; cpuIdx < getCpuQty(); cpuIdx++) { 

@@ -10,6 +10,8 @@
 #include <boost/multi_index/member.hpp>
 #include <boost/multi_index/ordered_index.hpp>
 #include <boost/multi_index/composite_key.hpp>
+#include <boost/archive/text_oarchive.hpp>
+#include <boost/archive/text_iarchive.hpp>
 #include "graph.h"
 #include "hashmap.h"
 
@@ -91,7 +93,7 @@ public:
 
   void load(const std::string& s){
     std::stringstream is;
-    is.str(s);
+    is.str(fixArchiveVersion(s));
     boost::archive::text_iarchive ia(is);
     ia >> BOOST_SERIALIZATION_NVP(*this);
   }

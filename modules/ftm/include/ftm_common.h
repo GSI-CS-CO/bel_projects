@@ -113,15 +113,24 @@
 #define _T_MOD_INFO_SIZE   (T_MOD_INFO_CNT  + _32b_SIZE_ ) //Struct size
 
 #define T_DIAG_MSG_CNT      (0)                              //CPU wide timing message counter
-#define T_DIAG_BOOT_TS      (T_DIAG_MSG_CNT   + _64b_SIZE_ ) //Timestamp of Uptime beginning
-#define T_DIAG_SCH_MOD      (T_DIAG_BOOT_TS   + _TS_SIZE_  ) //Schedule modification info
-#define T_DIAG_CMD_MOD      (T_DIAG_SCH_MOD   + _T_MOD_INFO_SIZE ) //Cmd modification info
-#define T_DIAG_DIF_MIN      (T_DIAG_CMD_MOD   + _T_MOD_INFO_SIZE ) //All time min diff between dispatch time and deadline   (signed!)
-#define T_DIAG_DIF_MAX      (T_DIAG_DIF_MIN   + _TS_SIZE_  ) //All time max diff between dispatch time and deadline   (signed!)
-#define T_DIAG_DIF_SUM      (T_DIAG_DIF_MAX   + _TS_SIZE_  ) //Running sum of diff between dispatch time and deadline (signed!)
-#define T_DIAG_DIF_WTH      (T_DIAG_DIF_SUM   + _64b_SIZE_ ) //Diff Threshold between dispatch time and deadline which will trigger a warning (signed!)
-#define T_DIAG_WAR_CNT      (T_DIAG_DIF_WTH   + _TS_SIZE_  ) //Diff warning counter
-#define _T_DIAG_SIZE_       (T_DIAG_WAR_CNT   + _64b_SIZE_ ) 
+#define T_DIAG_BOOT_TS      (T_DIAG_MSG_CNT       + _64b_SIZE_ ) //Timestamp of Uptime beginning
+#define T_DIAG_SCH_MOD      (T_DIAG_BOOT_TS       + _TS_SIZE_  ) //Schedule modification info
+#define T_DIAG_CMD_MOD      (T_DIAG_SCH_MOD       + _T_MOD_INFO_SIZE ) //Cmd modification info
+#define T_DIAG_DIF_MIN      (T_DIAG_CMD_MOD       + _T_MOD_INFO_SIZE ) //All time min diff between dispatch time and deadline   (signed!)
+#define T_DIAG_DIF_MAX      (T_DIAG_DIF_MIN       + _TS_SIZE_  ) //All time max diff between dispatch time and deadline   (signed!)
+#define T_DIAG_DIF_SUM      (T_DIAG_DIF_MAX       + _TS_SIZE_  ) //Running sum of diff between dispatch time and deadline (signed!)
+#define T_DIAG_DIF_WTH      (T_DIAG_DIF_SUM       + _64b_SIZE_ ) //Diff Threshold between dispatch time and deadline which will trigger a warning (signed!)
+#define T_DIAG_WAR_CNT      (T_DIAG_DIF_WTH       + _TS_SIZE_  ) //Diff warning counter
+#define T_DIAG_WAR_1ST_HASH (T_DIAG_WAR_CNT       + _32b_SIZE_ ) //Hash of node at first diff warning
+#define T_DIAG_WAR_1ST_TS   (T_DIAG_WAR_1ST_HASH  + _32b_SIZE_ ) //TS at first diff warning
+#define T_DIAG_BCKLOG_STRK  (T_DIAG_WAR_1ST_TS    + _TS_SIZE_  ) //Maximum Backlog streak size
+#define T_DIAG_BAD_WAIT_CNT (T_DIAG_BCKLOG_STRK   + _32b_SIZE_ ) //Maximum Backlog streak size
+#define _T_DIAG_SIZE_       (256)
+
+#if _T_DIAG_SIZE_ < (T_DIAG_BAD_WAIT_CNT + _32b_SIZE_)
+  #error Actual diagnostics area size exceeds fixed _T_DIAG_SIZE_
+#endif  
+
 
 
 #define T_META_START_PTR    (0)                               //same for all cpus, can be on any CPU. External view, read/write for host only. Must lie within bitmap range
@@ -147,7 +156,7 @@
 #define SHCTL_THR_STA    (SHCTL_THR_CTL + _T_TC_SIZE_  )              //Thread Start Staging Area (1 per Thread )
 #define SHCTL_THR_DAT    (SHCTL_THR_STA + _THR_QTY_ * _T_TS_SIZE_  )  //Thread Runtime Data (1 per Thread )
 #define SHCTL_INBOXES    (SHCTL_THR_DAT + _THR_QTY_ * _T_TD_SIZE_  )  //Inboxes for MSI (1 per Core in System )
-#define _SHCTL_END_      ROUND_UP((SHCTL_INBOXES + _THR_QTY_ * _32b_SIZE_), 2 * _MEM_BLOCK_SIZE) // set fixed size so firmware updates stay backward compatible // 
+#define _SHCTL_END_      (SHCTL_INBOXES + _THR_QTY_ * _32b_SIZE_)
 /*
 #pragma message(VAR_NAME_VALUE(_SHCTL_START_))
 #pragma message(VAR_NAME_VALUE(SHCTL_HEAP   ))
@@ -166,25 +175,34 @@
 //////////////////////////////////////////////////////////////////////
 
 // Global Status field bits
-#define SHCTL_STATUS_UART_INIT_MSK    0x1
-#define SHCTL_STATUS_UART_INIT_POS    0
-#define SHCTL_STATUS_UART_INIT_SMSK   (SHCTL_STATUS_UART_INIT_MSK << SHCTL_STATUS_UART_INIT_POS)
+#define SHCTL_STATUS_UART_INIT_MSK      0x1
+#define SHCTL_STATUS_UART_INIT_POS      0
+#define SHCTL_STATUS_UART_INIT_SMSK     (SHCTL_STATUS_UART_INIT_MSK << SHCTL_STATUS_UART_INIT_POS)
 
-#define SHCTL_STATUS_EBM_INIT_MSK     0x1
-#define SHCTL_STATUS_EBM_INIT_POS     1
-#define SHCTL_STATUS_EBM_INIT_SMSK    (SHCTL_STATUS_EBM_INIT_MSK << SHCTL_STATUS_EBM_INIT_POS)
+#define SHCTL_STATUS_EBM_INIT_MSK       0x1
+#define SHCTL_STATUS_EBM_INIT_POS       1
+#define SHCTL_STATUS_EBM_INIT_SMSK      (SHCTL_STATUS_EBM_INIT_MSK << SHCTL_STATUS_EBM_INIT_POS)
 
-#define SHCTL_STATUS_PQ_INIT_MSK      0x1
-#define SHCTL_STATUS_PQ_INIT_POS      2
-#define SHCTL_STATUS_PQ_INIT_SMSK     (SHCTL_STATUS_PQ_INIT_MSK << SHCTL_STATUS_PQ_INIT_POS)
+#define SHCTL_STATUS_PQ_INIT_MSK        0x1
+#define SHCTL_STATUS_PQ_INIT_POS        2
+#define SHCTL_STATUS_PQ_INIT_SMSK       (SHCTL_STATUS_PQ_INIT_MSK << SHCTL_STATUS_PQ_INIT_POS)
 
-#define SHCTL_STATUS_DM_INIT_MSK      0x1
-#define SHCTL_STATUS_DM_INIT_POS      3
-#define SHCTL_STATUS_DM_INIT_SMSK     (SHCTL_STATUS_DM_INIT_MSK << SHCTL_STATUS_DM_INIT_POS)
+#define SHCTL_STATUS_DM_INIT_MSK        0x1
+#define SHCTL_STATUS_DM_INIT_POS        3
+#define SHCTL_STATUS_DM_INIT_SMSK       (SHCTL_STATUS_DM_INIT_MSK << SHCTL_STATUS_DM_INIT_POS)
 
-#define SHCTL_STATUS_DM_ERROR_MSK      0x1
-#define SHCTL_STATUS_DM_ERROR_POS      8
-#define SHCTL_STATUS_DM_ERROR_SMSK     (SHCTL_STATUS_DM_ERROR_MSK << SHCTL_STATUS_DM_ERROR_POS)
+#define SHCTL_STATUS_DM_ERROR_MSK       0x1
+#define SHCTL_STATUS_DM_ERROR_POS       8
+#define SHCTL_STATUS_DM_ERROR_SMSK      (SHCTL_STATUS_DM_ERROR_MSK << SHCTL_STATUS_DM_ERROR_POS)
+
+#define SHCTL_STATUS_BAD_NODE_TYPE_MSK  0x1
+#define SHCTL_STATUS_BAD_NODE_TYPE_POS  12
+#define SHCTL_STATUS_BAD_NODE_TYPE_SMSK (SHCTL_STATUS_BAD_ACT_TYPE_MSK << SHCTL_STATUS_BAD_ACT_TYPE_POS)
+
+#define SHCTL_STATUS_BAD_ACT_TYPE_MSK   0x1
+#define SHCTL_STATUS_BAD_ACT_TYPE_POS   13
+#define SHCTL_STATUS_BAD_ACT_TYPE_SMSK  (SHCTL_STATUS_BAD_ACT_TYPE_MSK << SHCTL_STATUS_BAD_ACT_TYPE_POS)
+
 
 //####################################################################
 // #########################  Nodes  #################################
@@ -266,8 +284,8 @@
 #define TMSG_PAR                (TMSG_ID      + _64b_SIZE_)
 #define TMSG_PAR_HI             (TMSG_PAR     + 0)   
 #define TMSG_PAR_LO             (TMSG_PAR_HI  + _32b_SIZE_)          
-#define TMSG_TEF                (TMSG_PAR     + _64b_SIZE_)          
-#define TMSG_RES                (TMSG_TEF     + _32b_SIZE_)          
+#define TMSG_RES                (TMSG_PAR     + _64b_SIZE_)          
+#define TMSG_TEF                (TMSG_RES     + _32b_SIZE_)          
                                                                
    
 //////////////////////////////////////////////////////////////////////
@@ -332,8 +350,8 @@
 //
 // Timing Message
 #define ADR_DYN_ID         1
-#define ADR_DYN_PAR0       2
-#define ADR_DYN_PAR1       3
+#define ADR_DYN_PAR1       2
+#define ADR_DYN_PAR0       3
 #define ADR_DYN_TEF        4
 #define ADR_DYN_RES        5
 
@@ -434,7 +452,8 @@
 #define NODE_TYPE_SYNC          (NODE_TYPE_ALTDST       +1)   // used to denote the time offset for pattern rows
 #define NODE_TYPE_MGMT          (NODE_TYPE_SYNC         +1)   // contain the part of the groups and node name table in compressed form
 #define NODE_TYPE_COVENANT      (NODE_TYPE_MGMT         +1)   // contain the addresses of commands (in queues) which the user agrees not to preempt if optimised safe2remove is to work
-#define _NODE_TYPE_END_         (NODE_TYPE_COVENANT     +1)   // Node type Quantity
+#define NODE_TYPE_NULL          (NODE_TYPE_COVENANT     +1)   // type returned by getNodeType if the node ptr was NULL. Intentionally not 0x000...
+#define _NODE_TYPE_END_         (NODE_TYPE_NULL         +1)   // Node type Quantity
 //Node type
 #define NFLG_TYPE_MSK           0xff
 #define NFLG_TYPE_POS           0

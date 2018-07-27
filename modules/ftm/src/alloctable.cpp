@@ -1,6 +1,24 @@
 #include "alloctable.h"
 
-  
+  AllocTable::AllocTable(AllocTable const &src) {
+    a = src.a;
+    m = src.m;
+
+    recreatePools(AllocPoolMode::WITH_MGMT);
+    syncBmpsToPools();
+  }
+
+  AllocTable &AllocTable::operator=(const AllocTable &src)
+  {
+    a = src.a;
+    m = src.m;
+
+    recreatePools(AllocPoolMode::WITH_MGMT);
+    syncBmpsToPools();
+
+    return *this;
+  }
+
 
   bool AllocTable::insert(uint8_t cpu, uint32_t adr, uint32_t hash, vertex_t v, bool staged) {
    /*
@@ -39,19 +57,33 @@
 
   }
 
-  amI AllocTable::lookupVertex(vertex_t v) const  {
+  amI AllocTable::lookupVertex(vertex_t v, const std::string& exMsg) const  {
+    amI ret;
     auto it = a.get<Vertex>().find(v);
-    return a.iterator_to( *it );
+    ret = a.iterator_to( *it );
+    if (!isOk(ret)) {throw std::runtime_error(exMsg + "unknown vertex descriptor " + std::to_string(v));}
+    return ret; 
   }
 
-  amI AllocTable::lookupHash(uint32_t hash) const  {
+  amI AllocTable::lookupHash(uint32_t hash, const std::string& exMsg) const  {
+    amI ret;
     auto it = a.get<Hash>().find(hash);
-    return a.iterator_to( *it );
+    ret = a.iterator_to( *it );
+    if (!isOk(ret)) {throw std::runtime_error(exMsg + "unknown hash " + std::to_string(hash) + " (dec)");}
+    return ret; 
   }
 
-  amI AllocTable::lookupAdr(uint8_t cpu, uint32_t adr) const {
+  amI AllocTable::lookupAdr(uint8_t cpu, uint32_t adr, const std::string& exMsg) const {
+    
+    amI ret;
     auto it = a.get<CpuAdr>().find(boost::make_tuple( cpu, adr ));
-    return a.iterator_to( *it );
+    ret = a.iterator_to( *it );
+
+    std::stringstream auxstream;
+    auxstream << exMsg << "unknown cpu/adr combo " << (int)cpu << " 0x" << std::setfill('0') << std::setw(8) << std::hex << (int)adr << std::endl;
+
+    if (!isOk(ret)) {throw std::runtime_error(auxstream.str());}
+    return ret; 
     
   }
 
@@ -229,12 +261,13 @@
 
   }
 
-  bool AllocTable::syncToAtBmps(AllocTable const &src) {
-    //check of the number of memories is identical
-    if(vPool.size() != src.vPool.size()) {return false;}
-    for (unsigned int i = 0; i < vPool.size(); i++ ) { vPool[i].setBmp(src.vPool[i].getBmp());}
-    return true;
-  }
+  void AllocTable::syncBmpsToPools()  {for (unsigned int i = 0; i < vPool.size(); i++ ) vPool[i].syncBmpToPool();} // generate BMPs from Pools
+  void AllocTable::recreatePools(AllocPoolMode mode) {
+    for (unsigned int i = 0; i < vPool.size(); i++ ) vPool[i].init();
+    for (auto& e : a) { vPool[e.cpu].occupyChunk(e.adr); }
+    if(mode == AllocPoolMode::WITH_MGMT) for (auto& e : m) { vPool[e.cpu].occupyChunk(e.adr); }
+  }  
+
 
   bool AllocTable::setBmps(vBuf bmpData) {
     size_t bmpSum = 0;
@@ -265,10 +298,14 @@
     return ret;
   }
 
-  AllocTable::AllocTable(AllocTable const &src) {
+  
+
+  void AllocTable::cpyWithoutMgmt(AllocTable const &src) {
     this->a = src.a;
-    this->syncToAtBmps(src);
-    this->updatePools();
+    this->m.clear();
+
+    this->recreatePools(AllocPoolMode::WITHOUT_MGMT);
+    this->syncBmpsToPools();
   }
 
   void AllocTable::debug(std::ostream& os) {
@@ -320,15 +357,11 @@
     //printf("a 0x%08x, world 0x%08x\n", a, WORLD_BASE_ADR);
 
     if (a >= WORLD_BASE_ADR) { //peer address class
-      
       for (uint8_t i = 0; i < vPool.size(); i++) { //no iterator used because we need the cpu idx for later
-        //printf("a 0x%08x, peer %u start 0x%08x end 0x%08x\n", a, i, vPool[cpu].peerBaseAdr, vPool[i].peerBaseAdr + vPool[i].rawSize);
         if ( (a >= vPool[i].peerBaseAdr) && (a <= vPool[i].peerBaseAdr + vPool[i].rawSize) ) {cpu = i; adrT = AdrType::PEER; break;}
       } 
     } else { //internal address class
-      
       for (uint8_t i = 0; i < vPool.size(); i++) { //no iterator used because we need the cpu idx for later
-        //printf("a 0x%08x, int %u start 0x%08x end 0x%08x\n", a, i, vPool[i].intBaseAdr, vPool[i].intBaseAdr + vPool[i].rawSize);
         if ( (a >= vPool[i].intBaseAdr) && (a <= vPool[i].intBaseAdr + vPool[i].rawSize) ) {cpu = i; adrT = AdrType::INT; break;}
       } 
     }

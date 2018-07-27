@@ -1,0 +1,25 @@
+<wbdevice author="M. Kreider" email="m.kreider@gsi.de" version="0.0.1">
+   
+   <clockdomain name="ref"></clockdomain>
+   
+   <generic name="cores" type="natural" default="16" comment="CPU cores"></generic>
+
+   <slaveinterface name="ctrl" data="32" type="pipelined" pages="channels">          
+      <sdb vendorID="GSI" productID="0x18060200" version="1" date="auto" name="DM-Diagnostics"></sdb>
+      <registers>
+          <reg  name="reset"                                   write="yes"  bits="1"  pulse="yes"      comment="Resets/clears the diagnostic"></reg>
+          <reg  name="enable"                       read="yes" write="yes"  bits="1"  reset="1"      comment="Enables/disables update. Default is enabled"></reg>
+          <reg  name="time_observation_interval"    read="yes" write="yes"  bits="64"                  comment="TAI time observation interval in ns"></reg> 
+          <reg  name="time_dif_pos"                 read="yes" drive="yes"  bits="64"                  comment="Observed max pos. ECA time difference in ns between ref clock ticks"></reg>
+          <reg  name="time_dif_pos_ts"              read="yes" drive="yes"  bits="64"                  comment="(approximate) timestamp of last pos dif update"></reg>  
+          <reg  name="time_dif_neg"                 read="yes" drive="yes"  bits="64"                  comment="Observed max neg. ECA time difference in ns between ref clock ticks"></reg>
+          <reg  name="time_dif_neg_ts"              read="yes" drive="yes"  bits="64"                  comment="(approximate) timestamp of last neg dif update"></reg> 
+          <reg  name="stall_observation_interval"   read="yes" write="yes"  bits="32"                  comment="Stall observation interval in cycles"></reg> 
+          <reg  name="stall_stat_select"            read="yes" write="yes"  bits="8"   selector="yes" flags="yes" comment="Page selector register for Stall observers"></reg> 
+          <reg  name="stall_streak_max"             read="yes" drive="yes"  bits="32"  paged="yes"    address="0x100" comment="Observed max continuous stall in cycles"></reg>
+          <reg  name="stall_cnt"                    read="yes" drive="yes"  bits="32"  paged="yes"     comment="Stall time within observation interval in cycles"></reg>
+          <reg  name="stall_max_ts"                 read="yes" drive="yes"  bits="64"  paged="yes"     comment="Timestamp of last max update"></reg>
+      </registers>
+   </slaveinterface>
+
+</wbdevice>

@@ -33,15 +33,16 @@ class VisitorValidation {
     vertex_t    v;
     AllocTable& at;
     int         cpu = -1;
+    bool        force;
 
 
     //all of these have no return value as any violation is worth an exception
-    void eventSequenceCheck() const { Validation::eventSequenceCheck(v,g); }; //check if event sequence is well behaved
+    void eventSequenceCheck() const { Validation::eventSequenceCheck(v,g, force); }; //check if event sequence is well behaved
     void metaSequenceCheck()  const { Validation::metaSequenceCheck(v,g);  }; //check if meta tree is well behaved
 
 
   public:
-    VisitorValidation(Graph& g, vertex_t v, AllocTable& at)  : g(g), v(v), at(at) { auto x = at.lookupVertex(v); if (at.isOk(x)) cpu = x->cpu;}
+    VisitorValidation(Graph& g, vertex_t v, AllocTable& at, bool allowNegative)  : g(g), v(v), at(at), force(allowNegative) { auto x = at.lookupVertex(v); if (at.isOk(x)) cpu = x->cpu;}
     ~VisitorValidation() {};
     virtual void visit(const Block& el) const;
     virtual void visit(const TimingMsg& el) const;

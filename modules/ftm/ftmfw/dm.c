@@ -25,11 +25,15 @@ uint32_t* const status    = (uint32_t*)&_startshared[SHCTL_STATUS >> 2];
 uint64_t* const count     = (uint64_t*)&_startshared[(SHCTL_DIAG  + T_DIAG_MSG_CNT)  >> 2];
 uint64_t* const boottime  = (uint64_t*)&_startshared[(SHCTL_DIAG  + T_DIAG_BOOT_TS)  >> 2];
 #ifdef DIAGNOSTICS
-int64_t* const diffsum   = (int64_t*) &_startshared[(SHCTL_DIAG   + T_DIAG_DIF_SUM ) >> 2];
-int64_t* const diffmax   = (int64_t*) &_startshared[(SHCTL_DIAG   + T_DIAG_DIF_MAX ) >> 2];
-int64_t* const diffmin   = (int64_t*) &_startshared[(SHCTL_DIAG   + T_DIAG_DIF_MIN ) >> 2];
-int64_t* const diffwth   = (int64_t*) &_startshared[(SHCTL_DIAG   + T_DIAG_DIF_WTH ) >> 2];
-int64_t* const diffwcnt  = (int64_t*) &_startshared[(SHCTL_DIAG   + T_DIAG_WAR_CNT ) >> 2];
+int64_t* const diffsum    = (int64_t*) &_startshared[(SHCTL_DIAG  + T_DIAG_DIF_SUM ) >> 2];
+int64_t* const diffmax    = (int64_t*) &_startshared[(SHCTL_DIAG  + T_DIAG_DIF_MAX ) >> 2];
+int64_t* const diffmin    = (int64_t*) &_startshared[(SHCTL_DIAG  + T_DIAG_DIF_MIN ) >> 2];
+int64_t* const diffwth    = (int64_t*) &_startshared[(SHCTL_DIAG  + T_DIAG_DIF_WTH ) >> 2];
+uint32_t* const diffwcnt  = (uint32_t*) &_startshared[(SHCTL_DIAG + T_DIAG_WAR_CNT ) >> 2];
+uint32_t* const diffwhash = (uint32_t*) &_startshared[(SHCTL_DIAG + T_DIAG_WAR_1ST_HASH ) >> 2];
+uint64_t* const diffwts   = (uint64_t*) &_startshared[(SHCTL_DIAG + T_DIAG_WAR_1ST_TS ) >> 2];
+uint32_t* const bcklogmax = (uint32_t*) &_startshared[(SHCTL_DIAG + T_DIAG_BCKLOG_STRK )  >> 2];
+uint32_t* const badwaitcnt = (uint32_t*) &_startshared[(SHCTL_DIAG + T_DIAG_BAD_WAIT_CNT )  >> 2];
 #endif
 uint32_t* const start   = (uint32_t*)&_startshared[(SHCTL_THR_CTL + T_TC_START)   >> 2];
 uint32_t* const running = (uint32_t*)&_startshared[(SHCTL_THR_CTL + T_TC_RUNNING) >> 2];
@@ -68,6 +72,7 @@ void dmInit() {
   nodeFuncs[NODE_TYPE_SHARE]            = dummyNodeFunc; 
   nodeFuncs[NODE_TYPE_ALTDST]           = dummyNodeFunc; 
   nodeFuncs[NODE_TYPE_SYNC]             = dummyNodeFunc;
+  nodeFuncs[NODE_TYPE_NULL]             = nodeNull;
 
   //deadline updater. Return infinity (-1) if no or unsupported node was given
   deadlineFuncs[NODE_TYPE_UNKNOWN ]     = dummyDeadlineFunc;
@@ -84,6 +89,7 @@ void dmInit() {
   deadlineFuncs[NODE_TYPE_SHARE]        = dummyDeadlineFunc; 
   deadlineFuncs[NODE_TYPE_ALTDST]       = dummyDeadlineFunc; 
   deadlineFuncs[NODE_TYPE_SYNC]         = dummyDeadlineFunc;
+  deadlineFuncs[NODE_TYPE_NULL]         = deadlineNull;
 
 
   actionFuncs[ACT_TYPE_UNKNOWN]         = dummyActionFunc;
@@ -106,10 +112,14 @@ void dmInit() {
   }
   #ifdef DIAGNOSTICS
     *diffsum   = 0;
-    *diffmax   = INT64_MIN;
-    *diffmin   = INT64_MAX;
+    *diffmax   = 0xffffffffffffffffLL;
+    *diffmin   = 0x7fffffffffffffffLL;
     *diffwth   = 50000LL;
     *diffwcnt  = 0;
+    *diffwhash = 0;
+    *diffwts   = 0;
+    *bcklogmax = 0;
+    *badwaitcnt = 0;
     *boottime  = getSysTime();
   #endif  
 
@@ -128,9 +138,13 @@ uint8_t wrTimeValid() {
 
 }
 
-uint32_t* dummyNodeFunc (uint32_t* node, uint32_t* thrData)                   { return LM32_NULL_PTR;}
-uint64_t  dummyDeadlineFunc (uint32_t* node, uint32_t* thrData)               { return -1ULL; } //return infinity
-uint32_t* dummyActionFunc (uint32_t* node, uint32_t* cmd, uint32_t* thrData)  { return LM32_NULL_PTR;}
+
+uint32_t* nodeNull (uint32_t* node, uint32_t* thrData)                        { return LM32_NULL_PTR;}
+uint64_t  deadlineNull (uint32_t* node, uint32_t* thrData)                    { return -1ULL; } //return infinity
+
+uint32_t* dummyNodeFunc (uint32_t* node, uint32_t* thrData)                   { *status |= SHCTL_STATUS_BAD_NODE_TYPE_SMSK; return nodeNull(node, thrData); }
+uint64_t  dummyDeadlineFunc (uint32_t* node, uint32_t* thrData)               { *status |= SHCTL_STATUS_BAD_NODE_TYPE_SMSK; return deadlineNull(node, thrData); } //return infinity
+uint32_t* dummyActionFunc (uint32_t* node, uint32_t* cmd, uint32_t* thrData)  { *status |= SHCTL_STATUS_BAD_ACT_TYPE_SMSK;  return LM32_NULL_PTR;}
 
 uint8_t getNodeType(uint32_t* node) {
   uint32_t* tmpType;
@@ -144,7 +158,8 @@ uint8_t getNodeType(uint32_t* node) {
     msk       = -(type < _NODE_TYPE_END_);
     type     &= msk; //optional boundary check, if out of bounds, type will equal NODE_TYPE_UNKNOWN  
   } else {
-    DBPRINT2("#%02u: Null ptr detected \n", cpuId);  
+    DBPRINT2("#%02u: Null ptr detected \n", cpuId);
+    return NODE_TYPE_NULL;  
   }
 
   return type;
@@ -188,19 +203,18 @@ uint32_t* execWait(uint32_t* node, uint32_t* cmd, uint32_t* thrData) {
   // the block period is added in blockFixed or blockAligned.
   // we must therefore subtract it here if we modify current time, as execWait is optional
 
-  if ( cmd[T_CMD_ACT >> 2] & ACT_WAIT_ABS_SMSK) {
-    *(uint64_t*)&thrData[T_TD_CURRTIME >> 2] = *(uint64_t*)&cmd[T_CMD_WAIT_TIME >> 2] - *(uint64_t*)&node[BLOCK_PERIOD >> 2]; //1. set absolute value - block period
-    DBPRINT2("#%02u: Wait, Absolute to 0x%08x%08x\n", cpuId, (uint32_t)(*(uint64_t*)&cmd[T_CMD_WAIT_TIME >> 2] >> 32), (uint32_t)*(uint64_t*)&cmd[T_CMD_WAIT_TIME >> 2]);  
-  } else {
-    if( cmd[T_CMD_ACT >> 2] & ACT_CHP_SMSK) {
-      DBPRINT2("#%02u: Wait, Permanent relative to 0x%08x%08x\n", cpuId, (uint32_t)(*(uint64_t*)&cmd[T_CMD_WAIT_TIME >> 2] >> 32), (uint32_t)*(uint64_t*)&cmd[T_CMD_WAIT_TIME >> 2]);  
-      *(uint64_t*)&node[BLOCK_PERIOD >> 2] = *(uint64_t*)&cmd[T_CMD_WAIT_TIME >> 2];                                          //2. set new block period
-    } else {
+  uint64_t  tWait = *(uint64_t*)&cmd[T_CMD_WAIT_TIME >> 2] - *(uint64_t*)&node[BLOCK_PERIOD >> 2];
+  uint64_t*  tCur = (uint64_t*)&thrData[T_TD_CURRTIME >> 2];
+  uint32_t    act = cmd[T_CMD_ACT >> 2];
 
-      DBPRINT2("#%02u: Wait, temp relative to 0x%08x%08x\n", cpuId, (uint32_t)(*(uint64_t*)&cmd[T_CMD_WAIT_TIME >> 2] >> 32), (uint32_t)*(uint64_t*)&cmd[T_CMD_WAIT_TIME >> 2]);  
-      *(uint64_t*)&thrData[T_TD_CURRTIME >> 2] += (*(uint64_t*)&cmd[T_CMD_WAIT_TIME >> 2] - *(uint64_t*)&node[BLOCK_PERIOD]); //3. add temporary block period - block period
-      
-    }      
+  if ( act & ACT_WAIT_ABS_SMSK) {
+    // absolute wait time. Replaces current time sum
+    if ( getSysTime() < tWait ) { *tCur = tWait; } //1.1 if wait time is greater than Now, proceed
+    else                        { (*badwaitcnt)++; } //1.2 wait time is in the past, this is bad. Skip and increase bad wait warning counter
+  } else {
+    // relative wait time. replaces current block period
+    if( act & ACT_CHP_SMSK) { *(uint64_t*)&node[BLOCK_PERIOD >> 2] = *(uint64_t*)&cmd[T_CMD_WAIT_TIME >> 2]; }  // 2. permanently change this block's period
+    else                    { *tCur += tWait; }                                                                 // 3. temporarily change this block's period (inc. current time sum by waittime - blockperiod)
   }
    
   return (uint32_t*)node[NODE_DEF_DEST_PTR >> 2];
@@ -208,7 +222,7 @@ uint32_t* execWait(uint32_t* node, uint32_t* cmd, uint32_t* thrData) {
 }
 
 uint32_t* cmd(uint32_t* node, uint32_t* thrData) {
-
+        uint32_t *ret = (uint32_t*)node[NODE_DEF_DEST_PTR >> 2];
   const uint32_t prio = (node[CMD_ACT >> 2] >> ACT_PRIO_POS) & ACT_PRIO_MSK;
   const uint32_t *tg  = (uint32_t*)node[CMD_TARGET >> 2];
   const uint32_t adrPrefix = (uint32_t)tg & 0xffff0000; // if target is on a different RAM, all ptrs must be translated from the local to our (peer) perspective
@@ -218,6 +232,10 @@ uint32_t* cmd(uint32_t* node, uint32_t* thrData) {
   uint32_t bufOffs, elOffs;
   node[NODE_FLAGS >> 2] |= NFLG_PAINT_LM32_SMSK; // set paint bit to mark this node as visited  
   
+  if(tg == LM32_NULL_PTR) { // check if the target is a null pointer. Used to allow removal of pattern containing target nodes
+    return ret;
+  }
+
   wrIdx   = ((uint8_t *)tg + BLOCK_CMDQ_WR_IDXS + _32b_SIZE_  - prio -1);                           // calculate pointer (8b) to current write index
   bufOffs = (*wrIdx & Q_IDX_MAX_MSK) / (_MEM_BLOCK_SIZE / _T_CMD_SIZE_  ) * _PTR_SIZE_;             // calculate Offsets
   elOffs  = (*wrIdx & Q_IDX_MAX_MSK) % (_MEM_BLOCK_SIZE / _T_CMD_SIZE_  ) * _T_CMD_SIZE_; 
@@ -229,19 +247,26 @@ uint32_t* cmd(uint32_t* node, uint32_t* thrData) {
 
   // Important !!! So the host can verify if a command is active as seen from an LM32 by comparing with cursor timestamping,
   // we cannot place ANY tvalids into the past. All tValids must be placed sufficiently into the future so that this here function
-  // terminates before tValid is reached
+  // terminates before tValid is reached. This is the responsibility of carpeDM!
 
   // !!! CAVEAT !!! when tvalid is used as relative offset in multiple commands to synchronise them, the sum of block start (current time sume) + tvalid
   // must always be greater than tMinimum, else the commands get differing tvalids assigned and will no longer synchronously become valid !!!
   
   uint64_t* ptValid   = (uint64_t*)&node[CMD_VALID_TIME   >> 2];
   uint64_t* ptCurrent = (uint64_t*)&thrData[T_TD_CURRTIME >> 2];
+  uint64_t tValid;
+
+  if((node[CMD_ACT  >> 2] >> ACT_VABS_POS) & ACT_VABS_MSK) tValid = *ptValid;
+  else                                                     tValid = *ptCurrent + *ptValid;
+
+//TODO: find out what's wrong with this code
+/*
   uint64_t vabsMsk    = (uint64_t)((node[CMD_ACT  >> 2] >> ACT_VABS_POS) & ACT_VABS_MSK) -1; // abs -> 0x0, !abs -> 0xfff..f
   uint64_t tMinimum   = getSysTime() + _T_TVALID_OFFS_;                 // minimum timestamp that we consider 'future'
   uint64_t tValidCalc = *ptValid + *ptCurrent & vabsMsk;                // if tValid is relative offset (not absolute), add current time sum
   uint64_t tMinMsk    = (uint64_t)(tMinimum < tValidCalc) -1;           // min < calc -> 0x0, min >= calc -> 0xfff..f
   uint64_t tValid     = (tMinimum & tMinMsk) | (tValidCalc & ~tMinMsk); // equiv. tValid = (tMinimum < tvalidCalc) ? tvalidCalc : tMinimum;
-
+*/
   //copy cmd data to target queue
   e[(T_CMD_TIME + 0)          >> 2]  = (uint32_t)(tValid >> 32);
   e[(T_CMD_TIME + _32b_SIZE_) >> 2]  = (uint32_t)(tValid);
@@ -250,19 +275,10 @@ uint32_t* cmd(uint32_t* node, uint32_t* thrData) {
   e[(T_CMD_ACT + 1 * _32b_SIZE_) >> 2]  = node[(CMD_ACT + 1 * _32b_SIZE_) >> 2];
   e[(T_CMD_ACT + 2 * _32b_SIZE_) >> 2]  = node[(CMD_ACT + 2 * _32b_SIZE_) >> 2];
   
-  //FIXME WTF ... why doesn't this work with this loop ???
-  /*
-  //0, 4 , 8
-  // !!! CAREFUL: this must be post-increment, use '=+' instead of '+=' !!!
-  for(uint32_t offs = 0; offs < (_T_CMD_SIZE_ - _T_TS_SIZE_); offs =+ _32b_SIZE_ ) { 
-    e[(T_CMD_ACT + offs) >> 2] = node[(CMD_ACT + offs) >> 2];
-  }
-  */
-  
   *wrIdx = (*wrIdx + 1) & Q_IDX_MAX_OVF_MSK; //increase write index
 
   DBPRINT2("#%02u: Sending Cmd 0x%08x, Target: 0x%08x, next: 0x%08x\n", cpuId, node[NODE_HASH >> 2], (uint32_t)tg, node[NODE_DEF_DEST_PTR >> 2]);
-  return (uint32_t*)node[NODE_DEF_DEST_PTR >> 2];
+  return ret;
 }
 
 uint32_t* tmsg(uint32_t* node, uint32_t* thrData) {
@@ -272,9 +288,10 @@ uint32_t* tmsg(uint32_t* node, uint32_t* thrData) {
   uint64_t tmpPar = *(uint64_t*)&node[TMSG_PAR >> 2];
   
   #ifdef DIAGNOSTICS
+    int64_t now = getSysTime();
     //Diagnostic Event? insert PQ Message counter. Different device, can't be placed inside atomic!
     if (*(uint64_t*)&node[TMSG_ID >> 2] == DIAG_PQ_MSG_CNT) tmpPar = *(uint64_t*)&pFpqCtrl[PRIO_CNT_OUT_ALL_GET_0>>2];
-    int64_t diff  = *(uint64_t*)&thrData[T_TD_DEADLINE >> 2] - getSysTime();
+    int64_t diff  = *(uint64_t*)&thrData[T_TD_DEADLINE >> 2] - now;
     uint8_t overflow = (diff >= 0) & (*diffsum >= 0) & ((diff + *diffsum)  < 0)
                      | (diff <  0) & (*diffsum <  0) & ((diff + *diffsum) >= 0);
     *diffsum   = (overflow          ? diff    : *diffsum + diff);
@@ -282,7 +299,9 @@ uint32_t* tmsg(uint32_t* node, uint32_t* thrData) {
     *diffmin   = ((diff < *diffmin) ? diff    : *diffmin);
     *diffmax   = ((diff > *diffmax) ? diff    : *diffmax);
     *count     = (overflow          ? 0       : *count);   // necessary for calculating average: if sum resets, count must also reset
-    *diffwcnt += (int64_t)(diff < *diffwth); //inc diff warning counter when diff below threshold 
+    *diffwcnt += (int64_t)(diff < *diffwth); //inc diff warning counter when diff below threshold
+    *diffwhash = ((int64_t)(diff < *diffwth) && !*diffwhash) ? node[NODE_HASH >> 2] : *diffwhash; //save node hash of first warning
+    *diffwts   = ((int64_t)(diff < *diffwth) && !*diffwts)   ? now : *diffwts; //save time of first warning
   #endif
 
   //disptach timing message to priority queue
@@ -291,8 +310,8 @@ uint32_t* tmsg(uint32_t* node, uint32_t* thrData) {
   *(pFpqData + (PRIO_DAT_STD   >> 2))  = node[TMSG_ID_LO  >> 2];
   *(pFpqData + (PRIO_DAT_STD   >> 2))  = hiW(tmpPar);
   *(pFpqData + (PRIO_DAT_STD   >> 2))  = loW(tmpPar);
-  *(pFpqData + (PRIO_DAT_STD   >> 2))  = node[TMSG_TEF    >> 2];
   *(pFpqData + (PRIO_DAT_STD   >> 2))  = node[TMSG_RES    >> 2];
+  *(pFpqData + (PRIO_DAT_STD   >> 2))  = node[TMSG_TEF    >> 2];
   *(pFpqData + (PRIO_DAT_TS_HI >> 2))  = thrData[T_TD_DEADLINE_HI >> 2];
   *(pFpqData + (PRIO_DAT_TS_LO >> 2))  = thrData[T_TD_DEADLINE_LO >> 2];
   atomic_off();
@@ -310,6 +329,7 @@ uint32_t* block(uint32_t* node, uint32_t* thrData) {
   uint32_t *ret = (uint32_t*)node[NODE_DEF_DEST_PTR >> 2];
   uint32_t *bl, *b, *cmd, *act;
   uint8_t  *rdIdx,*wrIdx;
+  uint8_t skipOne = 0;
 
   uint32_t *ardOffs = node + (BLOCK_CMDQ_RD_IDXS >> 2), *awrOffs = node + (BLOCK_CMDQ_WR_IDXS >> 2);
   uint32_t bufOffs, elOffs, prio, actTmp, atype;
@@ -334,7 +354,7 @@ uint32_t* block(uint32_t* node, uint32_t* thrData) {
     cmd     = (uint32_t*)&b[elOffs  >> 2];                                                  // pointer to active command data 
     
     
-    if (getSysTime() < *((uint64_t*)((void*)cmd + T_CMD_TIME))) return node;                //if chosen command is not yet valid, return to scheduler
+    if (getSysTime() < *((uint64_t*)((void*)cmd + T_CMD_TIME))) return ret;                 // if chosen command is not yet valid, directly return to scheduler
 
     
     act     = (uint32_t*)&cmd[T_CMD_ACT >> 2];          //pointer to command's action
@@ -352,9 +372,18 @@ uint32_t* block(uint32_t* node, uint32_t* thrData) {
       actTmp &= ~ACT_QTY_SMSK; //clear qty
       actTmp |= ((--qty) & ACT_QTY_MSK) << ACT_QTY_POS;
       *act    = actTmp;
+    } else {
+      skipOne = 1; //qty was exhausted before decrement, can be skipped
+      DBPRINT2("#%02u: Found deactivated command\n" );
     }
 
     *(rdIdx) = (*rdIdx + (uint8_t)(qty == 0) ) & Q_IDX_MAX_OVF_MSK; //pop element if qty exhausted
+    
+    //If we could skip and there are more cmds pending, exit and let the scheduler come back directly to this block for the next cmd in our queue
+    if( skipOne && ((*awrOffs & 0x00ffffff) != (*ardOffs & 0x00ffffff)) ) {
+      DBPRINT2("#%02u: Found more pending commands, skip deactivated cmd and process next cmd\n" );
+      return node;
+    }  
 
     if (qty==0) DBPRINT3("#%02u: Qty reached zero, popping\n", cpuId);
 

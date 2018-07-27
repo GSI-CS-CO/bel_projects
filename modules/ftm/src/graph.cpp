@@ -11,7 +11,10 @@ myVertex::myVertex(myVertex const &src) {
   this->cpu = src.cpu;
   this->thread = src.thread;
   this->hash = src.hash;
-  if (src.np != nullptr) this->np = src.np->clone();
+  
+  this->np = (src.np != nullptr) ? src.np->clone() : nullptr;
+  //std::cout << "Original " << src.np << " cpy " << this->np << std::endl;
+  
   this->patEntry  = src.patEntry;
   this->patExit   = src.patExit;
   this->bpEntry   = src.bpEntry;
