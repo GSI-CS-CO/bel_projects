@@ -1,0 +1,35 @@
+
+Pack of convenience bash scripts for Etherbone based tools
+July 2018 by Mathias Kreider, GSI < m.kreider@gsi.de >
+
+Install:
+--------
+
+Bash Autocompletion scripts:
+
+eb-tools-prompt.sh
+dm-cmd-prompt.sh
+dm-sched-prompt.sh
+
+copy these into the bash autocompletion folder (Ubuntu) or otherwise appropriate
+
+sudo cp eb-tools-prompt.sh dm-cmd-prompt.sh dm-sched-prompt.sh /etc/bash_completion.d/
+
+
+EB over SSH script:
+
+eb-ssh-funcs.sh
+
+copy this into your home directory. then append the content of append_eb_ssh_to_bashrc to .bashrc to activate
+
+cp eb-ssh-funcs.sh ~
+cat append_eb_ssh_to_bashrc >> ~/.bashrc
+
+
+That's it. restart the shell or source all scripts to use.
+
+--------
+
+For more details, have a look at the comment headers in the individual files
+
+

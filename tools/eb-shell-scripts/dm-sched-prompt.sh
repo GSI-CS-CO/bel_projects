@@ -1,3 +1,14 @@
+#!/bin/bash
+
+# Autocomplete for dm-sched
+# !!! requires carpeDM >= v0.26.0!!!
+#
+# Install:
+# this file belongs in /etc/bash_completion.d/
+# After copying the file, you need to either restart the shell or source the file:
+# . /etc/bash_completion.d/dm-sched-prompt.sh
+#
+
  _dm-sched()
 {
 
@@ -12,12 +23,11 @@
     COMPREPLY=()
     cur="${COMP_WORDS[COMP_CWORD]}"
     prev="${COMP_WORDS[COMP_CWORD-1]}"
-    compline="${COMP_WORDS[*]}"
-    dev=`echo "$compline" | grep -o -E "(dev|tcp|udp)\/.[a-zA-Z0-9\_\-\.]* "`
+    dev=`echo "$COMP_LINE" | grep -o -E "(dev|tcp|udp)\/.[a-zA-Z0-9\_\-\.]* "`
 
     cmdlist="add remove keep overwrite clear status dump chkrem"
     cmdpattern="(add|remove|keep|overwrite|clear|status|dump|chkrem) "
-    cmd=`echo "$compline" | grep -o -E "$cmdpattern" | cut -d\  -f1`
+    cmd=`echo "$COMP_LINE" | grep -o -E "$cmdpattern" | cut -d\  -f1`
 
 
     if [ -z $dev ]; then #1. no eb-device, find one
