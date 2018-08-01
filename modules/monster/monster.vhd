@@ -348,6 +348,8 @@ end monster;
 
 architecture rtl of monster is
 
+  constant g_en_eca : boolean := false;
+
   constant c_is_arria5 : boolean := g_family = "Arria V";
   constant c_is_arria2 : boolean := g_family = "Arria II";
 
