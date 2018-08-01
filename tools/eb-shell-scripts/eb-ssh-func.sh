@@ -42,8 +42,8 @@ _add_eb_aliases()
 
 _add_dm_aliases()
 {
-  alias dm-cmd='_dm_cmd'
-  alias dm-sched='_dm_sched'
+  alias dm-cmd='_eb_ssh_dm_cmd'
+  alias dm-sched='_eb_ssh_dm_sched'
 }
 
 _rm_eb_aliases()
