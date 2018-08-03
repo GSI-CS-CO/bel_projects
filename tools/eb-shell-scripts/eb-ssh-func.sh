@@ -70,23 +70,65 @@ _rm_dm_aliases()
 #use _eb_ssh_ prefix as a sort of namespace to clashes with possible autocomplete functions
 
 _eb_ssh_eb_func() {
-  local rawCmd pciDev dev sshDev sshAuxCmd sshCmd directCmd
+  local rawCmd pciDev dev sshDev sshAuxCmd sshCmd directCmd fileWithPath fileNoPath
   rawCmd=$@                                                             # input from caller func
   pciDev="dev/wbm0"                                                     # constant for pci device string
   dev=`echo $rawCmd | grep -o -E "(dev|tcp|udp)\/.[a-zA-Z0-9\_\-\.]*"`  # isolate device string from input
+  fileWithPath=`echo $rawCmd | grep -o -E "[a-zA-Z0-9\_\-\/]*.(bin|dot|rpd)"`  # isolate qualified file string from input
+  fileNoPath=`echo $rawCmd | grep -o -E "[a-zA-Z0-9\_\-]*.(bin|dot|rpd)"`      # isolate file string from input
+
   sshDev=`echo $dev | cut -d\/ -f2`                                     # remove tcp/ udp/ dev/ from device string for ssh hostname
   sshAuxCmd="${rawCmd/$dev/$pciDev}"                                    # replace device string with pci device string for ssh access
-  sshCmd="ssh root@$sshDev $sshAuxCmd"                                  # the full ssh command
+  sshAuxCmd="${sshAuxCmd/$fileWithPath/$fileNoPath}"                    # remove path from file names
+  sshCmd="ssh -t root@$sshDev \"cd /tmp; $sshAuxCmd\""                  # the full ssh command
   directCmd="command $rawCmd"                                           # the full direct command, bypass alias to avoid loop
 
   if [[ $dev = *"tcp/"* ]]; then
-    #echo "ssh"
-    #echo "$sshCmd";
     eval $sshCmd
   else
-    #echo "direct"
-    #echo "$directCmd";
     eval $directCmd
+  fi
+}
+
+_eb_ssh_eb_cpy_file_to_fe() {
+  local rawCmd dev sshDev scpCmd fileWithPath
+  rawCmd=$@                                                             # input from caller func
+  dev=`echo $rawCmd | grep -o -E "(dev|tcp|udp)\/.[a-zA-Z0-9\_\-\.]*"`  # isolate device string from input
+  fileWithPath=`echo $rawCmd | grep -o -E "[a-zA-Z0-9\_\-\/]*.(bin|dot|rpd)"`  # isolate file string from input
+  sshDev=`echo $dev | cut -d\/ -f2`                                     # remove tcp/ udp/ dev/ from device string for ssh hostname
+  scpCmd="scp $fileWithPath root@$sshDev:/tmp/"                            # secure copy the file from caller pc to frontend
+
+
+  if [[ $dev = *"tcp/"* ]] && [[ -n $fileWithPath ]]; then
+    eval $scpCmd
+  fi
+}
+
+_eb_ssh_eb_cpy_file_from_fe() {
+  local rawCmd dev sshDev scpCmd fileWithPath fileNoPath
+  rawCmd=$@                                                                     # input from caller func
+  dev=`echo $rawCmd | grep -o -E "(dev|tcp|udp)\/.[a-zA-Z0-9\_\-\.]*"`          # isolate device string from input
+  fileWithPath=`echo $rawCmd | grep -o -E "[a-zA-Z0-9\_\-\/]*.(bin|dot|rpd)"`   # isolate qualified file string from input
+  fileNoPath=`echo $rawCmd | grep -o -E "[a-zA-Z0-9\_\-]*.(bin|dot|rpd)"`       # isolate file string from input
+  sshDev=`echo $dev | cut -d\/ -f2`                                             # remove tcp/ udp/ dev/ from device string for ssh hostname
+  scpCmd="scp root@$sshDev:/tmp/$fileNoPath $fileWithPath"                      # secure copy the file from frontend to caller pc
+
+
+  if [[ $dev = *"tcp/"* ]] && [[ -n $fileWithPath ]]; then
+    eval $scpCmd
+  fi
+}
+
+_eb_ssh_eb_cpy_download_dot_from_fe() {
+  local rawCmd dev sshDev scpCmd
+  rawCmd=$@                                                                     # input from caller func
+  dev=`echo $rawCmd | grep -o -E "(dev|tcp|udp)\/.[a-zA-Z0-9\_\-\.]*"`          # isolate device string from input
+  sshDev=`echo $dev | cut -d\/ -f2`                                             # remove tcp/ udp/ dev/ from device string for ssh hostname
+  scpCmd="scp root@$sshDev:/tmp/download.dot ."                                 # secure copy the file from frontend to caller pc
+
+
+  if [[ $dev = *"tcp/"* ]]; then
+    eval $scpCmd
   fi
 }
 
@@ -108,9 +150,11 @@ _eb_ssh_eb_write() {
 
 _eb_ssh_eb_get() {
   _eb_ssh_eb_func "eb-get $@"
+  _eb_ssh_eb_cpy_file_from_fe "eb-get $@"
 }
 
 _eb_ssh_eb_put() {
+  _eb_ssh_eb_cpy_file_to_fe "eb-put $@"
   _eb_ssh_eb_func "eb-put $@"
 }
 
@@ -119,6 +163,7 @@ _eb_ssh_eb_mon() {
 }
 
 _eb_ssh_eb_fwload() {
+  _eb_ssh_eb_cpy_file_to_fe "eb-fwload $@"
   _eb_ssh_eb_func "eb-fwload $@"
 }
 
@@ -137,9 +182,12 @@ _eb_ssh_eb_console() {
 
 # DM tools
 _eb_ssh_dm_sched() {
+  _eb_ssh_eb_cpy_file_to_fe "dm-sched $@"
   _eb_ssh_eb_func "dm-sched $@"
+  _eb_ssh_eb_cpy_download_dot_from_fe "dm-sched $@"
 }
 
 _eb_ssh_dm_cmd() {
+  _eb_ssh_eb_cpy_file_to_fe "dm-cmd $@"
   _eb_ssh_eb_func "dm-cmd $@"
 }
