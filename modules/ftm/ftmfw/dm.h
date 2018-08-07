@@ -12,12 +12,13 @@
 #define PRIO_BIT_TIME_LIMIT (1<<2)
 
 #define PRIO_DAT_STD     0x00
-#define PRIO_DAT_TS_HI   0x04    
-#define PRIO_DAT_TS_LO   0x08 
-#define PRIO_DRP_TS_HI   0x14    
-#define PRIO_DRP_TS_LO   0x18  
+#define PRIO_DAT_TS_HI   0x04
+#define PRIO_DAT_TS_LO   0x08
+#define PRIO_DRP_TS_HI   0x14
+#define PRIO_DRP_TS_LO   0x18
 
 #define DIAG_PQ_MSG_CNT  0x0FA62F9000000000
+#define ECA_GLOBAL_ADR   0x7ffffff0
 
 #define PRINT64_FACTOR  1000000000LL
 
@@ -44,7 +45,7 @@ extern uint32_t* const _endshared[];
 extern deadlineFuncPtr deadlineFuncs[_NODE_TYPE_END_];
 extern nodeFuncPtr         nodeFuncs[_NODE_TYPE_END_];
 extern actionFuncPtr     actionFuncs[_ACT_TYPE_END_];
-extern uint32_t* const p; 
+extern uint32_t* const p;
 extern uint32_t* const status;
 extern uint64_t* const count;
 extern uint64_t* const boottime;
