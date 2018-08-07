@@ -38,6 +38,7 @@ _add_eb_aliases()
   alias eb-find='_eb_ssh_eb_find'
   alias eb-reset='_eb_ssh_eb_reset'
   alias eb-console='_eb_ssh_eb_console'
+  alias eb-flash='_eb_ssh_eb_flash'
   alias eb-test='_eb_ssh_test_me'
 }
 
@@ -60,6 +61,7 @@ _rm_eb_aliases()
   unalias eb-find
   unalias eb-reset
   unalias eb-console
+  unalias eb-flash
   unalias eb-test
 }
 
@@ -232,6 +234,22 @@ _eb_ssh_eb_put() {
   _eb_ssh_eb_func "$dev" "$cmd" "$raw" ""
 }
 
+_eb_ssh_eb_flash() {
+  cmd="eb-flash"
+  raw=$@
+  fnp=$(_get_file_name_no_path "rpd" "$raw")
+  fwp=$(_get_file_name_with_path "rpd" "$raw")
+  dev=$(_get_eb_device "$raw")
+
+  if [ -n $fnp ] && [[ $dev = *"tcp/"* ]]; then
+    raw="${raw/$fwp/$fnp}"                    # remove path from file names
+  fi
+
+  _eb_ssh_eb_cpy_file_to_fe "$dev" "$fwp" "$fnp"
+  _eb_ssh_eb_func "$dev" "$cmd" "$raw" ""
+}
+
+
 _eb_ssh_eb_mon() {
   local cmd raw dev
   cmd="eb-mon"
@@ -278,7 +296,7 @@ _eb_ssh_eb_reset() {
 _eb_ssh_eb_console() {
   local cmd raw dev opt
   cmd="eb-console"
-  opt ="-t"
+  opt="-t"
 
   raw=$@
   dev=$(_get_eb_device "$raw")
