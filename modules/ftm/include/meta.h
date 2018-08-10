@@ -9,7 +9,7 @@
 class Meta : public Node {
 
 protected:
-  
+
 
 public:
   Meta(const std::string& name, const std::string&  pattern, const std::string&  beamproc,  const uint32_t& hash, const uint8_t& cpu, uint32_t flags) : Node(name, pattern, beamproc, hash,  cpu, flags) {}
@@ -35,7 +35,7 @@ class CmdQMeta : public Meta {
 
 
 public:
-  CmdQMeta(const std::string& name, const std::string&  pattern, const std::string&  beamproc,  const uint32_t& hash, const uint8_t& cpu, uint32_t flags) 
+  CmdQMeta(const std::string& name, const std::string&  pattern, const std::string&  beamproc,  const uint32_t& hash, const uint8_t& cpu, uint32_t flags)
   : Meta(name, pattern, beamproc, hash, cpu, ((flags & ~NFLG_TYPE_SMSK) | (NODE_TYPE_QUEUE << NFLG_TYPE_POS))) {}
   CmdQMeta(const CmdQMeta& src) : Meta(src) {}
   ~CmdQMeta()  {};
@@ -50,7 +50,7 @@ public:
   void show(void)       const;
   void show(uint32_t cnt, const char* sPrefix) const;
   void serialise(const vAdr &va, uint8_t* b) const;
-  
+
 };
 
 
@@ -58,7 +58,7 @@ public:
 class CmdQBuffer : public Meta {
 
 public:
-  CmdQBuffer(const std::string& name, const std::string&  pattern, const std::string&  beamproc,  const uint32_t& hash, const uint8_t& cpu, uint32_t flags) 
+  CmdQBuffer(const std::string& name, const std::string&  pattern, const std::string&  beamproc,  const uint32_t& hash, const uint8_t& cpu, uint32_t flags)
   : Meta(name, pattern, beamproc, hash, cpu, ((flags & ~NFLG_TYPE_SMSK) | (NODE_TYPE_QBUF << NFLG_TYPE_POS))) {}
   CmdQBuffer(const CmdQBuffer& src) : Meta(src) {}
   ~CmdQBuffer()  {};
@@ -79,7 +79,7 @@ public:
 class DestList : public Meta {
 
 public:
-  DestList(const std::string& name, const std::string&  pattern, const std::string&  beamproc,  const uint32_t& hash, const uint8_t& cpu, uint32_t flags) 
+  DestList(const std::string& name, const std::string&  pattern, const std::string&  beamproc,  const uint32_t& hash, const uint8_t& cpu, uint32_t flags)
   : Meta(name, pattern, beamproc, hash, cpu, ((flags & ~NFLG_TYPE_SMSK) | (NODE_TYPE_ALTDST << NFLG_TYPE_POS))) {}
   ~DestList()  {};
   DestList(const DestList& src) : Meta(src) {}

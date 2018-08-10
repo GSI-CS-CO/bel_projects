@@ -16,7 +16,7 @@ const std::string VisitorDownloadCrawler::exIntro = "VisitorDownloadCrawler: ";
 
 
 void VisitorDownloadCrawler::setDefDst() const {
-  
+
   uint32_t auxAdr;
   uint32_t tmpAdr;
 
@@ -33,7 +33,7 @@ void VisitorDownloadCrawler::setDefDst() const {
     // So if there is a covenant registered for the node we're just processing, ignore the exception. Otherwise rethrow
     if (!ct.isOk(ct.lookup(g[v].name))) { throw; }
     else {sLog << "setDefDst: Node <" << g[v].name << "> has an invalid def dst, ignoring because of active covenant" << std::endl;}
-  }  
+  }
 
 }
 
@@ -41,11 +41,11 @@ void VisitorDownloadCrawler::visit(const Block& el) const {
   Graph::in_edge_iterator in_begin, in_end;
   uint32_t tmpAdr;
 
-  
+
   tmpAdr = at.adrConv(AdrType::INT, AdrType::MGMT,cpu, writeBeBytesToLeNumber<uint32_t>(b + BLOCK_ALT_DEST_PTR ));
   //if the block has no destination list, set default destination ourself
   if (tmpAdr != LM32_NULL_PTR) { boost::add_edge(v, ((AllocMeta*)&(*(at.lookupAdr(cpu, tmpAdr))))->v, myEdge(det::sDstList), g); }
-  else setDefDst();  
+  else setDefDst();
 
   tmpAdr = at.adrConv(AdrType::INT, AdrType::MGMT,cpu, writeBeBytesToLeNumber<uint32_t>(b + BLOCK_CMDQ_IL_PTR ));
   if (tmpAdr != LM32_NULL_PTR) boost::add_edge(v, ((AllocMeta*)&(*(at.lookupAdr(cpu, tmpAdr))))->v, myEdge(det::sQPrio[PRIO_IL]), g);
@@ -77,10 +77,10 @@ void VisitorDownloadCrawler::visit(const TimingMsg& el) const  {
 }
 
 std::pair<uint8_t, AdrType> VisitorDownloadCrawler::createCmd(const Command& el) const {
-  uint8_t targetCpu; 
+  uint8_t targetCpu;
   AdrType adrT;
   uint32_t tmpAdr, auxAdr;
-  auxAdr = writeBeBytesToLeNumber<uint32_t>(b + CMD_TARGET );  
+  auxAdr = writeBeBytesToLeNumber<uint32_t>(b + CMD_TARGET );
 
   std::tie(targetCpu, adrT) = at.adrClassification(auxAdr);
   targetCpu = (adrT == AdrType::PEER ? targetCpu : cpu); // Internal address type does not know which cpu it belongs to
@@ -93,17 +93,17 @@ std::pair<uint8_t, AdrType> VisitorDownloadCrawler::createCmd(const Command& el)
 }
 
 void VisitorDownloadCrawler::visit(const Flow& el) const  {
-  uint8_t targetCpu; 
+  uint8_t targetCpu;
   AdrType adrT;
-  uint32_t tmpAdr;  
+  uint32_t tmpAdr;
 
   std::tie(targetCpu, adrT) = createCmd((Command&)el);
   uint32_t rawAdr = writeBeBytesToLeNumber<uint32_t>(b + CMD_FLOW_DEST );
-  
+
 
   tmpAdr = at.adrConv(AdrType::INT, AdrType::MGMT, targetCpu, rawAdr);
 
-  
+
   if (tmpAdr != LM32_NULL_PTR) boost::add_edge(v, ((AllocMeta*)&(*(at.lookupAdr(targetCpu, tmpAdr))))->v, myEdge(det::sCmdFlowDst),   g);
 
 }
@@ -121,13 +121,13 @@ void VisitorDownloadCrawler::visit(const Wait& el) const {
 }
 
 void VisitorDownloadCrawler::visit(const CmdQMeta& el) const {
-  uint32_t tmpAdr;  
+  uint32_t tmpAdr;
   for (ptrdiff_t offs = CMDQ_BUF_ARRAY; offs < CMDQ_BUF_ARRAY_END; offs += _32b_SIZE_) {
     tmpAdr = at.adrConv(AdrType::INT, AdrType::MGMT,cpu, writeBeBytesToLeNumber<uint32_t>(b + offs ));
     if (tmpAdr != LM32_NULL_PTR) {
       auto x = at.lookupAdr(cpu, tmpAdr);
       boost::add_edge(v, x->v, (myEdge){det::sMeta}, g);
-    }  
+    }
   }
 }
 
@@ -137,7 +137,7 @@ void VisitorDownloadCrawler::visit(const CmdQBuffer& el) const {
 void VisitorDownloadCrawler::visit(const DestList& el) const {
   vertex_t vPblock;
   Graph::in_edge_iterator in_begin, in_end;
-  uint32_t tmpAdr, defAdr; 
+  uint32_t tmpAdr, defAdr;
 
   //sLog << "Trying to find parent of " << g[v].name << std::endl;
   boost::tie(in_begin, in_end) = in_edges(v,g);
@@ -169,7 +169,7 @@ void VisitorDownloadCrawler::visit(const DestList& el) const {
           else {sLog << "visitDstList: Node <" << g[vPblock].name << "> has an invalid def dst, ignoring because of active covenant" << std::endl;}
 
         }
-      }  
+      }
     }
     if (!defaultValid) { //default destination was not in alt dest list. that shouldnt happen ... draw it in
       sErr << "!!! DefDest not in AltDestList. Means someone set an arbitrary pointer for DefDest !!!" << std::endl;
@@ -184,7 +184,7 @@ void VisitorDownloadCrawler::visit(const DestList& el) const {
     }
   } else {
     throw std::runtime_error( exIntro + "Node " + g[v].name + " of type " + g[v].type + " must have a parent\n");
-  }  
+  }
 
 }
 

@@ -25,9 +25,9 @@
 #define PRIO_HI 1
 #define PRIO_LO 0
 
-#define WR_PPS_GEN_STATE_MSK 
-#define WR_PPS_GEN_STATE_MSK 
-#define WR_PPS_GEN_STATE_MSK     
+#define WR_PPS_GEN_STATE_MSK
+#define WR_PPS_GEN_STATE_MSK
+#define WR_PPS_GEN_STATE_MSK
 
 
 
@@ -63,7 +63,7 @@
 #define T_TC_CEASE              (T_TC_START     + _32b_SIZE_) //WR Host, RW LM32
 #define T_TC_ABORT              (T_TC_CEASE     + _32b_SIZE_) //WR Host, RW LM32
 #define T_TC_RUNNING            (T_TC_ABORT     + _32b_SIZE_) //RD Host, WR LM32
-#define _T_TC_SIZE_             (T_TC_RUNNING   + _32b_SIZE_) 
+#define _T_TC_SIZE_             (T_TC_RUNNING   + _32b_SIZE_)
 
 //Thread Data
 #define T_TD_FLAGS              (0)                           //RD Host, RW LM32
@@ -85,9 +85,9 @@
 
 
 //Sync node entry
-#define T_SYNC_SRC              (0)                       
-#define T_SYNC_DST              (T_SYNC_SRC   + _PTR_SIZE_)  
-#define T_SYNC_TIME             (T_SYNC_DST   + _PTR_SIZE_)  
+#define T_SYNC_SRC              (0)
+#define T_SYNC_DST              (T_SYNC_SRC   + _PTR_SIZE_)
+#define T_SYNC_TIME             (T_SYNC_DST   + _PTR_SIZE_)
 #define _T_SYNC_SIZE_           (T_SYNC_TIME  + _TS_SIZE_)
 
 //Command (the received format)
@@ -129,7 +129,7 @@
 
 #if _T_DIAG_SIZE_ < (T_DIAG_BAD_WAIT_CNT + _32b_SIZE_)
   #error Actual diagnostics area size exceeds fixed _T_DIAG_SIZE_
-#endif  
+#endif
 
 
 
@@ -138,7 +138,7 @@
 #define T_META_GRPTAB_SIZE  (T_META_CON_SIZE    + _32b_SIZE_) //groupsTable size in byte
 #define T_META_COVTAB_SIZE  (T_META_GRPTAB_SIZE + _32b_SIZE_) //covenantTable size in byte
 #define T_META_FLAGS        (T_META_COVTAB_SIZE + _32b_SIZE_) //
-#define _T_META_SIZE_       (T_META_FLAGS       + _32b_SIZE_)   
+#define _T_META_SIZE_       (T_META_FLAGS       + _32b_SIZE_)
 
 
 //////////////////////////////////////////////////////////////////////
@@ -146,13 +146,13 @@
 //////////////////////////////////////////////////////////////////////
 
 #define _SHCTL_START_    0
-#define SHCTL_HEAP       (_SHCTL_START_)                              //Scheduler Heap  
+#define SHCTL_HEAP       (_SHCTL_START_)                              //Scheduler Heap
 #define SHCTL_STATUS     (SHCTL_HEAP    + _THR_QTY_ * _PTR_SIZE_)     //Status Registers
 #define SHCTL_META       (SHCTL_STATUS  + _32b_SIZE_ )                //Group/Node Name Meta Information
 #define SHCTL_DIAG       (SHCTL_META    + _T_META_SIZE_ )             //Diagnostic Registers
 #define SHCTL_CMD        (SHCTL_DIAG    + _T_DIAG_SIZE_ )             //Command Register
-#define SHCTL_TGATHER    (SHCTL_CMD     + _32b_SIZE_ )                //Gather Time (HW Priority Queue Config) Register 
-#define SHCTL_THR_CTL    (SHCTL_TGATHER + _TS_SIZE_  )                //Thread Control Registers (Start Stop Status) 
+#define SHCTL_TGATHER    (SHCTL_CMD     + _32b_SIZE_ )                //Gather Time (HW Priority Queue Config) Register
+#define SHCTL_THR_CTL    (SHCTL_TGATHER + _TS_SIZE_  )                //Thread Control Registers (Start Stop Status)
 #define SHCTL_THR_STA    (SHCTL_THR_CTL + _T_TC_SIZE_  )              //Thread Start Staging Area (1 per Thread )
 #define SHCTL_THR_DAT    (SHCTL_THR_STA + _THR_QTY_ * _T_TS_SIZE_  )  //Thread Runtime Data (1 per Thread )
 #define SHCTL_INBOXES    (SHCTL_THR_DAT + _THR_QTY_ * _T_TD_SIZE_  )  //Inboxes for MSI (1 per Core in System )
@@ -208,15 +208,15 @@
 // #########################  Nodes  #################################
 //####################################################################
 
-                                                                
+
 //////////////////////////////////////////////////////////////////////
 // Generic Node Attributes ///////////////////////////////////////////
 #define NODE_BEGIN              (0)
 
-// This pack all generic data to the end! Makes ptr arithmetic easier for array types   
-#define NODE_HASH               (0x28)                                
-#define NODE_FLAGS              (NODE_HASH  + _32b_SIZE_)             
-#define NODE_DEF_DEST_PTR       (NODE_FLAGS + _32b_SIZE_)             
+// This pack all generic data to the end! Makes ptr arithmetic easier for array types
+#define NODE_HASH               (0x28)
+#define NODE_FLAGS              (NODE_HASH  + _32b_SIZE_)
+#define NODE_DEF_DEST_PTR       (NODE_FLAGS + _32b_SIZE_)
 
 
 //////////////////////////////////////////////////////////////////////
@@ -228,12 +228,12 @@
 #define BLOCK_PERIOD            (BLOCK_BEGIN)
 #define BLOCK_PERIOD_HI         (BLOCK_BEGIN + 0)
 #define BLOCK_PERIOD_LO         (BLOCK_PERIOD_HI    + _32b_SIZE_)
-#define BLOCK_ALT_DEST_PTR      (BLOCK_PERIOD       + _TS_SIZE_)   
-#define BLOCK_CMDQ_LO_PTR       (BLOCK_ALT_DEST_PTR + _PTR_SIZE_)   
-#define BLOCK_CMDQ_HI_PTR       (BLOCK_CMDQ_LO_PTR  + _PTR_SIZE_)   
-#define BLOCK_CMDQ_IL_PTR       (BLOCK_CMDQ_HI_PTR  + _PTR_SIZE_)   
+#define BLOCK_ALT_DEST_PTR      (BLOCK_PERIOD       + _TS_SIZE_)
+#define BLOCK_CMDQ_LO_PTR       (BLOCK_ALT_DEST_PTR + _PTR_SIZE_)
+#define BLOCK_CMDQ_HI_PTR       (BLOCK_CMDQ_LO_PTR  + _PTR_SIZE_)
+#define BLOCK_CMDQ_IL_PTR       (BLOCK_CMDQ_HI_PTR  + _PTR_SIZE_)
 #define BLOCK_CMDQ_WR_IDXS      (BLOCK_CMDQ_IL_PTR  + _PTR_SIZE_)
-#define BLOCK_CMDQ_RD_IDXS      (BLOCK_CMDQ_WR_IDXS + _32b_SIZE_)   
+#define BLOCK_CMDQ_RD_IDXS      (BLOCK_CMDQ_WR_IDXS + _32b_SIZE_)
 #define BLOCK_CMDQ_PTRS          BLOCK_CMDQ_LO_PTR
 
 #define BLOCK_CMDQ_IDX_IL    (3 - PRIO_IL)
@@ -246,11 +246,11 @@
 #define Q_IDX_MAX_OVF_MSK      ~(-(1 << Q_IDX_MAX_OVF))
 #define Q_IDX_MAX_MSK          ~(-(1 << Q_IDX_MAX))
 
-///// CMDQ Meta Node 
+///// CMDQ Meta Node
 //
 // Array of pointers to cmd buffer nodes
 #define CMDQ_BUF_ARRAY          (NODE_BEGIN)
-#define CMDQ_BUF_ARRAY_END      (CMDQ_BUF_ARRAY + 10 * _PTR_SIZE_)  
+#define CMDQ_BUF_ARRAY_END      (CMDQ_BUF_ARRAY + 10 * _PTR_SIZE_)
 
 ///// CMD Buffer Meta Node
 //
@@ -271,42 +271,42 @@
 
 //////////////////////////////////////////////////////////////////////
 //// Generic Event Attributes ////////////////////////////////////////
-#define EVT_BEGIN               (NODE_BEGIN) 
-#define EVT_OFFS_TIME           (EVT_BEGIN)                     
-#define EVT_HDR_END             (EVT_OFFS_TIME + _TS_SIZE_)       
+#define EVT_BEGIN               (NODE_BEGIN)
+#define EVT_OFFS_TIME           (EVT_BEGIN)
+#define EVT_HDR_END             (EVT_OFFS_TIME + _TS_SIZE_)
 
 //// Timing Msg
 //
 #define TMSG_BEGIN              (EVT_HDR_END)
 #define TMSG_ID                 (TMSG_BEGIN)
-#define TMSG_ID_HI              (TMSG_ID      + 0)   
+#define TMSG_ID_HI              (TMSG_ID      + 0)
 #define TMSG_ID_LO              (TMSG_ID_HI   + _32b_SIZE_)
 #define TMSG_PAR                (TMSG_ID      + _64b_SIZE_)
-#define TMSG_PAR_HI             (TMSG_PAR     + 0)   
-#define TMSG_PAR_LO             (TMSG_PAR_HI  + _32b_SIZE_)          
-#define TMSG_RES                (TMSG_PAR     + _64b_SIZE_)          
-#define TMSG_TEF                (TMSG_RES     + _32b_SIZE_)          
-                                                               
-   
+#define TMSG_PAR_HI             (TMSG_PAR     + 0)
+#define TMSG_PAR_LO             (TMSG_PAR_HI  + _32b_SIZE_)
+#define TMSG_RES                (TMSG_PAR     + _64b_SIZE_)
+#define TMSG_TEF                (TMSG_RES     + _32b_SIZE_)
+
+
 //////////////////////////////////////////////////////////////////////
 //// Generic Command Attributes //////////////////////////////////////
 #define CMD_BEGIN               (EVT_HDR_END)
-#define CMD_TARGET              (CMD_BEGIN) 
+#define CMD_TARGET              (CMD_BEGIN)
 #define CMD_VALID_TIME          (CMD_TARGET         + _PTR_SIZE_)
 #define CMD_VALID_TIME_HI       (CMD_VALID_TIME     + 0)
 #define CMD_VALID_TIME_LO       (CMD_VALID_TIME_HI  + _32b_SIZE_)
-#define CMD_ACT                 (CMD_VALID_TIME     + _TS_SIZE_)           
-#define CMD_HDR_END             (CMD_ACT            + _32b_SIZE_)           
-                                                             
+#define CMD_ACT                 (CMD_VALID_TIME     + _TS_SIZE_)
+#define CMD_HDR_END             (CMD_ACT            + _32b_SIZE_)
+
 
 //// Cmd Flow ////////////////////////////////////////////////////////
 //
 
-#define CMD_FLOW_DEST           (CMD_HDR_END)                       
-                                                              
+#define CMD_FLOW_DEST           (CMD_HDR_END)
+
 //// Cmd Flush - Specific Attributes /////////////////////////////////
 //
-#define CMD_FLUSHRNG_IL         (CMD_HDR_END)                       
+#define CMD_FLUSHRNG_IL         (CMD_HDR_END)
 
 #define CMD_FLUSHRNG_IL_FRM     (CMD_FLUSHRNG_IL)
 #define CMD_FLUSHRNG_IL_TO      (CMD_FLUSHRNG_IL_FRM  + _8b_SIZE_)
@@ -320,24 +320,24 @@
 
 
 
-                                                             
+
 //// Cmd Nop - Specific Attributes ///////////////////////////////////
 //
-#define CMD_NOOP_RES            (CMD_HDR_END)                       
-                                                              
+#define CMD_NOOP_RES            (CMD_HDR_END)
+
 //// Cmd Wait - Specific Attributes //////////////////////////////////
 //
 #define CMD_WAIT_TIME           (CMD_HDR_END)
 #define CMD_WAIT_TIME_HI        (CMD_WAIT_TIME     + 0)
-#define CMD_WAIT_TIME_LO        (CMD_WAIT_TIME_HI  + _32b_SIZE_)                       
-                                                              
+#define CMD_WAIT_TIME_LO        (CMD_WAIT_TIME_HI  + _32b_SIZE_)
+
 //////////////////////////////////////////////////////////////////////
 
 // Address Vector Order
 //
 // Destination
-#define ADR_DEF_DST            0  
-#define ADR_ALT_DST_ARRAY      1 // only if multiple destinations    
+#define ADR_DEF_DST            0
+#define ADR_ALT_DST_ARRAY      1 // only if multiple destinations
 
 //
 // Block
@@ -374,7 +374,7 @@
 #define ACT_TYPE_UNKNOWN        0 // tUndefined
 #define ACT_TYPE_NOOP           (ACT_TYPE_UNKNOWN +1)  // noop command
 #define ACT_TYPE_FLOW           (ACT_TYPE_NOOP +1)  // flow change command
-#define ACT_TYPE_FLUSH          (ACT_TYPE_FLOW +1)  // flush command 
+#define ACT_TYPE_FLUSH          (ACT_TYPE_FLOW +1)  // flush command
 #define ACT_TYPE_WAIT           (ACT_TYPE_FLUSH +1)  // wait command
 #define _ACT_TYPE_END_          (ACT_TYPE_WAIT +1)  // Number of Action types
 
@@ -393,7 +393,7 @@
 #define ACT_PRIO_POS            24
 #define ACT_PRIO_SMSK           (ACT_PRIO_MSK << ACT_PRIO_POS)
 
-//Valid time is absolute (0) or relative (1) 
+//Valid time is absolute (0) or relative (1)
 #define ACT_VABS_MSK             0x1
 #define ACT_VABS_POS             26
 #define ACT_VABS_SMSK            (ACT_VABS_MSK << ACT_VABS_POS)
@@ -406,7 +406,7 @@
 //Cmd Action Flags - type specific bit definitions
 
 #define ACT_BITS_SPECIFIC_POS   28
-  
+
 //Command Flush Buffer Priority
 #define ACT_FLUSH_PRIO_MSK      0x7
 #define ACT_FLUSH_PRIO_POS      (ACT_BITS_SPECIFIC_POS + 0)
@@ -440,7 +440,7 @@
 #define NODE_TYPE_CNOOP         (NODE_TYPE_TMSG         +1)   // sends a noop command to designated block
 #define NODE_TYPE_CFLOW         (NODE_TYPE_CNOOP        +1)   // sends a flow change command to designated block
 #define NODE_TYPE_CFLUSH        (NODE_TYPE_CFLOW        +1)   // sends a flush command to designated block
-#define NODE_TYPE_CWAIT         (NODE_TYPE_CFLUSH       +1)   // sends a wait command to designated block 
+#define NODE_TYPE_CWAIT         (NODE_TYPE_CFLUSH       +1)   // sends a wait command to designated block
 //Shared Meta Type Enums
 #define NODE_TYPE_BLOCK_FIXED   (NODE_TYPE_CWAIT        +1)   // shows time block tPeriod and if necessary links to Q Meta and altdest nodes
 #define NODE_TYPE_BLOCK_ALIGN   (NODE_TYPE_BLOCK_FIXED  +1)   // shows time block tPeriod and if necessary links to Q Meta and altdest nodes
@@ -507,7 +507,7 @@
 
 // Timing Message //////////////////////////////////////////////////////////////////
 
-//FIXME selling my soul here by allowing dynamic changes to timing msg content. 
+//FIXME selling my soul here by allowing dynamic changes to timing msg content.
 // Prime BS caused by Jutta's "we must know which pattern it belongs to and dont want to use a proper DB lookup".
 // Evil stuff and likely to explode in our faces at some point
 

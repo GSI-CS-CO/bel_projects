@@ -13,18 +13,18 @@
 class Event : public Node {
 
 
-protected:  
+protected:
   uint64_t tOffs;
 public:
 
-  
+
   Event(const std::string& name, const std::string&  pattern, const std::string&  beamproc, const uint32_t& hash, const uint8_t& cpu, uint32_t flags) : Node(name, pattern, beamproc, hash, cpu, flags) {}
   Event(const std::string& name, const std::string&  pattern, const std::string&  beamproc, const uint32_t& hash, const uint8_t& cpu, uint32_t flags, uint64_t tOffs) : Node(name, pattern, beamproc, hash, cpu, flags), tOffs(tOffs) {}
   Event(const Event& src) : Node(src), tOffs(src.tOffs) {}
   virtual ~Event() = default;
   virtual node_ptr clone() const = 0;
 
-  
+
   virtual void show(void)                                 const = 0;
   virtual void show(uint32_t cnt, const char* sPrefix)    const = 0;
   virtual void accept(const VisitorVertexWriter& v)       const = 0;
@@ -35,7 +35,7 @@ public:
   bool isEvent(void) const {return true;}
   virtual void serialise(const vAdr &va, uint8_t* b) const;
   virtual void deserialise(uint8_t* b);
-  
+
 };
 
 // std timing message for the ECA, sent over the timing network
@@ -47,7 +47,7 @@ class TimingMsg : public Event {
 
 public:
   TimingMsg(const std::string& name, const std::string&  pattern, const std::string&  beamproc, const uint32_t& hash, const uint8_t& cpu, uint32_t flags) : Event(name, pattern, beamproc, hash, cpu, flags) {}
-  TimingMsg(const std::string& name, const std::string&  pattern, const std::string&  beamproc, const uint32_t& hash, const uint8_t& cpu, uint32_t flags, uint64_t tOffs,  uint64_t id, uint64_t par, uint32_t tef, uint32_t res) 
+  TimingMsg(const std::string& name, const std::string&  pattern, const std::string&  beamproc, const uint32_t& hash, const uint8_t& cpu, uint32_t flags, uint64_t tOffs,  uint64_t id, uint64_t par, uint32_t tef, uint32_t res)
   : Event (name, pattern, beamproc, hash, cpu, ((flags & ~NFLG_TYPE_SMSK) | (NODE_TYPE_TMSG << NFLG_TYPE_POS)), tOffs), id(id), par(par), tef(tef), res(res) {}
   ~TimingMsg()  {};
   TimingMsg(const TimingMsg& src) : Event(src), id(src.id), par(src.par), tef(src.tef), res(src.res) {
@@ -73,7 +73,7 @@ public:
 
 // A command to be sent over the bus to a Queue inside the DM, not executed before tValid
 class Command : public Event {
-protected: 
+protected:
   uint64_t tValid;
   uint32_t act;
 
@@ -82,7 +82,7 @@ protected:
   Command(const std::string& name, const std::string&  pattern, const std::string&  beamproc, const uint32_t& hash, const uint8_t& cpu, uint32_t flags, uint64_t tOffs, uint64_t tValid, uint32_t act) : Event (name, pattern, beamproc, hash, cpu, flags, tOffs), tValid(tValid), act(act) {}
   Command(const Command& src) : Event(src), tValid(src.tValid), act(src.act) {}
 public:
-  
+
   virtual ~Command() = default;
 
   virtual void show(void) const;
@@ -110,7 +110,7 @@ class Noop : public Command {
 
 public:
   Noop(const std::string& name, const std::string&  pattern, const std::string&  beamproc, const uint32_t& hash, const uint8_t& cpu, uint32_t flags) : Command(name, pattern, beamproc, hash, cpu, flags) {}
-  Noop(const std::string& name, const std::string&  pattern, const std::string&  beamproc, const uint32_t& hash, const uint8_t& cpu, uint32_t flags, uint64_t tOffs, uint64_t tValid, uint8_t prio, uint32_t qty, bool vabs) 
+  Noop(const std::string& name, const std::string&  pattern, const std::string&  beamproc, const uint32_t& hash, const uint8_t& cpu, uint32_t flags, uint64_t tOffs, uint64_t tValid, uint8_t prio, uint32_t qty, bool vabs)
   : Command(name, pattern, beamproc, hash, cpu, ((flags & ~NFLG_TYPE_SMSK) | (NODE_TYPE_CNOOP << NFLG_TYPE_POS)), tOffs, tValid, (ACT_TYPE_NOOP << ACT_TYPE_POS) | (prio & ACT_PRIO_MSK) << ACT_PRIO_POS | (qty & ACT_QTY_MSK) << ACT_QTY_POS | vabs << ACT_VABS_POS) {}
   Noop(const Noop& src) : Command(src) {}
   ~Noop() {};
@@ -147,7 +147,7 @@ public:
   virtual void accept(const VisitorUploadCrawler& v)    const override { v.visit(*this); }
   virtual void accept(const VisitorDownloadCrawler& v)  const override { v.visit(*this); }
   virtual void accept(const VisitorValidation& v)       const override { v.visit(*this); }
-  
+
 
 };
 
@@ -156,7 +156,7 @@ class Wait : public Command {
   uint64_t tWait;
 public:
   Wait(const std::string& name, const std::string&  pattern, const std::string&  beamproc, const uint32_t& hash, const uint8_t& cpu, uint32_t flags) : Command(name, pattern, beamproc, hash, cpu, flags) {}
-  Wait(const std::string& name, const std::string&  pattern, const std::string&  beamproc, const uint32_t& hash, const uint8_t& cpu, uint32_t flags, uint64_t tOffs, uint64_t tValid,  uint8_t prio, uint64_t tWait, bool vabs) 
+  Wait(const std::string& name, const std::string&  pattern, const std::string&  beamproc, const uint32_t& hash, const uint8_t& cpu, uint32_t flags, uint64_t tOffs, uint64_t tValid,  uint8_t prio, uint64_t tWait, bool vabs)
   : Command(name, pattern, beamproc, hash, cpu, ((flags & ~NFLG_TYPE_SMSK) | (NODE_TYPE_CWAIT << NFLG_TYPE_POS)), tOffs, tValid, (ACT_TYPE_WAIT << ACT_TYPE_POS) | (prio & ACT_PRIO_MSK) << ACT_PRIO_POS | 1 << ACT_QTY_POS | vabs << ACT_VABS_POS), tWait(tWait) {}
   Wait(const Wait& src) : Command(src), tWait(src.tWait) {}
   ~Wait() {};

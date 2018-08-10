@@ -26,7 +26,7 @@
       | (x >> 8);
   }
 
-  inline uint32_t endian_reverse(uint32_t x)                          
+  inline uint32_t endian_reverse(uint32_t x)
   {
     uint32_t step16;
     step16 = x << 16 | x >> 16;
@@ -82,12 +82,12 @@
   (byte & 0x08 ? '1' : '0'), \
   (byte & 0x04 ? '1' : '0'), \
   (byte & 0x02 ? '1' : '0'), \
-  (byte & 0x01 ? '1' : '0') 
+  (byte & 0x01 ? '1' : '0')
 
 
 enum class AdrType {EXT, INT, MGMT, PEER, UNKNOWN};
 enum class TransferDir {UPLOAD, DOWNLOAD};
-enum class FwId { FWID_RAM_TOO_SMALL      = -1, 
+enum class FwId { FWID_RAM_TOO_SMALL      = -1,
                   FWID_BAD_MAGIC          = -2,
                   FWID_BAD_PROJECT_NAME   = -3,
                   FWID_NOT_FOUND          = -4,
@@ -97,7 +97,7 @@ enum class FwId { FWID_RAM_TOO_SMALL      = -1,
                   VERSION_REVISION        = 2,
                   VERSION_MAJOR_MUL       = 10000,
                   VERSION_MINOR_MUL       = 100,
-                  VERSION_REVISION_MUL    = 1};  
+                  VERSION_REVISION_MUL    = 1};
 
 
 namespace CluTime {
@@ -113,7 +113,7 @@ namespace CluTime {
 const uint64_t processingTimeMargin = 500000000ULL; // 500 ms. Is set to 0 when testmode is on to speed coverage test
 
 typedef struct {
-  uint8_t   cpu; 
+  uint8_t   cpu;
   uint64_t  msgCnt;
   uint64_t  bootTime;
   uint64_t  smodTime;

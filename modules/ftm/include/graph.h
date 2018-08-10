@@ -25,11 +25,11 @@ public:
   uint32_t hash = uUndefined32;
   node_ptr np = nullptr;
 
-  
+
   std::string patEntry  = sZero;
   std::string patExit   = sZero;
 
-  
+
   std::string bpEntry   = sZero;
   std::string bpExit    = sZero;
 
@@ -39,8 +39,8 @@ public:
   // Option 1 (easy and clean, still needs ALL possible properties to be present in myVertex):
   //    pass Node constructor a reference to hosting myVertex Struct, Node can then use all relevent myVertex properties.
   //    Will make Node constructors VERY simple
-  // Option 2 (hard, but very clean): 
-  //    overload graphviz_read subfunctions so the parser evaluates typefield first, then have a 
+  // Option 2 (hard, but very clean):
+  //    overload graphviz_read subfunctions so the parser evaluates typefield first, then have a
   //    Node class factory and directly reference derived class members in property map.
   std::string type = sUndefined;
 
@@ -48,7 +48,7 @@ public:
 
   //Meta
 
-  //Block 
+  //Block
   std::string tPeriod = sUndefined64;
   std::string rdIdxIl = sZero, rdIdxHi = sZero, rdIdxLo = sZero;
   std::string wrIdxIl = sZero, wrIdxHi = sZero, wrIdxLo = sZero;
@@ -82,7 +82,7 @@ public:
 
   std::string frmIl = sZero, toIl = sZero;
   std::string frmHi = sZero, toHi = sZero;
-  std::string frmLo = sZero, toLo = sZero; 
+  std::string frmLo = sZero, toLo = sZero;
 
   //Flow, Noop
   std::string prio = sZero;
@@ -98,7 +98,7 @@ public:
   std::string cmdDestPat  = sUndefined;
 
   myVertex() {}
-  
+
   myVertex(std::string name, std::string cpu, uint32_t hash, node_ptr np, std::string type, std::string flags) : name(name), cpu(cpu), hash(hash), np(np), type(type), flags(flags) {}
   myVertex(std::string name, std::string pattern, std::string beamproc, std::string cpu, uint32_t hash, node_ptr np, std::string type, std::string flags) : name(name), patName(pattern), bpName(beamproc), cpu(cpu), hash(hash), np(np), type(type), flags(flags) {}
 
@@ -137,7 +137,7 @@ struct nameEqualityFilter {
   bool operator()(const Vertex& v) const {
     bool ret = false;
     for(auto& it : compNames ) { ret |= (names[v] == it.second); } //true if name is known. Hate property maps for not having a test method...
-    return ret;  
+    return ret;
   }
   NameMap names;
   NameMap compNames;
@@ -150,15 +150,15 @@ Graph& mycopy_graph(const T& original, Graph& cpy, vertex_map_t& vmap) {
     //std::cout << "copying " << original[v].name << std::endl;
     vertex_t i = boost::add_vertex(original[v], cpy);
     vmap[v] = i; // must keep track of descriptors as they can differ between graphs
-  }  
+  }
   BOOST_FOREACH( vertex_t v, vertices(original) ) {
     typename T::out_edge_iterator out_begin, out_end, out_cur;
     boost::tie(out_begin, out_end) = out_edges(v, original);
     for (out_cur = out_begin; out_cur != out_end; ++out_cur) {
       boost::add_edge(vmap[v], vmap[target(*out_cur, original)], myEdge(original[*out_cur].type), cpy);
-    }  
+    }
   }
-  //std::cout << "ENDING SUPER SIMPLY COPY" << std::endl;  
+  //std::cout << "ENDING SUPER SIMPLY COPY" << std::endl;
   return cpy;
 }
 
@@ -170,14 +170,14 @@ struct staticEdgeFilter {
     staticEdgeFilter(TypeMap n, vStrC t) : types(n), allowedTypes(t) { }
   template <typename Vertex>
   bool operator()(const Vertex& v) const {
-    
+
     for(auto& it : allowedTypes ) { if (types[v] == it) return true; } //true if edge is of allowed type
-    return false;  
+    return false;
   }
   TypeMap types;
   vStrC allowedTypes;
 };
- 
+
  vStrC allowedTypes = {sDefDst, sCmdFlowDst, sDynFlowDst};
 */
 #endif

@@ -43,50 +43,50 @@ entity ftm_lm32 is
 generic(g_cpu_id              : t_wishbone_data := x"CAFEBABE";
         g_size                : natural := 65536;                 -- size of the dpram
         g_world_bridge_sdb    : t_sdb_bridge;                     -- record for superior bridge
-        g_is_dm               : boolean := false;  
+        g_is_dm               : boolean := false;
         g_profile             : string  := "medium_icache"; -- lm32 profile
         g_init_file           : string);                    -- number of msi queues connected to the lm32
 port(
-  clk_sys_i      : in  std_logic;  -- system clock 
-  rst_n_i        : in  std_logic;  -- reset, active low 
+  clk_sys_i      : in  std_logic;  -- system clock
+  rst_n_i        : in  std_logic;  -- reset, active low
   rst_lm32_n_i   : in  std_logic;  -- reset, active low
   tm_tai8ns_i    : in std_logic_vector(63 downto 0) := (others => '0');
   stall_diag_o   : out std_logic;
   cycle_diag_o   : out std_logic;
-    
+
   -- wb world interface of the lm32
-  world_master_o  : out t_wishbone_master_out; 
+  world_master_o  : out t_wishbone_master_out;
   world_master_i  : in  t_wishbone_master_in := ('0', '0', '0', '0', '0', x"00000000");
   msi_slave_o     : out t_wishbone_slave_out;
   msi_slave_i     : in  t_wishbone_slave_in;
 
   -- optional wb interface to prioq for DM
-  prioq_master_o  : out t_wishbone_master_out; 
+  prioq_master_o  : out t_wishbone_master_out;
   prioq_master_i  : in  t_wishbone_master_in := ('0', '0', '0', '0', '0', x"00000000");
-  
-  -- port B of the LM32s DPRAM 
-  ram_slave_o    : out t_wishbone_slave_out;                           
+
+  -- port B of the LM32s DPRAM
+  ram_slave_o    : out t_wishbone_slave_out;
   ram_slave_i    : in  t_wishbone_slave_in
 
 );
 end ftm_lm32;
 
-architecture rtl of ftm_lm32 is 
-   
- 
-   
+architecture rtl of ftm_lm32 is
+
+
+
   signal   s_cpu_info,
            s_sys_time,
            s_atomic            : t_wishbone_master_in;
-               
+
   constant c_lm32_req_slaves   : t_sdb_record_array(c_lm32_slaves-1 downto 0) 	:= f_lm32_slaves_req(g_size, g_world_bridge_sdb, g_is_dm);
   constant c_lm32_req_masters  : t_sdb_record_array(c_lm32_masters-1 downto 0) 	:= f_lm32_masters_req;
 
   --FIXME: this is borderline and only works bevause this CB is the first in line. separate mastre and slave layout as done in the monster
-  constant c_lm32_layout       : t_sdb_record_array(c_lm32_slaves + c_lm32_masters -1 downto 0) := 
+  constant c_lm32_layout       : t_sdb_record_array(c_lm32_slaves + c_lm32_masters -1 downto 0) :=
                                                        f_sdb_auto_layout(c_lm32_req_slaves, c_lm32_req_masters);
   constant c_lm32_sdb_address  : t_wishbone_address := f_sdb_auto_sdb(c_lm32_req_slaves, c_lm32_req_masters);
- 
+
    --signals
    constant c_zero_master : t_wishbone_master_out := (
      cyc => '0',
@@ -102,9 +102,9 @@ architecture rtl of ftm_lm32 is
   signal lm32_cb_master_out     : t_wishbone_master_out_array(c_lm32_slaves-1 downto 0);
 
   signal msi_cb_master_in       : t_wishbone_master_in_array(c_lm32_masters-1 downto 0);
-  signal msi_cb_master_out      : t_wishbone_master_out_array(c_lm32_masters-1 downto 0);   
+  signal msi_cb_master_out      : t_wishbone_master_out_array(c_lm32_masters-1 downto 0);
   signal msi_cb_slave_in        : t_wishbone_slave_in_array(c_lm32_slaves-1 downto 0) := (others => c_zero_master);
-  signal msi_cb_slave_out       : t_wishbone_slave_out_array(c_lm32_slaves-1 downto 0);   
+  signal msi_cb_slave_out       : t_wishbone_slave_out_array(c_lm32_slaves-1 downto 0);
 
   signal s_irq : std_logic_vector(31 downto 0);
 
@@ -115,12 +115,12 @@ architecture rtl of ftm_lm32 is
   signal r_cyc, s_ext_clu_cyc, s_ext_world_cyc : std_logic;
 
 begin
-   
+
 
 
 --------------------------------------------------------------------------------
 -- Crossbar
--------------------------------------------------------------------------------- 
+--------------------------------------------------------------------------------
    LM32_CON : xwb_sdb_crossbar
    generic map(
       g_num_masters => c_lm32_masters,
@@ -148,7 +148,7 @@ begin
 -- Masters *********************************************************************
 --******************************************************************************
 -- 0 & 1 - LM32
---------------------------------------------------------------------------------  
+--------------------------------------------------------------------------------
    LM32_CORE : xwb_lm32
    generic map(g_profile     => g_profile,
                g_sdb_address => c_lm32_sdb_address,
@@ -177,7 +177,7 @@ begin
       g_slave1_interface_mode => PIPELINED,
       g_slave2_interface_mode => PIPELINED,
       g_slave1_granularity    => BYTE,
-      g_slave2_granularity    => BYTE)  
+      g_slave2_granularity    => BYTE)
    port map(
       clk_sys_i   => clk_sys_i,
       rst_n_i     => rst_n_i,
@@ -189,17 +189,17 @@ begin
 --******************************************************************************
 -- MSI-IRQ -- reduce to 1 interface for now
 --------------------------------------------------------------------------------
-   MSI_IRQ: wb_irq_slave 
+   MSI_IRQ: wb_irq_slave
    GENERIC MAP( g_queues  =>  1,
                 g_depth   => 32)
    PORT MAP (
       clk_i           => clk_sys_i,
-      rst_n_i         => rst_n_i,  
-           
-      irq_slave_o(0)  => msi_cb_master_in(c_msi_lm32_real), 
+      rst_n_i         => rst_n_i,
+
+      irq_slave_o(0)  => msi_cb_master_in(c_msi_lm32_real),
       irq_slave_i(0)  => msi_cb_master_out(c_msi_lm32_real),
       irq_o           => s_irq(0 downto 0),
-           
+
       ctrl_slave_o    => lm32_cb_master_in(c_lm32_msi_ctrl),
       ctrl_slave_i    => lm32_cb_master_out(c_lm32_msi_ctrl));
 
@@ -207,7 +207,7 @@ begin
 
 
 --******************************************************************************
--- CPU INFO ROM 
+-- CPU INFO ROM
 --------------------------------------------------------------------------------
 
 
@@ -217,20 +217,20 @@ begin
     vIdx := c_lm32_cpu_info;
     if rising_edge(clk_sys_i) then
       if(rst_n_i = '0') then
-         
+
         s_cpu_info <= ('0', '0', '0', '0', '0', (others => '0'));
-      else 
+      else
         -- rom is an easy solution for a device that never stalls:
-        s_cpu_info.dat <= (others => '0');      
+        s_cpu_info.dat <= (others => '0');
         s_cpu_info.ack <= lm32_cb_master_out(vIdx).cyc and lm32_cb_master_out(vIdx).stb and not lm32_cb_master_out(vIdx).we;
         s_cpu_info.err <= lm32_cb_master_out(vIdx).cyc and lm32_cb_master_out(vIdx).stb and     lm32_cb_master_out(vIdx).we;
-         
-        if(lm32_cb_master_out(vIdx).cyc = '1' and lm32_cb_master_out(vIdx).stb = '1') then         
+
+        if(lm32_cb_master_out(vIdx).cyc = '1' and lm32_cb_master_out(vIdx).stb = '1') then
            case(to_integer(unsigned(lm32_cb_master_out(vIdx).adr(3 downto 2)))) is
               when 0 => s_cpu_info.dat <= g_cpu_id;
               when 1 => s_cpu_info.dat <= std_logic_vector(to_unsigned(1,32));
               when 2 => s_cpu_info.dat <= std_logic_vector(to_unsigned(g_size*4,32));
-     
+
               -- unmapped addresses return error
               when others =>  s_cpu_info.ack <= '0';
                               s_cpu_info.err <= '1';
@@ -241,7 +241,7 @@ begin
   end process;
 
   lm32_cb_master_in(c_lm32_cpu_info) <= s_cpu_info;
---  
+--
 --******************************************************************************
 -- System Time
 --------------------------------------------------------------------------------
@@ -257,24 +257,24 @@ begin
            s_sys_time.ack <= lm32_cb_master_out(vIdx).cyc and lm32_cb_master_out(vIdx).stb and not lm32_cb_master_out(vIdx).we;
            s_sys_time.err <= lm32_cb_master_out(vIdx).cyc and lm32_cb_master_out(vIdx).stb and     lm32_cb_master_out(vIdx).we;
            s_sys_time.dat <= (others => '0');
-           
-           r_tai_8ns_HI <= tm_tai8ns_i(63 downto 32);  --register hi and low to reduce load on fan out       
+
+           r_tai_8ns_HI <= tm_tai8ns_i(63 downto 32);  --register hi and low to reduce load on fan out
            r_tai_8ns_LO <= tm_tai8ns_i(31 downto 0);
-  
+
            if(lm32_cb_master_out(vIdx).cyc = '1' and lm32_cb_master_out(vIdx).stb = '1') then
-              if(lm32_cb_master_out(vIdx).adr(2) = '0') then 
+              if(lm32_cb_master_out(vIdx).adr(2) = '0') then
                  s_sys_time.dat   <= r_tai_8ns_HI;
                  r_time_freeze_LO <= r_tai_8ns_LO;
-              else  
+              else
                  s_sys_time.dat   <= r_time_freeze_LO;
               end if;
            end if;
-         end if;   
+         end if;
       end if;
-   end process;  
+   end process;
 
    lm32_cb_master_in(c_lm32_sys_time) <= s_sys_time;
---    
+--
 ----******************************************************************************
 ---- Atomic Cycle Line Control
 ----------------------------------------------------------------------------------
@@ -285,15 +285,15 @@ begin
     if rising_edge(clk_sys_i) then
       if((rst_lm32_n and rst_n_i) = '0') then
          r_cyc_atomic <= '0';
-           s_atomic     <= ('0', '0', '0', '0', '0', (others => '0'));  
+           s_atomic     <= ('0', '0', '0', '0', '0', (others => '0'));
       else
-         r_cyc <= s_ext_world_cyc or s_ext_clu_cyc; -- Nr. 6 ext if cycle line  
+         r_cyc <= s_ext_world_cyc or s_ext_clu_cyc; -- Nr. 6 ext if cycle line
          -- rom is an easy solution for a device that never stalls:
          s_atomic.dat(31 downto 1)   <= (others => '0');
-         s_atomic.dat(0)             <= r_cyc_atomic;      
+         s_atomic.dat(0)             <= r_cyc_atomic;
          s_atomic.ack                <= lm32_cb_master_out(vIdx).cyc and lm32_cb_master_out(vIdx).stb;
-        
-         if(lm32_cb_master_out(vIdx).cyc = '1' and lm32_cb_master_out(vIdx).stb = '1') then         
+
+         if(lm32_cb_master_out(vIdx).cyc = '1' and lm32_cb_master_out(vIdx).stb = '1') then
             if( lm32_cb_master_out(vIdx).we = '1') then
                r_cyc_atomic <= lm32_cb_master_out(vIdx).dat(0);
             end if;
@@ -301,24 +301,24 @@ begin
       end if;
     end if;
   end process;
-  
-  lm32_cb_master_in(c_lm32_atomic) <= s_atomic; 
+
+  lm32_cb_master_in(c_lm32_atomic) <= s_atomic;
 
 --******************************************************************************
 -- Priority Queue Interface
-------------------------------------------------------------------------------  
-  
+------------------------------------------------------------------------------
+
   prioq_master_o <= lm32_cb_master_out(c_lm32_prioq);
   lm32_cb_master_in(c_lm32_prioq) <= prioq_master_i;
-   
-   
+
+
 --******************************************************************************
 -- World Interface
 ------------------------------------------------------------------------------
-   
+
    s_ext_world_cyc <= lm32_cb_master_out(c_lm32_world_bridge).cyc or (r_cyc and r_cyc_atomic);
-   
-   world_master_o.cyc <= s_ext_world_cyc; -- atomic does not raise cyc, but keeps it HI. 
+
+   world_master_o.cyc <= s_ext_world_cyc; -- atomic does not raise cyc, but keeps it HI.
    world_master_o.stb <= lm32_cb_master_out(c_lm32_world_bridge).stb;                             -- write LO to r_cyc_atomic to deassert
    world_master_o.we  <= lm32_cb_master_out(c_lm32_world_bridge).we;
    world_master_o.sel <= lm32_cb_master_out(c_lm32_world_bridge).sel;

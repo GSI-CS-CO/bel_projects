@@ -5,13 +5,13 @@
 
 
 uint32_t HashMap::hash(const std::string& s) {
-  if(s.find(DotStr::Misc::sHashType, 0) != 0) {return fnvHash(s.c_str());} 
+  if(s.find(DotStr::Misc::sHashType, 0) != 0) {return fnvHash(s.c_str());}
   else {//std::cout << "Found dumped hash, leaving intact" << std::endl;
 
     uint32_t hash = s2u<uint32_t>(s.substr(DotStr::Misc::sHashType.size()));
     std::cout << "Found dumped hash string " << s << ". Hash stays 0x" << std::hex << hash  << std::endl;
     return hash;
-  }  
+  }
 }
 
 uint32_t HashMap::fnvHash(const char* str)
@@ -29,12 +29,12 @@ uint32_t HashMap::fnvHash(const char* str)
 boost::optional<const uint32_t&> HashMap::add(const std::string& name) {
   uint32_t hash = fnvHash(name.c_str());
   try {
-    hm.insert( hashValue(hash, name) ); 
+    hm.insert( hashValue(hash, name) );
   } catch (...) {
     if(contains(hash)) throw std::runtime_error("'" + name + "' would cause a hash collision with '" + lookup(hash) + "'");
-    else throw; 
+    else throw;
     return boost::optional<const uint32_t&>();
-  } 
+  }
 
   return boost::optional<const uint32_t&>(hm.right.at(name));
 }
@@ -55,7 +55,7 @@ const std::string& HashMap::lookup(const uint32_t hash, const std::string& exMsg
 
 const uint32_t&    HashMap::lookup(const std::string& name, const std::string& exMsg) const  {
  try { return hm.right.at(name);} catch (...) {throw std::runtime_error(exMsg + "HashTable: Name " + name + " not found");}
-}                                                                                                                                       
+}
 
 bool HashMap::contains(const uint32_t hash)     const {if (hm.left.count(hash)  > 0) {return true;} else {return false;} };
 
@@ -72,14 +72,14 @@ std::string HashMap::store() {
 void HashMap::load(const std::string& s) {
   std::stringstream is;
   is.str(fixArchiveVersion(s));
-  
+
   boost::archive::text_iarchive ia(is);
   //boost::archive::xml_iarchive ia(ifs);
   ia >> BOOST_SERIALIZATION_NVP(*this);
 }
 
-void HashMap::debug(std::ostream& os) { 
-    for (auto& x : hm) { 
+void HashMap::debug(std::ostream& os) {
+    for (auto& x : hm) {
 
       os << "Node: " << std::setfill(' ') << std::setw(40) << x.left << " Hash 0x"  << std::hex << std::setfill('0') << std::setw(8) << x.right << std::endl;
     }

@@ -25,7 +25,7 @@ HwDelayReport& CarpeDM::getHwDelayReport(HwDelayReport& hdr) {
       hdr.sdr[i].stallStreakMaxUDts = getDmWrTime();
     }
   } else {
-    
+
     uint32_t devAdr = diagDevs[0].sdb_component.addr_first;
     vAdr vRa; vBuf rb; uint8_t* b;
     const uint32_t base = DM_DIAG_ENABLE_RW;
@@ -34,7 +34,7 @@ HwDelayReport& CarpeDM::getHwDelayReport(HwDelayReport& hdr) {
     b = (uint8_t*)&rb[0];
 
     hdr.enabled           = writeBeBytesToLeNumber<uint32_t>(b + DM_DIAG_ENABLE_RW - base);
-    hdr.timeObservIntvl   = writeBeBytesToLeNumber<uint64_t>(b + DM_DIAG_TIME_OBSERVATION_INTERVAL_RW_1 - base) + 8; 
+    hdr.timeObservIntvl   = writeBeBytesToLeNumber<uint64_t>(b + DM_DIAG_TIME_OBSERVATION_INTERVAL_RW_1 - base) + 8;
     hdr.timeMaxPosDif     = writeBeBytesToLeNumber<int64_t>(b + DM_DIAG_TIME_DIF_POS_GET_1 - base);
     hdr.timeMaxPosUDts    = writeBeBytesToLeNumber<uint64_t>(b + DM_DIAG_TIME_DIF_POS_TS_GET_1 - base);
     hdr.timeMinNegDif     = writeBeBytesToLeNumber<int64_t>(b + DM_DIAG_TIME_DIF_NEG_GET_1 - base);
@@ -53,17 +53,17 @@ HwDelayReport& CarpeDM::getHwDelayReport(HwDelayReport& hdr) {
       b = (uint8_t*)&rb[0];
       // Simulation, fill with dummies
       hdr.sdr.push_back(StallDelayReport());
-      hdr.sdr[i].stallStreakMax     = writeBeBytesToLeNumber<uint32_t>(b + DM_DIAG_STALL_STREAK_MAX_GET - base); 
-      hdr.sdr[i].stallStreakCurrent = writeBeBytesToLeNumber<uint32_t>(b + DM_DIAG_STALL_CNT_GET        - base); 
+      hdr.sdr[i].stallStreakMax     = writeBeBytesToLeNumber<uint32_t>(b + DM_DIAG_STALL_STREAK_MAX_GET - base);
+      hdr.sdr[i].stallStreakCurrent = writeBeBytesToLeNumber<uint32_t>(b + DM_DIAG_STALL_CNT_GET        - base);
       hdr.sdr[i].stallStreakMaxUDts = writeBeBytesToLeNumber<uint64_t>(b + DM_DIAG_STALL_MAX_TS_GET_1   - base);
     }
 
-    
+
 
 
   }
 
-  return hdr;  
+  return hdr;
 
 }
 
@@ -81,7 +81,7 @@ void CarpeDM::configHwDiagnostics(uint64_t timeIntvl, uint32_t stallIntvl) {
   uint32_t devAdr = diagDevs[0].sdb_component.addr_first;
   timeIntvl = timeIntvl < 8 ? 0 : timeIntvl - 8; // hardware has 1 cycle to latch, so there is always intvl of 8ns + x
   //quick n dirty
-  write64b(devAdr + DM_DIAG_TIME_OBSERVATION_INTERVAL_RW_1,   timeIntvl); 
+  write64b(devAdr + DM_DIAG_TIME_OBSERVATION_INTERVAL_RW_1,   timeIntvl);
   ebWriteWord(ebd, devAdr + DM_DIAG_STALL_OBSERVATION_INTERVAL_RW, stallIntvl);
 
 }
@@ -90,11 +90,11 @@ void CarpeDM::configFwDiagnostics(uint64_t warnThrshld) {
   vEbwrs ew;
   uint8_t b[_TS_SIZE_];
   writeLeNumberToBeBytes<uint64_t>(b, warnThrshld);
-  
+
 
   for(int cpuIdx = 0; cpuIdx< cpuQty; cpuIdx++) {
     const uint32_t base = atDown.getMemories()[cpuIdx].extBaseAdr + atDown.getMemories()[cpuIdx].sharedOffs + SHCTL_DIAG;
-    
+
     ew.va.push_back(base + T_DIAG_DIF_WTH + 0);
     ew.va.push_back(base + T_DIAG_DIF_WTH + _32b_SIZE_);
     ew.vb.insert( ew.vb.end(), b, b + _TS_SIZE_ );
@@ -105,4 +105,4 @@ void CarpeDM::configFwDiagnostics(uint64_t warnThrshld) {
 
   ebWriteCycle(ebd, ew.va, ew.vb, ew.vcs);
 
-}    
+}

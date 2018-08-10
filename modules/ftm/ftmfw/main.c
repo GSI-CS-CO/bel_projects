@@ -23,13 +23,13 @@ void show_msi()
 
 void isr0()
 {
-   mprintf("ISR0\n");   
+   mprintf("ISR0\n");
    show_msi();
 }
 
 void isr1()
 {
-   mprintf("ISR1\n");   
+   mprintf("ISR1\n");
    show_msi();
 }
 
@@ -37,24 +37,24 @@ void isr1()
 
 void ebmInit()
 {
-  
+
    int j;
-   
+
    while (*(pEbCfg + (EBC_SRC_IP>>2)) == EBC_DEFAULT_IP) {
      for (j = 0; j < (125000000/2); ++j) { asm("nop"); }
-     mprintf("#%02u: DM cores Waiting for IP from WRC...\n", cpuId);  
-   } 
+     mprintf("#%02u: DM cores Waiting for IP from WRC...\n", cpuId);
+   }
 
    ebm_init();
    ebm_config_meta(1500, 42, EBM_NOREPLY );                                         //MTU, max EB msgs, flags
-   ebm_config_if(DESTINATION, 0xffffffffffff, 0xffffffff,                0xebd0);   //Dst: EB broadcast 
+   ebm_config_if(DESTINATION, 0xffffffffffff, 0xffffffff,                0xebd0);   //Dst: EB broadcast
    ebm_config_if(SOURCE,      0xd15ea5edbeef, *(pEbCfg + (EBC_SRC_IP>>2)), 0xebd0); //Src: bogus mac (will be replaced by WR), WR IP
 
 }
 
 
 void init()
-{ 
+{
   *status = 0;
   *count  = 0;
 
@@ -62,14 +62,14 @@ void init()
   discoverPeriphery();
   cpuId = getCpuIdx();
 
-  
+
 
   if (cpuId == 0) {
     //TODO replace bogus system status flags by real ones
     uart_init_hw();   *status |= SHCTL_STATUS_UART_INIT_SMSK;
     ebmInit();        *status |= SHCTL_STATUS_EBM_INIT_SMSK ;
     prioQueueInit();  *status |= SHCTL_STATUS_PQ_INIT_SMSK;
-    //mprintf("#%02u: Got IP from WRC. Configured EBM and PQ\n", cpuId); 
+    //mprintf("#%02u: Got IP from WRC. Configured EBM and PQ\n", cpuId);
   } else {
     *status |= SHCTL_STATUS_UART_INIT_SMSK;
     *status |= SHCTL_STATUS_EBM_INIT_SMSK ;
@@ -77,22 +77,22 @@ void init()
   }
 
   int j;
- 
 
-  while(!wrTimeValid()) { 
+
+  while(!wrTimeValid()) {
     for (j = 0; j < (125000000/2); ++j) { asm("nop"); }
     if (cpuId == 0) mprintf("#%02u: DM cores Waiting for WRC synchronisation...\n", cpuId);
-  }     
+  }
   if (cpuId == 0) mprintf("#%02u: WR time now in sync\n", cpuId);
 
   isr_table_clr();
   irq_set_mask(0x01);
   irq_disable();
 
-  dmInit(); 
+  dmInit();
   *status  |= SHCTL_STATUS_DM_INIT_SMSK;
   *boottime = getSysTime();
-   
+
 }
 
 
@@ -100,13 +100,13 @@ void init()
 
 void main(void) {
 
-   
+
   int i,j;
 
   uint32_t* tp;
   uint32_t** np;
   uint32_t backlog = 0;
-  
+
 
   init();
 
@@ -116,11 +116,11 @@ void main(void) {
   if (cpuId != 0) uart_init_hw();   *status |= SHCTL_STATUS_UART_INIT_SMSK;
 
   atomic_on();
-    
+
   mprintf("#%02u: Rdy\n", cpuId);
   #if DEBUGLEVEL != 0
     mprintf("#%02u: Debuglevel %u. Don't expect timeley delivery with console outputs on!\n", cpuId, DEBUGLEVEL);
-  #endif   
+  #endif
   #if DEBUGTIME == 1
     mprintf("#%02u: Debugtime mode ON. Par Field of Msgs will be overwritten be dispatch time at lm32\n", cpuId);
   #endif
@@ -133,7 +133,7 @@ void main(void) {
   atomic_off();
 
   if (getMsiBoxCpuSlot(cpuId, 0) == -1) {mprintf("#%02u: Mail box slot acquisition failed\n", cpuId);}
-  
+
    while (1) {
 
 
@@ -155,7 +155,7 @@ void main(void) {
       DL(pT(hp))  = (uint64_t)deadlineFuncs[getNodeType(pN(hp))](pN(hp), pT(hp));   // return thread's next deadline (returns infinity on upcoming NULL ptr)
       *running   &= ~((DL(pT(hp)) == -1ULL) << thrIdx);                             // clear running bit if deadline is at infinity
       heapReplace(0);                                                               // call scheduler, re-sort only current thread
-      
+
     } else {
       //nothing due right now. did the host request any new threads to be started?
       *bcklogmax   = ((backlog > *bcklogmax) ? backlog : *bcklogmax);
@@ -171,9 +171,9 @@ void main(void) {
             uint32_t* origin    = (uint32_t*)&p[( SHCTL_THR_STA + i * _T_TS_SIZE_ + T_TS_NODE_PTR ) >> 2];
             uint32_t* cursor    = (uint32_t*)&p[( SHCTL_THR_DAT + i * _T_TD_SIZE_ + T_TD_NODE_PTR ) >> 2];
             uint32_t* msgcnt    = (uint32_t*)&p[( SHCTL_THR_DAT + i * _T_TD_SIZE_ + T_TD_MSG_CNT  ) >> 2];
-            
+
             DBPRINT1("#%02u: ThrIdx %u, Preptime: %s\n", cpuId, i, print64(*prepTime, 0));
-            
+
             if (!(*startTime)) {*currTime = getSysTime() + (*prepTime << 1); } // if 0, set to now + 2 * preptime
             else                *currTime = *startTime;
             *deadline = *currTime;
@@ -184,7 +184,7 @@ void main(void) {
             *msgcnt   = 0;                // clear msg counter
           }
         }
-        
+
         heapify(); // re-sort all threads in schedulder (necessary because multiple threads may have been started)
       }
     }

@@ -22,7 +22,7 @@
 
   bool AllocTable::insert(uint8_t cpu, uint32_t adr, uint32_t hash, vertex_t v, bool staged) {
    /*
-    std::cout << "Problem: " << std::endl; 
+    std::cout << "Problem: " << std::endl;
     if (lookupAdr(cpu, adr) != a.end()) std::cout << (int)cpu << " Adr 0x" << std::hex << adr << " exists already" << std::endl;
     if (lookupHash(hash) != a.end()) std::cout << "Hash 0x" << std::hex << hash << " exists already" << std::endl;
     if (lookupVertex(v) != a.end()) std::cout << "V 0x" << std::dec << v << " (hash 0x" << hash << ") exists already" << std::endl;
@@ -62,7 +62,7 @@
     auto it = a.get<Vertex>().find(v);
     ret = a.iterator_to( *it );
     if (!isOk(ret)) {throw std::runtime_error(exMsg + "unknown vertex descriptor " + std::to_string(v));}
-    return ret; 
+    return ret;
   }
 
   amI AllocTable::lookupHash(uint32_t hash, const std::string& exMsg) const  {
@@ -70,11 +70,11 @@
     auto it = a.get<Hash>().find(hash);
     ret = a.iterator_to( *it );
     if (!isOk(ret)) {throw std::runtime_error(exMsg + "unknown hash " + std::to_string(hash) + " (dec)");}
-    return ret; 
+    return ret;
   }
 
   amI AllocTable::lookupAdr(uint8_t cpu, uint32_t adr, const std::string& exMsg) const {
-    
+
     amI ret;
     auto it = a.get<CpuAdr>().find(boost::make_tuple( cpu, adr ));
     ret = a.iterator_to( *it );
@@ -83,8 +83,8 @@
     auxstream << exMsg << "unknown cpu/adr combo " << (int)cpu << " 0x" << std::setfill('0') << std::setw(8) << std::hex << (int)adr << std::endl;
 
     if (!isOk(ret)) {throw std::runtime_error(auxstream.str());}
-    return ret; 
-    
+    return ret;
+
   }
 
   //Allocation functions
@@ -104,7 +104,7 @@
 
   int AllocTable::allocateMgmt(vBuf& serialisedContainer) {
     vAdr ret;
-    
+
     //get the size of serialised container and round up to needed mem blocks
     unsigned neededChunks = (serialisedContainer.size() + payloadPerChunk -1) / payloadPerChunk; //integer round up
 
@@ -112,21 +112,21 @@
     //check if there is enough free space
     size_t availableSpace = 0;
     for (uint8_t cpuIdx=0; cpuIdx < vPool.size(); cpuIdx++) { availableSpace += getFreeSpace(cpuIdx); }
-    if (availableSpace < (neededChunks * _MEM_BLOCK_SIZE)) 
-      throw std::runtime_error("MgmtTable: Not enough space for management data. " + std::to_string(availableSpace) 
+    if (availableSpace < (neededChunks * _MEM_BLOCK_SIZE))
+      throw std::runtime_error("MgmtTable: Not enough space for management data. " + std::to_string(availableSpace)
                              + " available across all cores, needed " + std::to_string(neededChunks * _MEM_BLOCK_SIZE)
                              + ". Pro Tip: Remove some schedules.\n");
 
     //while we need mem blocks ...
-    for(unsigned chunk=0; chunk < neededChunks; chunk++) { 
+    for(unsigned chunk=0; chunk < neededChunks; chunk++) {
       //find the cpu with the most free space
       std::pair<uint8_t, size_t> chosen;
       chosen.second = 0;
       for (uint8_t cpuIdx=0; cpuIdx < vPool.size(); cpuIdx++) {
-        size_t tmpSize = getFreeSpace(cpuIdx); 
+        size_t tmpSize = getFreeSpace(cpuIdx);
         if (chosen.second < tmpSize) {
-          chosen.second = tmpSize;  
-          chosen.first  = cpuIdx;  
+          chosen.second = tmpSize;
+          chosen.first  = cpuIdx;
         }
       }
 
@@ -134,7 +134,7 @@
     }
     //FIXME get rid of this crap
     return 0;
-  }    
+  }
 
   int AllocTable::allocateMgmt(uint8_t cpu) {
 
@@ -149,7 +149,7 @@
     if (!(insertMgmt(cpu, chunkAdr, nullptr))) return ALLOC_ENTRY_EXISTS;
 
     return ALLOC_OK;
-  
+
   }
 
 
@@ -168,7 +168,7 @@
 
 
     //iterate management table: mark chunk as management node type, add linked list metadata and fill with serialised payload chunks
- 
+
     //multiindex iterators are not forward iterators. If we want a fixed order, we need to make it ourselves. Create a vector
     std::vector<mmI> itVec;
     for(mmI it = m.begin(); it != m.end(); it++) itVec.push_back(it);
@@ -183,7 +183,7 @@
       auto* x = (MgmtMeta*)&(*(itVec[idx])); // //TODO: Find a more sensible solution. Workaround: cast this, otherwise bloody multi-index container won't let me write to my own buffers !
       std::memcpy( (uint8_t*)&x->b[0], (uint8_t*)&serialisedContainer[serialisedContainer.size() - bytesLeft], bytesToCopy );  //copy slice into buffer
       x->b[NODE_FLAGS + 3] = (uint8_t)NODE_TYPE_MGMT;                                   //Node Type. +3 is bit 0..7 of NODE_FLAGS word
-      
+
       // the address is found at idx+1 except for the last chunk, where it's NULL
       if (idx < (itVec.size() - 1)) {
         auto* next = (MgmtMeta*)&(*(itVec[idx+1])); // //TODO: Find a more sensible solution. Workaround: cast this, otherwise bloody multi-index container won't let me write to my own buffers !
@@ -195,7 +195,7 @@
       }
       bytesLeft -= bytesToCopy;
     }
-  } 
+  }
 
   //recover payload (serialised container) from buffers of management table
   vBuf AllocTable::recoverMgmt() {
@@ -209,15 +209,15 @@
     //traverse the linked list by looking up elements in the management table. Copy payload of found elements to return vector
     while(chunkLinkPtr != LM32_NULL_PTR) {
       size_t bytesToCopy = std::min(bytesLeft, payloadPerChunk);
-      
+
       uint8_t  cpu = getCpuFromExtAdr(chunkLinkPtr);
       uint32_t adr = adrConv(AdrType::EXT, AdrType::MGMT, cpu, chunkLinkPtr);
       //std::cout << "recovery. Bytes to copy: " << std::dec << bytesToCopy << ", parsing at 0x" << std::hex << chunkLinkPtr << " (CPU " << std::dec << (int)cpu << ", 0x" << std::hex << adr << std::endl;
       //lookup entry and fetch buffer content
       auto aux      = m.get<CpuAdr>().find(boost::make_tuple( cpu, adr ));
       auto it       = m.iterator_to( *aux );
-      if (it == m.end()) throw std::runtime_error("MgmtTable: Cannot find entry for CPU " + std::to_string((int)cpu) + " Adr " + std::to_string(adr)  + "\n"); 
-      
+      if (it == m.end()) throw std::runtime_error("MgmtTable: Cannot find entry for CPU " + std::to_string((int)cpu) + " Adr " + std::to_string(adr)  + "\n");
+
       //hexDump((std::string("MGMT") + std::to_string(cnt)).c_str(), (char*)it->b, _MEM_BLOCK_SIZE );
 
       //add payload to return vector
@@ -226,7 +226,7 @@
       chunkLinkPtr  = writeBeBytesToLeNumber<uint32_t>((uint8_t*)&it->b[NODE_DEF_DEST_PTR]);
       bytesLeft    -= bytesToCopy;
       cnt++;
-    } 
+    }
 
     //recovery of management binary complete, return
     return ret;
@@ -242,7 +242,7 @@
   bool AllocTable::deallocate(uint32_t hash) {
 
     auto x = lookupHash(hash);
-    
+
     if (x == a.end()) {
       //std::cout << "nullptr" << std::endl;
       return false;}
@@ -254,10 +254,10 @@
       //std::cout << "Chunk" << std::endl;
       return false;}
     if (!(removeByHash(hash))) {
-      //std::cout << "AT Hash" << std::endl; 
+      //std::cout << "AT Hash" << std::endl;
       return false;}
     return true;
-    
+
 
   }
 
@@ -266,7 +266,7 @@
     for (unsigned int i = 0; i < vPool.size(); i++ ) vPool[i].init();
     for (auto& e : a) { vPool[e.cpu].occupyChunk(e.adr); }
     if(mode == AllocPoolMode::WITH_MGMT) for (auto& e : m) { vPool[e.cpu].occupyChunk(e.adr); }
-  }  
+  }
 
 
   bool AllocTable::setBmps(vBuf bmpData) {
@@ -281,7 +281,7 @@
       vBuf vTmp(bmpBegin, bmpBegin + vPool[i].bmpSize);
       vPool[i].setBmp(vTmp);
       bmpBegin += vPool[i].bmpSize;
-    }  
+    }
 
     return true;
 
@@ -294,11 +294,11 @@
     ret.reserve( bmpSum ); // preallocate memory
     //apend all bmps
     for(unsigned int i = 0; i < vPool.size(); i++) {ret += vPool[i].getBmp();}
-    
+
     return ret;
   }
 
-  
+
 
   void AllocTable::cpyWithoutMgmt(AllocTable const &src) {
     this->a = src.a;
@@ -311,18 +311,18 @@
   void AllocTable::debug(std::ostream& os) {
     for (amI x = a.begin(); x != a.end(); x++) {
 
-    os   << std::setfill(' ') << std::setw(4) << std::dec << x->v 
+    os   << std::setfill(' ') << std::setw(4) << std::dec << x->v
         << "   "    << std::setfill(' ') << std::setw(2) << std::dec << (int)x->staged
         << "   "    << std::setfill(' ') << std::setw(4) << std::dec << (int)x->cpu
         << "   0x"  << std::hex << std::setfill('0') << std::setw(8) << x->hash
-        << "   0x"  << std::hex << std::setfill('0') << std::setw(8) << adrConv(AdrType::MGMT, AdrType::INT, x->cpu, x->adr) 
+        << "   0x"  << std::hex << std::setfill('0') << std::setw(8) << adrConv(AdrType::MGMT, AdrType::INT, x->cpu, x->adr)
         << "   0x"  << std::hex << std::setfill('0') << std::setw(8) << adrConv(AdrType::MGMT, AdrType::EXT, x->cpu, x->adr)  << std::endl;
-    }    
+    }
   }
 
   const uint32_t AllocTable::adrConv(AdrType from, AdrType to, const uint8_t cpu, const uint32_t a) const {
     if (a == LM32_NULL_PTR) return a;
-    
+
     //std::cerr << "atypes " << debugAdrType(from) << ", " << debugAdrType(to) << std::endl;
 
     switch (ADR_FROM_TO(from,to)) {
@@ -359,13 +359,13 @@
     if (a >= WORLD_BASE_ADR) { //peer address class
       for (uint8_t i = 0; i < vPool.size(); i++) { //no iterator used because we need the cpu idx for later
         if ( (a >= vPool[i].peerBaseAdr) && (a <= vPool[i].peerBaseAdr + vPool[i].rawSize) ) {cpu = i; adrT = AdrType::PEER; break;}
-      } 
+      }
     } else { //internal address class
       for (uint8_t i = 0; i < vPool.size(); i++) { //no iterator used because we need the cpu idx for later
         if ( (a >= vPool[i].intBaseAdr) && (a <= vPool[i].intBaseAdr + vPool[i].rawSize) ) {cpu = i; adrT = AdrType::INT; break;}
-      } 
+      }
     }
-    
+
     return  std::make_pair(cpu, adrT);
   }
 
@@ -375,7 +375,7 @@
     for (uint8_t i = 0; i < vPool.size(); i++) {
         if ( (a >= vPool[i].extBaseAdr) && (a <= vPool[i].extBaseAdr + vPool[i].rawSize) ) {ret = i; break;}
     }
-    return ret; 
+    return ret;
   }
 
   void AllocTable::debugMgmt(std::ostream& os) {
@@ -394,5 +394,5 @@
 
       hexDump((std::string("MGMT") + std::to_string(cnt)).c_str(), (char*)x->b, _MEM_BLOCK_SIZE );
       cnt++;
-    }    
+    }
   }

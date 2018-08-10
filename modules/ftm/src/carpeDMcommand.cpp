@@ -1,5 +1,5 @@
 #include <boost/shared_ptr.hpp>
-#include <algorithm>  
+#include <algorithm>
 #include <stdio.h>
 #include <iostream>
 #include <string>
@@ -33,21 +33,21 @@ boost::optional<std::pair<int, int>> CarpeDM::parseCpuAndThr(vertex_t v, Graph& 
   uint8_t  cpu, thr;
   std::pair<int, int> res;
 
-  //sLog << "Try parsing CPU " << g[v].cpu << " and Thr " << g[v].thread << std::endl;   
-        
+  //sLog << "Try parsing CPU " << g[v].cpu << " and Thr " << g[v].thread << std::endl;
 
-  try { cpu = s2u<uint8_t>(g[v].cpu);   
+
+  try { cpu = s2u<uint8_t>(g[v].cpu);
         thr = s2u<uint8_t>(g[v].thread);
         res = {cpu, thr};
-      } catch (...) { 
-      //  sLog << "Caused exception, returning none" << std::endl; 
-        return boost::optional<std::pair<int, int>>(); 
+      } catch (...) {
+      //  sLog << "Caused exception, returning none" << std::endl;
+        return boost::optional<std::pair<int, int>>();
       }
 
 
-  if ( (cpu < 0) || (cpu >= getCpuQty()) || (thr < 0) || (thr >= _THR_QTY_  ) ) { 
-    //sLog << "OOR, returning none" << std::endl; 
-    return boost::optional<std::pair<int, int>>(); 
+  if ( (cpu < 0) || (cpu >= getCpuQty()) || (thr < 0) || (thr >= _THR_QTY_  ) ) {
+    //sLog << "OOR, returning none" << std::endl;
+    return boost::optional<std::pair<int, int>>();
   }
 
 
@@ -61,18 +61,18 @@ void CarpeDM::adjustValidTime(uint64_t& tValid, bool abs) {
   // Find a point in time which will safely be in the near future when we write this command
   uint64_t tFuture    = modTime + (testmode ? 0ULL : processingTimeMargin);  // no margin for sim, otherwise coverage testing is too slow.
   // make copy, choose and update original.
-  uint64_t tOriginal  = tValid; 
+  uint64_t tOriginal  = tValid;
   tValid = abs ? std::max(tOriginal, tFuture) : tFuture + tOriginal; // if absolute -> max of original and near future, if relative -> sum of original and future
 }
 
 
 vEbwrs& CarpeDM::createCommandBurst(Graph& g, vEbwrs& ew) {
 
-  
+
   mc_ptr mc;
 
   if ((boost::get_property(g, boost::graph_name)).find(DotStr::Graph::Special::sCmd) == std::string::npos) {throw std::runtime_error("Expected a series of commands, but this appears to be a schedule (Tag '" + DotStr::Graph::Special::sCmd + "' not found in graphname)");}
-  
+
   //it is vital that the modTime TS is current to handle relative command-valid-times.
   //this might redundantly be done by the implementing FESA class, but better safe than sorry.
   updateModTime();
@@ -80,42 +80,42 @@ vEbwrs& CarpeDM::createCommandBurst(Graph& g, vEbwrs& ew) {
   BOOST_FOREACH( vertex_t v, vertices(g) ) {
 
     std::string target, destination;
-    
- 
+
+
 
     //use the pattern and beamprocess tags to determine the target. Pattern overrides Beamprocess overrides cpu/thread
           if (g[v].patName  != DotStr::Misc::sUndefined)    { target = getPatternExitNode(g[v].patName); }
     else  if (g[v].bpName != DotStr::Misc::sUndefined)      { target = getBeamprocExitNode(g[v].bpName); }
     else  {target = g[v].cmdTarget;}
 
-  
+
 
     //use the destPattern and destBeamprocess tags to determine the destination
     if (g[v].cmdDestPat  != DotStr::Misc::sUndefined)      { destination = getPatternEntryNode(g[v].cmdDestPat); }
     else  if (g[v].cmdDestBp != DotStr::Misc::sUndefined)  { destination = getBeamprocEntryNode(g[v].cmdDestBp); }
     else                                                   { destination = g[v].cmdDest;}
-     
-    
-    
+
+
+
     bool vabs = s2u<bool>(g[v].vabs);
     uint64_t cmdTvalid = s2u<uint64_t>(g[v].tValid);
     //we need tValid always to be set slightly in the future so we can do some checks in the safeToRemove functions
     adjustValidTime(cmdTvalid, vabs);
-   
+
     //sLog << "Command valid time is " << (vabs ? "absolute" : "relative") << tmpTvalid << " @ " << cmdTvalid << std::endl;
     uint8_t  cmdPrio    = s2u<uint8_t>(g[v].prio);
     uint8_t cpu, thr;
-    
+
 
     if(verbose) sLog << "Command <" << g[v].name << ">, type <" << g[v].type << ">" << std::endl;
-    
+
 
     // Commands with optional target
 
     if (g[v].type == dnt::sCmdStart)   {
       if(parseCpuAndThr(v, g)) {
         std::tie(cpu, thr) = parseCpuAndThr(v, g).get();
-        //sLog << " Starting cpu=" << (int)cpu << ", thr=" << (int)thr << std::endl;  startThr(cpu, thr, ew); 
+        //sLog << " Starting cpu=" << (int)cpu << ", thr=" << (int)thr << std::endl;  startThr(cpu, thr, ew);
       } else {
         target = getPatternEntryNode(g[v].patName);
         if (hm.lookup(target)) {sLog << " Starting at <" << target << ">" << std::endl; startNodeOrigin(target, ew);  }
@@ -126,31 +126,31 @@ vEbwrs& CarpeDM::createCommandBurst(Graph& g, vEbwrs& ew) {
     if (g[v].type == dnt::sCmdStop)    {
       if(parseCpuAndThr(v, g)) {
         std::tie(cpu, thr) = parseCpuAndThr(v, g).get();
-        //sLog << " Stopping (trying) cpu=" << (int)cpu << ", thr=" << (int)thr << std::endl;  stopPattern(getNodePattern(getThrCursor(cpu, thr)), ew); 
+        //sLog << " Stopping (trying) cpu=" << (int)cpu << ", thr=" << (int)thr << std::endl;  stopPattern(getNodePattern(getThrCursor(cpu, thr)), ew);
       } else {
         if (hm.lookup(target)) { sLog << " Stopping at <" << target << ">" << std::endl; stopNodeOrigin(target, ew); }
         else throw std::runtime_error("Cannot execute command '" + g[v].type + "' No valid cpu/thr provided and '" + target + "' is not a valid node name\n");
       }
       continue;
-    }  
+    }
     else if (g[v].type == dnt::sCmdAbort)   {
       if(parseCpuAndThr(v, g)) {
         std::tie(cpu, thr) = parseCpuAndThr(v, g).get();
-        //sLog << " Aborting cpu=" << (int)cpu << ", thr=" << (int)thr << std::endl; abortThr(cpu, thr, ew); 
+        //sLog << " Aborting cpu=" << (int)cpu << ", thr=" << (int)thr << std::endl; abortThr(cpu, thr, ew);
       } else {
         if (hm.lookup(target)) {sLog << " Aborting (trying) at <" << target << ">" << std::endl; abortNodeOrigin(target, ew); }
         else throw std::runtime_error("Cannot execute command '" + g[v].type + "'. No valid cpu/thr provided and '" + target + "' is not a valid node name\n");
       }
-      continue;  
+      continue;
     }
 
- 
-    if (g[v].type == dnt::sCmdOrigin)   { 
+
+    if (g[v].type == dnt::sCmdOrigin)   {
       //Leave out for now and autocorrect cpu
       //if (getNodeCpu(target, DOWNLOAD) != cpu) throw std::runtime_error("Command '" + g[v].name + "'s value for property '" + DotStr::Node::Prop::Base::sCpu + "' is invalid\n");try { adr = getNodeAdr(destination, TransferDir::DOWNLOAD, AdrType::INT); } catch (std::runtime_error const& err) {
       try { setThrOrigin(getNodeCpu(target, TransferDir::DOWNLOAD), thr, target, ew); } catch (std::runtime_error const& err) {
-        throw std::runtime_error("Cannot execute command '" + g[v].type + "', " + std::string(err.what())); 
-      } 
+        throw std::runtime_error("Cannot execute command '" + g[v].type + "', " + std::string(err.what()));
+      }
       continue;
     }
 
@@ -173,22 +173,22 @@ vEbwrs& CarpeDM::createCommandBurst(Graph& g, vEbwrs& ew) {
     else if (g[v].type == dnt::sCmdWait)  { uint64_t cmdTwait  = s2u<uint64_t>(g[v].tWait);
                                             mc = (mc_ptr) new MiniWait(cmdTvalid, cmdPrio, cmdTwait, false, false );
                                           }
-    else                                  { throw std::runtime_error("Command <" + g[v].name + ">'s type <" + g[v].type + "> is not supported!\n");} 
-    
+    else                                  { throw std::runtime_error("Command <" + g[v].name + ">'s type <" + g[v].type + "> is not supported!\n");}
+
     //sLog << std::endl;
     //create miniCommand
     createCommand(target, cmdPrio, mc, ew);
-    
+
   }
 
- 
+
 
 
 
   return ew;
 
-}  
-  
+}
+
   int CarpeDM::send(vEbwrs& ew) {
     ebWriteCycle(ebd, ew.va, ew.vb, ew.vcs);
     return ew.vb.size();
@@ -199,33 +199,33 @@ vEbwrs& CarpeDM::createCommandBurst(Graph& g, vEbwrs& ew) {
 
     uint32_t cmdWrInc, hash;
     uint8_t b[_T_CMD_SIZE_ + _32b_SIZE_];
-    
+
     //check for covenants
     if(optimisedS2R) {
       cmI x = ct.lookup(targetName);
-      if (ct.isOk(x) && isCovenantPending(x)) { 
+      if (ct.isOk(x) && isCovenantPending(x)) {
         //there is covenant. lets see if we are a danger to it
         if(x->prio < cmdPrio) throw std::runtime_error("Command preemption (prio " + std::to_string((int)cmdPrio) + ") at block <" + targetName + "> would violate a safe2remove-covenant!");
-      } 
-      
+      }
+
     }
 
-    hash     = hm.lookup(targetName, "createCommand: unknown target "); 
+    hash     = hm.lookup(targetName, "createCommand: unknown target ");
     vAdr tmp = getCmdWrAdrs(hash, cmdPrio);
     ew.va   += tmp;
     ew.vcs  += leadingOne(tmp.size());
-    
+
     cmdWrInc = getCmdInc(hash, cmdPrio);
     mc->serialise(b);
     writeLeNumberToBeBytes(b + (ptrdiff_t)_T_CMD_SIZE_, cmdWrInc);
     ew.vb.insert( ew.vb.end(), b, b + _T_CMD_SIZE_ + _32b_SIZE_);
     //Save mod information for minicommands
-    
+
     //special treatment for stop (flow to idle == type flow && dst LM32_NULL_PTR)
-    uint8_t opType = OP_TYPE_CMD_BASE + ((mc->getAct() >> ACT_TYPE_POS) & ACT_TYPE_MSK); 
-    if ((((mc->getAct() >> ACT_TYPE_POS) & ACT_TYPE_MSK) == ACT_TYPE_FLOW) 
+    uint8_t opType = OP_TYPE_CMD_BASE + ((mc->getAct() >> ACT_TYPE_POS) & ACT_TYPE_MSK);
+    if ((((mc->getAct() >> ACT_TYPE_POS) & ACT_TYPE_MSK) == ACT_TYPE_FLOW)
      && (boost::dynamic_pointer_cast<MiniFlow>(mc)->getDst() == LM32_NULL_PTR)) { opType = OP_TYPE_CMD_STOP; }
-    
+
     createCmdModInfo(getNodeCpu(targetName, TransferDir::DOWNLOAD), 0, opType, ew);
 
     return ew;
@@ -237,7 +237,7 @@ vEbwrs& CarpeDM::createCommandBurst(Graph& g, vEbwrs& ew) {
     return atDown.getMemories()[cpuIdx].extBaseAdr + atDown.getMemories()[cpuIdx].sharedOffs + SHCTL_THR_CTL;
   }
 
-  //Returns the external address of a thread's initial node register 
+  //Returns the external address of a thread's initial node register
   uint32_t CarpeDM::getThrInitialNodeAdr(uint8_t cpuIdx, uint8_t thrIdx) {
     return atDown.getMemories()[cpuIdx].extBaseAdr + atDown.getMemories()[cpuIdx].sharedOffs + SHCTL_THR_STA + thrIdx * _T_TS_SIZE_ + T_TS_NODE_PTR;
   }
@@ -246,12 +246,12 @@ vEbwrs& CarpeDM::createCommandBurst(Graph& g, vEbwrs& ew) {
   uint32_t CarpeDM::getThrCurrentNodeAdr(uint8_t cpuIdx, uint8_t thrIdx) {
     return atDown.getMemories()[cpuIdx].extBaseAdr + atDown.getMemories()[cpuIdx].sharedOffs + SHCTL_THR_DAT + thrIdx * _T_TD_SIZE_ + T_TD_NODE_PTR;
   }
-  
+
 
   //Sets the Node the Thread will start from
   vEbwrs& CarpeDM::setThrOrigin(uint8_t cpuIdx, uint8_t thrIdx, const std::string& name, vEbwrs& ew) {
     uint8_t b[4];
-    
+
     ew.va.push_back(getThrInitialNodeAdr(cpuIdx, thrIdx));
     writeLeNumberToBeBytes<uint32_t>(b, getNodeAdr(name, TransferDir::DOWNLOAD, AdrType::INT));
     ew.vb.insert( ew.vb.end(), b, b + sizeof(b));
@@ -262,23 +262,23 @@ vEbwrs& CarpeDM::createCommandBurst(Graph& g, vEbwrs& ew) {
   //Returns the Node the Thread will start from
   const std::string CarpeDM::getThrOrigin(uint8_t cpuIdx, uint8_t thrIdx) {
     uint32_t adr;
-     
+
     adr = ebReadWord(ebd, getThrInitialNodeAdr(cpuIdx, thrIdx));
 
     if (adr == LM32_NULL_PTR) return DotStr::Node::Special::sIdle;
     try {
       auto x = atDown.lookupAdr(cpuIdx, atDown.adrConv(AdrType::INT, AdrType::MGMT,cpuIdx, adr));
       return gDown[x->v].name;
-    } catch (...) {   
+    } catch (...) {
       return DotStr::Misc::sUndefined;
     }
   }
 
- 
+
 
   const std::string CarpeDM::getThrCursor(uint8_t cpuIdx, uint8_t thrIdx) {
     uint32_t adr;
-    
+
     adr = ebReadWord(ebd, getThrCurrentNodeAdr(cpuIdx, thrIdx));
 
     //std::cout << "#" << (int) cpuIdx << ", " << (int)thrIdx << std::hex << " 0x" << adr << std::endl;
@@ -287,31 +287,31 @@ vEbwrs& CarpeDM::createCommandBurst(Graph& g, vEbwrs& ew) {
     try {
       auto x = atDown.lookupAdr(cpuIdx, atDown.adrConv(AdrType::INT, AdrType::MGMT,cpuIdx, adr));
       return gDown[x->v].name;
-    } catch (...) {  
+    } catch (...) {
       return DotStr::Misc::sUndefined;
-    }  
+    }
   }
 
   //DEBUG ONLY !!! force thread cursor to the value of the corresponding origin
   void CarpeDM::forceThrCursor(uint8_t cpuIdx, uint8_t thrIdx) {
     uint32_t cursor = ebReadWord(ebd, getThrInitialNodeAdr(cpuIdx, thrIdx));
     ebWriteWord(ebd, getThrCurrentNodeAdr(cpuIdx, thrIdx), cursor);
-  } 
+  }
 
   //Get bitfield showing running threads
   uint32_t CarpeDM::getThrRun(uint8_t cpuIdx) {
-    return ebReadWord(ebd, getThrCmdAdr(cpuIdx) + T_TC_RUNNING); 
+    return ebReadWord(ebd, getThrCmdAdr(cpuIdx) + T_TC_RUNNING);
   }
 
   //Get bifield showing running threads
   uint32_t CarpeDM::getStatus(uint8_t cpuIdx) {
-    return ebReadWord(ebd, atDown.getMemories()[cpuIdx].extBaseAdr + atDown.getMemories()[cpuIdx].sharedOffs + SHCTL_STATUS); 
+    return ebReadWord(ebd, atDown.getMemories()[cpuIdx].extBaseAdr + atDown.getMemories()[cpuIdx].sharedOffs + SHCTL_STATUS);
   }
 
   //Requests Threads to start
   vEbwrs& CarpeDM::setThrStart(uint8_t cpuIdx, uint32_t bits, vEbwrs& ew) {
     uint8_t b[4];
-    
+
     ew.va.push_back(getThrCmdAdr(cpuIdx) + T_TC_START);
     writeLeNumberToBeBytes<uint32_t>(b, bits);
     ew.vb.insert( ew.vb.end(), b, b + sizeof(b));
@@ -353,10 +353,10 @@ vEbwrs& CarpeDM::createCommandBurst(Graph& g, vEbwrs& ew) {
       ew.vcs.push_back(true); // each one is a new wb device, so we always need a new eb cycle
       createCmdModInfo(cpuIdx, 0, OP_TYPE_CMD_HALT, ew);
     }
-    
+
     ebWriteCycle(ebd, ew.va, ew.vb, ew.vcs);
   }
-  
+
 
   bool CarpeDM::isThrRunning(uint8_t cpuIdx, uint8_t thrIdx) {
     return (bool)(getThrRun(cpuIdx) & (1<< thrIdx));
@@ -369,7 +369,7 @@ vEbwrs& CarpeDM::createCommandBurst(Graph& g, vEbwrs& ew) {
 /*
   //Requests Thread to stop
   void CarpeDM::stopThr(uint8_t cpuIdx, uint8_t thrIdx) {
-    setThrStop(cpuIdx, (1<<thrIdx));    
+    setThrStop(cpuIdx, (1<<thrIdx));
   }
 */
   //Immediately aborts a Thread
@@ -377,13 +377,13 @@ vEbwrs& CarpeDM::createCommandBurst(Graph& g, vEbwrs& ew) {
     return setThrAbort(cpuIdx, (1<<thrIdx), ew);
   }
 
-  
+
 
 
 void  CarpeDM::resetThrMsgCnt(uint8_t cpuIdx, uint8_t thrIdx) {
   vEbwrs ew;
   resetThrMsgCnt(cpuIdx, thrIdx, ew);
-  ebWriteCycle(ebd, ew.va, ew.vb, ew.vcs);  
+  ebWriteCycle(ebd, ew.va, ew.vb, ew.vcs);
 }
 
 vEbwrs& CarpeDM::resetThrMsgCnt(uint8_t cpuIdx, uint8_t thrIdx, vEbwrs& ew) {
@@ -395,11 +395,11 @@ vEbwrs& CarpeDM::resetThrMsgCnt(uint8_t cpuIdx, uint8_t thrIdx, vEbwrs& ew) {
   ew.vcs += leadingOne(2);
 
   return ew;
-  
+
 }
 
 uint64_t CarpeDM::getThrMsgCnt(uint8_t cpuIdx, uint8_t thrIdx) {
-  return read64b(atDown.getMemories()[cpuIdx].extBaseAdr + atDown.getMemories()[cpuIdx].sharedOffs + SHCTL_THR_DAT + thrIdx * _T_TD_SIZE_ + T_TD_MSG_CNT);   
+  return read64b(atDown.getMemories()[cpuIdx].extBaseAdr + atDown.getMemories()[cpuIdx].sharedOffs + SHCTL_THR_DAT + thrIdx * _T_TD_SIZE_ + T_TD_MSG_CNT);
 }
 
 uint64_t CarpeDM::getThrDeadline(uint8_t cpuIdx, uint8_t thrIdx) {
@@ -427,31 +427,31 @@ uint64_t CarpeDM::getThrPrepTime(uint8_t cpuIdx, uint8_t thrIdx) {
 }
 
 const vAdr CarpeDM::getCmdWrAdrs(uint32_t hash, uint8_t prio) {
-  vAdr ret;  
+  vAdr ret;
 
   //find the address corresponding to given name
   auto it = atDown.lookupHash(hash, carpeDMcommand::exIntro);
   auto* x = (AllocMeta*)&(*it);
 
   //Check if requested queue priority level exists
-  uint32_t blAdr = writeBeBytesToLeNumber<uint32_t>((uint8_t*)&x->b[BLOCK_CMDQ_PTRS + prio * _PTR_SIZE_]); 
+  uint32_t blAdr = writeBeBytesToLeNumber<uint32_t>((uint8_t*)&x->b[BLOCK_CMDQ_PTRS + prio * _PTR_SIZE_]);
   //sLog << "Block BListAdr 0x" << std::hex << blAdr << std::endl;
   if(blAdr == LM32_NULL_PTR) {throw std::runtime_error( "Block Node does not have requested queue"); return ret; }
-  
+
     //get Write and Read indices
   uint8_t eWrIdx = ( writeBeBytesToLeNumber<uint32_t>((uint8_t*)&x->b[BLOCK_CMDQ_WR_IDXS]) >> (prio * 8)) & Q_IDX_MAX_OVF_MSK;
   uint8_t wrIdx  = eWrIdx & Q_IDX_MAX_MSK;
   uint8_t eRdIdx = ( writeBeBytesToLeNumber<uint32_t>((uint8_t*)&x->b[BLOCK_CMDQ_RD_IDXS]) >> (prio * 8)) & Q_IDX_MAX_OVF_MSK;
   uint8_t rdIdx  = eRdIdx & Q_IDX_MAX_MSK;
-  
+
   //Check if queue is not full
   //sLog << "wrIdx " << (int)wrIdx << " rdIdx " << (int)rdIdx << " ewrIdx " << (int)eWrIdx << " rdIdx " << (int)rdIdx << " eRdIdx " << eRdIdx << std::endl;
   if ((wrIdx == rdIdx) && (eWrIdx != eRdIdx)) {throw std::runtime_error( gDown[x->v].name + " queue of prio " + std::to_string((int)prio) + " is full, can't write.\n");}
-  //lookup Buffer List                                                        
+  //lookup Buffer List
   it = atDown.lookupAdr(x->cpu, atDown.adrConv(AdrType::INT, AdrType::MGMT, x->cpu, blAdr), carpeDMcommand::exIntro);
   auto* pmBl = (AllocMeta*)&(*it);
 
-  //calculate write offset                                                     
+  //calculate write offset
 
   ptrdiff_t bufIdx   = wrIdx / (_MEM_BLOCK_SIZE / _T_CMD_SIZE_  );
   ptrdiff_t elemIdx  = wrIdx % (_MEM_BLOCK_SIZE / _T_CMD_SIZE_  );
@@ -469,7 +469,7 @@ const vAdr CarpeDM::getCmdWrAdrs(uint32_t hash, uint8_t prio) {
   return ret;
 
 
-} 
+}
 
 
   const uint32_t CarpeDM::getCmdInc(uint32_t hash, uint8_t prio) {
@@ -498,7 +498,7 @@ std::pair<int, int> CarpeDM::findRunningPattern(const std::string& sPattern) {
   try { res.first = getNodeCpu(firstString(members), TransferDir::DOWNLOAD); } catch (...) {res.first = -1; return res;}
 
   uint32_t thrds  = getThrRun(res.first);
-  
+
   vStrC cursors;
 
   for (int i = 0; i < _THR_QTY_; i++ ) { cursors.push_back(getThrCursor(res.first, i)); }
@@ -508,9 +508,9 @@ std::pair<int, int> CarpeDM::findRunningPattern(const std::string& sPattern) {
     if ( (thrds & (1<<i)) && (cursors[i] != DotStr::Misc::sUndefined) && (cursors[i] != DotStr::Node::Special::sIdle) ) {
       // now the footwork: check if this cursor was pointing to a member of our pattern
       bool found = false;
-      for ( auto& sM : members ) { if (cursors[i] == sM) found = true; } 
+      for ( auto& sM : members ) { if (cursors[i] == sM) found = true; }
       if (found) {res.second = i; break;} //yep, we found the idx of the thread running our pattern
-    }  
+    }
   }
 
   return res;
@@ -528,7 +528,7 @@ int CarpeDM::getIdleThread(uint8_t cpuIdx) {
   int i;
   for (i = 0; i < _THR_QTY_; i++) { if(!(bool)(thrds & (1<<i))) return i; } // aborts at free thrIdx or returns _THR_QTY_ if no frees found
   return _THR_QTY_;
-}  
+}
 
 //Requests Pattern to start on thread <x>
 vEbwrs& CarpeDM::startPattern(const std::string& sPattern, uint8_t thrIdx, vEbwrs& ew) { return startNodeOrigin(getPatternEntryNode(sPattern), thrIdx, ew);}
@@ -561,7 +561,7 @@ vEbwrs& CarpeDM::startNodeOrigin(const std::string& sNode, vEbwrs& ew) {
   if (thrIdx == _THR_QTY_) throw std::runtime_error( "Found no free thread on " + std::to_string(cpuIdx) + "'s hosting cpu");
   setThrOrigin(cpuIdx, thrIdx, sNode, ew); //configure thread and run it
   startThr(cpuIdx, (uint8_t)thrIdx, ew);
-  return ew;        
+  return ew;
 }
 
 //Requests stop at node <sNode> (flow to idle)
@@ -609,16 +609,16 @@ vEbwrs& CarpeDM::abortNodeOrigin(const std::string& sNode, vEbwrs& ew) {
     for(auto& itP : sP) ret.push_back(itP);
     if (log.size() > 0) {
       sErr << "Warning: getGraphPatterns found no valid patterns for the following nodes:" << std::endl;
-      for(auto& itL : log) sErr << itL << std::endl;  
+      for(auto& itL : log) sErr << itL << std::endl;
     }
-    return ret;  
+    return ret;
 
 
-  }  
+  }
 
-  
 
- 
+
+
 vertex_set_t CarpeDM::getAllCursors(bool activeOnly) {
   vertex_set_t ret;
 
@@ -628,21 +628,21 @@ vertex_set_t CarpeDM::getAllCursors(bool activeOnly) {
   for(uint8_t cpu = 0; cpu < getCpuQty(); cpu++) { //cycle all CPUs
     for(uint8_t thr = 0; thr < _THR_QTY_; thr++) {
       uint32_t adr = ebReadWord(ebd, getThrCurrentNodeAdr(cpu, thr));
-      uint64_t  dl = getThrDeadline(cpu, thr); 
+      uint64_t  dl = getThrDeadline(cpu, thr);
       if (adr == LM32_NULL_PTR || (activeOnly && ((int64_t)dl == -1))) continue; // only active cursors: no dead end idles, no aborted threads
       try {
         auto x = atDown.lookupAdr(cpu, atDown.adrConv(AdrType::INT, AdrType::MGMT,cpu, adr));
         ret.insert(x->v);
-      } catch(...) {}  
+      } catch(...) {}
     }
       //add all thread cursors addresses of CPU <i>
-    
+
       //create triplicate version to allow majority vote on all values
-    
+
       //pass to ebReadCycle
-    
+
       //majority vote on results
-    
+
       //parse pointers. each pointer successfully translated to a vertex idx goes into the result set
 
   }
@@ -663,20 +663,20 @@ int CarpeDM::staticFlushPattern(const std::string& sPattern, bool prioIl, bool p
     if (hm.contains(nodeIt) ) {
       found = true;
       auto x = at.lookupHash(hm.lookup(nodeIt), carpeDMcommand::exIntro);
-      if (g[x->v].np->isBlock()) { staticFlush(g[x->v].name, prioIl, prioHi, prioLo, ew, force); }  
+      if (g[x->v].np->isBlock()) { staticFlush(g[x->v].name, prioIl, prioHi, prioLo, ew, force); }
     }
-  } 
+  }
   if (!found) {throw std::runtime_error( "staticFlush: No member nodes found for pattern <" + sPattern + ">. Wrong name?");}
 
   send(ew);
   return ew.va.size();
-} 
+}
 
 int CarpeDM::staticFlushBlock(const std::string& sBlock, bool prioIl, bool prioHi, bool prioLo, bool force) {
-  vEbwrs ew; 
+  vEbwrs ew;
   send(staticFlush(sBlock, prioIl, prioHi, prioLo, ew, force));
   return ew.va.size();
-}  
+}
 
 
 vEbwrs& CarpeDM::staticFlush(const std::string& sBlock, bool prioIl, bool prioHi, bool prioLo, vEbwrs& ew, bool force) {
@@ -686,11 +686,11 @@ vEbwrs& CarpeDM::staticFlush(const std::string& sBlock, bool prioIl, bool prioHi
   //check if the block can safely be modified
   //call safe2remove on the block's pattern. If remove is ok, so is Flushing
   std::string dbgReport;
-  std::string report; 
+  std::string report;
   const std::string sPattern = getNodePattern(sBlock);
   //if (!isSafeToRemove(sPattern, report,)) {printf("Cannot safely be removed\n"); writeTextFile("safetyReportNormal.dot", report); }
-  
-  
+
+
   if ( (!isSafeToRemove(sPattern, dbgReport)) && !force)  {
     if(debug) sLog << dbgReport << std::endl;
     throw std::runtime_error(carpeDMcommand::exIntro + "staticFlush: Pattern <" + sPattern + "> of block member <" + sBlock + "> is active, static flush not safely possible!");
@@ -699,27 +699,27 @@ vEbwrs& CarpeDM::staticFlush(const std::string& sBlock, bool prioIl, bool prioHi
   //check against covenants
 
   if(optimisedS2R && isCovenantPending(sBlock)) throw std::runtime_error(carpeDMcommand::exIntro + "staticFlush: cannot flush, block <" + sBlock + "> is in a safe2remove-covenant!");
-  
+
 
   if(verbose) sLog << "Trying to flush block <" << sBlock << ">" << std::endl;
-    
+
   //get the block
   auto x = at.lookupHash(hm.lookup(sBlock, carpeDMcommand::exIntro));
   uint32_t cpyMsk = 0;
-  uint32_t wrIdxs = boost::dynamic_pointer_cast<Block>(g[x->v].np)->getWrIdxs(); 
+  uint32_t wrIdxs = boost::dynamic_pointer_cast<Block>(g[x->v].np)->getWrIdxs();
   uint32_t rdIdxs = boost::dynamic_pointer_cast<Block>(g[x->v].np)->getRdIdxs();
 
   if (prioIl) cpyMsk |= (0xff << (PRIO_IL*8));
   if (prioHi) cpyMsk |= (0xff << (PRIO_HI*8));
   if (prioLo) cpyMsk |= (0xff << (PRIO_LO*8));
-    
+
   if (!cpyMsk) return ew; //no queues to flush, abort
 
   //create new rdIdx values
   uint8_t bTmp[4];
   uint32_t newRdIdxs = (rdIdxs & ~cpyMsk) | (wrIdxs & cpyMsk);
   writeLeNumberToBeBytes(bTmp, newRdIdxs);
-  
+
   //add to etherbone write
   ew.va.push_back(at.adrConv(AdrType::MGMT, AdrType::EXT, x->cpu, x->adr) + BLOCK_CMDQ_RD_IDXS); //ext address of this block + BLOCK_CMDQ_RD_IDXS
   ew.vcs += leadingOne(1);
@@ -732,7 +732,7 @@ vEbwrs& CarpeDM::staticFlush(const std::string& sBlock, bool prioIl, bool prioHi
 vEbwrs& CarpeDM::deactivateOrphanedCommands(std::vector<QueueReport>& vQr, vEbwrs& ew) {
   for (auto& qr : vQr) {
      for (int8_t prio = PRIO_IL; prio >= PRIO_LO; prio--) {
-        
+
       if (!qr.hasQ[prio]) {continue;}
       //find buffers of all non empty slots
       for (uint8_t i, idx = qr.aQ[prio].rdIdx; idx < qr.aQ[prio].rdIdx + 4; idx++) {
@@ -744,14 +744,14 @@ vEbwrs& CarpeDM::deactivateOrphanedCommands(std::vector<QueueReport>& vQr, vEbwr
           qe.qty = 0; // deactivate command execution
           //reconstruct action field from report. bit awkward, but not really bad either.
           uint32_t action = (qe.type << ACT_TYPE_POS) | ((prio & ACT_PRIO_MSK) << ACT_PRIO_POS) | ((qe.qty & ACT_QTY_MSK) << ACT_QTY_POS) | (qe.validAbs << ACT_VABS_POS) | (qe.flowPerma << ACT_CHP_POS );
-          ew.va.push_back(qe.extAdr + T_CMD_ACT); 
+          ew.va.push_back(qe.extAdr + T_CMD_ACT);
           ew.vcs += leadingOne(1);
           uint8_t bTmp[4];
           writeLeNumberToBeBytes(bTmp, action);
           ew.vb.insert( ew.vb.end(), bTmp, bTmp + _32b_SIZE_);
         }
       }
-    }    
+    }
   }
 
   return ew;

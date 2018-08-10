@@ -40,7 +40,7 @@ void TimingMsg::serialise(const vAdr &va, uint8_t* b) const {
 
   writeLeNumberToBeBytes(b + (ptrdiff_t)TMSG_ID,  id);
   writeLeNumberToBeBytes(b + (ptrdiff_t)TMSG_PAR, par);
-  writeLeNumberToBeBytes(b + (ptrdiff_t)TMSG_RES, res);    
+  writeLeNumberToBeBytes(b + (ptrdiff_t)TMSG_RES, res);
   writeLeNumberToBeBytes(b + (ptrdiff_t)TMSG_TEF, tef);
 }
 
@@ -54,18 +54,18 @@ void Command::serialise(const vAdr &va, uint8_t* b) const {
   Event::serialise(va, b);
   writeLeNumberToBeBytes(b + (ptrdiff_t)CMD_TARGET,     va[ADR_CMD_TARGET]);
   writeLeNumberToBeBytes(b + (ptrdiff_t)CMD_VALID_TIME, this->tValid);
-  writeLeNumberToBeBytes(b + (ptrdiff_t)CMD_ACT,        this->act); 
+  writeLeNumberToBeBytes(b + (ptrdiff_t)CMD_ACT,        this->act);
 
 }
 
 void Noop::deserialise(uint8_t* b)  {
   Command::deserialise(b);
-  
+
 }
 
 void Noop::serialise(const vAdr &va, uint8_t* b) const {
   Command::serialise(va, b);
-  
+
 }
 
 void Flow::deserialise(uint8_t* b)  {
@@ -74,7 +74,7 @@ void Flow::deserialise(uint8_t* b)  {
 
 void Flow::serialise(const vAdr &va, uint8_t* b) const {
   Command::serialise(va, b);
-  writeLeNumberToBeBytes(b + (ptrdiff_t)CMD_FLOW_DEST, va[ADR_CMD_FLOW_DEST]); 
+  writeLeNumberToBeBytes(b + (ptrdiff_t)CMD_FLOW_DEST, va[ADR_CMD_FLOW_DEST]);
 }
 
 void Wait::deserialise(uint8_t* b)  {
@@ -84,7 +84,7 @@ void Wait::deserialise(uint8_t* b)  {
 
 void Wait::serialise(const vAdr &va, uint8_t* b) const {
   Command::serialise(va, b);
-  writeLeNumberToBeBytes(b + (ptrdiff_t)CMD_WAIT_TIME, this->tWait);  
+  writeLeNumberToBeBytes(b + (ptrdiff_t)CMD_WAIT_TIME, this->tWait);
 
 }
 
@@ -106,7 +106,7 @@ void Flush::serialise(const vAdr &va, uint8_t* b) const {
   b[CMD_FLUSHRNG_HI_TO]   = this->toHi;
   b[CMD_FLUSHRNG_LO_FRM]  = this->frmLo;
   b[CMD_FLUSHRNG_LO_TO]   = this->toLo;
-  
+
 }
 
 const uint16_t Flush::getRng(uint8_t q) const {
@@ -166,9 +166,9 @@ void Flow::show(uint32_t cnt, const char* prefix) const {
   char* p;
   if (prefix == nullptr) p = (char*)"";
   else p = (char*)prefix;
-  
+
   Command::show( cnt, p);
-  
+
 }
 
 void Wait::show(void) const {
@@ -179,9 +179,9 @@ void Wait::show(uint32_t cnt, const char* prefix) const {
   char* p;
   if (prefix == nullptr) p = (char*)"";
   else p = (char*)prefix;
-  
+
   Command::show( cnt, p);
-  
+
 }
 
 

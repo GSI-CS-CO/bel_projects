@@ -32,7 +32,7 @@ void hexDump (const char *desc, const char* addr, int len) {
             buff[i % 16] = pc[i];
         buff[(i % 16) + 1] = '\0';
     }
-  printf ("\n");  
+  printf ("\n");
 }
 
 void hexDump (const char *desc, vBuf vb) { hexDump(desc, (const char*)&vb[0], vb.size()); }
@@ -46,7 +46,7 @@ std::string fixArchiveVersion(const std::string& s) {
     const std::string myVer = "10"; // Boost Version 1.53 Archiver Version is 10
     std::string sRet = s;
     size_t pos = sRet.find(tag, 0) + tag.length();
-    sRet.replace(pos, myVer.length(), myVer); 
+    sRet.replace(pos, myVer.length(), myVer);
 
     return sRet;
 

@@ -23,7 +23,7 @@ std::string errCode(int status) {
     case  SZ_ERROR_NO_ARCHIVE:  errCode = "NO_ARCHIVE"; break;
     default:                    errCode = "!UNDEFINED!";
   }
-  return errCode;  
+  return errCode;
 }
 
 
@@ -55,7 +55,7 @@ vBuf lzmaCompress(const vBuf& input) {
   SizeT outputSize64 = input.size() * 1.5;
   if (outputSize64 < 1024)
     outputSize64 = 1024;
-  
+
 
   lzmaStatus = LzmaEncode(
     b, &outputSize64, input.data(), input.size(),
@@ -79,7 +79,7 @@ vBuf lzmaCompress(const vBuf& input) {
     //memcpy(resultData + 13, output.data(), outputSize64);
     result.insert(result.end(), output.begin(), output.end());
   } else {
-    throw std::runtime_error("Compression: LZMA reported ERROR " + errCode(lzmaStatus) + " (" + std::to_string(lzmaStatus) + ")\n"); 
+    throw std::runtime_error("Compression: LZMA reported ERROR " + errCode(lzmaStatus) + " (" + std::to_string(lzmaStatus) + ")\n");
   }
   //printf("ResultSize = %u\n", (unsigned)result.size());
   return result;
@@ -115,7 +115,7 @@ vBuf lzmaDecompress(const vBuf& input) {
   }
 
   if (status != SZ_OK) {
-    throw std::runtime_error("Decompression: LZMA reported ERROR " + errCode(status) + " (" + std::to_string(status) + ")\n"); 
-  }    
+    throw std::runtime_error("Decompression: LZMA reported ERROR " + errCode(status) + " (" + std::to_string(status) + ")\n");
+  }
   return result;
 }

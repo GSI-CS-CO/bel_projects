@@ -1,7 +1,7 @@
 
 #hack for fuckin lib chaos (both on asl cluster and my computer... )
 
-ifeq ($(findstring asl,$(shell hostname)),asl) 
+ifeq ($(findstring asl,$(shell hostname)),asl)
   EB_INC        =-I/common/export/timing-rte/tg-cherry-v2/x86_64/include
   EB_LIB        =/common/export/timing-rte/tg-cherry-v2/x86_64/lib/libetherbone.so
 else
@@ -11,7 +11,7 @@ endif
 # support for installations with /opt/usr
 OPTPATH       ?= NO
 
-ifneq ($(OPTPATH), NO) 
+ifneq ($(OPTPATH), NO)
 EB_INC        =-I$(OPTPATH)/include
 EB_LIB        =$(OPTPATH)/lib/libetherbone.so
 endif
@@ -57,14 +57,14 @@ BINS            = $(addprefix $(BINPATH)/, $(EXECS))
 
 all: lib tools
 
-lib: libcarpedm.so  
+lib: libcarpedm.so
 
 tools: $(TOOLS)
 
 
 carpeDM.o: $(SRCPATH)/carpeDM.cpp
 	$(T_CXX) $(T_CXXFLAGS) $(T_CXXFLAGS_CDM) -c $< -o $@ $(T_LIBS)
-	
+
 %.o: 	$(SRCPATH)/%.cpp
 	$(T_CXX) $(T_CXXFLAGS) -c $< -o $@ $(T_LIBS)
 

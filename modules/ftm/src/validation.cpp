@@ -56,7 +56,7 @@ void init() {
     ConstellationCnt_set cCnt;
     std::string exIntro = "Neighbourhood: Node '" + g[v].name + "' of type '" + g[v].type;
 
-    if (g[v].np == nullptr) throw std::runtime_error(exIntro + "' was found unallocated\n"); 
+    if (g[v].np == nullptr) throw std::runtime_error(exIntro + "' was found unallocated\n");
 
     boost::tie(out_begin, out_end) = out_edges(v,g);
     if( (out_begin == out_end) && ( g[v].np->isEvent() || (g[v].type == n::sQInfo) )) { //found a childless node. Events and certain meta nodes cannot exist like this
@@ -69,17 +69,17 @@ void init() {
     }
 
     //Check connection duplicates
-    for (out_cur = out_begin; out_cur != out_end; ++out_cur) { 
+    for (out_cur = out_begin; out_cur != out_end; ++out_cur) {
       vertex_t vChk = target(*out_cur,g);
       edgeType_t et = g[*out_cur].type;
       unsigned cnt = 0;
-      for (out_chk = out_begin; out_chk != out_end; ++out_chk) { 
+      for (out_chk = out_begin; out_chk != out_end; ++out_chk) {
         if ( (vChk == target(*out_chk,g)) && (et == g[*out_chk].type) ) { cnt++;}
       }
-      if (cnt > 1) throw std::runtime_error(exIntro + "' must not have multiple edges of type '" + et + "' to Node '" + g[vChk].name + "' of type '" + g[vChk].type + "'\n");      
-    }  
+      if (cnt > 1) throw std::runtime_error(exIntro + "' must not have multiple edges of type '" + et + "' to Node '" + g[vChk].name + "' of type '" + g[vChk].type + "'\n");
+    }
 
-    for (out_cur = out_begin; out_cur != out_end; ++out_cur) { 
+    for (out_cur = out_begin; out_cur != out_end; ++out_cur) {
       auto it = cRules.get<Constellation>().find(boost::make_tuple(g[v].type, g[*out_cur].type));
       // if node type/edge type combo is not found, this is already invalid
       if (it == cRules.end()) {
@@ -88,8 +88,8 @@ void init() {
       //if necessary, add the counter for this constellation
       auto itAux = cCnt.insert(ConstellationCnt(g[v].type, g[*out_cur].type));
       auto itCnt = itAux.first; //returns iterator it, bool insertsuccess
-      if (itCnt == cCnt.end() ) throw std::runtime_error(exIntro + " has malfunctioning constellation counter - possible problem with a boost multiindex container\n"); 
-      cCnt.modify(itCnt, [](ConstellationCnt& e){e.cnt++;}); 
+      if (itCnt == cCnt.end() ) throw std::runtime_error(exIntro + " has malfunctioning constellation counter - possible problem with a boost multiindex container\n");
+      cCnt.modify(itCnt, [](ConstellationCnt& e){e.cnt++;});
 
       // if the child's type is not in the set of allowable children, this is invalid
       if (it->children.count(g[target(*out_cur,g)].type) < 1) {
@@ -105,10 +105,10 @@ void init() {
       for(auto itPCh : itRules->children) possibleChildren += (itPCh + ", ");
 
       if((itCntChk.cnt < itRules->min) | (itCntChk.cnt > itRules->max)) {
-        throw std::runtime_error(exIntro + "' must must have between " 
-          + std::to_string(itRules->min) + " and " + std::to_string(itRules->max) + " edge(s) of type '" + itRules->edge 
+        throw std::runtime_error(exIntro + "' must must have between "
+          + std::to_string(itRules->min) + " and " + std::to_string(itRules->max) + " edge(s) of type '" + itRules->edge
           + "'' connected to children of type(s) '" + possibleChildren + "', found " + std::to_string(itCntChk.cnt) + "\n");
-      }  
+      }
     }
   }
 
@@ -117,55 +117,55 @@ void init() {
     Graph::out_edge_iterator out_begin, out_end, out_cur;
     vertex_t vcurrent = v, vnext = v;
     unsigned int infiniteLoopGuard = 0;;
-    
 
-    std::string exIntroBase = "Event Sequence: Node '"; 
+
+    std::string exIntroBase = "Event Sequence: Node '";
     std::string exIntro;
 
     while (infiniteLoopGuard < MaxDepth::EVENT) {
       //find the child connected to this node's defdest
       boost::tie(out_begin, out_end) = out_edges(vcurrent,g);
       for (out_cur = out_begin; out_cur != out_end; ++out_cur) {
-        //std::cout << g[vcurrent].name << " child " << g[target(*out_cur,g)].name << " connected by " << g[*out_cur].type << std::endl;  
+        //std::cout << g[vcurrent].name << " child " << g[target(*out_cur,g)].name << " connected by " << g[*out_cur].type << std::endl;
         if(g[*out_cur].type == e::sDefDst) {
           vnext = target(*out_cur,g);
           break;
         }   // there can only be 1 defDst. event nodes with more or less are caught by neighbourhoodcheck
-        
+
       }
       exIntro = exIntroBase + g[vcurrent].name + "' of type '" + g[vcurrent].type + "' must not ";
       //check for forbidden properties:
        if ( (g[vnext].type == n::sBlockFixed) || (g[vnext].type == n::sBlockAlign) ) { //found a block
         //check for forbidden properties:
 
-        if (g[vcurrent].np == nullptr) throw std::runtime_error(g[vcurrent].name  + " is not allocated\n"); 
-        if (g[vnext].np == nullptr) throw std::runtime_error(g[vnext].name  + " is not allocated\n"); 
+        if (g[vcurrent].np == nullptr) throw std::runtime_error(g[vcurrent].name  + " is not allocated\n");
+        if (g[vnext].np == nullptr) throw std::runtime_error(g[vnext].name  + " is not allocated\n");
         if (!force) { // this allows negative values for time offsets to provoke specific late events
           //assumption: successors are either of class Event or Block (neighbourhoodCheck ensures this)
-          if (boost::dynamic_pointer_cast<Event>(g[vcurrent].np)->getTOffs() >= boost::dynamic_pointer_cast<Block>(g[vnext].np)->getTPeriod() ) { // time offset greater or equal block period 
+          if (boost::dynamic_pointer_cast<Event>(g[vcurrent].np)->getTOffs() >= boost::dynamic_pointer_cast<Block>(g[vnext].np)->getTPeriod() ) { // time offset greater or equal block period
             throw std::runtime_error(exIntro  + "have a time offset greater of equal than the period of its terminating block\n");
-          } 
+          }
         }
         return; // found a valid block, we're done.
       }
 
       if (vcurrent == vnext) { // self reference of event-class nodes
-        throw std::runtime_error(exIntro  + "loop back on itself\n");    
+        throw std::runtime_error(exIntro  + "loop back on itself\n");
       }
-      //assumption: successors are of class events (neighbourhoodCheck and block checks above ensure this)  
+      //assumption: successors are of class events (neighbourhoodCheck and block checks above ensure this)
       if (vnext == v) { // loop to original vertex without encountering block termination
-        throw std::runtime_error(exIntro  + "be part of a loop without a terminating block\n"); 
+        throw std::runtime_error(exIntro  + "be part of a loop without a terminating block\n");
       }
       if (!force) { // this allows negative values for time offsets to provoke specific late events
         if (boost::dynamic_pointer_cast<Event>(g[vcurrent].np)->getTOffs() > boost::dynamic_pointer_cast<Event>(g[vnext].np)->getTOffs()) { // non monotonically increasing time offsets
-          throw std::runtime_error(exIntro  + "have a time offset greater than its successor's\n");   
+          throw std::runtime_error(exIntro  + "have a time offset greater than its successor's\n");
         }
       }
-      
+
       vcurrent = vnext;
       infiniteLoopGuard++;
     }
-    throw std::runtime_error(exIntroBase + g[v].name + "' of type '" + g[v].type + "' is probably part of an infinite loop ( iteration cnt > " + std::to_string(MaxDepth::EVENT) + ")\n"); 
+    throw std::runtime_error(exIntroBase + g[v].name + "' of type '" + g[v].type + "' is probably part of an infinite loop ( iteration cnt > " + std::to_string(MaxDepth::EVENT) + ")\n");
 
     //useless, but eases my mind.
     return;
@@ -175,25 +175,25 @@ void init() {
     void metaSequenceCheckAux(vertex_t v, vertex_t vcurrent, Graph& g, unsigned int recursionLvl /*= 0*/) {
       Graph::out_edge_iterator out_begin, out_end, out_cur;
       vertex_t vnext;
-      
+
       if (recursionLvl +1 > MaxDepth::META) throw std::runtime_error("have more than " + std::to_string(MaxDepth::META) + " levels of children\n"); // too many child levels
       boost::tie(out_begin, out_end) = out_edges(vcurrent,g);
       for (out_cur = out_begin; out_cur != out_end; ++out_cur) {
         vnext = target(*out_cur,g);
-        if (vnext == vcurrent || vnext == v)  {throw std::runtime_error("be part of a loop\n");} // loop to original vertex 
-        metaSequenceCheckAux(v, vnext, g, recursionLvl +1);    
+        if (vnext == vcurrent || vnext == v)  {throw std::runtime_error("be part of a loop\n");} // loop to original vertex
+        metaSequenceCheckAux(v, vnext, g, recursionLvl +1);
       }
 
-      return;  
+      return;
 
-    }  
+    }
   }
 
   void metaSequenceCheck(vertex_t v, Graph& g) {
-    std::string exIntroBase = "Meta Sequence: Node '" + g[v].name + "' of type '" + g[v].type + "' must not "; 
+    std::string exIntroBase = "Meta Sequence: Node '" + g[v].name + "' of type '" + g[v].type + "' must not ";
     std::string exIntro;
-    
-    try {Aux::metaSequenceCheckAux(v, v, g);} catch (std::runtime_error const& err) {throw std::runtime_error(exIntroBase + std::string(err.what()));} 
-  }    
+
+    try {Aux::metaSequenceCheckAux(v, v, g);} catch (std::runtime_error const& err) {throw std::runtime_error(exIntroBase + std::string(err.what()));}
+  }
 
 }

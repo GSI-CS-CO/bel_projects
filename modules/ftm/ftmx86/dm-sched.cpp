@@ -27,7 +27,7 @@ static void help(const char *program) {
   fprintf(stderr, "  chkrem     <.dot file>    Checks if all patterns in given dot can be removed safely\n");
   fprintf(stderr, "  -n                        No verify, status will not be read after operation\n");
   fprintf(stderr, "  -o         <.dot file>    Specify output file name, default is '%s'\n", outfile);
-  fprintf(stderr, "  -s                        Show Meta Nodes. Download will not only contain schedules, but also queues, etc. \n");  
+  fprintf(stderr, "  -s                        Show Meta Nodes. Download will not only contain schedules, but also queues, etc. \n");
   fprintf(stderr, "  -v                        Verbose operation, print more details\n");
   fprintf(stderr, "  -d                        Debug operation, print everything\n");
   fprintf(stderr, "  -f                        Force, overrides the safety check for clear, remove, overwrite and keep\n");
@@ -46,14 +46,14 @@ int main(int argc, char* argv[]) {
   int opt;
   const char *program = argv[0];
   const char *netaddress, *inputFilename = NULL, *cmdName = NULL, *outputFilename = outfile;
-  const char *dirname = (const char *)getcwd(dirnameBuff, 80); 
+  const char *dirname = (const char *)getcwd(dirnameBuff, 80);
   int32_t error=0;
 
 
-// start getopt 
+// start getopt
    while ((opt = getopt(argc, argv, "fnshvo:d")) != -1) {
       switch (opt) {
- 
+
          case 'o':
             outputFilename  = optarg;
             if (outputFilename == NULL) {
@@ -63,14 +63,14 @@ int main(int argc, char* argv[]) {
             break;
          case 'd':
             debug = true;
-            break;   
+            break;
 
          case 'n':
             update = false;
             break;
          case 'f':
             force = true;
-            break;   
+            break;
 
          case 'v':
             verbose = true;
@@ -78,20 +78,20 @@ int main(int argc, char* argv[]) {
 
          case 's':
             strip = false;
-            break;   
+            break;
 
          case 'h':
             help(program);
             return 0;
-         
+
          case ':':
-         
+
          case '?':
             error = -2;
             break;
-            
+
          default:
-            std::cerr << std::endl << program << ": bad getopt result" << std::endl; 
+            std::cerr << std::endl << program << ": bad getopt result" << std::endl;
             error = -3;
       }
    }
@@ -104,16 +104,16 @@ int main(int argc, char* argv[]) {
    //help();
    return -4;
    }
-   
+
    // process command arguments
-  //std::cerr << program << ": " << argc << " " << optind << " " << argv[optind] << " " << argv[optind+1] << " " << argv[optind+2] << " " << std::endl;   
+  //std::cerr << program << ": " << argc << " " << optind << " " << argv[optind] << " " << argv[optind+1] << " " << argv[optind+2] << " " << std::endl;
 
    netaddress = argv[optind];
-   
+
    if (optind+1 < argc) cmdName        = argv[optind+1];
    if (optind+2 < argc) inputFilename  = argv[optind+2];
 
-   
+
 
   CarpeDM cdm = CarpeDM();
 
@@ -136,7 +136,7 @@ int main(int argc, char* argv[]) {
     std::string cmd(cmdName);
 
     if ((cmd == "add" || cmd == "overwrite" || cmd == "remove" || cmd == "keep") && inputFilename == NULL) { std::cerr << std::endl << program << "Command <" << cmd << "> requires a .dot file" << std::endl; return -8; }
-    
+
     try {
       if (cmd == "clear")     { cdm.clear(force); cmdValid = true;}
       if (cmd == "add")       { cdm.download(); cdm.addDotFile(inputFilename, force); cmdValid = true;}
@@ -151,7 +151,7 @@ int main(int argc, char* argv[]) {
         std::string report;
         Graph gTmp0, gTmp1;
         bool isSafe = cdm.isSafeToRemove(cdm.parseDot(cdm.readTextFile(inputFilename), gTmp0), report);
-        
+
         cdm.writeTextFile(std::string(dirname) + "/" + std::string(debugfile), report);
 
         std::cout << std::endl << "Dot file " << inputFilename << " content removal: " << (isSafe ? "SAFE" : "FORBIDDEN" ) << std::endl;
@@ -164,13 +164,13 @@ int main(int argc, char* argv[]) {
       return -6;
     }
   }
-  
+
   if (cmdName == NULL ) { cmdValid = true;reqStatus = true; }
 
   if ( ! cmdValid ) { std::cerr << std::endl << program << ": Unknown command <" << std::string(cmdName) << ">" << std::endl; return -8; }
 
   if ( update ) {
-    try { 
+    try {
       cdm.downloadDotFile(outputFilename, strip);
       if(verbose || reqStatus) cdm.showDown(false);
 

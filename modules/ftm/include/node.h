@@ -16,32 +16,32 @@ using namespace DotStr::Misc;
 
 class Node {
 
-  
 
 
-protected:    
+
+protected:
   std::string name;
   //FIXME having more references to vertex properties here is not pretty, but we are in a hurry
   std::string pattern;
   std::string beamproc;
 
- 
+
   const uint32_t     hash;
   const uint8_t      cpu;
   uint32_t      flags;
-  
 
-  
+
+
 
 
 public:
   //Node(const std::string& name, const uint32_t& hash, const uint8_t& cpu, uint8_t* b, uint32_t flags) : name(name), pattern(sUndefined), beamproc(sUndefined), hash(hash), cpu(cpu), b(b), flags(flags)  {}
-  Node(const std::string& name, const std::string&  pattern, const std::string&  beamproc, const uint32_t& hash, const uint8_t& cpu, uint32_t flags) 
-  : name(name), pattern(pattern), beamproc(beamproc), hash(hash), cpu(cpu), flags(flags)  {} 
+  Node(const std::string& name, const std::string&  pattern, const std::string&  beamproc, const uint32_t& hash, const uint8_t& cpu, uint32_t flags)
+  : name(name), pattern(pattern), beamproc(beamproc), hash(hash), cpu(cpu), flags(flags)  {}
   Node(const Node& src) : name(src.name), pattern(src.pattern), beamproc(src.beamproc), hash(src.hash), cpu(src.cpu), flags(src.flags) {}
   virtual ~Node() = default;
-  virtual node_ptr clone() const = 0; 
-  
+  virtual node_ptr clone() const = 0;
+
 
   std::string  getName() const {return std::string(this->name);}
   std::string  getPattern() const {return std::string(this->pattern);}

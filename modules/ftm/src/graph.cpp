@@ -11,10 +11,10 @@ myVertex::myVertex(myVertex const &src) {
   this->cpu = src.cpu;
   this->thread = src.thread;
   this->hash = src.hash;
-  
+
   this->np = (src.np != nullptr) ? src.np->clone() : nullptr;
   //std::cout << "Original " << src.np << " cpy " << this->np << std::endl;
-  
+
   this->patEntry  = src.patEntry;
   this->patExit   = src.patExit;
   this->bpEntry   = src.bpEntry;
@@ -23,7 +23,7 @@ myVertex::myVertex(myVertex const &src) {
   this->flags = src.flags;
   //Meta
 
-  //Block 
+  //Block
   this->tPeriod = src.tPeriod;
   this->rdIdxIl = src.rdIdxIl;
   this->rdIdxHi = src.rdIdxHi;
@@ -45,7 +45,7 @@ myVertex::myVertex(myVertex const &src) {
   this->id_res = src.id_res;
   this->id_bin = src.id_bin;
   this->id_reqnob  = src.id_reqnob;
-  this->id_vacc    = src.id_vacc; 
+  this->id_vacc    = src.id_vacc;
   this->par = src.par;
   this->tef = src.tef;
   this->res = src.res;
@@ -60,11 +60,11 @@ myVertex::myVertex(myVertex const &src) {
   this->qHi = src.qHi;
   this->qLo = src.qLo;
 
-  this->frmIl= src.frmIl; 
+  this->frmIl= src.frmIl;
   this->toIl = src.toIl;
-  this->frmHi= src.frmHi; 
+  this->frmHi= src.frmHi;
   this->toHi = src.toHi;
-  this->frmLo= src.frmLo; 
+  this->frmLo= src.frmLo;
   this->toLo = src.toLo;
 
   //Flow, Noop
@@ -80,6 +80,6 @@ myVertex::myVertex(myVertex const &src) {
   this->cmdDest     = src.cmdDest;
   this->cmdDestBp   = src.cmdDestBp;
   this->cmdDestPat  = src.cmdDestPat;
-  
+
 
 }
