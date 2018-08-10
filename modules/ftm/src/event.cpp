@@ -152,9 +152,10 @@ void Flush::show(uint32_t cnt, const char* prefix) const {
   else p = (char*)prefix;
   Command::show( cnt, p);
   printf("%s Flush \n", p);
-  if (this->qIl) printf("Interlock Q\n");
-  if (this->qHi) printf("High Prio. Q up to idx %u\n", this->toHi);
-  if (this->qLo) printf("Low Prio. Q up to idx  %u\n", this->toLo);
+  uint32_t flushPrio = this->getFlushPrio();
+  if (flushPrio & (1 << PRIO_IL)) printf("Interlock Q\n");
+  if (flushPrio & (1 << PRIO_HI)) printf("High Prio. Q up to idx %u\n", this->toHi);
+  if (flushPrio & (1 << PRIO_LO)) printf("Low Prio. Q up to idx  %u\n", this->toLo);
 }
 
 void Flow::show(void) const {

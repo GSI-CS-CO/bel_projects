@@ -389,7 +389,7 @@
 #define ACT_TYPE_SMSK           (ACT_TYPE_MSK << ACT_TYPE_POS)
 
 //Action Prirority (which Q at target it is going to)
-#define ACT_PRIO_MSK            0x2
+#define ACT_PRIO_MSK            0x3
 #define ACT_PRIO_POS            24
 #define ACT_PRIO_SMSK           (ACT_PRIO_MSK << ACT_PRIO_POS)
 
