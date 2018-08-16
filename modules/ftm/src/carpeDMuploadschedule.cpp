@@ -267,6 +267,7 @@ using namespace DotStr::Misc;
     BOOST_FOREACH( vertex_t v, vertices(gUp) ) {
 
       std::string name = gUp[v].name;
+      try{
       //if (!(hm.lookup(name)))                   {throw std::runtime_error("Node '" + name + "' was unknown to the hashmap"); return;}
       hash = gUp[v].hash;
       cpu  = s2u<uint8_t>(gUp[v].cpu);
@@ -293,6 +294,7 @@ using namespace DotStr::Misc;
       //Ugly as hell. But otherwise the bloody iterator will only allow access to MY alloc buffers (not their pointers!) as const!
       auto* x = (AllocMeta*)&(*it);
 
+      
       // add timing node data objects to vertices
       if(gUp[v].np == nullptr) {
 
@@ -317,6 +319,9 @@ using namespace DotStr::Misc;
         //FIXME try to get info from download
         else                        {throw std::runtime_error("Node <" + gUp[v].name + ">'s type <" + cmp + "> is not supported!\nMost likely you forgot to set the type attribute or accidentally created the node by a typo in an edge definition."); return;}
       }
+      } catch (std::runtime_error const& err) {
+        throw std::runtime_error( "Failed to create data object for node <" + name + ">. Cause: " + err.what());
+      }  
     }
 
     // Crawl vertices and serialise their data objects for upload
