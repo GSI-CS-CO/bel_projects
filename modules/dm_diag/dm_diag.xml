@@ -13,7 +13,10 @@
           <reg  name="time_dif_pos"                 read="yes" drive="yes"  bits="64"                  comment="Observed max pos. ECA time difference in ns between ref clock ticks"></reg>
           <reg  name="time_dif_pos_ts"              read="yes" drive="yes"  bits="64"                  comment="(approximate) timestamp of last pos dif update"></reg>  
           <reg  name="time_dif_neg"                 read="yes" drive="yes"  bits="64"                  comment="Observed max neg. ECA time difference in ns between ref clock ticks"></reg>
-          <reg  name="time_dif_neg_ts"              read="yes" drive="yes"  bits="64"                  comment="(approximate) timestamp of last neg dif update"></reg> 
+          <reg  name="time_dif_neg_ts"              read="yes" drive="yes"  bits="64"                  comment="(approximate) timestamp of last neg dif update"></reg>
+          <reg  name="wr_lock_cnt"                  read="yes" drive="yes"  bits="64"                  comment="cnt of wr lock bit going from low to high"></reg>
+          <reg  name="wr_lock_loss_last_ts"         read="yes" drive="yes"  bits="64"                  comment="timestamp of last wr lock loss"></reg>
+          <reg  name="wr_lock_acqu_last_ts"         read="yes" drive="yes"  bits="64"                  comment="timestamp of last wr lock acquired"></reg>
           <reg  name="stall_observation_interval"   read="yes" write="yes"  bits="32"                  comment="Stall observation interval in cycles"></reg> 
           <reg  name="stall_stat_select"            read="yes" write="yes"  bits="8"   selector="yes" flags="yes" comment="Page selector register for Stall observers"></reg> 
           <reg  name="stall_streak_max"             read="yes" drive="yes"  bits="32"  paged="yes"    address="0x100" comment="Observed max continuous stall in cycles"></reg>

@@ -14,8 +14,14 @@ class dm_diag (object):
   'time_dif_neg_get_0'              : 0x024, # ro, 32 b, Observed max neg. ECA time difference in ns between ref clock ticks
   'time_dif_neg_ts_get_1'           : 0x028, # ro, 32 b, (approximate) timestamp of last neg dif update
   'time_dif_neg_ts_get_0'           : 0x02c, # ro, 32 b, (approximate) timestamp of last neg dif update
-  'stall_observation_interval_rw'   : 0x030, # rw, 32 b, Stall observation interval in cycles
-  'stall_stat_select_rw'            : 0x034, # rw,  8 b, Page selector register for Stall observers
+  'wr_lock_cnt_get_1'               : 0x030, # ro, 32 b, cnt of wr lock bit going from low to high
+  'wr_lock_cnt_get_0'               : 0x034, # ro, 32 b, cnt of wr lock bit going from low to high
+  'wr_lock_loss_last_ts_get_1'      : 0x038, # ro, 32 b, timestamp of last wr lock loss
+  'wr_lock_loss_last_ts_get_0'      : 0x03c, # ro, 32 b, timestamp of last wr lock loss
+  'wr_lock_acqu_last_ts_get_1'      : 0x040, # ro, 32 b, timestamp of last wr lock acquired
+  'wr_lock_acqu_last_ts_get_0'      : 0x044, # ro, 32 b, timestamp of last wr lock acquired
+  'stall_observation_interval_rw'   : 0x048, # rw, 32 b, Stall observation interval in cycles
+  'stall_stat_select_rw'            : 0x04c, # rw,  8 b, Page selector register for Stall observers
   'stall_streak_max_get'            : 0x100, # ro, 32 b, Observed max continuous stall in cycles
   'stall_cnt_get'                   : 0x104, # ro, 32 b, Stall time within observation interval in cycles
   'stall_max_ts_get_1'              : 0x108, # ro, 32 b, Timestamp of last max update
@@ -35,8 +41,14 @@ class dm_diag (object):
   0x024 : 'time_dif_neg_get_0', # ro, 32 b, Observed max neg. ECA time difference in ns between ref clock ticks
   0x028 : 'time_dif_neg_ts_get_1', # ro, 32 b, (approximate) timestamp of last neg dif update
   0x02c : 'time_dif_neg_ts_get_0', # ro, 32 b, (approximate) timestamp of last neg dif update
-  0x030 : 'stall_observation_interval_rw', # rw, 32 b, Stall observation interval in cycles
-  0x034 : 'stall_stat_select_rw', # rw,  8 b, Page selector register for Stall observers
+  0x030 : 'wr_lock_cnt_get_1', # ro, 32 b, cnt of wr lock bit going from low to high
+  0x034 : 'wr_lock_cnt_get_0', # ro, 32 b, cnt of wr lock bit going from low to high
+  0x038 : 'wr_lock_loss_last_ts_get_1', # ro, 32 b, timestamp of last wr lock loss
+  0x03c : 'wr_lock_loss_last_ts_get_0', # ro, 32 b, timestamp of last wr lock loss
+  0x040 : 'wr_lock_acqu_last_ts_get_1', # ro, 32 b, timestamp of last wr lock acquired
+  0x044 : 'wr_lock_acqu_last_ts_get_0', # ro, 32 b, timestamp of last wr lock acquired
+  0x048 : 'stall_observation_interval_rw', # rw, 32 b, Stall observation interval in cycles
+  0x04c : 'stall_stat_select_rw', # rw,  8 b, Page selector register for Stall observers
   0x100 : 'stall_streak_max_get', # ro, 32 b, Observed max continuous stall in cycles
   0x104 : 'stall_cnt_get', # ro, 32 b, Stall time within observation interval in cycles
   0x108 : 'stall_max_ts_get_1', # ro, 32 b, Timestamp of last max update
@@ -51,6 +63,9 @@ class dm_diag (object):
   'time_dif_pos_ts'             : 'rd', # (approximate) timestamp of last pos dif update
   'time_dif_neg'                : 'rd', # Observed max neg. ECA time difference in ns between ref clock ticks
   'time_dif_neg_ts'             : 'rd', # (approximate) timestamp of last neg dif update
+  'wr_lock_cnt'                 : 'rd', # cnt of wr lock bit going from low to high
+  'wr_lock_loss_last_ts'        : 'rd', # timestamp of last wr lock loss
+  'wr_lock_acqu_last_ts'        : 'rd', # timestamp of last wr lock acquired
   'stall_observation_interval'  : 'rw', # Stall observation interval in cycles
   'stall_stat_select'           : 'rwf', # Page selector register for Stall observers
   'stall_streak_max'            : 'rdm', # Observed max continuous stall in cycles
@@ -66,6 +81,9 @@ class dm_diag (object):
   'time_dif_pos_ts'             : 0, # (approximate) timestamp of last pos dif update
   'time_dif_neg'                : 0, # Observed max neg. ECA time difference in ns between ref clock ticks
   'time_dif_neg_ts'             : 0, # (approximate) timestamp of last neg dif update
+  'wr_lock_cnt'                 : 0, # cnt of wr lock bit going from low to high
+  'wr_lock_loss_last_ts'        : 0, # timestamp of last wr lock loss
+  'wr_lock_acqu_last_ts'        : 0, # timestamp of last wr lock acquired
   'stall_observation_interval'  : 0, # Stall observation interval in cycles
   'stall_stat_select'           : 0, # Page selector register for Stall observers
   'stall_streak_max'            : 0, # Observed max continuous stall in cycles

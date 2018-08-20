@@ -116,6 +116,7 @@ package ftm_pkg is
     rst_lm32_n_i   : in  std_logic_vector(g_cores-1 downto 0);
 
     tm_tai8ns_i    : in std_logic_vector(63 downto 0);
+    wr_lock_i      : in std_logic;
 
     -- lm32 core interfaces
     lm32_masters_o   : out t_wishbone_master_out_array(g_cores-1 downto 0);
@@ -186,6 +187,7 @@ package ftm_pkg is
     tm_tai8ns_i                   : std_logic_vector(63 downto 0) := (others => '0');
     cyc_diag_i                    : std_logic_vector(g_cores-1 downto 0);
     stall_diag_i                  : std_logic_vector(g_cores-1 downto 0);
+    wr_lock_i                     : std_logic;
 
     ctrl_i                        : in  t_wishbone_slave_in;
     ctrl_o                        : out t_wishbone_slave_out

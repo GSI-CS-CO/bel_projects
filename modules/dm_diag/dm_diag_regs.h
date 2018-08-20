@@ -1,7 +1,7 @@
 /** @file        dm_diag_regs.h
   * DesignUnit   dm_diag
   * @author      M. Kreider <m.kreider@gsi.de>
-  * @date        03/07/2018
+  * @date        20/08/2018
   * @version     0.0.1
   * @copyright   2018 GSI Helmholtz Centre for Heavy Ion Research GmbH
   *
@@ -26,8 +26,14 @@
   #define DM_DIAG_TIME_DIF_NEG_GET_0             0x024 //ro, 32 b, Observed max neg. ECA time difference in ns between ref clock ticks
   #define DM_DIAG_TIME_DIF_NEG_TS_GET_1          0x028 //ro, 32 b, (approximate) timestamp of last neg dif update
   #define DM_DIAG_TIME_DIF_NEG_TS_GET_0          0x02c //ro, 32 b, (approximate) timestamp of last neg dif update
-  #define DM_DIAG_STALL_OBSERVATION_INTERVAL_RW  0x030 //rw, 32 b, Stall observation interval in cycles
-  #define DM_DIAG_STALL_STAT_SELECT_RW           0x034 //rw,  8 b, Page selector register for Stall observers
+  #define DM_DIAG_WR_LOCK_CNT_GET_1              0x030 //ro, 32 b, cnt of wr lock bit going from low to high
+  #define DM_DIAG_WR_LOCK_CNT_GET_0              0x034 //ro, 32 b, cnt of wr lock bit going from low to high
+  #define DM_DIAG_WR_LOCK_LOSS_LAST_TS_GET_1     0x038 //ro, 32 b, timestamp of last wr lock loss
+  #define DM_DIAG_WR_LOCK_LOSS_LAST_TS_GET_0     0x03c //ro, 32 b, timestamp of last wr lock loss
+  #define DM_DIAG_WR_LOCK_ACQU_LAST_TS_GET_1     0x040 //ro, 32 b, timestamp of last wr lock acquired
+  #define DM_DIAG_WR_LOCK_ACQU_LAST_TS_GET_0     0x044 //ro, 32 b, timestamp of last wr lock acquired
+  #define DM_DIAG_STALL_OBSERVATION_INTERVAL_RW  0x048 //rw, 32 b, Stall observation interval in cycles
+  #define DM_DIAG_STALL_STAT_SELECT_RW           0x04c //rw,  8 b, Page selector register for Stall observers
   #define DM_DIAG_STALL_STREAK_MAX_GET           0x100 //ro, 32 b, Observed max continuous stall in cycles
   #define DM_DIAG_STALL_CNT_GET                  0x104 //ro, 32 b, Stall time within observation interval in cycles
   #define DM_DIAG_STALL_MAX_TS_GET_1             0x108 //ro, 32 b, Timestamp of last max update

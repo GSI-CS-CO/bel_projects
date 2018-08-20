@@ -1,7 +1,7 @@
 --! @file        dm_diag_auto_pkg.vhd
 --  DesignUnit   dm_diag_auto
 --! @author      M. Kreider <m.kreider@gsi.de>
---! @date        03/07/2018
+--! @date        20/08/2018
 --! @version     0.0.1
 --! @copyright   2018 GSI Helmholtz Centre for Heavy Ion Research GmbH
 --!
@@ -50,8 +50,14 @@ package dm_diag_auto_pkg is
   constant c_time_dif_neg_GET_0             : natural := 16#024#; -- ro, 32 b, Observed max neg. ECA time difference in ns between ref clock ticks
   constant c_time_dif_neg_ts_GET_1          : natural := 16#028#; -- ro, 32 b, (approximate) timestamp of last neg dif update
   constant c_time_dif_neg_ts_GET_0          : natural := 16#02c#; -- ro, 32 b, (approximate) timestamp of last neg dif update
-  constant c_stall_observation_interval_RW  : natural := 16#030#; -- rw, 32 b, Stall observation interval in cycles
-  constant c_stall_stat_select_RW           : natural := 16#034#; -- rw,  8 b, Page selector register for Stall observers
+  constant c_wr_lock_cnt_GET_1              : natural := 16#030#; -- ro, 32 b, cnt of wr lock bit going from low to high
+  constant c_wr_lock_cnt_GET_0              : natural := 16#034#; -- ro, 32 b, cnt of wr lock bit going from low to high
+  constant c_wr_lock_loss_last_ts_GET_1     : natural := 16#038#; -- ro, 32 b, timestamp of last wr lock loss
+  constant c_wr_lock_loss_last_ts_GET_0     : natural := 16#03c#; -- ro, 32 b, timestamp of last wr lock loss
+  constant c_wr_lock_acqu_last_ts_GET_1     : natural := 16#040#; -- ro, 32 b, timestamp of last wr lock acquired
+  constant c_wr_lock_acqu_last_ts_GET_0     : natural := 16#044#; -- ro, 32 b, timestamp of last wr lock acquired
+  constant c_stall_observation_interval_RW  : natural := 16#048#; -- rw, 32 b, Stall observation interval in cycles
+  constant c_stall_stat_select_RW           : natural := 16#04c#; -- rw,  8 b, Page selector register for Stall observers
   constant c_stall_streak_max_GET           : natural := 16#100#; -- ro, 32 b, Observed max continuous stall in cycles
   constant c_stall_cnt_GET                  : natural := 16#104#; -- ro, 32 b, Stall time within observation interval in cycles
   constant c_stall_max_ts_GET_1             : natural := 16#108#; -- ro, 32 b, Timestamp of last max update
@@ -81,6 +87,12 @@ package dm_diag_auto_pkg is
     time_dif_pos_V_i              : in  std_logic_vector(1-1 downto 0);   -- Valid flag - time_dif_pos
     time_dif_pos_ts_i             : in  std_logic_vector(64-1 downto 0);  -- (approximate) timestamp of last pos dif update
     time_dif_pos_ts_V_i           : in  std_logic_vector(1-1 downto 0);   -- Valid flag - time_dif_pos_ts
+    wr_lock_acqu_last_ts_i        : in  std_logic_vector(64-1 downto 0);  -- timestamp of last wr lock acquired
+    wr_lock_acqu_last_ts_V_i      : in  std_logic_vector(1-1 downto 0);   -- Valid flag - wr_lock_acqu_last_ts
+    wr_lock_cnt_i                 : in  std_logic_vector(64-1 downto 0);  -- cnt of wr lock bit going from low to high
+    wr_lock_cnt_V_i               : in  std_logic_vector(1-1 downto 0);   -- Valid flag - wr_lock_cnt
+    wr_lock_loss_last_ts_i        : in  std_logic_vector(64-1 downto 0);  -- timestamp of last wr lock loss
+    wr_lock_loss_last_ts_V_i      : in  std_logic_vector(1-1 downto 0);   -- Valid flag - wr_lock_loss_last_ts
     enable_o                      : out std_logic_vector(1-1 downto 0);   -- Enables/disables update. Default is enabled
     reset_o                       : out std_logic_vector(1-1 downto 0);   -- Resets/clears the diagnostic
     stall_observation_interval_o  : out std_logic_vector(32-1 downto 0);  -- Stall observation interval in cycles
@@ -109,7 +121,7 @@ package dm_diag_auto_pkg is
   vendor_id     => x"0000000000000651",
   device_id     => x"18060200",
   version       => x"00000001",
-  date          => x"20180703",
+  date          => x"20180820",
   name          => "DM-Diagnostics     ")));
 
 end dm_diag_auto_pkg;

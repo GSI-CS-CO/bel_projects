@@ -1,7 +1,7 @@
 --! @file        dm_diag_auto.vhd
 --  DesignUnit   dm_diag_auto
 --! @author      M. Kreider <m.kreider@gsi.de>
---! @date        03/07/2018
+--! @date        20/08/2018
 --! @version     0.0.1
 --! @copyright   2018 GSI Helmholtz Centre for Heavy Ion Research GmbH
 --!
@@ -61,6 +61,12 @@ Port(
   time_dif_pos_V_i              : in  std_logic_vector(1-1 downto 0);   -- Valid flag - time_dif_pos
   time_dif_pos_ts_i             : in  std_logic_vector(64-1 downto 0);  -- (approximate) timestamp of last pos dif update
   time_dif_pos_ts_V_i           : in  std_logic_vector(1-1 downto 0);   -- Valid flag - time_dif_pos_ts
+  wr_lock_acqu_last_ts_i        : in  std_logic_vector(64-1 downto 0);  -- timestamp of last wr lock acquired
+  wr_lock_acqu_last_ts_V_i      : in  std_logic_vector(1-1 downto 0);   -- Valid flag - wr_lock_acqu_last_ts
+  wr_lock_cnt_i                 : in  std_logic_vector(64-1 downto 0);  -- cnt of wr lock bit going from low to high
+  wr_lock_cnt_V_i               : in  std_logic_vector(1-1 downto 0);   -- Valid flag - wr_lock_cnt
+  wr_lock_loss_last_ts_i        : in  std_logic_vector(64-1 downto 0);  -- timestamp of last wr lock loss
+  wr_lock_loss_last_ts_V_i      : in  std_logic_vector(1-1 downto 0);   -- Valid flag - wr_lock_loss_last_ts
   enable_o                      : out std_logic_vector(1-1 downto 0);   -- Enables/disables update. Default is enabled
   reset_o                       : out std_logic_vector(1-1 downto 0);   -- Resets/clears the diagnostic
   stall_observation_interval_o  : out std_logic_vector(32-1 downto 0);  -- Stall observation interval in cycles
@@ -116,6 +122,18 @@ architecture rtl of dm_diag_auto is
   signal s_time_dif_neg_ts_V_i        : std_logic_vector(1-1 downto 0)  := (others => '0');                     -- Valid flag - time_dif_neg_ts
   signal r_time_dif_neg_ts            : std_logic_vector(64-1 downto 0) := (others => '0');                     -- (approximate) timestamp of last neg dif update
   signal s_time_dif_neg_ts_i          : std_logic_vector(64-1 downto 0) := (others => '0');                     -- (approximate) timestamp of last neg dif update
+  signal r_wr_lock_cnt_V              : std_logic_vector(1-1 downto 0)  := (others => '0');                     -- Valid flag - wr_lock_cnt
+  signal s_wr_lock_cnt_V_i            : std_logic_vector(1-1 downto 0)  := (others => '0');                     -- Valid flag - wr_lock_cnt
+  signal r_wr_lock_cnt                : std_logic_vector(64-1 downto 0) := (others => '0');                     -- cnt of wr lock bit going from low to high
+  signal s_wr_lock_cnt_i              : std_logic_vector(64-1 downto 0) := (others => '0');                     -- cnt of wr lock bit going from low to high
+  signal r_wr_lock_loss_last_ts_V     : std_logic_vector(1-1 downto 0)  := (others => '0');                     -- Valid flag - wr_lock_loss_last_ts
+  signal s_wr_lock_loss_last_ts_V_i   : std_logic_vector(1-1 downto 0)  := (others => '0');                     -- Valid flag - wr_lock_loss_last_ts
+  signal r_wr_lock_loss_last_ts       : std_logic_vector(64-1 downto 0) := (others => '0');                     -- timestamp of last wr lock loss
+  signal s_wr_lock_loss_last_ts_i     : std_logic_vector(64-1 downto 0) := (others => '0');                     -- timestamp of last wr lock loss
+  signal r_wr_lock_acqu_last_ts_V     : std_logic_vector(1-1 downto 0)  := (others => '0');                     -- Valid flag - wr_lock_acqu_last_ts
+  signal s_wr_lock_acqu_last_ts_V_i   : std_logic_vector(1-1 downto 0)  := (others => '0');                     -- Valid flag - wr_lock_acqu_last_ts
+  signal r_wr_lock_acqu_last_ts       : std_logic_vector(64-1 downto 0) := (others => '0');                     -- timestamp of last wr lock acquired
+  signal s_wr_lock_acqu_last_ts_i     : std_logic_vector(64-1 downto 0) := (others => '0');                     -- timestamp of last wr lock acquired
   signal r_stall_observation_interval : std_logic_vector(32-1 downto 0) := (others => '0');                     -- Stall observation interval in cycles
   signal r_stall_stat_select_WR       : std_logic_vector(1-1 downto 0)  := std_logic_vector(to_unsigned(0, 1)); -- Write enable flag - stall_stat_select
   signal r_stall_stat_select_RD       : std_logic_vector(1-1 downto 0)  := std_logic_vector(to_unsigned(0, 1)); -- Read enable flag - stall_stat_select
@@ -159,19 +177,25 @@ begin
 
   validmux: with to_integer(unsigned(s_a_ext)) select
   s_valid <= 
-  s_time_dif_pos_V_i(0)     when c_time_dif_pos_GET_1,    -- 
-  s_time_dif_pos_V_i(0)     when c_time_dif_pos_GET_0,    -- 
-  s_time_dif_pos_ts_V_i(0)  when c_time_dif_pos_ts_GET_1, -- 
-  s_time_dif_pos_ts_V_i(0)  when c_time_dif_pos_ts_GET_0, -- 
-  s_time_dif_neg_V_i(0)     when c_time_dif_neg_GET_1,    -- 
-  s_time_dif_neg_V_i(0)     when c_time_dif_neg_GET_0,    -- 
-  s_time_dif_neg_ts_V_i(0)  when c_time_dif_neg_ts_GET_1, -- 
-  s_time_dif_neg_ts_V_i(0)  when c_time_dif_neg_ts_GET_0, -- 
-  s_stall_streak_max_V_i(0) when c_stall_streak_max_GET,  -- 
-  s_stall_cnt_V_i(0)        when c_stall_cnt_GET,         -- 
-  s_stall_max_ts_V_i(0)     when c_stall_max_ts_GET_1,    -- 
-  s_stall_max_ts_V_i(0)     when c_stall_max_ts_GET_0,    -- 
-  '1'                       when others;
+  s_time_dif_pos_V_i(0)         when c_time_dif_pos_GET_1,          -- 
+  s_time_dif_pos_V_i(0)         when c_time_dif_pos_GET_0,          -- 
+  s_time_dif_pos_ts_V_i(0)      when c_time_dif_pos_ts_GET_1,       -- 
+  s_time_dif_pos_ts_V_i(0)      when c_time_dif_pos_ts_GET_0,       -- 
+  s_time_dif_neg_V_i(0)         when c_time_dif_neg_GET_1,          -- 
+  s_time_dif_neg_V_i(0)         when c_time_dif_neg_GET_0,          -- 
+  s_time_dif_neg_ts_V_i(0)      when c_time_dif_neg_ts_GET_1,       -- 
+  s_time_dif_neg_ts_V_i(0)      when c_time_dif_neg_ts_GET_0,       -- 
+  s_wr_lock_cnt_V_i(0)          when c_wr_lock_cnt_GET_1,           -- 
+  s_wr_lock_cnt_V_i(0)          when c_wr_lock_cnt_GET_0,           -- 
+  s_wr_lock_loss_last_ts_V_i(0) when c_wr_lock_loss_last_ts_GET_1,  -- 
+  s_wr_lock_loss_last_ts_V_i(0) when c_wr_lock_loss_last_ts_GET_0,  -- 
+  s_wr_lock_acqu_last_ts_V_i(0) when c_wr_lock_acqu_last_ts_GET_1,  -- 
+  s_wr_lock_acqu_last_ts_V_i(0) when c_wr_lock_acqu_last_ts_GET_0,  -- 
+  s_stall_streak_max_V_i(0)     when c_stall_streak_max_GET,        -- 
+  s_stall_cnt_V_i(0)            when c_stall_cnt_GET,               -- 
+  s_stall_max_ts_V_i(0)         when c_stall_max_ts_GET_1,          -- 
+  s_stall_max_ts_V_i(0)         when c_stall_max_ts_GET_0,          -- 
+  '1'                           when others;
   
   s_valid_ok      <=  r_valid_check and s_valid;
   s_e_p           <=  r_e or r_e_wait;
@@ -195,6 +219,12 @@ begin
   s_time_dif_neg_i              <= time_dif_neg_i;
   s_time_dif_neg_ts_V_i         <= time_dif_neg_ts_V_i;
   s_time_dif_neg_ts_i           <= time_dif_neg_ts_i;
+  s_wr_lock_cnt_V_i             <= wr_lock_cnt_V_i;
+  s_wr_lock_cnt_i               <= wr_lock_cnt_i;
+  s_wr_lock_loss_last_ts_V_i    <= wr_lock_loss_last_ts_V_i;
+  s_wr_lock_loss_last_ts_i      <= wr_lock_loss_last_ts_i;
+  s_wr_lock_acqu_last_ts_V_i    <= wr_lock_acqu_last_ts_V_i;
+  s_wr_lock_acqu_last_ts_i      <= wr_lock_acqu_last_ts_i;
   stall_observation_interval_o  <= r_stall_observation_interval;
   stall_stat_select_WR_o        <= r_stall_stat_select_WR;
   stall_stat_select_RD_o        <= r_stall_stat_select_RD;
@@ -221,6 +251,9 @@ begin
         r_time_dif_pos_ts             <= (others => '0');
         r_time_dif_neg                <= (others => '0');
         r_time_dif_neg_ts             <= (others => '0');
+        r_wr_lock_cnt                 <= (others => '0');
+        r_wr_lock_loss_last_ts        <= (others => '0');
+        r_wr_lock_acqu_last_ts        <= (others => '0');
         r_stall_observation_interval  <= (others => '0');
         r_stall_stat_select_WR        <= std_logic_vector(to_unsigned(0, 1));
         r_stall_stat_select_RD        <= std_logic_vector(to_unsigned(0, 1));
@@ -247,13 +280,16 @@ begin
           r_stall_stat_select_WR  <= (others => '0');
         end if;
         
-        if s_stall_cnt_V_i        = "1" then r_stall_cnt        <= s_stall_cnt_i; end if;         -- 
-        if s_stall_max_ts_V_i     = "1" then r_stall_max_ts     <= s_stall_max_ts_i; end if;      -- 
-        if s_stall_streak_max_V_i = "1" then r_stall_streak_max <= s_stall_streak_max_i; end if;  -- 
-        if s_time_dif_neg_V_i     = "1" then r_time_dif_neg     <= s_time_dif_neg_i; end if;      -- 
-        if s_time_dif_neg_ts_V_i  = "1" then r_time_dif_neg_ts  <= s_time_dif_neg_ts_i; end if;   -- 
-        if s_time_dif_pos_V_i     = "1" then r_time_dif_pos     <= s_time_dif_pos_i; end if;      -- 
-        if s_time_dif_pos_ts_V_i  = "1" then r_time_dif_pos_ts  <= s_time_dif_pos_ts_i; end if;   -- 
+        if s_stall_cnt_V_i            = "1" then r_stall_cnt            <= s_stall_cnt_i; end if;             -- 
+        if s_stall_max_ts_V_i         = "1" then r_stall_max_ts         <= s_stall_max_ts_i; end if;          -- 
+        if s_stall_streak_max_V_i     = "1" then r_stall_streak_max     <= s_stall_streak_max_i; end if;      -- 
+        if s_time_dif_neg_V_i         = "1" then r_time_dif_neg         <= s_time_dif_neg_i; end if;          -- 
+        if s_time_dif_neg_ts_V_i      = "1" then r_time_dif_neg_ts      <= s_time_dif_neg_ts_i; end if;       -- 
+        if s_time_dif_pos_V_i         = "1" then r_time_dif_pos         <= s_time_dif_pos_i; end if;          -- 
+        if s_time_dif_pos_ts_V_i      = "1" then r_time_dif_pos_ts      <= s_time_dif_pos_ts_i; end if;       -- 
+        if s_wr_lock_acqu_last_ts_V_i = "1" then r_wr_lock_acqu_last_ts <= s_wr_lock_acqu_last_ts_i; end if;  -- 
+        if s_wr_lock_cnt_V_i          = "1" then r_wr_lock_cnt          <= s_wr_lock_cnt_i; end if;           -- 
+        if s_wr_lock_loss_last_ts_V_i = "1" then r_wr_lock_loss_last_ts <= s_wr_lock_loss_last_ts_i; end if;  -- 
         
         
         if(s_e = '1') then
@@ -283,6 +319,12 @@ begin
               when c_time_dif_neg_GET_0             => null;
               when c_time_dif_neg_ts_GET_1          => null;
               when c_time_dif_neg_ts_GET_0          => null;
+              when c_wr_lock_cnt_GET_1              => null;
+              when c_wr_lock_cnt_GET_0              => null;
+              when c_wr_lock_loss_last_ts_GET_1     => null;
+              when c_wr_lock_loss_last_ts_GET_0     => null;
+              when c_wr_lock_acqu_last_ts_GET_1     => null;
+              when c_wr_lock_acqu_last_ts_GET_0     => null;
               when c_stall_observation_interval_RW  => null;
               when c_stall_stat_select_RW           => null;
               r_stall_stat_select_RD <= (others     => '1');
@@ -307,6 +349,12 @@ begin
           when c_time_dif_neg_GET_0             => ctrl_o.dat <= std_logic_vector(resize(unsigned(r_time_dif_neg(31 downto 0)), ctrl_o.dat'length));                -- 
           when c_time_dif_neg_ts_GET_1          => ctrl_o.dat <= std_logic_vector(resize(unsigned(r_time_dif_neg_ts(63 downto 32)), ctrl_o.dat'length));            -- 
           when c_time_dif_neg_ts_GET_0          => ctrl_o.dat <= std_logic_vector(resize(unsigned(r_time_dif_neg_ts(31 downto 0)), ctrl_o.dat'length));             -- 
+          when c_wr_lock_cnt_GET_1              => ctrl_o.dat <= std_logic_vector(resize(unsigned(r_wr_lock_cnt(63 downto 32)), ctrl_o.dat'length));                -- 
+          when c_wr_lock_cnt_GET_0              => ctrl_o.dat <= std_logic_vector(resize(unsigned(r_wr_lock_cnt(31 downto 0)), ctrl_o.dat'length));                 -- 
+          when c_wr_lock_loss_last_ts_GET_1     => ctrl_o.dat <= std_logic_vector(resize(unsigned(r_wr_lock_loss_last_ts(63 downto 32)), ctrl_o.dat'length));       -- 
+          when c_wr_lock_loss_last_ts_GET_0     => ctrl_o.dat <= std_logic_vector(resize(unsigned(r_wr_lock_loss_last_ts(31 downto 0)), ctrl_o.dat'length));        -- 
+          when c_wr_lock_acqu_last_ts_GET_1     => ctrl_o.dat <= std_logic_vector(resize(unsigned(r_wr_lock_acqu_last_ts(63 downto 32)), ctrl_o.dat'length));       -- 
+          when c_wr_lock_acqu_last_ts_GET_0     => ctrl_o.dat <= std_logic_vector(resize(unsigned(r_wr_lock_acqu_last_ts(31 downto 0)), ctrl_o.dat'length));        -- 
           when c_stall_observation_interval_RW  => ctrl_o.dat <= std_logic_vector(resize(unsigned(r_stall_observation_interval), ctrl_o.dat'length));               -- 
           when c_stall_stat_select_RW           => ctrl_o.dat <= std_logic_vector(resize(unsigned(r_stall_stat_select), ctrl_o.dat'length));                        -- 
           when c_stall_streak_max_GET           => ctrl_o.dat <= std_logic_vector(resize(unsigned(r_stall_streak_max), ctrl_o.dat'length));                         -- 
