@@ -52,7 +52,6 @@ entity pci_control is
     nres            : in std_logic;
     pbs2            : in std_logic;
     hpw             : inout std_logic_vector(15 downto 0) := (others => 'Z'); -- logic analyzer
-    ant             : inout std_logic_vector(26 downto 1) := (others => 'Z'); -- trigger bus
 
     -----------------------------------------------------------------------
     -- pexaria5db1/2
