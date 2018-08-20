@@ -26,7 +26,7 @@
       | (x >> 8);
   }
 
-  inline uint32_t endian_reverse(uint32_t x)                          
+  inline uint32_t endian_reverse(uint32_t x)
   {
     uint32_t step16;
     step16 = x << 16 | x >> 16;
@@ -82,12 +82,12 @@
   (byte & 0x08 ? '1' : '0'), \
   (byte & 0x04 ? '1' : '0'), \
   (byte & 0x02 ? '1' : '0'), \
-  (byte & 0x01 ? '1' : '0') 
+  (byte & 0x01 ? '1' : '0')
 
 
 enum class AdrType {EXT, INT, MGMT, PEER, UNKNOWN};
 enum class TransferDir {UPLOAD, DOWNLOAD};
-enum class FwId { FWID_RAM_TOO_SMALL      = -1, 
+enum class FwId { FWID_RAM_TOO_SMALL      = -1,
                   FWID_BAD_MAGIC          = -2,
                   FWID_BAD_PROJECT_NAME   = -3,
                   FWID_NOT_FOUND          = -4,
@@ -97,21 +97,23 @@ enum class FwId { FWID_RAM_TOO_SMALL      = -1,
                   VERSION_REVISION        = 2,
                   VERSION_MAJOR_MUL       = 10000,
                   VERSION_MINOR_MUL       = 100,
-                  VERSION_REVISION_MUL    = 1};  
+                  VERSION_REVISION_MUL    = 1};
 
 
-namespace ECA {
-  //TODO import values from eca_regs.h
-  const uint32_t timeHiW = 0x18;
-  const uint32_t timeLoW = 0x1c;
+namespace CluTime {
+  const uint32_t timeHiW = 0x0;
+  const uint32_t timeLoW = 0x4;
   const uint64_t vendID  = 0x00000651;
-  const uint32_t devID   = 0xb2afc251;
+  const uint32_t devID   = 0x10041233;
 }
 
-const uint64_t processingTimeMargin = 100000000ULL; // 100 ms. Is set to 0 when testmode is on to speed coverage test
+
+
+
+const uint64_t processingTimeMargin = 500000000ULL; // 500 ms. Is set to 0 when testmode is on to speed coverage test
 
 typedef struct {
-  uint8_t   cpu; 
+  uint8_t   cpu;
   uint64_t  msgCnt;
   uint64_t  bootTime;
   uint64_t  smodTime;
@@ -129,13 +131,39 @@ typedef struct {
   int64_t   avgTimeDiff;
   int64_t   warningThreshold;
   uint32_t  warningCnt;
+  std::string warningNode;
+  uint64_t  warningTime;
+  uint32_t  maxBacklog;
+  uint32_t  badWaitCnt;
   uint32_t  stat;
 } HealthReport;
 
+typedef struct {
+  uint32_t  stallStreakMax;
+  uint32_t  stallStreakCurrent;
+  uint64_t  stallStreakMaxUDts;
+} StallDelayReport;
 
 typedef struct {
+  bool      enabled;
+  uint64_t  timeObservIntvl;
+  int64_t   timeMaxPosDif;
+  uint64_t  timeMaxPosUDts;
+  int64_t   timeMinNegDif;
+  uint64_t  timeMinNegUDts;
+  uint32_t  stallObservIntvl;
+  std::vector<StallDelayReport> sdr;
+} HwDelayReport;
+
+
+
+
+typedef struct {
+  uint32_t     extAdr = LM32_NULL_PTR;
+  bool       orphaned = false;
   bool        pending = false;
   uint64_t  validTime = 0;
+  bool       validAbs = false;
   uint8_t        type = 0;
   std::string   sType = DotStr::Misc::sUndefined;
   uint32_t        qty = 0;
@@ -159,6 +187,7 @@ typedef struct {
 } QueueBuffer;
 
 typedef struct {
+  std::string name;
   bool hasQ[3] = {false, false, false};
   QueueBuffer aQ[3];
 } QueueReport;
@@ -188,6 +217,8 @@ typedef struct {
   vAdr va;
   vBl  vcs;
 } vEbrds;
+
+
 
 
 vBl leadingOne(size_t length);
@@ -251,6 +282,8 @@ inline T s2u(const std::string& s) {
 void hexDump (const char *desc, const char* addr, int len);
 
 void hexDump (const char *desc, vBuf vb);
+
+std::string fixArchiveVersion(const std::string& s);
 
 
 #endif

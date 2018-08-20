@@ -97,7 +97,7 @@ static SRes Xz_ReadIndex2(CXzStream *p, const Byte *buf, size_t size, ISzAllocPt
     if (numBlocks != numBlocks64 || numBlocks * 2 > size)
       return SZ_ERROR_ARCHIVE;
   }
-  
+
   Xz_Free(p, alloc);
   if (numBlocks != 0)
   {
@@ -159,18 +159,18 @@ static SRes Xz_ReadBackward(CXzStream *p, ILookInStream *stream, Int64 *startOff
 
   pos -= XZ_STREAM_FOOTER_SIZE;
   RINOK(LookInStream_SeekRead_ForArc(stream, pos, buf, XZ_STREAM_FOOTER_SIZE));
-  
+
   if (!XZ_FOOTER_SIG_CHECK(buf + 10))
   {
     UInt32 total = 0;
     pos += XZ_STREAM_FOOTER_SIZE;
-    
+
     for (;;)
     {
       size_t i;
       #define TEMP_BUF_SIZE (1 << 10)
       Byte temp[TEMP_BUF_SIZE];
-      
+
       i = (pos > TEMP_BUF_SIZE) ? TEMP_BUF_SIZE : (size_t)pos;
       pos -= i;
       RINOK(LookInStream_SeekRead_ForArc(stream, pos, temp, i));
@@ -188,7 +188,7 @@ static SRes Xz_ReadBackward(CXzStream *p, ILookInStream *stream, Int64 *startOff
       if (pos < XZ_STREAM_FOOTER_SIZE || total > (1 << 16))
         return SZ_ERROR_NO_ARCHIVE;
     }
-    
+
     if (pos < XZ_STREAM_FOOTER_SIZE)
       return SZ_ERROR_NO_ARCHIVE;
     pos -= XZ_STREAM_FOOTER_SIZE;
@@ -196,7 +196,7 @@ static SRes Xz_ReadBackward(CXzStream *p, ILookInStream *stream, Int64 *startOff
     if (!XZ_FOOTER_SIG_CHECK(buf + 10))
       return SZ_ERROR_NO_ARCHIVE;
   }
-  
+
   p->flags = (CXzStreamFlags)GetBe16(buf + 8);
 
   if (!XzFlags_IsSupported(p->flags))

@@ -3,7 +3,7 @@ name="123!CMD!";
 
 graph []
 
-  
+
   CMD_0STOP   [type="stop", pattern="ABC"];
   CMD_1FLOW0   [type="flow", pattern="PPS", destpattern="ABC"];
   CMD_2FLOW1   [type="flow", pattern="TEST_DO_SIS18_HTP_20171013", destpattern="PPS"];
@@ -11,7 +11,7 @@ graph []
   //CMD_STOP   [type="stop", pattern="TEST_DO_SIS18_HTP_20171013"];
   //CMD_ABORT   [type="abort", cpu="0", thread="0"];
   //CMD_ABORT   [type="abort", pattern="TEST_DO_SIS18_HTP_20171013"];
-  
+
 
 
 

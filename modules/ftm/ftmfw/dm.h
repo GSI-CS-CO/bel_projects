@@ -12,12 +12,13 @@
 #define PRIO_BIT_TIME_LIMIT (1<<2)
 
 #define PRIO_DAT_STD     0x00
-#define PRIO_DAT_TS_HI   0x04    
-#define PRIO_DAT_TS_LO   0x08 
-#define PRIO_DRP_TS_HI   0x14    
-#define PRIO_DRP_TS_LO   0x18  
+#define PRIO_DAT_TS_HI   0x04
+#define PRIO_DAT_TS_LO   0x08
+#define PRIO_DRP_TS_HI   0x14
+#define PRIO_DRP_TS_LO   0x18
 
 #define DIAG_PQ_MSG_CNT  0x0FA62F9000000000
+#define ECA_GLOBAL_ADR   0x7ffffff0
 
 #define PRINT64_FACTOR  1000000000LL
 
@@ -44,7 +45,7 @@ extern uint32_t* const _endshared[];
 extern deadlineFuncPtr deadlineFuncs[_NODE_TYPE_END_];
 extern nodeFuncPtr         nodeFuncs[_NODE_TYPE_END_];
 extern actionFuncPtr     actionFuncs[_ACT_TYPE_END_];
-extern uint32_t* const p; 
+extern uint32_t* const p;
 extern uint32_t* const status;
 extern uint64_t* const count;
 extern uint64_t* const boottime;
@@ -53,7 +54,11 @@ extern int64_t*  const diffsum;
 extern int64_t*  const diffmax;
 extern int64_t*  const diffmin;
 extern int64_t*  const diffwth;
-extern int64_t*  const diffwcnt;
+extern uint32_t* const diffwcnt;
+extern uint32_t* const diffwhash;
+extern uint64_t* const diffwts;
+extern uint32_t* const bcklogmax;
+extern uint32_t* const badwaitcnt;
 #endif
 extern uint32_t* const start;
 extern uint32_t* const running;
@@ -123,33 +128,22 @@ void prioQueueInit();
 void dmInit();
 
 uint8_t getNodeType(uint32_t* node);
-
 uint64_t dlEvt(uint32_t* node, uint32_t* thrData);
-
 uint64_t dlBlock(uint32_t* node, uint32_t* thrData);
-
 uint32_t* execNoop(uint32_t* node, uint32_t* cmd, uint32_t* thrData);
-
 uint32_t* execFlow(uint32_t* node, uint32_t* cmd, uint32_t* thrData);
-
 uint32_t* execFlush(uint32_t* node, uint32_t* cmd, uint32_t* thrData);
-
 uint32_t* execWait(uint32_t* node, uint32_t* cmd, uint32_t* thrData);
-
 uint32_t* cmd(uint32_t* node, uint32_t* thrData);
-
 uint32_t* tmsg(uint32_t* node, uint32_t* thrData);
-
 uint32_t* block(uint32_t* node, uint32_t* thrData);
-
 uint32_t* blockFixed(uint32_t* node, uint32_t* thrData);
-
 uint32_t* blockAlign(uint32_t* node, uint32_t* thrData);
 
-// TODO clean this up
-// If there is a correct way to return literals from function pointer array, I couldn't find it. Use this workaround for undefined elements
+uint32_t* nodeNull (uint32_t* node, uint32_t* thrData);
+uint64_t  deadlineNull (uint32_t* node, uint32_t* thrData);
 uint32_t* dummyNodeFunc (uint32_t* node, uint32_t* thrData);
-uint64_t dummyDeadlineFunc (uint32_t* node, uint32_t* thrData);
+uint64_t  dummyDeadlineFunc (uint32_t* node, uint32_t* thrData);
 uint32_t* dummyActionFunc (uint32_t* node, uint32_t* cmd, uint32_t* thrData);
 
 inline uint32_t hiW(uint64_t dword) {return (uint32_t)(dword >> 32);}

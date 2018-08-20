@@ -99,7 +99,7 @@ void *BigAlloc(size_t size)
   #ifdef _SZ_ALLOC_DEBUG
   fprintf(stderr, "\nAlloc_Big %10u bytes;  count = %10d", size, g_allocCountBig++);
   #endif
-  
+
   #ifdef _7ZIP_LARGE_PAGES
   {
     SIZE_T ps = g_LargePageSize;
@@ -127,7 +127,7 @@ void BigFree(void *address)
   if (address)
     fprintf(stderr, "\nFree_Big; count = %10d", --g_allocCountBig);
   #endif
-  
+
   if (!address)
     return;
   VirtualFree(address, 0, MEM_RELEASE);

@@ -50,7 +50,7 @@ typedef struct
 } CMtProgressThunk;
 
 void MtProgressThunk_CreateVTable(CMtProgressThunk *p);
-    
+
 
 
 struct _CMtCoder;
@@ -87,7 +87,7 @@ typedef struct
 typedef struct _CMtCoder
 {
   /* input variables */
-  
+
   size_t blockSize;        /* size of input block */
   unsigned numThreadsMax;
   UInt64 expectedDataSize;
@@ -102,9 +102,9 @@ typedef struct _CMtCoder
   IMtCoderCallback2 *mtCallback;
   void *mtCallbackObject;
 
-  
+
   /* internal variables */
-  
+
   size_t allocatedBufsSize;
 
   CAutoResetEvent readEvent;
