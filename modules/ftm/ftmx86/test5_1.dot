@@ -13,7 +13,7 @@ subgraph cpu0 {
   B_B     [type="block",  tperiod=1000000000];
 
   Evt_B -> B_B;
-  
+
 
 }
 

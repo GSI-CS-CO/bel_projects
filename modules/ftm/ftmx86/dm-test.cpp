@@ -16,7 +16,7 @@
 int main(int argc, char* argv[]) {
 
   Graph g;
-  
+
 
   int opt, error = 0;
   std::string dirname, netaddress;
@@ -32,7 +32,7 @@ int main(int argc, char* argv[]) {
   bool sim = false, verbose = false;
 
 
-  // start getopt 
+  // start getopt
   while ((opt = getopt(argc, argv, "i:s:r:c:p:v")) != -1) {
      switch (opt) {
        case 'i':
@@ -52,15 +52,15 @@ int main(int argc, char* argv[]) {
          break;
        case 'v':
           verbose  = true;
-         break;    
+         break;
        case ':':
-       
+
        case '?':
           error = -2;
           break;
-          
+
        default:
-          std::cerr << program << ": bad getopt result" << std::endl; 
+          std::cerr << program << ": bad getopt result" << std::endl;
           error = -3;
      }
    }
@@ -87,10 +87,10 @@ int main(int argc, char* argv[]) {
   netaddress = std::string(argv[optind]);
   dirname = std::string(argv[optind+1]);
 
- 
+
   dir_err = mkdir(dirname.c_str(), ACCESSPERMS);
 
- 
+
 
   if (netaddress == "sim") sim = true;
 
@@ -116,14 +116,14 @@ int main(int argc, char* argv[]) {
     genCases += itThr.size();
   }
 
-  
+
   std::string cmd = "exec rm " + dirname + "/*";
   if (dir_err == -1) rem_err = system(cmd.c_str());
   else {std::cout << "Created directory" << dirname << std::endl;}
 
   if (rem_err == 0) std::cout << "Cleared directory" << dirname << std::endl;
-  
-  if (dir_err == -1 && rem_err != 0) 
+
+  if (dir_err == -1 && rem_err != 0)
   {
     std::cerr << "Error creating/clearing directory" << dirname << std::endl;
     exit(1);
@@ -131,7 +131,7 @@ int main(int argc, char* argv[]) {
 
   std::ofstream outfile;
   outfile.open(dirname + "/dm-test.log");
-  //  
+  //
   //outfile << "Created " << std::dec << range << " test range in " << std::dec << ((after - before) / 1000000ULL) << " ms" << std::endl;
   std::cout << "Given Startseed 0x" <<  std::setfill('0') << std::setw(10) << std::hex << seed <<  std::endl;
   outfile << "Given Startseed 0x" <<  std::setfill('0') << std::setw(10) << std::hex << seed <<  std::endl;
@@ -139,11 +139,11 @@ int main(int argc, char* argv[]) {
   outfile << "Given Range" <<  std::setfill(' ') << std::setw(10) << std::dec << range << ", " << percentage << "% coverage, Final Range " << (( range * percentage) / 100 ) <<  std::endl;
   std::cout << "Created " << std::dec << genCases << " test cases in " << std::dec << ((after - before) / 1000000ULL) << " ms" << std::endl;
 
- 
+
   uint64_t intervalCnt = 0;
   uint64_t fuckUpCnt = 0;
 
-  
+
 
   for (auto& itThr : testData) {
     for (auto& itVal : itThr) {
@@ -154,7 +154,7 @@ int main(int argc, char* argv[]) {
       bool isSafe = false;
       if (verbose) cdm.verboseOn();
       //cdm.inspectQueues("A_B", queueDbg);
-      //cdm.inspectQueues("B_B", queueDbg); 
+      //cdm.inspectQueues("B_B", queueDbg);
       //cdm.inspectQueues("C_B", queueDbg);
       //std::cout << queueDbg << std::endl;
 
@@ -191,10 +191,10 @@ int main(int argc, char* argv[]) {
         outfile << " Time Total: " << std::setfill(' ') << std::setw(10) << std::dec << ((after - beginning) / 1000000ULL) << " Avg: " << std::setfill(' ') << std::setw(10) << std::dec << (average / 1000000ULL) << " ms"  << std::endl;
         std::flush(outfile);
       }
-      
-      
+
+
     }
-  }  
+  }
   average = sum / intervalCnt;
   outfile << "Ran " << std::dec << intervalCnt << " of " << (( range * percentage) / 100 ) << " test range. " << fuckUpCnt << " f**kups" << std::endl;
   outfile << "Time Total: " << std::setfill(' ') << std::setw(10) << std::dec << ((after - beginning) / 1000000ULL) << " Avg: " << std::setfill(' ') << std::setw(10) << std::dec << (average / 1000000ULL) << " ms"  << std::endl;

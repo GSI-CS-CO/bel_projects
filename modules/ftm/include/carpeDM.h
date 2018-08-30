@@ -3,6 +3,7 @@
 
 #define SDB_VENDOR_GSI      0x0000000000000651ULL
 #define SDB_DEVICE_LM32_RAM 0x54111351
+#define SDB_DEVICE_DIAG     0x18060200
 
 #include <stdio.h>
 #include <iostream>
@@ -39,9 +40,10 @@ private:
   std::map<uint8_t, uint8_t> cpuIdxMap;
 
   Socket ebs;
-  Device ebd;  
-  std::vector<struct sdb_device> cpuDevs;  
-  std::vector<struct sdb_device> ecaDevs; 
+  Device ebd;
+  std::vector<struct sdb_device> cpuDevs;
+  std::vector<struct sdb_device> cluTimeDevs;
+  std::vector<struct sdb_device> diagDevs;
 
   int cpuQty = -1;
   HashMap hm;
@@ -70,7 +72,7 @@ private:
   bool simDisconnect();
   void simAdrTranslation (uint32_t a, uint8_t& cpu, uint32_t& arIdx);
   void simRamWrite (uint32_t a, eb_data_t d);
-  void simRamRead (uint32_t a, eb_data_t* d); 
+  void simRamRead (uint32_t a, eb_data_t* d);
   int  simWriteCycle(vAdr va, vBuf& vb);
   vBuf simReadCycle(vAdr va);
 
@@ -86,39 +88,39 @@ private:
   void addition(Graph& g);
   void subtraction(Graph& g);
   void nullify();
-  
+
   //FIXME this ought to be a variadic template
   int safeguardTransaction(int (CarpeDM::*func)(Graph&, bool), Graph& g, bool force);
   int safeguardTransaction(int (CarpeDM::*func)(bool), bool force);
 
   int add(Graph& g, bool force);
   int remove(Graph& g, bool force);
-  int keep(Graph& g, bool force);  
+  int keep(Graph& g, bool force);
   int overwrite(Graph& g,  bool force);
   int clear_raw(bool force);
-  bool validate(Graph& g, AllocTable& at);
+  bool validate(Graph& g, AllocTable& at, bool force);
 
   // Upload
   vEbwrs gatherUploadVector(std::set<uint8_t> moddedCpus, uint32_t modCnt, uint8_t opType);
   vEbwrs& createModInfo     (uint8_t cpu, uint32_t modCnt, uint8_t opType, vEbwrs& ew, uint32_t adrOffs);
   vEbwrs& createSchedModInfo(uint8_t cpu, uint32_t modCnt, uint8_t opType, vEbwrs& ew);
   vEbwrs& createCmdModInfo  (uint8_t cpu, uint32_t modCnt, uint8_t opType, vEbwrs& ew);
-  int upload(uint8_t opType); //Upload processed Graph to LM32 SoC via Etherbone
-  
+  int upload(uint8_t opType, std::vector<QueueReport>& vQr); //Upload processed Graph to LM32 SoC via Etherbone
+  int upload(uint8_t opType) {std::vector<QueueReport> vQr; return upload(opType, vQr);}
   // Download
   vEbrds gatherDownloadBmpVector();
   vEbrds gatherDownloadDataVector();
-  
+
   void parseDownloadData(const vBuf& downloadData);
   void parseDownloadMgmt(const vBuf& downloadData);
   void checkTablesForSubgraph(Graph& g);
-  
+
   void resetThrMsgCnt(uint8_t cpuIdx, uint8_t thrIdx);
   void baseUploadOnDownload();
   void prepareUpload(); //Process Graph for uploading to LM32 SoC
-  void mergeUploadDuplicates(vertex_t borg, vertex_t victim); 
+  void mergeUploadDuplicates(vertex_t borg, vertex_t victim);
 
-  void addToDict(Graph& g);      
+  void addToDict(Graph& g);
   void removeFromDict(Graph& g);
   int getIdleThread(uint8_t cpuIdx);
 
@@ -139,19 +141,21 @@ private:
   bool isSafetyCritical(vertex_set_t& covenants);
   bool verifySafety(vertex_t v, vertex_t goal, vertex_set_t& sV, Graph& g );
   //Coverage Tests for safe2remove
-  
+
   bool coverage3IsSeedValid(uint64_t seed);
   Graph& coverage3GenerateBase(Graph& g);
   Graph& coverage3GenerateStatic(Graph& g, uint64_t seed);
-  Graph& coverage3GenerateDynamic(Graph& g, uint64_t seed);   
+  Graph& coverage3GenerateDynamic(Graph& g, uint64_t seed);
   std::string coverage3GenerateCursor(Graph& g, uint64_t seed );
-  
+
   vertex_set_t getAllCursors(bool activeOnly);
   vStrC getGraphPatterns(Graph& g);
-  bool isSafeToRemove(std::set<std::string> patterns, std::string& report);
+
+  bool isSafeToRemove(std::set<std::string> patterns, std::string& report, std::vector<QueueReport>& vQr);
+  bool isSafeToRemove(std::set<std::string> patterns, std::string& report) {std::vector<QueueReport> vQr; return isSafeToRemove(patterns, report, vQr);}
   const std::string readFwIdROMTag(const std::string& fwIdROM, const std::string& tag, size_t maxlen, bool stopAtCr );
 
-  vBuf compress(const vBuf& in); 
+  vBuf compress(const vBuf& in);
   vBuf decompress(const vBuf& in);
 
   void readMgmtLLMeta();
@@ -173,13 +177,19 @@ private:
   vEbwrs& setThrPrepTime(uint8_t cpuIdx, uint8_t thrIdx, uint64_t t, vEbwrs& ew);
   vEbwrs& createCommandBurst(Graph& g, vEbwrs& ew);
   vEbwrs& createCommand(const std::string& targetName, uint8_t cmdPrio, mc_ptr mc, vEbwrs& ew);
+  vEbwrs& deactivateOrphanedCommands(std::vector<QueueReport>& vQr, vEbwrs& ew);
+  vEbwrs& clearHealth(uint8_t cpuIdx, vEbwrs& ew);
+  vEbwrs& resetThrMsgCnt(uint8_t cpuIdx, uint8_t thrIdx, vEbwrs& ew);
 
   int send(vEbwrs& ew);
 
   vEbwrs& staticFlush(const std::string& sBlock, bool prioIl, bool prioHi, bool prioLo, vEbwrs& ew, bool force);
 
-  QueueElement& getQelement(Graph& g, AllocTable& at, uint8_t idx, amI allocIt, QueueElement& qe);
-  QueueReport& getQReport(Graph& g, AllocTable& at, const std::string& blockName, QueueReport& qr);
+  QueueElement& getQelement(Graph& g, AllocTable& at, uint8_t idx, amI allocIt, QueueElement& qe, const vStrC& futureOrphan);
+  QueueElement& getQelement(Graph& g, AllocTable& at, uint8_t idx, amI allocIt, QueueElement& qe) {vStrC fo; return getQelement(g, at, idx, allocIt, qe, fo);}
+
+  QueueReport& getQReport(Graph& g, AllocTable& at, const std::string& blockName, QueueReport& qr, const vStrC& futureOrphan);
+
 
 
   int   ebWriteCycle(Device& dev, vAdr va, vBuf& vb, vBl vcs);
@@ -197,15 +207,15 @@ private:
   int write64b(uint32_t startAdr, uint64_t d);
 
   Graph& getUpGraph(); //Returns the Upload Graph for CPU <cpuIdx>
-  
+
 protected:
 
 
 
 
 public:
-  CarpeDM()                                        : sLog(std::cout),  sErr(std::cerr) {Validation::init();} 
-  CarpeDM(std::ostream& sLog)                      : sLog(sLog),       sErr(std::cerr) {Validation::init();} 
+  CarpeDM()                                        : sLog(std::cout),  sErr(std::cerr) {Validation::init();}
+  CarpeDM(std::ostream& sLog)                      : sLog(sLog),       sErr(std::cerr) {Validation::init();}
   CarpeDM(std::ostream& sLog, std::ostream& sErr)  : sLog(sLog),       sErr(sErr)      {Validation::init();}
   ~CarpeDM() {};
 
@@ -214,16 +224,16 @@ public:
                bool disconnect(); //Close connection
                // SDB and DM HW detection Functions
                bool isValidDMCpu(uint8_t cpuIdx);              // Check if CPU is registered as running a valid firmware
-  const std::string getFwIdROM(uint8_t cpuIdx);  
+  const std::string getFwIdROM(uint8_t cpuIdx);
                 int getFwVersion(const std::string& fwIdROM);  // Retrieve the Firmware Version of cpu at sdb dev array idx <cpuIdx>
            uint32_t getIntBaseAdr(const std::string& fwIdROM); // mockup for now, this info should be taken from found firmware binary
            uint32_t getSharedOffs(const std::string& fwIdROM);
            uint32_t getSharedSize(const std::string& fwIdROM);
                 int getCpuQty()   const;                       // Return number of found CPUs (not necessarily valid ones!)
-               bool isCpuIdxValid(uint8_t cpuIdx);  
+               bool isCpuIdxValid(uint8_t cpuIdx);
 
 //Internal Hash and Groupstable ///////////////////////////////////////////////////////////////////////////////////////////////
-               // Name/Hash Dict 
+               // Name/Hash Dict
                void clearHashDict();                          //Clear hash table
         std::string storeHashDict();                          //save hash table to serialised string
                void loadHashDict(const std::string& s);       //initiallise hash table from serialised string
@@ -233,21 +243,21 @@ public:
                bool isInHashDict(const std::string& name);
                bool isHashDictEmpty();
                 int getHashDictSize();
-             
-               // Group/Entry/Exit Table 
-               std::string storeGroupsDict(); 
+
+               // Group/Entry/Exit Table
+               std::string storeGroupsDict();
                void loadGroupsDict(const std::string& s);
                void storeGroupsDictFile(const std::string& fn);
-               void loadGroupsDictFile(const std::string& fn); 
+               void loadGroupsDictFile(const std::string& fn);
                void clearGroupsDict(); //Clear pattern table
                 int getGroupsSize();
-              
+
 // Aux Infos from Table lookups and static computation  /////////////////////////////////////////////////////////////////////////////////////////////////////
      const uint32_t getCmdInc(uint32_t hash, uint8_t prio);
            uint32_t getThrCmdAdr(uint8_t cpuIdx);                                       // Returns the external address of a thread's command register area
            uint32_t getThrInitialNodeAdr(uint8_t cpuIdx, uint8_t thrIdx);               // Returns the external address of a thread's initial node register
            uint32_t getThrCurrentNodeAdr(uint8_t cpuIdx, uint8_t thrIdx);               // Returns the external address of a thread's current node register
-         const vAdr getCmdWrAdrs(uint32_t hash, uint8_t prio); 
+         const vAdr getCmdWrAdrs(uint32_t hash, uint8_t prio);
             uint8_t getNodeCpu(const std::string& name, TransferDir dir);               // shortcut to obtain a node's cpu by its name
            uint32_t getNodeAdr(const std::string& name, TransferDir dir, AdrType adrT); // shortcut to obtain a node's address by its name
   const std::string getNodePattern (const std::string& sNode);
@@ -259,25 +269,25 @@ public:
   const std::string getBeamprocEntryNode(const std::string& sBeamproc);
   const std::string getBeamprocExitNode(const std::string& sBeamproc);
            uint64_t getModTime() { return modTime; }
- 
+
 // Text File IO /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
                void writeTextFile(const std::string& fn, const std::string& s);
         std::string readTextFile(const std::string& fn);
-              
+
 // Graphs to Dot
              Graph& parseDot(const std::string& s, Graph& g); //Parse a .dot string to create unprocessed Graph
         std::string createDot( Graph& g, bool filterMeta);
                void writeDotFile(const std::string& fn, Graph& g, bool filterMeta);
                void writeDownDotFile(const std::string& fn, bool filterMeta);
                void writeUpDotFile(const std::string& fn, bool filterMeta);
-              
+
 // Schedule Manipulation ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
                 int assignNodesToCpus();                            // NOT YET IMPLEMENTED // TODO assign a cpu to each node object. Currently taken from input .dot
                 int download();                                     // Download binary from LM32 SoC and create Graph
         std::string downloadDot(bool filterMeta);
                void downloadDotFile(const std::string& fn, bool filterMeta);
-                int addDot(const std::string& s);                   // add all nodes and/or edges in dot file
-                int addDotFile(const std::string& fn);
+                int addDot(const std::string& s, bool force);                   // add all nodes and/or edges in dot file
+                int addDotFile(const std::string& fn, bool force);
                 int overwriteDot(const std::string& s, bool force); // add all nodes and/or edges in dot file
                 int overwriteDotFile(const std::string& fn, bool force);
                 int keepDot(const std::string& s, bool force);      // removes all nodes NOT in input file
@@ -301,10 +311,12 @@ public:
            uint64_t getThrDeadline(uint8_t cpuIdx, uint8_t thrIdx);
            uint64_t getThrStartTime(uint8_t cpuIdx, uint8_t thrIdx);
            uint32_t getThrStart(uint8_t cpuIdx);
-           uint64_t getThrPrepTime(uint8_t cpuIdx, uint8_t thrIdx); 
+           uint64_t getThrPrepTime(uint8_t cpuIdx, uint8_t thrIdx);
                bool isThrRunning(uint8_t cpuIdx, uint8_t thrIdx);                   // true if thread <thrIdx> is running
-               bool isSafeToRemove(const std::string& pattern, std::string& report);
-               bool isSafeToRemove(Graph& gRem, std::string& report);
+               bool isSafeToRemove(const std::string& pattern, std::string& report, std::vector<QueueReport>& vQr);
+               bool isSafeToRemove(const std::string& pattern, std::string& report) {std::vector<QueueReport> vQr; return isSafeToRemove(pattern, report, vQr); }
+               bool isSafeToRemove(Graph& gRem, std::string& report, std::vector<QueueReport>& vQr);
+               bool isSafeToRemove(Graph& gRem, std::string& report) {std::vector<QueueReport> vQr; return isSafeToRemove(gRem, report, vQr);}
 std::pair<int, int> findRunningPattern(const std::string& sPattern); // get cpu and thread assignment of running pattern
                bool isPatternRunning(const std::string& sPattern);                  // true if Pattern <x> is running
                void updateModTime();
@@ -334,7 +346,7 @@ std::pair<int, int> findRunningPattern(const std::string& sPattern); // get cpu 
 // Diagnostics //////////////////////////////////////////////////////////////
                void verboseOn()  {verbose = true;}                              // Turn on Verbose Output
                void verboseOff() {verbose = false;}                             // Turn off Verbose Output
-               bool isVerbose()  const {return verbose;}                        // Tell if Output is set to Verbose 
+               bool isVerbose()  const {return verbose;}                        // Tell if Output is set to Verbose
                void debugOn()  {debug = true;}                                  // Turn on Verbose Output
                void debugOff() {debug = false;}                                 // Turn off Verbose Output
                bool isDebug()  const {return debug;}                            // Tell if Output is set to Verbose
@@ -346,8 +358,15 @@ std::pair<int, int> findRunningPattern(const std::string& sPattern); // get cpu 
                void optimisedS2ROff(){optimisedS2R = false;}                    // Optimised Safe2remove off
                bool isOptimisedS2R() const {return optimisedS2R;}               // tell if Safe2remove optimisation is on or off
       HealthReport& getHealth(uint8_t cpuIdx, HealthReport &hr);                // FIXME why reference in, reference out ? its not like you can add to this report ...
+               void clearHealth(uint8_t cpuIdx);
+               void clearHealth();
        QueueReport& getQReport(const std::string& blockName, QueueReport& qr);  // FIXME why reference in, reference out ? its not like you can add to this report ...
            uint64_t getDmWrTime();
+    HwDelayReport& getHwDelayReport(HwDelayReport& hdr);
+               void clearHwDiagnostics();
+               void startStopHwDiagnostics(bool enable);
+               void configHwDiagnostics(uint64_t timeIntvl, uint32_t stallIntvl);
+               void configFwDiagnostics(uint64_t warnThrshld);
 
        std::string& inspectQueues(const std::string& blockName, std::string& report);      // Show all command fields in Block Queue
                void show(const std::string& title, const std::string& logDictFile, TransferDir dir, bool filterMeta );

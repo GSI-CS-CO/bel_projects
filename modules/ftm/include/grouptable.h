@@ -33,7 +33,7 @@ struct GroupMeta {
   std::string beamproc; //name of entry node
   bool beamprocEntry, beamprocExit;
 
-  
+
   GroupMeta(const std::string& node) : node(node), pattern(sUndefined),  patternEntry(false), patternExit(false), beamproc(sUndefined), beamprocEntry(false), beamprocExit(false) {}
   GroupMeta() : node(sUndefined), pattern(sUndefined),  patternEntry(false), patternExit(false), beamproc(sUndefined), beamprocEntry(false), beamprocExit(false) {}
 
@@ -51,7 +51,7 @@ struct GroupMeta {
 
 
   }
-  
+
 };
 
 //necessary to avoid confusion with classnames elsewhere
@@ -75,14 +75,14 @@ typedef boost::multi_index_container<
     ordered_non_unique <
       tag<Groups::Pattern>,  BOOST_MULTI_INDEX_MEMBER(GroupMeta, std::string, pattern)>,
     ordered_non_unique <
-      tag<Groups::Beamproc>,  BOOST_MULTI_INDEX_MEMBER(GroupMeta, std::string, beamproc)>  
-  >    
+      tag<Groups::Beamproc>,  BOOST_MULTI_INDEX_MEMBER(GroupMeta, std::string, beamproc)>
+  >
  > GroupMeta_set;
 
 typedef GroupMeta_set::iterator pmI;
 
 /* accepted
-  
+
   //the iterator dilemma
 
 ivs.get<1>() gives you index, not iterator. You need to call begin(), end() and other methods on that index to get iterator (like you do on containers). You better use typedef though:
@@ -106,7 +106,7 @@ private:
   {
       ar & a;
   }
-  
+
   GroupMeta_set a;
 
 
@@ -130,7 +130,7 @@ public:
   template <typename Tag>
   pmI lookup(const std::string& s)   {auto tmp = a.get<Tag>().find(s); return a.iterator_to(*tmp);}
 
-  
+
   //Lookup a node, create if non existent. Single return value as node names are uniqu./d
   pmI lookupOrCreateNode(const std::string& sNode);
 
@@ -138,22 +138,22 @@ public:
   template <typename Tag>
   bool remove(const std::string& s) {
     auto range = a.get<Tag>().equal_range(s);
-    auto it = a.get<Tag>().erase(range.first, range.second); 
+    auto it = a.get<Tag>().erase(range.first, range.second);
     return (it != a.end() ? true : false);
   };
 
   void clear() { a.clear(); }
 
-  void setPattern (pmI it, const std::string& sNew, bool entry, bool exit)  { a.modify(it, [sNew, entry, exit](GroupMeta& p){p.pattern  = sNew; p.patternEntry  = entry; p.patternExit  = exit;}); } 
+  void setPattern (pmI it, const std::string& sNew, bool entry, bool exit)  { a.modify(it, [sNew, entry, exit](GroupMeta& p){p.pattern  = sNew; p.patternEntry  = entry; p.patternExit  = exit;}); }
   void setPattern (pmI it, const std::string& sNew) { setPattern(it, sNew, false, false); }
   void setPattern (const std::string& sNode, const std::string& sNew, bool entry, bool exit) { setPattern(lookupOrCreateNode(sNode), sNew, entry, exit); }
   void setPattern (const std::string& sNode, const std::string& sNew) { setPattern(sNode, sNew, false, false); }
-  
-  void setBeamproc (pmI it, const std::string& sNew, bool entry, bool exit)  { a.modify(it, [sNew, entry, exit](GroupMeta& p){p.beamproc = sNew; p.beamprocEntry = entry; p.beamprocExit = exit;}); } 
+
+  void setBeamproc (pmI it, const std::string& sNew, bool entry, bool exit)  { a.modify(it, [sNew, entry, exit](GroupMeta& p){p.beamproc = sNew; p.beamprocEntry = entry; p.beamprocExit = exit;}); }
   void setBeamproc (pmI it, const std::string& sNew) { setBeamproc(it, sNew, false, false); }
   void setBeamproc (const std::string& sNode, const std::string& sNew, bool entry, bool exit) { setBeamproc(lookupOrCreateNode(sNode), sNew, entry, exit); } ;
   void setBeamproc (const std::string& sNode, const std::string& sNew) { setBeamproc(sNode, sNew, false, false); }
-  
+
   template <typename Tag, std::string GroupMeta::*group>
   vStrC getGroups(const std::string& sNode) {
     vStrC res; auto x  = a.get<Tag>().equal_range(sNode);
@@ -164,12 +164,12 @@ public:
   template <typename Tag, bool GroupMeta::*point>
   vStrC getGroupNodes(const std::string& s) {
     //if we get this high level call, there ought to be information in the groups dict. if not, something is wrong
-    vStrC res; auto x  = a.get<Tag>().equal_range(s); 
+    vStrC res; auto x  = a.get<Tag>().equal_range(s);
     for (auto it = x.first; it != x.second; ++it) {
       if (*it.*point) {
         res.push_back(it->node);
       }
-    }   
+    }
     return res;
   }
 
@@ -183,7 +183,7 @@ public:
   vStrC getAllPatterns();
 
 
-  
+
 
 
   const GroupMeta_set& getTable() const { return a; }

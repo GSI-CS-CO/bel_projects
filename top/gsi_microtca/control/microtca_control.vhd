@@ -264,7 +264,6 @@ architecture rtl of microtca_control is
   signal s_lvds_act_led_mtca4_clk   : std_logic_vector(4 downto 1);
   signal s_lvds_act_led_libera      : std_logic_vector(4 downto 1);
 
-
   constant io_mapping_table : t_io_mapping_table_arg_array(0 to 38) :=
   (
  -- Name[12 Bytes], Special Purpose, SpecOut, SpecIn, Index, Direction,   Channel,  OutputEnable, Termination, Logic Level
@@ -686,7 +685,7 @@ begin
 
   -- Libera trigger buffer enable from SW
   -- USE THIS ONLY when FTRN is not in the crate or is on the AMC extender with cut PORT 6-7 lines!!!
-  s_libera_trig_buf_en_sw <= '1' when (s_gpio_out(6 downto 4) = "101" and s_mtca4_bpl_buf_en_sw='1') else '0';
+  s_libera_trig_buf_en_sw <= '1' when (s_mtca4_bpl_buf_en_sw='1') else '0';
 
   -- enable libera trigger buffers when
   -- in Libera Slot8 or when

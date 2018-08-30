@@ -38,7 +38,7 @@ enum class FormatNum {DEC, HEX, HEX16, HEX32, HEX64, BIT, BOOL};
     void pushEventInfo(const Event& el) const;
     void pushCommandInfo(const Command& el) const;
     void pushPaintedEyecandy(const Node& el) const;
-    void pushStartEyecandy(const Node& el) const; 
+    void pushStartEyecandy(const Node& el) const;
     void pushStopEyecandy(const Node& el) const;
     void pushMembershipInfo(const Node& el) const;
   public:
@@ -56,4 +56,4 @@ enum class FormatNum {DEC, HEX, HEX16, HEX32, HEX64, BIT, BOOL};
 
   };
 
-#endif  
+#endif

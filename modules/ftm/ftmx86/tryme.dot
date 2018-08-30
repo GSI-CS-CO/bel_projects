@@ -1,5 +1,5 @@
 digraph g {
-  
+
 name="SIS18";
 
 graph [];
@@ -9,11 +9,11 @@ edge  [type="defdst"];
     node  [cpu="0"];
 
     EVT_01 [type="tmsg", fid="15", gid="4095", evtno="4095", sid="4095", bpid="16383",  par="0xd15ea5eddeadbee0", toffs="0"];
-    
+
     B_00 [type="block"  , tperiod="1000000000"];
 
     EVT_01 -> B_00   -> EVT_01;
-  
-  } 
 
-} 
+  }
+
+}
