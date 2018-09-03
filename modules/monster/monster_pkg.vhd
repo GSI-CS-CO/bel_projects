@@ -112,7 +112,7 @@ package monster_pkg is
       g_lm32_MSIs            : natural := 1;
       g_lm32_ramsizes        : natural := 131072/4; -- in 32b words
       g_lm32_init_files      : string; -- multiple init files must be seperated by a semicolon ';'
-	g_lm32_profiles        : string; -- multiple profiles must be seperated by a semicolon ';'
+      g_lm32_profiles        : string; -- multiple profiles must be seperated by a semicolon ';'
       g_lm32_are_ftm         : boolean := false;
       g_en_tempsens          : boolean := false;
       g_delay_diagnostics    : boolean := false;
@@ -264,7 +264,6 @@ package monster_pkg is
       mil_lemo_nled_o        : out   std_logic_vector(4 downto 1);
       mil_lemo_out_en_o      : out   std_logic_vector(4 downto 1);
       mil_lemo_data_i        : in    std_logic_vector(4 downto 1):= (others => '0');
-
 --      mil_io1_o              : out   std_logic;
 --      mil_io1_is_in_o        : out   std_logic;
 --      mil_nled_io1_o         : out   std_logic;
@@ -538,7 +537,7 @@ package body monster_pkg is
     variable res : string(1 to str'length*times);
   begin
     for i in 0 to times-1 loop
-	   res(i*str'length+1 to (i+1)*str'length) := str;
+      res(i*str'length+1 to (i+1)*str'length) := str;
     end loop;
     return res;
   end f_string_list_repeat;
