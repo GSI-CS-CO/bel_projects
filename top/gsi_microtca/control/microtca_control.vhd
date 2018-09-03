@@ -369,26 +369,27 @@ begin
 
   main : monster
     generic map(
-      g_family          => c_family,
-      g_project         => c_project,
-      g_flash_bits      => 25,
-      g_lvds_inout      => 17, -- 5 LEMOs on front panel, 8 MTCA4 on BPL, 4 MTCA4 clk on BPL
-      g_lvds_in         => 0,
-      g_lvds_out        => 4,  -- 4 libera triggers at BPL
-      g_gpio_out        => 13,  -- 8 on-boards LEDs, 1 test mode enable, 1 IO5 input clock buffer enable
-      g_gpio_in         => 10, -- 4 FPGA HEX switch, 4 CPLD HEX switch, 1 FPGA button, 1 CPLD button
-      g_fixed           => 0,
-      g_lvds_invert     => false,
-      g_en_usb          => true,
-      g_en_lcd          => true,
-      g_en_user_ow      => false,
-      g_en_tempsens     => true,
-      g_en_pcie         => true,
-      g_io_table        => io_mapping_table,
-      g_lm32_cores      => c_cores,
-      g_lm32_ramsizes   => c_lm32_ramsizes/4,
-      g_lm32_init_files => f_string_list_repeat(c_initf_name, c_cores),
-      g_lm32_profiles   => f_string_list_repeat(c_profile_name, c_cores)
+      g_family            => c_family,
+      g_project           => c_project,
+      g_flash_bits        => 25,
+      g_lvds_inout        => 17, -- 5 LEMOs on front panel, 8 MTCA4 on BPL, 4 MTCA4 clk on BPL
+      g_lvds_in           => 0,
+      g_lvds_out          => 4,  -- 4 libera triggers at BPL
+      g_gpio_out          => 13,  -- 8 on-boards LEDs, 1 test mode enable, 1 IO5 input clock buffer enable
+      g_gpio_in           => 10, -- 4 FPGA HEX switch, 4 CPLD HEX switch, 1 FPGA button, 1 CPLD button
+      g_fixed             => 0,
+      g_lvds_invert       => false,
+      g_en_usb            => true,
+      g_en_lcd            => true,
+      g_en_user_ow        => false,
+      g_en_tempsens       => true,
+      g_en_pcie           => true,
+      g_delay_diagnostics => true,
+      g_io_table          => io_mapping_table,
+      g_lm32_cores        => c_cores,
+      g_lm32_ramsizes     => c_lm32_ramsizes/4,
+      g_lm32_init_files   => f_string_list_repeat(c_initf_name, c_cores),
+      g_lm32_profiles     => f_string_list_repeat(c_profile_name, c_cores)
     )
     port map(
       core_clk_20m_vcxo_i    => clk_20m_vcxo_i,
