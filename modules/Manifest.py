@@ -25,6 +25,7 @@ modules = {
     "mil",
     "wb_mil_scu",
     "wb_arria_reset",
+    "dm_diag",
     "ftm",
     "lvds",
     "monster",

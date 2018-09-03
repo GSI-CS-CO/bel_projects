@@ -11,7 +11,7 @@
 #define ID_FID_POS              60
 #define ID_FID_MSK              ((1 << ID_FID_BITS ) - 1)
 
-typedef struct { 
+typedef struct {
   const std::string& s;
   const uint8_t pos;
   const uint8_t bits;

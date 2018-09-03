@@ -68,10 +68,10 @@ static size_t Utf16_To_Utf8_Calc(const UInt16 *src, const UInt16 *srcLim)
     UInt32 val;
     if (src == srcLim)
       return size;
-    
+
     size++;
     val = *src++;
-   
+
     if (val < 0x80)
       continue;
 
@@ -103,9 +103,9 @@ static Byte *Utf16_To_Utf8(Byte *dest, const UInt16 *src, const UInt16 *srcLim)
     UInt32 val;
     if (src == srcLim)
       return dest;
-    
+
     val = *src++;
-    
+
     if (val < 0x80)
     {
       *dest++ = (char)val;
@@ -135,7 +135,7 @@ static Byte *Utf16_To_Utf8(Byte *dest, const UInt16 *src, const UInt16 *srcLim)
         continue;
       }
     }
-    
+
     dest[0] = _UTF8_HEAD(2, val);
     dest[1] = _UTF8_CHAR(1, val);
     dest[2] = _UTF8_CHAR(0, val);
@@ -201,9 +201,9 @@ static SRes Utf16_To_Char(CBuf *buf, const UInt16 *s
 static WRes MyCreateDir(const UInt16 *name)
 {
   #ifdef USE_WINDOWS_FILE
-  
+
   return CreateDirectoryW(name, NULL) ? 0 : GetLastError();
-  
+
   #else
 
   CBuf buf;
@@ -220,7 +220,7 @@ static WRes MyCreateDir(const UInt16 *name)
   == 0 ? 0 : errno;
   Buf_Free(&buf, &g_Alloc);
   return res;
-  
+
   #endif
 }
 
@@ -440,21 +440,21 @@ int MY_CDECL main(int numargs, char *args[])
       LookToRead2_Init(&lookStream);
     }
   }
-    
+
   CrcGenerateTable();
-    
+
   SzArEx_Init(&db);
-    
+
   if (res == SZ_OK)
   {
     res = SzArEx_Open(&db, &lookStream.vt, &allocImp, &allocTempImp);
   }
-  
+
   if (res == SZ_OK)
   {
     char *command = args[1];
     int listCommand = 0, testCommand = 0, fullPaths = 0;
-    
+
     if (strcmp(command, "l") == 0) listCommand = 1;
     else if (strcmp(command, "t") == 0) testCommand = 1;
     else if (strcmp(command, "e") == 0) { }
@@ -519,7 +519,7 @@ int MY_CDECL main(int numargs, char *args[])
 
           fileSize = SzArEx_GetFileSize(&db, i);
           UInt64ToStr(fileSize, s, 10);
-          
+
           if (SzBitWithVals_Check(&db.MTime, i))
             ConvertFileTimeToString(&db.MTime.Vals[i], t);
           else
@@ -529,7 +529,7 @@ int MY_CDECL main(int numargs, char *args[])
               t[j] = ' ';
             t[j] = '\0';
           }
-          
+
           Print(t);
           Print(" ");
           Print(attr);
@@ -551,7 +551,7 @@ int MY_CDECL main(int numargs, char *args[])
         res = PrintString(temp);
         if (res != SZ_OK)
           break;
-        
+
         if (isDir)
           Print("/");
         else
@@ -563,7 +563,7 @@ int MY_CDECL main(int numargs, char *args[])
           if (res != SZ_OK)
             break;
         }
-        
+
         if (!testCommand)
         {
           CSzFile outFile;
@@ -571,7 +571,7 @@ int MY_CDECL main(int numargs, char *args[])
           size_t j;
           UInt16 *name = (UInt16 *)temp;
           const UInt16 *destPath = (const UInt16 *)name;
- 
+
           for (j = 0; name[j] != 0; j++)
             if (name[j] == '/')
             {
@@ -584,7 +584,7 @@ int MY_CDECL main(int numargs, char *args[])
               else
                 destPath = name + j + 1;
             }
-    
+
           if (isDir)
           {
             MyCreateDir(destPath);
@@ -599,21 +599,21 @@ int MY_CDECL main(int numargs, char *args[])
           }
 
           processedSize = outSizeProcessed;
-          
+
           if (File_Write(&outFile, outBuffer + offset, &processedSize) != 0 || processedSize != outSizeProcessed)
           {
             PrintError("can not write output file");
             res = SZ_ERROR_FAIL;
             break;
           }
-          
+
           if (File_Close(&outFile))
           {
             PrintError("can not close output file");
             res = SZ_ERROR_FAIL;
             break;
           }
-          
+
           #ifdef USE_WINDOWS_FILE
           if (SzBitWithVals_Check(&db.Attribs, i))
           {
@@ -637,13 +637,13 @@ int MY_CDECL main(int numargs, char *args[])
   ISzAlloc_Free(&allocImp, lookStream.buf);
 
   File_Close(&archiveStream.file);
-  
+
   if (res == SZ_OK)
   {
     Print("\nEverything is Ok\n");
     return 0;
   }
-  
+
   if (res == SZ_ERROR_UNSUPPORTED)
     PrintError("decoder doesn't support this archive");
   else if (res == SZ_ERROR_MEM)
@@ -656,6 +656,6 @@ int MY_CDECL main(int numargs, char *args[])
     UInt64ToStr(res, s, 0);
     PrintError(s);
   }
-  
+
   return 1;
 }

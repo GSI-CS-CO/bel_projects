@@ -25,23 +25,23 @@ void VisitorValidation::visit(const Flow& el) const  {
 void VisitorValidation::visit(const Flush& el) const {
   eventSequenceCheck();
   //targetcheck
-    
+
 }
 
 void VisitorValidation::visit(const Noop& el) const {
   eventSequenceCheck();
   //targetcheck
-  
+
 }
 
 void VisitorValidation::visit(const Wait& el) const {
   eventSequenceCheck();
   //targetcheck
-  
+
 }
 
 void VisitorValidation::visit(const CmdQMeta& el) const {
-  metaSequenceCheck();  
+  metaSequenceCheck();
 }
 
 void VisitorValidation::visit(const CmdQBuffer& el) const {

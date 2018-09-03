@@ -1,8 +1,8 @@
 #include "mempool.h"
 
-void MemPool::initPool() { 
+void MemPool::initPool() {
     pool.clear();
-    //Never issue <baseAddress - (baseAddress + bmpBits -1) >, as this is where Mgmt bitmap vector resides  
+    //Never issue <baseAddress - (baseAddress + bmpBits -1) >, as this is where Mgmt bitmap vector resides
     for(uint32_t adr = startOffs; adr < endOffs; adr += _MEM_BLOCK_SIZE) { pool.insert(adr); }
   }
 
@@ -61,18 +61,18 @@ bool MemPool::freeChunk(uint32_t adr) {
   if (pool.count(adr) > 0)  {return false;}
   pool.insert(adr);
   return true;
-}      
+}
 
 MemPool& MemPool::operator=(const MemPool& other) {
   if (this            != &other &&  // self-assignment check expected
       this->startOffs == other.startOffs && // address range check
-      this->endOffs   == other.endOffs) 
-  {   
+      this->endOffs   == other.endOffs)
+  {
     pool.clear();
     pool = other.pool;
     bmp.clear();
-    bmp = other.bmp;  
-  }  
+    bmp = other.bmp;
+  }
   return *this;
 }
 

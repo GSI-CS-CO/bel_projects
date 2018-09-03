@@ -4,7 +4,7 @@
   namespace ssi = DotStr::Node::Prop::TMsg::SubId;
 
 std::vector<vPf> idFormats = {
-  
+
   //Format ID 0
   {
     {ssi::sFid,   60, 4},
@@ -13,7 +13,7 @@ std::vector<vPf> idFormats = {
     {ssi::sSid,   24, 12},
     {ssi::sBpid,  10, 14}
   },
-  //Format ID 1  
+  //Format ID 1
   {
     {ssi::sFid,   60, 4},
     {ssi::sGid,   48, 12},
@@ -24,7 +24,7 @@ std::vector<vPf> idFormats = {
     {ssi::sReqNoB, 4, 1},
     {ssi::sVacc,   0, 4}
   }
-};  
+};
 
 
 

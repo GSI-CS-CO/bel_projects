@@ -3,7 +3,7 @@
 namespace DotStr {
 
   namespace Misc { //mostly stuff to mark uninitialised props and some generic tags for nodes and edges alike
-    
+
     const unsigned char deadbeef[4] = {0xDE, 0xAD, 0xBE, 0xEF};
     const std::string needle(deadbeef, deadbeef + 4);
 
@@ -36,7 +36,7 @@ namespace DotStr {
       namespace Base {
         const std::string sType = "type"; // type specifier for edges (see namespace TypeVal )
       }
-    }  
+    }
 
     namespace TypeVal {
       // edge type tags
@@ -87,7 +87,7 @@ namespace DotStr {
         const std::string sGenQPrioMd    = "qhi";     // order to generate (if none exists) and attach a medium priority queue to this block
         const std::string sGenQPrioLo    = "qlo";     // order to generate (if none exists) and attach a low priority queue to this block
         const std::string sGenQPrio[]      = {sGenQPrioLo, sGenQPrioMd, sGenQPrioHi}; // array of priority generation orders for ease of use
-      }  
+      }
 
       namespace TMsg {
         // Timing Message Parameters
@@ -110,7 +110,7 @@ namespace DotStr {
       }
       // Command Parameters
       namespace Cmd {
-     
+
         const std::string sTimeValid   = "tvalid";        // time after which command becomes valid in ns
         const std::string sVabs        = "vabs";          // valid time is absolute (True) or relative (false)
         const std::string sPrio        = "prio";          // priority of this command
@@ -121,7 +121,7 @@ namespace DotStr {
         const std::string sDstPattern  = "destpattern";   // a flow command's destination pattern. only used in cmd dots, schedules use edges instead
         const std::string sDstBeamproc = "destbeamproc";  // a flow command's destination beam proccess. only used in cmd dots, schedules use edges instead
         const std::string sPermanent   = "permanent";     // specifies if changes by this command are permanent
-      }  
+      }
     }
 
 
@@ -155,23 +155,23 @@ namespace DotStr {
       const std::string sDstList       = "listdst";     // destination list (carpeDM internal)
       const std::string sQBuf          = "qbuf";        // queue buffer (carpeDM internal)
       const std::string sMeta          = "meta";        // generic meta node (carpeDM internal)
-      const bool bMetaNode             = true;          // as comparison against isMeta() Node class member function. 
+      const bool bMetaNode             = true;          // as comparison against isMeta() Node class member function.
       const bool bRealNode             = false;         //yeah yeah, it's not a string. I know
 
-    }  
-  }  
+    }
+  }
 
   namespace Graph {
     namespace Special {
       const std::string sCmd    = "!CMD!"; // magic word to show this dot was abused to contain commands
     }
     namespace Prop {
-      const std::string sName   = "name"; 
+      const std::string sName   = "name";
       const std::string sRoot   = "root";
-    }  
+    }
     const std::string sDefName  = "Demo";
   }
-  
+
   //Configures how a dot will be rendered (carpeDM internal)
   namespace EyeCandy {
 
@@ -180,7 +180,7 @@ namespace DotStr {
       const std::string sLookVert      = "rankdir   = TB, nodesep           = 0.6, mindist     = 1.0, ranksep = 1.0, overlap = false";
       const std::string sLookHor       = "rankdir   = LR, nodesep           = 0.6, mindist     = 1.0, ranksep = 1.0, overlap = false";
     }
-    
+
     namespace Node {
       namespace Base {
         const std::string sLookDef       = "style     = \"filled\", fillcolor = \"white\", color = \"black\"";
@@ -199,25 +199,25 @@ namespace DotStr {
         const std::string sLookDef       = "shape     = \"rectangle\"";
         const std::string sLookFix       = sLookDef;
         const std::string sLookAlign     = sLookDef;
-        
+
 
       }
       namespace TMsg {
         const std::string sLookDef       = "shape     = \"oval\"";
-        
-      }  
+
+      }
       namespace Cmd {
         const std::string sLookDef       = "shape     = \"hexagon\"";
 
-     
+
  }
       namespace Meta {
         const std::string sLookDef       = "shape     = \"rectangle\", color  = \"gray\", style  = \"dashed\"";
       }
-    } 
+    }
 
     namespace Edge {
-   
+
       const std::string sLookDefDst    = "color     = \"red\"";
       const std::string sLookAltDst    = "color     = \"black\"";
       const std::string sLookMeta      = "color     = \"gray\"";
@@ -227,8 +227,8 @@ namespace DotStr {
       const std::string sLookDebug1    = "color     = \"maroon4\"";
       const std::string sLookDebug2    = "color     = \"cyan\"";
       const std::string sLookbad       = "color     = \"orange\", style     = \"dashed\"";
-      
-    }   
+
+    }
   }
 
 

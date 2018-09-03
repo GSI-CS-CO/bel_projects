@@ -2,7 +2,7 @@
 --! @brief Monster (all your top are belong to BEL) package
 --! @author Wesley W. Terpstra <w.terpstra@gsi.de>
 --!
---! Copyright (C) 2013 GSI Helmholtz Centre for Heavy Ion Research GmbH 
+--! Copyright (C) 2013 GSI Helmholtz Centre for Heavy Ion Research GmbH
 --!
 --! This combines all the common GSI components together
 --!
@@ -16,7 +16,7 @@
 --! but WITHOUT ANY WARRANTY; without even the implied warranty of
 --! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 --! Lesser General Public License for more details.
---!  
+--!
 --! You should have received a copy of the GNU Lesser General Public
 --! License along with this library. If not, see <http://www.gnu.org/licenses/>.
 ---------------------------------------------------------------------------------
@@ -32,12 +32,12 @@ library work;
 use work.wishbone_pkg.all;
 
 package monster_pkg is
-  
+
   type io_channel is (IO_GPIO, IO_LVDS, IO_FIXED);
   type io_direction is (IO_OUTPUT, IO_INPUT, IO_INOUTPUT);
   type io_logic_level is (IO_TTL, IO_LVTTL, IO_LVDS, IO_NIM, IO_CMOS);
-  type io_special_purpose is (IO_NONE, IO_TTL_TO_NIM, IO_CLK_IN_EN);
-  
+  type io_special_purpose is (IO_NONE, IO_TTL_TO_NIM, IO_CLK_IN_EN, IO_MTCA4_TRIG_BPL_PDN, IO_MTCA4_FAILSAFE_EN);
+
   type t_io_mapping_table is
     record                                               -- Byte(s) = Bit(s)
       info_name         : std_logic_vector(95 downto 0); --      12 = 96
@@ -54,12 +54,12 @@ package monster_pkg is
       info_reserved     : std_logic_vector(3 downto 0);  --       x = 4 /
     end record;                                          --      16 = 128 total each entry
   type t_io_mapping_table_array is array (natural range <>) of t_io_mapping_table;
-  
+
   type t_io_mapping_table_arg is
-    record 
-      info_name         : string (1 to 11); 
+    record
+      info_name         : string (1 to 11);
       info_special      : io_special_purpose;
-      info_special_out  : boolean; 
+      info_special_out  : boolean;
       info_special_in   : boolean;
       info_index        : integer range 0 to 255;
       info_direction    : io_direction;
@@ -69,14 +69,14 @@ package monster_pkg is
       info_logic_level  : io_logic_level;
     end record;
   type t_io_mapping_table_arg_array is array (natural range <>) of t_io_mapping_table_arg;
-  
+
   function to_io_slv(str : string) return std_logic_vector;
   function f_gen_io_table(input : t_io_mapping_table_arg_array; ios_total : natural) return t_io_mapping_table_array;
-  
+
   function f_sub1(x : natural) return natural;
   function f_pick(x : boolean; y : integer; z : integer) return natural;
   function f_string_list_repeat(s : string; times : natural) return string;
-  
+
   component monster is
     generic(
       g_family               : string; -- "Arria II" or "Arria V"
@@ -112,9 +112,11 @@ package monster_pkg is
       g_lm32_MSIs            : natural := 1;
       g_lm32_ramsizes        : natural := 131072/4; -- in 32b words
       g_lm32_init_files      : string; -- multiple init files must be seperated by a semicolon ';'
-		g_lm32_profiles        : string; -- multiple profiles must be seperated by a semicolon ';'
+	g_lm32_profiles        : string; -- multiple profiles must be seperated by a semicolon ';'
       g_lm32_are_ftm         : boolean := false;
-      g_en_tempsens          : boolean := false
+      g_en_tempsens          : boolean := false;
+      g_delay_diagnostics    : boolean := false;
+      g_en_eca               : boolean := true
     );
     port(
       -- Required: core signals
@@ -146,7 +148,7 @@ package monster_pkg is
       wr_ext_clk_i           : in    std_logic := '0'; -- 10MHz
       wr_ext_pps_i           : in    std_logic := '0';
       wr_uart_o              : out   std_logic;
-      wr_uart_i              : in    std_logic := '1';     
+      wr_uart_i              : in    std_logic := '1';
       -- SFP
       sfp_tx_disable_o       : out   std_logic;
       sfp_tx_fault_i         : in    std_logic;
@@ -258,11 +260,11 @@ package monster_pkg is
       mil_nled_interl_o      : out   std_logic;
       mil_nled_dry_o         : out   std_logic;
       mil_nled_drq_o         : out   std_logic;
-	   mil_lemo_data_o        : out   std_logic_vector(4 downto 1);
+      mil_lemo_data_o        : out   std_logic_vector(4 downto 1);
       mil_lemo_nled_o        : out   std_logic_vector(4 downto 1);
-	   mil_lemo_out_en_o      : out   std_logic_vector(4 downto 1);
-      mil_lemo_data_i        : in    std_logic_vector(4 downto 1):= (others => '0');	
-		
+      mil_lemo_out_en_o      : out   std_logic_vector(4 downto 1);
+      mil_lemo_data_i        : in    std_logic_vector(4 downto 1):= (others => '0');
+
 --      mil_io1_o              : out   std_logic;
 --      mil_io1_is_in_o        : out   std_logic;
 --      mil_nled_io1_o         : out   std_logic;
@@ -367,7 +369,7 @@ package monster_pkg is
       addr_first  => x"0000000000000000",
       addr_last   => x"00000000000000ff",
       product     => (
-        vendor_id => x"0000000000000651",  -- GSI 
+        vendor_id => x"0000000000000651",  -- GSI
         device_id => x"4c8a0635",
         version   => x"00000001",
         date      => x"20171016",
@@ -388,7 +390,7 @@ package monster_pkg is
     version       => x"00000001",
     date          => x"20140516",
     name          => "GSI:IODIR_HACK     ")));
-  
+
   component monster_iodir is
     generic(
       g_gpio_inout : natural := 0;
@@ -443,17 +445,17 @@ package body monster_pkg is
     end loop;
     return res_v_r;
   end function;
-  
+
   function f_gen_io_table(input : t_io_mapping_table_arg_array; ios_total : natural) return t_io_mapping_table_array
   is
     variable result      : t_io_mapping_table_array(0 to ios_total);
-    variable name        : string (1 to 11); 
+    variable name        : string (1 to 11);
     variable special     : integer range 0 to 63;
     variable direction   : integer range 0 to 3;
     variable channel     : integer range 0 to 7;
     variable logic_level : integer range 0 to 15;
   begin
-    for i in 0 to ios_total-1 loop 
+    for i in 0 to ios_total-1 loop
       report "IO ITERATOR: " & integer'image(i) severity note;
       report "IO NAME: " & name severity note;
       -- Convert name
@@ -461,10 +463,12 @@ package body monster_pkg is
       result(i).info_name:= to_io_slv(name);
       -- Convert special information
       case input(i).info_special is
-        when IO_NONE       => special := 0;
-        when IO_TTL_TO_NIM => special := 1;
-        when IO_CLK_IN_EN  => special := 2;
-        when others        => special := 63;
+        when IO_NONE               => special := 0;
+        when IO_TTL_TO_NIM         => special := 1;
+        when IO_CLK_IN_EN          => special := 2;
+        when IO_MTCA4_TRIG_BPL_PDN => special := 3;
+        when IO_MTCA4_FAILSAFE_EN  => special := 4;
+        when others                => special := 63;
       end case;
       result(i).info_special := std_logic_vector(to_unsigned(special, result(i).info_special'length));
       if input(i).info_special_out = true then
@@ -525,18 +529,18 @@ package body monster_pkg is
     --report "DONE " & name severity failure;
     return result;
   end f_gen_io_table;
-  
+
   function f_string_list_repeat(s : string; times : natural)
   return string is
     variable i : natural := 0;
 	 constant delimeter : string := ";";
 	 constant str : string := s & delimeter;
-    variable res : string(1 to str'length*times);	 
+    variable res : string(1 to str'length*times);
   begin
     for i in 0 to times-1 loop
 	   res(i*str'length+1 to (i+1)*str'length) := str;
     end loop;
     return res;
-  end f_string_list_repeat;	
+  end f_string_list_repeat;
 
 end monster_pkg;
