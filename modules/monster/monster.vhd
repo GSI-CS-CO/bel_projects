@@ -102,7 +102,7 @@ entity monster is
     g_lm32_MSIs            : natural;
     g_lm32_ramsizes        : natural;
     g_lm32_init_files      : string;
-	g_lm32_profiles        : string;
+    g_lm32_profiles        : string;
     g_lm32_are_ftm         : boolean;
     g_en_tempsens          : boolean;
     g_delay_diagnostics    : boolean;
