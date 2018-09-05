@@ -215,8 +215,8 @@ end microtca_control;
 
 architecture rtl of microtca_control is
 
-  constant c_HWT_EN_BIT       : natural := 8;
-  constant c_IO_CLKIN_EN_BIT  : natural := 9;
+  --constant c_HWT_EN_BIT       : natural := 8;
+  --constant c_IO_CLKIN_EN_BIT  : natural := 9;
 
   signal clk_sys              : std_logic;
   signal clk_200m             : std_logic;
@@ -227,7 +227,7 @@ architecture rtl of microtca_control is
   signal s_led_status         : std_logic_vector(6 downto 1);
   signal s_led_user           : std_logic_vector(8 downto 1);
 
-  signal s_gpio_out           : std_logic_vector(12 downto 0);
+  signal s_gpio_out           : std_logic_vector(7 downto 0);
   signal s_gpio_in            : std_logic_vector(9 downto 0);
 
   signal s_test_sel           : std_logic_vector( 4 downto 0);
@@ -264,7 +264,7 @@ architecture rtl of microtca_control is
   signal s_lvds_act_led_mtca4_clk   : std_logic_vector(4 downto 1);
   signal s_lvds_act_led_libera      : std_logic_vector(4 downto 1);
 
-  constant io_mapping_table : t_io_mapping_table_arg_array(0 to 43) :=
+  constant io_mapping_table : t_io_mapping_table_arg_array(0 to 38) :=
   (
  -- Name[12 Bytes], Special Purpose, SpecOut, SpecIn, Index, Direction,   Channel,  OutputEnable, Termination, Logic Level
     ("LED_USR1   ", IO_NONE,                false,   false,  0,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
@@ -275,12 +275,6 @@ architecture rtl of microtca_control is
     ("LED_USR6   ", IO_NONE,                false,   false,  5,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
     ("LED_USR7   ", IO_NONE,                false,   false,  6,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
     ("LED_USR8   ", IO_NONE,                false,   false,  7,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
-
-    ("CON1       ", IO_NONE,                false,   false,  8,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
-    ("CON2       ", IO_NONE,                false,   false,  9,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
-    ("CON3       ", IO_NONE,                false,   false,  10,    IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
-    ("CON4       ", IO_NONE,                false,   false,  11,    IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
-    ("CON5       ", IO_NONE,                false,   false,  12,    IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
 
     ("HSWF1      ", IO_NONE,                false,   false,  0,     IO_INPUT,    IO_GPIO,  false,        false,       IO_TTL),
     ("HSWF2      ", IO_NONE,                false,   false,  1,     IO_INPUT,    IO_GPIO,  false,        false,       IO_TTL),
@@ -375,7 +369,7 @@ begin
       g_lvds_inout        => 17, -- 5 LEMOs on front panel, 8 MTCA4 on BPL, 4 MTCA4 clk on BPL
       g_lvds_in           => 0,
       g_lvds_out          => 4,  -- 4 libera triggers at BPL
-      g_gpio_out          => 13,  -- 8 on-boards LEDs, 1 test mode enable, 1 IO5 input clock buffer enable
+      g_gpio_out          => 8,  -- 8 on-boards LEDs, 1 test mode enable, 1 IO5 input clock buffer enable
       g_gpio_in           => 10, -- 4 FPGA HEX switch, 4 CPLD HEX switch, 1 FPGA button, 1 CPLD button
       g_fixed             => 0,
       g_lvds_invert       => false,
@@ -876,6 +870,6 @@ begin
     end generate;
   end generate; -- gen_load_shift_reg_false
 
-  con_io <= s_gpio_out(12 downto 8);
+  con_io <= (others=>'0');
 
 end rtl;
