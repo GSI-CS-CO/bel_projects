@@ -3,7 +3,7 @@
 //
 //  created : 2015
 //  author  : Dietrich Beck, GSI-Darmstadt
-//  version : 24-Apr-2018
+//  version : 22-Oct-2018
 //
 // Command-line interface for WR monitoring via Etherbone.
 //
@@ -34,7 +34,7 @@
 // For all questions and ideas contact: d.beck@gsi.de
 // Last update: 25-April-2015
 //////////////////////////////////////////////////////////////////////////////////////////////
-#define EBMON_VERSION "1.6.1"
+#define EBMON_VERSION "1.7.1"
 
 // standard includes
 #include <unistd.h> // getopt
@@ -73,6 +73,7 @@ static void help(void) {
   fprintf(stderr, "  -d               display WR time\n");
   fprintf(stderr, "  -e               display etherbone version\n");
   fprintf(stderr, "  -f<familyCode>   specify family code of 1-wire slave (0x43: EEPROM; 0x28,0x42: temperature)\n");
+  fprintf(stderr, "  -g               display WR lock statistics\n");
   fprintf(stderr, "  -h               display this help and exit\n");
   fprintf(stderr, "  -i               display WR IP\n");
   fprintf(stderr, "  -l               display WR link status\n");
@@ -117,6 +118,7 @@ int main(int argc, char** argv) {
   int         getWRMac=0;
   int         getWRLink=0;
   int         getWRIP=0;
+  int         getWRLockStats=0;
   int         getBoardID=0;
   int         getBoardTemp=0;
   int         getWRDateOther=0;
@@ -135,6 +137,9 @@ int main(int argc, char** argv) {
   uint64_t    hostmsecs64;
   int64_t     offset;
   uint64_t    mac;
+  uint64_t    nsecsLockLoss;
+  uint64_t    nsecsLockAcq;
+  uint32_t    nLockAcq;
   int         link;
   uint32_t    uptime;
   int         syncState;
@@ -154,7 +159,7 @@ int main(int argc, char** argv) {
 
   program = argv[0];
 
-  while ((opt = getopt(argc, argv, "t:u:w:f:b:c:adosmlievhz")) != -1) {
+  while ((opt = getopt(argc, argv, "t:u:w:f:b:c:adgosmlievhz")) != -1) {
     switch (opt) {
     case 'a':
       getBuildType=1;
@@ -180,6 +185,9 @@ int main(int argc, char** argv) {
         fprintf(stderr, "Specify a proper number, not '%s'!\n", optarg);
         exit(1);
       } // if *tail
+      break;
+    case 'g':
+      getWRLockStats=1;
       break;
     case 'o':
       getWROffset=1;
@@ -221,6 +229,7 @@ int main(int argc, char** argv) {
     case 'v':
       getWRDate=1;
       getWROffset=1;
+      getWRLockStats=1;
       getWRSync=1;
       getWRMac=1;
       getWRLink=1;
@@ -376,6 +385,30 @@ int main(int argc, char** argv) {
       sprintf(syncStr, "NO SYNC");
     if (verbose) fprintf(stdout, "Sync Status: ");
     fprintf(stdout, "%s\n", syncStr);
+  }
+
+  if (getWRLockStats) {
+    if ((status = wb_wr_get_lock_stats(device, devIndex, &nsecsLockLoss, &nsecsLockAcq, &nLockAcq)) != EB_OK) die("WR get lock statistics", status);
+
+    fprintf(stdout, "# of acquired locks: %d\n", nLockAcq);
+
+    if (nsecsLockLoss == 0xffffffffffffffff)
+      fprintf(stdout, "WR lock lost       : N/A\n");
+    else {
+      secs = (unsigned long)((double)nsecsLockLoss / 1000000000.0);
+      tm = gmtime(&secs);
+      strftime(timestr, sizeof(timestr), "%Y-%m-%d %H:%M:%S %Z", tm);
+      fprintf(stdout, "WR lock lost       : %s\n", timestr);
+    }
+
+    if (nsecsLockAcq == 0xffffffffffffffff)
+      fprintf(stdout, "WR lock acquired   : N/A\n");
+    else {
+      secs = (unsigned long)((double)nsecsLockAcq / 1000000000.0);
+      tm = gmtime(&secs);
+      strftime(timestr, sizeof(timestr), "%Y-%m-%d %H:%M:%S %Z", tm);
+      fprintf(stdout, "WR lock aquired    : %s\n", timestr);
+    }
   }
 
   if (getWRMac) {

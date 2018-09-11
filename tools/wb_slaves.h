@@ -178,6 +178,21 @@
 // masks
 
 
+
+//-- Data Master (and slave) diagnosis  --
+#include "../modules/dm_diag/dm_diag_regs.h"
+// device ID
+#define DM_DIAG_VENDOR               DM_DIAG_SDB_VENDOR_ID   // vendor ID
+#define DM_DIAG_PRODUCT              DM_DIAG_SDB_DEVICE_ID   // product ID
+#define DM_DIAG_VMAJOR               1                       // major revision
+#define DM_DIAG_VMINOR               0                       // minor revision
+
+// register offsets
+// see dm_diag_regs.h
+// masks
+// see dm_diag_regs.h
+
+
 //-- TLU --
 //device ID
 #define GSI_TM_LATCH_VENDOR          WB_GSI      //vendor ID
@@ -195,7 +210,7 @@
 #define GSI_TM_LATCH_TRIG_ARMSTAT    0x00C       //n..0 channel(n) trigger armed status     (ro)
 #define GSI_TM_LATCH_TRIG_ARMSET     0x010       //n..0 channel(n) trigger set armed        (wo)
 #define GSI_TM_LATCH_TRIG_ARMCLR     0x014       //n..0 channel(n) trigger clr armed        (wo)
-#define GSI_TM_LATCH_TRIG_EDGESTAT   0x018           //n..0 channel(n) trigger edge status  (ro)
+#define GSI_TM_LATCH_TRIG_EDGESTAT   0x018       //n..0 channel(n) trigger edge status      (ro)
 #define GSI_TM_LATCH_TRIG_EDGEPOS    0x01C       //n..0 channel(n) trigger edge set pos     (wo)
 #define GSI_TM_LATCH_TRIG_EDGENEG    0x020       //n..0 channel(n) trigger edge set neg     (wo)
 
