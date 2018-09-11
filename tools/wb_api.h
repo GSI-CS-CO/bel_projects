@@ -9,9 +9,9 @@
 //            -- Wesley W. Terpstra <w.terpstra@gsi.de>
 //            -- Alessandro Rubini <rubini@gnudd.com>
 //            -- Tomasz Wlostowski <tomasz.wlostowski@cern.ch>
-//  version : 01-May-2018
+//  version : 11-sep-2018
 //
-#define WB_API_VERSION "010.0"
+#define WB_API_VERSION "011.0"
 //
 // Api for wishbone devices for timing receiver nodes. This is not a timing receiver API.
 // 
@@ -117,6 +117,14 @@ eb_status_t wb_wr_get_uptime(eb_device_t device,               // EB device
                              int devIndex,                     // 0,1,2... - there may be more than 1 device on the WB bus
                              uint32_t *uptime                  // uptime of WR lm32 [s]
                              );
+
+// gets statistics about WR locks
+eb_status_t wb_wr_get_lock_stats(eb_device_t device,           // EB device
+                                 int devIndex,                 // 0,1,2... - there may be more than 1 device on the WB bus
+                                 uint64_t *nsecsLockLoss,      // timestamp of last WR lock loss
+                                 uint64_t *nsecsLockAcq,       // timestamp of last WR lock acquired
+                                 uint32_t *nLockAcq            // number of successful WR locks
+                                 );
 
 // get ID of the 1st 1-wire sensor found on the specified bus
 eb_status_t wb_1wire_get_id(eb_device_t device,                // EB device
