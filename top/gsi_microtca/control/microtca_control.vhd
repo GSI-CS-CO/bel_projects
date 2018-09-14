@@ -227,9 +227,10 @@ architecture rtl of microtca_control is
   signal s_led_status         : std_logic_vector(6  downto 1);
   signal s_led_user           : std_logic_vector(8  downto 1);
 
-  signal s_gpio_out           : std_logic_vector(9  downto 0);
-  signal s_gpio_in            : std_logic_vector(12 downto 0);
-  signal s_gpio_spec_out      : std_logic_vector(9  downto 0);
+  signal s_gpio_out           : std_logic_vector(10 downto 0);
+  signal s_gpio_in            : std_logic_vector(13 downto 0);
+  signal s_gpio_spec_out      : std_logic_vector(10 downto 0);
+  signal s_gpio_spec_in       : std_logic_vector(13  downto 0);
 
   signal s_test_sel           : std_logic_vector( 4 downto 0);
   signal core_debug_out       : std_logic_vector(15 downto 0);
@@ -265,9 +266,9 @@ architecture rtl of microtca_control is
   signal s_lvds_act_led_mtca4_clk   : std_logic_vector(4 downto 1);
   signal s_lvds_act_led_libera      : std_logic_vector(4 downto 1);
 
-  constant io_mapping_table : t_io_mapping_table_arg_array(0 to 43) :=
+  constant io_mapping_table : t_io_mapping_table_arg_array(0 to 45) :=
   (
- -- Name[12 Bytes], Special Purpose,        SpecOut, SpecIn, Index, Direction,   Channel,  OutputEnable, Termination, Logic Level
+  -- Name[12 Bytes], Special Purpose,       SpecOut, SpecIn, Index, Direction,   Channel,  OutputEnable, Termination, Logic Level
     ("LED_USR1   ", IO_NONE,                false,   false,  0,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
     ("LED_USR2   ", IO_NONE,                false,   false,  1,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
     ("LED_USR3   ", IO_NONE,                false,   false,  2,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
@@ -277,8 +278,9 @@ architecture rtl of microtca_control is
     ("LED_USR7   ", IO_NONE,                false,   false,  6,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
     ("LED_USR8   ", IO_NONE,                false,   false,  7,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
 
-    ("V_LIB_TRIG ", IO_LIBERA_TRIG_OE,      true,    false,  8,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
-    ("V_MTCA4_BUF", IO_MTCA4_BPL_BUF_OE,    true,    false,  9,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
+    ("V_LIB_TR_OR", IO_LIBERA_TRIG_OE,      true,    false,  8,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL), -- Override
+    ("V_MTCA4B_OR", IO_MTCA4_BPL_BUF_OE,    true,    false,  9,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL), -- Override
+    ("V_MTCA4B_EN", IO_MTCA4_TRIG_BPL_PDN,  true,    false,  10,    IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
 
     ("HSWF1      ", IO_NONE,                false,   false,  0,     IO_INPUT,    IO_GPIO,  false,        false,       IO_TTL),
     ("HSWF2      ", IO_NONE,                false,   false,  1,     IO_INPUT,    IO_GPIO,  false,        false,       IO_TTL),
@@ -297,6 +299,8 @@ architecture rtl of microtca_control is
     ("IN_LIBERA_8", IO_NONE,                false,   false, 11,     IO_INPUT,    IO_GPIO,  false,        false,       IO_TTL),
     ("MMC_QUIESCE", IO_NONE,                false,   false, 12,     IO_INPUT,    IO_GPIO,  false,        false,       IO_TTL),
 
+    ("V_MTCA4B_FS", IO_MTCA4_FAILSAFE_EN,   false,    true, 13,     IO_INPUT,    IO_GPIO,  false,        false,       IO_TTL),
+
     ("IO1        ", IO_NONE,                false,   false,  0,     IO_INOUTPUT, IO_LVDS,  true,         true,        IO_LVTTL),
     ("IO2        ", IO_NONE,                false,   false,  1,     IO_INOUTPUT, IO_LVDS,  true,         true,        IO_LVTTL),
     ("IO3        ", IO_NONE,                false,   false,  2,     IO_INOUTPUT, IO_LVDS,  true,         true,        IO_LVTTL),
@@ -308,19 +312,19 @@ architecture rtl of microtca_control is
     ("MTCA4_CLK3 ", IO_NONE,                false,   false,  7,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
     ("MTCA4_CLK4 ", IO_NONE,                false,   false,  8,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
 
-    ("MTCA4_IO1  ", IO_MTCA4_TRIG_BPL_PDN,  true,    false,  9,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS), -- Backplane power down
+    ("MTCA4_IO1  ", IO_NONE,                false,   false,  9,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
     ("MTCA4_IO2  ", IO_NONE,                false,   false, 10,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
     ("MTCA4_IO3  ", IO_NONE,                false,   false, 11,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
     ("MTCA4_IO4  ", IO_NONE,                false,   false, 12,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
     ("MTCA4_IO5  ", IO_NONE,                false,   false, 13,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
     ("MTCA4_IO6  ", IO_NONE,                false,   false, 14,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
     ("MTCA4_IO7  ", IO_NONE,                false,   false, 15,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
-    ("MTCA4_IO8  ", IO_MTCA4_FAILSAFE_EN,   false,   true,  16,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS), -- Failsafe enable
+    ("MTCA4_IO8  ", IO_NONE,                false,   false, 16,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
 
-    ("LIBERA_TR1 ", IO_NONE,                true,    false, 17,     IO_OUTPUT  , IO_LVDS,  false,        false,       IO_LVDS), --
-    ("LIBERA_TR2 ", IO_NONE,                true,    false, 18,     IO_OUTPUT  , IO_LVDS,  false,        false,       IO_LVDS),
-    ("LIBERA_TR3 ", IO_NONE,                true,    false, 19,     IO_OUTPUT  , IO_LVDS,  false,        false,       IO_LVDS),
-    ("LIBERA_TR4 ", IO_NONE,                true,    false, 20,     IO_OUTPUT  , IO_LVDS,  false,        false,       IO_LVDS)
+    ("LIBERA_TR1 ", IO_NONE,                false,   false, 17,     IO_OUTPUT  , IO_LVDS,  false,        false,       IO_LVDS),
+    ("LIBERA_TR2 ", IO_NONE,                false,   false, 18,     IO_OUTPUT  , IO_LVDS,  false,        false,       IO_LVDS),
+    ("LIBERA_TR3 ", IO_NONE,                false,   false, 19,     IO_OUTPUT  , IO_LVDS,  false,        false,       IO_LVDS),
+    ("LIBERA_TR4 ", IO_NONE,                false,   false, 20,     IO_OUTPUT  , IO_LVDS,  false,        false,       IO_LVDS)
 
   );
 
@@ -374,11 +378,11 @@ begin
       g_family            => c_family,
       g_project           => c_project,
       g_flash_bits        => 25,
-      g_lvds_inout        => 17, -- 5 LEMOs on front panel, 8 MTCA4 on BPL, 4 MTCA4 clk on BPL
+      g_lvds_inout        => 17,
       g_lvds_in           => 0,
-      g_lvds_out          => 4,  -- 4 libera triggers at BPL
-      g_gpio_out          => 10,  -- 8 on-boards LEDs, 1 test mode enable, 1 IO5 input clock buffer enable
-      g_gpio_in           => 13, -- 4 FPGA HEX switch, 4 CPLD HEX switch, 1 FPGA button, 1 CPLD button
+      g_lvds_out          => 4,
+      g_gpio_out          => 11,
+      g_gpio_in           => 14,
       g_fixed             => 0,
       g_lvds_invert       => false,
       g_en_usb            => true,
@@ -442,6 +446,7 @@ begin
       lvds_spec_out_o        => s_lvds_spec_out,
 
       gpio_spec_out_o        => s_gpio_spec_out,
+      gpio_spec_in_o         => s_gpio_spec_in,
 
       usb_rstn_o             => ures,
       usb_ebcyc_i            => pa(3),
@@ -611,7 +616,7 @@ begin
   -- select receiver input Type for onboard M-LVDS buffers to backplane
   -- ('0' = Type-1 , '1' = Type-2 )
   --mlvdio_fsen_o <= s_gpio_out(7);
-  mlvdio_fsen_o <= s_lvds_spec_in(16);
+  mlvdio_fsen_o <= s_gpio_spec_in(13);
 
   -- MTCA.4 bussed trigger lines (PORTS 17-20)
   s_lvds_n_i(16 downto 9) <= mlvdio_in_n_i(8 downto 1);
@@ -727,7 +732,7 @@ begin
   -----------------------------------------------------------------------
   -- enabled only in MTCA.4 by SW
   -- s_mtca4_bpl_buf_en_sw <= '1' when (s_gpio_out(6 downto 4) = "100" and s_gpio_out(c_HWT_EN_BIT)='1') else '0';
-  s_mtca4_bpl_buf_en_sw <= s_lvds_spec_out(9);
+  s_mtca4_bpl_buf_en_sw <= s_gpio_spec_out(10);
 
   -- crosscheck with Libera and quiesce.
   -- because there is no way to know if we are in MTCA or MTCA.4 crate
