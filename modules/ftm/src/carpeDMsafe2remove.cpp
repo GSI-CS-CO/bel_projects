@@ -264,10 +264,10 @@ bool CarpeDM::isSafeToRemove(std::set<std::string> patterns, std::string& report
 
   if (isSafe != isSafe2ndOpinion) {
     //writeTextFile("./debug.dot", report);
-    throw std::runtime_error(isSafeToRemove::exIntro + " ERROR in algorithm detected: safe2remove says " + (isSafe ? "safe" : "unsafe") + ", crawler says " + (isSafe2ndOpinion ? "safe" : "unsafe") + "\n");
+    throw std::runtime_error(isSafeToRemove::exIntro + " ERROR in algorithm detected: safe2remove says " + (isSafe ? "safe" : "unsafe") + ", crawler says " + (isSafe2ndOpinion ? "safe" : "unsafe") + "\n\n" + report);
   }
   if (allCovenantsUncritical == false) {
-    throw std::runtime_error(isSafeToRemove::exIntro + " ERROR in algorithm detected: a block listed as a covenant was safety critical itself\n");
+    throw std::runtime_error(isSafeToRemove::exIntro + " ERROR in algorithm detected: a block listed as a covenant was safety critical itself\n\n" + report);
   }
 
   return isSafe;
