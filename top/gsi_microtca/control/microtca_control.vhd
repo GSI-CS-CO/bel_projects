@@ -228,9 +228,9 @@ architecture rtl of microtca_control is
   signal s_led_user           : std_logic_vector(8  downto 1);
 
   signal s_gpio_out           : std_logic_vector(10 downto 0);
-  signal s_gpio_in            : std_logic_vector(13 downto 0);
+  signal s_gpio_in            : std_logic_vector(14 downto 0);
   signal s_gpio_spec_out      : std_logic_vector(10 downto 0);
-  signal s_gpio_spec_in       : std_logic_vector(13  downto 0);
+  signal s_gpio_spec_in       : std_logic_vector(14  downto 0);
 
   signal s_test_sel           : std_logic_vector( 4 downto 0);
   signal core_debug_out       : std_logic_vector(15 downto 0);
@@ -266,7 +266,7 @@ architecture rtl of microtca_control is
   signal s_lvds_act_led_mtca4_clk   : std_logic_vector(4 downto 1);
   signal s_lvds_act_led_libera      : std_logic_vector(4 downto 1);
 
-  constant io_mapping_table : t_io_mapping_table_arg_array(0 to 45) :=
+  constant io_mapping_table : t_io_mapping_table_arg_array(0 to 46) :=
   (
   -- Name[12 Bytes], Special Purpose,       SpecOut, SpecIn, Index, Direction,   Channel,  OutputEnable, Termination, Logic Level
     ("LED_USR1   ", IO_NONE,                false,   false,  0,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
@@ -300,6 +300,7 @@ architecture rtl of microtca_control is
     ("MMC_QUIESCE", IO_NONE,                false,   false, 12,     IO_INPUT,    IO_GPIO,  false,        false,       IO_TTL),
 
     ("V_MTCA4B_FS", IO_MTCA4_FAILSAFE_EN,   false,    true, 13,     IO_INPUT,    IO_GPIO,  false,        false,       IO_TTL),
+    ("V_WR_CLK_IN", IO_NONE,                false,   false, 14,     IO_INPUT,    IO_GPIO,  false,        false,       IO_TTL),
 
     ("IO1        ", IO_NONE,                false,   false,  0,     IO_INOUTPUT, IO_LVDS,  true,         true,        IO_LVTTL),
     ("IO2        ", IO_NONE,                false,   false,  1,     IO_INOUTPUT, IO_LVDS,  true,         true,        IO_LVTTL),
@@ -371,6 +372,8 @@ architecture rtl of microtca_control is
   signal s_lvds_spec_in           : std_logic_vector(16 downto 0);
   signal s_lvds_spec_out          : std_logic_vector(20 downto 0);
 
+  signal s_wr_clk_in              : std_logic;
+
 begin
 
   main : monster
@@ -382,7 +385,7 @@ begin
       g_lvds_in           => 0,
       g_lvds_out          => 4,
       g_gpio_out          => 11,
-      g_gpio_in           => 14,
+      g_gpio_in           => 15,
       g_fixed             => 0,
       g_lvds_invert       => false,
       g_en_usb            => true,
@@ -418,7 +421,7 @@ begin
       wr_dac_sclk_o          => wr_dac_sclk_o,
       wr_dac_din_o           => wr_dac_din_o,
       wr_ndac_cs_o           => wr_ndac_cs_o,
-      wr_ext_clk_i           => clk_lvtio_i,
+      wr_ext_clk_i           => s_wr_clk_in,
 
       sfp_tx_disable_o       => sfp_tx_dis_o,
       sfp_tx_fault_i         => sfp_tx_fault_i,
@@ -491,6 +494,10 @@ begin
   -- Display
   dis_wr_o    <= '0';
   dis_rst_o   <= '1';
+
+  -- WR clock in
+  s_wr_clk_in   <= clk_lvtio_i;
+  s_gpio_in(14) <= s_wr_clk_in;
 
   -----------------------------------------------------------
   -- LEDs
