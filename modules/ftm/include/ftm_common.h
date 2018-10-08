@@ -99,8 +99,9 @@
 #define T_CMD_FLOW_DEST         (T_CMD_ACT  + _32b_SIZE_) // if it's a flow command, this is the alternative destination to use
 #define T_CMD_RES               (T_CMD_FLOW_DEST + _32b_SIZE_)
 // ... or
-#define T_CMD_FLUSH_RNG_HILO    (T_CMD_ACT  + _32b_SIZE_) // if it's a flush command and mode bits are set, this defines the q from/to idx to flush per qbuf
-#define T_CMD_FLUSH_RNG_IL      (T_CMD_FLUSH_RNG_HILO + _32b_SIZE_)
+#define T_CMD_FLUSH_OVR         (T_CMD_ACT  + _32b_SIZE_) // if it's a flush command with non null successor override
+#define T_CMD_FLUSH_RNG_HILO    (T_CMD_FLUSH_OVR  + _32b_SIZE_) // if it's a flush command and mode bits are set, this defines the q from/to idx to flush per qbuf
+
 //
 #define _T_CMD_SIZE_             (_TS_SIZE_ + _32b_SIZE_ + _64b_SIZE_)
 
@@ -306,7 +307,8 @@
 
 //// Cmd Flush - Specific Attributes /////////////////////////////////
 //
-#define CMD_FLUSHRNG_IL         (CMD_HDR_END)
+#define CMD_FLUSH_DEST_OVR      (CMD_HDR_END)
+#define CMD_FLUSHRNG_IL         (CMD_FLUSH_DEST_OVR   + _32b_SIZE_)
 
 #define CMD_FLUSHRNG_IL_FRM     (CMD_FLUSHRNG_IL)
 #define CMD_FLUSHRNG_IL_TO      (CMD_FLUSHRNG_IL_FRM  + _8b_SIZE_)
@@ -359,6 +361,8 @@
 // Command
 #define ADR_CMD_TARGET     1
 #define ADR_CMD_FLOW_DEST  2 // only if command is Flow change
+
+#define ADR_CMD_FLUSH_DEST_OVR 2 // only if command is Flush with override
 
 // Command Queue
 #define ADR_CMDQ_BUF_ARRAY 1

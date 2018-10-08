@@ -42,6 +42,7 @@ class VisitorUploadCrawler {
     vAdr getQBuf(void)      const;
     vAdr getCmdTarget(Command& el) const;
     vAdr getFlowDst(void)   const;
+    vAdr getFlushOvr(void)  const;
     vAdr getListDst(void)   const;
     static const std::string exIntro;
     vertex_set_t getChildrenByEdgeType(vertex_t vStart, const std::string edgeType) const;

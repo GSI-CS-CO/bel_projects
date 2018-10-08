@@ -46,6 +46,7 @@ namespace DotStr {
       extern const std::string sBadDefDst;
       extern const std::string sCmdTarget;
       extern const std::string sCmdFlowDst;
+      extern const std::string sCmdFlushOvr;
       extern const std::string sDynId;
       extern const std::string sDynPar0;
       extern const std::string sDynPar1;

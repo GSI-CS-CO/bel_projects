@@ -28,7 +28,7 @@ void VisitorUploadCrawler::visit(const Flow& el) const  {
 }
 
 void VisitorUploadCrawler::visit(const Flush& el) const {
-  el.serialise( getDefDst() + getCmdTarget((Command&)el), b);
+  el.serialise( getDefDst() + getCmdTarget((Command&)el) + getFlushOvr(), b);
 }
 
 void VisitorUploadCrawler::visit(const Noop& el) const {
@@ -217,6 +217,25 @@ vAdr VisitorUploadCrawler::getFlowDst() const {
   auto tgt = at.lookupVertex(*vsTgt.begin());
 
   vertex_set_t vsDst = getChildrenByEdgeType(v, det::sCmdFlowDst);
+  if((vsTgt.size() == 0) || (vsDst.size() == 0)) { ret.push_back(LM32_NULL_PTR); return ret;}// if this command is not connected, return a null pointer as flowdst
+
+  auto x = at.lookupVertex(*vsDst.begin());
+
+  if (x->cpu != tgt->cpu) throw std::runtime_error(  exIntro + "Target " + g[*vsTgt.begin()].name + "'s CPU must not differ from Dst " + g[*vsDst.begin()].name + "'s CPU\n");
+  ret.push_back(at.adrConv(AdrType::MGMT, AdrType::INT , x->cpu, x->adr));
+
+  return ret;
+}
+
+vAdr VisitorUploadCrawler::getFlushOvr() const {
+  vAdr ret;
+
+  //this will return exactly one target, otherwise neighbourhood check would have detected the misshapen schedule
+  vertex_set_t vsTgt = getChildrenByEdgeType(v, det::sCmdTarget);
+  //command cross over to other CPUs is okay. Find out what Cpu the command target is on
+  auto tgt = at.lookupVertex(*vsTgt.begin());
+
+  vertex_set_t vsDst = getChildrenByEdgeType(v, det::sCmdFlushOvr);
   if((vsTgt.size() == 0) || (vsDst.size() == 0)) { ret.push_back(LM32_NULL_PTR); return ret;}// if this command is not connected, return a null pointer as flowdst
 
   auto x = at.lookupVertex(*vsDst.begin());

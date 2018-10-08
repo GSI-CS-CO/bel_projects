@@ -109,7 +109,18 @@ void VisitorDownloadCrawler::visit(const Flow& el) const  {
 }
 
 void VisitorDownloadCrawler::visit(const Flush& el) const {
-  createCmd((Command&)el);
+  uint8_t targetCpu;
+  AdrType adrT;
+  uint32_t tmpAdr;
+
+  std::tie(targetCpu, adrT) = createCmd((Command&)el);
+  uint32_t rawAdr = writeBeBytesToLeNumber<uint32_t>(b + CMD_FLUSH_DEST_OVR );
+
+
+  tmpAdr = at.adrConv(AdrType::INT, AdrType::MGMT, targetCpu, rawAdr);
+
+
+  if (tmpAdr != LM32_NULL_PTR) boost::add_edge(v, ((AllocMeta*)&(*(at.lookupAdr(targetCpu, tmpAdr))))->v, myEdge(det::sCmdFlushOvr),   g);
 }
 
 void VisitorDownloadCrawler::visit(const Noop& el) const {
