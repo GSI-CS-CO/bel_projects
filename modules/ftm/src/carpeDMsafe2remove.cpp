@@ -47,7 +47,7 @@ bool CarpeDM::isSafeToRemove(std::set<std::string> patterns, std::string& report
   //std::cout << "verbose " << (int)verbose << " debug " << (int)debug << " sim " << (int)sim << " testmode " << (int)testmode << " optimisedS2R " << (int)optimisedS2R << std::endl;
 
 
-  bool isSafe = true, isSafe2ndOpinion = true, allCovenantsUncritical = true;
+  bool isSafe = true, allCovenantsUncritical = true;
   Graph& g        = gDown;
   AllocTable& at  = atDown;
   CovenantTable ctAux; //Global CovenantTable is called ct
@@ -184,16 +184,6 @@ bool CarpeDM::isSafeToRemove(std::set<std::string> patterns, std::string& report
 
   isSafe = !isSafetyCritical(covenants); // if a safety critical node (cov set contains NO_COVENANT) is on the intersection with cursor set, it's unsafe
 
-  for (auto& itCur : cursors) {
-    for (auto& itEntry : entries) {
-      vertex_set_t tmpTree;
-      isSafe2ndOpinion &= verifySafety(itCur, itEntry, tmpTree, gEq);
-    }
-    for  (auto& itPat : patterns) {
-      isSafe2ndOpinion &= (itPat != getNodePattern(gEq[itCur].name));
-    }
-  }
-
   //Find all orphaned commands for later treatment
 
   //orphaned command check means: check all queues for flow commands with a destination node inside the pattern 2B removed
@@ -262,10 +252,6 @@ bool CarpeDM::isSafeToRemove(std::set<std::string> patterns, std::string& report
   }
   */
 
-  if (isSafe != isSafe2ndOpinion) {
-    //writeTextFile("./debug.dot", report);
-    throw std::runtime_error(isSafeToRemove::exIntro + " ERROR in algorithm detected: safe2remove says " + (isSafe ? "safe" : "unsafe") + ", crawler says " + (isSafe2ndOpinion ? "safe" : "unsafe") + "\n\n" + report);
-  }
   if (allCovenantsUncritical == false) {
     throw std::runtime_error(isSafeToRemove::exIntro + " ERROR in algorithm detected: a block listed as a covenant was safety critical itself\n\n" + report);
   }
@@ -354,29 +340,6 @@ void CarpeDM::getReverseNodeTree(vertex_t v, vertex_set_t& sV, Graph& g, vertex_
 
   }
 }
-
-//if we can construct a path between start and goal (not using optimised edges), this is not safe
-bool CarpeDM::verifySafety(vertex_t v, vertex_t goal, vertex_set_t& sV, Graph& g ) {
-  bool isSafe = true;
-  Graph::out_edge_iterator out_begin, out_end, out_cur;
-  //Do the crawl
-  boost::tie(out_begin, out_end) = out_edges(v,g);
-  for (out_cur = out_begin; out_cur != out_end; ++out_cur) {
-    if (isOptimisableEdge(*out_cur, g)) { continue; }
-
-    if (sV.find(target(*out_cur, g)) != sV.end()) { continue; }
-    if (target(*out_cur, g) == goal ) { return false; }
-    sV.insert(target(*out_cur, g));
-
-
-    isSafe &= verifySafety(target(*out_cur, g), goal, sV, g);
-
-  }
-
-  return isSafe;
-}
-
-
 
 bool CarpeDM::addResidentDestinations(Graph& gEq, Graph& gOrig, vertex_set_t cursors) {
   vertex_set_t resCmds; // prepare the set of flow commands to speed things up
