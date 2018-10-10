@@ -6,6 +6,7 @@ library work;
 use work.monster_pkg.all;
 use work.altera_lvds_pkg.all;
 use work.ramsize_pkg.c_lm32_ramsizes;
+use work.altera_networks_pkg.all;
 
 entity microtca_control is
   generic(
@@ -19,8 +20,8 @@ entity microtca_control is
     clk_125m_pllref_i : in std_logic; -- 125 MHz PLL reference - (clk_125m_wrpll_0  on sch)
     clk_125m_local_i  : in std_logic; -- local clk from 125Mhz oszillator (clk_osc_1  on sch)
     clk_sfp_ref_i     : in std_logic; -- SFP clk (clk_125m_wrpll_1 on sch)
-    clk_lvtio_i       : in std_logic; -- LEMO front panel input
-
+    clk_lvtio_p_i     : in std_logic; -- LEMO front panel clock input
+    clk_lvtio_n_i     : in std_logic; -- LEMO front panel clock input
 --    clk_osc_0_i         : in std_logic;  -- local clk from 100MHz or 125Mhz oscillator
 
     -----------------------------------------------------------------------
@@ -373,6 +374,7 @@ architecture rtl of microtca_control is
   signal s_lvds_spec_out          : std_logic_vector(20 downto 0);
 
   signal s_wr_clk_in              : std_logic;
+  signal s_clk_lvtio_global       : std_logic;
 
 begin
 
@@ -496,8 +498,21 @@ begin
   dis_rst_o   <= '1';
 
   -- WR clock in
-  s_wr_clk_in   <= clk_lvtio_i;
-  s_gpio_in(14) <= s_wr_clk_in;
+  lvtio_clk_inbuf : altera_lvds_ibuf
+  generic map(
+    g_family  => c_family)
+  port map(
+    datain_b  => clk_lvtio_n_i,
+    datain    => clk_lvtio_p_i,
+    dataout   => s_wr_clk_in
+  );
+
+  lvtio_clk_buf : global_region
+  port map(
+    inclk  => s_wr_clk_in,
+    outclk => s_clk_lvtio_global
+  );
+  s_gpio_in(14) <= s_clk_lvtio_global;
 
   -----------------------------------------------------------
   -- LEDs
