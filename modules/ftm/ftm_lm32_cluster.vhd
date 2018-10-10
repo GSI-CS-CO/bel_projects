@@ -92,6 +92,7 @@ architecture rtl of ftm_lm32_cluster is
   signal lm32_masters_out     : t_wishbone_master_out_array  (g_cores-1 downto 0);
   signal lm32_msi_slaves_in   : t_wishbone_slave_in_array   (g_cores-1 downto 0);
   signal lm32_msi_slaves_out  : t_wishbone_slave_out_array  (g_cores-1 downto 0);
+  signal r_tm_tai8ns_i        : std_logic_vector(63 downto 0);
 
 
   --**************************************************************************--
@@ -144,6 +145,13 @@ architecture rtl of ftm_lm32_cluster is
 
 begin
 
+  tai_fanout : process (clk_ref_i)
+  begin
+    if rising_edge(clk_ref_i) then
+      r_tm_tai8ns_i <= tm_tai8ns_i; -- we need to register TAI to reduce fanout
+    end if;
+  end process;
+
   G1: for I in 0 to g_cores-1 generate
     --instantiate an dm-lm32 (LM32 core with its own DPRAM and 2..n msi queues)
     LM32 : ftm_lm32
@@ -160,7 +168,7 @@ begin
       rst_n_i        => rst_ref_n_i,
       rst_lm32_n_i   => s_rst_lm32_n(I),
 
-      tm_tai8ns_i    => tm_tai8ns_i,
+      tm_tai8ns_i    => r_tm_tai8ns_i,
 
       stall_diag_o   => stall_diag(I),
       cycle_diag_o   => cycle_diag(I),
@@ -271,7 +279,7 @@ begin
       clk_i         => clk_ref_i,
       rst_n_i       => rst_ref_n_i,
 
-      time_i        => tm_tai8ns_i,
+      time_i        => r_tm_tai8ns_i,
 
       ctrl_i        => clu_cb_masterport_out(c_clu_pq_ctrl),
       ctrl_o        => clu_cb_masterport_in(c_clu_pq_ctrl),
@@ -314,7 +322,7 @@ begin
     port map(
       clk_ref_i      => clk_ref_i,
       rst_ref_n_i    => rst_ref_n_i,
-      tm_tai8ns_i    => tm_tai8ns_i,
+      tm_tai8ns_i    => r_tm_tai8ns_i,
       cyc_diag_i     => cycle_diag,
       stall_diag_i   => stall_diag,
       wr_lock_i      => wr_lock_i,
@@ -371,8 +379,8 @@ begin
            s_clu_time.err <= clu_cb_masterport_out(vIdx).cyc and clu_cb_masterport_out(vIdx).stb and     clu_cb_masterport_out(vIdx).we;
            s_clu_time.dat <= (others => '0');
 
-           r_tai_8ns_HI <= tm_tai8ns_i(63 downto 32);  --register hi and low to reduce load on fan out
-           r_tai_8ns_LO <= tm_tai8ns_i(31 downto 0);
+           r_tai_8ns_HI <= r_tm_tai8ns_i(63 downto 32);  --register hi and low to reduce load on fan out
+           r_tai_8ns_LO <= r_tm_tai8ns_i(31 downto 0);
 
            if(clu_cb_masterport_out(vIdx).cyc = '1' and clu_cb_masterport_out(vIdx).stb = '1') then
               if(clu_cb_masterport_out(vIdx).adr(2) = '0') then

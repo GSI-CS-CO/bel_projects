@@ -73,6 +73,7 @@ architecture rtl of dm_diag is
   type u32_array is array (natural range <>) of unsigned(31 downto 0);
   type u64_array is array (natural range <>) of unsigned(63 downto 0);
 
+  signal r_tm_tai8ns_i                        : std_logic_vector(64-1 downto 0) := (others => '0');
   signal r_tai_observer_cnt                   : unsigned(63 downto 0) := (others => '0');
   signal s_tai_observer_dec                   : unsigned(63 downto 0) := (others => '0');
   signal r_tai_old                            : signed(63 downto 0)   := (others => '0');
@@ -116,17 +117,24 @@ begin
   s_ctrl_time_dif_neg_i     <= std_logic_vector(r_time_dif_neg);
   s_ctrl_time_dif_neg_ts_i  <= r_time_dif_neg_ts;
 
+  tai_fanout : process (clk_ref_i)
+  begin
+    if rising_edge(clk_ref_i) then
+      r_tm_tai8ns_i <= tm_tai8ns_i; -- we need to register TAI to reduce fanout
+    end if;
+  end process;    
+
   --TAI diff observer process
   tai_observer : process (clk_ref_i)
   begin
 
     if rising_edge(clk_ref_i) then
       if(rst_ref_n_i = '0' OR s_ctrl_reset_o(0) = '1' ) then
-        r_tai_old         <= signed(tm_tai8ns_i);
+        r_tai_old         <= signed(r_tm_tai8ns_i);
         r_time_dif_neg    <= (others => '0');
-        r_time_dif_neg_ts <= tm_tai8ns_i;
+        r_time_dif_neg_ts <= r_tm_tai8ns_i;
         r_time_dif_pos    <= (others => '0');
-        r_time_dif_pos_ts <= tm_tai8ns_i;
+        r_time_dif_pos_ts <= r_tm_tai8ns_i;
         r_time_dif        <= (others => '0');
         r_tai_observer_cnt <= (others => '1'); -- this makes sure s_ctrl_time_observation_interval_o is always copied 1 cycle after clear
       else
@@ -137,19 +145,19 @@ begin
           --assign new extreme values penending on diff sign, timestamp the update (probably not exact, but enough to correlate with other log files)
           if (r_time_dif > r_time_dif_pos) then
             r_time_dif_pos    <= r_time_dif;
-            r_time_dif_pos_ts <= tm_tai8ns_i;
+            r_time_dif_pos_ts <= r_tm_tai8ns_i;
           end if;
           if (r_time_dif < r_time_dif_neg) then
             r_time_dif_neg    <= r_time_dif;
-            r_time_dif_neg_ts <= tm_tai8ns_i;
+            r_time_dif_neg_ts <= r_tm_tai8ns_i;
           end if;
-          r_tai_old <= signed(tm_tai8ns_i); --save current time for next diff
+          r_tai_old <= signed(r_tm_tai8ns_i); --save current time for next diff
         else
           --count down for observer
           r_tai_observer_cnt <= r_tai_observer_cnt - s_tai_observer_dec;
         end if;
         --TODO: ECA adder might be a good idea, this requires some fast 64b magic...
-        r_time_dif <= signed(tm_tai8ns_i) - r_tai_old;
+        r_time_dif <= signed(r_tm_tai8ns_i) - r_tai_old;
       end if;
     end if;
   end process;
@@ -178,13 +186,13 @@ begin
           ra_stall_max(I)          <= (others => '0');
           ra_stall_cnt(I)          <= (others => '0');
           ra_stall_observer_cnt(I) <= (others => '1');
-          ra_stall_max_ts(I)       <= unsigned(tm_tai8ns_i);
+          ra_stall_max_ts(I)       <= unsigned(r_tm_tai8ns_i);
         else
           if (ra_stall_observer_cnt(I)(ra_stall_observer_cnt(I)'left) = '1') then -- observer count down is over
 
             if (ra_stall_cnt(I) > ra_stall_max(I)) then -- if the stall cnt is a new record, we save the value
               ra_stall_max(I)     <= ra_stall_cnt(I);
-              ra_stall_max_ts(I)  <= unsigned(tm_tai8ns_i);
+              ra_stall_max_ts(I)  <= unsigned(r_tm_tai8ns_i);
             end if;
 
             -- re-init observer countdown, clear stall cnt
@@ -221,11 +229,11 @@ begin
         r_wr_lock_acqu_last_ts <= (others => '0');
       else
         if (s_wr_lock_loss = '1') then
-          r_wr_lock_loss_last_ts  <= tm_tai8ns_i;
+          r_wr_lock_cnt <= r_wr_lock_cnt + 1;
+          r_wr_lock_loss_last_ts <= r_tm_tai8ns_i; 
         end if;
         if (s_wr_lock_acqu = '1') then
-          r_wr_lock_cnt           <= r_wr_lock_cnt + 1;
-          r_wr_lock_acqu_last_ts  <= tm_tai8ns_i;
+          r_wr_lock_acqu_last_ts <= r_tm_tai8ns_i;
         end if;
       end if;
     end if;
