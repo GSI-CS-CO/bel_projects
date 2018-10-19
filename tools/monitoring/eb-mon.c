@@ -34,7 +34,7 @@
 // For all questions and ideas contact: d.beck@gsi.de
 // Last update: 25-April-2015
 //////////////////////////////////////////////////////////////////////////////////////////////
-#define EBMON_VERSION "1.6.0"
+#define EBMON_VERSION "1.6.1"
 
 // standard includes
 #include <unistd.h> // getopt

@@ -11,7 +11,7 @@
 //            -- Tomasz Wlostowski <tomasz.wlostowski@cern.ch>
 //  version : 01-May-2018
 //
-#define WB_API_VERSION "010.0"
+#define WB_API_VERSION "010.1"
 //
 // Api for wishbone devices for timing receiver nodes. This is not a timing receiver API.
 // 

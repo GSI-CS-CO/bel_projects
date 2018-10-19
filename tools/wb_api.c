@@ -3,7 +3,7 @@
 //
 //  created : Apr 10, 2013
 //  author  : Dietrich Beck, GSI-Darmstadt
-//  version : 01-May-2018
+//  version : 10-Oct-2018
 //
 // Api for wishbone devices for timing receiver nodes. This is not a timing receiver API,
 // but only a temporary solution.
@@ -390,7 +390,6 @@ eb_status_t wb_wr_get_uptime(eb_device_t device, int devIndex, uint32_t *uptime)
 eb_status_t wb_1wire_get_id(eb_device_t device, int devIndex, unsigned int busIndex, unsigned int family, short isUserFlag, uint64_t *id)
 {
   eb_status_t  status;
-  uint64_t     oneWireID;
   uint8_t      len4CRC;
   uint16_t     CRC;
 
@@ -425,10 +424,7 @@ eb_status_t wb_1wire_get_id(eb_device_t device, int devIndex, unsigned int busIn
   for (i = 0; i < W1_MAX_DEVICES; i++) {
     d = wrpc_w1_bus.devs + i;
     if ((d->rom & 0xff) == family) {
-      oneWireID = (int)(d->rom >> 32);
-      oneWireID = (oneWireID << 32);
-      oneWireID = oneWireID + (int)(d->rom);
-      *id = oneWireID;
+      *id = d->rom;
       CRC = wire1_crc8((uint8_t*)id, len4CRC, family);
       if (!CRC)                     return EB_ADDRESS; // CRC == 0 is illegal
       if (CRC == ((uint8_t*)id)[7]) return status;     // CRC ok
