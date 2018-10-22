@@ -229,10 +229,10 @@ begin
         r_wr_lock_acqu_last_ts <= (others => '0');
       else
         if (s_wr_lock_loss = '1') then
-          r_wr_lock_cnt <= r_wr_lock_cnt + 1;
           r_wr_lock_loss_last_ts <= r_tm_tai8ns_i; 
         end if;
         if (s_wr_lock_acqu = '1') then
+          r_wr_lock_cnt <= r_wr_lock_cnt + 1;
           r_wr_lock_acqu_last_ts <= r_tm_tai8ns_i;
         end if;
       end if;
