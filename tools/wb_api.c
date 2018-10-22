@@ -424,11 +424,6 @@ eb_status_t wb_wr_get_lock_stats(eb_device_t device, int devIndex, uint64_t *nse
   *nsecsLockAcq  = *nsecsLockAcq  + (uint64_t)data2;
   *nLockAcq      = data4;
 
-  // the following are hacks to make the result consistent with dm_diag_regs.h
-  // fix nLockAcq
-  if ((*nLockAcq == 0) && (*nsecsLockAcq > 0)) {*nLockAcq = 1; *nsecsLockLoss = 0xffffffffffffffff;}
-  else                                          *nLockAcq = *nLockAcq / 2 + 1;
-
   // mark nsecs in case no lock has been acquired so far
   if (*nLockAcq == 0) {
     *nsecsLockLoss = 0xffffffffffffffff;
@@ -439,8 +434,6 @@ eb_status_t wb_wr_get_lock_stats(eb_device_t device, int devIndex, uint64_t *nse
   wb_wr_get_sync_state(device, 0, &syncState);
   if (syncState != WR_PPS_GEN_ESCR_MASK) {
     *nsecsLockAcq  = 0xffffffffffffffff;
-    // chk: the following is hack as the lock counter is only increased if the lock is lost
-    if (*nLockAcq > 1) (*nLockAcq)--;
   }
 
   return status;
