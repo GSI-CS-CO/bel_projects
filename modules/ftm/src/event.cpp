@@ -100,6 +100,7 @@ void Flush::deserialise(uint8_t* b)  {
 
 void Flush::serialise(const vAdr &va, uint8_t* b) const {
   Command::serialise(va, b);
+  writeLeNumberToBeBytes(b + (ptrdiff_t)CMD_FLUSH_DEST_OVR, va[ADR_CMD_FLUSH_DEST_OVR]);
   b[CMD_FLUSHRNG_IL_FRM]  = this->frmIl;
   b[CMD_FLUSHRNG_IL_TO]   = this->toIl;
   b[CMD_FLUSHRNG_HI_FRM]  = this->frmHi;

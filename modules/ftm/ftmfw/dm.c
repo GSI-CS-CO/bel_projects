@@ -180,6 +180,7 @@ uint32_t* execNoop(uint32_t* node, uint32_t* cmd, uint32_t* thrData) {
 uint32_t* execFlow(uint32_t* node, uint32_t* cmd, uint32_t* thrData) {
   uint32_t* ret = (uint32_t*)cmd[T_CMD_FLOW_DEST >> 2];
   DBPRINT3("#%02u: Routing Flow to 0x%08x\n", cpuId, (uint32_t)ret);
+  //permanent change?
   if(cmd[T_CMD_ACT >> 2] & ACT_CHP_SMSK) node[NODE_DEF_DEST_PTR >> 2] = (uint32_t)ret;
   return ret;
 
@@ -187,12 +188,17 @@ uint32_t* execFlow(uint32_t* node, uint32_t* cmd, uint32_t* thrData) {
 
 uint32_t* execFlush(uint32_t* node, uint32_t* cmd, uint32_t* thrData) {
   uint8_t prios = (cmd[T_CMD_ACT >> 2] >> ACT_FLUSH_PRIO_POS) & ACT_FLUSH_PRIO_MSK;
-
-
   if(prios & (1 << PRIO_LO)) *((uint8_t *)node + BLOCK_CMDQ_RD_IDXS + _32b_SIZE_  - PRIO_LO -1) = *((uint8_t *)node + BLOCK_CMDQ_WR_IDXS + _32b_SIZE_  - PRIO_LO -1);
   if(prios & (1 << PRIO_HI)) *((uint8_t *)node + BLOCK_CMDQ_RD_IDXS + _32b_SIZE_  - PRIO_HI -1) = *((uint8_t *)node + BLOCK_CMDQ_WR_IDXS + _32b_SIZE_  - PRIO_HI -1);
   // makes no sense to flush interlock priority, skipping
-
+  
+  //override successor ?
+  uint32_t* ret = (uint32_t*)cmd[T_CMD_FLUSH_OVR >> 2];
+  if((uint32_t)ret != LM32_NULL_PTR) { // no override to idle allowed!
+    //permanent change?
+    if((cmd[T_CMD_ACT >> 2] & ACT_CHP_SMSK)) node[NODE_DEF_DEST_PTR >> 2] = (uint32_t)ret;
+    return ret;
+  }
   return (uint32_t*)node[NODE_DEF_DEST_PTR >> 2];
 
 

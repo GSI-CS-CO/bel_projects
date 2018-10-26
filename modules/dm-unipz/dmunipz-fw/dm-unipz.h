@@ -4,9 +4,15 @@
 #define  DMUNIPZ_US_ASMNOP        31          // # of asm("nop") operations per microsecond
 #define  DMUNIPZ_MS_ASMNOP        31 * 1000   // # of asm("nop") operations per microsecond
 #define  DMUNIPZ_DEFAULT_TIMEOUT  100         // default timeout used by main loop [ms]
-#define  DMUNIPZ_UNITIMEOUT       1000        // timeout used when requesting things from UNILAC [ms]
+#define  DMUNIPZ_UNITIMEOUT       2000        // timeout used when requesting things from UNILAC [ms]
 #define  DMUNIPZ_TKTIMEOUT        210         // timeout used when requesting TK from UNILAC [ms]
-#define  DMUNIPZ_OFFSETFLEX       1000000     // offset added to obtain TS "flex wait" [ns]
+#define  DMUNIPZ_QUERYTIMEOUT     1           // timeout for querying virt acc from MIL Piggy FIFO [ms] 
+                                              // Ludwig: we have 10ms time; here: use 5 ms to be on the safe side
+#define  DMUNIPZ_DMTIMEOUT           9000     // after receiving ReqBeam from DM, this is the amount of time available within we must reply to the DM [ms]
+#define  DMUNIPZ_SAFETYMARGIN     1000000     // saftey margin required by DM+network, 1ms @ 2018
+#define  DMUNIPZ_MATCHWINDOW       200000     // used for comparing timestamps: 1 TS from TLU->ECA matches event from MIL FIFO, 2: synch EVT_MB_TRIGGER, ...
+#define  DMUNIPZ_OFFSETFLEX       1500000     // offset added to obtain TS "flex wait" [ns]
+#define  DMUNIPZ_OFFSETINJECT     9980000     // offset added to obtain expected time of injection [ns], used for diagnostic only
 #define  DMUNIPZ_EVT_READY2SIS    0x1e        // event number EVT_READY_TO_SIS (HEX)
 #define  DMUNIPZ_ECA_ADDRESS      0x7ffffff0  // address of ECA input
 #define  DMUNIPZ_EB_HACKISH       0x12345678  // value for EB read handshake
@@ -28,7 +34,27 @@
 #define  DMUNIPZ_STATUS_NOIP            13    // DHCP request via WR network failed                                
 #define  DMUNIPZ_STATUS_WRONGIP         14    // IP received via DHCP does not match local config            
 #define  DMUNIPZ_STATUS_NODM            15    // Data Master unreachable                                     
-#define  DMUNIPZ_STATUS_EBREADTIMEDOUT  16    // EB read via WR network timed out                           
+#define  DMUNIPZ_STATUS_EBREADTIMEDOUT  16    // EB read via WR network timed out
+#define  DMUNIPZ_STATUS_WRONGVIRTACC    17    // received EVT_READY_TO_SIS with wrong virt acc number
+#define  DMUNIPZ_STATUS_SAFETYMARGIN    18    // violation of safety margin for data master and timing network
+#define  DMUNIPZ_STATUS_NOTIMESTAMP     19    // received EVT_READY_TO_SIS in MIL FIFO but not via TLU -> ECA
+#define  DMUNIPZ_STATUS_BADTIMESTAMP    20    // TS from TLU->ECA does not coincide with MIL Event from FIFO
+#define  DMUNIPZ_STATUS_DMQNOTEMPTY     21    // Data Master: Q not empty
+#define  DMUNIPZ_STATUS_LATEEVENT       22    // received 'late event' from Data Master
+#define  DMUNIPZ_STATUS_TKNOTRESERVED   23    // TK is not reserved
+#define  DMUNIPZ_STATUS_DMTIMEOUT       24    // beam request did not succeed within 10s timeout at DM
+#define  DMUNIPZ_STATUS_BADSYNC         25    // t(EVT_MB_TRIGGER) - t(EVT_READY_TO_SIS) != 10ms
+#define  DMUNIPZ_STATUS_WAIT4UNIEVENT   26    // timeout while waiting for EVT_READY_TO_SIS
+#define  DMUNIPZ_STATUS_BADSCHEDULEA    27    // t(EVT_MB_TRIGGER) - t(CMD_UNI_BREQ) < 10ms
+#define  DMUNIPZ_STATUS_BADSCHEDULEB    28    // unexpected even
+#define  DMUNIPZ_STATUS_INVALIDBLKADDR  29    // invalid address of block for Data Master
+#define  DMUNIPZ_STATUS_WRBADSYNC       30    // White Rabbit: not in 'TRACK_PHASE'
+#define  DMUNIPZ_STATUS_AUTORECOVERY    31    // trying auto-recovery from state ERROR
+
+
+// MASP 
+#define  DMUNIPZ_MASP_NOMEN      "U_DM_UNIPZ" // nomen for gateway
+#define  DMUNIPZ_MASP_CUSTOMSIG  "TRANSFER"   // custom signal for MASP
 
                                 
 // commands from the outside
@@ -59,7 +85,8 @@
 #define  DMUNIPZ_ECADO_REQBEAM    3           // request beam from UNIPZ
 #define  DMUNIPZ_ECADO_RELTK      4           // release the transfer channel (TK)
 #define  DMUNIPZ_ECADO_PREPDM     5           // dedicated message from DM, carries info on DM wait after TK request (deprecated)
-#define  DMUNIPZ_ECADO_READY2SIS  6           // received EVT_READY_TO_SIS (HEX) via TLU
+#define  DMUNIPZ_ECADO_READY2SIS  6           // received EVT_READY_TO_SIS via TLU
+#define  DMUNIPZ_ECADO_MBTRIGGER  7           // received EVT_MB_TRIGGER via TLU
 
 
 // status of transfer (status bits)
@@ -78,16 +105,18 @@
 #define DMUNIPZ_LOGLEVEL_STATE    3           // info on state changes
 
 typedef struct {                              // group together all information required for modifying blocks within the data master via Etherbone
-  uint32_t dynpar0;                           // receive from DM: 1st 32 bit of param field
-  uint32_t dynpar1;                           // receive from DM: 2nd 32 bit of param field
+  uint32_t dynpar0;                           // received from DM: 1st 32 bit of param field
+  uint32_t dynpar1;                           // received from DM: 2nd 32 bit of param field
+  uint32_t tef;                               // received from DM: TEF field
+  uint32_t hash;                              // queried from DM via EB: hash of node name
   uint32_t cmdAddr;                           // write to DM: external address of a command
   uint32_t cmdData[_T_CMD_SIZE_];             // write to DM: data of a command
-  uint32_t blockWrIdxAddr;                    // write to DM: external address of wrIdx within block
-  uint32_t blockWrIdx;                        // write to DM: updated value of wrIdx
+  uint32_t blockWrIdxsAddr;                   // write to DM: external address ofs wrIdxs within block
+  uint32_t blockWrIdxs;                       // write to DM: updated value of wrIdxs
 } dmComm;
 
 
-// part below provide by Ludwig Hechler 
+// part below provided by Ludwig Hechler 
 #define IFB_ADDRESS_SIS     0x20        /* Adresse der Interfacekarte               */
 #define IFB_ADDRESS_UNI     0x10        /* Adresse der Interfacekarte               */
 
@@ -99,8 +128,8 @@ typedef struct {                              // group together all information 
 #define IFB_DATA_BUS_W      0x10        /* Funktionscode Datenbus schreiben         */
 #define IFB_DATA_BUS_R      0x90        /* Funktionscode Datenbus lesen             */
 
-#define C_IO32_KANAL_0      0x00        /* Subadresse I/O-Modul für I/O-Bits 0..15  */
-#define C_IO32_KANAL_1      0x02        /* Subadresse I/O-Modul für I/O-Bits 16..31 */
+#define C_IO32_KANAL_0      0x00        /* Subadresse I/O-Modul fuer I/O-Bits 0..15 */
+#define C_IO32_KANAL_1      0x02        /* Subadresse I/O-Modul fuer I/O-Bits 16..31*/
 
 
 // part below provided by Ludwig Hechler

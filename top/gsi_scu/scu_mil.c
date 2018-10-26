@@ -233,6 +233,9 @@ int scub_reset_mil(volatile unsigned short *base, int slot) {
   base[CALC_OFFS(slot) + MIL_SIO3_RST] = 0x0;
   usleep(1000);
   base[CALC_OFFS(slot) + MIL_SIO3_RST] = 0xff;
+  usleep(100);      // added by db; if not, an subsequent write/read results in an error -3
+
+  return OKAY; 
   //for (i = TASKMIN; i <= TASKMAX; i++) {
     //data = 0xffff & base[CALC_OFFS(slot) + MIL_SIO3_RX_TASK1 + i - 1];
   ////}
@@ -244,6 +247,9 @@ int reset_mil(volatile unsigned *base) {
   base[MIL_SIO3_RST] = 0x0;
   usleep(1000);
   base[MIL_SIO3_RST] = 0xff;
+  usleep(100);      // added by db; if not, an subsequent write/read results in an error -3
+
+  return OKAY;
   //for (i = TASKMIN; i <= TASKMAX; i++) {
     //data = 0xffff & base[MIL_SIO3_RX_TASK1 + i - 1];
   //}
@@ -252,7 +258,7 @@ int reset_mil(volatile unsigned *base) {
 /***********************************************************
  ***********************************************************
  * 
- * 2st part:  (new) MIL bus library
+ * 2nd part:  (new) MIL bus library
  *
  ***********************************************************
  ***********************************************************/
@@ -294,6 +300,18 @@ int16_t echoTestDevMil(volatile uint32_t *base, uint16_t  ifbAddr, uint16_t data
   if (data != rData) return MIL_STAT_ERROR;
   else               return MIL_STAT_OK;
 } //echoTestDevMil
+
+int16_t resetPiggyDevMil(volatile uint32_t *base)
+{
+  int32_t  busStatus;
+  
+  // just a wrapper for the function of the original library
+  // replace code once original library becomes deprecated
+
+  busStatus = reset_mil((unsigned int *)base);
+  if (busStatus != OKAY) return MIL_STAT_ERROR;
+  else                   return MIL_STAT_OK;
+} //resetPiggyDevMil
 
 
 int16_t clearFilterEvtMil(volatile uint32_t *base)

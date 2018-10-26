@@ -139,7 +139,6 @@ private:
   unsigned updateCovenants();
 
   bool isSafetyCritical(vertex_set_t& covenants);
-  bool verifySafety(vertex_t v, vertex_t goal, vertex_set_t& sV, Graph& g );
   //Coverage Tests for safe2remove
 
   bool coverage3IsSeedValid(uint64_t seed);

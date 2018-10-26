@@ -47,6 +47,7 @@ namespace DotStr {
       const std::string sBadDefDst    = "baddefdst";  // Links to Bad Default Destination
       const std::string sCmdTarget    = "target";     // Links to Command's Target Block
       const std::string sCmdFlowDst   = "flowdst";    // Links to Flow Command's destination node
+      const std::string sCmdFlushOvr  = "flushovr";   // Links to Flush Command's destination overrride
       const std::string sDynId        = "dynid";      // Links to Source for dynamic ID field in Tmsg nodes
       const std::string sDynPar0      = "dynpar0";    // Links to Source for dynamic par (high word) field in Tmsg nodes
       const std::string sDynPar1      = "dynpar1";    // Links to Source for dynamic par (low  word) field in Tmsg nodes
