@@ -33,10 +33,10 @@ use work.wishbone_pkg.all;
 
 package monster_pkg is
 
-  type io_channel is (IO_GPIO, IO_LVDS, IO_FIXED);
+  type io_channel is (IO_GPIO, IO_LVDS, IO_FIXED, IO_VIRTUAL);
   type io_direction is (IO_OUTPUT, IO_INPUT, IO_INOUTPUT);
   type io_logic_level is (IO_TTL, IO_LVTTL, IO_LVDS, IO_NIM, IO_CMOS);
-  type io_special_purpose is (IO_NONE, IO_TTL_TO_NIM, IO_CLK_IN_EN, IO_MTCA4_TRIG_BPL_PDN, IO_MTCA4_FAILSAFE_EN);
+  type io_special_purpose is (IO_NONE, IO_TTL_TO_NIM, IO_CLK_IN_EN, IO_MTCA4_TRIG_BPL_PDN, IO_MTCA4_FAILSAFE_EN, IO_LIBERA_TRIG_OE, IO_MTCA4_BPL_BUF_OE);
 
   type t_io_mapping_table is
     record                                               -- Byte(s) = Bit(s)
@@ -467,6 +467,8 @@ package body monster_pkg is
         when IO_CLK_IN_EN          => special := 2;
         when IO_MTCA4_TRIG_BPL_PDN => special := 3;
         when IO_MTCA4_FAILSAFE_EN  => special := 4;
+        when IO_LIBERA_TRIG_OE     => special := 5;
+        when IO_MTCA4_BPL_BUF_OE   => special := 6;
         when others                => special := 63;
       end case;
       result(i).info_special := std_logic_vector(to_unsigned(special, result(i).info_special'length));
@@ -492,10 +494,11 @@ package body monster_pkg is
       result(i).info_direction := std_logic_vector(to_unsigned(direction, result(i).info_direction'length));
       -- Convert Channel
       case input(i).info_channel is
-        when IO_GPIO  => channel := 0;
-        when IO_LVDS  => channel := 1;
-        when IO_FIXED => channel := 2;
-        when others   => channel := 7;
+        when IO_GPIO    => channel := 0;
+        when IO_LVDS    => channel := 1;
+        when IO_FIXED   => channel := 2;
+        when IO_VIRTUAL => channel := 3;
+        when others     => channel := 7;
       end case;
       result(i).info_channel := std_logic_vector(to_unsigned(channel, result(i).info_channel'length));
       -- Convert OutputEnable
