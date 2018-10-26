@@ -540,7 +540,7 @@ int main(int argc, char* argv[]) {
         if (para == NULL) {std::cerr << program << ": Queues to be flushed are missing, require 3 bit as hex (IL HI LO 0x0 - 0x7)" << std::endl; return -1; }
         uint32_t queuePrio = strtol(para, NULL, 0) & 0x7;
         cdm.adjustValidTime(cmdTvalid, true);
-        mc = (mc_ptr) new MiniFlush(cmdTvalid, cmdPrio, (bool)(queuePrio >> PRIO_IL & 1), (bool)(queuePrio >> PRIO_HI & 1), (bool)(queuePrio >> PRIO_LO & 1));
+        mc = (mc_ptr) new MiniFlush(cmdTvalid, cmdPrio, (bool)(queuePrio >> PRIO_IL & 1), (bool)(queuePrio >> PRIO_HI & 1), (bool)(queuePrio >> PRIO_LO & 1), LM32_NULL_PTR, false);
     }
     else if (cmp == "staticflush") {
       if(!(cdm.isInHashDict( targetName))) {std::cerr << program << ": Target node '" << targetName << "'' was not found on DM" << std::endl; return -1; }

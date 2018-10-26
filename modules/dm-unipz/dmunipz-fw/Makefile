@@ -1,12 +1,11 @@
 TARGET		= dmunipz
 .DEFAULT_GOAL := fwbin
-DEVICE		= 5AGXMA3D4
-FLASH		= EPCQ256
-SPI_LANES	= ASx4
-RAM_SIZE	= 65536 
+DEVICE		= EP2AGX125
+FLASH		= EPCS128
+RAM_SIZE	= 98304
 SHARED_SIZE     = 8K
 USRCPUCLK       = 125000
-VERSION         = 0.0.12
+VERSION         = 00.04.05
 
 PATHFW 	 = .
 PATHPKG	 = $(shell python2.7 ../../../ip_cores/hdl-make/hdlmake list-mods | grep -G '^[^\#]' | grep top | grep -o '^\S*')

@@ -178,22 +178,21 @@ public:
 // Makes receiving Q clear <prio> queue buffer when leaving block once
 class Flush : public Command {
   uint8_t mode;
-
-  uint8_t frmIl, toIl;
-  uint8_t frmHi, toHi;
-  uint8_t frmLo, toLo;
+  uint8_t frmIl=0, toIl=0;
+  uint8_t frmHi=0, toHi=0;
+  uint8_t frmLo=0, toLo=0;
 
 
 public:
   Flush(const std::string& name, const std::string&  pattern, const std::string&  beamproc, const uint32_t& hash, const uint8_t& cpu, uint32_t flags) : Command(name, pattern, beamproc, hash, cpu, flags) {}
-  Flush(const std::string& name, const std::string&  pattern, const std::string&  beamproc, const uint32_t& hash, const uint8_t& cpu, uint32_t flags, uint64_t tOffs, uint64_t tValid, uint8_t prio, bool qIl, bool qHi, bool qLo, bool vabs )
+  Flush(const std::string& name, const std::string&  pattern, const std::string&  beamproc, const uint32_t& hash, const uint8_t& cpu, uint32_t flags, uint64_t tOffs, uint64_t tValid, uint8_t prio, bool qIl, bool qHi, bool qLo, bool vabs, bool permanent )
         : Command(name, pattern, beamproc, hash, cpu, ((flags & ~NFLG_TYPE_SMSK) | (NODE_TYPE_CFLUSH << NFLG_TYPE_POS)), tOffs, tValid,
-        (ACT_TYPE_FLUSH << ACT_TYPE_POS) | (prio & ACT_PRIO_MSK) << ACT_PRIO_POS | (1 & ACT_QTY_MSK) << ACT_QTY_POS | vabs << ACT_VABS_POS | (((qIl << PRIO_IL) | (qHi << PRIO_HI) | (qLo << PRIO_LO)) & ACT_FLUSH_PRIO_MSK) << ACT_FLUSH_PRIO_POS),
-        frmIl(0), toIl(0), frmHi(0), toHi(0), frmLo(0), toLo(0) {std::cout << "Flush ctor: prio " << (int)(prio & ACT_PRIO_MSK) << " prio 0x" << std::hex << (int)((prio & ACT_PRIO_MSK) << ACT_PRIO_POS) << std::endl;}
-  Flush(const std::string& name, const std::string&  pattern, const std::string&  beamproc, const uint32_t& hash, const uint8_t& cpu, uint32_t flags, uint64_t tOffs, uint64_t tValid, uint8_t prio, bool qIl, bool qHi, bool qLo, bool vabs, uint8_t frmIl, uint8_t toIl, uint8_t frmHi, uint8_t toHi, uint8_t frmLo, uint8_t toLo)
+        (ACT_TYPE_FLUSH << ACT_TYPE_POS) | (prio & ACT_PRIO_MSK) << ACT_PRIO_POS | (1 & ACT_QTY_MSK) << ACT_QTY_POS | vabs << ACT_VABS_POS | (((qIl << PRIO_IL) | (qHi << PRIO_HI) | (qLo << PRIO_LO)) & ACT_FLUSH_PRIO_MSK) << ACT_FLUSH_PRIO_POS | permanent << ACT_CHP_POS)
+        {};
+  Flush(const std::string& name, const std::string&  pattern, const std::string&  beamproc, const uint32_t& hash, const uint8_t& cpu, uint32_t flags, uint64_t tOffs, uint64_t tValid, uint8_t prio, bool qIl, bool qHi, bool qLo, bool vabs, bool permanent, uint8_t frmIl, uint8_t toIl, uint8_t frmHi, uint8_t toHi, uint8_t frmLo, uint8_t toLo)
         : Command(name, pattern, beamproc, hash, cpu, ((flags & ~NFLG_TYPE_SMSK) | (NODE_TYPE_CFLUSH << NFLG_TYPE_POS)), tOffs, tValid,
-        (ACT_TYPE_FLUSH << ACT_TYPE_POS) | (prio & ACT_PRIO_MSK) << ACT_PRIO_POS | (1 & ACT_QTY_MSK) << ACT_QTY_POS | vabs << ACT_VABS_POS | (((qIl << PRIO_IL) | (qHi << PRIO_HI) | (qLo << PRIO_LO)) & ACT_FLUSH_PRIO_MSK) << ACT_FLUSH_PRIO_POS),
-        frmIl(frmIl), toIl(toIl), frmHi(frmHi), toHi(toHi), frmLo(frmLo), toLo(toLo) {std::cout << "Flush ctor: prio " << (int)(prio) << std::hex << " msk 0x" << ACT_PRIO_MSK << " prio 0x"  << (int)((prio & ACT_PRIO_MSK) << ACT_PRIO_POS) << std::endl;}
+        (ACT_TYPE_FLUSH << ACT_TYPE_POS) | (prio & ACT_PRIO_MSK) << ACT_PRIO_POS | (1 & ACT_QTY_MSK) << ACT_QTY_POS | vabs << ACT_VABS_POS | (((qIl << PRIO_IL) | (qHi << PRIO_HI) | (qLo << PRIO_LO)) & ACT_FLUSH_PRIO_MSK) << ACT_FLUSH_PRIO_POS | permanent << ACT_CHP_POS),
+        frmIl(frmIl), toIl(toIl), frmHi(frmHi), toHi(toHi), frmLo(frmLo), toLo(toLo) {};
   Flush(const Flush& src) : Command(src), mode(src.mode), frmIl(src.frmIl), toIl(src.toIl), frmHi(src.frmHi), toHi(src.toHi), frmLo(src.frmLo), toLo(src.toLo) {}
   ~Flush() {};
     node_ptr clone() const override { return boost::make_shared<Flush>(Flush(*this)); }

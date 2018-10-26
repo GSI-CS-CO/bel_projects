@@ -2,7 +2,7 @@
 --! @brief Control unit for bidirectional IO and more
 --! @author CSCO-TG <csco-tg@gsi.de>
 --!
---! Copyright (C) 2015 GSI Helmholtz Centre for Heavy Ion Research GmbH 
+--! Copyright (C) 2015 GSI Helmholtz Centre for Heavy Ion Research GmbH
 --!
 --------------------------------------------------------------------------------
 --! This library is free software; you can redistribute it and/or
@@ -14,7 +14,7 @@
 --! but WITHOUT ANY WARRANTY; without even the implied warranty of
 --! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 --! Lesser General Public License for more details.
---!  
+--!
 --! You should have received a copy of the GNU Lesser General Public
 --! License along with this library. If not, see <http://www.gnu.org/licenses/>.
 ---------------------------------------------------------------------------------
@@ -22,7 +22,7 @@
 use std.textio.all;
 
 library ieee;
-use ieee.std_logic_1164.all; 
+use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 library work;
@@ -107,7 +107,7 @@ architecture rtl of io_control is
   signal s_bit_selector                   : natural range 0 to (2**16)-1;
   signal s_field_selector                 : natural range 0 to (2**16)-1;
   signal s_entry_selector                 : natural range 0 to (2**16)-1;
-  -- Generic constants                    
+  -- Generic constants
   constant c_table_pointer                : natural := (g_gpio_in+g_gpio_out+g_gpio_inout+g_lvds_in+g_lvds_out+g_lvds_inout)*4;
   constant c_gpio_inputs                  : natural := (g_gpio_inout+g_gpio_in);
   constant c_gpio_outputs                 : natural := (g_gpio_inout+g_gpio_out);
@@ -121,77 +121,77 @@ architecture rtl of io_control is
   constant c_gpio_oe_legacy_high_reg      : std_logic_vector (13 downto 0) := "00000000000010"; -- 0x0008
   constant c_lvds_oe_legacy_high_reg      : std_logic_vector (13 downto 0) := "00000000000011"; -- 0x000c
   constant c_io_config_reg                : std_logic_vector (13 downto 0) := "00000000000100"; -- 0x0010
-  -- Information registers                                                                 
+  -- Information registers
   constant c_version_reg                  : std_logic_vector (13 downto 0) := "00000001000000"; -- 0x0100
   constant c_gpio_info_reg                : std_logic_vector (13 downto 0) := "00000001000001"; -- 0x0104
   constant c_lvds_info_reg                : std_logic_vector (13 downto 0) := "00000001000010"; -- 0x0108
   constant c_fixed_info_reg               : std_logic_vector (13 downto 0) := "00000001000011"; -- 0x010c
-  -- GPIO OE registers                    
+  -- GPIO OE registers
   constant c_gpio_oe_set_low_reg          : std_logic_vector (13 downto 0) := "00000010000000"; -- 0x0200
   constant c_gpio_oe_set_high_reg         : std_logic_vector (13 downto 0) := "00000010000001"; -- 0x0204
   constant c_gpio_oe_reset_low_reg        : std_logic_vector (13 downto 0) := "00000010000010"; -- 0x0208
   constant c_gpio_oe_reset_high_reg       : std_logic_vector (13 downto 0) := "00000010000011"; -- 0x020c
-  -- LVDS OE registers                    
+  -- LVDS OE registers
   constant c_lvds_oe_set_low_reg          : std_logic_vector (13 downto 0) := "00000011000000"; -- 0x0300
   constant c_lvds_oe_set_high_reg         : std_logic_vector (13 downto 0) := "00000011000001"; -- 0x0304
   constant c_lvds_oe_reset_low_reg        : std_logic_vector (13 downto 0) := "00000011000010"; -- 0x0308
   constant c_lvds_oe_reset_high_reg       : std_logic_vector (13 downto 0) := "00000011000011"; -- 0x030c
-  -- GPIO TERM registers                  
+  -- GPIO TERM registers
   constant c_gpio_term_set_low_reg        : std_logic_vector (13 downto 0) := "00000100000000"; -- 0x0400
   constant c_gpio_term_set_high_reg       : std_logic_vector (13 downto 0) := "00000100000001"; -- 0x0404
   constant c_gpio_term_reset_low_reg      : std_logic_vector (13 downto 0) := "00000100000010"; -- 0x0408
   constant c_gpio_term_reset_high_reg     : std_logic_vector (13 downto 0) := "00000100000011"; -- 0x040c
-  -- LVDS TERM registers                  
+  -- LVDS TERM registers
   constant c_lvds_term_set_low_reg        : std_logic_vector (13 downto 0) := "00000101000000"; -- 0x0500
   constant c_lvds_term_set_high_reg       : std_logic_vector (13 downto 0) := "00000101000001"; -- 0x0504
   constant c_lvds_term_reset_low_reg      : std_logic_vector (13 downto 0) := "00000101000010"; -- 0x0508
   constant c_lvds_term_reset_high_reg     : std_logic_vector (13 downto 0) := "00000101000011"; -- 0x050c
-  -- GPIO SPECIAL IN registers            
+  -- GPIO SPECIAL IN registers
   constant c_gpio_spec_in_set_low_reg     : std_logic_vector (13 downto 0) := "00000110000000"; -- 0x0600
   constant c_gpio_spec_in_set_high_reg    : std_logic_vector (13 downto 0) := "00000110000001"; -- 0x0604
   constant c_gpio_spec_in_reset_low_reg   : std_logic_vector (13 downto 0) := "00000110000010"; -- 0x0608
   constant c_gpio_spec_in_reset_high_reg  : std_logic_vector (13 downto 0) := "00000110000011"; -- 0x060c
-  -- GPIO SPECIAL OUT registers            
+  -- GPIO SPECIAL OUT registers
   constant c_gpio_spec_out_set_low_reg    : std_logic_vector (13 downto 0) := "00000111000000"; -- 0x0700
   constant c_gpio_spec_out_set_high_reg   : std_logic_vector (13 downto 0) := "00000111000001"; -- 0x0704
   constant c_gpio_spec_out_reset_low_reg  : std_logic_vector (13 downto 0) := "00000111000010"; -- 0x0708
   constant c_gpio_spec_out_reset_high_reg : std_logic_vector (13 downto 0) := "00000111000011"; -- 0x070c
-  -- LVDS SPECIAL IN registers            
+  -- LVDS SPECIAL IN registers
   constant c_lvds_spec_in_set_low_reg     : std_logic_vector (13 downto 0) := "00001000000000"; -- 0x0800
   constant c_lvds_spec_in_set_high_reg    : std_logic_vector (13 downto 0) := "00001000000001"; -- 0x0804
   constant c_lvds_spec_in_reset_low_reg   : std_logic_vector (13 downto 0) := "00001000000010"; -- 0x0808
   constant c_lvds_spec_in_reset_high_reg  : std_logic_vector (13 downto 0) := "00001000000011"; -- 0x080c
-  -- LVDS SPECIAL OUT registers            
+  -- LVDS SPECIAL OUT registers
   constant c_lvds_spec_out_set_low_reg    : std_logic_vector (13 downto 0) := "00001001000000"; -- 0x0900
   constant c_lvds_spec_out_set_high_reg   : std_logic_vector (13 downto 0) := "00001001000001"; -- 0x0904
   constant c_lvds_spec_out_reset_low_reg  : std_logic_vector (13 downto 0) := "00001001000010"; -- 0x0908
   constant c_lvds_spec_out_reset_high_reg : std_logic_vector (13 downto 0) := "00001001000011"; -- 0x090c
-  -- GPIO MUX 
+  -- GPIO MUX
   constant c_gpio_mux_set_low_reg         : std_logic_vector (13 downto 0) := "00001010000000"; -- 0x0a00
   constant c_gpio_mux_set_high_reg        : std_logic_vector (13 downto 0) := "00001010000001"; -- 0x0a04
   constant c_gpio_mux_reset_low_reg       : std_logic_vector (13 downto 0) := "00001010000010"; -- 0x0a08
   constant c_gpio_mux_reset_high_reg      : std_logic_vector (13 downto 0) := "00001010000011"; -- 0x0a0c
-  -- LVDS MUX                            
+  -- LVDS MUX
   constant c_lvds_mux_set_low_reg         : std_logic_vector (13 downto 0) := "00001011000000"; -- 0x0b00
   constant c_lvds_mux_set_high_reg        : std_logic_vector (13 downto 0) := "00001011000001"; -- 0x0b04
   constant c_lvds_mux_reset_low_reg       : std_logic_vector (13 downto 0) := "00001011000010"; -- 0x0b08
   constant c_lvds_mux_reset_high_reg      : std_logic_vector (13 downto 0) := "00001011000011"; -- 0x0b0c
-  -- GPIO SEL                            
+  -- GPIO SEL
   constant c_gpio_sel_set_low_reg         : std_logic_vector (13 downto 0) := "00001100000000"; -- 0x0c00
   constant c_gpio_sel_set_high_reg        : std_logic_vector (13 downto 0) := "00001100000001"; -- 0x0c04
   constant c_gpio_sel_reset_low_reg       : std_logic_vector (13 downto 0) := "00001100000010"; -- 0x0c08
   constant c_gpio_sel_reset_high_reg      : std_logic_vector (13 downto 0) := "00001100000011"; -- 0x0c0c
-  -- LVDS SEL                            
+  -- LVDS SEL
   constant c_lvds_sel_set_low_reg         : std_logic_vector (13 downto 0) := "00001101000000"; -- 0x0d00
   constant c_lvds_sel_set_high_reg        : std_logic_vector (13 downto 0) := "00001101000001"; -- 0x0d04
   constant c_lvds_sel_reset_low_reg       : std_logic_vector (13 downto 0) := "00001101000010"; -- 0x0d08
   constant c_lvds_sel_reset_high_reg      : std_logic_vector (13 downto 0) := "00001101000011"; -- 0x0d0c
-  -- GPIO PPS MUX 
+  -- GPIO PPS MUX
   constant c_gpio_pps_mux_set_low_reg     : std_logic_vector (13 downto 0) := "00001110000000"; -- 0x0e00
   constant c_gpio_pps_mux_set_high_reg    : std_logic_vector (13 downto 0) := "00001110000001"; -- 0x0e04
   constant c_gpio_pps_mux_reset_low_reg   : std_logic_vector (13 downto 0) := "00001110000010"; -- 0x0e08
   constant c_gpio_pps_mux_reset_high_reg  : std_logic_vector (13 downto 0) := "00001110000011"; -- 0x0e0c
-  -- LVDS PPS MUX                         
+  -- LVDS PPS MUX
   constant c_lvds_pps_mux_set_low_reg     : std_logic_vector (13 downto 0) := "00001111000000"; -- 0x0f00
   constant c_lvds_pps_mux_set_high_reg    : std_logic_vector (13 downto 0) := "00001111000001"; -- 0x0f04
   constant c_lvds_pps_mux_reset_low_reg   : std_logic_vector (13 downto 0) := "00001111000010"; -- 0x0f08
@@ -229,13 +229,13 @@ architecture rtl of io_control is
   constant c_ios_total       : natural := c_gpio_total + c_lvds_total + g_fixed;
   constant c_io_table_memory : t_io_mapping_table_array := f_gen_io_table(g_io_table, c_ios_total);
   --signal   s_io_table_memory : t_io_mapping_table_array;
-  
+
 begin
-  
+
   -- Wishbone slave interface
   slave_o.dat <= r_dat;
   slave_o.ack <= r_ack when (g_rom_delay = 0) else r_ack_delay_out;
-  
+
   -- Delay data/acknowledge by two cycles (to please slow ROMs)
   p_wishbone_delay_handler : process(clk_i, rst_n_i) is
   begin
@@ -247,13 +247,13 @@ begin
       r_ack_delay_out <= r_ack_delay;
     end if;
   end process;
-  
+
   -- Unused Wishbone slave signals
   slave_o.err   <= '0';
   slave_o.int   <= '0';
   slave_o.rty   <= '0';
   slave_o.stall <= '0';
-  
+
   -- Output improved or legacy behavior
   gpio_oe_o                                                     <= r_gpio_oe(f_sub1(c_gpio_outputs) downto 0) when r_legacy_mode='0' else r_gpio_oe_legacy(f_sub1(c_gpio_outputs) downto 0);
   lvds_oe_o                                                     <= r_lvds_oe(f_sub1(c_lvds_outputs) downto 0) when r_legacy_mode='0' else r_lvds_oe_legacy(f_sub1(c_lvds_outputs) downto 0);
@@ -271,8 +271,8 @@ begin
   end generate;
   gpio_spec_in_o                                                <= r_gpio_spec_in(f_sub1(c_gpio_inputs)   downto 0) when r_legacy_mode='0' else (others => '0');
   gpio_spec_out_o                                               <= r_gpio_spec_out(f_sub1(c_gpio_outputs) downto 0) when r_legacy_mode='0' else (others => '0');
-  lvds_spec_in_o                                                <= r_gpio_spec_in(f_sub1(c_lvds_inputs)   downto 0) when r_legacy_mode='0' else (others => '0');
-  lvds_spec_out_o                                               <= r_gpio_spec_out(f_sub1(c_lvds_outputs) downto 0) when r_legacy_mode='0' else (others => '0');
+  lvds_spec_in_o                                                <= r_lvds_spec_in(f_sub1(c_lvds_inputs)   downto 0) when r_legacy_mode='0' else (others => '0');
+  lvds_spec_out_o                                               <= r_lvds_spec_out(f_sub1(c_lvds_outputs) downto 0) when r_legacy_mode='0' else (others => '0');
   gpio_mux_o                                                    <= r_gpio_mux(f_sub1(c_gpio_outputs)      downto 0) when r_legacy_mode='0' else (others => '0');
   lvds_mux_o                                                    <= r_lvds_mux(f_sub1(c_lvds_outputs)      downto 0) when r_legacy_mode='0' else (others => '0');
   gpio_pps_mux_o                                                <= r_gpio_pps_mux(f_sub1(c_gpio_outputs)  downto 0) when r_legacy_mode='0' else (others => '0');
@@ -281,16 +281,16 @@ begin
   lvds_sel_o                                                    <= r_lvds_sel(f_sub1(c_lvds_outputs)      downto 0) when r_legacy_mode='0' else (others => '0');
   gpio_output_o                                                 <= r_gpio_drive(gpio_output_o'range)                when r_legacy_mode='0' else (others => '0');
   lvds_output_o                                                 <= r_lvds_drive(lvds_output_o'range)                when r_legacy_mode='0' else (others => (others => '0'));
-  
+
   -- IO configuration register
   r_io_cfg_reg <= (0 => r_legacy_mode, others => '0');
-  
+
   -- Version register
   r_version_reg <= std_logic_vector(to_unsigned(g_version, r_version_reg'length));
-  
+
   -- Fixed IOs register
   r_fixed_info_reg <= std_logic_vector(to_unsigned(g_fixed, r_version_reg'length));
-  
+
   -- GPIO information register
   p_gpio_info : process(r_gpio_info_reg) is
   begin
@@ -299,7 +299,7 @@ begin
     r_gpio_info_reg(15 downto  8) <= std_logic_vector(to_unsigned(g_gpio_out,   r_gpio_info_reg'length/4));
     r_gpio_info_reg(7  downto  0) <= std_logic_vector(to_unsigned(g_gpio_inout, r_gpio_info_reg'length/4));
   end process;
-  
+
   -- LVDS information register
   p_lvds_info : process(r_lvds_info_reg) is
   begin
@@ -308,7 +308,7 @@ begin
     r_lvds_info_reg(15 downto  8) <= std_logic_vector(to_unsigned(g_lvds_out,   r_gpio_info_reg'length/4));
     r_lvds_info_reg(7  downto  0) <= std_logic_vector(to_unsigned(g_lvds_inout, r_gpio_info_reg'length/4));
   end process;
-  
+
   -- Decode selection from slave input address (use the least significant bits to selected IO number or table entry field)
   p_bit_selector : process(slave_i.adr) is
   begin
@@ -316,7 +316,7 @@ begin
     s_field_selector <= to_integer(unsigned(slave_i.adr(3  downto 2)));
     s_entry_selector <= to_integer(unsigned(slave_i.adr(11 downto 4)));
   end process;
-  
+
   -- Handle wishbone requests
   p_wishbone_handler : process(clk_i, rst_n_i) is
   begin
@@ -343,12 +343,12 @@ begin
       r_lvds_sel       <= (others => '0');
       r_gpio_drive     <= (others => '0');
       r_lvds_drive     <= (others => (others => '0'));
-  
+
     elsif (rising_edge(clk_i)) then
       -- Handle generic wishbone signals
       r_ack <= slave_i.cyc and slave_i.stb;
       r_dat <= (others => '0');
-      
+
       -- Handle write requests
       if (slave_i.cyc and slave_i.stb and slave_i.we) = '1' then
         case slave_i.adr(15 downto 2) is
@@ -423,12 +423,12 @@ begin
             if (slave_i.adr(15 downto 2) >= c_set_gpio_out_begin_reg and slave_i.adr(15 downto 2) <= c_set_gpio_out_end_reg) then
               r_gpio_drive(s_bit_selector) <= slave_i.dat(0);
               report "Setting driven GPIO OUT at: " & integer'image(s_bit_selector) severity note;
-              
+
             -- Set driven LVDS OUT values
             elsif (slave_i.adr(15 downto 2) >= c_set_lvds_out_begin_reg and slave_i.adr(15 downto 2) <= c_set_lvds_out_end_reg) then
               r_lvds_drive(s_bit_selector)  <= slave_i.dat(7 downto 0);
               report "Setting driven LVDS OUT at: " & integer'image(s_bit_selector-g_lvds_in-g_lvds_inout) severity note;
-              
+
             -- Unknown access
             else
               if ((slave_i.cyc and slave_i.stb) = '1') then
@@ -439,11 +439,11 @@ begin
               else
                 r_dat <= (others => '0');
               end if;
-            
+
             end if;
         end case;
       end if;
-      
+
       -- Handle read/no-write requests
       case slave_i.adr(15 downto 2) is
         -- Known registers
@@ -518,37 +518,37 @@ begin
             r_dat(31 downto  8) <= (others => '0');
             r_dat( 7 downto  0) <= (others => r_gpio_drive(s_bit_selector));
             report "Getting driven GPIO OUT at: " & integer'image(s_bit_selector) severity note;
-            
+
           -- Get driven LVDS OUT values
           elsif (slave_i.adr(15 downto 2) >= c_set_lvds_out_begin_reg and slave_i.adr(15 downto 2) <= c_set_lvds_out_end_reg) then
             r_dat(31 downto  8) <= (others => '0');
             r_dat( 7 downto  0) <= r_lvds_drive(s_bit_selector);
             report "Getting driven LVDS OUT at: " & integer'image(s_bit_selector) severity note;
-            
+
           -- Get GPIO IN values
           elsif (slave_i.adr(15 downto 2) >= c_get_gpio_in_begin_reg and slave_i.adr(15 downto 2) <= c_get_gpio_in_end_reg) then
             r_dat(31 downto  8) <= (others => '0');
             r_dat( 7 downto  0) <= (others => gpio_input_i(s_bit_selector));
             report "Getting GPIO IN at: " & integer'image(s_bit_selector) severity note;
-            
+
           -- Get GPIO OUT values
           elsif (slave_i.adr(15 downto 2) >= c_get_gpio_out_begin_reg and slave_i.adr(15 downto 2) <= c_get_gpio_out_end_reg) then
             r_dat(31 downto  8) <= (others => '0');
             r_dat( 7 downto  0) <= (others => gpio_output_i(s_bit_selector-g_gpio_in-g_gpio_inout));
             report "Getting GPIO OUT at: " & integer'image(s_bit_selector-g_gpio_in-g_gpio_inout) severity note;
-          
+
           -- Get LVDS IN values
           elsif (slave_i.adr(15 downto 2) >= c_get_lvds_in_begin_reg and slave_i.adr(15 downto 2) <= c_get_lvds_in_end_reg) then
             r_dat(31 downto  8) <= (others => '0');
             r_dat( 7 downto  0) <= lvds_input_i(s_bit_selector);
             report "Getting LVDS IN at: " & integer'image(s_bit_selector) severity note;
-          
+
           -- Get LVDS OUT values
           elsif (slave_i.adr(15 downto 2) >= c_get_lvds_out_begin_reg and slave_i.adr(15 downto 2) <= c_get_lvds_out_end_reg) then
             r_dat(31 downto  8) <= (others => '0');
             r_dat( 7 downto  0) <= lvds_output_i(s_bit_selector-g_lvds_in-g_lvds_inout);
             report "Getting LVDS OUT at: " & integer'image(s_bit_selector-g_lvds_in-g_lvds_inout) severity note;
-            
+
           -- GET IO mapping table
           elsif (slave_i.adr(15 downto 2) >= c_io_map_table_begin_reg and slave_i.adr(15 downto 2) <= c_io_map_table_end_reg) then
               -- Prevent out of range access
@@ -576,7 +576,7 @@ begin
                 r_dat( 1 downto  0) <= (others => '0');
               end if;
             report "Getting mapping table" severity note;
-            
+
           -- Unknown access
           else
             if ((slave_i.cyc and slave_i.stb) = '1') then
@@ -587,11 +587,11 @@ begin
             else
               r_dat <= (others => '0');
             end if;
-            
+
           end if;
       end case;
-      
+
     end if;
   end process;
-  
+
 end rtl;

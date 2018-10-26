@@ -127,6 +127,7 @@ template <class Name>
       else if (type[v] == det::sAltDst)      out << ec::Edge::sLookAltDst;
       else if (type[v] == det::sCmdTarget)   out << ec::Edge::sLookTarget;
       else if (type[v] == det::sCmdFlowDst)  out << ec::Edge::sLookArgument;
+      else if (type[v] == det::sCmdFlushOvr) out << ec::Edge::sLookArgument;
       else if (type[v] == det::sDynId)       out << ec::Edge::sLookArgument;
       else if (type[v] == det::sDynPar0)     out << ec::Edge::sLookArgument;
       else if (type[v] == det::sDynPar1)     out << ec::Edge::sLookArgument;
@@ -155,7 +156,7 @@ template <class Name>
     static_eq(typeMap type) : type(type) {}
     template <class Edge>
     bool operator()(const Edge& e) const {
-      auto allowedTypes = {det::sDefDst, det::sResFlowDst, det::sDynFlowDst, det::sCmdTarget, det::sCmdFlowDst};
+      auto allowedTypes = {det::sDefDst, det::sResFlowDst, det::sDynFlowDst, det::sCmdTarget, det::sCmdFlowDst, det::sCmdFlushOvr};
       for(auto& it : allowedTypes ) { if (type[e] == it) return true; } //true if edge is of allowed types
       return false;
     }

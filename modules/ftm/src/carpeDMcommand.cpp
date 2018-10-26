@@ -168,7 +168,11 @@ vEbwrs& CarpeDM::createCommandBurst(Graph& g, vEbwrs& ew) {
                                             mc = (mc_ptr) new MiniFlow(cmdTvalid, cmdPrio, cmdQty, adr, s2u<bool>(g[v].perma) );
                                           }
     else if (g[v].type == dnt::sCmdFlush) { // << " Flushing <" << target << "> Queues IL " << s2u<int>(g[v].qIl) << " HI " << s2u<int>(g[v].qHi) << " LO " << s2u<int>(g[v].qLo) <<  std::endl;
-                                            mc = (mc_ptr) new MiniFlush(cmdTvalid, cmdPrio, s2u<bool>(g[v].qIl), s2u<bool>(g[v].qHi), s2u<bool>(g[v].qLo));
+                                            uint32_t adr = LM32_NULL_PTR;
+                                            try { adr = getNodeAdr(destination, TransferDir::DOWNLOAD, AdrType::INT); } catch (std::runtime_error const& err) {
+                                              throw std::runtime_error("Destination (Flush Overrride) '" + destination + "'' invalid: " + std::string(err.what()));
+                                            }
+                                            mc = (mc_ptr) new MiniFlush(cmdTvalid, cmdPrio, s2u<bool>(g[v].qIl), s2u<bool>(g[v].qHi), s2u<bool>(g[v].qLo), adr, s2u<bool>(g[v].perma));
                                           }
     else if (g[v].type == dnt::sCmdWait)  { uint64_t cmdTwait  = s2u<uint64_t>(g[v].tWait);
                                             mc = (mc_ptr) new MiniWait(cmdTvalid, cmdPrio, cmdTwait, false, false );
