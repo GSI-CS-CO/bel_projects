@@ -3,7 +3,7 @@
 //
 //  created : 2018
 //  author  : Dietrich Beck, GSI-Darmstadt
-//  version : 28-May-2018
+//  version : 11-Sep-2018
 //
 // Command-line interface for WR monitoring of many nodes via Etherbone.
 //
@@ -34,7 +34,7 @@
 // For all questions and ideas contact: d.beck@gsi.de
 // Last update: 27-April-2018
 //////////////////////////////////////////////////////////////////////////////////////////////
-#define EBMASSMON_VERSION "0.0.3"
+#define EBMASSMON_VERSION "0.1.0"
 
 // standard includes
 #include <unistd.h> // getopt
@@ -86,6 +86,7 @@ static void help(void) {
   fprintf(stderr, "  -f<format>       file format\n");
   fprintf(stderr, "                   0: one node per line (default)\n");
   fprintf(stderr, "                   1: ATD format\n");
+  fprintf(stderr, "  -g               include # of acquired WR locks\n");
   fprintf(stderr, "  -h               display this help and exit\n");
   fprintf(stderr, "  -i               include WR IP\n");
   fprintf(stderr, "  -j               display additional info (requires option '-f1'\n");
@@ -411,6 +412,12 @@ static void printMac(uint64_t mac)
   else           fprintf(stdout, ", %012llx", (long long unsigned)mac);
 } // printMac
 
+static void printNLock(uint32_t nLock)
+{
+  if (nLock == ~0) fprintf(stdout, ", %5s", "---");
+  else             fprintf(stdout, ", %05d", nLock);
+} // printNLock
+
 
 static void printIp(uint32_t ip)
 {
@@ -488,7 +495,7 @@ static void printEbStat(eb_status_t status)
 } // print eb state
 
 
-static void printHeader(int wrDate, int wrOffset, int wrSync, int wrMac, int wrLink, int wrIp, int wrUptime, int buildVer, int info, int checkIpMac)
+static void printHeader(int wrDate, int wrOffset, int wrSync, int wrMac, int wrLock, int wrLink, int wrIp, int wrUptime, int buildVer, int info, int checkIpMac)
 {
   // always print header
   fprintf(stdout,   "%15s",   "node");
@@ -504,6 +511,7 @@ static void printHeader(int wrDate, int wrOffset, int wrSync, int wrMac, int wrL
   if (wrUptime)   fprintf(stdout, ", %9s",  "uptime[h]");
   if (buildVer)   fprintf(stdout, ", %8s",  "gwBuild");
   if (wrMac)      fprintf(stdout, ", %12s", "MAC");
+  if (wrLock)     fprintf(stdout, ", %5s",  "#lock");
   if (wrIp)       fprintf(stdout, ", %15s", "IP");
   if (checkIpMac) fprintf(stdout, ", %8s",  "?MAC ?IP");
   if (info)       fprintf(stdout, ", %s",   "info");  // this is the last option
@@ -533,6 +541,7 @@ int main(int argc, char** argv) {
   int          getEBVersion = 0;       // option '-e'
   int          getWRDate    = 0;       // option '-d'
   int          getWROffset  = 0;       // option '-o'
+  int          getWRLock    = 0;       // option '-g'
   int          getWRSync    = 0;       // option '-s'
   int          getWRMac     = 0;       // option '-m'
   int          getWRLink    = 0;       // option '-l'
@@ -556,6 +565,7 @@ int main(int argc, char** argv) {
   uint64_t     nodeMac[MAXNODES];
   uint64_t     atdMac[MAXNODES];
   uint32_t     nodeLink[MAXNODES];
+  uint32_t     nodeNLock[MAXNODES];
   uint32_t     nodeUptime[MAXNODES];
   uint32_t     nodeSyncState[MAXNODES];
   uint32_t     nodeIp[MAXNODES];
@@ -578,7 +588,7 @@ int main(int argc, char** argv) {
 
   program = argv[0];
 
-  while ((opt = getopt(argc, argv, "f:w:x:y:acdehijlmoqstuz")) != -1) {
+  while ((opt = getopt(argc, argv, "f:w:x:y:acdeghijlmoqstuz")) != -1) {
     switch (opt) {
     case 'a':
       getBuildVer=1;
@@ -599,6 +609,9 @@ int main(int argc, char** argv) {
         fprintf(stderr, "option file format: specify a proper number, not '%s'!\n", optarg);
         exit(1);
       } // if *tail
+      break;
+    case 'g':
+      getWRLock=1;
       break;
     case 'j':
       dispInfo=1;
@@ -733,6 +746,7 @@ int main(int argc, char** argv) {
     nodeNsecs64[i]   = ~0;
     nodeOffset[i]    = ~0;
     nodeMac[i]       = ~0;
+    nodeNLock[i]     = ~0;
     atdMac[i]        = ~0;
     nodeLink[i]      = ~0;
     nodeUptime[i]    = ~0;
@@ -780,12 +794,13 @@ int main(int argc, char** argv) {
               nodeNsecs64[nNodes] = tmp64;
               nodeOffset[nNodes]  = temp64;
               nodeUp[nNodes]      = 1;
-              if (getWRSync)   {if ((status = wb_wr_get_sync_state(device, devIndex, &tmp)) == EB_OK) nodeSyncState[nNodes] = tmp;}
-              if (getWRMac)    {if ((status = wb_wr_get_mac(device, devIndex, &tmp64)) == EB_OK)      nodeMac[nNodes]       = tmp64;}
-              if (getWRLink)   {if ((status = wb_wr_get_link(device, devIndex, &tmp)) == EB_OK)       nodeLink[nNodes]      = tmp;}
-              if (getWRIP)     {if ((status = wb_wr_get_ip(device, devIndex, &tmp)) == EB_OK)         nodeIp[nNodes]        = tmp;}
-              if (getWRUptime) {if ((status = wb_wr_get_uptime(device, devIndex, &tmp32)) == EB_OK)   nodeUptime[nNodes]    = tmp32;}
-              if (getBuildVer) {if ((status = wb_get_build_type(device, MAXLEN, tmpStr)) == EB_OK)    sprintf(buildType[nNodes], "%s", tmpStr);}
+              if (getWRSync)   {if ((status = wb_wr_get_sync_state(device, devIndex, &tmp)) == EB_OK)                    nodeSyncState[nNodes] = tmp;}
+              if (getWRMac)    {if ((status = wb_wr_get_mac(device, devIndex, &tmp64)) == EB_OK)                         nodeMac[nNodes]       = tmp64;}
+              if (getWRLock)   {if ((status = wb_wr_get_lock_stats(device, devIndex, &tmp64, &temp64, &tmp32)) == EB_OK) nodeNLock[nNodes]     = tmp32;}
+              if (getWRLink)   {if ((status = wb_wr_get_link(device, devIndex, &tmp)) == EB_OK)                          nodeLink[nNodes]      = tmp;}
+              if (getWRIP)     {if ((status = wb_wr_get_ip(device, devIndex, &tmp)) == EB_OK)                            nodeIp[nNodes]        = tmp;}
+              if (getWRUptime) {if ((status = wb_wr_get_uptime(device, devIndex, &tmp32)) == EB_OK)                      nodeUptime[nNodes]    = tmp32;}
+              if (getBuildVer) {if ((status = wb_get_build_type(device, MAXLEN, tmpStr)) == EB_OK)                       sprintf(buildType[nNodes], "%s", tmpStr);}
             } // check device
             wb_close(device, socket);
           } // wb_open is ok
@@ -800,7 +815,7 @@ int main(int argc, char** argv) {
   if (printTable) {
     fprintf(stdout, "\nqueried data from %d nodes in network '%s'\n", nNodes, networkTypeNames[networkType]);
     
-    printHeader(getWRDate, getWROffset, getWRSync, getWRMac, getWRLink, getWRIP, getWRUptime, getBuildVer, dispInfo, checkIpMac);
+    printHeader(getWRDate, getWROffset, getWRSync, getWRMac, getWRLock, getWRLink, getWRIP, getWRUptime, getBuildVer, dispInfo, checkIpMac);
     for (i=0; i<nNodes; i++) {
       fprintf(stdout, "%15s", nodeName[i]);
       fprintf(stdout, ", %10s", nodeNetwork[i]);
@@ -813,6 +828,7 @@ int main(int argc, char** argv) {
       if (getWRUptime) printUptime(nodeUptime[i]);
       if (getBuildVer) printBuildVer(buildType[i]);
       if (getWRMac)    printMac(nodeMac[i]);
+      if (getWRLock)   printNLock(nodeNLock[i]);
       if (getWRIP)     printIp(nodeIp[i]);
       if (checkIpMac)  printCheckIpMac(nodeMac[i], atdMac[i], nodeIp[i], atdIp[i]);
       if (dispInfo)    printInfo(nodeInfo[i]);

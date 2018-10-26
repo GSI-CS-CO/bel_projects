@@ -3,7 +3,7 @@
 //
 //  created : Apr 10, 2013
 //  author  : Dietrich Beck, GSI-Darmstadt
-//  version : 01-May-2018
+//  version : 11-sep-2018
 //
 // Api for wishbone devices for timing receiver nodes. This is not a timing receiver API,
 // but only a temporary solution.
@@ -63,6 +63,7 @@ eb_address_t wb4_1wire      = EB_NULL;
 eb_address_t user_1wire     = EB_NULL;
 eb_address_t reset_addr     = EB_NULL;
 eb_address_t brom_addr      = EB_NULL;
+eb_address_t dm_diag_addr   = EB_NULL;
 
 eb_address_t BASE_ONEWIRE;
 extern struct w1_bus wrpc_w1_bus;
@@ -385,6 +386,65 @@ eb_status_t wb_wr_get_uptime(eb_device_t device, int devIndex, uint32_t *uptime)
 
   return status;
 } // wb_wr_get_uptime
+
+
+eb_status_t wb_wr_get_lock_stats(eb_device_t device, int devIndex, uint64_t *nsecsLockLoss, uint64_t *nsecsLockAcq, uint32_t *nLockAcq)
+{
+  eb_cycle_t   cycle;
+  eb_data_t    data0, data1, data2, data3, data4;
+  eb_status_t  status;
+
+  int          syncState;
+
+#ifdef WB_SIMULATE
+  *nsecsLockLoss = 0xffffffffffffffff;
+  *nsecsLockAcq  = 4711;
+  *nLockAcq      = 17
+
+  return EB_OK;
+#endif
+
+  *nsecsLockLoss = 0xffffffffffffffff;
+  *nsecsLockAcq  = 0xffffffffffffffff;
+  *nLockAcq      = 0xffffffff;
+
+  if ((status = wb_check_device(device, DM_DIAG_VENDOR, DM_DIAG_PRODUCT, DM_DIAG_VMAJOR, DM_DIAG_VMINOR, devIndex, &dm_diag_addr)) != EB_OK) return status;
+
+  if ((status = eb_cycle_open(device, 0, eb_block, &cycle)) != EB_OK) return status;
+  eb_cycle_read(cycle, dm_diag_addr + DM_DIAG_WR_LOCK_LOSS_LAST_TS_GET_0, EB_BIG_ENDIAN|EB_DATA32, &data0);
+  eb_cycle_read(cycle, dm_diag_addr + DM_DIAG_WR_LOCK_LOSS_LAST_TS_GET_1, EB_BIG_ENDIAN|EB_DATA32, &data1);
+  eb_cycle_read(cycle, dm_diag_addr + DM_DIAG_WR_LOCK_ACQU_LAST_TS_GET_0, EB_BIG_ENDIAN|EB_DATA32, &data2);
+  eb_cycle_read(cycle, dm_diag_addr + DM_DIAG_WR_LOCK_ACQU_LAST_TS_GET_1, EB_BIG_ENDIAN|EB_DATA32, &data3);
+  eb_cycle_read(cycle, dm_diag_addr + DM_DIAG_WR_LOCK_CNT_GET_0,          EB_BIG_ENDIAN|EB_DATA32, &data4);
+  if ((status = eb_cycle_close(cycle)) != EB_OK) return status;
+
+  *nsecsLockLoss = (uint64_t)data1 << 32;
+  *nsecsLockLoss = *nsecsLockLoss + (uint64_t)data0;
+  *nsecsLockAcq  = (uint64_t)data3 << 32;
+  *nsecsLockAcq  = *nsecsLockAcq  + (uint64_t)data2;
+  *nLockAcq      = data4;
+
+  // the following are hacks to make the result consistent with dm_diag_regs.h
+  // fix nLockAcq
+  if ((*nLockAcq == 0) && (*nsecsLockAcq > 0)) {*nLockAcq = 1; *nsecsLockLoss = 0xffffffffffffffff;}
+  else                                          *nLockAcq = *nLockAcq / 2 + 1;
+
+  // mark nsecs in case no lock has been acquired so far
+  if (*nLockAcq == 0) {
+    *nsecsLockLoss = 0xffffffffffffffff;
+    *nsecsLockAcq  = 0xffffffffffffffff;
+  }
+
+  // mark nsecsAcq in case TR is not in TRACK_PHASE
+  wb_wr_get_sync_state(device, 0, &syncState);
+  if (syncState != WR_PPS_GEN_ESCR_MASK) {
+    *nsecsLockAcq  = 0xffffffffffffffff;
+    // chk: the following is hack as the lock counter is only increased if the lock is lost
+    if (*nLockAcq > 1) (*nLockAcq)--;
+  }
+
+  return status;
+} // wb_wr_get_lock_stats  
 
 
 eb_status_t wb_1wire_get_id(eb_device_t device, int devIndex, unsigned int busIndex, unsigned int family, short isUserFlag, uint64_t *id)
