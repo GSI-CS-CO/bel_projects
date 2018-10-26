@@ -3,7 +3,7 @@
 //
 //  created : Apr 10, 2013
 //  author  : Dietrich Beck, GSI-Darmstadt
-//  version : 11-sep-2018
+//  version : 22-Oct-2018
 //
 // Api for wishbone devices for timing receiver nodes. This is not a timing receiver API,
 // but only a temporary solution.
@@ -424,11 +424,6 @@ eb_status_t wb_wr_get_lock_stats(eb_device_t device, int devIndex, uint64_t *nse
   *nsecsLockAcq  = *nsecsLockAcq  + (uint64_t)data2;
   *nLockAcq      = data4;
 
-  // the following are hacks to make the result consistent with dm_diag_regs.h
-  // fix nLockAcq
-  if ((*nLockAcq == 0) && (*nsecsLockAcq > 0)) {*nLockAcq = 1; *nsecsLockLoss = 0xffffffffffffffff;}
-  else                                          *nLockAcq = *nLockAcq / 2 + 1;
-
   // mark nsecs in case no lock has been acquired so far
   if (*nLockAcq == 0) {
     *nsecsLockLoss = 0xffffffffffffffff;
@@ -439,8 +434,6 @@ eb_status_t wb_wr_get_lock_stats(eb_device_t device, int devIndex, uint64_t *nse
   wb_wr_get_sync_state(device, 0, &syncState);
   if (syncState != WR_PPS_GEN_ESCR_MASK) {
     *nsecsLockAcq  = 0xffffffffffffffff;
-    // chk: the following is hack as the lock counter is only increased if the lock is lost
-    if (*nLockAcq > 1) (*nLockAcq)--;
   }
 
   return status;
@@ -450,7 +443,6 @@ eb_status_t wb_wr_get_lock_stats(eb_device_t device, int devIndex, uint64_t *nse
 eb_status_t wb_1wire_get_id(eb_device_t device, int devIndex, unsigned int busIndex, unsigned int family, short isUserFlag, uint64_t *id)
 {
   eb_status_t  status;
-  uint64_t     oneWireID;
   uint8_t      len4CRC;
   uint16_t     CRC;
 
@@ -485,10 +477,7 @@ eb_status_t wb_1wire_get_id(eb_device_t device, int devIndex, unsigned int busIn
   for (i = 0; i < W1_MAX_DEVICES; i++) {
     d = wrpc_w1_bus.devs + i;
     if ((d->rom & 0xff) == family) {
-      oneWireID = (int)(d->rom >> 32);
-      oneWireID = (oneWireID << 32);
-      oneWireID = oneWireID + (int)(d->rom);
-      *id = oneWireID;
+      *id = d->rom;
       CRC = wire1_crc8((uint8_t*)id, len4CRC, family);
       if (!CRC)                     return EB_ADDRESS; // CRC == 0 is illegal
       if (CRC == ((uint8_t*)id)[7]) return status;     // CRC ok
