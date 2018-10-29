@@ -50,7 +50,9 @@ end daq;
 
 
 architecture daq_arch of daq is
-                                                                                                   
+
+  constant version_number:           std_logic_vector (15 downto 9):= (b"0000_000"); --Version 0 : Pre-Release (bis zur 1. SW Inbetriebnahme)
+                                                                                                
   --common registers for all channels                                                          
   constant daq_irq_reg_adr:          unsigned(15 downto 0):= (Base_addr + x"0060" );
   constant HiRes_irq_reg_adr:        unsigned(15 downto 0):= (Base_addr + x"0061" ); 
@@ -252,6 +254,7 @@ architecture daq_arch of daq is
   signal pm_fifo_words:           t_pmfifowords  (1 to ch_num); 
 
 --Register stuff
+  
   signal CtrlReg_Ch:              t_daq_dat(1 to ch_num);
   signal TrigWord_LW_Ch:          t_daq_dat(1 to ch_num);
   signal TrigWord_HW_Ch:          t_daq_dat(1 to ch_num);
@@ -986,7 +989,7 @@ fifo_instances: for i in 1 to ch_num generate
       g_with_full              => true,
       g_with_almost_full       => true,
       g_with_count             => true,  --todo
-      g_almost_full_threshold  => 502   --for real
+      g_almost_full_threshold  => 500   --for real 502??
       --g_almost_full_threshold  => 10   --for simulation 
       
       )
@@ -1014,7 +1017,7 @@ fifo_instances: for i in 1 to ch_num generate
       g_with_full              => true,
       g_with_almost_full       => true,
       g_with_count             => true,  
-      g_almost_full_threshold  => 502   --for real
+      g_almost_full_threshold  => 500   --for real 502??
       --g_almost_full_threshold  => 10   --for simulation 
       
       )   --for simulation
@@ -1186,6 +1189,7 @@ end generate;
       Ena_PM_rd          => Ena_PM_rd(i),
       daq_fifo_word      => daq_fifo_words(i),
       pm_fifo_word       => pm_fifo_words(i),
+      version_number     => version_number,
       
       Rd_Port            => Rd_Port_Ch(i),
       user_rd_active     => user_rd_active_ch(i),

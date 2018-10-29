@@ -45,6 +45,7 @@ port  (
       Ena_PM_rd:          in    std_logic;
       daq_fifo_word:      in    std_logic_vector (8 downto 0);     
       pm_fifo_word:       in    std_logic_vector (9 downto 0);
+      version_number:     in    std_logic_vector (15 downto 9);
       
       Rd_Port:            out   std_logic_vector(15 downto 0);
       user_rd_active:     out   std_logic;
@@ -227,14 +228,14 @@ end process write2regs;
 rd_PMDat        <= rd_PMDat_int;   -- to trigger fifo read-outs on level above
 rd_DAQDat       <= rd_DAQDat_int;
 
-Rd_Port         <= pmdat                      when rd_PMDat_int     ='1'  and Ena_PM_rd ='1'  else  -- PM Fifo data only valid on stopped PM/Hires DAQ
-                   daqdat                     when rd_DAQDat_int    ='1'                      else  -- all channel Rd Port or-ed on level above      
-                   b"000000"  & pm_fifo_word  when rd_PM_FIFO_Word  ='1'                      else
-                   b"0000000" & daq_fifo_word when rd_DAQ_FIFO_Word ='1'                      else
-                   CtrlReg                    when rd_CtrlReg       ='1'                      else  
-                   TrigWord_LW                when rd_trig_lw       ='1'                      else       
-                   TrigWord_HW                when rd_trig_hw       ='1'                      else
-                   Trig_dly_word              when rd_trig_dly_word ='1'                      else
+Rd_Port         <= pmdat                          when rd_PMDat_int     ='1'  and Ena_PM_rd ='1'  else  -- PM Fifo data only valid on stopped PM/Hires DAQ
+                   daqdat                         when rd_DAQDat_int    ='1'                      else  -- all channel Rd Port or-ed on level above      
+                   b"000000"  & pm_fifo_word      when rd_PM_FIFO_Word  ='1'                      else
+                   version_number & daq_fifo_word when rd_DAQ_FIFO_Word ='1'                      else
+                   CtrlReg                        when rd_CtrlReg       ='1'                      else  
+                   TrigWord_LW                    when rd_trig_lw       ='1'                      else       
+                   TrigWord_HW                    when rd_trig_hw       ='1'                      else
+                   Trig_dly_word                  when rd_trig_dly_word ='1'                      else
                    x"0000";
 
 user_rd_active  <=    rd_PMDat_int  or rd_DAQDat_int  or rd_PM_FIFO_Word or rd_DAQ_FIFO_Word  or

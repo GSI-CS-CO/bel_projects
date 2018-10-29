@@ -91,6 +91,7 @@ PACKAGE daq_pkg IS
       Ena_PM_rd          : IN std_logic;
       daq_fifo_word      : IN std_logic_vector (8 DOWNTO 0); 
       pm_fifo_word       : IN std_logic_vector (9 DOWNTO 0);
+      version_number     : IN std_logic_vector (15 downto 9);
                          
       Rd_Port            : OUT std_logic_vector(15 DOWNTO 0);
       user_rd_active     : OUT std_logic;
