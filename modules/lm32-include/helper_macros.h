@@ -28,27 +28,38 @@
  * @brief Macro will be substituted by the number of elements of the given array.
  * @param a Name of the c-array variable
  * @return Number of array-elements
+ * 
+ * Example:
+ * @code
+ * int myArray[42], i;
+ * for( i = 0; i < ARRAY_SIZE(myArray); i++)
+ *    myArray[i] = i;
+ * @endcode
  */
 #ifndef ARRAY_SIZE
  #define ARRAY_SIZE( a ) ( sizeof(a) / sizeof((a)[0]) )
 #endif
 
 #ifndef __GNUC__
-  #warning "Compiler isn't a GNU- compiler! Therefore it's not guaranteed that the following macro-definition _PACKED_ will work."
+  #warning "Compiler isn't a GNU- compiler! Therefore it's not guaranteed that the following macro-definition PACKED_SIZE will work."
 #endif
-#ifdef _PACKED_
-  #undef _PACKED_
+#ifdef PACKED_SIZE
+  #undef PACKED_SIZE
 #endif
 /*!
  * @brief Modifier- macro forces the compiler to arrange the elements of a \n
  *        structure in the smallest possible size of the structure.
+ * @see STATIC_ASSERT
+ * @note At the moment this macro has been tested for GCC- compiler only!
  */
-#define _PACKED_ __attribute__((packed))
+#define PACKED_SIZE __attribute__((packed))
 
 
 #ifndef STATIC_ASSERT
+ #ifndef __DOXYGEN__
   #define __STATIC_ASSERT__( condition, line ) \
        extern char static_assertion_on_line_##line[2*((condition)!=0)-1];
+ #endif
 /*!
  * @brief Macro produces a compiletime-error if the given static condition
  *        isn't true.
@@ -60,7 +71,7 @@
  * {
  *    char x;
  *    int  y;
- * } _PACKED_ FOO;
+ * } PACKED_SIZE FOO;
  * STATIC_ASSERT( sizeof(FOO) == (sizeof(char) + sizeof(int))); // OK
  * @endcode
  *
@@ -73,6 +84,7 @@
  * } BAR;
  * STATIC_ASSERT( sizeof(BAR) == (sizeof(char) + sizeof(int))); // Error
  * @endcode
+ * @see PACKED_SIZE
  */
   #define STATIC_ASSERT( condition ) __STATIC_ASSERT__( condition, __LINE__)
 #endif // ifndef STATIC_ASSERT

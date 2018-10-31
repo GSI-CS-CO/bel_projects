@@ -733,7 +733,23 @@ WARN_LOGFILE           =
 # spaces.
 # Note: If this tag is empty the current directory is searched.
 
-INPUT                  = ../ ../../../modules/lm32-include/
+INPUT                  = ../
+INPUT                 += ../../../modules/lm32-include/
+INPUT                 += ../../../modules/lm32_stub/
+INPUT                 += ../../../ip_cores/wr-cores/modules/wr_eca/eca_queue_regs.h
+INPUT                 += ../../../ip_cores/saftlib/drivers/eca_flags.h
+INPUT                 += ../../../ip_cores/wrpc-sw/dev/uart.c
+INPUT                 += ../../../ip_cores/wrpc-sw/lib/usleep.c
+INPUT                 += ../../../ip_cores/wrpc-sw/lib/usleep.h
+INPUT                 += ../../../ip_cores/wrpc-sw/dev/devicelist.c
+INPUT                 += ../../../ip_cores/wrpc-sw/dev/devicelist.h
+INPUT                 += ../../../ip_cores/wrpc-sw/dev/syscon.c
+INPUT                 += ../../../ip_cores/wrpc-sw/dev/syscon.h
+INPUT                 += ../../../ip_cores/wrpc-sw/pp_printf/printf.c
+INPUT                 += ../../../ip_cores/wrpc-sw/pp_printf/pp-printf.h
+INPUT                 += ../../../ip_cores/wrpc-sw/sdb-lib/glue.c
+INPUT                 += ../../../ip_cores/wrpc-sw/sdb-lib/libsdbfs.h
+INPUT                 += ../../../ip_cores/wrpc-sw/pp_printf/vsprintf-mini.
 
 # This tag can be used to specify the character encoding of the source files
 # that doxygen parses. Internally doxygen uses the UTF-8 encoding. Doxygen uses
