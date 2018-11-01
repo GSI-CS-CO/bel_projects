@@ -747,9 +747,11 @@ INPUT                 += ../../../ip_cores/wrpc-sw/dev/syscon.c
 INPUT                 += ../../../ip_cores/wrpc-sw/dev/syscon.h
 INPUT                 += ../../../ip_cores/wrpc-sw/pp_printf/printf.c
 INPUT                 += ../../../ip_cores/wrpc-sw/pp_printf/pp-printf.h
+INPUT                 += ../../../ip_cores/wrpc-sw/pp_printf/vsprintf-mini.h
 INPUT                 += ../../../ip_cores/wrpc-sw/sdb-lib/glue.c
 INPUT                 += ../../../ip_cores/wrpc-sw/sdb-lib/libsdbfs.h
-INPUT                 += ../../../ip_cores/wrpc-sw/pp_printf/vsprintf-mini.
+INPUT                 += ../../../ip_cores/wrpc-sw/sdb-lib/libsdbfs-freestanding.h
+
 
 # This tag can be used to specify the character encoding of the source files
 # that doxygen parses. Internally doxygen uses the UTF-8 encoding. Doxygen uses
