@@ -7,6 +7,10 @@ USRCPUCLK   = 125000
 PATHSCU     = ../../../top/gsi_scu
 CFLAGS      = -I$(PSCU)/include -I$(PATHSCU) -DHISTORY -fno-toplevel-reorder
 
+ifndef NO_DAQ
+CFLAGS      += -DCONFIG_DAQ
+endif
+
 include ../../build.mk
 
 CFLAGS        += -O2
