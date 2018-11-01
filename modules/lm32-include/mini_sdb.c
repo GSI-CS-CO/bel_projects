@@ -248,7 +248,7 @@ void discoverPeriphery(void)
   pOneWire        = (uint32_t*)getSdbAdr(&found_sdb_w1[1]);
 
   BASE_SYSCON     = (char *)find_device_adr(CERN, WR_SYS_CON);
-  pPps            = (char *)find_device_adr(CERN, WR_PPS_GEN);
+  pPps            = find_device_adr(CERN, WR_PPS_GEN);
 
 }
 
