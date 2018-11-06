@@ -734,6 +734,8 @@ WARN_LOGFILE           =
 # Note: If this tag is empty the current directory is searched.
 
 INPUT                  = ../
+INPUT                 += ../../../modules/lm32-test/cplusplus/
+INPUT                 += ../../../modules/lm32-test/assert/
 INPUT                 += ../../../modules/lm32-include/
 INPUT                 += ../../../modules/lm32_stub/
 INPUT                 += ../../../ip_cores/wr-cores/modules/wr_eca/eca_queue_regs.h
