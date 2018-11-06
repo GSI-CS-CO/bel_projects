@@ -4,6 +4,10 @@
 #include <inttypes.h>
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 ///////////////////////////////////////////////////////////////
 //  SBD BASE ADR IS AUTOMAPPED IN GATEWARE. USE getRootSdb() //
 ///////////////////////////////////////////////////////////////
@@ -197,5 +201,9 @@ uint32_t       getMsiUpperRange();
 uint8_t*       find_device(uint32_t devid); //DEPRECATED, USE find_device_adr INSTEAD!
 
 void           discoverPeriphery(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
