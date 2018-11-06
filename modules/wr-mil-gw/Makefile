@@ -33,14 +33,14 @@ deploy:
 	# timing-rte ESR version
 	mkdir -p $(TARGET_DIR)/timing-rte/wrmilgw-ESR/firmware
 	mkdir -p $(TARGET_DIR)/timing-rte/wrmilgw-ESR/x86_64/usr/bin
-	cp -r setup/timing-rte/wrmilgw-ESR-dev $(TARGET_DIR)/timing-rte/wrmilgw-ESR
+	cp -r setup/timing-rte/wrmilgw-ESR-dev/* $(TARGET_DIR)/timing-rte/wrmilgw-ESR/
 	cp firmware/wr_mil.bin $(TARGET_DIR)/timing-rte/wrmilgw-ESR/firmware/
 	cp control/wr-mil-gw-ctl $(TARGET_DIR)/timing-rte/wrmilgw-ESR/x86_64/usr/bin/
 
 	# timing-rte SIS version
 	mkdir -p $(TARGET_DIR)/timing-rte/wrmilgw-SIS/firmware
 	mkdir -p $(TARGET_DIR)/timing-rte/wrmilgw-SIS/x86_64/usr/bin
-	cp -r setup/timing-rte/wrmilgw-SIS-dev $(TARGET_DIR)/timing-rte/wrmilgw-SIS
+	cp -r setup/timing-rte/wrmilgw-SIS-dev/* $(TARGET_DIR)/timing-rte/wrmilgw-SIS/
 	cp firmware/wr_mil.bin $(TARGET_DIR)/timing-rte/wrmilgw-SIS/firmware/
 	cp control/wr-mil-gw-ctl $(TARGET_DIR)/timing-rte/wrmilgw-SIS/x86_64/usr/bin/
 
