@@ -71,7 +71,7 @@ void help(const char *program) {
   fprintf(stderr, "  -i              print information about the WR-MIL gateway (register content)\n");
   fprintf(stderr, "  -m              monitor gateway status registers and report irregularities on stdout\n");
 #ifdef USEMASP
-  fprintf(stderr, "  -M SIS|ESR      monitor gateway status registers and send MASP status as SIS or ESR nomen\n");
+  fprintf(stderr, "  -M SIS18|ESR      monitor gateway status registers and send MASP status as SIS or ESR nomen\n");
 #endif // USEMASP
   fprintf(stderr, "  -h              display this help and exit\n");
   fprintf(stderr, "\n");
@@ -79,24 +79,6 @@ void help(const char *program) {
   fprintf(stderr, "Licensed under the LGPL v3.\n");//, eb_source_version(), eb_build_info());
 }
 
-void fill_display_content(eb_device_t device, uint32_t reg_adr, bool op_ready, const char *SIS_or_ESR, uint64_t messages, uint32_t late_messages)
-{
-  eb_status_t eb_status;
-  char buffer[66];
-  if (op_ready) sprintf(buffer, "\rWR-MIL-%s\rOP_READY  \rMIL events\r%10ld\rlate      \r%10d",SIS_or_ESR,messages,late_messages);
-  else          sprintf(buffer, "\rWR-MIL-%s\rNOT READY \r          \r          \r          \r          ",SIS_or_ESR);
-
-  // reset OLED display
-  if ((eb_status = eb_device_write(device, reg_adr, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)0, 0, eb_block)) != EB_OK) {
-    die("wr-mil-gateway","reset OLED display", eb_status);
-  }
-  for (int i = 0; i < 66; ++i)
-  {
-    if ((eb_status = eb_device_write(device, reg_adr+0x8, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)buffer[i], 0, eb_block)) != EB_OK) {
-      die("wr-mil-gateway","write to OLED display", eb_status);
-    }
-  }
-}
 
 int main(int argc, char *argv[])
 {
@@ -278,18 +260,6 @@ int main(int argc, char *argv[])
     fprintf(stderr, "no WR-MIL gateway found\n");
     return 1;
   }
-
-  // // find addr of OLED display
-  // eb_sdb_find_by_identity(device, UINT64_C(0x651), UINT32_C(0x93a6f3c4), devices, &num_devices);
-  // if (num_devices == 0) {
-  //   fprintf(stderr, "%s: no matching OLED display found\n", argv[0]);
-  //   return 1;
-  // }
-  // uint32_t oled_reg_reset          = devices[0].sdb_component.addr_first;
-
-  // fill_display_content(device, oled_reg_reset, 0, "   ", 42, 41);
-
-
 
 
   // the register adresses 
