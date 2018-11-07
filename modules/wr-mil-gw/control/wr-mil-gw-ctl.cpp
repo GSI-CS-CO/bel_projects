@@ -17,14 +17,14 @@
 #include <wr_mil_gw.h>
 
 #ifdef USEMASP
-#include "MASP/Emitter/StatusEmitter.h"
-#include "MASP/StatusDefinition/DeviceStatus.h"
-#include "MASP/Util/Logger.h"
-#include "MASP/Common/StatusNames.h"
-#include "MASP/Emitter/End_of_scope_status_emitter.h"
-#include <boost/thread/thread.hpp> // (sleep)
-#include <iostream>
-#include <string>
+  #include "MASP/Emitter/StatusEmitter.h"
+  #include "MASP/StatusDefinition/DeviceStatus.h"
+  #include "MASP/Util/Logger.h"
+  #include "MASP/Common/StatusNames.h"
+  #include "MASP/Emitter/End_of_scope_status_emitter.h"
+  #include <boost/thread/thread.hpp> // (sleep)
+  #include <iostream>
+  #include <string>
 #endif // USEMASP
 
 void die(const char *program, const char* where, eb_status_t status) {
@@ -71,6 +71,7 @@ void help(const char *program) {
   fprintf(stderr, "  -i              print information about the WR-MIL gateway (register content)\n");
   fprintf(stderr, "  -m              monitor gateway status registers and report irregularities on stdout\n");
 #ifdef USEMASP
+
   fprintf(stderr, "  -M SIS18|ESR      monitor gateway status registers and send MASP status as SIS or ESR nomen\n");
 #endif // USEMASP
   fprintf(stderr, "  -h              display this help and exit\n");
@@ -101,9 +102,9 @@ int main(int argc, char *argv[])
   int     info        =  0;
   int     monitor     =  0;
   int     opt,error   =  0;
-
+#ifdef USEMASP
   std::string MASP_SIS_ESR;
-
+#endif
 
   /* Process the command-line arguments */
   while ((opt = getopt(argc, argv, "l:d:u:o:t:sehrkimM:")) != -1) {
@@ -443,11 +444,11 @@ int main(int argc, char *argv[])
         source_id.append(".");
         source_id.append(hostname);
         bool masp_productive = 
-#ifdef PRODUCTIVE
+  #ifdef PRODUCTIVE
             true;
-#else 
+  #else 
             false;
-#endif //PRODUCTIVE
+  #endif //PRODUCTIVE
 
         MASP::StatusEmitter emitter(MASP::StatusEmitterConfig(
             MASP::StatusEmitterConfig::CUSTOM_EMITTER_DEFAULT(),
@@ -463,9 +464,11 @@ int main(int argc, char *argv[])
    MASP::Logger::middleware_logger = &no_log;
 
 #endif  // USEMASP
+      fprintf(stderr,"loop\n");
 
     for (;;)
     {
+
       uint32_t value;
       uint64_t value64_bit;
       eb_status = eb_device_read(device, reg_num_events_hi_addr,  EB_BIG_ENDIAN|EB_DATA32, (eb_data_t*)&value, 0, eb_block);
@@ -508,8 +511,6 @@ int main(int argc, char *argv[])
       last_late_events = value;
       last_num_events  = value64_bit;
 
-
-
       // wait for 10 s until the number of events is checked again
       for (int i = 0; i < 60; ++i) 
       {
@@ -536,6 +537,7 @@ int main(int argc, char *argv[])
           printf("WR-MIL-GATEWAY: gateway is not active!\n");
         }
 
+#ifdef USEMASP
         // read gateway source type
         eb_status = eb_device_read(device, reg_event_source_addr,   EB_BIG_ENDIAN|EB_DATA32, (eb_data_t*)&value, 0, eb_block);
         int event_source = value;
@@ -559,18 +561,17 @@ int main(int argc, char *argv[])
               // update display
               //fill_display_content(device, oled_reg_reset, op_ready, MASP_SIS_ESR.c_str(), last_num_events, last_late_events);
 
-#ifdef USEMASP
               MASP::End_of_scope_status_emitter scoped_emitter(nomen,emitter);
               scoped_emitter.set_OP_READY(op_ready);
               //std::cout << "send op_ready " << op_ready << std::endl;
-#endif  // USEMASP          
               //scoped_emitter.set_custom_status("TEST_SIGNAL",true);
           } // <--- status is send when the End_of_scope_emitter goes out of scope
         }
+#endif  // USEMASP          
 
       }
     }
   }
-
+  fprintf(stderr, "%s\n", "done");
   return 0;
 }
