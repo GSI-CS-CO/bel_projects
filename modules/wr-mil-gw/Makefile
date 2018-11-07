@@ -1,8 +1,18 @@
 TARGET_DIR=/common/export
 
+# for prductive deployment,
+
 all:
 	make PATH=../../../toolchain/bin:$(PATH) -C firmware 
-	make -C control
+	make MASP=YES PRO=NO PREFIX= -C control
+
+pro:
+	make PATH=../../../toolchain/bin:$(PATH) -C firmware 
+	make MASP=YES PRO=YES PREFIX= -C control
+
+clean:
+	make -C firmware clean
+	make -C control clean
 
 deploy-dev:
 	# init script
@@ -24,7 +34,7 @@ deploy-dev:
 	cp firmware/wr_mil.bin $(TARGET_DIR)/timing-rte/wrmilgw-SIS-dev/firmware/
 	cp control/wr-mil-gw-ctl $(TARGET_DIR)/timing-rte/wrmilgw-SIS-dev/x86_64/usr/bin/
 
-deploy:
+deploy-pro:
 	# init script
 	mkdir -p $(TARGET_DIR)/nfsinit/global
 	cp setup/nfsinit/global/timing-rte-wrmilgw-ESR $(TARGET_DIR)/nfsinit/global/
