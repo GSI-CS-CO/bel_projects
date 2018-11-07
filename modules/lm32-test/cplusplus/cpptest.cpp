@@ -1,7 +1,5 @@
 /*!
- *
- * @brief     Example for using C++ in LM32 environment.
- *
+ * @brief     Example for using C++ in LM32 environment
  * @file      cpptest.cpp
  * @copyright GSI Helmholtz Centre for Heavy Ion Research GmbH
  * @author    Ulrich Becker <u.becker@gsi.de>
@@ -20,6 +18,32 @@
  *  You should have received a copy of the GNU Lesser General Public
  *  License along with this library. If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************
+ *
+ * This example shows what's at the moment possible coding in C++11 for a
+ * LM32 soft core processor.
+ *
+ * To compile this module, the LM32 toolchain lm32-elf-gcc version must be at
+ * least 7.3.0 or higher.
+ * You can obtain a actual tool-chain by cloning the following git-repository:
+ * @code
+ * $ git clone https://github.com/UlrichBecker/gcc-toolchain-builder.git
+ * @endcode
+ * Change in the new directory
+ * @code
+ * $ cd gcc-toolchain-builder
+ * @endcode
+ * Initialize the shell variable "PREFIX" by the path where the tool chain
+ * shall be installed. E.g.:
+ * @code
+ * export PREFIX=$HOME/.local/bin
+ * @endcode
+ * Invoke the shell-script "build-lm32-toolchain.sh"
+ * @code
+ * $ ./build-lm32-toolchain.sh
+ * @endcode
+ *
+ * ... Have a break of at least 45 minutes... ;-)
+ *
  */
 /*! !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
  * @note Implementing C++ source in LM32 target requires some limitations
@@ -29,7 +53,8 @@
  *          Disable the exception handling by the command line option
  *          "-fno-exceptions" in your Makefile.
  *
- *       2) No Run Time Type Information (rtti).
+ *       2) No Run Time Type Information (rtti) that means
+ *          don't use the cast operator "dynamic_cast<>()" as well. \n
  *          Disable RTTI by the command line option "-fno-rtti" in your Makefile.
  *
  *       3) Avoid the using of "new" respectively "delete" except you writes
@@ -73,6 +98,8 @@
  *          @code
  *          mprintf("bla bla\n"); // Correct!
  *          @endcode
+ *          Except you writes your own stream-operators like
+ *          the example below in this file.
  *
  * Conclusion:
  * The using of C++ in a LM32-target is similar like the code of
@@ -83,10 +110,26 @@
  * !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
  */
 
+#define GCC_VERSION (__GNUC__ * 10000 \
+                     + __GNUC_MINOR__ * 100 \
+                     + __GNUC_PATCHLEVEL__)
+
+#if GCC_VERSION < 70300
+  #error This module requieres the gcc-version 7.3.0 or higher.
+#endif
+#ifndef __lm32__
+  #error This module is for the target LM32 only!
+#endif
+
 #include "mprintf.h"
 #include "mini_sdb.h"
 
-extern "C" void __cxa_pure_virtual() {} // Workaround not nice, I know... :-/
+extern "C" void __cxa_pure_virtual() { nullptr; } // Workaround not nice, I know... :-/
+
+//! @todo Global initialization respectively constructor-calls will not
+//!       work at now yet.
+// SysInit g_sysInit;
+
 
 /////////////////////////////////////////////////////////////////////////////////
 class SysInit
@@ -94,99 +137,144 @@ class SysInit
 public:
    SysInit( void )
    {
-      discoverPeriphery(); // mini-sdb: get info on important Wishbone infrastructure
-      uart_init_hw();      // init UART, required for printf...
-      mprintf("\nHello world in C++\n");
+      ::discoverPeriphery(); // mini-sdb: get info on important Wishbone infrastructure
+      ::uart_init_hw();      // init UART, required for printf...
+      ::mprintf("\nHello world in C++11\n");
    }
 
    ~SysInit( void )
    {
-      mprintf( "End...\n" );
+      ::mprintf( "End...\n" );
+   }
+};
+
+///////////////////////////////////////////////////////////////////////////////
+class OverloadingTest
+{
+public:
+   void operator () ( void )
+   {
+      *this << "I'm a so called functor: \"OverloadingTest::operator()\"\n";
+   }
+
+   OverloadingTest& operator << ( const char* str )
+   {
+      ::mprintf( str );
+      return *this;
+   }
+
+   OverloadingTest& operator << ( char c )
+   {
+      ::mprintf( "%c", c );
+      return *this;
+   }
+
+   OverloadingTest& operator << ( int i )
+   {
+      ::mprintf( "%d", i );
+      return *this;
    }
 };
 
 ////////////////////////////////////////////////////////////////////////////////
 class Base
 {
+protected:
+   OverloadingTest& m_rOut;
+
 public:
-   Base( void );
+   Base( OverloadingTest& );
    ~Base( void );
    virtual void onSomething( void ) = 0;
 };
 
 //-----------------------------------------------------------------------------
-Base::Base( void )
+Base::Base( OverloadingTest& rOut ):
+   m_rOut( rOut )
 {
-   mprintf( "Coustructor of class \"Base\"\n" );
+   m_rOut << "Coustructor of class \"Base\"\n";
 }
 
 //-----------------------------------------------------------------------------
 Base::~Base( void )
 {
-   mprintf( "Destructor of class \"Base\"\n" );
+   m_rOut << "Destructor of class \"Base\"\n";
 }
 
 ///////////////////////////////////////////////////////////////////////////////
 class Foo: public Base
 {
 public:
-   Foo( void );
+   Foo( OverloadingTest& rOut );
    ~Foo( void );
    void onSomething( void ) override;
 };
 
 //-----------------------------------------------------------------------------
-Foo::Foo( void )
+Foo::Foo( OverloadingTest& rOut ):
+   Base( rOut )
 {
-   mprintf( "Coustructor of class \"Foo\"\n" );
+   m_rOut << "Coustructor of class \"Foo\"\n";
 }
 
 //-----------------------------------------------------------------------------
 Foo::~Foo( void )
 {
-   mprintf( "Destructor of class \"Foo\"\n" );
+   m_rOut << "Destructor of class \"Foo\"\n";
 }
 
 //-----------------------------------------------------------------------------
 void Foo::onSomething( void )
 {
-   mprintf( "Function \"Foo::onSomething\"\n" );
+   m_rOut << "Function \"Foo::onSomething\"\n";
 }
 
 ///////////////////////////////////////////////////////////////////////////////
 class Bar: public Base
 {
 public:
-   Bar( void );
+   Bar( OverloadingTest& rOut );
    ~Bar( void );
    void onSomething( void ) override;
 };
 
 //-----------------------------------------------------------------------------
-Bar::Bar( void )
+Bar::Bar( OverloadingTest& rOut ):
+   Base( rOut )
 {
-   mprintf( "Coustructor of class \"Bar\"\n" );
+   m_rOut << "Coustructor of class \"Bar\"\n";
 }
 
 //-----------------------------------------------------------------------------
 Bar::~Bar( void )
 {
-   mprintf( "Destructor of class \"Bar\"\n" );
+   m_rOut << "Destructor of class \"Bar\"\n";
 }
 
 //-----------------------------------------------------------------------------
 void Bar::onSomething( void )
 {
-   mprintf( "Function \"Bar::onSomething\"\n" );
+   m_rOut << "Function \"Bar::onSomething\"\n";
 }
+
+
+///////////////////////////////////////////////////////////////////////////////
+template <typename TYP> TYP min( TYP a, TYP b )
+{
+   return (a < b)? a : b;
+}
+
 
 //=============================================================================
 int main( void )
 {
    SysInit sysInit;
 
-   Foo foo;
-   Bar bar;
+   OverloadingTest ov;
+   ov();
+
+   Foo foo( ov );
+   Bar bar( ov );
 
    Base* pBase = &foo;
    pBase->onSomething();
@@ -194,13 +282,12 @@ int main( void )
    pBase = &bar;
    pBase->onSomething();
 
-   // Checking whether the modern C++ keyword "nullptr" is usable.
-   pBase = nullptr;
-
    // Checking whether a C++11 lambda-function is possible.
    auto myLambda = [](int a, int b) { return a + b; };
 
-   mprintf( "Return of lambda: %d\n", myLambda( 30, 12 ) );
+   ov << "Return of lambda: " << myLambda( 30, 12 ) << '\n';
+
+   ov << "Template-test: " << min( 4711, 42 ) << '\n';
 
    return 0;
 }
