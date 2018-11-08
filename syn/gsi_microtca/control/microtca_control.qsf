@@ -879,7 +879,7 @@ set_global_assignment -name ECO_OPTIMIZE_TIMING ON
 set_global_assignment -name OPTIMIZE_IOC_REGISTER_PLACEMENT_FOR_TIMING NORMAL
 set_global_assignment -name FINAL_PLACEMENT_OPTIMIZATION ALWAYS
 set_global_assignment -name FITTER_AGGRESSIVE_ROUTABILITY_OPTIMIZATION AUTOMATICALLY
-set_global_assignment -name SEED 0
+set_global_assignment -name SEED 33
 set_global_assignment -name FORCE_FITTER_TO_AVOID_PERIPHERY_PLACEMENT_WARNINGS OFF
 
 set_global_assignment -name ALM_REGISTER_PACKING_EFFORT HIGH
