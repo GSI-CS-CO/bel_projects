@@ -54,6 +54,25 @@
  */
 #define PACKED_SIZE __attribute__((packed))
 
+/*!
+ * @brief Modifier- macro for variables which are not used.
+ *
+ * In this case the compiler will suppress a appropriate warning. \n
+ * This macro is meaningful for some call-back functions respectively
+ * pointers to them, with a unique policy of parameters. For example
+ * interrupt service routines:
+ * @code
+ * void interruptHandler( int interruptNumber UNUSED )
+ * {
+ *  // No warning when "interruptNumber" will not used.
+ * }
+ * @endcode
+ * @note At the moment this macro has been tested for GCC- compiler only!
+ */
+#ifdef UNUSED
+ #undef UNUSED
+#endif
+#define UNUSED __attribute__((unused))
 
 #ifndef STATIC_ASSERT
  #ifndef __DOXYGEN__
