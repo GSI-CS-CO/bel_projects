@@ -124,11 +124,22 @@
 #include "mprintf.h"
 #include "mini_sdb.h"
 
-extern "C" void __cxa_pure_virtual() { nullptr; } // Workaround not nice, I know... :-/
-
-//! @todo Global initialization respectively constructor-calls will not
-//!       work at now yet.
-// SysInit g_sysInit;
+/*! ---------------------------------------------------------------------------
+ * @brief Dummy function for the case a virtual function pointer is not filled.
+ *
+ * The linker expect this if abstract C++ classes will used. \n
+ * Workaround not nice, I know... :-/
+ *
+ * @todo Maybe moving this function into "stubs.c" with the attribute
+ *       "__attribute__((weak))". \n
+ *       Or - better - find out in which library this function is implemented. \n
+ *       At the moment this source file becomes compiled by "lm32-elf-gcc"
+ *       because of the current sub-makefile "build++.mk". But the correct
+ *       way is compiling C++ sources with lm32-elf-g++ rather than lm32-elf-gcc.
+ *       If lm32-elf-g++ is used by a better customized Makefile, perhaps
+ *       this issue is accomplished.
+ */
+extern "C" void __attribute__((weak)) __cxa_pure_virtual( void ) { nullptr; }
 
 
 /////////////////////////////////////////////////////////////////////////////////
@@ -148,7 +159,25 @@ public:
    }
 };
 
+/*! @todo Global initialization respectively constructor-calls
+ *        - in this case: "SysInit g_sysInit" - will not work at now yet. \n
+ *        This issue could be in the start-up module "crt0.S" respectively in
+ *        "crt0.o" written in assembler, which is responsible for the calling
+ *        the function "main" and the interrupt-handler as well. \n
+ *        The providing of the start-up module "crt0" is a part of
+ *        the "newLib" rather than of "gcc" and becomes compiled in
+ *        the second stage during the toolchain-building. \n
+ *        "ftp://sources.redhat.com/pub/newlib/newlib-<version>.tar.gz"
+ */
+// SysInit g_sysInit; // Geht ned!!! ;-(
+
+
 ///////////////////////////////////////////////////////////////////////////////
+/*!
+ * @brief We build our own mini "ostream" library for test purposes only.
+ *
+ * But it's very nice to have...
+ */
 class OverloadingTest
 {
 public:
@@ -177,6 +206,10 @@ public:
 };
 
 ////////////////////////////////////////////////////////////////////////////////
+/*!
+ * @brief Test of the C++ hidden virtual function table respectively abstract
+ *        C++ classes and its virtual methods.
+ */
 class Base
 {
 protected:
@@ -205,7 +238,7 @@ Base::~Base( void )
 class Foo: public Base
 {
 public:
-   Foo( OverloadingTest& rOut );
+   Foo( OverloadingTest& );
    ~Foo( void );
    void onSomething( void ) override;
 };
@@ -233,7 +266,7 @@ void Foo::onSomething( void )
 class Bar: public Base
 {
 public:
-   Bar( OverloadingTest& rOut );
+   Bar( OverloadingTest& );
    ~Bar( void );
    void onSomething( void ) override;
 };
@@ -257,8 +290,12 @@ void Bar::onSomething( void )
    m_rOut << "Function \"Bar::onSomething\"\n";
 }
 
-
 ///////////////////////////////////////////////////////////////////////////////
+/*!
+ * If its possible to write a template alternatively to a preprocessoer macro,
+ * so prefer the template because of the better type-checking and the lower
+ * likelihood to produce bugs.
+ */
 template <typename TYP> TYP min( TYP a, TYP b )
 {
    return (a < b)? a : b;
