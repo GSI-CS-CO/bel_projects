@@ -170,7 +170,8 @@ vEbwrs& CarpeDM::createCommandBurst(Graph& g, vEbwrs& ew) {
     else if (g[v].type == dnt::sCmdFlush) { // << " Flushing <" << target << "> Queues IL " << s2u<int>(g[v].qIl) << " HI " << s2u<int>(g[v].qHi) << " LO " << s2u<int>(g[v].qLo) <<  std::endl;
                                             uint32_t adr = LM32_NULL_PTR;
                                             try { adr = getNodeAdr(destination, TransferDir::DOWNLOAD, AdrType::INT); } catch (std::runtime_error const& err) {
-                                              throw std::runtime_error("Destination (Flush Overrride) '" + destination + "'' invalid: " + std::string(err.what()));
+                                              // empty tag or invalid destination. We'll interpret this as no override desired.
+                                              adr = LM32_NULL_PTR;
                                             }
                                             mc = (mc_ptr) new MiniFlush(cmdTvalid, cmdPrio, s2u<bool>(g[v].qIl), s2u<bool>(g[v].qHi), s2u<bool>(g[v].qLo), adr, s2u<bool>(g[v].perma));
                                           }
