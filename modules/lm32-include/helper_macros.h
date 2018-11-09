@@ -62,9 +62,9 @@
  * pointers to them, with a unique policy of parameters. For example
  * interrupt service routines:
  * @code
- * void interruptHandler( int interruptNumber UNUSED )
+ * void interruptHandler( int interruptNumber UNUSED, void* pContext UNUSED )
  * {
- *  // No warning when "interruptNumber" will not used.
+ *  // No warning when "interruptNumber" and/or "pContext" will not used.
  * }
  * @endcode
  * @note At the moment this macro has been tested for GCC- compiler only!
