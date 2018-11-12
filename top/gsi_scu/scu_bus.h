@@ -1,8 +1,9 @@
 /** @file scu_bus.h
  *  
- *  Copyright (C) 2011-2012 GSI Helmholtz Centre for Heavy Ion Research GmbH 
+ *  Copyright (C) 2011-2018 GSI Helmholtz Centre for Heavy Ion Research GmbH
  *
  *  @author Stefan Rauch <s.rauch@gsi.de>
+ *  @author Ulrich Becker <u.becker@gsi.de>
  *
  *
  *******************************************************************************
@@ -21,11 +22,17 @@
  *******************************************************************************
  */
 
-#ifndef __SCU_H_
+#ifndef __SCU_H
 #define __SCU_H
 
+#include <stdbool.h>
 #include "inttypes.h"
+#include "helper_macros.h"
+#include "lm32_assert.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #define CID_SYS           0x4
 #define CID_GROUP         0x5
@@ -94,7 +101,7 @@
 #define SRQ_ACT           0x8
 #define MULTI_SLAVE_SEL   0xc
 #define MULTICAST_ACC     0x8
-#define MAX_SCU_SLAVES    12
+#define MAX_SCU_SLAVES    12    /*!< @brief Maximum number of slots */
 
 #define SYS_LOEP    3
 #define SYS_CSCO    55
@@ -108,9 +115,164 @@
 #define GRP_SIO3    69
 #define GRP_SIO2    23 
 
+#define SCUBUS_INVALID_VALUE     (uint16_t)0xdead
+#define SCUBUS_SLAVE_ADDR_SPACE  (1 << 17)         /*!< @brief Address space in bytes for each SCU bus slave 128k */
+
+typedef uint16_t SCU_BUS_SLAVE_FLAGS_T;
+STATIC_ASSERT( sizeof( SCU_BUS_SLAVE_FLAGS_T ) * 8 >= MAX_SCU_SLAVES );
 
 extern struct w1_bus wrpc_w1_bus;
 void ReadTemperatureDevices(int bus, uint64_t *id, uint16_t *temp);
 void probe_scu_bus(volatile unsigned short*, unsigned short, unsigned short, int*);
 void ReadTempDevices(int bus, uint64_t *id, uint32_t *temp);
+
+/*!
+ * @brief Calculates the relative address offset in bytes of a SCU bus slave
+ *        from the given slot number.
+ * @see MAX_SCU_SLAVES
+ * @param slot Slot number, valid range 1 .. MAX_SCU_SLAVES (12)
+ * @return Relative slot address
+ */
+static inline uint32_t getSlotOffset( const unsigned int slot )
+{
+   LM32_ASSERT( slot > 0 );
+   LM32_ASSERT( slot <= MAX_SCU_SLAVES );
+   return slot * SCUBUS_SLAVE_ADDR_SPACE;
+}
+
+/*!
+ * @brief Calculates the absolute address of a SCU bus slave from the
+ *        given slot number.
+ * @see MAX_SCU_SLAVES
+ * @see find_device_adr
+ * @param pScuBusBase Base address of SCU bus.
+ *                    Obtained by find_device_adr(GSI, SCU_BUS_MASTER);
+ * @param slot Slot number, valid range 1 .. MAX_SCU_SLAVES (12)
+ * @return Absolute SCU bus slave address
+ */
+static inline void* getAbsScuBusSlaveAddr( const void* pScuBusBase,
+                                           const unsigned int slot )
+{
+   return &(((uint8_t*)pScuBusBase)[getSlotOffset(slot)]);
+}
+
+/*!
+ * @brief Reads a 16 bit register value from a SCU bus slave
+ * @see getAbsScuBusSlaveAddr
+ * @see setScuBusSlaveValue16
+ * @param pAbsSlaveAddr Absolute SCU bus slave address e.g. obtained by getAbsScuBusSlaveAddr
+ * @param index Location of relevant register to read, that means offset to pAbsSlaveAddr
+ * @return Content of the addressed register
+ */
+static inline
+uint16_t getScuBusSlaveValue16( const void* pAbsSlaveAddr, const unsigned int index )
+{
+   LM32_ASSERT( index >= 0 );
+   LM32_ASSERT( index < SCUBUS_SLAVE_ADDR_SPACE );
+   LM32_ASSERT( ((int)pAbsSlaveAddr % sizeof(uint16_t)) == 0 ); // At least 2 bytes alignment assumed!
+   return ((uint16_t*)pAbsSlaveAddr)[index];
+}
+
+/*!
+ * @brief Writes a given 16 bit value in the addressed SCU bus slave register.
+ * @see getAbsScuBusSlaveAddr
+ * @see getScuBusSlaveValue16
+ * @param pAbsSlaveAddr Absolute SCU bus slave address e.g. obtained by getAbsScuBusSlaveAddr
+ * @param index Location of relevant register to read, that means offset to pAbsSlaveAddr
+ * @param value 16 bit value to write
+ */
+static inline
+void setScuBusSlaveValue16( void* pAbsSlaveAddr, const unsigned int index, const uint16_t value )
+{
+   LM32_ASSERT( index >= 0 );
+   LM32_ASSERT( index < SCUBUS_SLAVE_ADDR_SPACE );
+   LM32_ASSERT( ((int)pAbsSlaveAddr % sizeof(uint16_t)) == 0 ); // At least 2 bytes alignment assumed!
+   ((uint16_t*)pAbsSlaveAddr)[index] = value;
+}
+
+/*!
+ * @brief Reads a 32 bit register value from a SCU bus slave
+ * @see getAbsScuBusSlaveAddr
+ * @see setScuBusSlaveValue16
+ * @param pAbsSlaveAddr Absolute SCU bus slave address e.g. obtained by getAbsScuBusSlaveAddr
+ * @param index Location of relevant register to read, that means offset to pAbsSlaveAddr
+ * @return Content of the addressed register
+ */
+static inline
+uint32_t getScuBusSlaveValue32( const void* pAbsSlaveAddr, const unsigned int index )
+{
+   LM32_ASSERT( index >= 0 );
+   LM32_ASSERT( index < SCUBUS_SLAVE_ADDR_SPACE );
+   LM32_ASSERT( ((int)pAbsSlaveAddr % sizeof(uint16_t)) == 0 ); // At least 2 bytes alignment assumed!
+   return ((uint32_t*)pAbsSlaveAddr)[index];
+}
+
+/*!
+ * @brief Writes a given 32 bit value in the addressed SCU bus slave register.
+ * @see getAbsScuBusSlaveAddr
+ * @see getScuBusSlaveValue16
+ * @param pAbsSlaveAddr Absolute SCU bus slave address e.g. obtained by getAbsScuBusSlaveAddr
+ * @param index Location of relevant register to read, that means offset to pAbsSlaveAddr
+ * @param value 16 bit value to write
+ */
+static inline
+void setScuBusSlaveValue32( void* pAbsSlaveAddr, const unsigned int index, const uint32_t value )
+{
+   LM32_ASSERT( index >= 0 );
+   LM32_ASSERT( index < SCUBUS_SLAVE_ADDR_SPACE );
+   LM32_ASSERT( ((int)pAbsSlaveAddr % sizeof(uint16_t)) == 0 ); // At least 2 bytes alignment assumed!
+   ((uint32_t*)pAbsSlaveAddr)[index] = value;
+}
+
+/*!
+ * @brief Extract a single slave-present-flag from the SCU-slave-flag-present field
+ * @see scuBusFindSpecificSlaves
+ * @see scuFindAllSlaves
+ * @param flags packed slave present flags of all SCU bus slots
+ * @param slot Slot number, valid range 1 .. MAX_SCU_SLAVES (12)
+ * @return true: slave present
+ * @return false: slave not present
+ */
+static inline bool scuBusIsSlavePresent( const SCU_BUS_SLAVE_FLAGS_T flags, const int slot )
+{
+   LM32_ASSERT( slot > 0 );
+   LM32_ASSERT( slot <= MAX_SCU_SLAVES );
+   return ((flags & (1 << (slot-1))) != 0);
+}
+
+/*!
+ * @brief Scans the whole SCU bus and initialized a slave-flags present field if
+ *        the given system address and group address match.
+ * @see scuBusIsSlavePresent
+ * @see scuBusFindAllSlaves
+ * @see find_device_adr
+ * @param pScuBusBase Base address of SCU bus.
+ *                    Obtained by find_device_adr(GSI, SCU_BUS_MASTER);
+ * @param systemAddr System address
+ * @param groupAddr  group address
+ * @return Flag field for SCU present bits e.g.: \n
+ *         0000 0000 0010 1000: means: Slot 4 and 6 are used by devices where \n
+ *         system address and group address match.
+ */
+SCU_BUS_SLAVE_FLAGS_T scuBusFindSpecificSlaves( const void* pScuBusBase,
+                                                const uint16_t systemAddr,
+                                                const uint16_t grupAddr );
+
+/*!
+ * @brief Scans the whole SCU bus for all slots and initialized a slave-flags
+ *        present field for each found device.
+ * @see scuBusIsSlavePresent
+ * @see scuBusFindSpecificSlaves
+ * @param pScuBusBase Base address of SCU bus.
+ *                    Obtained by find_device_adr(GSI, SCU_BUS_MASTER);
+ * @return Flag field for SCU present bits e.g.: \n
+ *         0000 0001 0001 0000: means: Slot 5 and 9 are used all others are free.
+ */
+SCU_BUS_SLAVE_FLAGS_T scuBusFindAllSlaves( const void* pScuBusBase );
+
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif
