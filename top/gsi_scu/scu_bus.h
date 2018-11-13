@@ -164,13 +164,13 @@ static inline void* getAbsScuBusSlaveAddr( const void* pScuBusBase,
  * @param index Location of relevant register to read, that means offset to pAbsSlaveAddr
  * @return Content of the addressed register
  */
-static inline
+static inline volatile
 uint16_t getScuBusSlaveValue16( const void* pAbsSlaveAddr, const unsigned int index )
 {
    LM32_ASSERT( index >= 0 );
-   LM32_ASSERT( index < SCUBUS_SLAVE_ADDR_SPACE );
+   LM32_ASSERT( index < (SCUBUS_SLAVE_ADDR_SPACE / sizeof(uint16_t)) );
    LM32_ASSERT( ((int)pAbsSlaveAddr % sizeof(uint16_t)) == 0 ); // At least 2 bytes alignment assumed!
-   return ((uint16_t*)pAbsSlaveAddr)[index];
+   return ((uint16_t* volatile)pAbsSlaveAddr)[index];
 }
 
 /*!
@@ -185,9 +185,9 @@ static inline
 void setScuBusSlaveValue16( void* pAbsSlaveAddr, const unsigned int index, const uint16_t value )
 {
    LM32_ASSERT( index >= 0 );
-   LM32_ASSERT( index < SCUBUS_SLAVE_ADDR_SPACE );
+   LM32_ASSERT( index < (SCUBUS_SLAVE_ADDR_SPACE / sizeof(uint16_t)) );
    LM32_ASSERT( ((int)pAbsSlaveAddr % sizeof(uint16_t)) == 0 ); // At least 2 bytes alignment assumed!
-   ((uint16_t*)pAbsSlaveAddr)[index] = value;
+   ((uint16_t* volatile)pAbsSlaveAddr)[index] = value;
 }
 
 /*!
@@ -198,13 +198,13 @@ void setScuBusSlaveValue16( void* pAbsSlaveAddr, const unsigned int index, const
  * @param index Location of relevant register to read, that means offset to pAbsSlaveAddr
  * @return Content of the addressed register
  */
-static inline
+static inline volatile
 uint32_t getScuBusSlaveValue32( const void* pAbsSlaveAddr, const unsigned int index )
 {
    LM32_ASSERT( index >= 0 );
-   LM32_ASSERT( index < SCUBUS_SLAVE_ADDR_SPACE );
+   LM32_ASSERT( index < (SCUBUS_SLAVE_ADDR_SPACE / sizeof(uint32_t)) );
    LM32_ASSERT( ((int)pAbsSlaveAddr % sizeof(uint16_t)) == 0 ); // At least 2 bytes alignment assumed!
-   return ((uint32_t*)pAbsSlaveAddr)[index];
+   return ((uint32_t* volatile)pAbsSlaveAddr)[index];
 }
 
 /*!
@@ -219,9 +219,9 @@ static inline
 void setScuBusSlaveValue32( void* pAbsSlaveAddr, const unsigned int index, const uint32_t value )
 {
    LM32_ASSERT( index >= 0 );
-   LM32_ASSERT( index < SCUBUS_SLAVE_ADDR_SPACE );
+   LM32_ASSERT( index < (SCUBUS_SLAVE_ADDR_SPACE / sizeof(uint32_t)) );
    LM32_ASSERT( ((int)pAbsSlaveAddr % sizeof(uint16_t)) == 0 ); // At least 2 bytes alignment assumed!
-   ((uint32_t*)pAbsSlaveAddr)[index] = value;
+   ((uint32_t* volatile)pAbsSlaveAddr)[index] = value;
 }
 
 /*!
