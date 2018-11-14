@@ -85,8 +85,8 @@ void ReadTempDevices(int bus, uint64_t *id, uint32_t *temp)
 } 
 
 /*! ---------------------------------------------------------------------------
- * @brief Finds all scu-bus slaves which match by all items of the given
- *        match-list.
+ * @brief Finds all scu-bus slaves which match by one or all items of the
+ *        given match-list depending on mode.
  * @see SCU_BUS_MATCH_ITEM16
  * @see scuBusIsSlavePresent
  * @see scuBusFindAllSlaves
