@@ -27,6 +27,7 @@
 #include "inttypes.h"
 #include "mprintf.h"
 #include "dow_crc.h"
+#include "dbg.h"
 
 #define DEBUG
 
@@ -84,6 +85,53 @@ void ReadTempDevices(int bus, uint64_t *id, uint32_t *temp)
 } 
 
 /*! ---------------------------------------------------------------------------
+ * @brief Finds all scu-bus slaves which match by all items of the given
+ *        match-list.
+ * @see SCU_BUS_MATCH_ITEM16
+ * @see scuBusIsSlavePresent
+ * @see scuBusFindAllSlaves
+ * @see find_device_adr
+ * @see SCUBUS_FIND_MODE_T
+ * @param pScuBusBase Base address of SCU bus.
+ *                    Obtained by find_device_adr(GSI, SCU_BUS_MASTER);
+ * @param pMatchList  Match-list with SCU_BUS_MATCH_LIST16_TERMINATOR as last element.
+ * @note The last item of pMatchList has always to be the terminator:
+ *       SCU_BUS_MATCH_LIST16_TERMINATOR
+ * @param mode Determines how the match-list becomes handled.
+ * @return Flag field for SCU present bits e.g.: \n
+ *         0000 0000 0010 1000: means: Slot 4 and 6 are used by devices where \n
+ *         all or one item of the given match-list match depending on parameter mode.
+ */
+SCUBUS_SLAVE_FLAGS_T
+  scuBusFindSlavesByMatchList16( const void* pScuBusBase,
+                                 const struct SCU_BUS_MATCH_ITEM16 pMatchList[],
+                                 const enum SCUBUS_FIND_MODE_T mode )
+{
+   bool _or( bool a, bool b )  { return (a || b); }
+   bool _and( bool a, bool b ) { return (a && b); }
+
+   LM32_ASSERT( pMatchList[0].index < SCUBUS_INVALID_INDEX16 );
+   bool (*op)( bool, bool ) = (mode == ALL)? _and : _or;
+   SCUBUS_SLAVE_FLAGS_T slaveFlags = 0;
+   for( int slot = SCUBUS_START_SLOT; slot <= MAX_SCU_SLAVES; slot++ )
+   {
+      const void* pSlaveAddr = getAbsScuBusSlaveAddr( pScuBusBase, slot );
+      int i = 0;
+      bool match = (mode == ALL);
+      while( pMatchList[i].index < SCUBUS_INVALID_INDEX16 )
+      {
+         match = op( match,
+                     getScuBusSlaveValue16( pSlaveAddr, pMatchList[i].index ) ==
+                        pMatchList[i].value );
+         i++;
+      }
+      if( match )
+         slaveFlags |= (1 << (slot-SCUBUS_START_SLOT));
+   }
+   return slaveFlags;
+}
+
+/*! ---------------------------------------------------------------------------
  * @brief Scans the whole SCU bus and initialized a slave-flags present field if
  *        the given system address and group address match.
  * @see scuBusIsSlavePresent
@@ -97,21 +145,17 @@ void ReadTempDevices(int bus, uint64_t *id, uint32_t *temp)
  *         0000 0000 0010 1000: means: Slot 4 and 6 are used by devices where \n
  *         system address and group address match.
  */
-SCU_BUS_SLAVE_FLAGS_T scuBusFindSpecificSlaves( const void* pScuBusBase,
-                                                const uint16_t systemAddr,
-                                                const uint16_t grupAddr )
+SCUBUS_SLAVE_FLAGS_T scuBusFindSpecificSlaves( const void* pScuBusBase,
+                                               const uint16_t systemAddr,
+                                               const uint16_t grupAddr )
 {
-   SCU_BUS_SLAVE_FLAGS_T slaveFlags = 0;
-
-   for( int slot = 1; slot <= MAX_SCU_SLAVES; slot++ )
+   const struct SCU_BUS_MATCH_ITEM16 matchList[] =
    {
-      const void* pSlaveAddr = getAbsScuBusSlaveAddr( pScuBusBase, slot );
-      if( getScuBusSlaveValue16( pSlaveAddr, CID_SYS )   == systemAddr &&
-          getScuBusSlaveValue16( pSlaveAddr, CID_GROUP ) == grupAddr )
-         slaveFlags |= (1 << (slot-1));
-   }
-
-   return slaveFlags;
+      { .index = CID_SYS,   .value = systemAddr },
+      { .index = CID_GROUP, .value = grupAddr },
+      SCUBUS_MATCH_LIST16_TERMINATOR
+   };
+   return scuBusFindSlavesByMatchList16( pScuBusBase, matchList, ALL );
 }
 
 /*! ---------------------------------------------------------------------------
@@ -124,16 +168,16 @@ SCU_BUS_SLAVE_FLAGS_T scuBusFindSpecificSlaves( const void* pScuBusBase,
  * @return Flag field for SCU present bits e.g.: \n
  *         0000 0001 0001 0000: means: Slot 5 and 9 are used all others are free.
  */
-SCU_BUS_SLAVE_FLAGS_T scuBusFindAllSlaves( const void* pScuBusBase )
+SCUBUS_SLAVE_FLAGS_T scuBusFindAllSlaves( const void* pScuBusBase )
 {
-   SCU_BUS_SLAVE_FLAGS_T slaveFlags = 0;
+   SCUBUS_SLAVE_FLAGS_T slaveFlags = 0;
 
-   for( int slot = 1; slot <= MAX_SCU_SLAVES; slot++ )
+   for( int slot = SCUBUS_START_SLOT; slot <= MAX_SCU_SLAVES; slot++ )
    {
       const void* pSlaveAddr = getAbsScuBusSlaveAddr( pScuBusBase, slot );
       if( getScuBusSlaveValue16( pSlaveAddr, CID_SYS )   != SCUBUS_INVALID_VALUE ||
           getScuBusSlaveValue16( pSlaveAddr, CID_GROUP ) != SCUBUS_INVALID_VALUE )
-         slaveFlags |= (1 << (slot-1));
+         slaveFlags |= (1 << (slot-SCUBUS_START_SLOT));
    }
 
    return slaveFlags;

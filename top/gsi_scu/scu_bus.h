@@ -117,13 +117,14 @@ extern "C" {
 
 #define SCUBUS_INVALID_VALUE     (uint16_t)0xdead
 #define SCUBUS_SLAVE_ADDR_SPACE  (1 << 17)         /*!< @brief Address space in bytes for each SCU bus slave 128k */
+#define SCUBUS_START_SLOT         1                /*!< @brief First slot of SCU-bus */
 
-typedef uint16_t SCU_BUS_SLAVE_FLAGS_T;
-STATIC_ASSERT( sizeof( SCU_BUS_SLAVE_FLAGS_T ) * 8 >= MAX_SCU_SLAVES );
+typedef uint16_t SCUBUS_SLAVE_FLAGS_T;
+STATIC_ASSERT( sizeof( SCUBUS_SLAVE_FLAGS_T ) * 8 >= MAX_SCU_SLAVES );
 
 extern struct w1_bus wrpc_w1_bus;
 void ReadTemperatureDevices(int bus, uint64_t *id, uint16_t *temp);
-void probe_scu_bus(volatile unsigned short*, unsigned short, unsigned short, int*);
+void probe_scu_bus(volatile unsigned short*, unsigned short, unsigned short, int*); DEPRECATED
 void ReadTempDevices(int bus, uint64_t *id, uint32_t *temp);
 
 /*!
@@ -135,7 +136,7 @@ void ReadTempDevices(int bus, uint64_t *id, uint32_t *temp);
  */
 static inline uint32_t getSlotOffset( const unsigned int slot )
 {
-   LM32_ASSERT( slot > 0 );
+   LM32_ASSERT( slot >= SCUBUS_START_SLOT );
    LM32_ASSERT( slot <= MAX_SCU_SLAVES );
    return slot * SCUBUS_SLAVE_ADDR_SPACE;
 }
@@ -233,12 +234,82 @@ void setScuBusSlaveValue32( void* pAbsSlaveAddr, const unsigned int index, const
  * @return true: slave present
  * @return false: slave not present
  */
-static inline bool scuBusIsSlavePresent( const SCU_BUS_SLAVE_FLAGS_T flags, const int slot )
+static inline bool scuBusIsSlavePresent( const SCUBUS_SLAVE_FLAGS_T flags, const int slot )
 {
-   LM32_ASSERT( slot > 0 );
+   LM32_ASSERT( slot >= SCUBUS_START_SLOT );
    LM32_ASSERT( slot <= MAX_SCU_SLAVES );
-   return ((flags & (1 << (slot-1))) != 0);
+   return ((flags & (1 << (slot-SCUBUS_START_SLOT))) != 0);
 }
+
+
+/*!
+ * @brief Item type of scu-bus match list.
+ *
+ * Necessary to find specific scu-bus devices with attributes matching by
+ * each item of this list.
+ *
+ * @see scuBusFindSlaveByMatchList16
+ * @see SCUBUS_MATCH_LIST16_TERMINATOR
+ * @see SCUBUS_FIND_MODE_T
+ * @todo Convert type of "index" from "unsigned int" to "enum" for a cleaner design.
+ * @note The last item of pMatchList has always to be the terminator:
+ *       SCUBUS_MATCH_LIST16_TERMINATOR
+ */
+struct SCU_BUS_MATCH_ITEM16
+{
+   unsigned int index; //!< @brief Relative address resp. index of value to match.
+   uint16_t     value; //!< @brief 16 bit value to match
+};
+
+/*!
+ * @brief Invalid index-value used by the scu-bus match-list
+ * @see SCUBUS_MATCH_LIST16_TERMINATOR
+ */
+#define SCUBUS_INVALID_INDEX16 (SCUBUS_SLAVE_ADDR_SPACE / sizeof(uint16_t))
+
+/*!
+ * @brief Terminator of a scu-bus match-list it has to be always the last item
+ *        of the list.
+ * @see SCU_BUS_MATCH_ITEM16
+ * @see SCUBUS_INVALID_INDEX16
+ * @note Don't forget it!
+ */
+#define SCUBUS_MATCH_LIST16_TERMINATOR { .index = SCUBUS_INVALID_INDEX16, .value = 0 }
+
+/*!
+ * @brief Data type for the third argument of function scuBusFindSlavesByMatchList16
+ *
+ * It determines whether the whole items of the match-list has to be match, or
+ * only one item of the list.
+ * @see SCU_BUS_MATCH_ITEM16
+ * @see scuBusFindSlavesByMatchList16
+ */
+enum SCUBUS_FIND_MODE_T
+{
+   ALL, //!< @brief All items of the match list has to be match
+   ANY  //!< @brief Only one item of the match list has to be match
+};
+
+/*!
+ * @brief Finds all scu-bus slaves which match by all items of the given match-list.
+ * @see SCU_BUS_MATCH_ITEM16
+ * @see scuBusIsSlavePresent
+ * @see scuBusFindAllSlaves
+ * @see find_device_adr
+ * @see SCUBUS_FIND_MODE_T
+ * @param pScuBusBase Base address of SCU bus.
+ *                    Obtained by find_device_adr(GSI, SCU_BUS_MASTER);
+ * @param pMatchList  Match-list with SCU_BUS_MATCH_LIST16_TERMINATOR as last element.
+ * @note The last item of pMatchList has always to be the terminator:
+ *       SCU_BUS_MATCH_LIST16_TERMINATOR
+ * @param mode Determines how the match-list becomes handled.
+ * @return Flag field for SCU present bits e.g.: \n
+ *         0000 0000 0010 1000: means: Slot 4 and 6 are used by devices where \n
+ *         all or one item of the given match-list match depending on parameter mode.
+ */
+SCUBUS_SLAVE_FLAGS_T scuBusFindSlavesByMatchList16( const void* pScuBusBase,
+                                                 const struct SCU_BUS_MATCH_ITEM16 pMatchList[],
+                                                 const enum SCUBUS_FIND_MODE_T mode );
 
 /*!
  * @brief Scans the whole SCU bus and initialized a slave-flags present field if
@@ -254,7 +325,7 @@ static inline bool scuBusIsSlavePresent( const SCU_BUS_SLAVE_FLAGS_T flags, cons
  *         0000 0000 0010 1000: means: Slot 4 and 6 are used by devices where \n
  *         system address and group address match.
  */
-SCU_BUS_SLAVE_FLAGS_T scuBusFindSpecificSlaves( const void* pScuBusBase,
+SCUBUS_SLAVE_FLAGS_T scuBusFindSpecificSlaves( const void* pScuBusBase,
                                                 const uint16_t systemAddr,
                                                 const uint16_t grupAddr );
 
@@ -268,7 +339,7 @@ SCU_BUS_SLAVE_FLAGS_T scuBusFindSpecificSlaves( const void* pScuBusBase,
  * @return Flag field for SCU present bits e.g.: \n
  *         0000 0001 0001 0000: means: Slot 5 and 9 are used all others are free.
  */
-SCU_BUS_SLAVE_FLAGS_T scuBusFindAllSlaves( const void* pScuBusBase );
+SCUBUS_SLAVE_FLAGS_T scuBusFindAllSlaves( const void* pScuBusBase );
 
 
 #ifdef __cplusplus
