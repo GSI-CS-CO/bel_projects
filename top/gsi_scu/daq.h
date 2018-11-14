@@ -33,29 +33,49 @@ extern "C" {
 
 /*
  * For the reason LM32 RAM consume can be reduced here is the possibility
- * to overwrite MAX_DAQ by the Makefile.
+ * to overwrite DAQ_MAX by the Makefile.
  */
-#ifndef MAX_DAQ
-   #define MAX_DAQ MAX_SCU_SLAVES //!< @brief Maximum number of DAQ's
+#ifndef DAQ_MAX
+   #define DAQ_MAX MAX_SCU_SLAVES //!< @brief Maximum number of DAQ's
 #else
-  #if MAX_DAQ > MAX_SCU_SLAVES
-    #error Macro MAX_DAQ can not be greater than MAX_SCU_SLAVES !
+  #if DAQ_MAX > MAX_SCU_SLAVES
+    #error Macro DAQ_MAX can not be greater than MAX_SCU_SLAVES !
   #endif
+#endif
+
+#ifndef DAQ_MAX_CHANNELS
+  #define DAQ_MAX_CHANNELS 16 //!< @brief Maximum number of DAQ-channels
+
 #endif
 
 union DAQ_REGISTER_T;
 
-struct DAQ_T
+/*!
+ * @brief Object represents a single channel of a DAQ.
+ */
+struct DAQ_CANNEL_T
 {
-   unsigned int slot;     //!< @brief Slot number of this DAQ. Range: 1..MAX_SCU_SLAVES
-   unsigned int channels; //!< @brief Number of DAQ-channels
-   union DAQ_REGISTER_T* pReg; //!< @brief Pointer to DAQ-registers
+   void* p; //TODO
 };
 
-struct ALL_DAQ_T
+/*!
+ * @brief Object represents a single SCU-Bus slave including a DAQ
+ */
+struct DAQ_DEVICE_T
 {
-   unsigned int foundDevices;  //!< @brief Number of found DAQs
-   struct DAQ_T aDaq[MAX_DAQ]; //!< @brief Array of all possible existing DAQs
+   unsigned int slot;     //!< @brief Slot number of this DAQ. Range: 1..MAX_SCU_SLAVES
+   unsigned int maxChannels; //!< @brief Number of DAQ-channels
+   struct DAQ_CANNEL_T aChannel[DAQ_MAX_CHANNELS];
+   union DAQ_REGISTER_T* pReg; //!< @brief Pointer to DAQ-registers (start of address space)
+};
+
+/*!
+ * @brief Object represents all on the SCU-bus connected DAQs.
+ */
+struct DAQ_ALL_T
+{
+   unsigned int foundDevices;         //!< @brief Number of found DAQs
+   struct DAQ_DEVICE_T aDaq[DAQ_MAX]; //!< @brief Array of all possible existing DAQs
 };
 
 struct DAQ_DATA_T
@@ -72,19 +92,19 @@ union DAQ_REGISTER_T
 STATIC_ASSERT( sizeof( union DAQ_REGISTER_T ) == SCUBUS_SLAVE_ADDR_SPACE );
 
 /*!
- * @brief Preinitialized the ALL_DAQ_T by zero and try to find all
+ * @brief Preinitialized the DAQ_ALL_T by zero and try to find all
  *        existing DAQs connected to SCU-bus.
  *
- * For each found DAQ the a element of ALL_DAQ_T::DAQ_T becomes initialized.
+ * For each found DAQ the a element of DAQ_ALL_T::DAQ_DEVICE_T becomes initialized.
  *
- * @param pAllDAQ Pointer object of ALL_DAQ_T including a list of all DAQ.
+ * @param pAllDAQ Pointer object of DAQ_ALL_T including a list of all DAQ.
  * @param pScuBusBase Base address of SCU bus.
  *                    Obtained by find_device_adr(GSI, SCU_BUS_MASTER);
  * @retval -1 Error occurred.
  * @retval  0 No DAQ found.
  * @retval >0 Number of connected DAQ in SCU-bus.
  */
-int daqFindAndInitializeAll( struct ALL_DAQ_T* pAllDAQ, const void* pScuBusBase );
+int daqFindAndInitializeAll( struct DAQ_ALL_T* pAllDAQ, const void* pScuBusBase );
 
 #ifdef __cplusplus
 }

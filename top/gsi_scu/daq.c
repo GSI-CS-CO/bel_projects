@@ -30,16 +30,16 @@
 /*! ----------------------------------------------------------------------------
  * @see daq.h
  */
-int daqFindAndInitializeAll( struct ALL_DAQ_T* pAllDAQ, const void* pScuBusBase )
+int daqFindAndInitializeAll( struct DAQ_ALL_T* pAllDAQ, const void* pScuBusBase )
 {
-   SCU_BUS_SLAVE_FLAGS_T daqPersentFlags;
+   SCUBUS_SLAVE_FLAGS_T daqPersentFlags;
 
    // Paranoia...
    LM32_ASSERT( pScuBusBase != (void*)ERROR_NOT_FOUND );
    LM32_ASSERT( pAllDAQ != NULL );
 
    // Pre-initializing
-   memset( pAllDAQ, 0, sizeof( struct ALL_DAQ_T ));
+   memset( pAllDAQ, 0, sizeof( struct DAQ_ALL_T ));
 
    daqPersentFlags = scuBusFindSpecificSlaves( pScuBusBase, 0x37, 0x26 );
    if( daqPersentFlags == 0 )
@@ -48,7 +48,7 @@ int daqFindAndInitializeAll( struct ALL_DAQ_T* pAllDAQ, const void* pScuBusBase 
       return 0;
    }
 
-   for( int slot = 1; slot <= MAX_SCU_SLAVES; slot++ )
+   for( int slot = SCUBUS_START_SLOT; slot <= MAX_SCU_SLAVES; slot++ )
    {
       if( !scuBusIsSlavePresent( daqPersentFlags, slot ) )
          continue;
@@ -58,8 +58,10 @@ int daqFindAndInitializeAll( struct ALL_DAQ_T* pAllDAQ, const void* pScuBusBase 
                 pAllDAQ->aDaq[pAllDAQ->foundDevices].slot,
                 pAllDAQ->aDaq[pAllDAQ->foundDevices].pReg );
       pAllDAQ->foundDevices++;
+#if DAQ_MAX < MAX_SCU_SLAVES
       if( pAllDAQ->foundDevices == ARRAY_SIZE( pAllDAQ->aDaq ) )
          break;
+#endif
    }
 
    return pAllDAQ->foundDevices;
