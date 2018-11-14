@@ -74,6 +74,20 @@
 #endif
 #define UNUSED __attribute__((unused))
 
+/*!
+ * @brief Generates a deprecated warning during compiling
+ *
+ * The deprecated modifier- macro enables the declaration of a deprecated
+ * variable or function without any warnings or errors being issued by the
+ * compiler. \n
+ * However, any access to a deprecated variable or function creates a warning
+ * but still compiles.
+ */
+#ifdef DEPRECATED
+ #undef DEPRECATED
+#endif
+#define DEPRECATED __attribute__((deprecated))
+
 #ifndef STATIC_ASSERT
  #ifndef __DOXYGEN__
   #define __STATIC_ASSERT__( condition, line ) \
