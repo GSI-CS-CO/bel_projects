@@ -122,5 +122,50 @@
   #define STATIC_ASSERT( condition ) __STATIC_ASSERT__( condition, __LINE__)
 #endif // ifndef STATIC_ASSERT
 
+/*!
+ * @brief Will used from DECLARE_CONVERT_BYTE_ENDIAN
+ *        and IMPLEMENT_CONVERT_BYTE_ENDIAN
+ */
+#define _FUNCTION_HEAD_CONVERT_BYTE_ENDIAN( TYP )       \
+   TYP convertByteEndian_##TYP( const TYP value )
+
+/*!
+ * @brief Generates a prototypes of endian converting functions
+ *        for header-files.
+ * @see IMPLEMENT_CONVERT_BYTE_ENDIAN
+ * @param TYP Integer type of value to convert.
+ */
+#define DECLARE_CONVERT_BYTE_ENDIAN( TYP ) \
+   _FUNCTION_HEAD_CONVERT_BYTE_ENDIAN( TYP );
+
+/*!
+ * @brief Generates functions converting little to big endian
+ *        and vice versa.
+ *
+ * @see DECLARE_CONVERT_BYTE_ENDIAN
+ * Example:
+ * @code
+ * IMPLEMENT_CONVERT_BYTE_ENDIAN( uint64_t )
+ * @endcode
+ * implements a function with the following prototype:
+ * @code
+ * uint64_t convertByteEndian_uint64_t( const uint64_t )
+ * @endcode
+ * @see DECLARE_CONVERT_BYTE_ENDIAN
+ * @param TYP Integer type of value to convert.
+ *
+ * ... Unfortunately in contrast to C++ C doesn't understand templates. :-/
+ */
+#define IMPLEMENT_CONVERT_BYTE_ENDIAN( TYP )            \
+   _FUNCTION_HEAD_CONVERT_BYTE_ENDIAN( TYP )            \
+   {                                                    \
+      TYP result;                                       \
+      int i;                                            \
+      for( i = sizeof(TYP)-1; i >= 0; i-- )             \
+        ((unsigned char*)&result)[i] =                  \
+           ((unsigned char*)&value)[sizeof(TYP)-(i+1)]; \
+      return result;                                    \
+   }                                                    \
+
 #endif // ifndef _HELPER_MACROS_H
 //================================== EOF ======================================
