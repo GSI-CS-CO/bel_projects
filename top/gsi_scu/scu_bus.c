@@ -151,7 +151,7 @@ SCUBUS_SLAVE_FLAGS_T scuBusFindSpecificSlaves( const void* pScuBusBase,
 {
    const struct SCU_BUS_MATCH_ITEM16 matchList[] =
    {
-      { .index = CID_SYS,   .value = systemAddr },
+      { .index = CID_SYSTEM,.value = systemAddr },
       { .index = CID_GROUP, .value = grupAddr },
       SCUBUS_MATCH_LIST16_TERMINATOR
    };
@@ -182,5 +182,18 @@ SCUBUS_SLAVE_FLAGS_T scuBusFindAllSlaves( const void* pScuBusBase )
 
    return slaveFlags;
 }
+
+/*! ---------------------------------------------------------------------------
+ * @see scu_bus.h
+ */
+unsigned int getNumberOfSlaves( const SCUBUS_SLAVE_FLAGS_T slaveFlags )
+{
+   unsigned int ret = 0;
+   for( int i = 0; i <= (MAX_SCU_SLAVES-SCUBUS_START_SLOT); i++ )
+      if( (slaveFlags & (1 << i)) != 0 )
+         ret++;
+   return ret;
+}
+
 
 

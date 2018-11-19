@@ -34,6 +34,90 @@
 extern "C" {
 #endif
 
+#define SCUBUS_INVALID_VALUE     (uint16_t)0xdead
+#define SCUBUS_SLAVE_ADDR_SPACE  (1 << 17)         /*!< @brief Address space in bytes for each SCU bus slave 128k */
+#define SCUBUS_START_SLOT         1                /*!< @brief First slot of SCU-bus */
+
+/*!
+ * @brief Definitions of SCU-bus slave (offset) addresses.
+ */
+typedef enum
+{
+   ID                   = 0x0001, /*!< @brief Slave-ID */
+   FW_VERSION           = 0x0002, /*!< @brief FW Version of FPGA */
+   FW_RELEASE           = 0x0003, /*!< @brief FW Release of FPGA */
+   CID_SYSTEM           = 0x0004, /*!< @brief System Part of SCU Slave Component-ID */
+   CID_GROUP            = 0x0005, /*!< @brief Group Part of SCU Slave Component-ID */
+   VR_SCUBSL_Macro      = 0x0006, /*!< @brief Version/Revision of SCU Slave Macro */
+   Extension_CID_System = 0x0007, /*!< @brief System Part of Extension Component-ID */
+   Extension_CID_Group  = 0x0008, /*!< @brief Group Part of Extension Component-ID */
+   CLK_10kHz            = 0x0009, /*!< @brief Clock frequency (in 10Hz steps) */
+   __RFU__              = 0x000A, /*!< @brief Reserved for future use */
+   Echo_Register        = 0x0010, /*!< @brief Read echoes the word written before */
+   Status_Register      = 0x0011, /*!< @brief Bit 0= Power up done
+                                   *          Bit 1=User Ready
+                                   *          Bit 2..15=Reserved */
+   Intr_In              = 0x0020, /*!< @brief Interrupt Input Register (Bit
+                                   *          15:1=Actual Status, Bit 0 = 0)
+                                   *          Synchronized status as seen on
+                                   *          inputs of SCU Bus Slave macro */
+   Intr_Ena             = 0x0021, /*!< @brief Interrupt Enable Register
+                                   *          High-active Enable for Interrupt 15:1
+                                   *          Bit0 = Powerup IRQ = always enabled
+                                   *          Reset-value: 0x0001 */
+   Intr_pending         = 0x0022, /*!< @brief Interrupt pending. */
+   Intr_Active          = 0x0024, /*!< @brief Bit 15:1=interrupt, as seen after
+                                   *          passing interrupt mask.
+                                   *          Set to active when bits are
+                                   *          enabled and input shows an interrupt
+                                   *          “Active” bits are cleared when
+                                   *          interrupts are disabled.
+                                   *          “Active” bits are cleared \n
+                                   *          *) on writing a 0 to bit position. \n
+                                   *          *) when interrupt is still pending \n
+                                   *             and not masked, bit is set again. */
+   extern_clock         = 0x0030, /*!< @brief Extern clock */
+   Info_text            = 0x01C0, /*!< @brief Zero terminated info-string max. 512 byte */
+   mil_rd_wr_data       = 0x0400, /*!< @brief Reads received data from device bus.
+                                   *          writes data to dev. bus (do only when TX is not
+                                   *          busy,check mil_trm_rdy register bit) */
+   mil_wr_cmd           = 0x0401, /*!< @brief read a received command word from dev.bus
+                                   *          writes command to dev. bus ( do only when TX is not
+                                   *          busy,check mil_trm_rdy register bit) */
+   mil_wr_rd_status     = 0x0402, /*!< @brief read MIL Status bits 0...7 (for details see Table 14)
+                                   *          write MIL Control Register bits 8..15 */
+   rd_clr_no_vw_cnt     = 0x0403, /*!< @brief reads "no valid word" counters \n
+                                   *          writes (clears) "no valid word" counters */
+   rd_wr_not_eq_cnt     = 0x0404, /*!< @brief reads "not equal data/cmd" counters \n
+                                   *          writes (clears) "not equal data/cmd" counters */
+   rd_wr_ev_fifo        = 0x0405, /*!< @brief reads_event fifo only allowed when fifo
+                                   *          isn't empty writes (sw-clear) event fifo */
+   rd_clr_ev_timer      = 0x0406, /*!< @brief reads event timer upper word and stores LW in latch
+                                   *          writes (sw-clear) complete event timer */
+   rd_clr_dly_timer     = 0x0407, /*!< @brief reads delay timer upper word and stores LW in latch
+                                   *          write is used for handle preload and start see Ch5.4 */
+   rd_clr_wait_timer    = 0x0408, /*!< @brief reads wait timer upper word and store LW in latch \n
+                                   *          writes (sw-clear) complete wait timer */
+   mil_wr_rd_lemo_conf  = 0x0409, /*!< @brief Reads lemo config register (for details see Table 18) \n
+                                   *          Writes the lemo config register */
+   mil_wr_rd_lemo_dat   = 0x040A, /*!< @brief Reads lemo output data reg (details see Table 16) \n
+                                   *          Writes the lemo output data register */
+   mil_rd_lemo_inp      = 0x040B, /*!< @brief Reads lemo pin status (for details seeTable 17) \n
+                                   *          Write has no effect */
+   rd_ev_timer_lw       = 0x040C, /*!< @brief Reads LW ( bit 15..0) of event timer \n
+                                   *          Write has no effect */
+   rd_wait_timer_lw     = 0x040E, /*!< @brief Reads LW (bit 15..0) of wait timer \n
+                                   *          Write has no effect */
+   rd_wr_dly_timer_lw   = 0x0410, /*!< @brief Reads bit 15..0 of delay timer \n
+                                   *          Write preloads the LW buffer (see Delay Timer) */
+   rd_wr_dly_timer_hw   = 0x0411, /*!< @brief Reads bit 31..16 of delay timer \n
+                                              Write preloads the HW buffer (see Delay Timer) */
+   /*! @brief will used as list-terminator value */
+   SCUBUS_INVALID_INDEX16 = (SCUBUS_SLAVE_ADDR_SPACE / sizeof(uint16_t))
+} SCUBUS_ADDR_OFFSET_T;
+
+
+/* Deprecated defines */
 #define CID_SYS           0x4
 #define CID_GROUP         0x5
 #define SLAVE_VERSION     0x6
@@ -41,6 +125,8 @@ extern "C" {
 #define SLAVE_INT_PEND    0x22
 #define SLAVE_INT_ACT     0x24
 #define SLAVE_EXT_CLK     0x30
+
+#define SLAVE_INFO_TEXT   0x01c0 //!< @brief Zero terminated info-string max. 512 byte
 
 #define DAC1_BASE         0x200
 #define DAC2_BASE         0x210
@@ -115,16 +201,13 @@ extern "C" {
 #define GRP_SIO3    69
 #define GRP_SIO2    23 
 
-#define SCUBUS_INVALID_VALUE     (uint16_t)0xdead
-#define SCUBUS_SLAVE_ADDR_SPACE  (1 << 17)         /*!< @brief Address space in bytes for each SCU bus slave 128k */
-#define SCUBUS_START_SLOT         1                /*!< @brief First slot of SCU-bus */
 
 typedef uint16_t SCUBUS_SLAVE_FLAGS_T;
 STATIC_ASSERT( sizeof( SCUBUS_SLAVE_FLAGS_T ) * 8 >= MAX_SCU_SLAVES );
 
 extern struct w1_bus wrpc_w1_bus;
 void ReadTemperatureDevices(int bus, uint64_t *id, uint16_t *temp);
-void probe_scu_bus(volatile unsigned short*, unsigned short, unsigned short, int*); DEPRECATED
+void probe_scu_bus(volatile unsigned short*, unsigned short, unsigned short, int*) DEPRECATED;
 void ReadTempDevices(int bus, uint64_t *id, uint32_t *temp);
 
 /*!
@@ -241,6 +324,14 @@ static inline bool scuBusIsSlavePresent( const SCUBUS_SLAVE_FLAGS_T flags, const
    return ((flags & (1 << (slot-SCUBUS_START_SLOT))) != 0);
 }
 
+/*!
+ * @brief Calculates the number of slaves from the slave flag field.
+ * @see scuBusFindSlavesByMatchList16
+ * @see scuBusFindAllSlaves
+ * @param slaveFlags Slave flag field
+ * @return Number of SCU-bus slaves
+ */
+unsigned int getNumberOfSlaves( const SCUBUS_SLAVE_FLAGS_T slaveFlags );
 
 /*!
  * @brief Item type of scu-bus match list.
@@ -251,21 +342,20 @@ static inline bool scuBusIsSlavePresent( const SCUBUS_SLAVE_FLAGS_T flags, const
  * @see scuBusFindSlaveByMatchList16
  * @see SCUBUS_MATCH_LIST16_TERMINATOR
  * @see SCUBUS_FIND_MODE_T
- * @todo Convert type of "index" from "unsigned int" to "enum" for a cleaner design.
  * @note The last item of pMatchList has always to be the terminator:
  *       SCUBUS_MATCH_LIST16_TERMINATOR
  */
 struct SCU_BUS_MATCH_ITEM16
 {
-   unsigned int index; //!< @brief Relative address resp. index of value to match.
-   uint16_t     value; //!< @brief 16 bit value to match
+   SCUBUS_ADDR_OFFSET_T index; //!< @brief Relative address resp. index of value to match.
+   uint16_t             value; //!< @brief 16 bit value to match
 };
 
 /*!
  * @brief Invalid index-value used by the scu-bus match-list
  * @see SCUBUS_MATCH_LIST16_TERMINATOR
  */
-#define SCUBUS_INVALID_INDEX16 (SCUBUS_SLAVE_ADDR_SPACE / sizeof(uint16_t))
+//#define SCUBUS_INVALID_INDEX16 (SCUBUS_SLAVE_ADDR_SPACE / sizeof(uint16_t))
 
 /*!
  * @brief Terminator of a scu-bus match-list it has to be always the last item
