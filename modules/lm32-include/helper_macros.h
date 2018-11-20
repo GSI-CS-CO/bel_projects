@@ -24,6 +24,8 @@
 #ifndef _HELPER_MACROS_H
 #define _HELPER_MACROS_H
 
+#include <stddef.h>
+
 /*!
  * @brief Macro will be substituted by the number of elements of the given array.
  * @param a Name of the c-array variable
@@ -122,12 +124,29 @@
   #define STATIC_ASSERT( condition ) __STATIC_ASSERT__( condition, __LINE__)
 #endif // ifndef STATIC_ASSERT
 
+
+
 /*!
  * @brief Will used from DECLARE_CONVERT_BYTE_ENDIAN
  *        and IMPLEMENT_CONVERT_BYTE_ENDIAN
  */
-#define _FUNCTION_HEAD_CONVERT_BYTE_ENDIAN( TYP )       \
+#define __FUNCTION_HEAD_CONVERT_BYTE_ENDIAN( TYP )      \
    TYP convertByteEndian_##TYP( const TYP value )
+
+/*!
+ * @brief Will used from macro IMPLEMENT_CONVERT_BYTE_ENDIAN
+ *        and C++ template "convertByteEndian" in the
+ *        case of C++ only.
+ */
+#define __FUNCTION_BODY_CONVERT_BYTE_ENDIAN( TYP )      \
+   {                                                    \
+      TYP result;                                       \
+      int i;                                            \
+      for( i = sizeof(TYP)-1; i >= 0; i-- )             \
+        ((unsigned char*)&result)[i] =                  \
+           ((unsigned char*)&value)[sizeof(TYP)-1-i];   \
+      return result;                                    \
+   }                                                    \
 
 /*!
  * @brief Generates a prototypes of endian converting functions
@@ -136,7 +155,7 @@
  * @param TYP Integer type of value to convert.
  */
 #define DECLARE_CONVERT_BYTE_ENDIAN( TYP ) \
-   _FUNCTION_HEAD_CONVERT_BYTE_ENDIAN( TYP );
+   __FUNCTION_HEAD_CONVERT_BYTE_ENDIAN( TYP );
 
 /*!
  * @brief Generates functions converting little to big endian
@@ -157,15 +176,35 @@
  * ... Unfortunately in contrast to C++ C doesn't understand templates. :-/
  */
 #define IMPLEMENT_CONVERT_BYTE_ENDIAN( TYP )            \
-   _FUNCTION_HEAD_CONVERT_BYTE_ENDIAN( TYP )            \
-   {                                                    \
-      TYP result;                                       \
-      int i;                                            \
-      for( i = sizeof(TYP)-1; i >= 0; i-- )             \
-        ((unsigned char*)&result)[i] =                  \
-           ((unsigned char*)&value)[sizeof(TYP)-(i+1)]; \
-      return result;                                    \
-   }                                                    \
+   __FUNCTION_HEAD_CONVERT_BYTE_ENDIAN( TYP )           \
+   __FUNCTION_BODY_CONVERT_BYTE_ENDIAN( TYP )
+
+#ifdef __cplusplus
+/*!
+ * @brief Template converts the given value from little to big endian
+ *        and vice versa.
+ * @note For C++ only!
+ * @param value Integer value to convert.
+ * @return Converted value.
+ */
+template <typename TYP> TYP convertByteEndian( const TYP value )
+   __FUNCTION_BODY_CONVERT_BYTE_ENDIAN( TYP )
+#endif /* __cplusplus */
+
+/*!
+ * @brief Cast a member of a structure out to the containing structure.
+ *
+ * This macro has been adopt from the Linux kernel-source.
+ * Origin in <kernel-source>/include/linux/kernel.h as "container_of".
+ *
+ * @param ptr    The pointer to the member.
+ * @param type   The type of the container struct this is embedded in.
+ * @param member The name of the member within the struct.
+ * @return The pointer of the container-object including this member.
+ */
+#define CONTAINER_OF(ptr, type, member) ({                      \
+        const typeof( ((type *)0)->member ) *__mptr = (ptr);    \
+        (type *)( (char *)__mptr - offsetof(type,member) );})
 
 #endif // ifndef _HELPER_MACROS_H
 //================================== EOF ======================================
