@@ -123,6 +123,7 @@
 
 #include "mprintf.h"
 #include "mini_sdb.h"
+#include "helper_macros.h"
 
 /*! ---------------------------------------------------------------------------
  * @brief Dummy function for the case a virtual function pointer is not filled.
@@ -326,6 +327,9 @@ int main( void )
 
    ov << "Template-test: " << min( 4711, 42 ) << '\n';
 
+   // Test of the template "convertByteEndian" defined in "helper-macros.h"
+   uint32_t x = 0x11223344;
+   mprintf( "Endian convert test: 0x%x --> 0x%x\n", x, convertByteEndian( x ) );
    return 0;
 }
 
