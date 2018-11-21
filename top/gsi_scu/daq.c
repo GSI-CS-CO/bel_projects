@@ -28,6 +28,26 @@
 #include "daq.h"
 
 /*! ----------------------------------------------------------------------------
+ * @brief Scans all potential existing input-channels of the given
+ *        DAQ-Device.
+ * @param pDaqDev Start-address of DAQ-registers
+ * @return Number of real existing channels
+ */
+inline static int daqFindChannels( struct DAQ_DEVICE_T* pDaqDev )
+{
+   LM32_ASSERT( pDaqDev != NULL );
+   LM32_ASSERT( pDaqDev->pReg != NULL );
+
+   for( int i = 0; i < DAQ_MAX_CHANNELS; i++ )
+   {
+      if( daqGetChannelReg( pDaqDev->pReg, CTRLREG, i ) != 0 )
+         break; //TODO
+      pDaqDev->maxChannels++;
+   }
+   return pDaqDev->maxChannels;
+}
+
+/*! ----------------------------------------------------------------------------
  * @see daq.h
  */
 int daqFindAndInitializeAll( struct DAQ_ALL_T* pAllDAQ, const void* pScuBusBase )
@@ -53,10 +73,16 @@ int daqFindAndInitializeAll( struct DAQ_ALL_T* pAllDAQ, const void* pScuBusBase 
       if( !scuBusIsSlavePresent( daqPersentFlags, slot ) )
          continue;
       pAllDAQ->aDaq[pAllDAQ->foundDevices].slot = slot;
-      pAllDAQ->aDaq[pAllDAQ->foundDevices].pReg = getAbsScuBusSlaveAddr( pScuBusBase, slot );
+      pAllDAQ->aDaq[pAllDAQ->foundDevices].pReg =
+          getAbsScuBusSlaveAddr( pScuBusBase, slot ) + DAQ_REGISTER_OFFSET;
       DBPRINT2( "DBG: DAQ found in slot: %02d, address: 0x%08x\n",
                 pAllDAQ->aDaq[pAllDAQ->foundDevices].slot,
                 pAllDAQ->aDaq[pAllDAQ->foundDevices].pReg );
+      if( daqFindChannels( &pAllDAQ->aDaq[pAllDAQ->foundDevices] ) == 0 )
+      {
+         DBPRINT2( "DBG: DAQ in slot %d has on input channels - skipping\n", slot );
+         continue;
+      }
       pAllDAQ->foundDevices++;
 #if DAQ_MAX < MAX_SCU_SLAVES
       if( pAllDAQ->foundDevices == ARRAY_SIZE( pAllDAQ->aDaq ) )
@@ -67,5 +93,15 @@ int daqFindAndInitializeAll( struct DAQ_ALL_T* pAllDAQ, const void* pScuBusBase 
    return pAllDAQ->foundDevices;
 }
 
+/*! ---------------------------------------------------------------------------
+ * @see daq.h
+ */
+int daqGetNumberOfAllFoundChannels( struct DAQ_ALL_T* pAllDAQ )
+{
+   int ret = 0;
+   for( int i = 0; i < pAllDAQ->foundDevices; i++ )
+      ret += pAllDAQ->aDaq[i].maxChannels;
+   return ret;
+}
 
 /*================================== EOF ====================================*/

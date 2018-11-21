@@ -25,28 +25,39 @@
 #include "mini_sdb.h"
 #include "../../top/gsi_scu/daq.h"
 #include "eb_console_helper.h"
+#include "helper_macros.h"
 
+IMPLEMENT_CONVERT_BYTE_ENDIAN( uint32_t )
 
 void main( void )
 {
-   struct ALL_DAQ_T allDaq;
+   struct DAQ_ALL_T allDaq;
 
    discoverPeriphery();
    uart_init_hw();
-   gotoxy( 1, 1 );
+   gotoxy( 0, 0 );
    clrscr();
-   mprintf("\nTest...\n");
+   mprintf("Test...\n");
+
+   uint32_t x = 0xAABBCCDD;
+
+   mprintf( "Convert 0x%x -> 0x%x\n", x,  convertByteEndian_uint32_t( x ) );
+
+   mprintf( "SCU_IRQ_CTRL: 0x%08x\n",  find_device_adr(GSI, SCU_IRQ_CTRL) );
+
    if( daqFindAndInitializeAll( &allDaq, find_device_adr(GSI, SCU_BUS_MASTER) ) <= 0 )
       return;
    mprintf( "%d DAQ found\n", allDaq.foundDevices );
-#if 1
+
    for( int i = 0; i < allDaq.foundDevices; i++ )
    {
-      mprintf( "DAQ in slot: %02d, address: 0x%08x, version: %d\n",
+      mprintf( "DAQ in slot: %02d, address: 0x%08x, channels %d\n",
                allDaq.aDaq[i].slot, allDaq.aDaq[i].pReg,
-               allDaq.aDaq[i].pReg->i[SLAVE_VERSION] );
+               allDaq.aDaq[i].maxChannels );
    }
-#endif
+
+   mprintf( "\nTotal-number of channels: %d\n", daqGetNumberOfAllFoundChannels( &allDaq ) );
+
 }
 
 /*================================== EOF ====================================*/
