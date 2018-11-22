@@ -51,36 +51,65 @@ extern "C" {
   #endif
 #endif
 
+
 /*!
  * @brief Access indexes for writing and reading the DAQ-registers
+ * @see daqChannelGetReg
+ * @see daqChannelSetReg
  */
 typedef enum
 {
-   CTRLREG         = 0x00,
-   TRIG_LW         = 0x10,
-   TRIG_HW         = 0x20,
-   TRIG_DLY        = 0x30,
-   PM_DAT          = 0x40,
-   DAQ_DAT         = 0x50,
-   DAQU_FIFO_WORDS = 0x70,
-   PM_FIFO_WORDS   = 0x80
+   CtrlReg         = 0x00, //!< @see DAQ_CTRL_REG_T
+   TRIG_LW         = 0x10, //!< @brief Least significant word for SCU-bus event
+                           //!<        tag tregger condition.
+   TRIG_HW         = 0x20, //!< @brief Most significant word for SCU-bus event
+                           //!<        tag tregger condition.
+   TRIG_DLY        = 0x30, //!< @brief Trigger delay in samples.
+   PM_DAT          = 0x40, //!< @brief Data of PostMortem respectively HiRes-FiFos.
+   DAQ_DAT         = 0x50, //!< @brief Data of DAQ-FiFo.
+   DAQU_FIFO_WORDS = 0x70, //!< @brief Remaining FiFo word of DaqDat FiFo.
+   PM_FIFO_WORDS   = 0x80  //!< @brief Remaining FiFo word of PmDat FiFo.
 } DAQ_REGISTER_INDEX;
 
-struct _CTRL_REG_T
+/*!
+ * @brief Values for single bit respectively flag in bit-field structure.
+ * @see DAQ_CTRL_REG_T
+ */
+typedef enum
 {
-   uint16_t Ena_PM:          1; //TODO
-   uint16_t Sample10us:      1;
-   uint16_t Sample100us:     1;
-   uint16_t Sample1ms:       1;
-   uint16_t ExtTrig_nEvTrig: 1;
-};
+   OFF =  0, //!< @brief Value for switch on.
+   ON  =  1  //!< @brief Value for switch off.
+} DAQ_SWITCH_STATE_T;
 
-union CTRL_REG_T
+/*!
+ * @brief Data type of the control register for each channel.
+ * @note Do not change the order of attributes! Its a Hardware image!
+ * @see CtrlReg
+ * @see DAQ_SWITCH_STATE_T
+ */
+typedef volatile struct
 {
-   volatile uint16_t total;
-   volatile struct _CTRL_REG_T bf;
-};
-STATIC_ASSERT( sizeof( union CTRL_REG_T ) == sizeof(uint16_t) );
+#if (__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__) || defined(__DOXYGEN__)
+   uint16_t slot:                  4; //!< @brief Bit [15:12] slot number,
+                                      //!<        shall be initialized by software,
+                                      //!<        will used for the DAQ-Descriptor-Word.
+   uint16_t __unused__:            4; //!< @brief Bit [11:8] till now unused.
+   uint16_t ExtTrig_nEvTrig_HiRes: 1; //!< @brief Bit [7] trigger source in high resolution mode
+                                      //!<        1= external trigger, event trigger.
+   uint16_t Ena_HiRes:             1; //!< @brief Bit [6] high resolution sampling with 4 MHz.
+                                      //!< @note Ena_PM shall not be active at the same time!
+   uint16_t ExtTrig_nEvTrig:       1; //!< @brief Bit [5] trigger source in DAQ mode:
+                                      //!<        1=ext trigger, 0= event trigger.
+   uint16_t Ena_TrigMod:           1; //!< @brief Bit [4] prevents sampling till triggering.
+   uint16_t Sample1ms:             1; //!< @brief Bit [3] use 1 ms sample.
+   uint16_t Sample100us:           1; //!< @brief Bit [2] use 100 us sample.
+   uint16_t Sample10us:            1; //!< @brief Bit [1] use 10 us sample.
+   uint16_t Ena_PM:                1; //!< @brief Bit [0] starts PM sampling with 100 us.
+#else
+   #error Big endian is requested for this bit- field structure!
+#endif
+} DAQ_CTRL_REG_T;
+STATIC_ASSERT( sizeof(DAQ_CTRL_REG_T) == sizeof(uint16_t) );
 
 /*!
  * @brief Relative start address of the SCU registers
@@ -91,7 +120,19 @@ STATIC_ASSERT( sizeof( union CTRL_REG_T ) == sizeof(uint16_t) );
  */
 #define DAQ_REGISTER_OFFSET 0x4000
 
-union DAQ_REGISTER_T;
+struct DAQ_DATA_T
+{
+   //TODO
+};
+
+
+typedef volatile union
+{
+   volatile uint16_t i[SCUBUS_SLAVE_ADDR_SPACE/sizeof(uint16_t)];
+   volatile struct DAQ_DATA_T s;
+} DAQ_REGISTER_T;
+STATIC_ASSERT( sizeof( DAQ_REGISTER_T ) == SCUBUS_SLAVE_ADDR_SPACE );
+
 
 /*!
  * @brief Object represents a single channel of a DAQ.
@@ -104,116 +145,23 @@ struct DAQ_CANNEL_T
 /*!
  * @brief Object represents a single SCU-Bus slave including a DAQ
  */
-struct DAQ_DEVICE_T
+typedef struct
 {
-   unsigned int slot;     //!< @brief Slot number of this DAQ. Range: 1..MAX_SCU_SLAVES
+  // unsigned int slot;     //!< @brief Slot number of this DAQ. Range: 1..MAX_SCU_SLAVES
    unsigned int maxChannels; //!< @brief Number of DAQ-channels
    struct DAQ_CANNEL_T aChannel[DAQ_MAX_CHANNELS];
-   union DAQ_REGISTER_T* volatile pReg; //!< @brief Pointer to DAQ-registers (start of address space)
-};
+   DAQ_REGISTER_T* volatile pReg; //!< @brief Pointer to DAQ-registers (start of address space)
+} DAQ_DEVICE_T;
 
 /*!
  * @brief Object represents all on the SCU-bus connected DAQs.
  */
-struct DAQ_ALL_T
+typedef struct
 {
-   unsigned int foundDevices;         //!< @brief Number of found DAQs
-   struct DAQ_DEVICE_T aDaq[DAQ_MAX]; //!< @brief Array of all possible existing DAQs
-};
+   unsigned int foundDevices;  //!< @brief Number of found DAQs
+   DAQ_DEVICE_T aDaq[DAQ_MAX]; //!< @brief Array of all possible existing DAQs
+} DAQ_ALL_T;
 
-struct DAQ_DATA_T
-{
-   //TODO
-};
-
-union DAQ_REGISTER_T
-{
-   volatile uint16_t i[SCUBUS_SLAVE_ADDR_SPACE/sizeof(uint16_t)];
-   volatile struct DAQ_DATA_T s;
-};
-STATIC_ASSERT( sizeof( union DAQ_REGISTER_T ) == SCUBUS_SLAVE_ADDR_SPACE );
-
-/* ***********************  Building of DAQ descriptor **********************/
-#define DAQ_DISCRIPTOR_WORD_SIZE 10 /*!< @brief byte size size of
-                                     *  DAQ descriptor + crc */
-
-struct _DAQ_BF_SLOT_DIOB
-{
-   uint16_t slot:   4;
-   uint16_t unused: 7;
-   uint16_t diobId: 5;
-} PACKED_SIZE;
-STATIC_ASSERT( sizeof( struct _DAQ_BF_SLOT_DIOB ) == sizeof(uint16_t));
-
-struct _DAQ_BF_CANNEL_MODE
-{
-   uint8_t channelNumber: 5;
-   uint8_t pmMode:        1;
-   uint8_t hiResMode:     1;
-   uint8_t daqMode:       1;
-} PACKED_SIZE;
-STATIC_ASSERT( sizeof( struct _DAQ_BF_CANNEL_MODE ) == sizeof(uint8_t) );
-
-struct _DAQ_CHANNEL_CONTROL
-{
-   struct _DAQ_BF_CANNEL_MODE channelMode;
-   uint8_t controlReg;
-} PACKED_SIZE;
-STATIC_ASSERT( sizeof( struct _DAQ_CHANNEL_CONTROL ) == sizeof(uint16_t) );
-
-union _DAQ_WR_T
-{
-   uint8_t  byteIndex[sizeof(uint64_t)];
-   uint16_t wordIndex[sizeof(uint64_t)/sizeof(uint16_t)];
-#if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
-   uint64_t timeStamp;
-#elif __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
-   uint64_t timeStampToEndianConvert;
-#endif
-} PACKED_SIZE;
-STATIC_ASSERT( sizeof(union _DAQ_WR_T) == sizeof(uint64_t) );
-
-union _DAQ_USED_TRIGGER
-{
-   uint8_t  byteIndex[sizeof(uint32_t)];
-   uint16_t wordIndex[sizeof(uint32_t)/sizeof(uint16_t)];
-#if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
-   uint32_t usedTrigger;
-#elif __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
-   uint32_t usedTriggerToEndianConvert;
-#endif
-} PACKED_SIZE;
-STATIC_ASSERT( sizeof(union _DAQ_USED_TRIGGER) == sizeof(uint32_t) );
-
-struct _DAQ_TRIGGER
-{
-   union _DAQ_USED_TRIGGER trigger;
-   uint16_t delay;
-} PACKED_SIZE;
-STATIC_ASSERT( sizeof(struct _DAQ_TRIGGER) == 3 * sizeof(uint16_t) );
-
-struct _DAQ_DISCRIPTOR_STRUCT_T
-{
-   struct _DAQ_BF_SLOT_DIOB    slotDiob;
-   union  _DAQ_WR_T            wr;
-   struct _DAQ_TRIGGER         trigger;
-   struct _DAQ_CHANNEL_CONTROL cControl;
-   uint8_t                     unused;
-   uint8_t                     crc;
-} PACKED_SIZE;
-STATIC_ASSERT( sizeof( struct _DAQ_DISCRIPTOR_STRUCT_T ) == DAQ_DISCRIPTOR_WORD_SIZE * sizeof(uint16_t) );
-
-/*!
- * @brief Final type of DAQ- descriptor
- */
-union DAQ_DESCRIPTOR_T
-{
-   uint16_t index[DAQ_DISCRIPTOR_WORD_SIZE]; //!< @brief WORD-access by index
-   struct _DAQ_DISCRIPTOR_STRUCT_T name;     //!< @brief Access by name
-} PACKED_SIZE;
-STATIC_ASSERT( sizeof( union DAQ_DESCRIPTOR_T ) == DAQ_DISCRIPTOR_WORD_SIZE * sizeof( uint16_t ) );
-
-/* ****************** End of device descriptor building **********************/
 
 /*! ------------------------------------------------------------------------
  * @brief Preinitialized the DAQ_ALL_T by zero and try to find all
@@ -228,7 +176,7 @@ STATIC_ASSERT( sizeof( union DAQ_DESCRIPTOR_T ) == DAQ_DISCRIPTOR_WORD_SIZE * si
  * @retval  0 No DAQ found.
  * @retval >0 Number of connected DAQ in SCU-bus.
  */
-int daqFindAndInitializeAll( struct DAQ_ALL_T* pAllDAQ, const void* pScuBusBase );
+int daqFindAndInitializeAll( DAQ_ALL_T* pAllDAQ, const void* pScuBusBase );
 
 /*! ---------------------------------------------------------------------------
  * @brief Returns the total number of DAQ input channels from all DAQ-slaves
@@ -237,33 +185,228 @@ int daqFindAndInitializeAll( struct DAQ_ALL_T* pAllDAQ, const void* pScuBusBase 
  * @note Function daqFindAndInitializeAll has to be invoked before!
  *
  */
-int daqGetNumberOfAllFoundChannels( struct DAQ_ALL_T* pAllDAQ );
+int daqGetNumberOfAllFoundChannels( DAQ_ALL_T* pAllDAQ );
 
-/*!
+/*! --------------------------------------------------------------------------
  * @brief Writes the given value in addressed register
+ * @param pReg Start address of DAQ-macro.
+ * @param index Offset address of register @see
+ * @param channel Channel number.
+ * @param value Value for writing into register.
  */
-static inline void daqSetChannelReg( union DAQ_REGISTER_T* volatile preg,
+static inline void daqChannelSetReg( DAQ_REGISTER_T* volatile pReg,
                                      const DAQ_REGISTER_INDEX index,
                                      const unsigned int channel,
                                      const uint16_t value )
 {
    LM32_ASSERT( channel < DAQ_MAX_CHANNELS );
    LM32_ASSERT( (index & 0x0F) == 0x00 );
-   preg->i[index+channel] = value;
+   pReg->i[index+channel] = value;
 }
 
-/*!
+/*! ---------------------------------------------------------------------------
  * @brief Reads a value from a addressed register
+ * @param pReg Start address of DAQ-macro.
+ * @param index Offset address of register @see
+ * @param channel Channel number.
+ * @return Register value.
  */
-static inline uint16_t daqGetChannelReg( union DAQ_REGISTER_T* volatile preg,
+static inline uint16_t daqChannelGetReg( DAQ_REGISTER_T* volatile pReg,
                                          const DAQ_REGISTER_INDEX index,
                                          const unsigned int channel )
 {
    LM32_ASSERT( channel < DAQ_MAX_CHANNELS );
    LM32_ASSERT( (index & 0x0F) == 0x00 );
-   return preg->i[index+channel];
+   return pReg->i[index+channel];
 }
 
+/*! ---------------------------------------------------------------------------
+ * @brief Returns the pointer to the control register of a given DAQ-channel
+ * @param pReg Start address of DAQ-macro.
+ * @param channel Channel number.
+ * @return Pointer to the control register.
+ */
+static inline DAQ_CTRL_REG_T* daqChannelGetCtrlRegPtr( DAQ_REGISTER_T* volatile pReg,
+                                                   const unsigned int channel )
+{
+   LM32_ASSERT( channel < DAQ_MAX_CHANNELS );
+   return (DAQ_CTRL_REG_T*) &pReg->i[CtrlReg+channel];
+}
+
+/*! ---------------------------------------------------------------------------
+ * @brief Get the slot number of the given channel number.
+ * @param pReg Start address of DAQ-macro.
+ * @param channel Channel number.
+ */
+static inline int daqChannelGetSlot( DAQ_REGISTER_T* volatile pReg,
+                                     const unsigned int channel )
+{
+   return daqChannelGetCtrlRegPtr( pReg, channel )->slot;
+}
+
+/*! ---------------------------------------------------------------------------
+ * @brief Turns the 10 us sample mode on for the concerned channel.
+ * @param pReg Start address of DAQ-macro.
+ * @param channel Channel number.
+ */
+static inline void daqChannelSample10usOn( DAQ_REGISTER_T* volatile pReg,
+                                           const unsigned int channel )
+{
+   daqChannelGetCtrlRegPtr( pReg, channel )->Sample1ms = OFF;
+   daqChannelGetCtrlRegPtr( pReg, channel )->Sample100us = OFF;
+   daqChannelGetCtrlRegPtr( pReg, channel )->Sample10us = ON;
+}
+
+/*! ---------------------------------------------------------------------------
+ * @brief Turns the 10 us sample mode off for the concerned channel.
+ * @param pReg Start address of DAQ-macro.
+ * @param channel Channel number.
+ */
+static inline void daqChannelSample10usOff( DAQ_REGISTER_T* volatile pReg,
+                                           const unsigned int channel )
+{
+   daqChannelGetCtrlRegPtr( pReg, channel )->Sample10us = OFF;
+}
+
+/*! ---------------------------------------------------------------------------
+ * @brief Queries whether 10 us sample mode is active
+ * @param pReg Start address of DAQ-macro.
+ * @param channel Channel number.
+ * @return true: is active
+ * @return false: is not active
+ */
+static inline bool daqChannelIsSample10usActive( DAQ_REGISTER_T* volatile pReg,
+                                           const unsigned int channel )
+{
+   return (daqChannelGetCtrlRegPtr( pReg, channel )->Sample10us == ON);
+}
+
+/*! ---------------------------------------------------------------------------
+ * @brief Turns the 100 us sample mode on for the concerned channel.
+ * @param pReg Start address of DAQ-macro.
+ * @param channel Channel number.
+ */
+static inline void daqChannelSample100usOn( DAQ_REGISTER_T* volatile pReg,
+                                           const unsigned int channel )
+{
+   daqChannelGetCtrlRegPtr( pReg, channel )->Sample10us = OFF;
+   daqChannelGetCtrlRegPtr( pReg, channel )->Sample1ms = OFF;
+   daqChannelGetCtrlRegPtr( pReg, channel )->Sample100us = ON;
+}
+
+/*! ---------------------------------------------------------------------------
+ * @brief Turns the 100 us sample mode off for the concerned channel.
+ * @param pReg Start address of DAQ-macro.
+ * @param channel Channel number.
+ *
+ */
+static inline void daqChannelSample100usOff( DAQ_REGISTER_T* volatile pReg,
+                                           const unsigned int channel )
+{
+   daqChannelGetCtrlRegPtr( pReg, channel )->Sample100us = OFF;
+}
+
+/*! ---------------------------------------------------------------------------
+ * @brief Queries whether 100 us sample mode is active
+ * @param pReg Start address of DAQ-macro.
+ * @param channel Channel number.
+ * @return true: is active
+ * @return false: is not active
+ */
+static inline bool daqChannelIsSample100usActive( DAQ_REGISTER_T* volatile pReg,
+                                           const unsigned int channel )
+{
+   return (daqChannelGetCtrlRegPtr( pReg, channel )->Sample100us == ON);
+}
+
+/*! ---------------------------------------------------------------------------
+ * @brief Turns the 1 ms sample mode on for the concerned channel.
+ * @param pReg Start address of DAQ-macro.
+ * @param channel Channel number.
+ */
+static inline void daqChannelSample1msOn( DAQ_REGISTER_T* volatile pReg,
+                                           const unsigned int channel )
+{
+   daqChannelGetCtrlRegPtr( pReg, channel )->Sample10us = OFF;
+   daqChannelGetCtrlRegPtr( pReg, channel )->Sample100us = OFF;
+   daqChannelGetCtrlRegPtr( pReg, channel )->Sample1ms = ON;
+}
+
+/*! ---------------------------------------------------------------------------
+ * @brief Turns the 1 ms sample mode off for the concerned channel.
+ * @param pReg Start address of DAQ-macro.
+ * @param channel Channel number.
+ */
+static inline void daqChannelSample1msOff( DAQ_REGISTER_T* volatile pReg,
+                                           const unsigned int channel )
+{
+   daqChannelGetCtrlRegPtr( pReg, channel )->Sample1ms = OFF;
+}
+
+/*! ---------------------------------------------------------------------------
+ * @brief Queries whether 1 ms sample mode is active
+ * @param pReg Start address of DAQ-macro.
+ * @param channel Channel number.
+ * @return true: is active
+ * @return false: is not active
+ */
+static inline bool daqChannelIsSample1msActive( DAQ_REGISTER_T* volatile pReg,
+                                           const unsigned int channel )
+{
+   return (daqChannelGetCtrlRegPtr( pReg, channel )->Sample1ms == ON);
+}
+
+/*! ---------------------------------------------------------------------------
+ * @brief Enables the trigger mode of the concerning channel.
+ * @param pReg Start address of DAQ-macro.
+ * @param channel Channel number.
+ */
+static inline void daqChannelEnableTriggerMode( DAQ_REGISTER_T* volatile pReg,
+                                           const unsigned int channel )
+{
+   daqChannelGetCtrlRegPtr( pReg, channel )->Ena_TrigMod = ON;
+}
+
+/*! ---------------------------------------------------------------------------
+ * @brief Disables the trigger mode of the concerning channel.
+ * @param pReg Start address of DAQ-macro.
+ * @param channel Channel number.
+ */
+static inline void daqChannelDisableTriggerMode( DAQ_REGISTER_T* volatile pReg,
+                                           const unsigned int channel )
+{
+   daqChannelGetCtrlRegPtr( pReg, channel )->Ena_TrigMod = OFF;
+}
+
+/*! ---------------------------------------------------------------------------
+ * @brief Queries whether the trigger mode of the concerning channel is active.
+ * @param pReg Start address of DAQ-macro.
+ * @param channel Channel number.
+ * @return true: is active
+ * @return false: is not active
+ */
+static inline bool daqChannelIsTriggerModeEnabled( DAQ_REGISTER_T* volatile pReg,
+                                           const unsigned int channel )
+{
+   return (daqChannelGetCtrlRegPtr( pReg, channel )->Ena_TrigMod == ON);
+}
+
+/*! ---------------------------------------------------------------------------
+ * @brief Get the slot number of a DAQ device respectively the
+ *        DAQ-SCU-bis slave.
+ * @param pDaqDev Start address of the concerned DAQ-device
+ * @return Slot number.
+ */
+static inline int daqDeviceGetSlot( DAQ_DEVICE_T* pDaqDev )
+{
+   LM32_ASSERT( pDaqDev != NULL );
+   LM32_ASSERT( pDaqDev->pReg != NULL );
+   /*
+    * All existing channels of a DAQ have the same slot number
+    * therefore its enough to choose the channel 0.
+    */
+   return daqChannelGetSlot( pDaqDev->pReg, 0 );
+}
 
 #ifdef __cplusplus
 }

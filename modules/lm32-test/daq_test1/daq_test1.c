@@ -31,7 +31,7 @@ IMPLEMENT_CONVERT_BYTE_ENDIAN( uint32_t )
 
 void main( void )
 {
-   struct DAQ_ALL_T allDaq;
+   DAQ_ALL_T allDaq;
 
    discoverPeriphery();
    uart_init_hw();
@@ -46,14 +46,19 @@ void main( void )
    mprintf( "SCU_IRQ_CTRL: 0x%08x\n",  find_device_adr(GSI, SCU_IRQ_CTRL) );
 
    if( daqFindAndInitializeAll( &allDaq, find_device_adr(GSI, SCU_BUS_MASTER) ) <= 0 )
+   {
+      mprintf( "Nothing found!\n" );
       return;
+   }
    mprintf( "%d DAQ found\n", allDaq.foundDevices );
 
    for( int i = 0; i < allDaq.foundDevices; i++ )
    {
-      mprintf( "DAQ in slot: %02d, address: 0x%08x, channels %d\n",
-               allDaq.aDaq[i].slot, allDaq.aDaq[i].pReg,
+#if 1
+      mprintf( "DAQ in slot: %02d, DAQ macro start address: 0x%08x, channels %d\n",
+               daqDeviceGetSlot( &allDaq.aDaq[i] ), allDaq.aDaq[i].pReg,
                allDaq.aDaq[i].maxChannels );
+#endif
    }
 
    mprintf( "\nTotal-number of channels: %d\n", daqGetNumberOfAllFoundChannels( &allDaq ) );

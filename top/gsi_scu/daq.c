@@ -29,19 +29,36 @@
 
 /*! ----------------------------------------------------------------------------
  * @brief Scans all potential existing input-channels of the given
- *        DAQ-Device.
+ *        DAQ-Device ant initialize each found channel with
+ *        the slot number.
  * @param pDaqDev Start-address of DAQ-registers
  * @return Number of real existing channels
  */
-inline static int daqFindChannels( struct DAQ_DEVICE_T* pDaqDev )
+inline static int daqFindChannels( DAQ_DEVICE_T* pDaqDev, int slot )
 {
    LM32_ASSERT( pDaqDev != NULL );
    LM32_ASSERT( pDaqDev->pReg != NULL );
 
-   for( int i = 0; i < DAQ_MAX_CHANNELS; i++ )
+   for( int channel = 0; channel < DAQ_MAX_CHANNELS; channel++ )
    {
-      if( daqGetChannelReg( pDaqDev->pReg, CTRLREG, i ) != 0 )
-         break; //TODO
+      DBPRINT2( "DBG: Slot: %02d, Channel: %02d, ctrlReg: 0x%04x\n",
+                slot, channel, daqChannelGetReg( pDaqDev->pReg, CtrlReg, channel ));
+      /*
+       * The next three lines probes the channel by writing and read back
+       * the slot number. At the first look this algorithm seems not meaningful
+       * (writing and immediately reading a value from the same memory place)
+       * but we have to keep in mind that is a memory mapped IO areal and
+       * its attribute was declared as "volatile".
+       *
+       * If no (further) channel present the value of the control-register is
+       * 0xDEAD. That means the slot number has the hex number 0xD (13).
+       * Fortunately the highest slot number is 0xC (12). Therefore no further
+       * probing is necessary.
+       */
+      daqChannelGetCtrlRegPtr( pDaqDev->pReg, channel )->slot = slot;
+      if( daqChannelGetSlot( pDaqDev->pReg, channel ) != slot )
+         break; /* Supposing this channel isn't present. */
+
       pDaqDev->maxChannels++;
    }
    return pDaqDev->maxChannels;
@@ -50,7 +67,7 @@ inline static int daqFindChannels( struct DAQ_DEVICE_T* pDaqDev )
 /*! ----------------------------------------------------------------------------
  * @see daq.h
  */
-int daqFindAndInitializeAll( struct DAQ_ALL_T* pAllDAQ, const void* pScuBusBase )
+int daqFindAndInitializeAll( DAQ_ALL_T* pAllDAQ, const void* pScuBusBase )
 {
    SCUBUS_SLAVE_FLAGS_T daqPersentFlags;
 
@@ -59,7 +76,7 @@ int daqFindAndInitializeAll( struct DAQ_ALL_T* pAllDAQ, const void* pScuBusBase 
    LM32_ASSERT( pAllDAQ != NULL );
 
    // Pre-initializing
-   memset( pAllDAQ, 0, sizeof( struct DAQ_ALL_T ));
+   memset( pAllDAQ, 0, sizeof( DAQ_ALL_T ));
 
    daqPersentFlags = scuBusFindSpecificSlaves( pScuBusBase, 0x37, 0x26 );
    if( daqPersentFlags == 0 )
@@ -72,18 +89,17 @@ int daqFindAndInitializeAll( struct DAQ_ALL_T* pAllDAQ, const void* pScuBusBase 
    {
       if( !scuBusIsSlavePresent( daqPersentFlags, slot ) )
          continue;
-      pAllDAQ->aDaq[pAllDAQ->foundDevices].slot = slot;
+
       pAllDAQ->aDaq[pAllDAQ->foundDevices].pReg =
           getAbsScuBusSlaveAddr( pScuBusBase, slot ) + DAQ_REGISTER_OFFSET;
-      DBPRINT2( "DBG: DAQ found in slot: %02d, address: 0x%08x\n",
-                pAllDAQ->aDaq[pAllDAQ->foundDevices].slot,
+      DBPRINT2( "DBG: DAQ found in slot: %02d, address: 0x%08x\n", slot,
                 pAllDAQ->aDaq[pAllDAQ->foundDevices].pReg );
-      if( daqFindChannels( &pAllDAQ->aDaq[pAllDAQ->foundDevices] ) == 0 )
+      if( daqFindChannels( &pAllDAQ->aDaq[pAllDAQ->foundDevices], slot ) == 0 )
       {
-         DBPRINT2( "DBG: DAQ in slot %d has on input channels - skipping\n", slot );
+         DBPRINT2( "DBG: DAQ in slot %d has no input channels - skipping\n", slot );
          continue;
       }
-      pAllDAQ->foundDevices++;
+      pAllDAQ->foundDevices++; // At least one channel was found.
 #if DAQ_MAX < MAX_SCU_SLAVES
       if( pAllDAQ->foundDevices == ARRAY_SIZE( pAllDAQ->aDaq ) )
          break;
@@ -96,7 +112,7 @@ int daqFindAndInitializeAll( struct DAQ_ALL_T* pAllDAQ, const void* pScuBusBase 
 /*! ---------------------------------------------------------------------------
  * @see daq.h
  */
-int daqGetNumberOfAllFoundChannels( struct DAQ_ALL_T* pAllDAQ )
+int daqGetNumberOfAllFoundChannels( DAQ_ALL_T* pAllDAQ )
 {
    int ret = 0;
    for( int i = 0; i < pAllDAQ->foundDevices; i++ )
