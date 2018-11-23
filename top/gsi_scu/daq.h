@@ -137,19 +137,19 @@ STATIC_ASSERT( sizeof( DAQ_REGISTER_T ) == SCUBUS_SLAVE_ADDR_SPACE );
 /*!
  * @brief Object represents a single channel of a DAQ.
  */
-struct DAQ_CANNEL_T
+typedef struct
 {
-   void* p; //TODO
-};
+   uint8_t n; //!< @brief Channel number [0..DAQ_MAX_CHANNELS-1]
+   void* p; //TODO pointer ti FoFo
+} DAQ_CANNEL_T;
 
 /*!
  * @brief Object represents a single SCU-Bus slave including a DAQ
  */
 typedef struct
 {
-  // unsigned int slot;     //!< @brief Slot number of this DAQ. Range: 1..MAX_SCU_SLAVES
    unsigned int maxChannels; //!< @brief Number of DAQ-channels
-   struct DAQ_CANNEL_T aChannel[DAQ_MAX_CHANNELS];
+   DAQ_CANNEL_T aChannel[DAQ_MAX_CHANNELS]; //!< @brief Array of channel objects
    DAQ_REGISTER_T* volatile pReg; //!< @brief Pointer to DAQ-registers (start of address space)
 } DAQ_DEVICE_T;
 
@@ -222,178 +222,413 @@ static inline uint16_t daqChannelGetReg( DAQ_REGISTER_T* volatile pReg,
 
 /*! ---------------------------------------------------------------------------
  * @brief Returns the pointer to the control register of a given DAQ-channel
- * @param pReg Start address of DAQ-macro.
- * @param channel Channel number.
+ * @note <p>CAUTION!</p>\n
+ *       This function works only if the channel object (pThis) is
+ *       real content of the container DAQ_DEVICE_T. \n
+ *       That means, the address range of the concerned object DAQ_CANNEL_T
+ *       has to be within the address range of its container-object
+ *       DAQ_DEVICE_T!
+ * @see CONTAINER_OF defined in helper_macros.h
+ * @param pThis Pointer to the channel object
  * @return Pointer to the control register.
  */
-static inline DAQ_CTRL_REG_T* daqChannelGetCtrlRegPtr( DAQ_REGISTER_T* volatile pReg,
-                                                   const unsigned int channel )
+static inline DAQ_REGISTER_T* volatile daqChannelGetRegPtr( DAQ_CANNEL_T* pThis )
 {
-   LM32_ASSERT( channel < DAQ_MAX_CHANNELS );
-   return (DAQ_CTRL_REG_T*) &pReg->i[CtrlReg+channel];
+   LM32_ASSERT( pThis->n < DAQ_MAX_CHANNELS );
+   return CONTAINER_OF( pThis, DAQ_DEVICE_T, aChannel[pThis->n] )->pReg;
 }
 
 /*! ---------------------------------------------------------------------------
- * @brief Get the slot number of the given channel number.
- * @param pReg Start address of DAQ-macro.
- * @param channel Channel number.
+ * @brief Returns a pointer to the control-register of the given channel-
+ *        object.
+ * @see daqChannelGetRegPtr
+ * @see DAQ_CTRL_REG_T
+ * @param pThis Pointer to the channel object
+ * @return Pointer to control register bit field structure.
  */
-static inline int daqChannelGetSlot( DAQ_REGISTER_T* volatile pReg,
-                                     const unsigned int channel )
+static inline DAQ_CTRL_REG_T* daqChannelGetCtrlRegPtr( DAQ_CANNEL_T* pThis )
 {
-   return daqChannelGetCtrlRegPtr( pReg, channel )->slot;
+   return (DAQ_CTRL_REG_T*) &daqChannelGetRegPtr(pThis)->i[CtrlReg+pThis->n];
+}
+
+/*! ---------------------------------------------------------------------------
+ * @brief Get the slot number of the given DAQ-channel.
+ * @see daqChannelGetRegPtr
+ * @param pThis Pointer to the channel object
+ * @return Slot number of the DAQ device where belonging this channel
+ */
+static inline int daqChannelGetSlot( DAQ_CANNEL_T* pThis )
+{
+   return daqChannelGetCtrlRegPtr( pThis )->slot;
 }
 
 /*! ---------------------------------------------------------------------------
  * @brief Turns the 10 us sample mode on for the concerned channel.
- * @param pReg Start address of DAQ-macro.
- * @param channel Channel number.
+ * @see daqChannelGetRegPtr
+ * @param pThis Pointer to the channel object
  */
-static inline void daqChannelSample10usOn( DAQ_REGISTER_T* volatile pReg,
-                                           const unsigned int channel )
+static inline void daqChannelSample10usOn( DAQ_CANNEL_T* pThis )
 {
-   daqChannelGetCtrlRegPtr( pReg, channel )->Sample1ms = OFF;
-   daqChannelGetCtrlRegPtr( pReg, channel )->Sample100us = OFF;
-   daqChannelGetCtrlRegPtr( pReg, channel )->Sample10us = ON;
+   DAQ_CTRL_REG_T* pCtrl = daqChannelGetCtrlRegPtr( pThis );
+   pCtrl->Sample1ms = OFF;
+   pCtrl->Sample100us = OFF;
+   pCtrl->Sample10us = ON;
 }
 
 /*! ---------------------------------------------------------------------------
- * @brief Turns the 10 us sample mode off for the concerned channel.
- * @param pReg Start address of DAQ-macro.
+ * @brief Turns the 10 us sample mode off for the channel-object.
+ * @see daqChannelGetRegPtr
+ * @param pThis Pointer to the channel object
  * @param channel Channel number.
  */
-static inline void daqChannelSample10usOff( DAQ_REGISTER_T* volatile pReg,
-                                           const unsigned int channel )
+static inline void daqChannelSample10usOff( DAQ_CANNEL_T* pThis )
 {
-   daqChannelGetCtrlRegPtr( pReg, channel )->Sample10us = OFF;
+   daqChannelGetCtrlRegPtr( pThis )->Sample10us = OFF;
 }
 
 /*! ---------------------------------------------------------------------------
  * @brief Queries whether 10 us sample mode is active
- * @param pReg Start address of DAQ-macro.
- * @param channel Channel number.
- * @return true: is active
- * @return false: is not active
+ * @see daqChannelGetRegPtr
+ * @param pThis Pointer to the channel object
+ * @retval true is active
+ * @retval false is not active
  */
-static inline bool daqChannelIsSample10usActive( DAQ_REGISTER_T* volatile pReg,
-                                           const unsigned int channel )
+static inline bool daqChannelIsSample10usActive( DAQ_CANNEL_T* pThis )
 {
-   return (daqChannelGetCtrlRegPtr( pReg, channel )->Sample10us == ON);
+   return (daqChannelGetCtrlRegPtr( pThis )->Sample10us == ON);
 }
+
 
 /*! ---------------------------------------------------------------------------
  * @brief Turns the 100 us sample mode on for the concerned channel.
- * @param pReg Start address of DAQ-macro.
- * @param channel Channel number.
+ * @see daqChannelGetRegPtr
+ * @param pThis Pointer to the channel object
  */
-static inline void daqChannelSample100usOn( DAQ_REGISTER_T* volatile pReg,
-                                           const unsigned int channel )
+static inline void daqChannelSample100usOn( DAQ_CANNEL_T* pThis )
 {
-   daqChannelGetCtrlRegPtr( pReg, channel )->Sample10us = OFF;
-   daqChannelGetCtrlRegPtr( pReg, channel )->Sample1ms = OFF;
-   daqChannelGetCtrlRegPtr( pReg, channel )->Sample100us = ON;
+   DAQ_CTRL_REG_T* pCtrl = daqChannelGetCtrlRegPtr( pThis );
+   pCtrl->Sample10us = OFF;
+   pCtrl->Sample1ms = OFF;
+   pCtrl->Sample100us = ON;
 }
 
 /*! ---------------------------------------------------------------------------
  * @brief Turns the 100 us sample mode off for the concerned channel.
- * @param pReg Start address of DAQ-macro.
- * @param channel Channel number.
- *
+ * @see daqChannelGetRegPtr
+ * @param pThis Pointer to the channel object
  */
-static inline void daqChannelSample100usOff( DAQ_REGISTER_T* volatile pReg,
-                                           const unsigned int channel )
+static inline void daqChannelSample100usOff( DAQ_CANNEL_T* pThis )
 {
-   daqChannelGetCtrlRegPtr( pReg, channel )->Sample100us = OFF;
+   daqChannelGetCtrlRegPtr( pThis )->Sample100us = OFF;
 }
 
 /*! ---------------------------------------------------------------------------
  * @brief Queries whether 100 us sample mode is active
- * @param pReg Start address of DAQ-macro.
- * @param channel Channel number.
- * @return true: is active
- * @return false: is not active
+ * @see daqChannelGetRegPtr
+ * @param pThis Pointer to the channel object
+ * @retval true is active
+ * @retval false is not active
  */
-static inline bool daqChannelIsSample100usActive( DAQ_REGISTER_T* volatile pReg,
-                                           const unsigned int channel )
+static inline bool daqChannelIsSample100usActive( DAQ_CANNEL_T* pThis )
 {
-   return (daqChannelGetCtrlRegPtr( pReg, channel )->Sample100us == ON);
+   return (daqChannelGetCtrlRegPtr( pThis )->Sample100us == ON);
 }
 
 /*! ---------------------------------------------------------------------------
- * @brief Turns the 1 ms sample mode on for the concerned channel.
- * @param pReg Start address of DAQ-macro.
- * @param channel Channel number.
+ * @brief Turns the 1 ms us sample mode on for the concerned channel.
+ * @see daqChannelGetRegPtr
+ * @param pThis Pointer to the channel object
  */
-static inline void daqChannelSample1msOn( DAQ_REGISTER_T* volatile pReg,
-                                           const unsigned int channel )
+static inline void daqChannelSample1msOn( DAQ_CANNEL_T* pThis )
 {
-   daqChannelGetCtrlRegPtr( pReg, channel )->Sample10us = OFF;
-   daqChannelGetCtrlRegPtr( pReg, channel )->Sample100us = OFF;
-   daqChannelGetCtrlRegPtr( pReg, channel )->Sample1ms = ON;
+   DAQ_CTRL_REG_T* pCtrl = daqChannelGetCtrlRegPtr( pThis );
+   pCtrl->Sample10us = OFF;
+   pCtrl->Sample100us = OFF;
+   pCtrl->Sample1ms = ON;
 }
 
 /*! ---------------------------------------------------------------------------
  * @brief Turns the 1 ms sample mode off for the concerned channel.
- * @param pReg Start address of DAQ-macro.
- * @param channel Channel number.
+ * @see daqChannelGetRegPtr
+ * @param pThis Pointer to the channel object
  */
-static inline void daqChannelSample1msOff( DAQ_REGISTER_T* volatile pReg,
-                                           const unsigned int channel )
+static inline void daqChannelSample1msOff( DAQ_CANNEL_T* pThis )
 {
-   daqChannelGetCtrlRegPtr( pReg, channel )->Sample1ms = OFF;
+   daqChannelGetCtrlRegPtr( pThis )->Sample1ms = OFF;
 }
 
 /*! ---------------------------------------------------------------------------
  * @brief Queries whether 1 ms sample mode is active
- * @param pReg Start address of DAQ-macro.
- * @param channel Channel number.
- * @return true: is active
- * @return false: is not active
+ * @see daqChannelGetRegPtr
+ * @param pThis Pointer to the channel object
+ * @retval true is active
+ * @retval false is not active
  */
-static inline bool daqChannelIsSample1msActive( DAQ_REGISTER_T* volatile pReg,
-                                           const unsigned int channel )
+static inline bool daqChannelIsSample1msActive( DAQ_CANNEL_T* pThis )
 {
-   return (daqChannelGetCtrlRegPtr( pReg, channel )->Sample1ms == ON);
+   return (daqChannelGetCtrlRegPtr( pThis )->Sample1ms == ON);
 }
 
 /*! ---------------------------------------------------------------------------
  * @brief Enables the trigger mode of the concerning channel.
- * @param pReg Start address of DAQ-macro.
- * @param channel Channel number.
+ * @see daqChannelGetRegPtr
+ * @param pThis Pointer to the channel object
  */
-static inline void daqChannelEnableTriggerMode( DAQ_REGISTER_T* volatile pReg,
-                                           const unsigned int channel )
+static inline void daqChannelEnableTriggerMode( DAQ_CANNEL_T* pThis )
 {
-   daqChannelGetCtrlRegPtr( pReg, channel )->Ena_TrigMod = ON;
+   daqChannelGetCtrlRegPtr( pThis )->Ena_TrigMod = ON;
 }
 
 /*! ---------------------------------------------------------------------------
  * @brief Disables the trigger mode of the concerning channel.
- * @param pReg Start address of DAQ-macro.
- * @param channel Channel number.
+ * @see daqChannelGetRegPtr
+ * @param pThis Pointer to the channel object
  */
-static inline void daqChannelDisableTriggerMode( DAQ_REGISTER_T* volatile pReg,
-                                           const unsigned int channel )
+static inline void daqChannelDisableTriggerMode( DAQ_CANNEL_T* pThis )
 {
-   daqChannelGetCtrlRegPtr( pReg, channel )->Ena_TrigMod = OFF;
+   daqChannelGetCtrlRegPtr( pThis )->Ena_TrigMod = OFF;
 }
 
 /*! ---------------------------------------------------------------------------
  * @brief Queries whether the trigger mode of the concerning channel is active.
- * @param pReg Start address of DAQ-macro.
- * @param channel Channel number.
- * @return true: is active
- * @return false: is not active
+ * @see daqChannelGetRegPtr
+ * @param pThis Pointer to the channel object
+ * @retval true is active
+ * @retval false is not active
  */
-static inline bool daqChannelIsTriggerModeEnabled( DAQ_REGISTER_T* volatile pReg,
-                                           const unsigned int channel )
+static inline bool daqChannelIsTriggerModeEnabled( DAQ_CANNEL_T* pThis )
 {
-   return (daqChannelGetCtrlRegPtr( pReg, channel )->Ena_TrigMod == ON);
+   return (daqChannelGetCtrlRegPtr( pThis )->Ena_TrigMod == ON);
 }
+
+/*! ---------------------------------------------------------------------------
+ * @brief Enabling external trigger source
+ * @see daqChannelGetRegPtr
+ * @param pThis Pointer to the channel object
+ */
+static inline void daqChannelEnableExtrenTrigger( DAQ_CANNEL_T* pThis )
+{
+   daqChannelGetCtrlRegPtr( pThis )->ExtTrig_nEvTrig = ON;
+}
+
+/*! ---------------------------------------------------------------------------
+ * @brief Enable event trigger
+ * @see daqChannelGetRegPtr
+ * @param pThis Pointer to the channel object
+ */
+static inline void daqChannelEnableEventTrigger( DAQ_CANNEL_T* pThis )
+{
+   daqChannelGetCtrlRegPtr( pThis )->ExtTrig_nEvTrig = OFF;
+}
+
+/*! ---------------------------------------------------------------------------
+ * @brief Returns the trigger source of the given channel object
+ * @see daqChannelGetRegPtr
+ * @param pThis Pointer to the channel object
+ * @retval true Channel is in external trigger mode
+ * @retval false Channel in in event trigger mode
+ */
+static inline bool daqChannelGetTriggerSource( DAQ_CANNEL_T* pThis )
+{
+   return (daqChannelGetCtrlRegPtr( pThis )->ExtTrig_nEvTrig == ON);
+}
+
+/*! ---------------------------------------------------------------------------
+ * @brief Enables the post mortem mode (PM) of the given channel.
+ * @see daqChannelGetRegPtr
+ * @param pThis Pointer to the channel object
+ */
+static inline bool daqChannelEnablePostMortem( DAQ_CANNEL_T* pThis )
+{
+   LM32_ASSERT( daqChannelGetCtrlRegPtr( pThis )->Ena_HiRes == OFF );
+   daqChannelGetCtrlRegPtr( pThis )->Ena_PM = ON;
+}
+
+/*! ---------------------------------------------------------------------------
+ * @brief Queries whether the post mortem mode (PM) is enabled.
+ * @see daqChannelGetRegPtr
+ * @param pThis Pointer to the channel object
+ * @retval true PM is enabled
+ * @retval false PM is disabled
+ */
+static inline bool daqChannelIsPostMortemActive( DAQ_CANNEL_T* pThis )
+{
+   return (daqChannelGetCtrlRegPtr( pThis )->Ena_PM == ON);
+}
+
+/*! ---------------------------------------------------------------------------
+ * @brief Disables the post mortem mode (PM) of the given channel.
+ * @see daqChannelGetRegPtr
+ * @param pThis Pointer to the channel object
+ */
+static inline bool daqChannelDisablePostMortem( DAQ_CANNEL_T* pThis )
+{
+   daqChannelGetCtrlRegPtr( pThis )->Ena_PM = OFF;
+}
+
+/*! ---------------------------------------------------------------------------
+ * @brief Enables the high resolution sampling
+ * @see daqChannelGetRegPtr
+ * @param pThis Pointer to the channel object
+ */
+static inline void daqChannelEnableHighResolution( DAQ_CANNEL_T* pThis )
+{
+   LM32_ASSERT( daqChannelGetCtrlRegPtr( pThis )->Ena_PM == OFF );
+   daqChannelGetCtrlRegPtr( pThis )->Ena_HiRes = ON;
+}
+
+/*! ---------------------------------------------------------------------------
+ * @brief Disables the high resolution sampling
+ * @see daqChannelGetRegPtr
+ * @param pThis Pointer to the channel object
+ */
+static inline void daqChannelDisableHighResolution( DAQ_CANNEL_T* pThis )
+{
+   daqChannelGetCtrlRegPtr( pThis )->Ena_HiRes = OFF;
+}
+
+/*! ---------------------------------------------------------------------------
+ * @brief Queries whether the high resolution mod is enabled
+ * @see daqChannelGetRegPtr
+ * @param pThis Pointer to the channel object
+ * @retval true high resolution mode is enabled
+ * @retval false high resolution mode is disabled
+ */
+static inline bool daqChannelIsHighResolutionEnabled( DAQ_CANNEL_T* pThis )
+{
+   return (daqChannelGetCtrlRegPtr( pThis )->Ena_HiRes == ON);
+}
+
+/*! ---------------------------------------------------------------------------
+ * @brief Set the trigger source for high resolution mode to external
+ *        trigger source.
+ * @see daqChannelGetRegPtr
+ * @param pThis Pointer to the channel object
+ */
+static inline void daqChannelEnableExternTriggerHighRes( DAQ_CANNEL_T* pThis )
+{
+   daqChannelGetCtrlRegPtr( pThis )->ExtTrig_nEvTrig_HiRes = ON;
+}
+
+/*! ---------------------------------------------------------------------------
+ * @brief Enables the event trigger mode in high resolution mode.
+ * @see daqChannelGetRegPtr
+ * @param pThis Pointer to the channel object
+ */
+static inline void daqChannelEnableEventTriggerHighRes( DAQ_CANNEL_T* pThis )
+{
+   daqChannelGetCtrlRegPtr( pThis )->ExtTrig_nEvTrig_HiRes = OFF;
+}
+
+/*! ---------------------------------------------------------------------------
+ * @brief Returns the trigger source of high resolution of the given
+ *        channel object
+ * @see daqChannelGetRegPtr
+ * @param pThis Pointer to the channel object
+ * @retval true Channel is in external trigger mode
+ * @retval false Channel in in event trigger mode
+ */
+static inline bool daqChannelGetTriggerSourceHighRes( DAQ_CANNEL_T* pThis )
+{
+   return (daqChannelGetCtrlRegPtr( pThis )->ExtTrig_nEvTrig_HiRes == ON);
+}
+
+/*! --------------------------------------------------------------------------
+ * @brief Gets the least significant word of the bus tag event
+ *        trigger condition.
+ * @see daqChannelGetRegPtr
+ * @param pThis Pointer to the channel object
+ * @return least significant wort of bus tag event condition
+ */
+static inline uint16_t daqChannelGetTriggerConditionLW( DAQ_CANNEL_T* pThis )
+{
+   return daqChannelGetRegPtr( pThis )->i[TRIG_LW+pThis->n];
+}
+
+/*! --------------------------------------------------------------------------
+ * @brief sets the least significant word of the bus tag event
+ *        trigger condition.
+ * @see daqChannelGetRegPtr
+ * @param pThis Pointer to the channel object
+ * @param value least significant wort of bus tag event condition
+ */
+static inline void daqChannelSetTriggerConditionLW( DAQ_CANNEL_T* pThis, uint16_t value )
+{
+   daqChannelGetRegPtr( pThis )->i[TRIG_LW+pThis->n] = value;
+}
+
+/*! --------------------------------------------------------------------------
+ * @brief Gets the most significant word of the bus tag event
+ *        trigger condition.
+ * @see daqChannelGetRegPtr
+ * @param pThis Pointer to the channel object
+ * @return most significant wort of bus tag event condition
+ */
+static inline uint16_t daqChannelGetTriggerConditionHW( DAQ_CANNEL_T* pThis )
+{
+   return daqChannelGetRegPtr( pThis )->i[TRIG_HW+pThis->n];
+}
+
+/*! --------------------------------------------------------------------------
+ * @brief sets the most significant word of the bus tag event
+ *        trigger condition.
+ * @see daqChannelGetRegPtr
+ * @param pThis Pointer to the channel object
+ * @param value most significant wort of bus tag event condition
+ */
+static inline void daqChannelSetTriggerConditionHW( DAQ_CANNEL_T* pThis, uint16_t value )
+{
+   daqChannelGetRegPtr( pThis )->i[TRIG_HW+pThis->n] = value;
+}
+
+/*! ---------------------------------------------------------------------------
+ * @brief Gets the trigger delay of this channel.
+ * @see daqChannelGetRegPtr
+ * @param pThis Pointer to the channel object
+ * @return trigger delay
+ */
+static inline uint16_t daqChannelGetTriggerDelay( DAQ_CANNEL_T* pThis )
+{
+   return daqChannelGetRegPtr( pThis )->i[TRIG_DLY+pThis->n];
+}
+
+/*! ---------------------------------------------------------------------------
+ * @brief Set the trigger delay of this channel.
+ * @see daqChannelGetRegPtr
+ * @param pThis Pointer to the channel object
+ * @param value trigger delay
+ */
+static inline uint16_t daqChannelSetTriggerDelay( DAQ_CANNEL_T* pThis, uint16_t value )
+{
+   daqChannelGetRegPtr( pThis )->i[TRIG_DLY+pThis->n] = value;
+}
+
+/*! --------------------------------------------------------------------------
+ * @brief Get the pointer to the data of the post mortem respectively to
+ *        the high resolution FiFo.
+ * @see daqChannelGetRegPtr
+ * @param pThis Pointer to the channel object
+ */
+static inline uint16_t volatile * daqChannelGetPmDatPtr( DAQ_CANNEL_T* pThis )
+{ //TODO ?
+   return &daqChannelGetRegPtr( pThis )->i[PM_DAT+pThis->n];
+}
+
+/*! --------------------------------------------------------------------------
+ * @brief Get the pointer to the data of the DAQ FiFo.
+ * @see daqChannelGetRegPtr
+ * @param pThis Pointer to the channel object
+ */
+static inline uint16_t volatile * daqChannelGetDaqDatPtr( DAQ_CANNEL_T* pThis )
+{  //TODO ?
+   return &daqChannelGetRegPtr( pThis )->i[DAQ_DAT+pThis->n];
+}
+
 
 /*! ---------------------------------------------------------------------------
  * @brief Get the slot number of a DAQ device respectively the
  *        DAQ-SCU-bis slave.
+ * @see daqChannelGetRegPtr
  * @param pDaqDev Start address of the concerned DAQ-device
  * @return Slot number.
  */
@@ -405,7 +640,7 @@ static inline int daqDeviceGetSlot( DAQ_DEVICE_T* pDaqDev )
     * All existing channels of a DAQ have the same slot number
     * therefore its enough to choose the channel 0.
     */
-   return daqChannelGetSlot( pDaqDev->pReg, 0 );
+   return daqChannelGetSlot( &pDaqDev->aChannel[0] );
 }
 
 #ifdef __cplusplus

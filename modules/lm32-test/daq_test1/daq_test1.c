@@ -54,11 +54,9 @@ void main( void )
 
    for( int i = 0; i < allDaq.foundDevices; i++ )
    {
-#if 1
       mprintf( "DAQ in slot: %02d, DAQ macro start address: 0x%08x, channels %d\n",
                daqDeviceGetSlot( &allDaq.aDaq[i] ), allDaq.aDaq[i].pReg,
                allDaq.aDaq[i].maxChannels );
-#endif
    }
 
    mprintf( "\nTotal-number of channels: %d\n", daqGetNumberOfAllFoundChannels( &allDaq ) );

@@ -43,6 +43,7 @@ inline static int daqFindChannels( DAQ_DEVICE_T* pDaqDev, int slot )
    {
       DBPRINT2( "DBG: Slot: %02d, Channel: %02d, ctrlReg: 0x%04x\n",
                 slot, channel, daqChannelGetReg( pDaqDev->pReg, CtrlReg, channel ));
+      pDaqDev->aChannel[channel].n = channel;
       /*
        * The next three lines probes the channel by writing and read back
        * the slot number. At the first look this algorithm seems not meaningful
@@ -55,8 +56,8 @@ inline static int daqFindChannels( DAQ_DEVICE_T* pDaqDev, int slot )
        * Fortunately the highest slot number is 0xC (12). Therefore no further
        * probing is necessary.
        */
-      daqChannelGetCtrlRegPtr( pDaqDev->pReg, channel )->slot = slot;
-      if( daqChannelGetSlot( pDaqDev->pReg, channel ) != slot )
+      daqChannelGetCtrlRegPtr( &pDaqDev->aChannel[channel] )->slot = slot;
+      if( daqChannelGetSlot( &pDaqDev->aChannel[channel] ) != slot )
          break; /* Supposing this channel isn't present. */
 
       pDaqDev->maxChannels++;
