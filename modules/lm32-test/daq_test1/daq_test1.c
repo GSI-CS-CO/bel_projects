@@ -50,17 +50,20 @@ void main( void )
       mprintf( "Nothing found!\n" );
       return;
    }
-   mprintf( "%d DAQ found\n", allDaq.foundDevices );
 
+   mprintf( "%d DAQ found\n", allDaq.foundDevices );
+#if 1
    for( int i = 0; i < allDaq.foundDevices; i++ )
    {
-      mprintf( "DAQ in slot: %02d, DAQ macro start address: 0x%08x, channels %d\n",
+      mprintf( "DAQ in slot: %02d, DAQ macro start address: 0x%08x, channels %d version: %x channels: %d\n",
                daqDeviceGetSlot( &allDaq.aDaq[i] ), allDaq.aDaq[i].pReg,
-               allDaq.aDaq[i].maxChannels );
+               allDaq.aDaq[i].maxChannels, daqDeviceGetMacroVersion( &allDaq.aDaq[i] ),
+               daqDeviceGetMaxChannels( &allDaq.aDaq[i] )
+             );
    }
 
    mprintf( "\nTotal-number of channels: %d\n", daqGetNumberOfAllFoundChannels( &allDaq ) );
-
+#endif
 }
 
 /*================================== EOF ====================================*/
