@@ -100,6 +100,10 @@ int daqFindAndInitializeAll( DAQ_ALL_T* pAllDAQ, const void* pScuBusBase )
          DBPRINT2( "DBG: DAQ in slot %d has no input channels - skipping\n", slot );
          continue;
       }
+#ifdef CONFIG_DAQ_PEDANTIC_CHECK
+      LM32_ASSERT( pAllDAQ->aDaq[pAllDAQ->foundDevices].maxChannels ==
+         daqDeviceGetMaxChannels( &pAllDAQ->aDaq[pAllDAQ->foundDevices] ) );
+#endif
       pAllDAQ->foundDevices++; // At least one channel was found.
 #if DAQ_MAX < MAX_SCU_SLAVES
       if( pAllDAQ->foundDevices == ARRAY_SIZE( pAllDAQ->aDaq ) )
