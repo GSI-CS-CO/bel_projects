@@ -39,7 +39,7 @@ inline static int daqFindChannels( DAQ_DEVICE_T* pDaqDev, int slot )
    LM32_ASSERT( pDaqDev != NULL );
    LM32_ASSERT( pDaqDev->pReg != NULL );
 
-   for( int channel = 0; channel < DAQ_MAX_CHANNELS; channel++ )
+   for( int channel = 0; channel < ARRAY_SIZE(pDaqDev->aChannel); channel++ )
    {
       DBPRINT2( "DBG: Slot: %02d, Channel: %02d, ctrlReg: 0x%04x\n",
                 slot, channel, daqChannelGetReg( pDaqDev->pReg, CtrlReg, channel ));
