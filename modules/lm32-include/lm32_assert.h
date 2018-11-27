@@ -32,7 +32,8 @@
 extern "C" {
 #endif
 
-#ifdef NDEBUG           /* required by ANSI standard */
+#if defined( NDEBUG ) || defined( CONFIG_NO_LM32_ASSERT )
+  /* required by ANSI standard */
 # define LM32_ASSERT(__e) ((void)0)
 #else
 # define LM32_ASSERT(__e) ((__e) ? (void)0 : __lm32_assert_func (__FILE__, __LINE__, \
@@ -61,16 +62,18 @@ extern "C" {
 #define __ESC_RED    "\e[31m"
 #define __ESC_NORMAL "\e[0m"
 
+#define __STATIC_LOCAL __attribute__((section(".BSS"))) static
+
 static inline void __lm32_assert_func( const char* fileName,
                                        int lineNumber,
                                        const char* functionName,
                                        const char* conditionStr )
 {
-   mprintf( __ESC_BOLD __ESC_RED
+   __STATIC_LOCAL char* assertMsg =
+            __ESC_BOLD __ESC_RED
             "Assertion failed in file: \"%s\" line: %d function: \"%s\" condition: \"%s\"\n"
-            "System stopped!\n"
-            __ESC_NORMAL,
-            fileName, lineNumber, functionName, conditionStr );
+            "System stopped!\n" __ESC_NORMAL;
+   mprintf( assertMsg, fileName, lineNumber, functionName, conditionStr );
    while( 1 );
 }
 
