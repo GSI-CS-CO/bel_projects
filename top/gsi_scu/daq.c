@@ -68,16 +68,16 @@ inline static int daqFindChannels( DAQ_DEVICE_T* pDaqDev, int slot )
 /*! ----------------------------------------------------------------------------
  * @see daq.h
  */
-int daqFindAndInitializeAll( DAQ_ALL_T* pAllDAQ, const void* pScuBusBase )
+int daqBusFindAndInitializeAll( DAQ_BUS_T* pThis, const void* pScuBusBase )
 {
    SCUBUS_SLAVE_FLAGS_T daqPersentFlags;
 
    // Paranoia...
    LM32_ASSERT( pScuBusBase != (void*)ERROR_NOT_FOUND );
-   LM32_ASSERT( pAllDAQ != NULL );
+   LM32_ASSERT( pThis != NULL );
 
    // Pre-initializing
-   memset( pAllDAQ, 0, sizeof( DAQ_ALL_T ));
+   memset( pThis, 0, sizeof( DAQ_BUS_T ));
 
    daqPersentFlags = scuBusFindSpecificSlaves( pScuBusBase, 0x37, 0x26 );
    if( daqPersentFlags == 0 )
@@ -91,37 +91,37 @@ int daqFindAndInitializeAll( DAQ_ALL_T* pAllDAQ, const void* pScuBusBase )
       if( !scuBusIsSlavePresent( daqPersentFlags, slot ) )
          continue;
 
-      pAllDAQ->aDaq[pAllDAQ->foundDevices].pReg =
+      pThis->aDaq[pThis->foundDevices].pReg =
           getAbsScuBusSlaveAddr( pScuBusBase, slot ) + DAQ_REGISTER_OFFSET;
       DBPRINT2( "DBG: DAQ found in slot: %02d, address: 0x%08x\n", slot,
-                pAllDAQ->aDaq[pAllDAQ->foundDevices].pReg );
-      if( daqFindChannels( &pAllDAQ->aDaq[pAllDAQ->foundDevices], slot ) == 0 )
+                pThis->aDaq[pThis->foundDevices].pReg );
+      if( daqFindChannels( &pThis->aDaq[pThis->foundDevices], slot ) == 0 )
       {
          DBPRINT2( "DBG: DAQ in slot %d has no input channels - skipping\n", slot );
          continue;
       }
 #ifdef CONFIG_DAQ_PEDANTIC_CHECK
-      LM32_ASSERT( pAllDAQ->aDaq[pAllDAQ->foundDevices].maxChannels ==
-         daqDeviceGetMaxChannels( &pAllDAQ->aDaq[pAllDAQ->foundDevices] ) );
+      LM32_ASSERT( pThis->aDaq[pThis->foundDevices].maxChannels ==
+         daqDeviceGetMaxChannels( &pThis->aDaq[pThis->foundDevices] ) );
 #endif
-      pAllDAQ->foundDevices++; // At least one channel was found.
+      pThis->foundDevices++; // At least one channel was found.
 #if DAQ_MAX < MAX_SCU_SLAVES
-      if( pAllDAQ->foundDevices == ARRAY_SIZE( pAllDAQ->aDaq ) )
+      if( pThis->foundDevices == ARRAY_SIZE( pThis->aDaq ) )
          break;
 #endif
    }
 
-   return pAllDAQ->foundDevices;
+   return pThis->foundDevices;
 }
 
 /*! ---------------------------------------------------------------------------
  * @see daq.h
  */
-int daqGetNumberOfAllFoundChannels( DAQ_ALL_T* pAllDAQ )
+int daqBusGetNumberOfAllFoundChannels( DAQ_BUS_T* pThis )
 {
    int ret = 0;
-   for( int i = 0; i < pAllDAQ->foundDevices; i++ )
-      ret += pAllDAQ->aDaq[i].maxChannels;
+   for( int i = 0; i < pThis->foundDevices; i++ )
+      ret += pThis->aDaq[i].maxChannels;
    return ret;
 }
 

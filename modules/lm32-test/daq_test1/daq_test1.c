@@ -31,7 +31,7 @@ IMPLEMENT_CONVERT_BYTE_ENDIAN( uint32_t )
 
 void main( void )
 {
-   DAQ_ALL_T allDaq;
+   DAQ_BUS_T allDaq;
 
    discoverPeriphery();
    uart_init_hw();
@@ -45,24 +45,26 @@ void main( void )
 
    mprintf( "SCU_IRQ_CTRL: 0x%08x\n",  find_device_adr(GSI, SCU_IRQ_CTRL) );
 
-   if( daqFindAndInitializeAll( &allDaq, find_device_adr(GSI, SCU_BUS_MASTER) ) <= 0 )
+   if( daqBusFindAndInitializeAll( &allDaq, find_device_adr(GSI, SCU_BUS_MASTER) ) <= 0 )
    {
       mprintf( "Nothing found!\n" );
       return;
    }
 
-   mprintf( "%d DAQ found\n", allDaq.foundDevices );
+   mprintf( "%d DAQ found\n", daqBusGetFoundDevices( &allDaq ) );
 #if 1
-   for( int i = 0; i < allDaq.foundDevices; i++ )
+   for( int i = 0; i < daqBusGetFoundDevices( &allDaq ); i++ )
    {
-      mprintf( "DAQ in slot: %02d, DAQ macro start address: 0x%08x, channels %d version: %x channels: %d\n",
-               daqDeviceGetSlot( &allDaq.aDaq[i] ), allDaq.aDaq[i].pReg,
-               allDaq.aDaq[i].maxChannels, daqDeviceGetMacroVersion( &allDaq.aDaq[i] ),
-               daqDeviceGetMaxChannels( &allDaq.aDaq[i] )
+      DAQ_DEVICE_T* pDaqDev = daqBusGetDeviceObject( &allDaq, i );
+      mprintf( "DAQ in slot: %02d, DAQ macro start address: 0x%08x, channels %d version: %x\n",
+               daqDeviceGetSlot( pDaqDev ),
+               pDaqDev->pReg,
+               daqDeviceGetMaxChannels( pDaqDev ),
+               daqDeviceGetMacroVersion( pDaqDev )
              );
    }
 
-   mprintf( "\nTotal-number of channels: %d\n", daqGetNumberOfAllFoundChannels( &allDaq ) );
+   mprintf( "\nTotal-number of channels: %d\n", daqBusGetNumberOfAllFoundChannels( &allDaq ) );
 #endif
 }
 

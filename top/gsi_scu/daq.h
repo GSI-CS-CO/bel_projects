@@ -192,32 +192,8 @@ typedef struct
 {
    unsigned int foundDevices;  //!< @brief Number of found DAQs
    DAQ_DEVICE_T aDaq[DAQ_MAX]; //!< @brief Array of all possible existing DAQs
-} DAQ_ALL_T;
+} DAQ_BUS_T;
 
-
-/*! ------------------------------------------------------------------------
- * @brief Preinitialized the DAQ_ALL_T by zero and try to find all
- *        existing DAQs connected to SCU-bus.
- *
- * For each found DAQ the a element of DAQ_ALL_T::DAQ_DEVICE_T becomes initialized.
- *
- * @param pAllDAQ Pointer object of DAQ_ALL_T including a list of all DAQ.
- * @param pScuBusBase Base address of SCU bus.
- *                    Obtained by find_device_adr(GSI, SCU_BUS_MASTER);
- * @retval -1 Error occurred.
- * @retval  0 No DAQ found.
- * @retval >0 Number of connected DAQ in SCU-bus.
- */
-int daqFindAndInitializeAll( DAQ_ALL_T* pAllDAQ, const void* pScuBusBase );
-
-/*! ---------------------------------------------------------------------------
- * @brief Returns the total number of DAQ input channels from all DAQ-slaves
- *        of the whole SCU-bus.
- * @param pAllDAQ Pointer object of DAQ_ALL_T including a list of all DAQ.
- * @note Function daqFindAndInitializeAll has to be invoked before!
- *
- */
-int daqGetNumberOfAllFoundChannels( DAQ_ALL_T* pAllDAQ );
 
 /*! --------------------------------------------------------------------------
  * @brief Writes the given value in addressed register
@@ -286,6 +262,7 @@ static inline DAQ_REGISTER_T* volatile daqChannelGetRegPtr( DAQ_CANNEL_T* pThis 
  * @param pThis Pointer to the channel object
  * @return Pointer to control register bit field structure.
  */
+ALWAYS_INLINE
 static inline DAQ_CTRL_REG_T* daqChannelGetCtrlRegPtr( DAQ_CANNEL_T* pThis )
 {
    return (DAQ_CTRL_REG_T*) &__DAQ_GET_REG( CtrlReg );
@@ -297,9 +274,21 @@ static inline DAQ_CTRL_REG_T* daqChannelGetCtrlRegPtr( DAQ_CANNEL_T* pThis )
  * @param pThis Pointer to the channel object
  * @return Slot number of the DAQ device where belonging this channel
  */
+ALWAYS_INLINE
 static inline int daqChannelGetSlot( DAQ_CANNEL_T* pThis )
 {
    return daqChannelGetCtrlRegPtr( pThis )->slot;
+}
+
+/*! ---------------------------------------------------------------------------
+ * @brief Get the channel number in a range of 0 to 15 of this channel object.
+ * @param pThis Pointer to the channel object.
+ * @return Channel number.
+ */
+ALWAYS_INLINE
+static inline int daqChannelGetNumber( const DAQ_CANNEL_T* pThis )
+{
+   return pThis->n;
 }
 
 /*! ---------------------------------------------------------------------------
@@ -654,6 +643,12 @@ static inline uint16_t volatile * daqChannelGetPmDatPtr( DAQ_CANNEL_T* pThis )
    return &__DAQ_GET_REG( PM_DAT );
 }
 
+ALWAYS_INLINE
+static inline uint16_t daqChannelPopPmFifo( DAQ_CANNEL_T* pThis )
+{
+   return *daqChannelGetPmDatPtr( pThis );
+}
+
 /*! --------------------------------------------------------------------------
  * @brief Get the pointer to the data of the DAQ FiFo.
  * @see daqChannelGetRegPtr
@@ -662,6 +657,12 @@ static inline uint16_t volatile * daqChannelGetPmDatPtr( DAQ_CANNEL_T* pThis )
 static inline uint16_t volatile * daqChannelGetDaqDatPtr( DAQ_CANNEL_T* pThis )
 {  //TODO ?
    return &__DAQ_GET_REG( DAQ_DAT );
+}
+
+ALWAYS_INLINE
+static inline uint16_t daqChannelPopDaqFifo( DAQ_CANNEL_T* pThis )
+{
+   return *daqChannelGetDaqDatPtr( pThis );
 }
 
 /*! ---------------------------------------------------------------------------
@@ -755,7 +756,69 @@ static inline unsigned int daqDeviceGetMaxChannels( DAQ_DEVICE_T* pThis )
    return daqChannelGetMaxCannels( &pThis->aChannel[0] );
 }
 
+/*! ---------------------------------------------------------------------------
+ * @brief Gets the pointer to the device object remaining to the given number.
+ * @param pThis Pointer to the DAQ-device objects
+ * @param n Channel number in a range of 0 to max found channels minus one.
+ * @see daqDeviceGetMaxChannels
+ */
+static inline DAQ_CANNEL_T* daqDeviceGetChannelObject( DAQ_DEVICE_T* pThis, const unsigned int n )
+{
+   LM32_ASSERT( n < ARRAY_SIZE(pThis->aChannel) );
+   LM32_ASSERT( n < pThis->maxChannels );
+   return &pThis->aChannel[n];
+}
 
+/*============================ DAQ Bus Functions ============================*/
+/*! ------------------------------------------------------------------------
+ * @brief Preinitialized the DAQ_BUS_T by zero and try to find all
+ *        existing DAQs connected to SCU-bus.
+ *
+ * For each found DAQ the a element of DAQ_BUS_T::DAQ_DEVICE_T becomes initialized.
+ *
+ * @param pAllDAQ Pointer object of DAQ_BUS_T including a list of all DAQ.
+ * @param pScuBusBase Base address of SCU bus.
+ *                    Obtained by find_device_adr(GSI, SCU_BUS_MASTER);
+ * @retval -1 Error occurred.
+ * @retval  0 No DAQ found.
+ * @retval >0 Number of connected DAQ in SCU-bus.
+ */
+int daqBusFindAndInitializeAll( DAQ_BUS_T* pAllDAQ, const void* pScuBusBase );
+
+/*! ---------------------------------------------------------------------------
+ * @brief Returns the total number of DAQ input channels from all DAQ-slaves
+ *        of the whole SCU-bus.
+ * @param pAllDAQ Pointer object of DAQ_BUS_T including a list of all DAQ.
+ * @note Function daqBusFindAndInitializeAll has to be invoked before!
+ *
+ */
+int daqBusGetNumberOfAllFoundChannels( DAQ_BUS_T* pAllDAQ );
+
+/*! ---------------------------------------------------------------------------
+ * @brief Gets the number of found DAQ devices.
+ * @param pThis Pointer to the DAQ bus object.
+ * @return Number of found DAQ - devices
+ */
+ALWAYS_INLINE
+static inline unsigned int daqBusGetFoundDevices( const DAQ_BUS_T* pThis )
+{
+   return pThis->foundDevices;
+}
+
+/*! ---------------------------------------------------------------------------
+ * @brief Gets the pointer to a device object by its device number.
+ * @note Do not confuse the device number with the slot number!
+ * @param pThis Pointer to the DAQ bus object.
+ * @param n Device number in the range of 0 to number of found devices minus one.
+ * @see daqBusGetFoundDevices
+ * @return Pointer of type DAQ_DEVICE_T
+ */
+static inline DAQ_DEVICE_T* daqBusGetDeviceObject( DAQ_BUS_T* pThis, const unsigned int n )
+{
+   LM32_ASSERT( n < ARRAY_SIZE(pThis->aDaq) );
+   LM32_ASSERT( n < pThis->foundDevices );
+   return &pThis->aDaq[n];
+}
 
 #ifdef __cplusplus
 }
