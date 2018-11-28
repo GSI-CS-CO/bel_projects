@@ -91,6 +91,19 @@
 #define DEPRECATED __attribute__((deprecated))
 
 /*!
+ * @brief Declares a function as always inline.
+ *
+ * Generally, functions are not inlined unless optimization is specified. \n
+ * For functions declared inline, this attribute inlines the function independent
+ * of any restrictions that otherwise apply to inlining. \n
+ * Failure to inline such a function is diagnosed as an error. \n
+ * @Note that if such a function is called indirectly the compiler
+ * may or may not inline it depending on optimization level and a failure
+ * to inline an indirect call may or may not be diagnosed.
+ */
+#define ALWAYS_INLINE __attribute__((always_inline))
+
+/*!
  * @brief Patch of a bug in initializing local static variables by zero if
  *        the code will compiled for the LM32 processor.
  * @note Use for the definition of local static variables this macro rather than "static".
