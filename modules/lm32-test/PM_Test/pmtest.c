@@ -30,13 +30,8 @@
 
 DAQ_BUS_T g_allDaq;
 
-void getDaqChannelInfo( DAQ_CANNEL_T* pThis )
-{
-   mprintf( "Slot: %d, Channel %d, Address: 0x%08x\n",
-            daqChannelGetSlot( pThis ),
-            daqChannelGetNumber( pThis ),
-            daqChannelGetRegPtr( pThis ) );
-}
+#define CHANNEL 2
+#define DEVICE  0
 
 void main( void )
 {
@@ -46,6 +41,7 @@ void main( void )
    gotoxy( 0, 0 );
    clrscr();
    mprintf( "Post Mortem Fifo test\n");
+#if 1
    if( daqBusFindAndInitializeAll( &g_allDaq, find_device_adr(GSI, SCU_BUS_MASTER) ) <= 0 )
    {
       mprintf( "No usable DAQ found!\n" );
@@ -53,9 +49,26 @@ void main( void )
    }
    mprintf( "%d DAQ found\n", daqBusGetFoundDevices( &g_allDaq ) );
 
-   DAQ_CANNEL_T* pChannel = daqDeviceGetChannelObject( daqBusGetDeviceObject( &g_allDaq, 0 ), 0 );
+   int i;
+   for( i = 1; i <= MAX_SCU_SLAVES; i++ )
+   {
+      if( daqBusGetDeviceBySlotNumber( &g_allDaq, i ) != NULL )
+         mprintf( "DAQ found in slot %d\n", i );
+   }
 
-   getDaqChannelInfo( pChannel );
+   i = 0;
+   while( true )
+   {
+      DAQ_CANNEL_T* pChannel = daqBusGetChannelObjectByAbsoluteNumber( &g_allDaq, i );
+      if( pChannel == NULL )
+         break;
+      mprintf( "Channel %d, address 0x%08x, slot %d\n", i, pChannel, daqChannelGetSlot( pChannel ) );
+      i++;
+   }
+
+   DAQ_CANNEL_T* pChannel = daqDeviceGetChannelObject( daqBusGetDeviceObject( &g_allDaq, DEVICE ), CHANNEL );
+
+   daqChannelPrintInfo( pChannel );
    uint16_t volatile* ptr = daqChannelGetPmDatPtr( pChannel );
    for( int i = 0; i < 10; i++ )
    {
@@ -64,7 +77,7 @@ void main( void )
                                   //daqChannelPopPmFifo( pChannel ),
                                   daqChannelGetPmFifoWords( pChannel ) );
    }
-
+#endif
 }
 
 /*================================== EOF ====================================*/

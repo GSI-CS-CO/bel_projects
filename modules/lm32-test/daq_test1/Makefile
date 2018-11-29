@@ -30,7 +30,7 @@ VERSION         = 0.0.1
 SCU_SRC = $(PATHFW)/../../../top/gsi_scu
 
 PATHFW 	= .
-CFLAGS 	= -I$(PATHFW) -I$(SCU_SRC) -DDEBUGLEVEL=1
+CFLAGS 	= -I$(PATHFW) -I$(SCU_SRC) -DDEBUGLEVEL=2 -DCONFIG_DAQ_PEDANTIC_CHECK -DCONFIG_DAQ_DEBUG
 
 
 include ../../../syn/build.mk

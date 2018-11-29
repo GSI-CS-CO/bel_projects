@@ -26,6 +26,77 @@
 #include "mini_sdb.h" // necessary for ERROR_NOT_FOUND
 #include "dbg.h"
 #include "daq.h"
+#ifdef CONFIG_DAQ_DEBUG
+ #include "mprintf.h"
+#endif
+
+#if defined( CONFIG_DAQ_DEBUG ) || defined(__DOXYGEN__)
+/*! ---------------------------------------------------------------------------
+ * @see daq.h
+ */
+void daqChannelPrintInfo( register DAQ_CANNEL_T* pThis )
+{
+   const char* pYes = "yes";
+   const char* pNo  = "no";
+   mprintf( "Address: 0x%08x, Slot: %d, Channel %d\n",
+            daqChannelGetRegPtr( pThis ),
+            daqChannelGetSlot( pThis ),
+            daqChannelGetNumber( pThis )
+          );
+   const uint16_t ctrlReg = *(uint16_t*)daqChannelGetCtrlRegPtr( pThis );
+   mprintf( "  CtrlReg: &0x%08x *0x%04x *0b",
+            daqChannelGetCtrlRegPtr( pThis ), ctrlReg );
+
+   for( uint16_t i = 1 << (sizeof(uint16_t) * 8 - 1); i != 0; i >>= 1 )
+      mprintf( "%c", (ctrlReg & i)? '1' : '0' );
+
+   mprintf( "\n    Ena_PM:                %s\n",
+            daqChannelIsPostMortemActive( pThis )? pYes : pNo );
+   mprintf( "    Sample10us:            %s\n",
+            daqChannelIsSample10usActive( pThis )? pYes : pNo );
+   mprintf( "    Sample100us:           %s\n",
+            daqChannelIsSample100usActive( pThis )? pYes : pNo );
+   mprintf( "    Sample1ms:             %s\n",
+            daqChannelIsSample1msActive( pThis )? pYes : pNo );
+   mprintf( "    Ena_TrigMod:           %s\n",
+            daqChannelIsTriggerModeEnabled( pThis )? pYes : pNo );
+   mprintf( "    ExtTrig_nEvTrig:       %s\n",
+            daqChannelGetTriggerSource( pThis )?  pYes : pNo );
+   mprintf( "    Ena_HiRes:             %s\n",
+            daqChannelIsHighResolutionEnabled( pThis )? pYes : pNo );
+   mprintf( "    ExtTrig_nEvTrig_HiRes: %s\n",
+            daqChannelGetTriggerSourceHighRes( pThis )? pYes : pNo );
+   mprintf( "  Trig_LW:  &0x%08x *0x%04x\n",
+            &__DAQ_GET_REG( TRIG_LW ), daqChannelGetTriggerConditionLW( pThis ) );
+   mprintf( "  Trig_HW:  &0x%08x *0x%04x\n",
+            &__DAQ_GET_REG( TRIG_HW ), daqChannelGetTriggerConditionHW( pThis ) );
+   mprintf( "  Trig_Dly: &0x%08x *0x%04x\n",
+            &__DAQ_GET_REG( TRIG_DLY ), daqChannelGetTriggerDelay( pThis ) );
+}
+
+/*! ---------------------------------------------------------------------------
+ * @see daq.h
+ */
+void daqDevicePrintInfo( register DAQ_DEVICE_T* pThis )
+{
+   mprintf( "Macro version: %d\n", daqDeviceGetMacroVersion( pThis ) );
+   unsigned int maxChannels = daqDeviceGetMaxChannels( pThis );
+   for( unsigned int i = 0; i < maxChannels; i++ )
+      daqChannelPrintInfo( daqDeviceGetChannelObject( pThis, i ));
+}
+
+/*! ---------------------------------------------------------------------------
+ * @see daq.h
+ */
+void daqBusPrintInfo( register DAQ_BUS_T* pThis )
+{
+   unsigned int maxDevices = daqBusGetFoundDevices( pThis );
+   for( unsigned int i = 0; i < maxDevices; i++ )
+      daqDevicePrintInfo( daqBusGetDeviceObject( pThis, i ) );
+}
+
+#endif /* defined( CONFIG_DAQ_DEBUG ) || defined(__DOXYGEN__) */
+
 
 /*! ----------------------------------------------------------------------------
  * @brief Scans all potential existing input-channels of the given
@@ -68,7 +139,7 @@ inline static int daqFindChannels( DAQ_DEVICE_T* pDaqDev, int slot )
 /*! ----------------------------------------------------------------------------
  * @see daq.h
  */
-int daqBusFindAndInitializeAll( DAQ_BUS_T* pThis, const void* pScuBusBase )
+int daqBusFindAndInitializeAll( register DAQ_BUS_T* pThis, const void* pScuBusBase )
 {
    SCUBUS_SLAVE_FLAGS_T daqPersentFlags;
 
@@ -117,12 +188,53 @@ int daqBusFindAndInitializeAll( DAQ_BUS_T* pThis, const void* pScuBusBase )
 /*! ---------------------------------------------------------------------------
  * @see daq.h
  */
-int daqBusGetNumberOfAllFoundChannels( DAQ_BUS_T* pThis )
+int daqBusGetNumberOfAllFoundChannels( register DAQ_BUS_T* pThis )
 {
    int ret = 0;
    for( int i = 0; i < pThis->foundDevices; i++ )
       ret += pThis->aDaq[i].maxChannels;
    return ret;
 }
+
+/*! ---------------------------------------------------------------------------
+ * @see daq.h
+ */
+DAQ_DEVICE_T* daqBusGetDeviceBySlotNumber( register DAQ_BUS_T* pThis,
+                                           unsigned int slot )
+{
+   for( unsigned int i = 0; i < pThis->foundDevices; i++ )
+   {
+      DAQ_DEVICE_T* pDevice = daqBusGetDeviceObject( pThis, i );
+      if( slot == daqDeviceGetSlot( pDevice ) )
+         return pDevice;
+   }
+   return NULL;
+}
+
+/*! ---------------------------------------------------------------------------
+ * @see daq.h
+ */
+DAQ_CANNEL_T* daqBusGetChannelObjectByAbsoluteNumber( register DAQ_BUS_T* pThis,
+                                                      const unsigned int n )
+{
+   unsigned int deviceCounter;
+   unsigned int relativeChannelCounter;
+   unsigned int absoluteChannelCounter = 0;
+
+   for( deviceCounter = 0; deviceCounter < daqBusGetFoundDevices(pThis); deviceCounter++ )
+   {
+      DAQ_DEVICE_T* pDevice = daqBusGetDeviceObject( pThis, deviceCounter );
+      for( relativeChannelCounter = 0;
+           relativeChannelCounter < daqDeviceGetMaxChannels( pDevice );
+           relativeChannelCounter++ )
+      {
+         if( absoluteChannelCounter == n )
+            return daqDeviceGetChannelObject( pDevice, relativeChannelCounter );
+         absoluteChannelCounter++;
+      }
+   }
+   return NULL;
+}
+
 
 /*================================== EOF ====================================*/

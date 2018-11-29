@@ -29,6 +29,10 @@
 
 IMPLEMENT_CONVERT_BYTE_ENDIAN( uint32_t )
 
+#ifndef CONFIG_DAQ_DEBUG
+   #error CONFIG_DAQ_DEBUG has to be defined for this program!
+#endif
+
 void main( void )
 {
    DAQ_BUS_T allDaq;
@@ -52,20 +56,7 @@ void main( void )
    }
 
    mprintf( "%d DAQ found\n", daqBusGetFoundDevices( &allDaq ) );
-#if 1
-   for( int i = 0; i < daqBusGetFoundDevices( &allDaq ); i++ )
-   {
-      DAQ_DEVICE_T* pDaqDev = daqBusGetDeviceObject( &allDaq, i );
-      mprintf( "DAQ in slot: %02d, DAQ macro start address: 0x%08x, channels %d version: %x\n",
-               daqDeviceGetSlot( pDaqDev ),
-               pDaqDev->pReg,
-               daqDeviceGetMaxChannels( pDaqDev ),
-               daqDeviceGetMacroVersion( pDaqDev )
-             );
-   }
-
-   mprintf( "\nTotal-number of channels: %d\n", daqBusGetNumberOfAllFoundChannels( &allDaq ) );
-#endif
+   daqBusPrintInfo( &allDaq );
 }
 
 /*================================== EOF ====================================*/
