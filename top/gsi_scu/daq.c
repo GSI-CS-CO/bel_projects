@@ -30,6 +30,40 @@
  #include "mprintf.h"
 #endif
 
+/*======================== DAQ channel functions ============================*/
+/*! ---------------------------------------------------------------------------
+ * @brief Writes the given value in addressed register
+ * @param pReg Start address of DAQ-macro.
+ * @param index Offset address of register @see
+ * @param channel Channel number.
+ * @param value Value for writing into register.
+ */
+static inline void daqChannelSetReg( DAQ_REGISTER_T* volatile pReg,
+                                     const DAQ_REGISTER_INDEX index,
+                                     const unsigned int channel,
+                                     const uint16_t value )
+{
+   LM32_ASSERT( channel < DAQ_MAX_CHANNELS );
+   LM32_ASSERT( (index & 0x0F) == 0x00 );
+   pReg->i[index | channel] = value;
+}
+
+/*! ---------------------------------------------------------------------------
+ * @brief Reads a value from a addressed register
+ * @param pReg Start address of DAQ-macro.
+ * @param index Offset address of register @see
+ * @param channel Channel number.
+ * @return Register value.
+ */
+static inline uint16_t daqChannelGetReg( DAQ_REGISTER_T* volatile pReg,
+                                         const DAQ_REGISTER_INDEX index,
+                                         const unsigned int channel )
+{
+   LM32_ASSERT( channel < DAQ_MAX_CHANNELS );
+   LM32_ASSERT( (index & 0x0F) == 0x00 );
+   return pReg->i[index | channel];
+}
+
 #if defined( CONFIG_DAQ_DEBUG ) || defined(__DOXYGEN__)
 /*! ---------------------------------------------------------------------------
  * @see daq.h
@@ -73,7 +107,28 @@ void daqChannelPrintInfo( register DAQ_CANNEL_T* pThis )
    mprintf( "  Trig_Dly: &0x%08x *0x%04x\n",
             &__DAQ_GET_REG( TRIG_DLY ), daqChannelGetTriggerDelay( pThis ) );
 }
+#endif /* defined( CONFIG_DAQ_DEBUG ) || defined(__DOXYGEN__) */
 
+/*======================== DAQ- Device Functions ============================*/
+
+/*! ---------------------------------------------------------------------------
+ * @see daq.h
+ */
+unsigned int daqDeviceGetUsedChannels( register DAQ_DEVICE_T* pThis )
+{
+   LM32_ASSERT( pThis != NULL );
+   unsigned int retVal = 0;
+
+   for( int i = daqDeviceGetMaxChannels( pThis )-1; i >= 0; i-- )
+   {
+      if( !daqDeviceGetChannelObject( pThis, i )->properties.notUsed )
+         retVal++;
+   }
+   LM32_ASSERT( retVal <= daqDeviceGetMaxChannels( pThis ) );
+   return retVal;
+}
+
+#if defined( CONFIG_DAQ_DEBUG ) || defined(__DOXYGEN__)
 /*! ---------------------------------------------------------------------------
  * @see daq.h
  */
@@ -84,28 +139,17 @@ void daqDevicePrintInfo( register DAQ_DEVICE_T* pThis )
    for( unsigned int i = 0; i < maxChannels; i++ )
       daqChannelPrintInfo( daqDeviceGetChannelObject( pThis, i ));
 }
-
-/*! ---------------------------------------------------------------------------
- * @see daq.h
- */
-void daqBusPrintInfo( register DAQ_BUS_T* pThis )
-{
-   unsigned int maxDevices = daqBusGetFoundDevices( pThis );
-   for( unsigned int i = 0; i < maxDevices; i++ )
-      daqDevicePrintInfo( daqBusGetDeviceObject( pThis, i ) );
-}
-
 #endif /* defined( CONFIG_DAQ_DEBUG ) || defined(__DOXYGEN__) */
 
-
-/*! ----------------------------------------------------------------------------
+/*============================ DAQ Bus Functions ============================*/
+/*! ---------------------------------------------------------------------------
  * @brief Scans all potential existing input-channels of the given
  *        DAQ-Device ant initialize each found channel with
  *        the slot number.
  * @param pDaqDev Start-address of DAQ-registers
  * @return Number of real existing channels
  */
-inline static int daqFindChannels( DAQ_DEVICE_T* pDaqDev, int slot )
+inline static int daqBusFindChannels( DAQ_DEVICE_T* pDaqDev, int slot )
 {
    LM32_ASSERT( pDaqDev != NULL );
    LM32_ASSERT( pDaqDev->pReg != NULL );
@@ -166,7 +210,7 @@ int daqBusFindAndInitializeAll( register DAQ_BUS_T* pThis, const void* pScuBusBa
           getAbsScuBusSlaveAddr( pScuBusBase, slot ) + DAQ_REGISTER_OFFSET;
       DBPRINT2( "DBG: DAQ found in slot: %02d, address: 0x%08x\n", slot,
                 pThis->aDaq[pThis->foundDevices].pReg );
-      if( daqFindChannels( &pThis->aDaq[pThis->foundDevices], slot ) == 0 )
+      if( daqBusFindChannels( &pThis->aDaq[pThis->foundDevices], slot ) == 0 )
       {
          DBPRINT2( "DBG: DAQ in slot %d has no input channels - skipping\n", slot );
          continue;
@@ -191,6 +235,7 @@ int daqBusFindAndInitializeAll( register DAQ_BUS_T* pThis, const void* pScuBusBa
 int daqBusGetNumberOfAllFoundChannels( register DAQ_BUS_T* pThis )
 {
    int ret = 0;
+   LM32_ASSERT( pThis->foundDevices <= ARRAY_SIZE(pThis->aDaq) );
    for( int i = 0; i < pThis->foundDevices; i++ )
       ret += pThis->aDaq[i].maxChannels;
    return ret;
@@ -236,5 +281,41 @@ DAQ_CANNEL_T* daqBusGetChannelObjectByAbsoluteNumber( register DAQ_BUS_T* pThis,
    return NULL;
 }
 
+/*! ---------------------------------------------------------------------------
+ * @see daq.h
+ */
+unsigned int daqBusGetUsedChannels( register DAQ_BUS_T* pThis )
+{
+   LM32_ASSERT( pThis != NULL );
+   unsigned int retVal = 0;
+
+   for( int i = daqBusGetFoundDevices( pThis )-1; i >= 0; i-- )
+   {
+      retVal += daqDeviceGetUsedChannels( daqBusGetDeviceObject( pThis, i ) );
+   }
+   return retVal;
+}
+
+/*! ---------------------------------------------------------------------------
+ * @see daq.h
+ */
+unsigned int daqBusDistributeMemory( register DAQ_BUS_T* pThis )
+{
+   //TODO!!!
+   return 0;
+}
+
+
+#if defined( CONFIG_DAQ_DEBUG ) || defined(__DOXYGEN__)
+/*! ---------------------------------------------------------------------------
+ * @see daq.h
+ */
+void daqBusPrintInfo( register DAQ_BUS_T* pThis )
+{
+   unsigned int maxDevices = daqBusGetFoundDevices( pThis );
+   for( unsigned int i = 0; i < maxDevices; i++ )
+      daqDevicePrintInfo( daqBusGetDeviceObject( pThis, i ) );
+}
+#endif /* defined( CONFIG_DAQ_DEBUG ) || defined(__DOXYGEN__) */
 
 /*================================== EOF ====================================*/

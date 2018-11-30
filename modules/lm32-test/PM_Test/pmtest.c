@@ -66,7 +66,13 @@ void main( void )
       i++;
    }
 
-   DAQ_CANNEL_T* pChannel = daqDeviceGetChannelObject( daqBusGetDeviceObject( &g_allDaq, DEVICE ), CHANNEL );
+   mprintf( "Total number of all used channels: %d\n", daqBusGetUsedChannels( &g_allDaq ) );
+
+   //DAQ_CANNEL_T* pChannel = daqDeviceGetChannelObject( daqBusGetDeviceObject( &g_allDaq, DEVICE ), CHANNEL );
+   DAQ_CANNEL_T* pChannel = daqBusGetChannelObjectByAbsoluteNumber( &g_allDaq, 1 );
+   pChannel->properties.notUsed = true;
+
+   mprintf( "Total number of all used channels: %d\n", daqBusGetUsedChannels( &g_allDaq ) );
 
    daqChannelPrintInfo( pChannel );
    uint16_t volatile* ptr = daqChannelGetPmDatPtr( pChannel );
