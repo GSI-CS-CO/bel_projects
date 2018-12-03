@@ -318,4 +318,33 @@ void daqBusPrintInfo( register DAQ_BUS_T* pThis )
 }
 #endif /* defined( CONFIG_DAQ_DEBUG ) || defined(__DOXYGEN__) */
 
+/*======================== DAQ- Descriptor functions ========================*/
+#if defined( CONFIG_DAQ_DEBUG ) || defined(__DOXYGEN__)
+/*! --------------------------------------------------------------------------
+ * @see daq_descriptor.h
+ * @see daq.h
+ */
+void daqDescriptorPrintInfo( register DAQ_DESCRIPTOR_T* pThis )
+{
+   //IMPLEMENT_CONVERT_BYTE_ENDIAN( uint32_t )
+   const char* pYes = "yes";
+   const char* pNo  = "no";
+
+   mprintf( "Slot:            %d\n", daqDescriptorGetSlot( pThis ) );
+   mprintf( "Channel:         %d\n", daqDescriptorGetChannel( pThis ) );
+   mprintf( "DIOB ID:         %d\n", daqDescriptorGetDiobId( pThis ) );
+   mprintf( "Post Mortem:     %s\n", daqDescriptorWasPM( pThis )? pYes : pNo );
+   mprintf( "High Resolution: %s\n", daqDescriptorWasHiRes( pThis )? pYes : pNo );
+   mprintf( "DAQ mode:        %s\n", daqDescriptorWasDaq( pThis )? pYes : pNo );
+   mprintf( "Trigger low:     0x%04x\n", daqDescriptorGetTriggerConditionLW( pThis ) );
+   mprintf( "Trigger high:    0x%04x\n", daqDescriptorGetTriggerConditionHW( pThis ) );
+   mprintf( "Trigger delay:   0x%04x\n", daqDescriptorGetTriggerDelay( pThis ) );
+   mprintf( "Timestamp:       %08u.%09u\n", daqDescriptorGetTimeStampSec( pThis ),
+                                            daqDescriptorGetTimeStampNanoSec( pThis ));
+   mprintf( "CRC:             0x%02x\n", daqDescriptorGetCRC( pThis ));
+}
+
+#endif // if defined( CONFIG_DAQ_DEBUG ) || defined(__DOXYGEN__)
+
+
 /*================================== EOF ====================================*/

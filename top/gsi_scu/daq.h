@@ -563,6 +563,7 @@ static inline bool daqChannelGetTriggerSourceHighRes( register DAQ_CANNEL_T* pTh
  * @brief Gets the least significant word of the bus tag event
  *        trigger condition.
  * @see daqChannelGetRegPtr
+ * @see daqDescriptorGetTriggerConditionLW in daq_descriptor.h
  * @param pThis Pointer to the channel object
  * @return least significant wort of bus tag event condition
  */
@@ -574,7 +575,7 @@ static inline uint16_t daqChannelGetTriggerConditionLW( register DAQ_CANNEL_T* p
 }
 
 /*! --------------------------------------------------------------------------
- * @brief sets the least significant word of the bus tag event
+ * @brief Sets the least significant word of the bus tag event
  *        trigger condition.
  * @see daqChannelGetRegPtr
  * @param pThis Pointer to the channel object
@@ -804,7 +805,7 @@ static inline unsigned int daqDeviceGetMaxChannels( register DAQ_DEVICE_T* pThis
  *
  * @see daqDeviceGetMaxChannels
  * @see DAQ_CHANNEL_BF_PROPERTY_T ::notUsed
- * @param pThis Pointer to the DAQ-device objects
+ * @param pThis Pointer to the DAQ-device objectsremainingWords
  * @return Number of used channels of this device.
  */
 unsigned int daqDeviceGetUsedChannels( register DAQ_DEVICE_T* pThis );
@@ -951,6 +952,21 @@ unsigned int daqBusDistributeMemory( register DAQ_BUS_T* pThis );
    void daqBusPrintInfo( register DAQ_BUS_T* pThis );
 #else
    #define daqBusPrintInfo( pThis ) (void)0
+#endif
+
+/*======================== DAQ- Descriptor functions ========================*/
+/*! --------------------------------------------------------------------------
+ * @brief Prints the information of the device descriptor.
+ * @note This function becomes implemented only if the compiler switch
+ *       CONFIG_DAQ_DEBUG has been defined!
+ * @param pThis Pointer to the DAQ- descriptor object, that means to the last
+ *              10 received words (type uint16_t) of the received record.
+ *              @see DAQ_DISCRIPTOR_WORD_SIZE
+ */
+#if defined( CONFIG_DAQ_DEBUG ) || defined(__DOXYGEN__)
+   void daqDescriptorPrintInfo( register DAQ_DESCRIPTOR_T* pThis );
+#else
+   #define daqDescriptorPrintInfo( pThis ) (void)0
 #endif
 
 #ifdef __cplusplus

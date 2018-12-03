@@ -23,6 +23,7 @@
  *  License along with this library. If not, see <http://www.gnu.org/licenses/>.
  *******************************************************************************
  */
+#include <string.h>
 #include "mini_sdb.h"
 #include "../../top/gsi_scu/daq.h"
 #include "eb_console_helper.h"
@@ -69,21 +70,54 @@ void main( void )
    mprintf( "Total number of all used channels: %d\n", daqBusGetUsedChannels( &g_allDaq ) );
 
    //DAQ_CANNEL_T* pChannel = daqDeviceGetChannelObject( daqBusGetDeviceObject( &g_allDaq, DEVICE ), CHANNEL );
-   DAQ_CANNEL_T* pChannel = daqBusGetChannelObjectByAbsoluteNumber( &g_allDaq, 1 );
-   pChannel->properties.notUsed = true;
+   DAQ_CANNEL_T* pChannel = daqBusGetChannelObjectByAbsoluteNumber( &g_allDaq, 5 );
+   //pChannel->properties.notUsed = true;
 
    mprintf( "Total number of all used channels: %d\n", daqBusGetUsedChannels( &g_allDaq ) );
 
+   daqChannelSetTriggerConditionLW( pChannel, 0xA );
+   daqChannelSetTriggerConditionHW( pChannel, 0xB );
+   daqChannelSetTriggerDelay( pChannel, 0xC );
+
+   daqChannelEnablePostMortem( pChannel );
+   while( daqChannelGetPmFifoWords( pChannel ) < 1023 );
+   daqChannelDisablePostMortem( pChannel );
    daqChannelPrintInfo( pChannel );
+
    uint16_t volatile* ptr = daqChannelGetPmDatPtr( pChannel );
-   for( int i = 0; i < 10; i++ )
+   DAQ_DESCRIPTOR_T descriptor;
+   memset( &descriptor, 0, sizeof( descriptor ) );
+   int j = 0;
+   volatile uint16_t remaining;
+   i = 0;
+   do
    {
-      mprintf( "%d: 0x%04x, %d\n", i,
-                                  *ptr,
-                                  //daqChannelPopPmFifo( pChannel ),
-                                  daqChannelGetPmFifoWords( pChannel ) );
-   }
+      remaining = daqChannelGetPmFifoWords( pChannel );
+      volatile uint16_t data = *ptr;
+#if 1
+      mprintf( "%d: 0x%04x, %d\n", i, data, remaining );
 #endif
+      if( remaining < ARRAY_SIZE( descriptor.index ) )
+      {
+         LM32_ASSERT( j < ARRAY_SIZE( descriptor.index ) );
+         descriptor.index[j++] = data;
+      }
+      i++;
+   }
+   while( remaining != 0 );
+
+   for( j = 0; j < ARRAY_SIZE( descriptor.index ); j++ )
+      mprintf( "Descriptor %d: 0x%04x\n", j, descriptor.index[j] );
+
+   daqDescriptorPrintInfo( &descriptor );
+
+   LM32_ASSERT( daqDescriptorGetSlot( &descriptor ) == daqChannelGetSlot( pChannel ) );
+   LM32_ASSERT( daqDescriptorGetChannel( &descriptor ) == daqChannelGetNumber( pChannel ) );
+   LM32_ASSERT( daqDescriptorGetTriggerConditionLW( &descriptor ) == daqChannelGetTriggerConditionLW( pChannel ) );
+   LM32_ASSERT( daqDescriptorGetTriggerConditionHW( &descriptor ) == daqChannelGetTriggerConditionHW( pChannel ) );
+   LM32_ASSERT( daqDescriptorGetTriggerDelay( &descriptor ) == daqChannelGetTriggerDelay( pChannel ) );
+#endif
+   mprintf( "\nEnd...\n" );
 }
 
 /*================================== EOF ====================================*/
