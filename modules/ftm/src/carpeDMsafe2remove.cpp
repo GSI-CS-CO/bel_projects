@@ -233,8 +233,8 @@ bool CarpeDM::isSafeToRemove(std::set<std::string> patterns, std::string& report
       //find covname in ctAux and copy found entry to ct watchlist
       auto x = ctAux.lookup(covName);
       if (!ctAux.isOk(x)) { throw std::runtime_error(isSafeToRemove::exIntro + ": Lookup of <" + covName + "> in covenantAuxTable failed\n");}
-      if (!ct.insert(x))  { throw std::runtime_error(isSafeToRemove::exIntro + ": Insertion of <" + covName + "> in covenantTable failed\n");} ;
-
+      ct.insert(x);
+      //double check if item exists
       auto y = ct.lookup(covName);
       if (!ct.isOk(y)) { throw std::runtime_error(isSafeToRemove::exIntro + ": Lookup of <" + covName + "> in covenantTable failed\n");}
 
