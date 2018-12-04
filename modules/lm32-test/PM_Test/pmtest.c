@@ -70,10 +70,13 @@ void main( void )
    mprintf( "Total number of all used channels: %d\n", daqBusGetUsedChannels( &g_allDaq ) );
 
    //DAQ_CANNEL_T* pChannel = daqDeviceGetChannelObject( daqBusGetDeviceObject( &g_allDaq, DEVICE ), CHANNEL );
-   DAQ_CANNEL_T* pChannel = daqBusGetChannelObjectByAbsoluteNumber( &g_allDaq, 5 );
+   DAQ_CANNEL_T* pChannel = daqBusGetChannelObjectByAbsoluteNumber( &g_allDaq, 0 );
    //pChannel->properties.notUsed = true;
 
    mprintf( "Total number of all used channels: %d\n", daqBusGetUsedChannels( &g_allDaq ) );
+
+   daqBusSetAllTimeStampCounters( &g_allDaq, 0L );
+   daqBusSetAllTimeStampCounterTags( &g_allDaq, 0 );
 
    daqChannelSetTriggerConditionLW( pChannel, 0xA );
    daqChannelSetTriggerConditionHW( pChannel, 0xB );
@@ -94,7 +97,7 @@ void main( void )
    {
       remaining = daqChannelGetPmFifoWords( pChannel );
       volatile uint16_t data = *ptr;
-#if 1
+#if 0
       mprintf( "%d: 0x%04x, %d\n", i, data, remaining );
 #endif
       if( remaining < ARRAY_SIZE( descriptor.index ) )
