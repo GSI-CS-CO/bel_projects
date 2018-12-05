@@ -224,7 +224,7 @@
    __FUNCTION_HEAD_CONVERT_BYTE_ENDIAN( TYP )           \
    __FUNCTION_BODY_CONVERT_BYTE_ENDIAN( TYP )
 
-#ifdef __cplusplus
+#if defined(__cplusplus ) || defined(__DOXYGEN__)
 /*!
  * @brief Template converts the given value from little to big endian
  *        and vice versa.
