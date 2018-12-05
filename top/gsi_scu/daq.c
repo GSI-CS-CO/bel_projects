@@ -64,6 +64,26 @@ static inline uint16_t daqChannelGetReg( DAQ_REGISTER_T* volatile pReg,
    return pReg->i[index | channel];
 }
 
+/*! ---------------------------------------------------------------------------
+ * @see daq.h
+ */
+void daqChannelReset( register DAQ_CANNEL_T* pThis )
+{
+   daqChannelSample10usOff( pThis );
+   daqChannelSample100usOff( pThis );
+   daqChannelSample1msOff( pThis );
+   daqChannelDisableTriggerMode( pThis );
+   daqChannelEnableEventTrigger( pThis );
+   daqChannelDisablePostMortem( pThis );
+   daqChannelDisableHighResolution( pThis );
+   daqChannelEnableEventTriggerHighRes( pThis );
+   daqChannelSetTriggerConditionLW( pThis, 0 );
+   daqChannelSetTriggerConditionHW( pThis, 0 );
+   daqChannelSetTriggerDelay( pThis, 0 );
+   daqChannelTestAndClearDaqIntPending( pThis );
+   daqChannelTestAndClearHiResIntPending( pThis );
+}
+
 #if defined( CONFIG_DAQ_DEBUG ) || defined(__DOXYGEN__)
 /*! ---------------------------------------------------------------------------
  * @see daq.h
@@ -160,6 +180,7 @@ uint64_t daqDeviceGetTimeStampCounter( register DAQ_DEVICE_T* pThis )
 }
 
 /*! ---------------------------------------------------------------------------
+ * @see daq.h
  */
 void daqDeviceSetTimeStampTag( register DAQ_DEVICE_T* pThis, uint32_t tsTag )
 {
@@ -173,6 +194,7 @@ void daqDeviceSetTimeStampTag( register DAQ_DEVICE_T* pThis, uint32_t tsTag )
 }
 
 /*! ---------------------------------------------------------------------------
+ * @see daq.h
  */
 uint32_t daqDeviceGetTimeStampTag( register DAQ_DEVICE_T* pThis )
 {
@@ -189,6 +211,22 @@ uint32_t daqDeviceGetTimeStampTag( register DAQ_DEVICE_T* pThis )
    return tsTag;
 }
 
+/*! ---------------------------------------------------------------------------
+ * @see daq.h
+ */
+void daqDeviceReset( register DAQ_DEVICE_T* pThis )
+{
+#ifdef CONFIG_DAQ_PEDANTIC_CHECK
+   LM32_ASSERT( pThis != NULL );
+   LM32_ASSERT( pThis->pReg != NULL );
+#endif
+
+   for( int i = daqDeviceGetMaxChannels( pThis )-1; i >= 0; i-- )
+      daqChannelReset( daqDeviceGetChannelObject( pThis, i ) );
+
+   daqDeviceSetTimeStampCounter( pThis, 0L );
+   daqDeviceSetTimeStampTag( pThis, 0 );
+}
 
 #if defined( CONFIG_DAQ_DEBUG ) || defined(__DOXYGEN__)
 /*! ---------------------------------------------------------------------------
@@ -293,6 +331,15 @@ int daqBusFindAndInitializeAll( register DAQ_BUS_T* pThis, const void* pScuBusBa
          break;
 #endif
    }
+
+   /*
+    * In the case of re-initializing respectively warm-start a
+    * reset for all DAQ devices becomes necessary.
+    * Because a new start of the software doesn't concern
+    * the hardware registers of the SCU bus slaves.
+    */
+   if( pThis->foundDevices > 0 )
+      daqBusReset( pThis );
 
    return pThis->foundDevices;
 }
@@ -410,6 +457,16 @@ unsigned int daqBusDistributeMemory( register DAQ_BUS_T* pThis )
    return 0;
 }
 
+/*! ---------------------------------------------------------------------------
+ * @see daq.h
+ */
+void daqBusReset( register DAQ_BUS_T* pThis )
+{
+   LM32_ASSERT( pThis != NULL );
+
+   for( int i = daqBusGetFoundDevices( pThis )-1; i >= 0; i-- )
+      daqDeviceReset( daqBusGetDeviceObject( pThis, i ) );
+}
 
 #if defined( CONFIG_DAQ_DEBUG ) || defined(__DOXYGEN__)
 /*! ---------------------------------------------------------------------------

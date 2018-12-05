@@ -42,14 +42,14 @@ void main( void )
    gotoxy( 0, 0 );
    clrscr();
    mprintf( "Post Mortem Fifo test\n");
-#if 1
+//#if 0
    if( daqBusFindAndInitializeAll( &g_allDaq, find_device_adr(GSI, SCU_BUS_MASTER) ) <= 0 )
    {
       mprintf( "No usable DAQ found!\n" );
       return;
    }
    mprintf( "%d DAQ found\n", daqBusGetFoundDevices( &g_allDaq ) );
-
+#if 1
    int i;
    for( i = 1; i <= MAX_SCU_SLAVES; i++ )
    {

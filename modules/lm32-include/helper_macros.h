@@ -258,10 +258,23 @@ template <typename TYP> TYP convertByteEndian( const TYP value )
 #ifdef TO_STRING
    #undef TO_STRING
 #endif
+/*!
+ * @brief helper macro for TO_STRING.
+ */
 #define TO_STRING_LITERAL( s ) # s
 
 /*!
  * @brief Converts a constant expression to a zero terminated ASCII string.
+ *
+ * E.g.: The expression:
+ * @code
+ * #define MY_NUMBER 42
+ * const char* str = "My number is " TO_STRING( MY_NUMBER ) "\n";
+ * @endcode
+ * builds following string during the compile time:
+ * @code
+ * const char* str = "My number is 42\n";
+ * @endcode
  * @param s Constant expression
  * @return Zero terminated ASCII string.
  */
