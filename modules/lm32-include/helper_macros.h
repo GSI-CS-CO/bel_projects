@@ -24,7 +24,23 @@
 #ifndef _HELPER_MACROS_H
 #define _HELPER_MACROS_H
 
-#include <stddef.h>
+#include <stddef.h> // Necessary for the macro "offsetof()"
+
+/*!
+ * @brief Macro represents the full version number of the compiler as integer
+ *        value.
+ *
+ * E.g.: If the compilers version - displayed by the command line option
+ *       gcc --version - 7.3.0 then this macro will generate the number 70300.
+ */
+#if defined(__GNUC__) || defined(__DOXYGEN__)
+ #define COMPILER_VERSION (__GNUC__ * 10000 \
+                         + __GNUC_MINOR__ * 100 \
+                         + __GNUC_PATCHLEVEL__)
+#else
+ #define COMPILER_VERSION 0
+ #warning "Unknown compiler therefore its not possible to determine the macro COMPILER_VERSION !"
+#endif
 
 /*!
  * @brief Macro will be substituted by the number of elements of the given array.
@@ -234,6 +250,23 @@ template <typename TYP> TYP convertByteEndian( const TYP value )
 #define CONTAINER_OF(ptr, type, member) ({                      \
         const typeof( ((type *)0)->member ) *__mptr = (ptr);    \
         (type *)( (char *)__mptr - offsetof(type,member) );})
+
+
+#ifdef TO_STRING_LITERAL
+   #undef TO_STRING_LITERAL
+#endif
+#ifdef TO_STRING
+   #undef TO_STRING
+#endif
+#define TO_STRING_LITERAL( s ) # s
+
+/*!
+ * @brief Converts a constant expression to a zero terminated ASCII string.
+ * @param s Constant expression
+ * @return Zero terminated ASCII string.
+ */
+#define TO_STRING( s ) TO_STRING_LITERAL( s )
+
 
 #endif // ifndef _HELPER_MACROS_H
 //================================== EOF ======================================
