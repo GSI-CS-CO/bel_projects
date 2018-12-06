@@ -27,8 +27,14 @@
 #include "dbg.h"
 #include "daq.h"
 #ifdef CONFIG_DAQ_DEBUG
- #include "mprintf.h"
+ #include "eb_console_helper.h" //!@brief Will used for debug purposes only.
 #endif
+
+#if defined( CONFIG_DAQ_DEBUG ) || defined(__DOXYGEN__)
+const char* g_pYes = ESC_FG_WHITE ESC_BOLD"yes"ESC_NORMAL; //!<@brief For debug purposes only
+const char* g_pNo  = "no";  //!<@brief For debug purposes only
+#endif
+
 
 /*======================== DAQ channel functions ============================*/
 /*! ---------------------------------------------------------------------------
@@ -80,6 +86,21 @@ void daqChannelReset( register DAQ_CANNEL_T* pThis )
    daqChannelSetTriggerConditionLW( pThis, 0 );
    daqChannelSetTriggerConditionHW( pThis, 0 );
    daqChannelSetTriggerDelay( pThis, 0 );
+
+   unsigned int i;
+   volatile uint16_t dummy;
+   /*
+    * Making the PM_HiRes Fifo empty and discard the content
+    */
+   for( i = 0; i < DAQ_FIFO_PM_HIRES_WORD_SIZE; i++ )
+      dummy = daqChannelPopPmFifo( pThis );
+
+   /*
+    * Making the DAQ Fifo empty and discard the content
+    */
+   for( i = 0; i < DAQ_FIFO_DAQ_WORD_SIZE; i++ )
+      dummy = daqChannelPopDaqFifo( pThis );
+
    daqChannelTestAndClearDaqIntPending( pThis );
    daqChannelTestAndClearHiResIntPending( pThis );
 }
@@ -90,12 +111,12 @@ void daqChannelReset( register DAQ_CANNEL_T* pThis )
  */
 void daqChannelPrintInfo( register DAQ_CANNEL_T* pThis )
 {
-   const char* pYes = "yes";
-   const char* pNo  = "no";
-   mprintf( "Address: 0x%08x, Slot: %d, Channel %d\n",
-            daqChannelGetRegPtr( pThis ),
+   mprintf( ESC_BOLD ESC_FG_CYAN
+            "Slot: %d, Channel %d, Address: 0x%08x\n"
+            ESC_NORMAL,
             daqChannelGetSlot( pThis ),
-            daqChannelGetNumber( pThis )
+            daqChannelGetNumber( pThis ),
+            daqChannelGetRegPtr( pThis )
           );
    const uint16_t ctrlReg = *(uint16_t*)daqChannelGetCtrlRegPtr( pThis );
    mprintf( "  CtrlReg: &0x%08x *0x%04x *0b",
@@ -105,27 +126,40 @@ void daqChannelPrintInfo( register DAQ_CANNEL_T* pThis )
       mprintf( "%c", (ctrlReg & i)? '1' : '0' );
 
    mprintf( "\n    Ena_PM:                %s\n",
-            daqChannelIsPostMortemActive( pThis )? pYes : pNo );
+            daqChannelIsPostMortemActive( pThis )? g_pYes : g_pNo );
    mprintf( "    Sample10us:            %s\n",
-            daqChannelIsSample10usActive( pThis )? pYes : pNo );
+            daqChannelIsSample10usActive( pThis )? g_pYes : g_pNo );
    mprintf( "    Sample100us:           %s\n",
-            daqChannelIsSample100usActive( pThis )? pYes : pNo );
+            daqChannelIsSample100usActive( pThis )? g_pYes : g_pNo );
    mprintf( "    Sample1ms:             %s\n",
-            daqChannelIsSample1msActive( pThis )? pYes : pNo );
+            daqChannelIsSample1msActive( pThis )? g_pYes : g_pNo );
    mprintf( "    Ena_TrigMod:           %s\n",
-            daqChannelIsTriggerModeEnabled( pThis )? pYes : pNo );
+            daqChannelIsTriggerModeEnabled( pThis )? g_pYes : g_pNo );
    mprintf( "    ExtTrig_nEvTrig:       %s\n",
-            daqChannelGetTriggerSource( pThis )?  pYes : pNo );
+            daqChannelGetTriggerSource( pThis )?  g_pYes : g_pNo );
    mprintf( "    Ena_HiRes:             %s\n",
-            daqChannelIsHighResolutionEnabled( pThis )? pYes : pNo );
+            daqChannelIsHighResolutionEnabled( pThis )? g_pYes : g_pNo );
    mprintf( "    ExtTrig_nEvTrig_HiRes: %s\n",
-            daqChannelGetTriggerSourceHighRes( pThis )? pYes : pNo );
+            daqChannelGetTriggerSourceHighRes( pThis )? g_pYes : g_pNo );
    mprintf( "  Trig_LW:  &0x%08x *0x%04x\n",
-            &__DAQ_GET_CHANNEL_REG( TRIG_LW ), daqChannelGetTriggerConditionLW( pThis ) );
+            &__DAQ_GET_CHANNEL_REG( TRIG_LW ),
+            daqChannelGetTriggerConditionLW( pThis ) );
    mprintf( "  Trig_HW:  &0x%08x *0x%04x\n",
-            &__DAQ_GET_CHANNEL_REG( TRIG_HW ), daqChannelGetTriggerConditionHW( pThis ) );
+            &__DAQ_GET_CHANNEL_REG( TRIG_HW ),
+            daqChannelGetTriggerConditionHW( pThis ) );
    mprintf( "  Trig_Dly: &0x%08x *0x%04x\n",
-            &__DAQ_GET_CHANNEL_REG( TRIG_DLY ), daqChannelGetTriggerDelay( pThis ) );
+            &__DAQ_GET_CHANNEL_REG( TRIG_DLY ),
+            daqChannelGetTriggerDelay( pThis ) );
+   mprintf( "  DAQ int pending:   %s\n",
+         (((*daqChannelGetDaqIntPendingPtr( pThis )) & pThis->intMask) != 0 )?
+         g_pYes : g_pNo );
+   mprintf( "  HiRes int pending: %s\n",
+       (((*daqChannelGetHiResIntPendingPtr( pThis )) & pThis->intMask) != 0 )?
+         g_pYes : g_pNo );
+   mprintf( "  Level DAQ FiFo:      %d words\n",
+            daqChannelGetDaqFifoWords( pThis ));
+   mprintf( "  Level PM_HiRes FiFo: %d words \n",
+            daqChannelGetPmFifoWords( pThis ));
 }
 #endif /* defined( CONFIG_DAQ_DEBUG ) || defined(__DOXYGEN__) */
 
@@ -489,21 +523,28 @@ void daqBusPrintInfo( register DAQ_BUS_T* pThis )
 void daqDescriptorPrintInfo( register DAQ_DESCRIPTOR_T* pThis )
 {
    //IMPLEMENT_CONVERT_BYTE_ENDIAN( uint32_t )
-   const char* pYes = "yes";
-   const char* pNo  = "no";
 
-   mprintf( "Slot:            %d\n", daqDescriptorGetSlot( pThis ) );
-   mprintf( "Channel:         %d\n", daqDescriptorGetChannel( pThis ) );
-   mprintf( "DIOB ID:         %d\n", daqDescriptorGetDiobId( pThis ) );
-   mprintf( "Post Mortem:     %s\n", daqDescriptorWasPM( pThis )? pYes : pNo );
-   mprintf( "High Resolution: %s\n", daqDescriptorWasHiRes( pThis )? pYes : pNo );
-   mprintf( "DAQ mode:        %s\n", daqDescriptorWasDaq( pThis )? pYes : pNo );
-   mprintf( "Trigger low:     0x%04x\n", daqDescriptorGetTriggerConditionLW( pThis ) );
-   mprintf( "Trigger high:    0x%04x\n", daqDescriptorGetTriggerConditionHW( pThis ) );
-   mprintf( "Trigger delay:   0x%04x\n", daqDescriptorGetTriggerDelay( pThis ) );
-   mprintf( "Timestamp:       %08u.%09u\n", daqDescriptorGetTimeStampSec( pThis ),
-                                            daqDescriptorGetTimeStampNanoSec( pThis ));
-   mprintf( "CRC:             0x%02x\n", daqDescriptorGetCRC( pThis ));
+   mprintf( ESC_BOLD ESC_FG_CYAN
+            "Device Descriptor:\n" ESC_NORMAL );
+   mprintf( "  Slot:            %d\n", daqDescriptorGetSlot( pThis ) );
+   mprintf( "  Channel:         %d\n", daqDescriptorGetChannel( pThis ) );
+   mprintf( "  DIOB ID:         %d\n", daqDescriptorGetDiobId( pThis ) );
+   mprintf( "  Post Mortem:     %s\n", daqDescriptorWasPM( pThis )?
+                                       g_pYes : g_pNo );
+   mprintf( "  High Resolution: %s\n", daqDescriptorWasHiRes( pThis )?
+                                       g_pYes : g_pNo );
+   mprintf( "  DAQ mode:        %s\n", daqDescriptorWasDaq( pThis )?
+                                       g_pYes : g_pNo );
+   mprintf( "  Trigger low:     0x%04x\n",
+            daqDescriptorGetTriggerConditionLW( pThis ) );
+   mprintf( "  Trigger high:    0x%04x\n",
+            daqDescriptorGetTriggerConditionHW( pThis ) );
+   mprintf( "  Trigger delay:   0x%04x\n",
+            daqDescriptorGetTriggerDelay( pThis ) );
+   mprintf( "  Timestamp:       %08u.%09u\n",
+            daqDescriptorGetTimeStampSec( pThis ),
+            daqDescriptorGetTimeStampNanoSec( pThis ));
+   mprintf( "  CRC:             0x%02x\n", daqDescriptorGetCRC( pThis ));
 }
 
 #endif // if defined( CONFIG_DAQ_DEBUG ) || defined(__DOXYGEN__)

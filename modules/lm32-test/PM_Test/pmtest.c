@@ -42,15 +42,16 @@ void main( void )
    gotoxy( 0, 0 );
    clrscr();
    mprintf( "Post Mortem Fifo test\n");
-//#if 0
+#if 1
    if( daqBusFindAndInitializeAll( &g_allDaq, find_device_adr(GSI, SCU_BUS_MASTER) ) <= 0 )
    {
       mprintf( "No usable DAQ found!\n" );
       return;
    }
    mprintf( "%d DAQ found\n", daqBusGetFoundDevices( &g_allDaq ) );
-#if 1
+//#if 0
    int i;
+#if 0
    for( i = 1; i <= MAX_SCU_SLAVES; i++ )
    {
       if( daqBusGetDeviceBySlotNumber( &g_allDaq, i ) != NULL )
@@ -66,14 +67,14 @@ void main( void )
       mprintf( "Channel %d, address 0x%08x, slot %d\n", i, pChannel, daqChannelGetSlot( pChannel ) );
       i++;
    }
-
+#endif
    mprintf( "Total number of all used channels: %d\n", daqBusGetUsedChannels( &g_allDaq ) );
 
    //DAQ_CANNEL_T* pChannel = daqDeviceGetChannelObject( daqBusGetDeviceObject( &g_allDaq, DEVICE ), CHANNEL );
-   DAQ_CANNEL_T* pChannel = daqBusGetChannelObjectByAbsoluteNumber( &g_allDaq, 0 );
+   DAQ_CANNEL_T* pChannel = daqBusGetChannelObjectByAbsoluteNumber( &g_allDaq, 1 );
    //pChannel->properties.notUsed = true;
 
-   mprintf( "Total number of all used channels: %d\n", daqBusGetUsedChannels( &g_allDaq ) );
+   //mprintf( "Total number of all used channels: %d\n", daqBusGetUsedChannels( &g_allDaq ) );
 
    daqBusSetAllTimeStampCounters( &g_allDaq, 0L );
    daqBusSetAllTimeStampCounterTags( &g_allDaq, 0 );
@@ -82,21 +83,39 @@ void main( void )
    daqChannelSetTriggerConditionHW( pChannel, 0xB );
    daqChannelSetTriggerDelay( pChannel, 0xC );
 
-   daqChannelEnablePostMortem( pChannel );
-   while( daqChannelGetPmFifoWords( pChannel ) < 1023 );
-   daqChannelDisablePostMortem( pChannel );
-   daqChannelPrintInfo( pChannel );
 
-   uint16_t volatile* ptr = daqChannelGetPmDatPtr( pChannel );
+   mprintf( "HiResPending: 0x%04x\n", *daqChannelGetHiResIntPendingPtr( pChannel ) );
+
+   daqChannelPrintInfo( pChannel );
+   daqChannelTestAndClearHiResIntPending( pChannel );
+   daqChannelEnablePostMortem( pChannel );
+   while( daqChannelGetPmFifoWords( pChannel ) < (DAQ_FIFO_PM_HIRES_WORD_SIZE-1) );
+   //while( !daqChannelTestAndClearHiResIntPending( pChannel ) );
+   daqChannelDisablePostMortem( pChannel );
+//   daqChannelReset( pChannel );
+   daqChannelPrintInfo( pChannel );
+   mprintf( "HiResPending: 0x%04x\n", *daqChannelGetHiResIntPendingPtr( pChannel ) );
+
+   //!!uint16_t volatile* ptr = daqChannelGetPmDatPtr( pChannel );
    DAQ_DESCRIPTOR_T descriptor;
    memset( &descriptor, 0, sizeof( descriptor ) );
+
    int j = 0;
+#define CONFIG_DAQ_SEPARAD_COUNTER
+#ifdef CONFIG_DAQ_SEPARAD_COUNTER
+   uint16_t remaining  = daqChannelGetPmFifoWords( pChannel ) + 1;
+#else
    volatile uint16_t remaining;
+#endif
    i = 0;
    do
    {
+#ifdef CONFIG_DAQ_SEPARAD_COUNTER
+      remaining--;
+#else
       remaining = daqChannelGetPmFifoWords( pChannel );
-      volatile uint16_t data = *ptr;
+#endif
+      volatile uint16_t data = daqChannelPopPmFifo( pChannel ); //!!*ptr;
 #if 0
       mprintf( "%d: 0x%04x, %d\n", i, data, remaining );
 #endif
@@ -119,6 +138,7 @@ void main( void )
    LM32_ASSERT( daqDescriptorGetTriggerConditionLW( &descriptor ) == daqChannelGetTriggerConditionLW( pChannel ) );
    LM32_ASSERT( daqDescriptorGetTriggerConditionHW( &descriptor ) == daqChannelGetTriggerConditionHW( pChannel ) );
    LM32_ASSERT( daqDescriptorGetTriggerDelay( &descriptor ) == daqChannelGetTriggerDelay( pChannel ) );
+   daqChannelPrintInfo( pChannel );
 #endif
    mprintf( "\nEnd...\n" );
 }

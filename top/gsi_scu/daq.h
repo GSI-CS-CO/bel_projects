@@ -56,6 +56,15 @@ extern "C" {
   #endif
 #endif
 
+/*!
+ * @brief Maximum DAQ-FIFO capacity in 16 bit words
+ */
+#define DAQ_FIFO_DAQ_WORD_SIZE       512
+
+/*!
+ * @brief Maximum PM_HIRES FIFO capacity in 16 bit words
+ */
+#define DAQ_FIFO_PM_HIRES_WORD_SIZE  (2 * DAQ_FIFO_DAQ_WORD_SIZE)
 
 /*!
  * @brief Access indexes for writing and reading the DAQ-registers
@@ -750,7 +759,7 @@ uint16_t* daqChannelGetHiResIntPendingPtr( register DAQ_CANNEL_T* pThis )
 #ifdef CONFIG_DAQ_PEDANTIC_CHECK
    LM32_ASSERT( pThis != NULL );
 #endif
-   return &daqChannelGetRegPtr(pThis)->i[DAQ_INTS];
+   return &daqChannelGetRegPtr(pThis)->i[HIRES_INTS];
 }
 
 /*! ---------------------------------------------------------------------------
@@ -782,13 +791,15 @@ bool daqChannelTestAndClearHiResIntPending( register DAQ_CANNEL_T* pThis )
 static inline
 uint16_t volatile * daqChannelGetPmDatPtr( register DAQ_CANNEL_T* pThis )
 {
+#ifdef CONFIG_DAQ_PEDANTIC_CHECK
    LM32_ASSERT( pThis != NULL );
    __DAQ_VERIFY_CHANNEL_REG_ACCESS( PM_DAT );
+#endif
    return &__DAQ_GET_CHANNEL_REG( PM_DAT );
 }
 
 ALWAYS_INLINE
-static inline uint16_t daqChannelPopPmFifo( register DAQ_CANNEL_T* pThis )
+static inline volatile uint16_t daqChannelPopPmFifo( register DAQ_CANNEL_T* pThis )
 {
    return *daqChannelGetPmDatPtr( pThis );
 }
@@ -801,13 +812,15 @@ static inline uint16_t daqChannelPopPmFifo( register DAQ_CANNEL_T* pThis )
 static inline
 uint16_t volatile * daqChannelGetDaqDatPtr( register DAQ_CANNEL_T* pThis )
 {
+#ifdef CONFIG_DAQ_PEDANTIC_CHECK
    LM32_ASSERT( pThis != NULL );
    __DAQ_VERIFY_CHANNEL_REG_ACCESS( DAQ_DAT );
+#endif
    return &__DAQ_GET_CHANNEL_REG( DAQ_DAT );
 }
 
 ALWAYS_INLINE
-static inline uint16_t daqChannelPopDaqFifo( register DAQ_CANNEL_T* pThis )
+static inline volatile uint16_t daqChannelPopDaqFifo( register DAQ_CANNEL_T* pThis )
 {
    return *daqChannelGetDaqDatPtr( pThis );
 }
