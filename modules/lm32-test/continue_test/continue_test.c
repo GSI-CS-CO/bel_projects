@@ -1,6 +1,6 @@
 /*!
- *  @file pmtest.c
- *  @brief Testprogram reads the PostMortem Fifo of channel 1
+ *  @file continue_test.c
+ *  @brief Testprogram reads the DAQ Fifo of channel 1
  *         form the first found DAQ device on the SCU- bus
  *  @date 28.11.2018
  *  @copyright (C) 2018 GSI Helmholtz Centre for Heavy Ion Research GmbH
@@ -31,8 +31,7 @@
 
 DAQ_BUS_T g_allDaq;
 
-#define CHANNEL 2
-#define DEVICE  0
+
 
 void main( void )
 {
@@ -41,11 +40,11 @@ void main( void )
 
    gotoxy( 0, 0 );
    clrscr();
-   mprintf( "Post Mortem Fifo test\n");
+   mprintf( "DAQ Fifo test\n");
 #if 1
    if( daqBusFindAndInitializeAll( &g_allDaq, find_device_adr(GSI, SCU_BUS_MASTER) ) <= 0 )
    {
-      mprintf( "No usable DAQ found!\n" );
+      mprintf( ESC_FG_RED "ERROR: No usable DAQ found!\n" ESC_NORMAL );
       return;
    }
    mprintf( "%d DAQ found\n", daqBusGetFoundDevices( &g_allDaq ) );
@@ -54,59 +53,38 @@ void main( void )
 
    mprintf( "Total number of all used channels: %d\n", daqBusGetUsedChannels( &g_allDaq ) );
 
-   //DAQ_CANNEL_T* pChannel = daqDeviceGetChannelObject( daqBusGetDeviceObject( &g_allDaq, DEVICE ), CHANNEL );
    DAQ_CANNEL_T* pChannel = daqBusGetChannelObjectByAbsoluteNumber( &g_allDaq, 0 );
    if( pChannel == NULL )
    {
       mprintf( ESC_FG_RED "ERROR: Channel number out of range!\n" ESC_NORMAL );
       return;
    }
-
-   daqBusSetAllTimeStampCounters( &g_allDaq, 0L );
-   daqBusSetAllTimeStampCounterTags( &g_allDaq, 0 );
-
-   daqChannelSetTriggerConditionLW( pChannel, 0xA );
-   daqChannelSetTriggerConditionHW( pChannel, 0xB );
-   daqChannelSetTriggerDelay( pChannel, 0xC );
-
-
-   mprintf( "HiResPending: 0x%04x\n", *daqChannelGetHiResIntPendingPtr( pChannel ) );
-
    daqChannelPrintInfo( pChannel );
-
-   daqChannelTestAndClearHiResIntPending( pChannel );
-
-   daqChannelEnablePostMortem( pChannel );
-   //daqChannelEnableExternTriggerHighRes( pChannel );
-   //daqChannelEnableHighResolution( pChannel );
-
-   mprintf( "FiFo: %d\n", daqChannelGetPmFifoWords( pChannel ) );
-   mprintf( "FiFo: %d\n", daqChannelGetPmFifoWords( pChannel ) );
-   mprintf( "FiFo: %d\n", daqChannelGetPmFifoWords( pChannel ) );
-   
-   i = 0;
-   while( daqChannelGetPmFifoWords( pChannel ) < (DAQ_FIFO_PM_HIRES_WORD_SIZE-1) )
-      i++;
-   mprintf( "Polling loops: %d\n", i );
-   //while( !daqChannelTestAndClearHiResIntPending( pChannel ) );
-   daqChannelPrintInfo( pChannel );
-
-   daqChannelDisablePostMortem( pChannel );
-   daqChannelDisableHighResolution( pChannel );
-
-//   daqChannelReset( pChannel );
-
-   mprintf( "HiResPending: 0x%04x\n", *daqChannelGetHiResIntPendingPtr( pChannel ) );
-
-   //!!uint16_t volatile* ptr = daqChannelGetPmDatPtr( pChannel );
    DAQ_DESCRIPTOR_T descriptor;
    memset( &descriptor, 0, sizeof( descriptor ) );
 
+   daqChannelSample1msOn( pChannel );
+   //daqChannelSample100usOn( pChannel );
+   //daqChannelSample10usOn( pChannel );
+
+   mprintf( "FiFo: %d\n", daqChannelGetPmFifoWords( pChannel ) );
+   mprintf( "FiFo: %d\n", daqChannelGetPmFifoWords( pChannel ) );
+   mprintf( "FiFo: %d\n", daqChannelGetPmFifoWords( pChannel ) );
+
+   i = 0;
+   while( daqChannelGetDaqFifoWords( pChannel ) < (DAQ_FIFO_DAQ_WORD_SIZE-1) )
+      i++;
+   mprintf( "Polling loops: %d\n", i );
+   daqChannelPrintInfo( pChannel );
+
+   daqChannelSample1msOff( pChannel );
+   daqChannelSample100usOff( pChannel );
+   daqChannelSample10usOff( pChannel );
+
    mprintf( "Reading FoFo...\n" );
    int j = 0;
-//#define CONFIG_DAQ_SEPARAD_COUNTER
 #ifdef CONFIG_DAQ_SEPARAD_COUNTER
-   uint16_t remaining  = daqChannelGetPmFifoWords( pChannel ) + 1;
+   uint16_t remaining  = daqChannelGetDaqFifoWords( pChannel ) + 1;
 #else
    volatile uint16_t remaining;
 #endif
@@ -116,9 +94,9 @@ void main( void )
 #ifdef CONFIG_DAQ_SEPARAD_COUNTER
       remaining--;
 #else
-      remaining = daqChannelGetPmFifoWords( pChannel );
+      remaining = daqChannelGetDaqFifoWords( pChannel );
 #endif
-      volatile uint16_t data = daqChannelPopPmFifo( pChannel ); //!!*ptr;
+      volatile uint16_t data = daqChannelPopDaqFifo( pChannel ); //!!*ptr;
 #if 0
       mprintf( "%d: 0x%04x, %d\n", i, data, remaining );
 #endif
@@ -141,7 +119,12 @@ void main( void )
    LM32_ASSERT( daqDescriptorGetTriggerConditionLW( &descriptor ) == daqChannelGetTriggerConditionLW( pChannel ) );
    LM32_ASSERT( daqDescriptorGetTriggerConditionHW( &descriptor ) == daqChannelGetTriggerConditionHW( pChannel ) );
    LM32_ASSERT( daqDescriptorGetTriggerDelay( &descriptor ) == daqChannelGetTriggerDelay( pChannel ) );
+
+  // daqChannelTestAndClearHiResIntPending( pChannel );
+   daqChannelTestAndClearDaqIntPending( pChannel );
    daqChannelPrintInfo( pChannel );
+
+
 #endif
    mprintf( "\nEnd...\n" );
 }

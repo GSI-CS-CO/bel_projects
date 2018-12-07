@@ -150,14 +150,18 @@ void daqChannelPrintInfo( register DAQ_CANNEL_T* pThis )
    mprintf( "  Trig_Dly: &0x%08x *0x%04x\n",
             &__DAQ_GET_CHANNEL_REG( TRIG_DLY ),
             daqChannelGetTriggerDelay( pThis ) );
-   mprintf( "  DAQ int pending:   %s\n",
+   mprintf( "  DAQ int pending:     %s\n",
          (((*daqChannelGetDaqIntPendingPtr( pThis )) & pThis->intMask) != 0 )?
          g_pYes : g_pNo );
-   mprintf( "  HiRes int pending: %s\n",
+   mprintf( "  HiRes int pending:   %s\n",
        (((*daqChannelGetHiResIntPendingPtr( pThis )) & pThis->intMask) != 0 )?
          g_pYes : g_pNo );
+   mprintf( "  VHDL Macro version:  %d\n",
+            daqChannelGetMacroVersion( pThis ));
    mprintf( "  Level DAQ FiFo:      %d words\n",
             daqChannelGetDaqFifoWords( pThis ));
+   mprintf( "  Channels:            %d\n",
+            daqChannelGetMaxCannels( pThis ));
    mprintf( "  Level PM_HiRes FiFo: %d words \n",
             daqChannelGetPmFifoWords( pThis ));
 }

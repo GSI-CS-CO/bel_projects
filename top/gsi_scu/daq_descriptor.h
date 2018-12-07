@@ -38,6 +38,36 @@ extern "C" {
 #define DAQ_DISCRIPTOR_WORD_SIZE 10 /*!< @brief byte size size of
                                      *  DAQ descriptor + crc */
 
+/*!
+ * @brief Maximum DAQ-FIFO capacity in 16 bit words
+ *        inclusive the DAQ-Descriptor
+ * @see DAQ_DESCRIPTOR_T
+ * @see daqChannelGetDaqFifoWords
+ */
+#define DAQ_FIFO_DAQ_WORD_SIZE       0x01FD
+
+#if (DAQ_FIFO_DAQ_WORD_SIZE < DAQ_DISCRIPTOR_WORD_SIZE)
+  #error Fatal: DAQ_FIFO_DAQ_WORD_SIZE shall not be smaler than DAQ_DISCRIPTOR_WORD_SIZE !
+#endif
+
+/*!
+ * @brief Maximum PM_HIRES FIFO capacity in 16 bit words
+ *        inclusive the DAQ-Descriptor
+ * @see DAQ_DESCRIPTOR_T
+ * @see daqChannelGetPmFifoWords
+ */
+#define DAQ_FIFO_PM_HIRES_WORD_SIZE  0x03FF
+
+#if (DAQ_FIFO_PM_HIRES_WORD_SIZE < DAQ_DISCRIPTOR_WORD_SIZE)
+  #error Fatal: DAQ_FIFO_PM_HIRES_WORD_SIZE shall not be smaler than DAQ_DISCRIPTOR_WORD_SIZE !
+#endif
+
+#if (DAQ_FIFO_DAQ_WORD_SIZE > DAQ_FIFO_PM_HIRES_WORD_SIZE)
+  #warning DAQ_FIFO_DAQ_WORD_SIZE is greater than DAQ_FIFO_PM_HIRES_WORD_SIZE ! Realy?
+#endif
+
+
+
 typedef struct PACKED_SIZE
 {
 #if (__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__) || defined(__DOXYGEN__)

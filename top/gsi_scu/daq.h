@@ -57,16 +57,6 @@ extern "C" {
 #endif
 
 /*!
- * @brief Maximum DAQ-FIFO capacity in 16 bit words
- */
-#define DAQ_FIFO_DAQ_WORD_SIZE       512
-
-/*!
- * @brief Maximum PM_HIRES FIFO capacity in 16 bit words
- */
-#define DAQ_FIFO_PM_HIRES_WORD_SIZE  (2 * DAQ_FIFO_DAQ_WORD_SIZE)
-
-/*!
  * @brief Access indexes for writing and reading the DAQ-registers
  * @see daqChannelGetReg
  * @see daqChannelSetReg
@@ -798,8 +788,15 @@ uint16_t volatile * daqChannelGetPmDatPtr( register DAQ_CANNEL_T* pThis )
    return &__DAQ_GET_CHANNEL_REG( PM_DAT );
 }
 
+/*! ---------------------------------------------------------------------------
+ * @brief Moves the oldest 16 bit data word from the Post Mortem / HiRes FiFo
+ *        of this channel and returns it.
+ * @param pThis Pointer to the channel object
+ * @return 16 bit data word moved out from the Post Mortem / HiRes FiFo.
+ */
 ALWAYS_INLINE
-static inline volatile uint16_t daqChannelPopPmFifo( register DAQ_CANNEL_T* pThis )
+static inline volatile
+uint16_t daqChannelPopPmFifo( register DAQ_CANNEL_T* pThis )
 {
    return *daqChannelGetPmDatPtr( pThis );
 }
@@ -819,8 +816,15 @@ uint16_t volatile * daqChannelGetDaqDatPtr( register DAQ_CANNEL_T* pThis )
    return &__DAQ_GET_CHANNEL_REG( DAQ_DAT );
 }
 
+/*! ---------------------------------------------------------------------------
+ * @brief Moves the oldest 16 bit data word from the DAQ FiFo of this channel
+ *        and returns it.
+ * @param pThis Pointer to the channel object
+ * @return 16 bit data word moved out from the DAQ FiFo.
+ */
 ALWAYS_INLINE
-static inline volatile uint16_t daqChannelPopDaqFifo( register DAQ_CANNEL_T* pThis )
+static inline volatile
+uint16_t daqChannelPopDaqFifo( register DAQ_CANNEL_T* pThis )
 {
    return *daqChannelGetDaqDatPtr( pThis );
 }
@@ -839,6 +843,7 @@ static inline int daqChannelGetMacroVersion( register DAQ_CANNEL_T* pThis )
 
 /*! ---------------------------------------------------------------------------
  * @brief Get remaining number of words in DaquDat Fifo.
+ * @see DAQ_FIFO_DAQ_WORD_SIZE
  * @param pThis Pointer to the channel object
  * @return Remaining number of words during read out.
  */
@@ -870,6 +875,7 @@ unsigned int daqChannelGetMaxCannels( register DAQ_CANNEL_T* pThis )
 
 /*! ---------------------------------------------------------------------------
  * @brief Get remaining number of words in PmDat Fifo.
+ * @see DAQ_FIFO_PM_HIRES_WORD_SIZE
  * @param pThis Pointer to the channel object
  * @return Remaining number of words during read out.
  */
@@ -953,7 +959,6 @@ void daqDeviceClearHiResInterrupts( register DAQ_DEVICE_T* pThis )
 {
    *daqDeviceGetHiResIntPendingPtr( pThis ) = (uint16_t)~0;
 }
-
 
 /*! ---------------------------------------------------------------------------
  * @brief Get the slot number of a DAQ device respectively the
@@ -1059,10 +1064,18 @@ void daqDeviceSetTimeStampCounter( register DAQ_DEVICE_T* pThis, uint64_t ts );
 uint64_t daqDeviceGetTimeStampCounter( register DAQ_DEVICE_T* pThis );
 
 /*! ---------------------------------------------------------------------------
+ * @brief Set the time stamp counter tag for this DAQ device.
+ * @see daqDeviceGetTimeStampTag
+ * @param pThis Pointer to the DAQ-device object
+ * @param Value of time stamp tag.
  */
 void daqDeviceSetTimeStampTag( register DAQ_DEVICE_T* pThis, uint32_t tsTag );
 
 /*! ---------------------------------------------------------------------------
+ * @brief Gets the adjusted time stamp tag for this device.
+ * @see daqDeviceSetTimeStampTag
+ * @param pThis Pointer to the DAQ-device object
+ * @return Value of time stamp tag.
  */
 uint32_t daqDeviceGetTimeStampTag( register DAQ_DEVICE_T* pThis );
 
