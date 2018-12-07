@@ -136,6 +136,9 @@
 
 
 #ifndef STATIC_ASSERT
+#if (__cplusplus > 199711L) && !defined(__lm32__) // Is C++11 and not LM32 ?
+  #define STATIC_ASSERT( condition ) static_assert( condition, "C-Macro: STATIC_ASSERT" )
+#else
  #ifndef __DOXYGEN__
   #define __STATIC_ASSERT__( condition, line ) \
        extern char static_assertion_on_line_##line[2*((condition)!=0)-1];
@@ -167,8 +170,8 @@
  * @see PACKED_SIZE
  */
   #define STATIC_ASSERT( condition ) __STATIC_ASSERT__( condition, __LINE__)
+#endif // if (__cplusplus >  199711L) && !defined(__lm32__)
 #endif // ifndef STATIC_ASSERT
-
 
 
 /*!
