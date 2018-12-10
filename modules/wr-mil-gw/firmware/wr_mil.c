@@ -162,6 +162,7 @@ void eventHandler(volatile uint32_t    *eca,
       too_late = wait_until_tai(eca, mil_event_time);
       trials = mil_piggy_write_event(mil_piggy, milTelegram); 
       ++config->num_events.value;
+      ++config->mil_histogram[milTelegram & 0xff];
       if (evtCode == config->utc_trigger)
       {
         // generate EVT_UTC_1/2/3/4/5 EVENTS
@@ -180,7 +181,13 @@ void eventHandler(volatile uint32_t    *eca,
       if (too_late || trials)
       { 
         ++config->late_events;
-        mprintf("evtCode: %u trials: %u  late: %u\n",evtCode, trials, too_late);
+        //mprintf("evtCode: %u trials: %u  late: %u\n",evtCode, trials, too_late);
+        for (int i = 0; i < 16; ++i) {
+          if (too_late>>(i+10) == 0 || i == 15) {
+            ++config->late_histogram[i];
+            break;
+          } 
+        }
       }
     }
     // remove action from ECA queue 
@@ -198,9 +205,11 @@ void main(void)
   init();   
   // MilPiggy 
   volatile uint32_t *mil_piggy = (volatile uint32_t*) find_device_adr(GSI, SCU_MIL);
+  mprintf("mil_piggy adr: %08x\n", mil_piggy);
 
   // ECAQueue 
   volatile uint32_t *eca_queue = ECAQueue_init();
+  mprintf("eca_queue adr: %08x\n", eca_queue);
   uint32_t n_events = ECAQueue_clear(eca_queue);
   mprintf("popped %d events from the eca queue\n", n_events);
 
