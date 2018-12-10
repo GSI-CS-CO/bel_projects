@@ -4,15 +4,15 @@ TARGET_DIR=/common/export
 
 all:
 	make PATH=../../../toolchain/bin:$(PATH) -C firmware 
-	make MASP=YES PRO=NO PREFIX= -C control
+	make MASP=YES PRO=NO PREFIX= -C saft-control
 
 pro:
 	make PATH=../../../toolchain/bin:$(PATH) -C firmware 
-	make MASP=YES PRO=YES PREFIX= -C control
+	make MASP=YES PRO=YES PREFIX= -C saft-control
 
 clean:
 	make -C firmware clean
-	make -C control clean
+	make -C saft-control clean
 
 deploy-dev:
 	# init script

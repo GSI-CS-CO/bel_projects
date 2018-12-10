@@ -29,6 +29,9 @@ volatile WrMilConfig *config_init()
   config->utc_offset_ms.value  = UINT64_C(1199142000000);
   config->num_events.value     = UINT64_C(0);
   config->late_events          = UINT64_C(0);
+  for (int i = 0; i < 255; ++i) {
+    config->mil_histogram[i] = UINT32_C(0);
+  }
   return config;
 }
 
