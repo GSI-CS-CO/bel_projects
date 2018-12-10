@@ -41,7 +41,7 @@ void main( void )
 
    gotoxy( 0, 0 );
    clrscr();
-   mprintf( "Post Mortem Fifo test\n");
+   mprintf( "Post Mortem Fifo test, compiler: " COMPILER_VERSION_STRING "\n");
 #if 1
    if( daqBusFindAndInitializeAll( &g_allDaq, find_device_adr(GSI, SCU_BUS_MASTER) ) <= 0 )
    {
@@ -135,12 +135,7 @@ void main( void )
       mprintf( "Descriptor %d: 0x%04x\n", j, descriptor.index[j] );
 
    daqDescriptorPrintInfo( &descriptor );
-
-   LM32_ASSERT( daqDescriptorGetSlot( &descriptor ) == daqChannelGetSlot( pChannel ) );
-   LM32_ASSERT( daqDescriptorGetChannel( &descriptor ) == daqChannelGetNumber( pChannel ) );
-   LM32_ASSERT( daqDescriptorGetTriggerConditionLW( &descriptor ) == daqChannelGetTriggerConditionLW( pChannel ) );
-   LM32_ASSERT( daqDescriptorGetTriggerConditionHW( &descriptor ) == daqChannelGetTriggerConditionHW( pChannel ) );
-   LM32_ASSERT( daqDescriptorGetTriggerDelay( &descriptor ) == daqChannelGetTriggerDelay( pChannel ) );
+   DAQ_DESCRIPTOR_VERIFY_MY( &descriptor, pChannel );
    daqChannelPrintInfo( pChannel );
 #endif
    mprintf( "\nEnd...\n" );

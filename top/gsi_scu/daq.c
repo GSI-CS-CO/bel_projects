@@ -122,7 +122,7 @@ void daqChannelPrintInfo( register DAQ_CANNEL_T* pThis )
    mprintf( "  CtrlReg: &0x%08x *0x%04x *0b",
             daqChannelGetCtrlRegPtr( pThis ), ctrlReg );
 
-   for( uint16_t i = 1 << (sizeof(uint16_t) * 8 - 1); i != 0; i >>= 1 )
+   for( uint16_t i = 1 << (BIT_SIZEOF(uint16_t) - 1); i != 0; i >>= 1 )
       mprintf( "%c", (ctrlReg & i)? '1' : '0' );
 
    mprintf( "\n    Ena_PM:                %s\n",
@@ -552,6 +552,5 @@ void daqDescriptorPrintInfo( register DAQ_DESCRIPTOR_T* pThis )
 }
 
 #endif // if defined( CONFIG_DAQ_DEBUG ) || defined(__DOXYGEN__)
-
 
 /*================================== EOF ====================================*/

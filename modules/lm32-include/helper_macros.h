@@ -27,6 +27,7 @@
 #include <stddef.h> // Necessary for the macro "offsetof()"
 #include <limits.h> // Necessary for constant "CHAR_BIT" (in the most cases always 8)
 
+#if defined(__GNUC__) || defined(__DOXYGEN__)
 /*!
  * @brief Macro represents the full version number of the compiler as integer
  *        value.
@@ -34,12 +35,22 @@
  * E.g.: If the compilers version - displayed by the command line option
  *       gcc --version - 7.3.0 then this macro will generate the number 70300.
  */
-#if defined(__GNUC__) || defined(__DOXYGEN__)
- #define COMPILER_VERSION (__GNUC__ * 10000 \
-                         + __GNUC_MINOR__ * 100 \
-                         + __GNUC_PATCHLEVEL__)
+
+ #define COMPILER_VERSION_NUMBER (__GNUC__ * 10000 \
+                                + __GNUC_MINOR__ * 100 \
+                                + __GNUC_PATCHLEVEL__)
+/*!
+ * @brief Macro expands to a zero terminated ASCII string of the compiler-version.
+ *
+ * E.g.: If the compilers version - displayed by the command line option
+ *       gcc --version - 7.3.0 then this macro will substituted by: "7.3.0"
+ */
+ #define COMPILER_VERSION_STRING  TO_STRING(__GNUC__)"." \
+                                  TO_STRING(__GNUC_MINOR__)"." \
+                                  TO_STRING(__GNUC_PATCHLEVEL__)
 #else
  #define COMPILER_VERSION 0
+ #define COMPILER_VERSION_STRING "unknown"
  #warning "Unknown compiler therefore its not possible to determine the macro COMPILER_VERSION !"
 #endif
 

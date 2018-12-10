@@ -57,6 +57,17 @@ extern "C" {
 #endif
 
 /*!
+ * @brief Interrupt number for DAQ fifo full.
+ */
+#define DAQ_IRQ_DAQ_FIFO_FULL   12
+
+/*!
+ * @brief Interrupt number for High-Resolution finished
+ */
+#define DAQ_IRQ_HIRES_FINISHED  11
+
+
+/*!
  * @brief Access indexes for writing and reading the DAQ-registers
  * @see daqChannelGetReg
  * @see daqChannelSetReg
@@ -728,10 +739,10 @@ static inline
 bool daqChannelTestAndClearDaqIntPending( register DAQ_CANNEL_T* pThis )
 {
    if( ((*daqChannelGetDaqIntPendingPtr( pThis )) & pThis->intMask) != 0 )
-   {  /*
-       * Bit becomes cleared by writing a one in the concerning
-       * register position.
-       */
+   { /*
+      * Bit becomes cleared by writing a one in the concerning
+      * register position.
+      */
       (*daqChannelGetDaqIntPendingPtr( pThis )) |= pThis->intMask;
       return true;
    }
@@ -762,10 +773,10 @@ static inline
 bool daqChannelTestAndClearHiResIntPending( register DAQ_CANNEL_T* pThis )
 {
    if( ((*daqChannelGetHiResIntPendingPtr( pThis )) & pThis->intMask) != 0 )
-   {  /*
-       * Bit becomes cleared by writing a one in the concerning
-       * register position.
-       */
+   { /*
+      * Bit becomes cleared by writing a one in the concerning
+      * register position.
+      */
       (*daqChannelGetHiResIntPendingPtr( pThis )) |= pThis->intMask;
       return true;
    }
@@ -1256,6 +1267,28 @@ void daqBusReset( register DAQ_BUS_T* pThis );
 #else
    #define daqDescriptorPrintInfo( pThis ) (void)0
 #endif
+
+#if defined( CONFIG_DAQ_PEDANTIC_CHECK ) || defined(__DOXYGEN__)
+/*! ---------------------------------------------------------------------------
+ * @brief Verifies the descriptor with the concerning DAQ channel.
+ * @note This macro becomes only implemented if CONFIG_DAQ_PEDANTIC_CHECK
+ *       has been defined.
+ * @param pThis Pointer to start address of the descriptor
+ * @param pChannel Pointer to the concerning channel object which causes
+ *                 this descriptor.
+ */
+#define DAQ_DESCRIPTOR_VERIFY_MY( pThis, pChannel ) \
+{ \
+   LM32_ASSERT( daqDescriptorGetSlot( pThis ) == daqChannelGetSlot( pChannel ) ); \
+   LM32_ASSERT( daqDescriptorGetChannel( pThis ) == daqChannelGetNumber( pChannel ) ); \
+   LM32_ASSERT( daqDescriptorGetTriggerConditionLW( pThis ) == daqChannelGetTriggerConditionLW( pChannel ) ); \
+   LM32_ASSERT( daqDescriptorGetTriggerConditionHW( pThis ) == daqChannelGetTriggerConditionHW( pChannel ) ); \
+   LM32_ASSERT( daqDescriptorGetTriggerDelay( pThis ) == daqChannelGetTriggerDelay( pChannel ) ); \
+}
+#else
+ #define DAQ_DESCRIPTOR_VERIFY_MY( pThis, pChannel ) (void)0
+#endif // / if defined( CONFIG_DAQ_PEDANTIC_CHECK ) || defined(__DOXYGEN__)
+
 
 #ifdef __cplusplus
 }

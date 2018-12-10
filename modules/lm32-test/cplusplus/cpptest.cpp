@@ -109,21 +109,18 @@
  * And I think that's a lot! :-) UB
  * !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
  */
+#include "mprintf.h"
+#include "mini_sdb.h"
+#include "helper_macros.h"
 
-#define GCC_VERSION (__GNUC__ * 10000 \
-                     + __GNUC_MINOR__ * 100 \
-                     + __GNUC_PATCHLEVEL__)
 
-#if GCC_VERSION < 70300
+#if COMPILER_VERSION_NUMBER < 70300
   #error This module requieres the gcc-version 7.3.0 or higher.
 #endif
 #ifndef __lm32__
   #error This module is for the target LM32 only!
 #endif
 
-#include "mprintf.h"
-#include "mini_sdb.h"
-#include "helper_macros.h"
 
 /*! ---------------------------------------------------------------------------
  * @brief Dummy function for the case a virtual function pointer is not filled.

@@ -114,6 +114,7 @@ void _irq_entry(void)
 #if NESTED_IRQS
   uint32_t  msk;
 #endif
+  mprintf( "\nIRQ++++++++++++++++++++++++++++++\n" );
   asm ("rcsr %0, ip": "=r"(ip)); //get pending flags
   while(ip)
   {
@@ -157,6 +158,10 @@ static unsigned int getEventOf( unsigned int n )
 
 #define LINE_START 3
 
+//Slot: 11, Channel 0, Address: 0x80564000
+//  CtrlReg: &0x80564000 *0xb002 *0b1011000000000010
+
+
 //=============================================================================
 void main( void )
 {
@@ -169,7 +174,8 @@ void main( void )
    uart_init_hw();
    gotoxy( 1, 1 );
    clrscr();
-   mprintf( ESC_BOLD "Interrupt listener\n" ESC_NORMAL );
+   mprintf( ESC_BOLD "Interrupt listener, compiler: " COMPILER_VERSION_STRING "\n" ESC_NORMAL );
+   irq_set_mask( (uint32_t)~0 );
    irq_enable();
    while( true )
    {
