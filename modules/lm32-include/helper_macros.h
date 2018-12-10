@@ -25,6 +25,7 @@
 #define _HELPER_MACROS_H
 
 #include <stddef.h> // Necessary for the macro "offsetof()"
+#include <limits.h> // Necessary for constant "CHAR_BIT" (in the most cases always 8)
 
 /*!
  * @brief Macro represents the full version number of the compiler as integer
@@ -57,6 +58,16 @@
 #ifndef ARRAY_SIZE
  #define ARRAY_SIZE( a ) ( sizeof(a) / sizeof((a)[0]) )
 #endif
+
+/*!
+ * @brief Returns the size in bits of the given data type,
+ * in contrast to sizeof() which returns the size in bytes.
+ *
+ * @param TYP data type
+ * @return Number of bits for the given data type.
+ */
+#define BIT_SIZEOF( TYP ) (sizeof(TYP) * CHAR_BIT)
+
 
 #ifndef __GNUC__
   #warning "Compiler isn't a GNU- compiler! Therefore it's not guaranteed that the following macro-definition PACKED_SIZE will work."

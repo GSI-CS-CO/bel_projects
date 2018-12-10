@@ -201,9 +201,15 @@ typedef enum
 #define GRP_SIO3    69
 #define GRP_SIO2    23 
 
-
+/*!
+ * @brief Flag field for slaves connected in the SCU bus.
+ *
+ * Each bit reflects a slot in the SCU bus.
+ * If a bit equal one so a SCU device is connected at this place.
+ * @see MAX_SCU_SLAVES
+ */
 typedef uint16_t SCUBUS_SLAVE_FLAGS_T;
-STATIC_ASSERT( sizeof( SCUBUS_SLAVE_FLAGS_T ) * 8 >= MAX_SCU_SLAVES );
+STATIC_ASSERT( BIT_SIZEOF( SCUBUS_SLAVE_FLAGS_T ) >= MAX_SCU_SLAVES );
 
 extern struct w1_bus wrpc_w1_bus;
 void ReadTemperatureDevices(int bus, uint64_t *id, uint16_t *temp);
