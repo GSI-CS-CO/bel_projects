@@ -707,6 +707,7 @@ void CarpeDM::showCpuList() {
   }
 
   bool CarpeDM::isInHashDict(const std::string& name) {
+    if (name == NULL) return false;
     if (!(hm.contains(name))) return false;
     return (atDown.isOk(atDown.lookupHash(hm.lookup(name))));
   }

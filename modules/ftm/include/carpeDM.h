@@ -296,6 +296,12 @@ public:
                 int clear(bool force);                              // clears all nodes from DM
 
 // Command Generation and Dispatch ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+               //Block Queue Locking and Asynchronous clear
+               void blockLock(const std::string& targetName, bool readLock=true, bool writeLock=true);
+               void blockAsyncClearQueues(const std::string& targetName, bool autoLock=false, bool autoUnlock=false);
+               void blockUnlock(const std::string& targetName, bool readLock=true, bool writeLock=true);
+               bool blockIsLocked(const std::string& targetName, bool checkReadLock=true, bool checkWriteLock=true);
+              vStrC getLockedBlocks(bool checkReadLock, bool checkWriteLock);
                 int sendCommandsDot(const std::string& s); //Sends a dotfile of commands to the DM
                 int sendCommandsDotFile(const std::string& fn);
                 int sendCommand(const std::string& targetName, uint8_t cmdPrio, mc_ptr mc); //Send a command to Block <targetName> on CPU <cpuIdx> via Etherbone

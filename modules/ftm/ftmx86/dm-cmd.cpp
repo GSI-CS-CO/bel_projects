@@ -50,6 +50,9 @@ static void help(const char *program) {
   //fprintf(stderr, "  cease                   Cease thread at pattern end.\n");
   fprintf(stderr, "  abort                     Immediately abort selected thread.\n");
   fprintf(stderr, "  halt                      Immediately aborts all threads on all cpus\n");
+  fprintf(stderr, "  lock <target>             Locks all queues of a block, making them invisible to the DM and allowing modification during active runtime\n");
+  fprintf(stderr, "  clear <target>            Clears all queues of a locked block allowing modification/refill during active runtime\n");
+  fprintf(stderr, "  unlock <target>           Unlocks all queues of a block, making them visible to the DM\n");
   //fprintf(stderr, "  force                     Force cursor to match origin\n");
   fprintf(stderr, "  staticflush <target> <prios>                  Flushes all pending commands of given priorities (3b Hi-Md-Lo -> 0x0..0x7) in an inactive (static) block of the schedule\n");
   fprintf(stderr, "  staticflushpattern <pattern> <prios>          Flushes all pending commands of given priorities (3b Hi-Md-Lo -> 0x0..0x7) in an inactive (static) pattern of the schedule\n");
@@ -554,6 +557,49 @@ int main(int argc, char* argv[]) {
 
       return 0;
     }
+    else if (cmp == "lock") {
+      if(!(cdm.isInHashDict( targetName))) {std::cerr << program << ": Target node '" << targetName << "'' was not found on DM" << std::endl; return -1; }
+      try {
+          cdm.blockLock(targetName);
+        } catch (std::runtime_error const& err) {
+          std::cerr << program << ": Could not lock block " << targetName << ". Cause: " << err.what() << std::endl;
+        }
+
+      return 0;
+    }
+    else if (cmp == "asyncclear") {
+      if(!(cdm.isInHashDict( targetName))) {std::cerr << program << ": Target node '" << targetName << "'' was not found on DM" << std::endl; return -1; }
+      try {
+          cdm.blockAsyncClearQueues(targetName, false, false);
+        } catch (std::runtime_error const& err) {
+          std::cerr << program << ": Could not clear block " << targetName << "'s queues. Cause: " << err.what() << std::endl;
+        }
+
+      return 0;
+    }
+    else if (cmp == "unlock") {
+      if(!(cdm.isInHashDict( targetName))) {std::cerr << program << ": Target node '" << targetName << "'' was not found on DM" << std::endl; return -1; }
+      try {
+          cdm.blockUnlock(targetName);
+        } catch (std::runtime_error const& err) {
+          std::cerr << program << ": Could not unlock block " << targetName << ". Cause: " << err.what() << std::endl;
+        }
+
+      return 0;
+    }
+    else if (cmp == "showlocks") {
+      vStrC res;
+      try {
+        res = cdm.getLockedBlocks(true, true);
+      } catch (std::runtime_error const& err) {
+        std::cerr << program << ": Could not list locked blocks. Cause: " << err.what() << std::endl;
+      }
+      std::cout << "Locked Queues: " << res.size() << std::endl;
+      for (auto s : res) {std::cout << s << std::endl;}
+
+      return 0;
+    }
+    
     else if (cmp == "queue") {
         if(!(cdm.isInHashDict( targetName))) {std::cerr << program << ": Target node '" << targetName << "'' was not found on DM" << std::endl; return -1; }
         std::string report;
