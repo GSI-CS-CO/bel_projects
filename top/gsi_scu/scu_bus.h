@@ -73,7 +73,7 @@ typedef enum
                                    *          “Active” bits are cleared when
                                    *          interrupts are disabled.
                                    *          “Active” bits are cleared \n
-                                   *          *) on writing a 0 to bit position. \n
+                                   *          *) on writing a 1 to bit position. \n
                                    *          *) when interrupt is still pending \n
                                    *             and not masked, bit is set again. */
    extern_clock         = 0x0030, /*!< @brief Extern clock */
@@ -240,7 +240,7 @@ static inline uint32_t getSlotOffset( const unsigned int slot )
  * @param slot Slot number, valid range 1 .. MAX_SCU_SLAVES (12)
  * @return Absolute SCU bus slave address
  */
-static inline void* getAbsScuBusSlaveAddr( const void* pScuBusBase,
+static inline void* scuBusGetAbsSlaveAddr( const void* pScuBusBase,
                                            const unsigned int slot )
 {
    return &(((uint8_t*)pScuBusBase)[getSlotOffset(slot)]);
@@ -248,69 +248,114 @@ static inline void* getAbsScuBusSlaveAddr( const void* pScuBusBase,
 
 /*!
  * @brief Reads a 16 bit register value from a SCU bus slave
- * @see getAbsScuBusSlaveAddr
- * @see setScuBusSlaveValue16
- * @param pAbsSlaveAddr Absolute SCU bus slave address e.g. obtained by getAbsScuBusSlaveAddr
+ * @see scuBusGetAbsSlaveAddr
+ * @see scuBusSetSlaveValue16
+ * @param pAbsSlaveAddr Absolute SCU bus slave address e.g. obtained by scuBusGetAbsSlaveAddr
  * @param index Location of relevant register to read, that means offset to pAbsSlaveAddr
  * @return Content of the addressed register
  */
 static inline volatile
-uint16_t getScuBusSlaveValue16( const void* pAbsSlaveAddr, const unsigned int index )
+uint16_t scuBusGetSlaveValue16( const void* pAbsSlaveAddr, const unsigned int index )
 {
+#ifdef CONFIG_SCU_BUS_PEDANTIC_CHECK
    LM32_ASSERT( index >= 0 );
    LM32_ASSERT( index < (SCUBUS_SLAVE_ADDR_SPACE / sizeof(uint16_t)) );
-   LM32_ASSERT( ((int)pAbsSlaveAddr % sizeof(uint16_t)) == 0 ); // At least 2 bytes alignment assumed!
+   LM32_ASSERT( ((unsigned int)pAbsSlaveAddr % sizeof(uint16_t)) == 0 ); // At least 2 bytes alignment assumed!
+#endif
    return ((uint16_t* volatile)pAbsSlaveAddr)[index];
 }
 
 /*!
  * @brief Writes a given 16 bit value in the addressed SCU bus slave register.
- * @see getAbsScuBusSlaveAddr
- * @see getScuBusSlaveValue16
- * @param pAbsSlaveAddr Absolute SCU bus slave address e.g. obtained by getAbsScuBusSlaveAddr
+ * @see scuBusGetAbsSlaveAddr
+ * @see scuBusGetSlaveValue16
+ * @param pAbsSlaveAddr Absolute SCU bus slave address e.g. obtained by scuBusGetAbsSlaveAddr
  * @param index Location of relevant register to read, that means offset to pAbsSlaveAddr
  * @param value 16 bit value to write
  */
 static inline
-void setScuBusSlaveValue16( void* pAbsSlaveAddr, const unsigned int index, const uint16_t value )
+void scuBusSetSlaveValue16( void* pAbsSlaveAddr, const unsigned int index, const uint16_t value )
 {
+#ifdef CONFIG_SCU_BUS_PEDANTIC_CHECK
    LM32_ASSERT( index >= 0 );
    LM32_ASSERT( index < (SCUBUS_SLAVE_ADDR_SPACE / sizeof(uint16_t)) );
-   LM32_ASSERT( ((int)pAbsSlaveAddr % sizeof(uint16_t)) == 0 ); // At least 2 bytes alignment assumed!
+   LM32_ASSERT( ((unsigned int)pAbsSlaveAddr % sizeof(uint16_t)) == 0 ); // At least 2 bytes alignment assumed!
+#endif
    ((uint16_t* volatile)pAbsSlaveAddr)[index] = value;
 }
 
+/*! ---------------------------------------------------------------------------
+ * @brief Sets unique bits via OR link in a 16 bit SCU bus register
+ * @param pAbsSlaveAddr Absolute SCU bus slave address e.g. obtained by scuBusGetAbsSlaveAddr
+ * @param index Location of relevant register to read, that means offset to pAbsSlaveAddr
+ * @param flags16 Bit field
+ */
+static inline
+void scuBusSetRegisterFalgs( void* pAbsSlaveAddr, const unsigned int index,
+                             const uint16_t flags16 )
+{
+#ifdef CONFIG_SCU_BUS_PEDANTIC_CHECK
+   LM32_ASSERT( index >= 0 );
+   LM32_ASSERT( index < (SCUBUS_SLAVE_ADDR_SPACE / sizeof(uint16_t)) );
+   LM32_ASSERT( ((unsigned int)pAbsSlaveAddr % sizeof(uint16_t)) == 0 ); // At least 2 bytes alignment assumed!
+#endif
+   ((uint16_t* volatile)pAbsSlaveAddr)[index] |= flags16;
+}
+
+/*! ---------------------------------------------------------------------------
+ * @brief Clears unique bits via AND link in a 16 bit SCU bus register
+ * @param pAbsSlaveAddr Absolute SCU bus slave address e.g. obtained by scuBusGetAbsSlaveAddr
+ * @param index Location of relevant register to read, that means offset to pAbsSlaveAddr
+ * @param flags16 Bit field
+ */
+static inline
+void scuBusClearRegisterFalgs( void* pAbsSlaveAddr, const unsigned int index,
+                               const uint16_t flags16 )
+{
+#ifdef CONFIG_SCU_BUS_PEDANTIC_CHECK
+   LM32_ASSERT( index >= 0 );
+   LM32_ASSERT( index < (SCUBUS_SLAVE_ADDR_SPACE / sizeof(uint16_t)) );
+   LM32_ASSERT( ((unsigned int)pAbsSlaveAddr % sizeof(uint16_t)) == 0 ); // At least 2 bytes alignment assumed!
+#endif
+   ((uint16_t* volatile)pAbsSlaveAddr)[index] &= flags16;
+}
+
+
 /*!
  * @brief Reads a 32 bit register value from a SCU bus slave
- * @see getAbsScuBusSlaveAddr
- * @see setScuBusSlaveValue16
- * @param pAbsSlaveAddr Absolute SCU bus slave address e.g. obtained by getAbsScuBusSlaveAddr
+ * @see scuBusGetAbsSlaveAddr
+ * @see scuBusSetSlaveValue16
+ * @param pAbsSlaveAddr Absolute SCU bus slave address e.g. obtained by scuBusGetAbsSlaveAddr
  * @param index Location of relevant register to read, that means offset to pAbsSlaveAddr
  * @return Content of the addressed register
  */
 static inline volatile
-uint32_t getScuBusSlaveValue32( const void* pAbsSlaveAddr, const unsigned int index )
+uint32_t scuBusGetSlaveValue32( const void* pAbsSlaveAddr, const unsigned int index )
 {
+#ifdef CONFIG_SCU_BUS_PEDANTIC_CHECK
    LM32_ASSERT( index >= 0 );
    LM32_ASSERT( index < (SCUBUS_SLAVE_ADDR_SPACE / sizeof(uint32_t)) );
-   LM32_ASSERT( ((int)pAbsSlaveAddr % sizeof(uint16_t)) == 0 ); // At least 2 bytes alignment assumed!
+   LM32_ASSERT( ((unsigned int)pAbsSlaveAddr % sizeof(uint16_t)) == 0 ); // At least 2 bytes alignment assumed!
+#endif
    return ((uint32_t* volatile)pAbsSlaveAddr)[index];
 }
 
 /*!
  * @brief Writes a given 32 bit value in the addressed SCU bus slave register.
- * @see getAbsScuBusSlaveAddr
- * @see getScuBusSlaveValue16
- * @param pAbsSlaveAddr Absolute SCU bus slave address e.g. obtained by getAbsScuBusSlaveAddr
+ * @see scuBusGetAbsSlaveAddr
+ * @see scuBusGetSlaveValue16
+ * @param pAbsSlaveAddr Absolute SCU bus slave address e.g. obtained by scuBusGetAbsSlaveAddr
  * @param index Location of relevant register to read, that means offset to pAbsSlaveAddr
  * @param value 16 bit value to write
  */
 static inline
-void setScuBusSlaveValue32( void* pAbsSlaveAddr, const unsigned int index, const uint32_t value )
+void scuBusSetSlaveValue32( void* pAbsSlaveAddr, const unsigned int index, const uint32_t value )
 {
+#ifdef CONFIG_SCU_BUS_PEDANTIC_CHECK
    LM32_ASSERT( index >= 0 );
    LM32_ASSERT( index < (SCUBUS_SLAVE_ADDR_SPACE / sizeof(uint32_t)) );
-   LM32_ASSERT( ((int)pAbsSlaveAddr % sizeof(uint16_t)) == 0 ); // At least 2 bytes alignment assumed!
+   LM32_ASSERT( ((unsigned int)pAbsSlaveAddr % sizeof(uint16_t)) == 0 ); // At least 2 bytes alignment assumed!
+#endif
    ((uint32_t* volatile)pAbsSlaveAddr)[index] = value;
 }
 
@@ -325,8 +370,10 @@ void setScuBusSlaveValue32( void* pAbsSlaveAddr, const unsigned int index, const
  */
 static inline bool scuBusIsSlavePresent( const SCUBUS_SLAVE_FLAGS_T flags, const int slot )
 {
+#ifdef CONFIG_SCU_BUS_PEDANTIC_CHECK
    LM32_ASSERT( slot >= SCUBUS_START_SLOT );
    LM32_ASSERT( slot <= MAX_SCU_SLAVES );
+#endif
    return ((flags & (1 << (slot-SCUBUS_START_SLOT))) != 0);
 }
 

@@ -115,13 +115,13 @@ SCUBUS_SLAVE_FLAGS_T
    SCUBUS_SLAVE_FLAGS_T slaveFlags = 0;
    for( int slot = SCUBUS_START_SLOT; slot <= MAX_SCU_SLAVES; slot++ )
    {
-      const void* pSlaveAddr = getAbsScuBusSlaveAddr( pScuBusBase, slot );
+      const void* pSlaveAddr = scuBusGetAbsSlaveAddr( pScuBusBase, slot );
       int i = 0;
       bool match = (mode == ALL);
       while( pMatchList[i].index < SCUBUS_INVALID_INDEX16 )
       {
          match = op( match,
-                     getScuBusSlaveValue16( pSlaveAddr, pMatchList[i].index ) ==
+                     scuBusGetSlaveValue16( pSlaveAddr, pMatchList[i].index ) ==
                         pMatchList[i].value );
          i++;
       }
@@ -174,9 +174,9 @@ SCUBUS_SLAVE_FLAGS_T scuBusFindAllSlaves( const void* pScuBusBase )
 
    for( int slot = SCUBUS_START_SLOT; slot <= MAX_SCU_SLAVES; slot++ )
    {
-      const void* pSlaveAddr = getAbsScuBusSlaveAddr( pScuBusBase, slot );
-      if( getScuBusSlaveValue16( pSlaveAddr, CID_SYS )   != SCUBUS_INVALID_VALUE ||
-          getScuBusSlaveValue16( pSlaveAddr, CID_GROUP ) != SCUBUS_INVALID_VALUE )
+      const void* pSlaveAddr = scuBusGetAbsSlaveAddr( pScuBusBase, slot );
+      if( scuBusGetSlaveValue16( pSlaveAddr, CID_SYS )   != SCUBUS_INVALID_VALUE ||
+          scuBusGetSlaveValue16( pSlaveAddr, CID_GROUP ) != SCUBUS_INVALID_VALUE )
          slaveFlags |= (1 << (slot-SCUBUS_START_SLOT));
    }
 

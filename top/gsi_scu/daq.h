@@ -273,8 +273,30 @@ typedef struct
 static inline
 DAQ_REGISTER_T* volatile daqChannelGetRegPtr( register DAQ_CANNEL_T* pThis )
 {
+#ifdef CONFIG_DAQ_PEDANTIC_CHECK
    LM32_ASSERT( pThis->n < DAQ_MAX_CHANNELS );
+#endif
    return CONTAINER_OF( pThis, DAQ_DEVICE_T, aChannel[pThis->n] )->pReg;
+}
+
+/*! ---------------------------------------------------------------------------
+ * @brief Returns the SCU- bus address of the DAQ device belonging this
+ *        channel.
+ * @param pThis Pointer to the channel object
+ * @return Slave base address of the DAQ device of this channel.
+ */
+static inline
+void* daqChannelGetScuBusSlaveBaseAddress( register DAQ_CANNEL_T* pThis )
+{
+#ifdef CONFIG_DAQ_PEDANTIC_CHECK
+   LM32_ASSERT( (unsigned int)daqChannelGetRegPtr( pThis ) > DAQ_REGISTER_OFFSET );
+#endif
+  /*
+   * Because the register access to the DAQ device is more frequent than
+   * to the registers of the SCU slave, therefore the base address of the
+   * DAQ register is noted rather than the SCU bus slave address.
+   */
+   return ((void*)daqChannelGetRegPtr( pThis )) - DAQ_REGISTER_OFFSET;
 }
 
 /*! --------------------------------------------------------------------------
@@ -922,6 +944,72 @@ void daqChannelReset( register DAQ_CANNEL_T* pThis );
 
 /*======================== DAQ- Device Functions ============================*/
 /*! ---------------------------------------------------------------------------
+ * @brief Returns the SCU bus slave address of this DAQ device
+ * @param pThis Pointer to the DAQ-device objects
+ * @return Slave base address of this DAQ device
+ */
+static inline
+void* daqDeviceGetScuBusSlaveBaseAddress( register DAQ_DEVICE_T* pThis )
+{
+#ifdef CONFIG_DAQ_PEDANTIC_CHECK
+   LM32_ASSERT( pThis != NULL );
+   LM32_ASSERT( pThis->pReg != NULL );
+   LM32_ASSERT( (unsigned int)pThis->pReg > DAQ_REGISTER_OFFSET );
+#endif
+  /*
+   * Because the register access to the DAQ device is more frequent than
+   * to the registers of the SCU slave, therefore the base address of the
+   * DAQ register is noted rather than the SCU bus slave address.
+   */
+   return ((void*)pThis->pReg) - DAQ_REGISTER_OFFSET;
+}
+
+static inline
+void daqDeviceEnableScuSlaveInterrupt( register DAQ_DEVICE_T* pThis )
+{
+   scuBusSetRegisterFalgs( daqDeviceGetScuBusSlaveBaseAddress( pThis ),
+                           Intr_Ena,
+                           (1 << DAQ_IRQ_DAQ_FIFO_FULL) |
+                           (1 << DAQ_IRQ_HIRES_FINISHED)
+                         );
+}
+
+static inline
+void daqDeviceDisableScuSlaveInterrupt( register DAQ_DEVICE_T* pThis )
+{
+   scuBusClearRegisterFalgs( daqDeviceGetScuBusSlaveBaseAddress( pThis ),
+                             Intr_Ena,
+                             (1 << DAQ_IRQ_DAQ_FIFO_FULL) |
+                             (1 << DAQ_IRQ_HIRES_FINISHED)
+                           );
+}
+
+static inline
+bool daqDeviceTestAndClearDaqInt( register DAQ_DEVICE_T* pThis )
+{
+   uint16_t* pFlags = &((uint16_t*)daqDeviceGetScuBusSlaveBaseAddress( pThis ))[Intr_Active];
+   if( (*pFlags & (1 << DAQ_IRQ_DAQ_FIFO_FULL)) != 0 )
+   {
+      *pFlags |= (1 << DAQ_IRQ_DAQ_FIFO_FULL);
+      return true;
+   }
+   return false;
+}
+
+static inline
+bool daqDeviceTestAndClearHiResInt( register DAQ_DEVICE_T* pThis )
+{
+   uint16_t* pFlags = &((uint16_t*)daqDeviceGetScuBusSlaveBaseAddress( pThis ))[Intr_Active];
+   if( (*pFlags & (1 << DAQ_IRQ_HIRES_FINISHED)) != 0 )
+   {
+      *pFlags |= (1 << DAQ_IRQ_HIRES_FINISHED);
+      return true;
+   }
+   return false;
+}
+
+
+/*! ---------------------------------------------------------------------------
  * @brief Gets the pointer to the DAQ interrupt pending register.
  * @param pThis Pointer to the DAQ-device objects
  * @return Pointer to the DAQ interrupt pending Register.
@@ -941,7 +1029,7 @@ uint16_t* daqDeviceGetDaqIntPendingPtr( register DAQ_DEVICE_T* pThis )
  * @param pThis Pointer to the DAQ-device objects
  */
 static inline
-void daqDeviceClearDaqInterrupts( register DAQ_DEVICE_T* pThis )
+void daqDeviceClearDaqChannelInterrupts( register DAQ_DEVICE_T* pThis )
 {
    *daqDeviceGetDaqIntPendingPtr( pThis ) = (uint16_t)~0;
 }
@@ -966,7 +1054,7 @@ uint16_t* daqDeviceGetHiResIntPendingPtr( register DAQ_DEVICE_T* pThis )
  * @param pThis Pointer to the DAQ-device objects
  */
 static inline
-void daqDeviceClearHiResInterrupts( register DAQ_DEVICE_T* pThis )
+void daqDeviceClearHiResChannelInterrupts( register DAQ_DEVICE_T* pThis )
 {
    *daqDeviceGetHiResIntPendingPtr( pThis ) = (uint16_t)~0;
 }
@@ -1108,6 +1196,12 @@ void daqDeviceReset( register DAQ_DEVICE_T* pThis );
    #define daqDevicePrintInfo( pThis ) (void)0
 #endif
 
+#if defined( CONFIG_DAQ_DEBUG ) || defined(__DOXYGEN__)
+   void daqDevicePrintInterruptStatus( register DAQ_DEVICE_T* pThis );
+#else
+   #define daqDevicePrintInterruptStatus( pThis ) (void)0
+#endif
+
 /*============================ DAQ Bus Functions ============================*/
 /*! ------------------------------------------------------------------------
  * @brief Preinitialized the DAQ_BUS_T by zero and try to find all
@@ -1204,6 +1298,16 @@ DAQ_DEVICE_T* daqBusGetDeviceBySlotNumber( register DAQ_BUS_T* pThis,
  */
 DAQ_CANNEL_T* daqBusGetChannelObjectByAbsoluteNumber( register DAQ_BUS_T* pThis,
                                                       const unsigned int n );
+
+
+/*! ---------------------------------------------------------------------------
+ */
+void daqBusEnableSlaveInterrupts( register DAQ_BUS_T* pThis );
+
+/*! ---------------------------------------------------------------------------
+ */
+void daqBusDisablSlaveInterrupts( register DAQ_BUS_T* pThis );
+
 
 /*! ---------------------------------------------------------------------------
  * @brief Clears all possible pending interrupts (DAQ and HiRes) of

@@ -112,11 +112,12 @@ void daqChannelReset( register DAQ_CANNEL_T* pThis )
 void daqChannelPrintInfo( register DAQ_CANNEL_T* pThis )
 {
    mprintf( ESC_BOLD ESC_FG_CYAN
-            "Slot: %d, Channel %d, Address: 0x%08x\n"
+            "Slot: %d, Channel %d, Address: 0x%08x, Bus address: 0x%08x\n"
             ESC_NORMAL,
             daqChannelGetSlot( pThis ),
             daqChannelGetNumber( pThis ),
-            daqChannelGetRegPtr( pThis )
+            daqChannelGetRegPtr( pThis ),
+            daqChannelGetScuBusSlaveBaseAddress( pThis )
           );
    const uint16_t ctrlReg = *(uint16_t*)daqChannelGetCtrlRegPtr( pThis );
    mprintf( "  CtrlReg: &0x%08x *0x%04x *0b",
@@ -277,6 +278,20 @@ void daqDevicePrintInfo( register DAQ_DEVICE_T* pThis )
    for( unsigned int i = 0; i < maxChannels; i++ )
       daqChannelPrintInfo( daqDeviceGetChannelObject( pThis, i ));
 }
+
+/*! ---------------------------------------------------------------------------
+ * @see daq.h
+ */
+void daqDevicePrintInterruptStatus( register DAQ_DEVICE_T* pThis )
+{
+   uint16_t flags = scuBusGetSlaveValue16(
+                   daqDeviceGetScuBusSlaveBaseAddress( pThis ), Intr_Active );
+   mprintf( "SCU slave DAQ interrupt active:   %s\n",
+            ((flags & (1 << DAQ_IRQ_DAQ_FIFO_FULL)) != 0)? g_pYes : g_pNo);
+   mprintf( "SCU slave HiRes interrupt active: %s\n",
+            ((flags & (1 << DAQ_IRQ_HIRES_FINISHED)) != 0)? g_pYes : g_pNo);
+}
+
 #endif /* defined( CONFIG_DAQ_DEBUG ) || defined(__DOXYGEN__) */
 
 /*============================ DAQ Bus Functions ============================*/
@@ -347,23 +362,38 @@ int daqBusFindAndInitializeAll( register DAQ_BUS_T* pThis, const void* pScuBusBa
       if( !scuBusIsSlavePresent( daqPersentFlags, slot ) )
          continue;
 
-      pThis->aDaq[pThis->foundDevices].pReg =
-          getAbsScuBusSlaveAddr( pScuBusBase, slot ) + DAQ_REGISTER_OFFSET;
+      DAQ_DEVICE_T* pCurrentDaqDevice = &pThis->aDaq[pThis->foundDevices];
+     /*
+      * Because the register access to the DAQ device is more frequent than
+      * to the registers of the SCU slave, therefore the base address of the
+      * DAQ registers are noted rather than the SCU bus slave address.
+      */
+      pCurrentDaqDevice->pReg =
+          scuBusGetAbsSlaveAddr( pScuBusBase, slot ) + DAQ_REGISTER_OFFSET;
+
       DBPRINT2( "DBG: DAQ found in slot: %02d, address: 0x%08x\n", slot,
-                pThis->aDaq[pThis->foundDevices].pReg );
-      if( daqBusFindChannels( &pThis->aDaq[pThis->foundDevices], slot ) == 0 )
+                pCurrentDaqDevice->pReg );
+
+
+      if( daqBusFindChannels( pCurrentDaqDevice, slot ) == 0 )
       {
          DBPRINT2( "DBG: DAQ in slot %d has no input channels - skipping\n", slot );
          continue;
       }
-#ifdef CONFIG_DAQ_PEDANTIC_CHECK
-      LM32_ASSERT( pThis->aDaq[pThis->foundDevices].maxChannels ==
-         daqDeviceGetMaxChannels( &pThis->aDaq[pThis->foundDevices] ) );
-#endif
-      daqDeviceClearDaqInterrupts( &pThis->aDaq[pThis->foundDevices] );
-      daqDeviceClearHiResInterrupts( &pThis->aDaq[pThis->foundDevices] );
-
       pThis->foundDevices++; // At least one channel was found.
+
+#ifdef CONFIG_DAQ_PEDANTIC_CHECK
+      LM32_ASSERT( pCurrentDaqDevice->maxChannels ==
+                   daqDeviceGetMaxChannels( pCurrentDaqDevice ) );
+#endif
+      daqDeviceDisableScuSlaveInterrupt( pCurrentDaqDevice );
+      daqDeviceTestAndClearDaqInt( pCurrentDaqDevice );
+      daqDeviceTestAndClearHiResInt( pCurrentDaqDevice );
+
+      daqDeviceClearDaqChannelInterrupts( pCurrentDaqDevice );
+      daqDeviceClearHiResChannelInterrupts( pCurrentDaqDevice );
+
+
 #if DAQ_MAX < MAX_SCU_SLAVES
       if( pThis->foundDevices == ARRAY_SIZE( pThis->aDaq ) )
          break;
@@ -452,6 +482,26 @@ unsigned int daqBusGetUsedChannels( register DAQ_BUS_T* pThis )
 /*! ---------------------------------------------------------------------------
  * @see daq.h
  */
+void daqBusEnableSlaveInterrupts( register DAQ_BUS_T* pThis )
+{
+   LM32_ASSERT( pThis != NULL );
+   for( int i = daqBusGetFoundDevices( pThis )-1; i >= 0; i-- )
+      daqDeviceEnableScuSlaveInterrupt( daqBusGetDeviceObject( pThis, i ) );
+}
+
+/*! ---------------------------------------------------------------------------
+ * @see daq.h
+ */
+void daqBusDisablSlaveInterrupts( register DAQ_BUS_T* pThis )
+{
+   LM32_ASSERT( pThis != NULL );
+   for( int i = daqBusGetFoundDevices( pThis )-1; i >= 0; i-- )
+      daqDeviceDisableScuSlaveInterrupt( daqBusGetDeviceObject( pThis, i ) );
+}
+
+/*! ---------------------------------------------------------------------------
+ * @see daq.h
+ */
 void daqBusClearAllPendingInterrupts( register DAQ_BUS_T* pThis )
 {
    LM32_ASSERT( pThis != NULL );
@@ -459,8 +509,8 @@ void daqBusClearAllPendingInterrupts( register DAQ_BUS_T* pThis )
    for( int i = daqBusGetFoundDevices( pThis )-1; i >= 0; i-- )
    {
       DAQ_DEVICE_T* pDaqSlave = daqBusGetDeviceObject( pThis, i );
-      daqDeviceClearDaqInterrupts( pDaqSlave );
-      daqDeviceClearHiResInterrupts( pDaqSlave );
+      daqDeviceClearDaqChannelInterrupts( pDaqSlave );
+      daqDeviceClearHiResChannelInterrupts( pDaqSlave );
    }
 }
 
@@ -516,6 +566,7 @@ void daqBusPrintInfo( register DAQ_BUS_T* pThis )
    for( unsigned int i = 0; i < maxDevices; i++ )
       daqDevicePrintInfo( daqBusGetDeviceObject( pThis, i ) );
 }
+
 #endif /* defined( CONFIG_DAQ_DEBUG ) || defined(__DOXYGEN__) */
 
 /*======================== DAQ- Descriptor functions ========================*/
