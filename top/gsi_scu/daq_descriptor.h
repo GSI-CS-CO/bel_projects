@@ -34,6 +34,12 @@
 extern "C" {
 #endif
 
+/*!
+ * @ingroup DAQ
+ * @defgroup DAQ_DESCRIPTOR
+ * @brief DAQ Descriptor
+ * @{
+ */
 
 #define DAQ_DISCRIPTOR_WORD_SIZE 10 /*!< @brief byte size size of
                                      *  DAQ descriptor + crc */
@@ -71,50 +77,56 @@ extern "C" {
 typedef struct PACKED_SIZE
 {
 #if (__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__) || defined(__DOXYGEN__)
-   uint16_t diobId: 5;
-   uint16_t unused: 7;
-   uint16_t slot:   4;
+   unsigned int diobId: 5;
+   unsigned int unused: 7;
+   unsigned int slot:   4;
 #else
-   uint16_t slot:   4;
-   uint16_t unused: 7;
-   uint16_t diobId: 5;
+   unsigned int slot:   4;
+   unsigned int unused: 7;
+   unsigned int diobId: 5;
 #endif
 } _DAQ_BF_SLOT_DIOB ;
+#ifndef __DOXYGEN__
 STATIC_ASSERT( sizeof( _DAQ_BF_SLOT_DIOB ) == sizeof(uint16_t));
-
+#endif
 
 typedef struct PACKED_SIZE
 {
 #if (__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__) || defined(__DOXYGEN__)
-   uint8_t daqMode:       1;
-   uint8_t hiResMode:     1;
-   uint8_t pmMode:        1;
+   bool    daqMode:       1;
+   bool    hiResMode:     1;
+   bool    pmMode:        1;
    uint8_t channelNumber: 5;
 #else
    uint8_t channelNumber: 5;
-   uint8_t pmMode:        1;
-   uint8_t hiResMode:     1;
-   uint8_t daqMode:       1;
+   bool    pmMode:        1;
+   bool    hiResMode:     1;
+   bool    daqMode:       1;
 #endif
 } _DAQ_BF_CANNEL_MODE;
+#ifndef __DOXYGEN__
 STATIC_ASSERT( sizeof( _DAQ_BF_CANNEL_MODE ) == sizeof(uint8_t) );
-
+#endif
 
 typedef struct PACKED_SIZE
 {
    uint8_t controlReg;
    _DAQ_BF_CANNEL_MODE channelMode;
 } _DAQ_CHANNEL_CONTROL;
+#ifndef __DOXYGEN__
 STATIC_ASSERT( offsetof(_DAQ_CHANNEL_CONTROL, controlReg ) == 0 );
 STATIC_ASSERT( offsetof(_DAQ_CHANNEL_CONTROL, channelMode ) == offsetof(_DAQ_CHANNEL_CONTROL, controlReg ) + sizeof(_DAQ_BF_CANNEL_MODE ));
 STATIC_ASSERT( sizeof( _DAQ_CHANNEL_CONTROL ) == sizeof(uint16_t) );
+#endif
 
 typedef struct PACKED_SIZE
 {
    uint32_t nSec;
    uint32_t utSec;
 } _DAQ_WR_NAME_T;
+#ifndef __DOXYGEN__
 STATIC_ASSERT( sizeof(_DAQ_WR_NAME_T) == sizeof(uint64_t) );
+#endif
 
 typedef union PACKED_SIZE
 {
@@ -127,7 +139,9 @@ typedef union PACKED_SIZE
    uint64_t timeStampToEndianConvert;
 #endif
 } _DAQ_WR_T;
+#ifndef __DOXYGEN__
 STATIC_ASSERT( sizeof( _DAQ_WR_T) == sizeof(uint64_t) );
+#endif
 
 typedef struct PACKED_SIZE
 {
@@ -135,10 +149,12 @@ typedef struct PACKED_SIZE
    uint16_t high;
    uint16_t delay;
 } _DAQ_TRIGGER;
+#ifndef __DOXYGEN__
 STATIC_ASSERT( offsetof( _DAQ_TRIGGER, low )   == 0 * sizeof(uint16_t) );
 STATIC_ASSERT( offsetof( _DAQ_TRIGGER, high )  == 1 * sizeof(uint16_t) );
 STATIC_ASSERT( offsetof( _DAQ_TRIGGER, delay ) == 2 * sizeof(uint16_t) );
 STATIC_ASSERT( sizeof(_DAQ_TRIGGER)            == 3 * sizeof(uint16_t) );
+#endif
 
 typedef struct PACKED_SIZE
 {
@@ -149,6 +165,7 @@ typedef struct PACKED_SIZE
    uint8_t              __unused;
    uint8_t              crc;
 } _DAQ_DISCRIPTOR_STRUCT_T;
+#ifndef __DOXYGEN__
 STATIC_ASSERT( offsetof(_DAQ_DISCRIPTOR_STRUCT_T, slotDiob ) == 0 );
 STATIC_ASSERT( offsetof(_DAQ_DISCRIPTOR_STRUCT_T, wr ) == offsetof(_DAQ_DISCRIPTOR_STRUCT_T, slotDiob ) + sizeof( _DAQ_BF_SLOT_DIOB ));
 STATIC_ASSERT( offsetof(_DAQ_DISCRIPTOR_STRUCT_T, trigger ) == offsetof(_DAQ_DISCRIPTOR_STRUCT_T, wr ) + sizeof( _DAQ_WR_T ));
@@ -156,7 +173,7 @@ STATIC_ASSERT( offsetof(_DAQ_DISCRIPTOR_STRUCT_T, cControl ) == offsetof(_DAQ_DI
 STATIC_ASSERT( offsetof(_DAQ_DISCRIPTOR_STRUCT_T, __unused ) == offsetof(_DAQ_DISCRIPTOR_STRUCT_T, cControl ) + sizeof(_DAQ_CHANNEL_CONTROL));
 STATIC_ASSERT( offsetof(_DAQ_DISCRIPTOR_STRUCT_T, crc ) == offsetof(_DAQ_DISCRIPTOR_STRUCT_T, __unused ) + sizeof( uint8_t ));
 STATIC_ASSERT( sizeof(_DAQ_DISCRIPTOR_STRUCT_T ) == DAQ_DISCRIPTOR_WORD_SIZE * sizeof(uint16_t) );
-
+#endif
 /*!
  * @brief Final type of DAQ- descriptor
  */
@@ -212,7 +229,7 @@ static inline int daqDescriptorGetChannel( register DAQ_DESCRIPTOR_T* pThis )
  */
 static inline bool daqDescriptorWasPM( register DAQ_DESCRIPTOR_T* pThis )
 {
-   return (pThis->name.cControl.channelMode.pmMode != 0);
+   return pThis->name.cControl.channelMode.pmMode;
 }
 
 /*! ---------------------------------------------------------------------------
@@ -225,7 +242,7 @@ static inline bool daqDescriptorWasPM( register DAQ_DESCRIPTOR_T* pThis )
  */
 static inline bool daqDescriptorWasHiRes( register DAQ_DESCRIPTOR_T* pThis )
 {
-   return (pThis->name.cControl.channelMode.hiResMode != 0);
+   return pThis->name.cControl.channelMode.hiResMode;
 }
 
 /*! --------------------------------------------------------------------------
@@ -237,7 +254,7 @@ static inline bool daqDescriptorWasHiRes( register DAQ_DESCRIPTOR_T* pThis )
  */
 static inline bool daqDescriptorWasDaq( register DAQ_DESCRIPTOR_T* pThis )
 {
-   return (pThis->name.cControl.channelMode.daqMode != 0);
+   return pThis->name.cControl.channelMode.daqMode;
 }
 
 /*! ---------------------------------------------------------------------------
@@ -311,10 +328,11 @@ static inline uint8_t daqDescriptorGetCRC( register DAQ_DESCRIPTOR_T* pThis )
    return pThis->name.crc;
 }
 
+/*! @} */ //End of group  DAQ_DESCRIPTOR
 #ifdef __cplusplus
 }
 #endif
 
-#endif
+#endif /* ifndef _DAQ_DESCRIPTOR_H */
 /*================================== EOF ====================================*/
 

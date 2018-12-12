@@ -34,11 +34,18 @@
 extern "C" {
 #endif
 
+/*!
+ * @defgroup SCU_BUS
+ * @brief SCU Bus
+ */
+
+
 #define SCUBUS_INVALID_VALUE     (uint16_t)0xdead
 #define SCUBUS_SLAVE_ADDR_SPACE  (1 << 17)         /*!< @brief Address space in bytes for each SCU bus slave 128k */
 #define SCUBUS_START_SLOT         1                /*!< @brief First slot of SCU-bus */
 
 /*!
+ * @ingroup SCU_BUS
  * @brief Definitions of SCU-bus slave (offset) addresses.
  */
 typedef enum
@@ -202,6 +209,7 @@ typedef enum
 #define GRP_SIO2    23 
 
 /*!
+ * @ingroup SCU_BUS
  * @brief Flag field for slaves connected in the SCU bus.
  *
  * Each bit reflects a slot in the SCU bus.
@@ -217,6 +225,7 @@ void probe_scu_bus(volatile unsigned short*, unsigned short, unsigned short, int
 void ReadTempDevices(int bus, uint64_t *id, uint32_t *temp);
 
 /*!
+ * @ingroup SCU_BUS
  * @brief Calculates the relative address offset in bytes of a SCU bus slave
  *        from the given slot number.
  * @see MAX_SCU_SLAVES
@@ -231,6 +240,7 @@ static inline uint32_t getSlotOffset( const unsigned int slot )
 }
 
 /*!
+ * @ingroup SCU_BUS
  * @brief Calculates the absolute address of a SCU bus slave from the
  *        given slot number.
  * @see MAX_SCU_SLAVES
@@ -247,6 +257,7 @@ static inline void* scuBusGetAbsSlaveAddr( const void* pScuBusBase,
 }
 
 /*!
+ * @ingroup SCU_BUS
  * @brief Reads a 16 bit register value from a SCU bus slave
  * @see scuBusGetAbsSlaveAddr
  * @see scuBusSetSlaveValue16
@@ -266,6 +277,7 @@ uint16_t scuBusGetSlaveValue16( const void* pAbsSlaveAddr, const unsigned int in
 }
 
 /*!
+ * @ingroup SCU_BUS
  * @brief Writes a given 16 bit value in the addressed SCU bus slave register.
  * @see scuBusGetAbsSlaveAddr
  * @see scuBusGetSlaveValue16
@@ -285,6 +297,7 @@ void scuBusSetSlaveValue16( void* pAbsSlaveAddr, const unsigned int index, const
 }
 
 /*! ---------------------------------------------------------------------------
+ * @ingroup SCU_BUS
  * @brief Sets unique bits via OR link in a 16 bit SCU bus register
  * @param pAbsSlaveAddr Absolute SCU bus slave address e.g. obtained by scuBusGetAbsSlaveAddr
  * @param index Location of relevant register to read, that means offset to pAbsSlaveAddr
@@ -303,6 +316,7 @@ void scuBusSetRegisterFalgs( void* pAbsSlaveAddr, const unsigned int index,
 }
 
 /*! ---------------------------------------------------------------------------
+ * @ingroup SCU_BUS
  * @brief Clears unique bits via AND link in a 16 bit SCU bus register
  * @param pAbsSlaveAddr Absolute SCU bus slave address e.g. obtained by scuBusGetAbsSlaveAddr
  * @param index Location of relevant register to read, that means offset to pAbsSlaveAddr
@@ -322,6 +336,7 @@ void scuBusClearRegisterFalgs( void* pAbsSlaveAddr, const unsigned int index,
 
 
 /*!
+ * @ingroup SCU_BUS
  * @brief Reads a 32 bit register value from a SCU bus slave
  * @see scuBusGetAbsSlaveAddr
  * @see scuBusSetSlaveValue16
@@ -341,6 +356,7 @@ uint32_t scuBusGetSlaveValue32( const void* pAbsSlaveAddr, const unsigned int in
 }
 
 /*!
+ * @ingroup SCU_BUS
  * @brief Writes a given 32 bit value in the addressed SCU bus slave register.
  * @see scuBusGetAbsSlaveAddr
  * @see scuBusGetSlaveValue16
@@ -360,6 +376,7 @@ void scuBusSetSlaveValue32( void* pAbsSlaveAddr, const unsigned int index, const
 }
 
 /*!
+ * @ingroup SCU_BUS
  * @brief Extract a single slave-present-flag from the SCU-slave-flag-present field
  * @see scuBusFindSpecificSlaves
  * @see scuFindAllSlaves
@@ -378,6 +395,7 @@ static inline bool scuBusIsSlavePresent( const SCUBUS_SLAVE_FLAGS_T flags, const
 }
 
 /*!
+ * @ingroup SCU_BUS
  * @brief Calculates the number of slaves from the slave flag field.
  * @see scuBusFindSlavesByMatchList16
  * @see scuBusFindAllSlaves
@@ -387,6 +405,7 @@ static inline bool scuBusIsSlavePresent( const SCUBUS_SLAVE_FLAGS_T flags, const
 unsigned int getNumberOfSlaves( const SCUBUS_SLAVE_FLAGS_T slaveFlags );
 
 /*!
+ * @ingroup SCU_BUS
  * @brief Item type of scu-bus match list.
  *
  * Necessary to find specific scu-bus devices with attributes matching by
@@ -411,6 +430,7 @@ struct SCU_BUS_MATCH_ITEM16
 //#define SCUBUS_INVALID_INDEX16 (SCUBUS_SLAVE_ADDR_SPACE / sizeof(uint16_t))
 
 /*!
+ * @ingroup SCU_BUS
  * @brief Terminator of a scu-bus match-list it has to be always the last item
  *        of the list.
  * @see SCU_BUS_MATCH_ITEM16
@@ -420,6 +440,7 @@ struct SCU_BUS_MATCH_ITEM16
 #define SCUBUS_MATCH_LIST16_TERMINATOR { .index = SCUBUS_INVALID_INDEX16, .value = 0 }
 
 /*!
+ * @ingroup SCU_BUS
  * @brief Data type for the third argument of function scuBusFindSlavesByMatchList16
  *
  * It determines whether the whole items of the match-list has to be match, or
@@ -434,6 +455,7 @@ enum SCUBUS_FIND_MODE_T
 };
 
 /*!
+ * @ingroup SCU_BUS
  * @brief Finds all scu-bus slaves which match by one or all items of the
  *        given match-list depending on mode.
  * @see SCU_BUS_MATCH_ITEM16
@@ -456,6 +478,7 @@ SCUBUS_SLAVE_FLAGS_T scuBusFindSlavesByMatchList16( const void* pScuBusBase,
                                                  const enum SCUBUS_FIND_MODE_T mode );
 
 /*!
+ * @ingroup SCU_BUS
  * @brief Scans the whole SCU bus and initialized a slave-flags present field if
  *        the given system address and group address match.
  * @see scuBusIsSlavePresent
@@ -474,6 +497,7 @@ SCUBUS_SLAVE_FLAGS_T scuBusFindSpecificSlaves( const void* pScuBusBase,
                                                 const uint16_t grupAddr );
 
 /*!
+ * @ingroup SCU_BUS
  * @brief Scans the whole SCU bus for all slots and initialized a slave-flags
  *        present field for each found device.
  * @see scuBusIsSlavePresent

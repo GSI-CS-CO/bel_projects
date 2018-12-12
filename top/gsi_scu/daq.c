@@ -31,8 +31,10 @@
 #endif
 
 #if defined( CONFIG_DAQ_DEBUG ) || defined(__DOXYGEN__)
-const char* g_pYes = ESC_FG_WHITE ESC_BOLD"yes"ESC_NORMAL; //!<@brief For debug purposes only
-const char* g_pNo  = "no";  //!<@brief For debug purposes only
+//! @brief For debug purposes only
+const char* g_pYes = ESC_FG_WHITE ESC_BOLD"yes"ESC_NORMAL;
+//! @brief For debug purposes only
+const char* g_pNo  = "no";
 #endif
 
 
@@ -294,24 +296,29 @@ void daqDevicePrintInterruptStatus( register DAQ_DEVICE_T* pThis )
 
 #endif /* defined( CONFIG_DAQ_DEBUG ) || defined(__DOXYGEN__) */
 
-/*============================ DAQ Bus Functions ============================*/
+
 /*! ---------------------------------------------------------------------------
+ * @ingroup DAQ_DEVICE
  * @brief Scans all potential existing input-channels of the given
  *        DAQ-Device ant initialize each found channel with
  *        the slot number.
- * @param pDaqDev Start-address of DAQ-registers
+ * @param pThis Pointer to the DAQ device object
+ * @param slot slot number
  * @return Number of real existing channels
  */
-inline static int daqBusFindChannels( DAQ_DEVICE_T* pDaqDev, int slot )
+inline static int daqDeviceFindChannels( DAQ_DEVICE_T* pThis, int slot )
 {
-   LM32_ASSERT( pDaqDev != NULL );
-   LM32_ASSERT( pDaqDev->pReg != NULL );
+   LM32_ASSERT( pThis != NULL );
+   LM32_ASSERT( pThis->pReg != NULL );
 
-   for( int channel = 0; channel < ARRAY_SIZE(pDaqDev->aChannel); channel++ )
+   for( int channel = 0; channel < ARRAY_SIZE(pThis->aChannel); channel++ )
    {
       DBPRINT2( "DBG: Slot: %02d, Channel: %02d, ctrlReg: 0x%04x\n",
-                slot, channel, daqChannelGetReg( pDaqDev->pReg, CtrlReg, channel ));
-      pDaqDev->aChannel[channel].n = channel;
+                slot, channel, daqChannelGetReg( pThis->pReg, CtrlReg, channel ));
+
+      DAQ_CANNEL_T* pCurrentChannel = &pThis->aChannel[channel];
+      pCurrentChannel->n = channel;
+      LM32_ASSERT( pThis == DAQ_CHANNEL_GET_PARENT_OF( pCurrentChannel ) );
       /*
        * The next three lines probes the channel by writing and read back
        * the slot number. At the first look this algorithm seems not meaningful
@@ -324,18 +331,19 @@ inline static int daqBusFindChannels( DAQ_DEVICE_T* pDaqDev, int slot )
        * Fortunately the highest slot number is 0xC (12). Therefore no further
        * probing is necessary.
        */
-      daqChannelGetCtrlRegPtr( &pDaqDev->aChannel[channel] )->slot = slot;
-      if( daqChannelGetSlot( &pDaqDev->aChannel[channel] ) != slot )
+      daqChannelGetCtrlRegPtr( pCurrentChannel )->slot = slot;
+      if( daqChannelGetSlot( pCurrentChannel ) != slot )
          break; /* Supposing this channel isn't present. */
 
-      LM32_ASSERT( channel < 8 * sizeof( pDaqDev->aChannel[channel].intMask ));
-      pDaqDev->aChannel[channel].intMask = 1 << channel;
+      LM32_ASSERT( channel < BIT_SIZEOF( pCurrentChannel->intMask ));
+      pCurrentChannel->intMask = 1 << channel;
 
-      pDaqDev->maxChannels++;
+      pThis->maxChannels++;
    }
-   return pDaqDev->maxChannels;
+   return pThis->maxChannels;
 }
 
+/*============================ DAQ Bus Functions ============================*/
 /*! ----------------------------------------------------------------------------
  * @see daq.h
  */
@@ -363,6 +371,7 @@ int daqBusFindAndInitializeAll( register DAQ_BUS_T* pThis, const void* pScuBusBa
          continue;
 
       DAQ_DEVICE_T* pCurrentDaqDevice = &pThis->aDaq[pThis->foundDevices];
+      pCurrentDaqDevice->n = pThis->foundDevices;
      /*
       * Because the register access to the DAQ device is more frequent than
       * to the registers of the SCU slave, therefore the base address of the
@@ -375,7 +384,7 @@ int daqBusFindAndInitializeAll( register DAQ_BUS_T* pThis, const void* pScuBusBa
                 pCurrentDaqDevice->pReg );
 
 
-      if( daqBusFindChannels( pCurrentDaqDevice, slot ) == 0 )
+      if( daqDeviceFindChannels( pCurrentDaqDevice, slot ) == 0 )
       {
          DBPRINT2( "DBG: DAQ in slot %d has no input channels - skipping\n", slot );
          continue;
@@ -385,6 +394,7 @@ int daqBusFindAndInitializeAll( register DAQ_BUS_T* pThis, const void* pScuBusBa
 #ifdef CONFIG_DAQ_PEDANTIC_CHECK
       LM32_ASSERT( pCurrentDaqDevice->maxChannels ==
                    daqDeviceGetMaxChannels( pCurrentDaqDevice ) );
+      LM32_ASSERT( DAQ_DEVICE_GET_PARENT_OF( pCurrentDaqDevice ) == pThis );
 #endif
       daqDeviceDisableScuSlaveInterrupt( pCurrentDaqDevice );
       daqDeviceTestAndClearDaqInt( pCurrentDaqDevice );

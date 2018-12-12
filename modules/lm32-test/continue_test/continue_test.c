@@ -157,8 +157,12 @@ void main( void )
       mprintf( ESC_FG_RED "ERROR: Channel number out of range!\n" ESC_NORMAL );
       return;
    }
+
    daqChannelPrintInfo( pChannel );
    printScuBusSlaveInfo( pChannel );
+
+   daqDeviceEnableScuSlaveInterrupt( DAQ_CHANNEL_GET_PARENT_OF( pChannel ) );
+
    initIrq();
 
    daqChannelSample1msOn( pChannel );
@@ -202,6 +206,7 @@ void main( void )
    printScuBusSlaveInfo( pChannel );
    mprintf( "IRQ DAQ:   %d\n", getDaqIrqCount() );
    mprintf( "IRQ HIRES: %d\n", getHiResIrqCount() );
+   mprintf( "DAQ devices: parent %d\n", daqBusGetFoundDevices( DAQ_CHANNEL_GET_GRANDPARENT_OF( pChannel )) );
 #endif
    mprintf( "\nEnd...\n" );
 }
