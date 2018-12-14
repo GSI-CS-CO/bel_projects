@@ -3,7 +3,7 @@
  *
  *  created : 2018
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 30-Nov-2018
+ *  version : 14-Dec-2018
  *
  *  lm32 program for gateway between UNILAC Pulszentrale and a White Rabbit network
  *  this basically serves a Data Master for UNILAC
@@ -35,7 +35,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 22-November-2018
  ********************************************************************************************/
-#define WRUNIPZ_FW_VERSION 0x000001                                     // make this consistent with makefile
+#define WRUNIPZ_FW_VERSION 0x000002                                     // make this consistent with makefile
 
 /* standard includes */
 #include <stdio.h>
@@ -103,12 +103,21 @@ uint32_t *pSharedNBadState;             // pointer to a "user defined" u32 regis
 volatile uint32_t *pSharedCmd;          // pointer to a "user defined" u32 register; here: get command from host
 uint32_t *pSharedState;                 // pointer to a "user defined" u32 register; here: publish status
 volatile uint32_t *pSharedData4EB;      // pointer to a n x u32 register; here: memory region for receiving EB return values
+uint32_t *pSharedMacHi;                 // pointer to a "user defined" u32 register; here: high bits of MAC
+uint32_t *pSharedMacLo;                 // pointer to a "user defined" u32 register; here: low bits of MAC
+uint32_t *pSharedIp;                    // pointer to a "user defined" u32 register; here: IP
+uint32_t *pSharedNCycle;                // pointer to a "user defined" u32 register; here: number of UNILAC cycles
+uint32_t *pSharedTCycle;                // pointer to a "user defined" u32 register; here: period of UNILAC [us]
+uint32_t *pSharedNMessageHi;            // pointer to a "user defined" u32 register; here: high bits # of messages
+uint32_t *pSharedNMessageLo;            // pointer to a "user defined" u32 register; here: lo bits # of messages
 
 uint32_t *pCpuRamExternal;              // external address (seen from host bridge) of this CPU's RAM            
 uint32_t *pCpuRamExternalData4EB;       // external address (seen from host bridge) of this CPU's RAM: field for EB return values
 
 uint32_t nBadStatus;                    // # of bad status (=error) incidents
 uint32_t nBadState;                     // # of bad state (=FATAL, ERROR, UNKNOWN) incidents
+uint64_t nMessages;                     // # of timing messages sent
+
 dataTable bigData[WRUNIPZ_NPZ][WRUNIPZ_NVIRTACC]; // data 
 
 
@@ -225,24 +234,24 @@ uint32_t data2TM(uint32_t *idLo, uint32_t *idHi, uint32_t *paramLo, uint32_t *pa
   evtCode  = (uint32_t)(data & 0xff);                // get event number
   status   = (uint32_t)((data >> 6) & 0xff);         // get status info
 
-  *idHi     = (uint32_t)(                             // EventID
-                         0x1     << 28     |         // FID = 1
-                         (gid     << 16)    |         // GID
-                         (evtCode <<  4)    |         // EVTNO
+  *idHi     = (uint32_t)(                            // EventID
+                         0x1     << 28      |        // FID = 1
+                         (gid     << 16)    |        // GID
+                         (evtCode <<  4)    |        // EVTNO
                          0x0                         // flags
                         );
   *idLo     = (uint32_t)(
-                         (virtAcc << 20)    |         // SID
-                         (0x0     <<  6)    |         // BPID
-                         (0x0     <<  5)    |         // reserved
-                         (0x0     <<  4)    |         // reqNoBeam
-                         0x0                          // virtAcc only for DM-UNIPZ gateway
+                         (virtAcc << 20)    |        // SID
+                         (0x0     <<  6)    |        // BPID
+                         (0x0     <<  5)    |        // reserved
+                         (0x0     <<  4)    |        // reqNoBeam
+                         0x0                         // virtAcc only for DM-UNIPZ gateway
                         );
-  *paramLo  = status;                                 // parameter field
-  *paramHi  = 0x0;                                 
-  *res      = 0x0;                                    // reserved
-  *tef      = 0x0;                                    // timing extension field
-  *offset   = t * 1000;                               // convert offset -> ns
+  *paramLo  = status;                                // parameter field
+  *paramHi  = 0x0;                                
+  *res      = 0x0;                                   // reserved
+  *tef      = 0x0;                                   // timing extension field
+  *offset   = t * 1000;                              // convert offset -> ns
 } // data2TM
 
 
@@ -282,13 +291,15 @@ uint32_t ebmWriteTM(dataTable evts, uint64_t tStart, uint32_t nPz, uint32_t virt
         ebm_op(WRUNIPZ_ECA_ADDRESS, deadlineHi, EBM_WRITE);
         ebm_op(WRUNIPZ_ECA_ADDRESS, deadlineLo, EBM_WRITE);
         atomic_off();
+
+        nMessages++; 
       } // is event
     } // is valid
   } // for i
 
-  // send Ethernet frame
+  // send Ethernet frame (EBM takes care of MTU - don't bother on fragmenting here)
   ebm_flush();
-
+        
   return WRUNIPZ_STATUS_OK;
 } //ebmWriteTM
 
@@ -338,8 +349,15 @@ void initSharedMem() // determine address and clear shared mem
   pSharedState        = (uint32_t *)(pShared + (WRUNIPZ_SHARED_STATE >> 2));
   pSharedData4EB      = (uint32_t *)(pShared + (WRUNIPZ_SHARED_DATA_4EB_START >> 2));
   pSharedNBadStatus   = (uint32_t *)(pShared + (WRUNIPZ_SHARED_NBADSTATUS >> 2));
-  pSharedNBadState    = (uint32_t *)(pShared + (WRUNIPZ_SHARED_NBADSTATE >> 2));  
-  
+  pSharedNBadState    = (uint32_t *)(pShared + (WRUNIPZ_SHARED_NBADSTATE >> 2));
+  pSharedMacHi        = (uint32_t *)(pShared + (WRUNIPZ_SHARED_MACHI >> 2));
+  pSharedMacLo        = (uint32_t *)(pShared + (WRUNIPZ_SHARED_MACLO >> 2));
+  pSharedIp           = (uint32_t *)(pShared + (WRUNIPZ_SHARED_IP >> 2));
+  pSharedNCycle       = (uint32_t *)(pShared + (WRUNIPZ_SHARED_NCYCLE >> 2));  
+  pSharedTCycle       = (uint32_t *)(pShared + (WRUNIPZ_SHARED_TCYCLE >> 2));
+  pSharedNMessageHi   = (uint32_t *)(pShared + (WRUNIPZ_SHARED_NMESSAGEHI >> 2));
+  pSharedNMessageLo   = (uint32_t *)(pShared + (WRUNIPZ_SHARED_NMESSAGELO >> 2));
+
   // find address of CPU from external perspective
   idx = 0;
   find_device_multi(&found_clu, &idx, 1, GSI, LM32_CB_CLUSTER);	
@@ -353,7 +371,7 @@ void initSharedMem() // determine address and clear shared mem
   DBPRINT2("wr-unipz: CPU RAM External 0x%8x, begin shared 0x%08x\n", pCpuRamExternal, SHARED_OFFS);
 
   // set initial values;
-                                /* ebmClearSharedMem(); */
+  /* ebmClearSharedMem(); */
   *pSharedVersion    = WRUNIPZ_FW_VERSION; // of all the shared variabes, only VERSION is a constant. Set it now!
   *pSharedNBadStatus = 0;
   *pSharedNBadState  = 0;
@@ -436,6 +454,27 @@ uint32_t wait4ECAEvent(uint32_t msTimeout, uint64_t *deadline, uint32_t *isLate)
   uint32_t actTag;              // tag of action           
   uint32_t nextAction;          // describes what to do next
   uint64_t timeoutT;            // when to time out
+
+  // THE FOLLOWING IS A HACK!!!!
+  // (this implements a 50 Hz clock)
+  uint64_t tCycle;              // UNILAC period
+  uint64_t tEntry;              // timestamp when entering this routine
+  uint64_t tNext;               // timestamp of next 20ms tick
+  uint64_t nCycles;             // number of 20ms cycles
+
+  tCycle  = 20000000;
+  tEntry  = getSysTime();
+  nCycles = tEntry / tCycle;    // number of UNILAC cycles so far
+  nCycles = nCycles + 1;        // number of next UNILAC cycle
+  tNext   = tCycle * nCycles;
+
+  while (getSysTime() < tNext) asm("nop");
+
+  *deadline = tNext;
+  *isLate   = 0;
+  
+  return WRUNIPZ_ECADO_DUMMY;
+  // THE ABOVE IS A HACK!!!!
 
   pECAFlag    = (uint32_t *)(pECAQ + (ECA_QUEUE_FLAGS_GET >> 2));   // address of ECA flag
   timeoutT    = getSysTime() + (uint64_t)msTimeout * (uint64_t)1000000;
@@ -581,13 +620,25 @@ uint32_t entryActionConfigured()
   uint32_t data;
   uint64_t timestamp;
   uint32_t isLate;
+  uint64_t mac;
+  uint32_t ip;
 
   // configure EB master (SRC and DST MAC/IP are set from host)
+  //  ebmInit(100, 0xffffffffffff, 0xffffffff, EBM_NOREPLY);
   if ((status = ebmInit(2000, 0xffffffffffff, 0xffffffff, EBM_NOREPLY)) != WRUNIPZ_STATUS_OK) {
     DBPRINT1("wr-unipz: ERROR - init of EB master failed! %d\n", status);
     return status;
   } 
- 
+
+  // get and publish NIC data
+  mac = wrGetMac();
+  *pSharedMacHi = (uint32_t)(mac >> 32) & 0xffff;
+  *pSharedMacLo = (uint32_t)mac         & 0xffffffff;
+
+  ip  = *(pEbCfg + (EBC_SRC_IP>>2));
+  *pSharedIp    = ip;
+  
+  
   // reset MIL piggy and wait
   /* comment while developping on exploder
   if ((status = resetPiggyDevMil(pMILPiggy))  != MIL_STAT_OK) {
@@ -604,12 +655,12 @@ uint32_t entryActionConfigured()
   DBPRINT1("wr-unipz: MIL piggy configured for receving events (eventbus)\n");
 
   configLemoOutputEvtMil(pMILPiggy, 2);    // used to see a blinking LED (and optionally connect a scope) for debugging
-  */
+  
   // empty ECA queue for lm32
   i = 0;
   while (wait4ECAEvent(1, &timestamp, &isLate) !=  WRUNIPZ_ECADO_TIMEOUT) {i++;}
   DBPRINT1("wr-unipz: ECA queue flushed - removed %d pending entries from ECA queue\n", i);
-
+  */
   return status;
 } // entryActionConfigured
 
@@ -633,7 +684,7 @@ uint32_t exitActionError()
 } // exitActionError
 
 
-void cmdHandler(uint32_t *reqState, uint32_t *statusTransfer) // handle commands from the outside world
+void cmdHandler(uint32_t *reqState) // handle commands from the outside world
 {
   uint32_t cmd;
 
@@ -739,7 +790,13 @@ uint32_t doActionOperation(uint32_t *nCycle,                  // total number of
   switch (nextAction) 
     {
     case WRUNIPZ_ECADO_DUMMY :                                                     // whatever
-      ; // do something
+      (*nCycle)++;
+
+      ebm_clr();
+
+      int i;
+
+      for (i=0; i < 7; i++) ebmWriteTM(bigData[0][0], deadline, i, i);
 
       break;
     
@@ -779,6 +836,8 @@ void main(void) {
   uint32_t j;
  
   uint32_t i;                                   // counter for iterations of main loop
+  uint64_t tPrevCycle;                          // time of previous UNILAC cycle
+  uint64_t tActCycle;                           // time of actual UNILAC cycle
   uint32_t status;                              // (error) status
   uint32_t actState;                            // actual FSM state
   uint32_t reqState;                            // requested FSM state
@@ -799,15 +858,51 @@ void main(void) {
   status         = WRUNIPZ_STATUS_UNKNOWN;
   nBadState      = 0;
   nBadStatus     = 0;
+  nMessages      = 0;
   flagRecover    = 0;
 
   init();                                                                   // initialize stuff for lm32
   initSharedMem();                                                          // initialize shared memory
 
-  /* 
+  /* hack */
+  bigData[0][0].validFlags  = 0xffffffff;
+  bigData[0][0].prepFlags   = 0x0f;
+  bigData[0][0].evtFlags    = 0xffffffff;
+  bigData[0][0].data[0]     = 0x00010010;
+  bigData[0][0].data[1]     = 0x00020011; 
+  bigData[0][0].data[2]     = 0x00030012;
+  bigData[0][0].data[3]     = 0x00040013;
+  bigData[0][0].data[4]     = 0x00050014;
+  bigData[0][0].data[5]     = 0x00060015;
+  bigData[0][0].data[6]     = 0x00070016;
+  bigData[0][0].data[7]     = 0x00080017;
+  bigData[0][0].data[8]     = 0x00110018;
+  bigData[0][0].data[9]     = 0x00120019; 
+  bigData[0][0].data[10]    = 0x0013001a;
+  bigData[0][0].data[11]    = 0x0014001b;
+  bigData[0][0].data[12]    = 0x0015001c;
+  bigData[0][0].data[13]    = 0x0016001d;
+  bigData[0][0].data[14]    = 0x0017001e;
+  bigData[0][0].data[15]    = 0x0018001f;
+  bigData[0][0].data[16]    = 0x00210020;
+  bigData[0][0].data[17]    = 0x00220021; 
+  bigData[0][0].data[18]    = 0x00230022;
+  bigData[0][0].data[19]    = 0x00240023;
+  bigData[0][0].data[20]    = 0x00250024;
+  bigData[0][0].data[21]    = 0x00260025;
+  bigData[0][0].data[22]    = 0x00270026;
+  bigData[0][0].data[23]    = 0x00280027;
+  bigData[0][0].data[24]    = 0x00310028;
+  bigData[0][0].data[25]    = 0x00320029; 
+  bigData[0][0].data[26]    = 0x0033002a;
+  bigData[0][0].data[27]    = 0x0034002b;
+  bigData[0][0].data[28]    = 0x0035002c;
+  bigData[0][0].data[29]    = 0x0036002d;
+  bigData[0][0].data[30]    = 0x0037002e;
+  bigData[0][0].data[31]    = 0x0000002f;
   
   while (1) {
-    cmdHandler(&reqState, &statusTransfer);                                 // check for commands and possibly request state changes
+    cmdHandler(&reqState);                                                  // check for commands and possibly request state changes
     status = changeState(&actState, &reqState, status);                     // handle requested state changes
     switch(actState)                                                        // state specific do actions
       {
@@ -818,7 +913,7 @@ void main(void) {
         break;
       case WRUNIPZ_STATE_OPREADY :
         flagRecover = 0;
-        status = doActionOperation(&statusTransfer, &virtAccReq, &virtAccRec, &noBeam, &dtStart, &dtSync, &dtInject, &dtTransfer, &dtTkreq, &dtBreq, &dtBprep, &dtReady2Sis, &nTransfer, &nInject, status);
+        status = doActionOperation(&nCycle, status);
         if (status == WRUNIPZ_STATUS_WRBADSYNC)      reqState = WRUNIPZ_STATE_ERROR;
         if (status == WRUNIPZ_STATUS_ERROR)          reqState = WRUNIPZ_STATE_ERROR;
         break;
@@ -838,66 +933,20 @@ void main(void) {
     // autorecovery from state ERROR
     if (flagRecover) doAutoRecovery(actState, &reqState);
 
-    // update shared memory 
+    // update shared memory
+    if ((i % 50) == 0) {
+      tActCycle = getSysTime();
+      *pSharedTCycle  = (uint32_t)((tActCycle - tPrevCycle)/50000);
+      tPrevCycle      = tActCycle;
+    }
     if ((*pSharedStatus == WRUNIPZ_STATUS_OK)     && (status    != WRUNIPZ_STATUS_OK))     {nBadStatus++; *pSharedNBadStatus = nBadStatus;}
     if ((*pSharedState  == WRUNIPZ_STATE_OPREADY) && (actState  != WRUNIPZ_STATE_OPREADY)) {nBadState++;  *pSharedNBadState  = nBadState;}
     *pSharedStatus       = status;
     *pSharedState        = actState;
+    *pSharedNCycle       = nCycle;
+    *pSharedNMessageHi   = (uint32_t)(nMessages >> 32);
+    *pSharedNMessageLo   = (uint32_t)(nMessages & 0xffffffff);
+
     i++;
-  
-  } // while   */
-  
-  /*  ebmInit(0);
-  ebmClearSharedMem();
-  // ebmReadN(2000, 0x60308, test, 1); 
-  //*pSharedSrcMacHi = test[0];
-  usleep(10000); */
-
-  uint64_t d1;
-
-  bigData[0][0].validFlags  = 0xffffffff;
-  bigData[0][0].prepFlags   = 0x0f;
-  bigData[0][0].evtFlags    = 0xffffffff;
-  bigData[0][0].data[0]     = 0x00010010;
-  bigData[0][0].data[1]     = 0x00020011; 
-  bigData[0][0].data[2]     = 0x00030012;
-  bigData[0][0].data[3]     = 0x00040013;
-  bigData[0][0].data[4]     = 0x00050014;
-  bigData[0][0].data[5]     = 0x00060015;
-  bigData[0][0].data[6]     = 0x00070016;
-  bigData[0][0].data[7]     = 0x00080017;
-  bigData[0][0].data[8]     = 0x00110110;
-  bigData[0][0].data[9]     = 0x00120111; 
-  bigData[0][0].data[10]    = 0x00130112;
-  bigData[0][0].data[11]    = 0x00140113;
-  bigData[0][0].data[12]    = 0x00150114;
-  bigData[0][0].data[13]    = 0x00160115;
-  bigData[0][0].data[14]    = 0x00170116;
-  bigData[0][0].data[15]    = 0x00180117;
-  bigData[0][0].data[16]    = 0x00210210;
-  bigData[0][0].data[17]    = 0x00220211; 
-  bigData[0][0].data[18]    = 0x00230212;
-  bigData[0][0].data[19]    = 0x00240213;
-  bigData[0][0].data[20]    = 0x00250214;
-  bigData[0][0].data[21]    = 0x00260215;
-  bigData[0][0].data[22]    = 0x00270216;
-  bigData[0][0].data[23]    = 0x00280217;
-  bigData[0][0].data[24]    = 0x00310310;
-  bigData[0][0].data[25]    = 0x00320311; 
-  bigData[0][0].data[26]    = 0x00330312;
-  bigData[0][0].data[27]    = 0x00340313;
-  bigData[0][0].data[28]    = 0x00350314;
-  bigData[0][0].data[29]    = 0x00360315;
-  bigData[0][0].data[30]    = 0x00370316;
-  bigData[0][0].data[31]    = 0x00380317;
-  
-
-  
-  status = doActionS0();                                
-  ebmInit(100, 0xffffffffffff, 0xffffffff, EBM_NOREPLY);
-  
-  ebm_clr();
-
-  d1 = getSysTime();
-  ebmWriteTM(bigData[0][0], d1, 0, 12);
+  } // while  
 } // main

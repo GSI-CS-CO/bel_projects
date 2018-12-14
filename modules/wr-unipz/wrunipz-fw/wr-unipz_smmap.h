@@ -9,16 +9,16 @@
 #define WRUNIPZ_SHARED_STATUS         0x00   // error status                       
 #define WRUNIPZ_SHARED_CMD            0x04   // input of 32bit command
 #define WRUNIPZ_SHARED_STATE          0x08   // state of state machine
-#define WRUNIPZ_SHARED_NITERMAIN      0x0C   // # of iterations of main loop
+#define WRUNIPZ_SHARED_TCYCLE         0x0C   // perdiod of UNILAC cycle [us]
 #define WRUNIPZ_SHARED_VERSION        0x10   // version of firmware
-#define WRUNIPZ_SHARED_SRCMACHI       0x14   // WR MAC of dmunipz, bits 31..16 unused
-#define WRUNIPZ_SHARED_SRCMACLO       0x18   // WR MAC of dmunipz
-#define WRUNIPZ_SHARED_SRCIP          0x1C   // IP of dmunipz
-#define WRUNIPZ_SHARED_DSTMACHI       0x20   // WR MAC of data master, bits 31..16 unused
-#define WRUNIPZ_SHARED_DSTMACLO       0x24   // WR MAC of data master
-#define WRUNIPZ_SHARED_DSTIP          0x28   // IP of data master
-#define WRUNIPZ_SHARED_NBADSTATUS     0x38   // # of bad status (=error) incidents
-#define WRUNIPZ_SHARED_NBADSTATE      0x3C   // # of bad state (=FATAL, ERROR, UNKNOWN) incidents
+#define WRUNIPZ_SHARED_MACHI          0x14   // WR MAC of wrunipz, bits 31..16 unused
+#define WRUNIPZ_SHARED_MACLO          0x18   // WR MAC of wrunipz
+#define WRUNIPZ_SHARED_IP             0x20   // IP of wrunipz
+#define WRUNIPZ_SHARED_NBADSTATUS     0x24   // # of bad status (=error) incidents
+#define WRUNIPZ_SHARED_NBADSTATE      0x28   // # of bad state (=FATAL, ERROR, UNKNOWN) incidents
+#define WRUNIPZ_SHARED_NCYCLE         0x2C   // # of UNILAC cycles
+#define WRUNIPZ_SHARED_NMESSAGEHI     0x30   // # of messsages, high bits
+#define WRUNIPZ_SHARED_NMESSAGELO     0x34   // # of messsages, low bits
 
 
 // 0x8a-0x8f: reserved

@@ -26,14 +26,7 @@
 #define  WRUNIPZ_STATUS_WAIT4UNIEVENT   26    // timeout while waiting for EVT_READY_TO_SIS
 #define  WRUNIPZ_STATUS_WRBADSYNC       30    // White Rabbit: not in 'TRACK_PHASE'
 #define  WRUNIPZ_STATUS_AUTORECOVERY    31    // trying auto-recovery from state ERROR
-
-
-
-// MASP chk, we need this later probably
-// #define  WRUNIPZ_MASP_NOMEN      "U_DM_UNIPZ" // nomen for gateway      
-// #define  WRUNIPZ_MASP_CUSTOMSIG  "TRANSFER"   // custom signal for MASP
-
-                                
+                              
 // commands from the outside
 #define  WRUNIPZ_CMD_NOCMD        0           // no command ...
 #define  WRUNIPZ_CMD_CONFIGURE    1           // configures the gateway
@@ -58,14 +51,14 @@
 #define  WRUNIPZ_ECADO_DUMMY      2           // chk some activity requested ...
 
 // define log levels for print statemens
-#define WRUNIPZ_LOGLEVEL_ALL      0           // info on every UNILAC cycles
-#define WRUNIPZ_LOGLEVEL_SECOND   1           // summary info once per second
-#define WRUNIPZ_LOGLEVEL_STATUS   2           // info on status changes, info on state changes
-#define WRUNIPZ_LOGLEVEL_STATE    3           // info on state changes
+#define  WRUNIPZ_LOGLEVEL_ALL     0           // info on every UNILAC cycles
+#define  WRUNIPZ_LOGLEVEL_SECOND  1           // summary info once per second
+#define  WRUNIPZ_LOGLEVEL_STATUS  2           // info on status changes, info on state changes
+#define  WRUNIPZ_LOGLEVEL_STATE   3           // info on state changes
 
-#define WRUNIPZ_NEVTMAX          32           // maximum number of events per virtAcc and cycle
-#define WRUNIPZ_NVIRTACC         16           // maximum number of virtual Accelerators
-#define WRUNIPZ_NPZ               7           // maximum number of Pulszentralen
+#define  WRUNIPZ_NEVTMAX         32           // maximum number of events per virtAcc and cycle
+#define  WRUNIPZ_NVIRTACC        16           // maximum number of virtual Accelerators
+#define  WRUNIPZ_NPZ              7           // maximum number of Pulszentralen
 uint32_t gid[] =                 {1000, 1001, 1002, 1003, 1004, 1005, 1006};
 
 typedef struct dataTable {                    // table with _one_ virtAcc for _one_ Pulszentrale
