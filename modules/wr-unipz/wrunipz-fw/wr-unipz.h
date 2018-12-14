@@ -6,7 +6,7 @@
 #define  WRUNIPZ_DEFAULT_TIMEOUT  100         // default timeout used by main loop [ms]
 #define  WRUNIPZ_QUERYTIMEOUT     1           // timeout for querying virt acc from MIL Piggy FIFO [ms] 
                                               // Ludwig: we have 10ms time; here: use 5 ms to be on the safe side
-#define  WRUNIPZ_MATCHWINDOW       200000     // used for comparing timestamps: 1 TS from TLU->ECA matches event from MIL FIFO, 2: synch EVT_MB_TRIGGER, ...
+#define  WRUNIPZ_MATCHWINDOW      200000      // used for comparing timestamps: 1 TS from TLU->ECA matches event from MIL FIFO, 2: synch EVT_MB_TRIGGER, ...
 #define  WRUNIPZ_EVT_DUMMY        0x43        // event number chk !!!
 #define  WRUNIPZ_ECA_ADDRESS      0x7ffffff0  // address of ECA input
 #define  WRUNIPZ_EB_HACKISH       0x12345678  // value for EB read handshake
@@ -21,6 +21,7 @@
 #define  WRUNIPZ_STATUS_OUTOFRANGE       4    // some value is out of range
 #define  WRUNIPZ_STATUS_LATE             5    // a timing messages is not dispatched in time
 #define  WRUNIPZ_STATUS_EARLY            6    // a timing messages is dispatched unreasonably early (dt > UNILACPERIOD)
+#define  WRUNIPZ_STATUS_CONFIG           7    // config data transaction in progress
 #define  WRUNIPZ_STATUS_NOIP            13    // DHCP request via WR network failed                                
 #define  WRUNIPZ_STATUS_EBREADTIMEDOUT  16    // EB read via WR network timed out
 #define  WRUNIPZ_STATUS_WRONGVIRTACC    17    // received EVT_READY_TO_SIS with wrong virt acc number
@@ -39,6 +40,8 @@
 #define  WRUNIPZ_CMD_IDLE         4           // requests gateway to enter idle state
 #define  WRUNIPZ_CMD_RECOVER      5           // recovery from error state
 #define  WRUNIPZ_CMD_CLEARDIAG    6           // reset statistics information
+#define  WRUNIPZ_CMD_CONFREQ      7           // request to start configuration of a virt acc
+#define  WRUNIPZ_CMD_CONFSUBMIT   8           // submission of config data failed
 
 // states; implicitely, all states may transit to the ERROR or FATAL state
 #define  WRUNIPZ_STATE_UNKNOWN    0           // unknown state
@@ -61,16 +64,25 @@
 #define  WRUNIPZ_LOGLEVEL_STATUS  2           // info on status changes, info on state changes
 #define  WRUNIPZ_LOGLEVEL_STATE   3           // info on state changes
 
-#define  WRUNIPZ_NEVTMAX         32           // maximum number of events per virtAcc and cycle
-#define  WRUNIPZ_NVIRTACC        16           // maximum number of virtual Accelerators
-#define  WRUNIPZ_NPZ              7           // maximum number of Pulszentralen
+#define  WRUNIPZ_NEVT            32           // maximum number of events per virtAcc and cycle
+#define  WRUNIPZ_NVACC           16           // maximum number of vAcc
+#define  WRUNIPZ_NSET             2           // maximum number of sets for each vAcc
+#define  WRUNIPZ_NPZ              7           // # of Pulszentralen
+#define  WRUNIPZ_NFLAG            4           // number of flags per virtAcc
+#define  WRUNIPZ_CONFDATASIZE     WRUNIPZ_NEVT  * WRUNIPZ_NPZ * WRUNIPZ_NSET // # of config data words for one virtual accelerator
+#define  WRUNIPZ_CONFFLAGSIZE     WRUNIPZ_NFLAG * WRUNIPZ_NPZ * WRUNIPZ_NSET // # of config data words for one virtual accelerator
+
+#define  WRUNIPZ_CONFSTAT_REQ     1           // request for transfer of config data
+#define  WRUNIPZ_CONFSTAT_SUBMIT  2           // config data has been transferred, FW starts waiting for commit
+#define  WRUNIPZ_CONFSTAT_COMMIT  4           // received commit event, data being commited
+
 uint32_t gid[] =                 {1000, 1001, 1002, 1003, 1004, 1005, 1006};
 
 typedef struct dataTable {                    // table with _one_ virtAcc for _one_ Pulszentrale
   uint32_t validFlags;                        // if bit 'n' is set, data of element 'n' is valid
   uint32_t prepFlags;                         // if bit 'n' is set, data of element 'n' are prep data
   uint32_t evtFlags;                          // if bit 'n' is set, data of element 'n' are event data  
-  uint32_t data[WRUNIPZ_NEVTMAX];             // bits 0..7 'event code', bits 8..15 'data', bits 16..31 offset [us]
+  uint32_t data[WRUNIPZ_NEVT];                // bits 0..7 'event code', bits 8..15 'data', bits 16..31 offset [us]
 } dataTable;
 
 #endif

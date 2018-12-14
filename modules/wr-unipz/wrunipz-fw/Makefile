@@ -2,7 +2,8 @@ TARGET		= wrunipz
 PLATFPATH       = ../../../syn/gsi_exploder5/exploder5_csco_tr
 PLATFMAKEFILE   = $(PLATFPATH)/Makefile
 
-PLATFORM        := $(shell echo $(PLATFPATH)     | rev | cut -d'/' -f1 | rev )
+#PLATFORM        := $(shell echo $(PLATFPATH)     | rev | cut -d'/' -f1 | rev )
+PLATFORM	:= $(shell cat 	$(PLATFMAKEFILE) | grep TARGET    | cut -d' ' -f2 )
 DEVICE		:= $(shell cat 	$(PLATFMAKEFILE) | grep DEVICE    | cut -d' ' -f2 )
 FLASH		:= $(shell cat 	$(PLATFMAKEFILE) | grep FLASH     | cut -d' ' -f2 )
 SPI_LANES	:= $(shell cat 	$(PLATFMAKEFILE) | grep SPI_LANES | cut -d' ' -f2 )

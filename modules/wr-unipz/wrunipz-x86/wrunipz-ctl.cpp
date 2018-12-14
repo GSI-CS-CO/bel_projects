@@ -79,6 +79,10 @@ eb_address_t wrunipz_nMessageHi;   // number of messages, read
 eb_address_t wrunipz_msgFreqAvg;   // message rate (average over one second), read
 eb_address_t wrunipz_dtMax;        // delta T (max) between message time of dispatching and deadline
 eb_address_t wrunipz_dtMin;        // delta T (min) between message time of dispatching and deadline
+eb_address_t wrunipz_confVacc;     // virtAcc of config
+eb_address_t wrunipz_confStat;     // status of config transaction
+eb_address_t wrunipz_confFlag;     // flags of config
+eb_address_t wrunipz_confData;     // data of config
 
 eb_data_t   data1;
 
@@ -150,6 +154,8 @@ static void help(void) {
   fprintf(stderr, "  stopop              command requests state change from OPREADY to STOPPING -> CONFIGURED\n");
   fprintf(stderr, "  recover             command tries to recover from state ERROR and transit to state IDLE\n");
   fprintf(stderr, "  idle                command requests state change to IDLE\n");
+  fprintf(stderr, "\n");
+  fprintf(stderr, "  loadvacc            command loads configuration of a virtual accelerator\n");
   fprintf(stderr, "\n");
   fprintf(stderr, "  cleardiag           clear statistics\n");
   fprintf(stderr, "\n");
@@ -380,6 +386,10 @@ int main(int argc, char** argv) {
   wrunipz_msgFreqAvg   = lm32_base + SHARED_OFFS + WRUNIPZ_SHARED_MSGFREQAVG;
   wrunipz_dtMax        = lm32_base + SHARED_OFFS + WRUNIPZ_SHARED_DTMAX;
   wrunipz_dtMin        = lm32_base + SHARED_OFFS + WRUNIPZ_SHARED_DTMIN;
+  wrunipz_confVacc     = lm32_base + SHARED_OFFS + WRUNIPZ_SHARED_CONF_VACC;
+  wrunipz_confStat     = lm32_base + SHARED_OFFS + WRUNIPZ_SHARED_CONF_STAT;
+  wrunipz_confFlag     = lm32_base + SHARED_OFFS + WRUNIPZ_SHARED_CONFFLAG_START;
+  wrunipz_confData     = lm32_base + SHARED_OFFS + WRUNIPZ_SHARED_CONFDATA_START;
 
   // printf("wr-unipz: lm32_base 0x%08x, 0x%08x\n", lm32_base, wrunipz_iterations);
 
@@ -431,6 +441,36 @@ int main(int argc, char** argv) {
       eb_device_write(device, wrunipz_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)WRUNIPZ_CMD_CLEARDIAG , 0, eb_block);
       if (state != WRUNIPZ_STATE_OPREADY) printf("wr-unipz: WARNING command has not effect (not in state OPREADY)\n");
     } // "cleardiag"
+    if (!strcasecmp(command, "loadvacc")) {
+      if (state != WRUNIPZ_STATE_OPREADY) printf("wr-unipz: WARNING command has not effect (not in state OPREADY)\n");
+      
+      /* hack */
+      int i,j;
+      int vAcc = 5;
+
+      // request start of transaction
+      eb_device_write(device, wrunipz_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)WRUNIPZ_CMD_CONFREQ , 0, eb_block);
+      sleep(1);
+
+      // write data
+      for (i=0; i < WRUNIPZ_NPZ; i++) {
+        // vacc
+        eb_device_write(device, wrunipz_confVacc,  EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)vAcc , 0, eb_block);
+
+        // flags (valid, prep, evt)
+        eb_device_write(device, wrunipz_confFlag + ((0 + i * WRUNIPZ_NPZ +  0) << 2),  EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)0xf , 0, eb_block);
+        eb_device_write(device, wrunipz_confFlag + ((1 + i * WRUNIPZ_NPZ +  0) << 2),  EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)0x0 , 0, eb_block);
+        eb_device_write(device, wrunipz_confFlag + ((2 + i * WRUNIPZ_NPZ +  0) << 2),  EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)0xf , 0, eb_block);
+
+        // data
+        for (j=0; j < WRUNIPZ_NEVT; j++) 
+          eb_device_write(device, wrunipz_confData + ((j + i * WRUNIPZ_NPZ +  0) << 2),  EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)(((i*100 + j*10) << 16) + j) , 0, eb_block);
+      } // for i
+
+      // request submission of data
+      eb_device_write(device, wrunipz_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)WRUNIPZ_CMD_CONFSUBMIT , 0, eb_block);
+      
+    } // "loadvacc"
   } //if command
   
 

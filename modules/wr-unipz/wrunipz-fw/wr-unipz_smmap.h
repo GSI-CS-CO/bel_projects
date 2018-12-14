@@ -2,6 +2,7 @@
 #define _WRUNIPZ_REGS_
 
 #include "wrunipz_shared_mmap.h"
+#include "wr-unipz.h"
 
 #define WRUNIPZ_SHARED_DATA_4EB_SIZE  68     // size of shared memory used to receive EB return values; size is in bytes
 
@@ -25,6 +26,15 @@
 #define WRUNIPZ_SHARED_DTMIN          0x44   // delta T min
 // reserved: more defines here
 #define WRUNIPZ_SHARED_DATA_4EB_START 0x90    // start of shared memory for EB return values
-#define WRUNIPZ_SHARED_DATA_4EB_END   WRUNIPZ_SHARED_DATA_4EB_START + WRUNIPZ_SHARED_DATA_4EB_SIZE // end of shared memory area for EB return values
+#define WRUNIPZ_SHARED_DATA_4EB_END   WRUNIPZ_SHARED_DATA_4EB_START + WRUNIPZ_SHARED_DATA_4EB_SIZE   // end of shared memory area for EB return values
+
+#define WRUNIPZ_SHARED_CONF_VACC      WRUNIPZ_SHARED_DATA_4EB_END   + 4                              // vACC for config data
+#define WRUNIPZ_SHARED_CONF_STAT      WRUNIPZ_SHARED_CONF_VACC  + 4                                  // status of config transaction
+#define WRUNIPZ_SHARED_CONFDATA_START WRUNIPZ_SHARED_CONF_STAT  + 4                                  // start of config data
+#define WRUNIPZ_SHARED_CONFDATA_END   WRUNIPZ_SHARED_CONFDATA_START + (WRUNIPZ_CONFDATASIZE << 2)    // end of config data
+#define WRUNIPZ_SHARED_CONFFLAG_START WRUNIPZ_SHARED_CONFDATA_END + 4                                // start of config flags
+#define WRUNIPZ_SHARED_CONFFLAG_END   WRUNIPZ_SHARED_CONFFLAG_START + (WRUNIPZ_CONFFLAGSIZE << 2)    // end of config flags
+
+#define WRUNIPZ_SHARED_SIZEUSED       WRUNIPZ_SHARED_CONFFLAG_END + 4                                                     // used size of shared area
 
 #endif
