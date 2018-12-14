@@ -1,12 +1,12 @@
 TARGET		= wrunipz
-TRPATH          = ../../../syn/gsi_exploder5/exploder5_csco_tr
-TRMAKEFILE      = $(TRPATH)/Makefile
+PLATFPATH       = ../../../syn/gsi_exploder5/exploder5_csco_tr
+PLATFMAKEFILE   = $(PLATFPATH)/Makefile
 
-PLATFORM        := $(shell echo $(TRPATH)    | rev | cut -d'/' -f1 | rev )
-DEVICE		:= $(shell cat $(TRMAKEFILE) | grep DEVICE    | cut -d' ' -f2 )
-FLASH		:= $(shell cat $(TRMAKEFILE) | grep FLASH     | cut -d' ' -f2 )
-SPI_LANES	:= $(shell cat $(TRMAKEFILE) | grep SPI_LANES | cut -d' ' -f2 )
-RAM_SIZE        := $(shell cat $(TRMAKEFILE) | grep RAM_SIZE  | cut -d' ' -f2 )
+PLATFORM        := $(shell echo $(PLATFPATH)     | rev | cut -d'/' -f1 | rev )
+DEVICE		:= $(shell cat 	$(PLATFMAKEFILE) | grep DEVICE    | cut -d' ' -f2 )
+FLASH		:= $(shell cat 	$(PLATFMAKEFILE) | grep FLASH     | cut -d' ' -f2 )
+SPI_LANES	:= $(shell cat 	$(PLATFMAKEFILE) | grep SPI_LANES | cut -d' ' -f2 )
+RAM_SIZE        := $(shell cat 	$(PLATFMAKEFILE) | grep RAM_SIZE  | cut -d' ' -f2 )
 
 SHARED_SIZE     ?= 8K
 USRCPUCLK       ?= 125000
@@ -19,7 +19,7 @@ DEBUGLVL    	= 1
 CFLAGS 	    	= -I$(PATHFW) -DDEBUGLEVEL=$(DEBUGLVL)
 
 $(info    >>>>)
-$(info    building is done by importing following data from $(TRPATH):)
+$(info    building is done by importing the following data from $(PLATFPATH):)
 $(info    PLATFORM    is $(PLATFORM))
 $(info    DEVICE      is $(DEVICE))
 $(info    FLASH       is $(FLASH))

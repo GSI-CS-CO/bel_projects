@@ -107,16 +107,21 @@ uint32_t *pSharedMacHi;                 // pointer to a "user defined" u32 regis
 uint32_t *pSharedMacLo;                 // pointer to a "user defined" u32 register; here: low bits of MAC
 uint32_t *pSharedIp;                    // pointer to a "user defined" u32 register; here: IP
 uint32_t *pSharedNCycle;                // pointer to a "user defined" u32 register; here: number of UNILAC cycles
-uint32_t *pSharedTCycle;                // pointer to a "user defined" u32 register; here: period of UNILAC [us]
+uint32_t *pSharedTCycleAvg;             // pointer to a "user defined" u32 register; here: period of UNILAC cycle [us] (average over one second)
 uint32_t *pSharedNMessageHi;            // pointer to a "user defined" u32 register; here: high bits # of messages
 uint32_t *pSharedNMessageLo;            // pointer to a "user defined" u32 register; here: lo bits # of messages
+uint32_t *pSharedMsgFreqAvg;            // pointer to a "user defined" u32 register; here: message rate (average over one second)
+uint32_t *pSharedDtMax;                 // pointer to a "user defined" u32 register; here: max diff between deadline and time of dispatching
+uint32_t *pSharedDtMin;                 // pointer to a "user defined" u32 register; here: min diff between deadline and time of dispatching
 
 uint32_t *pCpuRamExternal;              // external address (seen from host bridge) of this CPU's RAM            
 uint32_t *pCpuRamExternalData4EB;       // external address (seen from host bridge) of this CPU's RAM: field for EB return values
 
 uint32_t nBadStatus;                    // # of bad status (=error) incidents
 uint32_t nBadState;                     // # of bad state (=FATAL, ERROR, UNKNOWN) incidents
-uint64_t nMessages;                     // # of timing messages sent
+int32_t  dtMax;                         // dT max (deadline - dispatch time)
+int32_t  dtMin;                         // dT min (deadline - dispatch time)
+
 
 dataTable bigData[WRUNIPZ_NPZ][WRUNIPZ_NVIRTACC]; // data 
 
@@ -255,7 +260,7 @@ uint32_t data2TM(uint32_t *idLo, uint32_t *idHi, uint32_t *paramLo, uint32_t *pa
 } // data2TM
 
 
-uint32_t ebmWriteTM(dataTable evts, uint64_t tStart, uint32_t nPz, uint32_t virtAcc)
+uint32_t ebmWriteTM(dataTable evts, uint64_t tStart, uint32_t nPz, uint32_t virtAcc, uint64_t *nMsg)
 {
   int      i;
   uint64_t deadline;
@@ -263,6 +268,7 @@ uint32_t ebmWriteTM(dataTable evts, uint64_t tStart, uint32_t nPz, uint32_t virt
   uint32_t deadlineLo, deadlineHi, offset;
   uint32_t idLo, idHi;
   uint32_t paramLo, paramHi;
+  int32_t  tDiff;
 
   // set high bits for EB master
   ebm_hi(WRUNIPZ_ECA_ADDRESS);
@@ -276,7 +282,7 @@ uint32_t ebmWriteTM(dataTable evts, uint64_t tStart, uint32_t nPz, uint32_t virt
         data2TM(&idLo, &idHi, &paramLo, &paramHi, &res, &tef, &offset, evts.data[i], gid[nPz], virtAcc);  //convert data
 
         // calc deadline
-        deadline   = tStart + (uint64_t)offset;       
+        deadline   = tStart + (uint64_t)offset + 2000000;       /* hack */
         deadlineHi = (uint32_t)((deadline >> 32) & 0xffffffff);
         deadlineLo = (uint32_t)(deadline & 0xffffffff);
 
@@ -292,7 +298,11 @@ uint32_t ebmWriteTM(dataTable evts, uint64_t tStart, uint32_t nPz, uint32_t virt
         ebm_op(WRUNIPZ_ECA_ADDRESS, deadlineLo, EBM_WRITE);
         atomic_off();
 
-        nMessages++; 
+        tDiff = deadline - getSysTime();
+        if (tDiff < dtMin) dtMin = tDiff;
+        if (tDiff > dtMax) dtMax = tDiff;
+
+        (*nMsg)++; 
       } // is event
     } // is valid
   } // for i
@@ -354,9 +364,12 @@ void initSharedMem() // determine address and clear shared mem
   pSharedMacLo        = (uint32_t *)(pShared + (WRUNIPZ_SHARED_MACLO >> 2));
   pSharedIp           = (uint32_t *)(pShared + (WRUNIPZ_SHARED_IP >> 2));
   pSharedNCycle       = (uint32_t *)(pShared + (WRUNIPZ_SHARED_NCYCLE >> 2));  
-  pSharedTCycle       = (uint32_t *)(pShared + (WRUNIPZ_SHARED_TCYCLE >> 2));
+  pSharedTCycleAvg    = (uint32_t *)(pShared + (WRUNIPZ_SHARED_TCYCLEAVG >> 2));
   pSharedNMessageHi   = (uint32_t *)(pShared + (WRUNIPZ_SHARED_NMESSAGEHI >> 2));
   pSharedNMessageLo   = (uint32_t *)(pShared + (WRUNIPZ_SHARED_NMESSAGELO >> 2));
+  pSharedMsgFreqAvg   = (uint32_t *)(pShared + (WRUNIPZ_SHARED_MSGFREQAVG >> 2));
+  pSharedDtMax        = (uint32_t *)(pShared + (WRUNIPZ_SHARED_DTMAX >> 2));
+  pSharedDtMin        = (uint32_t *)(pShared + (WRUNIPZ_SHARED_DTMIN >> 2));
 
   // find address of CPU from external perspective
   idx = 0;
@@ -597,6 +610,14 @@ void pulseLemo2() //for debugging with scope
 } // pulseLemo2
 
 
+void clearDiag() // clears all statistics
+{
+  dtMax          = 0x80000000;
+  dtMin          = 0x7fffffff;
+} // clearDiag
+
+
+
 uint32_t doActionS0()
 {
   uint32_t status = WRUNIPZ_STATUS_OK;
@@ -667,6 +688,8 @@ uint32_t entryActionConfigured()
 
 uint32_t entryActionOperation()
 {
+  clearDiag();
+
   return WRUNIPZ_STATUS_OK;
 } // entryActionOperation
 
@@ -711,6 +734,10 @@ void cmdHandler(uint32_t *reqState) // handle commands from the outside world
     case WRUNIPZ_CMD_RECOVER :
       *reqState = WRUNIPZ_STATE_IDLE;
       DBPRINT3("wr-unipz: received cmd %d\n", cmd);
+      break;
+    case WRUNIPZ_CMD_CLEARDIAG :
+      DBPRINT3("wr-unipz: received cmd %d\n", cmd);
+      clearDiag();
       break;
     default:
       DBPRINT3("wr-unipz: received unknown command '0x%08x'\n", cmd);
@@ -775,6 +802,8 @@ uint32_t changeState(uint32_t *actState, uint32_t *reqState, uint32_t actStatus)
 
 
 uint32_t doActionOperation(uint32_t *nCycle,                  // total number of UNILAC cycle since FW start
+                           uint64_t *tAct,                    // actual time
+                           uint64_t *nMsg,                    // number of messages
                            uint32_t actStatus)                // actual status of firmware
 {
   uint32_t status;                                                                 // status returned by routines
@@ -796,7 +825,8 @@ uint32_t doActionOperation(uint32_t *nCycle,                  // total number of
 
       int i;
 
-      for (i=0; i < 7; i++) ebmWriteTM(bigData[0][0], deadline, i, i);
+      for (i=0; i < 7; i++) ebmWriteTM(bigData[0][0], deadline, i, i, nMsg);
+      *tAct = deadline;
 
       break;
     
@@ -845,6 +875,9 @@ void main(void) {
 
   uint32_t statusCycle;                         // status of cycle
   uint32_t nCycle;                              // number of cycles
+  uint64_t nMsgAct;                             // actual number of cycles
+  uint64_t nMsgPrev;                            // previous number of cycles
+  
 
   mprintf("\n");
   mprintf("wr-unipz: ***** firmware v %06d started from scratch *****\n", WRUNIPZ_FW_VERSION);
@@ -858,7 +891,8 @@ void main(void) {
   status         = WRUNIPZ_STATUS_UNKNOWN;
   nBadState      = 0;
   nBadStatus     = 0;
-  nMessages      = 0;
+  nMsgAct        = 0;
+  nMsgPrev       = 0;
   flagRecover    = 0;
 
   init();                                                                   // initialize stuff for lm32
@@ -913,7 +947,7 @@ void main(void) {
         break;
       case WRUNIPZ_STATE_OPREADY :
         flagRecover = 0;
-        status = doActionOperation(&nCycle, status);
+        status = doActionOperation(&nCycle, &tActCycle, &nMsgAct, status);
         if (status == WRUNIPZ_STATUS_WRBADSYNC)      reqState = WRUNIPZ_STATE_ERROR;
         if (status == WRUNIPZ_STATUS_ERROR)          reqState = WRUNIPZ_STATE_ERROR;
         break;
@@ -934,18 +968,26 @@ void main(void) {
     if (flagRecover) doAutoRecovery(actState, &reqState);
 
     // update shared memory
-    if ((i % 50) == 0) {
-      tActCycle = getSysTime();
-      *pSharedTCycle  = (uint32_t)((tActCycle - tPrevCycle)/50000);
-      tPrevCycle      = tActCycle;
-    }
+    if ((i % WRUNIPZ_UNILACFREQ) == 0) {                                    // once per second
+
+      // get frequency of UNILAC [uHz]
+      *pSharedTCycleAvg  = (uint32_t)((tActCycle - tPrevCycle)/(WRUNIPZ_UNILACFREQ * 1000));
+      tPrevCycle         = tActCycle;
+
+      // get message rate [Hz]
+      *pSharedMsgFreqAvg = (uint32_t)(nMsgAct - nMsgPrev);
+      nMsgPrev           = nMsgAct;
+    } // if i %
+
     if ((*pSharedStatus == WRUNIPZ_STATUS_OK)     && (status    != WRUNIPZ_STATUS_OK))     {nBadStatus++; *pSharedNBadStatus = nBadStatus;}
     if ((*pSharedState  == WRUNIPZ_STATE_OPREADY) && (actState  != WRUNIPZ_STATE_OPREADY)) {nBadState++;  *pSharedNBadState  = nBadState;}
     *pSharedStatus       = status;
     *pSharedState        = actState;
+    *pSharedDtMax        = dtMax;
+    *pSharedDtMin        = dtMin;
     *pSharedNCycle       = nCycle;
-    *pSharedNMessageHi   = (uint32_t)(nMessages >> 32);
-    *pSharedNMessageLo   = (uint32_t)(nMessages & 0xffffffff);
+    *pSharedNMessageHi   = (uint32_t)(nMsgAct >> 32);
+    *pSharedNMessageLo   = (uint32_t)(nMsgAct & 0xffffffff);
 
     i++;
   } // while  

@@ -10,6 +10,8 @@
 #define  WRUNIPZ_EVT_DUMMY        0x43        // event number chk !!!
 #define  WRUNIPZ_ECA_ADDRESS      0x7ffffff0  // address of ECA input
 #define  WRUNIPZ_EB_HACKISH       0x12345678  // value for EB read handshake
+#define  WRUNIPZ_UNILACFREQ       50          // frequency of UNILAC operation [Hz]
+#define  WRUNIPZ_UNILACPERIOD     20000000    // length of one UNILAC cylce [us]
 
 // (error) status
 #define  WRUNIPZ_STATUS_UNKNOWN          0    // unknown status
@@ -17,6 +19,8 @@
 #define  WRUNIPZ_STATUS_ERROR            2    // an error occured
 #define  WRUNIPZ_STATUS_TIMEDOUT         3    // a timeout occured
 #define  WRUNIPZ_STATUS_OUTOFRANGE       4    // some value is out of range
+#define  WRUNIPZ_STATUS_LATE             5    // a timing messages is not dispatched in time
+#define  WRUNIPZ_STATUS_EARLY            6    // a timing messages is dispatched unreasonably early (dt > UNILACPERIOD)
 #define  WRUNIPZ_STATUS_NOIP            13    // DHCP request via WR network failed                                
 #define  WRUNIPZ_STATUS_EBREADTIMEDOUT  16    // EB read via WR network timed out
 #define  WRUNIPZ_STATUS_WRONGVIRTACC    17    // received EVT_READY_TO_SIS with wrong virt acc number
@@ -34,6 +38,7 @@
 #define  WRUNIPZ_CMD_STOPOP       3           // stops operation
 #define  WRUNIPZ_CMD_IDLE         4           // requests gateway to enter idle state
 #define  WRUNIPZ_CMD_RECOVER      5           // recovery from error state
+#define  WRUNIPZ_CMD_CLEARDIAG    6           // reset statistics information
 
 // states; implicitely, all states may transit to the ERROR or FATAL state
 #define  WRUNIPZ_STATE_UNKNOWN    0           // unknown state

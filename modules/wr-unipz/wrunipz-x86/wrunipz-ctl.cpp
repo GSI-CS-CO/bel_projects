@@ -3,7 +3,7 @@
  *
  *  created : 2018
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 13-December-2018
+ *  version : 14-December-2018
  *
  * Command-line interface for wrunipz
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 17-May-2017
  ********************************************************************************************/
-#define WRUNIPZ_X86_VERSION "0.0.1"
+#define WRUNIPZ_X86_VERSION "0.0.2"
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -73,9 +73,12 @@ eb_address_t wrunipz_macLo;        // ebm src mac, read
 eb_address_t wrunipz_ip;           // ebm src ip, read
 eb_address_t wrunipz_nBadStatus;   // # of bad status ("ERROR") incidents, read
 eb_address_t wrunipz_nBadState;    // # of bad state ("not in operation") incidents, read
-eb_address_t wrunipz_tCycle;       // period of cycle [us], read
+eb_address_t wrunipz_tCycleAvg;    // period of cycle [us] (average over one second), read
 eb_address_t wrunipz_nMessageLo;   // number of messages, read
 eb_address_t wrunipz_nMessageHi;   // number of messages, read
+eb_address_t wrunipz_msgFreqAvg;   // message rate (average over one second), read
+eb_address_t wrunipz_dtMax;        // delta T (max) between message time of dispatching and deadline
+eb_address_t wrunipz_dtMin;        // delta T (min) between message time of dispatching and deadline
 
 eb_data_t   data1;
 
@@ -96,6 +99,8 @@ const char* wrunipz_status_text(uint32_t code) {
   case WRUNIPZ_STATUS_ERROR            : sprintf(message, "error %d, %s",    code, "an error occured"); break;
   case WRUNIPZ_STATUS_TIMEDOUT         : sprintf(message, "error %d, %s",    code, "a timeout occured"); break;
   case WRUNIPZ_STATUS_OUTOFRANGE       : sprintf(message, "error %d, %s",    code, "some value is out of range"); break;
+  case WRUNIPZ_STATUS_LATE             : sprintf(message, "error %d, %s",    code, "a timing messages is not dispatched in time"); break;
+  case WRUNIPZ_STATUS_EARLY            : sprintf(message, "error %d, %s",    code, "a timing messages is dispatched unreasonably early (dt > UNILAC period)"); break;
   case WRUNIPZ_STATUS_NOIP             : sprintf(message, "error %d, %s",    code, "DHCP request via WR network failed"); break;
   case WRUNIPZ_STATUS_EBREADTIMEDOUT   : sprintf(message, "error %d, %s",    code, "EB read via WR network timed out"); break;
   case WRUNIPZ_STATUS_WRONGVIRTACC     : sprintf(message, "error %d, %s",    code, "mismatching virtual accelerator for EVT_READY_TO_SIS from UNIPZ"); break;
@@ -134,17 +139,19 @@ static void help(void) {
   fprintf(stderr, "  -c                  display configuration of WR-UNIPZ\n");
   fprintf(stderr, "  -e                  display version\n");
   fprintf(stderr, "  -i                  display information on WR-UNIPZ\n");
-  fprintf(stderr, "  -s<n>               snoop gateway for information continuously\n");
+  fprintf(stderr, "  -s<n>               snoop ... for information continuously\n");
   fprintf(stderr, "                      0: print all messages (default)\n");
-  fprintf(stderr, "                      1: as 0, but without info on ongoing transfers\n");
-  fprintf(stderr, "                      2: as 1, but without info on transfers\n");
-  fprintf(stderr, "                      3: as 2, but without info on status\n");
+  fprintf(stderr, "                      1: as 0, once per second\n");
+  fprintf(stderr, "                      2: as 1, inform in case of status or state changes\n");
+  fprintf(stderr, "                      3: as 2, inform in case of state changes\n");
   fprintf(stderr, "\n");
   fprintf(stderr, "  configure           command requests state change from IDLE or CONFIGURED to CONFIGURED\n");
   fprintf(stderr, "  startop             command requests state change from CONFIGURED to OPREADY\n");
   fprintf(stderr, "  stopop              command requests state change from OPREADY to STOPPING -> CONFIGURED\n");
   fprintf(stderr, "  recover             command tries to recover from state ERROR and transit to state IDLE\n");
   fprintf(stderr, "  idle                command requests state change to IDLE\n");
+  fprintf(stderr, "\n");
+  fprintf(stderr, "  cleardiag           clear statistics\n");
   fprintf(stderr, "\n");
   fprintf(stderr, "Use this tool to control WR-UNIPZ from the command line\n");
   fprintf(stderr, "Example1: '%s dev/wbm0 bla bla bla\n", program);
@@ -176,7 +183,7 @@ int readTransfers(uint32_t *transfers)
 } // getInfo
 
 
-int readInfo(uint32_t *status, uint32_t *state, uint32_t *iterations, uint32_t *cycles, uint32_t *nBadStatus, uint32_t *nBadState, uint32_t *tCycle, uint64_t *nMessages)
+int readInfo(uint32_t *status, uint32_t *state, uint32_t *iterations, uint32_t *cycles, uint32_t *nBadStatus, uint32_t *nBadState, uint32_t *tCycleAvg, uint64_t *msgFreqAvg, int32_t *dtMax, int32_t *dtMin)
 {
   eb_cycle_t  cycle;
   eb_status_t eb_status;
@@ -190,9 +197,10 @@ int readInfo(uint32_t *status, uint32_t *state, uint32_t *iterations, uint32_t *
   eb_cycle_read(cycle, wrunipz_nBadStatus,    EB_BIG_ENDIAN|EB_DATA32, &(data[3]));
   eb_cycle_read(cycle, wrunipz_nBadState,     EB_BIG_ENDIAN|EB_DATA32, &(data[4]));
   eb_cycle_read(cycle, wrunipz_cycles,        EB_BIG_ENDIAN|EB_DATA32, &(data[5]));
-  eb_cycle_read(cycle, wrunipz_tCycle,        EB_BIG_ENDIAN|EB_DATA32, &(data[6]));
-  eb_cycle_read(cycle, wrunipz_nMessageHi,    EB_BIG_ENDIAN|EB_DATA32, &(data[7]));
-  eb_cycle_read(cycle, wrunipz_nMessageLo,    EB_BIG_ENDIAN|EB_DATA32, &(data[8]));
+  eb_cycle_read(cycle, wrunipz_tCycleAvg,     EB_BIG_ENDIAN|EB_DATA32, &(data[6]));
+  eb_cycle_read(cycle, wrunipz_msgFreqAvg,    EB_BIG_ENDIAN|EB_DATA32, &(data[7]));
+  eb_cycle_read(cycle, wrunipz_dtMax,         EB_BIG_ENDIAN|EB_DATA32, &(data[8]));
+  eb_cycle_read(cycle, wrunipz_dtMin,         EB_BIG_ENDIAN|EB_DATA32, &(data[9]));
   if ((eb_status = eb_cycle_close(cycle)) != EB_OK) die("wr-unipz: eb_cycle_close", eb_status);
 
   *status        = data[0];
@@ -201,8 +209,10 @@ int readInfo(uint32_t *status, uint32_t *state, uint32_t *iterations, uint32_t *
   *nBadStatus    = data[3];
   *nBadState     = data[4];
   *cycles        = data[5];
-  *tCycle        = data[6];
-  *nMessages     = ((uint64_t)(data[7]) << 32) + (uint64_t)(data[8]);
+  *tCycleAvg     = data[6];
+  *msgFreqAvg    = data[7];
+  *dtMax         = data[8];
+  *dtMin         = data[9];
   
   return eb_status;
 } // readInfo
@@ -237,18 +247,18 @@ int readConfig(uint64_t *mac, uint32_t *ip)
 
 void printCycleHeader()
 {
-  printf("wr-unipz:           CYCLES            | DIAGNOSIS  |                 INFO           \n");
-  printf("wr-unipz:                n   messages | nue        |   state      nchng stat   nchng\n");
+  printf("wr-unipz:         CYCLES |          DIAGNOSIS        |                 INFO           \n");
+  printf("wr-unipz:              n |    fUni  fMsg dtMax dtMin |   state      nchng stat   nchng\n");
 } // printCycleHeader
 
 
-void printCycle(uint32_t cycles, uint32_t tCycle, uint64_t nMessages)
+void printCycle(uint32_t cycles, uint32_t tCycleAvg, uint32_t msgFreqAvg, int32_t dtMax, int32_t dtMin)
 {
   // cycle
-  printf("wr-unipz: CYCLE %010d  %012"PRIu64" |", cycles, nMessages);
+  printf("wr-unipz: CYC %010d |", cycles);
 
   // diag
-  printf(" %5.2f      |", 1000000.0/(double)tCycle);
+  printf("DG %5.2f %05d %05d %05d |", 1000000.0/(double)tCycleAvg, msgFreqAvg, dtMax / 1000, dtMin / 1000);
 
 } // printCycle
 
@@ -281,6 +291,8 @@ int main(int argc, char** argv) {
   uint64_t messages;
   uint32_t tCycle;
   uint32_t version;
+  int32_t  dtMax;
+  int32_t  dtMin;
 
   uint32_t actCycles;                          // actual number of cycles
   uint32_t actState = WRUNIPZ_STATE_UNKNOWN;   // actual state of gateway
@@ -362,9 +374,12 @@ int main(int argc, char** argv) {
   wrunipz_ip           = lm32_base + SHARED_OFFS + WRUNIPZ_SHARED_IP;
   wrunipz_nBadStatus   = lm32_base + SHARED_OFFS + WRUNIPZ_SHARED_NBADSTATUS;
   wrunipz_nBadState    = lm32_base + SHARED_OFFS + WRUNIPZ_SHARED_NBADSTATE;
-  wrunipz_tCycle       = lm32_base + SHARED_OFFS + WRUNIPZ_SHARED_TCYCLE;
+  wrunipz_tCycleAvg    = lm32_base + SHARED_OFFS + WRUNIPZ_SHARED_TCYCLEAVG;
   wrunipz_nMessageHi   = lm32_base + SHARED_OFFS + WRUNIPZ_SHARED_NMESSAGEHI;
   wrunipz_nMessageLo   = lm32_base + SHARED_OFFS + WRUNIPZ_SHARED_NMESSAGELO;
+  wrunipz_msgFreqAvg   = lm32_base + SHARED_OFFS + WRUNIPZ_SHARED_MSGFREQAVG;
+  wrunipz_dtMax        = lm32_base + SHARED_OFFS + WRUNIPZ_SHARED_DTMAX;
+  wrunipz_dtMin        = lm32_base + SHARED_OFFS + WRUNIPZ_SHARED_DTMIN;
 
   // printf("wr-unipz: lm32_base 0x%08x, 0x%08x\n", lm32_base, wrunipz_iterations);
 
@@ -381,9 +396,9 @@ int main(int argc, char** argv) {
 
   if (getInfo) {
     // status
-    readInfo(&status, &state, &iterations, &cycles, &nBadStatus, &nBadState, &tCycle, &messages);
+    readInfo(&status, &state, &iterations, &cycles, &nBadStatus, &nBadState, &tCycle, &messages, &dtMax, &dtMin);
     printCycleHeader();
-    printCycle(cycles, tCycle, messages);
+    printCycle(cycles, tCycle, messages, dtMax, dtMin);
     printf(" %s (%6u), %s (%6u)\n", wrunipz_state_text(state), nBadState, wrunipz_status_text(status), nBadStatus);
   } // if getInfo
 
@@ -412,6 +427,10 @@ int main(int argc, char** argv) {
       eb_device_write(device, wrunipz_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)WRUNIPZ_CMD_IDLE     , 0, eb_block);
       if (state != WRUNIPZ_STATE_CONFIGURED) printf("wr-unipz: WARNING command has not effect (not in state CONFIGURED)\n");
     } // "idle"
+    if (!strcasecmp(command, "cleardiag")) {
+      eb_device_write(device, wrunipz_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)WRUNIPZ_CMD_CLEARDIAG , 0, eb_block);
+      if (state != WRUNIPZ_STATE_OPREADY) printf("wr-unipz: WARNING command has not effect (not in state OPREADY)\n");
+    } // "cleardiag"
   } //if command
   
 
@@ -425,7 +444,7 @@ int main(int argc, char** argv) {
     printCycleHeader();
 
     while (1) {
-      readInfo(&status, &state, &iterations, &cycles, &nBadStatus, &nBadState, &tCycle, &messages); // read info from lm32
+      readInfo(&status, &state, &iterations, &cycles, &nBadStatus, &nBadState, &tCycle, &messages, &dtMax, &dtMin); // read info from lm32
 
       switch(state) {
       case WRUNIPZ_STATE_OPREADY :
@@ -446,7 +465,7 @@ int main(int argc, char** argv) {
       if ((actStatus    != status)    && (logLevel <= WRUNIPZ_LOGLEVEL_STATUS))                                        {printFlag = 1; actStatus = status;}
 
       if (printFlag) {
-        printCycle(cycles, tCycle, messages); 
+        printCycle(cycles, tCycle, messages, dtMax, dtMin); 
         printf(" %s (%6u), %s (%6u)\n", wrunipz_state_text(state), nBadState, wrunipz_status_text(status), nBadStatus);
       } // if printFlag
 
