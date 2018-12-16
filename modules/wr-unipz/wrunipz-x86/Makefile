@@ -13,7 +13,7 @@ TARGETS     := wrunipz-ctl
 
 
 EXTRA_FLAGS ?=
-CFLAGS      ?= $(EXTRA_FLAGS) -Wall -O2 -g -I $(EB) -I $(FW)
+CFLAGS      ?= $(EXTRA_FLAGS) -Wall -O2 -g -I $(EB) -I $(FW)/../include -I $(FW)
 LIBS        ?= -L $(EB)/.libs -Wl,-rpath,$(PREFIX)/lib -letherbone -lm
 
 all: $(TARGETS)

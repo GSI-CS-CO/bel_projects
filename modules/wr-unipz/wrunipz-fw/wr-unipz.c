@@ -3,7 +3,7 @@
  *
  *  created : 2018
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 14-Dec-2018
+ *  version : 15-Dec-2018
  *
  *  lm32 program for gateway between UNILAC Pulszentrale and a White Rabbit network
  *  this basically serves a Data Master for UNILAC
@@ -35,7 +35,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 22-November-2018
  ********************************************************************************************/
-#define WRUNIPZ_FW_VERSION 0x000002                                     // make this consistent with makefile
+#define WRUNIPZ_FW_VERSION 0x000003                                     // make this consistent with makefile
 
 /* standard includes */
 #include <stdio.h>
@@ -113,10 +113,11 @@ uint32_t *pSharedNMessageLo;            // pointer to a "user defined" u32 regis
 uint32_t *pSharedMsgFreqAvg;            // pointer to a "user defined" u32 register; here: message rate (average over one second)
 uint32_t *pSharedDtMax;                 // pointer to a "user defined" u32 register; here: max diff between deadline and time of dispatching
 uint32_t *pSharedDtMin;                 // pointer to a "user defined" u32 register; here: min diff between deadline and time of dispatching
-uint32_t *pSharedConfDataStat;          // pointer to a "user defined" u32 register; here: status of config data transaction
-uint32_t *pSharedConfDataVacc;          // pointer to a "user defined" u32 register; here: virt acc of config data
+uint32_t *pSharedConfStat;              // pointer to a "user defined" u32 register; here: status of config data transaction
+uint32_t *pSharedConfVacc;              // pointer to a "user defined" u32 register; here: virt acc of config data
 uint32_t *pSharedConfData;              // pointer to a "user defined" u32 register; here: start of config data
 uint32_t *pSharedConfFlag;              // pointer to a "user defined" u32 register; here: start of config flags
+uint32_t *pSharedConfSubmit;            // pointer to a "user defined" u32 register; here: start of submit flags
 
 uint32_t *pCpuRamExternal;              // external address (seen from host bridge) of this CPU's RAM            
 uint32_t *pCpuRamExternalData4EB;       // external address (seen from host bridge) of this CPU's RAM: field for EB return values
@@ -127,11 +128,10 @@ int32_t  dtMax;                         // dT max (deadline - dispatch time)
 int32_t  dtMin;                         // dT min (deadline - dispatch time)
 
 
-dataTable bigData[WRUNIPZ_NPZ][WRUNIPZ_NVACC * WRUNIPZ_NSET];            // data 1st index: # of UNIPZ; 2nd index: # of virtAcc
-                                                                          // two sets of virtAcc: 'normal' and 'verkuerzt'
-uint32_t  configData[WRUNIPZ_NPZ][WRUNIPZ_CONFDATASIZE];                  // data for transactional configuration 
-uint32_t  configFlags[WRUNIPZ_NPZ][WRUNIPZ_CONFFLAGSIZE];                 // extra words for flags (see dataTable)
-
+// big data contains the event tables for all PZs, and for all virtual accelerators
+// there are two sets of 16 virtual accelerators: 0..15: "normal"; 16..31: "verkuerzt"
+dataTable bigData[WRUNIPZ_NPZ][WRUNIPZ_NVACC * WRUNIPZ_NSET];            
+                                                                         
 uint64_t wrGetMac() // get my own MAC
 {
   uint32_t macHi, macLo;
@@ -359,27 +359,28 @@ void initSharedMem() // determine address and clear shared mem
   pShared           = (uint32_t *)_startshared;
 
   // get address to data
-  pSharedVersion       = (uint32_t *)(pShared + (WRUNIPZ_SHARED_VERSION >> 2));
-  pSharedStatus        = (uint32_t *)(pShared + (WRUNIPZ_SHARED_STATUS >> 2));
-  pSharedCmd           = (uint32_t *)(pShared + (WRUNIPZ_SHARED_CMD >> 2));
-  pSharedState         = (uint32_t *)(pShared + (WRUNIPZ_SHARED_STATE >> 2));
-  pSharedData4EB       = (uint32_t *)(pShared + (WRUNIPZ_SHARED_DATA_4EB_START >> 2));
-  pSharedNBadStatus    = (uint32_t *)(pShared + (WRUNIPZ_SHARED_NBADSTATUS >> 2));
-  pSharedNBadState     = (uint32_t *)(pShared + (WRUNIPZ_SHARED_NBADSTATE >> 2));
-  pSharedMacHi         = (uint32_t *)(pShared + (WRUNIPZ_SHARED_MACHI >> 2));
-  pSharedMacLo         = (uint32_t *)(pShared + (WRUNIPZ_SHARED_MACLO >> 2));
-  pSharedIp            = (uint32_t *)(pShared + (WRUNIPZ_SHARED_IP >> 2));
-  pSharedNCycle        = (uint32_t *)(pShared + (WRUNIPZ_SHARED_NCYCLE >> 2));  
-  pSharedTCycleAvg     = (uint32_t *)(pShared + (WRUNIPZ_SHARED_TCYCLEAVG >> 2));
-  pSharedNMessageHi    = (uint32_t *)(pShared + (WRUNIPZ_SHARED_NMESSAGEHI >> 2));
-  pSharedNMessageLo    = (uint32_t *)(pShared + (WRUNIPZ_SHARED_NMESSAGELO >> 2));
-  pSharedMsgFreqAvg    = (uint32_t *)(pShared + (WRUNIPZ_SHARED_MSGFREQAVG >> 2));
-  pSharedDtMax         = (uint32_t *)(pShared + (WRUNIPZ_SHARED_DTMAX >> 2));
-  pSharedDtMin         = (uint32_t *)(pShared + (WRUNIPZ_SHARED_DTMIN >> 2));
-  pSharedConfDataStat  = (uint32_t *)(pShared + (WRUNIPZ_SHARED_CONF_STAT >> 2));
-  pSharedConfDataVacc  = (uint32_t *)(pShared + (WRUNIPZ_SHARED_CONF_VACC >> 2));
-  pSharedConfData      = (uint32_t *)(pShared + (WRUNIPZ_SHARED_CONFDATA_START >> 2));
-  pSharedConfFlag      = (uint32_t *)(pShared + (WRUNIPZ_SHARED_CONFFLAG_START >> 2));
+  pSharedVersion          = (uint32_t *)(pShared + (WRUNIPZ_SHARED_VERSION >> 2));
+  pSharedStatus           = (uint32_t *)(pShared + (WRUNIPZ_SHARED_STATUS >> 2));
+  pSharedCmd              = (uint32_t *)(pShared + (WRUNIPZ_SHARED_CMD >> 2));
+  pSharedState            = (uint32_t *)(pShared + (WRUNIPZ_SHARED_STATE >> 2));
+  pSharedData4EB          = (uint32_t *)(pShared + (WRUNIPZ_SHARED_DATA_4EB >> 2));
+  pSharedNBadStatus       = (uint32_t *)(pShared + (WRUNIPZ_SHARED_NBADSTATUS >> 2));
+  pSharedNBadState        = (uint32_t *)(pShared + (WRUNIPZ_SHARED_NBADSTATE >> 2));
+  pSharedMacHi            = (uint32_t *)(pShared + (WRUNIPZ_SHARED_MACHI >> 2));
+  pSharedMacLo            = (uint32_t *)(pShared + (WRUNIPZ_SHARED_MACLO >> 2));
+  pSharedIp               = (uint32_t *)(pShared + (WRUNIPZ_SHARED_IP >> 2));
+  pSharedNCycle           = (uint32_t *)(pShared + (WRUNIPZ_SHARED_NCYCLE >> 2));  
+  pSharedTCycleAvg        = (uint32_t *)(pShared + (WRUNIPZ_SHARED_TCYCLEAVG >> 2));
+  pSharedNMessageHi       = (uint32_t *)(pShared + (WRUNIPZ_SHARED_NMESSAGEHI >> 2));
+  pSharedNMessageLo       = (uint32_t *)(pShared + (WRUNIPZ_SHARED_NMESSAGELO >> 2));
+  pSharedMsgFreqAvg       = (uint32_t *)(pShared + (WRUNIPZ_SHARED_MSGFREQAVG >> 2));
+  pSharedDtMax            = (uint32_t *)(pShared + (WRUNIPZ_SHARED_DTMAX >> 2));
+  pSharedDtMin            = (uint32_t *)(pShared + (WRUNIPZ_SHARED_DTMIN >> 2));
+  pSharedConfStat         = (uint32_t *)(pShared + (WRUNIPZ_SHARED_CONF_STAT >> 2));
+  pSharedConfVacc         = (uint32_t *)(pShared + (WRUNIPZ_SHARED_CONF_VACC >> 2));
+  pSharedConfData         = (uint32_t *)(pShared + (WRUNIPZ_SHARED_CONF_DATA >> 2));
+  pSharedConfFlag         = (uint32_t *)(pShared + (WRUNIPZ_SHARED_CONF_FLAG >> 2));
+  pSharedConfSubmit       = (uint32_t *)(pShared + (WRUNIPZ_SHARED_CONF_SUBMIT >> 2));
   
   // find address of CPU from external perspective
   idx = 0;
@@ -388,7 +389,7 @@ void initSharedMem() // determine address and clear shared mem
   find_device_multi_in_subtree(&found_clu, &found_sdb[0], &idx, c_Max_Rams, GSI, LM32_RAM_USER);
   if(idx >= cpuId) {
     pCpuRamExternal           = (uint32_t *)(getSdbAdr(&found_sdb[cpuId]) & 0x7FFFFFFF); // CPU sees the 'world' under 0x8..., remove that bit to get host bridge perspective
-    pCpuRamExternalData4EB    = (uint32_t *)(pCpuRamExternal + ((WRUNIPZ_SHARED_DATA_4EB_START + SHARED_OFFS) >> 2));
+    pCpuRamExternalData4EB    = (uint32_t *)(pCpuRamExternal + ((WRUNIPZ_SHARED_DATA_4EB + SHARED_OFFS) >> 2));
   }
 
   DBPRINT2("wr-unipz: CPU RAM External 0x%8x, begin shared 0x%08x\n", pCpuRamExternal, SHARED_OFFS);
@@ -398,7 +399,7 @@ void initSharedMem() // determine address and clear shared mem
   *pSharedVersion      = WRUNIPZ_FW_VERSION; // of all the shared variabes, only VERSION is a constant. Set it now!
   *pSharedNBadStatus   = 0;
   *pSharedNBadState    = 0;
-  *pSharedConfDataStat = 0;
+  *pSharedConfStat     = 0;
 } // initSharedMem 
 
 
@@ -627,54 +628,60 @@ void clearDiag() // clears all statistics
   dtMin          = 0x7fffffff;
 } // clearDiag
 
-uint32_t configRequest() // request to start transaction for config data
+uint32_t configTransactInit()          // initializes transaction for config data
 {
   int i,j;
   
-  if (*pSharedConfDataStat != 0) return WRUNIPZ_STATUS_CONFIG;
+  if (*pSharedConfStat != 0) return WRUNIPZ_STATUS_CONFIG;
 
-  for (i=0; i < WRUNIPZ_CONFFLAGSIZE; i++) *(pSharedConfFlag + i) = 0;
-  for (i=0; i < WRUNIPZ_CONFDATASIZE; i++) *(pSharedConfData + i) = 0;
+  *pSharedConfSubmit = 0;
+  *pSharedConfVacc   = 0;
+  for (i=0; i < (WRUNIPZ_NCONFFLAG); i++) *(pSharedConfFlag   + i) = 0;
+  for (i=0; i < (WRUNIPZ_NCONFDATA); i++) *(pSharedConfData   + i) = 0;
 
   mprintf("wr-unipz: request completed\n");
     
-  *pSharedConfDataStat = WRUNIPZ_CONFSTAT_REQ;
+  *pSharedConfStat = WRUNIPZ_CONFSTAT_INIT;
 
   return WRUNIPZ_STATUS_OK;
-} // configRequest
+} // configTransactInit
 
-uint32_t configSubmit() // submit transferred config data
+uint32_t configTransactSubmit() // submit transferred config data
 {
-  if (*pSharedConfDataStat != WRUNIPZ_CONFSTAT_REQ) return WRUNIPZ_STATUS_CONFIG;
+  if (*pSharedConfStat != WRUNIPZ_CONFSTAT_INIT) return WRUNIPZ_STATUS_CONFIG;
 
-  /* hack */
-  int i,j,k;
-  int vacc;
+  /* hack: code below shall be triggered by "commit" event from Masterpulszentrale */
+  int      i,j,k;
+  int      vacc;
+  uint32_t submitFlag;
 
-  vacc = *pSharedConfDataVacc;
+  // get vacc and submit flags
+  vacc       = *pSharedConfVacc;
+  submitFlag = *pSharedConfSubmit;
 
-  for (i=0; i < WRUNIPZ_NPZ; i++) {
-    for (j=0; j < WRUNIPZ_NSET; j++) {
+  for (i=0; i < WRUNIPZ_NPZ; i++) {        // for all Pulszentralen
+    for (j=0; j < WRUNIPZ_NSET; j++) {     // for all sets ("normal", "verkuerzt")
+      if (submitFlag & (1 << i)) {         // check, if Pulszentrale (defined by "i") shall be submitted
+        // flags
+        bigData[i][j * WRUNIPZ_NVACC + vacc].validFlags = *(pSharedConfFlag + j * WRUNIPZ_NPZ * WRUNIPZ_NFLAG + i * WRUNIPZ_NPZ + 0);
+        bigData[i][j * WRUNIPZ_NVACC + vacc].prepFlags  = *(pSharedConfFlag + j * WRUNIPZ_NPZ * WRUNIPZ_NFLAG + i * WRUNIPZ_NPZ + 1);
+        bigData[i][j * WRUNIPZ_NVACC + vacc].evtFlags   = *(pSharedConfFlag + j * WRUNIPZ_NPZ * WRUNIPZ_NFLAG + i * WRUNIPZ_NPZ + 2);
 
-      // flags
-      bigData[i][vacc + j * WRUNIPZ_NVACC].validFlags = *(pSharedConfFlag + 0 + i * WRUNIPZ_NPZ + j * WRUNIPZ_NPZ * WRUNIPZ_NFLAG );
-      bigData[i][vacc + j * WRUNIPZ_NVACC].prepFlags  = *(pSharedConfFlag + 1 + i * WRUNIPZ_NPZ + j * WRUNIPZ_NPZ * WRUNIPZ_NFLAG );
-      bigData[i][vacc + j * WRUNIPZ_NVACC].evtFlags   = *(pSharedConfFlag + 2 + i * WRUNIPZ_NPZ + j * WRUNIPZ_NPZ * WRUNIPZ_NFLAG );
-
-      // data
-      for (k=0; k < WRUNIPZ_NEVT; k++) 
-        bigData[i][vacc + j * WRUNIPZ_NVACC].data[k]  = *(pSharedConfData + k + i * WRUNIPZ_NPZ + j * WRUNIPZ_NPZ * WRUNIPZ_NEVT);
+        // data
+        for (k=0; k < WRUNIPZ_NEVT; k++) 
+          bigData[i][j * WRUNIPZ_NVACC + vacc].data[k]  = *(pSharedConfData + j * WRUNIPZ_NPZ * WRUNIPZ_NEVT +  i * WRUNIPZ_NPZ + k);
+      } // if submit flag
     } // for j
   } // for i
   /* end hack */
 
   mprintf("wr-unipz: submit completed\n");
   
-  /* *pSharedConfDataStat = WRUNIPZ_CONFSTAT_REQ | WRUNIPZ_CONFSTAT_SUBMIT; hack */
-  *pSharedConfDataStat =0x0;
+  /* *pSharedConfDataStat = WRUNIPZ_CONFSTAT_REQ | WRUNIPZ_CONFSTAT_SUBMIT; commented: this shall be used once code above is triggered by event */
+  *pSharedConfStat =0x0;
 
   return WRUNIPZ_STATUS_OK;
-} // configSubmig
+} // configTransactSubmit
 
 
 uint32_t doActionS0()
@@ -800,11 +807,11 @@ void cmdHandler(uint32_t *reqState) // handle commands from the outside world
       break;
     case WRUNIPZ_CMD_CONFREQ :
       DBPRINT3("wr-unipz: received cmd %d\n", cmd);
-      if (configRequest() != WRUNIPZ_STATUS_OK) DBPRINT1("wr-unipz: request to start config data transaction failed\n");
+      if (configTransactInit() != WRUNIPZ_STATUS_OK) DBPRINT1("wr-unipz: request to start config data transaction failed\n");
       break;
     case WRUNIPZ_CMD_CONFSUBMIT :
       DBPRINT3("wr-unipz: received cmd %d\n", cmd);
-      if (configSubmit() != WRUNIPZ_STATUS_OK) DBPRINT1("wr-unipz: submission of config data failed\n");
+      if (configTransactSubmit() != WRUNIPZ_STATUS_OK) DBPRINT1("wr-unipz: submission of config data failed\n");
       break;
     default:
       DBPRINT3("wr-unipz: received unknown command '0x%08x'\n", cmd);

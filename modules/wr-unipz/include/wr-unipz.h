@@ -11,7 +11,7 @@
 #define  WRUNIPZ_ECA_ADDRESS      0x7ffffff0  // address of ECA input
 #define  WRUNIPZ_EB_HACKISH       0x12345678  // value for EB read handshake
 #define  WRUNIPZ_UNILACFREQ       50          // frequency of UNILAC operation [Hz]
-#define  WRUNIPZ_UNILACPERIOD     20000000    // length of one UNILAC cylce [us]
+#define  WRUNIPZ_UNILACPERIOD     20000000    // length of one UNILAC cylce [ns]
 
 // (error) status
 #define  WRUNIPZ_STATUS_UNKNOWN          0    // unknown status
@@ -65,16 +65,9 @@
 #define  WRUNIPZ_LOGLEVEL_STATE   3           // info on state changes
 
 #define  WRUNIPZ_NEVT            32           // maximum number of events per virtAcc and cycle
-#define  WRUNIPZ_NVACC           16           // maximum number of vAcc
-#define  WRUNIPZ_NSET             2           // maximum number of sets for each vAcc
-#define  WRUNIPZ_NPZ              7           // # of Pulszentralen
-#define  WRUNIPZ_NFLAG            4           // number of flags per virtAcc
-#define  WRUNIPZ_CONFDATASIZE     WRUNIPZ_NEVT  * WRUNIPZ_NPZ * WRUNIPZ_NSET // # of config data words for one virtual accelerator
-#define  WRUNIPZ_CONFFLAGSIZE     WRUNIPZ_NFLAG * WRUNIPZ_NPZ * WRUNIPZ_NSET // # of config data words for one virtual accelerator
 
-#define  WRUNIPZ_CONFSTAT_REQ     1           // request for transfer of config data
-#define  WRUNIPZ_CONFSTAT_SUBMIT  2           // config data has been transferred, FW starts waiting for commit
-#define  WRUNIPZ_CONFSTAT_COMMIT  4           // received commit event, data being commited
+#define  WRUNIPZ_CONFSTAT_INIT    1           // transaction of config data has been initialized
+#define  WRUNIPZ_CONFSTAT_SUBMIT  2           // config data for transaction has been submitted, waiting for commit event
 
 uint32_t gid[] =                 {1000, 1001, 1002, 1003, 1004, 1005, 1006};
 

@@ -3,7 +3,7 @@
  *
  *  created : 2018
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 14-December-2018
+ *  version : 15-December-2018
  *
  * Command-line interface for wrunipz
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 17-May-2017
  ********************************************************************************************/
-#define WRUNIPZ_X86_VERSION "0.0.2"
+#define WRUNIPZ_X86_VERSION "0.0.3"
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -81,6 +81,7 @@ eb_address_t wrunipz_dtMax;        // delta T (max) between message time of disp
 eb_address_t wrunipz_dtMin;        // delta T (min) between message time of dispatching and deadline
 eb_address_t wrunipz_confVacc;     // virtAcc of config
 eb_address_t wrunipz_confStat;     // status of config transaction
+eb_address_t wrunipz_confSubmit;   // submit flags (indicates, which PZ is submitted)
 eb_address_t wrunipz_confFlag;     // flags of config
 eb_address_t wrunipz_confData;     // data of config
 
@@ -388,8 +389,9 @@ int main(int argc, char** argv) {
   wrunipz_dtMin        = lm32_base + SHARED_OFFS + WRUNIPZ_SHARED_DTMIN;
   wrunipz_confVacc     = lm32_base + SHARED_OFFS + WRUNIPZ_SHARED_CONF_VACC;
   wrunipz_confStat     = lm32_base + SHARED_OFFS + WRUNIPZ_SHARED_CONF_STAT;
-  wrunipz_confFlag     = lm32_base + SHARED_OFFS + WRUNIPZ_SHARED_CONFFLAG_START;
-  wrunipz_confData     = lm32_base + SHARED_OFFS + WRUNIPZ_SHARED_CONFDATA_START;
+  wrunipz_confFlag     = lm32_base + SHARED_OFFS + WRUNIPZ_SHARED_CONF_FLAG;
+  wrunipz_confData     = lm32_base + SHARED_OFFS + WRUNIPZ_SHARED_CONF_DATA;
+  wrunipz_confSubmit   = lm32_base + SHARED_OFFS + WRUNIPZ_SHARED_CONF_SUBMIT;
 
   // printf("wr-unipz: lm32_base 0x%08x, 0x%08x\n", lm32_base, wrunipz_iterations);
 
