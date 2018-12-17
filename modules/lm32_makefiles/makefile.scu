@@ -1,0 +1,60 @@
+###############################################################################
+##                                                                           ##
+##  Common include makefile for SCU integrated soft core processor LM32      ##
+##                                                                           ##
+##---------------------------------------------------------------------------##
+## File:    makefile.scu                                                     ##
+## (c):     GSI Helmholtz Centre for Heavy Ion Research GmbH                 ##
+## Author:  Ulrich Becker                                                    ##
+## Date:    17.12.2018                                                       ##
+###############################################################################
+
+#SOURCE += buildid.c
+
+SOURCE += $(SYN_DIR)/modules/lm32_stub/stubs.c
+SOURCE += $(SYN_DIR)/modules/lm32_stub/crt0.S
+
+
+SOURCE += $(SYN_DIR)/ip_cores/wrpc-sw/dev/w1.c
+SOURCE += $(SYN_DIR)/ip_cores/wrpc-sw/dev/w1-temp.c
+SOURCE += $(SYN_DIR)/ip_cores/wrpc-sw/dev/w1-hw.c
+SOURCE += $(SYN_DIR)/modules/lm32-include/dbg.c
+SOURCE += $(SYN_DIR)/modules/lm32-include/aux.c
+SOURCE += $(SYN_DIR)/modules/lm32-include/irq.c
+SOURCE += $(SYN_DIR)/modules/lm32-include/mini_sdb.c
+SOURCE += $(SYN_DIR)/modules/lm32-include/mprintf.c
+SOURCE += $(SYN_DIR)/ip_cores/wrpc-sw/dev/uart.c
+SOURCE += $(SYN_DIR)/ip_cores/wrpc-sw/lib/usleep.c
+SOURCE += $(SYN_DIR)/ip_cores/wrpc-sw/dev/devicelist.c
+SOURCE += $(SYN_DIR)/ip_cores/wrpc-sw/dev/syscon.c
+SOURCE += $(SYN_DIR)/ip_cores/wrpc-sw/pp_printf/printf.c
+SOURCE += $(SYN_DIR)/ip_cores/wrpc-sw/sdb-lib/glue.c
+SOURCE += $(SYN_DIR)/ip_cores/wrpc-sw/pp_printf/vsprintf-mini.c
+SOURCE += $(SYN_DIR)/modules/lm32-include/sdb_add.S
+
+INCLUDE_DIRS += $(SYN_DIR)/modules/lm32-include
+INCLUDE_DIRS += $(SYN_DIR)/ip_cores/wrpc-sw/include
+INCLUDE_DIRS += $(SYN_DIR)/ip_cores/wrpc-sw/sdb-lib
+INCLUDE_DIRS += $(SYN_DIR)/ip_cores/wrpc-sw/pp_printf
+INCLUDE_DIRS += $(SYN_DIR)/ip_cores/etherbone-core/hdl/eb_master_core
+
+DEFINES += CONFIG_WR_NODE
+DEFINES += CONFIG_PRINT_BUFSIZE=128
+DEFINES += SDBFS_BIG_ENDIAN
+DEFINES += USRCPUCLK=125000
+
+RAM_SIZE ?= 49152
+
+CODE_OPTIMIZATION ?= s
+CFLAGS +=  -std=gnu99
+CFLAGS += -O$(CODE_OPTIMIZATION)
+CFLAGS += -nostdlib
+#CFLAGS += -mmultiply-enabled
+#CFLAGS += -mbarrel-shift-enabled
+
+LIBS += gcc c
+
+MAKEFILE_DIR ?= $(SYN_DIR)/modules/lm32_makefiles
+
+include $(MAKEFILE_DIR)/makefile.lm32
+#=================================== EOF ======================================
