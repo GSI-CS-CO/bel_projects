@@ -54,10 +54,13 @@
 #include "wr_mil_config.h"
 #include "wr_mil_delay.h"
 #include "wr_mil_events.h"
+#include "wr_mil_msi.h"
 #include "../../../top/gsi_scu/scu_mil.h"
 
 // for the event handler
 //#include "../../ip_cores/saftlib/drivers/eca_flags.h"
+
+
 
 int init()
 {
@@ -158,6 +161,11 @@ void eventHandler(volatile uint32_t    *eca,
       uint64_t mil_event_time = tai_deadl.value + WR_MIL_GATEWAY_LATENCY + ((int32_t)config->latency-100)*1000; // add latency to the deadline
       //make_mil_timestamp(mil_event_time, EVT_UTC);     
 
+      // volatile uint32_t *msi = pCpuMsiBox + config->mb_slot*2;
+      // *msi = 0x00000042; // trigger MSI
+      // interrupt (MSI)
+      send_MSI(config->mb_slot, 32);
+
       // generate MIL event
       too_late = wait_until_tai(eca, mil_event_time);
       trials = mil_piggy_write_event(mil_piggy, milTelegram); 
@@ -220,6 +228,14 @@ void main(void)
   // Command
   volatile WrMilConfig *config = config_init();
   mprintf("mil cmd regs at %08x\n", config);
+
+  // Where is the MSI message box
+  mprintf("pCpuMsiBox %08x      pMyMsi %08x\n", pCpuMsiBox, pMyMsi);
+  config->mb_slot = getMsiBoxSlot(0xa0);
+  mprintf("mb_slot %d\n", config->mb_slot);
+
+
+
 
   // say hello on the console
   TAI_t nowTAI; 
