@@ -49,7 +49,6 @@
 
 // Interrupts
 #define WR_MIL_GW_MSI_LATE_EVENT       0x1
-#define WR_MIL_GW_MSI_STARTED          0x2
-#define WR_MIL_GW_MSI_STOPPED          0x3
+#define WR_MIL_GW_MSI_STATE_CHANGED    0x2
 
 #endif
