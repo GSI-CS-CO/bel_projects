@@ -7,6 +7,7 @@
 #include "wr_mil_eca_queue.h"
 #include "wr_mil_events.h"
 #include "wr_mil_gw.h"
+#include "wr_mil_msi.h"
 
 extern volatile uint32_t _startshared[]; // provided in linker script "ram.ld"
 #define SHARED __attribute__((section(".shared")))
@@ -46,16 +47,19 @@ void config_command_handler(volatile WrMilConfig *config)
       case WR_MIL_GW_CMD_KILL:
         mprintf("stop MCU\n");
         config->state = WR_MIL_GW_STATE_PAUSED;
+        send_MSI(config->mb_slot, WR_MIL_GW_MSI_STATE_CHANGED);
         while(1);
       case WR_MIL_GW_CMD_RESET:
         mprintf("wr-mil-gw reset after pause of 1 sec\n");
         { 
           int current_state = config->state; 
           config->state = WR_MIL_GW_STATE_PAUSED;
+          send_MSI(config->mb_slot, WR_MIL_GW_MSI_STATE_CHANGED);
           config->event_source = WR_MIL_GW_EVENT_SOURCE_UNKNOWN; //reset the source type
           for (int i = 0; i < 1000; ++i) DELAY1000us;
             
           config->state             = WR_MIL_GW_STATE_INIT;
+          send_MSI(config->mb_slot, WR_MIL_GW_MSI_STATE_CHANGED);
           config->num_events.value  = UINT64_C(0);
           config->late_events       = UINT64_C(0);
         }
@@ -65,6 +69,7 @@ void config_command_handler(volatile WrMilConfig *config)
         {
           config->event_source = WR_MIL_GW_EVENT_SOURCE_SIS;
           config->state = WR_MIL_GW_STATE_CONFIGURED;
+          send_MSI(config->mb_slot, WR_MIL_GW_MSI_STATE_CHANGED);
           mprintf("wr-mil-gw configured as SIS event source\n");
         }
         break;
@@ -73,6 +78,7 @@ void config_command_handler(volatile WrMilConfig *config)
         {
           config->event_source = WR_MIL_GW_EVENT_SOURCE_ESR;
           config->state = WR_MIL_GW_STATE_CONFIGURED;
+          send_MSI(config->mb_slot, WR_MIL_GW_MSI_STATE_CHANGED);
           mprintf("wr-mil-gw configured as ESR event source\n");
         }
         break;
@@ -97,15 +103,18 @@ void config_poll(volatile WrMilConfig *config)
       if (config->event_source == WR_MIL_GW_EVENT_SOURCE_UNKNOWN) {
         mprintf("wr-mil-gw not configured\n");
         config->state = WR_MIL_GW_STATE_UNCONFIGURED;
+        send_MSI(config->mb_slot, WR_MIL_GW_MSI_STATE_CHANGED);
       }
       else
       {
         config->state = WR_MIL_GW_STATE_CONFIGURED;
+        send_MSI(config->mb_slot, WR_MIL_GW_MSI_STATE_CHANGED);
       }
       break;
     case WR_MIL_GW_STATE_UNCONFIGURED:
       if (config->event_source != WR_MIL_GW_EVENT_SOURCE_UNKNOWN) {
         config->state = WR_MIL_GW_STATE_CONFIGURED;
+        send_MSI(config->mb_slot, WR_MIL_GW_MSI_STATE_CHANGED);
       }
       // fall through
     case WR_MIL_GW_STATE_CONFIGURED:
@@ -114,5 +123,6 @@ void config_poll(volatile WrMilConfig *config)
     default:
       mprintf("wr-mil-gw unknown state\n");
       config->state = WR_MIL_GW_STATE_INIT;
+      send_MSI(config->mb_slot, WR_MIL_GW_MSI_STATE_CHANGED);
   }
 }
