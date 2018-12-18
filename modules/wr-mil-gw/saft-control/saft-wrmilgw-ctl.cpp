@@ -61,6 +61,7 @@ static void wrmilgw_help (void)
   // std::cout << "  -c <id> <mask> <offset> <tag>: Create a new condition" << std::endl;
   std::cout << "  -i                            Show gateway information. Repeat the option"    << std::endl;
   std::cout << "                                 to get more detailed information, e.g. -iii"   << std::endl;
+  std::cout << "  -R                            Read register content"                          << std::endl;
   std::cout << "  -m                            Start monitoring loop"                          << std::endl;
   std::cout << "  -H                            Show MIL-event histogram"                       << std::endl;
   std::cout << "  -s                            Start WR-MIL Gateway as SIS18 Pulszentrale"     << std::endl;
@@ -341,18 +342,20 @@ int main (int argc, char** argv)
   bool    clearStat      = false;
   bool    lateHist       = false;
   bool    show_histogram = false;
+  bool    read_registers = false;
   
   // Get the application name 
   program = argv[0]; 
   
   // Parse arguments 
   //while ((opt = getopt(argc, argv, "c:dgxzlvh")) != -1)
-  while ((opt = getopt(argc, argv, "l:d:u:o:t:sehrkicCLmM:H")) != -1) 
+  while ((opt = getopt(argc, argv, "l:d:u:o:t:sehrkicCLmM:HR")) != -1) 
   {
     switch (opt)
     {
       case 'm': { monitoring = true; break; }
       case 'H': { show_histogram = true; break; }
+      case 'R': { read_registers = true; break; }
       case 'c': { red_color = green_color = default_color = ""; break; }
       case 'C': { clearStat = true; break; }
       case 'L': { lateHist = true; break; }
@@ -539,6 +542,13 @@ int main (int argc, char** argv)
     }
     if (info > 2) {
       print_info3(receiver, wrmilgw);
+    }
+
+    if (read_registers) {
+      auto registerContent = wrmilgw->getRegisterContent();
+      for (auto reg: registerContent) {
+        std::cout << reg << std::endl;
+      }
     }
 
     if (lateHist) {
