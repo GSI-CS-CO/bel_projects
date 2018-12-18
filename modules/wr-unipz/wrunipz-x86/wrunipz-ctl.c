@@ -1,13 +1,13 @@
-/******************************************************************************
- *  wrunipz-ctl.cpp
+/********************************************************************************************
+ *  wrunipz-ctl.c
  *
  *  created : 2018
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 15-December-2018
+ *  version : 17-December-2018
  *
  * Command-line interface for wrunipz
  *
- * -------------------------------------------------------------------------------------------
+ * ------------------------------------------------------------------------------------------
  * License Agreement for this software:
  *
  * Copyright (C) 2013  Dietrich Beck
@@ -33,8 +33,7 @@
  *
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 17-May-2017
- ********************************************************************************************/
-#define WRUNIPZ_X86_VERSION "0.0.3"
+ *********************************************************************************************/
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -50,8 +49,9 @@
 #include <etherbone.h>
 
 // wr-unipz
-#include <wr-unipz.h>
-#include <wr-unipz_smmap.h>
+#include <wrunipz-api.h>                 // API
+#include <wr-unipz.h>                    // FW
+#include <wrunipz_shared_mmap.h>         // LM32
 
 const char* program;
 static int getInfo    = 0;
@@ -81,60 +81,17 @@ eb_address_t wrunipz_dtMax;        // delta T (max) between message time of disp
 eb_address_t wrunipz_dtMin;        // delta T (min) between message time of dispatching and deadline
 eb_address_t wrunipz_confVacc;     // virtAcc of config
 eb_address_t wrunipz_confStat;     // status of config transaction
-eb_address_t wrunipz_confSubmit;   // submit flags (indicates, which PZ is submitted)
+eb_address_t wrunipz_confPz;       // bit field (indicates, which PZ is submitted)
 eb_address_t wrunipz_confFlag;     // flags of config
 eb_address_t wrunipz_confData;     // data of config
 
 eb_data_t   data1;
-
  
 static void die(const char* where, eb_status_t status) {
   fprintf(stderr, "%s: %s failed: %s\n",
           program, where, eb_status(status));
   exit(1);
 } //die
-
-
-const char* wrunipz_status_text(uint32_t code) {  
-  static char message[256];
-
-  switch (code) {
-  case WRUNIPZ_STATUS_UNKNOWN          : sprintf(message, "error %d, %s",    code, "unknown status"); break;
-  case WRUNIPZ_STATUS_OK               : sprintf(message, "OK"); break;
-  case WRUNIPZ_STATUS_ERROR            : sprintf(message, "error %d, %s",    code, "an error occured"); break;
-  case WRUNIPZ_STATUS_TIMEDOUT         : sprintf(message, "error %d, %s",    code, "a timeout occured"); break;
-  case WRUNIPZ_STATUS_OUTOFRANGE       : sprintf(message, "error %d, %s",    code, "some value is out of range"); break;
-  case WRUNIPZ_STATUS_LATE             : sprintf(message, "error %d, %s",    code, "a timing messages is not dispatched in time"); break;
-  case WRUNIPZ_STATUS_EARLY            : sprintf(message, "error %d, %s",    code, "a timing messages is dispatched unreasonably early (dt > UNILAC period)"); break;
-  case WRUNIPZ_STATUS_NOIP             : sprintf(message, "error %d, %s",    code, "DHCP request via WR network failed"); break;
-  case WRUNIPZ_STATUS_EBREADTIMEDOUT   : sprintf(message, "error %d, %s",    code, "EB read via WR network timed out"); break;
-  case WRUNIPZ_STATUS_WRONGVIRTACC     : sprintf(message, "error %d, %s",    code, "mismatching virtual accelerator for EVT_READY_TO_SIS from UNIPZ"); break;
-  case WRUNIPZ_STATUS_SAFETYMARGIN     : sprintf(message, "error %d, %s",    code, "violation of safety margin for data master and timing network"); break;
-  case WRUNIPZ_STATUS_NOTIMESTAMP      : sprintf(message, "error %d, %s",    code, "received EVT_READY_TO_SIS in MIL FIFO but no TS via TLU -> ECA"); break;
-  case WRUNIPZ_STATUS_BADTIMESTAMP     : sprintf(message, "error %d, %s",    code, "TS from TLU->ECA does not coincide with MIL Event from FIFO"); break;
-  case WRUNIPZ_STATUS_WAIT4UNIEVENT    : sprintf(message, "error %d, %s",    code, "timeout while waiting for EVT_READY_TO_SIS"); break;
-  case WRUNIPZ_STATUS_WRBADSYNC        : sprintf(message, "error %d, %s",    code, "White Rabbit: not in 'TRACK_PHASE'"); break;
-  case WRUNIPZ_STATUS_AUTORECOVERY     : sprintf(message, "errorFix %d, %s", code, "attempting auto-recovery from state ERROR"); break;
-  default                              : sprintf(message, "error %d, %s",    code, "wr-unipz: undefined error code"); break;
-  }
-
-  return message;
-} // wrunipz_status_text
-
-
-const char* wrunipz_state_text(uint32_t code) {
-  switch (code) {
-  case WRUNIPZ_STATE_UNKNOWN      : return "UNKNOWN   ";
-  case WRUNIPZ_STATE_S0           : return "S0        ";
-  case WRUNIPZ_STATE_IDLE         : return "IDLE      ";                                       
-  case WRUNIPZ_STATE_CONFIGURED   : return "CONFIGURED";
-  case WRUNIPZ_STATE_OPREADY      : return "OpReady   ";
-  case WRUNIPZ_STATE_STOPPING     : return "STOPPING  ";
-  case WRUNIPZ_STATE_ERROR        : return "ERROR     ";
-  case WRUNIPZ_STATE_FATAL        : return "FATAL(RIP)";
-  default                         : return "undefined ";
-  }
-} // wrunipz_state_text
 
 
 static void help(void) {
@@ -156,7 +113,9 @@ static void help(void) {
   fprintf(stderr, "  recover             command tries to recover from state ERROR and transit to state IDLE\n");
   fprintf(stderr, "  idle                command requests state change to IDLE\n");
   fprintf(stderr, "\n");
-  fprintf(stderr, "  loadvacc            command loads configuration of a virtual accelerator\n");
+  fprintf(stderr, "  test <vacc> <pz>    command loads dummy event table for virtual accelerator <vacc> to Pulszentrale <pz>\n");
+  fprintf(stderr, "  kill                command will kill possibly ongoing transactions\n");
+  fprintf(stderr, "  cleartables         command will clear all event tables of all PZs\n");
   fprintf(stderr, "\n");
   fprintf(stderr, "  cleardiag           clear statistics\n");
   fprintf(stderr, "\n");
@@ -174,30 +133,13 @@ static void help(void) {
 } //help
 
 
-int readTransfers(uint32_t *transfers)
-{
-  eb_cycle_t  cycle;
-  eb_status_t eb_status;
-  eb_data_t   data;
-  
-  if ((eb_status = eb_cycle_open(device, 0, eb_block, &cycle)) != EB_OK) die("wr-unipz: eb_cycle_open", eb_status);
-  eb_cycle_read(cycle, wrunipz_cycles,   EB_BIG_ENDIAN|EB_DATA32, &data);
-  if ((eb_status = eb_cycle_close(cycle)) != EB_OK) die("wr-unipz: eb_cycle_close", eb_status);
-
-  *transfers = data;
-
-  return eb_status;
-} // getInfo
-
-
-int readInfo(uint32_t *status, uint32_t *state, uint32_t *iterations, uint32_t *cycles, uint32_t *nBadStatus, uint32_t *nBadState, uint32_t *tCycleAvg, uint64_t *msgFreqAvg, int32_t *dtMax, int32_t *dtMin)
+int readInfo(uint32_t *status, uint32_t *state, uint32_t *iterations, uint32_t *cycles, uint32_t *nBadStatus, uint32_t *nBadState, uint32_t *tCycleAvg, uint64_t *msgFreqAvg, int32_t *dtMax, int32_t *dtMin, uint32_t *confStat)
 {
   eb_cycle_t  cycle;
   eb_status_t eb_status;
   eb_data_t   data[30];
   
   if ((eb_status = eb_cycle_open(device, 0, eb_block, &cycle)) != EB_OK) die("wr-unipz: eb_cycle_open", eb_status);
-
   eb_cycle_read(cycle, wrunipz_status,        EB_BIG_ENDIAN|EB_DATA32, &(data[0]));
   eb_cycle_read(cycle, wrunipz_state,         EB_BIG_ENDIAN|EB_DATA32, &(data[1]));
   eb_cycle_read(cycle, wrunipz_iterations,    EB_BIG_ENDIAN|EB_DATA32, &(data[2]));
@@ -208,6 +150,7 @@ int readInfo(uint32_t *status, uint32_t *state, uint32_t *iterations, uint32_t *
   eb_cycle_read(cycle, wrunipz_msgFreqAvg,    EB_BIG_ENDIAN|EB_DATA32, &(data[7]));
   eb_cycle_read(cycle, wrunipz_dtMax,         EB_BIG_ENDIAN|EB_DATA32, &(data[8]));
   eb_cycle_read(cycle, wrunipz_dtMin,         EB_BIG_ENDIAN|EB_DATA32, &(data[9]));
+  eb_cycle_read(cycle, wrunipz_confStat,      EB_BIG_ENDIAN|EB_DATA32, &(data[10]));
   if ((eb_status = eb_cycle_close(cycle)) != EB_OK) die("wr-unipz: eb_cycle_close", eb_status);
 
   *status        = data[0];
@@ -220,6 +163,7 @@ int readInfo(uint32_t *status, uint32_t *state, uint32_t *iterations, uint32_t *
   *msgFreqAvg    = data[7];
   *dtMax         = data[8];
   *dtMin         = data[9];
+  *confStat      = data[10];
   
   return eb_status;
 } // readInfo
@@ -254,18 +198,18 @@ int readConfig(uint64_t *mac, uint32_t *ip)
 
 void printCycleHeader()
 {
-  printf("wr-unipz:         CYCLES |          DIAGNOSIS        |                 INFO           \n");
-  printf("wr-unipz:              n |    fUni  fMsg dtMax dtMin |   state      nchng stat   nchng\n");
+  printf("wr-unipz:         CYCLES |            DIAGNOSIS        |                 INFO           \n");
+  printf("wr-unipz:              n |    fUni  fMsg dtMax dtMin T |   state      nchng stat   nchng\n");
 } // printCycleHeader
 
 
-void printCycle(uint32_t cycles, uint32_t tCycleAvg, uint32_t msgFreqAvg, int32_t dtMax, int32_t dtMin)
+void printCycle(uint32_t cycles, uint32_t tCycleAvg, uint32_t msgFreqAvg, int32_t dtMax, int32_t dtMin, uint32_t confStat)
 {
   // cycle
   printf("wr-unipz: CYC %010d |", cycles);
 
   // diag
-  printf("DG %5.2f %05d %05d %05d |", 1000000.0/(double)tCycleAvg, msgFreqAvg, dtMax / 1000, dtMin / 1000);
+  printf("DG %5.2f %05d %05d %05d %1d |", 1000000.0/(double)tCycleAvg, msgFreqAvg, dtMax / 1000, dtMin / 1000, confStat);
 
 } // printCycle
 
@@ -277,6 +221,7 @@ int main(int argc, char** argv) {
   eb_status_t         eb_status;
   eb_socket_t         socket;
   eb_data_t           data;
+  int                 i;
 
   struct sdb_device   sdbDevice;          // instantiated lm32 core
   int                 nDevices;           // number of instantiated cores
@@ -300,6 +245,7 @@ int main(int argc, char** argv) {
   uint32_t version;
   int32_t  dtMax;
   int32_t  dtMin;
+  uint32_t confStat;
 
   uint32_t actCycles;                          // actual number of cycles
   uint32_t actState = WRUNIPZ_STATE_UNKNOWN;   // actual state of gateway
@@ -309,6 +255,15 @@ int main(int argc, char** argv) {
 
   uint64_t mac;                                // mac for config of EB master
   uint32_t ip;                                 // ip for config of EB master
+
+  // command perftest
+  uint32_t    dataNorm[WRUNIPZ_NEVT];
+  uint32_t    nDataNorm;
+  uint32_t    dataKurz[WRUNIPZ_NEVT];
+  uint32_t    nDataKurz;
+  uint32_t    vacc;
+  uint32_t    pz;
+
     
   program = argv[0];    
 
@@ -391,7 +346,7 @@ int main(int argc, char** argv) {
   wrunipz_confStat     = lm32_base + SHARED_OFFS + WRUNIPZ_SHARED_CONF_STAT;
   wrunipz_confFlag     = lm32_base + SHARED_OFFS + WRUNIPZ_SHARED_CONF_FLAG;
   wrunipz_confData     = lm32_base + SHARED_OFFS + WRUNIPZ_SHARED_CONF_DATA;
-  wrunipz_confSubmit   = lm32_base + SHARED_OFFS + WRUNIPZ_SHARED_CONF_SUBMIT;
+  wrunipz_confPz       = lm32_base + SHARED_OFFS + WRUNIPZ_SHARED_CONF_PZ;
 
   // printf("wr-unipz: lm32_base 0x%08x, 0x%08x\n", lm32_base, wrunipz_iterations);
 
@@ -408,9 +363,9 @@ int main(int argc, char** argv) {
 
   if (getInfo) {
     // status
-    readInfo(&status, &state, &iterations, &cycles, &nBadStatus, &nBadState, &tCycle, &messages, &dtMax, &dtMin);
+    readInfo(&status, &state, &iterations, &cycles, &nBadStatus, &nBadState, &tCycle, &messages, &dtMax, &dtMin, &confStat);
     printCycleHeader();
-    printCycle(cycles, tCycle, messages, dtMax, dtMin);
+    printCycle(cycles, tCycle, messages, dtMax, dtMin, confStat);
     printf(" %s (%6u), %s (%6u)\n", wrunipz_state_text(state), nBadState, wrunipz_status_text(status), nBadStatus);
   } // if getInfo
 
@@ -421,58 +376,61 @@ int main(int argc, char** argv) {
 
     if (!strcasecmp(command, "configure")) {
       eb_device_write(device, wrunipz_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)WRUNIPZ_CMD_CONFIGURE, 0, eb_block);
-      if ((state != WRUNIPZ_STATE_CONFIGURED) && (state != WRUNIPZ_STATE_IDLE)) printf("wr-unipz: WARNING command has not effect (not in state CONFIGURED or IDLE)\n");
+      if ((state != WRUNIPZ_STATE_CONFIGURED) && (state != WRUNIPZ_STATE_IDLE)) printf("wr-unipz: WARNING command has no effect (not in state CONFIGURED or IDLE)\n");
     } // "configure"
     if (!strcasecmp(command, "startop")) {
       eb_device_write(device, wrunipz_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)WRUNIPZ_CMD_STARTOP  , 0, eb_block);
-      if (state != WRUNIPZ_STATE_CONFIGURED) printf("wr-unipz: WARNING command has not effect (not in state CONFIGURED)\n");
+      if (state != WRUNIPZ_STATE_CONFIGURED) printf("wr-unipz: WARNING command has no effect (not in state CONFIGURED)\n");
     } // "startop"
     if (!strcasecmp(command, "stopop")) {
       eb_device_write(device, wrunipz_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)WRUNIPZ_CMD_STOPOP   , 0, eb_block);
-      if (state != WRUNIPZ_STATE_OPREADY) printf("wr-unipz: WARNING command has not effect (not in state OPREADY)\n");
+      if (state != WRUNIPZ_STATE_OPREADY) printf("wr-unipz: WARNING command has no effect (not in state OPREADY)\n");
     } // "startop"
     if (!strcasecmp(command, "recover")) {
       eb_device_write(device, wrunipz_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)WRUNIPZ_CMD_RECOVER  , 0, eb_block);
-      if (state != WRUNIPZ_STATE_ERROR) printf("wr-unipz: WARNING command has not effect (not in state ERROR)\n");
+      if (state != WRUNIPZ_STATE_ERROR) printf("wr-unipz: WARNING command has no effect (not in state ERROR)\n");
     } // "recover"
     if (!strcasecmp(command, "idle")) {
       eb_device_write(device, wrunipz_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)WRUNIPZ_CMD_IDLE     , 0, eb_block);
-      if (state != WRUNIPZ_STATE_CONFIGURED) printf("wr-unipz: WARNING command has not effect (not in state CONFIGURED)\n");
+      if (state != WRUNIPZ_STATE_CONFIGURED) printf("wr-unipz: WARNING command has no effect (not in state CONFIGURED)\n");
     } // "idle"
     if (!strcasecmp(command, "cleardiag")) {
       eb_device_write(device, wrunipz_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)WRUNIPZ_CMD_CLEARDIAG , 0, eb_block);
-      if (state != WRUNIPZ_STATE_OPREADY) printf("wr-unipz: WARNING command has not effect (not in state OPREADY)\n");
+      if (state != WRUNIPZ_STATE_OPREADY) printf("wr-unipz: WARNING command has no effect (not in state OPREADY)\n");
     } // "cleardiag"
-    if (!strcasecmp(command, "loadvacc")) {
-      if (state != WRUNIPZ_STATE_OPREADY) printf("wr-unipz: WARNING command has not effect (not in state OPREADY)\n");
+    if (!strcasecmp(command, "test")) {
+      if (state != WRUNIPZ_STATE_OPREADY) printf("wr-unipz: WARNING command has no effect (not in state OPREADY)\n");
+      if (optind+3  != argc) {printf("wr-unipz: expecting exactly two arguments: test <vacc> <pz>\n"); return 1;}
+      vacc = strtoul(argv[optind+1], &tail, 0);
+      if ((vacc < 0) || (vacc >= WRUNIPZ_NVACC)) {printf("wr-unipz: invalid virtual accelerator -- %s\n", argv[optind+2]); return 1;}
+      pz = strtoul(argv[optind+2], &tail, 0);
+      if ((pz < 0) || (pz >= WRUNIPZ_NPZ)) {printf("wr-unipz: invalid PZ -- %s\n", argv[optind+2]); return 1;}
+
+      if ((status = wrunipz_transaction_init(device, wrunipz_cmd, wrunipz_confVacc, wrunipz_confStat, vacc)) !=  WRUNIPZ_STATUS_OK) {
+        printf("wr-unipz: transaction init - %s\n", wrunipz_status_text(status));
+      }
+      else {
+        // upload
+        nDataNorm = WRUNIPZ_NEVT;
+        nDataKurz = 0;
+        for (i=0; i < nDataNorm; i++) dataNorm[i] = ((uint32_t)(i + 100 * pz) << 16) + i;
+        if ((status = wrunipz_transaction_upload(device, wrunipz_confStat, wrunipz_confPz, wrunipz_confData, wrunipz_confFlag, pz, dataNorm, nDataNorm, dataKurz, nDataKurz)) != WRUNIPZ_STATUS_OK)
+          printf("wr-unipz: transaction upload - %s\n", wrunipz_status_text(status));
+        
+        // submit
+        wrunipz_transaction_submit(device, wrunipz_cmd, wrunipz_confStat);
+      }
+    } // "test"
+    if (!strcasecmp(command, "kill")) {
+      eb_device_write(device, wrunipz_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)WRUNIPZ_CMD_CONFKILL, 0, eb_block);
+      if (state != WRUNIPZ_STATE_OPREADY) printf("wr-unipz: WARNING command has no effect (not in state OPREADY)\n");
+    } // "kill"
+    if (!strcasecmp(command, "cleartables")) {
+      eb_device_write(device, wrunipz_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)WRUNIPZ_CMD_CONFCLEAR, 0, eb_block);
+      if (state != WRUNIPZ_STATE_OPREADY) printf("wr-unipz: WARNING command has no effect (not in state OPREADY)\n");
+    } // "cleartables"
+    
       
-      /* hack */
-      int i,j;
-      int vAcc = 5;
-
-      // request start of transaction
-      eb_device_write(device, wrunipz_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)WRUNIPZ_CMD_CONFREQ , 0, eb_block);
-      sleep(1);
-
-      // write data
-      for (i=0; i < WRUNIPZ_NPZ; i++) {
-        // vacc
-        eb_device_write(device, wrunipz_confVacc,  EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)vAcc , 0, eb_block);
-
-        // flags (valid, prep, evt)
-        eb_device_write(device, wrunipz_confFlag + ((0 + i * WRUNIPZ_NPZ +  0) << 2),  EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)0xf , 0, eb_block);
-        eb_device_write(device, wrunipz_confFlag + ((1 + i * WRUNIPZ_NPZ +  0) << 2),  EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)0x0 , 0, eb_block);
-        eb_device_write(device, wrunipz_confFlag + ((2 + i * WRUNIPZ_NPZ +  0) << 2),  EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)0xf , 0, eb_block);
-
-        // data
-        for (j=0; j < WRUNIPZ_NEVT; j++) 
-          eb_device_write(device, wrunipz_confData + ((j + i * WRUNIPZ_NPZ +  0) << 2),  EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)(((i*100 + j*10) << 16) + j) , 0, eb_block);
-      } // for i
-
-      // request submission of data
-      eb_device_write(device, wrunipz_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)WRUNIPZ_CMD_CONFSUBMIT , 0, eb_block);
-      
-    } // "loadvacc"
   } //if command
   
 
@@ -486,7 +444,7 @@ int main(int argc, char** argv) {
     printCycleHeader();
 
     while (1) {
-      readInfo(&status, &state, &iterations, &cycles, &nBadStatus, &nBadState, &tCycle, &messages, &dtMax, &dtMin); // read info from lm32
+      readInfo(&status, &state, &iterations, &cycles, &nBadStatus, &nBadState, &tCycle, &messages, &dtMax, &dtMin, &confStat); // read info from lm32
 
       switch(state) {
       case WRUNIPZ_STATE_OPREADY :
@@ -507,7 +465,7 @@ int main(int argc, char** argv) {
       if ((actStatus    != status)    && (logLevel <= WRUNIPZ_LOGLEVEL_STATUS))                                        {printFlag = 1; actStatus = status;}
 
       if (printFlag) {
-        printCycle(cycles, tCycle, messages, dtMax, dtMin); 
+        printCycle(cycles, tCycle, messages, dtMax, dtMin, confStat); 
         printf(" %s (%6u), %s (%6u)\n", wrunipz_state_text(state), nBadState, wrunipz_status_text(status), nBadStatus);
       } // if printFlag
 

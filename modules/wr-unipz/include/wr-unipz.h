@@ -1,6 +1,13 @@
-#ifndef __WR_UNIPZ_H_
-#define __WR_UNIPZ_H_
+#ifndef _WR_UNIPZ_H_
+#define _WR_UNIPZ_H_
 
+// this file is structured in two parts
+// 1st: definitions of general things like error messages
+// 2nd: definitions for data exchange via DP RAM
+
+// ****************************************************************************************
+// general things
+// ****************************************************************************************
 #define  WRUNIPZ_US_ASMNOP        31          // # of asm("nop") operations per microsecond
 #define  WRUNIPZ_MS_ASMNOP        31 * 1000   // # of asm("nop") operations per microsecond
 #define  WRUNIPZ_DEFAULT_TIMEOUT  100         // default timeout used by main loop [ms]
@@ -13,6 +20,13 @@
 #define  WRUNIPZ_UNILACFREQ       50          // frequency of UNILAC operation [Hz]
 #define  WRUNIPZ_UNILACPERIOD     20000000    // length of one UNILAC cylce [ns]
 
+// numbers for UNIPZ
+#define  WRUNIPZ_NEVT             32          // # of events per virt acc
+#define  WRUNIPZ_NVACC            16          // # vAcc
+#define  WRUNIPZ_NSET              2          // # of sets for each virt acc ("normal", "verkuerzt")
+#define  WRUNIPZ_NPZ               7          // # of Pulszentralen
+#define  WRUNIPZ_NFLAG             4          // # flags per virt acc 
+
 // (error) status
 #define  WRUNIPZ_STATUS_UNKNOWN          0    // unknown status
 #define  WRUNIPZ_STATUS_OK               1    // OK
@@ -21,7 +35,8 @@
 #define  WRUNIPZ_STATUS_OUTOFRANGE       4    // some value is out of range
 #define  WRUNIPZ_STATUS_LATE             5    // a timing messages is not dispatched in time
 #define  WRUNIPZ_STATUS_EARLY            6    // a timing messages is dispatched unreasonably early (dt > UNILACPERIOD)
-#define  WRUNIPZ_STATUS_CONFIG           7    // config data transaction in progress
+#define  WRUNIPZ_STATUS_TRANSACTION      7    // transaction failed
+#define  WRUNIPZ_STATUS_EB               8    // an Etherbone error occured
 #define  WRUNIPZ_STATUS_NOIP            13    // DHCP request via WR network failed                                
 #define  WRUNIPZ_STATUS_EBREADTIMEDOUT  16    // EB read via WR network timed out
 #define  WRUNIPZ_STATUS_WRONGVIRTACC    17    // received EVT_READY_TO_SIS with wrong virt acc number
@@ -40,8 +55,10 @@
 #define  WRUNIPZ_CMD_IDLE         4           // requests gateway to enter idle state
 #define  WRUNIPZ_CMD_RECOVER      5           // recovery from error state
 #define  WRUNIPZ_CMD_CLEARDIAG    6           // reset statistics information
-#define  WRUNIPZ_CMD_CONFREQ      7           // request to start configuration of a virt acc
-#define  WRUNIPZ_CMD_CONFSUBMIT   8           // submission of config data failed
+#define  WRUNIPZ_CMD_CONFINIT     7           // init transaction of table data
+#define  WRUNIPZ_CMD_CONFSUBMIT   8           // submit data written to DP RAM
+#define  WRUNIPZ_CMD_CONFKILL     9           // this will kill an ongoing transaction
+#define  WRUNIPZ_CMD_CONFCLEAR   10           // this will clear all event tables
 
 // states; implicitely, all states may transit to the ERROR or FATAL state
 #define  WRUNIPZ_STATE_UNKNOWN    0           // unknown state
@@ -64,18 +81,68 @@
 #define  WRUNIPZ_LOGLEVEL_STATUS  2           // info on status changes, info on state changes
 #define  WRUNIPZ_LOGLEVEL_STATE   3           // info on state changes
 
-#define  WRUNIPZ_NEVT            32           // maximum number of events per virtAcc and cycle
-
+#define  WRUNIPZ_CONFSTAT_IDLE    0           // no transaction in progress
 #define  WRUNIPZ_CONFSTAT_INIT    1           // transaction of config data has been initialized
 #define  WRUNIPZ_CONFSTAT_SUBMIT  2           // config data for transaction has been submitted, waiting for commit event
 
-uint32_t gid[] =                 {1000, 1001, 1002, 1003, 1004, 1005, 1006};
-
 typedef struct dataTable {                    // table with _one_ virtAcc for _one_ Pulszentrale
-  uint32_t validFlags;                        // if bit 'n' is set, data of element 'n' is valid
-  uint32_t prepFlags;                         // if bit 'n' is set, data of element 'n' are prep data
-  uint32_t evtFlags;                          // if bit 'n' is set, data of element 'n' are event data  
+  uint32_t validFlags;                        // if bit 'n' is set, data[n] is valid
+  uint32_t prepFlags;                         // if bit 'n' is set, data[n] is prep data
+  uint32_t evtFlags;                          // if bit 'n' is set, data[n] is event data  
   uint32_t data[WRUNIPZ_NEVT];                // bits 0..7 'event code', bits 8..15 'data', bits 16..31 offset [us]
 } dataTable;
+
+// ****************************************************************************************
+// DP RAM
+// ****************************************************************************************
+
+// sizes
+#define _32b_SIZE_                    4                                                 // size of 32bit value [bytes]
+#define WRUNIPZ_DATA4EBSIZE          (_32b_SIZE_ * 20)                                  // size of shared memory used to receive EB return values [bytes]
+#define WRUNIPZ_NCONFDATA            (WRUNIPZ_NEVT  * WRUNIPZ_NPZ * WRUNIPZ_NSET)       // # of config data words for one virt acc
+#define WRUNIPZ_NCONFFLAG            (WRUNIPZ_NFLAG * WRUNIPZ_NPZ * WRUNIPZ_NSET)       // # of config flag words for one virt acc
+
+// offsets
+// simple values
+#define WRUNIPZ_SHARED_STATUS         0x0                                               // error status                       
+#define WRUNIPZ_SHARED_CMD            (WRUNIPZ_SHARED_STATUS     + _32b_SIZE_)          // input of 32bit command
+#define WRUNIPZ_SHARED_STATE          (WRUNIPZ_SHARED_CMD        + _32b_SIZE_)          // state of state machine
+#define WRUNIPZ_SHARED_TCYCLEAVG      (WRUNIPZ_SHARED_STATE      + _32b_SIZE_)          // period of UNILAC cycleft [us] (average over one second)
+#define WRUNIPZ_SHARED_VERSION        (WRUNIPZ_SHARED_TCYCLEAVG  + _32b_SIZE_)          // version of firmware
+#define WRUNIPZ_SHARED_MACHI          (WRUNIPZ_SHARED_VERSION    + _32b_SIZE_)          // WR MAC of wrunipz, bits 31..16 unused
+#define WRUNIPZ_SHARED_MACLO          (WRUNIPZ_SHARED_MACHI      + _32b_SIZE_)          // WR MAC of wrunipz
+#define WRUNIPZ_SHARED_IP             (WRUNIPZ_SHARED_MACLO      + _32b_SIZE_)          // IP of wrunipz
+#define WRUNIPZ_SHARED_NBADSTATUS     (WRUNIPZ_SHARED_IP         + _32b_SIZE_)          // # of bad status (=error) incidents
+#define WRUNIPZ_SHARED_NBADSTATE      (WRUNIPZ_SHARED_NBADSTATUS + _32b_SIZE_)          // # of bad state (=FATAL, ERROR, UNKNOWN) incidents
+#define WRUNIPZ_SHARED_NCYCLE         (WRUNIPZ_SHARED_NBADSTATE  + _32b_SIZE_)          // # of UNILAC cycles
+#define WRUNIPZ_SHARED_NMESSAGEHI     (WRUNIPZ_SHARED_NCYCLE     + _32b_SIZE_)          // # of messsages, high bits
+#define WRUNIPZ_SHARED_NMESSAGELO     (WRUNIPZ_SHARED_NMESSAGEHI + _32b_SIZE_)          // # of messsages, low bits
+#define WRUNIPZ_SHARED_MSGFREQAVG     (WRUNIPZ_SHARED_NMESSAGELO + _32b_SIZE_)          // message rate (average over one second)
+#define WRUNIPZ_SHARED_DTAVG          (WRUNIPZ_SHARED_MSGFREQAVG + _32b_SIZE_)          // delta T between message time of dispatching and deadline
+#define WRUNIPZ_SHARED_DTMAX          (WRUNIPZ_SHARED_DTAVG      + _32b_SIZE_)          // delta T max
+#define WRUNIPZ_SHARED_DTMIN          (WRUNIPZ_SHARED_DTMAX      + _32b_SIZE_)          // delta T min
+
+// shared memory for EB return values
+#define WRUNIPZ_SHARED_DATA_4EB       (WRUNIPZ_SHARED_DTMIN      + _32b_SIZE_)   
+
+// shared memory for submitting new 'event tables'                                      
+#define WRUNIPZ_SHARED_CONF_VACC      (WRUNIPZ_SHARED_DATA_4EB   + WRUNIPZ_DATA4EBSIZE) // vACC for config data
+#define WRUNIPZ_SHARED_CONF_STAT      (WRUNIPZ_SHARED_CONF_VACC  + _32b_SIZE_)          // status of config transaction
+// config PZ flag layout: least significant bit is PZ0; '1': PZ has new data uploaded
+#define WRUNIPZ_SHARED_CONF_PZ        (WRUNIPZ_SHARED_CONF_STAT  + _32b_SIZE_)
+// config data layout
+// ==================
+// note: all config data is valid for the SAME virtual accelerator defined in WRUNIPZ_SHARED_CONF_VACC
+// (there are 32 words per virtual accelerator for "normal" and another 32 words for "verkuerzt" operation)
+// [norm0 of PZ0]..[norm31 of PZ0][kurz0 of PZ0]..[kurz31 of PZ0][norm0 of PZ1].....[kurz31 of PZ6] 
+#define WRUNIPZ_SHARED_CONF_DATA      (WRUNIPZ_SHARED_CONF_PZ    + _32b_SIZE_) 
+// config flag layout
+// ==================
+// (there are 4 words per virtual accelerator for "normal" and another 4 words for "verkuerzt" operation)
+// [norm0 of PZ0]..[norm3 of PZ0][kurz0 of PZ0]..[kurz3 of PZ0][norm0 of PZ1].....[kurz32 of PZ6] 
+#define WRUNIPZ_SHARED_CONF_FLAG      (WRUNIPZ_SHARED_CONF_DATA  + (WRUNIPZ_NCONFDATA << 2))  
+
+// diagnosis
+#define WRUNIPZ_SHARED_SIZEUSED       (WRUNIPZ_SHARED_CONF_FLAG  + (WRUNIPZ_NCONFFLAG << 2)) // used size of shared area
 
 #endif

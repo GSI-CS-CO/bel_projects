@@ -9,17 +9,18 @@ STAGING     ?=
 ARCH        ?= x86_64
 EB          ?= ../../../ip_cores/etherbone-core/api
 FW          ?=../wrunipz-fw
+INCLUDE     ?=../include
 TARGETS     := wrunipz-ctl 
 
 
 EXTRA_FLAGS ?=
-CFLAGS      ?= $(EXTRA_FLAGS) -Wall -O2 -g -I $(EB) -I $(FW)/../include -I $(FW)
+CFLAGS      ?= $(EXTRA_FLAGS) -Wall -O2 -g -I $(EB) -I $(INCLUDE) -I $(FW)
 LIBS        ?= -L $(EB)/.libs -Wl,-rpath,$(PREFIX)/lib -letherbone -lm
 
 all: $(TARGETS)
 
-wrunipz-ctl: wrunipz-ctl.cpp
-	$(CC) $(CFLAGS) -o wrunipz-ctl wrunipz-ctl.cpp $(LIBS)
+wrunipz-ctl: wrunipz-ctl.c
+	$(CC) $(CFLAGS) wrunipz-api.c -o wrunipz-ctl wrunipz-ctl.c $(LIBS)
 
 clean:
 	rm -f *.o $(TARGETS)
