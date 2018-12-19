@@ -43,14 +43,10 @@ OPT_INCLUDE := $(addprefix -I,$(INCLUDE_DIRS) )
 OPT_DEFINES := $(addprefix -D,$(DEFINES) )
 ARG_LIBS    := $(addprefix -l,$(LIBS) )
 
-
-TARGET ?= $(notdir $(basename $(MIAN_MODULE)))
-SOURCE += $(MIAN_MODULE)
-
 OBJ_DIR ?= ./obj/
 OBJ_FILES := $(addprefix $(OBJ_DIR),$(addsuffix .o,$(basename $(notdir $(SOURCE)))))
 
-all: $(TARGET).bin
+all: $(TARGET).bin size
 
 DEPENDFILE = $(TARGET).dep
 
@@ -62,7 +58,7 @@ $(OBJ_DIR):
 
 C_SOURCE = $(SOURCE) # TODO: Separate C++, C and Assembler files.
 	
-$(DEPENDFILE): $(C_SOURCE) $(CPP_SOURCE) $(OBJ_DIR)
+$(DEPENDFILE): $(C_SOURCE) $(CPP_SOURCE) $(OBJ_DIR) $(ADDITIONAL_DEPENDENCES)
 	@(for i in $(C_SOURCE); do printf $(OBJ_DIR); $(CC) -MM $(CC_ARG) "$$i"; \
 	printf '\t$$(CC_F) -c -o $$@ $$< $$(CC_ARG)\n\n'; done) > $(DEPENDFILE)
 	@(for i in $(CXX_SOURCE); do printf $(OBJ_DIR); $(CXX) -MM $(CXX_ARG) "$$i"; \
@@ -75,8 +71,8 @@ dep: $(DEPENDFILE)
 #$(TARGET).elf: $(OBJ_FILES)
 #	$(LD_F) -o $@ $^ -Wl,--defsym,_fstack=$$(($(RAM_SIZE)-4)) -nostdlib -T ram.ld $(ARG_LIBS)
 
-$(TARGET).elf: $(OBJ_FILES)
-	$(CC_F) -o $@ $^ -Wl,--defsym,_fstack=$$(($(RAM_SIZE)-4)) -nostdlib -T ram.ld $(ARG_LIBS)
+$(TARGET).elf: $(OBJ_FILES) $(LINKER_SCRIPT)
+	$(CC_F) -o $@ $^ -Wl,$(LD_FLAGS)
 
 $(TARGET).bin: $(TARGET).elf
 	$(OBJCPY_F) -O binary $< $@
@@ -87,6 +83,7 @@ size: $(TARGET).elf
 
 .PHONY: clean
 clean:
+	rm $(ADDITIONAL_TO_CLEAN)
 	rm $(OBJ_DIR)*.*
 	rmdir $(OBJ_DIR)
 	rm $(DEPENDFILE)

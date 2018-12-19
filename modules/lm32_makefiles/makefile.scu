@@ -9,7 +9,10 @@
 ## Date:    17.12.2018                                                       ##
 ###############################################################################
 
-#SOURCE += buildid.c
+BUILD_ID_FILE = buildid.c
+LINKER_SCRIPT = ram.ld
+
+SOURCE += $(BUILD_ID_FILE)
 
 SOURCE += $(SYN_DIR)/modules/lm32_stub/stubs.c
 SOURCE += $(SYN_DIR)/modules/lm32_stub/crt0.S
@@ -31,6 +34,9 @@ SOURCE += $(SYN_DIR)/ip_cores/wrpc-sw/pp_printf/printf.c
 SOURCE += $(SYN_DIR)/ip_cores/wrpc-sw/sdb-lib/glue.c
 SOURCE += $(SYN_DIR)/ip_cores/wrpc-sw/pp_printf/vsprintf-mini.c
 SOURCE += $(SYN_DIR)/modules/lm32-include/sdb_add.S
+
+TARGET ?= $(notdir $(basename $(MIAN_MODULE)))
+SOURCE += $(MIAN_MODULE)
 
 INCLUDE_DIRS += $(SYN_DIR)/modules/lm32-include
 INCLUDE_DIRS += $(SYN_DIR)/ip_cores/wrpc-sw/include
@@ -54,7 +60,118 @@ CFLAGS += -nostdlib
 
 LIBS += gcc c
 
-MAKEFILE_DIR ?= $(SYN_DIR)/modules/lm32_makefiles
+RAM_OFFS	= 0x10000000
+BOOTL_SIZE	= 0x100
+BUILDID_SIZE	= 0x400
+BUILDID_START	= $(shell printf "0x%x" $(BOOTL_SIZE))
+SHARED_START = $(shell printf "0x%x" $$(( $(BUILDID_START) + $(BUILDID_SIZE) )) )
+INTADR_OFFS = $(shell printf "0x%x" $(RAM_OFFS))
 
+
+ifdef SHARED_SIZE
+	SHARED = "$(SHARED_SIZE)"
+else
+	SHARED = "0"
+endif
+
+LDS := "OUTPUT_FORMAT(\"elf32-lm32\")\n"
+LDS := "MEMORY { RAM (rwx) : ORIGIN = $(RAM_OFFS), LENGTH = $(RAM_SIZE) }\n"
+LDS += "SECTIONS\n{\n"
+LDS += ". = ORIGIN(RAM);\n"
+LDS += "_fstack = . + LENGTH(RAM) - 4;\n"
+LDS += ".boot			: { _fboot   = .; *(.boot); 			     _eboot   = .; } > RAM\n"
+LDS += ".buildid ADDR(.boot)   + $(BOOTL_SIZE) : { _fbuildid = .; *(.buildid .buildid.*) _ebuildid = .; } > RAM\n"
+LDS += ".shared ADDR(.buildid) + $(BUILDID_SIZE) : { _fshared = .; PROVIDE(_startshared = .);*(.shared .shared.*)	_eshared = .; } > RAM\n"
+LDS += ".text ADDR(.shared)    + $(SHARED) : { _ftext = .; *(.text .text.*)	_etext = .; } > RAM\n"
+LDS += ".rodata	  : { _frodata = .; *(.rodata .rodata.*) _erodata = .; } > RAM\n"
+LDS += ".data			: { _fdata   = .; *(.data .data.*)     _edata   = .; } > RAM\n"
+LDS += ".bss			: { _fbss    = .; *(.bss .bss.*)       _ebss    = .; } > RAM = 0\n}\n"
+
+
+PKG := "library ieee;\n"
+PKG += "use ieee.std_logic_1164.all;\n"
+PKG += "use ieee.numeric_std.all;\n\n"
+PKG += "library work;\n"
+PKG += "package ramsize_pkg is\n"
+PKG += "  constant c_lm32_ramsizes : natural := $(RAM_SIZE);\n"
+PKG += "end ramsize_pkg;\n"
+
+
+
+VERSION  ?= "1.0.0"
+CBR_DATE := `date +"%a %b %d %H:%M:%S %Z %Y"`
+CBR_USR  := `git config user.name`
+CBR_MAIL := `git config user.email`
+CBR_HOST := `hostname`
+CBR_GCC  := `lm32-elf-gcc --version | grep gcc`
+CBR_FLGS := $(CFLAGS)
+CBR_KRNL := `uname -mrs`
+CBR_OS   := `lsb_release -d -s | tr -d '"'`
+CBR_PF   := ""
+CBR_GIT1  := `git log HEAD~0 --oneline --decorate=no -n 1 | cut -c1-100`
+CBR_GIT2  := `git log HEAD~1 --oneline --decorate=no -n 1 | cut -c1-100`
+CBR_GIT3  := `git log HEAD~2 --oneline --decorate=no -n 1 | cut -c1-100`
+CBR_GIT4  := `git log HEAD~3 --oneline --decorate=no -n 1 | cut -c1-100`
+CBR_GIT5  := `git log HEAD~4 --oneline --decorate=no -n 1 | cut -c1-100`
+
+
+
+CBR = "//! @file $(BUILD_ID_FILE)\n" \
+      "//! @author Created by makefile.scu\n\n" \
+      "\#define BUILDID __attribute__((section(\".buildid\")))\n" \
+      "const char BUILDID build_id_rom[] = \""'\\'"\n" \
+      "UserLM32"'\\n\\'"\n" \
+      "Project     : $(TARGET)"'\\n\\'"\n" \
+      "Version     : $(VERSION)"'\\n\\'"\n" \
+      "Platform    : $(CBR_PF)"'\\n\\'"\n" \
+      "Build Date  : $(CBR_DATE)"'\\n\\'"\n" \
+      "Prepared by : $(USER) $(CBR_USR) <$(CBR_MAIL)>"'\\n\\'"\n" \
+      "Prepared on : $(CBR_HOST)"'\\n\\'"\n" \
+      "OS Version  : $(CBR_OS) $(CBR_KRNL)"'\\n\\'"\n" \
+      "GCC Version : $(CBR_GCC)"'\\n\\'"\n" \
+      "IntAdrOffs  : $(INTADR_OFFS)"'\\n\\'"\n" \
+      "SharedOffs  : $(SHARED_START)"'\\n\\'"\n" \
+      "SharedSize  : $(SHARED_SIZE)"'\\n\\'"\n" \
+      "FW-ID ROM will contain:"'\\n\\'"\n" \
+      "   $(CBR_GIT1)"'\\n\\'"\n" \
+      "   $(CBR_GIT2)"'\\n\\'"\n" \
+      "   $(CBR_GIT3)"'\\n\\'"\n" \
+      "   $(CBR_GIT4)"'\\n\\'"\n" \
+      "   $(CBR_GIT5)"'\\n\\'"\n\";\n\n"
+
+SHARED_MAP_HEADDER := $(TARGET)_shared_mmap.h
+
+UCTARGET = "_$$(echo $(SHARED_MAP_HEADDER) | tr a-z A-Z | tr '.' '_')"
+SMM = "//! @file $(SHARED_MAP_HEADDER)\n" \
+      "//! @brief Location of Buildid and Shared Section in LM32 Memory," \
+      " to be used by host\n" \
+      "//! @author Created by makefile.scu\n\n" \
+      "\#ifndef $(UCTARGET)\n" \
+      "\#define $(UCTARGET)\n\n" \
+      "\#define INT_BASE_ADR $(RAM_OFFS)\n" \
+      "\#define RAM_SIZE $(RAM_SIZE)\n" \
+      "\#define SHARED_SIZE $(SHARED_SIZE)\n" \
+      "\#define BUILDID_OFFS $(BUILDID_START)\n" \
+      "\#define SHARED_OFFS  $(SHARED_START)\n\n" \
+      "\#endif\n"
+
+ADDITIONAL_DEPENDENCES += $(SHARED_MAP_HEADDER)
+ADDITIONAL_TO_CLEAN    += $(SHARED_MAP_HEADDER)
+ADDITIONAL_TO_CLEAN    += $(BUILD_ID_FILE)
+ADDITIONAL_TO_CLEAN    += $(LINKER_SCRIPT)
+
+LD_FLAGS ?= --defsym,_fstack=$$(($(RAM_SIZE)-4)) -nostdlib -T $(LINKER_SCRIPT) $(ARG_LIBS)
+
+MAKEFILE_DIR ?= $(SYN_DIR)/modules/lm32_makefiles
 include $(MAKEFILE_DIR)/makefile.lm32
+
+$(SHARED_MAP_HEADDER):
+	@(printf %b $(SMM)) > $@
+
+$(BUILD_ID_FILE):
+	@(printf %b $(CBR)) > $@
+
+$(LINKER_SCRIPT):
+	@(printf %b $(LDS)) > $@
+
 #=================================== EOF ======================================
