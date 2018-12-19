@@ -311,14 +311,26 @@ inline static int daqDeviceFindChannels( DAQ_DEVICE_T* pThis, int slot )
    LM32_ASSERT( pThis != NULL );
    LM32_ASSERT( pThis->pReg != NULL );
 
-   for( int channel = 0; channel < ARRAY_SIZE(pThis->aChannel); channel++ )
+   for( unsigned int channel = 0; channel < ARRAY_SIZE(pThis->aChannel); channel++ )
    {
       DBPRINT2( "DBG: Slot: %02d, Channel: %02d, ctrlReg: 0x%04x\n",
                 slot, channel, daqChannelGetReg( pThis->pReg, CtrlReg, channel ));
 
       DAQ_CANNEL_T* pCurrentChannel = &pThis->aChannel[channel];
       pCurrentChannel->n = channel;
+
+      /*
+       * Checking whether the macro DAQ_CHANNEL_GET_PARENT_OF works
+       * correct.
+       */
       LM32_ASSERT( pThis == DAQ_CHANNEL_GET_PARENT_OF( pCurrentChannel ) );
+
+      /*
+       * In the case of a warm start, clearing eventually old values
+       * in the entire control register.
+       */
+      *((uint16_t*)daqChannelGetCtrlRegPtr( pCurrentChannel )) = 0;
+
       /*
        * The next three lines probes the channel by writing and read back
        * the slot number. At the first look this algorithm seems not meaningful
@@ -331,12 +343,23 @@ inline static int daqDeviceFindChannels( DAQ_DEVICE_T* pThis, int slot )
        * Fortunately the highest slot number is 0xC (12). Therefore no further
        * probing is necessary.
        */
+      DBPRINT2( "DBG: ctrReg: 0x%04x\n", *((uint16_t*)daqChannelGetCtrlRegPtr( pCurrentChannel )) );
       daqChannelGetCtrlRegPtr( pCurrentChannel )->slot = slot;
+      DBPRINT2( "DBG: ctrReg: 0x%04x\n", *((uint16_t*)daqChannelGetCtrlRegPtr( pCurrentChannel )) );
       if( daqChannelGetSlot( pCurrentChannel ) != slot )
          break; /* Supposing this channel isn't present. */
 
+      LM32_ASSERT( (*((uint16_t*)daqChannelGetCtrlRegPtr( pCurrentChannel )) & 0x0FFF) == 0 );
+      /* If the assertion above has been occurred, check the element types
+       * of the structure DAQ_CTRL_REG_T.
+       * At least one element type has to be greater or equal like uint16_t.
+       */
+
       LM32_ASSERT( channel < BIT_SIZEOF( pCurrentChannel->intMask ));
       pCurrentChannel->intMask = 1 << channel;
+
+      DBPRINT2( "DBG: Slot of channel %d: %d\n", channel,
+                daqChannelGetSlot( pCurrentChannel ) );
 
       pThis->maxChannels++;
    }
@@ -403,7 +426,6 @@ int daqBusFindAndInitializeAll( register DAQ_BUS_T* pThis, const void* pScuBusBa
       daqDeviceClearDaqChannelInterrupts( pCurrentDaqDevice );
       daqDeviceClearHiResChannelInterrupts( pCurrentDaqDevice );
 
-
 #if DAQ_MAX < MAX_SCU_SLAVES
       if( pThis->foundDevices == ARRAY_SIZE( pThis->aDaq ) )
          break;
@@ -416,6 +438,7 @@ int daqBusFindAndInitializeAll( register DAQ_BUS_T* pThis, const void* pScuBusBa
     * Because a new start of the software doesn't concern
     * the hardware registers of the SCU bus slaves.
     */
+
    if( pThis->foundDevices > 0 )
       daqBusReset( pThis );
 

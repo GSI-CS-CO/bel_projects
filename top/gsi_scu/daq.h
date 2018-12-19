@@ -144,25 +144,28 @@ typedef enum
  * @note Do not change the order of attributes! Its a Hardware image!
  * @see CtrlReg
  * @see DAQ_SWITCH_STATE_T
+ *
+ * CAUTION: Don't use a smaller type for a bit field element like
+ *          uint16_t!
  */
 typedef volatile struct
 {
 #if (__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__) || defined(__DOXYGEN__)
-   uint8_t slot:                  4; //!< @brief Bit [15:12] slot number,
-                                     //!<        shall be initialized by software,
-                                     //!<        will used for the DAQ-Descriptor-Word.
-   uint8_t __unused__:            4; //!< @brief Bit [11:8] till now unused.
-   uint8_t ExtTrig_nEvTrig_HiRes: 1; //!< @brief Bit [7] trigger source in high resolution mode
-                                     //!<        1= external trigger, event trigger.
-   uint8_t Ena_HiRes:             1; //!< @brief Bit [6] high resolution sampling with 4 MHz.
-                                     //!< @note Ena_PM shall not be active at the same time!
-   uint8_t ExtTrig_nEvTrig:       1; //!< @brief Bit [5] trigger source in DAQ mode:
+   uint16_t slot:                  4; //!< @brief Bit [15:12] slot number,
+                                      //!<        shall be initialized by software,
+                                      //!<        will used for the DAQ-Descriptor-Word.
+   uint16_t __unused__:            4; //!< @brief Bit [11:8] till now unused.
+   uint16_t ExtTrig_nEvTrig_HiRes: 1; //!< @brief Bit [7] trigger source in high resolution mode
+                                      //!<        1= external trigger, event trigger.
+   uint16_t Ena_HiRes:             1; //!< @brief Bit [6] high resolution sampling with 4 MHz.
+                                      //!< @note Ena_PM shall not be active at the same time!
+   uint16_t ExtTrig_nEvTrig:       1; //!< @brief Bit [5] trigger source in DAQ mode:
                                       //!<        1=ext trigger, 0= event trigger.
-   uint8_t Ena_TrigMod:           1; //!< @brief Bit [4] prevents sampling till triggering.
-   uint8_t Sample1ms:             1; //!< @brief Bit [3] use 1 ms sample.
-   uint8_t Sample100us:           1; //!< @brief Bit [2] use 100 us sample.
-   uint8_t Sample10us:            1; //!< @brief Bit [1] use 10 us sample.
-   uint8_t Ena_PM:                1; //!< @brief Bit [0] starts PM sampling with 100 us.
+   uint16_t Ena_TrigMod:           1; //!< @brief Bit [4] prevents sampling till triggering.
+   uint16_t Sample1ms:             1; //!< @brief Bit [3] use 1 ms sample.
+   uint16_t Sample100us:           1; //!< @brief Bit [2] use 100 us sample.
+   uint16_t Sample10us:            1; //!< @brief Bit [1] use 10 us sample.
+   uint16_t Ena_PM:                1; //!< @brief Bit [0] starts PM sampling with 100 us.
 #else
    #error Big endian is requested for this bit- field structure!
 #endif
