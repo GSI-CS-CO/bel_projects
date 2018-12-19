@@ -5,7 +5,7 @@
 #include <string>
 #include <inttypes.h>
 #include <boost/graph/graphviz.hpp>
-#include <boost/algorithm/string.hpp>
+//#include <boost/algorithm/string.hpp>
 #include <sys/time.h>
 
 #include "common.h"
@@ -16,6 +16,7 @@
 #include "dotstr.h"
 #include "idformat.h"
 #include "lzmaCompression.h"
+#include "ebwrapper.h"
 
 
   namespace dgp = DotStr::Graph::Prop;
@@ -28,371 +29,6 @@
 
 vBuf CarpeDM::compress(const vBuf& in) {return lzmaCompress(in);}
 vBuf CarpeDM::decompress(const vBuf& in) {return lzmaDecompress(in);}
-
-void CarpeDM::simAdrTranslation (uint32_t a, uint8_t& cpu, uint32_t& arIdx) {
-  //get cpu
-  /*
-   if (debug) sLog << "cpuQty "  << getCpuQty() << std::endl;
-  for (uint8_t cpuIdx = 0; cpuIdx < getCpuQty(); cpuIdx++) {
-    if (debug) sLog << "a : " << std::hex << a << ", cmpA " << simRamAdrMap[cpuIdx] << " cpu " << (int)cpuIdx << " arIdx "  << arIdx << std::endl;
-    if (simRamAdrMap[cpuIdx] > a) break;
-    cpu = cpuIdx;
-  }
-  */
-  cpu = ((a >> 17) & 0x7) -1;
-  arIdx = atDown.adrConv(AdrType::EXT, AdrType::MGMT, cpu, a) >> 2;
-}
-
-void CarpeDM::simRamWrite (uint32_t a, eb_data_t d) {
-  uint8_t cpu = -1;
-  uint32_t arIdx;
-  if (debug) sLog << "cpu : " << (int)cpu << " arIdx " << std::hex << arIdx << std::endl;
-  simAdrTranslation (a, cpu, arIdx);
-  simRam[cpu][arIdx] = d;
-}
-
-
-void CarpeDM::simRamRead (uint32_t a, eb_data_t* d) {
-  uint8_t cpu;
-  uint32_t arIdx;
-  simAdrTranslation (a, cpu, arIdx);
-  *d = simRam[cpu][arIdx];
-}
-
-int CarpeDM::simWriteCycle(vAdr va, vBuf& vb) {
-  if (debug) sLog << "Starting Write Cycle" << std::endl;
-  eb_data_t veb[va.size()];
-
-  for(int i = 0; i < (va.end()-va.begin()); i++) {
-   uint32_t data = vb[i*4 + 0] << 24 | vb[i*4 + 1] << 16 | vb[i*4 + 2] << 8 | vb[i*4 + 3];
-   veb[i] = (eb_data_t)data;
-  }
-
-
-  for(int i = 0; i < (va.end()-va.begin()); i++) {
-
-    if (debug) sLog << " Writing @ 0x" << std::hex << std::setfill('0') << std::setw(8) << va[i] << " : 0x" << std::hex << std::setfill('0') << std::setw(8) << veb[i] << std::endl;
-    simRamWrite(va[i], veb[i]);
-  }
-
-
-  return 0;
-
-}
-
-
-
-
-
-vBuf CarpeDM::simReadCycle(vAdr va)
-{
-
-
-  eb_data_t veb[va.size()];
-  vBuf ret = vBuf(va.size() * 4);
-  if (debug) sLog << "Starting Read Cycle" << std::endl;
-  //sLog << "Got Adr Vec with " << va.size() << " Adrs" << std::endl;
-
-
-  for(int i = 0; i < (va.end()-va.begin()); i++) {
-    if (debug) sLog << " Reading @ 0x" << std::hex << std::setfill('0') << std::setw(8) << va[i] << std::endl;
-    simRamRead(va[i], (eb_data_t*)&veb[i]);
-  }
-
-  //FIXME use endian functions
-  for(unsigned int i = 0; i < va.size(); i++) {
-    ret[i * 4]     = (uint8_t)(veb[i] >> 24);
-    ret[i * 4 + 1] = (uint8_t)(veb[i] >> 16);
-    ret[i * 4 + 2] = (uint8_t)(veb[i] >> 8);
-    ret[i * 4 + 3] = (uint8_t)(veb[i] >> 0);
-  }
-
-  return ret;
-}
-
-
-
-int CarpeDM::ebWriteCycle(Device& dev, vAdr va, vBuf& vb, vBl vcs)
-{
-  if ( (va.size() != vcs.size()) || ( va.size() * _32b_SIZE_ != vb.size() ) )
-    throw std::runtime_error(" EB write cycle Adr / Data / Flow control vector lengths (" + std::to_string(va.size()) + "/" + std::to_string(vb.size() /  _32b_SIZE_) + "/" + std::to_string(vcs.size()) +") do not match\n");
-
-  if (sim) {return simWriteCycle(va, vb); }
-  //eb_status_t status;
-  //FIXME What about MTU? What about returned eb status ??
-
-  if (debug) sLog << "Starting Write Cycle" << std::endl;
-  Cycle cyc;
-  eb_data_t veb[va.size()];
-
-  for(int i = 0; i < (va.end()-va.begin()); i++) {
-   uint32_t data = vb[i*4 + 0] << 24 | vb[i*4 + 1] << 16 | vb[i*4 + 2] << 8 | vb[i*4 + 3];
-   veb[i] = (eb_data_t)data;
-  }
-  try {
-    cyc.open(dev);
-    for(int i = 0; i < (va.end()-va.begin()); i++) {
-    if (i && vcs.at(i)) {
-      cyc.close();
-      if (debug) sLog << "Close and open next Write Cycle" << std::endl;
-      cyc.open(dev);
-    }
-
-    if (debug) sLog << " Writing @ 0x" << std::hex << std::setfill('0') << std::setw(8) << va[i] << " : 0x" << std::hex << std::setfill('0') << std::setw(8) << veb[i] << std::endl;
-    cyc.write(va[i], EB_BIG_ENDIAN | EB_DATA32, veb[i]);
-
-    }
-    cyc.close();
-  } catch (etherbone::exception_t const& ex) {
-    throw std::runtime_error("Etherbone " + std::string(ex.method) + " returned " + std::string(eb_status(ex.status)) + "\n" );
-  }
-
-   return 0;
-}
-
-int   CarpeDM::ebWriteCycle(Device& dev, vAdr va, vBuf& vb) {return  ebWriteCycle(dev, va, vb, leadingOne(va.size()));}
-
-
-
-vBuf CarpeDM::ebReadCycle(Device& dev, vAdr va, vBl vcs)
-{
-  if (va.size() != vcs.size()) throw std::runtime_error(" EB Read cycle Adr / Flow control vector lengths (" + std::to_string(va.size()) + "/" + std::to_string(vcs.size()) + ") do not match\n");
-
-  if (sim) {return simReadCycle(va); }
-  //FIXME What about MTU? What about returned eb status ??
-
-
-  Cycle cyc;
-  eb_data_t veb[va.size()];
-  vBuf ret = vBuf(va.size() * 4);
-  if (debug) sLog << "Starting Read Cycle" << std::endl;
-  //sLog << "Got Adr Vec with " << va.size() << " Adrs" << std::endl;
-
-  try {
-    cyc.open(dev);
-    for(int i = 0; i < (va.end()-va.begin()); i++) {
-    //FIXME dirty break into cycles
-    if (i && vcs.at(i)) {
-      cyc.close();
-      if (debug) sLog << "Close and open next Read Cycle" << std::endl;
-      cyc.open(dev);
-    }
-    if (debug) sLog << " Reading @ 0x" << std::hex << std::setfill('0') << std::setw(8) << va[i] << std::endl;
-    cyc.read(va[i], EB_BIG_ENDIAN | EB_DATA32, (eb_data_t*)&veb[i]);
-    }
-    cyc.close();
-
-  } catch (etherbone::exception_t const& ex) {
-    throw std::runtime_error("Etherbone " + std::string(ex.method) + " returned " + std::string(eb_status(ex.status)) + "\n" );
-  }
-  //FIXME use endian functions
-  for(unsigned int i = 0; i < va.size(); i++) {
-    ret[i * 4]     = (uint8_t)(veb[i] >> 24);
-    ret[i * 4 + 1] = (uint8_t)(veb[i] >> 16);
-    ret[i * 4 + 2] = (uint8_t)(veb[i] >> 8);
-    ret[i * 4 + 3] = (uint8_t)(veb[i] >> 0);
-  }
-
-  return ret;
-}
-
-vBuf CarpeDM::ebReadCycle(Device& dev, vAdr va) {return  ebReadCycle(dev, va, leadingOne(va.size()));}
-
-int CarpeDM::ebWriteWord(Device& dev, uint32_t adr, uint32_t data)
-{
-  uint8_t b[_32b_SIZE_];
-  writeLeNumberToBeBytes(b, data);
-  vAdr vA({adr});
-  vBuf vD(std::begin(b), std::end(b) );
-
-  return ebWriteCycle(ebd, vA, vD);
-}
-
-uint32_t CarpeDM::ebReadWord(Device& dev, uint32_t adr)
-{
-  vAdr vA({adr});
-  vBuf vD = ebReadCycle(ebd, vA);
-  uint8_t* b = &vD[0];
-
-  return writeBeBytesToLeNumber<uint32_t>(b);
-}
-
- //Reads and returns a 64 bit word from DM
-uint64_t CarpeDM::read64b(uint32_t startAdr) {
-  vAdr vA({startAdr + 0, startAdr + _32b_SIZE_});
-  vBuf vD = ebReadCycle(ebd, vA);
-  uint8_t* b = &vD[0];
-
-  return writeBeBytesToLeNumber<uint64_t>(b);
-}
-
-int CarpeDM::write64b(uint32_t startAdr, uint64_t d) {
-  uint8_t b[_TS_SIZE_];
-  writeLeNumberToBeBytes(b, d);
-  vAdr vA({startAdr + 0, startAdr + _32b_SIZE_});
-  vBuf vD(std::begin(b), std::end(b) );
-
-  return ebWriteCycle(ebd, vA, vD);
-
-}
-
-bool CarpeDM::simConnect() {
-    ebdevname = "simDummy"; //copy to avoid mem trouble later
-    uint8_t mappedIdx = 0;
-    uint32_t const intBaseAdr   = 0x1000000;
-    uint32_t const sharedSize   = 98304;
-    uint32_t const rawSize      = 131072;
-    uint32_t const sharedOffs   = 0x500;
-    uint32_t const devBaseAdr   = 0x4120000;
-    cpuQty = 4;
-
-    atUp.clear();
-    atUp.removeMemories();
-    gUp.clear();
-    atDown.clear();
-    atDown.removeMemories();
-    gDown.clear();
-    cpuIdxMap.clear();
-    cpuDevs.clear();
-
-
-
-
-    sLog << "Connecting to Sim... ";
-    simRam.reserve(cpuQty);
-
-    for(int cpuIdx = 0; cpuIdx< cpuQty; cpuIdx++) {
-      simRam[cpuIdx]        = new uint32_t [(rawSize + _32b_SIZE_ -1) >> 2];
-      cpuIdxMap[cpuIdx]     = mappedIdx;
-      uint32_t extBaseAdr   = devBaseAdr + cpuIdx * rawSize;
-      simRamAdrMap[cpuIdx]  = extBaseAdr;
-      uint32_t peerBaseAdr  = WORLD_BASE_ADR  + extBaseAdr;
-      uint32_t space        = sharedSize - _SHCTL_END_;
-
-      atUp.addMemory(cpuIdx, extBaseAdr, intBaseAdr, peerBaseAdr, sharedOffs, space, rawSize );
-      atDown.addMemory(cpuIdx, extBaseAdr, intBaseAdr, peerBaseAdr, sharedOffs, space, rawSize );
-      mappedIdx++;
-    }
-    sLog << "done" << std::endl;
-    return true;
-
-}
-
-
-bool CarpeDM::connect(const std::string& en, bool simulation, bool test) {
-    sim = simulation;
-    testmode = test;
-    simRam.clear();
-    simRamAdrMap.clear();
-    if (sim) {return simConnect(); }
-
-    ebdevname = std::string(en); //copy to avoid mem trouble later
-    bool  ret = false;
-    uint8_t mappedIdx = 0;
-    int expVersion = parseFwVersionString(EXP_VER), foundVersion;
-    int foundVersionMax = -1;
-
-    if (expVersion <= 0) {throw std::runtime_error("Bad required minimum firmware version string received from Makefile"); return false;}
-
-    atUp.clear();
-    atUp.removeMemories();
-    gUp.clear();
-    atDown.clear();
-    atDown.removeMemories();
-    gDown.clear();
-    cpuIdxMap.clear();
-    cpuDevs.clear();
-
-    vFw.clear();
-
-    if(verbose) sLog << "Connecting to " << en << "... ";
-    try {
-      ebs.open(0, EB_DATAX|EB_ADDRX);
-      ebd.open(ebs, ebdevname.c_str(), EB_DATAX|EB_ADDRX, 3);
-      ebd.sdb_find_by_identity(CluTime::vendID, CluTime::devID, cluTimeDevs);
-      if (cluTimeDevs.size() < 1) throw std::runtime_error("Could not find Cluster Time Module on DM (needed for WR time). Something is wrong\n");
-
-      ebd.sdb_find_by_identity(SDB_VENDOR_GSI,SDB_DEVICE_DIAG, diagDevs);
-
-      ebd.sdb_find_by_identity(SDB_VENDOR_GSI,SDB_DEVICE_LM32_RAM, cpuDevs);
-      if (cpuDevs.size() >= 1) {
-        cpuQty = cpuDevs.size();
-
-
-        for(int cpuIdx = 0; cpuIdx< cpuQty; cpuIdx++) {
-          //only create MemUnits for valid DM CPUs, generate Mapping so we can still use the cpuIdx supplied by User
-          const std::string fwIdROM = getFwIdROM(cpuIdx);
-          foundVersion = getFwVersion(fwIdROM);
-          foundVersionMax = foundVersionMax < foundVersion ? foundVersion : foundVersionMax;
-          vFw.push_back(foundVersion);
-          int expVersionMin = expVersion;
-          int expVersionMax = (expVersion / (int)FwId::VERSION_MAJOR_MUL) * (int)FwId::VERSION_MAJOR_MUL
-                             + 99 * (int)FwId::VERSION_MINOR_MUL
-                             + 99 * (int)FwId::VERSION_REVISION_MUL;
-
-          if ( (foundVersion >= expVersionMin) && (foundVersion <= expVersionMax) ) {
-            //FIXME check for consequent use of cpu index map!!! I'm sure there'll be absolute chaos throughout the lib if CPUs indices were not continuous
-            cpuIdxMap[cpuIdx]    = mappedIdx;
-
-            uint32_t extBaseAdr   = cpuDevs[cpuIdx].sdb_component.addr_first;
-            uint32_t intBaseAdr   = getIntBaseAdr(fwIdROM);
-            uint32_t peerBaseAdr  = WORLD_BASE_ADR + extBaseAdr;
-            uint32_t rawSize      = cpuDevs[cpuIdx].sdb_component.addr_last - cpuDevs[cpuIdx].sdb_component.addr_first;
-            uint32_t sharedOffs   = getSharedOffs(fwIdROM);
-            uint32_t space        = getSharedSize(fwIdROM) - _SHCTL_END_;
-
-              atUp.addMemory(cpuIdx, extBaseAdr, intBaseAdr, peerBaseAdr, sharedOffs, space, rawSize );
-            atDown.addMemory(cpuIdx, extBaseAdr, intBaseAdr, peerBaseAdr, sharedOffs, space, rawSize );
-            mappedIdx++;
-          }
-          /*
-          sLog << "#" << (int)cpuIdx << " Shared Offset 0x" << std::hex <<  atDown.getMemories()[cpuIdx].sharedOffs << std::endl;
-          sLog << "#" << (int)cpuIdx << " BmpSize 0x" << std::hex <<  atDown.getMemories()[cpuIdx].bmpSize << std::endl;
-          sLog << "#" << (int)cpuIdx << " SHCTL 0x" << std::hex <<  _SHCTL_END_ << std::endl;
-          sLog << "#" << (int)cpuIdx << " Start Offset 0x" << std::hex <<  atDown.getMemories()[cpuIdx].startOffs << std::endl;
-          */
-        }
-        ret = true;
-      }
-    } catch (etherbone::exception_t const& ex) {
-      throw std::runtime_error("Etherbone " + std::string(ex.method) + " returned " + std::string(eb_status(ex.status)) + "\n" );
-    } catch(...) {
-      throw;// std::runtime_error("Could not find CPUs running valid DM Firmware\n" );
-    }
-
-    if(verbose) {
-      sLog << " Done."  << std::endl << "Found " << getCpuQty() << " Cores, " << cpuIdxMap.size() << " of them run a valid DM firmware." << std::endl;
-    }
-    std::string fwCause = foundVersionMax == -1 ? "" : "Requires FW v" + createFwVersionString(expVersion) + ", found " + createFwVersionString(foundVersionMax);
-    if (cpuIdxMap.size() == 0) {throw std::runtime_error("No CPUs running a valid DM firmware found. " + fwCause);}
-
-
-    return ret;
-
-  }
-
-  bool CarpeDM::disconnect() {
-
-
-    bool ret = false;
-
-    if(verbose) sLog << "Disconnecting ... ";
-    if (sim) {simRam.clear(); ret = true;}
-    else {
-      try {
-        ebd.close();
-        ebs.close();
-        cpuQty = -1;
-        ret = true;
-      } catch (etherbone::exception_t const& ex) {
-        throw std::runtime_error("Etherbone " + std::string(ex.method) + " returned " + std::string(eb_status(ex.status)) + "\n" );
-        //TODO report why we could not disconnect
-      }
-    }
-    if(verbose) sLog << " Done" << std::endl;
-    sim = false;
-    return ret;
-  }
 
 
 
@@ -520,127 +156,15 @@ bool CarpeDM::connect(const std::string& en, bool simulation, bool test) {
     return g;
   }
 
-  const std::string CarpeDM::createFwVersionString(const int fwVer) {
 
-    unsigned int fwv = (unsigned int)fwVer;
-    std::string ret;
 
-    unsigned int verMaj = fwv / (unsigned int)FwId::VERSION_MAJOR_MUL; fwv %= (unsigned int)FwId::VERSION_MAJOR_MUL;
-    unsigned int verMin = fwv / (unsigned int)FwId::VERSION_MINOR_MUL; fwv %= (unsigned int)FwId::VERSION_MINOR_MUL;
-    unsigned int verRev = fwv;
-
-    ret = std::to_string(verMaj) + "." + std::to_string(verMin) + "." + std::to_string(verRev);
-    return ret;
-
+  void CarpeDM::showMemSpace() {
+    sLog << "Space" << std::setw(11) << "Free" << std::endl;
+    for (uint8_t x = 0; x < ebd.getCpuQty(); x++) {
+      sLog << std::dec << std::setfill(' ') << std::setw(11) << atDown.getTotalSpace(x) << std::setw(10) << atDown.getFreeSpace(x) * 100 / atDown.getTotalSpace(x) << "%";
+      sLog << std::endl;
+    }
   }
-
-
-  int CarpeDM::parseFwVersionString(const std::string& s) {
-
-    int verMaj, verMin, verRev;
-    std::vector<std::string> x;
-
-
-
-    try { boost::split(x, s, boost::is_any_of(".")); } catch (...) {};
-    if (x.size() != 3) {return (int)FwId::FWID_BAD_VERSION_FORMAT;}
-
-    verMaj = std::stoi (x[(int)FwId::VERSION_MAJOR]);
-    verMin = std::stoi (x[(int)FwId::VERSION_MINOR]);
-    verRev = std::stoi (x[(int)FwId::VERSION_REVISION]);
-
-    if (verMaj < 0 || verMaj > 99 || verMin < 0 || verMin > 99 || verRev < 0 || verRev > 99) {return (int)FwId::FWID_BAD_VERSION_FORMAT;}
-    else {return verMaj * (int)FwId::VERSION_MAJOR_MUL + verMin * (int)FwId::VERSION_MINOR_MUL  + verRev * (int)FwId::VERSION_REVISION_MUL;}
-
-
-  }
-
-    //returns firmware version as int <xxyyzz> (x Major Version, y Minor Version, z Revison; negative values for error codes)
-  const std::string CarpeDM::getFwIdROM(uint8_t cpuIdx) {
-    //FIXME replace with FW ID string constants
-    const std::string tagMagic      = "UserLM32";
-    const std::string tagProject    = "Project     : ";
-    const std::string tagExpName    = "ftm";
-    std::string version;
-    size_t pos;
-    struct  sdb_device& ram = cpuDevs.at(cpuIdx);
-    vAdr fwIdAdr;
-    //FIXME get rid of SHARED_OFFS somehow and replace with an end tag and max limit
-    for (uint32_t adr = ram.sdb_component.addr_first + BUILDID_OFFS; adr < ram.sdb_component.addr_first + BUILDID_OFFS + BUILDID_SIZE; adr += 4) fwIdAdr.push_back(adr);
-    vBuf fwIdData = ebReadCycle(ebd, fwIdAdr);
-    std::string s(fwIdData.begin(),fwIdData.end());
-
-    //check for magic word
-    pos = 0;
-    if(s.find(tagMagic, 0) == std::string::npos) {throw std::runtime_error( "Bad Firmware Info ROM: Magic word not found\n");}
-    //check for project name
-    pos = s.find(tagProject, 0);
-    if (pos == std::string::npos || (s.find(tagExpName, pos + tagProject.length()) != pos + tagProject.length())) {throw std::runtime_error( "Bad Firmware Info ROM: Not a DM project\n");}
-
-    return s;
-  }
-
-  //returns firmware version as int <xxyyzz> (x Major Version, y Minor Version, z Revison; negative values for error codes)
-  int CarpeDM::getFwVersion(const std::string& fwIdROM) {
-    //FIXME replace with FW ID string constants
-    //get Version string xx.yy.zz
-
-    std::string version = readFwIdROMTag(fwIdROM, "Version     : ", 10, true);
-
-    int ret = parseFwVersionString(version);
-
-    return ret;
-  }
-
-
-  const std::string CarpeDM::readFwIdROMTag(const std::string& fwIdROM, const std::string& tag, size_t maxlen, bool stopAtCr ) {
-    size_t pos, posEnd, tmp;
-    std::string s = fwIdROM;
-
-    tmp = s.find(tag, 0);
-    if(tmp == std::string::npos) throw std::runtime_error( "Could not find tag <" + tag + ">in FW ID ROM\n");
-    pos = tmp + tag.length();
-
-    tmp = s.find("\n", pos);
-    if( (tmp == std::string::npos) || (tmp > (pos + maxlen)) ) posEnd = (pos + maxlen);
-    else posEnd = tmp;
-
-    return s.substr(pos, posEnd - pos);
-
-
-  }
-
-  // SDB Functions
-  bool CarpeDM::isValidDMCpu(uint8_t cpuIdx) {return (cpuIdxMap.count(cpuIdx) > 0);}; //Check if CPU is registered as running a valid firmware
-  int CarpeDM::getCpuQty()   const {return cpuQty;} //Return number of found CPUs (not necessarily valid ones!)
-  bool CarpeDM::isCpuIdxValid(uint8_t cpuIdx) { if ( cpuIdxMap.find(cpuIdx) != cpuIdxMap.end() ) return true; else return false;}
-
-
-
-  uint32_t CarpeDM::getIntBaseAdr(const std::string& fwIdROM) {
-    //FIXME replace with FW ID string constants
-    //CAREFUL: Get the EXACT position. If you miss out on leading spaces, the parsed number gets truncated!
-    std::string value = readFwIdROMTag(fwIdROM, "IntAdrOffs  : ", 10, true);
-    //sLog << "IntAdrOffs : " << value << " parsed: 0x" << std::hex << s2u<uint32_t>(value) << std::endl;
-    return s2u<uint32_t>(value);
-
-  }
-
-  uint32_t CarpeDM::getSharedOffs(const std::string& fwIdROM) {
-    //FIXME replace with FW ID string constants
-    std::string value = readFwIdROMTag(fwIdROM, "SharedOffs  : ", 10, true);
-    //sLog << "Parsing SharedOffs : " << value << " parsed: 0x" << std::hex << s2u<uint32_t>(value) << std::endl;
-    return s2u<uint32_t>(value);
-
-  }
-
-  uint32_t CarpeDM::getSharedSize(const std::string& fwIdROM){
-    std::string value = readFwIdROMTag(fwIdROM, "SharedSize  : ", 10, true);
-    //sLog << "SharedSize : " << value << " parsed: "  << std::dec << s2u<uint32_t>(value) << std::endl;
-    return s2u<uint32_t>(value);
-
-  }
-
 
 
 
@@ -677,28 +201,6 @@ bool CarpeDM::connect(const std::string& en, bool simulation, bool test) {
   }
 
 
-
-
-void CarpeDM::showCpuList() {
-  int expVersionMin = parseFwVersionString(EXP_VER);
-  int expVersionMax = (expVersionMin / (int)FwId::VERSION_MAJOR_MUL) * (int)FwId::VERSION_MAJOR_MUL
-                   + 99 * (int)FwId::VERSION_MINOR_MUL
-                   + 99 * (int)FwId::VERSION_REVISION_MUL;
-
-  sLog << std::endl << std::setfill(' ') << std::setw(5) << "CPU" << std::setfill(' ') << std::setw(11) << "FW found"
-       << std::setfill(' ') << std::setw(11) << "Min" << std::setw(11) << "Max" << std::setw(11) << "Space" << std::setw(11) << "Free" << std::endl;
-  for (int x = 0; x < cpuQty; x++) {
-
-    sLog << std::dec << std::setfill(' ') << std::setw(5) << x << std::setfill(' ') << std::setw(11) << (sim ? "Sim" : createFwVersionString(vFw[x]))
-                                                                       << std::setfill(' ') << std::setw(11) << (sim ? "Sim" : createFwVersionString(expVersionMin))
-                                                                       << std::setfill(' ') << std::setw(11) << (sim ? "Sim" : createFwVersionString(expVersionMax));
-
-    sLog << std::dec << std::setfill(' ') << std::setw(11) << atDown.getTotalSpace(x) << std::setw(10) << atDown.getFreeSpace(x) * 100 / atDown.getTotalSpace(x) << "%";
-    sLog << std::endl;
-  }
-
-}
-
 //Returns if a hash / nodename is present on DM
   bool CarpeDM::isInHashDict(const uint32_t hash)  {
 
@@ -707,7 +209,6 @@ void CarpeDM::showCpuList() {
   }
 
   bool CarpeDM::isInHashDict(const std::string& name) {
-    if (name == NULL) return false;
     if (!(hm.contains(name))) return false;
     return (atDown.isOk(atDown.lookupHash(hm.lookup(name))));
   }
@@ -762,10 +263,10 @@ void CarpeDM::showCpuList() {
 
 
   // Command Generation and Dispatch //////////////////////////////////////////////////////////////
-  int CarpeDM::sendCommandsDot(const std::string& s) {Graph gTmp; vEbwrs ew; return send(createCommandBurst(parseDot(s, gTmp), ew));}; //Sends a dotfile of commands to the DM
-  int CarpeDM::sendCommandsDotFile(const std::string& fn) {Graph gTmp; vEbwrs ew; return send(createCommandBurst(parseDot(readTextFile(fn), gTmp), ew));};
+  int CarpeDM::sendCommandsDot(const std::string& s) {Graph gTmp; vEbwrs ew; return send(createCommandBurst(ew, parseDot(s, gTmp)));}; //Sends a dotfile of commands to the DM
+  int CarpeDM::sendCommandsDotFile(const std::string& fn) {Graph gTmp; vEbwrs ew; return send(createCommandBurst(ew, parseDot(readTextFile(fn), gTmp)));};
   //Send a command to Block <targetName> on CPU <cpuIdx> via Etherbone
-  int CarpeDM::sendCommand(const std::string& targetName, uint8_t cmdPrio, mc_ptr mc) {vEbwrs ew; return send(createCommand(targetName, cmdPrio, mc, ew));};
+  //int CarpeDM::sendCommand(const std::string& targetName, uint8_t cmdPrio, mc_ptr mc) {vEbwrs ew; return send(createCommand(targetName, cmdPrio, mc, ew));};
 
 
    //write out dotstringfrom download graph
@@ -815,46 +316,6 @@ void CarpeDM::showCpuList() {
     return true;
   }
 
-
-  uint64_t CarpeDM::getDmWrTime() {
-    /* get time from Cluster Time Module (ECA Time with or wo ECA) */
-    uint64_t wrTime;
-
-    if (sim) {
-      timeval ts;
-      gettimeofday(&ts, NULL);
-
-      wrTime = (uint64_t)ts.tv_sec * 1000000000ULL + (uint64_t)ts.tv_usec * 1000ULL;
-
-      return wrTime;
-
-    }
-
-    eb_data_t    nsHi, nsLo;
-    Cycle cyc;
-
-
-    uint32_t cluTimeAddr = cluTimeDevs[0].sdb_component.addr_first;
-
-
-      try {
-        cyc.open(ebd);
-        cyc.read( cluTimeAddr + CluTime::timeHiW, EB_BIG_ENDIAN|EB_DATA32, &nsHi);
-        cyc.read( cluTimeAddr + CluTime::timeLoW, EB_BIG_ENDIAN|EB_DATA32, &nsLo);
-        cyc.close();
-      } catch (etherbone::exception_t const& ex) {
-        throw std::runtime_error("Etherbone " + std::string(ex.method) + " returned " + std::string(eb_status(ex.status)) + "\n" );
-      }
-
-
-    /* time */
-    wrTime = (uint64_t)nsHi << 32;
-    wrTime = wrTime + (uint64_t)nsLo;
-
-
-
-    return wrTime;
-  }
 
 
   //Improvised Transaction Management: If an upload preparation operation fails for any reason, we roll back the meta tables
@@ -936,7 +397,7 @@ void CarpeDM::showCpuList() {
 
   vEbwrs& CarpeDM::createSchedModInfo(uint8_t cpu, uint32_t modCnt, uint8_t opType, vEbwrs& ew) { return createModInfo(cpu, modCnt, opType, ew, T_DIAG_SCH_MOD); };
   vEbwrs& CarpeDM::createCmdModInfo  (uint8_t cpu, uint32_t modCnt, uint8_t opType, vEbwrs& ew) { return createModInfo(cpu, modCnt, opType, ew, T_DIAG_CMD_MOD); };
-
+/*
   int CarpeDM::startThr(uint8_t cpuIdx, uint8_t thrIdx)                              { vEbwrs ew; return send(startThr(cpuIdx, thrIdx, ew));} //Requests Thread to start
   int CarpeDM::startPattern(const std::string& sPattern, uint8_t thrIdx)             { vEbwrs ew; return send(startPattern(sPattern, thrIdx, ew));}//Requests Pattern to start
   int CarpeDM::startPattern(const std::string& sPattern)                             { vEbwrs ew; return send(startPattern(sPattern, ew));}//Requests Pattern to start on first free thread
@@ -952,7 +413,7 @@ void CarpeDM::showCpuList() {
   int CarpeDM::setThrOrigin(uint8_t cpuIdx, uint8_t thrIdx, const std::string& name) { vEbwrs ew; return send(setThrOrigin(cpuIdx, thrIdx, name, ew));}//Sets the Node the Thread will start from
   int CarpeDM::setThrStartTime(uint8_t cpuIdx, uint8_t thrIdx, uint64_t t)           { vEbwrs ew; return send(setThrStartTime(cpuIdx, thrIdx, t, ew));}
   int CarpeDM::setThrPrepTime(uint8_t cpuIdx, uint8_t thrIdx, uint64_t t)            { vEbwrs ew; return send(setThrPrepTime(cpuIdx, thrIdx, t, ew));}
-
+*/
 
   void CarpeDM::showUp(bool filterMeta) {show("Upload Table", "upload_dict.txt", TransferDir::UPLOAD, false);} //show a CPU's Upload address table
   void CarpeDM::showDown(bool filterMeta) {  //show a CPU's Download address table

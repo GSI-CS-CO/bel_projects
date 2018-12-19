@@ -390,7 +390,7 @@ void CarpeDM::inspectHeap(uint8_t cpuIdx) {
   uint32_t thrAdr  = baseAdr + SHCTL_THR_DAT;
 
   for(int i=0; i<_THR_QTY_; i++) vRa.push_back(heapAdr + i * _PTR_SIZE_);
-  heap = ebReadCycle(ebd, vRa);
+  heap = ebd.readCycle(vRa);
 
 
   sLog << std::setfill(' ') << std::setw(4) << "Rank  " << std::setfill(' ') << std::setw(5) << "Thread  " << std::setfill(' ') << std::setw(21)
@@ -411,13 +411,13 @@ void CarpeDM::inspectHeap(uint8_t cpuIdx) {
 void CarpeDM::clearHealth(uint8_t cpuIdx) {
   vEbwrs ew;
   clearHealth(cpuIdx, ew);
-  ebWriteCycle(ebd, ew.va, ew.vb, ew.vcs);
+  ebd.writeCycle(ew.va, ew.vb, ew.vcs);
 }
 
 void CarpeDM::clearHealth() {
   vEbwrs ew;
-  for(int cpuIdx = 0; cpuIdx < getCpuQty(); cpuIdx++) { clearHealth(cpuIdx, ew); }
-  ebWriteCycle(ebd, ew.va, ew.vb, ew.vcs);
+  for(int cpuIdx = 0; cpuIdx < ebd.getCpuQty(); cpuIdx++) { clearHealth(cpuIdx, ew); }
+  ebd.writeCycle(ew.va, ew.vb, ew.vcs);
 }
 
 vEbwrs& CarpeDM::clearHealth(uint8_t cpuIdx, vEbwrs& ew) {
@@ -509,7 +509,7 @@ HealthReport& CarpeDM::getHealth(uint8_t cpuIdx, HealthReport &hr) {
   // this is possible because T_DIAG offsets start at 0, see ftm_common.h for definition
   for (uint32_t offs = 0; offs < _T_DIAG_SIZE_; offs += _32b_SIZE_) diagAdr.push_back(baseAdr + SHCTL_DIAG + offs);
   diagAdr.push_back(baseAdr + SHCTL_STATUS);
-  diagBuf = ebReadCycle(ebd, diagAdr);
+  diagBuf = ebd.readCycle(diagAdr);
   b = (uint8_t*)&diagBuf[0];
 
   //hexDump("TEST", diagBuf );
@@ -713,9 +713,11 @@ void CarpeDM::coverage3Upload(uint64_t seed ) {
   //writeDownDotFile("coverage.dot", false);
 
   coverage3GenerateDynamic(gCmd, seed );
-  send(createCommandBurst(gCmd, tmpWr));
-  setThrOrigin(0, 0, coverage3GenerateCursor(g, seed));
+  createCommandBurst(tmpWr, gCmd);
+  setThrOrigin(0, 0, coverage3GenerateCursor(g, seed),tmpWr);
   forceThrCursor(0, 0);
+  send(tmpWr);
+
   download();
 
 

@@ -255,7 +255,7 @@ namespace dnt = DotStr::Node::TypeVal;
     er.va.push_back(modAdrBase + T_META_COVTAB_SIZE);
     er.vcs += leadingOne(4);
 
-    vDl = ebReadCycle(ebd, er.va, er.vcs);
+    vDl = ebd.readCycle(er.va, er.vcs);
     atDown.setMgmtLLstartAdr(writeBeBytesToLeNumber<uint32_t>((uint8_t*)&vDl[T_META_START_PTR]));
 
     uint32_t grp, cov;
@@ -283,7 +283,7 @@ namespace dnt = DotStr::Node::TypeVal;
     gDown.clear();
     //get all BMPs so we know which nodes to download
     if(verbose) sLog << "Downloading ...";
-    vDlBmpD = ebReadCycle(ebd, erBmp.va, erBmp.vcs);
+    vDlBmpD = ebd.readCycle(erBmp.va, erBmp.vcs);
     /*
     sLog << "Tried to read " << std::dec << erBmp.va.size() << " bmp addresses " << std::endl;
     sLog << "Got back " << std::dec << vDlBmpD.size() << " bmp bytes " << std::endl;
@@ -291,7 +291,7 @@ namespace dnt = DotStr::Node::TypeVal;
     */
     atDown.setBmps( vDlBmpD );
     erData = gatherDownloadDataVector();
-    vDlD   = ebReadCycle(ebd, erData.va, erData.vcs);
+    vDlD   = ebd.readCycle(erData.va, erData.vcs);
     /*
     sLog << "Tried to read " << erData.va.size() << " data addresses " << std::endl;
     sLog << "Got back " << vDlD.size() << " data bytes " << std::endl;

@@ -361,7 +361,7 @@ using namespace DotStr::Misc;
     vEbwrs ew = gatherUploadVector(moddedCpus, 0, opType); //TODO not using modCnt right now, maybe implement later
     deactivateOrphanedCommands(vQr, ew);
     //Upload
-    ebWriteCycle(ebd, ew.va, ew.vb, ew.vcs);
+    ebd.writeCycle(ew.va, ew.vb, ew.vcs);
     if(verbose) sLog << "Done." << std::endl;
     freshDownload = false;
     return ew.va.size();
@@ -646,7 +646,7 @@ using namespace DotStr::Misc;
     nullify(); // read out current time for upload mod time (seconds, but probably better to use same format as DM FW. Convert to ns)
     // check if there are any threads still running first
     uint32_t activity = 0;
-    for(uint8_t cpuIdx=0; cpuIdx < getCpuQty(); cpuIdx++) {
+    for(uint8_t cpuIdx=0; cpuIdx < ebd.getCpuQty(); cpuIdx++) {
       uint32_t s = getThrStart(cpuIdx);
       uint32_t r = getThrRun(cpuIdx);
       //printf("#%u ThrStartBits: 0x%08x, ThrRunBits: 0x%08x, force=%u\n", cpuIdx, s, r, (int)force );
@@ -666,7 +666,7 @@ using namespace DotStr::Misc;
     validate(gUp, atUp, force);
     // check if there are any threads still running first
     uint32_t activity = 0;
-    for(uint8_t cpuIdx=0; cpuIdx < getCpuQty(); cpuIdx++) {
+    for(uint8_t cpuIdx=0; cpuIdx < ebd.getCpuQty(); cpuIdx++) {
       activity |= getThrRun(cpuIdx);
     }
     if (!force && activity)  {throw std::runtime_error("Cannot overwrite, threads are still running. Call stop/abort/halt first\n");}

@@ -122,6 +122,7 @@ namespace DotStr {
         extern const std::string sPermanent;
 
 
+
       }
     }
 
@@ -149,6 +150,9 @@ namespace DotStr {
       extern const std::string sCmdStop;
       extern const std::string sCmdAbort;
       extern const std::string sCmdOrigin;
+      extern const std::string sCmdLock;
+      extern const std::string sCmdUnlock;
+      extern const std::string sCmdAsyncClear;
       extern const std::string sBlock;
       extern const std::string sBlockFixed;
       extern const std::string sBlockAlign;
@@ -158,6 +162,7 @@ namespace DotStr {
       extern const std::string sMeta;
       extern const bool bMetaNode;
       extern const bool bRealNode;
+
 
     }
   }

@@ -149,6 +149,9 @@ namespace DotStr {
       const std::string sCmdStop       = "stop";        // For cmd dots, stops a thread (by cpu/thread, patternname or node name)
       const std::string sCmdAbort      = "abort";       // For cmd dots, aborts a thread (by cpu/thread, patternname or node name)
       const std::string sCmdOrigin     = "origin";      // For cmd dots, sets origin to node name
+      const std::string sCmdLock       = "lock";       // locks a block against DM reading/writing
+      const std::string sCmdUnlock     = "unlock";     // unlocks a block
+      const std::string sCmdAsyncClear = "asyncclear"; // clears all queues of a block. Only possible when locked.
       const std::string sBlock         = "block";       // block
       const std::string sBlockFixed    = sBlock;        // same as 'block'
       const std::string sBlockAlign    = "blockalign";  // auto aligning block, prolongs duration to match time grid (currently hardcoded in FW to 10µs starting at TAI 0)

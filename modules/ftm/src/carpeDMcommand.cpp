@@ -7,6 +7,8 @@
 #include <boost/graph/graphviz.hpp>
 #include <boost/graph/copy.hpp>
 #include <boost/algorithm/string.hpp>
+#include <thread>
+#include <chrono>
 
 #include "common.h"
 
@@ -28,124 +30,39 @@ namespace carpeDMcommand {
   const std::string exIntro = "carpeDMcommand: ";
 }
 
-void CarpeDM::blockLock(const std::string& targetName, bool readLock, bool writeLock) {
-
-    uint32_t hash;
-    const uint32_t flagsToAdd = ((uint32_t)readLock << BLOCK_CMDQ_DNR_POS) | ((uint32_t)writeLock << BLOCK_CMDQ_DNW_POS);
-
-    //check for covenants
-    if(optimisedS2R) {
-      cmI x = ct.lookup(targetName);
-      if (ct.isOk(x) && isCovenantPending(x)) {
-        throw std::runtime_error("Locking block <" + targetName + "> for modification would violate a safe2remove-covenant!");
-      }
-
-    }
-    hash     = hm.lookup(targetName, "queueLock: unknown target ");
-    auto it = atDown.lookupHash(hash, carpeDMcommand::exIntro);
-    auto* x = (AllocMeta*)&(*it);
-    uint32_t adrBase    = atDown.adrConv(AdrType::MGMT, AdrType::EXT, x->cpu, x->adr);
-    uint32_t adrQFlags   = adrBase + BLOCK_CMDQ_FLAGS;
-    uint32_t flags = (ebReadWord(ebd, adrQFlags) & BLOCK_CMDQ_FLGS_SMSK);
-
-    sLog << "adr 0x" << std::hex <<  adrQFlags << " flags 0x" << flags << " newflags 0x" << (flags | flagsToAdd) << std::endl;
-    //add lock bits to flags
-    ebWriteWord(ebd, adrQFlags, flags | flagsToAdd);
-   
-    
-}
-
-void CarpeDM::blockAsyncClearQueues(const std::string& targetName, bool autoLock, bool autoUnlock) {
-  //check if locked
-  if(autoLock) blockLock(targetName);
-  if (!blockIsLocked(targetName, true, true)) throw std::runtime_error("No async clear of block <" + targetName + ">'s queues possible, block is not locked.");
-
+vEbwrs& CarpeDM::blockAsyncClearQueues(const std::string& sBlock, vEbwrs& ew) {
   uint32_t hash;
-  hash      = hm.lookup(targetName, "queueLock: unknown target ");
+  hash      = hm.lookup(sBlock, "block: unknown target ");
   auto it   = atDown.lookupHash(hash, carpeDMcommand::exIntro);
   auto* x   = (AllocMeta*)&(*it);
   uint32_t adrBase    = atDown.adrConv(AdrType::MGMT, AdrType::EXT, x->cpu, x->adr);
-  uint32_t adrWrIdxs  = adrBase + BLOCK_CMDQ_WR_IDXS;
-  uint32_t adrRdIdxs  = adrBase + BLOCK_CMDQ_RD_IDXS;
-  //copy read indices to write indices, clearing queues
-  uint32_t eRdIdxs = ebReadWord(ebd, adrRdIdxs);
-  uint32_t newWrIdxs = eRdIdxs & BLOCK_CMDQ_RD_IDXS_MSK;
-  ebWriteWord(ebd, adrWrIdxs, newWrIdxs);
-  if(autoUnlock) blockUnlock(targetName);
-
-}
-
-void CarpeDM::blockUnlock(const std::string& targetName, bool readLock, bool writeLock) {
-  const uint32_t flagsToRem = ((uint32_t)readLock << BLOCK_CMDQ_DNR_POS) | ((uint32_t)writeLock << BLOCK_CMDQ_DNW_POS);
-  uint32_t hash = hm.lookup(targetName, "queueUnlock: unknown target ");
-  auto it  = atDown.lookupHash(hash, carpeDMcommand::exIntro);
-  auto* x  = (AllocMeta*)&(*it);
-  uint32_t adrQFlags  = atDown.adrConv(AdrType::MGMT, AdrType::EXT, x->cpu, x->adr) + BLOCK_CMDQ_FLAGS;
-  uint32_t qFlags     = ebReadWord(ebd, adrQFlags) & BLOCK_CMDQ_FLGS_SMSK;
-  uint32_t newQFlags  = qFlags & ~(flagsToRem);
-  ebWriteWord(ebd, adrQFlags, newQFlags);
-
-}
-
-bool CarpeDM::blockIsLocked(const std::string& targetName, bool checkReadLock, bool checkWriteLock) {
-  if (!(checkReadLock & checkWriteLock)) throw std::runtime_error("Lockcheck on <" + targetName + ">: valid inputs are read, write, or both. None is not permitted.");  
-
-  uint32_t hash       = hm.lookup(targetName, "queueLock: unknown target ");
-  auto it             = atDown.lookupHash(hash, carpeDMcommand::exIntro);
-  auto* x             = (AllocMeta*)&(*it);
-  uint32_t adrBase    = atDown.adrConv(AdrType::MGMT, AdrType::EXT, x->cpu, x->adr);
-  uint32_t adrWrIdxs  = adrBase + BLOCK_CMDQ_WR_IDXS;
-  uint32_t adrRdIdxs  = adrBase + BLOCK_CMDQ_RD_IDXS;
-  uint32_t adrQFlags  = adrBase + BLOCK_CMDQ_FLAGS;
-  uint32_t qFlags     = ebReadWord(ebd, adrQFlags) & BLOCK_CMDQ_FLGS_SMSK;
-  
-  //check if all requested lock bits are present
-  if(!((qFlags & ((uint32_t)checkReadLock << BLOCK_CMDQ_DNR_POS))
-    && (qFlags & ((uint32_t)checkWriteLock << BLOCK_CMDQ_DNW_POS)))) {return false;}
-
-  //confirm spin lock
-  //cumbersome version for now
-  uint32_t oldRdIdxs, newRdIdxs = -1; // set out of range initial value on purpose so initial comp. fails
-  uint32_t oldWrIdxs, newWrIdxs = -1; // ""
-  uint32_t attempts = 0, maxAttempts = 10;
-
-  bool spin = true;
-  // spin lock. check indices of attempted locks until no more changes are detected 
-  while(spin) {
-    if (attempts == maxAttempts) return false;
-    //sleep 0.001;
-    spin = false;
-    // check read indices if read lock is active
-    if(qFlags & ((uint32_t)checkReadLock << BLOCK_CMDQ_DNR_POS)) {  
-      oldRdIdxs = newRdIdxs; //save RdIdxs
-      newRdIdxs = ebReadWord(ebd, adrRdIdxs);
-      spin |= (oldRdIdxs != newRdIdxs);
-    }
-    // check write indices if wr lock is active
-    if(qFlags & ((uint32_t)checkWriteLock << BLOCK_CMDQ_DNW_POS)) {  
-      oldWrIdxs = newWrIdxs; //save WrIdxs
-      newWrIdxs = ebReadWord(ebd, adrWrIdxs);
-      spin |= (oldWrIdxs != newWrIdxs);
-    }
-    attempts++;
-  }
-
-  return true;
+  //reset read and write indices
+  vAdr tmp = {(adrBase + BLOCK_CMDQ_RD_IDXS), (adrBase + BLOCK_CMDQ_WR_IDXS)};
+  ew.va += tmp;
+  ew.vb += {0, 0};
+  ew.vcs += leadingOne(tmp.size());
+  return ew;
 }
 
 vStrC CarpeDM::getLockedBlocks(bool checkReadLock, bool checkWriteLock) {
   vStrC ret;
   if (!(checkReadLock & checkWriteLock)) throw std::runtime_error("Get locked Blocks: valid inputs are read, write, or both. None is not permitted.");  
 
+
+  lm.clear(); //clear lock manager for inspection
+
   //get a list of all blocks
   BOOST_FOREACH( vertex_t vChkBlock, vertices(gDown) ) {
-    //check if block is locked
-    if(gDown[vChkBlock].np->isBlock()) {
-      //take a detour here over the name, but this should be changed to work just with the node index
-      if(blockIsLocked(gDown[vChkBlock].name, checkReadLock, checkWriteLock)) ret.push_back(gDown[vChkBlock].name);
+    //setup check if this block has a lock we're interested in
+    if(gDown[vChkBlock].np->isBlock()) { 
+      BlockLock& lock = lm.add(gDown[vChkBlock].name);
+      lock.rd.set = checkReadLock;
+      lock.wr.set = checkWriteLock;
     }
   }
-
+  lm.readInStat(); // read in the lock status flags from DM
+  for (const auto& l : lm.getLockVec()) { if (l.isAnySet()) ret.push_back(l.name); }; //
+  
   return ret;
 }
 
@@ -168,7 +85,7 @@ boost::optional<std::pair<int, int>> CarpeDM::parseCpuAndThr(vertex_t v, Graph& 
       }
 
 
-  if ( (cpu < 0) || (cpu >= getCpuQty()) || (thr < 0) || (thr >= _THR_QTY_  ) ) {
+  if ( (cpu < 0) || (cpu >= ebd.getCpuQty()) || (thr < 0) || (thr >= _THR_QTY_  ) ) {
     //sLog << "OOR, returning none" << std::endl;
     return boost::optional<std::pair<int, int>>();
   }
@@ -189,10 +106,162 @@ void CarpeDM::adjustValidTime(uint64_t& tValid, bool abs) {
 }
 
 
-vEbwrs& CarpeDM::createCommandBurst(Graph& g, vEbwrs& ew) {
+vEbwrs& CarpeDM::createCommand(vEbwrs& ew, const std::string& type, const std::string& target, const std::string& destination, 
+  uint8_t  cmdPrio, uint8_t cmdQty, bool vabs, uint64_t cmdTvalid, bool perma, bool qIl, bool qHi, bool qLo,  uint64_t cmdTwait, bool abswait, bool lockRd, bool lockWr )
+{
+    mc_ptr mc;
+    sLog << "Command  type <" << type << ">" << std::endl;
+            sLog << "DEBUG: VABS: " << std::boolalpha << " b " << vabs << std::endl;
+    adjustValidTime(cmdTvalid, vabs);
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Global Commands (not targeted at cmd queues of individual blocks)
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    if (type == dnt::sCmdStart)   {
+      if (hm.lookup(target)) {sLog << " Starting at <" << target << ">" << std::endl; startNodeOrigin(target, ew);  }
+      else {throw std::runtime_error("Cannot execute command '" + type + "' No valid cpu/thr provided and '" + target + "' is not a valid node name\n");}
+      return ew;
+    }
+    if (type == dnt::sCmdStop)    {
+      if (hm.lookup(target)) { sLog << " Stopping at <" << target << ">" << std::endl; stopNodeOrigin(target, ew); }
+      else {throw std::runtime_error("Cannot execute command '" + type + "' No valid cpu/thr provided and '" + target + "' is not a valid node name\n");}
+      return ew;
+    }
+    else if (type == dnt::sCmdAbort)   {
+      if (hm.lookup(target)) {sLog << " Aborting (trying) at <" << target << ">" << std::endl; abortNodeOrigin(target, ew); }
+      else {throw std::runtime_error("Cannot execute command '" + type + "'. No valid cpu/thr provided and '" + target + "' is not a valid node name\n");}
+      return ew;
+    }
+
+    //FIMXE hack to test compile
+    uint8_t thr = 0;
+
+    if (type == dnt::sCmdOrigin)   {
+      //Leave out for now and autocorrect cpu
+      try { setThrOrigin(getNodeCpu(target, TransferDir::DOWNLOAD), thr, target, ew); } catch (std::runtime_error const& err) {
+        throw std::runtime_error("Cannot execute command '" + type + "', " + std::string(err.what()));
+      }
+      return ew;
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Local Commands (targeted at cmd queue of individual blocks)
+    // These operations need at least a write lock. Add it to the lock manager
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    BlockLock& lock = lm.add(target);
+
+    // lock all queues of a block
+    if (type == dnt::sCmdLock) {
+      lock.wr.set = lockWr;
+      lock.rd.set = lockRd;  
+      return ew;
+    // async clear all queues
+    } else if (type == dnt::sCmdAsyncClear) {
+      blockAsyncClearQueues(target, ew);
+      lock.wr.set = true;
+      lock.wr.clr = true;
+      lock.rd.set = true;
+      lock.rd.clr = true;    
+      return ew;
+    // unlock all queues
+    } else if (type == dnt::sCmdUnlock) {
+      lock.wr.clr = lockWr;
+      lock.rd.clr = lockRd; 
+      return ew;
+    // Commands targeted at cmd queue of individual blocks
+    } else if (type == dnt::sCmdNoop) {
+      mc = (mc_ptr) new MiniNoop(cmdTvalid, cmdPrio, cmdQty );
+      lock.wr.set = true;
+      lock.wr.clr = true;
+
+    } else if (type == dnt::sCmdFlow) {
+      
+      //sLog << " Flowing from <" << target << "> to <" << destination << ">, permanent defDest change='" << s2u<bool>(g[v].perma) << "'" << std::endl;
+
+      uint32_t adr = LM32_NULL_PTR;
+      try { adr = getNodeAdr(destination, TransferDir::DOWNLOAD, AdrType::INT); } catch (std::runtime_error const& err) {
+        throw std::runtime_error("Destination '" + destination + "'' invalid: " + std::string(err.what()));
+      }
+  
+      mc = (mc_ptr) new MiniFlow(cmdTvalid, cmdPrio, cmdQty, adr, perma );
+      lock.wr.set = true;
+      lock.wr.clr = true;
+
+    } else if (type == dnt::sCmdFlush) { // << " Flushing <" << target << "> Queues IL " << s2u<int>(g[v].qIl) << " HI " << s2u<int>(g[v].qHi) << " LO " << s2u<int>(g[v].qLo) <<  std::endl;
+      uint32_t adr = LM32_NULL_PTR;
+      try { adr = getNodeAdr(destination, TransferDir::DOWNLOAD, AdrType::INT); } catch (std::runtime_error const& err) {
+        // empty tag or invalid destination. We'll interpret this as no override desired.
+        adr = LM32_NULL_PTR;
+      }
+      mc = (mc_ptr) new MiniFlush(cmdTvalid, cmdPrio, qIl, qHi, qLo, adr, perma);
+      lock.wr.set = true;
+      lock.wr.clr = true; 
+
+    } else if (type == dnt::sCmdWait) {
+      mc = (mc_ptr) new MiniWait(cmdTvalid, cmdPrio, cmdTwait, false, false );
+      lock.wr.set = true;
+      lock.wr.clr = true;                                            
+    }
+    else { throw std::runtime_error("Command type <" + type + "> is not supported!\n");}
+
+    //sLog << std::endl;
+    createMiniCommand(target, cmdPrio, mc, ew);
+
+  return ew;
+  
+}    
+
+//convenience wrappers
+//commands with no extras
+vEbwrs& CarpeDM::createNonQCommand(vEbwrs& ew, const std::string& type, const std::string& target) {
+  return createCommand(ew, type, target, "", 0, 1, true, 0, false, false, false, false, 0, false, false, false);
+}
+
+vEbwrs& CarpeDM::createLockCtrlCommand(vEbwrs& ew, const std::string& type, const std::string& target, bool lockRd, bool lockWr ) {
+  return createCommand(ew, type, target, "", 0, 1, true, 0, false, false, false, false, 0, false, lockRd, lockWr );
+}
+
+//commands with time
+vEbwrs& CarpeDM::createQCommand(vEbwrs& ew, const std::string& type, const std::string& target, uint8_t cmdPrio, uint8_t cmdQty, bool vabs, uint64_t cmdTvalid) {
+  return createCommand(ew, type, target, "", cmdPrio, cmdQty, vabs, cmdTvalid, false, false, false, false, 0, false, false, false);
+}
+  
+//flows
+vEbwrs& CarpeDM::createFlowCommand(vEbwrs& ew, const std::string& type, const std::string& target, const std::string& destination, 
+  uint8_t  cmdPrio, uint8_t cmdQty, bool vabs, uint64_t cmdTvalid, bool perma) {
+  return createCommand(ew, type, target, destination, cmdPrio, cmdQty, vabs, cmdTvalid, perma, false, false, false, 0, false, false, false);
+} 
+
+//flush or flush override
+vEbwrs& CarpeDM::createFlushCommand(vEbwrs& ew, const std::string& type, const std::string& target, const std::string& destination, 
+  uint8_t  cmdPrio, uint8_t cmdQty, bool vabs, uint64_t cmdTvalid, bool qIl, bool qHi, bool qLo) {
+  return createCommand(ew, type, target, destination, cmdPrio, cmdQty, vabs, cmdTvalid, false, qIl, qHi, qLo, 0, false, false, false);
+} 
+
+//wait
+vEbwrs& CarpeDM::createWaitCommand(vEbwrs& ew, const std::string& type, const std::string& target,  
+  uint8_t  cmdPrio, uint8_t cmdQty, bool vabs, uint64_t cmdTvalid, uint64_t cmdTwait, bool abswait ) {
+  return createCommand(ew, type, target, "", cmdPrio, cmdQty, vabs, cmdTvalid, false, false, false, false, cmdTwait, abswait, false, false);
+}
+
+vEbwrs& CarpeDM::createFullCommand(vEbwrs& ew, const std::string& type, const std::string& target, const std::string& destination, 
+  uint8_t  cmdPrio, uint8_t cmdQty, bool vabs, uint64_t cmdTvalid, bool perma, bool qIl, bool qHi, bool qLo, uint64_t cmdTwait, bool abswait,bool lockRd, bool lockWr )
+{
+  updateModTime();
+  return createCommand(ew, type, target, destination, cmdPrio, cmdQty, vabs, perma, qIl, qHi, qLo, cmdTvalid, cmdTwait, abswait, lockRd, lockWr);
+}
 
 
-  mc_ptr mc;
+
+
+
+
+vEbwrs& CarpeDM::createCommandBurst(vEbwrs& ew, Graph& g) {
+
+  lm.clear();
+ 
 
   if ((boost::get_property(g, boost::graph_name)).find(DotStr::Graph::Special::sCmd) == std::string::npos) {throw std::runtime_error("Expected a series of commands, but this appears to be a schedule (Tag '" + DotStr::Graph::Special::sCmd + "' not found in graphname)");}
 
@@ -202,7 +271,11 @@ vEbwrs& CarpeDM::createCommandBurst(Graph& g, vEbwrs& ew) {
 
   BOOST_FOREACH( vertex_t v, vertices(g) ) {
 
-    std::string target, destination;
+    std::string target, destination, type;
+    bool qIl, qHi, qLo, perma, vabs, abswait, lockRd, lockWr;
+    uint64_t cmdTvalid, cmdTwait;
+    uint32_t cmdQty;
+    uint8_t cmdPrio;
 
 
 
@@ -218,112 +291,61 @@ vEbwrs& CarpeDM::createCommandBurst(Graph& g, vEbwrs& ew) {
     else  if (g[v].cmdDestBp != DotStr::Misc::sUndefined)  { destination = getBeamprocEntryNode(g[v].cmdDestBp); }
     else                                                   { destination = g[v].cmdDest;}
 
-
-
-    bool vabs = s2u<bool>(g[v].vabs);
-    uint64_t cmdTvalid = s2u<uint64_t>(g[v].tValid);
-    //we need tValid always to be set slightly in the future so we can do some checks in the safeToRemove functions
-    adjustValidTime(cmdTvalid, vabs);
-
-    //sLog << "Command valid time is " << (vabs ? "absolute" : "relative") << tmpTvalid << " @ " << cmdTvalid << std::endl;
-    uint8_t  cmdPrio    = s2u<uint8_t>(g[v].prio);
-    uint8_t cpu, thr;
-
-
+    type      = g[v].type;
+    cmdPrio   = s2u<uint8_t>(g[v].prio);
+    vabs      = s2u<bool>(g[v].vabs);
+    cmdQty    = s2u<uint32_t>(g[v].qty);
+    cmdTvalid = s2u<uint64_t>(g[v].tValid);
+    cmdTwait  = s2u<uint64_t>(g[v].tWait);
+    qIl       = s2u<bool>(g[v].qIl);
+    qHi       = s2u<bool>(g[v].qHi);
+    qLo       = s2u<bool>(g[v].qLo);
+    perma     = s2u<bool>(g[v].perma);
+    sLog << "DEBUG: VABS: " << g[v].vabs << std::boolalpha << " recon " << vabs << std::endl;
+    lockRd    = false;
+    lockWr    = false;
+    //fixme hack to test compile
+    abswait   = false;
+  
     if(verbose) sLog << "Command <" << g[v].name << ">, type <" << g[v].type << ">" << std::endl;
-
-
-    // Commands with optional target
-
-    if (g[v].type == dnt::sCmdStart)   {
-      if(parseCpuAndThr(v, g)) {
-        std::tie(cpu, thr) = parseCpuAndThr(v, g).get();
-        //sLog << " Starting cpu=" << (int)cpu << ", thr=" << (int)thr << std::endl;  startThr(cpu, thr, ew);
-      } else {
-        target = getPatternEntryNode(g[v].patName);
-        if (hm.lookup(target)) {sLog << " Starting at <" << target << ">" << std::endl; startNodeOrigin(target, ew);  }
-        else throw std::runtime_error("Cannot execute command '" + g[v].type + "' No valid cpu/thr provided and '" + target + "' is not a valid node name\n");
-      }
-      continue;
-    }
-    if (g[v].type == dnt::sCmdStop)    {
-      if(parseCpuAndThr(v, g)) {
-        std::tie(cpu, thr) = parseCpuAndThr(v, g).get();
-        //sLog << " Stopping (trying) cpu=" << (int)cpu << ", thr=" << (int)thr << std::endl;  stopPattern(getNodePattern(getThrCursor(cpu, thr)), ew);
-      } else {
-        if (hm.lookup(target)) { sLog << " Stopping at <" << target << ">" << std::endl; stopNodeOrigin(target, ew); }
-        else throw std::runtime_error("Cannot execute command '" + g[v].type + "' No valid cpu/thr provided and '" + target + "' is not a valid node name\n");
-      }
-      continue;
-    }
-    else if (g[v].type == dnt::sCmdAbort)   {
-      if(parseCpuAndThr(v, g)) {
-        std::tie(cpu, thr) = parseCpuAndThr(v, g).get();
-        //sLog << " Aborting cpu=" << (int)cpu << ", thr=" << (int)thr << std::endl; abortThr(cpu, thr, ew);
-      } else {
-        if (hm.lookup(target)) {sLog << " Aborting (trying) at <" << target << ">" << std::endl; abortNodeOrigin(target, ew); }
-        else throw std::runtime_error("Cannot execute command '" + g[v].type + "'. No valid cpu/thr provided and '" + target + "' is not a valid node name\n");
-      }
-      continue;
-    }
-
-
-    if (g[v].type == dnt::sCmdOrigin)   {
-      //Leave out for now and autocorrect cpu
-      //if (getNodeCpu(target, DOWNLOAD) != cpu) throw std::runtime_error("Command '" + g[v].name + "'s value for property '" + DotStr::Node::Prop::Base::sCpu + "' is invalid\n");try { adr = getNodeAdr(destination, TransferDir::DOWNLOAD, AdrType::INT); } catch (std::runtime_error const& err) {
-      try { setThrOrigin(getNodeCpu(target, TransferDir::DOWNLOAD), thr, target, ew); } catch (std::runtime_error const& err) {
-        throw std::runtime_error("Cannot execute command '" + g[v].type + "', " + std::string(err.what()));
-      }
-      continue;
-    }
-
-    // Commands targeted at cmd queue of individual blocks, using miniCommand (mc) class
-         if (g[v].type == dnt::sCmdNoop)  { uint32_t cmdQty = s2u<uint32_t>(g[v].qty);
-                                            mc = (mc_ptr) new MiniNoop(cmdTvalid, cmdPrio, cmdQty );
-                                          }
-    else if (g[v].type == dnt::sCmdFlow)  { uint32_t cmdQty = s2u<uint32_t>(g[v].qty);
-                                            //sLog << " Flowing from <" << target << "> to <" << destination << ">, permanent defDest change='" << s2u<bool>(g[v].perma) << "'" << std::endl;
-                                            uint32_t adr = LM32_NULL_PTR;
-                                            try { adr = getNodeAdr(destination, TransferDir::DOWNLOAD, AdrType::INT); } catch (std::runtime_error const& err) {
-                                              throw std::runtime_error("Destination '" + destination + "'' invalid: " + std::string(err.what()));
-                                            }
-
-                                            mc = (mc_ptr) new MiniFlow(cmdTvalid, cmdPrio, cmdQty, adr, s2u<bool>(g[v].perma) );
-                                          }
-    else if (g[v].type == dnt::sCmdFlush) { // << " Flushing <" << target << "> Queues IL " << s2u<int>(g[v].qIl) << " HI " << s2u<int>(g[v].qHi) << " LO " << s2u<int>(g[v].qLo) <<  std::endl;
-                                            uint32_t adr = LM32_NULL_PTR;
-                                            try { adr = getNodeAdr(destination, TransferDir::DOWNLOAD, AdrType::INT); } catch (std::runtime_error const& err) {
-                                              // empty tag or invalid destination. We'll interpret this as no override desired.
-                                              adr = LM32_NULL_PTR;
-                                            }
-                                            mc = (mc_ptr) new MiniFlush(cmdTvalid, cmdPrio, s2u<bool>(g[v].qIl), s2u<bool>(g[v].qHi), s2u<bool>(g[v].qLo), adr, s2u<bool>(g[v].perma));
-                                          }
-    else if (g[v].type == dnt::sCmdWait)  { uint64_t cmdTwait  = s2u<uint64_t>(g[v].tWait);
-                                            mc = (mc_ptr) new MiniWait(cmdTvalid, cmdPrio, cmdTwait, false, false );
-                                          }
-    else                                  { throw std::runtime_error("Command <" + g[v].name + ">'s type <" + g[v].type + "> is not supported!\n");}
-
-    //sLog << std::endl;
-    //create miniCommand
-    createCommand(target, cmdPrio, mc, ew);
-
-  }
-
-
-
-
+    createCommand(ew, type, target, destination, cmdPrio, cmdQty, vabs, cmdTvalid, perma, qIl, qHi, qLo, cmdTwait, abswait, lockRd, lockWr);
+  }  
 
   return ew;
 
 }
 
   int CarpeDM::send(vEbwrs& ew) {
-    ebWriteCycle(ebd, ew.va, ew.vb, ew.vcs);
+
+    bool locksRdy;
+    sLog << "reading lockstates...";
+    lm.readInStat(); //read current lock states
+    sLog << "done" << std::endl << " Setting locks...";
+    lm.processLockRequests(); //set requested locks (or'ed with already set locks)
+    sLog << "done" << std::endl; 
+    //3 retries for lock readiness
+    for(unsigned i = 0; i < 3; i++) {
+      sLog << "checking locks";
+      locksRdy = lm.isReady();
+      sLog << "check performed" << std::endl;
+      if (locksRdy) {
+        sLog << "locks ready. writing commands";
+        ebd.writeCycle(ew.va, ew.vb, ew.vcs); //if ready, write commands. if not, restore locks and throw exception
+        //sLog << "writing commands" << std::endl;
+        break;
+      }
+      std::chrono::milliseconds timespan(1);
+      std::this_thread::sleep_for(timespan);  
+    }
+    sLog << "done." << std::endl << "Unlocking...";
+    lm.processUnlockRequests(); //restore lock bits
+    if (!locksRdy) throw std::runtime_error("Could not write commands, locking failed");
+    sLog << "done." << std::endl;
     return ew.vb.size();
   }
 
 
-  vEbwrs& CarpeDM::createCommand(const std::string& targetName, uint8_t cmdPrio, mc_ptr mc, vEbwrs& ew) {
+  vEbwrs& CarpeDM::createMiniCommand(const std::string& targetName, uint8_t cmdPrio, mc_ptr mc, vEbwrs& ew) {
 
     uint32_t cmdWrInc, hash;
     uint8_t b[_T_CMD_SIZE_ + _32b_SIZE_];
@@ -335,7 +357,6 @@ vEbwrs& CarpeDM::createCommandBurst(Graph& g, vEbwrs& ew) {
         //there is covenant. lets see if we are a danger to it
         if(x->prio < cmdPrio) throw std::runtime_error("Command preemption (prio " + std::to_string((int)cmdPrio) + ") at block <" + targetName + "> would violate a safe2remove-covenant!");
       }
-
     }
 
     hash     = hm.lookup(targetName, "createCommand: unknown target ");
@@ -353,7 +374,7 @@ vEbwrs& CarpeDM::createCommandBurst(Graph& g, vEbwrs& ew) {
     uint8_t opType = OP_TYPE_CMD_BASE + ((mc->getAct() >> ACT_TYPE_POS) & ACT_TYPE_MSK);
     if ((((mc->getAct() >> ACT_TYPE_POS) & ACT_TYPE_MSK) == ACT_TYPE_FLOW)
      && (boost::dynamic_pointer_cast<MiniFlow>(mc)->getDst() == LM32_NULL_PTR)) { opType = OP_TYPE_CMD_STOP; }
-
+    //FIMXE this should be done for all commands, not just the minis  
     createCmdModInfo(getNodeCpu(targetName, TransferDir::DOWNLOAD), 0, opType, ew);
 
     return ew;
@@ -391,7 +412,7 @@ vEbwrs& CarpeDM::createCommandBurst(Graph& g, vEbwrs& ew) {
   const std::string CarpeDM::getThrOrigin(uint8_t cpuIdx, uint8_t thrIdx) {
     uint32_t adr;
 
-    adr = ebReadWord(ebd, getThrInitialNodeAdr(cpuIdx, thrIdx));
+    adr = ebd.read32b( getThrInitialNodeAdr(cpuIdx, thrIdx));
 
     if (adr == LM32_NULL_PTR) return DotStr::Node::Special::sIdle;
     try {
@@ -407,7 +428,7 @@ vEbwrs& CarpeDM::createCommandBurst(Graph& g, vEbwrs& ew) {
   const std::string CarpeDM::getThrCursor(uint8_t cpuIdx, uint8_t thrIdx) {
     uint32_t adr;
 
-    adr = ebReadWord(ebd, getThrCurrentNodeAdr(cpuIdx, thrIdx));
+    adr = ebd.read32b( getThrCurrentNodeAdr(cpuIdx, thrIdx));
 
     //std::cout << "#" << (int) cpuIdx << ", " << (int)thrIdx << std::hex << " 0x" << adr << std::endl;
 
@@ -422,18 +443,18 @@ vEbwrs& CarpeDM::createCommandBurst(Graph& g, vEbwrs& ew) {
 
   //DEBUG ONLY !!! force thread cursor to the value of the corresponding origin
   void CarpeDM::forceThrCursor(uint8_t cpuIdx, uint8_t thrIdx) {
-    uint32_t cursor = ebReadWord(ebd, getThrInitialNodeAdr(cpuIdx, thrIdx));
-    ebWriteWord(ebd, getThrCurrentNodeAdr(cpuIdx, thrIdx), cursor);
+    uint32_t cursor = ebd.read32b( getThrInitialNodeAdr(cpuIdx, thrIdx));
+    ebd.write32b(getThrCurrentNodeAdr(cpuIdx, thrIdx), cursor);
   }
 
   //Get bitfield showing running threads
   uint32_t CarpeDM::getThrRun(uint8_t cpuIdx) {
-    return ebReadWord(ebd, getThrCmdAdr(cpuIdx) + T_TC_RUNNING);
+    return ebd.read32b( getThrCmdAdr(cpuIdx) + T_TC_RUNNING);
   }
 
   //Get bifield showing running threads
   uint32_t CarpeDM::getStatus(uint8_t cpuIdx) {
-    return ebReadWord(ebd, atDown.getMemories()[cpuIdx].extBaseAdr + atDown.getMemories()[cpuIdx].sharedOffs + SHCTL_STATUS);
+    return ebd.read32b( atDown.getMemories()[cpuIdx].extBaseAdr + atDown.getMemories()[cpuIdx].sharedOffs + SHCTL_STATUS);
   }
 
   //Requests Threads to start
@@ -449,7 +470,7 @@ vEbwrs& CarpeDM::createCommandBurst(Graph& g, vEbwrs& ew) {
   }
 
   uint32_t CarpeDM::getThrStart(uint8_t cpuIdx) {
-    return ebReadWord(ebd, getThrCmdAdr(cpuIdx) + T_TC_START);
+    return ebd.read32b( getThrCmdAdr(cpuIdx) + T_TC_START);
   }
 
 
@@ -474,7 +495,7 @@ vEbwrs& CarpeDM::createCommandBurst(Graph& g, vEbwrs& ew) {
     writeLeNumberToBeBytes<uint32_t>(b, (1 << _THR_QTY_)-1 );
 
 
-    for(uint8_t cpuIdx=0; cpuIdx < getCpuQty(); cpuIdx++) {
+    for(uint8_t cpuIdx=0; cpuIdx < ebd.getCpuQty(); cpuIdx++) {
       setThrStart(cpuIdx, 0, ew);
       ew.va.push_back(getThrCmdAdr(cpuIdx) + T_TC_ABORT);
       ew.vb.insert( ew.vb.end(), b, b + sizeof(b));
@@ -482,7 +503,7 @@ vEbwrs& CarpeDM::createCommandBurst(Graph& g, vEbwrs& ew) {
       createCmdModInfo(cpuIdx, 0, OP_TYPE_CMD_HALT, ew);
     }
 
-    ebWriteCycle(ebd, ew.va, ew.vb, ew.vcs);
+    ebd.writeCycle(ew.va, ew.vb, ew.vcs);
   }
 
 
@@ -511,7 +532,7 @@ vEbwrs& CarpeDM::createCommandBurst(Graph& g, vEbwrs& ew) {
 void  CarpeDM::resetThrMsgCnt(uint8_t cpuIdx, uint8_t thrIdx) {
   vEbwrs ew;
   resetThrMsgCnt(cpuIdx, thrIdx, ew);
-  ebWriteCycle(ebd, ew.va, ew.vb, ew.vcs);
+  ebd.writeCycle(ew.va, ew.vb, ew.vcs);
 }
 
 vEbwrs& CarpeDM::resetThrMsgCnt(uint8_t cpuIdx, uint8_t thrIdx, vEbwrs& ew) {
@@ -527,31 +548,37 @@ vEbwrs& CarpeDM::resetThrMsgCnt(uint8_t cpuIdx, uint8_t thrIdx, vEbwrs& ew) {
 }
 
 uint64_t CarpeDM::getThrMsgCnt(uint8_t cpuIdx, uint8_t thrIdx) {
-  return read64b(atDown.getMemories()[cpuIdx].extBaseAdr + atDown.getMemories()[cpuIdx].sharedOffs + SHCTL_THR_DAT + thrIdx * _T_TD_SIZE_ + T_TD_MSG_CNT);
+  return ebd.read64b(atDown.getMemories()[cpuIdx].extBaseAdr + atDown.getMemories()[cpuIdx].sharedOffs + SHCTL_THR_DAT + thrIdx * _T_TD_SIZE_ + T_TD_MSG_CNT);
 }
 
 uint64_t CarpeDM::getThrDeadline(uint8_t cpuIdx, uint8_t thrIdx) {
-  return read64b(atDown.getMemories()[cpuIdx].extBaseAdr + atDown.getMemories()[cpuIdx].sharedOffs + SHCTL_THR_DAT + thrIdx * _T_TD_SIZE_ + T_TD_DEADLINE);
+  return ebd.read64b(atDown.getMemories()[cpuIdx].extBaseAdr + atDown.getMemories()[cpuIdx].sharedOffs + SHCTL_THR_DAT + thrIdx * _T_TD_SIZE_ + T_TD_DEADLINE);
 }
 
 //FIXME wtf ... this doesnt queue anything!
 vEbwrs&  CarpeDM::setThrStartTime(uint8_t cpuIdx, uint8_t thrIdx, uint64_t t, vEbwrs& ew) {
-  write64b(atDown.getMemories()[cpuIdx].extBaseAdr + atDown.getMemories()[cpuIdx].sharedOffs + SHCTL_THR_STA + thrIdx * _T_TS_SIZE_ + T_TS_STARTTIME, t);
+  uint32_t startAdr = atDown.getMemories()[cpuIdx].extBaseAdr + atDown.getMemories()[cpuIdx].sharedOffs + SHCTL_THR_STA + thrIdx * _T_TS_SIZE_ + T_TS_STARTTIME;
+  ew.va += {startAdr, startAdr + _32b_SIZE_};
+  writeLeNumberToBeBytes<uint64_t>(ew.vb, t );
+  ew.vcs += leadingOne(2);
   return ew;
 }
 
 uint64_t CarpeDM::getThrStartTime(uint8_t cpuIdx, uint8_t thrIdx) {
-  return read64b(atDown.getMemories()[cpuIdx].extBaseAdr + atDown.getMemories()[cpuIdx].sharedOffs + SHCTL_THR_STA + thrIdx * _T_TS_SIZE_ + T_TS_STARTTIME);
+  return ebd.read64b(atDown.getMemories()[cpuIdx].extBaseAdr + atDown.getMemories()[cpuIdx].sharedOffs + SHCTL_THR_STA + thrIdx * _T_TS_SIZE_ + T_TS_STARTTIME);
 }
 
 //FIXME wtf ... this doesnt queue anything!
 vEbwrs&  CarpeDM::setThrPrepTime(uint8_t cpuIdx, uint8_t thrIdx, uint64_t t, vEbwrs& ew) {
-  write64b(atDown.getMemories()[cpuIdx].extBaseAdr + atDown.getMemories()[cpuIdx].sharedOffs + SHCTL_THR_STA + thrIdx * _T_TS_SIZE_ + T_TS_PREPTIME, t);
+  uint32_t startAdr = atDown.getMemories()[cpuIdx].extBaseAdr + atDown.getMemories()[cpuIdx].sharedOffs + SHCTL_THR_STA + thrIdx * _T_TS_SIZE_ + T_TS_PREPTIME;
+  ew.va += {startAdr, startAdr + _32b_SIZE_};
+  writeLeNumberToBeBytes<uint64_t>(ew.vb, t );
+  ew.vcs += leadingOne(2);
   return ew;
 }
 
 uint64_t CarpeDM::getThrPrepTime(uint8_t cpuIdx, uint8_t thrIdx) {
-  return read64b(atDown.getMemories()[cpuIdx].extBaseAdr + atDown.getMemories()[cpuIdx].sharedOffs + SHCTL_THR_STA + thrIdx * _T_TS_SIZE_ + T_TS_PREPTIME);
+  return ebd.read64b(atDown.getMemories()[cpuIdx].extBaseAdr + atDown.getMemories()[cpuIdx].sharedOffs + SHCTL_THR_STA + thrIdx * _T_TS_SIZE_ + T_TS_PREPTIME);
 }
 
 const vAdr CarpeDM::getCmdWrAdrs(uint32_t hash, uint8_t prio) {
@@ -694,10 +721,8 @@ vEbwrs& CarpeDM::startNodeOrigin(const std::string& sNode, vEbwrs& ew) {
 
 //Requests stop at node <sNode> (flow to idle)
 vEbwrs& CarpeDM::stopNodeOrigin(const std::string& sNode, vEbwrs& ew) {
-  mc_ptr mc = (mc_ptr) new MiniFlow(0, PRIO_LO, 1, getNodeAdr(DotStr::Node::Special::sIdle, TransferDir::DOWNLOAD, AdrType::INT), false );
   //send a command: tell patternExitNode to change the flow to Idle
-  return createCommand(sNode, PRIO_LO, mc, ew);
-
+  return createFlowCommand(ew, dnt::sCmdFlow, sNode, DotStr::Node::Special::sIdle, PRIO_LO, 1, true, 0, false);
 }
 
 //Immediately aborts the thread whose pattern <sNode> belongs to
@@ -753,9 +778,9 @@ vertex_set_t CarpeDM::getAllCursors(bool activeOnly) {
   //TODO - this is dirty and cumbersome, make it streamlined
 
 
-  for(uint8_t cpu = 0; cpu < getCpuQty(); cpu++) { //cycle all CPUs
+  for(uint8_t cpu = 0; cpu < ebd.getCpuQty(); cpu++) { //cycle all CPUs
     for(uint8_t thr = 0; thr < _THR_QTY_; thr++) {
-      uint32_t adr = ebReadWord(ebd, getThrCurrentNodeAdr(cpu, thr));
+      uint32_t adr = ebd.read32b( getThrCurrentNodeAdr(cpu, thr));
       uint64_t  dl = getThrDeadline(cpu, thr);
       if (adr == LM32_NULL_PTR || (activeOnly && ((int64_t)dl == -1))) continue; // only active cursors: no dead end idles, no aborted threads
       try {
@@ -780,10 +805,10 @@ vertex_set_t CarpeDM::getAllCursors(bool activeOnly) {
 }
 
 
-int CarpeDM::staticFlushPattern(const std::string& sPattern, bool prioIl, bool prioHi, bool prioLo, bool force) {
+int CarpeDM::staticFlushPattern(const std::string& sPattern, bool prioIl, bool prioHi, bool prioLo, vEbwrs& ew, bool force) {
   Graph& g = gDown;
   AllocTable& at = atDown;
-  vEbwrs ew;
+
 
   bool found = false;
 
@@ -800,8 +825,8 @@ int CarpeDM::staticFlushPattern(const std::string& sPattern, bool prioIl, bool p
   return ew.va.size();
 }
 
-int CarpeDM::staticFlushBlock(const std::string& sBlock, bool prioIl, bool prioHi, bool prioLo, bool force) {
-  vEbwrs ew;
+int CarpeDM::staticFlushBlock(const std::string& sBlock, bool prioIl, bool prioHi, bool prioLo, vEbwrs& ew, bool force) {
+
   send(staticFlush(sBlock, prioIl, prioHi, prioLo, ew, force));
   return ew.va.size();
 }
