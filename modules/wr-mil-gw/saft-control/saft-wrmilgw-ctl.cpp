@@ -20,6 +20,18 @@
 #include "WrMilGateway.h"
 #include "wr_mil_gw_regs.h"
 
+#ifdef USEMASP
+  #include "MASP/Emitter/StatusEmitter.h"
+  #include "MASP/StatusDefinition/DeviceStatus.h"
+  #include "MASP/Util/Logger.h"
+  #include "MASP/Common/StatusNames.h"
+  #include "MASP/Emitter/End_of_scope_status_emitter.h"
+  #include <boost/thread/thread.hpp> // (sleep)
+  #include <iostream>
+  #include <string>
+#endif // USEMASP
+
+
 // Namespaces 
 // ==================================================================================================== 
 using namespace saftlib;
@@ -602,6 +614,45 @@ int main (int argc, char** argv)
         }
       }
 
+    
+    ///////////////////////////////////////////
+    // MASP relevant stuff
+    ///////////////////////////////////////////
+#ifdef USEMASP
+        // send MASP status
+      std::string nomen("U_WR2MIL_");
+      if (configSIS18) {
+        nomen.append("SIS18");
+      }
+      if (configESR) {
+        nomen.append("ESR");
+      }
+      char hostname_cstr[100];
+      gethostname(hostname_cstr,100);
+      std::string hostname(hostname_cstr);
+      std::string source_id(nomen);
+      source_id.append(".");
+      source_id.append(hostname);
+      bool masp_productive = 
+  #ifdef PRODUCTIVE
+            true;
+  #else 
+            false;
+  #endif //PRODUCTIVE
+      MASP::StatusEmitter emitter(MASP::StatusEmitterConfig(
+          MASP::StatusEmitterConfig::CUSTOM_EMITTER_DEFAULT(),
+          source_id, masp_productive ));
+      //printf ("prepare MASP status emitter with source_id: %s, nomen: %s, productive: %\n");
+      std::cout << "prepare MASP status emitter with "
+                << "source_id: " << source_id 
+                << ",  nomen: " << nomen
+                << ",  productive: " << (masp_productive?"true":"false")
+                << std::endl;
+
+      MASP::no_logger no_log;
+      MASP::Logger::middleware_logger = &no_log;
+#endif  // USEMASP
+
       // connect some callbacks
       receiver->SigLocked.connect(sigc::ptr_fun(&on_locked));
       wrmilgw->SigFirmwareRunning.connect(sigc::ptr_fun(&on_firmware_running));
@@ -624,7 +675,7 @@ int main (int argc, char** argv)
 #ifdef USEMASP
         {
           MASP::End_of_scope_status_emitter scoped_emitter(nomen,emitter);
-          scoped_emitter.set_OP_READY(op_ready);
+          scoped_emitter.set_OP_READY(new_opReady);
         }
 #endif 
         if (new_opReady != opReady) {
