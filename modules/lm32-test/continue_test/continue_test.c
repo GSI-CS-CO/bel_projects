@@ -77,7 +77,7 @@ void readFiFo( DAQ_CANNEL_T* pThis )
 
 void printScuBusSlaveInfo( DAQ_CANNEL_T* pThis )
 {
-   daqDevicePrintInterruptStatus( CONTAINER_OF( pThis, DAQ_DEVICE_T, aChannel[pThis->n] ));
+   daqDevicePrintInterruptStatus( DAQ_CHANNEL_GET_PARENT_OF( pThis ));
 }
 
 
@@ -130,15 +130,15 @@ void initIrq( void )
    irq_enable();
 }
 
+//=============================================================================
 void main( void )
 {
-
    discoverPeriphery();
    uart_init_hw();
 
    gotoxy( 0, 0 );
    clrscr();
-   mprintf( "DAQ Fifo test, compiler: " COMPILER_VERSION_STRING "\n");
+   mprintf( ESC_FG_MAGNETA "DAQ Fifo test, compiler: " COMPILER_VERSION_STRING ESC_NORMAL "\n");
 //#if 1
    if( daqBusFindAndInitializeAll( &g_allDaq, find_device_adr(GSI, SCU_BUS_MASTER) ) <= 0 )
    {
@@ -147,8 +147,8 @@ void main( void )
    }
    mprintf( "%d DAQ found\n", daqBusGetFoundDevices( &g_allDaq ) );
 #if 1
-   int i, j;
 
+   int i, j;
    mprintf( "Total number of all used channels: %d\n", daqBusGetUsedChannels( &g_allDaq ) );
 
    DAQ_CANNEL_T* pChannel = daqBusGetChannelObjectByAbsoluteNumber( &g_allDaq, 0 );
@@ -157,21 +157,17 @@ void main( void )
       mprintf( ESC_FG_RED "ERROR: Channel number out of range!\n" ESC_NORMAL );
       return;
    }
-
+//#if 1
    daqChannelPrintInfo( pChannel );
    printScuBusSlaveInfo( pChannel );
-
+//#if 0
    daqDeviceEnableScuSlaveInterrupt( DAQ_CHANNEL_GET_PARENT_OF( pChannel ) );
 
    initIrq();
 
-   daqChannelSample1msOn( pChannel );
+  // daqChannelSample1msOn( pChannel );
    daqChannelSample100usOn( pChannel );
-   daqChannelSample10usOn( pChannel );
-
-   mprintf( "FiFo: %d\n", daqChannelGetPmFifoWords( pChannel ) );
-   mprintf( "FiFo: %d\n", daqChannelGetPmFifoWords( pChannel ) );
-   mprintf( "FiFo: %d\n", daqChannelGetPmFifoWords( pChannel ) );
+  // daqChannelSample10usOn( pChannel );
 
    i = 0;
   // while( daqChannelGetDaqFifoWords( pChannel ) < (DAQ_FIFO_DAQ_WORD_SIZE-1) )
@@ -179,22 +175,30 @@ void main( void )
       i++;
    mprintf( "Polling loops: %d\n", i );
 
- // for (j = 0; j < (31000000); ++j) { asm("nop"); }
+  //for (j = 0; j < (31000000); ++j) { asm("nop"); }
 
    daqChannelPrintInfo( pChannel );
    printScuBusSlaveInfo( pChannel );
    mprintf( "Reading FoFo...\n" );
    readFiFo( pChannel );
 
-#if 0
+#if 1
    i = 0;
-   //while( daqChannelGetDaqFifoWords( pChannel ) < (DAQ_FIFO_DAQ_WORD_SIZE-1) )
+//   while( daqChannelGetDaqFifoWords( pChannel ) < (DAQ_FIFO_DAQ_WORD_SIZE-1) )
    while( !daqChannelTestAndClearDaqIntPending( pChannel ) )
       i++;
-   mprintf( "Polling loops: %d\n", i );
+   mprintf( "Polling loops 2: %d\n", i );
 
+ // for (j = 0; j < (31000000); ++j) { asm("nop"); }
+
+   daqChannelPrintInfo( pChannel );
+   printScuBusSlaveInfo( pChannel );
+   mprintf( "Reading FoFo...\n" );
    readFiFo( pChannel );
 #endif
+
+
+
    daqChannelSample1msOff( pChannel );
    daqChannelSample100usOff( pChannel );
    daqChannelSample10usOff( pChannel );

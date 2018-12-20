@@ -1,0 +1,51 @@
+# Two examples are provided
+# - miniExample: 'daq_test1' for lm32
+# - example: demo program including
+# -- shared memory for exchange of data via Wishbone
+# -- access to other Wishbone devices
+# -- receive commands via shared memory
+# -- get actions from the ECA by polling
+#
+# Example usage:
+#   make TARGET=example
+#   ... will compile the more complex example program
+
+ifndef COLORED
+all:
+	((make -C $(PWD) COLORED=1) 2>&1 | sed -e 's/.*\bWARN.*/\x1b[7m&\x1b[0m/i' -e 's/.*\bERR.*/\x1b[93;41m&\x1b[0m/i')
+endif
+
+
+
+TARGET		?= continue_test
+.DEFAULT_GOAL := fwbin
+DEVICE		= 5AGXMA3D4
+FLASH		= EPCQ256
+SPI_LANES	= ASx4
+RAM_SIZE	= 49152 
+SHARED_SIZE     = 8K
+USRCPUCLK       = 125000
+VERSION         = 0.0.1
+
+SCU_SRC = $(PATHFW)/../../../top/gsi_scu
+
+PATHFW 	= .
+CFLAGS 	= -I$(PATHFW) -I$(SCU_SRC)
+CFLAGS += -DCONFIG_DAQ_PEDANTIC_CHECK
+CFLAGS += -DCONFIG_SCU_BUS_PEDANTIC_CHECK
+CFLAGS += -DCONFIG_DAQ_DEBUG
+# CFLAGS += -DDEBUGLEVEL=2
+
+include ../../../syn/build.mk
+
+
+
+fwbin: $(TARGET).bin
+
+$(TARGET).elf: $(PATHFW)/$(TARGET).c $(SCU_SRC)/scu_bus.c $(SCU_SRC)/daq.c \
+               $(SCU_SRC)/dow_crc.c $(W1)/dev/w1.c $(W1)/dev/w1-temp.c $(W1)/dev/w1-hw.c
+
+clean::
+	rm -f $(PATHFW)/*.o $(PATHFW)/*.a $(PATHFW)/*.elf $(PATHFW)/*.bin
+
+

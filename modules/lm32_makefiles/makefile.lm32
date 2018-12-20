@@ -12,12 +12,12 @@
 CPU    = lm32
 CROSS_COMPILE ?= $(CPU)-elf-
 
-CC     = $(CROSS_COMPILE)gcc
-CXX    = $(CROSS_COMPILE)g++
-LD     = $(CROSS_COMPILE)ld
+CC     = $(CROSS_COMPILE)gcc -std=gnu99
+CXX    = $(CROSS_COMPILE)g++ -fno-exceptions -fno-rtti
+LD     = $(CROSS_COMPILE)gcc
 OBJCPY = $(CROSS_COMPILE)objcopy
 SIZE   = $(CROSS_COMPILE)size
-AS     = $(CROSS_COMPILE)as
+AS     = $(CROSS_COMPILE)gcc
 AR     = $(CROSS_COMPILE)ar
 CPP    = $(CROSS_COMPILE)cpp
 

@@ -18,6 +18,7 @@ ifeq ($(VERBOSE), 1)
    AS_F      = $(AS)
    AR_F      = $(AR)
    OBJCPY_F = $(OBJCPY)
+   QUIET = ""
 else
    CXX_MSG    := "CXX"
    CC_MSG     := "CC"
@@ -37,6 +38,7 @@ else
    AS_F      = $(FORMAT) $(CPU) $(AS_MSG)     $(@); $(AS)
    AR_F      = $(FORMAT) $(CPU) $(AR_MSG)     $(@); $(AR)
    OBJCPY_F  = $(FORMAT) $(CPU) $(OBJCPY_MSG) $(@); $(OBJCPY)
+   QUIET = @
 endif
 
 OPT_INCLUDE := $(addprefix -I,$(INCLUDE_DIRS) )
@@ -52,43 +54,54 @@ DEPENDFILE = $(TARGET).dep
 
 CC_ARG = $(CFLAGS) $(OPT_INCLUDE) $(OPT_DEFINES)
 CXX_ARG ?= $(CC_ARG)
+AS_ARG ?= $(CC_ARG)
 
 $(OBJ_DIR):
-	mkdir $(OBJ_DIR)
+	$(QUIET)mkdir $(OBJ_DIR)
 
-C_SOURCE = $(SOURCE) # TODO: Separate C++, C and Assembler files.
-	
-$(DEPENDFILE): $(C_SOURCE) $(CPP_SOURCE) $(OBJ_DIR) $(ADDITIONAL_DEPENDENCES)
-	@(for i in $(C_SOURCE); do printf $(OBJ_DIR); $(CC) -MM $(CC_ARG) "$$i"; \
-	printf '\t$$(CC_F) -c -o $$@ $$< $$(CC_ARG)\n\n'; done) > $(DEPENDFILE)
-	@(for i in $(CXX_SOURCE); do printf $(OBJ_DIR); $(CXX) -MM $(CXX_ARG) "$$i"; \
-	printf '\t$$(CXX_F) -c -o $$@ $$< $$(CXX_ARG)\n\n'; done) >> $(DEPENDFILE)
+$(DEPENDFILE): $(SOURCE) $(OBJ_DIR) $(ADDITIONAL_DEPENDENCES)
+	$(QUIET)(for i in $(SOURCE); do \
+		printf $(OBJ_DIR); \
+		case "$${i##*.}" in \
+		"cpp"|"CPP") \
+			$(CXX) -MM $(CXX_ARG) "$$i"; \
+			printf '\t$$(CXX_F) -c -o $$@ $$< $$(CXX_ARG)\n\n'; \
+		;; \
+		"c"|"C") \
+			$(CC) -MM $(CC_ARG) "$$i"; \
+			printf '\t$$(CC_F) -c -o $$@ $$< $$(CC_ARG)\n\n'; \
+		;; \
+		"s"|"S") \
+			$(AS) -MM $(AS_ARG) "$$i"; \
+			printf '\t$$(AS_F) -c -o $$@ $$< $$(AS_ARG)\n\n'; \
+		;; \
+		esac; \
+	done) > $(DEPENDFILE)
 
 .PHONY: dep
 dep: $(DEPENDFILE)
 	@cat $(DEPENDFILE)
 
-#$(TARGET).elf: $(OBJ_FILES)
-#	$(LD_F) -o $@ $^ -Wl,--defsym,_fstack=$$(($(RAM_SIZE)-4)) -nostdlib -T ram.ld $(ARG_LIBS)
+-include $(DEPENDFILE)
 
 $(TARGET).elf: $(OBJ_FILES) $(LINKER_SCRIPT)
-	$(CC_F) -o $@ $^ -Wl,$(LD_FLAGS)
+	$(LD_F) -o $@ $^ $(LD_FLAGS)
 
 $(TARGET).bin: $(TARGET).elf
 	$(OBJCPY_F) -O binary $< $@
 
 .PHONY: size
 size: $(TARGET).elf
-	$(SIZE) $(TARGET).elf
+	$(QUIET)$(SIZE) $(TARGET).elf
 
 .PHONY: clean
 clean:
-	rm $(ADDITIONAL_TO_CLEAN)
-	rm $(OBJ_DIR)*.*
-	rmdir $(OBJ_DIR)
-	rm $(DEPENDFILE)
-	rm $(TARGET).elf
-	rm $(TARGET).bin
+	$(QUIET)rm $(ADDITIONAL_TO_CLEAN)
+	$(QUIET)rm $(OBJ_DIR)*.*
+	$(QUIET)rmdir $(OBJ_DIR)
+	$(QUIET)rm $(DEPENDFILE)
+	$(QUIET)rm $(TARGET).elf
+	$(QUIET)rm $(TARGET).bin
 
--include $(DEPENDFILE)
+
 #=================================== EOF ======================================
