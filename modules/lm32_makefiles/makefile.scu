@@ -75,6 +75,11 @@ endif
 
 COMMENT_TEXT = 'This file has been created automatically, do not modify it by hand!'
 
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# TODO: Investigation of linker warning:
+#       "ld:ram.ld:1: warning: redeclaration of memory region `RAM'"
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 #LDS := "OUTPUT_FORMAT(\"elf32-lm32\")\n"
 LDS = "MEMORY { RAM (rwx) : ORIGIN = $(RAM_OFFS), LENGTH = $(RAM_SIZE) }\n"
 LDS += "SECTIONS\n{\n"

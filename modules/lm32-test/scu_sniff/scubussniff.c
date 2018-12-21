@@ -25,8 +25,11 @@
 #include "mini_sdb.h"
 #include "../../top/gsi_scu/scu_bus.h"
 #include "eb_console_helper.h"
+#include "lm32_hexdump.h"
+#include "dbg.h"
 
-#define LINE_OFFSET 3
+#define LINE_OFFSET 5
+
 
 void main( void )
 {
@@ -46,29 +49,36 @@ void main( void )
       mprintf( ESC_BOLD ESC_FG_RED "ERROR: Couldn't found address of SCU_BUS_MASTER!\n" ESC_NORMAL );
       return;
    }
-   slaveFlags = scuBusFindAllSlaves( pScuBusBase );
 
-   mprintf( "%d Slaves found", getNumberOfSlaves( slaveFlags ) );
+   mprintf( "Base address: 0x%08x\n", pScuBusBase );
+
+
+
+   slaveFlags = scuBusFindAllSlaves( pScuBusBase );
+   mprintf( "%d Slaves found\n", getNumberOfSlaves( slaveFlags ) );
 
    int i = LINE_OFFSET;
+   //while( uart_read_byte() != 'c' );
    for( int slot = SCUBUS_START_SLOT; slot <= MAX_SCU_SLAVES; slot++ )
    {
       if( !scuBusIsSlavePresent( slaveFlags, slot ) )
          continue;
-      const void* pSlave = getAbsScuBusSlaveAddr( pScuBusBase, slot );
+
+      const void* pSlave = scuBusGetAbsSlaveAddr( pScuBusBase, slot );
+      hexdump( pSlave, 1024 );
+      //mprintf( "%s\n", pSlave + SLAVE_INFO_TEXT );
       gotoxy( 0, i );
       mprintf( "Slot %d:", slot );
       gotoxy( 10, i );
       mprintf( "Address 0x%08x,", pSlave );
       gotoxy( 30, i );
-      mprintf( "CID_SYS %d,", getScuBusSlaveValue16( pSlave, CID_SYS ) );
+      mprintf( "CID_SYS %d,", scuBusGetSlaveValue16( pSlave, CID_SYS ) );
       gotoxy( 42, i );
-      mprintf( "CID_GROUP %d,",getScuBusSlaveValue16( pSlave, CID_GROUP ) );
+      mprintf( "CID_GROUP %d,",scuBusGetSlaveValue16( pSlave, CID_GROUP ) );
       gotoxy( 56, i );
-      mprintf( "SLAVE_VERSION %d,", getScuBusSlaveValue16( pSlave, SLAVE_VERSION ) );
+      mprintf( "SLAVE_VERSION %d,", scuBusGetSlaveValue16( pSlave, SLAVE_VERSION ) );
       i++;
    }
-
 }
 
 /*================================== EOF ====================================*/

@@ -31,10 +31,11 @@
 
 void main( void )
 {
-   SCU_BUS_SLAVE_FLAGS_T slavePersentFlags, oldSlavePresentFlags;
+   SCUBUS_SLAVE_FLAGS_T slavePersentFlags, oldSlavePresentFlags;
 
    discoverPeriphery();
    uart_init_hw();
+   clrscr();
    mprintf("\nTest...\n");
 
    void* pScuBusBase = find_device_adr(GSI, SCU_BUS_MASTER);
@@ -60,7 +61,7 @@ void main( void )
             if( scuBusIsSlavePresent( slavePersentFlags, i ) )
             {
                mprintf( ESC_BOLD ESC_FG_RED "used" ESC_NORMAL " Address: 0x%08x ",
-                        getAbsScuBusSlaveAddr( pScuBusBase, i ));
+                        scuBusGetAbsSlaveAddr( pScuBusBase, i ));
                continue;
             }
             mprintf( "free" );

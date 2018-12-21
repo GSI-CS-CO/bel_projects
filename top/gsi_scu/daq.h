@@ -58,7 +58,11 @@ extern "C" {
  * @defgroup DAQ_CHANNEL
  * @brief Objects and functions for a single DAQ channel
  */
-
+/*!
+ * @ingroup SCU_BUS
+ * @defgroup DAQ_INTERRUPT
+ * @brief Interrupt functions concerning the DAQ.
+ */
 
 /*
  * For the reason LM32 RAM consume can be reduced here is the possibility
@@ -87,13 +91,13 @@ extern "C" {
 #endif
 
 /*!
- * @ingroup DAQ_DEVICE
+ * @ingroup DAQ_DEVICE DAQ_INTERRUPT
  * @brief Interrupt number for DAQ fifo full.
  */
 #define DAQ_IRQ_DAQ_FIFO_FULL   12
 
 /*!
- * @ingroup DAQ_DEVICE
+ * @ingroup DAQ_DEVICE DAQ_INTERRUPT
  * @brief Interrupt number for High-Resolution finished
  */
 #define DAQ_IRQ_HIRES_FINISHED  11
@@ -870,7 +874,7 @@ void daqChannelSetTriggerDelay( register DAQ_CANNEL_T* pThis, uint16_t value )
 }
 
 /*! ---------------------------------------------------------------------------
- * @ingroup DAQ_CHANNEL
+ * @ingroup DAQ_CHANNEL DAQ_INTERRUPT
  * @brief Returns the pointer to the 16 bit DAQ interrupt pending register
  * @param pThis Pointer to the channel object
  * @return Pointer to the 16 bit DAQ interrupt pending register
@@ -885,7 +889,7 @@ uint16_t* daqChannelGetDaqIntPendingPtr( register DAQ_CANNEL_T* pThis )
 }
 
 /*! ---------------------------------------------------------------------------
- * @ingroup DAQ_CHANNEL
+ * @ingroup DAQ_CHANNEL DAQ_INTERRUPT
  * @brief Tests and clears the DAQ interrupt pending flag of this channel.
  * @param pThis Pointer to the channel object
  * @retval true DAQ Interrupt was pending.
@@ -906,7 +910,7 @@ bool daqChannelTestAndClearDaqIntPending( register DAQ_CANNEL_T* pThis )
 }
 
 /*! ---------------------------------------------------------------------------
- * @ingroup DAQ_CHANNEL
+ * @ingroup DAQ_CHANNEL DAQ_INTERRUPT
  * @brief Returns the pointer to the 16 bit HiRes interrupt pending register
  * @param pThis Pointer to the channel object
  * @return Pointer to the 16 bit HiRes interrupt pending register
@@ -921,7 +925,7 @@ uint16_t* daqChannelGetHiResIntPendingPtr( register DAQ_CANNEL_T* pThis )
 }
 
 /*! ---------------------------------------------------------------------------
- * @ingroup DAQ_CHANNEL
+ * @ingroup DAQ_CHANNEL DAQ_INTERRUPT
  * @brief Tests and clears the HiRes interrupt pending flag of this channel.
  * @param pThis Pointer to the channel object
  * @retval true HiRes Interrupt was pending.
@@ -1118,7 +1122,7 @@ void daqChannelReset( register DAQ_CANNEL_T* pThis );
 /*! ---------------------------------------------------------------------------
  * @ingroup DAQ_DEVICE
  * @brief Returns the SCU bus slave address of this DAQ device
- * @param pThis Pointer to the DAQ-device objects
+ * @param pThis Pointer to the DAQ-device object
  * @return Slave base address of this DAQ device
  */
 static inline
@@ -1137,6 +1141,12 @@ void* daqDeviceGetScuBusSlaveBaseAddress( register DAQ_DEVICE_T* pThis )
    return ((void*)pThis->pReg) - DAQ_REGISTER_OFFSET;
 }
 
+/*! ---------------------------------------------------------------------------
+ * @ingroup DAQ_DEVICE DAQ_INTERRUPT
+ * @brief Enables the HiRes finished and DAQ-FiFo interrupts.
+ * @see daqDeviceDisableScuSlaveInterrupt
+ * @param pThis Pointer to the DAQ-device objects
+ */
 static inline
 void daqDeviceEnableScuSlaveInterrupt( register DAQ_DEVICE_T* pThis )
 {
@@ -1147,6 +1157,12 @@ void daqDeviceEnableScuSlaveInterrupt( register DAQ_DEVICE_T* pThis )
                          );
 }
 
+/*! ---------------------------------------------------------------------------
+ * @ingroup DAQ_DEVICE DAQ_INTERRUPT
+ * @brief Disnables the HiRes finished and DAQ-FiFo interrupts.
+ * @see daqDeviceEnableScuSlaveInterrupt
+ * @param pThis Pointer to the DAQ-device objects
+ */
 static inline
 void daqDeviceDisableScuSlaveInterrupt( register DAQ_DEVICE_T* pThis )
 {
@@ -1157,24 +1173,48 @@ void daqDeviceDisableScuSlaveInterrupt( register DAQ_DEVICE_T* pThis )
                            );
 }
 
+/*! ---------------------------------------------------------------------------
+ * @ingroup DAQ_DEVICE DAQ_INTERRUPT
+ * @brief Tests and clears the DAQ interrupt pending flag of this DAQ device.
+ * @param pThis Pointer to the DAQ-device object
+ * @retval true DAQ Interrupt was pending.
+ * @retval false No DAQ interrupt was pending.
+ */
 static inline
 bool daqDeviceTestAndClearDaqInt( register DAQ_DEVICE_T* pThis )
 {
-   uint16_t* pFlags = &((uint16_t*)daqDeviceGetScuBusSlaveBaseAddress( pThis ))[Intr_Active];
+   volatile uint16_t* pFlags =
+      &((uint16_t*)daqDeviceGetScuBusSlaveBaseAddress( pThis ))[Intr_Active];
+
    if( (*pFlags & (1 << DAQ_IRQ_DAQ_FIFO_FULL)) != 0 )
-   {
+   { /*
+      * Bit becomes cleared by writing a one in the concerning
+      * register position.
+      */
       *pFlags |= (1 << DAQ_IRQ_DAQ_FIFO_FULL);
       return true;
    }
    return false;
 }
 
+/*! ---------------------------------------------------------------------------
+ * @ingroup DAQ_DEVICE DAQ_INTERRUPT
+ * @brief Tests and clears the HiRes interrupt pending flag of this DAQ device.
+ * @param pThis Pointer to the DAQ-device object
+ * @retval true HiRes Interrupt was pending.
+ * @retval false No HiRes interrupt was pending.
+ */
 static inline
 bool daqDeviceTestAndClearHiResInt( register DAQ_DEVICE_T* pThis )
 {
-   uint16_t* pFlags = &((uint16_t*)daqDeviceGetScuBusSlaveBaseAddress( pThis ))[Intr_Active];
+   volatile uint16_t* pFlags =
+      &((uint16_t*)daqDeviceGetScuBusSlaveBaseAddress( pThis ))[Intr_Active];
+
    if( (*pFlags & (1 << DAQ_IRQ_HIRES_FINISHED)) != 0 )
-   {
+   { /*
+      * Bit becomes cleared by writing a one in the concerning
+      * register position.
+      */
       *pFlags |= (1 << DAQ_IRQ_HIRES_FINISHED);
       return true;
    }
@@ -1183,9 +1223,9 @@ bool daqDeviceTestAndClearHiResInt( register DAQ_DEVICE_T* pThis )
 
 
 /*! ---------------------------------------------------------------------------
- * @ingroup DAQ_DEVICE
+ * @ingroup DAQ_DEVICE DAQ_INTERRUPT
  * @brief Gets the pointer to the DAQ interrupt pending register.
- * @param pThis Pointer to the DAQ-device objects
+ * @param pThis Pointer to the DAQ-device object
  * @return Pointer to the DAQ interrupt pending Register.
  */
 static inline volatile
@@ -1199,7 +1239,7 @@ uint16_t* daqDeviceGetDaqIntPendingPtr( register DAQ_DEVICE_T* pThis )
 }
 
 /*! ---------------------------------------------------------------------------
- * @ingroup DAQ_DEVICE
+ * @ingroup DAQ_DEVICE DAQ_INTERRUPT
  * @brief Clears all possible pending  DAQ interrupt flags.
  * @param pThis Pointer to the DAQ-device objects
  */

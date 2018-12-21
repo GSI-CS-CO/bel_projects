@@ -32,9 +32,6 @@
 
 DAQ_BUS_T g_allDaq;
 
-
-
-
 void readFiFo( DAQ_CANNEL_T* pThis )
 {
    int j = 0;
@@ -67,9 +64,10 @@ void readFiFo( DAQ_CANNEL_T* pThis )
    }
    while( remaining != 0 );
 
+#if 0
    for( j = 0; j < ARRAY_SIZE( descriptor.index ); j++ )
       mprintf( "Descriptor %d: 0x%04x\n", j, descriptor.index[j] );
-
+#endif
    daqDescriptorPrintInfo( &descriptor );
    DAQ_DESCRIPTOR_VERIFY_MY( &descriptor, pThis );
 
@@ -130,6 +128,13 @@ void initIrq( void )
    irq_enable();
 }
 
+void printLine( const char c )
+{
+   for( int i = 0; i < 80; i++ )
+      mprintf( "%c", c );
+   mprintf( "\n" );
+}
+
 //=============================================================================
 void main( void )
 {
@@ -166,39 +171,35 @@ void main( void )
    initIrq();
 
   // daqChannelSample1msOn( pChannel );
-   daqChannelSample100usOn( pChannel );
+  // daqChannelSample100usOn( pChannel );
   // daqChannelSample10usOn( pChannel );
+   printLine( '-' );
+   for( int k = 0; k < 3; k++ )
+   {
+      printLine( '+' );
+      daqChannelSetTriggerConditionLW( pChannel, (k == 0)? 0x4710 : 0x4711 );
+      daqChannelSample100usOn( pChannel );
+      i = 0;
+     // while( daqChannelGetDaqFifoWords( pChannel ) < (DAQ_FIFO_DAQ_WORD_SIZE-1) )
+     // while( !daqDeviceTestAndClearDaqInt( DAQ_CHANNEL_GET_PARENT_OF( pChannel ) ) )
+      while( !daqChannelTestAndClearDaqIntPending( pChannel ) )
+         i++;
+      daqDeviceTestAndClearDaqInt( DAQ_CHANNEL_GET_PARENT_OF( pChannel ) );
+      mprintf( "Polling loops: %d\n", i );
 
-   i = 0;
-  // while( daqChannelGetDaqFifoWords( pChannel ) < (DAQ_FIFO_DAQ_WORD_SIZE-1) )
-   while( !daqChannelTestAndClearDaqIntPending( pChannel ) )
-      i++;
-   mprintf( "Polling loops: %d\n", i );
+     //for (j = 0; j < (31000000); ++j) { asm("nop"); }
 
-  //for (j = 0; j < (31000000); ++j) { asm("nop"); }
+      daqChannelPrintInfo( pChannel );
+      printScuBusSlaveInfo( pChannel );
+      mprintf( "Reading FoFo for the " ESC_FG_YELLOW "%dth"ESC_NORMAL" time\n", k+1 );
+      readFiFo( pChannel );
+//         daqChannelSample1msOff( pChannel );
+//   daqChannelSample100usOff( pChannel );
+   //daqChannelSample10usOff( pChannel );
 
-   daqChannelPrintInfo( pChannel );
-   printScuBusSlaveInfo( pChannel );
-   mprintf( "Reading FoFo...\n" );
-   readFiFo( pChannel );
-
-#if 1
-   i = 0;
-//   while( daqChannelGetDaqFifoWords( pChannel ) < (DAQ_FIFO_DAQ_WORD_SIZE-1) )
-   while( !daqChannelTestAndClearDaqIntPending( pChannel ) )
-      i++;
-   mprintf( "Polling loops 2: %d\n", i );
-
- // for (j = 0; j < (31000000); ++j) { asm("nop"); }
-
-   daqChannelPrintInfo( pChannel );
-   printScuBusSlaveInfo( pChannel );
-   mprintf( "Reading FoFo...\n" );
-   readFiFo( pChannel );
-#endif
-
-
-
+   //   for (j = 0; j < (31000000); ++j) { asm("nop"); }
+   }
+   printLine( '=' );
    daqChannelSample1msOff( pChannel );
    daqChannelSample100usOff( pChannel );
    daqChannelSample10usOff( pChannel );

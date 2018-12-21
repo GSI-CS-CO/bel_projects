@@ -27,7 +27,7 @@
 #include "mini_sdb.h"
 #include "eb_console_helper.h"
 #include "helper_macros.h"
-
+#include "../../top/gsi_scu/daq.h"
 int foo( void )
 {
    /*!
@@ -61,6 +61,13 @@ BF_T g_bf =
    .e1 = 1
 };
 
+void printBits16( uint16_t bits )
+{
+   for( uint16_t m = 1 << 8 * sizeof(uint16_t) - 1; m != 0; m >>= 1 )
+      mprintf( "%c", (m & bits)? '1' : '0' );
+   mprintf( "\n" );
+}
+
 void printBF( BF_T* pThis )
 {
    mprintf( "a4 = %d\n", pThis->a4 );
@@ -68,9 +75,8 @@ void printBF( BF_T* pThis )
    mprintf( "c3 = %d\n", pThis->c3 );
    mprintf( "d1 = %d\n", pThis->d1 );
    mprintf( "e1 = %d\n", pThis->e1 );
-   for( uint16_t m = 1 << 8 * sizeof(uint16_t) - 1; m != 0; m >>= 1 )
-      mprintf( "%c", (m & *(uint16_t*)pThis)? '1' : '0' );
    mprintf( "\n" );
+   printBits16( *(uint16_t*)pThis );
 }
 
 typedef struct
@@ -99,14 +105,13 @@ void printContainerFromCintent( CONTENT_T* pContent )
 }
 
 
-
 void main( void )
 {
    discoverPeriphery();
    uart_init_hw();
    gotoxy( 0, 0 );
    clrscr();
-   mprintf("Static-test compiler-version: %d.%d.%d\n", __GNUC__, __GNUC_MINOR__, __GNUC_PATCHLEVEL__);
+   mprintf("Static-test compiler-version: " COMPILER_VERSION_STRING "\n" );
    
    mprintf( "Foo: %d\n", foo() );
    mprintf( "Foo: %d\n", foo() );
@@ -131,6 +136,32 @@ void main( void )
 
    printContainerFromCintent( &container.item );
 
+   DAQ_CTRL_REG_T creg = {0};
+
+   creg.Ena_PM = 1;
+   creg.Sample1ms = 1;
+   creg.slot = 7;
+
+   const char* str = "register";
+
+   mprintf( "\nControl %s:\n", str  );
+   printBits16( *((uint16_t*) &creg) );
+
+   uint16_t v = 0x01;
+   v |= 1 << 3;
+   v |= 7 << 12;
+   mprintf( "\nvalue:\n" );
+   printBits16( v );
+
+
+   _DAQ_CHANNEL_CONTROL ccontrol = {0};
+
+   ccontrol.controlReg = 0xFF;
+   ccontrol.channelMode.channelNumber = 3;
+
+   mprintf( "_DAQ_CHANNEL_CONTROL:\n" );
+
+   printBits16( *((uint16_t*) &ccontrol) );
 }
 
 //================================== EOF ======================================
