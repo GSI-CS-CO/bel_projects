@@ -1,50 +1,23 @@
-# Two examples are provided
-# - miniExample: 'daq_test1' for lm32
-# - example: demo program including
-# -- shared memory for exchange of data via Wishbone
-# -- access to other Wishbone devices
-# -- receive commands via shared memory
-# -- get actions from the ECA by polling
-#
-# Example usage:
-#   make TARGET=example
-#   ... will compile the more complex example program
+MIAN_MODULE := pmtest.c
 
-ifndef COLORED
-all:
-	((make -C $(PWD) COLORED=1) 2>&1 | sed -e 's/.*\bWARN.*/\x1b[7m&\x1b[0m/i' -e 's/.*\bERR.*/\x1b[93;41m&\x1b[0m/i')
-endif
+SYN_DIR = ../../../
 
+SCU_DIR = $(SYN_DIR)top/gsi_scu
 
+INCLUDE_DIRS = ./
+INCLUDE_DIRS += $(SCU_DIR)
 
-TARGET		?= pmtest
-.DEFAULT_GOAL := fwbin
-DEVICE		= 5AGXMA3D4
-FLASH		= EPCQ256
-SPI_LANES	= ASx4
-RAM_SIZE	= 49152 
-SHARED_SIZE     = 8K
-USRCPUCLK       = 125000
-VERSION         = 0.0.1
+SOURCE += $(SCU_DIR)/daq.c
+SOURCE += $(SCU_DIR)/scu_bus.c
+SOURCE += $(SCU_DIR)/dow_crc.c
 
-SCU_SRC = $(PATHFW)/../../../top/gsi_scu
+DEFINES += CONFIG_DAQ_PEDANTIC_CHECK
+DEFINES += CONFIG_SCU_BUS_PEDANTIC_CHECK
+DEFINES += CONFIG_DAQ_DEBUG
 
-PATHFW 	= .
-CFLAGS 	= -I$(PATHFW) -I$(SCU_SRC)
-CFLAGS += -DCONFIG_DAQ_PEDANTIC_CHECK
-CFLAGS += -DCONFIG_DAQ_DEBUG
-# CFLAGS += -DDEBUGLEVEL=2
+URL = tcp/scuxl0035
 
-include ../../../syn/build.mk
-
-
-
-fwbin: $(TARGET).bin
-
-$(TARGET).elf: $(PATHFW)/$(TARGET).c $(SCU_SRC)/scu_bus.c $(SCU_SRC)/daq.c \
-               $(SCU_SRC)/dow_crc.c $(W1)/dev/w1.c $(W1)/dev/w1-temp.c $(W1)/dev/w1-hw.c
-
-clean::
-	rm -f $(PATHFW)/*.o $(PATHFW)/*.a $(PATHFW)/*.elf $(PATHFW)/*.bin
+include $(SYN_DIR)/modules/lm32_makefiles/makefile.scu
+#=================================== EOF ======================================
 
 
