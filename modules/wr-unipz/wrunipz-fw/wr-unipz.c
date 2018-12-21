@@ -467,7 +467,7 @@ uint32_t wait4ECAEvent(uint32_t msTimeout, uint64_t *deadline, uint32_t *isLate)
   *deadline = tNext;
   *isLate   = 0;
   
-  return WRUNIPZ_ECADO_DUMMY;
+  return WRUNIPZ_ECADO_TEST;
   } // if mode
 
   pECAFlag    = (uint32_t *)(pECAQ + (ECA_QUEUE_FLAGS_GET >> 2));   // address of ECA flag
@@ -495,14 +495,12 @@ uint32_t wait4ECAEvent(uint32_t msTimeout, uint64_t *deadline, uint32_t *isLate)
       // here: do s.th. according to tag
       switch (actTag) 
         {
-          /*        case WRUNIPZ_ECADO_READY2SIS :
-          nextAction = WRUNIPZ_ECADO_READY2SIS;
+        case WRUNIPZ_ECADO_MIL :
+          nextAction = WRUNIPZ_ECADO_MIL;
           break;
-        case  WRUNIPZ_ECADO_MBTRIGGER :
-          nextAction = WRUNIPZ_ECADO_MBTRIGGER;
-          break;*/
         default: 
           nextAction = WRUNIPZ_ECADO_UNKOWN;
+          break;
         } // switch
 
       return nextAction;
@@ -521,7 +519,7 @@ void initCmds() // init stuff for handling commands, trivial for now, will be ex
 } // initCmds
 
  
-uint32_t configMILEvent(uint16_t evtCode) // configure SoC to receive events via MIL bus
+uint32_t configMILEvent() // configure SoC to receive events via MIL bus
 {
   uint32_t i;
 
@@ -536,7 +534,8 @@ uint32_t configMILEvent(uint16_t evtCode) // configure SoC to receive events via
 
   for (i=0; i < (0xf+1); i++) {
     // set filter (FIFO and LEMO1 pulsing) for all possible virtual accelerators
-    if (setFilterEvtMil(pMILPiggy,  evtCode, i, MIL_FILTER_EV_TO_FIFO | MIL_FILTER_EV_PULS1_S) != MIL_STAT_OK) return WRUNIPZ_STATUS_ERROR;
+    if (setFilterEvtMil(pMILPiggy, WRUNIPZ_EVT_50HZ_SYNCH, i, MIL_FILTER_EV_TO_FIFO | MIL_FILTER_EV_PULS1_S) != MIL_STAT_OK) return WRUNIPZ_STATUS_ERROR;
+    if (setFilterEvtMil(pMILPiggy, WRUNIPZ_EVT_PZ6       , i, MIL_FILTER_EV_TO_FIFO | MIL_FILTER_EV_PULS1_S) != MIL_STAT_OK) return WRUNIPZ_STATUS_ERROR;
   }
 
   // configure LEMO1 for pulse generation
@@ -546,36 +545,48 @@ uint32_t configMILEvent(uint16_t evtCode) // configure SoC to receive events via
 } // configMILEvent
 
 
-uint32_t wait4MILEvent(uint16_t evtCode, uint16_t virtAccReq, uint32_t *virtAccRec, uint32_t msTimeout)  // wait for MIL event or timeout
+ uint32_t wait4MILEvent(uint16_t *evtData, uint16_t *evtCode, uint32_t *virtAccRec, uint32_t msTimeout)  // wait for MIL event or timeout
 {
-  uint32_t evtDataRec;         // data of one MIL event
+  uint32_t evtRec;             // one MIL event
   uint32_t evtCodeRec;         // "event number"
+  uint32_t evtDataRec;         // "event data"
   uint64_t timeoutT;           // when to time out
   uint32_t virtAccTmp;         // temp value for virtAcc
+  int      valid;              // evt is valid
 
   timeoutT    = getSysTime() + (uint64_t)msTimeout * (uint64_t)1000000;
   *virtAccRec = 0;             // last two digits: virtacc; count other junk in FIFO by increasing by 100;
-
+  *evtData    = 0xffff;
+  *evtCode    = 0xffff;
+  valid       = 0;
+  
   while(getSysTime() < timeoutT) {              // while not timed out...
     while (fifoNotemptyEvtMil(pMILPiggy)) {     // while fifo contains data
-      popFifoEvtMil(pMILPiggy, &evtDataRec);    
-      evtCodeRec  = evtDataRec & 0x000000ff;    // extract event code
-      virtAccTmp  = (evtDataRec >> 8) & 0x0f;   // extract virtual accelerator (assuming event message)
+      popFifoEvtMil(pMILPiggy, &evtRec);    
+      evtCodeRec  = evtRec & 0x000000ff;        // extract event code
+      virtAccTmp  = (evtRec >> 8)  & 0x0f;      // extract virtual accelerator
+      evtDataRec  = (evtRec >> 12) & 0x0f;      // extract event data
 
-      *virtAccRec += 100;                       // increase by 100 for each FIFO entry
+      *virtAccRec += 100;                       // increase by 100 for each FIFO entry ('count events')
       
-      if (evtCodeRec == evtCode) {
-        *virtAccRec += virtAccTmp;
-        if (virtAccTmp == virtAccReq) return WRUNIPZ_STATUS_OK;
-        else                          return WRUNIPZ_STATUS_WRONGVIRTACC;
-      } // if evtCode
+      switch (evtCodeRec) {
+      case WRUNIPZ_EVT_PZ6                     : valid = 1; break;
+      case WRUNIPZ_EVT_SYNCH_DATA              : valid = 1; break;
+      case WRUNIPZ_EVT_50HZ_SYNCH              : valid = 1; break;
+      default                                  : break;
+      } // switch event code
 
-      // chck mprintf("wr-unipz: virtAcc %03d, evtCode %03d\n", virtAcc, evtCodeRec);
+      if (valid) {
+        *evtData     = evtDataRec;
+        *evtCode     = evtCodeRec;
+        *virtAccRec += virtAccTmp;
+        return WRUNIPZ_STATUS_OK;
+      } // if valid;
     } // while fifo contains data
     asm("nop");                                 // wait a bit...
   } // while not timed out
 
-  // up to here: no matching evtCode AND matching virtAcc
+  // up to here: no matching evtCode
   *virtAccRec += 42;                            // mark with illegal virtAcc number
   return WRUNIPZ_STATUS_TIMEDOUT;  
 } //wait4MILEvent
@@ -679,7 +690,7 @@ uint32_t doActionS0()
   initCmds();                    
 
   return status;
-} // entryActionS0
+} // doActionS0
 
 
 uint32_t entryActionConfigured()
@@ -712,14 +723,13 @@ uint32_t entryActionConfigured()
   mode          = WRUNIPZ_MODE_SPZ;
     
   // reset MIL piggy and wait
-  /* comment while developping on exploder
   if ((status = resetPiggyDevMil(pMILPiggy))  != MIL_STAT_OK) {
     DBPRINT1("wr-unipz: ERROR - can't reset MIL Piggy\n");
-    return WRUNIPZ_STATUS_DEVBUSERROR;
-    } 
+    return WRUNIPZ_STATUS_MIL;
+  } 
   
   // configure MIL piggy for timing events for all 16 virtual accelerators
-  if ((status = configMILEvent(WRUNIPZ_EVT_DUMMY)) != WRUNIPZ_STATUS_OK) {
+  if ((status = configMILEvent()) != WRUNIPZ_STATUS_OK) {
     DBPRINT1("wr-unipz: ERROR - failed to configure MIL piggy for receiving timing events! %d\n", status);
     return status;
   } 
@@ -732,9 +742,9 @@ uint32_t entryActionConfigured()
   i = 0;
   while (wait4ECAEvent(1, &timestamp, &isLate) !=  WRUNIPZ_ECADO_TIMEOUT) {i++;}
   DBPRINT1("wr-unipz: ECA queue flushed - removed %d pending entries from ECA queue\n", i);
-  */
 
   *pSharedConfStat = WRUNIPZ_CONFSTAT_IDLE; /* chk */
+  mode             = WRUNIPZ_MODE_SPZ;
   return status;
 } // entryActionConfigured
 
@@ -742,14 +752,16 @@ uint32_t entryActionConfigured()
 uint32_t entryActionOperation()
 {
   clearDiag();
+  clearPZ();
+  enableFilterEvtMil(pMILPiggy);
+  clearFifoEvtMil(pMILPiggy);
 
   return WRUNIPZ_STATUS_OK;
 } // entryActionOperation
 
 
-uint32_t exitActionOperation()
-{/* comment while developing on exploder 
-    if (disableFilterEvtMil(pMILPiggy) != MIL_STAT_OK) return WRUNIPZ_STATUS_ERROR; */
+uint32_t exitActionOperation(){
+  if (disableFilterEvtMil(pMILPiggy) != MIL_STAT_OK) return WRUNIPZ_STATUS_ERROR; 
   
   return WRUNIPZ_STATUS_OK;
 } // exitActionOperation
@@ -887,6 +899,10 @@ uint32_t doActionOperation(uint32_t *nCycle,                  // total number of
   uint32_t flagIsLate;                                                             // flag indicating that we received a 'late' event from ECA
   uint32_t nextAction;                                                             // action triggered by event received from ECA
   uint64_t deadline;                                                               // deadline of event received via ECA
+  uint16_t evtData;                                                                // MIL event: data
+  uint16_t evtCode;                                                                // MIL event: code
+  uint32_t virtAcc;                                                                // MIL event: virtAcc
+  uint32_t milStatus;
   int      i,j;
 
 
@@ -895,25 +911,41 @@ uint32_t doActionOperation(uint32_t *nCycle,                  // total number of
 
   nextAction = wait4ECAEvent(WRUNIPZ_DEFAULT_TIMEOUT, &deadline, &flagIsLate);     // 'do action' is driven by actions issued by the ECA
 
-  switch (nextAction) 
-    {
-    case WRUNIPZ_ECADO_DUMMY :                                                     // whatever
+  switch (nextAction) {
+  case WRUNIPZ_ECADO_TEST :                                                      // whatever
+    (*nCycle)++;
+    
+    ebm_clr();
+    
+    int vacc[] = {5,5,5,5,5,5,5}; /* chk hack */
+    int kurz[] = {0,0,0,0,0,0,0}; /* chk hack */
+    
+    for (i=0; i < WRUNIPZ_NPZ; i++) ebmWriteTM(bigData[i][5], deadline, i, vacc[i]);
+    *tAct = deadline;
+    
+    break;
+  case WRUNIPZ_ECADO_MIL :
+    milStatus = wait4MILEvent(&evtData, &evtCode, &virtAcc, WRUNIPZ_MILTIMEOUT);
+    switch (evtCode) {
+    case WRUNIPZ_EVT_50HZ_SYNCH :
       (*nCycle)++;
-
+      
       ebm_clr();
       
-      int vacc[] = {5,5,5,5,5,5,5}; /* chk hack */
+      int vacc[] = {8,8,8,8,8,8,8}; /* chk hack */
       int kurz[] = {0,0,0,0,0,0,0}; /* chk hack */
-
-      for (i=0; i < WRUNIPZ_NPZ; i++) ebmWriteTM(bigData[i][5], deadline, i, vacc[i]);
+      
+      for (i=0; i < WRUNIPZ_NPZ; i++) ebmWriteTM(bigData[i][8], deadline, i, vacc[i]);
       *tAct = deadline;
-
       break;
+    default :
+      break;
+    } // switch evtCode
     
-    default:
-      ; // do something
-    } // switch nextAction
-
+  default:
+    break;
+  } // switch nextAction
+  
   return status;
 } // doActionOperation
 
@@ -945,7 +977,6 @@ void main(void) {
  
   uint32_t j;
  
-  uint32_t i;                                   // counter for iterations of main loop
   uint64_t tPrevCycle;                          // time of previous UNILAC cycle
   uint64_t tActCycle;                           // time of actual UNILAC cycle
   uint32_t status;                              // (error) status
@@ -964,7 +995,6 @@ void main(void) {
   mprintf("\n");
   
   // init local variables
-  i              = 0;
   nCycle         = 0;                           
   reqState       = WRUNIPZ_STATE_S0;
   actState       = WRUNIPZ_STATE_UNKNOWN;
@@ -1011,7 +1041,7 @@ void main(void) {
     if (flagRecover) doAutoRecovery(actState, &reqState);
 
     // update shared memory
-    if ((i % WRUNIPZ_UNILACFREQ) == 0) {                                    // once per second
+    if ((nCycle % WRUNIPZ_UNILACFREQ) == 0) {                                    // about once per second
 
       // get frequency of UNILAC [uHz]
       *pSharedTCycleAvg  = (uint32_t)((tActCycle - tPrevCycle)/(WRUNIPZ_UNILACFREQ * 1000));
@@ -1020,8 +1050,13 @@ void main(void) {
       // get message rate [Hz]
       *pSharedMsgFreqAvg = (uint32_t)(nMsgAct - nMsgPrev);
       nMsgPrev           = nMsgAct;
-    } // if i %
 
+      mprintf("nact %d %x\n", (uint32_t)nMsgAct, pSharedMsgFreqAvg);
+
+      vaccAvg = 0;
+      pzAvg   = 0;
+    } // if nCycle %
+    
     if ((*pSharedStatus == WRUNIPZ_STATUS_OK)     && (status    != WRUNIPZ_STATUS_OK))     {nBadStatus++; *pSharedNBadStatus = nBadStatus;}
     if ((*pSharedState  == WRUNIPZ_STATE_OPREADY) && (actState  != WRUNIPZ_STATE_OPREADY)) {nBadState++;  *pSharedNBadState  = nBadState;}
     *pSharedStatus       = status;
@@ -1029,13 +1064,11 @@ void main(void) {
     *pSharedDtMax        = dtMax;
     *pSharedDtMin        = dtMin;
     *pSharedNLate        = nLate;
-    *pSharedVaccAvg      = vaccAvg; vaccAvg = 0;
-    *pSharedPzAvg        = pzAvg;   pzAvg   = 0;
+    *pSharedVaccAvg      = vaccAvg;
+    *pSharedPzAvg        = pzAvg;
     *pSharedMode         = mode;
     *pSharedNCycle       = nCycle; 
     *pSharedNMessageHi   = (uint32_t)(nMsgAct >> 32);
     *pSharedNMessageLo   = (uint32_t)(nMsgAct & 0xffffffff);
-
-    i++;
   } // while  
 } // main

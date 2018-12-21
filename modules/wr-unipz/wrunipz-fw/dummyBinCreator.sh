@@ -2,7 +2,7 @@
 # write data to file
 
 FILENAME=dummy.bin
-FILESIZE=131072
+FILESIZE=98304
 
 NWORDS=$((FILESIZE / 4))
 

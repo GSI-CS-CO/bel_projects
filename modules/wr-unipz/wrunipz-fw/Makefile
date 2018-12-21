@@ -1,17 +1,17 @@
 TARGET		= wrunipz
-PLATFPATH       = ../../../syn/gsi_exploder5/exploder5_csco_tr
+#PLATFPATH       = ../../../syn/gsi_exploder5/exploder5_csco_tr
+PLATFPATH       = ../../../syn/gsi_scu/control3
 PLATFMAKEFILE   = $(PLATFPATH)/Makefile
 
-#PLATFORM        := $(shell echo $(PLATFPATH)     | rev | cut -d'/' -f1 | rev )
-PLATFORM	:= $(shell cat 	$(PLATFMAKEFILE) | grep TARGET    | cut -d' ' -f2 )
-DEVICE		:= $(shell cat 	$(PLATFMAKEFILE) | grep DEVICE    | cut -d' ' -f2 )
-FLASH		:= $(shell cat 	$(PLATFMAKEFILE) | grep FLASH     | cut -d' ' -f2 )
-SPI_LANES	:= $(shell cat 	$(PLATFMAKEFILE) | grep SPI_LANES | cut -d' ' -f2 )
-RAM_SIZE        := $(shell cat 	$(PLATFMAKEFILE) | grep RAM_SIZE  | cut -d' ' -f2 )
+PLATFORM	:= $(shell cat 	$(PLATFMAKEFILE) | grep -m1 TARGET    | cut -d'=' -f2 | sed 's/[^a-zA-Z0-9]//g')
+DEVICE		:= $(shell cat 	$(PLATFMAKEFILE) | grep -m1 DEVICE    | cut -d'=' -f2 | sed 's/[^a-zA-Z0-9]//g')
+FLASH		:= $(shell cat 	$(PLATFMAKEFILE) | grep -m1 FLASH     | cut -d'=' -f2 | sed 's/[^a-zA-Z0-9]//g')
+SPI_LANES	:= $(shell cat 	$(PLATFMAKEFILE) | grep -m1 SPI_LANES | cut -d'=' -f2 | sed 's/[^a-zA-Z0-9]//g')
+RAM_SIZE        := $(shell cat 	$(PLATFMAKEFILE) | grep -m1 RAM_SIZE  | cut -d'=' -f2 | sed 's/[^a-zA-Z0-9]//g')
 
 SHARED_SIZE     ?= 8K
 USRCPUCLK       ?= 125000
-VERSION         = 00.00.03
+VERSION         = 00.00.04
 
 .DEFAULT_GOAL  := fwbin
 
@@ -20,7 +20,7 @@ DEBUGLVL    	= 1
 CFLAGS 	    	= -I../include -I$(PATHFW) -DDEBUGLEVEL=$(DEBUGLVL)
 
 $(info    >>>>)
-$(info    building is done by importing the following data from $(PLATFPATH):)
+$(info    building is done by importing the following data from $(PLATFMAKEFILE):)
 $(info    PLATFORM    is $(PLATFORM))
 $(info    DEVICE      is $(DEVICE))
 $(info    FLASH       is $(FLASH))

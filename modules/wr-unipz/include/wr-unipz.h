@@ -13,8 +13,8 @@
 #define  WRUNIPZ_DEFAULT_TIMEOUT  100         // default timeout used by main loop [ms]
 #define  WRUNIPZ_QUERYTIMEOUT     1           // timeout for querying virt acc from MIL Piggy FIFO [ms] 
                                               // Ludwig: we have 10ms time; here: use 5 ms to be on the safe side
+#define  WRUNIPZ_MILTIMEOUT       5           // timeout for querying MIL event
 #define  WRUNIPZ_MATCHWINDOW      200000      // used for comparing timestamps: 1 TS from TLU->ECA matches event from MIL FIFO, 2: synch EVT_MB_TRIGGER, ...
-#define  WRUNIPZ_EVT_DUMMY        0x43        // event number chk !!!
 #define  WRUNIPZ_ECA_ADDRESS      0x7ffffff0  // address of ECA input
 #define  WRUNIPZ_EB_HACKISH       0x12345678  // value for EB read handshake
 #define  WRUNIPZ_UNILACFREQ       50          // frequency of UNILAC operation [Hz]
@@ -37,6 +37,7 @@
 #define  WRUNIPZ_STATUS_EARLY            6    // a timing messages is dispatched unreasonably early (dt > UNILACPERIOD)
 #define  WRUNIPZ_STATUS_TRANSACTION      7    // transaction failed
 #define  WRUNIPZ_STATUS_EB               8    // an Etherbone error occured
+#define  WRUNIPZ_STATUS_MIL              9    // an error on MIL hardware occured (MIL piggy etc...)
 #define  WRUNIPZ_STATUS_NOIP            13    // DHCP request via WR network failed                                
 #define  WRUNIPZ_STATUS_EBREADTIMEDOUT  16    // EB read via WR network timed out
 #define  WRUNIPZ_STATUS_WRONGVIRTACC    17    // received EVT_READY_TO_SIS with wrong virt acc number
@@ -75,7 +76,8 @@
 // activity requested by ECA Handler, the relevant codes are also used as "tags".
 #define  WRUNIPZ_ECADO_TIMEOUT    0           // timeout: no activity requested
 #define  WRUNIPZ_ECADO_UNKOWN     1           // unnkown activity requested (unexpected action by ECA)
-#define  WRUNIPZ_ECADO_DUMMY      2           // chk some activity requested ...
+#define  WRUNIPZ_ECADO_TEST       2           // test mode (internal 50 Hz trigger)
+#define  WRUNIPZ_ECADO_MIL        3           // a MIL event was received
 
 // define log levels for print statemens
 #define  WRUNIPZ_LOGLEVEL_ALL     0           // info on every UNILAC cycles
@@ -89,6 +91,17 @@
 
 #define WRUNIPZ_MODE_SPZ          0           // listen to events from Super-UNIPZ
 #define WRUNIPZ_MODE_TEST         1           // test mode: 50 Hz clock generated internally
+
+#define WRUNIPZ_EVT_PZ1            1          // next cycle PZ 1
+#define WRUNIPZ_EVT_PZ2            2          // next cycle PZ 2
+#define WRUNIPZ_EVT_PZ3            3          // next cycle PZ 3
+#define WRUNIPZ_EVT_PZ4            4          // next cycle PZ 4
+#define WRUNIPZ_EVT_PZ5            5          // next cycle PZ 5
+#define WRUNIPZ_EVT_PZ6            6          // next cycle PZ 6
+#define WRUNIPZ_EVT_PZ7            7          // next cycle PZ 7
+#define WRUNIPZ_EVT_SYNCH_DATA    32          // commit event for transaction
+#define WRUNIPZ_EVT_50HZ_SYNCH    33          // 50 Hz trigger, cycle start
+
 
 typedef struct dataTable {                    // table with _one_ virtAcc for _one_ Pulszentrale
   uint32_t validFlags;                        // if bit 'n' is set, data[n] is valid

@@ -186,7 +186,7 @@ int readInfo(uint32_t *status, uint32_t *state, uint32_t *iterations, uint32_t *
   *vaccAvg       = data[12];
   *pzAvg         = data[13];
   *mode          = data[14];
-  
+
   return eb_status;
 } // readInfo
 
@@ -447,7 +447,7 @@ int main(int argc, char** argv) {
         // upload
         nDataNorm = WRUNIPZ_NEVT;
         nDataKurz = 0;
-        for (i=0; i < (nDataNorm -1); i++) dataNorm[i] = ((uint16_t)(i + 100 * pz + 2000) << 16) + i;
+        for (i=0; i < (nDataNorm -1); i++) dataNorm[i] = ((uint16_t)(i + 100 * pz + 2001) << 16) + i;
         dataNorm[nDataNorm -1] = ((uint16_t)2000 << 16) + 64;
         if ((status = wrunipz_transaction_upload(device, wrunipz_confStat, wrunipz_confPz, wrunipz_confData, wrunipz_confFlag, pz, dataNorm, nDataNorm, dataKurz, nDataKurz)) != WRUNIPZ_STATUS_OK)
           printf("wr-unipz: transaction upload - %s\n", wrunipz_status_text(status));
