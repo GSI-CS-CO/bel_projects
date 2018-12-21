@@ -3,7 +3,7 @@
  *
  *  created : 2018
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 17-December-2018
+ *  version : 21-December-2018
  *
  * Command-line interface for wrunipz
  *
@@ -77,13 +77,17 @@ eb_address_t wrunipz_tCycleAvg;    // period of cycle [us] (average over one sec
 eb_address_t wrunipz_nMessageLo;   // number of messages, read
 eb_address_t wrunipz_nMessageHi;   // number of messages, read
 eb_address_t wrunipz_msgFreqAvg;   // message rate (average over one second), read
-eb_address_t wrunipz_dtMax;        // delta T (max) between message time of dispatching and deadline
-eb_address_t wrunipz_dtMin;        // delta T (min) between message time of dispatching and deadline
-eb_address_t wrunipz_confVacc;     // virtAcc of config
-eb_address_t wrunipz_confStat;     // status of config transaction
-eb_address_t wrunipz_confPz;       // bit field (indicates, which PZ is submitted)
-eb_address_t wrunipz_confFlag;     // flags of config
-eb_address_t wrunipz_confData;     // data of config
+eb_address_t wrunipz_dtMax;        // delta T (max) between message time of dispatching and deadline, read
+eb_address_t wrunipz_dtMin;        // delta T (min) between message time of dispatching and deadline, read
+eb_address_t wrunipz_nLate;        // # of late messages, read
+eb_address_t wrunipz_vaccAvg;      // virtual accelerators played over the past second, read
+eb_address_t wrunipz_pzAvg;        // PZs used over the past second, read
+eb_address_t wrunipz_mode;         // mode, see WRUNIPZ_MODE_...
+eb_address_t wrunipz_confVacc;     // virtAcc of config, write
+eb_address_t wrunipz_confStat;     // status of config transaction, read
+eb_address_t wrunipz_confPz;       // bit field (indicates, which PZ is submitted), write
+eb_address_t wrunipz_confFlag;     // flags of config, write
+eb_address_t wrunipz_confData;     // data of config, write
 
 eb_data_t   data1;
  
@@ -92,6 +96,13 @@ static void die(const char* where, eb_status_t status) {
           program, where, eb_status(status));
   exit(1);
 } //die
+
+
+uint64_t getTimeStamp() {
+  struct timeval tv;
+  gettimeofday(&tv,NULL);
+  return tv.tv_sec*(uint64_t)1000000+tv.tv_usec;
+} // small helper function
 
 
 static void help(void) {
@@ -107,15 +118,18 @@ static void help(void) {
   fprintf(stderr, "                      2: as 1, inform in case of status or state changes\n");
   fprintf(stderr, "                      3: as 2, inform in case of state changes\n");
   fprintf(stderr, "\n");
-  fprintf(stderr, "  configure           command requests state change from IDLE or CONFIGURED to CONFIGURED\n");
-  fprintf(stderr, "  startop             command requests state change from CONFIGURED to OPREADY\n");
-  fprintf(stderr, "  stopop              command requests state change from OPREADY to STOPPING -> CONFIGURED\n");
+  fprintf(stderr, "  configure           command requests state change from IDLE or CONFIGURED -> CONFIGURED\n");
+  fprintf(stderr, "  startop             command requests state change from CONFIGURED -> OPREADY\n");
+  fprintf(stderr, "  stopop              command requests state change from OPREADY -> STOPPING -> CONFIGURED\n");
   fprintf(stderr, "  recover             command tries to recover from state ERROR and transit to state IDLE\n");
   fprintf(stderr, "  idle                command requests state change to IDLE\n");
   fprintf(stderr, "\n");
-  fprintf(stderr, "  test <vacc> <pz>    command loads dummy event table for virtual accelerator <vacc> to Pulszentrale <pz>\n");
-  fprintf(stderr, "  kill                command will kill possibly ongoing transactions\n");
-  fprintf(stderr, "  cleartables         command will clear all event tables of all PZs\n");
+  fprintf(stderr, "  modespz             command sets to PZ mode (listen to SuperPZ)\n");
+  fprintf(stderr, "  modetest            command sets to test mode (listen to internal 50 Hz trigger)\n");
+  fprintf(stderr, "  test <vacc> <pz>    command loads dummy event table for virtual accelerator <vacc> to pulszentrale <pz>\n");
+  fprintf(stderr, "  vacc                command sets virtual accelerator for ALL PZs\n");
+  fprintf(stderr, "  cleartables         command clears all event tables of all PZs\n");
+  fprintf(stderr, "  kill                command kills possibly ongoing transactions\n");  
   fprintf(stderr, "\n");
   fprintf(stderr, "  cleardiag           clear statistics\n");
   fprintf(stderr, "\n");
@@ -133,12 +147,12 @@ static void help(void) {
 } //help
 
 
-int readInfo(uint32_t *status, uint32_t *state, uint32_t *iterations, uint32_t *cycles, uint32_t *nBadStatus, uint32_t *nBadState, uint32_t *tCycleAvg, uint64_t *msgFreqAvg, int32_t *dtMax, int32_t *dtMin, uint32_t *confStat)
+int readInfo(uint32_t *status, uint32_t *state, uint32_t *iterations, uint32_t *cycles, uint32_t *nBadStatus, uint32_t *nBadState, uint32_t *tCycleAvg, uint64_t *msgFreqAvg, int32_t *dtMax, int32_t *dtMin, uint32_t *confStat, uint32_t *nLate, uint32_t *vaccAvg, uint32_t *pzAvg, uint32_t *mode)
 {
   eb_cycle_t  cycle;
   eb_status_t eb_status;
   eb_data_t   data[30];
-  
+
   if ((eb_status = eb_cycle_open(device, 0, eb_block, &cycle)) != EB_OK) die("wr-unipz: eb_cycle_open", eb_status);
   eb_cycle_read(cycle, wrunipz_status,        EB_BIG_ENDIAN|EB_DATA32, &(data[0]));
   eb_cycle_read(cycle, wrunipz_state,         EB_BIG_ENDIAN|EB_DATA32, &(data[1]));
@@ -149,8 +163,12 @@ int readInfo(uint32_t *status, uint32_t *state, uint32_t *iterations, uint32_t *
   eb_cycle_read(cycle, wrunipz_tCycleAvg,     EB_BIG_ENDIAN|EB_DATA32, &(data[6]));
   eb_cycle_read(cycle, wrunipz_msgFreqAvg,    EB_BIG_ENDIAN|EB_DATA32, &(data[7]));
   eb_cycle_read(cycle, wrunipz_dtMax,         EB_BIG_ENDIAN|EB_DATA32, &(data[8]));
-  eb_cycle_read(cycle, wrunipz_dtMin,         EB_BIG_ENDIAN|EB_DATA32, &(data[9]));
+  eb_cycle_read(cycle, wrunipz_dtMin,         EB_BIG_ENDIAN|EB_DATA32, &(data[9])); 
   eb_cycle_read(cycle, wrunipz_confStat,      EB_BIG_ENDIAN|EB_DATA32, &(data[10]));
+  eb_cycle_read(cycle, wrunipz_nLate,         EB_BIG_ENDIAN|EB_DATA32, &(data[11]));
+  eb_cycle_read(cycle, wrunipz_vaccAvg,       EB_BIG_ENDIAN|EB_DATA32, &(data[12]));
+  eb_cycle_read(cycle, wrunipz_pzAvg,         EB_BIG_ENDIAN|EB_DATA32, &(data[13]));
+  eb_cycle_read(cycle, wrunipz_mode,          EB_BIG_ENDIAN|EB_DATA32, &(data[14]));
   if ((eb_status = eb_cycle_close(cycle)) != EB_OK) die("wr-unipz: eb_cycle_close", eb_status);
 
   *status        = data[0];
@@ -164,6 +182,10 @@ int readInfo(uint32_t *status, uint32_t *state, uint32_t *iterations, uint32_t *
   *dtMax         = data[8];
   *dtMin         = data[9];
   *confStat      = data[10];
+  *nLate         = data[11];
+  *vaccAvg       = data[12];
+  *pzAvg         = data[13];
+  *mode          = data[14];
   
   return eb_status;
 } // readInfo
@@ -198,18 +220,24 @@ int readConfig(uint64_t *mac, uint32_t *ip)
 
 void printCycleHeader()
 {
-  printf("wr-unipz:         CYCLES |            DIAGNOSIS        |                 INFO           \n");
-  printf("wr-unipz:              n |    fUni  fMsg dtMax dtMin T |   state      nchng stat   nchng\n");
+  printf("wr-unipz:        cycles      virtAcc        PZ   |            DIAGNOSIS                |                 INFO           \n");
+  printf("wr-unipz: STATUS      n 0....5....A....F 0.....6 |    fUni  fMsg dtMax dtMin nLate T M |   state      nchng stat   nchng\n");
 } // printCycleHeader
 
 
-void printCycle(uint32_t cycles, uint32_t tCycleAvg, uint32_t msgFreqAvg, int32_t dtMax, int32_t dtMin, uint32_t confStat)
+void printCycle(uint32_t cycles, uint32_t tCycleAvg, uint32_t msgFreqAvg, int32_t dtMax, int32_t dtMin, uint32_t confStat, uint32_t nLate, uint32_t vaccAvg, uint32_t pzAvg, uint32_t mode)
 {
-  // cycle
-  printf("wr-unipz: CYC %010d |", cycles);
+  int i;
+  
+  // past cycles
+  printf("wr-unipz: ST %010d ", cycles);
+  for (i=0; i < WRUNIPZ_NVACC; i++) printf("%d", (((1 << i) & vaccAvg) > 0));
+  printf(" ");
+  for (i=0; i < WRUNIPZ_NPZ;   i++) printf("%d", (((1 << i) & pzAvg) > 0));
+  printf(" |");
 
   // diag
-  printf("DG %5.2f %05d %05d %05d %1d |", 1000000.0/(double)tCycleAvg, msgFreqAvg, dtMax / 1000, dtMin / 1000, confStat);
+  printf("DG %5.2f %05d %05d %05d %05d %1d %1d |", 1000000.0/(double)tCycleAvg, msgFreqAvg, dtMax / 1000, dtMin / 1000, nLate, confStat, mode);
 
 } // printCycle
 
@@ -245,6 +273,10 @@ int main(int argc, char** argv) {
   uint32_t version;
   int32_t  dtMax;
   int32_t  dtMin;
+  uint32_t nLate;
+  uint32_t vaccAvg;
+  uint32_t pzAvg;
+  uint32_t mode;
   uint32_t confStat;
 
   uint32_t actCycles;                          // actual number of cycles
@@ -264,7 +296,6 @@ int main(int argc, char** argv) {
   uint32_t    vacc;
   uint32_t    pz;
 
-    
   program = argv[0];    
 
   while ((opt = getopt(argc, argv, "s:ceih")) != -1) {
@@ -316,7 +347,6 @@ int main(int argc, char** argv) {
 
   if (optind+1 < argc)  command = argv[++optind];
   else command = NULL;
-
   /* open Etherbone device and socket */
   if ((eb_status = eb_socket_open(EB_ABI_CODE, 0, EB_ADDR32|EB_DATA32, &socket)) != EB_OK) die("eb_socket_open", eb_status);
   if ((eb_status = eb_device_open(socket, devName, EB_ADDR32|EB_DATA32, 3, &device)) != EB_OK) die("eb_device_open", eb_status);
@@ -342,6 +372,10 @@ int main(int argc, char** argv) {
   wrunipz_msgFreqAvg   = lm32_base + SHARED_OFFS + WRUNIPZ_SHARED_MSGFREQAVG;
   wrunipz_dtMax        = lm32_base + SHARED_OFFS + WRUNIPZ_SHARED_DTMAX;
   wrunipz_dtMin        = lm32_base + SHARED_OFFS + WRUNIPZ_SHARED_DTMIN;
+  wrunipz_nLate        = lm32_base + SHARED_OFFS + WRUNIPZ_SHARED_NLATE;
+  wrunipz_vaccAvg      = lm32_base + SHARED_OFFS + WRUNIPZ_SHARED_VACCAVG;
+  wrunipz_pzAvg        = lm32_base + SHARED_OFFS + WRUNIPZ_SHARED_PZAVG;
+  wrunipz_mode         = lm32_base + SHARED_OFFS + WRUNIPZ_SHARED_MODE;
   wrunipz_confVacc     = lm32_base + SHARED_OFFS + WRUNIPZ_SHARED_CONF_VACC;
   wrunipz_confStat     = lm32_base + SHARED_OFFS + WRUNIPZ_SHARED_CONF_STAT;
   wrunipz_confFlag     = lm32_base + SHARED_OFFS + WRUNIPZ_SHARED_CONF_FLAG;
@@ -363,9 +397,9 @@ int main(int argc, char** argv) {
 
   if (getInfo) {
     // status
-    readInfo(&status, &state, &iterations, &cycles, &nBadStatus, &nBadState, &tCycle, &messages, &dtMax, &dtMin, &confStat);
+    readInfo(&status, &state, &iterations, &cycles, &nBadStatus, &nBadState, &tCycle, &messages, &dtMax, &dtMin, &confStat, &nLate, &vaccAvg, &pzAvg, &mode);
     printCycleHeader();
-    printCycle(cycles, tCycle, messages, dtMax, dtMin, confStat);
+    printCycle(cycles, tCycle, messages, dtMax, dtMin, confStat, nLate, vaccAvg, pzAvg, mode);
     printf(" %s (%6u), %s (%6u)\n", wrunipz_state_text(state), nBadState, wrunipz_status_text(status), nBadStatus);
   } // if getInfo
 
@@ -413,7 +447,8 @@ int main(int argc, char** argv) {
         // upload
         nDataNorm = WRUNIPZ_NEVT;
         nDataKurz = 0;
-        for (i=0; i < nDataNorm; i++) dataNorm[i] = ((uint32_t)(i + 100 * pz) << 16) + i;
+        for (i=0; i < (nDataNorm -1); i++) dataNorm[i] = ((uint16_t)(i + 100 * pz + 2000) << 16) + i;
+        dataNorm[nDataNorm -1] = ((uint16_t)2000 << 16) + 64;
         if ((status = wrunipz_transaction_upload(device, wrunipz_confStat, wrunipz_confPz, wrunipz_confData, wrunipz_confFlag, pz, dataNorm, nDataNorm, dataKurz, nDataKurz)) != WRUNIPZ_STATUS_OK)
           printf("wr-unipz: transaction upload - %s\n", wrunipz_status_text(status));
         
@@ -429,6 +464,14 @@ int main(int argc, char** argv) {
       eb_device_write(device, wrunipz_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)WRUNIPZ_CMD_CONFCLEAR, 0, eb_block);
       if (state != WRUNIPZ_STATE_OPREADY) printf("wr-unipz: WARNING command has no effect (not in state OPREADY)\n");
     } // "cleartables"
+    if (!strcasecmp(command, "modespz")) {
+      eb_device_write(device, wrunipz_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)WRUNIPZ_CMD_MODESPZ, 0, eb_block);
+      if (state != WRUNIPZ_STATE_OPREADY) printf("wr-unipz: WARNING command has no effect (not in state OPREADY)\n");
+    } // "modespz"
+    if (!strcasecmp(command, "modetest")) {
+      eb_device_write(device, wrunipz_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)WRUNIPZ_CMD_MODETEST, 0, eb_block);
+      if (state != WRUNIPZ_STATE_OPREADY) printf("wr-unipz: WARNING command has no effect (not in state OPREADY)\n");
+    } // "modetest"
     
       
   } //if command
@@ -444,7 +487,7 @@ int main(int argc, char** argv) {
     printCycleHeader();
 
     while (1) {
-      readInfo(&status, &state, &iterations, &cycles, &nBadStatus, &nBadState, &tCycle, &messages, &dtMax, &dtMin, &confStat); // read info from lm32
+      readInfo(&status, &state, &iterations, &cycles, &nBadStatus, &nBadState, &tCycle, &messages, &dtMax, &dtMin, &confStat, &nLate, &vaccAvg, &pzAvg, &mode); // read info from lm32
 
       switch(state) {
       case WRUNIPZ_STATE_OPREADY :
@@ -465,7 +508,7 @@ int main(int argc, char** argv) {
       if ((actStatus    != status)    && (logLevel <= WRUNIPZ_LOGLEVEL_STATUS))                                        {printFlag = 1; actStatus = status;}
 
       if (printFlag) {
-        printCycle(cycles, tCycle, messages, dtMax, dtMin, confStat); 
+        printCycle(cycles, tCycle, messages, dtMax, dtMin, confStat, nLate, vaccAvg, pzAvg, mode); 
         printf(" %s (%6u), %s (%6u)\n", wrunipz_state_text(state), nBadState, wrunipz_status_text(status), nBadStatus);
       } // if printFlag
 

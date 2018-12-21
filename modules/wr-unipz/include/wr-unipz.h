@@ -59,6 +59,8 @@
 #define  WRUNIPZ_CMD_CONFSUBMIT   8           // submit data written to DP RAM
 #define  WRUNIPZ_CMD_CONFKILL     9           // this will kill an ongoing transaction
 #define  WRUNIPZ_CMD_CONFCLEAR   10           // this will clear all event tables
+#define  WRUNIPZ_CMD_MODESPZ     11           // mode -> WRUNIPZ_MODE_SPZ
+#define  WRUNIPZ_CMD_MODETEST    12           // mode ->  WRUNIPZ_MODE_TEST
 
 // states; implicitely, all states may transit to the ERROR or FATAL state
 #define  WRUNIPZ_STATE_UNKNOWN    0           // unknown state
@@ -84,6 +86,9 @@
 #define  WRUNIPZ_CONFSTAT_IDLE    0           // no transaction in progress
 #define  WRUNIPZ_CONFSTAT_INIT    1           // transaction of config data has been initialized
 #define  WRUNIPZ_CONFSTAT_SUBMIT  2           // config data for transaction has been submitted, waiting for commit event
+
+#define WRUNIPZ_MODE_SPZ          0           // listen to events from Super-UNIPZ
+#define WRUNIPZ_MODE_TEST         1           // test mode: 50 Hz clock generated internally
 
 typedef struct dataTable {                    // table with _one_ virtAcc for _one_ Pulszentrale
   uint32_t validFlags;                        // if bit 'n' is set, data[n] is valid
@@ -118,12 +123,15 @@ typedef struct dataTable {                    // table with _one_ virtAcc for _o
 #define WRUNIPZ_SHARED_NMESSAGEHI     (WRUNIPZ_SHARED_NCYCLE     + _32b_SIZE_)          // # of messsages, high bits
 #define WRUNIPZ_SHARED_NMESSAGELO     (WRUNIPZ_SHARED_NMESSAGEHI + _32b_SIZE_)          // # of messsages, low bits
 #define WRUNIPZ_SHARED_MSGFREQAVG     (WRUNIPZ_SHARED_NMESSAGELO + _32b_SIZE_)          // message rate (average over one second)
-#define WRUNIPZ_SHARED_DTAVG          (WRUNIPZ_SHARED_MSGFREQAVG + _32b_SIZE_)          // delta T between message time of dispatching and deadline
-#define WRUNIPZ_SHARED_DTMAX          (WRUNIPZ_SHARED_DTAVG      + _32b_SIZE_)          // delta T max
-#define WRUNIPZ_SHARED_DTMIN          (WRUNIPZ_SHARED_DTMAX      + _32b_SIZE_)          // delta T min
+#define WRUNIPZ_SHARED_DTMAX          (WRUNIPZ_SHARED_MSGFREQAVG + _32b_SIZE_)          // delta T max (actTime - deadline)
+#define WRUNIPZ_SHARED_DTMIN          (WRUNIPZ_SHARED_DTMAX      + _32b_SIZE_)          // delta T min (actTime - deadline)
+#define WRUNIPZ_SHARED_NLATE          (WRUNIPZ_SHARED_DTMIN      + _32b_SIZE_)          // # of late messages
+#define WRUNIPZ_SHARED_VACCAVG        (WRUNIPZ_SHARED_NLATE      + _32b_SIZE_)          // virt accs used (past second) bits 0..15 (normal), 16-31 (verkuerzt)
+#define WRUNIPZ_SHARED_PZAVG          (WRUNIPZ_SHARED_VACCAVG    + _32b_SIZE_)          // PZ used (past second) bits 0..6
+#define WRUNIPZ_SHARED_MODE           (WRUNIPZ_SHARED_PZAVG      + _32b_SIZE_)          // mode (see WRUNIPZ_MODE_...)
 
 // shared memory for EB return values
-#define WRUNIPZ_SHARED_DATA_4EB       (WRUNIPZ_SHARED_DTMIN      + _32b_SIZE_)   
+#define WRUNIPZ_SHARED_DATA_4EB       (WRUNIPZ_SHARED_MODE       + _32b_SIZE_)          // shared area for EB return values
 
 // shared memory for submitting new 'event tables'                                      
 #define WRUNIPZ_SHARED_CONF_VACC      (WRUNIPZ_SHARED_DATA_4EB   + WRUNIPZ_DATA4EBSIZE) // vACC for config data

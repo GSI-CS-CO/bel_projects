@@ -3,11 +3,21 @@
  *
  *  created : 2018
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 18-Dec-2018
+ *  version : 21-Dec-2018
  *
  *  lm32 program for gateway between UNILAC Pulszentrale and a White Rabbit network
  *  this basically serves a Data Master for UNILAC
+ *
+ *  relevant source code UNIPZ:
+ *  - https://www-acc.gsi.de/viewvc/view/devacc/trunk/eqmodels/pz/common/src/pzus-dpr-def.h (relevant header file)
+ *  - https://www-acc.gsi.de/viewvc/view/devacc/trunk/eqmodels/pz/pzu/src/pzu-eqms.c (source code for PZ 1..7)
  * 
+ *  'announce' events for the next cycle (received from the SuperPZ) have the following format:
+ *  31..24: code (defined in pzus-dpr-def-h, lines 72ff; example: 0x10(use channel 1), 0x00(use channel 0)
+ *  23..16: virt acc
+ *  15...8: 0
+ *   7...0: # of PZ (** counting starts at 1 **)
+ *  
  * -------------------------------------------------------------------------------------------
  * License Agreement for this software:
  *
@@ -35,7 +45,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 22-November-2018
  ********************************************************************************************/
-#define WRUNIPZ_FW_VERSION 0x000003                                     // make this consistent with makefile
+#define WRUNIPZ_FW_VERSION 0x000004                                     // make this consistent with makefile
 
 /* standard includes */
 #include <stdio.h>
@@ -113,6 +123,10 @@ uint32_t *pSharedNMessageLo;            // pointer to a "user defined" u32 regis
 uint32_t *pSharedMsgFreqAvg;            // pointer to a "user defined" u32 register; here: message rate (average over one second)
 uint32_t *pSharedDtMax;                 // pointer to a "user defined" u32 register; here: max diff between deadline and time of dispatching
 uint32_t *pSharedDtMin;                 // pointer to a "user defined" u32 register; here: min diff between deadline and time of dispatching
+uint32_t *pSharedNLate;                 // pointer to a "user defined" u32 register; here: # late messages
+uint32_t *pSharedVaccAvg;               // pointer to a "user defined" u32 register; here: virt accs played during past second
+uint32_t *pSharedPzAvg;                 // pointer to a "user defined" u32 register; here: PZs used during the past second
+uint32_t *pSharedMode;                  // pointer to a "user defined" u32 register; here: mode (see WRUNIPZ_MODE...)
 uint32_t *pSharedConfStat;              // pointer to a "user defined" u32 register; here: status of config data transaction
 uint32_t *pSharedConfVacc;              // pointer to a "user defined" u32 register; here: virt acc of config data
 uint32_t *pSharedConfData;              // pointer to a "user defined" u32 register; here: config data
@@ -126,6 +140,11 @@ uint32_t nBadStatus;                    // # of bad status (=error) incidents
 uint32_t nBadState;                     // # of bad state (=FATAL, ERROR, UNKNOWN) incidents
 int32_t  dtMax;                         // dT max (deadline - dispatch time)
 int32_t  dtMin;                         // dT min (deadline - dispatch time)
+uint32_t nLate;                         // # of late messages
+uint64_t nMsgAct;                       // # of messages sent
+uint32_t vaccAvg;                       // virt accs played over the past second
+uint32_t pzAvg;                         // PZs used over the past second
+uint32_t mode;                          // 1: test mode
 
 
 // big data contains the event tables for all PZs, and for all virtual accelerators
@@ -175,68 +194,6 @@ uint32_t ebmInit(uint32_t msTimeout, uint64_t dstMac, uint32_t dstIp, uint32_t e
 } // ebminit
 
 
-/*
-void ebmClearSharedMem() // clear shared memory used for EB return values
-{
-  uint32_t i;
-
-  for (i=0; i< (WRUNIPZ_SHARED_DATA_4EB_SIZE >> 2); i++) pSharedData4EB[i] = 0x0;
-} //ebmClearSharedMem
-
-
-uint32_t ebmReadN(uint32_t msTimeout, uint32_t address, uint32_t *data, uint32_t n32BitWords)
-{
-  uint64_t timeoutT;
-  int      i;
-  uint32_t handshakeIdx;
-
-  handshakeIdx = n32BitWords + 1;
-
-  if (n32BitWords >= (WRUNIPZ_SHARED_DATA_4EB_SIZE >> 2)) return WRUNIPZ_STATUS_OUTOFRANGE;
-  if (n32BitWords == 0)                                   return WRUNIPZ_STATUS_OUTOFRANGE;
-
-  for (i=0; i< n32BitWords; i++) data[i] = 0x0;
-
-  ebmClearSharedMem();                                                                               // clear shared data for EB return values
-  pSharedData4EB[handshakeIdx] = WRUNIPZ_EB_HACKISH;                                                 // see below
-
-  ebm_hi(address);                                                                                   // EB operation starts here
-  for (i=0; i<n32BitWords; i++) ebm_op(address + i*4, (uint32_t)(&(pCpuRamExternalData4EB[i])), EBM_READ); // put data into EB cycle
-                                ebm_op(address      , (uint32_t)(&(pCpuRamExternalData4EB[handshakeIdx])), EBM_READ); // handshake data
-  ebm_flush();                                                                                       // commit EB cycle via the network
-  
-  timeoutT = getSysTime() + (uint64_t)msTimeout * (uint64_t)1000000;                                                     
-  while (getSysTime() < timeoutT) {                                                                  // wait for received data until timeout
-    if (pSharedData4EB[handshakeIdx] != WRUNIPZ_EB_HACKISH) {                                        // hackish solution to determine if a reply value has been received
-      for (i=0; i<n32BitWords; i++) data[i] = pSharedData4EB[i];
-      // dbg mprintf("wr-unipz: ebmReadN EB_address 0x%08x, nWords %d, data[0] 0x%08x, hackish 0x%08x, return 0x%08x\n", address, n32BitWords, data[0], WRUNIPZ_EB_HACKISH, pSharedData4EB[handshakeIdx]);
-      return WRUNIPZ_STATUS_OK;
-    }
-  } //while not timed out
-
-  return WRUNIPZ_STATUS_EBREADTIMEDOUT; 
-} //ebmReadN
-
-
-uint32_t ebmWriteN(uint32_t address, uint32_t *data, uint32_t n32BitWords)
-{
-  int i;
-
-  if (n32BitWords > (WRUNIPZ_SHARED_DATA_4EB_SIZE >> 2)) return WRUNIPZ_STATUS_OUTOFRANGE;
-  if (n32BitWords == 0)                                  return WRUNIPZ_STATUS_OUTOFRANGE;
-
-  ebmClearSharedMem();                                                      // clear my shared memory used for EB replies
-
-  ebm_hi(address);                                                          // EB operation starts here
-  for (i=0; i<n32BitWords; i++) ebm_op(address + i*4, data[i], EBM_WRITE);  // put data into EB cycle
-  if (n32BitWords == 1)         ebm_op(address      , data[0], EBM_WRITE);  // workaround runt frame issue
-  ebm_flush();                                                              // commit EB cycle via the network
-  
-  return WRUNIPZ_STATUS_OK;
-} // ebmWriteN
-*/
-
-
 uint32_t data2TM(uint32_t *idLo, uint32_t *idHi, uint32_t *paramLo, uint32_t *paramHi, uint32_t *res, uint32_t *tef, uint32_t *offset, uint32_t data, uint32_t gid, uint32_t virtAcc)  //converts event UNILAC event data to timing message
 {
   uint32_t  t;
@@ -248,19 +205,19 @@ uint32_t data2TM(uint32_t *idLo, uint32_t *idHi, uint32_t *paramLo, uint32_t *pa
   status   = (uint32_t)((data >> 6) & 0xff);         // get status info
 
   *idHi     = (uint32_t)(                            // EventID
-                         0x1     << 28      |        // FID = 1
+                          0x1     << 28     |        // FID = 1
                          (gid     << 16)    |        // GID
                          (evtCode <<  4)    |        // EVTNO
-                         0x0                         // flags
+                          0x0                        // flags
                         );
   *idLo     = (uint32_t)(
                          (virtAcc << 20)    |        // SID
                          (0x0     <<  6)    |        // BPID
                          (0x0     <<  5)    |        // reserved
                          (0x0     <<  4)    |        // reqNoBeam
-                         0x0                         // virtAcc only for DM-UNIPZ gateway
+                          0x0                        // virtAcc only for DM-UNIPZ gateway
                         );
-  *paramLo  = status;                                // parameter field
+  *paramLo  = status;                                // parameter field  /* chk, probably rquires Hanno */ 
   *paramHi  = 0x0;                                
   *res      = 0x0;                                   // reserved
   *tef      = 0x0;                                   // timing extension field
@@ -268,7 +225,7 @@ uint32_t data2TM(uint32_t *idLo, uint32_t *idHi, uint32_t *paramLo, uint32_t *pa
 } // data2TM
 
 
-uint32_t ebmWriteTM(dataTable evts, uint64_t tStart, uint32_t gid, uint32_t virtAcc, uint64_t *nMsg)
+uint32_t ebmWriteTM(dataTable evts, uint64_t tStart, uint32_t pz, uint32_t virtAcc)
 {
   int      i;
   uint64_t deadline;
@@ -287,7 +244,7 @@ uint32_t ebmWriteTM(dataTable evts, uint64_t tStart, uint32_t gid, uint32_t virt
       if (evts.evtFlags & (1 << i)) {                 // data is an event?
 
         // convert data
-        data2TM(&idLo, &idHi, &paramLo, &paramHi, &res, &tef, &offset, evts.data[i], gid, virtAcc);  //convert data
+        data2TM(&idLo, &idHi, &paramLo, &paramHi, &res, &tef, &offset, evts.data[i], gid[pz], virtAcc);  //convert data
 
         // calc deadline
         deadline   = tStart + (uint64_t)offset;       /* hack */
@@ -307,12 +264,16 @@ uint32_t ebmWriteTM(dataTable evts, uint64_t tStart, uint32_t gid, uint32_t virt
         atomic_off();
 
         ebm_flush();
-        
+
+        // diag and status
         tDiff = deadline - getSysTime();
+        if (tDiff < 0    ) nLate++;
         if (tDiff < dtMin) dtMin = tDiff;
         if (tDiff > dtMax) dtMax = tDiff;
 
-        (*nMsg)++; 
+        vaccAvg = vaccAvg | (1 << virtAcc);
+        pzAvg   = pzAvg   | (1 << pz);
+        nMsgAct++; 
       } // is event
     } // is valid
   } // for i
@@ -380,6 +341,10 @@ void initSharedMem() // determine address and clear shared mem
   pSharedMsgFreqAvg       = (uint32_t *)(pShared + (WRUNIPZ_SHARED_MSGFREQAVG >> 2));
   pSharedDtMax            = (uint32_t *)(pShared + (WRUNIPZ_SHARED_DTMAX >> 2));
   pSharedDtMin            = (uint32_t *)(pShared + (WRUNIPZ_SHARED_DTMIN >> 2));
+  pSharedNLate            = (uint32_t *)(pShared + (WRUNIPZ_SHARED_NLATE >> 2));
+  pSharedVaccAvg          = (uint32_t *)(pShared + (WRUNIPZ_SHARED_VACCAVG >> 2));
+  pSharedPzAvg            = (uint32_t *)(pShared + (WRUNIPZ_SHARED_PZAVG >> 2));
+  pSharedMode             = (uint32_t *)(pShared + (WRUNIPZ_SHARED_MODE >> 2));
   pSharedConfStat         = (uint32_t *)(pShared + (WRUNIPZ_SHARED_CONF_STAT >> 2));
   pSharedConfVacc         = (uint32_t *)(pShared + (WRUNIPZ_SHARED_CONF_VACC >> 2));
   pSharedConfData         = (uint32_t *)(pShared + (WRUNIPZ_SHARED_CONF_DATA >> 2));
@@ -484,8 +449,8 @@ uint32_t wait4ECAEvent(uint32_t msTimeout, uint64_t *deadline, uint32_t *isLate)
   uint32_t nextAction;          // describes what to do next
   uint64_t timeoutT;            // when to time out
 
-  // THE FOLLOWING IS A HACK!!!!
-  // (this implements a 50 Hz clock)
+  if (mode == WRUNIPZ_MODE_TEST) {
+  // hackish implementation of a test mode without events from Super-UNIPZ
   uint64_t tCycle;              // UNILAC period
   uint64_t tEntry;              // timestamp when entering this routine
   uint64_t tNext;               // timestamp of next 20ms tick
@@ -503,7 +468,7 @@ uint32_t wait4ECAEvent(uint32_t msTimeout, uint64_t *deadline, uint32_t *isLate)
   *isLate   = 0;
   
   return WRUNIPZ_ECADO_DUMMY;
-  // THE ABOVE IS A HACK!!!!
+  } // if mode
 
   pECAFlag    = (uint32_t *)(pECAQ + (ECA_QUEUE_FLAGS_GET >> 2));   // address of ECA flag
   timeoutT    = getSysTime() + (uint64_t)msTimeout * (uint64_t)1000000;
@@ -630,6 +595,7 @@ void clearDiag() // clears all statistics
 {
   dtMax          = 0x80000000;
   dtMin          = 0x7fffffff;
+  nLate          = 0;
 } // clearDiag
 
 uint32_t configTransactInit()          // initializes transaction for config data
@@ -742,8 +708,9 @@ uint32_t entryActionConfigured()
 
   ip  = *(pEbCfg + (EBC_SRC_IP>>2));
   *pSharedIp    = ip;
-  
-  
+
+  mode          = WRUNIPZ_MODE_SPZ;
+    
   // reset MIL piggy and wait
   /* comment while developping on exploder
   if ((status = resetPiggyDevMil(pMILPiggy))  != MIL_STAT_OK) {
@@ -840,7 +807,15 @@ void cmdHandler(uint32_t *reqState) // handle commands from the outside world
     case WRUNIPZ_CMD_CONFCLEAR :
       DBPRINT3("wr-unipz: received cmd %d\n", cmd);
       clearPZ();
-      break;     
+      break;
+    case WRUNIPZ_CMD_MODESPZ :
+      DBPRINT3("wr-unipz: received cmd %d\n", cmd);
+      mode = WRUNIPZ_MODE_SPZ;
+      break;
+    case WRUNIPZ_CMD_MODETEST :
+      DBPRINT3("wr-unipz: received cmd %d\n", cmd);
+      mode = WRUNIPZ_MODE_TEST;
+      break;
     default:
       DBPRINT3("wr-unipz: received unknown command '0x%08x'\n", cmd);
     } // switch 
@@ -905,7 +880,6 @@ uint32_t changeState(uint32_t *actState, uint32_t *reqState, uint32_t actStatus)
 
 uint32_t doActionOperation(uint32_t *nCycle,                  // total number of UNILAC cycle since FW start
                            uint64_t *tAct,                    // actual time
-                           uint64_t *nMsg,                    // number of messages
                            uint32_t actStatus)                // actual status of firmware
 {
   uint32_t status;                                                                 // status returned by routines
@@ -931,7 +905,7 @@ uint32_t doActionOperation(uint32_t *nCycle,                  // total number of
       int vacc[] = {5,5,5,5,5,5,5}; /* chk hack */
       int kurz[] = {0,0,0,0,0,0,0}; /* chk hack */
 
-      for (i=0; i < WRUNIPZ_NPZ; i++) ebmWriteTM(bigData[i][5], deadline, gid[i], vacc[i], nMsg);
+      for (i=0; i < WRUNIPZ_NPZ; i++) ebmWriteTM(bigData[i][5], deadline, i, vacc[i]);
       *tAct = deadline;
 
       break;
@@ -981,7 +955,6 @@ void main(void) {
 
   uint32_t statusCycle;                         // status of cycle
   uint32_t nCycle;                              // number of cycles
-  uint64_t nMsgAct;                             // actual number of cycles
   uint64_t nMsgPrev;                            // previous number of cycles
   
 
@@ -1017,7 +990,7 @@ void main(void) {
         break;
       case WRUNIPZ_STATE_OPREADY :
         flagRecover = 0;
-        status = doActionOperation(&nCycle, &tActCycle, &nMsgAct, status);
+        status = doActionOperation(&nCycle, &tActCycle, status);
         if (status == WRUNIPZ_STATUS_WRBADSYNC)      reqState = WRUNIPZ_STATE_ERROR;
         if (status == WRUNIPZ_STATUS_ERROR)          reqState = WRUNIPZ_STATE_ERROR;
         break;
@@ -1055,7 +1028,11 @@ void main(void) {
     *pSharedState        = actState;
     *pSharedDtMax        = dtMax;
     *pSharedDtMin        = dtMin;
-    *pSharedNCycle       = nCycle;
+    *pSharedNLate        = nLate;
+    *pSharedVaccAvg      = vaccAvg; vaccAvg = 0;
+    *pSharedPzAvg        = pzAvg;   pzAvg   = 0;
+    *pSharedMode         = mode;
+    *pSharedNCycle       = nCycle; 
     *pSharedNMessageHi   = (uint32_t)(nMsgAct >> 32);
     *pSharedNMessageLo   = (uint32_t)(nMsgAct & 0xffffffff);
 
