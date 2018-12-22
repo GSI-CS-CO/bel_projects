@@ -3,7 +3,7 @@
  *
  *  created : 2018
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 21-December-2018
+ *  version : 22-December-2018
  *
  * Command-line interface for wrunipz
  *
@@ -220,8 +220,8 @@ int readConfig(uint64_t *mac, uint32_t *ip)
 
 void printCycleHeader()
 {
-  printf("wr-unipz:        cycles      virtAcc        PZ   |            DIAGNOSIS                |                 INFO           \n");
-  printf("wr-unipz: STATUS      n 0....5....A....F 0.....6 |    fUni  fMsg dtMax dtMin nLate T M |   state      nchng stat   nchng\n");
+  printf("wr-unipz:        cycles      virtAcc        PZ   |             DIAGNOSIS                |                 INFO           \n");
+  printf("wr-unipz: STATUS      n 0....5....A....F 0.....6 |     fUni  fMsg dtMax dtMin nLate T M |   state      nchng stat   nchng\n");
 } // printCycleHeader
 
 
@@ -237,7 +237,7 @@ void printCycle(uint32_t cycles, uint32_t tCycleAvg, uint32_t msgFreqAvg, int32_
   printf(" |");
 
   // diag
-  printf("DG %5.2f %05d %05d %05d %05d %1d %1d |", 1000000.0/(double)tCycleAvg, msgFreqAvg, dtMax / 1000, dtMin / 1000, nLate, confStat, mode);
+  printf("DG %6.3f %05d %05d %05d %05d %1d %1d |", 1000000000.0/(double)tCycleAvg, msgFreqAvg, dtMax / 1000, dtMin / 1000, nLate, confStat, mode);
 
 } // printCycle
 

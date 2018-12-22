@@ -3,7 +3,7 @@
  *
  *  created : 2018
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 21-Dec-2018
+ *  version : 22-Dec-2018
  *
  *  lm32 program for gateway between UNILAC Pulszentrale and a White Rabbit network
  *  this basically serves a Data Master for UNILAC
@@ -985,8 +985,10 @@ void main(void) {
   uint32_t flagRecover;                         // flag indicating auto-recovery from error state;
 
   uint32_t statusCycle;                         // status of cycle
-  uint32_t nCycle;                              // number of cycles
-  uint64_t nMsgPrev;                            // previous number of cycles
+  uint32_t nCycleAct;                           // number of cycles
+  uint32_t nCyclePrev;                          // previous number of cycles
+  uint64_t nMsgPrev;                            // previous number of messages
+  uint32_t nTest;              
   
 
   mprintf("\n");
@@ -995,7 +997,8 @@ void main(void) {
   mprintf("\n");
   
   // init local variables
-  nCycle         = 0;                           
+  nCycleAct      = 0;
+  nCyclePrev     = 0;
   reqState       = WRUNIPZ_STATE_S0;
   actState       = WRUNIPZ_STATE_UNKNOWN;
   status         = WRUNIPZ_STATUS_UNKNOWN;
@@ -1020,7 +1023,7 @@ void main(void) {
         break;
       case WRUNIPZ_STATE_OPREADY :
         flagRecover = 0;
-        status = doActionOperation(&nCycle, &tActCycle, status);
+        status = doActionOperation(&nCycleAct, &tActCycle, status);
         if (status == WRUNIPZ_STATUS_WRBADSYNC)      reqState = WRUNIPZ_STATE_ERROR;
         if (status == WRUNIPZ_STATUS_ERROR)          reqState = WRUNIPZ_STATE_ERROR;
         break;
@@ -1041,21 +1044,26 @@ void main(void) {
     if (flagRecover) doAutoRecovery(actState, &reqState);
 
     // update shared memory
-    if ((nCycle % WRUNIPZ_UNILACFREQ) == 0) {                                    // about once per second
+    if (nCycleAct != nCyclePrev) {                                            // update only one per cycle 
+      if ((nCycleAct % WRUNIPZ_UNILACFREQ) == 0) {                            // about only once per second
+        
+        // frequency of UNILAC [nHz]
+        *pSharedTCycleAvg  = (uint32_t)((tActCycle - tPrevCycle)/WRUNIPZ_UNILACFREQ);
+        tPrevCycle         = tActCycle;
+        
+        // message rate [Hz]
+        *pSharedMsgFreqAvg = (uint32_t)(nMsgAct - nMsgPrev);
+        nMsgPrev           = nMsgAct;
 
-      // get frequency of UNILAC [uHz]
-      *pSharedTCycleAvg  = (uint32_t)((tActCycle - tPrevCycle)/(WRUNIPZ_UNILACFREQ * 1000));
-      tPrevCycle         = tActCycle;
-
-      // get message rate [Hz]
-      *pSharedMsgFreqAvg = (uint32_t)(nMsgAct - nMsgPrev);
-      nMsgPrev           = nMsgAct;
-
-      mprintf("nact %d %x\n", (uint32_t)nMsgAct, pSharedMsgFreqAvg);
-
-      vaccAvg = 0;
-      pzAvg   = 0;
-    } // if nCycle %
+        // virt acc and pz info
+        *pSharedVaccAvg    = vaccAvg;
+        *pSharedPzAvg      = pzAvg;
+        vaccAvg            = 0;
+        pzAvg              = 0;
+      } // if nCycleAct %
+      
+      nCyclePrev = nCycleAct;
+    } // if nCycleAct
     
     if ((*pSharedStatus == WRUNIPZ_STATUS_OK)     && (status    != WRUNIPZ_STATUS_OK))     {nBadStatus++; *pSharedNBadStatus = nBadStatus;}
     if ((*pSharedState  == WRUNIPZ_STATE_OPREADY) && (actState  != WRUNIPZ_STATE_OPREADY)) {nBadState++;  *pSharedNBadState  = nBadState;}
@@ -1064,10 +1072,8 @@ void main(void) {
     *pSharedDtMax        = dtMax;
     *pSharedDtMin        = dtMin;
     *pSharedNLate        = nLate;
-    *pSharedVaccAvg      = vaccAvg;
-    *pSharedPzAvg        = pzAvg;
     *pSharedMode         = mode;
-    *pSharedNCycle       = nCycle; 
+    *pSharedNCycle       = nCycleAct; 
     *pSharedNMessageHi   = (uint32_t)(nMsgAct >> 32);
     *pSharedNMessageLo   = (uint32_t)(nMsgAct & 0xffffffff);
   } // while  
