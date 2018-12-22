@@ -23,7 +23,7 @@
 // numbers for UNIPZ
 #define  WRUNIPZ_NEVT             32          // # of events per virt acc
 #define  WRUNIPZ_NVACC            16          // # vAcc
-#define  WRUNIPZ_NSET              2          // # of sets for each virt acc ("normal", "verkuerzt")
+#define  WRUNIPZ_NCHN              2          // # of channels (each virtacc may have multiple channels, example: "verkuerzte" operation)
 #define  WRUNIPZ_NPZ               7          // # of Pulszentralen
 #define  WRUNIPZ_NFLAG             4          // # flags per virt acc 
 
@@ -117,8 +117,8 @@ typedef struct dataTable {                    // table with _one_ virtAcc for _o
 // sizes
 #define _32b_SIZE_                    4                                                 // size of 32bit value [bytes]
 #define WRUNIPZ_DATA4EBSIZE          (_32b_SIZE_ * 20)                                  // size of shared memory used to receive EB return values [bytes]
-#define WRUNIPZ_NCONFDATA            (WRUNIPZ_NEVT  * WRUNIPZ_NPZ * WRUNIPZ_NSET)       // # of config data words for one virt acc
-#define WRUNIPZ_NCONFFLAG            (WRUNIPZ_NFLAG * WRUNIPZ_NPZ * WRUNIPZ_NSET)       // # of config flag words for one virt acc
+#define WRUNIPZ_NCONFDATA            (WRUNIPZ_NEVT  * WRUNIPZ_NPZ * WRUNIPZ_NCHN)       // # of config data words for one virt acc
+#define WRUNIPZ_NCONFFLAG            (WRUNIPZ_NFLAG * WRUNIPZ_NPZ * WRUNIPZ_NCHN)       // # of config flag words for one virt acc
 
 // offsets
 // simple values
@@ -154,13 +154,13 @@ typedef struct dataTable {                    // table with _one_ virtAcc for _o
 // config data layout
 // ==================
 // note: all config data is valid for the SAME virtual accelerator defined in WRUNIPZ_SHARED_CONF_VACC
-// (there are 32 words per virtual accelerator for "normal" and another 32 words for "verkuerzt" operation)
-// [norm0 of PZ0]..[norm31 of PZ0][kurz0 of PZ0]..[kurz31 of PZ0][norm0 of PZ1].....[kurz31 of PZ6] 
+// (there are 32 words per virtual accelerator for each "Kanal"
+// [data0 of PZ0-chn0]..[data31 of PZ0-chan0][data0 of PZ0-chn1]..[data31 of PZ0-chn1][data0 of PZ1-chn0].....[data31 of PZ6-chn1] 
 #define WRUNIPZ_SHARED_CONF_DATA      (WRUNIPZ_SHARED_CONF_PZ    + _32b_SIZE_) 
 // config flag layout
 // ==================
-// (there are 4 words per virtual accelerator for "normal" and another 4 words for "verkuerzt" operation)
-// [norm0 of PZ0]..[norm3 of PZ0][kurz0 of PZ0]..[kurz3 of PZ0][norm0 of PZ1].....[kurz32 of PZ6] 
+// (there are 4 words per virtual accelerator for each channel
+// [flag1 of PZ0-chn0]..[flag3 of PZ0-chn0][flag0 of PZ0-chn1]..[flag3 of PZ0-chn1][flag0 of PZ1-chn0].....[flag3 of PZ6-chn1] 
 #define WRUNIPZ_SHARED_CONF_FLAG      (WRUNIPZ_SHARED_CONF_DATA  + (WRUNIPZ_NCONFDATA << 2))  
 
 // diagnosis

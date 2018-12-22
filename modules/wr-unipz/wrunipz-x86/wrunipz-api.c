@@ -135,7 +135,7 @@ uint32_t wrunipz_transaction_submit(eb_device_t device, eb_address_t DPcmd, eb_a
 } // wrunipz_transaction_submit
 
 
-uint32_t wrunipz_transaction_upload(eb_device_t device, eb_address_t DPstat, eb_address_t DPpz, eb_address_t DPdata, eb_address_t DPflag, uint32_t pz, uint32_t *dataNorm, uint32_t nDataNorm, uint32_t *dataKurz, uint32_t nDataKurz)
+uint32_t wrunipz_transaction_upload(eb_device_t device, eb_address_t DPstat, eb_address_t DPpz, eb_address_t DPdata, eb_address_t DPflag, uint32_t pz, uint32_t *dataChn0, uint32_t nDataChn0, uint32_t *dataChn1, uint32_t nDataChn1)
 {
   int          i;
   uint32_t     pzFlag;         // flag: PZ has new data
@@ -158,46 +158,46 @@ uint32_t wrunipz_transaction_upload(eb_device_t device, eb_address_t DPstat, eb_
 
   eb_cycle_write(cycle, DPpz, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)pzFlag);
 
-  // UNILAC normal
+  // UNILAC Kanal0
   validFlag = 0;
   prepFlag  = 0;
   evtFlag   = 0;
 
   // write data
-  for (i=0; i < nDataNorm; i++) {
+  for (i=0; i < nDataChn0; i++) {
     validFlag = validFlag | (1 << i);
     evtFlag   = evtFlag   | (1 << i); /* chk, for now assume, that all data are 'event data'  */
     prepFlag  = prepFlag;             /* chk, treatment of prep events is still on open issue */
     
-    eb_cycle_write(cycle, DPdata + (eb_address_t)((pz * WRUNIPZ_NEVT * WRUNIPZ_NSET + i) << 2), EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)(dataNorm[i]));
+    eb_cycle_write(cycle, DPdata + (eb_address_t)((pz * WRUNIPZ_NEVT * WRUNIPZ_NCHN + i) << 2), EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)(dataChn0[i]));
   } // for i
 
-  printf("pz %d, vF %x, eF %x, nData %d dN[10] %x \n", pz, validFlag, evtFlag, nDataNorm, dataNorm[10]);
+  /* printf("pz %d, vF %x, eF %x, nData %d dN[10] %x \n", pz, validFlag, evtFlag, nDataChn0, dataChn0[10]); */
   // write flags
-  eb_cycle_write(cycle, DPflag + (eb_address_t)((pz * WRUNIPZ_NPZ * WRUNIPZ_NSET + 0) << 2),  EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)validFlag);
-  eb_cycle_write(cycle, DPflag + (eb_address_t)((pz * WRUNIPZ_NPZ * WRUNIPZ_NSET + 1) << 2),  EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)prepFlag);
-  eb_cycle_write(cycle, DPflag + (eb_address_t)((pz * WRUNIPZ_NPZ * WRUNIPZ_NSET + 2) << 2),  EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)evtFlag);
+  eb_cycle_write(cycle, DPflag + (eb_address_t)((pz * WRUNIPZ_NPZ * WRUNIPZ_NCHN + 0) << 2),  EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)validFlag);
+  eb_cycle_write(cycle, DPflag + (eb_address_t)((pz * WRUNIPZ_NPZ * WRUNIPZ_NCHN + 1) << 2),  EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)prepFlag);
+  eb_cycle_write(cycle, DPflag + (eb_address_t)((pz * WRUNIPZ_NPZ * WRUNIPZ_NCHN + 2) << 2),  EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)evtFlag);
 
-  printf("valid addr %x flag %x\n", (uint32_t)DPflag + ((pz * WRUNIPZ_NPZ * WRUNIPZ_NSET + 0) << 2), validFlag);
+  /* printf("valid addr %x flag %x\n", (uint32_t)DPflag + ((pz * WRUNIPZ_NPZ * WRUNIPZ_NCHN + 0) << 2), validFlag); */
 
-  // UNILAC verkuerzt
+  // UNILAC Kanal1
   validFlag = 0;
   prepFlag  = 0;
   evtFlag   = 0;
 
   // write data
-  for (i=0; i < nDataKurz; i++) {
+  for (i=0; i < nDataChn1; i++) {
     validFlag = validFlag | (1 << i);
     evtFlag   = evtFlag   | (1 << i); /* chk, for now assume, that all data are 'event data'  */
     prepFlag  = prepFlag;             /* chk, treatment of prep events is still on open issue */
     
-    eb_cycle_write(cycle, DPdata + (eb_address_t)((pz * WRUNIPZ_NEVT * WRUNIPZ_NSET + WRUNIPZ_NEVT + i) << 2), EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)(dataKurz[i]));
+    eb_cycle_write(cycle, DPdata + (eb_address_t)((pz * WRUNIPZ_NEVT * WRUNIPZ_NCHN + WRUNIPZ_NEVT + i) << 2), EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)(dataChn1[i]));
   } // for i
   
   // write flags
-  eb_cycle_write(cycle, DPflag + (eb_address_t)((pz * WRUNIPZ_NPZ * WRUNIPZ_NSET + WRUNIPZ_NFLAG + 0) << 2),  EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)validFlag);
-  eb_cycle_write(cycle, DPflag + (eb_address_t)((pz * WRUNIPZ_NPZ * WRUNIPZ_NSET + WRUNIPZ_NFLAG + 1) << 2),  EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)prepFlag);
-  eb_cycle_write(cycle, DPflag + (eb_address_t)((pz * WRUNIPZ_NPZ * WRUNIPZ_NSET + WRUNIPZ_NFLAG + 2) << 2),  EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)evtFlag);
+  eb_cycle_write(cycle, DPflag + (eb_address_t)((pz * WRUNIPZ_NPZ * WRUNIPZ_NCHN + WRUNIPZ_NFLAG + 0) << 2),  EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)validFlag);
+  eb_cycle_write(cycle, DPflag + (eb_address_t)((pz * WRUNIPZ_NPZ * WRUNIPZ_NCHN + WRUNIPZ_NFLAG + 1) << 2),  EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)prepFlag);
+  eb_cycle_write(cycle, DPflag + (eb_address_t)((pz * WRUNIPZ_NPZ * WRUNIPZ_NCHN + WRUNIPZ_NFLAG + 2) << 2),  EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)evtFlag);
 
   if (eb_cycle_close(cycle) != EB_OK) return WRUNIPZ_STATUS_EB;
 

@@ -3,7 +3,7 @@
  *
  *  created : 2018
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 18-December-2018
+ *  version : 22-December-2018
  *
  * API for wrunipz
  *
@@ -37,7 +37,7 @@
 #ifndef __WR_UNIPZ_API_H_
 #define __WR_UNIPZ_API_H_
 
-#define WRUNIPZ_X86_VERSION "0.0.3"
+#define WRUNIPZ_X86_VERSION "0.0.5"
 
 #include <wr-unipz.h>
 
@@ -76,10 +76,10 @@ uint32_t wrunipz_transaction_upload(eb_device_t device,   // EB device
                                     eb_address_t DPdata,  // event data in DP RAM
                                     eb_address_t DPflag,  // flag data in DP RAM
                                     uint32_t pz,          // # of UNIPZ
-                                    uint32_t *dataNorm,   // data for 'normal' opeation
-                                    uint32_t nDataNorm,   // # of data for 'normal' operation
-                                    uint32_t *dataKurz,   // data for 'verkuerzt' opeation
-                                    uint32_t nDataKurz    // # of data for 'verkuerzt' operation
+                                    uint32_t *dataChn0,   // data for 'Kanal 0'
+                                    uint32_t nDataChn0,   // # of data for 'Kanal 0'
+                                    uint32_t *dataChn1,   // data for 'Kanal 1'
+                                    uint32_t nDataChn1    // # of data for 'Kanal 1'
                                     );
 
 

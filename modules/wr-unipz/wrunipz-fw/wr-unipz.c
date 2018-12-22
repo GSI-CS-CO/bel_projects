@@ -13,15 +13,15 @@
  *  - https://www-acc.gsi.de/viewvc/view/devacc/trunk/eqmodels/pz/pzu/src/pzu-eqms.c (source code for PZ 1..7)
  * 
  *  'announce' events for the next cycle (received from the SuperPZ) have the following format:
- *  31..24: code (defined in pzus-dpr-def-h, lines 72ff; example: 0x10(use channel 1), 0x00(use channel 0)
+ *  31..24: code (defined in pzus-dpr-def-h, lines 72ff; example: 0x10(use 'Kanal 1'), 0x00(use 'Kanal 0')
  *  23..16: virt acc
  *  15...8: 0
- *   7...0: # of PZ (** counting starts at 1 **)
+ *   7...1: # of PZ (** counting starts at 1(!) **)
  *  
  * -------------------------------------------------------------------------------------------
  * License Agreement for this software:
  *
- * Copyright (C) 2019  Dietrich Beck
+ * Copyright (C) 2018  Dietrich Beck
  * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH
  * Planckstrasse 1
  * D-64291 Darmstadt
@@ -45,7 +45,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 22-November-2018
  ********************************************************************************************/
-#define WRUNIPZ_FW_VERSION 0x000004                                     // make this consistent with makefile
+#define WRUNIPZ_FW_VERSION 0x000005                                     // make this consistent with makefile
 
 /* standard includes */
 #include <stdio.h>
@@ -148,8 +148,8 @@ uint32_t mode;                          // 1: test mode
 
 
 // big data contains the event tables for all PZs, and for all virtual accelerators
-// there are two sets of 16 virtual accelerators: 0..15: "normal"; 16..31: "verkuerzt"
-dataTable bigData[WRUNIPZ_NPZ][WRUNIPZ_NVACC * WRUNIPZ_NSET];
+// there are two sets of 16 virtual accelerators ('Kanal0' and 'Kanal1')
+dataTable bigData[WRUNIPZ_NPZ][WRUNIPZ_NVACC * WRUNIPZ_NCHN];
 
 uint32_t gid[] =                 {1000, 1001, 1002, 1003, 1004, 1005, 1006};              /* hackish: GIDs for PZs, to be clarified with Hanno */
                                                                         
@@ -247,7 +247,7 @@ uint32_t ebmWriteTM(dataTable evts, uint64_t tStart, uint32_t pz, uint32_t virtA
         data2TM(&idLo, &idHi, &paramLo, &paramHi, &res, &tef, &offset, evts.data[i], gid[pz], virtAcc);  //convert data
 
         // calc deadline
-        deadline   = tStart + (uint64_t)offset;       /* hack */
+        deadline   = tStart + (uint64_t)offset; 
         deadlineHi = (uint32_t)((deadline >> 32) & 0xffffffff);
         deadlineLo = (uint32_t)(deadline & 0xffffffff);
         
@@ -641,16 +641,16 @@ uint32_t configTransactSubmit() // submit transferred config data
   pzFlag  = *pSharedConfPz;
 
   for (i=0; i < WRUNIPZ_NPZ; i++) {        // for all Pulszentralen
-    for (j=0; j < WRUNIPZ_NSET; j++) {     // for all sets ("normal", "verkuerzt")
+    for (j=0; j < WRUNIPZ_NCHN; j++) {     // for all channels
       if (pzFlag & (1 << i)) {             // check, if Pulszentrale (defined by "i") shall be submitted
         // flags
-        bigData[i][j * WRUNIPZ_NVACC + vacc].validFlags = *(pSharedConfFlag + j * WRUNIPZ_NFLAG + i * WRUNIPZ_NPZ * WRUNIPZ_NSET + 0);
-        bigData[i][j * WRUNIPZ_NVACC + vacc].prepFlags  = *(pSharedConfFlag + j * WRUNIPZ_NFLAG + i * WRUNIPZ_NPZ * WRUNIPZ_NSET + 1);
-        bigData[i][j * WRUNIPZ_NVACC + vacc].evtFlags   = *(pSharedConfFlag + j * WRUNIPZ_NFLAG + i * WRUNIPZ_NPZ * WRUNIPZ_NSET + 2);
+        bigData[i][j * WRUNIPZ_NVACC + vacc].validFlags = *(pSharedConfFlag + j * WRUNIPZ_NFLAG + i * WRUNIPZ_NPZ * WRUNIPZ_NCHN + 0);
+        bigData[i][j * WRUNIPZ_NVACC + vacc].prepFlags  = *(pSharedConfFlag + j * WRUNIPZ_NFLAG + i * WRUNIPZ_NPZ * WRUNIPZ_NCHN + 1);
+        bigData[i][j * WRUNIPZ_NVACC + vacc].evtFlags   = *(pSharedConfFlag + j * WRUNIPZ_NFLAG + i * WRUNIPZ_NPZ * WRUNIPZ_NCHN + 2);
 
         // data
         for (k=0; k < WRUNIPZ_NEVT; k++) 
-          bigData[i][j * WRUNIPZ_NVACC + vacc].data[k]  = *(pSharedConfData + j * WRUNIPZ_NEVT  + i * WRUNIPZ_NEVT * WRUNIPZ_NSET + k);
+          bigData[i][j * WRUNIPZ_NVACC + vacc].data[k]  = *(pSharedConfData + j * WRUNIPZ_NEVT  + i * WRUNIPZ_NEVT * WRUNIPZ_NCHN + k);
       } // if submit flag
     } // for j
   } // for i
@@ -670,7 +670,7 @@ void clearPZ()
   int i,j,k;
 
   for (i=0; i < WRUNIPZ_NPZ; i++)
-    for (j=0; j < (WRUNIPZ_NVACC * WRUNIPZ_NSET); j++) {
+    for (j=0; j < (WRUNIPZ_NVACC * WRUNIPZ_NCHN); j++) {
       bigData[i][j].validFlags = 0x0;
       bigData[i][j].prepFlags  = 0x0;
       bigData[i][j].evtFlags   = 0x0;
@@ -918,7 +918,7 @@ uint32_t doActionOperation(uint32_t *nCycle,                  // total number of
     ebm_clr();
     
     int vacc[] = {5,5,5,5,5,5,5}; /* chk hack */
-    int kurz[] = {0,0,0,0,0,0,0}; /* chk hack */
+    int chan[] = {0,0,0,0,0,0,0}; /* chk hack */
     
     for (i=0; i < WRUNIPZ_NPZ; i++) ebmWriteTM(bigData[i][5], deadline, i, vacc[i]);
     *tAct = deadline;
@@ -933,7 +933,7 @@ uint32_t doActionOperation(uint32_t *nCycle,                  // total number of
       ebm_clr();
       
       int vacc[] = {8,8,8,8,8,8,8}; /* chk hack */
-      int kurz[] = {0,0,0,0,0,0,0}; /* chk hack */
+      int chan[] = {0,0,0,0,0,0,0}; /* chk hack */
       
       for (i=0; i < WRUNIPZ_NPZ; i++) ebmWriteTM(bigData[i][8], deadline, i, vacc[i]);
       *tAct = deadline;

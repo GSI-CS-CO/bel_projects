@@ -289,10 +289,10 @@ int main(int argc, char** argv) {
   uint32_t ip;                                 // ip for config of EB master
 
   // command perftest
-  uint32_t    dataNorm[WRUNIPZ_NEVT];
-  uint32_t    nDataNorm;
-  uint32_t    dataKurz[WRUNIPZ_NEVT];
-  uint32_t    nDataKurz;
+  uint32_t    dataChn0[WRUNIPZ_NEVT];
+  uint32_t    nDataChn0;
+  uint32_t    dataChn1[WRUNIPZ_NEVT];
+  uint32_t    nDataChn1;
   uint32_t    vacc;
   uint32_t    pz;
 
@@ -445,11 +445,11 @@ int main(int argc, char** argv) {
       }
       else {
         // upload
-        nDataNorm = WRUNIPZ_NEVT;
-        nDataKurz = 0;
-        for (i=0; i < (nDataNorm -1); i++) dataNorm[i] = ((uint16_t)(i + 100 * pz + 2001) << 16) + i;
-        dataNorm[nDataNorm -1] = ((uint16_t)2000 << 16) + 64;
-        if ((status = wrunipz_transaction_upload(device, wrunipz_confStat, wrunipz_confPz, wrunipz_confData, wrunipz_confFlag, pz, dataNorm, nDataNorm, dataKurz, nDataKurz)) != WRUNIPZ_STATUS_OK)
+        nDataChn0 = WRUNIPZ_NEVT;
+        nDataChn1 = 0;
+        for (i=0; i < (nDataChn0 -1); i++) dataChn0[i] = ((uint16_t)(i + 100 * pz + 2001) << 16) + i;
+        dataChn0[nDataChn0 -1] = ((uint16_t)2000 << 16) + 64;
+        if ((status = wrunipz_transaction_upload(device, wrunipz_confStat, wrunipz_confPz, wrunipz_confData, wrunipz_confFlag, pz, dataChn0, nDataChn0, dataChn1, nDataChn1)) != WRUNIPZ_STATUS_OK)
           printf("wr-unipz: transaction upload - %s\n", wrunipz_status_text(status));
         
         // submit
