@@ -3,12 +3,12 @@
  *
  *  created : 2018
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 22-Dec-2018
+ *  version : 28-Dec-2018
  *
  *  lm32 program for gateway between UNILAC Pulszentrale and a White Rabbit network
  *  this basically serves a Data Master for UNILAC
  *
- *  relevant source code UNIPZ:
+ *  source code UNIPZ:
  *  - https://www-acc.gsi.de/viewvc/view/devacc/trunk/eqmodels/pz/common/src/pzus-dpr-def.h (relevant header file)
  *  - https://www-acc.gsi.de/viewvc/view/devacc/trunk/eqmodels/pz/pzu/src/pzu-eqms.c (source code for PZ 1..7)
  * 
@@ -45,7 +45,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 22-November-2018
  ********************************************************************************************/
-#define WRUNIPZ_FW_VERSION 0x000005                                     // make this consistent with makefile
+#define WRUNIPZ_FW_VERSION 0x000006                                     // make this consistent with makefile
 
 /* standard includes */
 #include <stdio.h>
@@ -449,6 +449,7 @@ uint32_t wait4ECAEvent(uint32_t msTimeout, uint64_t *deadline, uint32_t *isLate)
   uint32_t nextAction;          // describes what to do next
   uint64_t timeoutT;            // when to time out
 
+  /*
   if (mode == WRUNIPZ_MODE_TEST) {
   // hackish implementation of a test mode without events from Super-UNIPZ
   uint64_t tCycle;              // UNILAC period
@@ -469,6 +470,7 @@ uint32_t wait4ECAEvent(uint32_t msTimeout, uint64_t *deadline, uint32_t *isLate)
   
   return WRUNIPZ_ECADO_TEST;
   } // if mode
+  */
 
   pECAFlag    = (uint32_t *)(pECAQ + (ECA_QUEUE_FLAGS_GET >> 2));   // address of ECA flag
   timeoutT    = getSysTime() + (uint64_t)msTimeout * (uint64_t)1000000;
@@ -894,21 +896,67 @@ uint32_t doActionOperation(uint32_t *nCycle,                  // total number of
                            uint64_t *tAct,                    // actual time
                            uint32_t actStatus)                // actual status of firmware
 {
-  uint32_t status;                                                                 // status returned by routines
-  uint32_t flagMilEvtValid;                                                        // flag indicating that we recevied a valid MIL event
-  uint32_t flagIsLate;                                                             // flag indicating that we received a 'late' event from ECA
-  uint32_t nextAction;                                                             // action triggered by event received from ECA
-  uint64_t deadline;                                                               // deadline of event received via ECA
-  uint16_t evtData;                                                                // MIL event: data
-  uint16_t evtCode;                                                                // MIL event: code
-  uint32_t virtAcc;                                                                // MIL event: virtAcc
+  uint32_t status;                                            // status returned by routines
+  uint32_t flagMilEvtValid;                                   // flag indicating that we recevied a valid MIL event
+  uint32_t flagIsLate;                                        // flag indicating that we received a 'late' event from ECA
+  uint32_t ecaAction;                                         // action triggered by event received from ECA
+  uint64_t deadline;                                          // deadline of event received via ECA
+  uint64_t tMIL;                                              // time when MIL event was received
+  uint64_t tDummy;                                            // dummy timestamp
+  uint16_t evtData;                                           // MIL event: data
+  uint16_t evtCode;                                           // MIL event: code
+  uint32_t virtAcc;                                           // MIL event: virtAcc
   uint32_t milStatus;
   int      i,j;
 
 
+  status = actStatus;
+  
+  // wait for MIL event
+  milStatus = wait4MILEvent(&evtData, &evtCode, &virtAcc, WRUNIPZ_MILTIMEOUT);
+  tMIL      = getSysTime();
+  if (milStatus == WRUNIPZ_STATUS_TIMEDOUT) return status;     // no MIL event
 
-  status = actStatus; 
+  // get timestamp from TLU -> ECA
+  ecaAction = wait4ECAEvent(WRUNIPZ_ECATIMEOUT, &deadline, &flagIsLate);
 
+  // check, if timestamping via TLU failed
+  if (ecaAction == WRUNIPZ_ECADO_TIMEOUT) {      
+    deadline = tMIL;                                          // continue with TS from MIL
+    status   = WRUNIPZ_STATUS_NOTIMESTAMP;
+  } // if ecaAction
+
+  // check, if timestamps form TLU and MIL are out of order
+  if (deadline > tMIL) {
+    deadline = tMIL;                                          // continue with TS from MIL
+    status   = WRUNIPZ_STATUS_ORDERTIMESTAMP;
+  } 
+
+  // check, if timestamp from TLU is not reasonable
+  if ((tMIL - deadline) > WRUNIPZ_MATCHWINDOW) {
+    deadline = tMIL;                                          // continue with TS from MIL
+    status   = WRUNIPZ_STATUS_BADTIMESTAMP;
+    // flush ECA Q to get rid of pending TS
+    while (wait4ECAEvent(1, &tDummy, &flagIsLate) !=  WRUNIPZ_ECADO_TIMEOUT) {asm("nop");} 
+  } // if tMIL
+    
+  switch (evtCode) {
+  case WRUNIPZ_EVT_50HZ_SYNCH :                               // next UNILAC cycle starts
+      (*nCycle)++;
+      
+      int vacc[] = {8,8,8,8,8,8,8}; // chk hack 
+      int chan[] = {0,0,0,0,0,0,0}; // chk hack 
+      
+      ebm_clr();                      
+      for (i=0; i < WRUNIPZ_NPZ; i++) ebmWriteTM(bigData[i][8], deadline, i, vacc[i]);
+      *tAct = deadline;
+
+      break;
+    default :
+      break;
+  } // switch evtCode
+
+  /*
   nextAction = wait4ECAEvent(WRUNIPZ_DEFAULT_TIMEOUT, &deadline, &flagIsLate);     // 'do action' is driven by actions issued by the ECA
 
   switch (nextAction) {
@@ -917,8 +965,8 @@ uint32_t doActionOperation(uint32_t *nCycle,                  // total number of
     
     ebm_clr();
     
-    int vacc[] = {5,5,5,5,5,5,5}; /* chk hack */
-    int chan[] = {0,0,0,0,0,0,0}; /* chk hack */
+    int vacc[] = {5,5,5,5,5,5,5}; // chk hack 
+    int chan[] = {0,0,0,0,0,0,0}; // chk hack 
     
     for (i=0; i < WRUNIPZ_NPZ; i++) ebmWriteTM(bigData[i][5], deadline, i, vacc[i]);
     *tAct = deadline;
@@ -932,8 +980,8 @@ uint32_t doActionOperation(uint32_t *nCycle,                  // total number of
       
       ebm_clr();
       
-      int vacc[] = {8,8,8,8,8,8,8}; /* chk hack */
-      int chan[] = {0,0,0,0,0,0,0}; /* chk hack */
+      int vacc[] = {8,8,8,8,8,8,8}; // chk hack 
+      int chan[] = {0,0,0,0,0,0,0}; // chk hack 
       
       for (i=0; i < WRUNIPZ_NPZ; i++) ebmWriteTM(bigData[i][8], deadline, i, vacc[i]);
       *tAct = deadline;
@@ -945,6 +993,7 @@ uint32_t doActionOperation(uint32_t *nCycle,                  // total number of
   default:
     break;
   } // switch nextAction
+  */
   
   return status;
 } // doActionOperation
@@ -1062,6 +1111,9 @@ void main(void) {
         pzAvg              = 0;
       } // if nCycleAct %
       
+      // reset status (hackish solution); chk: consider changing status info to bits encoded into a 32bit number 
+      if ((nCycleAct % (WRUNIPZ_UNILACFREQ * 5)) == 0) status = WRUNIPZ_STATUS_OK; 
+        
       nCyclePrev = nCycleAct;
     } // if nCycleAct
     

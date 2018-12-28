@@ -13,7 +13,8 @@
 #define  WRUNIPZ_DEFAULT_TIMEOUT  100         // default timeout used by main loop [ms]
 #define  WRUNIPZ_QUERYTIMEOUT     1           // timeout for querying virt acc from MIL Piggy FIFO [ms] 
                                               // Ludwig: we have 10ms time; here: use 5 ms to be on the safe side
-#define  WRUNIPZ_MILTIMEOUT       5           // timeout for querying MIL event
+#define  WRUNIPZ_MILTIMEOUT       1           // timeout for querying MIL event
+#define  WRUNIPZ_ECATIMEOUT       1           // timeout for querying ECA action 
 #define  WRUNIPZ_MATCHWINDOW      200000      // used for comparing timestamps: 1 TS from TLU->ECA matches event from MIL FIFO, 2: synch EVT_MB_TRIGGER, ...
 #define  WRUNIPZ_ECA_ADDRESS      0x7ffffff0  // address of ECA input
 #define  WRUNIPZ_EB_HACKISH       0x12345678  // value for EB read handshake
@@ -44,6 +45,7 @@
 #define  WRUNIPZ_STATUS_SAFETYMARGIN    18    // violation of safety margin for data master and timing network
 #define  WRUNIPZ_STATUS_NOTIMESTAMP     19    // received EVT_READY_TO_SIS in MIL FIFO but not via TLU -> ECA
 #define  WRUNIPZ_STATUS_BADTIMESTAMP    20    // TS from TLU->ECA does not coincide with MIL Event from FIFO
+#define  WRUNIPZ_STATUS_ORDERTIMESTAMP  21    // TS from TLU->ECA and MIL Events are out of order
 #define  WRUNIPZ_STATUS_WAIT4UNIEVENT   26    // timeout while waiting for EVT_READY_TO_SIS
 #define  WRUNIPZ_STATUS_WRBADSYNC       30    // White Rabbit: not in 'TRACK_PHASE'
 #define  WRUNIPZ_STATUS_AUTORECOVERY    31    // trying auto-recovery from state ERROR

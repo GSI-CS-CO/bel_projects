@@ -3,7 +3,7 @@
  *
  *  created : 2018
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 22-December-2018
+ *  version : 28-December-2018
  *
  * Command-line interface for wrunipz
  *
@@ -284,11 +284,12 @@ int main(int argc, char** argv) {
   uint32_t actStatus;                          // actual status of gateway
   uint32_t sleepTime;                          // time to sleep [us]
   uint32_t printFlag;                          // flag for printing
+  uint64_t t1, t2;
 
   uint64_t mac;                                // mac for config of EB master
   uint32_t ip;                                 // ip for config of EB master
 
-  // command perftest
+  // command test
   uint32_t    dataChn0[WRUNIPZ_NEVT];
   uint32_t    nDataChn0;
   uint32_t    dataChn1[WRUNIPZ_NEVT];
@@ -440,6 +441,8 @@ int main(int argc, char** argv) {
       pz = strtoul(argv[optind+2], &tail, 0);
       if ((pz < 0) || (pz >= WRUNIPZ_NPZ)) {printf("wr-unipz: invalid PZ -- %s\n", argv[optind+2]); return 1;}
 
+       t1 = getTimeStamp();
+
       if ((status = wrunipz_transaction_init(device, wrunipz_cmd, wrunipz_confVacc, wrunipz_confStat, vacc)) !=  WRUNIPZ_STATUS_OK) {
         printf("wr-unipz: transaction init - %s\n", wrunipz_status_text(status));
       }
@@ -454,6 +457,9 @@ int main(int argc, char** argv) {
         
         // submit
         wrunipz_transaction_submit(device, wrunipz_cmd, wrunipz_confStat);
+
+        t2 = getTimeStamp();
+        printf("wr-unipz: transaction took %u us\n", (uint32_t)(t2 -t1));
       }
     } // "test"
     if (!strcasecmp(command, "kill")) {
