@@ -267,15 +267,25 @@ template <typename TYP> TYP convertByteEndian( const TYP value )
  * This macro has been adopt from the Linux kernel-source.
  * Origin in <kernel-source>/include/linux/kernel.h as "container_of".
  *
+ * This macro has also been tested successful with the compiler "lm32-elf-gcc"
+ * version 4.5.3 and 7.3.0, and in C++ environment as well.
+ *
+ * @note Keep in mind: This macro is a hack, be careful and use it only if
+ *       you know exactly what you are doing!
+ *
  * @param ptr    The pointer to the member.
  * @param type   The type of the container struct this is embedded in.
- * @param member The name of the member within the struct.
+ * @param member The name of the member within the container struct.
  * @return The pointer of the container-object including this member.
  */
 #define CONTAINER_OF(ptr, type, member) ({                      \
         const typeof( ((type *)0)->member ) *__mptr = (ptr);    \
-        (type *)( (char *)__mptr - offsetof(type,member) );})
+        (type *)( (char *)__mptr - offsetof(type, member) );})
 
+#define CONTAINER_OF_ARRAY(ptr, type, mArray, index) ({            \
+        const typeof( ((type *)0)->mArray[0] ) *__mptr = (ptr);    \
+        (type *)( (char *)__mptr - (offsetof(type, mArray[0]) +    \
+        (index) * sizeof(mArray[0])));})
 
 #ifdef TO_STRING_LITERAL
    #undef TO_STRING_LITERAL

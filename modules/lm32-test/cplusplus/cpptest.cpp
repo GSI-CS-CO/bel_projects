@@ -289,6 +289,54 @@ void Bar::onSomething( void )
 }
 
 ///////////////////////////////////////////////////////////////////////////////
+/*! ---------------------------------------------------------------------------
+ * @brief This class tests whether the macro CONTAINER_OF() works properly
+ *        in C++ respectively the macro offsetof().
+ * warning: offsetof within non-standard-layout type
+ */
+class Container
+{
+   class Content
+   {
+   public:
+      Content( void );
+      ~Content( void );
+   };
+
+   OverloadingTest* m_pOut;
+   Content          m_oContent;
+
+public:
+   Container( OverloadingTest& rOut );
+   ~Container( void );
+};
+
+//-----------------------------------------------------------------------------
+Container::Container( OverloadingTest& rOut ):
+   m_pOut( &rOut )
+{
+   *m_pOut << "Constructor of class \"Container\"\n";
+}
+
+//-----------------------------------------------------------------------------
+Container::~Container( void )
+{
+   *m_pOut << "Destructor of class \"Container\"\n";
+}
+
+//-----------------------------------------------------------------------------
+Container::Content::Content( void )
+{
+   *CONTAINER_OF( this, Container, m_oContent )->m_pOut << "Constructor of class \"Container::Content\"\n";
+}
+
+//-----------------------------------------------------------------------------
+Container::Content::~Content( void )
+{
+   *CONTAINER_OF( this, Container, m_oContent )->m_pOut << "Destructor of class \"Container::Content\"\n";
+}
+
+///////////////////////////////////////////////////////////////////////////////
 /*!
  * If its possible to write a template alternatively to a preprocessoer macro,
  * so prefer the template because of the better type-checking and the lower
@@ -304,9 +352,11 @@ template <typename TYP> TYP min( TYP a, TYP b )
 int main( void )
 {
    SysInit sysInit;
-
+#if 1
    OverloadingTest ov;
    ov();
+
+   Container container( ov );
 
    Foo foo( ov );
    Bar bar( ov );
@@ -327,6 +377,7 @@ int main( void )
    // Test of the template "convertByteEndian" defined in "helper-macros.h"
    uint32_t x = 0x11223344;
    mprintf( "Endian convert test: 0x%x --> 0x%x\n", x, convertByteEndian( x ) );
+#endif
    return 0;
 }
 
