@@ -12,14 +12,15 @@
 CPU    = lm32
 CROSS_COMPILE ?= $(CPU)-elf-
 
-CC     = $(CROSS_COMPILE)gcc -std=gnu99
-CXX    = $(CROSS_COMPILE)g++ -fno-exceptions -fno-rtti
-LD     = $(CROSS_COMPILE)gcc
-OBJCPY = $(CROSS_COMPILE)objcopy
-SIZE   = $(CROSS_COMPILE)size
-AS     = $(CROSS_COMPILE)gcc
-AR     = $(CROSS_COMPILE)ar
-CPP    = $(CROSS_COMPILE)cpp
+CC      = $(CROSS_COMPILE)gcc -std=gnu99
+CXX     = $(CROSS_COMPILE)g++ -fno-exceptions -fno-rtti
+LD      = $(CROSS_COMPILE)gcc
+OBJCPY  = $(CROSS_COMPILE)objcopy
+OBJDUMP = $(CROSS_COMPILE)objdump
+SIZE    = $(CROSS_COMPILE)size
+AS      = $(CROSS_COMPILE)gcc
+AR      = $(CROSS_COMPILE)ar
+CPP     = $(CROSS_COMPILE)cpp
 
 include $(MAKEFILE_DIR)/makefile.uc
 #=================================== EOF ======================================

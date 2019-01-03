@@ -270,8 +270,13 @@ template <typename TYP> TYP convertByteEndian( const TYP value )
  * This macro has also been tested successful with the compiler "lm32-elf-gcc"
  * version 4.5.3 and 7.3.0, and in C++ environment as well.
  *
- * @note Keep in mind: This macro is a hack, be careful and use it only if
- *       you know exactly what you are doing!
+ * @note The condition for working this macro properly is, that the content
+ *       structures of the container structure has to be flat members,
+ *       that means not as pointers (or in C++ as reverences). \n
+ *       <b>Otherwise this macro will crash!</b>
+ *
+ * @note Keep in mind: This macro is and remains a hack, be careful
+ *       and use it only if you know exactly what you are doing!
  *
  * @param ptr    The pointer to the member.
  * @param type   The type of the container struct this is embedded in.

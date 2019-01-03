@@ -39,7 +39,7 @@ typedef struct
    uint32_t b;
    uint32_t c;
 } IO_T;
-
+STATIC_ASSERT( sizeof(IO_T) <= SHARED_SIZE );
 
 //extern uint32_t*       _startshared[];
 volatile IO_T SHARED io;

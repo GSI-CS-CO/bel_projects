@@ -9,8 +9,9 @@
 ## Date:    17.12.2018                                                       ##
 ###############################################################################
 
-BUILD_ID_FILE = buildid.c
-LINKER_SCRIPT = ram.ld
+TARGET        ?= $(notdir $(basename $(MIAN_MODULE)))
+BUILD_ID_FILE ?= $(TARGET)_buildid.c
+LINKER_SCRIPT ?= $(TARGET).ld
 
 SOURCE += $(BUILD_ID_FILE)
 
@@ -34,7 +35,6 @@ SOURCE += $(SYN_DIR)/ip_cores/wrpc-sw/sdb-lib/glue.c
 SOURCE += $(SYN_DIR)/ip_cores/wrpc-sw/pp_printf/vsprintf-mini.c
 SOURCE += $(SYN_DIR)/modules/lm32-include/sdb_add.S
 
-TARGET ?= $(notdir $(basename $(MIAN_MODULE)))
 SOURCE += $(MIAN_MODULE)
 
 INCLUDE_DIRS += $(SYN_DIR)/modules/lm32-include
@@ -53,11 +53,11 @@ RAM_SIZE ?= 49152
 CODE_OPTIMIZATION ?= s
 
 CFLAGS += -O$(CODE_OPTIMIZATION)
-CFLAGS += -nostdlib
+# CFLAGS += -nostdlib
 CFLAGS += -mmultiply-enabled
 CFLAGS += -mbarrel-shift-enabled
 
-LIBS += gcc c
+# LIBS += gcc c
 
 RAM_OFFS	= 0x10000000
 BOOTL_SIZE	= 0x100
@@ -80,18 +80,143 @@ COMMENT_TEXT = 'This file has been created automatically, do not modify it by ha
 #       "ld:ram.ld:1: warning: redeclaration of memory region `RAM'"
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-#LDS := "OUTPUT_FORMAT(\"elf32-lm32\")\n"
-LDS = "MEMORY { RAM (rwx) : ORIGIN = $(RAM_OFFS), LENGTH = $(RAM_SIZE) }\n"
-LDS += "SECTIONS\n{\n"
-LDS += ". = ORIGIN(RAM);\n"
-LDS += "_fstack = . + LENGTH(RAM) - 4;\n"
-LDS += ".boot			: { _fboot   = .; *(.boot); 			     _eboot   = .; } > RAM\n"
-LDS += ".buildid ADDR(.boot)   + $(BOOTL_SIZE) : { _fbuildid = .; *(.buildid .buildid.*) _ebuildid = .; } > RAM\n"
-LDS += ".shared ADDR(.buildid) + $(BUILDID_SIZE) : { _fshared = .; PROVIDE(_startshared = .);*(.shared .shared.*)	_eshared = .; } > RAM\n"
-LDS += ".text ADDR(.shared)    + $(SHARED) : { _ftext = .; *(.text .text.*)	_etext = .; } > RAM\n"
-LDS += ".rodata	  : { _frodata = .; *(.rodata .rodata.*) _erodata = .; } > RAM\n"
-LDS += ".data			: { _fdata   = .; *(.data .data.*)     _edata   = .; } > RAM\n"
-LDS += ".bss			: { _fbss    = .; *(.bss .bss.*)       _ebss    = .; } > RAM = 0\n}\n"
+LDS =  "/*!\n"
+LDS += " * @file $(LINKER_SCRIPT)\n"
+LDS += " * @brief Linkerscript for target: $(TARGET)\n"
+LDS += " * @note $(COMMENT_TEXT)\n"
+LDS += " * @author Created by makefile.scu\n"
+LDS += " */\n\n"
+LDS += "OUTPUT_FORMAT(\"elf32-lm32\")\n"
+LDS += "GROUP(-lgloss -lnosys -lc -lgcc)\n"
+#LDS += "ENTRY(_start)\n"
+LDS += "\nMEMORY\n"
+LDS += "{\n"
+LDS += "   ram : ORIGIN = $(RAM_OFFS), LENGTH = $(RAM_SIZE)\n"
+LDS += "} /* End of MEMORY */\n\n"
+LDS += "SECTIONS\n"
+LDS += "{\n"
+LDS += "   . = ORIGIN(ram);\n\n"
+LDS += "   /* First location in stack is highest address in RAM */\n"
+#LDS += "   _fstack = . + LENGTH(ram) - 4;\n\n"
+LDS += "   PROVIDE(_fstack = ORIGIN(ram) + LENGTH(ram) - 4);\n"
+LDS += "   .boot :\n"
+LDS += "   {\n"
+LDS += "      _fboot = .;\n"
+LDS += "      *(.boot);\n"
+LDS += "      _eboot = .;\n"
+LDS += "   } > ram\n\n"
+LDS += "   /* Begin of build-id array defined in \"$(BUILD_ID_FILE)\" */\n"
+LDS += "   .buildid ADDR(.boot) + $(BOOTL_SIZE) :\n"
+LDS += "   {\n"
+LDS += "      _fbuildid = .;\n"
+LDS += "      *(.buildid .buildid.*) _ebuildid = .;\n"
+LDS += "   } > ram\n\n"
+LDS += "   /* Begin of shared memory */\n"
+LDS += "   .shared ADDR(.buildid) + $(BUILDID_SIZE) :\n"
+LDS += "   {\n"
+LDS += "      _fshared = .;\n"
+LDS += "      PROVIDE(_startshared = .);\n"
+LDS += "      *(.shared .shared.*) _eshared = .;\n"
+LDS += "   } > ram\n\n"
+LDS += "   /* Begin of code */\n"
+#LDS += "   .text ADDR(.shared) + $(SHARED) :\n"
+#LDS += "   {\n"
+#LDS += "      _ftext = .;\n"
+#LDS += "      *(.text .text.*) _etext = .;\n"
+#LDS += "   } > ram\n\n"
+LDS += "   .text  ADDR(.shared) + $(SHARED) :\n"
+LDS += "   {\n"
+LDS += "     . = ALIGN(4);\n"
+LDS += "     _ftext = .;\n"
+LDS += "     _ftext_rom = LOADADDR(.text);\n"
+LDS += "     *(.text .stub .text.* .gnu.linkonce.t.*)\n"
+LDS += "     *(.gnu.warning)\n"
+LDS += "     KEEP(*(.init))\n"
+LDS += "     KEEP(*(.fini))\n"
+LDS += "     /* Constructors and destructors */\n"
+LDS += "     KEEP(*crtbegin*.o(.ctors))\n"
+LDS += "     KEEP(*(EXCLUDE_FILE (*crtend*.o ) .ctors))\n"
+LDS += "     KEEP(*(SORT(.ctors.*)))\n"
+LDS += "     KEEP(*(.ctors))\n"
+LDS += "     KEEP(*crtbegin*.o(.dtors))\n"
+LDS += "     KEEP(*(EXCLUDE_FILE (*crtend*.o ) .dtors))\n"
+LDS += "     KEEP(*(SORT(.dtors.*)))\n"
+LDS += "     KEEP(*(.dtors))\n"
+LDS += "     KEEP(*(.jcr))\n"
+LDS += "     _etext = .;\n"
+LDS += "   } > ram\n\n"
+
+LDS += "   /* Exception handlers */\n"
+LDS += "   .eh_frame_hdr :\n"
+LDS += "   {\n"
+LDS += "      *(.eh_frame_hdr)\n"
+LDS += "   } > ram\n"
+LDS += "   .eh_frame :\n"
+LDS += "   {\n"
+LDS += "      KEEP (*(.eh_frame))\n"
+LDS += "   } > ram\n"
+LDS += "   .gcc_except_table :\n"
+LDS += "   {\n"
+LDS += "      *(.gcc_except_table)\n"
+LDS += "      *(.gcc_except_table.*)\n"
+LDS += "   } > ram\n\n"
+
+LDS += "   /* Read-only data */\n"
+#LDS += "   .rodata :\n"
+#LDS += "   {\n"
+#LDS += "      _frodata = .;\n"
+#LDS += "      *(.rodata .rodata.*) _erodata = .;\n"
+#LDS += "   } > ram\n\n"
+LDS += "   .rodata :\n"
+LDS += "   {\n"
+LDS += "     . = ALIGN(4);\n"
+LDS += "     _frodata = .;\n"
+LDS += "     _frodata_rom = LOADADDR(.rodata);\n"
+LDS += "     *(.rodata .rodata.* .gnu.linkonce.r.*)\n"
+LDS += "     *(.rodata1)\n"
+LDS += "     _erodata = .;\n"
+LDS += "   } > ram\n\n"
+
+#LDS += "   .data :\n"
+#LDS += "   {\n"
+#LDS += "      _fdata = .;\n"
+#LDS += "      *(.data .data.*) _edata = .;\n"
+#LDS += "   } > ram\n\n"
+LDS += "   .data :\n"
+LDS += "   {\n"
+LDS += "      . = ALIGN(4);\n"
+LDS += "      _fdata = .;\n"
+LDS += "      _fdata_rom = LOADADDR(.data);\n"
+LDS += "      *(.data .data.* .gnu.linkonce.d.*)\n"
+LDS += "      *(.data1)\n"
+LDS += "      SORT(CONSTRUCTORS)\n"
+LDS += "      _gp = ALIGN(16) + 0x7ff0;\n"
+LDS += "      *(.sdata .sdata.* .gnu.linkonce.s.*)\n"
+LDS += "      _edata = .;\n"
+LDS += "   } > ram\n\n"
+
+#LDS += "   .bss :\n"
+#LDS += "   {\n"
+#LDS += "      _fbss = .;\n"
+#LDS += "      *(.bss .bss.*) _ebss = .;\n"
+#LDS += "   } > ram = 0\n"
+LDS += "   .bss :\n"
+LDS += "   {\n"
+LDS += "     . = ALIGN(4);\n"
+LDS += "     _fbss = .;\n"
+LDS += "     *(.dynsbss)\n"
+LDS += "     *(.sbss .sbss.* .gnu.linkonce.sb.*)\n"
+LDS += "     *(.scommon)\n"
+LDS += "     *(.dynbss)\n"
+LDS += "     *(.bss .bss.* .gnu.linkonce.b.*)\n"
+LDS += "     *(COMMON)\n"
+LDS += "     . = ALIGN(4);\n"
+LDS += "     _ebss = .;\n"
+LDS += "     _end = .;\n"
+LDS += "     PROVIDE(end = .);\n"
+LDS += "   } > ram = 0\n"
+
+LDS += "} /* End of SECTIONS */\n"
 
 VERSION  ?= "1.0.0"
 CBR_DATE := $$(date +"%a %b %d %H:%M:%S %Z %Y")
@@ -155,7 +280,9 @@ ADDITIONAL_TO_CLEAN    += $(SHARED_MAP_HEADDER)
 ADDITIONAL_TO_CLEAN    += $(BUILD_ID_FILE)
 ADDITIONAL_TO_CLEAN    += $(LINKER_SCRIPT)
 
-LD_FLAGS ?= -Wl,--defsym,_fstack=$$(($(RAM_SIZE)-4)) -nostdlib -T $(LINKER_SCRIPT) $(ARG_LIBS)
+# LD_FLAGS ?= -Wl,--defsym,_fstack=$$(($(RAM_SIZE)-4)) -nostdlib -T $(LINKER_SCRIPT) $(ARG_LIBS)
+LD_FLAGS ?=  -T $(LINKER_SCRIPT) $(ARG_LIBS)
+#LD_FLAGS ?=  --verbose -T $(LINKER_SCRIPT) $(ARG_LIBS)
 
 MAKEFILE_DIR ?= $(SYN_DIR)/modules/lm32_makefiles
 include $(MAKEFILE_DIR)/makefile.lm32

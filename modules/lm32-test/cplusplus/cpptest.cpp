@@ -109,7 +109,7 @@
  * And I think that's a lot! :-) UB
  * !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
  */
-#include "mprintf.h"
+#include "eb_console_helper.h"
 #include "mini_sdb.h"
 #include "helper_macros.h"
 
@@ -148,12 +148,14 @@ public:
    {
       ::discoverPeriphery(); // mini-sdb: get info on important Wishbone infrastructure
       ::uart_init_hw();      // init UART, required for printf...
-      ::mprintf("\nHello world in C++11\n");
+      ::clrscr();
+      ::gotoxy( 0, 0 );
+      ::mprintf( ESC_FG_MAGNETA "Hello world in C++11\n" ESC_NORMAL );
    }
 
    ~SysInit( void )
    {
-      ::mprintf( "End...\n" );
+      ::mprintf( ESC_FG_MAGNETA "End...\n" ESC_NORMAL );
    }
 };
 
@@ -292,7 +294,12 @@ void Bar::onSomething( void )
 /*! ---------------------------------------------------------------------------
  * @brief This class tests whether the macro CONTAINER_OF() works properly
  *        in C++ respectively the macro offsetof().
- * warning: offsetof within non-standard-layout type
+ * @note The structure respectively class has to be a so called plain type. \n
+ *       That means the class members shouldn't to be reverences and/or
+ *       virtual functions. Otherwise the following compiler warning will
+ *       appear: \n
+ *       <b>warning: offsetof within non-standard-layout type </b> \n
+ *       In other words, the members has to be C- compatible.
  */
 class Container
 {
@@ -303,7 +310,17 @@ class Container
       ~Content( void );
    };
 
+   /*
+    * For plain types the member m_pOut shall be a pointer rather than a
+    * C++ reverence.
+    */
    OverloadingTest* m_pOut;
+
+   /*
+    * The following member has to be implemented plain, otherwise
+    * the macro CONTAINER_OF will crash!
+    * That means, not as a pointer or a C++ reverence.
+    */
    Content          m_oContent;
 
 public:
