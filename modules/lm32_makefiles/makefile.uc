@@ -17,40 +17,53 @@ ifeq ($(VERBOSE), 1)
    LD_F      = $(LD)
    AS_F      = $(AS)
    AR_F      = $(AR)
-   OBJCPY_F = $(OBJCPY)
-   QUIET = ""
+   OBJCPY_F  = $(OBJCPY)
+   QUIET     = ""
 else
-   CXX_MSG    := "CXX"
-   CC_MSG     := "CC"
-   CPP_MSG    := "CPP"
-   LD_MSG     := "LD"
-   LDSH_MSG   := "LD SH-LIB"
-   AR_MSG     := "AR"
-   AS_MSG     := "AS"
-   OBJCPY_MSG := "OBJCOPY"
-   STRIP_MSG  := "STRIP"
-   FORMAT     := @printf "[ %s %s ]\t%s\n"
-   CC_F      = $(FORMAT) $(CPU) $(CC_MSG)     $(@); $(CC)
-   CXX_F     = $(FORMAT) $(CPU) $(CXX_MSG)    $(@); $(CXX)
-   CPP_F     = $(FORMAT) $(CPU) $(CPP_MSG)    $(@); $(CPP)
-   CXXCPP_F  = $(FORMAT) $(CPU) $(CPP_MSG)    $(@); $(CXXCPP)
-   LD_F      = $(FORMAT) $(CPU) $(LD_MSG)     $(@); $(LD)
-   AS_F      = $(FORMAT) $(CPU) $(AS_MSG)     $(@); $(AS)
-   AR_F      = $(FORMAT) $(CPU) $(AR_MSG)     $(@); $(AR)
-   OBJCPY_F  = $(FORMAT) $(CPU) $(OBJCPY_MSG) $(@); $(OBJCPY)
-   QUIET = @
+   CXX_MSG     := "CXX"
+   CC_MSG      := "CC"
+   CPP_MSG     := "CPP"
+   LD_MSG      := "LD"
+   LDSH_MSG    := "LD SH-LIB"
+   AR_MSG      := "AR"
+   AS_MSG      := "AS"
+   OBJCPY_MSG  := "OBJCPY"
+   STRIP_MSG   := "STRIP"
+   FORMAT      := @printf "[ %s %s ]\t%s\n"
+ifdef NO_COLORED
+   FORMAT_L    := $(FORMAT)
+   FORMAT_R    := $(FORMAT)
+else
+   ESC_FG_CYAN    := "\\e[36m"
+   ESC_FG_MAGNETA := "\\e[35m"
+   ESC_BOLD       := "\\e[1m"
+   ESC_NORMAL     := "\\e[0m"
+   FORMAT_L    := @printf "[ %s %s ]\t$(ESC_FG_MAGNETA)%s$(ESC_NORMAL)\n"
+   FORMAT_R    := @printf "[ %s %s ]\t$(ESC_FG_CYAN)$(ESC_BOLD)%s$(ESC_NORMAL)\n"
+endif
+   CC_F        = $(FORMAT)   $(CPU) $(CC_MSG)     $(@); $(CC)
+   CXX_F       = $(FORMAT)   $(CPU) $(CXX_MSG)    $(@); $(CXX)
+   CPP_F       = $(FORMAT)   $(CPU) $(CPP_MSG)    $(@); $(CPP)
+   CXXCPP_F    = $(FORMAT)   $(CPU) $(CPP_MSG)    $(@); $(CXXCPP)
+   LD_F        = $(FORMAT_L) $(CPU) $(LD_MSG)     $(@); $(LD)
+   AS_F        = $(FORMAT)   $(CPU) $(AS_MSG)     $(@); $(AS)
+   AR_F        = $(FORMAT_L) $(CPU) $(AR_MSG)     $(@); $(AR)
+   OBJCPY_F    = $(FORMAT_R) $(CPU) $(OBJCPY_MSG) $(@); $(OBJCPY)
+   QUIET       = @
 endif
 
 OPT_INCLUDE := $(addprefix -I,$(INCLUDE_DIRS) )
 OPT_DEFINES := $(addprefix -D,$(DEFINES) )
 ARG_LIBS    := $(addprefix -l,$(LIBS) )
 
-OBJ_DIR ?= ./obj/
+OBJ_DIR    ?= ./$(CPU)_obj/
+TARGET_DIR ?= ./$(CPU)_bin/
+
 OBJ_FILES := $(addprefix $(OBJ_DIR),$(addsuffix .o,$(basename $(notdir $(SOURCE)))))
 
-all: $(TARGET).bin size
+all: $(TARGET_DIR)$(TARGET).bin size
 
-DEPENDFILE = $(TARGET).dep
+DEPENDFILE = $(OBJ_DIR)$(TARGET).dep
 
 CC_ARG = $(CFLAGS) $(OPT_INCLUDE) $(OPT_DEFINES)
 CXX_ARG ?= $(CC_ARG)
@@ -58,6 +71,9 @@ AS_ARG ?= $(CC_ARG)
 
 $(OBJ_DIR):
 	$(QUIET)mkdir $(OBJ_DIR)
+
+$(TARGET_DIR):
+	$(QUIET)mkdir -p $(TARGET_DIR)
 
 $(DEPENDFILE): $(SOURCE) $(OBJ_DIR) $(ADDITIONAL_DEPENDENCES)
 	$(QUIET)(for i in $(SOURCE); do \
@@ -84,24 +100,23 @@ dep: $(DEPENDFILE)
 
 -include $(DEPENDFILE)
 
-$(TARGET).elf: $(OBJ_FILES) $(LINKER_SCRIPT)
-	$(LD_F) -o $@ $^ $(LD_FLAGS)
+$(OBJ_DIR)$(TARGET).elf: $(OBJ_DIR)$(LINKER_SCRIPT) $(OBJ_FILES)
+	$(LD_F) -o $@ $(OBJ_FILES) $(LD_FLAGS)
 
-$(TARGET).bin: $(TARGET).elf
-	$(OBJCPY_F) -O binary $< $@
+$(TARGET_DIR)$(TARGET).bin: $(OBJ_DIR)$(TARGET).elf $(TARGET_DIR)
+	$(OBJCPY_F) -O binary $(OBJ_DIR)$(TARGET).elf $(TARGET_DIR)$(TARGET).bin
 
 .PHONY: size
-size: $(TARGET).elf
-	$(QUIET)$(SIZE) $(TARGET).elf
+size: $(OBJ_DIR)$(TARGET).elf
+	$(QUIET)$(SIZE) $(OBJ_DIR)$(TARGET).elf
 
 .PHONY: clean
 clean:
 	$(QUIET)rm $(ADDITIONAL_TO_CLEAN)
 	$(QUIET)rm $(OBJ_DIR)*.*
 	$(QUIET)rmdir $(OBJ_DIR)
-	$(QUIET)rm $(DEPENDFILE)
-	$(QUIET)rm $(TARGET).elf
-	$(QUIET)rm $(TARGET).bin
+	$(QUIET)rm $(TARGET_DIR)$(TARGET).bin
+	$(QUIET)rmdir $(TARGET_DIR)
 
 
 #=================================== EOF ======================================

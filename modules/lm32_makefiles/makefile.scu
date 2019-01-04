@@ -75,11 +75,6 @@ endif
 
 COMMENT_TEXT = 'This file has been created automatically, do not modify it by hand!'
 
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-# TODO: Investigation of linker warning:
-#       "ld:ram.ld:1: warning: redeclaration of memory region `RAM'"
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
 LDS =  "/*!\n"
 LDS += " * @file $(LINKER_SCRIPT)\n"
 LDS += " * @brief Linkerscript for target: $(TARGET)\n"
@@ -278,14 +273,16 @@ SMM = "//! @file $(SHARED_MAP_HEADDER)\n" \
 ADDITIONAL_DEPENDENCES += $(SHARED_MAP_HEADDER)
 ADDITIONAL_TO_CLEAN    += $(SHARED_MAP_HEADDER)
 ADDITIONAL_TO_CLEAN    += $(BUILD_ID_FILE)
-ADDITIONAL_TO_CLEAN    += $(LINKER_SCRIPT)
+#ADDITIONAL_TO_CLEAN    += $(LINKER_SCRIPT)
 
 # LD_FLAGS ?= -Wl,--defsym,_fstack=$$(($(RAM_SIZE)-4)) -nostdlib -T $(LINKER_SCRIPT) $(ARG_LIBS)
-LD_FLAGS ?=  -T $(LINKER_SCRIPT) $(ARG_LIBS)
+
 #LD_FLAGS ?=  --verbose -T $(LINKER_SCRIPT) $(ARG_LIBS)
 
 MAKEFILE_DIR ?= $(SYN_DIR)/modules/lm32_makefiles
 include $(MAKEFILE_DIR)/makefile.lm32
+
+LD_FLAGS ?=  -T $(OBJ_DIR)$(LINKER_SCRIPT) $(ARG_LIBS)
 
 $(SHARED_MAP_HEADDER):
 	$(QUIET)(printf %b $(SMM)) > $@
@@ -293,7 +290,7 @@ $(SHARED_MAP_HEADDER):
 $(BUILD_ID_FILE):
 	$(QUIET)(printf %b $(CBR)) > $@
 
-$(LINKER_SCRIPT):
+$(OBJ_DIR)$(LINKER_SCRIPT): #$(OBJ_DIR)
 	$(QUIET)(printf %b $(LDS)) > $@
 
 ifdef URL
@@ -302,7 +299,7 @@ CPU_ID ?= u0
 CPU_OFFSET ?= 0
 
 .PHONY: load
-load: $(TARGET).bin
+load: $(TARGET_DIR)$(TARGET).bin
 	eb-fwload $(URL) $(CPU_ID) $(CPU_OFFSET) $^
 endif
 
