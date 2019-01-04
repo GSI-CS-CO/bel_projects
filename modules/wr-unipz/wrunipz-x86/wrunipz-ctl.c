@@ -3,7 +3,7 @@
  *
  *  created : 2018
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 28-December-2018
+ *  version : 04-January-2019
  *
  * Command-line interface for wrunipz
  *
@@ -43,7 +43,6 @@
 #include <stdint.h>
 #include <math.h>
 #include <time.h>
-#include <sys/time.h>
 
 // Etherbone
 #include <etherbone.h>
@@ -98,13 +97,6 @@ static void die(const char* where, eb_status_t status) {
 } //die
 
 
-uint64_t getTimeStamp() {
-  struct timeval tv;
-  gettimeofday(&tv,NULL);
-  return tv.tv_sec*(uint64_t)1000000+tv.tv_usec;
-} // small helper function
-
-
 static void help(void) {
   fprintf(stderr, "Usage: %s [OPTION] <etherbone-device> [COMMAND]\n", program);
   fprintf(stderr, "\n");
@@ -127,7 +119,7 @@ static void help(void) {
   fprintf(stderr, "  modespz             command sets to PZ mode (listen to SuperPZ)\n");
   fprintf(stderr, "  modetest            command sets to test mode (listen to internal 50 Hz trigger)\n");
   fprintf(stderr, "  test <vacc> <pz>    command loads dummy event table for virtual accelerator <vacc> to pulszentrale <pz>\n");
-  fprintf(stderr, "  vacc                command sets virtual accelerator for ALL PZs\n");
+  fprintf(stderr, "  testfull            command loads dummy event tables for ALL virt acclerators and all PZs\n");
   fprintf(stderr, "  cleartables         command clears all event tables of all PZs\n");
   fprintf(stderr, "  kill                command kills possibly ongoing transactions\n");  
   fprintf(stderr, "\n");
@@ -249,7 +241,7 @@ int main(int argc, char** argv) {
   eb_status_t         eb_status;
   eb_socket_t         socket;
   eb_data_t           data;
-  int                 i;
+  int                 i,j,k;
 
   struct sdb_device   sdbDevice;          // instantiated lm32 core
   int                 nDevices;           // number of instantiated cores
@@ -441,7 +433,7 @@ int main(int argc, char** argv) {
       pz = strtoul(argv[optind+2], &tail, 0);
       if ((pz < 0) || (pz >= WRUNIPZ_NPZ)) {printf("wr-unipz: invalid PZ -- %s\n", argv[optind+2]); return 1;}
 
-       t1 = getTimeStamp();
+      t1 = getSysTime();
 
       if ((status = wrunipz_transaction_init(device, wrunipz_cmd, wrunipz_confVacc, wrunipz_confStat, vacc)) !=  WRUNIPZ_STATUS_OK) {
         printf("wr-unipz: transaction init - %s\n", wrunipz_status_text(status));
@@ -458,10 +450,40 @@ int main(int argc, char** argv) {
         // submit
         wrunipz_transaction_submit(device, wrunipz_cmd, wrunipz_confStat);
 
-        t2 = getTimeStamp();
+        t2 = getSysTime();
         printf("wr-unipz: transaction took %u us\n", (uint32_t)(t2 -t1));
       }
-    } // "test"
+    } // "testfull"
+    if (!strcasecmp(command, "testfull")) {
+      if (state != WRUNIPZ_STATE_OPREADY) printf("wr-unipz: WARNING command has no effect (not in state OPREADY)\n");
+
+      t1 = getSysTime();
+
+      for (k=0; k < WRUNIPZ_NPZ; k++) {
+        for (j=0; j < WRUNIPZ_NVACC; j++) {
+          
+          if ((status = wrunipz_transaction_init(device, wrunipz_cmd, wrunipz_confVacc, wrunipz_confStat, j)) !=  WRUNIPZ_STATUS_OK) {
+            printf("wr-unipz: transaction init (virt acc %d) - %s\n", j, wrunipz_status_text(status));
+          } // if status
+          else {
+            // upload
+            nDataChn0 = WRUNIPZ_NEVT;
+            nDataChn1 = 0;
+            for (i=0; i < (nDataChn0 -1); i++) dataChn0[i] = ((uint16_t)(i + 100 * k + 2001) << 16) + i;
+            dataChn0[nDataChn0 -1] = ((uint16_t)2000 << 16) + 64;
+            if ((status = wrunipz_transaction_upload(device, wrunipz_confStat, wrunipz_confPz, wrunipz_confData, wrunipz_confFlag, k, dataChn0, nDataChn0, dataChn1, nDataChn1)) != WRUNIPZ_STATUS_OK)
+              printf("wr-unipz: transaction upload (virt acc %d, pz %d) - %s\n", j, k, wrunipz_status_text(status));
+            
+            // submit
+            wrunipz_transaction_submit(device, wrunipz_cmd, wrunipz_confStat);
+          } // else status
+        } // for k
+      } // for j
+
+      t2 = getSysTime();
+      printf("wr-unipz: transaction took %u us\n", (uint32_t)(t2 -t1));
+
+    } // "testfull"
     if (!strcasecmp(command, "kill")) {
       eb_device_write(device, wrunipz_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)WRUNIPZ_CMD_CONFKILL, 0, eb_block);
       if (state != WRUNIPZ_STATE_OPREADY) printf("wr-unipz: WARNING command has no effect (not in state OPREADY)\n");

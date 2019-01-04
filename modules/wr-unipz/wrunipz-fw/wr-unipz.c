@@ -3,7 +3,7 @@
  *
  *  created : 2018
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 28-Dec-2018
+ *  version : 04-Jan-2019
  *
  *  lm32 program for gateway between UNILAC Pulszentrale and a White Rabbit network
  *  this basically serves a Data Master for UNILAC
@@ -150,6 +150,7 @@ uint32_t mode;                          // 1: test mode
 // big data contains the event tables for all PZs, and for all virtual accelerators
 // there are two sets of 16 virtual accelerators ('Kanal0' and 'Kanal1')
 dataTable bigData[WRUNIPZ_NPZ][WRUNIPZ_NVACC * WRUNIPZ_NCHN];
+uint32_t  vaccNext[WRUNIPZ_NPZ];
 
 uint32_t gid[] =                 {1000, 1001, 1002, 1003, 1004, 1005, 1006};              /* hackish: GIDs for PZs, to be clarified with Hanno */
                                                                         
@@ -164,8 +165,6 @@ uint64_t wrGetMac() // get my own MAC
   mac = macHi;
   mac = (mac << 32);
   mac = mac + macLo;
-
-  mprintf("bla %x %x %x\n", macHi, macLo, pWREp);
 
   return mac;
 } // wrGetMac
@@ -309,13 +308,15 @@ void init() // typical init for lm32
   // set MSI IRQ handler
   isr_table_clr();
   //irq_set_mask(0x01);
-  irq_disable(); 
+  irq_disable();
 } // init
 
 
 void initSharedMem() // determine address and clear shared mem
 {
   uint32_t idx;
+  uint32_t *pSharedTemp;
+  int      i; 
   const uint32_t c_Max_Rams = 10;
   sdb_location found_sdb[c_Max_Rams];
   sdb_location found_clu;
@@ -363,8 +364,17 @@ void initSharedMem() // determine address and clear shared mem
 
   DBPRINT2("wr-unipz: CPU RAM External 0x%8x, begin shared 0x%08x\n", pCpuRamExternal, SHARED_OFFS);
 
+  // clear shared mem
+  i = 0;
+  pSharedTemp          = (uint32_t *)(pShared + (WRUNIPZ_SHARED_BEGIN >> 2 ));
+  while (pSharedTemp < (uint32_t *)(pShared + (WRUNIPZ_SHARED_END >> 2 ))) {
+    *pSharedTemp = 0x0;
+    pSharedTemp++;
+    i++;
+  } // while pSharedTemp
+  DBPRINT2("wr-unipz: used size of shared mem is %d words (uint32_t), begin %x, end %x\n", i, pShared, pSharedTemp-1);
+  
   // set initial values;
-  /* ebmClearSharedMem(); */
   *pSharedVersion      = WRUNIPZ_FW_VERSION; // of all the shared variabes, only VERSION is a constant. Set it now!
   *pSharedNBadStatus   = 0;
   *pSharedNBadState    = 0;
@@ -473,8 +483,9 @@ uint32_t wait4ECAEvent(uint32_t msTimeout, uint64_t *deadline, uint32_t *isLate)
   */
 
   pECAFlag    = (uint32_t *)(pECAQ + (ECA_QUEUE_FLAGS_GET >> 2));   // address of ECA flag
-  timeoutT    = getSysTime() + (uint64_t)msTimeout * (uint64_t)1000000;
 
+  timeoutT    = getSysTime() + (uint64_t)msTimeout * (uint64_t)1000000 + (uint64_t)1000; 
+  
   while (getSysTime() < timeoutT) {
     if (*pECAFlag & (0x0001 << ECA_VALID)) {                        // if ECA data is valid
 
@@ -535,9 +546,15 @@ uint32_t configMILEvent() // configure SoC to receive events via MIL bus
   if (clearFilterEvtMil(pMILPiggy)    != MIL_STAT_OK) return WRUNIPZ_STATUS_ERROR; 
 
   for (i=0; i < (0xf+1); i++) {
-    // set filter (FIFO and LEMO1 pulsing) for all possible virtual accelerators
+    // set filter for all possible virtual accelerators; set filter and LEMO for 50 Hz sync
     if (setFilterEvtMil(pMILPiggy, WRUNIPZ_EVT_50HZ_SYNCH, i, MIL_FILTER_EV_TO_FIFO | MIL_FILTER_EV_PULS1_S) != MIL_STAT_OK) return WRUNIPZ_STATUS_ERROR;
-    if (setFilterEvtMil(pMILPiggy, WRUNIPZ_EVT_PZ6       , i, MIL_FILTER_EV_TO_FIFO | MIL_FILTER_EV_PULS1_S) != MIL_STAT_OK) return WRUNIPZ_STATUS_ERROR;
+    if (setFilterEvtMil(pMILPiggy, WRUNIPZ_EVT_PZ1       , i, MIL_FILTER_EV_TO_FIFO                        ) != MIL_STAT_OK) return WRUNIPZ_STATUS_ERROR;
+    if (setFilterEvtMil(pMILPiggy, WRUNIPZ_EVT_PZ2       , i, MIL_FILTER_EV_TO_FIFO                        ) != MIL_STAT_OK) return WRUNIPZ_STATUS_ERROR;
+    if (setFilterEvtMil(pMILPiggy, WRUNIPZ_EVT_PZ3       , i, MIL_FILTER_EV_TO_FIFO                        ) != MIL_STAT_OK) return WRUNIPZ_STATUS_ERROR;
+    if (setFilterEvtMil(pMILPiggy, WRUNIPZ_EVT_PZ4       , i, MIL_FILTER_EV_TO_FIFO                        ) != MIL_STAT_OK) return WRUNIPZ_STATUS_ERROR;
+    if (setFilterEvtMil(pMILPiggy, WRUNIPZ_EVT_PZ5       , i, MIL_FILTER_EV_TO_FIFO                        ) != MIL_STAT_OK) return WRUNIPZ_STATUS_ERROR;
+    if (setFilterEvtMil(pMILPiggy, WRUNIPZ_EVT_PZ6       , i, MIL_FILTER_EV_TO_FIFO                        ) != MIL_STAT_OK) return WRUNIPZ_STATUS_ERROR;
+    if (setFilterEvtMil(pMILPiggy, WRUNIPZ_EVT_PZ7       , i, MIL_FILTER_EV_TO_FIFO                        ) != MIL_STAT_OK) return WRUNIPZ_STATUS_ERROR;
   }
 
   // configure LEMO1 for pulse generation
@@ -547,17 +564,17 @@ uint32_t configMILEvent() // configure SoC to receive events via MIL bus
 } // configMILEvent
 
 
- uint32_t wait4MILEvent(uint16_t *evtData, uint16_t *evtCode, uint32_t *virtAccRec, uint32_t msTimeout)  // wait for MIL event or timeout
+ uint32_t wait4MILEvent(uint16_t *evtData, uint16_t *evtCode, uint32_t *virtAcc, uint32_t msTimeout)  // wait for MIL event or timeout
 {
   uint32_t evtRec;             // one MIL event
   uint32_t evtCodeRec;         // "event number"
   uint32_t evtDataRec;         // "event data"
+  uint32_t virtAccRec;         // "virt Acc"
   uint64_t timeoutT;           // when to time out
-  uint32_t virtAccTmp;         // temp value for virtAcc
   int      valid;              // evt is valid
 
   timeoutT    = getSysTime() + (uint64_t)msTimeout * (uint64_t)1000000;
-  *virtAccRec = 0;             // last two digits: virtacc; count other junk in FIFO by increasing by 100;
+  *virtAcc    = 0;           
   *evtData    = 0xffff;
   *evtCode    = 0xffff;
   valid       = 0;
@@ -566,13 +583,13 @@ uint32_t configMILEvent() // configure SoC to receive events via MIL bus
     while (fifoNotemptyEvtMil(pMILPiggy)) {     // while fifo contains data
       popFifoEvtMil(pMILPiggy, &evtRec);    
       evtCodeRec  = evtRec & 0x000000ff;        // extract event code
-      virtAccTmp  = (evtRec >> 8)  & 0x0f;      // extract virtual accelerator
+      virtAccRec  = (evtRec >> 8)  & 0x0f;      // extract virtual accelerator
       evtDataRec  = (evtRec >> 12) & 0x0f;      // extract event data
 
-      *virtAccRec += 100;                       // increase by 100 for each FIFO entry ('count events')
-      
+      //mprintf("data %d, code %d, vA %d\n", evtDataRec, evtCodeRec, virtAccTmp);
+
       switch (evtCodeRec) {
-      case WRUNIPZ_EVT_PZ6                     : valid = 1; break;
+      case WRUNIPZ_EVT_PZ1 ... WRUNIPZ_EVT_PZ7 : valid = 1; break;
       case WRUNIPZ_EVT_SYNCH_DATA              : valid = 1; break;
       case WRUNIPZ_EVT_50HZ_SYNCH              : valid = 1; break;
       default                                  : break;
@@ -581,15 +598,13 @@ uint32_t configMILEvent() // configure SoC to receive events via MIL bus
       if (valid) {
         *evtData     = evtDataRec;
         *evtCode     = evtCodeRec;
-        *virtAccRec += virtAccTmp;
+        *virtAcc     = virtAccRec;
         return WRUNIPZ_STATUS_OK;
       } // if valid;
     } // while fifo contains data
     asm("nop");                                 // wait a bit...
   } // while not timed out
 
-  // up to here: no matching evtCode
-  *virtAccRec += 42;                            // mark with illegal virtAcc number
   return WRUNIPZ_STATUS_TIMEDOUT;  
 } //wait4MILEvent
 
@@ -622,7 +637,7 @@ uint32_t configTransactInit()          // initializes transaction for config dat
   for (i=0; i < (WRUNIPZ_NCONFFLAG); i++) *(pSharedConfFlag   + i) = 0;
   for (i=0; i < (WRUNIPZ_NCONFDATA); i++) *(pSharedConfData   + i) = 0;
 
-  mprintf("wr-unipz: request completed\n");
+  DBPRINT2("wr-unipz: request completed\n");
     
   *pSharedConfStat = WRUNIPZ_CONFSTAT_INIT;
 
@@ -658,7 +673,7 @@ uint32_t configTransactSubmit() // submit transferred config data
   } // for i
   /* end hack */
 
-  mprintf("wr-unipz: submit completed\n");
+  DBPRINT2("wr-unipz: submit completed\n");
   
   /* *pSharedConfDataStat = WRUNIPZ_CONFSTAT_REQ | WRUNIPZ_CONFSTAT_SUBMIT; commented: this shall be used once code above is triggered by event */
   *pSharedConfStat = WRUNIPZ_CONFSTAT_IDLE;
@@ -698,12 +713,6 @@ uint32_t doActionS0()
 uint32_t entryActionConfigured()
 {
   uint32_t status = WRUNIPZ_STATUS_OK;
-  uint32_t virtAcc;
-  uint32_t dryRunFlag;
-  uint32_t i;
-  uint32_t data;
-  uint64_t timestamp;
-  uint32_t isLate;
   uint64_t mac;
   uint32_t ip;
 
@@ -740,11 +749,6 @@ uint32_t entryActionConfigured()
 
   configLemoOutputEvtMil(pMILPiggy, 2);    // used to see a blinking LED (and optionally connect a scope) for debugging
   
-  // empty ECA queue for lm32
-  i = 0;
-  while (wait4ECAEvent(1, &timestamp, &isLate) !=  WRUNIPZ_ECADO_TIMEOUT) {i++;}
-  DBPRINT1("wr-unipz: ECA queue flushed - removed %d pending entries from ECA queue\n", i);
-
   *pSharedConfStat = WRUNIPZ_CONFSTAT_IDLE; /* chk */
   mode             = WRUNIPZ_MODE_SPZ;
   return status;
@@ -753,10 +757,20 @@ uint32_t entryActionConfigured()
 
 uint32_t entryActionOperation()
 {
-  clearDiag();
-  clearPZ();
-  enableFilterEvtMil(pMILPiggy);
-  clearFifoEvtMil(pMILPiggy);
+  int      i;
+  uint64_t tDummy;
+  uint32_t flagDummy;
+  
+  clearDiag();                                               // clear diagnosis
+  clearPZ();                                                 // clear all event tables
+  for (i=0; i < WRUNIPZ_NPZ; i++) vaccNext[i] = 0xffffffff;  // 0xffffffff: no virt acc
+  enableFilterEvtMil(pMILPiggy);                             // enable MIL event filter
+  clearFifoEvtMil(pMILPiggy);                                // clear MIL event FIFO
+
+  // flush ECA queue for lm32
+  i = 0;
+  while (wait4ECAEvent(1, &tDummy, &flagDummy) !=  WRUNIPZ_ECADO_TIMEOUT) {i++;}
+  DBPRINT1("wr-unipz: ECA queue flushed - removed %d pending entries from ECA queue\n", i);
 
   return WRUNIPZ_STATUS_OK;
 } // entryActionOperation
@@ -897,7 +911,6 @@ uint32_t doActionOperation(uint32_t *nCycle,                  // total number of
                            uint32_t actStatus)                // actual status of firmware
 {
   uint32_t status;                                            // status returned by routines
-  uint32_t flagMilEvtValid;                                   // flag indicating that we recevied a valid MIL event
   uint32_t flagIsLate;                                        // flag indicating that we received a 'late' event from ECA
   uint32_t ecaAction;                                         // action triggered by event received from ECA
   uint64_t deadline;                                          // deadline of event received via ECA
@@ -914,46 +927,57 @@ uint32_t doActionOperation(uint32_t *nCycle,                  // total number of
   
   // wait for MIL event
   milStatus = wait4MILEvent(&evtData, &evtCode, &virtAcc, WRUNIPZ_MILTIMEOUT);
-  tMIL      = getSysTime();
   if (milStatus == WRUNIPZ_STATUS_TIMEDOUT) return status;     // no MIL event
 
-  // get timestamp from TLU -> ECA
-  ecaAction = wait4ECAEvent(WRUNIPZ_ECATIMEOUT, &deadline, &flagIsLate);
+  tMIL      = getSysTime();
 
-  // check, if timestamping via TLU failed
-  if (ecaAction == WRUNIPZ_ECADO_TIMEOUT) {      
-    deadline = tMIL;                                          // continue with TS from MIL
-    status   = WRUNIPZ_STATUS_NOTIMESTAMP;
-  } // if ecaAction
-
-  // check, if timestamps form TLU and MIL are out of order
-  if (deadline > tMIL) {
-    deadline = tMIL;                                          // continue with TS from MIL
-    status   = WRUNIPZ_STATUS_ORDERTIMESTAMP;
-  } 
-
-  // check, if timestamp from TLU is not reasonable
-  if ((tMIL - deadline) > WRUNIPZ_MATCHWINDOW) {
-    deadline = tMIL;                                          // continue with TS from MIL
-    status   = WRUNIPZ_STATUS_BADTIMESTAMP;
-    // flush ECA Q to get rid of pending TS
-    while (wait4ECAEvent(1, &tDummy, &flagIsLate) !=  WRUNIPZ_ECADO_TIMEOUT) {asm("nop");} 
-  } // if tMIL
-    
   switch (evtCode) {
-  case WRUNIPZ_EVT_50HZ_SYNCH :                               // next UNILAC cycle starts
-      (*nCycle)++;
-      
-      int vacc[] = {8,8,8,8,8,8,8}; // chk hack 
-      int chan[] = {0,0,0,0,0,0,0}; // chk hack 
-      
-      ebm_clr();                      
-      for (i=0; i < WRUNIPZ_NPZ; i++) ebmWriteTM(bigData[i][8], deadline, i, vacc[i]);
-      *tAct = deadline;
 
-      break;
-    default :
-      break;
+  case WRUNIPZ_EVT_50HZ_SYNCH :                               // next UNILAC cycle starts
+    (*nCycle)++;
+    DBPRINT3("wr-unipz: 50Hz, data %d, evtcode %d, virtAcc %d\n", evtData, evtCode, virtAcc);
+
+    // get timestamp from TLU -> ECA
+    ecaAction = wait4ECAEvent(WRUNIPZ_ECATIMEOUT, &deadline, &flagIsLate);
+    
+    // check, if timestamping via TLU failed
+    if (ecaAction == WRUNIPZ_ECADO_TIMEOUT) {      
+      deadline = tMIL;                                          // continue with TS from MIL
+      status   = WRUNIPZ_STATUS_NOTIMESTAMP;
+    } // if ecaAction
+    
+    // check, if timestamps form TLU and MIL are out of order
+    if (deadline > tMIL) {
+      deadline = tMIL;                                          // continue with TS from MIL
+      status   = WRUNIPZ_STATUS_ORDERTIMESTAMP;
+    } // if deadline
+    
+    // check, if timestamp from TLU is not reasonable
+    if ((tMIL - deadline) > WRUNIPZ_MATCHWINDOW) {
+      deadline = tMIL;                                          // continue with TS from MIL
+      status   = WRUNIPZ_STATUS_BADTIMESTAMP;
+    } // if tMIL
+    
+
+    ebm_clr();
+
+    // walk through all PZs and run requested virt acc
+    for (i=0; i < WRUNIPZ_NPZ; i++) if (vaccNext[i] != 0xffffffff) ebmWriteTM(bigData[i][vaccNext[i]], deadline, i, vaccNext[i]);
+    *tAct = deadline;                                           // remember 50 Hz tick
+
+    // reset requested virt accs; flush ECA queue
+    for (i=0; i < WRUNIPZ_NPZ; i++) vaccNext[i] = 0xffffffff;   // 0xffffffff: no virt acc for PZ
+    while (wait4ECAEvent(0, &tDummy, &flagIsLate) !=  WRUNIPZ_ECADO_TIMEOUT) {asm("nop");}
+    
+    break;
+  case WRUNIPZ_EVT_PZ1 ... WRUNIPZ_EVT_PZ7 :                 // announce what happens in next UNILAC cycle
+    DBPRINT3("wr-unipz: PZ, data %d, evtcode %d, virtAcc %d\n", evtData, evtCode, virtAcc);
+
+    vaccNext[evtCode-1] = virtAcc & 0xf;                     // PZ: sPZ counts from 1..7, we count from 0..6; vACC: mask relevant bits
+
+    break;
+  default :
+    break;
   } // switch evtCode
 
   /*
@@ -1033,16 +1057,13 @@ void main(void) {
   uint32_t reqState;                            // requested FSM state
   uint32_t flagRecover;                         // flag indicating auto-recovery from error state;
 
-  uint32_t statusCycle;                         // status of cycle
   uint32_t nCycleAct;                           // number of cycles
   uint32_t nCyclePrev;                          // previous number of cycles
   uint64_t nMsgPrev;                            // previous number of messages
-  uint32_t nTest;              
   
 
   mprintf("\n");
   mprintf("wr-unipz: ***** firmware v %06d started from scratch *****\n", WRUNIPZ_FW_VERSION);
-  mprintf("wr-unipz: used size of shared mem is %d\n", WRUNIPZ_SHARED_SIZEUSED);
   mprintf("\n");
   
   // init local variables

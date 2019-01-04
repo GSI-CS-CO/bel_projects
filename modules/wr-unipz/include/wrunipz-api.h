@@ -37,9 +37,12 @@
 #ifndef __WR_UNIPZ_API_H_
 #define __WR_UNIPZ_API_H_
 
-#define WRUNIPZ_X86_VERSION "0.0.5"
+#define WRUNIPZ_X86_VERSION "0.0.6"
 
 #include <wr-unipz.h>
+
+// small helper function
+uint64_t getSysTime();     
 
 // convert status code to status text
 const char* wrunipz_state_text(uint32_t code              // status code

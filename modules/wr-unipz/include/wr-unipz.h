@@ -124,7 +124,8 @@ typedef struct dataTable {                    // table with _one_ virtAcc for _o
 
 // offsets
 // simple values
-#define WRUNIPZ_SHARED_STATUS         0x0                                               // error status                       
+#define WRUNIPZ_SHARED_BEGIN          0x0                                               // begin of used shared memory
+#define WRUNIPZ_SHARED_STATUS         WRUNIPZ_SHARED_BEGIN                              // error status                       
 #define WRUNIPZ_SHARED_CMD            (WRUNIPZ_SHARED_STATUS     + _32b_SIZE_)          // input of 32bit command
 #define WRUNIPZ_SHARED_STATE          (WRUNIPZ_SHARED_CMD        + _32b_SIZE_)          // state of state machine
 #define WRUNIPZ_SHARED_TCYCLEAVG      (WRUNIPZ_SHARED_STATE      + _32b_SIZE_)          // period of UNILAC cycle [ns] (average over one second)
@@ -149,7 +150,7 @@ typedef struct dataTable {                    // table with _one_ virtAcc for _o
 #define WRUNIPZ_SHARED_DATA_4EB       (WRUNIPZ_SHARED_MODE       + _32b_SIZE_)          // shared area for EB return values
 
 // shared memory for submitting new 'event tables'                                      
-#define WRUNIPZ_SHARED_CONF_VACC      (WRUNIPZ_SHARED_DATA_4EB   + WRUNIPZ_DATA4EBSIZE) // vACC for config data
+#define WRUNIPZ_SHARED_CONF_VACC      (WRUNIPZ_SHARED_DATA_4EB   + WRUNIPZ_DATA4EBSIZE) // vAcc for config data
 #define WRUNIPZ_SHARED_CONF_STAT      (WRUNIPZ_SHARED_CONF_VACC  + _32b_SIZE_)          // status of config transaction
 // config PZ flag layout: least significant bit is PZ0; '1': PZ has new data uploaded
 #define WRUNIPZ_SHARED_CONF_PZ        (WRUNIPZ_SHARED_CONF_STAT  + _32b_SIZE_)
@@ -165,7 +166,7 @@ typedef struct dataTable {                    // table with _one_ virtAcc for _o
 // [flag1 of PZ0-chn0]..[flag3 of PZ0-chn0][flag0 of PZ0-chn1]..[flag3 of PZ0-chn1][flag0 of PZ1-chn0].....[flag3 of PZ6-chn1] 
 #define WRUNIPZ_SHARED_CONF_FLAG      (WRUNIPZ_SHARED_CONF_DATA  + (WRUNIPZ_NCONFDATA << 2))  
 
-// diagnosis
-#define WRUNIPZ_SHARED_SIZEUSED       (WRUNIPZ_SHARED_CONF_FLAG  + (WRUNIPZ_NCONFFLAG << 2)) // used size of shared area
+// diagnosis: end of used shared memory
+#define WRUNIPZ_SHARED_END            (WRUNIPZ_SHARED_CONF_FLAG  + (WRUNIPZ_NCONFFLAG << 2)) //
 
 #endif

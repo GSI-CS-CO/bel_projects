@@ -13,6 +13,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/time.h>
 
 // etherbone
 #include <etherbone.h>
@@ -20,6 +21,13 @@
 // wr-unipz
 #include <wr-unipz.h>
 #include <wrunipz-api.h>
+
+uint64_t getSysTime() {
+  struct timeval tv;
+  gettimeofday(&tv,NULL);
+  return tv.tv_sec*(uint64_t)1000000+tv.tv_usec;
+} // small helper function
+
 
 const char* wrunipz_state_text(uint32_t code) {
   switch (code) {
@@ -91,7 +99,7 @@ uint32_t wrunipz_transaction_kill(eb_device_t device, eb_address_t DPcmd, eb_add
 uint32_t wrunipz_transaction_init(eb_device_t device, eb_address_t DPcmd, eb_address_t DPvacc, eb_address_t DPstat, uint32_t vAcc) {
 
   eb_data_t     data;
-  int           i;
+  uint64_t      tTimeout;
 
   // check if _no_ transaction in progress
   if (eb_device_read(device, DPstat, EB_BIG_ENDIAN|EB_DATA32, &data, 0, eb_block) != EB_OK) return WRUNIPZ_STATUS_EB;
@@ -101,15 +109,12 @@ uint32_t wrunipz_transaction_init(eb_device_t device, eb_address_t DPcmd, eb_add
   if (eb_device_write(device, DPcmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)WRUNIPZ_CMD_CONFINIT, 0, eb_block) != EB_OK) return WRUNIPZ_STATUS_EB;
 
   // wait until FW confirms init mode
-  /* chk: do this with proper timeout handling */
-  i = 0;
-  while (i < 1000) {   
+  tTimeout = getSysTime() + (uint64_t)1000000000;
+  while (getSysTime() < tTimeout) {   
     if (eb_device_read(device, DPstat, EB_BIG_ENDIAN|EB_DATA32, &data, 0, eb_block) != EB_OK) return WRUNIPZ_STATUS_EB;
     if (data == WRUNIPZ_CONFSTAT_INIT) break;
-    i++;
-  } // while
+  } // while getSysTime
 
-  /* printf("huhu1 %d %d\n", (int)data, i); */
   // FW is not in init mode: give up
   if (data != WRUNIPZ_CONFSTAT_INIT) return WRUNIPZ_STATUS_TRANSACTION;
   
@@ -123,6 +128,7 @@ uint32_t wrunipz_transaction_init(eb_device_t device, eb_address_t DPcmd, eb_add
 uint32_t wrunipz_transaction_submit(eb_device_t device, eb_address_t DPcmd, eb_address_t DPstat) {
 
   eb_data_t     data;
+  uint64_t      tTimeout;
 
   // check if transaction has been initialized
   if (eb_device_read(device, DPstat, EB_BIG_ENDIAN|EB_DATA32, &data, 0, eb_block) != EB_OK) return WRUNIPZ_STATUS_EB;
@@ -131,7 +137,14 @@ uint32_t wrunipz_transaction_submit(eb_device_t device, eb_address_t DPcmd, eb_a
   // submit data already uploaded to DP RAM
   if (eb_device_write(device, DPcmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)WRUNIPZ_CMD_CONFSUBMIT, 0, eb_block) != EB_OK) return WRUNIPZ_STATUS_EB;
 
-  return WRUNIPZ_STATUS_OK;
+  // wait until transaction has been completed
+  tTimeout = getSysTime() + (uint64_t)1000000000;
+  while(getSysTime() < tTimeout) {
+    if (eb_device_read(device, DPstat, EB_BIG_ENDIAN|EB_DATA32, &data, 0, eb_block) != EB_OK) return WRUNIPZ_STATUS_EB;
+    if (data == WRUNIPZ_CONFSTAT_IDLE) return WRUNIPZ_STATUS_OK;
+  } // while getSysTime
+  
+  return WRUNIPZ_STATUS_TIMEDOUT;
 } // wrunipz_transaction_submit
 
 
