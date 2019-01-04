@@ -574,7 +574,7 @@ uint32_t configMILEvent() // configure SoC to receive events via MIL bus
   int      valid;              // evt is valid
 
   timeoutT    = getSysTime() + (uint64_t)msTimeout * (uint64_t)1000000;
-  *virtAcc    = 0;           
+  *virtAcc    = 0xffff;           
   *evtData    = 0xffff;
   *evtCode    = 0xffff;
   valid       = 0;
@@ -927,7 +927,7 @@ uint32_t doActionOperation(uint32_t *nCycle,                  // total number of
   
   // wait for MIL event
   milStatus = wait4MILEvent(&evtData, &evtCode, &virtAcc, WRUNIPZ_MILTIMEOUT);
-  if (milStatus == WRUNIPZ_STATUS_TIMEDOUT) return status;     // no MIL event
+  if (milStatus != WRUNIPZ_STATUS_OK) return status;          // no MIL event
 
   tMIL      = getSysTime();
 
@@ -962,63 +962,30 @@ uint32_t doActionOperation(uint32_t *nCycle,                  // total number of
     ebm_clr();
 
     // walk through all PZs and run requested virt acc
-    for (i=0; i < WRUNIPZ_NPZ; i++) if (vaccNext[i] != 0xffffffff) ebmWriteTM(bigData[i][vaccNext[i]], deadline, i, vaccNext[i]);
+    for (i=0; i < WRUNIPZ_NPZ; i++) {
+      if (vaccNext[i] != 0xffffffff) {
+        ebmWriteTM(bigData[i][vaccNext[i]], deadline, i, vaccNext[i]);
+        DBPRINT3("wr-unipz: playing pz %d, vacc %d\n", i, vaccNext[i]);
+      } // if vaccNext
+    } // for i
     *tAct = deadline;                                           // remember 50 Hz tick
+    DBPRINT3("wr-unipz: vA played:  %x %x %x %x %x %x %x\n", vaccNext[0], vaccNext[1], vaccNext[2], vaccNext[3], vaccNext[4], vaccNext[5], vaccNext[6]);
 
     // reset requested virt accs; flush ECA queue
     for (i=0; i < WRUNIPZ_NPZ; i++) vaccNext[i] = 0xffffffff;   // 0xffffffff: no virt acc for PZ
+    DBPRINT3("wr-unipz: vA reset:  %x %x %x %x %x %x %x\n", vaccNext[0], vaccNext[1], vaccNext[2], vaccNext[3], vaccNext[4], vaccNext[5], vaccNext[6]);
     while (wait4ECAEvent(0, &tDummy, &flagIsLate) !=  WRUNIPZ_ECADO_TIMEOUT) {asm("nop");}
     
     break;
   case WRUNIPZ_EVT_PZ1 ... WRUNIPZ_EVT_PZ7 :                 // announce what happens in next UNILAC cycle
-    DBPRINT3("wr-unipz: PZ, data %d, evtcode %d, virtAcc %d\n", evtData, evtCode, virtAcc);
-
-    vaccNext[evtCode-1] = virtAcc & 0xf;                     // PZ: sPZ counts from 1..7, we count from 0..6; vACC: mask relevant bits
+    vaccNext[evtCode-1] = virtAcc;                           // PZ: sPZ counts from 1..7, we count from 0..6
+    DBPRINT3("wr-unipz: vA set:  %x %x %x %x %x %x %x\n", vaccNext[0], vaccNext[1], vaccNext[2], vaccNext[3], vaccNext[4], vaccNext[5], vaccNext[6]);
 
     break;
   default :
     break;
   } // switch evtCode
 
-  /*
-  nextAction = wait4ECAEvent(WRUNIPZ_DEFAULT_TIMEOUT, &deadline, &flagIsLate);     // 'do action' is driven by actions issued by the ECA
-
-  switch (nextAction) {
-  case WRUNIPZ_ECADO_TEST :                                                      // whatever
-    (*nCycle)++;
-    
-    ebm_clr();
-    
-    int vacc[] = {5,5,5,5,5,5,5}; // chk hack 
-    int chan[] = {0,0,0,0,0,0,0}; // chk hack 
-    
-    for (i=0; i < WRUNIPZ_NPZ; i++) ebmWriteTM(bigData[i][5], deadline, i, vacc[i]);
-    *tAct = deadline;
-    
-    break;
-  case WRUNIPZ_ECADO_MIL :
-    milStatus = wait4MILEvent(&evtData, &evtCode, &virtAcc, WRUNIPZ_MILTIMEOUT);
-    switch (evtCode) {
-    case WRUNIPZ_EVT_50HZ_SYNCH :
-      (*nCycle)++;
-      
-      ebm_clr();
-      
-      int vacc[] = {8,8,8,8,8,8,8}; // chk hack 
-      int chan[] = {0,0,0,0,0,0,0}; // chk hack 
-      
-      for (i=0; i < WRUNIPZ_NPZ; i++) ebmWriteTM(bigData[i][8], deadline, i, vacc[i]);
-      *tAct = deadline;
-      break;
-    default :
-      break;
-    } // switch evtCode
-    
-  default:
-    break;
-  } // switch nextAction
-  */
-  
   return status;
 } // doActionOperation
 

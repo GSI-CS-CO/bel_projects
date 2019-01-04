@@ -119,7 +119,7 @@ static void help(void) {
   fprintf(stderr, "  modespz             command sets to PZ mode (listen to SuperPZ)\n");
   fprintf(stderr, "  modetest            command sets to test mode (listen to internal 50 Hz trigger)\n");
   fprintf(stderr, "  test <vacc> <pz>    command loads dummy event table for virtual accelerator <vacc> to pulszentrale <pz>\n");
-  fprintf(stderr, "  testfull            command loads dummy event tables for ALL virt acclerators and all PZs\n");
+  fprintf(stderr, "  testfull            command loads dummy event tables for ALL virt accs (except virt acc 0xf) and all PZs\n");
   fprintf(stderr, "  cleartables         command clears all event tables of all PZs\n");
   fprintf(stderr, "  kill                command kills possibly ongoing transactions\n");  
   fprintf(stderr, "\n");
@@ -460,7 +460,7 @@ int main(int argc, char** argv) {
       t1 = getSysTime();
 
       for (k=0; k < WRUNIPZ_NPZ; k++) {
-        for (j=0; j < WRUNIPZ_NVACC; j++) {
+        for (j=0; j < WRUNIPZ_NVACC - 1; j++) {  // only virt acc 0..14
           
           if ((status = wrunipz_transaction_init(device, wrunipz_cmd, wrunipz_confVacc, wrunipz_confStat, j)) !=  WRUNIPZ_STATUS_OK) {
             printf("wr-unipz: transaction init (virt acc %d) - %s\n", j, wrunipz_status_text(status));
@@ -477,8 +477,8 @@ int main(int argc, char** argv) {
             // submit
             wrunipz_transaction_submit(device, wrunipz_cmd, wrunipz_confStat);
           } // else status
-        } // for k
-      } // for j
+        } // for j
+      } // for k
 
       t2 = getSysTime();
       printf("wr-unipz: transaction took %u us\n", (uint32_t)(t2 -t1));
