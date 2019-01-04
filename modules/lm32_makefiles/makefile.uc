@@ -70,7 +70,7 @@ CXX_ARG ?= $(CC_ARG)
 AS_ARG ?= $(CC_ARG)
 
 $(OBJ_DIR):
-	$(QUIET)mkdir $(OBJ_DIR)
+	$(QUIET)mkdir -p $(OBJ_DIR)
 
 $(TARGET_DIR):
 	$(QUIET)mkdir -p $(TARGET_DIR)
@@ -81,18 +81,21 @@ $(DEPENDFILE): $(SOURCE) $(OBJ_DIR) $(ADDITIONAL_DEPENDENCES)
 		case "$${i##*.}" in \
 		"cpp"|"CPP") \
 			$(CXX) -MM $(CXX_ARG) "$$i"; \
-			printf '\t$$(CXX_F) -c -o $$@ $$< $$(CXX_ARG)\n\n'; \
+			[ "$$?" == "0" ] && printf \
+			'\t$$(CXX_F) -c -o $$@ $$< $$(CXX_ARG)\n\n'; \
 		;; \
 		"c"|"C") \
 			$(CC) -MM $(CC_ARG) "$$i"; \
-			printf '\t$$(CC_F) -c -o $$@ $$< $$(CC_ARG)\n\n'; \
+			[ "$$?" == "0" ] && printf \
+			'\t$$(CC_F) -c -o $$@ $$< $$(CC_ARG)\n\n'; \
 		;; \
 		"s"|"S") \
 			$(AS) -MM $(AS_ARG) "$$i"; \
-			printf '\t$$(AS_F) -c -o $$@ $$< $$(AS_ARG)\n\n'; \
+			[ "$$?" == "0" ] && printf \
+			'\t$$(AS_F) -c -o $$@ $$< $$(AS_ARG)\n\n'; \
 		;; \
 		esac; \
-	done) > $(DEPENDFILE)
+	done) > $(DEPENDFILE);
 
 .PHONY: dep
 dep: $(DEPENDFILE)
@@ -117,6 +120,9 @@ clean:
 	$(QUIET)rmdir $(OBJ_DIR)
 	$(QUIET)rm $(TARGET_DIR)$(TARGET).bin
 	$(QUIET)rmdir $(TARGET_DIR)
+ifdef GENERATED_DIR
+	$(QUIET)rmdir $(GENERATED_DIR)
+endif
 
 
 #=================================== EOF ======================================

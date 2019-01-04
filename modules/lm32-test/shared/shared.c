@@ -2,7 +2,7 @@
  *
  * @brief     Testprogram for using shared memory in LM32.
  *
- * @file      static_test.c
+ * @file      shared.c
  * @copyright GSI Helmholtz Centre for Heavy Ion Research GmbH
  * @author    Ulrich Becker <u.becker@gsi.de>
  * @date      26.11.2018
@@ -27,11 +27,9 @@
 #include "aux.h"
 #include "../../tools/wb_slaves.h"
 #include "eb_console_helper.h"
-#include "helper_macros.h"
+#include "scu_lm32_macros.h"
 #include "lm32_assert.h"
-#include "shared_shared_mmap.h"
-
-#define SHARED __attribute__((section(".shared")))
+#include "generated/shared_mmap.h"
 
 typedef struct
 {

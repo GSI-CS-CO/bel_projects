@@ -37,7 +37,8 @@ int foo( void )
     * @todo Fix this bug.
     *      As workaround the macro STATIC_LOCAL will solve this issue for the time being.
     */
-   STATIC_LOCAL int bar = 0;
+   //STATIC_LOCAL int bar = 0;
+    static int bar;
    bar++;
    return bar;
 }

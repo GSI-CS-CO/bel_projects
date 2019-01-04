@@ -1,6 +1,6 @@
 /*!
  *
- * @brief     Some helpfull macro definitions
+ * @brief     Some helpful macro definitions
  *
  * @file      helper_macros.h
  * @copyright GSI Helmholtz Centre for Heavy Ion Research GmbH
