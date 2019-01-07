@@ -12,6 +12,8 @@
 CPU    = lm32
 CROSS_COMPILE ?= $(CPU)-elf-
 
+OUTPUT_FORMAT ?= binary
+
 CC      = $(CROSS_COMPILE)gcc -std=gnu99
 CXX     = $(CROSS_COMPILE)g++ -fno-exceptions -fno-rtti
 LD      = $(CROSS_COMPILE)gcc

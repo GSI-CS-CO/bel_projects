@@ -31,6 +31,8 @@
 #include "lm32_assert.h"
 #include "generated/shared_mmap.h"
 
+#include "wr_time.h"
+
 typedef struct
 {
    uint32_t a;
@@ -48,6 +50,7 @@ void getWishboneTAI()
   uint32_t *pPPSGen;   // WB address of PPS_GEN
   uint32_t taiSecs;    // TAI full seconds
   uint32_t taiNsecs;   // TAI nanoseconds part
+  struct tm oTime;
 
   // find Wishbone address of WR PPS GEN
   pPPSGen   = find_device_adr(WR_PPS_GEN_VENDOR, WR_PPS_GEN_PRODUCT);
@@ -57,6 +60,16 @@ void getWishboneTAI()
 
   //print TAI to UART
   mprintf("TAI: %08u.%09u\n", taiSecs, taiNsecs);
+
+  time64_to_tm( taiSecs, 0, &oTime );
+
+  mprintf( "%d.%d.%d  %02d:%02d:%02d\n",
+           oTime.tm_mday,
+           oTime.tm_mon,
+           oTime.tm_year + 1900,
+           oTime.tm_hour,
+           oTime.tm_min,
+           oTime.tm_sec );
 
 } // getWishboneTAI
 

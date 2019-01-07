@@ -72,6 +72,7 @@ ifdef SHARED_SIZE
    SHARED = "$(SHARED_SIZE)"
 else
    SHARED = "0"
+   SHARED_SIZE = 0
 endif
 
 COMMENT_TEXT = 'This file has been created automatically, do not modify it by hand!'
@@ -237,11 +238,11 @@ SMM += "//! @note $(COMMENT_TEXT)\n"
 SMM += "//! @author Created by makefile.scu\n\n"
 SMM += "\#ifndef $(UCTARGET)\n"
 SMM += "\#define $(UCTARGET)\n\n"
-SMM += "\#define INT_BASE_ADR $(RAM_OFFS)\n"
-SMM += "\#define RAM_SIZE $(RAM_SIZE)\n"
-SMM += "\#define SHARED_SIZE $(SHARED_SIZE)\n"
-SMM += "\#define BUILDID_OFFS $(BUILDID_START)\n"
-SMM += "\#define SHARED_OFFS  $(SHARED_START)\n\n"
+SMM += "\#define INT_BASE_ADR  $(RAM_OFFS)\n"
+SMM += "\#define RAM_SIZE      $(RAM_SIZE)\n"
+SMM += "\#define SHARED_SIZE   $(SHARED_SIZE)\n"
+SMM += "\#define BUILDID_OFFS  $(BUILDID_START)\n"
+SMM += "\#define SHARED_OFFS   $(SHARED_START)\n\n"
 SMM += "\#endif\n"
 
 ADDITIONAL_DEPENDENCES += $(GENERATED_DIR)$(SHARED_MAP_HEADDER)

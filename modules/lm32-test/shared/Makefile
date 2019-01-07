@@ -9,7 +9,12 @@ INCLUDE_DIRS += $(SCU_DIR)
 
 URL = tcp/scuxl0035
 
-SHARED_SIZE     = 8K
+SHARED_SIZE     = 80
+
+SOURCE += wr_time.c
+
+SOURCE += $(SYN_DIR)/modules/lm32-include/aux.c
+SOURCE += $(SYN_DIR)/modules/lm32-include/irq.c
 
 include $(SYN_DIR)/modules/lm32_makefiles/makefile.scu
 #=================================== EOF ======================================

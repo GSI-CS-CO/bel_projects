@@ -75,27 +75,30 @@ $(OBJ_DIR):
 $(TARGET_DIR):
 	$(QUIET)mkdir -p $(TARGET_DIR)
 
+# TODO: Following rule could be made a bit better...
+
 $(DEPENDFILE): $(SOURCE) $(OBJ_DIR) $(ADDITIONAL_DEPENDENCES)
 	$(QUIET)(for i in $(SOURCE); do \
 		printf $(OBJ_DIR); \
 		case "$${i##*.}" in \
 		"cpp"|"CPP") \
 			$(CXX) -MM $(CXX_ARG) "$$i"; \
-			[ "$$?" == "0" ] && printf \
-			'\t$$(CXX_F) -c -o $$@ $$< $$(CXX_ARG)\n\n'; \
+			[ "$$?" != "0" ] && echo :;  # prevents a makefile syntax error \
+			printf '\t$$(CXX_F) -c -o $$@ $$< $$(CXX_ARG)\n\n'; \
 		;; \
 		"c"|"C") \
 			$(CC) -MM $(CC_ARG) "$$i"; \
-			[ "$$?" == "0" ] && printf \
-			'\t$$(CC_F) -c -o $$@ $$< $$(CC_ARG)\n\n'; \
+			[ "$$?" != "0" ] && echo :;  # prevents a makefile syntax error \
+			printf '\t$$(CC_F) -c -o $$@ $$< $$(CC_ARG)\n\n'; \
 		;; \
 		"s"|"S") \
 			$(AS) -MM $(AS_ARG) "$$i"; \
-			[ "$$?" == "0" ] && printf \
-			'\t$$(AS_F) -c -o $$@ $$< $$(AS_ARG)\n\n'; \
+			[ "$$?" != "0" ] && echo :;  # prevents a makefile syntax error \
+			printf '\t$$(AS_F) -c -o $$@ $$< $$(AS_ARG)\n\n'; \
 		;; \
 		esac; \
 	done) > $(DEPENDFILE);
+
 
 .PHONY: dep
 dep: $(DEPENDFILE)
@@ -107,7 +110,7 @@ $(OBJ_DIR)$(TARGET).elf: $(OBJ_DIR)$(LINKER_SCRIPT) $(OBJ_FILES)
 	$(LD_F) -o $@ $(OBJ_FILES) $(LD_FLAGS)
 
 $(TARGET_DIR)$(TARGET).bin: $(OBJ_DIR)$(TARGET).elf $(TARGET_DIR)
-	$(OBJCPY_F) -O binary $(OBJ_DIR)$(TARGET).elf $(TARGET_DIR)$(TARGET).bin
+	$(OBJCPY_F) -O $(OUTPUT_FORMAT) $(OBJ_DIR)$(TARGET).elf $(TARGET_DIR)$(TARGET).bin
 
 .PHONY: size
 size: $(OBJ_DIR)$(TARGET).elf
