@@ -262,6 +262,8 @@ inline void send_fg_param(int slot, int fg_base, unsigned short cntrl_reg) {
       // still in block mode !
     }
     param_sent[fg_num]++;
+  } else {
+    hist_addx(HISTORY_XYZ_MODULE, "buffer empty, no parameter sent", slot);
   }
 }
 
