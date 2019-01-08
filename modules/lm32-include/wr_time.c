@@ -24,8 +24,9 @@
  *  License along with this library. If not, see <http://www.gnu.org/licenses/>.
  *******************************************************************************
  */
-#include "lm32_assert.h"
-#include "wr_time.h"
+#include <mini_sdb.h>
+#include <lm32_assert.h>
+#include <wr_time.h>
 
 /**
  * div_rem - signed 64bit divide with 32bit divisor with remainder
@@ -77,22 +78,32 @@ static const unsigned short __mon_yday[2][13] =
    { 0, 31, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335, 366 }
 };
 
-
-/**
- * time64_to_tm - converts the calendar time to local broken-down time
- *
- * @totalsecs   the number of seconds elapsed since 00:00:00 on January 1, 1970,
- *              Coordinated Universal Time (UTC).
- * @offset      offset seconds adding to totalsecs.
- * @result      pointer to struct tm variable to receive broken-down time
+/*! ---------------------------------------------------------------------------
+ * @see wr_time.h
  */
-void wrTime2tm( SECONDS_T totalsecs, int offset, struct TM_T* pResult )
+WR_TIME_T* wrGetPtr( void )
+{
+   uint32_t *pPPSGen;   // WB address of PPS_GEN
+
+   pPPSGen = find_device_adr( WR_PPS_GEN_VENDOR, WR_PPS_GEN_PRODUCT );
+   if( pPPSGen == (uint32_t*)ERROR_NOT_FOUND )
+      return NULL;
+
+   return ((WR_TIME_T*)(((uint8_t*)pPPSGen) + WR_PPS_GEN_CNTR_NSEC));
+}
+
+
+/*! ---------------------------------------------------------------------------
+ * @see wr_time.h
+ */
+void wrTime2tm( WR_TIME_T* pWr, int offset, TM_T* pResult )
 {
    long days, rem, y;
    int remainder;
    const unsigned short *ip;
 
-   days = div_rem( totalsecs, SECS_PER_DAY, &remainder );
+   LM32_ASSERT( pWr != NULL );
+   days = div_rem( pWr->tsv.tv_sec, SECS_PER_DAY, &remainder );
    rem = remainder;
    rem += offset;
    while( rem < 0 )
@@ -139,6 +150,11 @@ void wrTime2tm( SECONDS_T totalsecs, int offset, struct TM_T* pResult )
 
    pResult->tm_mon = y;
    pResult->tm_mday = days + 1;
+
+   /*
+    * No information in day light saving flag.
+    */
+   pResult->tm_isdst = -1;
 }
 
 /*================================== EOF ====================================*/

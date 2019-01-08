@@ -1,4 +1,5 @@
-MIAN_MODULE := shared.c
+
+MIAN_MODULE := wr-test.c
 
 SYN_DIR = ../../../
 
@@ -9,13 +10,12 @@ INCLUDE_DIRS += $(SCU_DIR)
 
 URL = tcp/scuxl0035
 
-SHARED_SIZE     = 80
+# SHARED_SIZE     = 80
 
-SOURCE += $(SYN_DIR)/modules/lm32-include/shared_memory_helper.c
+SOURCE += $(SYN_DIR)/modules/lm32-include/wr_time.c
+
 SOURCE += $(SYN_DIR)/modules/lm32-include/aux.c
 SOURCE += $(SYN_DIR)/modules/lm32-include/irq.c
 
 include $(SYN_DIR)/modules/lm32_makefiles/makefile.scu
 #=================================== EOF ======================================
-
-

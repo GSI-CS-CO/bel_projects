@@ -1,5 +1,4 @@
 /*!
- *
  * @brief Module to convert WhiteRabbit to a readable date and time format
  *
  * This module has been adopt from the Linux kernel source and customized
@@ -28,52 +27,59 @@
 #define _WR_TIME_H
 
 #include <stdint.h>
+#include <helper_macros.h>
+#include <wb_slaves.h>
+#include <time.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-typedef int32_t SECONDS_T;
-
 #define SECS_PER_HOUR   (60 * 60)
 #define SECS_PER_DAY    (SECS_PER_HOUR * 24)
 
-/*!
- * Similar to the struct tm in userspace <time.h>, but it needs to be here so
- * that the kernel source is self contained.
- */
-struct TM_T
+typedef struct
 {
-   /*!
-    * @brief the number of seconds after the minute, normally in the range
-    *        0 to 59, but can be up to 60 to allow for leap seconds
-    */
-   int tm_sec;
-   /*! @brief the number of minutes after the hour, in the range 0 to 59*/
-   int tm_min;
-   /*! @brief the number of hours past midnight, in the range 0 to 23 */
-   int tm_hour;
-   /*! @brief the day of the month, in the range 1 to 31 */
-   int tm_mday;
-   /*! @brief the number of months since January, in the range 0 to 11 */
-   int tm_mon;
-   /*! @brief the number of years since 1900 */
-   long tm_year;
-   /*! @brief the number of days since Sunday, in the range 0 to 6 */
-   int tm_wday;
-   /*! @brief the number of days since January 1, in the range 0 to 365 */
-   int tm_yday;
-};
+   uint32_t tv_nsec; /*!< @brief nanoseconds */
+   uint32_t tv_sec;  /*!< @brief seconds     */
+} volatile TIMESPEC_T;
+STATIC_ASSERT( sizeof( TIMESPEC_T ) == sizeof(uint64_t) );
+STATIC_ASSERT( offsetof( TIMESPEC_T, tv_sec ) == (WR_PPS_GEN_CNTR_UTCLO-WR_PPS_GEN_CNTR_NSEC) );
 
-/**
- * @brief converts the calendar time to local broken-down time
+/*!
+ * @brief White Rabbit time structure
+ */
+typedef union
+{
+   uint64_t   wrv; /*!< @brief 64 bit White Rabbit value */
+   TIMESPEC_T tsv; /*!< @brief Value for separated access of seconds and nanoseconds */
+} volatile WR_TIME_T;
+STATIC_ASSERT( sizeof( WR_TIME_T ) == sizeof(uint64_t) );
+
+/*!
+ * @brief the time structure defined in <time.h>
+ * @see time.h
+ */
+typedef struct tm TM_T;
+
+/*! ---------------------------------------------------------------------------
+ * @brief Returns a pointer to the value of the White Rabbit timer.
+ * @see WR_TIME_T
+ * @retval ==NULL Function was not successful
+ * @retval !=NULL Pointer to the White Rabbit time structure
+ */
+WR_TIME_T* wrGetPtr( void );
+
+/*! ---------------------------------------------------------------------------
+ * @brief Converts the seconds part of the White Rabbit time into
  *
+ * @see WR_TIME_T
  * @param totalsecs the number of seconds elapsed since 00:00:00 on
  *                  January 1, 1970, Coordinated Universal Time (UTC).
  * @param offset  offset seconds adding to totalsecs.
  * @result pointer to struct TM_T variable to receive broken-down time
  */
-void wrTime2tm( SECONDS_T totalsecs, int offset, struct TM_T* pResult );
+void wrTime2tm( WR_TIME_T* pWr, int offset, TM_T* pResult );
 
 #ifdef __cplusplus
 }

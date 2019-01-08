@@ -39,11 +39,11 @@ SOURCE += $(SYN_DIR)/modules/lm32-include/sdb_add.S
 SOURCE += $(MIAN_MODULE)
 
 INCLUDE_DIRS += $(SYN_DIR)/modules/lm32-include
+INCLUDE_DIRS += $(SYN_DIR)/tools
 INCLUDE_DIRS += $(SYN_DIR)/ip_cores/wrpc-sw/include
 INCLUDE_DIRS += $(SYN_DIR)/ip_cores/wrpc-sw/sdb-lib
 INCLUDE_DIRS += $(SYN_DIR)/ip_cores/wrpc-sw/pp_printf
 INCLUDE_DIRS += $(SYN_DIR)/ip_cores/etherbone-core/hdl/eb_master_core
-
 
 DEFINES += CONFIG_SCU
 DEFINES += CONFIG_WR_NODE
