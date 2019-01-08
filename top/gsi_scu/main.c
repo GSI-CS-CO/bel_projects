@@ -56,6 +56,9 @@
 #define INTERVAL_100MS  100000000ULL
 #define INTERVAL_84MS   84000000ULL
 #define INTERVAL_10MS   10000000ULL
+#define INTERVAL_200US  200000ULL
+#define INTERVAL_150US  150000ULL
+#define INTERVAL_100US  100000ULL
 #define INTERVAL_10US   10000ULL
 #define INTERVAL_5MS    5000000ULL
 #define ALWAYS          0ULL
@@ -813,19 +816,20 @@ typedef struct {
   int task_timeout_cnt;
   uint64_t interval;               /* interval of the task */
   uint64_t lasttick;               /* when was the task ran last */
+  uint64_t timestamp1;             /* timestamp */
   void (*func)(int);               /* pointer to the function of the task */
 }TaskType;
 
 /* task configuration table */
 static TaskType tasks[] = {
-  { 0, 0, {0}, 0, 0, ALWAYS         , 0, dev_sio_handler    }, // sio task 1
-  { 0, 0, {0}, 0, 0, ALWAYS         , 0, dev_sio_handler    }, // sio task 2
-  { 0, 0, {0}, 0, 0, ALWAYS         , 0, dev_sio_handler    }, // sio task 3
-  { 0, 0, {0}, 0, 0, ALWAYS         , 0, dev_sio_handler    }, // sio task 4
-  { 0, 0, {0}, 0, 0, ALWAYS         , 0, dev_bus_handler    },
-  { 0, 0, {0}, 0, 0, ALWAYS         , 0, scu_bus_handler    },
-  { 0, 0, {0}, 0, 0, ALWAYS         , 0, ecaHandler         },
-  { 0, 0, {0}, 0, 0, ALWAYS         , 0, sw_irq_handler     },
+  { 0, 0, {0}, 0, 0, ALWAYS         , 0, 0, dev_sio_handler    }, // sio task 1
+  { 0, 0, {0}, 0, 0, ALWAYS         , 0, 0, dev_sio_handler    }, // sio task 2
+  { 0, 0, {0}, 0, 0, ALWAYS         , 0, 0, dev_sio_handler    }, // sio task 3
+  { 0, 0, {0}, 0, 0, ALWAYS         , 0, 0, dev_sio_handler    }, // sio task 4
+  { 0, 0, {0}, 0, 0, ALWAYS         , 0, 0, dev_bus_handler    },
+  { 0, 0, {0}, 0, 0, ALWAYS         , 0, 0, scu_bus_handler    },
+  { 0, 0, {0}, 0, 0, ALWAYS         , 0, 0, ecaHandler         },
+  { 0, 0, {0}, 0, 0, ALWAYS         , 0, 0, sw_irq_handler     },
 
 };
 
@@ -900,6 +904,20 @@ void dev_sio_handler(int id) {
         m = remove_msg(&msg_buf[0], DEVSIO);
 
       task_ptr[id].slave_nr = m.msg + 1;
+      task_ptr[id].timestamp1 = getSysTime();
+      task_ptr[id].state = 1;
+      break; //yield
+
+    case 1:
+      // wait for 200 us
+      if (getSysTime() < (task_ptr[id].timestamp1 + INTERVAL_200US))
+        break; //yield
+      else
+        task_ptr[id].state = 2;
+        break; //yield
+
+
+    case 2:
       //mprintf("state %d\n", task_ptr[id].state);
       /* poll all pending regs on the dev bus; non blocking read operation */
       for (i = 0; i < MAX_FG_CHANNELS; i++) {
@@ -916,10 +934,10 @@ void dev_sio_handler(int id) {
       // clear old irq data
       for (i = 0; i < MAX_FG_CHANNELS; i++)
         task_ptr[id].irq_data[i] = 0;
-      task_ptr[id].state = 1;
+      task_ptr[id].state = 3;
       break;
 
-    case 1:
+    case 3:
       //mprintf("state %d\n", task_ptr[id].state);
       /* if timeout reached, proceed with next task */
       if (task_ptr[id].task_timeout_cnt > TASK_TIMEOUT) {
@@ -958,11 +976,11 @@ void dev_sio_handler(int id) {
       } else {
         task_ptr[id].i = 0; // start next time from 0
         task_ptr[id].task_timeout_cnt = 0;
-        task_ptr[id].state = 2;
+        task_ptr[id].state = 4;
         break;
       }
 
-    case 2:
+    case 4:
       //mprintf("state %d\n", task_ptr[id].state);
       /* handle irqs for ifas with active pending regs; non blocking write */
       for (i = 0; i < MAX_FG_CHANNELS; i++) {
@@ -974,10 +992,10 @@ void dev_sio_handler(int id) {
           if ((status = scub_write_mil(scub_base, task_ptr[id].slave_nr, 0, FC_IRQ_ACT_WR | dev)) != OKAY) dev_failure(status, 22, "dev_sio end handle");
         }
       }
-      task_ptr[id].state = 3;
+      task_ptr[id].state = 5;
       break;
 
-    case 3:
+    case 5:
       //mprintf("state %d\n", task_ptr[id].state);
       /* dummy data aquisition */
       for (i = 0; i < MAX_FG_CHANNELS; i++) {
@@ -988,9 +1006,9 @@ void dev_sio_handler(int id) {
           if ((status = scub_set_task_mil(scub_base, task_ptr[id].slave_nr, id + i + 1, FC_CNTRL_RD | dev)) != OKAY) dev_failure(status, 23, "dev_sio read daq");
         }
       }
-      task_ptr[id].state = 4;
+      task_ptr[id].state = 6;
       break;
-    case 4:
+    case 6:
       //mprintf("state %d\n", task_ptr[id].state);
       /* if timeout reached, proceed with next task */
       if (task_ptr[id].task_timeout_cnt > TASK_TIMEOUT) {
