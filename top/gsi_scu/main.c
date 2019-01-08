@@ -789,19 +789,20 @@ void ecaHandler()
 
     // here: do s.th. according to action
     switch (actTag) {
-    case MY_ECA_TAG:
-      // send broadcast start to mil extension
-      if (dev_mil_armed) scu_mil_base[MIL_SIO3_TX_CMD] = 0x20ff;
-      // send broadcast start to active sio slaves
-      if (dev_sio_armed) {
-        // select active sio slaves
-        scub_base[OFFS(0) + MULTI_SLAVE_SEL] = active_sios;
-        // send broadcast
-        scub_base[OFFS(13) + MIL_SIO3_TX_CMD] = 0x20ff;
-      }
-      //mprintf("EvtID: 0x%08x%08x; deadline: 0x%08x%08x; flag: 0x%08x\n", evtIdHigh, evtIdLow, evtDeadlHigh, evtDeadlLow, flag);
+      case MY_ECA_TAG:
+        // send broadcast start to mil extension
+        if (dev_mil_armed) scu_mil_base[MIL_SIO3_TX_CMD] = 0x20ff;
+        // send broadcast start to active sio slaves
+        if (dev_sio_armed) {
+          // select active sio slaves
+          scub_base[OFFS(0) + MULTI_SLAVE_SEL] = active_sios;
+          // send broadcast
+          scub_base[OFFS(13) + MIL_SIO3_TX_CMD] = 0x20ff;
+        }
+        //mprintf("EvtID: 0x%08x%08x; deadline: 0x%08x%08x; flag: 0x%08x\n", evtIdHigh, evtIdLow, evtDeadlHigh, evtDeadlLow, flag);
       break;
-    default:
+    
+      default:
       break;
     } // switch
 
