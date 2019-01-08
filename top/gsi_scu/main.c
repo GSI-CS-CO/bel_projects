@@ -896,8 +896,6 @@ void dev_sio_handler(int id) {
   static TaskType *task_ptr;              // task pointer
   task_ptr = tsk_getConfig();             // get a pointer to the task configuration
 
-  //if (task_ptr[id].state != 0)
-    ////mprintf("sio task id: %d state: %d\n", id, task_ptr[id].state);
   switch(task_ptr[id].state) {
     case 0:
       // we have nothing to do
@@ -915,33 +913,24 @@ void dev_sio_handler(int id) {
       // wait for 200 us
       if (getSysTime() < (task_ptr[id].timestamp1 + INTERVAL_200US))
         break; //yield
-      else
+      else {
+        /* poll all pending regs on the dev bus; non blocking read operation */
+        for (i = 0; i < MAX_FG_CHANNELS; i++) {
+            slot = fg_macros[fg_regs[i].macro_number] >> 24;
+            dev = (fg_macros[fg_regs[i].macro_number] & 0x00ff0000) >> 16;
+            /* test only ifas connected to sio */
+            if(((slot & 0xf) == task_ptr[id].slave_nr ) && (slot & DEV_SIO)) {
+              if ((status = scub_set_task_mil(scub_base, task_ptr[id].slave_nr, id + i + 1, FC_IRQ_ACT_RD | dev)) != OKAY) dev_failure(status, 20, "dev_sio set task");
+            }
+        }
+        // clear old irq data
+        for (i = 0; i < MAX_FG_CHANNELS; i++)
+          task_ptr[id].irq_data[i] = 0;
         task_ptr[id].state = 2;
-        break; //yield
-
+        break;
+      }
 
     case 2:
-      //mprintf("state %d\n", task_ptr[id].state);
-      /* poll all pending regs on the dev bus; non blocking read operation */
-      for (i = 0; i < MAX_FG_CHANNELS; i++) {
-        //if (fg_regs[i].state > STATE_STOPPED) {
-        //if (fg_regs[i].state > STATE_STOPPED) {
-          slot = fg_macros[fg_regs[i].macro_number] >> 24;
-          dev = (fg_macros[fg_regs[i].macro_number] & 0x00ff0000) >> 16;
-          /* test only ifas connected to sio */
-          if(((slot & 0xf) == task_ptr[id].slave_nr ) && (slot & DEV_SIO)) {
-            if ((status = scub_set_task_mil(scub_base, task_ptr[id].slave_nr, id + i + 1, FC_IRQ_ACT_RD | dev)) != OKAY) dev_failure(status, 20, "dev_sio set task");
-          }
-        //}
-      }
-      // clear old irq data
-      for (i = 0; i < MAX_FG_CHANNELS; i++)
-        task_ptr[id].irq_data[i] = 0;
-      task_ptr[id].state = 3;
-      break;
-
-    case 3:
-      //mprintf("state %d\n", task_ptr[id].state);
       /* if timeout reached, proceed with next task */
       if (task_ptr[id].task_timeout_cnt > TASK_TIMEOUT) {
         mprintf("timeout in dev_sio_handle, state 1, taskid %d , index %d\n", id, task_ptr[id].i);
@@ -971,20 +960,17 @@ void dev_sio_handler(int id) {
         //}
       }
       if (status == RCV_TASK_BSY) {
-        //mprintf("yield\n");
         task_ptr[id].i = i; // start next time from i
         task_ptr[id].task_timeout_cnt++;
-        //mprintf("rcv_tsk_bsy, timout cnt %d\n", task_ptr[id].task_timeout_cnt);
         break; //yield
       } else {
         task_ptr[id].i = 0; // start next time from 0
         task_ptr[id].task_timeout_cnt = 0;
-        task_ptr[id].state = 4;
+        task_ptr[id].state = 3;
         break;
       }
 
-    case 4:
-      //mprintf("state %d\n", task_ptr[id].state);
+    case 3:
       /* handle irqs for ifas with active pending regs; non blocking write */
       for (i = 0; i < MAX_FG_CHANNELS; i++) {
         if (task_ptr[id].irq_data[i] & (DEV_STATE_IRQ | DEV_DRQ)) { // any irq pending?
@@ -995,11 +981,10 @@ void dev_sio_handler(int id) {
           if ((status = scub_write_mil(scub_base, task_ptr[id].slave_nr, 0, FC_IRQ_ACT_WR | dev)) != OKAY) dev_failure(status, 22, "dev_sio end handle");
         }
       }
-      task_ptr[id].state = 5;
+      task_ptr[id].state = 4;
       break;
 
-    case 5:
-      //mprintf("state %d\n", task_ptr[id].state);
+    case 4:
       /* dummy data aquisition */
       for (i = 0; i < MAX_FG_CHANNELS; i++) {
         if (task_ptr[id].irq_data[i] & (DEV_STATE_IRQ | DEV_DRQ)) { // any irq pending?
@@ -1009,10 +994,10 @@ void dev_sio_handler(int id) {
           if ((status = scub_set_task_mil(scub_base, task_ptr[id].slave_nr, id + i + 1, FC_CNTRL_RD | dev)) != OKAY) dev_failure(status, 23, "dev_sio read daq");
         }
       }
-      task_ptr[id].state = 6;
+      task_ptr[id].state = 5;
       break;
-    case 6:
-      //mprintf("state %d\n", task_ptr[id].state);
+
+    case 5:
       /* if timeout reached, proceed with next task */
       if (task_ptr[id].task_timeout_cnt > TASK_TIMEOUT) {
         mprintf("timeout in dev_sio_handle, state 4, taskid %d , index %d\n", id, task_ptr[id].i);
@@ -1037,11 +1022,9 @@ void dev_sio_handler(int id) {
               mprintf("unknown error when reading task %d\n", task_ptr[id].slave_nr);
             }
           }
-          //mprintf("daq: 0x%x\n", dummy_aquisition);
         }
       }
       if (status == RCV_TASK_BSY) {
-        //mprintf("yield\n");
         task_ptr[id].i = i; // start next time from i
         task_ptr[id].task_timeout_cnt++;
         break; //yield
@@ -1078,26 +1061,34 @@ void dev_bus_handler(int id) {
       else
         m = remove_msg(&msg_buf[0], DEVBUS);
 
-      //mprintf("state %d\n", task_ptr[id].state);
-      /* poll all pending regs on the dev bus; non blocking read operation */
-      for (i = 0; i < MAX_FG_CHANNELS; i++) {
-        //if (fg_regs[i].state > STATE_STOPPED) {
-          slot = fg_macros[fg_regs[i].macro_number] >> 24;
-          dev = (fg_macros[fg_regs[i].macro_number] & 0x00ff0000) >> 16;
-          /* test only ifas connected to mil extension */
-          if(slot & DEV_MIL_EXT) {
-            if ((status = set_task_mil(scu_mil_base, id + i + 1, FC_IRQ_ACT_RD | dev)) != OKAY) dev_failure(status, 20, "");
-          }
-        //}
-      }
-      // clear old irq data
-      for (i = 0; i < MAX_FG_CHANNELS; i++)
-        task_ptr[id].irq_data[i] = 0;
+      task_ptr[id].timestamp1 = getSysTime();
       task_ptr[id].state = 1;
-      break;
+      break; //yield
 
     case 1:
-      //mprintf("state %d\n", task_ptr[id].state);
+      // wait for 200us
+      if (getSysTime() < (task_ptr[id].timestamp1 + INTERVAL_200US))
+        break; //yield
+      else {
+
+        /* poll all pending regs on the dev bus; non blocking read operation */
+        for (i = 0; i < MAX_FG_CHANNELS; i++) {
+            slot = fg_macros[fg_regs[i].macro_number] >> 24;
+            dev = (fg_macros[fg_regs[i].macro_number] & 0x00ff0000) >> 16;
+            /* test only ifas connected to mil extension */
+            if(slot & DEV_MIL_EXT) {
+              if ((status = set_task_mil(scu_mil_base, id + i + 1, FC_IRQ_ACT_RD | dev)) != OKAY) dev_failure(status, 20, "");
+            }
+          //}
+        }
+        // clear old irq data
+        for (i = 0; i < MAX_FG_CHANNELS; i++)
+          task_ptr[id].irq_data[i] = 0;
+        task_ptr[id].state = 2;
+        break;
+      }
+
+    case 2:
       /* if timeout reached, proceed with next task */
       if (task_ptr[id].task_timeout_cnt > TASK_TIMEOUT) {
         task_ptr[id].i++;
@@ -1105,7 +1096,6 @@ void dev_bus_handler(int id) {
       }
       /* fetch status from dev bus controller; */
       for (i = task_ptr[id].i; i < MAX_FG_CHANNELS; i++) {
-        //if (fg_regs[i].state > STATE_STOPPED) {
           slot = fg_macros[fg_regs[i].macro_number] >> 24;
           dev = (fg_macros[fg_regs[i].macro_number] & 0x00ff0000) >> 16;
           /* test only ifas connected to mil extension */
@@ -1124,22 +1114,19 @@ void dev_bus_handler(int id) {
             }
 
           }
-        //}
       }
       if (status == RCV_TASK_BSY) {
-        //mprintf("yield\n");
         task_ptr[id].i = i; // start next time from i
         task_ptr[id].task_timeout_cnt++;
         break; //yield
       } else {
         task_ptr[id].i = 0; // start next time from 0
         task_ptr[id].task_timeout_cnt = 0;
-        task_ptr[id].state = 2;
+        task_ptr[id].state = 3;
         break;
       }
 
-    case 2:
-      //mprintf("state %d\n", task_ptr[id].state);
+    case 3:
       /* handle irqs for ifas with active pending regs; non blocking write */
       for (i = 0; i < MAX_FG_CHANNELS; i++) {
         if (task_ptr[id].irq_data[i] & (DEV_STATE_IRQ | DEV_DRQ)) { // any irq pending?
@@ -1151,11 +1138,10 @@ void dev_bus_handler(int id) {
 
         }
       }
-      task_ptr[id].state = 3;
+      task_ptr[id].state = 4;
       break;
 
-    case 3:
-      //mprintf("state %d\n", task_ptr[id].state);
+    case 4:
       /* dummy data aquisition */
       for (i = 0; i < MAX_FG_CHANNELS; i++) {
         if (task_ptr[id].irq_data[i] & (DEV_STATE_IRQ | DEV_DRQ)) { // any irq pending?
@@ -1165,10 +1151,10 @@ void dev_bus_handler(int id) {
           if ((status = set_task_mil(scu_mil_base, id + i + 1, FC_CNTRL_RD | dev)) != OKAY) dev_failure(status, 23, "");
         }
       }
-      task_ptr[id].state = 4;
+      task_ptr[id].state = 5;
       break;
-    case 4:
-      //mprintf("state %d\n", task_ptr[id].state);
+
+    case 5:
       /* if timeout reached, proceed with next task */
       if (task_ptr[id].task_timeout_cnt > TASK_TIMEOUT) {
         task_ptr[id].i++;
@@ -1192,11 +1178,9 @@ void dev_bus_handler(int id) {
               mprintf("unknown error when reading task %d\n", task_ptr[id].slave_nr);
             }
           }
-          //mprintf("daq: 0x%x\n", dummy_aquisition);
         };
       }
       if (status == RCV_TASK_BSY) {
-        //mprintf("yield\n");
         task_ptr[id].i = i; // start next time from i
         task_ptr[id].task_timeout_cnt++;
         break; //yield
