@@ -270,9 +270,10 @@ $(GENERATED_DIR)$(BUILD_ID_FILE): $(GENERATED_DIR)
 $(OBJ_DIR)$(LINKER_SCRIPT): #$(OBJ_DIR)
 	$(QUIET)(printf %b $(LDS)) > $@
 
-ifdef URL
+ifdef TARGET_URL_FILE
 
-CPU_ID ?= u0
+URL        = $(shell cat $(TARGET_URL_FILE))
+CPU_ID     ?= u0
 CPU_OFFSET ?= 0
 
 .PHONY: load

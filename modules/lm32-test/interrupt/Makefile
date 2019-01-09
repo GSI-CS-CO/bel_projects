@@ -8,7 +8,7 @@ SYN_DIR = ../../../
 INCLUDE_DIRS = ./
 INCLUDE_DIRS += $(SYN_DIR)top/gsi_scu
 
-URL = tcp/scuxl0035
+TARGET_URL_FILE = ~/target.url
 
 include $(SYN_DIR)/modules/lm32_makefiles/makefile.scu
 #=================================== EOF ======================================
