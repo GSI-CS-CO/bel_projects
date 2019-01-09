@@ -939,7 +939,6 @@ void dev_sio_handler(int id) {
       }
       /* fetch status from dev bus controller; */
       for (i = task_ptr[id].i; i < MAX_FG_CHANNELS; i++) {
-        //if (fg_regs[i].state > STATE_STOPPED) {
           slot = fg_macros[fg_regs[i].macro_number] >> 24;
           dev = (fg_macros[fg_regs[i].macro_number] & 0x00ff0000) >> 16;
           /* test only ifas connected to sio */
@@ -957,7 +956,6 @@ void dev_sio_handler(int id) {
               }
             }
           }
-        //}
       }
       if (status == RCV_TASK_BSY) {
         task_ptr[id].i = i; // start next time from i
@@ -1079,7 +1077,6 @@ void dev_bus_handler(int id) {
             if(slot & DEV_MIL_EXT) {
               if ((status = set_task_mil(scu_mil_base, id + i + 1, FC_IRQ_ACT_RD | dev)) != OKAY) dev_failure(status, 20, "");
             }
-          //}
         }
         // clear old irq data
         for (i = 0; i < MAX_FG_CHANNELS; i++)
