@@ -35,7 +35,7 @@ void main( void )
    clrscr();
    mprintf( "White Rabbit time\n");
 
-   WR_TIME_T* pWrt = wrGetPtr();
+   WR_PPS_T* pWrt = wrGetPtr();
    if( pWrt == NULL )
    {
       mprintf( ESC_FG_RED "Error could not initialize WR-pointer!\n" ESC_NORMAL );
@@ -44,21 +44,23 @@ void main( void )
 
 #if 1
    TM_T tm;
-   uint32_t lastSecs = (uint32_t)~0;
+   typeof(pWrt->tsv.tv_secLo) lastSecs = (typeof(pWrt->tsv.tv_secLo))~0L;
    do
    {
-      if( lastSecs == pWrt->tsv.tv_sec )
-         continue;
-      lastSecs = pWrt->tsv.tv_sec;
-      wrTime2tm( pWrt, 0, &tm );
-      gotoxy( 1, 2 );
-      mprintf( "%d.%d.%d  %02d:%02d:%02d\n",
+      if( lastSecs != pWrt->tsv.tv_secLo )
+      {
+         lastSecs = pWrt->tsv.tv_secLo;
+         wrTime2tm( pWrt, 0, &tm );
+         gotoxy( 1, 2 );
+         mprintf( "%d.%d.%d  %02d:%02d:%02d and %d ns",
                tm.tm_mday,
                tm.tm_mon,
                tm.tm_year + 1900,
                tm.tm_hour,
                tm.tm_min,
-               tm.tm_sec );
+               tm.tm_sec,
+               pWrt->tsv.tv_nsec );
+      }
    }
    while( 1 );
 #endif

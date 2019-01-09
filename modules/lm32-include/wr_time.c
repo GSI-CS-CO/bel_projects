@@ -81,29 +81,29 @@ static const unsigned short __mon_yday[2][13] =
 /*! ---------------------------------------------------------------------------
  * @see wr_time.h
  */
-WR_TIME_T* wrGetPtr( void )
+WR_PPS_T* wrGetPtr( void )
 {
-   uint32_t *pPPSGen;   // WB address of PPS_GEN
+   WR_PPS_T* pPPSGen;   // WB address of PPS_GEN
 
-   pPPSGen = find_device_adr( WR_PPS_GEN_VENDOR, WR_PPS_GEN_PRODUCT );
-   if( pPPSGen == (uint32_t*)ERROR_NOT_FOUND )
+   pPPSGen = (WR_PPS_T*)find_device_adr( WR_PPS_GEN_VENDOR, WR_PPS_GEN_PRODUCT );
+   if( pPPSGen == (WR_PPS_T*)ERROR_NOT_FOUND )
       return NULL;
 
-   return ((WR_TIME_T*)(((uint8_t*)pPPSGen) + WR_PPS_GEN_CNTR_NSEC));
+   return pPPSGen;
 }
 
 
 /*! ---------------------------------------------------------------------------
  * @see wr_time.h
  */
-void wrTime2tm( WR_TIME_T* pWr, int offset, TM_T* pResult )
+void wrTime2tm( WR_PPS_T* pWr, int offset, TM_T* pResult )
 {
    long days, rem, y;
    int remainder;
    const unsigned short *ip;
 
    LM32_ASSERT( pWr != NULL );
-   days = div_rem( pWr->tsv.tv_sec, SECS_PER_DAY, &remainder );
+   days = div_rem( pWr->tsv.tv_secLo, SECS_PER_DAY, &remainder );
    rem = remainder;
    rem += offset;
    while( rem < 0 )
