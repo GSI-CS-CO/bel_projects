@@ -1079,7 +1079,6 @@ void dev_bus_handler(int id) {
             if(slot & DEV_MIL_EXT) {
               if ((status = set_task_mil(scu_mil_base, id + i + 1, FC_IRQ_ACT_RD | dev)) != OKAY) dev_failure(status, 20, "");
             }
-          //}
         }
         // clear old irq data
         for (i = 0; i < MAX_FG_CHANNELS; i++)
