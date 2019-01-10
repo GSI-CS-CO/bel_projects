@@ -28,7 +28,7 @@ LDS += ".shared ADDR(.buildid) + $(BUILDID_SIZE) : { _fshared = .; PROVIDE(_star
 LDS += ".text ADDR(.shared)    + $(SHARED) : { _ftext = .; *(.text .text.*)	_etext = .; } > RAM\n"
 LDS += ".rodata	  : { _frodata = .; *(.rodata .rodata.*) _erodata = .; } > RAM\n"
 LDS += ".data			: { _fdata   = .; *(.data .data.*)     _edata   = .; } > RAM\n"
-LDS += ".bss			: { _fbss    = .; *(.bss .bss.*)       _ebss    = .; } > RAM = 0\n}\n"
+LDS += "_fbss = .;\n .bss : { *(.bss .bss.*) } > RAM\n_ebss = .;\n}\n"
 
 
 PKG := "library ieee;\n"
