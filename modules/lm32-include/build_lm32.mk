@@ -26,8 +26,8 @@ LDS += ".boot			: { _fboot   = .; *(.boot); 			     _eboot   = .; } > RAM\n"
 LDS += ".buildid ADDR(.boot)   + $(BOOTL_SIZE) : { _fbuildid = .; *(.buildid .buildid.*) _ebuildid = .; } > RAM\n"
 LDS += ".shared ADDR(.buildid) + $(BUILDID_SIZE) : { _fshared = .; PROVIDE(_startshared = .);*(.shared .shared.*)	_eshared = .; } > RAM\n"	
 LDS += ".text ADDR(.shared)    + $(SHARED) : { _ftext = .; *(.text .text.*)	_etext = .; } > RAM\n"
-LDS += ".rodata	  : { _frodata = .; *(.rodata .rodata.*) _erodata = .; } > RAM\n"
-LDS += ".data			: { _fdata   = .; *(.data .data.*)     _edata   = .; } > RAM\n"
+LDS += "_frodata = .;\n .rodata  : { *(.rodata .rodata.*) } > RAM\n_erodata = .;\n"
+LDS += "_fdata   = .;\n .data : { *(.data .data.*) } > RAM\n_edata   = .;\n"
 LDS += "_fbss = .;\n .bss : { *(.bss .bss.*) } > RAM\n_ebss = .;\n}\n"
 
 
