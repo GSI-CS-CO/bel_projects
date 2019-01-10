@@ -65,7 +65,9 @@ prog:
 	$(CC) $(CFLAGS) -o $@ $^ $(STUBS) $(LDFLAGS)
 
 %.elf:	buildid.c ram.ld $(TARGET)_shared_mmap.h
-	$(CC) $(CFLAGS) -o $@ $^ $(STUBS) $(INCLUDES) $(LDFLAGS)
+	$(CC) $(CFLAGS) -o $@ buildid.c $(TARGET)_shared_mmap.h $(STUBS) $(INCLUDES) $(LDFLAGS)
+
+%.elf:  ram.ld
 
 %.bin:	%.elf
 	$(OBJCOPY) -O binary $< $@
