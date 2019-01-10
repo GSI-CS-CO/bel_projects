@@ -45,8 +45,7 @@ INCLUDE_DIRS += $(SYN_DIR)/ip_cores/wrpc-sw/sdb-lib
 INCLUDE_DIRS += $(SYN_DIR)/ip_cores/wrpc-sw/pp_printf
 INCLUDE_DIRS += $(SYN_DIR)/ip_cores/etherbone-core/hdl/eb_master_core
 
-DEFINES += CONFIG_SCU
-DEFINES += CONFIG_WR_NODE
+# DEFINES += CONFIG_WR_NODE
 DEFINES += CONFIG_PRINT_BUFSIZE=$(PRINT_BUFSIZE)
 DEFINES += SDBFS_BIG_ENDIAN
 DEFINES += USRCPUCLK=$(USRCPUCLK)
@@ -54,7 +53,7 @@ DEFINES += USRCPUCLK=$(USRCPUCLK)
 CODE_OPTIMIZATION ?= s
 
 CFLAGS += -O$(CODE_OPTIMIZATION)
-# CFLAGS += -nostdlib
+CFLAGS += -nostdlib
 CFLAGS += -mmultiply-enabled
 CFLAGS += -mbarrel-shift-enabled
 

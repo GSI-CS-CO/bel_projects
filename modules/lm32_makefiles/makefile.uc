@@ -9,7 +9,14 @@
 ## Date:    17.12.2018                                                       ##
 ###############################################################################
 
-ifeq ($(VERBOSE), 1)
+ifndef SOURCE
+  $(error No sources defined in variable SOURCE !)
+endif
+
+_SOURCE = $(strip $(SOURCE))
+_INCLUDE_DIRS = $(strip $(INCLUDE_DIRS))
+
+ifeq ($(V), 1)
    CC_F      = $(CC)
    CXX_F     = $(CXX)
    CPP_F     = $(CPP)
@@ -18,7 +25,6 @@ ifeq ($(VERBOSE), 1)
    AS_F      = $(AS)
    AR_F      = $(AR)
    OBJCPY_F  = $(OBJCPY)
-   QUIET     = ""
 else
    CXX_MSG     := "CXX"
    CC_MSG      := "CC"
@@ -30,17 +36,17 @@ else
    OBJCPY_MSG  := "OBJCPY"
    STRIP_MSG   := "STRIP"
    FORMAT      := @printf "[ %s %s ]\t%s\n"
-ifdef NO_COLORED
+ ifdef NO_COLORED
    FORMAT_L    := $(FORMAT)
    FORMAT_R    := $(FORMAT)
-else
+ else
    ESC_FG_CYAN    := "\\e[36m"
    ESC_FG_MAGNETA := "\\e[35m"
    ESC_BOLD       := "\\e[1m"
    ESC_NORMAL     := "\\e[0m"
    FORMAT_L    := @printf "[ %s %s ]\t$(ESC_FG_MAGNETA)%s$(ESC_NORMAL)\n"
    FORMAT_R    := @printf "[ %s %s ]\t$(ESC_FG_CYAN)$(ESC_BOLD)%s$(ESC_NORMAL)\n"
-endif
+ endif
    CC_F        = $(FORMAT)   $(CPU) $(CC_MSG)     $(@); $(CC)
    CXX_F       = $(FORMAT)   $(CPU) $(CXX_MSG)    $(@); $(CXX)
    CPP_F       = $(FORMAT)   $(CPU) $(CPP_MSG)    $(@); $(CPP)
@@ -52,14 +58,14 @@ endif
    QUIET       = @
 endif
 
-OPT_INCLUDE := $(addprefix -I,$(INCLUDE_DIRS) )
+OPT_INCLUDE := $(addprefix -I,$(_INCLUDE_DIRS) )
 OPT_DEFINES := $(addprefix -D,$(DEFINES) )
 ARG_LIBS    := $(addprefix -l,$(LIBS) )
 
 OBJ_DIR    ?= ./$(CPU)_obj/
 TARGET_DIR ?= ./$(CPU)_bin/
 
-OBJ_FILES := $(addprefix $(OBJ_DIR),$(addsuffix .o,$(basename $(notdir $(SOURCE)))))
+OBJ_FILES := $(addprefix $(OBJ_DIR),$(addsuffix .o,$(basename $(notdir $(_SOURCE)))))
 
 all: $(TARGET_DIR)$(TARGET).bin size
 
@@ -77,8 +83,8 @@ $(TARGET_DIR):
 
 # TODO: Following rule could be made a bit better...
 
-$(DEPENDFILE): $(SOURCE) $(OBJ_DIR) $(ADDITIONAL_DEPENDENCES)
-	$(QUIET)(for i in $(SOURCE); do \
+$(DEPENDFILE): $(_SOURCE) $(OBJ_DIR) $(ADDITIONAL_DEPENDENCES)
+	$(QUIET)(for i in $(_SOURCE); do \
 		printf $(OBJ_DIR); \
 		case "$${i##*.}" in \
 		"cpp"|"CPP") \

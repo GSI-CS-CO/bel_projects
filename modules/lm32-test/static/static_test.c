@@ -28,17 +28,11 @@
 #include "eb_console_helper.h"
 #include "helper_macros.h"
 #include "../../top/gsi_scu/daq.h"
+
+
 int foo( void )
 {
-   /*!
-    * @bug local static variables (here: static int bar) will not initialized by zero! \n
-    *      Initializing by all other values (except zero) works correct.  \n
-    *      Perhaps this issue could be in the startup-code crt0.S resp. crt0.o.
-    * @todo Fix this bug.
-    *      As workaround the macro STATIC_LOCAL will solve this issue for the time being.
-    */
-   //STATIC_LOCAL int bar = 0;
-    static int bar;
+   static int bar;
    bar++;
    return bar;
 }
@@ -64,19 +58,18 @@ BF_T g_bf =
 
 void printBits16( uint16_t bits )
 {
-   for( uint16_t m = 1 << 8 * sizeof(uint16_t) - 1; m != 0; m >>= 1 )
+   for( uint16_t m = 1 << BIT_SIZEOF(uint16_t) - 1; m != 0; m >>= 1 )
       mprintf( "%c", (m & bits)? '1' : '0' );
    mprintf( "\n" );
 }
 
 void printBF( BF_T* pThis )
 {
-   mprintf( "a4 = %d\n", pThis->a4 );
+   mprintf( "\na4 = %d\n", pThis->a4 );
    mprintf( "b1 = %d\n", pThis->b1 );
    mprintf( "c3 = %d\n", pThis->c3 );
    mprintf( "d1 = %d\n", pThis->d1 );
    mprintf( "e1 = %d\n", pThis->e1 );
-   mprintf( "\n" );
    printBits16( *(uint16_t*)pThis );
 }
 

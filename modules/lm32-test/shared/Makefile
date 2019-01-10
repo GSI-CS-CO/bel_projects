@@ -7,7 +7,7 @@ SCU_DIR = $(SYN_DIR)top/gsi_scu
 INCLUDE_DIRS = ./
 INCLUDE_DIRS += $(SCU_DIR)
 
-URL = tcp/scuxl0035
+TARGET_URL_FILE = ~/target.url
 
 SHARED_SIZE     = 80
 

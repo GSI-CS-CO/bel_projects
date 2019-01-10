@@ -26,6 +26,10 @@
 #ifndef _WR_TIME_H
 #define _WR_TIME_H
 
+#ifndef CONFIG_WR_NODE
+  #error Compiler switch CONFIG_WR_NODE has to be defined in your Makefile!
+#endif
+
 #include <stdint.h>
 #include <helper_macros.h>
 #include <wb_slaves.h>
