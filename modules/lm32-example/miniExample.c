@@ -55,12 +55,24 @@ extern uint32_t*       _startshared[];
 unsigned int cpuId, cpuQty;
 #define SHARED __attribute__((section(".shared")))
 uint64_t SHARED dummy = 0;
+int cnt_global = 0; // init with 0 is unsafe in our toolchain, every value != 0 works
 
 void init(){
   discoverPeriphery();   // mini-sdb: get info on important Wishbone infrastructure
   uart_init_hw();        // init UART, required for printf... 
   cpuId = getCpuIdx();   // get ID of THIS CPU 
 } // init
+
+
+int counter_static() {
+  static int cnt = 0; // init with 0 is unsafe in our toolchain, every value != 0 works
+
+  return cnt++;
+}
+
+int counter_global() {
+  return cnt_global++;
+}
 
 void main(void) {
   int j;
@@ -73,7 +85,7 @@ void main(void) {
   mprintf("Hello World!\n");
 
   while (1) {
-    mprintf("boring...\n");
+    mprintf("boring...%d...%d\n", counter_static(), counter_global());
     for (j = 0; j < (31000000); ++j) { asm("nop"); }
   } // while
 } /* main */
