@@ -23,6 +23,7 @@ SIZE    = $(CROSS_COMPILE)size
 AS      = $(CROSS_COMPILE)gcc
 AR      = $(CROSS_COMPILE)ar
 CPP     = $(CROSS_COMPILE)cpp
+STRINGS = $(CROSS_COMPILE)strings
 
 include $(MAKEFILE_DIR)/makefile.uc
 #=================================== EOF ======================================

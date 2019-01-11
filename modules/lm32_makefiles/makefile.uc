@@ -112,22 +112,35 @@ dep: $(DEPENDFILE)
 
 -include $(DEPENDFILE)
 
-$(OBJ_DIR)$(TARGET).elf: $(OBJ_DIR)$(LINKER_SCRIPT) $(OBJ_FILES)
+ELF_FILE = $(OBJ_DIR)$(TARGET).elf
+BIN_FILE = $(TARGET_DIR)$(TARGET).bin
+
+$(ELF_FILE): $(OBJ_DIR)$(LINKER_SCRIPT) $(OBJ_FILES)
 	$(LD_F) -o $@ $(OBJ_FILES) $(LD_FLAGS)
 
-$(TARGET_DIR)$(TARGET).bin: $(OBJ_DIR)$(TARGET).elf $(TARGET_DIR)
-	$(OBJCPY_F) -O $(OUTPUT_FORMAT) $(OBJ_DIR)$(TARGET).elf $(TARGET_DIR)$(TARGET).bin
+$(BIN_FILE): $(ELF_FILE) $(TARGET_DIR)
+	$(OBJCPY_F) -O $(OUTPUT_FORMAT) $(ELF_FILE) $(BIN_FILE)
 
 .PHONY: size
-size: $(OBJ_DIR)$(TARGET).elf
-	$(QUIET)$(SIZE) $(OBJ_DIR)$(TARGET).elf
+size: $(ELF_FILE)
+	$(QUIET)$(SIZE) $(ELF_FILE)
+ifdef USABLE_MEM_SIZE
+	$(QUIET)(appSize=$$($(SIZE) $(ELF_FILE) | tail -n1 | awk '{printf $$4}'); \
+	size=$$(echo $$(($${appSize}+$(RESERVED_MEM_SIZE)))); \
+	echo "$${size} of $(USABLE_MEM_SIZE) bytes used, $$(($(USABLE_MEM_SIZE)-$${size})) \
+	bytes free"; \
+	echo -e "$(ESC_BOLD)>> Memory usage: $$(echo $${size}*100/$(USABLE_MEM_SIZE) \
+	| bc)% <<$(ESC_NORMAL)")
+endif
+
+
 
 .PHONY: clean
 clean:
 	$(QUIET)rm $(ADDITIONAL_TO_CLEAN)
 	$(QUIET)rm $(OBJ_DIR)*.*
 	$(QUIET)rmdir $(OBJ_DIR)
-	$(QUIET)rm $(TARGET_DIR)$(TARGET).bin
+	$(QUIET)rm $(BIN_FILE)
 	$(QUIET)rmdir $(TARGET_DIR)
 ifdef GENERATED_DIR
 	$(QUIET)rmdir $(GENERATED_DIR)

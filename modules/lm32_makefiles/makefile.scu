@@ -8,25 +8,34 @@
 ## Author:  Ulrich Becker                                                    ##
 ## Date:    17.12.2018                                                       ##
 ###############################################################################
+ifndef MIAN_MODULE
+   $(error Variable MAIN_MODULE is not defined, it includes \
+the source-filename which contains the function "main"! )
+endif
+ifndef SYN_DIR
+   $(error Variable SYN_DIR is not defined, it includs the path \
+to the folder .../syn/)
+endif
 VERSION       ?= "1.0.0"
 PRINT_BUFSIZE ?= 128
 USRCPUCLK     ?= 125000
-RAM_SIZE      ?= 49152
+RAM_SIZE      ?= 98304
 TARGET        ?= $(notdir $(basename $(MIAN_MODULE)))
 BUILD_ID_FILE ?= $(TARGET)_buildid.c
 LINKER_SCRIPT ?= $(TARGET).ld
 
-GENERATED_DIR ?= ./generated/
+GENERATED_DIR ?= $(dir $(MIAN_MODULE))generated/
 
 SOURCE += $(GENERATED_DIR)$(BUILD_ID_FILE)
 
 SOURCE += $(SYN_DIR)/modules/lm32_stub/stubs.c
 SOURCE += $(SYN_DIR)/modules/lm32_stub/crt0.S
+SOURCE += $(SYN_DIR)/modules/lm32-include/mini_sdb.c
+SOURCE += $(SYN_DIR)/modules/lm32-include/mprintf.c
+SOURCE += $(SYN_DIR)/modules/lm32-include/sdb_add.S
 
 SOURCE += $(SYN_DIR)/ip_cores/wrpc-sw/dev/w1.c
 SOURCE += $(SYN_DIR)/ip_cores/wrpc-sw/dev/w1-hw.c
-SOURCE += $(SYN_DIR)/modules/lm32-include/mini_sdb.c
-SOURCE += $(SYN_DIR)/modules/lm32-include/mprintf.c
 SOURCE += $(SYN_DIR)/ip_cores/wrpc-sw/dev/uart.c
 SOURCE += $(SYN_DIR)/ip_cores/wrpc-sw/lib/usleep.c
 SOURCE += $(SYN_DIR)/ip_cores/wrpc-sw/dev/devicelist.c
@@ -34,7 +43,6 @@ SOURCE += $(SYN_DIR)/ip_cores/wrpc-sw/dev/syscon.c
 SOURCE += $(SYN_DIR)/ip_cores/wrpc-sw/pp_printf/printf.c
 SOURCE += $(SYN_DIR)/ip_cores/wrpc-sw/sdb-lib/glue.c
 SOURCE += $(SYN_DIR)/ip_cores/wrpc-sw/pp_printf/vsprintf-mini.c
-SOURCE += $(SYN_DIR)/modules/lm32-include/sdb_add.S
 
 SOURCE += $(MIAN_MODULE)
 
@@ -45,7 +53,7 @@ INCLUDE_DIRS += $(SYN_DIR)/ip_cores/wrpc-sw/sdb-lib
 INCLUDE_DIRS += $(SYN_DIR)/ip_cores/wrpc-sw/pp_printf
 INCLUDE_DIRS += $(SYN_DIR)/ip_cores/etherbone-core/hdl/eb_master_core
 
-# DEFINES += CONFIG_WR_NODE
+DEFINES += CONFIG_WR_NODE
 DEFINES += CONFIG_PRINT_BUFSIZE=$(PRINT_BUFSIZE)
 DEFINES += SDBFS_BIG_ENDIAN
 DEFINES += USRCPUCLK=$(USRCPUCLK)
@@ -74,6 +82,9 @@ else
    SHARED_SIZE = 0
 endif
 
+RESERVED_MEM_SIZE := $(shell echo $$(($(BOOTL_SIZE)+$(BUILDID_SIZE)+$(SHARED_SIZE))) )
+USABLE_MEM_SIZE := $(shell echo $$(($(RAM_SIZE)-$(RESERVED_MEM_SIZE))) )
+
 COMMENT_TEXT = 'This file has been created automatically, do not modify it by hand!'
 
 LDS  = "/*!\n"
@@ -83,7 +94,8 @@ LDS += " * @note $(COMMENT_TEXT)\n"
 LDS += " * @author Created by makefile.scu\n"
 LDS += " */\n\n"
 LDS += "OUTPUT_FORMAT(\"elf32-lm32\")\n"
-LDS += "GROUP(-lgloss -lnosys -lc -lgcc)\n"
+#LDS += "GROUP(-lgloss -lnosys -lc -lgcc)\n"
+LDS += "GROUP( -lc -lgcc)\n"
 #LDS += "ENTRY(_start)\n"
 LDS += "\nMEMORY\n"
 LDS += "{\n"
@@ -135,6 +147,7 @@ LDS += "     KEEP(*(.dtors))\n"
 LDS += "     KEEP(*(.jcr))\n"
 LDS += "     _etext = .;\n"
 LDS += "   } > ram\n\n"
+ifndef GGG
 LDS += "   /* Exception handlers */\n"
 LDS += "   .eh_frame_hdr :\n"
 LDS += "   {\n"
@@ -159,6 +172,7 @@ LDS += "     *(.rodata .rodata.* .gnu.linkonce.r.*)\n"
 LDS += "     *(.rodata1)\n"
 LDS += "     _erodata = .;\n"
 LDS += "   } > ram\n\n"
+endif
 LDS += "   .data :\n"
 LDS += "   {\n"
 LDS += "      . = ALIGN(4);\n"
@@ -244,6 +258,7 @@ SMM += "\#define BUILDID_OFFS  $(BUILDID_START)\n"
 SMM += "\#define SHARED_OFFS   $(SHARED_START)\n\n"
 SMM += "\#endif\n"
 
+#ADDITIONAL_DEPENDENCES += Makefile
 ADDITIONAL_DEPENDENCES += $(GENERATED_DIR)$(SHARED_MAP_HEADDER)
 ADDITIONAL_TO_CLEAN    += $(GENERATED_DIR)$(SHARED_MAP_HEADDER)
 ADDITIONAL_TO_CLEAN    += $(GENERATED_DIR)$(BUILD_ID_FILE)
