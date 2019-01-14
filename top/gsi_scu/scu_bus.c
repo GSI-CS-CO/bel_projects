@@ -110,7 +110,7 @@ SCUBUS_SLAVE_FLAGS_T
    bool _or( bool a, bool b )  { return (a || b); }
    bool _and( bool a, bool b ) { return (a && b); }
 
-   LM32_ASSERT( pMatchList[0].index < SCUBUS_INVALID_INDEX16 );
+   SCUBUS_ASSERT( pMatchList[0].index < SCUBUS_INVALID_INDEX16 );
    bool (*op)( bool, bool ) = (mode == ALL)? _and : _or;
    SCUBUS_SLAVE_FLAGS_T slaveFlags = 0;
    for( int slot = SCUBUS_START_SLOT; slot <= MAX_SCU_SLAVES; slot++ )

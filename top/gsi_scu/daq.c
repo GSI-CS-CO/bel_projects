@@ -51,8 +51,8 @@ static inline void daqChannelSetReg( DAQ_REGISTER_T* volatile pReg,
                                      const unsigned int channel,
                                      const uint16_t value )
 {
-   LM32_ASSERT( channel < DAQ_MAX_CHANNELS );
-   LM32_ASSERT( (index & 0x0F) == 0x00 );
+   DAQ_ASSERT( channel < DAQ_MAX_CHANNELS );
+   DAQ_ASSERT( (index & 0x0F) == 0x00 );
    pReg->i[index | channel] = value;
 }
 
@@ -67,8 +67,8 @@ static inline uint16_t daqChannelGetReg( DAQ_REGISTER_T* volatile pReg,
                                          const DAQ_REGISTER_INDEX_T index,
                                          const unsigned int channel )
 {
-   LM32_ASSERT( channel < DAQ_MAX_CHANNELS );
-   LM32_ASSERT( (index & 0x0F) == 0x00 );
+   DAQ_ASSERT( channel < DAQ_MAX_CHANNELS );
+   DAQ_ASSERT( (index & 0x0F) == 0x00 );
    return pReg->i[index | channel];
 }
 
@@ -177,7 +177,7 @@ void daqChannelPrintInfo( register DAQ_CANNEL_T* pThis )
  */
 unsigned int daqDeviceGetUsedChannels( register DAQ_DEVICE_T* pThis )
 {
-   LM32_ASSERT( pThis != NULL );
+   DAQ_ASSERT( pThis != NULL );
    unsigned int retVal = 0;
 
    for( int i = daqDeviceGetMaxChannels( pThis )-1; i >= 0; i-- )
@@ -193,10 +193,8 @@ unsigned int daqDeviceGetUsedChannels( register DAQ_DEVICE_T* pThis )
  */
 void daqDeviceSetTimeStampCounter( register DAQ_DEVICE_T* pThis, uint64_t ts )
 {
-#ifdef CONFIG_DAQ_PEDANTIC_CHECK
-   LM32_ASSERT( pThis != NULL );
-   LM32_ASSERT( pThis->pReg != NULL );
-#endif
+   DAQ_ASSERT( pThis != NULL );
+   DAQ_ASSERT( pThis->pReg != NULL );
 
    for( unsigned int i = 0; i < (sizeof(uint64_t)/sizeof(uint16_t)); i++ )
       pThis->pReg->i[TS_COUNTER_WD1+i] = ((uint16_t*)&ts)[i];
@@ -207,10 +205,8 @@ void daqDeviceSetTimeStampCounter( register DAQ_DEVICE_T* pThis, uint64_t ts )
  */
 uint64_t daqDeviceGetTimeStampCounter( register DAQ_DEVICE_T* pThis )
 {
-#ifdef CONFIG_DAQ_PEDANTIC_CHECK
-   LM32_ASSERT( pThis != NULL );
-   LM32_ASSERT( pThis->pReg != NULL );
-#endif
+   DAQ_ASSERT( pThis != NULL );
+   DAQ_ASSERT( pThis->pReg != NULL );
 
    uint64_t ts;
 
@@ -225,10 +221,8 @@ uint64_t daqDeviceGetTimeStampCounter( register DAQ_DEVICE_T* pThis )
  */
 void daqDeviceSetTimeStampTag( register DAQ_DEVICE_T* pThis, uint32_t tsTag )
 {
-#ifdef CONFIG_DAQ_PEDANTIC_CHECK
-   LM32_ASSERT( pThis != NULL );
-   LM32_ASSERT( pThis->pReg != NULL );
-#endif
+   DAQ_ASSERT( pThis != NULL );
+   DAQ_ASSERT( pThis->pReg != NULL );
 
    for( unsigned int i = 0; i < (sizeof(uint32_t)/sizeof(uint16_t)); i++ )
       pThis->pReg->i[TS_CNTR_TAG_LW+i] = ((uint16_t*)&tsTag)[i];
@@ -239,10 +233,8 @@ void daqDeviceSetTimeStampTag( register DAQ_DEVICE_T* pThis, uint32_t tsTag )
  */
 uint32_t daqDeviceGetTimeStampTag( register DAQ_DEVICE_T* pThis )
 {
-#ifdef CONFIG_DAQ_PEDANTIC_CHECK
-   LM32_ASSERT( pThis != NULL );
-   LM32_ASSERT( pThis->pReg != NULL );
-#endif
+   DAQ_ASSERT( pThis != NULL );
+   DAQ_ASSERT( pThis->pReg != NULL );
 
    uint32_t tsTag;
 
@@ -257,10 +249,8 @@ uint32_t daqDeviceGetTimeStampTag( register DAQ_DEVICE_T* pThis )
  */
 void daqDeviceReset( register DAQ_DEVICE_T* pThis )
 {
-#ifdef CONFIG_DAQ_PEDANTIC_CHECK
-   LM32_ASSERT( pThis != NULL );
-   LM32_ASSERT( pThis->pReg != NULL );
-#endif
+   DAQ_ASSERT( pThis != NULL );
+   DAQ_ASSERT( pThis->pReg != NULL );
 
    for( int i = daqDeviceGetMaxChannels( pThis )-1; i >= 0; i-- )
       daqChannelReset( daqDeviceGetChannelObject( pThis, i ) );
@@ -308,8 +298,8 @@ void daqDevicePrintInterruptStatus( register DAQ_DEVICE_T* pThis )
  */
 inline static int daqDeviceFindChannels( DAQ_DEVICE_T* pThis, int slot )
 {
-   LM32_ASSERT( pThis != NULL );
-   LM32_ASSERT( pThis->pReg != NULL );
+   DAQ_ASSERT( pThis != NULL );
+   DAQ_ASSERT( pThis->pReg != NULL );
 
    for( unsigned int channel = 0; channel < ARRAY_SIZE(pThis->aChannel); channel++ )
    {
@@ -323,7 +313,7 @@ inline static int daqDeviceFindChannels( DAQ_DEVICE_T* pThis, int slot )
        * Checking whether the macro DAQ_CHANNEL_GET_PARENT_OF works
        * correct.
        */
-      LM32_ASSERT( pThis == DAQ_CHANNEL_GET_PARENT_OF( pCurrentChannel ) );
+      DAQ_ASSERT( pThis == DAQ_CHANNEL_GET_PARENT_OF( pCurrentChannel ) );
 
       /*
        * In the case of a warm start, clearing eventually old values
@@ -349,13 +339,13 @@ inline static int daqDeviceFindChannels( DAQ_DEVICE_T* pThis, int slot )
       if( daqChannelGetSlot( pCurrentChannel ) != slot )
          break; /* Supposing this channel isn't present. */
 
-      LM32_ASSERT( (*((uint16_t*)daqChannelGetCtrlRegPtr( pCurrentChannel )) & 0x0FFF) == 0 );
+      DAQ_ASSERT( (*((uint16_t*)daqChannelGetCtrlRegPtr( pCurrentChannel )) & 0x0FFF) == 0 );
       /* If the assertion above has been occurred, check the element types
        * of the structure DAQ_CTRL_REG_T.
        * At least one element type has to be greater or equal like uint16_t.
        */
 
-      LM32_ASSERT( channel < BIT_SIZEOF( pCurrentChannel->intMask ));
+      DAQ_ASSERT( channel < BIT_SIZEOF( pCurrentChannel->intMask ));
       pCurrentChannel->intMask = 1 << channel;
 
       DBPRINT2( "DBG: Slot of channel %d: %d\n", channel,
@@ -375,8 +365,8 @@ int daqBusFindAndInitializeAll( register DAQ_BUS_T* pThis, const void* pScuBusBa
    SCUBUS_SLAVE_FLAGS_T daqPersentFlags;
 
    // Paranoia...
-   LM32_ASSERT( pScuBusBase != (void*)ERROR_NOT_FOUND );
-   LM32_ASSERT( pThis != NULL );
+   DAQ_ASSERT( pScuBusBase != (void*)ERROR_NOT_FOUND );
+   DAQ_ASSERT( pThis != NULL );
 
    // Pre-initializing
    memset( pThis, 0, sizeof( DAQ_BUS_T ));
@@ -414,11 +404,10 @@ int daqBusFindAndInitializeAll( register DAQ_BUS_T* pThis, const void* pScuBusBa
       }
       pThis->foundDevices++; // At least one channel was found.
 
-#ifdef CONFIG_DAQ_PEDANTIC_CHECK
-      LM32_ASSERT( pCurrentDaqDevice->maxChannels ==
+      DAQ_ASSERT( pCurrentDaqDevice->maxChannels ==
                    daqDeviceGetMaxChannels( pCurrentDaqDevice ) );
-      LM32_ASSERT( DAQ_DEVICE_GET_PARENT_OF( pCurrentDaqDevice ) == pThis );
-#endif
+      DAQ_ASSERT( DAQ_DEVICE_GET_PARENT_OF( pCurrentDaqDevice ) == pThis );
+
       daqDeviceDisableScuSlaveInterrupt( pCurrentDaqDevice );
       daqDeviceTestAndClearDaqInt( pCurrentDaqDevice );
       daqDeviceTestAndClearHiResInt( pCurrentDaqDevice );
@@ -451,7 +440,7 @@ int daqBusFindAndInitializeAll( register DAQ_BUS_T* pThis, const void* pScuBusBa
 int daqBusGetNumberOfAllFoundChannels( register DAQ_BUS_T* pThis )
 {
    int ret = 0;
-   LM32_ASSERT( pThis->foundDevices <= ARRAY_SIZE(pThis->aDaq) );
+   DAQ_ASSERT( pThis->foundDevices <= ARRAY_SIZE(pThis->aDaq) );
    for( int i = 0; i < pThis->foundDevices; i++ )
       ret += pThis->aDaq[i].maxChannels;
    return ret;
@@ -502,7 +491,7 @@ DAQ_CANNEL_T* daqBusGetChannelObjectByAbsoluteNumber( register DAQ_BUS_T* pThis,
  */
 unsigned int daqBusGetUsedChannels( register DAQ_BUS_T* pThis )
 {
-   LM32_ASSERT( pThis != NULL );
+   DAQ_ASSERT( pThis != NULL );
    unsigned int retVal = 0;
 
    for( int i = daqBusGetFoundDevices( pThis )-1; i >= 0; i-- )
@@ -517,7 +506,7 @@ unsigned int daqBusGetUsedChannels( register DAQ_BUS_T* pThis )
  */
 void daqBusEnableSlaveInterrupts( register DAQ_BUS_T* pThis )
 {
-   LM32_ASSERT( pThis != NULL );
+   DAQ_ASSERT( pThis != NULL );
    for( int i = daqBusGetFoundDevices( pThis )-1; i >= 0; i-- )
       daqDeviceEnableScuSlaveInterrupt( daqBusGetDeviceObject( pThis, i ) );
 }
@@ -527,7 +516,7 @@ void daqBusEnableSlaveInterrupts( register DAQ_BUS_T* pThis )
  */
 void daqBusDisablSlaveInterrupts( register DAQ_BUS_T* pThis )
 {
-   LM32_ASSERT( pThis != NULL );
+   DAQ_ASSERT( pThis != NULL );
    for( int i = daqBusGetFoundDevices( pThis )-1; i >= 0; i-- )
       daqDeviceDisableScuSlaveInterrupt( daqBusGetDeviceObject( pThis, i ) );
 }
@@ -537,7 +526,7 @@ void daqBusDisablSlaveInterrupts( register DAQ_BUS_T* pThis )
  */
 void daqBusClearAllPendingInterrupts( register DAQ_BUS_T* pThis )
 {
-   LM32_ASSERT( pThis != NULL );
+   DAQ_ASSERT( pThis != NULL );
 
    for( int i = daqBusGetFoundDevices( pThis )-1; i >= 0; i-- )
    {
@@ -552,7 +541,7 @@ void daqBusClearAllPendingInterrupts( register DAQ_BUS_T* pThis )
  */
 void daqBusSetAllTimeStampCounters( register DAQ_BUS_T* pThis, uint64_t ts )
 {
-   LM32_ASSERT( pThis != NULL );
+   DAQ_ASSERT( pThis != NULL );
 
    for( int i = daqBusGetFoundDevices( pThis )-1; i >= 0; i-- )
       daqDeviceSetTimeStampCounter( daqBusGetDeviceObject( pThis, i ), ts );
@@ -563,7 +552,7 @@ void daqBusSetAllTimeStampCounters( register DAQ_BUS_T* pThis, uint64_t ts )
  */
 void daqBusSetAllTimeStampCounterTags( register DAQ_BUS_T* pThis, uint32_t tsTag )
 {
-   LM32_ASSERT( pThis != NULL );
+   DAQ_ASSERT( pThis != NULL );
    
    for( int i = daqBusGetFoundDevices( pThis )-1; i >= 0; i-- )
       daqDeviceSetTimeStampTag( daqBusGetDeviceObject( pThis, i ), tsTag );
@@ -583,7 +572,7 @@ unsigned int daqBusDistributeMemory( register DAQ_BUS_T* pThis )
  */
 void daqBusReset( register DAQ_BUS_T* pThis )
 {
-   LM32_ASSERT( pThis != NULL );
+   DAQ_ASSERT( pThis != NULL );
 
    for( int i = daqBusGetFoundDevices( pThis )-1; i >= 0; i-- )
       daqDeviceReset( daqBusGetDeviceObject( pThis, i ) );

@@ -1953,7 +1953,7 @@ DOX_SEARCH_INCLUDES        ?= YES
 # preprocessor.
 # This tag requires that the tag SEARCH_INCLUDES is set to YES.
 
-DOX_INCLUDE_PATH           += ${INCLUDEPATH}
+DOX_INCLUDE_PATH           += ${INCLUDE_DIRS}
 
 # You can use the INCLUDE_FILE_PATTERNS tag to specify one or more wildcard
 # patterns (like *.h and *.hpp) to filter out the header-files in the
@@ -2353,7 +2353,7 @@ DOX_GENERATE_LEGEND        ?= YES
 DOX_DOT_CLEANUP            ?= YES
 
 ###############################################################################
-${DOXY_CFG_FILE}:
+${DOXY_CFG_FILE}: ${DOX_OUTPUT_DIRECTORY}
 	@echo 'DOXYFILE_ENCODING         = ${DOX_DOXYFILE_ENCODING}'       > ${DOXY_CFG_FILE}
 	@echo 'PROJECT_NAME              = ${DOX_PROJECT_NAME}'           >> ${DOXY_CFG_FILE}
 	@echo 'PROJECT_NUMBER            = ${DOX_PROJECT_NUMBER}'         >> ${DOXY_CFG_FILE}
@@ -2617,6 +2617,6 @@ doc: ${DOXY_CFG_FILE} ${DOX_OUTPUT_DIRECTORY}
 .PHONY: deldoc
 deldoc:
 	rm ${DOXY_CFG_FILE}
-	rm -rf ${DOX_OUTPUT_DIRECTORY}
+	rm -r ${DOX_OUTPUT_DIRECTORY}/*.*
 
 #----------------------------------- EOF---------------------------------------

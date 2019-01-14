@@ -13,8 +13,14 @@ ifndef SOURCE
   $(error No sources defined in variable SOURCE !)
 endif
 
-_SOURCE = $(strip $(SOURCE))
-_INCLUDE_DIRS = $(strip $(INCLUDE_DIRS))
+ifndef NO_COLORED
+   ESC_FG_CYAN    := "\\e[36m"
+   ESC_FG_MAGNETA := "\\e[35m"
+   ESC_FG_RED     := "\\e[31m"
+   ESC_FG_GREEN   := "\\e[32m"
+   ESC_BOLD       := "\\e[1m"
+   ESC_NORMAL     := "\\e[0m"
+endif
 
 ifeq ($(V), 1)
    CC_F      = $(CC)
@@ -40,10 +46,6 @@ else
    FORMAT_L    := $(FORMAT)
    FORMAT_R    := $(FORMAT)
  else
-   ESC_FG_CYAN    := "\\e[36m"
-   ESC_FG_MAGNETA := "\\e[35m"
-   ESC_BOLD       := "\\e[1m"
-   ESC_NORMAL     := "\\e[0m"
    FORMAT_L    := @printf "[ %s %s ]\t$(ESC_FG_MAGNETA)%s$(ESC_NORMAL)\n"
    FORMAT_R    := @printf "[ %s %s ]\t$(ESC_FG_CYAN)$(ESC_BOLD)%s$(ESC_NORMAL)\n"
  endif
@@ -58,34 +60,41 @@ else
    QUIET       = @
 endif
 
+_SOURCE       = $(strip $(SOURCE))
+_INCLUDE_DIRS = $(strip $(INCLUDE_DIRS))
+
 OPT_INCLUDE := $(addprefix -I,$(_INCLUDE_DIRS) )
 OPT_DEFINES := $(addprefix -D,$(DEFINES) )
 ARG_LIBS    := $(addprefix -l,$(LIBS) )
 
-OBJ_DIR    ?= ./$(CPU)_obj/
-TARGET_DIR ?= ./$(CPU)_bin/
+DEPLOY_DIR  ?= ./deploy_$(CPU)
+WORK_DIR    ?= $(DEPLOY_DIR)/work/
+TARGET_DIR  ?= $(DEPLOY_DIR)/result/
 
-OBJ_FILES := $(addprefix $(OBJ_DIR),$(addsuffix .o,$(basename $(notdir $(_SOURCE)))))
-
-all: $(TARGET_DIR)$(TARGET).bin size
-
-DEPENDFILE = $(OBJ_DIR)$(TARGET).dep
+OBJ_FILES   := $(addprefix $(WORK_DIR),$(addsuffix .o,$(basename $(notdir $(_SOURCE)))))
+ELF_FILE    = $(WORK_DIR)$(TARGET).elf
+BIN_FILE    = $(TARGET_DIR)$(TARGET).bin
+DEPENDFILE  = $(WORK_DIR)$(TARGET).dep
 
 CC_ARG = $(CFLAGS) $(OPT_INCLUDE) $(OPT_DEFINES)
 CXX_ARG ?= $(CC_ARG)
 AS_ARG ?= $(CC_ARG)
 
-$(OBJ_DIR):
-	$(QUIET)mkdir -p $(OBJ_DIR)
+RESULT_FILE ?= $(BIN_FILE)
+
+all: $(RESULT_FILE) size
+
+$(WORK_DIR):
+	$(QUIET)mkdir -p $(WORK_DIR)
 
 $(TARGET_DIR):
 	$(QUIET)mkdir -p $(TARGET_DIR)
 
 # TODO: Following rule could be made a bit better...
 
-$(DEPENDFILE): $(_SOURCE) $(OBJ_DIR) $(ADDITIONAL_DEPENDENCES)
+$(DEPENDFILE): $(_SOURCE) $(WORK_DIR) $(ADDITIONAL_DEPENDENCES)
 	$(QUIET)(for i in $(_SOURCE); do \
-		printf $(OBJ_DIR); \
+		printf $(WORK_DIR); \
 		case "$${i##*.}" in \
 		"cpp"|"CPP") \
 			$(CXX) -MM $(CXX_ARG) "$$i"; \
@@ -112,10 +121,8 @@ dep: $(DEPENDFILE)
 
 -include $(DEPENDFILE)
 
-ELF_FILE = $(OBJ_DIR)$(TARGET).elf
-BIN_FILE = $(TARGET_DIR)$(TARGET).bin
 
-$(ELF_FILE): $(OBJ_DIR)$(LINKER_SCRIPT) $(OBJ_FILES)
+$(ELF_FILE): $(WORK_DIR)$(LINKER_SCRIPT) $(OBJ_FILES)
 	$(LD_F) -o $@ $(OBJ_FILES) $(LD_FLAGS)
 
 $(BIN_FILE): $(ELF_FILE) $(TARGET_DIR)
@@ -127,24 +134,34 @@ size: $(ELF_FILE)
 ifdef USABLE_MEM_SIZE
 	$(QUIET)(appSize=$$($(SIZE) $(ELF_FILE) | tail -n1 | awk '{printf $$4}'); \
 	size=$$(echo $$(($${appSize}+$(RESERVED_MEM_SIZE)))); \
-	echo "$${size} of $(USABLE_MEM_SIZE) bytes used, $$(($(USABLE_MEM_SIZE)-$${size})) \
+	free=$$(($(USABLE_MEM_SIZE)-$${size}));\
+	if [ "$${free}" -lt "0" ]; then \
+		ec=$(ESC_FG_RED); \
+	else \
+		ec=$(ESC_NORMAL); \
+	fi; \
+	echo -e "$${ec}$${size} of $(USABLE_MEM_SIZE) bytes used, $${free} \
 	bytes free"; \
 	echo -e "$(ESC_BOLD)>> Memory usage: $$(echo $${size}*100/$(USABLE_MEM_SIZE) \
 	| bc)% <<$(ESC_NORMAL)")
 endif
 
-
+.PHONY: strings
+strings: $(BIN_FILE)
+	$(QUIET)$(STRINGS) $(BIN_FILE)
 
 .PHONY: clean
 clean:
-	$(QUIET)rm $(ADDITIONAL_TO_CLEAN)
-	$(QUIET)rm $(OBJ_DIR)*.*
-	$(QUIET)rmdir $(OBJ_DIR)
-	$(QUIET)rm $(BIN_FILE)
-	$(QUIET)rmdir $(TARGET_DIR)
-ifdef GENERATED_DIR
-	$(QUIET)rmdir $(GENERATED_DIR)
-endif
+	$(QUIET)( rm $(ADDITIONAL_TO_CLEAN); \
+	rm $(OBJ_FILES); \
+	rm $(ELF_FILE); \
+	rm $(DEPENDFILE); \
+	rm $(BIN_FILE); \
+	rmdir $(WORK_DIR); \
+	rmdir $(TARGET_DIR); \
+	rmdir $(DEPLOY_DIR); \
+	rmdir $(GENERATED_DIR) ) 2>/dev/null
+
 
 
 #=================================== EOF ======================================
