@@ -24,7 +24,7 @@
 #ifndef _LM32_ASSERT_H
 #define _LM32_ASSERT_H
 
-#ifndef NDEBUG
+#if !defined( NDEBUG ) && !defined( CONFIG_NO_LM32_ASSERT )
  #include "mprintf.h"
 #endif
 
@@ -62,19 +62,21 @@ extern "C" {
 #define __ESC_RED    "\e[31m"
 #define __ESC_NORMAL "\e[0m"
 
-#define __STATIC_LOCAL __attribute__((section(".BSS"))) static
-
 static inline void __lm32_assert_func( const char* fileName,
                                        int lineNumber,
                                        const char* functionName,
                                        const char* conditionStr )
 {
-   __STATIC_LOCAL char* assertMsg =
-            __ESC_BOLD __ESC_RED
-            "Assertion failed in file: \"%s\" line: %d function: \"%s\" condition: \"%s\"\n"
-            "System stopped!\n" __ESC_NORMAL;
-   mprintf( assertMsg, fileName, lineNumber, functionName, conditionStr );
+   mprintf( __ESC_BOLD __ESC_RED "Assertion failed in file: \"%s\""
+            " line: %d function: \"%s\" condition: \"%s\"\n"
+#ifndef CONFIG_LM32_ASSERT_CONTINUE
+            "System stopped!\n"
+#endif
+            __ESC_NORMAL,
+            fileName, lineNumber, functionName, conditionStr );
+#ifndef CONFIG_LM32_ASSERT_CONTINUE
    while( 1 );
+#endif
 }
 
 #endif /* !NDEBUG */
