@@ -195,6 +195,68 @@
 #endif // if (__cplusplus >  199711L) && !defined(__lm32__)
 #endif // ifndef STATIC_ASSERT
 
+/*!
+ * @brief Cast a member of a structure out to the containing structure.
+ *
+ * This macro has been adopt from the Linux kernel-source.
+ * Origin in <kernel-source>/include/linux/kernel.h as "container_of".
+ *
+ * This macro has also been tested successful with the compiler "lm32-elf-gcc"
+ * version 4.5.3 and 7.3.0, and in C++ environment as well.
+ *
+ * @note The condition for working this macro properly is, that the content
+ *       structures of the container structure has to be flat members,
+ *       that means not as pointers (or in C++ as reverences). \n
+ *       <b>Otherwise this macro will crash!</b>
+ *
+ * @note Keep in mind: This macro is and remains a hack, be careful
+ *       and use it only if you know exactly what you are doing!
+ *
+ * @param ptr    The pointer to the member.
+ * @param type   The type of the container struct this is embedded in.
+ * @param member The name of the member within the container struct.
+ * @return The pointer of the container-object including this member.
+ */
+#define CONTAINER_OF(ptr, type, member) ({                      \
+        const typeof( ((type *)0)->member ) *__mptr = (ptr);    \
+        (type *)( (char *)__mptr - offsetof(type, member) );})
+
+/*!
+ * @see CONTAINER_OF
+ */
+#define CONTAINER_OF_ARRAY(ptr, type, mArray, index) ({            \
+        const typeof( ((type *)0)->mArray[0] ) *__mptr = (ptr);    \
+        (type *)( (char *)__mptr - (offsetof(type, mArray[0]) +    \
+        (index) * sizeof(mArray[0])));})
+
+
+#ifdef TO_STRING_LITERAL
+   #undef TO_STRING_LITERAL
+#endif
+#ifdef TO_STRING
+   #undef TO_STRING
+#endif
+/*!
+ * @brief helper macro for TO_STRING.
+ */
+#define TO_STRING_LITERAL( s ) # s
+
+/*!
+ * @brief Converts a constant expression to a zero terminated ASCII string.
+ *
+ * E.g.: The expression:
+ * @code
+ * #define MY_NUMBER 42
+ * const char* str = "My number is " TO_STRING( MY_NUMBER ) "\n";
+ * @endcode
+ * builds following string during the compile time:
+ * @code
+ * const char* str = "My number is 42\n";
+ * @endcode
+ * @param s Constant expression
+ * @return Zero terminated ASCII string.
+ */
+#define TO_STRING( s ) TO_STRING_LITERAL( s )
 
 /*!
  * @brief Will used from DECLARE_CONVERT_BYTE_ENDIAN
@@ -261,64 +323,6 @@ template <typename TYP> TYP convertByteEndian( const TYP value )
    __FUNCTION_BODY_CONVERT_BYTE_ENDIAN( TYP )
 #endif /* __cplusplus */
 
-/*!
- * @brief Cast a member of a structure out to the containing structure.
- *
- * This macro has been adopt from the Linux kernel-source.
- * Origin in <kernel-source>/include/linux/kernel.h as "container_of".
- *
- * This macro has also been tested successful with the compiler "lm32-elf-gcc"
- * version 4.5.3 and 7.3.0, and in C++ environment as well.
- *
- * @note The condition for working this macro properly is, that the content
- *       structures of the container structure has to be flat members,
- *       that means not as pointers (or in C++ as reverences). \n
- *       <b>Otherwise this macro will crash!</b>
- *
- * @note Keep in mind: This macro is and remains a hack, be careful
- *       and use it only if you know exactly what you are doing!
- *
- * @param ptr    The pointer to the member.
- * @param type   The type of the container struct this is embedded in.
- * @param member The name of the member within the container struct.
- * @return The pointer of the container-object including this member.
- */
-#define CONTAINER_OF(ptr, type, member) ({                      \
-        const typeof( ((type *)0)->member ) *__mptr = (ptr);    \
-        (type *)( (char *)__mptr - offsetof(type, member) );})
-
-#define CONTAINER_OF_ARRAY(ptr, type, mArray, index) ({            \
-        const typeof( ((type *)0)->mArray[0] ) *__mptr = (ptr);    \
-        (type *)( (char *)__mptr - (offsetof(type, mArray[0]) +    \
-        (index) * sizeof(mArray[0])));})
-
-#ifdef TO_STRING_LITERAL
-   #undef TO_STRING_LITERAL
-#endif
-#ifdef TO_STRING
-   #undef TO_STRING
-#endif
-/*!
- * @brief helper macro for TO_STRING.
- */
-#define TO_STRING_LITERAL( s ) # s
-
-/*!
- * @brief Converts a constant expression to a zero terminated ASCII string.
- *
- * E.g.: The expression:
- * @code
- * #define MY_NUMBER 42
- * const char* str = "My number is " TO_STRING( MY_NUMBER ) "\n";
- * @endcode
- * builds following string during the compile time:
- * @code
- * const char* str = "My number is 42\n";
- * @endcode
- * @param s Constant expression
- * @return Zero terminated ASCII string.
- */
-#define TO_STRING( s ) TO_STRING_LITERAL( s )
 
 
 #endif // ifndef _HELPER_MACROS_H
