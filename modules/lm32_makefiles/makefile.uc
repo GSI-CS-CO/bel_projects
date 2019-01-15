@@ -68,13 +68,13 @@ OPT_DEFINES := $(addprefix -D,$(DEFINES) )
 ARG_LIBS    := $(addprefix -l,$(LIBS) )
 
 DEPLOY_DIR  ?= ./deploy_$(CPU)
-WORK_DIR    ?= $(DEPLOY_DIR)/work/
-TARGET_DIR  ?= $(DEPLOY_DIR)/result/
+WORK_DIR    ?= $(DEPLOY_DIR)/work
+TARGET_DIR  ?= $(DEPLOY_DIR)/result
 
-OBJ_FILES   := $(addprefix $(WORK_DIR),$(addsuffix .o,$(basename $(notdir $(_SOURCE)))))
-ELF_FILE    = $(WORK_DIR)$(TARGET).elf
-BIN_FILE    = $(TARGET_DIR)$(TARGET).bin
-DEPENDFILE  = $(WORK_DIR)$(TARGET).dep
+OBJ_FILES   := $(addprefix $(WORK_DIR)/,$(addsuffix .o,$(basename $(notdir $(_SOURCE)))))
+ELF_FILE    = $(WORK_DIR)/$(TARGET).elf
+BIN_FILE    = $(TARGET_DIR)/$(TARGET).bin
+DEPENDFILE  = $(WORK_DIR)/$(TARGET).dep
 
 CC_ARG = $(CFLAGS) $(OPT_INCLUDE) $(OPT_DEFINES)
 CXX_ARG ?= $(CC_ARG)
@@ -82,7 +82,7 @@ AS_ARG ?= $(CC_ARG)
 
 RESULT_FILE ?= $(BIN_FILE)
 
-all: $(RESULT_FILE) size
+all: $(WORK_DIR) $(RESULT_FILE) size
 
 $(WORK_DIR):
 	$(QUIET)mkdir -p $(WORK_DIR)
@@ -94,7 +94,7 @@ $(TARGET_DIR):
 
 $(DEPENDFILE): $(_SOURCE) $(WORK_DIR) $(ADDITIONAL_DEPENDENCES)
 	$(QUIET)(for i in $(_SOURCE); do \
-		printf $(WORK_DIR); \
+		printf "$(WORK_DIR)/"; \
 		case "$${i##*.}" in \
 		"cpp"|"CPP") \
 			$(CXX) -MM $(CXX_ARG) "$$i"; \
@@ -122,7 +122,7 @@ dep: $(DEPENDFILE)
 -include $(DEPENDFILE)
 
 
-$(ELF_FILE): $(WORK_DIR)$(LINKER_SCRIPT) $(OBJ_FILES)
+$(ELF_FILE): $(OBJ_FILES) $(ADDITIONAL_LD_DEPENDENCES)
 	$(LD_F) -o $@ $(OBJ_FILES) $(LD_FLAGS)
 
 $(BIN_FILE): $(ELF_FILE) $(TARGET_DIR)

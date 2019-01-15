@@ -195,5 +195,6 @@ unsigned int getNumberOfSlaves( const SCUBUS_SLAVE_FLAGS_T slaveFlags )
    return ret;
 }
 
+/*================================== EOF ====================================*/
 
 

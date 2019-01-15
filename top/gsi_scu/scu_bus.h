@@ -274,11 +274,10 @@ static inline void* scuBusGetAbsSlaveAddr( const void* pScuBusBase,
 static inline volatile
 uint16_t scuBusGetSlaveValue16( const void* pAbsSlaveAddr, const unsigned int index )
 {
-#ifdef CONFIG_SCU_BUS_PEDANTIC_CHECK
    SCUBUS_ASSERT( index >= 0 );
    SCUBUS_ASSERT( index < (SCUBUS_SLAVE_ADDR_SPACE / sizeof(uint16_t)) );
    SCUBUS_ASSERT( ((unsigned int)pAbsSlaveAddr % sizeof(uint16_t)) == 0 ); // At least 2 bytes alignment assumed!
-#endif
+
    return ((uint16_t* volatile)pAbsSlaveAddr)[index];
 }
 
@@ -294,11 +293,10 @@ uint16_t scuBusGetSlaveValue16( const void* pAbsSlaveAddr, const unsigned int in
 static inline
 void scuBusSetSlaveValue16( void* pAbsSlaveAddr, const unsigned int index, const uint16_t value )
 {
-#ifdef CONFIG_SCU_BUS_PEDANTIC_CHECK
    SCUBUS_ASSERT( index >= 0 );
    SCUBUS_ASSERT( index < (SCUBUS_SLAVE_ADDR_SPACE / sizeof(uint16_t)) );
    SCUBUS_ASSERT( ((unsigned int)pAbsSlaveAddr % sizeof(uint16_t)) == 0 ); // At least 2 bytes alignment assumed!
-#endif
+
    ((uint16_t* volatile)pAbsSlaveAddr)[index] = value;
 }
 
@@ -313,11 +311,10 @@ static inline
 void scuBusSetRegisterFalgs( void* pAbsSlaveAddr, const unsigned int index,
                              const uint16_t flags16 )
 {
-#ifdef CONFIG_SCU_BUS_PEDANTIC_CHECK
    SCUBUS_ASSERT( index >= 0 );
    SCUBUS_ASSERT( index < (SCUBUS_SLAVE_ADDR_SPACE / sizeof(uint16_t)) );
    SCUBUS_ASSERT( ((unsigned int)pAbsSlaveAddr % sizeof(uint16_t)) == 0 ); // At least 2 bytes alignment assumed!
-#endif
+
    ((uint16_t* volatile)pAbsSlaveAddr)[index] |= flags16;
 }
 
@@ -332,11 +329,10 @@ static inline
 void scuBusClearRegisterFalgs( void* pAbsSlaveAddr, const unsigned int index,
                                const uint16_t flags16 )
 {
-#ifdef CONFIG_SCU_BUS_PEDANTIC_CHECK
    SCUBUS_ASSERT( index >= 0 );
    SCUBUS_ASSERT( index < (SCUBUS_SLAVE_ADDR_SPACE / sizeof(uint16_t)) );
    SCUBUS_ASSERT( ((unsigned int)pAbsSlaveAddr % sizeof(uint16_t)) == 0 ); // At least 2 bytes alignment assumed!
-#endif
+
    ((uint16_t* volatile)pAbsSlaveAddr)[index] &= flags16;
 }
 
@@ -353,11 +349,10 @@ void scuBusClearRegisterFalgs( void* pAbsSlaveAddr, const unsigned int index,
 static inline volatile
 uint32_t scuBusGetSlaveValue32( const void* pAbsSlaveAddr, const unsigned int index )
 {
-#ifdef CONFIG_SCU_BUS_PEDANTIC_CHECK
    SCUBUS_ASSERT( index >= 0 );
    SCUBUS_ASSERT( index < (SCUBUS_SLAVE_ADDR_SPACE / sizeof(uint32_t)) );
    SCUBUS_ASSERT( ((unsigned int)pAbsSlaveAddr % sizeof(uint16_t)) == 0 ); // At least 2 bytes alignment assumed!
-#endif
+
    return ((uint32_t* volatile)pAbsSlaveAddr)[index];
 }
 
@@ -373,11 +368,10 @@ uint32_t scuBusGetSlaveValue32( const void* pAbsSlaveAddr, const unsigned int in
 static inline
 void scuBusSetSlaveValue32( void* pAbsSlaveAddr, const unsigned int index, const uint32_t value )
 {
-#ifdef CONFIG_SCU_BUS_PEDANTIC_CHECK
    SCUBUS_ASSERT( index >= 0 );
    SCUBUS_ASSERT( index < (SCUBUS_SLAVE_ADDR_SPACE / sizeof(uint32_t)) );
    SCUBUS_ASSERT( ((unsigned int)pAbsSlaveAddr % sizeof(uint16_t)) == 0 ); // At least 2 bytes alignment assumed!
-#endif
+
    ((uint32_t* volatile)pAbsSlaveAddr)[index] = value;
 }
 
@@ -393,10 +387,9 @@ void scuBusSetSlaveValue32( void* pAbsSlaveAddr, const unsigned int index, const
  */
 static inline bool scuBusIsSlavePresent( const SCUBUS_SLAVE_FLAGS_T flags, const int slot )
 {
-#ifdef CONFIG_SCU_BUS_PEDANTIC_CHECK
    SCUBUS_ASSERT( slot >= SCUBUS_START_SLOT );
    SCUBUS_ASSERT( slot <= MAX_SCU_SLAVES );
-#endif
+
    return ((flags & (1 << (slot-SCUBUS_START_SLOT))) != 0);
 }
 

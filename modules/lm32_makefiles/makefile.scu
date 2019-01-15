@@ -24,35 +24,42 @@ TARGET        ?= $(notdir $(basename $(MIAN_MODULE)))
 BUILD_ID_FILE ?= $(TARGET)_buildid.c
 LINKER_SCRIPT ?= $(TARGET).ld
 
-GENRAMMIF ?= $(SYN_DIR)/ip_cores/wrpc-sw/tools/genrammif
+SCU_DIR = $(SYN_DIR)/top/gsi_scu
 
-GENERATED_DIR ?= $(dir $(MIAN_MODULE))generated/
+SCU_LIB_SRC_DIR = $(SYN_DIR)/modules/lm32-include
+WR_DIR          = $(SYN_DIR)/ip_cores/wrpc-sw
 
-SOURCE += $(GENERATED_DIR)$(BUILD_ID_FILE)
+GENRAMMIF ?= $(WR_DIR)/tools/genrammif
+
+GENERATED_DIR ?= $(dir $(MIAN_MODULE))generated
+
+SOURCE += $(GENERATED_DIR)/$(BUILD_ID_FILE)
 
 SOURCE += $(SYN_DIR)/modules/lm32_stub/stubs.c
 SOURCE += $(SYN_DIR)/modules/lm32_stub/crt0.S
-SOURCE += $(SYN_DIR)/modules/lm32-include/mini_sdb.c
-SOURCE += $(SYN_DIR)/modules/lm32-include/mprintf.c
-SOURCE += $(SYN_DIR)/modules/lm32-include/sdb_add.S
+SOURCE += $(SCU_LIB_SRC_DIR)/mini_sdb.c
+SOURCE += $(SCU_LIB_SRC_DIR)/mprintf.c
+SOURCE += $(SCU_LIB_SRC_DIR)/sdb_add.S
 
-SOURCE += $(SYN_DIR)/ip_cores/wrpc-sw/dev/w1.c
-SOURCE += $(SYN_DIR)/ip_cores/wrpc-sw/dev/w1-hw.c
-SOURCE += $(SYN_DIR)/ip_cores/wrpc-sw/dev/uart.c
-SOURCE += $(SYN_DIR)/ip_cores/wrpc-sw/lib/usleep.c
-SOURCE += $(SYN_DIR)/ip_cores/wrpc-sw/dev/devicelist.c
-SOURCE += $(SYN_DIR)/ip_cores/wrpc-sw/dev/syscon.c
-SOURCE += $(SYN_DIR)/ip_cores/wrpc-sw/pp_printf/printf.c
-SOURCE += $(SYN_DIR)/ip_cores/wrpc-sw/sdb-lib/glue.c
-SOURCE += $(SYN_DIR)/ip_cores/wrpc-sw/pp_printf/vsprintf-mini.c
+SOURCE += $(WR_DIR)/dev/w1.c
+SOURCE += $(WR_DIR)/dev/w1-hw.c
+SOURCE += $(WR_DIR)/dev/uart.c
+SOURCE += $(WR_DIR)/dev/devicelist.c
+SOURCE += $(WR_DIR)/dev/syscon.c
+SOURCE += $(WR_DIR)/lib/usleep.c
+SOURCE += $(WR_DIR)/pp_printf/printf.c
+SOURCE += $(WR_DIR)/pp_printf/vsprintf-mini.c
+SOURCE += $(WR_DIR)/sdb-lib/glue.c
 
 SOURCE += $(MIAN_MODULE)
 
-INCLUDE_DIRS += $(SYN_DIR)/modules/lm32-include
+
+INCLUDE_DIRS += $(SCU_LIB_SRC_DIR)
+INCLUDE_DIRS += $(SCU_DIR)
 INCLUDE_DIRS += $(SYN_DIR)/tools
-INCLUDE_DIRS += $(SYN_DIR)/ip_cores/wrpc-sw/include
-INCLUDE_DIRS += $(SYN_DIR)/ip_cores/wrpc-sw/sdb-lib
-INCLUDE_DIRS += $(SYN_DIR)/ip_cores/wrpc-sw/pp_printf
+INCLUDE_DIRS += $(WR_DIR)/include
+INCLUDE_DIRS += $(WR_DIR)/sdb-lib
+INCLUDE_DIRS += $(WR_DIR)/pp_printf
 INCLUDE_DIRS += $(SYN_DIR)/ip_cores/etherbone-core/hdl/eb_master_core
 
 DEFINES += CONFIG_WR_NODE
@@ -85,7 +92,7 @@ else
 endif
 
 RESERVED_MEM_SIZE := $(shell echo $$(($(BOOTL_SIZE)+$(BUILDID_SIZE)+$(SHARED_SIZE))) )
-USABLE_MEM_SIZE := $(shell echo $$(($(RAM_SIZE)-$(RESERVED_MEM_SIZE))) )
+USABLE_MEM_SIZE := $(shell echo $$(($(RAM_SIZE)*4-$(RESERVED_MEM_SIZE))) )
 
 COMMENT_TEXT = 'This file has been created automatically, do not modify it by hand!'
 
@@ -114,7 +121,7 @@ LDS += "      _fboot = .;\n"
 LDS += "      *(.boot);\n"
 LDS += "      _eboot = .;\n"
 LDS += "   } > ram\n\n"
-LDS += "   /* Begin of build-id array defined in \"$(GENERATED_DIR)$(BUILD_ID_FILE)\" */\n"
+LDS += "   /* Begin of build-id array defined in \"$(GENERATED_DIR)/$(BUILD_ID_FILE)\" */\n"
 LDS += "   .buildid ADDR(.boot) + $(BOOTL_SIZE) :\n"
 LDS += "   {\n"
 LDS += "      _fbuildid = .;\n"
@@ -149,7 +156,6 @@ LDS += "     KEEP(*(.dtors))\n"
 LDS += "     KEEP(*(.jcr))\n"
 LDS += "     _etext = .;\n"
 LDS += "   } > ram\n\n"
-ifndef GGG
 LDS += "   /* Exception handlers */\n"
 LDS += "   .eh_frame_hdr :\n"
 LDS += "   {\n"
@@ -174,7 +180,6 @@ LDS += "     *(.rodata .rodata.* .gnu.linkonce.r.*)\n"
 LDS += "     *(.rodata1)\n"
 LDS += "     _erodata = .;\n"
 LDS += "   } > ram\n\n"
-endif
 LDS += "   .data :\n"
 LDS += "   {\n"
 LDS += "      . = ALIGN(4);\n"
@@ -246,7 +251,7 @@ CBR += "   $(CBR_GIT5)"'\\n\\'"\n\";\n\n"
 SHARED_MAP_HEADDER ?= shared_mmap.h
 
 UCTARGET = "_$$(echo $(SHARED_MAP_HEADDER) | tr a-z A-Z | tr '.' '_')"
-SMM  = "//! @file $(GENERATED_DIR)$(SHARED_MAP_HEADDER)\n"
+SMM  = "//! @file $(GENERATED_DIR)/$(SHARED_MAP_HEADDER)\n"
 SMM += "//! @brief Location of Buildid and Shared Section in LM32 Memory,"
 SMM += " to be used by host\n"
 SMM += "//! @note $(COMMENT_TEXT)\n"
@@ -261,23 +266,24 @@ SMM += "\#define SHARED_OFFS   $(SHARED_START)\n\n"
 SMM += "\#endif\n"
 
 #ADDITIONAL_DEPENDENCES += Makefile
-ADDITIONAL_DEPENDENCES += $(GENERATED_DIR)$(SHARED_MAP_HEADDER)
-ADDITIONAL_TO_CLEAN    += $(GENERATED_DIR)$(SHARED_MAP_HEADDER)
-ADDITIONAL_TO_CLEAN    += $(GENERATED_DIR)$(BUILD_ID_FILE)
+ADDITIONAL_DEPENDENCES += $(GENERATED_DIR)/$(SHARED_MAP_HEADDER)
+ADDITIONAL_TO_CLEAN    += $(GENERATED_DIR)/$(SHARED_MAP_HEADDER)
+ADDITIONAL_TO_CLEAN    += $(GENERATED_DIR)/$(BUILD_ID_FILE)
+
+ADDITIONAL_LD_DEPENDENCES = $(WORK_DIR)/$(LINKER_SCRIPT)
 
 # LD_FLAGS ?= -Wl,--defsym,_fstack=$$(($(RAM_SIZE)-4)) -nostdlib -T $(LINKER_SCRIPT) $(ARG_LIBS)
 
 #LD_FLAGS ?=  --verbose -T $(LINKER_SCRIPT) $(ARG_LIBS)
 
-RESULT_FILE = $(TARGET_DIR)$(TARGET).mif
+RESULT_FILE = $(TARGET_DIR)/$(TARGET).mif
 
 ADDITIONAL_TO_CLEAN += $(RESULT_FILE)
-ADDITIONAL_TO_CLEAN += $(WORK_DIR)$(LINKER_SCRIPT)
+ADDITIONAL_TO_CLEAN += $(WORK_DIR)/$(LINKER_SCRIPT)
 
 MAKEFILE_DIR ?= $(SYN_DIR)/modules/lm32_makefiles
-include $(MAKEFILE_DIR)/makefile.lm32
 
-LD_FLAGS ?=  -T $(WORK_DIR)$(LINKER_SCRIPT) $(ARG_LIBS)
+LD_FLAGS ?=  -T $(WORK_DIR)/$(LINKER_SCRIPT) $(ARG_LIBS)
 
 ifeq ($(V), 1)
    GENRAMMIF_F = $(GENRAMMIF)
@@ -285,22 +291,26 @@ else
    GENRAMMIF_F = $(FORMAT_R) $(CPU) "MIF" $(@); $(GENRAMMIF)
 endif
 
+include $(MAKEFILE_DIR)/makefile.lm32
 
 $(GENERATED_DIR):
 	$(QUIET)mkdir $(GENERATED_DIR)
 
-$(GENERATED_DIR)$(SHARED_MAP_HEADDER): $(GENERATED_DIR)
+$(GENERATED_DIR)/$(SHARED_MAP_HEADDER): $(GENERATED_DIR)
 	$(QUIET)(printf %b $(SMM)) > $@
 
-$(GENERATED_DIR)$(BUILD_ID_FILE): $(GENERATED_DIR)
+$(GENERATED_DIR)/$(BUILD_ID_FILE): $(GENERATED_DIR)
 	$(QUIET)(printf %b $(CBR)) > $@
 
-$(WORK_DIR)$(LINKER_SCRIPT): #$(WORK_DIR)
+$(WORK_DIR)/$(LINKER_SCRIPT): # $(WORK_DIR)
 	$(QUIET)(printf %b $(LDS)) > $@
 
 $(RESULT_FILE): $(BIN_FILE)
 	$(GENRAMMIF_F) $(BIN_FILE) $(RAM_SIZE) > $(RESULT_FILE)
 
+
+#-------------------------- upload to target SCU ------------------------------
+# For developing reasons only.
 ifdef TARGET_URL_FILE
 
 URL        = $(shell cat $(TARGET_URL_FILE))
@@ -308,8 +318,37 @@ CPU_ID     ?= u0
 CPU_OFFSET ?= 0
 
 .PHONY: load
-load: $(TARGET_DIR)$(TARGET).bin
+load: $(BIN_FILE)
 	eb-fwload $(URL) $(CPU_ID) $(CPU_OFFSET) $^
 endif
+
+#-------------------------------- Doxygen -------------------------------------
+
+DOX_INPUT                  = $(patsubst %.c,%.h, $(SOURCE))
+DOX_INPUT                 += $(SOURCE)
+DOX_INPUT                 += $(SCU_LIB_SRC_DIR)/helper_macros.h
+DOX_INPUT                 += $(SCU_LIB_SRC_DIR)/eb_console_helper.h
+DOX_INPUT                 += $(SCU_LIB_SRC_DIR)/lm32_assert.h
+DOX_INPUT                 += $(SHARED_MAP_HEADDER)
+DOX_INPUT                 += $(WORK_DIR)/$(LINKER_SCRIPT)
+DOX_OUTPUT_DIRECTORY      ?= $(HOME)/Documents/scr_doc/$(TARGET)
+DOX_PROJECT_LOGO          ?= $(MAKEFILE_DIR)/GSI_Logo_rgb_72dpi.png
+DOX_PROJECT_NAME          ?= $(TARGET)
+DOX_INLINE_INHERITED_MEMB ?= "YES"
+DOX_OPTIMIZE_OUTPUT_FOR_C ?= "YES"
+DOX_EXTRACT_ALL           ?= "YES"
+DOX_FORCE_LOCAL_INCLUDES  ?= "YES"
+DOX_RECURSIVE             ?= "NO"
+DOX_INLINE_SOURCES        ?= "NO"
+DOX_FORCE_LOCAL_INCLUDES  ?= "YES"
+DOX_MACRO_EXPANSION       ?= "NO"
+DOX_PREDEFINED            ?= $(DEFINES)
+DOX_UML_LOOK              ?= "YES"
+DOX_CALL_GRAPH            ?= "YES"
+DOX_CALLER_GRAPH          ?= "YES"
+
+DOXY_CFG_FILE             ?= $(DOX_OUTPUT_DIRECTORY)/Doxyfile
+
+include $(MAKEFILE_DIR)/makefile.dox
 
 #=================================== EOF ======================================
