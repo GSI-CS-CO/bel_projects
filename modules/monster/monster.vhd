@@ -418,37 +418,36 @@ architecture rtl of monster is
   ----------------------------------------------------------------------------------
 
   -- required slaves
-  constant c_dev_slaves          : natural := 28;
+  constant c_dev_slaves          : natural := 27;
   constant c_devs_build_id       : natural := 0;
   constant c_devs_watchdog       : natural := 1;
   constant c_devs_flash          : natural := 2;
   constant c_devs_reset          : natural := 3;
-  constant c_devs_ebm            : natural := 4;
-  constant c_devs_tlu            : natural := 5;
-  constant c_devs_eca_ctl        : natural := 6;
-  constant c_devs_eca_aq         : natural := 7;
-  constant c_devs_eca_tlu        : natural := 8;
-  constant c_devs_eca_wbm        : natural := 9;
-  constant c_devs_emb_cpu        : natural := 10;
-  constant c_devs_serdes_clk_gen : natural := 11;
-  constant c_devs_control        : natural := 12;
-  constant c_devs_ftm_cluster    : natural := 13;
+  constant c_devs_tlu            : natural := 4;
+  constant c_devs_eca_ctl        : natural := 5;
+  constant c_devs_eca_aq         : natural := 6;
+  constant c_devs_eca_tlu        : natural := 7;
+  constant c_devs_eca_wbm        : natural := 8;
+  constant c_devs_emb_cpu        : natural := 9;
+  constant c_devs_serdes_clk_gen : natural := 10;
+  constant c_devs_control        : natural := 11;
+  constant c_devs_ftm_cluster    : natural := 12;
 
   -- optional slaves:
-  constant c_devs_lcd            : natural := 14;
-  constant c_devs_oled           : natural := 15;
-  constant c_devs_scubirq        : natural := 16;
-  constant c_devs_mil_ctrl       : natural := 17;
-  constant c_devs_ow             : natural := 18;
-  constant c_devs_ssd1325        : natural := 19;
-  constant c_devs_vme_info       : natural := 20;
-  constant c_devs_CfiPFlash      : natural := 21;
-  constant c_devs_nau8811        : natural := 22;
-  constant c_devs_psram          : natural := 23;
-  constant c_devs_DDR3_if1       : natural := 24;
-  constant c_devs_DDR3_if2       : natural := 25;
-  constant c_devs_DDR3_ctrl      : natural := 26;
-  constant c_devs_tempsens       : natural := 27;
+  constant c_devs_lcd            : natural := 13;
+  constant c_devs_oled           : natural := 14;
+  constant c_devs_scubirq        : natural := 15;
+  constant c_devs_mil_ctrl       : natural := 16;
+  constant c_devs_ow             : natural := 17;
+  constant c_devs_ssd1325        : natural := 18;
+  constant c_devs_vme_info       : natural := 19;
+  constant c_devs_CfiPFlash      : natural := 20;
+  constant c_devs_nau8811        : natural := 21;
+  constant c_devs_psram          : natural := 22;
+  constant c_devs_DDR3_if1       : natural := 23;
+  constant c_devs_DDR3_if2       : natural := 24;
+  constant c_devs_DDR3_ctrl      : natural := 25;
+  constant c_devs_tempsens       : natural := 26;
 
   -- We have to specify the values for WRC as they provide no function for this
   constant c_wrcore_bridge_sdb : t_sdb_bridge := f_xwb_bridge_manual_sdb(x"0003ffff", x"00030000");
@@ -459,7 +458,6 @@ architecture rtl of monster is
     c_devs_watchdog       => f_sdb_auto_device(c_watchdog_sdb,                   true),
     c_devs_flash          => f_sdb_auto_device(f_wb_spi_flash_sdb(g_flash_bits), true),
     c_devs_reset          => f_sdb_auto_device(c_arria_reset,                    true),
-    c_devs_ebm            => f_sdb_auto_device(c_ebm_sdb,                        true),
     c_devs_tlu            => f_sdb_auto_device(c_tlu_sdb,                        not g_lm32_are_ftm),
     c_devs_eca_ctl        => f_sdb_auto_device(c_eca_slave_sdb,                  g_en_eca),
     c_devs_eca_aq         => f_sdb_auto_device(c_eca_queue_slave_sdb,            g_en_eca),
@@ -497,13 +495,15 @@ architecture rtl of monster is
   ----------------------------------------------------------------------------------
 
   -- Only put a slave here if it has critical performance requirements!
-  constant c_top_slaves        : natural := 6;
+  constant c_top_slaves        : natural := 7;
   constant c_tops_eca_event    : natural := 0;
   constant c_tops_scubus       : natural := 1;
   constant c_tops_mbox         : natural := 2;
   constant c_tops_dev          : natural := 3;
   constant c_tops_mil          : natural := 4;
   constant c_tops_wr_fast_path : natural := 5;
+  constant c_tops_ebm          : natural := 6;
+
 
   constant c_top_layout_req_slaves : t_sdb_record_array(c_top_slaves-1 downto 0) :=
    (c_tops_eca_event    => f_sdb_embed_device(c_eca_event_sdb, x"7FFFFFF0",    g_en_eca), -- must be located at fixed address
@@ -511,7 +511,8 @@ architecture rtl of monster is
     c_tops_mbox         => f_sdb_auto_device(c_mbox_sdb,                       true),
     c_tops_dev          => f_sdb_auto_bridge(c_dev_bridge_sdb),
     c_tops_mil          => f_sdb_auto_device(c_xwb_gsi_mil_scu,                g_en_mil),
-    c_tops_wr_fast_path => f_sdb_auto_bridge(c_wrcore_bridge_sdb,              true));
+    c_tops_wr_fast_path => f_sdb_auto_bridge(c_wrcore_bridge_sdb,              true),
+    c_tops_ebm          => f_sdb_auto_device(c_ebm_sdb,                        true));
 
   constant c_top_layout      : t_sdb_record_array := f_sdb_auto_layout(c_top_layout_req_masters, c_top_layout_req_slaves);
   constant c_top_sdb_address : t_wishbone_address := f_sdb_auto_sdb   (c_top_layout_req_masters, c_top_layout_req_slaves);
@@ -1122,8 +1123,8 @@ begin
       ebs_cfg_slave_i => wrc_master_o,
       ebs_wb_master_o => top_bus_slave_i (c_topm_ebs),
       ebs_wb_master_i => top_bus_slave_o (c_topm_ebs),
-      ebm_wb_slave_i  => dev_bus_master_o(c_devs_ebm),
-      ebm_wb_slave_o  => dev_bus_master_i(c_devs_ebm));
+      ebm_wb_slave_i  => top_bus_master_o(c_tops_ebm),
+      ebm_wb_slave_o  => top_bus_master_i(c_tops_ebm));
 
 
   lm32 : ftm_lm32_cluster
