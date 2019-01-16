@@ -37,8 +37,7 @@ typedef struct
 } IO_T;
 STATIC_ASSERT( sizeof(IO_T) <= SHARED_SIZE );
 
-//extern uint32_t*       _startshared[];
-volatile IO_T SHARED io;
+volatile IO_T SHARED io = { 1, 0, 4711 };
 
 
 void main( void )
@@ -63,11 +62,11 @@ void main( void )
 
    while( true )
    {
-      io.a = 0;
       while( io.a == 0 );
-      mprintf( "io.a: 0x%x\n", io.a );
-      mprintf( "io.b: 0x%x\n", io.b );
-      mprintf( "io.c: 0x%x\n", io.c );
+      mprintf( "io.a: 0x%04x %d\n", io.a, io.a );
+      mprintf( "io.b: 0x%04x %d\n", io.b, io.b );
+      mprintf( "io.c: 0x%04x %d\n", io.c, io.c );
+      io.a = 0;
    }
 
 }
