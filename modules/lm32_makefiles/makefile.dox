@@ -2156,7 +2156,7 @@ DOX_GROUP_GRAPHS           ?= YES
 # The default value is: NO.
 # This tag requires that the tag HAVE_DOT is set to YES.
 
-DOX_UML_LOOK               ?= NO
+DOX_UML_LOOK               ?= YES
 
 # If the UML_LOOK tag is enabled, the fields and methods are shown inside the
 # class node. If there are many fields or methods and many nodes the graph may
@@ -2206,7 +2206,7 @@ DOX_INCLUDED_BY_GRAPH      ?= YES
 # The default value is: NO.
 # This tag requires that the tag HAVE_DOT is set to YES.
 
-DOX_CALL_GRAPH             ?= NO
+DOX_CALL_GRAPH             ?= YES
 
 # If the CALLER_GRAPH tag is set to YES then doxygen will generate a caller
 # dependency graph for every global function or class method.
@@ -2217,7 +2217,7 @@ DOX_CALL_GRAPH             ?= NO
 # The default value is: NO.
 # This tag requires that the tag HAVE_DOT is set to YES.
 
-DOX_CALLER_GRAPH           ?= NO
+DOX_CALLER_GRAPH           ?= YES
 
 # If the GRAPHICAL_HIERARCHY tag is set to YES then doxygen will graphical
 # hierarchy of all classes instead of a textual one.
@@ -2351,6 +2351,7 @@ DOX_GENERATE_LEGEND        ?= YES
 # This tag requires that the tag HAVE_DOT is set to YES.
 
 DOX_DOT_CLEANUP            ?= YES
+
 
 ###############################################################################
 ${DOXY_CFG_FILE}: ${DOX_OUTPUT_DIRECTORY}
@@ -2607,16 +2608,27 @@ ${DOXY_CFG_FILE}: ${DOX_OUTPUT_DIRECTORY}
 	@echo 'DOT_CLEANUP               = ${DOX_DOT_CLEANUP}'            >> ${DOXY_CFG_FILE}
 
 ${DOX_OUTPUT_DIRECTORY}:
-	mkdir -p ${DOX_OUTPUT_DIRECTORY}
+	${QUIET}mkdir -p ${DOX_OUTPUT_DIRECTORY}
 
 .PHONY: doc
 doc: ${DOXY_CFG_FILE} ${DOX_OUTPUT_DIRECTORY}
-	doxygen ${DOXY_CFG_FILE}
-	@echo done
+	${QUIET}doxygen ${DOXY_CFG_FILE}
 
 .PHONY: deldoc
 deldoc:
-	rm -r ${DOX_OUTPUT_DIRECTORY} 2>/dev/null
-	rm ${DOXY_CFG_FILE} 2>/dev/null
+	${QUIET}rm -r ${DOX_OUTPUT_DIRECTORY} 2>/dev/null
+	${QUIET}rm ${DOXY_CFG_FILE} 2>/dev/null
+
+ifeq (${DOX_GENERATE_HTML}, YES)
+
+DOX_BROWSER    ?= firefox
+DOX_HTML_INDEX := ${DOX_OUTPUT_DIRECTORY}/${DOX_HTML_OUTPUT}/index.html
+
+.PHONY: showdoc
+showdoc:
+	${QUIET}[ -f "${DOX_HTML_INDEX}" ] || make doc
+	${QUIET}${DOX_BROWSER} ${DOX_HTML_INDEX}
+
+endif
 
 #----------------------------------- EOF---------------------------------------

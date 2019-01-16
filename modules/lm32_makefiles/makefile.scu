@@ -343,9 +343,6 @@ DOX_INLINE_SOURCES        ?= "NO"
 DOX_FORCE_LOCAL_INCLUDES  ?= "YES"
 DOX_MACRO_EXPANSION       ?= "NO"
 DOX_PREDEFINED            ?= $(DEFINES)
-DOX_UML_LOOK              ?= "YES"
-DOX_CALL_GRAPH            ?= "YES"
-DOX_CALLER_GRAPH          ?= "YES"
 
 DOXY_CFG_FILE             ?= $(DOX_OUTPUT_DIRECTORY)/Doxyfile
 
