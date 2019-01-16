@@ -1,0 +1,185 @@
+digraph g {
+name="Monster";
+
+// create svg using "dot -Tsvg FILE.dot -o FILE.svg"
+
+graph [root="top",  rankdir=LR, nodesep=0.6, mindist=0.6, ranksep=1, overlap=false]
+
+// crossbars
+top                 [type="crossbar", shape="oval", style="filled", fillcolor="yellow", color="black", fixedsize=true, width=2, height=1];
+ftm_cluster         [type="crossbar", shape="oval", style="filled", fillcolor="yellow", color="black", fixedsize=true, width=2, height=1];
+dev                 [type="crossbar", shape="oval", style="filled", fillcolor="yellow", color="black", fixedsize=true, width=2, height=1];
+wrcore              [type="crossbar", shape="oval", style="filled", fillcolor="yellow", color="black", fixedsize=true, width=2, height=1];
+wb_crossbar         [type="crossbar", shape="oval", style="filled", fillcolor="yellow", color="black", fixedsize=true, width=2, height=1];
+
+// wb slaves
+eca_event           [type="slave", shape="rectangle", style="filled", fillcolor="gray68", color="black", fixedsize=true, width=1.8, height=.4];
+scu_bus             [type="slave", shape="rectangle", style="filled", fillcolor="gray68", color="black", fixedsize=true, width=1.8, height=.4];
+mbox                [type="slave", shape="rectangle", style="filled", fillcolor="gray68", color="black", fixedsize=true, width=1.8, height=.4];
+mil                 [type="slave", shape="rectangle", style="filled", fillcolor="gray68", color="black", fixedsize=true, width=1.8, height=.4];
+build_id            [type="slave", shape="rectangle", style="filled", fillcolor="gray68", color="black", fixedsize=true, width=1.8, height=.4];
+watchdog            [type="slave", shape="rectangle", style="filled", fillcolor="gray68", color="black", fixedsize=true, width=1.8, height=.4];
+flash               [type="slave", shape="rectangle", style="filled", fillcolor="gray68", color="black", fixedsize=true, width=1.8, height=.4];
+reset               [type="slave", shape="rectangle", style="filled", fillcolor="gray68", color="black", fixedsize=true, width=1.8, height=.4];
+ebm                 [type="slave", shape="rectangle", style="filled", fillcolor="orange", color="black", fixedsize=true, width=1.8, height=.4, label="ebm, previously @ dev"];
+tlu                 [type="slave", shape="rectangle", style="filled", fillcolor="gray68", color="black", fixedsize=true, width=1.8, height=.4];
+eca_ctl             [type="slave", shape="rectangle", style="filled", fillcolor="gray68", color="black", fixedsize=true, width=1.8, height=.4];
+eca_aq              [type="slave", shape="rectangle", style="filled", fillcolor="gray68", color="black", fixedsize=true, width=1.8, height=.4];
+eca_tlu             [type="slave", shape="rectangle", style="filled", fillcolor="gray68", color="black", fixedsize=true, width=1.8, height=.4];
+eca_wbm_m           [type="slave", shape="rectangle", style="filled", fillcolor="gray68", color="black", fixedsize=true, width=1.8, height=.4];
+emb_cpu             [type="slave", shape="rectangle", style="filled", fillcolor="gray68", color="black", fixedsize=true, width=1.8, height=.4];
+serdes_clk_gen      [type="slave", shape="rectangle", style="filled", fillcolor="gray68", color="black", fixedsize=true, width=1.8, height=.4];
+control             [type="slave", shape="rectangle", style="filled", fillcolor="gray68", color="black", fixedsize=true, width=1.8, height=.4];
+lm32_ram_user_1     [type="slave", shape="rectangle", style="filled", fillcolor="gray68", color="black", fixedsize=true, width=1.8, height=.4];
+lm32_ram_user_N     [type="slave", shape="rectangle", style="filled", fillcolor="gray68", color="black", fixedsize=true, width=1.8, height=.4];  
+cluster_info        [type="slave", shape="rectangle", style="filled", fillcolor="gray68", color="black", fixedsize=true, width=1.8, height=.4];  
+eb_config           [type="slave", shape="rectangle", style="filled", fillcolor="gray68", color="black", fixedsize=true, width=1.8, height=.4];  
+diag                [type="slave", shape="rectangle", style="filled", fillcolor="gray68", color="black", fixedsize=true, width=1.8, height=.4];
+user_1wire          [type="slave", shape="rectangle", style="filled", fillcolor="gray68", color="black", fixedsize=true, width=1.8, height=.4];
+tempsens            [type="slave", shape="rectangle", style="filled", fillcolor="gray68", color="black", fixedsize=true, width=1.8, height=.4];
+prioq_ctl           [type="slave", shape="rectangle", style="filled", fillcolor="gray68", color="black", fixedsize=true, width=1.8, height=.4];
+wr_mini_nic         [type="slave", shape="rectangle", style="filled", fillcolor="gray68" , color="black", fixedsize=true, width=1.8, height=.4];
+wr_endpoint         [type="slave", shape="rectangle", style="filled", fillcolor="gray68" , color="black", fixedsize=true, width=1.8, height=.4];
+wr_soft_pll         [type="slave", shape="rectangle", style="filled", fillcolor="gray68" , color="black", fixedsize=true, width=1.8, height=.4];
+wr_pps_gen          [type="slave", shape="rectangle", style="filled", fillcolor="gray68" , color="black", fixedsize=true, width=1.8, height=.4];
+wr_periph_syscon    [type="slave", shape="rectangle", style="filled", fillcolor="gray68" , color="black", fixedsize=true, width=1.8, height=.4];
+wr_periph_1wire     [type="slave", shape="rectangle", style="filled", fillcolor="gray68" , color="black", fixedsize=true, width=1.8, height=.4];
+wb_slave            [type="slave", shape="rectangle", style="filled", fillcolor="gray68", color="black", fixedsize=true, width=1.8, height=.4];
+
+// wb masters
+ebs                 [type="master", shape="diamond", style="filled", fillcolor="greenyellow", color="black", fixedsize=true, width=2, height=1];
+eca_wbm_s           [type="master", shape="diamond", style="filled", fillcolor="greenyellow", color="black", fixedsize=true, width=2, height=1];
+pcie_vme_pmc        [type="master", shape="diamond", style="filled", fillcolor="greenyellow", color="black", fixedsize=true, width=2, height=1];
+usb                 [type="master", shape="diamond", style="filled", fillcolor="greenyellow", color="black", fixedsize=true, width=2, height=1];
+prioq               [type="master", shape="diamond", style="filled", fillcolor="greenyellow", color="black", fixedsize=true, width=2, height=1];
+lm32_core_1         [type="master", shape="diamond", style="filled", fillcolor="greenyellow", color="black", fixedsize=true, width=2, height=1];
+lm32_core_N         [type="master", shape="diamond", style="filled", fillcolor="greenyellow", color="black", fixedsize=true, width=2, height=1];
+wb_master           [type="master", shape="diamond", style="filled", fillcolor="greenyellow", color="black", fixedsize=true, width=2, height=1];
+
+// connect crossbars
+top               -> dev               [type="interconnect", color="red", arrowhead=normal, penwidth=2]; 
+dev               -> ftm_cluster       [type="interconnect", color="red", arrowhead=normal, penwidth=2];
+top               -> wrcore            [type="interconnect", color="red", arrowhead=normal, penwidth=2]; 
+
+// connect masters
+ebs               -> top              [type="masterconnect", color="black", arrowhead=normal]; 
+eca_wbm_s         -> top              [type="masterconnect", color="black", arrowhead=normal]; 
+pcie_vme_pmc      -> top              [type="masterconnect", color="black", arrowhead=normal]; 
+usb               -> top              [type="masterconnect", color="black", arrowhead=normal]; 
+prioq             -> top              [type="masterconnect", color="black", arrowhead=normal]; 
+lm32_core_1       -> top              [type="masterconnect", color="black", arrowhead=normal]; 
+lm32_core_N       -> top              [type="masterconnect", color="black", arrowhead=normal];     
+
+// connect slaves
+top               -> eca_event        [type="slaveconnect", color="black", arrowhead=normal];      
+top               -> scu_bus          [type="slaveconnect", color="black", arrowhead=normal];      
+top               -> mbox             [type="slaveconnect", color="black", arrowhead=normal];      
+top               -> mil              [type="slaveconnect", color="black", arrowhead=normal];      
+dev               -> build_id         [type="slaveconnect", color="black", arrowhead=normal];      
+dev               -> watchdog         [type="slaveconnect", color="black", arrowhead=normal];      
+dev               -> flash            [type="slaveconnect", color="black", arrowhead=normal];      
+dev               -> reset            [type="slaveconnect", color="black", arrowhead=normal];      
+top               -> ebm              [type="slaveconnect", color="black", arrowhead=normal];      
+dev               -> tlu              [type="slaveconnect", color="black", arrowhead=normal];      
+dev               -> eca_ctl          [type="slaveconnect", color="black", arrowhead=normal];      
+dev               -> eca_aq           [type="slaveconnect", color="black", arrowhead=normal];      
+dev               -> eca_tlu          [type="slaveconnect", color="black", arrowhead=normal];      
+dev               -> eca_wbm_m        [type="slaveconnect", color="black", arrowhead=normal];      
+dev               -> emb_cpu          [type="slaveconnect", color="black", arrowhead=normal];      
+dev               -> serdes_clk_gen   [type="slaveconnect", color="black", arrowhead=normal];      
+dev               -> control          [type="slaveconnect", color="black", arrowhead=normal];      
+dev               -> user_1wire       [type="slaveconnect", color="black", arrowhead=normal];      
+dev               -> tempsens         [type="slaveconnect", color="black", arrowhead=normal];      
+ftm_cluster       -> lm32_ram_user_1  [type="slaveconnect", color="black", arrowhead=normal];      
+ftm_cluster       -> lm32_ram_user_N  [type="slaveconnect", color="black", arrowhead=normal];      
+ftm_cluster       -> cluster_info     [type="slaveconnect", color="black", arrowhead=normal];      
+ftm_cluster       -> diag             [type="slaveconnect", color="black", arrowhead=normal];
+ftm_cluster       -> prioq_ctl        [type="slaveconnect", color="black", arrowhead=normal];
+wrcore            -> eb_config        [type="slaveconnect", color="black", arrowhead=normal];
+wrcore            -> wr_mini_nic      [type="slaveconnect", color="black", arrowhead=normal];
+wrcore            -> wr_endpoint      [type="slaveconnect", color="black", arrowhead=normal];
+wrcore            -> wr_soft_pll      [type="slaveconnect", color="black", arrowhead=normal];
+wrcore            -> wr_pps_gen       [type="slaveconnect", color="black", arrowhead=normal];
+wrcore            -> wr_periph_syscon [type="slaveconnect", color="black", arrowhead=normal];
+wrcore            -> wr_periph_1wire  [type="slaveconnect", color="black", arrowhead=normal];
+
+// special connects
+lm32_ram_user_1  -> lm32_core_1      [type="specialconnect", color="red",  arrowhead=normal, style=dashed, label="dp ram", dir=back];      
+lm32_ram_user_N  -> lm32_core_N      [type="specialconnect", color="red",  arrowhead=normal, style=dashed, label="dp ram", dir=back];
+
+rank=same;
+
+subgraph cluster_eb {
+        label="eb";
+        ebm;
+        ebs;
+        eb_config
+        fontcolor="blue"; color=blue;
+}
+
+subgraph cluster_prioq {
+        label="prioq"
+        prioq;
+        prioq_ctl;
+        fontcolor="blue"; color=blue;
+}
+
+subgraph cluster_ecawbm{
+        label="eca_wbm"
+        eca_wbm_m;
+        eca_wbm_s;
+        fontcolor="blue"; color=blue;
+}
+
+/*subgraph cluster_top {
+       top;
+       pcie_vme_pmc; 
+       usb;          
+       eca_event;
+       scu_bus;  
+       mbox;     
+       mil;
+       lm32_core_1
+       lm32_core_N
+
+       //fontcolor="deeppink4"; color=deeppink4;
+       style=invis;
+}*/
+
+subgraph cluster_dev {
+       dev;
+       build_id;       
+       watchdog;       
+       flash;          
+       reset;          
+       tlu;            
+       eca_ctl;        
+       eca_aq;         
+       eca_tlu;        
+       emb_cpu;        
+       serdes_clk_gen; 
+       control;        
+       user_1wire;
+       tempsens;
+
+       //fontcolor="deeppink4"; color=deeppink4;
+       style=invis;
+}
+
+subgraph cluster_legend {
+        wb_crossbar         
+        wb_slave            
+        wb_master           
+
+        label = "legend";
+        fontcolor="black"; color=black;
+}
+
+// very special connects to force placement inside graph
+usb       -> wb_master   [minlen=3, style=invis];
+//eca_wbm_s -> prioq_ctl   [style=invis];
+
+}
+
+
+
