@@ -2616,8 +2616,8 @@ doc: ${DOXY_CFG_FILE} ${DOX_OUTPUT_DIRECTORY}
 
 .PHONY: deldoc
 deldoc:
-	${QUIET}rm -r ${DOX_OUTPUT_DIRECTORY} 2>/dev/null
 	${QUIET}rm ${DOXY_CFG_FILE} 2>/dev/null
+	${QUIET}rm -r ${DOX_OUTPUT_DIRECTORY} 2>/dev/null
 
 ifeq (${DOX_GENERATE_HTML}, YES)
 

@@ -291,6 +291,16 @@ else
    GENRAMMIF_F = $(FORMAT_R) $(CPU) "MIF" $(@); $(GENRAMMIF)
 endif
 
+# ------------ Additional defines for Doxygen ---------------------------------
+DOX_INPUT                 += $(SCU_LIB_SRC_DIR)/helper_macros.h
+DOX_INPUT                 += $(SCU_LIB_SRC_DIR)/eb_console_helper.h
+DOX_INPUT                 += $(SCU_LIB_SRC_DIR)/lm32_assert.h
+DOX_INPUT                 += $(SHARED_MAP_HEADDER)
+DOX_INPUT                 += $(WORK_DIR)/$(LINKER_SCRIPT)
+DOX_OUTPUT_DIRECTORY      ?= $(HOME)/Documents/scr_doc/$(TARGET)
+DOX_PROJECT_LOGO          ?= $(MAKEFILE_DIR)/GSI_Logo_rgb_72dpi.png
+# -------------- End of defines for Doxygen -----------------------------------
+
 include $(MAKEFILE_DIR)/makefile.lm32
 
 $(GENERATED_DIR):
@@ -321,31 +331,5 @@ CPU_OFFSET ?= 0
 load: $(BIN_FILE)
 	eb-fwload $(URL) $(CPU_ID) $(CPU_OFFSET) $^
 endif
-
-#-------------------------------- Doxygen -------------------------------------
-
-DOX_INPUT                  = $(patsubst %.c,%.h, $(SOURCE))
-DOX_INPUT                 += $(SOURCE)
-DOX_INPUT                 += $(SCU_LIB_SRC_DIR)/helper_macros.h
-DOX_INPUT                 += $(SCU_LIB_SRC_DIR)/eb_console_helper.h
-DOX_INPUT                 += $(SCU_LIB_SRC_DIR)/lm32_assert.h
-DOX_INPUT                 += $(SHARED_MAP_HEADDER)
-DOX_INPUT                 += $(WORK_DIR)/$(LINKER_SCRIPT)
-DOX_OUTPUT_DIRECTORY      ?= $(HOME)/Documents/scr_doc/$(TARGET)
-DOX_PROJECT_LOGO          ?= $(MAKEFILE_DIR)/GSI_Logo_rgb_72dpi.png
-DOX_PROJECT_NAME          ?= $(TARGET)
-DOX_INLINE_INHERITED_MEMB ?= "YES"
-DOX_OPTIMIZE_OUTPUT_FOR_C ?= "YES"
-DOX_EXTRACT_ALL           ?= "YES"
-DOX_FORCE_LOCAL_INCLUDES  ?= "YES"
-DOX_RECURSIVE             ?= "NO"
-DOX_INLINE_SOURCES        ?= "NO"
-DOX_FORCE_LOCAL_INCLUDES  ?= "YES"
-DOX_MACRO_EXPANSION       ?= "NO"
-DOX_PREDEFINED            ?= $(DEFINES)
-
-DOXY_CFG_FILE             ?= $(DOX_OUTPUT_DIRECTORY)/Doxyfile
-
-include $(MAKEFILE_DIR)/makefile.dox
 
 #=================================== EOF ======================================

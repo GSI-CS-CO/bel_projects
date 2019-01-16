@@ -82,7 +82,7 @@ AS_ARG ?= $(CC_ARG)
 
 RESULT_FILE ?= $(BIN_FILE)
 
-all: $(WORK_DIR) $(RESULT_FILE) size
+all: $(WORK_DIR) $(TARGET_DIR) $(RESULT_FILE) size
 
 $(WORK_DIR):
 	$(QUIET)mkdir -p $(WORK_DIR)
@@ -90,9 +90,9 @@ $(WORK_DIR):
 $(TARGET_DIR):
 	$(QUIET)mkdir -p $(TARGET_DIR)
 
-# TODO: Following rule could be made a bit better...
+# TODO Following rule could be made a bit better...
 
-$(DEPENDFILE): $(_SOURCE) $(WORK_DIR) $(ADDITIONAL_DEPENDENCES)
+$(DEPENDFILE): $(_SOURCE) $(ADDITIONAL_DEPENDENCES) $(WORK_DIR)
 	$(QUIET)(for i in $(_SOURCE); do \
 		printf "$(WORK_DIR)/"; \
 		case "$${i##*.}" in \
@@ -116,7 +116,7 @@ $(DEPENDFILE): $(_SOURCE) $(WORK_DIR) $(ADDITIONAL_DEPENDENCES)
 
 
 .PHONY: dep
-dep: $(DEPENDFILE)
+dep: $(WORK_DIR) $(DEPENDFILE)
 	@cat $(DEPENDFILE)
 
 -include $(DEPENDFILE)
@@ -125,7 +125,7 @@ dep: $(DEPENDFILE)
 $(ELF_FILE): $(OBJ_FILES) $(ADDITIONAL_LD_DEPENDENCES)
 	$(LD_F) -o $@ $(OBJ_FILES) $(LD_FLAGS)
 
-$(BIN_FILE): $(ELF_FILE) $(TARGET_DIR)
+$(BIN_FILE): $(ELF_FILE) # $(TARGET_DIR)
 	$(OBJCPY_F) -O $(OUTPUT_FORMAT) $(ELF_FILE) $(BIN_FILE)
 
 .PHONY: size
@@ -162,6 +162,28 @@ clean:
 	rmdir $(DEPLOY_DIR); \
 	rmdir $(GENERATED_DIR) ) 2>/dev/null
 
+#-------------------------------- Doxygen -------------------------------------
+DOX_PROJECT_NAME          ?= $(TARGET)
+DOX_INPUT                 += $(patsubst %.c,%.h, $(SOURCE))
+DOX_INPUT                 += $(patsubst %.cpp,%.h, $(SOURCE))
+DOX_INPUT                 += $(patsubst %.cpp,%.hpp, $(SOURCE))
+DOX_INPUT                 += $(SOURCE)
 
+DOX_INLINE_INHERITED_MEMB ?= "YES"
+DOX_OPTIMIZE_OUTPUT_FOR_C ?= "YES"
+DOX_EXTRACT_ALL           ?= "YES"
+DOX_FORCE_LOCAL_INCLUDES  ?= "YES"
+DOX_RECURSIVE             ?= "NO"
+DOX_INLINE_SOURCES        ?= "NO"
+DOX_FORCE_LOCAL_INCLUDES  ?= "YES"
+DOX_MACRO_EXPANSION       ?= "NO"
+DOX_PREDEFINED            ?= $(DEFINES)
+
+DOXY_CFG_FILE             ?= $(DOX_OUTPUT_DIRECTORY)/Doxyfile
+
+DOX_MAKEFILE ?= $(MAKEFILE_DIR)/makefile.dox
+
+# The presence of the Doxygen-makefile is optional only.
+-include $(DOX_MAKEFILE)
 
 #=================================== EOF ======================================
