@@ -43,29 +43,28 @@ const char* wrunipz_state_text(uint32_t code) {
   }
 } // wrunipz_state_text
 
-const char* wrunipz_status_text(uint32_t code) {  
+const char* wrunipz_status_text(uint32_t bit) {  
   static char message[256];
 
-  switch (code) {
-  case WRUNIPZ_STATUS_UNKNOWN          : sprintf(message, "error %d, %s",    code, "unknown status"); break;
+  switch (bit) {
   case WRUNIPZ_STATUS_OK               : sprintf(message, "OK"); break;
-  case WRUNIPZ_STATUS_ERROR            : sprintf(message, "error %d, %s",    code, "an error occured"); break;
-  case WRUNIPZ_STATUS_TIMEDOUT         : sprintf(message, "error %d, %s",    code, "a timeout occured"); break;
-  case WRUNIPZ_STATUS_OUTOFRANGE       : sprintf(message, "error %d, %s",    code, "some value is out of range"); break;
-  case WRUNIPZ_STATUS_LATE             : sprintf(message, "error %d, %s",    code, "a timing messages is not dispatched in time"); break;
-  case WRUNIPZ_STATUS_EARLY            : sprintf(message, "error %d, %s",    code, "a timing messages is dispatched unreasonably early (dt > UNILAC period)"); break;
-  case WRUNIPZ_STATUS_TRANSACTION      : sprintf(message, "error %d, %s",    code, "transaction failed"); break;
-  case WRUNIPZ_STATUS_EB               : sprintf(message, "error %d, %s",    code, "an Etherbone error occured"); break;
-  case WRUNIPZ_STATUS_NOIP             : sprintf(message, "error %d, %s",    code, "DHCP request via WR network failed"); break;
-  case WRUNIPZ_STATUS_EBREADTIMEDOUT   : sprintf(message, "error %d, %s",    code, "EB read via WR network timed out"); break;
-  case WRUNIPZ_STATUS_WRONGVIRTACC     : sprintf(message, "error %d, %s",    code, "mismatching virtual accelerator for EVT_READY_TO_SIS from UNIPZ"); break;
-  case WRUNIPZ_STATUS_SAFETYMARGIN     : sprintf(message, "error %d, %s",    code, "violation of safety margin for data master and timing network"); break;
-  case WRUNIPZ_STATUS_NOTIMESTAMP      : sprintf(message, "error %d, %s",    code, "received EVT_READY_TO_SIS in MIL FIFO but no TS via TLU -> ECA"); break;
-  case WRUNIPZ_STATUS_BADTIMESTAMP     : sprintf(message, "error %d, %s",    code, "TS from TLU->ECA does not coincide with MIL Event from FIFO"); break;
-  case WRUNIPZ_STATUS_WAIT4UNIEVENT    : sprintf(message, "error %d, %s",    code, "timeout while waiting for EVT_READY_TO_SIS"); break;
-  case WRUNIPZ_STATUS_WRBADSYNC        : sprintf(message, "error %d, %s",    code, "White Rabbit: not in 'TRACK_PHASE'"); break;
-  case WRUNIPZ_STATUS_AUTORECOVERY     : sprintf(message, "errorFix %d, %s", code, "attempting auto-recovery from state ERROR"); break;
-  default                              : sprintf(message, "error %d, %s",    code, "wr-unipz: undefined error code"); break;
+  case WRUNIPZ_STATUS_ERROR            : sprintf(message, "error %d, %s",    bit, "an error occured"); break;
+  case WRUNIPZ_STATUS_TIMEDOUT         : sprintf(message, "error %d, %s",    bit, "a timeout occured"); break;
+  case WRUNIPZ_STATUS_OUTOFRANGE       : sprintf(message, "error %d, %s",    bit, "some value is out of range"); break;
+  case WRUNIPZ_STATUS_LATE             : sprintf(message, "error %d, %s",    bit, "a timing messages is not dispatched in time"); break;
+  case WRUNIPZ_STATUS_EARLY            : sprintf(message, "error %d, %s",    bit, "a timing messages is dispatched unreasonably early (dt > UNILAC period)"); break;
+  case WRUNIPZ_STATUS_TRANSACTION      : sprintf(message, "error %d, %s",    bit, "transaction failed"); break;
+  case WRUNIPZ_STATUS_EB               : sprintf(message, "error %d, %s",    bit, "an Etherbone error occured"); break;
+  case WRUNIPZ_STATUS_NOIP             : sprintf(message, "error %d, %s",    bit, "DHCP request via WR network failed"); break;
+  case WRUNIPZ_STATUS_EBREADTIMEDOUT   : sprintf(message, "error %d, %s",    bit, "EB read via WR network timed out"); break;
+  case WRUNIPZ_STATUS_WRONGVIRTACC     : sprintf(message, "error %d, %s",    bit, "mismatching virtual accelerator for EVT_READY_TO_SIS from UNIPZ"); break;
+  case WRUNIPZ_STATUS_SAFETYMARGIN     : sprintf(message, "error %d, %s",    bit, "violation of safety margin for data master and timing network"); break;
+  case WRUNIPZ_STATUS_NOTIMESTAMP      : sprintf(message, "error %d, %s",    bit, "received EVT_READY_TO_SIS in MIL FIFO but no TS via TLU -> ECA"); break;
+  case WRUNIPZ_STATUS_BADTIMESTAMP     : sprintf(message, "error %d, %s",    bit, "TS from TLU->ECA does not coincide with MIL Event from FIFO"); break;
+  case WRUNIPZ_STATUS_WAIT4UNIEVENT    : sprintf(message, "error %d, %s",    bit, "timeout while waiting for EVT_READY_TO_SIS"); break;
+  case WRUNIPZ_STATUS_WRBADSYNC        : sprintf(message, "error %d, %s",    bit, "White Rabbit: not in 'TRACK_PHASE'"); break;
+  case WRUNIPZ_STATUS_AUTORECOVERY     : sprintf(message, "errorFix %d, %s", bit, "attempting auto-recovery from state ERROR"); break;
+  default                              : sprintf(message, "error %d, %s",    bit, "wr-unipz: undefined error code"); break;
   }
 
   return message;
@@ -155,9 +154,12 @@ uint32_t wrunipz_transaction_upload(eb_device_t device, eb_address_t DPstat, eb_
   uint32_t     validFlag;      // flag: data[n] is valid
   uint32_t     prepFlag;       // flag: data[n] is prep datum
   uint32_t     evtFlag;        // flag: data[n] is evt
+  uint32_t     offset;         // helper variable
   eb_data_t    data;
   eb_cycle_t   cycle;
 
+  /* check: its a mess to have practically the same code for Kanal0 and Kanal1 */
+  
   // check if transaction has been initialized
   if (eb_device_read(device, DPstat, EB_BIG_ENDIAN|EB_DATA32, &data, 0, eb_block) != EB_OK) return WRUNIPZ_STATUS_EB;
   if (data != WRUNIPZ_CONFSTAT_INIT) return WRUNIPZ_STATUS_TRANSACTION;
@@ -166,7 +168,7 @@ uint32_t wrunipz_transaction_upload(eb_device_t device, eb_address_t DPstat, eb_
   if (eb_device_read(device, DPpz, EB_BIG_ENDIAN|EB_DATA32, &data, 0, eb_block) != EB_OK) return WRUNIPZ_STATUS_EB;
   pzFlag = (uint32_t)data | (1 << pz);
 
-    // EB cycle
+  // EB cycle
   if (eb_cycle_open(device, 0, eb_block, &cycle) != EB_OK) return WRUNIPZ_STATUS_EB;
 
   eb_cycle_write(cycle, DPpz, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)pzFlag);
@@ -178,10 +180,12 @@ uint32_t wrunipz_transaction_upload(eb_device_t device, eb_address_t DPstat, eb_
 
   // write data
   for (i=0; i < nDataChn0; i++) {
+    offset    = (uint32_t)(dataChn0[i] >> 16); // get offset of event within UNILAC cycle
+    
     validFlag = validFlag | (1 << i);
     evtFlag   = evtFlag   | (1 << i); /* chk, for now assume, that all data are 'event data'  */
-    prepFlag  = prepFlag;             /* chk, treatment of prep events is still on open issue */
-    
+    if (offset < WRUNIPZ_MAXPREPOFFSET)  prepFlag  = prepFlag | (1 << i);
+
     eb_cycle_write(cycle, DPdata + (eb_address_t)((pz * WRUNIPZ_NEVT * WRUNIPZ_NCHN + i) << 2), EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)(dataChn0[i]));
   } // for i
 
@@ -193,7 +197,7 @@ uint32_t wrunipz_transaction_upload(eb_device_t device, eb_address_t DPstat, eb_
 
   /* printf("valid addr %x flag %x\n", (uint32_t)DPflag + ((pz * WRUNIPZ_NPZ * WRUNIPZ_NCHN + 0) << 2), validFlag); */
 
-  // UNILAC Kanal1
+  // UNILAC Kanal 1
   validFlag = 0;
   prepFlag  = 0;
   evtFlag   = 0;

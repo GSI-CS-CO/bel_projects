@@ -3,7 +3,7 @@
  *
  *  created : 2018
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 04-Jan-2019
+ *  version : 14-Jan-2019
  *
  *  lm32 program for gateway between UNILAC Pulszentrale and a White Rabbit network
  *  this basically serves a Data Master for UNILAC
@@ -45,7 +45,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 22-November-2018
  ********************************************************************************************/
-#define WRUNIPZ_FW_VERSION 0x000006                                     // make this consistent with makefile
+#define WRUNIPZ_FW_VERSION 0x000007                                     // make this consistent with makefile
 
 /* standard includes */
 #include <stdio.h>
@@ -107,7 +107,7 @@ volatile uint32_t *pWREp;               // WB address of WR Endpoint
 
 volatile uint32_t *pShared;             // pointer to begin of shared memory region
 uint32_t *pSharedVersion;               // pointer to a "user defined" u32 register; here: publish version
-uint32_t *pSharedStatus;                // pointer to a "user defined" u32 register; here: publish status
+uint32_t *pSharedSumStatus;             // pointer to a "user defined" u32 register; here: publish OR of all (actual) error bits
 uint32_t *pSharedNBadStatus;            // pointer to a "user defined" u32 register; here: publish # of bad status (=error) incidents
 uint32_t *pSharedNBadState;             // pointer to a "user defined" u32 register; here: publish # of bad state (=FATAL, ERROR, UNKNOWN) incidents
 volatile uint32_t *pSharedCmd;          // pointer to a "user defined" u32 register; here: get command from host
@@ -127,6 +127,10 @@ uint32_t *pSharedNLate;                 // pointer to a "user defined" u32 regis
 uint32_t *pSharedVaccAvg;               // pointer to a "user defined" u32 register; here: virt accs played during past second
 uint32_t *pSharedPzAvg;                 // pointer to a "user defined" u32 register; here: PZs used during the past second
 uint32_t *pSharedMode;                  // pointer to a "user defined" u32 register; here: mode (see WRUNIPZ_MODE...)
+uint32_t *pSharedTDiagHi;               // pointer to a "user defined" u32 register; here: time when diag was cleared, high bits
+uint32_t *pSharedTDiagLo;               // pointer to a "user defined" u32 register; here: time when diag was cleared, low bits
+uint32_t *pSharedTS0Hi;                 // pointer to a "user defined" u32 register; here: time when FW was in S0 state, high bits
+uint32_t *pSharedTS0Lo;                 // pointer to a "user defined" u32 register; here: time when FW was in S0 state, low bits
 uint32_t *pSharedConfStat;              // pointer to a "user defined" u32 register; here: status of config data transaction
 uint32_t *pSharedConfVacc;              // pointer to a "user defined" u32 register; here: virt acc of config data
 uint32_t *pSharedConfData;              // pointer to a "user defined" u32 register; here: config data
@@ -136,15 +140,22 @@ uint32_t *pSharedConfPz;                // pointer to a "user defined" u32 regis
 uint32_t *pCpuRamExternal;              // external address (seen from host bridge) of this CPU's RAM            
 uint32_t *pCpuRamExternalData4EB;       // external address (seen from host bridge) of this CPU's RAM: field for EB return values
 
+uint32_t sumStatus;                     // all status infos are ORed bit-wise into sum status, sum status is then published
 uint32_t nBadStatus;                    // # of bad status (=error) incidents
 uint32_t nBadState;                     // # of bad state (=FATAL, ERROR, UNKNOWN) incidents
 int32_t  dtMax;                         // dT max (deadline - dispatch time)
 int32_t  dtMin;                         // dT min (deadline - dispatch time)
 uint32_t nLate;                         // # of late messages
-uint64_t nMsgAct;                       // # of messages sent
 uint32_t vaccAvg;                       // virt accs played over the past second
 uint32_t pzAvg;                         // PZs used over the past second
 uint32_t mode;                          // 1: test mode
+uint32_t nCycleAct;                     // number of cycles
+uint32_t nCyclePrev;                    // previous number of cycles
+uint64_t nMsgAct;                       // # of messages sent
+uint64_t nMsgPrev;                      // previous number of messages
+uint64_t tSyncPrev;                     // timestamp of previous 50Hz sync event from SPZ
+uint64_t lengthPrev;                    // duration of previous UNILAC cycle    
+
 
 
 // big data contains the event tables for all PZs, and for all virtual accelerators
@@ -224,7 +235,7 @@ uint32_t data2TM(uint32_t *idLo, uint32_t *idHi, uint32_t *paramLo, uint32_t *pa
 } // data2TM
 
 
-uint32_t ebmWriteTM(dataTable evts, uint64_t tStart, uint32_t pz, uint32_t virtAcc)
+uint32_t ebmWriteTM(dataTable evts, uint64_t tStart, uint32_t pz, uint32_t virtAcc, uint32_t isPrep)
 {
   int      i;
   uint64_t deadline;
@@ -238,48 +249,47 @@ uint32_t ebmWriteTM(dataTable evts, uint64_t tStart, uint32_t pz, uint32_t virtA
   ebm_hi(WRUNIPZ_ECA_ADDRESS);
 
   // pack Ethernet frame with messages
-  for (i=0; i<WRUNIPZ_NEVT; i++) {                    // loop over all data fields
-    if (evts.validFlags & (1 << i)) {                 // data is valid?
-      if (evts.evtFlags & (1 << i)) {                 // data is an event?
+  for (i=0; i<WRUNIPZ_NEVT; i++) {                     // loop over all data fields
+    if ((evts.validFlags >> i) & 0x1) {                // data is valid?
+      if ((evts.evtFlags >> i) & 0x1) {                // data is an event?
+        if (((evts.prepFlags >> i) & 0x1) == isPrep) { // data matches 'isPrep condition'
+          // convert data
+          data2TM(&idLo, &idHi, &paramLo, &paramHi, &res, &tef, &offset, evts.data[i], gid[pz], virtAcc);  //convert data
+            
+          // calc deadline
+          deadline   = tStart + (uint64_t)offset; 
+          deadlineHi = (uint32_t)((deadline >> 32) & 0xffffffff);
+          deadlineLo = (uint32_t)(deadline & 0xffffffff);
+          
+          // pack timing message
+          atomic_on();                                  
+          ebm_op(WRUNIPZ_ECA_ADDRESS, idHi,       EBM_WRITE);             
+          ebm_op(WRUNIPZ_ECA_ADDRESS, idLo,       EBM_WRITE);             
+          ebm_op(WRUNIPZ_ECA_ADDRESS, paramHi,    EBM_WRITE);
+          ebm_op(WRUNIPZ_ECA_ADDRESS, paramLo,    EBM_WRITE);
+          ebm_op(WRUNIPZ_ECA_ADDRESS, tef,        EBM_WRITE);
+          ebm_op(WRUNIPZ_ECA_ADDRESS, res,        EBM_WRITE);
+          ebm_op(WRUNIPZ_ECA_ADDRESS, deadlineHi, EBM_WRITE);
+          ebm_op(WRUNIPZ_ECA_ADDRESS, deadlineLo, EBM_WRITE);
+          atomic_off();
 
-        // convert data
-        data2TM(&idLo, &idHi, &paramLo, &paramHi, &res, &tef, &offset, evts.data[i], gid[pz], virtAcc);  //convert data
+          // send timing message
+          ebm_flush();
+          
+          // diag and status
+          tDiff = deadline - getSysTime();
+          if (tDiff < 0    ) nLate++;
+          if (tDiff < dtMin) dtMin = tDiff;
+          if (tDiff > dtMax) dtMax = tDiff;
 
-        // calc deadline
-        deadline   = tStart + (uint64_t)offset; 
-        deadlineHi = (uint32_t)((deadline >> 32) & 0xffffffff);
-        deadlineLo = (uint32_t)(deadline & 0xffffffff);
-        
-        //
-        atomic_on();                                  
-        ebm_op(WRUNIPZ_ECA_ADDRESS, idHi,       EBM_WRITE);             
-        ebm_op(WRUNIPZ_ECA_ADDRESS, idLo,       EBM_WRITE);             
-        ebm_op(WRUNIPZ_ECA_ADDRESS, paramHi,    EBM_WRITE);
-        ebm_op(WRUNIPZ_ECA_ADDRESS, paramLo,    EBM_WRITE);
-        ebm_op(WRUNIPZ_ECA_ADDRESS, tef,        EBM_WRITE);
-        ebm_op(WRUNIPZ_ECA_ADDRESS, res,        EBM_WRITE);
-        ebm_op(WRUNIPZ_ECA_ADDRESS, deadlineHi, EBM_WRITE);
-        ebm_op(WRUNIPZ_ECA_ADDRESS, deadlineLo, EBM_WRITE);
-        atomic_off();
-
-        ebm_flush();
-
-        // diag and status
-        tDiff = deadline - getSysTime();
-        if (tDiff < 0    ) nLate++;
-        if (tDiff < dtMin) dtMin = tDiff;
-        if (tDiff > dtMax) dtMax = tDiff;
-
-        vaccAvg = vaccAvg | (1 << virtAcc);
-        pzAvg   = pzAvg   | (1 << pz);
-        nMsgAct++; 
+          vaccAvg = vaccAvg | (1 << virtAcc);
+          pzAvg   = pzAvg   | (1 << pz);
+          nMsgAct++;
+        } // if 'isPrep'
       } // is event
     } // is valid
   } // for i
 
-  // send Ethernet frame (EBM takes care of MTU - don't bother on fragmenting here)
-  //ebm_flush();
-        
   return WRUNIPZ_STATUS_OK;
 } //ebmWriteTM
 
@@ -326,7 +336,7 @@ void initSharedMem() // determine address and clear shared mem
 
   // get address to data
   pSharedVersion          = (uint32_t *)(pShared + (WRUNIPZ_SHARED_VERSION >> 2));
-  pSharedStatus           = (uint32_t *)(pShared + (WRUNIPZ_SHARED_STATUS >> 2));
+  pSharedSumStatus        = (uint32_t *)(pShared + (WRUNIPZ_SHARED_SUMSTATUS >> 2));
   pSharedCmd              = (uint32_t *)(pShared + (WRUNIPZ_SHARED_CMD >> 2));
   pSharedState            = (uint32_t *)(pShared + (WRUNIPZ_SHARED_STATE >> 2));
   pSharedData4EB          = (uint32_t *)(pShared + (WRUNIPZ_SHARED_DATA_4EB >> 2));
@@ -346,6 +356,10 @@ void initSharedMem() // determine address and clear shared mem
   pSharedVaccAvg          = (uint32_t *)(pShared + (WRUNIPZ_SHARED_VACCAVG >> 2));
   pSharedPzAvg            = (uint32_t *)(pShared + (WRUNIPZ_SHARED_PZAVG >> 2));
   pSharedMode             = (uint32_t *)(pShared + (WRUNIPZ_SHARED_MODE >> 2));
+  pSharedTDiagHi          = (uint32_t *)(pShared + (WRUNIPZ_SHARED_TDIAGHI >> 2));
+  pSharedTDiagLo          = (uint32_t *)(pShared + (WRUNIPZ_SHARED_TDIAGLO >> 2));
+  pSharedTS0Hi            = (uint32_t *)(pShared + (WRUNIPZ_SHARED_TS0HI >> 2));
+  pSharedTS0Lo            = (uint32_t *)(pShared + (WRUNIPZ_SHARED_TS0LO >> 2));
   pSharedConfStat         = (uint32_t *)(pShared + (WRUNIPZ_SHARED_CONF_STAT >> 2));
   pSharedConfVacc         = (uint32_t *)(pShared + (WRUNIPZ_SHARED_CONF_VACC >> 2));
   pSharedConfData         = (uint32_t *)(pShared + (WRUNIPZ_SHARED_CONF_DATA >> 2));
@@ -621,9 +635,22 @@ void pulseLemo2() //for debugging with scope
 
 void clearDiag() // clears all statistics
 {
+  uint64_t now;
+  
   dtMax          = 0x80000000;
   dtMin          = 0x7fffffff;
   nLate          = 0;
+  nCycleAct      = 0;
+  nCyclePrev     = 0;
+  nMsgAct        = 0;
+  nMsgPrev       = 0;
+  sumStatus      = 0;
+  nBadStatus     = 0;
+
+  now = getSysTime();
+  *pSharedTDiagHi = (uint32_t)(now >> 32);
+  *pSharedTDiagLo = (uint32_t)now & 0xffffffff;
+
 } // clearDiag
 
 uint32_t configTransactInit()          // initializes transaction for config data
@@ -699,11 +726,19 @@ void clearPZ()
 uint32_t doActionS0()
 {
   uint32_t status = WRUNIPZ_STATUS_OK;
+  uint64_t now;
 
   if (findECAQueue() != WRUNIPZ_STATUS_OK) status = WRUNIPZ_STATUS_ERROR; 
   if (findMILPiggy() != WRUNIPZ_STATUS_OK) status = WRUNIPZ_STATUS_ERROR;
   if (findPPSGen()   != WRUNIPZ_STATUS_OK) status = WRUNIPZ_STATUS_ERROR;
   if (findWREp()     != WRUNIPZ_STATUS_OK) status = WRUNIPZ_STATUS_ERROR;
+
+  nBadState     = 0;
+  mode          = WRUNIPZ_MODE_SPZ;
+  now           = getSysTime();
+  *pSharedTS0Hi = (uint32_t)(now >> 32);
+  *pSharedTS0Lo = (uint32_t)now & 0xffffffff;
+  
   initCmds();                    
 
   return status;
@@ -731,8 +766,6 @@ uint32_t entryActionConfigured()
   ip  = *(pEbCfg + (EBC_SRC_IP>>2));
   *pSharedIp    = ip;
 
-  mode          = WRUNIPZ_MODE_SPZ;
-    
   // reset MIL piggy and wait
   if ((status = resetPiggyDevMil(pMILPiggy))  != MIL_STAT_OK) {
     DBPRINT1("wr-unipz: ERROR - can't reset MIL Piggy\n");
@@ -761,7 +794,7 @@ uint32_t entryActionOperation()
   uint64_t tDummy;
   uint32_t flagDummy;
   
-  clearDiag();                                               // clear diagnosis
+  clearDiag();                                               // clear diagnostics
   clearPZ();                                                 // clear all event tables
   for (i=0; i < WRUNIPZ_NPZ; i++) vaccNext[i] = 0xffffffff;  // 0xffffffff: no virt acc
   enableFilterEvtMil(pMILPiggy);                             // enable MIL event filter
@@ -919,7 +952,9 @@ uint32_t doActionOperation(uint32_t *nCycle,                  // total number of
   uint16_t evtData;                                           // MIL event: data
   uint16_t evtCode;                                           // MIL event: code
   uint32_t virtAcc;                                           // MIL event: virtAcc
-  uint32_t milStatus;
+  uint32_t milStatus;                                         // status for receiving of MIL events
+  uint32_t nLateLocal;                                        // remember actual counter
+  uint32_t isPrepFlag;                                        // flag 'isPrep': prep-events are sent immediately, non-prep-events are sent at 50 Hz trigger
   int      i,j;
 
 
@@ -927,13 +962,14 @@ uint32_t doActionOperation(uint32_t *nCycle,                  // total number of
   
   // wait for MIL event
   milStatus = wait4MILEvent(&evtData, &evtCode, &virtAcc, WRUNIPZ_MILTIMEOUT);
-  if (milStatus != WRUNIPZ_STATUS_OK) return status;          // no MIL event
+  if (milStatus == WRUNIPZ_STATUS_TIMEDOUT) return WRUNIPZ_STATUS_NOMILEVENTS; // error: no MIL event, maybe dead UNIPZ?
+  if (milStatus != WRUNIPZ_STATUS_OK)       return WRUNIPZ_STATUS_MIL;         // some other error
 
   tMIL      = getSysTime();
 
   switch (evtCode) {
 
-  case WRUNIPZ_EVT_50HZ_SYNCH :                               // next UNILAC cycle starts
+  case WRUNIPZ_EVT_50HZ_SYNCH :                                // next UNILAC cycle starts
     (*nCycle)++;
     DBPRINT3("wr-unipz: 50Hz, data %d, evtcode %d, virtAcc %d\n", evtData, evtCode, virtAcc);
 
@@ -961,13 +997,18 @@ uint32_t doActionOperation(uint32_t *nCycle,                  // total number of
 
     ebm_clr();
 
-    // walk through all PZs and run requested virt acc
+    // walk through all PZs and run requested virt acc (non-prep events)
+    nLateLocal = nLate;                                        // for bookkepping for late messages
+    lengthPrev = deadline - tSyncPrev;                         // required for 'prep events of next UNILAC cycle'
+    tSyncPrev  = deadline;                                     // required for 'prep events of next UNILAC cycle'
+    isPrepFlag = 0;                                            // 50 Hz synch: no preperation - use actual deadline from TLU
     for (i=0; i < WRUNIPZ_NPZ; i++) {
       if (vaccNext[i] != 0xffffffff) {
-        ebmWriteTM(bigData[i][vaccNext[i]], deadline, i, vaccNext[i]);
+        ebmWriteTM(bigData[i][vaccNext[i]], deadline, i, vaccNext[i], isPrepFlag);
         DBPRINT3("wr-unipz: playing pz %d, vacc %d\n", i, vaccNext[i]);
       } // if vaccNext
     } // for i
+    if ((nLate != nLateLocal) && (status == WRUNIPZ_STATUS_OK)) status = WRUNIPZ_STATUS_LATE;
     *tAct = deadline;                                           // remember 50 Hz tick
     DBPRINT3("wr-unipz: vA played:  %x %x %x %x %x %x %x\n", vaccNext[0], vaccNext[1], vaccNext[2], vaccNext[3], vaccNext[4], vaccNext[5], vaccNext[6]);
 
@@ -977,9 +1018,16 @@ uint32_t doActionOperation(uint32_t *nCycle,                  // total number of
     while (wait4ECAEvent(0, &tDummy, &flagIsLate) !=  WRUNIPZ_ECADO_TIMEOUT) {asm("nop");}
     
     break;
-  case WRUNIPZ_EVT_PZ1 ... WRUNIPZ_EVT_PZ7 :                 // announce what happens in next UNILAC cycle
-    vaccNext[evtCode-1] = virtAcc;                           // PZ: sPZ counts from 1..7, we count from 0..6
+  case WRUNIPZ_EVT_PZ1 ... WRUNIPZ_EVT_PZ7 :                    // announce what happens in next UNILAC cycle
+    vaccNext[evtCode-1] = virtAcc;                              // PZ: sPZ counts from 1..7, we count from 0..6
     DBPRINT3("wr-unipz: vA set:  %x %x %x %x %x %x %x\n", vaccNext[0], vaccNext[1], vaccNext[2], vaccNext[3], vaccNext[4], vaccNext[5], vaccNext[6]);
+
+    nLateLocal = nLate;
+    isPrepFlag = 1;                                             // PZ1..7: preperation - use deadline from past 50 Hz tick
+    deadline   = tSyncPrev + (uint64_t)WRUNIPZ_UNILACPERIOD;
+    ebmWriteTM(bigData[evtCode - 1][virtAcc], deadline, evtCode - 1, virtAcc, isPrepFlag);
+    DBPRINT3("wr-unipz: playing pz %d, vacc %d\n", i, virtAcc);
+    if ((nLate != nLateLocal) && (status == WRUNIPZ_STATUS_OK)) status = WRUNIPZ_STATUS_LATE;
 
     break;
   default :
@@ -1022,34 +1070,25 @@ void main(void) {
   uint32_t status;                              // (error) status
   uint32_t actState;                            // actual FSM state
   uint32_t reqState;                            // requested FSM state
-  uint32_t flagRecover;                         // flag indicating auto-recovery from error state;
-
-  uint32_t nCycleAct;                           // number of cycles
-  uint32_t nCyclePrev;                          // previous number of cycles
-  uint64_t nMsgPrev;                            // previous number of messages
-  
+  uint32_t flagRecover;                         // flag indicating auto-recovery from error state;  
 
   mprintf("\n");
   mprintf("wr-unipz: ***** firmware v %06d started from scratch *****\n", WRUNIPZ_FW_VERSION);
   mprintf("\n");
   
   // init local variables
-  nCycleAct      = 0;
-  nCyclePrev     = 0;
   reqState       = WRUNIPZ_STATE_S0;
   actState       = WRUNIPZ_STATE_UNKNOWN;
-  status         = WRUNIPZ_STATUS_UNKNOWN;
-  nBadState      = 0;
-  nBadStatus     = 0;
-  nMsgAct        = 0;
-  nMsgPrev       = 0;
+  status         = WRUNIPZ_STATUS_OK;
   flagRecover    = 0;
+  clearDiag();
 
   init();                                                                   // initialize stuff for lm32
   initSharedMem();                                                          // initialize shared memory
   
   while (1) {
     cmdHandler(&reqState);                                                  // check for commands and possibly request state changes
+    status = WRUNIPZ_STATUS_OK;                                             // reset status for each iteration
     status = changeState(&actState, &reqState, status);                     // handle requested state changes
     switch(actState)                                                        // state specific do actions
       {
@@ -1068,8 +1107,8 @@ void main(void) {
         flagRecover = 1;                                                    // start autorecovery
         break; 
       case WRUNIPZ_STATE_FATAL :
-        *pSharedState  = actState;
-        *pSharedStatus = status;
+        *pSharedState     = actState;
+        *pSharedSumStatus = sumStatus;
         mprintf("wr-unipz: a FATAL error has occured. Good bye.\n");
         while (1) asm("nop"); // RIP!
         break;
@@ -1100,15 +1139,27 @@ void main(void) {
       } // if nCycleAct %
       
       // reset status (hackish solution); chk: consider changing status info to bits encoded into a 32bit number 
-      if ((nCycleAct % (WRUNIPZ_UNILACFREQ * 5)) == 0) status = WRUNIPZ_STATUS_OK; 
+      // if ((nCycleAct % (WRUNIPZ_UNILACFREQ * 5)) == 0) status = WRUNIPZ_STATUS_OK; 
         
       nCyclePrev = nCycleAct;
     } // if nCycleAct
-    
-    if ((*pSharedStatus == WRUNIPZ_STATUS_OK)     && (status    != WRUNIPZ_STATUS_OK))     {nBadStatus++; *pSharedNBadStatus = nBadStatus;}
-    if ((*pSharedState  == WRUNIPZ_STATE_OPREADY) && (actState  != WRUNIPZ_STATE_OPREADY)) {nBadState++;  *pSharedNBadState  = nBadState;}
-    *pSharedStatus       = status;
+
+    switch (status) {
+    case WRUNIPZ_STATUS_OK :                                                  // status OK
+      sumStatus = sumStatus |  (0x1 << WRUNIPZ_STATUS_OK);                    // set OK bit
+      break;
+    default :                                                                 // status not OK
+      if ((sumStatus >> WRUNIPZ_STATUS_OK) & 0x1) nBadStatus++;               // changing status from OK to 'not OK': increase 'bad status count'
+      sumStatus = sumStatus & ~(0x1 << WRUNIPZ_STATUS_OK);                    // clear OK bit
+      sumStatus = sumStatus |  (0x1 << status);                               // set status bit and remember other bits set
+      break;
+    } // switch status
+
+    if ((*pSharedState     == WRUNIPZ_STATE_OPREADY) && (actState  != WRUNIPZ_STATE_OPREADY)) nBadState++;
+    *pSharedSumStatus    = sumStatus;
     *pSharedState        = actState;
+    *pSharedNBadStatus   = nBadStatus;
+    *pSharedNBadState    = nBadState;
     *pSharedDtMax        = dtMax;
     *pSharedDtMin        = dtMin;
     *pSharedNLate        = nLate;

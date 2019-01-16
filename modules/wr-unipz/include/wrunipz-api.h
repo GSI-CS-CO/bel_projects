@@ -37,7 +37,7 @@
 #ifndef __WR_UNIPZ_API_H_
 #define __WR_UNIPZ_API_H_
 
-#define WRUNIPZ_X86_VERSION "0.0.6"
+#define WRUNIPZ_X86_VERSION "0.0.7"
 
 #include <wr-unipz.h>
 
