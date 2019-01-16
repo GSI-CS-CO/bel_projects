@@ -3,7 +3,7 @@
  *
  *  created : 2018
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 22-December-2018
+ *  version : 16-January-2019
  *
  * API for wrunipz
  *
@@ -37,7 +37,7 @@
 #ifndef __WR_UNIPZ_API_H_
 #define __WR_UNIPZ_API_H_
 
-#define WRUNIPZ_X86_VERSION "0.0.7"
+#define WRUNIPZ_X86_VERSION "0.0.8"
 
 #include <wr-unipz.h>
 

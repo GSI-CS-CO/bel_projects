@@ -540,7 +540,7 @@ int main(int argc, char** argv) {
         // upload
         nDataChn0 = WRUNIPZ_NEVT;
         nDataChn1 = 0;
-        for (i=0; i < (nDataChn0 -1); i++) dataChn0[i] = ((uint16_t)(i + 100 * pz + 2001) << 16) + i; /* 2001 */
+        for (i=0; i < (nDataChn0 -1); i++) dataChn0[i] = ((uint16_t)(i + 100 * pz + 2001) << 16) + i; // 1501 or 2001 
         dataChn0[nDataChn0 -1] = ((uint16_t)2000 << 16) + 64;
         if ((status = wrunipz_transaction_upload(device, wrunipz_confStat, wrunipz_confPz, wrunipz_confData, wrunipz_confFlag, pz, dataChn0, nDataChn0, dataChn1, nDataChn1)) != WRUNIPZ_STATUS_OK)
           printf("wr-unipz: transaction upload - %s\n", wrunipz_status_text(status));
@@ -567,7 +567,7 @@ int main(int argc, char** argv) {
           for (k=0; k < WRUNIPZ_NPZ; k++) {
             nDataChn0 = WRUNIPZ_NEVT;
             nDataChn1 = 0;
-            for (i=0; i < (nDataChn0 -1); i++) dataChn0[i] = ((uint16_t)(i + 100 * k + 1501) << 16) + i; /* 2001 */
+            for (i=0; i < (nDataChn0 -1); i++) dataChn0[i] = ((uint16_t)(i + 100 * k + 2001) << 16) + i; // 1501 or 2001
             dataChn0[nDataChn0 -1] = ((uint16_t)2000 << 16) + 64;
             if ((status = wrunipz_transaction_upload(device, wrunipz_confStat, wrunipz_confPz, wrunipz_confData, wrunipz_confFlag, k, dataChn0, nDataChn0, dataChn1, nDataChn1)) != WRUNIPZ_STATUS_OK)
               printf("wr-unipz: transaction upload (virt acc %d, pz %d) - %s\n", j, k, wrunipz_status_text(status));
