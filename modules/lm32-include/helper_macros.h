@@ -141,22 +141,6 @@
  */
 #define ALWAYS_INLINE __attribute__((always_inline))
 
-/*!
- * @brief Patch of a bug in initializing local static variables by zero if
- *        the code will compiled for the LM32 processor.
- * @note Use for the definition of local static variables this macro rather than "static".
- *
- * This is a temporary workaround till this issue will resolved.
- *
- * @todo Perhaps this issue could be find in the start-up code crt0.S.
- */
-#if defined(__GNUC__) && defined(__lm32__)
-  #define STATIC_LOCAL __attribute__((section(".BSS"))) static
-#else
-  #define STATIC_LOCAL static
-#endif
-
-
 #ifndef STATIC_ASSERT
 #if (__cplusplus > 199711L) && !defined(__lm32__) // Is C++11 and not LM32 ?
   #define STATIC_ASSERT( condition ) static_assert( condition, "C-Macro: STATIC_ASSERT" )
