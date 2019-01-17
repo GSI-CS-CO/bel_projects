@@ -39,7 +39,6 @@ STATIC_ASSERT( sizeof(IO_T) <= SHARED_SIZE );
 
 volatile IO_T SHARED io = { 1, 0, 4711 };
 
-
 void main( void )
 {
    discoverPeriphery();

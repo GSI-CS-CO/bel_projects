@@ -54,7 +54,7 @@ void main( void )
          gotoxy( 1, 2 );
          mprintf( "%d.%d.%d  %02d:%02d:%02d and %d ns",
                tm.tm_mday,
-               tm.tm_mon,
+               tm.tm_mon + 1,
                tm.tm_year + 1900,
                tm.tm_hour,
                tm.tm_min,

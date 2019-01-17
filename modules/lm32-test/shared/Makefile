@@ -2,18 +2,14 @@ MIAN_MODULE := shared.c
 
 SYN_DIR = ../../../
 
-SCU_DIR = $(SYN_DIR)top/gsi_scu
+TARGET_URL_FILE = $(HOME)/target.url
 
-INCLUDE_DIRS = ./
-INCLUDE_DIRS += $(SCU_DIR)
 
-TARGET_URL_FILE = ~/target.url
+SHARED_SIZE     = 12
 
-SHARED_SIZE     = 80
-
-SOURCE += $(SYN_DIR)/modules/lm32-include/shared_memory_helper.c
-SOURCE += $(SYN_DIR)/modules/lm32-include/aux.c
-SOURCE += $(SYN_DIR)/modules/lm32-include/irq.c
+SOURCE += $(SCU_LIB_SRC_DIR)/shared_memory_helper.c
+SOURCE += $(SCU_LIB_SRC_DIR)/aux.c
+SOURCE += $(SCU_LIB_SRC_DIR)/irq.c
 
 include $(SYN_DIR)/modules/lm32_makefiles/makefile.scu
 #=================================== EOF ======================================

@@ -27,5 +27,3 @@ syn
 *.swp
 *.orig
 greybox_tmp
-top/gsi_scu/doc/html/
-top/gsi_scu/Makefile

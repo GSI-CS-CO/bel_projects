@@ -2626,7 +2626,7 @@ DOX_HTML_INDEX := ${DOX_OUTPUT_DIRECTORY}/${DOX_HTML_OUTPUT}/index.html
 
 .PHONY: showdoc
 showdoc:
-	${QUIET}[ -f "${DOX_HTML_INDEX}" ] || make doc
+	${QUIET}[ -f "${DOX_HTML_INDEX}" ] || $(MAKE) doc
 	${QUIET}${DOX_BROWSER} ${DOX_HTML_INDEX}
 
 endif
