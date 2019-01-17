@@ -7,8 +7,9 @@ RAM_OFFS	= 0x10000000
 BOOTL_SIZE	= 0x100
 BUILDID_SIZE	= 0x400
 BUILDID_START	= $(shell printf "0x%x" $(BOOTL_SIZE)) 
-SHARED_START = $(shell printf "0x%x" $$(( $(BUILDID_START) + $(BUILDID_SIZE) )) ) 
-INTADR_OFFS = $(shell printf "0x%x" $(RAM_OFFS))
+SHARED_START    = $(shell printf "0x%x" $$(( $(BUILDID_START) + $(BUILDID_SIZE) )) ) 
+INTADR_OFFS     = $(shell printf "0x%x" $(RAM_OFFS))
+PLATFORM       ?= ""
 
 
 ifdef SHARED_SIZE
@@ -50,7 +51,7 @@ CBR_GCC  := `lm32-elf-gcc --version | grep gcc`
 CBR_FLGS := $(CFLAGS)
 CBR_KRNL := `uname -mrs`
 CBR_OS   := `lsb_release -d -s | tr -d '"'` 
-CBR_PF   := ""
+CBR_PF   := $(PLATFORM)
 CBR_GIT1  := `git log HEAD~0 --oneline --decorate=no -n 1 | cut -c1-100`
 CBR_GIT2  := `git log HEAD~1 --oneline --decorate=no -n 1 | cut -c1-100`
 CBR_GIT3  := `git log HEAD~2 --oneline --decorate=no -n 1 | cut -c1-100`
