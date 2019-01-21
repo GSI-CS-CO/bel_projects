@@ -71,7 +71,6 @@ CFLAGS += -O$(CODE_OPTIMIZATION)
 CFLAGS += -nostdlib
 CFLAGS += -mmultiply-enabled
 CFLAGS += -mbarrel-shift-enabled
-CFLAGS += -fno-toplevel-reorder
 
 # LIBS += gcc c
 
