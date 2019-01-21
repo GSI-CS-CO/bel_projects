@@ -288,7 +288,7 @@ ifeq ($(V), 1)
    EB_LOAD_F   = $(EB_LOAD)
 else
    GENRAMMIF_F = $(FORMAT_R) $(CPU) "MIF" $(@); $(GENRAMMIF)
-   EB_LOAD_F   = $(FORMAT_R) $(CPU) "EBL" $(URL); $(EB_LOAD)
+   EB_LOAD_F   = $(FORMAT_R) $(CPU) "EBL" "$(TARGET) -> $(URL) $(CPU_ID) $(CPU_OFFSET)"; $(EB_LOAD)
 endif
 
 # ------------ Additional defines for Doxygen ---------------------------------
