@@ -34,6 +34,7 @@ SOURCE += $(WR_DIR)/dev/w1-temp.c
 
 CODE_OPTIMIZATION = 2
 SHARED_SIZE = 34816
+CFLAGS += -fno-toplevel-reorder
 
 # Including common makefile for arbitrary LM32 software for SCU
 include $(SYN_DIR)/modules/lm32_makefiles/makefile.scu
