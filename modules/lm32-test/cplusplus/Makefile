@@ -11,7 +11,7 @@ INCLUDE_DIRS += $(SCU_DIR)
 SOURCE += $(SCU_DIR)/dow_crc.c
 
 
-TARGET_URL_FILE = ~/target.url
+TARGET_URL_FILE = $(HOME)/scu.url
 
 include $(SYN_DIR)/modules/lm32_makefiles/makefile.scu
 

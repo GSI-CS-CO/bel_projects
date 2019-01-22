@@ -7,9 +7,10 @@ SCU_DIR = $(SYN_DIR)top/gsi_scu
 INCLUDE_DIRS = ./
 INCLUDE_DIRS += $(SCU_DIR)
 
-TARGET_URL_FILE = ~/target.url
+TARGET_URL_FILE = ${HOME}/scu.url
+
+CODE_OPTIMIZATION = s
 
 include $(SYN_DIR)/modules/lm32_makefiles/makefile.scu
 #=================================== EOF ======================================
-
 

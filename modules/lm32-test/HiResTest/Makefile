@@ -19,7 +19,7 @@ DEFINES += CONFIG_DAQ_PEDANTIC_CHECK
 DEFINES += CONFIG_SCU_BUS_PEDANTIC_CHECK
 DEFINES += CONFIG_DAQ_DEBUG
 
-TARGET_URL_FILE = ~/target.url
+TARGET_URL_FILE = $(HOME)/scu.url
 
 include $(SYN_DIR)/modules/lm32_makefiles/makefile.scu
 #=================================== EOF ======================================

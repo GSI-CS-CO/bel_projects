@@ -2,15 +2,11 @@
 
 MIAN_MODULE := oled_test.c
 
-
 SYN_DIR = ../../../
 
-INCLUDE_DIRS = ./
-INCLUDE_DIRS += $(SYN_DIR)top/gsi_scu
+SOURCE += $(SCU_LIB_SRC_DIR)/display.c
 
-SOURCE += $(SYN_DIR)/modules/lm32-include/display.c
-
-TARGET_URL_FILE = ~/target.url
+TARGET_URL_FILE = $(HOME)/scu.url
 
 include $(SYN_DIR)/modules/lm32_makefiles/makefile.scu
 #=================================== EOF ======================================

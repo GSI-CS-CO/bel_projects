@@ -17,7 +17,7 @@ SOURCE += $(SYN_DIR)/ip_cores/wrpc-sw/dev/w1-temp.c
 
 DEFINES += CONFIG_DAQ_DEBUG 
 
-TARGET_URL_FILE = ~/target.url
+TARGET_URL_FILE = $(HOME)/scu.url
 
 include $(SYN_DIR)/modules/lm32_makefiles/makefile.scu
 #=================================== EOF ======================================

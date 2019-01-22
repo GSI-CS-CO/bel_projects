@@ -2,7 +2,7 @@ MIAN_MODULE := analize_shm.c
 
 SYN_DIR = ../../../
 
-TARGET_URL_FILE = $(HOME)/target.url
+TARGET_URL_FILE = $(HOME)/scu.url
 
 CODE_OPTIMIZATION = 2
 # CFLAGS = -fno-toplevel-reorder
