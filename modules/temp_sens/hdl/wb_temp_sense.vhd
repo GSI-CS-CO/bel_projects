@@ -71,6 +71,10 @@ end wb_temp_sense;
 
 architecture rtl of wb_temp_sense is
 
+--constants
+    constant c_address_tx_data  : std_logic_vector (1 downto 0):= "00";  -- sensor data
+    constant c_address_temp     : std_logic_vector (1 downto 0):= "01";  -- temperature in degree
+    constant c_temp_coef        : signed(g_ts_data_width downto 0):= "110000000"; -- -128
 --wishbone signals
     signal s_wb_cyc		: std_logic ;
     signal s_wb_stb		: std_logic ;
@@ -92,10 +96,7 @@ architecture rtl of wb_temp_sense is
     signal s_clr_o  	        : std_logic;
     signal s_count		: unsigned(11 downto 0);
     signal s_ts_data  : std_logic_vector(g_ts_data_width downto 0);  -- latest sensor data
---constants
-    constant c_address_tx_data  : std_logic_vector (1 downto 0):= "00"; -- sensor raw data
-    constant c_address_temp     : std_logic_vector (1 downto 0):= "01";
-    constant c_temp_coef        : signed(g_ts_data_width -1 downto 0):= x"80";
+    signal s_temp     : signed(g_ts_data_width downto 0);  -- latest temperature value
 
 begin
     s_wb_cyc	  <= slave_i.cyc;
@@ -139,10 +140,11 @@ begin
           s_clr_o <= '0';
         elsif  (s_count > x"450") then -- conversion failure/timeout
           s_ts_data <= '1' & s_tsdcalo;
-          s_count <= (others => '0');
+          s_count   <= (others => '0');
         elsif (s_tsdcaldone = '1') then
           s_ts_data <= '0' & s_tsdcalo;
-          s_count <= (others => '0');
+          s_temp    <= signed('0' & s_tsdcalo) + c_temp_coef;
+          s_count   <= (others => '0');
         end if;
 
       end if;
@@ -173,7 +175,6 @@ temperature_sensor : temp_sens
 ---------------------------------------------------
 
   p_clk_wb_read: process (clk_sys_i)
-    variable v_temp : signed(g_ts_data_width downto 0);
 
   begin
     if rising_edge(clk_sys_i) then
@@ -195,12 +196,11 @@ temperature_sensor : temp_sens
                 s_wb_dat(g_data_width -1)                        <= s_ts_data(g_ts_data_width);
               when c_address_temp    =>  -- temperature in degree (=256, if conversion is failed )
                 if (s_ts_data(g_ts_data_width) = '1') then
-                  s_wb_dat(g_ts_data_width downto 0)                  <= std_logic_vector(c_temp_coef) & '0';
-                  s_wb_dat(g_data_width -1 downto g_ts_data_width +1) <= (others => '0');
+                  s_wb_dat(g_ts_data_width +1 downto 0)               <= std_logic_vector(c_temp_coef) & '0';
+                  s_wb_dat(g_data_width -1 downto g_ts_data_width +2) <= (others => '0');
                 else
-                  v_temp                                              := signed(s_ts_data) + c_temp_coef;
-                  s_wb_dat(g_ts_data_width downto 0)                  <= std_logic_vector(v_temp);
-                  s_wb_dat(g_data_width -1 downto g_ts_data_width +1) <= (others => std_logic(v_temp(g_ts_data_width)));
+                  s_wb_dat(g_ts_data_width downto 0)                  <= std_logic_vector(s_temp);
+                  s_wb_dat(g_data_width -1 downto g_ts_data_width +1) <= (others => std_logic(s_temp(g_ts_data_width)));
                 end if;
               when others =>  -- wrong address
                 s_wb_dat <= x"DEADC0DE";
