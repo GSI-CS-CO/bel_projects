@@ -179,7 +179,7 @@ public:
                     atDown.clear();
                     atDown.removeMemories();
                     gDown.clear();
-                    sLog << "eb connect with" << en << std::endl;
+                    //sLog << "eb connect with" << en << std::endl;
                     return ebd.connect(en, atUp, atDown); 
                 } //Open connection to a DM via Etherbone
                bool disconnect() {return ebd.disconnect();} //Close connection
@@ -344,6 +344,7 @@ std::pair<int, int> findRunningPattern(const std::string& sPattern); // get cpu 
                void clearHealth(uint8_t cpuIdx);
                void clearHealth();
        QueueReport& getQReport(const std::string& blockName, QueueReport& qr);  // FIXME why reference in, reference out ? its not like you can add to this report ...
+       std::string& getRawQReport(const std::string& blockName, std::string& report) ;
            uint64_t getDmWrTime() {return ebd.getDmWrTime();}
     HwDelayReport& getHwDelayReport(HwDelayReport& hdr);
                void clearHwDiagnostics();

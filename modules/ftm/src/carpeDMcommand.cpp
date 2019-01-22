@@ -102,7 +102,7 @@ void CarpeDM::adjustValidTime(uint64_t& tValid, bool abs) {
   uint64_t tFuture    = modTime + (testmode ? 0ULL : processingTimeMargin);  // no margin for sim, otherwise coverage testing is too slow.
   // make copy, choose and update original.
   uint64_t tOriginal  = tValid;
-  tValid = abs ? std::max(tOriginal, tFuture) : tFuture + tOriginal; // if absolute -> max of original and near future, if relative -> sum of original and future
+  tValid = abs ? tOriginal : tFuture + tOriginal; // if absolute -> max of original and near future, if relative -> sum of original and future
 }
 
 
@@ -189,7 +189,7 @@ vEbwrs& CarpeDM::createCommand(vEbwrs& ew, const std::string& type, const std::s
       lock.wr.set = true;
       lock.wr.clr = true;
 
-    } else if (type == dnt::sCmdFlush) { // << " Flushing <" << target << "> Queues IL " << s2u<int>(g[v].qIl) << " HI " << s2u<int>(g[v].qHi) << " LO " << s2u<int>(g[v].qLo) <<  std::endl;
+    } else if (type == dnt::sCmdFlush) { // << " Flushing <" << target < < "> Queues IL " << s2u<int>(g[v].qIl) << " HI " << s2u<int>(g[v].qHi) << " LO " << s2u<int>(g[v].qLo) <<  std::endl;
       uint32_t adr = LM32_NULL_PTR;
       try { adr = getNodeAdr(destination, TransferDir::DOWNLOAD, AdrType::INT); } catch (std::runtime_error const& err) {
         // empty tag or invalid destination. We'll interpret this as no override desired.

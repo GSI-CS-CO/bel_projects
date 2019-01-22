@@ -604,6 +604,12 @@ int main(int argc, char* argv[]) {
         std::cout << cdm.inspectQueues(targetName, report) << std::endl;
         return 0;
     }
+    else if (cmp == "rawqueue") {
+        if(!(cdm.isInHashDict( targetName))) {std::cerr << program << ": Target node '" << targetName << "'' was not found on DM" << std::endl; return -1; }
+        std::string report;
+        std::cout << cdm.getRawQReport(targetName, report) << std::endl;
+        return 0;
+    }
     else if (cmp == dnt::sCmdOrigin) {
       if( targetName != NULL) {
         if(!(cdm.isInHashDict( targetName)) && targetName != DotStr::Node::Special::sIdle) {std::cerr << program << ": Target node '" << targetName << "'' was not found on DM" << std::endl; return -1; }

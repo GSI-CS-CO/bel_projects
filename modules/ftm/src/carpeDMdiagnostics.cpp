@@ -214,6 +214,46 @@ namespace coverage {
   }
 
 
+std::string& CarpeDM::getRawQReport(const std::string& blockName, std::string& report) {
+
+    QueueReport qr;
+    qr = getQReport(blockName, qr);
+
+    report += "RAWREP:" + blockName + "\n";
+
+    report += "PRIO_AVL:"; for (int8_t prio = PRIO_IL; prio >= PRIO_LO; prio--) {report += qr.hasQ[prio] ? "1" : "0";} report += "\n";
+
+    for (int8_t prio = PRIO_IL; prio >= PRIO_LO; prio--) {
+
+      report += "PRIO:" + std::to_string((int)prio);
+      if (!qr.hasQ[prio]) {report += "_-\n"; continue;}
+
+      report += ",RI:" + std::to_string((int)qr.aQ[prio].rdIdx)
+              + ",WI:" + std::to_string((int)qr.aQ[prio].wrIdx)
+              + ",PC:" + std::to_string((int)qr.aQ[prio].pendingCnt) + "\n";
+
+      //find buffers of all non empty slots
+      for (uint8_t i, idx = qr.aQ[prio].rdIdx; idx < qr.aQ[prio].rdIdx + 4; idx++) {
+        i = idx & Q_IDX_MAX_MSK;
+        QueueElement& qe = qr.aQ[prio].aQe[i];
+
+        report += "@RI:" + std::to_string(i) + ",PEN:" + (qe.pending ? std::string("1") : std::string("0")) + ",ORPH:" + (qe.orphaned ? std::string("1") : std::string("0"));
+        report += "\nVABS:" + (qe.validAbs ? std::string("1") : std::string("0")) + ",VTIME:" + std::to_string(qe.validTime);
+        report += "\nTYPE:" + std::to_string(qe.type) + ",STYPE:" + qe.sType;
+        report += "\nQTY:" + std::to_string(qe.qty) + ",FLOWDST:" + qe.flowDst + ",FLOWDSTPAT:" + qe.flowDstPattern;
+        report += "\nPERMA:" + (qe.flowPerma ? std::string("1") : std::string("0")) + ",FPRIO:" + (qe.flushIl ? std::string("1") : std::string("0")) + (qe.flushHi ? std::string("1") : std::string("0")) + (qe.flushLo ? std::string("1") : std::string("0"));
+        report += "\nWABS:" + (qe.waitAbs ? std::string("1") : std::string("0")) + ",WTIME:" + std::to_string(qe.waitTime);
+        report += "\n";
+      }
+
+    }
+
+    return report;
+  }
+
+
+
+
   QueueReport& CarpeDM::getQReport(const std::string& blockName, QueueReport& qr) {
     Graph& g = gDown;
     AllocTable& at = atDown;
