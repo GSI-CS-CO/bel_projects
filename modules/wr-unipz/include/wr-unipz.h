@@ -95,15 +95,23 @@
 #define WRUNIPZ_MODE_SPZ          0           // listen to events from Super-UNIPZ
 #define WRUNIPZ_MODE_TEST         1           // test mode: 50 Hz clock generated internally
 
-#define WRUNIPZ_EVT_PZ1           1           // next cycle PZ 1
-#define WRUNIPZ_EVT_PZ2           2           // next cycle PZ 2
-#define WRUNIPZ_EVT_PZ3           3           // next cycle PZ 3
-#define WRUNIPZ_EVT_PZ4           4           // next cycle PZ 4
-#define WRUNIPZ_EVT_PZ5           5           // next cycle PZ 5
-#define WRUNIPZ_EVT_PZ6           6           // next cycle PZ 6
-#define WRUNIPZ_EVT_PZ7           7           // next cycle PZ 7
-#define WRUNIPZ_EVT_SYNCH_DATA   32           // commit event for transaction
-#define WRUNIPZ_EVT_50HZ_SYNCH   33           // 50 Hz trigger, cycle start
+// event codes from Super PZ received via interal bus
+#define WRUNIPZ_EVT_PZ1               1       // next cycle PZ 1
+#define WRUNIPZ_EVT_PZ2               2       // next cycle PZ 2
+#define WRUNIPZ_EVT_PZ3               3       // next cycle PZ 3
+#define WRUNIPZ_EVT_PZ4               4       // next cycle PZ 4
+#define WRUNIPZ_EVT_PZ5               5       // next cycle PZ 5
+#define WRUNIPZ_EVT_PZ6               6       // next cycle PZ 6
+#define WRUNIPZ_EVT_PZ7               7       // next cycle PZ 7
+#define WRUNIPZ_EVT_SYNCH_DATA       32       // commit event for transaction
+#define WRUNIPZ_EVT_50HZ_SYNCH       33       // 50 Hz trigger, cycle start
+
+#define WRUNIPZ_OFFS_CHANNEL1      0x10       // execute 2nd channel
+#define WRUNIPZ_OFFS_NOCHOP        0x20       // execute virt acc without chopper
+#define WRUNIPZ_OFFS_SHORTCHOP     0x40       // execute acc with short chopperpulse
+#define WRUNIPZ_OFFS_PREPIMMEDIATE 0xd0       // execute preparation event for virt acc immediately
+#define WRUNIPZ_OFFS_PREPACC       0xe0       // execute preparation event for virt acc
+#define WRUNIPZ_OFFS_ZEROACC       0xf0       // set all magnets to zero value
 
 
 typedef struct dataTable {                    // table with _one_ virtAcc for _one_ Pulszentrale

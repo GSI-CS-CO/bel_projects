@@ -154,14 +154,19 @@ uint32_t nCyclePrev;                    // previous number of cycles
 uint64_t nMsgAct;                       // # of messages sent
 uint64_t nMsgPrev;                      // previous number of messages
 uint64_t tSyncPrev;                     // timestamp of previous 50Hz sync event from SPZ
-uint64_t lengthPrev;                    // duration of previous UNILAC cycle    
-
+uint64_t lengthPrev;                    // duration of previous UNILAC cycle
 
 
 // big data contains the event tables for all PZs, and for all virtual accelerators
 // there are two sets of 16 virtual accelerators ('Kanal0' and 'Kanal1')
 dataTable bigData[WRUNIPZ_NPZ][WRUNIPZ_NVACC * WRUNIPZ_NCHN];
-uint32_t  vaccNext[WRUNIPZ_NPZ];
+
+// contains info on what will be played at which PZ during next cycle
+uint32_t  vaccNext[WRUNIPZ_NPZ];        // vacc
+uint32_t  channelNext[WRUNIPZ_NPZ];     // channel
+uint32_t  nochopNext[WRUNIPZ_NPZ];      // chopper usage
+uint32_t  prepNext[WRUNIPZ_NPZ];        // preparation
+uint32_t  zeroNExt[WRUNIPZ_NPZ];        // magnets to zero
 
 uint32_t gid[] =                 {1000, 1001, 1002, 1003, 1004, 1005, 1006};              /* hackish: GIDs for PZs, to be clarified with Hanno */
                                                                         
@@ -578,7 +583,7 @@ uint32_t configMILEvent() // configure SoC to receive events via MIL bus
 } // configMILEvent
 
 
- uint32_t wait4MILEvent(uint16_t *evtData, uint16_t *evtCode, uint32_t *virtAcc, uint32_t msTimeout)  // wait for MIL event or timeout
+ uint32_t wait4MILEvent(uint32_t *evtData, uint32_t *evtCode, uint32_t *virtAcc, uint32_t msTimeout)  // wait for MIL event or timeout
 {
   uint32_t evtRec;             // one MIL event
   uint32_t evtCodeRec;         // "event number"
@@ -949,8 +954,8 @@ uint32_t doActionOperation(uint32_t *nCycle,                  // total number of
   uint64_t deadline;                                          // deadline of event received via ECA
   uint64_t tMIL;                                              // time when MIL event was received
   uint64_t tDummy;                                            // dummy timestamp
-  uint16_t evtData;                                           // MIL event: data
-  uint16_t evtCode;                                           // MIL event: code
+  uint32_t evtData;                                           // MIL event: data
+  uint32_t evtCode;                                           // MIL event: code
   uint32_t virtAcc;                                           // MIL event: virtAcc
   uint32_t milStatus;                                         // status for receiving of MIL events
   uint32_t nLateLocal;                                        // remember actual counter
@@ -1001,7 +1006,7 @@ uint32_t doActionOperation(uint32_t *nCycle,                  // total number of
     nLateLocal = nLate;                                        // for bookkepping for late messages
     lengthPrev = deadline - tSyncPrev;                         // required for 'prep events of next UNILAC cycle'
     tSyncPrev  = deadline;                                     // required for 'prep events of next UNILAC cycle'
-    isPrepFlag = 0;                                            // 50 Hz synch: no preperation - use actual deadline from TLU
+    isPrepFlag = 0;                                            // 50 Hz synch: no preparation - use actual deadline from TLU
     for (i=0; i < WRUNIPZ_NPZ; i++) {
       if (vaccNext[i] != 0xffffffff) {
         ebmWriteTM(bigData[i][vaccNext[i]], deadline, i, vaccNext[i], isPrepFlag);
