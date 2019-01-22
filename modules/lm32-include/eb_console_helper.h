@@ -26,7 +26,12 @@
 #ifndef _EB_CONSOLE_HELPER_H
 #define _EB_CONSOLE_HELPER_H
 
-#include "mprintf.h"
+#ifdef __lm32__
+  #include "mprintf.h"
+#else
+  #include <stdio.h>
+  #define mprintf printf
+#endif
 
 #define ESC_FG_BLACK   "\e[30m" /*!< @brief Foreground color black   */
 #define ESC_FG_RED     "\e[31m" /*!< @brief Foreground color red     */
@@ -55,6 +60,7 @@
 extern "C" {
 #endif
 
+   
 /*!
  * @brief Set cursor position.
  * @param x Column position (horizontal)

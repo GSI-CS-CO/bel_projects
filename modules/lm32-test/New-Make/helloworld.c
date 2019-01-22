@@ -19,16 +19,22 @@
  *  You should have received a copy of the GNU Lesser General Public
  *  License along with this library. If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-#include "mini_sdb.h"
-#include "eb_console_helper.h"
+#ifdef __lm32__
+ #include <mini_sdb.h>
+#endif
 
-void main( void )
+#include <eb_console_helper.h>
+
+int main( void )
 {
+#ifdef __lm32__
    discoverPeriphery();
    uart_init_hw();
+#endif
    gotoxy( 0, 0 );
    clrscr();
    mprintf( "Hello world!\n" );
+   return 0;
 }
 
 /*================================== EOF ====================================*/

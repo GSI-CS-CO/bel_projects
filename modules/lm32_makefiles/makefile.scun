@@ -1,0 +1,19 @@
+###############################################################################
+##                                                                           ##
+##   Common include makefile for SCU native applications resp. Linux apps    ##
+##                                                                           ##
+##---------------------------------------------------------------------------##
+## File:    makefile.scun                                                    ##
+## (c):     GSI Helmholtz Centre for Heavy Ion Research GmbH                 ##
+## Author:  Ulrich Becker                                                    ##
+## Date:    22.01.2019                                                       ##
+###############################################################################
+MAKEFILE_DIR ?= $(SYN_DIR)/modules/lm32_makefiles
+
+include $(MAKEFILE_DIR)/scu_dirs.inc
+
+INCLUDE_DIRS += $(SYN_DIR)/ip_cores/etherbone-core/api
+
+include $(MAKEFILE_DIR)/makefile.native
+
+#=================================== EOF ======================================

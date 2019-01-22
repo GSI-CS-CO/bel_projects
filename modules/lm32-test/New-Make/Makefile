@@ -1,14 +1,32 @@
+###############################################################################
+##                                                                           ##
+##     Test-makefile for building a simple "halle world" application for     ##
+##     the softcoreprocessoer LM32 and for Linux in only one step            ##
+##                                                                           ##           
+##---------------------------------------------------------------------------##
+## File:    New-Make/Makefile                                                ##
+## (c):     GSI Helmholtz Centre for Heavy Ion Research GmbH                 ##
+## Author:  Ulrich Becker <u.becker@gsi.de>                                  ##
+## Date:    22.01.2019                                                       ##
+###############################################################################
+.PHONY: all
+all:
+	$(MAKE) -C buildLm32 all
+	$(MAKE) -C buildNative all
 
+.PHONY: clean
+clean:
+	$(MAKE) -C buildLm32 clean
+	$(MAKE) -C buildNative clean
 
-MIAN_MODULE := helloworld.c
+# Uploads the LM32 application to SCU
+.PHONY: load
+load:
+	$(MAKE) -C buildLm32 load
 
+# Starts the Linux application
+.PHONY: run
+run:
+	$(MAKE) -C buildNative run
 
-SYN_DIR = ../../../
-
-INCLUDE_DIRS = ./
-INCLUDE_DIRS += $(SYN_DIR)top/gsi_scu
-
-TARGET_URL_FILE = ~/target.url
-
-include $(SYN_DIR)/modules/lm32_makefiles/makefile.scu
 #=================================== EOF ======================================
