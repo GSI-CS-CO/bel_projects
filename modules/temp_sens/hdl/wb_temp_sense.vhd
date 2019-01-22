@@ -2,10 +2,10 @@
 -- Title      : Altera Temperature Sensor IP Core
 -------------------------------------------------------------------------------
 -- File       : wb_temp_sense.vhd
--- Author     : Anjan Suresh
+-- Author     : Anjan Suresh, Enkhbold Ochirsuren
 -- Company    : GSI
 -- Created    : 2016-04-22
--- Last update: 2016-04-22
+-- Last update: 2019-01-18
 -- Platform   : Altera
 -- Standard   : VHDL'93
 -------------------------------------------------------------------------------
@@ -33,8 +33,9 @@
 --
 -------------------------------------------------------------------------------
 -- Revisions  :
--- Date        Version  Author    Description
--- 2016-04-22  1.0      Suresh    FPGA Device temperature reading
+-- Date        Version  Author      Description
+-- 2016-04-22  1.0      Suresh      FPGA Device temperature reading
+-- 2019-01-18  1.1      Ochirsuren  Supports temperature reading in degree
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -50,7 +51,10 @@ entity wb_temp_sense is
   generic (
     g_address_size  : natural := 32;  -- in bit(s)
     g_data_size     : natural := 32;  -- in bit(s)
-    g_spi_data_size : natural := 8    -- in bit(s)
+    g_spi_data_size : natural := 8;   -- in bit(s)
+    g_addr_width    : natural := 32;  -- wb addr bus width
+    g_data_width    : natural := 32;  -- wb data bus width
+    g_ts_data_width : natural := 8    -- temperature sensor data width
           );
   port (
     -- generic system interface
@@ -71,25 +75,27 @@ architecture rtl of wb_temp_sense is
     signal s_wb_cyc		: std_logic ;
     signal s_wb_stb		: std_logic ;
     signal s_wb_we		: std_logic ;
-    signal s_wb_adr		: std_logic_vector(31 downto 0);
     signal s_wb_sel		: std_logic_vector(3 downto 0);
     signal s_wb_ack 	        : std_logic := '0';
     signal s_wb_stall	        : std_logic := '0';
-    signal s_wb_dat		: std_logic_vector(31 downto 0) := (others => '0');
-    signal s_wb_dat_i           : std_logic_vector(31 downto 0) := (others => '0');
+    signal s_wb_adr   : std_logic_vector(g_addr_width -1 downto 0);
+    signal s_wb_dat   : std_logic_vector(g_data_width -1 downto 0) := (others => '0');
+    signal s_wb_dat_i : std_logic_vector(g_data_width -1 downto 0) := (others => '0');
 
 --temperature sensor signals
     signal s_ce			: std_logic := '1';
     signal s_clr		: std_logic := '0';
     signal s_tsdcaldone	        : std_logic := '0';
-    signal s_tsdcalo		: std_logic_vector(7 downto 0);
+    signal s_tsdcalo    : std_logic_vector(g_ts_data_width -1 downto 0);
 
 --internal signals
     signal s_clr_o  	        : std_logic;
     signal s_count		: unsigned(11 downto 0);
-    signal s_temp_val		: std_logic_vector(7 downto 0);
+    signal s_ts_data  : std_logic_vector(g_ts_data_width downto 0);  -- latest sensor data
 --constants
-    constant c_address_tx_data  : std_logic_vector (1 downto 0):= "00";
+    constant c_address_tx_data  : std_logic_vector (1 downto 0):= "00"; -- sensor raw data
+    constant c_address_temp     : std_logic_vector (1 downto 0):= "01";
+    constant c_temp_coef        : signed(g_ts_data_width -1 downto 0):= x"80";
 
 begin
     s_wb_cyc	  <= slave_i.cyc;
@@ -109,8 +115,10 @@ begin
 -----------------------------------------------------
 --Process description
 --
---Assert the clear signal to clear the data for
---next cycle to read the temperature value
+--Reading from the temperature sensor diode is done
+--periodically. When tsd signals the completion of
+--ADC conversion, then its sensor data is acquired and
+--next read cycle is started.
 --
 -----------------------------------------------------
 
@@ -121,18 +129,21 @@ begin
       if (rst_n_i='0') then
         s_count 	<= (others => '0');
 	s_clr_o 	<= '1';
-	s_temp_val	<= (others => '0');
+        s_ts_data <= (g_ts_data_width => '0', others =>'1');
       else
+        s_count <= s_count + 1;
 
-      if (s_count <= x"120") then
-        s_count   	<= s_count + 1;
-	s_clr_o 	<= '1';
-      elsif (s_count > x"120") then
-	s_clr_o 	<= '0';
-	s_count   	<= s_count+1;
-      elsif  (s_count > x"450") then
-	s_count 	<= (others => '0');
-      end if; 
+        if (s_count < x"120") then
+          s_clr_o <= '1';
+        elsif (s_count = x"120") then
+          s_clr_o <= '0';
+        elsif  (s_count > x"450") then -- conversion failure/timeout
+          s_ts_data <= '1' & s_tsdcalo;
+          s_count <= (others => '0');
+        elsif (s_tsdcaldone = '1') then
+          s_ts_data <= '0' & s_tsdcalo;
+          s_count <= (others => '0');
+        end if;
 
       end if;
     end if;
@@ -153,32 +164,51 @@ temperature_sensor : temp_sens
 --Process Description
 --
 --Read the temperature sensor data from the device
---to the wishbone slave
+--to the wishbone slave. The MSB bit indicates the
+--data validity: invalid if the MSB = '1'.
+--
+--The temperature value in degree is read at the
+--offset next to the base address.
 --
 ---------------------------------------------------
 
   p_clk_wb_read: process (clk_sys_i)
+    variable v_temp : signed(g_ts_data_width downto 0);
 
   begin
     if rising_edge(clk_sys_i) then
       if (rst_n_i='0') then
+        s_wb_stall <= '0';
         s_wb_ack	<= '0';
+
       else
-	s_wb_ack        <= s_wb_cyc and s_wb_stb;
-      if (s_wb_cyc='1' and s_wb_stb='1') then
-	case s_wb_adr(3 downto 2) is
-          when c_address_tx_data =>
-	    if (s_wb_we='0'and s_clr_o='0' and s_tsdcaldone='1') then
-	      s_wb_dat(7 downto 0) 	<= s_tsdcalo;
-	      s_wb_dat(31 downto 8)	<= (others => '0');
-	    else
-	      s_wb_dat <= x"DEADC0DE";
-	    end if;
-	  when others =>
-	    s_wb_dat <= x"DEADC0DE";
-	end case;		
-      end if;--sensor reading complete
-      end if;--cycle and strobe check
-    end if;--reset check
+        s_wb_ack <= s_wb_cyc and s_wb_stb and not s_wb_stall;
+
+        if (s_wb_cyc='1' and s_wb_stb='1' and s_wb_stall='0') then -- wb cycle
+
+          if (s_wb_we = '0') then -- read access
+
+            case s_wb_adr(3 downto 2) is
+              when c_address_tx_data =>  -- latest sensor raw data with the validity flag
+                s_wb_dat(g_ts_data_width -1 downto 0)            <= s_ts_data(g_ts_data_width -1 downto 0);
+                s_wb_dat(g_data_width -2 downto g_ts_data_width) <= (others => '0');
+                s_wb_dat(g_data_width -1)                        <= s_ts_data(g_ts_data_width);
+              when c_address_temp    =>  -- temperature in degree (=256, if conversion is failed )
+                if (s_ts_data(g_ts_data_width) = '1') then
+                  s_wb_dat(g_ts_data_width downto 0)                  <= std_logic_vector(c_temp_coef) & '0';
+                  s_wb_dat(g_data_width -1 downto g_ts_data_width +1) <= (others => '0');
+                else
+                  v_temp                                              := signed(s_ts_data) + c_temp_coef;
+                  s_wb_dat(g_ts_data_width downto 0)                  <= std_logic_vector(v_temp);
+                  s_wb_dat(g_data_width -1 downto g_ts_data_width +1) <= (others => std_logic(v_temp(g_ts_data_width)));
+                end if;
+              when others =>  -- wrong address
+                s_wb_dat <= x"DEADC0DE";
+              end case;
+
+          end if;--sensor reading complete
+        end if;--cycle and strobe check
+      end if;--reset check
+    end if;
   end process;
 end rtl;
