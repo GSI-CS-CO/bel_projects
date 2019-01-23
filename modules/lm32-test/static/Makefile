@@ -1,9 +1,9 @@
 MIAN_MODULE := static_test.c
 
-SYN_DIR = ../../../
+REPOSITORY_DIR := $(shell git rev-parse --show-toplevel)
 
 CODE_OPTIMIZATION = 2
 
-include $(SYN_DIR)/modules/lm32_makefiles/makefile.scu
+include $(REPOSITORY_DIR)/modules/lm32_makefiles/makefile.scu
 #=================================== EOF ======================================
 

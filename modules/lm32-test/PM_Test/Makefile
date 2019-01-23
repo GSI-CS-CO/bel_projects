@@ -1,6 +1,6 @@
 MIAN_MODULE := pmtest.c
 
-SYN_DIR = ../../../
+REPOSITORY_DIR := $(shell git rev-parse --show-toplevel)
 
 SOURCE += $(SCU_DIR)/daq.c
 SOURCE += $(SCU_DIR)/scu_bus.c
@@ -11,7 +11,7 @@ DEFINES += CONFIG_DAQ_PEDANTIC_CHECK
 DEFINES += CONFIG_SCU_BUS_PEDANTIC_CHECK
 DEFINES += CONFIG_DAQ_DEBUG
 
-include $(SYN_DIR)/modules/lm32_makefiles/makefile.scu
+include $(REPOSITORY_DIR)/modules/lm32_makefiles/makefile.scu
 #=================================== EOF ======================================
 
 

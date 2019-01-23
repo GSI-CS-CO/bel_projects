@@ -1,6 +1,6 @@
 MIAN_MODULE := continue_test.c
 
-SYN_DIR = ../../..
+REPOSITORY_DIR := $(shell git rev-parse --show-toplevel)
 
 SOURCE += $(SCU_DIR)/daq.c
 SOURCE += $(SCU_DIR)/scu_bus.c
@@ -17,6 +17,6 @@ DEFINES += CONFIG_DAQ_DEBUG
 
 CODE_OPTIMIZATION = s
 
-include $(SYN_DIR)/modules/lm32_makefiles/makefile.scu
+include $(REPOSITORY_DIR)/modules/lm32_makefiles/makefile.scu
 #=================================== EOF ======================================
 

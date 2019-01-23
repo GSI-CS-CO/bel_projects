@@ -1,8 +1,8 @@
 
 MIAN_MODULE := cpptest.cpp
 
-SYN_DIR = ../../../
+REPOSITORY_DIR := $(shell git rev-parse --show-toplevel)
 
 SOURCE += $(SCU_DIR)/dow_crc.c
 
-include $(SYN_DIR)/modules/lm32_makefiles/makefile.scu
+include $(REPOSITORY_DIR)/modules/lm32_makefiles/makefile.scu

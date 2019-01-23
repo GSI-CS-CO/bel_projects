@@ -1,6 +1,6 @@
 MIAN_MODULE := analize_shm.c
 
-SYN_DIR = ../../../
+REPOSITORY_DIR := $(shell git rev-parse --show-toplevel)
 
 
 CODE_OPTIMIZATION = 2
@@ -14,7 +14,7 @@ SOURCE += $(SCU_LIB_SRC_DIR)/aux.c
 SOURCE += $(SCU_LIB_SRC_DIR)/irq.c
 
 
-include $(SYN_DIR)/modules/lm32_makefiles/makefile.scu
+include $(REPOSITORY_DIR)/modules/lm32_makefiles/makefile.scu
 #=================================== EOF ======================================
 
 

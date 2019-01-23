@@ -10,18 +10,18 @@
 ## Date:    22.01.2019                                                       ##
 ###############################################################################
 
-SCU_DIR = $(SYN_DIR)/top/gsi_scu
+SCU_DIR = $(REPOSITORY_DIR)/top/gsi_scu
 
-SCU_LIB_SRC_DIR = $(SYN_DIR)/modules/lm32-include
-WR_DIR          = $(SYN_DIR)/ip_cores/wrpc-sw
+SCU_LIB_SRC_DIR = $(REPOSITORY_DIR)/modules/lm32-include
+WR_DIR          = $(REPOSITORY_DIR)/ip_cores/wrpc-sw
 
 INCLUDE_DIRS += $(SCU_LIB_SRC_DIR)
 INCLUDE_DIRS += $(SCU_DIR)
-INCLUDE_DIRS += $(SYN_DIR)/tools
+INCLUDE_DIRS += $(REPOSITORY_DIR)/tools
 INCLUDE_DIRS += $(WR_DIR)/include
 INCLUDE_DIRS += $(WR_DIR)/sdb-lib
 INCLUDE_DIRS += $(WR_DIR)/pp_printf
-INCLUDE_DIRS += $(SYN_DIR)/ip_cores/etherbone-core/hdl/eb_master_core
+INCLUDE_DIRS += $(REPOSITORY_DIR)/ip_cores/etherbone-core/hdl/eb_master_core
 
 DEFINES += CONFIG_SCU
 
