@@ -86,7 +86,13 @@ _INCLUDE_DIRS = $(strip $(INCLUDE_DIRS))
 
 OPT_INCLUDE := $(addprefix -I,$(_INCLUDE_DIRS) )
 OPT_DEFINES := $(addprefix -D,$(DEFINES) )
-ARG_LIBS    := $(addprefix -l,$(LIBS) )
+
+ifdef LIBS
+   ARG_LIBS := $(addprefix -l,$(LIBS) )
+endif
+ifdef LIB_DIRS
+   ARG_LIBS += $(addprefix -L,$(LIB_DIRS))
+endif
 
 DEPLOY_DIR  ?= ./deploy_$(CPU)
 WORK_DIR    ?= $(DEPLOY_DIR)/work

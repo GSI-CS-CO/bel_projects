@@ -27,6 +27,8 @@ STRINGS = strings
 TARGET   ?= $(notdir $(basename $(MIAN_MODULE)))
 BIN_FILE ?= $(TARGET_DIR)/$(TARGET)
 
+LD_FLAGS += $(ARG_LIBS)
+
 include $(MAKEFILE_DIR)/makefile.base
 
 $(BIN_FILE): $(OBJ_FILES) $(ADDITIONAL_LD_DEPENDENCES)
