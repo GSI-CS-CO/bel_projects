@@ -41,6 +41,7 @@
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
+use ieee.math_real.all;
 
 -- wishbone/gsi/cern
 library work;
@@ -54,7 +55,10 @@ entity wb_temp_sense is
     g_spi_data_size : natural := 8;   -- in bit(s)
     g_addr_width    : natural := 32;  -- wb addr bus width
     g_data_width    : natural := 32;  -- wb data bus width
-    g_ts_data_width : natural := 8    -- temperature sensor data width
+    g_ts_data_width : natural := 8;   -- temperature sensor data width
+    g_ts_clk_div    : natural := 80;  -- temperature sensor clock divider
+    g_ts_clr_cycles : natural := 3;   -- adcclk cycles for clr, min=1
+    g_ts_adc_cycles : natural := 12   -- adcclk cycles for a/d conversion, nom=10
           );
   port (
     -- generic system interface
@@ -75,6 +79,12 @@ architecture rtl of wb_temp_sense is
     constant c_address_tx_data  : std_logic_vector (1 downto 0):= "00";  -- sensor data
     constant c_address_temp     : std_logic_vector (1 downto 0):= "01";  -- temperature in degree
     constant c_temp_coef        : signed(g_ts_data_width downto 0):= "110000000"; -- -128
+    constant c_ts_clr_cnt       : integer := integer(ceil(real(g_ts_clk_div) * real(g_ts_clr_cycles)));
+    constant c_ts_clr_max       : integer := 2**(integer(ceil(log2(real(c_ts_clr_cnt)))));
+    constant c_ts_adc_cnt       : integer := integer(ceil(real(g_ts_clk_div) * real(g_ts_clr_cycles + g_ts_adc_cycles)));
+    constant c_ts_adc_max       : integer := 2**(integer(ceil(log2(real(c_ts_adc_cnt)))));
+    constant c_ts_cnt_width     : integer := integer(ceil(log2(real(c_ts_adc_max + 1))));
+
 --wishbone signals
     signal s_wb_cyc		: std_logic ;
     signal s_wb_stb		: std_logic ;
@@ -94,7 +104,7 @@ architecture rtl of wb_temp_sense is
 
 --internal signals
     signal s_clr_o  	        : std_logic;
-    signal s_count		: unsigned(11 downto 0);
+    signal s_count		: unsigned(c_ts_cnt_width -1 downto 0);
     signal s_ts_data  : std_logic_vector(g_ts_data_width downto 0);  -- latest sensor data
     signal s_temp     : signed(g_ts_data_width downto 0);  -- latest temperature value
 
@@ -130,16 +140,16 @@ begin
     if rising_edge (clk_sys_i) then
       if (rst_n_i='0') then
         s_count 	<= (others => '0');
-	s_clr_o 	<= '1';
+        s_clr_o 	<= '1';
         s_ts_data <= (g_ts_data_width => '0', others =>'1');
-      else
+     else
         s_count <= s_count + 1;
 
-        if (s_count < x"120") then
+        if (s_count < c_ts_clr_cnt) then
           s_clr_o <= '1';
-        elsif (s_count = x"120") then
+        elsif (s_count = c_ts_clr_cnt) then
           s_clr_o <= '0';
-        elsif  (s_count > x"450") then -- conversion failure/timeout
+        elsif  (s_count > c_ts_adc_max) then -- conversion failure/timeout
           s_ts_data <= '1' & s_tsdcalo;      -- set the fault bit
           s_count   <= (others => '0');
         elsif (s_tsdcaldone = '1') then

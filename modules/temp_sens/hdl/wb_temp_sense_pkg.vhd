@@ -14,7 +14,13 @@ package wb_temp_sense_pkg is
     generic (
       g_address_size  : natural := 32;  -- in bit(s)
       g_data_size     : natural := 32;  -- in bit(s)
-      g_spi_data_size : natural := 8    -- in bit(s)
+      g_spi_data_size : natural := 8;   -- in bit(s)
+      g_addr_width    : natural := 32;  -- wb addr bus width
+      g_data_width    : natural := 32;  -- wb data bus width
+      g_ts_data_width : natural := 8;   -- temperature sensor data width
+      g_ts_clk_div    : natural := 80;  -- temperature sensor clock divider
+      g_ts_clr_cycles : natural := 3;   -- adcclk cycles for clr
+      g_ts_adc_cycles : natural := 12   -- adcclk cycles for a/d conversion
     );
     port (
       -- generic system interface
