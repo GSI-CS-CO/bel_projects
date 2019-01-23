@@ -119,7 +119,8 @@ begin
 --Reading from the temperature sensor diode is done
 --periodically. When tsd signals the completion of
 --ADC conversion, then its sensor data is acquired and
---next read cycle is started.
+--next read cycle is started. If ADC takes far longer
+--than expected period, then fault bit is set.
 --
 -----------------------------------------------------
 
@@ -139,7 +140,7 @@ begin
         elsif (s_count = x"120") then
           s_clr_o <= '0';
         elsif  (s_count > x"450") then -- conversion failure/timeout
-          s_ts_data <= '1' & s_tsdcalo;
+          s_ts_data <= '1' & s_tsdcalo;      -- set the fault bit
           s_count   <= (others => '0');
         elsif (s_tsdcaldone = '1') then
           s_ts_data <= '0' & s_tsdcalo;
@@ -167,10 +168,12 @@ temperature_sensor : temp_sens
 --
 --Read the temperature sensor data from the device
 --to the wishbone slave. The MSB bit indicates the
---data validity: invalid if the MSB = '1'.
+--fault/timeout in sensor data conversion:
+--if ADC is failed, then MSB is set to '1'.
 --
 --The temperature value in degree is read at the
---offset next to the base address.
+--next offset of the base address. In case of ADC
+--fault it returns a value of 384.
 --
 ---------------------------------------------------
 
@@ -190,14 +193,14 @@ temperature_sensor : temp_sens
           if (s_wb_we = '0') then -- read access
 
             case s_wb_adr(3 downto 2) is
-              when c_address_tx_data =>  -- latest sensor raw data with the validity flag
+              when c_address_tx_data =>  -- latest sensor raw data with the fault flag
                 s_wb_dat(g_ts_data_width -1 downto 0)            <= s_ts_data(g_ts_data_width -1 downto 0);
                 s_wb_dat(g_data_width -2 downto g_ts_data_width) <= (others => '0');
                 s_wb_dat(g_data_width -1)                        <= s_ts_data(g_ts_data_width);
-              when c_address_temp    =>  -- temperature in degree (=256, if conversion is failed )
-                if (s_ts_data(g_ts_data_width) = '1') then
-                  s_wb_dat(g_ts_data_width +1 downto 0)               <= std_logic_vector(c_temp_coef) & '0';
-                  s_wb_dat(g_data_width -1 downto g_ts_data_width +2) <= (others => '0');
+              when c_address_temp    =>  -- temperature in degree
+                if (s_ts_data(g_ts_data_width) = '1') then -- temperature=384, if conversion fails
+                  s_wb_dat(g_ts_data_width downto 0)                  <= std_logic_vector(c_temp_coef);
+                  s_wb_dat(g_data_width -1 downto g_ts_data_width +1) <= (others => '0');
                 else
                   s_wb_dat(g_ts_data_width downto 0)                  <= std_logic_vector(s_temp);
                   s_wb_dat(g_data_width -1 downto g_ts_data_width +1) <= (others => std_logic(s_temp(g_ts_data_width)));
