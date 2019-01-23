@@ -2,20 +2,13 @@ MIAN_MODULE := scubussniff.c
 
 SYN_DIR = ../../../
 
-SCU_DIR = $(SYN_DIR)top/gsi_scu
-
-INCLUDE_DIRS = ./
-INCLUDE_DIRS += $(SCU_DIR)
-
-SOURCE += $(SYN_DIR)/modules/lm32-include/lm32_hexdump.c
+SOURCE += $(SCU_LIB_SRC_DIR)/lm32_hexdump.c
 
 SOURCE += $(SCU_DIR)/scu_bus.c
 SOURCE += $(SCU_DIR)/dow_crc.c
 SOURCE += $(SYN_DIR)/ip_cores/wrpc-sw/dev/w1-temp.c
 
 DEFINES += CONFIG_SCU_BUS_PEDANTIC_CHECK
-
-URL = tcp/scuxl0035
 
 include $(SYN_DIR)/modules/lm32_makefiles/makefile.scu
 #=================================== EOF ======================================

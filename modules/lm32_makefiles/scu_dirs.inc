@@ -23,6 +23,8 @@ INCLUDE_DIRS += $(WR_DIR)/sdb-lib
 INCLUDE_DIRS += $(WR_DIR)/pp_printf
 INCLUDE_DIRS += $(SYN_DIR)/ip_cores/etherbone-core/hdl/eb_master_core
 
+DEFINES += CONFIG_SCU
+
 # ------------ Additional defines for Doxygen ---------------------------------
 DOX_OUTPUT_DIRECTORY ?= $(HOME)/Documents/scr_doc/$(TARGET)
 DOX_PROJECT_LOGO     ?= $(MAKEFILE_DIR)/GSI_Logo_rgb_72dpi.png

@@ -3,16 +3,9 @@ MIAN_MODULE := wr-test.c
 
 SYN_DIR = ../../../
 
-
 DEFINES += CONFIG_WR_NODE
 
-INCLUDE_DIRS = ./
-INCLUDE_DIRS += $(SCU_DIR)
-
-TARGET_URL_FILE = $(HOME)/scu.url
-
 SOURCE += $(SCU_LIB_SRC_DIR)/wr_time.c
-
 SOURCE += $(SCU_LIB_SRC_DIR)/aux.c
 SOURCE += $(SCU_LIB_SRC_DIR)/irq.c
 

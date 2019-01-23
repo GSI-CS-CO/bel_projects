@@ -2,9 +2,6 @@ MIAN_MODULE := shared.c
 
 SYN_DIR = ../../../
 
-TARGET_URL_FILE = $(HOME)/scu.url
-
-
 SHARED_SIZE     = 16
 
 SOURCE += $(SCU_LIB_SRC_DIR)/shared_memory_helper.c

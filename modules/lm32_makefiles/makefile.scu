@@ -273,7 +273,7 @@ ifeq ($(V), 1)
    EB_LOAD_F   = $(EB_LOAD)
 else
    GENRAMMIF_F = $(FORMAT_R) $(CPU) "MIF" $(@); $(GENRAMMIF)
-   EB_LOAD_F   = $(FORMAT_R) $(CPU) "EBL" "$(TARGET) -> $(URL) $(CPU_ID) $(CPU_OFFSET)"; $(EB_LOAD)
+   EB_LOAD_F   = $(FORMAT_R) $(CPU) "EBL" "$(TARGET) -> $(SCU_URL) $(CPU_ID) $(CPU_OFFSET)"; $(EB_LOAD)
 endif
 
 # ------------ Additional defines for Doxygen ---------------------------------
@@ -301,16 +301,16 @@ $(RESULT_FILE): $(BIN_FILE)
 
 
 #-------------------------- upload to target SCU ------------------------------
-# For developing reasons only.
-ifdef TARGET_URL_FILE
+# For developing purposes only.
+ifdef SCU_URL
 
-URL        = $(shell cat $(TARGET_URL_FILE))
+PROTOCOL   ?= tcp
 CPU_ID     ?= u0
 CPU_OFFSET ?= 0
 
 .PHONY: load
 load: $(BIN_FILE)
-	$(EB_LOAD_F) $(URL) $(CPU_ID) $(CPU_OFFSET) $^
+	$(EB_LOAD_F) $(PROTOCOL)/$(SCU_URL) $(CPU_ID) $(CPU_OFFSET) $^
 endif
 
 #=================================== EOF ======================================
