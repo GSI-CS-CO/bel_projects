@@ -41,7 +41,7 @@ set_global_assignment -name SYNCHRONIZER_IDENTIFICATION "FORCED IF ASYNCHRONOUS"
 set_global_assignment -name TIMEQUEST_DO_CCPP_REMOVAL ON
 set_global_assignment -name OPTIMIZE_HOLD_TIMING "ALL PATHS"
 set_global_assignment -name OPTIMIZE_MULTI_CORNER_TIMING ON
-set_global_assignment -name SEED 666
+set_global_assignment -name SEED 256
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to ndac_cs[1]
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to ndac_cs[2]
 set_instance_assignment -name IO_STANDARD LVDS -to pcie_refclk_i
