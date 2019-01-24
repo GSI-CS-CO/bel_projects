@@ -11,18 +11,18 @@
 
 # TODO: target for install, target for shared library.
 
-CPU     = $(shell uname -m)
+CPU     := $(shell uname -m)
 
-CC      = gcc
-CXX     = g++
-LD      = gcc
-OBJCPY  = objcopy
-OBJDUMP = objdump
-SIZE    = size
-AS      = gcc
-AR      = ar
-CPP     = cpp
-STRINGS = strings
+CC      = $(GCC_BIN_DIR)gcc
+CXX     = $(GCC_BIN_DIR)g++
+LD      = $(GCC_BIN_DIR)gcc
+OBJCPY  = $(GCC_BIN_DIR)objcopy
+OBJDUMP = $(GCC_BIN_DIR)objdump
+SIZE    = $(GCC_BIN_DIR)size
+AS      = $(GCC_BIN_DIR)gcc
+AR      = $(GCC_BIN_DIR)ar
+CPP     = $(GCC_BIN_DIR)cpp
+STRINGS = $(GCC_BIN_DIR)strings
 
 TARGET   ?= $(notdir $(basename $(MIAN_MODULE)))
 BIN_FILE ?= $(TARGET_DIR)/$(TARGET)
@@ -43,7 +43,7 @@ size: $(BIN_FILE)
 ifndef IS_LIBRARY
 
 .PHONY: run
-run: all
+run: $(WORK_DIR) $(TARGET_DIR) $(RESULT_FILE)
 	$(BIN_FILE) $(CALL_ARGS)
 
 endif

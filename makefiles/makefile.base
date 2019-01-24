@@ -176,6 +176,7 @@ DOX_INPUT                 += $(patsubst %.cpp,%.h, $(SOURCE))
 DOX_INPUT                 += $(patsubst %.cpp,%.hpp, $(SOURCE))
 DOX_INPUT                 += $(SOURCE)
 DOX_INPUT                 += $(MAKEFILE_DIR)/makefile.base
+DOX_TYPEDEF_HIDES_STRUCT  ?= "YES"
 DOX_INLINE_INHERITED_MEMB ?= "YES"
 DOX_OPTIMIZE_OUTPUT_FOR_C ?= "YES"
 DOX_EXTRACT_ALL           ?= "YES"
