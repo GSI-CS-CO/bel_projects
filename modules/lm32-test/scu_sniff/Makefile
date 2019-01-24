@@ -10,6 +10,6 @@ SOURCE += $(WR_DIR)/dev/w1-temp.c
 
 DEFINES += CONFIG_SCU_BUS_PEDANTIC_CHECK
 
-include $(REPOSITORY_DIR)/modules/lm32_makefiles/makefile.scu
+include $(REPOSITORY_DIR)/makefiles/makefile.scu
 #=================================== EOF ======================================
 

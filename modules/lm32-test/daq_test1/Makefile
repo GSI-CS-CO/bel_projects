@@ -11,5 +11,5 @@ SOURCE += $(REPOSITORY_DIR)/ip_cores/wrpc-sw/dev/w1-temp.c
 
 DEFINES += CONFIG_DAQ_DEBUG 
 
-include $(REPOSITORY_DIR)/modules/lm32_makefiles/makefile.scu
+include $(REPOSITORY_DIR)/makefiles/makefile.scu
 #=================================== EOF ======================================

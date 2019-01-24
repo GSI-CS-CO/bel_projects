@@ -1,11 +1,12 @@
 
-
-MIAN_MODULE := assert_test.c
-
+MIAN_MODULE := eb1test.c
 
 REPOSITORY_DIR := $(shell git rev-parse --show-toplevel)
 
-#DEFINES = CONFIG_LM32_ASSERT_CONTINUE
+LIBS += etherbone
 
-include $(REPOSITORY_DIR)/makefiles/makefile.scu
+CALL_ARGS = "tcp/$(SCU_URL)"
+
+include $(REPOSITORY_DIR)/makefiles/makefile.scun
 #=================================== EOF ======================================
+

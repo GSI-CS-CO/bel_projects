@@ -249,6 +249,8 @@ void ReadTemperatureDevices(int bus, uint64_t *id, uint16_t *temp);
 void probe_scu_bus(volatile unsigned short*, unsigned short, unsigned short, int*) DEPRECATED;
 void ReadTempDevices(int bus, uint64_t *id, uint32_t *temp);
 
+#ifndef CONFIG_OLD_SCU_SW
+
 /*! ---------------------------------------------------------------------------
  * @ingroup SCU_BUS
  * @brief Calculates the relative address offset in bytes of a SCU bus slave
@@ -525,6 +527,7 @@ SCUBUS_SLAVE_FLAGS_T scuBusFindSpecificSlaves( const void* pScuBusBase,
  */
 SCUBUS_SLAVE_FLAGS_T scuBusFindAllSlaves( const void* pScuBusBase );
 
+#endif /* #ifndef CONFIG_OLD_SCU_SW */
 
 #ifdef __cplusplus
 }

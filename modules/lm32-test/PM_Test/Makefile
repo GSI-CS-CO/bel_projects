@@ -11,7 +11,7 @@ DEFINES += CONFIG_DAQ_PEDANTIC_CHECK
 DEFINES += CONFIG_SCU_BUS_PEDANTIC_CHECK
 DEFINES += CONFIG_DAQ_DEBUG
 
-include $(REPOSITORY_DIR)/modules/lm32_makefiles/makefile.scu
+include $(REPOSITORY_DIR)/makefiles/makefile.scu
 #=================================== EOF ======================================
 
 

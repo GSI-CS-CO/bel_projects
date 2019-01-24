@@ -9,15 +9,17 @@
 ## Date:    09.01.2019                                                       ##
 ###############################################################################
 
-SYN_DIR    = ../../../..
-TARGET_DIR = ..
-DEPLOY_DIR = .
-
-TARGET = scu_control
-MIAN_MODULE = $(SCU_DIR)/main.c
+REPOSITORY_DIR := $(shell git rev-parse --show-toplevel)
+TARGET_DIR     := ..
+DEPLOY_DIR     := .
+TARGET         := scu_control
+MIAN_MODULE    = $(SCU_DIR)/main.c
 
 DEFINES += HISTORY
 DEFINES += CONFIG_NO_LM32_ASSERT
+
+# New functions will not compiled when the following switch is set.
+DEFINES += CONFIG_OLD_SCU_SW
 
 SOURCE += $(SCU_LIB_SRC_DIR)/aux.c
 SOURCE += $(SCU_LIB_SRC_DIR)/irq.c
@@ -34,8 +36,17 @@ SOURCE += $(WR_DIR)/dev/w1-temp.c
 
 CODE_OPTIMIZATION = 2
 SHARED_SIZE = 34816
+
+# Absolutely necessary for the correct order of the variables
+# within the shared memory!
 CFLAGS += -fno-toplevel-reorder
 
+# To be 100% backward compatible we can use the old toolchain.
+# If the variable TOOLCHAIN_DIR commented out, then the first toolchain found
+# in the environment variable $PATH will used if present,
+# else the included toolchain of this repository will used never the less. 
+TOOLCHAIN_DIR = $(INCLUDED_TOOLCHAIN_DIR)
+
 # Including common makefile for arbitrary LM32 software for SCU
-include $(SYN_DIR)/modules/lm32_makefiles/makefile.scu
+include $(REPOSITORY_DIR)/makefiles/makefile.scu
 #=================================== EOF ======================================

@@ -121,25 +121,6 @@
   #error This module is for the target LM32 only!
 #endif
 
-
-/*! ---------------------------------------------------------------------------
- * @brief Dummy function for the case a virtual function pointer is not filled.
- *
- * The linker expect this if abstract C++ classes will used. \n
- * Workaround not nice, I know... :-/
- *
- * @todo Maybe moving this function into "stubs.c" with the attribute
- *       "__attribute__((weak))". \n
- *       Or - better - find out in which library this function is implemented. \n
- *       At the moment this source file becomes compiled by "lm32-elf-gcc"
- *       because of the current sub-makefile "build++.mk". But the correct
- *       way is compiling C++ sources with lm32-elf-g++ rather than lm32-elf-gcc.
- *       If lm32-elf-g++ is used by a better customized Makefile, perhaps
- *       this issue is accomplished.
- */
-extern "C" void __attribute__((weak)) __cxa_pure_virtual( void ) { nullptr; }
-
-
 /////////////////////////////////////////////////////////////////////////////////
 class SysInit
 {
@@ -169,6 +150,7 @@ public:
  *        the second stage during the toolchain-building. \n
  *        "ftp://sources.redhat.com/pub/newlib/newlib-<version>.tar.gz"
  */
+//void * __dso_handle;
 // SysInit g_sysInit; // Geht ned!!! ;-(
 
 
@@ -369,6 +351,7 @@ template <typename TYP> TYP min( TYP a, TYP b )
 int main( void )
 {
    SysInit sysInit;
+//#define sysInit g_sysInit
 #if 1
    OverloadingTest ov;
    ov();

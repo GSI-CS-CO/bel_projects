@@ -17,6 +17,6 @@ DEFINES += CONFIG_DAQ_DEBUG
 
 CODE_OPTIMIZATION = s
 
-include $(REPOSITORY_DIR)/modules/lm32_makefiles/makefile.scu
+include $(REPOSITORY_DIR)/makefiles/makefile.scu
 #=================================== EOF ======================================
 

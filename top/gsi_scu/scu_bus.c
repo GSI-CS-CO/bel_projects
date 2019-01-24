@@ -84,6 +84,8 @@ void ReadTempDevices(int bus, uint64_t *id, uint32_t *temp)
   }
 } 
 
+#ifndef CONFIG_OLD_SCU_SW
+
 /*! ---------------------------------------------------------------------------
  * @brief Finds all scu-bus slaves which match by one or all items of the
  *        given match-list depending on mode.
@@ -194,6 +196,8 @@ unsigned int getNumberOfSlaves( const SCUBUS_SLAVE_FLAGS_T slaveFlags )
          ret++;
    return ret;
 }
+
+#endif /* #ifndef CONFIG_OLD_SCU_SW */
 
 /*================================== EOF ====================================*/
 
