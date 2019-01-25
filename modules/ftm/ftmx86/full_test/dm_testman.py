@@ -3,6 +3,7 @@ import difflib
 import sys
 import os.path
 import subprocess
+import time
 
 prefix ="/usr/local/bin/dm-"
 diffHeaderLen = 2
@@ -16,6 +17,9 @@ class Filter(object):
           if type == "reltime": 
             #print("creating timefilert")
             return Timefilter()
+          if type == "msgcnt": 
+            #print("creating timefilert")
+            return Msgcntfilter()  
           assert 0, "Bad filter creation: " + type
     factory = staticmethod(factory)
 
@@ -33,15 +37,31 @@ class Timefilter:
         toRemove.append(line)
     for line in toRemove:
       diff.remove(line)        
-    return diff    
+    return diff
+
+class Msgcntfilter:
+  
+  #  self.lambdas = lambdas
+  #  self.paras = parameters
+#
+  #def run:
+  def run(self, diff):
+    toRemove = []
+    for line in diff:
+      if "MSG:" in line:
+        #could check against actual time
+        toRemove.append(line)
+    for line in toRemove:
+      diff.remove(line)        
+    return diff           
       
 
 class Op:
-  def __init__(self, desc, typ, content, execTime=0, optFile=None, expResFile=None, filtertype=None):
+  def __init__(self, desc, typ, content, execTime=0.0, optFile=None, expResFile=None, filtertype=None):
     self.desc       = desc
     self.typ        = typ
     self.content    = content
-    self.execTime   = execTime
+    self.execTime   = float(execTime)
     self.optFile    = optFile
     self.expResFile = expResFile
     self.__filter     = Filter.factory(filtertype)
@@ -94,7 +114,8 @@ class Op:
     optFile = ""
     if self.optFile is not None:
       optFile = self.path + self.optFile
-    try:   
+    try:
+      time.sleep(float(self.execTime))   
       tmp = subprocess.check_output([self.getCliCmd()] + self.getCliArgs(dev), stderr=subprocess.STDOUT)
       if self.expResFile is not None:
         d='\n'
@@ -103,8 +124,9 @@ class Op:
     except subprocess.CalledProcessError as err:
       print("Rcode %s Stdout %s" % (err.returncode, err.output)) 
 
+      
        
-    #sleep(int(self.execTime))
+    
 
   def runRda(self, instance):
     pass  
@@ -158,7 +180,7 @@ class TestCase:
       expResFile = "-"
       if op.expResFile is not None:
         expResFile = self.path + "/" +  op.expResFile  
-      print("# %s, '%s', %ums, %s %s" % (op.desc, op.getCliStr(self.dev), int(op.execTime), optFile, expResFile))
+      print("# %s, '%s', %fs, %s %s" % (op.desc, op.getCliStr(self.dev), op.execTime, optFile, expResFile))
     print("")  
 
   def setPath(self, filename):
@@ -296,27 +318,24 @@ class Manager:
 
 
 def main(argv):
-  print("Loading Tests")
   pathandfile = os.path.realpath(__file__)
   mypath, myfile = os.path.split(pathandfile) 
   #print (mypath)
   m = Manager(mypath, "TestManifest.py", "tcp/tsl008.acc")
-  m.showTestList()
+  print("Loading %u Tests" % len(m.tests))
+  #m.showTestList()
   print("\n########################\n")
   failedList = []
-  m.loadTest(0)
-  #m.actTestCase.showOpsList()
-  m.actTestCase.run()
-  if m.actTestCase.report(m.actTestCase.eval()) == False:
-    failedList.append(0)
-  m.loadTest(1)
-  #m.actTestCase.showOpsList()
-  m.actTestCase.run()
-  if m.actTestCase.report(m.actTestCase.eval(True)) == False:
-    failedList.append(1)
+  for index, test in enumerate(m.tests):
+    m.loadTest(index)
+    #m.actTestCase.showOpsList()
+    m.actTestCase.run()
+    if m.actTestCase.report(m.actTestCase.eval(True)) == False:
+      failedList.append(index)
   print("\n########################\n")  
   if len(failedList) == 0:
     print("Test run PASSED")
+
   else:
     print("Test run FAILED")
     for test in failedList:

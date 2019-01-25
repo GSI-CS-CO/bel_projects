@@ -1,0 +1,12 @@
+digraph g {
+name="Basic_Branching";
+edge  [type="defdst"]
+node  [cpu="0"];
+  
+  BLOCK_IN0 [type="block", pattern="IN_C0", patentry="true", patexit="true", qlo="1", tperiod=1000];
+  BLOCK_A  [type="block", pattern="A",  patentry="true", patexit="true", qlo="1", tperiod=1000];
+  BLOCK_B  [type="block", pattern="B",  patentry="true", patexit="true", qlo="1", tperiod=1000];
+
+  BLOCK_IN0->BLOCK_A;
+  BLOCK_IN0->BLOCK_B [type="altdst"];
+}

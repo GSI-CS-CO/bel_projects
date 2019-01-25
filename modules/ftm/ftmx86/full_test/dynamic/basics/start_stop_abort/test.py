@@ -1,0 +1,23 @@
+testcase = TestCase(
+  "Test_Basic_Start_Stop_Abort",
+  [ Op("Init0_0", "cmd", "reset all"),
+    Op("Init0_1", "sched", "add", "0", "test_sched.dot"),
+    Op("Test0_0_CheckNone", "sched", "rawvisited", "0.0", None, "test0_0_exp.txt"),
+    Op("Test0_1_CheckIdle", "cmd", "rawstatus", "0.0", None, "test0_1_exp.txt"),
+    Op("Test0_2_RunCPU0", "cmd", "startpattern IN_C0"),
+    Op("Test0_3_CheckRun", "cmd", "rawstatus", "0.0", None, "test0_3_exp.txt"),
+    Op("Test0_4_AbortCPU0", "cmd", "abortpattern IN_C0"),
+    Op("Test0_5_CheckAbort", "cmd", "rawstatus", "0.0", None, "test0_5_exp.txt"),
+    Op("Test0_2_CheckVisited", "sched", "rawvisited", "0.0", None, "test0_6_exp.txt"),
+    Op("Init1_0", "cmd", "reset all"),
+    Op("Init1_1", "sched", "add", "0", "test_sched.dot"),
+    Op("Test1_0_CheckNone", "sched", "rawvisited", "0.0", None, "test0_0_exp.txt"),
+    Op("Test1_1_CheckIdle", "cmd", "rawstatus", "0.0", None, "test0_1_exp.txt"),
+    Op("Test1_2_RunCPU0", "cmd", "startpattern IN_C0"),
+    Op("Test1_3_CheckRun", "cmd", "rawstatus", "0.0", None, "test0_3_exp.txt"),
+    Op("Test1_4_StopCPU0", "cmd", "stoppattern IN_C0"),
+    Op("Test1_5_CheckStop", "cmd", "rawstatus", "0.0", None, "test1_5_exp.txt"),
+    Op("Test1_6_CheckStop", "cmd", "rawstatus", "1.5", None, "test1_6_exp.txt"),
+    Op("Test1_2_CheckVisited", "sched", "rawvisited", "0.0", None, "test1_7_exp.txt"),
+  ]
+)
