@@ -142,7 +142,10 @@
 #define ALWAYS_INLINE __attribute__((always_inline))
 
 #ifndef STATIC_ASSERT
-#if (__cplusplus > 199711L) && !defined(__lm32__) // Is C++11 and not LM32 ?
+#if ((__cplusplus > 199711L) || (COMPILER_VERSION_NUMBER >= 40600))
+  #ifndef __cplusplus
+     #define static_assert _Static_assert
+  #endif
   #define STATIC_ASSERT( condition ) static_assert( condition, "C-Macro: STATIC_ASSERT" )
 #else
  #ifndef __DOXYGEN__
