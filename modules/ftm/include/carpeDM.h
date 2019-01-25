@@ -141,7 +141,10 @@ private:
 
   void readMgmtLLMeta();
 
-
+  
+  vEbwrs& setThrDeadline(uint8_t cpuIdx, uint8_t thrIdx, uint64_t t, vEbwrs& ew);
+  vEbwrs& setThrCursor(uint8_t cpuIdx, uint8_t thrIdx, const std::string& name, vEbwrs& ew);
+  void resetAllThreads();
 
 
 
@@ -356,7 +359,9 @@ std::pair<int, int> findRunningPattern(const std::string& sPattern); // get cpu 
                void show(const std::string& title, const std::string& logDictFile, TransferDir dir, bool filterMeta );
                void showUp(bool filterMeta);                                               // show a CPU's Upload address table
                void showDown(bool filterMeta);
-               void dumpNode(uint8_t cpuIdx, const std::string& name);                     // hex dump a node
+               void dumpNode(const std::string& name);                     // hex dump a node
+               void showPaint();
+               bool isPainted(const std::string& name);
                void inspectHeap(uint8_t cpuIdx);
                void showHashDict();
                void showGroupsDict();
@@ -371,7 +376,7 @@ std::pair<int, int> findRunningPattern(const std::string& sPattern); // get cpu 
                void showMemSpace();
                void lockManagerClear() {lm.clear();}
                bool lockManagerHasEntries() {return (lm.getLockVec().size() > 0);}
-
+               void softwareReset(bool clearStatistic); 
 
 vEbwrs& createNonQCommand(vEbwrs& ew, const std::string& type, const std::string& target);
 vEbwrs& createLockCtrlCommand(vEbwrs& ew, const std::string& type, const std::string& target, bool lockRd, bool lockWr );

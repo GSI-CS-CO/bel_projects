@@ -145,6 +145,7 @@ int main(int argc, char* argv[]) {
       if (cmd == "keep")      { cdm.download(); cdm.keepDotFile(inputFilename, force); cmdValid = true;}
       if (cmd == "status")    { cdm.downloadDotFile(outputFilename, strip); cmdValid = true; reqStatus = true;}
       if (cmd == "dump")      { cdm.download(); std::cout << cdm.createDot(cdm.getDownGraph(), strip) << std::endl; cmdValid = true; reqStatus = false; update=false;}
+      if (cmd == "rawvisited"){ cdm.download(); cdm.showPaint(); cmdValid = true; reqStatus = false; update=false;}
       if (cmd == "chkrem")    {
         cdm.download();
 

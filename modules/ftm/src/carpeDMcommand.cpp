@@ -423,7 +423,16 @@ vEbwrs& CarpeDM::createCommandBurst(vEbwrs& ew, Graph& g) {
     }
   }
 
+  //DEBUG Sets the cursor
+  vEbwrs& CarpeDM::setThrCursor(uint8_t cpuIdx, uint8_t thrIdx, const std::string& name, vEbwrs& ew) {
+    uint8_t b[4];
 
+    ew.va.push_back(getThrCurrentNodeAdr(cpuIdx, thrIdx));
+    writeLeNumberToBeBytes<uint32_t>(b, getNodeAdr(name, TransferDir::DOWNLOAD, AdrType::INT));
+    ew.vb.insert( ew.vb.end(), b, b + sizeof(b));
+    ew.vcs += leadingOne(1);
+    return ew;
+  }
 
   const std::string CarpeDM::getThrCursor(uint8_t cpuIdx, uint8_t thrIdx) {
     uint32_t adr;
@@ -547,6 +556,31 @@ vEbwrs& CarpeDM::resetThrMsgCnt(uint8_t cpuIdx, uint8_t thrIdx, vEbwrs& ew) {
 
 }
 
+
+void CarpeDM::softwareReset(bool clearStatistic) {
+  halt();
+  clear_raw(true);
+  resetAllThreads();
+  if (clearStatistic) {
+    clearHealth();
+    clearHwDiagnostics();
+  }
+}
+
+void CarpeDM::resetAllThreads() {
+  vEbwrs ew;
+  for(uint8_t cpu = 0; cpu < ebd.getCpuQty(); cpu++) { //cycle all CPUs
+    for(uint8_t thr = 0; thr < _THR_QTY_; thr++) {
+      setThrStartTime(cpu, thr, 0ULL, ew);
+      setThrDeadline(cpu, thr, -1ULL, ew);
+      setThrOrigin(cpu, thr, DotStr::Node::Special::sIdle, ew);
+      setThrCursor(cpu, thr, DotStr::Node::Special::sIdle, ew); 
+    }
+  }
+  send(ew);  
+}      
+
+
 uint64_t CarpeDM::getThrMsgCnt(uint8_t cpuIdx, uint8_t thrIdx) {
   return ebd.read64b(atDown.getMemories()[cpuIdx].extBaseAdr + atDown.getMemories()[cpuIdx].sharedOffs + SHCTL_THR_DAT + thrIdx * _T_TD_SIZE_ + T_TD_MSG_CNT);
 }
@@ -555,7 +589,14 @@ uint64_t CarpeDM::getThrDeadline(uint8_t cpuIdx, uint8_t thrIdx) {
   return ebd.read64b(atDown.getMemories()[cpuIdx].extBaseAdr + atDown.getMemories()[cpuIdx].sharedOffs + SHCTL_THR_DAT + thrIdx * _T_TD_SIZE_ + T_TD_DEADLINE);
 }
 
-//FIXME wtf ... this doesnt queue anything!
+vEbwrs&  CarpeDM::setThrDeadline(uint8_t cpuIdx, uint8_t thrIdx, uint64_t t, vEbwrs& ew) {
+  uint32_t startAdr = atDown.getMemories()[cpuIdx].extBaseAdr + atDown.getMemories()[cpuIdx].sharedOffs + SHCTL_THR_DAT + thrIdx * _T_TD_SIZE_ + T_TD_DEADLINE;
+  ew.va += {startAdr, startAdr + _32b_SIZE_};
+  writeLeNumberToBeBytes<uint64_t>(ew.vb, t );
+  ew.vcs += leadingOne(2);
+  return ew;
+}
+
 vEbwrs&  CarpeDM::setThrStartTime(uint8_t cpuIdx, uint8_t thrIdx, uint64_t t, vEbwrs& ew) {
   uint32_t startAdr = atDown.getMemories()[cpuIdx].extBaseAdr + atDown.getMemories()[cpuIdx].sharedOffs + SHCTL_THR_STA + thrIdx * _T_TS_SIZE_ + T_TS_STARTTIME;
   ew.va += {startAdr, startAdr + _32b_SIZE_};

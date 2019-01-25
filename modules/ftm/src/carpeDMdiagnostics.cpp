@@ -410,7 +410,7 @@ std::string& CarpeDM::getRawQReport(const std::string& blockName, std::string& r
 
 
 
-void CarpeDM::dumpNode(uint8_t cpuIdx, const std::string& name) {
+void CarpeDM::dumpNode(const std::string& name) {
 
   Graph& g = gDown;
   if (hm.contains(name)) {
@@ -418,6 +418,26 @@ void CarpeDM::dumpNode(uint8_t cpuIdx, const std::string& name) {
     auto* x = (AllocMeta*)&(*it);
     hexDump(g[x->v].name.c_str(), (const char*)x->b, _MEM_BLOCK_SIZE);
   }
+}
+
+bool CarpeDM::isPainted(const std::string& name) {
+  Graph& g = gDown;
+  if (hm.contains(name)) {
+    AllocTable& at = atDown;
+    auto it = atDown.lookupHash(hm.lookup(name));
+    auto* x = (AllocMeta*)&(*it);
+  
+    return g[x->v].np->isPainted();
+  }
+  return false;
+
+}
+
+void CarpeDM::showPaint() {
+  Graph& g = gDown;
+  BOOST_FOREACH( vertex_t v, vertices(g) ) {
+    if (!g[v].np->isMeta()) std::cout << g[v].name << ":" << (int)(g[v].np->isPainted() ? 1 : 0) << std::endl;
+  }  
 }
 
 void CarpeDM::inspectHeap(uint8_t cpuIdx) {
@@ -671,7 +691,7 @@ void CarpeDM::show(const std::string& title, const std::string& logDictFile, Tra
   if(debug) {
     BOOST_FOREACH( vertex_t v, vertices(g) ) {
       auto x = at.lookupVertex(v);
-      dumpNode(x->cpu, g[x->v].name);
+      dumpNode(g[x->v].name);
     }
   }
 

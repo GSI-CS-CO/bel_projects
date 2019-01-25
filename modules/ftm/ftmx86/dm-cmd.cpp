@@ -166,6 +166,46 @@ void showStatus(const char *netaddress, CarpeDM& cdm, bool verbose) {
 
 }
 
+void showRawStatus(const char *netaddress, CarpeDM& cdm) {
+  uint8_t cpuQty = cdm.getCpuQty();
+  uint8_t thrQty = _THR_QTY_;
+
+  std::vector<std::string> vsCursor;
+  std::vector<std::string> vsCursorPattern;
+  std::vector<std::string> vsOrigin;
+  std::vector<std::string> vsOriginPattern;
+  std::vector<uint64_t> vsMsgCnt;
+
+  //do this fast to get a most coherent picture, no output
+  for(uint8_t cpuIdx=0; cpuIdx < cpuQty; cpuIdx++) {
+    for(uint8_t thrIdx=0; thrIdx < thrQty; thrIdx++) {
+      vsCursor.push_back(cdm.getThrCursor(cpuIdx, thrIdx));
+      vsMsgCnt.push_back(cdm.getThrMsgCnt(cpuIdx, thrIdx));
+    }
+  }
+
+  for(uint8_t cpuIdx=0; cpuIdx < cpuQty; cpuIdx++) {
+    for(uint8_t thrIdx=0; thrIdx < thrQty; thrIdx++) {
+      vsCursorPattern.push_back(cdm.getNodePattern(vsCursor[cpuIdx * thrQty + thrIdx]));
+      vsOrigin.push_back(cdm.getThrOrigin(cpuIdx, thrIdx));
+      vsOriginPattern.push_back(cdm.getNodePattern(vsOrigin[cpuIdx * thrQty + thrIdx]));
+    }
+  }
+
+  for(uint8_t cpuIdx=0; cpuIdx < cpuQty; cpuIdx++) {
+    for(uint8_t thrIdx=0; thrIdx < thrQty; thrIdx++) {      
+      std::string originPattern = vsOriginPattern[cpuIdx * thrQty + thrIdx];
+      std::string origin        = vsOrigin[cpuIdx * thrQty + thrIdx];
+      printf("CPU:%02u,THR:%02u,RUN:%1u\nMSG:%09llu\nPAT:%s,NOD:%s\n", cpuIdx, thrIdx, (cdm.getThrRun(cpuIdx) >> thrIdx) & 1,
+        (unsigned long long int)vsMsgCnt[cpuIdx * thrQty + thrIdx],
+        vsCursorPattern[cpuIdx * thrQty + thrIdx].c_str(),
+        vsCursor[cpuIdx * thrQty + thrIdx].c_str()
+      );
+    }
+  }
+}
+
+
 void showHealth(const char *netaddress, CarpeDM& cdm, bool verbose) {
   std::string show;
   uint8_t cpuQty = cdm.getCpuQty();
@@ -436,6 +476,13 @@ int main(int argc, char* argv[]) {
       cdm.halt();
       return 0;
     }
+    else if (tmpGlobalCmds== "reset") {
+      bool clearStatistic = targetName != NULL && targetName == std::string("all");
+      std::cout << "clear statistic:" << std::boolalpha << clearStatistic << std::endl;
+      cdm.softwareReset(clearStatistic);
+      return 0;
+    }
+
   }
 
 
@@ -493,6 +540,10 @@ int main(int argc, char* argv[]) {
     }
     else if (cmp == "status")  {
       showStatus(netaddress, cdm, verbose);
+      return 0;
+    }
+    else if (cmp == "rawstatus")  {
+      showRawStatus(netaddress, cdm);
       return 0;
     }
     else if ( (cmp == "details") || (cmp == "diag")) {
@@ -694,7 +745,17 @@ int main(int argc, char* argv[]) {
     else if (cmp == "hex")  {
       if(!(cdm.isInHashDict( targetName))) {std::cerr << program << ": Target node '" << targetName << "'' was not found on DM" << std::endl; return -1; }
       try {
-        cdm.dumpNode(cpuIdx, targetName);
+        cdm.dumpNode(targetName);
+      } catch (std::runtime_error const& err) {
+        std::cerr << program << ": Node not found. Cause: " << err.what() << std::endl; return -21;
+      }
+      return 0;
+    }
+    else if (cmp == "rawvisited")  {
+      if(!(cdm.isInHashDict( targetName))) {std::cerr << program << ": Target node '" << targetName << "'' was not found on DM" << std::endl; return -1; }
+      try {
+        bool isVisited = cdm.isPainted(targetName);
+        std::cout << targetName << ":" << (int)(isVisited ? 1 : 0) << std::endl;
       } catch (std::runtime_error const& err) {
         std::cerr << program << ": Node not found. Cause: " << err.what() << std::endl; return -21;
       }
@@ -755,6 +816,7 @@ int main(int argc, char* argv[]) {
       }
       return 0;
     }
+    
 
 
 
