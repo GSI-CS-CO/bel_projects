@@ -3,7 +3,7 @@
  *
  *  created : 2018
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 14-Jan-2019
+ *  version : 25-Jan-2019
  *
  *  lm32 program for gateway between UNILAC Pulszentrale and a White Rabbit network
  *  this basically serves a Data Master for UNILAC
@@ -45,7 +45,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 22-November-2018
  ********************************************************************************************/
-#define WRUNIPZ_FW_VERSION 0x000007                                     // make this consistent with makefile
+#define WRUNIPZ_FW_VERSION 0x000008                                     // make this consistent with makefile
 
 /* standard includes */
 #include <stdio.h>
@@ -163,10 +163,10 @@ dataTable bigData[WRUNIPZ_NPZ][WRUNIPZ_NVACC * WRUNIPZ_NCHN];
 
 // contains info on what will be played at which PZ during next cycle
 uint32_t  vaccNext[WRUNIPZ_NPZ];        // vacc
-uint32_t  channelNext[WRUNIPZ_NPZ];     // channel
-uint32_t  nochopNext[WRUNIPZ_NPZ];      // chopper usage
-uint32_t  prepNext[WRUNIPZ_NPZ];        // preparation
-uint32_t  zeroNExt[WRUNIPZ_NPZ];        // magnets to zero
+uint32_t  channelNext[WRUNIPZ_NPZ];     // # of channel
+uint32_t  nochopNext[WRUNIPZ_NPZ];      // flag: 'no chopper'
+uint32_t  shortchopNext[WRUNIPZ_NPZ];   // flag: 'short chopper'
+uint32_t  servEvtNext[WRUNIPZ_NPZ];     // trailing service event
 
 uint32_t gid[] =                 {1000, 1001, 1002, 1003, 1004, 1005, 1006};              /* hackish: GIDs for PZs, to be clarified with Hanno */
                                                                         
@@ -960,7 +960,9 @@ uint32_t doActionOperation(uint32_t *nCycle,                  // total number of
   uint32_t milStatus;                                         // status for receiving of MIL events
   uint32_t nLateLocal;                                        // remember actual counter
   uint32_t isPrepFlag;                                        // flag 'isPrep': prep-events are sent immediately, non-prep-events are sent at 50 Hz trigger
+  int      ipz;                                               // index of PZ, helper variable
   int      i,j;
+  dataTable servNow;                                          // used to send a service event NOW!
 
 
   status = actStatus;
@@ -1019,22 +1021,53 @@ uint32_t doActionOperation(uint32_t *nCycle,                  // total number of
 
     // reset requested virt accs; flush ECA queue
     for (i=0; i < WRUNIPZ_NPZ; i++) vaccNext[i] = 0xffffffff;   // 0xffffffff: no virt acc for PZ
-    DBPRINT3("wr-unipz: vA reset:  %x %x %x %x %x %x %x\n", vaccNext[0], vaccNext[1], vaccNext[2], vaccNext[3], vaccNext[4], vaccNext[5], vaccNext[6]);
     while (wait4ECAEvent(0, &tDummy, &flagIsLate) !=  WRUNIPZ_ECADO_TIMEOUT) {asm("nop");}
+
+    break;
     
-    break;
-  case WRUNIPZ_EVT_PZ1 ... WRUNIPZ_EVT_PZ7 :                    // announce what happens in next UNILAC cycle
-    vaccNext[evtCode-1] = virtAcc;                              // PZ: sPZ counts from 1..7, we count from 0..6
-    DBPRINT3("wr-unipz: vA set:  %x %x %x %x %x %x %x\n", vaccNext[0], vaccNext[1], vaccNext[2], vaccNext[3], vaccNext[4], vaccNext[5], vaccNext[6]);
+  case WRUNIPZ_EVT_PZ1 ... WRUNIPZ_EVT_PZ7 :                    // super PZ announces what happens in next UNILAC cycle
+    // extract information from event from super PZ
+    ipz              = evtCode - 1;                             // PZ: sPZ counts from 1..7, we count from 0..6
+    vaccNext[ipz]    = virtAcc;
+    
+    // there are two different types of announce events
+    // A: The announce event contains information about the vacc to played in the next cycle
+    //    In this case 1. handle chopper mode, 2. send all 'prep events'
+    // B: The announce event contains information about a service event to be sent
+    //    In this case we just take care of the service event and nothing else
 
-    nLateLocal = nLate;
-    isPrepFlag = 1;                                             // PZ1..7: preperation - use deadline from past 50 Hz tick
-    deadline   = tSyncPrev + (uint64_t)WRUNIPZ_UNILACPERIOD;
-    ebmWriteTM(bigData[evtCode - 1][virtAcc], deadline, evtCode - 1, virtAcc, isPrepFlag);
-    DBPRINT3("wr-unipz: playing pz %d, vacc %d\n", i, virtAcc);
-    if ((nLate != nLateLocal) && (status == WRUNIPZ_STATUS_OK)) status = WRUNIPZ_STATUS_LATE;
+    if ((evtData & WRUNIPZ_EVTDATA_SERVICE) == 0) {                    // A: super PZ has announced vacc for next cycle: bits 12 (channel number), bits 13..15 (chooper mode)
+      DBPRINT3("wr-unipz: playing prep events, pz %d, vacc %d\n", ipz, virtAcc);
+      // get chopper mode
+      channelNext[ipz]   = ((evtData & WRUNIPZ_EVTDATA_CHANNEL) != 0));// use relevant bit as channel number (there are only two channels)
+      nochopNext[ipz]    = ((evtData & WRUNIPZ_EVTDATA_NOCHOP) != 0);
+      shortchopNext[ipz] = ((evtData & EVTDATA_SHORTCHOP) != 0);
+      servEvtNext[ipz]   = 0x0;                                        // reset service event for next cycle
 
+      // PZ1..7: preperation; as the next cycle has been announced, we may send all 'prep events' already now
+      // as deadline, we use the deadline from past 50 Hz tick and add the actual UNILAC cycle length
+      nLateLocal = nLate;
+      isPrepFlag = 1;                                                  
+      deadline   = tSyncPrev + (uint64_t)WRUNIPZ_UNILACPERIOD;         /* chk: need to replaced fixed value for period by actual valud */
+      ebmWriteTM(bigData[evtCode - 1][virtAcc], deadline, evtCode - 1, virtAcc, isPrepFlag);
+      if ((nLate != nLateLocal) && (status == WRUNIPZ_STATUS_OK)) status = WRUNIPZ_STATUS_LATE;
+    } // if !SERVICE
+    else {                                                             // B: super PZ has sent info on a service event: bits 12..15 encode event type
+      DBPRINT3("wr-unipz: service event for pz %d, vacc %d\n", ipz, virtAcc);
+      if (evtData == WRUNIPZ_EVTDATA_PREPACC) servEvtNext[ipz] = EVT_AUX_PRP_NXT_ACC;
+      if (evtData == WRUNIPZ_EVTDATA_ZEROACC) servEvtNext[ipz] = EVT_MAGN_DOWN;
+      if (evtData == WRUNIPZ_EVTDATA_PREPACCNOW) {                     // send event immediately; VERY SPECIAL CASE for QQ
+        servNow.validFlags = 0x1;                                      // just one event
+        servNow.prepFlags  = 0x0;
+        servNow.evtFlags   = 0x1;                                      // is event
+        servNow.data       = EVT_AUX_PRP_NXT_ACC;                      // only set event code; evt data is unused, offset is 0 us
+        /* chk: we need to send this as fast as possible. ToDo: decide what offset is needed */
+        ebmWriteTM(servNow, getSysTime(), ipz, virtAcc, 0);     
+      } // if PREPACCNOW
+    } // else SERVICE
+  
     break;
+    
   default :
     break;
   } // switch evtCode
