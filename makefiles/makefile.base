@@ -119,7 +119,16 @@ CC_ARG = $(CFLAGS) $(OPT_INCLUDE) $(OPT_DEFINES)
 CXX_ARG ?= $(CC_ARG)
 AS_ARG ?= $(CC_ARG)
 
-all: $(WORK_DIR) $(TARGET_DIR) $(RESULT_FILE) size
+.PHONY: all
+all: $(WORK_DIR) $(TARGET_DIR) $(RESULT_FILE) size version
+
+.PHONY: version
+version:
+ifeq ($(V), 1)
+	$(CC) --version
+else
+	@$(CC) --version | head -n1
+endif
 
 $(WORK_DIR):
 	$(QUIET)mkdir -p $(WORK_DIR)
@@ -127,8 +136,9 @@ $(WORK_DIR):
 $(TARGET_DIR):
 	$(QUIET)mkdir -p $(TARGET_DIR)
 
+#
 # TODO Following rule could be made a bit better...
-
+#
 $(DEPENDFILE): $(_SOURCE) $(ADDITIONAL_DEPENDENCES) $(WORK_DIR)
 	$(QUIET)(for i in $(_SOURCE); do \
 		printf "$(WORK_DIR)/"; \

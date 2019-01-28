@@ -25,12 +25,20 @@
  */
 #include <string.h>
 #include "mini_sdb.h"
-#include "../../top/gsi_scu/daq.h"
+#include "daq.h"
 #include "eb_console_helper.h"
 #include "helper_macros.h"
+#include "lm32_assert.h"
 #include "irq.h"
 
 DAQ_BUS_T g_allDaq;
+
+void _segfault(int sig)
+{
+   mprintf( ESC_FG_RED ESC_BOLD "Segmentation fault: %d\n" ESC_NORMAL, sig );
+   while( 1 );
+}
+
 
 void readFiFo( DAQ_CANNEL_T* pThis )
 {

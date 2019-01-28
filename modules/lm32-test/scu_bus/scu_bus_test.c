@@ -26,8 +26,15 @@
 
 #include "mprintf.h"
 #include "mini_sdb.h"
-#include "../../top/gsi_scu/scu_bus.h"
+#include "scu_bus.h"
 #include "eb_console_helper.h"
+
+void _segfault( int sig )
+{
+   mprintf( ESC_FG_RED ESC_BOLD "Segmentation fault: %d\n" ESC_NORMAL, sig );
+   while( 1 );
+}
+
 
 void main( void )
 {

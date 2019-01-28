@@ -34,6 +34,14 @@ DAQ_BUS_T g_allDaq;
 #define CHANNEL 2
 #define DEVICE  0
 
+
+void _segfault( int sig )
+{
+   mprintf( ESC_FG_RED ESC_BOLD "Segmentation fault: %d\n" ESC_NORMAL, sig );
+   while( 1 );
+}
+
+
 void main( void )
 {
    discoverPeriphery();
