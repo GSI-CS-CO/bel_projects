@@ -27,6 +27,17 @@
 #include <stddef.h> // Necessary for the macro "offsetof()"
 #include <limits.h> // Necessary for constant "CHAR_BIT" (in the most cases always 8)
 
+#if defined(__SSP__) || defined(__SSP_ALL__) || defined(__DOXYGEN__)
+/*!
+ * @brief This macro becomes defined when the compiler is invoked with option
+ *        -fstack-protector or -fstack-protector-all
+ *
+ * That means, extra code for the stack-protector will produced.
+ */
+ #define CONFIG_STACK_PROTECTOR_CODE
+
+#endif /* if defined(__SSP__) || defined(__SSP_ALL__) */
+
 #if defined(__GNUC__) || defined(__DOXYGEN__)
 /*!
  * @brief Macro represents the full version number of the compiler as integer

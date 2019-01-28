@@ -39,6 +39,22 @@ void __attribute__((weak)) _segfault(void) {
  * @date 24.01.2019
  */
 void __attribute__((weak)) __cxa_pure_virtual( void ) {}
-#endif
 
+#endif /* ifdef CONFIG_CPLUSPLUS_MODULE_PRESENT */
+
+#if defined(__SSP__) || defined(__SSP_ALL__) || defined(__SSP_STRONG__)
+#include <stdint.h> /* For uintptr_t */
+
+/*! ---------------------------------------------------------------------------
+ * @brief Rewritable function becomes invoked in the case of stack overflow.
+ *        "Stack Smashing Protector" (SSP)
+ */
+void __attribute__((weak)) __stack_chk_fail( void ) {}
+
+/*!
+ * @brief Will used for the stack smashing protector (SSP).
+ */
+uintptr_t __attribute__((weak)) __stack_chk_guard;
+
+#endif /* defined(__SSP__) || defined(__SSP_ALL__) */
 /*================================== EOF ====================================*/
