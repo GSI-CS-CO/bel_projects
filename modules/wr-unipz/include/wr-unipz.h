@@ -13,14 +13,15 @@
 #define  WRUNIPZ_DEFAULT_TIMEOUT  100         // default timeout used by main loop [ms]
 #define  WRUNIPZ_QUERYTIMEOUT     1           // timeout for querying virt acc from MIL Piggy FIFO [ms] 
                                               // Ludwig: we have 10ms time; here: use 5 ms to be on the safe side
-#define  WRUNIPZ_MILTIMEOUT       100         // timeout for querying MIL event
-#define  WRUNIPZ_ECATIMEOUT       1           // timeout for querying ECA action 
-#define  WRUNIPZ_MATCHWINDOW      200000      // used for comparing timestamps: 1 TS from TLU->ECA matches event from MIL FIFO, 2: synch EVT_MB_TRIGGER, ...
+#define  WRUNIPZ_MILTIMEOUT       100         // timeout for querying MIL event [ms]
+#define  WRUNIPZ_ECATIMEOUT       1           // timeout for querying ECA action [ms]
+#define  WRUNIPZ_MATCHWINDOW      200000      // used for comparing timestamps: 1 TS from TLU->ECA matches event from MIL FIFO, 2: synch EVT_MB_TRIGGER, ... [ns]
 #define  WRUNIPZ_ECA_ADDRESS      0x7ffffff0  // address of ECA input
 #define  WRUNIPZ_EB_HACKISH       0x12345678  // value for EB read handshake
 #define  WRUNIPZ_UNILACFREQ       50          // frequency of UNILAC operation [Hz]
 #define  WRUNIPZ_UNILACPERIOD     20000000    // length of one UNILAC cylce [ns]
 #define  WRUNIPZ_MAXPREPOFFSET    2000        // max offset of a prep event within UNILAC cycle [us]
+#define  WRUNIPZ_QQOFFSET         500000      // offset for sending special service event for QQ [ns]
 
 // numbers for UNIPZ
 #define  WRUNIPZ_NEVT             32          // # of events per virt acc

@@ -294,7 +294,8 @@ uint64_t ebmWriteTM(uint32_t evtData, uint64_t tStart, uint32_t pz, uint32_t vir
 } // ebmWriteTm
 
 
-uint32_t pzRunVacc(dataTable evts, uint64_t tStart, uint32_t pz, uint32_t virtAcc, uint32_t isPrep)
+uint32_t
+pzRunVacc(dataTable evts, uint64_t tStart, uint32_t pz, uint32_t virtAcc, uint32_t isPrep)
 {
   int      i;
   uint64_t offset;
@@ -1075,7 +1076,7 @@ uint32_t doActionOperation(uint32_t *nCycle,                  // total number of
       DBPRINT3("wr-unipz: service event for pz %d, vacc %d\n", ipz, virtAcc);
       if (evtData == WRUNIPZ_EVTDATA_PREPACC) nextServEvt[ipz] = EVT_AUX_PRP_NXT_ACC;
       if (evtData == WRUNIPZ_EVTDATA_ZEROACC) nextServEvt[ipz] = EVT_MAGN_DOWN;
-      if (evtData == WRUNIPZ_EVTDATA_PREPACCNOW) ebmWriteTM((uint32_t)EVT_AUX_PRP_NXT_ACC, getSysTime(), ipz, virtAcc, 0, 0);
+      if (evtData == WRUNIPZ_EVTDATA_PREPACCNOW) ebmWriteTM((uint32_t)EVT_AUX_PRP_NXT_ACC, getSysTime() + (uint64_t)WRUNIPZ_QQOFFSET, ipz, virtAcc, 0, 0);  /* chk: value for QQOFFSET */
     } // else SERVICE
   
     break;
