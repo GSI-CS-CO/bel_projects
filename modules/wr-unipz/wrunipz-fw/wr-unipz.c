@@ -3,7 +3,7 @@
  *
  *  created : 2018
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 25-Jan-2019
+ *  version : 28-Jan-2019
  *
  *  lm32 program for gateway between UNILAC Pulszentrale and a White Rabbit network
  *  this basically serves a Data Master for UNILAC
@@ -162,11 +162,11 @@ uint64_t lengthPrev;                    // duration of previous UNILAC cycle
 dataTable bigData[WRUNIPZ_NPZ][WRUNIPZ_NVACC * WRUNIPZ_NCHN];
 
 // contains info on what will be played at which PZ during next cycle
-uint32_t  vaccNext[WRUNIPZ_NPZ];        // vacc
-uint32_t  channelNext[WRUNIPZ_NPZ];     // # of channel
-uint32_t  nochopNext[WRUNIPZ_NPZ];      // flag: 'no chopper'
-uint32_t  shortchopNext[WRUNIPZ_NPZ];   // flag: 'short chopper'
-uint32_t  servEvtNext[WRUNIPZ_NPZ];     // trailing service event
+uint32_t  nextVacc[WRUNIPZ_NPZ];        // vacc
+uint32_t  nextChannel[WRUNIPZ_NPZ];     // # of channel
+uint32_t  nextNochop[WRUNIPZ_NPZ];      // flag: 'no chopper'
+uint32_t  nextShortchop[WRUNIPZ_NPZ];   // flag: 'short chopper'
+uint32_t  nextServEvt[WRUNIPZ_NPZ];     // trailing service event
 
 uint32_t gid[] =                 {1000, 1001, 1002, 1003, 1004, 1005, 1006};              /* hackish: GIDs for PZs, to be clarified with Hanno */
                                                                         
@@ -209,30 +209,34 @@ uint32_t ebmInit(uint32_t msTimeout, uint64_t dstMac, uint32_t dstIp, uint32_t e
 } // ebminit
 
 
-uint32_t data2TM(uint32_t *idLo, uint32_t *idHi, uint32_t *paramLo, uint32_t *paramHi, uint32_t *res, uint32_t *tef, uint32_t *offset, uint32_t data, uint32_t gid, uint32_t virtAcc)  //converts event UNILAC event data to timing message
+void data2TM(uint32_t *idLo, uint32_t *idHi, uint32_t *paramLo, uint32_t *paramHi, uint32_t *res, uint32_t *tef, uint32_t *offset, uint32_t data, uint32_t gid, uint32_t virtAcc, uint32_t noChop, uint32_t shortChop)  
 {
   uint32_t  t;
   uint32_t  evtCode;
-  uint32_t  status;
+  uint32_t  flags;
 
   t        = (uint32_t)((data >> 16) & 0xffff);      // get time relative to begining of UNILAC cycle [us]
   evtCode  = (uint32_t)(data & 0xff);                // get event number
-  status   = (uint32_t)((data >> 6) & 0xff);         // get status info
+  flags    = (uint32_t)(                             // flags /* check with Hanno */
+                        0x0                 |        // bit 3: beam-in, bit 2: res
+                        (noChop & 0x1) << 1 |        // bit 1: no chopper
+                        (shortChop & 0x1)            // bit 0: short chopper
+                        );
 
   *idHi     = (uint32_t)(                            // EventID
-                          0x1     << 28     |        // FID = 1
-                         (gid     << 16)    |        // GID
-                         (evtCode <<  4)    |        // EVTNO
-                          0x0                        // flags
+                          0x1     << 28      |       // FID = 1
+                         (gid     << 16)     |       // GID
+                         (evtCode <<  4)     |       // EVTNO
+                          flags                      // flags
                         );
   *idLo     = (uint32_t)(
-                         (virtAcc << 20)    |        // SID
-                         (0x0     <<  6)    |        // BPID
-                         (0x0     <<  5)    |        // reserved
-                         (0x0     <<  4)    |        // reqNoBeam
+                         (virtAcc << 20)     |       // SID
+                         (0x0     <<  6)     |       // BPID
+                         (0x0     <<  5)     |       // reserved
+                         (0x0     <<  4)     |       // reqNoBeam
                           0x0                        // virtAcc only for DM-UNIPZ gateway
                         );
-  *paramLo  = status;                                // parameter field  /* chk, probably rquires Hanno */ 
+  *paramLo  = 0x0;                                   // parameter field
   *paramHi  = 0x0;                                
   *res      = 0x0;                                   // reserved
   *tef      = 0x0;                                   // timing extension field
@@ -240,9 +244,8 @@ uint32_t data2TM(uint32_t *idLo, uint32_t *idHi, uint32_t *paramLo, uint32_t *pa
 } // data2TM
 
 
-uint32_t ebmWriteTM(dataTable evts, uint64_t tStart, uint32_t pz, uint32_t virtAcc, uint32_t isPrep)
+uint64_t ebmWriteTM(uint32_t evtData, uint64_t tStart, uint32_t pz, uint32_t virtAcc, uint32_t flagNochop, uint32_t flagShortChop)
 {
-  int      i;
   uint64_t deadline;
   uint32_t res, tef;
   uint32_t deadlineLo, deadlineHi, offset;
@@ -252,51 +255,65 @@ uint32_t ebmWriteTM(dataTable evts, uint64_t tStart, uint32_t pz, uint32_t virtA
 
   // set high bits for EB master
   ebm_hi(WRUNIPZ_ECA_ADDRESS);
+  
+  // convert data
+  data2TM(&idLo, &idHi, &paramLo, &paramHi, &res, &tef, &offset, evtData, gid[pz], virtAcc, flagNochop, flagShortChop);  //convert data
+
+  
+  // calc deadline
+  deadline   = tStart + (uint64_t)offset; 
+  deadlineHi = (uint32_t)((deadline >> 32) & 0xffffffff);
+  deadlineLo = (uint32_t)(deadline & 0xffffffff);
+  
+          // pack timing message
+  atomic_on();                                  
+  ebm_op(WRUNIPZ_ECA_ADDRESS, idHi,       EBM_WRITE);             
+  ebm_op(WRUNIPZ_ECA_ADDRESS, idLo,       EBM_WRITE);             
+  ebm_op(WRUNIPZ_ECA_ADDRESS, paramHi,    EBM_WRITE);
+  ebm_op(WRUNIPZ_ECA_ADDRESS, paramLo,    EBM_WRITE);
+  ebm_op(WRUNIPZ_ECA_ADDRESS, tef,        EBM_WRITE);
+  ebm_op(WRUNIPZ_ECA_ADDRESS, res,        EBM_WRITE);
+  ebm_op(WRUNIPZ_ECA_ADDRESS, deadlineHi, EBM_WRITE);
+  ebm_op(WRUNIPZ_ECA_ADDRESS, deadlineLo, EBM_WRITE);
+  atomic_off();
+  
+  // send timing message
+  ebm_flush();
+  
+  // diag and status
+  tDiff = deadline - getSysTime();
+  if (tDiff < 0    ) nLate++;
+  if (tDiff < dtMin) dtMin = tDiff;
+  if (tDiff > dtMax) dtMax = tDiff;
+  
+  vaccAvg = vaccAvg | (1 << virtAcc);
+  pzAvg   = pzAvg   | (1 << pz);
+  nMsgAct++;
+
+  return deadline;
+} // ebmWriteTm
+
+
+uint32_t pzRunVacc(dataTable evts, uint64_t tStart, uint32_t pz, uint32_t virtAcc, uint32_t isPrep)
+{
+  int      i;
+  uint64_t offset;
 
   // pack Ethernet frame with messages
   for (i=0; i<WRUNIPZ_NEVT; i++) {                     // loop over all data fields
     if ((evts.validFlags >> i) & 0x1) {                // data is valid?
       if ((evts.evtFlags >> i) & 0x1) {                // data is an event?
         if (((evts.prepFlags >> i) & 0x1) == isPrep) { // data matches 'isPrep condition'
-          // convert data
-          data2TM(&idLo, &idHi, &paramLo, &paramHi, &res, &tef, &offset, evts.data[i], gid[pz], virtAcc);  //convert data
-            
-          // calc deadline
-          deadline   = tStart + (uint64_t)offset; 
-          deadlineHi = (uint32_t)((deadline >> 32) & 0xffffffff);
-          deadlineLo = (uint32_t)(deadline & 0xffffffff);
-          
-          // pack timing message
-          atomic_on();                                  
-          ebm_op(WRUNIPZ_ECA_ADDRESS, idHi,       EBM_WRITE);             
-          ebm_op(WRUNIPZ_ECA_ADDRESS, idLo,       EBM_WRITE);             
-          ebm_op(WRUNIPZ_ECA_ADDRESS, paramHi,    EBM_WRITE);
-          ebm_op(WRUNIPZ_ECA_ADDRESS, paramLo,    EBM_WRITE);
-          ebm_op(WRUNIPZ_ECA_ADDRESS, tef,        EBM_WRITE);
-          ebm_op(WRUNIPZ_ECA_ADDRESS, res,        EBM_WRITE);
-          ebm_op(WRUNIPZ_ECA_ADDRESS, deadlineHi, EBM_WRITE);
-          ebm_op(WRUNIPZ_ECA_ADDRESS, deadlineLo, EBM_WRITE);
-          atomic_off();
-
-          // send timing message
-          ebm_flush();
-          
-          // diag and status
-          tDiff = deadline - getSysTime();
-          if (tDiff < 0    ) nLate++;
-          if (tDiff < dtMin) dtMin = tDiff;
-          if (tDiff > dtMax) dtMax = tDiff;
-
-          vaccAvg = vaccAvg | (1 << virtAcc);
-          pzAvg   = pzAvg   | (1 << pz);
-          nMsgAct++;
+          offset = ebmWriteTM(evts.data[i], tStart, pz, virtAcc, nextNochop[pz], nextShortchop[pz]);
         } // if 'isPrep'
       } // is event
     } // is valid
   } // for i
 
+  if (nextServEvt[pz] != 0) ebmWriteTM(nextServEvt[pz], offset + (uint64_t)8, pz, virtAcc, nextNochop[pz], nextShortchop[pz]);
+
   return WRUNIPZ_STATUS_OK;
-} //ebmWriteTM
+} // pzRunVacc
 
 
 uint32_t wrCheckSyncState() //check status of White Rabbit (link up, tracking)
@@ -801,7 +818,7 @@ uint32_t entryActionOperation()
   
   clearDiag();                                               // clear diagnostics
   clearPZ();                                                 // clear all event tables
-  for (i=0; i < WRUNIPZ_NPZ; i++) vaccNext[i] = 0xffffffff;  // 0xffffffff: no virt acc
+  for (i=0; i < WRUNIPZ_NPZ; i++) nextVacc[i] = 0xffffffff;  // 0xffffffff: no virt acc
   enableFilterEvtMil(pMILPiggy);                             // enable MIL event filter
   clearFifoEvtMil(pMILPiggy);                                // clear MIL event FIFO
 
@@ -1010,17 +1027,19 @@ uint32_t doActionOperation(uint32_t *nCycle,                  // total number of
     tSyncPrev  = deadline;                                     // required for 'prep events of next UNILAC cycle'
     isPrepFlag = 0;                                            // 50 Hz synch: no preparation - use actual deadline from TLU
     for (i=0; i < WRUNIPZ_NPZ; i++) {
-      if (vaccNext[i] != 0xffffffff) {
-        ebmWriteTM(bigData[i][vaccNext[i]], deadline, i, vaccNext[i], isPrepFlag);
-        DBPRINT3("wr-unipz: playing pz %d, vacc %d\n", i, vaccNext[i]);
-      } // if vaccNext
+      if (nextVacc[i] != 0xffffffff) {
+        // run vacc
+        pzRunVacc(bigData[i][nextVacc[i]], deadline, i, nextVacc[i], isPrepFlag);
+        DBPRINT3("wr-unipz: playing pz %d, vacc %d\n", i, nextVacc[i]);
+      } // if nextVacc
     } // for i
+    
     if ((nLate != nLateLocal) && (status == WRUNIPZ_STATUS_OK)) status = WRUNIPZ_STATUS_LATE;
     *tAct = deadline;                                           // remember 50 Hz tick
-    DBPRINT3("wr-unipz: vA played:  %x %x %x %x %x %x %x\n", vaccNext[0], vaccNext[1], vaccNext[2], vaccNext[3], vaccNext[4], vaccNext[5], vaccNext[6]);
+    DBPRINT3("wr-unipz: vA played:  %x %x %x %x %x %x %x\n", nextVacc[0], nextVacc[1], nextVacc[2], nextVacc[3], nextVacc[4], nextVacc[5], nextVacc[6]);
 
     // reset requested virt accs; flush ECA queue
-    for (i=0; i < WRUNIPZ_NPZ; i++) vaccNext[i] = 0xffffffff;   // 0xffffffff: no virt acc for PZ
+    for (i=0; i < WRUNIPZ_NPZ; i++) nextVacc[i] = 0xffffffff;   // 0xffffffff: no virt acc for PZ
     while (wait4ECAEvent(0, &tDummy, &flagIsLate) !=  WRUNIPZ_ECADO_TIMEOUT) {asm("nop");}
 
     break;
@@ -1028,7 +1047,7 @@ uint32_t doActionOperation(uint32_t *nCycle,                  // total number of
   case WRUNIPZ_EVT_PZ1 ... WRUNIPZ_EVT_PZ7 :                    // super PZ announces what happens in next UNILAC cycle
     // extract information from event from super PZ
     ipz              = evtCode - 1;                             // PZ: sPZ counts from 1..7, we count from 0..6
-    vaccNext[ipz]    = virtAcc;
+    nextVacc[ipz]    = virtAcc;
     
     // there are two different types of announce events
     // A: The announce event contains information about the vacc to played in the next cycle
@@ -1039,31 +1058,24 @@ uint32_t doActionOperation(uint32_t *nCycle,                  // total number of
     if ((evtData & WRUNIPZ_EVTDATA_SERVICE) == 0) {                    // A: super PZ has announced vacc for next cycle: bits 12 (channel number), bits 13..15 (chooper mode)
       DBPRINT3("wr-unipz: playing prep events, pz %d, vacc %d\n", ipz, virtAcc);
       // get chopper mode
-      channelNext[ipz]   = ((evtData & WRUNIPZ_EVTDATA_CHANNEL) != 0));// use relevant bit as channel number (there are only two channels)
-      nochopNext[ipz]    = ((evtData & WRUNIPZ_EVTDATA_NOCHOP) != 0);
-      shortchopNext[ipz] = ((evtData & EVTDATA_SHORTCHOP) != 0);
-      servEvtNext[ipz]   = 0x0;                                        // reset service event for next cycle
+      nextChannel[ipz]   = ((evtData & WRUNIPZ_EVTDATA_CHANNEL) != 0); // use relevant bit as channel number (there are only two channels)
+      nextNochop[ipz]    = ((evtData & WRUNIPZ_EVTDATA_NOCHOP) != 0);
+      nextShortchop[ipz] = ((evtData & WRUNIPZ_EVTDATA_SHORTCHOP) != 0);
+      nextServEvt[ipz]   = 0x0;                                        // reset service event for next cycle
 
       // PZ1..7: preperation; as the next cycle has been announced, we may send all 'prep events' already now
       // as deadline, we use the deadline from past 50 Hz tick and add the actual UNILAC cycle length
       nLateLocal = nLate;
       isPrepFlag = 1;                                                  
       deadline   = tSyncPrev + (uint64_t)WRUNIPZ_UNILACPERIOD;         /* chk: need to replaced fixed value for period by actual valud */
-      ebmWriteTM(bigData[evtCode - 1][virtAcc], deadline, evtCode - 1, virtAcc, isPrepFlag);
+      pzRunVacc(bigData[evtCode - 1][virtAcc], deadline, ipz, virtAcc, isPrepFlag);
       if ((nLate != nLateLocal) && (status == WRUNIPZ_STATUS_OK)) status = WRUNIPZ_STATUS_LATE;
     } // if !SERVICE
     else {                                                             // B: super PZ has sent info on a service event: bits 12..15 encode event type
       DBPRINT3("wr-unipz: service event for pz %d, vacc %d\n", ipz, virtAcc);
-      if (evtData == WRUNIPZ_EVTDATA_PREPACC) servEvtNext[ipz] = EVT_AUX_PRP_NXT_ACC;
-      if (evtData == WRUNIPZ_EVTDATA_ZEROACC) servEvtNext[ipz] = EVT_MAGN_DOWN;
-      if (evtData == WRUNIPZ_EVTDATA_PREPACCNOW) {                     // send event immediately; VERY SPECIAL CASE for QQ
-        servNow.validFlags = 0x1;                                      // just one event
-        servNow.prepFlags  = 0x0;
-        servNow.evtFlags   = 0x1;                                      // is event
-        servNow.data       = EVT_AUX_PRP_NXT_ACC;                      // only set event code; evt data is unused, offset is 0 us
-        /* chk: we need to send this as fast as possible. ToDo: decide what offset is needed */
-        ebmWriteTM(servNow, getSysTime(), ipz, virtAcc, 0);     
-      } // if PREPACCNOW
+      if (evtData == WRUNIPZ_EVTDATA_PREPACC) nextServEvt[ipz] = EVT_AUX_PRP_NXT_ACC;
+      if (evtData == WRUNIPZ_EVTDATA_ZEROACC) nextServEvt[ipz] = EVT_MAGN_DOWN;
+      if (evtData == WRUNIPZ_EVTDATA_PREPACCNOW) ebmWriteTM((uint32_t)EVT_AUX_PRP_NXT_ACC, getSysTime(), ipz, virtAcc, 0, 0);
     } // else SERVICE
   
     break;
