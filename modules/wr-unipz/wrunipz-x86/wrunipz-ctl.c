@@ -550,6 +550,8 @@ int main(int argc, char** argv) {
 
         t2 = getSysTime();
         printf("wr-unipz: transaction took %u us\n", (uint32_t)(t2 -t1));
+
+        wrunipz_fill_channel_real(0, 0, dataChn0, &nDataChn0, dataChn1, &nDataChn1);
       }
     } // "testfull"
     if (!strcasecmp(command, "testfull")) {

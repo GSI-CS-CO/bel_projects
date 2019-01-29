@@ -14,6 +14,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/time.h>
+#include <unistd.h>
 
 // etherbone
 #include <etherbone.h>
@@ -207,3 +208,83 @@ uint32_t wrunipz_transaction_upload(eb_device_t device, eb_address_t DPstat, eb_
   return WRUNIPZ_STATUS_OK;
 } // wrunipz_transaction_upload
 
+
+void wrunipz_fill_channel_real(uint32_t pz, uint32_t vAcc, uint32_t *dataChn0, uint32_t *nDataChn0, uint32_t *dataChn1, uint32_t *nDataChn1)
+{
+#define  MAXLEN 1024
+
+  int     i,j,k;
+  char    charChn0[MAXLEN];
+  char    charChn1[MAXLEN];
+  FILE    *fp;
+  char    *line = NULL;
+  size_t  len = 0;
+  ssize_t read;
+
+  char     *data;       
+  int      dataOffset;
+  uint32_t evt, offset, dummy;
+  
+  // init
+  for (i=0; i<WRUNIPZ_NEVT; i++) {
+    dataChn0[i] = 0x0;
+    dataChn1[i] = 0x0;
+  } // for i
+  *nDataChn0 = 0;
+  *nDataChn1 = 0;
+  // read data for the two relevant channels from file
+  fp = fopen("event_table_real.txt", "r"); 
+  if (fp == NULL) {
+    printf("wr-unipz: can't open file with event table\n");
+    exit(1);
+  } // if fp
+
+  for (i=0; i<WRUNIPZ_NPZ; i++) {
+    for (j=0; j<WRUNIPZ_NVACC; j++) {
+      for (k=0; k<WRUNIPZ_NCHN; k++) {
+        if((read = getline(&line, &len, fp)) != -1) {
+          // printf("line %s\n", line);
+          if ((i==pz) && (j==vAcc) && (k == 0)) strcpy(charChn0, line);
+          if ((i==pz) && (j==vAcc) && (k == 1)) strcpy(charChn1, line); 
+        } // while
+      } // for k
+    } // for j
+  } // for i
+        
+  fclose(fp);
+  if (line) free (line);
+
+  // printf("c0 %s\n", charChn0);
+  // printf("c1 %s\n", charChn1);
+  
+  
+  // extract data for channel0
+  data       = charChn0;
+  *nDataChn0 = 0;
+  while (sscanf(data, "%u%n", &evt, &dataOffset) == 1) {
+    data += dataOffset;
+    sscanf(data, ", %uL%n", &offset, &dataOffset);
+    data += dataOffset;
+    sscanf(data, ", %uL, %n", &dummy, &dataOffset);
+    data += dataOffset;
+
+    dataChn0[*nDataChn0] = (offset << 16) | evt;
+    // printf("c0: offset %d, data %d\n", offset, evt);
+    (*nDataChn0)++;
+  } // while
+  // extract data for channel1
+  data       = charChn1;
+  *nDataChn1 = 0;
+  while (sscanf(data, "%u%n", &evt, &dataOffset) == 1) {
+    data += dataOffset;
+    sscanf(data, ", %uL%n", &offset, &dataOffset);
+    data += dataOffset;
+    sscanf(data, ", %uL, %n", &dummy, &dataOffset);
+    data += dataOffset;
+
+    dataChn1[*nDataChn1] = (offset << 16) | evt;
+    // printf("c1: offset %d, data %d\n", offset, evt);
+    (*nDataChn1)++;
+  } // while
+  
+} // wrunipz_fill_channel_real
