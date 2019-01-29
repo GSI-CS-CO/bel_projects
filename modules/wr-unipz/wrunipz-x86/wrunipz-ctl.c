@@ -114,21 +114,24 @@ static void help(void) {
   fprintf(stderr, "                      2: as 1, inform in case of status or state changes\n");
   fprintf(stderr, "                      3: as 2, inform in case of state changes\n");
   fprintf(stderr, "\n");
-  fprintf(stderr, "  configure           command requests state change from IDLE or CONFIGURED -> CONFIGURED\n");
-  fprintf(stderr, "  startop             command requests state change from CONFIGURED -> OPREADY\n");
-  fprintf(stderr, "  stopop              command requests state change from OPREADY -> STOPPING -> CONFIGURED\n");
-  fprintf(stderr, "  recover             command tries to recover from state ERROR and transit to state IDLE\n");
-  fprintf(stderr, "  idle                command requests state change to IDLE\n");
+  fprintf(stderr, "  commands:\n");
+  fprintf(stderr, "  configure           	 requests state change from IDLE or CONFIGURED -> CONFIGURED\n");
+  fprintf(stderr, "  startop             	 requests state change from CONFIGURED -> OPREADY\n");
+  fprintf(stderr, "  stopop              	 requests state change from OPREADY -> STOPPING -> CONFIGURED\n");
+  fprintf(stderr, "  recover             	 tries to recover from state ERROR and transit to state IDLE\n");
+  fprintf(stderr, "  idle                	 requests state change to IDLE\n");
   fprintf(stderr, "\n");
-  fprintf(stderr, "  modespz             command sets to PZ mode (listen to SuperPZ)\n");
-  fprintf(stderr, "  modetest            command sets to test mode (listen to internal 50 Hz trigger)\n");
-  fprintf(stderr, "  test <vacc> <pz>    command loads dummy event table for virtual accelerator <vacc> to pulszentrale <pz>\n");
-  fprintf(stderr, "  testfull            command loads dummy event tables for ALL virt accs (except virt acc 0xf) and all PZs\n");
-  fprintf(stderr, "  cleartables         command clears all event tables of all PZs\n");
-  fprintf(stderr, "  kill                command kills possibly ongoing transactions\n");  
+  fprintf(stderr, "  modespz             	 sets to PZ mode (listen to SuperPZ)\n");
+  fprintf(stderr, "  modetest            	 sets to test mode (listen to internal 50 Hz trigger)\n");
+  fprintf(stderr, "  test <offset> <vacc> <pz>   loads dummy table with starting at <offset> (us) for virt acc <vacc> to pulszentrale <pz>\n");
+  fprintf(stderr, "  testfull <offset>        	 loads dummy tables with starting at <offset> (us) for ALL virt accs (except 0xf) and all PZs\n");
+  fprintf(stderr, "  ftest <file>> <vacc> <pz>   loads table from file for virt acc <vacc> to pulszentrale <pz> from <file>\n");
+  fprintf(stderr, "  ftestfull <file>          	 loads dummy event tables for ALL virt accs and all PZs from <file>\n");
+  fprintf(stderr, "  cleartables         	 clears all event tables of all PZs\n");
+  fprintf(stderr, "  kill                	 kills possibly ongoing transactions\n");  
   fprintf(stderr, "\n");
-  fprintf(stderr, "  diag                shows statistics and detailled information\n");
-  fprintf(stderr, "  cleardiag           command clears FW statistics\n");
+  fprintf(stderr, "  diag                        shows statistics and detailled information\n");
+  fprintf(stderr, "  cleardiag                   clears FW statistics\n");
   fprintf(stderr, "\n");
   fprintf(stderr, "Use this tool to control WR-UNIPZ from the command line\n");
   fprintf(stderr, "Example1: '%s dev/wbm0 bla bla bla\n", program);
@@ -373,6 +376,8 @@ int main(int argc, char** argv) {
   uint32_t    nDataChn1;
   uint32_t    vacc;
   uint32_t    pz;
+  uint32_t    offset;
+  char        *filename;
 
   program = argv[0];    
 
@@ -522,14 +527,16 @@ int main(int argc, char** argv) {
       printDiags(sumStatus, state, nBadStatus, nBadState, cycles, messages, dtMax, dtMin, nLate, tDiag, tS0);
     } // "diag"
 
-    // ...
+    // test with data
     if (!strcasecmp(command, "test")) {
       if (state != WRUNIPZ_STATE_OPREADY) printf("wr-unipz: WARNING command has no effect (not in state OPREADY)\n");
-      if (optind+3  != argc) {printf("wr-unipz: expecting exactly two arguments: test <vacc> <pz>\n"); return 1;}
-      vacc = strtoul(argv[optind+1], &tail, 0);
+      if (optind+4  != argc)                     {printf("wr-unipz: expecting exactly three arguments: test <offset> <vacc> <pz>\n"); return 1;}
+      offset = strtoul(argv[optind+1], &tail, 0);
+      if (offset > 10000)                        {printf("wr-unipz: offset must be smaller than 10000 us -- %s\n", argv[optind+1]); return 1;}
+      vacc   = strtoul(argv[optind+2], &tail, 0);
       if ((vacc < 0) || (vacc >= WRUNIPZ_NVACC)) {printf("wr-unipz: invalid virtual accelerator -- %s\n", argv[optind+2]); return 1;}
-      pz = strtoul(argv[optind+2], &tail, 0);
-      if ((pz < 0) || (pz >= WRUNIPZ_NPZ)) {printf("wr-unipz: invalid PZ -- %s\n", argv[optind+2]); return 1;}
+      pz     = strtoul(argv[optind+3], &tail, 0);
+      if ((pz < 0) || (pz >= WRUNIPZ_NPZ))       {printf("wr-unipz: invalid PZ -- %s\n", argv[optind+3]); return 1;}
 
       t1 = getSysTime();
 
@@ -540,8 +547,8 @@ int main(int argc, char** argv) {
         // upload
         nDataChn0 = WRUNIPZ_NEVT;
         nDataChn1 = 0;
-        for (i=0; i < (nDataChn0 -1); i++) dataChn0[i] = ((uint16_t)(i + 100 * pz + 2001) << 16) + i; // 1501 or 2001 
-        dataChn0[nDataChn0 -1] = ((uint16_t)2000 << 16) + 64;
+        for (i=0; i < (nDataChn0 -1); i++) dataChn0[i] = ((uint16_t)(i + 100 * pz + offset) << 16) + i;
+        dataChn0[nDataChn0 -1] = ((uint16_t)offset << 16) + 64;
         if ((status = wrunipz_transaction_upload(device, wrunipz_confStat, wrunipz_confPz, wrunipz_confData, wrunipz_confFlag, pz, dataChn0, nDataChn0, dataChn1, nDataChn1)) != WRUNIPZ_STATUS_OK)
           printf("wr-unipz: transaction upload - %s\n", wrunipz_status_text(status));
         
@@ -550,12 +557,13 @@ int main(int argc, char** argv) {
 
         t2 = getSysTime();
         printf("wr-unipz: transaction took %u us\n", (uint32_t)(t2 -t1));
-
-        wrunipz_fill_channel_real(0, 0, dataChn0, &nDataChn0, dataChn1, &nDataChn1);
       }
-    } // "testfull"
+    } // "test"
     if (!strcasecmp(command, "testfull")) {
-      if (state != WRUNIPZ_STATE_OPREADY) printf("wr-unipz: WARNING command has no effect (not in state OPREADY)\n");
+      if (state != WRUNIPZ_STATE_OPREADY)  printf("wr-unipz: WARNING command has no effect (not in state OPREADY)\n");
+      if (optind+2  != argc)              {printf("wr-unipz: expecting exactly one argument: testfull <offset>\n"); return 1;}
+      offset = strtoul(argv[optind+1], &tail, 0);
+      if (offset > 10000)                 {printf("wr-unipz: offset must be smaller than 10000 us -- %s\n", argv[optind+1]); return 1;}
 
       t1 = getSysTime();
 
@@ -569,8 +577,8 @@ int main(int argc, char** argv) {
           for (k=0; k < WRUNIPZ_NPZ; k++) {
             nDataChn0 = WRUNIPZ_NEVT;
             nDataChn1 = 0;
-            for (i=0; i < (nDataChn0 -1); i++) dataChn0[i] = ((uint16_t)(i + 100 * k + 2001) << 16) + i; // 1501 or 2001
-            dataChn0[nDataChn0 -1] = ((uint16_t)2000 << 16) + 64;
+            for (i=0; i < (nDataChn0 -1); i++) dataChn0[i] = ((uint16_t)(i + 100 * k + offset) << 16) + i; 
+            dataChn0[nDataChn0 -1] = ((uint16_t)offset << 16) + 64;
             if ((status = wrunipz_transaction_upload(device, wrunipz_confStat, wrunipz_confPz, wrunipz_confData, wrunipz_confFlag, k, dataChn0, nDataChn0, dataChn1, nDataChn1)) != WRUNIPZ_STATUS_OK)
               printf("wr-unipz: transaction upload (virt acc %d, pz %d) - %s\n", j, k, wrunipz_status_text(status));
           } // for k
@@ -586,6 +594,66 @@ int main(int argc, char** argv) {
       printf("wr-unipz: transaction took %u us per virtAcc\n", (uint32_t)(t2 -t1) / (WRUNIPZ_NVACC - 1));
 
     } // "testfull"
+    if (!strcasecmp(command, "testf")) {
+      if (state != WRUNIPZ_STATE_OPREADY) printf("wr-unipz: WARNING command has no effect (not in state OPREADY)\n");
+      if (optind+4  != argc)                     {printf("wr-unipz: expecting exactly three arguments: test <file> <vacc> <pz>\n"); return 1;}
+      filename = argv[optind+1];
+      vacc   = strtoul(argv[optind+2], &tail, 0);
+      if ((vacc < 0) || (vacc >= WRUNIPZ_NVACC)) {printf("wr-unipz: invalid virtual accelerator -- %s\n", argv[optind+2]); return 1;}
+      pz     = strtoul(argv[optind+3], &tail, 0);
+      if ((pz < 0) || (pz >= WRUNIPZ_NPZ))       {printf("wr-unipz: invalid PZ -- %s\n", argv[optind+3]); return 1;}
+
+      t1 = getSysTime();
+
+      if ((status = wrunipz_transaction_init(device, wrunipz_cmd, wrunipz_confVacc, wrunipz_confStat, vacc)) !=  WRUNIPZ_STATUS_OK) {
+        printf("wr-unipz: transaction init - %s\n", wrunipz_status_text(status));
+      }
+      else {
+        // load channel data from filename
+	wrunipz_fill_channel_file(filename, pz, vacc, dataChn0, &nDataChn0, dataChn1, &nDataChn1);
+
+	// upload table
+	if ((status = wrunipz_transaction_upload(device, wrunipz_confStat, wrunipz_confPz, wrunipz_confData, wrunipz_confFlag, pz, dataChn0, nDataChn0, dataChn1, nDataChn1)) != WRUNIPZ_STATUS_OK)
+          printf("wr-unipz: transaction upload - %s\n", wrunipz_status_text(status));
+        
+        // submit
+        wrunipz_transaction_submit(device, wrunipz_cmd, wrunipz_confStat);
+
+        t2 = getSysTime();
+        printf("wr-unipz: transaction took %u us\n", (uint32_t)(t2 -t1));
+      }
+    } // "ftest"
+    if (!strcasecmp(command, "ftestfull")) {
+      if (state != WRUNIPZ_STATE_OPREADY) printf("wr-unipz: WARNING command has no effect (not in state OPREADY)\n");
+      if (optind+2  != argc)              {printf("wr-unipz: expecting exactly one argument: ftestfull <offset>\n"); return 1;}
+      filename = argv[optind+1];
+
+      t1 = getSysTime();
+
+      for (j=0; j < WRUNIPZ_NVACC; j++) {  // only virt acc 0..14
+
+        if ((status = wrunipz_transaction_init(device, wrunipz_cmd, wrunipz_confVacc, wrunipz_confStat, j)) !=  WRUNIPZ_STATUS_OK) {
+          printf("wr-unipz: transaction init (virt acc %d) - %s\n", j, wrunipz_status_text(status));
+        } // if status
+        else {
+	  // load data and upload table
+          for (k=0; k < WRUNIPZ_NPZ; k++) {
+	    wrunipz_fill_channel_file(filename, k, j, dataChn0, &nDataChn0, dataChn1, &nDataChn1);
+            if ((status = wrunipz_transaction_upload(device, wrunipz_confStat, wrunipz_confPz, wrunipz_confData, wrunipz_confFlag, k, dataChn0, nDataChn0, dataChn1, nDataChn1)) != WRUNIPZ_STATUS_OK)
+              printf("wr-unipz: transaction upload (virt acc %d, pz %d) - %s\n", j, k, wrunipz_status_text(status));
+          } // for k
+        } // else
+
+        // submit
+        wrunipz_transaction_submit(device, wrunipz_cmd, wrunipz_confStat);
+
+      } // for j
+
+      t2 = getSysTime();
+      
+      printf("wr-unipz: transaction took %u us per virtAcc\n", (uint32_t)(t2 -t1) / (WRUNIPZ_NVACC - 1));
+
+    } // "ftestfull"
     if (!strcasecmp(command, "kill")) {
       eb_device_write(device, wrunipz_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)WRUNIPZ_CMD_CONFKILL, 0, eb_block);
       if (state != WRUNIPZ_STATE_OPREADY) printf("wr-unipz: WARNING command has no effect (not in state OPREADY)\n");
@@ -602,8 +670,6 @@ int main(int argc, char** argv) {
       eb_device_write(device, wrunipz_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)WRUNIPZ_CMD_MODETEST, 0, eb_block);
       if (state != WRUNIPZ_STATE_OPREADY) printf("wr-unipz: WARNING command has no effect (not in state OPREADY)\n");
     } // "modetest"
-    
-      
   } //if command
   
 

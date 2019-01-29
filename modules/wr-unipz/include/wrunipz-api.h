@@ -86,7 +86,8 @@ uint32_t wrunipz_transaction_upload(eb_device_t device,   // EB device
                                     );
 
 // set channel data with 'real' data; used for testing
-void wrunipz_fill_channel_real(uint32_t pz,               // # of UNIPZ
+void wrunipz_fill_channel_file(char     *filename,        // filename
+			       uint32_t pz,               // # of UNIPZ
                                uint32_t vAcc,             // # of virtual accelerator
                                uint32_t *dataChn0,        // data for 'Kanal 0'
                                uint32_t *nDataChn0,       // # of data for 'Kanal 0'

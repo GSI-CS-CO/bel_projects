@@ -209,7 +209,7 @@ uint32_t wrunipz_transaction_upload(eb_device_t device, eb_address_t DPstat, eb_
 } // wrunipz_transaction_upload
 
 
-void wrunipz_fill_channel_real(uint32_t pz, uint32_t vAcc, uint32_t *dataChn0, uint32_t *nDataChn0, uint32_t *dataChn1, uint32_t *nDataChn1)
+void wrunipz_fill_channel_file(char *filename, uint32_t pz, uint32_t vAcc, uint32_t *dataChn0, uint32_t *nDataChn0, uint32_t *dataChn1, uint32_t *nDataChn1)
 {
 #define  MAXLEN 1024
 
@@ -233,7 +233,7 @@ void wrunipz_fill_channel_real(uint32_t pz, uint32_t vAcc, uint32_t *dataChn0, u
   *nDataChn0 = 0;
   *nDataChn1 = 0;
   // read data for the two relevant channels from file
-  fp = fopen("event_table_real.txt", "r"); 
+  fp = fopen(filename, "r"); 
   if (fp == NULL) {
     printf("wr-unipz: can't open file with event table\n");
     exit(1);
