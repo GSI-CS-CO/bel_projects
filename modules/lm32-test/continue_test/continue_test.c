@@ -28,7 +28,7 @@
 #include "daq.h"
 #include "eb_console_helper.h"
 #include "helper_macros.h"
-#include "lm32_assert.h"
+#include "scu_assert.h"
 #include "irq.h"
 
 DAQ_BUS_T g_allDaq;
@@ -39,6 +39,9 @@ void _segfault(int sig)
    while( 1 );
 }
 
+#ifdef CONFIG_STACK_PROTECTOR_CODE
+
+#endif
 
 void readFiFo( DAQ_CANNEL_T* pThis )
 {
@@ -65,7 +68,7 @@ void readFiFo( DAQ_CANNEL_T* pThis )
 #endif
       if( remaining < ARRAY_SIZE( descriptor.index ) )
       {
-         LM32_ASSERT( j < ARRAY_SIZE( descriptor.index ) );
+         SCU_ASSERT( j < ARRAY_SIZE( descriptor.index ) );
          descriptor.index[j++] = data;
       }
       i++;

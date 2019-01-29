@@ -33,8 +33,8 @@
 #include "daq_descriptor.h"
 
 #ifdef CONFIG_DAQ_PEDANTIC_CHECK
-   #include <lm32_assert.h>
-   #define DAQ_ASSERT LM32_ASSERT
+   #include <scu_assert.h>
+   #define DAQ_ASSERT SCU_ASSERT
 #else
    #define DAQ_ASSERT(__e) ((void)0)
 #endif
@@ -267,6 +267,7 @@ typedef struct
    void* p; //TODO pointer ti FoFo
 } DAQ_CANNEL_T;
 
+#if 0
 /*!
  * @brief Pointers to the interrupt pending registers of DAQ SCU-bus slave.
  *
@@ -289,7 +290,7 @@ typedef struct
    uint16_t* volatile pDaq;   //!< @brief Pointer to 16 bit interrupt DAQ pending register
    uint16_t* volatile pHiRes; //!< @brief Pointer to 16 bit interrupt HiRes pending register
 } DAQ_INT_PENDING_T;
-
+#endif
 /*!
  * @ingroup DAQ_DEVICE
  * @brief Object represents a single SCU-Bus slave including a DAQ
@@ -441,7 +442,7 @@ void* daqChannelGetScuBusSlaveBaseAddress( register DAQ_CANNEL_T* pThis )
  */
 ALWAYS_INLINE
 static inline
-DAQ_CTRL_REG_T* daqChannelGetCtrlRegPtr( register DAQ_CANNEL_T* pThis )
+DAQ_CTRL_REG_T* daqChannelGetCtrlRegPtr( register DAQ_CANNEL_T* restrict pThis )
 {
    DAQ_ASSERT( pThis != NULL );
    __DAQ_VERIFY_CHANNEL_REG_ACCESS( CtrlReg );

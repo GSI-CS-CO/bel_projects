@@ -30,8 +30,8 @@
 
 #ifdef CONFIG_SCU_BUS_PEDANTIC_CHECK
    /* Paranoia mode is enabled... ;-) */
-   #include <lm32_assert.h>
-   #define SCUBUS_ASSERT LM32_ASSERT
+   #include <scu_assert.h>
+   #define SCUBUS_ASSERT SCU_ASSERT
 #else
    #define SCUBUS_ASSERT(__e) ((void)0)
 #endif

@@ -24,7 +24,7 @@
  */
 #include <string.h>
 #include "mini_sdb.h"
-#include "../../top/gsi_scu/daq.h"
+#include "daq.h"
 #include "eb_console_helper.h"
 #include "helper_macros.h"
 
@@ -32,6 +32,54 @@ DAQ_BUS_T g_allDaq;
 
 #define CHANNEL 0
 #define DEVICE  0
+
+void _segfault(int sig)
+{
+   mprintf( ESC_FG_RED ESC_BOLD "Segmentation fault: %d\n" ESC_NORMAL, sig );
+   while( 1 );
+}
+
+void readFiFo( DAQ_CANNEL_T* pThis )
+{
+   int j = 0;
+   DAQ_DESCRIPTOR_T descriptor;
+   memset( &descriptor, 0, sizeof( descriptor ) );
+
+#ifdef CONFIG_DAQ_SEPARAD_COUNTER
+   uint16_t remaining  = daqChannelGetDaqFifoWords( pThis ) + 1;
+#else
+   volatile uint16_t remaining;
+#endif
+   int i = 0;
+   do
+   {
+#ifdef CONFIG_DAQ_SEPARAD_COUNTER
+      remaining--;
+#else
+      remaining = daqChannelGetDaqFifoWords( pThis );
+#endif
+      volatile uint16_t data = daqChannelPopDaqFifo( pThis ); //!!*ptr;
+#if 0
+      mprintf( "%d: 0x%04x, %d\n", i, data, remaining );
+#endif
+      if( remaining < ARRAY_SIZE( descriptor.index ) )
+      {
+         SCU_ASSERT( j < ARRAY_SIZE( descriptor.index ) );
+         descriptor.index[j++] = data;
+      }
+      i++;
+   }
+   while( remaining != 0 );
+
+#if 0
+   for( j = 0; j < ARRAY_SIZE( descriptor.index ); j++ )
+      mprintf( "Descriptor %d: 0x%04x\n", j, descriptor.index[j] );
+#endif
+   daqDescriptorPrintInfo( &descriptor );
+   DAQ_DESCRIPTOR_VERIFY_MY( &descriptor, pThis );
+
+}
+
 
 void main( void )
 {
@@ -58,13 +106,14 @@ void main( void )
    }
    mprintf( "Using channel: " TO_STRING( CHANNEL ) "\n" );
 
-  // daqChannelEnableHighResolution( pChannel );
+   daqChannelEnableHighResolution( pChannel );
    daqChannelPrintInfo( pChannel );
    unsigned int i = 0;
-   while( !daqChannelTestAndClearHiResIntPending( pChannel ) )
+   //while( !daqChannelTestAndClearHiResIntPending( pChannel ) )
+   while( daqChannelGetPmFifoWords( pChannel ) < (DAQ_FIFO_PM_HIRES_WORD_SIZE-1) )
       i++;
    mprintf( "i = %d\n", i );
-
+   readFiFo( pChannel );
 
 
 #endif

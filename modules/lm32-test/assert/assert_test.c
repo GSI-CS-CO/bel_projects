@@ -1,6 +1,6 @@
 /*!
  *
- * @brief     Testprogram for the macro LM32_ASSERT similar to ANSI-macro "assert"
+ * @brief     Testprogram for the macro SCU_ASSERT similar to ANSI-macro "assert"
  *
  * @file      assert_test.c
  * @copyright GSI Helmholtz Centre for Heavy Ion Research GmbH
@@ -27,7 +27,9 @@
 
 //#define NDEBUG
 
-#include "lm32_assert.h"
+
+
+#include "scu_assert.h"
 
 void init( void )
 {
@@ -39,8 +41,10 @@ void main( void )
 {
    init();
    mprintf("\nFarewell, you cruel world!\n");
-   LM32_ASSERT( true );
-   LM32_ASSERT( false );
+   SCU_ASSERT( true );
+   SCU_ASSERT( true );
+   SCU_ASSERT( true );
+   SCU_ASSERT( false );
    mprintf("\nI survived!\n");
    while( true );
 }

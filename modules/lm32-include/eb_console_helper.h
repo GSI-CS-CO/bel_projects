@@ -26,9 +26,9 @@
 #ifndef _EB_CONSOLE_HELPER_H
 #define _EB_CONSOLE_HELPER_H
 
-#ifdef __lm32__
-  #include "mprintf.h"
-#else
+#if defined(__lm32__)
+  #include <mprintf.h>
+#elif !defined( mprintf )
   #include <stdio.h>
   #define mprintf printf
 #endif

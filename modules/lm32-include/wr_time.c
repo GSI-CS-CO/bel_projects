@@ -25,20 +25,20 @@
  *******************************************************************************
  */
 #include <mini_sdb.h>
-#include <lm32_assert.h>
+#include <scu_assert.h>
 #include <wr_time.h>
 
 /**
  * div_rem - signed 64bit divide with 32bit divisor with remainder
- * @dividend: signed 64bit dividend
- * @divisor: signed 32bit divisor
- * @pRemainder: pointer to signed 32bit remainder
+ * @param dividend: signed 64bit dividend
+ * @param divisor: signed 32bit divisor
+ * @param pRemainder: pointer to signed 32bit remainder
  *
- * Return: sets ``*remainder``, then returns dividend / divisor
+ * @return: sets ``*remainder``, then returns dividend / divisor
  */
 static inline int32_t div_rem( int32_t dividend, int32_t divisor, int *pRemainder )
 {
-   LM32_ASSERT( divisor != 0 );
+   SCU_ASSERT( divisor != 0 );
    *pRemainder = dividend % divisor;
    return dividend / divisor;
 }
@@ -55,7 +55,7 @@ static int __isleap( long year )
 /* do a mathdiv for long type */
 static long math_div( long a, long b )
 {
-   LM32_ASSERT( b != 0 );
+   SCU_ASSERT( b != 0 );
    return a / b - (a % b < 0);
 }
 
@@ -102,7 +102,7 @@ void wrTime2tm( WR_PPS_T* pWr, int offset, TM_T* pResult )
    int remainder;
    const unsigned short *ip;
 
-   LM32_ASSERT( pWr != NULL );
+   SCU_ASSERT( pWr != NULL );
    days = div_rem( pWr->tsv.tv_secLo, SECS_PER_DAY, &remainder );
    rem = remainder;
    rem += offset;

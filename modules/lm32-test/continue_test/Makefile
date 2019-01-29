@@ -13,9 +13,10 @@ SOURCE += $(WR_DIR)/dev/w1-temp.c
 DEFINES += CONFIG_DAQ_PEDANTIC_CHECK
 DEFINES += CONFIG_SCU_BUS_PEDANTIC_CHECK
 DEFINES += CONFIG_DAQ_DEBUG
-#DEFINES += CONFIG_NO_LM32_ASSERT
+#DEFINES += CONFIG_NO_SCU_ASSERT
 
 CODE_OPTIMIZATION = s
+   CFLAGS += -fstack-protector-all
 
 include $(REPOSITORY_DIR)/makefiles/makefile.scu
 #=================================== EOF ======================================

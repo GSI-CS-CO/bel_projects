@@ -46,7 +46,7 @@ void main( void )
    mprintf("\nTest...\n");
 
    void* pScuBusBase = find_device_adr(GSI, SCU_BUS_MASTER);
-   LM32_ASSERT( pScuBusBase != (void*)ERROR_NOT_FOUND );
+   SCU_ASSERT( pScuBusBase != (void*)ERROR_NOT_FOUND );
    mprintf( "SCU base address: 0x%x\n", pScuBusBase );
 
    slavePersentFlags = ~0;

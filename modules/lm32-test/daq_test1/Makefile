@@ -10,6 +10,7 @@ SOURCE += $(SCU_DIR)/dow_crc.c
 SOURCE += $(REPOSITORY_DIR)/ip_cores/wrpc-sw/dev/w1-temp.c
 
 DEFINES += CONFIG_DAQ_DEBUG 
+DEFINES += CONFIG_SCU_BUS_PEDANTIC_CHECK
 
 include $(REPOSITORY_DIR)/makefiles/makefile.scu
 #=================================== EOF ======================================

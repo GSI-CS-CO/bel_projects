@@ -1,8 +1,10 @@
 /*!
+ * @brief  Definition of the macro SCU_ASSERT similar to ANSI-macro "assert"
  *
- * @brief     Definition of the macro LM32_ASSERT similar to ANSI-macro "assert"
+ * This macro is suitable for LatticeMico32 (LM32) applications within
+ * the SCU environment and for Linux applications.
  *
- * @file      lm32_assert.h
+ * @file      scu_assert.h
  * @copyright GSI Helmholtz Centre for Heavy Ion Research GmbH
  * @author    Ulrich Becker <u.becker@gsi.de>
  * @date      05.11.2018
@@ -21,23 +23,37 @@
  *  License along with this library. If not, see <http://www.gnu.org/licenses/>.
  *******************************************************************************
 */
-#ifndef _LM32_ASSERT_H
-#define _LM32_ASSERT_H
+#ifndef _SCU_ASSERT_H
+#define _SCU_ASSERT_H
 
-#if !defined( NDEBUG ) && !defined( CONFIG_NO_LM32_ASSERT )
- #include "mprintf.h"
+#if !defined( NDEBUG ) && !defined( CONFIG_NO_SCU_ASSERT )
+  #if defined(__lm32__)
+    #include <mprintf.h>
+    #define __stderr
+    #define assertMprintf mprintf
+  #elif !defined( assertMprintf )
+    #include <stdio.h>
+   #ifndef CONFIG_SCU_ASSERT_CONTINUE
+     #include <stdlib.h>
+   #endif
+    #ifndef SCU_ASSERT_OSTREAM
+      #define SCU_ASSERT_OSTREAM stderr
+    #endif
+    #define __stderr, SCU_ASSERT_OSTREAM
+    #define assertMprintf fprintf
+  #endif
 #endif
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#if defined( NDEBUG ) || defined( CONFIG_NO_LM32_ASSERT )
+#if defined( NDEBUG ) || defined( CONFIG_NO_SCU_ASSERT )
   /* required by ANSI standard */
-# define LM32_ASSERT(__e) ((void)0)
+# define SCU_ASSERT(__e) ((void)0)
 #else
-# define LM32_ASSERT(__e) ((__e) ? (void)0 : __lm32_assert_func (__FILE__, __LINE__, \
-                                                                 __ASSERT_FUNC, #__e))
+# define SCU_ASSERT(__e) ((__e) ? (void)0 : __scu_assert_func(__FILE__, __LINE__, \
+                                                              __ASSERT_FUNC, #__e))
 
 # ifndef __ASSERT_FUNC
   /* Use g++'s demangled names in C++.  */
@@ -58,24 +74,34 @@ extern "C" {
 #  endif
 # endif /* !__ASSERT_FUNC */
 
-#define __ESC_BOLD   "\e[1m"
-#define __ESC_RED    "\e[31m"
-#define __ESC_NORMAL "\e[0m"
+#ifndef CONFIG_SCU_ASSERT_NO_COLORED
+  #define __ESC_BOLD   "\e[1m"
+  #define __ESC_RED    "\e[31m"
+  #define __ESC_NORMAL "\e[0m"
+#else
+  #define __ESC_BOLD
+  #define __ESC_RED
+  #define __ESC_NORMAL
+#endif
 
-static inline void __lm32_assert_func( const char* fileName,
-                                       int lineNumber,
-                                       const char* functionName,
-                                       const char* conditionStr )
+static inline void __scu_assert_func( const char* fileName,
+                                      int lineNumber,
+                                      const char* functionName,
+                                      const char* conditionStr )
 {
-   mprintf( __ESC_BOLD __ESC_RED "Assertion failed in file: \"%s\""
+   assertMprintf( __stderr __ESC_BOLD __ESC_RED "Assertion failed in file: \"%s\""
             " line: %d function: \"%s\" condition: \"%s\"\n"
-#ifndef CONFIG_LM32_ASSERT_CONTINUE
+#ifndef CONFIG_SCU_ASSERT_CONTINUE
             "System stopped!\n"
 #endif
             __ESC_NORMAL,
             fileName, lineNumber, functionName, conditionStr );
-#ifndef CONFIG_LM32_ASSERT_CONTINUE
+#ifndef CONFIG_SCU_ASSERT_CONTINUE
+ #ifdef __lm32__
    while( 1 );
+ #else
+   abort();
+ #endif
 #endif
 }
 
@@ -85,6 +111,6 @@ static inline void __lm32_assert_func( const char* fileName,
 }
 #endif
 
-#endif // _LM32_ASSERT_H
+#endif // _SCU_ASSERT_H
 /*================================== EOF ====================================*/
 

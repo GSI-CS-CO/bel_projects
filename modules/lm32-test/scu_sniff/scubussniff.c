@@ -60,7 +60,7 @@ void main( void )
 
 
    slaveFlags = scuBusFindAllSlaves( pScuBusBase );
-   mprintf( "%d Slaves found\n", getNumberOfSlaves( slaveFlags ) );
+   mprintf( "%d Slaves found\n", scuBusGetNumberOfSlaves( slaveFlags ) );
 
    int i = LINE_OFFSET;
    //while( uart_read_byte() != 'c' );

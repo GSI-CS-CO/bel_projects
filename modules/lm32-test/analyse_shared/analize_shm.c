@@ -25,7 +25,7 @@
 #include <stdbool.h>
 #include "eb_console_helper.h"
 #include "scu_lm32_macros.h"
-#include "lm32_assert.h"
+#include "scu_assert.h"
 #include "shared_memory_helper.h"
 #include "generated/shared_mmap.h"
 
@@ -143,7 +143,9 @@ STATIC_ASSERT( offsetof( SHM_T, fg_regs )   == 1080 );
 STATIC_ASSERT( offsetof( SHM_T, fg_buffer ) == 1528 );
 STATIC_ASSERT( offsetof( SHM_T, histbuf ) == 24760 );
 STATIC_ASSERT( sizeof( SHM_T ) == 32952 );
+#ifdef __lm32__
 STATIC_ASSERT( sizeof( SHM_T ) <= SHARED_SIZE );
+#endif
 #endif
 
 SHM_T SHARED_TEST g_shared =

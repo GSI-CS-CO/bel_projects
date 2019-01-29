@@ -23,7 +23,7 @@
  *******************************************************************************
  */
 #include "mini_sdb.h"
-#include "../../top/gsi_scu/daq.h"
+#include "daq.h"
 #include "eb_console_helper.h"
 #include "helper_macros.h"
 

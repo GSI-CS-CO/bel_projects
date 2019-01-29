@@ -27,12 +27,14 @@
 #include <stddef.h> // Necessary for the macro "offsetof()"
 #include <limits.h> // Necessary for constant "CHAR_BIT" (in the most cases always 8)
 
-#if defined(__SSP__) || defined(__SSP_ALL__) || defined(__DOXYGEN__)
+#if defined(__SSP__) || defined(__SSP_ALL__) || defined(__SSP_STRONG__) || \
+    defined(__DOXYGEN__)
 /*!
  * @brief This macro becomes defined when the compiler is invoked with option
  *        -fstack-protector or -fstack-protector-all
  *
- * That means, extra code for the stack-protector will produced.
+ * That means, extra code for the stack-protector will produced for the
+ * so called "Stack Smashing Protector" (SSP)
  */
  #define CONFIG_STACK_PROTECTOR_CODE
 

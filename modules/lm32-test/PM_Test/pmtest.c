@@ -25,7 +25,7 @@
  */
 #include <string.h>
 #include "mini_sdb.h"
-#include "../../top/gsi_scu/daq.h"
+#include "daq.h"
 #include "eb_console_helper.h"
 #include "helper_macros.h"
 
@@ -132,7 +132,7 @@ void main( void )
 #endif
       if( remaining < ARRAY_SIZE( descriptor.index ) )
       {
-         LM32_ASSERT( j < ARRAY_SIZE( descriptor.index ) );
+         SCU_ASSERT( j < ARRAY_SIZE( descriptor.index ) );
          descriptor.index[j++] = data;
       }
       i++;

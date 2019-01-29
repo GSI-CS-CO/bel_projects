@@ -346,6 +346,7 @@ template <typename TYP> TYP min( TYP a, TYP b )
    return (a < b)? a : b;
 }
 
+// STATIC_ASSERT( false );
 
 //=============================================================================
 int main( void )
