@@ -26,7 +26,7 @@
 #include "mini_sdb.h"
 #include "eb_console_helper.h"
 #include "scu_lm32_macros.h"
-#include "lm32_assert.h"
+#include "scu_assert.h"
 
 #ifndef CONFIG_STACK_PROTECTOR_CODE
 //#error -fstack-protector or -fstack-protector-all or -fstack-protector has to be defined!

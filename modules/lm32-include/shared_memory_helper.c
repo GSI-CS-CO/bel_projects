@@ -20,7 +20,7 @@
  *  License along with this library. If not, see <http://www.gnu.org/licenses/>.
  *******************************************************************************
  */
-#include <lm32_assert.h>
+#include <scu_assert.h>
 #include <helper_macros.h>
 #include <shared_memory_helper.h>
 
@@ -42,7 +42,7 @@ uint32_t* shmGetRelatedEtherBoneAddress( const uint32_t sharedOffset )
    if(idx < cpuId)
       return NULL;
 
-   LM32_ASSERT( cpuId < ARRAY_SIZE(aFoundSdb) );
+   SCU_ASSERT( cpuId < ARRAY_SIZE(aFoundSdb) );
    return (uint32_t*)(getSdbAdr(&aFoundSdb[cpuId]) + sharedOffset
                                                    - LM32_INTERN_OFFSET);
 }
