@@ -40,7 +40,10 @@ void _segfault(int sig)
 }
 
 #ifdef CONFIG_STACK_PROTECTOR_CODE
-
+void __stack_chk_fail( void )
+{
+   mprintf( ESC_FG_RED ESC_BOLD"PANIC: Stack overflow!!!\n"ESC_NORMAL );
+}
 #endif
 
 void readFiFo( DAQ_CANNEL_T* pThis )
@@ -155,14 +158,15 @@ void main( void )
    gotoxy( 0, 0 );
    clrscr();
    mprintf( ESC_FG_MAGNETA "DAQ Fifo test, compiler: " COMPILER_VERSION_STRING ESC_NORMAL "\n");
-//#if 1
+#if 1
    if( daqBusFindAndInitializeAll( &g_allDaq, find_device_adr(GSI, SCU_BUS_MASTER) ) <= 0 )
    {
       mprintf( ESC_FG_RED "ERROR: No usable DAQ found!\n" ESC_NORMAL );
       return;
    }
    mprintf( "%d DAQ found\n", daqBusGetFoundDevices( &g_allDaq ) );
-#if 1
+
+//#if 0
 
    int i, j;
    mprintf( "Total number of all used channels: %d\n", daqBusGetUsedChannels( &g_allDaq ) );
@@ -173,6 +177,9 @@ void main( void )
       mprintf( ESC_FG_RED "ERROR: Channel number out of range!\n" ESC_NORMAL );
       return;
    }
+   uint32_t* pBusSlave = daqDeviceGetScuBusSlaveBaseAddress( DAQ_CHANNEL_GET_PARENT_OF( pChannel ) );
+   uint16_t flags = scuBusGetSlaveValue16( pBusSlave, Intr_Active );
+   mprintf( "SCU-Bus IRQ-flags: 0x%04x, Address : 0x%08x\n", flags, ((int)pBusSlave) + Intr_Active );
 //#if 1
    daqChannelPrintInfo( pChannel );
    printScuBusSlaveInfo( pChannel );
