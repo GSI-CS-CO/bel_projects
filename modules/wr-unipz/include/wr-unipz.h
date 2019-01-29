@@ -8,123 +8,124 @@
 // ****************************************************************************************
 // general things
 // ****************************************************************************************
-#define  WRUNIPZ_US_ASMNOP        31          // # of asm("nop") operations per microsecond
-#define  WRUNIPZ_MS_ASMNOP        31 * 1000   // # of asm("nop") operations per microsecond
-#define  WRUNIPZ_DEFAULT_TIMEOUT  100         // default timeout used by main loop [ms]
-#define  WRUNIPZ_QUERYTIMEOUT     1           // timeout for querying virt acc from MIL Piggy FIFO [ms] 
+#define WRUNIPZ_US_ASMNOP        31           // # of asm("nop") operations per microsecond
+#define WRUNIPZ_MS_ASMNOP        31 * 1000    // # of asm("nop") operations per microsecond
+#define WRUNIPZ_DEFAULT_TIMEOUT  100          // default timeout used by main loop [ms]
+#define WRUNIPZ_QUERYTIMEOUT     1            // timeout for querying virt acc from MIL Piggy FIFO [ms] 
                                               // Ludwig: we have 10ms time; here: use 5 ms to be on the safe side
-#define  WRUNIPZ_MILTIMEOUT       100         // timeout for querying MIL event [ms]
-#define  WRUNIPZ_ECATIMEOUT       1           // timeout for querying ECA action [ms]
-#define  WRUNIPZ_MATCHWINDOW      200000      // used for comparing timestamps: 1 TS from TLU->ECA matches event from MIL FIFO, 2: synch EVT_MB_TRIGGER, ... [ns]
-#define  WRUNIPZ_ECA_ADDRESS      0x7ffffff0  // address of ECA input
-#define  WRUNIPZ_EB_HACKISH       0x12345678  // value for EB read handshake
-#define  WRUNIPZ_UNILACFREQ       50          // frequency of UNILAC operation [Hz]
-#define  WRUNIPZ_UNILACPERIOD     20000000    // length of one UNILAC cylce [ns]
-#define  WRUNIPZ_MAXPREPOFFSET    2000        // max offset of a prep event within UNILAC cycle [us]
-#define  WRUNIPZ_QQOFFSET         500000      // offset for sending special service event for QQ [ns]
+#define WRUNIPZ_MILTIMEOUT       100          // timeout for querying MIL event [ms]
+#define WRUNIPZ_ECATIMEOUT       1            // timeout for querying ECA action [ms]
+#define WRUNIPZ_MATCHWINDOW      200000       // used for comparing timestamps: 1 TS from TLU->ECA matches event from MIL FIFO, 2: synch EVT_MB_TRIGGER, ... [ns]
+#define WRUNIPZ_ECA_ADDRESS      0x7ffffff0   // address of ECA input
+#define WRUNIPZ_EB_HACKISH       0x12345678   // value for EB read handshake
+#define WRUNIPZ_UNILACFREQ       50           // frequency of UNILAC operation [Hz]
+#define WRUNIPZ_UNILACPERIOD     20000000     // length of one UNILAC cylce [ns]
+#define WRUNIPZ_MAXPREPOFFSET    2000         // max offset of a prep event within UNILAC cycle [us]
+#define WRUNIPZ_QQOFFSET         500000       // offset for sending special service event for QQ [ns]
 
 // numbers for UNIPZ
-#define  WRUNIPZ_NEVT             32          // # of events per virt acc
-#define  WRUNIPZ_NVACC            16          // # vAcc
-#define  WRUNIPZ_NCHN              2          // # of channels (each virtacc may have multiple channels, example: "verkuerzte" operation)
-#define  WRUNIPZ_NPZ               7          // # of Pulszentralen
-#define  WRUNIPZ_NFLAG             4          // # flags per virt acc 
+#define WRUNIPZ_NEVT                    32    // # of events per virt acc
+#define WRUNIPZ_NVACC                   16    // # vAcc
+#define WRUNIPZ_NCHN                     2    // # of channels (each virtacc may have multiple channels, example: "verkuerzte" operation)
+#define WRUNIPZ_NPZ                      7    // # of Pulszentralen
+#define WRUNIPZ_NFLAG                    4    // # flags per virt acc 
 
 // (error) status, each status will be represented by one bit, bits will be ORed into a 32bit word
-#define  WRUNIPZ_STATUS_OK               0    // OK
-#define  WRUNIPZ_STATUS_ERROR            1    // an error occured
-#define  WRUNIPZ_STATUS_TIMEDOUT         2    // a timeout occured
-#define  WRUNIPZ_STATUS_OUTOFRANGE       3    // some value is out of range
-#define  WRUNIPZ_STATUS_LATE             4    // a timing messages is not dispatched in time
-#define  WRUNIPZ_STATUS_EARLY            5    // a timing messages is dispatched unreasonably early (dt > UNILACPERIOD)
-#define  WRUNIPZ_STATUS_TRANSACTION      6    // transaction failed
-#define  WRUNIPZ_STATUS_EB               7    // an Etherbone error occured
-#define  WRUNIPZ_STATUS_MIL              8    // an error on MIL hardware occured (MIL piggy etc...)
-#define  WRUNIPZ_STATUS_NOMILEVENTS      9    // no MIL events from UNIPZ
-#define  WRUNIPZ_STATUS_NOIP            10    // DHCP request via WR network failed                                
-#define  WRUNIPZ_STATUS_EBREADTIMEDOUT  11    // EB read via WR network timed out
-#define  WRUNIPZ_STATUS_WRONGVIRTACC    12    // received EVT_READY_TO_SIS with wrong virt acc number
-#define  WRUNIPZ_STATUS_SAFETYMARGIN    13    // violation of safety margin for data master and timing network
-#define  WRUNIPZ_STATUS_NOTIMESTAMP     14    // received EVT_READY_TO_SIS in MIL FIFO but not via TLU -> ECA
-#define  WRUNIPZ_STATUS_BADTIMESTAMP    15    // TS from TLU->ECA does not coincide with MIL Event from FIFO
-#define  WRUNIPZ_STATUS_ORDERTIMESTAMP  16    // TS from TLU->ECA and MIL Events are out of order
-#define  WRUNIPZ_STATUS_WAIT4UNIEVENT   17    // timeout while waiting for EVT_READY_TO_SIS
-#define  WRUNIPZ_STATUS_WRBADSYNC       18    // White Rabbit: not in 'TRACK_PHASE'
-#define  WRUNIPZ_STATUS_AUTORECOVERY    19    // trying auto-recovery from state ERROR
+#define WRUNIPZ_STATUS_OK                0    // OK
+#define WRUNIPZ_STATUS_ERROR             1    // an error occured
+#define WRUNIPZ_STATUS_TIMEDOUT          2    // a timeout occured
+#define WRUNIPZ_STATUS_OUTOFRANGE        3    // some value is out of range
+#define WRUNIPZ_STATUS_LATE              4    // a timing messages is not dispatched in time
+#define WRUNIPZ_STATUS_EARLY             5    // a timing messages is dispatched unreasonably early (dt > UNILACPERIOD)
+#define WRUNIPZ_STATUS_TRANSACTION       6    // transaction failed
+#define WRUNIPZ_STATUS_EB                7    // an Etherbone error occured
+#define WRUNIPZ_STATUS_MIL               8    // an error on MIL hardware occured (MIL piggy etc...)
+#define WRUNIPZ_STATUS_NOMILEVENTS       9    // no MIL events from UNIPZ
+#define WRUNIPZ_STATUS_NOIP             10    // DHCP request via WR network failed                                
+#define WRUNIPZ_STATUS_EBREADTIMEDOUT   11    // EB read via WR network timed out
+#define WRUNIPZ_STATUS_WRONGVIRTACC     12    // received EVT_READY_TO_SIS with wrong virt acc number
+#define WRUNIPZ_STATUS_SAFETYMARGIN     13    // violation of safety margin for data master and timing network
+#define WRUNIPZ_STATUS_NOTIMESTAMP      14    // received EVT_READY_TO_SIS in MIL FIFO but not via TLU -> ECA
+#define WRUNIPZ_STATUS_BADTIMESTAMP     15    // TS from TLU->ECA does not coincide with MIL Event from FIFO
+#define WRUNIPZ_STATUS_ORDERTIMESTAMP   16    // TS from TLU->ECA and MIL Events are out of order
+#define WRUNIPZ_STATUS_WAIT4UNIEVENT    17    // timeout while waiting for EVT_READY_TO_SIS
+#define WRUNIPZ_STATUS_WRBADSYNC        18    // White Rabbit: not in 'TRACK_PHASE'
+#define WRUNIPZ_STATUS_AUTORECOVERY     19    // trying auto-recovery from state ERROR
                               
 // commands from the outside
-#define  WRUNIPZ_CMD_NOCMD        0           // no command ...
-#define  WRUNIPZ_CMD_CONFIGURE    1           // configures the gateway
-#define  WRUNIPZ_CMD_STARTOP      2           // starts operation
-#define  WRUNIPZ_CMD_STOPOP       3           // stops operation
-#define  WRUNIPZ_CMD_IDLE         4           // requests gateway to enter idle state
-#define  WRUNIPZ_CMD_RECOVER      5           // recovery from error state
-#define  WRUNIPZ_CMD_CLEARDIAG    6           // reset statistics information
-#define  WRUNIPZ_CMD_CONFINIT     7           // init transaction of table data
-#define  WRUNIPZ_CMD_CONFSUBMIT   8           // submit data written to DP RAM
-#define  WRUNIPZ_CMD_CONFKILL     9           // this will kill an ongoing transaction
-#define  WRUNIPZ_CMD_CONFCLEAR   10           // this will clear all event tables
-#define  WRUNIPZ_CMD_MODESPZ     11           // mode -> WRUNIPZ_MODE_SPZ
-#define  WRUNIPZ_CMD_MODETEST    12           // mode ->  WRUNIPZ_MODE_TEST
+#define WRUNIPZ_CMD_NOCMD                0    // no command ...
+#define WRUNIPZ_CMD_CONFIGURE            1    // configures the gateway
+#define WRUNIPZ_CMD_STARTOP              2    // starts operation
+#define WRUNIPZ_CMD_STOPOP               3    // stops operation
+#define WRUNIPZ_CMD_IDLE                 4    // requests gateway to enter idle state
+#define WRUNIPZ_CMD_RECOVER              5    // recovery from error state
+#define WRUNIPZ_CMD_CLEARDIAG            6    // reset statistics information
+#define WRUNIPZ_CMD_CONFINIT             7    // init transaction of table data
+#define WRUNIPZ_CMD_CONFSUBMIT           8    // submit data written to DP RAM
+#define WRUNIPZ_CMD_CONFKILL             9    // this will kill an ongoing transaction
+#define WRUNIPZ_CMD_CONFCLEAR           10    // this will clear all event tables
+#define WRUNIPZ_CMD_MODESPZ             11    // mode -> WRUNIPZ_MODE_SPZ
+#define WRUNIPZ_CMD_MODETEST            12    // mode ->  WRUNIPZ_MODE_TEST
 
 // states; implicitely, all states may transit to the ERROR or FATAL state
-#define  WRUNIPZ_STATE_UNKNOWN    0           // unknown state
-#define  WRUNIPZ_STATE_S0         1           // initial state -> IDLE (automatic)
-#define  WRUNIPZ_STATE_IDLE       2           // idle state -> CONFIGURED (by command "configure")
-#define  WRUNIPZ_STATE_CONFIGURED 3           // configured state -> IDLE ("idle"), CONFIGURED ("configure"), OPREADY ("startop")
-#define  WRUNIPZ_STATE_OPREADY    4           // gateway in operation -> STOPPING ("stopop")
-#define  WRUNIPZ_STATE_STOPPING   5           // gateway in operation -> CONFIGURED (automatic)
-#define  WRUNIPZ_STATE_ERROR      6           // gateway in error -> IDLE ("recover")
-#define  WRUNIPZ_STATE_FATAL      7           // gateway in fatal error; RIP                                                             
+#define WRUNIPZ_STATE_UNKNOWN            0    // unknown state
+#define WRUNIPZ_STATE_S0                 1    // initial state -> IDLE (automatic)
+#define WRUNIPZ_STATE_IDLE               2    // idle state -> CONFIGURED (by command "configure")
+#define WRUNIPZ_STATE_CONFIGURED         3    // configured state -> IDLE ("idle"), CONFIGURED ("configure"), OPREADY ("startop")
+#define WRUNIPZ_STATE_OPREADY            4    // gateway in operation -> STOPPING ("stopop")
+#define WRUNIPZ_STATE_STOPPING           5    // gateway in operation -> CONFIGURED (automatic)
+#define WRUNIPZ_STATE_ERROR              6    // gateway in error -> IDLE ("recover")
+#define WRUNIPZ_STATE_FATAL              7    // gateway in fatal error; RIP                                                             
 
 // activity requested by ECA Handler, the relevant codes are also used as "tags".
-#define  WRUNIPZ_ECADO_TIMEOUT    0           // timeout: no activity requested
-#define  WRUNIPZ_ECADO_UNKOWN     1           // unnkown activity requested (unexpected action by ECA)
-#define  WRUNIPZ_ECADO_TEST       2           // test mode (internal 50 Hz trigger)
-#define  WRUNIPZ_ECADO_MIL        3           // a MIL event was received
+#define WRUNIPZ_ECADO_TIMEOUT            0    // timeout: no activity requested
+#define WRUNIPZ_ECADO_UNKOWN             1    // unnkown activity requested (unexpected action by ECA)
+#define WRUNIPZ_ECADO_TEST               2    // test mode (internal 50 Hz trigger)
+#define WRUNIPZ_ECADO_MIL                3    // a MIL event was received
 
 // define log levels for print statemens
-#define  WRUNIPZ_LOGLEVEL_ALL     0           // info on every UNILAC cycles
-#define  WRUNIPZ_LOGLEVEL_SECOND  1           // summary info once per second
-#define  WRUNIPZ_LOGLEVEL_STATUS  2           // info on status changes, info on state changes
-#define  WRUNIPZ_LOGLEVEL_STATE   3           // info on state changes
+#define  WRUNIPZ_LOGLEVEL_ALL            0    // info on every UNILAC cycles
+#define  WRUNIPZ_LOGLEVEL_SECOND         1    // summary info once per second
+#define  WRUNIPZ_LOGLEVEL_STATUS         2    // info on status changes, info on state changes
+#define  WRUNIPZ_LOGLEVEL_STATE          3    // info on state changes
 
-#define  WRUNIPZ_CONFSTAT_IDLE    0           // no transaction in progress
-#define  WRUNIPZ_CONFSTAT_INIT    1           // transaction of config data has been initialized
-#define  WRUNIPZ_CONFSTAT_SUBMIT  2           // config data for transaction has been submitted, waiting for commit event
+#define  WRUNIPZ_CONFSTAT_IDLE           0    // no transaction in progress
+#define  WRUNIPZ_CONFSTAT_INIT           1    // transaction of config data has been initialized
+#define  WRUNIPZ_CONFSTAT_SUBMIT         2    // config data for transaction has been submitted, waiting for commit event
 
-#define WRUNIPZ_MODE_SPZ          0           // listen to events from Super-UNIPZ
-#define WRUNIPZ_MODE_TEST         1           // test mode: 50 Hz clock generated internally
+#define  WRUNIPZ_MODE_SPZ                0    // listen to events from Super-UNIPZ
+#define  WRUNIPZ_MODE_TEST               1    // test mode: 50 Hz clock generated internally
 
 // event codes from Super PZ received via internal bus (bits 0..7)
-#define WRUNIPZ_EVT_PZ1               1       // next cycle PZ 1
-#define WRUNIPZ_EVT_PZ2               2       // next cycle PZ 2
-#define WRUNIPZ_EVT_PZ3               3       // next cycle PZ 3
-#define WRUNIPZ_EVT_PZ4               4       // next cycle PZ 4
-#define WRUNIPZ_EVT_PZ5               5       // next cycle PZ 5
-#define WRUNIPZ_EVT_PZ6               6       // next cycle PZ 6
-#define WRUNIPZ_EVT_PZ7               7       // next cycle PZ 7
-#define WRUNIPZ_EVT_SYNCH_DATA       32       // commit event for transaction
-#define WRUNIPZ_EVT_50HZ_SYNCH       33       // 50 Hz trigger, cycle start
+#define WRUNIPZ_EVT_PZ1                  1    // next cycle PZ 1
+#define WRUNIPZ_EVT_PZ2                  2    // next cycle PZ 2
+#define WRUNIPZ_EVT_PZ3                  3    // next cycle PZ 3
+#define WRUNIPZ_EVT_PZ4                  4    // next cycle PZ 4
+#define WRUNIPZ_EVT_PZ5                  5    // next cycle PZ 5
+#define WRUNIPZ_EVT_PZ6                  6    // next cycle PZ 6
+#define WRUNIPZ_EVT_PZ7                  7    // next cycle PZ 7
+#define WRUNIPZ_EVT_SYNCH_DATA          32    // commit event for transaction
+#define WRUNIPZ_EVT_50HZ_SYNCH          33    // 50 Hz trigger, cycle start
 
 // event codes for service events
-#define EVT_AUX_PRP_NXT_ACC        0x11       // set values in magnet prep. cycles
-#define EVT_MAGN_DOWN              0x19       // set magnets to zero current
+#define EVT_AUX_PRP_NXT_ACC           0x11    // set values in magnet prep. cycles
+#define EVT_MAGN_DOWN                 0x19    // set magnets to zero current
 
 // event data from Super PZ received via internal bus (bits 12..15)
-#define WRUNIPZ_EVTDATA_CHANNEL     0x1       // bit 12 - channel number: there are only two channels -> channel number coded in one bit
-#define WRUNIPZ_EVTDATA_NOCHOP      0x2       // bit 13 (bit 15 not set) - flag: executee virt acc without chopper
-#define WRUNIPZ_EVTDATA_SHORTCHOP   0x4       // bit 14 (bit 15 not set) - flag: execute acc with short chopperpulse
-#define WRUNIPZ_EVTDATA_SERVICE     0x8       // if bit 15 is set, a service event must be sent after all other events have been sent
-#define WRUNIPZ_EVTDATA_PREPACCNOW  0xd       // service event: execute preparation event for virt acc: VERY SPECIAL! event sent immediately 
-#define WRUNIPZ_EVTDATA_PREPACC     0xe       // service event: execute preparation event for virt acc 
-#define WRUNIPZ_EVTDATA_ZEROACC     0xf       // set all magnets to zero value
+#define WRUNIPZ_EVTDATA_CHANNEL        0x1    // bit 12 - channel number: there are only two channels -> channel number coded in one bit
+#define WRUNIPZ_EVTDATA_NOCHOP         0x2    // bit 13 (bit 15 not set) - flag: executee virt acc without chopper
+#define WRUNIPZ_EVTDATA_SERVICE        0x8    // if bit 15 is set, a service event must be sent after all other events have been sent
+#define WRUNIPZ_EVTDATA_PREPACCNOW     0xd    // service event: execute preparation event for virt acc: VERY SPECIAL! event sent immediately 
+#define WRUNIPZ_EVTDATA_PREPACC        0xe    // service event: execute preparation event for virt acc 
+#define WRUNIPZ_EVTDATA_ZEROACC        0xf    // set all magnets to zero value
 
 typedef struct dataTable {                    // table with _one_ virtAcc for _one_ Pulszentrale
   uint32_t validFlags;                        // if bit 'n' is set, data[n] is valid
   uint32_t prepFlags;                         // if bit 'n' is set, data[n] is prep data
   uint32_t evtFlags;                          // if bit 'n' is set, data[n] is event data  
-  uint32_t data[WRUNIPZ_NEVT];                // bits 0..7 'event code', bits 8..15 'data', bits 16..31 offset [us]
+  uint32_t data[WRUNIPZ_NEVT];                // bits 0..7 'event code', bits 8..11 reserved, bits 12..15 'event data', bits 16..31 offset [us]
+                                              // meaning of bits ist _not_ as desribed in https://www-acc.gsi.de/data/documentation/eq-models/pzus/gm-pzus.pdf (page 72)
+                                              // instead: bit 15 ('high current'), bit 14 ('no chopper'), bit 13 ('high brho'), bit 12 (reserved)
 } dataTable;
 
 // ****************************************************************************************
@@ -164,7 +165,6 @@ typedef struct dataTable {                    // table with _one_ virtAcc for _o
 #define WRUNIPZ_SHARED_TDIAGLO        (WRUNIPZ_SHARED_TDIAGHI    + _32b_SIZE_)          // time when diagnostics was cleared, low bits
 #define WRUNIPZ_SHARED_TS0HI          (WRUNIPZ_SHARED_TDIAGLO    + _32b_SIZE_)          // time when FW was in S0 state (start of FW), high bits
 #define WRUNIPZ_SHARED_TS0LO          (WRUNIPZ_SHARED_TS0HI      + _32b_SIZE_)          // time when FW was in S0 state (start of FW), low bits
-
 
 // shared memory for EB return values
 #define WRUNIPZ_SHARED_DATA_4EB       (WRUNIPZ_SHARED_TS0LO      + _32b_SIZE_)          // shared area for EB return values
