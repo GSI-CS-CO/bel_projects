@@ -3,7 +3,7 @@
  *
  *  created : 2018
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 28-Jan-2019
+ *  version : 29-Jan-2019
  *
  *  lm32 program for gateway between UNILAC Pulszentrale and a White Rabbit network
  *  this basically serves a Data Master for UNILAC
@@ -157,7 +157,7 @@ uint32_t nCyclePrev;                    // previous number of cycles
 uint64_t nMsgAct;                       // # of messages sent
 uint64_t nMsgPrev;                      // previous number of messages
 uint64_t syncPrevT;                     // timestamp of previous 50Hz sync event from SPZ
-uint64_t syncPrevLen;                    // duration of previous UNILAC cycle
+uint64_t syncPrevLen;                   // duration of previous UNILAC cycle
 
 // big data contains the event tables for all PZs, and for all virtual accelerators
 // there are two sets of 16 virtual accelerators ('Kanal0' and 'Kanal1')
@@ -1055,22 +1055,22 @@ uint32_t doActionOperation(uint32_t *nCycle,                  // total number of
     // B: The announce event contains information about a service event to be sent
     //    In this case we just take care of the service event and nothing else
 
-    if ((evtData & WRUNIPZ_EVTDATA_SERVICE) == 0) {                    // A: super PZ has announced vacc for next cycle: bits 12 (channel number), bits 13..15 (chooper mode)
+    if ((evtData & WRUNIPZ_EVTDATA_SERVICE) == 0) {           // A: super PZ has announced vacc for next cycle: bits 12 (channel number), bits 13..15 (chooper mode)
       DBPRINT3("wr-unipz: playing prep events, pz %d, vacc %d\n", ipz, virtAcc);
       // get chopper mode
       nextChannel[ipz]   = ((evtData & WRUNIPZ_EVTDATA_CHANNEL) != 0); // use relevant bit as channel number (there are only two channels)
       nextNochop[ipz]    = ((evtData & WRUNIPZ_EVTDATA_NOCHOP) != 0);
-      nextServEvt[ipz]   = 0x0;                                        // reset service event for next cycle
+      nextServEvt[ipz]   = 0x0;                               // reset service event for next cycle
 
       // PZ1..7: preperation; as the next cycle has been announced, we may send all 'prep events' already now
       // as deadline, we use the deadline from past 50 Hz tick and add the actual UNILAC cycle length
       nLateLocal = nLate;
       isPrepFlag = 1;                                                  
-      deadline   = syncPrevT + syncPrevLen;                            // guess start time of next UNILAC cycle from previous cycle
+      deadline   = syncPrevT + syncPrevLen;                   // guess start time of next UNILAC cycle from previous cycle
       pzRunVacc(bigData[evtCode - 1][virtAcc], deadline, ipz, virtAcc, isPrepFlag);
       if ((nLate != nLateLocal) && (status == WRUNIPZ_STATUS_OK)) status = WRUNIPZ_STATUS_LATE;
     } // if !SERVICE
-    else {                                                             // B: super PZ has sent info on a service event: bits 12..15 encode event type
+    else {                                                    // B: super PZ has sent info on a service event: bits 12..15 encode event type
       DBPRINT3("wr-unipz: service event for pz %d, vacc %d\n", ipz, virtAcc);
       if (evtData == WRUNIPZ_EVTDATA_PREPACC) nextServEvt[ipz] = EVT_AUX_PRP_NXT_ACC;
       if (evtData == WRUNIPZ_EVTDATA_ZEROACC) nextServEvt[ipz] = EVT_MAGN_DOWN;
@@ -1115,10 +1115,10 @@ void main(void) {
  
   uint32_t j;
  
-  uint32_t status;                              // (error) status
-  uint32_t actState;                            // actual FSM state
-  uint32_t reqState;                            // requested FSM state
-  uint32_t flagRecover;                         // flag indicating auto-recovery from error state;  
+  uint32_t status;                                            // (error) status
+  uint32_t actState;                                          // actual FSM state
+  uint32_t reqState;                                          // requested FSM state
+  uint32_t flagRecover;                                       // flag indicating auto-recovery from error state;  
 
   mprintf("\n");
   mprintf("wr-unipz: ***** firmware v %06d started from scratch *****\n", WRUNIPZ_FW_VERSION);
@@ -1131,14 +1131,14 @@ void main(void) {
   flagRecover    = 0;
   clearDiag();
 
-  init();                                                                   // initialize stuff for lm32
-  initSharedMem();                                                          // initialize shared memory
+  init();                                                     // initialize stuff for lm32
+  initSharedMem();                                            // initialize shared memory
   
   while (1) {
-    cmdHandler(&reqState);                                                  // check for commands and possibly request state changes
-    status = WRUNIPZ_STATUS_OK;                                             // reset status for each iteration
-    status = changeState(&actState, &reqState, status);                     // handle requested state changes
-    switch(actState)                                                        // state specific do actions
+    cmdHandler(&reqState);                                    // check for commands and possibly request state changes
+    status = WRUNIPZ_STATUS_OK;                               // reset status for each iteration
+    status = changeState(&actState, &reqState, status);       // handle requested state changes
+    switch(actState)                                          // state specific do actions
       {
       case WRUNIPZ_STATE_S0 :
         status = doActionS0();                                              // important initialization that must succeed!
@@ -1152,7 +1152,7 @@ void main(void) {
         if (status == WRUNIPZ_STATUS_ERROR)          reqState = WRUNIPZ_STATE_ERROR;
         break;
       case WRUNIPZ_STATE_ERROR :
-        flagRecover = 1;                                                    // start autorecovery
+        flagRecover = 1;                                      // start autorecovery
         break; 
       case WRUNIPZ_STATE_FATAL :
         *pSharedState     = actState;
@@ -1160,7 +1160,7 @@ void main(void) {
         mprintf("wr-unipz: a FATAL error has occured. Good bye.\n");
         while (1) asm("nop"); // RIP!
         break;
-      default :                                                             // avoid flooding WB bus with unnecessary activity
+      default :                                               // avoid flooding WB bus with unnecessary activity
         for (j = 0; j < (WRUNIPZ_DEFAULT_TIMEOUT * WRUNIPZ_MS_ASMNOP); j++) { asm("nop"); }
       } // switch
 
@@ -1168,8 +1168,8 @@ void main(void) {
     if (flagRecover) doAutoRecovery(actState, &reqState);
 
     // update shared memory
-    if (nCycleAct != nCyclePrev) {                                            // update only one per cycle 
-      if ((nCycleAct % WRUNIPZ_UNILACFREQ) == 0) {                            // about only once per second
+    if (nCycleAct != nCyclePrev) {                            // update only once per cycle 
+      if ((nCycleAct % WRUNIPZ_UNILACFREQ) == 0) {            // about only once per second
         
         // length of UNILAC cycle [ns]
         *pSharedTCycleAvg  = (uint32_t)(syncPrevLen);
@@ -1192,13 +1192,13 @@ void main(void) {
     } // if nCycleAct
 
     switch (status) {
-    case WRUNIPZ_STATUS_OK :                                                  // status OK
-      sumStatus = sumStatus |  (0x1 << WRUNIPZ_STATUS_OK);                    // set OK bit
+    case WRUNIPZ_STATUS_OK :                                   // status OK
+      sumStatus = sumStatus |  (0x1 << WRUNIPZ_STATUS_OK);     // set OK bit
       break;
-    default :                                                                 // status not OK
-      if ((sumStatus >> WRUNIPZ_STATUS_OK) & 0x1) nBadStatus++;               // changing status from OK to 'not OK': increase 'bad status count'
-      sumStatus = sumStatus & ~(0x1 << WRUNIPZ_STATUS_OK);                    // clear OK bit
-      sumStatus = sumStatus |  (0x1 << status);                               // set status bit and remember other bits set
+    default :                                                  // status not OK
+      if ((sumStatus >> WRUNIPZ_STATUS_OK) & 0x1) nBadStatus++;// changing status from OK to 'not OK': increase 'bad status count'
+      sumStatus = sumStatus & ~(0x1 << WRUNIPZ_STATUS_OK);     // clear OK bit
+      sumStatus = sumStatus |  (0x1 << status);                // set status bit and remember other bits set
       break;
     } // switch status
 
