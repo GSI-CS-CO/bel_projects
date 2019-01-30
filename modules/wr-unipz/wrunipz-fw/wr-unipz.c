@@ -46,7 +46,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 22-November-2018
  ********************************************************************************************/
-#define WRUNIPZ_FW_VERSION 0x000008                                     // make this consistent with makefile
+#define WRUNIPZ_FW_VERSION 0x000009                                     // make this consistent with makefile
 
 // standard includes
 #include <stdio.h>
@@ -161,11 +161,15 @@ uint64_t syncPrevLen;                   // duration of previous UNILAC cycle
 // there are two sets of 16 virtual accelerators ('Kanal0' and 'Kanal1')
 dataTable bigData[WRUNIPZ_NPZ][WRUNIPZ_NVACC * WRUNIPZ_NCHN];
 
+// info on what will be played at which PZ during actual cycles
+uint32_t actVacc[WRUNIPZ_NPZ];          // vacc
+uint32_t actChan[WRUNIPZ_NPZ];          // channel
+
 // contains info on what will be played at which PZ during next cycle
 uint32_t nextVacc[WRUNIPZ_NPZ];         // vacc
-uint32_t nextChannel[WRUNIPZ_NPZ];      // # of channel
+uint32_t nextChan[WRUNIPZ_NPZ];      // channel
 uint32_t nextNochop[WRUNIPZ_NPZ];       // flag: 'no chopper'
-uint32_t nextServEvt[WRUNIPZ_NPZ];      // trailing service event
+
 uint32_t gid[] = {1000, 1001, 1002, 1003, 1004, 1005, 1006};              /* hackish: GIDs for PZs, to be clarified with Hanno */
 
 // get my own MAC
@@ -308,10 +312,28 @@ uint32_t pzRunVacc(dataTable evts, uint64_t tStart, uint32_t pz, uint32_t virtAc
     } // is valid
   } // for i
 
-  if (nextServEvt[pz] != 0) ebmWriteTM(nextServEvt[pz], offset + (uint64_t)8, pz, virtAcc, nextNochop[pz]);
-
   return WRUNIPZ_STATUS_OK;
 } // pzRunVacc
+
+// get length of vacc
+uint32_t getVaccLen(dataTable evts)
+{
+  int      i;
+  uint32_t usOffset;
+  uint32_t tmp;
+  
+
+  usOffset = 0;
+  
+  for (i=0; i<WRUNIPZ_NEVT; i++) {
+    if ((evts.validFlags >> i) & 0x1) {
+      tmp = (uint32_t)((evts.data >> 16) & 0xffff);
+      if (tmp > usOffset) usOffset = tmp;
+    } // if validFlags
+  } // for i
+
+  return usOffset;
+} //getVaccLen
 
 //check status of White Rabbit (link up, tracking)
 uint32_t wrCheckSyncState() 
@@ -794,6 +816,7 @@ uint32_t entryActionOperation()
   clearDiag();                                               // clear diagnostics
   clearPZ();                                                 // clear all event tables
   for (i=0; i < WRUNIPZ_NPZ; i++) nextVacc[i] = 0xffffffff;  // 0xffffffff: no virt acc
+  for (i=0; i < WRUNIPZ_NPZ; i++) actVacc[i]  = 0xffffffff;  // 0xffffffff: no virt acc
   enableFilterEvtMil(pMILPiggy);                             // enable MIL event filter
   clearFifoEvtMil(pMILPiggy);                                // clear MIL event FIFO
 
@@ -946,7 +969,9 @@ uint32_t doActionOperation(uint32_t *nCycle,                  // total number of
   int      ipz;                                               // index of PZ, helper variable
   int      i,j;
   dataTable servNow;                                          // used to send a service event NOW!
-
+  uint32_t chn;                                               // channel
+  uint32_t servEvt;                                           // service event
+  uint32_t servOffs;                                          // offset for service event
 
   status = actStatus;
   
@@ -994,8 +1019,9 @@ uint32_t doActionOperation(uint32_t *nCycle,                  // total number of
     isPrepFlag  = 0;                                          // 50 Hz synch: no preparation - use actual deadline from TLU
     for (i=0; i < WRUNIPZ_NPZ; i++) {
       if (nextVacc[i] != 0xffffffff) {
-        // run vaccs for all 
-        pzRunVacc(bigData[i][nextVacc[i]], deadline, i, nextVacc[i], isPrepFlag);
+        actVacc[i] = nextVacc[i];                             // remember vacc for actual cycle
+        actChan[i] = nextChan[i],
+        pzRunVacc(bigData[i][nextVacc[i] * WRUNIPZ_NCHN + nextChan[i]], deadline, i, nextVacc[i], isPrepFlag); // run vaccs
         DBPRINT3("wr-unipz: playing pz %d, vacc %d\n", i, nextVacc[i]);
       } // if nextVacc
     } // for i
@@ -1011,8 +1037,9 @@ uint32_t doActionOperation(uint32_t *nCycle,                  // total number of
     
   case WRUNIPZ_EVT_PZ1 ... WRUNIPZ_EVT_PZ7 :                  // super PZ announces what happens in next UNILAC cycle
     // extract information from event from super PZ
-    ipz              = evtCode - 1;                           // PZ: sPZ counts from 1..7, we count from 0..6
-    nextVacc[ipz]    = virtAcc;
+    ipz            = evtCode - 1;                             // PZ: sPZ counts from 1..7, we count from 0..6
+    nextVacc[ipz]  = virtAcc;
+    chn            =  ((evtData & WRUNIPZ_EVTDATA_CHANNEL) != 0); // use relevant bit as channel number (there are only two channels)
     
     // there are two different types of announce events
     // A: The announce event contains information about the vacc to played in the next cycle
@@ -1023,23 +1050,25 @@ uint32_t doActionOperation(uint32_t *nCycle,                  // total number of
     if ((evtData & WRUNIPZ_EVTDATA_SERVICE) == 0) {           // A: super PZ has announced vacc for next cycle: bits 12 (channel number), bits 13..15 (chooper mode)
       DBPRINT3("wr-unipz: playing prep events, pz %d, vacc %d\n", ipz, virtAcc);
       // get chopper mode
-      nextChannel[ipz]   = ((evtData & WRUNIPZ_EVTDATA_CHANNEL) != 0); // use relevant bit as channel number (there are only two channels)
-      nextNochop[ipz]    = ((evtData & WRUNIPZ_EVTDATA_NOCHOP) != 0);
-      nextServEvt[ipz]   = 0x0;                               // reset service event for next cycle
+      nextChan[ipz]    = chn;
+      nextNochop[ipz]  = ((evtData & WRUNIPZ_EVTDATA_NOCHOP)  != 0);
 
       // PZ1..7: preperation; as the next cycle has been announced, we may send all 'prep events' already now
       // as deadline, we use the deadline from past 50 Hz tick and add the actual UNILAC cycle length
       nLateLocal = nLate;
       isPrepFlag = 1;                                                  
       deadline   = syncPrevT + syncPrevLen;                   // guess start time of next UNILAC cycle from previous cycle
-      pzRunVacc(bigData[evtCode - 1][virtAcc], deadline, ipz, virtAcc, isPrepFlag);
+      pzRunVacc(bigData[ipz][virtAcc * WRUNIPZ_NCHN + chn], deadline, ipz, virtAcc, isPrepFlag);
       if ((nLate != nLateLocal) && (status == WRUNIPZ_STATUS_OK)) status = WRUNIPZ_STATUS_LATE;
     } // if !SERVICE
     else {                                                    // B: super PZ has sent info on a service event: bits 12..15 encode event type
       DBPRINT3("wr-unipz: service event for pz %d, vacc %d\n", ipz, virtAcc);
-      if (evtData == WRUNIPZ_EVTDATA_PREPACC) nextServEvt[ipz] = EVT_AUX_PRP_NXT_ACC;
-      if (evtData == WRUNIPZ_EVTDATA_ZEROACC) nextServEvt[ipz] = EVT_MAGN_DOWN;
-      if (evtData == WRUNIPZ_EVTDATA_PREPACCNOW) ebmWriteTM((uint32_t)EVT_AUX_PRP_NXT_ACC, getSysTime() + (uint64_t)WRUNIPZ_QQOFFSET, ipz, virtAcc, 0);  /* chk: value for QQOFFSET */
+      servOffs = getVaccLen(bigData[ipz][virtAcc * WRUNIPZ_NCHN + chn]) & 0xffff;
+      servEvt  = 0x0
+      if (evtData == WRUNIPZ_EVTDATA_PREPACC)    servEvt = EVT_AUX_PRP_NXT_ACC | ((virtAcc & 0xf) << 8) | ((servOffs & 0xffff)        << 16); // send after last event
+      if (evtData == WRUNIPZ_EVTDATA_ZEROACC)    servEvt = EVT_MAGN_DOWN       | ((virtAcc & 0xf) << 8) | ((servOffs & 0xffff)        << 16); // send after last event 
+      if (evtData == WRUNIPZ_EVTDATA_PREPACCNOW) servEvt = EVT_AUX_PRP_NXT_ACC | ((virtAcc & 0xf) << 8) | ((uint16_t)WRUNIPZ_QQOFFSET << 16); // send 'now' /* chk QQOFFSET */
+      if (servEvt != 0 ) ebmWriteTM(servEvt, getSysTime(), ipz, virtAcc, 0);  // send message
     } // else SERVICE
   
     break;
