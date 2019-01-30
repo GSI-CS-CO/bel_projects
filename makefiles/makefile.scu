@@ -21,7 +21,7 @@ PRINT_BUFSIZE ?= 128
 USRCPUCLK     ?= 125000
 RAM_SIZE      ?= 98304
 TARGET        ?= $(notdir $(basename $(MIAN_MODULE)))
-BUILD_ID_FILE ?= $(TARGET)_buildid.c
+BUILD_ID_FILE ?= $(TARGET)_$(BUILDID_NAME).c
 LINKER_SCRIPT ?= $(TARGET).ld
 
 
@@ -68,11 +68,10 @@ CFLAGS += -nostdlib
 CFLAGS += -mmultiply-enabled
 CFLAGS += -mbarrel-shift-enabled
 
-# LIBS += gcc c
-
 RAM_OFFS      = 0x10000000
 BOOTL_SIZE    = 0x100
 BUILDID_SIZE  = 0x400
+BUILDID_NAME  ?= buildid
 BUILDID_START = $(shell printf "0x%x" $(BOOTL_SIZE))
 SHARED_START  = $(shell printf "0x%x" $$(( $(BUILDID_START) + $(BUILDID_SIZE) )) )
 INTADR_OFFS   = $(shell printf "0x%x" $(RAM_OFFS))
@@ -84,21 +83,29 @@ else
    SHARED = "0"
    SHARED_SIZE = 0
 endif
+SHARED_NAME ?= shared
 
-RESERVED_MEM_SIZE := $(shell echo $$(($(BOOTL_SIZE)+$(BUILDID_SIZE)+$(SHARED_SIZE))) )
-USABLE_MEM_SIZE := $(shell echo $$(($(RAM_SIZE)*4-$(RESERVED_MEM_SIZE))) )
+RESERVED_MEM_SIZE = $(shell echo $$(($(BOOTL_SIZE)+$(BUILDID_SIZE)+$(SHARED_SIZE))) )
+USABLE_MEM_SIZE   = $(shell echo $$(($(RAM_SIZE)*$(MEM_ALIGN)-$(RESERVED_MEM_SIZE))) )
 
-COMMENT_TEXT = 'This file has been created automatically, do not modify it by hand!'
+COMMENT_TEXT := 'This file has been created automatically, do not modify it by hand!'
+DATE         := $(shell date)
+AUTHOR       := makefile.scu
+
+LDS_LIBS   = c
+LDS_LIBS  += gcc
+# LDS_LIBS  += gloss   # library for GNU Low-level OS Support
+# LDS_LIBS  += nosys
 
 LDS  = "/*!\n"
 LDS += " * @file $(LINKER_SCRIPT)\n"
-LDS += " * @brief Linkerscript for target: $(TARGET)\n"
+LDS += " * @brief $(CPU)-Linkerscript for target: $(TARGET)\n"
 LDS += " * @note $(COMMENT_TEXT)\n"
-LDS += " * @author Created by makefile.scu\n"
+LDS += " * @date $(DATE)\n"
+LDS += " * @author $(AUTHOR)\n"
 LDS += " */\n\n"
-LDS += "OUTPUT_FORMAT(\"elf32-lm32\")\n"
-#LDS += "GROUP(-lgloss -lnosys -lc -lgcc)\n"
-LDS += "GROUP( -lc -lgcc)\n"
+LDS += "OUTPUT_FORMAT(\"elf32-$(CPU)\")\n"
+LDS += "GROUP( $(addprefix -l,$(LDS_LIBS)) )\n"
 #LDS += "ENTRY(_start)\n"
 LDS += "\nMEMORY\n"
 LDS += "{\n"
@@ -108,7 +115,7 @@ LDS += "SECTIONS\n"
 LDS += "{\n"
 LDS += "   . = ORIGIN(ram);\n\n"
 LDS += "   /* First location in stack is highest address in RAM */\n"
-LDS += "   PROVIDE(_fstack = ORIGIN(ram) + LENGTH(ram) - 4);\n"
+LDS += "   PROVIDE(_fstack = ORIGIN(ram) + LENGTH(ram) - $(MEM_ALIGN));\n"
 LDS += "   .boot :\n"
 LDS += "   {\n"
 LDS += "      _fboot = .;\n"
@@ -116,22 +123,22 @@ LDS += "      *(.boot);\n"
 LDS += "      _eboot = .;\n"
 LDS += "   } > ram\n\n"
 LDS += "   /* Begin of build-id array defined in \"$(GENERATED_DIR)/$(BUILD_ID_FILE)\" */\n"
-LDS += "   .buildid ADDR(.boot) + $(BOOTL_SIZE) :\n"
+LDS += "   .$(BUILDID_NAME) ADDR(.boot) + $(BOOTL_SIZE) :\n"
 LDS += "   {\n"
-LDS += "      _fbuildid = .;\n"
-LDS += "      *(.buildid .buildid.*) _ebuildid = .;\n"
+LDS += "      _f$(BUILDID_NAME) = .;\n"
+LDS += "      *(.$(BUILDID_NAME) .$(BUILDID_NAME).*) _e$(BUILDID_NAME) = .;\n"
 LDS += "   } > ram\n\n"
 LDS += "   /* Begin of shared memory */\n"
-LDS += "   .shared ADDR(.buildid) + $(BUILDID_SIZE) :\n"
+LDS += "   .$(SHARED_NAME) ADDR(.$(BUILDID_NAME)) + $(BUILDID_SIZE) :\n"
 LDS += "   {\n"
-LDS += "      _fshared = .;\n"
-LDS += "      PROVIDE(_startshared = .);\n"
-LDS += "      *(.shared .shared.*) _eshared = .;\n"
+LDS += "      _f$(SHARED_NAME) = .;\n"
+LDS += "      PROVIDE(_start$(SHARED_NAME) = .);\n"
+LDS += "      *(.$(SHARED_NAME) .$(SHARED_NAME).*) _e$(SHARED_NAME) = .;\n"
 LDS += "   } > ram\n\n"
 LDS += "   /* Begin of code */\n"
-LDS += "   .text  ADDR(.shared) + $(SHARED) :\n"
+LDS += "   .text  ADDR(.$(SHARED_NAME)) + $(SHARED) :\n"
 LDS += "   {\n"
-LDS += "     . = ALIGN(4);\n"
+LDS += "     . = ALIGN($(MEM_ALIGN));\n"
 LDS += "     _ftext = .;\n"
 LDS += "     _ftext_rom = LOADADDR(.text);\n"
 LDS += "     *(.text .stub .text.* .gnu.linkonce.t.*)\n"
@@ -167,7 +174,7 @@ LDS += "   } > ram\n\n"
 LDS += "   /* Read-only data */\n"
 LDS += "   .rodata :\n"
 LDS += "   {\n"
-LDS += "     . = ALIGN(4);\n"
+LDS += "     . = ALIGN($(MEM_ALIGN));\n"
 LDS += "     _frodata = .;\n"
 LDS += "     _frodata_rom = LOADADDR(.rodata);\n"
 LDS += "     *(.rodata .rodata.* .gnu.linkonce.r.*)\n"
@@ -176,7 +183,7 @@ LDS += "     _erodata = .;\n"
 LDS += "   } > ram\n\n"
 LDS += "   .data :\n"
 LDS += "   {\n"
-LDS += "      . = ALIGN(4);\n"
+LDS += "      . = ALIGN($(MEM_ALIGN));\n"
 LDS += "      _fdata = .;\n"
 LDS += "      _fdata_rom = LOADADDR(.data);\n"
 LDS += "      *(.data .data.* .gnu.linkonce.d.*)\n"
@@ -188,7 +195,7 @@ LDS += "      _edata = .;\n"
 LDS += "   } > ram\n\n"
 LDS += "   .bss :\n"
 LDS += "   {\n"
-LDS += "     . = ALIGN(4);\n"
+LDS += "     . = ALIGN($(MEM_ALIGN));\n"
 LDS += "     _fbss = .;\n"
 LDS += "     *(.dynsbss)\n"
 LDS += "     *(.sbss .sbss.* .gnu.linkonce.sb.*)\n"
@@ -196,7 +203,7 @@ LDS += "     *(.scommon)\n"
 LDS += "     *(.dynbss)\n"
 LDS += "     *(.bss .bss.* .gnu.linkonce.b.*)\n"
 LDS += "     *(COMMON)\n"
-LDS += "     . = ALIGN(4);\n"
+LDS += "     . = ALIGN($(MEM_ALIGN));\n"
 LDS += "     _ebss = .;\n"
 LDS += "     _end = .;\n"
 LDS += "     PROVIDE(end = .);\n"
@@ -218,10 +225,13 @@ CBR_GIT3 := $$(git log HEAD~2 --oneline --decorate=no -n 1 | cut -c1-100)
 CBR_GIT4 := $$(git log HEAD~3 --oneline --decorate=no -n 1 | cut -c1-100)
 CBR_GIT5 := $$(git log HEAD~4 --oneline --decorate=no -n 1 | cut -c1-100)
 
-CBR  = "//! @file $(BUILD_ID_FILE)\n"
-CBR += "//! @note $(COMMENT_TEXT)\n"
-CBR += "//! @author Created by makefile.scu\n\n"
-CBR += "\#define BUILDID __attribute__((section(\".buildid\")))\n\n"
+CBR  = "/*!\n"
+CBR += " * @file $(BUILD_ID_FILE)\n"
+CBR += " * @note $(COMMENT_TEXT)\n"
+CBR += " * @date $(DATE)\n"
+CBR += " * @author $(AUTHOR)\n"
+CBR += " */\n\n"
+CBR += "\#define BUILDID __attribute__((section(\".$(BUILDID_NAME)\")))\n\n"
 CBR += "const char BUILDID build_id_rom[] = \""'\\'"\n"
 CBR += "UserLM32"'\\n\\'"\n"
 CBR += "Project     : $(TARGET)"'\\n\\'"\n"
@@ -245,11 +255,14 @@ CBR += "   $(CBR_GIT5)"'\\n\\'"\n\";\n\n"
 SHARED_MAP_HEADDER ?= shared_mmap.h
 
 UCTARGET = "_$$(echo $(SHARED_MAP_HEADDER) | tr a-z A-Z | tr '.' '_')"
-SMM  = "//! @file $(GENERATED_DIR)/$(SHARED_MAP_HEADDER)\n"
-SMM += "//! @brief Location of Buildid and Shared Section in LM32 Memory,"
+SMM  = "/*!\n"
+SMM += " * @file $(GENERATED_DIR)/$(SHARED_MAP_HEADDER)\n"
+SMM += " * @brief Location of Buildid and Shared Section in LM32 Memory,"
 SMM += " to be used by host\n"
-SMM += "//! @note $(COMMENT_TEXT)\n"
-SMM += "//! @author Created by makefile.scu\n\n"
+SMM += " * @note $(COMMENT_TEXT)\n"
+SMM += " * @date $(DATE)\n"
+SMM += " * @author $(AUTHOR)\n"
+SMM += " */\n\n"
 SMM += "\#ifndef $(UCTARGET)\n"
 SMM += "\#define $(UCTARGET)\n\n"
 SMM += "\#define INT_BASE_ADR  $(RAM_OFFS)\n"

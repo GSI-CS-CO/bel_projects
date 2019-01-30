@@ -9,9 +9,10 @@
 ## Date:    17.12.2018                                                       ##
 ###############################################################################
 
-CPU    := lm32
+CPU           := lm32
 CROSS_COMPILE ?= $(CPU)-elf-
-
+MEM_ALIGN     := 4
+DEFINES       += __MEM_ALIGN=$(MEM_ALIGN)
 OUTPUT_FORMAT ?= binary
 
 CC      = $(TOOLCHAIN_DIR)$(CROSS_COMPILE)gcc -std=gnu99
