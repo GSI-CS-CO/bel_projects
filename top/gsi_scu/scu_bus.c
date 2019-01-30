@@ -87,6 +87,24 @@ void ReadTempDevices(int bus, uint64_t *id, uint32_t *temp)
 #ifndef CONFIG_OLD_SCU_SW
 
 /*! ---------------------------------------------------------------------------
+ * @brief Function will need in function scuBusFindSlavesByMatchList16
+ * @see scuBusFindSlavesByMatchList16
+ */
+static bool _or( bool a, bool b )
+{
+   return (a || b);
+}
+
+/*! ---------------------------------------------------------------------------
+ * @brief Function will need in function scuBusFindSlavesByMatchList16
+ * @see scuBusFindSlavesByMatchList16
+ */
+static bool _and( bool a, bool b )
+{
+   return (a && b);
+}
+
+/*! ---------------------------------------------------------------------------
  * @brief Finds all scu-bus slaves which match by one or all items of the
  *        given match-list depending on mode.
  * @see SCU_BUS_MATCH_ITEM16
@@ -109,9 +127,6 @@ SCUBUS_SLAVE_FLAGS_T
                                  const struct SCU_BUS_MATCH_ITEM16 pMatchList[],
                                  const enum SCUBUS_FIND_MODE_T mode )
 {
-   bool _or( bool a, bool b )  { return (a || b); }
-   bool _and( bool a, bool b ) { return (a && b); }
-
    SCUBUS_ASSERT( pMatchList[0].index < SCUBUS_INVALID_INDEX16 );
    bool (*op)( bool, bool ) = (mode == ALL)? _and : _or;
    SCUBUS_SLAVE_FLAGS_T slaveFlags = 0;
@@ -188,7 +203,7 @@ SCUBUS_SLAVE_FLAGS_T scuBusFindAllSlaves( const void* pScuBusBase )
 /*! ---------------------------------------------------------------------------
  * @see scu_bus.h
  */
-unsigned int getNumberOfSlaves( const SCUBUS_SLAVE_FLAGS_T slaveFlags )
+unsigned int scuBusGetNumberOfSlaves( const SCUBUS_SLAVE_FLAGS_T slaveFlags )
 {
    unsigned int ret = 0;
    for( int i = 0; i <= (MAX_SCU_SLAVES-SCUBUS_START_SLOT); i++ )

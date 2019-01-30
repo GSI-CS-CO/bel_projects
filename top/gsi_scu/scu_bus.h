@@ -426,7 +426,7 @@ bool scuBusIsSlavePresent( const SCUBUS_SLAVE_FLAGS_T flags, const int slot )
  * @param slaveFlags Slave flag field
  * @return Number of SCU-bus slaves
  */
-unsigned int getNumberOfSlaves( const SCUBUS_SLAVE_FLAGS_T slaveFlags );
+unsigned int scuBusGetNumberOfSlaves( const SCUBUS_SLAVE_FLAGS_T slaveFlags );
 
 /*! ---------------------------------------------------------------------------
  * @ingroup SCU_BUS
