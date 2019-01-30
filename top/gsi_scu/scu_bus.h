@@ -441,17 +441,17 @@ unsigned int scuBusGetNumberOfSlaves( const SCUBUS_SLAVE_FLAGS_T slaveFlags );
  * @note The last item of pMatchList has always to be the terminator:
  *       SCUBUS_MATCH_LIST16_TERMINATOR
  */
-struct SCU_BUS_MATCH_ITEM16
+typedef struct
 {
    SCUBUS_ADDR_OFFSET_T index; //!< @brief Relative address resp. index of value to match.
    uint16_t             value; //!< @brief 16 bit value to match
-};
+} SCU_BUS_MATCH_ITEM16_T;
 
 /*!
  * @ingroup SCU_BUS
  * @brief Terminator of a scu-bus match-list it has to be always the last item
  *        of the list.
- * @see SCU_BUS_MATCH_ITEM16
+ * @see SCU_BUS_MATCH_ITEM16_T
  * @see SCUBUS_INVALID_INDEX16
  * @note Don't forget it!
  */
@@ -463,20 +463,20 @@ struct SCU_BUS_MATCH_ITEM16
  *
  * It determines whether the whole items of the match-list has to be match, or
  * only one item of the list.
- * @see SCU_BUS_MATCH_ITEM16
+ * @see SCU_BUS_MATCH_ITEM16_T
  * @see scuBusFindSlavesByMatchList16
  */
-enum SCUBUS_FIND_MODE_T
+typedef enum
 {
    ALL, //!< @brief All items of the match list has to be match
    ANY  //!< @brief Only one item of the match list has to be match
-};
+} SCUBUS_FIND_MODE_T;
 
 /*!
  * @ingroup SCU_BUS
  * @brief Finds all scu-bus slaves which match by one or all items of the
  *        given match-list depending on mode.
- * @see SCU_BUS_MATCH_ITEM16
+ * @see SCU_BUS_MATCH_ITEM16_T
  * @see scuBusIsSlavePresent
  * @see scuBusFindAllSlaves
  * @see find_device_adr
@@ -492,8 +492,8 @@ enum SCUBUS_FIND_MODE_T
  *         all or one item of the given match-list match depending on parameter mode.
  */
 SCUBUS_SLAVE_FLAGS_T scuBusFindSlavesByMatchList16( const void* pScuBusBase,
-                                                 const struct SCU_BUS_MATCH_ITEM16 pMatchList[],
-                                                 const enum SCUBUS_FIND_MODE_T mode );
+                                                 const SCU_BUS_MATCH_ITEM16_T pMatchList[],
+                                                 const SCUBUS_FIND_MODE_T mode );
 
 /*! ---------------------------------------------------------------------------
  * @ingroup SCU_BUS

@@ -87,6 +87,7 @@ void ReadTempDevices(int bus, uint64_t *id, uint32_t *temp)
 #ifndef CONFIG_OLD_SCU_SW
 
 /*! ---------------------------------------------------------------------------
+ * @ingroup SCU_BUS
  * @brief Function will need in function scuBusFindSlavesByMatchList16
  * @see scuBusFindSlavesByMatchList16
  */
@@ -96,6 +97,7 @@ static bool _or( bool a, bool b )
 }
 
 /*! ---------------------------------------------------------------------------
+ * @ingroup SCU_BUS
  * @brief Function will need in function scuBusFindSlavesByMatchList16
  * @see scuBusFindSlavesByMatchList16
  */
@@ -105,9 +107,10 @@ static bool _and( bool a, bool b )
 }
 
 /*! ---------------------------------------------------------------------------
+ * @ingroup SCU_BUS
  * @brief Finds all scu-bus slaves which match by one or all items of the
  *        given match-list depending on mode.
- * @see SCU_BUS_MATCH_ITEM16
+ * @see SCU_BUS_MATCH_ITEM16_T
  * @see scuBusIsSlavePresent
  * @see scuBusFindAllSlaves
  * @see find_device_adr
@@ -124,8 +127,8 @@ static bool _and( bool a, bool b )
  */
 SCUBUS_SLAVE_FLAGS_T
   scuBusFindSlavesByMatchList16( const void* pScuBusBase,
-                                 const struct SCU_BUS_MATCH_ITEM16 pMatchList[],
-                                 const enum SCUBUS_FIND_MODE_T mode )
+                                 const SCU_BUS_MATCH_ITEM16_T pMatchList[],
+                                 const SCUBUS_FIND_MODE_T mode )
 {
    SCUBUS_ASSERT( pMatchList[0].index < SCUBUS_INVALID_INDEX16 );
    bool (*op)( bool, bool ) = (mode == ALL)? _and : _or;
@@ -166,7 +169,7 @@ SCUBUS_SLAVE_FLAGS_T scuBusFindSpecificSlaves( const void* pScuBusBase,
                                                const uint16_t systemAddr,
                                                const uint16_t grupAddr )
 {
-   const struct SCU_BUS_MATCH_ITEM16 matchList[] =
+   const SCU_BUS_MATCH_ITEM16_T matchList[] =
    {
       { .index = CID_SYSTEM,.value = systemAddr },
       { .index = CID_GROUP, .value = grupAddr },
