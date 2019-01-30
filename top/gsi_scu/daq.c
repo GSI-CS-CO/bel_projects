@@ -360,7 +360,8 @@ inline static int daqDeviceFindChannels( DAQ_DEVICE_T* pThis, int slot )
 /*! ----------------------------------------------------------------------------
  * @see daq.h
  */
-int daqBusFindAndInitializeAll( register DAQ_BUS_T* pThis, const void* pScuBusBase )
+int daqBusFindAndInitializeAll( register DAQ_BUS_T* pThis,
+				const void* pScuBusBase )
 {
    SCUBUS_SLAVE_FLAGS_T daqPersentFlags;
 
@@ -371,7 +372,8 @@ int daqBusFindAndInitializeAll( register DAQ_BUS_T* pThis, const void* pScuBusBa
    // Pre-initializing
    memset( pThis, 0, sizeof( DAQ_BUS_T ));
 
-   daqPersentFlags = scuBusFindSpecificSlaves( pScuBusBase, 0x37, 0x26 );
+   daqPersentFlags = scuBusFindSpecificSlaves( pScuBusBase,
+					       DAQ_SYS_ID, DAQ_GROUP_ID );
    if( daqPersentFlags == 0 )
    {
       DBPRINT( "DBG: No DAQ slaves found!\n" );

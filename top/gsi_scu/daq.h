@@ -97,6 +97,22 @@ extern "C" {
   #endif
 #endif
 
+#ifndef DAQ_SYS_ID
+/*!
+ * @ingroup DAQ_DEVICE SCU_BUS
+ * @brief DAQ device system ID
+ */
+ #define DAQ_SYS_ID   0x37
+#endif
+
+#ifndef DAQ_GROUP_ID
+/*!
+ * @ingroup DAQ_DEVICE SCU_BUS
+ * @brief DAQ device group ID
+ */
+ #define DAQ_GROUP_ID 0x26
+#endif
+
 /*!
  * @ingroup DAQ_DEVICE DAQ_INTERRUPT
  * @brief Interrupt number for DAQ fifo full.
