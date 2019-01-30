@@ -64,8 +64,6 @@
 #define WRUNIPZ_CMD_CONFSUBMIT           8    // submit data written to DP RAM
 #define WRUNIPZ_CMD_CONFKILL             9    // this will kill an ongoing transaction
 #define WRUNIPZ_CMD_CONFCLEAR           10    // this will clear all event tables
-#define WRUNIPZ_CMD_MODESPZ             11    // mode -> WRUNIPZ_MODE_SPZ
-#define WRUNIPZ_CMD_MODETEST            12    // mode ->  WRUNIPZ_MODE_TEST
 
 // states; implicitely, all states may transit to the ERROR or FATAL state
 #define WRUNIPZ_STATE_UNKNOWN            0    // unknown state
@@ -80,7 +78,6 @@
 // activity requested by ECA Handler, the relevant codes are also used as "tags".
 #define WRUNIPZ_ECADO_TIMEOUT            0    // timeout: no activity requested
 #define WRUNIPZ_ECADO_UNKOWN             1    // unnkown activity requested (unexpected action by ECA)
-#define WRUNIPZ_ECADO_TEST               2    // test mode (internal 50 Hz trigger)
 #define WRUNIPZ_ECADO_MIL                3    // a MIL event was received
 
 // define log levels for print statemens
@@ -92,9 +89,6 @@
 #define  WRUNIPZ_CONFSTAT_IDLE           0    // no transaction in progress
 #define  WRUNIPZ_CONFSTAT_INIT           1    // transaction of config data has been initialized
 #define  WRUNIPZ_CONFSTAT_SUBMIT         2    // config data for transaction has been submitted, waiting for commit event
-
-#define  WRUNIPZ_MODE_SPZ                0    // listen to events from Super-UNIPZ
-#define  WRUNIPZ_MODE_TEST               1    // test mode: 50 Hz clock generated internally
 
 // event codes from Super PZ received via internal bus (bits 0..7)
 #define WRUNIPZ_EVT_PZ1                  1    // next cycle PZ 1
@@ -160,8 +154,7 @@ typedef struct dataTable {                    // table with _one_ virtAcc for _o
 #define WRUNIPZ_SHARED_NLATE          (WRUNIPZ_SHARED_DTMIN      + _32b_SIZE_)          // # of late messages
 #define WRUNIPZ_SHARED_VACCAVG        (WRUNIPZ_SHARED_NLATE      + _32b_SIZE_)          // virt accs used (past second) bits 0..15 (normal), 16-31 (verkuerzt)
 #define WRUNIPZ_SHARED_PZAVG          (WRUNIPZ_SHARED_VACCAVG    + _32b_SIZE_)          // PZ used (past second) bits 0..6
-#define WRUNIPZ_SHARED_MODE           (WRUNIPZ_SHARED_PZAVG      + _32b_SIZE_)          // mode (see WRUNIPZ_MODE_...)
-#define WRUNIPZ_SHARED_TDIAGHI        (WRUNIPZ_SHARED_MODE       + _32b_SIZE_)          // time when diagnostics was cleared, high bits
+#define WRUNIPZ_SHARED_TDIAGHI        (WRUNIPZ_SHARED_PZAVG       + _32b_SIZE_)          // time when diagnostics was cleared, high bits
 #define WRUNIPZ_SHARED_TDIAGLO        (WRUNIPZ_SHARED_TDIAGHI    + _32b_SIZE_)          // time when diagnostics was cleared, low bits
 #define WRUNIPZ_SHARED_TS0HI          (WRUNIPZ_SHARED_TDIAGLO    + _32b_SIZE_)          // time when FW was in S0 state (start of FW), high bits
 #define WRUNIPZ_SHARED_TS0LO          (WRUNIPZ_SHARED_TS0HI      + _32b_SIZE_)          // time when FW was in S0 state (start of FW), low bits

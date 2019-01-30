@@ -129,7 +129,6 @@ uint32_t *pSharedDtMin;                 // pointer to a "user defined" u32 regis
 uint32_t *pSharedNLate;                 // pointer to a "user defined" u32 register; here: # late messages
 uint32_t *pSharedVaccAvg;               // pointer to a "user defined" u32 register; here: virt accs played during past second
 uint32_t *pSharedPzAvg;                 // pointer to a "user defined" u32 register; here: PZs used during the past second
-uint32_t *pSharedMode;                  // pointer to a "user defined" u32 register; here: mode (see WRUNIPZ_MODE...)
 uint32_t *pSharedTDiagHi;               // pointer to a "user defined" u32 register; here: time when diag was cleared, high bits
 uint32_t *pSharedTDiagLo;               // pointer to a "user defined" u32 register; here: time when diag was cleared, low bits
 uint32_t *pSharedTS0Hi;                 // pointer to a "user defined" u32 register; here: time when FW was in S0 state, high bits
@@ -151,7 +150,6 @@ int32_t  dtMin;                         // dT min (deadline - dispatch time)
 uint32_t nLate;                         // # of late messages
 uint32_t vaccAvg;                       // virt accs played over the past second
 uint32_t pzAvg;                         // PZs used over the past second
-uint32_t mode;                          // 1: test mode
 uint32_t nCycleAct;                     // number of cycles
 uint32_t nCyclePrev;                    // previous number of cycles
 uint64_t nMsgAct;                       // # of messages sent
@@ -377,7 +375,6 @@ void initSharedMem()
   pSharedNLate            = (uint32_t *)(pShared + (WRUNIPZ_SHARED_NLATE >> 2));
   pSharedVaccAvg          = (uint32_t *)(pShared + (WRUNIPZ_SHARED_VACCAVG >> 2));
   pSharedPzAvg            = (uint32_t *)(pShared + (WRUNIPZ_SHARED_PZAVG >> 2));
-  pSharedMode             = (uint32_t *)(pShared + (WRUNIPZ_SHARED_MODE >> 2));
   pSharedTDiagHi          = (uint32_t *)(pShared + (WRUNIPZ_SHARED_TDIAGHI >> 2));
   pSharedTDiagLo          = (uint32_t *)(pShared + (WRUNIPZ_SHARED_TDIAGLO >> 2));
   pSharedTS0Hi            = (uint32_t *)(pShared + (WRUNIPZ_SHARED_TS0HI >> 2));
@@ -494,29 +491,6 @@ uint32_t wait4ECAEvent(uint32_t msTimeout, uint64_t *deadline, uint32_t *isLate)
   uint32_t actTag;              // tag of action           
   uint32_t nextAction;          // describes what to do next
   uint64_t timeoutT;            // when to time out
-
-  /*
-  if (mode == WRUNIPZ_MODE_TEST) {
-  // hackish implementation of a test mode without events from Super-UNIPZ
-  uint64_t tCycle;              // UNILAC period
-  uint64_t tEntry;              // timestamp when entering this routine
-  uint64_t tNext;               // timestamp of next 20ms tick
-  uint64_t nCycles;             // number of 20ms cycles
-
-  tCycle  = 20000000;
-  tEntry  = getSysTime();
-  nCycles = tEntry / tCycle;    // number of UNILAC cycles so far
-  nCycles = nCycles + 1;        // number of next UNILAC cycle
-  tNext   = tCycle * nCycles;
-
-  while (getSysTime() < tNext) asm("nop");
-
-  *deadline = tNext;
-  *isLate   = 0;
-  
-  return WRUNIPZ_ECADO_TEST;
-  } // if mode
-  */
 
   pECAFlag    = (uint32_t *)(pECAQ + (ECA_QUEUE_FLAGS_GET >> 2));   // address of ECA flag
 
@@ -758,7 +732,6 @@ uint32_t doActionS0()
   if (findWREp()     != WRUNIPZ_STATUS_OK) status = WRUNIPZ_STATUS_ERROR;
 
   nBadState     = 0;
-  mode          = WRUNIPZ_MODE_SPZ;
   now           = getSysTime();
   *pSharedTS0Hi = (uint32_t)(now >> 32);
   *pSharedTS0Lo = (uint32_t)now & 0xffffffff;
@@ -807,7 +780,7 @@ uint32_t entryActionConfigured()
   configLemoOutputEvtMil(pMILPiggy, 2);    // used to see a blinking LED (and optionally connect a scope) for debugging
   
   *pSharedConfStat = WRUNIPZ_CONFSTAT_IDLE; /* chk */
-  mode             = WRUNIPZ_MODE_SPZ;
+
   return status;
 } // entryActionConfigured
 
@@ -892,14 +865,6 @@ void cmdHandler(uint32_t *reqState) // handle commands from the outside world
     case WRUNIPZ_CMD_CONFCLEAR :
       DBPRINT3("wr-unipz: received cmd %d\n", cmd);
       clearPZ();
-      break;
-    case WRUNIPZ_CMD_MODESPZ :
-      DBPRINT3("wr-unipz: received cmd %d\n", cmd);
-      mode = WRUNIPZ_MODE_SPZ;
-      break;
-    case WRUNIPZ_CMD_MODETEST :
-      DBPRINT3("wr-unipz: received cmd %d\n", cmd);
-      mode = WRUNIPZ_MODE_TEST;
       break;
     default:
       DBPRINT3("wr-unipz: received unknown command '0x%08x'\n", cmd);
@@ -1210,7 +1175,6 @@ void main(void) {
     *pSharedDtMax        = dtMax;
     *pSharedDtMin        = dtMin;
     *pSharedNLate        = nLate;
-    *pSharedMode         = mode;
     *pSharedNCycle       = nCycleAct; 
     *pSharedNMessageHi   = (uint32_t)(nMsgAct >> 32);
     *pSharedNMessageLo   = (uint32_t)(nMsgAct & 0xffffffff);

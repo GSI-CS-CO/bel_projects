@@ -211,7 +211,7 @@ uint32_t wrunipz_transaction_upload(eb_device_t device, eb_address_t DPstat, eb_
 
 void wrunipz_fill_channel_file(char *filename, uint32_t pz, uint32_t vAcc, uint32_t *dataChn0, uint32_t *nDataChn0, uint32_t *dataChn1, uint32_t *nDataChn1)
 {
-#define  MAXLEN 1024
+#define  MAXLEN 4096
 
   int     i,j,k;
   char    charChn0[MAXLEN];
@@ -287,4 +287,20 @@ void wrunipz_fill_channel_file(char *filename, uint32_t pz, uint32_t vAcc, uint3
     (*nDataChn1)++;
   } // while
   
-} // wrunipz_fill_channel_real
+} // wrunipz_fill_channel_file
+
+
+void wrunipz_fill_channel_dummy(uint32_t offset, uint32_t pz, uint32_t vAcc, uint32_t *dataChn0, uint32_t *nDataChn0, uint32_t *dataChn1, uint32_t *nDataChn1)
+{
+  int i;
+  
+  *nDataChn0 = WRUNIPZ_NEVT;
+  *nDataChn1 = WRUNIPZ_NEVT;
+
+  for (i=0; i < (*nDataChn0 -1); i++) dataChn0[i] = ((uint16_t)(i + 100 * pz + offset) << 16) + i;  // time and evtno from formula
+  dataChn0[*nDataChn0 -1] = ((uint16_t)offset << 16) + 64;                                          // time is offset, evtno 64 (diagnosis)
+
+  for (i=0; i < (*nDataChn1 -1); i++) dataChn1[i] = ((uint16_t)(i + 100 * pz + offset) << 16) + i;
+  dataChn1[*nDataChn1 -1] = ((uint16_t)offset << 16) + 64;
+} // wrunipz_fill_channel_dummy
+
