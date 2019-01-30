@@ -244,8 +244,8 @@ void wrunipz_fill_channel_file(char *filename, uint32_t pz, uint32_t vAcc, uint3
       for (k=0; k<WRUNIPZ_NCHN; k++) {
         if((read = getline(&line, &len, fp)) != -1) {
           // printf("line %s\n", line);
-          if ((i==pz) && (j==vAcc) && (k == 0)) strcpy(charChn0, line);
-          if ((i==pz) && (j==vAcc) && (k == 1)) strcpy(charChn1, line); 
+          if ((i==pz) && (j==vAcc) && (k == 0)) strcpy(charChn0, (line+1)); // ommit leading '['
+          if ((i==pz) && (j==vAcc) && (k == 1)) strcpy(charChn1, (line+1)); // ommit leading '['
         } // while
       } // for k
     } // for j
@@ -254,8 +254,8 @@ void wrunipz_fill_channel_file(char *filename, uint32_t pz, uint32_t vAcc, uint3
   fclose(fp);
   if (line) free (line);
 
-  // printf("c0 %s\n", charChn0);
-  // printf("c1 %s\n", charChn1);
+  //printf("c0 %s\n", charChn0);
+  //printf("c1 %s\n", charChn1);
   
   
   // extract data for channel0
@@ -269,7 +269,7 @@ void wrunipz_fill_channel_file(char *filename, uint32_t pz, uint32_t vAcc, uint3
     data += dataOffset;
 
     dataChn0[*nDataChn0] = (offset << 16) | evt;
-    // printf("c0: offset %d, data %d\n", offset, evt);
+    //printf("c0: offset %d, data %d\n", offset, evt);
     (*nDataChn0)++;
   } // while
   // extract data for channel1

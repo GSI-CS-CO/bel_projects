@@ -594,7 +594,7 @@ int main(int argc, char** argv) {
       printf("wr-unipz: transaction took %u us per virtAcc\n", (uint32_t)(t2 -t1) / (WRUNIPZ_NVACC - 1));
 
     } // "testfull"
-    if (!strcasecmp(command, "testf")) {
+    if (!strcasecmp(command, "ftest")) {
       if (state != WRUNIPZ_STATE_OPREADY) printf("wr-unipz: WARNING command has no effect (not in state OPREADY)\n");
       if (optind+4  != argc)                     {printf("wr-unipz: expecting exactly three arguments: test <file> <vacc> <pz>\n"); return 1;}
       filename = argv[optind+1];
