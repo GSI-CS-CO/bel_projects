@@ -46,7 +46,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 22-November-2018
  ********************************************************************************************/
-#define WRUNIPZ_FW_VERSION 0x000009                                     // make this consistent with makefile
+#define WRUNIPZ_FW_VERSION 0x000010                                     // make this consistent with makefile
 
 // standard includes
 #include <stdio.h>
@@ -267,7 +267,7 @@ uint64_t ebmWriteTM(uint32_t evtData, uint64_t tStart, uint32_t pz, uint32_t vir
   deadlineHi = (uint32_t)((deadline >> 32) & 0xffffffff);
   deadlineLo = (uint32_t)(deadline & 0xffffffff);
   
-          // pack timing message
+  // pack timing message
   atomic_on();                                  
   ebm_op(WRUNIPZ_ECA_ADDRESS, idHi,       EBM_WRITE);             
   ebm_op(WRUNIPZ_ECA_ADDRESS, idLo,       EBM_WRITE);             
@@ -327,7 +327,7 @@ uint32_t getVaccLen(dataTable evts)
   
   for (i=0; i<WRUNIPZ_NEVT; i++) {
     if ((evts.validFlags >> i) & 0x1) {
-      tmp = (uint32_t)((evts.data >> 16) & 0xffff);
+      tmp = (uint32_t)((evts.data[i] >> 16) & 0xffff);
       if (tmp > usOffset) usOffset = tmp;
     } // if validFlags
   } // for i
@@ -675,6 +675,11 @@ void clearDiag()
 uint32_t configTransactInit()
 {
   int i,j;
+
+  uint64_t t1, t2;
+  uint32_t dt;
+
+  t1 = getSysTime();
   
   if (*pSharedConfStat != WRUNIPZ_CONFSTAT_IDLE) return WRUNIPZ_STATUS_TRANSACTION;
 
@@ -687,12 +692,21 @@ uint32_t configTransactInit()
     
   *pSharedConfStat = WRUNIPZ_CONFSTAT_INIT;
 
+  t2 = getSysTime();
+  dt = (uint32_t)(t2-t1);
+  mprintf("wr-unipz: confTransInit dt %u\n", dt);
+
   return WRUNIPZ_STATUS_OK;
 } // configTransactInit
 
 // submit transferred config data
 uint32_t configTransactSubmit() 
 {
+  uint64_t t1, t2;
+  uint32_t dt;
+
+  t1 = getSysTime();
+  
   if (*pSharedConfStat != WRUNIPZ_CONFSTAT_INIT) return WRUNIPZ_STATUS_TRANSACTION;
 
   /* hack: code below shall be triggered by "commit" event from Masterpulszentrale */
@@ -724,6 +738,10 @@ uint32_t configTransactSubmit()
   
   /* *pSharedConfDataStat = WRUNIPZ_CONFSTAT_REQ | WRUNIPZ_CONFSTAT_SUBMIT; commented: this shall be used once code above is triggered by event */
   *pSharedConfStat = WRUNIPZ_CONFSTAT_IDLE;
+
+  t2 = getSysTime();
+  dt = (uint32_t)(t2-t1);
+  mprintf("wr-unipz: confTransSubmit dt %u\n", dt);
 
   return WRUNIPZ_STATUS_OK;
 } // configTransactSubmit
@@ -1064,7 +1082,7 @@ uint32_t doActionOperation(uint32_t *nCycle,                  // total number of
     else {                                                    // B: super PZ has sent info on a service event: bits 12..15 encode event type
       DBPRINT3("wr-unipz: service event for pz %d, vacc %d\n", ipz, virtAcc);
       servOffs = getVaccLen(bigData[ipz][virtAcc * WRUNIPZ_NCHN + chn]) & 0xffff;
-      servEvt  = 0x0
+      servEvt  = 0x0;
       if (evtData == WRUNIPZ_EVTDATA_PREPACC)    servEvt = EVT_AUX_PRP_NXT_ACC | ((virtAcc & 0xf) << 8) | ((servOffs & 0xffff)        << 16); // send after last event
       if (evtData == WRUNIPZ_EVTDATA_ZEROACC)    servEvt = EVT_MAGN_DOWN       | ((virtAcc & 0xf) << 8) | ((servOffs & 0xffff)        << 16); // send after last event 
       if (evtData == WRUNIPZ_EVTDATA_PREPACCNOW) servEvt = EVT_AUX_PRP_NXT_ACC | ((virtAcc & 0xf) << 8) | ((uint16_t)WRUNIPZ_QQOFFSET << 16); // send 'now' /* chk QQOFFSET */

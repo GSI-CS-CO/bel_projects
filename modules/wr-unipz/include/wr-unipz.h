@@ -8,20 +8,20 @@
 // ****************************************************************************************
 // general things
 // ****************************************************************************************
-#define WRUNIPZ_US_ASMNOP        31           // # of asm("nop") operations per microsecond
+#define WRUNIPZ_US_ASMNOP               31    // # of asm("nop") operations per microsecond
 #define WRUNIPZ_MS_ASMNOP        31 * 1000    // # of asm("nop") operations per microsecond
-#define WRUNIPZ_DEFAULT_TIMEOUT  100          // default timeout used by main loop [ms]
-#define WRUNIPZ_QUERYTIMEOUT     1            // timeout for querying virt acc from MIL Piggy FIFO [ms] 
+#define WRUNIPZ_DEFAULT_TIMEOUT        100    // default timeout used by main loop [ms]
+#define WRUNIPZ_QUERYTIMEOUT             1    // timeout for querying virt acc from MIL Piggy FIFO [ms] 
                                               // Ludwig: we have 10ms time; here: use 5 ms to be on the safe side
-#define WRUNIPZ_MILTIMEOUT       100          // timeout for querying MIL event [ms]
-#define WRUNIPZ_ECATIMEOUT       1            // timeout for querying ECA action [ms]
-#define WRUNIPZ_MATCHWINDOW      200000       // used for comparing timestamps: 1 TS from TLU->ECA matches event from MIL FIFO, 2: synch EVT_MB_TRIGGER, ... [ns]
-#define WRUNIPZ_ECA_ADDRESS      0x7ffffff0   // address of ECA input
-#define WRUNIPZ_EB_HACKISH       0x12345678   // value for EB read handshake
-#define WRUNIPZ_UNILACFREQ       50           // frequency of UNILAC operation [Hz]
-#define WRUNIPZ_UNILACPERIOD     20000000     // length of one UNILAC cylce [ns]
-#define WRUNIPZ_MAXPREPOFFSET    2000         // max offset of a prep event within UNILAC cycle [us]
-#define WRUNIPZ_QQOFFSET         500000       // offset for sending special service event for QQ [ns]
+#define WRUNIPZ_MILTIMEOUT             100    // timeout for querying MIL event [ms]
+#define WRUNIPZ_ECATIMEOUT               1    // timeout for querying ECA action [ms]
+#define WRUNIPZ_MATCHWINDOW         200000    // used for comparing timestamps: 1 TS from TLU->ECA matches event from MIL FIFO, 2: synch EVT_MB_TRIGGER, ... [ns]
+#define WRUNIPZ_ECA_ADDRESS     0x7ffffff0    // address of ECA input
+#define WRUNIPZ_EB_HACKISH      0x12345678    // value for EB read handshake
+#define WRUNIPZ_UNILACFREQ              50    // frequency of UNILAC operation [Hz]
+#define WRUNIPZ_UNILACPERIOD      20000000    // length of one UNILAC cylce [ns]
+#define WRUNIPZ_MAXPREPOFFSET         2000    // max offset of a prep event within UNILAC cycle [us]
+#define WRUNIPZ_QQOFFSET            500000    // offset for sending special service event for QQ [ns]
 
 // numbers for UNIPZ
 #define WRUNIPZ_NEVT                    32    // # of events per virt acc
@@ -118,7 +118,7 @@ typedef struct dataTable {                    // table with _one_ virtAcc for _o
   uint32_t prepFlags;                         // if bit 'n' is set, data[n] is prep data
   uint32_t evtFlags;                          // if bit 'n' is set, data[n] is event data  
   uint32_t data[WRUNIPZ_NEVT];                // bits 0..7 'event code', bits 8..11 reserved, bits 12..15 'event data', bits 16..31 offset [us]
-                                              // meaning of bits ist _not_ as desribed in https://www-acc.gsi.de/data/documentation/eq-models/pzus/gm-pzus.pdf (page 72)
+                                              // 'event data' is _not_ as desribed in https://www-acc.gsi.de/data/documentation/eq-models/pzus/gm-pzus.pdf (page 72)
                                               // instead: bit 15 ('high current'), bit 14 ('no chopper'), bit 13 ('high brho'), bit 12 (reserved)
 } dataTable;
 
@@ -128,9 +128,9 @@ typedef struct dataTable {                    // table with _one_ virtAcc for _o
 
 // sizes
 #define _32b_SIZE_                    4                                                 // size of 32bit value [bytes]
-#define WRUNIPZ_DATA4EBSIZE          (_32b_SIZE_ * 20)                                  // size of shared memory used to receive EB return values [bytes]
-#define WRUNIPZ_NCONFDATA            (WRUNIPZ_NEVT  * WRUNIPZ_NPZ * WRUNIPZ_NCHN)       // # of config data words for one virt acc
-#define WRUNIPZ_NCONFFLAG            (WRUNIPZ_NFLAG * WRUNIPZ_NPZ * WRUNIPZ_NCHN)       // # of config flag words for one virt acc
+#define WRUNIPZ_DATA4EBSIZE           (_32b_SIZE_ * 20)                                 // size of shared memory used to receive EB return values [bytes]
+#define WRUNIPZ_NCONFDATA             (WRUNIPZ_NEVT  * WRUNIPZ_NPZ * WRUNIPZ_NCHN)      // # of config data words for one virt acc
+#define WRUNIPZ_NCONFFLAG             (WRUNIPZ_NFLAG * WRUNIPZ_NPZ * WRUNIPZ_NCHN)      // # of config flag words for one virt acc
 
 // offsets
 // simple values
@@ -154,7 +154,7 @@ typedef struct dataTable {                    // table with _one_ virtAcc for _o
 #define WRUNIPZ_SHARED_NLATE          (WRUNIPZ_SHARED_DTMIN      + _32b_SIZE_)          // # of late messages
 #define WRUNIPZ_SHARED_VACCAVG        (WRUNIPZ_SHARED_NLATE      + _32b_SIZE_)          // virt accs used (past second) bits 0..15 (normal), 16-31 (verkuerzt)
 #define WRUNIPZ_SHARED_PZAVG          (WRUNIPZ_SHARED_VACCAVG    + _32b_SIZE_)          // PZ used (past second) bits 0..6
-#define WRUNIPZ_SHARED_TDIAGHI        (WRUNIPZ_SHARED_PZAVG       + _32b_SIZE_)          // time when diagnostics was cleared, high bits
+#define WRUNIPZ_SHARED_TDIAGHI        (WRUNIPZ_SHARED_PZAVG      + _32b_SIZE_)          // time when diagnostics was cleared, high bits
 #define WRUNIPZ_SHARED_TDIAGLO        (WRUNIPZ_SHARED_TDIAGHI    + _32b_SIZE_)          // time when diagnostics was cleared, low bits
 #define WRUNIPZ_SHARED_TS0HI          (WRUNIPZ_SHARED_TDIAGLO    + _32b_SIZE_)          // time when FW was in S0 state (start of FW), high bits
 #define WRUNIPZ_SHARED_TS0LO          (WRUNIPZ_SHARED_TS0HI      + _32b_SIZE_)          // time when FW was in S0 state (start of FW), low bits
