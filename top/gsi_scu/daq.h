@@ -1,11 +1,16 @@
 /*!
  *  @file daq.h
  *  @brief Control module for Data Acquisition Unit (DAQ)
+ *  @see
+ *  <a href="https://www-acc.gsi.de/wiki/Hardware/Intern/DataAquisitionMacrof%C3%BCrSCUSlaveBaugruppen">
+ *     Data Aquisition Macro fuer SCU Slave Baugruppen</a>
  *  @date 13.11.2018
  *  @copyright (C) 2018 GSI Helmholtz Centre for Heavy Ion Research GmbH
  *
  *  @author Ulrich Becker <u.becker@gsi.de>
  *
+ *  @todo Synchronization with SCU-Bus. It could be there that further devices
+ *        which have traffic via this SCU-Bus!
  *
  *******************************************************************************
  *  This library is free software; you can redistribute it and/or
@@ -29,8 +34,8 @@
   #error This module is for the target LM32 only!
 #endif
 
-#include "scu_bus.h"
-#include "daq_descriptor.h"
+#include <scu_bus.h>
+#include <daq_descriptor.h>
 
 #ifdef CONFIG_DAQ_PEDANTIC_CHECK
    #include <scu_assert.h>
@@ -97,20 +102,20 @@ extern "C" {
   #endif
 #endif
 
-#ifndef DAQ_SYS_ID
+#ifndef DAQ_CID_SYS
 /*!
  * @ingroup DAQ_DEVICE SCU_BUS
  * @brief DAQ device system ID
  */
- #define DAQ_SYS_ID   0x37
+ #define DAQ_CID_SYS   0x37
 #endif
 
-#ifndef DAQ_GROUP_ID
+#ifndef DAQ_CID_GROUP
 /*!
  * @ingroup DAQ_DEVICE SCU_BUS
  * @brief DAQ device group ID
  */
- #define DAQ_GROUP_ID 0x26
+ #define DAQ_CID_GROUP 0x26
 #endif
 
 /*!
@@ -1225,7 +1230,6 @@ bool daqDeviceTestAndClearHiResInt( register DAQ_DEVICE_T* pThis )
    }
    return false;
 }
-
 
 /*! ---------------------------------------------------------------------------
  * @ingroup DAQ_DEVICE DAQ_INTERRUPT

@@ -1,11 +1,16 @@
 /*!
  *  @file daq.c
  *  @brief Control module for Data Acquisition Unit (DAQ)
+ *  @see
+ *  <a href="https://www-acc.gsi.de/wiki/Hardware/Intern/DataAquisitionMacrof%C3%BCrSCUSlaveBaugruppen">
+ *     Data Aquisition Macro fuer SCU Slave Baugruppen</a>
  *  @date 13.11.2018
  *  @copyright (C) 2018 GSI Helmholtz Centre for Heavy Ion Research GmbH
  *
  *  @author Ulrich Becker <u.becker@gsi.de>
  *
+ *  @todo Synchronization with SCU-Bus. It could be there that further devices
+ *        which have traffic via this SCU-Bus!
  *
  *******************************************************************************
  *  This library is free software; you can redistribute it and/or
@@ -23,11 +28,11 @@
  *******************************************************************************
  */
 #include <string.h>   // necessary for memset()
-#include "mini_sdb.h" // necessary for ERROR_NOT_FOUND
-#include "dbg.h"
-#include "daq.h"
+#include <mini_sdb.h> // necessary for ERROR_NOT_FOUND
+#include <dbg.h>
+#include <daq.h>
 #ifdef CONFIG_DAQ_DEBUG
- #include "eb_console_helper.h" //!@brief Will used for debug purposes only.
+ #include <eb_console_helper.h> //!@brief Will used for debug purposes only.
 #endif
 
 #if defined( CONFIG_DAQ_DEBUG ) || defined(__DOXYGEN__)
@@ -39,6 +44,7 @@ const char* g_pNo  = "no";
 
 
 /*======================== DAQ channel functions ============================*/
+#if 0
 /*! ---------------------------------------------------------------------------
  * @brief Writes the given value in addressed register
  * @param pReg Start address of DAQ-macro.
@@ -71,7 +77,7 @@ static inline uint16_t daqChannelGetReg( DAQ_REGISTER_T* volatile pReg,
    DAQ_ASSERT( (index & 0x0F) == 0x00 );
    return pReg->i[index | channel];
 }
-
+#endif
 /*! ---------------------------------------------------------------------------
  * @see daq.h
  */
@@ -361,7 +367,7 @@ inline static int daqDeviceFindChannels( DAQ_DEVICE_T* pThis, int slot )
  * @see daq.h
  */
 int daqBusFindAndInitializeAll( register DAQ_BUS_T* pThis,
-				const void* pScuBusBase )
+                                const void* pScuBusBase )
 {
    SCUBUS_SLAVE_FLAGS_T daqPersentFlags;
 
@@ -373,7 +379,8 @@ int daqBusFindAndInitializeAll( register DAQ_BUS_T* pThis,
    memset( pThis, 0, sizeof( DAQ_BUS_T ));
 
    daqPersentFlags = scuBusFindSpecificSlaves( pScuBusBase,
-					       DAQ_SYS_ID, DAQ_GROUP_ID );
+                                               DAQ_CID_SYS,
+                                               DAQ_CID_GROUP );
    if( daqPersentFlags == 0 )
    {
       DBPRINT( "DBG: No DAQ slaves found!\n" );

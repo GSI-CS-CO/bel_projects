@@ -1,6 +1,13 @@
 /*!
  *  @file daq_descriptor.h
  *  @brief Definition of DAQ-Descriptor data-type
+ *
+ *  This file is suitable for LM32-apps within the SCU environment and
+ *  for Linux applications.
+ *
+ *  @see
+ *  <a href="https://www-acc.gsi.de/wiki/Hardware/Intern/DataAquisitionMacrof%C3%BCrSCUSlaveBaugruppen">
+ *     Data Aquisition Macro fuer SCU Slave Baugruppen</a>
  *  @date 22.11.2018
  *  @copyright (C) 2018 GSI Helmholtz Centre for Heavy Ion Research GmbH
  *
@@ -25,10 +32,9 @@
 #ifndef _DAQ_DESCRIPTOR_H
 #define _DAQ_DESCRIPTOR_H
 
-
 #include <stdbool.h>
-#include "inttypes.h"
-#include "helper_macros.h"
+#include <stdint.h>
+#include <helper_macros.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -41,8 +47,10 @@ extern "C" {
  * @{
  */
 
-#define DAQ_DISCRIPTOR_WORD_SIZE 10 /*!< @brief byte size size of
-                                     *  DAQ descriptor + crc */
+/*!
+ * @brief byte size size of DAQ descriptor + crc
+ */
+#define DAQ_DISCRIPTOR_WORD_SIZE 10
 
 /*!
  * @brief Maximum DAQ-FIFO capacity in 16 bit words
@@ -51,6 +59,12 @@ extern "C" {
  * @see daqChannelGetDaqFifoWords
  */
 #define DAQ_FIFO_DAQ_WORD_SIZE       0x01FD
+
+//#define DAQ_FIFO_DAQ_WORD_SIZE (4 + DAQ_DISCRIPTOR_WORD_SIZE) //!! For test only!
+
+#if (DAQ_FIFO_DAQ_WORD_SIZE < 0x1FD)
+#warning DAQ module in test!
+#endif
 
 #if (DAQ_FIFO_DAQ_WORD_SIZE < DAQ_DISCRIPTOR_WORD_SIZE)
   #error Fatal: DAQ_FIFO_DAQ_WORD_SIZE shall not be smaler than DAQ_DISCRIPTOR_WORD_SIZE !
@@ -77,9 +91,9 @@ extern "C" {
 typedef struct PACKED_SIZE
 {
 #if (__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__) || defined(__DOXYGEN__)
-   unsigned int diobId: 5;
-   unsigned int unused: 7;
-   unsigned int slot:   4;
+   unsigned int diobId: 5; /*!< @brief Diob Extntion ID */
+   unsigned int unused: 7; /*!< @brief not used */
+   unsigned int slot:   4; /*!< @brief Slot number of SCU-Bus [1..12] */
 #else
    unsigned int slot:   4;
    unsigned int unused: 7;
@@ -93,10 +107,10 @@ STATIC_ASSERT( sizeof( _DAQ_BF_SLOT_DIOB ) == sizeof(uint16_t));
 typedef struct PACKED_SIZE
 {
 #if (__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__) || defined(__DOXYGEN__)
-   bool    daqMode:       1;
-   bool    hiResMode:     1;
-   bool    pmMode:        1;
-   uint8_t channelNumber: 5;
+   bool    daqMode:       1; /*!< @brief Data Acquisition continuous mode */
+   bool    hiResMode:     1; /*!< @brief High Resolution mode */
+   bool    pmMode:        1; /*!< @brief Post Mortem mode */
+   uint8_t channelNumber: 5; /*!< @brief Channel number [1..16] */
 #else
    uint8_t channelNumber: 5;
    bool    pmMode:        1;
@@ -110,8 +124,8 @@ STATIC_ASSERT( sizeof( _DAQ_BF_CANNEL_MODE ) == sizeof(uint8_t) );
 
 typedef struct PACKED_SIZE
 {
-   uint8_t controlReg;
-   _DAQ_BF_CANNEL_MODE channelMode;
+   uint8_t controlReg;               /*!< @brief Bits [7:0] of control register */
+   _DAQ_BF_CANNEL_MODE channelMode;  /*!< @see _DAQ_BF_CANNEL_MODE */
 } _DAQ_CHANNEL_CONTROL;
 #ifndef __DOXYGEN__
 STATIC_ASSERT( offsetof(_DAQ_CHANNEL_CONTROL, controlReg ) == 0 );
@@ -119,6 +133,7 @@ STATIC_ASSERT( offsetof(_DAQ_CHANNEL_CONTROL, channelMode ) == offsetof(_DAQ_CHA
 STATIC_ASSERT( sizeof( _DAQ_CHANNEL_CONTROL ) == sizeof(uint16_t) );
 #endif
 
+#if 1
 typedef struct PACKED_SIZE
 {
    uint32_t nSec;
@@ -127,7 +142,10 @@ typedef struct PACKED_SIZE
 #ifndef __DOXYGEN__
 STATIC_ASSERT( sizeof(_DAQ_WR_NAME_T) == sizeof(uint64_t) );
 #endif
-
+#endif
+/*!
+ * @brief White Rabbit time stamp
+ */
 typedef union PACKED_SIZE
 {
    _DAQ_WR_NAME_T name;
@@ -143,11 +161,14 @@ typedef union PACKED_SIZE
 STATIC_ASSERT( sizeof( _DAQ_WR_T) == sizeof(uint64_t) );
 #endif
 
+/*!
+ * @brief Trigger data type
+ */
 typedef struct PACKED_SIZE
 {
-   uint16_t low;
-   uint16_t high;
-   uint16_t delay;
+   uint16_t low;   /*!<@brief Trigger last significant word */
+   uint16_t high;  /*!<@brief Trigger most significant word */
+   uint16_t delay; /*!<@brief Trigger delay */
 } _DAQ_TRIGGER;
 #ifndef __DOXYGEN__
 STATIC_ASSERT( offsetof( _DAQ_TRIGGER, low )   == 0 * sizeof(uint16_t) );
@@ -158,10 +179,10 @@ STATIC_ASSERT( sizeof(_DAQ_TRIGGER)            == 3 * sizeof(uint16_t) );
 
 typedef struct PACKED_SIZE
 {
-   _DAQ_BF_SLOT_DIOB    slotDiob;
-   _DAQ_WR_T            wr;
-   _DAQ_TRIGGER         trigger;
-   _DAQ_CHANNEL_CONTROL cControl;
+   _DAQ_BF_SLOT_DIOB    slotDiob; /*!<@see _DAQ_BF_SLOT_DIOB */
+   _DAQ_WR_T            wr;       /*!<@brief White Rabbit Timestamp @see _DAQ_WR_T */
+   _DAQ_TRIGGER         trigger;  /*!<@brief Trigger @see _DAQ_TRIGGER */
+   _DAQ_CHANNEL_CONTROL cControl; /*!<@see _DAQ_CHANNEL_CONTROL */
    uint8_t              __unused;
    uint8_t              crc;
 } _DAQ_DISCRIPTOR_STRUCT_T;
@@ -174,6 +195,7 @@ STATIC_ASSERT( offsetof(_DAQ_DISCRIPTOR_STRUCT_T, __unused ) == offsetof(_DAQ_DI
 STATIC_ASSERT( offsetof(_DAQ_DISCRIPTOR_STRUCT_T, crc ) == offsetof(_DAQ_DISCRIPTOR_STRUCT_T, __unused ) + sizeof( uint8_t ));
 STATIC_ASSERT( sizeof(_DAQ_DISCRIPTOR_STRUCT_T ) == DAQ_DISCRIPTOR_WORD_SIZE * sizeof(uint16_t) );
 #endif
+
 /*!
  * @brief Final type of DAQ- descriptor
  */
@@ -182,7 +204,9 @@ typedef union PACKED_SIZE
    uint16_t index[DAQ_DISCRIPTOR_WORD_SIZE]; //!< @brief WORD-access by index
    _DAQ_DISCRIPTOR_STRUCT_T name;            //!< @brief Access by name
 } DAQ_DESCRIPTOR_T;
+#ifndef __DOXYGEN__
 STATIC_ASSERT( sizeof( DAQ_DESCRIPTOR_T ) == DAQ_DISCRIPTOR_WORD_SIZE * sizeof( uint16_t ) );
+#endif
 
 /*! ---------------------------------------------------------------------------
  * @brief Tells the origin slot of the last record
@@ -296,6 +320,7 @@ static inline uint16_t daqDescriptorGetTriggerDelay( register DAQ_DESCRIPTOR_T* 
    return pThis->name.trigger.delay;
 }
 
+#if 1
 /*! ---------------------------------------------------------------------------
  * @param pThis Pointer to the DAQ- descriptor object, that means to the last
  *              10 received words (type uint16_t) of the received record.
@@ -315,7 +340,7 @@ static inline uint32_t daqDescriptorGetTimeStampSec( register DAQ_DESCRIPTOR_T* 
 {
    return pThis->name.wr.name.utSec;
 }
-
+#endif
 /*! ---------------------------------------------------------------------------
  * @brief Get the CRC of this record.
  * @param pThis Pointer to the DAQ- descriptor object, that means to the last

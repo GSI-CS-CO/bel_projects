@@ -284,8 +284,6 @@ RESULT_FILE = $(TARGET_DIR)/$(TARGET).mif
 ADDITIONAL_TO_CLEAN += $(RESULT_FILE)
 ADDITIONAL_TO_CLEAN += $(WORK_DIR)/$(LINKER_SCRIPT)
 
-
-
 LD_FLAGS ?= -nostdlib -T$(WORK_DIR)/$(LINKER_SCRIPT) $(ARG_LIBS)
 
 GENRAMMIF ?= $(WR_DIR)/tools/genrammif
@@ -300,8 +298,9 @@ else
 endif
 
 # ------------ Additional defines for Doxygen ---------------------------------
-DOX_INPUT += $(SCU_LIB_SRC_DIR)/lm32_assert.h
-DOX_INPUT += $(SHARED_MAP_HEADDER)
+DOX_INPUT += $(SCU_LIB_SRC_DIR)/scu_assert.h
+DOX_INPUT += $(SCU_DIR)/daq_descriptor.h
+DOX_INPUT += $(GENERATED_DIR)/$(SHARED_MAP_HEADDER)
 DOX_INPUT += $(WORK_DIR)/$(LINKER_SCRIPT)
 DOX_INPUT += $(MAKEFILE_DIR)/makefile.scu
 # -------------- End of defines for Doxygen -----------------------------------
@@ -326,6 +325,11 @@ $(RESULT_FILE): $(BIN_FILE)
 
 #-------------------------- upload to target SCU ------------------------------
 # For developing purposes only.
+# SCU_URL can be a Linux environment-variable containing the URL of the
+# concerning SCU to develop.
+# E.g.:
+# export SCU_URL=scuxlXXXX
+#
 ifdef SCU_URL
 
 PROTOCOL   ?= tcp
