@@ -562,7 +562,6 @@ int main(int argc, char** argv) {
       t1 = getSysTime();
 
       for (j=0; j < WRUNIPZ_NVACC - 1; j++) {  // only virt acc 0..14
-
         if ((status = wrunipz_transaction_init(device, wrunipz_cmd, wrunipz_confVacc, wrunipz_confStat, j)) !=  WRUNIPZ_STATUS_OK) {
           printf("wr-unipz: transaction init (virt acc %d) - %s\n", j, wrunipz_status_text(status));
         } // if status
@@ -577,7 +576,6 @@ int main(int argc, char** argv) {
 
         // submit
         wrunipz_transaction_submit(device, wrunipz_cmd, wrunipz_confStat);
-
       } // for j
 
       t2 = getSysTime();

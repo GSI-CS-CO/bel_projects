@@ -64,7 +64,7 @@ const char* wrunipz_status_text(uint32_t bit) {
   case WRUNIPZ_STATUS_BADTIMESTAMP     : sprintf(message, "error %d, %s",    bit, "TS from TLU->ECA does not coincide with MIL Event from FIFO"); break;
   case WRUNIPZ_STATUS_WAIT4UNIEVENT    : sprintf(message, "error %d, %s",    bit, "timeout while waiting for EVT_READY_TO_SIS"); break;
   case WRUNIPZ_STATUS_WRBADSYNC        : sprintf(message, "error %d, %s",    bit, "White Rabbit: not in 'TRACK_PHASE'"); break;
-  case WRUNIPZ_STATUS_AUTORECOVERY     : sprintf(message, "errorFix %d, %s", bit, "attempting auto-recovery from state ERROR"); break;
+  case WRUNIPZ_STATUS_AUTORECOVERY     : sprintf(message, "error %d, %s",    bit, "attempting auto-recovery from state ERROR"); break;
   default                              : sprintf(message, "error %d, %s",    bit, "wr-unipz: undefined error code"); break;
   }
 
@@ -104,23 +104,23 @@ uint32_t wrunipz_transaction_init(eb_device_t device, eb_address_t DPcmd, eb_add
   // check if _no_ transaction in progress
   if (eb_device_read(device, DPstat, EB_BIG_ENDIAN|EB_DATA32, &data, 0, eb_block) != EB_OK) return WRUNIPZ_STATUS_EB;
   if (data != WRUNIPZ_CONFSTAT_IDLE) return WRUNIPZ_STATUS_TRANSACTION;
-
+  
   // init transaction
   if (eb_device_write(device, DPcmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)WRUNIPZ_CMD_CONFINIT, 0, eb_block) != EB_OK) return WRUNIPZ_STATUS_EB;
-
+  
   // wait until FW confirms init mode
-  tTimeout = getSysTime() + (uint64_t)1000000000;
-  while (getSysTime() < tTimeout) {   
+  tTimeout = getSysTime() + (uint64_t)1000000;
+  while (getSysTime() < tTimeout) {
     if (eb_device_read(device, DPstat, EB_BIG_ENDIAN|EB_DATA32, &data, 0, eb_block) != EB_OK) return WRUNIPZ_STATUS_EB;
     if (data == WRUNIPZ_CONFSTAT_INIT) break;
   } // while getSysTime
-
+  
   // FW is not in init mode: give up
   if (data != WRUNIPZ_CONFSTAT_INIT) return WRUNIPZ_STATUS_TRANSACTION;
   
   // set virt acc
   if (eb_device_write(device, DPvacc, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)vAcc, 0, eb_block) != EB_OK) return WRUNIPZ_STATUS_EB;
-
+  
   return WRUNIPZ_STATUS_OK;
 } // wrunipz_transaction_init
 
@@ -138,7 +138,7 @@ uint32_t wrunipz_transaction_submit(eb_device_t device, eb_address_t DPcmd, eb_a
   if (eb_device_write(device, DPcmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)WRUNIPZ_CMD_CONFSUBMIT, 0, eb_block) != EB_OK) return WRUNIPZ_STATUS_EB;
 
   // wait until transaction has been completed
-  tTimeout = getSysTime() + (uint64_t)1000000000;
+  tTimeout = getSysTime() + (uint64_t)1000000;
   while(getSysTime() < tTimeout) {
     if (eb_device_read(device, DPstat, EB_BIG_ENDIAN|EB_DATA32, &data, 0, eb_block) != EB_OK) return WRUNIPZ_STATUS_EB;
     if (data == WRUNIPZ_CONFSTAT_IDLE) return WRUNIPZ_STATUS_OK;

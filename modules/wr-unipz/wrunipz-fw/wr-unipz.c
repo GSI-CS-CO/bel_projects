@@ -694,7 +694,7 @@ uint32_t configTransactInit()
 
   t2 = getSysTime();
   dt = (uint32_t)(t2-t1);
-  mprintf("wr-unipz: confTransInit dt %u\n", dt);
+  //mprintf("wr-unipz: confTransInit dt %u\n", dt);
 
   return WRUNIPZ_STATUS_OK;
 } // configTransactInit
@@ -702,17 +702,11 @@ uint32_t configTransactInit()
 // submit transferred config data
 uint32_t configTransactSubmit() 
 {
-  uint64_t t1, t2;
-  uint32_t dt;
-
-  t1 = getSysTime();
-  
-  if (*pSharedConfStat != WRUNIPZ_CONFSTAT_INIT) return WRUNIPZ_STATUS_TRANSACTION;
-
-  /* hack: code below shall be triggered by "commit" event from Masterpulszentrale */
   int      i,j,k;
   int      vacc;
   uint32_t pzFlag;
+
+  if (*pSharedConfStat != WRUNIPZ_CONFSTAT_INIT) return WRUNIPZ_STATUS_TRANSACTION;
 
   // get vacc and submit flags
   vacc    = *pSharedConfVacc;
@@ -738,10 +732,6 @@ uint32_t configTransactSubmit()
   
   /* *pSharedConfDataStat = WRUNIPZ_CONFSTAT_REQ | WRUNIPZ_CONFSTAT_SUBMIT; commented: this shall be used once code above is triggered by event */
   *pSharedConfStat = WRUNIPZ_CONFSTAT_IDLE;
-
-  t2 = getSysTime();
-  dt = (uint32_t)(t2-t1);
-  mprintf("wr-unipz: confTransSubmit dt %u\n", dt);
 
   return WRUNIPZ_STATUS_OK;
 } // configTransactSubmit
@@ -898,6 +888,7 @@ void cmdHandler(uint32_t *reqState) // handle commands from the outside world
     case WRUNIPZ_CMD_CONFSUBMIT :
       DBPRINT3("wr-unipz: received cmd %d\n", cmd);
       if (configTransactSubmit() != WRUNIPZ_STATUS_OK) DBPRINT1("wr-unipz: submission of config data failed\n");
+      // takes about 51us, possibly just set a flag here and call routine after WRUNIPZ_EVT_50HZ_SYNCH
       break;
     case WRUNIPZ_CMD_CONFKILL :
       DBPRINT3("wr-unipz: received cmd %d\n", cmd);
