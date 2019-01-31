@@ -1,0 +1,51 @@
+# Copyright (C) 2019 GSI Helmholtz Centre for Heavy Ion Research GmbH
+#
+# Build instructions for the bel_projects project using Travis CI
+#
+# Author Enkhbold Ochirsuren <E.Ochirsuren@gsi.de>
+
+anguage: cpp
+os: linux
+dist: xenial
+sudo: required
+
+compiler:
+- gcc
+
+# show CPU info, update package manager
+before_install:
+- lscpu
+- sudo apt-get update
+
+# install required packages
+install:
+- sudo apt-get install build-essential --install-suggests -y
+- sudo apt-get install docbook-utils -y
+- sudo apt-get install libreadline-dev -y
+- sudo apt-get install zlib1g:i386 -y
+- sudo apt-get install linux-headers-$(uname -r) -y
+- sudo apt-get install sdcc fxload -y
+- sudo apt-get install autotools-dev -y
+- sudo apt-get install automake -y
+- sudo apt-get install libtool -y
+- sudo apt-get install libglibmm-2.4 -y
+- sudo apt-get install libglib2.0 -y
+- sudo apt-get install xsltproc -y
+
+# update submodules
+# hack Makefile to fix make failure regarding spec_wb.o
+before_script:
+- ./fix-git.sh
+- sed -i 's/spec_wb.o//g' ip_cores/fpga-config-space/pcie-wb/Makefile
+
+# build etherbone and install
+script:
+- make etherbone
+- make tools
+- make driver
+- sudo make install
+
+# build saftlib and install (optional)
+#after_success:
+#- make saftlib
+#- sudo make saftlib-install
