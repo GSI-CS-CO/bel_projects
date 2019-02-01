@@ -3,7 +3,7 @@
  *
  *  created : 2018
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 31-Jan-2019
+ *  version : 01-Jan-2019
  *
  *  lm32 program for gateway between UNILAC Pulszentrale and a White Rabbit network
  *  this basically serves a Data Master for UNILAC
@@ -156,6 +156,11 @@ uint64_t nMsgAct;                       // # of messages sent
 uint64_t nMsgPrev;                      // previous number of messages
 uint64_t syncPrevT;                     // timestamp of previous 50Hz sync event from SPZ
 uint64_t syncPrevLen;                   // duration of previous UNILAC cycle
+
+// flags
+uint32_t flagTransactionInit;           // a transaction for uploading new event data shall be initialized
+uint32_t flagTransactionSubmit;         // data uploaded during a transction shall be  commited 
+uint32_t flagClearAllPZ;                // event tables of all PZs shall be cleared
 
 // big data contains the event tables for all PZs, and for all virtual accelerators
 // there are two sets of 16 virtual accelerators ('Kanal0' and 'Kanal1')
@@ -738,7 +743,7 @@ uint32_t configTransactSubmit()
 } // configTransactSubmit
 
 // clears data of all PZs
-void clearPZ()
+void clearAllPZ()
 {
   int i,j,k;
 
@@ -823,9 +828,14 @@ uint32_t entryActionOperation()
   uint32_t flagDummy;
   
   clearDiag();                                               // clear diagnostics
-  clearPZ();                                                 // clear all event tables
+  clearAllPZ();                                              // clear all event tables
+
+  flagClearAllPZ        = 0;
+  flagTransactionInit   = 0;
+  flagTransactionSubmit = 0;
   for (i=0; i < WRUNIPZ_NPZ; i++) nextVacc[i] = 0xffffffff;  // 0xffffffff: no virt acc
   for (i=0; i < WRUNIPZ_NPZ; i++) actVacc[i]  = 0xffffffff;  // 0xffffffff: no virt acc
+  
   enableFilterEvtMil(pMILPiggy);                             // enable MIL event filter
   clearFifoEvtMil(pMILPiggy);                                // clear MIL event FIFO
 
@@ -884,7 +894,7 @@ void cmdHandler(uint32_t *reqState) // handle commands from the outside world
       break;
     case WRUNIPZ_CMD_CONFINIT :
       DBPRINT3("wr-unipz: received cmd %d\n", cmd);
-      if (configTransactInit() != WRUNIPZ_STATUS_OK) DBPRINT1("wr-unipz: request to start config data transaction failed\n");
+      flagTransactionInit = 1;
       break;
     case WRUNIPZ_CMD_CONFSUBMIT :
       DBPRINT3("wr-unipz: received cmd %d\n", cmd);
@@ -897,7 +907,7 @@ void cmdHandler(uint32_t *reqState) // handle commands from the outside world
       break;     
     case WRUNIPZ_CMD_CONFCLEAR :
       DBPRINT3("wr-unipz: received cmd %d\n", cmd);
-      clearPZ();
+      flagClearAllPZ = 1;
       break;
     default:
       DBPRINT3("wr-unipz: received unknown command '0x%08x'\n", cmd);
@@ -1039,6 +1049,15 @@ uint32_t doActionOperation(uint32_t *nCycle,                  // total number of
     if ((nLate != nLateLocal) && (status == WRUNIPZ_STATUS_OK)) status = WRUNIPZ_STATUS_LATE;
     DBPRINT3("wr-unipz: vA played:  %x %x %x %x %x %x %x\n", nextVacc[0], nextVacc[1], nextVacc[2], nextVacc[3], nextVacc[4], nextVacc[5], nextVacc[6]);
 
+    // at this point we have scheduled all timing messages of the running cycle and completed the real-time critical stuff
+    // now we can do other things...
+    
+    if (flagClearAllPZ)        {clearAllPZ();           flagClearAllPZ = 0;       }
+    if (flagTransactionInit)   {configTransactInit();   flagTransactionInit = 0;  }  /* chk: error handling */
+    if (flagTransactionSubmit) {configTransactSubmit(); flagTransactionSubmit = 0;}  // this takes 51us /* chk: error handling */
+    /* chk !!! what is the mechanism that makes sure that data are committed to all PZs simultanously ??????????????? */
+    /* chk !!! bug: in the same cycle where data becomes commited the routine getVacclen will fail (fix after we know commit mechanism) !!! */ 
+    
     // reset requested virt accs; flush ECA queue
     for (i=0; i < WRUNIPZ_NPZ; i++) nextVacc[i] = 0xffffffff; // 0xffffffff: no virt acc for PZ
     while (wait4ECAEvent(0, &tDummy, &flagIsLate) !=  WRUNIPZ_ECADO_TIMEOUT) {asm("nop");}
