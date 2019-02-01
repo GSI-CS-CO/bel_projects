@@ -109,6 +109,8 @@ class Op:
         self.expRes = f.read().splitlines() 
     return self.expRes
 
+
+
   def runEb(self, dev):
     res = ""
     optFile = ""
@@ -122,7 +124,8 @@ class Op:
         self.result = tmp.decode("utf-8", "ignore").split(d) # [e+d for e in tmp.decode("utf-8", "ignore").split(d) if e]
         self.result.pop() # remove trailing newline
     except subprocess.CalledProcessError as err:
-      print("Rcode %s Stdout %s" % (err.returncode, err.output)) 
+      print("Operation %40s -- FAILED" % self.desc)
+      raise err
 
       
        
@@ -321,7 +324,7 @@ def main(argv):
   pathandfile = os.path.realpath(__file__)
   mypath, myfile = os.path.split(pathandfile) 
   #print (mypath)
-  m = Manager(mypath, "TestManifest.py", "dev/ttyUSB1")
+  m = Manager(mypath, "TestManifest.py", "dev/ttyUSB0")
   print("Loading %u Tests" % len(m.tests))
   #m.showTestList()
   print("\n########################\n")
@@ -329,7 +332,13 @@ def main(argv):
   for index, test in enumerate(m.tests):
     m.loadTest(index)
     #m.actTestCase.showOpsList()
-    m.actTestCase.run()
+    try:
+      m.actTestCase.run()
+    except subprocess.CalledProcessError as err:
+      print("%40s -- FAILED with exception" % m.actTestCase.name)
+      print("Rcode %s Stdout %s" % (err.returncode, err.output)) 
+      sys.exit(-1)
+    
     if m.actTestCase.report(m.actTestCase.eval(True)) == False:
       failedList.append(index)
   print("\n########################\n")  
