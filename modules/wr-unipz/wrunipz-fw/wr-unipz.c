@@ -3,7 +3,7 @@
  *
  *  created : 2018
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 29-Jan-2019
+ *  version : 31-Jan-2019
  *
  *  lm32 program for gateway between UNILAC Pulszentrale and a White Rabbit network
  *  this basically serves a Data Master for UNILAC
@@ -159,6 +159,7 @@ uint64_t syncPrevLen;                   // duration of previous UNILAC cycle
 
 // big data contains the event tables for all PZs, and for all virtual accelerators
 // there are two sets of 16 virtual accelerators ('Kanal0' and 'Kanal1')
+// [va0 of chn0]..[va15 of chn0][va0 of chn1]..[va15 of chn1]
 dataTable bigData[WRUNIPZ_NPZ][WRUNIPZ_NVACC * WRUNIPZ_NCHN];
 
 // info on what will be played at which PZ during actual cycles
@@ -1030,7 +1031,7 @@ uint32_t doActionOperation(uint32_t *nCycle,                  // total number of
       if (nextVacc[i] != 0xffffffff) {
         actVacc[i] = nextVacc[i];                             // remember vacc for actual cycle
         actChan[i] = nextChan[i],
-        pzRunVacc(bigData[i][nextVacc[i] * WRUNIPZ_NCHN + nextChan[i]], deadline, i, nextVacc[i], isPrepFlag); // run vaccs
+        pzRunVacc(bigData[i][nextChan[i] * WRUNIPZ_NVACC + nextVacc[i]], deadline, i, nextVacc[i], isPrepFlag); // run vaccs
         DBPRINT3("wr-unipz: playing pz %d, vacc %d\n", i, nextVacc[i]);
       } // if nextVacc
     } // for i
@@ -1067,12 +1068,12 @@ uint32_t doActionOperation(uint32_t *nCycle,                  // total number of
       nLateLocal = nLate;
       isPrepFlag = 1;                                                  
       deadline   = syncPrevT + syncPrevLen;                   // guess start time of next UNILAC cycle from previous cycle
-      pzRunVacc(bigData[ipz][virtAcc * WRUNIPZ_NCHN + chn], deadline, ipz, virtAcc, isPrepFlag);
+      pzRunVacc(bigData[ipz][chn * WRUNIPZ_NVACC + virtAcc], deadline, ipz, virtAcc, isPrepFlag);
       if ((nLate != nLateLocal) && (status == WRUNIPZ_STATUS_OK)) status = WRUNIPZ_STATUS_LATE;
     } // if !SERVICE
     else {                                                    // B: super PZ has sent info on a service event: bits 12..15 encode event type
       DBPRINT3("wr-unipz: service event for pz %d, vacc %d\n", ipz, virtAcc);
-      servOffs = getVaccLen(bigData[ipz][virtAcc * WRUNIPZ_NCHN + chn]) & 0xffff;
+      servOffs = getVaccLen(bigData[ipz][chn * WRUNIPZ_NVACC + virtAcc]) & 0xffff;
       servEvt  = 0x0;
       if (evtData == WRUNIPZ_EVTDATA_PREPACC)    servEvt = EVT_AUX_PRP_NXT_ACC | ((virtAcc & 0xf) << 8) | ((servOffs & 0xffff)        << 16); // send after last event
       if (evtData == WRUNIPZ_EVTDATA_ZEROACC)    servEvt = EVT_MAGN_DOWN       | ((virtAcc & 0xf) << 8) | ((servOffs & 0xffff)        << 16); // send after last event 
