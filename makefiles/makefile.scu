@@ -86,7 +86,8 @@ endif
 SHARED_NAME ?= shared
 
 RESERVED_MEM_SIZE = $(shell echo $$(($(BOOTL_SIZE)+$(BUILDID_SIZE)+$(SHARED_SIZE))) )
-USABLE_MEM_SIZE   = $(shell echo $$(($(RAM_SIZE)*$(MEM_ALIGN)-$(RESERVED_MEM_SIZE))) )
+# USABLE_MEM_SIZE   = $(shell echo $$(($(RAM_SIZE)*$(MEM_ALIGN)-$(RESERVED_MEM_SIZE))) ) # would be nice...
+USABLE_MEM_SIZE   = $(shell echo $$(($(RAM_SIZE)-$(RESERVED_MEM_SIZE))) )
 
 COMMENT_TEXT := 'This file has been created automatically, do not modify it by hand!'
 DATE         := $(shell date)
@@ -95,7 +96,7 @@ AUTHOR       := makefile.scu
 LDS_LIBS   = c
 LDS_LIBS  += gcc
 # LDS_LIBS  += gloss   # library for GNU Low-level OS Support
-# LDS_LIBS  += nosys
+# LDS_LIBS  += nosys   # Some OS dummy-functions
 
 LDS  = "/*!\n"
 LDS += " * @file $(LINKER_SCRIPT)\n"
