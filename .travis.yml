@@ -47,5 +47,5 @@ script:
 
 # build saftlib and install (optional)
 after_success:
-- make saftlib
+- make saftlib -j$(nproc)
 - sudo make saftlib-install
