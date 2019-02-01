@@ -304,7 +304,6 @@ std::pair<int, int> findRunningPattern(const std::string& sPattern); // get cpu 
             vEbwrs& deactivateOrphanedCommands(vEbwrs& ew, std::vector<QueueReport>& vQr);
             vEbwrs& clearHealth(vEbwrs& ew, uint8_t cpuIdx);
             vEbwrs& clearHealth(vEbwrs& ew);
-
             vEbwrs& resetThrMsgCnt(vEbwrs& ew, uint8_t cpuIdx, uint8_t thrIdx);
             vEbwrs& blockAsyncClearQueues(vEbwrs& ew, const std::string& sBlock);
             vEbwrs& createNonQCommand(vEbwrs& ew, const std::string& type, const std::string& target);
@@ -341,25 +340,25 @@ std::pair<int, int> findRunningPattern(const std::string& sPattern); // get cpu 
 */
             //FIXME workaround for flawed template approach (disambiguation of member functin pointers failing). no time to figure it out right  now, get the job done first
             //convenience wrappers without eb cycle control, send immediately
-            int startThr(uint8_t cpuIdx, uint8_t thrIdx)                              { vEbwrs ew; startThr(ew, cpuIdx, thrIdx );           return send(ew);}
-            int startPattern(const std::string& sPattern, uint8_t thrIdx)             { vEbwrs ew; startPattern(ew, sPattern, thrIdx);      return send(ew);}
-            int startNodeOrigin(const std::string& sNode, uint8_t thrIdx)             { vEbwrs ew; startNodeOrigin(ew, sNode, thrIdx );     return send(ew);}
-            int startNodeOrigin(const std::string& sNode)                             { vEbwrs ew; startNodeOrigin(ew, sNode);              return send(ew);}
-            int stopPattern(const std::string& sPattern)                              { vEbwrs ew; stopPattern(ew, sPattern  );             return send(ew);}
-            int stopNodeOrigin(const std::string& sNode)                              { vEbwrs ew; stopNodeOrigin(ew, sNode);               return send(ew);}
-            int abortPattern(const std::string& sPattern)                             { vEbwrs ew; abortPattern(ew, sPattern);              return send(ew);}
-            int abortNodeOrigin(const std::string& sNode)                             { vEbwrs ew; abortNodeOrigin(ew, sNode );             return send(ew);}
-            int abortThr(uint8_t cpuIdx, uint8_t thrIdx)                              { vEbwrs ew; abortThr(ew, cpuIdx, thrIdx);            return send(ew);}
-            int setThrStart(uint8_t cpuIdx, uint32_t bits)                            { vEbwrs ew; setThrStart(ew, cpuIdx,  bits );         return send(ew);}
-            int setThrAbort(uint8_t cpuIdx, uint32_t bits)                            { vEbwrs ew; setThrAbort(ew, cpuIdx,  bits );         return send(ew);}
-            int setThrOrigin(uint8_t cpuIdx, uint8_t thrIdx, const std::string& name) { vEbwrs ew; setThrOrigin(ew, cpuIdx, thrIdx, name);  return send(ew);}
-            int setThrStartTime(uint8_t cpuIdx, uint8_t thrIdx, uint64_t t)           { vEbwrs ew; setThrStartTime(ew, cpuIdx, thrIdx, t ); return send(ew);}
-            int setThrPrepTime(uint8_t cpuIdx, uint8_t thrIdx, uint64_t t)            { vEbwrs ew; setThrPrepTime(ew, cpuIdx, thrIdx, t);   return send(ew);}
-            int deactivateOrphanedCommands(std::vector<QueueReport> & vQr)            { vEbwrs ew; deactivateOrphanedCommands(ew, vQr);     return send(ew);}
-            int clearHealth()                                                         { vEbwrs ew; clearHealth(ew);                         return send(ew);}
-            int clearHealth(uint8_t cpuIdx)                                           { vEbwrs ew; clearHealth(ew, cpuIdx);                 return send(ew);}
-            int resetThrMsgCnt(uint8_t cpuIdx, uint8_t thrIdx)                        { vEbwrs ew; resetThrMsgCnt(ew, cpuIdx, thrIdx);      return send(ew);}
-            int blockAsyncClearQueues(const std::string& sBlock)                      { vEbwrs ew; blockAsyncClearQueues(ew, sBlock);       return send(ew);}
+            int startThr(uint8_t cpuIdx, uint8_t thrIdx)                              ;
+            int startPattern(const std::string& sPattern, uint8_t thrIdx)             ;
+            int startNodeOrigin(const std::string& sNode, uint8_t thrIdx)             ;
+            int startNodeOrigin(const std::string& sNode)                             ;
+            int stopPattern(const std::string& sPattern)                              ;
+            int stopNodeOrigin(const std::string& sNode)                              ;
+            int abortPattern(const std::string& sPattern)                             ;
+            int abortNodeOrigin(const std::string& sNode)                             ;
+            int abortThr(uint8_t cpuIdx, uint8_t thrIdx)                              ;
+            int setThrStart(uint8_t cpuIdx, uint32_t bits)                            ;
+            int setThrAbort(uint8_t cpuIdx, uint32_t bits)                            ;
+            int setThrOrigin(uint8_t cpuIdx, uint8_t thrIdx, const std::string& name) ;
+            int setThrStartTime(uint8_t cpuIdx, uint8_t thrIdx, uint64_t t)           ;
+            int setThrPrepTime(uint8_t cpuIdx, uint8_t thrIdx, uint64_t t)            ;
+            int deactivateOrphanedCommands(std::vector<QueueReport> & vQr)            ;
+            int clearHealth()                                                         ;
+            int clearHealth(uint8_t cpuIdx)                                           ;
+            int resetThrMsgCnt(uint8_t cpuIdx, uint8_t thrIdx)                        ;
+            int blockAsyncClearQueues(const std::string& sBlock)                      ;
 
 
                void verboseOn()  {verbose = true;}                              // Turn on Verbose Output
@@ -375,6 +374,7 @@ std::pair<int, int> findRunningPattern(const std::string& sPattern); // get cpu 
                void optimisedS2ROn() {optimisedS2R = true;}                     // Optimised Safe2remove on
                void optimisedS2ROff(){optimisedS2R = false;}                    // Optimised Safe2remove off
                bool isOptimisedS2R() const {return optimisedS2R;}               // tell if Safe2remove optimisation is on or off
+               bool isValidDMCpu(uint8_t cpuIdx);                               // Check if CPU is registered as running a valid firmware
       HealthReport& getHealth(uint8_t cpuIdx, HealthReport &hr);                // FIXME why reference in, reference out ? its not like you can add to this report ...
        QueueReport& getQReport(const std::string& blockName, QueueReport& qr);  // FIXME why reference in, reference out ? its not like you can add to this report ...
        std::string& getRawQReport(const std::string& blockName, std::string& report) ;
@@ -407,6 +407,7 @@ std::pair<int, int> findRunningPattern(const std::string& sPattern); // get cpu 
                void lockManagerClear() {lm.clear();}
                bool lockManagerHasEntries() {return (lm.getLockVec().size() > 0);}
                void softwareReset(bool clearStatistic); 
+
 
 
 };

@@ -389,23 +389,6 @@ vBuf CarpeDM::decompress(const vBuf& in) {return lzmaDecompress(in);}
 
   vEbwrs& CarpeDM::createSchedModInfo(vEbwrs& ew, uint8_t cpu, uint32_t modCnt, uint8_t opType) { return createModInfo(ew, cpu, modCnt, opType, T_DIAG_SCH_MOD); };
   vEbwrs& CarpeDM::createCmdModInfo  (vEbwrs& ew, uint8_t cpu, uint32_t modCnt, uint8_t opType) { return createModInfo(ew, cpu, modCnt, opType, T_DIAG_CMD_MOD); };
-/*
-  int CarpeDM::startThr(uint8_t cpuIdx, uint8_t thrIdx)                              { vEbwrs ew; return send(startThr(cpuIdx, thrIdx, ew));} //Requests Thread to start
-  int CarpeDM::startPattern(const std::string& sPattern, uint8_t thrIdx)             { vEbwrs ew; return send(startPattern(sPattern, thrIdx, ew));}//Requests Pattern to start
-  int CarpeDM::startPattern(const std::string& sPattern)                             { vEbwrs ew; return send(startPattern(sPattern, ew));}//Requests Pattern to start on first free thread
-  int CarpeDM::startNodeOrigin(const std::string& sNode, uint8_t thrIdx)             { vEbwrs ew; return send(startNodeOrigin(sNode, thrIdx, ew));}//Requests thread <thrIdx> to start at node <sNode>
-  int CarpeDM::startNodeOrigin(const std::string& sNode)                             { vEbwrs ew; return send(startNodeOrigin(sNode, ew));}//Requests a start at node <sNode>
-  int CarpeDM::stopPattern(const std::string& sPattern)                              { vEbwrs ew; return send(stopPattern(sPattern, ew));}//Requests Pattern to stop
-  int CarpeDM::stopNodeOrigin(const std::string& sNode)                              { vEbwrs ew; return send(stopNodeOrigin(sNode, ew));}//Requests stop at node <sNode> (flow to idle)
-  int CarpeDM::abortPattern(const std::string& sPattern)                             { vEbwrs ew; return send(abortPattern(sPattern, ew));}//Immediately aborts a Pattern
-  int CarpeDM::abortNodeOrigin(const std::string& sNode)                             { vEbwrs ew; return send(abortNodeOrigin(sNode, ew));}//Immediately aborts the thread whose pattern <sNode> belongs to
-  int CarpeDM::abortThr(uint8_t cpuIdx, uint8_t thrIdx)                              { vEbwrs ew; return send(abortThr(cpuIdx, thrIdx, ew));} //Immediately aborts a Thread
-  int CarpeDM::setThrStart(uint8_t cpuIdx, uint32_t bits)                            { vEbwrs ew; return send(setThrStart(cpuIdx, bits, ew));} //Requests Threads to start
-  int CarpeDM::setThrAbort(uint8_t cpuIdx, uint32_t bits)                            { vEbwrs ew; return send(setThrAbort(cpuIdx, bits, ew));}//Immediately aborts Threads
-  int CarpeDM::setThrOrigin(uint8_t cpuIdx, uint8_t thrIdx, const std::string& name) { vEbwrs ew; return send(setThrOrigin(cpuIdx, thrIdx, name, ew));}//Sets the Node the Thread will start from
-  int CarpeDM::setThrStartTime(uint8_t cpuIdx, uint8_t thrIdx, uint64_t t)           { vEbwrs ew; return send(setThrStartTime(cpuIdx, thrIdx, t, ew));}
-  int CarpeDM::setThrPrepTime(uint8_t cpuIdx, uint8_t thrIdx, uint64_t t)            { vEbwrs ew; return send(setThrPrepTime(cpuIdx, thrIdx, t, ew));}
-*/
 
   void CarpeDM::showUp(bool filterMeta) {show("Upload Table", "upload_dict.txt", TransferDir::UPLOAD, false);} //show a CPU's Upload address table
   void CarpeDM::showDown(bool filterMeta) {  //show a CPU's Download address table
@@ -413,3 +396,25 @@ vBuf CarpeDM::decompress(const vBuf& in) {return lzmaDecompress(in);}
   }
 
   void CarpeDM::updateModTime() { modTime = getDmWrTime(); }
+
+  bool CarpeDM::isValidDMCpu(uint8_t cpuIdx) {return ebd.isValidDMCpu(cpuIdx);}; //Check if CPU is registered as running a valid firmware
+
+  int CarpeDM::startThr(uint8_t cpuIdx, uint8_t thrIdx)                              { vEbwrs ew; startThr(ew, cpuIdx, thrIdx );           return send(ew);}
+  int CarpeDM::startPattern(const std::string& sPattern, uint8_t thrIdx)             { vEbwrs ew; startPattern(ew, sPattern, thrIdx);      return send(ew);}
+  int CarpeDM::startNodeOrigin(const std::string& sNode, uint8_t thrIdx)             { vEbwrs ew; startNodeOrigin(ew, sNode, thrIdx );     return send(ew);}
+  int CarpeDM::startNodeOrigin(const std::string& sNode)                             { vEbwrs ew; startNodeOrigin(ew, sNode);              return send(ew);}
+  int CarpeDM::stopPattern(const std::string& sPattern)                              { vEbwrs ew; stopPattern(ew, sPattern  );             return send(ew);}
+  int CarpeDM::stopNodeOrigin(const std::string& sNode)                              { vEbwrs ew; stopNodeOrigin(ew, sNode);               return send(ew);}
+  int CarpeDM::abortPattern(const std::string& sPattern)                             { vEbwrs ew; abortPattern(ew, sPattern);              return send(ew);}
+  int CarpeDM::abortNodeOrigin(const std::string& sNode)                             { vEbwrs ew; abortNodeOrigin(ew, sNode );             return send(ew);}
+  int CarpeDM::abortThr(uint8_t cpuIdx, uint8_t thrIdx)                              { vEbwrs ew; abortThr(ew, cpuIdx, thrIdx);            return send(ew);}
+  int CarpeDM::setThrStart(uint8_t cpuIdx, uint32_t bits)                            { vEbwrs ew; setThrStart(ew, cpuIdx,  bits );         return send(ew);}
+  int CarpeDM::setThrAbort(uint8_t cpuIdx, uint32_t bits)                            { vEbwrs ew; setThrAbort(ew, cpuIdx,  bits );         return send(ew);}
+  int CarpeDM::setThrOrigin(uint8_t cpuIdx, uint8_t thrIdx, const std::string& name) { vEbwrs ew; setThrOrigin(ew, cpuIdx, thrIdx, name);  return send(ew);}
+  int CarpeDM::setThrStartTime(uint8_t cpuIdx, uint8_t thrIdx, uint64_t t)           { vEbwrs ew; setThrStartTime(ew, cpuIdx, thrIdx, t ); return send(ew);}
+  int CarpeDM::setThrPrepTime(uint8_t cpuIdx, uint8_t thrIdx, uint64_t t)            { vEbwrs ew; setThrPrepTime(ew, cpuIdx, thrIdx, t);   return send(ew);}
+  int CarpeDM::deactivateOrphanedCommands(std::vector<QueueReport> & vQr)            { vEbwrs ew; deactivateOrphanedCommands(ew, vQr);     return send(ew);}
+  int CarpeDM::clearHealth()                                                         { vEbwrs ew; clearHealth(ew);                         return send(ew);}
+  int CarpeDM::clearHealth(uint8_t cpuIdx)                                           { vEbwrs ew; clearHealth(ew, cpuIdx);                 return send(ew);}
+  int CarpeDM::resetThrMsgCnt(uint8_t cpuIdx, uint8_t thrIdx)                        { vEbwrs ew; resetThrMsgCnt(ew, cpuIdx, thrIdx);      return send(ew);}
+  int CarpeDM::blockAsyncClearQueues(const std::string& sBlock)                      { vEbwrs ew; blockAsyncClearQueues(ew, sBlock);       return send(ew);}
