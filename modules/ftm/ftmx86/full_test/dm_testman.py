@@ -272,12 +272,12 @@ class TestCase:
       else:
         nocmpCnt += 1
     if failedCnt == 0:
-      print("Test <%s> PASSED" % self.name)
+      print("%40s --- PASSED" % self.name)
       ret = True
     else:
-      print("Test <%s> FAILED" % self.name)
+      print("%40s --- FAILED" % self.name)
       ret = False
-    print("Result of Operations:\n%u no expectations, %u passed, %u failed\n%u total" %(nocmpCnt, passedCnt, failedCnt, int(nocmpCnt) + int(passedCnt) + int(failedCnt)))
+    print("%u no expectations, %u passed, %u failed\n%u total" %(nocmpCnt, passedCnt, failedCnt, int(nocmpCnt) + int(passedCnt) + int(failedCnt)))
     return ret
 
         
@@ -321,7 +321,7 @@ def main(argv):
   pathandfile = os.path.realpath(__file__)
   mypath, myfile = os.path.split(pathandfile) 
   #print (mypath)
-  m = Manager(mypath, "TestManifest.py", "tcp/tsl008.acc")
+  m = Manager(mypath, "TestManifest.py", "dev/ttyUSB1")
   print("Loading %u Tests" % len(m.tests))
   #m.showTestList()
   print("\n########################\n")
@@ -334,15 +334,13 @@ def main(argv):
       failedList.append(index)
   print("\n########################\n")  
   if len(failedList) == 0:
-    print("Test run PASSED")
+    print("All tests PASSED")
 
   else:
-    print("Test run FAILED")
+    print("Some tests FAILED:")
     for test in failedList:
-      print("Test <%s> FAILED" % m.tests[test])
-
-
-# print("Result of Tests:\n%u passed, %u failed\n%u total" %(len(m.tests) - len(failedList), len(failedList), len(m.tests)))
+      print("%40s FAILED" % m.tests[test])
+  print("%u passed, %u failed, %u total" %(len(m.tests) - len(failedList), len(failedList), len(m.tests)))
   
 
 if __name__ == "__main__":

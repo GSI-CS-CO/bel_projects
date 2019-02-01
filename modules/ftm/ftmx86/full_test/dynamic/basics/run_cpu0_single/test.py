@@ -1,5 +1,5 @@
 testcase = TestCase(
-  "Test0_Basic_Run_CPU0",
+  "Run_Pattern_on_CPU0",
   [ Op("Init0_1", "cmd", "halt"),
     Op("Init0_1", "sched", "clear"),
     Op("Init0_2", "sched", "add", "0", "test_sched.dot"),

@@ -1,5 +1,5 @@
 testcase = TestCase(
-  "Test0_Basic_Cmd_Queue_Operations",
+  "Cmd_Queue_Priorities_and_Types",
   [ Op("Init0_1", "cmd", "halt"),
     Op("Init0_1", "sched", "clear"),
     Op("Init0_2", "sched", "add", "0", "test0_sched.dot"),

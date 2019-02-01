@@ -1,5 +1,5 @@
 testcase = TestCase(
-  "Test_Basic_Branching",
+  "Basic_Branching_single_execution",
   [ Op("Init0_0", "cmd", "reset all"),
     Op("Init0_1", "sched", "add", "0", "test_sched.dot"),
     Op("Test0_0_RunCPU0", "cmd", "startpattern IN_C0"),

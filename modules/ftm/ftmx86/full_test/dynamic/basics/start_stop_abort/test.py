@@ -1,5 +1,5 @@
 testcase = TestCase(
-  "Test_Basic_Start_Stop_Abort",
+  "Start_Stop_Abort_a_Pattern",
   [ Op("Init0_0", "cmd", "reset all"),
     Op("Init0_1", "sched", "add", "0", "test_sched.dot"),
     Op("Test0_0_CheckNone", "sched", "rawvisited", "0.0", None, "test0_0_exp.txt"),

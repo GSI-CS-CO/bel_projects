@@ -5,6 +5,7 @@ testfiles = [
   "./dynamic/basics/run_all_single/test.py",
   "./dynamic/basics/start_stop_abort/test.py",
   "./dynamic/branch/single/test.py",
+  "./dynamic/branch/qty/test.py",
 #  "./dynamic/loop/test.py",
 #  "./dynamic/timeout/test.py",
   ]
