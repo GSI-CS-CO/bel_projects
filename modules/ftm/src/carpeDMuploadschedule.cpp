@@ -83,7 +83,7 @@ using namespace DotStr::Misc;
 
 
     // save modification infos
-    for (auto& itMod : moddedCpus) { createSchedModInfo(itMod, modCnt, opType, ew); }
+    for (auto& itMod : moddedCpus) { createSchedModInfo(ew, itMod, modCnt, opType); }
 
     // save global meta info for management linked list
     uint8_t b[4 * _32b_SIZE_];
@@ -359,7 +359,7 @@ using namespace DotStr::Misc;
 
     generateMgmtData();
     vEbwrs ew = gatherUploadVector(moddedCpus, 0, opType); //TODO not using modCnt right now, maybe implement later
-    deactivateOrphanedCommands(vQr, ew);
+    deactivateOrphanedCommands(ew, vQr);
     //Upload
     ebd.writeCycle(ew.va, ew.vb, ew.vcs);
     if(verbose) sLog << "Done." << std::endl;

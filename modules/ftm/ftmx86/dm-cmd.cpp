@@ -377,8 +377,8 @@ int main(int argc, char* argv[]) {
              break;
          case 'q':
             tmp = strtol(optarg, NULL, 0);
-            if ((tmp < 1) || (tmp > ACT_QTY_MSK)) {
-              std::cerr << program << ": Command quantity must be between 1 and " << ACT_QTY_MSK << std::endl;
+            if ((tmp < 0) || (tmp > ACT_QTY_MSK)) {
+              std::cerr << program << ": Command quantity must be between 0 and " << ACT_QTY_MSK << std::endl;
               error = -1;
             } else {cmdQty = (uint32_t)tmp;}
             break;
@@ -468,8 +468,8 @@ int main(int argc, char* argv[]) {
     if (tmpGlobalCmds == dnt::sCmdAbort)  {
       if( targetName != NULL) {
         uint32_t bits = strtol(targetName, NULL, 0);
-       cdm.setThrAbort(cpuIdx, bits & ((1<<_THR_QTY_)-1) , ew );
-      } else { cdm.abortThr(cpuIdx, thrIdx, ew); }
+       cdm.setThrAbort(ew, cpuIdx, bits & ((1<<_THR_QTY_)-1)  );
+      } else { cdm.abortThr(ew, cpuIdx, thrIdx); }
       return 0;
     }
     else if (tmpGlobalCmds == "halt")  {
@@ -588,7 +588,7 @@ int main(int argc, char* argv[]) {
       if (para == NULL) {std::cerr << program << ": Queues to be flushed are missing, require 3 bit as hex (IL HI LO 0x0 - 0x7)" << std::endl; return -1; }
       uint32_t queuePrio = strtol(para, NULL, 0) & 0x7;
       try {
-          cdm.staticFlushBlock(targetName, (bool)(queuePrio >> PRIO_IL & 1), (bool)(queuePrio >> PRIO_HI & 1), (bool)(queuePrio >> PRIO_LO & 1), ew , force);
+          cdm.staticFlushBlock(targetName, (bool)(queuePrio >> PRIO_IL & 1), (bool)(queuePrio >> PRIO_HI & 1), (bool)(queuePrio >> PRIO_LO & 1), force);
         } catch (std::runtime_error const& err) {
           std::cerr << program << ": Could not statically flush " << targetName << ". Cause: " << err.what() << std::endl;
         }
@@ -664,7 +664,7 @@ int main(int argc, char* argv[]) {
     else if (cmp == dnt::sCmdOrigin) {
       if( targetName != NULL) {
         if(!(cdm.isInHashDict( targetName)) && targetName != DotStr::Node::Special::sIdle) {std::cerr << program << ": Target node '" << targetName << "'' was not found on DM" << std::endl; return -1; }
-        cdm.setThrOrigin(cpuIdx, thrIdx, targetName, ew);
+        cdm.setThrOrigin(ew, cpuIdx, thrIdx, targetName);
       }
       if( verbose | (targetName == NULL) ) { std::cout << "CPU " << cpuIdx << " Thr " << thrIdx << " origin points to node " << cdm.getThrOrigin(cpuIdx, thrIdx) << std::endl; return 0;}
 
@@ -695,11 +695,11 @@ int main(int argc, char* argv[]) {
             if ((origin == DotStr::Node::Special::sIdle) || (origin == DotStr::Misc::sUndefined)) {std::cerr << program << ": Cannot start, origin of CPU " << cpuIdx << "'s thread " << thrIdx << " is not a valid node" << std::endl; return -1;}
          }
         }
-        cdm.setThrStart(cpuIdx, bits & ((1<<_THR_QTY_)-1), ew );
+        cdm.setThrStart(ew, cpuIdx, bits & ((1<<_THR_QTY_)-1) );
       } else {
         origin = cdm.getThrOrigin(cpuIdx, thrIdx);
         if ((origin == DotStr::Node::Special::sIdle) || (origin == DotStr::Misc::sUndefined)) {std::cerr << program << ": Cannot start, origin of CPU " << cpuIdx << "'s thread " << thrIdx << " is not a valid node" << std::endl; return -1;}
-        cdm.startThr(cpuIdx, thrIdx, ew);
+        cdm.startThr(cpuIdx, thrIdx);
       }
 
     }
@@ -707,26 +707,26 @@ int main(int argc, char* argv[]) {
       if (targetName == NULL) {std::cerr << program << ": expected name of target node" << std::endl; return -1; }
       if(!(cdm.isInHashDict( targetName))) {std::cerr << program << ": Target node '" << targetName << "'' was not found on DM" << std::endl; return -1; }
 
-        cdm.stopNodeOrigin(targetName,ew);
+        cdm.stopNodeOrigin(targetName);
 
     }
     else if (cmp == "startpattern")  {
       //check if a valid origin was assigned before executing
       if( targetName != NULL) {
-        cdm.startPattern(targetName, thrIdx, ew );
+        cdm.startPattern(ew, targetName, thrIdx );
       } else { std::cout << "Missing valid Pattern name" << std::endl; }
 
     }
     else if (cmp == "stoppattern")  {
       if( targetName != NULL) {
-        cdm.stopPattern(targetName,ew);
+        cdm.stopPattern(targetName);
       } else { std::cout << "Missing valid Pattern name" << std::endl; }
  
 
     }
     else if (cmp == "abortpattern")  {
       if( targetName != NULL) {
-        cdm.abortPattern(targetName,ew);
+        cdm.abortPattern(targetName);
       } else { std::cout << "Missing valid Pattern name" << std::endl; }
 
     }
@@ -734,7 +734,7 @@ int main(int argc, char* argv[]) {
       if( targetName != NULL) {
         if (para == NULL) {std::cerr << program << ": Queues to be flushed are missing, require 3 bit as hex (IL HI LO 0x0 - 0x7)" << std::endl; return -1; }
         uint32_t queuePrio = strtol(para, NULL, 0) & 0x7;
-        cdm.staticFlushPattern(targetName, (bool)(queuePrio >> PRIO_IL & 1), (bool)(queuePrio >> PRIO_HI & 1), (bool)(queuePrio >> PRIO_LO & 1), ew , force);
+        cdm.staticFlushPattern(targetName, (bool)(queuePrio >> PRIO_IL & 1), (bool)(queuePrio >> PRIO_HI & 1), (bool)(queuePrio >> PRIO_LO & 1), force);
       } else { std::cout << "Missing valid Pattern name" << std::endl; }
 
     }
@@ -766,12 +766,12 @@ int main(int argc, char* argv[]) {
       return 0;
     }
     else if (cmp == "starttime")  {
-      if( targetName != NULL) { cdm.setThrStartTime(cpuIdx, thrIdx, strtoll(targetName, NULL, 0), ew); }
+      if( targetName != NULL) { cdm.setThrStartTime(ew, cpuIdx, thrIdx, strtoll(targetName, NULL, 0)); }
       else { std::cout << "CPU " << cpuIdx << " Thr " << thrIdx << " Starttime " << cdm.getThrStartTime(cpuIdx, thrIdx) << std::endl; return 0;}
       
     }
     else if (cmp == "preptime")  {
-      if( targetName != NULL) { cdm.setThrPrepTime(cpuIdx, thrIdx, strtoll(targetName, NULL, 0), ew); }
+      if( targetName != NULL) { cdm.setThrPrepTime(ew, cpuIdx, thrIdx, strtoll(targetName, NULL, 0)); }
       else { std::cout << "CPU " << cpuIdx << " Thr " << thrIdx << " Preptime " << cdm.getThrPrepTime(cpuIdx, thrIdx) << std::endl; return 0;}
  
     }

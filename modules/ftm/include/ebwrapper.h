@@ -44,26 +44,17 @@ protected:
 
   vStrC vFwIdROM;
 
-  const int expVersionMin = parseFwVersionString(EXP_VER);
-  const int expVersionMax = (expVersionMin / (int)FwId::VERSION_MAJOR_MUL) * (int)FwId::VERSION_MAJOR_MUL
-                     + 99 * (int)FwId::VERSION_MINOR_MUL
-                     + 99 * (int)FwId::VERSION_REVISION_MUL;
+  static const int expVersionMin;
+  static const int expVersionMax;
   
-  void checkReadCycle (const vAdr& va, const vBl& vcs) const {
-     if (va.size() != vcs.size()) throw std::runtime_error(" EB Read cycle Adr / Flow control vector lengths (" 
-      + std::to_string(va.size()) + "/" + std::to_string(vcs.size()) + ") do not match\n");
-  }
+  void checkReadCycle (const vAdr& va, const vBl& vcs) const;
 
-  void checkWriteCycle(const vAdr& va, const vBuf& vb, const vBl& vcs) const {   
-    if ( (va.size() != vcs.size()) || ( va.size() * _32b_SIZE_ != vb.size() ) )
-    throw std::runtime_error(" EB/sim write cycle Adr / Data / Flow control vector lengths (" + std::to_string(va.size()) + "/" 
-      + std::to_string(vb.size() /  _32b_SIZE_) + "/" + std::to_string(vcs.size()) +") do not match\n");
-  }
+  void checkWriteCycle(const vAdr& va, const vBuf& vb, const vBl& vcs) const;
   //returns firmware version as int <xxyyzz> (x Major Version, y Minor Version, z Revison; negative values for error codes)
   int getFwVersion(const std::string& fwIdROM) const;
   std::string getFwIdROM(uint8_t cpuIdx) const;
   std::string createFwVersionString(const int fwVer) const;
-  int parseFwVersionString(const std::string& s) const;
+  static int parseFwVersionString(const std::string& s);
   std::string readFwIdROMTag(const std::string& fwIdROM, const std::string& tag, size_t maxlen, bool stopAtCr ) const;
   // SDB Functions
 

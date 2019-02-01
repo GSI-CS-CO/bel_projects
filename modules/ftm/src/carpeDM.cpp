@@ -245,16 +245,16 @@ vBuf CarpeDM::decompress(const vBuf& in) {return lzmaDecompress(in);}
   std::string CarpeDM::downloadDot(bool filterMeta) {download(); return createDot( gDown, filterMeta);};
   void CarpeDM::downloadDotFile(const std::string& fn, bool filterMeta) {download(); writeDownDotFile(fn, filterMeta);};
   //add all nodes and/or edges in dot file
-  int CarpeDM::addDot(const std::string& s, bool force) {Graph gTmp; return safeguardTransaction(&CarpeDM::add, parseDot(s, gTmp), force);};
+  int CarpeDM::addDot(const std::string& s, bool force) {Graph gTmp; return safeguardTransaction(&CarpeDM::add, std::ref(parseDot(s, gTmp)), force);};
   int CarpeDM::addDotFile(const std::string& fn, bool force) {return addDot(readTextFile(fn), force);};
   //add all nodes and/or edges in dot file
-  int CarpeDM::overwriteDot(const std::string& s, bool force) {Graph gTmp; return safeguardTransaction(&CarpeDM::overwrite, parseDot(s, gTmp), force);};
+  int CarpeDM::overwriteDot(const std::string& s, bool force) {Graph gTmp; return safeguardTransaction(&CarpeDM::overwrite, std::ref(parseDot(s, gTmp)), force);};
   int CarpeDM::overwriteDotFile(const std::string& fn, bool force) {return overwriteDot(readTextFile(fn), force);};
   //removes all nodes NOT in input file
-  int CarpeDM::keepDot(const std::string& s, bool force) {Graph gTmp; return safeguardTransaction(&CarpeDM::keep, parseDot(s, gTmp), force);};
+  int CarpeDM::keepDot(const std::string& s, bool force) {Graph gTmp; return safeguardTransaction(&CarpeDM::keep, std::ref(parseDot(s, gTmp)), force);};
   int CarpeDM::keepDotFile(const std::string& fn, bool force) {return keepDot(readTextFile(fn), force);};
   //removes all nodes in input file
-  int CarpeDM::removeDot(const std::string& s, bool force) {Graph gTmp; return safeguardTransaction(&CarpeDM::remove, parseDot(s, gTmp), force);};
+  int CarpeDM::removeDot(const std::string& s, bool force) {Graph gTmp; return safeguardTransaction(&CarpeDM::remove, std::ref(parseDot(s, gTmp)), force);};
   int CarpeDM::removeDotFile(const std::string& fn, bool force) {return removeDot(readTextFile(fn), force);};
   // Safe removal check
   //bool isSafe2RemoveDotFile(const std::string& fn) {Graph gTmp; return isSafeToRemove(parseDot(readTextFile(fn), gTmp));};
@@ -318,15 +318,18 @@ vBuf CarpeDM::decompress(const vBuf& in) {return lzmaDecompress(in);}
 
 
 
-  //Improvised Transaction Management: If an upload preparation operation fails for any reason, we roll back the meta tables
-  int CarpeDM::safeguardTransaction(int (CarpeDM::*func)(Graph&, bool), Graph& g, bool force) {
+  //Transaction Management: If an upload preparation operation fails for any reason, we roll back the meta tables
+  
+  template <typename R, typename ... As1, typename ... As2>
+  R CarpeDM::safeguardTransaction(R(CarpeDM::*func)(As1...), As2 ... args)
+  { 
     HashMap hmBak     = hm;
     GroupTable gtBak  = gt;
     CovenantTable ctBak = ct;
-    int ret;
+    R ret;    
 
     try {
-      ret = (*this.*func)(g, force);
+      ret = (*this.*func)(std::forward<As2>(args)...); 
     } catch(...) {
       hm = hmBak;
       gt = gtBak;
@@ -338,29 +341,18 @@ vBuf CarpeDM::decompress(const vBuf& in) {return lzmaDecompress(in);}
     return ret;
   }
 
-  //Improvised Transaction Management: If an upload operation fails for any reason, we roll back the meta tables
-  int CarpeDM::safeguardTransaction(int (CarpeDM::*func)(bool), bool force) {
-    HashMap hmBak     = hm;
-    GroupTable gtBak  = gt;
-    CovenantTable ctBak = ct;
-    int ret;
-
-    try {
-      ret = (*this.*func)(force);
-    } catch(...) {
-      hm = hmBak;
-      gt = gtBak;
-      ct = ctBak;
-      sLog << "Operation FAILED, executing roll back\n" << std::endl;
-      throw;
-    }
-
-    return ret;
-
+  template <typename R, typename ... As1, typename ... As2>
+  int CarpeDM::dSend(R(CarpeDM::*func)(As1...), As2 ... args) {
+    //R test;
+    //decltype(func)::foo = 1;
+    vEbwrs ew;
+    ew = (*this.*func)(ew, std::forward<As2>(args)...); 
+    send(ew);
+    return ew.va.size();
   }
 
 
-  vEbwrs& CarpeDM::createModInfo(uint8_t cpu, uint32_t modCnt, uint8_t opType, vEbwrs& ew, uint32_t adrOffs) {
+  vEbwrs& CarpeDM::createModInfo(vEbwrs& ew, uint8_t cpu, uint32_t modCnt, uint8_t opType, uint32_t adrOffs) {
     // modification time address (lo/hi)
     uint32_t modAdrBase = atUp.getMemories()[cpu].extBaseAdr + atUp.getMemories()[cpu].sharedOffs + SHCTL_DIAG + adrOffs;
     // save modification time, issuer
@@ -395,8 +387,8 @@ vBuf CarpeDM::decompress(const vBuf& in) {return lzmaDecompress(in);}
     return ew;
   }
 
-  vEbwrs& CarpeDM::createSchedModInfo(uint8_t cpu, uint32_t modCnt, uint8_t opType, vEbwrs& ew) { return createModInfo(cpu, modCnt, opType, ew, T_DIAG_SCH_MOD); };
-  vEbwrs& CarpeDM::createCmdModInfo  (uint8_t cpu, uint32_t modCnt, uint8_t opType, vEbwrs& ew) { return createModInfo(cpu, modCnt, opType, ew, T_DIAG_CMD_MOD); };
+  vEbwrs& CarpeDM::createSchedModInfo(vEbwrs& ew, uint8_t cpu, uint32_t modCnt, uint8_t opType) { return createModInfo(ew, cpu, modCnt, opType, T_DIAG_SCH_MOD); };
+  vEbwrs& CarpeDM::createCmdModInfo  (vEbwrs& ew, uint8_t cpu, uint32_t modCnt, uint8_t opType) { return createModInfo(ew, cpu, modCnt, opType, T_DIAG_CMD_MOD); };
 /*
   int CarpeDM::startThr(uint8_t cpuIdx, uint8_t thrIdx)                              { vEbwrs ew; return send(startThr(cpuIdx, thrIdx, ew));} //Requests Thread to start
   int CarpeDM::startPattern(const std::string& sPattern, uint8_t thrIdx)             { vEbwrs ew; return send(startPattern(sPattern, thrIdx, ew));}//Requests Pattern to start

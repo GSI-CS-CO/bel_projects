@@ -1,6 +1,22 @@
 #include <boost/algorithm/string.hpp>
 #include "ebwrapper.h"
 
+const int EbWrapper::expVersionMin = EbWrapper::parseFwVersionString(EXP_VER);
+const int EbWrapper::expVersionMax = (expVersionMin / (int)FwId::VERSION_MAJOR_MUL) * (int)FwId::VERSION_MAJOR_MUL
+                     + 99 * (int)FwId::VERSION_MINOR_MUL
+                     + 99 * (int)FwId::VERSION_REVISION_MUL;
+
+void EbWrapper::checkReadCycle (const vAdr& va, const vBl& vcs) const {
+     if (va.size() != vcs.size()) throw std::runtime_error(" EB Read cycle Adr / Flow control vector lengths (" 
+      + std::to_string(va.size()) + "/" + std::to_string(vcs.size()) + ") do not match\n");
+  }
+
+void EbWrapper::checkWriteCycle(const vAdr& va, const vBuf& vb, const vBl& vcs) const {   
+    if ( (va.size() != vcs.size()) || ( va.size() * _32b_SIZE_ != vb.size() ) )
+    throw std::runtime_error(" EB/sim write cycle Adr / Data / Flow control vector lengths (" + std::to_string(va.size()) + "/" 
+      + std::to_string(vb.size() /  _32b_SIZE_) + "/" + std::to_string(vcs.size()) +") do not match\n");
+}
+
 int EbWrapper::writeCycle(const vAdr& va, const vBuf& vb, const vBl& vcs) const {
 
   //eb_status_t status;
@@ -289,7 +305,7 @@ bool EbWrapper::connect(const std::string& en, AllocTable& atUp, AllocTable& atD
   }
 
 
-  int EbWrapper::parseFwVersionString(const std::string& s) const {
+  int EbWrapper::parseFwVersionString(const std::string& s) {
     int verMaj, verMin, verRev;
     std::vector<std::string> x;
 

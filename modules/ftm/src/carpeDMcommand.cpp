@@ -30,7 +30,7 @@ namespace carpeDMcommand {
   const std::string exIntro = "carpeDMcommand: ";
 }
 
-vEbwrs& CarpeDM::blockAsyncClearQueues(const std::string& sBlock, vEbwrs& ew) {
+vEbwrs& CarpeDM::blockAsyncClearQueues(vEbwrs& ew, const std::string& sBlock) {
   uint32_t hash;
   hash      = hm.lookup(sBlock, "block: unknown target ");
   auto it   = atDown.lookupHash(hash, carpeDMcommand::exIntro);
@@ -119,17 +119,17 @@ vEbwrs& CarpeDM::createCommand(vEbwrs& ew, const std::string& type, const std::s
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     if (type == dnt::sCmdStart)   {
-      if (hm.lookup(target)) {sLog << " Starting at <" << target << ">" << std::endl; startNodeOrigin(target, ew);  }
+      if (hm.lookup(target)) {sLog << " Starting at <" << target << ">" << std::endl; startNodeOrigin(ew, target);  }
       else {throw std::runtime_error("Cannot execute command '" + type + "' No valid cpu/thr provided and '" + target + "' is not a valid node name\n");}
       return ew;
     }
     if (type == dnt::sCmdStop)    {
-      if (hm.lookup(target)) { sLog << " Stopping at <" << target << ">" << std::endl; stopNodeOrigin(target, ew); }
+      if (hm.lookup(target)) { sLog << " Stopping at <" << target << ">" << std::endl; stopNodeOrigin(ew, target); }
       else {throw std::runtime_error("Cannot execute command '" + type + "' No valid cpu/thr provided and '" + target + "' is not a valid node name\n");}
       return ew;
     }
     else if (type == dnt::sCmdAbort)   {
-      if (hm.lookup(target)) {sLog << " Aborting (trying) at <" << target << ">" << std::endl; abortNodeOrigin(target, ew); }
+      if (hm.lookup(target)) {sLog << " Aborting (trying) at <" << target << ">" << std::endl; abortNodeOrigin(ew, target); }
       else {throw std::runtime_error("Cannot execute command '" + type + "'. No valid cpu/thr provided and '" + target + "' is not a valid node name\n");}
       return ew;
     }
@@ -139,7 +139,7 @@ vEbwrs& CarpeDM::createCommand(vEbwrs& ew, const std::string& type, const std::s
 
     if (type == dnt::sCmdOrigin)   {
       //Leave out for now and autocorrect cpu
-      try { setThrOrigin(getNodeCpu(target, TransferDir::DOWNLOAD), thr, target, ew); } catch (std::runtime_error const& err) {
+      try { setThrOrigin(ew, getNodeCpu(target, TransferDir::DOWNLOAD), thr, target); } catch (std::runtime_error const& err) {
         throw std::runtime_error("Cannot execute command '" + type + "', " + std::string(err.what()));
       }
       return ew;
@@ -159,7 +159,7 @@ vEbwrs& CarpeDM::createCommand(vEbwrs& ew, const std::string& type, const std::s
       return ew;
     // async clear all queues
     } else if (type == dnt::sCmdAsyncClear) {
-      blockAsyncClearQueues(target, ew);
+      blockAsyncClearQueues(ew, target);
       lock.wr.set = true;
       lock.wr.clr = true;
       lock.rd.set = true;
@@ -207,7 +207,7 @@ vEbwrs& CarpeDM::createCommand(vEbwrs& ew, const std::string& type, const std::s
     else { throw std::runtime_error("Command type <" + type + "> is not supported!\n");}
 
     //sLog << std::endl;
-    createMiniCommand(target, cmdPrio, mc, ew);
+    createMiniCommand(ew, target, cmdPrio, mc);
 
   return ew;
   
@@ -345,7 +345,7 @@ vEbwrs& CarpeDM::createCommandBurst(vEbwrs& ew, Graph& g) {
   }
 
 
-  vEbwrs& CarpeDM::createMiniCommand(const std::string& targetName, uint8_t cmdPrio, mc_ptr mc, vEbwrs& ew) {
+  vEbwrs& CarpeDM::createMiniCommand(vEbwrs& ew, const std::string& targetName, uint8_t cmdPrio, mc_ptr mc) {
 
     uint32_t cmdWrInc, hash;
     uint8_t b[_T_CMD_SIZE_ + _32b_SIZE_];
@@ -375,7 +375,7 @@ vEbwrs& CarpeDM::createCommandBurst(vEbwrs& ew, Graph& g) {
     if ((((mc->getAct() >> ACT_TYPE_POS) & ACT_TYPE_MSK) == ACT_TYPE_FLOW)
      && (boost::dynamic_pointer_cast<MiniFlow>(mc)->getDst() == LM32_NULL_PTR)) { opType = OP_TYPE_CMD_STOP; }
     //FIMXE this should be done for all commands, not just the minis  
-    createCmdModInfo(getNodeCpu(targetName, TransferDir::DOWNLOAD), 0, opType, ew);
+    createCmdModInfo(ew, getNodeCpu(targetName, TransferDir::DOWNLOAD), 0, opType);
 
     return ew;
   }
@@ -398,7 +398,7 @@ vEbwrs& CarpeDM::createCommandBurst(vEbwrs& ew, Graph& g) {
 
 
   //Sets the Node the Thread will start from
-  vEbwrs& CarpeDM::setThrOrigin(uint8_t cpuIdx, uint8_t thrIdx, const std::string& name, vEbwrs& ew) {
+  vEbwrs& CarpeDM::setThrOrigin(vEbwrs& ew, uint8_t cpuIdx, uint8_t thrIdx, const std::string& name) {
     uint8_t b[4];
 
     ew.va.push_back(getThrInitialNodeAdr(cpuIdx, thrIdx));
@@ -424,7 +424,7 @@ vEbwrs& CarpeDM::createCommandBurst(vEbwrs& ew, Graph& g) {
   }
 
   //DEBUG Sets the cursor
-  vEbwrs& CarpeDM::setThrCursor(uint8_t cpuIdx, uint8_t thrIdx, const std::string& name, vEbwrs& ew) {
+  vEbwrs& CarpeDM::setThrCursor(vEbwrs& ew, uint8_t cpuIdx, uint8_t thrIdx, const std::string& name) {
     uint8_t b[4];
 
     ew.va.push_back(getThrCurrentNodeAdr(cpuIdx, thrIdx));
@@ -467,14 +467,14 @@ vEbwrs& CarpeDM::createCommandBurst(vEbwrs& ew, Graph& g) {
   }
 
   //Requests Threads to start
-  vEbwrs& CarpeDM::setThrStart(uint8_t cpuIdx, uint32_t bits, vEbwrs& ew) {
+  vEbwrs& CarpeDM::setThrStart(vEbwrs& ew, uint8_t cpuIdx, uint32_t bits) {
     uint8_t b[4];
 
     ew.va.push_back(getThrCmdAdr(cpuIdx) + T_TC_START);
     writeLeNumberToBeBytes<uint32_t>(b, bits);
     ew.vb.insert( ew.vb.end(), b, b + sizeof(b));
     ew.vcs += leadingOne(1);
-    createCmdModInfo(cpuIdx, 0, OP_TYPE_CMD_START, ew);
+    createCmdModInfo(ew, cpuIdx, 0, OP_TYPE_CMD_START);
     return ew;
   }
 
@@ -485,14 +485,14 @@ vEbwrs& CarpeDM::createCommandBurst(vEbwrs& ew, Graph& g) {
 
 
   //Requests Threads to stop
-  vEbwrs& CarpeDM::setThrAbort(uint8_t cpuIdx, uint32_t bits, vEbwrs& ew) {
+  vEbwrs& CarpeDM::setThrAbort(vEbwrs& ew, uint8_t cpuIdx, uint32_t bits) {
     uint8_t b[4];
 
     ew.va.push_back(getThrCmdAdr(cpuIdx) + T_TC_ABORT);
     writeLeNumberToBeBytes<uint32_t>(b, bits);
     ew.vb.insert( ew.vb.end(), b, b + sizeof(b));
     ew.vcs += leadingOne(1);
-    createCmdModInfo(cpuIdx, 0, OP_TYPE_CMD_ABORT, ew);
+    createCmdModInfo(ew, cpuIdx, 0, OP_TYPE_CMD_ABORT);
     return ew;
   }
 
@@ -505,11 +505,11 @@ vEbwrs& CarpeDM::createCommandBurst(vEbwrs& ew, Graph& g) {
 
 
     for(uint8_t cpuIdx=0; cpuIdx < ebd.getCpuQty(); cpuIdx++) {
-      setThrStart(cpuIdx, 0, ew);
+      setThrStart(ew, cpuIdx, 0);
       ew.va.push_back(getThrCmdAdr(cpuIdx) + T_TC_ABORT);
       ew.vb.insert( ew.vb.end(), b, b + sizeof(b));
       ew.vcs.push_back(true); // each one is a new wb device, so we always need a new eb cycle
-      createCmdModInfo(cpuIdx, 0, OP_TYPE_CMD_HALT, ew);
+      createCmdModInfo(ew, cpuIdx, 0, OP_TYPE_CMD_HALT);
     }
 
     ebd.writeCycle(ew.va, ew.vb, ew.vcs);
@@ -521,30 +521,17 @@ vEbwrs& CarpeDM::createCommandBurst(vEbwrs& ew, Graph& g) {
   }
 
   //Requests Thread to start
-  vEbwrs& CarpeDM::startThr(uint8_t cpuIdx, uint8_t thrIdx, vEbwrs& ew) {
-    return setThrStart(cpuIdx, (1<<thrIdx), ew);
+  vEbwrs& CarpeDM::startThr(vEbwrs& ew, uint8_t cpuIdx, uint8_t thrIdx) {
+    return setThrStart(ew, cpuIdx, (1<<thrIdx));
   }
-/*
-  //Requests Thread to stop
-  void CarpeDM::stopThr(uint8_t cpuIdx, uint8_t thrIdx) {
-    setThrStop(cpuIdx, (1<<thrIdx));
-  }
-*/
+
   //Immediately aborts a Thread
-  vEbwrs& CarpeDM::abortThr(uint8_t cpuIdx, uint8_t thrIdx, vEbwrs& ew) {
-    return setThrAbort(cpuIdx, (1<<thrIdx), ew);
+  vEbwrs& CarpeDM::abortThr(vEbwrs& ew, uint8_t cpuIdx, uint8_t thrIdx) {
+    return setThrAbort(ew, cpuIdx, (1<<thrIdx));
   }
 
 
-
-
-void  CarpeDM::resetThrMsgCnt(uint8_t cpuIdx, uint8_t thrIdx) {
-  vEbwrs ew;
-  resetThrMsgCnt(cpuIdx, thrIdx, ew);
-  ebd.writeCycle(ew.va, ew.vb, ew.vcs);
-}
-
-vEbwrs& CarpeDM::resetThrMsgCnt(uint8_t cpuIdx, uint8_t thrIdx, vEbwrs& ew) {
+vEbwrs& CarpeDM::resetThrMsgCnt(vEbwrs& ew, uint8_t cpuIdx, uint8_t thrIdx) {
   uint32_t msgCntAdr = atDown.getMemories()[cpuIdx].extBaseAdr + atDown.getMemories()[cpuIdx].sharedOffs + SHCTL_THR_DAT + thrIdx * _T_TD_SIZE_ + T_TD_MSG_CNT;
 
   ew.va.push_back(msgCntAdr + 0);
@@ -571,10 +558,10 @@ void CarpeDM::resetAllThreads() {
   vEbwrs ew;
   for(uint8_t cpu = 0; cpu < ebd.getCpuQty(); cpu++) { //cycle all CPUs
     for(uint8_t thr = 0; thr < _THR_QTY_; thr++) {
-      setThrStartTime(cpu, thr, 0ULL, ew);
-      setThrDeadline(cpu, thr, -1ULL, ew);
-      setThrOrigin(cpu, thr, DotStr::Node::Special::sIdle, ew);
-      setThrCursor(cpu, thr, DotStr::Node::Special::sIdle, ew); 
+      setThrStartTime(ew, cpu, thr, 0ULL);
+      setThrDeadline(ew, cpu, thr, -1ULL);
+      setThrOrigin(ew, cpu, thr, DotStr::Node::Special::sIdle);
+      setThrCursor(ew, cpu, thr, DotStr::Node::Special::sIdle); 
     }
   }
   send(ew);  
@@ -589,7 +576,7 @@ uint64_t CarpeDM::getThrDeadline(uint8_t cpuIdx, uint8_t thrIdx) {
   return ebd.read64b(atDown.getMemories()[cpuIdx].extBaseAdr + atDown.getMemories()[cpuIdx].sharedOffs + SHCTL_THR_DAT + thrIdx * _T_TD_SIZE_ + T_TD_DEADLINE);
 }
 
-vEbwrs&  CarpeDM::setThrDeadline(uint8_t cpuIdx, uint8_t thrIdx, uint64_t t, vEbwrs& ew) {
+vEbwrs&  CarpeDM::setThrDeadline(vEbwrs& ew, uint8_t cpuIdx, uint8_t thrIdx, uint64_t t) {
   uint32_t startAdr = atDown.getMemories()[cpuIdx].extBaseAdr + atDown.getMemories()[cpuIdx].sharedOffs + SHCTL_THR_DAT + thrIdx * _T_TD_SIZE_ + T_TD_DEADLINE;
   ew.va += {startAdr, startAdr + _32b_SIZE_};
   writeLeNumberToBeBytes<uint64_t>(ew.vb, t );
@@ -597,7 +584,7 @@ vEbwrs&  CarpeDM::setThrDeadline(uint8_t cpuIdx, uint8_t thrIdx, uint64_t t, vEb
   return ew;
 }
 
-vEbwrs&  CarpeDM::setThrStartTime(uint8_t cpuIdx, uint8_t thrIdx, uint64_t t, vEbwrs& ew) {
+vEbwrs&  CarpeDM::setThrStartTime(vEbwrs& ew, uint8_t cpuIdx, uint8_t thrIdx, uint64_t t) {
   uint32_t startAdr = atDown.getMemories()[cpuIdx].extBaseAdr + atDown.getMemories()[cpuIdx].sharedOffs + SHCTL_THR_STA + thrIdx * _T_TS_SIZE_ + T_TS_STARTTIME;
   ew.va += {startAdr, startAdr + _32b_SIZE_};
   writeLeNumberToBeBytes<uint64_t>(ew.vb, t );
@@ -610,7 +597,7 @@ uint64_t CarpeDM::getThrStartTime(uint8_t cpuIdx, uint8_t thrIdx) {
 }
 
 //FIXME wtf ... this doesnt queue anything!
-vEbwrs&  CarpeDM::setThrPrepTime(uint8_t cpuIdx, uint8_t thrIdx, uint64_t t, vEbwrs& ew) {
+vEbwrs&  CarpeDM::setThrPrepTime(vEbwrs& ew, uint8_t cpuIdx, uint8_t thrIdx, uint64_t t) {
   uint32_t startAdr = atDown.getMemories()[cpuIdx].extBaseAdr + atDown.getMemories()[cpuIdx].sharedOffs + SHCTL_THR_STA + thrIdx * _T_TS_SIZE_ + T_TS_PREPTIME;
   ew.va += {startAdr, startAdr + _32b_SIZE_};
   writeLeNumberToBeBytes<uint64_t>(ew.vb, t );
@@ -727,51 +714,51 @@ int CarpeDM::getIdleThread(uint8_t cpuIdx) {
 }
 
 //Requests Pattern to start on thread <x>
-vEbwrs& CarpeDM::startPattern(const std::string& sPattern, uint8_t thrIdx, vEbwrs& ew) { return startNodeOrigin(getPatternEntryNode(sPattern), thrIdx, ew);}
+vEbwrs& CarpeDM::startPattern(vEbwrs& ew, const std::string& sPattern, uint8_t thrIdx) { return startNodeOrigin(ew, getPatternEntryNode(sPattern), thrIdx);}
 //Requests Pattern to start
-vEbwrs& CarpeDM::startPattern(const std::string& sPattern, vEbwrs& ew) { return startNodeOrigin(getPatternEntryNode(sPattern), ew); }
+vEbwrs& CarpeDM::startPattern(vEbwrs& ew, const std::string& sPattern) { return startNodeOrigin(ew, getPatternEntryNode(sPattern)); }
 
 //Requests Pattern to stop
-vEbwrs& CarpeDM::stopPattern(const std::string& sPattern, vEbwrs& ew) { return stopNodeOrigin(getPatternExitNode(sPattern), ew); }
+vEbwrs& CarpeDM::stopPattern(vEbwrs& ew, const std::string& sPattern) { return stopNodeOrigin(ew, getPatternExitNode(sPattern)); }
 
 //Immediately aborts a Pattern
-vEbwrs& CarpeDM::abortPattern(const std::string& sPattern, vEbwrs& ew) {
+vEbwrs& CarpeDM::abortPattern(vEbwrs& ew, const std::string& sPattern) {
   std::pair<int, int> cpuAndThr = findRunningPattern(sPattern);
   //if we didn't find it, it's not running now. So no problem that we cannot abort it
-  if ((cpuAndThr.first >= 0) && (cpuAndThr.second >= 0)) return abortThr((uint8_t)cpuAndThr.first, (uint8_t)cpuAndThr.second, ew);
+  if ((cpuAndThr.first >= 0) && (cpuAndThr.second >= 0)) return abortThr(ew, (uint8_t)cpuAndThr.first, (uint8_t)cpuAndThr.second);
   return ew;
 }
 
 
 //Requests thread <thrIdx> to start at node <sNode>
-vEbwrs& CarpeDM::startNodeOrigin(const std::string& sNode, uint8_t thrIdx, vEbwrs& ew) {
+vEbwrs& CarpeDM::startNodeOrigin(vEbwrs& ew, const std::string& sNode, uint8_t thrIdx) {
   uint8_t cpuIdx    = getNodeCpu(sNode, TransferDir::DOWNLOAD);
-  setThrOrigin(cpuIdx, thrIdx, sNode, ew); //configure thread and run it
-  startThr(cpuIdx, thrIdx, ew);
+  setThrOrigin(ew, cpuIdx, thrIdx, sNode); //configure thread and run it
+  startThr(ew, cpuIdx, thrIdx);
   return ew;
 }
 //Requests a start at node <sNode>
-vEbwrs& CarpeDM::startNodeOrigin(const std::string& sNode, vEbwrs& ew) {
+vEbwrs& CarpeDM::startNodeOrigin(vEbwrs& ew, const std::string& sNode) {
   uint8_t cpuIdx    = getNodeCpu(sNode, TransferDir::DOWNLOAD);
   int thrIdx = 0; //getIdleThread(cpuIdx); //find a free thread we can use to run our pattern
   if (thrIdx == _THR_QTY_) throw std::runtime_error( "Found no free thread on " + std::to_string(cpuIdx) + "'s hosting cpu");
-  setThrOrigin(cpuIdx, thrIdx, sNode, ew); //configure thread and run it
-  startThr(cpuIdx, (uint8_t)thrIdx, ew);
+  setThrOrigin(ew, cpuIdx, thrIdx, sNode); //configure thread and run it
+  startThr(ew, cpuIdx, (uint8_t)thrIdx);
   return ew;
 }
 
 //Requests stop at node <sNode> (flow to idle)
-vEbwrs& CarpeDM::stopNodeOrigin(const std::string& sNode, vEbwrs& ew) {
+vEbwrs& CarpeDM::stopNodeOrigin(vEbwrs& ew, const std::string& sNode) {
   //send a command: tell patternExitNode to change the flow to Idle
   return createFlowCommand(ew, dnt::sCmdFlow, sNode, DotStr::Node::Special::sIdle, PRIO_LO, 1, true, 0, false);
 }
 
 //Immediately aborts the thread whose pattern <sNode> belongs to
-vEbwrs& CarpeDM::abortNodeOrigin(const std::string& sNode, vEbwrs& ew) {
+vEbwrs& CarpeDM::abortNodeOrigin(vEbwrs& ew, const std::string& sNode) {
   std::string sPattern = getNodePattern(sNode);
   std::pair<int, int> cpuAndThr = findRunningPattern(sPattern);
   //if we didn't find it, it's not running now. So no problem that we cannot abort it
-  if ((cpuAndThr.first >= 0) && (cpuAndThr.second >= 0)) return abortThr((uint8_t)cpuAndThr.first, (uint8_t)cpuAndThr.second, ew);
+  if ((cpuAndThr.first >= 0) && (cpuAndThr.second >= 0)) return abortThr(ew, (uint8_t)cpuAndThr.first, (uint8_t)cpuAndThr.second);
   return ew;
 }
 
@@ -846,10 +833,10 @@ vertex_set_t CarpeDM::getAllCursors(bool activeOnly) {
 }
 
 
-int CarpeDM::staticFlushPattern(const std::string& sPattern, bool prioIl, bool prioHi, bool prioLo, vEbwrs& ew, bool force) {
+int CarpeDM::staticFlushPattern(const std::string& sPattern, bool prioIl, bool prioHi, bool prioLo, bool force) {
   Graph& g = gDown;
   AllocTable& at = atDown;
-
+  vEbwrs ew;
 
   bool found = false;
 
@@ -866,8 +853,8 @@ int CarpeDM::staticFlushPattern(const std::string& sPattern, bool prioIl, bool p
   return ew.va.size();
 }
 
-int CarpeDM::staticFlushBlock(const std::string& sBlock, bool prioIl, bool prioHi, bool prioLo, vEbwrs& ew, bool force) {
-
+int CarpeDM::staticFlushBlock(const std::string& sBlock, bool prioIl, bool prioHi, bool prioLo, bool force) {
+  vEbwrs ew;
   send(staticFlush(sBlock, prioIl, prioHi, prioLo, ew, force));
   return ew.va.size();
 }
@@ -923,7 +910,7 @@ vEbwrs& CarpeDM::staticFlush(const std::string& sBlock, bool prioIl, bool prioHi
 
 }
 
-vEbwrs& CarpeDM::deactivateOrphanedCommands(std::vector<QueueReport>& vQr, vEbwrs& ew) {
+vEbwrs& CarpeDM::deactivateOrphanedCommands(vEbwrs& ew, std::vector<QueueReport>& vQr) {
   for (auto& qr : vQr) {
      for (int8_t prio = PRIO_IL; prio >= PRIO_LO; prio--) {
 

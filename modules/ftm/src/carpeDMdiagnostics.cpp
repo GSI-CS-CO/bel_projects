@@ -468,19 +468,15 @@ void CarpeDM::inspectHeap(uint8_t cpuIdx) {
 }
 
 
-void CarpeDM::clearHealth(uint8_t cpuIdx) {
-  vEbwrs ew;
-  clearHealth(cpuIdx, ew);
-  ebd.writeCycle(ew.va, ew.vb, ew.vcs);
+
+vEbwrs& CarpeDM::clearHealth(vEbwrs& ew) {
+  for(int cpuIdx = 0; cpuIdx < ebd.getCpuQty(); cpuIdx++) { clearHealth(ew, cpuIdx); }
+  return ew;
 }
 
-void CarpeDM::clearHealth() {
-  vEbwrs ew;
-  for(int cpuIdx = 0; cpuIdx < ebd.getCpuQty(); cpuIdx++) { clearHealth(cpuIdx, ew); }
-  ebd.writeCycle(ew.va, ew.vb, ew.vcs);
-}
 
-vEbwrs& CarpeDM::clearHealth(uint8_t cpuIdx, vEbwrs& ew) {
+vEbwrs& CarpeDM::clearHealth(vEbwrs& ew, uint8_t cpuIdx) {
+ 
   uint32_t const baseAdr = atDown.getMemories()[cpuIdx].extBaseAdr + atDown.getMemories()[cpuIdx].sharedOffs;
 
   uint8_t buf[8];
@@ -496,7 +492,7 @@ vEbwrs& CarpeDM::clearHealth(uint8_t cpuIdx, vEbwrs& ew) {
   //printf("VA size before %u, VCS size \n", ew.va.size(), ew.vcs.size());
   for (uint8_t thrIdx = 0; thrIdx < _THR_QTY_; thrIdx++) {
 
-    resetThrMsgCnt(cpuIdx, thrIdx, ew);
+    resetThrMsgCnt(ew, cpuIdx, thrIdx);
     //printf("VA size %u, VCS size \n", ew.va.size(), ew.vcs.size());
   }
 
@@ -774,7 +770,7 @@ void CarpeDM::coverage3Upload(uint64_t seed ) {
 
   coverage3GenerateDynamic(gCmd, seed );
   createCommandBurst(tmpWr, gCmd);
-  setThrOrigin(0, 0, coverage3GenerateCursor(g, seed),tmpWr);
+  setThrOrigin(tmpWr, 0, 0, coverage3GenerateCursor(g, seed));
   forceThrCursor(0, 0);
   send(tmpWr);
 
