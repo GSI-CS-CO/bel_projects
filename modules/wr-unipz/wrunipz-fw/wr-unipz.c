@@ -1094,10 +1094,18 @@ uint32_t doActionOperation(uint32_t *nCycle,                  // total number of
       DBPRINT3("wr-unipz: service event for pz %d, vacc %d\n", ipz, virtAcc);
       servOffs = getVaccLen(bigData[ipz][chn * WRUNIPZ_NVACC + virtAcc]) & 0xffff;
       servEvt  = 0x0;
-      if (evtData == WRUNIPZ_EVTDATA_PREPACC)    servEvt = EVT_AUX_PRP_NXT_ACC | ((virtAcc & 0xf) << 8) | ((servOffs & 0xffff)        << 16); // send after last event
-      if (evtData == WRUNIPZ_EVTDATA_ZEROACC)    servEvt = EVT_MAGN_DOWN       | ((virtAcc & 0xf) << 8) | ((servOffs & 0xffff)        << 16); // send after last event 
-      if (evtData == WRUNIPZ_EVTDATA_PREPACCNOW) servEvt = EVT_AUX_PRP_NXT_ACC | ((virtAcc & 0xf) << 8) | ((uint16_t)WRUNIPZ_QQOFFSET << 16); // send 'now' /* chk QQOFFSET */
-      if (servEvt != 0 ) ebmWriteTM(servEvt, getSysTime(), ipz, virtAcc, 0);  // send message
+      if (evtData == WRUNIPZ_EVTDATA_PREPACC) {
+        servEvt = EVT_AUX_PRP_NXT_ACC | ((virtAcc & 0xf) << 8) | ((servOffs & 0xffff)        << 16); // send after last event of current PZ cycle
+        ebmWriteTM(servEvt, syncPrevT, ipz, virtAcc, 0);                                             // send message
+      } // if PREPACC
+      if (evtData == WRUNIPZ_EVTDATA_ZEROACC) {
+        servEvt = EVT_MAGN_DOWN       | ((virtAcc & 0xf) << 8) | ((servOffs & 0xffff)        << 16); // send after last event of current PZ cycle
+        ebmWriteTM(servEvt, syncPrevT, ipz, virtAcc, 0);                                             // send message
+      } // if ZEROACC
+      if (evtData == WRUNIPZ_EVTDATA_PREPACCNOW) {
+        servEvt = EVT_AUX_PRP_NXT_ACC | ((virtAcc & 0xf) << 8) | ((uint16_t)WRUNIPZ_QQOFFSET << 16); // send 'now' /* chk QQOFFSET */
+        ebmWriteTM(servEvt, getSysTime(), ipz, virtAcc, 0);                                          // send message
+      } // if PREPACCNOW
     } // else SERVICE
   
     break;

@@ -21,7 +21,7 @@
 #define WRUNIPZ_UNILACFREQ              50    // frequency of UNILAC operation [Hz]
 #define WRUNIPZ_UNILACPERIOD      20000000    // length of one UNILAC cylce [ns]
 #define WRUNIPZ_MAXPREPOFFSET         2000    // max offset of a prep event within UNILAC cycle [us]
-#define WRUNIPZ_QQOFFSET            500000    // offset for sending special service event for QQ [ns]
+#define WRUNIPZ_QQOFFSET               500    // offset for sending special service event for QQ [us] /* chk: QQ is breaking the concept of WR */
 
 // numbers for UNIPZ
 #define WRUNIPZ_NEVT                    32    // # of events per virt acc
