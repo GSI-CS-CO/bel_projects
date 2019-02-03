@@ -3,7 +3,7 @@
  *
  *  created : 2018
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 01-Jan-2019
+ *  version : 03-Feb-2019
  *
  *  lm32 program for gateway between UNILAC Pulszentrale and a White Rabbit network
  *  this basically serves a Data Master for UNILAC
@@ -46,7 +46,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 22-November-2018
  ********************************************************************************************/
-#define WRUNIPZ_FW_VERSION 0x000010                                     // make this consistent with makefile
+#define WRUNIPZ_FW_VERSION 0x000011                                     // make this consistent with makefile
 
 // standard includes
 #include <stdio.h>
@@ -126,6 +126,8 @@ uint32_t *pSharedNMessageLo;            // pointer to a "user defined" u32 regis
 uint32_t *pSharedMsgFreqAvg;            // pointer to a "user defined" u32 register; here: message rate (average over one second)
 uint32_t *pSharedDtMax;                 // pointer to a "user defined" u32 register; here: max diff between deadline and time of dispatching
 uint32_t *pSharedDtMin;                 // pointer to a "user defined" u32 register; here: min diff between deadline and time of dispatching
+uint32_t *pSharedCycJmpMax;             // pointer to a "user defined" u32 register; here: max diff between expected and actual start of UNILAC cycle
+uint32_t *pSharedCycJmpMin;             // pointer to a "user defined" u32 register; here: min diff between expected and actual start of UNILAC cycle
 uint32_t *pSharedNLate;                 // pointer to a "user defined" u32 register; here: # late messages
 uint32_t *pSharedVaccAvg;               // pointer to a "user defined" u32 register; here: virt accs played during past second
 uint32_t *pSharedPzAvg;                 // pointer to a "user defined" u32 register; here: PZs used during the past second
@@ -147,6 +149,8 @@ uint32_t nBadStatus;                    // # of bad status (=error) incidents
 uint32_t nBadState;                     // # of bad state (=FATAL, ERROR, UNKNOWN) incidents
 int32_t  dtMax;                         // dT max (deadline - dispatch time)
 int32_t  dtMin;                         // dT min (deadline - dispatch time)
+int32_t  cycJmpMax;                     // dT max (difference between actual and expected start of UNILAC cycle)
+int32_t  cycJmpMin;                     // dT min (difference between actual and expected start of UNILAC cycle)
 uint32_t nLate;                         // # of late messages
 uint32_t vaccAvg;                       // virt accs played over the past second
 uint32_t pzAvg;                         // PZs used over the past second
@@ -259,14 +263,13 @@ uint64_t ebmWriteTM(uint32_t evtData, uint64_t tStart, uint32_t pz, uint32_t vir
   uint32_t deadlineLo, deadlineHi, offset;
   uint32_t idLo, idHi;
   uint32_t paramLo, paramHi;
-  int32_t  tDiff;
+  int32_t  tDiff;                             // diff between deadline and dispatch timed
 
   // set high bits for EB master
   ebm_hi(WRUNIPZ_ECA_ADDRESS);
   
   // convert data
   data2TM(&idLo, &idHi, &paramLo, &paramHi, &res, &tef, &offset, evtData, gid[pz], virtAcc, flagNochop);  //convert data
-
   
   // calc deadline
   deadline   = tStart + (uint64_t)offset; 
@@ -400,6 +403,8 @@ void initSharedMem()
   pSharedMsgFreqAvg       = (uint32_t *)(pShared + (WRUNIPZ_SHARED_MSGFREQAVG >> 2));
   pSharedDtMax            = (uint32_t *)(pShared + (WRUNIPZ_SHARED_DTMAX >> 2));
   pSharedDtMin            = (uint32_t *)(pShared + (WRUNIPZ_SHARED_DTMIN >> 2));
+  pSharedCycJmpMax        = (uint32_t *)(pShared + (WRUNIPZ_SHARED_CYCJMPMAX >> 2));
+  pSharedCycJmpMin        = (uint32_t *)(pShared + (WRUNIPZ_SHARED_CYCJMPMIN >> 2));
   pSharedNLate            = (uint32_t *)(pShared + (WRUNIPZ_SHARED_NLATE >> 2));
   pSharedVaccAvg          = (uint32_t *)(pShared + (WRUNIPZ_SHARED_VACCAVG >> 2));
   pSharedPzAvg            = (uint32_t *)(pShared + (WRUNIPZ_SHARED_PZAVG >> 2));
@@ -663,6 +668,8 @@ void clearDiag()
   
   dtMax          = 0x80000000;
   dtMin          = 0x7fffffff;
+  cycJmpMax      = 0x80000000;
+  cycJmpMin      = 0x7fffffff;
   nLate          = 0;
   nCycleAct      = 0;
   nCyclePrev     = 0;
@@ -992,6 +999,9 @@ uint32_t doActionOperation(uint32_t *nCycle,                  // total number of
   uint32_t chn;                                               // channel
   uint32_t servEvt;                                           // service event
   uint32_t servOffs;                                          // offset for service event
+  int32_t  tJump;                                             // diff between expected and actual start of UNILAC cycle
+  uint64_t tExpect;                                           // expected start of UNILAC cycle
+
 
   status = actStatus;
   
@@ -1033,6 +1043,7 @@ uint32_t doActionOperation(uint32_t *nCycle,                  // total number of
     ebm_clr();
 
     // walk through all PZs and run requested virt acc (non-prep events)
+    tExpect     = syncPrevT + syncPrevLen;                    // expected start of 50 Hz trigger
     nLateLocal  = nLate;                                      // for bookkepping for late messages
     syncPrevLen = deadline - syncPrevT;                       // required for 'prep events of next UNILAC cycle'
     syncPrevT   = deadline;                                   // required for 'prep events of next UNILAC cycle'
@@ -1052,6 +1063,10 @@ uint32_t doActionOperation(uint32_t *nCycle,                  // total number of
     // at this point we have scheduled all timing messages of the running cycle and completed the real-time critical stuff
     // now we can do other things...
     
+    tJump       = tExpect - deadline;                         // this is how the start of this UNILAC cycle jumped
+    if (tJump > cycJmpMax) cycJmpMax = tJump;
+    if (tJump < cycJmpMin) cycJmpMin = tJump;                 
+
     if (flagClearAllPZ)        {clearAllPZ();           flagClearAllPZ = 0;       }
     if (flagTransactionInit)   {configTransactInit();   flagTransactionInit = 0;  }  /* chk: error handling */
     if (flagTransactionSubmit) {configTransactSubmit(); flagTransactionSubmit = 0;}  // this takes 51us /* chk: error handling */
@@ -1240,6 +1255,8 @@ void main(void) {
     *pSharedNBadState    = nBadState;
     *pSharedDtMax        = dtMax;
     *pSharedDtMin        = dtMin;
+    *pSharedCycJmpMax    = cycJmpMax;
+    *pSharedCycJmpMin    = cycJmpMin;
     *pSharedNLate        = nLate;
     *pSharedNCycle       = nCycleAct; 
     *pSharedNMessageHi   = (uint32_t)(nMsgAct >> 32);

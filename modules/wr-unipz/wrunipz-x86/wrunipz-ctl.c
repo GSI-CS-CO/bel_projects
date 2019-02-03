@@ -3,7 +3,7 @@
  *
  *  created : 2018
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 14-January-2019
+ *  version : 03-February-2019
  *
  * Command-line interface for wrunipz
  *
@@ -78,6 +78,8 @@ eb_address_t wrunipz_nMessageHi;   // number of messages, read
 eb_address_t wrunipz_msgFreqAvg;   // message rate (average over one second), read
 eb_address_t wrunipz_dtMax;        // delta T (max) between message time of dispatching and deadline, read
 eb_address_t wrunipz_dtMin;        // delta T (min) between message time of dispatching and deadline, read
+eb_address_t wrunipz_cycJmpMax;    // delta T (max) between expected and actual start of UNILAC cycle, read
+eb_address_t wrunipz_cycJmpMin;    // delta T (min) between expected and actual start of UNILAC cycle, read
 eb_address_t wrunipz_nLate;        // # of late messages, read
 eb_address_t wrunipz_vaccAvg;      // virtual accelerators played over the past second, read
 eb_address_t wrunipz_pzAvg;        // PZs used over the past second, read
@@ -182,7 +184,7 @@ int readInfo(uint32_t *sumStatus, uint32_t *state, uint32_t *cycles, uint32_t *n
 } // readInfo
 
 
-int readDiags(uint32_t *sumStatus, uint32_t *state, uint32_t *nBadStatus, uint32_t *nBadState, uint32_t *nCycles, uint64_t *nMessages, int32_t *dtMax, int32_t *dtMin, uint32_t *nLate, uint64_t *tDiag, uint64_t *tS0)
+int readDiags(uint32_t *sumStatus, uint32_t *state, uint32_t *nBadStatus, uint32_t *nBadState, uint32_t *nCycles, uint64_t *nMessages, int32_t *dtMax, int32_t *dtMin, int32_t *cycJmpMax, int32_t *cycJmpMin, uint32_t *nLate, uint64_t *tDiag, uint64_t *tS0)
 {
   eb_cycle_t  cycle;
   eb_status_t eb_status;
@@ -203,6 +205,8 @@ int readDiags(uint32_t *sumStatus, uint32_t *state, uint32_t *nBadStatus, uint32
   eb_cycle_read(cycle, wrunipz_tDiagLo,       EB_BIG_ENDIAN|EB_DATA32, &(data[11]));
   eb_cycle_read(cycle, wrunipz_tS0Hi,         EB_BIG_ENDIAN|EB_DATA32, &(data[12]));
   eb_cycle_read(cycle, wrunipz_tS0Lo,         EB_BIG_ENDIAN|EB_DATA32, &(data[13]));
+  eb_cycle_read(cycle, wrunipz_cycJmpMax,     EB_BIG_ENDIAN|EB_DATA32, &(data[14]));
+  eb_cycle_read(cycle, wrunipz_cycJmpMin,     EB_BIG_ENDIAN|EB_DATA32, &(data[15]));
   if ((eb_status = eb_cycle_close(cycle)) != EB_OK) die("wr-unipz: eb_cycle_close", eb_status);
 
   *sumStatus     = data[0];
@@ -219,6 +223,8 @@ int readDiags(uint32_t *sumStatus, uint32_t *state, uint32_t *nBadStatus, uint32
   *tDiag        += data[11];
   *tS0           = (uint64_t)(data[12]) << 32;
   *tS0          += data[13];
+  *cycJmpMax     = data[14];
+  *cycJmpMin     = data[15];
  
   return eb_status;
 } // readDiags
@@ -276,7 +282,7 @@ void printCycle(uint32_t cycles, uint32_t tCycleAvg, uint32_t msgFreqAvg, uint32
 } // printCycle
 
 
-void printDiags(uint32_t sumStatus, uint32_t state, uint32_t nBadStatus, uint32_t nBadState, uint32_t nCycles, uint64_t nMessages, int32_t dtMax, int32_t dtMin, uint32_t nLate, uint64_t tDiag, uint64_t tS0)
+void printDiags(uint32_t sumStatus, uint32_t state, uint32_t nBadStatus, uint32_t nBadState, uint32_t nCycles, uint64_t nMessages, int32_t dtMax, int32_t dtMin, int32_t cycJmpMax, int32_t cycJmpMin, uint32_t nLate, uint64_t tDiag, uint64_t tS0)
 {
   const struct tm* tm;
   char             timestr[60];
@@ -310,6 +316,8 @@ void printDiags(uint32_t sumStatus, uint32_t state, uint32_t nBadStatus, uint32_
   printf("# of late messages    : %010u\n",   nLate);
   printf("dt min [us]           : %08.1f\n",  (double)dtMin / 1000.0);
   printf("dt max [us]           : %08.1f\n",  (double)dtMax / 1000.0);
+  printf("cycle jump min [us]   : %08.1f\n",  (double)cycJmpMin / 1000.0);
+  printf("cycle jump max [us]   : %08.1f\n",  (double)cycJmpMax / 1000.0);
 } // printDiags
 
 
@@ -348,6 +356,8 @@ int main(int argc, char** argv) {
   uint32_t version;
   int32_t  dtMax;
   int32_t  dtMin;
+  int32_t  cycJmpMax;
+  int32_t  cycJmpMin;
   uint32_t nLate;
   uint32_t vaccAvg;
   uint32_t pzAvg;
@@ -518,8 +528,8 @@ int main(int argc, char** argv) {
       if (state != WRUNIPZ_STATE_OPREADY) printf("wr-unipz: WARNING command has no effect (not in state OPREADY)\n");
     } // "cleardiag"
     if (!strcasecmp(command, "diag")) {
-      readDiags(&sumStatus, &state, &nBadStatus, &nBadState, &cycles, &messages, &dtMax, &dtMin, &nLate, &tDiag, &tS0);
-      printDiags(sumStatus, state, nBadStatus, nBadState, cycles, messages, dtMax, dtMin, nLate, tDiag, tS0);
+      readDiags(&sumStatus, &state, &nBadStatus, &nBadState, &cycles, &messages, &dtMax, &dtMin, &cycJmpMax, &cycJmpMin, &nLate, &tDiag, &tS0);
+      printDiags(sumStatus, state, nBadStatus, nBadState, cycles, messages, dtMax, dtMin, cycJmpMax, cycJmpMin, nLate, tDiag, tS0);
     } // "diag"
 
     // test with data

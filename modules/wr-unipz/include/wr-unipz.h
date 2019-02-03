@@ -151,7 +151,9 @@ typedef struct dataTable {                    // table with _one_ virtAcc for _o
 #define WRUNIPZ_SHARED_MSGFREQAVG     (WRUNIPZ_SHARED_NMESSAGELO + _32b_SIZE_)          // message rate (average over one second)
 #define WRUNIPZ_SHARED_DTMAX          (WRUNIPZ_SHARED_MSGFREQAVG + _32b_SIZE_)          // delta T max (actTime - deadline)
 #define WRUNIPZ_SHARED_DTMIN          (WRUNIPZ_SHARED_DTMAX      + _32b_SIZE_)          // delta T min (actTime - deadline)
-#define WRUNIPZ_SHARED_NLATE          (WRUNIPZ_SHARED_DTMIN      + _32b_SIZE_)          // # of late messages
+#define WRUNIPZ_SHARED_CYCJMPMAX      (WRUNIPZ_SHARED_DTMIN      + _32b_SIZE_)          // delta T max (expected and actual start of UNILAC cycle)
+#define WRUNIPZ_SHARED_CYCJMPMIN      (WRUNIPZ_SHARED_CYCJMPMAX  + _32b_SIZE_)          // delta T min (expected and actual start of UNILAC cycle)
+#define WRUNIPZ_SHARED_NLATE          (WRUNIPZ_SHARED_CYCJMPMIN  + _32b_SIZE_)          // # of late messages
 #define WRUNIPZ_SHARED_VACCAVG        (WRUNIPZ_SHARED_NLATE      + _32b_SIZE_)          // virt accs used (past second) bits 0..15 (normal), 16-31 (verkuerzt)
 #define WRUNIPZ_SHARED_PZAVG          (WRUNIPZ_SHARED_VACCAVG    + _32b_SIZE_)          // PZ used (past second) bits 0..6
 #define WRUNIPZ_SHARED_TDIAGHI        (WRUNIPZ_SHARED_PZAVG      + _32b_SIZE_)          // time when diagnostics was cleared, high bits
