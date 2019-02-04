@@ -8,5 +8,7 @@ REPOSITORY_DIR := $(shell git rev-parse --show-toplevel)
 DEFINES += CONFIG_DDR_PEDANTIC_CHECK
 DEFINES += DEBUGLEVEL=2
 
+CODE_OPTIMIZATION = 2
+
 include $(REPOSITORY_DIR)/makefiles/makefile.scu
 #=================================== EOF ======================================

@@ -29,6 +29,7 @@
 #ifndef _SCU_DDR3_H
 #define _SCU_DDR3_H
 #include <stdint.h>
+#include <helper_macros.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -47,6 +48,14 @@ extern "C" {
 #endif
 
 /*!
+ * @brief Elementary data type of DDR3 within SCU3
+ */
+//typedef uint64_t ;
+
+
+typedef uint32_t DDR3_ALIGN_T;
+
+/*!
  * @brief Maximum size of DDR3 RAM in bytes (1GiBit = GB/8) (134 MB)
  *        (134217728 B)
  */
@@ -57,10 +66,27 @@ extern "C" {
  */
 #define DDR3_MAX_ADDR 0x7FFFFEC
 
+#define DDR3_MAX_INDEX64 (DDR3_MAX_ADDR / sizeof(DDR3_PAYLOAD_T))
+
+/*!
+ * @brief Offset address of burst mode start-address register
+ */
+#define DDR3_BURST_START_ADDR_REG_OFFSET 0x7FFFFF4
+
 /*!
  * @brief Elementary data type of DDR3 within SCU3
  */
-typedef uint64_t DDR3_PAYLOAD_T;
+typedef uint64_t DDR3_BASE_T;
+
+
+typedef union
+{
+   uint64_t  d64;
+   uint32_t  ad32[sizeof(uint64_t)/sizeof(uint32_t)];
+   uint16_t  ad16[sizeof(uint64_t)/sizeof(uint16_t)];
+   uint8_t   ad8[sizeof(uint64_t)/sizeof(uint8_t)];
+} DDR3_PAYLOAD_T;
+STATIC_ASSERT( sizeof(DDR3_PAYLOAD_T) == sizeof(uint64_t) );
 
 /*!
  * @brief Object type of SCU internal DDR3 RAM.
@@ -70,11 +96,11 @@ typedef struct
    /*!
     * @brief WB Base-address of transparent mode
     */
-   uint32_t* volatile pTrModeBase;
+   DDR3_ALIGN_T* volatile pTrModeBase;
    /*!
     * @brief WB Base-address of burst mode
     */
-   uint32_t* volatile pBurstModeBase;
+   DDR3_ALIGN_T* volatile pBurstModeBase;
 } DDR3_T;
 
 /*! ---------------------------------------------------------------------------
@@ -86,42 +112,52 @@ typedef struct
 int ddr3init( register DDR3_T* pThis );
 
 /*! ---------------------------------------------------------------------------
- * @brief Writes a 32 bit value by index addressed DDR-RAM position.
- * @note The index must be dividable by sizeof(uint32_t) that means
- *       dividable by 4.
+ * @brief Writes a 64-bit value in the DDR3 RAM
+ * @see DDR3_PAYLOAD_T
  * @param pThis Pointer to the DDR3 object
- * @param index Offset address in DDR-RAM (must be dividable by 4)
- * @param value Value to write
+ * @param index64 64 bit aligned index
+ * @param pData Pointer to the 64 bit data to write.
  */
 static inline
-void ddr3write32( register DDR3_T* pThis, unsigned int index, uint32_t value )
+void ddr3write64( register const  DDR3_T* pThis, const unsigned int index64,
+                  const DDR3_PAYLOAD_T* pData )
 {
    DDR_ASSERT( pThis != NULL );
    DDR_ASSERT( pThis->pTrModeBase != NULL );
-   DDR_ASSERT( (index % sizeof(uint32_t)) == 0 );
-   DDR_ASSERT( index <= DDR3_MAX_ADDR );
-   pThis->pTrModeBase[index] = value;
+   DDR_ASSERT( index64 <= DDR3_MAX_INDEX64 );
+   register const unsigned int index32 =
+                  index64 * (sizeof(uint64_t)/sizeof(uint32_t));
+   /*
+    * CAUTION: Don't change the order of the following both
+    * code lines!
+    */
+   pThis->pTrModeBase[index32+1] = pData->ad32[1]; // DDR3 high word
+   pThis->pTrModeBase[index32+0] = pData->ad32[0]; // DDR3 low word
 }
 
 /*! ---------------------------------------------------------------------------
- * @brief Reads a 32 bit value from the by indexed position of the
- *        DDR RAM.
- * @note The index must be dividable by sizeof(uint32_t) that means
- *       dividable by 4.
+ * @brief Reads a 64-bit value
+ * @see DDR3_PAYLOAD_T
  * @param pThis Pointer to the DDR3 object
- * @param index Offset address in DDR-RAM (must be dividable by 4)
- * @return Value from DDR-RAM
+ * @param index64 64 bit aligned index
+ * @param pData Pointer to the 64-bit-target where the function should copy the data.
  */
 static inline
-uint32_t ddr3read32( register DDR3_T* pThis, unsigned int index )
+void ddr3read64( register const DDR3_T* pThis, DDR3_PAYLOAD_T* pData,
+                 const unsigned int index64 )
 {
    DDR_ASSERT( pThis != NULL );
    DDR_ASSERT( pThis->pTrModeBase != NULL );
-   DDR_ASSERT( (index % sizeof(uint32_t)) == 0 );
-   DDR_ASSERT( index <= DDR3_MAX_ADDR );
-   return pThis->pTrModeBase[index];
+   DDR_ASSERT( index64 <= DDR3_MAX_INDEX64 );
+   register const unsigned int index32 =
+                  index64 * (sizeof(uint64_t)/sizeof(uint32_t));
+   /*
+    * CAUTION: Don't change the order of the following both
+    * code lines!
+    */
+   pData->ad32[0] = pThis->pTrModeBase[index32+0]; // DDR3 low word
+   pData->ad32[1] = pThis->pTrModeBase[index32+1]; // DDR3 high word
 }
-
 
 /*! @} */ //End of group  SCU_DDR3
 #ifdef __cplusplus

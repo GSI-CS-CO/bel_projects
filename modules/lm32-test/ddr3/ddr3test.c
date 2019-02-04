@@ -32,9 +32,19 @@
 #include <scu_ddr3.h>
 #include <eb_console_helper.h>
 
+void ddrPrint16( DDR3_T* pthis, unsigned int index )
+{
+   DDR3_PAYLOAD_T toRead;
+   ddr3read64( pthis, &toRead, index );
+   for( int i = 0; i < ARRAY_SIZE( toRead.ad16 ); i++ )
+      mprintf( "DDR-Index: %d, offset: %d, 0x%04x\n", index, i, toRead.ad16[i] );
+}
+
 void main( void )
 {
    DDR3_T oDdr3;
+   DDR3_PAYLOAD_T toWrite;
+   DDR3_PAYLOAD_T toRead;
 
    discoverPeriphery();
    uart_init_hw();
@@ -48,12 +58,22 @@ void main( void )
       return;
    }
 
-   ddr3write32( &oDdr3, 0, 0x11223346 );
-   ddr3write32( &oDdr3, 4, 0xAABBCCDD );
+   toWrite.ad16[0] = 0x4711;
+   toWrite.ad16[1] = 0x4712;
+   toWrite.ad16[2] = 0x4713;
+   toWrite.ad16[3] = 0x4714;
 
-   mprintf( "Index 1: 0x%08x\n", ddr3read32( &oDdr3, 0 ));
-   mprintf( "Index 4: 0x%08x\n", ddr3read32( &oDdr3, 16 ));
+   ddr3write64( &oDdr3, 0, &toWrite );
 
+   toWrite.ad16[0] = 0xAAAA;
+   toWrite.ad16[1] = 0xBBBB;
+   toWrite.ad16[2] = 0xCCCC;
+   toWrite.ad16[3] = 0xDDDD;
+
+   ddr3write64( &oDdr3, 1, &toWrite );
+
+   ddrPrint16( &oDdr3, 0 );
+   ddrPrint16( &oDdr3, 1 );
 }
 
 /* ================================= EOF ====================================*/
