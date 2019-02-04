@@ -38,10 +38,11 @@ before_script:
 - ./fix-git.sh
 - sed -i 's/spec_wb.o//g' ip_cores/fpga-config-space/pcie-wb/Makefile
 
-# build etherbone and install
+# build projects and install
 script:
 - make etherbone
 - make tools
+- make firmware
 - make driver
 - sudo make install
 
