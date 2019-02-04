@@ -123,6 +123,7 @@ SIGNAL		S_ATR_to_kanal:	            STD_LOGIC_VECTOR(15 DOWNTO 0);
 
 SIGNAL		ATR_TRIGGER_8_1:	          STD_LOGIC_VECTOR(8 DOWNTO 1);
 SIGNAL		ATR_TRIGGER_TEMP_8_1:	      STD_LOGIC_VECTOR(8 DOWNTO 1);
+SIGNAL    Syn_ATR_Comp_in_puls_8_1_gated : STD_LOGIC_VECTOR(8 DOWNTO 1);
 
 SIGNAL		S_Dtack:				            STD_LOGIC;
 SIGNAL		S_Read_Port:		            STD_LOGIC_VECTOR(DATa_to_SCUB'RANGE);
@@ -202,12 +203,12 @@ atr_puls_start_7_0 <= ATR_TRIGGER_8_1;  --Also: Index 7 gehört zu Startpuls Ch.
 
 
 Trigger_Input_Select : FOR i IN 1 TO 8 GENERATE
-  Trigger_Inputs_MUX : PROCESS (Syn_ATR_Comp_in_puls_8_1, ATR_TimingTags_8_1, ATR_Tag_X_En_8_1)
+  Trigger_Inputs_MUX : PROCESS (Syn_ATR_Comp_in_puls_8_1_gated, ATR_TimingTags_8_1, ATR_Tag_X_En_8_1)
   BEGIN
     IF ATR_Tag_X_En_8_1(i) = '1' THEN
       ATR_TRIGGER_TEMP_8_1(i) <= ATR_TimingTags_8_1(i);
     ELSE
-      ATR_TRIGGER_TEMP_8_1(i) <= Syn_ATR_Comp_in_puls_8_1(i);
+      ATR_TRIGGER_TEMP_8_1(i) <= Syn_ATR_Comp_in_puls_8_1_gated(i);
     END IF;
   END PROCESS Trigger_Inputs_MUX;
   END GENERATE Trigger_Input_Select;
@@ -225,18 +226,24 @@ END GENERATE ATR_TRIGGER_PULS_Select;
 
 
 ----- Multiplexer für die Zuordnung von Rückmelde Strobes zu den Timeout Überwachungen
-  ATR_Strobe_o_MUX : PROCESS (Tags_Only,strobe_o)
+  ATR_Strobe_o_MUX : PROCESS (Tags_Only,strobe_o,Syn_ATR_Comp_in_puls_8_1,ATR_TRIG_IN_Dis)
   BEGIN
-    IF Tags_Only = '0' THEN
-      strobe_o_timeout <= strobe_o;
-    ELSE
-      strobe_o_timeout(7 downto 4) <= "0000";
+    IF Tags_Only = '1' or ATR_TRIG_IN_Dis = '0' THEN                   -- Timing Tags genutzt oder gemeinsamer Trigger genutzt
+      strobe_o_timeout               <= strobe_o;
+      Syn_ATR_Comp_in_puls_8_1_gated <= Syn_ATR_Comp_in_puls_8_1;
+    ELSE                                                               -- Alle anderen Fälle wie Mischbetrieb gemappt
+      strobe_o_timeout(7 downto 4) <= "0000";                          -- Pulsausgänge für Kanal 5..8 geerdet
       strobe_o_timeout(3 downto 0) <= strobe_o(7 downto 4);
+      Syn_ATR_Comp_in_puls_8_1_gated(8 downto 5) <= "0000";
+      Syn_ATR_Comp_in_puls_8_1_gated(4 downto 1) <= Syn_ATR_Comp_in_puls_8_1 (4 downto 1);    
       
     END IF;
   END PROCESS ATR_Strobe_o_MUX;
 
 
+
+  
+  
 ------------------------------------- Outpuls und Timeout  Kanal 1-8 -----------------------------------------         
   
   
