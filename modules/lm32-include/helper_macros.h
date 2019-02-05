@@ -323,7 +323,29 @@ template <typename TYP> TYP convertByteEndian( const TYP value )
    __FUNCTION_BODY_CONVERT_BYTE_ENDIAN( TYP )
 #endif /* __cplusplus */
 
+#ifndef __cplusplus
 
+#ifndef min
+   /*!
+    * @brief Returns the smaller value of the parameters "a" or "b"
+    */
+   #define min( a, b ) \
+   ({ typeof(a) _a = (a); \
+      typeof(b) _b = (b); \
+   (_a < _b)? _a : _b; })
+#endif
+
+#ifndef max
+   /*!
+    * @brief Returns the greater value of the parameters "a" or "b"
+    */
+   #define max( a, b ) \
+   ({ typeof(a) _a = (a); \
+      typeof(b) _b = (b); \
+   (_a > _b)? _a : _b; })
+#endif
+
+#endif /* ifndef __cplusplus */
 
 #endif // ifndef _HELPER_MACROS_H
 //================================== EOF ======================================
