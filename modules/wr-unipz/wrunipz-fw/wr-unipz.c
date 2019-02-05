@@ -3,7 +3,7 @@
  *
  *  created : 2018
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 03-Feb-2019
+ *  version : 05-Feb-2019
  *
  *  lm32 program for gateway between UNILAC Pulszentrale and a White Rabbit network
  *  this basically serves a Data Master for UNILAC
@@ -46,7 +46,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 22-November-2018
  ********************************************************************************************/
-#define WRUNIPZ_FW_VERSION 0x000011                                     // make this consistent with makefile
+#define WRUNIPZ_FW_VERSION 0x000012                                     // make this consistent with makefile
 
 // standard includes
 #include <stdio.h>
@@ -1043,7 +1043,7 @@ uint32_t doActionOperation(uint32_t *nCycle,                  // total number of
     ebm_clr();
 
     // walk through all PZs and run requested virt acc (non-prep events)
-    tExpect     = syncPrevT + syncPrevLen;                    // expected start of 50 Hz trigger
+    tExpect     = syncPrevT + syncPrevLen;                    // expected start of 50 Hz trigger (with data from the previous cycle)
     nLateLocal  = nLate;                                      // for bookkepping for late messages
     syncPrevLen = deadline - syncPrevT;                       // required for 'prep events of next UNILAC cycle'
     syncPrevT   = deadline;                                   // required for 'prep events of next UNILAC cycle'
@@ -1063,13 +1063,12 @@ uint32_t doActionOperation(uint32_t *nCycle,                  // total number of
     // at this point we have scheduled all timing messages of the running cycle and completed the real-time critical stuff
     // now we can do other things...
     
-    tJump       = tExpect - deadline;                         // this is how the start of this UNILAC cycle jumped
+    tJump       = (int32_t)(tExpect - deadline);              // this is how the start of this UNILAC cycle jumped
     if (tJump > cycJmpMax) cycJmpMax = tJump;
-    if (tJump < cycJmpMin) cycJmpMin = tJump;                 
-
+    if (tJump < cycJmpMin) cycJmpMin = tJump;
+    
     if (flagClearAllPZ)        {clearAllPZ();           flagClearAllPZ = 0;       }
     if (flagTransactionInit)   {configTransactInit();   flagTransactionInit = 0;  }  /* chk: error handling */
-    if (flagTransactionSubmit) {configTransactSubmit(); flagTransactionSubmit = 0;}  // this takes 51us /* chk: error handling */
     /* chk !!! what is the mechanism that makes sure that data are committed to all PZs simultanously ??????????????? */
     /* chk !!! bug: in the same cycle where data becomes commited the routine getVacclen will fail (fix after we know commit mechanism) !!! */ 
     
@@ -1123,6 +1122,14 @@ uint32_t doActionOperation(uint32_t *nCycle,                  // total number of
       } // if PREPACCNOW
     } // else SERVICE
   
+    break;
+    
+  case WRUNIPZ_EVT_SYNCH_DATA :                               // super PZ commits recently supplied virt acc -> replace active data by the new ones
+    if (flagTransactionSubmit) {
+      configTransactSubmit();                                 // this takes 51us /* chk: error handling */
+      flagTransactionSubmit = 0;
+    }  // if transaction submit
+    
     break;
     
   default :

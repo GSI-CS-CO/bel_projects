@@ -3,7 +3,7 @@
  *
  *  created : 2018
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 03-February-2019
+ *  version : 05-February-2019
  *
  * Command-line interface for wrunipz
  *
@@ -223,7 +223,7 @@ int readDiags(uint32_t *sumStatus, uint32_t *state, uint32_t *nBadStatus, uint32
   *tDiag        += data[11];
   *tS0           = (uint64_t)(data[12]) << 32;
   *tS0          += data[13];
-  *cycJmpMax     = data[14];
+  *cycJmpMax     = data[14]; 
   *cycJmpMin     = data[15];
  
   return eb_status;
@@ -461,6 +461,8 @@ int main(int argc, char** argv) {
   wrunipz_msgFreqAvg   = lm32_base + SHARED_OFFS + WRUNIPZ_SHARED_MSGFREQAVG;
   wrunipz_dtMax        = lm32_base + SHARED_OFFS + WRUNIPZ_SHARED_DTMAX;
   wrunipz_dtMin        = lm32_base + SHARED_OFFS + WRUNIPZ_SHARED_DTMIN;
+  wrunipz_cycJmpMax    = lm32_base + SHARED_OFFS + WRUNIPZ_SHARED_CYCJMPMAX;
+  wrunipz_cycJmpMin    = lm32_base + SHARED_OFFS + WRUNIPZ_SHARED_CYCJMPMIN;
   wrunipz_nLate        = lm32_base + SHARED_OFFS + WRUNIPZ_SHARED_NLATE;
   wrunipz_vaccAvg      = lm32_base + SHARED_OFFS + WRUNIPZ_SHARED_VACCAVG;
   wrunipz_pzAvg        = lm32_base + SHARED_OFFS + WRUNIPZ_SHARED_PZAVG;
