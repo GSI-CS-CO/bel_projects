@@ -31,10 +31,21 @@
 #include <mini_sdb.h>
 #include <scu_ddr3.h>
 #include <eb_console_helper.h>
+#include <daq_descriptor.h>
+
+
+typedef struct PACKED_SIZE
+{
+   DAQ_DESCRIPTOR_T daq;
+   uint32_t         pading;
+} DDR3_DAQ_DESCRIPTOR_T;
+
+STATIC_ASSERT( (sizeof(DDR3_DAQ_DESCRIPTOR_T) % sizeof(DDR3_PAYLOAD_T)) == 0 );
 
 void ddrPrint16( DDR3_T* pthis, unsigned int index )
 {
    DDR3_PAYLOAD_T toRead;
+
    ddr3read64( pthis, &toRead, index );
    for( int i = 0; i < ARRAY_SIZE( toRead.ad16 ); i++ )
       mprintf( "DDR-Index: %d, offset: %d, 0x%04x\n", index, i, toRead.ad16[i] );
@@ -44,7 +55,6 @@ void main( void )
 {
    DDR3_T oDdr3;
    DDR3_PAYLOAD_T toWrite;
-   DDR3_PAYLOAD_T toRead;
 
    discoverPeriphery();
    uart_init_hw();
@@ -54,7 +64,7 @@ void main( void )
 
    if( ddr3init( &oDdr3 ) < 0  )
    {
-      mprintf( "ERROR: Could not find DDR3 base address!\n" );
+      mprintf( ESC_FG_RED"ERROR: Could not find DDR3 base address!\n"ESC_NORMAL );
       return;
    }
 
@@ -74,6 +84,14 @@ void main( void )
 
    ddrPrint16( &oDdr3, 0 );
    ddrPrint16( &oDdr3, 1 );
+
+   mprintf( "Fifo-Status address: 0x%08x\n",    &oDdr3.pBurstModeBase[DDR3_FIFO_STATUS_OFFSET_ADDR] );
+   mprintf( "Fifo-low word address: 0x%08x\n",  &oDdr3.pBurstModeBase[DDR3_FIFO_LOW_WORD_OFFSET_ADDR] );
+   mprintf( "FiFo-high word address: 0x%08x\n", &oDdr3.pBurstModeBase[DDR3_FIFO_HIGH_WORD_OFFSET_ADDR] );
+
+   mprintf( "FiFo-Status: 0x%08x\n", ddr3GetFifoStatus( &oDdr3 ) );
+
+   ddr3FlushFiFo( &oDdr3, 0, 513, NULL );
 }
 
 /* ================================= EOF ====================================*/
