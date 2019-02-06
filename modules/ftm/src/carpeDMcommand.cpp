@@ -302,8 +302,8 @@ vEbwrs& CarpeDM::createCommandBurst(vEbwrs& ew, Graph& g) {
     qLo       = s2u<bool>(g[v].qLo);
     perma     = s2u<bool>(g[v].perma);
     sLog << "DEBUG: VABS: " << g[v].vabs << std::boolalpha << " recon " << vabs << std::endl;
-    lockRd    = false;
-    lockWr    = false;
+    lockRd    = true;
+    lockWr    = true;
     //fixme hack to test compile
     abswait   = false;
   
