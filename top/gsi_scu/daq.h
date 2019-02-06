@@ -38,6 +38,12 @@
 #include <daq_descriptor.h>
 
 #ifdef CONFIG_DAQ_PEDANTIC_CHECK
+   /* CAUTION:
+    * Assert-macros could be expensive in memory consuming and the
+    * latency time can increase as well!
+    * Especially in embedded systems with small resources.
+    * Therefore use them for bug-fixing or developing purposes only!
+    */
    #include <scu_assert.h>
    #define DAQ_ASSERT SCU_ASSERT
 #else

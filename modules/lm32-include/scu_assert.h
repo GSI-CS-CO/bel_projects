@@ -8,6 +8,15 @@
  * @copyright GSI Helmholtz Centre for Heavy Ion Research GmbH
  * @author    Ulrich Becker <u.becker@gsi.de>
  * @date      05.11.2018
+ * @note CAUTION:
+ *       Assert-macros could be expensive in memory consuming and the
+ *       latency time can increase as well! \n
+ *       Especially in embedded systems with small resources. \n
+ *       Therefore use them for bug-fixing and/or developing purposes only! \n
+ *       You can disable this macros by defining CONFIG_NO_SCU_ASSERT
+ *       independently of the compiler-switch NDEBUG. \n
+ *       Understand the macros as scaffolding and in a way as a kind of
+ *       "active commenting".
  *******************************************************************************
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public

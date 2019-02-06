@@ -96,7 +96,7 @@ void main( void )
    while( daqChannelGetPmFifoWords( pChannel ) < (DAQ_FIFO_PM_HIRES_WORD_SIZE-1) )
       i++;
    mprintf( "Polling loops: %d\n", i );
-   //while( !daqChannelTestAndClearHiResIntPending( pChannel ) );
+  // while( !daqChannelTestAndClearHiResIntPending( pChannel ) );
    daqChannelPrintInfo( pChannel );
 
    daqChannelDisablePostMortem( pChannel );
@@ -138,6 +138,8 @@ void main( void )
       i++;
    }
    while( remaining != 0 );
+
+   mprintf( ESC_FG_BLUE"Received %d words\n"ESC_NORMAL, i );
 
    for( j = 0; j < ARRAY_SIZE( descriptor.index ); j++ )
       mprintf( "Descriptor %d: 0x%04x\n", j, descriptor.index[j] );

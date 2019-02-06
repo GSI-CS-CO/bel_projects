@@ -54,11 +54,11 @@ extern "C" {
 
 /*!
  * @brief Maximum DAQ-FIFO capacity in 16 bit words
- *        inclusive the DAQ-Descriptor
+ *        inclusive the DAQ-Descriptor but without check-sum.
  * @see DAQ_DESCRIPTOR_T
  * @see daqChannelGetDaqFifoWords
  */
-#define DAQ_FIFO_DAQ_WORD_SIZE       0x01FD
+#define DAQ_FIFO_DAQ_WORD_SIZE       510
 
 //#define DAQ_FIFO_DAQ_WORD_SIZE (4 + DAQ_DISCRIPTOR_WORD_SIZE) //!! For test only!
 
@@ -72,11 +72,11 @@ extern "C" {
 
 /*!
  * @brief Maximum PM_HIRES FIFO capacity in 16 bit words
- *        inclusive the DAQ-Descriptor
+ *        inclusive the DAQ-Descriptor but without check-sum.
  * @see DAQ_DESCRIPTOR_T
  * @see daqChannelGetPmFifoWords
  */
-#define DAQ_FIFO_PM_HIRES_WORD_SIZE  0x03FF
+#define DAQ_FIFO_PM_HIRES_WORD_SIZE  1023
 
 #if (DAQ_FIFO_PM_HIRES_WORD_SIZE < DAQ_DISCRIPTOR_WORD_SIZE)
   #error Fatal: DAQ_FIFO_PM_HIRES_WORD_SIZE shall not be smaler than DAQ_DISCRIPTOR_WORD_SIZE !
@@ -85,8 +85,6 @@ extern "C" {
 #if (DAQ_FIFO_DAQ_WORD_SIZE > DAQ_FIFO_PM_HIRES_WORD_SIZE)
   #warning DAQ_FIFO_DAQ_WORD_SIZE is greater than DAQ_FIFO_PM_HIRES_WORD_SIZE ! Realy?
 #endif
-
-
 
 typedef struct PACKED_SIZE
 {

@@ -29,6 +29,7 @@
 #ifndef _SCU_DDR3_H
 #define _SCU_DDR3_H
 #include <stdint.h>
+#include <stdbool.h>
 #include <helper_macros.h>
 
 #ifdef __cplusplus
@@ -41,6 +42,12 @@ extern "C" {
  */
 
 #ifdef CONFIG_DDR_PEDANTIC_CHECK
+   /* CAUTION:
+    * Assert-macros could be expensive in memory consuming and the
+    * latency time can increase as well!
+    * Especially in embedded systems with small resources.
+    * Therefore use them for bug-fixing or developing purposes only!
+    */
    #include <scu_assert.h>
    #define DDR_ASSERT SCU_ASSERT
 #else
@@ -81,7 +88,7 @@ extern "C" {
 /*!
  * @brief Maximum size of DDR3 Xfer Fifo in 64-bit words
  */
-#define DDE3_XFER_FIFO_SIZE  512
+#define DDR3_XFER_FIFO_SIZE  512
 
 /*!
  * @brief 32 bit oriented offset address of fifo status
@@ -135,9 +142,10 @@ typedef struct
 {
    /*! @brief WB Base-address of transparent mode */
    uint32_t* volatile pTrModeBase;
-
+#ifndef CONFIG_DDR3_NO_BURST_FUNCTIONS
    /*! @brief WB Base-address of burst mode */
    uint32_t* volatile pBurstModeBase;
+#endif
 } DDR3_T;
 
 /*! ---------------------------------------------------------------------------
@@ -197,6 +205,8 @@ void ddr3read64( register const DDR3_T* pThis, DDR3_PAYLOAD_T* pData,
    pData->ad32[1] = pThis->pTrModeBase[index32+1]; // DDR3 high word
 }
 
+#ifndef CONFIG_DDR3_NO_BURST_FUNCTIONS
+
 /*! ---------------------------------------------------------------------------
  * @brief Returns the DDR3-fofo -status;
  * @see DDR3_FIFO_STATUS_MASK_EMPTY
@@ -205,11 +215,12 @@ void ddr3read64( register const DDR3_T* pThis, DDR3_PAYLOAD_T* pData,
  * @param pThis Pointer to the DDR3 object
  * @return Currently fifo status;
  */
-static inline
+static inline volatile
 uint32_t ddr3GetFifoStatus( register const DDR3_T* pThis )
 {
    DDR_ASSERT( pThis != NULL );
    DDR_ASSERT( pThis->pBurstModeBase != NULL );
+
    return pThis->pBurstModeBase[DDR3_FIFO_STATUS_OFFSET_ADDR];
 }
 
@@ -238,8 +249,8 @@ void ddr3PopFifo( register const DDR3_T* pThis, DDR3_PAYLOAD_T* pData )
  * @param pThis Pointer to the DDR3 object
  * @param burstStartAddr 64 bit oriented start address in fifo
  * @param burstLen 64 bit oriented data-length the value
- *                 has to be between [1..DDE3_XFER_FIFO_SIZE]
- * @see DDE3_XFER_FIFO_SIZE
+ *                 has to be between [1..DDR3_XFER_FIFO_SIZE]
+ * @see DDR3_XFER_FIFO_SIZE
  */
 static inline
 void ddr3StartBurstTransfer( register const DDR3_T* pThis,
@@ -248,7 +259,7 @@ void ddr3StartBurstTransfer( register const DDR3_T* pThis,
 {
    DDR_ASSERT( pThis != NULL );
    DDR_ASSERT( pThis->pTrModeBase != NULL );
-   DDR_ASSERT( burstLen <= DDE3_XFER_FIFO_SIZE );
+   DDR_ASSERT( burstLen <= DDR3_XFER_FIFO_SIZE );
 
    /*
     * CAUTION: Don't change the order of the following both
@@ -258,19 +269,44 @@ void ddr3StartBurstTransfer( register const DDR3_T* pThis,
    pThis->pTrModeBase[DDR3_BURST_XFER_CNT_REG_OFFSET]   = burstLen;
 }
 
+/*! ---------------------------------------------------------------------------
+ * @brief Pointer type of the optional polling-function for
+ *        the argument "poll" of the function ddr3FlushFiFo.
+ *
+ * This callback function can be used e.g.: to implement a timeout function
+ * or in the case when using a OS to invoke a scheduling function.
+ * @see ddr3FlushFiFo
+ * @param pThis Pointer to the DDR3 object
+ * @param count Number of subsequent calls of this function. E.g.: The
+ *              condition (count == 0) can be used to initialize
+ *              a timer.
+ * @retval >0   Polling loop will terminated despite of the wrong FiFo-status.
+ * @retval ==0  Polling will continue till the FiFo contains at least one
+ *              data-word.
+ * @retval <0   Function ddr3FlushFiFo will terminated immediately with the
+ *              return-value of this function.
+ */
+typedef int (*DDR3_POLL_FT)( register const DDR3_T* pThis UNUSED,
+                             unsigned int count UNUSED );
 
-/*! --------------------------------------------------------------------------
+/*! ---------------------------------------------------------------------------
  * @brief Flushes the DDR3 Fifo and writes it's content in argument pTarget
  * @param pThis Pointer to the DDR3 object
  * @param start Start-index (64-byte oriented) in fifo.
  * @param word64len Number of 64 bit words to read.
  * @param pTarget Target address. The memory-size where this address points
  *                has to be at least sizeof(uint64_t) resp. 8 bytes.
- * @return Remaining 64 bit words in fifo.
+ * @param poll Optional pointer to a polling function. If not used then
+ *             this parameter has to be set to NULL.
+ *             @see DDR3_POLL_FT
+ * @return Return status of poll-function if used.
  */
-unsigned int ddr3FlushFiFo( register const DDR3_T* pThis, unsigned int start,
-                            unsigned int word64len, DDR3_PAYLOAD_T* pTarget );
+int ddr3FlushFiFo( register const DDR3_T* pThis, unsigned int start,
+                   unsigned int word64len, DDR3_PAYLOAD_T* pTarget,
+                   DDR3_POLL_FT poll
+                 );
 
+#endif /* ifndef CONFIG_DDR3_NO_BURST_FUNCTIONS */
 /*! @} */ //End of group  SCU_DDR3
 #ifdef __cplusplus
 }

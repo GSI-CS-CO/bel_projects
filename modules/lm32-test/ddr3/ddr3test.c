@@ -32,29 +32,62 @@
 #include <scu_ddr3.h>
 #include <eb_console_helper.h>
 #include <daq_descriptor.h>
+#include <string.h>
 
-
+#if 1
 typedef struct PACKED_SIZE
 {
    DAQ_DESCRIPTOR_T daq;
-   uint32_t         pading;
+   uint16_t data[sizeof(DAQ_DESCRIPTOR_T)%sizeof(DDR3_PAYLOAD_T)/sizeof(uint16_t)];
 } DDR3_DAQ_DESCRIPTOR_T;
 
 STATIC_ASSERT( (sizeof(DDR3_DAQ_DESCRIPTOR_T) % sizeof(DDR3_PAYLOAD_T)) == 0 );
+#endif
+
+void printPayload16( DDR3_PAYLOAD_T* pPl )
+{
+   for( int i = 0; i < ARRAY_SIZE( pPl->ad16 ); i++ )
+      mprintf( "   %d: 0x%04x\n", i, pPl->ad16[i] );
+}
+
+void printPayloadArray( DDR3_PAYLOAD_T* aPl, size_t size )
+{
+   for( size_t i = 0; i < size; i++ )
+   {
+      mprintf( "Index: %d\n", i );
+      printPayload16( &aPl[i] );
+   }
+}
 
 void ddrPrint16( DDR3_T* pthis, unsigned int index )
 {
    DDR3_PAYLOAD_T toRead;
 
    ddr3read64( pthis, &toRead, index );
-   for( int i = 0; i < ARRAY_SIZE( toRead.ad16 ); i++ )
-      mprintf( "DDR-Index: %d, offset: %d, 0x%04x\n", index, i, toRead.ad16[i] );
+   mprintf( "DDR-Index: %d\n", index );
+   printPayload16( &toRead );
 }
+
+#ifndef CONFIG_DDR3_NO_BURST_FUNCTIONS
+int ddr3Poll(  const DDR3_T* pThis UNUSED, unsigned int count )
+{
+   if( count >= 10 )
+   {
+      mprintf( ESC_FG_RED"Poll-function called for 10 times!\n"ESC_NORMAL );
+      return -1;
+   }
+   return 0;
+}
+#endif
 
 void main( void )
 {
    DDR3_T oDdr3;
    DDR3_PAYLOAD_T toWrite;
+
+   DDR3_PAYLOAD_T burstFifo[8];
+
+   memset( burstFifo, 0xFF, sizeof( burstFifo ));
 
    discoverPeriphery();
    uart_init_hw();
@@ -82,16 +115,23 @@ void main( void )
 
    ddr3write64( &oDdr3, 1, &toWrite );
 
+   toWrite.ad16[0] = 0x1111;
+   toWrite.ad16[1] = 0x2222;
+   toWrite.ad16[2] = 0x3333;
+   toWrite.ad16[3] = 0x4444;
+
+   ddr3write64( &oDdr3, 2, &toWrite );
+
    ddrPrint16( &oDdr3, 0 );
    ddrPrint16( &oDdr3, 1 );
-
+#ifndef CONFIG_DDR3_NO_BURST_FUNCTIONS
    mprintf( "Fifo-Status address: 0x%08x\n",    &oDdr3.pBurstModeBase[DDR3_FIFO_STATUS_OFFSET_ADDR] );
    mprintf( "Fifo-low word address: 0x%08x\n",  &oDdr3.pBurstModeBase[DDR3_FIFO_LOW_WORD_OFFSET_ADDR] );
    mprintf( "FiFo-high word address: 0x%08x\n", &oDdr3.pBurstModeBase[DDR3_FIFO_HIGH_WORD_OFFSET_ADDR] );
-
    mprintf( "FiFo-Status: 0x%08x\n", ddr3GetFifoStatus( &oDdr3 ) );
-
-   ddr3FlushFiFo( &oDdr3, 0, 513, NULL );
+   ddr3FlushFiFo( &oDdr3, 0, ARRAY_SIZE( burstFifo ), burstFifo, ddr3Poll );
+#endif
+   printPayloadArray( burstFifo, ARRAY_SIZE( burstFifo ));
 }
 
 /* ================================= EOF ====================================*/

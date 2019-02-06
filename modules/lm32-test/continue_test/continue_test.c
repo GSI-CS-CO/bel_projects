@@ -77,7 +77,7 @@ void readFiFo( DAQ_CANNEL_T* pThis )
       i++;
    }
    while( remaining != 0 );
-
+   mprintf( ESC_FG_BLUE"Received: %d 16-bit words\n"ESC_NORMAL, i );
 #if 0
    for( j = 0; j < ARRAY_SIZE( descriptor.index ); j++ )
       mprintf( "Descriptor %d: 0x%04x\n", j, descriptor.index[j] );
@@ -171,7 +171,7 @@ void main( void )
    int i, j;
    mprintf( "Total number of all used channels: %d\n", daqBusGetUsedChannels( &g_allDaq ) );
 
-   DAQ_CANNEL_T* pChannel = daqBusGetChannelObjectByAbsoluteNumber( &g_allDaq, 0 );
+   DAQ_CANNEL_T* pChannel = daqBusGetChannelObjectByAbsoluteNumber( &g_allDaq, 4 );
    if( pChannel == NULL )
    {
       mprintf( ESC_FG_RED "ERROR: Channel number out of range!\n" ESC_NORMAL );
@@ -180,6 +180,9 @@ void main( void )
    uint32_t* pBusSlave = daqDeviceGetScuBusSlaveBaseAddress( DAQ_CHANNEL_GET_PARENT_OF( pChannel ) );
    uint16_t flags = scuBusGetSlaveValue16( pBusSlave, Intr_Active );
    mprintf( "SCU-Bus IRQ-flags: 0x%04x, Address : 0x%08x\n", flags, ((int)pBusSlave) + Intr_Active );
+   flags = scuBusGetSlaveValue16( pBusSlave, Intr_Active );
+   mprintf( "SCU-Bus IRQ-flags: 0x%04x, Address : 0x%08x\n", flags, ((int)pBusSlave) + Intr_Active );
+
 //#if 1
    daqChannelPrintInfo( pChannel );
    printScuBusSlaveInfo( pChannel );
