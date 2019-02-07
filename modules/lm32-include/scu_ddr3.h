@@ -37,6 +37,7 @@ extern "C" {
 #endif
 /*!
  * @defgroup SCU_DDR3
+ * @ingroup SCU_RAM_BUFFER
  * @brief DDR3 RAM of SCU3
  * @{
  */
