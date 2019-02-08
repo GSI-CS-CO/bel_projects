@@ -31,9 +31,9 @@
 /*! ---------------------------------------------------------------------------
  * @see scu_ramBuffer.h
  */
-int ramInit( register RAM_SCU_T* pThis, RAM_FIFO_PTRS_T* pFifo )
+int ramInit( register RAM_SCU_T* pThis, RAM_RING_INDEXES_T* pRingIndexes )
 {
-   pThis->pFifo = pFifo;
+   pThis->pRingIndexes = pRingIndexes;
 #ifdef CONFIG_SCU_USE_DDR3
    return ddr3init( &pThis->ddr3 );
 #endif

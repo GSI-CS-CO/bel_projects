@@ -65,6 +65,25 @@
 extern "C" {
 #endif
 
+#ifdef CONFIG_SCU_USE_DDR3
+
+#ifndef RAM_DAQ_MIN_INDEX
+   /*!
+    * @brief Minimum value for Ring read and write index
+    */
+   #define RAM_DAQ_MIN_INDEX 0
+#endif
+#ifndef RAM_DAQ_MAX_INDEX
+   /*!
+    * @brief Maximum value for Ring read and write index
+    */
+   #define RAM_DAQ_MAX_INDEX DDR3_MAX_INDEX64
+#endif
+
+#endif
+
+typedef uint32_t RAM_RING_INDEX_T;
+
 /*! ---------------------------------------------------------------------------
  * @brief Data type of fifo pointers.
  * @note The implementation has to be within the shared memory!
@@ -72,13 +91,25 @@ extern "C" {
  */
 typedef struct PACKED_SIZE
 {
-   uint32_t read;  /*!<@brief Read index  */
-   uint32_t write; /*!<@brief Write index */
-   uint32_t top;   /*!<@brief Maximum     */
-} RAM_FIFO_PTRS_T;
+   RAM_RING_INDEX_T minimum;  /*!<@brief Minimum value for indexes */
+   RAM_RING_INDEX_T maximum;  /*!<@brief Maximum value for indexes */
+   RAM_RING_INDEX_T read;     /*!<@brief Read index  */
+   RAM_RING_INDEX_T write;    /*!<@brief Write index */
+} RAM_RING_INDEXES_T;
 #ifndef __DOXYGEN__
-STATIC_ASSERT( sizeof(RAM_FIFO_PTRS_T) == 3 * sizeof(uint32_t));
+STATIC_ASSERT( sizeof(RAM_RING_INDEXES_T) == 4 * sizeof(RAM_RING_INDEX_T));
 #endif
+
+/*!
+ * @brief Initializer for object of data type RAM_RING_INDEXES_T
+ */
+#define RAM_RING_INDEXES_INITIALIZER  \
+{                                  \
+   .minimum = RAM_DAQ_MIN_INDEX,   \
+   .maximum = RAM_DAQ_MAX_INDEX,   \
+   .read    = RAM_DAQ_MIN_INDEX,   \
+   .write   = RAM_DAQ_MIN_INDEX    \
+}
 
 /*!
  * @brief Generalized object type for SCU RAM buffer
@@ -99,17 +130,45 @@ typedef struct
     *       memory. \n
     *       Therefore its a pointer in this object.
     */
-   RAM_FIFO_PTRS_T* volatile pFifo;
+   RAM_RING_INDEXES_T* volatile pRingIndexes;
 } RAM_SCU_T;
+
+/*! ---------------------------------------------------------------------------
+ * @brief Resets respectively clears the ring buffer
+ * @param pThis Pointer to the Ring index object
+ */
+static inline void ramRingReset( RAM_RING_INDEXES_T* pThis )
+{
+   pThis->read  = RAM_DAQ_MIN_INDEX;
+   pThis->write = RAM_DAQ_MIN_INDEX;
+}
+
+#define RAM_RING_GET_CAPACITY() (RAM_DAQ_MAX_INDEX - RAM_DAQ_MIN_INDEX)
+
+/*! ---------------------------------------------------------------------------
+ * @brief Returns the number of currently used memory places
+ * @param pThis Pointer to the Ring index object
+ * @return Actual number of free memory places
+ */
+RAM_RING_INDEX_T ramRingGetLevel( RAM_RING_INDEXES_T* pThis );
+
+/*! ---------------------------------------------------------------------------
+ *
+ */
+void ramRingAddToWriteIndex( RAM_RING_INDEXES_T* pThis, RAM_RING_INDEX_T toAdd );
+
+/*! ---------------------------------------------------------------------------
+*/
+void ramRingAddToReadIndex( RAM_RING_INDEXES_T* pThis, RAM_RING_INDEX_T toAdd );
 
 /*! ---------------------------------------------------------------------------
  * @brief Initializing SCU RAM buffer ready to use.
  * @param pThis Pointer to the RAM object.
- * @param pFifo Pointer to the fifo administration in shared memory.
+ * @param pRingIndexes Pointer to the fifo administration in shared memory.
  * @retval 0 Initializing was successful
  * @retval <0 Error
  */
-int ramInit( register RAM_SCU_T* pThis, RAM_FIFO_PTRS_T* pFifo );
+int ramInit( register RAM_SCU_T* pThis, RAM_RING_INDEXES_T* pRingIndexes );
 
 #if defined(__lm32__) || defined(__DOXYGEN__)
 

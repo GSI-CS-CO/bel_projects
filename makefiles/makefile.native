@@ -21,7 +21,9 @@ OBJDUMP = $(GCC_BIN_DIR)objdump
 SIZE    = $(GCC_BIN_DIR)size
 AS      = $(GCC_BIN_DIR)gcc
 AR      = $(GCC_BIN_DIR)ar
-CPP     = $(GCC_BIN_DIR)cpp
+CPP     = $(CC) -E
+NM      = $(GCC_BIN_DIR)nm
+STRIP   = $(GCC_BIN_DIR)strip
 STRINGS = $(GCC_BIN_DIR)strings
 
 TARGET   ?= $(notdir $(basename $(MIAN_MODULE)))

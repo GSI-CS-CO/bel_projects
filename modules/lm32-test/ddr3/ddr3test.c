@@ -36,7 +36,7 @@
 
 #if 1
 
-RAM_FIFO_PTRS_T g_FifoAdmin;
+RAM_RING_INDEXES_T g_FifoAdmin = RAM_RING_INDEXES_INITIALIZER;
 
 typedef struct PACKED_SIZE
 {
