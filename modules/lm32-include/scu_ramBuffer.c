@@ -31,6 +31,46 @@
 /*! ---------------------------------------------------------------------------
  * @see scu_ramBuffer.h
  */
+RAM_RING_INDEX_T ramRingGetSize( RAM_RING_INDEXES_T* pThis )
+{
+   if( pThis->end == pThis->capacity) /* Is ring-buffer full? */
+      return pThis->capacity;
+   if( pThis->end >= pThis->start )
+      return pThis->end - pThis->start;
+   mprintf( "***\n" );
+   return (pThis->capacity - pThis->start) + pThis->end;
+}
+
+/*! ---------------------------------------------------------------------------
+ * @see scu_ramBuffer.h
+ */
+void ramRingAddToWriteIndex( RAM_RING_INDEXES_T* pThis, RAM_RING_INDEX_T toAdd )
+{
+   RAM_ASSERT( ramRingGetRemainingCapacity( pThis ) >= toAdd );
+   RAM_ASSERT( pThis->end < pThis->capacity );
+
+   pThis->end = (pThis->end + toAdd) % pThis->capacity;
+
+   if( pThis->end == pThis->start )
+      pThis->end = pThis->capacity; /* Ring buffer is full. */
+}
+
+/*! ---------------------------------------------------------------------------
+ * @see scu_ramBuffer.h
+ */
+void ramRingAddToReadIndex( RAM_RING_INDEXES_T* pThis, RAM_RING_INDEX_T toAdd )
+{
+   RAM_ASSERT( ramRingGetSize( pThis ) >= toAdd );
+
+   if( (toAdd != 0) && (pThis->end == pThis->capacity) )  /* Is ring-buffer full? */
+      pThis->end = pThis->start;
+
+   pThis->start = (pThis->start + toAdd) % pThis->capacity;
+}
+
+/*! ---------------------------------------------------------------------------
+ * @see scu_ramBuffer.h
+ */
 int ramInit( register RAM_SCU_T* pThis, RAM_RING_INDEXES_T* pRingIndexes )
 {
    pThis->pRingIndexes = pRingIndexes;

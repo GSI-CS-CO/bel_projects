@@ -67,6 +67,14 @@ extern "C" {
 
 #ifdef CONFIG_SCU_USE_DDR3
 
+/*!
+ * @defgroup SCU_RING_BUFFER_INDEXES
+ * @brief Administration of write and read indexes for
+ *        a ring-buffer.
+ * @{
+ */
+
+
 #ifndef RAM_DAQ_MIN_INDEX
    /*!
     * @brief Minimum value for Ring read and write index
@@ -82,6 +90,8 @@ extern "C" {
 
 #endif
 
+
+
 typedef uint32_t RAM_RING_INDEX_T;
 
 /*! ---------------------------------------------------------------------------
@@ -91,10 +101,10 @@ typedef uint32_t RAM_RING_INDEX_T;
  */
 typedef struct PACKED_SIZE
 {
-   RAM_RING_INDEX_T minimum;  /*!<@brief Minimum value for indexes */
-   RAM_RING_INDEX_T maximum;  /*!<@brief Maximum value for indexes */
-   RAM_RING_INDEX_T read;     /*!<@brief Read index  */
-   RAM_RING_INDEX_T write;    /*!<@brief Write index */
+   RAM_RING_INDEX_T offset;   /*!<@brief offset in alignment units of physical memory */
+   RAM_RING_INDEX_T capacity; /*!<@brief Maximum capacity of ring- buffer */
+   RAM_RING_INDEX_T start;    /*!<@brief Start index of ring buffer */
+   RAM_RING_INDEX_T end;      /*!<@brief End- index of ring buffer */
 } RAM_RING_INDEXES_T;
 #ifndef __DOXYGEN__
 STATIC_ASSERT( sizeof(RAM_RING_INDEXES_T) == 4 * sizeof(RAM_RING_INDEX_T));
@@ -103,12 +113,12 @@ STATIC_ASSERT( sizeof(RAM_RING_INDEXES_T) == 4 * sizeof(RAM_RING_INDEX_T));
 /*!
  * @brief Initializer for object of data type RAM_RING_INDEXES_T
  */
-#define RAM_RING_INDEXES_INITIALIZER  \
-{                                  \
-   .minimum = RAM_DAQ_MIN_INDEX,   \
-   .maximum = RAM_DAQ_MAX_INDEX,   \
-   .read    = RAM_DAQ_MIN_INDEX,   \
-   .write   = RAM_DAQ_MIN_INDEX    \
+#define RAM_RING_INDEXES_INITIALIZER                  \
+{                                                     \
+   .offset   = RAM_DAQ_MIN_INDEX,                     \
+   .capacity = RAM_DAQ_MAX_INDEX - RAM_DAQ_MIN_INDEX, \
+   .start    = 0,                                     \
+   .end      = 0                                      \
 }
 
 /*!
@@ -122,7 +132,7 @@ typedef struct
     */
    DDR3_T   ddr3;
 #else
-   //TODO maybe in the future....
+   //TODO maybe in the future will use a other memory type
 #endif
    /*!
     * @brief Administration of fifo- indexes.
@@ -135,31 +145,74 @@ typedef struct
 
 /*! ---------------------------------------------------------------------------
  * @brief Resets respectively clears the ring buffer
- * @param pThis Pointer to the Ring index object
+ * @param pThis Pointer to the ring index object
  */
 static inline void ramRingReset( RAM_RING_INDEXES_T* pThis )
 {
-   pThis->read  = RAM_DAQ_MIN_INDEX;
-   pThis->write = RAM_DAQ_MIN_INDEX;
+   pThis->start = 0;
+   pThis->end   = 0;
 }
 
 #define RAM_RING_GET_CAPACITY() (RAM_DAQ_MAX_INDEX - RAM_DAQ_MIN_INDEX)
 
 /*! ---------------------------------------------------------------------------
- * @brief Returns the number of currently used memory places
- * @param pThis Pointer to the Ring index object
- * @return Actual number of free memory places
+ * @brief Returns the number of currently used memory items
+ * @param pThis Pointer to the ring index object
+ * @return Actual number written items
  */
-RAM_RING_INDEX_T ramRingGetLevel( RAM_RING_INDEXES_T* pThis );
+RAM_RING_INDEX_T ramRingGetSize( RAM_RING_INDEXES_T* pThis );
 
 /*! ---------------------------------------------------------------------------
- *
+ * @brief Returns the remaining free items of the currently used memory
+ * @param pThis Pointer to the ring index object
+ * @return Number of free memory items.
+ */
+static inline
+RAM_RING_INDEX_T ramRingGetRemainingCapacity( RAM_RING_INDEXES_T* pThis )
+{
+   return pThis->capacity - ramRingGetSize( pThis );
+}
+
+/*! ---------------------------------------------------------------------------
+ * @brief Adds a value to the write index.
+ * @param pThis Pointer to the ring index object
+ * @param value to add to the write index.
  */
 void ramRingAddToWriteIndex( RAM_RING_INDEXES_T* pThis, RAM_RING_INDEX_T toAdd );
 
 /*! ---------------------------------------------------------------------------
-*/
+ * @brief Adds a value to the read index.
+ * @param pThis Pointer to the ring index object
+ * @param value to add to the read index.
+ */
 void ramRingAddToReadIndex( RAM_RING_INDEXES_T* pThis, RAM_RING_INDEX_T toAdd );
+
+/*! ---------------------------------------------------------------------------
+ * @brief Gets the actual write-index for a write access to the physical
+ *        memory.
+ * @param pThis Pointer to the ring index object
+ * @return Index value for write access.
+ */
+static inline
+RAM_RING_INDEX_T ramRingGetWriteIndex( register RAM_RING_INDEXES_T* pThis )
+{
+   if( pThis->end == pThis->capacity )
+      return pThis->start + pThis->offset;
+   return pThis->end + pThis->offset;
+}
+
+/*! ---------------------------------------------------------------------------
+ * @brief Gets the actual read index for a read access to the physical memory.
+ * @param pThis Pointer to the ring index object
+ * @return Index value for read access.
+ */
+static inline
+RAM_RING_INDEX_T ramRingGeReadIndex( register RAM_RING_INDEXES_T* pThis )
+{
+   return pThis->start + pThis->offset;
+}
+
+/*! @} */ // End SCU_RING_BUFFER_INDEXES
 
 /*! ---------------------------------------------------------------------------
  * @brief Initializing SCU RAM buffer ready to use.
