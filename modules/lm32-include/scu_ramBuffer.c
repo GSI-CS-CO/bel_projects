@@ -37,7 +37,7 @@ RAM_RING_INDEX_T ramRingGetSize( RAM_RING_INDEXES_T* pThis )
       return pThis->capacity;
    if( pThis->end >= pThis->start )
       return pThis->end - pThis->start;
-   mprintf( "***\n" );
+//   mprintf( "***\n" );
    return (pThis->capacity - pThis->start) + pThis->end;
 }
 

@@ -58,7 +58,7 @@ extern "C" {
  * @see DAQ_DESCRIPTOR_T
  * @see daqChannelGetDaqFifoWords
  */
-#define DAQ_FIFO_DAQ_WORD_SIZE       510
+#define DAQ_FIFO_DAQ_WORD_SIZE       509
 
 //#define DAQ_FIFO_DAQ_WORD_SIZE (4 + DAQ_DISCRIPTOR_WORD_SIZE) //!! For test only!
 

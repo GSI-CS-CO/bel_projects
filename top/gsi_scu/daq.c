@@ -78,6 +78,7 @@ static inline uint16_t daqChannelGetReg( DAQ_REGISTER_T* volatile pReg,
    return pReg->i[index | channel];
 }
 #endif
+#ifndef CONFIG_DAQ_SIMULATE_CHANNEL
 /*! ---------------------------------------------------------------------------
  * @see daq.h
  */
@@ -112,6 +113,106 @@ void daqChannelReset( register DAQ_CANNEL_T* pThis )
    daqChannelTestAndClearDaqIntPending( pThis );
    daqChannelTestAndClearHiResIntPending( pThis );
 }
+#else /* ifndef CONFIG_DAQ_SIMULATE_CHANNEL */
+/* !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+ * CAUTION: Following functions are for simulation purposes only!
+ */
+/*! ---------------------------------------------------------------------------
+ * @see daq.h
+ */
+void daqChannelReset( register DAQ_CANNEL_T* pThis )
+{
+   memset( pThis, 0x00, sizeof( DAQ_CANNEL_T ) );
+}
+
+/*! ---------------------------------------------------------------------------
+ * @see daq.h
+ */
+unsigned int daqChannelGetPmFifoWordsSimulate( register DAQ_CANNEL_T* pThis )
+{
+   return DAQ_FIFO_PM_HIRES_WORD_SIZE - pThis->callCount;
+}
+
+/*! ---------------------------------------------------------------------------
+ * @see daq.h
+ */
+unsigned int daqChannelGetDaqFifoWordsSimulate( register DAQ_CANNEL_T* pThis )
+{
+   return DAQ_FIFO_DAQ_WORD_SIZE  - pThis->callCount;
+}
+
+/*! ---------------------------------------------------------------------------
+ * @brief Simulates a DAQ single shot stream finalized by a fake
+ *        DAQ-descriptor. The payload becomes simulated by increasing numbers.
+ *
+ * The time stamp counter will misused as periodic counter.
+ * @note CAUTION: This function is for developing and testing purposes only and
+ *                becomes compiled if the compiler-switch
+ *                CONFIG_DAQ_SIMULATE_CHANNEL defined!
+ * @param pThis Pointer to the channel object
+ * @return Simulated fake data.
+ */
+uint16_t daqChannelPopPmFifoSimulate( register DAQ_CANNEL_T* pThis )
+{
+   uint16_t ret;
+
+   if( daqChannelGetPmFifoWordsSimulate( pThis ) >=
+       ARRAY_SIZE( pThis->simulatedDescriptor.index ) )
+      ret = pThis->callCount;
+   else
+   {
+      DAQ_ASSERT( daqChannelGetPmFifoWordsSimulate(pThis) <
+                 ARRAY_SIZE( pThis->simulatedDescriptor.index ) );
+      ret = pThis->simulatedDescriptor.index[daqChannelGetPmFifoWordsSimulate(pThis)];
+   }
+
+   if( pThis->callCount < DAQ_FIFO_PM_HIRES_WORD_SIZE )
+      pThis->callCount++;
+   else
+      pThis->simulatedDescriptor.name.wr.name.utSec++;
+   return ret;
+}
+
+/*! ---------------------------------------------------------------------------
+ * @brief Simulates a DAQ continuous stream finalized by a fake
+ *        DAQ-descriptor. The payload becomes simulated by increasing numbers.
+ *
+ * The time stamp counter will misused as periodic counter.
+ * @note CAUTION: This function is for developing and testing purposes only and
+ *                becomes compiled if the compiler-switch
+ *                CONFIG_DAQ_SIMULATE_CHANNEL defined!
+ * @param pThis Pointer to the channel object
+ * @return Simulated fake data.
+ */
+uint16_t daqChannelPopDaqFifoSimulate( register DAQ_CANNEL_T* pThis )
+{
+   uint16_t ret;
+
+   if( daqChannelGetDaqFifoWordsSimulate( pThis ) >=
+       ARRAY_SIZE( pThis->simulatedDescriptor.index ) )
+      ret = pThis->callCount;
+   else
+   {
+      DAQ_ASSERT( (pThis->callCount - DAQ_FIFO_DAQ_WORD_SIZE+1) < ARRAY_SIZE( pThis->simulatedDescriptor.index ) );
+      ret = pThis->simulatedDescriptor.index[ARRAY_SIZE( pThis->simulatedDescriptor.index ) - daqChannelGetDaqFifoWordsSimulate(pThis)];
+      //ret = pThis->simulatedDescriptor.index[pThis->callCount - DAQ_FIFO_DAQ_WORD_SIZE+1];
+   }
+
+   if( pThis->callCount <= DAQ_FIFO_DAQ_WORD_SIZE )
+      pThis->callCount++;
+   else
+   {
+      pThis->callCount = 0;
+    //  pThis->simulatedDescriptor.name.wr.name.utSec++;
+   }
+   return ret;
+}
+
+/*
+ * End of prototypes for simulation!
+ * !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+ */
+#endif /* ifdef CONFIG_DAQ_SIMULATE_CHANNEL */
 
 #if defined( CONFIG_DAQ_DEBUG ) || defined(__DOXYGEN__)
 /*! ---------------------------------------------------------------------------
@@ -363,14 +464,13 @@ inline static int daqDeviceFindChannels( DAQ_DEVICE_T* pThis, int slot )
 }
 
 /*============================ DAQ Bus Functions ============================*/
+#ifndef CONFIG_DAQ_SIMULATE_CHANNEL
 /*! ----------------------------------------------------------------------------
  * @see daq.h
  */
 int daqBusFindAndInitializeAll( register DAQ_BUS_T* pThis,
                                 const void* pScuBusBase )
 {
-   SCUBUS_SLAVE_FLAGS_T daqPersentFlags;
-
    // Paranoia...
    DAQ_ASSERT( pScuBusBase != (void*)ERROR_NOT_FOUND );
    DAQ_ASSERT( pThis != NULL );
@@ -378,10 +478,11 @@ int daqBusFindAndInitializeAll( register DAQ_BUS_T* pThis,
    // Pre-initializing
    memset( pThis, 0, sizeof( DAQ_BUS_T ));
 
-   daqPersentFlags = scuBusFindSpecificSlaves( pScuBusBase,
-                                               DAQ_CID_SYS,
-                                               DAQ_CID_GROUP );
-   if( daqPersentFlags == 0 )
+   // Find all DAQ- slaves
+   pThis->slotDaqUsedFlags = scuBusFindSpecificSlaves( pScuBusBase,
+                                                       DAQ_CID_SYS,
+                                                       DAQ_CID_GROUP );
+   if( pThis->slotDaqUsedFlags == 0 )
    {
       DBPRINT( "DBG: No DAQ slaves found!\n" );
       return 0;
@@ -389,9 +490,12 @@ int daqBusFindAndInitializeAll( register DAQ_BUS_T* pThis,
 
    for( int slot = SCUBUS_START_SLOT; slot <= MAX_SCU_SLAVES; slot++ )
    {
-      if( !scuBusIsSlavePresent( daqPersentFlags, slot ) )
-         continue;
+      if( !scuBusIsSlavePresent( pThis->slotDaqUsedFlags, slot ) )
+         continue; /* In this slot is not a DAQ! */
 
+      /*
+       * For each found DAQ-device:
+       */
       DAQ_DEVICE_T* pCurrentDaqDevice = &pThis->aDaq[pThis->foundDevices];
       pCurrentDaqDevice->n = pThis->foundDevices;
      /*
@@ -442,6 +546,8 @@ int daqBusFindAndInitializeAll( register DAQ_BUS_T* pThis,
 
    return pThis->foundDevices;
 }
+
+#endif
 
 /*! ---------------------------------------------------------------------------
  * @see daq.h

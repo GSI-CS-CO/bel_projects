@@ -32,21 +32,11 @@
 #include <mini_sdb.h>
 #include <scu_ramBuffer.h>
 #include <eb_console_helper.h>
-#include <daq_descriptor.h>
 #include <string.h>
 
 #if 1
 
-#define OFFSET 10
-#define SIZE 10
-
-RAM_RING_INDEXES_T g_FifoAdmin =
-{
-   .offset = 0,
-   .capacity = 10,
-   .start    = 0,
-   .end   = 0
-};
+RAM_RING_INDEXES_T g_FifoAdmin = RAM_RING_INDEXES_INITIALIZER;
 
 typedef struct PACKED_SIZE
 {
@@ -93,64 +83,43 @@ int ddr3Poll(  const DDR3_T* pThis UNUSED, unsigned int count )
 }
 #endif
 
-typedef struct
-{
-   RAM_RING_INDEXES_T index;
-   int                buffer[8];
-} TEST_BUFFER_T;
 
-
-void initTestBuffer( TEST_BUFFER_T* pThis )
+void readFiFo( DAQ_CANNEL_T* pThis )
 {
-   pThis->index.offset = 0;
-   pThis->index.capacity = ARRAY_SIZE( pThis->buffer );
-   ramRingReset( &pThis->index );
-   memset( pThis->buffer, 0, sizeof( pThis->buffer ) );
-}
+   int j = 0;
+   DAQ_DESCRIPTOR_T descriptor;
+   memset( &descriptor, 0, sizeof( descriptor ) );
 
-void pushTestBuffer( TEST_BUFFER_T* pThis, int value )
-{
-   RAM_RING_INDEX_T i = ramRingGetWriteIndex(&pThis->index);
-   ramRingAddToWriteIndex( &pThis->index, 1 );
-   pThis->buffer[i] = value;
-}
+   uint16_t remaining  = daqChannelGetDaqFifoWords( pThis ) + 1;
 
-int popTestBuffer( TEST_BUFFER_T* pThis )
-{
-   int ret = pThis->buffer[ ramRingGeReadIndex( &pThis->index ) ];
-   ramRingAddToReadIndex( &pThis->index, 1 );
-   return ret;
-}
-
-void printTestBuffer( TEST_BUFFER_T* pThis )
-{
-   while( ramRingGetSize(&pThis->index) > 0 )
+   int i = 0;
+   do
    {
-      mprintf( "Index:  %d, content: %d\n", ramRingGeReadIndex( &pThis->index ), popTestBuffer( pThis ) );
+      remaining = daqChannelGetDaqFifoWords( pThis );
+      volatile uint16_t data = daqChannelPopDaqFifo( pThis ); //!!*ptr;
+      if( i >= 490 )
+        mprintf( "data[%d] = %d\n", i, data );
+      if( remaining < ARRAY_SIZE( descriptor.index ) )
+      {
+         SCU_ASSERT( j < ARRAY_SIZE( descriptor.index ) );
+         descriptor.index[j++] = data;
+      }
+      i++;
    }
+   while( remaining != 0 );
+   mprintf( ESC_FG_WHITE"Received: %d 16-bit words\n"ESC_NORMAL, i );
+   daqDescriptorPrintInfo( &descriptor );
+   DAQ_DESCRIPTOR_VERIFY_MY( &descriptor, pThis );
 }
-
-void printRingIndexes( RAM_RING_INDEXES_T* pIndexes )
-{
-   mprintf( "capacity: %d\n"
-            "size:     %d\n"
-            "free:     %d\n",
-            pIndexes->capacity, ramRingGetSize( pIndexes ), ramRingGetRemainingCapacity( pIndexes ) );
-   mprintf( "full:     %s\n\n", (pIndexes->end==pIndexes->capacity)? "YES" : "NO " );
-}
-
 
 
 
 void main( void )
 {
+   DAQ_CANNEL_T daqChannel;
    RAM_SCU_T oRam;
 
    DDR3_PAYLOAD_T toWrite;
-
-   DDR3_PAYLOAD_T burstFifo[8];
-
-   memset( burstFifo, 0xFF, sizeof( burstFifo ));
 
    discoverPeriphery();
    uart_init_hw();
@@ -164,62 +133,14 @@ void main( void )
       return;
    }
 
-   printRingIndexes( &g_FifoAdmin );
-   ramRingAddToWriteIndex( &g_FifoAdmin, 1 );
-   printRingIndexes( &g_FifoAdmin );
-   ramRingAddToReadIndex( &g_FifoAdmin, 1 );
-   printRingIndexes( &g_FifoAdmin );
-   ramRingAddToWriteIndex( &g_FifoAdmin, 4 );
-   printRingIndexes( &g_FifoAdmin );
-   ramRingAddToReadIndex( &g_FifoAdmin, 1 );
-   ramRingAddToWriteIndex( &g_FifoAdmin, 7 );
-   printRingIndexes( &g_FifoAdmin );
-   ramRingAddToReadIndex( &g_FifoAdmin, 10 );
-   printRingIndexes( &g_FifoAdmin );
+   daqChannelReset( &daqChannel );
+   daqChannel.simulatedDescriptor.name.slotDiob.slot = 1;
 
-   ramRingAddToWriteIndex( &g_FifoAdmin, 9 );
-   printRingIndexes( &g_FifoAdmin );
+   daqDescriptorPrintInfo( &daqChannel.simulatedDescriptor );
 
-   TEST_BUFFER_T tb;
+   readFiFo( &daqChannel );
 
-   initTestBuffer( &tb );
-   pushTestBuffer( &tb, 1 );
-   pushTestBuffer( &tb, 2 );
-   pushTestBuffer( &tb, 3 );
-   printTestBuffer( &tb );
-   pushTestBuffer( &tb, 4 );
-   pushTestBuffer( &tb, 5 );
-   pushTestBuffer( &tb, 6 );
-   printTestBuffer( &tb );
-   pushTestBuffer( &tb, 7 );
-   pushTestBuffer( &tb, 8 );
-   pushTestBuffer( &tb, 9 );
-   printTestBuffer( &tb );
-   pushTestBuffer( &tb, 10 );
-   pushTestBuffer( &tb, 11 );
-   pushTestBuffer( &tb, 12 );
-   printTestBuffer( &tb );
-   pushTestBuffer( &tb, 13 );
-   pushTestBuffer( &tb, 14 );
-   pushTestBuffer( &tb, 15 );
-   printTestBuffer( &tb );
-   pushTestBuffer( &tb, 16 );
-   pushTestBuffer( &tb, 17 );
-   pushTestBuffer( &tb, 18 );
-   printTestBuffer( &tb );
-   pushTestBuffer( &tb, 19 );
-   pushTestBuffer( &tb, 20 );
-   pushTestBuffer( &tb, 21 );
-   printTestBuffer( &tb );
-   pushTestBuffer( &tb, 22 );
-   pushTestBuffer( &tb, 23 );
-   pushTestBuffer( &tb, 24 );
-   printTestBuffer( &tb );
-   pushTestBuffer( &tb, 25 );
-   pushTestBuffer( &tb, 26 );
-   pushTestBuffer( &tb, 27 );
-   printTestBuffer( &tb );
-
- }
+   mprintf( "End...\n" );
+}
 
 /* ================================= EOF ====================================*/

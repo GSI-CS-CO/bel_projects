@@ -71,9 +71,14 @@ extern "C" {
  * @defgroup SCU_RING_BUFFER_INDEXES
  * @brief Administration of write and read indexes for
  *        a ring-buffer.
+ * @note A problem in administration of ring- buffer indexes is,
+ *       that read index and write index are equal in the case of
+ *       buffer is empty and full! \n
+ *       To distinguish this both cases the write index will set to the
+ *       invalid value of the maximum capacity in the case when the
+ *       buffer is full.
  * @{
  */
-
 
 #ifndef RAM_DAQ_MIN_INDEX
    /*!
@@ -88,14 +93,13 @@ extern "C" {
    #define RAM_DAQ_MAX_INDEX DDR3_MAX_INDEX64
 #endif
 
-#endif
-
-
-
 typedef uint32_t RAM_RING_INDEX_T;
 
+#endif /* ifdef CONFIG_SCU_USE_DDR3 */
+
+
 /*! ---------------------------------------------------------------------------
- * @brief Data type of fifo pointers.
+ * @brief Data type of ring buffer indexes.
  * @note The implementation has to be within the shared memory!
  *       They must be visible in the LM32 and in the Linux side.
  */
@@ -147,7 +151,7 @@ typedef struct
  * @brief Resets respectively clears the ring buffer
  * @param pThis Pointer to the ring index object
  */
-static inline void ramRingReset( RAM_RING_INDEXES_T* pThis )
+static inline void ramRingReset( register RAM_RING_INDEXES_T* pThis )
 {
    pThis->start = 0;
    pThis->end   = 0;

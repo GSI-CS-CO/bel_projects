@@ -37,6 +37,10 @@
 #include <scu_bus.h>
 #include <daq_descriptor.h>
 
+#ifdef CONFIG_DAQ_SIMULATE_CHANNEL
+#warning CAUTION: Module daq will compiled in simulation mode!!!
+#endif
+
 #ifdef CONFIG_DAQ_PEDANTIC_CHECK
    /* CAUTION:
     * Assert-macros could be expensive in memory consuming and the
@@ -292,6 +296,10 @@ typedef struct
                                       //! @see DAQ_INT_PENDING_T
    DAQ_CHANNEL_BF_PROPERTY_T properties; //!<@see DAQ_CHANNEL_PROPERTY_T
    void* p; //TODO pointer ti FoFo
+#ifdef CONFIG_DAQ_SIMULATE_CHANNEL
+   uint16_t          callCount;   //!<@brief For simulation purposes only!
+   DAQ_DESCRIPTOR_T  simulatedDescriptor; //!<@brief For simulation purposes only!
+#endif
 } DAQ_CANNEL_T;
 
 #if 0
@@ -338,11 +346,32 @@ typedef struct
  */
 typedef struct
 {
-   unsigned int foundDevices;  //!< @brief Number of found DAQs
-   DAQ_DEVICE_T aDaq[DAQ_MAX]; //!< @brief Array of all possible existing DAQs
+   //! @brief Mirror-flags of the used slots by DAQ-slaves
+   SCUBUS_SLAVE_FLAGS_T  slotDaqUsedFlags;
+   //! @brief Number of found DAQs
+   unsigned int          foundDevices;
+   //! @brief Array of all possible existing DAQs
+   DAQ_DEVICE_T          aDaq[DAQ_MAX];
 } DAQ_BUS_T;
 
 /*======================== DAQ channel functions ============================*/
+
+#ifdef CONFIG_DAQ_SIMULATE_CHANNEL
+/* !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+ * CAUTION: Following prototypes are for simulation purposes only!
+ *          In this mode some functions becomes bend to the following functions
+ *          and not to a real hardware access!
+ */
+uint16_t daqChannelPopPmFifoSimulate( register DAQ_CANNEL_T* pThis );
+uint16_t daqChannelPopDaqFifoSimulate( register DAQ_CANNEL_T* pThis );
+unsigned int daqChannelGetPmFifoWordsSimulate( register DAQ_CANNEL_T* pThis );
+unsigned int daqChannelGetDaqFifoWordsSimulate( register DAQ_CANNEL_T* pThis );
+/*
+ * End of prototypes for simulation!
+ * !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+ */
+#endif /* ifdef CONFIG_DAQ_SIMULATE_CHANNEL */
+
 /*! ---------------------------------------------------------------------------
  * @ingroup DAQ_CHANNEL DAQ_DEVICE
  * @brief Macro returns the pointer to the DAQ device object of type
@@ -509,10 +538,17 @@ static inline int daqChannelGetNumber( const register DAQ_CANNEL_T* pThis )
  */
 static inline void daqChannelSample10usOn( register DAQ_CANNEL_T* pThis )
 {
+#ifdef CONFIG_DAQ_SIMULATE_CHANNEL
+   pThis->callCount = 0;
+   pThis->simulatedDescriptor.name.cControl.channelMode.daqMode   = 1;
+   pThis->simulatedDescriptor.name.cControl.channelMode.hiResMode = 0;
+   pThis->simulatedDescriptor.name.cControl.channelMode.pmMode    = 0;
+#else
    DAQ_CTRL_REG_T* pCtrl = daqChannelGetCtrlRegPtr( pThis );
    pCtrl->Sample1ms = OFF;
    pCtrl->Sample100us = OFF;
    pCtrl->Sample10us = ON;
+#endif
 }
 
 /*! ---------------------------------------------------------------------------
@@ -524,7 +560,13 @@ static inline void daqChannelSample10usOn( register DAQ_CANNEL_T* pThis )
  */
 static inline void daqChannelSample10usOff( register DAQ_CANNEL_T* pThis )
 {
+#ifdef CONFIG_DAQ_SIMULATE_CHANNEL
+   pThis->simulatedDescriptor.name.cControl.channelMode.daqMode   = 0;
+   pThis->simulatedDescriptor.name.cControl.channelMode.hiResMode = 0;
+   pThis->simulatedDescriptor.name.cControl.channelMode.pmMode    = 0;
+#else
    daqChannelGetCtrlRegPtr( pThis )->Sample10us = OFF;
+#endif
 }
 
 /*! ---------------------------------------------------------------------------
@@ -537,7 +579,11 @@ static inline void daqChannelSample10usOff( register DAQ_CANNEL_T* pThis )
  */
 static inline bool daqChannelIsSample10usActive( register DAQ_CANNEL_T* pThis )
 {
+#ifdef CONFIG_DAQ_SIMULATE_CHANNEL
+   return pThis->simulatedDescriptor.name.cControl.channelMode.daqMode != 0;
+#else
    return (daqChannelGetCtrlRegPtr( pThis )->Sample10us == ON);
+#endif
 }
 
 
@@ -549,10 +595,14 @@ static inline bool daqChannelIsSample10usActive( register DAQ_CANNEL_T* pThis )
  */
 static inline void daqChannelSample100usOn( register DAQ_CANNEL_T* pThis )
 {
+#ifdef CONFIG_DAQ_SIMULATE_CHANNEL
+   daqChannelSample10usOn( pThis );
+#else
    DAQ_CTRL_REG_T* pCtrl = daqChannelGetCtrlRegPtr( pThis );
    pCtrl->Sample10us = OFF;
    pCtrl->Sample1ms = OFF;
    pCtrl->Sample100us = ON;
+#endif
 }
 
 /*! ---------------------------------------------------------------------------
@@ -564,7 +614,11 @@ static inline void daqChannelSample100usOn( register DAQ_CANNEL_T* pThis )
 static inline
 void daqChannelSample100usOff( register DAQ_CANNEL_T* pThis )
 {
+#ifdef CONFIG_DAQ_SIMULATE_CHANNEL
+   daqChannelSample10usOff( pThis );
+#else
    daqChannelGetCtrlRegPtr( pThis )->Sample100us = OFF;
+#endif
 }
 
 /*! ---------------------------------------------------------------------------
@@ -578,7 +632,11 @@ void daqChannelSample100usOff( register DAQ_CANNEL_T* pThis )
 static inline
 bool daqChannelIsSample100usActive( register DAQ_CANNEL_T* pThis )
 {
+#ifdef CONFIG_DAQ_SIMULATE_CHANNEL
+   return pThis->simulatedDescriptor.name.cControl.channelMode.daqMode != 0;
+#else
    return (daqChannelGetCtrlRegPtr( pThis )->Sample100us == ON);
+#endif
 }
 
 /*! ---------------------------------------------------------------------------
@@ -589,10 +647,14 @@ bool daqChannelIsSample100usActive( register DAQ_CANNEL_T* pThis )
  */
 static inline void daqChannelSample1msOn( register DAQ_CANNEL_T* pThis )
 {
+#ifdef CONFIG_DAQ_SIMULATE_CHANNEL
+   daqChannelSample10usOn( pThis );
+#else
    DAQ_CTRL_REG_T* pCtrl = daqChannelGetCtrlRegPtr( pThis );
    pCtrl->Sample10us = OFF;
    pCtrl->Sample100us = OFF;
    pCtrl->Sample1ms = ON;
+#endif
 }
 
 /*! ---------------------------------------------------------------------------
@@ -603,7 +665,11 @@ static inline void daqChannelSample1msOn( register DAQ_CANNEL_T* pThis )
  */
 static inline void daqChannelSample1msOff( register DAQ_CANNEL_T* pThis )
 {
+#ifdef CONFIG_DAQ_SIMULATE_CHANNEL
+   daqChannelSample1msOff( pThis );
+#else
    daqChannelGetCtrlRegPtr( pThis )->Sample1ms = OFF;
+#endif
 }
 
 /*! ---------------------------------------------------------------------------
@@ -616,7 +682,11 @@ static inline void daqChannelSample1msOff( register DAQ_CANNEL_T* pThis )
  */
 static inline bool daqChannelIsSample1msActive( register DAQ_CANNEL_T* pThis )
 {
+#ifdef CONFIG_DAQ_SIMULATE_CHANNEL
+   return daqChannelIsSample100usActive( pThis );
+#else
    return (daqChannelGetCtrlRegPtr( pThis )->Sample1ms == ON);
+#endif
 }
 
 /*! ---------------------------------------------------------------------------
@@ -699,8 +769,14 @@ static inline bool daqChannelGetTriggerSource( register DAQ_CANNEL_T* pThis )
  */
 static inline bool daqChannelEnablePostMortem( register DAQ_CANNEL_T* pThis )
 {
+#ifdef CONFIG_DAQ_SIMULATE_CHANNEL
+   DAQ_ASSERT( pThis->simulatedDescriptor.name.cControl.channelMode.hiResMode == 0 );
+   pThis->simulatedDescriptor.name.cControl.channelMode.pmMode = 1;
+   pThis->callCount = 0;
+#else
    DAQ_ASSERT( daqChannelGetCtrlRegPtr( pThis )->Ena_HiRes == OFF );
    daqChannelGetCtrlRegPtr( pThis )->Ena_PM = ON;
+#endif
 }
 
 /*! ---------------------------------------------------------------------------
@@ -713,7 +789,11 @@ static inline bool daqChannelEnablePostMortem( register DAQ_CANNEL_T* pThis )
  */
 static inline bool daqChannelIsPostMortemActive( register DAQ_CANNEL_T* pThis )
 {
+#ifdef CONFIG_DAQ_SIMULATE_CHANNEL
+   return pThis->simulatedDescriptor.name.cControl.channelMode.pmMode != 0;
+#else
    return (daqChannelGetCtrlRegPtr( pThis )->Ena_PM == ON);
+#endif
 }
 
 /*! ---------------------------------------------------------------------------
@@ -724,7 +804,11 @@ static inline bool daqChannelIsPostMortemActive( register DAQ_CANNEL_T* pThis )
  */
 static inline bool daqChannelDisablePostMortem( register DAQ_CANNEL_T* pThis )
 {
+#ifdef CONFIG_DAQ_SIMULATE_CHANNEL
+   pThis->simulatedDescriptor.name.cControl.channelMode.pmMode = 0;
+#else
    daqChannelGetCtrlRegPtr( pThis )->Ena_PM = OFF;
+#endif
 }
 
 /*! ---------------------------------------------------------------------------
@@ -736,8 +820,14 @@ static inline bool daqChannelDisablePostMortem( register DAQ_CANNEL_T* pThis )
 static inline
 void daqChannelEnableHighResolution( register DAQ_CANNEL_T* pThis )
 {
+#ifdef CONFIG_DAQ_SIMULATE_CHANNEL
+   DAQ_ASSERT( pThis->simulatedDescriptor.name.cControl.channelMode.pmMode == 0 );
+   pThis->simulatedDescriptor.name.cControl.channelMode.hiResMode = 1;
+   pThis->callCount = 0;
+#else
    DAQ_ASSERT( daqChannelGetCtrlRegPtr( pThis )->Ena_PM == OFF );
    daqChannelGetCtrlRegPtr( pThis )->Ena_HiRes = ON;
+#endif
 }
 
 /*! ---------------------------------------------------------------------------
@@ -749,7 +839,11 @@ void daqChannelEnableHighResolution( register DAQ_CANNEL_T* pThis )
 static inline
 void daqChannelDisableHighResolution( register DAQ_CANNEL_T* pThis )
 {
+#ifdef CONFIG_DAQ_SIMULATE_CHANNEL
+   pThis->simulatedDescriptor.name.cControl.channelMode.hiResMode = 0;
+#else
    daqChannelGetCtrlRegPtr( pThis )->Ena_HiRes = OFF;
+#endif
 }
 
 /*! ---------------------------------------------------------------------------
@@ -763,7 +857,11 @@ void daqChannelDisableHighResolution( register DAQ_CANNEL_T* pThis )
 static inline
 bool daqChannelIsHighResolutionEnabled( register DAQ_CANNEL_T* pThis )
 {
+#ifdef CONFIG_DAQ_SIMULATE_CHANNEL
+   return pThis->simulatedDescriptor.name.cControl.channelMode.hiResMode != 0;
+#else
    return (daqChannelGetCtrlRegPtr( pThis )->Ena_HiRes == ON);
+#endif
 }
 
 /*! ---------------------------------------------------------------------------
@@ -997,7 +1095,11 @@ ALWAYS_INLINE
 static inline volatile
 uint16_t daqChannelPopPmFifo( register DAQ_CANNEL_T* pThis )
 {
+#ifdef CONFIG_DAQ_SIMULATE_CHANNEL
+   return daqChannelPopPmFifoSimulate( pThis );
+#else
    return *daqChannelGetPmDatPtr( pThis );
+#endif
 }
 
 /*! --------------------------------------------------------------------------
@@ -1025,7 +1127,11 @@ ALWAYS_INLINE
 static inline volatile
 uint16_t daqChannelPopDaqFifo( register DAQ_CANNEL_T* pThis )
 {
+#ifdef CONFIG_DAQ_SIMULATE_CHANNEL
+   return daqChannelPopDaqFifoSimulate( pThis );
+#else
    return *daqChannelGetDaqDatPtr( pThis );
+#endif
 }
 
 /*! ---------------------------------------------------------------------------
@@ -1052,9 +1158,13 @@ static inline
 unsigned int daqChannelGetDaqFifoWords( register DAQ_CANNEL_T* pThis )
 {
    DAQ_ASSERT( pThis != NULL );
+#ifdef CONFIG_DAQ_SIMULATE_CHANNEL
+   return daqChannelGetDaqFifoWordsSimulate( pThis );
+#else
    __DAQ_VERIFY_CHANNEL_REG_ACCESS( DAQ_FIFO_WORDS );
    return ((DAQ_DAQ_FIFO_WORDS_T*)
           &__DAQ_GET_CHANNEL_REG( DAQ_FIFO_WORDS ))->fifoWords;
+#endif
 }
 
 /*! ---------------------------------------------------------------------------
@@ -1084,9 +1194,13 @@ static inline
 unsigned int daqChannelGetPmFifoWords( register DAQ_CANNEL_T* pThis )
 {
    DAQ_ASSERT( pThis != NULL );
+#ifdef CONFIG_DAQ_SIMULATE_CHANNEL
+   return daqChannelGetPmFifoWordsSimulate( pThis );
+#else
    __DAQ_VERIFY_CHANNEL_REG_ACCESS( PM_FIFO_WORDS );
    return ((DAQ_PM_FIFO_WORDS_T*)
           &__DAQ_GET_CHANNEL_REG( PM_FIFO_WORDS ))->fifoWords;
+#endif
 }
 
 /*! ---------------------------------------------------------------------------
