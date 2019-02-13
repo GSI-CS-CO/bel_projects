@@ -152,24 +152,30 @@ unsigned int daqChannelGetDaqFifoWordsSimulate( register DAQ_CANNEL_T* pThis )
  * @param pThis Pointer to the channel object
  * @return Simulated fake data.
  */
-uint16_t daqChannelPopPmFifoSimulate( register DAQ_CANNEL_T* pThis )
+DAQ_DATA_T daqChannelPopPmFifoSimulate( register DAQ_CANNEL_T* pThis )
 {
-   uint16_t ret;
+   DAQ_DATA_T ret;
 
-   if( daqChannelGetPmFifoWordsSimulate( pThis ) >=
-       ARRAY_SIZE( pThis->simulatedDescriptor.index ) )
+   if( pThis->callCount > DAQ_FIFO_PM_HIRES_WORD_SIZE )
+      return 0;
+
+   unsigned int remaining = daqChannelGetPmFifoWordsSimulate( pThis );
+
+   if( remaining >= ARRAY_SIZE( pThis->simulatedDescriptor.index ) )
       ret = pThis->callCount;
    else
    {
-      DAQ_ASSERT( daqChannelGetPmFifoWordsSimulate(pThis) <
-                 ARRAY_SIZE( pThis->simulatedDescriptor.index ) );
-      ret = pThis->simulatedDescriptor.index[daqChannelGetPmFifoWordsSimulate(pThis)];
+      unsigned int i = ARRAY_SIZE( pThis->simulatedDescriptor.index ) - 1
+                       - remaining;
+      ret = pThis->simulatedDescriptor.index[i];
+      DBPRINT2( "DBG: i: %d ret: 0x%04x\n", i, ret );
    }
 
    if( pThis->callCount < DAQ_FIFO_PM_HIRES_WORD_SIZE )
       pThis->callCount++;
    else
       pThis->simulatedDescriptor.name.wr.name.utSec++;
+
    return ret;
 }
 
@@ -184,27 +190,29 @@ uint16_t daqChannelPopPmFifoSimulate( register DAQ_CANNEL_T* pThis )
  * @param pThis Pointer to the channel object
  * @return Simulated fake data.
  */
-uint16_t daqChannelPopDaqFifoSimulate( register DAQ_CANNEL_T* pThis )
+DAQ_DATA_T daqChannelPopDaqFifoSimulate( register DAQ_CANNEL_T* pThis )
 {
-   uint16_t ret;
+   DAQ_DATA_T ret;
+   unsigned int remaining = daqChannelGetDaqFifoWordsSimulate( pThis );
 
-   if( daqChannelGetDaqFifoWordsSimulate( pThis ) >=
-       ARRAY_SIZE( pThis->simulatedDescriptor.index ) )
+   if( remaining >= ARRAY_SIZE( pThis->simulatedDescriptor.index ) )
       ret = pThis->callCount;
    else
    {
-      DAQ_ASSERT( (pThis->callCount - DAQ_FIFO_DAQ_WORD_SIZE+1) < ARRAY_SIZE( pThis->simulatedDescriptor.index ) );
-      ret = pThis->simulatedDescriptor.index[ARRAY_SIZE( pThis->simulatedDescriptor.index ) - daqChannelGetDaqFifoWordsSimulate(pThis)];
-      //ret = pThis->simulatedDescriptor.index[pThis->callCount - DAQ_FIFO_DAQ_WORD_SIZE+1];
+      unsigned int i = ARRAY_SIZE( pThis->simulatedDescriptor.index ) - 1
+                       - remaining;
+      ret = pThis->simulatedDescriptor.index[i];
+      DBPRINT2( "DBG: i: %d ret: 0x%04x\n", i, ret );
    }
 
-   if( pThis->callCount <= DAQ_FIFO_DAQ_WORD_SIZE )
+   if( pThis->callCount < DAQ_FIFO_DAQ_WORD_SIZE )
       pThis->callCount++;
    else
    {
       pThis->callCount = 0;
-    //  pThis->simulatedDescriptor.name.wr.name.utSec++;
+      pThis->simulatedDescriptor.name.wr.name.utSec++;
    }
+
    return ret;
 }
 

@@ -79,16 +79,57 @@ int ramInit( register RAM_SCU_T* pThis, RAM_RING_INDEXES_T* pRingIndexes )
 #endif
 }
 
+/*! ---------------------------------------------------------------------------
+ * @see scu_ramBuffer.h
+ */
+RAM_DAQ_BLOCK_T ramRingGetTypeOfOldestBlock( register RAM_SCU_T* pThis )
+{
+#ifdef CONFIG_SCU_USE_DDR3
+   //TODO
+   return RAM_DAQ_UNDEFINED;
+#else
+ #error Nothing implemented in function ramRingGetTypeOfOldestBlock()!
+#endif
+}
+
 #if defined(__lm32__) || defined(__DOXYGEN__)
+
+/*! ---------------------------------------------------------------------------
+ */
+static int ramRemoveOldestBlock( register RAM_SCU_T* pThis )
+{
+   //TODO
+   return 0;
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+static bool ramDoesBlockFit( register RAM_SCU_T* pThis, bool isShort )
+{
+   //TODO
+   return false;
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+static void ramWriteDaqData( register RAM_SCU_T* pThis,
+                             DAQ_CANNEL_T* pDaqChannel,
+                             bool isShort )
+{
+   //TODO
+}
+
 
 /*! ---------------------------------------------------------------------------
  * @see scu_ramBuffer.h
  */
-int ramPushDaqDataBlock( register RAM_SCU_T* pThis, DAQ_CANNEL_T* pDaqChannel )
+int ramPushDaqDataBlock( register RAM_SCU_T* pThis, DAQ_CANNEL_T* pDaqChannel,
+                         bool isShort )
 {
    RAM_ASSERT( pThis != NULL );
    RAM_ASSERT( pDaqChannel != NULL );
    RAM_ASSERT( daqChannelGetDaqFifoWords( pDaqChannel ) > DAQ_DISCRIPTOR_WORD_SIZE );
+   //TODO
    return 0;
 }
 

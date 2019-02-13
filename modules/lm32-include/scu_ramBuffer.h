@@ -65,7 +65,46 @@
 extern "C" {
 #endif
 
+/*!
+ * @brief Calculates the start offset of the payload data in the ring-buffer
+ *        during the compile time, so that the offset is dividable by
+ *        RAM_DAQ_PAYLOAD_T.
+ * @note CAUTION: Don't remove the double exclamation mark (!!) because
+ *       it will be used to convert a value that is not equal to zero to one!
+ */
+#define RAM_DAQ_DATA_START_OFFSET                            \
+(                                                            \
+   (sizeof(DAQ_DESCRIPTOR_T) / sizeof(RAM_DAQ_PAYLOAD_T)) +  \
+   !!(sizeof(DAQ_DESCRIPTOR_T) % sizeof(RAM_DAQ_PAYLOAD_T))  \
+)
+
+/*!
+ * @brief Size in uint16_t to make the size of device-descriptor
+ *        dividable by sizeof(RAM_DAQ_PAYLOAD_T)
+ */
+#define RAM_DAQ_PAYLOAD_COMPLEMENT_SIZE                      \
+(                                                            \
+   (sizeof(DAQ_DESCRIPTOR_T) % sizeof(RAM_DAQ_PAYLOAD_T)) /  \
+   sizeof(uint16_t)                                          \
+)
+
+
+/*!
+ * @brief Definition of return values of function ramRingGetTypeOfOldestBlock
+ */
+typedef enum
+{
+   RAM_DAQ_UNDEFINED = 0, //!<@brief No block recognized
+   RAM_DAQ_SHORT     = 1, //!<@brief Short block
+   RAM_DAQ_LONG      = 2  //!<@brief Long block
+} RAM_DAQ_BLOCK_T;
+
 #ifdef CONFIG_SCU_USE_DDR3
+
+/*!
+ * @brief Smallest memory unit of the used memory type.
+ */
+typedef DDR3_PAYLOAD_T RAM_DAQ_PAYLOAD_T;
 
 /*!
  * @defgroup SCU_RING_BUFFER_INDEXES
@@ -97,6 +136,27 @@ typedef uint32_t RAM_RING_INDEX_T;
 
 #endif /* ifdef CONFIG_SCU_USE_DDR3 */
 
+/*!
+ * @brief Calculates the number of memory items from a given number
+ *        of data words in DAQ_DATA_T.
+ * @see DAQ_DATA_T
+ * @see RAM_DAQ_PAYLOAD_T
+ * @note CAUTION: Don't remove the double exclamation mark (!!) because
+ *       it will be used to convert a value that is not equal to zero to one!
+ */
+#define __RAM_DAQ_GET_BLOCK_LEN( b )      \
+(                                         \
+   (b / sizeof(RAM_DAQ_PAYLOAD_T) +       \
+   !!(b % sizeof(RAM_DAQ_PAYLOAD_T))) *   \
+   sizeof(DAQ_DATA_T)                     \
+)
+
+#define RAM_DAQ_LONG_BLOCK_LEN  \
+   __RAM_DAQ_GET_BLOCK_LEN( DAQ_FIFO_PM_HIRES_WORD_SIZE_CRC )
+
+
+#define RAM_DAQ_SHORT_BLOCK_LEN \
+   __RAM_DAQ_GET_BLOCK_LEN( DAQ_FIFO_DAQ_WORD_SIZE_CRC )
 
 /*! ---------------------------------------------------------------------------
  * @brief Data type of ring buffer indexes.
@@ -237,9 +297,15 @@ int ramInit( register RAM_SCU_T* pThis, RAM_RING_INDEXES_T* pRingIndexes );
  *        DAQ data blocks becomes deleted until its enough space.
  * @param pThis Pointer to the RAM object object.
  * @param pDaqChannel Pointer of the concerning DAQ-channel-object.
+ * @param isShort Decides between long and short DAQ-block.
+ *                If true it trades is a short block (DAQ continuous)
+ *                else (DAQ HiRes or PostMortem)
  * @return Number of deleted old data blocks.
  */
-int ramPushDaqDataBlock( register RAM_SCU_T* pThis, DAQ_CANNEL_T* pDaqChannel );
+int ramPushDaqDataBlock( register RAM_SCU_T* pThis,
+                         DAQ_CANNEL_T* pDaqChannel,
+                         bool isShort
+                       );
 
 #endif /* if defined(__lm32__) || defined(__DOXYGEN__) */
 

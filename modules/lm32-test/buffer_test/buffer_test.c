@@ -84,21 +84,39 @@ int ddr3Poll(  const DDR3_T* pThis UNUSED, unsigned int count )
 #endif
 
 
-void readFiFo( DAQ_CANNEL_T* pThis )
+void readFiFo( DAQ_CANNEL_T* pThis, bool isDaq )
 {
    int j = 0;
    DAQ_DESCRIPTOR_T descriptor;
+
    memset( &descriptor, 0, sizeof( descriptor ) );
 
-   uint16_t remaining  = daqChannelGetDaqFifoWords( pThis ) + 1;
+   unsigned int (*getRemaining)( register DAQ_CANNEL_T* );
+   volatile uint16_t (*pop)( register DAQ_CANNEL_T* );
+   uint16_t remaining;
 
-   int i = 0;
+   unsigned int show;
+
+   if( isDaq )
+   {
+      getRemaining = daqChannelGetDaqFifoWords;
+      pop          = daqChannelPopDaqFifo;
+      show         = DAQ_FIFO_DAQ_WORD_SIZE - ARRAY_SIZE( descriptor.index ) - 4;
+   }
+   else
+   {
+      getRemaining = daqChannelGetPmFifoWords;
+      pop          = daqChannelPopPmFifo;
+      show         = DAQ_FIFO_PM_HIRES_WORD_SIZE - ARRAY_SIZE( descriptor.index ) - 4;
+   }
+
+   unsigned int i = 0;
    do
    {
-      remaining = daqChannelGetDaqFifoWords( pThis );
-      volatile uint16_t data = daqChannelPopDaqFifo( pThis ); //!!*ptr;
-      if( i >= 490 )
-        mprintf( "data[%d] = %d\n", i, data );
+      remaining = getRemaining( pThis );
+      volatile uint16_t data = pop( pThis );
+      if( i >= show )
+        mprintf( "data[%d] = 0x%04x, %d\n", i, data, data );
       if( remaining < ARRAY_SIZE( descriptor.index ) )
       {
          SCU_ASSERT( j < ARRAY_SIZE( descriptor.index ) );
@@ -114,6 +132,8 @@ void readFiFo( DAQ_CANNEL_T* pThis )
 
 
 
+
+
 void main( void )
 {
    DAQ_CANNEL_T daqChannel;
@@ -126,7 +146,9 @@ void main( void )
    gotoxy( 0, 0 );
    clrscr();
    mprintf( ESC_FG_MAGNETA"Ring-buffer test\n"ESC_NORMAL );
-
+   mprintf( "Offset: %d complement %d\n", RAM_DAQ_DATA_START_OFFSET, RAM_DAQ_PAYLOAD_COMPLEMENT_SIZE );
+   mprintf( "Long  block: %d\n", RAM_DAQ_LONG_BLOCK_LEN );
+   mprintf( "Short block: %d\n", RAM_DAQ_SHORT_BLOCK_LEN );
    if( ramInit( &oRam, &g_FifoAdmin ) < 0  )
    {
       mprintf( ESC_FG_RED"ERROR: Could not find DDR3 base address!\n"ESC_NORMAL );
@@ -134,12 +156,17 @@ void main( void )
    }
 
    daqChannelReset( &daqChannel );
-   daqChannel.simulatedDescriptor.name.slotDiob.slot = 1;
-
+   daqDescriptorSetSlot( &daqChannel.simulatedDescriptor, 12 );
+   daqDescriptorSetChannel( &daqChannel.simulatedDescriptor, 0 );
+   daqDescriptorSetDaq( &daqChannel.simulatedDescriptor, true );
+   daqDescriptorSetTriggerConditionLW( &daqChannel.simulatedDescriptor, 0xA );
+   daqDescriptorSetTriggerConditionHW( &daqChannel.simulatedDescriptor, 0xB );
+   daqDescriptorSetTriggerDelay( &daqChannel.simulatedDescriptor, 0xC );
+   daqDescriptorSetCRC( &daqChannel.simulatedDescriptor, 0xAA );
    daqDescriptorPrintInfo( &daqChannel.simulatedDescriptor );
 
-   readFiFo( &daqChannel );
-
+  // readFiFo( &daqChannel, false );
+   readFiFo( &daqChannel, true );
    mprintf( "End...\n" );
 }
 

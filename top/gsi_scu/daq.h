@@ -257,11 +257,12 @@ STATIC_ASSERT( sizeof(DAQ_PM_FIFO_WORDS_T) == sizeof(uint16_t) );
  */
 #define DAQ_REGISTER_OFFSET 0x4000
 
-struct DAQ_DATA_T
+#if 0
+struct DAQ_DATA_NAME_T
 {
    //TODO
 };
-
+#endif
 /*!
  * @ingroup DAQ_CHANNEL DAQ_DEVICE
  * @brief Memory mapped IO-space of a DAQ macro
@@ -269,7 +270,7 @@ struct DAQ_DATA_T
 typedef volatile union
 {
    volatile uint16_t i[(SCUBUS_SLAVE_ADDR_SPACE-DAQ_REGISTER_OFFSET)/sizeof(uint16_t)];
-   volatile struct DAQ_DATA_T s;
+   //volatile struct DAQ_DATA_NAME_T s;
 } DAQ_REGISTER_T;
 STATIC_ASSERT( sizeof( DAQ_REGISTER_T ) == (SCUBUS_SLAVE_ADDR_SPACE-DAQ_REGISTER_OFFSET) );
 
@@ -362,8 +363,8 @@ typedef struct
  *          In this mode some functions becomes bend to the following functions
  *          and not to a real hardware access!
  */
-uint16_t daqChannelPopPmFifoSimulate( register DAQ_CANNEL_T* pThis );
-uint16_t daqChannelPopDaqFifoSimulate( register DAQ_CANNEL_T* pThis );
+DAQ_DATA_T daqChannelPopPmFifoSimulate( register DAQ_CANNEL_T* pThis );
+DAQ_DATA_T daqChannelPopDaqFifoSimulate( register DAQ_CANNEL_T* pThis );
 unsigned int daqChannelGetPmFifoWordsSimulate( register DAQ_CANNEL_T* pThis );
 unsigned int daqChannelGetDaqFifoWordsSimulate( register DAQ_CANNEL_T* pThis );
 /*
@@ -1077,7 +1078,7 @@ bool daqChannelTestAndClearHiResIntPending( register DAQ_CANNEL_T* pThis )
  * @param pThis Pointer to the channel object
  */
 static inline
-uint16_t volatile * daqChannelGetPmDatPtr( register DAQ_CANNEL_T* pThis )
+DAQ_DATA_T volatile * daqChannelGetPmDatPtr( register DAQ_CANNEL_T* pThis )
 {
    DAQ_ASSERT( pThis != NULL );
    __DAQ_VERIFY_CHANNEL_REG_ACCESS( PM_DAT );
@@ -1093,7 +1094,7 @@ uint16_t volatile * daqChannelGetPmDatPtr( register DAQ_CANNEL_T* pThis )
  */
 ALWAYS_INLINE
 static inline volatile
-uint16_t daqChannelPopPmFifo( register DAQ_CANNEL_T* pThis )
+DAQ_DATA_T daqChannelPopPmFifo( register DAQ_CANNEL_T* pThis )
 {
 #ifdef CONFIG_DAQ_SIMULATE_CHANNEL
    return daqChannelPopPmFifoSimulate( pThis );
@@ -1109,7 +1110,7 @@ uint16_t daqChannelPopPmFifo( register DAQ_CANNEL_T* pThis )
  * @param pThis Pointer to the channel object
  */
 static inline
-uint16_t volatile * daqChannelGetDaqDatPtr( register DAQ_CANNEL_T* pThis )
+DAQ_DATA_T volatile * daqChannelGetDaqDatPtr( register DAQ_CANNEL_T* pThis )
 {
    DAQ_ASSERT( pThis != NULL );
    __DAQ_VERIFY_CHANNEL_REG_ACCESS( DAQ_DAT );
@@ -1125,7 +1126,7 @@ uint16_t volatile * daqChannelGetDaqDatPtr( register DAQ_CANNEL_T* pThis )
  */
 ALWAYS_INLINE
 static inline volatile
-uint16_t daqChannelPopDaqFifo( register DAQ_CANNEL_T* pThis )
+DAQ_DATA_T daqChannelPopDaqFifo( register DAQ_CANNEL_T* pThis )
 {
 #ifdef CONFIG_DAQ_SIMULATE_CHANNEL
    return daqChannelPopDaqFifoSimulate( pThis );

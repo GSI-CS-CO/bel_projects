@@ -39,6 +39,12 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+   
+/*!
+ * @ingroup DAQ_CHANNEL
+ * @brief Data type of DAQ FiFo containment
+ */
+typedef uint16_t DAQ_DATA_T;
 
 /*!
  * @ingroup DAQ
@@ -60,6 +66,14 @@ extern "C" {
  */
 #define DAQ_FIFO_DAQ_WORD_SIZE       509
 
+/*!
+ * @brief Maximum DAQ-FIFO capacity in 16 bit words
+ *        inclusive the DAQ-Descriptor and check-sum.
+ * @see DAQ_DESCRIPTOR_T
+ * @see daqChannelGetDaqFifoWords
+ */
+#define DAQ_FIFO_DAQ_WORD_SIZE_CRC   (DAQ_FIFO_DAQ_WORD_SIZE + 1)
+
 //#define DAQ_FIFO_DAQ_WORD_SIZE (4 + DAQ_DISCRIPTOR_WORD_SIZE) //!! For test only!
 
 #if (DAQ_FIFO_DAQ_WORD_SIZE < 0x1FD)
@@ -76,7 +90,16 @@ extern "C" {
  * @see DAQ_DESCRIPTOR_T
  * @see daqChannelGetPmFifoWords
  */
-#define DAQ_FIFO_PM_HIRES_WORD_SIZE  1023
+
+#define DAQ_FIFO_PM_HIRES_WORD_SIZE     1023
+/*!
+ * @brief Maximum PM_HIRES FIFO capacity in 16 bit words
+ *        inclusive the DAQ-Descriptor and check-sum.
+ * @see DAQ_DESCRIPTOR_T
+ * @see daqChannelGetPmFifoWords
+ */
+
+#define DAQ_FIFO_PM_HIRES_WORD_SIZE_CRC (DAQ_FIFO_PM_HIRES_WORD_SIZE + 1)
 
 #if (DAQ_FIFO_PM_HIRES_WORD_SIZE < DAQ_DISCRIPTOR_WORD_SIZE)
   #error Fatal: DAQ_FIFO_PM_HIRES_WORD_SIZE shall not be smaler than DAQ_DISCRIPTOR_WORD_SIZE !
@@ -218,6 +241,14 @@ static inline int daqDescriptorGetSlot( register DAQ_DESCRIPTOR_T* pThis )
    return pThis->name.slotDiob.slot;
 }
 
+#ifdef CONFIG_DAQ_SIMULATE_CHANNEL
+static inline void daqDescriptorSetSlot( register DAQ_DESCRIPTOR_T* pThis,
+                                         unsigned int slot )
+{
+   pThis->name.slotDiob.slot = slot;
+}
+#endif
+
 /*! ---------------------------------------------------------------------------
  * @brief Gets the Digital IO Board ID (DIOB) from the record.
  * @param pThis Pointer to the DAQ- descriptor object, that means to the last
@@ -229,6 +260,14 @@ static inline int daqDescriptorGetDiobId( register DAQ_DESCRIPTOR_T* pThis )
 {
    return pThis->name.slotDiob.diobId;
 }
+
+#ifdef CONFIG_DAQ_SIMULATE_CHANNEL
+static inline void daqDescriptorSetDiobId( register DAQ_DESCRIPTOR_T* pThis,
+                                           unsigned int diobId )
+{
+   pThis->name.slotDiob.diobId = diobId;
+}
+#endif
 
 /*! ---------------------------------------------------------------------------
  * @brief Tells the origin DAQ device channel number of the last record
@@ -242,6 +281,14 @@ static inline int daqDescriptorGetChannel( register DAQ_DESCRIPTOR_T* pThis )
    return pThis->name.cControl.channelMode.channelNumber - 1;
 }
 
+#ifdef CONFIG_DAQ_SIMULATE_CHANNEL
+static inline void daqDescriptorSetChannel( register DAQ_DESCRIPTOR_T* pThis,
+                                            unsigned int channel )
+{
+   pThis->name.cControl.channelMode.channelNumber = channel + 1;
+}
+#endif
+
 /*! ---------------------------------------------------------------------------
  * @brief Indicates whether the last record was received in "Post Mortem mode".
  * @param pThis Pointer to the DAQ- descriptor object, that means to the last
@@ -253,6 +300,14 @@ static inline bool daqDescriptorWasPM( register DAQ_DESCRIPTOR_T* pThis )
 {
    return pThis->name.cControl.channelMode.pmMode;
 }
+
+#ifdef CONFIG_DAQ_SIMULATE_CHANNEL
+static inline void daqDescriptorSetPM( register DAQ_DESCRIPTOR_T* pThis,
+                                       bool pmMode )
+{
+   pThis->name.cControl.channelMode.pmMode = pmMode;
+}
+#endif
 
 /*! ---------------------------------------------------------------------------
  * @brief Indicates whether the last record was received in "High Resolution
@@ -267,6 +322,14 @@ static inline bool daqDescriptorWasHiRes( register DAQ_DESCRIPTOR_T* pThis )
    return pThis->name.cControl.channelMode.hiResMode;
 }
 
+#ifdef CONFIG_DAQ_SIMULATE_CHANNEL
+static inline void daqDescriptorSetHiRes( register DAQ_DESCRIPTOR_T* pThis,
+                                          bool hiResMode )
+{
+   pThis->name.cControl.channelMode.hiResMode = hiResMode;
+}
+#endif
+
 /*! --------------------------------------------------------------------------
  * @brief Indicates whether the last record was received in "DAQ- mode".
  * @param pThis Pointer to the DAQ- descriptor object, that means to the last
@@ -279,6 +342,14 @@ static inline bool daqDescriptorWasDaq( register DAQ_DESCRIPTOR_T* pThis )
    return pThis->name.cControl.channelMode.daqMode;
 }
 
+#ifdef CONFIG_DAQ_SIMULATE_CHANNEL
+static inline void daqDescriptorSetDaq( register DAQ_DESCRIPTOR_T* pThis,
+                                        bool daqMode )
+{
+   pThis->name.cControl.channelMode.daqMode = daqMode;
+}
+#endif
+
 /*! ---------------------------------------------------------------------------
  * @brief Gets the least significant word of the bus tag event
  *        trigger condition from the last record.
@@ -288,10 +359,20 @@ static inline bool daqDescriptorWasDaq( register DAQ_DESCRIPTOR_T* pThis )
  *              @see DAQ_DISCRIPTOR_WORD_SIZE
  * @return Least significant word of trigger condition.
  */
-static inline uint16_t daqDescriptorGetTriggerConditionLW( register DAQ_DESCRIPTOR_T* pThis )
+static inline
+uint16_t daqDescriptorGetTriggerConditionLW( register DAQ_DESCRIPTOR_T* pThis )
 {
    return pThis->name.trigger.low;
 }
+
+#ifdef CONFIG_DAQ_SIMULATE_CHANNEL
+static inline
+void daqDescriptorSetTriggerConditionLW( register DAQ_DESCRIPTOR_T* pThis,
+                                         uint16_t trLow )
+{
+   pThis->name.trigger.low = trLow;
+}
+#endif
 
 /*! ---------------------------------------------------------------------------
  * @brief Gets the most significant word of the bus tag event
@@ -301,10 +382,20 @@ static inline uint16_t daqDescriptorGetTriggerConditionLW( register DAQ_DESCRIPT
  *              @see DAQ_DISCRIPTOR_WORD_SIZE
  * @return Most significant word of trigger condition.
  */
-static inline uint16_t daqDescriptorGetTriggerConditionHW( register DAQ_DESCRIPTOR_T* pThis )
+static inline
+uint16_t daqDescriptorGetTriggerConditionHW( register DAQ_DESCRIPTOR_T* pThis )
 {
    return pThis->name.trigger.high;
 }
+
+#ifdef CONFIG_DAQ_SIMULATE_CHANNEL
+static inline
+void daqDescriptorSetTriggerConditionHW( register DAQ_DESCRIPTOR_T* pThis,
+                                         uint16_t trHigh )
+{
+   pThis->name.trigger.high = trHigh;
+}
+#endif
 
 /*! ---------------------------------------------------------------------------
  * @brief Gets the trigger delay from the last record
@@ -313,10 +404,20 @@ static inline uint16_t daqDescriptorGetTriggerConditionHW( register DAQ_DESCRIPT
  *              @see DAQ_DISCRIPTOR_WORD_SIZE
  * @return Trigger delay
  */
-static inline uint16_t daqDescriptorGetTriggerDelay( register DAQ_DESCRIPTOR_T* pThis )
+static inline
+uint16_t daqDescriptorGetTriggerDelay( register DAQ_DESCRIPTOR_T* pThis )
 {
    return pThis->name.trigger.delay;
 }
+
+#ifdef CONFIG_DAQ_SIMULATE_CHANNEL
+static inline
+void daqDescriptorSetTriggerDelay( register DAQ_DESCRIPTOR_T* pThis,
+                                   uint16_t delay )
+{
+   pThis->name.trigger.delay = delay;
+}
+#endif
 
 #if 1
 /*! ---------------------------------------------------------------------------
@@ -350,6 +451,14 @@ static inline uint8_t daqDescriptorGetCRC( register DAQ_DESCRIPTOR_T* pThis )
 {
    return pThis->name.crc;
 }
+
+#ifdef CONFIG_DAQ_SIMULATE_CHANNEL
+static inline
+void daqDescriptorSetCRC( register DAQ_DESCRIPTOR_T* pThis, uint8_t crc )
+{
+   pThis->name.crc = crc;
+}
+#endif
 
 /*! @} */ //End of group  DAQ_DESCRIPTOR
 #ifdef __cplusplus
