@@ -218,12 +218,12 @@ void main(void) {
   t2    = getSysTime();
   dt6   = (uint32_t)(t2 -t1);
   
-  mprintf("writing %d * 0x%x (32bit) took %7u ns or %4u ns / word (shared ram)\n",       NWORDS, data1, dt1, dt1/(NWORDS));
-  mprintf("copying %d * 0x%x (32bit) took %7u ns or %4u ns / word (shared -> shared)\n", NWORDS, data1, dt2, dt2/(NWORDS));
-  mprintf("reading %d * 0x%x (32bit) took %7u ns or %4u ns / word (shared ram)\n",       NWORDS, data3, dt3, dt3/(NWORDS));
-  mprintf("writing %d * 0x%x (32bit) took %7u ns or %4u ns / word (pseudo sram)\n",      NWORDS, data2, dt4, dt4/(NWORDS));
-  mprintf("copying %d * 0x%x (32bit) took %7u ns or %4u ns / word (pseudo -> pseudo)\n", NWORDS, data2, dt5, dt5/(NWORDS));
-  mprintf("reading %d * 0x%x (32bit) took %7u ns or %4u ns / word (pseudo sram)\n",      NWORDS, data4, dt6, dt6/(NWORDS));
+  mprintf("writing %d * 0x%x (32bit) took %7u ns or %4u ns/word or %4u Mbit/s (shared ram)\n",       NWORDS, data1, dt1, dt1/(NWORDS), (1000 * NWORDS * 32)/dt1);
+  mprintf("copying %d * 0x%x (32bit) took %7u ns or %4u ns/word or %4u Mbit/s (shared -> shared)\n", NWORDS, data1, dt2, dt2/(NWORDS), (1000 * NWORDS * 32)/dt2);
+  mprintf("reading %d * 0x%x (32bit) took %7u ns or %4u ns/word or %4u Mbit/s (shared ram)\n",       NWORDS, data3, dt3, dt3/(NWORDS), (1000 * NWORDS * 32)/dt3);
+  mprintf("writing %d * 0x%x (32bit) took %7u ns or %4u ns/word or %4u Mbit/s (pseudo sram)\n",      NWORDS, data2, dt4, dt4/(NWORDS), (1000 * NWORDS * 32)/dt4);
+  mprintf("copying %d * 0x%x (32bit) took %7u ns or %4u ns/word or %4u Mbit/s (pseudo -> pseudo)\n", NWORDS, data2, dt5, dt5/(NWORDS), (1000 * NWORDS * 32)/dt5);
+  mprintf("reading %d * 0x%x (32bit) took %7u ns or %4u ns/word or %4u Mbit/s (pseudo sram)\n",      NWORDS, data4, dt6, dt6/(NWORDS), (1000 * NWORDS * 32)/dt6);
 
   while(1);  
 } /* main */
