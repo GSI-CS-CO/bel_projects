@@ -38,13 +38,6 @@
 
 RAM_RING_INDEXES_T g_FifoAdmin = RAM_RING_INDEXES_INITIALIZER;
 
-typedef struct PACKED_SIZE
-{
-   DAQ_DESCRIPTOR_T daq;
-   uint16_t data[sizeof(DAQ_DESCRIPTOR_T)%sizeof(DDR3_PAYLOAD_T)/sizeof(uint16_t)];
-} DDR3_DAQ_DESCRIPTOR_T;
-
-STATIC_ASSERT( (sizeof(DDR3_DAQ_DESCRIPTOR_T) % sizeof(DDR3_PAYLOAD_T)) == 0 );
 #endif
 
 void printPayload16( DDR3_PAYLOAD_T* pPl )
@@ -114,7 +107,7 @@ void readFiFo( DAQ_CANNEL_T* pThis, bool isDaq )
    do
    {
       remaining = getRemaining( pThis );
-      volatile uint16_t data = pop( pThis );
+      volatile DAQ_DATA_T data = pop( pThis );
       if( i >= show )
         mprintf( "data[%d] = 0x%04x, %d\n", i, data, data );
       if( remaining < ARRAY_SIZE( descriptor.index ) )
@@ -146,9 +139,15 @@ void main( void )
    gotoxy( 0, 0 );
    clrscr();
    mprintf( ESC_FG_MAGNETA"Ring-buffer test\n"ESC_NORMAL );
-   mprintf( "Offset: %d complement %d\n", RAM_DAQ_DATA_START_OFFSET, RAM_DAQ_PAYLOAD_COMPLEMENT_SIZE );
-   mprintf( "Long  block: %d\n", RAM_DAQ_LONG_BLOCK_LEN );
-   mprintf( "Short block: %d\n", RAM_DAQ_SHORT_BLOCK_LEN );
+   mprintf( "Offset: %d complement %d\n", RAM_DAQ_DATA_START_OFFSET, RAM_DAQ_DESCRIPTOR_REST );
+   mprintf( "Long  block:      %d\n", RAM_DAQ_LONG_BLOCK_LEN );
+   mprintf( "Long block rest:  %d\n", RAM_DAQ_LONG_BLOCK_REST );
+   mprintf( "Short block:      %d\n", RAM_DAQ_SHORT_BLOCK_LEN );
+   mprintf( "Short block rest: %d\n", RAM_DAQ_SHORT_BLOCK_REST );
+   mprintf( "Capacity64:       %d\n", RAM_DAQ_MAX_CAPACITY );
+   mprintf( "Words per index:  %d\n", RAM_DAQ_DATA_WORDS_PER_RAM_INDEX );
+   mprintf( "Offset of channel control: %d\n", RAM_DAQ_INDEX_OFFSET_OF_CHANNEL_CONTROL );
+   mprintf( "Length of channel control: %d\n", RAM_DAQ_INDEX_LENGTH_OF_CHANNEL_CONTROL );
    if( ramInit( &oRam, &g_FifoAdmin ) < 0  )
    {
       mprintf( ESC_FG_RED"ERROR: Could not find DDR3 base address!\n"ESC_NORMAL );
@@ -166,7 +165,10 @@ void main( void )
    daqDescriptorPrintInfo( &daqChannel.simulatedDescriptor );
 
   // readFiFo( &daqChannel, false );
-   readFiFo( &daqChannel, true );
+   //readFiFo( &daqChannel, true );
+
+   ramPushDaqDataBlock( &oRam, &daqChannel, false );
+
    mprintf( "End...\n" );
 }
 

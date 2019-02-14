@@ -79,15 +79,14 @@ extern "C" {
 )
 
 /*!
- * @brief Size in uint16_t to make the size of device-descriptor
+ * @brief Size in DAQ_DATA_T to make the size of device-descriptor
  *        dividable by sizeof(RAM_DAQ_PAYLOAD_T)
  */
-#define RAM_DAQ_PAYLOAD_COMPLEMENT_SIZE                      \
+#define RAM_DAQ_DESCRIPTOR_REST                              \
 (                                                            \
    (sizeof(DAQ_DESCRIPTOR_T) % sizeof(RAM_DAQ_PAYLOAD_T)) /  \
-   sizeof(uint16_t)                                          \
+   sizeof(DAQ_DATA_T)                                        \
 )
-
 
 /*!
  * @brief Definition of return values of function ramRingGetTypeOfOldestBlock
@@ -121,16 +120,22 @@ typedef DDR3_PAYLOAD_T RAM_DAQ_PAYLOAD_T;
 
 #ifndef RAM_DAQ_MIN_INDEX
    /*!
-    * @brief Minimum value for Ring read and write index
+    * @brief Minimum value for ring buffer read and write index
     */
    #define RAM_DAQ_MIN_INDEX 0
 #endif
 #ifndef RAM_DAQ_MAX_INDEX
    /*!
-    * @brief Maximum value for Ring read and write index
+    * @brief Maximum value for ring buffer read and write index
     */
    #define RAM_DAQ_MAX_INDEX DDR3_MAX_INDEX64
 #endif
+
+
+/*!
+ * @brief Maximum capacity of ring buffer in RAM_DAQ_PAYLOAD_T
+ */
+#define RAM_DAQ_MAX_CAPACITY (RAM_DAQ_MAX_INDEX - RAM_DAQ_MIN_INDEX)
 
 typedef uint32_t RAM_RING_INDEX_T;
 
@@ -151,12 +156,60 @@ typedef uint32_t RAM_RING_INDEX_T;
    sizeof(DAQ_DATA_T)                     \
 )
 
+/*!
+ * @brief Calculates the rest in DAQ_DATA_T of a given block length to
+ *        complete a full number of RAM_DAQ_PAYLOAD_T.
+ */
+#define __RAM_DAQ_GET_BLOCK_REST( b )                        \
+(                                                            \
+   ((b * sizeof(DAQ_DATA_T)) % sizeof(RAM_DAQ_PAYLOAD_T)) /  \
+   sizeof(DAQ_DATA_T)                                        \
+)
+
+/*!
+ * @brief Length of long blocks in RAM_DAQ_PAYLOAD_T for
+ *        PostMortem and/or HiRes mode.
+ */
 #define RAM_DAQ_LONG_BLOCK_LEN  \
    __RAM_DAQ_GET_BLOCK_LEN( DAQ_FIFO_PM_HIRES_WORD_SIZE_CRC )
 
+/*!
+ * @brief Rest of long blocks in DAQ_DATA_T to complete a full number of
+ *        RAM_DAQ_PAYLOAD_T.
+ */
+#define RAM_DAQ_LONG_BLOCK_REST \
+   __RAM_DAQ_GET_BLOCK_REST( DAQ_FIFO_PM_HIRES_WORD_SIZE_CRC )
 
+/*!
+ * @brief Length of short blocks in RAM_DAQ_PAYLOAD_T for
+ *        DAQ continuous mode.
+ */
 #define RAM_DAQ_SHORT_BLOCK_LEN \
    __RAM_DAQ_GET_BLOCK_LEN( DAQ_FIFO_DAQ_WORD_SIZE_CRC )
+
+/*!
+ * @brief Rest of short blocks in DAQ_DATA_T to complete a full number of
+ *        RAM_DAQ_PAYLOAD_T.
+ */
+#define RAM_DAQ_SHORT_BLOCK_REST \
+   __RAM_DAQ_GET_BLOCK_REST( DAQ_FIFO_DAQ_WORD_SIZE_CRC )
+
+#define RAM_DAQ_DATA_WORDS_PER_RAM_INDEX \
+   (sizeof(RAM_DAQ_PAYLOAD_T) / sizeof(DAQ_DATA_T))
+
+
+#define RAM_DAQ_INDEX_OFFSET_OF_CHANNEL_CONTROL \
+   (offsetof( _DAQ_DISCRIPTOR_STRUCT_T, cControl ) / sizeof(RAM_DAQ_PAYLOAD_T))
+   
+/*!
+ * @note CAUTION: Don't remove the double exclamation mark (!!) because
+ *       it will be used to convert a value that is not equal to zero to one!
+ */
+#define RAM_DAQ_INDEX_LENGTH_OF_CHANNEL_CONTROL                 \
+(                                                               \
+   (sizeof(_DAQ_CHANNEL_CONTROL) / sizeof(RAM_DAQ_PAYLOAD_T)) + \
+   !!(sizeof(_DAQ_CHANNEL_CONTROL) % sizeof(RAM_DAQ_PAYLOAD_T)) \
+)
 
 /*! ---------------------------------------------------------------------------
  * @brief Data type of ring buffer indexes.
@@ -177,12 +230,12 @@ STATIC_ASSERT( sizeof(RAM_RING_INDEXES_T) == 4 * sizeof(RAM_RING_INDEX_T));
 /*!
  * @brief Initializer for object of data type RAM_RING_INDEXES_T
  */
-#define RAM_RING_INDEXES_INITIALIZER                  \
-{                                                     \
-   .offset   = RAM_DAQ_MIN_INDEX,                     \
-   .capacity = RAM_DAQ_MAX_INDEX - RAM_DAQ_MIN_INDEX, \
-   .start    = 0,                                     \
-   .end      = 0                                      \
+#define RAM_RING_INDEXES_INITIALIZER  \
+{                                     \
+   .offset   = RAM_DAQ_MIN_INDEX,     \
+   .capacity = RAM_DAQ_MAX_CAPACITY,  \
+   .start    = 0,                     \
+   .end      = 0                      \
 }
 
 /*!
@@ -194,7 +247,7 @@ typedef struct
    /*!
     * @brief SCU DDR3 administration object.
     */
-   DDR3_T   ddr3;
+   DDR3_T   ram;
 #else
    //TODO maybe in the future will use a other memory type
 #endif
