@@ -4,9 +4,9 @@
 //
 //  created : 11-Nov-2016
 //  author  : Dietrich Beck, GSI-Darmstadt
-//  version : 24-Apr-2018
+//  version : 12-feb-2019
 //
-#define WB_SLAVES_VERSION "0.06.0"
+#define WB_SLAVES_VERSION "0.07.0"
 //
 //  defines wishbone vendor IDs
 //  defines wishbone device IDs and registers
@@ -172,6 +172,17 @@
 #define FPGA_BUILDROM_PRODUCT        0x2d39fa8b          // product ID
 #define FPGA_BUILDROM_VMAJOR         1                   // major revision
 #define FPGA_BUILDROM_VMINOR         1                   // minor revision
+
+// register offsets
+
+// masks
+
+//-- Pseudo SRAM
+// device ID
+#define PSRAM_VENDOR                 WB_GSI              // vendor ID
+#define PSRAM_PRODUCT                0x169edcb7          // product ID
+#define PSRAM_VMAJOR                 1                   // major revision
+#define PSRAM_VMINOR                 1                   // minor revision
 
 // register offsets
 

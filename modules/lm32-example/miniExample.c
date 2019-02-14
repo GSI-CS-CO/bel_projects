@@ -48,7 +48,7 @@
 #include "dbg.h"
 
 /* shared memory map for communication via Wishbone  */
-#include "miniExample_shared_mmap.h"
+//#include "miniExample_shared_mmap.h"
 
 /* stuff required for environment */
 extern uint32_t*       _startshared[];
