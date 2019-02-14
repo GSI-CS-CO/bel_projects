@@ -7,14 +7,18 @@
 # -- get actions from the ECA by polling
 # - milExample.c: communication with MIL device bus
 # - milSnooper.c: snoops MIL event bus
-# - 
+# - psramexample.c: bandwidth test for various types of RAMs
 #
 # Example usage:
 #   make TARGET=example
 #   ... will compile the more complex example program
 TARGET		?= miniExample
+
+
+# set PLATFPATH to the intended hardware platform 
 PLATFPATH       = ../../syn/gsi_exploder5/exploder5_csco_tr
 #PLATFPATH       = ../../syn/gsi_scu/control3
+
 PLATFMAKEFILE   = $(PLATFPATH)/Makefile
 
 PLATFORM	:= $(shell cat 	$(PLATFMAKEFILE) | grep -m1 TARGET    | cut -d'=' -f2 | sed 's/[^a-zA-Z0-9]//g')
@@ -29,7 +33,7 @@ VERSION  	= 00.00.01
 
 .DEFAULT_GOAL := fwbin
 
-#is this junk we can get rid of?
+#is this junk we can get rid off?
 #PATHPKG	= $(shell python2.7 ../../ip_cores/hdl-make/hdlmake list-mods | grep -G '^[^\#]' | grep top | grep -o '^\S*')
 #PREFIX 	?= /usr/local
 
