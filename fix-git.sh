@@ -1,4 +1,5 @@
 #! /bin/bash
+git submodule sync
 git submodule init
 git submodule update --recursive
 cd ip_cores/wrpc-sw

@@ -16,12 +16,12 @@
 [submodule "ip_cores/hdl-make"]
 	path = ip_cores/hdl-make
 	url = https://ohwr.org/project/hdl-make.git
-[submodule "ip_cores/saftlib"]
-	path = ip_cores/saftlib
-	url = https://github.com/GSI-CS-CO/saftlib.git
 [submodule "ip_cores/pci-core"]
 	path = ip_cores/pci-core
 	url = https://ohwr.org/project/pci-core.git
+[submodule "ip_cores/saftlib"]
+	path = ip_cores/saftlib
+	url = https://github.com/GSI-CS-CO/saftlib.git
 [submodule "ip_cores/mtca_mmc_firmware"]
 	path = ip_cores/mtca_mmc_firmware
 	url = https://github.com/GSI-CS-CO/mtca_mmc_firmware.git
