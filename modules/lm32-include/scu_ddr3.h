@@ -127,7 +127,7 @@ extern "C" {
  * @brief 64-bit payload base type of the smallest storing unit
  *        of the SCU- DDR3- RAM.
  */
-typedef union
+typedef volatile union
 {
    uint64_t  d64;
    uint32_t  ad32[sizeof(uint64_t)/sizeof(uint32_t)];

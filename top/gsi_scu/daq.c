@@ -44,7 +44,7 @@ const char* g_pNo  = "no";
 
 
 /*======================== DAQ channel functions ============================*/
-#if 0
+#if 1
 /*! ---------------------------------------------------------------------------
  * @brief Writes the given value in addressed register
  * @param pReg Start address of DAQ-macro.
@@ -149,20 +149,19 @@ unsigned int daqChannelGetDaqFifoWordsSimulate( register DAQ_CANNEL_T* pThis )
  * @note CAUTION: This function is for developing and testing purposes only and
  *                becomes compiled if the compiler-switch
  *                CONFIG_DAQ_SIMULATE_CHANNEL defined!
- * @param pThis Pointer to the channel object
- * @return Simulated fake data.
  */
-DAQ_DATA_T daqChannelPopPmFifoSimulate( register DAQ_CANNEL_T* pThis )
+static
+DAQ_DATA_T daqChannelPopFifoSimulate( register DAQ_CANNEL_T* pThis,
+                                      unsigned int remaining,
+                                      const unsigned int limit )
 {
    DAQ_DATA_T ret;
 
-   if( pThis->callCount > DAQ_FIFO_PM_HIRES_WORD_SIZE )
+   if( pThis->callCount > limit )
       return 0;
 
-   unsigned int remaining = daqChannelGetPmFifoWordsSimulate( pThis );
-
    if( remaining >= ARRAY_SIZE( pThis->simulatedDescriptor.index ) )
-      ret = pThis->callCount;
+      ret = pThis->callCount + 1;
    else
    {
       unsigned int i = ARRAY_SIZE( pThis->simulatedDescriptor.index ) - 1
@@ -171,12 +170,33 @@ DAQ_DATA_T daqChannelPopPmFifoSimulate( register DAQ_CANNEL_T* pThis )
       DBPRINT2( "DBG: i: %d ret: 0x%04x\n", i, ret );
    }
 
-   if( pThis->callCount < DAQ_FIFO_PM_HIRES_WORD_SIZE )
+   if( pThis->callCount < limit )
       pThis->callCount++;
    else
+   {
+      pThis->callCount = 0;
       pThis->simulatedDescriptor.name.wr.name.utSec++;
+   }
 
    return ret;
+}
+
+/*! ---------------------------------------------------------------------------
+ * @brief Simulates a DAQ single shot stream finalized by a fake
+ *        DAQ-descriptor. The payload becomes simulated by increasing numbers.
+ *
+ * The time stamp counter will misused as periodic counter.
+ * @note CAUTION: This function is for developing and testing purposes only and
+ *                becomes compiled if the compiler-switch
+ *                CONFIG_DAQ_SIMULATE_CHANNEL defined!
+ * @param pThis Pointer to the channel object
+ * @return Simulated fake data.
+ */
+DAQ_DATA_T daqChannelPopPmFifoSimulate( register DAQ_CANNEL_T* pThis )
+{
+   return daqChannelPopFifoSimulate( pThis,
+                                     daqChannelGetPmFifoWordsSimulate( pThis ),
+                                     DAQ_FIFO_PM_HIRES_WORD_SIZE );
 }
 
 /*! ---------------------------------------------------------------------------
@@ -192,28 +212,9 @@ DAQ_DATA_T daqChannelPopPmFifoSimulate( register DAQ_CANNEL_T* pThis )
  */
 DAQ_DATA_T daqChannelPopDaqFifoSimulate( register DAQ_CANNEL_T* pThis )
 {
-   DAQ_DATA_T ret;
-   unsigned int remaining = daqChannelGetDaqFifoWordsSimulate( pThis );
-
-   if( remaining >= ARRAY_SIZE( pThis->simulatedDescriptor.index ) )
-      ret = pThis->callCount;
-   else
-   {
-      unsigned int i = ARRAY_SIZE( pThis->simulatedDescriptor.index ) - 1
-                       - remaining;
-      ret = pThis->simulatedDescriptor.index[i];
-      DBPRINT2( "DBG: i: %d ret: 0x%04x\n", i, ret );
-   }
-
-   if( pThis->callCount < DAQ_FIFO_DAQ_WORD_SIZE )
-      pThis->callCount++;
-   else
-   {
-      pThis->callCount = 0;
-      pThis->simulatedDescriptor.name.wr.name.utSec++;
-   }
-
-   return ret;
+   return daqChannelPopFifoSimulate( pThis,
+                                     daqChannelGetDaqFifoWordsSimulate( pThis ),
+                                     DAQ_FIFO_DAQ_WORD_SIZE );
 }
 
 /*

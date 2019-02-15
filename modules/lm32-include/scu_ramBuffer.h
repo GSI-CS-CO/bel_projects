@@ -93,9 +93,10 @@ extern "C" {
  */
 typedef enum
 {
-   RAM_DAQ_UNDEFINED = 0, //!<@brief No block recognized
-   RAM_DAQ_SHORT     = 1, //!<@brief Short block
-   RAM_DAQ_LONG      = 2  //!<@brief Long block
+   RAM_DAQ_EMPTY,     //!<@brief No block present
+   RAM_DAQ_UNDEFINED, //!<@brief No block recognized
+   RAM_DAQ_SHORT,     //!<@brief Short block
+   RAM_DAQ_LONG       //!<@brief Long block
 } RAM_DAQ_BLOCK_T;
 
 #ifdef CONFIG_SCU_USE_DDR3
@@ -198,9 +199,19 @@ typedef uint32_t RAM_RING_INDEX_T;
    (sizeof(RAM_DAQ_PAYLOAD_T) / sizeof(DAQ_DATA_T))
 
 
-#define RAM_DAQ_INDEX_OFFSET_OF_CHANNEL_CONTROL \
-   (offsetof( _DAQ_DISCRIPTOR_STRUCT_T, cControl ) / sizeof(RAM_DAQ_PAYLOAD_T))
-   
+#define RAM_DAQ_INDEX_OFFSET_OF_CHANNEL_CONTROL     \
+(                                                   \
+   offsetof( _DAQ_DISCRIPTOR_STRUCT_T, cControl ) / \
+   sizeof(RAM_DAQ_PAYLOAD_T)                        \
+)
+
+#define RAM_DAQ_DAQ_WORD_OFFSET_OF_CHANNEL_CONTROL    \
+(                                                     \
+   (offsetof( _DAQ_DISCRIPTOR_STRUCT_T, cControl ) %  \
+   sizeof(RAM_DAQ_PAYLOAD_T) ) /                      \
+   sizeof( _DAQ_BF_CANNEL_MODE )                      \
+)
+
 /*!
  * @note CAUTION: Don't remove the double exclamation mark (!!) because
  *       it will be used to convert a value that is not equal to zero to one!
@@ -277,7 +288,7 @@ static inline void ramRingReset( register RAM_RING_INDEXES_T* pThis )
  * @param pThis Pointer to the ring index object
  * @return Actual number written items
  */
-RAM_RING_INDEX_T ramRingGetSize( RAM_RING_INDEXES_T* pThis );
+RAM_RING_INDEX_T ramRingGetSize( const RAM_RING_INDEXES_T* pThis );
 
 /*! ---------------------------------------------------------------------------
  * @brief Returns the remaining free items of the currently used memory
@@ -285,7 +296,7 @@ RAM_RING_INDEX_T ramRingGetSize( RAM_RING_INDEXES_T* pThis );
  * @return Number of free memory items.
  */
 static inline
-RAM_RING_INDEX_T ramRingGetRemainingCapacity( RAM_RING_INDEXES_T* pThis )
+RAM_RING_INDEX_T ramRingGetRemainingCapacity( const RAM_RING_INDEXES_T* pThis )
 {
    return pThis->capacity - ramRingGetSize( pThis );
 }

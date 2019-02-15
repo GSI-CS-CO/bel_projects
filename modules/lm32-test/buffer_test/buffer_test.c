@@ -148,6 +148,7 @@ void main( void )
    mprintf( "Words per index:  %d\n", RAM_DAQ_DATA_WORDS_PER_RAM_INDEX );
    mprintf( "Offset of channel control: %d\n", RAM_DAQ_INDEX_OFFSET_OF_CHANNEL_CONTROL );
    mprintf( "Length of channel control: %d\n", RAM_DAQ_INDEX_LENGTH_OF_CHANNEL_CONTROL );
+   mprintf( "Word offset of channel control: %d\n", RAM_DAQ_DAQ_WORD_OFFSET_OF_CHANNEL_CONTROL );
    if( ramInit( &oRam, &g_FifoAdmin ) < 0  )
    {
       mprintf( ESC_FG_RED"ERROR: Could not find DDR3 base address!\n"ESC_NORMAL );
@@ -156,8 +157,8 @@ void main( void )
 
    daqChannelReset( &daqChannel );
    daqDescriptorSetSlot( &daqChannel.simulatedDescriptor, 12 );
-   daqDescriptorSetChannel( &daqChannel.simulatedDescriptor, 0 );
-   daqDescriptorSetDaq( &daqChannel.simulatedDescriptor, true );
+   daqDescriptorSetChannel( &daqChannel.simulatedDescriptor, 4 );
+ //  daqDescriptorSetDaq( &daqChannel.simulatedDescriptor, false );
    daqDescriptorSetTriggerConditionLW( &daqChannel.simulatedDescriptor, 0xA );
    daqDescriptorSetTriggerConditionHW( &daqChannel.simulatedDescriptor, 0xB );
    daqDescriptorSetTriggerDelay( &daqChannel.simulatedDescriptor, 0xC );
@@ -167,7 +168,17 @@ void main( void )
   // readFiFo( &daqChannel, false );
    //readFiFo( &daqChannel, true );
 
-   ramPushDaqDataBlock( &oRam, &daqChannel, false );
+ //  ramPushDaqDataBlock( &oRam, &daqChannel, false );
+   ramPushDaqDataBlock( &oRam, &daqChannel, true );
+   ramPushDaqDataBlock( &oRam, &daqChannel, true );
+
+
+   ddrPrint16( &oRam.ram, 0 );
+   ddrPrint16( &oRam.ram, 1 );
+   ddrPrint16( &oRam.ram, 2 );
+   ddrPrint16( &oRam.ram, 3 );
+
+   ramRingGetTypeOfOldestBlock( &oRam );
 
    mprintf( "End...\n" );
 }
