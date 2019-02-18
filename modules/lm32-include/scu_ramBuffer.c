@@ -105,10 +105,10 @@ void ramRingAddToReadIndex( RAM_RING_INDEXES_T* pThis, RAM_RING_INDEX_T toAdd )
 /*! ---------------------------------------------------------------------------
  * @see scu_ramBuffer.h
  */
-int ramInit( register RAM_SCU_T* pThis, RAM_RING_INDEXES_T* pRingIndexes )
+int ramInit( register RAM_SCU_T* pThis, RAM_RING_SHARED_OBJECT_T* pSharedObj )
 {
-   pThis->pRingIndexes = pRingIndexes;
-   ramRingReset( pRingIndexes );
+   pThis->pSharedObj = pSharedObj;
+   ramRingReset( &pSharedObj->ringIndexes );
 #ifdef CONFIG_SCU_USE_DDR3
    return ddr3init( &pThis->ram );
 #endif
@@ -142,19 +142,20 @@ void ramRreadItem( register RAM_SCU_T* pThis, const RAM_RING_INDEX_T index,
  */
 RAM_DAQ_BLOCK_T ramRingGetTypeOfOldestBlock( register RAM_SCU_T* pThis )
 {
-   unsigned int size = ramRingGetSize( pThis->pRingIndexes );
+   unsigned int size = ramRingGetSize( &pThis->pSharedObj->ringIndexes );
    if( size == 0 )
       return RAM_DAQ_EMPTY;
 
    if( (size % RAM_DAQ_SHORT_BLOCK_LEN) != 0 )
    {
-      DBPRINT1( "DBG: ERROR: RAM content not dividable by "
-                "minimum block length!\n" )
+      DBPRINT1( ESC_FG_RED ESC_BOLD
+                "DBG: ERROR: RAM content not dividable by "
+                "minimum block length!\n"ESC_NORMAL );
       return RAM_DAQ_UNDEFINED;
    }
 
    RAM_DAQ_PAYLOAD_T  item;
-   RAM_RING_INDEXES_T indexes = *pThis->pRingIndexes;
+   RAM_RING_INDEXES_T indexes = pThis->pSharedObj->ringIndexes;
    ramRingAddToReadIndex( &indexes, RAM_DAQ_INDEX_OFFSET_OF_CHANNEL_CONTROL );
    ramRreadItem( pThis, ramRingGeReadIndex( &indexes ), &item );
 
@@ -165,7 +166,9 @@ RAM_DAQ_BLOCK_T ramRingGetTypeOfOldestBlock( register RAM_SCU_T* pThis )
       if( RAM_EXTRACT_CHANNEL_MODE( item ).hiResMode ||
           RAM_EXTRACT_CHANNEL_MODE( item ).pmMode )
       {
-         DBPRINT1( "DBG: ERROR: RAM daq-Mode: Too much modes!\n" );
+         DBPRINT1( ESC_FG_RED ESC_BOLD
+                   "DBG: ERROR: RAM daq-Mode: Too much modes!\n"
+                   ESC_NORMAL);
          return RAM_DAQ_UNDEFINED;
       }
       return RAM_DAQ_SHORT;
@@ -176,7 +179,9 @@ RAM_DAQ_BLOCK_T ramRingGetTypeOfOldestBlock( register RAM_SCU_T* pThis )
       if( RAM_EXTRACT_CHANNEL_MODE( item ).daqMode ||
           RAM_EXTRACT_CHANNEL_MODE( item ).pmMode )
       {
-         DBPRINT1( "DBG: ERROR: RAM hiRes-mode: Too much modes!\n" );
+         DBPRINT1( ESC_FG_RED ESC_BOLD
+                   "DBG: ERROR: RAM hiRes-mode: Too much modes!\n"
+                   ESC_NORMAL );
          return RAM_DAQ_UNDEFINED;
       }
       return RAM_DAQ_LONG;
@@ -187,13 +192,17 @@ RAM_DAQ_BLOCK_T ramRingGetTypeOfOldestBlock( register RAM_SCU_T* pThis )
       if( RAM_EXTRACT_CHANNEL_MODE( item ).daqMode ||
           RAM_EXTRACT_CHANNEL_MODE( item ).hiResMode )
       {
-         DBPRINT1( "DBG: ERROR: RAM PM mode: Too much modes!\n" );
+         DBPRINT1( ESC_FG_RED ESC_BOLD
+                   "DBG: ERROR: RAM PM mode: Too much modes!\n"
+                   ESC_NORMAL );
          return RAM_DAQ_UNDEFINED;
       }
       return RAM_DAQ_LONG;
    }
 
-   DBPRINT1( "DBG: ERROR: RAM: No DAQ channel mode set!\n" );
+   DBPRINT1( ESC_FG_RED ESC_BOLD
+             "DBG: ERROR: RAM: No DAQ channel mode set!\n"
+             ESC_NORMAL );
    return RAM_DAQ_UNDEFINED;
 }
 
@@ -208,7 +217,7 @@ static int ramRemoveOldestBlock( register RAM_SCU_T* pThis )
    {
       case RAM_DAQ_UNDEFINED:
       {
-         ramRingReset( pThis->pRingIndexes );
+         ramRingReset( &pThis->pSharedObj->ringIndexes );
          return -1;
       }
       case RAM_DAQ_EMPTY:
@@ -217,12 +226,14 @@ static int ramRemoveOldestBlock( register RAM_SCU_T* pThis )
       }
       case RAM_DAQ_SHORT:
       {
-         ramRingAddToReadIndex( pThis->pRingIndexes, RAM_DAQ_SHORT_BLOCK_LEN );
+         ramRingAddToReadIndex( &pThis->pSharedObj->ringIndexes,
+                                RAM_DAQ_SHORT_BLOCK_LEN );
          return 1;
       }
       case RAM_DAQ_LONG:
       {
-         ramRingAddToReadIndex( pThis->pRingIndexes, RAM_DAQ_LONG_BLOCK_LEN );
+         ramRingAddToReadIndex( &pThis->pSharedObj->ringIndexes,
+                                RAM_DAQ_LONG_BLOCK_LEN );
          break;
       }
    }
@@ -235,7 +246,7 @@ static int ramRemoveOldestBlock( register RAM_SCU_T* pThis )
 inline static
 bool ramDoesBlockFit( register RAM_SCU_T* pThis, const bool isShort )
 {
-   return (ramRingGetRemainingCapacity( pThis->pRingIndexes ) >=
+   return (ramRingGetRemainingCapacity( &pThis->pSharedObj->ringIndexes ) >=
            (isShort? RAM_DAQ_SHORT_BLOCK_LEN : RAM_DAQ_LONG_BLOCK_LEN));
 }
 
@@ -249,7 +260,10 @@ inline static
 void ramMakeSpaceIfNecessary( register RAM_SCU_T* pThis, const bool isShort )
 {
    while( !ramDoesBlockFit( pThis, isShort ) )
+   {
+      DBPRINT1( "DBG Removing block!\n" );
       ramRemoveOldestBlock( pThis );
+   }
 }
 
 /*! ---------------------------------------------------------------------------
@@ -301,9 +315,9 @@ void ramWriteDaqData( register RAM_SCU_T* pThis, DAQ_CANNEL_T* pDaqChannel,
    RAM_RING_INDEXES_T* poIndexes;
 
    RAM_DAQ_PAYLOAD_T ramItem;
-   DAQ_DATA_T firstData[RAM_DAQ_DESCRIPTOR_REST];
+   DAQ_DATA_T        firstData[RAM_DAQ_DESCRIPTOR_COMPLETION];
 
-   oDescriptorIndexes = *pThis->pRingIndexes;
+   oDescriptorIndexes = pThis->pSharedObj->ringIndexes;
    oDataIndexes       = oDescriptorIndexes;
    poIndexes          = &oDataIndexes;
 
@@ -312,7 +326,7 @@ void ramWriteDaqData( register RAM_SCU_T* pThis, DAQ_CANNEL_T* pDaqChannel,
     */
    ramRingAddToWriteIndex( poIndexes, RAM_DAQ_DATA_START_OFFSET );
 
-   ramRingDbgPrintIndexes( pThis->pRingIndexes, "Origin indexes:" );
+   ramRingDbgPrintIndexes( &pThis->pSharedObj->ringIndexes, "Origin indexes:" );
    ramRingDbgPrintIndexes( poIndexes, "Data indexes:" );
 
 
@@ -422,8 +436,9 @@ void ramWriteDaqData( register RAM_SCU_T* pThis, DAQ_CANNEL_T* pDaqChannel,
    { /*
       * Yes, making the new received data block in ring buffer valid.
       */
-      pThis->pRingIndexes->end = oDataIndexes.end;
+      pThis->pSharedObj->ringIndexes.end = oDataIndexes.end;
    }
+#ifdef DEBUGLEVEL
    else
    {
       DBPRINT1( ESC_BOLD ESC_FG_RED
@@ -434,10 +449,11 @@ void ramWriteDaqData( register RAM_SCU_T* pThis, DAQ_CANNEL_T* pDaqChannel,
                 dataWordCounter,
                 expectedWords );
    }
-
-   ramRingDbgPrintIndexes( pThis->pRingIndexes, "Final indexes" );
+#endif
+   ramRingDbgPrintIndexes( &pThis->pSharedObj->ringIndexes, "Final indexes" );
 }
 
+#if 1
 
 /*! ---------------------------------------------------------------------------
  * @see scu_ramBuffer.h
@@ -462,11 +478,11 @@ int ramPushDaqDataBlock( register RAM_SCU_T* pThis, DAQ_CANNEL_T* pDaqChannel,
       daqDescriptorSetDaq( &pDaqChannel->simulatedDescriptor, false );
    }
 #endif
-   //TODO
+   ramMakeSpaceIfNecessary( pThis, isShort );
    ramWriteDaqData( pThis, pDaqChannel, isShort );
    return 0;
 }
-
+#endif
 #endif /* if defined(__lm32__) || defined(__DOXYGEN__) */
 
 /*================================== EOF ====================================*/

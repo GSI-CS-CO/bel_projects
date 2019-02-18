@@ -79,13 +79,18 @@ extern "C" {
 )
 
 /*!
- * @brief Size in DAQ_DATA_T to make the size of device-descriptor
- *        dividable by sizeof(RAM_DAQ_PAYLOAD_T)
+ * @brief Calculates any missing DAQ data words of type DAQ_DATA_T to
+ *        make the length of the DAQ device descriptor dividable
+ *        by the length of RAM_DAQ_PAYLOAD_T.
+ * @note CAUTION: Don't remove the double exclamation mark (!!) because
+ *       it will be used to convert a value that is not equal to zero to one!
  */
-#define RAM_DAQ_DESCRIPTOR_REST                              \
-(                                                            \
-   (sizeof(DAQ_DESCRIPTOR_T) % sizeof(RAM_DAQ_PAYLOAD_T)) /  \
-   sizeof(DAQ_DATA_T)                                        \
+#define RAM_DAQ_DESCRIPTOR_COMPLETION                          \
+(                                                              \
+   ((sizeof(RAM_DAQ_PAYLOAD_T) -                               \
+   (sizeof(DAQ_DESCRIPTOR_T) % sizeof(RAM_DAQ_PAYLOAD_T))) *   \
+    !!(sizeof(DAQ_DESCRIPTOR_T) % sizeof(RAM_DAQ_PAYLOAD_T)))  \
+    / sizeof(DAQ_DATA_T)                                       \
 )
 
 /*!
@@ -224,8 +229,6 @@ typedef uint32_t RAM_RING_INDEX_T;
 
 /*! ---------------------------------------------------------------------------
  * @brief Data type of ring buffer indexes.
- * @note The implementation has to be within the shared memory!
- *       They must be visible in the LM32 and in the Linux side.
  */
 typedef struct PACKED_SIZE
 {
@@ -249,6 +252,29 @@ STATIC_ASSERT( sizeof(RAM_RING_INDEXES_T) == 4 * sizeof(RAM_RING_INDEX_T));
    .end      = 0                      \
 }
 
+/*! ---------------------------------------------------------------------------
+ * @brief Data type for data residing in the shared memory for the
+ *        communication between uC server and Linux client.
+ * @note The implementation has to be within the shared memory!
+ *       They must be visible in the LM32 and in the Linux side.
+ */
+typedef struct PACKED_SIZE
+{
+   /*
+    * At the moment it's one member only.
+    */
+   RAM_RING_INDEXES_T ringIndexes;
+} RAM_RING_SHARED_OBJECT_T;
+
+/*!
+ * @brief Initializer of the shared object for the communication between
+ *        server and Linux client.
+ */
+#define RAM_RING_SHARED_OBJECT_INITIALIZER      \
+{                                               \
+   .ringIndexes = RAM_RING_INDEXES_INITIALIZER  \
+}
+
 /*!
  * @brief Generalized object type for SCU RAM buffer
  */
@@ -268,7 +294,7 @@ typedef struct
     *       memory. \n
     *       Therefore its a pointer in this object.
     */
-   RAM_RING_INDEXES_T* volatile pRingIndexes;
+   RAM_RING_SHARED_OBJECT_T* volatile pSharedObj;
 } RAM_SCU_T;
 
 /*! ---------------------------------------------------------------------------
@@ -345,11 +371,11 @@ RAM_RING_INDEX_T ramRingGeReadIndex( register RAM_RING_INDEXES_T* pThis )
 /*! ---------------------------------------------------------------------------
  * @brief Initializing SCU RAM buffer ready to use.
  * @param pThis Pointer to the RAM object.
- * @param pRingIndexes Pointer to the fifo administration in shared memory.
+ * @param pSharedObj Pointer to the fifo administration in shared memory.
  * @retval 0 Initializing was successful
  * @retval <0 Error
  */
-int ramInit( register RAM_SCU_T* pThis, RAM_RING_INDEXES_T* pRingIndexes );
+int ramInit( register RAM_SCU_T* pThis, RAM_RING_SHARED_OBJECT_T* pSharedObj );
 
 #if defined(__lm32__) || defined(__DOXYGEN__)
 

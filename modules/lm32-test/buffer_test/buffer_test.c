@@ -36,7 +36,7 @@
 
 #if 1
 
-RAM_RING_INDEXES_T g_FifoAdmin = RAM_RING_INDEXES_INITIALIZER;
+RAM_RING_SHARED_OBJECT_T g_FifoAdmin = RAM_RING_SHARED_OBJECT_INITIALIZER;
 
 #endif
 
@@ -62,6 +62,16 @@ void ddrPrint16( DDR3_T* pthis, unsigned int index )
    ddr3read64( pthis, &toRead, index );
    mprintf( "DDR-Index: %d\n", index );
    printPayload16( &toRead );
+}
+
+void ramPrintFirst( RAM_SCU_T* pRam, unsigned int n )
+{
+   RAM_RING_INDEXES_T oIndexes = pRam->pSharedObj->ringIndexes;
+   while( n-- )
+   {
+      ddrPrint16( &pRam->ram, ramRingGeReadIndex( &oIndexes ));
+      ramRingAddToReadIndex( &oIndexes, 1 );
+   }
 }
 
 #ifndef CONFIG_DDR3_NO_BURST_FUNCTIONS
@@ -139,7 +149,7 @@ void main( void )
    gotoxy( 0, 0 );
    clrscr();
    mprintf( ESC_FG_MAGNETA"Ring-buffer test\n"ESC_NORMAL );
-   mprintf( "Offset: %d complement %d\n", RAM_DAQ_DATA_START_OFFSET, RAM_DAQ_DESCRIPTOR_REST );
+   mprintf( "Offset: %d complement %d\n", RAM_DAQ_DATA_START_OFFSET, RAM_DAQ_DESCRIPTOR_COMPLETION );
    mprintf( "Long  block:      %d\n", RAM_DAQ_LONG_BLOCK_LEN );
    mprintf( "Long block rest:  %d\n", RAM_DAQ_LONG_BLOCK_REST );
    mprintf( "Short block:      %d\n", RAM_DAQ_SHORT_BLOCK_LEN );
@@ -149,16 +159,16 @@ void main( void )
    mprintf( "Offset of channel control: %d\n", RAM_DAQ_INDEX_OFFSET_OF_CHANNEL_CONTROL );
    mprintf( "Length of channel control: %d\n", RAM_DAQ_INDEX_LENGTH_OF_CHANNEL_CONTROL );
    mprintf( "Word offset of channel control: %d\n", RAM_DAQ_DAQ_WORD_OFFSET_OF_CHANNEL_CONTROL );
+//   return;
    if( ramInit( &oRam, &g_FifoAdmin ) < 0  )
    {
       mprintf( ESC_FG_RED"ERROR: Could not find DDR3 base address!\n"ESC_NORMAL );
       return;
    }
-
+#if 1
    daqChannelReset( &daqChannel );
    daqDescriptorSetSlot( &daqChannel.simulatedDescriptor, 12 );
    daqDescriptorSetChannel( &daqChannel.simulatedDescriptor, 4 );
- //  daqDescriptorSetDaq( &daqChannel.simulatedDescriptor, false );
    daqDescriptorSetTriggerConditionLW( &daqChannel.simulatedDescriptor, 0xA );
    daqDescriptorSetTriggerConditionHW( &daqChannel.simulatedDescriptor, 0xB );
    daqDescriptorSetTriggerDelay( &daqChannel.simulatedDescriptor, 0xC );
@@ -168,18 +178,29 @@ void main( void )
   // readFiFo( &daqChannel, false );
    //readFiFo( &daqChannel, true );
 
- //  ramPushDaqDataBlock( &oRam, &daqChannel, false );
+   g_FifoAdmin.ringIndexes.capacity = 384 + 10;
+   g_FifoAdmin.ringIndexes.offset = 1000;
+
+#if 0
+   ramPushDaqDataBlock( &oRam, &daqChannel, false );
    ramPushDaqDataBlock( &oRam, &daqChannel, true );
    ramPushDaqDataBlock( &oRam, &daqChannel, true );
+   ramPushDaqDataBlock( &oRam, &daqChannel, true );
+   ramPushDaqDataBlock( &oRam, &daqChannel, false );
+   //ramPushDaqDataBlock( &oRam, &daqChannel, false );
+#endif
+   for( int i = 0; i < 20; i++ )
+      ramPushDaqDataBlock( &oRam, &daqChannel, (i % 2) == 0 );
 
 
-   ddrPrint16( &oRam.ram, 0 );
-   ddrPrint16( &oRam.ram, 1 );
-   ddrPrint16( &oRam.ram, 2 );
-   ddrPrint16( &oRam.ram, 3 );
+//   ddrPrint16( &oRam.ram, ramRingGeReadIndex( &oRam.pSharedObj->ringIndexes ));
+//   ddrPrint16( &oRam.ram, 1 );
+//   ddrPrint16( &oRam.ram, 2 );
+//   ddrPrint16( &ramPrintFirst.ram, 3 );
 
-   ramRingGetTypeOfOldestBlock( &oRam );
-
+   ramPrintFirst( &oRam, 4 );
+   //ramRingGetTypeOfOldestBlock( &oRam );
+#endif
    mprintf( "End...\n" );
 }
 

@@ -296,7 +296,6 @@ typedef struct
                                       //!  concerning interrupt routine a bit.
                                       //! @see DAQ_INT_PENDING_T
    DAQ_CHANNEL_BF_PROPERTY_T properties; //!<@see DAQ_CHANNEL_PROPERTY_T
-   void* p; //TODO pointer ti FoFo
 #ifdef CONFIG_DAQ_SIMULATE_CHANNEL
    uint16_t          callCount;   //!<@brief For simulation purposes only!
    DAQ_DESCRIPTOR_T  simulatedDescriptor; //!<@brief For simulation purposes only!
