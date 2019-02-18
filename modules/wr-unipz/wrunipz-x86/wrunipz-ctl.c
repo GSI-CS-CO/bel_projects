@@ -109,40 +109,49 @@ static void help(void) {
   fprintf(stderr, "  -c                  display configuration of WR-UNIPZ\n");
   fprintf(stderr, "  -e                  display version\n");
   fprintf(stderr, "  -i                  display information on WR-UNIPZ\n");
-  fprintf(stderr, "  -s<n>               snoop ... for information continuously\n");
-  fprintf(stderr, "                      0: print all messages (default)\n");
-  fprintf(stderr, "                      1: as 0, once per second\n");
+  fprintf(stderr, "  -s<n>               snoop for information continuously\n");
+  fprintf(stderr, "                      0: print info every second (default)\n");
+  fprintf(stderr, "                      1: print every 10 seconds\n");
   fprintf(stderr, "                      2: as 1, inform in case of status or state changes\n");
   fprintf(stderr, "                      3: as 2, inform in case of state changes\n");
   fprintf(stderr, "\n");
   fprintf(stderr, "  commands:\n");
   fprintf(stderr, "  ---------\n");
-  fprintf(stderr, "  configure           	  requests state change from IDLE or CONFIGURED -> CONFIGURED\n");
-  fprintf(stderr, "  startop             	  requests state change from CONFIGURED -> OPREADY\n");
-  fprintf(stderr, "  stopop              	  requests state change from OPREADY -> STOPPING -> CONFIGURED\n");
-  fprintf(stderr, "  recover             	  tries to recover from state ERROR and transit to state IDLE\n");
-  fprintf(stderr, "  idle                	  requests state change to IDLE\n");
+  fprintf(stderr, "  configure                      requests state change from IDLE or CONFIGURED -> CONFIGURED\n");
+  fprintf(stderr, "  startop                        requests state change from CONFIGURED -> OPREADY\n");
+  fprintf(stderr, "  stopop                         requests state change from OPREADY -> STOPPING -> CONFIGURED\n");
+  fprintf(stderr, "  recover                        tries to recover from state ERROR and transit to state IDLE\n");
+  fprintf(stderr, "  idle                           requests state change to IDLE\n");
   fprintf(stderr, "\n");
-  fprintf(stderr, "  test    <offset> <vacc> <pz> loads dummy table with starting at <offset> (us) for virt acc <vacc> to pulszentrale <pz> 0..6\n");
-  fprintf(stderr, "  testfull<offset>             loads dummy tables with starting at <offset> (us) for ALL virt accs (except 0xf) and all PZs\n");
-  fprintf(stderr, "  ftest     <file> <vacc> <pz> loads table from file for virt acc <vacc> to pulszentrale <pz> 0..6 from <file>\n");
-  fprintf(stderr, "  ftestfull <file>             loads table from file for ALL virt accs and all PZs from <file>\n");
-  fprintf(stderr, "  cleartables                  clears all event tables of all PZs\n");
-  fprintf(stderr, "  kill                         kills possibly ongoing transactions\n");  
+  fprintf(stderr, "  test      <offset> <vacc> <pz> loads dummy table with starting at <offset> (us) for virt acc <vacc> to pulszentrale <pz> 0..6\n");
+  fprintf(stderr, "  testfull  <offset>             loads dummy tables with starting at <offset> (us) for ALL virt accs (except 0xf) and all PZs\n");
+  fprintf(stderr, "  ftest     <file> <vacc> <pz>   loads table from file for virt acc <vacc> to pulszentrale <pz> 0..6 from <file>\n");
+  fprintf(stderr, "  ftestfull <file>               loads table from file for ALL virt accs and all PZs from <file>\n");
+  fprintf(stderr, "  cleartables                    clears all event tables of all PZs\n");
+  fprintf(stderr, "  kill                           kills possibly ongoing transactions\n");  
   fprintf(stderr, "\n");
-  fprintf(stderr, "  diag                         shows statistics and detailled information\n");
-  fprintf(stderr, "  cleardiag                    clears FW statistics\n");
+  fprintf(stderr, "  diag                           shows statistics and detailled information\n");
+  fprintf(stderr, "  cleardiag                      clears FW statistics\n");
   fprintf(stderr, "\n");
   fprintf(stderr, "Use this tool to control WR-UNIPZ from the command line\n");
-  fprintf(stderr, "Example1: '%s dev/wbm0 bla bla bla\n", program);
+  //fprintf(stderr, "Example1: '%s dev/wbm0 bla bla bla\n", program);
   fprintf(stderr, "\n");
-  /*
-  fprintf(stderr, "When using option '-s<n>', the following information is displayed\n");
-  fprintf(stderr, "wr-unipz:                  TRANSFERS                |                   INJECTION                     | DIAGNOSIS  |                    INFO   \n");
-  fprintf(stderr, "wr-unipz:              n    sum(tkr)  set(get)/noBm | n(r2s/sumr2s)   sum( prep/bmrq/r2sis->mbtrig)   | DIAG margn | status         state      nchng stat   nchng\n");
-  fprintf(stderr, "wr-unipz: TRANS 00057399,  5967( 13)ms, va 10(10)/0 | INJ 06(06/06),  964(0.146/   0/ 954 -> 9.979)ms | DG 1.453ms | 1 1 1 1 1 1, OpReady    (     0), OK (     4)\n");
-  fprintf(stderr, "          |            '      '   '         '  '  ' |      '  '  '      '     '    '    '        '    |        '   | ' ' ' ' ' '        '          '    '       ' \n");
-  fprintf(stderr, "          |            '      '   '         '  '  ' |      '  '  '      '     '    '    '        '    |        '   | ' ' ' ' ' '        '          '    '       ' - # of 'bad status' incidents\n");*/
+  fprintf(stderr, "When using option '-s<n>' or '-i', the following information is displayed\n");
+  fprintf(stderr, "wr-unipz:        cycles      virtAcc        PZ   |         DIAGNOSIS      |                 INFO           \n");
+  fprintf(stderr, "wr-unipz: STATUS      n 0....5....A....F 0.....6 |     fUni  fMsg nLate T |   state      nchng stat   nchng\n");
+  fprintf(stderr, "wr-unipz: ST 0054834398 0010010111000011 1111111 |DG 49.972 02335 00000 0 | OpReady    (     0), status 0x00000001 (     0)\n");
+  fprintf(stderr, "                      '                '       ' |        '     '     ' ' |       '          '                   '       ' \n");
+  fprintf(stderr, "                      '                '       ' |        '     '     ' ' |       '          '                   '       '- # of 'bad status' incidents\n");
+  fprintf(stderr, "                      '                '       ' |        '     '     ' ' |       '          '                   '- status value ('1' is OK)\n");
+  fprintf(stderr, "                      '                '       ' |        '     '     ' ' |       '          '- # of state changes\n");
+  fprintf(stderr, "                      '                '       ' |        '     '     ' ' |       '- state\n");
+  fprintf(stderr, "                      '                '       ' |        '     '     ' '- '1': transaction in progress\n");
+  fprintf(stderr, "                      '                '       ' |        '     '     '- # of late messages\n");
+  fprintf(stderr, "                      '                '       ' |        '     '- average message rate [Hz]\n");
+  fprintf(stderr, "                      '                '       ' |        '- average UNILAC cycle rate [Hz]\n");
+  fprintf(stderr, "                      '                '       '- '1': PZ is active\n");
+  fprintf(stderr, "                      '                '- '1': vacc is played\n");
+  fprintf(stderr, "                      '- # of UNILAC cycles\n");
   fprintf(stderr, "Report software bugs to <d.beck@gsi.de>\n");
   fprintf(stderr, "Version %s. Licensed under the LGPL v3.\n", WRUNIPZ_X86_VERSION);
 } //help
@@ -365,7 +374,7 @@ int main(int argc, char** argv) {
   uint64_t tDiag;
   uint64_t tS0;
 
-  uint32_t actCycles;                          // actual number of cycles
+  //  uint32_t actCycles;                          // actual number of cycles
   uint32_t actState = WRUNIPZ_STATE_UNKNOWN;   // actual state of gateway
   uint32_t actSumStatus;                       // actual sum status of gateway
   uint32_t sleepTime;                          // time to sleep [us]
@@ -667,9 +676,9 @@ int main(int argc, char** argv) {
   
 
   if (snoop) {
-    printf("wr-unipz: continous monitoring of gateway, loglevel = %d\n", logLevel);
+    printf("wr-unipz: continous monitoring of 'Data Master', loglevel = %d\n", logLevel);
     
-    actCycles    = 0;
+    //    actCycles    = 0;
     actState     = WRUNIPZ_STATE_UNKNOWN;
     actSumStatus = 0;
 
@@ -678,14 +687,8 @@ int main(int argc, char** argv) {
     while (1) {
       readInfo(&sumStatus, &state, &cycles, &nBadStatus, &nBadState, &tCycle, &fMessages, &confStat, &nLate, &vaccAvg, &pzAvg); // read info from lm32
 
-      switch(state) {
-      case WRUNIPZ_STATE_OPREADY :
-        if (actCycles != cycles) sleepTime = WRUNIPZ_DEFAULT_TIMEOUT * 1000 * 2;              // ongoing cycle: reduce polling rate ...
-        else                     sleepTime = WRUNIPZ_DEFAULT_TIMEOUT * 1000;                  // sleep for default timeout to catch next cycle
-        break;
-      default:
-        sleepTime = WRUNIPZ_DEFAULT_TIMEOUT * 1000;                          
-      } // switch actState
+      if (logLevel == 1) sleepTime = WRUNIPZ_DEFAULT_TIMEOUT * 100000;
+      else               sleepTime = WRUNIPZ_DEFAULT_TIMEOUT * 10000;
       
       // if required, print status change
       if  ((actState != state) && (logLevel <= WRUNIPZ_LOGLEVEL_STATE)) printFlag = 1;
@@ -693,8 +696,10 @@ int main(int argc, char** argv) {
       // determine when to print info
       printFlag = 0;
 
-      if ((actState     != state)        && (logLevel <= WRUNIPZ_LOGLEVEL_STATE))                                         {printFlag = 1; actState  = state;}
-      if ((actSumStatus != sumStatus)    && (logLevel <= WRUNIPZ_LOGLEVEL_STATUS))                                        {printFlag = 1; actSumStatus = sumStatus;}
+      if (logLevel <= 1) printFlag = 1;
+
+      if ((actState     != state)        && (logLevel <= WRUNIPZ_LOGLEVEL_STATE))   {printFlag = 1; actState  = state;}
+      if ((actSumStatus != sumStatus)    && (logLevel <= WRUNIPZ_LOGLEVEL_STATUS))  {printFlag = 1; actSumStatus = sumStatus;}
 
       if (printFlag) {
         printCycle(cycles, tCycle, fMessages, confStat, nLate, vaccAvg, pzAvg); 
