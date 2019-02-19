@@ -1,14 +1,23 @@
-MIAN_MODULE := shared.c
 
-REPOSITORY_DIR := $(shell git rev-parse --show-toplevel)
+.PHOMY: all
+all:
+	$(MAKE) -C ./lm32Make  all
+	$(MAKE) -C ./linuxMake all
 
-SHARED_SIZE     = 16
+.PHOMY: clean
+clean:
+	$(MAKE) -C ./lm32Make  clean
+	$(MAKE) -C ./linuxMake clean
 
-SOURCE += $(SCU_LIB_SRC_DIR)/shared_memory_helper.c
-SOURCE += $(SCU_LIB_SRC_DIR)/aux.c
-SOURCE += $(SCU_LIB_SRC_DIR)/irq.c
+.PHOMY: load
+load:
+	$(MAKE) -C ./lm32Make  load
+	$(MAKE) -C ./linuxMake load
 
-include $(REPOSITORY_DIR)/makefiles/makefile.scu
-#=================================== EOF ======================================
+.PHOMY: run
+run:
+	$(MAKE) -C ./linuxMake run
 
-
+.PHONY: dbg
+dbg:
+	$(MAKE) -C ./linuxMake dbg
