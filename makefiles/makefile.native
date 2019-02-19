@@ -48,5 +48,14 @@ ifndef IS_LIBRARY
 run: $(WORK_DIR) $(TARGET_DIR) $(RESULT_FILE)
 	$(BIN_FILE) $(CALL_ARGS)
 
+ifeq ($(DEBUG), 1)
+
+DEBUG_GUI ?= ddd
+
+.PHONY: dbg
+dbg: $(WORK_DIR) $(TARGET_DIR) $(RESULT_FILE)
+	$(DEBUG_GUI) $(BIN_FILE)
+endif
+
 endif
 #=================================== EOF ======================================

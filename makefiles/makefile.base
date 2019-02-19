@@ -112,8 +112,12 @@ TARGET_DIR  ?= $(DEPLOY_DIR)/result
 OBJ_FILES   := $(addprefix $(WORK_DIR)/,$(addsuffix .o,$(basename $(notdir $(_SOURCE)))))
 DEPENDFILE  = $(WORK_DIR)/$(TARGET).dep
 
-CODE_OPTIMIZATION ?= s
-CFLAGS += -O$(CODE_OPTIMIZATION)
+ifeq ($(DEBUG), 1)
+  CFLAGS = -g -O0
+else
+  CODE_OPTIMIZATION ?= s
+  CFLAGS += -O$(CODE_OPTIMIZATION)
+endif
 
 CC_ARG = $(CFLAGS) $(OPT_INCLUDE) $(OPT_DEFINES)
 CXX_ARG ?= $(CC_ARG)
