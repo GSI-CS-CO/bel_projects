@@ -50,11 +50,11 @@ run: $(WORK_DIR) $(TARGET_DIR) $(RESULT_FILE)
 
 ifeq ($(DEBUG), 1)
 
-DEBUG_GUI ?= ddd
+DEBUG_GUI ?= kdbg
 
 .PHONY: dbg
 dbg: $(WORK_DIR) $(TARGET_DIR) $(RESULT_FILE)
-	$(DEBUG_GUI) $(BIN_FILE)
+	$(DEBUG_GUI) $(BIN_FILE) -a $(CALL_ARGS)
 endif
 
 endif
