@@ -29,17 +29,33 @@
 #include <etherbone.h>
 #include <shared.h>
 #include <dbg.h>
+#include <stdbool.h>
+#include <scu_assert.h>
+
+#include <generated/shared_mmap.h>
 
 #define ATTEMPTS 3
 
 char* g_pProgramName;
 
-#define TEST_SDDRESS 0x200a0508
+
+#define SHARED_BASE_ADDRESS (0x100A0000 + INT_BASE_ADR + SHARED_OFFS)
+
+#define GET_ADDR_OF_MEMBER( type, member ) \
+   (SHARED_BASE_ADDRESS + offsetof( type, member ))
+
+#define GET_SIZE_OF_MEMBER( type, member ) \
+({\
+   type __c; \
+   sizeof( __c.member ); \
+})
 
 typedef struct
 {
    eb_socket_t socket;
    eb_device_t device;
+   eb_cycle_t  cycle;
+   bool        exit;
 } EB_HANDLE_T;
 
 IMPLEMENT_CONVERT_BYTE_ENDIAN( uint32_t )
@@ -49,6 +65,10 @@ IMPLEMENT_CONVERT_BYTE_ENDIAN( uint32_t )
 eb_status_t ebOpen( EB_HANDLE_T* pThis, char* name )
 {
    eb_status_t status;
+
+   SCU_ASSERT( name != NULL );
+
+   pThis->exit = false;
    status = eb_socket_open( EB_ABI_CODE, 0, EB_DATAX | EB_ADDRX,
                             &pThis->socket );
    if( status != EB_OK )
@@ -78,6 +98,7 @@ eb_status_t ebOpen( EB_HANDLE_T* pThis, char* name )
 eb_status_t ebClose( EB_HANDLE_T* pThis )
 {
   eb_status_t status;
+
   if( (status = eb_device_close(pThis->device)) != EB_OK)
   {
      fprintf( stderr, ESC_FG_RED ESC_BOLD
@@ -95,20 +116,26 @@ eb_status_t ebClose( EB_HANDLE_T* pThis )
   return EB_OK;
 }
 
+/*! ---------------------------------------------------------------------------
+ */
 int fdcb(eb_user_data_t pUser, eb_descriptor_t des, uint8_t mode)
 {
    printf( "Descriptor: %d, mode 0x%02x\n", des, mode );
    return 0;
 }
 
+/*! ---------------------------------------------------------------------------
+ */
 void cycleCb( eb_user_data_t user, eb_device_t dev, eb_operation_t op, eb_status_t status )
 {
+   ((EB_HANDLE_T*)user)->exit = true;
    if( status != EB_OK )
    {
-      printf( ESC_FG_RED ESC_BOLD"Callback function called by status: %s"ESC_NORMAL,
+      printf( ESC_FG_RED ESC_BOLD"Callback function called by status: %s\n"ESC_NORMAL,
               eb_status(status));
       return;
    }
+   printf( "data = 0x%04x\n", eb_operation_data( op ) );
 }
 
 
@@ -119,9 +146,27 @@ int main( int argc, char** ppArgv )
    printf( "Sizeof eb_data_t: %d\n", sizeof(eb_data_t) );
 
    EB_HANDLE_T ebh;
-   ebOpen( &ebh, ppArgv[1] );
+   if( ebOpen( &ebh, ppArgv[1] ) != EB_OK )
+      return 1;
    eb_socket_descriptors( ebh.socket, &ebh, fdcb );
+
+   eb_status_t status;
+   if ((status = eb_cycle_open( ebh.device, &ebh, cycleCb, &ebh.cycle)) != EB_OK)
+   {
+     fprintf(stderr, "%s: failed to create cycle: %s\n",
+             g_pProgramName, eb_status(status));
+     return 1;
+   }
+
+   eb_cycle_read( ebh.cycle, GET_ADDR_OF_MEMBER( IO_T, c ), GET_SIZE_OF_MEMBER( IO_T, c ) | EB_BIG_ENDIAN, NULL );
+
+   eb_cycle_close(ebh.cycle);
+
+   while( !ebh.exit )
+      eb_socket_run( ebh.socket, 10000 );
+
    ebClose( &ebh );
+   printf( ESC_FG_CYAN"End...\n"ESC_NORMAL );
    return 0;
 }
 
