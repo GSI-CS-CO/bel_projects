@@ -48,7 +48,7 @@
     #ifndef SCU_ASSERT_OSTREAM
       #define SCU_ASSERT_OSTREAM stderr
     #endif
-    #define __stderr, SCU_ASSERT_OSTREAM
+    #define __stderr SCU_ASSERT_OSTREAM,
     #define assertMprintf fprintf
   #endif
 #endif
