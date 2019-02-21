@@ -12,6 +12,9 @@ clean:
 .PHOMY: load
 load:
 	$(MAKE) -C ./lm32Make  load
+
+.PHONY: lload
+lload:
 	$(MAKE) -C ./linuxMake load
 
 .PHOMY: run

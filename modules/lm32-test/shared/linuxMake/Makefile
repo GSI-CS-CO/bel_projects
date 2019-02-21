@@ -2,6 +2,8 @@
 
 MIAN_MODULE := ../shared_linux.c
 
+SOURCE += $(SCU_LIB_SRC_DIR)/eb_object_transfer.c
+
 CODE_OPTIMIZATION = 2
 
 LIBS += etherbone

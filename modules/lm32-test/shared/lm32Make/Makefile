@@ -2,7 +2,7 @@ MIAN_MODULE := ../shared.c
 
 REPOSITORY_DIR := $(shell git rev-parse --show-toplevel)
 
-SHARED_SIZE     = 16
+SHARED_SIZE     = 32
 
 
 

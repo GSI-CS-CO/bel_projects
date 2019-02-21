@@ -29,7 +29,18 @@
 #include "shared_memory_helper.h"
 #include "shared.h"
 
-volatile IO_T SHARED io = { 1, 0, 4711 };
+volatile IO_T SHARED io =
+{
+   .a = 1,
+   .b = 42,
+   .c = 4711,
+   .bf =
+   {
+      .a = 1,
+      .b = 2,
+      .c = 3
+   }
+};
 
 void main( void )
 {
@@ -47,19 +58,17 @@ void main( void )
       return;
    }
 
-   mprintf( "intern: &io.a: 0x%x extern: 0x%x\n", &io.a, ((uint32_t)pCpuRamExternal) + offsetof( IO_T, a ) );
-   mprintf( "intern: &io.b: 0x%x extern: 0x%x\n", &io.b, ((uint32_t)pCpuRamExternal) + offsetof( IO_T, b ) );
-   mprintf( "intern: &io.c: 0x%x extern: 0x%x\n", &io.c, ((uint32_t)pCpuRamExternal) + offsetof( IO_T, c ) );
+   mprintf( "intern: &io.a:  0x%x extern: 0x%x\n", &io.a,  ((uint32_t)pCpuRamExternal) + offsetof( IO_T, a ) );
+   mprintf( "intern: &io.b:  0x%x extern: 0x%x\n", &io.b,  ((uint32_t)pCpuRamExternal) + offsetof( IO_T, b ) );
+   mprintf( "intern: &io.c:  0x%x extern: 0x%x\n", &io.c,  ((uint32_t)pCpuRamExternal) + offsetof( IO_T, c ) );
+   mprintf( "intern: &io.bf: 0x%x extern: 0x%x\n", &io.bf, ((uint32_t)pCpuRamExternal) + offsetof( IO_T, bf ) );
 
    while( true )
    {
       while( io.a == 0 );
-      mprintf( "io.a: 0x%08x %d\n", io.a, io.a );
-      mprintf( "io.b: 0x%08x %d\n", io.b, io.b );
-      mprintf( "io.c: 0x%08x %d\n", io.c, io.c );
+      printIO( &io );
       io.a = 0;
    }
-
 }
 
 /*================================== EOF ====================================*/
