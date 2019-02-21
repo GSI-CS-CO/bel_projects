@@ -2,6 +2,8 @@ MIAN_MODULE := pmtest.c
 
 REPOSITORY_DIR := $(shell git rev-parse --show-toplevel)
 
+TOOLCHAIN_DIR = $(INCLUDED_TOOLCHAIN_DIR)
+
 SOURCE += $(SCU_DIR)/daq.c
 SOURCE += $(SCU_DIR)/scu_bus.c
 SOURCE += $(SCU_DIR)/dow_crc.c

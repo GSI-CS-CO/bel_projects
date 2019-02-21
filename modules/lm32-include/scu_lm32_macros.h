@@ -32,6 +32,7 @@
 #include <helper_macros.h>
 
 /*! ---------------------------------------------------------------------------
+ * @ingroup HELPER_MACROS
  * @brief Modifier macro forces data variables declared by this macro in
  *        to the shared memory area.
  *

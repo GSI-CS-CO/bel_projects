@@ -27,6 +27,11 @@
 #include <stddef.h> // Necessary for the macro "offsetof()"
 #include <limits.h> // Necessary for constant "CHAR_BIT" (in the most cases always 8)
 
+/*!
+ * @defgroup HELPER_MACROS  Some helpful macro definitions
+ * @{
+ */
+
 #if defined(__SSP__) || defined(__SSP_ALL__) || defined(__SSP_STRONG__) || \
     defined(__DOXYGEN__)
 /*!
@@ -217,18 +222,33 @@
  * @param member The name of the member within the container struct.
  * @return The pointer of the container-object including this member.
  */
-#define CONTAINER_OF(ptr, type, member) ({                      \
-        const typeof( ((type *)0)->member ) *__mptr = (ptr);    \
-        (type *)( (char *)__mptr - offsetof(type, member) );})
+#define CONTAINER_OF( ptr, type, member )                  \
+({                                                         \
+   const typeof( ((type *)0)->member ) *__mptr = (ptr);    \
+   (type *)( (char *)__mptr - offsetof(type, member) );    \
+})
 
 /*!
  * @see CONTAINER_OF
  */
-#define CONTAINER_OF_ARRAY(ptr, type, mArray, index) ({            \
-        const typeof( ((type *)0)->mArray[0] ) *__mptr = (ptr);    \
-        (type *)( (char *)__mptr - (offsetof(type, mArray[0]) +    \
-        (index) * sizeof(mArray[0])));})
+#define CONTAINER_OF_ARRAY(ptr, type, mArray, index)       \
+({                                                         \
+   const typeof( ((type *)0)->mArray[0] ) *__mptr = (ptr); \
+   (type *)( (char *)__mptr - (offsetof(type, mArray[0]) + \
+      (index) * sizeof(mArray[0])));                       \
+})
 
+/*!
+ * @brief Get the byte size of a struct, union or class member.
+ * @param type Name of struct union or class.
+ * @param member Name of the concerning member variable
+ * @return Number of bytes of the member.
+ */
+#define GET_SIZE_OF_MEMBER( type, member )                 \
+({                                                         \
+   type __c;                                               \
+   sizeof( __c.member );                                   \
+})
 
 #ifdef TO_STRING_LITERAL
    #undef TO_STRING_LITERAL
@@ -329,23 +349,29 @@ template <typename TYP> TYP convertByteEndian( const TYP value )
    /*!
     * @brief Returns the smaller value of the parameters "a" or "b"
     */
-   #define min( a, b ) \
-   ({ typeof(a) _a = (a); \
+   #define min( a, b )    \
+   ({                     \
+      typeof(a) _a = (a); \
       typeof(b) _b = (b); \
-   (_a < _b)? _a : _b; })
+      (_a < _b)? _a : _b; \
+   })
 #endif
 
 #ifndef max
    /*!
     * @brief Returns the greater value of the parameters "a" or "b"
     */
-   #define max( a, b ) \
-   ({ typeof(a) _a = (a); \
+   #define max( a, b )    \
+   ({                     \
+      typeof(a) _a = (a); \
       typeof(b) _b = (b); \
-   (_a > _b)? _a : _b; })
+      (_a > _b)? _a : _b; \
+   })
 #endif
 
 #endif /* ifndef __cplusplus */
+
+/*! @} */
 
 #endif // ifndef _HELPER_MACROS_H
 //================================== EOF ======================================
