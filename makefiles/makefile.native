@@ -44,9 +44,14 @@ size: $(BIN_FILE)
 
 ifndef IS_LIBRARY
 
+ifdef LIB_DIRS
+ ADDITIONAL_LIB_PATH = $(LIB_DIRS):
+endif
+
 .PHONY: run
 run: $(WORK_DIR) $(TARGET_DIR) $(RESULT_FILE)
-	$(BIN_FILE) $(CALL_ARGS)
+	$(QUIET)(export LD_LIBRARY_PATH=$(ADDITIONAL_LIB_PATH)$(LD_LIBRARY_PATH); \
+	$(BIN_FILE) $(CALL_ARGS))
 
 ifeq ($(DEBUG), 1)
 
@@ -54,7 +59,8 @@ DEBUG_GUI ?= kdbg
 
 .PHONY: dbg
 dbg: $(WORK_DIR) $(TARGET_DIR) $(RESULT_FILE)
-	$(DEBUG_GUI) $(BIN_FILE) -a $(CALL_ARGS)
+	$(QUIET)(export LD_LIBRARY_PATH=$(ADDITIONAL_LIB_PATH)$(LD_LIBRARY_PATH); \
+	$(DEBUG_GUI) $(BIN_FILE) -a $(CALL_ARGS))
 endif
 
 endif
