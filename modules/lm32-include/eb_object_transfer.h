@@ -57,32 +57,92 @@
  * @{
  */
 
-#define SHARED_BASE_ADDRESS (0x100A0000 + INT_BASE_ADR + SHARED_OFFS)
+/*! ---------------------------------------------------------------------------
+ */
+#ifndef LM32_EB_BASE
+   #define LM32_EB_BASE 0x100A0000
+#endif
 
+/*! ---------------------------------------------------------------------------
+ */
+#define SHARED_BASE_ADDRESS (LM32_EB_BASE + INT_BASE_ADR + SHARED_OFFS)
+
+/*! ---------------------------------------------------------------------------
+ */
 #define GET_ADDR_OF_MEMBER( type, member ) \
    (SHARED_BASE_ADDRESS + offsetof( type, member ))
 
-#define EB_FOR_MEMBER( type, member ) \
-   GET_ADDR_OF_MEMBER( type, member ), GET_SIZE_OF_MEMBER( type, member ) | EB_BIG_ENDIAN
+/*! ---------------------------------------------------------------------------
+ */
+#define EB_FOR_MEMBER( type, member )                        \
+   GET_ADDR_OF_MEMBER( type, member ),                       \
+   GET_SIZE_OF_MEMBER( type, member ) | EB_BIG_ENDIAN
 
+/*! ---------------------------------------------------------------------------
+ */
+#define __EB_INIT_INFO_ITEM( name, index, memberAcess )      \
+   name[index].pData = (uint8_t*)&(memberAcess);             \
+   name[index].size  = sizeof( memberAcess )                 \
 
-#define EB_INIT_INFO_ITEM( name, memberAcess, index )  \
-{                                                      \
-   typeof( index ) _index = index;                     \
-   name[_index].pData = (uint8_t*)&(memberAcess);      \
-   name[_index].size  = sizeof( memberAcess );         \
+/*! ---------------------------------------------------------------------------
+ */
+#define EB_INIT_INFO_ITEM_STATIC( name, index, memberAcess ) \
+{                                                            \
+   STATIC_ASSERT( index >= 0  );                             \
+   STATIC_ASSERT( index < ARRAY_SIZE( name ) );              \
+   __EB_INIT_INFO_ITEM( name, index, memberAcess );          \
 }
 
-#define EB_INIT_CB_ARG( arg, infoArray )               \
+/*! ---------------------------------------------------------------------------
+ */
+#define EB_INIT_INFO_ITEM( name, index, memberAcess )  \
+{                                                      \
+   size_t _index = index;                              \
+   SCU_ASSERT( _index < ARRAY_SIZE( name ) );          \
+   __EB_INIT_INFO_ITEM( name, _index, memberAcess );   \
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+#define EB_INIT_CB_OR_ARG( arg, infoArray )            \
 {                                                      \
    (arg).aInfo   = infoArray;                          \
    (arg).infoLen = ARRAY_SIZE( infoArray );            \
    (arg).exit    = false;                              \
 }
 
+/*! ---------------------------------------------------------------------------
+ */
+#define EB_MAKE_CB_OR_ARG( arg, infoArray ) \
+   EB_CYCLE_OR_CB_ARG_T arg;                \
+   EB_INIT_CB_OR_ARG( arg, infoArray )
+
+/*! ---------------------------------------------------------------------------
+ */
+#define EB_INIT_CB_OW_ARG( arg )            \
+{                                           \
+   (arg).exit    = false;                   \
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+#define EB_MAKE_CB_OW_ARG( arg )           \
+   EB_CYCLE_OW_CB_ARG_T arg;               \
+   EB_INIT_CB_OW_ARG( arg )
+
+/*! ---------------------------------------------------------------------------
+ */
 #define EB_OJECT_MEMBER_READ( pThis, type, member )                   \
    eb_cycle_read( pThis->cycle, EB_FOR_MEMBER( type, member ), NULL )
 
+/*! ---------------------------------------------------------------------------
+ */
+#define EB_OJECT_MEMBER_WRITE( pThis, ptr, member )                   \
+   eb_cycle_write( pThis->cycle,                                      \
+                   GET_ADDR_OF_MEMBER( typeof( *ptr ), member ),      \
+                   sizeof( ptr->member ) | EB_BIG_ENDIAN,             \
+                   *((eb_data_t*)&(ptr->member)) &                    \
+                   ~(((eb_data_t)~0) << BIT_SIZEOF( ptr->member )) )
 
 #ifdef __cplusplus
 extern "C" {
@@ -93,6 +153,7 @@ typedef struct
    eb_socket_t socket;
    eb_device_t device;
    eb_cycle_t  cycle;
+   eb_status_t status;
 } EB_HANDLE_T;
 
 typedef struct
@@ -107,32 +168,94 @@ typedef struct
    eb_status_t       status;
    size_t            infoLen;
    EB_MEMBER_INFO_T* aInfo;
-} EB_CYCLE_CB_ARG_T;
+} EB_CYCLE_OR_CB_ARG_T;
 
-eb_status_t ebOpen( EB_HANDLE_T* pThis, char* name );
-
-eb_status_t ebClose( EB_HANDLE_T* pThis );
-
-void ebCycleReadIoObjectCb( eb_user_data_t user, eb_device_t dev,
-                             eb_operation_t op, eb_status_t status );
-
-static inline
-eb_status_t ebObjectCycleOpen( EB_HANDLE_T* pThis, EB_CYCLE_CB_ARG_T* pCArg )
+typedef struct
 {
-   return eb_cycle_open( pThis->device, pCArg, ebCycleReadIoObjectCb,
-                         &pThis->cycle );
+   bool        exit;
+   eb_status_t status;
+} EB_CYCLE_OW_CB_ARG_T;
+
+/*! ---------------------------------------------------------------------------
+ */
+static inline
+eb_status_t ebGetStatus( EB_HANDLE_T* pThis )
+{
+   return pThis->status;
 }
 
+/*! ---------------------------------------------------------------------------
+ */
+static inline
+const char* ebGetStatusString( EB_HANDLE_T* pThis )
+{
+   return eb_status( pThis->status );
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+eb_status_t ebOpen( EB_HANDLE_T* pThis, char* name );
+
+/*! ---------------------------------------------------------------------------
+ */
+eb_status_t ebClose( EB_HANDLE_T* pThis );
+
+/*! ---------------------------------------------------------------------------
+ */
+void __ebCycleReadIoObjectCb( eb_user_data_t user, eb_device_t dev,
+                              eb_operation_t op, eb_status_t status );
+
+/*! ---------------------------------------------------------------------------
+ */
+static inline
+eb_status_t ebObjectReadCycleOpen( EB_HANDLE_T* pThis, EB_CYCLE_OR_CB_ARG_T* pCArg )
+{
+   SCU_ASSERT( pThis != NULL );
+   SCU_ASSERT( pCArg != NULL );
+
+   pCArg->exit = false;
+   pThis->status = eb_cycle_open( pThis->device, pCArg,
+                                  __ebCycleReadIoObjectCb,
+                                  &pThis->cycle );
+   return pThis->status;
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+void __ebCycleWriteIoObjectCb( eb_user_data_t user, eb_device_t dev,
+                              eb_operation_t op, eb_status_t status );
+
+/*! ---------------------------------------------------------------------------
+ */
+static inline
+eb_status_t ebObjectWriteCycleOpen( EB_HANDLE_T* pThis, EB_CYCLE_OW_CB_ARG_T* pCArg )
+{
+   SCU_ASSERT( pThis != NULL );
+   SCU_ASSERT( pCArg != NULL );
+
+   pCArg->exit = false;
+   pThis->status = eb_cycle_open( pThis->device, pCArg,
+                                  __ebCycleWriteIoObjectCb,
+                                  &pThis->cycle );
+   return pThis->status;
+}
+
+/*! ---------------------------------------------------------------------------
+ */
 static inline
 eb_status_t ebCycleClose( EB_HANDLE_T* pThis )
 {
-   return eb_cycle_close( pThis->cycle );
+   pThis->status = eb_cycle_close( pThis->cycle );
+   return pThis->status;
 }
 
+/*! ---------------------------------------------------------------------------
+ */
 static inline
 eb_status_t ebSocketRun( EB_HANDLE_T* pThis )
 {
-   return eb_socket_run( pThis->socket, 10000 );
+   pThis->status = eb_socket_run( pThis->socket, 10000 );
+   return pThis->status;
 }
 
 #ifdef __cplusplus

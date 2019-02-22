@@ -38,32 +38,30 @@
  */
 eb_status_t ebOpen( EB_HANDLE_T* pThis, char* name )
 {
-   eb_status_t status;
-
    SCU_ASSERT( name != NULL );
+   SCU_ASSERT( strlen( name ) > 0 );
 
-
-   status = eb_socket_open( EB_ABI_CODE, 0, EB_DATAX | EB_ADDRX,
+   pThis->status = eb_socket_open( EB_ABI_CODE, 0, EB_DATAX | EB_ADDRX,
                             &pThis->socket );
-   if( status != EB_OK )
+   if( pThis->status != EB_OK )
    {
       fprintf( stderr, ESC_FG_RED ESC_BOLD
                "Error: eb_socket_open \"%s\" returns %s\n"ESC_NORMAL,
-               name, eb_status( status ) );
-      return status;
+               name, ebGetStatusString( pThis ) );
+      return pThis->status;
    }
 
-   status = eb_device_open( pThis->socket, name, EB_DATAX | EB_ADDRX, ATTEMPTS,
+   pThis->status = eb_device_open( pThis->socket, name, EB_DATAX | EB_ADDRX, ATTEMPTS,
                             &pThis->device );
-   if( status != EB_OK )
+   if( pThis->status != EB_OK )
    {
       fprintf( stderr, ESC_FG_RED ESC_BOLD
               "Error: eb_device_open \"%s\" returns %s\n"ESC_NORMAL,
-               name, eb_status( status ));
+               name, ebGetStatusString( pThis ));
       eb_socket_close( pThis->socket );
-      return status;
    }
-   return EB_OK;
+
+   return pThis->status;
 }
 
 
@@ -71,31 +69,30 @@ eb_status_t ebOpen( EB_HANDLE_T* pThis, char* name )
  */
 eb_status_t ebClose( EB_HANDLE_T* pThis )
 {
-  eb_status_t status;
-
-  if( (status = eb_device_close(pThis->device)) != EB_OK)
+  if( (pThis->status = eb_device_close(pThis->device)) != EB_OK)
   {
      fprintf( stderr, ESC_FG_RED ESC_BOLD
                       "Error: eb_device_close returns %s\n"ESC_NORMAL,
-                      eb_status(status));
-     return status;
+                      ebGetStatusString( pThis ));
+     return pThis->status;
   }
 
-  if( (status = eb_socket_close(pThis->socket)) != EB_OK)
+  if( (pThis->status = eb_socket_close(pThis->socket)) != EB_OK)
   {
      fprintf( stderr, ESC_FG_RED ESC_BOLD"Error: eb_socket_close returns %s\n"
-             ESC_NORMAL, eb_status(status));
+             ESC_NORMAL, ebGetStatusString( pThis ));
   }
-  return status;
+  return pThis->status;
 }
 
 /*! --------------------------------------------------------------------------
  */
-void ebCycleReadIoObjectCb( eb_user_data_t user, eb_device_t dev,
-                            eb_operation_t op, eb_status_t status )
+void __ebCycleReadIoObjectCb( eb_user_data_t user, eb_device_t dev,
+                              eb_operation_t op, eb_status_t status )
 {
-   ((EB_CYCLE_CB_ARG_T*)user)->exit   = true;
-   ((EB_CYCLE_CB_ARG_T*)user)->status = status;
+   ((EB_CYCLE_OR_CB_ARG_T*)user)->exit   = true;
+   ((EB_CYCLE_OR_CB_ARG_T*)user)->status = status;
+
    if( status != EB_OK )
    {
       fprintf( stderr, ESC_FG_RED ESC_BOLD
@@ -105,14 +102,49 @@ void ebCycleReadIoObjectCb( eb_user_data_t user, eb_device_t dev,
    }
 
    size_t i = 0;
-   while( (op != EB_NULL) && (i < ((EB_CYCLE_CB_ARG_T*)user)->infoLen) )
+   while( (op != EB_NULL) && (i < ((EB_CYCLE_OR_CB_ARG_T*)user)->infoLen) )
    {
       size_t size = eb_operation_format(op) & EB_DATAX;
-      SCU_ASSERT( ((EB_CYCLE_CB_ARG_T*)user)->aInfo[i].size == size );
+      SCU_ASSERT( ((EB_CYCLE_OR_CB_ARG_T*)user)->aInfo[i].size == size );
       eb_data_t data = eb_operation_data( op );
-      memcpy( ((EB_CYCLE_CB_ARG_T*)user)->aInfo[i++].pData, &data, size );
+      memcpy( ((EB_CYCLE_OR_CB_ARG_T*)user)->aInfo[i++].pData, &data, size );
       op = eb_operation_next( op );
    }
 }
+
+/*! ---------------------------------------------------------------------------
+ */
+void __ebCycleWriteIoObjectCb( eb_user_data_t user, eb_device_t dev,
+                              eb_operation_t op, eb_status_t status )
+{
+   ((EB_CYCLE_OW_CB_ARG_T*)user)->exit   = true;
+   ((EB_CYCLE_OW_CB_ARG_T*)user)->status = status;
+
+   if( status != EB_OK )
+   {
+      fprintf( stderr, ESC_FG_RED ESC_BOLD
+               "ERROR: Callback function %s called by sratus : %s\n"ESC_NORMAL,
+               __func__, eb_status( status ));
+      return;
+   }
+
+   while( op != EB_NULL )
+   {
+      if( eb_operation_had_error( op ) )
+      {
+         fprintf( stderr, ESC_FG_RED ESC_BOLD
+                  "ERROR: Wishbone segfault %s %s %s bits to address 0x%"
+                  EB_ADDR_FMT"\n"ESC_NORMAL,
+                  eb_operation_is_read(op)?"reading":"writing",
+                  eb_width_data(eb_operation_format(op)),
+                  eb_format_endian(eb_operation_format(op)),
+                  eb_operation_address(op));
+         ((EB_CYCLE_OW_CB_ARG_T*)user)->status = EB_SEGFAULT;
+      }
+      op = eb_operation_next( op );
+   }
+
+}
+
 
 /*================================== EOF ====================================*/

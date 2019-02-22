@@ -39,6 +39,11 @@ volatile IO_T SHARED io =
       .a = 1,
       .b = 2,
       .c = 3
+   },
+   .sb =
+   {
+      .a = 0xAA,
+      .b = 0x55,
    }
 };
 

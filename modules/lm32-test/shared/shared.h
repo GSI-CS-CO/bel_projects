@@ -44,14 +44,20 @@ STATIC_ASSERT( sizeof( BF_T ) == sizeof(uint16_t) );
 
 typedef struct PACKED_SIZE
 {
- //  uint16_t x;
+   uint32_t a;
+   uint32_t b;
+} SUB_T;
+STATIC_ASSERT( sizeof( SUB_T ) == 2 * sizeof(uint32_t) );
+
+typedef struct PACKED_SIZE
+{
    uint16_t a;
    uint16_t b;
    uint16_t c;
    BF_T     bf;
-   uint32_t d;
+   SUB_T    sb;
 } IO_T;
-//STATIC_ASSERT( sizeof(IO_T) == (sizeof(uint16_t) + 3 * sizeof(uint32_t) + sizeof(BF_T)));
+STATIC_ASSERT( sizeof(IO_T) == (3 * sizeof(uint16_t) + sizeof(BF_T) + sizeof(SUB_T)) );
 STATIC_ASSERT( sizeof(IO_T) <= SHARED_SIZE );
 
 #ifndef __lm32__
@@ -59,14 +65,23 @@ STATIC_ASSERT( sizeof(IO_T) <= SHARED_SIZE );
 #endif
 
 static inline
-void printIO( IO_T* pIo )
+void printIO( volatile IO_T* pIo )
 {
-   mprintf( "IO_T::a:       0x%04x, %d\n", pIo->a, pIo->a );
-   mprintf( "IO_T::b:       0x%04x, %d\n", pIo->b, pIo->b );
-   mprintf( "IO_T::c:       0x%04x, %d\n", pIo->c, pIo->c );
-   mprintf( "IO_T::BF_T::a: 0x%02x, %d\n", pIo->bf.a, pIo->bf.a );
-   mprintf( "IO_T::BF_T::b: 0x%02x, %d\n", pIo->bf.b, pIo->bf.b );
-   mprintf( "IO_T::BF_T::c: 0x%02x, %d\n", pIo->bf.c, pIo->bf.c );
+   mprintf( "{\n" );
+   mprintf( "   .a = 0x%04x, %d\n", pIo->a, pIo->a );
+   mprintf( "   .b = 0x%04x, %d\n", pIo->b, pIo->b );
+   mprintf( "   .c = 0x%04x, %d\n", pIo->c, pIo->c );
+   mprintf( "   .bf =\n" );
+   mprintf( "   {\n" );
+   mprintf( "      .a = 0x%02x, %d\n", pIo->bf.a, pIo->bf.a );
+   mprintf( "      .b = 0x%02x, %d\n", pIo->bf.b, pIo->bf.b );
+   mprintf( "      .c = 0x%02x, %d\n", pIo->bf.c, pIo->bf.c );
+   mprintf( "   }\n" );
+   mprintf( "   .sb =\n" );
+   mprintf( "   {\n" );
+   mprintf( "      .a = 0x%02x, %d\n", pIo->sb.a, pIo->sb.a );
+   mprintf( "      .b = 0x%02x, %d\n", pIo->sb.b, pIo->sb.b );
+   mprintf( "   }\n}\n" );
 }
 
 
