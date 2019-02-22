@@ -5,7 +5,7 @@
  *  author  : Dietrich Beck, GSI-Darmstadt
  *  version : 05-February-2019
  *
- * Command-line interface for wrunipz
+ *  command-line interface for wrunipz
  *
  * ------------------------------------------------------------------------------------------
  * License Agreement for this software:
