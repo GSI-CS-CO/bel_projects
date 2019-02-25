@@ -59,23 +59,35 @@
 
 /*! ---------------------------------------------------------------------------
  */
-#ifndef LM32_EB_BASE
-   #define LM32_EB_BASE 0x100A0000
+#ifndef EB_LM32_BASE
+   #define EB_LM32_BASE 0x100A0000
 #endif
 
 /*! ---------------------------------------------------------------------------
+ * @brief Base address of the Linux perspective of the shared memory for
+ *        the communication between LM32 and Linux.
+ * @note The macros INT_BASE_ADR and SHARED_OFFS are project dependent and
+ *       will be defined in the automatically generated header file
+ *       "generated/shared_mmap.h". Therefore this file has to be also
+ *       registered in the header file include path of the associated Linux
+ *       project. For this reason the Linux module depends on the
+ *       LM32 module, whereby the LM32-module has to be compiled first.
  */
-#define SHARED_BASE_ADDRESS (LM32_EB_BASE + INT_BASE_ADR + SHARED_OFFS)
+#define EB_LM32_SHARED_BASE_ADDRESS (EB_LM32_BASE + INT_BASE_ADR + SHARED_OFFS)
+
+/*! ---------------------------------------------------------------------------
+ * @brief Macro calculates the eb/wb address of a member variable of a
+ *        transfer object for the communication between LM32 and Linux.
+ * @param type Name of the data type including the concerning member.
+ * @param member Name of the member variable.
+ */
+#define EB_LM32_GET_ADDR_OF_MEMBER( type, member )             \
+   (EB_LM32_SHARED_BASE_ADDRESS + offsetof( type, member ))
 
 /*! ---------------------------------------------------------------------------
  */
-#define GET_ADDR_OF_MEMBER( type, member ) \
-   (SHARED_BASE_ADDRESS + offsetof( type, member ))
-
-/*! ---------------------------------------------------------------------------
- */
-#define EB_FOR_MEMBER( type, member )                        \
-   GET_ADDR_OF_MEMBER( type, member ),                       \
+#define EB_LM32_FOR_MEMBER( type, member )                   \
+   EB_LM32_GET_ADDR_OF_MEMBER( type, member ),               \
    GET_SIZE_OF_MEMBER( type, member ) | EB_BIG_ENDIAN
 
 /*! ---------------------------------------------------------------------------
@@ -133,20 +145,50 @@
 /*! ---------------------------------------------------------------------------
  */
 #define EB_OJECT_MEMBER_READ( pThis, type, member )                   \
-   eb_cycle_read( pThis->cycle, EB_FOR_MEMBER( type, member ), NULL )
+   eb_cycle_read( pThis->cycle, EB_LM32_FOR_MEMBER( type, member ), NULL )
 
 /*! ---------------------------------------------------------------------------
+ * @brief Macro for sending a member variable via eb/wb bus to LM32.
+ * @param pThis Pointer to the EB_HANDLE_T
+ * @param ptr Pointer to the concerning object.
+ * @param member Name of the member variable.
  */
-#define EB_OJECT_MEMBER_WRITE( pThis, ptr, member )                   \
-   eb_cycle_write( pThis->cycle,                                      \
-                   GET_ADDR_OF_MEMBER( typeof( *ptr ), member ),      \
-                   sizeof( ptr->member ) | EB_BIG_ENDIAN,             \
-                   *((eb_data_t*)&(ptr->member)) &                    \
-                   ~(((eb_data_t)~0) << BIT_SIZEOF( ptr->member )) )
+#define EB_LM32_OJECT_MEMBER_WRITE( pThis, ptr, member )                   \
+   eb_cycle_write( pThis->cycle,                                           \
+                   EB_LM32_GET_ADDR_OF_MEMBER( typeof( *(ptr) ), member ), \
+                   sizeof( (ptr)->member ) | EB_BIG_ENDIAN,                \
+                   (ptr)->member )
+
+/*! ---------------------------------------------------------------------------
+ * @brief Macro for sending bit fields via eb/wb bus to LM32.
+ * @note <b>CAUTION:</b> This macro includes a "bad cast" preventing a
+ *       compiler error! \n
+ *       Use this macro for bit-fields only and if you exactly know
+ *       what you do.
+ *       The size of these bit fields shall not exceed the size of
+ *       "eb_data_t"! \n
+ *       When the concerning bit field is the last element of the whole
+ *       transfer object and its size is smaller than "eb_data_t", so a
+ *       following padding field becomes necessary, \n
+ *       otherwise a segmentation error could occur!
+ * @note Keep in mind: The order of bit field elements depends on the
+ *       endianness convention!
+ * @param pThis Pointer to the EB_HANDLE_T
+ * @param ptr Pointer to the concerning object.
+ * @param bfMember Name of the member variable of type bit field.
+ */
+#define EB_LM32_OJECT_MEMBER_WRITE_BF( pThis, ptr, bfMember )                \
+   eb_cycle_write( pThis->cycle,                                             \
+                   EB_LM32_GET_ADDR_OF_MEMBER( typeof( *(ptr) ), bfMember ), \
+                   sizeof( (ptr)->bfMember ) | EB_BIG_ENDIAN,                \
+                   *((eb_data_t*)&((ptr)->bfMember)) &                       \
+                   ~(((eb_data_t)~0) << BIT_SIZEOF( (ptr)->bfMember )) )
+
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
 
 typedef struct
 {
@@ -202,6 +244,12 @@ eb_status_t ebClose( EB_HANDLE_T* pThis );
 
 /*! ---------------------------------------------------------------------------
  */
+eb_status_t ebFindFirstDeviceAddrById( EB_HANDLE_T* pThis,
+                                   uint64_t vendorId, uint32_t deviceId,
+                                   uint32_t* pDevAddr );
+
+/*! ---------------------------------------------------------------------------
+ */
 void __ebCycleReadIoObjectCb( eb_user_data_t user, eb_device_t dev,
                               eb_operation_t op, eb_status_t status );
 
@@ -224,6 +272,15 @@ eb_status_t ebObjectReadCycleOpen( EB_HANDLE_T* pThis, EB_CYCLE_OR_CB_ARG_T* pCA
  */
 void __ebCycleWriteIoObjectCb( eb_user_data_t user, eb_device_t dev,
                               eb_operation_t op, eb_status_t status );
+
+
+/*! ---------------------------------------------------------------------------
+ */
+eb_status_t ebReadData32( EB_HANDLE_T* pThis, uint32_t addr, uint32_t* pData );
+
+/*! ---------------------------------------------------------------------------
+ */
+eb_status_t ebWriteData32( EB_HANDLE_T* pThis, uint32_t addr, uint32_t data );
 
 /*! ---------------------------------------------------------------------------
  */

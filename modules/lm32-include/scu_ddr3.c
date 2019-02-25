@@ -27,42 +27,71 @@
  *******************************************************************************
  */
 #include <scu_ddr3.h>
-#ifdef __lm32__
-#include <mini_sdb.h>
+#if defined(__lm32__)
+ #include <mini_sdb.h>
+#elif defined(__linux__)
+ #include <sdb_ids.h>
+#else
+ #error Unknown platform!
 #endif
 #include <dbg.h>
 
 /*! ---------------------------------------------------------------------------
  * @see scu_ddr3.h
  */
-int ddr3init( register DDR3_T* pThis )
+int ddr3init( register DDR3_T* pThis
+            #ifdef __linux__
+            , EB_HANDLE_T* pEbHandle
+            #endif
+            )
 {
    DDR_ASSERT( pThis != NULL );
 #ifndef CONFIG_DDR3_NO_BURST_FUNCTIONS
-   pThis->pBurstModeBase = NULL;
+   pThis->pBurstModeBase = DDR3_INVALID;
 #endif
-#ifdef __lm32__
+#if defined( __lm32__ )
    pThis->pTrModeBase = find_device_adr( GSI, WB_DDR3_if1 );
    if( pThis->pTrModeBase == (uint32_t*)ERROR_NOT_FOUND )
    {
-      pThis->pTrModeBase = NULL;
+      pThis->pTrModeBase = DDR3_INVALID;
       DBPRINT1( "DBG: ERROR: DDR3: Can't find address of WB_DDR3_if1 !\n" );
       return -1;
    }
-#ifndef CONFIG_DDR3_NO_BURST_FUNCTIONS
+ #ifndef CONFIG_DDR3_NO_BURST_FUNCTIONS
    pThis->pBurstModeBase = find_device_adr( GSI, WB_DDR3_if2 );
    if( pThis->pBurstModeBase == (uint32_t*)ERROR_NOT_FOUND )
    {
-      pThis->pBurstModeBase = NULL;
-      pThis->pTrModeBase    = NULL;
+      pThis->pBurstModeBase = DDR3_INVALID;
+      pThis->pTrModeBase    = DDR3_INVALID;
       DBPRINT1( "DBG: ERROR: DDR3: Can't find address of WB_DDR3_if2 !\n" );
       return -1;
    }
-#endif
-#else /* __lm32__ */
-#error Nothing for Linux implemented yet!
-#endif /* /__lm32__ */
+ #endif
    return 0;
+#elif defined(__linux__)
+  DDR_ASSERT( pEbHandle != NULL );
+  pThis->pEbHandle = pEbHandle;
+  eb_status_t status;
+  if( ebFindFirstDeviceAddrById( pEbHandle, GSI, WB_DDR3_if1,
+                                 &pThis->pTrModeBase ) != EB_OK )
+  {
+     DBPRINT1( "DBG: ERROR: DDR3: Can't find address of WB_DDR3_if1 !\n" );
+     pThis->pTrModeBase = DDR3_INVALID;
+     return pEbHandle->status;
+  }
+ #ifndef CONFIG_DDR3_NO_BURST_FUNCTIONS
+  if( ebFindFirstDeviceAddrById( pEbHandle, GSI, WB_DDR3_if2,
+                                 &pThis->pBurstModeBase ) != EB_OK )
+  {
+     DBPRINT1( "DBG: ERROR: DDR3: Can't find address of WB_DDR3_if2 !\n" );
+     pThis->pTrModeBase    = DDR3_INVALID;
+     pThis->pBurstModeBase = DDR3_INVALID;
+  }
+ #endif
+  return pEbHandle->status;
+#else
+#error Unknown platfrm!
+#endif /* /__lm32__ */
 }
 
 #ifndef CONFIG_DDR3_NO_BURST_FUNCTIONS

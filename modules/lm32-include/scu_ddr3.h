@@ -31,6 +31,9 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <helper_macros.h>
+#if defined(__linux__)
+ #include <eb_object_transfer.h>
+#endif
 
 #ifdef __cplusplus
 extern "C" {
@@ -123,11 +126,23 @@ extern "C" {
  */
 #define DDR3_FIFO_HIGH_WORD_OFFSET_ADDR 0x0D
 
+#ifdef __lm32__
+   typedef uint32_t* volatile DDR3_ADDR_T;
+   typedef void               DDR3_RETURN_T;
+   #define DDR3_INVALID       NULL
+   #define LM32_VOLATILE      volatile
+#else
+   typedef uint32_t           DDR3_ADDR_T;
+   typedef eb_status_t        DDR3_RETURN_T;
+   #define DDR3_INVALID       0
+   #define LM32_VOLATILE
+#endif
+
 /*!
  * @brief 64-bit payload base type of the smallest storing unit
  *        of the SCU- DDR3- RAM.
  */
-typedef volatile union
+typedef LM32_VOLATILE union
 {
    uint64_t  d64;
    uint32_t  ad32[sizeof(uint64_t)/sizeof(uint32_t)];
@@ -136,16 +151,20 @@ typedef volatile union
 } DDR3_PAYLOAD_T;
 STATIC_ASSERT( sizeof(DDR3_PAYLOAD_T) == sizeof(uint64_t) );
 
+
 /*!
  * @brief Object type of SCU internal DDR3 RAM.
  */
 typedef struct
 {
    /*! @brief WB Base-address of transparent mode */
-   uint32_t* volatile pTrModeBase;
+   DDR3_ADDR_T pTrModeBase;
 #ifndef CONFIG_DDR3_NO_BURST_FUNCTIONS
    /*! @brief WB Base-address of burst mode */
-   uint32_t* volatile pBurstModeBase;
+   DDR3_ADDR_T pBurstModeBase;
+#endif
+#ifdef __linux__
+   EB_HANDLE_T* pEbHandle;
 #endif
 } DDR3_T;
 
@@ -155,7 +174,11 @@ typedef struct
  * @retval 0 Initializing was successful
  * @retval <0 Error
  */
-int ddr3init( register DDR3_T* pThis );
+int ddr3init( register DDR3_T* pThis
+            #ifdef __linux__
+               , EB_HANDLE_T* pEbHandle
+            #endif
+            );
 
 /*! ---------------------------------------------------------------------------
  * @brief Writes a 64-bit value in the DDR3 RAM
@@ -165,11 +188,12 @@ int ddr3init( register DDR3_T* pThis );
  * @param pData Pointer to the 64 bit data to write.
  */
 static inline
-void ddr3write64( register const  DDR3_T* pThis, const unsigned int index64,
-                  const DDR3_PAYLOAD_T* pData )
+DDR3_RETURN_T ddr3write64( register const  DDR3_T* pThis,
+                           const unsigned int index64,
+                           const DDR3_PAYLOAD_T* pData )
 {
    DDR_ASSERT( pThis != NULL );
-   DDR_ASSERT( pThis->pTrModeBase != NULL );
+   DDR_ASSERT( pThis->pTrModeBase != DDR3_INVALID );
    DDR_ASSERT( index64 <= DDR3_MAX_INDEX64 );
    register const unsigned int index32 =
                   index64 * (sizeof(uint64_t)/sizeof(uint32_t));
@@ -177,8 +201,16 @@ void ddr3write64( register const  DDR3_T* pThis, const unsigned int index64,
     * CAUTION: Don't change the order of the following both
     * code lines!
     */
+#if defined(__lm32__)
    pThis->pTrModeBase[index32+1] = pData->ad32[1]; // DDR3 high word
    pThis->pTrModeBase[index32+0] = pData->ad32[0]; // DDR3 low word
+#elif defined(__linux__)
+   if( ebWriteData32( pThis->pEbHandle, pThis->pTrModeBase + index32+1,
+                      pData->ad32[1] ) != EB_OK )
+      return pThis->pEbHandle->status;
+   return ebWriteData32( pThis->pEbHandle, pThis->pTrModeBase + index32+0,
+                         pData->ad32[0] );
+#endif
 }
 
 /*! ---------------------------------------------------------------------------
@@ -190,11 +222,11 @@ void ddr3write64( register const  DDR3_T* pThis, const unsigned int index64,
  *              copy the data.
  */
 static inline
-void ddr3read64( register const DDR3_T* pThis, DDR3_PAYLOAD_T* pData,
-                 const unsigned int index64 )
+DDR3_RETURN_T ddr3read64( register const DDR3_T* pThis, DDR3_PAYLOAD_T* pData,
+                          const unsigned int index64 )
 {
    DDR_ASSERT( pThis != NULL );
-   DDR_ASSERT( pThis->pTrModeBase != NULL );
+   DDR_ASSERT( pThis->pTrModeBase != DDR3_INVALID );
    DDR_ASSERT( index64 <= DDR3_MAX_INDEX64 );
    register const unsigned int index32 =
                   index64 * (sizeof(uint64_t)/sizeof(uint32_t));
@@ -202,8 +234,16 @@ void ddr3read64( register const DDR3_T* pThis, DDR3_PAYLOAD_T* pData,
     * CAUTION: Don't change the order of the following both
     * code lines!
     */
+#if defined(__lm32__)
    pData->ad32[0] = pThis->pTrModeBase[index32+0]; // DDR3 low word
    pData->ad32[1] = pThis->pTrModeBase[index32+1]; // DDR3 high word
+#elif defined(__linux__)
+   if( ebReadData32( pThis->pEbHandle, pThis->pTrModeBase + index32+0,
+                         &pData->ad32[0] ) != EB_OK )
+      return pThis->pEbHandle->status;
+   return ebReadData32( pThis->pEbHandle, pThis->pTrModeBase + index32+1,
+                        &pData->ad32[1] );
+#endif
 }
 
 #ifndef CONFIG_DDR3_NO_BURST_FUNCTIONS
@@ -220,9 +260,17 @@ static inline volatile
 uint32_t ddr3GetFifoStatus( register const DDR3_T* pThis )
 {
    DDR_ASSERT( pThis != NULL );
-   DDR_ASSERT( pThis->pBurstModeBase != NULL );
+   DDR_ASSERT( pThis->pBurstModeBase != DDR3_INVALID );
 
+#if defined(__lm32__)
    return pThis->pBurstModeBase[DDR3_FIFO_STATUS_OFFSET_ADDR];
+#elif defined(__linux__)
+   uint32_t ret;
+   ebReadData32( pThis->pEbHandle,
+                 pThis->pBurstModeBase + DDR3_FIFO_STATUS_OFFSET_ADDR,
+                 &ret );
+   return ret;
+#endif
 }
 
 /*! ---------------------------------------------------------------------------
@@ -232,17 +280,28 @@ uint32_t ddr3GetFifoStatus( register const DDR3_T* pThis )
  * @param pThis Pointer to the DDR3 object
  */
 static inline
-void ddr3PopFifo( register const DDR3_T* pThis, DDR3_PAYLOAD_T* pData )
+DDR3_RETURN_T ddr3PopFifo( register const DDR3_T* pThis,
+                           DDR3_PAYLOAD_T* pData )
 {
    DDR_ASSERT( pThis != NULL );
-   DDR_ASSERT( pThis->pBurstModeBase != NULL );
+   DDR_ASSERT( pThis->pBurstModeBase != DDR3_INVALID );
 
    /*
     * CAUTION: Don't change the order of the following both
     * code lines!
     */
+#if defined(__lm32__)
    pData->ad32[0] = pThis->pBurstModeBase[DDR3_FIFO_LOW_WORD_OFFSET_ADDR];
    pData->ad32[1] = pThis->pBurstModeBase[DDR3_FIFO_HIGH_WORD_OFFSET_ADDR];
+#elif defined(__linux__)
+   if( ebReadData32( pThis->pEbHandle,
+                     pThis->pBurstModeBase + DDR3_FIFO_LOW_WORD_OFFSET_ADDR,
+                     &pData->ad32[0] ) != EB_OK )
+      return pThis->pEbHandle->status;
+   return ebReadData32( pThis->pEbHandle,
+                        pThis->pBurstModeBase + DDR3_FIFO_HIGH_WORD_OFFSET_ADDR,
+                        &pData->ad32[1] );
+#endif
 }
 
 /*! ---------------------------------------------------------------------------
@@ -254,20 +313,24 @@ void ddr3PopFifo( register const DDR3_T* pThis, DDR3_PAYLOAD_T* pData )
  * @see DDR3_XFER_FIFO_SIZE
  */
 static inline
-void ddr3StartBurstTransfer( register const DDR3_T* pThis,
-                             const unsigned int burstStartAddr,
-                             const unsigned int burstLen )
+DDR3_RETURN_T ddr3StartBurstTransfer( register const DDR3_T* pThis,
+                                      const unsigned int burstStartAddr,
+                                      const unsigned int burstLen )
 {
    DDR_ASSERT( pThis != NULL );
-   DDR_ASSERT( pThis->pTrModeBase != NULL );
+   DDR_ASSERT( pThis->pTrModeBase != DDR3_INVALID );
    DDR_ASSERT( burstLen <= DDR3_XFER_FIFO_SIZE );
 
    /*
     * CAUTION: Don't change the order of the following both
     * code lines!
     */
+#if defined(__lm32__)
    pThis->pTrModeBase[DDR3_BURST_START_ADDR_REG_OFFSET] = burstStartAddr;
    pThis->pTrModeBase[DDR3_BURST_XFER_CNT_REG_OFFSET]   = burstLen;
+#elif defined(__linux__)
+   //TODO
+#endif
 }
 
 /*! ---------------------------------------------------------------------------

@@ -105,12 +105,20 @@ void ramRingAddToReadIndex( RAM_RING_INDEXES_T* pThis, RAM_RING_INDEX_T toAdd )
 /*! ---------------------------------------------------------------------------
  * @see scu_ramBuffer.h
  */
-int ramInit( register RAM_SCU_T* pThis, RAM_RING_SHARED_OBJECT_T* pSharedObj )
+int ramInit( register RAM_SCU_T* pThis, RAM_RING_SHARED_OBJECT_T* pSharedObj
+          #ifdef __linux__
+           , EB_HANDLE_T* pEbHandle
+          #endif
+           )
 {
    pThis->pSharedObj = pSharedObj;
    ramRingReset( &pSharedObj->ringIndexes );
 #ifdef CONFIG_SCU_USE_DDR3
+ #ifdef __lm32__
    return ddr3init( &pThis->ram );
+ #else
+   return ddr3init( &pThis->ram, pEbHandle );
+ #endif
 #endif
 }
 

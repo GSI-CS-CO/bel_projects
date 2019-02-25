@@ -27,6 +27,10 @@
 #include <stddef.h> // Necessary for the macro "offsetof()"
 #include <limits.h> // Necessary for constant "CHAR_BIT" (in the most cases always 8)
 
+#ifndef typeof
+   #define typeof __typeof__
+#endif
+
 /*!
  * @defgroup HELPER_MACROS  Some helpful macro definitions
  * @{

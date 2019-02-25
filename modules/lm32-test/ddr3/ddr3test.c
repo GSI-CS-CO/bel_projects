@@ -28,7 +28,10 @@
  *******************************************************************************
  */
 
-#include <mini_sdb.h>
+#ifdef __lm32__
+  #include <mini_sdb.h>
+#endif
+
 #include <scu_ramBuffer.h>
 #include <eb_console_helper.h>
 #include <daq_descriptor.h>
@@ -36,7 +39,7 @@
 
 #if 1
 
-RAM_RING_INDEXES_T g_FifoAdmin = RAM_RING_INDEXES_INITIALIZER;
+RAM_RING_SHARED_OBJECT_T  g_FifoAdmin = RAM_RING_SHARED_OBJECT_INITIALIZER;
 
 typedef struct PACKED_SIZE
 {
@@ -83,7 +86,14 @@ int ddr3Poll(  const DDR3_T* pThis UNUSED, unsigned int count )
 }
 #endif
 
-void main( void )
+#ifdef __lm32__
+  #define EB_HANDLE
+#else
+EB_HANDLE_T g_ebHandle;
+#define EB_HANDLE ,&g_ebHandle
+#endif
+
+int main( int argc, char** ppArgv )
 {
    RAM_SCU_T oRam;
 
@@ -91,18 +101,26 @@ void main( void )
 
    DDR3_PAYLOAD_T burstFifo[8];
 
-   memset( burstFifo, 0xFF, sizeof( burstFifo ));
-
+   memset( (void*)burstFifo, 0xFF, sizeof( burstFifo ));
+#ifdef __lm32__
    discoverPeriphery();
    uart_init_hw();
+#else
+#endif
+
    gotoxy( 0, 0 );
    clrscr();
    mprintf( ESC_FG_MAGNETA"DDR3 Test\n"ESC_NORMAL );
 
-   if( ramInit( &oRam, &g_FifoAdmin ) < 0  )
+#ifdef __linux__
+   if( ebOpen( &g_ebHandle, ppArgv[1] ) != EB_OK )
+      return 1;
+#endif
+
+   if( ramInit( &oRam, &g_FifoAdmin EB_HANDLE ) < 0  )
    {
       mprintf( ESC_FG_RED"ERROR: Could not find DDR3 base address!\n"ESC_NORMAL );
-      return;
+      return 1;
    }
 
    toWrite.ad16[0] = 0x4711;
@@ -110,32 +128,40 @@ void main( void )
    toWrite.ad16[2] = 0x4713;
    toWrite.ad16[3] = 0x4714;
 
-   ddr3write64( &oRam.ddr3, 0, &toWrite );
+   ddr3write64( &oRam.ram, 0, &toWrite );
 
    toWrite.ad16[0] = 0xAAAA;
    toWrite.ad16[1] = 0xBBBB;
    toWrite.ad16[2] = 0xCCCC;
    toWrite.ad16[3] = 0xDDDD;
 
-   ddr3write64( &oRam.ddr3, 1, &toWrite );
+   ddr3write64( &oRam.ram, 1, &toWrite );
 
    toWrite.ad16[0] = 0x1111;
    toWrite.ad16[1] = 0x2222;
    toWrite.ad16[2] = 0x3333;
    toWrite.ad16[3] = 0x4444;
 
-   ddr3write64( &oRam.ddr3, 2, &toWrite );
+   ddr3write64( &oRam.ram, 2, &toWrite );
 
-   ddrPrint16( &oRam.ddr3, 0 );
-   ddrPrint16( &oRam.ddr3, 1 );
+   ddrPrint16( &oRam.ram, 0 );
+   ddrPrint16( &oRam.ram, 1 );
 #ifndef CONFIG_DDR3_NO_BURST_FUNCTIONS
-   mprintf( "Fifo-Status address: 0x%08x\n",    &oRam.ddr3.pBurstModeBase[DDR3_FIFO_STATUS_OFFSET_ADDR] );
-   mprintf( "Fifo-low word address: 0x%08x\n",  &oRam.ddr3.pBurstModeBase[DDR3_FIFO_LOW_WORD_OFFSET_ADDR] );
-   mprintf( "FiFo-high word address: 0x%08x\n", &oRam.ddr3.pBurstModeBase[DDR3_FIFO_HIGH_WORD_OFFSET_ADDR] );
-   mprintf( "FiFo-Status: 0x%08x\n", ddr3GetFifoStatus( &oRam.ddr3 ) );
-   ddr3FlushFiFo( &oRam.ddr3, 0, ARRAY_SIZE( burstFifo ), burstFifo, ddr3Poll );
+#ifdef __lm32__
+   mprintf( "Fifo-Status address: 0x%08x\n",    &oRam.ram.pBurstModeBase[DDR3_FIFO_STATUS_OFFSET_ADDR] );
+   mprintf( "Fifo-low word address: 0x%08x\n",  &oRam.ram.pBurstModeBase[DDR3_FIFO_LOW_WORD_OFFSET_ADDR] );
+   mprintf( "FiFo-high word address: 0x%08x\n", &oRam.ram.pBurstModeBase[DDR3_FIFO_HIGH_WORD_OFFSET_ADDR] );
+   mprintf( "FiFo-Status: 0x%08x\n", ddr3GetFifoStatus( &oRam.ram ) );
+   ddr3FlushFiFo( &oRam.ram, 0, ARRAY_SIZE( burstFifo ), burstFifo, ddr3Poll );
+#endif
 #endif
    printPayloadArray( burstFifo, ARRAY_SIZE( burstFifo ));
+
+#ifdef __linux__
+   ebClose( &g_ebHandle );
+#endif
+   mprintf( ESC_FG_MAGNETA"End of DDR3 test\n"ESC_NORMAL );
+   return 0;
 }
 
 /* ================================= EOF ====================================*/

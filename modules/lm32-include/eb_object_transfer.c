@@ -31,6 +31,7 @@
  ******************************************************************************
  */
 #include <eb_object_transfer.h>
+#include <dbg.h>
 
 #define ATTEMPTS 3
 
@@ -84,6 +85,51 @@ eb_status_t ebClose( EB_HANDLE_T* pThis )
   }
   return pThis->status;
 }
+
+/*! ---------------------------------------------------------------------------
+ */
+eb_status_t ebFindFirstDeviceAddrById( EB_HANDLE_T* pThis,
+                                       uint64_t vendorId, uint32_t deviceId,
+                                       uint32_t* pDevAddr )
+{
+   struct sdb_device devices[1];
+   int numDevices = ARRAY_SIZE( devices );
+
+   if( eb_sdb_find_by_identity( pThis->device, vendorId, deviceId, devices,
+                               &numDevices ) != EB_OK )
+   {
+      fprintf( stderr, ESC_FG_RED ESC_BOLD"Error: eb_sdb_find_by_identity"
+                       " returns %s\n"ESC_NORMAL,
+                       ebGetStatusString( pThis ) );
+      return pThis->status;
+   }
+   if( numDevices == 0 )
+   {
+      fprintf( stderr, ESC_FG_RED ESC_BOLD"Error: no matching device found:\n"
+                       "Vendor ID: 0x%08X\n"
+                       "Device ID: 0x%08X\n"ESC_NORMAL,
+                       vendorId, deviceId );
+      pThis->status = EB_SEGFAULT;
+      return pThis->status;
+   }
+
+   *pDevAddr = devices[0].sdb_component.addr_first;
+
+   DBPRINT1( "DBG: INFO: Found device at addr: 0x%08X\n", *pDevAddr );
+
+   return pThis->status;
+}
+
+eb_status_t ebReadData32( EB_HANDLE_T* pThis, uint32_t addr, uint32_t* pData )
+{
+   return pThis->status;
+}
+
+eb_status_t ebWriteData32( EB_HANDLE_T* pThis, uint32_t addr, uint32_t data )
+{
+   return pThis->status;
+}
+
 
 /*! --------------------------------------------------------------------------
  */

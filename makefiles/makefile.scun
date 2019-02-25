@@ -37,7 +37,7 @@ load: $(BIN_FILE)
 ifndef IS_LIBRARY
 .PHONY:
 lrun:
-	$(SSH) $(SCU_USER)@$(SCU_URL) $(SCU_TARGET_DIR)/$(notdir $(BIN_FILE)) $(CALL_ARGS)
+	$(SSH) $(SCU_USER)@$(SCU_URL) $(SCU_TARGET_DIR)/$(notdir $(BIN_FILE)) $(REMOTE_CALL_ARGS)
 endif # ifndef IS_LIBRARY
 endif # ifdef SCU_URL
 

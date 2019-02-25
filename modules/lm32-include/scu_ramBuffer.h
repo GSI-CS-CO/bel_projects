@@ -36,7 +36,9 @@
 #endif
 
 #ifdef __lm32__
-#include <daq.h>
+ #include <daq.h>
+#else
+ #include <daq_descriptor.h>
 #endif
 
 /*!
@@ -375,7 +377,11 @@ RAM_RING_INDEX_T ramRingGeReadIndex( register RAM_RING_INDEXES_T* pThis )
  * @retval 0 Initializing was successful
  * @retval <0 Error
  */
-int ramInit( register RAM_SCU_T* pThis, RAM_RING_SHARED_OBJECT_T* pSharedObj );
+int ramInit( register RAM_SCU_T* pThis, RAM_RING_SHARED_OBJECT_T* pSharedObj
+           #ifdef __linux__
+            , EB_HANDLE_T* pEbHandle
+           #endif
+           );
 
 #if defined(__lm32__) || defined(__DOXYGEN__)
 
@@ -398,6 +404,7 @@ int ramPushDaqDataBlock( register RAM_SCU_T* pThis,
                        );
 
 #endif /* if defined(__lm32__) || defined(__DOXYGEN__) */
+
 
 /*! @} */ //End of group SCU_RAM_BUFFER
 #ifdef __cplusplus

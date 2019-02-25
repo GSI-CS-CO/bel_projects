@@ -1,18 +1,26 @@
 
-MIAN_MODULE := ddr3test.c
+.PHOMY: all
+all:
+	$(MAKE) -C ./lm32Make  all
+	$(MAKE) -C ./linuxMake all
 
-SOURCE += $(SCU_LIB_SRC_DIR)/scu_ddr3.c
-SOURCE += $(SCU_LIB_SRC_DIR)/scu_ramBuffer.c
+.PHOMY: clean
+clean:
+	$(MAKE) -C ./lm32Make  clean
+	$(MAKE) -C ./linuxMake clean
 
-REPOSITORY_DIR := $(shell git rev-parse --show-toplevel)
+.PHOMY: load
+load:
+	$(MAKE) -C ./lm32Make  load
 
-DEFINES += CONFIG_DDR_PEDANTIC_CHECK
-DEFINES += CONFIG_RAM_PEDANTIC_CHECK
-#DEFINES += DEBUGLEVEL=2
-# DEFINES += CONFIG_DDR3_NO_BURST_FUNCTIONS
-DEFINES += CONFIG_SCU_USE_DDR3
+.PHONY: lload
+lload:
+	$(MAKE) -C ./linuxMake load
 
-CODE_OPTIMIZATION = 2
+.PHOMY: run
+run:
+	$(MAKE) -C ./linuxMake run
 
-include $(REPOSITORY_DIR)/makefiles/makefile.scu
-#=================================== EOF ======================================
+.PHONY: dbg
+dbg:
+	$(MAKE) -C ./linuxMake dbg

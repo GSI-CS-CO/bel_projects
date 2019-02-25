@@ -13,7 +13,7 @@
 
 CPU     := $(shell uname -m)
 
-CC      = $(GCC_BIN_DIR)gcc
+CC      = $(GCC_BIN_DIR)gcc -std=c99
 CXX     = $(GCC_BIN_DIR)g++
 LD      = $(GCC_BIN_DIR)gcc
 OBJCPY  = $(GCC_BIN_DIR)objcopy
@@ -57,10 +57,14 @@ ifeq ($(DEBUG), 1)
 
 DEBUG_GUI ?= kdbg
 
+ifdef CALL_ARGS
+DBG_ARGS = "-a $(CALL_ARGS)"
+endif
+
 .PHONY: dbg
 dbg: $(WORK_DIR) $(TARGET_DIR) $(RESULT_FILE)
 	$(QUIET)(export LD_LIBRARY_PATH=$(ADDITIONAL_LIB_PATH)$(LD_LIBRARY_PATH); \
-	$(DEBUG_GUI) $(BIN_FILE) -a $(CALL_ARGS))
+	$(DEBUG_GUI) $(BIN_FILE) $(DBG_ARGS))
 
 endif # ifeq ($(DEBUG), 1)
 endif # ifndef IS_LIBRARY
