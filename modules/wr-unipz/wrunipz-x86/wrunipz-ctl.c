@@ -606,7 +606,7 @@ int main(int argc, char** argv) {
     } // "testfull"
     if (!strcasecmp(command, "ftest")) {
       if (state != WRUNIPZ_STATE_OPREADY) printf("wr-unipz: WARNING command has no effect (not in state OPREADY)\n");
-      if (optind+4  != argc)                     {printf("wr-unipz: expecting exactly three arguments: test <file> <vacc> <pz>\n"); return 1;}
+      if (optind+4  != argc)             {printf("wr-unipz: expecting exactly three arguments: test <file> <vacc> <pz>\n"); return 1;}
       filename = argv[optind+1];
       vacc   = strtoul(argv[optind+2], &tail, 0);
       if ((vacc < 0) || (vacc >= WRUNIPZ_NVACC)) {printf("wr-unipz: invalid virtual accelerator -- %s\n", argv[optind+2]); return 1;}
@@ -635,7 +635,7 @@ int main(int argc, char** argv) {
     } // "ftest"
     if (!strcasecmp(command, "ftestfull")) {
       if (state != WRUNIPZ_STATE_OPREADY) printf("wr-unipz: WARNING command has no effect (not in state OPREADY)\n");
-      if (optind+2  != argc)              {printf("wr-unipz: expecting exactly one argument: ftestfull <offset>\n"); return 1;}
+      if (optind+2  != argc)             {printf("wr-unipz: expecting exactly one argument: ftestfull <file>\n"); return 1;}
       filename = argv[optind+1];
 
       t1 = getSysTime();
