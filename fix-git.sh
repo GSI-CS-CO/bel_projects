@@ -1,9 +1,12 @@
 #! /bin/bash
+git submodule sync
 git submodule init
 git submodule update --recursive
 cd ip_cores/wrpc-sw
+git submodule sync
 git submodule init
 git submodule update --recursive
 cd ../fpga-config-space
+git submodule sync
 git submodule init
 git submodule update --recursive
