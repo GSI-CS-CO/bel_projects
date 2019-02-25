@@ -101,8 +101,7 @@ sdbfs-clean::
 	$(MAKE) -C ip_cores/fpga-config-space/sdbfs DIRS="lib userspace" clean
 
 gcc-4.5.3-lm32.tar.xz:
-	wget http://www.ohwr.org/attachments/1301/
-	mv index.html gcc-4.5.3-lm32.tar.xz
+	wget https://www.ohwr.org/project/general-cores/uploads/84a8c35f99f67f5072c2169dfe68ba1c/gcc-4.5.3-lm32.tar.xz
 
 toolchain:	gcc-4.5.3-lm32.tar.xz
 	tar xvJf gcc-4.5.3-lm32.tar.xz
