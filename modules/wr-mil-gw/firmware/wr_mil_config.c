@@ -33,6 +33,7 @@ volatile WrMilConfig *config_init()
   for (int i = 0; i < 255; ++i) {
     config->mil_histogram[i] = UINT32_C(0);
   }
+  config->mb_slot              = UINT32_C(0xffffffff); // this is an invalid value
   return config;
 }
 
