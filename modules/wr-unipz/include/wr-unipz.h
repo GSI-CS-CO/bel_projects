@@ -20,7 +20,8 @@
 #define WRUNIPZ_EB_HACKISH      0x12345678    // value for EB read handshake
 #define WRUNIPZ_UNILACFREQ              50    // frequency of UNILAC operation [Hz]
 #define WRUNIPZ_UNILACPERIOD      20000000    // length of one UNILAC cylce [ns]
-#define WRUNIPZ_MAXPREPOFFSET         2000    // max offset of a prep event within UNILAC cycle [us]
+#define WRUNIPZ_MAXPREPOFFSET         2000    // max offset of a prep event within UNILAC cycle [us]; all with events a smaller offset will be predicted from previous cycles
+#define WRUNIPZ_MILCALIBOFFSET       29000    // calibration offset to MIL event bus [ns]; MIL events are always 'late' due its protocol; this offset must be added to WR deadlines
 #define WRUNIPZ_QQOFFSET               500    // offset for sending special service event for QQ [us] /* chk: QQ is breaking the concept of WR */
 
 // numbers for UNIPZ
@@ -101,17 +102,18 @@
 #define WRUNIPZ_EVT_SYNCH_DATA          32    // commit event for transaction
 #define WRUNIPZ_EVT_50HZ_SYNCH          33    // 50 Hz trigger, cycle start
 
-// event codes for service events
-#define EVT_AUX_PRP_NXT_ACC           0x11    // set values in magnet prep. cycles
-#define EVT_MAGN_DOWN                 0x19    // set magnets to zero current
-
 // event data from Super PZ received via internal bus (bits 12..15)
 #define WRUNIPZ_EVTDATA_CHANNEL        0x1    // bit 12 - channel number: there are only two channels -> channel number coded in one bit
-#define WRUNIPZ_EVTDATA_NOCHOP         0x2    // bit 13 (bit 15 not set) - flag: executee virt acc without chopper
+#define WRUNIPZ_EVTDATA_NOCHOP         0x2    // bit 13 (bit 15 not set) - flag: execute virt acc without chopper
 #define WRUNIPZ_EVTDATA_SERVICE        0x8    // if bit 15 is set, a service event must be sent after all other events have been sent
 #define WRUNIPZ_EVTDATA_PREPACCNOW     0xd    // service event: execute preparation event for virt acc: VERY SPECIAL! event sent immediately 
 #define WRUNIPZ_EVTDATA_PREPACC        0xe    // service event: execute preparation event for virt acc 
 #define WRUNIPZ_EVTDATA_ZEROACC        0xf    // set all magnets to zero value
+
+// event codes for service events (sent by wr-unipz)
+#define EVT_AUX_PRP_NXT_ACC           0x11    // set values in magnet prep. cycles
+#define EVT_MAGN_DOWN                 0x19    // set magnets to zero current
+
 
 typedef struct dataTable {                    // table with _one_ virtAcc for _one_ Pulszentrale
   uint32_t validFlags;                        // if bit 'n' is set, data[n] is valid

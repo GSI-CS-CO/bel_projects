@@ -3,7 +3,7 @@
  *
  *  created : 2018
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 05-Feb-2019
+ *  version : 25-Feb-2019
  *
  *  lm32 program for gateway between UNILAC Pulszentrale and a White Rabbit network
  *  this basically serves a Data Master for UNILAC
@@ -46,7 +46,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 22-November-2018
  ********************************************************************************************/
-#define WRUNIPZ_FW_VERSION 0x000012                                     // make this consistent with makefile
+#define WRUNIPZ_FW_VERSION 0x000013                                     // make this consistent with makefile
 
 // standard includes
 #include <stdio.h>
@@ -272,7 +272,7 @@ uint64_t ebmWriteTM(uint32_t evtData, uint64_t tStart, uint32_t pz, uint32_t vir
   data2TM(&idLo, &idHi, &paramLo, &paramHi, &res, &tef, &offset, evtData, gid[pz], virtAcc, flagNochop);  //convert data
   
   // calc deadline
-  deadline   = tStart + (uint64_t)offset; 
+  deadline   = tStart + (uint64_t)offset + (uint64_t)WRUNIPZ_MILCALIBOFFSET; 
   deadlineHi = (uint32_t)((deadline >> 32) & 0xffffffff);
   deadlineLo = (uint32_t)(deadline & 0xffffffff);
   
