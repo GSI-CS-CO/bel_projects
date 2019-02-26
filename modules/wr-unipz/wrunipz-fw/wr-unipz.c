@@ -158,8 +158,11 @@ uint32_t nCycleAct;                     // number of cycles
 uint32_t nCyclePrev;                    // previous number of cycles
 uint64_t nMsgAct;                       // # of messages sent
 uint64_t nMsgPrev;                      // previous number of messages
-uint64_t syncPrevT;                     // timestamp of previous 50Hz sync event from SPZ
-uint64_t syncPrevLen;                   // duration of previous UNILAC cycle
+uint64_t syncPrevT4;                    // timestamp of previous 50Hz sync event from SPZ
+uint64_t syncPrevT3;                    // timestamp of previous sync
+uint64_t syncPrevT2;                    // timestamp of previous sync
+uint64_t syncPrevT1;                    // timestamp of previous sync 
+uint64_t syncPrevT0;                    // timestamp of previous sync
 
 // flags
 uint32_t flagTransactionInit;           // a transaction for uploading new event data shall be initialized
@@ -189,7 +192,7 @@ uint64_t wrGetMac()
   uint64_t mac;
 
   macHi = (*(pWREp + (WR_ENDPOINT_MACHI >> 2))) & 0xffff;
-  macLo = *(pWREp + (WR_ENDPOINT_MACLO >> 2));
+  macLo =  *(pWREp + (WR_ENDPOINT_MACLO >> 2));
 
   mac = macHi;
   mac = (mac << 32);
@@ -343,6 +346,20 @@ uint32_t getVaccLen(dataTable evts)
 
   return usOffset;
 } //getVaccLen
+
+// predict start of next UNILAC cycle
+uint64_t predictNxtCycle()
+{
+  uint64_t predictLen;                                 // predicted length of current cycle
+  uint64_t predictT;                                   // predicted start of next cycle;     
+
+  predictLen = ((syncPrevT4 - syncPrevT0) >> 2);       // expected length of current UNILAC cycle (calculated from 4 previous cycles and divided by 4)
+  if (predictLen > (uint32_t)WRUNIPZ_UNILACPERIODMAX) predictLen = (uint32_t)WRUNIPZ_UNILACPERIODMAX; // upper bound according to manual
+  if (predictLen < (uint32_t)WRUNIPZ_UNILACPERIODMIN) predictLen = (uint32_t)WRUNIPZ_UNILACPERIODMIN; // lower bound
+  predictT   = syncPrevT4 + predictLen;                // expected start of 50 Hz trigger (with data from the two previous cycles)
+
+  return predictT;
+} //predictNxtCyle
 
 //check status of White Rabbit (link up, tracking)
 uint32_t wrCheckSyncState() 
@@ -1000,7 +1017,8 @@ uint32_t doActionOperation(uint32_t *nCycle,                  // total number of
   uint32_t servEvt;                                           // service event
   uint32_t servOffs;                                          // offset for service event
   int32_t  tJump;                                             // diff between expected and actual start of UNILAC cycle
-  uint64_t tExpect;                                           // expected start of UNILAC cycle
+  uint64_t tExpect;                                           // expected start of next UNILAC cycle
+  uint64_t lenExpect;                                         // expected length of current UNILAC cycle
 
 
   status = actStatus;
@@ -1043,10 +1061,7 @@ uint32_t doActionOperation(uint32_t *nCycle,                  // total number of
     ebm_clr();
 
     // walk through all PZs and run requested virt acc (non-prep events)
-    tExpect     = syncPrevT + syncPrevLen;                    // expected start of 50 Hz trigger (with data from the previous cycle)
     nLateLocal  = nLate;                                      // for bookkepping for late messages
-    syncPrevLen = deadline - syncPrevT;                       // required for 'prep events of next UNILAC cycle'
-    syncPrevT   = deadline;                                   // required for 'prep events of next UNILAC cycle'
     isPrepFlag  = 0;                                          // 50 Hz synch: no preparation - use actual deadline from TLU
     for (i=0; i < WRUNIPZ_NPZ; i++) {
       if (nextVacc[i] != 0xffffffff) {
@@ -1062,14 +1077,19 @@ uint32_t doActionOperation(uint32_t *nCycle,                  // total number of
 
     // at this point we have scheduled all timing messages of the running cycle and completed the real-time critical stuff
     // now we can do other things...
-    
-    tJump       = (int32_t)(tExpect - deadline);              // this is how the start of this UNILAC cycle jumped
+
+    tJump       = (int32_t)(predictNxtCycle() - deadline);    // compare prediction and deadline
     if (tJump > cycJmpMax) cycJmpMax = tJump;
     if (tJump < cycJmpMin) cycJmpMin = tJump;
+
+    syncPrevT0  = syncPrevT1;                                 // remember time of a previous cycle
+    syncPrevT1  = syncPrevT2;                                 // remember time of a previous cycle
+    syncPrevT2  = syncPrevT3;                                 // remember time of a previous cycle
+    syncPrevT3  = syncPrevT4;                                 // remember time of a previous cycle
+    syncPrevT4  = deadline;                                   // remember time of the previous cycle
     
     if (flagClearAllPZ)        {clearAllPZ();           flagClearAllPZ = 0;       }
     if (flagTransactionInit)   {configTransactInit();   flagTransactionInit = 0;  }  /* chk: error handling */
-    /* chk !!! what is the mechanism that makes sure that data are committed to all PZs simultanously ??????????????? */
     /* chk !!! bug: in the same cycle where data becomes commited the routine getVacclen will fail (fix after we know commit mechanism) !!! */ 
     
     // reset requested virt accs; flush ECA queue
@@ -1097,10 +1117,10 @@ uint32_t doActionOperation(uint32_t *nCycle,                  // total number of
       nextNochop[ipz]  = ((evtData & WRUNIPZ_EVTDATA_NOCHOP)  != 0);
 
       // PZ1..7: preperation; as the next cycle has been announced, we may send all 'prep events' already now
-      // as deadline, we use the deadline from past 50 Hz tick and add the actual UNILAC cycle length
+      // as deadline, we use the prediciton based on previous UNILAC cycles
       nLateLocal = nLate;
       isPrepFlag = 1;                                                  
-      deadline   = syncPrevT + syncPrevLen;                   // guess start time of next UNILAC cycle from previous cycle
+      deadline   = predictNxtCycle();                         // predict start of next cycle
       pzRunVacc(bigData[ipz][chn * WRUNIPZ_NVACC + virtAcc], deadline, ipz, virtAcc, isPrepFlag);
       if ((nLate != nLateLocal) && (status == WRUNIPZ_STATUS_OK)) status = WRUNIPZ_STATUS_LATE;
     } // if !SERVICE
@@ -1110,11 +1130,11 @@ uint32_t doActionOperation(uint32_t *nCycle,                  // total number of
       servEvt  = 0x0;
       if (evtData == WRUNIPZ_EVTDATA_PREPACC) {
         servEvt = EVT_AUX_PRP_NXT_ACC | ((virtAcc & 0xf) << 8) | ((servOffs & 0xffff)        << 16); // send after last event of current PZ cycle
-        ebmWriteTM(servEvt, syncPrevT, ipz, virtAcc, 0);                                             // send message
+        ebmWriteTM(servEvt, syncPrevT4, ipz, virtAcc, 0);                                            // send message
       } // if PREPACC
       if (evtData == WRUNIPZ_EVTDATA_ZEROACC) {
         servEvt = EVT_MAGN_DOWN       | ((virtAcc & 0xf) << 8) | ((servOffs & 0xffff)        << 16); // send after last event of current PZ cycle
-        ebmWriteTM(servEvt, syncPrevT, ipz, virtAcc, 0);                                             // send message
+        ebmWriteTM(servEvt, syncPrevT4, ipz, virtAcc, 0);                                            // send message
       } // if ZEROACC
       if (evtData == WRUNIPZ_EVTDATA_PREPACCNOW) {
         servEvt = EVT_AUX_PRP_NXT_ACC | ((virtAcc & 0xf) << 8) | ((uint16_t)WRUNIPZ_QQOFFSET << 16); // send 'now' /* chk QQOFFSET */
@@ -1225,7 +1245,7 @@ void main(void) {
       if ((nCycleAct % WRUNIPZ_UNILACFREQ) == 0) {            // about only once per second
         
         // length of UNILAC cycle [ns]
-        *pSharedTCycleAvg  = (uint32_t)(syncPrevLen);
+        *pSharedTCycleAvg  = (uint32_t)((syncPrevT4 - syncPrevT0) >> 2);
        
         // message rate [Hz]
         *pSharedMsgFreqAvg = (uint32_t)(nMsgAct - nMsgPrev);

@@ -20,6 +20,9 @@
 #define WRUNIPZ_EB_HACKISH      0x12345678    // value for EB read handshake
 #define WRUNIPZ_UNILACFREQ              50    // frequency of UNILAC operation [Hz]
 #define WRUNIPZ_UNILACPERIOD      20000000    // length of one UNILAC cylce [ns]
+#define WRUNIPZ_UNILACPERIODMAX   20200000    // max length of one UNILAC cylce [ns]
+#define WRUNIPZ_UNILACPERIODMIN   19800000    // min length of one UNILAC cylce [ns]
+
 #define WRUNIPZ_MAXPREPOFFSET         2000    // max offset of a prep event within UNILAC cycle [us]; all with events a smaller offset will be predicted from previous cycles
 #define WRUNIPZ_MILCALIBOFFSET       29000    // calibration offset to MIL event bus [ns]; MIL events are always 'late' due its protocol; this offset must be added to WR deadlines
 #define WRUNIPZ_QQOFFSET               500    // offset for sending special service event for QQ [us] /* chk: QQ is breaking the concept of WR */
