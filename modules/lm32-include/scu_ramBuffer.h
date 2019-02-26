@@ -113,6 +113,8 @@ typedef enum
  */
 typedef DDR3_PAYLOAD_T RAM_DAQ_PAYLOAD_T;
 
+
+
 /*!
  * @defgroup SCU_RING_BUFFER_INDEXES
  * @brief Administration of write and read indexes for
@@ -298,6 +300,32 @@ typedef struct
     */
    RAM_RING_SHARED_OBJECT_T* volatile pSharedObj;
 } RAM_SCU_T;
+
+/*! --------------------------------------------------------------------------
+ */
+static inline
+void ramSetPayload16( RAM_DAQ_PAYLOAD_T* pPl, const uint16_t d,
+                      const unsigned int i )
+{
+#ifdef CONFIG_SCU_USE_DDR3
+   ddr3SetPayload16( pPl, d, i );
+#else
+   //TODO
+#endif
+}
+
+/*! --------------------------------------------------------------------------
+ */
+static inline
+uint16_t ramGetPayload16( RAM_DAQ_PAYLOAD_T* pPl, const unsigned int i )
+{
+#ifdef CONFIG_SCU_USE_DDR3
+   return ddr3GetPayload16( pPl, i );
+#else
+   //TODO
+#endif
+}
+
 
 /*! ---------------------------------------------------------------------------
  * @brief Resets respectively clears the ring buffer

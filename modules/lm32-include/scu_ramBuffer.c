@@ -297,7 +297,7 @@ void ramFillItem( RAM_DAQ_PAYLOAD_T* pItem, const unsigned int i,
 {
 #ifdef CONFIG_SCU_USE_DDR3
    RAM_ASSERT( i < ARRAY_SIZE( pItem->ad16 ) );
-   pItem->ad16[i] = data;
+   ramSetPayload16( pItem, data, i );
 #else
    #error Nothing implemented in function ramFillItem()!
 #endif

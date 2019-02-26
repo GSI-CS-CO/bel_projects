@@ -273,14 +273,16 @@ eb_status_t ebObjectReadCycleOpen( EB_HANDLE_T* pThis, EB_CYCLE_OR_CB_ARG_T* pCA
 void __ebCycleWriteIoObjectCb( eb_user_data_t user, eb_device_t dev,
                               eb_operation_t op, eb_status_t status );
 
+/*! ---------------------------------------------------------------------------
+ */
+//eb_status_t ebReadData32( EB_HANDLE_T* pThis, uint32_t addr, uint32_t* pData );
+eb_status_t ebReadData32( EB_HANDLE_T* pThis, uint32_t addr, uint32_t* pData,
+                          size_t len );
 
 /*! ---------------------------------------------------------------------------
  */
-eb_status_t ebReadData32( EB_HANDLE_T* pThis, uint32_t addr, uint32_t* pData );
-
-/*! ---------------------------------------------------------------------------
- */
-eb_status_t ebWriteData32( EB_HANDLE_T* pThis, uint32_t addr, uint32_t data );
+eb_status_t ebWriteData32( EB_HANDLE_T* pThis, uint32_t addr, uint32_t* pData,
+                           size_t len );
 
 /*! ---------------------------------------------------------------------------
  */
@@ -296,6 +298,7 @@ eb_status_t ebObjectWriteCycleOpen( EB_HANDLE_T* pThis, EB_CYCLE_OW_CB_ARG_T* pC
                                   &pThis->cycle );
    return pThis->status;
 }
+
 
 /*! ---------------------------------------------------------------------------
  */

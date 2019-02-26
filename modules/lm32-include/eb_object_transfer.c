@@ -120,13 +120,113 @@ eb_status_t ebFindFirstDeviceAddrById( EB_HANDLE_T* pThis,
    return pThis->status;
 }
 
+/*! ---------------------------------------------------------------------------
+ */
+#if 0
 eb_status_t ebReadData32( EB_HANDLE_T* pThis, uint32_t addr, uint32_t* pData )
 {
+   EB_MEMBER_INFO_T info[1];
+
+   EB_INIT_INFO_ITEM_STATIC( info, 0, *pData );
+   EB_MAKE_CB_OR_ARG( cArg, info );
+
+   if( ebObjectReadCycleOpen( pThis, &cArg ) != EB_OK )
+   {
+      fprintf( stderr, ESC_FG_RED ESC_BOLD
+                       "Error: Failed to create cycle for read: %s\n"
+                       ESC_NORMAL,
+               ebGetStatusString( pThis ));
+      return pThis->status;
+   }
+
+   eb_cycle_read( pThis->cycle, addr, EB_DATA32, NULL );
+
+   ebCycleClose( pThis );
+
+   while( !cArg.exit )
+      ebSocketRun( pThis );
+
+   pThis->status = cArg.status;
+
+   return pThis->status;
+}
+#endif
+
+eb_status_t ebReadData32( EB_HANDLE_T* pThis, uint32_t addr, uint32_t* pData,
+                          size_t len )
+{
+   if( len == 0 )
+   {
+      pThis->status = EB_OK;
+      return pThis->status;
+   }
+
+   EB_MEMBER_INFO_T info[len];
+   for( size_t i = 0; i < len; i++ )
+   {
+      info[i].pData = (uint8_t*)&pData[i];
+      info[i].size = sizeof( uint32_t );
+   }
+
+   EB_CYCLE_OR_CB_ARG_T arg;
+   arg.aInfo   = info;
+   arg.infoLen = len;
+   arg.exit    = false;
+
+   if( ebObjectReadCycleOpen( pThis, &arg ) != EB_OK )
+   {
+      fprintf( stderr, ESC_FG_RED ESC_BOLD
+                       "Error: failed to create cycle for read: %s\n"
+                       ESC_NORMAL,
+                       ebGetStatusString( pThis ));
+      return pThis->status;
+   }
+
+   for( size_t i = 0; i < len; i++ )
+   {
+   }
+
+   ebCycleClose( pThis );
+
+   while( !arg.exit )
+      ebSocketRun( pThis );
+
+   pThis->status = arg.status;
+
    return pThis->status;
 }
 
-eb_status_t ebWriteData32( EB_HANDLE_T* pThis, uint32_t addr, uint32_t data )
+/*! ---------------------------------------------------------------------------
+ */
+eb_status_t ebWriteData32( EB_HANDLE_T* pThis, uint32_t addr, uint32_t* pData,
+                           size_t len )
 {
+   if( len == 0 )
+   {
+      pThis->status = EB_OK;
+      return pThis->status;
+   }
+
+   EB_MAKE_CB_OW_ARG( cArg );
+
+   if( ebObjectWriteCycleOpen( pThis, &cArg ) != EB_OK )
+   {
+      fprintf( stderr, ESC_FG_RED ESC_BOLD
+                       "Error: Failed to create cycle for write: %s\n"
+                       ESC_NORMAL,
+               ebGetStatusString( pThis ));
+      return pThis->status;
+   }
+
+   for( size_t i = 0; i < len; i++ )
+      eb_cycle_write( pThis->cycle, addr, EB_DATA32 | EB_LITTLE_ENDIAN, pData[i] );
+
+   ebCycleClose( pThis );
+
+   while( !cArg.exit )
+      ebSocketRun( pThis );
+
+   pThis->status = cArg.status;
    return pThis->status;
 }
 

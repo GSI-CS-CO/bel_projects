@@ -43,7 +43,7 @@ RAM_RING_SHARED_OBJECT_T g_FifoAdmin = RAM_RING_SHARED_OBJECT_INITIALIZER;
 void printPayload16( DDR3_PAYLOAD_T* pPl )
 {
    for( int i = 0; i < ARRAY_SIZE( pPl->ad16 ); i++ )
-      mprintf( "   %d: 0x%04x\n", i, pPl->ad16[i] );
+      mprintf( "   %d: 0x%04x\n", i, ddr3GetPayload16( pPl, i ) );
 }
 
 void printPayloadArray( DDR3_PAYLOAD_T* aPl, size_t size )
