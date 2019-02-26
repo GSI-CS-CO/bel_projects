@@ -55,6 +55,7 @@
 #include "wr_mil_delay.h"
 #include "wr_mil_events.h"
 #include "wr_mil_msi.h"
+#include "wr_mil_oled.h"
 #include "../../../top/gsi_scu/scu_mil.h"
 
 // for the event handler
@@ -226,6 +227,10 @@ void main(void)
   volatile WrMilConfig *config = config_init();
   mprintf("mil cmd regs at %08x\n", config);
 
+
+  volatile uint32_t *oled = (volatile uint32_t*) find_device_adr(GSI, 0x93a6f3c4);
+  oled[0] = 0;
+
   // // Where is the MSI message box
   // mprintf("pCpuMsiBox %08x      pMyMsi %08x\n", pCpuMsiBox, pMyMsi);
   // config->mb_slot = getMsiBoxSlot(0xa0);
@@ -251,6 +256,7 @@ void main(void)
       eventHandler(eca_ctrl, eca_queue, mil_piggy, config);
     }
 
-    DELAY1us;
+    //DELAY1us;
+    oled_loop(config, oled);
   } 
 } 

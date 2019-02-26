@@ -38,6 +38,7 @@ $(TARGET).elf: $(PATHFW)/$(TARGET).c                 \
 			   $(PATHFW)/wr_mil_config.c             \
 			   $(PATHFW)/wr_mil_delay.s              \
 			   $(PATHFW)/wr_mil_msi.c                \
+			   $(PATHFW)/wr_mil_oled.c               \
 			   $(PATHFW)/../../../top/gsi_scu/scu_mil.c
 
 clean::
