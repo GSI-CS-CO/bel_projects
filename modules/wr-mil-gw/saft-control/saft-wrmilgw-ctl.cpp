@@ -11,7 +11,6 @@
 // ==================================================================================================== 
 #include <stdio.h>
 #include <iostream>
-#include <giomm.h>
 
 #include "SAFTd.h"
 #include "EmbeddedCPUActionSink.h"
