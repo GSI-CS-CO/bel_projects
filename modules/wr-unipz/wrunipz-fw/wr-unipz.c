@@ -351,13 +351,28 @@ uint32_t getVaccLen(dataTable evts)
 uint64_t predictNxtCycle()
 {
   uint64_t predictLen;                                 // predicted length of current cycle
-  uint64_t predictT;                                   // predicted start of next cycle;     
+  uint64_t predictT;                                   // predicted start of next cycle;
+  uint64_t predictT1;                                  // prediction based on T1
+  uint64_t predictT2;                                  // prediction based on T2
+  uint64_t predictT3;                                  // prediction based on T3
+  uint64_t predictT4;                                  // prediction based on T4
+  
+  // predicted length of UNILAC cycle
+  predictLen = ((syncPrevT4 - syncPrevT0) >> 2);       // expected length of current UNILAC cycle (diff from 4 previous cycles divided by 4)
 
-  predictLen = ((syncPrevT4 - syncPrevT0) >> 2);       // expected length of current UNILAC cycle (calculated from 4 previous cycles and divided by 4)
-  if (predictLen > (uint32_t)WRUNIPZ_UNILACPERIODMAX) predictLen = (uint32_t)WRUNIPZ_UNILACPERIODMAX; // upper bound according to manual
-  if (predictLen < (uint32_t)WRUNIPZ_UNILACPERIODMIN) predictLen = (uint32_t)WRUNIPZ_UNILACPERIODMIN; // lower bound
-  predictT   = syncPrevT4 + predictLen;                // expected start of 50 Hz trigger (with data from the two previous cycles)
+  // predictions based on previous cycles
+  predictT4  = syncPrevT4 + 1 * predictLen;
+  predictT3  = syncPrevT3 + 2 * predictLen;
+  predictT2  = syncPrevT2 + 3 * predictLen;
+  predictT1  = syncPrevT1 + 4 * predictLen;
 
+  // average prediction
+  predictT   = (predictT4 >> 2) + (predictT3 >> 2) + (predictT2 >> 2) + (predictT1 >> 2); 
+
+  // check for limits
+  if ((predictT - syncPrevT4) > (uint64_t)WRUNIPZ_UNILACPERIODMAX) predictT = syncPrevT4 + (uint64_t)WRUNIPZ_UNILACPERIODMAX; // upper bound according to manual
+  if ((predictT - syncPrevT4) < (uint64_t)WRUNIPZ_UNILACPERIODMIN) predictT = syncPrevT4 + (uint64_t)WRUNIPZ_UNILACPERIODMIN; // lower bound
+  
   return predictT;
 } //predictNxtCyle
 
