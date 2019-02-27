@@ -256,7 +256,9 @@ void main(void)
       eventHandler(eca_ctrl, eca_queue, mil_piggy, config);
     }
 
-    //DELAY1us;
-    oled_loop(config, oled);
+    if (!oled_loop(config, oled)) {
+      DELAY1us; // little delay if nothing was written to display
+    }
+
   } 
 } 
