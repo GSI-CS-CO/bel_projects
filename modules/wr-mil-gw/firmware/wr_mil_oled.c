@@ -22,19 +22,25 @@ int oled_loop(volatile WrMilConfig *config, volatile uint32_t *oled)
 	return 0;
 }
 
+static char line0[]  = "WR-MIL-GW  ";
+static char line1a[] = "SIS18      ";
+static char line1b[] = "ESR        ";
+static char line1c[] = "NOT CONFIG.";
+static char line2[]  = "# events:  ";
+static char line4[]  = "# delayed: ";
+static int row, col;
 void oled_write_one_char(volatile WrMilConfig *config, volatile uint32_t *oled, int ch)
 {
-  static char line0[]  = "WR-MIL-GW  ";
-
-  static char line1a[] = "SIS18      ";
-  static char line1b[] = "ESR        ";
-  static char line1c[] = "NOT CONFIG.";
-
-  static char line2[]  = "# events:  ";
-  static char line4[]  = "# delayed: ";
-
-  int row = (ch-1)/11;
-  int col = (ch-1)%11;
+	if (ch == 0) {
+		row = -1;
+		col = 10;
+	} else {
+		++col;
+		if (col == 11) {
+			col = 0;
+			++row;
+		}
+	}
 
   if (config->state==WR_MIL_GW_STATE_CONFIGURED)
   {
