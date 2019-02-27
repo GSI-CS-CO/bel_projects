@@ -10,13 +10,17 @@
 ## Date:    22.01.2019                                                       ##
 ###############################################################################
 
-SCU_DIR = $(REPOSITORY_DIR)/top/gsi_scu
+TOP_DIR = $(REPOSITORY_DIR)/top
+
+SCU_DIR = $(TOP_DIR)/gsi_scu
+DAQ_DIR = $(TOP_DIR)/gsi_daq
 
 SCU_LIB_SRC_DIR = $(REPOSITORY_DIR)/modules/lm32-include
 WR_DIR          = $(REPOSITORY_DIR)/ip_cores/wrpc-sw
 
 INCLUDE_DIRS += $(SCU_LIB_SRC_DIR)
 INCLUDE_DIRS += $(SCU_DIR)
+INCLUDE_DIRS += $(DAQ_DIR)
 INCLUDE_DIRS += $(REPOSITORY_DIR)/tools
 INCLUDE_DIRS += $(WR_DIR)/include
 INCLUDE_DIRS += $(WR_DIR)/sdb-lib

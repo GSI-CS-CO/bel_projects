@@ -13,6 +13,7 @@ SOURCE += $(SCU_LIB_SRC_DIR)/shared_memory_helper.c
 SOURCE += $(SCU_LIB_SRC_DIR)/aux.c
 SOURCE += $(SCU_LIB_SRC_DIR)/irq.c
 
+# TOOLCHAIN_DIR = $(INCLUDED_TOOLCHAIN_DIR)
 
 include $(REPOSITORY_DIR)/makefiles/makefile.scu
 #=================================== EOF ======================================
