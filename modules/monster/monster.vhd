@@ -106,7 +106,8 @@ entity monster is
     g_lm32_are_ftm         : boolean;
     g_en_tempsens          : boolean;
     g_delay_diagnostics    : boolean;
-    g_en_eca               : boolean);
+    g_en_eca               : boolean;
+    g_en_wd_tmr            : boolean);
   port(
     -- Required: core signals
     core_clk_20m_vcxo_i    : in    std_logic;
@@ -1624,7 +1625,9 @@ end generate;
   wb_reset : wb_arria_reset
     generic map(
       arria_family => g_family,
-      rst_channels => g_lm32_cores)
+      rst_channels => g_lm32_cores,
+      clk_in_hz    => 62_500_000,
+      en_wd_tmr    => g_en_wd_tmr)
     port map(
       clk_sys_i  => clk_sys,
       rstn_sys_i => rstn_sys,
