@@ -1,10 +1,10 @@
 #include "wr_mil_oled.h"
 
-uint32_t oled_loop_counter = 0;
-uint32_t oled_char_counter = 0;
+static uint32_t oled_loop_counter = 0;
+static uint32_t oled_char_counter = 0;
 
-uint64_t oled_num_events = 0;
-uint32_t oled_num_delayed_events = 0;
+static uint64_t oled_num_events = 0;
+static uint32_t oled_num_delayed_events = 0;
 
 int oled_loop(volatile WrMilConfig *config, volatile uint32_t *oled)
 {
@@ -42,28 +42,28 @@ void oled_write_one_char(volatile WrMilConfig *config, volatile uint32_t *oled, 
 		}
 	}
 
-  if (config->state==WR_MIL_GW_STATE_CONFIGURED)
-  {
-	  if (row == 3 || row == 5)
-	  {
-	    if (col == 0) { oled[2] = '0'; return; }
-	    if (col == 1) { oled[2] = 'x'; return; }
-	    if (col == 10) { oled[2] = ' '; return; }
-	    int digit;
-	    if (row == 3) digit = ((oled_num_events)         >> (((9-col)*4))&0xf);
-	    if (row == 5) digit = ((oled_num_delayed_events) >> (((9-col)*4))&0xf);
-	    if (digit < 10) oled[2] = '0' + digit;
-	    else            oled[2] = 'a' + (digit-10);
-	    return;
-	  }
-	  if (row == 1 && config->event_source==WR_MIL_GW_EVENT_SOURCE_SIS) { oled[2] = line1a[col]; return; }
-	  if (row == 1 && config->event_source==WR_MIL_GW_EVENT_SOURCE_ESR) { oled[2] = line1b[col]; return; }
-	  if (row == 2) { oled[2] = line2[col]; return; }
-	  if (row == 4) { oled[2] = line4[col]; return; }
-  }
-  if (ch == 0) { oled[2] = '\r'; return; }
-  if (row == 0) { oled[2] = line0[col]; return; }
-  if (row == 1 && config->event_source==WR_MIL_GW_EVENT_SOURCE_UNKNOWN) { oled[2] = line1c[col]; return; }
-  oled[2] = ' ';
-  return;
+	if (config->state==WR_MIL_GW_STATE_CONFIGURED)
+	{
+		if (row == 3 || row == 5)
+		{
+			if (col == 0) { oled[2] = '0'; return; }
+			if (col == 1) { oled[2] = 'x'; return; }
+			if (col == 10) { oled[2] = ' '; return; }
+			int digit;
+			if (row == 3) digit = ((oled_num_events)         >> (((9-col)*4))&0xf);
+			if (row == 5) digit = ((oled_num_delayed_events) >> (((9-col)*4))&0xf);
+			if (digit < 10) oled[2] = '0' + digit;
+			else            oled[2] = 'a' + (digit-10);
+			return;
+		}
+		if (row == 1 && config->event_source==WR_MIL_GW_EVENT_SOURCE_SIS) { oled[2] = line1a[col]; return; }
+		if (row == 1 && config->event_source==WR_MIL_GW_EVENT_SOURCE_ESR) { oled[2] = line1b[col]; return; }
+		if (row == 2) { oled[2] = line2[col]; return; }
+		if (row == 4) { oled[2] = line4[col]; return; }
+	}
+	if (ch == 0) { oled[2] = '\r'; return; }
+	if (row == 0) { oled[2] = line0[col]; return; }
+	if (row == 1 && config->event_source==WR_MIL_GW_EVENT_SOURCE_UNKNOWN) { oled[2] = line1c[col]; return; }
+	oled[2] = ' ';
+	return;
 }
