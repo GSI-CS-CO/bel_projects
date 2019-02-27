@@ -49,16 +49,16 @@ bool op_ready(bool receiver_locked, bool firmware_running, int firmware_state);
 void print_firmware_state(guint32 firmware_state);
 void print_event_source(guint32 event_source);
 void print_in_use(bool in_use);
-void print_info1(Glib::RefPtr<TimingReceiver_Proxy> receiver, Glib::RefPtr<WrMilGateway_Proxy> wrmilgw);
-void print_info2(Glib::RefPtr<TimingReceiver_Proxy> receiver, Glib::RefPtr<WrMilGateway_Proxy> wrmilgw);
-void print_info3(Glib::RefPtr<TimingReceiver_Proxy> receiver, Glib::RefPtr<WrMilGateway_Proxy> wrmilgw);
-void createCondition(Glib::RefPtr<TimingReceiver_Proxy> receiver, guint64 eventID);
-void destroyGatewayConditions(Glib::RefPtr<TimingReceiver_Proxy> receiver);
+void print_info1(std::shared_ptr<TimingReceiver_Proxy> receiver, std::shared_ptr<WrMilGateway_Proxy> wrmilgw);
+void print_info2(std::shared_ptr<TimingReceiver_Proxy> receiver, std::shared_ptr<WrMilGateway_Proxy> wrmilgw);
+void print_info3(std::shared_ptr<TimingReceiver_Proxy> receiver, std::shared_ptr<WrMilGateway_Proxy> wrmilgw);
+void createCondition(std::shared_ptr<TimingReceiver_Proxy> receiver, guint64 eventID);
+void destroyGatewayConditions(std::shared_ptr<TimingReceiver_Proxy> receiver);
 void on_locked(bool is_locked);
 void on_firmware_running(bool is_running);
 void on_firmware_state(guint32 state);
 void on_event_source(guint32 source);
-void on_num_late_mil_events(guint32 total, guint32 since_last_signal, Glib::RefPtr<WrMilGateway_Proxy> wrmilgw);
+void on_num_late_mil_events(guint32 total, guint32 since_last_signal, std::shared_ptr<WrMilGateway_Proxy> wrmilgw);
 void on_in_use(bool in_use);
 
 // Function wrmilgw_help() 
@@ -149,7 +149,7 @@ void print_in_use(bool in_use)
 }
 
 // Print basic info
-void print_info1(Glib::RefPtr<TimingReceiver_Proxy> receiver, Glib::RefPtr<WrMilGateway_Proxy> wrmilgw)
+void print_info1(std::shared_ptr<TimingReceiver_Proxy> receiver, std::shared_ptr<WrMilGateway_Proxy> wrmilgw)
 {
   auto receiver_locked  = receiver->getLocked();
   auto firmware_running = wrmilgw->getFirmwareRunning();
@@ -168,7 +168,7 @@ void print_info1(Glib::RefPtr<TimingReceiver_Proxy> receiver, Glib::RefPtr<WrMil
 }
 
 // print number of events info
-void print_info2(Glib::RefPtr<TimingReceiver_Proxy> receiver, Glib::RefPtr<WrMilGateway_Proxy> wrmilgw)
+void print_info2(std::shared_ptr<TimingReceiver_Proxy> receiver, std::shared_ptr<WrMilGateway_Proxy> wrmilgw)
 {
   auto receiver_locked  = receiver->getLocked();
   auto firmware_running = wrmilgw->getFirmwareRunning();
@@ -205,7 +205,7 @@ void print_info2(Glib::RefPtr<TimingReceiver_Proxy> receiver, Glib::RefPtr<WrMil
 }
 
 // print timnig and UTC-trigger configuration info
-void print_info3(Glib::RefPtr<TimingReceiver_Proxy> receiver, Glib::RefPtr<WrMilGateway_Proxy> wrmilgw)
+void print_info3(std::shared_ptr<TimingReceiver_Proxy> receiver, std::shared_ptr<WrMilGateway_Proxy> wrmilgw)
 {
   std::cout << std::endl;
   std::cout << std::setw(key_width) << std::left << "MIL event latency:" 
@@ -228,20 +228,20 @@ void print_info3(Glib::RefPtr<TimingReceiver_Proxy> receiver, Glib::RefPtr<WrMil
 const auto SIS18EventID = UINT64_C(0x112c000000000000);
 const auto   ESREventID = UINT64_C(0x1154000000000000);
 
-void createCondition(Glib::RefPtr<TimingReceiver_Proxy> receiver, guint64 eventID)
+void createCondition(std::shared_ptr<TimingReceiver_Proxy> receiver, guint64 eventID)
 {
   // create the embedded CPU action sink for SIS18 WR events
-  std::map<Glib::ustring, Glib::ustring> e_cpus = receiver->getInterfaces()["EmbeddedCPUActionSink"];
+  std::map<std::string, std::string> e_cpus = receiver->getInterfaces()["EmbeddedCPUActionSink"];
   if (e_cpus.size() != 1)  {
-    throw IPC_METHOD::Error(IPC_METHOD::Error::FAILED, "No embedded CPU action sink found");
+    throw saftbus::Error(saftbus::Error::FAILED, "No embedded CPU action sink found");
   }
-  Glib::RefPtr<EmbeddedCPUActionSink_Proxy> e_cpu 
+  std::shared_ptr<EmbeddedCPUActionSink_Proxy> e_cpu 
       = EmbeddedCPUActionSink_Proxy::create(e_cpus.begin()->second);
   auto eventMask = UINT64_C(0xfffff00000000000);
   auto offset    = INT64_C(-100000);
   auto tag       = UINT32_C(0x4);
 
-  Glib::RefPtr<EmbeddedCPUCondition_Proxy> condition 
+  std::shared_ptr<EmbeddedCPUCondition_Proxy> condition 
       = EmbeddedCPUCondition_Proxy::create(e_cpu->NewCondition(true, eventID, eventMask, offset, tag));
   // Accept every kind of event 
   condition->setAcceptConflict(true);
@@ -250,20 +250,20 @@ void createCondition(Glib::RefPtr<TimingReceiver_Proxy> receiver, guint64 eventI
   condition->setAcceptLate(true);
   condition->Disown();
 }
-void destroyGatewayConditions(Glib::RefPtr<TimingReceiver_Proxy> receiver)
+void destroyGatewayConditions(std::shared_ptr<TimingReceiver_Proxy> receiver)
 {
   // Get the conditions
-  std::map<Glib::ustring, Glib::ustring> e_cpus = receiver->getInterfaces()["EmbeddedCPUActionSink"];
+  std::map<std::string, std::string> e_cpus = receiver->getInterfaces()["EmbeddedCPUActionSink"];
   if (e_cpus.size() != 1)  {
-    throw IPC_METHOD::Error(IPC_METHOD::Error::FAILED, "No embedded CPU action sink found");
+    throw saftbus::Error(saftbus::Error::FAILED, "No embedded CPU action sink found");
   }
-  Glib::RefPtr<EmbeddedCPUActionSink_Proxy> e_cpu 
+  std::shared_ptr<EmbeddedCPUActionSink_Proxy> e_cpu 
       = EmbeddedCPUActionSink_Proxy::create(e_cpus.begin()->second);
-  std::vector< Glib::ustring > all_conditions = e_cpu->getAllConditions();
+  std::vector< std::string > all_conditions = e_cpu->getAllConditions();
  
   // Destroy conditions if possible
   for (auto condition_name: all_conditions)  {
-    Glib::RefPtr<EmbeddedCPUCondition_Proxy> condition = EmbeddedCPUCondition_Proxy::create(condition_name);
+    std::shared_ptr<EmbeddedCPUCondition_Proxy> condition = EmbeddedCPUCondition_Proxy::create(condition_name);
     if (condition->getDestructible() && condition->getOwner() == "" &&
         condition->getMask() == UINT64_C(0xfffff00000000000) &&
         condition->getOffset() == INT64_C(-100000) &&
@@ -306,7 +306,7 @@ void on_event_source(guint32 source)
   print_event_source(source);
 }
 
-void on_num_late_mil_events(guint32 total, guint32 since_last_signal, Glib::RefPtr<WrMilGateway_Proxy> wrmilgw) 
+void on_num_late_mil_events(guint32 total, guint32 since_last_signal, std::shared_ptr<WrMilGateway_Proxy> wrmilgw) 
 {
   // If gateway is reset, callback will be called with total=0
   // To prevent this to be displayed as "late MIL event detected", 
@@ -431,7 +431,7 @@ int main (int argc, char** argv)
       wrmilgw_help();
       return -1;
     }
-    map<Glib::ustring, Glib::ustring> devices = SAFTd_Proxy::create()->getDevices();
+    map<std::string, std::string> devices = SAFTd_Proxy::create()->getDevices();
     if (devices.find(deviceName) == devices.end())  {
       std::cerr << "Device '" << deviceName << "' does not exist!" << std::endl;
       return -1;
@@ -441,16 +441,16 @@ int main (int argc, char** argv)
     saftlib::SignalGroup signal_group;
 
     // Get TimingReceiver Proxy
-    Glib::RefPtr<TimingReceiver_Proxy> receiver = TimingReceiver_Proxy::create(devices[deviceName], signal_group);
+    std::shared_ptr<TimingReceiver_Proxy> receiver = TimingReceiver_Proxy::create(devices[deviceName], signal_group);
 
     // Search for WR-MIL Gateway 
-    map<Glib::ustring, Glib::ustring> wrmilgws = receiver->getInterfaces()["WrMilGateway"];
+    map<std::string, std::string> wrmilgws = receiver->getInterfaces()["WrMilGateway"];
     if (wrmilgws.size() != 1) {
       std::cerr << "Device '" << receiver->getName() << "' has no WR-MIL Gateway!" << std::endl;
       return -1;
     }
     // Get Gateway Proxy
-    Glib::RefPtr<WrMilGateway_Proxy> wrmilgw = WrMilGateway_Proxy::create(wrmilgws.begin()->second, signal_group);
+    std::shared_ptr<WrMilGateway_Proxy> wrmilgw = WrMilGateway_Proxy::create(wrmilgws.begin()->second, signal_group);
 
     if (clearStat) {
       wrmilgw->ClearStatistics();
@@ -558,9 +558,28 @@ int main (int argc, char** argv)
     }
 
     if (read_registers) {
+      std::vector<std::string> registerNames;
+      registerNames.push_back("MAGIC_NUMBER ");
+      registerNames.push_back("COMMAND      ");
+      registerNames.push_back("UTC_TRIGGER  ");
+      registerNames.push_back("UTC_DELAY    ");
+      registerNames.push_back("TRIG_UTC_DELA");
+      registerNames.push_back("EVENT_SOURCE ");
+      registerNames.push_back("LATENCY      ");
+      registerNames.push_back("STATE        ");
+      registerNames.push_back("UTC_OFFSET_HI");
+      registerNames.push_back("UTC_OFFSET_LO");
+      registerNames.push_back("NUM_EVENTS_HI");
+      registerNames.push_back("NUM_EVENTS_LO");
+      registerNames.push_back("LATE_EVENTS  ");
       auto registerContent = wrmilgw->getRegisterContent();
+      unsigned idx = 0;
       for (auto reg: registerContent) {
-        std::cout << reg << std::endl;
+        std::cout << "0x" << std::hex << std::setfill('0') << std::setw(2) << idx << " " 
+                  << registerNames[idx] << " : " 
+                  << "0x" << std::hex << std::setfill('0') << std::setw(8) << reg 
+                  << std::dec << std::endl;
+        ++idx;          
       }
     }
 
@@ -686,7 +705,7 @@ int main (int argc, char** argv)
     }
     
   } 
-  catch (const Glib::Error& error)
+  catch (const saftbus::Error& error)
   {
     std::cerr << "Failed to invoke method: " << error.what() << std::endl;
   }
