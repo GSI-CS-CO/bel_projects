@@ -23,12 +23,28 @@
  ******************************************************************************
  */
 
-
+#include <daq_command_interface_uc.h>
 #include <daq.h>
-
+#ifdef DEBUGLEVEL
+#include <mini_sdb.h>
+#include <eb_console_helper.h>
+#include <dbg.h>
+#endif
 
 void main( void )
 {
+#ifdef DEBUGLEVEL
+   discoverPeriphery();
+   uart_init_hw();
+   gotoxy( 0, 0 );
+   clrscr();
+   DBPRINT1( "DAQ control started\n" );
+#endif
+
+   while( true )
+   {
+      executeIfRequested();
+   }
 }
 
 /*================================== EOF ====================================*/

@@ -24,8 +24,9 @@ SOURCE += $(WR_DIR)/dev/w1-temp.c
 SOURCE += $(SCU_LIB_SRC_DIR)/scu_ddr3.c
 SOURCE += $(SCU_LIB_SRC_DIR)/scu_ramBuffer.c
 
+DEFINES += DEBUGLEVEL=1
 DEFINES += CONFIG_SCU_USE_DDR3
-SHARED_SIZE = 128
+SHARED_SIZE = 32
 
 include $(REPOSITORY_DIR)/makefiles/makefile.scu
 #=================================== EOF ======================================

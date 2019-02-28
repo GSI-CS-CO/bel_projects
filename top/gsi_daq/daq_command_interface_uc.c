@@ -24,5 +24,87 @@
  ******************************************************************************
  */
 #include <daq_command_interface_uc.h>
+#include <scu_lm32_macros.h>
+#include <dbg.h>
+
+volatile DAQ_SHARED_IO_T SHARED g_shared =
+{
+   .magicNumber = DAQ_MAGIC_NUMBER,
+   .ramIndexes  = RAM_RING_SHARED_OBJECT_INITIALIZER,
+   .operation =
+   {
+      .code   = DAQ_OP_NO,
+      .retCode  = 0
+   }
+};
+
+typedef int32_t (*DAQ_OPERATION_FT)( volatile DAQ_OPERATION_IO_T* );
+
+typedef struct
+{
+   DAQ_OPERATION_CODE_T code;
+   DAQ_OPERATION_FT     operation;
+} DAQ_OPERATION_TAB_ITEM_T;
+
+#define DAQ_OPERATION_ITEM_TERMINATOR { .code = DAQ_OP_NO, .operation = NULL }
+
+
+/*! ---------------------------------------------------------------------------
+ */
+static
+int32_t opReset( volatile DAQ_OPERATION_IO_T* pData )
+{
+   DBPRINT1( "DBG: executing %s\n", __func__ );
+   return DAQ_RET_OK;
+}
+
+static int32_t opGetStatus( volatile DAQ_OPERATION_IO_T* pData )
+{
+   DBPRINT1( "DBG: executing %s\n", __func__ );
+   return DAQ_RET_OK;
+}
+
+static int32_t opRescan( volatile DAQ_OPERATION_IO_T* pData )
+{
+   DBPRINT1( "DBG: executing %s\n", __func__ );
+   return DAQ_RET_OK;
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+const DAQ_OPERATION_TAB_ITEM_T g_operationTab[] =
+{
+   { .code = DAQ_OP_RESET,           .operation = opReset     },
+   { .code = DAQ_OP_GET_STATUS,      .operation = opGetStatus },
+   { .code = DAQ_OP_RESCAN,          .operation = opRescan    },
+   DAQ_OPERATION_ITEM_TERMINATOR
+};
+
+/*! ---------------------------------------------------------------------------
+ */
+void executeIfRequested( void )
+{
+   if( g_shared.operation.code == DAQ_OP_NO )
+      return;
+
+   unsigned int i = 0;
+   while( g_operationTab[i].operation != NULL )
+   {
+      if( g_operationTab[i].code == g_shared.operation.code )
+      {
+         g_shared.operation.retCode =
+            g_operationTab[i].operation( &g_shared.operation.ioData );
+         break;
+      }
+      i++;
+   }
+   if( g_operationTab[i].operation == NULL )
+   {
+      DBPRINT1( "DBG: DAQ_RET_ERR_UNKNOWN_OPERATION\n" );
+      g_shared.operation.retCode = DAQ_RET_ERR_UNKNOWN_OPERATION;
+   }
+
+   g_shared.operation.code = DAQ_OP_NO;
+}
 
 /*================================== EOF ====================================*/

@@ -30,5 +30,19 @@
 #endif
 #include <daq_command_interface.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/*! ---------------------------------------------------------------------------
+ * @brief Executes a a from host (Linux) requested function.
+ */
+void executeIfRequested( void );
+
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif /* ifndef _DAQ_COMMAND_INTERFACE_UC_H */
 /*================================== EOF ====================================*/
