@@ -56,8 +56,8 @@ endif
 
 
 EXTRA_FLAGS ?= $(USEMASP) $(PRODUCTIVE)
-CFLAGS      ?= `pkg-config giomm-2.4 saftlib --cflags` $(EXTRA_FLAGS) -Wall -O2 -g -I $(EB) -I $(FW) $(BOOST_INCL) $(MASP_INCL) 
-LIBS        ?= `pkg-config giomm-2.4 saftlib --libs` -L $(EB)/.libs $(BOOST_LIBPATH) $(MASP_LIBPATH) -Wl,-rpath,$(PREFIX)/lib -letherbone -lm $(MASP_LIBS) $(GENERAL_LIBS) $(BOOST_LIBS) 
+CFLAGS      ?= `pkg-config sigc++-2.0 --cflags` `pkg-config --define-variable=prefix=$(PREFIX) saftlib --cflags` $(EXTRA_FLAGS) -Wall -O2 -g -I $(EB) -I $(FW) $(BOOST_INCL) $(MASP_INCL) 
+LIBS        ?= `pkg-config sigc++-2.0 --libs`   `pkg-config --define-variable=prefix=$(PREFIX) saftlib --libs` -L $(EB)/.libs $(BOOST_LIBPATH) $(MASP_LIBPATH) -Wl,-rpath,$(PREFIX)/lib -letherbone -lm $(MASP_LIBS) $(GENERAL_LIBS) $(BOOST_LIBS) 
 CC          = g++ --std=c++0x
 
 #EXTRA_FLAGS ?=
