@@ -14,7 +14,7 @@
 CPU     := $(shell uname -m)
 
 CC      = $(GCC_BIN_DIR)gcc -std=c99
-CXX     = $(GCC_BIN_DIR)g++
+CXX     = $(GCC_BIN_DIR)g++ -std=c++11
 LD      = $(GCC_BIN_DIR)gcc
 OBJCPY  = $(GCC_BIN_DIR)objcopy
 OBJDUMP = $(GCC_BIN_DIR)objdump
