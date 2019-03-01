@@ -57,20 +57,31 @@
 #include "../../ip_cores/wr-cores/modules/wr_eca/eca_regs.h"
 #include "../../ip_cores/saftlib/drivers/eca_flags.h"
 #include "../../ip_cores/wr-cores/modules/wr_eca/eca_queue_regs.h"
-#include "../wr-unipz/include/wr-unipz.h"
+#include "../wr-unipz/include/wr-unipz.h" // findEcaQueue()
+
+const unsigned char fwName[] = {"burstgen\0"};
+const unsigned char errMsgEcaMsi[] = {"Cannot en/disable ECA MSI path to mailbox.\0"};
+
+/* ECA channels and id for LM32 channel */
+#define ECAQMAX           4     // max number of ECA channels in the system
+#define ECACHANNELFORLM32 2     // this is a hack! suggest implementing finding via sdb-record and info
 
 /* definitions of LM32 action events */
 #define MY_ECA_TAG  0x42  // ECA actions tagged for me
-uint32_t myTimingEvent[8];
+#define LEN_EVENT   0x8   // length of timing event in bytes
+uint32_t gEvtId = 0xEEEE0000; // default event id
+volatile int32_t gBurstCnt = 0;   // flag to start/stop burst generation: stop = 0, start != 0 (positive = number of burst series, negative = endless)
+
+uint32_t myTimingEvent[LEN_EVENT];
 void injectTimingEvent(uint32_t *msg);
 
-// ECA rules for IO channel for burst
+/* ECA burst rules for IO channel */
 typedef struct {
   uint32_t nConditions; // number of ECA conditions
   uint32_t tOffset;     // and their offsets
 } ecaIoRules_s;
 
-// desired pulse frequencies
+/* conditioned pulse frequencies */
 enum {
   M_12_5 = 0, // 12,5 MHz
   M_10,      // 10 MHz
@@ -83,7 +94,7 @@ enum {
   N_FREQ
 };
 
-// pulse generation based on ECA IO rules
+/* pulse generation based on ECA burst rules */
 ecaIoRules_s ioPulses[N_FREQ] = {
   {250,40}, {200,50}, {100,250}, {100,500}, {100,1000}, {100,5000}, {10,50000}, {10,500000}};
 /* 12,5 MHz, 10 MHz,   2 MHz,     1 MHz,     500 KHz,    100 KHz,    10 KHz,     1 KHz */
@@ -110,26 +121,56 @@ volatile uint32_t *pShared;         // pointer to begin of shared memory region
 volatile uint32_t *pSharedBuff1;    // pointer to buffer in shared memory
 volatile uint32_t *pSharedBuff2;    // pointer to buffer in shared memory
 volatile uint32_t *pCpuRamExternal; // external address (seen from host bridge) of this CPU's RAM
+int ecaChannel = 0;                 // ECA channel for an embedded CPU (LM32), connected to ECA queue pointed by pECAQ
 
-void init()
-{
-  discoverPeriphery();    // mini-sdb: get info on important Wishbone infrastructure, such as (this) CPU, flash, ...
+/***********************************************************
+ *
+ * configure ECA to send MSI interruption to mailbox:
+ * - MSI interrupt is triggered on reception of timing events in the ECA queue connected to the given channel
+ * - Hence, ECA needs that output channel and target address of the configuration register in the given mailbox slot
+ *
+ ***********************************************************/
+void configureEcaMsi(int enable, uint32_t channel, uint32_t mbSlot) {
 
-  mprintf("Found MsgBox at 0x%08x. MSI Path is 0x%08x\n", (uint32_t)pCpuMsiBox, (uint32_t)pMyMsi);
+  if (enable != 0 && enable != 1) {
+    mprintf("%s: Bad enable argument. %s\n", fwName, errMsgEcaMsi);
+    return;
+  }
 
-  uart_init_hw();         // init UART, required for printf... . To view print message, you may use 'eb-console' from the host
-  cpuId = getCpuIdx();    // get ID of THIS CPU
+  if (channel > ECAQMAX) {
+     mprintf("%s: Bad channel argument. %s\n", fwName, errMsgEcaMsi);
+    return;
+  }
 
-  pEcaCtl = find_device_adr(ECA_SDB_VENDOR_ID, ECA_SDB_DEVICE_ID);
+  uint32_t mbCfgOff = (mbSlot << 3) + 4; // get offset address of configuration register for the given mailbox slot, configAddr = (8*slot)+4
 
-  timer_init(1);          // needed by usleep_init()
-  usleep_init();          // needed by scu_mil.c
+  *(pEcaCtl + (ECA_CHANNEL_SELECT_RW >> 2)) = channel;            // select channel
+  *(pEcaCtl + (ECA_CHANNEL_MSI_SET_ENABLE_OWR >> 2)) = 0;         // disable ECA MSI, it's always required to set a target address
+  *(pEcaCtl + (ECA_CHANNEL_MSI_SET_TARGET_OWR >> 2)) = (uint32_t)pCpuMsiBox + mbCfgOff;  // set configuration register absolute address of the given mailbox slot as a target address
+  *(pEcaCtl + (ECA_CHANNEL_MSI_SET_ENABLE_OWR >> 2)) = enable;    // enable/disable ECA MSI
 
-  //isr_table_clr();        // set MSI IRQ handler
-  //irq_set_mask(0x01);     // ...
-  //irq_disable();          // ...
-} // init
+  mprintf("%s: MSI path from ECA to mbox is %s (ECA channel = %d, mbox slot = %d (config offset 0x%08x)\n", fwName, enable==1?"enabled":"disabled", channel, mbSlot, mbCfgOff);
+}
 
+/***********************************************************
+ *
+ * interrupt handling
+ *
+ ***********************************************************/
+void irqHandler() {
+
+  gBurstCnt = (int32_t)global_msi.msg;
+  mprintf(" MSI:\t%08x\nCnt:\t%d\n", global_msi.msg, gBurstCnt);
+  //mprintf(" MSI:\t%08x\nAdr:\t%08x\nSel:\t%01x\nCnt:\t%d\n", global_msi.msg, global_msi.adr, global_msi.sel, gBurstCnt);
+}
+
+void initIrqTable() {
+  isr_table_clr();
+  isr_ptr_table[0] = &irqHandler;
+  irq_set_mask(0x01);
+  irq_enable();
+  mprintf("Init IRQ table is done.\n");
+}
 
 /***********************************************************
  *
@@ -152,7 +193,7 @@ void initSharedMem()
   pSharedBuff2   = (uint32_t *)(pShared + NWORDS);          // 2nd buffer in shared memory
 
   // print pointer info to UART
-  mprintf("burstgen: internal shared memory: start            @ 0x%08x\n", (uint32_t)pShared);
+  mprintf("%s: internal shared memory: start            @ 0x%08x\n", fwName, (uint32_t)pShared);
 
   // get pointer to shared memory; external perspective from host bridge
   idx = 0;
@@ -162,25 +203,28 @@ void initSharedMem()
   if(idx >= cpuId) {
     pCpuRamExternal = (uint32_t*)(getSdbAdr(&found_sdb[cpuId]) & 0x7FFFFFFF); // CPU sees the 'world' under 0x8..., remove that bit to get host bridge perspective
     // print external WB info to UART
-    mprintf("burstgen: external shared memory: start            @ 0x%08x\n", (uint32_t)(pCpuRamExternal + (SHARED_OFFS >> 2)));
+    mprintf("%s: external shared memory: start            @ 0x%08x\n", fwName, (uint32_t)(pCpuRamExternal + (SHARED_OFFS >> 2)));
   } else {
     pCpuRamExternal = (uint32_t*)ERROR_NOT_FOUND;
-    mprintf("burstgen: could not find external WB address of my own RAM !\n");
+    mprintf("%s: could not find external WB address of my own RAM !\n", fwName);
   }
-} // useSharedMem
+}
 
-uint32_t findEcaQueue() // find WB address of ECA channel for LM32
+/***********************************************************
+ *
+ * find WB address of ECA queue connect to LM32 channel
+ * - return Ok if a queue is found, otherwise return ERROR
+ * - ECA queue address is set to "pECAQ"
+ * - number of LM32 channel is set to "ecaChannel"
+ *
+ ***********************************************************/
+uint32_t findEcaQueue()
 {
-#define ECAQMAX           4     // max number of ECA channels in the system
-#define ECACHANNELFORLM32 2     // this is a hack! suggest implementing finding via sdb-record and info
-
-  // stuff below needed to get WB address of ECA queue
   sdb_location EcaQ_base[ECAQMAX];
   uint32_t EcaQ_idx = 0;
   uint32_t *tmp;
   int i;
 
-  // get Wishbone address of ECA queue
   // get list of ECA queues
   find_device_multi(EcaQ_base, &EcaQ_idx, ECAQMAX, ECA_QUEUE_SDB_VENDOR_ID, ECA_QUEUE_SDB_DEVICE_ID);
   pECAQ = 0x0;
@@ -188,10 +232,11 @@ uint32_t findEcaQueue() // find WB address of ECA channel for LM32
   // find ECA queue connected to ECA channel for LM32
   for (i=0; i < EcaQ_idx; i++) {
     tmp = (uint32_t *)(getSdbAdr(&EcaQ_base[i]));
-    mprintf("-- found ECA queue%d @ 0x%08x\n", i, (uint32_t)tmp);
+    mprintf("-- found ECA queue 0x%08x @ channel %d\n", (uint32_t)tmp, i);
     if ( *(tmp + (ECA_QUEUE_QUEUE_ID_GET >> 2)) == ECACHANNELFORLM32) {
-      pECAQ = tmp;
-      i = EcaQ_idx;
+      pECAQ = tmp;    // update global variables
+      ecaChannel = i;
+      i = ECAQMAX;    // break loop
     }
   }
 
@@ -199,7 +244,7 @@ uint32_t findEcaQueue() // find WB address of ECA channel for LM32
     return WRUNIPZ_STATUS_OK;
   else
     return WRUNIPZ_STATUS_ERROR;
-} // findEcaQueue
+}
 
 /*************************************************************
 *
@@ -239,7 +284,7 @@ void ecaHandler()
     switch (actTag) {
     case MY_ECA_TAG:
       mprintf("EvtID: 0x%08x%08x; deadline: 0x%08x%08x; flag: 0x%08x\n", evtIdHigh, evtIdLow, evtDeadlHigh, evtDeadlLow, flag);
-      injectTimingEvent(myTimingEvent); // inject timing event for generating pulses
+      //injectTimingEvent(myTimingEvent); // inject timing event for generating pulses
       break;
     default:
       mprintf("ecaHandler: unknown tag\n");
@@ -251,12 +296,13 @@ void ecaHandler()
 /***********************************************************
  *
  * construct a timing event for ECA input
+ * - uses fixed event ID
  *
  ***********************************************************/
-void constructTimingEvent(uint32_t *msg)
+void constructTimingEvent(uint32_t *msg, uint32_t id)
 {
     // construct an event
-    *msg = 0xEEEE0000; // FID+GID*EVTNO+flags
+    *msg = id; // FID+GID*EVTNO+flags
     *(msg +1) = 0x0; // SID+BPID+resrv
     *(msg +2) = 0x0; // param_up
     *(msg +3) = 0x0; // param_lo
@@ -265,7 +311,7 @@ void constructTimingEvent(uint32_t *msg)
     *(msg +6) = 0x0;
     *(msg +7) = 0x0;
 
-    mprintf("\ninject event\n");
+    mprintf("\nconstructed event\n");
     mprintf("event: %x-%x\n",msg[0], msg[1]);
     mprintf("param: %x-%x\n",msg[2], msg[3]);
     mprintf("resrv: %x\n",msg[4]);
@@ -275,28 +321,64 @@ void constructTimingEvent(uint32_t *msg)
 
 /***********************************************************
  *
- * inject a timing event to ECA input locally
- * get White Rabbit time from ECA
+ * inject the given timing event to ECA event input
  *
  ***********************************************************/
 void injectTimingEvent(uint32_t *msg)
 {
     atomic_on();
-    *pEca = msg[0];
-    *pEca = msg[1];
-    *pEca = msg[2];
-    *pEca = msg[3];
-    *pEca = msg[4];
-    *pEca = msg[5];
-    *pEca = msg[6];
-    *pEca = msg[7];
+
+    for (int i = 0; i < LEN_EVENT; i++)
+      *pEca = msg[i];
+
     atomic_off();
 }
 
-void main(void) {
-  uint32_t i, j, nEvnt = 5;
+void init()
+{
+  discoverPeriphery();    // mini-sdb: get info on important Wishbone infrastructure, such as (this) CPU, flash, ...
 
-  uint64_t t1, t2, tPeriod, tInject, tWait, tDeadline;
+  if (pEca)
+    mprintf("Found ECA event input: 0x%08x\n", (uint32_t) pEca);
+  else {
+    mprintf("No ECA event input found. Exit!\n");
+    return;
+  }
+
+  mprintf("Found mailbox at 0x%08x. My MSI path is 0x%08x\n", (uint32_t)pCpuMsiBox, (uint32_t)pMyMsi);
+
+  uart_init_hw();         // init UART, required for printf... . To view print message, you may use 'eb-console' from the host
+  cpuId = getCpuIdx();    // get ID of THIS CPU
+
+  pEcaCtl = find_device_adr(ECA_SDB_VENDOR_ID, ECA_SDB_DEVICE_ID);
+
+  if (pEcaCtl)
+    mprintf("Found ECA control: 0x%08x\n", (uint32_t) pEcaCtl);
+  else {
+    mprintf("No ECA control found. Exit!\n");
+    return;
+  }
+
+  if (findEcaQueue() == WRUNIPZ_STATUS_OK)
+    mprintf("Addr of ECA queue connected to ECA channel for LM32: 0x%08x\n", (uint32_t) pECAQ);
+  else {
+    mprintf("No ECA queue connected to LM32 channel found\n");
+    return;
+  }
+
+  timer_init(1);          // needed by usleep_init()
+  usleep_init();          // needed by scu_mil.c
+
+  isr_table_clr();        // set MSI IRQ handler
+  irq_set_mask(0x01);     // ...
+  irq_disable();          // ...
+}
+
+void main(void) {
+
+  uint32_t i, j, mbSlot;
+
+  uint64_t t1, t2;
   uint32_t dt1, dt2, dt3, dt4, dt5, dt6, dt7, dt8;
 
   uint32_t data1, data2, data3, data4, data5, data6, data7, data8;
@@ -304,55 +386,84 @@ void main(void) {
   data1 = 0xdeadbeef;
   data2 = 0xcafebabe;
 
-  init();                     // initialize 'boot' lm32
+  init();                     // discover mailbox, own MSI path, ECA event input, ECA queue for LM32 channel
   initSharedMem();            // init shared memory
 
-  // report address of all required WB devices if they were detected, otherwise exit
-  if (pEcaCtl) mprintf("Addr of ECA control: 0x%08x\n", (uint32_t) pEcaCtl);
-  else      {  mprintf("ECA control addr is not found\n"); return;}
-
-  if (pEca)    mprintf("Addr of ECA event input: 0x%08x\n", (uint32_t) pEca);
-  else      {  mprintf("ECA event input is not found\n");  return;}
-
-  if (findEcaQueue() == WRUNIPZ_STATUS_OK)
-         mprintf("Addr of ECA queue connected to ECA channel for LM32: 0x%08x\n", (uint32_t) pECAQ);
-  else { mprintf("ECA queue connected to ECA channel for LM32 is not found\n");  return;}
-
-  constructTimingEvent(myTimingEvent); // construct a timing event
+  /* burst generation setup */
+  uint64_t t, tPeriod, tInject, tWait, tDeadline;
 
   // set time interval needed for sending timing event periodically
   ecaIoRules_s *pulse = &ioPulses[K_500]; // generate pulses with the chosen frequency (stable up to 500KHz)
   tPeriod = pulse->nConditions * pulse->tOffset;
 
+  constructTimingEvent(myTimingEvent, gEvtId << 1); // construct a dummy timing event to measure initial injection duration
+
   // set up event injection
-  t1 = getSysTime();
-  tDeadline = getSysTime() + tPeriod; // set initial deadline
+  t = getSysTime();
+  tDeadline = getSysTime(); // set deadline to late
 
   *(myTimingEvent +6) = (uint32_t)((tDeadline >> 32) & 0xFFFFFFFF);
   *(myTimingEvent +7) = (uint32_t)(tDeadline & 0xFFFFFFFF);
 
-  // inject the first event
+  // inject the dummy late event
   injectTimingEvent(myTimingEvent);
 
-  tInject = getSysTime() - t1; // get injection duration
+  tInject = getSysTime() - t; // get injection duration
   tInject <<= 1;
+  mprintf("\n%s: min injection setup (hex ns) = 0x%x%08x\n", fwName, (uint32_t) (tInject >> 32), (uint32_t) tInject );
 
-  // repeat the injection
-#if 1
+  constructTimingEvent(myTimingEvent, gEvtId); // construct my timing event
+
+  /* MSI interrupt hanlder setup */
+  mbSlot = getMsiBoxSlot(0x0); // mailbox is used for MSI message delivery from ECA to LM32 (first part of MSI/mailbox configuration)
+
+  if (mbSlot == -1)  {
+    mprintf("No free slots in mailbox. Exit!\n");
+    return;
+  }
+  else  {
+    configureEcaMsi(1, ecaChannel, mbSlot); // allow MSI path from ECA to mailbox (second part of MSI/mailbox configuration)
+    mprintf("Configured slot %d in mailbox\n", mbSlot);
+  }
+
+  initIrqTable();              // set up MSI interupt handler
+
+  mprintf("waiting for MSI ...\n");
+
+  /* main loop */
   while(1) {
-#else
-  for (i = 0; i < nEvnt; i++) {
-#endif
 
-    tDeadline += tPeriod;   // set next deadline
-    *(myTimingEvent +6) = (uint32_t)((tDeadline >> 32) & 0xFFFFFFFF);
-    *(myTimingEvent +7) = (uint32_t)(tDeadline & 0xFFFFFFFF);
+    tDeadline = getSysTime(); // update deadline
 
+    // repeat the event injection
+    while (gBurstCnt != 0) {
+
+      tDeadline += tPeriod;   // set next deadline
+      *(myTimingEvent +6) = (uint32_t)((tDeadline >> 32) & 0xFFFFFFFF);
+      *(myTimingEvent +7) = (uint32_t)(tDeadline & 0xFFFFFFFF);
+
+      do {
+        t = getSysTime();
+      } while ((tDeadline - t) > tInject && tDeadline > t); // wait until setup due or late!
+
+      injectTimingEvent(myTimingEvent);
+
+      if (gBurstCnt > 0) {
+        if (--gBurstCnt == 0)
+          mprintf("burst gen completed: Cnt=%d\n", gBurstCnt);
+      }
+    };
+
+    t1 = getSysTime();
     do {
-      t1 = tDeadline - getSysTime();
-    } while (t1 > tInject); // wait until setup due
+      t2 = getSysTime() - t1;
+      if (gBurstCnt != 0)
+        break;      // break loop on new value of loop
+      else
+        asm("nop");
+    } while (t2 < 10000000000); // 10 second
 
-    injectTimingEvent(myTimingEvent);
+    mprintf("idle: elapsed %d ms\n",(uint32_t)(t2 / 1000000));
   }
 
 #if 0
@@ -374,7 +485,7 @@ void main(void) {
 
   // read from shared ram and check values
   for (i=0; i<NWORDS; i++) {
-    if (pSharedBuff2[i] != data1) mprintf("burstgen: shared mem messed up\n");
+    if (pSharedBuff2[i] != data1) mprintf("%s: shared mem messed up\n", fwName);
   } // for i
 
   // read from shared ram
