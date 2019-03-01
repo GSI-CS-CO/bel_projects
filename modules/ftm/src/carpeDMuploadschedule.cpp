@@ -356,15 +356,64 @@ using namespace DotStr::Misc;
     for(unsigned int i = 0; i < atUp.getMemories().size(); i++) {
       if (!freshDownload || (atUp.getMemories()[i].getBmp() != atDown.getMemories()[i].getBmp()) ) moddedCpus.insert(i); // mark cpu as modified if alloctable empty or Bmp Changed
     }
-
+    vEbwrs ew, ewChg, ewOrphans;
     generateMgmtData();
-    vEbwrs ew = gatherUploadVector(moddedCpus, 0, opType); //TODO not using modCnt right now, maybe implement later
-    deactivateOrphanedCommands(ew, vQr);
+    ewChg = gatherUploadVector(moddedCpus, 0, opType); //TODO not using modCnt right now, maybe implement later
+    deactivateOrphanedCommands(ewOrphans, vQr);
+  /*  
+    //Simulate orphan cleanup memory corruption bug
+    const  int dummy = 14;
+    ewOrphans.va.push_back(ewChg.va[dummy]);
+    ewOrphans.vb.push_back(0xDE);
+    ewOrphans.vb.push_back(0xAD);
+    ewOrphans.vb.push_back(0xBE);
+    ewOrphans.vb.push_back(0xEF);
+    ewOrphans.vcs.push_back(ewChg.vcs[dummy]);
+   /
+    std::string sDebug;
+    auto adri = ewOrphans.va.begin();
+    auto dati = ewOrphans.vb.begin();
+    while (adri != ewOrphans.va.end() and dati != ewOrphans.vb.end())
+    {
+      auto adr = adri;
+      auto dat = dati;
+      uint8_t b[4] = {*(dat+0), *(dat+1), *(dat+2), *(dat+3)};
+      auto iHit = std::find(ewChg.va.begin(), ewChg.va.end(), *adr);
+
+      if(iHit != ewChg.va.end()) {
+        std::stringstream auxstream;
+        uint32_t val = writeBeBytesToLeNumber<uint32_t>((uint8_t*)&b[0]);
+        auto idx = (iHit - ewChg.va.begin()) * 4;
+      
+        ewChg.vb[idx+0] = 0xca;
+        ewChg.vb[idx+1] = 0xfe;
+        ewChg.vb[idx+2] = 0xba;
+        ewChg.vb[idx+3] = 0xbe;
+
+        uint8_t b1[4] = {ewChg.vb[idx+0], ewChg.vb[idx+1], ewChg.vb[idx+2], ewChg.vb[idx+3]};
+ 
+        uint32_t hitval = writeBeBytesToLeNumber<uint32_t>((uint8_t*)&b1[0]);
+ 
+        auxstream << " A 0x" << std::setfill('0') << std::setw(8) << std::hex << *adr << " D 0x" << std::setfill('0') << std::setw(8) << std::hex << val << " Destroys: 0x" << std::setfill('0') << std::setw(8) << std::hex << hitval << std::endl;
+        sDebug += auxstream.str();
+      }
+      adri++;
+      dati+=4;  
+    }
+    if (sDebug.size()  > 0) {
+      sErr << "Possible access violation: Orphaned command cleanup routine tried to overwrite otherwise modified nodes. List of conflicting EB write ops:\n" << sDebug << std::endl;
+      //throw std::runtime_error("Possible access violation: Orphaned command cleanup routine tried to overwrite otherwise modified nodes. List of conflicting EB write ops:\n" + sDebug);
+    
+    }  
+*/      
+    ew = ewOrphans + ewChg; //order is critical !!!
+
     //Upload
     ebd.writeCycle(ew.va, ew.vb, ew.vcs);
     if(verbose) sLog << "Done." << std::endl;
     freshDownload = false;
     return ew.va.size();
+    
   }
 
   void CarpeDM::baseUploadOnDownload() {
