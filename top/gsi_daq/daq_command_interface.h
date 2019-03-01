@@ -53,10 +53,17 @@
  */
 typedef enum
 {
-   DAQ_OP_NO          = 0,
-   DAQ_OP_RESET       = DAQ_OP_OFFSET + 1,
-   DAQ_OP_GET_STATUS  = DAQ_OP_OFFSET + 2,
-   DAQ_OP_RESCAN      = DAQ_OP_OFFSET + 3
+   DAQ_OP_IDLE         = 0,
+   DAQ_OP_LOCK         = DAQ_OP_OFFSET +  1,
+   DAQ_OP_UNLOCK       = DAQ_OP_OFFSET +  2,
+   DAQ_OP_RESET        = DAQ_OP_OFFSET +  3,
+   DAQ_OP_GET_SLOTS    = DAQ_OP_OFFSET +  4,
+   DAQ_OP_GET_CHANNELS = DAQ_OP_OFFSET +  5,
+   DAQ_OP_RESCAN       = DAQ_OP_OFFSET +  6,
+   DAQ_OP_PM_ON        = DAQ_OP_OFFSET +  7,
+   DAQ_OP_HIRES_ON     = DAQ_OP_OFFSET +  8,
+   DAQ_OP_CONTINUE_ON  = DAQ_OP_OFFSET +  9,
+   DAQ_OP_OFF          = DAQ_OP_OFFSET + 10
 } DAQ_OPERATION_CODE_T;
 STATIC_ASSERT( sizeof( DAQ_OPERATION_CODE_T ) == sizeof(uint32_t) );
 
@@ -67,9 +74,13 @@ typedef struct PACKED_SIZE
 } DAQ_CHANNEL_LOCATION_T;
 STATIC_ASSERT( sizeof( DAQ_CHANNEL_LOCATION_T ) == 2 * sizeof(uint16_t));
 
-typedef union PACKED_SIZE
+typedef struct PACKED_SIZE
 {
    DAQ_CHANNEL_LOCATION_T location;
+   uint16_t param1;
+   uint16_t param2;
+   uint16_t param3;
+   uint16_t param4;
 } DAQ_OPERATION_IO_T;
 
 typedef struct PACKED_SIZE

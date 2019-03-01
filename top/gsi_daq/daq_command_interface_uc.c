@@ -27,16 +27,18 @@
 #include <scu_lm32_macros.h>
 #include <dbg.h>
 
+/*!!!!!!!!!!!!!!!!!!!!!! Begin of shared memory area !!!!!!!!!!!!!!!!!!!!!!!!*/
 volatile DAQ_SHARED_IO_T SHARED g_shared =
 {
    .magicNumber = DAQ_MAGIC_NUMBER,
    .ramIndexes  = RAM_RING_SHARED_OBJECT_INITIALIZER,
    .operation =
    {
-      .code   = DAQ_OP_NO,
-      .retCode  = 0
+      .code    = DAQ_OP_IDLE,
+      .retCode = 0
    }
 };
+/*!!!!!!!!!!!!!!!!!!!!!!! End of shared memory area !!!!!!!!!!!!!!!!!!!!!!!!!*/
 
 typedef int32_t (*DAQ_OPERATION_FT)( volatile DAQ_OPERATION_IO_T* );
 
@@ -46,7 +48,7 @@ typedef struct
    DAQ_OPERATION_FT     operation;
 } DAQ_OPERATION_TAB_ITEM_T;
 
-#define DAQ_OPERATION_ITEM_TERMINATOR { .code = DAQ_OP_NO, .operation = NULL }
+#define DAQ_OPERATION_ITEM_TERMINATOR { .code = DAQ_OP_IDLE, .operation = NULL }
 
 
 /*! ---------------------------------------------------------------------------
@@ -58,12 +60,16 @@ int32_t opReset( volatile DAQ_OPERATION_IO_T* pData )
    return DAQ_RET_OK;
 }
 
-static int32_t opGetStatus( volatile DAQ_OPERATION_IO_T* pData )
+/*! ---------------------------------------------------------------------------
+ */
+static int32_t opGetSlots( volatile DAQ_OPERATION_IO_T* pData )
 {
    DBPRINT1( "DBG: executing %s\n", __func__ );
    return DAQ_RET_OK;
 }
 
+/*! ---------------------------------------------------------------------------
+ */
 static int32_t opRescan( volatile DAQ_OPERATION_IO_T* pData )
 {
    DBPRINT1( "DBG: executing %s\n", __func__ );
@@ -75,7 +81,7 @@ static int32_t opRescan( volatile DAQ_OPERATION_IO_T* pData )
 const DAQ_OPERATION_TAB_ITEM_T g_operationTab[] =
 {
    { .code = DAQ_OP_RESET,           .operation = opReset     },
-   { .code = DAQ_OP_GET_STATUS,      .operation = opGetStatus },
+   { .code = DAQ_OP_GET_SLOTS,       .operation = opGetSlots  },
    { .code = DAQ_OP_RESCAN,          .operation = opRescan    },
    DAQ_OPERATION_ITEM_TERMINATOR
 };
@@ -84,7 +90,7 @@ const DAQ_OPERATION_TAB_ITEM_T g_operationTab[] =
  */
 void executeIfRequested( void )
 {
-   if( g_shared.operation.code == DAQ_OP_NO )
+   if( g_shared.operation.code == DAQ_OP_IDLE )
       return;
 
    unsigned int i = 0;
@@ -104,7 +110,7 @@ void executeIfRequested( void )
       g_shared.operation.retCode = DAQ_RET_ERR_UNKNOWN_OPERATION;
    }
 
-   g_shared.operation.code = DAQ_OP_NO;
+   g_shared.operation.code = DAQ_OP_IDLE;
 }
 
 /*================================== EOF ====================================*/
