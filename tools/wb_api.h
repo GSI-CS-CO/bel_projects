@@ -9,9 +9,9 @@
 //            -- Wesley W. Terpstra <w.terpstra@gsi.de>
 //            -- Alessandro Rubini <rubini@gnudd.com>
 //            -- Tomasz Wlostowski <tomasz.wlostowski@cern.ch>
-//  version : 22-Oct-2018
+//  version : 01-Mar-2019
 //
-#define WB_API_VERSION "011.1"
+#define WB_API_VERSION "012.0"
 //
 // Api for wishbone devices for timing receiver nodes. This is not a timing receiver API.
 // 
@@ -150,6 +150,10 @@ eb_status_t wb_wr_reset(eb_device_t device,                    // EB device
                         uint32_t value                         // value to be written to the reset controller
                         );
 
+// disable the watchdog and prevent automated restart
+eb_status_t wb_wr_watchdog(eb_device_t device,                 // EB device
+                           int devIndex                        // 0,1,2... - there may be more than 1 device on the WB bus
+                           );
 
 // put user lm32 into reset state
 eb_status_t wb_cpu_halt(eb_device_t device,                    // EB device
