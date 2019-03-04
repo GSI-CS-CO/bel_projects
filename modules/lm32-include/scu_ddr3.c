@@ -2,6 +2,8 @@
  *  @file scu_ddr3.c
  *  @brief Interface routines for Double Data Rate (DDR3) RAM in SCU3
  *
+ *  @note This module is suitable for Linux and LM32 at the moment.
+ *
  *  @see scu_ddr3.h
  *  @see
  *  <a href="https://www-acc.gsi.de/wiki/Hardware/Intern/MacroF%C3%BCr1GbitDDR3MT41J64M16LADesSCUCarrierboards">
@@ -111,11 +113,19 @@ int ddr3FlushFiFo( register const DDR3_T* pThis, unsigned int start,
       unsigned int blkLen = min( word64len, DDR3_XFER_FIFO_SIZE );
       DBPRINT2( "DBG: blkLen: %d\n", blkLen );
       ddr3StartBurstTransfer( pThis, start, blkLen );
+   #ifdef __linux__
+      if( pThis->pEbHandle->status != EB_OK )
+         return pThis->pEbHandle->status;
+   #endif
       for( unsigned int i = 0; i < blkLen; i++ )
       {
          unsigned int pollCount = 0;
          while( (ddr3GetFifoStatus( pThis ) & DDR3_FIFO_STATUS_MASK_EMPTY) != 0 )
          {
+         #ifdef __linux__
+            if( pThis->pEbHandle->status != EB_OK )
+               return pThis->pEbHandle->status;
+         #endif
             if( poll == NULL )
                continue;
             pollRet = poll( pThis, pollCount );
@@ -126,6 +136,10 @@ int ddr3FlushFiFo( register const DDR3_T* pThis, unsigned int start,
             pollCount++;
          }
          ddr3PopFifo( pThis, &pTarget[start] );
+      #ifdef __linux__
+         if( pThis->pEbHandle->status != EB_OK )
+            return pThis->pEbHandle->status;
+      #endif
          start++;
       }
       word64len -= blkLen;

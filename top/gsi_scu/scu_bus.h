@@ -26,15 +26,8 @@
 
 #include <stdbool.h>
 #include "inttypes.h"
-#include "helper_macros.h"
 
-#ifdef CONFIG_SCU_BUS_PEDANTIC_CHECK
-   /* Paranoia mode is enabled... ;-) */
-   #include <scu_assert.h>
-   #define SCUBUS_ASSERT SCU_ASSERT
-#else
-   #define SCUBUS_ASSERT(__e) ((void)0)
-#endif
+#include "scu_bus_defines.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -61,11 +54,6 @@ extern "C" {
  */
 #define SCUBUS_SLAVE_ADDR_SPACE  (1 << 17)
 
-/*!
- * @ingroup SCU_BUS
- * @brief First slot of SCU-bus
- */
-#define SCUBUS_START_SLOT         1
 
 /*!
  * @ingroup SCU_BUS
@@ -217,7 +205,7 @@ typedef enum
 #define SRQ_ACT           0x8
 #define MULTI_SLAVE_SEL   0xc
 #define MULTICAST_ACC     0x8
-#define MAX_SCU_SLAVES    12    /*!< @brief Maximum number of slots */
+//#define MAX_SCU_SLAVES    12    /*!< @brief Maximum number of slots */
 
 #define SYS_LOEP    3
 #define SYS_CSCO    55
@@ -231,18 +219,6 @@ typedef enum
 #define GRP_SIO3    69
 #define GRP_SIO2    23 
 
-/*!
- * @ingroup SCU_BUS
- * @brief Flag field for slaves connected in the SCU bus.
- *
- * Each bit reflects a slot in the SCU bus.
- * If a bit equal one so a SCU device is connected at this place. \n
- * E.g.: \n
- * 000000010101 means: Slot 1, 3 and 5 are used.
- * @see MAX_SCU_SLAVES
- */
-typedef uint16_t SCUBUS_SLAVE_FLAGS_T;
-STATIC_ASSERT( BIT_SIZEOF( SCUBUS_SLAVE_FLAGS_T ) >= MAX_SCU_SLAVES );
 
 extern struct w1_bus wrpc_w1_bus;
 void ReadTemperatureDevices(int bus, uint64_t *id, uint16_t *temp);
@@ -397,25 +373,6 @@ void scuBusSetSlaveValue32( void* pAbsSlaveAddr, const unsigned int index,
    SCUBUS_ASSERT( ((unsigned int)pAbsSlaveAddr % sizeof(uint16_t)) == 0 ); // At least 2 bytes alignment assumed!
 
    ((uint32_t* volatile)pAbsSlaveAddr)[index] = value;
-}
-
-/*! ---------------------------------------------------------------------------
- * @ingroup SCU_BUS
- * @brief Extract a single slave-present-flag from the SCU-slave-flag-present field
- * @see scuBusFindSpecificSlaves
- * @see scuFindAllSlaves
- * @param flags packed slave present flags of all SCU bus slots
- * @param slot Slot number, valid range 1 .. MAX_SCU_SLAVES (12)
- * @return true: slave present
- * @return false: slave not present
- */
-static inline
-bool scuBusIsSlavePresent( const SCUBUS_SLAVE_FLAGS_T flags, const int slot )
-{
-   SCUBUS_ASSERT( slot >= SCUBUS_START_SLOT );
-   SCUBUS_ASSERT( slot <= MAX_SCU_SLAVES );
-
-   return ((flags & (1 << (slot-SCUBUS_START_SLOT))) != 0);
 }
 
 /*! ---------------------------------------------------------------------------
