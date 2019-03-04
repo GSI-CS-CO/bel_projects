@@ -28,16 +28,24 @@
 #ifndef __lm32__
   #error This module is compilable for LM32 only!
 #endif
-#include <daq_command_interface.h>
+#include <daq_main.h>
+
+typedef struct
+{
+   DAQ_BUS_T oDaqDevs;
+   RAM_SCU_T oRam;
+} DAQ_ADMIN_T;
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+int initBuffer( RAM_SCU_T* poRam );
+
 /*! ---------------------------------------------------------------------------
  * @brief Executes a a from host (Linux) requested function.
  */
-void executeIfRequested( void );
+int executeIfRequested( DAQ_ADMIN_T* pDaqAdmin );
 
 
 #ifdef __cplusplus

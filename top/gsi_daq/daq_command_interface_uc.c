@@ -25,6 +25,8 @@
  */
 #include <daq_command_interface_uc.h>
 #include <scu_lm32_macros.h>
+#include <daq_main.h>
+#include <scu_ramBuffer.h>
 #include <dbg.h>
 
 /*!!!!!!!!!!!!!!!!!!!!!! Begin of shared memory area !!!!!!!!!!!!!!!!!!!!!!!!*/
@@ -40,21 +42,44 @@ volatile DAQ_SHARED_IO_T SHARED g_shared =
 };
 /*!!!!!!!!!!!!!!!!!!!!!!! End of shared memory area !!!!!!!!!!!!!!!!!!!!!!!!!*/
 
-typedef int32_t (*DAQ_OPERATION_FT)( volatile DAQ_OPERATION_IO_T* );
+typedef int32_t (*DAQ_OPERATION_FT)( DAQ_ADMIN_T* pDaqAdmin,
+                                     volatile DAQ_OPERATION_IO_T* );
 
+/*!
+ * @ingroup DAQ_INTERFACE
+ * @brief Definition of the item for the operation match list.
+ */
 typedef struct
 {
+   /*!
+    * @brief Operation code
+    * @see DAQ_OPERATION_CODE_T
+    */
    DAQ_OPERATION_CODE_T code;
+   /*!
+    * @brief Pointer of the related function
+    */
    DAQ_OPERATION_FT     operation;
 } DAQ_OPERATION_TAB_ITEM_T;
 
+/*!
+ * @ingroup DAQ_INTERFACE
+ * @brief Last item of the operation match list.
+ */
 #define DAQ_OPERATION_ITEM_TERMINATOR { .code = DAQ_OP_IDLE, .operation = NULL }
+
+/*! ---------------------------------------------------------------------------
+ */
+int initBuffer( RAM_SCU_T* poRam )
+{
+   return ramInit( poRam, (RAM_RING_SHARED_OBJECT_T*)&g_shared.ramIndexes );
+}
 
 
 /*! ---------------------------------------------------------------------------
  */
 static
-int32_t opReset( volatile DAQ_OPERATION_IO_T* pData )
+int32_t opReset( DAQ_ADMIN_T* pDaqAdmin, volatile DAQ_OPERATION_IO_T* pData )
 {
    DBPRINT1( "DBG: executing %s\n", __func__ );
    return DAQ_RET_OK;
@@ -62,23 +87,32 @@ int32_t opReset( volatile DAQ_OPERATION_IO_T* pData )
 
 /*! ---------------------------------------------------------------------------
  */
-static int32_t opGetSlots( volatile DAQ_OPERATION_IO_T* pData )
+static int32_t opGetSlots( DAQ_ADMIN_T* pDaqAdmin,
+                           volatile DAQ_OPERATION_IO_T* pData )
 {
    DBPRINT1( "DBG: executing %s\n", __func__ );
+   STATIC_ASSERT( sizeof( pData->param1 ) >= sizeof(pDaqAdmin->oDaqDevs.slotDaqUsedFlags));
+
+   pData->param1 = pDaqAdmin->oDaqDevs.slotDaqUsedFlags;
+
    return DAQ_RET_OK;
 }
 
 /*! ---------------------------------------------------------------------------
  */
-static int32_t opRescan( volatile DAQ_OPERATION_IO_T* pData )
+static int32_t opRescan( DAQ_ADMIN_T* pDaqAdmin,
+                         volatile DAQ_OPERATION_IO_T* pData )
 {
    DBPRINT1( "DBG: executing %s\n", __func__ );
-   return DAQ_RET_OK;
+   scanScuBus( &pDaqAdmin->oDaqDevs );
+   return DAQ_RET_RESCAN;
 }
 
 /*! ---------------------------------------------------------------------------
+ * @ingroup DAQ_INTERFACE
+ * @brief Operation match list
  */
-const DAQ_OPERATION_TAB_ITEM_T g_operationTab[] =
+static const DAQ_OPERATION_TAB_ITEM_T g_operationTab[] =
 {
    { .code = DAQ_OP_RESET,           .operation = opReset     },
    { .code = DAQ_OP_GET_SLOTS,       .operation = opGetSlots  },
@@ -88,10 +122,10 @@ const DAQ_OPERATION_TAB_ITEM_T g_operationTab[] =
 
 /*! ---------------------------------------------------------------------------
  */
-void executeIfRequested( void )
+int executeIfRequested( DAQ_ADMIN_T* pDaqAdmin )
 {
    if( g_shared.operation.code == DAQ_OP_IDLE )
-      return;
+      return DAQ_RET_OK;
 
    unsigned int i = 0;
    while( g_operationTab[i].operation != NULL )
@@ -99,7 +133,7 @@ void executeIfRequested( void )
       if( g_operationTab[i].code == g_shared.operation.code )
       {
          g_shared.operation.retCode =
-            g_operationTab[i].operation( &g_shared.operation.ioData );
+            g_operationTab[i].operation( pDaqAdmin, &g_shared.operation.ioData );
          break;
       }
       i++;
@@ -111,6 +145,7 @@ void executeIfRequested( void )
    }
 
    g_shared.operation.code = DAQ_OP_IDLE;
+   return g_shared.operation.retCode;
 }
 
 /*================================== EOF ====================================*/

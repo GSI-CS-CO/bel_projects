@@ -1,7 +1,7 @@
 
 #include <iostream>
 #include <eb_console_helper.h>
-#include <daq_interface.hpp>
+#include <daq_administration.hpp>
 
 using namespace daq;
 using namespace std;
@@ -12,12 +12,21 @@ int main( int argc, const char** ppArgv )
 
    try
    {
-      Daq oDaq( ppArgv[1] );
-      cout << "WB-interface: " << oDaq.getWbDevice() << endl;
+      DaqAdmin oDaqInterface( ppArgv[1] );
+      cout << "WB-interface: " << oDaqInterface.getWbDevice() << endl;
+
+      DaqInterface::SLOT_FLAGS_T flags = oDaqInterface.readSlotStatus();
+      for( unsigned int i = 1; i < DaqInterface::c_maxDevices; i++ )
+      {
+         if( DaqInterface::isDevicePresent( flags, i ) )
+         {
+            cout << "Slot: " << i << endl;
+         }
+      }
    }
-   catch( Daq::Exception& e )
+   catch( DaqInterface::Exception& e )
    {
-      cerr << ESC_FG_RED "Daq::Exception occurred: " << e.what() << endl;
+      cerr << ESC_FG_RED "DaqInterface::Exception occurred: " << e.what() << endl;
    }
    catch( exception& e )
    {

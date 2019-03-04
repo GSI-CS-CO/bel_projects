@@ -26,6 +26,7 @@
 #define _DAQ_INTERFACE_HPP
 
 #include <daq_command_interface.h>
+#include <scu_bus_defines.h>
 #include <scu_ramBuffer.h>
 #include <daq_descriptor.h>
 #include <eb_object_transfer.h>
@@ -39,7 +40,8 @@
 namespace daq
 {
 
-class Daq
+///////////////////////////////////////////////////////////////////////////////
+class DaqInterface
 {
    typedef eb_status_t      EB_STATUS_T;
 
@@ -50,9 +52,15 @@ class Daq
    DAQ_SHARED_IO_T          m_oSharedData;
 
 protected:
-   constexpr static unsigned int   c_maxCmdPoll = 10;
+   constexpr static unsigned int   c_maxCmdPoll = 100;
 
 public:
+   constexpr static unsigned int c_maxDevices  = DAQ_MAX;
+   constexpr static unsigned int c_maxChannels = DAQ_MAX_CHANNELS;
+
+   typedef SCUBUS_SLAVE_FLAGS_T SLOT_FLAGS_T;
+   typedef DAQ_RETURN_CODE_T    RETURN_CODE_T;
+
    class Exception
    {
       const std::string m_message;
@@ -67,15 +75,27 @@ public:
       }
    };
 
-   Daq( const std::string = DAQ_DEFAULT_WB_DEVICE );
+   DaqInterface( const std::string = DAQ_DEFAULT_WB_DEVICE );
 
-   virtual ~Daq( void );
+   virtual ~DaqInterface( void );
 
    const std::string& getWbDevice( void ) const { return m_wbDevice; }
 
    const std::string getEbStatusString( void ) const
    {
       static_cast<const std::string>(::ebGetStatusString( m_poEbHandle ));
+   }
+
+   RETURN_CODE_T readParam1( void );
+   RETURN_CODE_T readParam12( void );
+   RETURN_CODE_T readParam123( void );
+   RETURN_CODE_T readParam1234( void );
+
+   SLOT_FLAGS_T readSlotStatus( void );
+
+   static bool isDevicePresent( const SLOT_FLAGS_T flags, const unsigned int slot )
+   {
+      return ::scuBusIsSlavePresent( flags, slot );
    }
 
 protected:
@@ -110,7 +130,7 @@ private:
    void readSharedTotal( void );
    void setCommand( DAQ_OPERATION_CODE_T );
    DAQ_OPERATION_CODE_T getCommand( void );
-};
+}; // end class DaqInterface
 
 } //namespace daq
 

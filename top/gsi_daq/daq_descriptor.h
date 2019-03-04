@@ -35,6 +35,31 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <helper_macros.h>
+/*
+ * For the reason LM32 RAM consume can be reduced here is the possibility
+ * to overwrite DAQ_MAX by the Makefile.
+ */
+#ifndef DAQ_MAX
+   /*! @ingroup DAQ_DEVICE
+    * @brief Maximum number of DAQ's
+    */
+   #define DAQ_MAX MAX_SCU_SLAVES
+#else
+  #if DAQ_MAX > MAX_SCU_SLAVES
+    #error Macro DAQ_MAX can not be greater than MAX_SCU_SLAVES !
+  #endif
+#endif
+
+#ifndef DAQ_MAX_CHANNELS
+   /*! @ingroup DAQ_CHANNEL
+    *  @brief Maximum number of DAQ-channels
+    */
+  #define DAQ_MAX_CHANNELS 16
+#else
+  #if DAQ_MAX_CHANNELS > 16
+    #error Not more than 16 channels per DAQ
+  #endif
+#endif
 
 #ifdef __cplusplus
 extern "C" {

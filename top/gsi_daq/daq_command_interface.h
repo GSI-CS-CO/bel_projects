@@ -28,7 +28,7 @@
 #define _DAQ_COMMAND_INTERFACE_H
 
 #include <generated/shared_mmap.h>
-#include <helper_macros.h>
+#include <scu_bus_defines.h>
 #include <scu_ramBuffer.h>
 #include <stdint.h>
 
@@ -41,8 +41,13 @@
 
 #define DAQ_MAGIC_NUMBER           ((uint32_t)0xCAFEAD04)
 
-#define DAQ_RET_ERR_UNKNOWN_OPERATION  -100
+#define DAQ_RET_ERR_UNKNOWN_OPERATION        -1
+#define DAQ_RET_ERR_SLAVE_NOT_PRESENT        -2
+#define DAQ_RET_ERR_CHANNEL_NOT_PRESENT      -3
+#define DAQ_RET_ERR_DEVICE_ADDRESS_NOT_FOUND -4
+
 #define DAQ_RET_OK                        0
+#define DAQ_RET_RESCAN                    1
 
 #ifndef DAQ_OP_OFFSET
   #define DAQ_OP_OFFSET 0
@@ -82,21 +87,29 @@ typedef struct PACKED_SIZE
    uint16_t param3;
    uint16_t param4;
 } DAQ_OPERATION_IO_T;
+STATIC_ASSERT( sizeof(DAQ_OPERATION_IO_T) == (sizeof(DAQ_CHANNEL_LOCATION_T)
+                                            + 4 * sizeof( uint16_t ) ));
+
+typedef int32_t DAQ_RETURN_CODE_T;
 
 typedef struct PACKED_SIZE
 {
    DAQ_OPERATION_CODE_T code;
-   int32_t              retCode;
+   DAQ_RETURN_CODE_T    retCode;
    DAQ_OPERATION_IO_T   ioData;
 } DAQ_OPERATION_T;
-
+STATIC_ASSERT( sizeof(DAQ_OPERATION_T) == (sizeof(DAQ_OPERATION_CODE_T)
+                                         + sizeof(DAQ_RETURN_CODE_T)
+                                         + sizeof(DAQ_OPERATION_IO_T) ));
 typedef struct PACKED_SIZE
 {
    uint32_t                 magicNumber;
    RAM_RING_SHARED_OBJECT_T ramIndexes;
    DAQ_OPERATION_T          operation;
 } DAQ_SHARED_IO_T;
-
+STATIC_ASSERT( sizeof( DAQ_SHARED_IO_T ) == (sizeof(uint32_t)
+                                           + sizeof(RAM_RING_SHARED_OBJECT_T)
+                                           + sizeof(DAQ_OPERATION_T) ));
 STATIC_ASSERT( sizeof( DAQ_SHARED_IO_T ) <= SHARED_SIZE );
 
 

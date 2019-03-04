@@ -35,9 +35,9 @@ using namespace daq;
 
 ///////////////////////////////////////////////////////////////////////////////
 /*! ---------------------------------------------------------------------------
- * @brief Constructor of class daq::Daq
+ * @brief Constructor of class daq::DaqInterface
  */
-Daq::Daq( const std::string wbDevice )
+DaqInterface::DaqInterface( const std::string wbDevice )
    :m_wbDevice( wbDevice )
    ,m_poEbHandle( nullptr )
 {
@@ -54,22 +54,21 @@ Daq::Daq( const std::string wbDevice )
 
    readSharedTotal();
    setCommand( DAQ_OP_RESET );
-   setCommand( DAQ_OP_GET_SLOTS ); //!!
-   setCommand( DAQ_OP_RESCAN );     //!!
-   setCommand( DAQ_OP_LOCK );       //!!
+  // setCommand( DAQ_OP_GET_SLOTS ); //!!
+ //  setCommand( DAQ_OP_LOCK );       //!!
 }
 
 /*! ---------------------------------------------------------------------------
- * @brief Destructor of class daq::Daq
+ * @brief Destructor of class daq::DaqInterfaceInterface
  */
-Daq::~Daq( void )
+DaqInterface::~DaqInterface( void )
 {
    ebClose();
 }
 
 /*! ---------------------------------------------------------------------------
  */
-void Daq::ebClose( void )
+void DaqInterface::ebClose( void )
 {
    if( m_poEbHandle == nullptr )
       return;
@@ -82,7 +81,7 @@ void Daq::ebClose( void )
 
 /*! ---------------------------------------------------------------------------
  */
-void Daq::readSharedTotal( void )
+void DaqInterface::readSharedTotal( void )
 {
    EB_MEMBER_INFO_T info[3];
    EB_INIT_INFO_ITEM_STATIC( info, 0, m_oSharedData.magicNumber );
@@ -112,7 +111,7 @@ void Daq::readSharedTotal( void )
 
 /*! ---------------------------------------------------------------------------
  */
-bool Daq::onCommandReadyPoll( unsigned int pollCount )
+bool DaqInterface::onCommandReadyPoll( unsigned int pollCount )
 {
    if( pollCount >= c_maxCmdPoll )
       return true;
@@ -123,7 +122,7 @@ bool Daq::onCommandReadyPoll( unsigned int pollCount )
 
 /*! ---------------------------------------------------------------------------
  */
-bool Daq::cmdReadyWait( void )
+bool DaqInterface::cmdReadyWait( void )
 {
    unsigned int pollCount = 0;
    while( getCommand() != DAQ_OP_IDLE )
@@ -137,10 +136,8 @@ bool Daq::cmdReadyWait( void )
 
 /*! ---------------------------------------------------------------------------
  */
-void Daq::setCommand( DAQ_OPERATION_CODE_T cmd )
+void DaqInterface::setCommand( DAQ_OPERATION_CODE_T cmd )
 {
-   if( cmdReadyWait() )
-      throw Exception( "Timeout" );
 
    m_oSharedData.operation.code = cmd;
    EB_MAKE_CB_OW_ARG( cArg );
@@ -157,11 +154,14 @@ void Daq::setCommand( DAQ_OPERATION_CODE_T cmd )
    m_poEbHandle->status = cArg.status;
    if( m_poEbHandle->status != EB_OK )
       __THROW_EB_EXCEPTION();
+
+   if( cmdReadyWait() )
+      throw Exception( "Timeout" );
 }
 
 /*! ---------------------------------------------------------------------------
  */
-DAQ_OPERATION_CODE_T Daq::getCommand( void )
+DAQ_OPERATION_CODE_T DaqInterface::getCommand( void )
 {
    EB_MEMBER_INFO_T info[2];
 
@@ -186,5 +186,134 @@ DAQ_OPERATION_CODE_T Daq::getCommand( void )
    return m_oSharedData.operation.code;
 }
 
+/*! ---------------------------------------------------------------------------
+ */
+DaqInterface::RETURN_CODE_T DaqInterface::readParam1( void )
+{
+   EB_MEMBER_INFO_T info[2];
+
+   EB_INIT_INFO_ITEM_STATIC( info, 0, m_oSharedData.operation.retCode );
+   EB_INIT_INFO_ITEM_STATIC( info, 1, m_oSharedData.operation.ioData.param1 );
+   EB_MAKE_CB_OR_ARG( cArg, info );
+
+   if( ebReadObjectCycleOpen( cArg ) != EB_OK )
+      __THROW_EB_EXCEPTION();
+
+   EB_OJECT_MEMBER_READ( m_poEbHandle, DAQ_SHARED_IO_T, operation.retCode );
+   EB_OJECT_MEMBER_READ( m_poEbHandle, DAQ_SHARED_IO_T, operation.ioData.param1 );
+   ebCycleClose();
+
+   while( !cArg.exit )
+      ebSocketRun();
+
+   m_poEbHandle->status = cArg.status;
+   if( m_poEbHandle->status != EB_OK )
+      __THROW_EB_EXCEPTION();
+
+   return m_oSharedData.operation.retCode;
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+DaqInterface::RETURN_CODE_T DaqInterface::readParam12( void )
+{
+   EB_MEMBER_INFO_T info[3];
+
+   EB_INIT_INFO_ITEM_STATIC( info, 0, m_oSharedData.operation.retCode );
+   EB_INIT_INFO_ITEM_STATIC( info, 1, m_oSharedData.operation.ioData.param1 );
+   EB_INIT_INFO_ITEM_STATIC( info, 2, m_oSharedData.operation.ioData.param2 );
+   EB_MAKE_CB_OR_ARG( cArg, info );
+
+   if( ebReadObjectCycleOpen( cArg ) != EB_OK )
+      __THROW_EB_EXCEPTION();
+
+   EB_OJECT_MEMBER_READ( m_poEbHandle, DAQ_SHARED_IO_T, operation.retCode );
+   EB_OJECT_MEMBER_READ( m_poEbHandle, DAQ_SHARED_IO_T, operation.ioData.param1 );
+   EB_OJECT_MEMBER_READ( m_poEbHandle, DAQ_SHARED_IO_T, operation.ioData.param2 );
+   ebCycleClose();
+
+   while( !cArg.exit )
+      ebSocketRun();
+
+   m_poEbHandle->status = cArg.status;
+   if( m_poEbHandle->status != EB_OK )
+      __THROW_EB_EXCEPTION();
+
+   return m_oSharedData.operation.retCode;
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+DaqInterface::RETURN_CODE_T DaqInterface::readParam123( void )
+{
+   EB_MEMBER_INFO_T info[4];
+
+   EB_INIT_INFO_ITEM_STATIC( info, 0, m_oSharedData.operation.retCode );
+   EB_INIT_INFO_ITEM_STATIC( info, 1, m_oSharedData.operation.ioData.param1 );
+   EB_INIT_INFO_ITEM_STATIC( info, 2, m_oSharedData.operation.ioData.param2 );
+   EB_INIT_INFO_ITEM_STATIC( info, 3, m_oSharedData.operation.ioData.param3 );
+   EB_MAKE_CB_OR_ARG( cArg, info );
+
+   if( ebReadObjectCycleOpen( cArg ) != EB_OK )
+      __THROW_EB_EXCEPTION();
+
+   EB_OJECT_MEMBER_READ( m_poEbHandle, DAQ_SHARED_IO_T, operation.retCode );
+   EB_OJECT_MEMBER_READ( m_poEbHandle, DAQ_SHARED_IO_T, operation.ioData.param1 );
+   EB_OJECT_MEMBER_READ( m_poEbHandle, DAQ_SHARED_IO_T, operation.ioData.param2 );
+   EB_OJECT_MEMBER_READ( m_poEbHandle, DAQ_SHARED_IO_T, operation.ioData.param3 );
+   ebCycleClose();
+
+   while( !cArg.exit )
+      ebSocketRun();
+
+   m_poEbHandle->status = cArg.status;
+   if( m_poEbHandle->status != EB_OK )
+      __THROW_EB_EXCEPTION();
+
+
+   return m_oSharedData.operation.retCode;
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+DaqInterface::RETURN_CODE_T DaqInterface::readParam1234( void )
+{
+   EB_MEMBER_INFO_T info[5];
+
+   EB_INIT_INFO_ITEM_STATIC( info, 0, m_oSharedData.operation.retCode );
+   EB_INIT_INFO_ITEM_STATIC( info, 1, m_oSharedData.operation.ioData.param1 );
+   EB_INIT_INFO_ITEM_STATIC( info, 2, m_oSharedData.operation.ioData.param2 );
+   EB_INIT_INFO_ITEM_STATIC( info, 3, m_oSharedData.operation.ioData.param3 );
+   EB_INIT_INFO_ITEM_STATIC( info, 4, m_oSharedData.operation.ioData.param4 );
+   EB_MAKE_CB_OR_ARG( cArg, info );
+
+   if( ebReadObjectCycleOpen( cArg ) != EB_OK )
+      __THROW_EB_EXCEPTION();
+
+   EB_OJECT_MEMBER_READ( m_poEbHandle, DAQ_SHARED_IO_T, operation.retCode );
+   EB_OJECT_MEMBER_READ( m_poEbHandle, DAQ_SHARED_IO_T, operation.ioData.param1 );
+   EB_OJECT_MEMBER_READ( m_poEbHandle, DAQ_SHARED_IO_T, operation.ioData.param2 );
+   EB_OJECT_MEMBER_READ( m_poEbHandle, DAQ_SHARED_IO_T, operation.ioData.param3 );
+   EB_OJECT_MEMBER_READ( m_poEbHandle, DAQ_SHARED_IO_T, operation.ioData.param4 );
+   ebCycleClose();
+
+   while( !cArg.exit )
+      ebSocketRun();
+
+   m_poEbHandle->status = cArg.status;
+   if( m_poEbHandle->status != EB_OK )
+      __THROW_EB_EXCEPTION();
+
+   return m_oSharedData.operation.retCode;
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+DaqInterface::SLOT_FLAGS_T DaqInterface::readSlotStatus( void )
+{
+   setCommand( DAQ_OP_GET_SLOTS );
+   readParam1();
+   return m_oSharedData.operation.ioData.param1;
+}
 
 //================================== EOF ======================================

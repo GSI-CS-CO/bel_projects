@@ -22,15 +22,50 @@
  * License along with this library. If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************
  */
+#include <daq_main.h>
 
-#include <daq_command_interface_uc.h>
-#include <daq.h>
 #ifdef DEBUGLEVEL
-#include <mini_sdb.h>
-#include <eb_console_helper.h>
-#include <dbg.h>
+  #include <mini_sdb.h>
+  #include <eb_console_helper.h>
+  #include <dbg.h>
 #endif
 
+static DAQ_ADMIN_T g_DaqAdmin;
+
+/*! ---------------------------------------------------------------------------
+ */
+int scanScuBus( DAQ_BUS_T* pDaqDevices )
+{
+   void* pScuBusBase = find_device_adr( GSI, SCU_BUS_MASTER );
+
+   /* That's not fine, but it's not my idea. */
+   if( pScuBusBase == (void*)ERROR_NOT_FOUND )
+   {
+      DBPRINT1( "ERROR: find_device_adr() didn't find it!\n" );
+      return DAQ_RET_ERR_DEVICE_ADDRESS_NOT_FOUND;
+   }
+   int ret = daqBusFindAndInitializeAll( pDaqDevices, pScuBusBase );
+   if( ret < 0 )
+   {
+      DBPRINT1( "ERROR: in daqBusFindAndInitializeAll()\n" );
+      return DAQ_RET_ERR_DEVICE_ADDRESS_NOT_FOUND;
+   }
+#ifdef DEBUGLEVEL
+   if( ret == 0 )
+      DBPRINT1( "WARNING: No DAQ devices present!\n" );
+   else
+   {
+      DBPRINT1( "%d DAQ devices found.\n", ret );
+      DBPRINT1( "Total number of all used channels: %d\n",
+                daqBusGetUsedChannels( pDaqDevices ) );
+   }
+#endif
+   return DAQ_RET_OK;
+}
+
+/*================================= main ====================================*/
+/*! ---------------------------------------------------------------------------
+ */
 void main( void )
 {
 #ifdef DEBUGLEVEL
@@ -41,9 +76,12 @@ void main( void )
    DBPRINT1( "DAQ control started\n" );
 #endif
 
+   scanScuBus( &g_DaqAdmin.oDaqDevs );
+   initBuffer( &g_DaqAdmin.oRam );
+
    while( true )
    {
-      executeIfRequested();
+      executeIfRequested( &g_DaqAdmin );
    }
 }
 
