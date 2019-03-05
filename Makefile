@@ -16,6 +16,10 @@ export EXTRA_FLAGS
 # Set variables that are passed down to sub-makes
 EB=$(PWD)/ip_cores/etherbone-core/api
 export EB
+TLU=$(PWD)/ip_cores/wr-cores/modules/wr_tlu
+export TLU
+ECA=$(PWD)/ip_cores/wr-cores/modules/wr_eca
+export ECA
 
 all:		etherbone tools sdbfs toolchain firmware driver
 
@@ -61,13 +65,13 @@ tools-install::
 	$(MAKE) -C tools install
 
 ecatools: 	etherbone eca tlu
-	$(MAKE) -C tools ECA=$(PWD)/ip_cores/wr-cores/modules/wr_eca TLU=$(PWD)/ip_cores/wr-cores/modules/wr_tlu ecatools
+	$(MAKE) -C tools ecatools
 
 ecatools-clean::
-	$(MAKE) -C tools ECA=$(PWD)/ip_cores/wr-cores/modules/wr_eca TLU=$(PWD)/ip_cores/wr-cores/modules/wr_tlu ecatools-clean
+	$(MAKE) -C tools ecatools-clean
 
 ecatools-install::
-	$(MAKE) -C tools ECA=$(PWD)/ip_cores/wr-cores/modules/wr_eca TLU=$(PWD)/ip_cores/wr-cores/modules/wr_tlu ecatools-install
+	$(MAKE) -C tools ecatools-install
 
 eca:		etherbone
 	$(MAKE) -C ip_cores/wr-cores/modules/wr_eca all
