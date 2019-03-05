@@ -216,9 +216,11 @@ ifa8:		firmware
 ifa8-clean::
 	$(MAKE) -C syn/gsi_ifa8 PATH=$(PWD)/toolchain/bin:$(PATH) clean
 
-### We need to run ./fix-git.sh: make it a prerequisite for Makefile
+### We need to run ./fix-git.sh and ./install-hdlmake.sh: make them a prerequisite for Makefile
 Makefile: prereq-rule
 
 prereq-rule::
 	@test -d .git/modules/ip_cores/wrpc-sw/modules/ppsi || \
 		(echo "Downloading submodules"; ./fix-git.sh)
+	@test -d lib/python2.7/site-packages || \
+		(echo "Installing hdlmake"; ./install-hdlmake.sh)
