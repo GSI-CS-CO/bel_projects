@@ -9,8 +9,9 @@
 STAGING     ?=
 PREFIX      ?= /usr/local
 SYSCONFDIR  ?= /etc
-EXTRA_FLAGS ?=
 PWD         := $(shell pwd)
+EXTRA_FLAGS ?=
+export EXTRA_FLAGS
 
 all:		etherbone tools sdbfs toolchain firmware driver
 
@@ -27,60 +28,60 @@ distclean::	clean
 etherbone::
 	test -f ip_cores/etherbone-core/api/Makefile.in || ./ip_cores/etherbone-core/api/autogen.sh
 	cd ip_cores/etherbone-core/api; test -f Makefile || ./configure --enable-maintainer-mode --prefix=$(PREFIX)
-	$(MAKE) -C ip_cores/etherbone-core/api EXTRA_FLAGS="$(EXTRA_FLAGS)" all
+	$(MAKE) -C ip_cores/etherbone-core/api all
 
 etherbone-clean::
-	! test -f ip_cores/etherbone-core/api/Makefile || $(MAKE) -C ip_cores/etherbone-core/api EXTRA_FLAGS="$(EXTRA_FLAGS)" distclean
+	! test -f ip_cores/etherbone-core/api/Makefile || $(MAKE) -C ip_cores/etherbone-core/api distclean
 
 etherbone-install::
-	$(MAKE) -C ip_cores/etherbone-core/api EXTRA_FLAGS="$(EXTRA_FLAGS)" DESTDIR=$(STAGING) install
+	$(MAKE) -C ip_cores/etherbone-core/api DESTDIR=$(STAGING) install
 
 saftlib::
 	test -f ip_cores/saftlib/Makefile.in || ./ip_cores/saftlib/autogen.sh
 	cd ip_cores/saftlib; test -f Makefile || ./configure --enable-maintainer-mode --prefix=$(PREFIX) --sysconfdir=$(SYSCONFDIR)
-	$(MAKE) -C ip_cores/saftlib EXTRA_FLAGS="$(EXTRA_FLAGS)" all
+	$(MAKE) -C ip_cores/saftlib all
 
 saftlib-clean::
-	! test -f ip_cores/saftlib/Makefile || $(MAKE) -C ip_cores/saftlib EXTRA_FLAGS="$(EXTRA_FLAGS)" distclean
+	! test -f ip_cores/saftlib/Makefile || $(MAKE) -C ip_cores/saftlib distclean
 
 saftlib-install::
-	$(MAKE) -C ip_cores/saftlib EXTRA_FLAGS="$(EXTRA_FLAGS)" DESTDIR=$(STAGING) install
+	$(MAKE) -C ip_cores/saftlib DESTDIR=$(STAGING) install
 
 tools::		etherbone
-	$(MAKE) -C tools EB=$(PWD)/ip_cores/etherbone-core/api EXTRA_FLAGS="$(EXTRA_FLAGS)" all
+	$(MAKE) -C tools EB=$(PWD)/ip_cores/etherbone-core/api all
 
 tools-clean::
-	$(MAKE) -C tools EB=$(PWD)/ip_cores/etherbone-core/api EXTRA_FLAGS="$(EXTRA_FLAGS)" clean
+	$(MAKE) -C tools EB=$(PWD)/ip_cores/etherbone-core/api clean
 
 tools-install::
-	$(MAKE) -C tools EB=$(PWD)/ip_cores/etherbone-core/api EXTRA_FLAGS="$(EXTRA_FLAGS)" install
+	$(MAKE) -C tools EB=$(PWD)/ip_cores/etherbone-core/api install
 
 ecatools: 	etherbone eca tlu
-	$(MAKE) -C tools ECA=$(PWD)/ip_cores/wr-cores/modules/wr_eca TLU=$(PWD)/ip_cores/wr-cores/modules/wr_tlu EB=$(PWD)/ip_cores/etherbone-core/api EXTRA_FLAGS="$(EXTRA_FLAGS)" ecatools
+	$(MAKE) -C tools ECA=$(PWD)/ip_cores/wr-cores/modules/wr_eca TLU=$(PWD)/ip_cores/wr-cores/modules/wr_tlu EB=$(PWD)/ip_cores/etherbone-core/api ecatools
 
 ecatools-clean::
-	$(MAKE) -C tools ECA=$(PWD)/ip_cores/wr-cores/modules/wr_eca TLU=$(PWD)/ip_cores/wr-cores/modules/wr_tlu EB=$(PWD)/ip_cores/etherbone-core/api EXTRA_FLAGS="$(EXTRA_FLAGS)" ecatools-clean
+	$(MAKE) -C tools ECA=$(PWD)/ip_cores/wr-cores/modules/wr_eca TLU=$(PWD)/ip_cores/wr-cores/modules/wr_tlu EB=$(PWD)/ip_cores/etherbone-core/api ecatools-clean
 
 ecatools-install::
-	$(MAKE) -C tools ECA=$(PWD)/ip_cores/wr-cores/modules/wr_eca TLU=$(PWD)/ip_cores/wr-cores/modules/wr_tlu EB=$(PWD)/ip_cores/etherbone-core/api EXTRA_FLAGS="$(EXTRA_FLAGS)" ecatools-install
+	$(MAKE) -C tools ECA=$(PWD)/ip_cores/wr-cores/modules/wr_eca TLU=$(PWD)/ip_cores/wr-cores/modules/wr_tlu EB=$(PWD)/ip_cores/etherbone-core/api ecatools-install
 
 eca:		etherbone
-	$(MAKE) -C ip_cores/wr-cores/modules/wr_eca EB=$(PWD)/ip_cores/etherbone-core/api EXTRA_FLAGS="$(EXTRA_FLAGS)" all
+	$(MAKE) -C ip_cores/wr-cores/modules/wr_eca EB=$(PWD)/ip_cores/etherbone-core/api all
 
 eca-clean::
-	$(MAKE) -C ip_cores/wr-cores/modules/wr_eca EB=$(PWD)/ip_cores/etherbone-core/api EXTRA_FLAGS="$(EXTRA_FLAGS)" clean
+	$(MAKE) -C ip_cores/wr-cores/modules/wr_eca EB=$(PWD)/ip_cores/etherbone-core/api clean
 
 eca-install::
-	$(MAKE) -C ip_cores/wr-cores/modules/wr_eca EB=$(PWD)/ip_cores/etherbone-core/api EXTRA_FLAGS="$(EXTRA_FLAGS)" install
+	$(MAKE) -C ip_cores/wr-cores/modules/wr_eca EB=$(PWD)/ip_cores/etherbone-core/api install
 
 tlu:		etherbone
-	$(MAKE) -C ip_cores/wr-cores/modules/wr_tlu EB=$(PWD)/ip_cores/etherbone-core/api EXTRA_FLAGS="$(EXTRA_FLAGS)" all
+	$(MAKE) -C ip_cores/wr-cores/modules/wr_tlu EB=$(PWD)/ip_cores/etherbone-core/api all
 
 tlu-clean::
-	$(MAKE) -C ip_cores/wr-cores/modules/wr_tlu EB=$(PWD)/ip_cores/etherbone-core/api EXTRA_FLAGS="$(EXTRA_FLAGS)" clean
+	$(MAKE) -C ip_cores/wr-cores/modules/wr_tlu EB=$(PWD)/ip_cores/etherbone-core/api clean
 
 tlu-install::
-	$(MAKE) -C ip_cores/wr-cores/modules/wr_tlu EB=$(PWD)/ip_cores/etherbone-core/api EXTRA_FLAGS="$(EXTRA_FLAGS)" install
+	$(MAKE) -C ip_cores/wr-cores/modules/wr_tlu EB=$(PWD)/ip_cores/etherbone-core/api install
 
 driver::
 	$(MAKE) -C ip_cores/fpga-config-space/pcie-wb all
