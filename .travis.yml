@@ -35,8 +35,7 @@ install:
 # update submodules
 # hack Makefile to fix make failure regarding spec_wb.o
 before_script:
-- ./fix-git.sh
-- sed -i 's/spec_wb.o//g' ip_cores/fpga-config-space/pcie-wb/Makefile
+- ./autogen.sh
 
 # build projects and install
 script:
