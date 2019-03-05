@@ -115,7 +115,7 @@ extern "C" {
  */
 #define DAQ_IRQ_HIRES_FINISHED  11
 
-/*!
+/*! ---------------------------------------------------------------------------
  * @ingroup DAQ_CHANNEL DAQ_DEVICE
  * @brief Access indexes for writing and reading the DAQ-registers
  * @see daqChannelGetReg
@@ -143,7 +143,7 @@ typedef enum
    PM_FIFO_WORDS   = 0x80  //!< @brief Remaining FiFo word of PmDat FiFo.
 } DAQ_REGISTER_INDEX_T;
 
-/*!
+/*! ---------------------------------------------------------------------------
  * @ingroup DAQ_CHANNEL DAQ_DEVICE
  * @brief Values for single bit respectively flag in bit-field structure.
  * @see DAQ_CTRL_REG_T
@@ -154,7 +154,7 @@ typedef enum
    ON  =  1  //!< @brief Value for switch off.
 } DAQ_SWITCH_STATE_T;
 
-/*!
+/*! ---------------------------------------------------------------------------
  * @ingroup DAQ_CHANNEL DAQ_DEVICE
  * @brief Data type of the control register for each channel.
  * @note Do not change the order of attributes! Its a Hardware image!
@@ -190,7 +190,7 @@ typedef volatile struct
 STATIC_ASSERT( sizeof(DAQ_CTRL_REG_T) == sizeof(uint16_t) );
 #endif
 
-/*!
+/*! ---------------------------------------------------------------------------
  * @ingroup DAQ_CHANNEL DAQ_DEVICE
  * @brief Data type of DAQ register "Daq_Fifo_Words"
  * @see DAQ_FIFO_WORDS
@@ -206,7 +206,7 @@ typedef volatile struct
 } DAQ_DAQ_FIFO_WORDS_T;
 STATIC_ASSERT( sizeof(DAQ_DAQ_FIFO_WORDS_T) == sizeof(uint16_t) );
 
-/*!
+/*! ---------------------------------------------------------------------------
  * @ingroup DAQ_CHANNEL DAQ_DEVICE
  * @brief Data type of DAQ register "PM_Fifo_Words"
  * @see PM_FIFO_WORDS
@@ -238,7 +238,7 @@ struct DAQ_DATA_NAME_T
    //TODO
 };
 #endif
-/*!
+/*! ---------------------------------------------------------------------------
  * @ingroup DAQ_CHANNEL DAQ_DEVICE
  * @brief Memory mapped IO-space of a DAQ macro
  */
@@ -249,7 +249,7 @@ typedef volatile union
 } DAQ_REGISTER_T;
 STATIC_ASSERT( sizeof( DAQ_REGISTER_T ) == (SCUBUS_SLAVE_ADDR_SPACE-DAQ_REGISTER_OFFSET) );
 
-/*!
+/*! ---------------------------------------------------------------------------
  * @ingroup DAQ_CHANNEL
  * @brief Flag pool of channel properties
  */
@@ -259,13 +259,14 @@ typedef struct
 } DAQ_CHANNEL_BF_PROPERTY_T;
 STATIC_ASSERT( sizeof( DAQ_CHANNEL_BF_PROPERTY_T ) == sizeof( uint8_t ) );
 
-/*!
+/*! ---------------------------------------------------------------------------
  * @ingroup DAQ_CHANNEL
  * @brief Object represents a single channel of a DAQ.
  */
 typedef struct
 {
-   uint8_t                   n;       //!< @brief Channel number [0..DAQ_MAX_CHANNELS-1]
+   uint8_t                   n;       //!< @brief Channel number
+                                      //!        [0..DAQ_MAX_CHANNELS-1]
    uint16_t                  intMask; //!< @brief Interrupt mask. In principle not
                                       //!  necessary, but it accelerates the
                                       //!  concerning interrupt routine a bit.
@@ -301,21 +302,22 @@ typedef struct
    uint16_t* volatile pHiRes; //!< @brief Pointer to 16 bit interrupt HiRes pending register
 } DAQ_INT_PENDING_T;
 #endif
-/*!
+/*! ---------------------------------------------------------------------------
  * @ingroup DAQ_DEVICE
  * @brief Object represents a single SCU-Bus slave including a DAQ
  */
 typedef struct
 {
    unsigned int maxChannels; //!< @brief Number of DAQ-channels
-   unsigned int n;      //!< @brief Device number becomes valid after daqBusFindAndInitializeAll
+   unsigned int n;      //!< @brief Device number becomes valid after
+                        //!         daqBusFindAndInitializeAll
    DAQ_CANNEL_T aChannel[DAQ_MAX_CHANNELS]; //!< @brief Array of channel objects
   // DAQ_INT_PENDING_T volatile intPending;  //!< @brief  DAQ_INT_PENDING_T
    DAQ_REGISTER_T* volatile pReg; //!< @brief Pointer to DAQ-registers
                                   //! (start of address space)
 } DAQ_DEVICE_T;
 
-/*!
+/*! ---------------------------------------------------------------------------
  * @ingroup DAQ_SCU_BUS
  * @brief Object represents all on the SCU-bus connected DAQs.
  */
@@ -742,7 +744,7 @@ static inline bool daqChannelGetTriggerSource( register DAQ_CANNEL_T* pThis )
  * @see daqChannelGetRegPtr
  * @param pThis Pointer to the channel object
  */
-static inline bool daqChannelEnablePostMortem( register DAQ_CANNEL_T* pThis )
+static inline void daqChannelEnablePostMortem( register DAQ_CANNEL_T* pThis )
 {
 #ifdef CONFIG_DAQ_SIMULATE_CHANNEL
    DAQ_ASSERT( pThis->simulatedDescriptor.name.cControl.channelMode.hiResMode == 0 );
@@ -777,7 +779,7 @@ static inline bool daqChannelIsPostMortemActive( register DAQ_CANNEL_T* pThis )
  * @see daqChannelGetRegPtr
  * @param pThis Pointer to the channel object
  */
-static inline bool daqChannelDisablePostMortem( register DAQ_CANNEL_T* pThis )
+static inline void daqChannelDisablePostMortem( register DAQ_CANNEL_T* pThis )
 {
 #ifdef CONFIG_DAQ_SIMULATE_CHANNEL
    pThis->simulatedDescriptor.name.cControl.channelMode.pmMode = 0;

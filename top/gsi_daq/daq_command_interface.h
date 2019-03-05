@@ -45,6 +45,9 @@
 #define DAQ_RET_ERR_SLAVE_NOT_PRESENT        -2
 #define DAQ_RET_ERR_CHANNEL_NOT_PRESENT      -3
 #define DAQ_RET_ERR_DEVICE_ADDRESS_NOT_FOUND -4
+#define DAQ_RET_ERR_CHANNEL_OUT_OF_RANGE     -5
+#define DAQ_RET_ERR_SLAVE_OUT_OF_RANGE       -6
+#define DAQ_RET_ERR_WRONG_SAMPLE_PARAMETER   -7
 
 #define DAQ_RET_OK                        0
 #define DAQ_RET_RESCAN                    1
@@ -72,9 +75,13 @@ typedef enum
 } DAQ_OPERATION_CODE_T;
 STATIC_ASSERT( sizeof( DAQ_OPERATION_CODE_T ) == sizeof(uint32_t) );
 
+#define DAQ_SAMPLE_1MS   1
+#define DAQ_SAMPLE_100US 2
+#define DAQ_SAMPLE_10US  3
+
 typedef struct PACKED_SIZE
 {
-   uint16_t  slot;
+   uint16_t  deviceNumber;
    uint16_t  channel;
 } DAQ_CHANNEL_LOCATION_T;
 STATIC_ASSERT( sizeof( DAQ_CHANNEL_LOCATION_T ) == 2 * sizeof(uint16_t));

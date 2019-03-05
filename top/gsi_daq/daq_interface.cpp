@@ -24,7 +24,7 @@
  */
 #include <daq_interface.hpp>
 #include <sys/select.h>
-
+#include <helper_macros.h>
 using namespace daq;
 
 #define FUNCTION_NAME_TO_STD_STRING static_cast<const std::string>(__func__)
@@ -40,6 +40,8 @@ using namespace daq;
 DaqInterface::DaqInterface( const std::string wbDevice )
    :m_wbDevice( wbDevice )
    ,m_poEbHandle( nullptr )
+   ,m_slotFlags( 0 )
+   ,m_maxDevices( 0 )
 {
    if( ::ebOpen( &m_oEbHandle, m_wbDevice.c_str() ) != EB_OK )
       throw Exception( ::ebGetStatusString( &m_oEbHandle ) );
@@ -52,10 +54,9 @@ DaqInterface::DaqInterface( const std::string wbDevice )
       throw( Exception( "Could not find RAM-device!" ) );
    }
 
-   readSharedTotal();
    setCommand( DAQ_OP_RESET );
-  // setCommand( DAQ_OP_GET_SLOTS ); //!!
- //  setCommand( DAQ_OP_LOCK );       //!!
+   readSharedTotal();
+   readSlotStatus();
 }
 
 /*! ---------------------------------------------------------------------------
@@ -309,9 +310,170 @@ DaqInterface::RETURN_CODE_T DaqInterface::readParam1234( void )
 
 /*! ---------------------------------------------------------------------------
  */
-DaqInterface::SLOT_FLAGS_T DaqInterface::readSlotStatus( void )
+void DaqInterface::writeParam1( void )
+{
+   EB_MAKE_CB_OW_ARG( cArg );
+
+   if( ebWriteObjectCycleOpen( cArg ) != EB_OK )
+      __THROW_EB_EXCEPTION();
+
+   EB_LM32_OJECT_MEMBER_WRITE( m_poEbHandle, &m_oSharedData,
+                               operation.ioData.location.deviceNumber );
+   EB_LM32_OJECT_MEMBER_WRITE( m_poEbHandle, &m_oSharedData,
+                               operation.ioData.location.channel );
+   EB_LM32_OJECT_MEMBER_WRITE( m_poEbHandle, &m_oSharedData,
+                               operation.ioData.param1 );
+   ebCycleClose();
+
+   while( !cArg.exit )
+      ebSocketRun();
+
+   m_poEbHandle->status = cArg.status;
+   if( m_poEbHandle->status != EB_OK )
+      __THROW_EB_EXCEPTION();
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+void DaqInterface::writeParam12( void )
+{
+   EB_MAKE_CB_OW_ARG( cArg );
+
+   if( ebWriteObjectCycleOpen( cArg ) != EB_OK )
+      __THROW_EB_EXCEPTION();
+
+   EB_LM32_OJECT_MEMBER_WRITE( m_poEbHandle, &m_oSharedData,
+                               operation.ioData.location.deviceNumber );
+   EB_LM32_OJECT_MEMBER_WRITE( m_poEbHandle, &m_oSharedData,
+                               operation.ioData.location.channel );
+   EB_LM32_OJECT_MEMBER_WRITE( m_poEbHandle, &m_oSharedData,
+                               operation.ioData.param1 );
+   EB_LM32_OJECT_MEMBER_WRITE( m_poEbHandle, &m_oSharedData,
+                               operation.ioData.param2 );
+
+   ebCycleClose();
+
+   while( !cArg.exit )
+      ebSocketRun();
+
+   m_poEbHandle->status = cArg.status;
+   if( m_poEbHandle->status != EB_OK )
+      __THROW_EB_EXCEPTION();
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+void DaqInterface::writeParam123( void )
+{
+   EB_MAKE_CB_OW_ARG( cArg );
+
+   if( ebWriteObjectCycleOpen( cArg ) != EB_OK )
+      __THROW_EB_EXCEPTION();
+
+   EB_LM32_OJECT_MEMBER_WRITE( m_poEbHandle, &m_oSharedData,
+                               operation.ioData.location.deviceNumber );
+   EB_LM32_OJECT_MEMBER_WRITE( m_poEbHandle, &m_oSharedData,
+                               operation.ioData.location.channel );
+   EB_LM32_OJECT_MEMBER_WRITE( m_poEbHandle, &m_oSharedData,
+                               operation.ioData.param1 );
+   EB_LM32_OJECT_MEMBER_WRITE( m_poEbHandle, &m_oSharedData,
+                               operation.ioData.param2 );
+   EB_LM32_OJECT_MEMBER_WRITE( m_poEbHandle, &m_oSharedData,
+                               operation.ioData.param3 );
+
+   ebCycleClose();
+
+   while( !cArg.exit )
+      ebSocketRun();
+
+   m_poEbHandle->status = cArg.status;
+   if( m_poEbHandle->status != EB_OK )
+      __THROW_EB_EXCEPTION();
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+void DaqInterface::writeParam1234( void )
+{
+   EB_MAKE_CB_OW_ARG( cArg );
+
+   if( ebWriteObjectCycleOpen( cArg ) != EB_OK )
+      __THROW_EB_EXCEPTION();
+
+   EB_LM32_OJECT_MEMBER_WRITE( m_poEbHandle, &m_oSharedData,
+                               operation.ioData.location.deviceNumber );
+   EB_LM32_OJECT_MEMBER_WRITE( m_poEbHandle, &m_oSharedData,
+                               operation.ioData.location.channel );
+   EB_LM32_OJECT_MEMBER_WRITE( m_poEbHandle, &m_oSharedData,
+                               operation.ioData.param1 );
+   EB_LM32_OJECT_MEMBER_WRITE( m_poEbHandle, &m_oSharedData,
+                               operation.ioData.param2 );
+   EB_LM32_OJECT_MEMBER_WRITE( m_poEbHandle, &m_oSharedData,
+                               operation.ioData.param3 );
+   EB_LM32_OJECT_MEMBER_WRITE( m_poEbHandle, &m_oSharedData,
+                               operation.ioData.param4 );
+
+   ebCycleClose();
+
+   while( !cArg.exit )
+      ebSocketRun();
+
+   m_poEbHandle->status = cArg.status;
+   if( m_poEbHandle->status != EB_OK )
+      __THROW_EB_EXCEPTION();
+
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+unsigned int DaqInterface::getSlotNumber( const unsigned int deviceNumber )
+{
+   SCU_ASSERT( deviceNumber > 0 );
+   SCU_ASSERT( deviceNumber <= c_maxDevices );
+
+   unsigned int i = 0;
+   for( unsigned int slot = 1; slot <= c_maxSlots; slot++ )
+   {
+      if( isDevicePresent( slot ) )
+         i++;
+      if( i == deviceNumber )
+         return slot;
+   }
+   return 0;
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+DaqInterface::RETURN_CODE_T DaqInterface::readSlotStatus( void )
 {
    setCommand( DAQ_OP_GET_SLOTS );
+   readParam1();
+   if( m_oSharedData.operation.retCode == DAQ_RET_OK )
+   {
+      m_slotFlags = m_oSharedData.operation.ioData.param1;
+      m_maxDevices = 0;
+      for( unsigned int slot = 1; slot <= c_maxSlots; slot++ )
+      {
+         if( isDevicePresent( slot ) )
+            m_maxDevices++;
+      }
+   }
+   else
+   {
+      m_slotFlags = 0;
+      m_maxDevices = 0;
+   }
+   return m_oSharedData.operation.retCode;
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+unsigned int DaqInterface::readMaxChannels( unsigned int deviceNumber )
+{
+   SCU_ASSERT( deviceNumber <= c_maxDevices );
+   m_oSharedData.operation.ioData.location.deviceNumber = deviceNumber;
+   writeParam1();
+   setCommand( DAQ_OP_GET_CHANNELS );
    readParam1();
    return m_oSharedData.operation.ioData.param1;
 }

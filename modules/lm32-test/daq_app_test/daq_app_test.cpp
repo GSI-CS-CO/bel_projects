@@ -14,23 +14,20 @@ int main( int argc, const char** ppArgv )
    {
       DaqAdmin oDaqInterface( ppArgv[1] );
       cout << "WB-interface: " << oDaqInterface.getWbDevice() << endl;
-
-      DaqInterface::SLOT_FLAGS_T flags = oDaqInterface.readSlotStatus();
-      for( unsigned int i = 1; i < DaqInterface::c_maxDevices; i++ )
+      cout << oDaqInterface.getMaxFoundDevices() << " DAQ's found" << endl;
+      for( unsigned int i = 1; i <= oDaqInterface.getMaxFoundDevices(); i++ )
       {
-         if( DaqInterface::isDevicePresent( flags, i ) )
-         {
-            cout << "Slot: " << i << endl;
-         }
+         unsigned int channels = oDaqInterface.readMaxChannels( i );
+         cout << "Slot: " << oDaqInterface.getSlotNumber( i ) << "\tChannels: " << channels << endl;
       }
    }
    catch( DaqInterface::Exception& e )
    {
-      cerr << ESC_FG_RED "DaqInterface::Exception occurred: " << e.what() << endl;
+      cerr << ESC_FG_RED "DaqInterface::Exception occurred: " << e.what() << ESC_NORMAL << endl;
    }
    catch( exception& e )
    {
-      cerr << ESC_FG_RED "std::xception occurred: " << e.what() << endl;
+      cerr << ESC_FG_RED "std::xception occurred: " << e.what() << ESC_NORMAL << endl;
    }
    catch( ... )
    {

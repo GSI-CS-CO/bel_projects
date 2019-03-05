@@ -75,6 +75,70 @@ int initBuffer( RAM_SCU_T* poRam )
    return ramInit( poRam, (RAM_RING_SHARED_OBJECT_T*)&g_shared.ramIndexes );
 }
 
+/*! ---------------------------------------------------------------------------
+ */
+static int
+verifyDeviceAccess( DAQ_BUS_T* pDaqBus,
+                    volatile DAQ_CHANNEL_LOCATION_T* pLocation )
+{
+   if( (pLocation->deviceNumber == 0) || (pLocation->deviceNumber > DAQ_MAX) )
+   {
+      DBPRINT1( "DBG: DAQ_RET_ERR_SLAVE_OUT_OF_RANGE\n" );
+      return DAQ_RET_ERR_SLAVE_OUT_OF_RANGE;
+   }
+
+   if( pLocation->deviceNumber > pDaqBus->foundDevices )
+   {
+      DBPRINT1( "DBG: DAQ_RET_ERR_SLAVE_NOT_PRESENT\n" );
+      return DAQ_RET_ERR_SLAVE_NOT_PRESENT;
+   }
+
+   return DAQ_RET_OK;
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+static int
+verifyChannelAccess( DAQ_BUS_T* pDaqBus,
+                     volatile DAQ_CHANNEL_LOCATION_T* pLocation )
+{
+   int ret = verifyDeviceAccess( pDaqBus, pLocation );
+   if( ret != DAQ_RET_OK )
+      return ret;
+
+   if( (pLocation->channel == 0) || (pLocation->channel > DAQ_MAX_CHANNELS))
+   {
+      DBPRINT1( "DBG: DAQ_RET_ERR_CHANNEL_OUT_OF_RANGE\n" );
+      return DAQ_RET_ERR_CHANNEL_OUT_OF_RANGE;
+   }
+
+   if( pLocation->channel > pDaqBus->aDaq[pLocation->deviceNumber-1].maxChannels )
+   {
+      DBPRINT1( "DBG: DAQ_RET_ERR_CHANNEL_NOT_PRESENT\n" );
+      return DAQ_RET_ERR_CHANNEL_NOT_PRESENT;
+   }
+
+   return DAQ_RET_OK;
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+static
+int32_t opLock( DAQ_ADMIN_T* pDaqAdmin, volatile DAQ_OPERATION_IO_T* pData )
+{
+   DBPRINT1( "DBG: executing %s\n", __func__ );
+   return DAQ_RET_OK;
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+static
+int32_t opUnlock( DAQ_ADMIN_T* pDaqAdmin, volatile DAQ_OPERATION_IO_T* pData )
+{
+   DBPRINT1( "DBG: executing %s\n", __func__ );
+   return DAQ_RET_OK;
+}
+
 
 /*! ---------------------------------------------------------------------------
  */
@@ -100,6 +164,21 @@ static int32_t opGetSlots( DAQ_ADMIN_T* pDaqAdmin,
 
 /*! ---------------------------------------------------------------------------
  */
+static int32_t opGetChannels( DAQ_ADMIN_T* pDaqAdmin,
+                              volatile DAQ_OPERATION_IO_T* pData )
+{
+   DBPRINT1( "DBG: executing %s\n", __func__ );
+   int ret = verifyDeviceAccess( &pDaqAdmin->oDaqDevs, &pData->location );
+   if( ret != DAQ_RET_OK )
+      return ret;
+
+   pData->param1 = pDaqAdmin->oDaqDevs.aDaq[pData->location.deviceNumber-1].maxChannels;
+
+   return DAQ_RET_OK;
+}
+
+/*! ---------------------------------------------------------------------------
+ */
 static int32_t opRescan( DAQ_ADMIN_T* pDaqAdmin,
                          volatile DAQ_OPERATION_IO_T* pData )
 {
@@ -109,14 +188,124 @@ static int32_t opRescan( DAQ_ADMIN_T* pDaqAdmin,
 }
 
 /*! ---------------------------------------------------------------------------
+ */
+static inline
+DAQ_CANNEL_T* getChannel( DAQ_ADMIN_T* pDaqAdmin,
+                          volatile DAQ_OPERATION_IO_T* pData )
+{
+   return &pDaqAdmin->oDaqDevs.aDaq
+            [pData->location.deviceNumber-1].aChannel[pData->location.channel-1];
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+static int32_t opPostMortemOn( DAQ_ADMIN_T* pDaqAdmin,
+                               volatile DAQ_OPERATION_IO_T* pData )
+{
+   DBPRINT1( "DBG: executing %s\n", __func__ );
+
+   int ret = verifyChannelAccess( &pDaqAdmin->oDaqDevs, &pData->location );
+   if( ret != DAQ_RET_OK )
+      return ret;
+
+   daqChannelEnablePostMortem( getChannel( pDaqAdmin, pData ) );
+
+   return DAQ_RET_OK;
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+static int32_t opHighResolutionOn( DAQ_ADMIN_T* pDaqAdmin,
+                                   volatile DAQ_OPERATION_IO_T* pData )
+{
+   DBPRINT1( "DBG: executing %s\n", __func__ );
+
+   int ret = verifyChannelAccess( &pDaqAdmin->oDaqDevs, &pData->location );
+   if( ret != DAQ_RET_OK )
+      return ret;
+
+   daqChannelEnableHighResolution( getChannel( pDaqAdmin, pData ) );
+
+   return DAQ_RET_OK;
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+static int32_t opContinueOn( DAQ_ADMIN_T* pDaqAdmin,
+                             volatile DAQ_OPERATION_IO_T* pData )
+{
+   DBPRINT1( "DBG: executing %s\n", __func__ );
+
+   int ret = verifyChannelAccess( &pDaqAdmin->oDaqDevs, &pData->location );
+   if( ret != DAQ_RET_OK )
+      return ret;
+
+   DAQ_CANNEL_T* pChannel = getChannel( pDaqAdmin, pData );
+
+   switch( pData->param1 )
+   {
+      case DAQ_SAMPLE_1MS:
+      {
+         daqChannelSample1msOn( pChannel );
+         break;
+      }
+      case DAQ_SAMPLE_100US:
+      {
+         daqChannelSample100usOn( pChannel );
+         break;
+      }
+      case DAQ_SAMPLE_10US:
+      {
+         daqChannelSample10usOn( pChannel );
+         break;
+      }
+      default:
+      {
+         return DAQ_RET_ERR_WRONG_SAMPLE_PARAMETER;
+      }
+   }
+
+   return DAQ_RET_OK;
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+static int32_t opOff( DAQ_ADMIN_T* pDaqAdmin,
+                             volatile DAQ_OPERATION_IO_T* pData )
+{
+   DBPRINT1( "DBG: executing %s\n", __func__ );
+
+   int ret = verifyChannelAccess( &pDaqAdmin->oDaqDevs, &pData->location );
+   if( ret != DAQ_RET_OK )
+      return ret;
+
+   DAQ_CANNEL_T* pChannel = getChannel( pDaqAdmin, pData );
+
+   daqChannelSample10usOff( pChannel );
+   daqChannelSample100usOff( pChannel );
+   daqChannelSample1msOff( pChannel );
+   daqChannelDisablePostMortem( pChannel );
+   daqChannelDisableHighResolution( pChannel );
+
+   return DAQ_RET_OK;
+}
+
+/*! ---------------------------------------------------------------------------
  * @ingroup DAQ_INTERFACE
  * @brief Operation match list
  */
 static const DAQ_OPERATION_TAB_ITEM_T g_operationTab[] =
 {
-   { .code = DAQ_OP_RESET,           .operation = opReset     },
-   { .code = DAQ_OP_GET_SLOTS,       .operation = opGetSlots  },
-   { .code = DAQ_OP_RESCAN,          .operation = opRescan    },
+   { .code = DAQ_OP_LOCK,         .operation = opLock             },
+   { .code = DAQ_OP_UNLOCK,       .operation = opUnlock           },
+   { .code = DAQ_OP_RESET,        .operation = opReset            },
+   { .code = DAQ_OP_GET_SLOTS,    .operation = opGetSlots         },
+   { .code = DAQ_OP_GET_CHANNELS, .operation = opGetChannels      },
+   { .code = DAQ_OP_RESCAN,       .operation = opRescan           },
+   { .code = DAQ_OP_PM_ON,        .operation = opPostMortemOn     },
+   { .code = DAQ_OP_HIRES_ON,     .operation = opHighResolutionOn },
+   { .code = DAQ_OP_CONTINUE_ON,  .operation = opContinueOn       },
+   { .code = DAQ_OP_OFF,          .operation = opOff              },
    DAQ_OPERATION_ITEM_TERMINATOR
 };
 
@@ -133,7 +322,8 @@ int executeIfRequested( DAQ_ADMIN_T* pDaqAdmin )
       if( g_operationTab[i].code == g_shared.operation.code )
       {
          g_shared.operation.retCode =
-            g_operationTab[i].operation( pDaqAdmin, &g_shared.operation.ioData );
+            g_operationTab[i].operation( pDaqAdmin,
+                                         &g_shared.operation.ioData );
          break;
       }
       i++;

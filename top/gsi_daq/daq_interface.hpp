@@ -44,22 +44,27 @@ namespace daq
 class DaqInterface
 {
    typedef eb_status_t      EB_STATUS_T;
+public:
+   typedef SCUBUS_SLAVE_FLAGS_T SLOT_FLAGS_T;
+   typedef DAQ_RETURN_CODE_T    RETURN_CODE_T;
 
+private:
    const std::string        m_wbDevice;
    RAM_SCU_T                m_oScuRam;
    EB_HANDLE_T              m_oEbHandle;
    EB_HANDLE_T*             m_poEbHandle;
    DAQ_SHARED_IO_T          m_oSharedData;
+   SLOT_FLAGS_T             m_slotFlags;
+   unsigned int             m_maxDevices;
 
 protected:
-   constexpr static unsigned int   c_maxCmdPoll = 100;
+   constexpr static unsigned int c_maxCmdPoll = 100;
 
 public:
-   constexpr static unsigned int c_maxDevices  = DAQ_MAX;
-   constexpr static unsigned int c_maxChannels = DAQ_MAX_CHANNELS;
-
-   typedef SCUBUS_SLAVE_FLAGS_T SLOT_FLAGS_T;
-   typedef DAQ_RETURN_CODE_T    RETURN_CODE_T;
+   constexpr static unsigned int c_maxDevices   = DAQ_MAX;
+   constexpr static unsigned int c_maxSlots     = MAX_SCU_SLAVES;
+   constexpr static unsigned int c_startSlot    = SCUBUS_START_SLOT;
+   constexpr static unsigned int c_maxChannels  = DAQ_MAX_CHANNELS;
 
    class Exception
    {
@@ -86,17 +91,26 @@ public:
       static_cast<const std::string>(::ebGetStatusString( m_poEbHandle ));
    }
 
-   RETURN_CODE_T readParam1( void );
-   RETURN_CODE_T readParam12( void );
-   RETURN_CODE_T readParam123( void );
-   RETURN_CODE_T readParam1234( void );
 
-   SLOT_FLAGS_T readSlotStatus( void );
-
-   static bool isDevicePresent( const SLOT_FLAGS_T flags, const unsigned int slot )
+   RETURN_CODE_T readSlotStatus( void );
+   SLOT_FLAGS_T  getSlotStatus( void ) const
    {
-      return ::scuBusIsSlavePresent( flags, slot );
+      return m_slotFlags;
    }
+
+   unsigned int getMaxFoundDevices( void ) const
+   {
+      return m_maxDevices;
+   }
+
+   bool isDevicePresent( const unsigned int slot )
+   {
+      return ::scuBusIsSlavePresent( m_slotFlags, slot );
+   }
+
+   unsigned int getSlotNumber( const unsigned int deviceNumber );
+
+   unsigned int readMaxChannels( unsigned int slot );
 
 protected:
 
@@ -130,6 +144,16 @@ private:
    void readSharedTotal( void );
    void setCommand( DAQ_OPERATION_CODE_T );
    DAQ_OPERATION_CODE_T getCommand( void );
+
+   RETURN_CODE_T readParam1( void );
+   RETURN_CODE_T readParam12( void );
+   RETURN_CODE_T readParam123( void );
+   RETURN_CODE_T readParam1234( void );
+
+   void writeParam1( void );
+   void writeParam12( void );
+   void writeParam123( void );
+   void writeParam1234( void );
 }; // end class DaqInterface
 
 } //namespace daq
