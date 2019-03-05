@@ -13,6 +13,10 @@ PWD         := $(shell pwd)
 EXTRA_FLAGS ?=
 export EXTRA_FLAGS
 
+# Set variables that are passed down to sub-makes
+EB=$(PWD)/ip_cores/etherbone-core/api
+export EB
+
 all:		etherbone tools sdbfs toolchain firmware driver
 
 gateware:	all pexarria5 exploder5 vetar2a scu2 scu3
@@ -48,40 +52,40 @@ saftlib-install::
 	$(MAKE) -C ip_cores/saftlib DESTDIR=$(STAGING) install
 
 tools::		etherbone
-	$(MAKE) -C tools EB=$(PWD)/ip_cores/etherbone-core/api all
+	$(MAKE) -C tools all
 
 tools-clean::
-	$(MAKE) -C tools EB=$(PWD)/ip_cores/etherbone-core/api clean
+	$(MAKE) -C tools clean
 
 tools-install::
-	$(MAKE) -C tools EB=$(PWD)/ip_cores/etherbone-core/api install
+	$(MAKE) -C tools install
 
 ecatools: 	etherbone eca tlu
-	$(MAKE) -C tools ECA=$(PWD)/ip_cores/wr-cores/modules/wr_eca TLU=$(PWD)/ip_cores/wr-cores/modules/wr_tlu EB=$(PWD)/ip_cores/etherbone-core/api ecatools
+	$(MAKE) -C tools ECA=$(PWD)/ip_cores/wr-cores/modules/wr_eca TLU=$(PWD)/ip_cores/wr-cores/modules/wr_tlu ecatools
 
 ecatools-clean::
-	$(MAKE) -C tools ECA=$(PWD)/ip_cores/wr-cores/modules/wr_eca TLU=$(PWD)/ip_cores/wr-cores/modules/wr_tlu EB=$(PWD)/ip_cores/etherbone-core/api ecatools-clean
+	$(MAKE) -C tools ECA=$(PWD)/ip_cores/wr-cores/modules/wr_eca TLU=$(PWD)/ip_cores/wr-cores/modules/wr_tlu ecatools-clean
 
 ecatools-install::
-	$(MAKE) -C tools ECA=$(PWD)/ip_cores/wr-cores/modules/wr_eca TLU=$(PWD)/ip_cores/wr-cores/modules/wr_tlu EB=$(PWD)/ip_cores/etherbone-core/api ecatools-install
+	$(MAKE) -C tools ECA=$(PWD)/ip_cores/wr-cores/modules/wr_eca TLU=$(PWD)/ip_cores/wr-cores/modules/wr_tlu ecatools-install
 
 eca:		etherbone
-	$(MAKE) -C ip_cores/wr-cores/modules/wr_eca EB=$(PWD)/ip_cores/etherbone-core/api all
+	$(MAKE) -C ip_cores/wr-cores/modules/wr_eca all
 
 eca-clean::
-	$(MAKE) -C ip_cores/wr-cores/modules/wr_eca EB=$(PWD)/ip_cores/etherbone-core/api clean
+	$(MAKE) -C ip_cores/wr-cores/modules/wr_eca clean
 
 eca-install::
-	$(MAKE) -C ip_cores/wr-cores/modules/wr_eca EB=$(PWD)/ip_cores/etherbone-core/api install
+	$(MAKE) -C ip_cores/wr-cores/modules/wr_eca install
 
 tlu:		etherbone
-	$(MAKE) -C ip_cores/wr-cores/modules/wr_tlu EB=$(PWD)/ip_cores/etherbone-core/api all
+	$(MAKE) -C ip_cores/wr-cores/modules/wr_tlu all
 
 tlu-clean::
-	$(MAKE) -C ip_cores/wr-cores/modules/wr_tlu EB=$(PWD)/ip_cores/etherbone-core/api clean
+	$(MAKE) -C ip_cores/wr-cores/modules/wr_tlu clean
 
 tlu-install::
-	$(MAKE) -C ip_cores/wr-cores/modules/wr_tlu EB=$(PWD)/ip_cores/etherbone-core/api install
+	$(MAKE) -C ip_cores/wr-cores/modules/wr_tlu install
 
 driver::
 	$(MAKE) -C ip_cores/fpga-config-space/pcie-wb all
@@ -116,10 +120,10 @@ wrpc-sw-config::
 	$(MAKE) -C ip_cores/wrpc-sw/ gsi_defconfig
 
 firmware:	sdbfs etherbone toolchain wrpc-sw-config
-	$(MAKE) -C ip_cores/wrpc-sw EB=$(PWD)/ip_cores/etherbone-core/api SDBFS=$(PWD)/ip_cores/fpga-config-space/sdbfs/userspace PATH=$(PWD)/toolchain/bin:$(PATH) all
+	$(MAKE) -C ip_cores/wrpc-sw SDBFS=$(PWD)/ip_cores/fpga-config-space/sdbfs/userspace PATH=$(PWD)/toolchain/bin:$(PATH) all
 
 firmware-clean::
-	$(MAKE) -C ip_cores/wrpc-sw EB=$(PWD)/ip_cores/etherbone-core/api SDBFS=$(PWD)/ip_cores/fpga-config-space/sdbfs/userspace PATH=$(PWD)/toolchain/bin:$(PATH) clean
+	$(MAKE) -C ip_cores/wrpc-sw SDBFS=$(PWD)/ip_cores/fpga-config-space/sdbfs/userspace PATH=$(PWD)/toolchain/bin:$(PATH) clean
 
 avsoc:		firmware
 	$(MAKE) -C syn/gsi_avsoc/av_rocket_board PATH=$(PWD)/toolchain/bin:$(PATH) all
