@@ -95,5 +95,3 @@ prog:
 
 %.rpd:	%.pof %.opt
 	$(QUARTUS_BIN)/quartus_cpf -c -o $*.opt $< $@
-
--include $(TARGET).dep
