@@ -38,8 +38,9 @@ DaqChannel::DaqChannel( unsigned int number )
 ///////////////////////////////////////////////////////////////////////////////
 /*! ---------------------------------------------------------------------------
  */
-DaqDevice::DaqDevice( unsigned int slot )
-   :m_slot( slot )
+DaqDevice::DaqDevice( unsigned int number )
+   :m_deviceNumber( number )
+   ,m_slot( 0 )
    ,m_pParent(nullptr)
 {
 

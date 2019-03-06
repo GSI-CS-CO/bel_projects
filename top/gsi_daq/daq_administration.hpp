@@ -34,6 +34,9 @@ class DaqAdmin;
 class DaqDevice;
 
 ///////////////////////////////////////////////////////////////////////////////
+/*! ---------------------------------------------------------------------------
+ * @brief Object of this type represents a single DAQ channel.
+ */
 class DaqChannel
 {
    friend class DaqDevice;
@@ -51,21 +54,37 @@ public:
 
    DaqDevice* getParent( void )
    {
+      SCU_ASSERT( m_pParent != nullptr );
       return m_pParent;
    }
+
+   int enablePostMortem( void );
+   int enableHighResolution( void );
+   int enableContineous( const DAQ_SAMPLE_RATE_T sampleRate );
+   int disable( void );
 };
 
 ///////////////////////////////////////////////////////////////////////////////
+/*! ---------------------------------------------------------------------------
+ * @brief Object of this type represents one of the 12 possible DAQ devices
+ *        on the SCU bus. It's the container of the DAQ channels.
+ */
 class DaqDevice
 {
    friend class DaqAdmin;
-   std::vector<DaqChannel*> m_channelList;
+   std::vector<DaqChannel*> m_channelPtrList[DaqInterface::c_maxChannels];
+   unsigned int             m_deviceNumber;
    unsigned int             m_slot;
    DaqAdmin*                m_pParent;
 
 public:
    DaqDevice( unsigned int slot );
    ~DaqDevice( void );
+
+   const unsigned int getDeviceNumber( void ) const
+   {
+      return m_deviceNumber;
+   }
 
    const unsigned int getSlot( void ) const
    {
@@ -74,16 +93,27 @@ public:
 
    DaqAdmin* getParent( void )
    {
+      SCU_ASSERT( m_pParent != nullptr );
       return m_pParent;
    }
 
    bool registerChannel( DaqChannel* pChannel );
+
+   int enablePostMortem( const unsigned int channel );
+   int enableHighResolution( const unsigned int channel );
+   int enableContineous( const unsigned int channel,
+                         const DAQ_SAMPLE_RATE_T sampleRate );
+   int disable( const unsigned int channel );
 };
 
 ///////////////////////////////////////////////////////////////////////////////
+/*! ---------------------------------------------------------------------------
+ * @brief Object of this type represents the container of all possible
+ *        DAQ slaves on the SCU bus
+ */
 class DaqAdmin: public DaqInterface
 {
-   std::list<DaqDevice*>  m_deviceList;
+   std::list<DaqDevice*>  m_devicePtrList[DaqInterface::c_maxDevices];
 
 public:
    DaqAdmin( const std::string = DAQ_DEFAULT_WB_DEVICE );
@@ -93,6 +123,65 @@ public:
    bool unregisterDevice( DaqDevice* pDevice );
 };
 
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+/*! ---------------------------------------------------------------------------
+ */
+inline int DaqDevice::enablePostMortem( const unsigned int channel )
+{
+   return getParent()->enablePostMortem( m_deviceNumber, channel );
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+inline int DaqDevice::enableHighResolution( const unsigned int channel )
+{
+   return getParent()->enableHighResolution( m_deviceNumber, channel );
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+inline int DaqDevice::enableContineous( const unsigned int channel,
+                                        const DAQ_SAMPLE_RATE_T sampleRate )
+{
+   return getParent()->enableContineous( m_deviceNumber, channel, sampleRate );
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+inline int DaqDevice::disable( const unsigned int channel )
+{
+   return getParent()->disable( m_deviceNumber, channel );
+}
+
+///////////////////////////////////////////////////////////////////////////////
+/*! ---------------------------------------------------------------------------
+ */
+inline int DaqChannel::enablePostMortem( void )
+{
+   return getParent()->enablePostMortem( m_number );
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+inline int DaqChannel::enableHighResolution( void )
+{
+   return getParent()->enableHighResolution( m_number );
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+inline int DaqChannel::enableContineous( const DAQ_SAMPLE_RATE_T sampleRate )
+{
+   return getParent()->enableContineous( m_number, sampleRate );
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+inline int DaqChannel::disable( void )
+{
+   return getParent()->disable( m_number );
+}
 
 } //namespace daq
 

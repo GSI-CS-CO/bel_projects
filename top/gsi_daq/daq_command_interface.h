@@ -75,9 +75,12 @@ typedef enum
 } DAQ_OPERATION_CODE_T;
 STATIC_ASSERT( sizeof( DAQ_OPERATION_CODE_T ) == sizeof(uint32_t) );
 
-#define DAQ_SAMPLE_1MS   1
-#define DAQ_SAMPLE_100US 2
-#define DAQ_SAMPLE_10US  3
+typedef enum
+{
+   DAQ_SAMPLE_1MS      = 1,
+   DAQ_SAMPLE_100US    = 2,
+   DAQ_SAMPLE_10US     = 3
+} DAQ_SAMPLE_RATE_T;
 
 typedef struct PACKED_SIZE
 {

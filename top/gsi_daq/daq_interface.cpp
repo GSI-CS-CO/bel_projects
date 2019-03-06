@@ -116,8 +116,10 @@ bool DaqInterface::onCommandReadyPoll( unsigned int pollCount )
 {
    if( pollCount >= c_maxCmdPoll )
       return true;
+
    struct timeval sleepTime = {0, 1};
    ::select( 0, nullptr, nullptr, nullptr, &sleepTime );
+
    return false;
 }
 
@@ -139,7 +141,6 @@ bool DaqInterface::cmdReadyWait( void )
  */
 void DaqInterface::setCommand( DAQ_OPERATION_CODE_T cmd )
 {
-
    m_oSharedData.operation.code = cmd;
    EB_MAKE_CB_OW_ARG( cArg );
 
@@ -157,7 +158,7 @@ void DaqInterface::setCommand( DAQ_OPERATION_CODE_T cmd )
       __THROW_EB_EXCEPTION();
 
    if( cmdReadyWait() )
-      throw Exception( "Timeout" );
+      throw Exception( "Timeout at waiting for command feedback" );
 }
 
 /*! ---------------------------------------------------------------------------
@@ -421,7 +422,6 @@ void DaqInterface::writeParam1234( void )
    m_poEbHandle->status = cArg.status;
    if( m_poEbHandle->status != EB_OK )
       __THROW_EB_EXCEPTION();
-
 }
 
 /*! ---------------------------------------------------------------------------
@@ -460,7 +460,7 @@ DaqInterface::RETURN_CODE_T DaqInterface::readSlotStatus( void )
    }
    else
    {
-      m_slotFlags = 0;
+      m_slotFlags  = 0;
       m_maxDevices = 0;
    }
    return m_oSharedData.operation.retCode;
@@ -470,12 +470,84 @@ DaqInterface::RETURN_CODE_T DaqInterface::readSlotStatus( void )
  */
 unsigned int DaqInterface::readMaxChannels( unsigned int deviceNumber )
 {
+   SCU_ASSERT( deviceNumber > 0 );
    SCU_ASSERT( deviceNumber <= c_maxDevices );
+
    m_oSharedData.operation.ioData.location.deviceNumber = deviceNumber;
    writeParam1();
    setCommand( DAQ_OP_GET_CHANNELS );
    readParam1();
    return m_oSharedData.operation.ioData.param1;
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+int DaqInterface::enablePostMortem( const unsigned int deviceNumber,
+                                    const unsigned int channel )
+{
+   SCU_ASSERT( deviceNumber > 0 );
+   SCU_ASSERT( deviceNumber <= c_maxDevices );
+   SCU_ASSERT( channel > 0 );
+   SCU_ASSERT( channel <= c_maxChannels );
+
+   m_oSharedData.operation.ioData.location.deviceNumber = deviceNumber;
+   m_oSharedData.operation.ioData.location.channel      = channel;
+   writeParam1();
+   setCommand( DAQ_OP_PM_ON );
+   return 0;
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+int DaqInterface::enableHighResolution( const unsigned int deviceNumber,
+                                        const unsigned int channel )
+{
+   SCU_ASSERT( deviceNumber > 0 );
+   SCU_ASSERT( deviceNumber <= c_maxDevices );
+   SCU_ASSERT( channel > 0 );
+   SCU_ASSERT( channel <= c_maxChannels );
+
+   m_oSharedData.operation.ioData.location.deviceNumber = deviceNumber;
+   m_oSharedData.operation.ioData.location.channel      = channel;
+   writeParam1();
+   setCommand( DAQ_OP_HIRES_ON );
+   return 0;
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+int DaqInterface::enableContineous( const unsigned int deviceNumber,
+                                    const unsigned int channel,
+                                    const DAQ_SAMPLE_RATE_T sampleRate )
+{
+   SCU_ASSERT( deviceNumber > 0 );
+   SCU_ASSERT( deviceNumber <= c_maxDevices );
+   SCU_ASSERT( channel > 0 );
+   SCU_ASSERT( channel <= c_maxChannels );
+
+   m_oSharedData.operation.ioData.location.deviceNumber = deviceNumber;
+   m_oSharedData.operation.ioData.location.channel      = channel;
+   m_oSharedData.operation.ioData.param1                = sampleRate;
+   writeParam1();
+   setCommand( DAQ_OP_CONTINUE_ON );
+   return 0;
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+int DaqInterface::disable( const unsigned int deviceNumber,
+                           const unsigned int channel )
+{
+   SCU_ASSERT( deviceNumber > 0 );
+   SCU_ASSERT( deviceNumber <= c_maxDevices );
+   SCU_ASSERT( channel > 0 );
+   SCU_ASSERT( channel <= c_maxChannels );
+
+   m_oSharedData.operation.ioData.location.deviceNumber = deviceNumber;
+   m_oSharedData.operation.ioData.location.channel      = channel;
+   writeParam1();
+   setCommand( DAQ_OP_OFF );
+   return 0;
 }
 
 //================================== EOF ======================================

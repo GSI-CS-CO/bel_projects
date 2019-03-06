@@ -45,7 +45,7 @@ int initBuffer( RAM_SCU_T* poRam );
 /*! ---------------------------------------------------------------------------
  * @brief Executes a a from host (Linux) requested function.
  */
-int executeIfRequested( DAQ_ADMIN_T* pDaqAdmin );
+bool executeIfRequested( DAQ_ADMIN_T* pDaqAdmin );
 
 
 #ifdef __cplusplus

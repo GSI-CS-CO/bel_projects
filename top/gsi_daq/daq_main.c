@@ -63,6 +63,52 @@ int scanScuBus( DAQ_BUS_T* pDaqDevices )
    return DAQ_RET_OK;
 }
 
+/*! ---------------------------------------------------------------------------
+ */
+static inline bool concernsChannel( DAQ_CANNEL_T* pChannel )
+{
+   if( daqChannelTestAndClearDaqIntPending( pChannel ) )
+   {
+      ramPushDaqDataBlock( &g_DaqAdmin.oRam, pChannel, true );
+      return true;
+   }
+   if( daqChannelTestAndClearHiResIntPending( pChannel ) )
+   {
+      ramPushDaqDataBlock( &g_DaqAdmin.oRam, pChannel, false );
+      return true;
+   }
+   return false;
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+static inline bool forEachCahnnel( DAQ_DEVICE_T* pDevice )
+{
+   for( unsigned int channelNr = 0;
+        channelNr < daqDeviceGetMaxChannels( pDevice ); channelNr++ )
+   {
+      if( executeIfRequested( &g_DaqAdmin ) )
+         return true;
+      concernsChannel( daqDeviceGetChannelObject( pDevice, channelNr ));
+   }
+   return false;
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+static inline void forEachDevice( void )
+{
+   for( unsigned int deviceNr = 0;
+       deviceNr < daqBusGetFoundDevices( &g_DaqAdmin.oDaqDevs ); deviceNr++ )
+   {
+      if( forEachCahnnel( daqBusGetDeviceObject( &g_DaqAdmin.oDaqDevs, deviceNr ) ))
+      {
+         DBPRINT1( "DBG: Leaving loop\n" );
+         break;
+      }
+   }
+}
+
 /*================================= main ====================================*/
 /*! ---------------------------------------------------------------------------
  */
@@ -81,7 +127,7 @@ void main( void )
 
    while( true )
    {
-      executeIfRequested( &g_DaqAdmin );
+      forEachDevice();
    }
 }
 

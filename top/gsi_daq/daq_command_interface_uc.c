@@ -242,7 +242,7 @@ static int32_t opContinueOn( DAQ_ADMIN_T* pDaqAdmin,
 
    DAQ_CANNEL_T* pChannel = getChannel( pDaqAdmin, pData );
 
-   switch( pData->param1 )
+   switch( (DAQ_SAMPLE_RATE_T)pData->param1 )
    {
       case DAQ_SAMPLE_1MS:
       {
@@ -311,10 +311,10 @@ static const DAQ_OPERATION_TAB_ITEM_T g_operationTab[] =
 
 /*! ---------------------------------------------------------------------------
  */
-int executeIfRequested( DAQ_ADMIN_T* pDaqAdmin )
+bool executeIfRequested( DAQ_ADMIN_T* pDaqAdmin )
 {
    if( g_shared.operation.code == DAQ_OP_IDLE )
-      return DAQ_RET_OK;
+      return false;
 
    unsigned int i = 0;
    while( g_operationTab[i].operation != NULL )
@@ -334,8 +334,17 @@ int executeIfRequested( DAQ_ADMIN_T* pDaqAdmin )
       g_shared.operation.retCode = DAQ_RET_ERR_UNKNOWN_OPERATION;
    }
 
+   bool ret;
+   if( g_shared.operation.retCode == DAQ_RET_RESCAN )
+   {
+      g_shared.operation.retCode = DAQ_RET_OK;
+      ret = true;
+   }
+   else
+      ret = false;
+
    g_shared.operation.code = DAQ_OP_IDLE;
-   return g_shared.operation.retCode;
+   return ret;
 }
 
 /*================================== EOF ====================================*/

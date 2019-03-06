@@ -41,6 +41,21 @@ namespace daq
 {
 
 ///////////////////////////////////////////////////////////////////////////////
+class Exception
+{
+   const std::string m_message;
+
+public:
+   Exception( const std::string msg ):
+      m_message( msg ) {}
+
+   const std::string& what( void ) const
+   {
+      return m_message;
+   }
+};
+
+///////////////////////////////////////////////////////////////////////////////
 class DaqInterface
 {
    typedef eb_status_t      EB_STATUS_T;
@@ -66,19 +81,6 @@ public:
    constexpr static unsigned int c_startSlot    = SCUBUS_START_SLOT;
    constexpr static unsigned int c_maxChannels  = DAQ_MAX_CHANNELS;
 
-   class Exception
-   {
-      const std::string m_message;
-
-   public:
-      Exception( const std::string msg ):
-         m_message( msg ) {}
-
-      const std::string& what( void ) const
-      {
-         return m_message;
-      }
-   };
 
    DaqInterface( const std::string = DAQ_DEFAULT_WB_DEVICE );
 
@@ -111,6 +113,19 @@ public:
    unsigned int getSlotNumber( const unsigned int deviceNumber );
 
    unsigned int readMaxChannels( unsigned int slot );
+
+   int enablePostMortem( const unsigned int deviceNumber,
+                         const unsigned int channel );
+
+   int enableHighResolution( const unsigned int deviceNumber,
+                             const unsigned int channel );
+
+   int enableContineous( const unsigned int deviceNumber,
+                         const unsigned int channel,
+                         const DAQ_SAMPLE_RATE_T sampleRate );
+
+   int disable( const unsigned int deviceNumber,
+                const unsigned int channel );
 
 protected:
 
