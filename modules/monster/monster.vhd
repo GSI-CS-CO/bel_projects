@@ -98,6 +98,9 @@ entity monster is
     g_en_psram             : boolean;
     g_io_table             : t_io_mapping_table_arg_array(natural range <>);
     g_en_pmc               : boolean;
+    g_a10_use_sys_fpll     : boolean;
+    g_a10_use_ref_fpll     : boolean;
+    g_en_butis             : boolean;
     g_lm32_cores           : natural;
     g_lm32_MSIs            : natural;
     g_lm32_ramsizes        : natural;
@@ -348,8 +351,13 @@ end monster;
 
 architecture rtl of monster is
 
-  constant c_is_arria5 : boolean := g_family = "Arria V";
-  constant c_is_arria2 : boolean := g_family = "Arria II";
+  constant c_is_arria10sx      : boolean := g_family = "Arria 10 SX";
+  constant c_is_arria10gx      : boolean := g_family = "Arria 10 GX";
+  constant c_is_arria10gx_e3p1 : boolean := g_family = "Arria 10 GX E3P1";
+  constant c_is_arria10gx_scu4 : boolean := g_family = "Arria 10 GX SCU4";
+  constant c_is_arria10        : boolean := c_is_arria10gx or c_is_arria10sx or c_is_arria10gx_e3p1 or c_is_arria10gx_scu4;
+  constant c_is_arria5         : boolean := g_family = "Arria V";
+  constant c_is_arria2         : boolean := g_family = "Arria II";
 
   constant c_zero_master : t_wishbone_master_out := (
     cyc => '0',
@@ -584,6 +592,9 @@ architecture rtl of monster is
 
   signal pci_clk_global   : std_logic;
 
+  -- Misc.
+  signal clk_tx_pll_a10   : std_logic;
+
   -- END OF Clock networks
   ----------------------------------------------------------------------------------
 
@@ -811,6 +822,9 @@ begin
   free_a2 : if c_is_arria2 generate
     clk_free <= core_clk_20m_vcxo_i; -- (125MHz is too fast)
   end generate;
+  free_a10 : if c_is_arria10 generate
+    clk_free <= core_clk_125m_local_i;
+  end generate;
 
   reset : altera_reset
     generic map(
@@ -850,6 +864,14 @@ begin
       locked   => dmtd_locked);
   end generate;
 
+  dmtd_a10 : if c_is_arria10 generate
+    dmtd_inst : dmtd_pll10 port map(
+      rst      => pll_rst,
+      refclk   => core_clk_20m_vcxo_i,    --  20  MHz
+      outclk_0 => clk_dmtd0,              --  62.5MHz
+      locked   => dmtd_locked);
+  end generate;
+
   dmtd_clk : single_region port map(
     inclk  => clk_dmtd0,
     outclk => clk_dmtd);
@@ -865,6 +887,7 @@ begin
       locked => sys_locked);
     clk_sys4 <= clk_sys1;
   end generate;
+
   sys_a5 : if c_is_arria5 generate
     sys_inst : sys_pll5 port map(
       rst      => pll_rst,
@@ -876,6 +899,32 @@ begin
       outclk_4 => clk_sys4,           --  20  MHz
       locked   => sys_locked);
   end generate;
+
+  sys_a10 : if (c_is_arria10 and not(g_a10_use_sys_fpll)) generate
+    sys_inst : sys_pll10 port map(
+      rst      => pll_rst,
+      refclk   => core_clk_125m_local_i, -- 125  Mhz
+      outclk_0 => clk_sys0,           --  62.5MHz
+      outclk_1 => clk_sys1,           -- 100  MHz +0   ns
+      outclk_2 => clk_sys2,           --  20  MHz
+      outclk_3 => clk_sys3,           --  10  MHz
+      outclk_4 => clk_sys4,           --  20  MHz
+      locked   => sys_locked);
+  end generate;
+
+  sys_fa10 : if (c_is_arria10 and g_a10_use_sys_fpll) generate
+    sys_inst : sys_fpll10 port map(
+      pll_refclk0   => core_clk_125m_local_i,
+      pll_powerdown => '0',
+      pll_locked    => sys_locked,
+      pll_cal_busy  => open,
+      outclk0       => clk_sys0,  -- 62.5MHz
+      outclk1       => clk_sys1,  -- 100 MHz
+      outclk2       => clk_sys2,  -- 20 MHz
+      outclk3       => clk_sys3); -- 10 MHz
+      clk_sys4      <= clk_sys2;
+  end generate;
+
 
   sys_clk : global_region port map(
     inclk  => clk_sys0,
@@ -930,6 +979,37 @@ begin
       phase_en   => phase_step,
       updn       => '1',              -- positive phase shift (widen period)
       phase_done => phase_done);
+  end generate;
+
+  ref_a10 : if (c_is_arria10 and not(g_a10_use_ref_fpll)) generate
+    ref_inst : ref_pll10 port map(
+      rst        => pll_rst,
+      refclk     => core_clk_125m_pllref_i, -- 125 MHz
+      outclk_0   => clk_ref0,         -- 125 MHz
+      outclk_1   => clk_ref1,         -- 200 MHz
+      outclk_2   => clk_ref2,         --  25 MHz
+      outclk_3   => clk_ref3,         --1000 MHz
+      outclk_4   => clk_ref4,         -- 125 MHz, 1/8 duty, -1.5ns phase
+      locked     => ref_locked,
+      scanclk    => clk_free,
+      cntsel     => phase_sel,
+      phase_en   => phase_step,
+      updn       => '1',              -- positive phase shift (widen period)
+      phase_done => phase_done);
+  end generate;
+
+  ref_fa10 : if (c_is_arria10 and g_a10_use_ref_fpll) generate
+    ref_inst : ref_fpll10 port map(
+      pll_refclk0   => core_clk_125m_pllref_i,
+      pll_powerdown => '0',
+      pll_locked    => ref_locked,
+      pll_cal_busy  => open,
+      outclk0       => clk_ref0,    -- 125 MHz
+      outclk1       => open,        -- 125 MHz
+      outclk2       => clk_ref1,    -- 200 MHz
+      outclk3       => clk_ref2);   --  25 MHz
+      clk_ref3      <= '0';
+      clk_ref3      <=  '0';
   end generate;
 
   phase : altera_phase
@@ -1522,6 +1602,48 @@ end generate;
         pad_txp_o      => wr_sfp_tx_o,
         pad_rxp_i      => wr_sfp_rx_i);
   end generate phy_a5;
+
+  phy_a10 : if (c_is_arria10gx or c_is_arria10sx) generate
+    phy : wr_arria10_transceiver
+      generic map (
+        g_use_atx_pll => TRUE)
+      port map (
+        clk_ref_i      => phy_clk,
+        tx_clk_o       => phy_tx_clk,
+        tx_data_i      => phy_tx_data,
+        rx_clk_o       => phy_rx_rbclk,
+        rx_data_o      => phy_rx_data,
+        pad_txp_o      => wr_sfp_tx_o,
+        pad_rxp_i      => wr_sfp_rx_i);
+  end generate phy_a10;
+
+  phy_a10_e3p1 : if c_is_arria10gx_e3p1 generate
+    phy : wr_arria10_e3p1_transceiver
+      generic map (
+        g_use_atx_pll => TRUE)
+      port map (
+        clk_ref_i      => phy_clk,
+        tx_clk_o       => phy_tx_clk,
+        tx_data_i      => phy_tx_data,
+        rx_clk_o       => phy_rx_rbclk,
+        rx_data_o      => phy_rx_data,
+        pad_txp_o      => wr_sfp_tx_o,
+        pad_rxp_i      => wr_sfp_rx_i);
+  end generate phy_a10_e3p1;
+
+  phy_a10_scu4 : if c_is_arria10gx_scu4 generate
+    phy : wr_arria10_scu4_transceiver
+      generic map (
+        g_use_atx_pll => TRUE)
+      port map (
+        clk_ref_i      => phy_clk,
+        tx_clk_o       => phy_tx_clk,
+        tx_data_i      => phy_tx_data,
+        rx_clk_o       => phy_rx_rbclk,
+        rx_data_o      => phy_rx_data,
+        pad_txp_o      => wr_sfp_tx_o,
+        pad_rxp_i      => wr_sfp_rx_i);
+  end generate phy_a10_scu4;
 
   phy_clk <= core_clk_125m_sfpref_i;
   phy16_o <= c_dummy_phy16_to_wrc;
