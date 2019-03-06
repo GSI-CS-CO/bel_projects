@@ -83,6 +83,7 @@ entity monster is
     g_lvds_out             : natural;
     g_fixed                : natural;
     g_lvds_invert          : boolean;
+    g_en_tlu               : boolean;
     g_en_pcie              : boolean;
     g_en_vme               : boolean;
     g_en_usb               : boolean;
@@ -457,6 +458,9 @@ architecture rtl of monster is
   constant c_devs_DDR3_ctrl      : natural := 26;
   constant c_devs_tempsens       : natural := 27;
 
+  -- Cut off TLU
+  constant c_use_tlu : boolean := (g_lm32_are_ftm and g_en_tlu) or (not(g_lm32_are_ftm) and g_en_tlu);
+
   -- We have to specify the values for WRC as they provide no function for this
   constant c_wrcore_bridge_sdb : t_sdb_bridge := f_xwb_bridge_manual_sdb(x"0003ffff", x"00030000");
   constant c_ftm_slaves : t_sdb_bridge := f_cluster_bridge(c_dev_bridge_msi, g_lm32_cores, g_lm32_ramsizes, g_lm32_are_ftm, g_delay_diagnostics);
@@ -467,7 +471,7 @@ architecture rtl of monster is
     c_devs_flash          => f_sdb_auto_device(f_wb_spi_flash_sdb(g_flash_bits), true),
     c_devs_reset          => f_sdb_auto_device(c_arria_reset,                    true),
     c_devs_ebm            => f_sdb_auto_device(c_ebm_sdb,                        true),
-    c_devs_tlu            => f_sdb_auto_device(c_tlu_sdb,                        not g_lm32_are_ftm),
+    c_devs_tlu            => f_sdb_auto_device(c_tlu_sdb,                        not g_lm32_are_ftm or c_use_tlu),
     c_devs_eca_ctl        => f_sdb_auto_device(c_eca_slave_sdb,                  g_en_eca),
     c_devs_eca_aq         => f_sdb_auto_device(c_eca_queue_slave_sdb,            g_en_eca),
     c_devs_eca_tlu        => f_sdb_auto_device(c_eca_tlu_slave_sdb,              g_en_eca),
@@ -1908,7 +1912,7 @@ end generate;
 
    end generate;
 
-   genEcaStuff : if g_en_eca generate
+   genEcaStuff : if g_en_eca and c_use_tlu generate
       tlu : wr_tlu
         generic map(
           g_num_triggers => g_gpio_in + g_gpio_inout + g_lvds_inout + g_lvds_in,
