@@ -9,6 +9,9 @@ os: linux
 dist: xenial
 sudo: required
 
+git:
+  submodules: false
+
 compiler:
 - gcc
 
@@ -33,7 +36,6 @@ install:
 - sudo apt-get install xsltproc -y
 
 # update submodules
-# hack Makefile to fix make failure regarding spec_wb.o
 before_script:
 - ./autogen.sh
 
