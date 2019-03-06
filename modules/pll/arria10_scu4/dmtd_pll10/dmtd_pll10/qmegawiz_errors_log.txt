@@ -1,0 +1,13 @@
+
+
+/home/alex/workspace/projects/r13/bel_projects/modules/pll/arria10/dmtd_pll10/dmtd_pll10/dmtd_pll10
+
+Oct 16 03PM:36:25>: File has no filename extension.
+Do you want to edit the file anyway?
+
+/home/alex/workspace/projects/r13/bel_projects/modules/pll/arria10/dmtd_pll10/dmtd_pll10/dmtd_pll10.xml
+
+Oct 16 03PM:36:42>: MegaWizard Plug-In Manager does not recognize /home/alex/workspace/projects/r13/bel_projects/modules/pll/arria10/dmtd_pll10/dmtd_pll10/dmtd_pll10.xml as a wizard-generated
+custom megafunction variation.
+
+Do you want to use a wizard to overwrite it?

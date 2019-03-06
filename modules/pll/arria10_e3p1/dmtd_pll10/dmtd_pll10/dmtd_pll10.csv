@@ -1,0 +1,18 @@
+# system info dmtd_pll10 on 2019.02.13.16:44:06
+system_info:
+name,value
+DEVICE,10AX115S2F45I2SG
+DEVICE_FAMILY,Arria 10
+GENERATION_ID,1550072645
+#
+#
+# Files generated for dmtd_pll10 on 2019.02.13.16:44:06
+files:
+filepath,kind,attributes,module,is_top
+sim/dmtd_pll10.v,VERILOG,CONTAINS_INLINE_CONFIGURATION,dmtd_pll10,true
+altera_iopll_181/sim/dmtd_pll10_altera_iopll_181_pxobl3q.vo,VERILOG,,dmtd_pll10_altera_iopll_181_pxobl3q,false
+#
+# Map from instance-path to kind of module
+instances:
+instancePath,module
+dmtd_pll10.iopll_0,dmtd_pll10_altera_iopll_181_pxobl3q
