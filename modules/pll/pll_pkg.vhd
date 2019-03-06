@@ -38,7 +38,15 @@ package pll_pkg is
       rst      : in  std_logic := 'X';
       locked   : out std_logic);
   end component;
-  
+
+  component dmtd_pll10 is -- arria10
+    port(
+      refclk   : in  std_logic := 'X'; -- 20   MHz
+      outclk_0 : out std_logic;        -- 62.5 MHz
+      rst      : in  std_logic := 'X';
+      locked   : out std_logic);
+  end component;
+
   component ref_pll is   -- arria2
     port(
       areset : in  std_logic;
@@ -70,7 +78,24 @@ package pll_pkg is
       updn       : in  std_logic;
       phase_done : out std_logic);
   end component;
-  
+
+  component ref_pll10 is  -- arria10
+    port(
+      refclk     : in  std_logic := 'X'; -- 125 MHz
+      outclk_0   : out std_logic;        -- 125 MHz
+      outclk_1   : out std_logic;        -- 200 MHz
+      outclk_2   : out std_logic;        --  25 MHz
+      outclk_3   : out std_logic;        --1000 MHz
+      outclk_4   : out std_logic;        -- 125 MHz, 1/8 duty cycle, -1.5ns phase
+      rst        : in  std_logic := 'X';
+      locked     : out std_logic;
+      scanclk    : in  std_logic;
+      cntsel     : in  std_logic_vector(4 downto 0);
+      phase_en   : in  std_logic;
+      updn       : in  std_logic;
+      phase_done : out std_logic);
+  end component;
+
   component sys_pll is   -- arria2
     port(
       areset : in  std_logic;
@@ -93,6 +118,70 @@ package pll_pkg is
       rst      : in  std_logic := 'X';
       locked   : out std_logic);
   end component;
+
+  component sys_pll10 is  -- arria10
+    port(
+      refclk   : in  std_logic := 'X'; -- 125   MHz
+      outclk_0 : out std_logic;        --  62.5 MHz
+      outclk_1 : out std_logic;        -- 100   MHz (flash+reconfig)
+      outclk_2 : out std_logic;        --  20   MHz (display+scubus)
+      outclk_3 : out std_logic;        --  10   MHz (remote update)
+      outclk_4 : out std_logic;        --  50   MHz
+      rst      : in  std_logic := 'X';
+      locked   : out std_logic);
+  end component;
+
+  component sys_fpll10 is
+    port (
+      pll_refclk0   : in  std_logic := 'X'; -- clk
+      pll_powerdown : in  std_logic := 'X'; -- pll_powerdown
+      pll_locked    : out std_logic;        -- pll_locked
+      pll_cal_busy  : out std_logic;        -- pll_cal_busy
+      outclk0       : out std_logic;        -- clk
+      outclk1       : out std_logic;        -- clk
+      outclk2       : out std_logic;        -- clk
+      outclk3       : out std_logic         -- clk
+    );
+	end component sys_fpll10;
+
+  component sys_fpll10_e3p1 is
+    port (
+      pll_refclk0   : in  std_logic := 'X'; -- clk
+      pll_powerdown : in  std_logic := 'X'; -- pll_powerdown
+      pll_locked    : out std_logic;        -- pll_locked
+      pll_cal_busy  : out std_logic;        -- pll_cal_busy
+      outclk0       : out std_logic;        -- clk
+      outclk1       : out std_logic;        -- clk
+      outclk2       : out std_logic;        -- clk
+      outclk3       : out std_logic         -- clk
+    );
+	end component sys_fpll10_e3p1;
+
+  component ref_fpll10 is
+    port (
+      pll_refclk0   : in  std_logic := 'X'; -- clk
+      pll_powerdown : in  std_logic := 'X'; -- pll_powerdown
+      pll_locked    : out std_logic;        -- pll_locked
+      pll_cal_busy  : out std_logic;        -- pll_cal_busy
+      outclk0       : out std_logic;        -- clk
+      outclk1       : out std_logic;        -- clk
+      outclk2       : out std_logic;        -- clk
+      outclk3       : out std_logic         -- clk
+    );
+  end component ref_fpll10;
+
+  component ref_fpll10_e3p1 is
+    port (
+      pll_refclk0   : in  std_logic := 'X'; -- clk
+      pll_powerdown : in  std_logic := 'X'; -- pll_powerdown
+      pll_locked    : out std_logic;        -- pll_locked
+      pll_cal_busy  : out std_logic;        -- pll_cal_busy
+      outclk0       : out std_logic;        -- clk
+      outclk1       : out std_logic;        -- clk
+      outclk2       : out std_logic;        -- clk
+      outclk3       : out std_logic         -- clk
+    );
+  end component ref_fpll10_e3p1;
 
   component altera_phase is
     generic(
