@@ -152,6 +152,8 @@ int main(int argc, char** argv) {
   /* be lazy and just poll for now */
   busy = 0;
   while (1) {
+    int nread;
+
     if (!busy) usleep(10000); /* 10ms */
     
     /* Poll for status */
@@ -177,14 +179,19 @@ int main(int argc, char** argv) {
     
     busy = busy && (done & 0x100) == 0;
     
-    if (!busy && read(STDIN_FD, &byte, 1) == 1) {
-      if (byte == 3) { /* control-C */
+    if (!busy) {
+      nread = read(STDIN_FD, &byte, 1);
+      if (nread == 0)
+        exit(0); /* EOF, user stopped, all right */
+      if (nread == 1 && byte == 3) { /* control-C */
         tcsetattr(STDIN_FD, TCSANOW, &old);
         exit(0);
       }
-      tx_data = byte;
-      eb_device_write(device, tx, EB_BIG_ENDIAN|EB_DATA32, tx_data, eb_block, 0);
-      busy = 1;
+      if (nread == 1) {
+        tx_data = byte;
+        eb_device_write(device, tx, EB_BIG_ENDIAN|EB_DATA32, tx_data, eb_block, 0);
+        busy = 1;
+      }
     }
   }
   
