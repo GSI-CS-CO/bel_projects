@@ -1,0 +1,18 @@
+# system info stub_pll on 2019.02.13.11:04:38
+system_info:
+name,value
+DEVICE,10AX027E3F29E2SG
+DEVICE_FAMILY,Arria 10
+GENERATION_ID,1550052277
+#
+#
+# Files generated for stub_pll on 2019.02.13.11:04:38
+files:
+filepath,kind,attributes,module,is_top
+sim/stub_pll.v,VERILOG,CONTAINS_INLINE_CONFIGURATION,stub_pll,true
+altera_iopll_181/sim/stub_pll_altera_iopll_181_6x4drji.vo,VERILOG,,stub_pll_altera_iopll_181_6x4drji,false
+#
+# Map from instance-path to kind of module
+instances:
+instancePath,module
+stub_pll.iopll_0,stub_pll_altera_iopll_181_6x4drji
