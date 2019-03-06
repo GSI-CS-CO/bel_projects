@@ -108,6 +108,9 @@ package monster_pkg is
       g_en_psram             : boolean := false;
       g_io_table             : t_io_mapping_table_arg_array(natural range <>);
       g_en_pmc               : boolean := false;
+      g_a10_use_sys_fpll     : boolean := false;
+      g_a10_use_ref_fpll     : boolean := false;
+      g_en_butis             : boolean := true;
       g_lm32_cores           : natural := 1;
       g_lm32_MSIs            : natural := 1;
       g_lm32_ramsizes        : natural := 131072/4; -- in 32b words
