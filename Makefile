@@ -138,6 +138,12 @@ scu3::		firmware
 scu3-clean::
 	$(MAKE) -C syn/gsi_scu/control3 PATH=$(PWD)/toolchain/bin:$(PATH) clean
 
+scu4::
+	$(MAKE) -C syn/gsi_scu/control4 PATH=$(PWD)/toolchain/bin:$(PATH) all
+
+scu4-clean::
+	$(MAKE) -C syn/gsi_scu/control4 PATH=$(PWD)/toolchain/bin:$(PATH) clean
+
 vetar::		firmware
 	$(MAKE) -C syn/gsi_vetar/wr_core_demo PATH=$(PWD)/toolchain/bin:$(PATH) all
 
@@ -167,6 +173,24 @@ pexarria5::	firmware
 
 pexarria5-clean::
 	$(MAKE) -C syn/gsi_pexarria5/control PATH=$(PWD)/toolchain/bin:$(PATH) clean
+
+pexarria10::	firmware
+	$(MAKE) -C syn/gsi_pexarria10/control PATH=$(PWD)/toolchain/bin:$(PATH) all
+
+pexarria10-clean::
+	$(MAKE) -C syn/gsi_pexarria10/control PATH=$(PWD)/toolchain/bin:$(PATH) clean
+
+pexarria10_soc::	firmware
+	$(MAKE) -C syn/gsi_pexarria10_soc/control PATH=$(PWD)/toolchain/bin:$(PATH) all
+
+pexarria10_soc-clean::
+	$(MAKE) -C syn/gsi_pexarria10_soc/control PATH=$(PWD)/toolchain/bin:$(PATH) clean
+
+a10gx_pcie::	firmware
+	$(MAKE) -C syn/gsi_a10gx_pcie/control PATH=$(PWD)/toolchain/bin:$(PATH) all
+
+a10gx_pcie-clean::
+	$(MAKE) -C syn/gsi_a10gx_pcie/control PATH=$(PWD)/toolchain/bin:$(PATH) clean
 
 microtca::	firmware
 	$(MAKE) -C syn/gsi_microtca/control PATH=$(PWD)/toolchain/bin:$(PATH) all
