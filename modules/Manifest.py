@@ -44,6 +44,7 @@ modules = {
     "watchdog",
     "mbox",
     "prioq2",
+    "stub_pll",
     "temp_sens",
   ]
 }
