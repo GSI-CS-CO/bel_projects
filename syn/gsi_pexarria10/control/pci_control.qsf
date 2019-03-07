@@ -40,7 +40,7 @@ set_global_assignment -name OPTIMIZE_HOLD_TIMING "ALL PATHS"
 set_global_assignment -name OPTIMIZE_MULTI_CORNER_TIMING ON
 set_global_assignment -name STRATIXV_CONFIGURATION_SCHEME "ACTIVE SERIAL X4"
 set_global_assignment -name CRC_ERROR_OPEN_DRAIN ON
-set_global_assignment -name ADV_NETLIST_OPT_SYNTH_WYSIWYG_REMAP OFFN
+set_global_assignment -name ADV_NETLIST_OPT_SYNTH_WYSIWYG_REMAP OFF
 set_global_assignment -name FITTER_EFFORT "STANDARD FIT"
 set_global_assignment -name TRI_STATE_SPI_PINS ON
 set_global_assignment -name ENABLE_BOOT_SEL_PIN ON
