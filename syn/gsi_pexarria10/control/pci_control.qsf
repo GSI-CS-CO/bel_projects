@@ -28,9 +28,7 @@ set_global_assignment -name EDA_OUTPUT_DATA_FORMAT NONE -section_id eda_simulati
 set_global_assignment -name CYCLONEII_RESERVE_NCEO_AFTER_CONFIGURATION "USE AS REGULAR IO"
 set_global_assignment -name VHDL_INPUT_VERSION VHDL_2008
 set_global_assignment -name VHDL_SHOW_LMF_MAPPING_MESSAGES OFF
-set_global_assignment -name PHYSICAL_SYNTHESIS_COMBO_LOGIC ON
-set_global_assignment -name PHYSICAL_SYNTHESIS_REGISTER_RETIMING ON
-set_global_assignment -name PHYSICAL_SYNTHESIS_REGISTER_DUPLICATION ON
+
 set_global_assignment -name PHYSICAL_SYNTHESIS_EFFORT EXTRA
 set_global_assignment -name PARTITION_NETLIST_TYPE SOURCE -section_id Top
 set_global_assignment -name PARTITION_FITTER_PRESERVATION_LEVEL PLACEMENT_AND_ROUTING -section_id Top
@@ -42,9 +40,7 @@ set_global_assignment -name OPTIMIZE_HOLD_TIMING "ALL PATHS"
 set_global_assignment -name OPTIMIZE_MULTI_CORNER_TIMING ON
 set_global_assignment -name STRATIXV_CONFIGURATION_SCHEME "ACTIVE SERIAL X4"
 set_global_assignment -name CRC_ERROR_OPEN_DRAIN ON
-set_global_assignment -name ADV_NETLIST_OPT_SYNTH_WYSIWYG_REMAP OFF
-set_global_assignment -name PHYSICAL_SYNTHESIS_ASYNCHRONOUS_SIGNAL_PIPELINING ON
-set_global_assignment -name PHYSICAL_SYNTHESIS_COMBO_LOGIC_FOR_AREA ON
+set_global_assignment -name ADV_NETLIST_OPT_SYNTH_WYSIWYG_REMAP OFFN
 set_global_assignment -name FITTER_EFFORT "STANDARD FIT"
 set_global_assignment -name TRI_STATE_SPI_PINS ON
 set_global_assignment -name ENABLE_BOOT_SEL_PIN ON
