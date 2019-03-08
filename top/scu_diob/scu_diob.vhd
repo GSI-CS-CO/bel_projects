@@ -738,6 +738,16 @@ port  (
     );
 end component;
 
+component spill_abort is    -- Control Spill Abort
+    Port ( clk : in STD_LOGIC;
+           nReset : in STD_LOGIC;
+           time_pulse : in STD_LOGIC;
+           armed : in STD_LOGIC;
+           req : in STD_LOGIC;
+           command : out STD_LOGIC;
+           command_rst : out STD_LOGIC);
+end component;
+
 
 
 --  +============================================================================================================================+
@@ -1421,7 +1431,11 @@ end component;
   type   IOBP_LED_state_t is   (IOBP_idle, led_id_wait, led_id_loop, led_str_rot_h, led_str_rot_l, led_gruen,
                                 led_str_gruen_h, led_str_gruen_l, iobp_led_dis, iobp_led_z, iobp_id_str_h, iobp_rd_id, iobp_id_str_l, iobp_end);
   signal IOBP_state:   IOBP_LED_state_t:= IOBP_idle;
-
+  
+  signal spill_abort_armed:       std_logic_vector (15 downto 0);
+  signal spill_abort_command:     std_logic;
+  signal spill_abort_command_rst: std_logic;
+  
 
   --------------------------- IO-Select ----------------------------------------------------------------------
 
@@ -2094,7 +2108,7 @@ port map  (
       Reg_IO3            =>  IOBP_Masken_Reg3,
       Reg_IO4            =>  IOBP_Masken_Reg4,
       Reg_IO5            =>  IOBP_Masken_Reg5,
-      Reg_IO6            =>  open,
+      Reg_IO6            =>  spill_abort_armed,
       Reg_IO7            =>  open,
       Reg_IO8            =>  open,
 --
@@ -3734,6 +3748,15 @@ P_IOBP_LED_ID_Loop:  process (clk_sys, Ena_Every_250ns, rstn_sys, IOBP_state)
     end if;
   end process P_IOBP_LED_ID_Loop;
 
+  spill_test : spill_abort
+    Port map( clk => clk_sys,
+              nReset => rstn_sys,
+              time_pulse => Ena_Every_20ms,
+              armed => spill_abort_armed(0),
+              req => Deb60_in(0),
+              command => spill_abort_command,
+              command_rst => spill_abort_command_rst);
+  
 
 --  +============================================================================================================================+
 --  |                                          Anwender-IO: Out16  -- FG901_010                                                  |
@@ -6512,20 +6535,28 @@ BEGIN
 
 --################################ Outputs AND Maske ##################################
 --
---                                                    MaskenBit=0 --> Enable
-    IOBP_Output(1)  <= (AW_Output_Reg(1)( 0) AND not IOBP_Masken_Reg5( 0));  -- Output von Slave 1
-    IOBP_Output(2)  <= (AW_Output_Reg(1)( 1) AND not IOBP_Masken_Reg5( 1));  -- Output von Slave 2
-    IOBP_Output(3)  <= (AW_Output_Reg(1)( 2) AND not IOBP_Masken_Reg5( 2));  -- Output von Slave 3
-    IOBP_Output(4)  <= (AW_Output_Reg(1)( 3) AND not IOBP_Masken_Reg5( 3));  -- Output von Slave 4
-    IOBP_Output(5)  <= (AW_Output_Reg(1)( 4) AND not IOBP_Masken_Reg5( 4));  -- Output von Slave 5
-    IOBP_Output(6)  <= (AW_Output_Reg(1)( 5) AND not IOBP_Masken_Reg5( 5));  -- Output von Slave 6
-    IOBP_Output(7)  <= (AW_Output_Reg(1)( 6) AND not IOBP_Masken_Reg5( 6));  -- Output von Slave 7
-    IOBP_Output(8)  <= (AW_Output_Reg(1)( 7) AND not IOBP_Masken_Reg5( 7));  -- Output von Slave 8
-    IOBP_Output(9)  <= (AW_Output_Reg(1)( 8) AND not IOBP_Masken_Reg5( 8));  -- Output von Slave 9
-    IOBP_Output(10) <= (AW_Output_Reg(1)( 9) AND not IOBP_Masken_Reg5( 9));  -- Output von Slave 10
-    IOBP_Output(11) <= (AW_Output_Reg(1)(10) AND not IOBP_Masken_Reg5(10));  -- Output von Slave 11
-    IOBP_Output(12) <= (AW_Output_Reg(1)(11) AND not IOBP_Masken_Reg5(11));  -- Output von Slave 12
+    case AW_Config2 is
 
+    when x"ABDE" =>
+      --IOBP_Output <= x"00" & "0" & clk_blink & not clk_blink & clk_blink;
+      IOBP_Output <= x"00" & "0" & spill_abort_command_rst & clk_blink & spill_abort_command;
+
+    when OTHERS =>
+    --  STANDARD OUTPUT OUTREG
+--                                                    MaskenBit=0 --> Enable
+      IOBP_Output(1)  <= (AW_Output_Reg(1)( 0) AND not IOBP_Masken_Reg5( 0));  -- Output von Slave 1
+      IOBP_Output(2)  <= (AW_Output_Reg(1)( 1) AND not IOBP_Masken_Reg5( 1));  -- Output von Slave 2
+    IOBP_Output(3)  <= (AW_Output_Reg(1)( 2) AND not IOBP_Masken_Reg5( 2));  -- Output von Slave 3
+      IOBP_Output(4)  <= (AW_Output_Reg(1)( 3) AND not IOBP_Masken_Reg5( 3));  -- Output von Slave 4
+      IOBP_Output(5)  <= (AW_Output_Reg(1)( 4) AND not IOBP_Masken_Reg5( 4));  -- Output von Slave 5
+      IOBP_Output(6)  <= (AW_Output_Reg(1)( 5) AND not IOBP_Masken_Reg5( 5));  -- Output von Slave 6
+      IOBP_Output(7)  <= (AW_Output_Reg(1)( 6) AND not IOBP_Masken_Reg5( 6));  -- Output von Slave 7
+      IOBP_Output(8)  <= (AW_Output_Reg(1)( 7) AND not IOBP_Masken_Reg5( 7));  -- Output von Slave 8
+      IOBP_Output(9)  <= (AW_Output_Reg(1)( 8) AND not IOBP_Masken_Reg5( 8));  -- Output von Slave 9
+      IOBP_Output(10) <= (AW_Output_Reg(1)( 9) AND not IOBP_Masken_Reg5( 9));  -- Output von Slave 10
+      IOBP_Output(11) <= (AW_Output_Reg(1)(10) AND not IOBP_Masken_Reg5(10));  -- Output von Slave 11
+      IOBP_Output(12) <= (AW_Output_Reg(1)(11) AND not IOBP_Masken_Reg5(11));  -- Output von Slave 12
+    end case;
 
 
 --################################ Aktiv-Led's ##################################
