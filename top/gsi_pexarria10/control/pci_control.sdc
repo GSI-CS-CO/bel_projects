@@ -58,6 +58,7 @@ set_false_path -from [get_clocks {main|\phy_a10:phy|inst_phy|xcvr_native_a10_0|r
 set_false_path -from [get_clocks {main|\phy_a10:phy|inst_phy|xcvr_native_a10_0|rx_pma_clk}] -to [get_clocks {main|\ref_a10:ref_inst|xcvr_fpll_a10_0|outclk0}]
 set_false_path -from [get_clocks {main|\phy_a10:phy|inst_phy|xcvr_native_a10_0|rx_pma_clk}] -to [get_clocks {main|\sys_a10:sys_inst|iopll_0|outclk0}]
 # cut: wb sys <=> phy rx pma clock
+set_false_path -from [get_clocks {main|\sys_fa10:sys_inst|xcvr_fpll_a10_0|outclk0}] -to [get_clocks {main|\ref_fa10:ref_inst|xcvr_fpll_a10_0|outclk0}]
 set_false_path -from [get_clocks {main|\sys_fa10:sys_inst|xcvr_fpll_a10_0|outclk0}] -to [get_clocks {main|\phy_a10:phy|inst_phy|xcvr_native_a10_0|rx_pma_clk}]
 set_false_path -from [get_clocks {main|\sys_fa10:sys_inst|xcvr_fpll_a10_0|outclk0}] -to [get_clocks {main|\phy_a10:phy|inst_phy|xcvr_native_a10_0|rx_pma_clk}]
 set_false_path -from [get_clocks {main|\sys_a10:sys_inst|xcvr_fpll_a10_0|outclk0}] -to [get_clocks {main|\phy_a10:phy|inst_phy|xcvr_native_a10_0|rx_pma_clk}]
