@@ -748,6 +748,16 @@ component spill_abort is    -- Control Spill Abort
            command_rst : out STD_LOGIC);
 end component;
 
+component quench_detection is
+    Port ( clk : in STD_LOGIC;
+           nReset : in STD_LOGIC;
+           time_pulse : in STD_LOGIC;
+           delay : in STD_LOGIC;
+           QuDIn: in STD_LOGIC_VECTOR (24 downto 0);
+           mute: in STD_LOGIC_VECTOR (24 downto 0);
+           QuDOut : out STD_LOGIC);
+end component;
+
 
 
 --  +============================================================================================================================+
@@ -1435,7 +1445,7 @@ end component;
   signal spill_abort_armed:       std_logic_vector (15 downto 0);
   signal spill_abort_command:     std_logic;
   signal spill_abort_command_rst: std_logic;
-  
+  signal quench_out:              std_logic;
 
   --------------------------- IO-Select ----------------------------------------------------------------------
 
@@ -3756,7 +3766,15 @@ P_IOBP_LED_ID_Loop:  process (clk_sys, Ena_Every_250ns, rstn_sys, IOBP_state)
               req => Deb60_in(0),
               command => spill_abort_command,
               command_rst => spill_abort_command_rst);
-  
+              
+    quench_test : quench_detection
+        Port map( clk => clk_sys,
+                  nReset => rstn_sys,
+                  time_pulse => Ena_Every_20ms,
+                  delay => AW_Config1(0),
+                  QuDIn => Deb60_in(24 downto 0),
+                  mute => "1"&X"FFFFFC",
+                  QuDOut => quench_out);
 
 --  +============================================================================================================================+
 --  |                                          Anwender-IO: Out16  -- FG901_010                                                  |
@@ -6537,9 +6555,13 @@ BEGIN
 --
     case AW_Config2 is
 
-    when x"ABDE" =>
+    when x"ABDE" => --SPILL ABORT Development
       --IOBP_Output <= x"00" & "0" & clk_blink & not clk_blink & clk_blink;
       IOBP_Output <= x"00" & "0" & spill_abort_command_rst & clk_blink & spill_abort_command;
+      
+    when x"DEDE" => --Quench Detection Development
+      IOBP_Output <= x"00" & "0"& not clk_blink & clk_blink & quench_out;
+      
 
     when OTHERS =>
     --  STANDARD OUTPUT OUTREG

@@ -12,4 +12,5 @@ files = [
   "local_20_to_12p5.vhd",
   "local_125_to_12p5.vhd",
   "spill_abort.vhd",
+  "quench_detection.vhd",
 ]
