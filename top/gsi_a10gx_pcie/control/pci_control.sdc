@@ -41,6 +41,7 @@ set_clock_groups -asynchronous                                    \
 
 # cut: wb sys <=> ref
 set_false_path -from [get_clocks {main|\sys_a10:sys_inst|iopll_0|outclk0}] -to [get_clocks {main|\ref_a10:ref_inst|iopll_0|outclk0}]
+set_false_path -from [get_clocks {main|\ref_a10:ref_inst|iopll_0|outclk0}] -to [get_clocks {main|\sys_a10:sys_inst|iopll_0|outclk0}]
 # cut: wb sys <=> wb flash   (different frequencies and using xwb_clock_crossing)
 set_false_path -from [get_clocks {main|\sys_a10:sys_inst|*|general[0].*}] -to [get_clocks {main|\sys_a10:sys_inst|*|general[4].*}]
 set_false_path -from [get_clocks {main|\sys_a10:sys_inst|*|general[4].*}] -to [get_clocks {main|\sys_a10:sys_inst|*|general[0].*}]
