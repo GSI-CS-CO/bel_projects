@@ -20,14 +20,20 @@ int main( int argc, const char** ppArgv )
          unsigned int channels = oDaqInterface.readMaxChannels( i );
          cout << "Slot: " << oDaqInterface.getSlotNumber( i ) << "\tChannels: " << channels << endl;
       }
+      oDaqInterface.setTriggerDelay( 1, 4, 55 );
+      cout << "Returncode: " << oDaqInterface.getLastReturnCodeString() << endl;
+      uint16_t delay;
+      oDaqInterface.getTriggerDelay( 1, 1, delay );
+      cout << "Delay: " << delay << endl;
+
    }
-   catch( DaqInterface::Exception& e )
+   catch( daq::Exception& e )
    {
-      cerr << ESC_FG_RED "DaqInterface::Exception occurred: " << e.what() << ESC_NORMAL << endl;
+      cerr << ESC_FG_RED "daq::Exception occurred: " << e.what() << ESC_NORMAL << endl;
    }
-   catch( exception& e )
+   catch( std::exception& e )
    {
-      cerr << ESC_FG_RED "std::xception occurred: " << e.what() << ESC_NORMAL << endl;
+      cerr << ESC_FG_RED "std::exception occurred: " << e.what() << ESC_NORMAL << endl;
    }
    catch( ... )
    {
@@ -35,5 +41,5 @@ int main( int argc, const char** ppArgv )
    }
 
    cout << ESC_FG_MAGNETA << "End" << ESC_NORMAL << endl;
-   return 0;
+   return EXIT_SUCCESS;
 }

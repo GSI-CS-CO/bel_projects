@@ -74,6 +74,8 @@ static inline bool concernsChannel( DAQ_CANNEL_T* pChannel )
    }
    if( daqChannelTestAndClearHiResIntPending( pChannel ) )
    {
+      daqChannelDisablePostMortem( pChannel );
+      daqChannelDisableHighResolution( pChannel );
       ramPushDaqDataBlock( &g_DaqAdmin.oRam, pChannel, false );
       return true;
    }

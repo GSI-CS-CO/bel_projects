@@ -54,8 +54,8 @@ DaqInterface::DaqInterface( const std::string wbDevice )
       throw( Exception( "Could not find RAM-device!" ) );
    }
 
-   setCommand( DAQ_OP_RESET );
    readSharedTotal();
+   setCommand( DAQ_OP_RESET );
    readSlotStatus();
 }
 
@@ -65,6 +65,27 @@ DaqInterface::DaqInterface( const std::string wbDevice )
 DaqInterface::~DaqInterface( void )
 {
    ebClose();
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+const std::string DaqInterface::getLastReturnCodeString( void )
+{
+   #define __RET_CODE_CASE_ITEM( name ) case name: return #name
+   switch( getLastReturnCode() )
+   {
+      __RET_CODE_CASE_ITEM( DAQ_RET_RESCAN );
+      __RET_CODE_CASE_ITEM( DAQ_RET_OK );
+      __RET_CODE_CASE_ITEM( DAQ_RET_ERR_UNKNOWN_OPERATION );
+      __RET_CODE_CASE_ITEM( DAQ_RET_ERR_SLAVE_NOT_PRESENT );
+      __RET_CODE_CASE_ITEM( DAQ_RET_ERR_CHANNEL_NOT_PRESENT );
+      __RET_CODE_CASE_ITEM( DAQ_RET_ERR_DEVICE_ADDRESS_NOT_FOUND );
+      __RET_CODE_CASE_ITEM( DAQ_RET_ERR_CHANNEL_OUT_OF_RANGE );
+      __RET_CODE_CASE_ITEM( DAQ_RET_ERR_SLAVE_OUT_OF_RANGE );
+      __RET_CODE_CASE_ITEM( DAQ_RET_ERR_WRONG_SAMPLE_PARAMETER );
+   }
+   return "unknown";
+   #undef __RET_CODE_CASE_ITEM
 }
 
 /*! ---------------------------------------------------------------------------
@@ -139,7 +160,7 @@ bool DaqInterface::cmdReadyWait( void )
 
 /*! ---------------------------------------------------------------------------
  */
-void DaqInterface::setCommand( DAQ_OPERATION_CODE_T cmd )
+DaqInterface::RETURN_CODE_T DaqInterface::setCommand( DAQ_OPERATION_CODE_T cmd )
 {
    m_oSharedData.operation.code = cmd;
    EB_MAKE_CB_OW_ARG( cArg );
@@ -159,6 +180,8 @@ void DaqInterface::setCommand( DAQ_OPERATION_CODE_T cmd )
 
    if( cmdReadyWait() )
       throw Exception( "Timeout at waiting for command feedback" );
+
+   return m_oSharedData.operation.retCode;
 }
 
 /*! ---------------------------------------------------------------------------
@@ -475,7 +498,8 @@ unsigned int DaqInterface::readMaxChannels( unsigned int deviceNumber )
 
    m_oSharedData.operation.ioData.location.deviceNumber = deviceNumber;
    writeParam1();
-   setCommand( DAQ_OP_GET_CHANNELS );
+   if( setCommand( DAQ_OP_GET_CHANNELS ) != DAQ_RET_OK )
+      return 0;
    readParam1();
    return m_oSharedData.operation.ioData.param1;
 }
@@ -493,8 +517,7 @@ int DaqInterface::enablePostMortem( const unsigned int deviceNumber,
    m_oSharedData.operation.ioData.location.deviceNumber = deviceNumber;
    m_oSharedData.operation.ioData.location.channel      = channel;
    writeParam1();
-   setCommand( DAQ_OP_PM_ON );
-   return 0;
+   return setCommand( DAQ_OP_PM_ON );
 }
 
 /*! ---------------------------------------------------------------------------
@@ -510,8 +533,7 @@ int DaqInterface::enableHighResolution( const unsigned int deviceNumber,
    m_oSharedData.operation.ioData.location.deviceNumber = deviceNumber;
    m_oSharedData.operation.ioData.location.channel      = channel;
    writeParam1();
-   setCommand( DAQ_OP_HIRES_ON );
-   return 0;
+   return setCommand( DAQ_OP_HIRES_ON );
 }
 
 /*! ---------------------------------------------------------------------------
@@ -529,8 +551,7 @@ int DaqInterface::enableContineous( const unsigned int deviceNumber,
    m_oSharedData.operation.ioData.location.channel      = channel;
    m_oSharedData.operation.ioData.param1                = sampleRate;
    writeParam1();
-   setCommand( DAQ_OP_CONTINUE_ON );
-   return 0;
+   return setCommand( DAQ_OP_CONTINUE_ON );
 }
 
 /*! ---------------------------------------------------------------------------
@@ -546,8 +567,94 @@ int DaqInterface::disable( const unsigned int deviceNumber,
    m_oSharedData.operation.ioData.location.deviceNumber = deviceNumber;
    m_oSharedData.operation.ioData.location.channel      = channel;
    writeParam1();
-   setCommand( DAQ_OP_OFF );
-   return 0;
+   return setCommand( DAQ_OP_OFF );
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+int DaqInterface::setTriggerCondition( const unsigned int deviceNumber,
+                                       const unsigned int channel,
+                                       const uint32_t trgCondition )
+{
+   SCU_ASSERT( deviceNumber > 0 );
+   SCU_ASSERT( deviceNumber <= c_maxDevices );
+   SCU_ASSERT( channel > 0 );
+   SCU_ASSERT( channel <= c_maxChannels );
+
+   m_oSharedData.operation.ioData.location.deviceNumber = deviceNumber;
+   m_oSharedData.operation.ioData.location.channel      = channel;
+
+   m_oSharedData.operation.ioData.param1 =
+      reinterpret_cast<const uint16_t*>(&trgCondition)[0];
+   m_oSharedData.operation.ioData.param2 =
+      reinterpret_cast<const uint16_t*>(&trgCondition)[1];
+   writeParam12();
+   return setCommand( DAQ_OP_SET_TRIGGER_CONDITION );
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+int DaqInterface::getTriggerCondition( const unsigned int deviceNumber,
+                                       const unsigned int channel,
+                                       uint32_t& rTrgCondition )
+{
+   SCU_ASSERT( deviceNumber > 0 );
+   SCU_ASSERT( deviceNumber <= c_maxDevices );
+   SCU_ASSERT( channel > 0 );
+   SCU_ASSERT( channel <= c_maxChannels );
+
+   m_oSharedData.operation.ioData.location.deviceNumber = deviceNumber;
+   m_oSharedData.operation.ioData.location.channel      = channel;
+   writeParam1();
+   if( setCommand( DAQ_OP_GET_TRIGGER_CONDITION ) != DAQ_RET_OK )
+      return m_oSharedData.operation.retCode;
+
+   readParam12();
+   reinterpret_cast<uint16_t*>(&rTrgCondition)[0] =
+      m_oSharedData.operation.ioData.param1;
+   reinterpret_cast<uint16_t*>(&rTrgCondition)[1] =
+      m_oSharedData.operation.ioData.param2;
+
+   return m_oSharedData.operation.retCode;
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+int DaqInterface::setTriggerDelay( const unsigned int deviceNumber,
+                                   const unsigned int channel,
+                                   const uint16_t delay )
+{
+   SCU_ASSERT( deviceNumber > 0 );
+   SCU_ASSERT( deviceNumber <= c_maxDevices );
+   SCU_ASSERT( channel > 0 );
+   SCU_ASSERT( channel <= c_maxChannels );
+
+   m_oSharedData.operation.ioData.location.deviceNumber = deviceNumber;
+   m_oSharedData.operation.ioData.location.channel      = channel;
+   m_oSharedData.operation.ioData.param1                = delay;
+   writeParam1();
+   return setCommand( DAQ_OP_SET_TRIGGER_DELAY );
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+int DaqInterface::getTriggerDelay( const unsigned int deviceNumber,
+                                   const unsigned int channel,
+                                   uint16_t& rDelay )
+{
+   SCU_ASSERT( deviceNumber > 0 );
+   SCU_ASSERT( deviceNumber <= c_maxDevices );
+   SCU_ASSERT( channel > 0 );
+   SCU_ASSERT( channel <= c_maxChannels );
+
+   m_oSharedData.operation.ioData.location.deviceNumber = deviceNumber;
+   m_oSharedData.operation.ioData.location.channel      = channel;
+   writeParam1();
+   if( setCommand( DAQ_OP_GET_TRIGGER_DELAY ) != DAQ_RET_OK )
+      return m_oSharedData.operation.retCode;
+   readParam1();
+   rDelay = m_oSharedData.operation.ioData.param1;
+   return m_oSharedData.operation.retCode;;
 }
 
 //================================== EOF ======================================

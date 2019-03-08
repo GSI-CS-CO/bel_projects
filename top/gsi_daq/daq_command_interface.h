@@ -61,17 +61,23 @@
  */
 typedef enum
 {
-   DAQ_OP_IDLE         = 0,
-   DAQ_OP_LOCK         = DAQ_OP_OFFSET +  1,
-   DAQ_OP_UNLOCK       = DAQ_OP_OFFSET +  2,
-   DAQ_OP_RESET        = DAQ_OP_OFFSET +  3,
-   DAQ_OP_GET_SLOTS    = DAQ_OP_OFFSET +  4,
-   DAQ_OP_GET_CHANNELS = DAQ_OP_OFFSET +  5,
-   DAQ_OP_RESCAN       = DAQ_OP_OFFSET +  6,
-   DAQ_OP_PM_ON        = DAQ_OP_OFFSET +  7,
-   DAQ_OP_HIRES_ON     = DAQ_OP_OFFSET +  8,
-   DAQ_OP_CONTINUE_ON  = DAQ_OP_OFFSET +  9,
-   DAQ_OP_OFF          = DAQ_OP_OFFSET + 10
+   DAQ_OP_IDLE                   = 0,
+   DAQ_OP_LOCK                   = DAQ_OP_OFFSET +  1,
+   DAQ_OP_UNLOCK                 = DAQ_OP_OFFSET +  2,
+   DAQ_OP_RESET                  = DAQ_OP_OFFSET +  3,
+   DAQ_OP_GET_SLOTS              = DAQ_OP_OFFSET +  4,
+   DAQ_OP_GET_CHANNELS           = DAQ_OP_OFFSET +  5,
+   DAQ_OP_RESCAN                 = DAQ_OP_OFFSET +  6,
+   DAQ_OP_PM_ON                  = DAQ_OP_OFFSET +  7,
+   DAQ_OP_HIRES_ON               = DAQ_OP_OFFSET +  8,
+   DAQ_OP_CONTINUE_ON            = DAQ_OP_OFFSET +  9,
+   DAQ_OP_OFF                    = DAQ_OP_OFFSET + 10,
+   DAQ_OP_SET_TRIGGER_CONDITION  = DAQ_OP_OFFSET + 11,
+   DAQ_OP_GET_TRIGGER_CONDITION  = DAQ_OP_OFFSET + 12,
+   DAQ_OP_SET_TRIGGER_DELAY      = DAQ_OP_OFFSET + 13,
+   DAQ_OP_GET_TRIGGER_DELAY      = DAQ_OP_OFFSET + 14,
+   DAQ_OP_SET_TRIGGER_MODE       = DAQ_OP_OFFSET + 15,
+   DAQ_OP_GET_TRIGGER_MODE       = DAQ_OP_OFFSET + 16
 } DAQ_OPERATION_CODE_T;
 STATIC_ASSERT( sizeof( DAQ_OPERATION_CODE_T ) == sizeof(uint32_t) );
 

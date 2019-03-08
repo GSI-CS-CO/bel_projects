@@ -93,6 +93,12 @@ public:
       static_cast<const std::string>(::ebGetStatusString( m_poEbHandle ));
    }
 
+   RETURN_CODE_T getLastReturnCode( void ) const
+   {
+      return m_oSharedData.operation.retCode;
+   }
+
+   const std::string getLastReturnCodeString( void );
 
    RETURN_CODE_T readSlotStatus( void );
    SLOT_FLAGS_T  getSlotStatus( void ) const
@@ -127,6 +133,22 @@ public:
    int disable( const unsigned int deviceNumber,
                 const unsigned int channel );
 
+   int setTriggerCondition( const unsigned int deviceNumber,
+                            const unsigned int channel,
+                            const uint32_t trgCondition );
+   int getTriggerCondition( const unsigned int deviceNumber,
+                            const unsigned int channel,
+                            uint32_t& rTrgCondition );
+
+
+   int setTriggerDelay( const unsigned int deviceNumber,
+                        const unsigned int channel,
+                        const uint16_t delay );
+   int getTriggerDelay( const unsigned int deviceNumber,
+                        const unsigned int channel,
+                        uint16_t& rDelay );
+
+
 protected:
 
    virtual bool onCommandReadyPoll( unsigned int pollCount );
@@ -157,7 +179,7 @@ private:
 
    bool cmdReadyWait( void );
    void readSharedTotal( void );
-   void setCommand( DAQ_OPERATION_CODE_T );
+   RETURN_CODE_T setCommand( DAQ_OPERATION_CODE_T );
    DAQ_OPERATION_CODE_T getCommand( void );
 
    RETURN_CODE_T readParam1( void );

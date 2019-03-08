@@ -68,6 +68,16 @@ typedef struct
  */
 #define DAQ_OPERATION_ITEM_TERMINATOR { .code = DAQ_OP_IDLE, .operation = NULL }
 
+#ifdef DEBUGLEVEL
+static void printFunctionName( const char* str )
+{
+   DBPRINT1( "DBG: executing %s()\n", str );
+}
+  #define FUNCTION_INFO() printFunctionName( __func__ )
+#else
+  #define FUNCTION_INFO()
+#endif
+
 /*! ---------------------------------------------------------------------------
  */
 int initBuffer( RAM_SCU_T* poRam )
@@ -126,7 +136,7 @@ verifyChannelAccess( DAQ_BUS_T* pDaqBus,
 static
 int32_t opLock( DAQ_ADMIN_T* pDaqAdmin, volatile DAQ_OPERATION_IO_T* pData )
 {
-   DBPRINT1( "DBG: executing %s\n", __func__ );
+   FUNCTION_INFO();
    return DAQ_RET_OK;
 }
 
@@ -135,7 +145,7 @@ int32_t opLock( DAQ_ADMIN_T* pDaqAdmin, volatile DAQ_OPERATION_IO_T* pData )
 static
 int32_t opUnlock( DAQ_ADMIN_T* pDaqAdmin, volatile DAQ_OPERATION_IO_T* pData )
 {
-   DBPRINT1( "DBG: executing %s\n", __func__ );
+   FUNCTION_INFO();
    return DAQ_RET_OK;
 }
 
@@ -145,7 +155,7 @@ int32_t opUnlock( DAQ_ADMIN_T* pDaqAdmin, volatile DAQ_OPERATION_IO_T* pData )
 static
 int32_t opReset( DAQ_ADMIN_T* pDaqAdmin, volatile DAQ_OPERATION_IO_T* pData )
 {
-   DBPRINT1( "DBG: executing %s\n", __func__ );
+   FUNCTION_INFO();
    return DAQ_RET_OK;
 }
 
@@ -154,7 +164,7 @@ int32_t opReset( DAQ_ADMIN_T* pDaqAdmin, volatile DAQ_OPERATION_IO_T* pData )
 static int32_t opGetSlots( DAQ_ADMIN_T* pDaqAdmin,
                            volatile DAQ_OPERATION_IO_T* pData )
 {
-   DBPRINT1( "DBG: executing %s\n", __func__ );
+   FUNCTION_INFO();
    STATIC_ASSERT( sizeof( pData->param1 ) >= sizeof(pDaqAdmin->oDaqDevs.slotDaqUsedFlags));
 
    pData->param1 = pDaqAdmin->oDaqDevs.slotDaqUsedFlags;
@@ -167,7 +177,7 @@ static int32_t opGetSlots( DAQ_ADMIN_T* pDaqAdmin,
 static int32_t opGetChannels( DAQ_ADMIN_T* pDaqAdmin,
                               volatile DAQ_OPERATION_IO_T* pData )
 {
-   DBPRINT1( "DBG: executing %s\n", __func__ );
+   FUNCTION_INFO();
    int ret = verifyDeviceAccess( &pDaqAdmin->oDaqDevs, &pData->location );
    if( ret != DAQ_RET_OK )
       return ret;
@@ -182,7 +192,7 @@ static int32_t opGetChannels( DAQ_ADMIN_T* pDaqAdmin,
 static int32_t opRescan( DAQ_ADMIN_T* pDaqAdmin,
                          volatile DAQ_OPERATION_IO_T* pData )
 {
-   DBPRINT1( "DBG: executing %s\n", __func__ );
+   FUNCTION_INFO();
    scanScuBus( &pDaqAdmin->oDaqDevs );
    return DAQ_RET_RESCAN;
 }
@@ -202,7 +212,7 @@ DAQ_CANNEL_T* getChannel( DAQ_ADMIN_T* pDaqAdmin,
 static int32_t opPostMortemOn( DAQ_ADMIN_T* pDaqAdmin,
                                volatile DAQ_OPERATION_IO_T* pData )
 {
-   DBPRINT1( "DBG: executing %s\n", __func__ );
+   FUNCTION_INFO();
 
    int ret = verifyChannelAccess( &pDaqAdmin->oDaqDevs, &pData->location );
    if( ret != DAQ_RET_OK )
@@ -218,7 +228,7 @@ static int32_t opPostMortemOn( DAQ_ADMIN_T* pDaqAdmin,
 static int32_t opHighResolutionOn( DAQ_ADMIN_T* pDaqAdmin,
                                    volatile DAQ_OPERATION_IO_T* pData )
 {
-   DBPRINT1( "DBG: executing %s\n", __func__ );
+   FUNCTION_INFO();
 
    int ret = verifyChannelAccess( &pDaqAdmin->oDaqDevs, &pData->location );
    if( ret != DAQ_RET_OK )
@@ -234,7 +244,7 @@ static int32_t opHighResolutionOn( DAQ_ADMIN_T* pDaqAdmin,
 static int32_t opContinueOn( DAQ_ADMIN_T* pDaqAdmin,
                              volatile DAQ_OPERATION_IO_T* pData )
 {
-   DBPRINT1( "DBG: executing %s\n", __func__ );
+   FUNCTION_INFO();
 
    int ret = verifyChannelAccess( &pDaqAdmin->oDaqDevs, &pData->location );
    if( ret != DAQ_RET_OK )
@@ -273,7 +283,7 @@ static int32_t opContinueOn( DAQ_ADMIN_T* pDaqAdmin,
 static int32_t opOff( DAQ_ADMIN_T* pDaqAdmin,
                              volatile DAQ_OPERATION_IO_T* pData )
 {
-   DBPRINT1( "DBG: executing %s\n", __func__ );
+   FUNCTION_INFO();
 
    int ret = verifyChannelAccess( &pDaqAdmin->oDaqDevs, &pData->location );
    if( ret != DAQ_RET_OK )
@@ -291,21 +301,122 @@ static int32_t opOff( DAQ_ADMIN_T* pDaqAdmin,
 }
 
 /*! ---------------------------------------------------------------------------
+ */
+static int32_t opSetTriggerCondition( DAQ_ADMIN_T* pDaqAdmin,
+                                      volatile DAQ_OPERATION_IO_T* pData )
+{
+   FUNCTION_INFO();
+   int ret = verifyChannelAccess( &pDaqAdmin->oDaqDevs, &pData->location );
+   if( ret != DAQ_RET_OK )
+      return ret;
+
+   DAQ_CANNEL_T* pChannel = getChannel( pDaqAdmin, pData );
+   daqChannelSetTriggerConditionLW( pChannel, pData->param1 );
+   daqChannelSetTriggerConditionHW( pChannel, pData->param2 );
+   return DAQ_RET_OK;
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+static int32_t opGetTriggerCondition( DAQ_ADMIN_T* pDaqAdmin,
+                                      volatile DAQ_OPERATION_IO_T* pData )
+{
+   FUNCTION_INFO();
+   int ret = verifyChannelAccess( &pDaqAdmin->oDaqDevs, &pData->location );
+   if( ret != DAQ_RET_OK )
+      return ret;
+
+   DAQ_CANNEL_T* pChannel = getChannel( pDaqAdmin, pData );
+   pData->param1 = daqChannelGetTriggerConditionLW( pChannel );
+   pData->param2 = daqChannelGetTriggerConditionHW( pChannel );
+   return DAQ_RET_OK;
+}
+
+
+/*! ---------------------------------------------------------------------------
+ */
+static int32_t opSetTriggerDelay( DAQ_ADMIN_T* pDaqAdmin,
+                                      volatile DAQ_OPERATION_IO_T* pData )
+{
+   FUNCTION_INFO();
+   int ret = verifyChannelAccess( &pDaqAdmin->oDaqDevs, &pData->location );
+   if( ret != DAQ_RET_OK )
+      return ret;
+
+   daqChannelSetTriggerDelay( getChannel( pDaqAdmin, pData ), pData->param1 );
+   return DAQ_RET_OK;
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+static int32_t opGetTriggerDelay( DAQ_ADMIN_T* pDaqAdmin,
+                                      volatile DAQ_OPERATION_IO_T* pData )
+{
+   FUNCTION_INFO();
+   int ret = verifyChannelAccess( &pDaqAdmin->oDaqDevs, &pData->location );
+   if( ret != DAQ_RET_OK )
+      return ret;
+
+   pData->param1 = daqChannelGetTriggerDelay( getChannel( pDaqAdmin, pData ) );
+   return DAQ_RET_OK;
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+static int32_t opSetTriggerMode( DAQ_ADMIN_T* pDaqAdmin,
+                                 volatile DAQ_OPERATION_IO_T* pData )
+{
+   FUNCTION_INFO();
+   int ret = verifyChannelAccess( &pDaqAdmin->oDaqDevs, &pData->location );
+   if( ret != DAQ_RET_OK )
+      return ret;
+
+   DAQ_CANNEL_T* pChannel = getChannel( pDaqAdmin, pData );
+
+   if( pData->param1 != 0 )
+      daqChannelEnableTriggerMode( pChannel );
+   else
+      daqChannelDisableTriggerMode( pChannel );
+
+   return DAQ_RET_OK;
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+static int32_t opGetTriggerMode( DAQ_ADMIN_T* pDaqAdmin,
+                                 volatile DAQ_OPERATION_IO_T* pData )
+{
+   FUNCTION_INFO();
+   int ret = verifyChannelAccess( &pDaqAdmin->oDaqDevs, &pData->location );
+   if( ret != DAQ_RET_OK )
+      return ret;
+   pData->param1 = daqChannelIsTriggerModeEnabled( getChannel( pDaqAdmin, pData ) );
+   return DAQ_RET_OK;
+}
+
+
+/*! ---------------------------------------------------------------------------
  * @ingroup DAQ_INTERFACE
  * @brief Operation match list
  */
 static const DAQ_OPERATION_TAB_ITEM_T g_operationTab[] =
 {
-   { .code = DAQ_OP_LOCK,         .operation = opLock             },
-   { .code = DAQ_OP_UNLOCK,       .operation = opUnlock           },
-   { .code = DAQ_OP_RESET,        .operation = opReset            },
-   { .code = DAQ_OP_GET_SLOTS,    .operation = opGetSlots         },
-   { .code = DAQ_OP_GET_CHANNELS, .operation = opGetChannels      },
-   { .code = DAQ_OP_RESCAN,       .operation = opRescan           },
-   { .code = DAQ_OP_PM_ON,        .operation = opPostMortemOn     },
-   { .code = DAQ_OP_HIRES_ON,     .operation = opHighResolutionOn },
-   { .code = DAQ_OP_CONTINUE_ON,  .operation = opContinueOn       },
-   { .code = DAQ_OP_OFF,          .operation = opOff              },
+   { .code = DAQ_OP_LOCK,                  .operation = opLock                },
+   { .code = DAQ_OP_UNLOCK,                .operation = opUnlock              },
+   { .code = DAQ_OP_RESET,                 .operation = opReset               },
+   { .code = DAQ_OP_GET_SLOTS,             .operation = opGetSlots            },
+   { .code = DAQ_OP_GET_CHANNELS,          .operation = opGetChannels         },
+   { .code = DAQ_OP_RESCAN,                .operation = opRescan              },
+   { .code = DAQ_OP_PM_ON,                 .operation = opPostMortemOn        },
+   { .code = DAQ_OP_HIRES_ON,              .operation = opHighResolutionOn    },
+   { .code = DAQ_OP_CONTINUE_ON,           .operation = opContinueOn          },
+   { .code = DAQ_OP_OFF,                   .operation = opOff                 },
+   { .code = DAQ_OP_SET_TRIGGER_CONDITION, .operation = opSetTriggerCondition },
+   { .code = DAQ_OP_GET_TRIGGER_CONDITION, .operation = opGetTriggerCondition },
+   { .code = DAQ_OP_SET_TRIGGER_DELAY,     .operation = opSetTriggerDelay     },
+   { .code = DAQ_OP_GET_TRIGGER_DELAY,     .operation = opGetTriggerDelay     },
+   { .code = DAQ_OP_SET_TRIGGER_MODE,      .operation = opSetTriggerMode      },
+   { .code = DAQ_OP_GET_TRIGGER_MODE,      .operation = opGetTriggerMode      },
    DAQ_OPERATION_ITEM_TERMINATOR
 };
 

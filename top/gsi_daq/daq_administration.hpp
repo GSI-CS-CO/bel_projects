@@ -62,6 +62,12 @@ public:
    int enableHighResolution( void );
    int enableContineous( const DAQ_SAMPLE_RATE_T sampleRate );
    int disable( void );
+   int setTriggerCondition( const uint32_t trgCondition );
+   int getTriggerCondition( uint32_t& rTrgCondition );
+
+   int setTriggerDelay( const uint16_t delay );
+   int getTriggerDelay( uint16_t& rDelay );
+
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -104,6 +110,16 @@ public:
    int enableContineous( const unsigned int channel,
                          const DAQ_SAMPLE_RATE_T sampleRate );
    int disable( const unsigned int channel );
+   int setTriggerCondition( const unsigned int channel,
+                            const uint32_t trgCondition );
+   int getTriggerCondition( const unsigned int channel,
+                            uint32_t& rTrgCondition );
+
+   int setTriggerDelay( const unsigned int channel,
+                        const uint16_t delay );
+   int getTriggerDelay( const unsigned int channel,
+                        uint16_t& rDelay );
+
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -154,6 +170,42 @@ inline int DaqDevice::disable( const unsigned int channel )
    return getParent()->disable( m_deviceNumber, channel );
 }
 
+/*! ---------------------------------------------------------------------------
+ */
+inline int DaqDevice::setTriggerCondition( const unsigned int channel,
+                                           const uint32_t trgCondition )
+{
+   return getParent()->setTriggerCondition( m_deviceNumber, channel,
+                                            trgCondition );
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+inline int DaqDevice::getTriggerCondition(  const unsigned int channel,
+                                            uint32_t& rTrgCondition )
+{
+   return getParent()->getTriggerCondition( m_deviceNumber, channel,
+                                            rTrgCondition );
+}
+
+
+/*! ---------------------------------------------------------------------------
+ */
+inline int DaqDevice::setTriggerDelay( const unsigned int channel,
+                                       const uint16_t delay )
+{
+   return getParent()->setTriggerDelay( m_deviceNumber, channel, delay );
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+inline int DaqDevice::getTriggerDelay( const unsigned int channel,
+                                       uint16_t& rDelay )
+{
+   return getParent()->getTriggerDelay( m_deviceNumber, channel, rDelay );
+}
+
+
 ///////////////////////////////////////////////////////////////////////////////
 /*! ---------------------------------------------------------------------------
  */
@@ -181,6 +233,27 @@ inline int DaqChannel::enableContineous( const DAQ_SAMPLE_RATE_T sampleRate )
 inline int DaqChannel::disable( void )
 {
    return getParent()->disable( m_number );
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+inline int DaqChannel::setTriggerCondition( const uint32_t trgCondition )
+{
+   return getParent()->setTriggerCondition( m_number, trgCondition );
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+inline int DaqChannel::getTriggerCondition( uint32_t& rTrgCondition )
+{
+   return getParent()->getTriggerCondition( m_number, rTrgCondition );
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+inline int DaqChannel::setTriggerDelay( const uint16_t delay )
+{
+   return getParent()->setTriggerDelay( m_number, delay );
 }
 
 } //namespace daq

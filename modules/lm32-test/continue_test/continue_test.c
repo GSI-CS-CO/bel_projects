@@ -66,8 +66,9 @@ void readFiFo( DAQ_CANNEL_T* pThis )
       remaining = daqChannelGetDaqFifoWords( pThis );
 #endif
       volatile uint16_t data = daqChannelPopDaqFifo( pThis ); //!!*ptr;
-#if 0
-      mprintf( "%d: 0x%04x, %d\n", i, data, remaining );
+#if 1
+      if( i < 4 )
+       mprintf( "%d: 0x%04x, %d\n", i, data, remaining );
 #endif
       if( remaining < ARRAY_SIZE( descriptor.index ) )
       {
@@ -77,7 +78,7 @@ void readFiFo( DAQ_CANNEL_T* pThis )
       i++;
    }
    while( remaining != 0 );
-   mprintf( ESC_FG_BLUE"Received: %d 16-bit words\n"ESC_NORMAL, i );
+   mprintf( ESC_FG_BLUE ESC_BOLD"Received: %d 16-bit words\n"ESC_NORMAL, i );
 #if 0
    for( j = 0; j < ARRAY_SIZE( descriptor.index ); j++ )
       mprintf( "Descriptor %d: 0x%04x\n", j, descriptor.index[j] );
@@ -157,7 +158,7 @@ void main( void )
 
    gotoxy( 0, 0 );
    clrscr();
-   mprintf( ESC_FG_MAGNETA "DAQ Fifo test, compiler: " COMPILER_VERSION_STRING ESC_NORMAL "\n");
+   mprintf( ESC_FG_MAGNETA ESC_BOLD "DAQ Fifo test, compiler: " COMPILER_VERSION_STRING ESC_NORMAL "\n");
 #if 1
    if( daqBusFindAndInitializeAll( &g_allDaq, find_device_adr(GSI, SCU_BUS_MASTER) ) <= 0 )
    {
@@ -171,7 +172,7 @@ void main( void )
    int i, j;
    mprintf( "Total number of all used channels: %d\n", daqBusGetUsedChannels( &g_allDaq ) );
 
-   DAQ_CANNEL_T* pChannel = daqBusGetChannelObjectByAbsoluteNumber( &g_allDaq, 4 );
+   DAQ_CANNEL_T* pChannel = daqBusGetChannelObjectByAbsoluteNumber( &g_allDaq, 3 );
    if( pChannel == NULL )
    {
       mprintf( ESC_FG_RED "ERROR: Channel number out of range!\n" ESC_NORMAL );
@@ -199,7 +200,7 @@ void main( void )
    {
       printLine( '+' );
       daqChannelSetTriggerConditionLW( pChannel, (k == 0)? 0x4710 : 0x4711 );
-      daqChannelSample100usOn( pChannel );
+      daqChannelSample10usOn( pChannel );
       i = 0;
      // while( daqChannelGetDaqFifoWords( pChannel ) < (DAQ_FIFO_DAQ_WORD_SIZE-1) )
      // while( !daqDeviceTestAndClearDaqInt( DAQ_CHANNEL_GET_PARENT_OF( pChannel ) ) )
@@ -207,18 +208,12 @@ void main( void )
          i++;
       daqDeviceTestAndClearDaqInt( DAQ_CHANNEL_GET_PARENT_OF( pChannel ) );
       mprintf( "Polling loops: %d\n", i );
-
-     //for (j = 0; j < (31000000); ++j) { asm("nop"); }
+      daqChannelSample10usOff( pChannel ); // BUGFIX!!!
 
       daqChannelPrintInfo( pChannel );
       printScuBusSlaveInfo( pChannel );
-      mprintf( "Reading FoFo for the " ESC_FG_YELLOW "%dth"ESC_NORMAL" time\n", k+1 );
+      mprintf( "Reading FoFo for the " ESC_FG_YELLOW ESC_BOLD"%dth"ESC_NORMAL" time\n", k+1 );
       readFiFo( pChannel );
-//         daqChannelSample1msOff( pChannel );
-//   daqChannelSample100usOff( pChannel );
-   //daqChannelSample10usOff( pChannel );
-
-   //   for (j = 0; j < (31000000); ++j) { asm("nop"); }
    }
    printLine( '=' );
    daqChannelSample1msOff( pChannel );
@@ -234,7 +229,7 @@ void main( void )
    mprintf( "IRQ HIRES: %d\n", getHiResIrqCount() );
    mprintf( "DAQ devices: parent %d\n", daqBusGetFoundDevices( DAQ_CHANNEL_GET_GRANDPARENT_OF( pChannel )) );
 #endif
-   mprintf( "\nEnd...\n" );
+   mprintf( ESC_FG_MAGNETA ESC_BOLD "\nEnd...\n"ESC_NORMAL );
 }
 
 /*================================== EOF ====================================*/
