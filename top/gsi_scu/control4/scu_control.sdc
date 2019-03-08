@@ -9,20 +9,20 @@ set_clock_groups -asynchronous                                    \
  -group { clk_125m_local_i      main|\sys_a10:sys_inst|*        } \
  -group { clk_125m_tcb_local_i  main|\sys_fa10:sys_inst|*       } \
  -group { clk_125m_sfpref_i     main|\ref_a10:ref_inst|*          \
-          main|\phy_a10:phy|inst_phy|xcvr_native_a10_0|*          \
-          main|\phy_a10:phy|*.cdr_refclk*                         \
-          main|\phy_a10:phy|*.cmu_pll.*                           \
-          main|\phy_a10:phy|*|av_tx_pma|*                         \
-          main|\phy_a10:phy|*|inst_av_pcs|*|tx*                 } \
+          main|\phy_a10_scu4:phy|inst_phy|xcvr_native_a10_0|*          \
+          main|\phy_a10_scu4:phy|*.cdr_refclk*                         \
+          main|\phy_a10_scu4:phy|*.cmu_pll.*                           \
+          main|\phy_a10_scu4:phy|*|av_tx_pma|*                         \
+          main|\phy_a10_scu4:phy|*|inst_av_pcs|*|tx*                 } \
  -group { clk_125m_tcb_sfpref_i  main|\ref_a10:ref_inst|*         \
-          main|\phy_a10:phy|inst_phy|xcvr_native_a10_0|*          \
-          main|\phy_a10:phy|*.cdr_refclk*                         \
-          main|\phy_a10:phy|*.cmu_pll.*                           \
-          main|\phy_a10:phy|*|av_tx_pma|*                         \
-          main|\phy_a10:phy|*|inst_av_pcs|*|tx*                 } \
- -group { main|\phy_a10:phy|*|clk90bdes                           \
-          main|\phy_a10:phy|*|clk90b                              \
-          main|\phy_a10:phy|*|rcvdclkpma                        } \
+          main|\phy_a10_scu4:phy|inst_phy|xcvr_native_a10_0|*          \
+          main|\phy_a10_scu4:phy|*.cdr_refclk*                         \
+          main|\phy_a10_scu4:phy|*.cmu_pll.*                           \
+          main|\phy_a10_scu4:phy|*|av_tx_pma|*                         \
+          main|\phy_a10_scu4:phy|*|inst_av_pcs|*|tx*                 } \
+ -group { main|\phy_a10_scu4:phy|*|clk90bdes                           \
+          main|\phy_a10_scu4:phy|*|clk90b                              \
+          main|\phy_a10_scu4:phy|*|rcvdclkpma                        } \
  -group { pcie_refclk_i                                           \
           main|\pcie_y:pcie|*.cdr_refclk*                         \
           main|\pcie_y:pcie|*.cmu_pll.*                           \
