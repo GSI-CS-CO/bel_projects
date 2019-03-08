@@ -39,6 +39,8 @@ set_clock_groups -asynchronous                                    \
  -group { main|\pcie_y:pcie|*|coreclkout                        } \
  -group { main|\pcie_y:pcie|pcie_phy|\arria10gx_e3p1:hip|pcie_a10_hip_0|coreclkout}
 
+# cut: wb sys <=> ref
+set_false_path -from [get_clocks {main|\sys_a10:sys_inst|iopll_0|outclk0}] -to [get_clocks {main|\ref_a10:ref_inst|iopll_0|outclk0}]
 # cut: wb sys <=> wb flash   (different frequencies and using xwb_clock_crossing)
 set_false_path -from [get_clocks {main|\sys_a10:sys_inst|*|general[0].*}] -to [get_clocks {main|\sys_a10:sys_inst|*|general[4].*}]
 set_false_path -from [get_clocks {main|\sys_a10:sys_inst|*|general[4].*}] -to [get_clocks {main|\sys_a10:sys_inst|*|general[0].*}]
@@ -50,6 +52,7 @@ set_false_path -from [get_clocks {main|\ref_a10:ref_inst|*|counter[0].*}] -to [g
 set_false_path -from [get_clocks {main|\ref_a10:ref_inst|*|counter[1].*}] -to [get_clocks {main|\ref_a10:ref_inst|*|counter[0].*}]
 # cut: wr-ref <=> phy rx pma clock
 set_false_path -from [get_clocks {main|\phy_a10_e3p1:phy|inst_phy|xcvr_native_a10_0|rx_pma_clk}] -to [get_clocks {main|\ref_a10:ref_inst|iopll_0|outclk0}]
+set_false_path -from [get_clocks {main|\ref_a10:ref_inst|iopll_0|outclk0}] -to [get_clocks {main|\phy_a10_e3p1:phy|inst_phy|xcvr_native_a10_0|rx_pma_clk}]
 set_false_path -from [get_clocks {main|\ref_fa10:ref_inst|xcvr_fpll_a10_0|outclk0}] -to [get_clocks {main|\phy_a10:phy|inst_phy|xcvr_native_a10_0|rx_pma_clk}]
 set_false_path -from [get_clocks {main|\ref_fa10:ref_inst|xcvr_fpll_a10_0|outclk0}] -to [get_clocks {main|\phy_a10:phy|inst_phy|xcvr_native_a10_0|rx_pma_clk}]
 set_false_path -from [get_clocks {main|\ref_a10:ref_inst|xcvr_fpll_a10_0|outclk0}] -to [get_clocks {main|\phy_a10:phy|inst_phy|xcvr_native_a10_0|rx_pma_clk}]
@@ -74,9 +77,11 @@ set_false_path -from [get_clocks {main|\phy_a10:phy|inst_phy|xcvr_native_a10_0|r
 set_false_path -from [get_clocks {main|\phy_a10:phy|inst_phy|xcvr_native_a10_0|rx_pma_clk}] -to [get_clocks {main|\sys_a10:sys_inst|xcvr_fpll_a10_0|outclk0}]
 # cut: pcie <=> system
 set_false_path -from [get_clocks {main|\sys_a10:sys_inst|iopll_0|outclk0}] -to [get_clocks {main|\pcie_y:pcie|pcie_phy|\arria10gx_e3p1:hip|pcie_a10_hip_0|coreclkout}]
+set_false_path -from [get_clocks {main|\pcie_y:pcie|pcie_phy|\arria10gx_e3p1:hip|pcie_a10_hip_0|coreclkout}] -to [get_clocks {main|\sys_a10:sys_inst|iopll_0|outclk0}]
 # cut: wb sys <=> butis
 set_false_path -from [get_clocks {main|\ref_fa10:ref_inst|xcvr_fpll_a10_0|outclk2}] -to [get_clocks {main|\sys_fa10:sys_inst|xcvr_fpll_a10_0|outclk0}]
 set_false_path -from [get_clocks {main|\ref_fa10:ref_inst|xcvr_fpll_a10_0|outclk0}] -to [get_clocks {main|\ref_fa10:ref_inst|xcvr_fpll_a10_0|outclk2}]
 # cut: dmtd clk <=> phy rx pma
 set_false_path -from [get_clocks {main|\phy_a10:phy|inst_phy|xcvr_native_a10_0|rx_pma_clk}] -to [get_clocks {main|\dmtd_a10:dmtd_inst|iopll_0|outclk0}]
+set_false_path -from [get_clocks {main|\phy_a10_e3p1:phy|inst_phy|xcvr_native_a10_0|rx_pma_clk}] -to [get_clocks {main|\dmtd_a10:dmtd_inst|iopll_0|outclk0}]
 set_false_path -from [get_clocks {main|\sys_a10:sys_inst|iopll_0|outclk0}] -to [get_clocks {main|\dmtd_a10:dmtd_inst|iopll_0|outclk0}]
