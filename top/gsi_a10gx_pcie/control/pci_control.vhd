@@ -111,6 +111,7 @@ architecture rtl of pci_control is
   signal s_stub_pll_reset       : std_logic;
   signal s_stub_pll_locked      : std_logic;
   signal s_stub_pll_locked_prev : std_logic;
+  signal s_clk_20m_loop         : std_logic;
 
   constant io_mapping_table : t_io_mapping_table_arg_array(0 to 5) :=
   (
@@ -151,10 +152,11 @@ begin
       g_lm32_profiles    => f_string_list_repeat(c_profile_name, c_cores)
     )
     port map(
-      core_clk_20m_vcxo_i     => clk_20m_vcxo_i,
+      core_clk_20m_vcxo_i     => s_clk_20m_loop,
       core_clk_125m_pllref_i  => clk_125m_tcb_pllref_i,
       core_clk_125m_local_i   => clk_125m_tcb_local_i,
       core_clk_125m_sfpref_i  => clk_125m_tcb_sfpref_i,
+      core_clk_20m_o          => s_clk_20m_loop,
       wr_onewire_io           => rom_data_io,
       wr_sfp_sda_io           => sfp_mod2_io,
       wr_sfp_scl_io           => sfp_mod1_io,
