@@ -33,7 +33,7 @@ endif
 .PRECIOUS: $(TARGET).bin
 
 include $(INCPATH)/build_lm32.mk
- 
+
 
 all:	$(TARGET).mif $(TARGET)_stub.mif $(TARGET).sof $(TARGET).jic $(TARGET).rpd
 
@@ -53,7 +53,7 @@ clean::
 	rm -rf db incremental_db PLLJ_PLLSPE_INFO.txt
 	rm -f $(TARGET).*.rpt $(TARGET).*.summary $(TARGET).map* $(TARGET).fit.* $(TARGET).pin $(TARGET).jdi $(TARGET)*.qdf $(TARGET).done $(TARGET).qws
 	rm -f $(TARGET).rpd $(TARGET).jic $(TARGET).pof $(TARGET).sof $(TARGET).dep $(TARGET).elf $(TARGET).o *.mif *.elf
-	rm -f ram.ld buildid.c $(TARGET)_shared_mmap.h 
+	rm -f ram.ld buildid.c $(TARGET)_shared_mmap.h
 	rm -f project project.tcl files.tcl
 
 prog:
@@ -73,7 +73,7 @@ prog:
 %.mif:	%.bin
 	$(GENRAMMIF) $< $(RAM_SIZE) > $@
 
-%.sof:	%.qsf %.mif $(PATHPKG)/ramsize_pkg.vhd 
+%.sof:	%.qsf %.mif $(PATHPKG)/ramsize_pkg.vhd
 	$(HDLMAKE) makefile -f hdlmake.mk ; make -f hdlmake.mk project
 	find $(TOP) -name Manifest.py > $*.dep
 	sed -n -e 's/"//g;s/quartus_sh://;s/set_global_assignment.*-name.*_FILE //p' < $< >> $*.dep
@@ -88,7 +88,9 @@ prog:
 	mv $@.tmp $@
 
 %.jic:	%.sof %.opt
+ifndef SKIP_JIC
 	$(QUARTUS_BIN)/quartus_cpf -c -o $*.opt -d $(FLASH) -s $(DEVICE) $< $@
+endif
 
 %.pof:	%.sof %.opt
 	$(QUARTUS_BIN)/quartus_cpf -c -o $*.opt -d $(FLASH) -m $(SPI_LANES) $< $@
