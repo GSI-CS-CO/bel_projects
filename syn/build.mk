@@ -91,6 +91,9 @@ prog:
 ifndef SKIP_JIC
 	$(QUARTUS_BIN)/quartus_cpf -c -o $*.opt -d $(FLASH) -s $(DEVICE) $< $@
 endif
+ifdef SKIP_JIC
+	@echo "Skipping JIC file..."
+endif
 
 %.pof:	%.sof %.opt
 	$(QUARTUS_BIN)/quartus_cpf -c -o $*.opt -d $(FLASH) -m $(SPI_LANES) $< $@
