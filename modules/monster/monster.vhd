@@ -126,6 +126,7 @@ entity monster is
     core_rstn_wr_ref_o     : out   std_logic;
     core_rstn_butis_o      : out   std_logic;
     core_clk_200m_o        : out   std_logic;
+    core_clk_20m_o         : out   std_logic;
     core_debug_o           : out   std_logic_vector(15 downto 0) := (others => 'Z');
     -- Required: white rabbit pins
     wr_onewire_io          : inout std_logic;
@@ -1094,6 +1095,7 @@ begin
   core_rstn_butis_o  <= rstn_butis;
   core_clk_sys_o     <= clk_sys;
   core_clk_200m_o    <= clk_200m;
+  core_clk_20m_o     <= clk_20m;
 
   -- END OF Reset and PLLs
   ----------------------------------------------------------------------------------
