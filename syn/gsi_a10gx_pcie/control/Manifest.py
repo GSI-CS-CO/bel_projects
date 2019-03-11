@@ -3,7 +3,7 @@ action = "synthesis"
 
 fetchto = "../../../ip_cores"
 syn_tool = "quartus"
-syn_grade = "i2sg"
+syn_grade = "i1sg"
 syn_package = "45"
 syn_device = "10ax115s2f"
 syn_top = "pci_control"
