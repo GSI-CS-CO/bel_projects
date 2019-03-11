@@ -7,6 +7,14 @@ use work.monster_pkg.all;
 use work.ramsize_pkg.c_lm32_ramsizes;
 use work.stub_pll_pkg.all;
 
+------------------------------------------------------------------------
+-- Clocking
+------------------------------------------------------------------------
+-- clk_125m_pllref_i is connected to U14 (Si5338A) -> Clock 3 (schematic name: REFCLK_SMA)
+-- clk_125m_local_i  is connected to U26 (Si5338A) -> Clock 2 (schematic name: REFCLK_QSFP)
+-- clk_125m_sfpref_i is connected to U26 (Si5338A) -> Clock 1 (schematic name: REFCLK_QSFP)
+-- clk_20m_vcxo_i    is connected to U26 (Si5338A) -> Clock 0 (schematic name: REFCLK_DP)
+
 entity pci_control is
   port(
     ------------------------------------------------------------------------
