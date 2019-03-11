@@ -12,7 +12,7 @@
 # or its authorized distributors. Please refer to the applicable 
 # agreement for further details.
 
-# ACDS 18.1 625 linux 2019.02.13.16:44:07
+# ACDS 18.1 625 linux 2019.03.11.10:13:14
 
 # ----------------------------------------
 # vcs - auto-generated simulation script
@@ -94,12 +94,12 @@
 # within the Quartus project, and generate a unified
 # script which supports all the Altera IP within the design.
 # ----------------------------------------
-# ACDS 18.1 625 linux 2019.02.13.16:44:07
+# ACDS 18.1 625 linux 2019.03.11.10:13:14
 # ----------------------------------------
 # initialize variables
 TOP_LEVEL_NAME="dmtd_pll10"
 QSYS_SIMDIR="./../../"
-QUARTUS_INSTALL_DIR="/home/alex/workspace/optional/quartus18/quartus/"
+QUARTUS_INSTALL_DIR="/opt/quartus/18/quartus/"
 SKIP_FILE_COPY=0
 SKIP_SIM=0
 USER_DEFINED_ELAB_OPTIONS=""
@@ -142,7 +142,7 @@ vcs -lca -timescale=1ps/1ps -sverilog +verilog2001ext+.v -ntb_opts dtm $ELAB_OPT
   -v $QUARTUS_INSTALL_DIR/eda/sim_lib/twentynm_hssi_atoms.v \
   -v $QUARTUS_INSTALL_DIR/eda/sim_lib/synopsys/twentynm_hip_atoms_ncrypt.v \
   -v $QUARTUS_INSTALL_DIR/eda/sim_lib/twentynm_hip_atoms.v \
-  $QSYS_SIMDIR/../altera_iopll_181/sim/dmtd_pll10_altera_iopll_181_pxobl3q.vo \
+  $QSYS_SIMDIR/../altera_iopll_181/sim/dmtd_pll10_altera_iopll_181_5laf3ga.vo \
   $QSYS_SIMDIR/dmtd_pll10.v \
   -top $TOP_LEVEL_NAME
 # ----------------------------------------

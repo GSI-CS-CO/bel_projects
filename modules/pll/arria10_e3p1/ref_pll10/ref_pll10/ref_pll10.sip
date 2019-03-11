@@ -5,4 +5,4 @@ set_global_assignment -library "lib_ref_pll10" -name SPD_FILE [file join $::quar
 set_global_assignment -library "lib_ref_pll10" -name MISC_FILE [file join $::quartus(sip_path) "../ref_pll10.qsys"]
 
 set_global_assignment -library "lib_ref_pll10" -name MISC_FILE [file join $::quartus(sip_path) "sim/ref_pll10.v"]
-set_global_assignment -library "lib_ref_pll10" -name MISC_FILE [file join $::quartus(sip_path) "altera_iopll_181/sim/ref_pll10_altera_iopll_181_tntpbwy.vo"]
+set_global_assignment -library "lib_ref_pll10" -name MISC_FILE [file join $::quartus(sip_path) "altera_iopll_181/sim/ref_pll10_altera_iopll_181_c5qxdni.vo"]

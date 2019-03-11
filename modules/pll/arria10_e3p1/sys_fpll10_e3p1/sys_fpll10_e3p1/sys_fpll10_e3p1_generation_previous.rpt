@@ -17,7 +17,7 @@ Info: sys_fpll10_e3p1: Running transform generation_view_transform took 0.000s
 Info: xcvr_fpll_a10_0: Running transform generation_view_transform
 Info: xcvr_fpll_a10_0: Running transform generation_view_transform took 0.000s
 Info: sys_fpll10_e3p1: Running transform merlin_avalon_transform
-Info: sys_fpll10_e3p1: Running transform merlin_avalon_transform took 0.067s
+Info: sys_fpll10_e3p1: Running transform merlin_avalon_transform took 0.062s
 Info: sys_fpll10_e3p1: "Naming system components in system: sys_fpll10_e3p1"
 Info: sys_fpll10_e3p1: "Processing generation queue"
 Info: sys_fpll10_e3p1: "Generating: sys_fpll10_e3p1"

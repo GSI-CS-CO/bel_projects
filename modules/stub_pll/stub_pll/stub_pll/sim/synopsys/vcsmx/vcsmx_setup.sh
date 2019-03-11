@@ -12,7 +12,7 @@
 # or its authorized distributors. Please refer to the applicable 
 # agreement for further details.
 
-# ACDS 18.1 625 linux 2019.02.13.11:04:39
+# ACDS 18.1 625 linux 2019.03.11.10:11:59
 
 # ----------------------------------------
 # vcsmx - auto-generated simulation script
@@ -107,12 +107,12 @@
 # within the Quartus project, and generate a unified
 # script which supports all the Altera IP within the design.
 # ----------------------------------------
-# ACDS 18.1 625 linux 2019.02.13.11:04:39
+# ACDS 18.1 625 linux 2019.03.11.10:11:59
 # ----------------------------------------
 # initialize variables
 TOP_LEVEL_NAME="stub_pll"
 QSYS_SIMDIR="./../../"
-QUARTUS_INSTALL_DIR="/home/alex/workspace/optional/quartus18/quartus/"
+QUARTUS_INSTALL_DIR="/opt/quartus/18/quartus/"
 SKIP_FILE_COPY=0
 SKIP_DEV_COM=0
 SKIP_COM=0
@@ -179,7 +179,7 @@ fi
 # ----------------------------------------
 # compile design files in correct order
 if [ $SKIP_COM -eq 0 ]; then
-  vlogan +v2k $USER_DEFINED_VERILOG_COMPILE_OPTIONS $USER_DEFINED_COMPILE_OPTIONS "$QSYS_SIMDIR/../altera_iopll_181/sim/stub_pll_altera_iopll_181_6x4drji.vo" -work stub_pll_altera_iopll_181
+  vlogan +v2k $USER_DEFINED_VERILOG_COMPILE_OPTIONS $USER_DEFINED_COMPILE_OPTIONS "$QSYS_SIMDIR/../altera_iopll_181/sim/stub_pll_altera_iopll_181_arpnjwy.vo" -work stub_pll_altera_iopll_181
   vlogan +v2k $USER_DEFINED_VERILOG_COMPILE_OPTIONS $USER_DEFINED_COMPILE_OPTIONS "$QSYS_SIMDIR/stub_pll.v"                                                                                  
 fi
 

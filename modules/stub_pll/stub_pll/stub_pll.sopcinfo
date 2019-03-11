@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <EnsembleReport name="stub_pll" kind="stub_pll" version="1.0" fabric="QSYS">
  <!-- Format version 18.1 625 (Future versions may contain additional information.) -->
- <!-- 2019.02.14.17:04:35 -->
+ <!-- 2019.03.11.10:12:01 -->
  <!-- A collection of modules and connections -->
  <parameter name="AUTO_GENERATION_ID">
   <type>java.lang.Integer</type>
-  <value>1550160274</value>
+  <value>1552295521</value>
   <derived>false</derived>
   <enabled>true</enabled>
   <visible>false</visible>
@@ -32,7 +32,7 @@
  </parameter>
  <parameter name="AUTO_DEVICE">
   <type>java.lang.String</type>
-  <value>10AX027E3F29E2SG</value>
+  <value>10AX115S2F45I1SG</value>
   <derived>false</derived>
   <enabled>true</enabled>
   <visible>false</visible>
@@ -41,7 +41,7 @@
  </parameter>
  <parameter name="AUTO_DEVICE_SPEEDGRADE">
   <type>java.lang.String</type>
-  <value>2</value>
+  <value>1</value>
   <derived>false</derived>
   <enabled>true</enabled>
   <visible>false</visible>
@@ -120,7 +120,7 @@ the requested settings for a module instance. -->
   </parameter>
   <parameter name="gui_device_component">
    <type>java.lang.String</type>
-   <value>10AX027E3F29E2SG</value>
+   <value>10AX115S2F45I1SG</value>
    <derived>true</derived>
    <enabled>false</enabled>
    <visible>true</visible>
@@ -128,7 +128,7 @@ the requested settings for a module instance. -->
   </parameter>
   <parameter name="gui_device_speed_grade">
    <type>int</type>
-   <value>2</value>
+   <value>1</value>
    <derived>true</derived>
    <enabled>true</enabled>
    <visible>true</visible>
@@ -337,7 +337,7 @@ the requested settings for a module instance. -->
   </parameter>
   <parameter name="system_info_device_component">
    <type>java.lang.String</type>
-   <value>10AX027E3F29E2SG</value>
+   <value>10AX115S2F45I1SG</value>
    <derived>false</derived>
    <enabled>true</enabled>
    <visible>false</visible>
@@ -346,7 +346,7 @@ the requested settings for a module instance. -->
   </parameter>
   <parameter name="system_info_device_speed_grade">
    <type>java.lang.String</type>
-   <value>2</value>
+   <value>1</value>
    <derived>false</derived>
    <enabled>true</enabled>
    <visible>false</visible>
@@ -355,7 +355,7 @@ the requested settings for a module instance. -->
   </parameter>
   <parameter name="system_part_trait_speed_grade">
    <type>java.lang.String</type>
-   <value>2</value>
+   <value>1</value>
    <derived>false</derived>
    <enabled>true</enabled>
    <visible>false</visible>
@@ -1477,7 +1477,7 @@ the requested settings for a module instance. -->
   </parameter>
   <parameter name="gui_actual_output_clock_frequency_range0">
    <type>[Ljava.lang.String;</type>
-   <value>19.962687,19.965278,19.967794,20.0,20.031299,20.033670</value>
+   <value>19.967794,19.96997,19.971871,20.0,20.029240,20.031299</value>
    <derived>true</derived>
    <enabled>true</enabled>
    <visible>true</visible>
@@ -1493,7 +1493,7 @@ the requested settings for a module instance. -->
   </parameter>
   <parameter name="gui_actual_output_clock_frequency_range2">
    <type>[Ljava.lang.String;</type>
-   <value>90.909091,100.0,111.111111,125.0,142.857143,166.666667</value>
+   <value>107.142857,111.111111,115.384615,125.0,136.363636,142.857143</value>
    <derived>true</derived>
    <enabled>true</enabled>
    <visible>true</visible>
@@ -1501,7 +1501,7 @@ the requested settings for a module instance. -->
   </parameter>
   <parameter name="gui_actual_output_clock_frequency_range3">
    <type>[Ljava.lang.String;</type>
-   <value>90.909091,100.0,111.111111,125.0,142.857143,166.666667</value>
+   <value>107.142857,111.111111,115.384615,125.0,136.363636,142.857143</value>
    <derived>true</derived>
    <enabled>true</enabled>
    <visible>true</visible>
@@ -2197,7 +2197,7 @@ the requested settings for a module instance. -->
   </parameter>
   <parameter name="gui_actual_phase_shift_range0">
    <type>[Ljava.lang.String;</type>
-   <value>0.0,125.0,250.0,375.0,500.0,625.0</value>
+   <value>0.0,83.3,125.0,166.7,250.0,333.3</value>
    <derived>true</derived>
    <enabled>true</enabled>
    <visible>true</visible>
@@ -2205,7 +2205,7 @@ the requested settings for a module instance. -->
   </parameter>
   <parameter name="gui_actual_phase_shift_range1">
    <type>[Ljava.lang.String;</type>
-   <value>0.0,125.0,250.0,375.0,500.0,625.0</value>
+   <value>0.0,83.3,125.0,166.7,250.0,333.3</value>
    <derived>true</derived>
    <enabled>true</enabled>
    <visible>true</visible>
@@ -2213,7 +2213,7 @@ the requested settings for a module instance. -->
   </parameter>
   <parameter name="gui_actual_phase_shift_range2">
    <type>[Ljava.lang.String;</type>
-   <value>0.0,125.0,250.0,375.0,500.0,625.0</value>
+   <value>0.0,83.3,125.0,166.7,250.0,333.3</value>
    <derived>true</derived>
    <enabled>true</enabled>
    <visible>true</visible>
@@ -2221,7 +2221,7 @@ the requested settings for a module instance. -->
   </parameter>
   <parameter name="gui_actual_phase_shift_range3">
    <type>[Ljava.lang.String;</type>
-   <value>0.0,125.0,250.0,375.0,500.0,625.0</value>
+   <value>0.0,83.3,125.0,166.7,250.0,333.3</value>
    <derived>true</derived>
    <enabled>true</enabled>
    <visible>true</visible>
@@ -2485,7 +2485,7 @@ the requested settings for a module instance. -->
   </parameter>
   <parameter name="gui_actual_phase_shift_deg_range0">
    <type>[Ljava.lang.String;</type>
-   <value>0.0,0.9,1.8,2.7,3.6,4.5</value>
+   <value>0.0,0.6,0.9,1.2,1.8,2.4</value>
    <derived>true</derived>
    <enabled>true</enabled>
    <visible>false</visible>
@@ -2493,7 +2493,7 @@ the requested settings for a module instance. -->
   </parameter>
   <parameter name="gui_actual_phase_shift_deg_range1">
    <type>[Ljava.lang.String;</type>
-   <value>0.0,5.6,11.2,16.9,22.5,28.1</value>
+   <value>0.0,3.8,5.6,7.5,11.2,15.0</value>
    <derived>true</derived>
    <enabled>true</enabled>
    <visible>false</visible>
@@ -2501,7 +2501,7 @@ the requested settings for a module instance. -->
   </parameter>
   <parameter name="gui_actual_phase_shift_deg_range2">
    <type>[Ljava.lang.String;</type>
-   <value>0.0,5.6,11.2,16.9,22.5,28.1</value>
+   <value>0.0,3.8,5.6,7.5,11.2,15.0</value>
    <derived>true</derived>
    <enabled>true</enabled>
    <visible>false</visible>
@@ -2509,7 +2509,7 @@ the requested settings for a module instance. -->
   </parameter>
   <parameter name="gui_actual_phase_shift_deg_range3">
    <type>[Ljava.lang.String;</type>
-   <value>0.0,5.6,11.2,16.9,22.5,28.1</value>
+   <value>0.0,3.8,5.6,7.5,11.2,15.0</value>
    <derived>true</derived>
    <enabled>true</enabled>
    <visible>false</visible>
@@ -2917,7 +2917,7 @@ the requested settings for a module instance. -->
   </parameter>
   <parameter name="gui_actual_duty_cycle_range0">
    <type>[Ljava.lang.String;</type>
-   <value>47.0,48.0,49.0,50.0,51.0,52.0</value>
+   <value>48.67,49.0,49.33,50.0,50.67,51.0</value>
    <derived>true</derived>
    <enabled>true</enabled>
    <visible>true</visible>
@@ -2925,7 +2925,7 @@ the requested settings for a module instance. -->
   </parameter>
   <parameter name="gui_actual_duty_cycle_range1">
    <type>[Ljava.lang.String;</type>
-   <value>31.25,37.5,43.75,50.0,56.25,62.5</value>
+   <value>41.67,43.75,45.83,50.0,54.17,56.25</value>
    <derived>true</derived>
    <enabled>true</enabled>
    <visible>true</visible>
@@ -2933,7 +2933,7 @@ the requested settings for a module instance. -->
   </parameter>
   <parameter name="gui_actual_duty_cycle_range2">
    <type>[Ljava.lang.String;</type>
-   <value>31.25,37.5,43.75,50.0,56.25,62.5</value>
+   <value>41.67,43.75,45.83,50.0,54.17,56.25</value>
    <derived>true</derived>
    <enabled>true</enabled>
    <visible>true</visible>
@@ -2941,7 +2941,7 @@ the requested settings for a module instance. -->
   </parameter>
   <parameter name="gui_actual_duty_cycle_range3">
    <type>[Ljava.lang.String;</type>
-   <value>31.25,37.5,43.75,50.0,56.25,62.5</value>
+   <value>41.67,43.75,45.83,50.0,54.17,56.25</value>
    <derived>true</derived>
    <enabled>true</enabled>
    <visible>true</visible>
@@ -5157,7 +5157,7 @@ the requested settings for a module instance. -->
   </parameter>
   <parameter name="hp_parameter_update_message">
    <type>java.lang.String</type>
-   <value>{altera_iopll::util::pll_send_message DEBUG {-- in update gui_device_family }} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_device_component }} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_device_speed_grade }} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_dps_cntr}} {altera_iopll::util::pll_send_message DEBUG { -- in update_gui_extclkout_source}} {altera_iopll::util::pll_send_message DEBUG { -- in update_gui_cascade_outclk_index}} {altera_iopll::util::pll_send_message DEBUG { -- in update gui_clock_to_compensate}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_vco_frequency}} {altera_iopll::util::pll_send_message DEBUG { -- Updating all outclk values in order, starting with freq 0}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_output_clock_frequency0}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_output_clock_frequency1}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_output_clock_frequency2}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_output_clock_frequency3}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_phase_shift0}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_phase_shift1}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_phase_shift2}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_phase_shift3}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_duty_cycle0}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_duty_cycle1}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_duty_cycle2}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_duty_cycle3}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_output_clock_frequency4}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_phase_shift4}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_duty_cycle4}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_output_clock_frequency5}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_phase_shift5}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_duty_cycle5}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_output_clock_frequency6}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_phase_shift6}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_duty_cycle6}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_output_clock_frequency7}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_phase_shift7}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_duty_cycle7}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_output_clock_frequency8}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_phase_shift8}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_duty_cycle8}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_device_family }} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_device_component }} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_device_speed_grade }} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_dps_cntr}} {altera_iopll::util::pll_send_message DEBUG { -- in update_gui_extclkout_source}} {altera_iopll::util::pll_send_message DEBUG { -- in update_gui_cascade_outclk_index}} {altera_iopll::util::pll_send_message DEBUG { -- in update gui_clock_to_compensate}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_vco_frequency}} {altera_iopll::util::pll_send_message DEBUG { -- Updating all outclk values in order, starting with freq 0}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_output_clock_frequency0}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_output_clock_frequency1}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_output_clock_frequency2}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_output_clock_frequency3}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_phase_shift0}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_phase_shift1}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_phase_shift2}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_phase_shift3}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_duty_cycle0}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_duty_cycle1}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_duty_cycle2}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_duty_cycle3}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_output_clock_frequency4}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_phase_shift4}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_duty_cycle4}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_output_clock_frequency5}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_phase_shift5}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_duty_cycle5}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_output_clock_frequency6}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_phase_shift6}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_duty_cycle6}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_output_clock_frequency7}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_phase_shift7}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_duty_cycle7}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_output_clock_frequency8}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_phase_shift8}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_duty_cycle8}}</value>
+   <value>{altera_iopll::util::pll_send_message DEBUG {-- in update gui_device_family }} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_device_component }} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_device_speed_grade }} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_dps_cntr}} {altera_iopll::util::pll_send_message DEBUG { -- in update_gui_extclkout_source}} {altera_iopll::util::pll_send_message DEBUG { -- in update_gui_cascade_outclk_index}} {altera_iopll::util::pll_send_message DEBUG { -- in update gui_clock_to_compensate}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_vco_frequency}} {altera_iopll::util::pll_send_message DEBUG { -- Updating all outclk values in order, starting with freq 0}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_output_clock_frequency0}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_output_clock_frequency1}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_output_clock_frequency2}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_output_clock_frequency3}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_phase_shift0}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_phase_shift1}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_phase_shift2}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_phase_shift3}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_duty_cycle0}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_duty_cycle1}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_duty_cycle2}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_duty_cycle3}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_output_clock_frequency4}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_phase_shift4}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_duty_cycle4}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_output_clock_frequency5}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_phase_shift5}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_duty_cycle5}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_output_clock_frequency6}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_phase_shift6}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_duty_cycle6}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_output_clock_frequency7}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_phase_shift7}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_duty_cycle7}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_output_clock_frequency8}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_phase_shift8}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_duty_cycle8}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_device_family }} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_device_component }} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_device_speed_grade }} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_dps_cntr}} {altera_iopll::util::pll_send_message DEBUG { -- in update_gui_extclkout_source}} {altera_iopll::util::pll_send_message DEBUG { -- in update_gui_cascade_outclk_index}} {altera_iopll::util::pll_send_message DEBUG { -- in update gui_clock_to_compensate}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_vco_frequency}} {altera_iopll::util::pll_send_message DEBUG { -- Updating all outclk values in order, starting with freq 0}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_output_clock_frequency0}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_output_clock_frequency1}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_output_clock_frequency2}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_output_clock_frequency3}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_phase_shift0}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_phase_shift1}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_phase_shift2}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_phase_shift3}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_duty_cycle0}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_duty_cycle1}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_duty_cycle2}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_duty_cycle3}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_output_clock_frequency4}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_phase_shift4}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_duty_cycle4}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_output_clock_frequency5}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_phase_shift5}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_duty_cycle5}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_output_clock_frequency6}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_phase_shift6}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_duty_cycle6}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_output_clock_frequency7}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_phase_shift7}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_duty_cycle7}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_output_clock_frequency8}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_phase_shift8}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_duty_cycle8}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_device_family }} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_device_component }} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_device_speed_grade }} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_dps_cntr}} {altera_iopll::util::pll_send_message DEBUG { -- in update_gui_extclkout_source}} {altera_iopll::util::pll_send_message DEBUG { -- in update_gui_cascade_outclk_index}} {altera_iopll::util::pll_send_message DEBUG { -- in update gui_clock_to_compensate}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_vco_frequency}} {altera_iopll::util::pll_send_message DEBUG { -- Updating all outclk values in order, starting with freq 0}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_output_clock_frequency0}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_output_clock_frequency1}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_output_clock_frequency2}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_output_clock_frequency3}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_phase_shift0}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_phase_shift1}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_phase_shift2}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_phase_shift3}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_duty_cycle0}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_duty_cycle1}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_duty_cycle2}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_duty_cycle3}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_output_clock_frequency4}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_phase_shift4}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_duty_cycle4}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_output_clock_frequency5}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_phase_shift5}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_duty_cycle5}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_output_clock_frequency6}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_phase_shift6}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_duty_cycle6}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_output_clock_frequency7}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_phase_shift7}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_duty_cycle7}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_output_clock_frequency8}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_phase_shift8}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_duty_cycle8}}</value>
    <derived>true</derived>
    <enabled>true</enabled>
    <visible>false</visible>

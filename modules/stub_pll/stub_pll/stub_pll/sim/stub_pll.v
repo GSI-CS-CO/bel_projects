@@ -13,7 +13,7 @@ module stub_pll (
 		input  wire  rst       //   reset.reset
 	);
 
-	stub_pll_altera_iopll_181_6x4drji iopll_0 (
+	stub_pll_altera_iopll_181_arpnjwy iopll_0 (
 		.rst      (rst),      //   reset.reset
 		.refclk   (refclk),   //  refclk.clk
 		.locked   (locked),   //  locked.export

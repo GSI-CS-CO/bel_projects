@@ -1,5 +1,5 @@
 Info: Starting: Create HDL design files for synthesis
-Info: qsys-generate /home/alex/workspace/projects/r13/bel_projects/modules/pll/arria10_e3p1/ref_fpll10_e3p1/ref_fpll10_e3p1.qsys --synthesis=VERILOG --output-directory=/home/alex/workspace/projects/r13/bel_projects/modules/pll/arria10_e3p1/ref_fpll10_e3p1/ref_fpll10_e3p1 --family="Arria 10" --part=10AX115S2F45I2SG
+Info: qsys-generate /home/alex/workspace/a10_dev/modules/pll/arria10_e3p1/ref_fpll10_e3p1/ref_fpll10_e3p1.qsys --synthesis=VERILOG --output-directory=/home/alex/workspace/a10_dev/modules/pll/arria10_e3p1/ref_fpll10_e3p1/ref_fpll10_e3p1 --family="Arria 10" --part=10AX115S2F45I2SG
 Progress: Loading ref_fpll10_e3p1/ref_fpll10_e3p1.qsys
 Progress: Reading input file
 Progress: Adding xcvr_fpll_a10_0 [altera_xcvr_fpll_a10 18.1]
@@ -13,11 +13,11 @@ Info: ref_fpll10_e3p1.xcvr_fpll_a10_0: The output frequencies are not exact when
 Info: ref_fpll10_e3p1.xcvr_fpll_a10_0: For the selected device(10AX115S2F45I2SG), PLL speed grade is 2.
 Info: ref_fpll10_e3p1: "Transforming system: ref_fpll10_e3p1"
 Info: ref_fpll10_e3p1: Running transform generation_view_transform
-Info: ref_fpll10_e3p1: Running transform generation_view_transform took 0.000s
+Info: ref_fpll10_e3p1: Running transform generation_view_transform took 0.001s
 Info: xcvr_fpll_a10_0: Running transform generation_view_transform
 Info: xcvr_fpll_a10_0: Running transform generation_view_transform took 0.000s
 Info: ref_fpll10_e3p1: Running transform merlin_avalon_transform
-Info: ref_fpll10_e3p1: Running transform merlin_avalon_transform took 0.042s
+Info: ref_fpll10_e3p1: Running transform merlin_avalon_transform took 0.040s
 Info: ref_fpll10_e3p1: "Naming system components in system: ref_fpll10_e3p1"
 Info: ref_fpll10_e3p1: "Processing generation queue"
 Info: ref_fpll10_e3p1: "Generating: ref_fpll10_e3p1"

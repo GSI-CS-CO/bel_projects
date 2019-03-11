@@ -20,7 +20,7 @@ module ref_pll10 (
 		input  wire       updn              //             updn.updn
 	);
 
-	ref_pll10_altera_iopll_181_tntpbwy iopll_0 (
+	ref_pll10_altera_iopll_181_c5qxdni iopll_0 (
 		.rst              (rst),              //            reset.reset
 		.refclk           (refclk),           //           refclk.clk
 		.locked           (locked),           //           locked.export

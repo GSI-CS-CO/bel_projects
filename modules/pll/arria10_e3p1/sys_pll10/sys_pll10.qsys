@@ -20,9 +20,9 @@
 }
 ]]></parameter>
  <parameter name="clockCrossingAdapter" value="HANDSHAKE" />
- <parameter name="device" value="10AX115S2F45I2SG" />
+ <parameter name="device" value="10AX115S2F45I1SG" />
  <parameter name="deviceFamily" value="Arria 10" />
- <parameter name="deviceSpeedGrade" value="2" />
+ <parameter name="deviceSpeedGrade" value="1" />
  <parameter name="fabricMode" value="QSYS" />
  <parameter name="generateLegacySim" value="false" />
  <parameter name="generationId" value="0" />
@@ -286,9 +286,9 @@
   <parameter name="gui_usr_device_speed_grade" value="1" />
   <parameter name="gui_vco_frequency" value="600.0" />
   <parameter name="hp_qsys_scripting_mode" value="false" />
-  <parameter name="system_info_device_component" value="10AX115S2F45I2SG" />
+  <parameter name="system_info_device_component" value="10AX115S2F45I1SG" />
   <parameter name="system_info_device_family" value="Arria 10" />
-  <parameter name="system_info_device_speed_grade" value="2" />
+  <parameter name="system_info_device_speed_grade" value="1" />
   <parameter name="system_part_trait_speed_grade" value="2" />
  </module>
  <interconnectRequirement for="$system" name="qsys_mm.clockCrossingAdapter" value="HANDSHAKE" />

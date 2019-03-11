@@ -1,5 +1,5 @@
 Info: Starting: Create HDL design files for synthesis
-Info: qsys-generate /home/alex/workspace/projects/r13/bel_projects/modules/pll/arria10_e3p1/sys_fpll10_e3p1/sys_fpll10_e3p1.qsys --synthesis=VERILOG --output-directory=/home/alex/workspace/projects/r13/bel_projects/modules/pll/arria10_e3p1/sys_fpll10_e3p1/sys_fpll10_e3p1 --family="Arria 10" --part=10AX115S2F45I2SG
+Info: qsys-generate /home/alex/workspace/a10_dev/modules/pll/arria10_e3p1/sys_fpll10_e3p1/sys_fpll10_e3p1.qsys --synthesis=VERILOG --output-directory=/home/alex/workspace/a10_dev/modules/pll/arria10_e3p1/sys_fpll10_e3p1/sys_fpll10_e3p1 --family="Arria 10" --part=10AX115S2F45I2SG
 Progress: Loading sys_fpll10_e3p1/sys_fpll10_e3p1.qsys
 Progress: Reading input file
 Progress: Adding xcvr_fpll_a10_0 [altera_xcvr_fpll_a10 18.1]
@@ -17,7 +17,7 @@ Info: sys_fpll10_e3p1: Running transform generation_view_transform took 0.000s
 Info: xcvr_fpll_a10_0: Running transform generation_view_transform
 Info: xcvr_fpll_a10_0: Running transform generation_view_transform took 0.000s
 Info: sys_fpll10_e3p1: Running transform merlin_avalon_transform
-Info: sys_fpll10_e3p1: Running transform merlin_avalon_transform took 0.062s
+Info: sys_fpll10_e3p1: Running transform merlin_avalon_transform took 0.045s
 Info: sys_fpll10_e3p1: "Naming system components in system: sys_fpll10_e3p1"
 Info: sys_fpll10_e3p1: "Processing generation queue"
 Info: sys_fpll10_e3p1: "Generating: sys_fpll10_e3p1"

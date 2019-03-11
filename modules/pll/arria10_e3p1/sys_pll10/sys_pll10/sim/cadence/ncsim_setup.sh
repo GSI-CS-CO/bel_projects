@@ -12,7 +12,7 @@
 # or its authorized distributors. Please refer to the applicable 
 # agreement for further details.
 
-# ACDS 18.1 625 linux 2019.02.13.16:43:09
+# ACDS 18.1 625 linux 2019.03.11.10:12:24
 
 # ----------------------------------------
 # ncsim - auto-generated simulation script
@@ -106,12 +106,12 @@
 # within the Quartus project, and generate a unified
 # script which supports all the Altera IP within the design.
 # ----------------------------------------
-# ACDS 18.1 625 linux 2019.02.13.16:43:09
+# ACDS 18.1 625 linux 2019.03.11.10:12:24
 # ----------------------------------------
 # initialize variables
 TOP_LEVEL_NAME="sys_pll10"
 QSYS_SIMDIR="./../"
-QUARTUS_INSTALL_DIR="/home/alex/workspace/optional/quartus18/quartus/"
+QUARTUS_INSTALL_DIR="/opt/quartus/18/quartus/"
 SKIP_FILE_COPY=0
 SKIP_DEV_COM=0
 SKIP_COM=0
@@ -178,7 +178,7 @@ fi
 # ----------------------------------------
 # compile design files in correct order
 if [ $SKIP_COM -eq 0 ]; then
-  ncvlog $USER_DEFINED_VERILOG_COMPILE_OPTIONS $USER_DEFINED_COMPILE_OPTIONS           "$QSYS_SIMDIR/../altera_iopll_181/sim/sys_pll10_altera_iopll_181_wfdplty.vo" -work sys_pll10_altera_iopll_181 -cdslib ./cds_libs/sys_pll10_altera_iopll_181.cds.lib
+  ncvlog $USER_DEFINED_VERILOG_COMPILE_OPTIONS $USER_DEFINED_COMPILE_OPTIONS           "$QSYS_SIMDIR/../altera_iopll_181/sim/sys_pll10_altera_iopll_181_tql5muy.vo" -work sys_pll10_altera_iopll_181 -cdslib ./cds_libs/sys_pll10_altera_iopll_181.cds.lib
   ncvlog -compcnfg $USER_DEFINED_VERILOG_COMPILE_OPTIONS $USER_DEFINED_COMPILE_OPTIONS "$QSYS_SIMDIR/sys_pll10.v"                                                                                                                                         
 fi
 
