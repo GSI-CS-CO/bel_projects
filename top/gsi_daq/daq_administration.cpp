@@ -33,6 +33,8 @@ DaqChannel::DaqChannel( unsigned int number )
    :m_number( number )
    ,m_pParent(nullptr)
 {
+   SCU_ASSERT( m_number > 0 );
+   SCU_ASSERT( m_number<= DaqInterface::c_maxChannels );
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -43,7 +45,24 @@ DaqDevice::DaqDevice( unsigned int number )
    ,m_slot( 0 )
    ,m_pParent(nullptr)
 {
+   SCU_ASSERT( m_deviceNumber > 0 );
+   SCU_ASSERT( m_deviceNumber <= DaqInterface::c_maxDevices );
+}
 
+/* ----------------------------------------------------------------------------
+ */
+bool DaqDevice::registerChannel( DaqChannel* pChannel )
+{
+   SCU_ASSERT( dynamic_cast<DaqChannel*>(pChannel) != nullptr );
+   SCU_ASSERT( m_channelPtrList.size() <= DaqInterface::c_maxChannels );
+   for( auto& i: m_channelPtrList )
+   {
+      if( pChannel->getNumber() == i->getNumber() )
+         return true;
+   }
+   pChannel->m_pParent = this;
+   m_channelPtrList.push_back( pChannel );
+   return false;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -58,5 +77,26 @@ DaqAdmin::DaqAdmin( const std::string wbDevice ): DaqInterface( wbDevice )
 DaqAdmin::~DaqAdmin( void )
 {
 }
+
+/*! ---------------------------------------------------------------------------
+ */
+bool DaqAdmin::registerDevice( DaqDevice* pDevice )
+{
+   SCU_ASSERT( dynamic_cast<DaqDevice*>(pDevice) != nullptr );
+   SCU_ASSERT( m_devicePtrList.size() <= DaqInterface::c_maxDevices );
+   for( auto& i: m_devicePtrList )
+   {
+      if( pDevice->getDeviceNumber() == i->getDeviceNumber() )
+         return true;
+   }
+   pDevice->m_pParent = this;
+   m_devicePtrList.push_back( pDevice );
+   return false;
+}
+
+bool DaqAdmin::unregisterDevice( DaqDevice* pDevice )
+{
+}
+
 
 //================================== EOF ======================================

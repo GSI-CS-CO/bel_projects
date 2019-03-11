@@ -67,6 +67,8 @@ public:
 
    int setTriggerDelay( const uint16_t delay );
    int getTriggerDelay( uint16_t& rDelay );
+   int setTriggerMode( bool mode );
+   int getTriggerMode( bool& rMode );
 
 };
 
@@ -78,7 +80,7 @@ public:
 class DaqDevice
 {
    friend class DaqAdmin;
-   std::vector<DaqChannel*> m_channelPtrList[DaqInterface::c_maxChannels];
+   std::vector<DaqChannel*> m_channelPtrList; //[DaqInterface::c_maxChannels];
    unsigned int             m_deviceNumber;
    unsigned int             m_slot;
    DaqAdmin*                m_pParent;
@@ -120,6 +122,9 @@ public:
    int getTriggerDelay( const unsigned int channel,
                         uint16_t& rDelay );
 
+   int setTriggerMode( const unsigned int channel, bool mode );
+   int getTriggerMode( const unsigned int channel, bool& rMode );
+
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -129,7 +134,7 @@ public:
  */
 class DaqAdmin: public DaqInterface
 {
-   std::list<DaqDevice*>  m_devicePtrList[DaqInterface::c_maxDevices];
+   std::list<DaqDevice*>  m_devicePtrList;
 
 public:
    DaqAdmin( const std::string = DAQ_DEFAULT_WB_DEVICE );
@@ -205,6 +210,20 @@ inline int DaqDevice::getTriggerDelay( const unsigned int channel,
    return getParent()->getTriggerDelay( m_deviceNumber, channel, rDelay );
 }
 
+/*! ---------------------------------------------------------------------------
+ */
+inline int DaqDevice::setTriggerMode( const unsigned int channel, bool mode )
+{
+   return getParent()->setTriggerMode( m_deviceNumber, channel, mode );
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+inline int DaqDevice::getTriggerMode( const unsigned int channel,
+                                      bool& rMode )
+{
+   return getParent()->getTriggerMode( m_deviceNumber, channel, rMode );
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 /*! ---------------------------------------------------------------------------
@@ -254,6 +273,20 @@ inline int DaqChannel::getTriggerCondition( uint32_t& rTrgCondition )
 inline int DaqChannel::setTriggerDelay( const uint16_t delay )
 {
    return getParent()->setTriggerDelay( m_number, delay );
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+inline int DaqChannel::setTriggerMode( bool mode )
+{
+   return getParent()->setTriggerMode( m_number, mode );
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+inline int DaqChannel::getTriggerMode( bool& rMode )
+{
+   return getParent()->getTriggerMode( m_number, rMode );
 }
 
 } //namespace daq

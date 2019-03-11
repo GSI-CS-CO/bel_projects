@@ -20,11 +20,15 @@ int main( int argc, const char** ppArgv )
          unsigned int channels = oDaqInterface.readMaxChannels( i );
          cout << "Slot: " << oDaqInterface.getSlotNumber( i ) << "\tChannels: " << channels << endl;
       }
-      oDaqInterface.setTriggerDelay( 1, 4, 55 );
+      oDaqInterface.setTriggerDelay( 1, 4, 0x55 );
+      oDaqInterface.setTriggerCondition( 1, 4, 0xCAFEAFFE );
       cout << "Returncode: " << oDaqInterface.getLastReturnCodeString() << endl;
       uint16_t delay;
-      oDaqInterface.getTriggerDelay( 1, 1, delay );
-      cout << "Delay: " << delay << endl;
+      uint32_t triggerCondition;
+      oDaqInterface.getTriggerDelay( 1, 4, delay );
+      cout << "Delay: 0x" << hex << delay << endl;
+      oDaqInterface.getTriggerCondition( 1, 4, triggerCondition );
+      cout << "Trigger condition: 0x" << hex << triggerCondition << endl;
 
    }
    catch( daq::Exception& e )

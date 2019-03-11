@@ -133,9 +133,11 @@ public:
    int disable( const unsigned int deviceNumber,
                 const unsigned int channel );
 
+
    int setTriggerCondition( const unsigned int deviceNumber,
                             const unsigned int channel,
                             const uint32_t trgCondition );
+
    int getTriggerCondition( const unsigned int deviceNumber,
                             const unsigned int channel,
                             uint32_t& rTrgCondition );
@@ -144,14 +146,40 @@ public:
    int setTriggerDelay( const unsigned int deviceNumber,
                         const unsigned int channel,
                         const uint16_t delay );
+
    int getTriggerDelay( const unsigned int deviceNumber,
                         const unsigned int channel,
                         uint16_t& rDelay );
 
 
-protected:
+   int setTriggerMode( const unsigned int deviceNumber,
+                       const unsigned int channel,
+                       const bool mode );
 
+   int getTriggerMode( const unsigned int deviceNumber,
+                       const unsigned int channel,
+                       bool& rMode );
+
+protected:
    virtual bool onCommandReadyPoll( unsigned int pollCount );
+
+#ifdef CONFIG_DAQ_TEST
+   void clearData( void )
+   {
+      ::memset( &m_oSharedData.operation, 0,
+                sizeof( m_oSharedData.operation ));
+   }
+#endif
+
+   void setLocation( const unsigned int deviceNumber,
+                     const unsigned int channel )
+   {
+#ifdef CONFIG_DAQ_TEST
+      clearData();
+#endif
+      m_oSharedData.operation.ioData.location.deviceNumber = deviceNumber;
+      m_oSharedData.operation.ioData.location.channel      = channel;
+   }
 
 private:
 

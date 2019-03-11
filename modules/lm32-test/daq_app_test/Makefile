@@ -10,6 +10,8 @@ SOURCE += $(DAQ_DIR)/daq_interface.cpp
 SOURCE += $(DAQ_DIR)/daq_administration.cpp
 
 DEFINES += CONFIG_SCU_USE_DDR3
+DEFINES += DEBUGLEVEL=1
+DEFINES += CONFIG_DAQ_TEST
 
 CALL_ARGS         = "tcp/$(SCU_URL)"
 REMOTE_CALL_ARGS  = "dev/wbm0"
@@ -17,5 +19,6 @@ REMOTE_CALL_ARGS  = "dev/wbm0"
 LIBS += stdc++
 LIBS += etherbone
 DEBUG = 1
+
 
 include $(REPOSITORY_DIR)/makefiles/makefile.scun
