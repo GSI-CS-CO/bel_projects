@@ -5,7 +5,6 @@ use ieee.numeric_std.all;
 library work;
 use work.monster_pkg.all;
 use work.ramsize_pkg.c_lm32_ramsizes;
-use work.stub_pll_pkg.all;
 
 entity scu_control is
   port(
