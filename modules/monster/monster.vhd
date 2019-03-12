@@ -1629,6 +1629,8 @@ end generate;
         g_use_atx_pll => TRUE)
       port map (
         clk_ref_i      => phy_clk,
+        ready_o        => phy_ready,
+        drop_link_i    => phy_rst,
         tx_clk_o       => phy_tx_clk,
         tx_data_i      => phy_tx_data,
         rx_clk_o       => phy_rx_rbclk,
