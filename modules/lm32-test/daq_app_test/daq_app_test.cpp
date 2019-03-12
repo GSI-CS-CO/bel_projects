@@ -13,23 +13,39 @@ int main( int argc, const char** ppArgv )
    try
    {
       DaqAdmin oDaqInterface( ppArgv[1] );
-      cout << "WB-interface: " << oDaqInterface.getWbDevice() << endl;
-      cout << oDaqInterface.getMaxFoundDevices() << " DAQ's found" << endl;
+      cout << "WB-interface:        " << oDaqInterface.getWbDevice() << endl;
+      cout << "Found devices:       " << oDaqInterface.getMaxFoundDevices() << endl;
       for( unsigned int i = 1; i <= oDaqInterface.getMaxFoundDevices(); i++ )
       {
-         unsigned int channels = oDaqInterface.readMaxChannels( i );
-         cout << "Slot: " << oDaqInterface.getSlotNumber( i ) << "\tChannels: " << channels << endl;
+         DaqDevice* pDevice = new DaqDevice;
+         oDaqInterface.registerDevice( pDevice );
+         for( unsigned int j = 1; j <= pDevice->getMaxChannels(); j++ )
+         {
+            DaqChannel* pChannel = new DaqChannel;
+            pDevice->registerChannel( pChannel );
+         }
       }
-      oDaqInterface.setTriggerDelay( 1, 4, 0x55 );
-      oDaqInterface.setTriggerCondition( 1, 4, 0xCAFEAFFE );
+      cout << "Registered channels: " << oDaqInterface.getMaxChannels() << endl;
+      for( unsigned int i = 1; i <= oDaqInterface.getMaxChannels(); i++ )
+      {
+         DaqChannel* pChannel = oDaqInterface.getChannelByAbsoluteNumber( i );
+         SCU_ASSERT( pChannel != nullptr );
+         cout << "Slot:    " << pChannel->getSlot() << endl;
+         cout << "Device:  " << pChannel->getDeviceNumber() << endl;
+         cout << "Channel: " << pChannel->getNumber() << "\n" << endl;
+      }
+
+      DaqChannel* pChannel = oDaqInterface.getChannelByAbsoluteNumber( 1 );
+      pChannel->setTriggerDelay( 0x55 );
+      pChannel->setTriggerCondition( 0xCAFEAFFE );
       cout << "Returncode: " << oDaqInterface.getLastReturnCodeString() << endl;
       uint16_t delay;
       uint32_t triggerCondition;
-      oDaqInterface.getTriggerDelay( 1, 4, delay );
+      pChannel->getTriggerDelay( delay );
       cout << "Delay: 0x" << hex << delay << endl;
-      oDaqInterface.getTriggerCondition( 1, 4, triggerCondition );
+      pChannel->getTriggerCondition( triggerCondition );
       cout << "Trigger condition: 0x" << hex << triggerCondition << endl;
-
+      oDaqInterface.distributeData();
    }
    catch( daq::Exception& e )
    {

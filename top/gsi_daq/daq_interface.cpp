@@ -491,17 +491,21 @@ DaqInterface::RETURN_CODE_T DaqInterface::readSlotStatus( void )
 
 /*! ---------------------------------------------------------------------------
  */
-unsigned int DaqInterface::readMaxChannels( unsigned int deviceNumber )
+int DaqInterface::readMaxChannels( const unsigned int deviceNumber,
+                                   unsigned int& rMaxChannels )
 {
    SCU_ASSERT( deviceNumber > 0 );
    SCU_ASSERT( deviceNumber <= c_maxDevices );
 
+   rMaxChannels = 0;
    m_oSharedData.operation.ioData.location.deviceNumber = deviceNumber;
    writeParam1();
    if( setCommand( DAQ_OP_GET_CHANNELS ) != DAQ_RET_OK )
-      return 0;
-   readParam1();
-   return m_oSharedData.operation.ioData.param1;
+      return getLastReturnCode();
+   if( readParam1() != DAQ_RET_OK )
+      return getLastReturnCode();
+   rMaxChannels = m_oSharedData.operation.ioData.param1;
+   return getLastReturnCode();
 }
 
 /*! ---------------------------------------------------------------------------

@@ -44,7 +44,7 @@ class DaqChannel
    DaqDevice*   m_pParent;
 
 public:
-   DaqChannel( unsigned int number );
+   DaqChannel( unsigned int number = 0 );
    ~DaqChannel( void );
 
    const unsigned int getNumber( void ) const
@@ -57,6 +57,9 @@ public:
       SCU_ASSERT( m_pParent != nullptr );
       return m_pParent;
    }
+
+   const unsigned int getSlot( void );
+   const unsigned int getDeviceNumber( void );
 
    int enablePostMortem( void );
    int enableHighResolution( void );
@@ -83,10 +86,11 @@ class DaqDevice
    std::vector<DaqChannel*> m_channelPtrList; //[DaqInterface::c_maxChannels];
    unsigned int             m_deviceNumber;
    unsigned int             m_slot;
+   unsigned int             m_maxChannels;
    DaqAdmin*                m_pParent;
 
 public:
-   DaqDevice( unsigned int slot );
+   DaqDevice( unsigned int slot = 0 );
    ~DaqDevice( void );
 
    const unsigned int getDeviceNumber( void ) const
@@ -97,6 +101,11 @@ public:
    const unsigned int getSlot( void ) const
    {
       return m_slot;
+   }
+
+   const unsigned int getMaxChannels( void ) const
+   {
+      return m_maxChannels;
    }
 
    DaqAdmin* getParent( void )
@@ -112,6 +121,7 @@ public:
    int enableContineous( const unsigned int channel,
                          const DAQ_SAMPLE_RATE_T sampleRate );
    int disable( const unsigned int channel );
+
    int setTriggerCondition( const unsigned int channel,
                             const uint32_t trgCondition );
    int getTriggerCondition( const unsigned int channel,
@@ -125,6 +135,8 @@ public:
    int setTriggerMode( const unsigned int channel, bool mode );
    int getTriggerMode( const unsigned int channel, bool& rMode );
 
+   DaqChannel* getChannel( const unsigned int number );
+
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -135,13 +147,36 @@ public:
 class DaqAdmin: public DaqInterface
 {
    std::list<DaqDevice*>  m_devicePtrList;
+   unsigned int           m_maxChannels;
 
 public:
    DaqAdmin( const std::string = DAQ_DEFAULT_WB_DEVICE );
    virtual ~DaqAdmin( void );
 
+   unsigned int getMaxChannels( void ) const
+   {
+      return m_maxChannels;
+   }
+
+   unsigned int getMaxDevices( void ) const
+   {
+      return m_devicePtrList.size();
+   }
+
    bool registerDevice( DaqDevice* pDevice );
    bool unregisterDevice( DaqDevice* pDevice );
+   int redistributeSlotNumbers( void );
+
+   DaqDevice* getDeviceByNumber( const unsigned int number );
+   DaqDevice* getDeviceBySlot( const unsigned int slot );
+
+   DaqChannel* getChannelByAbsoluteNumber( unsigned int absChannelNumber );
+   DaqChannel* getChannelByDeviceNumber( const unsigned int deviceNumber,
+                                         const unsigned int channelNumber );
+   DaqChannel* getChannelBySlotNumber( const unsigned int slotNumber,
+                                       const unsigned int channelNumber );
+
+   int distributeData( void );
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -228,6 +263,20 @@ inline int DaqDevice::getTriggerMode( const unsigned int channel,
 ///////////////////////////////////////////////////////////////////////////////
 /*! ---------------------------------------------------------------------------
  */
+inline const unsigned int DaqChannel::getSlot( void )
+{
+   return getParent()->getSlot();
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+inline const unsigned int DaqChannel::getDeviceNumber( void )
+{
+   return getParent()->getDeviceNumber();
+}
+
+/*! ---------------------------------------------------------------------------
+ */
 inline int DaqChannel::enablePostMortem( void )
 {
    return getParent()->enablePostMortem( m_number );
@@ -273,6 +322,13 @@ inline int DaqChannel::getTriggerCondition( uint32_t& rTrgCondition )
 inline int DaqChannel::setTriggerDelay( const uint16_t delay )
 {
    return getParent()->setTriggerDelay( m_number, delay );
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+inline int DaqChannel::getTriggerDelay( uint16_t& rDelay )
+{
+   return getParent()->getTriggerDelay( m_number, rDelay );
 }
 
 /*! ---------------------------------------------------------------------------

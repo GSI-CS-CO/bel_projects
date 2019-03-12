@@ -118,7 +118,8 @@ public:
 
    unsigned int getSlotNumber( const unsigned int deviceNumber );
 
-   unsigned int readMaxChannels( unsigned int slot );
+   int readMaxChannels( const unsigned int deviceNumber,
+                        unsigned int& rMaxChannels );
 
    int enablePostMortem( const unsigned int deviceNumber,
                          const unsigned int channel );

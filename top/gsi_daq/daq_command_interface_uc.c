@@ -71,7 +71,11 @@ typedef struct
 #ifdef DEBUGLEVEL
 static void printFunctionName( const char* str )
 {
-   DBPRINT1( "DBG: executing %s()\n", str );
+   DBPRINT1( "DBG: executing %s(),\tDevice: %d, Channel: %d\n",
+             str,
+             g_shared.operation.ioData.location.deviceNumber,
+             g_shared.operation.ioData.location.channel
+           );
 }
   #define FUNCTION_INFO() printFunctionName( __func__ )
 #else
