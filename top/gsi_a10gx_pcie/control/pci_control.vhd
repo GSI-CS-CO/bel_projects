@@ -13,7 +13,7 @@ use work.stub_pll_pkg.all;
 -- clk_125m_pllref_i is connected to U14 (Si5338A) -> Clock 3 (schematic name: REFCLK_SMA)
 -- clk_125m_local_i  is connected to U26 (Si5338A) -> Clock 2 (schematic name: REFCLK_QSFP)
 -- clk_125m_sfpref_i is connected to U26 (Si5338A) -> Clock 1 (schematic name: REFCLK_QSFP)
--- clk_20m_vcxo_i    is connected to U26 (Si5338A) -> Clock 0 (schematic name: REFCLK_DP)
+-- clk_20m_vcxo_i    is connected to U26 (Si5338A) -> Clock 0 (schematic name: REFCLK_DP) (here: looped)
 
 entity pci_control is
   port(
@@ -104,14 +104,16 @@ architecture rtl of pci_control is
   signal s_lvds_p_o     : std_logic_vector(1 downto 0);
   signal s_lvds_n_o     : std_logic_vector(1 downto 0);
 
-  signal s_clk_20m_vcxo_i       : std_logic;
-  signal s_clk_125m_pllref_i    : std_logic;
-  signal s_clk_125m_local_i     : std_logic;
-  signal s_clk_sfp_i            : std_logic;
+  signal s_clk_20m_vcxo         : std_logic;
+  signal s_clk_125m_pllref      : std_logic;
+  signal s_clk_125m_local       : std_logic;
+  signal s_clk_125m_sfpref      : std_logic;
   signal s_stub_pll_reset       : std_logic;
   signal s_stub_pll_locked      : std_logic;
   signal s_stub_pll_locked_prev : std_logic;
   signal s_clk_20m_loop         : std_logic;
+
+  constant c_use_stub_pll : boolean := false;
 
   constant io_mapping_table : t_io_mapping_table_arg_array(0 to 5) :=
   (
@@ -152,10 +154,10 @@ begin
       g_lm32_profiles    => f_string_list_repeat(c_profile_name, c_cores)
     )
     port map(
-      core_clk_20m_vcxo_i     => s_clk_20m_loop,
-      core_clk_125m_pllref_i  => clk_125m_tcb_pllref_i,
-      core_clk_125m_local_i   => clk_125m_tcb_local_i,
-      core_clk_125m_sfpref_i  => clk_125m_tcb_sfpref_i,
+      core_clk_20m_vcxo_i     => s_clk_20m_vcxo,
+      core_clk_125m_pllref_i  => s_clk_125m_pllref,
+      core_clk_125m_local_i   => s_clk_125m_local,
+      core_clk_125m_sfpref_i  => s_clk_125m_sfpref,
       core_clk_20m_o          => s_clk_20m_loop,
       wr_onewire_io           => rom_data_io,
       wr_sfp_sda_io           => sfp_mod2_io,
@@ -201,6 +203,46 @@ begin
     s_lvds_n_i(i)      <= lemo_n_i(i);
     lemo_p_o(i)        <= s_lvds_p_o(i);
     lemo_n_o(i)        <= s_lvds_n_o(i);
+  end generate;
+
+  real_pll_a10 : if not(c_use_stub_pll) generate
+    s_clk_20m_vcxo    <= s_clk_20m_loop;
+    s_clk_125m_pllref <= clk_125m_pllref_i;
+    s_clk_125m_local  <= clk_125m_local_i;
+    s_clk_125m_sfpref <= clk_125m_sfpref_i;
+  end generate;
+
+  stub_pll_a10 : if c_use_stub_pll generate
+    -- Connect to monster
+    s_clk_20m_vcxo    <= s_clk_20m_vcxo_i_stub;
+    s_clk_125m_pllref <= s_clk_125m_pllref_i_stub;
+    s_clk_125m_local  <= s_clk_125m_local_i_stub;
+    s_clk_125m_sfpref <= s_clk_125m_sfpref_i_stub;
+
+    -- Stub PLL
+    stub_inst : stub_pll port map(
+      rst        => s_stub_pll_reset,
+      refclk     => clk_pll_i,
+      locked     => s_stub_pll_locked,
+      outclk_0   => s_clk_20m_vcxo_i_stub,
+      outclk_1   => s_clk_125m_pllref_i_stub,
+      outclk_2   => s_clk_125m_local_i_stub,
+      outclk_3   => s_clk_125m_sfpref_i_stub);
+
+    -- PLL reset, don't do this at home
+    p_stub_pll_reset : process(clk_pll_i)
+    begin
+      if (rising_edge(clk_pll_i)) then
+        s_stub_pll_locked_prev <= s_stub_pll_locked;
+        if (s_stub_pll_reset = '1') then
+          s_stub_pll_reset <= '0';
+        elsif (s_stub_pll_locked = '0' and s_stub_pll_locked_prev = '1') then
+          s_stub_pll_reset <= '1';
+        else
+          s_stub_pll_reset <= '0';
+        end if;
+      end if;
+    end process;
   end generate;
 
 end rtl;
