@@ -11,8 +11,7 @@
 MAKEFILE_DIR ?= $(REPOSITORY_DIR)/makefiles
 
 include $(MAKEFILE_DIR)/scu_dirs.inc
-
-EB_API_DIR   = $(REPOSITORY_DIR)/ip_cores/etherbone-core/api
+EB_API_DIR   = $(IP_CORE_DIR)/etherbone-core/api
 
 INCLUDE_DIRS += $(EB_API_DIR)
 LIB_DIRS     += $(EB_API_DIR)/.libs

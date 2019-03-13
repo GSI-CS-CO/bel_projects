@@ -14,7 +14,7 @@
 CPU     := $(shell uname -m)
 
 CC      = $(GCC_BIN_DIR)gcc -std=c99
-CXX     = $(GCC_BIN_DIR)g++ -std=c++11
+CXX     = $(GCC_BIN_DIR)g++ -std=c++11 -fpermissive
 LD      = $(GCC_BIN_DIR)gcc
 OBJCPY  = $(GCC_BIN_DIR)objcopy
 OBJDUMP = $(GCC_BIN_DIR)objdump
@@ -26,6 +26,10 @@ NM      = $(GCC_BIN_DIR)nm
 STRIP   = $(GCC_BIN_DIR)strip
 STRINGS = $(GCC_BIN_DIR)strings
 
+ifdef SHARED_OBJECT
+  IS_LIBRARY = 1
+endif
+
 TARGET   ?= $(notdir $(basename $(MIAN_MODULE)))
 BIN_FILE ?= $(TARGET_DIR)/$(TARGET)
 
@@ -35,6 +39,7 @@ DOX_INPUT += $(MAKEFILE_DIR)/makefile.native
 
 include $(MAKEFILE_DIR)/makefile.base
 
+ifndef IS_LIBRARY
 $(BIN_FILE): $(OBJ_FILES) $(ADDITIONAL_LD_DEPENDENCES)
 	$(LD_F) -o $@ $(OBJ_FILES) $(LD_FLAGS)
 
@@ -42,7 +47,6 @@ $(BIN_FILE): $(OBJ_FILES) $(ADDITIONAL_LD_DEPENDENCES)
 size: $(BIN_FILE)
 	$(QUIET)$(SIZE) $(BIN_FILE)
 
-ifndef IS_LIBRARY
 
 ifdef LIB_DIRS
    ADDITIONAL_LIB_PATH = $(addsuffix :,$(LIB_DIRS))
