@@ -54,6 +54,8 @@ public:
 
    DaqDevice* getParent( void )
    {
+      if( m_pParent == nullptr )
+         throw( Exception( "Object of DaqChannel is not registered in DaqDevice!" ) );
       SCU_ASSERT( m_pParent != nullptr );
       return m_pParent;
    }
@@ -110,6 +112,8 @@ public:
 
    DaqAdmin* getParent( void )
    {
+      if( m_pParent == nullptr )
+         throw( Exception( "Object of DaqDevice is not registered in DaqAdmin!" ) );
       SCU_ASSERT( m_pParent != nullptr );
       return m_pParent;
    }

@@ -2,6 +2,7 @@
 #include <iostream>
 #include <eb_console_helper.h>
 #include <daq_administration.hpp>
+#include <unistd.h>
 
 using namespace daq;
 using namespace std;
@@ -44,7 +45,11 @@ int main( int argc, const char** ppArgv )
       pChannel->getTriggerDelay( delay );
       cout << "Delay: 0x" << hex << delay << endl;
       pChannel->getTriggerCondition( triggerCondition );
-      cout << "Trigger condition: 0x" << hex << triggerCondition << endl;
+      cout << "Trigger condition: 0x" << hex << triggerCondition << dec << endl;
+      pChannel->enableContineous( DAQ_SAMPLE_10US );
+      usleep( 100000 );
+      cout << "Ram level: " << oDaqInterface.getCurrentRamSize(true ) << endl;
+
       oDaqInterface.distributeData();
    }
    catch( daq::Exception& e )

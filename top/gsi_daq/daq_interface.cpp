@@ -105,10 +105,14 @@ void DaqInterface::ebClose( void )
  */
 void DaqInterface::readSharedTotal( void )
 {
-   EB_MEMBER_INFO_T info[3];
+   EB_MEMBER_INFO_T info[7];
    EB_INIT_INFO_ITEM_STATIC( info, 0, m_oSharedData.magicNumber );
-   EB_INIT_INFO_ITEM_STATIC( info, 1, m_oSharedData.operation.code );
-   EB_INIT_INFO_ITEM_STATIC( info, 2, m_oSharedData.operation.retCode );
+   EB_INIT_INFO_ITEM_STATIC( info, 1, m_oSharedData.ramIndexes.ringIndexes.offset );
+   EB_INIT_INFO_ITEM_STATIC( info, 2, m_oSharedData.ramIndexes.ringIndexes.capacity );
+   EB_INIT_INFO_ITEM_STATIC( info, 3, m_oSharedData.ramIndexes.ringIndexes.start );
+   EB_INIT_INFO_ITEM_STATIC( info, 4, m_oSharedData.ramIndexes.ringIndexes.end );
+   EB_INIT_INFO_ITEM_STATIC( info, 5, m_oSharedData.operation.code );
+   EB_INIT_INFO_ITEM_STATIC( info, 6, m_oSharedData.operation.retCode );
 
    EB_MAKE_CB_OR_ARG( cArg, info );
 
@@ -116,6 +120,10 @@ void DaqInterface::readSharedTotal( void )
       __THROW_EB_EXCEPTION();
 
    EB_OJECT_MEMBER_READ( m_poEbHandle, DAQ_SHARED_IO_T, magicNumber );
+   EB_OJECT_MEMBER_READ( m_poEbHandle, DAQ_SHARED_IO_T, ramIndexes.ringIndexes.offset );
+   EB_OJECT_MEMBER_READ( m_poEbHandle, DAQ_SHARED_IO_T, ramIndexes.ringIndexes.capacity );
+   EB_OJECT_MEMBER_READ( m_poEbHandle, DAQ_SHARED_IO_T, ramIndexes.ringIndexes.start );
+   EB_OJECT_MEMBER_READ( m_poEbHandle, DAQ_SHARED_IO_T, ramIndexes.ringIndexes.end );
    EB_OJECT_MEMBER_READ( m_poEbHandle, DAQ_SHARED_IO_T, operation.code );
    EB_OJECT_MEMBER_READ( m_poEbHandle, DAQ_SHARED_IO_T, operation.retCode );
    ebCycleClose();
@@ -334,6 +342,33 @@ DaqInterface::RETURN_CODE_T DaqInterface::readParam1234( void )
 
 /*! ---------------------------------------------------------------------------
  */
+DaqInterface::RETURN_CODE_T DaqInterface::readRamIndexes( void )
+{
+   EB_MEMBER_INFO_T info[2];
+   EB_INIT_INFO_ITEM_STATIC( info, 0, m_oSharedData.ramIndexes.ringIndexes.start );
+   EB_INIT_INFO_ITEM_STATIC( info, 1, m_oSharedData.ramIndexes.ringIndexes.end );
+
+   EB_MAKE_CB_OR_ARG( cArg, info );
+
+   if( ebReadObjectCycleOpen( cArg ) != EB_OK )
+      __THROW_EB_EXCEPTION();
+
+   EB_OJECT_MEMBER_READ( m_poEbHandle, DAQ_SHARED_IO_T, ramIndexes.ringIndexes.start );
+   EB_OJECT_MEMBER_READ( m_poEbHandle, DAQ_SHARED_IO_T, ramIndexes.ringIndexes.end );
+   ebCycleClose();
+
+   while( !cArg.exit )
+      ebSocketRun();
+
+   m_poEbHandle->status = cArg.status;
+   if( m_poEbHandle->status != EB_OK )
+      __THROW_EB_EXCEPTION();
+
+   return m_oSharedData.operation.retCode;
+}
+
+/*! ---------------------------------------------------------------------------
+ */
 void DaqInterface::writeParam1( void )
 {
    EB_MAKE_CB_OW_ARG( cArg );
@@ -445,6 +480,47 @@ void DaqInterface::writeParam1234( void )
    m_poEbHandle->status = cArg.status;
    if( m_poEbHandle->status != EB_OK )
       __THROW_EB_EXCEPTION();
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+void DaqInterface::writeRamIndexes( void )
+{
+   EB_MAKE_CB_OW_ARG( cArg );
+
+   if( ebWriteObjectCycleOpen( cArg ) != EB_OK )
+      __THROW_EB_EXCEPTION();
+
+   EB_LM32_OJECT_MEMBER_WRITE( m_poEbHandle, &m_oSharedData,
+                               ramIndexes.ringIndexes.start );
+   EB_LM32_OJECT_MEMBER_WRITE( m_poEbHandle, &m_oSharedData,
+                               ramIndexes.ringIndexes.end );
+   ebCycleClose();
+
+   while( !cArg.exit )
+      ebSocketRun();
+
+   m_poEbHandle->status = cArg.status;
+   if( m_poEbHandle->status != EB_OK )
+      __THROW_EB_EXCEPTION();
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+RAM_RING_INDEX_T DaqInterface::getCurrentRamSize( bool update )
+{
+   if( update )
+      readRamIndexes();
+   return ::ramRingGetSize( &m_oSharedData.ramIndexes.ringIndexes );
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+void DaqInterface::ramAddToReadIndex( RAM_RING_INDEX_T toAdd, bool update )
+{
+   ::ramRingAddToReadIndex( &m_oSharedData.ramIndexes.ringIndexes, toAdd );
+   if( update )
+      writeRamIndexes();
 }
 
 /*! ---------------------------------------------------------------------------

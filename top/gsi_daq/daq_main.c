@@ -55,8 +55,8 @@ int scanScuBus( DAQ_BUS_T* pDaqDevices )
       DBPRINT1( "WARNING: No DAQ devices present!\n" );
    else
    {
-      DBPRINT1( "%d DAQ devices found.\n", ret );
-      DBPRINT1( "Total number of all used channels: %d\n",
+      DBPRINT1( "DBG: %d DAQ devices found.\n", ret );
+      DBPRINT1( "DBG: Total number of all used channels: %d\n",
                 daqBusGetUsedChannels( pDaqDevices ) );
    }
 #endif
@@ -70,8 +70,12 @@ static inline bool concernsChannel( DAQ_CANNEL_T* pChannel )
    if( daqChannelTestAndClearDaqIntPending( pChannel ) )
    {
       ramPushDaqDataBlock( &g_DaqAdmin.oRam, pChannel, true );
+#ifdef CONFIG_PATCH_DAQ_HW_BUG
+      daqChannelTestAndClearHiResIntPending( pChannel );
+#endif
       return true;
    }
+#if 0
    if( daqChannelTestAndClearHiResIntPending( pChannel ) )
    {
       daqChannelDisablePostMortem( pChannel );
@@ -79,6 +83,7 @@ static inline bool concernsChannel( DAQ_CANNEL_T* pChannel )
       ramPushDaqDataBlock( &g_DaqAdmin.oRam, pChannel, false );
       return true;
    }
+#endif
    return false;
 }
 

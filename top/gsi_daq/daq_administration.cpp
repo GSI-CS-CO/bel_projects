@@ -25,7 +25,7 @@
 #include <daq_administration.hpp>
 #include <algorithm>
 #include <iostream>
-//#include <boost/circular_buffer.hpp>
+#include <boost/circular_buffer.hpp>
 
 using namespace daq;
 

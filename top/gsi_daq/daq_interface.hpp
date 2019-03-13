@@ -161,6 +161,8 @@ public:
                        const unsigned int channel,
                        bool& rMode );
 
+   RAM_RING_INDEX_T getCurrentRamSize( bool update = true );
+
 protected:
    virtual bool onCommandReadyPoll( unsigned int pollCount );
 
@@ -181,6 +183,8 @@ protected:
       m_oSharedData.operation.ioData.location.deviceNumber = deviceNumber;
       m_oSharedData.operation.ioData.location.channel      = channel;
    }
+
+   void ramAddToReadIndex( RAM_RING_INDEX_T toAdd, bool update = true );
 
 private:
 
@@ -216,10 +220,14 @@ private:
    RETURN_CODE_T readParam123( void );
    RETURN_CODE_T readParam1234( void );
 
+   RETURN_CODE_T readRamIndexes( void );
+
    void writeParam1( void );
    void writeParam12( void );
    void writeParam123( void );
    void writeParam1234( void );
+
+   void writeRamIndexes( void );
 }; // end class DaqInterface
 
 } //namespace daq

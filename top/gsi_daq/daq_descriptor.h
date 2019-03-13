@@ -4,7 +4,7 @@
  *
  *  This file is suitable for LM32-apps within the SCU environment and
  *  for Linux applications.
- *
+ *  @note Different endianes conventions of bit fields becomes considered!
  *  @see
  *  <a href="https://www-acc.gsi.de/wiki/Hardware/Intern/DataAquisitionMacrof%C3%BCrSCUSlaveBaugruppen">
  *     Data Aquisition Macro fuer SCU Slave Baugruppen</a>
@@ -13,21 +13,20 @@
  *
  *  @author Ulrich Becker <u.becker@gsi.de>
  *
+ ******************************************************************************
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 3 of the License, or (at your option) any later version.
  *
- *******************************************************************************
- *  This library is free software; you can redistribute it and/or
- *  modify it under the terms of the GNU Lesser General Public
- *  License as published by the Free Software Foundation; either
- *  version 3 of the License, or (at your option) any later version.
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
  *
- *  This library is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- *  Lesser General Public License for more details.
- *
- *  You should have received a copy of the GNU Lesser General Public
- *  License along with this library. If not, see <http://www.gnu.org/licenses/>.
- *******************************************************************************
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library. If not, see <http://www.gnu.org/licenses/>.
+ ******************************************************************************
  */
 #ifndef _DAQ_DESCRIPTOR_H
 #define _DAQ_DESCRIPTOR_H
@@ -134,6 +133,9 @@ typedef uint16_t DAQ_DATA_T;
   #warning DAQ_FIFO_DAQ_WORD_SIZE is greater than DAQ_FIFO_PM_HIRES_WORD_SIZE ! Realy?
 #endif
 
+/*! ---------------------------------------------------------------------------
+ * @brief Bit field of DIOB extention ID ind slot number.
+ */
 typedef struct PACKED_SIZE
 {
 #if (__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__) || defined(__DOXYGEN__)
@@ -150,6 +152,9 @@ typedef struct PACKED_SIZE
 STATIC_ASSERT( sizeof( _DAQ_BF_SLOT_DIOB ) == sizeof(uint16_t));
 #endif
 
+/*! ---------------------------------------------------------------------------
+ * @brief Bit field of acquisition mode and channel number
+ */
 typedef struct PACKED_SIZE
 {
 #if (__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__) || defined(__DOXYGEN__)
@@ -168,28 +173,35 @@ typedef struct PACKED_SIZE
 STATIC_ASSERT( sizeof( _DAQ_BF_CANNEL_MODE ) == sizeof(uint8_t) );
 #endif
 
+/*! ---------------------------------------------------------------------------
+ * @brief Summary of DAQ control register acquisition mode register.
+ */
 typedef struct PACKED_SIZE
 {
-   uint8_t controlReg;               /*!< @brief Bits [7:0] of control register */
+   uint8_t controlReg;            /*!< @brief Bits [7:0] of control register */
    _DAQ_BF_CANNEL_MODE channelMode;  /*!< @see _DAQ_BF_CANNEL_MODE */
 } _DAQ_CHANNEL_CONTROL;
 #ifndef __DOXYGEN__
 STATIC_ASSERT( offsetof(_DAQ_CHANNEL_CONTROL, controlReg ) == 0 );
-STATIC_ASSERT( offsetof(_DAQ_CHANNEL_CONTROL, channelMode ) == offsetof(_DAQ_CHANNEL_CONTROL, controlReg ) + sizeof(_DAQ_BF_CANNEL_MODE ));
+STATIC_ASSERT( offsetof(_DAQ_CHANNEL_CONTROL, channelMode ) ==
+               offsetof(_DAQ_CHANNEL_CONTROL, controlReg ) +
+               sizeof(_DAQ_BF_CANNEL_MODE ));
 STATIC_ASSERT( sizeof( _DAQ_CHANNEL_CONTROL ) == sizeof(uint16_t) );
 #endif
 
-#if 1
+/*! ---------------------------------------------------------------------------
+ * @brief Summary of nano seconds and seconds
+ */
 typedef struct PACKED_SIZE
 {
-   uint32_t nSec;
-   uint32_t utSec;
+   uint32_t nSec;  /*!<@brief Nano seconds */
+   uint32_t utSec; /*!<@brief Seconds */
 } _DAQ_WR_NAME_T;
 #ifndef __DOXYGEN__
 STATIC_ASSERT( sizeof(_DAQ_WR_NAME_T) == sizeof(uint64_t) );
 #endif
-#endif
-/*!
+
+/*! ---------------------------------------------------------------------------
  * @brief White Rabbit time stamp
  */
 typedef union PACKED_SIZE
@@ -197,17 +209,13 @@ typedef union PACKED_SIZE
    _DAQ_WR_NAME_T name;
    uint8_t  byteIndex[sizeof(uint64_t)];
    uint16_t wordIndex[sizeof(uint64_t)/sizeof(uint16_t)];
-#if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
    uint64_t timeStamp;
-#elif __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
-   uint64_t timeStampToEndianConvert;
-#endif
 } _DAQ_WR_T;
 #ifndef __DOXYGEN__
 STATIC_ASSERT( sizeof( _DAQ_WR_T) == sizeof(uint64_t) );
 #endif
 
-/*!
+/*! ---------------------------------------------------------------------------
  * @brief Trigger data type
  */
 typedef struct PACKED_SIZE
@@ -223,10 +231,14 @@ STATIC_ASSERT( offsetof( _DAQ_TRIGGER, delay ) == 2 * sizeof(uint16_t) );
 STATIC_ASSERT( sizeof(_DAQ_TRIGGER)            == 3 * sizeof(uint16_t) );
 #endif
 
+/*! ---------------------------------------------------------------------------
+ * @brief Named type of DAQ- descriptor
+ */
 typedef struct PACKED_SIZE
 {
    _DAQ_BF_SLOT_DIOB    slotDiob; /*!<@see _DAQ_BF_SLOT_DIOB */
-   _DAQ_WR_T            wr;       /*!<@brief White Rabbit Timestamp @see _DAQ_WR_T */
+   _DAQ_WR_T            wr;       /*!<@brief White Rabbit Timestamp
+                                       @see _DAQ_WR_T */
    _DAQ_TRIGGER         trigger;  /*!<@brief Trigger @see _DAQ_TRIGGER */
    _DAQ_CHANNEL_CONTROL cControl; /*!<@see _DAQ_CHANNEL_CONTROL */
    uint8_t              __unused;
@@ -234,15 +246,25 @@ typedef struct PACKED_SIZE
 } _DAQ_DISCRIPTOR_STRUCT_T;
 #ifndef __DOXYGEN__
 STATIC_ASSERT( offsetof(_DAQ_DISCRIPTOR_STRUCT_T, slotDiob ) == 0 );
-STATIC_ASSERT( offsetof(_DAQ_DISCRIPTOR_STRUCT_T, wr ) == offsetof(_DAQ_DISCRIPTOR_STRUCT_T, slotDiob ) + sizeof( _DAQ_BF_SLOT_DIOB ));
-STATIC_ASSERT( offsetof(_DAQ_DISCRIPTOR_STRUCT_T, trigger ) == offsetof(_DAQ_DISCRIPTOR_STRUCT_T, wr ) + sizeof( _DAQ_WR_T ));
-STATIC_ASSERT( offsetof(_DAQ_DISCRIPTOR_STRUCT_T, cControl ) == offsetof(_DAQ_DISCRIPTOR_STRUCT_T, trigger ) + sizeof(_DAQ_TRIGGER ));
-STATIC_ASSERT( offsetof(_DAQ_DISCRIPTOR_STRUCT_T, __unused ) == offsetof(_DAQ_DISCRIPTOR_STRUCT_T, cControl ) + sizeof(_DAQ_CHANNEL_CONTROL));
-STATIC_ASSERT( offsetof(_DAQ_DISCRIPTOR_STRUCT_T, crc ) == offsetof(_DAQ_DISCRIPTOR_STRUCT_T, __unused ) + sizeof( uint8_t ));
-STATIC_ASSERT( sizeof(_DAQ_DISCRIPTOR_STRUCT_T ) == DAQ_DISCRIPTOR_WORD_SIZE * sizeof(uint16_t) );
-#endif
+STATIC_ASSERT( offsetof(_DAQ_DISCRIPTOR_STRUCT_T, wr ) ==
+               offsetof(_DAQ_DISCRIPTOR_STRUCT_T, slotDiob ) +
+               sizeof( _DAQ_BF_SLOT_DIOB ));
+STATIC_ASSERT( offsetof(_DAQ_DISCRIPTOR_STRUCT_T, trigger ) ==
+               offsetof(_DAQ_DISCRIPTOR_STRUCT_T, wr ) + sizeof( _DAQ_WR_T ));
+STATIC_ASSERT( offsetof(_DAQ_DISCRIPTOR_STRUCT_T, cControl ) ==
+               offsetof(_DAQ_DISCRIPTOR_STRUCT_T, trigger ) +
+               sizeof(_DAQ_TRIGGER ));
+STATIC_ASSERT( offsetof(_DAQ_DISCRIPTOR_STRUCT_T, __unused ) ==
+               offsetof(_DAQ_DISCRIPTOR_STRUCT_T, cControl ) +
+               sizeof(_DAQ_CHANNEL_CONTROL));
+STATIC_ASSERT( offsetof(_DAQ_DISCRIPTOR_STRUCT_T, crc ) ==
+               offsetof(_DAQ_DISCRIPTOR_STRUCT_T, __unused ) +
+               sizeof( uint8_t ));
+STATIC_ASSERT( sizeof(_DAQ_DISCRIPTOR_STRUCT_T ) ==
+               DAQ_DISCRIPTOR_WORD_SIZE * sizeof(uint16_t) );
+#endif /* ifndef __DOXYGEN__ */
 
-/*!
+/*! ---------------------------------------------------------------------------
  * @brief Final type of DAQ- descriptor
  */
 typedef union PACKED_SIZE
@@ -251,9 +273,11 @@ typedef union PACKED_SIZE
    _DAQ_DISCRIPTOR_STRUCT_T name;            //!< @brief Access by name
 } DAQ_DESCRIPTOR_T;
 #ifndef __DOXYGEN__
-STATIC_ASSERT( sizeof( DAQ_DESCRIPTOR_T ) == DAQ_DISCRIPTOR_WORD_SIZE * sizeof( uint16_t ) );
+STATIC_ASSERT( sizeof( DAQ_DESCRIPTOR_T ) ==
+               DAQ_DISCRIPTOR_WORD_SIZE * sizeof( uint16_t ) );
 #endif
 
+///////////////////////////////////////////////////////////////////////////////
 /*! ---------------------------------------------------------------------------
  * @brief Tells the origin slot of the last record
  * @param pThis Pointer to the DAQ- descriptor object, that means to the last
