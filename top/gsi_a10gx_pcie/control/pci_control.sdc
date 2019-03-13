@@ -88,3 +88,6 @@ set_false_path -from [get_clocks {main|\sys_a10:sys_inst|iopll_0|outclk0}] -to [
 # cut: dmtd <=> sys
 set_false_path -from [get_clocks {main|\dmtd_a10:dmtd_inst|iopll_0|outclk0}] -to [get_clocks {main|\sys_a10:sys_inst|iopll_0|outclk0}]
 set_false_path -from [get_clocks {main|\sys_a10:sys_inst|iopll_0|outclk0}] -to [get_clocks {main|\dmtd_a10:dmtd_inst|iopll_0|outclk0}]
+# cut: dmtd <=> ref
+set_false_path -from [get_clocks {main|\ref_a10:ref_inst|iopll_0|outclk0}] -to [get_clocks {main|\dmtd_a10:dmtd_inst|iopll_0|outclk0}]
+set_false_path -from [get_clocks {main|\dmtd_a10:dmtd_inst|iopll_0|outclk0}] -to {main|\ref_a10:ref_inst|iopll_0|outclk0}]
