@@ -211,10 +211,10 @@ void clearActions()
   uint32_t valCnt;
 
   *(pEcaCtl + (ECA_CHANNEL_SELECT_RW >> 2)) = gEcaChLm32;    // select ECA channel for LM32
-	valCnt = *(pEcaCtl + (ECA_CHANNEL_VALID_COUNT_GET >> 2));  // get/clear valid count
-	mprintf("validCnt=%d\n", valCnt);
+  valCnt = *(pEcaCtl + (ECA_CHANNEL_VALID_COUNT_GET >> 2));  // get/clear valid count
+  mprintf("validCnt=%d\n", valCnt);
 
-	valCnt = clearEcaQueue(valCnt);                            // pop pending actions
+  valCnt = clearEcaQueue(valCnt);                            // pop pending actions
   if (valCnt != 0)
     mprintf("%d actions cleared!\n", valCnt);
 }
@@ -228,11 +228,11 @@ void handleValidActions()
 {
   uint32_t valCnt;
   *(pEcaCtl + (ECA_CHANNEL_SELECT_RW >> 2)) = gEcaChLm32;    // select ECA channel for LM32
-	valCnt = *(pEcaCtl + (ECA_CHANNEL_VALID_COUNT_GET >> 2));  // read and clear valid counter
-	mprintf("valCnt=%d\n", valCnt);
+  valCnt = *(pEcaCtl + (ECA_CHANNEL_VALID_COUNT_GET >> 2));  // read and clear valid counter
+  mprintf("valCnt=%d\n", valCnt);
 
   if (valCnt != 0)
-	  ecaHandler(valCnt);                             // pop pending valid actions
+    ecaHandler(valCnt);                             // pop pending valid actions
 }
 
 /*******************************************************************************
@@ -250,7 +250,7 @@ void irqHandler() {
   mprintf(" MSI:\t%08x\nAdr:\t%08x\nSel:\t%01x\nCnt:\t%d\n", global_msi.msg, global_msi.adr, global_msi.sel, gBurstCnt);
 
   if ((global_msi.msg & ECA_VALID_ACTION) == ECA_VALID_ACTION) // valid actions are pending
-	  handleValidActions();                                      // ECA MSI handling
+    handleValidActions();                                      // ECA MSI handling
 }
 
 /*******************************************************************************
@@ -409,20 +409,20 @@ void ecaHandler(uint32_t cnt)
  ******************************************************************************/
 void constructTimingMsg(uint32_t *msg, uint32_t id)
 {
-    *msg = id; // FID+GID*EVTNO+flags
-    *(msg +1) = 0x0; // SID+BPID+resrv
-    *(msg +2) = 0x0; // param_up
-    *(msg +3) = 0x0; // param_lo
-    *(msg +4) = 0x0; // resrv
-    *(msg +5) = 0x0; // TEF
-    *(msg +6) = 0x0;
-    *(msg +7) = 0x0;
+  *msg = id; // FID+GID*EVTNO+flags
+  *(msg +1) = 0x0; // SID+BPID+resrv
+  *(msg +2) = 0x0; // param_up
+  *(msg +3) = 0x0; // param_lo
+  *(msg +4) = 0x0; // resrv
+  *(msg +5) = 0x0; // TEF
+  *(msg +6) = 0x0;
+  *(msg +7) = 0x0;
 
-    mprintf("\nconstructed timing msg:\n");
-    mprintf("event: %x-%x\n",msg[0], msg[1]);
-    mprintf("param: %x-%x\n",msg[2], msg[3]);
-    mprintf("resrv: %x\n",msg[4]);
-    mprintf("TEF  : %x\n",msg[5]);
+  mprintf("\nconstructed timing msg:\n");
+  mprintf("event: %x-%x\n",msg[0], msg[1]);
+  mprintf("param: %x-%x\n",msg[2], msg[3]);
+  mprintf("resrv: %x\n",msg[4]);
+  mprintf("TEF  : %x\n",msg[5]);
 }
 
 /*******************************************************************************
@@ -434,12 +434,12 @@ void constructTimingMsg(uint32_t *msg, uint32_t id)
  ******************************************************************************/
 void injectTimingMsg(uint32_t *msg)
 {
-    atomic_on();
+  atomic_on();
 
-    for (int i = 0; i < LEN_TIM_MSG; i++)
-      *pEca = msg[i];
+  for (int i = 0; i < LEN_TIM_MSG; i++)
+    *pEca = msg[i];
 
-    atomic_off();
+  atomic_off();
 }
 
 /*******************************************************************************
@@ -545,7 +545,7 @@ void main(void) {
   clearActions();
 
   /* MSI hanlder setup */
-	configureEcaMsi(1, gEcaChLm32); // allow MSI path from ECA to itself
+  configureEcaMsi(1, gEcaChLm32); // allow MSI path from ECA to itself
 
   initIrqTable();              // set up MSI handler
 
