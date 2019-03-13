@@ -35,6 +35,8 @@ entity pci_control is
     clk_125m_tcb_local_i  : in std_logic; -- Local clk from 125Mhz oszillator at tranceiver bank
     clk_125m_tcb_sfpref_i : in std_logic; -- PLL/SFP reference clk from 125Mhz oszillator at tranceiver bank
 
+	 clk_pll_i             : in std_logic; -- Evaluation board
+	 
     ------------------------------------------------------------------------
     -- PCI express pins
     ------------------------------------------------------------------------
