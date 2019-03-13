@@ -24,7 +24,7 @@ PATH:=$(PWD)/toolchain/bin:$(PATH)
 
 all:		etherbone tools sdbfs toolchain firmware driver
 
-gateware:	all pexarria5 exploder5 vetar2a scu2 scu3
+gateware:	all pexarria5 exploder5 vetar2a vetar2a-ee-butis scu2 scu3 pmc microtca
 
 install:	etherbone-install tools-install driver-install
 
