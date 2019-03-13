@@ -224,7 +224,7 @@ begin
     s_clk_125m_sfpref <= s_clk_125m_sfpref_i_stub;
 
     -- Stub PLL
-    stub_inst : stub_pll port map(
+    stub_inst : stub_pll_altera_iopll_160_z2kwsvq port map(
       rst        => s_stub_pll_reset,
       refclk     => clk_pll_i,
       locked     => s_stub_pll_locked,
