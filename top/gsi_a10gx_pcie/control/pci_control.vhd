@@ -104,14 +104,18 @@ architecture rtl of pci_control is
   signal s_lvds_p_o     : std_logic_vector(1 downto 0);
   signal s_lvds_n_o     : std_logic_vector(1 downto 0);
 
-  signal s_clk_20m_vcxo         : std_logic;
-  signal s_clk_125m_pllref      : std_logic;
-  signal s_clk_125m_local       : std_logic;
-  signal s_clk_125m_sfpref      : std_logic;
-  signal s_stub_pll_reset       : std_logic;
-  signal s_stub_pll_locked      : std_logic;
-  signal s_stub_pll_locked_prev : std_logic;
-  signal s_clk_20m_loop         : std_logic;
+  signal s_clk_20m_vcxo           : std_logic;
+  signal s_clk_125m_pllref        : std_logic;
+  signal s_clk_125m_local         : std_logic;
+  signal s_clk_125m_sfpref        : std_logic;
+  signal s_stub_pll_reset         : std_logic;
+  signal s_stub_pll_locked        : std_logic;
+  signal s_stub_pll_locked_prev   : std_logic;
+  signal s_clk_20m_vcxo_i_stub    : std_logic;
+  signal s_clk_125m_pllref_i_stub : std_logic;
+  signal s_clk_125m_local_i_stub  : std_logic;
+  signal s_clk_125m_sfpref_i_stub : std_logic;
+  signal s_clk_20m_loop           : std_logic;
 
   constant c_use_stub_pll : boolean := false;
 
