@@ -14,6 +14,7 @@ use work.stub_pll_pkg.all;
 -- clk_125m_local_i  is connected to U26 (Si5338A) -> Clock 2 (schematic name: REFCLK_QSFP)
 -- clk_125m_sfpref_i is connected to U26 (Si5338A) -> Clock 1 (schematic name: REFCLK_QSFP)
 -- clk_20m_vcxo_i    is connected to U26 (Si5338A) -> Clock 0 (schematic name: REFCLK_DP) (here: looped)
+-- clk_pll_i         is connected to U26 (Si5338A) -> Clock 3 (schematic name: CLK_EMI)
 
 entity pci_control is
   port(
@@ -34,8 +35,8 @@ entity pci_control is
     clk_125m_tcb_pllref_i : in std_logic; -- 125 MHz PLL reference at tranceiver bank
     clk_125m_tcb_local_i  : in std_logic; -- Local clk from 125Mhz oszillator at tranceiver bank
     clk_125m_tcb_sfpref_i : in std_logic; -- PLL/SFP reference clk from 125Mhz oszillator at tranceiver bank
-
-	 clk_pll_i             : in std_logic; -- Evaluation board
+    
+    clk_pll_i             : in std_logic; -- Evaluation board
 	 
     ------------------------------------------------------------------------
     -- PCI express pins
