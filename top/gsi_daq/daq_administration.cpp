@@ -99,7 +99,7 @@ DaqChannel* DaqDevice::getChannel( const unsigned int number )
 ///////////////////////////////////////////////////////////////////////////////
 /*! ---------------------------------------------------------------------------
  */
-DaqAdmin::DaqAdmin( const std::string wbDevice )
+DaqAdministration::DaqAdministration( const std::string wbDevice )
   :DaqInterface( wbDevice )
   ,m_maxChannels( 0 )
 {
@@ -107,13 +107,13 @@ DaqAdmin::DaqAdmin( const std::string wbDevice )
 
 /*! ---------------------------------------------------------------------------
  */
-DaqAdmin::~DaqAdmin( void )
+DaqAdministration::~DaqAdministration( void )
 {
 }
 
 /*! ---------------------------------------------------------------------------
  */
-bool DaqAdmin::registerDevice( DaqDevice* pDevice )
+bool DaqAdministration::registerDevice( DaqDevice* pDevice )
 {
    SCU_ASSERT( dynamic_cast<DaqDevice*>(pDevice) != nullptr );
    SCU_ASSERT( m_devicePtrList.size() <= DaqInterface::c_maxDevices );
@@ -126,16 +126,14 @@ bool DaqAdmin::registerDevice( DaqDevice* pDevice )
 
    // Is device number forced?
    if( pDevice->m_deviceNumber == 0 )
-   {
-      // No, allocation automatically.
+   { // No, allocation automatically.
       pDevice->m_deviceNumber = m_devicePtrList.size() + 1;
    }
 
-   if( readMaxChannels( pDevice->m_deviceNumber, pDevice->m_maxChannels ) != DAQ_RET_OK )
-      return true;
-   m_maxChannels += pDevice->m_maxChannels;
-   pDevice->m_slot    = getSlotNumber( pDevice->m_deviceNumber );
-   pDevice->m_pParent = this;
+   pDevice->m_maxChannels = readMaxChannels( pDevice->m_deviceNumber );
+   m_maxChannels          += pDevice->m_maxChannels;
+   pDevice->m_slot        = getSlotNumber( pDevice->m_deviceNumber );
+   pDevice->m_pParent     = this;
    m_devicePtrList.push_back( pDevice );
 
    return false;
@@ -143,13 +141,13 @@ bool DaqAdmin::registerDevice( DaqDevice* pDevice )
 
 /*! ---------------------------------------------------------------------------
  */
-bool DaqAdmin::unregisterDevice( DaqDevice* pDevice )
+bool DaqAdministration::unregisterDevice( DaqDevice* pDevice )
 {
 }
 
 /*! ---------------------------------------------------------------------------
  */
-int DaqAdmin::redistributeSlotNumbers( void )
+int DaqAdministration::redistributeSlotNumbers( void )
 {
    if( readSlotStatus() != DAQ_RET_OK )
    {
@@ -170,7 +168,7 @@ int DaqAdmin::redistributeSlotNumbers( void )
 
 /*! ---------------------------------------------------------------------------
  */
-DaqDevice* DaqAdmin::getDeviceByNumber( const unsigned int number )
+DaqDevice* DaqAdministration::getDeviceByNumber( const unsigned int number )
 {
    SCU_ASSERT( number > 0 );
    SCU_ASSERT( number <= c_maxDevices );
@@ -186,7 +184,7 @@ DaqDevice* DaqAdmin::getDeviceByNumber( const unsigned int number )
 
 /*! ---------------------------------------------------------------------------
  */
-DaqDevice* DaqAdmin::getDeviceBySlot( const unsigned int slot )
+DaqDevice* DaqAdministration::getDeviceBySlot( const unsigned int slot )
 {
    SCU_ASSERT( slot > 0 );
    SCU_ASSERT( slot <= c_maxSlots );
@@ -203,7 +201,7 @@ DaqDevice* DaqAdmin::getDeviceBySlot( const unsigned int slot )
 /*! ---------------------------------------------------------------------------
  */
 DaqChannel*
-DaqAdmin::getChannelByAbsoluteNumber( unsigned int absChannelNumber )
+DaqAdministration::getChannelByAbsoluteNumber( unsigned int absChannelNumber )
 {
    SCU_ASSERT( absChannelNumber > 0 );
    SCU_ASSERT( absChannelNumber <= (c_maxChannels * c_maxDevices) );
@@ -224,13 +222,10 @@ DaqAdmin::getChannelByAbsoluteNumber( unsigned int absChannelNumber )
 /*! ---------------------------------------------------------------------------
  */
 DaqChannel*
-DaqAdmin::getChannelByDeviceNumber( const unsigned int deviceNumber,
-                                    const unsigned int channelNumber )
+DaqAdministration::getChannelByDeviceNumber( const unsigned int deviceNumber,
+                                             const unsigned int channelNumber )
 {
-   SCU_ASSERT( deviceNumber > 0 );
-   SCU_ASSERT( deviceNumber <= c_maxDevices );
-   SCU_ASSERT( channelNumber > 0 );
-   SCU_ASSERT( channelNumber <= c_maxChannels );
+   DAQ_ASSERT_CHANNEL_ACCESS( deviceNumber, channelNumber );
 
    DaqDevice* poDevice = getDeviceByNumber( deviceNumber );
    if( poDevice == nullptr )
@@ -242,8 +237,8 @@ DaqAdmin::getChannelByDeviceNumber( const unsigned int deviceNumber,
 /*! ---------------------------------------------------------------------------
  */
 DaqChannel*
-DaqAdmin::getChannelBySlotNumber( const unsigned int slotNumber,
-                                  const unsigned int channelNumber )
+DaqAdministration::getChannelBySlotNumber( const unsigned int slotNumber,
+                                           const unsigned int channelNumber )
 {
    SCU_ASSERT( slotNumber > 0 );
    SCU_ASSERT( slotNumber <= c_maxSlots );
@@ -251,24 +246,77 @@ DaqAdmin::getChannelBySlotNumber( const unsigned int slotNumber,
    SCU_ASSERT( channelNumber <= c_maxChannels );
 
    DaqDevice* poDevice = getDeviceBySlot( slotNumber );
-   if( poDevice == nullptr );
+   if( poDevice == nullptr )
       return nullptr;
 
    return poDevice->getChannel( channelNumber );
 }
 
+#ifdef CONFIG_SCU_USE_DDR3
+extern "C" {
+
+static int ddr3Poll( const DDR3_T* pThis UNUSED, unsigned int count )
+{
+   if( count >= 10 )
+   {
+      return -1;
+   }
+   usleep( 10 );
+   return 0;
+}
+
+} // extern "C"
+#endif // ifdef CONFIG_SCU_USE_DDR3
+
 /*! ---------------------------------------------------------------------------
  */
-int DaqAdmin::distributeData( void )
+int DaqAdministration::distributeData( void )
 {
-   for( auto& pDevice: m_devicePtrList )
+   union PROBE_BUFFER_T
    {
-      for( auto& pChannel: pDevice->m_channelPtrList )
+      DAQ_DATA_T        buffer[sizeof(DAQ_DESCRIPTOR_T)/sizeof(DAQ_DATA_T) +
+                                      RAM_DAQ_DESCRIPTOR_COMPLETION];
+      RAM_DAQ_PAYLOAD_T ramItems[sizeof(PROBE_BUFFER_T::buffer) /
+                                 sizeof(RAM_DAQ_PAYLOAD_T)];
+      DAQ_DESCRIPTOR_T  descriptor;
+   } PACKED_SIZE;
+
+   static_assert( sizeof(PROBE_BUFFER_T) % sizeof(RAM_DAQ_PAYLOAD_T) == 0,
+                  "sizeof(PROBE_BUFFER_T) has to be dividable by "
+                  "sizeof(RAM_DAQ_PAYLOAD_T) !" );
+
+   PROBE_BUFFER_T probeBuffer;
+
+#ifdef CONFIG_SCU_USE_DDR3
+   if( ::ddr3FlushFiFo( &m_oScuRam.ram, 0, ARRAY_SIZE(probeBuffer.ramItems),
+                    probeBuffer.ramItems, ddr3Poll ) != EB_OK )
+      throw EbException( "Unable to read SCU-Ram buffer" );
+#else
+   #error At hthe moment DDR3 is supported only please define CONFIG_SCU_USE_DDR3
+#endif
+   std::cout << "Slot:    " << daqDescriptorGetSlot( &probeBuffer.descriptor ) << std::endl;
+   std::cout << "Channel: " << daqDescriptorGetChannel( &probeBuffer.descriptor ) << std::endl;
+
+   std::cout << "trigger: " << std::hex << daqDescriptorGetTriggerCondition( &probeBuffer.descriptor )
+             << std::dec << std::endl;
+   std::cout << "delay: " << std::hex << daqDescriptorGetTriggerDelay( &probeBuffer.descriptor )
+             << std::dec << std::endl;
+
+   DaqChannel* pChannel = getChannelBySlotNumber(
+                            daqDescriptorGetSlot( &probeBuffer.descriptor ),
+                            daqDescriptorGetChannel( &probeBuffer.descriptor )
+                          );
+   if( pChannel != nullptr )
+   {
+      std::cout << "Channel found!" << std::endl;
+      for( unsigned int i = 0; i < sizeof( probeBuffer.buffer ); i++ )
       {
-         std::cout << "*";
+      //   pChannel->onDataInput( probeBuffer.buffer[i],
+        //                        i > sizeof( DAQ_DESCRIPTOR_T ) / sizeof( DAQ_DATA_T ));
       }
+
    }
-   std::cout << std::endl;
+
    return 0;
 }
 

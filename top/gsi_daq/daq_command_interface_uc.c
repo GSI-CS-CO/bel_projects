@@ -166,6 +166,23 @@ int32_t opReset( DAQ_ADMIN_T* pDaqAdmin, volatile DAQ_OPERATION_IO_T* pData )
 
 /*! ---------------------------------------------------------------------------
  */
+static
+int32_t opGetMacroVersion( DAQ_ADMIN_T* pDaqAdmin,
+                           volatile DAQ_OPERATION_IO_T* pData )
+{
+   FUNCTION_INFO();
+   int ret = verifyDeviceAccess( &pDaqAdmin->oDaqDevs, &pData->location );
+   if( ret != DAQ_RET_OK )
+      return ret;
+
+   pData->param1 = daqDeviceGetMacroVersion(
+                   &pDaqAdmin->oDaqDevs.aDaq[pData->location.deviceNumber-1] );
+
+   return DAQ_RET_OK;
+}
+
+/*! ---------------------------------------------------------------------------
+ */
 static int32_t opGetSlots( DAQ_ADMIN_T* pDaqAdmin,
                            volatile DAQ_OPERATION_IO_T* pData )
 {
@@ -409,6 +426,7 @@ static const DAQ_OPERATION_TAB_ITEM_T g_operationTab[] =
    { .code = DAQ_OP_LOCK,                  .operation = opLock                },
    { .code = DAQ_OP_UNLOCK,                .operation = opUnlock              },
    { .code = DAQ_OP_RESET,                 .operation = opReset               },
+   { .code = DAQ_OP_GET_MACRO_VERSION,     .operation = opGetMacroVersion     },
    { .code = DAQ_OP_GET_SLOTS,             .operation = opGetSlots            },
    { .code = DAQ_OP_GET_CHANNELS,          .operation = opGetChannels         },
    { .code = DAQ_OP_RESCAN,                .operation = opRescan              },

@@ -7,13 +7,29 @@
 using namespace daq;
 using namespace std;
 
+
+class MyDaqChannel: public DaqChannel
+{
+public:
+   MyDaqChannel( void ):
+      DaqChannel( 0 )
+   {}
+
+   bool onDataInput( DAQ_DATA_T data, bool isPayload ) override;
+};
+
+bool MyDaqChannel::onDataInput( DAQ_DATA_T data, bool isPayload )
+{
+}
+
+///////////////////////////////////////////////////////////////////////////////
 int main( int argc, const char** ppArgv )
 {
    cout << ESC_FG_MAGNETA << ppArgv[0] << ESC_NORMAL << endl;
 
    try
    {
-      DaqAdmin oDaqInterface( ppArgv[1] );
+      DaqAdministration oDaqInterface( ppArgv[1] );
       cout << "WB-interface:        " << oDaqInterface.getWbDevice() << endl;
       cout << "Found devices:       " << oDaqInterface.getMaxFoundDevices() << endl;
       for( unsigned int i = 1; i <= oDaqInterface.getMaxFoundDevices(); i++ )
@@ -21,10 +37,7 @@ int main( int argc, const char** ppArgv )
          DaqDevice* pDevice = new DaqDevice;
          oDaqInterface.registerDevice( pDevice );
          for( unsigned int j = 1; j <= pDevice->getMaxChannels(); j++ )
-         {
-            DaqChannel* pChannel = new DaqChannel;
-            pDevice->registerChannel( pChannel );
-         }
+            pDevice->registerChannel( new MyDaqChannel );
       }
       cout << "Registered channels: " << oDaqInterface.getMaxChannels() << endl;
       for( unsigned int i = 1; i <= oDaqInterface.getMaxChannels(); i++ )
@@ -36,25 +49,26 @@ int main( int argc, const char** ppArgv )
          cout << "Channel: " << pChannel->getNumber() << "\n" << endl;
       }
 
-      DaqChannel* pChannel = oDaqInterface.getChannelByAbsoluteNumber( 1 );
-      pChannel->setTriggerDelay( 0x55 );
-      pChannel->setTriggerCondition( 0xCAFEAFFE );
+      DaqChannel* pChannel = oDaqInterface.getChannelByAbsoluteNumber( 4 );
+      pChannel->sendTriggerDelay( 0x55 );
+      pChannel->sendTriggerCondition( 0xCAFEAFFE );
       cout << "Returncode: " << oDaqInterface.getLastReturnCodeString() << endl;
-      uint16_t delay;
-      uint32_t triggerCondition;
-      pChannel->getTriggerDelay( delay );
-      cout << "Delay: 0x" << hex << delay << endl;
-      pChannel->getTriggerCondition( triggerCondition );
-      cout << "Trigger condition: 0x" << hex << triggerCondition << dec << endl;
-      pChannel->enableContineous( DAQ_SAMPLE_10US );
+      cout << "Delay: 0x" << hex << pChannel->receiveTriggerDelay() << endl;
+      cout << "Trigger condition: 0x" << hex << pChannel->receiveTriggerCondition() << dec << endl;
+      pChannel->sendEnableContineous( DAQ_SAMPLE_10US );
       usleep( 100000 );
       cout << "Ram level: " << oDaqInterface.getCurrentRamSize(true ) << endl;
 
       oDaqInterface.distributeData();
    }
-   catch( daq::Exception& e )
+   catch( daq::EbException& e )
    {
-      cerr << ESC_FG_RED "daq::Exception occurred: " << e.what() << ESC_NORMAL << endl;
+      cerr << ESC_FG_RED "daq::EbException occurred: " << e.what() << ESC_NORMAL << endl;
+   }
+   catch( daq::DaqException& e )
+   {
+      cerr << ESC_FG_RED "daq::DaqException occurred: " << e.what();
+      cerr << "\nStatus: " <<  e.getStatusString() <<  ESC_NORMAL << endl;
    }
    catch( std::exception& e )
    {

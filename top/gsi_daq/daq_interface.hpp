@@ -37,10 +37,36 @@
    #define DAQ_DEFAULT_WB_DEVICE "dev/wbm0"
 #endif
 
+#define DAQ_ERR_PROGRAM                     -100
+#define DAQ_ERR_RESPONSE_TIMEOUT            -101
+
+#define DAQ_ASSERT_CHANNEL_ACCESS( deviceNumber, channel ) \
+{                                                          \
+   SCU_ASSERT( deviceNumber > 0 );                         \
+   SCU_ASSERT( deviceNumber <= c_maxDevices );             \
+   SCU_ASSERT( channel > 0 );                              \
+   SCU_ASSERT( channel <= c_maxChannels );                 \
+}
+
 namespace daq
 {
 
+/*! ---------------------------------------------------------------------------
+ * @brief Converts the status number in to the defined string.
+ */
+const std::string status2String( DAQ_RETURN_CODE_T status );
+
+/*!
+ * @ingroup DAQ
+ * @defgroup DAQ_EXCEPTION
+ * @brief Error exceptions in communication with the LM32 firmware.
+ * @{
+ */
+
 ///////////////////////////////////////////////////////////////////////////////
+/*!
+ * @brief Base exception class for all DAQ- exceptions
+ */
 class Exception
 {
    const std::string m_message;
@@ -56,6 +82,44 @@ public:
 };
 
 ///////////////////////////////////////////////////////////////////////////////
+/*!
+ * @brief Exception class for wishbone / ehthebone communication errors.
+ */
+class EbException: public Exception
+{
+public:
+   EbException( const std::string msg ):
+      Exception( msg ) {}
+};
+
+///////////////////////////////////////////////////////////////////////////////
+/*!
+ * @brief Exception class for error returns of the DAQ LM32 firmware.
+ */
+class DaqException: public Exception
+{
+   const DAQ_RETURN_CODE_T  m_daqStatus;
+
+public:
+   DaqException( const std::string msg,
+                 const DAQ_RETURN_CODE_T status = DAQ_ERR_PROGRAM )
+      :Exception( msg )
+      ,m_daqStatus( status ) {}
+
+   const DAQ_RETURN_CODE_T getStatus( void )
+   {
+      return m_daqStatus;
+   }
+
+   const std::string getStatusString( void )
+   {
+      return status2String( getStatus() );
+   }
+};
+
+/*! @} */
+
+///////////////////////////////////////////////////////////////////////////////
 class DaqInterface
 {
    typedef eb_status_t      EB_STATUS_T;
@@ -65,7 +129,6 @@ public:
 
 private:
    const std::string        m_wbDevice;
-   RAM_SCU_T                m_oScuRam;
    EB_HANDLE_T              m_oEbHandle;
    EB_HANDLE_T*             m_poEbHandle;
    DAQ_SHARED_IO_T          m_oSharedData;
@@ -73,6 +136,7 @@ private:
    unsigned int             m_maxDevices;
 
 protected:
+   RAM_SCU_T                m_oScuRam;
    constexpr static unsigned int c_maxCmdPoll = 100;
 
 public:
@@ -116,50 +180,48 @@ public:
       return ::scuBusIsSlavePresent( m_slotFlags, slot );
    }
 
+   unsigned int readMacroVersion( const unsigned int deviceNumber );
+
    unsigned int getSlotNumber( const unsigned int deviceNumber );
 
-   int readMaxChannels( const unsigned int deviceNumber,
-                        unsigned int& rMaxChannels );
+   unsigned int readMaxChannels( const unsigned int deviceNumber );
 
-   int enablePostMortem( const unsigned int deviceNumber,
-                         const unsigned int channel );
-
-   int enableHighResolution( const unsigned int deviceNumber,
+   int sendEnablePostMortem( const unsigned int deviceNumber,
                              const unsigned int channel );
 
-   int enableContineous( const unsigned int deviceNumber,
+   int sendEnableHighResolution( const unsigned int deviceNumber,
+                             const unsigned int channel );
+
+   int sendEnableContineous( const unsigned int deviceNumber,
                          const unsigned int channel,
                          const DAQ_SAMPLE_RATE_T sampleRate );
 
-   int disable( const unsigned int deviceNumber,
+   int sendDisable( const unsigned int deviceNumber,
                 const unsigned int channel );
 
 
-   int setTriggerCondition( const unsigned int deviceNumber,
-                            const unsigned int channel,
-                            const uint32_t trgCondition );
+   int sendTriggerCondition( const unsigned int deviceNumber,
+                             const unsigned int channel,
+                              const uint32_t trgCondition );
 
-   int getTriggerCondition( const unsigned int deviceNumber,
-                            const unsigned int channel,
-                            uint32_t& rTrgCondition );
+   uint32_t receiveTriggerCondition( const unsigned int deviceNumber,
+                                 const unsigned int channel );
 
 
-   int setTriggerDelay( const unsigned int deviceNumber,
+   int sendTriggerDelay( const unsigned int deviceNumber,
+                         const unsigned int channel,
+                         const uint16_t delay );
+
+   uint16_t receiveTriggerDelay( const unsigned int deviceNumber,
+                             const unsigned int channel );
+
+
+   int sendTriggerMode( const unsigned int deviceNumber,
                         const unsigned int channel,
-                        const uint16_t delay );
+                        const bool mode );
 
-   int getTriggerDelay( const unsigned int deviceNumber,
-                        const unsigned int channel,
-                        uint16_t& rDelay );
-
-
-   int setTriggerMode( const unsigned int deviceNumber,
-                       const unsigned int channel,
-                       const bool mode );
-
-   int getTriggerMode( const unsigned int deviceNumber,
-                       const unsigned int channel,
-                       bool& rMode );
+   bool receiveTriggerMode( const unsigned int deviceNumber,
+                            const unsigned int channel );
 
    RAM_RING_INDEX_T getCurrentRamSize( bool update = true );
 
@@ -212,7 +274,7 @@ private:
 
    bool cmdReadyWait( void );
    void readSharedTotal( void );
-   RETURN_CODE_T setCommand( DAQ_OPERATION_CODE_T );
+   RETURN_CODE_T sendCommand( DAQ_OPERATION_CODE_T );
    DAQ_OPERATION_CODE_T getCommand( void );
 
    RETURN_CODE_T readParam1( void );
