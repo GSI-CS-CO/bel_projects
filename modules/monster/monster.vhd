@@ -1916,25 +1916,25 @@ end generate;
 
    end generate;
 
-   genEcaStuff : if g_en_eca and c_use_tlu generate
-      tlu : wr_tlu
-        generic map(
-          g_num_triggers => g_gpio_in + g_gpio_inout + g_lvds_inout + g_lvds_in,
-          g_fifo_depth   => g_tlu_fifo_size)
-        port map(
-          clk_ref_i      => clk_ref,
-          rst_ref_n_i    => rstn_ref,
-          clk_sys_i      => clk_sys,
-          rst_sys_n_i    => rstn_sys,
-          triggers_i     => s_triggers,
-          tm_tai_cyc_i   => ref_tai8ns,
-          ctrl_slave_i   => dev_bus_master_o(c_devs_tlu),
-          ctrl_slave_o   => dev_bus_master_i(c_devs_tlu),
-          irq_master_o   => dev_msi_slave_i (c_devs_tlu),
-          irq_master_i   => dev_msi_slave_o (c_devs_tlu));
+   genTluStuff : if c_use_tlu generate
+   tlu : wr_tlu
+     generic map(
+       g_num_triggers => g_gpio_in + g_gpio_inout + g_lvds_inout + g_lvds_in,
+       g_fifo_depth   => g_tlu_fifo_size)
+     port map(
+       clk_ref_i      => clk_ref,
+       rst_ref_n_i    => rstn_ref,
+       clk_sys_i      => clk_sys,
+       rst_sys_n_i    => rstn_sys,
+       triggers_i     => s_triggers,
+       tm_tai_cyc_i   => ref_tai8ns,
+       ctrl_slave_i   => dev_bus_master_o(c_devs_tlu),
+       ctrl_slave_o   => dev_bus_master_i(c_devs_tlu),
+       irq_master_o   => dev_msi_slave_i (c_devs_tlu),
+       irq_master_i   => dev_msi_slave_o (c_devs_tlu));
+  end generate;
 
-
-
+   genEcaStuff : if g_en_eca generate
 
       ecawb : eca_wb_event
         port map(
@@ -1946,8 +1946,6 @@ end generate;
           e_rst_n_i  => rstn_ref,
           e_stream_o => s_stream_i(0),
           e_stall_i  => s_stall_o(0));
-
-
 
       ecatlu : eca_tlu
         generic map(
@@ -1963,9 +1961,6 @@ end generate;
           a_gpio_i   => s_tlu_io,
           a_stream_o => s_stream_i(1),
           a_stall_i  => s_stall_o(1));
-
-
-
 
       eca : wr_eca
         generic map(
