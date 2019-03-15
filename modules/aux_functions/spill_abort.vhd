@@ -74,9 +74,9 @@ process (clk)
 begin
         if rising_edge (clk) then
             if state = P_WAIT then
-            command <= '0';
-            else
             command <= '1';
+            else
+            command <= '0';
             end if;
         end if;
 end process;
@@ -84,7 +84,7 @@ end process;
 --command <= armed and not req;
 
 ---Assert-Count-------------------------------------------
-process (clk)
+process (clk, nReset)
 begin
         if nReset = '0' then
           assert_count <= X"000";

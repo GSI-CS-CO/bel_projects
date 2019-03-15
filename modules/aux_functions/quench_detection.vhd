@@ -20,7 +20,7 @@ end quench_detection;
 
 architecture Arch_quench_detection of quench_detection is
 
-signal delay_count  :    std_logic_vector (11 downto 0):=X"000";
+signal delay_count  :    std_logic_vector (11 downto 0):=X"032";
 signal delay_ctr_tc :    std_logic;
 signal delay_ctr_en :    std_logic;
 signal delay_ctr_load :  std_logic;
@@ -32,7 +32,7 @@ begin
 combi <= '1' when (  not (QuDIn or mute ) = 0) else '0'; 
 
 ---Delay-Count-------------------------------------------
-process (clk)
+process (clk, nReset)
 begin
         if nReset = '0' then
           delay_count <= X"032";

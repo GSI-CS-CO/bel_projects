@@ -6611,7 +6611,7 @@ BEGIN
 
     when x"ABDE" => --SPILL ABORT Development
       --IOBP_Output <= x"00" & "0" & clk_blink & not clk_blink & clk_blink;
-      IOBP_Output <= x"00" & "0" & spill_abort_command_rst & clk_blink & spill_abort_command;
+      IOBP_Output <= "0000000" & clk_blink & "0" & spill_abort_armed (0)  & spill_abort_command_rst & spill_abort_command;
       
     when x"DEDE" => --Quench Detection Development
       IOBP_Output <= "0000000" & quench_out(3) & quench_out(0) & quench_out (2) & quench_out (1) & quench_out(0);
