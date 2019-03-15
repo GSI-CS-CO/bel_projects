@@ -138,12 +138,18 @@ void ramRreadItem( register RAM_SCU_T* pThis, const RAM_RING_INDEX_T index,
 
 /*! ---------------------------------------------------------------------------
  */
-#define RAM_EXTRACT_CHANNEL_MODE( item )             \
-(                                                    \
-   *((_DAQ_BF_CANNEL_MODE*)&item.ad8                 \
-      [offsetof(_DAQ_CHANNEL_CONTROL, channelMode)]) \
+/*
+ * Awful I know...
+ */
+#define RAM_ACCESS_CHANNEL_MODE( item )                  \
+(                                                        \
+   *((_DAQ_CHANNEL_CONTROL*)&item.ad16                   \
+   [                                                     \
+      (RAM_DAQ_INDEX_OFFSET_OF_CHANNEL_CONTROL %         \
+       offsetof(_DAQ_DISCRIPTOR_STRUCT_T, cControl )) /  \
+       sizeof(DAQ_DATA_T)                                \
+   ])                                                    \
 )
-
 
 /*! ---------------------------------------------------------------------------
  * @see scu_ramBuffer.h
@@ -167,12 +173,19 @@ RAM_DAQ_BLOCK_T ramRingGetTypeOfOldestBlock( register RAM_SCU_T* pThis )
    ramRingAddToReadIndex( &indexes, RAM_DAQ_INDEX_OFFSET_OF_CHANNEL_CONTROL );
    ramRreadItem( pThis, ramRingGeReadIndex( &indexes ), &item );
 
-   mprintf( "ITEM: item: 0x%x\n", RAM_EXTRACT_CHANNEL_MODE( item ).daqMode );
+#if  (DEBUGLEVEL>1)
+   for( unsigned int i = 0; i < ARRAY_SIZE(item.ad16); i++ )
+      DBPRINT1( "DBG: item: %d 0x%04x %d\n", i, item.ad16[i], item.ad16[i] );
 
-   if( RAM_EXTRACT_CHANNEL_MODE( item ).daqMode )
+   DBPRINT1( "DBG: daq:   0x%x\n", RAM_ACCESS_CHANNEL_MODE( item ).daqMode );
+   DBPRINT1( "DBG: pm:    0x%x\n", RAM_ACCESS_CHANNEL_MODE( item ).pmMode );
+   DBPRINT1( "DBG: hiRes: 0x%x\n", RAM_ACCESS_CHANNEL_MODE( item ).hiResMode );
+#endif
+
+   if( RAM_ACCESS_CHANNEL_MODE( item ).daqMode )
    {
-      if( RAM_EXTRACT_CHANNEL_MODE( item ).hiResMode ||
-          RAM_EXTRACT_CHANNEL_MODE( item ).pmMode )
+      if( RAM_ACCESS_CHANNEL_MODE( item ).hiResMode ||
+          RAM_ACCESS_CHANNEL_MODE( item ).pmMode )
       {
          DBPRINT1( ESC_FG_RED ESC_BOLD
                    "DBG: ERROR: RAM daq-Mode: Too much modes!\n"
@@ -182,10 +195,10 @@ RAM_DAQ_BLOCK_T ramRingGetTypeOfOldestBlock( register RAM_SCU_T* pThis )
       return RAM_DAQ_SHORT;
    }
 
-   if( RAM_EXTRACT_CHANNEL_MODE( item ).hiResMode )
+   if( RAM_ACCESS_CHANNEL_MODE( item ).hiResMode )
    {
-      if( RAM_EXTRACT_CHANNEL_MODE( item ).daqMode ||
-          RAM_EXTRACT_CHANNEL_MODE( item ).pmMode )
+      if( RAM_ACCESS_CHANNEL_MODE( item ).daqMode ||
+          RAM_ACCESS_CHANNEL_MODE( item ).pmMode )
       {
          DBPRINT1( ESC_FG_RED ESC_BOLD
                    "DBG: ERROR: RAM hiRes-mode: Too much modes!\n"
@@ -195,10 +208,10 @@ RAM_DAQ_BLOCK_T ramRingGetTypeOfOldestBlock( register RAM_SCU_T* pThis )
       return RAM_DAQ_LONG;
    }
 
-   if( RAM_EXTRACT_CHANNEL_MODE( item ).pmMode )
+   if( RAM_ACCESS_CHANNEL_MODE( item ).pmMode )
    {
-      if( RAM_EXTRACT_CHANNEL_MODE( item ).daqMode ||
-          RAM_EXTRACT_CHANNEL_MODE( item ).hiResMode )
+      if( RAM_ACCESS_CHANNEL_MODE( item ).daqMode ||
+          RAM_ACCESS_CHANNEL_MODE( item ).hiResMode )
       {
          DBPRINT1( ESC_FG_RED ESC_BOLD
                    "DBG: ERROR: RAM PM mode: Too much modes!\n"
@@ -383,7 +396,7 @@ void ramWriteDaqData( register RAM_SCU_T* pThis, DAQ_CANNEL_T* pDaqChannel,
             * total length isn't dividable by RAM_DAQ_PAYLOAD_T.
             */
             while( payloadIndex < (RAM_DAQ_DATA_WORDS_PER_RAM_INDEX-1) )
-            { mprintf( "Da!\n" );
+            { mprintf( "Da! %d\n", payloadIndex+1 );
                payloadIndex++;
                ramFillItem( &ramItem, payloadIndex, 0xCAFE );
             }
@@ -398,7 +411,7 @@ void ramWriteDaqData( register RAM_SCU_T* pThis, DAQ_CANNEL_T* pDaqChannel,
             * the first received data words.
             */
             for( unsigned int i = 0; i < ARRAY_SIZE( firstData ); i++ )
-            { mprintf( "Hier!\n" );
+            { mprintf( "Hier! %d\n", i );
                payloadIndex++;
                RAM_ASSERT( payloadIndex < RAM_DAQ_DATA_WORDS_PER_RAM_INDEX );
                ramFillItem( &ramItem, payloadIndex, firstData[i] );
@@ -461,8 +474,6 @@ void ramWriteDaqData( register RAM_SCU_T* pThis, DAQ_CANNEL_T* pDaqChannel,
    ramRingDbgPrintIndexes( &pThis->pSharedObj->ringIndexes, "Final indexes" );
 }
 
-#if 1
-
 /*! ---------------------------------------------------------------------------
  * @see scu_ramBuffer.h
  */
@@ -490,7 +501,7 @@ int ramPushDaqDataBlock( register RAM_SCU_T* pThis, DAQ_CANNEL_T* pDaqChannel,
    ramWriteDaqData( pThis, pDaqChannel, isShort );
    return 0;
 }
-#endif
+
 #endif /* if defined(__lm32__) || defined(__DOXYGEN__) */
 
 /*================================== EOF ====================================*/

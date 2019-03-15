@@ -295,24 +295,31 @@ int DaqAdministration::distributeData( void )
    #error At hthe moment DDR3 is supported only please define CONFIG_SCU_USE_DDR3
 #endif
    std::cout << "Slot:    " << daqDescriptorGetSlot( &probeBuffer.descriptor ) << std::endl;
-   std::cout << "Channel: " << daqDescriptorGetChannel( &probeBuffer.descriptor ) << std::endl;
+   std::cout << "Channel: " << daqDescriptorGetChannel( &probeBuffer.descriptor ) + 1 << std::endl;
 
    std::cout << "trigger: " << std::hex << daqDescriptorGetTriggerCondition( &probeBuffer.descriptor )
              << std::dec << std::endl;
    std::cout << "delay: " << std::hex << daqDescriptorGetTriggerDelay( &probeBuffer.descriptor )
              << std::dec << std::endl;
 
+   if( daqDescriptorWasDaq( &probeBuffer.descriptor )   +
+       daqDescriptorWasHiRes( &probeBuffer.descriptor ) +
+       daqDescriptorWasPM( &probeBuffer.descriptor )    != 1 )
+   {
+      throw( DaqException( "Erroneous descriptor" ) );
+   }
+
    DaqChannel* pChannel = getChannelBySlotNumber(
                             daqDescriptorGetSlot( &probeBuffer.descriptor ),
-                            daqDescriptorGetChannel( &probeBuffer.descriptor )
+                            daqDescriptorGetChannel( &probeBuffer.descriptor ) + 1
                           );
    if( pChannel != nullptr )
    {
       std::cout << "Channel found!" << std::endl;
       for( unsigned int i = 0; i < sizeof( probeBuffer.buffer ); i++ )
       {
-      //   pChannel->onDataInput( probeBuffer.buffer[i],
-        //                        i > sizeof( DAQ_DESCRIPTOR_T ) / sizeof( DAQ_DATA_T ));
+         pChannel->onDataInput( probeBuffer.buffer[i],
+                     i > sizeof( DAQ_DESCRIPTOR_T ) / sizeof( DAQ_DATA_T ));
       }
 
    }

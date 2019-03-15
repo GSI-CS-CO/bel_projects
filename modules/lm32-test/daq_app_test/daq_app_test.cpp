@@ -1,8 +1,9 @@
 
 #include <iostream>
 #include <eb_console_helper.h>
-#include <daq_administration.hpp>
+#include <daq_channel_container.hpp>
 #include <unistd.h>
+#include <assert.h>
 
 using namespace daq;
 using namespace std;
@@ -13,7 +14,15 @@ class MyDaqChannel: public DaqChannel
 public:
    MyDaqChannel( void ):
       DaqChannel( 0 )
-   {}
+   {
+      cout << "Constructor" << endl;
+   }
+
+   virtual ~MyDaqChannel( void )
+   {
+      cout << "Destructor channel: " << getNumber() <<
+              ",  slot: " << getSlot() << endl;
+   }
 
    bool onDataInput( DAQ_DATA_T data, bool isPayload ) override;
 };
@@ -29,27 +38,23 @@ int main( int argc, const char** ppArgv )
 
    try
    {
-      DaqAdministration oDaqInterface( ppArgv[1] );
+      //DaqAdministration oDaqInterface( ppArgv[1] );
+      DaqChannelContainer< MyDaqChannel > oDaqInterface( ppArgv[1] );
       cout << "WB-interface:        " << oDaqInterface.getWbDevice() << endl;
       cout << "Found devices:       " << oDaqInterface.getMaxFoundDevices() << endl;
-      for( unsigned int i = 1; i <= oDaqInterface.getMaxFoundDevices(); i++ )
-      {
-         DaqDevice* pDevice = new DaqDevice;
-         oDaqInterface.registerDevice( pDevice );
-         for( unsigned int j = 1; j <= pDevice->getMaxChannels(); j++ )
-            pDevice->registerChannel( new MyDaqChannel );
-      }
+
       cout << "Registered channels: " << oDaqInterface.getMaxChannels() << endl;
-      for( unsigned int i = 1; i <= oDaqInterface.getMaxChannels(); i++ )
+      for( auto& itDev: oDaqInterface )
       {
-         DaqChannel* pChannel = oDaqInterface.getChannelByAbsoluteNumber( i );
-         SCU_ASSERT( pChannel != nullptr );
-         cout << "Slot:    " << pChannel->getSlot() << endl;
-         cout << "Device:  " << pChannel->getDeviceNumber() << endl;
-         cout << "Channel: " << pChannel->getNumber() << "\n" << endl;
+         cout << "Slot:  " << itDev->getSlot() << endl;
+         for( auto& itChannel: *itDev )
+         {
+            cout << "   Channel: " << itChannel->getNumber() << endl;
+         }
       }
 
-      DaqChannel* pChannel = oDaqInterface.getChannelByAbsoluteNumber( 4 );
+      MyDaqChannel* pChannel = oDaqInterface.getChannelByAbsoluteNumber( 1 );
+      assert( pChannel != nullptr );
       pChannel->sendTriggerDelay( 0x55 );
       pChannel->sendTriggerCondition( 0xCAFEAFFE );
       cout << "Returncode: " << oDaqInterface.getLastReturnCodeString() << endl;

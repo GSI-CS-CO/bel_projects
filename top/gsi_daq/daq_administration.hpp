@@ -40,6 +40,8 @@ class DaqDevice;
 class DaqChannel
 {
    friend class DaqDevice;
+   friend class DaqAdministration;
+
    unsigned int m_number;
    DaqDevice*   m_pParent;
 
@@ -90,15 +92,29 @@ protected:
 class DaqDevice
 {
    friend class DaqAdministration;
-   std::vector<DaqChannel*> m_channelPtrList; //[DaqInterface::c_maxChannels];
+
    unsigned int             m_deviceNumber;
    unsigned int             m_slot;
    unsigned int             m_maxChannels;
-   DaqAdministration*                m_pParent;
+   DaqAdministration*       m_pParent;
+
+protected:
+   typedef std::vector<DaqChannel*>  CHANNEL_LIST_T;
+   CHANNEL_LIST_T m_channelPtrList;
 
 public:
    DaqDevice( unsigned int slot = 0 );
    ~DaqDevice( void );
+
+   const CHANNEL_LIST_T::iterator begin( void )
+   {
+      return m_channelPtrList.begin();
+   }
+
+   const CHANNEL_LIST_T::iterator end( void )
+   {
+      return m_channelPtrList.end();
+   }
 
    const unsigned int getDeviceNumber( void ) const
    {
@@ -156,12 +172,25 @@ public:
  */
 class DaqAdministration: public DaqInterface
 {
-   std::list<DaqDevice*>  m_devicePtrList;
-   unsigned int           m_maxChannels;
+   unsigned int   m_maxChannels;
+
+protected:
+   typedef std::list<DaqDevice*> DEVICE_LIST_T;
+   DEVICE_LIST_T  m_devicePtrList;
 
 public:
    DaqAdministration( const std::string = DAQ_DEFAULT_WB_DEVICE );
    virtual ~DaqAdministration( void );
+
+   const DEVICE_LIST_T::iterator begin( void )
+   {
+      return m_devicePtrList.begin();
+   }
+
+   const DEVICE_LIST_T::iterator end( void )
+   {
+      return m_devicePtrList.end();
+   }
 
    unsigned int getMaxChannels( void ) const
    {
@@ -187,6 +216,7 @@ public:
                                        const unsigned int channelNumber );
 
    int distributeData( void );
+
 };
 
 ///////////////////////////////////////////////////////////////////////////////

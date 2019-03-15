@@ -113,7 +113,7 @@ typedef enum
  */
 typedef DDR3_PAYLOAD_T RAM_DAQ_PAYLOAD_T;
 
-
+typedef DDR3_POLL_FT   RAM_DAQ_POLL_FT;
 
 /*!
  * @defgroup SCU_RING_BUFFER_INDEXES
@@ -216,10 +216,10 @@ typedef uint32_t RAM_RING_INDEX_T;
 
 #define RAM_DAQ_DAQ_WORD_OFFSET_OF_CHANNEL_CONTROL    \
 (                                                     \
-   (offsetof( _DAQ_DISCRIPTOR_STRUCT_T, cControl ) %  \
-   sizeof(RAM_DAQ_PAYLOAD_T) ) /                      \
-   sizeof( _DAQ_BF_CANNEL_MODE )                      \
+   (offsetof( _DAQ_DISCRIPTOR_STRUCT_T, cControl ) /  \
+   sizeof(RAM_DAQ_PAYLOAD_T) )                        \
 )
+
 
 /*!
  * @note CAUTION: Don't remove the double exclamation mark (!!) because

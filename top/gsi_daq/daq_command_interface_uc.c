@@ -62,11 +62,6 @@ typedef struct
    DAQ_OPERATION_FT     operation;
 } DAQ_OPERATION_TAB_ITEM_T;
 
-/*!
- * @ingroup DAQ_INTERFACE
- * @brief Last item of the operation match list.
- */
-#define DAQ_OPERATION_ITEM_TERMINATOR { .code = DAQ_OP_IDLE, .operation = NULL }
 
 #ifdef DEBUGLEVEL
 static void printFunctionName( const char* str )
@@ -416,6 +411,14 @@ static int32_t opGetTriggerMode( DAQ_ADMIN_T* pDaqAdmin,
    return DAQ_RET_OK;
 }
 
+#define OPERATION_ITEM( opcode, function ) \
+   { .code = opcode, .operation = function }
+
+/*!
+ * @ingroup DAQ_INTERFACE
+ * @brief Last item of the operation match list.
+ */
+#define OPERATION_ITEM_TERMINATOR OPERATION_ITEM( DAQ_OP_IDLE, NULL )
 
 /*! ---------------------------------------------------------------------------
  * @ingroup DAQ_INTERFACE
@@ -423,24 +426,24 @@ static int32_t opGetTriggerMode( DAQ_ADMIN_T* pDaqAdmin,
  */
 static const DAQ_OPERATION_TAB_ITEM_T g_operationTab[] =
 {
-   { .code = DAQ_OP_LOCK,                  .operation = opLock                },
-   { .code = DAQ_OP_UNLOCK,                .operation = opUnlock              },
-   { .code = DAQ_OP_RESET,                 .operation = opReset               },
-   { .code = DAQ_OP_GET_MACRO_VERSION,     .operation = opGetMacroVersion     },
-   { .code = DAQ_OP_GET_SLOTS,             .operation = opGetSlots            },
-   { .code = DAQ_OP_GET_CHANNELS,          .operation = opGetChannels         },
-   { .code = DAQ_OP_RESCAN,                .operation = opRescan              },
-   { .code = DAQ_OP_PM_ON,                 .operation = opPostMortemOn        },
-   { .code = DAQ_OP_HIRES_ON,              .operation = opHighResolutionOn    },
-   { .code = DAQ_OP_CONTINUE_ON,           .operation = opContinueOn          },
-   { .code = DAQ_OP_OFF,                   .operation = opOff                 },
-   { .code = DAQ_OP_SET_TRIGGER_CONDITION, .operation = opSetTriggerCondition },
-   { .code = DAQ_OP_GET_TRIGGER_CONDITION, .operation = opGetTriggerCondition },
-   { .code = DAQ_OP_SET_TRIGGER_DELAY,     .operation = opSetTriggerDelay     },
-   { .code = DAQ_OP_GET_TRIGGER_DELAY,     .operation = opGetTriggerDelay     },
-   { .code = DAQ_OP_SET_TRIGGER_MODE,      .operation = opSetTriggerMode      },
-   { .code = DAQ_OP_GET_TRIGGER_MODE,      .operation = opGetTriggerMode      },
-   DAQ_OPERATION_ITEM_TERMINATOR
+   OPERATION_ITEM( DAQ_OP_LOCK,                  opLock                ),
+   OPERATION_ITEM( DAQ_OP_UNLOCK,                opUnlock              ),
+   OPERATION_ITEM( DAQ_OP_RESET,                 opReset               ),
+   OPERATION_ITEM( DAQ_OP_GET_MACRO_VERSION,     opGetMacroVersion     ),
+   OPERATION_ITEM( DAQ_OP_GET_SLOTS,             opGetSlots            ),
+   OPERATION_ITEM( DAQ_OP_GET_CHANNELS,          opGetChannels         ),
+   OPERATION_ITEM( DAQ_OP_RESCAN,                opRescan              ),
+   OPERATION_ITEM( DAQ_OP_PM_ON,                 opPostMortemOn        ),
+   OPERATION_ITEM( DAQ_OP_HIRES_ON,              opHighResolutionOn    ),
+   OPERATION_ITEM( DAQ_OP_CONTINUE_ON,           opContinueOn          ),
+   OPERATION_ITEM( DAQ_OP_OFF,                   opOff                 ),
+   OPERATION_ITEM( DAQ_OP_SET_TRIGGER_CONDITION, opSetTriggerCondition ),
+   OPERATION_ITEM( DAQ_OP_GET_TRIGGER_CONDITION, opGetTriggerCondition ),
+   OPERATION_ITEM( DAQ_OP_SET_TRIGGER_DELAY,     opSetTriggerDelay     ),
+   OPERATION_ITEM( DAQ_OP_GET_TRIGGER_DELAY,     opGetTriggerDelay     ),
+   OPERATION_ITEM( DAQ_OP_SET_TRIGGER_MODE,      opSetTriggerMode      ),
+   OPERATION_ITEM( DAQ_OP_GET_TRIGGER_MODE,      opGetTriggerMode      ),
+   OPERATION_ITEM_TERMINATOR
 };
 
 /*! ---------------------------------------------------------------------------
