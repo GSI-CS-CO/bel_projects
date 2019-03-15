@@ -28,7 +28,7 @@ gateware:	all pexarria5 exploder5 vetar2a vetar2a-ee-butis scu2 scu3 pmc microtc
 
 install:	etherbone-install tools-install driver-install
 
-clean:		etherbone-clean tools-clean tlu-clean sdbfs-clean driver-clean toolchain-clean firmware-clean scu2-clean scu3-clean exploder-clean exploder5-clean pexarria5-clean sio3-clean ecatools-clean pmc-clean
+clean::		etherbone-clean tools-clean tlu-clean sdbfs-clean driver-clean toolchain-clean firmware-clean scu2-clean scu3-clean vetar2a-clean vetar2a-ee-butis-clean exploder5-clean pexarria5-clean sio3-clean ecatools-clean pmc-clean microtca-clean
 
 distclean::	clean
 	git clean -xfd .
