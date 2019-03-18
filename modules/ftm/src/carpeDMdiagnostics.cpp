@@ -196,7 +196,6 @@ namespace coverage {
                                                                  + "   1 (" + dnt::sQPrio[1] + "): " + (qe.flushHi ? sYes : sNo)
                                                                  + "   0 (" + dnt::sQPrio[0] + "): " + (qe.flushLo ? sYes : sNo)
                                                                  + "    Qty: " + std::to_string(qe.qty) + "    " + blockName + " --> " + qe.flushOvr + " \n";
-                                                                 + "\n";
                                   break;
                                 }
           case ACT_TYPE_WAIT  : { report += qe.sType + (qe.waitAbs ? " - until " : " - make block period ") + std::to_string(qe.waitTime) + "ns\n";
@@ -453,7 +452,6 @@ void CarpeDM::dumpNode(const std::string& name) {
 bool CarpeDM::isPainted(const std::string& name) {
   Graph& g = gDown;
   if (hm.contains(name)) {
-    AllocTable& at = atDown;
     auto it = atDown.lookupHash(hm.lookup(name));
     auto* x = (AllocMeta*)&(*it);
   
