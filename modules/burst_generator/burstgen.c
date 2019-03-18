@@ -212,11 +212,12 @@ void clearActions()
 
   *(pEcaCtl + (ECA_CHANNEL_SELECT_RW >> 2)) = gEcaChLm32;    // select ECA channel for LM32
   valCnt = *(pEcaCtl + (ECA_CHANNEL_VALID_COUNT_GET >> 2));  // get/clear valid count
-  mprintf("validCnt=%d\n", valCnt);
-
-  valCnt = clearEcaQueue(valCnt);                            // pop pending actions
-  if (valCnt != 0)
-    mprintf("%d actions cleared!\n", valCnt);
+  if (valCnt)
+  {
+    mprintf("pending actions: %d\n", valCnt);
+    valCnt = clearEcaQueue(valCnt);                          // pop pending actions
+    mprintf("cleared actions: %d\n", valCnt);
+  }
 }
 
 /*******************************************************************************
@@ -418,11 +419,11 @@ void constructTimingMsg(uint32_t *msg, uint32_t id)
   *(msg +6) = 0x0;
   *(msg +7) = 0x0;
 
-  mprintf("\nconstructed timing msg:\n");
+  /*mprintf("\nconstructed timing msg:\n");
   mprintf("event: %x-%x\n",msg[0], msg[1]);
   mprintf("param: %x-%x\n",msg[2], msg[3]);
   mprintf("resrv: %x\n",msg[4]);
-  mprintf("TEF  : %x\n",msg[5]);
+  mprintf("TEF  : %x\n",msg[5]);*/
 }
 
 /*******************************************************************************
