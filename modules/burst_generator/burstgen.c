@@ -362,6 +362,43 @@ void initSharedMem()
 
 /*******************************************************************************
  *
+ * Get/subscribe slot in mailbox
+ *
+ * Check mailbox slots starting from the first slot. If a slot has the same
+ * destination address, then re-use it. If a slot is free, then subscribe it.
+ *
+ * @param[in] offset  Offset address used to recognize a sender.
+ * /return    slot    Subscribed slot number. Returns -1, if no free slot is found.
+ *
+ ******************************************************************************/
+int getMboxSlot(uint32_t offset)
+{
+  uint32_t myDestAddr = (uint32_t)(pMyMsi + (offset >> 2));
+  uint32_t destination;
+  unsigned char notFound = 1;
+  uint8_t slot = 0;
+
+  atomic_on();
+  while (notFound && (slot < 128))
+  {
+    destination = *(pCpuMsiBox + (slot << 1)); // get destination address
+    if (destination == myDestAddr)             // slot has my destination address
+      notFound = 0;
+    else if (destination == 0xffffffff)        // slot is free, subscribe it
+    {
+      cfgMsiBox(slot,offset);
+      notFound = 0;
+    }
+    else
+      slot++;
+  }
+  atomic_off();
+
+  return (notFound?-1:slot);
+}
+
+/*******************************************************************************
+ *
  * Find WB address of ECA queue connect to ECA channel for LM32
  *
  * - ECA queue address is set to "pECAQ"
@@ -547,7 +584,7 @@ void init()
 
 void main(void) {
 
-  uint32_t i, j, mbSlot;
+  int i, j, mbSlot;
 
   uint64_t t1, t2;
   uint32_t dt1, dt2, dt3, dt4, dt5, dt6, dt7, dt8;
@@ -586,8 +623,7 @@ void main(void) {
   constructTimingMsg(myTimingMsg, gEvtId); // construct timing message for IO action channel
 
   /* set up handler for host messages */
-  // subscribe a free slot in mailbox to receive messages from host
-  mbSlot = getMsiBoxSlot(0x10); // host messages are forwarded to destination address of (pMyMsi + 0x10)
+  mbSlot = getMboxSlot(0x10); // host messages are forwarded to destination address of (pMyMsi + 0x10)
 
   if (mbSlot == -1)  {
     mprintf("No free slots in mailbox. Exit!\n");
@@ -601,7 +637,7 @@ void main(void) {
   clearActions();
 
   /* set up handler for ECA messages */
-  configureEcaMsi(1, gEcaChLm32); // ECA messages will be sent to destination address in pMyMsi
+  configureEcaMsi(1, gEcaChLm32); // ECA messages are sent to destination address of pMyMsi
 
   initIrqTable();              // set up MSI handler
 
