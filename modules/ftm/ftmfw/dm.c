@@ -187,12 +187,28 @@ uint32_t* execFlow(uint32_t* node, uint32_t* cmd, uint32_t* thrData) {
 }
 
 uint32_t* execFlush(uint32_t* node, uint32_t* cmd, uint32_t* thrData) {
-  uint8_t prios = (cmd[T_CMD_ACT >> 2] >> ACT_FLUSH_PRIO_POS) & ACT_FLUSH_PRIO_MSK;
-  if(prios & (1 << PRIO_LO)) *((uint8_t *)node + BLOCK_CMDQ_RD_IDXS + _32b_SIZE_  - PRIO_LO -1) = *((uint8_t *)node + BLOCK_CMDQ_WR_IDXS + _32b_SIZE_  - PRIO_LO -1);
-  if(prios & (1 << PRIO_HI)) *((uint8_t *)node + BLOCK_CMDQ_RD_IDXS + _32b_SIZE_  - PRIO_HI -1) = *((uint8_t *)node + BLOCK_CMDQ_WR_IDXS + _32b_SIZE_  - PRIO_HI -1);
-  // makes no sense to flush interlock priority, skipping
-  
-  //override successor ?
+  uint32_t action     = cmd[T_CMD_ACT >> 2];  
+  uint8_t  flushees   =       (action >> ACT_FLUSH_PRIO_POS) & ACT_FLUSH_PRIO_MSK;  // msk of flushee prios
+  uint8_t  flusher    =  1 << ((action >> ACT_PRIO_POS)      & ACT_PRIO_MSK);       // msk of flusher prio
+  uint8_t  qtyIsOne   = (1 ==  ((action >> ACT_QTY_POS)       & ACT_QTY_MSK));        // last qty left? (should always be 1 for flushes, but we better make sure)
+  uint32_t wrIdxs     = node[BLOCK_CMDQ_WR_IDXS >> 2] & BLOCK_CMDQ_WR_IDXS_SMSK;    // buffer current wr indices
+  uint32_t rdIdxs     = node[BLOCK_CMDQ_RD_IDXS >> 2] & BLOCK_CMDQ_RD_IDXS_SMSK;    // buffer current read indices
+
+  uint8_t prio;
+  for(prio = PRIO_LO; prio <= PRIO_IL; prio++) { // iterate priorities of flushees
+    // if execution would flush the very queue containing the flush command (the flusher), we must prevent the queue from being popped in block() function afterwards.
+    // Otherwise, rd idx will overtake wr idx -> queue corrupted. To minimize corner case impact, we do this by adjusting the
+    // new read idx to be wr idx-1. Then the queue pop leaves us with new rd idx = wr idx as it should be after a flush.
+    uint8_t flushMyselfB4pop  = ((flushees & flusher) >> prio) & 1 & qtyIsOne;                      // check if this is the only qty left and if flushee and flusher prios match
+    // new rd idx = wr idx, adjust by -1 if necessary. Don't forget to mask to proper qidx width afterwards!
+    uint8_t newRdIdx          = (*((uint8_t *)&wrIdxs + _32b_SIZE_ - prio -1) - flushMyselfB4pop) & Q_IDX_MAX_OVF_MSK;  
+
+    if(flushees & (1 << prio)) { *((uint8_t *)&rdIdxs + _32b_SIZE_  - prio -1) = newRdIdx; } // execute flush if current prio is a flushee
+  }
+  //write back potentially updated read indices
+  node[BLOCK_CMDQ_RD_IDXS >> 2] = rdIdxs;
+
+  //Flush override handling. Override successor ?
   uint32_t* ret = (uint32_t*)cmd[T_CMD_FLUSH_OVR >> 2];
   if((uint32_t)ret != LM32_NULL_PTR) { // no override to idle allowed!
     //permanent change?

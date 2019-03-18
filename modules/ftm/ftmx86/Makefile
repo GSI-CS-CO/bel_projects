@@ -20,7 +20,7 @@ SER_LIB         =-lboost_serialization
 GRAPH_LIB       =-lboost_graph
 TOP            ?= ../../..
 
-VERSION_FW     = 6.1.0
+VERSION_FW     = 6.1.3
 VERSION_TOOL   = 0.29.5
 BUILD_DATE     = $(shell date +'%Y%m%d')
 BUILD_ID_ROM_ADR = 0x100
