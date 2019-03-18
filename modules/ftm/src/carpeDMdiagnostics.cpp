@@ -195,6 +195,7 @@ namespace coverage {
                                                                  + "   2 (" + dnt::sQPrio[2] + "): " + (qe.flushIl ? sYes : sNo)
                                                                  + "   1 (" + dnt::sQPrio[1] + "): " + (qe.flushHi ? sYes : sNo)
                                                                  + "   0 (" + dnt::sQPrio[0] + "): " + (qe.flushLo ? sYes : sNo)
+                                                                 + "    Qty: " + std::to_string(qe.qty) + "    " + blockName + " --> " + qe.flushOvr + " \n";
                                                                  + "\n";
                                   break;
                                 }
@@ -392,6 +393,35 @@ std::string& CarpeDM::getRawQReport(const std::string& blockName, std::string& r
                               qe.flushIl = flPrio & (1<<PRIO_IL);
                               qe.flushHi = flPrio & (1<<PRIO_HI);
                               qe.flushLo = flPrio & (1<<PRIO_LO);
+
+                              uint32_t dstAdr = writeBeBytesToLeNumber<uint32_t>((uint8_t*)&b[T_CMD_FLUSH_OVR]);
+                              std::string sDst;
+
+                              if (dstAdr == LM32_NULL_PTR) { sDst = "No Ovr"; }// pointing to idle is always okay
+                              else {
+                                //Find out if Destination is on this core ('cpu') or on a peer core ('dstCpuAux')
+                                uint8_t dstCpuAux, dstCpu;
+                                AdrType dstAdrType;
+                                std::tie(dstCpuAux, dstAdrType) = at.adrClassification(dstAdr);
+                                dstCpu = (dstAdrType == AdrType::PEER ? dstCpuAux : cpu);
+                                //get allocentry of the destination by its cpu idx and memory address
+                                try {
+                                  auto dst = at.lookupAdr( dstCpu, at.adrConv(dstAdrType, AdrType::MGMT, dstCpu, dstAdr) );
+                                  sDst = g[dst->v].name;
+                                  for (auto& itOrphan : futureOrphan) {
+                                    if (sDst == itOrphan) {
+                                      if (verbose) sLog << "found orphaned command pointing to " << itOrphan << " in slot " << (int)idx << std::endl;
+                                      qe.orphaned = true;
+                                      break;}
+                                  }
+                                } catch (...) {
+                                  if (verbose) sLog << "found orphaned command pointing to unknown destination (#" << std::dec << (int)dstCpu << " 0x" << std::hex << dstAdr << std::dec << " in slot " << (int)idx << std::endl;
+                                  sDst = DotStr::Misc::sUndefined;
+                                  qe.orphaned = true;
+                                }
+
+                              }
+                              qe.flushOvr = sDst;
                               break;
                             }
       case ACT_TYPE_WAIT  : {

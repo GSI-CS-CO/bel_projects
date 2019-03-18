@@ -173,6 +173,7 @@ typedef struct {
   bool flushIl = false;
   bool flushHi = false;
   bool flushLo = false;
+  std::string flushOvr = DotStr::Node::Special::sIdle;
   //wait Properties
   uint64_t waitTime = 0;
   bool      waitAbs = false;
