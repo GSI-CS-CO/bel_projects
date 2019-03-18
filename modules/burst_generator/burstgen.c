@@ -83,6 +83,7 @@ const unsigned char errMsgEcaMsi[] = {"Cannot en/disable ECA MSI path to mailbox
 uint32_t gEvtId = 0xEEEE0000;         // id of timing message
 
 uint32_t myTimingMsg[LEN_TIM_MSG];  // timing message for IO action channel (will be sent by this LM32)
+uint64_t gInjectionSetup = 0;       // time duration for local message injection to ECA event input
 
 /* function prototypes */
 void injectTimingMsg(uint32_t *msg);  // inject timing message to ECA event input
@@ -235,12 +236,51 @@ void handleValidActions()
   if (valCnt != 0)
     ecaHandler(valCnt);                             // pop pending valid actions
 }
+/*******************************************************************************
+ *
+ * Respond to host request
+ *
+ * @param[in] data Response data to host request
+ *
+ ******************************************************************************/
+void respondToHost(uint32_t data)
+{
+  mprintf("host request %s\n", data==WRUNIPZ_STATUS_OK?"accepted":"rejected!");
+}
 
 /*******************************************************************************
  *
- * Handle MSIs sent by ECA
+ * Handle host requests
  *
- * If interrupt was caused by a valid action, then MSI has value of (4<<16|num).
+ * Read pulse parameters at the reserved location in the shared memory.
+ * Respond to host whether its request accepted or not.
+ *
+ ******************************************************************************/
+void handleHostRequests()
+{
+  ecaIoRules_s *pIoRules = (ecaIoRules_s *)pSharedBuff1;
+  uint64_t period = pIoRules->nConditions * pIoRules->tOffset;
+
+  mprintf("Host request: conditions=%x @ 0x%08x, offset=%x @ 0x%08x\n",
+      pIoRules->nConditions, (uint32_t)&pIoRules->nConditions, pIoRules->tOffset, (uint32_t)&pIoRules->tOffset);
+
+  if (period >= gInjectionSetup)
+    respondToHost(WRUNIPZ_STATUS_OK);    // accept host request
+  else
+    respondToHost(WRUNIPZ_STATUS_ERROR); // reject host request
+}
+
+/*******************************************************************************
+ *
+ * Handle MSIs
+ *
+ * Any WB device connected to MSI crossbar as a master can send MSIs: ECA, SCU bus etc.
+ * Besides data value, an MSI message includes also a destination address.
+ * In order to identify a particular sender, LM32 has to inform them distinct
+ * MSI destinations as its destination.
+ *
+ * Handling ECA MSIs
+ * If interrupt was caused by a valid ECA action, then MSI has value of (4<<16|num).
  * Both ECA action channel and ECA queue connected to that channel must be handled:
  * - read and clear the valid counter value of ECA action channel for LM32 and,
  * - pop pending actions from ECA queue connected to this action channel
@@ -250,8 +290,21 @@ void irqHandler() {
 
   mprintf(" MSI:\t%08x\nAdr:\t%08x\nSel:\t%01x\nCnt:\t%d\n", global_msi.msg, global_msi.adr, global_msi.sel, gBurstCnt);
 
-  if ((global_msi.msg & ECA_VALID_ACTION) == ECA_VALID_ACTION) // valid actions are pending
-    handleValidActions();                                      // ECA MSI handling
+  // sender of messages is detected with the address
+  uint32_t sender = global_msi.adr & 0xF0;
+
+  switch (sender) {
+    case 0x00: // ECA
+      if ((global_msi.msg & ECA_VALID_ACTION) == ECA_VALID_ACTION) // valid actions are pending
+	handleValidActions();                                      // ECA MSI handling
+      break;
+    case 0x10: // host
+      handleHostRequests();
+      break;
+    default:
+      mprintf("Cannot handle MSI, sender unknown!\n");
+      break;
+  }
 }
 
 /*******************************************************************************
@@ -508,7 +561,7 @@ void main(void) {
   initSharedMem();            // init shared memory
 
   /* burst generation setup */
-  uint64_t t, tPeriod, tInject, tWait, tDeadline;
+  uint64_t t, tPeriod, tWait, tDeadline;
 
   // set time interval needed for sending timing messages periodically
   ecaIoRules_s *pulse = &ioPulses[K_500]; // generate pulses with the chosen frequency (stable up to 500KHz)
@@ -526,27 +579,29 @@ void main(void) {
   // inject the dummy late message
   injectTimingMsg(myTimingMsg);
 
-  tInject = getSysTime() - t; // get injection duration
-  tInject <<= 1;
-  mprintf("\n%s: duration of injection (hex ns) = 0x%x%08x\n", fwName, (uint32_t) (tInject >> 32), (uint32_t) tInject );
+  gInjectionSetup = getSysTime() - t; // get injection duration
+  gInjectionSetup <<= 1;
+  mprintf("\n%s: duration of injection (ns) = 0x%x%08x\n", fwName, (uint32_t) (gInjectionSetup >> 32), (uint32_t) gInjectionSetup );
 
   constructTimingMsg(myTimingMsg, gEvtId); // construct timing message for IO action channel
 
-  /*mbSlot = getMsiBoxSlot(0x0); // mailbox will be used for MSI message delivery from LM32 to host
+  /* set up handler for host messages */
+  // subscribe a free slot in mailbox to receive messages from host
+  mbSlot = getMsiBoxSlot(0x10); // host messages are forwarded to destination address of (pMyMsi + 0x10)
 
   if (mbSlot == -1)  {
     mprintf("No free slots in mailbox. Exit!\n");
     return;
   }
   else  {
-    mprintf("Configured slot %d in mailbox\n", mbSlot);
-  }*/
+    mprintf("Subscribed slot %d in mailbox (+0x%x)\n", mbSlot, mbSlot*8);
+  }
 
   // clean ECA queue and channel from previous actions
   clearActions();
 
-  /* MSI hanlder setup */
-  configureEcaMsi(1, gEcaChLm32); // allow MSI path from ECA to itself
+  /* set up handler for ECA messages */
+  configureEcaMsi(1, gEcaChLm32); // ECA messages will be sent to destination address in pMyMsi
 
   initIrqTable();              // set up MSI handler
 
@@ -568,7 +623,7 @@ void main(void) {
 
       do {
         t = getSysTime();
-      } while ((tDeadline - t) > tInject && tDeadline > t); // wait until setup due or late!
+      } while ((tDeadline - t) > gInjectionSetup && tDeadline > t); // wait until setup due or late!
 
       injectTimingMsg(myTimingMsg);
 
