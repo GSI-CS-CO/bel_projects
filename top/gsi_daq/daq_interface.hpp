@@ -140,7 +140,8 @@ public:
 ///////////////////////////////////////////////////////////////////////////////
 class DaqInterface
 {
-   typedef eb_status_t      EB_STATUS_T;
+   typedef eb_status_t          EB_STATUS_T;
+
 public:
    typedef SCUBUS_SLAVE_FLAGS_T SLOT_FLAGS_T;
    typedef DAQ_RETURN_CODE_T    RETURN_CODE_T;
@@ -158,14 +159,15 @@ protected:
    constexpr static unsigned int c_maxCmdPoll = 100;
 
 public:
-   constexpr static unsigned int c_maxDevices        = DAQ_MAX;
-   constexpr static unsigned int c_maxSlots          = MAX_SCU_SLAVES;
-   constexpr static unsigned int c_startSlot         = SCUBUS_START_SLOT;
-   constexpr static unsigned int c_maxChannels       = DAQ_MAX_CHANNELS;
-   constexpr static std::size_t  c_ramBlockShortLen  = RAM_DAQ_SHORT_BLOCK_LEN;
-   constexpr static std::size_t  c_ramBlockLongLen   = RAM_DAQ_LONG_BLOCK_LEN;
-   constexpr static std::size_t  c_hiresPmDataLen    = DAQ_FIFO_PM_HIRES_WORD_SIZE_CRC;
-   constexpr static std::size_t  c_contineousDataLen = DAQ_FIFO_DAQ_WORD_SIZE_CRC;
+   constexpr static unsigned int c_maxDevices         = DAQ_MAX;
+   constexpr static unsigned int c_maxSlots           = MAX_SCU_SLAVES;
+   constexpr static unsigned int c_startSlot          = SCUBUS_START_SLOT;
+   constexpr static unsigned int c_maxChannels        = DAQ_MAX_CHANNELS;
+   constexpr static std::size_t  c_ramBlockShortLen   = RAM_DAQ_SHORT_BLOCK_LEN;
+   constexpr static std::size_t  c_ramBlockLongLen    = RAM_DAQ_LONG_BLOCK_LEN;
+   constexpr static std::size_t  c_hiresPmDataLen     = DAQ_FIFO_PM_HIRES_WORD_SIZE_CRC;
+   constexpr static std::size_t  c_contineousDataLen  = DAQ_FIFO_DAQ_WORD_SIZE_CRC;
+   constexpr static std::size_t  c_discriptorWordSize = DAQ_DISCRIPTOR_WORD_SIZE;
 
    DaqInterface( const std::string = DAQ_DEFAULT_WB_DEVICE );
 

@@ -28,25 +28,81 @@ public:
    bool onDataBlock( DAQ_DATA_T* pData, std::size_t wordLen ) override;
 };
 
+//-----------------------------------------------------------------------------
 bool MyDaqChannel::onDataBlock( DAQ_DATA_T* pData, std::size_t wordLen )
 {
-  std::cout << "Slot:    " << getSlot();
-  std::cout << "\nChannel: " << getNumber() << std::endl;
+  cout << "-------------------------------------" << endl;
+  cout << "Slot:    " << getSlot();
+  cout << "\nChannel: " << getNumber() << endl;
 
-  std::cout << "trigger: 0x" << std::hex << descriptorGetTreggerCondition( pData )
-             << std::dec << std::endl;
-  std::cout << "delay: 0x" << std::hex << descriptorGetTriggerDelay( pData )
-             << std::dec << std::endl;
-  std::cout << "CRC: 0x" << std::hex << std::setfill('0') << std::setw(2) <<
-     static_cast<unsigned int>(descriptorGetCrc( pData ))
-             << std::dec << std::endl;
-  std::cout << "Seconds:     " <<
-     daqDescriptorGetTimeStampSec( reinterpret_cast<DAQ_DESCRIPTOR_T*>(pData) )
-     << std::endl;
-  std::cout << "Nanoseconds: " <<
-   daqDescriptorGetTimeStampNanoSec( reinterpret_cast<DAQ_DESCRIPTOR_T*>(pData) )
-   << std::endl;
+  cout << setiosflags(ios::uppercase);
+  cout << "trigger: 0x" << hex << setfill('0') << setw(8)
+       << descriptorGetTreggerCondition( pData ) << dec << endl;
+
+  cout << "delay: 0x" << hex << descriptorGetTriggerDelay( pData )
+       << dec << endl;
+
+  cout << "CRC: 0x" << hex << setfill('0') << setw(2)
+       << static_cast<unsigned int>(descriptorGetCrc( pData ))
+       << dec << endl;
+
+  cout << "Seconds:     "
+       << daqDescriptorGetTimeStampSec( reinterpret_cast<DAQ_DESCRIPTOR_T*>(pData) )
+       << endl;
+  cout << "Nanoseconds: " <<
+     daqDescriptorGetTimeStampNanoSec( reinterpret_cast<DAQ_DESCRIPTOR_T*>(pData) )
+       << endl;
+
+  cout << "Data:" << endl;
+  for( std::size_t i = c_discriptorWordSize; i < wordLen; i += 100 )
+  {
+     cout << "  " << pData[i] << endl;
+  }
+  return false;
 }
+
+//------------------------------------------------------------------------------
+void doTest( const string wbName )
+{
+   DaqChannelContainer< MyDaqChannel > oDaqInterface( wbName );
+
+   cout << "WB-interface:        " << oDaqInterface.getWbDevice() << endl;
+   cout << "Found devices:       " << oDaqInterface.getMaxFoundDevices() << endl;
+   cout << "Registered channels: " << oDaqInterface.getMaxChannels() << endl;
+
+   for( auto& itDev: oDaqInterface )
+   {
+      cout << "Slot:  " << itDev->getSlot() << endl;
+      for( auto& itChannel: *itDev )
+      {
+         cout << "   Channel: " << itChannel->getNumber() << endl;
+      }
+   }
+
+   MyDaqChannel* pChannel_a = oDaqInterface.getChannelByAbsoluteNumber( 1 );
+   assert( pChannel_a != nullptr );
+   MyDaqChannel* pChannel_b = oDaqInterface.getChannelByAbsoluteNumber( 5 );
+   assert( pChannel_b != nullptr );
+   pChannel_a->sendTriggerDelay( 0x55 );
+   pChannel_a->sendTriggerCondition( 0xCAFEAFFE );
+   pChannel_b->sendTriggerDelay( 0xAA );
+   pChannel_b->sendTriggerCondition( 0x08154711 );
+
+   cout << "Returncode: " << oDaqInterface.getLastReturnCodeString() << endl;
+
+   cout << "Delay a: 0x" << hex << pChannel_a->receiveTriggerDelay() << endl;
+   cout << "Trigger condition a: 0x" << hex << pChannel_a->receiveTriggerCondition() << dec << endl;
+   cout << "Delay b: 0x" << hex << pChannel_b->receiveTriggerDelay() << endl;
+   cout << "Trigger condition b: 0x" << hex << pChannel_b->receiveTriggerCondition() << dec << endl;
+
+   pChannel_a->sendEnableContineous( DAQ_SAMPLE_10US );
+   pChannel_b->sendEnableContineous( DAQ_SAMPLE_10US );
+   usleep( 100000 );
+   cout << "Ram level: " << oDaqInterface.getCurrentRamSize(true ) << endl;
+
+   while( oDaqInterface.distributeData() > 0 );
+}
+
 
 ///////////////////////////////////////////////////////////////////////////////
 int main( int argc, const char** ppArgv )
@@ -55,33 +111,7 @@ int main( int argc, const char** ppArgv )
 
    try
    {
-      //DaqAdministration oDaqInterface( ppArgv[1] );
-      DaqChannelContainer< MyDaqChannel > oDaqInterface( ppArgv[1] );
-      cout << "WB-interface:        " << oDaqInterface.getWbDevice() << endl;
-      cout << "Found devices:       " << oDaqInterface.getMaxFoundDevices() << endl;
-      cout << "Registered channels: " << oDaqInterface.getMaxChannels() << endl;
-      for( auto& itDev: oDaqInterface )
-      {
-         cout << "Slot:  " << itDev->getSlot() << endl;
-         for( auto& itChannel: *itDev )
-         {
-            cout << "   Channel: " << itChannel->getNumber() << endl;
-         }
-      }
-
-      MyDaqChannel* pChannel = oDaqInterface.getChannelByAbsoluteNumber( 1 );
-      assert( pChannel != nullptr );
-      pChannel->sendTriggerDelay( 0x55 );
-      pChannel->sendTriggerCondition( 0xCAFEAFFE );
-      cout << "Returncode: " << oDaqInterface.getLastReturnCodeString() << endl;
-      cout << "Delay: 0x" << hex << pChannel->receiveTriggerDelay() << endl;
-      cout << "Trigger condition: 0x" << hex << pChannel->receiveTriggerCondition() << dec << endl;
-      pChannel->sendEnableContineous( DAQ_SAMPLE_10US );
-      usleep( 100000 );
-      cout << "Ram level: " << oDaqInterface.getCurrentRamSize(true ) << endl;
-
-      oDaqInterface.distributeData();
-      oDaqInterface.distributeData();
+      doTest( ppArgv[1] );
    }
    catch( daq::EbException& e )
    {

@@ -723,12 +723,12 @@ void daqBusPrintInfo( register DAQ_BUS_T* pThis )
  */
 void daqDescriptorPrintInfo( register DAQ_DESCRIPTOR_T* pThis )
 {
-   //IMPLEMENT_CONVERT_BYTE_ENDIAN( uint32_t )
+   IMPLEMENT_CONVERT_BYTE_ENDIAN( uint32_t )
 
    mprintf( ESC_BOLD ESC_FG_CYAN
             "Device Descriptor:\n" ESC_NORMAL );
    mprintf( "  Slot:            %d\n", daqDescriptorGetSlot( pThis ) );
-   mprintf( "  Channel:         %d\n", daqDescriptorGetChannel( pThis ) );
+   mprintf( "  Channel:         %d\n", daqDescriptorGetChannel( pThis ) + 1 );
    mprintf( "  DIOB ID:         %d\n", daqDescriptorGetDiobId( pThis ) );
    mprintf( "  Post Mortem:     %s\n", daqDescriptorWasPM( pThis )?
                                        g_pYes : g_pNo );
@@ -742,9 +742,10 @@ void daqDescriptorPrintInfo( register DAQ_DESCRIPTOR_T* pThis )
             daqDescriptorGetTriggerConditionHW( pThis ) );
    mprintf( "  Trigger delay:   0x%04x\n",
             daqDescriptorGetTriggerDelay( pThis ) );
-   mprintf( "  Timestamp:       %08u.%09u\n",
-            daqDescriptorGetTimeStampSec( pThis ),
-            daqDescriptorGetTimeStampNanoSec( pThis ));
+   mprintf( "  Seconds:       %08u\n",
+            convertByteEndian_uint32_t( daqDescriptorGetTimeStampSec( pThis ) ));
+   mprintf( "  Nanoseconds:   %09u\n",
+            convertByteEndian_uint32_t( daqDescriptorGetTimeStampNanoSec( pThis )));
    mprintf( "  CRC:             0x%02x\n", daqDescriptorGetCRC( pThis ));
 }
 

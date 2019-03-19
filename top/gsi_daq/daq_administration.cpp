@@ -291,7 +291,12 @@ int DaqAdministration::distributeData( void )
 
    std::size_t size = getCurrentRamSize( true );
    if( size == 0 )
+   {  /*
+       * Nothing to do...
+       */
       return 0;
+   }
+
    if( size % c_ramBlockShortLen != 0 )
    {
       //TODO data perhaps corrupt!
@@ -299,13 +304,16 @@ int DaqAdministration::distributeData( void )
       return -1;
    }
 
-   PROBE_BUFFER_T probeBuffer;
+   PROBE_BUFFER_T probe;
+#ifdef CONFIG_DAQ_DEBUG
+   ::memset( &probe, 0, sizeof( probe ) );
+#endif
 
    /*
     * At first a short block is supposed. It's necessary to read this data
     * obtaining the device-descriptor.
     */
-   if( ::ramReadDaqDataBlock( &m_oScuRam, probeBuffer.ramItems,
+   if( ::ramReadDaqDataBlock( &m_oScuRam, probe.ramItems,
                               c_ramBlockShortLen, ramReadPoll ) != EB_OK )
       throw EbException( "Unable to read SCU-Ram buffer first part" );
 
@@ -313,25 +321,23 @@ int DaqAdministration::distributeData( void )
    /*
     * Rough check of the device descriptors integrity.
     */
-   if( ::daqDescriptorWasDaq( &probeBuffer.descriptor )   +
-       ::daqDescriptorWasHiRes( &probeBuffer.descriptor ) +
-       ::daqDescriptorWasPM( &probeBuffer.descriptor )    != 1 )
+   if( ::daqDescriptorWasDaq( &probe.descriptor )   +
+       ::daqDescriptorWasHiRes( &probe.descriptor ) +
+       ::daqDescriptorWasPM( &probe.descriptor )    != 1 )
    {
       //TODO Maybe clearing the entire buffer?
       clearBuffer();
       throw( DaqException( "Erroneous descriptor" ) );
    }
 
-   writeRamIndexes();
-
    std::size_t wordLen;
-   if( !::daqDescriptorWasDaq( &probeBuffer.descriptor ) )
+   if( !::daqDescriptorWasDaq( &probe.descriptor ) )
    { /*
       * Long block is detected, in this case the rest of the data
       * has still to be read from the DAQ-Ram-buffer.
       */
       if( ::ramReadDaqDataBlock( &m_oScuRam,
-                                 &probeBuffer.ramItems[c_ramBlockShortLen],
+                                 &probe.ramItems[c_ramBlockShortLen],
                                  c_ramBlockLongLen -
                                  c_ramBlockShortLen,
                                  ramReadPoll ) != EB_OK )
@@ -345,19 +351,16 @@ int DaqAdministration::distributeData( void )
       */
       wordLen = c_contineousDataLen;
    }
+   writeRamIndexes();
 
-   DaqChannel* pChannel = getChannelBySlotNumber(
-                          ::daqDescriptorGetSlot( &probeBuffer.descriptor ),
-                          ::daqDescriptorGetChannel( &probeBuffer.descriptor ) + 1
-                          );
-
+   DaqChannel* pChannel = getChannelByDescriptor( probe.descriptor );
 
    if( pChannel != nullptr )
    {
-      pChannel->onDataBlock( probeBuffer.buffer, wordLen );
+      pChannel->onDataBlock( probe.buffer, wordLen );
    }
 
-   return 0;
+   return getCurrentRamSize( false );
 }
 
 //================================== EOF ======================================

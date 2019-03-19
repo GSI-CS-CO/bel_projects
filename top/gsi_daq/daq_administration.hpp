@@ -46,6 +46,8 @@ class DaqChannel
    DaqDevice*   m_pParent;
 
 public:
+   constexpr static std::size_t  c_discriptorWordSize = DaqInterface::c_discriptorWordSize;
+
    DaqChannel( unsigned int number = 0 );
    virtual ~DaqChannel( void );
 
@@ -217,6 +219,13 @@ public:
 
    int distributeData( void );
 
+private:
+   DaqChannel* getChannelByDescriptor( DAQ_DESCRIPTOR_T& roDescriptor )
+   {
+      return getChannelBySlotNumber( ::daqDescriptorGetSlot( &roDescriptor ),
+                                     ::daqDescriptorGetChannel( &roDescriptor )
+                                     + 1 );
+   }
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -387,6 +396,7 @@ inline bool DaqChannel::receiveTriggerMode( void )
 {
    return getParent()->receiveTriggerMode( m_number );
 }
+
 
 } //namespace daq
 
