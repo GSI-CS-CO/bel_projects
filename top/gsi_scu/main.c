@@ -949,7 +949,7 @@ void dev_sio_handler(int id) {
   int i;
   int slot, dev;
   int status;
-  short dummy_aquisition;
+  short data_aquisition;
   struct msi m;
   static TaskType *task_ptr;              // task pointer
   task_ptr = tsk_getConfig();             // get a pointer to the task configuration
@@ -1041,13 +1041,13 @@ void dev_sio_handler(int id) {
       break;
 
     case 4:
-      /* dummy data aquisition */
+      /* data aquisition */
       for (i = 0; i < MAX_FG_CHANNELS; i++) {
         if (task_ptr[id].irq_data[i] & (DEV_STATE_IRQ | DEV_DRQ)) { // any irq pending?
           slot = fg_macros[fg_regs[i].macro_number] >> 24;
           dev = (fg_macros[fg_regs[i].macro_number] & 0x00ff0000) >> 16;
           // non blocking read for DAQ
-          if ((status = scub_set_task_mil(scub_base, task_ptr[id].slave_nr, id + i + 1, FC_CNTRL_RD | dev)) != OKAY) dev_failure(status, 23, "dev_sio read daq");
+          if ((status = scub_set_task_mil(scub_base, task_ptr[id].slave_nr, id + i + 1, FC_ACT_RD | dev)) != OKAY) dev_failure(status, 23, "dev_sio read daq");
         }
       }
       task_ptr[id].state = 5;
@@ -1066,7 +1066,7 @@ void dev_sio_handler(int id) {
           slot = fg_macros[fg_regs[i].macro_number] >> 24;
           dev = (fg_macros[fg_regs[i].macro_number] & 0x00ff0000) >> 16;
           // fetch DAQ
-          status = scub_get_task_mil(scub_base, task_ptr[id].slave_nr, id + i + 1, &dummy_aquisition);
+          status = scub_get_task_mil(scub_base, task_ptr[id].slave_nr, id + i + 1, &data_aquisition);
           if (status != OKAY) {
             if (status == RCV_TASK_BSY) {
               break; // break from for loop
@@ -1077,6 +1077,10 @@ void dev_sio_handler(int id) {
             } else if (status == RCV_ERROR) {
               mprintf("unknown error when reading task %d\n", task_ptr[id].slave_nr);
             }
+          }
+          if ((slot == 35) && (dev == 0x0d)) {
+            hist_addx(HISTORY_XYZ_MODULE, "daq_high", data_aquisition >> 8);
+            hist_addx(HISTORY_XYZ_MODULE, "daq_low", data_aquisition & 0xff);
           }
         }
       }
@@ -1109,7 +1113,7 @@ void dev_bus_handler(int id) {
   int i;
   int slot, dev;
   int status;
-  short dummy_aquisition;
+  short data_aquisition;
   struct msi m;
   static TaskType *task_ptr;              // task pointer
   task_ptr = tsk_getConfig();             // get a pointer to the task configuration
@@ -1202,13 +1206,13 @@ void dev_bus_handler(int id) {
       break;
 
     case 4:
-      /* dummy data aquisition */
+      /* data aquisition */
       for (i = 0; i < MAX_FG_CHANNELS; i++) {
         if (task_ptr[id].irq_data[i] & (DEV_STATE_IRQ | DEV_DRQ)) { // any irq pending?
           slot = fg_macros[fg_regs[i].macro_number] >> 24;
           dev = (fg_macros[fg_regs[i].macro_number] & 0x00ff0000) >> 16;
           // non blocking read for DAQ
-          if ((status = set_task_mil(scu_mil_base, id + i + 1, FC_CNTRL_RD | dev)) != OKAY) dev_failure(status, 23, "");
+          if ((status = set_task_mil(scu_mil_base, id + i + 1, FC_ACT_RD | dev)) != OKAY) dev_failure(status, 23, "");
         }
       }
       task_ptr[id].state = 5;
@@ -1226,7 +1230,7 @@ void dev_bus_handler(int id) {
           slot = fg_macros[fg_regs[i].macro_number] >> 24;
           dev = (fg_macros[fg_regs[i].macro_number] & 0x00ff0000) >> 16;
           // fetch DAQ
-          status = get_task_mil(scu_mil_base, id +  i + 1, &dummy_aquisition);
+          status = get_task_mil(scu_mil_base, id +  i + 1, &data_aquisition);
           if (status != OKAY) {
             if (status == RCV_TASK_BSY) {
               break; // break from for loop
