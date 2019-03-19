@@ -433,6 +433,14 @@ int ramPushDaqDataBlock( register RAM_SCU_T* pThis,
 
 #endif /* if defined(__lm32__) || defined(__DOXYGEN__) */
 
+#if defined(__linux__) || defined(__DOXYGEN__)
+
+/*! ---------------------------------------------------------------------------
+ */
+int ramReadDaqDataBlock( register RAM_SCU_T* pThis, RAM_DAQ_PAYLOAD_T* pData,
+                         unsigned int len, RAM_DAQ_POLL_FT poll );
+
+#endif /* defined(__linux__) || defined(__DOXYGEN__) */
 
 /*! @} */ //End of group SCU_RAM_BUFFER
 #ifdef __cplusplus

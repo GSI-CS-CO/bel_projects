@@ -517,9 +517,9 @@ static inline void daqChannelSample10usOn( register DAQ_CANNEL_T* pThis )
 {
 #ifdef CONFIG_DAQ_SIMULATE_CHANNEL
    pThis->callCount = 0;
-   pThis->simulatedDescriptor.name.cControl.channelMode.daqMode   = 1;
-   pThis->simulatedDescriptor.name.cControl.channelMode.hiResMode = 0;
-   pThis->simulatedDescriptor.name.cControl.channelMode.pmMode    = 0;
+   pThis->simulatedDescriptor.name.cControl.daqMode   = true;
+   pThis->simulatedDescriptor.name.cControl.hiResMode = false;
+   pThis->simulatedDescriptor.name.cControl.pmMode    = false;
 #else
    DAQ_CTRL_REG_T* pCtrl = daqChannelGetCtrlRegPtr( pThis );
    pCtrl->Sample1ms = OFF;
@@ -538,9 +538,9 @@ static inline void daqChannelSample10usOn( register DAQ_CANNEL_T* pThis )
 static inline void daqChannelSample10usOff( register DAQ_CANNEL_T* pThis )
 {
 #ifdef CONFIG_DAQ_SIMULATE_CHANNEL
-   pThis->simulatedDescriptor.name.cControl.channelMode.daqMode   = 0;
-   pThis->simulatedDescriptor.name.cControl.channelMode.hiResMode = 0;
-   pThis->simulatedDescriptor.name.cControl.channelMode.pmMode    = 0;
+   pThis->simulatedDescriptor.name.cControl.daqMode   = false;
+   pThis->simulatedDescriptor.name.cControl.hiResMode = false;
+   pThis->simulatedDescriptor.name.cControl.pmMode    = false;
 #else
    daqChannelGetCtrlRegPtr( pThis )->Sample10us = OFF;
 #endif
@@ -557,7 +557,7 @@ static inline void daqChannelSample10usOff( register DAQ_CANNEL_T* pThis )
 static inline bool daqChannelIsSample10usActive( register DAQ_CANNEL_T* pThis )
 {
 #ifdef CONFIG_DAQ_SIMULATE_CHANNEL
-   return pThis->simulatedDescriptor.name.cControl.channelMode.daqMode != 0;
+   return pThis->simulatedDescriptor.name.cControl.daqMode;
 #else
    return (daqChannelGetCtrlRegPtr( pThis )->Sample10us == ON);
 #endif
@@ -610,7 +610,7 @@ static inline
 bool daqChannelIsSample100usActive( register DAQ_CANNEL_T* pThis )
 {
 #ifdef CONFIG_DAQ_SIMULATE_CHANNEL
-   return pThis->simulatedDescriptor.name.cControl.channelMode.daqMode != 0;
+   return pThis->simulatedDescriptor.name.cControl.daqMode != 0;
 #else
    return (daqChannelGetCtrlRegPtr( pThis )->Sample100us == ON);
 #endif
@@ -747,8 +747,8 @@ static inline bool daqChannelGetTriggerSource( register DAQ_CANNEL_T* pThis )
 static inline void daqChannelEnablePostMortem( register DAQ_CANNEL_T* pThis )
 {
 #ifdef CONFIG_DAQ_SIMULATE_CHANNEL
-   DAQ_ASSERT( pThis->simulatedDescriptor.name.cControl.channelMode.hiResMode == 0 );
-   pThis->simulatedDescriptor.name.cControl.channelMode.pmMode = 1;
+   DAQ_ASSERT( pThis->simulatedDescriptor.name.cControl.hiResMode == false );
+   pThis->simulatedDescriptor.name.cControl.pmMode = true;
    pThis->callCount = 0;
 #else
    DAQ_ASSERT( daqChannelGetCtrlRegPtr( pThis )->Ena_HiRes == OFF );
@@ -767,7 +767,7 @@ static inline void daqChannelEnablePostMortem( register DAQ_CANNEL_T* pThis )
 static inline bool daqChannelIsPostMortemActive( register DAQ_CANNEL_T* pThis )
 {
 #ifdef CONFIG_DAQ_SIMULATE_CHANNEL
-   return pThis->simulatedDescriptor.name.cControl.channelMode.pmMode != 0;
+   return pThis->simulatedDescriptor.name.cControl.pmMode;
 #else
    return (daqChannelGetCtrlRegPtr( pThis )->Ena_PM == ON);
 #endif
@@ -782,7 +782,7 @@ static inline bool daqChannelIsPostMortemActive( register DAQ_CANNEL_T* pThis )
 static inline void daqChannelDisablePostMortem( register DAQ_CANNEL_T* pThis )
 {
 #ifdef CONFIG_DAQ_SIMULATE_CHANNEL
-   pThis->simulatedDescriptor.name.cControl.channelMode.pmMode = 0;
+   pThis->simulatedDescriptor.name.cControl.pmMode = false;
 #else
    daqChannelGetCtrlRegPtr( pThis )->Ena_PM = OFF;
 #endif
@@ -798,8 +798,8 @@ static inline
 void daqChannelEnableHighResolution( register DAQ_CANNEL_T* pThis )
 {
 #ifdef CONFIG_DAQ_SIMULATE_CHANNEL
-   DAQ_ASSERT( pThis->simulatedDescriptor.name.cControl.channelMode.pmMode == 0 );
-   pThis->simulatedDescriptor.name.cControl.channelMode.hiResMode = 1;
+   DAQ_ASSERT( pThis->simulatedDescriptor.name.cControl.pmMode == false );
+   pThis->simulatedDescriptor.name.cControl.hiResMode = true;
    pThis->callCount = 0;
 #else
    DAQ_ASSERT( daqChannelGetCtrlRegPtr( pThis )->Ena_PM == OFF );
@@ -817,7 +817,7 @@ static inline
 void daqChannelDisableHighResolution( register DAQ_CANNEL_T* pThis )
 {
 #ifdef CONFIG_DAQ_SIMULATE_CHANNEL
-   pThis->simulatedDescriptor.name.cControl.channelMode.hiResMode = 0;
+   pThis->simulatedDescriptor.name.cControl.hiResMode = false;
 #else
    daqChannelGetCtrlRegPtr( pThis )->Ena_HiRes = OFF;
 #endif
@@ -835,7 +835,7 @@ static inline
 bool daqChannelIsHighResolutionEnabled( register DAQ_CANNEL_T* pThis )
 {
 #ifdef CONFIG_DAQ_SIMULATE_CHANNEL
-   return pThis->simulatedDescriptor.name.cControl.channelMode.hiResMode != 0;
+   return pThis->simulatedDescriptor.name.cControl.hiResMode;
 #else
    return (daqChannelGetCtrlRegPtr( pThis )->Ena_HiRes == ON);
 #endif

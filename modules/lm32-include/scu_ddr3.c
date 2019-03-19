@@ -105,6 +105,7 @@ int ddr3FlushFiFo( register const DDR3_T* pThis, unsigned int start,
                    DDR3_POLL_FT poll )
 {
    int pollRet = 0;
+   unsigned int targetIndex = 0;
    DDR_ASSERT( pTarget != NULL );
    DDR_ASSERT( (word64len + start) <= DDR3_MAX_INDEX64 );
 
@@ -135,13 +136,14 @@ int ddr3FlushFiFo( register const DDR3_T* pThis, unsigned int start,
                break;
             pollCount++;
          }
-         ddr3PopFifo( pThis, &pTarget[start] );
+         ddr3PopFifo( pThis, &pTarget[targetIndex++] );
       #ifdef __linux__
          if( pThis->pEbHandle->status != EB_OK )
             return pThis->pEbHandle->status;
       #endif
-         start++;
+         //start++;
       }
+      start     += blkLen;
       word64len -= blkLen;
    }
    DBPRINT2( "DBG: FiFo-status final: 0x%08x\n", ddr3GetFifoStatus( pThis ) );

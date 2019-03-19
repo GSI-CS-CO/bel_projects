@@ -25,8 +25,9 @@
 #include <daq_administration.hpp>
 #include <algorithm>
 #include <iostream>
-#include <boost/circular_buffer.hpp>
-
+//#include <boost/circular_buffer.hpp>
+#include <cstddef>
+#include <unistd.h>
 using namespace daq;
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -255,7 +256,7 @@ DaqAdministration::getChannelBySlotNumber( const unsigned int slotNumber,
 #ifdef CONFIG_SCU_USE_DDR3
 extern "C" {
 
-static int ddr3Poll( const DDR3_T* pThis UNUSED, unsigned int count )
+static int ramReadPoll( const DDR3_T* pThis UNUSED, unsigned int count )
 {
    if( count >= 10 )
    {
@@ -274,54 +275,86 @@ int DaqAdministration::distributeData( void )
 {
    union PROBE_BUFFER_T
    {
-      DAQ_DATA_T        buffer[sizeof(DAQ_DESCRIPTOR_T)/sizeof(DAQ_DATA_T) +
-                                      RAM_DAQ_DESCRIPTOR_COMPLETION];
+      DAQ_DATA_T        buffer[c_hiresPmDataLen];
       RAM_DAQ_PAYLOAD_T ramItems[sizeof(PROBE_BUFFER_T::buffer) /
                                  sizeof(RAM_DAQ_PAYLOAD_T)];
       DAQ_DESCRIPTOR_T  descriptor;
    } PACKED_SIZE;
 
+   static_assert( sizeof(PROBE_BUFFER_T)
+                   == c_hiresPmDataLen * sizeof(DAQ_DATA_T),
+                  "sizeof(PROBE_BUFFER_T) has to be equal"
+                  "c_hiresPmDataLen * sizeof(DAQ_DATA_T) !" );
    static_assert( sizeof(PROBE_BUFFER_T) % sizeof(RAM_DAQ_PAYLOAD_T) == 0,
                   "sizeof(PROBE_BUFFER_T) has to be dividable by "
                   "sizeof(RAM_DAQ_PAYLOAD_T) !" );
 
+   std::size_t size = getCurrentRamSize( true );
+   if( size == 0 )
+      return 0;
+   if( size % c_ramBlockShortLen != 0 )
+   {
+      //TODO data perhaps corrupt!
+      clearBuffer();
+      return -1;
+   }
+
    PROBE_BUFFER_T probeBuffer;
 
-#ifdef CONFIG_SCU_USE_DDR3
-   if( ::ddr3FlushFiFo( &m_oScuRam.ram, 0, ARRAY_SIZE(probeBuffer.ramItems),
-                    probeBuffer.ramItems, ddr3Poll ) != EB_OK )
-      throw EbException( "Unable to read SCU-Ram buffer" );
-#else
-   #error At hthe moment DDR3 is supported only please define CONFIG_SCU_USE_DDR3
-#endif
-   std::cout << "Slot:    " << daqDescriptorGetSlot( &probeBuffer.descriptor ) << std::endl;
-   std::cout << "Channel: " << daqDescriptorGetChannel( &probeBuffer.descriptor ) + 1 << std::endl;
+   /*
+    * At first a short block is supposed. It's necessary to read this data
+    * obtaining the device-descriptor.
+    */
+   if( ::ramReadDaqDataBlock( &m_oScuRam, probeBuffer.ramItems,
+                              c_ramBlockShortLen, ramReadPoll ) != EB_OK )
+      throw EbException( "Unable to read SCU-Ram buffer first part" );
 
-   std::cout << "trigger: " << std::hex << daqDescriptorGetTriggerCondition( &probeBuffer.descriptor )
-             << std::dec << std::endl;
-   std::cout << "delay: " << std::hex << daqDescriptorGetTriggerDelay( &probeBuffer.descriptor )
-             << std::dec << std::endl;
 
-   if( daqDescriptorWasDaq( &probeBuffer.descriptor )   +
-       daqDescriptorWasHiRes( &probeBuffer.descriptor ) +
-       daqDescriptorWasPM( &probeBuffer.descriptor )    != 1 )
+   /*
+    * Rough check of the device descriptors integrity.
+    */
+   if( ::daqDescriptorWasDaq( &probeBuffer.descriptor )   +
+       ::daqDescriptorWasHiRes( &probeBuffer.descriptor ) +
+       ::daqDescriptorWasPM( &probeBuffer.descriptor )    != 1 )
    {
+      //TODO Maybe clearing the entire buffer?
+      clearBuffer();
       throw( DaqException( "Erroneous descriptor" ) );
    }
 
+   writeRamIndexes();
+
+   std::size_t wordLen;
+   if( !::daqDescriptorWasDaq( &probeBuffer.descriptor ) )
+   { /*
+      * Long block is detected, in this case the rest of the data
+      * has still to be read from the DAQ-Ram-buffer.
+      */
+      if( ::ramReadDaqDataBlock( &m_oScuRam,
+                                 &probeBuffer.ramItems[c_ramBlockShortLen],
+                                 c_ramBlockLongLen -
+                                 c_ramBlockShortLen,
+                                 ramReadPoll ) != EB_OK )
+         throw EbException( "Unable to read SCU-Ram buffer second part" );
+
+      wordLen = c_hiresPmDataLen;
+   }
+   else
+   { /*
+      * Short block is detected.
+      */
+      wordLen = c_contineousDataLen;
+   }
+
    DaqChannel* pChannel = getChannelBySlotNumber(
-                            daqDescriptorGetSlot( &probeBuffer.descriptor ),
-                            daqDescriptorGetChannel( &probeBuffer.descriptor ) + 1
+                          ::daqDescriptorGetSlot( &probeBuffer.descriptor ),
+                          ::daqDescriptorGetChannel( &probeBuffer.descriptor ) + 1
                           );
+
+
    if( pChannel != nullptr )
    {
-      std::cout << "Channel found!" << std::endl;
-      for( unsigned int i = 0; i < sizeof( probeBuffer.buffer ); i++ )
-      {
-         pChannel->onDataInput( probeBuffer.buffer[i],
-                     i > sizeof( DAQ_DESCRIPTOR_T ) / sizeof( DAQ_DATA_T ));
-      }
-
+      pChannel->onDataBlock( probeBuffer.buffer, wordLen );
    }
 
    return 0;

@@ -538,15 +538,6 @@ RAM_RING_INDEX_T DaqInterface::getCurrentRamSize( bool update )
 
 /*! ---------------------------------------------------------------------------
  */
-void DaqInterface::ramAddToReadIndex( RAM_RING_INDEX_T toAdd, bool update )
-{
-   ::ramRingAddToReadIndex( &m_oSharedData.ramIndexes.ringIndexes, toAdd );
-   if( update )
-      writeRamIndexes();
-}
-
-/*! ---------------------------------------------------------------------------
- */
 unsigned int DaqInterface::getSlotNumber( const unsigned int deviceNumber )
 {
    SCU_ASSERT( deviceNumber > 0 );
@@ -747,6 +738,7 @@ int DaqInterface::sendTriggerMode( const unsigned int deviceNumber,
    writeParam1();
    return sendCommand( DAQ_OP_SET_TRIGGER_MODE );
 }
+
 /*! ---------------------------------------------------------------------------
  */
 bool DaqInterface::receiveTriggerMode( const unsigned int deviceNumber,
@@ -757,6 +749,15 @@ bool DaqInterface::receiveTriggerMode( const unsigned int deviceNumber,
    sendCommand( DAQ_OP_GET_TRIGGER_MODE );
    readParam1();
    return m_oSharedData.operation.ioData.param1;
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+void DaqInterface::clearBuffer( bool update )
+{
+   ramRingReset( &m_oScuRam.pSharedObj->ringIndexes );
+   if( update )
+      writeRamIndexes();
 }
 
 //================================== EOF ======================================

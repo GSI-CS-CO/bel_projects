@@ -156,6 +156,7 @@ int32_t opReset( DAQ_ADMIN_T* pDaqAdmin, volatile DAQ_OPERATION_IO_T* pData )
 {
    FUNCTION_INFO();
    daqBusReset( &pDaqAdmin->oDaqDevs );
+   ramRingReset( &pDaqAdmin->oRam.pSharedObj->ringIndexes );
    return DAQ_RET_OK;
 }
 

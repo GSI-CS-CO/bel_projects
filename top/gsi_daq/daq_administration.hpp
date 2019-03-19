@@ -80,7 +80,7 @@ public:
    bool receiveTriggerMode( void );
 
 protected:
-   virtual bool onDataInput( DAQ_DATA_T data, bool isPayload ) = 0;
+   virtual bool onDataBlock( DAQ_DATA_T* pData, std::size_t wordLen ) = 0;
 
 };
 

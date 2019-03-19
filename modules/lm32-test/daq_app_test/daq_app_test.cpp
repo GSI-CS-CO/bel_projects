@@ -1,5 +1,6 @@
 
 #include <iostream>
+#include <iomanip>
 #include <eb_console_helper.h>
 #include <daq_channel_container.hpp>
 #include <unistd.h>
@@ -24,11 +25,27 @@ public:
               ",  slot: " << getSlot() << endl;
    }
 
-   bool onDataInput( DAQ_DATA_T data, bool isPayload ) override;
+   bool onDataBlock( DAQ_DATA_T* pData, std::size_t wordLen ) override;
 };
 
-bool MyDaqChannel::onDataInput( DAQ_DATA_T data, bool isPayload )
+bool MyDaqChannel::onDataBlock( DAQ_DATA_T* pData, std::size_t wordLen )
 {
+  std::cout << "Slot:    " << getSlot();
+  std::cout << "\nChannel: " << getNumber() << std::endl;
+
+  std::cout << "trigger: 0x" << std::hex << descriptorGetTreggerCondition( pData )
+             << std::dec << std::endl;
+  std::cout << "delay: 0x" << std::hex << descriptorGetTriggerDelay( pData )
+             << std::dec << std::endl;
+  std::cout << "CRC: 0x" << std::hex << std::setfill('0') << std::setw(2) <<
+     static_cast<unsigned int>(descriptorGetCrc( pData ))
+             << std::dec << std::endl;
+  std::cout << "Seconds:     " <<
+     daqDescriptorGetTimeStampSec( reinterpret_cast<DAQ_DESCRIPTOR_T*>(pData) )
+     << std::endl;
+  std::cout << "Nanoseconds: " <<
+   daqDescriptorGetTimeStampNanoSec( reinterpret_cast<DAQ_DESCRIPTOR_T*>(pData) )
+   << std::endl;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -42,7 +59,6 @@ int main( int argc, const char** ppArgv )
       DaqChannelContainer< MyDaqChannel > oDaqInterface( ppArgv[1] );
       cout << "WB-interface:        " << oDaqInterface.getWbDevice() << endl;
       cout << "Found devices:       " << oDaqInterface.getMaxFoundDevices() << endl;
-
       cout << "Registered channels: " << oDaqInterface.getMaxChannels() << endl;
       for( auto& itDev: oDaqInterface )
       {
@@ -64,6 +80,7 @@ int main( int argc, const char** ppArgv )
       usleep( 100000 );
       cout << "Ram level: " << oDaqInterface.getCurrentRamSize(true ) << endl;
 
+      oDaqInterface.distributeData();
       oDaqInterface.distributeData();
    }
    catch( daq::EbException& e )

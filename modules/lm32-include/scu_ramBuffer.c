@@ -504,4 +504,41 @@ int ramPushDaqDataBlock( register RAM_SCU_T* pThis, DAQ_CANNEL_T* pDaqChannel,
 
 #endif /* if defined(__lm32__) || defined(__DOXYGEN__) */
 
+#if defined(__linux__) || defined(__DOXYGEN__)
+/*! ---------------------------------------------------------------------------
+ */
+int ramReadDaqDataBlock( register RAM_SCU_T* pThis, RAM_DAQ_PAYLOAD_T* pData,
+                         unsigned int len, RAM_DAQ_POLL_FT poll )
+{
+#ifdef CONFIG_SCU_USE_DDR3
+   int ret;
+   RAM_RING_INDEXES_T indexes = pThis->pSharedObj->ringIndexes;
+   unsigned int lenToEnd = indexes.capacity - indexes.start;
+
+   if( lenToEnd < len )
+   {
+      ret = ddr3FlushFiFo( &pThis->ram, ramRingGeReadIndex( &indexes ),
+                           lenToEnd, pData, poll );
+      if( ret != EB_OK )
+         return ret;
+      ramRingAddToReadIndex( &indexes, lenToEnd );
+      len   -= lenToEnd;
+      pData += lenToEnd;
+   }
+
+   ret = ddr3FlushFiFo( &pThis->ram, ramRingGeReadIndex( &indexes ),
+                        len, pData, poll );
+   if( ret != EB_OK )
+      return ret;
+   ramRingAddToReadIndex( &indexes, len );
+   pThis->pSharedObj->ringIndexes = indexes;
+
+   return EB_OK;
+#else
+#error Nnknown melury type for function: ramReadDaqDataBlock()
+#endif
+}
+
+#endif /* defined(__linux__) || defined(__DOXYGEN__) */
+
 /*================================== EOF ====================================*/

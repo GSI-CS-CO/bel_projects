@@ -30,6 +30,7 @@
 #include <scu_ramBuffer.h>
 #include <daq_descriptor.h>
 #include <eb_object_transfer.h>
+#include <stddef.h>
 #include <string>
 #include <exception>
 
@@ -62,6 +63,23 @@ const std::string status2String( DAQ_RETURN_CODE_T status );
  * @brief Error exceptions in communication with the LM32 firmware.
  * @{
  */
+
+inline uint32_t descriptorGetTreggerCondition( DAQ_DATA_T* pData )
+{
+   return ::daqDescriptorGetTriggerCondition(
+                               reinterpret_cast<DAQ_DESCRIPTOR_T*>(pData) );
+}
+
+inline uint16_t descriptorGetTriggerDelay( DAQ_DATA_T* pData )
+{
+   return ::daqDescriptorGetTriggerDelay(
+                               reinterpret_cast<DAQ_DESCRIPTOR_T*>(pData) );
+}
+
+inline uint8_t descriptorGetCrc( DAQ_DATA_T* pData )
+{
+   return ::daqDescriptorGetCRC( reinterpret_cast<DAQ_DESCRIPTOR_T*>(pData) );
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 /*!
@@ -140,11 +158,14 @@ protected:
    constexpr static unsigned int c_maxCmdPoll = 100;
 
 public:
-   constexpr static unsigned int c_maxDevices   = DAQ_MAX;
-   constexpr static unsigned int c_maxSlots     = MAX_SCU_SLAVES;
-   constexpr static unsigned int c_startSlot    = SCUBUS_START_SLOT;
-   constexpr static unsigned int c_maxChannels  = DAQ_MAX_CHANNELS;
-
+   constexpr static unsigned int c_maxDevices        = DAQ_MAX;
+   constexpr static unsigned int c_maxSlots          = MAX_SCU_SLAVES;
+   constexpr static unsigned int c_startSlot         = SCUBUS_START_SLOT;
+   constexpr static unsigned int c_maxChannels       = DAQ_MAX_CHANNELS;
+   constexpr static std::size_t  c_ramBlockShortLen  = RAM_DAQ_SHORT_BLOCK_LEN;
+   constexpr static std::size_t  c_ramBlockLongLen   = RAM_DAQ_LONG_BLOCK_LEN;
+   constexpr static std::size_t  c_hiresPmDataLen    = DAQ_FIFO_PM_HIRES_WORD_SIZE_CRC;
+   constexpr static std::size_t  c_contineousDataLen = DAQ_FIFO_DAQ_WORD_SIZE_CRC;
 
    DaqInterface( const std::string = DAQ_DEFAULT_WB_DEVICE );
 
@@ -246,7 +267,8 @@ protected:
       m_oSharedData.operation.ioData.location.channel      = channel;
    }
 
-   void ramAddToReadIndex( RAM_RING_INDEX_T toAdd, bool update = true );
+   void clearBuffer( bool update = true );
+   void writeRamIndexes( void );
 
 private:
 
@@ -289,7 +311,6 @@ private:
    void writeParam123( void );
    void writeParam1234( void );
 
-   void writeRamIndexes( void );
 }; // end class DaqInterface
 
 } //namespace daq
