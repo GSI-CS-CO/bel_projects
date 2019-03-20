@@ -29,7 +29,7 @@
 
 #include <generated/shared_mmap.h>
 #include <scu_bus_defines.h>
-#include <scu_ramBuffer.h>
+#include <daq_ramBuffer.h>
 #include <stdint.h>
 
 /*!

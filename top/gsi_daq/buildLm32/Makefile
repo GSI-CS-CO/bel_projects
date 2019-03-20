@@ -21,7 +21,7 @@ SOURCE += $(WR_DIR)/dev/w1-temp.c
 SOURCE += $(DAQ_DIR)/daq.c
 SOURCE += $(DAQ_DIR)/daq_command_interface_uc.c
 SOURCE += $(SCU_LIB_SRC_DIR)/scu_ddr3.c
-SOURCE += $(DAQ_DIR)/scu_ramBuffer.c
+SOURCE += $(DAQ_DIR)/daq_ramBuffer.c
 
 DEFINES += CONFIG_DAQ_PEDANTIC_CHECK
 DEFINES += CONFIG_RAM_PEDANTIC_CHECK

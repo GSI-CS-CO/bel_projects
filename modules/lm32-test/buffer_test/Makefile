@@ -2,7 +2,7 @@
 MIAN_MODULE := buffer_test.c
 
 SOURCE += $(SCU_LIB_SRC_DIR)/scu_ddr3.c
-SOURCE += $(SCU_LIB_SRC_DIR)/scu_ramBuffer.c
+SOURCE += $(DAQ_DIR)/daq_ramBuffer.c
 SOURCE += $(DAQ_DIR)/daq.c
 
 REPOSITORY_DIR := $(shell git rev-parse --show-toplevel)

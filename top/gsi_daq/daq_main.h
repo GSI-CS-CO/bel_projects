@@ -28,7 +28,7 @@
 #include <daq_command_interface.h>
 #include <daq_command_interface_uc.h>
 #include <daq.h>
-#include <scu_ramBuffer.h>
+#include <daq_ramBuffer.h>
 
 #ifdef __cplusplus
 extern "C" {

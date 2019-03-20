@@ -26,7 +26,7 @@
 #include <daq_command_interface_uc.h>
 #include <scu_lm32_macros.h>
 #include <daq_main.h>
-#include <scu_ramBuffer.h>
+#include <daq_ramBuffer.h>
 #include <dbg.h>
 
 /*!!!!!!!!!!!!!!!!!!!!!! Begin of shared memory area !!!!!!!!!!!!!!!!!!!!!!!!*/
@@ -37,7 +37,7 @@ volatile DAQ_SHARED_IO_T SHARED g_shared =
    .operation =
    {
       .code    = DAQ_OP_IDLE,
-      .retCode = 0
+      .retCode = DAQ_RET_OK
    }
 };
 /*!!!!!!!!!!!!!!!!!!!!!!! End of shared memory area !!!!!!!!!!!!!!!!!!!!!!!!!*/
@@ -45,7 +45,7 @@ volatile DAQ_SHARED_IO_T SHARED g_shared =
 typedef int32_t (*DAQ_OPERATION_FT)( DAQ_ADMIN_T* pDaqAdmin,
                                      volatile DAQ_OPERATION_IO_T* );
 
-/*!
+/*! ---------------------------------------------------------------------------
  * @ingroup DAQ_INTERFACE
  * @brief Definition of the item for the operation match list.
  */
@@ -62,7 +62,8 @@ typedef struct
    DAQ_OPERATION_FT     operation;
 } DAQ_OPERATION_TAB_ITEM_T;
 
-
+/*! ---------------------------------------------------------------------------
+ */
 #ifdef DEBUGLEVEL
 static void printFunctionName( const char* str )
 {
@@ -451,9 +452,20 @@ static const DAQ_OPERATION_TAB_ITEM_T g_operationTab[] =
  */
 bool executeIfRequested( DAQ_ADMIN_T* pDaqAdmin )
 {
+   /*
+    * Requests the Linux host an operation?
+    */
    if( g_shared.operation.code == DAQ_OP_IDLE )
+   { /*
+      * No, there is nothing to do...
+      */
       return false;
+   }
 
+   /*
+    * Yes, executing the requested operation if present
+    * in the operation table.
+    */
    unsigned int i = 0;
    while( g_operationTab[i].operation != NULL )
    {
@@ -466,8 +478,14 @@ bool executeIfRequested( DAQ_ADMIN_T* pDaqAdmin )
       }
       i++;
    }
+
+   /*
+    * Was the requested operation known?
+    */
    if( g_operationTab[i].operation == NULL )
-   {
+   { /*
+      * No, making known this for the Linux host.
+      */
       DBPRINT1( "DBG: DAQ_RET_ERR_UNKNOWN_OPERATION\n" );
       g_shared.operation.retCode = DAQ_RET_ERR_UNKNOWN_OPERATION;
    }
@@ -481,6 +499,10 @@ bool executeIfRequested( DAQ_ADMIN_T* pDaqAdmin )
    else
       ret = false;
 
+   /*
+    * Making known for the Linux host that this application is ready
+    * for the next operation.
+    */
    g_shared.operation.code = DAQ_OP_IDLE;
    return ret;
 }

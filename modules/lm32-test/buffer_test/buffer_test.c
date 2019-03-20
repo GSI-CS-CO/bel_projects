@@ -30,7 +30,7 @@
  */
 
 #include <mini_sdb.h>
-#include <scu_ramBuffer.h>
+#include <daq_ramBuffer.h>
 #include <eb_console_helper.h>
 #include <string.h>
 
@@ -159,7 +159,9 @@ void main( void )
    mprintf( "Offset of channel control: %d\n", RAM_DAQ_INDEX_OFFSET_OF_CHANNEL_CONTROL );
    mprintf( "Length of channel control: %d\n", RAM_DAQ_INDEX_LENGTH_OF_CHANNEL_CONTROL );
    mprintf( "Word offset of channel control: %d\n", RAM_DAQ_DAQ_WORD_OFFSET_OF_CHANNEL_CONTROL );
-//   return;
+   mprintf( "access offset of channel control: %d\n",
+            (RAM_DAQ_INDEX_OFFSET_OF_CHANNEL_CONTROL % offsetof(_DAQ_DISCRIPTOR_STRUCT_T, cControl )) / sizeof(DAQ_DATA_T) );
+   //return;
    if( ramInit( &oRam, &g_FifoAdmin ) < 0  )
    {
       mprintf( ESC_FG_RED"ERROR: Could not find DDR3 base address!\n"ESC_NORMAL );
@@ -167,8 +169,8 @@ void main( void )
    }
 #if 1
    daqChannelReset( &daqChannel );
-   daqDescriptorSetSlot( &daqChannel.simulatedDescriptor, 12 );
-   daqDescriptorSetChannel( &daqChannel.simulatedDescriptor, 4 );
+   daqDescriptorSetSlot( &daqChannel.simulatedDescriptor, 9 );
+   daqDescriptorSetChannel( &daqChannel.simulatedDescriptor, 6 );
    daqDescriptorSetTriggerConditionLW( &daqChannel.simulatedDescriptor, 0xA );
    daqDescriptorSetTriggerConditionHW( &daqChannel.simulatedDescriptor, 0xB );
    daqDescriptorSetTriggerDelay( &daqChannel.simulatedDescriptor, 0xC );
@@ -189,7 +191,7 @@ void main( void )
    ramPushDaqDataBlock( &oRam, &daqChannel, false );
    //ramPushDaqDataBlock( &oRam, &daqChannel, false );
 #endif
-   for( int i = 0; i < 20; i++ )
+   for( int i = 0; i < 6; i++ )
       ramPushDaqDataBlock( &oRam, &daqChannel, (i % 2) == 0 );
 
 

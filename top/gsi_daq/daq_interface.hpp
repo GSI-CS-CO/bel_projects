@@ -27,7 +27,7 @@
 
 #include <daq_command_interface.h>
 #include <scu_bus_defines.h>
-#include <scu_ramBuffer.h>
+#include <daq_ramBuffer.h>
 #include <daq_descriptor.h>
 #include <eb_object_transfer.h>
 #include <stddef.h>
