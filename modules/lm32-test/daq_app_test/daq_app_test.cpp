@@ -70,6 +70,19 @@ void doTest( const string wbName )
    cout << "Found devices:       " << oDaqInterface.getMaxFoundDevices() << endl;
    cout << "Registered channels: " << oDaqInterface.getMaxChannels() << endl;
 
+   if( oDaqInterface.getMaxFoundDevices() == 0 )
+   {
+      cerr << ESC_FG_RED "Error: No DAQ devices found!" ESC_NORMAL << endl;
+      return;
+   }
+
+   if( oDaqInterface.getMaxChannels() == 0 )
+   {
+      cerr << ESC_FG_RED "Error: No DAQ channels found! How that!?!" ESC_NORMAL
+      << endl;
+      return;
+   }
+
    for( auto& itDev: oDaqInterface )
    {
       cout << "Slot:  " << itDev->getSlot() << endl;
@@ -81,7 +94,7 @@ void doTest( const string wbName )
 
    MyDaqChannel* pChannel_a = oDaqInterface.getChannelByAbsoluteNumber( 1 );
    assert( pChannel_a != nullptr );
-   MyDaqChannel* pChannel_b = oDaqInterface.getChannelByAbsoluteNumber( 5 );
+   MyDaqChannel* pChannel_b = oDaqInterface.getChannelByAbsoluteNumber( 2 );
    assert( pChannel_b != nullptr );
    pChannel_a->sendTriggerDelay( 0x55 );
    pChannel_a->sendTriggerCondition( 0xCAFEAFFE );
@@ -97,6 +110,10 @@ void doTest( const string wbName )
 
    pChannel_a->sendEnableContineous( DAQ_SAMPLE_10US );
    pChannel_b->sendEnableContineous( DAQ_SAMPLE_10US );
+
+   usleep( 100000 );
+ //  oDaqInterface.sendReset();
+   pChannel_a->sendEnableContineous( DAQ_SAMPLE_10US );
    usleep( 100000 );
    cout << "Ram level: " << oDaqInterface.getCurrentRamSize(true ) << endl;
 

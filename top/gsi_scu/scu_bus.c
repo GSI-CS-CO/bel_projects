@@ -1,10 +1,13 @@
 /** @file scu_bus.c
  *
- *  Copyright (C) 2011-2018 GSI Helmholtz Centre for Heavy Ion Research GmbH
+ *  @copyright (C) 2011-2018 GSI Helmholtz Centre for Heavy Ion Research GmbH
  *
  *  @author Stefan Rauch <s.rauch@gsi.de> perhaps
  *  @author Ulrich Becker <u.becker@gsi.de>
  *
+ * @see
+ * <a href="https://www-acc.gsi.de/wiki/Hardware/Intern/StdRegScuBusSlave">
+ *    Registersatz SCU-Bus-Slaves</a>
  *
  *******************************************************************************
  *  This library is free software; you can redistribute it and/or
@@ -171,8 +174,8 @@ SCUBUS_SLAVE_FLAGS_T scuBusFindSpecificSlaves( const void* pScuBusBase,
 {
    const SCU_BUS_MATCH_ITEM16_T matchList[] =
    {
-      { .index = CID_SYSTEM,.value = systemAddr },
-      { .index = CID_GROUP, .value = grupAddr },
+      { .index = CID_SYSTEM, .value = systemAddr },
+      { .index = CID_GROUP,  .value = grupAddr },
       SCUBUS_MATCH_LIST16_TERMINATOR
    };
    return scuBusFindSlavesByMatchList16( pScuBusBase, matchList, ALL );

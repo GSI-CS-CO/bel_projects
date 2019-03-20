@@ -1,31 +1,35 @@
 /*!
- *  @file daq.h
- *  @brief Control module for Data Acquisition Unit (DAQ)
- *  @see
- *  <a href="https://www-acc.gsi.de/wiki/Hardware/Intern/DataAquisitionMacrof%C3%BCrSCUSlaveBaugruppen">
- *     Data Aquisition Macro fuer SCU Slave Baugruppen</a>
- *  @date 13.11.2018
- *  @copyright (C) 2018 GSI Helmholtz Centre for Heavy Ion Research GmbH
+ * @file daq.h
+ * @brief Control module for Data Acquisition Unit (DAQ)
+ * @see
+ * <a href="https://www-acc.gsi.de/wiki/Hardware/Intern/DataAquisitionMacrof%C3%BCrSCUSlaveBaugruppen">
+ *    Data Aquisition Macro fuer SCU Slave Baugruppen</a>
+ * @see
+ * <a href="https://www-acc.gsi.de/wiki/Hardware/Intern/StdRegScuBusSlave">
+ *    Registersatz SCU-Bus-Slaves</a>
  *
- *  @author Ulrich Becker <u.becker@gsi.de>
+ * @date 13.11.2018
+ * @copyright (C) 2018 GSI Helmholtz Centre for Heavy Ion Research GmbH
  *
- *  @todo Synchronization with SCU-Bus. It could be there that further devices
- *        which have traffic via this SCU-Bus!
+ * @author Ulrich Becker <u.becker@gsi.de>
  *
- *******************************************************************************
- *  This library is free software; you can redistribute it and/or
- *  modify it under the terms of the GNU Lesser General Public
- *  License as published by the Free Software Foundation; either
- *  version 3 of the License, or (at your option) any later version.
+ * @todo Synchronization with SCU-Bus. It could be there that further devices
+ *       which have traffic via this SCU-Bus!
  *
- *  This library is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- *  Lesser General Public License for more details.
+ ******************************************************************************
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 3 of the License, or (at your option) any later version.
  *
- *  You should have received a copy of the GNU Lesser General Public
- *  License along with this library. If not, see <http://www.gnu.org/licenses/>.
- *******************************************************************************
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library. If not, see <http://www.gnu.org/licenses/>.
+ ******************************************************************************
  */
 #ifndef _DAQ_H
 #define _DAQ_H

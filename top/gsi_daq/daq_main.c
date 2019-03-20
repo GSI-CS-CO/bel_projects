@@ -91,6 +91,9 @@ static inline bool concernsChannel( DAQ_CANNEL_T* pChannel )
  */
 static inline bool forEachCahnnel( DAQ_DEVICE_T* pDevice )
 {
+ // daqDeviceTestAndClearDaqInt( pDevice );
+ //  daqDeviceTestAndClearHiResInt( pDevice );
+//daqDeviceClearDaqChannelInterrupts( pDevice );
    for( unsigned int channelNr = 0;
         channelNr < daqDeviceGetMaxChannels( pDevice ); channelNr++ )
    {
@@ -98,6 +101,7 @@ static inline bool forEachCahnnel( DAQ_DEVICE_T* pDevice )
          return true;
       concernsChannel( daqDeviceGetChannelObject( pDevice, channelNr ));
    }
+ //  daqDeviceClearDaqChannelInterrupts( pDevice );
    return false;
 }
 
@@ -111,9 +115,10 @@ static inline void forEachDevice( void )
       if( forEachCahnnel( daqBusGetDeviceObject( &g_DaqAdmin.oDaqDevs, deviceNr ) ))
       {
          DBPRINT1( "DBG: Leaving loop\n" );
-         break;
+         return;
       }
    }
+   executeIfRequested( &g_DaqAdmin );
 }
 
 /*================================= main ====================================*/

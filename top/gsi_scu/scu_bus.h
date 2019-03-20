@@ -1,10 +1,13 @@
 /** @file scu_bus.h
  *  
- *  Copyright (C) 2011-2018 GSI Helmholtz Centre for Heavy Ion Research GmbH
+ *  @copyright (C) 2018 GSI Helmholtz Centre for Heavy Ion Research GmbH
  *
  *  @author Stefan Rauch <s.rauch@gsi.de>
  *  @author Ulrich Becker <u.becker@gsi.de>
  *
+ * @see
+ * <a href="https://www-acc.gsi.de/wiki/Hardware/Intern/StdRegScuBusSlave">
+ *    Registersatz SCU-Bus-Slaves</a>
  *
  *******************************************************************************
  *  This library is free software; you can redistribute it and/or
@@ -58,6 +61,9 @@ extern "C" {
 /*!
  * @ingroup SCU_BUS
  * @brief Definitions of SCU-bus slave (offset) addresses.
+ * @see
+ * <a href="https://www-acc.gsi.de/wiki/Hardware/Intern/StdRegScuBusSlave">
+ *    Registersatz SCU-Bus-Slaves</a>
  */
 typedef enum
 {

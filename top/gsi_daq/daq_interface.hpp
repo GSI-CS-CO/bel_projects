@@ -203,6 +203,11 @@ public:
       return ::scuBusIsSlavePresent( m_slotFlags, slot );
    }
 
+   void sendReset( void )
+   {
+      sendCommand( DAQ_OP_RESET );
+   }
+
    unsigned int readMacroVersion( const unsigned int deviceNumber );
 
    unsigned int getSlotNumber( const unsigned int deviceNumber );

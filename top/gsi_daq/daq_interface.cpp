@@ -85,7 +85,7 @@ DaqInterface::DaqInterface( const std::string wbDevice )
    }
 
    readSharedTotal();
-   sendCommand( DAQ_OP_RESET );
+   sendReset();
    readSlotStatus();
 }
 
