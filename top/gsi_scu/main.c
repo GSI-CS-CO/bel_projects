@@ -77,6 +77,7 @@ extern int scub_write_mil_blk(volatile unsigned short *base, int slot, short *da
 extern struct msi remove_msg(volatile struct message_buffer *mb, int queue);
 extern int add_msg(volatile struct message_buffer *mb, int queue, struct msi m);
 extern int has_msg(volatile struct message_buffer *mb, int queue);
+extern void add_daq_msg(volatile struct daq_buffer *db, struct daq d);
 
 /* task prototypes */
 void dev_sio_handler(int);
@@ -96,15 +97,13 @@ uint32_t SHARED backplane_temp     = -1; /*!< temperature value of the backplane
 uint32_t SHARED fg_magic_number    = 0xdeadbeef;
 uint32_t SHARED fg_version         = 0x3; /*!< 0x2 saftlib, 0x3 new msi system with mailbox */
 uint32_t SHARED fg_mb_slot               = -1;
-uint32_t SHARED fg_num_channels          = MAX_FG_CHANNELS; /*!< tell saftlib the max number of fg channels */
-uint32_t SHARED fg_buffer_size           = BUFFER_SIZE; /*!< tell saftlib the buffer size for one channel */
-uint32_t SHARED fg_macros[MAX_FG_MACROS] = {0}; /*!< hi..lo bytes: slot, device, version, output-bits */
-struct channel_regs SHARED fg_regs[MAX_FG_CHANNELS]; /*!< header of the channel buffers, here are the indexes of the buffers */
-struct channel_buffer SHARED fg_buffer[MAX_FG_CHANNELS]; /*!< array of channel buffers, here is the data for each buffer */
-HistItem SHARED histbuf[HISTSIZE];
-/**
- * this is a brief description
- */
+uint32_t SHARED fg_num_channels          = MAX_FG_CHANNELS;
+uint32_t SHARED fg_buffer_size           = BUFFER_SIZE;
+uint32_t SHARED fg_macros[MAX_FG_MACROS] = {0}; // hi..lo bytes: slot, device, version, output-bits
+struct channel_regs SHARED fg_regs[MAX_FG_CHANNELS];
+struct channel_buffer SHARED fg_buffer[MAX_FG_CHANNELS];
+struct daq_buffer SHARED daq_buf = {0};
+HistItem  histbuf[HISTSIZE];
 
 volatile unsigned short* scub_base     = 0;
 volatile unsigned int* scub_irq_base   = 0;
@@ -951,6 +950,8 @@ void dev_sio_handler(int id) {
   int status;
   short data_aquisition;
   struct msi m;
+  struct daq d;
+  uint64_t daq_time;
   static TaskType *task_ptr;              // task pointer
   task_ptr = tsk_getConfig();             // get a pointer to the task configuration
 
@@ -1078,10 +1079,16 @@ void dev_sio_handler(int id) {
               mprintf("unknown error when reading task %d\n", task_ptr[id].slave_nr);
             }
           }
-          if ((slot == 35) && (dev == 0x0d)) {
-            hist_addx(HISTORY_XYZ_MODULE, "daq_high", data_aquisition >> 8);
-            hist_addx(HISTORY_XYZ_MODULE, "daq_low", data_aquisition & 0xff);
-          }
+          d.setpoint = 0;
+          d.actvalue = data_aquisition;
+          daq_time = getSysTime();
+          d.tmstmp_l = daq_time & 0xffffffff;
+          d.tmstmp_h = daq_time >> 32;
+          d.channel = i;
+          add_daq_msg(&daq_buf, d);
+
+          hist_addx(HISTORY_XYZ_MODULE, "daq_high", data_aquisition >> 8);
+          hist_addx(HISTORY_XYZ_MODULE, "daq_low", data_aquisition & 0xff);
         }
       }
       if (status == RCV_TASK_BSY) {

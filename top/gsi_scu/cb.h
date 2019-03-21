@@ -4,6 +4,7 @@
 #include <fg.h>
 
 #define RING_SIZE   64
+#define DAQ_RING_SIZE  2048 
 
 /** @brief check if a channel buffer is empty
  *  @param cr channel register
@@ -57,19 +58,32 @@ inline int cbRead(volatile struct channel_buffer *cb, volatile struct channel_re
   return 1;
 }
 
-struct msi
-{
+struct msi {
    unsigned int  msg;
    unsigned int  adr;
    unsigned int  sel;
 }; 
 
+struct daq {
+  unsigned int setpoint;
+  unsigned int actvalue;
+  unsigned int tmstmp_l;
+  unsigned int tmstmp_h;
+  unsigned int channel;
+};
 
 typedef uint32_t ring_pos_t;
+
 struct message_buffer {
   ring_pos_t ring_head;
   ring_pos_t ring_tail;
   struct msi ring_data[RING_SIZE];
+};
+
+struct daq_buffer {
+  ring_pos_t ring_head;
+  ring_pos_t ring_tail;
+  struct daq ring_data[DAQ_RING_SIZE];
 };
 
 void cbWrite(volatile struct channel_buffer *cb, volatile struct channel_regs*, int, struct param_set*);
