@@ -76,6 +76,7 @@ extern int scub_write_mil_blk(volatile unsigned short *base, int slot, short *da
 extern struct msi remove_msg(volatile struct message_buffer *mb, int queue);
 extern int add_msg(volatile struct message_buffer *mb, int queue, struct msi m);
 extern int has_msg(volatile struct message_buffer *mb, int queue);
+extern void add_daq_msg(volatile struct daq_buffer *db, struct daq d);
 
 /* task prototypes */
 void dev_sio_handler(int);
@@ -101,7 +102,8 @@ uint32_t SHARED fg_buffer_size           = BUFFER_SIZE;
 uint32_t SHARED fg_macros[MAX_FG_MACROS] = {0}; // hi..lo bytes: slot, device, version, output-bits
 struct channel_regs SHARED fg_regs[MAX_FG_CHANNELS];
 struct channel_buffer SHARED fg_buffer[MAX_FG_CHANNELS];
-HistItem SHARED histbuf[HISTSIZE];
+struct daq_buffer SHARED daq_buf = {0};
+HistItem  histbuf[HISTSIZE];
 
 volatile unsigned short* scub_base     = 0;
 volatile unsigned int* scub_irq_base   = 0;
@@ -893,6 +895,8 @@ void dev_sio_handler(int id) {
   int status;
   short data_aquisition;
   struct msi m;
+  struct daq d;
+  uint64_t daq_time;
   static TaskType *task_ptr;              // task pointer
   task_ptr = tsk_getConfig();             // get a pointer to the task configuration
 
@@ -1020,10 +1024,16 @@ void dev_sio_handler(int id) {
               mprintf("unknown error when reading task %d\n", task_ptr[id].slave_nr);
             }
           }
-          if ((slot == 35) && (dev == 0x0d)) {
-            hist_addx(HISTORY_XYZ_MODULE, "daq_high", data_aquisition >> 8);
-            hist_addx(HISTORY_XYZ_MODULE, "daq_low", data_aquisition & 0xff);
-          }
+          d.setpoint = 0;
+          d.actvalue = data_aquisition;
+          daq_time = getSysTime();
+          d.tmstmp_l = daq_time & 0xffffffff;
+          d.tmstmp_h = daq_time >> 32;
+          d.channel = i;
+          add_daq_msg(&daq_buf, d);
+
+          hist_addx(HISTORY_XYZ_MODULE, "daq_high", data_aquisition >> 8);
+          hist_addx(HISTORY_XYZ_MODULE, "daq_low", data_aquisition & 0xff);
         }
       }
       if (status == RCV_TASK_BSY) {

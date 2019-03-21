@@ -31,31 +31,38 @@ void cbDump(volatile struct channel_buffer *cb, volatile struct channel_regs* cr
   }
 }
 
+
+void add_daq_msg(volatile struct daq_buffer *mb, struct daq m) {
+  ring_pos_t next_head = (mb->ring_head + 1) % DAQ_RING_SIZE;
+  mb->ring_data[mb->ring_head] = m;
+  mb->ring_head = next_head;
+}
+
 int add_msg(volatile struct message_buffer *mb, int queue, struct msi m) {
-    ring_pos_t next_head = (mb[queue].ring_head + 1) % RING_SIZE;
-    if (next_head != mb[queue].ring_tail) {
-        /* there is room */
-        mb[queue].ring_data[mb[queue].ring_head] = m;
-        mb[queue].ring_head = next_head;
-        return 0;
-    } else {
-        /* no room left in the buffer */
-        mprintf("msg buffer %d full!\n", queue);
-        return -1;
-    }
+  ring_pos_t next_head = (mb[queue].ring_head + 1) % RING_SIZE;
+  if (next_head != mb[queue].ring_tail) {
+      /* there is room */
+      mb[queue].ring_data[mb[queue].ring_head] = m;
+      mb[queue].ring_head = next_head;
+      return 0;
+  } else {
+      /* no room left in the buffer */
+      mprintf("msg buffer %d full!\n", queue);
+      return -1;
+  }
 }
 
 struct msi remove_msg(volatile struct message_buffer *mb, int queue) {
-    struct msi m;
-    if (mb[queue].ring_head != mb[queue].ring_tail) {
-        m = mb[queue].ring_data[mb[queue].ring_tail];
-        mb[queue].ring_tail = (mb[queue].ring_tail + 1) % RING_SIZE;
-        return m;
-    } else {
-        m.msg = -1;
-        m.adr = -1;
-        return m;
-    }
+  struct msi m;
+  if (mb[queue].ring_head != mb[queue].ring_tail) {
+      m = mb[queue].ring_data[mb[queue].ring_tail];
+      mb[queue].ring_tail = (mb[queue].ring_tail + 1) % RING_SIZE;
+      return m;
+  } else {
+      m.msg = -1;
+      m.adr = -1;
+      return m;
+  }
 }
 
 int has_msg(volatile struct message_buffer *mb, int queue) {
