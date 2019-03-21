@@ -51,8 +51,21 @@
 
 namespace daq
 {
+/*! ---------------------------------------------------------------------------
+ * @ingroup DAQ
+ * @brief Converts raw data of the DAQ ADC in to voltage.
+ *  (Nice to have function)
+ * @param rawData raw data from the DAQ ADC.
+ * @return Voltage in the range 0.0V to 10.0V
+ */
+inline double rawToVoltage( DAQ_DATA_T rawData )
+{
+   return (static_cast<double>(rawData) * 10.0) /
+             static_cast<double>(static_cast<DAQ_DATA_T>(~0));
+}
 
 /*! ---------------------------------------------------------------------------
+ * @ingroup DAQ
  * @brief Converts the status number in to the defined string.
  */
 const std::string status2String( DAQ_RETURN_CODE_T status );
@@ -64,21 +77,48 @@ const std::string status2String( DAQ_RETURN_CODE_T status );
  * @{
  */
 
+/*! ---------------------------------------------------------------------------
+ */
 inline uint32_t descriptorGetTreggerCondition( DAQ_DATA_T* pData )
 {
    return ::daqDescriptorGetTriggerCondition(
                                reinterpret_cast<DAQ_DESCRIPTOR_T*>(pData) );
 }
 
+/*! ---------------------------------------------------------------------------
+ */
 inline uint16_t descriptorGetTriggerDelay( DAQ_DATA_T* pData )
 {
    return ::daqDescriptorGetTriggerDelay(
                                reinterpret_cast<DAQ_DESCRIPTOR_T*>(pData) );
 }
 
+/*! ---------------------------------------------------------------------------
+ */
 inline uint8_t descriptorGetCrc( DAQ_DATA_T* pData )
 {
    return ::daqDescriptorGetCRC( reinterpret_cast<DAQ_DESCRIPTOR_T*>(pData) );
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+inline bool descriptorWasPM( DAQ_DATA_T* pData )
+{
+   return ::daqDescriptorWasPM( reinterpret_cast<DAQ_DESCRIPTOR_T*>(pData) );
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+inline bool descriptorWasHiRes( DAQ_DATA_T* pData )
+{
+   return ::daqDescriptorWasHiRes( reinterpret_cast<DAQ_DESCRIPTOR_T*>(pData) );
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+inline bool descriptorWasDaq( DAQ_DATA_T* pData )
+{
+   return ::daqDescriptorWasDaq( reinterpret_cast<DAQ_DESCRIPTOR_T*>(pData) );
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -218,22 +258,27 @@ public:
                              const unsigned int channel );
 
    int sendEnableHighResolution( const unsigned int deviceNumber,
-                             const unsigned int channel );
+                                 const unsigned int channel );
+
+   int sendDisablePmHires( const unsigned int deviceNumber,
+                           const unsigned int channel );
 
    int sendEnableContineous( const unsigned int deviceNumber,
-                         const unsigned int channel,
-                         const DAQ_SAMPLE_RATE_T sampleRate );
+                             const unsigned int channel,
+                             const DAQ_SAMPLE_RATE_T sampleRate,
+                             const unsigned int maxBlocks = 0
+                           );
 
-   int sendDisable( const unsigned int deviceNumber,
-                const unsigned int channel );
+   int sendDisableContinue( const unsigned int deviceNumber,
+                            const unsigned int channel );
 
 
    int sendTriggerCondition( const unsigned int deviceNumber,
                              const unsigned int channel,
-                              const uint32_t trgCondition );
+                             const uint32_t trgCondition );
 
    uint32_t receiveTriggerCondition( const unsigned int deviceNumber,
-                                 const unsigned int channel );
+                                     const unsigned int channel );
 
 
    int sendTriggerDelay( const unsigned int deviceNumber,
@@ -241,7 +286,7 @@ public:
                          const uint16_t delay );
 
    uint16_t receiveTriggerDelay( const unsigned int deviceNumber,
-                             const unsigned int channel );
+                                 const unsigned int channel );
 
 
    int sendTriggerMode( const unsigned int deviceNumber,

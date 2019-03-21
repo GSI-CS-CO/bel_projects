@@ -70,16 +70,40 @@ static inline bool concernsChannel( DAQ_CANNEL_T* pChannel )
    if( daqChannelTestAndClearDaqIntPending( pChannel ) )
    {
       ramPushDaqDataBlock( &g_DaqAdmin.oRam, pChannel, true );
-#ifdef CONFIG_PATCH_DAQ_HW_BUG
+
+   #ifdef CONFIG_PATCH_DAQ_HW_BUG
       daqChannelTestAndClearHiResIntPending( pChannel );
-#endif
+      if( daqChannelDecrementBlockCounter( pChannel ) )
+         return true;
+      if( daqChannelIsSample10usActive( pChannel ) )
+      {
+         daqChannelSample10usOff( pChannel );
+         daqChannelSample10usOn( pChannel );
+         return true;
+      }
+      if( daqChannelIsSample100usActive( pChannel ) )
+      {
+         daqChannelSample100usOff( pChannel );
+         daqChannelSample100usOn( pChannel );
+         return true;
+      }
+      if( daqChannelIsSample1msActive( pChannel ) )
+      {
+         daqChannelSample1msOff( pChannel );
+         daqChannelSample1msOn( pChannel );
+      }
+   #else
+      daqChannelDecrementBlockCounter( pChannel );
+   #endif
       return true;
    }
-#if 0
+#if 1
    if( daqChannelTestAndClearHiResIntPending( pChannel ) )
    {
-      daqChannelDisablePostMortem( pChannel );
-      daqChannelDisableHighResolution( pChannel );
+   #ifdef CONFIG_PATCH_DAQ_HW_BUG
+      if( daqChannelGetPmFifoWords( pChannel ) < (DAQ_FIFO_PM_HIRES_WORD_SIZE-1) )
+         return true;
+   #endif
       ramPushDaqDataBlock( &g_DaqAdmin.oRam, pChannel, false );
       return true;
    }

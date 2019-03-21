@@ -607,7 +607,7 @@ unsigned int DaqInterface::readMacroVersion( const unsigned int deviceNumber )
 /*! ---------------------------------------------------------------------------
  */
 int DaqInterface::sendEnablePostMortem( const unsigned int deviceNumber,
-                                    const unsigned int channel )
+                                        const unsigned int channel )
 {
    DAQ_SET_CHANNEL_LOCATION( deviceNumber, channel );
 
@@ -618,7 +618,7 @@ int DaqInterface::sendEnablePostMortem( const unsigned int deviceNumber,
 /*! ---------------------------------------------------------------------------
  */
 int DaqInterface::sendEnableHighResolution( const unsigned int deviceNumber,
-                                        const unsigned int channel )
+                                            const unsigned int channel )
 {
    DAQ_SET_CHANNEL_LOCATION( deviceNumber, channel );
 
@@ -629,32 +629,47 @@ int DaqInterface::sendEnableHighResolution( const unsigned int deviceNumber,
 /*! ---------------------------------------------------------------------------
  */
 int DaqInterface::sendEnableContineous( const unsigned int deviceNumber,
-                                    const unsigned int channel,
-                                    const DAQ_SAMPLE_RATE_T sampleRate )
+                                        const unsigned int channel,
+                                        const DAQ_SAMPLE_RATE_T sampleRate,
+                                        const unsigned int maxBlocks
+                                      )
 {
+   SCU_ASSERT( maxBlocks <= static_cast<uint16_t>(~0) );
    DAQ_SET_CHANNEL_LOCATION( deviceNumber, channel );
 
    m_oSharedData.operation.ioData.param1 = sampleRate;
-   writeParam1();
+   m_oSharedData.operation.ioData.param2 = maxBlocks;
+   writeParam12();
    return sendCommand( DAQ_OP_CONTINUE_ON );
 }
 
 /*! ---------------------------------------------------------------------------
  */
-int DaqInterface::sendDisable( const unsigned int deviceNumber,
-                           const unsigned int channel )
+int DaqInterface::sendDisableContinue( const unsigned int deviceNumber,
+                                       const unsigned int channel )
 {
    DAQ_SET_CHANNEL_LOCATION( deviceNumber, channel );
 
    writeParam1();
-   return sendCommand( DAQ_OP_OFF );
+   return sendCommand( DAQ_OP_CONTINUE_OFF );
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+int DaqInterface::sendDisablePmHires( const unsigned int deviceNumber,
+                                      const unsigned int channel )
+{
+   DAQ_SET_CHANNEL_LOCATION( deviceNumber, channel );
+
+   writeParam1();
+   return sendCommand( DAQ_OP_PM_HIRES_OFF );
 }
 
 /*! ---------------------------------------------------------------------------
  */
 int DaqInterface::sendTriggerCondition( const unsigned int deviceNumber,
-                                       const unsigned int channel,
-                                       const uint32_t trgCondition )
+                                        const unsigned int channel,
+                                        const uint32_t trgCondition )
 {
    DAQ_SET_CHANNEL_LOCATION( deviceNumber, channel );
 

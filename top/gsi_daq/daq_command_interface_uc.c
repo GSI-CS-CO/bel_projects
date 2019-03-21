@@ -260,6 +260,23 @@ static int32_t opHighResolutionOn( DAQ_ADMIN_T* pDaqAdmin,
 
 /*! ---------------------------------------------------------------------------
  */
+static int32_t opPmHighResOff( DAQ_ADMIN_T* pDaqAdmin,
+                               volatile DAQ_OPERATION_IO_T* pData )
+{
+   FUNCTION_INFO();
+
+   int ret = verifyChannelAccess( &pDaqAdmin->oDaqDevs, &pData->location );
+   if( ret != DAQ_RET_OK )
+      return ret;
+
+   DAQ_CANNEL_T* pChannel = getChannel( pDaqAdmin, pData );
+   daqChannelDisablePostMortem( pChannel );
+   daqChannelDisableHighResolution( pChannel );
+   return DAQ_RET_OK;
+}
+
+/*! ---------------------------------------------------------------------------
+ */
 static int32_t opContinueOn( DAQ_ADMIN_T* pDaqAdmin,
                              volatile DAQ_OPERATION_IO_T* pData )
 {
@@ -271,20 +288,26 @@ static int32_t opContinueOn( DAQ_ADMIN_T* pDaqAdmin,
 
    DAQ_CANNEL_T* pChannel = getChannel( pDaqAdmin, pData );
 
+   pChannel->blockDownCounter = pData->param2;
+   DBPRINT1( "DBG: blockDownCounter = %d\n", pChannel->blockDownCounter );
+
    switch( (DAQ_SAMPLE_RATE_T)pData->param1 )
    {
       case DAQ_SAMPLE_1MS:
       {
+         DBPRINT1( "DBG: 1 ms sample ON\n" );
          daqChannelSample1msOn( pChannel );
          break;
       }
       case DAQ_SAMPLE_100US:
       {
+         DBPRINT1( "DBG: 100 us sample ON\n" );
          daqChannelSample100usOn( pChannel );
          break;
       }
       case DAQ_SAMPLE_10US:
       {
+         DBPRINT1( "DBG: 10 us sample ON\n" );
          daqChannelSample10usOn( pChannel );
          break;
       }
@@ -299,8 +322,8 @@ static int32_t opContinueOn( DAQ_ADMIN_T* pDaqAdmin,
 
 /*! ---------------------------------------------------------------------------
  */
-static int32_t opOff( DAQ_ADMIN_T* pDaqAdmin,
-                             volatile DAQ_OPERATION_IO_T* pData )
+static int32_t opContinueOff( DAQ_ADMIN_T* pDaqAdmin,
+                              volatile DAQ_OPERATION_IO_T* pData )
 {
    FUNCTION_INFO();
 
@@ -313,8 +336,6 @@ static int32_t opOff( DAQ_ADMIN_T* pDaqAdmin,
    daqChannelSample10usOff( pChannel );
    daqChannelSample100usOff( pChannel );
    daqChannelSample1msOff( pChannel );
-   daqChannelDisablePostMortem( pChannel );
-   daqChannelDisableHighResolution( pChannel );
 
    return DAQ_RET_OK;
 }
@@ -437,8 +458,9 @@ static const DAQ_OPERATION_TAB_ITEM_T g_operationTab[] =
    OPERATION_ITEM( DAQ_OP_RESCAN,                opRescan              ),
    OPERATION_ITEM( DAQ_OP_PM_ON,                 opPostMortemOn        ),
    OPERATION_ITEM( DAQ_OP_HIRES_ON,              opHighResolutionOn    ),
+   OPERATION_ITEM( DAQ_OP_PM_HIRES_OFF,          opPmHighResOff        ),
    OPERATION_ITEM( DAQ_OP_CONTINUE_ON,           opContinueOn          ),
-   OPERATION_ITEM( DAQ_OP_OFF,                   opOff                 ),
+   OPERATION_ITEM( DAQ_OP_CONTINUE_OFF,          opContinueOff         ),
    OPERATION_ITEM( DAQ_OP_SET_TRIGGER_CONDITION, opSetTriggerCondition ),
    OPERATION_ITEM( DAQ_OP_GET_TRIGGER_CONDITION, opGetTriggerCondition ),
    OPERATION_ITEM( DAQ_OP_SET_TRIGGER_DELAY,     opSetTriggerDelay     ),

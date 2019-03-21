@@ -257,9 +257,13 @@ STATIC_ASSERT( sizeof( DAQ_REGISTER_T ) == (SCUBUS_SLAVE_ADDR_SPACE-DAQ_REGISTER
  * @ingroup DAQ_CHANNEL
  * @brief Flag pool of channel properties
  */
-typedef struct
+typedef struct PACKED_SIZE
 {
-   bool notUsed; //!< @brief When true than this channel will not used.
+   /*!
+    * @brief When true than this channel will not used.
+    */
+   bool notUsed;
+
 } DAQ_CHANNEL_BF_PROPERTY_T;
 STATIC_ASSERT( sizeof( DAQ_CHANNEL_BF_PROPERTY_T ) == sizeof( uint8_t ) );
 
@@ -267,14 +271,33 @@ STATIC_ASSERT( sizeof( DAQ_CHANNEL_BF_PROPERTY_T ) == sizeof( uint8_t ) );
  * @ingroup DAQ_CHANNEL
  * @brief Object represents a single channel of a DAQ.
  */
-typedef struct
+typedef struct PACKED_SIZE
 {
-   uint8_t                   n;       //!< @brief Channel number
-                                      //!        [0..DAQ_MAX_CHANNELS-1]
-   uint16_t                  intMask; //!< @brief Interrupt mask. In principle not
-                                      //!  necessary, but it accelerates the
-                                      //!  concerning interrupt routine a bit.
-                                      //! @see DAQ_INT_PENDING_T
+   /*!
+    * @brief Channel number [0..DAQ_MAX_CHANNELS-1]
+    */
+   uint8_t n;
+
+   /*!
+    * @brief Interrupt mask.
+    *
+    * In principle not necessary, but it accelerates the
+    * concerning interrupt routine a bit.
+    * @see DAQ_INT_PENDING_T
+    */
+   uint16_t intMask;
+
+   /*!
+    * @brief Down counter to limit the receiving blocks in continuous mode.
+    *
+    * When the counter is zero, the endless receiving mode is
+    * active until the continuous becomes disabled, else
+    * the counter becomes decremented with each received block and
+    * the channel becomes automatically disabled when the counter
+    * reaches zero.
+    */
+   uint16_t blockDownCounter;
+
    DAQ_CHANNEL_BF_PROPERTY_T properties; //!<@see DAQ_CHANNEL_PROPERTY_T
 #ifdef CONFIG_DAQ_SIMULATE_CHANNEL
    uint16_t          callCount;   //!<@brief For simulation purposes only!
@@ -668,6 +691,29 @@ static inline bool daqChannelIsSample1msActive( register DAQ_CANNEL_T* pThis )
 #else
    return (daqChannelGetCtrlRegPtr( pThis )->Sample1ms == ON);
 #endif
+}
+
+/*! ---------------------------------------------------------------------------
+ * @ingroup DAQ_CHANNEL
+ * @brief Decrements the channel down counter and deactivates all possible
+ *        continue modes when the counter reaches zero.
+ * @param pThis Pointer to the channel object
+ */
+static inline
+bool daqChannelDecrementBlockCounter( register DAQ_CANNEL_T* pThis )
+{
+   if( pThis->blockDownCounter == 0 )
+      return false;
+
+   pThis->blockDownCounter--;
+   if( pThis->blockDownCounter > 0 )
+      return false;
+
+   DAQ_CTRL_REG_T* pCtrl = daqChannelGetCtrlRegPtr( pThis );
+   pCtrl->Sample10us = OFF;
+   pCtrl->Sample100us = OFF;
+   pCtrl->Sample1ms = OFF;
+   return true;
 }
 
 /*! ---------------------------------------------------------------------------

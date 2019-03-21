@@ -28,6 +28,7 @@ public:
    bool onDataBlock( DAQ_DATA_T* pData, std::size_t wordLen ) override;
 };
 
+
 //-----------------------------------------------------------------------------
 bool MyDaqChannel::onDataBlock( DAQ_DATA_T* pData, std::size_t wordLen )
 {
@@ -54,10 +55,36 @@ bool MyDaqChannel::onDataBlock( DAQ_DATA_T* pData, std::size_t wordLen )
        << endl;
 
   cout << "Data:" << endl;
-  for( std::size_t i = c_discriptorWordSize; i < wordLen; i += 100 )
+  DAQ_DATA_T minimum = static_cast<DAQ_DATA_T>(~0);
+  DAQ_DATA_T maximum = 0;
+  uint64_t summe = 0;
+  for( std::size_t i = c_discriptorWordSize; i < wordLen; i++ )
   {
-     cout << "  " << pData[i] << endl;
+   //  if( i % 100 == 0 )
+   //     cout << "  " << pData[i] << endl;
+     minimum = min( pData[i], minimum );
+     maximum = max( pData[i], maximum );
+     summe   += pData[i];
   }
+
+  unsigned int numOfSamples = wordLen - c_discriptorWordSize;
+  cout << "  Samples: " << numOfSamples << ", Modus: " ESC_FG_CYAN;
+  if( descriptorWasPM( pData ) )
+     cout << "Post Mortem";
+  else if( descriptorWasHiRes( pData ) )
+     cout << "High Resolution";
+  else if( descriptorWasDaq( pData ))
+     cout << "Continuous";
+  cout << ESC_NORMAL << endl;
+
+  assert( (wordLen - numOfSamples) > 0 );
+  DAQ_DATA_T average = summe / numOfSamples;
+  cout << "  Minimum: " << minimum << " -> " << rawToVoltage( minimum ) << " Volt" << endl;
+  cout << "  Average: " << average << " -> " << rawToVoltage( average ) << " Volt" << endl;
+  if( maximum == static_cast<DAQ_DATA_T>(~0) )
+     cout << ESC_FG_RED;
+  cout << "  Maximum: " << maximum << " -> " << rawToVoltage( maximum ) << " Volt" << endl;
+  cout << ESC_NORMAL;
   return false;
 }
 
@@ -94,7 +121,7 @@ void doTest( const string wbName )
 
    MyDaqChannel* pChannel_a = oDaqInterface.getChannelByAbsoluteNumber( 1 );
    assert( pChannel_a != nullptr );
-   MyDaqChannel* pChannel_b = oDaqInterface.getChannelByAbsoluteNumber( 2 );
+   MyDaqChannel* pChannel_b = oDaqInterface.getChannelByAbsoluteNumber( 5 );
    assert( pChannel_b != nullptr );
    pChannel_a->sendTriggerDelay( 0x55 );
    pChannel_a->sendTriggerCondition( 0xCAFEAFFE );
@@ -108,13 +135,16 @@ void doTest( const string wbName )
    cout << "Delay b: 0x" << hex << pChannel_b->receiveTriggerDelay() << endl;
    cout << "Trigger condition b: 0x" << hex << pChannel_b->receiveTriggerCondition() << dec << endl;
 
-   pChannel_a->sendEnableContineous( DAQ_SAMPLE_10US );
-   pChannel_b->sendEnableContineous( DAQ_SAMPLE_10US );
+   pChannel_a->sendEnableContineous( DAQ_SAMPLE_10US, 10 );
+   pChannel_b->sendEnableContineous( DAQ_SAMPLE_10US, 10 );
 
    usleep( 100000 );
  //  oDaqInterface.sendReset();
-   pChannel_a->sendEnableContineous( DAQ_SAMPLE_10US );
+  // pChannel_a->sendEnableContineous( DAQ_SAMPLE_10US, 2 );
+  // usleep( 100000 );
+  // pChannel_a->sendEnableContineous( DAQ_SAMPLE_10US, 1 );
    usleep( 100000 );
+
    cout << "Ram level: " << oDaqInterface.getCurrentRamSize(true ) << endl;
 
    while( oDaqInterface.distributeData() > 0 );

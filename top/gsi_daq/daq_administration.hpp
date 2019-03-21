@@ -25,6 +25,8 @@
 #ifndef _DAQ_ADMINISTRATION_HPP
 #define _DAQ_ADMINISTRATION_HPP
 
+//#include <boost/thread.hpp>
+#include <boost/bind.hpp>
 #include <list>
 #include <daq_interface.hpp>
 
@@ -69,8 +71,10 @@ public:
 
    int sendEnablePostMortem( void );
    int sendEnableHighResolution( void );
-   int sendEnableContineous( const DAQ_SAMPLE_RATE_T sampleRate );
-   int sendDisable( void );
+   int sendEnableContineous( const DAQ_SAMPLE_RATE_T sampleRate,
+                             const unsigned int maxBlocks = 0 );
+   int sendDisableContinue( void );
+   int sendDisablePmHires( void );
 
    int sendTriggerCondition( const uint32_t trgCondition );
    uint32_t receiveTriggerCondition( void );
@@ -149,8 +153,10 @@ public:
    int sendEnablePostMortem( const unsigned int channel );
    int sendEnableHighResolution( const unsigned int channel );
    int sendEnableContineous( const unsigned int channel,
-                         const DAQ_SAMPLE_RATE_T sampleRate );
-   int sendDisable( const unsigned int channel );
+                             const DAQ_SAMPLE_RATE_T sampleRate,
+                             const unsigned int maxBlocks = 0 );
+   int sendDisableContinue( const unsigned int channel );
+   int sendDisablePmHires( const unsigned int channel );
 
    int sendTriggerCondition( const unsigned int channel,
                             const uint32_t trgCondition );
@@ -226,6 +232,8 @@ private:
                                      ::daqDescriptorGetChannel( &roDescriptor )
                                      + 1 );
    }
+
+   void thread( void );
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -254,16 +262,26 @@ inline int DaqDevice::sendEnableHighResolution( const unsigned int channel )
 /*! ---------------------------------------------------------------------------
  */
 inline int DaqDevice::sendEnableContineous( const unsigned int channel,
-                                        const DAQ_SAMPLE_RATE_T sampleRate )
+                                            const DAQ_SAMPLE_RATE_T sampleRate,
+                                            const unsigned int maxBlocks
+                                          )
 {
-   return getParent()->sendEnableContineous( m_deviceNumber, channel, sampleRate );
+   return getParent()->sendEnableContineous( m_deviceNumber, channel,
+                                             sampleRate, maxBlocks );
 }
 
 /*! ---------------------------------------------------------------------------
  */
-inline int DaqDevice::sendDisable( const unsigned int channel )
+inline int DaqDevice::sendDisableContinue( const unsigned int channel )
 {
-   return getParent()->sendDisable( m_deviceNumber, channel );
+   return getParent()->sendDisableContinue( m_deviceNumber, channel );
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+inline int DaqDevice::sendDisablePmHires( const unsigned int channel )
+{
+   return getParent()->sendDisablePmHires( m_deviceNumber, channel );
 }
 
 /*! ---------------------------------------------------------------------------
@@ -343,16 +361,24 @@ inline int DaqChannel::sendEnableHighResolution( void )
 
 /*! ---------------------------------------------------------------------------
  */
-inline int DaqChannel::sendEnableContineous( const DAQ_SAMPLE_RATE_T sampleRate )
+inline int DaqChannel::sendEnableContineous( const DAQ_SAMPLE_RATE_T sampleRate,
+                                             const unsigned int maxBlocks )
 {
-   return getParent()->sendEnableContineous( m_number, sampleRate );
+   return getParent()->sendEnableContineous( m_number, sampleRate, maxBlocks );
 }
 
 /*! ---------------------------------------------------------------------------
  */
-inline int DaqChannel::sendDisable( void )
+inline int DaqChannel::sendDisableContinue( void )
 {
-   return getParent()->sendDisable( m_number );
+   return getParent()->sendDisableContinue( m_number );
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+inline int DaqChannel::sendDisablePmHires( void )
+{
+   return getParent()->sendDisablePmHires( m_number );
 }
 
 /*! ---------------------------------------------------------------------------
