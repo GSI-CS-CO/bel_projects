@@ -3802,7 +3802,7 @@ P_IOBP_LED_ID_Loop:  process (clk_sys, Ena_Every_250ns, rstn_sys, IOBP_state)
     Port map( clk => clk_sys,
               nReset => rstn_sys,
               time_pulse => Ena_Every_20ms,
-              armed => spill_abort_armed(0),
+              armed => AW_Output_Reg(1)( 0),
               req => Deb60_in(0),
               command => spill_abort_command,
               command_rst => spill_abort_command_rst);
@@ -6611,7 +6611,7 @@ BEGIN
 
     when x"ABDE" => --SPILL ABORT Development
       --IOBP_Output <= x"00" & "0" & clk_blink & not clk_blink & clk_blink;
-      IOBP_Output <= "0000000" & clk_blink & "0" & spill_abort_armed (0)  & spill_abort_command_rst & spill_abort_command;
+      IOBP_Output <= "0000000" & clk_blink & "0" & AW_Output_Reg(1)( 0)  & spill_abort_command_rst & spill_abort_command;
       
     when x"DEDE" => --Quench Detection Development
       IOBP_Output <= "0000000" & quench_out(3) & quench_out(0) & quench_out (2) & quench_out (1) & quench_out(0);
