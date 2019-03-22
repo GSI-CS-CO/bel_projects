@@ -432,14 +432,14 @@ begin
           when c_lvds_pps_mux_set_high_reg    => r_lvds_pps_mux(63 downto 32)   <= r_lvds_pps_mux(63 downto 32) or slave_i.dat;
           when c_lvds_pps_mux_reset_low_reg   => r_lvds_pps_mux(31 downto  0)   <= r_lvds_pps_mux(31 downto  0) and not(slave_i.dat);
           when c_lvds_pps_mux_reset_high_reg  => r_lvds_pps_mux(63 downto 32)   <= r_lvds_pps_mux(63 downto 32) and not(slave_i.dat);
-          when c_gpio_in_gate_set_low_reg     => r_gpio_in_gate(31 downto  0)   <= r_gpio_pps_mux(31 downto  0) or slave_i.dat;
-          when c_gpio_in_gate_set_high_reg    => r_gpio_in_gate(63 downto 32)   <= r_gpio_pps_mux(63 downto 32) or slave_i.dat;
-          when c_gpio_in_gate_reset_low_reg   => r_gpio_in_gate(31 downto  0)   <= r_gpio_pps_mux(31 downto  0) and not(slave_i.dat);
-          when c_gpio_in_gate_reset_high_reg  => r_gpio_in_gate(63 downto 32)   <= r_gpio_pps_mux(63 downto 32) and not(slave_i.dat);
-          when c_lvds_in_gate_set_low_reg     => r_lvds_in_gate(31 downto  0)   <= r_lvds_pps_mux(31 downto  0) or slave_i.dat;
-          when c_lvds_in_gate_set_high_reg    => r_lvds_in_gate(63 downto 32)   <= r_lvds_pps_mux(63 downto 32) or slave_i.dat;
-          when c_lvds_in_gate_reset_low_reg   => r_lvds_in_gate(31 downto  0)   <= r_lvds_pps_mux(31 downto  0) and not(slave_i.dat);
-          when c_lvds_in_gate_reset_high_reg  => r_lvds_in_gate(63 downto 32)   <= r_lvds_pps_mux(63 downto 32) and not(slave_i.dat);
+          when c_gpio_in_gate_set_low_reg     => r_gpio_in_gate(31 downto  0)   <= r_gpio_in_gate(31 downto  0) or slave_i.dat;
+          when c_gpio_in_gate_set_high_reg    => r_gpio_in_gate(63 downto 32)   <= r_gpio_in_gate(63 downto 32) or slave_i.dat;
+          when c_gpio_in_gate_reset_low_reg   => r_gpio_in_gate(31 downto  0)   <= r_gpio_in_gate(31 downto  0) and not(slave_i.dat);
+          when c_gpio_in_gate_reset_high_reg  => r_gpio_in_gate(63 downto 32)   <= r_gpio_in_gate(63 downto 32) and not(slave_i.dat);
+          when c_lvds_in_gate_set_low_reg     => r_lvds_in_gate(31 downto  0)   <= r_lvds_in_gate(31 downto  0) or slave_i.dat;
+          when c_lvds_in_gate_set_high_reg    => r_lvds_in_gate(63 downto 32)   <= r_lvds_in_gate(63 downto 32) or slave_i.dat;
+          when c_lvds_in_gate_reset_low_reg   => r_lvds_in_gate(31 downto  0)   <= r_lvds_in_gate(31 downto  0) and not(slave_i.dat);
+          when c_lvds_in_gate_reset_high_reg  => r_lvds_in_gate(63 downto 32)   <= r_lvds_in_gate(63 downto 32) and not(slave_i.dat);
           when others =>
             -- Set driven GPIO OUT values
             if (slave_i.adr(15 downto 2) >= c_set_gpio_out_begin_reg and slave_i.adr(15 downto 2) <= c_set_gpio_out_end_reg) then
