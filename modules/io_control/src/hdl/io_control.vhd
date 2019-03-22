@@ -295,6 +295,8 @@ begin
   lvds_sel_o                                                    <= r_lvds_sel(f_sub1(c_lvds_outputs)      downto 0) when r_legacy_mode='0' else (others => '0');
   gpio_output_o                                                 <= r_gpio_drive(gpio_output_o'range)                when r_legacy_mode='0' else (others => '0');
   lvds_output_o                                                 <= r_lvds_drive(lvds_output_o'range)                when r_legacy_mode='0' else (others => (others => '0'));
+  gpio_in_gate_o                                                <= r_gpio_in_gate(f_sub1(c_gpio_inputs)   downto 0) when r_legacy_mode='0' else (others => '0');
+  lvds_in_gate_o                                                <= r_lvds_in_gate(f_sub1(c_lvds_inputs)   downto 0) when r_legacy_mode='0' else (others => '0');
 
   -- IO configuration register
   r_io_cfg_reg <= (0 => r_legacy_mode, others => '0');
