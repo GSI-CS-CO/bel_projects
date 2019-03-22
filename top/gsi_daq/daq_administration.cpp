@@ -25,7 +25,6 @@
 #include <daq_administration.hpp>
 #include <algorithm>
 #include <iostream>
-//#include <boost/circular_buffer.hpp>
 #include <cstddef>
 #include <unistd.h>
 using namespace daq;
@@ -103,6 +102,9 @@ DaqChannel* DaqDevice::getChannel( const unsigned int number )
 DaqAdministration::DaqAdministration( const std::string wbDevice )
   :DaqInterface( wbDevice )
   ,m_maxChannels( 0 )
+  ,m_pThread( nullptr )
+  ,m_finalizeThread( false )
+  ,m_exceptionPtr( nullptr )
 {
 }
 
@@ -110,7 +112,59 @@ DaqAdministration::DaqAdministration( const std::string wbDevice )
  */
 DaqAdministration::~DaqAdministration( void )
 {
+   stop();
 }
+
+/*! ---------------------------------------------------------------------------
+ */
+void DaqAdministration::start( unsigned int toSleep )
+{
+   SCU_ASSERT( m_pThread == nullptr );
+   m_finalizeThread = false;
+   m_pThread = new boost::thread( boost::bind( &DaqAdministration::thread,
+                                               this,
+                                               toSleep
+                                             ));
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+void DaqAdministration::stop( void )
+{
+   if( m_pThread == nullptr )
+      return;
+
+   m_finalizeThread = true;
+   m_pThread->join();
+   delete m_pThread;
+   m_pThread = nullptr;
+   if( m_exceptionPtr == nullptr )
+      return;
+  // std::rethrow_exception( m_exceptionPtr );
+   //throw( m_exceptionPtr );
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+void DaqAdministration::thread( unsigned int toSleep )
+{
+   try {
+   while( !m_finalizeThread )
+   {
+      //distributeData();
+      throw( DaqException( "Test" ) );
+      ::usleep( toSleep );
+
+   }
+   }
+   catch( ... )
+   {
+      std::cerr << "Exception in thread" << std::endl;
+      m_exceptionPtr = std::current_exception();
+   }
+   std::cout << "Thread left" << std::endl;
+}
+
 
 /*! ---------------------------------------------------------------------------
  */
@@ -301,7 +355,8 @@ int DaqAdministration::distributeData( void )
    {
       //TODO data perhaps corrupt!
       clearBuffer();
-      return -1;
+      throw( DaqException( "Memory size not dividable by block size" ) );
+      //return -1;
    }
 
    PROBE_BUFFER_T probe;

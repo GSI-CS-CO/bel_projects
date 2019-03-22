@@ -153,7 +153,7 @@ void DaqInterface::readSharedTotal( void )
       __THROW_EB_EXCEPTION();
 
    if( m_oSharedData.magicNumber != DAQ_MAGIC_NUMBER )
-      throw DaqException( "Wrong DAQ magic number" );
+      throw DaqException( "Wrong DAQ magic number respectively not found" );
 }
 
 /*! ---------------------------------------------------------------------------

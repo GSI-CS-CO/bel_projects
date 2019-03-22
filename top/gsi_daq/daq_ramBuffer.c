@@ -316,6 +316,12 @@ void ramFillItem( RAM_DAQ_PAYLOAD_T* pItem, const unsigned int i,
 #endif
 }
 
+#ifdef CONFIG_DEBUG_RAM_WRITE_DATA
+  #define DBG_RAM_INFO DBPRINT1
+#else
+  #define DBG_RAM_INFO( ... )
+#endif
+
 /*! ---------------------------------------------------------------------------
  * @brief Copies the data of the given DAQ-channel in to the RAM and
  *        exchanges the order of DAQ data with device descriptor.
@@ -374,6 +380,7 @@ void ramWriteDaqData( register RAM_SCU_T* pThis, DAQ_CANNEL_T* pDaqChannel,
    do
    {
       remainingDataWords = getRemaining( pDaqChannel );
+
       if( dataWordCounter < ARRAY_SIZE( firstData ) )
       { /*
          * The first two received data words will stored in a temporary buffer.
@@ -381,6 +388,7 @@ void ramWriteDaqData( register RAM_SCU_T* pThis, DAQ_CANNEL_T* pDaqChannel,
          * descriptor. This manner making the intended RAM- place
          * of the device descriptor dividable by RAM_DAQ_PAYLOAD_T.
          */
+         DBG_RAM_INFO( "DBG: Words in Fifo: %d\n", remainingDataWords );
          firstData[dataWordCounter] = pop( pDaqChannel );
       }
       else
@@ -411,8 +419,9 @@ void ramWriteDaqData( register RAM_SCU_T* pThis, DAQ_CANNEL_T* pDaqChannel,
             * total length isn't dividable by RAM_DAQ_PAYLOAD_T.
             */
             while( payloadIndex < (RAM_DAQ_DATA_WORDS_PER_RAM_INDEX-1) )
-            { mprintf( "Da! %d\n", payloadIndex+1 );
+            {
                payloadIndex++;
+               DBG_RAM_INFO( "DBG: Complete with dummy data %d\n", payloadIndex );
                ramFillItem( &ramItem, payloadIndex, 0xCAFE );
             }
          }
@@ -426,7 +435,8 @@ void ramWriteDaqData( register RAM_SCU_T* pThis, DAQ_CANNEL_T* pDaqChannel,
             * the first received data words.
             */
             for( unsigned int i = 0; i < ARRAY_SIZE( firstData ); i++ )
-            { mprintf( "Hier! %d\n", i );
+            {
+               DBG_RAM_INFO( "DBG: Finalize with first data %d\n", i );
                payloadIndex++;
                RAM_ASSERT( payloadIndex < RAM_DAQ_DATA_WORDS_PER_RAM_INDEX );
                ramFillItem( &ramItem, payloadIndex, firstData[i] );
@@ -499,7 +509,8 @@ int ramPushDaqDataBlock( register RAM_SCU_T* pThis, DAQ_CANNEL_T* pDaqChannel,
 {
    RAM_ASSERT( pThis != NULL );
    RAM_ASSERT( pDaqChannel != NULL );
-   RAM_ASSERT( daqChannelGetDaqFifoWords( pDaqChannel ) > DAQ_DISCRIPTOR_WORD_SIZE );
+   RAM_ASSERT( !isShort || (daqChannelGetDaqFifoWords( pDaqChannel ) > DAQ_DISCRIPTOR_WORD_SIZE) );
+   RAM_ASSERT( isShort || (daqChannelGetPmFifoWords( pDaqChannel ) > DAQ_DISCRIPTOR_WORD_SIZE) );
 #ifdef CONFIG_DAQ_SIMULATE_CHANNEL
    if( isShort )
    {

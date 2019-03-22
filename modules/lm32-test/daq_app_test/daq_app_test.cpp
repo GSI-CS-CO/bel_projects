@@ -135,19 +135,23 @@ void doTest( const string wbName )
    cout << "Delay b: 0x" << hex << pChannel_b->receiveTriggerDelay() << endl;
    cout << "Trigger condition b: 0x" << hex << pChannel_b->receiveTriggerCondition() << dec << endl;
 
-   pChannel_a->sendEnableContineous( DAQ_SAMPLE_10US, 10 );
-   pChannel_b->sendEnableContineous( DAQ_SAMPLE_10US, 10 );
 
-   usleep( 100000 );
- //  oDaqInterface.sendReset();
-  // pChannel_a->sendEnableContineous( DAQ_SAMPLE_10US, 2 );
-  // usleep( 100000 );
-  // pChannel_a->sendEnableContineous( DAQ_SAMPLE_10US, 1 );
-   usleep( 100000 );
 
+ //  pChannel_a->sendEnableContineous( DAQ_SAMPLE_100US, 10 );
+   pChannel_b->sendEnableContineous( DAQ_SAMPLE_100US, 10 );
+
+   pChannel_a->sendEnablePostMortem();
+   //pChannel_a->sendEnableHighResolution();
+   usleep( 1000000 );
+   pChannel_a->sendDisablePmHires();
+  //
+   usleep( 1000000 );
    cout << "Ram level: " << oDaqInterface.getCurrentRamSize(true ) << endl;
 
+
    while( oDaqInterface.distributeData() > 0 );
+   oDaqInterface.start();
+  // sleep( 4 );
 }
 
 

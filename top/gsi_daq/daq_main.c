@@ -65,50 +65,66 @@ int scanScuBus( DAQ_BUS_T* pDaqDevices )
 
 /*! ---------------------------------------------------------------------------
  */
-static inline bool concernsChannel( DAQ_CANNEL_T* pChannel )
+static inline void handleContinuousMode( DAQ_CANNEL_T* pChannel )
 {
-   if( daqChannelTestAndClearDaqIntPending( pChannel ) )
-   {
-      ramPushDaqDataBlock( &g_DaqAdmin.oRam, pChannel, true );
+   if( !daqChannelTestAndClearDaqIntPending( pChannel ) )
+      return;
 
-   #ifdef CONFIG_PATCH_DAQ_HW_BUG
-      daqChannelTestAndClearHiResIntPending( pChannel );
-      if( daqChannelDecrementBlockCounter( pChannel ) )
-         return true;
-      if( daqChannelIsSample10usActive( pChannel ) )
-      {
-         daqChannelSample10usOff( pChannel );
-         daqChannelSample10usOn( pChannel );
-         return true;
-      }
-      if( daqChannelIsSample100usActive( pChannel ) )
-      {
-         daqChannelSample100usOff( pChannel );
-         daqChannelSample100usOn( pChannel );
-         return true;
-      }
-      if( daqChannelIsSample1msActive( pChannel ) )
-      {
-         daqChannelSample1msOff( pChannel );
-         daqChannelSample1msOn( pChannel );
-      }
-   #else
-      daqChannelDecrementBlockCounter( pChannel );
-   #endif
-      return true;
-   }
-#if 1
-   if( daqChannelTestAndClearHiResIntPending( pChannel ) )
-   {
-   #ifdef CONFIG_PATCH_DAQ_HW_BUG
-      if( daqChannelGetPmFifoWords( pChannel ) < (DAQ_FIFO_PM_HIRES_WORD_SIZE-1) )
-         return true;
-   #endif
-      ramPushDaqDataBlock( &g_DaqAdmin.oRam, pChannel, false );
-      return true;
-   }
+#ifdef CONFIG_PATCH_DAQ_HW_BUG
+   if( daqChannelGetDaqFifoWords( pChannel ) < DAQ_FIFO_DAQ_WORD_SIZE )
+      return;
 #endif
-   return false;
+   ramPushDaqDataBlock( &g_DaqAdmin.oRam, pChannel, true );
+
+#ifdef CONFIG_PATCH_DAQ_HW_BUG
+   if( daqChannelDecrementBlockCounter( pChannel ) )
+      return;
+   if( daqChannelIsSample10usActive( pChannel ) )
+   {
+      daqChannelSample10usOff( pChannel );
+      daqChannelSample10usOn( pChannel );
+      return;
+   }
+   if( daqChannelIsSample100usActive( pChannel ) )
+   {
+      daqChannelSample100usOff( pChannel );
+      daqChannelSample100usOn( pChannel );
+      return;
+   }
+   if( daqChannelIsSample1msActive( pChannel ) )
+   {
+      daqChannelSample1msOff( pChannel );
+      daqChannelSample1msOn( pChannel );
+   }
+#else
+   daqChannelDecrementBlockCounter( pChannel );
+#endif
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+static inline void handlePmHiresMode( DAQ_CANNEL_T* pChannel )
+{
+#ifdef CONFIG_PATCH_DAQ_HW_BUG
+   daqChannelTestAndClearHiResIntPending( pChannel );
+   if( daqChannelGetPmFifoWords( pChannel ) < DAQ_FIFO_PM_HIRES_WORD_SIZE )
+      return;
+   if( daqChannelIsPostMortemActive( pChannel ) ||
+       daqChannelIsHighResolutionEnabled( pChannel ) )
+      return;
+#else
+   if( !daqChannelTestAndClearHiResIntPending( pChannel ) )
+      return;
+#endif
+   ramPushDaqDataBlock( &g_DaqAdmin.oRam, pChannel, false );
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+static inline void concernsChannel( DAQ_CANNEL_T* pChannel )
+{
+   handleContinuousMode( pChannel );
+   handlePmHiresMode( pChannel );
 }
 
 /*! ---------------------------------------------------------------------------
@@ -123,7 +139,7 @@ static inline bool forEachCahnnel( DAQ_DEVICE_T* pDevice )
    {
       if( executeIfRequested( &g_DaqAdmin ) )
          return true;
-      concernsChannel( daqDeviceGetChannelObject( pDevice, channelNr ));
+      concernsChannel( daqDeviceGetChannelObject( pDevice, channelNr ) );
    }
  //  daqDeviceClearDaqChannelInterrupts( pDevice );
    return false;
@@ -131,7 +147,7 @@ static inline bool forEachCahnnel( DAQ_DEVICE_T* pDevice )
 
 /*! ---------------------------------------------------------------------------
  */
-static inline void forEachDevice( void )
+static inline void forEachScuDevice( void )
 {
    for( unsigned int deviceNr = 0;
        deviceNr < daqBusGetFoundDevices( &g_DaqAdmin.oDaqDevs ); deviceNr++ )
@@ -163,7 +179,7 @@ void main( void )
 
    while( true )
    {
-      forEachDevice();
+      forEachScuDevice();
    }
 }
 
