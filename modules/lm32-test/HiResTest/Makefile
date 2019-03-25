@@ -13,6 +13,7 @@ SOURCE += $(WR_DIR)/dev/w1-temp.c
 DEFINES += CONFIG_DAQ_PEDANTIC_CHECK
 DEFINES += CONFIG_SCU_BUS_PEDANTIC_CHECK
 DEFINES += CONFIG_DAQ_DEBUG
+CODE_OPTIMIZATION=0
 
 include $(REPOSITORY_DIR)/makefiles/makefile.scu
 #=================================== EOF ======================================

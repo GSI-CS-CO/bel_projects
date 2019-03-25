@@ -76,7 +76,7 @@ static inline void handleContinuousMode( DAQ_CANNEL_T* pChannel )
 #endif
    ramPushDaqDataBlock( &g_DaqAdmin.oRam, pChannel, true );
 
-#ifdef CONFIG_PATCH_DAQ_HW_BUG
+#ifdef CONFIG_PATCH_DAQ_HW_BUG__
    if( daqChannelDecrementBlockCounter( pChannel ) )
       return;
    if( daqChannelIsSample10usActive( pChannel ) )
@@ -131,9 +131,10 @@ static inline void concernsChannel( DAQ_CANNEL_T* pChannel )
  */
 static inline bool forEachCahnnel( DAQ_DEVICE_T* pDevice )
 {
- // daqDeviceTestAndClearDaqInt( pDevice );
- //  daqDeviceTestAndClearHiResInt( pDevice );
+  daqDeviceTestAndClearDaqInt( pDevice );
+//  daqDeviceTestAndClearHiResInt( pDevice );
 //daqDeviceClearDaqChannelInterrupts( pDevice );
+
    for( unsigned int channelNr = 0;
         channelNr < daqDeviceGetMaxChannels( pDevice ); channelNr++ )
    {

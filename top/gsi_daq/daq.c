@@ -233,7 +233,7 @@ void daqChannelPrintInfo( register DAQ_CANNEL_T* pThis )
             "Slot: %d, Channel %d, Address: 0x%08x, Bus address: 0x%08x\n"
             ESC_NORMAL,
             daqChannelGetSlot( pThis ),
-            daqChannelGetNumber( pThis ),
+            daqChannelGetNumber( pThis ) + 1,
             daqChannelGetRegPtr( pThis ),
             daqChannelGetScuBusSlaveBaseAddress( pThis )
           );
@@ -279,10 +279,10 @@ void daqChannelPrintInfo( register DAQ_CANNEL_T* pThis )
             daqChannelGetMacroVersion( pThis ));
    mprintf( "  Level DAQ FiFo:      %d words\n",
             daqChannelGetDaqFifoWords( pThis ));
-   mprintf( "  Channels:            %d\n",
-            daqChannelGetMaxCannels( pThis ));
    mprintf( "  Level PM_HiRes FiFo: %d words \n",
             daqChannelGetPmFifoWords( pThis ));
+   mprintf( "  Channels:            %d\n",
+            daqChannelGetMaxCannels( pThis ));
 }
 #endif /* defined( CONFIG_DAQ_DEBUG ) || defined(__DOXYGEN__) */
 
@@ -530,7 +530,8 @@ int daqBusFindAndInitializeAll( register DAQ_BUS_T* pThis,
                    daqDeviceGetMaxChannels( pCurrentDaqDevice ) );
       DAQ_ASSERT( DAQ_DEVICE_GET_PARENT_OF( pCurrentDaqDevice ) == pThis );
 
-      daqDeviceDisableScuSlaveInterrupt( pCurrentDaqDevice );
+      //daqDeviceDisableScuSlaveInterrupt( pCurrentDaqDevice );
+      daqDeviceEnableScuSlaveInterrupt( pCurrentDaqDevice ); //!!
       daqDeviceTestAndClearDaqInt( pCurrentDaqDevice );
       daqDeviceTestAndClearHiResInt( pCurrentDaqDevice );
 

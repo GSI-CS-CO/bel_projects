@@ -434,6 +434,42 @@ static int32_t opGetTriggerMode( DAQ_ADMIN_T* pDaqAdmin,
    return DAQ_RET_OK;
 }
 
+/*! ---------------------------------------------------------------------------
+ */
+static int32_t opSetTriggerSource( DAQ_ADMIN_T* pDaqAdmin,
+                                   volatile DAQ_OPERATION_IO_T* pData )
+{
+   FUNCTION_INFO();
+   int ret = verifyChannelAccess( &pDaqAdmin->oDaqDevs, &pData->location );
+   if( ret != DAQ_RET_OK )
+      return ret;
+
+   DAQ_CANNEL_T* pChannel = getChannel( pDaqAdmin, pData );
+
+   if( pData->param1 != 0 )
+      daqChannelEnableExtrenTrigger( pChannel );
+   else
+      daqChannelEnableEventTrigger( pChannel );
+
+   return DAQ_RET_OK;
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+static int32_t opGetTriggerSource( DAQ_ADMIN_T* pDaqAdmin,
+                                 volatile DAQ_OPERATION_IO_T* pData )
+{
+   FUNCTION_INFO();
+   int ret = verifyChannelAccess( &pDaqAdmin->oDaqDevs, &pData->location );
+   if( ret != DAQ_RET_OK )
+      return ret;
+
+   pData->param1 = daqChannelGetTriggerSource( getChannel( pDaqAdmin, pData ) );
+
+   return DAQ_RET_OK;
+}
+
+
 #define OPERATION_ITEM( opcode, function ) \
    { .code = opcode, .operation = function }
 
@@ -467,6 +503,8 @@ static const DAQ_OPERATION_TAB_ITEM_T g_operationTab[] =
    OPERATION_ITEM( DAQ_OP_GET_TRIGGER_DELAY,     opGetTriggerDelay     ),
    OPERATION_ITEM( DAQ_OP_SET_TRIGGER_MODE,      opSetTriggerMode      ),
    OPERATION_ITEM( DAQ_OP_GET_TRIGGER_MODE,      opGetTriggerMode      ),
+   OPERATION_ITEM( DAQ_OP_SET_TRIGGER_SOURCE,    opSetTriggerSource    ),
+   OPERATION_ITEM( DAQ_OP_GET_TRIGGER_SOURCE,    opGetTriggerSource    ),
    OPERATION_ITEM_TERMINATOR
 };
 

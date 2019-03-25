@@ -85,6 +85,9 @@ public:
    int sendTriggerMode( bool mode );
    bool receiveTriggerMode( void );
 
+   int sendTriggerSource( bool extInput );
+   bool receiveTriggerSource( void );
+
 protected:
    virtual bool onDataBlock( DAQ_DATA_T* pData, std::size_t wordLen ) = 0;
 
@@ -159,15 +162,18 @@ public:
    int sendDisablePmHires( const unsigned int channel );
 
    int sendTriggerCondition( const unsigned int channel,
-                            const uint32_t trgCondition );
+                             const uint32_t trgCondition );
    uint32_t receiveTriggerCondition( const unsigned int channel );
 
    int sendTriggerDelay( const unsigned int channel,
-                        const uint16_t delay );
+                         const uint16_t delay );
    uint16_t receiveTriggerDelay( const unsigned int channel );
 
    int sendTriggerMode( const unsigned int channel, bool mode );
    bool receiveTriggerMode( const unsigned int channel );
+
+   int sendTriggerSource( const unsigned int channel, bool extInput );
+   bool receiveTriggerSource( const unsigned int channel );
 
    DaqChannel* getChannel( const unsigned int number );
 
@@ -348,6 +354,21 @@ inline bool DaqDevice::receiveTriggerMode( const unsigned int channel )
    return getParent()->receiveTriggerMode( m_deviceNumber, channel );
 }
 
+/*! ---------------------------------------------------------------------------
+ */
+inline int DaqDevice::sendTriggerSource( const unsigned int channel,
+                                         bool extInput )
+{
+   return getParent()->sendTriggerSource( m_deviceNumber, channel, extInput );
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+inline bool DaqDevice::receiveTriggerSource( const unsigned int channel )
+{
+   return getParent()->receiveTriggerSource( m_deviceNumber, channel );
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 /*! ---------------------------------------------------------------------------
  */
@@ -439,6 +460,20 @@ inline int DaqChannel::sendTriggerMode( bool mode )
 inline bool DaqChannel::receiveTriggerMode( void )
 {
    return getParent()->receiveTriggerMode( m_number );
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+inline int DaqChannel::sendTriggerSource( bool extInput )
+{
+   return getParent()->sendTriggerSource( m_number, extInput );
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+inline bool DaqChannel::receiveTriggerSource( void )
+{
+   return getParent()->receiveTriggerSource( m_number );
 }
 
 

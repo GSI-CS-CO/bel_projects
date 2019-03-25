@@ -79,10 +79,9 @@ bool MyDaqChannel::onDataBlock( DAQ_DATA_T* pData, std::size_t wordLen )
 
   assert( (wordLen - numOfSamples) > 0 );
   DAQ_DATA_T average = summe / numOfSamples;
+
   cout << "  Minimum: " << minimum << " -> " << rawToVoltage( minimum ) << " Volt" << endl;
   cout << "  Average: " << average << " -> " << rawToVoltage( average ) << " Volt" << endl;
-  if( maximum == static_cast<DAQ_DATA_T>(~0) )
-     cout << ESC_FG_RED;
   cout << "  Maximum: " << maximum << " -> " << rawToVoltage( maximum ) << " Volt" << endl;
   cout << ESC_NORMAL;
   return false;
@@ -123,10 +122,10 @@ void doTest( const string wbName )
    assert( pChannel_a != nullptr );
    MyDaqChannel* pChannel_b = oDaqInterface.getChannelByAbsoluteNumber( 5 );
    assert( pChannel_b != nullptr );
-   pChannel_a->sendTriggerDelay( 0x55 );
-   pChannel_a->sendTriggerCondition( 0xCAFEAFFE );
-   pChannel_b->sendTriggerDelay( 0xAA );
-   pChannel_b->sendTriggerCondition( 0x08154711 );
+//   pChannel_a->sendTriggerDelay( 0x55 );
+//   pChannel_a->sendTriggerCondition( 0xCAFEAFFE );
+//   pChannel_b->sendTriggerDelay( 0xAA );
+//   pChannel_b->sendTriggerCondition( 0x08154711 );
 
    cout << "Returncode: " << oDaqInterface.getLastReturnCodeString() << endl;
 
@@ -142,7 +141,7 @@ void doTest( const string wbName )
 
    pChannel_a->sendEnablePostMortem();
    //pChannel_a->sendEnableHighResolution();
-   usleep( 1000000 );
+   usleep( 100000 );
    pChannel_a->sendDisablePmHires();
   //
    usleep( 1000000 );

@@ -45,20 +45,12 @@ void readFiFo( DAQ_CANNEL_T* pThis )
    DAQ_DESCRIPTOR_T descriptor;
    memset( &descriptor, 0, sizeof( descriptor ) );
 
-#ifdef CONFIG_DAQ_SEPARAD_COUNTER
-   uint16_t remaining  = daqChannelGetDaqFifoWords( pThis ) + 1;
-#else
-   volatile uint16_t remaining;
-#endif
+   volatile unsigned int remaining;
    int i = 0;
    do
    {
-#ifdef CONFIG_DAQ_SEPARAD_COUNTER
-      remaining--;
-#else
-      remaining = daqChannelGetDaqFifoWords( pThis );
-#endif
-      volatile uint16_t data = daqChannelPopDaqFifo( pThis ); //!!*ptr;
+      remaining = daqChannelGetPmFifoWords( pThis );
+      volatile uint16_t data = daqChannelPopPmFifo( pThis ); //!!*ptr;
 #if 0
       mprintf( "%d: 0x%04x, %d\n", i, data, remaining );
 #endif
@@ -80,6 +72,37 @@ void readFiFo( DAQ_CANNEL_T* pThis )
 
 }
 
+void printBin( uint16_t a )
+{
+   for( uint16_t i = 1 << (BIT_SIZEOF(uint16_t) - 1); i != 0; i >>= 1 )
+      mprintf( "%c", (a & i)? '1' : '0' );
+}
+
+void printIntRegs( DAQ_DEVICE_T* pDevice )
+{
+   volatile uint16_t* volatile pIntr_In      = &((uint16_t*)daqDeviceGetScuBusSlaveBaseAddress( pDevice ))[Intr_In];
+   volatile uint16_t* volatile pIntr_Ena     = &((uint16_t*)daqDeviceGetScuBusSlaveBaseAddress( pDevice ))[Intr_Ena];
+   volatile uint16_t* volatile pIntr_pending = &((uint16_t*)daqDeviceGetScuBusSlaveBaseAddress( pDevice ))[Intr_pending];
+   volatile uint16_t* volatile pIntr_Active  = &((uint16_t*)daqDeviceGetScuBusSlaveBaseAddress( pDevice ))[Intr_Active];
+
+   mprintf( "Intr_In:      0x%08x -> ", pIntr_In );
+   printBin( *pIntr_In );
+
+   mprintf( "\nIntr_Ena:     0x%08x -> ", pIntr_Ena );
+   printBin( *pIntr_Ena );
+
+   mprintf( "\nIntr_pending: 0x%08x -> ", pIntr_pending );
+   printBin( *pIntr_pending );
+
+   mprintf( "\nIntr_Active:  0x%08x -> ", pIntr_Active );
+   printBin( *pIntr_Active );
+
+   (*pIntr_Ena) |= ~0;
+   if( (*pIntr_Active) & 0x01 )
+      (*pIntr_Active) |= 0x01;
+   mprintf( "\n" );
+}
+
 
 void main( void )
 {
@@ -98,7 +121,9 @@ void main( void )
    mprintf( "%d DAQ found %d channels\n",
             daqBusGetFoundDevices( &g_allDaq ),
             daqBusGetNumberOfAllFoundChannels( &g_allDaq ) );
-   DAQ_CANNEL_T* pChannel = daqBusGetChannelObjectByAbsoluteNumber( &g_allDaq, CHANNEL );
+
+
+   DAQ_CANNEL_T* pChannel = daqBusGetChannelObjectByAbsoluteNumber( &g_allDaq, 0 );
    if( pChannel == NULL )
    {
       mprintf( ESC_FG_RED "ERROR: Channel " TO_STRING( CHANNEL ) " not present!\n" ESC_NORMAL );
@@ -106,15 +131,27 @@ void main( void )
    }
    mprintf( "Using channel: " TO_STRING( CHANNEL ) "\n" );
 
-   daqChannelEnableHighResolution( pChannel );
+   printIntRegs( DAQ_CHANNEL_GET_PARENT_OF( pChannel ) );
+   daqChannelEnableExtrenTrigger( pChannel );
+   daqChannelEnableTriggerMode( pChannel );
+
+
+ daqChannelEnableHighResolution( pChannel );
+ //  daqChannelEnablePostMortem( pChannel );
    daqChannelPrintInfo( pChannel );
+
+daqDeviceDisableScuSlaveInterrupt( DAQ_CHANNEL_GET_PARENT_OF( pChannel ) );
+printIntRegs( DAQ_CHANNEL_GET_PARENT_OF( pChannel ) );
+ //  while( !daqChannelTestAndClearHiResIntPending( pChannel ) );
    unsigned int i = 0;
-   //while( !daqChannelTestAndClearHiResIntPending( pChannel ) )
-   while( daqChannelGetPmFifoWords( pChannel ) < (DAQ_FIFO_PM_HIRES_WORD_SIZE-1) )
+   while( daqChannelGetPmFifoWords( pChannel ) < DAQ_FIFO_PM_HIRES_WORD_SIZE )
       i++;
+
+   daqChannelDisableHighResolution( pChannel );
+   daqChannelDisablePostMortem( pChannel );
+   daqChannelPrintInfo( pChannel );
    mprintf( "i = %d\n", i );
    readFiFo( pChannel );
-
 
 #endif
    mprintf( "End...\n" );

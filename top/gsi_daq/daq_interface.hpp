@@ -49,6 +49,11 @@
    SCU_ASSERT( channel <= c_maxChannels );                 \
 }
 
+
+#ifndef DAQ_VSS_MAX
+   #define DAQ_VSS_MAX 20.0
+#endif
+
 namespace daq
 {
 /*! ---------------------------------------------------------------------------
@@ -60,7 +65,7 @@ namespace daq
  */
 inline double rawToVoltage( DAQ_DATA_T rawData )
 {
-   return (static_cast<double>(rawData) * 10.0) /
+   return (static_cast<double>(static_cast<int16_t>(rawData)) * DAQ_VSS_MAX) /
              static_cast<double>(static_cast<DAQ_DATA_T>(~0));
 }
 
@@ -295,6 +300,13 @@ public:
 
    bool receiveTriggerMode( const unsigned int deviceNumber,
                             const unsigned int channel );
+
+   int sendTriggerSource( const unsigned int deviceNumber,
+                          const unsigned int channel,
+                          const bool extInput );
+
+   bool receiveTriggerSource( const unsigned int deviceNumber,
+                              const unsigned int channel );
 
    RAM_RING_INDEX_T getCurrentRamSize( bool update = true );
 

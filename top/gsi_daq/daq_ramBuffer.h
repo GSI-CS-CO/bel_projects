@@ -167,10 +167,10 @@ typedef uint32_t RAM_RING_INDEX_T;
 )
 
 /*!
- * @brief Calculates the rest in DAQ_DATA_T of a given block length to
+ * @brief Calculates the remainder in DAQ_DATA_T of a given block length to
  *        complete a full number of RAM_DAQ_PAYLOAD_T.
  */
-#define __RAM_DAQ_GET_BLOCK_REST( b )                        \
+#define __RAM_DAQ_GET_BLOCK_REMAINDER( b )                   \
 (                                                            \
    ((b * sizeof(DAQ_DATA_T)) % sizeof(RAM_DAQ_PAYLOAD_T)) /  \
    sizeof(DAQ_DATA_T)                                        \
@@ -184,11 +184,11 @@ typedef uint32_t RAM_RING_INDEX_T;
    __RAM_DAQ_GET_BLOCK_LEN( DAQ_FIFO_PM_HIRES_WORD_SIZE_CRC )
 
 /*!
- * @brief Rest of long blocks in DAQ_DATA_T to complete a full number of
+ * @brief Remainder of long blocks in DAQ_DATA_T to complete a full number of
  *        RAM_DAQ_PAYLOAD_T.
  */
-#define RAM_DAQ_LONG_BLOCK_REST \
-   __RAM_DAQ_GET_BLOCK_REST( DAQ_FIFO_PM_HIRES_WORD_SIZE_CRC )
+#define RAM_DAQ_LONG_BLOCK_REMAINDER \
+   __RAM_DAQ_GET_BLOCK_REMAINDER( DAQ_FIFO_PM_HIRES_WORD_SIZE_CRC )
 
 /*!
  * @brief Length of short blocks in RAM_DAQ_PAYLOAD_T for
@@ -198,20 +198,20 @@ typedef uint32_t RAM_RING_INDEX_T;
    __RAM_DAQ_GET_BLOCK_LEN( DAQ_FIFO_DAQ_WORD_SIZE_CRC )
 
 /*!
- * @brief Rest of short blocks in DAQ_DATA_T to complete a full number of
+ * @brief Remainder of short blocks in DAQ_DATA_T to complete a full number of
  *        RAM_DAQ_PAYLOAD_T.
  */
-#define RAM_DAQ_SHORT_BLOCK_REST \
-   __RAM_DAQ_GET_BLOCK_REST( DAQ_FIFO_DAQ_WORD_SIZE_CRC )
+#define RAM_DAQ_SHORT_BLOCK_REMAINDER \
+   __RAM_DAQ_GET_BLOCK_REMAINDER( DAQ_FIFO_DAQ_WORD_SIZE_CRC )
 
 #define RAM_DAQ_DATA_WORDS_PER_RAM_INDEX \
    (sizeof(RAM_DAQ_PAYLOAD_T) / sizeof(DAQ_DATA_T))
 
 
-#define RAM_DAQ_INDEX_OFFSET_OF_CHANNEL_CONTROL     \
-(                                                   \
-   offsetof( _DAQ_DISCRIPTOR_STRUCT_T, cControl ) / \
-   sizeof(RAM_DAQ_PAYLOAD_T)                        \
+#define RAM_DAQ_INDEX_OFFSET_OF_CHANNEL_CONTROL       \
+(                                                     \
+   offsetof( _DAQ_DISCRIPTOR_STRUCT_T, cControl ) /   \
+   sizeof(RAM_DAQ_PAYLOAD_T)                          \
 )
 
 #define RAM_DAQ_DAQ_WORD_OFFSET_OF_CHANNEL_CONTROL    \
