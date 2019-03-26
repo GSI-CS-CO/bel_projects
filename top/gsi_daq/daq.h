@@ -841,12 +841,12 @@ static inline bool daqChannelIsPostMortemActive( register DAQ_CANNEL_T* pThis )
  */
 static inline void daqChannelDisablePostMortem( register DAQ_CANNEL_T* pThis )
 {
+   pThis->properties.postMortemEvent = daqChannelIsPostMortemActive( pThis );
 #ifdef CONFIG_DAQ_SIMULATE_CHANNEL
    pThis->simulatedDescriptor.name.cControl.pmMode = false;
 #else
    daqChannelGetCtrlRegPtr( pThis )->Ena_PM = OFF;
 #endif
-    pThis->properties.postMortemEvent = true;
 }
 
 /*! ---------------------------------------------------------------------------
