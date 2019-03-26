@@ -190,7 +190,7 @@ class DaqAdministration: public DaqInterface
    boost::thread* m_pThread;
    bool           m_finalizeThread;
    boost::mutex   m_oMutex;
-   std::exception_ptr m_exceptionPtr;
+   static std::exception_ptr c_exceptionPtr;
 
 protected:
    typedef std::list<DaqDevice*> DEVICE_LIST_T;

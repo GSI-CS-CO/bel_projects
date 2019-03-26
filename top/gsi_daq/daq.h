@@ -262,7 +262,17 @@ typedef struct PACKED_SIZE
    /*!
     * @brief When true than this channel will not used.
     */
-   bool notUsed;
+   bool notUsed:          1;
+
+   /*!
+    * @brief Help flag will go to true when
+    *        post-mortem has bell switched off.
+    *
+    * This redundance is necessary to reduce the SCU-Buss accesses.
+    * Unfortunately the post-mortem mode doesn't supports the interrupt line.
+    *
+    */
+   bool postMortemEvent:  1;
 
 } DAQ_CHANNEL_BF_PROPERTY_T;
 STATIC_ASSERT( sizeof( DAQ_CHANNEL_BF_PROPERTY_T ) == sizeof( uint8_t ) );
@@ -836,6 +846,32 @@ static inline void daqChannelDisablePostMortem( register DAQ_CANNEL_T* pThis )
 #else
    daqChannelGetCtrlRegPtr( pThis )->Ena_PM = OFF;
 #endif
+    pThis->properties.postMortemEvent = true;
+}
+
+/*! ---------------------------------------------------------------------------
+ * @ingroup DAQ_CHANNEL
+ * @brief Tests whether post mortem mode has been switched off, and the data
+ *        are ready to copy.
+ *
+ * Hint: Of course it's also possible to ask the Ena_PM bit respectively
+ * the function daqChannelIsPostMortemActive()
+ * but in these manner the scu-bus access  will reduced. \n
+ * Unfortunately at the moment the post mortem mode doesn't supports
+ * the interrupt.
+ * @see daqChannelDisablePostMortem
+ * @param pThis Pointer to the channel object
+ * @retval true Post-Mortem data ready to copy
+ * @retval false No post mortem event
+ */
+static inline bool daqWasPostMortemEvent( register DAQ_CANNEL_T* pThis )
+{
+   if( pThis->properties.postMortemEvent )
+   {
+      pThis->properties.postMortemEvent = false;
+      return true;
+   }
+   return false;
 }
 
 /*! ---------------------------------------------------------------------------

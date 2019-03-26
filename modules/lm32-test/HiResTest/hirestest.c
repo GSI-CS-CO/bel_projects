@@ -97,7 +97,7 @@ void printIntRegs( DAQ_DEVICE_T* pDevice )
    mprintf( "\nIntr_Active:  0x%08x -> ", pIntr_Active );
    printBin( *pIntr_Active );
 
-   (*pIntr_Ena) |= ~0;
+ //  (*pIntr_Ena) |= ~0;
    if( (*pIntr_Active) & 0x01 )
       (*pIntr_Active) |= 0x01;
    mprintf( "\n" );
@@ -122,8 +122,8 @@ void main( void )
             daqBusGetFoundDevices( &g_allDaq ),
             daqBusGetNumberOfAllFoundChannels( &g_allDaq ) );
 
-
-   DAQ_CANNEL_T* pChannel = daqBusGetChannelObjectByAbsoluteNumber( &g_allDaq, 0 );
+#define CHANNEL 4
+   DAQ_CANNEL_T* pChannel = daqBusGetChannelObjectByAbsoluteNumber( &g_allDaq, CHANNEL );
    if( pChannel == NULL )
    {
       mprintf( ESC_FG_RED "ERROR: Channel " TO_STRING( CHANNEL ) " not present!\n" ESC_NORMAL );
@@ -140,17 +140,18 @@ void main( void )
  //  daqChannelEnablePostMortem( pChannel );
    daqChannelPrintInfo( pChannel );
 
-daqDeviceDisableScuSlaveInterrupt( DAQ_CHANNEL_GET_PARENT_OF( pChannel ) );
-printIntRegs( DAQ_CHANNEL_GET_PARENT_OF( pChannel ) );
- //  while( !daqChannelTestAndClearHiResIntPending( pChannel ) );
+//daqDeviceDisableScuSlaveInterrupt( DAQ_CHANNEL_GET_PARENT_OF( pChannel ) );
+   printIntRegs( DAQ_CHANNEL_GET_PARENT_OF( pChannel ) );
    unsigned int i = 0;
-   while( daqChannelGetPmFifoWords( pChannel ) < DAQ_FIFO_PM_HIRES_WORD_SIZE )
+  //  while( !daqDeviceTestAndClearHiResInt( DAQ_CHANNEL_GET_PARENT_OF( pChannel ) ) )
+   while( !daqChannelTestAndClearHiResIntPending( pChannel ) )
+  // while( daqChannelGetPmFifoWords( pChannel ) < DAQ_FIFO_PM_HIRES_WORD_SIZE )
       i++;
 
    daqChannelDisableHighResolution( pChannel );
    daqChannelDisablePostMortem( pChannel );
    daqChannelPrintInfo( pChannel );
-   mprintf( "i = %d\n", i );
+   mprintf( "Polling: %d\n", i );
    readFiFo( pChannel );
 
 #endif

@@ -5,9 +5,32 @@
 #include <daq_channel_container.hpp>
 #include <unistd.h>
 #include <assert.h>
+#include <termios.h>
 
 using namespace daq;
 using namespace std;
+
+class Terminal
+{
+   struct termios m_originTerminal;
+
+public:
+   Terminal( void )
+   {
+      struct termios newTerminal;
+      ::tcgetattr( STDIN_FILENO, &m_originTerminal );
+      newTerminal = m_originTerminal;
+      newTerminal.c_lflag     &= ~(ICANON | ECHO);  /* Disable canonic mode and echo.*/
+      newTerminal.c_cc[VMIN]  = 1;  /* Reading is complete after one byte only. */
+      newTerminal.c_cc[VTIME] = 0; /* No timer. */
+      ::tcsetattr( STDIN_FILENO, TCSANOW, &newTerminal );
+   }
+
+   ~Terminal( void )
+   {
+      ::tcsetattr( STDIN_FILENO, TCSANOW, &m_originTerminal );
+   }
+};
 
 
 class MyDaqChannel: public DaqChannel
@@ -149,8 +172,8 @@ void doTest( const string wbName )
 
 
    while( oDaqInterface.distributeData() > 0 );
-   oDaqInterface.start();
-  // sleep( 4 );
+//   oDaqInterface.start();
+// sleep( 4 );
 }
 
 
@@ -161,6 +184,7 @@ int main( int argc, const char** ppArgv )
 
    try
    {
+      Terminal terminal;
       doTest( ppArgv[1] );
    }
    catch( daq::EbException& e )

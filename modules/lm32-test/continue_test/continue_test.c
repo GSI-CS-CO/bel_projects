@@ -46,6 +46,38 @@ void __stack_chk_fail( void )
 }
 #endif
 
+void printBin( uint16_t a )
+{
+   for( uint16_t i = 1 << (BIT_SIZEOF(uint16_t) - 1); i != 0; i >>= 1 )
+      mprintf( "%c", (a & i)? '1' : '0' );
+}
+
+void printIntRegs( DAQ_DEVICE_T* pDevice )
+{
+   volatile uint16_t* volatile pIntr_In      = &((uint16_t*)daqDeviceGetScuBusSlaveBaseAddress( pDevice ))[Intr_In];
+   volatile uint16_t* volatile pIntr_Ena     = &((uint16_t*)daqDeviceGetScuBusSlaveBaseAddress( pDevice ))[Intr_Ena];
+   volatile uint16_t* volatile pIntr_pending = &((uint16_t*)daqDeviceGetScuBusSlaveBaseAddress( pDevice ))[Intr_pending];
+   volatile uint16_t* volatile pIntr_Active  = &((uint16_t*)daqDeviceGetScuBusSlaveBaseAddress( pDevice ))[Intr_Active];
+
+   mprintf( "Intr_In:      0x%08x -> ", pIntr_In );
+   printBin( *pIntr_In );
+
+   mprintf( "\nIntr_Ena:     0x%08x -> ", pIntr_Ena );
+   printBin( *pIntr_Ena );
+
+   mprintf( "\nIntr_pending: 0x%08x -> ", pIntr_pending );
+   printBin( *pIntr_pending );
+
+   mprintf( "\nIntr_Active:  0x%08x -> ", pIntr_Active );
+   printBin( *pIntr_Active );
+
+ //  (*pIntr_Ena) |= ~0;
+   if( (*pIntr_Active) & 0x01 )
+      (*pIntr_Active) |= 0x01;
+   mprintf( "\n" );
+}
+
+
 void readFiFo( DAQ_CANNEL_T* pThis )
 {
    int j = 0;
@@ -172,7 +204,7 @@ void main( void )
    int i, j;
    mprintf( "Total number of all used channels: %d\n", daqBusGetUsedChannels( &g_allDaq ) );
 
-   DAQ_CANNEL_T* pChannel = daqBusGetChannelObjectByAbsoluteNumber( &g_allDaq, 3 );
+   DAQ_CANNEL_T* pChannel = daqBusGetChannelObjectByAbsoluteNumber( &g_allDaq, 4 );
    if( pChannel == NULL )
    {
       mprintf( ESC_FG_RED "ERROR: Channel number out of range!\n" ESC_NORMAL );
@@ -180,18 +212,16 @@ void main( void )
    }
    uint32_t* pBusSlave = daqDeviceGetScuBusSlaveBaseAddress( DAQ_CHANNEL_GET_PARENT_OF( pChannel ) );
    uint16_t flags = scuBusGetSlaveValue16( pBusSlave, Intr_Active );
-   mprintf( "SCU-Bus IRQ-flags: 0x%04x, Address : 0x%08x\n", flags, ((int)pBusSlave) + Intr_Active );
-   flags = scuBusGetSlaveValue16( pBusSlave, Intr_Active );
-   mprintf( "SCU-Bus IRQ-flags: 0x%04x, Address : 0x%08x\n", flags, ((int)pBusSlave) + Intr_Active );
+   mprintf( "SCU-Bus IRQ-flags: 0x%04x, Address : 0x%08x\n", flags, &((uint16_t*)pBusSlave)[Intr_Active] );
 
 //#if 1
    daqChannelPrintInfo( pChannel );
    printScuBusSlaveInfo( pChannel );
 //#if 0
    daqDeviceEnableScuSlaveInterrupt( DAQ_CHANNEL_GET_PARENT_OF( pChannel ) );
-
+   printIntRegs( DAQ_CHANNEL_GET_PARENT_OF( pChannel ) );
    initIrq();
-
+   daqChannelTestAndClearHiResIntPending( pChannel );
   // daqChannelSample1msOn( pChannel );
   // daqChannelSample100usOn( pChannel );
   // daqChannelSample10usOn( pChannel );
@@ -200,16 +230,33 @@ void main( void )
    {
       printLine( '+' );
       daqChannelSetTriggerConditionLW( pChannel, (k == 0)? 0x4710 : 0x4711 );
-      daqChannelSample10usOn( pChannel );
+      //daqChannelSample10usOn( pChannel );
+      //daqChannelSample1msOn( pChannel );
+      daqChannelSample100usOn( pChannel );
       i = 0;
-     // while( daqChannelGetDaqFifoWords( pChannel ) < (DAQ_FIFO_DAQ_WORD_SIZE-1) )
-     // while( !daqDeviceTestAndClearDaqInt( DAQ_CHANNEL_GET_PARENT_OF( pChannel ) ) )
+    //  while( daqChannelGetDaqFifoWords( pChannel ) < DAQ_FIFO_DAQ_WORD_SIZE )
+      while( !daqDeviceTestAndClearDaqInt( DAQ_CHANNEL_GET_PARENT_OF( pChannel ) ) );
       while( !daqChannelTestAndClearDaqIntPending( pChannel ) )
+     //   while( !daqChannelTestAndClearHiResIntPending( pChannel ) ) //!!!!!!!!
          i++;
-      daqDeviceTestAndClearDaqInt( DAQ_CHANNEL_GET_PARENT_OF( pChannel ) );
-      mprintf( "Polling loops: %d\n", i );
-      daqChannelSample10usOff( pChannel ); // BUGFIX!!!
 
+      mprintf( "Polling loops: %d\n", i );
+      printIntRegs( DAQ_CHANNEL_GET_PARENT_OF( pChannel ) );
+#define BUG_FIX
+#ifdef BUG_FIX
+      if( daqChannelIsSample10usActive( pChannel ) )
+      {
+         daqChannelSample10usOff( pChannel );
+      }
+      else if( daqChannelIsSample100usActive( pChannel ) )
+      {
+         daqChannelSample100usOff( pChannel );
+      }
+      else if( daqChannelIsSample1msActive( pChannel ) )
+      {
+         daqChannelSample1msOff( pChannel );
+      }
+#endif
       daqChannelPrintInfo( pChannel );
       printScuBusSlaveInfo( pChannel );
       mprintf( "Reading FoFo for the " ESC_FG_YELLOW ESC_BOLD"%dth"ESC_NORMAL" time\n", k+1 );

@@ -97,6 +97,8 @@ DaqChannel* DaqDevice::getChannel( const unsigned int number )
 }
 
 ///////////////////////////////////////////////////////////////////////////////
+std::exception_ptr DaqAdministration::c_exceptionPtr = nullptr;
+
 /*! ---------------------------------------------------------------------------
  */
 DaqAdministration::DaqAdministration( const std::string wbDevice )
@@ -104,7 +106,6 @@ DaqAdministration::DaqAdministration( const std::string wbDevice )
   ,m_maxChannels( 0 )
   ,m_pThread( nullptr )
   ,m_finalizeThread( false )
-  ,m_exceptionPtr( nullptr )
 {
 }
 
@@ -138,10 +139,10 @@ void DaqAdministration::stop( void )
    m_pThread->join();
    delete m_pThread;
    m_pThread = nullptr;
-   if( m_exceptionPtr == nullptr )
+   if( c_exceptionPtr == nullptr )
       return;
-  // std::rethrow_exception( m_exceptionPtr );
-   //throw( m_exceptionPtr );
+  // std::rethrow_exception( c_exceptionPtr );
+   throw( c_exceptionPtr );
 }
 
 /*! ---------------------------------------------------------------------------
@@ -152,7 +153,8 @@ void DaqAdministration::thread( unsigned int toSleep )
    while( !m_finalizeThread )
    {
       //distributeData();
-      throw( DaqException( "Test" ) );
+      //throw( DaqException( "Test" ) );
+      throw( std::exception(  ));
       ::usleep( toSleep );
 
    }
@@ -160,7 +162,7 @@ void DaqAdministration::thread( unsigned int toSleep )
    catch( ... )
    {
       std::cerr << "Exception in thread" << std::endl;
-      m_exceptionPtr = std::current_exception();
+      c_exceptionPtr = std::current_exception();
    }
    std::cout << "Thread left" << std::endl;
 }
