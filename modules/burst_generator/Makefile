@@ -18,9 +18,10 @@ VERSION  	= 00.00.01
 .DEFAULT_GOAL := fwbin
 
 PATHFW 	        = .
+PATHSCU       = ../../top/gsi_scu
 DEBUGLVL    	= 1
 EXTRA_FLAGS	?=
-CFLAGS 	        =  -I$(PATHFW) -DDEBUGLEVEL=$(DEBUGLVL) $(EXTRA_FLAGS)
+CFLAGS 	        =  -I$(PATHFW) -I$(PATHSCU) -DDEBUGLEVEL=$(DEBUGLVL) $(EXTRA_FLAGS)
 
 $(info    >>>>)
 $(info    building is done by importing the following data from $(PLATFMAKEFILE):)
@@ -40,7 +41,8 @@ include ../../syn/build.mk
 
 fwbin: $(TARGET).bin
 
-$(TARGET).elf: $(PATHFW)/$(TARGET).c
+$(TARGET).elf: $(PATHFW)/$(TARGET).c \
+                $(PATHSCU)/cb.c # definitions of MSI message buffer functions
 
 clean::
 	rm -f $(PATHFW)/*.o $(PATHFW)/*.a $(PATHFW)/*.elf $(PATHFW)/*.bin
