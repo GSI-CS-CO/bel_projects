@@ -237,7 +237,9 @@ static int32_t opPostMortemOn( DAQ_ADMIN_T* pDaqAdmin,
    if( ret != DAQ_RET_OK )
       return ret;
 
-   daqChannelEnablePostMortem( getChannel( pDaqAdmin, pData ) );
+   DAQ_CANNEL_T* pChannel = getChannel( pDaqAdmin, pData );
+   pChannel->properties.restart = (pData->param1 != 0);
+   daqChannelEnablePostMortem( pChannel );
 
    return DAQ_RET_OK;
 }
@@ -270,6 +272,7 @@ static int32_t opPmHighResOff( DAQ_ADMIN_T* pDaqAdmin,
       return ret;
 
    DAQ_CANNEL_T* pChannel = getChannel( pDaqAdmin, pData );
+   pChannel->properties.restart = (pData->param1 != 0);
    daqChannelDisablePostMortem( pChannel );
    daqChannelDisableHighResolution( pChannel );
    return DAQ_RET_OK;

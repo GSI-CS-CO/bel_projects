@@ -136,6 +136,8 @@ void ramRreadItem( register RAM_SCU_T* pThis, const RAM_RING_INDEX_T index,
 #endif
 }
 
+#if defined(__lm32__) || defined(__DOXYGEN__)
+
 /*! ---------------------------------------------------------------------------
  */
 /*
@@ -154,6 +156,7 @@ void ramRreadItem( register RAM_SCU_T* pThis, const RAM_RING_INDEX_T index,
 /*! ---------------------------------------------------------------------------
  * @see scu_ramBuffer.h
  */
+static inline
 RAM_DAQ_BLOCK_T ramRingGetTypeOfOldestBlock( register RAM_SCU_T* pThis )
 {
    unsigned int size = ramRingGetSize( &pThis->pSharedObj->ringIndexes );
@@ -182,74 +185,42 @@ RAM_DAQ_BLOCK_T ramRingGetTypeOfOldestBlock( register RAM_SCU_T* pThis )
    DBPRINT1( "DBG: hiRes: 0x%x\n", RAM_ACCESS_CHANNEL_MODE( item ).hiResMode );
 #endif
 
+   if( ((int)RAM_ACCESS_CHANNEL_MODE( item ).daqMode)   +
+       ((int)RAM_ACCESS_CHANNEL_MODE( item ).hiResMode) +
+       ((int)RAM_ACCESS_CHANNEL_MODE( item ).pmMode)    != 1 )
+   {
+       DBPRINT1( ESC_FG_RED ESC_BOLD
+                "DBG: ERROR: RAM wrong modes!\n"
+                 ESC_NORMAL);
+       return RAM_DAQ_UNDEFINED;
+   }
+
    if( RAM_ACCESS_CHANNEL_MODE( item ).daqMode )
-   {
-      if( RAM_ACCESS_CHANNEL_MODE( item ).hiResMode ||
-          RAM_ACCESS_CHANNEL_MODE( item ).pmMode )
-      {
-         DBPRINT1( ESC_FG_RED ESC_BOLD
-                   "DBG: ERROR: RAM daq-Mode: Too much modes!\n"
-                   ESC_NORMAL);
-         return RAM_DAQ_UNDEFINED;
-      }
       return RAM_DAQ_SHORT;
-   }
 
-   if( RAM_ACCESS_CHANNEL_MODE( item ).hiResMode )
-   {
-      if( RAM_ACCESS_CHANNEL_MODE( item ).daqMode ||
-          RAM_ACCESS_CHANNEL_MODE( item ).pmMode )
-      {
-         DBPRINT1( ESC_FG_RED ESC_BOLD
-                   "DBG: ERROR: RAM hiRes-mode: Too much modes!\n"
-                   ESC_NORMAL );
-         return RAM_DAQ_UNDEFINED;
-      }
-      return RAM_DAQ_LONG;
-   }
-
-   if( RAM_ACCESS_CHANNEL_MODE( item ).pmMode )
-   {
-      if( RAM_ACCESS_CHANNEL_MODE( item ).daqMode ||
-          RAM_ACCESS_CHANNEL_MODE( item ).hiResMode )
-      {
-         DBPRINT1( ESC_FG_RED ESC_BOLD
-                   "DBG: ERROR: RAM PM mode: Too much modes!\n"
-                   ESC_NORMAL );
-         return RAM_DAQ_UNDEFINED;
-      }
-      return RAM_DAQ_LONG;
-   }
-
-   DBPRINT1( ESC_FG_RED ESC_BOLD
-             "DBG: ERROR: RAM: No DAQ channel mode set!\n"
-             ESC_NORMAL );
-   return RAM_DAQ_UNDEFINED;
+   return RAM_DAQ_LONG;
 }
 
-#if defined(__lm32__) || defined(__DOXYGEN__)
+
 
 /*! ---------------------------------------------------------------------------
  * @brief Removes the oldest DAQ- block in the ring boffer
  */
-static int ramRemoveOldestBlock( register RAM_SCU_T* pThis )
+static inline
+void ramRemoveOldestBlock( register RAM_SCU_T* pThis )
 {
    switch( ramRingGetTypeOfOldestBlock( pThis ) )
    {
       case RAM_DAQ_UNDEFINED:
       {
          ramRingReset( &pThis->pSharedObj->ringIndexes );
-         return -1;
-      }
-      case RAM_DAQ_EMPTY:
-      {
-         return 0;
+         break;
       }
       case RAM_DAQ_SHORT:
       {
          ramRingAddToReadIndex( &pThis->pSharedObj->ringIndexes,
                                 RAM_DAQ_SHORT_BLOCK_LEN );
-         return 1;
+         break;
       }
       case RAM_DAQ_LONG:
       {
@@ -257,8 +228,8 @@ static int ramRemoveOldestBlock( register RAM_SCU_T* pThis )
                                 RAM_DAQ_LONG_BLOCK_LEN );
          break;
       }
+      default: break;
    }
-   return 1;
 }
 
 /*! ---------------------------------------------------------------------------
@@ -336,10 +307,9 @@ void ramWriteDaqData( register RAM_SCU_T* pThis, DAQ_CANNEL_T* pDaqChannel,
    unsigned int dataWordCounter;
    unsigned int payloadIndex;
    unsigned int expectedWords;
-#ifdef  CONFIG_DAQ_DEBUG
-   DAQ_DESCRIPTOR_T   discriptor;
-   unsigned int  di = 0;
-#endif
+   unsigned int di;
+
+   DAQ_DESCRIPTOR_T    oDescriptor;
    RAM_RING_INDEXES_T  oDescriptorIndexes;
    RAM_RING_INDEXES_T  oDataIndexes;
    RAM_RING_INDEXES_T* poIndexes;
@@ -376,6 +346,7 @@ void ramWriteDaqData( register RAM_SCU_T* pThis, DAQ_CANNEL_T* pDaqChannel,
       expectedWords = DAQ_FIFO_PM_HIRES_WORD_SIZE_CRC;
    }
 
+   di = 0;
    dataWordCounter = 0;
    do
    {
@@ -398,17 +369,16 @@ void ramWriteDaqData( register RAM_SCU_T* pThis, DAQ_CANNEL_T* pDaqChannel,
             payloadIndex = 0;
          }
 
-      #ifdef  CONFIG_DAQ_DEBUG
          DAQ_DATA_T data = pop( pDaqChannel );
          ramFillItem( &ramItem, payloadIndex, data );
          if( poIndexes == &oDescriptorIndexes )
-         {
-            RAM_ASSERT( di < sizeof(discriptor)/sizeof(DAQ_DATA_T) );
-            ((DAQ_DATA_T*)&discriptor)[di++] = data;
+         { /*
+            * Descriptor will received.
+            */
+            RAM_ASSERT( di < ARRAY_SIZE(oDescriptor.index) );
+            oDescriptor.index[di++] = data;
          }
-      #else
-         ramFillItem( &ramItem, payloadIndex, pop( pDaqChannel ) );
-      #endif
+
          /*
           * Was the last data word of payload received?
           */
@@ -478,9 +448,16 @@ void ramWriteDaqData( register RAM_SCU_T* pThis, DAQ_CANNEL_T* pDaqChannel,
    /*
     * Is the block integrity given?
     */
-   if( dataWordCounter == expectedWords )
-   { /*
-      * Yes, making the new received data block in ring buffer valid.
+   if( (dataWordCounter == expectedWords) && daqDescriptorVerifyMode(&oDescriptor) )
+   {
+      RAM_ASSERT( isShort == daqDescriptorWasDaq( &oDescriptor ) );
+      if( daqDescriptorWasPM( &oDescriptor ) && pDaqChannel->properties.restart )
+      {
+         DBG_RAM_INFO( "DBG: Restarting Post Mortem\n" );
+         daqChannelEnablePostMortem( pDaqChannel );
+      }
+     /*
+      * Making the new received data block in ring buffer valid.
       */
       pThis->pSharedObj->ringIndexes.end = oDataIndexes.end;
    }
@@ -498,7 +475,7 @@ void ramWriteDaqData( register RAM_SCU_T* pThis, DAQ_CANNEL_T* pDaqChannel,
 #endif
    ramRingDbgPrintIndexes( &pThis->pSharedObj->ringIndexes,
                            ESC_FG_WHITE ESC_BOLD "Final indexes" ESC_NORMAL );
-   daqDescriptorPrintInfo( &discriptor );
+   daqDescriptorPrintInfo( &oDescriptor );
 }
 
 /*! ---------------------------------------------------------------------------

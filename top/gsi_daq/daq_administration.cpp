@@ -378,9 +378,7 @@ int DaqAdministration::distributeData( void )
    /*
     * Rough check of the device descriptors integrity.
     */
-   if( ::daqDescriptorWasDaq( &probe.descriptor )   +
-       ::daqDescriptorWasHiRes( &probe.descriptor ) +
-       ::daqDescriptorWasPM( &probe.descriptor )    != 1 )
+   if( !::daqDescriptorVerifyMode( &probe.descriptor ) )
    {
       //TODO Maybe clearing the entire buffer?
       clearBuffer();
@@ -388,15 +386,14 @@ int DaqAdministration::distributeData( void )
    }
 
    std::size_t wordLen;
-   if( !::daqDescriptorWasDaq( &probe.descriptor ) )
+   if( ::daqDescriptorIsLongBlock( &probe.descriptor ) )
    { /*
       * Long block is detected, in this case the rest of the data
       * has still to be read from the DAQ-Ram-buffer.
       */
       if( ::ramReadDaqDataBlock( &m_oScuRam,
                                  &probe.ramItems[c_ramBlockShortLen],
-                                 c_ramBlockLongLen -
-                                 c_ramBlockShortLen,
+                                 c_ramBlockLongLen - c_ramBlockShortLen,
                                  ramReadPoll ) != EB_OK )
          throw EbException( "Unable to read SCU-Ram buffer second part" );
 

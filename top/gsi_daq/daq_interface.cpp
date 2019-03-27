@@ -607,10 +607,13 @@ unsigned int DaqInterface::readMacroVersion( const unsigned int deviceNumber )
 /*! ---------------------------------------------------------------------------
  */
 int DaqInterface::sendEnablePostMortem( const unsigned int deviceNumber,
-                                        const unsigned int channel )
+                                        const unsigned int channel,
+                                        const bool restart
+                                      )
 {
    DAQ_SET_CHANNEL_LOCATION( deviceNumber, channel );
 
+   m_oSharedData.operation.ioData.param1 = restart;
    writeParam1();
    return sendCommand( DAQ_OP_PM_ON );
 }
@@ -657,10 +660,13 @@ int DaqInterface::sendDisableContinue( const unsigned int deviceNumber,
 /*! ---------------------------------------------------------------------------
  */
 int DaqInterface::sendDisablePmHires( const unsigned int deviceNumber,
-                                      const unsigned int channel )
+                                      const unsigned int channel,
+                                      const bool restart
+                                    )
 {
    DAQ_SET_CHANNEL_LOCATION( deviceNumber, channel );
 
+   m_oSharedData.operation.ioData.param1 = restart;
    writeParam1();
    return sendCommand( DAQ_OP_PM_HIRES_OFF );
 }

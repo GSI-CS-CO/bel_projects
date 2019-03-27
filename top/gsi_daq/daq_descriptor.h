@@ -268,7 +268,7 @@ STATIC_ASSERT( sizeof(_DAQ_DISCRIPTOR_STRUCT_T ) ==
  */
 typedef union PACKED_SIZE
 {
-   uint16_t index[DAQ_DISCRIPTOR_WORD_SIZE]; //!< @brief WORD-access by index
+   DAQ_DATA_T index[DAQ_DISCRIPTOR_WORD_SIZE]; //!< @brief WORD-access by index
    _DAQ_DISCRIPTOR_STRUCT_T name;            //!< @brief Access by name
 } DAQ_DESCRIPTOR_T;
 #ifndef __DOXYGEN__
@@ -384,7 +384,7 @@ static inline void daqDescriptorSetHiRes( register DAQ_DESCRIPTOR_T* pThis,
  * @param pThis Pointer to the DAQ- descriptor object, that means to the last
  *              10 received words (type uint16_t) of the received record.
  *              @see DAQ_DISCRIPTOR_WORD_SIZE
- * @retval ==true DAQ- mode was active.
+ * @retval true DAQ- mode was active.
  */
 static inline bool daqDescriptorWasDaq( register DAQ_DESCRIPTOR_T* pThis )
 {
@@ -398,6 +398,33 @@ static inline void daqDescriptorSetDaq( register DAQ_DESCRIPTOR_T* pThis,
    pThis->name.cControl.daqMode = daqMode;
 }
 #endif
+
+/*! ---------------------------------------------------------------------------
+ * @brief Verifies the integrity of the set DAQ- mode in the device-
+ *        descriptor.
+ * @param pThis Pointer to the DAQ- descriptor object, that means to the last
+ *              10 received words (type uint16_t) of the received record.
+ * @retval true Set mote is OK.
+ * @retval false Error in descriptor.
+ */
+static inline bool daqDescriptorVerifyMode( register DAQ_DESCRIPTOR_T* pThis )
+{
+   return ( ((int)daqDescriptorWasPM( pThis ))    +
+            ((int)daqDescriptorWasHiRes( pThis )) +
+            ((int)daqDescriptorWasDaq( pThis )) == 1 );
+}
+
+/*! ----------------------------------------------------------------------------
+ * @brief Returns true if it is a long block.
+ * @param pThis Pointer to the DAQ- descriptor object, that means to the last
+ *              10 received words (type uint16_t) of the received record.
+ * @retval true Long block   (has DAQ_FIFO_PM_HIRES_WORD_SIZE_CRC words)
+ * @retval false Short block (has DAQ_FIFO_DAQ_WORD_SIZE_CRC words)
+ */
+static inline bool daqDescriptorIsLongBlock( register DAQ_DESCRIPTOR_T* pThis )
+{
+   return !daqDescriptorWasDaq( pThis );
+}
 
 /*! ---------------------------------------------------------------------------
  * @brief Gets the least significant word of the bus tag event

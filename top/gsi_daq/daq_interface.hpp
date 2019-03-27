@@ -260,13 +260,17 @@ public:
    unsigned int readMaxChannels( const unsigned int deviceNumber );
 
    int sendEnablePostMortem( const unsigned int deviceNumber,
-                             const unsigned int channel );
+                             const unsigned int channel,
+                             const bool restart = false
+                           );
 
    int sendEnableHighResolution( const unsigned int deviceNumber,
                                  const unsigned int channel );
 
    int sendDisablePmHires( const unsigned int deviceNumber,
-                           const unsigned int channel );
+                           const unsigned int channel,
+                           const bool restart = false
+                         );
 
    int sendEnableContineous( const unsigned int deviceNumber,
                              const unsigned int channel,

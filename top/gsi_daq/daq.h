@@ -274,6 +274,11 @@ typedef struct PACKED_SIZE
     */
    bool postMortemEvent:  1;
 
+   /*!
+    * @brief Restarts the post mortem, after a copy cycle of post mortem data.
+    */
+   bool restart:          1;
+
 } DAQ_CHANNEL_BF_PROPERTY_T;
 STATIC_ASSERT( sizeof( DAQ_CHANNEL_BF_PROPERTY_T ) == sizeof( uint8_t ) );
 
@@ -866,12 +871,9 @@ static inline void daqChannelDisablePostMortem( register DAQ_CANNEL_T* pThis )
  */
 static inline bool daqWasPostMortemEvent( register DAQ_CANNEL_T* pThis )
 {
-   if( pThis->properties.postMortemEvent )
-   {
-      pThis->properties.postMortemEvent = false;
-      return true;
-   }
-   return false;
+   bool ret = pThis->properties.postMortemEvent;
+   pThis->properties.postMortemEvent = false;
+   return ret;
 }
 
 /*! ---------------------------------------------------------------------------

@@ -165,9 +165,14 @@ void doTest( const string wbName )
    pChannel_a->sendEnablePostMortem();
    //pChannel_a->sendEnableHighResolution();
    usleep( 100000 );
-   pChannel_a->sendDisablePmHires();
+   pChannel_a->sendDisablePmHires( true );
   //
    usleep( 1000000 );
+
+    pChannel_a->sendDisablePmHires( true );
+  //
+   usleep( 1000000 );
+
    cout << "Ram level: " << oDaqInterface.getCurrentRamSize(true ) << endl;
 
 

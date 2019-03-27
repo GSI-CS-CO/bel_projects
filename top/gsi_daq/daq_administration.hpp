@@ -69,12 +69,12 @@ public:
    const unsigned int getSlot( void );
    const unsigned int getDeviceNumber( void );
 
-   int sendEnablePostMortem( void );
+   int sendEnablePostMortem( const bool restart = false );
    int sendEnableHighResolution( void );
    int sendEnableContineous( const DAQ_SAMPLE_RATE_T sampleRate,
                              const unsigned int maxBlocks = 0 );
    int sendDisableContinue( void );
-   int sendDisablePmHires( void );
+   int sendDisablePmHires( const bool restart = false );
 
    int sendTriggerCondition( const uint32_t trgCondition );
    uint32_t receiveTriggerCondition( void );
@@ -153,13 +153,15 @@ public:
 
    bool registerChannel( DaqChannel* pChannel );
 
-   int sendEnablePostMortem( const unsigned int channel );
+   int sendEnablePostMortem( const unsigned int channel,
+                             const bool restart = false );
    int sendEnableHighResolution( const unsigned int channel );
    int sendEnableContineous( const unsigned int channel,
                              const DAQ_SAMPLE_RATE_T sampleRate,
                              const unsigned int maxBlocks = 0 );
    int sendDisableContinue( const unsigned int channel );
-   int sendDisablePmHires( const unsigned int channel );
+   int sendDisablePmHires( const unsigned int channel,
+                           const bool restart = false );
 
    int sendTriggerCondition( const unsigned int channel,
                              const uint32_t trgCondition );
@@ -271,9 +273,11 @@ inline unsigned int DaqDevice::readMacroVersion( void )
 
 /*! ---------------------------------------------------------------------------
  */
-inline int DaqDevice::sendEnablePostMortem( const unsigned int channel )
+inline int DaqDevice::sendEnablePostMortem( const unsigned int channel,
+                                            const bool restart )
 {
-   return getParent()->sendEnablePostMortem( m_deviceNumber, channel );
+   return getParent()->sendEnablePostMortem( m_deviceNumber, channel,
+                                             restart );
 }
 
 /*! ---------------------------------------------------------------------------
@@ -303,9 +307,11 @@ inline int DaqDevice::sendDisableContinue( const unsigned int channel )
 
 /*! ---------------------------------------------------------------------------
  */
-inline int DaqDevice::sendDisablePmHires( const unsigned int channel )
+inline int DaqDevice::sendDisablePmHires( const unsigned int channel,
+                                          const bool restart )
 {
-   return getParent()->sendDisablePmHires( m_deviceNumber, channel );
+   return getParent()->sendDisablePmHires( m_deviceNumber, channel,
+                                           restart  );
 }
 
 /*! ---------------------------------------------------------------------------
@@ -386,9 +392,9 @@ inline const unsigned int DaqChannel::getDeviceNumber( void )
 
 /*! ---------------------------------------------------------------------------
  */
-inline int DaqChannel::sendEnablePostMortem( void )
+inline int DaqChannel::sendEnablePostMortem( const bool restart )
 {
-   return getParent()->sendEnablePostMortem( m_number );
+   return getParent()->sendEnablePostMortem( m_number, restart );
 }
 
 /*! ---------------------------------------------------------------------------
@@ -415,9 +421,9 @@ inline int DaqChannel::sendDisableContinue( void )
 
 /*! ---------------------------------------------------------------------------
  */
-inline int DaqChannel::sendDisablePmHires( void )
+inline int DaqChannel::sendDisablePmHires( const bool restart )
 {
-   return getParent()->sendDisablePmHires( m_number );
+   return getParent()->sendDisablePmHires( m_number, restart );
 }
 
 /*! ---------------------------------------------------------------------------
