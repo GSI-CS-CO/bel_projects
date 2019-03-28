@@ -4,6 +4,7 @@
  *
  *  This file is suitable for LM32-apps within the SCU environment and
  *  for Linux applications.
+ *
  *  @note Different endianes conventions of bit fields becomes considered!
  *  @see
  *  <a href="https://www-acc.gsi.de/wiki/Hardware/Intern/DataAquisitionMacrof%C3%BCrSCUSlaveBaugruppen">
@@ -88,7 +89,8 @@ typedef uint16_t DAQ_DATA_T;
  * @see DAQ_DESCRIPTOR_T
  * @see daqChannelGetDaqFifoWords
  */
-#define DAQ_FIFO_DAQ_WORD_SIZE       509
+//#define DAQ_FIFO_DAQ_WORD_SIZE       509
+#define DAQ_FIFO_DAQ_WORD_SIZE       511
 
 /*!
  * @brief Maximum DAQ-FIFO capacity in 16 bit words
@@ -114,8 +116,8 @@ typedef uint16_t DAQ_DATA_T;
  * @see DAQ_DESCRIPTOR_T
  * @see daqChannelGetPmFifoWords
  */
-
 #define DAQ_FIFO_PM_HIRES_WORD_SIZE     1023
+
 /*!
  * @brief Maximum PM_HIRES FIFO capacity in 16 bit words
  *        inclusive the DAQ-Descriptor and check-sum.
@@ -148,6 +150,7 @@ typedef struct PACKED_SIZE
    unsigned int diobId: 5;
 #endif
 } _DAQ_BF_SLOT_DIOB ;
+
 #ifndef __DOXYGEN__
 STATIC_ASSERT( sizeof( _DAQ_BF_SLOT_DIOB ) == sizeof(DAQ_DATA_T));
 #endif
@@ -171,6 +174,7 @@ typedef struct PACKED_SIZE
    uint8_t controlReg:    8;
 #endif
 } _DAQ_CHANNEL_CONTROL;
+
 #ifndef __DOXYGEN__
 STATIC_ASSERT( sizeof( _DAQ_CHANNEL_CONTROL ) == sizeof(DAQ_DATA_T) );
 #endif
@@ -183,6 +187,7 @@ typedef struct PACKED_SIZE
    uint32_t nSec;  /*!<@brief Nano seconds */
    uint32_t utSec; /*!<@brief Seconds */
 } _DAQ_WR_NAME_T;
+
 #ifndef __DOXYGEN__
 STATIC_ASSERT( sizeof(_DAQ_WR_NAME_T) == sizeof(uint64_t) );
 #endif
@@ -197,6 +202,7 @@ typedef union PACKED_SIZE
    uint16_t wordIndex[sizeof(uint64_t)/sizeof(DAQ_DATA_T)];
    uint64_t timeStamp;
 } _DAQ_WR_T;
+
 #ifndef __DOXYGEN__
 STATIC_ASSERT( sizeof( _DAQ_WR_T) == sizeof(uint64_t) );
 #endif
@@ -210,6 +216,7 @@ typedef struct PACKED_SIZE
    DAQ_DATA_T high;  /*!<@brief Trigger most significant word */
    DAQ_DATA_T delay; /*!<@brief Trigger delay */
 } _DAQ_TRIGGER;
+
 #ifndef __DOXYGEN__
 STATIC_ASSERT( offsetof( _DAQ_TRIGGER, low )   == 0 * sizeof(DAQ_DATA_T) );
 STATIC_ASSERT( offsetof( _DAQ_TRIGGER, high )  == 1 * sizeof(DAQ_DATA_T) );
@@ -230,6 +237,7 @@ typedef struct PACKED_SIZE
    DAQ_DATA_T __unused: 8;
 #endif
 } _DAQ_BF_CRC_REG;
+
 #ifndef __DOXYGEN__
 STATIC_ASSERT( sizeof(_DAQ_BF_CRC_REG) == sizeof(DAQ_DATA_T) );
 #endif
@@ -246,7 +254,12 @@ typedef struct PACKED_SIZE
    _DAQ_CHANNEL_CONTROL cControl; /*!<@see _DAQ_CHANNEL_CONTROL */
    _DAQ_BF_CRC_REG      crcReg;   /*!<@see _DAQ_BF_CRC_REG */
 } _DAQ_DISCRIPTOR_STRUCT_T;
+
 #ifndef __DOXYGEN__
+/*
+ * Due to the implementation in different platforms - LM32 and linux -
+ * we have a bit of paranoia, which can't hurt. ;-)
+ */
 STATIC_ASSERT( offsetof(_DAQ_DISCRIPTOR_STRUCT_T, slotDiob ) == 0 );
 STATIC_ASSERT( offsetof(_DAQ_DISCRIPTOR_STRUCT_T, wr ) ==
                offsetof(_DAQ_DISCRIPTOR_STRUCT_T, slotDiob ) +
@@ -271,6 +284,7 @@ typedef union PACKED_SIZE
    DAQ_DATA_T index[DAQ_DISCRIPTOR_WORD_SIZE]; //!< @brief WORD-access by index
    _DAQ_DISCRIPTOR_STRUCT_T name;            //!< @brief Access by name
 } DAQ_DESCRIPTOR_T;
+
 #ifndef __DOXYGEN__
 STATIC_ASSERT( sizeof( DAQ_DESCRIPTOR_T ) ==
                DAQ_DISCRIPTOR_WORD_SIZE * sizeof( DAQ_DATA_T ) );

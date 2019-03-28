@@ -33,19 +33,6 @@
 
 DAQ_BUS_T g_allDaq;
 
-#define NUM_PAGES 4
-
-typedef struct
-{
-  unsigned int     startSize;
-  unsigned int     n;
-  DAQ_DATA_T       first;
-  DAQ_DATA_T       last;
-  DAQ_DESCRIPTOR_T descriptor;
-} RCEIVED_T;
-
-RCEIVED_T g_data[NUM_PAGES];
-
 void _segfault(int sig)
 {
    mprintf( ESC_FG_RED ESC_BOLD "Segmentation fault: %d\n" ESC_NORMAL, sig );
@@ -91,6 +78,47 @@ void printIntRegs( DAQ_DEVICE_T* pDevice )
 }
 
 
+void readFiFo( DAQ_CANNEL_T* pThis )
+{
+   int j = 0;
+   DAQ_DESCRIPTOR_T descriptor;
+   memset( &descriptor, 0, sizeof( descriptor ) );
+
+#ifdef CONFIG_DAQ_SEPARAD_COUNTER
+   uint16_t remaining  = daqChannelGetDaqFifoWords( pThis ) + 1;
+#else
+   volatile uint16_t remaining;
+#endif
+   int i = 0;
+   do
+   {
+#ifdef CONFIG_DAQ_SEPARAD_COUNTER
+      remaining--;
+#else
+      remaining = daqChannelGetDaqFifoWords( pThis );
+#endif
+      volatile uint16_t data = daqChannelPopDaqFifo( pThis ); //!!*ptr;
+#if 1
+      if( i < 4 )
+       mprintf( ESC_FG_MAGNETA"Index: %d, Data: 0x%04x, Remaining: %d\n"ESC_NORMAL, i, data, remaining );
+#endif
+      if( remaining < ARRAY_SIZE( descriptor.index ) )
+      {
+         SCU_ASSERT( j < ARRAY_SIZE( descriptor.index ) );
+         descriptor.index[j++] = data;
+      }
+      i++;
+   }
+   while( remaining != 0 );
+   mprintf( ESC_FG_BLUE ESC_BOLD"Received: %d 16-bit words\n"ESC_NORMAL, i );
+#if 0
+   for( j = 0; j < ARRAY_SIZE( descriptor.index ); j++ )
+      mprintf( "Descriptor %d: 0x%04x\n", j, descriptor.index[j] );
+#endif
+   daqDescriptorPrintInfo( &descriptor );
+  // DAQ_DESCRIPTOR_VERIFY_MY( &descriptor, pThis );
+
+}
 
 
 
@@ -156,37 +184,6 @@ void printLine( const char c )
    mprintf( "\n" );
 }
 
-
-static inline void readFiFo( DAQ_CANNEL_T* pThis, RCEIVED_T* pReceived )
-{
-   volatile uint16_t remaining;
-   unsigned int i = 0;
-   unsigned int j = 0;
-   do
-   {
-      remaining = daqChannelGetDaqFifoWords( pThis );
-
-      volatile DAQ_DATA_T data = daqChannelPopDaqFifo( pThis );
-
-      if( i == 0 )
-      {
-         pReceived->startSize = remaining;
-         pReceived->first = data;
-      }
-      else if( remaining == ARRAY_SIZE( pReceived->descriptor.index ) )
-         pReceived->last  = data;
-      if( remaining < ARRAY_SIZE( pReceived->descriptor.index ) )
-      {
-         SCU_ASSERT( j < ARRAY_SIZE( pReceived->descriptor.index ) );
-         pReceived->descriptor.index[j++] = data;
-      }
-      i++;
-   }
-   while( remaining != 0 );
-   pReceived->n = i;
-}
-
-
 //=============================================================================
 void main( void )
 {
@@ -227,39 +224,59 @@ void main( void )
    printIntRegs( DAQ_CHANNEL_GET_PARENT_OF( pChannel ) );
    initIrq();
    daqChannelTestAndClearHiResIntPending( pChannel );
-
-   printLine( '-' );
-   daqChannelSample1msOn( pChannel );
+  // daqChannelSample1msOn( pChannel );
   // daqChannelSample100usOn( pChannel );
   // daqChannelSample10usOn( pChannel );
-
-   for( unsigned int k = 0; k < ARRAY_SIZE(g_data); k++ )
-   {
-    //  while( daqChannelGetDaqFifoWords( pChannel ) < DAQ_FIFO_DAQ_WORD_SIZE );
-      while( !daqDeviceTestAndClearDaqInt( DAQ_CHANNEL_GET_PARENT_OF( pChannel ) ) );
-      while( !daqChannelTestAndClearDaqIntPending( pChannel ) );
-    //    while( !daqChannelTestAndClearHiResIntPending( pChannel ) ) //!!!!!!!!
-
-      readFiFo( pChannel, &g_data[k] );
-   }
-
-   daqChannelSample1msOff( pChannel );
-   daqChannelSample100usOff( pChannel );
-   daqChannelSample10usOff( pChannel );
-
-   for( unsigned int i = 0; i < ARRAY_SIZE(g_data); i++ )
+   printLine( '-' );
+   for( int k = 0; k < 3; k++ )
    {
       printLine( '+' );
-      mprintf( "Page: %d, Start: %d, Received: %d words\n",  i, g_data[i].startSize, g_data[i].n );
-      daqDescriptorPrintInfo( &g_data[i].descriptor );
-      DAQ_DESCRIPTOR_VERIFY_MY( &g_data[i].descriptor, pChannel );
+      daqChannelSetTriggerConditionLW( pChannel, (k == 0)? 0x4710 : 0x4711 );
+      //daqChannelSample10usOn( pChannel );
+      daqChannelSample1msOn( pChannel );
+      //daqChannelSample100usOn( pChannel );
+      i = 0;
+    //  while( daqChannelGetDaqFifoWords( pChannel ) < DAQ_FIFO_DAQ_WORD_SIZE )
+    //  while( !daqDeviceTestAndClearDaqInt( DAQ_CHANNEL_GET_PARENT_OF( pChannel ) ) );
+      while( !daqChannelTestAndClearDaqIntPending( pChannel ) )
+    //    while( !daqChannelTestAndClearHiResIntPending( pChannel ) ) //!!!!!!!!
+         i++;
+
+      mprintf( "Polling loops: %d\n", i );
+      printIntRegs( DAQ_CHANNEL_GET_PARENT_OF( pChannel ) );
+//#define BUG_FIX
+#ifdef BUG_FIX
+      if( daqChannelIsSample10usActive( pChannel ) )
+      {
+         daqChannelSample10usOff( pChannel );
+      }
+      else if( daqChannelIsSample100usActive( pChannel ) )
+      {
+         daqChannelSample100usOff( pChannel );
+      }
+      else if( daqChannelIsSample1msActive( pChannel ) )
+      {
+         daqChannelSample1msOff( pChannel );
+      }
+#endif
+   //   daqChannelPrintInfo( pChannel );
+   //   printScuBusSlaveInfo( pChannel );
+   //   mprintf( "Reading FoFo for the " ESC_FG_YELLOW ESC_BOLD"%dth"ESC_NORMAL" time\n", k+1 );
+      readFiFo( pChannel );
    }
    printLine( '=' );
+//   daqChannelSample1msOff( pChannel );
+//   daqChannelSample100usOff( pChannel );
+//   daqChannelSample10usOff( pChannel );
+
+
+  // daqChannelTestAndClearHiResIntPending( pChannel );
+  // daqChannelTestAndClearDaqIntPending( pChannel );
    daqChannelPrintInfo( pChannel );
    printScuBusSlaveInfo( pChannel );
- //  mprintf( "IRQ DAQ:   %d\n", getDaqIrqCount() );
- //  mprintf( "IRQ HIRES: %d\n", getHiResIrqCount() );
- //  mprintf( "DAQ devices: parent %d\n", daqBusGetFoundDevices( DAQ_CHANNEL_GET_GRANDPARENT_OF( pChannel )) );
+   mprintf( "IRQ DAQ:   %d\n", getDaqIrqCount() );
+   mprintf( "IRQ HIRES: %d\n", getHiResIrqCount() );
+   mprintf( "DAQ devices: parent %d\n", daqBusGetFoundDevices( DAQ_CHANNEL_GET_GRANDPARENT_OF( pChannel )) );
 #endif
    mprintf( ESC_FG_MAGNETA ESC_BOLD "\nEnd...\n"ESC_NORMAL );
 }

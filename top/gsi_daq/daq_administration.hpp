@@ -85,8 +85,8 @@ public:
    int sendTriggerMode( bool mode );
    bool receiveTriggerMode( void );
 
-   int sendTriggerSource( bool extInput );
-   bool receiveTriggerSource( void );
+   int sendTriggerSourceContinue( bool extInput );
+   bool receiveTriggerSourceContinue( void );
 
 protected:
    virtual bool onDataBlock( DAQ_DATA_T* pData, std::size_t wordLen ) = 0;
@@ -102,18 +102,18 @@ class DaqDevice
 {
    friend class DaqAdministration;
 
-   unsigned int             m_deviceNumber;
-   unsigned int             m_slot;
-   unsigned int             m_maxChannels;
-   DaqAdministration*       m_pParent;
+   unsigned int       m_deviceNumber;
+   unsigned int       m_slot;
+   unsigned int       m_maxChannels;
+   DaqAdministration* m_pParent;
 
 protected:
-   typedef std::vector<DaqChannel*>  CHANNEL_LIST_T;
-   CHANNEL_LIST_T m_channelPtrList;
+   typedef std::list<DaqChannel*>  CHANNEL_LIST_T;
+   CHANNEL_LIST_T     m_channelPtrList;
 
 public:
    DaqDevice( unsigned int slot = 0 );
-   ~DaqDevice( void );
+   virtual ~DaqDevice( void );
 
    const CHANNEL_LIST_T::iterator begin( void )
    {
@@ -153,6 +153,8 @@ public:
 
    bool registerChannel( DaqChannel* pChannel );
 
+   bool unregisterChannel( DaqChannel* pChannel );
+
    int sendEnablePostMortem( const unsigned int channel,
                              const bool restart = false );
    int sendEnableHighResolution( const unsigned int channel );
@@ -174,8 +176,8 @@ public:
    int sendTriggerMode( const unsigned int channel, bool mode );
    bool receiveTriggerMode( const unsigned int channel );
 
-   int sendTriggerSource( const unsigned int channel, bool extInput );
-   bool receiveTriggerSource( const unsigned int channel );
+   int sendTriggerSourceContinue( const unsigned int channel, bool extInput );
+   bool receiveTriggerSourceContinue( const unsigned int channel );
 
    DaqChannel* getChannel( const unsigned int number );
 
@@ -362,17 +364,17 @@ inline bool DaqDevice::receiveTriggerMode( const unsigned int channel )
 
 /*! ---------------------------------------------------------------------------
  */
-inline int DaqDevice::sendTriggerSource( const unsigned int channel,
+inline int DaqDevice::sendTriggerSourceContinue( const unsigned int channel,
                                          bool extInput )
 {
-   return getParent()->sendTriggerSource( m_deviceNumber, channel, extInput );
+   return getParent()->sendTriggerSourceContinue( m_deviceNumber, channel, extInput );
 }
 
 /*! ---------------------------------------------------------------------------
  */
-inline bool DaqDevice::receiveTriggerSource( const unsigned int channel )
+inline bool DaqDevice::receiveTriggerSourceContinue( const unsigned int channel )
 {
-   return getParent()->receiveTriggerSource( m_deviceNumber, channel );
+   return getParent()->receiveTriggerSourceContinue( m_deviceNumber, channel );
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -470,16 +472,16 @@ inline bool DaqChannel::receiveTriggerMode( void )
 
 /*! ---------------------------------------------------------------------------
  */
-inline int DaqChannel::sendTriggerSource( bool extInput )
+inline int DaqChannel::sendTriggerSourceContinue( bool extInput )
 {
-   return getParent()->sendTriggerSource( m_number, extInput );
+   return getParent()->sendTriggerSourceContinue( m_number, extInput );
 }
 
 /*! ---------------------------------------------------------------------------
  */
-inline bool DaqChannel::receiveTriggerSource( void )
+inline bool DaqChannel::receiveTriggerSourceContinue( void )
 {
-   return getParent()->receiveTriggerSource( m_number );
+   return getParent()->receiveTriggerSourceContinue( m_number );
 }
 
 

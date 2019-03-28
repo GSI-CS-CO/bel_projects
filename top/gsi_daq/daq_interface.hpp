@@ -305,12 +305,12 @@ public:
    bool receiveTriggerMode( const unsigned int deviceNumber,
                             const unsigned int channel );
 
-   int sendTriggerSource( const unsigned int deviceNumber,
+   int sendTriggerSourceContinue( const unsigned int deviceNumber,
                           const unsigned int channel,
                           const bool extInput );
 
-   bool receiveTriggerSource( const unsigned int deviceNumber,
-                              const unsigned int channel );
+   bool receiveTriggerSourceContinue( const unsigned int deviceNumber,
+                                      const unsigned int channel );
 
    RAM_RING_INDEX_T getCurrentRamSize( bool update = true );
 

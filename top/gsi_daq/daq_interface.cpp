@@ -774,25 +774,25 @@ bool DaqInterface::receiveTriggerMode( const unsigned int deviceNumber,
 
 /*! ---------------------------------------------------------------------------
  */
-int DaqInterface::sendTriggerSource( const unsigned int deviceNumber,
-                                     const unsigned int channel,
-                                      const bool extInput )
+int DaqInterface::sendTriggerSourceContinue( const unsigned int deviceNumber,
+                                             const unsigned int channel,
+                                             const bool extInput )
 {
    DAQ_SET_CHANNEL_LOCATION( deviceNumber, channel );
 
    m_oSharedData.operation.ioData.param1 = extInput;
    writeParam1();
-   return sendCommand( DAQ_OP_SET_TRIGGER_SOURCE );
+   return sendCommand( DAQ_OP_SET_TRIGGER_SOURCE_CON );
 }
 
 /*! ---------------------------------------------------------------------------
  */
-bool DaqInterface::receiveTriggerSource( const unsigned int deviceNumber,
-                                         const unsigned int channel )
+bool DaqInterface::receiveTriggerSourceContinue( const unsigned int deviceNumber,
+                                                 const unsigned int channel )
 {
    DAQ_SET_CHANNEL_LOCATION( deviceNumber, channel );
 
-   sendCommand( DAQ_OP_GET_TRIGGER_SOURCE );
+   sendCommand( DAQ_OP_GET_TRIGGER_SOURCE_CON );
    readParam1();
    return (m_oSharedData.operation.ioData.param1 != 0);
 }

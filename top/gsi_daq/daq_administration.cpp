@@ -70,6 +70,7 @@ bool DaqDevice::registerChannel( DaqChannel* pChannel )
 {
    SCU_ASSERT( dynamic_cast<DaqChannel*>(pChannel) != nullptr );
    SCU_ASSERT( m_channelPtrList.size() <= DaqInterface::c_maxChannels );
+
    for( auto& i: m_channelPtrList )
    {
       if( pChannel->getNumber() == i->getNumber() )
@@ -84,10 +85,30 @@ bool DaqDevice::registerChannel( DaqChannel* pChannel )
 
 /* ----------------------------------------------------------------------------
  */
+bool DaqDevice::unregisterChannel( DaqChannel* pChannel )
+{
+   SCU_ASSERT( dynamic_cast<DaqChannel*>(pChannel) != nullptr );
+
+   if( pChannel->m_pParent != this )
+      return true;
+
+   for( auto& i: m_channelPtrList )
+   {
+      if( i != pChannel )
+         continue;
+      //m_channelPtrList.erase( pChannel );
+   }
+
+   return false;
+}
+
+/* ----------------------------------------------------------------------------
+ */
 DaqChannel* DaqDevice::getChannel( const unsigned int number )
 {
    SCU_ASSERT( number > 0 );
    SCU_ASSERT( number <= DaqInterface::c_maxChannels );
+
    for( auto& i: m_channelPtrList )
    {
       if( i->getNumber() == number )
@@ -388,7 +409,7 @@ int DaqAdministration::distributeData( void )
    std::size_t wordLen;
    if( ::daqDescriptorIsLongBlock( &probe.descriptor ) )
    { /*
-      * Long block is detected, in this case the rest of the data
+      * Long block has been detected, in this case the rest of the data
       * has still to be read from the DAQ-Ram-buffer.
       */
       if( ::ramReadDaqDataBlock( &m_oScuRam,
@@ -401,11 +422,13 @@ int DaqAdministration::distributeData( void )
    }
    else
    { /*
-      * Short block is detected.
+      * Short block has been detected.
       */
       wordLen = c_contineousDataLen;
    }
    writeRamIndexes();
+
+   //TODO Make CRC check here!
 
    DaqChannel* pChannel = getChannelByDescriptor( probe.descriptor );
 

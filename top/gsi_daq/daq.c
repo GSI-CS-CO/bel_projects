@@ -530,8 +530,8 @@ int daqBusFindAndInitializeAll( register DAQ_BUS_T* pThis,
                    daqDeviceGetMaxChannels( pCurrentDaqDevice ) );
       DAQ_ASSERT( DAQ_DEVICE_GET_PARENT_OF( pCurrentDaqDevice ) == pThis );
 
-      //daqDeviceDisableScuSlaveInterrupt( pCurrentDaqDevice );
-      daqDeviceEnableScuSlaveInterrupt( pCurrentDaqDevice ); //!!
+     daqDeviceDisableScuSlaveInterrupt( pCurrentDaqDevice );
+    //  daqDeviceEnableScuSlaveInterrupt( pCurrentDaqDevice ); //!!
       daqDeviceTestAndClearDaqInt( pCurrentDaqDevice );
       daqDeviceTestAndClearHiResInt( pCurrentDaqDevice );
 

@@ -122,7 +122,7 @@ void main( void )
             daqBusGetFoundDevices( &g_allDaq ),
             daqBusGetNumberOfAllFoundChannels( &g_allDaq ) );
 
-#define CHANNEL 4
+#define CHANNEL 0
    DAQ_CANNEL_T* pChannel = daqBusGetChannelObjectByAbsoluteNumber( &g_allDaq, CHANNEL );
    if( pChannel == NULL )
    {
@@ -133,8 +133,8 @@ void main( void )
 
    printIntRegs( DAQ_CHANNEL_GET_PARENT_OF( pChannel ) );
    daqChannelEnableExtrenTrigger( pChannel );
-   daqChannelEnableTriggerMode( pChannel );
-
+  //daqChannelEnableTriggerMode( pChannel );
+   daqChannelEnableExternTriggerHighRes( pChannel );
 
  daqChannelEnableHighResolution( pChannel );
  //  daqChannelEnablePostMortem( pChannel );
@@ -143,8 +143,8 @@ void main( void )
 //daqDeviceDisableScuSlaveInterrupt( DAQ_CHANNEL_GET_PARENT_OF( pChannel ) );
    printIntRegs( DAQ_CHANNEL_GET_PARENT_OF( pChannel ) );
    unsigned int i = 0;
-  //  while( !daqDeviceTestAndClearHiResInt( DAQ_CHANNEL_GET_PARENT_OF( pChannel ) ) )
-   while( !daqChannelTestAndClearHiResIntPending( pChannel ) )
+   while( !daqDeviceTestAndClearHiResInt( DAQ_CHANNEL_GET_PARENT_OF( pChannel ) ) )
+   //while( !daqChannelTestAndClearHiResIntPending( pChannel ) )
   // while( daqChannelGetPmFifoWords( pChannel ) < DAQ_FIFO_PM_HIRES_WORD_SIZE )
       i++;
 

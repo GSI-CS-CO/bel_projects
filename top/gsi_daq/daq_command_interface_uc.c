@@ -439,8 +439,8 @@ static int32_t opGetTriggerMode( DAQ_ADMIN_T* pDaqAdmin,
 
 /*! ---------------------------------------------------------------------------
  */
-static int32_t opSetTriggerSource( DAQ_ADMIN_T* pDaqAdmin,
-                                   volatile DAQ_OPERATION_IO_T* pData )
+static int32_t opSetTriggerSourceCon( DAQ_ADMIN_T* pDaqAdmin,
+                                      volatile DAQ_OPERATION_IO_T* pData )
 {
    FUNCTION_INFO();
    int ret = verifyChannelAccess( &pDaqAdmin->oDaqDevs, &pData->location );
@@ -459,8 +459,8 @@ static int32_t opSetTriggerSource( DAQ_ADMIN_T* pDaqAdmin,
 
 /*! ---------------------------------------------------------------------------
  */
-static int32_t opGetTriggerSource( DAQ_ADMIN_T* pDaqAdmin,
-                                 volatile DAQ_OPERATION_IO_T* pData )
+static int32_t opGetTriggerSourceCon( DAQ_ADMIN_T* pDaqAdmin,
+                                      volatile DAQ_OPERATION_IO_T* pData )
 {
    FUNCTION_INFO();
    int ret = verifyChannelAccess( &pDaqAdmin->oDaqDevs, &pData->location );
@@ -468,6 +468,41 @@ static int32_t opGetTriggerSource( DAQ_ADMIN_T* pDaqAdmin,
       return ret;
 
    pData->param1 = daqChannelGetTriggerSource( getChannel( pDaqAdmin, pData ) );
+
+   return DAQ_RET_OK;
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+static int32_t opSetTriggerSourceHir( DAQ_ADMIN_T* pDaqAdmin,
+                                      volatile DAQ_OPERATION_IO_T* pData )
+{
+   FUNCTION_INFO();
+   int ret = verifyChannelAccess( &pDaqAdmin->oDaqDevs, &pData->location );
+   if( ret != DAQ_RET_OK )
+      return ret;
+
+   DAQ_CANNEL_T* pChannel = getChannel( pDaqAdmin, pData );
+
+   if( pData->param1 != 0 )
+      daqChannelEnableExternTriggerHighRes( pChannel );
+   else
+      daqChannelEnableEventTriggerHighRes( pChannel );
+
+   return DAQ_RET_OK;
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+static int32_t opGetTriggerSourceHir( DAQ_ADMIN_T* pDaqAdmin,
+                                      volatile DAQ_OPERATION_IO_T* pData )
+{
+   FUNCTION_INFO();
+   int ret = verifyChannelAccess( &pDaqAdmin->oDaqDevs, &pData->location );
+   if( ret != DAQ_RET_OK )
+      return ret;
+
+   pData->param1 = daqChannelGetTriggerSourceHighRes( getChannel( pDaqAdmin, pData ) );
 
    return DAQ_RET_OK;
 }
@@ -488,26 +523,29 @@ static int32_t opGetTriggerSource( DAQ_ADMIN_T* pDaqAdmin,
  */
 static const DAQ_OPERATION_TAB_ITEM_T g_operationTab[] =
 {
-   OPERATION_ITEM( DAQ_OP_LOCK,                  opLock                ),
-   OPERATION_ITEM( DAQ_OP_UNLOCK,                opUnlock              ),
-   OPERATION_ITEM( DAQ_OP_RESET,                 opReset               ),
-   OPERATION_ITEM( DAQ_OP_GET_MACRO_VERSION,     opGetMacroVersion     ),
-   OPERATION_ITEM( DAQ_OP_GET_SLOTS,             opGetSlots            ),
-   OPERATION_ITEM( DAQ_OP_GET_CHANNELS,          opGetChannels         ),
-   OPERATION_ITEM( DAQ_OP_RESCAN,                opRescan              ),
-   OPERATION_ITEM( DAQ_OP_PM_ON,                 opPostMortemOn        ),
-   OPERATION_ITEM( DAQ_OP_HIRES_ON,              opHighResolutionOn    ),
-   OPERATION_ITEM( DAQ_OP_PM_HIRES_OFF,          opPmHighResOff        ),
-   OPERATION_ITEM( DAQ_OP_CONTINUE_ON,           opContinueOn          ),
-   OPERATION_ITEM( DAQ_OP_CONTINUE_OFF,          opContinueOff         ),
-   OPERATION_ITEM( DAQ_OP_SET_TRIGGER_CONDITION, opSetTriggerCondition ),
-   OPERATION_ITEM( DAQ_OP_GET_TRIGGER_CONDITION, opGetTriggerCondition ),
-   OPERATION_ITEM( DAQ_OP_SET_TRIGGER_DELAY,     opSetTriggerDelay     ),
-   OPERATION_ITEM( DAQ_OP_GET_TRIGGER_DELAY,     opGetTriggerDelay     ),
-   OPERATION_ITEM( DAQ_OP_SET_TRIGGER_MODE,      opSetTriggerMode      ),
-   OPERATION_ITEM( DAQ_OP_GET_TRIGGER_MODE,      opGetTriggerMode      ),
-   OPERATION_ITEM( DAQ_OP_SET_TRIGGER_SOURCE,    opSetTriggerSource    ),
-   OPERATION_ITEM( DAQ_OP_GET_TRIGGER_SOURCE,    opGetTriggerSource    ),
+   OPERATION_ITEM( DAQ_OP_LOCK,                   opLock                ),
+   OPERATION_ITEM( DAQ_OP_UNLOCK,                 opUnlock              ),
+   OPERATION_ITEM( DAQ_OP_RESET,                  opReset               ),
+   OPERATION_ITEM( DAQ_OP_GET_MACRO_VERSION,      opGetMacroVersion     ),
+   OPERATION_ITEM( DAQ_OP_GET_SLOTS,              opGetSlots            ),
+   OPERATION_ITEM( DAQ_OP_GET_CHANNELS,           opGetChannels         ),
+   OPERATION_ITEM( DAQ_OP_RESCAN,                 opRescan              ),
+   OPERATION_ITEM( DAQ_OP_PM_ON,                  opPostMortemOn        ),
+   OPERATION_ITEM( DAQ_OP_HIRES_ON,               opHighResolutionOn    ),
+   OPERATION_ITEM( DAQ_OP_PM_HIRES_OFF,           opPmHighResOff        ),
+   OPERATION_ITEM( DAQ_OP_CONTINUE_ON,            opContinueOn          ),
+   OPERATION_ITEM( DAQ_OP_CONTINUE_OFF,           opContinueOff         ),
+   OPERATION_ITEM( DAQ_OP_SET_TRIGGER_CONDITION,  opSetTriggerCondition ),
+   OPERATION_ITEM( DAQ_OP_GET_TRIGGER_CONDITION,  opGetTriggerCondition ),
+   OPERATION_ITEM( DAQ_OP_SET_TRIGGER_DELAY,      opSetTriggerDelay     ),
+   OPERATION_ITEM( DAQ_OP_GET_TRIGGER_DELAY,      opGetTriggerDelay     ),
+   OPERATION_ITEM( DAQ_OP_SET_TRIGGER_MODE,       opSetTriggerMode      ),
+   OPERATION_ITEM( DAQ_OP_GET_TRIGGER_MODE,       opGetTriggerMode      ),
+   OPERATION_ITEM( DAQ_OP_SET_TRIGGER_SOURCE_CON, opSetTriggerSourceCon ),
+   OPERATION_ITEM( DAQ_OP_GET_TRIGGER_SOURCE_CON, opGetTriggerSourceCon ),
+   OPERATION_ITEM( DAQ_OP_SET_TRIGGER_SOURCE_HIR, opSetTriggerSourceHir ),
+   OPERATION_ITEM( DAQ_OP_GET_TRIGGER_SOURCE_HIR, opGetTriggerSourceHir ),
+
    OPERATION_ITEM_TERMINATOR
 };
 
