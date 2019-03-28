@@ -312,6 +312,14 @@ public:
    bool receiveTriggerSourceContinue( const unsigned int deviceNumber,
                                       const unsigned int channel );
 
+   int sendTriggerSourceHiRes( const unsigned int deviceNumber,
+                               const unsigned int channel,
+                               const bool extInput );
+
+   bool receiveTriggerSourceHiRes( const unsigned int deviceNumber,
+                                   const unsigned int channel );
+
+
    RAM_RING_INDEX_T getCurrentRamSize( bool update = true );
 
 protected:

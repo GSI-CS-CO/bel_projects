@@ -797,6 +797,31 @@ bool DaqInterface::receiveTriggerSourceContinue( const unsigned int deviceNumber
    return (m_oSharedData.operation.ioData.param1 != 0);
 }
 
+/*! ---------------------------------------------------------------------------
+ */
+int DaqInterface::sendTriggerSourceHiRes( const unsigned int deviceNumber,
+                                          const unsigned int channel,
+                                          const bool extInput )
+{
+   DAQ_SET_CHANNEL_LOCATION( deviceNumber, channel );
+
+   m_oSharedData.operation.ioData.param1 = extInput;
+   writeParam1();
+   return sendCommand( DAQ_OP_SET_TRIGGER_SOURCE_HIR );
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+bool DaqInterface::receiveTriggerSourceHiRes( const unsigned int deviceNumber,
+                                              const unsigned int channel )
+{
+   DAQ_SET_CHANNEL_LOCATION( deviceNumber, channel );
+
+   sendCommand( DAQ_OP_GET_TRIGGER_SOURCE_HIR );
+   readParam1();
+   return (m_oSharedData.operation.ioData.param1 != 0);
+}
+
 
 /*! ---------------------------------------------------------------------------
  */
