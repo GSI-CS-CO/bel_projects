@@ -131,7 +131,9 @@ public:
       ::uart_init_hw();      // init UART, required for printf...
       ::clrscr();
       ::gotoxy( 0, 0 );
-      ::mprintf( ESC_FG_MAGNETA "Hello world in C++11\n" ESC_NORMAL );
+      ::mprintf( ESC_FG_MAGNETA 
+                 "Hello world in C++11, Compiler: " COMPILER_VERSION_STRING "\n"
+                 ESC_NORMAL );
    }
 
    ~SysInit( void )
@@ -377,7 +379,7 @@ int main( void )
 
    // Test of the template "convertByteEndian" defined in "helper-macros.h"
    uint32_t x = 0x11223344;
-   mprintf( "Endian convert test: 0x%x --> 0x%x\n", x, convertByteEndian( x ) );
+   mprintf( "Endian convert test: 0x%x --> 0x%x\n", x, gsi::convertByteEndian( x ) );
 #endif
    return 0;
 }

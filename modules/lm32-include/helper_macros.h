@@ -336,16 +336,20 @@
    __FUNCTION_BODY_CONVERT_BYTE_ENDIAN( TYP )
 
 #if defined(__cplusplus ) || defined(__DOXYGEN__)
+namespace gsi
+{
 /*!
  * @brief Template converts the given value from little to big endian
- *        and vice versa.
+ *        or vice versa.
  * @note For C++ only!
  * @param value Integer value to convert.
  * @return Converted value.
  */
 template <typename TYP> TYP convertByteEndian( const TYP value )
    __FUNCTION_BODY_CONVERT_BYTE_ENDIAN( TYP )
-#endif /* __cplusplus */
+
+}      /* namespace gsi */
+#endif /* __cplusplus   */
 
 #ifndef __cplusplus
 

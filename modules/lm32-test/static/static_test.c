@@ -27,8 +27,9 @@
 #include "mini_sdb.h"
 #include "eb_console_helper.h"
 #include "helper_macros.h"
-#include "../../top/gsi_scu/daq.h"
+#include "daq.h"
 
+#define STATIC_LOCAL __attribute__((section(".BSS"))) static
 
 int foo( void )
 {
@@ -148,14 +149,14 @@ void main( void )
    printBits16( v );
 
 
-   _DAQ_CHANNEL_CONTROL ccontrol = {0};
+//   _DAQ_CHANNEL_CONTROL ccontrol = {0};
 
-   ccontrol.controlReg = 0xFF;
-   ccontrol.channelMode.channelNumber = 3;
+ //  ccontrol.controlReg = 0xFF;
+ //  ccontrol.channelMode.channelNumber = 3;
 
-   mprintf( "_DAQ_CHANNEL_CONTROL:\n" );
+//   mprintf( "_DAQ_CHANNEL_CONTROL:\n" );
 
-   printBits16( *((uint16_t*) &ccontrol) );
+ //  printBits16( *((uint16_t*) &ccontrol) );
 }
 
 //================================== EOF ======================================

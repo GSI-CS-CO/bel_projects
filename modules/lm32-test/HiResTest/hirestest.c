@@ -111,7 +111,7 @@ void main( void )
 
    gotoxy( 0, 0 );
    clrscr();
-   mprintf( "DAQ High Resolution test\n");
+   mprintf( ESC_FG_MAGNETA ESC_BOLD "DAQ High Resolution test, compiler: " COMPILER_VERSION_STRING ESC_NORMAL "\n");
 #if 1
    if( daqBusFindAndInitializeAll( &g_allDaq, find_device_adr(GSI, SCU_BUS_MASTER) ) <= 0 )
    {
@@ -122,7 +122,7 @@ void main( void )
             daqBusGetFoundDevices( &g_allDaq ),
             daqBusGetNumberOfAllFoundChannels( &g_allDaq ) );
 
-#define CHANNEL 0
+#define CHANNEL 4
    DAQ_CANNEL_T* pChannel = daqBusGetChannelObjectByAbsoluteNumber( &g_allDaq, CHANNEL );
    if( pChannel == NULL )
    {
@@ -132,8 +132,8 @@ void main( void )
    mprintf( "Using channel: " TO_STRING( CHANNEL ) "\n" );
 
    printIntRegs( DAQ_CHANNEL_GET_PARENT_OF( pChannel ) );
-   daqChannelEnableExtrenTrigger( pChannel );
-  //daqChannelEnableTriggerMode( pChannel );
+ //  daqChannelEnableExtrenTrigger( pChannel );
+  daqChannelEnableTriggerMode( pChannel );
    daqChannelEnableExternTriggerHighRes( pChannel );
 
  daqChannelEnableHighResolution( pChannel );
@@ -142,18 +142,22 @@ void main( void )
 
 //daqDeviceDisableScuSlaveInterrupt( DAQ_CHANNEL_GET_PARENT_OF( pChannel ) );
    printIntRegs( DAQ_CHANNEL_GET_PARENT_OF( pChannel ) );
-   unsigned int i = 0;
-   while( !daqDeviceTestAndClearHiResInt( DAQ_CHANNEL_GET_PARENT_OF( pChannel ) ) )
-   //while( !daqChannelTestAndClearHiResIntPending( pChannel ) )
-  // while( daqChannelGetPmFifoWords( pChannel ) < DAQ_FIFO_PM_HIRES_WORD_SIZE )
-      i++;
+   while( true )
+   {
+      daqChannelEnableHighResolution( pChannel );
+      unsigned int i = 0;
+      while( !daqDeviceTestAndClearHiResInt( DAQ_CHANNEL_GET_PARENT_OF( pChannel ) ) )
+      while( !daqChannelTestAndClearHiResIntPending( pChannel ) )
+     // while( daqChannelGetPmFifoWords( pChannel ) < DAQ_FIFO_PM_HIRES_WORD_SIZE )
+         i++;
 
-   daqChannelDisableHighResolution( pChannel );
-   daqChannelDisablePostMortem( pChannel );
-   daqChannelPrintInfo( pChannel );
-   mprintf( "Polling: %d\n", i );
-   readFiFo( pChannel );
-
+      daqChannelDisableHighResolution( pChannel );
+      daqChannelDisablePostMortem( pChannel );
+      daqChannelPrintInfo( pChannel );
+      mprintf( "Polling: %d\n", i );
+      readFiFo( pChannel );
+       printIntRegs( DAQ_CHANNEL_GET_PARENT_OF( pChannel ) );
+   }
 #endif
    mprintf( "End...\n" );
 }
