@@ -25,7 +25,7 @@
  */
 #include <daq_command_interface_uc.h>
 #include <scu_lm32_macros.h>
-#include <daq_main.h>
+//#include <daq_main.h>
 #include <daq_ramBuffer.h>
 #include <dbg.h>
 

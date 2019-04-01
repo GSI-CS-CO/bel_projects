@@ -22,6 +22,7 @@
  * License along with this library. If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************
  */
+#include <daq_command_interface_uc.h>
 #include <daq_main.h>
 
 #ifdef DEBUGLEVEL
@@ -70,99 +71,66 @@ static inline void handleContinuousMode( DAQ_CANNEL_T* pChannel )
    if( !daqChannelTestAndClearDaqIntPending( pChannel ) )
       return;
 
-#ifdef CONFIG_PATCH_DAQ_HW_BUG
-   if( daqChannelGetDaqFifoWords( pChannel ) < DAQ_FIFO_DAQ_WORD_SIZE )
-      return;
-#endif
    ramPushDaqDataBlock( &g_DaqAdmin.oRam, pChannel, true );
-
-#ifdef CONFIG_PATCH_DAQ_HW_BUG__
-   if( daqChannelDecrementBlockCounter( pChannel ) )
-      return;
-   if( daqChannelIsSample10usActive( pChannel ) )
-   {
-      daqChannelSample10usOff( pChannel );
-      daqChannelSample10usOn( pChannel );
-      return;
-   }
-   if( daqChannelIsSample100usActive( pChannel ) )
-   {
-      daqChannelSample100usOff( pChannel );
-      daqChannelSample100usOn( pChannel );
-      return;
-   }
-   if( daqChannelIsSample1msActive( pChannel ) )
-   {
-      daqChannelSample1msOff( pChannel );
-      daqChannelSample1msOn( pChannel );
-   }
-#else
    daqChannelDecrementBlockCounter( pChannel );
-#endif
 }
 
 /*! ---------------------------------------------------------------------------
  */
-static inline void handlePmHiresMode( DAQ_CANNEL_T* pChannel )
+static inline void handleHiresMode( DAQ_CANNEL_T* pChannel )
 {
-#ifdef CONFIG_PATCH_DAQ_HW_BUG
-   daqChannelTestAndClearHiResIntPending( pChannel );
-   if( daqChannelGetPmFifoWords( pChannel ) < DAQ_FIFO_PM_HIRES_WORD_SIZE )
-      return;
-   if( daqChannelIsPostMortemActive( pChannel ) ||
-       daqChannelIsHighResolutionEnabled( pChannel ) )
-      return;
-#else
    if( !daqChannelTestAndClearHiResIntPending( pChannel ) )
       return;
-#endif
+
    ramPushDaqDataBlock( &g_DaqAdmin.oRam, pChannel, false );
 }
 
 /*! ---------------------------------------------------------------------------
  */
-static inline void concernsChannel( DAQ_CANNEL_T* pChannel )
+static inline bool forEachContinuousCahnnel( DAQ_DEVICE_T* pDevice )
 {
-   handleContinuousMode( pChannel );
-   handlePmHiresMode( pChannel );
-}
-
-/*! ---------------------------------------------------------------------------
- */
-static inline bool forEachCahnnel( DAQ_DEVICE_T* pDevice )
-{
-  daqDeviceTestAndClearDaqInt( pDevice );
-//  daqDeviceTestAndClearHiResInt( pDevice );
-//daqDeviceClearDaqChannelInterrupts( pDevice );
-
    for( unsigned int channelNr = 0;
         channelNr < daqDeviceGetMaxChannels( pDevice ); channelNr++ )
    {
       if( executeIfRequested( &g_DaqAdmin ) )
          return true;
-      concernsChannel( daqDeviceGetChannelObject( pDevice, channelNr ) );
+      DAQ_CANNEL_T* pChannel = daqDeviceGetChannelObject( pDevice, channelNr );
+      handleContinuousMode( pChannel );
    }
+
  //  daqDeviceClearDaqChannelInterrupts( pDevice );
    return false;
 }
 
 /*! ---------------------------------------------------------------------------
  */
-static inline void forEachScuDevice( void )
+#ifdef CONFIG_DAQ_SINGLE_MODULE
+static inline
+#endif
+void forEachScuDevice( void )
 {
    for( unsigned int deviceNr = 0;
        deviceNr < daqBusGetFoundDevices( &g_DaqAdmin.oDaqDevs ); deviceNr++ )
    {
-      if( forEachCahnnel( daqBusGetDeviceObject( &g_DaqAdmin.oDaqDevs, deviceNr ) ))
+      DAQ_DEVICE_T* pDevice = daqBusGetDeviceObject( &g_DaqAdmin.oDaqDevs, deviceNr );
+      if( daqDeviceTestAndClearDaqInt( pDevice ) )
       {
-         DBPRINT1( "DBG: Leaving loop\n" );
-         return;
+         if( forEachContinuousCahnnel( pDevice ))
+         {
+            DBPRINT1( "DBG: Leaving loop\n" );
+            return;
+         }
+      }
+      if( daqDeviceTestAndClearHiResInt( pDevice ) )
+      {
+         //TODO
       }
    }
    executeIfRequested( &g_DaqAdmin );
 }
 
 /*================================= main ====================================*/
+#ifdef CONFIG_DAQ_SINGLE_MODULE
 /*! ---------------------------------------------------------------------------
  */
 void main( void )
@@ -175,13 +143,12 @@ void main( void )
    DBPRINT1( "DAQ control started\n" );
 #endif
 
-   scanScuBus( &g_DaqAdmin.oDaqDevs );
-   initBuffer( &g_DaqAdmin.oRam );
+   daqInitialize( &g_DaqAdmin );
 
    while( true )
    {
       forEachScuDevice();
    }
 }
-
+#endif /* CONFIG_DAQ_SINGLE_MODULE */
 /*================================== EOF ====================================*/

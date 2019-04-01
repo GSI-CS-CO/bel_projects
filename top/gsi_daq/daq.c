@@ -527,7 +527,7 @@ int daqBusFindAndInitializeAll( register DAQ_BUS_T* pThis,
       pThis->foundDevices++; // At least one channel was found.
 
       DAQ_ASSERT( pCurrentDaqDevice->maxChannels ==
-                   daqDeviceGetMaxChannels( pCurrentDaqDevice ) );
+                   daqChannelGetMaxCannels( &pCurrentDaqDevice->aChannel[0] ) );
       DAQ_ASSERT( DAQ_DEVICE_GET_PARENT_OF( pCurrentDaqDevice ) == pThis );
 
     // daqDeviceDisableScuSlaveInterrupt( pCurrentDaqDevice );

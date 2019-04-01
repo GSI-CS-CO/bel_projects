@@ -1370,6 +1370,19 @@ void daqDeviceDisableScuSlaveInterrupt( register DAQ_DEVICE_T* pThis )
 
 /*! ---------------------------------------------------------------------------
  * @ingroup DAQ_DEVICE DAQ_INTERRUPT
+ * @brief Returns the pointer to the interrupt active flag register of
+ *        the SCU slave macro to which belongs this DAQ device.
+ * @param pThis Pointer to the DAQ-device object.
+ * @return Pointer to the interrupt active flag register.
+ */
+static inline
+uint16_t* volatile daqDeviceGetInterruptFlags( register DAQ_DEVICE_T* pThis )
+{
+   return &((uint16_t*)daqDeviceGetScuBusSlaveBaseAddress( pThis ))[Intr_Active];
+}
+
+/*! ---------------------------------------------------------------------------
+ * @ingroup DAQ_DEVICE DAQ_INTERRUPT
  * @brief Tests and clears the DAQ interrupt pending flag of this DAQ device.
  * @param pThis Pointer to the DAQ-device object
  * @retval true DAQ Interrupt was pending.
@@ -1512,6 +1525,7 @@ static inline
 unsigned int daqDeviceGetMaxChannels( register DAQ_DEVICE_T* pThis )
 {
    DAQ_ASSERT( pThis != NULL );
+#if 0
    DAQ_ASSERT( pThis->pReg != NULL );
    /*
     * All existing channels of a DAQ have the same information
@@ -1519,6 +1533,9 @@ unsigned int daqDeviceGetMaxChannels( register DAQ_DEVICE_T* pThis )
     * therefore its enough to choose the channel 0.
     */
    return daqChannelGetMaxCannels( &pThis->aChannel[0] );
+#else
+   return pThis->maxChannels;
+#endif
 }
 
 /*! ---------------------------------------------------------------------------
@@ -1556,7 +1573,7 @@ DAQ_CANNEL_T* daqDeviceGetChannelObject( register DAQ_DEVICE_T* pThis,
  * @brief Becomes invoked from the interrupt routine.
  * @param pThis Pointer to the DAQ-device objects
  */
-void daqDeviceOnInterrupt( register DAQ_DEVICE_T* pThis );
+//void daqDeviceOnInterrupt( register DAQ_DEVICE_T* pThis );
 
 /*! ---------------------------------------------------------------------------
  * @ingroup DAQ_DEVICE

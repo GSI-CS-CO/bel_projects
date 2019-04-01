@@ -25,19 +25,33 @@
 #ifndef _DAQ_MAIN_H
 #define _DAQ_MAIN_H
 
-#include <daq_command_interface.h>
-#include <daq_command_interface_uc.h>
+//#include <daq_command_interface_uc.h>
 #include <daq.h>
 #include <daq_ramBuffer.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+typedef struct
+{
+   DAQ_BUS_T oDaqDevs;
+   RAM_SCU_T oRam;
+} DAQ_ADMIN_T;
 
-
+int initBuffer( RAM_SCU_T* poRam );
 
 int scanScuBus( DAQ_BUS_T* pDaqDevices );
 
+
+static inline void daqInitialize( DAQ_ADMIN_T* pDaqAdmin )
+{
+   scanScuBus( &pDaqAdmin->oDaqDevs );
+   initBuffer( &pDaqAdmin->oRam );
+}
+
+#ifndef CONFIG_DAQ_SINGLE_MODULE
+void forEachScuDevice( void );
+#endif
 
 #ifdef __cplusplus
 }
