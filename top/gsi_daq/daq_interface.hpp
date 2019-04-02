@@ -126,6 +126,14 @@ inline bool descriptorWasDaq( DAQ_DATA_T* pData )
    return ::daqDescriptorWasDaq( reinterpret_cast<DAQ_DESCRIPTOR_T*>(pData) );
 }
 
+/*! ---------------------------------------------------------------------------
+ */
+inline uint64_t descriptorGetTimestamp( DAQ_DATA_T* pData )
+{
+   return ::daqDescriptorGetTimeStamp(
+                              reinterpret_cast<DAQ_DESCRIPTOR_T*>(pData) );
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 /*!
  * @brief Base exception class for all DAQ- exceptions

@@ -25,17 +25,18 @@
 #ifndef _DAQ_MAIN_H
 #define _DAQ_MAIN_H
 
-//#include <daq_command_interface_uc.h>
 #include <daq.h>
 #include <daq_ramBuffer.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
 typedef struct
 {
    DAQ_BUS_T oDaqDevs;
    RAM_SCU_T oRam;
+   volatile bool isIrq;
 } DAQ_ADMIN_T;
 
 int initBuffer( RAM_SCU_T* poRam );
@@ -49,7 +50,7 @@ static inline void daqInitialize( DAQ_ADMIN_T* pDaqAdmin )
    initBuffer( &pDaqAdmin->oRam );
 }
 
-#ifndef CONFIG_DAQ_SINGLE_MODULE
+#ifndef CONFIG_DAQ_SINGLE_APP
 void forEachScuDevice( void );
 #endif
 

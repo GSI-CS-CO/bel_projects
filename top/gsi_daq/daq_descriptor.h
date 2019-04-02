@@ -547,6 +547,13 @@ uint32_t daqDescriptorGetTimeStampSec( register DAQ_DESCRIPTOR_T* pThis )
 {
    return pThis->name.wr.name.utSec;
 }
+
+static inline
+uint64_t daqDescriptorGetTimeStamp( register DAQ_DESCRIPTOR_T* pThis )
+{
+   return pThis->name.wr.timeStamp;
+}
+
 #endif
 /*! ---------------------------------------------------------------------------
  * @brief Get the CRC of this record.

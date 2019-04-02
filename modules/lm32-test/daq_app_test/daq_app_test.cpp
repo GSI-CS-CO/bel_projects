@@ -30,14 +30,34 @@ public:
    {
       ::tcsetattr( STDIN_FILENO, TCSANOW, &m_originTerminal );
    }
+
+   static int readKey( void )
+   {
+      int inKey = 0;
+      fd_set rfds;
+
+      struct timeval sleepTime = {0, 10};
+      FD_ZERO( &rfds );
+      FD_SET( STDIN_FILENO, &rfds );
+
+      if( ::select( STDIN_FILENO+1, &rfds, NULL, NULL, &sleepTime ) > 0 )
+         ::read( STDIN_FILENO, &inKey, sizeof( inKey ) );
+      else
+         inKey = 0;
+      return (inKey & 0xFF);
+   }
 };
+
+
 
 
 class MyDaqChannel: public DaqChannel
 {
+   uint64_t m_LastTimestamp;
 public:
-   MyDaqChannel( void ):
-      DaqChannel( 0 )
+   MyDaqChannel( void )
+     :DaqChannel( 0 )
+     ,m_LastTimestamp( 0 )
    {
       cout << "Constructor" << endl;
    }
@@ -70,13 +90,22 @@ bool MyDaqChannel::onDataBlock( DAQ_DATA_T* pData, std::size_t wordLen )
        << static_cast<unsigned int>(descriptorGetCrc( pData ))
        << dec << endl;
 
+
+  cout << "Timestamp: " << descriptorGetTimestamp( pData )
+       << endl;
+  if( m_LastTimestamp > 0 )
+     cout << "Delta time: " << descriptorGetTimestamp( pData ) - m_LastTimestamp << endl;
+  m_LastTimestamp = descriptorGetTimestamp( pData );
+
+
+#if 0
   cout << "Seconds:     "
        << daqDescriptorGetTimeStampSec( reinterpret_cast<DAQ_DESCRIPTOR_T*>(pData) )
        << endl;
   cout << "Nanoseconds: " <<
      daqDescriptorGetTimeStampNanoSec( reinterpret_cast<DAQ_DESCRIPTOR_T*>(pData) )
        << endl;
-
+#endif
   cout << "Data:" << endl;
   DAQ_DATA_T minimum = static_cast<DAQ_DATA_T>(~0);
   DAQ_DATA_T maximum = 0;
@@ -159,24 +188,52 @@ void doTest( const string wbName )
 
 
 
- //  pChannel_a->sendEnableContineous( DAQ_SAMPLE_100US, 10 );
-   pChannel_b->sendEnableContineous( DAQ_SAMPLE_100US, 10 );
+//   pChannel_a->sendEnableContineous( DAQ_SAMPLE_100US, 10 );
+   pChannel_b->sendEnableContineous( DAQ_SAMPLE_100US, 4 );
 
-   pChannel_a->sendEnablePostMortem();
+//   pChannel_a->sendEnablePostMortem();
    //pChannel_a->sendEnableHighResolution();
-   usleep( 100000 );
-   pChannel_a->sendDisablePmHires( true );
+  // usleep( 100000 );
+ //  pChannel_a->sendDisablePmHires( true );
   //
-   usleep( 1000000 );
+  // usleep( 1000000 );
 
-    pChannel_a->sendDisablePmHires( true );
-  //
-   usleep( 1000000 );
-
-   cout << "Ram level: " << oDaqInterface.getCurrentRamSize(true ) << endl;
+  //  pChannel_a->sendDisablePmHires( true );
+  // cout << "Ram level: " << oDaqInterface.getCurrentRamSize(true ) << endl;
 
 
-   while( oDaqInterface.distributeData() > 0 );
+   int key;
+   while( (key = Terminal::readKey()) != '\e' )
+   {
+      if( key != 0 )
+         cout << "Ram level: " << oDaqInterface.getCurrentRamSize( true ) << endl;
+
+      switch( key )
+      {
+         case 'p':
+         {
+            pChannel_a->sendDisablePmHires( true );
+            break;
+         }
+         case 'P':
+         {
+            pChannel_a->sendEnablePostMortem();
+            break;
+         }
+         case 'C':
+         {
+            pChannel_b->sendEnableContineous( DAQ_SAMPLE_100US, 10 );
+            usleep( 1000000 );
+            break;
+         }
+         case 'r':
+         {
+            oDaqInterface.sendReset();
+            break;
+         }
+      }
+      oDaqInterface.distributeData();
+   }
 //   oDaqInterface.start();
 // sleep( 4 );
 }

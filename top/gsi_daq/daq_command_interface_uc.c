@@ -25,22 +25,14 @@
  */
 #include <daq_command_interface_uc.h>
 #include <scu_lm32_macros.h>
-//#include <daq_main.h>
 #include <daq_ramBuffer.h>
 #include <dbg.h>
 
+#ifdef CONFIG_DAQ_SINGLE_APP
 /*!!!!!!!!!!!!!!!!!!!!!! Begin of shared memory area !!!!!!!!!!!!!!!!!!!!!!!!*/
-volatile DAQ_SHARED_IO_T SHARED g_shared =
-{
-   .magicNumber = DAQ_MAGIC_NUMBER,
-   .ramIndexes  = RAM_RING_SHARED_OBJECT_INITIALIZER,
-   .operation =
-   {
-      .code    = DAQ_OP_IDLE,
-      .retCode = DAQ_RET_OK
-   }
-};
+volatile DAQ_SHARED_IO_T SHARED g_shared = DAQ_SHARAD_MEM_INITIALIZER;
 /*!!!!!!!!!!!!!!!!!!!!!!! End of shared memory area !!!!!!!!!!!!!!!!!!!!!!!!!*/
+#endif /* CONFIG_DAQ_SINGLE_APP */
 
 typedef int32_t (*DAQ_OPERATION_FT)( DAQ_ADMIN_T* pDaqAdmin,
                                      volatile DAQ_OPERATION_IO_T* );
@@ -273,8 +265,12 @@ static int32_t opPmHighResOff( DAQ_ADMIN_T* pDaqAdmin,
 
    DAQ_CANNEL_T* pChannel = getChannel( pDaqAdmin, pData );
    pChannel->properties.restart = (pData->param1 != 0);
-   daqChannelDisablePostMortem( pChannel );
    daqChannelDisableHighResolution( pChannel );
+   if( daqChannelIsPostMortemActive( pChannel ) )
+   {
+      pChannel->properties.postMortemEvent = true;
+      daqChannelDisablePostMortem( pChannel );
+   }
    return DAQ_RET_OK;
 }
 

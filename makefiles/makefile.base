@@ -93,9 +93,7 @@ ifdef CPLUSPLUS_MODULE_PRESENT
    DEFINES += CONFIG_CPLUSPLUS_MODULE_PRESENT
 endif
 
-_INCLUDE_DIRS = $(strip $(INCLUDE_DIRS))
-
-OPT_INCLUDE := $(addprefix -I,$(_INCLUDE_DIRS) )
+OPT_INCLUDE := $(addprefix -I,$(strip $(INCLUDE_DIRS)))
 OPT_DEFINES := $(addprefix -D,$(DEFINES) )
 
 ifdef LIBS

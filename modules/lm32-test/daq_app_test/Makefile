@@ -8,6 +8,7 @@ SOURCE += $(DAQ_DIR)/daq_ramBuffer.c
 SOURCE += $(SCU_LIB_SRC_DIR)/eb_object_transfer.c
 SOURCE += $(DAQ_DIR)/daq_interface.cpp
 SOURCE += $(DAQ_DIR)/daq_administration.cpp
+SOURCE += $(DAQ_DIR)/scu_eb_interface.cpp
 
 DEFINES += CONFIG_SCU_USE_DDR3
 DEFINES += DEBUGLEVEL=1

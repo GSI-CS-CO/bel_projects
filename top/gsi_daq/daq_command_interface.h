@@ -124,6 +124,9 @@ typedef struct PACKED_SIZE
 STATIC_ASSERT( sizeof(DAQ_OPERATION_T) == (sizeof(DAQ_OPERATION_CODE_T)
                                          + sizeof(DAQ_RETURN_CODE_T)
                                          + sizeof(DAQ_OPERATION_IO_T) ));
+/*!
+ * @brief Final data type in shared memory for DAQ.
+ */
 typedef struct PACKED_SIZE
 {
    uint32_t                 magicNumber;
@@ -134,6 +137,20 @@ STATIC_ASSERT( sizeof( DAQ_SHARED_IO_T ) == (sizeof(uint32_t)
                                            + sizeof(RAM_RING_SHARED_OBJECT_T)
                                            + sizeof(DAQ_OPERATION_T) ));
 STATIC_ASSERT( sizeof( DAQ_SHARED_IO_T ) <= SHARED_SIZE );
+
+/*!
+ * @brief Initializer of DAQ shared memory
+ */
+#define DAQ_SHARAD_MEM_INITIALIZER                    \
+{                                                     \
+   .magicNumber = DAQ_MAGIC_NUMBER,                   \
+   .ramIndexes  = RAM_RING_SHARED_OBJECT_INITIALIZER, \
+   .operation =                                       \
+   {                                                  \
+      .code    = DAQ_OP_IDLE,                         \
+      .retCode = DAQ_RET_OK                           \
+   }                                                  \
+}
 
 
 /*!@} */

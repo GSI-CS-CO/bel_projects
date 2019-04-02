@@ -326,7 +326,7 @@ void ramWriteDaqData( register RAM_SCU_T* pThis, DAQ_CANNEL_T* pDaqChannel,
     */
    ramRingAddToWriteIndex( poIndexes, RAM_DAQ_DATA_START_OFFSET );
 
-   ramRingDbgPrintIndexes( &pThis->pSharedObj->ringIndexes, "Origin indexes:" );
+   ramRingDbgPrintIndexes( &pThis->pSharedObj->ringIndexes, "Origin indexes:");
    ramRingDbgPrintIndexes( poIndexes, "Data indexes:" );
 
    DBPRINT2( "%s() : Slot: %d, Channel: %d\n", __func__,
@@ -391,7 +391,8 @@ void ramWriteDaqData( register RAM_SCU_T* pThis, DAQ_CANNEL_T* pDaqChannel,
             while( payloadIndex < (RAM_DAQ_DATA_WORDS_PER_RAM_INDEX-1) )
             {
                payloadIndex++;
-               DBG_RAM_INFO( "DBG: Complete with dummy data %d\n", payloadIndex );
+               DBG_RAM_INFO( "DBG: Complete with dummy data %d\n",
+                             payloadIndex );
                ramFillItem( &ramItem, payloadIndex, 0xCAFE );
             }
          }
@@ -448,10 +449,12 @@ void ramWriteDaqData( register RAM_SCU_T* pThis, DAQ_CANNEL_T* pDaqChannel,
    /*
     * Is the block integrity given?
     */
-   if( (dataWordCounter == expectedWords) && daqDescriptorVerifyMode(&oDescriptor) )
+   if( (dataWordCounter == expectedWords) &&
+        daqDescriptorVerifyMode(&oDescriptor) )
    {
       RAM_ASSERT( isShort == daqDescriptorWasDaq( &oDescriptor ) );
-      if( daqDescriptorWasPM( &oDescriptor ) && pDaqChannel->properties.restart )
+      if( daqDescriptorWasPM( &oDescriptor ) &&
+          pDaqChannel->properties.restart )
       {
          DBG_RAM_INFO( "DBG: Restarting Post Mortem\n" );
          daqChannelEnablePostMortem( pDaqChannel );

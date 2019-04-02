@@ -75,6 +75,21 @@ static inline void handleContinuousMode( DAQ_CANNEL_T* pChannel )
    daqChannelDecrementBlockCounter( pChannel );
 }
 
+
+/*! ---------------------------------------------------------------------------
+ */
+static inline bool forEachContinuousCahnnel( DAQ_DEVICE_T* pDevice )
+{
+   for( unsigned int channelNr = 0;
+        channelNr < daqDeviceGetMaxChannels( pDevice ); channelNr++ )
+   {
+      if( executeIfRequested( &g_DaqAdmin ) )
+         return true;
+      handleContinuousMode( daqDeviceGetChannelObject( pDevice, channelNr ) );
+   }
+   return false;
+}
+
 /*! ---------------------------------------------------------------------------
  */
 static inline void handleHiresMode( DAQ_CANNEL_T* pChannel )
@@ -87,50 +102,98 @@ static inline void handleHiresMode( DAQ_CANNEL_T* pChannel )
 
 /*! ---------------------------------------------------------------------------
  */
-static inline bool forEachContinuousCahnnel( DAQ_DEVICE_T* pDevice )
+static inline bool forEachHiresChannel( DAQ_DEVICE_T* pDevice )
 {
    for( unsigned int channelNr = 0;
         channelNr < daqDeviceGetMaxChannels( pDevice ); channelNr++ )
    {
       if( executeIfRequested( &g_DaqAdmin ) )
          return true;
-      DAQ_CANNEL_T* pChannel = daqDeviceGetChannelObject( pDevice, channelNr );
-      handleContinuousMode( pChannel );
+      handleHiresMode( daqDeviceGetChannelObject( pDevice, channelNr ) );
    }
-
- //  daqDeviceClearDaqChannelInterrupts( pDevice );
    return false;
 }
 
 /*! ---------------------------------------------------------------------------
  */
-#ifdef CONFIG_DAQ_SINGLE_MODULE
+static inline void handlePostMortemMode( DAQ_CANNEL_T* pChannel )
+{
+   if( !pChannel->properties.postMortemEvent )
+      return;
+   if( daqChannelGetPmFifoWords( pChannel ) < DAQ_FIFO_PM_HIRES_WORD_SIZE )
+      return;
+
+   pChannel->properties.postMortemEvent = false;
+   ramPushDaqDataBlock( &g_DaqAdmin.oRam, pChannel, false );
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+static inline bool forEachPostMortemChennel( DAQ_DEVICE_T* pDevice )
+{
+   for( unsigned int channelNr = 0;
+        channelNr < daqDeviceGetMaxChannels( pDevice ); channelNr++ )
+   {
+      if( executeIfRequested( &g_DaqAdmin ) )
+         return true;
+      handlePostMortemMode( daqDeviceGetChannelObject( pDevice, channelNr ) );
+   }
+   return false;
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+#ifdef CONFIG_DAQ_SINGLE_APP
 static inline
 #endif
 void forEachScuDevice( void )
 {
+   bool isIrq;
+
+   // TODO disable irq
+ //!!  isIrq = g_DaqAdmin.isIrq;
+ //!!  g_DaqAdmin.isIrq = false;
+   // TODO enable irq
+
+   isIrq = true; //!!
+
    for( unsigned int deviceNr = 0;
        deviceNr < daqBusGetFoundDevices( &g_DaqAdmin.oDaqDevs ); deviceNr++ )
    {
-      DAQ_DEVICE_T* pDevice = daqBusGetDeviceObject( &g_DaqAdmin.oDaqDevs, deviceNr );
-      if( daqDeviceTestAndClearDaqInt( pDevice ) )
+      DAQ_DEVICE_T* pDevice = daqBusGetDeviceObject( &g_DaqAdmin.oDaqDevs,
+                                                     deviceNr );
+      if( isIrq )
       {
-         if( forEachContinuousCahnnel( pDevice ))
+         uint16_t* volatile pIntFlags = daqDeviceGetInterruptFlags( pDevice );
+         if( _daqDeviceTestAndClearDaqInt( pIntFlags ) )
          {
-            DBPRINT1( "DBG: Leaving loop\n" );
-            return;
+            if( forEachContinuousCahnnel( pDevice ))
+            {
+               DBPRINT1( "DBG: Leaving loop 1\n" );
+               return;
+            }
+         }
+         if( _daqDeviceTestAndClearHiResInt( pIntFlags ) )
+         {
+            if( forEachHiresChannel( pDevice ) )
+            {
+               DBPRINT1( "DBG: Leaving loop 2\n" );
+               return;
+            }
          }
       }
-      if( daqDeviceTestAndClearHiResInt( pDevice ) )
+
+      if( forEachPostMortemChennel( pDevice ) )
       {
-         //TODO
+         DBPRINT1( "DBG: Leaving loop 3\n" );
+         return;
       }
    }
    executeIfRequested( &g_DaqAdmin );
 }
 
 /*================================= main ====================================*/
-#ifdef CONFIG_DAQ_SINGLE_MODULE
+#ifdef CONFIG_DAQ_SINGLE_APP
 /*! ---------------------------------------------------------------------------
  */
 void main( void )
@@ -150,5 +213,5 @@ void main( void )
       forEachScuDevice();
    }
 }
-#endif /* CONFIG_DAQ_SINGLE_MODULE */
+#endif /* CONFIG_DAQ_SINGLE_APP */
 /*================================== EOF ====================================*/

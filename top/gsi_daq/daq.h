@@ -1384,6 +1384,27 @@ uint16_t* volatile daqDeviceGetInterruptFlags( register DAQ_DEVICE_T* pThis )
 /*! ---------------------------------------------------------------------------
  * @ingroup DAQ_DEVICE DAQ_INTERRUPT
  * @brief Tests and clears the DAQ interrupt pending flag of this DAQ device.
+ * @param pFlags Pointer to the DAQ- interrupt flag register.
+ * @retval true DAQ Interrupt was pending.
+ * @retval false No DAQ interrupt was pending.
+ */
+static inline
+bool _daqDeviceTestAndClearDaqInt( uint16_t* volatile pFlags )
+{
+   if( (*pFlags & (1 << DAQ_IRQ_DAQ_FIFO_FULL)) != 0 )
+   { /*
+      * Bit becomes cleared by writing a one in the concerning
+      * register position.
+      */
+      *pFlags |= (1 << DAQ_IRQ_DAQ_FIFO_FULL);
+      return true;
+   }
+   return false;
+}
+
+/*! ---------------------------------------------------------------------------
+ * @ingroup DAQ_DEVICE DAQ_INTERRUPT
+ * @brief Tests and clears the DAQ interrupt pending flag of this DAQ device.
  * @param pThis Pointer to the DAQ-device object
  * @retval true DAQ Interrupt was pending.
  * @retval false No DAQ interrupt was pending.
@@ -1391,15 +1412,25 @@ uint16_t* volatile daqDeviceGetInterruptFlags( register DAQ_DEVICE_T* pThis )
 static inline
 bool daqDeviceTestAndClearDaqInt( register DAQ_DEVICE_T* pThis )
 {
-   volatile uint16_t* pFlags =
-      &((uint16_t*)daqDeviceGetScuBusSlaveBaseAddress( pThis ))[Intr_Active];
+   return _daqDeviceTestAndClearDaqInt( daqDeviceGetInterruptFlags( pThis ) );
+}
 
-   if( (*pFlags & (1 << DAQ_IRQ_DAQ_FIFO_FULL)) != 0 )
+/*! ---------------------------------------------------------------------------
+ * @ingroup DAQ_DEVICE DAQ_INTERRUPT
+ * @brief Tests and clears the HiRes interrupt pending flag of this DAQ device.
+ * @param pFlags Pointer to the DAQ- interrupt flag register.
+ * @retval true HiRes Interrupt was pending.
+ * @retval false No HiRes interrupt was pending.
+ */
+static inline
+bool _daqDeviceTestAndClearHiResInt( uint16_t* volatile pFlags )
+{
+   if( (*pFlags & (1 << DAQ_IRQ_HIRES_FINISHED)) != 0 )
    { /*
       * Bit becomes cleared by writing a one in the concerning
       * register position.
       */
-      *pFlags |= (1 << DAQ_IRQ_DAQ_FIFO_FULL);
+      *pFlags |= (1 << DAQ_IRQ_HIRES_FINISHED);
       return true;
    }
    return false;
@@ -1415,18 +1446,36 @@ bool daqDeviceTestAndClearDaqInt( register DAQ_DEVICE_T* pThis )
 static inline
 bool daqDeviceTestAndClearHiResInt( register DAQ_DEVICE_T* pThis )
 {
-   volatile uint16_t* pFlags =
-      &((uint16_t*)daqDeviceGetScuBusSlaveBaseAddress( pThis ))[Intr_Active];
+   return _daqDeviceTestAndClearHiResInt( daqDeviceGetInterruptFlags( pThis ));
+}
 
-   if( (*pFlags & (1 << DAQ_IRQ_HIRES_FINISHED)) != 0 )
-   { /*
-      * Bit becomes cleared by writing a one in the concerning
-      * register position.
-      */
-      *pFlags |= (1 << DAQ_IRQ_HIRES_FINISHED);
-      return true;
-   }
-   return false;
+/*! ---------------------------------------------------------------------------
+ * @ingroup DAQ_DEVICE DAQ_INTERRUPT
+ * @brief Returns true when at least one of both DAQ interrupts
+ *      (HiRes or Continuous)  is active.
+ * @param pFlags Pointer to the DAQ- flag register
+ * @retval true  DAQ interrupt request is active.
+ * @retval false No DAQ interrupt
+ */
+static inline
+bool _daqDeviceIsInterrupt( uint16_t* volatile pFlags )
+{
+   return ((*pFlags & ((1 << DAQ_IRQ_HIRES_FINISHED) |
+                       (1 << DAQ_IRQ_DAQ_FIFO_FULL)) ) != 0);
+}
+
+/*! ---------------------------------------------------------------------------
+ * @ingroup DAQ_DEVICE DAQ_INTERRUPT
+ * @brief Returns true when at least one of both DAQ interrupts
+ *      (HiRes or Continuous)  is active.
+ * @param pThis Pointer to the DAQ-device objects
+ * @retval true  DAQ interrupt request is active.
+ * @retval false No DAQ interrupt
+ */
+static inline
+bool daqDeviceIsInterrupt( register DAQ_DEVICE_T* pThis )
+{
+   return _daqDeviceIsInterrupt( daqDeviceGetInterruptFlags( pThis ));
 }
 
 /*! ---------------------------------------------------------------------------
