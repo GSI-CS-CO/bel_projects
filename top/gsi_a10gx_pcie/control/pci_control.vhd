@@ -10,9 +10,10 @@ use work.stub_pll_pkg.all;
 ------------------------------------------------------------------------
 -- Clocking
 ------------------------------------------------------------------------
--- clk_125m_pllref_i is connected to U14 (Si5338A) -> Clock 3 (schematic name: REFCLK_SMA)
--- clk_125m_local_i  is connected to U26 (Si5338A) -> Clock 2 (schematic name: REFCLK_QSFP)
--- clk_125m_sfpref_i is connected to U26 (Si5338A) -> Clock 1 (schematic name: REFCLK_QSFP)
+-- Tool: arria10GX_10ax115sf45_fpga_v15.1.2/examples/board_test_system$ java -Xmx256m -jar bts.jar -mode clk
+-- clk_125m_pllref_i is connected to U14 (Si5338A) -> Clock 3 (schematic name: REFCLK_SMA) => Set this to 125MHz
+-- clk_125m_local_i  is connected to U26 (Si5338A) -> Clock 2 (schematic name: REFCLK_QSFP) => Set this to 125MHz
+-- clk_125m_sfpref_i is connected to U26 (Si5338A) -> Clock 1 (schematic name: REFCLK_QSFP) => Set this to 125MHz
 -- clk_20m_vcxo_i    is connected to U26 (Si5338A) -> Clock 0 (schematic name: REFCLK_DP) (here: looped)
 -- clk_pll_i         is connected to U26 (Si5338A) -> Clock 3 (schematic name: CLK_EMI)
 
