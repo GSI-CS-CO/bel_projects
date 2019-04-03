@@ -97,6 +97,7 @@ static inline void handleHiresMode( DAQ_CANNEL_T* pChannel )
    if( !daqChannelTestAndClearHiResIntPending( pChannel ) )
       return;
 
+   daqChannelDisableHighResolution( pChannel );
    ramPushDaqDataBlock( &g_DaqAdmin.oRam, pChannel, false );
 }
 
@@ -124,6 +125,7 @@ static inline void handlePostMortemMode( DAQ_CANNEL_T* pChannel )
       return;
 
    pChannel->properties.postMortemEvent = false;
+   daqChannelDisablePostMortem( pChannel ); //!!
    ramPushDaqDataBlock( &g_DaqAdmin.oRam, pChannel, false );
 }
 
@@ -203,7 +205,7 @@ void main( void )
    uart_init_hw();
    gotoxy( 0, 0 );
    clrscr();
-   DBPRINT1( "DAQ control started\n" );
+   DBPRINT1( "DAQ control started; Compiler: "COMPILER_VERSION_STRING"\n" );
 #endif
 
    daqInitialize( &g_DaqAdmin );

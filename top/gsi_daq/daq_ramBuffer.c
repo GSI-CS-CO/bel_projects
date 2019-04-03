@@ -64,7 +64,8 @@ void ramRingAddToReadIndex( RAM_RING_INDEXES_T* pThis, RAM_RING_INDEX_T toAdd )
 {
    RAM_ASSERT( ramRingGetSize( pThis ) >= toAdd );
 
-   if( (toAdd != 0) && (pThis->end == pThis->capacity) )  /* Is ring-buffer full? */
+   /* Is ring-buffer full? */
+   if( (toAdd != 0) && (pThis->end == pThis->capacity) )
       pThis->end = pThis->start;
 
    pThis->start = (pThis->start + toAdd) % pThis->capacity;
@@ -450,9 +451,9 @@ void ramWriteDaqData( register RAM_SCU_T* pThis, DAQ_CANNEL_T* pDaqChannel,
     * Is the block integrity given?
     */
    if( (dataWordCounter == expectedWords) &&
-        daqDescriptorVerifyMode(&oDescriptor) )
+        daqDescriptorVerifyMode( &oDescriptor ) )
    {
-      RAM_ASSERT( isShort == daqDescriptorWasDaq( &oDescriptor ) );
+      RAM_ASSERT( isShort == daqDescriptorIsShortBlock( &oDescriptor ) );
       if( daqDescriptorWasPM( &oDescriptor ) &&
           pDaqChannel->properties.restart )
       {

@@ -53,11 +53,13 @@ public:
 
 class MyDaqChannel: public DaqChannel
 {
-   uint64_t m_LastTimestamp;
+   uint64_t      m_LastTimestamp;
+   unsigned int  m_blockCount;
 public:
    MyDaqChannel( void )
      :DaqChannel( 0 )
      ,m_LastTimestamp( 0 )
+     ,m_blockCount( 0 )
    {
       cout << "Constructor" << endl;
    }
@@ -90,7 +92,7 @@ bool MyDaqChannel::onDataBlock( DAQ_DATA_T* pData, std::size_t wordLen )
        << static_cast<unsigned int>(descriptorGetCrc( pData ))
        << dec << endl;
 
-
+  cout << "Block:     " << ++m_blockCount << endl;
   cout << "Timestamp: " << descriptorGetTimestamp( pData )
        << endl;
   if( m_LastTimestamp > 0 )
@@ -196,7 +198,7 @@ void doTest( const string wbName )
   // usleep( 100000 );
  //  pChannel_a->sendDisablePmHires( true );
   //
-  // usleep( 1000000 );
+   usleep( 1000000 );
 
   //  pChannel_a->sendDisablePmHires( true );
   // cout << "Ram level: " << oDaqInterface.getCurrentRamSize(true ) << endl;
@@ -205,8 +207,9 @@ void doTest( const string wbName )
    int key;
    while( (key = Terminal::readKey()) != '\e' )
    {
-      if( key != 0 )
-         cout << "Ram level: " << oDaqInterface.getCurrentRamSize( true ) << endl;
+     // unsigned int RamSize = oDaqInterface.getCurrentRamSize( true );
+     // if( RamSize != 0 )
+     //    cout << "Ram level: " << RamSize << endl;
 
       switch( key )
       {
@@ -217,7 +220,7 @@ void doTest( const string wbName )
          }
          case 'P':
          {
-            pChannel_a->sendEnablePostMortem();
+            pChannel_a->sendEnablePostMortem(true);
             break;
          }
          case 'C':

@@ -440,6 +440,19 @@ static inline bool daqDescriptorIsLongBlock( register DAQ_DESCRIPTOR_T* pThis )
    return !daqDescriptorWasDaq( pThis );
 }
 
+/*! ----------------------------------------------------------------------------
+ * @brief Returns true if it is a short block.
+ * @param pThis Pointer to the DAQ- descriptor object, that means to the last
+ *              10 received words (type uint16_t) of the received record.
+ * @retval true Long block   (has DAQ_FIFO_PM_HIRES_WORD_SIZE_CRC words)
+ * @retval false Short block (has DAQ_FIFO_DAQ_WORD_SIZE_CRC words)
+ */
+static inline bool daqDescriptorIsShortBlock( register DAQ_DESCRIPTOR_T* pThis )
+{
+   return daqDescriptorWasDaq( pThis );
+}
+
+
 /*! ---------------------------------------------------------------------------
  * @brief Gets the least significant word of the bus tag event
  *        trigger condition from the last record.

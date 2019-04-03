@@ -37,7 +37,7 @@
 
 /*! ---------------------------------------------------------------------------
  */
-eb_status_t ebOpen( EB_HANDLE_T* pThis, char* name )
+eb_status_t ebOpen( EB_HANDLE_T* pThis, const char* name )
 {
    SCU_ASSERT( name != NULL );
    SCU_ASSERT( strlen( name ) > 0 );
@@ -52,8 +52,9 @@ eb_status_t ebOpen( EB_HANDLE_T* pThis, char* name )
       return pThis->status;
    }
 
-   pThis->status = eb_device_open( pThis->socket, name, EB_DATAX | EB_ADDRX, ATTEMPTS,
-                            &pThis->device );
+   pThis->status = eb_device_open( pThis->socket, name,
+                                   EB_DATAX | EB_ADDRX, ATTEMPTS,
+                                   &pThis->device );
    if( pThis->status != EB_OK )
    {
       fprintf( stderr, ESC_FG_RED ESC_BOLD
@@ -80,8 +81,9 @@ eb_status_t ebClose( EB_HANDLE_T* pThis )
 
   if( (pThis->status = eb_socket_close(pThis->socket)) != EB_OK)
   {
-     fprintf( stderr, ESC_FG_RED ESC_BOLD"Error: eb_socket_close returns %s\n"
-             ESC_NORMAL, ebGetStatusString( pThis ));
+     fprintf( stderr,
+              ESC_FG_RED ESC_BOLD"Error: eb_socket_close returns %s\n"
+              ESC_NORMAL, ebGetStatusString( pThis ));
   }
   return pThis->status;
 }
@@ -105,7 +107,8 @@ eb_status_t ebFindFirstDeviceAddrById( EB_HANDLE_T* pThis,
    }
    if( numDevices == 0 )
    {
-      fprintf( stderr, ESC_FG_RED ESC_BOLD"Error: no matching device found:\n"
+      fprintf( stderr,
+               ESC_FG_RED ESC_BOLD"Error: no matching device found:\n"
                        "Vendor ID: 0x%08X\n"
                        "Device ID: 0x%08X\n"ESC_NORMAL,
                        vendorId, deviceId );
@@ -122,36 +125,6 @@ eb_status_t ebFindFirstDeviceAddrById( EB_HANDLE_T* pThis,
 
 /*! ---------------------------------------------------------------------------
  */
-#if 0
-eb_status_t ebReadData32( EB_HANDLE_T* pThis, uint32_t addr, uint32_t* pData )
-{
-   EB_MEMBER_INFO_T info[1];
-
-   EB_INIT_INFO_ITEM_STATIC( info, 0, *pData );
-   EB_MAKE_CB_OR_ARG( cArg, info );
-
-   if( ebObjectReadCycleOpen( pThis, &cArg ) != EB_OK )
-   {
-      fprintf( stderr, ESC_FG_RED ESC_BOLD
-                       "Error: Failed to create cycle for read: %s\n"
-                       ESC_NORMAL,
-               ebGetStatusString( pThis ));
-      return pThis->status;
-   }
-
-   eb_cycle_read( pThis->cycle, addr, EB_DATA32, NULL );
-
-   ebCycleClose( pThis );
-
-   while( !cArg.exit )
-      ebSocketRun( pThis );
-
-   pThis->status = cArg.status;
-
-   return pThis->status;
-}
-#endif
-
 eb_status_t ebReadData32( EB_HANDLE_T* pThis, uint32_t addr, uint32_t* pData,
                           size_t len )
 {
@@ -184,6 +157,8 @@ eb_status_t ebReadData32( EB_HANDLE_T* pThis, uint32_t addr, uint32_t* pData,
 
    for( size_t i = 0; i < len; i++ )
    {
+      eb_cycle_read( pThis->cycle, addr + i * sizeof(uint32_t),
+                     EB_DATA32 | EB_LITTLE_ENDIAN, NULL );
    }
 
    ebCycleClose( pThis );
@@ -219,7 +194,10 @@ eb_status_t ebWriteData32( EB_HANDLE_T* pThis, uint32_t addr, uint32_t* pData,
    }
 
    for( size_t i = 0; i < len; i++ )
-      eb_cycle_write( pThis->cycle, addr, EB_DATA32 | EB_LITTLE_ENDIAN, pData[i] );
+   {
+      eb_cycle_write( pThis->cycle, addr, EB_DATA32 | EB_LITTLE_ENDIAN,
+                      pData[i] );
+   }
 
    ebCycleClose( pThis );
 
@@ -291,6 +269,5 @@ void __ebCycleWriteIoObjectCb( eb_user_data_t user, eb_device_t dev,
    }
 
 }
-
 
 /*================================== EOF ====================================*/

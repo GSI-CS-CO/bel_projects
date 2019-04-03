@@ -81,70 +81,70 @@
  * @param type Name of the data type including the concerning member.
  * @param member Name of the member variable.
  */
-#define EB_LM32_GET_ADDR_OF_MEMBER( type, member )             \
+#define EB_LM32_GET_ADDR_OF_MEMBER( type, member )                            \
    (EB_LM32_SHARED_BASE_ADDRESS + offsetof( type, member ))
 
 /*! ---------------------------------------------------------------------------
  */
-#define EB_LM32_FOR_MEMBER( type, member )                   \
-   EB_LM32_GET_ADDR_OF_MEMBER( type, member ),               \
+#define EB_LM32_FOR_MEMBER( type, member )                                    \
+   EB_LM32_GET_ADDR_OF_MEMBER( type, member ),                                \
    GET_SIZE_OF_MEMBER( type, member ) | EB_BIG_ENDIAN
 
 /*! ---------------------------------------------------------------------------
  */
-#define __EB_INIT_INFO_ITEM( name, index, memberAcess )      \
-   name[index].pData = (uint8_t*)&(memberAcess);             \
-   name[index].size  = sizeof( memberAcess )                 \
+#define __EB_INIT_INFO_ITEM( name, index, memberAcess )                       \
+   name[index].pData = (uint8_t*)&(memberAcess);                              \
+   name[index].size  = sizeof( memberAcess )                                  \
 
 /*! ---------------------------------------------------------------------------
  */
-#define EB_INIT_INFO_ITEM_STATIC( name, index, memberAcess ) \
-{                                                            \
-   STATIC_ASSERT( index >= 0  );                             \
-   STATIC_ASSERT( index < ARRAY_SIZE( name ) );              \
-   __EB_INIT_INFO_ITEM( name, index, memberAcess );          \
+#define EB_INIT_INFO_ITEM_STATIC( name, index, memberAcess )                  \
+{                                                                             \
+   STATIC_ASSERT( index >= 0  );                                              \
+   STATIC_ASSERT( index < ARRAY_SIZE( name ) );                               \
+   __EB_INIT_INFO_ITEM( name, index, memberAcess );                           \
 }
 
 /*! ---------------------------------------------------------------------------
  */
-#define EB_INIT_INFO_ITEM( name, index, memberAcess )  \
-{                                                      \
-   size_t _index = index;                              \
-   SCU_ASSERT( _index < ARRAY_SIZE( name ) );          \
-   __EB_INIT_INFO_ITEM( name, _index, memberAcess );   \
+#define EB_INIT_INFO_ITEM( name, index, memberAcess )                         \
+{                                                                             \
+   size_t _index = index;                                                     \
+   SCU_ASSERT( _index < ARRAY_SIZE( name ) );                                 \
+   __EB_INIT_INFO_ITEM( name, _index, memberAcess );                          \
 }
 
 /*! ---------------------------------------------------------------------------
  */
-#define EB_INIT_CB_OR_ARG( arg, infoArray )            \
-{                                                      \
-   (arg).aInfo   = infoArray;                          \
-   (arg).infoLen = ARRAY_SIZE( infoArray );            \
-   (arg).exit    = false;                              \
+#define EB_INIT_CB_OR_ARG( arg, infoArray )                                   \
+{                                                                             \
+   (arg).aInfo   = infoArray;                                                 \
+   (arg).infoLen = ARRAY_SIZE( infoArray );                                   \
+   (arg).exit    = false;                                                     \
 }
 
 /*! ---------------------------------------------------------------------------
  */
-#define EB_MAKE_CB_OR_ARG( arg, infoArray ) \
-   EB_CYCLE_OR_CB_ARG_T arg;                \
+#define EB_MAKE_CB_OR_ARG( arg, infoArray )                                   \
+   EB_CYCLE_OR_CB_ARG_T arg;                                                  \
    EB_INIT_CB_OR_ARG( arg, infoArray )
 
 /*! ---------------------------------------------------------------------------
  */
-#define EB_INIT_CB_OW_ARG( arg )            \
-{                                           \
-   (arg).exit    = false;                   \
+#define EB_INIT_CB_OW_ARG( arg )                                              \
+{                                                                             \
+   (arg).exit    = false;                                                     \
 }
 
 /*! ---------------------------------------------------------------------------
  */
-#define EB_MAKE_CB_OW_ARG( arg )           \
-   EB_CYCLE_OW_CB_ARG_T arg;               \
+#define EB_MAKE_CB_OW_ARG( arg )                                              \
+   EB_CYCLE_OW_CB_ARG_T arg;                                                  \
    EB_INIT_CB_OW_ARG( arg )
 
 /*! ---------------------------------------------------------------------------
  */
-#define EB_OJECT_MEMBER_READ( pThis, type, member )                   \
+#define EB_OJECT_MEMBER_READ( pThis, type, member )                           \
    eb_cycle_read( pThis->cycle, EB_LM32_FOR_MEMBER( type, member ), NULL )
 
 /*! ---------------------------------------------------------------------------
@@ -153,10 +153,10 @@
  * @param ptr Pointer to the concerning object.
  * @param member Name of the member variable.
  */
-#define EB_LM32_OJECT_MEMBER_WRITE( pThis, ptr, member )                   \
-   eb_cycle_write( pThis->cycle,                                           \
-                   EB_LM32_GET_ADDR_OF_MEMBER( typeof( *(ptr) ), member ), \
-                   sizeof( (ptr)->member ) | EB_BIG_ENDIAN,                \
+#define EB_LM32_OJECT_MEMBER_WRITE( pThis, ptr, member )                      \
+   eb_cycle_write( pThis->cycle,                                              \
+                   EB_LM32_GET_ADDR_OF_MEMBER( typeof( *(ptr) ), member ),    \
+                   sizeof( (ptr)->member ) | EB_BIG_ENDIAN,                   \
                    (ptr)->member )
 
 /*! ---------------------------------------------------------------------------
@@ -177,11 +177,11 @@
  * @param ptr Pointer to the concerning object.
  * @param bfMember Name of the member variable of type bit field.
  */
-#define EB_LM32_OJECT_MEMBER_WRITE_BF( pThis, ptr, bfMember )                \
-   eb_cycle_write( pThis->cycle,                                             \
-                   EB_LM32_GET_ADDR_OF_MEMBER( typeof( *(ptr) ), bfMember ), \
-                   sizeof( (ptr)->bfMember ) | EB_BIG_ENDIAN,                \
-                   *((eb_data_t*)&((ptr)->bfMember)) &                       \
+#define EB_LM32_OJECT_MEMBER_WRITE_BF( pThis, ptr, bfMember )                 \
+   eb_cycle_write( pThis->cycle,                                              \
+                   EB_LM32_GET_ADDR_OF_MEMBER( typeof( *(ptr) ), bfMember ),  \
+                   sizeof( (ptr)->bfMember ) | EB_BIG_ENDIAN,                 \
+                   *((eb_data_t*)&((ptr)->bfMember)) &                        \
                    ~(((eb_data_t)~0) << BIT_SIZEOF( (ptr)->bfMember )) )
 
 
@@ -236,7 +236,7 @@ const char* ebGetStatusString( EB_HANDLE_T* pThis )
 
 /*! ---------------------------------------------------------------------------
  */
-eb_status_t ebOpen( EB_HANDLE_T* pThis, char* name );
+eb_status_t ebOpen( EB_HANDLE_T* pThis, const char* name );
 
 /*! ---------------------------------------------------------------------------
  */
@@ -256,7 +256,8 @@ void __ebCycleReadIoObjectCb( eb_user_data_t user, eb_device_t dev,
 /*! ---------------------------------------------------------------------------
  */
 static inline
-eb_status_t ebObjectReadCycleOpen( EB_HANDLE_T* pThis, EB_CYCLE_OR_CB_ARG_T* pCArg )
+eb_status_t ebObjectReadCycleOpen( EB_HANDLE_T* pThis,
+                                   EB_CYCLE_OR_CB_ARG_T* pCArg )
 {
    SCU_ASSERT( pThis != NULL );
    SCU_ASSERT( pCArg != NULL );
@@ -275,7 +276,6 @@ void __ebCycleWriteIoObjectCb( eb_user_data_t user, eb_device_t dev,
 
 /*! ---------------------------------------------------------------------------
  */
-//eb_status_t ebReadData32( EB_HANDLE_T* pThis, uint32_t addr, uint32_t* pData );
 eb_status_t ebReadData32( EB_HANDLE_T* pThis, uint32_t addr, uint32_t* pData,
                           size_t len );
 
@@ -287,7 +287,8 @@ eb_status_t ebWriteData32( EB_HANDLE_T* pThis, uint32_t addr, uint32_t* pData,
 /*! ---------------------------------------------------------------------------
  */
 static inline
-eb_status_t ebObjectWriteCycleOpen( EB_HANDLE_T* pThis, EB_CYCLE_OW_CB_ARG_T* pCArg )
+eb_status_t ebObjectWriteCycleOpen( EB_HANDLE_T* pThis,
+                                    EB_CYCLE_OW_CB_ARG_T* pCArg )
 {
    SCU_ASSERT( pThis != NULL );
    SCU_ASSERT( pCArg != NULL );
