@@ -258,6 +258,7 @@ public:
 
    void sendReset( void )
    {
+      sendUnlockRamAccess();
       sendCommand( DAQ_OP_RESET );
    }
 
@@ -351,6 +352,12 @@ protected:
       m_oSharedData.operation.ioData.location.channel      = channel;
    }
 
+   void sendLockRamAccess( void )
+   {
+      sendCommand( DAQ_OP_LOCK );
+   }
+
+   void sendUnlockRamAccess( void );
    void clearBuffer( bool update = true );
    void writeRamIndexes( void );
 

@@ -129,6 +129,7 @@ static
 int32_t opLock( DAQ_ADMIN_T* pDaqAdmin, volatile DAQ_OPERATION_IO_T* pData )
 {
    FUNCTION_INFO();
+   g_shared.ramIndexes.ramAccessLock = true;
    return DAQ_RET_OK;
 }
 
@@ -150,6 +151,7 @@ int32_t opReset( DAQ_ADMIN_T* pDaqAdmin, volatile DAQ_OPERATION_IO_T* pData )
    FUNCTION_INFO();
    daqBusReset( &pDaqAdmin->oDaqDevs );
    ramRingReset( &pDaqAdmin->oRam.pSharedObj->ringIndexes );
+   g_shared.ramIndexes.ramAccessLock = false;
    return DAQ_RET_OK;
 }
 

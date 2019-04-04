@@ -70,7 +70,10 @@ public:
               ",  slot: " << getSlot() << endl;
    }
 
+   void clearCounter( void ) { m_blockCount = 0; }
+
    bool onDataBlock( DAQ_DATA_T* pData, std::size_t wordLen ) override;
+
 };
 
 
@@ -213,6 +216,18 @@ void doTest( const string wbName )
 
       switch( key )
       {
+         case 'd':
+         {
+            cout << "Endurance test begin" << endl;
+            do
+            {
+                pChannel_a->sendDisablePmHires( false );
+                pChannel_a->sendDisableContinue();
+            }
+            while( Terminal::readKey() == 0 );
+            cout << "Endurance test end" << endl;
+            break;
+         }
          case 'p':
          {
             pChannel_a->sendDisablePmHires( true );
@@ -232,11 +247,15 @@ void doTest( const string wbName )
          case 'r':
          {
             oDaqInterface.sendReset();
+            for( auto& itDev: oDaqInterface )
+               for( auto& itChannel: *itDev )
+                  static_cast<MyDaqChannel*>(itChannel)->clearCounter();
             break;
          }
       }
       oDaqInterface.distributeData();
    }
+
 //   oDaqInterface.start();
 // sleep( 4 );
 }

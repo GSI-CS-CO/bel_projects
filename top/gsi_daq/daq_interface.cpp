@@ -85,6 +85,7 @@ DaqInterface::DaqInterface( const std::string wbDevice )
    }
 
    readSharedTotal();
+   sendUnlockRamAccess();
    sendReset();
    readSlotStatus();
 }
@@ -375,8 +376,10 @@ DaqInterface::RETURN_CODE_T DaqInterface::readRamIndexes( void )
    if( ebReadObjectCycleOpen( cArg ) != EB_OK )
       __THROW_EB_EXCEPTION();
 
-   EB_OJECT_MEMBER_READ( m_poEbHandle, DAQ_SHARED_IO_T, ramIndexes.ringIndexes.start );
-   EB_OJECT_MEMBER_READ( m_poEbHandle, DAQ_SHARED_IO_T, ramIndexes.ringIndexes.end );
+   EB_OJECT_MEMBER_READ( m_poEbHandle, DAQ_SHARED_IO_T,
+                         ramIndexes.ringIndexes.start );
+   EB_OJECT_MEMBER_READ( m_poEbHandle, DAQ_SHARED_IO_T,
+                         ramIndexes.ringIndexes.end );
    ebCycleClose();
 
    while( !cArg.exit )
@@ -388,6 +391,29 @@ DaqInterface::RETURN_CODE_T DaqInterface::readRamIndexes( void )
 
    return m_oSharedData.operation.retCode;
 }
+
+void DaqInterface::sendUnlockRamAccess( void )
+{
+   EB_MAKE_CB_OW_ARG( cArg );
+
+   m_oSharedData.ramIndexes.ramAccessLock = false;
+
+   if( ebWriteObjectCycleOpen( cArg ) != EB_OK )
+      __THROW_EB_EXCEPTION();
+
+   EB_LM32_OJECT_MEMBER_WRITE( m_poEbHandle, &m_oSharedData,
+                               ramIndexes.ramAccessLock );
+
+   ebCycleClose();
+
+   while( !cArg.exit )
+      ebSocketRun();
+
+   m_poEbHandle->status = cArg.status;
+   if( m_poEbHandle->status != EB_OK )
+      __THROW_EB_EXCEPTION();
+}
+
 
 /*! ---------------------------------------------------------------------------
  */

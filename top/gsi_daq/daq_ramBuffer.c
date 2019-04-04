@@ -295,6 +295,38 @@ void ramFillItem( RAM_DAQ_PAYLOAD_T* pItem, const unsigned int i,
 #endif
 
 /*! ---------------------------------------------------------------------------
+ * @brief Publishing written data in shared memory.
+ */
+static inline
+void publishWrittenData( register RAM_SCU_T* pThis,
+                         RAM_RING_INDEXES_T* poIndexes )
+{
+   pThis->pSharedObj->ringIndexes.end = poIndexes->end;
+   pThis->pSharedObj->serverHasWritten = 1;
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+static inline void ramPollAccessLock( RAM_SCU_T* pThis )
+{
+#ifdef CONFIG_DEBUG_RAM_WRITE_DATA
+   if( pThis->pSharedObj->ramAccessLock )
+   {
+      unsigned int pollCount = 0;
+      DBG_RAM_INFO( "DBG: Enter RAM-access polling\n" );
+      while( pThis->pSharedObj->ramAccessLock )
+      {
+         pollCount++;
+      }
+      DBG_RAM_INFO( "DBG: Leaving RAM-access polling. %d loops\n", pollCount );
+   }
+#else
+   while( pThis->pSharedObj->ramAccessLock ) {}
+#endif
+}
+
+
+/*! ---------------------------------------------------------------------------
  * @brief Copies the data of the given DAQ-channel in to the RAM and
  *        exchanges the order of DAQ data with device descriptor.
  */
@@ -317,6 +349,8 @@ void ramWriteDaqData( register RAM_SCU_T* pThis, DAQ_CANNEL_T* pDaqChannel,
 
    RAM_DAQ_PAYLOAD_T ramItem;
    DAQ_DATA_T        firstData[RAM_DAQ_DESCRIPTOR_COMPLETION];
+
+   ramPollAccessLock( pThis );
 
    oDescriptorIndexes = pThis->pSharedObj->ringIndexes;
    oDataIndexes       = oDescriptorIndexes;
@@ -463,7 +497,7 @@ void ramWriteDaqData( register RAM_SCU_T* pThis, DAQ_CANNEL_T* pDaqChannel,
      /*
       * Making the new received data block in ring buffer valid.
       */
-      pThis->pSharedObj->ringIndexes.end = oDataIndexes.end;
+      publishWrittenData( pThis, &oDataIndexes );
    }
 #ifdef DEBUGLEVEL
    else

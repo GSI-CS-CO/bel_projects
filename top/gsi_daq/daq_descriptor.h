@@ -230,11 +230,11 @@ STATIC_ASSERT( sizeof(_DAQ_TRIGGER)            == 3 * sizeof(DAQ_DATA_T) );
 typedef struct PACKED_SIZE
 {
 #if (__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__)
-   DAQ_DATA_T __unused: 8;
-   DAQ_DATA_T crc:      8;
+   DAQ_DATA_T _unused: 8;
+   DAQ_DATA_T crc:     8;
 #else
-   DAQ_DATA_T crc:      8;
-   DAQ_DATA_T __unused: 8;
+   DAQ_DATA_T crc:     8;
+   DAQ_DATA_T _unused: 8;
 #endif
 } _DAQ_BF_CRC_REG;
 

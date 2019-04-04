@@ -248,12 +248,12 @@ STATIC_ASSERT( sizeof(RAM_RING_INDEXES_T) == 4 * sizeof(RAM_RING_INDEX_T));
 /*!
  * @brief Initializer for object of data type RAM_RING_INDEXES_T
  */
-#define RAM_RING_INDEXES_INITIALIZER  \
-{                                     \
-   .offset   = RAM_DAQ_MIN_INDEX,     \
-   .capacity = RAM_DAQ_MAX_CAPACITY,  \
-   .start    = 0,                     \
-   .end      = 0                      \
+#define RAM_RING_INDEXES_INITIALIZER                                          \
+{                                                                             \
+   .offset   = RAM_DAQ_MIN_INDEX,                                             \
+   .capacity = RAM_DAQ_MAX_CAPACITY,                                          \
+   .start    = 0,                                                             \
+   .end      = 0                                                              \
 }
 
 /*! ---------------------------------------------------------------------------
@@ -264,19 +264,32 @@ STATIC_ASSERT( sizeof(RAM_RING_INDEXES_T) == 4 * sizeof(RAM_RING_INDEX_T));
  */
 typedef struct PACKED_SIZE
 {
-   /*
-    * At the moment it's one member only.
+   /*!
+    * @brief Flag becomes 1 by the server if he has modified
+    *        the ring indexes.
+    *
+    * To avoid partial register access by LM32, the size of the following
+    * flag is equal to the LM32 register size.
     */
+   uint32_t           serverHasWritten;
+   uint32_t           ramAccessLock;
    RAM_RING_INDEXES_T ringIndexes;
 } RAM_RING_SHARED_OBJECT_T;
+#ifndef __DOXYGEN__
+STATIC_ASSERT( sizeof(RAM_RING_SHARED_OBJECT_T) ==
+               sizeof(RAM_RING_INDEXES_T) +
+               2 * sizeof(uint32_t) );
+#endif
 
 /*!
  * @brief Initializer of the shared object for the communication between
  *        server and Linux client.
  */
-#define RAM_RING_SHARED_OBJECT_INITIALIZER      \
-{                                               \
-   .ringIndexes = RAM_RING_INDEXES_INITIALIZER  \
+#define RAM_RING_SHARED_OBJECT_INITIALIZER                                    \
+{                                                                             \
+   .serverHasWritten = false,                                                 \
+   .ramAccessLock    = false,                                                 \
+   .ringIndexes      = RAM_RING_INDEXES_INITIALIZER                           \
 }
 
 /*!

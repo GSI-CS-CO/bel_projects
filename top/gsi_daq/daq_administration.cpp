@@ -387,6 +387,8 @@ int DaqAdministration::distributeData( void )
    ::memset( &probe, 0, sizeof( probe ) );
 #endif
 
+   sendLockRamAccess();
+
    /*
     * At first a short block is supposed. It's necessary to read this data
     * obtaining the device-descriptor.
@@ -403,7 +405,10 @@ int DaqAdministration::distributeData( void )
    {
       //TODO Maybe clearing the entire buffer?
       clearBuffer();
-      throw( DaqException( "Erroneous descriptor" ) );
+      {
+         sendUnlockRamAccess();
+         throw( DaqException( "Erroneous descriptor" ) );
+      }
    }
 
    std::size_t wordLen;
@@ -416,8 +421,10 @@ int DaqAdministration::distributeData( void )
                                  &probe.ramItems[c_ramBlockShortLen],
                                  c_ramBlockLongLen - c_ramBlockShortLen,
                                  ramReadPoll ) != EB_OK )
+      {
+         sendUnlockRamAccess();
          throw EbException( "Unable to read SCU-Ram buffer second part" );
-
+      }
       wordLen = c_hiresPmDataLen;
    }
    else
@@ -427,6 +434,8 @@ int DaqAdministration::distributeData( void )
       wordLen = c_contineousDataLen;
    }
    writeRamIndexes();
+
+   sendUnlockRamAccess();
 
    //TODO Make CRC check here!
 
