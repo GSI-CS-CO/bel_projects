@@ -164,7 +164,7 @@ bool DaqInterface::onCommandReadyPoll( unsigned int pollCount )
    if( pollCount >= c_maxCmdPoll )
       return true;
 
-   struct timeval sleepTime = {0, 1};
+   struct timeval sleepTime = {0, 10};
    ::select( 0, nullptr, nullptr, nullptr, &sleepTime );
 
    return false;

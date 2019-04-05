@@ -54,9 +54,9 @@ typedef struct
    DAQ_OPERATION_FT     operation;
 } DAQ_OPERATION_TAB_ITEM_T;
 
+#ifdef DEBUGLEVEL
 /*! ---------------------------------------------------------------------------
  */
-#ifdef DEBUGLEVEL
 static void printFunctionName( const char* str )
 {
    DBPRINT1( "DBG: executing %s(),\tDevice: %d, Channel: %d\n",
@@ -71,6 +71,7 @@ static void printFunctionName( const char* str )
 #endif
 
 /*! ---------------------------------------------------------------------------
+ * @brief Initializing of the ring buffer.
  */
 int initBuffer( RAM_SCU_T* poRam )
 {
@@ -78,6 +79,7 @@ int initBuffer( RAM_SCU_T* poRam )
 }
 
 /*! ---------------------------------------------------------------------------
+ * @brief Checking whether the selected DAQ device is present.
  */
 static int
 verifyDeviceAccess( DAQ_BUS_T* pDaqBus,
@@ -99,6 +101,7 @@ verifyDeviceAccess( DAQ_BUS_T* pDaqBus,
 }
 
 /*! ---------------------------------------------------------------------------
+ * @brief Checking whether the selected DAQ device and channel is present.
  */
 static int
 verifyChannelAccess( DAQ_BUS_T* pDaqBus,
@@ -114,7 +117,8 @@ verifyChannelAccess( DAQ_BUS_T* pDaqBus,
       return DAQ_RET_ERR_CHANNEL_OUT_OF_RANGE;
    }
 
-   if( pLocation->channel > pDaqBus->aDaq[pLocation->deviceNumber-1].maxChannels )
+   if( pLocation->channel >
+                      pDaqBus->aDaq[pLocation->deviceNumber-1].maxChannels )
    {
       DBPRINT1( "DBG: DAQ_RET_ERR_CHANNEL_NOT_PRESENT\n" );
       return DAQ_RET_ERR_CHANNEL_NOT_PRESENT;
@@ -124,6 +128,12 @@ verifyChannelAccess( DAQ_BUS_T* pDaqBus,
 }
 
 /*! ---------------------------------------------------------------------------
+ * @brief Locks the access of the DAQ ring buffer access.
+ * @note After the this command the command function table is not any more
+ *       a reachable from the Linux host! \n
+ *       Therefore the opposite action (unlock) will made from the
+ *       Linux host directly in the shared memory.
+ * @see executeIfRequested
  */
 static
 int32_t opLock( DAQ_ADMIN_T* pDaqAdmin, volatile DAQ_OPERATION_IO_T* pData )
@@ -144,6 +154,8 @@ int32_t opUnlock( DAQ_ADMIN_T* pDaqAdmin, volatile DAQ_OPERATION_IO_T* pData )
 
 
 /*! ---------------------------------------------------------------------------
+ * @brief Performs a reset of all DAQ devices residing in the SCU bus.
+ * @see executeIfRequested
  */
 static
 int32_t opReset( DAQ_ADMIN_T* pDaqAdmin, volatile DAQ_OPERATION_IO_T* pData )
@@ -156,6 +168,9 @@ int32_t opReset( DAQ_ADMIN_T* pDaqAdmin, volatile DAQ_OPERATION_IO_T* pData )
 }
 
 /*! ---------------------------------------------------------------------------
+ * @brief Sending of the macro version of the selected DAQ device back to the
+ *        Linux host.
+ * @see executeIfRequested
  */
 static
 int32_t opGetMacroVersion( DAQ_ADMIN_T* pDaqAdmin,
@@ -173,12 +188,15 @@ int32_t opGetMacroVersion( DAQ_ADMIN_T* pDaqAdmin,
 }
 
 /*! ---------------------------------------------------------------------------
+ * @brief Sending of the SCU bus slot flag field back to the Linux host.
+ * @see executeIfRequested
  */
 static int32_t opGetSlots( DAQ_ADMIN_T* pDaqAdmin,
                            volatile DAQ_OPERATION_IO_T* pData )
 {
    FUNCTION_INFO();
-   STATIC_ASSERT( sizeof( pData->param1 ) >= sizeof(pDaqAdmin->oDaqDevs.slotDaqUsedFlags));
+   STATIC_ASSERT( sizeof( pData->param1 ) >=
+                            sizeof(pDaqAdmin->oDaqDevs.slotDaqUsedFlags));
 
    pData->param1 = pDaqAdmin->oDaqDevs.slotDaqUsedFlags;
 
@@ -186,6 +204,9 @@ static int32_t opGetSlots( DAQ_ADMIN_T* pDaqAdmin,
 }
 
 /*! ---------------------------------------------------------------------------
+ * @brief Sends the number channels of a selected DAQ device back to the
+ *        Linux host.
+ * @see executeIfRequested
  */
 static int32_t opGetChannels( DAQ_ADMIN_T* pDaqAdmin,
                               volatile DAQ_OPERATION_IO_T* pData )
@@ -195,12 +216,15 @@ static int32_t opGetChannels( DAQ_ADMIN_T* pDaqAdmin,
    if( ret != DAQ_RET_OK )
       return ret;
 
-   pData->param1 = pDaqAdmin->oDaqDevs.aDaq[pData->location.deviceNumber-1].maxChannels;
+   pData->param1 =
+      pDaqAdmin->oDaqDevs.aDaq[pData->location.deviceNumber-1].maxChannels;
 
    return DAQ_RET_OK;
 }
 
 /*! ---------------------------------------------------------------------------
+ * @brief Performs a rescan of the whole SCU bus for SCU devices
+ * @see executeIfRequested
  */
 static int32_t opRescan( DAQ_ADMIN_T* pDaqAdmin,
                          volatile DAQ_OPERATION_IO_T* pData )
@@ -211,16 +235,20 @@ static int32_t opRescan( DAQ_ADMIN_T* pDaqAdmin,
 }
 
 /*! ---------------------------------------------------------------------------
+ * @brief Returns the pointer of the requested channel object
  */
 static inline
 DAQ_CANNEL_T* getChannel( DAQ_ADMIN_T* pDaqAdmin,
                           volatile DAQ_OPERATION_IO_T* pData )
 {
    return &pDaqAdmin->oDaqDevs.aDaq
-            [pData->location.deviceNumber-1].aChannel[pData->location.channel-1];
+          [pData->location.deviceNumber-1].aChannel[pData->location.channel-1];
 }
 
 /*! ---------------------------------------------------------------------------
+ * @ingroup DAQ_INTERFACE
+ * @brief Switching post mortem mode on.
+ * @see executeIfRequested
  */
 static int32_t opPostMortemOn( DAQ_ADMIN_T* pDaqAdmin,
                                volatile DAQ_OPERATION_IO_T* pData )
@@ -239,6 +267,9 @@ static int32_t opPostMortemOn( DAQ_ADMIN_T* pDaqAdmin,
 }
 
 /*! ---------------------------------------------------------------------------
+ * @ingroup DAQ_INTERFACE
+ * @brief switching high resolution mode on.
+ * @see executeIfRequested
  */
 static int32_t opHighResolutionOn( DAQ_ADMIN_T* pDaqAdmin,
                                    volatile DAQ_OPERATION_IO_T* pData )
@@ -255,6 +286,8 @@ static int32_t opHighResolutionOn( DAQ_ADMIN_T* pDaqAdmin,
 }
 
 /*! ---------------------------------------------------------------------------
+ * @brief Switching post-mortem and high-resolution mode off.
+ * @see executeIfRequested
  */
 static int32_t opPmHighResOff( DAQ_ADMIN_T* pDaqAdmin,
                                volatile DAQ_OPERATION_IO_T* pData )
@@ -277,6 +310,9 @@ static int32_t opPmHighResOff( DAQ_ADMIN_T* pDaqAdmin,
 }
 
 /*! ---------------------------------------------------------------------------
+ * @ingroup DAQ_INTERFACE
+ * @brief Switching continue mode on.
+ * @see executeIfRequested
  */
 static int32_t opContinueOn( DAQ_ADMIN_T* pDaqAdmin,
                              volatile DAQ_OPERATION_IO_T* pData )
@@ -322,6 +358,9 @@ static int32_t opContinueOn( DAQ_ADMIN_T* pDaqAdmin,
 }
 
 /*! ---------------------------------------------------------------------------
+ * @ingroup DAQ_INTERFACE
+ * @brief Switching continuous mode off.
+ * @see executeIfRequested
  */
 static int32_t opContinueOff( DAQ_ADMIN_T* pDaqAdmin,
                               volatile DAQ_OPERATION_IO_T* pData )
@@ -342,6 +381,9 @@ static int32_t opContinueOff( DAQ_ADMIN_T* pDaqAdmin,
 }
 
 /*! ---------------------------------------------------------------------------
+ * @ingroup DAQ_INTERFACE
+ * @brief Setting trigger condition.
+ * @see executeIfRequested
  */
 static int32_t opSetTriggerCondition( DAQ_ADMIN_T* pDaqAdmin,
                                       volatile DAQ_OPERATION_IO_T* pData )
@@ -358,6 +400,9 @@ static int32_t opSetTriggerCondition( DAQ_ADMIN_T* pDaqAdmin,
 }
 
 /*! ---------------------------------------------------------------------------
+ * @ingroup DAQ_INTERFACE
+ * @brief Send actual trigger condition back to Linux host.
+ * @see executeIfRequested
  */
 static int32_t opGetTriggerCondition( DAQ_ADMIN_T* pDaqAdmin,
                                       volatile DAQ_OPERATION_IO_T* pData )
@@ -373,8 +418,10 @@ static int32_t opGetTriggerCondition( DAQ_ADMIN_T* pDaqAdmin,
    return DAQ_RET_OK;
 }
 
-
 /*! ---------------------------------------------------------------------------
+ * @ingroup DAQ_INTERFACE
+ * @brief Setting trigger delay.
+ * @see executeIfRequested
  */
 static int32_t opSetTriggerDelay( DAQ_ADMIN_T* pDaqAdmin,
                                       volatile DAQ_OPERATION_IO_T* pData )
@@ -389,6 +436,9 @@ static int32_t opSetTriggerDelay( DAQ_ADMIN_T* pDaqAdmin,
 }
 
 /*! ---------------------------------------------------------------------------
+ * @ingroup DAQ_INTERFACE
+ * @brief Send actual trigger delay back to the Linux host.
+ * @see executeIfRequested
  */
 static int32_t opGetTriggerDelay( DAQ_ADMIN_T* pDaqAdmin,
                                       volatile DAQ_OPERATION_IO_T* pData )
@@ -403,6 +453,9 @@ static int32_t opGetTriggerDelay( DAQ_ADMIN_T* pDaqAdmin,
 }
 
 /*! ---------------------------------------------------------------------------
+ * @ingroup DAQ_INTERFACE
+ * @brief Enabling or disabling the trigger mode.
+ * @see executeIfRequested
  */
 static int32_t opSetTriggerMode( DAQ_ADMIN_T* pDaqAdmin,
                                  volatile DAQ_OPERATION_IO_T* pData )
@@ -423,6 +476,9 @@ static int32_t opSetTriggerMode( DAQ_ADMIN_T* pDaqAdmin,
 }
 
 /*! ---------------------------------------------------------------------------
+ * @ingroup DAQ_INTERFACE
+ * @brief Send the actual state of the trigger mode back to the Linux host.
+ * @see executeIfRequested
  */
 static int32_t opGetTriggerMode( DAQ_ADMIN_T* pDaqAdmin,
                                  volatile DAQ_OPERATION_IO_T* pData )
@@ -431,11 +487,15 @@ static int32_t opGetTriggerMode( DAQ_ADMIN_T* pDaqAdmin,
    int ret = verifyChannelAccess( &pDaqAdmin->oDaqDevs, &pData->location );
    if( ret != DAQ_RET_OK )
       return ret;
-   pData->param1 = daqChannelIsTriggerModeEnabled( getChannel( pDaqAdmin, pData ) );
+   pData->param1 = daqChannelIsTriggerModeEnabled(
+                                             getChannel( pDaqAdmin, pData ) );
    return DAQ_RET_OK;
 }
 
 /*! ---------------------------------------------------------------------------
+ * @ingroup DAQ_INTERFACE
+ * @brief Setting of the trigger source for continuous mode.
+ * @see executeIfRequested
  */
 static int32_t opSetTriggerSourceCon( DAQ_ADMIN_T* pDaqAdmin,
                                       volatile DAQ_OPERATION_IO_T* pData )
@@ -456,6 +516,10 @@ static int32_t opSetTriggerSourceCon( DAQ_ADMIN_T* pDaqAdmin,
 }
 
 /*! ---------------------------------------------------------------------------
+ * @ingroup DAQ_INTERFACE
+ * @brief Sending of the actual trigger source for continuous mode back to
+ *        the Linux host.
+ * @see executeIfRequested
  */
 static int32_t opGetTriggerSourceCon( DAQ_ADMIN_T* pDaqAdmin,
                                       volatile DAQ_OPERATION_IO_T* pData )
@@ -471,6 +535,9 @@ static int32_t opGetTriggerSourceCon( DAQ_ADMIN_T* pDaqAdmin,
 }
 
 /*! ---------------------------------------------------------------------------
+ * @ingroup DAQ_INTERFACE
+ * @brief Setting of the trigger source for the high resolution mode.
+ * @see executeIfRequested
  */
 static int32_t opSetTriggerSourceHir( DAQ_ADMIN_T* pDaqAdmin,
                                       volatile DAQ_OPERATION_IO_T* pData )
@@ -491,6 +558,10 @@ static int32_t opSetTriggerSourceHir( DAQ_ADMIN_T* pDaqAdmin,
 }
 
 /*! ---------------------------------------------------------------------------
+ * @ingroup DAQ_INTERFACE
+ * @brief Sending of the actual trigger source for high resolution mode
+ *        back to the Linux host.
+ * @see executeIfRequested
  */
 static int32_t opGetTriggerSourceHir( DAQ_ADMIN_T* pDaqAdmin,
                                       volatile DAQ_OPERATION_IO_T* pData )
@@ -500,24 +571,35 @@ static int32_t opGetTriggerSourceHir( DAQ_ADMIN_T* pDaqAdmin,
    if( ret != DAQ_RET_OK )
       return ret;
 
-   pData->param1 = daqChannelGetTriggerSourceHighRes( getChannel( pDaqAdmin, pData ) );
+   pData->param1 = daqChannelGetTriggerSourceHighRes(
+                                        getChannel( pDaqAdmin, pData ) );
 
    return DAQ_RET_OK;
 }
 
+/*! ---------------------------------------------------------------------------
+ * @ingroup DAQ_INTERFACE
+ * @brief Helper macro for making a item in the command function table.
+ * @see DAQ_OPERATION_TAB_ITEM_T
+ */
+#define OPERATION_ITEM( opcode, function )                                    \
+{                                                                             \
+   .code      = opcode,                                                       \
+   .operation = function                                                      \
+}
 
-#define OPERATION_ITEM( opcode, function ) \
-   { .code = opcode, .operation = function }
-
-/*!
+/*! ---------------------------------------------------------------------------
  * @ingroup DAQ_INTERFACE
  * @brief Last item of the operation match list.
+ * @note CAUTION: Don't forget it!
+ * @see DAQ_OPERATION_TAB_ITEM_T
  */
 #define OPERATION_ITEM_TERMINATOR OPERATION_ITEM( DAQ_OP_IDLE, NULL )
 
 /*! ---------------------------------------------------------------------------
  * @ingroup DAQ_INTERFACE
- * @brief Operation match list
+ * @brief Operation match list respectively command function table.
+ * @see executeIfRequested
  */
 static const DAQ_OPERATION_TAB_ITEM_T g_operationTab[] =
 {
@@ -548,6 +630,10 @@ static const DAQ_OPERATION_TAB_ITEM_T g_operationTab[] =
 };
 
 /*! ---------------------------------------------------------------------------
+ * @ingroup DAQ_INTERFACE
+ * @brief Performs the list and executes a function in the table if it is
+ *        present
+ * @see DAQ_OPERATION_TAB_ITEM_T
  */
 bool executeIfRequested( DAQ_ADMIN_T* pDaqAdmin )
 {

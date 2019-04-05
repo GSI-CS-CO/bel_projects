@@ -42,13 +42,17 @@ int scanScuBus( DAQ_BUS_T* pDaqDevices )
    /* That's not fine, but it's not my idea. */
    if( pScuBusBase == (void*)ERROR_NOT_FOUND )
    {
-      DBPRINT1( "ERROR: find_device_adr() didn't find it!\n" );
+      DBPRINT1( ESC_BOLD ESC_FG_RED
+               "ERROR: find_device_adr() didn't find it!\n"
+               ESC_NORMAL );
       return DAQ_RET_ERR_DEVICE_ADDRESS_NOT_FOUND;
    }
    int ret = daqBusFindAndInitializeAll( pDaqDevices, pScuBusBase );
    if( ret < 0 )
    {
-      DBPRINT1( "ERROR: in daqBusFindAndInitializeAll()\n" );
+      DBPRINT1(  ESC_BOLD ESC_FG_RED
+                 "ERROR: in daqBusFindAndInitializeAll()\n"
+                 ESC_NORMAL );
       return DAQ_RET_ERR_DEVICE_ADDRESS_NOT_FOUND;
    }
 #ifdef DEBUGLEVEL
@@ -70,6 +74,13 @@ static inline void handleContinuousMode( DAQ_CANNEL_T* pChannel )
 {
    if( !daqChannelTestAndClearDaqIntPending( pChannel ) )
       return;
+   if( daqChannelGetDaqFifoWords( pChannel ) == 0 )
+   {
+      DBPRINT1( ESC_BOLD ESC_FG_RED
+                "DBG WARNING: Discarding continuous block!\n"
+                ESC_NORMAL );
+      return;
+   }
 
    ramPushDaqDataBlock( &g_DaqAdmin.oRam, pChannel, true );
    daqChannelDecrementBlockCounter( pChannel );

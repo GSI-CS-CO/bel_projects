@@ -1209,7 +1209,8 @@ static inline int daqChannelGetMacroVersion( register DAQ_CANNEL_T* pThis )
 {
    DAQ_ASSERT( pThis != NULL );
    __DAQ_VERIFY_CHANNEL_REG_ACCESS( DAQ_FIFO_WORDS );
-   return ((DAQ_DAQ_FIFO_WORDS_T*) &__DAQ_GET_CHANNEL_REG( DAQ_FIFO_WORDS ))->version;
+   return ((DAQ_DAQ_FIFO_WORDS_T*)
+                          &__DAQ_GET_CHANNEL_REG( DAQ_FIFO_WORDS ))->version;
 }
 
 /*! ---------------------------------------------------------------------------
@@ -1862,7 +1863,7 @@ void daqBusReset( register DAQ_BUS_T* pThis );
  *       CONFIG_DAQ_DEBUG has been defined!
  * @param pThis Pointer to the DAQ- descriptor object, that means to the last
  *              10 received words (type uint16_t) of the received record.
- *              @see DAQ_DISCRIPTOR_WORD_SIZE
+ *              @see DAQ_DESCRIPTOR_WORD_SIZE
  */
 #if defined( CONFIG_DAQ_DEBUG ) || defined(__DOXYGEN__)
    void daqDescriptorPrintInfo( register DAQ_DESCRIPTOR_T* pThis );

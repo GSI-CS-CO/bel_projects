@@ -209,7 +209,8 @@ private:
 
 protected:
    RAM_SCU_T                m_oScuRam;
-   constexpr static unsigned int c_maxCmdPoll = 100;
+
+   constexpr static unsigned int c_maxCmdPoll         = 200;
 
 public:
    constexpr static unsigned int c_maxDevices         = DAQ_MAX;
@@ -220,7 +221,7 @@ public:
    constexpr static std::size_t  c_ramBlockLongLen    = RAM_DAQ_LONG_BLOCK_LEN;
    constexpr static std::size_t  c_hiresPmDataLen     = DAQ_FIFO_PM_HIRES_WORD_SIZE_CRC;
    constexpr static std::size_t  c_contineousDataLen  = DAQ_FIFO_DAQ_WORD_SIZE_CRC;
-   constexpr static std::size_t  c_discriptorWordSize = DAQ_DISCRIPTOR_WORD_SIZE;
+   constexpr static std::size_t  c_discriptorWordSize = DAQ_DESCRIPTOR_WORD_SIZE;
 
    DaqInterface( const std::string = DAQ_DEFAULT_WB_DEVICE );
 

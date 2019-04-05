@@ -14,6 +14,9 @@
  *
  *  @author Ulrich Becker <u.becker@gsi.de>
  *
+ *  @todo Constants like e.g. DAQ_FIFO_DAQ_WORD_SIZE and
+ *        DAQ_FIFO_PM_HIRES_WORD_SIZE has to be defined by a corresponding
+ *        VHDL source file by a VHDL to C-header parser.
  ******************************************************************************
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -81,7 +84,7 @@ typedef uint16_t DAQ_DATA_T;
 /*!
  * @brief byte size size of DAQ descriptor + crc
  */
-#define DAQ_DISCRIPTOR_WORD_SIZE 10
+#define DAQ_DESCRIPTOR_WORD_SIZE 10
 
 /*!
  * @brief Maximum DAQ-FIFO capacity in 16 bit words
@@ -89,7 +92,6 @@ typedef uint16_t DAQ_DATA_T;
  * @see DAQ_DESCRIPTOR_T
  * @see daqChannelGetDaqFifoWords
  */
-//#define DAQ_FIFO_DAQ_WORD_SIZE       509
 #define DAQ_FIFO_DAQ_WORD_SIZE       511
 
 /*!
@@ -100,14 +102,14 @@ typedef uint16_t DAQ_DATA_T;
  */
 #define DAQ_FIFO_DAQ_WORD_SIZE_CRC   (DAQ_FIFO_DAQ_WORD_SIZE + 1)
 
-//#define DAQ_FIFO_DAQ_WORD_SIZE (4 + DAQ_DISCRIPTOR_WORD_SIZE) //!! For test only!
+//#define DAQ_FIFO_DAQ_WORD_SIZE (4 + DAQ_DESCRIPTOR_WORD_SIZE) //!! For test only!
 
 #if (DAQ_FIFO_DAQ_WORD_SIZE < 0x1FD)
 #warning DAQ module in test!
 #endif
 
-#if (DAQ_FIFO_DAQ_WORD_SIZE < DAQ_DISCRIPTOR_WORD_SIZE)
-  #error Fatal: DAQ_FIFO_DAQ_WORD_SIZE shall not be smaler than DAQ_DISCRIPTOR_WORD_SIZE !
+#if (DAQ_FIFO_DAQ_WORD_SIZE < DAQ_DESCRIPTOR_WORD_SIZE)
+  #error Fatal: DAQ_FIFO_DAQ_WORD_SIZE shall not be smaler than DAQ_DESCRIPTOR_WORD_SIZE !
 #endif
 
 /*!
@@ -127,8 +129,8 @@ typedef uint16_t DAQ_DATA_T;
 
 #define DAQ_FIFO_PM_HIRES_WORD_SIZE_CRC (DAQ_FIFO_PM_HIRES_WORD_SIZE + 1)
 
-#if (DAQ_FIFO_PM_HIRES_WORD_SIZE < DAQ_DISCRIPTOR_WORD_SIZE)
-  #error Fatal: DAQ_FIFO_PM_HIRES_WORD_SIZE shall not be smaler than DAQ_DISCRIPTOR_WORD_SIZE !
+#if (DAQ_FIFO_PM_HIRES_WORD_SIZE < DAQ_DESCRIPTOR_WORD_SIZE)
+  #error Fatal: DAQ_FIFO_PM_HIRES_WORD_SIZE shall not be smaler than DAQ_DESCRIPTOR_WORD_SIZE !
 #endif
 
 #if (DAQ_FIFO_DAQ_WORD_SIZE > DAQ_FIFO_PM_HIRES_WORD_SIZE)
@@ -273,7 +275,7 @@ STATIC_ASSERT( offsetof(_DAQ_DISCRIPTOR_STRUCT_T, crcReg ) ==
                offsetof(_DAQ_DISCRIPTOR_STRUCT_T, cControl ) +
                sizeof(_DAQ_BF_CRC_REG ));
 STATIC_ASSERT( sizeof(_DAQ_DISCRIPTOR_STRUCT_T ) ==
-               DAQ_DISCRIPTOR_WORD_SIZE * sizeof(DAQ_DATA_T) );
+               DAQ_DESCRIPTOR_WORD_SIZE * sizeof(DAQ_DATA_T) );
 #endif /* ifndef __DOXYGEN__ */
 
 /*! ---------------------------------------------------------------------------
@@ -281,13 +283,13 @@ STATIC_ASSERT( sizeof(_DAQ_DISCRIPTOR_STRUCT_T ) ==
  */
 typedef union PACKED_SIZE
 {
-   DAQ_DATA_T index[DAQ_DISCRIPTOR_WORD_SIZE]; //!< @brief WORD-access by index
+   DAQ_DATA_T index[DAQ_DESCRIPTOR_WORD_SIZE]; //!< @brief WORD-access by index
    _DAQ_DISCRIPTOR_STRUCT_T name;            //!< @brief Access by name
 } DAQ_DESCRIPTOR_T;
 
 #ifndef __DOXYGEN__
 STATIC_ASSERT( sizeof( DAQ_DESCRIPTOR_T ) ==
-               DAQ_DISCRIPTOR_WORD_SIZE * sizeof( DAQ_DATA_T ) );
+               DAQ_DESCRIPTOR_WORD_SIZE * sizeof( DAQ_DATA_T ) );
 #endif
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -295,7 +297,7 @@ STATIC_ASSERT( sizeof( DAQ_DESCRIPTOR_T ) ==
  * @brief Tells the origin slot of the last record
  * @param pThis Pointer to the DAQ- descriptor object, that means to the last
  *              10 received words (type uint16_t) of the received record.
- *              @see DAQ_DISCRIPTOR_WORD_SIZE
+ *              @see DAQ_DESCRIPTOR_WORD_SIZE
  * @return Slot number in the range of [1..12]
  */
 static inline int daqDescriptorGetSlot( register DAQ_DESCRIPTOR_T* pThis )
@@ -315,7 +317,7 @@ static inline void daqDescriptorSetSlot( register DAQ_DESCRIPTOR_T* pThis,
  * @brief Gets the Digital IO Board ID (DIOB) from the record.
  * @param pThis Pointer to the DAQ- descriptor object, that means to the last
  *              10 received words (type uint16_t) of the received record.
- *              @see DAQ_DISCRIPTOR_WORD_SIZE
+ *              @see DAQ_DESCRIPTOR_WORD_SIZE
  * @return DIOB
  */
 static inline int daqDescriptorGetDiobId( register DAQ_DESCRIPTOR_T* pThis )
@@ -335,7 +337,7 @@ static inline void daqDescriptorSetDiobId( register DAQ_DESCRIPTOR_T* pThis,
  * @brief Tells the origin DAQ device channel number of the last record
  * @param pThis Pointer to the DAQ- descriptor object, that means to the last
  *              10 received words (type uint16_t) of the received record.
- *              @see DAQ_DISCRIPTOR_WORD_SIZE
+ *              @see DAQ_DESCRIPTOR_WORD_SIZE
  * @return Channel number in the range of [0..15]
  */
 static inline int daqDescriptorGetChannel( register DAQ_DESCRIPTOR_T* pThis )
@@ -355,7 +357,7 @@ static inline void daqDescriptorSetChannel( register DAQ_DESCRIPTOR_T* pThis,
  * @brief Indicates whether the last record was received in "Post Mortem mode".
  * @param pThis Pointer to the DAQ- descriptor object, that means to the last
  *              10 received words (type uint16_t) of the received record.
- *              @see DAQ_DISCRIPTOR_WORD_SIZE
+ *              @see DAQ_DESCRIPTOR_WORD_SIZE
  * @retval ==true Post Mortem was active.
  */
 static inline bool daqDescriptorWasPM( register DAQ_DESCRIPTOR_T* pThis )
@@ -376,12 +378,11 @@ static inline void daqDescriptorSetPM( register DAQ_DESCRIPTOR_T* pThis,
  *        mode".
  * @param pThis Pointer to the DAQ- descriptor object, that means to the last
  *              10 received words (type uint16_t) of the received record.
- *              @see DAQ_DISCRIPTOR_WORD_SIZE
+ *              @see DAQ_DESCRIPTOR_WORD_SIZE
  * @retval ==true High Resolution mode was active.
  */
 static inline bool daqDescriptorWasHiRes( register DAQ_DESCRIPTOR_T* pThis )
 {
-  // return pThis->name.cControl.channelMode.hiResMode;
    return pThis->name.cControl.hiResMode;
 }
 
@@ -397,7 +398,7 @@ static inline void daqDescriptorSetHiRes( register DAQ_DESCRIPTOR_T* pThis,
  * @brief Indicates whether the last record was received in "DAQ- mode".
  * @param pThis Pointer to the DAQ- descriptor object, that means to the last
  *              10 received words (type uint16_t) of the received record.
- *              @see DAQ_DISCRIPTOR_WORD_SIZE
+ *              @see DAQ_DESCRIPTOR_WORD_SIZE
  * @retval true DAQ- mode was active.
  */
 static inline bool daqDescriptorWasDaq( register DAQ_DESCRIPTOR_T* pThis )
@@ -431,7 +432,7 @@ static inline bool daqDescriptorVerifyMode( register DAQ_DESCRIPTOR_T* pThis )
 /*! ----------------------------------------------------------------------------
  * @brief Returns true if it is a long block.
  * @param pThis Pointer to the DAQ- descriptor object, that means to the last
- *              10 received words (type uint16_t) of the received record.
+ *              10 received words (type DAQ_DATA_T) of the received record.
  * @retval true Long block   (has DAQ_FIFO_PM_HIRES_WORD_SIZE_CRC words)
  * @retval false Short block (has DAQ_FIFO_DAQ_WORD_SIZE_CRC words)
  */
@@ -443,7 +444,7 @@ static inline bool daqDescriptorIsLongBlock( register DAQ_DESCRIPTOR_T* pThis )
 /*! ----------------------------------------------------------------------------
  * @brief Returns true if it is a short block.
  * @param pThis Pointer to the DAQ- descriptor object, that means to the last
- *              10 received words (type uint16_t) of the received record.
+ *              10 received words (type DAQ_DATA_T) of the received record.
  * @retval true Long block   (has DAQ_FIFO_PM_HIRES_WORD_SIZE_CRC words)
  * @retval false Short block (has DAQ_FIFO_DAQ_WORD_SIZE_CRC words)
  */
@@ -452,14 +453,40 @@ static inline bool daqDescriptorIsShortBlock( register DAQ_DESCRIPTOR_T* pThis )
    return daqDescriptorWasDaq( pThis );
 }
 
+/*! ---------------------------------------------------------------------------
+ * @brief Returns the data block size in words (type DAQ_DATA_T).
+ * @param pThis Pointer to the DAQ- descriptor object, that means to the last
+ *              10 received words (type DAQ_DATA_T) of the received record.
+ * @return Number of data words of the block belonging to this descriptor.
+ */
+static inline
+size_t daqDescriptorGetBlockLen( register DAQ_DESCRIPTOR_T* pThis )
+{
+   return daqDescriptorIsLongBlock( pThis )?
+             DAQ_FIFO_PM_HIRES_WORD_SIZE_CRC : DAQ_FIFO_DAQ_WORD_SIZE_CRC;
+}
+
+/*! ---------------------------------------------------------------------------
+ * @brief Returns the number of data words (type DAQ_DATA_T) of the
+ *        payload part belonging to the block of this descriptor.
+ * @param pThis Pointer to the DAQ- descriptor object, that means to the last
+ *              10 received words (type DAQ_DATA_T) of the received record.
+ * @return Number of payload data words of the block belonging to this
+ *         descriptor.
+ */
+static inline
+size_t daqDescriptorGetPayloadLen( register DAQ_DESCRIPTOR_T* pThis )
+{
+   return daqDescriptorGetBlockLen( pThis ) - DAQ_DESCRIPTOR_WORD_SIZE;
+}
 
 /*! ---------------------------------------------------------------------------
  * @brief Gets the least significant word of the bus tag event
  *        trigger condition from the last record.
  * @see daqChannelGetTriggerConditionLW in daq.h
  * @param pThis Pointer to the DAQ- descriptor object, that means to the last
- *              10 received words (type uint16_t) of the received record.
- *              @see DAQ_DISCRIPTOR_WORD_SIZE
+ *              10 received words (type DAQ_DATA_T) of the received record.
+ *              @see DAQ_DESCRIPTOR_WORD_SIZE
  * @return Least significant word of trigger condition.
  */
 static inline
@@ -482,7 +509,7 @@ void daqDescriptorSetTriggerConditionLW( register DAQ_DESCRIPTOR_T* pThis,
  *        trigger condition from the last record.
  * @param pThis Pointer to the DAQ- descriptor object, that means to the last
  *              10 received words (type DAQ_DATA_T) of the received record.
- *              @see DAQ_DISCRIPTOR_WORD_SIZE
+ *              @see DAQ_DESCRIPTOR_WORD_SIZE
  * @return Most significant word of trigger condition.
  */
 static inline
@@ -520,7 +547,7 @@ uint32_t daqDescriptorGetTriggerCondition( register DAQ_DESCRIPTOR_T* pThis )
  * @brief Gets the trigger delay from the last record
  * @param pThis Pointer to the DAQ- descriptor object, that means to the last
  *              10 received words (type uint16_t) of the received record.
- *              @see DAQ_DISCRIPTOR_WORD_SIZE
+ *              @see DAQ_DESCRIPTOR_WORD_SIZE
  * @return Trigger delay
  */
 static inline
@@ -542,7 +569,7 @@ void daqDescriptorSetTriggerDelay( register DAQ_DESCRIPTOR_T* pThis,
 /*! ---------------------------------------------------------------------------
  * @param pThis Pointer to the DAQ- descriptor object, that means to the last
  *              10 received words (type uint16_t) of the received record.
- *              @see DAQ_DISCRIPTOR_WORD_SIZE
+ *              @see DAQ_DESCRIPTOR_WORD_SIZE
  */
 static inline 
 uint32_t daqDescriptorGetTimeStampNanoSec( register DAQ_DESCRIPTOR_T* pThis )
@@ -553,7 +580,7 @@ uint32_t daqDescriptorGetTimeStampNanoSec( register DAQ_DESCRIPTOR_T* pThis )
 /*! ---------------------------------------------------------------------------
  * @param pThis Pointer to the DAQ- descriptor object, that means to the last
  *              10 received words (type uint16_t) of the received record.
- *              @see DAQ_DISCRIPTOR_WORD_SIZE
+ *              @see DAQ_DESCRIPTOR_WORD_SIZE
  */
 static inline 
 uint32_t daqDescriptorGetTimeStampSec( register DAQ_DESCRIPTOR_T* pThis )
@@ -572,7 +599,7 @@ uint64_t daqDescriptorGetTimeStamp( register DAQ_DESCRIPTOR_T* pThis )
  * @brief Get the CRC of this record.
  * @param pThis Pointer to the DAQ- descriptor object, that means to the last
  *              10 received words (type uint16_t) of the received record.
- *              @see DAQ_DISCRIPTOR_WORD_SIZE
+ *              @see DAQ_DESCRIPTOR_WORD_SIZE
  * @return 8 bit CRC
  */
 static inline 

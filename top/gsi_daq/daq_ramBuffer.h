@@ -315,6 +315,17 @@ typedef struct
 } RAM_SCU_T;
 
 /*! --------------------------------------------------------------------------
+ * @brief Returns the number of RAM items of the data block belonging to this
+ *        descriptor.
+ */
+static inline
+size_t ramGetSizeByDescriptor( register DAQ_DESCRIPTOR_T* pDescriptor )
+{
+   return daqDescriptorIsShortBlock( pDescriptor )?
+             RAM_DAQ_SHORT_BLOCK_LEN : RAM_DAQ_LONG_BLOCK_LEN;
+}
+
+/*! --------------------------------------------------------------------------
  */
 static inline
 void ramSetPayload16( RAM_DAQ_PAYLOAD_T* pPl, const uint16_t d,

@@ -240,8 +240,15 @@ void doTest( const string wbName )
          }
          case 'C':
          {
-            pChannel_b->sendEnableContineous( DAQ_SAMPLE_100US, 10 );
+            pChannel_a->sendEnableContineous( DAQ_SAMPLE_100US, 4 );
+            pChannel_b->sendEnableContineous( DAQ_SAMPLE_100US, 4 );
             usleep( 1000000 );
+            break;
+         }
+         case 'c':
+         {
+            pChannel_a->sendDisableContinue();
+            pChannel_b->sendDisableContinue();
             break;
          }
          case 'r':

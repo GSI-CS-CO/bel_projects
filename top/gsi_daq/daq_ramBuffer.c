@@ -71,7 +71,9 @@ void ramRingAddToReadIndex( RAM_RING_INDEXES_T* pThis, RAM_RING_INDEX_T toAdd )
    pThis->start = (pThis->start + toAdd) % pThis->capacity;
 }
 
-#if CONFIG_DAQ_DEBUG
+//#define CONFIG_DAQ_DEBUG
+
+#ifdef CONFIG_DAQ_DEBUG
 /*! ---------------------------------------------------------------------------
  * @brief Prints the values of the members of RAM_RING_INDEXES_T
  */
@@ -364,7 +366,7 @@ void ramWriteDaqData( register RAM_SCU_T* pThis, DAQ_CANNEL_T* pDaqChannel,
    ramRingDbgPrintIndexes( &pThis->pSharedObj->ringIndexes, "Origin indexes:");
    ramRingDbgPrintIndexes( poIndexes, "Data indexes:" );
 
-   DBPRINT2( "%s() : Slot: %d, Channel: %d\n", __func__,
+   DBG_RAM_INFO( "DBG: %s() : Slot: %d, Channel: %d\n", __func__,
              daqChannelGetSlot( pDaqChannel ),
              daqChannelGetNumber( pDaqChannel ) + 1 );
 
@@ -385,10 +387,13 @@ void ramWriteDaqData( register RAM_SCU_T* pThis, DAQ_CANNEL_T* pDaqChannel,
    dataWordCounter = 0;
    do
    {
-      remainingDataWords = getRemaining( pDaqChannel );
+      do
+        remainingDataWords = getRemaining( pDaqChannel );
+      while( getRemaining( pDaqChannel ) != remainingDataWords );
 
       if( dataWordCounter < ARRAY_SIZE( firstData ) )
-      { /*
+      {
+         /*
          * The first two received data words will stored in a temporary buffer.
          * They will copied in the place immediately after the device
          * descriptor. This manner making the intended RAM- place
@@ -417,7 +422,7 @@ void ramWriteDaqData( register RAM_SCU_T* pThis, DAQ_CANNEL_T* pDaqChannel,
          /*
           * Was the last data word of payload received?
           */
-         if( remainingDataWords == DAQ_DISCRIPTOR_WORD_SIZE )
+         if( remainingDataWords == DAQ_DESCRIPTOR_WORD_SIZE )
          { /*
             * Yes, possibly completion of the last RAM item if necessary.
             * This will be the case, by receiving a short block its
@@ -464,7 +469,7 @@ void ramWriteDaqData( register RAM_SCU_T* pThis, DAQ_CANNEL_T* pDaqChannel,
             /*
              * Is the next data word the first word of the device descriptor?
              */
-            if( remainingDataWords == DAQ_DISCRIPTOR_WORD_SIZE )
+            if( remainingDataWords == DAQ_DESCRIPTOR_WORD_SIZE )
             { /*
                * Yes, skipping back at the begin.
                */
@@ -524,8 +529,10 @@ int ramPushDaqDataBlock( register RAM_SCU_T* pThis, DAQ_CANNEL_T* pDaqChannel,
 {
    RAM_ASSERT( pThis != NULL );
    RAM_ASSERT( pDaqChannel != NULL );
-   RAM_ASSERT( !isShort || (daqChannelGetDaqFifoWords( pDaqChannel ) > DAQ_DISCRIPTOR_WORD_SIZE) );
-   RAM_ASSERT( isShort || (daqChannelGetPmFifoWords( pDaqChannel ) > DAQ_DISCRIPTOR_WORD_SIZE) );
+   RAM_ASSERT( !isShort || (daqChannelGetDaqFifoWords( pDaqChannel ) >
+               DAQ_DESCRIPTOR_WORD_SIZE) );
+   RAM_ASSERT( isShort || (daqChannelGetPmFifoWords( pDaqChannel ) >
+               DAQ_DESCRIPTOR_WORD_SIZE) );
 #ifdef CONFIG_DAQ_SIMULATE_CHANNEL
    if( isShort )
    {
@@ -539,7 +546,7 @@ int ramPushDaqDataBlock( register RAM_SCU_T* pThis, DAQ_CANNEL_T* pDaqChannel,
       daqDescriptorSetHiRes( &pDaqChannel->simulatedDescriptor, true );
       daqDescriptorSetDaq( &pDaqChannel->simulatedDescriptor, false );
    }
-#endif
+#endif /* ifdef CONFIG_DAQ_SIMULATE_CHANNEL */
    ramMakeSpaceIfNecessary( pThis, isShort );
    ramWriteDaqData( pThis, pDaqChannel, isShort );
    return 0;
