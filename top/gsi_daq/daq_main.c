@@ -33,6 +33,14 @@
 
 static DAQ_ADMIN_T g_DaqAdmin;
 
+static inline uint32_t getInterruptPending( void )
+{
+   uint32_t ip;
+   asm ("rcsr %0, ip": "=r"(ip));
+   return ip;
+}
+
+
 /*! ---------------------------------------------------------------------------
  */
 int scanScuBus( DAQ_BUS_T* pDaqDevices )

@@ -171,21 +171,13 @@ typedef enum
 typedef volatile struct
 {
 #if (__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__) || defined(__DOXYGEN__)
-   uint16_t slot:                  4; //!< @brief Bit [15:12] slot number,
-                                      //!<        shall be initialized by software,
-                                      //!<        will used for the DAQ-Descriptor-Word.
+   /*!
+    *  @brief Bit [15:12] slot number, shall be initialized by software,
+    *         will used for the DAQ-Descriptor-Word.
+    */
+   uint16_t slot:                  4;
    uint16_t __unused__:            4; //!< @brief Bit [11:8] till now unused.
-   uint16_t ExtTrig_nEvTrig_HiRes: 1; //!< @brief Bit [7] trigger source in high resolution mode
-                                      //!<        1= external trigger, event trigger.
-   uint16_t Ena_HiRes:             1; //!< @brief Bit [6] high resolution sampling with 4 MHz.
-                                      //!< @note Ena_PM shall not be active at the same time!
-   uint16_t ExtTrig_nEvTrig:       1; //!< @brief Bit [5] trigger source in DAQ mode:
-                                      //!<        1=ext trigger, 0= event trigger.
-   uint16_t Ena_TrigMod:           1; //!< @brief Bit [4] prevents sampling till triggering.
-   uint16_t Sample1ms:             1; //!< @brief Bit [3] use 1 ms sample.
-   uint16_t Sample100us:           1; //!< @brief Bit [2] use 100 us sample.
-   uint16_t Sample10us:            1; //!< @brief Bit [1] use 10 us sample.
-   uint16_t Ena_PM:                1; //!< @brief Bit [0] starts PM sampling with 100 us.
+   __DAQ_BF_CONTROL_REGISTER_BITS
 #else
    #error Big endian is requested for this bit- field structure!
 #endif
@@ -306,12 +298,28 @@ typedef struct PACKED_SIZE
     * @brief Down counter to limit the receiving blocks in continuous mode.
     *
     * When the counter is zero, the endless receiving mode is
-    * active until the continuous becomes disabled, else
+    * active until the continuous mode becomes disabled, else
     * the counter becomes decremented with each received block and
     * the channel becomes automatically disabled when the counter
     * reaches zero.
     */
    uint16_t blockDownCounter;
+
+   /*!
+    * @brief Sequence number respectively modulo 256 block counter for
+    *        blocks in continuous mode.
+    *
+    * Becomes incremented for each received continuous data block.
+    */
+   uint8_t  sequenceContinuous;
+
+   /*!
+    * @brief Sequence number respectively modulo 256 block counter for
+    *        blocks in high resolution or post mortem mode.
+    *
+    * Becomes incremented for each received hiRes or PM data block.
+    */
+   uint8_t  sequencePmHires;
 
    DAQ_CHANNEL_BF_PROPERTY_T properties; //!<@see DAQ_CHANNEL_PROPERTY_T
 #ifdef CONFIG_DAQ_SIMULATE_CHANNEL

@@ -144,16 +144,6 @@ int32_t opLock( DAQ_ADMIN_T* pDaqAdmin, volatile DAQ_OPERATION_IO_T* pData )
 }
 
 /*! ---------------------------------------------------------------------------
- */
-static
-int32_t opUnlock( DAQ_ADMIN_T* pDaqAdmin, volatile DAQ_OPERATION_IO_T* pData )
-{
-   FUNCTION_INFO();
-   return DAQ_RET_OK;
-}
-
-
-/*! ---------------------------------------------------------------------------
  * @brief Performs a reset of all DAQ devices residing in the SCU bus.
  * @see executeIfRequested
  */
@@ -260,7 +250,9 @@ static int32_t opPostMortemOn( DAQ_ADMIN_T* pDaqAdmin,
       return ret;
 
    DAQ_CANNEL_T* pChannel = getChannel( pDaqAdmin, pData );
+
    pChannel->properties.restart = (pData->param1 != 0);
+   pChannel->sequencePmHires = 0;
    daqChannelEnablePostMortem( pChannel );
 
    return DAQ_RET_OK;
@@ -280,7 +272,9 @@ static int32_t opHighResolutionOn( DAQ_ADMIN_T* pDaqAdmin,
    if( ret != DAQ_RET_OK )
       return ret;
 
-   daqChannelEnableHighResolution( getChannel( pDaqAdmin, pData ) );
+   DAQ_CANNEL_T* pChannel = getChannel( pDaqAdmin, pData );
+   pChannel->sequencePmHires = 0;
+   daqChannelEnableHighResolution( pChannel );
 
    return DAQ_RET_OK;
 }
@@ -325,6 +319,7 @@ static int32_t opContinueOn( DAQ_ADMIN_T* pDaqAdmin,
 
    DAQ_CANNEL_T* pChannel = getChannel( pDaqAdmin, pData );
 
+   pChannel->sequenceContinuous = 0;
    pChannel->blockDownCounter = pData->param2;
    DBPRINT1( "DBG: blockDownCounter = %d\n", pChannel->blockDownCounter );
 
@@ -604,7 +599,6 @@ static int32_t opGetTriggerSourceHir( DAQ_ADMIN_T* pDaqAdmin,
 static const DAQ_OPERATION_TAB_ITEM_T g_operationTab[] =
 {
    OPERATION_ITEM( DAQ_OP_LOCK,                   opLock                ),
-   OPERATION_ITEM( DAQ_OP_UNLOCK,                 opUnlock              ),
    OPERATION_ITEM( DAQ_OP_RESET,                  opReset               ),
    OPERATION_ITEM( DAQ_OP_GET_MACRO_VERSION,      opGetMacroVersion     ),
    OPERATION_ITEM( DAQ_OP_GET_SLOTS,              opGetSlots            ),

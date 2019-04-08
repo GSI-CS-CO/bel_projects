@@ -338,6 +338,8 @@ void ramWriteDaqData( register RAM_SCU_T* pThis, DAQ_CANNEL_T* pDaqChannel,
 {
    unsigned int (*getRemaining)( register DAQ_CANNEL_T* );
    volatile DAQ_DATA_T (*pop)( register DAQ_CANNEL_T* );
+
+   uint8_t*     pSequence;
    unsigned int remainingDataWords;
    unsigned int dataWordCounter;
    unsigned int payloadIndex;
@@ -351,8 +353,6 @@ void ramWriteDaqData( register RAM_SCU_T* pThis, DAQ_CANNEL_T* pDaqChannel,
 
    RAM_DAQ_PAYLOAD_T ramItem;
    DAQ_DATA_T        firstData[RAM_DAQ_DESCRIPTOR_COMPLETION];
-
-   ramPollAccessLock( pThis );
 
    oDescriptorIndexes = pThis->pSharedObj->ringIndexes;
    oDataIndexes       = oDescriptorIndexes;
@@ -375,12 +375,14 @@ void ramWriteDaqData( register RAM_SCU_T* pThis, DAQ_CANNEL_T* pDaqChannel,
       getRemaining  = daqChannelGetDaqFifoWords;
       pop           = daqChannelPopDaqFifo;
       expectedWords = DAQ_FIFO_DAQ_WORD_SIZE_CRC;
+      pSequence     = &pDaqChannel->sequenceContinuous;
    }
    else
    {
       getRemaining  = daqChannelGetPmFifoWords;
       pop           = daqChannelPopPmFifo;
       expectedWords = DAQ_FIFO_PM_HIRES_WORD_SIZE_CRC;
+      pSequence     = &pDaqChannel->sequencePmHires;
    }
 
    di = 0;
@@ -410,14 +412,20 @@ void ramWriteDaqData( register RAM_SCU_T* pThis, DAQ_CANNEL_T* pDaqChannel,
          }
 
          DAQ_DATA_T data = pop( pDaqChannel );
-         ramFillItem( &ramItem, payloadIndex, data );
          if( poIndexes == &oDescriptorIndexes )
          { /*
-            * Descriptor will received.
+            * Descriptor becomes received.
             */
             RAM_ASSERT( di < ARRAY_SIZE(oDescriptor.index) );
+            if( di == offsetof(_DAQ_DISCRIPTOR_STRUCT_T, crcReg ) /
+                               sizeof(DAQ_DATA_T) )
+            {
+               ((_DAQ_BF_CRC_REG*)&data)->sequence = *pSequence;
+               (*pSequence)++;
+            }
             oDescriptor.index[di++] = data;
          }
+         ramFillItem( &ramItem, payloadIndex, data );
 
          /*
           * Was the last data word of payload received?
@@ -547,6 +555,7 @@ int ramPushDaqDataBlock( register RAM_SCU_T* pThis, DAQ_CANNEL_T* pDaqChannel,
       daqDescriptorSetDaq( &pDaqChannel->simulatedDescriptor, false );
    }
 #endif /* ifdef CONFIG_DAQ_SIMULATE_CHANNEL */
+   ramPollAccessLock( pThis );
    ramMakeSpaceIfNecessary( pThis, isShort );
    ramWriteDaqData( pThis, pDaqChannel, isShort );
    return 0;

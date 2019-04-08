@@ -162,10 +162,9 @@ static inline void readFiFo( DAQ_CANNEL_T* pThis, RCEIVED_T* pReceived )
    volatile uint16_t remaining;
    unsigned int i = 0;
    unsigned int j = 0;
+   remaining = daqChannelGetDaqFifoWords( pThis );
    do
    {
-      remaining = daqChannelGetDaqFifoWords( pThis );
-
       volatile DAQ_DATA_T data = daqChannelPopDaqFifo( pThis );
 
       if( i == 0 )
@@ -181,6 +180,7 @@ static inline void readFiFo( DAQ_CANNEL_T* pThis, RCEIVED_T* pReceived )
          pReceived->descriptor.index[j++] = data;
       }
       i++;
+      remaining--;
    }
    while( remaining != 0 );
    pReceived->n = i;
@@ -229,9 +229,9 @@ void main( void )
    daqChannelTestAndClearHiResIntPending( pChannel );
 
    printLine( '-' );
-   daqChannelSample1msOn( pChannel );
-  // daqChannelSample100usOn( pChannel );
-  // daqChannelSample10usOn( pChannel );
+  // daqChannelSample1msOn( pChannel );
+   daqChannelSample100usOn( pChannel );
+   //daqChannelSample10usOn( pChannel );
 
    for( unsigned int k = 0; k < ARRAY_SIZE(g_data); k++ )
    {

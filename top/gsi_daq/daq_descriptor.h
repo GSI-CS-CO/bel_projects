@@ -137,6 +137,49 @@ typedef uint16_t DAQ_DATA_T;
   #warning DAQ_FIFO_DAQ_WORD_SIZE is greater than DAQ_FIFO_PM_HIRES_WORD_SIZE ! Realy?
 #endif
 
+#if (__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__)  || defined(__DOXYGEN__)
+/*! ---------------------------------------------------------------------------
+ * @brief Definition of the control register bits.
+ *
+ * This bits are present in the DAQ control-register it self
+ * and in the device descriptor. Therefore this macro will used avoiding
+ * code redundancy.
+ *
+ * ExtTrig_nEvTrig_HiRes: Bit [7] trigger source in high resolution mode
+ *                                1= external trigger, 0= event trigger.
+ * Ena_HiRes:             Bit [6] high resolution sampling with 4 MHz.
+ *                                CAUTION:
+ *                                Ena_PM shall not be active at the same time!
+ * ExtTrig_nEvTrig:       Bit [5] trigger source in DAQ mode:
+ *                                1=ext trigger, 0= event trigger.
+ * Ena_TrigMod:           Bit [4] prevents sampling till triggering.
+ * Sample1ms:             Bit [3] use 1 ms sample.
+ * Sample100us:           Bit [2] use 100 us sample.
+ * Sample10us:            Bit [1] use 10 us sample.
+ * Ena_PM:                Bit [0] starts PM sampling with 100 us.
+ */
+   #define __DAQ_BF_CONTROL_REGISTER_BITS   \
+      uint16_t ExtTrig_nEvTrig_HiRes: 1;    \
+      uint16_t Ena_HiRes:             1;    \
+      uint16_t ExtTrig_nEvTrig:       1;    \
+      uint16_t Ena_TrigMod:           1;    \
+      uint16_t Sample1ms:             1;    \
+      uint16_t Sample100us:           1;    \
+      uint16_t Sample10us:            1;    \
+      uint16_t Ena_PM:                1;
+
+#else /* Little endian. */
+   #define __DAQ_BF_CONTROL_REGISTER_BITS   \
+      uint16_t Ena_PM:                1;    \
+      uint16_t Sample10us:            1;    \
+      uint16_t Sample100us:           1;    \
+      uint16_t Sample1ms:             1;    \
+      uint16_t Ena_TrigMod:           1;    \
+      uint16_t ExtTrig_nEvTrig:       1;    \
+      uint16_t Ena_HiRes:             1;    \
+      uint16_t ExtTrig_nEvTrig_HiRes: 1;
+#endif
+
 /*! ---------------------------------------------------------------------------
  * @brief Bit field of DIOB extention ID ind slot number.
  */
@@ -163,7 +206,7 @@ STATIC_ASSERT( sizeof( _DAQ_BF_SLOT_DIOB ) == sizeof(DAQ_DATA_T));
 typedef struct PACKED_SIZE
 {
 #if (__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__) || defined(__DOXYGEN__)
-   uint8_t controlReg:    8; /*!< @brief Bits [7:0] of control register */
+   __DAQ_BF_CONTROL_REGISTER_BITS /*!< @brief Bits [7:0] of control register */
    bool    daqMode:       1; /*!< @brief Data Acquisition continuous mode */
    bool    hiResMode:     1; /*!< @brief High Resolution mode */
    bool    pmMode:        1; /*!< @brief Post Mortem mode */
@@ -173,7 +216,7 @@ typedef struct PACKED_SIZE
    bool    pmMode:        1;
    bool    hiResMode:     1;
    bool    daqMode:       1;
-   uint8_t controlReg:    8;
+   __DAQ_BF_CONTROL_REGISTER_BITS
 #endif
 } _DAQ_CHANNEL_CONTROL;
 
@@ -232,11 +275,11 @@ STATIC_ASSERT( sizeof(_DAQ_TRIGGER)            == 3 * sizeof(DAQ_DATA_T) );
 typedef struct PACKED_SIZE
 {
 #if (__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__)
-   DAQ_DATA_T _unused: 8;
-   DAQ_DATA_T crc:     8;
+   DAQ_DATA_T sequence: 8;
+   DAQ_DATA_T crc:      8;
 #else
-   DAQ_DATA_T crc:     8;
-   DAQ_DATA_T _unused: 8;
+   DAQ_DATA_T crc:      8;
+   DAQ_DATA_T sequence: 8;
 #endif
 } _DAQ_BF_CRC_REG;
 
@@ -615,6 +658,43 @@ void daqDescriptorSetCRC( register DAQ_DESCRIPTOR_T* pThis, uint8_t crc )
    pThis->name.crcReg.crc = crc;
 }
 #endif
+
+/*! ---------------------------------------------------------------------------
+ * @brief Returns the sequence number of the current block.
+ * @param pThis Pointer to the DAQ- descriptor object, that means to the last
+ *              10 received words (type uint16_t) of the received record.
+ *              @see DAQ_DESCRIPTOR_WORD_SIZE
+ * @return Sequence number.
+ */
+static inline
+uint8_t daqDescriptorGetSequence( register DAQ_DESCRIPTOR_T* pThis )
+{
+   return pThis->name.crcReg.sequence;
+}
+
+/*! ---------------------------------------------------------------------------
+ * @brief Returns the time-base in nanoseconds belonging to this data block
+ * @param pThis Pointer to the DAQ- descriptor object, that means to the last
+ *              10 received words (type uint16_t) of the received record.
+ *              @see DAQ_DESCRIPTOR_WORD_SIZE
+ * @return Timebase in nanoseconds [ns]
+ */
+static inline
+unsigned int daqDescriptorGetTimeBase( register DAQ_DESCRIPTOR_T* pThis )
+{
+   if( daqDescriptorWasHiRes( pThis ) )
+      return 250;     /* 4 mHz */
+   if( daqDescriptorWasPM( pThis ) )
+      return 100000;  /* 10 kHz */
+   if( pThis->name.cControl.Sample10us )
+      return 10000;   /* 100 kHz */
+   if( pThis->name.cControl.Sample100us )
+      return 100000;  /* 10 kHz */
+   if( pThis->name.cControl.Sample1ms )
+      return 1000000; /* 1 kHz */
+
+   return 0;
+}
 
 /*! @} */ //End of group  DAQ_DESCRIPTOR
 #ifdef __cplusplus

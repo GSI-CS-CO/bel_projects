@@ -134,6 +134,32 @@ inline uint64_t descriptorGetTimestamp( DAQ_DATA_T* pData )
                               reinterpret_cast<DAQ_DESCRIPTOR_T*>(pData) );
 }
 
+/*! ---------------------------------------------------------------------------
+ */
+inline
+unsigned int descriptorGetTimeBase( DAQ_DATA_T* pData )
+{
+   return ::daqDescriptorGetTimeBase(
+                              reinterpret_cast<DAQ_DESCRIPTOR_T*>(pData) );
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+inline
+uint8_t daqDescriptorGetCRC( DAQ_DATA_T* pData )
+{
+   return ::daqDescriptorGetCRC( reinterpret_cast<DAQ_DESCRIPTOR_T*>(pData) );
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+inline
+uint8_t descriptorGetSequence( DAQ_DATA_T* pData )
+{
+   return ::daqDescriptorGetSequence(
+                              reinterpret_cast<DAQ_DESCRIPTOR_T*>(pData) );
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 /*!
  * @brief Base exception class for all DAQ- exceptions
