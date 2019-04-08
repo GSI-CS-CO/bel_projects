@@ -1107,6 +1107,7 @@ end component;
   signal P25IO_DAC_Mode:             std_logic_vector( 1 downto 0); -- Output-Betriebsart
   signal P25IO_DAC_Out:              std_logic_vector(15 downto 0); -- Data_Output
   signal P25IO_DAC_Data_FG_Out:      std_logic_vector(15 downto 0); -- Data/FG-Output
+  signal P25IO_DAC_Data_FG_Reg:      std_logic_vector(15 downto 0); -- Data/FG-Output
 
   signal P25IO_DAC_DAC_Strobe_i:     std_logic;                     -- Input  "DAC-Strobe"
   signal P25IO_DAC_DAC_Strobe_o:     std_logic;                     -- Output "DAC-Strobe"
@@ -3021,8 +3022,6 @@ P_P25IO_Holec_Strobe:  process (clk_sys, rstn_sys, P25IO_Holec_Strobe_Start, P25
         when holec_idle   =>    if  (P25IO_Holec_Strobe_Start  = '1')  THEN
                                      P25IO_Holec_Str_Cnt      <=  4 ;               -- Anzahl der Strobs
                                      P25IO_Holec_state        <= holec_puls;
-                                else          
-                                     P25IO_Holec_state        <= holec_idle;
                                 end if;
                                
         when holec_puls   =>    P25IO_DAC_Str_Puls_i          <= '1';               -- Start Puls-Breiten-Counter
@@ -3048,9 +3047,9 @@ P_P25IO_Holec_Strobe:  process (clk_sys, rstn_sys, P25IO_Holec_Strobe_Start, P25
                                 P25IO_Holec_state             <= holec_pause_w;
   
         when holec_pause_w =>   P25IO_DAC_Str_Pause_i         <= '0';                   -- Stop Pause-Breiten-Counter
-                                if  (P25IO_DAC_Str_Pause_o     = '0')  THEN             -- Output ist Low-Akiv
-                                    P25IO_Holec_state         <= holec_pause_w;
-                                else
+                                if (P25IO_Holec_Str_Cnt < 1) then
+                                  P25IO_Holec_state <= holec_idle;
+                                elsif  (P25IO_DAC_Str_Pause_o     = '1')  THEN             -- Output ist Low-Akiv
                                     P25IO_Holec_state         <= holec_puls;
                                 end if;
                                 
@@ -3063,6 +3062,17 @@ P_P25IO_Holec_Strobe:  process (clk_sys, rstn_sys, P25IO_Holec_Strobe_Start, P25
   end process P_P25IO_Holec_Strobe;
   
 
+  dac_out_puls: process (clk_sys)
+  begin
+    -- value has to be registered for strobe duration
+    if (rstn_sys = '0') then
+      P25IO_DAC_Data_FG_Reg <= (others => '0');
+    elsif rising_edge(clk_sys) then
+      if (P25IO_Holec_state = holec_puls) then
+        P25IO_DAC_Data_FG_Reg <= P25IO_DAC_Data_FG_Out;
+      end if;
+    end if;
+  end process;
 
 
 
@@ -4862,12 +4872,10 @@ BEGIN
 
       end case;
 
-
-   
     --############################ Einstellen der Output-Polarität ##################################
 
-    IF  (AW_Config1(7) = '0')  THEN  P25IO_DAC_Out(15 DOWNTO 0) <=  NOT P25IO_DAC_Data_FG_Out(15 downto 0); -- Output negativ 
-                               Else  P25IO_DAC_Out(15 DOWNTO 0) <=      P25IO_DAC_Data_FG_Out(15 downto 0); -- Output positiv 
+    IF  (AW_Config1(7) = '0')  THEN  P25IO_DAC_Out(15 DOWNTO 0) <=  NOT P25IO_DAC_Data_FG_Reg; -- Output negativ
+                               Else  P25IO_DAC_Out(15 DOWNTO 0) <=      P25IO_DAC_Data_FG_Reg; -- Output positiv
     END IF; 
 
 
