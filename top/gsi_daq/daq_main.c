@@ -140,7 +140,7 @@ static inline void handlePostMortemMode( DAQ_CANNEL_T* pChannel )
 {
    if( !pChannel->properties.postMortemEvent )
       return;
-   if( daqChannelGetPmFifoWords( pChannel ) < DAQ_FIFO_PM_HIRES_WORD_SIZE )
+   if( !daqChannelIsPmHiResFiFoFull( pChannel ) )
       return;
 
    pChannel->properties.postMortemEvent = false;

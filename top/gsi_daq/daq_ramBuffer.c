@@ -327,6 +327,7 @@ static inline void ramPollAccessLock( RAM_SCU_T* pThis )
 #endif
 }
 
+//#define CONFIG_DAQ_DECREMENT
 
 /*! ---------------------------------------------------------------------------
  * @brief Copies the data of the given DAQ-channel in to the RAM and
@@ -385,17 +386,36 @@ void ramWriteDaqData( register RAM_SCU_T* pThis, DAQ_CANNEL_T* pDaqChannel,
       pSequence     = &pDaqChannel->sequencePmHires;
    }
 
+#ifndef CONFIG_DAQ_DECREMENT
+   /*
+    * The data wort which includes the CRC isn't a part of the fifo content,
+    * therefore we have to add it here.
+    */
+   remainingDataWords = getRemaining( pDaqChannel ) + 1;
+   if( remainingDataWords != expectedWords )
+   {
+      DBPRINT1( ESC_BOLD ESC_FG_RED
+                "DBG ERROR: remainingDataWords != expectedWords\n"
+                "           remainingDataWords: %d\n"
+                "           expectedWords:      %d\n"
+                ESC_NORMAL,
+                remainingDataWords,
+                expectedWords );
+      return;
+   }
+#endif
    di = 0;
    dataWordCounter = 0;
    do
    {
-      do
-        remainingDataWords = getRemaining( pDaqChannel );
-      while( getRemaining( pDaqChannel ) != remainingDataWords );
+   #ifdef CONFIG_DAQ_DECREMENT
+      remainingDataWords = getRemaining( pDaqChannel );
+   #else
+      remainingDataWords--;
+   #endif
 
       if( dataWordCounter < ARRAY_SIZE( firstData ) )
-      {
-         /*
+      { /*
          * The first two received data words will stored in a temporary buffer.
          * They will copied in the place immediately after the device
          * descriptor. This manner making the intended RAM- place
@@ -497,20 +517,31 @@ void ramWriteDaqData( register RAM_SCU_T* pThis, DAQ_CANNEL_T* pDaqChannel,
    /*
     * Is the block integrity given?
     */
-   if( (dataWordCounter == expectedWords) &&
-        daqDescriptorVerifyMode( &oDescriptor ) )
+   if( (dataWordCounter == expectedWords)
+#ifndef CONFIG_DAQ_DECREMENT
+       && (getRemaining( pDaqChannel ) == 0)
+#endif
+       && daqDescriptorVerifyMode( &oDescriptor ) )
    {
       RAM_ASSERT( isShort == daqDescriptorIsShortBlock( &oDescriptor ) );
-      if( daqDescriptorWasPM( &oDescriptor ) &&
-          pDaqChannel->properties.restart )
-      {
-         DBG_RAM_INFO( "DBG: Restarting Post Mortem\n" );
-         daqChannelEnablePostMortem( pDaqChannel );
-      }
      /*
       * Making the new received data block in ring buffer valid.
       */
       publishWrittenData( pThis, &oDataIndexes );
+
+      if( pDaqChannel->properties.restart )
+      {
+         if( daqDescriptorWasHiRes( &oDescriptor ) )
+         {
+            DBG_RAM_INFO( "DBG: Restarting High Resolution\n" );
+            daqChannelEnableHighResolution( pDaqChannel );
+         }
+         else if( daqDescriptorWasPM( &oDescriptor ) )
+         {
+            DBG_RAM_INFO( "DBG: Restarting Post Mortem\n" );
+            daqChannelEnablePostMortem( pDaqChannel );
+         }
+      }
    }
 #ifdef DEBUGLEVEL
    else

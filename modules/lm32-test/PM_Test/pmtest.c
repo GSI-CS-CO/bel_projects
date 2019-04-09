@@ -41,6 +41,55 @@ void _segfault( int sig )
    while( 1 );
 }
 
+static inline
+bool readFiFo( DAQ_CANNEL_T* pChannel, unsigned int block )
+{
+   daqChannelEnablePostMortem( pChannel );
+   unsigned int i = 0;
+#if 0
+   do
+   {
+      while( daqChannelGetPmFifoWords( pChannel ) != (DAQ_FIFO_PM_HIRES_WORD_SIZE-0) )
+         i++;
+   }
+   while( daqChannelGetPmFifoWords( pChannel ) != (DAQ_FIFO_PM_HIRES_WORD_SIZE-0) );
+#else
+   while( !daqChannelIsPmHiResFiFoFull( pChannel ) )
+      i++;
+#endif
+   mprintf( "Polling loops %d\nBlock: %d\n", i, block );
+   daqChannelDisablePostMortem( pChannel );
+   unsigned int remaining  = daqChannelGetPmFifoWords( pChannel );
+   if( remaining != DAQ_FIFO_PM_HIRES_WORD_SIZE )
+   {
+      daqChannelSetTriggerDelay( pChannel, 0xCAFE );
+      mprintf( ESC_BOLD ESC_FG_RED "ERROR: Words in FiFo: %d\n"
+                                   "       Expected:      %d\n"
+                                   "       Block:         %d\n"
+               ESC_NORMAL, remaining, DAQ_FIFO_PM_HIRES_WORD_SIZE,
+                           block
+             );
+      return false;
+   }
+   remaining++;
+   do
+   {
+      remaining--;
+      volatile uint16_t data = daqChannelPopPmFifo( pChannel );
+   }
+   while( remaining > 0 );
+   unsigned int test = daqChannelGetPmFifoWords( pChannel );
+   if( test != 0 )
+   {
+      daqChannelSetTriggerDelay( pChannel, 0xCAFE );
+      mprintf( ESC_BOLD ESC_FG_RED "ERROR: FiFo has to be empty, but"
+                                   " the counter has the value of %d!\n"
+               ESC_NORMAL, test );
+      return false;
+   }
+   return true;
+}
+
 
 void main( void )
 {
@@ -64,7 +113,7 @@ void main( void )
    mprintf( "Total number of all used channels: %d\n", daqBusGetUsedChannels( &g_allDaq ) );
 
    //DAQ_CANNEL_T* pChannel = daqDeviceGetChannelObject( daqBusGetDeviceObject( &g_allDaq, DEVICE ), CHANNEL );
-   DAQ_CANNEL_T* pChannel = daqBusGetChannelObjectByAbsoluteNumber( &g_allDaq, 4 );
+   DAQ_CANNEL_T* pChannel = daqBusGetChannelObjectByAbsoluteNumber( &g_allDaq, 0 );
    if( pChannel == NULL )
    {
       mprintf( ESC_FG_RED "ERROR: Channel number out of range!\n" ESC_NORMAL );
@@ -76,8 +125,11 @@ void main( void )
 
    daqChannelSetTriggerConditionLW( pChannel, 0xA );
    daqChannelSetTriggerConditionHW( pChannel, 0xB );
-   daqChannelSetTriggerDelay( pChannel, 0xC );
+   daqChannelSetTriggerDelay( pChannel, 0x0000 );
 
+   unsigned int b = 0;
+   while( readFiFo( pChannel, b++ ) ) {}
+   return;
 
    mprintf( "HiResPending: 0x%04x\n", *daqChannelGetHiResIntPendingPtr( pChannel ) );
 
@@ -112,7 +164,7 @@ void main( void )
 
    mprintf( "Reading FoFo...\n" );
    int j = 0;
-//#define CONFIG_DAQ_SEPARAD_COUNTER
+#define CONFIG_DAQ_SEPARAD_COUNTER
 #ifdef CONFIG_DAQ_SEPARAD_COUNTER
    uint16_t remaining  = daqChannelGetPmFifoWords( pChannel ) + 1;
 #else
@@ -127,9 +179,6 @@ void main( void )
       remaining = daqChannelGetPmFifoWords( pChannel );
 #endif
       volatile uint16_t data = daqChannelPopPmFifo( pChannel ); //!!*ptr;
-#if 0
-      mprintf( "%d: 0x%04x, %d\n", i, data, remaining );
-#endif
       if( i < 4 )
          mprintf( "%d: 0x%04x, %d\n", i, data, remaining );
       if( remaining < ARRAY_SIZE( descriptor.index ) )

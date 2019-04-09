@@ -44,7 +44,6 @@ const char* g_pNo  = "no";
 
 
 /*======================== DAQ channel functions ============================*/
-#if 1
 /*! ---------------------------------------------------------------------------
  * @brief Writes the given value in addressed register
  * @param pReg Start address of DAQ-macro.
@@ -77,7 +76,24 @@ static inline uint16_t daqChannelGetReg( DAQ_REGISTER_T* volatile pReg,
    DAQ_ASSERT( (index & 0x0F) == 0x00 );
    return pReg->i[index | channel];
 }
-#endif
+
+/*! ---------------------------------------------------------------------------
+ */
+bool daqChannelIsPmHiResFiFoFull( register DAQ_CANNEL_T* pThis )
+{  /*
+    * Because of possible transitions in the FoFo-level register during
+    * the post-mortem/high-resolution mode is sill active,
+    * it becomes necessary to ask this register more then one time to
+    * ensure that the FiFo is really full.
+    */
+   for( unsigned int i = 0; i < 2; i++ )
+   {
+      if( daqChannelGetPmFifoWords( pThis ) != DAQ_FIFO_PM_HIRES_WORD_SIZE )
+         return false;
+   }
+   return true;
+}
+
 #ifndef CONFIG_DAQ_SIMULATE_CHANNEL
 /*! ---------------------------------------------------------------------------
  * @see daq.h

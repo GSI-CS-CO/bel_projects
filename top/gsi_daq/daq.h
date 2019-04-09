@@ -1279,6 +1279,14 @@ unsigned int daqChannelGetPmFifoWords( register DAQ_CANNEL_T* pThis )
 
 /*! ---------------------------------------------------------------------------
  * @ingroup DAQ_CHANNEL
+ * @brief Returns "true" when the Post-Mortem/High Resolution FiFo is full.
+ * @param pThis Pointer to the channel object
+ * @return true: Fifo is full; false: Fofo is not full.
+ */
+bool daqChannelIsPmHiResFiFoFull( register DAQ_CANNEL_T* pThis );
+
+/*! ---------------------------------------------------------------------------
+ * @ingroup DAQ_CHANNEL
  * @brief Resets the channel registers to its default values except the slot
  *        number.
  * @param pThis Pointer to the channel object
