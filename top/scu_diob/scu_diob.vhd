@@ -3037,23 +3037,20 @@ P_P25IO_Holec_Strobe:  process (clk_sys, rstn_sys, P25IO_Holec_Strobe_Start, P25
                                 end if;
 
         when holec_puls_e =>    P25IO_Holec_Strobe_Out        <= '0';                   -- Reset Output-Strobe (Puls-n)
-                                IF  P25IO_Holec_Str_Cnt       <   1 THEN
-                                    P25IO_Holec_state         <= holec_end;
-                                else  
-                                    P25IO_Holec_state         <= holec_pause;
-                                end if; 
+                                P25IO_Holec_state             <= holec_pause;
                   
         when holec_pause  =>    P25IO_DAC_Str_Pause_i         <= '1';                   -- Start Pause-Breiten-Counter
                                 P25IO_Holec_state             <= holec_pause_w;
   
         when holec_pause_w =>   P25IO_DAC_Str_Pause_i         <= '0';                   -- Stop Pause-Breiten-Counter
-                                if (P25IO_Holec_Str_Cnt < 1) then
-                                  P25IO_Holec_state <= holec_idle;
-                                elsif  (P25IO_DAC_Str_Pause_o     = '1')  THEN             -- Output ist Low-Akiv
-                                    P25IO_Holec_state         <= holec_puls;
+                                if P25IO_DAC_Str_Pause_o = '1' then                     -- Output ist Low-Aktiv
+                                  if P25IO_Holec_Str_Cnt < 1 then
+                                    P25IO_Holec_state <= holec_idle;
+                                  else
+                                    P25IO_Holec_state <= holec_puls;
+                                  end if;
                                 end if;
                                 
-        when holec_end     =>   P25IO_Holec_state           <= holec_idle;
 
         when others =>          P25IO_Holec_state           <= holec_idle;
 
