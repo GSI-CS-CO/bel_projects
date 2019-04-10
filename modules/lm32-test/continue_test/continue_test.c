@@ -33,7 +33,7 @@
 
 DAQ_BUS_T g_allDaq;
 
-#define NUM_PAGES 4
+#define NUM_PAGES 2
 
 typedef struct
 {
@@ -156,15 +156,25 @@ void printLine( const char c )
    mprintf( "\n" );
 }
 
+//#define READ_ALWAYS
 
 static inline void readFiFo( DAQ_CANNEL_T* pThis, RCEIVED_T* pReceived )
 {
    volatile uint16_t remaining;
    unsigned int i = 0;
    unsigned int j = 0;
-   remaining = daqChannelGetDaqFifoWords( pThis );
+#ifndef READ_ALWAYS
+   remaining = daqChannelGetDaqFifoWords( pThis ) + 1;
+#endif
    do
    {
+   #ifndef READ_ALWAYS
+      remaining--;
+   #endif
+
+   #ifdef READ_ALWAYS
+      remaining = daqChannelGetDaqFifoWords( pThis );
+   #endif
       volatile DAQ_DATA_T data = daqChannelPopDaqFifo( pThis );
 
       if( i == 0 )
@@ -180,7 +190,6 @@ static inline void readFiFo( DAQ_CANNEL_T* pThis, RCEIVED_T* pReceived )
          pReceived->descriptor.index[j++] = data;
       }
       i++;
-      remaining--;
    }
    while( remaining != 0 );
    pReceived->n = i;
@@ -196,7 +205,7 @@ void main( void )
    gotoxy( 0, 0 );
    clrscr();
    mprintf( ESC_FG_MAGNETA ESC_BOLD "DAQ Fifo test, compiler: " COMPILER_VERSION_STRING ESC_NORMAL "\n");
-#if 1
+
    if( daqBusFindAndInitializeAll( &g_allDaq, find_device_adr(GSI, SCU_BUS_MASTER) ) <= 0 )
    {
       mprintf( ESC_FG_RED "ERROR: No usable DAQ found!\n" ESC_NORMAL );
@@ -204,7 +213,6 @@ void main( void )
    }
    mprintf( "%d DAQ found\n", daqBusGetFoundDevices( &g_allDaq ) );
 
-//#if 0
 
    int i, j;
    mprintf( "Total number of all used channels: %d\n", daqBusGetUsedChannels( &g_allDaq ) );
@@ -219,23 +227,27 @@ void main( void )
    uint16_t flags = scuBusGetSlaveValue16( pBusSlave, Intr_Active );
    mprintf( "SCU-Bus IRQ-flags: 0x%04x, Address : 0x%08x\n", flags, &((uint16_t*)pBusSlave)[Intr_Active] );
 
-//#if 1
    daqChannelPrintInfo( pChannel );
    printScuBusSlaveInfo( pChannel );
-//#if 0
+
    daqDeviceEnableScuSlaveInterrupt( DAQ_CHANNEL_GET_PARENT_OF( pChannel ) );
    printIntRegs( DAQ_CHANNEL_GET_PARENT_OF( pChannel ) );
    initIrq();
    daqChannelTestAndClearHiResIntPending( pChannel );
 
+  // daqChannelEnableEventTrigger( pChannel );
+   //daqChannelSetTriggerDelay( pChannel, 10 );
+   daqChannelEnableTriggerMode( pChannel );
+   daqChannelEnableExtrenTrigger( pChannel );
+   daqChannelPrintInfo( pChannel );
    printLine( '-' );
   // daqChannelSample1msOn( pChannel );
    daqChannelSample100usOn( pChannel );
-   //daqChannelSample10usOn( pChannel );
+  //daqChannelSample10usOn( pChannel );
+
 
    for( unsigned int k = 0; k < ARRAY_SIZE(g_data); k++ )
    {
-    //  while( daqChannelGetDaqFifoWords( pChannel ) < DAQ_FIFO_DAQ_WORD_SIZE );
       while( !daqDeviceTestAndClearDaqInt( DAQ_CHANNEL_GET_PARENT_OF( pChannel ) ) );
       while( !daqChannelTestAndClearDaqIntPending( pChannel ) );
     //    while( !daqChannelTestAndClearHiResIntPending( pChannel ) ) //!!!!!!!!
@@ -243,6 +255,8 @@ void main( void )
       readFiFo( pChannel, &g_data[k] );
    }
 
+   daqChannelDisableTriggerMode( pChannel );
+   daqChannelEnableEventTrigger( pChannel );
    daqChannelSample1msOff( pChannel );
    daqChannelSample100usOff( pChannel );
    daqChannelSample10usOff( pChannel );
@@ -260,7 +274,7 @@ void main( void )
  //  mprintf( "IRQ DAQ:   %d\n", getDaqIrqCount() );
  //  mprintf( "IRQ HIRES: %d\n", getHiResIrqCount() );
  //  mprintf( "DAQ devices: parent %d\n", daqBusGetFoundDevices( DAQ_CHANNEL_GET_GRANDPARENT_OF( pChannel )) );
-#endif
+
    mprintf( ESC_FG_MAGNETA ESC_BOLD "\nEnd...\n"ESC_NORMAL );
 }
 

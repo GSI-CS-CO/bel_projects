@@ -25,8 +25,8 @@
 #ifndef _DAQ_ADMINISTRATION_HPP
 #define _DAQ_ADMINISTRATION_HPP
 
-#include <boost/thread.hpp>
-#include <boost/bind.hpp>
+//#include <boost/thread.hpp>
+//#include <boost/bind.hpp>
 #include <list>
 #include <daq_interface.hpp>
 
@@ -71,7 +71,7 @@ public:
    const unsigned int getDeviceNumber( void );
 
    int sendEnablePostMortem( const bool restart = false );
-   int sendEnableHighResolution( void );
+   int sendEnableHighResolution( const bool restart = false );
    int sendEnableContineous( const DAQ_SAMPLE_RATE_T sampleRate,
                              const unsigned int maxBlocks = 0 );
    int sendDisableContinue( void );
@@ -79,6 +79,7 @@ public:
 
    int sendTriggerCondition( const uint32_t trgCondition );
    uint32_t receiveTriggerCondition( void );
+   uint32_t descriptorGetTriggerCondition( void );
 
    int sendTriggerDelay( const uint16_t delay );
    uint16_t receiveTriggerDelay( void );
@@ -162,7 +163,8 @@ public:
 
    int sendEnablePostMortem( const unsigned int channel,
                              const bool restart = false );
-   int sendEnableHighResolution( const unsigned int channel );
+   int sendEnableHighResolution( const unsigned int channel,
+                                 const bool restart = false );
    int sendEnableContineous( const unsigned int channel,
                              const DAQ_SAMPLE_RATE_T sampleRate,
                              const unsigned int maxBlocks = 0 );
@@ -199,10 +201,13 @@ public:
  */
 class DaqAdministration: public DaqInterface
 {
-   unsigned int   m_maxChannels;
+   unsigned int      m_maxChannels;
+   DAQ_DESCRIPTOR_T* m_poCurrentDescriptor;
+#if 0
    boost::thread* m_pThread;
    bool           m_finalizeThread;
    boost::mutex   m_oMutex;
+#endif
    static std::exception_ptr c_exceptionPtr;
 
 protected:
@@ -248,10 +253,53 @@ public:
 
    int distributeData( void );
 
+   uint32_t descriptorGetTriggerCondition( void )
+   {
+      SCU_ASSERT( m_poCurrentDescriptor != nullptr );
+      return ::daqDescriptorGetTriggerCondition( m_poCurrentDescriptor );
+   }
+
+   uint16_t descriptorGetTriggerDelay( void )
+   {
+      SCU_ASSERT( m_poCurrentDescriptor != nullptr );
+      return ::daqDescriptorGetTriggerDelay( m_poCurrentDescriptor );
+   }
+
+   uint8_t descriptorGetSequence( void )
+   {
+      SCU_ASSERT( m_poCurrentDescriptor != nullptr );
+      return ::daqDescriptorGetSequence( m_poCurrentDescriptor );
+   }
+
+   uint8_t descriptorGetCrc( void )
+   {
+      SCU_ASSERT( m_poCurrentDescriptor != nullptr );
+      return ::daqDescriptorGetCRC( m_poCurrentDescriptor );
+   }
+
+   bool descriptorWasPM( void )
+   {
+      SCU_ASSERT( m_poCurrentDescriptor != nullptr );
+      return ::daqDescriptorWasPM( m_poCurrentDescriptor );
+   }
+
+   uint64_t descriptorGetTimeStamp( void )
+   {
+      SCU_ASSERT( m_poCurrentDescriptor != nullptr );
+      return ::daqDescriptorGetTimeStamp( m_poCurrentDescriptor );
+   }
+
+   unsigned int descriptorGetTimeBase( void )
+   {
+      SCU_ASSERT( m_poCurrentDescriptor != nullptr );
+      return ::daqDescriptorGetTimeBase( m_poCurrentDescriptor );
+   }
+
    void start( unsigned int toSleep = 100 );
    void stop( void );
 
 protected:
+#if 0
    void lock( void )
    {
       m_oMutex.lock();
@@ -261,7 +309,7 @@ protected:
    {
       m_oMutex.unlock();
    }
-
+#endif
 private:
    DaqChannel* getChannelByDescriptor( DAQ_DESCRIPTOR_T& roDescriptor )
    {
@@ -293,9 +341,11 @@ inline int DaqDevice::sendEnablePostMortem( const unsigned int channel,
 
 /*! ---------------------------------------------------------------------------
  */
-inline int DaqDevice::sendEnableHighResolution( const unsigned int channel )
+inline int DaqDevice::sendEnableHighResolution( const unsigned int channel,
+                                                const bool restart )
 {
-   return getParent()->sendEnableHighResolution( m_deviceNumber, channel );
+   return getParent()->sendEnableHighResolution( m_deviceNumber, channel,
+                                                 restart );
 }
 
 /*! ---------------------------------------------------------------------------
@@ -428,9 +478,9 @@ inline int DaqChannel::sendEnablePostMortem( const bool restart )
 
 /*! ---------------------------------------------------------------------------
  */
-inline int DaqChannel::sendEnableHighResolution( void )
+inline int DaqChannel::sendEnableHighResolution( const bool restart )
 {
-   return getParent()->sendEnableHighResolution( m_number );
+   return getParent()->sendEnableHighResolution( m_number, restart );
 }
 
 /*! ---------------------------------------------------------------------------
@@ -460,6 +510,11 @@ inline int DaqChannel::sendDisablePmHires( const bool restart )
 inline int DaqChannel::sendTriggerCondition( const uint32_t trgCondition )
 {
    return getParent()->sendTriggerCondition( m_number, trgCondition );
+}
+
+inline uint32_t DaqChannel::descriptorGetTriggerCondition( void )
+{
+   return getParent()->getParent()->descriptorGetTriggerCondition();
 }
 
 /*! ---------------------------------------------------------------------------

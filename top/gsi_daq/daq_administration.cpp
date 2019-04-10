@@ -125,8 +125,9 @@ std::exception_ptr DaqAdministration::c_exceptionPtr = nullptr;
 DaqAdministration::DaqAdministration( const std::string wbDevice )
   :DaqInterface( wbDevice )
   ,m_maxChannels( 0 )
-  ,m_pThread( nullptr )
-  ,m_finalizeThread( false )
+  ,m_poCurrentDescriptor( nullptr )
+//  ,m_pThread( nullptr )
+//  ,m_finalizeThread( false )
 {
 }
 
@@ -134,11 +135,12 @@ DaqAdministration::DaqAdministration( const std::string wbDevice )
  */
 DaqAdministration::~DaqAdministration( void )
 {
-   stop();
+  // stop();
 }
 
 /*! ---------------------------------------------------------------------------
  */
+#if 0
 void DaqAdministration::start( unsigned int toSleep )
 {
    SCU_ASSERT( m_pThread == nullptr );
@@ -187,7 +189,7 @@ void DaqAdministration::thread( unsigned int toSleep )
    }
    std::cout << "Thread left" << std::endl;
 }
-
+#endif
 
 /*! ---------------------------------------------------------------------------
  */
@@ -397,7 +399,6 @@ int DaqAdministration::distributeData( void )
                               c_ramBlockShortLen, ramReadPoll ) != EB_OK )
       throw EbException( "Unable to read SCU-Ram buffer first part" );
 
-
    /*
     * Rough check of the device descriptors integrity.
     */
@@ -410,6 +411,8 @@ int DaqAdministration::distributeData( void )
          throw( DaqException( "Erroneous descriptor" ) );
       }
    }
+
+   m_poCurrentDescriptor = &probe.descriptor;
 
    std::size_t wordLen;
    if( ::daqDescriptorIsLongBlock( &probe.descriptor ) )
@@ -445,7 +448,7 @@ int DaqAdministration::distributeData( void )
    {
       pChannel->onDataBlock( probe.buffer, wordLen );
    }
-
+   m_poCurrentDescriptor = nullptr;
    return getCurrentRamSize( false );
 }
 

@@ -413,6 +413,7 @@ void ramWriteDaqData( register RAM_SCU_T* pThis, DAQ_CANNEL_T* pDaqChannel,
    #else
       remainingDataWords--;
    #endif
+      DAQ_DATA_T data = pop( pDaqChannel );
 
       if( dataWordCounter < ARRAY_SIZE( firstData ) )
       { /*
@@ -422,7 +423,7 @@ void ramWriteDaqData( register RAM_SCU_T* pThis, DAQ_CANNEL_T* pDaqChannel,
          * of the device descriptor dividable by RAM_DAQ_PAYLOAD_T.
          */
          DBG_RAM_INFO( "DBG: Words in Fifo: %d\n", remainingDataWords );
-         firstData[dataWordCounter] = pop( pDaqChannel );
+         firstData[dataWordCounter] = data;
       }
       else
       {
@@ -431,7 +432,6 @@ void ramWriteDaqData( register RAM_SCU_T* pThis, DAQ_CANNEL_T* pDaqChannel,
             payloadIndex = 0;
          }
 
-         DAQ_DATA_T data = pop( pDaqChannel );
          if( poIndexes == &oDescriptorIndexes )
          { /*
             * Descriptor becomes received.

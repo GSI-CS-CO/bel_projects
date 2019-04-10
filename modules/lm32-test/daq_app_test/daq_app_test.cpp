@@ -86,7 +86,7 @@ bool MyDaqChannel::onDataBlock( DAQ_DATA_T* pData, std::size_t wordLen )
 
   cout << setiosflags(ios::uppercase);
   cout << "trigger: 0x" << hex << setfill('0') << setw(8)
-       << descriptorGetTreggerCondition( pData ) << dec << endl;
+       << descriptorGetTriggerCondition() << dec << endl;
 
   cout << "delay: 0x" << hex << descriptorGetTriggerDelay( pData )
        << dec << endl;
@@ -132,7 +132,9 @@ bool MyDaqChannel::onDataBlock( DAQ_DATA_T* pData, std::size_t wordLen )
      cout << "High Resolution";
   else if( descriptorWasDaq( pData ))
      cout << "Continuous";
-  cout << ESC_NORMAL << endl;
+  cout << ", Timebase: " << descriptorGetTimeBase( pData ) << " ns"
+       << ESC_NORMAL << " Sequence: " <<
+       static_cast<unsigned int>(descriptorGetSequence( pData )) << endl;
 
   assert( (wordLen - numOfSamples) > 0 );
   DAQ_DATA_T average = summe / numOfSamples;
@@ -194,7 +196,7 @@ void doTest( const string wbName )
 
 
 //   pChannel_a->sendEnableContineous( DAQ_SAMPLE_100US, 10 );
-   pChannel_b->sendEnableContineous( DAQ_SAMPLE_100US, 4 );
+   pChannel_b->sendEnableContineous( DAQ_SAMPLE_1MS, 4 );
 
 //   pChannel_a->sendEnablePostMortem();
    //pChannel_a->sendEnableHighResolution();
@@ -208,6 +210,7 @@ void doTest( const string wbName )
 
 
    int key;
+   bool read = true;
    while( (key = Terminal::readKey()) != '\e' )
    {
      // unsigned int RamSize = oDaqInterface.getCurrentRamSize( true );
@@ -216,6 +219,12 @@ void doTest( const string wbName )
 
       switch( key )
       {
+         case '1':
+         {
+            read = !read;
+            cout << "Read: " << (read? "ON " : "OFF") << endl;
+            break;
+         }
          case 'd':
          {
             cout << "Endurance test begin" << endl;
@@ -240,9 +249,9 @@ void doTest( const string wbName )
          }
          case 'C':
          {
-            pChannel_a->sendEnableContineous( DAQ_SAMPLE_100US, 4 );
-            pChannel_b->sendEnableContineous( DAQ_SAMPLE_100US, 4 );
-            usleep( 1000000 );
+            pChannel_a->sendEnableContineous( DAQ_SAMPLE_1MS, 4 );
+            pChannel_b->sendEnableContineous( DAQ_SAMPLE_1MS, 4 );
+            //usleep( 1000000 );
             break;
          }
          case 'c':
@@ -260,7 +269,8 @@ void doTest( const string wbName )
             break;
          }
       }
-      oDaqInterface.distributeData();
+      if( read )
+         oDaqInterface.distributeData();
    }
 
 //   oDaqInterface.start();

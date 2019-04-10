@@ -151,9 +151,9 @@ void main( void )
    mprintf( ESC_FG_MAGNETA"Ring-buffer test\n"ESC_NORMAL );
    mprintf( "Offset: %d complement %d\n", RAM_DAQ_DATA_START_OFFSET, RAM_DAQ_DESCRIPTOR_COMPLETION );
    mprintf( "Long  block:      %d\n", RAM_DAQ_LONG_BLOCK_LEN );
-   mprintf( "Long block rest:  %d\n", RAM_DAQ_LONG_BLOCK_REST );
+   mprintf( "Long block rest:  %d\n", RAM_DAQ_LONG_BLOCK_REMAINDER );
    mprintf( "Short block:      %d\n", RAM_DAQ_SHORT_BLOCK_LEN );
-   mprintf( "Short block rest: %d\n", RAM_DAQ_SHORT_BLOCK_REST );
+   mprintf( "Short block rest: %d\n", RAM_DAQ_SHORT_BLOCK_REMAINDER );
    mprintf( "Capacity64:       %d\n", RAM_DAQ_MAX_CAPACITY );
    mprintf( "Words per index:  %d\n", RAM_DAQ_DATA_WORDS_PER_RAM_INDEX );
    mprintf( "Offset of channel control: %d\n", RAM_DAQ_INDEX_OFFSET_OF_CHANNEL_CONTROL );

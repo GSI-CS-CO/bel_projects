@@ -21,7 +21,7 @@ REMOTE_CALL_ARGS  = "dev/wbm0"
 
 LIBS += stdc++
 LIBS += etherbone
-LIBS += boost_thread
+# LIBS += boost_thread
 DEBUG = 1
 
 

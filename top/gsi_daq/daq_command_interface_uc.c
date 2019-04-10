@@ -273,6 +273,7 @@ static int32_t opHighResolutionOn( DAQ_ADMIN_T* pDaqAdmin,
       return ret;
 
    DAQ_CANNEL_T* pChannel = getChannel( pDaqAdmin, pData );
+   pChannel->properties.restart = (pData->param1 != 0);
    pChannel->sequencePmHires = 0;
    daqChannelEnableHighResolution( pChannel );
 

@@ -301,7 +301,9 @@ public:
                            );
 
    int sendEnableHighResolution( const unsigned int deviceNumber,
-                                 const unsigned int channel );
+                                 const unsigned int channel,
+                                 const bool restart = false
+                               );
 
    int sendDisablePmHires( const unsigned int deviceNumber,
                            const unsigned int channel,
