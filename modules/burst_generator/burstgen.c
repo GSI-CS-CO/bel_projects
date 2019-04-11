@@ -32,13 +32,14 @@
  *  run:    eb-reset dev/wbm0 cpureset 0 (assume only one LM32 is instantiated)
  *  debug:  eb-console dev/wbm0
  *
- *  Commands used to generate continous pulses of 50KHz at the B1 IO pin are
- *  given below. They are also packed in configure_eca.sh and can be invoked as:
- *    ./configure_eca.sh -n 10 -o 10000 -f 0xf -c 0x88776655 -d 0x44332211
+ *  A set of commands used to generate continous pulses of 50KHz at the B1 IO
+ *  pin of SCU3 is given below as an example. Please consider that the presented
+ *  Wishbone addresses might differ!
  *
- *  Please consider that the presented Wishbone addresses might differ!
+ *  1. Commands to configure ECA, write pulse parameters and pulse production
+ *  cycle for LM32 into the shared memory:
  *
- *  set ECA rules for IO actions (10 entries):
+ *  set ECA rules for IO actions (10 entries with 10000 ns offset):
  *    saft-io-ctl tr0 -u -c -n B1 0xEEEE000000000000 0xFFFF000000000000 10000 0xf 1
  *    saft-io-ctl tr0 -u -c -n B1 0xEEEE000000000000 0xFFFF000000000000 20000 0xf 0
  *    ...
@@ -61,18 +62,28 @@
  *    	eb-write dev/wbm0 0x200A0520/4 0x88776655
  *    	eb-write dev/wbm0 0x200A0524/4 0x44332211
  *
- *  host requests to:
+ *  These commands are also packed in configure_eca.sh and can be invoked as:
+ *    ./configure_eca.sh -n 10 -o 10000 -f 0xf -c 0x88776655 -d 0x44332211
+ *
+ *  2. Host requests to LM32 that instruct the embedded soft CPU to get
+ *  the pulse parameters and production cycle from a shared memory:
+ *
  *  - show actual pulse parameters
  *    	eb-write dev/wbm0 0x808/4 1
  *  - load pulse parameters from shared RAM
  *    	eb-write dev/wbm0 0x808/4 2
  *  - load production cycle from shared RAM
  *    	eb-write dev/wbm0 0x808/4 3
+ *  - show actual pulse parameters again for verification (optional)
+ *  	eb-write dev/wbm0 0x808/4 1
  *
- *  inject timing message for eCPU action (start pulse generation):
- *    saft-ctl -p tr0 inject 0x8484114455667788 100000000 0
- *  inject timing message for eCPU action (stop pulse generation):
- *    saft-ctl -p tr0 inject 0x8484994455667788 0 0
+ *  3. A target timing receiver is now ready to generate pulses at its output.
+ *  Users need to inject timing messages to start and stop pulse generation:
+ *
+ *  - start pulse generation:
+ *    	saft-ctl -p tr0 inject 0x8484114455667788 100000000 0
+ *  - stop pulse generation:
+ *    	saft-ctl -p tr0 inject 0x8484994455667788 0 0
  *
  * -----------------------------------------------------------------------------
  * License Agreement for this software:
