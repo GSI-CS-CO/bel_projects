@@ -77,7 +77,6 @@ end io_control;
 architecture rtl of io_control is
   -- Signals and registers
   signal r_legacy_mode                    : std_logic                     := '0';
-  signal r_gated_mode                     : std_logic                     := '0';
   signal r_ack                            : std_logic                     := '0';
   signal r_ack_delay                      : std_logic                     := '0';
   signal r_ack_delay_out                  : std_logic                     := '0';
@@ -102,8 +101,8 @@ architecture rtl of io_control is
   signal r_lvds_mux                       : std_logic_vector(63 downto 0) := (others => '0');
   signal r_gpio_pps_mux                   : std_logic_vector(63 downto 0) := (others => '0');
   signal r_lvds_pps_mux                   : std_logic_vector(63 downto 0) := (others => '0');
-  signal r_gpio_in_gate                   : std_logic_vector(63 downto 0) := (others => '0');
-  signal r_lvds_in_gate                   : std_logic_vector(63 downto 0) := (others => '0');
+  signal r_gpio_in_gate                   : std_logic_vector(63 downto 0) := (others => '1');
+  signal r_lvds_in_gate                   : std_logic_vector(63 downto 0) := (others => '1');
   signal r_gpio_sel                       : std_logic_vector(63 downto 0) := (others => '0');
   signal r_lvds_sel                       : std_logic_vector(63 downto 0) := (others => '0');
   signal r_gpio_drive                     : std_logic_vector(63 downto 0) := (others => '0');
@@ -296,11 +295,11 @@ begin
   lvds_sel_o                                                    <= r_lvds_sel(f_sub1(c_lvds_outputs)      downto 0) when r_legacy_mode='0' else (others => '0');
   gpio_output_o                                                 <= r_gpio_drive(gpio_output_o'range)                when r_legacy_mode='0' else (others => '0');
   lvds_output_o                                                 <= r_lvds_drive(lvds_output_o'range)                when r_legacy_mode='0' else (others => (others => '0'));
-  gpio_in_gate_o                                                <= r_gpio_in_gate(f_sub1(c_gpio_inputs)   downto 0) when r_gated_mode='1'  else (others => '1');
-  lvds_in_gate_o                                                <= r_lvds_in_gate(f_sub1(c_lvds_inputs)   downto 0) when r_gated_mode='1'  else (others => '1');
+  gpio_in_gate_o                                                <= r_gpio_in_gate(f_sub1(c_gpio_inputs)   downto 0) when r_legacy_mode='0'  else (others => '1');
+  lvds_in_gate_o                                                <= r_lvds_in_gate(f_sub1(c_lvds_inputs)   downto 0) when r_legacy_mode='0'  else (others => '1');
 
   -- IO configuration register
-  r_io_cfg_reg <= (0 => r_legacy_mode, 1 => r_gated_mode, others => '0');
+  r_io_cfg_reg <= (0 => r_legacy_mode, others => '0');
 
   -- Version register
   r_version_reg <= std_logic_vector(to_unsigned(g_version, r_version_reg'length));
@@ -375,7 +374,6 @@ begin
           when c_gpio_oe_legacy_high_reg      => r_gpio_oe_legacy(63 downto 32) <= slave_i.dat;
           when c_lvds_oe_legacy_high_reg      => r_lvds_oe_legacy(63 downto 32) <= slave_i.dat;
           when c_io_config_reg                => r_legacy_mode                  <= slave_i.dat(0);
-                                                 r_gated_mode                   <= slave_i.dat(1);
           when c_version_reg                  => null;                          -- read only
           when c_gpio_info_reg                => null;                          -- read only
           when c_lvds_info_reg                => null;                          -- read only
