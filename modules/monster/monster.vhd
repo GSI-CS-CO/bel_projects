@@ -763,8 +763,10 @@ architecture rtl of monster is
   constant c_tlu_gpio : natural := g_gpio_inout + g_gpio_in;
   constant c_tlu_io   : natural := c_tlu_lvds + c_tlu_gpio;
 
-  signal s_eca_io   : t_gpio_array(c_eca_io-1 downto 0);
-  signal s_tlu_io   : t_gpio_array(c_tlu_io-1 downto 0);
+  signal s_eca_io            : t_gpio_array(c_eca_io-1 downto 0);
+  signal s_tlu_io            : t_gpio_array(c_tlu_io-1 downto 0);
+  signal s_tlu_gated_io      : t_gpio_array(c_tlu_io-1 downto 0);
+  signal s_tlu_gated_io_sync : t_gpio_array(c_tlu_io-1 downto 0);
 
   signal s_gpio_out          : std_logic_vector(f_sub1(c_eca_gpio) downto 0);
   signal s_gpio_src_eca      : std_logic_vector(f_sub1(c_eca_gpio) downto 0);
@@ -772,11 +774,15 @@ architecture rtl of monster is
   signal s_gpio_src_wr_pps   : std_logic_vector(f_sub1(c_eca_gpio) downto 0);
   signal s_gpio_src_butis_t0 : std_logic_vector(f_sub1(c_eca_gpio) downto 0);
 
-  signal s_gpio_mux      : std_logic_vector(f_sub1(c_eca_gpio) downto 0);
-  signal s_lvds_mux      : std_logic_vector(f_sub1(c_eca_lvds) downto 0);
-  signal s_gpio_pps_mux  : std_logic_vector(f_sub1(c_eca_gpio) downto 0);
-  signal s_lvds_pps_mux  : std_logic_vector(f_sub1(c_eca_lvds) downto 0);
-  signal s_lvds_vec_i    : t_lvds_byte_array(f_sub1(g_lvds_inout+g_lvds_in) downto 0);
+  signal s_gpio_mux          : std_logic_vector(f_sub1(c_eca_gpio) downto 0);
+  signal s_lvds_mux          : std_logic_vector(f_sub1(c_eca_lvds) downto 0);
+  signal s_gpio_pps_mux      : std_logic_vector(f_sub1(c_eca_gpio) downto 0);
+  signal s_lvds_pps_mux      : std_logic_vector(f_sub1(c_eca_lvds) downto 0);
+  signal s_gpio_in_gate      : std_logic_vector(f_sub1(c_tlu_gpio) downto 0);
+  signal s_lvds_in_gate      : std_logic_vector(f_sub1(c_tlu_lvds) downto 0);
+  signal s_gpio_in_gate_sync : std_logic_vector(f_sub1(c_tlu_gpio) downto 0);
+  signal s_lvds_in_gate_sync : std_logic_vector(f_sub1(c_tlu_lvds) downto 0);
+  signal s_lvds_vec_i        : t_lvds_byte_array(f_sub1(g_lvds_inout+g_lvds_in) downto 0);
 
   signal lvds_dat_fr_butis_t0 : t_lvds_byte_array(f_sub1(c_eca_lvds) downto 0);
   signal lvds_dat_fr_ioc      : t_lvds_byte_array(f_sub1(c_eca_lvds) downto 0);
@@ -1657,12 +1663,14 @@ end generate;
       gpio_spec_out_o => gpio_spec_out_o,
       gpio_spec_in_o  => gpio_spec_in_o,
       gpio_mux_o      => s_gpio_mux,
+      gpio_in_gate_o  => s_gpio_in_gate,
       gpio_pps_mux_o  => s_gpio_pps_mux,
       lvds_oe_o       => lvds_oen_o,
       lvds_term_o     => lvds_term_o,
       lvds_spec_out_o => lvds_spec_out_o,
       lvds_spec_in_o  => lvds_spec_in_o,
       lvds_mux_o      => s_lvds_mux,
+      lvds_in_gate_o  => s_lvds_in_gate,
       lvds_pps_mux_o  => s_lvds_pps_mux);
 
   lvds_vec_in_zero : if (g_lvds_inout + g_lvds_in = 0) generate
@@ -1786,6 +1794,8 @@ end generate;
 
    end generate;
 
+
+
    genEcaStuff : if g_en_eca generate
       tlu : wr_tlu
         generic map(
@@ -1803,8 +1813,58 @@ end generate;
           irq_master_o   => dev_msi_slave_i (c_devs_tlu),
           irq_master_i   => dev_msi_slave_o (c_devs_tlu));
 
+        -- Synchronize and relax paths
+        gpio_gated_io_sync : if c_tlu_gpio > 0 generate
+          gpio_gated_io_sync : for i in 0 to c_tlu_gpio-1 generate
+            sync_gated_gpio : gc_sync_ffs
+              port map (
+                clk_i    => clk_ref,
+                rst_n_i  => '1',
+                data_i   => s_gpio_in_gate(i),
+                synced_o => s_gpio_in_gate_sync(i));
+          end generate;
+        end generate;
 
+        lvds_gated_io_sync : if c_tlu_lvds > 0 generate
+          lvds_gated_io_sync : for i in 0 to c_tlu_lvds-1 generate
+            sync_gated_lvds : gc_sync_ffs
+              port map (
+                clk_i    => clk_ref,
+                rst_n_i  => '1',
+                data_i   => s_lvds_in_gate(i),
+                synced_o => s_lvds_in_gate_sync(i));
+          end generate;
+        end generate;
 
+          -- GPIO input to the TLU
+          gpi1_gated : if c_tlu_gpio > 0 generate
+            gpio_gated : for i in 0 to c_tlu_gpio-1 generate
+              s_tlu_gated_io(i) <= (others => gpio_i(i) and s_gpio_in_gate_sync(i));
+              bits_gated : for b in 0 to 7 generate -- 0 goes first for ECA
+                sync_gated : gc_sync_ffs
+                  port map (
+                    clk_i    => clk_ref,
+                    rst_n_i  => '1',
+                    data_i   => s_tlu_gated_io(i)(b),
+                    synced_o => s_tlu_gated_io_sync(i)(b));
+              end generate;
+            end generate;
+          end generate;
+
+          -- LVDS input to the TLU
+          lvd1_gated : if c_tlu_lvds > 0 generate
+            lvds_gated : for i in 0 to c_tlu_lvds-1 generate
+              bits_gated : for b in 0 to 7 generate -- 0 goes first for ECA
+                s_tlu_gated_io(i+c_tlu_gpio)(b) <= lvds_i(i)(7-b) and s_lvds_in_gate_sync(i);
+                  sync_gated : gc_sync_ffs
+                  port map (
+                    clk_i    => clk_ref,
+                    rst_n_i  => '1',
+                    data_i   => s_tlu_gated_io(i+c_tlu_gpio)(b),
+                    synced_o => s_tlu_gated_io_sync(i+c_tlu_gpio)(b));
+              end generate;
+            end generate;
+          end generate;
 
       ecawb : eca_wb_event
         port map(
@@ -1830,7 +1890,7 @@ end generate;
           a_clk_i    => clk_ref,
           a_rst_n_i  => rstn_ref,
           a_time_i   => s_time,
-          a_gpio_i   => s_tlu_io,
+          a_gpio_i   => s_tlu_gated_io,
           a_stream_o => s_stream_i(1),
           a_stall_i  => s_stall_o(1));
 

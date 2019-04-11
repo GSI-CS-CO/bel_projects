@@ -63,13 +63,15 @@ entity io_control is
     gpio_mux_o      : out std_logic_vector(f_sub1(g_gpio_inout+g_gpio_out)  downto 0);
     gpio_pps_mux_o  : out std_logic_vector(f_sub1(g_gpio_inout+g_gpio_out)  downto 0);
     gpio_sel_o      : out std_logic_vector(f_sub1(g_gpio_inout+g_gpio_out)  downto 0);
+    gpio_in_gate_o  : out std_logic_vector(f_sub1(g_gpio_inout+g_gpio_in)   downto 0);
     lvds_oe_o       : out std_logic_vector(f_sub1(g_lvds_inout+g_lvds_out)  downto 0);
     lvds_term_o     : out std_logic_vector(f_sub1(g_lvds_inout+g_lvds_in)   downto 0);
     lvds_spec_out_o : out std_logic_vector(f_sub1(g_lvds_inout+g_lvds_out)  downto 0);
     lvds_spec_in_o  : out std_logic_vector(f_sub1(g_lvds_inout+g_lvds_in)   downto 0);
     lvds_mux_o      : out std_logic_vector(f_sub1(g_lvds_inout+g_lvds_out)  downto 0);
     lvds_pps_mux_o  : out std_logic_vector(f_sub1(g_lvds_inout+g_lvds_out)  downto 0);
-    lvds_sel_o      : out std_logic_vector(f_sub1(g_lvds_inout+g_lvds_out)  downto 0));
+    lvds_sel_o      : out std_logic_vector(f_sub1(g_lvds_inout+g_lvds_out)  downto 0);
+    lvds_in_gate_o  : out std_logic_vector(f_sub1(g_lvds_inout+g_lvds_in)   downto 0));
 end io_control;
 
 architecture rtl of io_control is
@@ -99,6 +101,8 @@ architecture rtl of io_control is
   signal r_lvds_mux                       : std_logic_vector(63 downto 0) := (others => '0');
   signal r_gpio_pps_mux                   : std_logic_vector(63 downto 0) := (others => '0');
   signal r_lvds_pps_mux                   : std_logic_vector(63 downto 0) := (others => '0');
+  signal r_gpio_in_gate                   : std_logic_vector(63 downto 0) := (others => '1');
+  signal r_lvds_in_gate                   : std_logic_vector(63 downto 0) := (others => '1');
   signal r_gpio_sel                       : std_logic_vector(63 downto 0) := (others => '0');
   signal r_lvds_sel                       : std_logic_vector(63 downto 0) := (others => '0');
   signal r_gpio_drive                     : std_logic_vector(63 downto 0) := (others => '0');
@@ -196,6 +200,16 @@ architecture rtl of io_control is
   constant c_lvds_pps_mux_set_high_reg    : std_logic_vector (13 downto 0) := "00001111000001"; -- 0x0f04
   constant c_lvds_pps_mux_reset_low_reg   : std_logic_vector (13 downto 0) := "00001111000010"; -- 0x0f08
   constant c_lvds_pps_mux_reset_high_reg  : std_logic_vector (13 downto 0) := "00001111000011"; -- 0x0f0c
+  -- GPIO IN GATE
+  constant c_gpio_in_gate_set_low_reg     : std_logic_vector (13 downto 0) := "00010000000000"; -- 0x1000
+  constant c_gpio_in_gate_set_high_reg    : std_logic_vector (13 downto 0) := "00010000000001"; -- 0x1004
+  constant c_gpio_in_gate_reset_low_reg   : std_logic_vector (13 downto 0) := "00010000000010"; -- 0x1008
+  constant c_gpio_in_gate_reset_high_reg  : std_logic_vector (13 downto 0) := "00010000000011"; -- 0x100c
+  -- LVDS IN GATE
+  constant c_lvds_in_gate_set_low_reg     : std_logic_vector (13 downto 0) := "00100000000000"; -- 0x2000
+  constant c_lvds_in_gate_set_high_reg    : std_logic_vector (13 downto 0) := "00100000000001"; -- 0x2004
+  constant c_lvds_in_gate_reset_low_reg   : std_logic_vector (13 downto 0) := "00100000000010"; -- 0x2008
+  constant c_lvds_in_gate_reset_high_reg  : std_logic_vector (13 downto 0) := "00100000000011"; -- 0x200c
   -- GPIO registers addresses for set status/value
   constant c_set_gpio_out_begin_reg       : std_logic_vector (13 downto 0) := "10100000000000"; -- 0xannn ...
   constant c_set_gpio_out_offset_reg      : std_logic_vector (13 downto 0) := std_logic_vector(to_unsigned((f_sub1(g_gpio_out+g_gpio_inout)), c_set_gpio_out_begin_reg'length));
@@ -281,6 +295,8 @@ begin
   lvds_sel_o                                                    <= r_lvds_sel(f_sub1(c_lvds_outputs)      downto 0) when r_legacy_mode='0' else (others => '0');
   gpio_output_o                                                 <= r_gpio_drive(gpio_output_o'range)                when r_legacy_mode='0' else (others => '0');
   lvds_output_o                                                 <= r_lvds_drive(lvds_output_o'range)                when r_legacy_mode='0' else (others => (others => '0'));
+  gpio_in_gate_o                                                <= r_gpio_in_gate(f_sub1(c_gpio_inputs)   downto 0) when r_legacy_mode='0'  else (others => '1');
+  lvds_in_gate_o                                                <= r_lvds_in_gate(f_sub1(c_lvds_inputs)   downto 0) when r_legacy_mode='0'  else (others => '1');
 
   -- IO configuration register
   r_io_cfg_reg <= (0 => r_legacy_mode, others => '0');
@@ -418,6 +434,14 @@ begin
           when c_lvds_pps_mux_set_high_reg    => r_lvds_pps_mux(63 downto 32)   <= r_lvds_pps_mux(63 downto 32) or slave_i.dat;
           when c_lvds_pps_mux_reset_low_reg   => r_lvds_pps_mux(31 downto  0)   <= r_lvds_pps_mux(31 downto  0) and not(slave_i.dat);
           when c_lvds_pps_mux_reset_high_reg  => r_lvds_pps_mux(63 downto 32)   <= r_lvds_pps_mux(63 downto 32) and not(slave_i.dat);
+          when c_gpio_in_gate_set_low_reg     => r_gpio_in_gate(31 downto  0)   <= r_gpio_in_gate(31 downto  0) or slave_i.dat;
+          when c_gpio_in_gate_set_high_reg    => r_gpio_in_gate(63 downto 32)   <= r_gpio_in_gate(63 downto 32) or slave_i.dat;
+          when c_gpio_in_gate_reset_low_reg   => r_gpio_in_gate(31 downto  0)   <= r_gpio_in_gate(31 downto  0) and not(slave_i.dat);
+          when c_gpio_in_gate_reset_high_reg  => r_gpio_in_gate(63 downto 32)   <= r_gpio_in_gate(63 downto 32) and not(slave_i.dat);
+          when c_lvds_in_gate_set_low_reg     => r_lvds_in_gate(31 downto  0)   <= r_lvds_in_gate(31 downto  0) or slave_i.dat;
+          when c_lvds_in_gate_set_high_reg    => r_lvds_in_gate(63 downto 32)   <= r_lvds_in_gate(63 downto 32) or slave_i.dat;
+          when c_lvds_in_gate_reset_low_reg   => r_lvds_in_gate(31 downto  0)   <= r_lvds_in_gate(31 downto  0) and not(slave_i.dat);
+          when c_lvds_in_gate_reset_high_reg  => r_lvds_in_gate(63 downto 32)   <= r_lvds_in_gate(63 downto 32) and not(slave_i.dat);
           when others =>
             -- Set driven GPIO OUT values
             if (slave_i.adr(15 downto 2) >= c_set_gpio_out_begin_reg and slave_i.adr(15 downto 2) <= c_set_gpio_out_end_reg) then
@@ -512,6 +536,14 @@ begin
           when c_lvds_pps_mux_set_high_reg    => r_dat <= r_lvds_pps_mux(63 downto 32);
           when c_lvds_pps_mux_reset_low_reg   => r_dat <= r_lvds_pps_mux(31 downto  0);
           when c_lvds_pps_mux_reset_high_reg  => r_dat <= r_lvds_pps_mux(63 downto 32);
+          when c_gpio_in_gate_set_low_reg     => r_dat <= r_gpio_in_gate(31 downto  0);
+          when c_gpio_in_gate_set_high_reg    => r_dat <= r_gpio_in_gate(63 downto 32);
+          when c_gpio_in_gate_reset_low_reg   => r_dat <= r_gpio_in_gate(31 downto  0);
+          when c_gpio_in_gate_reset_high_reg  => r_dat <= r_gpio_in_gate(63 downto 32);
+          when c_lvds_in_gate_set_low_reg     => r_dat <= r_lvds_in_gate(31 downto  0);
+          when c_lvds_in_gate_set_high_reg    => r_dat <= r_lvds_in_gate(63 downto 32);
+          when c_lvds_in_gate_reset_low_reg   => r_dat <= r_lvds_in_gate(31 downto  0);
+          when c_lvds_in_gate_reset_high_reg  => r_dat <= r_lvds_in_gate(63 downto 32);
         when others =>
           -- Get driven GPIO OUT values
           if (slave_i.adr(15 downto 2) >= c_set_gpio_out_begin_reg and slave_i.adr(15 downto 2) <= c_set_gpio_out_end_reg) then
