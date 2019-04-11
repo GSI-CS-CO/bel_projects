@@ -175,15 +175,15 @@ typedef volatile struct
     *  @brief Bit [15:12] slot number, shall be initialized by software,
     *         will used for the DAQ-Descriptor-Word.
     */
-   uint16_t slot:                  4;
-   uint16_t __unused__:            4; //!< @brief Bit [11:8] till now unused.
+   DAQ_REGISTER_T slot:        4;
+   DAQ_REGISTER_T __unused__:  4; //!< @brief Bit [11:8] till now unused.
    __DAQ_BF_CONTROL_REGISTER_BITS
 #else
    #error Big endian is requested for this bit- field structure!
 #endif
 } DAQ_CTRL_REG_T;
 #ifndef __DOXYGEN__
-STATIC_ASSERT( sizeof(DAQ_CTRL_REG_T) == sizeof(uint16_t) );
+STATIC_ASSERT( sizeof(DAQ_CTRL_REG_T) == sizeof(DAQ_REGISTER_T) );
 #endif
 
 /*! ---------------------------------------------------------------------------
@@ -194,13 +194,15 @@ STATIC_ASSERT( sizeof(DAQ_CTRL_REG_T) == sizeof(uint16_t) );
 typedef volatile struct
 {
 #if (__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__) || defined(__DOXYGEN__)
-   uint16_t version:     7; //!< @brief Version number of DAQ macro.
-   uint16_t fifoWords:   9; //!< @brief Remaining data words in PmDat Fifo
+   DAQ_REGISTER_T version:     7; //!<@brief Version number of DAQ macro.
+   DAQ_REGISTER_T fifoWords:   9; //!<@brief Remaining data words in PmDat Fifo
 #else
    #error Big endian is requested for this bit- field structure!
 #endif
 } DAQ_DAQ_FIFO_WORDS_T;
-STATIC_ASSERT( sizeof(DAQ_DAQ_FIFO_WORDS_T) == sizeof(uint16_t) );
+#ifndef __DOXYGEN__
+STATIC_ASSERT( sizeof(DAQ_DAQ_FIFO_WORDS_T) == sizeof(DAQ_REGISTER_T) );
+#endif
 
 /*! ---------------------------------------------------------------------------
  * @ingroup DAQ_CHANNEL DAQ_DEVICE
@@ -210,21 +212,22 @@ STATIC_ASSERT( sizeof(DAQ_DAQ_FIFO_WORDS_T) == sizeof(uint16_t) );
 typedef volatile struct
 {
 #if (__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__) || defined(__DOXYGEN__)
-   uint16_t maxChannels: 6; //!< @brief Maximum number of used channels
-   uint16_t fifoWords:  10; //!< @brief Remaining data words in PmDat Fifo
+   DAQ_REGISTER_T maxChannels: 6; //!< @brief Maximum number of used channels
+   DAQ_REGISTER_T fifoWords:  10; //!< @brief Remaining data words in PmDat Fifo
 #else
    #error Big endian is requested for this bit- field structure!
 #endif
 } DAQ_PM_FIFO_WORDS_T;
-STATIC_ASSERT( sizeof(DAQ_PM_FIFO_WORDS_T) == sizeof(uint16_t) );
-
+#ifndef __DOXYGEN__
+STATIC_ASSERT( sizeof(DAQ_PM_FIFO_WORDS_T) == sizeof(DAQ_REGISTER_T) );
+#endif
 
 /*!
  * @brief Relative start address of the SCU registers
  *
  * Accessing to a SCU register will made as followed:
  * Absolute-register-address = SCU-bus-slave base_address + DAQ_REGISTER_OFFSET
- *                           + canal_number * sizeof(uint16_t)
+ *                           + canal_number * sizeof(DAQ_REGISTER_T)
  */
 #define DAQ_REGISTER_OFFSET 0x4000
 
@@ -240,10 +243,14 @@ struct DAQ_DATA_NAME_T
  */
 typedef volatile union
 {
-   volatile uint16_t i[(SCUBUS_SLAVE_ADDR_SPACE-DAQ_REGISTER_OFFSET)/sizeof(uint16_t)];
+   volatile DAQ_REGISTER_T
+      i[(SCUBUS_SLAVE_ADDR_SPACE-DAQ_REGISTER_OFFSET)/sizeof(DAQ_REGISTER_T)];
    //volatile struct DAQ_DATA_NAME_T s;
-} DAQ_REGISTER_T;
-STATIC_ASSERT( sizeof( DAQ_REGISTER_T ) == (SCUBUS_SLAVE_ADDR_SPACE-DAQ_REGISTER_OFFSET) );
+} DAQ_REGISTER_ACCESS_T;
+#ifndef __DOXYGEN__
+STATIC_ASSERT( sizeof( DAQ_REGISTER_ACCESS_T ) ==
+               (SCUBUS_SLAVE_ADDR_SPACE-DAQ_REGISTER_OFFSET) );
+#endif
 
 /*! ---------------------------------------------------------------------------
  * @ingroup DAQ_CHANNEL
@@ -272,7 +279,9 @@ typedef struct PACKED_SIZE
    bool restart:          1;
 
 } DAQ_CHANNEL_BF_PROPERTY_T;
+#ifndef __DOXYGEN__
 STATIC_ASSERT( sizeof( DAQ_CHANNEL_BF_PROPERTY_T ) == sizeof( uint8_t ) );
+#endif
 
 /*! ---------------------------------------------------------------------------
  * @ingroup DAQ_CHANNEL
@@ -292,7 +301,7 @@ typedef struct PACKED_SIZE
     * concerning interrupt routine a bit.
     * @see DAQ_INT_PENDING_T
     */
-   uint16_t intMask;
+   DAQ_REGISTER_T intMask;
 
    /*!
     * @brief Down counter to limit the receiving blocks in continuous mode.
@@ -363,7 +372,7 @@ typedef struct
                         //!         daqBusFindAndInitializeAll
    DAQ_CANNEL_T aChannel[DAQ_MAX_CHANNELS]; //!< @brief Array of channel objects
   // DAQ_INT_PENDING_T volatile intPending;  //!< @brief  DAQ_INT_PENDING_T
-   DAQ_REGISTER_T* volatile pReg; //!< @brief Pointer to DAQ-registers
+   DAQ_REGISTER_ACCESS_T* volatile pReg; //!< @brief Pointer to DAQ-registers
                                   //! (start of address space)
 } DAQ_DEVICE_T;
 
@@ -460,7 +469,7 @@ unsigned int daqChannelGetDaqFifoWordsSimulate( register DAQ_CANNEL_T* pThis );
  * @return Pointer to the control register.
  */
 static inline
-DAQ_REGISTER_T* volatile daqChannelGetRegPtr( register DAQ_CANNEL_T* pThis )
+DAQ_REGISTER_ACCESS_T* volatile daqChannelGetRegPtr( register DAQ_CANNEL_T* pThis )
 {
    DAQ_ASSERT( pThis->n < DAQ_MAX_CHANNELS );
    return DAQ_CHANNEL_GET_PARENT_OF( pThis )->pReg;
@@ -489,7 +498,7 @@ void* daqChannelGetScuBusSlaveBaseAddress( register DAQ_CANNEL_T* pThis )
  * @ingroup DAQ_CHANNEL
  * @brief Macro makes the index for memory mapped IO of the DQQ register space
  * @note For internal use only!
- * @see DAQ_REGISTER_T
+ * @see DAQ_REGISTER_ACCESS_T
  */
 #define __DAQ_MAKE_INDEX(index) (index | pThis->n)
 
@@ -509,7 +518,7 @@ void* daqChannelGetScuBusSlaveBaseAddress( register DAQ_CANNEL_T* pThis )
  */
 #if defined( CONFIG_DAQ_PEDANTIC_CHECK ) || defined(__DOXYGEN__)
   #define __DAQ_VERIFY_CHANNEL_REG_ACCESS( index ) \
-      DAQ_ASSERT( __DAQ_MAKE_INDEX(index) < sizeof(DAQ_REGISTER_T) )
+      DAQ_ASSERT( __DAQ_MAKE_INDEX(index) < sizeof(DAQ_REGISTER_ACCESS_T) )
 #else
   #define __DAQ_VERIFY_CHANNEL_REG_ACCESS( index )
 #endif
@@ -987,7 +996,7 @@ bool daqChannelGetTriggerSourceHighRes( register DAQ_CANNEL_T* pThis )
  * @return least significant wort of bus tag event condition
  */
 static inline
-uint16_t daqChannelGetTriggerConditionLW( register DAQ_CANNEL_T* pThis )
+DAQ_REGISTER_T daqChannelGetTriggerConditionLW( register DAQ_CANNEL_T* pThis )
 {
    DAQ_ASSERT( pThis != NULL );
    __DAQ_VERIFY_CHANNEL_REG_ACCESS(TRIG_LW);
@@ -1004,7 +1013,7 @@ uint16_t daqChannelGetTriggerConditionLW( register DAQ_CANNEL_T* pThis )
  */
 static inline
 void daqChannelSetTriggerConditionLW( register DAQ_CANNEL_T* pThis,
-                                      uint16_t value )
+                                      DAQ_REGISTER_T value )
 {
    DAQ_ASSERT( pThis != NULL );
    __DAQ_VERIFY_CHANNEL_REG_ACCESS(TRIG_LW);
@@ -1020,7 +1029,7 @@ void daqChannelSetTriggerConditionLW( register DAQ_CANNEL_T* pThis,
  * @return most significant wort of bus tag event condition
  */
 static inline
-uint16_t daqChannelGetTriggerConditionHW( register DAQ_CANNEL_T* pThis )
+DAQ_REGISTER_T daqChannelGetTriggerConditionHW( register DAQ_CANNEL_T* pThis )
 {
    DAQ_ASSERT( pThis != NULL );
    __DAQ_VERIFY_CHANNEL_REG_ACCESS( TRIG_HW );
@@ -1037,7 +1046,7 @@ uint16_t daqChannelGetTriggerConditionHW( register DAQ_CANNEL_T* pThis )
  */
 static inline
 void daqChannelSetTriggerConditionHW( register DAQ_CANNEL_T* pThis,
-                                      uint16_t value )
+                                      DAQ_REGISTER_T value )
 {
    DAQ_ASSERT( pThis != NULL );
    __DAQ_VERIFY_CHANNEL_REG_ACCESS( TRIG_HW );
@@ -1052,7 +1061,7 @@ void daqChannelSetTriggerConditionHW( register DAQ_CANNEL_T* pThis,
  * @return trigger delay
  */
 static inline
-uint16_t daqChannelGetTriggerDelay( register DAQ_CANNEL_T* pThis )
+DAQ_REGISTER_T daqChannelGetTriggerDelay( register DAQ_CANNEL_T* pThis )
 {
    DAQ_ASSERT( pThis != NULL );
    __DAQ_VERIFY_CHANNEL_REG_ACCESS( TRIG_DLY );
@@ -1067,7 +1076,8 @@ uint16_t daqChannelGetTriggerDelay( register DAQ_CANNEL_T* pThis )
  * @param value trigger delay
  */
 static inline
-void daqChannelSetTriggerDelay( register DAQ_CANNEL_T* pThis, uint16_t value )
+void daqChannelSetTriggerDelay( register DAQ_CANNEL_T* pThis,
+                                DAQ_REGISTER_T value )
 {
    DAQ_ASSERT( pThis != NULL );
    __DAQ_VERIFY_CHANNEL_REG_ACCESS( TRIG_DLY );
@@ -1872,7 +1882,7 @@ void daqBusReset( register DAQ_BUS_T* pThis );
 #endif
 
 /*======================== DAQ- Descriptor functions ========================*/
-/*! --------------------------------------------------------------------------
+/*! ---------------------------------------------------------------------------
  * @ingroup DAQ_CHANNEL DAQ_DEVICE
  * @brief Prints the information of the device descriptor.
  * @note This function becomes implemented only if the compiler switch
@@ -1897,16 +1907,21 @@ void daqBusReset( register DAQ_BUS_T* pThis );
  * @param pChannel Pointer to the concerning channel object which causes
  *                 this descriptor.
  */
-#define DAQ_DESCRIPTOR_VERIFY_MY( pThis, pChannel ) \
-{ \
-   DAQ_ASSERT( daqDescriptorGetSlot( pThis ) == daqChannelGetSlot( pChannel ) ); \
-   DAQ_ASSERT( daqDescriptorGetChannel( pThis ) == daqChannelGetNumber( pChannel ) ); \
-   DAQ_ASSERT( daqDescriptorGetTriggerConditionLW( pThis ) == daqChannelGetTriggerConditionLW( pChannel ) ); \
-   DAQ_ASSERT( daqDescriptorGetTriggerConditionHW( pThis ) == daqChannelGetTriggerConditionHW( pChannel ) ); \
-   DAQ_ASSERT( daqDescriptorGetTriggerDelay( pThis ) == daqChannelGetTriggerDelay( pChannel ) ); \
-}
+   #define DAQ_DESCRIPTOR_VERIFY_MY( pThis, pChannel )                        \
+   {                                                                          \
+      DAQ_ASSERT( daqDescriptorGetSlot( pThis ) ==                            \
+                  daqChannelGetSlot( pChannel ) );                            \
+      DAQ_ASSERT( daqDescriptorGetChannel( pThis ) ==                         \
+                  daqChannelGetNumber( pChannel ) );                          \
+      DAQ_ASSERT( daqDescriptorGetTriggerConditionLW( pThis ) ==              \
+                  daqChannelGetTriggerConditionLW( pChannel ) );              \
+      DAQ_ASSERT( daqDescriptorGetTriggerConditionHW( pThis ) ==              \
+                  daqChannelGetTriggerConditionHW( pChannel ) );              \
+      DAQ_ASSERT( daqDescriptorGetTriggerDelay( pThis ) ==                    \
+                  daqChannelGetTriggerDelay( pChannel ) );                    \
+   }
 #else
- #define DAQ_DESCRIPTOR_VERIFY_MY( pThis, pChannel ) (void)0
+   #define DAQ_DESCRIPTOR_VERIFY_MY( pThis, pChannel ) (void)0
 #endif // / if defined( CONFIG_DAQ_PEDANTIC_CHECK ) || defined(__DOXYGEN__)
 
 #ifdef __cplusplus

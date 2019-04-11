@@ -30,6 +30,9 @@ ifndef CPP
   $(error No C-PreProcessor defined in variable CPP !)
 endif
 
+DEFINES += CONFIG_GSI
+DEFINES += CONFIG_GSI_FE
+
 ifndef NO_COLORED
    ESC_FG_CYAN    := "\\e[36m"
    ESC_FG_MAGNETA := "\\e[35m"

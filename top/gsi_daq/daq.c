@@ -51,10 +51,10 @@ const char* g_pNo  = "no";
  * @param channel Channel number.
  * @param value Value for writing into register.
  */
-static inline void daqChannelSetReg( DAQ_REGISTER_T* volatile pReg,
+static inline void daqChannelSetReg( DAQ_REGISTER_ACCESS_T* volatile pReg,
                                      const DAQ_REGISTER_INDEX_T index,
                                      const unsigned int channel,
-                                     const uint16_t value )
+                                     const DAQ_REGISTER_T value )
 {
    DAQ_ASSERT( channel < DAQ_MAX_CHANNELS );
    DAQ_ASSERT( (index & 0x0F) == 0x00 );
@@ -68,9 +68,10 @@ static inline void daqChannelSetReg( DAQ_REGISTER_T* volatile pReg,
  * @param channel Channel number.
  * @return Register value.
  */
-static inline uint16_t daqChannelGetReg( DAQ_REGISTER_T* volatile pReg,
-                                         const DAQ_REGISTER_INDEX_T index,
-                                         const unsigned int channel )
+static inline
+DAQ_REGISTER_T daqChannelGetReg( DAQ_REGISTER_ACCESS_T* volatile pReg,
+                                 const DAQ_REGISTER_INDEX_T index,
+                                 const unsigned int channel )
 {
    DAQ_ASSERT( channel < DAQ_MAX_CHANNELS );
    DAQ_ASSERT( (index & 0x0F) == 0x00 );
@@ -433,10 +434,11 @@ inline static int daqDeviceFindChannels( DAQ_DEVICE_T* pThis, int slot )
    DAQ_ASSERT( pThis != NULL );
    DAQ_ASSERT( pThis->pReg != NULL );
 
-   for( unsigned int channel = 0; channel < ARRAY_SIZE(pThis->aChannel); channel++ )
+   for( unsigned int channel = 0; channel < ARRAY_SIZE(pThis->aChannel);
+       channel++ )
    {
       DBPRINT2( "DBG: Slot: %02d, Channel: %02d, ctrlReg: 0x%04x\n",
-                slot, channel, daqChannelGetReg( pThis->pReg, CtrlReg, channel ));
+             slot, channel, daqChannelGetReg( pThis->pReg, CtrlReg, channel ));
 
       DAQ_CANNEL_T* pCurrentChannel = &pThis->aChannel[channel];
       pCurrentChannel->n = channel;
@@ -451,7 +453,7 @@ inline static int daqDeviceFindChannels( DAQ_DEVICE_T* pThis, int slot )
        * In the case of a warm start, clearing eventually old values
        * in the entire control register.
        */
-      *((uint16_t*)daqChannelGetCtrlRegPtr( pCurrentChannel )) = 0;
+      *((DAQ_REGISTER_T*)daqChannelGetCtrlRegPtr( pCurrentChannel )) = 0;
 
       /*
        * The next three lines probes the channel by writing and read back
@@ -465,13 +467,16 @@ inline static int daqDeviceFindChannels( DAQ_DEVICE_T* pThis, int slot )
        * Fortunately the highest slot number is 0xC (12). Therefore no further
        * probing is necessary.
        */
-      DBPRINT2( "DBG: ctrReg: 0x%04x\n", *((uint16_t*)daqChannelGetCtrlRegPtr( pCurrentChannel )) );
+      DBPRINT2( "DBG: ctrReg: 0x%04x\n",
+              *((DAQ_REGISTER_T*)daqChannelGetCtrlRegPtr( pCurrentChannel )) );
       daqChannelGetCtrlRegPtr( pCurrentChannel )->slot = slot;
-      DBPRINT2( "DBG: ctrReg: 0x%04x\n", *((uint16_t*)daqChannelGetCtrlRegPtr( pCurrentChannel )) );
+      DBPRINT2( "DBG: ctrReg: 0x%04x\n",
+              *((DAQ_REGISTER_T*)daqChannelGetCtrlRegPtr( pCurrentChannel )) );
       if( daqChannelGetSlot( pCurrentChannel ) != slot )
          break; /* Supposing this channel isn't present. */
 
-      DAQ_ASSERT( (*((uint16_t*)daqChannelGetCtrlRegPtr( pCurrentChannel )) & 0x0FFF) == 0 );
+      DAQ_ASSERT((*((DAQ_REGISTER_T*)daqChannelGetCtrlRegPtr(
+                                           pCurrentChannel )) & 0x0FFF) == 0 );
       /* If the assertion above has been occurred, check the element types
        * of the structure DAQ_CTRL_REG_T.
        * At least one element type has to be greater or equal like uint16_t.

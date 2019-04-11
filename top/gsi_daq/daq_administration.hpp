@@ -77,12 +77,17 @@ public:
    int sendDisableContinue( void );
    int sendDisablePmHires( const bool restart = false );
 
+   bool descriptorWasPostMortem( void );
+   bool descriptorWasHighResolution( void );
+   bool descriptorWasContinuous( void );
+
    int sendTriggerCondition( const uint32_t trgCondition );
    uint32_t receiveTriggerCondition( void );
    uint32_t descriptorGetTriggerCondition( void );
 
    int sendTriggerDelay( const uint16_t delay );
    uint16_t receiveTriggerDelay( void );
+   uint16_t descriptorGetTriggerDelay( void );
 
    int sendTriggerMode( bool mode );
    bool receiveTriggerMode( void );
@@ -93,6 +98,11 @@ public:
    int sendTriggerSourceHiRes( bool extInput );
    bool receiveTriggerSourceHiRes( void );
 
+   uint8_t descriptorGetSequence( void );
+   uint8_t descriptorGetCrc( void );
+
+   uint64_t descriptorGetTimeStamp( void );
+   unsigned int descriptorGetTimeBase( void );
 
 protected:
    virtual bool onDataBlock( DAQ_DATA_T* pData, std::size_t wordLen ) = 0;
@@ -189,9 +199,7 @@ public:
    int sendTriggerSourceHiRes( const unsigned int channel, bool extInput );
    bool receiveTriggerSourceHiRes( const unsigned int channel );
 
-
    DaqChannel* getChannel( const unsigned int number );
-
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -277,10 +285,22 @@ public:
       return ::daqDescriptorGetCRC( m_poCurrentDescriptor );
    }
 
-   bool descriptorWasPM( void )
+   bool descriptorWasPostMortem( void )
    {
       SCU_ASSERT( m_poCurrentDescriptor != nullptr );
       return ::daqDescriptorWasPM( m_poCurrentDescriptor );
+   }
+
+   bool descriptorWasHighResolution( void )
+   {
+      SCU_ASSERT( m_poCurrentDescriptor != nullptr );
+      return ::daqDescriptorWasHiRes( m_poCurrentDescriptor );
+   }
+
+   bool descriptorWasContinuous( void )
+   {
+      SCU_ASSERT( m_poCurrentDescriptor != nullptr );
+      return ::daqDescriptorWasDaq( m_poCurrentDescriptor );
    }
 
    uint64_t descriptorGetTimeStamp( void )
@@ -512,6 +532,8 @@ inline int DaqChannel::sendTriggerCondition( const uint32_t trgCondition )
    return getParent()->sendTriggerCondition( m_number, trgCondition );
 }
 
+/*! ---------------------------------------------------------------------------
+ */
 inline uint32_t DaqChannel::descriptorGetTriggerCondition( void )
 {
    return getParent()->getParent()->descriptorGetTriggerCondition();
@@ -536,6 +558,13 @@ inline int DaqChannel::sendTriggerDelay( const uint16_t delay )
 inline uint16_t DaqChannel::receiveTriggerDelay( void )
 {
    return getParent()->receiveTriggerDelay( m_number );
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+inline uint16_t DaqChannel::descriptorGetTriggerDelay( void )
+{
+   return getParent()->getParent()->descriptorGetTriggerDelay();
 }
 
 /*! ---------------------------------------------------------------------------
@@ -580,7 +609,54 @@ inline bool DaqChannel::receiveTriggerSourceHiRes( void )
    return getParent()->receiveTriggerSourceHiRes( m_number );
 }
 
+/*! ---------------------------------------------------------------------------
+ */
+inline bool DaqChannel::descriptorWasPostMortem( void )
+{
+   return getParent()->getParent()->descriptorWasPostMortem();
+}
 
+/*! ---------------------------------------------------------------------------
+ */
+inline bool DaqChannel::descriptorWasHighResolution( void )
+{
+   return getParent()->getParent()->descriptorWasHighResolution();
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+inline bool DaqChannel::descriptorWasContinuous( void )
+{
+   return getParent()->getParent()->descriptorWasContinuous();
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+inline uint8_t DaqChannel::descriptorGetSequence( void )
+{
+   return getParent()->getParent()->descriptorGetSequence();
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+inline uint8_t DaqChannel::descriptorGetCrc( void )
+{
+   return getParent()->getParent()->descriptorGetCrc();
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+inline uint64_t DaqChannel::descriptorGetTimeStamp( void )
+{
+   return getParent()->getParent()->descriptorGetTimeStamp();
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+inline unsigned int DaqChannel::descriptorGetTimeBase( void )
+{
+   return getParent()->getParent()->descriptorGetTimeBase();
+}
 
 } //namespace daq
 

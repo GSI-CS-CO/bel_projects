@@ -34,8 +34,12 @@ volatile DAQ_SHARED_IO_T SHARED g_shared = DAQ_SHARAD_MEM_INITIALIZER;
 /*!!!!!!!!!!!!!!!!!!!!!!! End of shared memory area !!!!!!!!!!!!!!!!!!!!!!!!!*/
 #endif /* CONFIG_DAQ_SINGLE_APP */
 
-typedef int32_t (*DAQ_OPERATION_FT)( DAQ_ADMIN_T* pDaqAdmin,
-                                     volatile DAQ_OPERATION_IO_T* );
+/*!
+ * @brief Definition of the function type for all functions which becomes
+ *        invoked by the Linux host beginning with the prefix "op".
+ */
+typedef DAQ_RETURN_CODE_T (*DAQ_OPERATION_FT)( DAQ_ADMIN_T* pDaqAdmin,
+                                               volatile DAQ_OPERATION_IO_T* );
 
 /*! ---------------------------------------------------------------------------
  * @ingroup DAQ_INTERFACE
@@ -65,9 +69,9 @@ static void printFunctionName( const char* str )
              g_shared.operation.ioData.location.channel
            );
 }
-  #define FUNCTION_INFO() printFunctionName( __func__ )
+  #define DBG_FUNCTION_INFO() printFunctionName( __func__ )
 #else
-  #define FUNCTION_INFO()
+  #define DBG_FUNCTION_INFO()
 #endif
 
 /*! ---------------------------------------------------------------------------
@@ -81,7 +85,7 @@ int initBuffer( RAM_SCU_T* poRam )
 /*! ---------------------------------------------------------------------------
  * @brief Checking whether the selected DAQ device is present.
  */
-static int
+static DAQ_RETURN_CODE_T
 verifyDeviceAccess( DAQ_BUS_T* pDaqBus,
                     volatile DAQ_CHANNEL_LOCATION_T* pLocation )
 {
@@ -103,11 +107,11 @@ verifyDeviceAccess( DAQ_BUS_T* pDaqBus,
 /*! ---------------------------------------------------------------------------
  * @brief Checking whether the selected DAQ device and channel is present.
  */
-static int
+static DAQ_RETURN_CODE_T
 verifyChannelAccess( DAQ_BUS_T* pDaqBus,
                      volatile DAQ_CHANNEL_LOCATION_T* pLocation )
 {
-   int ret = verifyDeviceAccess( pDaqBus, pLocation );
+   DAQ_RETURN_CODE_T ret = verifyDeviceAccess( pDaqBus, pLocation );
    if( ret != DAQ_RET_OK )
       return ret;
 
@@ -136,9 +140,10 @@ verifyChannelAccess( DAQ_BUS_T* pDaqBus,
  * @see executeIfRequested
  */
 static
-int32_t opLock( DAQ_ADMIN_T* pDaqAdmin, volatile DAQ_OPERATION_IO_T* pData )
+DAQ_RETURN_CODE_T opLock( DAQ_ADMIN_T* pDaqAdmin,
+                          volatile DAQ_OPERATION_IO_T* pData )
 {
-   FUNCTION_INFO();
+   DBG_FUNCTION_INFO();
    g_shared.ramIndexes.ramAccessLock = true;
    return DAQ_RET_OK;
 }
@@ -148,9 +153,10 @@ int32_t opLock( DAQ_ADMIN_T* pDaqAdmin, volatile DAQ_OPERATION_IO_T* pData )
  * @see executeIfRequested
  */
 static
-int32_t opReset( DAQ_ADMIN_T* pDaqAdmin, volatile DAQ_OPERATION_IO_T* pData )
+DAQ_RETURN_CODE_T opReset( DAQ_ADMIN_T* pDaqAdmin,
+                           volatile DAQ_OPERATION_IO_T* pData )
 {
-   FUNCTION_INFO();
+   DBG_FUNCTION_INFO();
    daqBusReset( &pDaqAdmin->oDaqDevs );
    ramRingReset( &pDaqAdmin->oRam.pSharedObj->ringIndexes );
    g_shared.ramIndexes.ramAccessLock = false;
@@ -163,11 +169,12 @@ int32_t opReset( DAQ_ADMIN_T* pDaqAdmin, volatile DAQ_OPERATION_IO_T* pData )
  * @see executeIfRequested
  */
 static
-int32_t opGetMacroVersion( DAQ_ADMIN_T* pDaqAdmin,
-                           volatile DAQ_OPERATION_IO_T* pData )
+DAQ_RETURN_CODE_T opGetMacroVersion( DAQ_ADMIN_T* pDaqAdmin,
+                                     volatile DAQ_OPERATION_IO_T* pData )
 {
-   FUNCTION_INFO();
-   int ret = verifyDeviceAccess( &pDaqAdmin->oDaqDevs, &pData->location );
+   DBG_FUNCTION_INFO();
+   DAQ_RETURN_CODE_T ret = verifyDeviceAccess( &pDaqAdmin->oDaqDevs,
+                                               &pData->location );
    if( ret != DAQ_RET_OK )
       return ret;
 
@@ -181,10 +188,11 @@ int32_t opGetMacroVersion( DAQ_ADMIN_T* pDaqAdmin,
  * @brief Sending of the SCU bus slot flag field back to the Linux host.
  * @see executeIfRequested
  */
-static int32_t opGetSlots( DAQ_ADMIN_T* pDaqAdmin,
-                           volatile DAQ_OPERATION_IO_T* pData )
+static
+DAQ_RETURN_CODE_T opGetSlots( DAQ_ADMIN_T* pDaqAdmin,
+                              volatile DAQ_OPERATION_IO_T* pData )
 {
-   FUNCTION_INFO();
+   DBG_FUNCTION_INFO();
    STATIC_ASSERT( sizeof( pData->param1 ) >=
                             sizeof(pDaqAdmin->oDaqDevs.slotDaqUsedFlags));
 
@@ -198,11 +206,13 @@ static int32_t opGetSlots( DAQ_ADMIN_T* pDaqAdmin,
  *        Linux host.
  * @see executeIfRequested
  */
-static int32_t opGetChannels( DAQ_ADMIN_T* pDaqAdmin,
-                              volatile DAQ_OPERATION_IO_T* pData )
+static
+DAQ_RETURN_CODE_T opGetChannels( DAQ_ADMIN_T* pDaqAdmin,
+                                 volatile DAQ_OPERATION_IO_T* pData )
 {
-   FUNCTION_INFO();
-   int ret = verifyDeviceAccess( &pDaqAdmin->oDaqDevs, &pData->location );
+   DBG_FUNCTION_INFO();
+   DAQ_RETURN_CODE_T ret = verifyDeviceAccess( &pDaqAdmin->oDaqDevs,
+                                               &pData->location );
    if( ret != DAQ_RET_OK )
       return ret;
 
@@ -216,10 +226,10 @@ static int32_t opGetChannels( DAQ_ADMIN_T* pDaqAdmin,
  * @brief Performs a rescan of the whole SCU bus for SCU devices
  * @see executeIfRequested
  */
-static int32_t opRescan( DAQ_ADMIN_T* pDaqAdmin,
-                         volatile DAQ_OPERATION_IO_T* pData )
+static DAQ_RETURN_CODE_T opRescan( DAQ_ADMIN_T* pDaqAdmin,
+                                   volatile DAQ_OPERATION_IO_T* pData )
 {
-   FUNCTION_INFO();
+   DBG_FUNCTION_INFO();
    scanScuBus( &pDaqAdmin->oDaqDevs );
    return DAQ_RET_RESCAN;
 }
@@ -240,12 +250,14 @@ DAQ_CANNEL_T* getChannel( DAQ_ADMIN_T* pDaqAdmin,
  * @brief Switching post mortem mode on.
  * @see executeIfRequested
  */
-static int32_t opPostMortemOn( DAQ_ADMIN_T* pDaqAdmin,
-                               volatile DAQ_OPERATION_IO_T* pData )
+static
+DAQ_RETURN_CODE_T opPostMortemOn( DAQ_ADMIN_T* pDaqAdmin,
+                                  volatile DAQ_OPERATION_IO_T* pData )
 {
-   FUNCTION_INFO();
+   DBG_FUNCTION_INFO();
 
-   int ret = verifyChannelAccess( &pDaqAdmin->oDaqDevs, &pData->location );
+   DAQ_RETURN_CODE_T ret = verifyChannelAccess( &pDaqAdmin->oDaqDevs,
+                                                &pData->location );
    if( ret != DAQ_RET_OK )
       return ret;
 
@@ -263,12 +275,13 @@ static int32_t opPostMortemOn( DAQ_ADMIN_T* pDaqAdmin,
  * @brief switching high resolution mode on.
  * @see executeIfRequested
  */
-static int32_t opHighResolutionOn( DAQ_ADMIN_T* pDaqAdmin,
-                                   volatile DAQ_OPERATION_IO_T* pData )
+static DAQ_RETURN_CODE_T opHighResolutionOn( DAQ_ADMIN_T* pDaqAdmin,
+                                             volatile DAQ_OPERATION_IO_T* pData )
 {
-   FUNCTION_INFO();
+   DBG_FUNCTION_INFO();
 
-   int ret = verifyChannelAccess( &pDaqAdmin->oDaqDevs, &pData->location );
+   DAQ_RETURN_CODE_T ret = verifyChannelAccess( &pDaqAdmin->oDaqDevs,
+                                                &pData->location );
    if( ret != DAQ_RET_OK )
       return ret;
 
@@ -284,12 +297,13 @@ static int32_t opHighResolutionOn( DAQ_ADMIN_T* pDaqAdmin,
  * @brief Switching post-mortem and high-resolution mode off.
  * @see executeIfRequested
  */
-static int32_t opPmHighResOff( DAQ_ADMIN_T* pDaqAdmin,
-                               volatile DAQ_OPERATION_IO_T* pData )
+static DAQ_RETURN_CODE_T opPmHighResOff( DAQ_ADMIN_T* pDaqAdmin,
+                                         volatile DAQ_OPERATION_IO_T* pData )
 {
-   FUNCTION_INFO();
+   DBG_FUNCTION_INFO();
 
-   int ret = verifyChannelAccess( &pDaqAdmin->oDaqDevs, &pData->location );
+   DAQ_RETURN_CODE_T ret = verifyChannelAccess( &pDaqAdmin->oDaqDevs,
+                                                &pData->location );
    if( ret != DAQ_RET_OK )
       return ret;
 
@@ -309,12 +323,13 @@ static int32_t opPmHighResOff( DAQ_ADMIN_T* pDaqAdmin,
  * @brief Switching continue mode on.
  * @see executeIfRequested
  */
-static int32_t opContinueOn( DAQ_ADMIN_T* pDaqAdmin,
-                             volatile DAQ_OPERATION_IO_T* pData )
+static DAQ_RETURN_CODE_T opContinueOn( DAQ_ADMIN_T* pDaqAdmin,
+                                       volatile DAQ_OPERATION_IO_T* pData )
 {
-   FUNCTION_INFO();
+   DBG_FUNCTION_INFO();
 
-   int ret = verifyChannelAccess( &pDaqAdmin->oDaqDevs, &pData->location );
+   DAQ_RETURN_CODE_T ret = verifyChannelAccess( &pDaqAdmin->oDaqDevs,
+                                                &pData->location );
    if( ret != DAQ_RET_OK )
       return ret;
 
@@ -358,12 +373,13 @@ static int32_t opContinueOn( DAQ_ADMIN_T* pDaqAdmin,
  * @brief Switching continuous mode off.
  * @see executeIfRequested
  */
-static int32_t opContinueOff( DAQ_ADMIN_T* pDaqAdmin,
-                              volatile DAQ_OPERATION_IO_T* pData )
+static DAQ_RETURN_CODE_T opContinueOff( DAQ_ADMIN_T* pDaqAdmin,
+                                        volatile DAQ_OPERATION_IO_T* pData )
 {
-   FUNCTION_INFO();
+   DBG_FUNCTION_INFO();
 
-   int ret = verifyChannelAccess( &pDaqAdmin->oDaqDevs, &pData->location );
+   DAQ_RETURN_CODE_T ret = verifyChannelAccess( &pDaqAdmin->oDaqDevs,
+                                                &pData->location );
    if( ret != DAQ_RET_OK )
       return ret;
 
@@ -381,11 +397,13 @@ static int32_t opContinueOff( DAQ_ADMIN_T* pDaqAdmin,
  * @brief Setting trigger condition.
  * @see executeIfRequested
  */
-static int32_t opSetTriggerCondition( DAQ_ADMIN_T* pDaqAdmin,
-                                      volatile DAQ_OPERATION_IO_T* pData )
+static
+DAQ_RETURN_CODE_T opSetTriggerCondition( DAQ_ADMIN_T* pDaqAdmin,
+                                         volatile DAQ_OPERATION_IO_T* pData )
 {
-   FUNCTION_INFO();
-   int ret = verifyChannelAccess( &pDaqAdmin->oDaqDevs, &pData->location );
+   DBG_FUNCTION_INFO();
+   DAQ_RETURN_CODE_T ret = verifyChannelAccess( &pDaqAdmin->oDaqDevs,
+                                                &pData->location );
    if( ret != DAQ_RET_OK )
       return ret;
 
@@ -400,11 +418,12 @@ static int32_t opSetTriggerCondition( DAQ_ADMIN_T* pDaqAdmin,
  * @brief Send actual trigger condition back to Linux host.
  * @see executeIfRequested
  */
-static int32_t opGetTriggerCondition( DAQ_ADMIN_T* pDaqAdmin,
-                                      volatile DAQ_OPERATION_IO_T* pData )
+static DAQ_RETURN_CODE_T opGetTriggerCondition( DAQ_ADMIN_T* pDaqAdmin,
+                                         volatile DAQ_OPERATION_IO_T* pData )
 {
-   FUNCTION_INFO();
-   int ret = verifyChannelAccess( &pDaqAdmin->oDaqDevs, &pData->location );
+   DBG_FUNCTION_INFO();
+   DAQ_RETURN_CODE_T ret = verifyChannelAccess( &pDaqAdmin->oDaqDevs,
+                                                &pData->location );
    if( ret != DAQ_RET_OK )
       return ret;
 
@@ -419,11 +438,12 @@ static int32_t opGetTriggerCondition( DAQ_ADMIN_T* pDaqAdmin,
  * @brief Setting trigger delay.
  * @see executeIfRequested
  */
-static int32_t opSetTriggerDelay( DAQ_ADMIN_T* pDaqAdmin,
-                                      volatile DAQ_OPERATION_IO_T* pData )
+static DAQ_RETURN_CODE_T opSetTriggerDelay( DAQ_ADMIN_T* pDaqAdmin,
+                                            volatile DAQ_OPERATION_IO_T* pData )
 {
-   FUNCTION_INFO();
-   int ret = verifyChannelAccess( &pDaqAdmin->oDaqDevs, &pData->location );
+   DBG_FUNCTION_INFO();
+   DAQ_RETURN_CODE_T ret = verifyChannelAccess( &pDaqAdmin->oDaqDevs,
+                                                &pData->location );
    if( ret != DAQ_RET_OK )
       return ret;
 
@@ -436,11 +456,12 @@ static int32_t opSetTriggerDelay( DAQ_ADMIN_T* pDaqAdmin,
  * @brief Send actual trigger delay back to the Linux host.
  * @see executeIfRequested
  */
-static int32_t opGetTriggerDelay( DAQ_ADMIN_T* pDaqAdmin,
-                                      volatile DAQ_OPERATION_IO_T* pData )
+static DAQ_RETURN_CODE_T opGetTriggerDelay( DAQ_ADMIN_T* pDaqAdmin,
+                                          volatile DAQ_OPERATION_IO_T* pData )
 {
-   FUNCTION_INFO();
-   int ret = verifyChannelAccess( &pDaqAdmin->oDaqDevs, &pData->location );
+   DBG_FUNCTION_INFO();
+   DAQ_RETURN_CODE_T ret = verifyChannelAccess( &pDaqAdmin->oDaqDevs,
+                                                &pData->location );
    if( ret != DAQ_RET_OK )
       return ret;
 
@@ -453,11 +474,12 @@ static int32_t opGetTriggerDelay( DAQ_ADMIN_T* pDaqAdmin,
  * @brief Enabling or disabling the trigger mode.
  * @see executeIfRequested
  */
-static int32_t opSetTriggerMode( DAQ_ADMIN_T* pDaqAdmin,
-                                 volatile DAQ_OPERATION_IO_T* pData )
+static DAQ_RETURN_CODE_T opSetTriggerMode( DAQ_ADMIN_T* pDaqAdmin,
+                                           volatile DAQ_OPERATION_IO_T* pData )
 {
-   FUNCTION_INFO();
-   int ret = verifyChannelAccess( &pDaqAdmin->oDaqDevs, &pData->location );
+   DBG_FUNCTION_INFO();
+   DAQ_RETURN_CODE_T ret = verifyChannelAccess( &pDaqAdmin->oDaqDevs,
+                                                &pData->location );
    if( ret != DAQ_RET_OK )
       return ret;
 
@@ -476,11 +498,12 @@ static int32_t opSetTriggerMode( DAQ_ADMIN_T* pDaqAdmin,
  * @brief Send the actual state of the trigger mode back to the Linux host.
  * @see executeIfRequested
  */
-static int32_t opGetTriggerMode( DAQ_ADMIN_T* pDaqAdmin,
-                                 volatile DAQ_OPERATION_IO_T* pData )
+static DAQ_RETURN_CODE_T opGetTriggerMode( DAQ_ADMIN_T* pDaqAdmin,
+                                           volatile DAQ_OPERATION_IO_T* pData )
 {
-   FUNCTION_INFO();
-   int ret = verifyChannelAccess( &pDaqAdmin->oDaqDevs, &pData->location );
+   DBG_FUNCTION_INFO();
+   DAQ_RETURN_CODE_T ret = verifyChannelAccess( &pDaqAdmin->oDaqDevs,
+                                                &pData->location );
    if( ret != DAQ_RET_OK )
       return ret;
    pData->param1 = daqChannelIsTriggerModeEnabled(
@@ -493,11 +516,13 @@ static int32_t opGetTriggerMode( DAQ_ADMIN_T* pDaqAdmin,
  * @brief Setting of the trigger source for continuous mode.
  * @see executeIfRequested
  */
-static int32_t opSetTriggerSourceCon( DAQ_ADMIN_T* pDaqAdmin,
-                                      volatile DAQ_OPERATION_IO_T* pData )
+static
+DAQ_RETURN_CODE_T opSetTriggerSourceCon( DAQ_ADMIN_T* pDaqAdmin,
+                                         volatile DAQ_OPERATION_IO_T* pData )
 {
-   FUNCTION_INFO();
-   int ret = verifyChannelAccess( &pDaqAdmin->oDaqDevs, &pData->location );
+   DBG_FUNCTION_INFO();
+   DAQ_RETURN_CODE_T ret = verifyChannelAccess( &pDaqAdmin->oDaqDevs,
+                                                &pData->location );
    if( ret != DAQ_RET_OK )
       return ret;
 
@@ -517,11 +542,13 @@ static int32_t opSetTriggerSourceCon( DAQ_ADMIN_T* pDaqAdmin,
  *        the Linux host.
  * @see executeIfRequested
  */
-static int32_t opGetTriggerSourceCon( DAQ_ADMIN_T* pDaqAdmin,
-                                      volatile DAQ_OPERATION_IO_T* pData )
+static
+DAQ_RETURN_CODE_T opGetTriggerSourceCon( DAQ_ADMIN_T* pDaqAdmin,
+                                         volatile DAQ_OPERATION_IO_T* pData )
 {
-   FUNCTION_INFO();
-   int ret = verifyChannelAccess( &pDaqAdmin->oDaqDevs, &pData->location );
+   DBG_FUNCTION_INFO();
+   DAQ_RETURN_CODE_T ret = verifyChannelAccess( &pDaqAdmin->oDaqDevs,
+                                                &pData->location );
    if( ret != DAQ_RET_OK )
       return ret;
 
@@ -535,11 +562,13 @@ static int32_t opGetTriggerSourceCon( DAQ_ADMIN_T* pDaqAdmin,
  * @brief Setting of the trigger source for the high resolution mode.
  * @see executeIfRequested
  */
-static int32_t opSetTriggerSourceHir( DAQ_ADMIN_T* pDaqAdmin,
-                                      volatile DAQ_OPERATION_IO_T* pData )
+static
+DAQ_RETURN_CODE_T opSetTriggerSourceHir( DAQ_ADMIN_T* pDaqAdmin,
+                                         volatile DAQ_OPERATION_IO_T* pData )
 {
-   FUNCTION_INFO();
-   int ret = verifyChannelAccess( &pDaqAdmin->oDaqDevs, &pData->location );
+   DBG_FUNCTION_INFO();
+   DAQ_RETURN_CODE_T ret = verifyChannelAccess( &pDaqAdmin->oDaqDevs,
+                                                &pData->location );
    if( ret != DAQ_RET_OK )
       return ret;
 
@@ -559,16 +588,18 @@ static int32_t opSetTriggerSourceHir( DAQ_ADMIN_T* pDaqAdmin,
  *        back to the Linux host.
  * @see executeIfRequested
  */
-static int32_t opGetTriggerSourceHir( DAQ_ADMIN_T* pDaqAdmin,
-                                      volatile DAQ_OPERATION_IO_T* pData )
+static
+DAQ_RETURN_CODE_T opGetTriggerSourceHir( DAQ_ADMIN_T* pDaqAdmin,
+                                         volatile DAQ_OPERATION_IO_T* pData )
 {
-   FUNCTION_INFO();
-   int ret = verifyChannelAccess( &pDaqAdmin->oDaqDevs, &pData->location );
+   DBG_FUNCTION_INFO();
+   DAQ_RETURN_CODE_T ret = verifyChannelAccess( &pDaqAdmin->oDaqDevs,
+                                                &pData->location );
    if( ret != DAQ_RET_OK )
       return ret;
 
    pData->param1 = daqChannelGetTriggerSourceHighRes(
-                                        getChannel( pDaqAdmin, pData ) );
+                                            getChannel( pDaqAdmin, pData ) );
 
    return DAQ_RET_OK;
 }

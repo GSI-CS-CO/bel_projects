@@ -75,6 +75,11 @@ extern "C" {
 typedef uint16_t DAQ_DATA_T;
 
 /*!
+ * @brief Register type of DAQ device
+ */
+typedef uint16_t DAQ_REGISTER_T;
+
+/*!
  * @ingroup DAQ
  * @defgroup DAQ_DESCRIPTOR
  * @brief DAQ Descriptor

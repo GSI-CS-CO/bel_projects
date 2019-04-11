@@ -428,13 +428,13 @@ int DaqAdministration::distributeData( void )
          sendUnlockRamAccess();
          throw EbException( "Unable to read SCU-Ram buffer second part" );
       }
-      wordLen = c_hiresPmDataLen;
+      wordLen = c_hiresPmDataLen - c_discriptorWordSize;
    }
    else
    { /*
       * Short block has been detected.
       */
-      wordLen = c_contineousDataLen;
+      wordLen = c_contineousDataLen - c_discriptorWordSize;
    }
    writeRamIndexes();
 
@@ -446,7 +446,7 @@ int DaqAdministration::distributeData( void )
 
    if( pChannel != nullptr )
    {
-      pChannel->onDataBlock( probe.buffer, wordLen );
+      pChannel->onDataBlock( &probe.buffer[c_discriptorWordSize], wordLen );
    }
    m_poCurrentDescriptor = nullptr;
    return getCurrentRamSize( false );
