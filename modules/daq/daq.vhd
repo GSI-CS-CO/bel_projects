@@ -12,6 +12,12 @@ use work.daq_pkg.all;
 --        0       1: 2016Sep23 K.Kaiser Concept Change of DIOB requires flexible DAQ Channel count 
 --                2: 2016Okt07 K.Kaiser Add Descriptor to each DAQ Data Packet  
 --                3: 2017Nov20 K.Kaiser Added used Fifowords, Register readback and changed Interrupt Register handling
+--                4: 2019Mar26 K.Kaiser HiRes_irq_pulse Bugfix (copypaste error)
+--                                      DAQ Fifo Size changed back from 500 to 502 Samples
+--                                      HiRes Timestamp latch now on HiRes Trigger Event, not on HiRes Switch off
+--                                      For Signaltaps better change Samplerate to max than shorten FIFOs
+--                                      crc_daq_out and wait_for_trigger  bugfix
+--                                         
 ------------------------------------------------------------------------------------------------------------------------------------
 
 
@@ -27,7 +33,7 @@ port  (
       Adr_from_SCUB_LA:    in    std_logic_vector(15 downto 0);-- latched address from SCU_Bus
       Data_from_SCUB_LA:   in    std_logic_vector(15 downto 0);-- latched data from SCU_Bus 
       Ext_Adr_Val:         in    std_logic;                    -- '1' => "ADR_from_SCUB_LA" is valid
-      Ext_Rd_active:       in    std_logic;                    -- '1' => Rd-Cycle is active
+      Ext_Rd_active:       in    std_logic;                     -- '1' => Rd-Cycle is active
       Ext_Wr_active:       in    std_logic;                    -- '1' => Wr-Cycle is active
       clk_i:               in    std_logic;                    -- should be the same clk, used by SCU_Bus_Slave
       nReset:              in    std_logic;
@@ -253,6 +259,7 @@ architecture daq_arch of daq is
   signal daq_fifo_words:          t_pagefifowords(1 to ch_num);
   signal pm_fifo_words:           t_pmfifowords  (1 to ch_num); 
 
+
 --Register stuff
   
   signal CtrlReg_Ch:              t_daq_dat(1 to ch_num);
@@ -388,6 +395,8 @@ architecture daq_arch of daq is
   signal Ena_DAQ:                 t_daq_ctl(1 to ch_num); -- one of Sample enables (10ns/100ns/1ms) is set
   signal Ena_DAQ_del:             t_daq_ctl(1 to ch_num);
   signal Ena_DAQ_Start_pulse:     t_daq_ctl(1 to ch_num); -- resets DAQ Fifos and starts Wait_for_Trigger
+  signal Ena_DAQ_Stopp_pulse:     t_daq_ctl(1 to ch_num); -- stopps Sampling 
+  
   
 -- Timestamp Counter
   signal timestamp_cntr:             std_logic_vector (63 downto 0); 
@@ -419,7 +428,7 @@ architecture daq_arch of daq is
   signal crc_pm_was_read:            t_daq_ctl(1 to ch_num);
   signal crc_pm_data_in:             t_daq_dat(1 to ch_num);  
   signal crc_daq_data_in:            t_daq_dat(1 to ch_num); 
-  signal crc_daq_word:               t_daq_dat(1 to ch_num);
+  --signal crc_daq_word:               t_daq_dat(1 to ch_num);
   signal crc_pm_out:                 t_daq_dat(1 to ch_num);
   signal crc_daq_out:                t_daq_dat(1 to ch_num);
   signal PMDat_to_SCUB:              t_daq_dat(1 to ch_num); --switches Fifo dat or crc data to SCUB
@@ -444,56 +453,74 @@ Pulses_on_trigger_sources: for I in 1 to ch_num generate
 end generate Pulses_on_trigger_sources;
 
 
-Trigger_Registered_Logic: for i in 1 to ch_num generate
-  Ena_DAQ_Start_pulse(i) <=      Ena_DAQ(i)             and not Ena_DAQ_del(i);
-  nSClr_DAQ_FIFO(i)      <= not (Ena_DAQ_Start_pulse(i) or      Reset           or DAQ_FIFO_Overflow(i));
+Trigger_Registered_Logic : FOR i IN 1 TO ch_num GENERATE
+  Ena_DAQ_Start_pulse(i) <=     Ena_DAQ(i) AND NOT Ena_DAQ_del(i);
+  Ena_DAQ_Stopp_pulse(i) <= NOT Ena_DAQ(i) AND     Ena_DAQ_del(i);
+  nSClr_DAQ_FIFO(i)      <= NOT (Ena_DAQ_Start_pulse(i) OR Reset OR DAQ_FIFO_Overflow(i));
 
-  PreTrigger_DelayCntr:process (clk_i,nReset)
-    begin
-      if nReset='0' then
-        Trig_dly_cnt(i)        <= (others =>'0');
-        Wait_for_Trigger(i)    <= '0';
-        Ena_Sampling(i)        <= '0';
-      elsif rising_edge (clk_i) then
-        --Count down with Channel Rate after preload on trigger pulse
-        if  (Ena_DAQ_Start_pulse(i)='1' and Ena_TrigMod(i)='1') then
-          Trig_dly_cnt(i) <= Trig_dly_word_Ch (i); -- initial load
-        elsif Trig_dly_cnt(i) /= "0000" and ChRate(i)='1' and Wait_for_Trigger(i)  ='0' then
-          Trig_dly_cnt(i) <= Trig_dly_cnt(i)- 1;   -- count on each tick until zero
-        else
-          null;                                    --stay 
-        end if;
+  PreTrigger_DelayCntr : PROCESS (clk_i, nReset)
+  BEGIN
+    IF nReset = '0' THEN
+      Trig_dly_cnt(i)     <= (OTHERS => '0');
+      Wait_for_Trigger(i) <= '0';
+      Ena_Sampling(i)     <= '0';
+    ELSIF rising_edge (clk_i) THEN
+      --Count down with Channel Rate after preload on trigger pulse
+      IF (Ena_DAQ_Start_pulse(i) = '1' AND Ena_TrigMod(i) = '1') THEN
+        Trig_dly_cnt(i) <= Trig_dly_word_Ch (i);      -- initial load
+      ELSIF Trig_dly_cnt(i) /= "0000" AND ChRate(i) = '1' AND Wait_for_Trigger(i) = '0' THEN
+        Trig_dly_cnt(i) <= Trig_dly_cnt(i) - 1;       -- count on each tick until zero
+      ELSE
+        NULL;                                         --stay
+      END IF;
 
-        -- Wait for Trigger after setup of channel
-        if Ena_DAQ_Start_pulse(i)='1' and Ena_TrigMod(i)='1' then 
-          Wait_for_Trigger(i) <= '1'; 
-        elsif Trig_Pulse(i) ='1' or Ena_TrigMod(i)='0' then
-          Wait_for_Trigger(i)  <='0'; 
-        else
-          null;
-        end if;
-    
-        -- Enable Sampling after Pre Trigger Delay is done
-        if  Trig_dly_cnt(i) = x"0000" and Ena_TrigMod(i)='1' and Ena_DAQ_Start_pulse(i) ='0'then 
-          Ena_Sampling(i) <= '1'; -- start DAQ Sampling until Ena_TrigMod  disables it
-        elsif Ena_TrigMod(i) ='0' then
-          Ena_Sampling(i) <='0'; 
-        else
-          null;
-        end if;
-        
-      end if;  
-  end process PreTrigger_DelayCntr;
-end generate Trigger_Registered_Logic;
-
-
+      -- Wait for Trigger after setup of channel
+      IF Ena_DAQ_Start_pulse(i) = '1' AND Ena_TrigMod(i) = '1' THEN
+        Wait_for_Trigger(i) <= '1';
+      ELSIF Trig_Pulse(i) = '1' OR Ena_TrigMod(i) = '0' THEN
+        Wait_for_Trigger(i) <= '0';
+      ELSE
+        NULL;
+      END IF;
+ 
+      -- Enable Sampling
+      IF Ena_TrigMod(i) = '1' THEN           -- Trigger Modus
+ 
+        IF Wait_for_Trigger(i) = '1' THEN 
+          Ena_Sampling(i) <= '0';            -- waiting for trigger event
+        ELSE
+          IF Trig_dly_cnt(i) /= "0000" THEN
+            Ena_Sampling(i) <= '0';          -- waiting for triggercounter
+          ELSE
+            Ena_Sampling(i) <= '1';          -- Condition fulfilled
+          END IF;
+        END IF;
+ 
+      ELSIF Ena_TrigMod(i) = '0' THEN        -- Non Triggered Modus 
+ 
+        IF Ena_DAQ_Start_pulse(i) = '1' THEN 
+          Ena_Sampling(i) <= '1'; 
+        ELSE
+          NULL;
+        END IF ; 
+ 
+      ELSIF Ena_DAQ_Stopp_pulse(i) = '1' THEN  -- Stopp Condition
+        Ena_Sampling(i) <= '0'; 
+ 
+      ELSE
+        NULL;
+      END IF ; 
+    END IF; 
+  END PROCESS PreTrigger_DelayCntr;
+END GENERATE Trigger_Registered_Logic;
 
 
 Fifo_Data_Muxes: for I in 1 to ch_num generate
 
     -- Provide data of Page which is actually not active
     DaqDat_Ch(i)      <=  DaqDat_pg1(i)   when (page1_active(i) ='0' and fifo_empty_pg1(i) ='0'                            )else  --read from inactive fifo1  as long as not empty
-                          crc_daq_word(i) when (page1_active(i) ='0' and fifo_empty_pg1(i) ='1' and crc_daq_was_read(i)='0')else  --read from crc_daq as long not read
+                         -- crc_daq_word(i) when (page1_active(i) ='0' and fifo_empty_pg1(i) ='1' and crc_daq_was_read(i)='0')else  --read from crc_daq as long not read
+                          crc_daq_out(i) when (page1_active(i) ='0' and fifo_empty_pg1(i) ='1' and crc_daq_was_read(i)='0')else  --read from crc_daq as long not read						  
                           DaqDat_pg2(i)   when (page1_active(i) ='1' and fifo_empty_pg2(i) ='0'                            )else  --read from inactive fifo2 as long as not empty
                           crc_daq_out(i)  when (page1_active(i) ='1' and fifo_empty_pg2(i) ='1' and crc_daq_was_read(i)='0')else  --read from crc_daq as long not read
                           x"0000";
@@ -660,6 +687,9 @@ fifo_cntrl: process (clk_i, nReset)
 
   end if;
 end process fifo_cntrl;
+
+
+
 
 end generate fifo_logic;
 
@@ -847,8 +877,8 @@ PM_Logic : for I in 1 to ch_num generate
                        (Ena_every_250ns     and   HiRes_runs(i)           and Fifo_full_pm(i)) or -- PM rd in HiRes Mode to shuffle HiRes Data ?!
                        (PM_Descr_reached_7(i)                                                ) or -- to get PM Descriptor data in Fifo whilst FIFO Full
                        (Stop_PM_pulse(i)    and   fifo_full_pm(i)                            ) or -- to get PM Descriptor data in Fifo whilst  PM FIFO Full
-                                                                                           -- PMStop may occur on full fifo or on not full fifo
-                                                                  -- only on full fifo we need to shuffle 1 word at PM Stop
+                                                                                                  -- PMStop may occur on full fifo or on not full fifo
+                                                                                                  -- only on full fifo we need to shuffle 1 word at PM Stop
                        (Stop_HiRes_pulse(i)                                                  ) or -- to get HiRes Descriptor data in Fifo whilst PM FIFO Full
                        (PMDat_rd_pulse(i)   and   Ena_PM_rd(i)                               )    -- to get captured  samples out to SCUB
                         ;
@@ -864,8 +894,7 @@ PM_Logic : for I in 1 to ch_num generate
         HiRes_trig_cntr(i)    <= (others => '0');
         HiRes_runs(i)  <='1';
       elsif Trig_Pulse_HiRes(i) ='1' or  HiRes_trig_cntr(i) /= x"0000" then
-     -- if HiRes_trig_cntr(i) /=    x"0004" then   -- todo adjust simulation case
-        if HiRes_trig_cntr(i) /=    x"0392" then  -- todo adjust normal case = x392=d914 Sample Positions
+        if HiRes_trig_cntr(i) /=    x"0392" then          
           HiRes_trig_cntr(i) <= HiRes_trig_cntr(i) + 1;
           HiRes_runs(i)  <='1';
         else
@@ -876,7 +905,9 @@ PM_Logic : for I in 1 to ch_num generate
   end process HiRes_Counter;
 
 ----------------------------------- Descriptor append logic for PM and HiRes -------------------------------------------------------
--- Descriptor loaded on 9 following clocks after PM/HiRes DAQ finished. Timestamp latched on first sysclk after PM/Hires finished
+-- Descriptor loaded on 9 following clocks after PM/HiRes DAQ finished. 
+-- PM Timestamp latched on first sysclk after PM finished
+-- HiRes Timestamp latched on first sysclk after HiRes Trigger Event occurs
 
 
   PM_Descr_Logic: process (clk_i,nreset)
@@ -889,8 +920,13 @@ PM_Logic : for I in 1 to ch_num generate
      Last_mode_was_HiRes(i)      <= '0';
      PM_Descr_reached_7(i)       <= '0';
     elsif rising_edge (clk_i) then
-      if Stop_PM_pulse(i) ='1' or Stop_HiRes_pulse(i)='1' then
+      if Stop_PM_pulse(i) ='1' or Trig_Pulse_HiRes(i)='1' then     --new  Tight coupling of Timestamp to HiRes Trigger Event
+      --if Stop_PM_pulse(i) ='1' or Stop_HiRes_pulse(i)='1' then   -- old
         PM_Timestamp_latched(i)   <= Timestamp_cntr;
+      end if;
+      
+      if Stop_PM_pulse(i) ='1' or Stop_HiRes_pulse(i)='1' then 
+      
         if Stop_PM_pulse(i) ='1' then
           Last_mode_was_PM(i)     <='1';
         elsif PM_Descr_runs(i) ='1' then
@@ -983,14 +1019,13 @@ fifo_instances: for i in 1 to ch_num generate
     generic map(
       g_data_width             => 16, 
       g_size                   => 512, --g_size only available in 2exp(n) steps
-      --g_size                   => 19, --for simulation   4 + 9 descriptor  
       g_show_ahead             => true,
       g_with_empty             => true,
       g_with_full              => true,
       g_with_almost_full       => true,
-      g_with_count             => true,  --todo
-      g_almost_full_threshold  => 500   --for real 502??
-      --g_almost_full_threshold  => 10   --for simulation 
+      g_with_count             => true,  
+      g_almost_full_threshold  => 502   
+
       
       )
     port map(
@@ -1003,7 +1038,7 @@ fifo_instances: for i in 1 to ch_num generate
       empty_o        => fifo_empty_pg1(i),
       full_o         => fifo_full_pg1(i),
       almost_full_o  => almost_full_pg1(i),
-      count_o        => page1_fifo_words(i) --todo
+      count_o        => page1_fifo_words(i) 
       );
 
       
@@ -1011,14 +1046,12 @@ fifo_instances: for i in 1 to ch_num generate
     generic map(
       g_data_width             => 16, 
       g_size                   => 512, --g_size only available in 2exp(n) step
-      --g_size                   => 19, --for simulation   4 + 9 descriptor  
       g_show_ahead             => true,
       g_with_empty             => true,
       g_with_full              => true,
       g_with_almost_full       => true,
       g_with_count             => true,  
-      g_almost_full_threshold  => 500   --for real 502??
-      --g_almost_full_threshold  => 10   --for simulation 
+      g_almost_full_threshold  => 502 
       
       )   --for simulation
     port map(
@@ -1038,8 +1071,7 @@ fifo_instances: for i in 1 to ch_num generate
   postmortem_fifo : generic_sync_fifo
     generic map(
       g_data_width             => 16, 
-      g_size                   => 1024,  --g_size only available in 2exp(n) step
-      --g_size                   => 17,   --for simulation 8+9     
+      g_size                   => 1024,  --g_size only available in 2exp(n) step   
       g_show_ahead             => true,  --shows the 1st word w/o rd request
       g_with_empty             => true,
       g_with_full              => true,
@@ -1115,7 +1147,7 @@ IRQ_PULSES: for I in 1 to ch_num generate
       
       if HiRes_irq_reg_wr = '1'and Data_from_SCUB_LA(i-1)='1' and HiRes_irq_pulse(i)='0' then  -- no irq should be lost
          HiRes_irq_reg(i) <= '0';
-      elsif daq_irq_pulse(i) ='1' then 
+      elsif HiRes_irq_pulse(i) ='1' then 
          HiRes_irq_reg(i) <= '1';
       else
          null;
@@ -1243,10 +1275,10 @@ adr_decoder: process (clk_i, nReset)
       timestamp_cntr_word2_rd  <= '0';
       timestamp_cntr_word3_rd  <= '0';
       timestamp_cntr_word4_rd  <= '0';
-    timestamp_cntr_tag_lw_wr <= '0';
-    timestamp_cntr_tag_hw_wr <= '0';
-    timestamp_cntr_tag_lw_rd <= '0';
-    timestamp_cntr_tag_hw_rd <= '0';
+      timestamp_cntr_tag_lw_wr <= '0';
+      timestamp_cntr_tag_hw_wr <= '0';
+      timestamp_cntr_tag_lw_rd <= '0';
+      timestamp_cntr_tag_hw_rd <= '0';
     elsif rising_edge(clk_i) then
       daq_irq_reg_rd           <= '0';
       HiRes_irq_reg_rd         <= '0';
@@ -1260,10 +1292,10 @@ adr_decoder: process (clk_i, nReset)
       timestamp_cntr_word2_rd  <= '0';
       timestamp_cntr_word3_rd  <= '0';
       timestamp_cntr_word4_rd  <= '0';
-    timestamp_cntr_tag_lw_wr <= '0';
-    timestamp_cntr_tag_hw_wr <= '0';
-    timestamp_cntr_tag_lw_rd <= '0';
-    timestamp_cntr_tag_hw_rd <= '0';
+      timestamp_cntr_tag_lw_wr <= '0';
+      timestamp_cntr_tag_hw_wr <= '0';
+      timestamp_cntr_tag_lw_rd <= '0';
+      timestamp_cntr_tag_hw_rd <= '0';
     
       if Ext_Adr_Val = '1' then
         case unsigned(Adr_from_SCUB_LA) is
