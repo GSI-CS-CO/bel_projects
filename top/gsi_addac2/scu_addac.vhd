@@ -392,13 +392,13 @@ addac_clk_sw: slave_clk_switch
 
 
       daq_dat_i    (1)   <= ADC_channel_1;
-      daq_ext_trig_i (1) <= adc_trgd;
+      daq_ext_trig_i (1) <= not EXT_TRIG_ADC;  --todo HPCL2400 liefert low bei Led-on
       daq_dat_i    (2)   <= ADC_channel_2;    
-      daq_ext_trig_i (2) <= adc_trgd;   
+      daq_ext_trig_i (2) <= not EXT_TRIG_ADC;  --todo HPCL2400 liefert low bei Led-on 
       daq_dat_i(3)       <= DAC_channel_1;
-      daq_ext_trig_i (3) <= dac_1_ext_trig;         
+      daq_ext_trig_i (3) <= not EXT_TRIG_DAC;  --todo HPCL2400 liefert low bei Led-on       
       daq_dat_i(4)       <= DAC_channel_2;     
-      daq_ext_trig_i (4) <= dac_2_ext_trig;   
+      daq_ext_trig_i (4) <= not EXT_TRIG_DAC;  --todo HPCL2400 liefert low bei Led-on 
       
       
   -- open drain buffer for one wire
