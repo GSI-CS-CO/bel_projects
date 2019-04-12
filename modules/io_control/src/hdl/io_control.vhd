@@ -359,6 +359,8 @@ begin
       r_lvds_sel       <= (others => '0');
       r_gpio_drive     <= (others => '0');
       r_lvds_drive     <= (others => (others => '0'));
+      r_gpio_in_gate   <= (others => '1');
+      r_lvds_in_gate   <= (others => '1');
 
     elsif (rising_edge(clk_i)) then
       -- Handle generic wishbone signals
