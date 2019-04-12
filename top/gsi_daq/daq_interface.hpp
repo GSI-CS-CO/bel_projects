@@ -310,7 +310,7 @@ protected:
 
    void sendUnlockRamAccess( void );
    void clearBuffer( bool update = true );
-   void writeRamIndexes( void );
+   void writeRamIndexesAndUnlock( void );
 
 private:
 

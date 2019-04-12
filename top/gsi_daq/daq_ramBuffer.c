@@ -146,14 +146,14 @@ void ramRreadItem( register RAM_SCU_T* pThis, const RAM_RING_INDEX_T index,
 /*
  * Awful I know...
  */
-#define RAM_ACCESS_CHANNEL_MODE( item )                  \
-(                                                        \
-   *((_DAQ_CHANNEL_CONTROL*)&item.ad16                   \
-   [                                                     \
-      (RAM_DAQ_INDEX_OFFSET_OF_CHANNEL_CONTROL %         \
-       offsetof(_DAQ_DISCRIPTOR_STRUCT_T, cControl )) /  \
-       sizeof(DAQ_DATA_T)                                \
-   ])                                                    \
+#define RAM_ACCESS_CHANNEL_MODE( item )                                       \
+(                                                                             \
+   *((_DAQ_CHANNEL_CONTROL*)&item.ad16                                        \
+   [                                                                          \
+      (RAM_DAQ_INDEX_OFFSET_OF_CHANNEL_CONTROL %                              \
+       offsetof(_DAQ_DISCRIPTOR_STRUCT_T, cControl )) /                       \
+       sizeof(DAQ_DATA_T)                                                     \
+   ])                                                                         \
 )
 
 /*! ---------------------------------------------------------------------------
@@ -305,6 +305,8 @@ void publishWrittenData( register RAM_SCU_T* pThis,
 {
    pThis->pSharedObj->ringIndexes.end = poIndexes->end;
    pThis->pSharedObj->serverHasWritten = 1;
+   DBG_RAM_INFO( "DBG: RAM-items: %d\n",
+                 ramRingGetSize( &pThis->pSharedObj->ringIndexes ) );
 }
 
 /*! ---------------------------------------------------------------------------
@@ -546,15 +548,25 @@ void ramWriteDaqData( register RAM_SCU_T* pThis, DAQ_CANNEL_T* pDaqChannel,
 #ifdef DEBUGLEVEL
    else
    {
-      DBPRINT1( ESC_BOLD ESC_FG_RED
-                "DBG ERROR: dataWordCounter > expectedWords\n"
-                "           dataWordCounter: %d\n"
-                "           expectedWords:   %d\n"
-                ESC_NORMAL,
-                dataWordCounter,
-                expectedWords );
+   #ifndef CONFIG_DAQ_DECREMENT
+      if( getRemaining( pDaqChannel ) != 0 )
+      {
+         DBPRINT1( ESC_BOLD ESC_FG_RED
+                   "DBG ERROR: PmHires fifo: %d\n"
+                   ESC_NORMAL, getRemaining( pDaqChannel ) );
+
+      }
+      else
+   #endif
+         DBPRINT1( ESC_BOLD ESC_FG_RED
+                   "DBG ERROR: dataWordCounter > expectedWords\n"
+                   "           dataWordCounter: %d\n"
+                   "           expectedWords:   %d\n"
+                   ESC_NORMAL,
+                   dataWordCounter,
+                   expectedWords );
    }
-#endif
+#endif /* ifdef DEBUGLEVEL */
    ramRingDbgPrintIndexes( &pThis->pSharedObj->ringIndexes,
                            ESC_FG_WHITE ESC_BOLD "Final indexes" ESC_NORMAL );
    daqDescriptorPrintInfo( &oDescriptor );

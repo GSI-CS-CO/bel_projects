@@ -67,35 +67,35 @@
 extern "C" {
 #endif
 
-/*!
+/*! ---------------------------------------------------------------------------
  * @brief Calculates the start offset of the payload data in the ring-buffer
  *        during the compile time, so that the offset is dividable by
  *        RAM_DAQ_PAYLOAD_T.
  * @note CAUTION: Don't remove the double exclamation mark (!!) because
  *       it will be used to convert a value that is not equal to zero to one!
  */
-#define RAM_DAQ_DATA_START_OFFSET                            \
-(                                                            \
-   (sizeof(DAQ_DESCRIPTOR_T) / sizeof(RAM_DAQ_PAYLOAD_T)) +  \
-   !!(sizeof(DAQ_DESCRIPTOR_T) % sizeof(RAM_DAQ_PAYLOAD_T))  \
+#define RAM_DAQ_DATA_START_OFFSET                                             \
+(                                                                             \
+   (sizeof(DAQ_DESCRIPTOR_T) / sizeof(RAM_DAQ_PAYLOAD_T)) +                   \
+   !!(sizeof(DAQ_DESCRIPTOR_T) % sizeof(RAM_DAQ_PAYLOAD_T))                   \
 )
 
-/*!
+/*! ---------------------------------------------------------------------------
  * @brief Calculates any missing DAQ data words of type DAQ_DATA_T to
  *        make the length of the DAQ device descriptor dividable
  *        by the length of RAM_DAQ_PAYLOAD_T.
  * @note CAUTION: Don't remove the double exclamation mark (!!) because
  *       it will be used to convert a value that is not equal to zero to one!
  */
-#define RAM_DAQ_DESCRIPTOR_COMPLETION                          \
-(                                                              \
-   ((sizeof(RAM_DAQ_PAYLOAD_T) -                               \
-   (sizeof(DAQ_DESCRIPTOR_T) % sizeof(RAM_DAQ_PAYLOAD_T))) *   \
-    !!(sizeof(DAQ_DESCRIPTOR_T) % sizeof(RAM_DAQ_PAYLOAD_T)))  \
-    / sizeof(DAQ_DATA_T)                                       \
+#define RAM_DAQ_DESCRIPTOR_COMPLETION                                         \
+(                                                                             \
+   ((sizeof(RAM_DAQ_PAYLOAD_T) -                                              \
+   (sizeof(DAQ_DESCRIPTOR_T) % sizeof(RAM_DAQ_PAYLOAD_T))) *                  \
+    !!(sizeof(DAQ_DESCRIPTOR_T) % sizeof(RAM_DAQ_PAYLOAD_T)))                 \
+    / sizeof(DAQ_DATA_T)                                                      \
 )
 
-/*!
+/*! ---------------------------------------------------------------------------
  * @brief Definition of return values of function ramRingGetTypeOfOldestBlock
  */
 typedef enum
@@ -113,6 +113,9 @@ typedef enum
  */
 typedef DDR3_PAYLOAD_T RAM_DAQ_PAYLOAD_T;
 
+/*!
+ * @see DDR3_POLL_FT
+ */
 typedef DDR3_POLL_FT   RAM_DAQ_POLL_FT;
 
 /*!
@@ -147,11 +150,15 @@ typedef DDR3_POLL_FT   RAM_DAQ_POLL_FT;
  */
 #define RAM_DAQ_MAX_CAPACITY (RAM_DAQ_MAX_INDEX - RAM_DAQ_MIN_INDEX)
 
+/*!
+ * @brief Data type for read, write, offset and capacity for
+ *        ring buffer access.
+ */
 typedef uint32_t RAM_RING_INDEX_T;
 
 #endif /* ifdef CONFIG_SCU_USE_DDR3 */
 
-/*!
+/*! ---------------------------------------------------------------------------
  * @brief Calculates the number of memory items from a given number
  *        of data words in DAQ_DATA_T.
  * @see DAQ_DATA_T
@@ -159,76 +166,85 @@ typedef uint32_t RAM_RING_INDEX_T;
  * @note CAUTION: Don't remove the double exclamation mark (!!) because
  *       it will be used to convert a value that is not equal to zero to one!
  */
-#define __RAM_DAQ_GET_BLOCK_LEN( b )      \
-(                                         \
-   (b / sizeof(RAM_DAQ_PAYLOAD_T) +       \
-   !!(b % sizeof(RAM_DAQ_PAYLOAD_T))) *   \
-   sizeof(DAQ_DATA_T)                     \
+#define __RAM_DAQ_GET_BLOCK_LEN( b )                                          \
+(                                                                             \
+   (b / sizeof(RAM_DAQ_PAYLOAD_T) +                                           \
+   !!(b % sizeof(RAM_DAQ_PAYLOAD_T))) * sizeof(DAQ_DATA_T)                    \
 )
 
-/*!
+/*! ---------------------------------------------------------------------------
  * @brief Calculates the remainder in DAQ_DATA_T of a given block length to
  *        complete a full number of RAM_DAQ_PAYLOAD_T.
  */
-#define __RAM_DAQ_GET_BLOCK_REMAINDER( b )                   \
-(                                                            \
-   ((b * sizeof(DAQ_DATA_T)) % sizeof(RAM_DAQ_PAYLOAD_T)) /  \
-   sizeof(DAQ_DATA_T)                                        \
+#define __RAM_DAQ_GET_BLOCK_REMAINDER( b )                                    \
+(                                                                             \
+   ((b * sizeof(DAQ_DATA_T)) % sizeof(RAM_DAQ_PAYLOAD_T)) /                   \
+   sizeof(DAQ_DATA_T)                                                         \
 )
 
-/*!
+/*! ---------------------------------------------------------------------------
  * @brief Length of long blocks in RAM_DAQ_PAYLOAD_T for
  *        PostMortem and/or HiRes mode.
  */
-#define RAM_DAQ_LONG_BLOCK_LEN  \
+#define RAM_DAQ_LONG_BLOCK_LEN                                                \
    __RAM_DAQ_GET_BLOCK_LEN( DAQ_FIFO_PM_HIRES_WORD_SIZE_CRC )
 
-/*!
+/*! ---------------------------------------------------------------------------
  * @brief Remainder of long blocks in DAQ_DATA_T to complete a full number of
  *        RAM_DAQ_PAYLOAD_T.
  */
-#define RAM_DAQ_LONG_BLOCK_REMAINDER \
+#define RAM_DAQ_LONG_BLOCK_REMAINDER                                          \
    __RAM_DAQ_GET_BLOCK_REMAINDER( DAQ_FIFO_PM_HIRES_WORD_SIZE_CRC )
 
-/*!
+/*! ---------------------------------------------------------------------------
  * @brief Length of short blocks in RAM_DAQ_PAYLOAD_T for
  *        DAQ continuous mode.
  */
-#define RAM_DAQ_SHORT_BLOCK_LEN \
+#define RAM_DAQ_SHORT_BLOCK_LEN                                               \
    __RAM_DAQ_GET_BLOCK_LEN( DAQ_FIFO_DAQ_WORD_SIZE_CRC )
 
-/*!
+/*! ---------------------------------------------------------------------------
  * @brief Remainder of short blocks in DAQ_DATA_T to complete a full number of
  *        RAM_DAQ_PAYLOAD_T.
  */
-#define RAM_DAQ_SHORT_BLOCK_REMAINDER \
+#define RAM_DAQ_SHORT_BLOCK_REMAINDER                                         \
    __RAM_DAQ_GET_BLOCK_REMAINDER( DAQ_FIFO_DAQ_WORD_SIZE_CRC )
 
-#define RAM_DAQ_DATA_WORDS_PER_RAM_INDEX \
+/*! ---------------------------------------------------------------------------
+ * @brief DAQ data words per RAM item
+ */
+#define RAM_DAQ_DATA_WORDS_PER_RAM_INDEX                                      \
    (sizeof(RAM_DAQ_PAYLOAD_T) / sizeof(DAQ_DATA_T))
 
 
-#define RAM_DAQ_INDEX_OFFSET_OF_CHANNEL_CONTROL       \
-(                                                     \
-   offsetof( _DAQ_DISCRIPTOR_STRUCT_T, cControl ) /   \
-   sizeof(RAM_DAQ_PAYLOAD_T)                          \
+/*! ---------------------------------------------------------------------------
+ * @brief Calculates the offset in RAM-items to the channel control register
+ *        in the device descriptor
+ */
+#define RAM_DAQ_INDEX_OFFSET_OF_CHANNEL_CONTROL                               \
+(                                                                             \
+   offsetof( _DAQ_DISCRIPTOR_STRUCT_T, cControl ) /                           \
+   sizeof(RAM_DAQ_PAYLOAD_T)                                                  \
 )
 
+#if 0
 #define RAM_DAQ_DAQ_WORD_OFFSET_OF_CHANNEL_CONTROL    \
 (                                                     \
    (offsetof( _DAQ_DISCRIPTOR_STRUCT_T, cControl ) /  \
    sizeof(RAM_DAQ_PAYLOAD_T) )                        \
 )
+#endif
 
-
-/*!
+/*! ---------------------------------------------------------------------------
+ * @brief Calculates the data length to read from the DAQ-RAM to obtain the
+ *        channel control register in the device descriptor.
  * @note CAUTION: Don't remove the double exclamation mark (!!) because
  *       it will be used to convert a value that is not equal to zero to one!
  */
-#define RAM_DAQ_INDEX_LENGTH_OF_CHANNEL_CONTROL                 \
-(                                                               \
-   (sizeof(_DAQ_CHANNEL_CONTROL) / sizeof(RAM_DAQ_PAYLOAD_T)) + \
-   !!(sizeof(_DAQ_CHANNEL_CONTROL) % sizeof(RAM_DAQ_PAYLOAD_T)) \
+#define RAM_DAQ_INDEX_LENGTH_OF_CHANNEL_CONTROL                               \
+(                                                                             \
+   (sizeof(_DAQ_CHANNEL_CONTROL) / sizeof(RAM_DAQ_PAYLOAD_T)) +               \
+   !!(sizeof(_DAQ_CHANNEL_CONTROL) % sizeof(RAM_DAQ_PAYLOAD_T))               \
 )
 
 /*! ---------------------------------------------------------------------------
@@ -245,7 +261,7 @@ typedef struct PACKED_SIZE
 STATIC_ASSERT( sizeof(RAM_RING_INDEXES_T) == 4 * sizeof(RAM_RING_INDEX_T));
 #endif
 
-/*!
+/*! ---------------------------------------------------------------------------
  * @brief Initializer for object of data type RAM_RING_INDEXES_T
  */
 #define RAM_RING_INDEXES_INITIALIZER                                          \
@@ -281,7 +297,7 @@ STATIC_ASSERT( sizeof(RAM_RING_SHARED_OBJECT_T) ==
                2 * sizeof(uint32_t) );
 #endif
 
-/*!
+/*! ---------------------------------------------------------------------------
  * @brief Initializer of the shared object for the communication between
  *        server and Linux client.
  */
@@ -292,7 +308,7 @@ STATIC_ASSERT( sizeof(RAM_RING_SHARED_OBJECT_T) ==
    .ringIndexes      = RAM_RING_INDEXES_INITIALIZER                           \
 }
 
-/*!
+/*! ---------------------------------------------------------------------------
  * @brief Generalized object type for SCU RAM buffer
  */
 typedef struct

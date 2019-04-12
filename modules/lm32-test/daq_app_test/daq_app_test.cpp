@@ -88,34 +88,25 @@ bool MyDaqChannel::onDataBlock( DAQ_DATA_T* pData, std::size_t wordLen )
   cout << "trigger: 0x" << hex << setfill('0') << setw(8)
        << descriptorGetTriggerCondition() << dec << endl;
 
-  cout << "delay: 0x" << hex << descriptorGetTriggerDelay( pData )
+  cout << "delay: 0x" << hex << descriptorGetTriggerDelay()
        << dec << endl;
 
   cout << "CRC: 0x" << hex << setfill('0') << setw(2)
-       << static_cast<unsigned int>(descriptorGetCrc( pData ))
+       << static_cast<unsigned int>(descriptorGetCrc())
        << dec << endl;
 
   cout << "Block:     " << ++m_blockCount << endl;
-  cout << "Timestamp: " << descriptorGetTimestamp( pData )
-       << endl;
+  cout << "Timestamp: " << descriptorGetTimeStamp() << endl;
   if( m_LastTimestamp > 0 )
-     cout << "Delta time: " << descriptorGetTimestamp( pData ) - m_LastTimestamp << endl;
-  m_LastTimestamp = descriptorGetTimestamp( pData );
+     cout << "Delta time: " << descriptorGetTimeStamp() - m_LastTimestamp << endl;
+  m_LastTimestamp = descriptorGetTimeStamp();
 
 
-#if 0
-  cout << "Seconds:     "
-       << daqDescriptorGetTimeStampSec( reinterpret_cast<DAQ_DESCRIPTOR_T*>(pData) )
-       << endl;
-  cout << "Nanoseconds: " <<
-     daqDescriptorGetTimeStampNanoSec( reinterpret_cast<DAQ_DESCRIPTOR_T*>(pData) )
-       << endl;
-#endif
   cout << "Data:" << endl;
   DAQ_DATA_T minimum = static_cast<DAQ_DATA_T>(~0);
   DAQ_DATA_T maximum = 0;
   uint64_t summe = 0;
-  for( std::size_t i = c_discriptorWordSize; i < wordLen; i++ )
+  for( std::size_t i = 0; i < wordLen; i++ )
   {
    //  if( i % 100 == 0 )
    //     cout << "  " << pData[i] << endl;
@@ -124,20 +115,18 @@ bool MyDaqChannel::onDataBlock( DAQ_DATA_T* pData, std::size_t wordLen )
      summe   += pData[i];
   }
 
-  unsigned int numOfSamples = wordLen - c_discriptorWordSize;
-  cout << "  Samples: " << numOfSamples << ", Modus: " ESC_FG_CYAN;
-  if( descriptorWasPM( pData ) )
+  cout << "  Samples: " << wordLen << ", Modus: " ESC_FG_CYAN;
+  if( descriptorWasPostMortem() )
      cout << "Post Mortem";
-  else if( descriptorWasHiRes( pData ) )
+  else if( descriptorWasHighResolution() )
      cout << "High Resolution";
-  else if( descriptorWasDaq( pData ))
+  else if( descriptorWasContinuous())
      cout << "Continuous";
-  cout << ", Timebase: " << descriptorGetTimeBase( pData ) << " ns"
+  cout << ", Timebase: " << descriptorGetTimeBase() << " ns"
        << ESC_NORMAL << " Sequence: " <<
-       static_cast<unsigned int>(descriptorGetSequence( pData )) << endl;
+       static_cast<unsigned int>(descriptorGetSequence()) << endl;
 
-  assert( (wordLen - numOfSamples) > 0 );
-  DAQ_DATA_T average = summe / numOfSamples;
+  DAQ_DATA_T average = summe / wordLen;
 
   cout << "  Minimum: " << minimum << " -> " << rawToVoltage( minimum ) << " Volt" << endl;
   cout << "  Average: " << average << " -> " << rawToVoltage( average ) << " Volt" << endl;
@@ -211,18 +200,36 @@ void doTest( const string wbName )
 
    int key;
    bool read = true;
+   bool highRs = false;
+   std::size_t oldSize = 0;
    while( (key = Terminal::readKey()) != '\e' )
    {
      // unsigned int RamSize = oDaqInterface.getCurrentRamSize( true );
      // if( RamSize != 0 )
      //    cout << "Ram level: " << RamSize << endl;
-
       switch( key )
       {
          case '1':
          {
             read = !read;
             cout << "Read: " << (read? "ON " : "OFF") << endl;
+            break;
+         }
+         case 'h':
+         {
+            if( highRs )
+            {
+               highRs = false;
+               cout << "Disabling HighRes" << endl;
+               pChannel_a->sendDisablePmHires( true );
+            }
+            else
+            {
+               highRs = true;
+               cout << "Enabling HighRes" << endl;
+               pChannel_a->sendTriggerSourceHiRes( true );
+               pChannel_a->sendEnableHighResolution( true );
+            }
             break;
          }
          case 'd':
@@ -269,8 +276,18 @@ void doTest( const string wbName )
             break;
          }
       }
+      std::size_t size;
       if( read )
-         oDaqInterface.distributeData();
+         size = oDaqInterface.distributeData();
+      else
+         size = oDaqInterface.getCurrentRamSize( true );
+
+      if( oldSize != size )
+      {
+         cout << "Ram items: new: " << size << ", old: " << oldSize << endl;
+         oldSize = size;
+      }
+
    }
 
 //   oDaqInterface.start();

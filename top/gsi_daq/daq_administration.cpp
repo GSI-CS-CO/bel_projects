@@ -370,9 +370,9 @@ int DaqAdministration::distributeData( void )
 
    std::size_t size = getCurrentRamSize( true );
    if( size == 0 )
-   {  /*
-       * Nothing to do...
-       */
+   { /*
+      * Nothing to do...
+      */
       return 0;
    }
 
@@ -397,7 +397,10 @@ int DaqAdministration::distributeData( void )
     */
    if( ::ramReadDaqDataBlock( &m_oScuRam, probe.ramItems,
                               c_ramBlockShortLen, ramReadPoll ) != EB_OK )
+   {
+      sendUnlockRamAccess();
       throw EbException( "Unable to read SCU-Ram buffer first part" );
+   }
 
    /*
     * Rough check of the device descriptors integrity.
@@ -406,13 +409,9 @@ int DaqAdministration::distributeData( void )
    {
       //TODO Maybe clearing the entire buffer?
       clearBuffer();
-      {
-         sendUnlockRamAccess();
-         throw( DaqException( "Erroneous descriptor" ) );
-      }
+      sendUnlockRamAccess();
+      throw( DaqException( "Erroneous descriptor" ) );
    }
-
-   m_poCurrentDescriptor = &probe.descriptor;
 
    std::size_t wordLen;
    if( ::daqDescriptorIsLongBlock( &probe.descriptor ) )
@@ -436,9 +435,7 @@ int DaqAdministration::distributeData( void )
       */
       wordLen = c_contineousDataLen - c_discriptorWordSize;
    }
-   writeRamIndexes();
-
-   sendUnlockRamAccess();
+   writeRamIndexesAndUnlock();
 
    //TODO Make CRC check here!
 
@@ -446,9 +443,11 @@ int DaqAdministration::distributeData( void )
 
    if( pChannel != nullptr )
    {
+      m_poCurrentDescriptor = &probe.descriptor;
       pChannel->onDataBlock( &probe.buffer[c_discriptorWordSize], wordLen );
+      m_poCurrentDescriptor = nullptr;
    }
-   m_poCurrentDescriptor = nullptr;
+
    return getCurrentRamSize( false );
 }
 

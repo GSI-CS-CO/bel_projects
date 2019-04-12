@@ -265,6 +265,7 @@ DAQ_RETURN_CODE_T opPostMortemOn( DAQ_ADMIN_T* pDaqAdmin,
 
    pChannel->properties.restart = (pData->param1 != 0);
    pChannel->sequencePmHires = 0;
+   daqChannelDisableHighResolution( pChannel );
    daqChannelEnablePostMortem( pChannel );
 
    return DAQ_RET_OK;
@@ -276,7 +277,7 @@ DAQ_RETURN_CODE_T opPostMortemOn( DAQ_ADMIN_T* pDaqAdmin,
  * @see executeIfRequested
  */
 static DAQ_RETURN_CODE_T opHighResolutionOn( DAQ_ADMIN_T* pDaqAdmin,
-                                             volatile DAQ_OPERATION_IO_T* pData )
+                                          volatile DAQ_OPERATION_IO_T* pData )
 {
    DBG_FUNCTION_INFO();
 
@@ -288,6 +289,7 @@ static DAQ_RETURN_CODE_T opHighResolutionOn( DAQ_ADMIN_T* pDaqAdmin,
    DAQ_CANNEL_T* pChannel = getChannel( pDaqAdmin, pData );
    pChannel->properties.restart = (pData->param1 != 0);
    pChannel->sequencePmHires = 0;
+   daqChannelDisablePostMortem( pChannel );
    daqChannelEnableHighResolution( pChannel );
 
    return DAQ_RET_OK;
@@ -439,7 +441,7 @@ static DAQ_RETURN_CODE_T opGetTriggerCondition( DAQ_ADMIN_T* pDaqAdmin,
  * @see executeIfRequested
  */
 static DAQ_RETURN_CODE_T opSetTriggerDelay( DAQ_ADMIN_T* pDaqAdmin,
-                                            volatile DAQ_OPERATION_IO_T* pData )
+                                           volatile DAQ_OPERATION_IO_T* pData )
 {
    DBG_FUNCTION_INFO();
    DAQ_RETURN_CODE_T ret = verifyChannelAccess( &pDaqAdmin->oDaqDevs,
@@ -486,9 +488,15 @@ static DAQ_RETURN_CODE_T opSetTriggerMode( DAQ_ADMIN_T* pDaqAdmin,
    DAQ_CANNEL_T* pChannel = getChannel( pDaqAdmin, pData );
 
    if( pData->param1 != 0 )
+   {
+      DBPRINT1( "DBG: Enable\n" );
       daqChannelEnableTriggerMode( pChannel );
+   }
    else
+   {
+      DBPRINT1( "DBG: Disable\n" );
       daqChannelDisableTriggerMode( pChannel );
+   }
 
    return DAQ_RET_OK;
 }
@@ -529,9 +537,15 @@ DAQ_RETURN_CODE_T opSetTriggerSourceCon( DAQ_ADMIN_T* pDaqAdmin,
    DAQ_CANNEL_T* pChannel = getChannel( pDaqAdmin, pData );
 
    if( pData->param1 != 0 )
+   {
+      DBPRINT1( "DBG: Extern\n" );
       daqChannelEnableExtrenTrigger( pChannel );
+   }
    else
+   {
+      DBPRINT1( "DBG: Event\n" );
       daqChannelEnableEventTrigger( pChannel );
+   }
 
    return DAQ_RET_OK;
 }
@@ -552,7 +566,8 @@ DAQ_RETURN_CODE_T opGetTriggerSourceCon( DAQ_ADMIN_T* pDaqAdmin,
    if( ret != DAQ_RET_OK )
       return ret;
 
-   pData->param1 = daqChannelGetTriggerSource( getChannel( pDaqAdmin, pData ) );
+   pData->param1 =
+             daqChannelGetTriggerSource( getChannel( pDaqAdmin, pData ) );
 
    return DAQ_RET_OK;
 }
@@ -575,9 +590,15 @@ DAQ_RETURN_CODE_T opSetTriggerSourceHir( DAQ_ADMIN_T* pDaqAdmin,
    DAQ_CANNEL_T* pChannel = getChannel( pDaqAdmin, pData );
 
    if( pData->param1 != 0 )
+   {
+      DBPRINT1( "DBG: Extern\n" );
       daqChannelEnableExternTriggerHighRes( pChannel );
+   }
    else
+   {
+      DBPRINT1( "DBG: Event\n" );
       daqChannelEnableEventTriggerHighRes( pChannel );
+   }
 
    return DAQ_RET_OK;
 }

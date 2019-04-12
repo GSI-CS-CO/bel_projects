@@ -532,7 +532,7 @@ void DaqInterface::writeParam1234( void )
 
 /*! ---------------------------------------------------------------------------
  */
-void DaqInterface::writeRamIndexes( void )
+void DaqInterface::writeRamIndexesAndUnlock( void )
 {
    EB_MAKE_CB_OW_ARG( cArg );
 
@@ -543,6 +543,11 @@ void DaqInterface::writeRamIndexes( void )
                                ramIndexes.ringIndexes.start );
    EB_LM32_OJECT_MEMBER_WRITE( m_poEbHandle, &m_oSharedData,
                                ramIndexes.ringIndexes.end );
+
+   m_oSharedData.ramIndexes.ramAccessLock = false;
+   EB_LM32_OJECT_MEMBER_WRITE( m_poEbHandle, &m_oSharedData,
+                               ramIndexes.ramAccessLock );
+
    ebCycleClose();
 
    while( !cArg.exit )
@@ -858,7 +863,7 @@ void DaqInterface::clearBuffer( bool update )
 {
    ramRingReset( &m_oScuRam.pSharedObj->ringIndexes );
    if( update )
-      writeRamIndexes();
+      writeRamIndexesAndUnlock();
 }
 
 //================================== EOF ======================================
