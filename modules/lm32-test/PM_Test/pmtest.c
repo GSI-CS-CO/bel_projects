@@ -125,11 +125,7 @@ void main( void )
 
    daqChannelSetTriggerConditionLW( pChannel, 0xA );
    daqChannelSetTriggerConditionHW( pChannel, 0xB );
-   daqChannelSetTriggerDelay( pChannel, 0x0000 );
-
-   unsigned int b = 0;
-   while( readFiFo( pChannel, b++ ) ) {}
-   return;
+   daqChannelSetTriggerDelay( pChannel, 0x000C );
 
    mprintf( "HiResPending: 0x%04x\n", *daqChannelGetHiResIntPendingPtr( pChannel ) );
 
@@ -138,27 +134,21 @@ void main( void )
    daqChannelTestAndClearHiResIntPending( pChannel );
 
    daqChannelEnablePostMortem( pChannel );
-  // daqChannelEnableExternTriggerHighRes( pChannel );
-   //daqChannelEnableHighResolution( pChannel );
 
    mprintf( "FiFo: %d\n", daqChannelGetPmFifoWords( pChannel ) );
    mprintf( "FiFo: %d\n", daqChannelGetPmFifoWords( pChannel ) );
    mprintf( "FiFo: %d\n", daqChannelGetPmFifoWords( pChannel ) );
-   
+
    i = 0;
-   while( daqChannelGetPmFifoWords( pChannel ) < (DAQ_FIFO_PM_HIRES_WORD_SIZE-1) )
+   while( !daqChannelIsPmHiResFiFoFull( pChannel ) )
       i++;
    mprintf( "Polling loops: %d\n", i );
-  // while( !daqChannelTestAndClearHiResIntPending( pChannel ) );
+
    daqChannelPrintInfo( pChannel );
 
    daqChannelDisablePostMortem( pChannel );
 
-//   daqChannelReset( pChannel );
-
-   mprintf( "HiResPending: 0x%04x\n", *daqChannelGetHiResIntPendingPtr( pChannel ) );
-
-   //!!uint16_t volatile* ptr = daqChannelGetPmDatPtr( pChannel );
+   //!!DAQ_DATA_T volatile* ptr = daqChannelGetPmDatPtr( pChannel );
    DAQ_DESCRIPTOR_T descriptor;
    memset( &descriptor, 0, sizeof( descriptor ) );
 
@@ -166,9 +156,9 @@ void main( void )
    int j = 0;
 #define CONFIG_DAQ_SEPARAD_COUNTER
 #ifdef CONFIG_DAQ_SEPARAD_COUNTER
-   uint16_t remaining  = daqChannelGetPmFifoWords( pChannel ) + 1;
+   DAQ_REGISTER_T remaining  = daqChannelGetPmFifoWords( pChannel ) + 1;
 #else
-   volatile uint16_t remaining;
+   volatile DAQ_REGISTER_T remaining;
 #endif
    i = 0;
    do
@@ -178,7 +168,7 @@ void main( void )
 #else
       remaining = daqChannelGetPmFifoWords( pChannel );
 #endif
-      volatile uint16_t data = daqChannelPopPmFifo( pChannel ); //!!*ptr;
+      volatile DAQ_DATA_T data = daqChannelPopPmFifo( pChannel ); //!!*ptr;
       if( i < 4 )
          mprintf( "%d: 0x%04x, %d\n", i, data, remaining );
       if( remaining < ARRAY_SIZE( descriptor.index ) )

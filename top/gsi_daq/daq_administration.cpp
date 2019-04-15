@@ -210,9 +210,16 @@ bool DaqAdministration::registerDevice( DaqDevice* pDevice )
       pDevice->m_deviceNumber = m_devicePtrList.size() + 1;
    }
 
+   if( pDevice->m_slot != 0 )
+   {
+      if( pDevice->m_slot != getSlotNumber( pDevice->m_deviceNumber ) )
+         return true;
+   }
+   else
+      pDevice->m_slot = getSlotNumber( pDevice->m_deviceNumber );
+
    pDevice->m_maxChannels = readMaxChannels( pDevice->m_deviceNumber );
    m_maxChannels          += pDevice->m_maxChannels;
-   pDevice->m_slot        = getSlotNumber( pDevice->m_deviceNumber );
    pDevice->m_pParent     = this;
    m_devicePtrList.push_back( pDevice );
 

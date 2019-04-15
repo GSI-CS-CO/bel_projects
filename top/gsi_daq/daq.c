@@ -81,12 +81,12 @@ DAQ_REGISTER_T daqChannelGetReg( DAQ_REGISTER_ACCESS_T* volatile pReg,
 /*! ---------------------------------------------------------------------------
  */
 bool daqChannelIsPmHiResFiFoFull( register DAQ_CANNEL_T* pThis )
-{  /*
-    * Because of possible transitions in the FoFo-level register during
-    * the post-mortem/high-resolution mode is sill active,
-    * it becomes necessary to ask this register more then one time to
-    * ensure that the FiFo is really full.
-    */
+{ /*
+   * Because of possible transitions in the FoFo-level register during
+   * the post-mortem/high-resolution mode is sill active,
+   * it becomes necessary to ask this register more then one time to
+   * ensure that the FiFo is really full.
+   */
    for( unsigned int i = 0; i < 2; i++ )
    {
       if( daqChannelGetPmFifoWords( pThis ) != DAQ_FIFO_PM_HIRES_WORD_SIZE )
@@ -768,6 +768,7 @@ void daqDescriptorPrintInfo( register DAQ_DESCRIPTOR_T* pThis )
             convertByteEndian_uint32_t( daqDescriptorGetTimeStampSec( pThis ) ));
    mprintf( "  Nanoseconds:   %09u\n",
             convertByteEndian_uint32_t( daqDescriptorGetTimeStampNanoSec( pThis )));
+   mprintf( "  Sequence:        %d\n", daqDescriptorGetSequence( pThis ));
    mprintf( "  CRC:             0x%02x\n", daqDescriptorGetCRC( pThis ));
 }
 

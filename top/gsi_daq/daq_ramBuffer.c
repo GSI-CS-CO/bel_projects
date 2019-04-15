@@ -424,8 +424,10 @@ void ramWriteDaqData( register RAM_SCU_T* pThis, DAQ_CANNEL_T* pDaqChannel,
          * descriptor. This manner making the intended RAM- place
          * of the device descriptor dividable by RAM_DAQ_PAYLOAD_T.
          */
-         DBG_RAM_INFO( "DBG: Words in Fifo: %d\n", remainingDataWords );
          firstData[dataWordCounter] = data;
+      #ifdef CONFIG_DAQ_DECREMENT
+         DBG_RAM_INFO( "DBG: Words in Fifo: %d\n", remainingDataWords );
+      #endif
       }
       else
       {
