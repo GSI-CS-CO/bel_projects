@@ -600,7 +600,7 @@ void ecaHandler(uint32_t cnt)
 	      pTask[0].cycle = 0;
 	      mprintf("cycle stopped!\n");
 	    }
-	    else {                        // update remaining cycle
+	    else if (pTask[0].cycle > 0) { // update remaining cycle
 	      p = d - pTask[0].deadline;
 	      p = p / pTask[0].period;
 	      pTask[0].cycle = p;
