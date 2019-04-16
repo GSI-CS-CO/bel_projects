@@ -1472,7 +1472,7 @@ end component;
   signal IOBP_id_data_to_SCUB:    std_logic_vector(15 downto 0);
   
   TYPE   t_quench_array     is array (0 to 4) of std_logic_vector(24 downto 0);
-  signal quench_mute_signal: t_quench_array := (others=>(others=>'0'));
+  signal quench_enable_signal: t_quench_array := (others=>(others=>'0'));
   TYPE   t_quench_reg_array     is array (0 to 7) of std_logic_vector(15 downto 0);
   signal quench_reg: t_quench_reg_array := (others=>(others=>'0'));
   
@@ -3825,7 +3825,7 @@ Quench_Matrix_Gen:  for J in 1 to 3 generate
                   delay => AW_Config1(J),
                   QuDIn => Deb60_in(24 downto 0),
                   --mute => "1"&X"FFFFFC",
-                  mute => (IOBP_Masken_Reg2 (9 downto 0) & IOBP_Masken_Reg1 (14 downto 0)) or (quench_mute_signal(J) ) ,
+                  mute => (IOBP_Masken_Reg2 (9 downto 0) & IOBP_Masken_Reg1 (14 downto 0)) or not (quench_enable_signal(J) ) ,
                   QuDOut => quench_out(J));
 end generate Quench_Matrix_Gen;
                   
@@ -6612,13 +6612,14 @@ BEGIN
     when x"ABDE" => --SPILL ABORT Development
       --IOBP_Output <= x"00" & "0" & clk_blink & not clk_blink & clk_blink;
       IOBP_Output <= "0000000" & clk_blink & "0" & AW_Output_Reg(1)( 0)  & spill_abort_command_rst & spill_abort_command;
+      spill_abort_armed <= X"00"&"000" & clk_blink & "0" & AW_Output_Reg(1)( 0)  & spill_abort_command_rst & spill_abort_command;
       
     when x"DEDE" => --Quench Detection Development
       IOBP_Output <= "0000000" & quench_out(3) & quench_out(0) & quench_out (2) & quench_out (1) & quench_out(0);
-      quench_mute_signal(1) <= quench_reg (1) (9 downto 0) &  quench_reg (0) (14 downto 0);
-      quench_mute_signal(2) <= quench_reg (3) (9 downto 0) &  quench_reg (2) (14 downto 0);
-      quench_mute_signal(3) <= quench_reg (5) (9 downto 0) &  quench_reg (4) (14 downto 0);
-      quench_mute_signal(4) <= quench_reg (7) (9 downto 0) &  quench_reg (6) (14 downto 0);
+      quench_enable_signal(1) <= quench_reg (1) (9 downto 0) &  quench_reg (0) (14 downto 0);
+      quench_enable_signal(2) <= quench_reg (3) (9 downto 0) &  quench_reg (2) (14 downto 0);
+      quench_enable_signal(3) <= quench_reg (5) (9 downto 0) &  quench_reg (4) (14 downto 0);
+      quench_enable_signal(4) <= quench_reg (7) (9 downto 0) &  quench_reg (6) (14 downto 0);
       
 
     when OTHERS =>
