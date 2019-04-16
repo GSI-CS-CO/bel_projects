@@ -114,7 +114,7 @@ void daqChannelReset( register DAQ_CANNEL_T* pThis )
    daqChannelSetTriggerDelay( pThis, 0 );
 
    unsigned int i;
-   volatile uint16_t dummy;
+   volatile DAQ_DATA_T dummy;
    /*
     * Making the PM_HiRes Fifo empty and discard the content
     */

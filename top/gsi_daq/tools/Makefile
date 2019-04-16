@@ -4,6 +4,7 @@ REPOSITORY_DIR := $(shell git rev-parse --show-toplevel)
 MIAN_MODULE := daqt.cpp
 
 SOURCE += parse_opts.cpp
+SOURCE += daqt_command_line.cpp
 SOURCE += daqt_scan.cpp
 
 SOURCE += $(SCU_LIB_SRC_DIR)/scu_ddr3.c
@@ -19,7 +20,8 @@ DEFINES += CONFIG_DAQ_TEST
 # DEFINES += NDEBUG
 DEFINES += CONFIG_DAQ_DEBUG
 
-CALL_ARGS         = "tcp/$(SCU_URL)"
+CALL_ARGS         = tcp/$(SCU_URL) -h
+
 REMOTE_CALL_ARGS  = "dev/wbm0"
 
 LIBS += stdc++

@@ -1,8 +1,8 @@
 /*!
- *  @file daqt.cpp
- *  @brief Main module of Data Acquisition Tool
+ *  @file daqt_command_line.hpp
+ *  @brief Command line parser of DAQ-Test
  *
- *  @date 11.04.2019
+ *  @date 16.04.2019
  *  @copyright (C) 2019 GSI Helmholtz Centre for Heavy Ion Research GmbH
  *
  *  @author Ulrich Becker <u.becker@gsi.de>
@@ -22,43 +22,33 @@
  * License along with this library. If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************
  */
+#ifndef _DAQT_COMMAND_LINE_HPP
+#define _DAQT_COMMAND_LINE_HPP
+#include <parse_opts.hpp>
 #include "daqt.hpp"
-#include "daqt_command_line.hpp"
-#include "daqt_scan.hpp"
 
-using namespace daqt;
+using namespace CLOP;
 
-int main( int argc, char** ppArgv )
+namespace daqt
 {
-   try
-   {
-      CommandLine cmdLine( argc, ppArgv );
-      cmdLine();
- //     Scan s( ppArgv[1] );
- //     s( cout );
-      return EXIT_SUCCESS;
-   }
-   catch( daq::EbException& e )
-   {
-      cerr << ESC_FG_RED "daq::EbException occurred: " << e.what()
-          << ESC_NORMAL << endl;
-   }
-   catch( daq::DaqException& e )
-   {
-      cerr << ESC_FG_RED "daq::DaqException occurred: " << e.what();
-      cerr << "\nStatus: " <<  e.getStatusString() <<  ESC_NORMAL << endl;
-   }
-   catch( std::exception& e )
-   {
-      cerr << ESC_FG_RED "std::exception occurred: " << e.what()
-           << ESC_NORMAL << endl;
-   }
-   catch( ... )
-   {
-      cerr << ESC_FG_RED "Undefined exception occurred!" ESC_NORMAL << endl;
-   }
 
-   return EXIT_FAILURE;
-}
+using namespace daq;
 
+class CommandLine: public PARSER
+{
+   static std::vector<OPTION> c_optList;
+
+   DaqAdministration*  m_poAllDaq;
+
+   bool                m_doScan;
+public:
+   CommandLine( int argc, char** ppArgv );
+   virtual ~CommandLine( void );
+
+   int onArgument( void ) override;
+};
+
+} // namespace daqt
+
+#endif // _DAQT_COMMAND_LINE_HPP
 //================================== EOF ======================================

@@ -55,7 +55,7 @@ endif
 .PHONY: run
 run: $(WORK_DIR) $(TARGET_DIR) $(RESULT_FILE)
 	$(QUIET)(export LD_LIBRARY_PATH=$(ADDITIONAL_LIB_PATH)$(LD_LIBRARY_PATH); \
-	$(BIN_FILE) $(CALL_ARGS))
+	$(BIN_FILE) $(CALL_ARGS) )
 
 ifeq ($(DEBUG), 1)
 
