@@ -809,6 +809,10 @@ void init()
 {
   discoverPeriphery();    // mini-sdb: get info on important Wishbone infrastructure, such as (this) CPU, flash, ...
 
+  uart_init_hw();         // init UART, required for printf... . To view print message, you may use 'eb-console' from the host
+
+  mprintf("\n Wishbone device detection (%s)\n", __FILE__);
+
   if (pEca)
     mprintf("ECA event input                @ 0x%08x\n", (uint32_t) pEca);
   else {
@@ -819,7 +823,6 @@ void init()
   mprintf("Mailbox                        @ 0x%08x\n", (uint32_t)pCpuMsiBox);
   mprintf("MSI destination path of LM32   : 0x%08x\n", (uint32_t)pMyMsi);
 
-  uart_init_hw();         // init UART, required for printf... . To view print message, you may use 'eb-console' from the host
   cpuId = getCpuIdx();    // get ID of THIS CPU
 
   pEcaCtl = find_device_adr(ECA_SDB_VENDOR_ID, ECA_SDB_DEVICE_ID);
@@ -849,8 +852,6 @@ void init()
 void main(void) {
 
   uint64_t tick;
-
-  mprintf("\n Wishbone device detection (%s)\n", __FILE__);
 
   init();               // discover mailbox, own MSI path, ECA event input, ECA queue for LM32 channel
   initSharedMem();      // init shared memory
