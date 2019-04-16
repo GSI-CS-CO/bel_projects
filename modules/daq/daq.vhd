@@ -16,7 +16,7 @@ use work.daq_pkg.all;
 --                                      DAQ Fifo Size changed back from 500 to 502 Samples
 --                                      HiRes Timestamp latch now on HiRes Trigger Event, not on HiRes Switch off
 --                                      For Signaltaps better change Samplerate to max than shorten FIFOs
---                                      crc_daq_out and wait_for_trigger  bugfix
+--                                      crc_daq_out, HiRes_Runs and wait_for_trigger  bugfix
 --                                         
 ------------------------------------------------------------------------------------------------------------------------------------
 
@@ -887,23 +887,52 @@ PM_Logic : for I in 1 to ch_num generate
   HiRes_Counter: process (clk_i,nreset)
   begin
     if nreset = '0' then
-      HiRes_trig_cntr(i) <=  (others => '0');  
-      HiRes_runs(i)<='0';
+      HiRes_trig_cntr(i)      <=  (others => '0');  
+      HiRes_runs(i)           <=  '0';
     elsif rising_edge (clk_i) then
-      if Start_HiRes_pulse(i) ='1' then
-        HiRes_trig_cntr(i)    <= (others => '0');
-        HiRes_runs(i)  <='1';
-      elsif Trig_Pulse_HiRes(i) ='1' or  HiRes_trig_cntr(i) /= x"0000" then
+  
+      if    Stop_HiRes_pulse(i)  ='1' then
+        HiRes_trig_cntr(i)    <=  (others => '0');  
+        HiRes_runs(i)         <=  '0';      
+      elsif Start_HiRes_pulse(i) ='1' then
+        HiRes_trig_cntr(i)    <= (others => '0');                                                 --set counter 
+        HiRes_runs(i)         <='1';                                                              --enable HiRes_Counter and wait for Trig_Pulse_HiRes
+      elsif Trig_Pulse_HiRes(i) ='1' or  HiRes_trig_cntr(i) /= x"0000" then        
         if HiRes_trig_cntr(i) /=    x"0392" then          
-          HiRes_trig_cntr(i) <= HiRes_trig_cntr(i) + 1;
-          HiRes_runs(i)  <='1';
+          HiRes_trig_cntr(i)  <= HiRes_trig_cntr(i) + 1;
+          HiRes_runs(i)       <='1';
         else
-          HiRes_runs(i)  <='0';
+          HiRes_runs(i)       <='0';
+          HiRes_trig_cntr(i)  <=  (others => '0');
         end if;
       end if;
     end if;
   end process HiRes_Counter;
 
+  
+  
+  
+--    HiRes_Counter: process (clk_i,nreset)
+--  begin
+--    if nreset = '0' then
+--      HiRes_trig_cntr(i) <=  (others => '0');  
+--      HiRes_runs(i)<='0';
+--    elsif rising_edge (clk_i) then
+--      if Start_HiRes_pulse(i) ='1' then
+--        HiRes_trig_cntr(i)    <= (others => '0');
+--        HiRes_runs(i)  <='1';
+--      elsif Trig_Pulse_HiRes(i) ='1' or  HiRes_trig_cntr(i) /= x"0000" then
+--        if HiRes_trig_cntr(i) /=    x"0392" then          
+--          HiRes_trig_cntr(i) <= HiRes_trig_cntr(i) + 1;
+--          HiRes_runs(i)  <='1';
+--        else
+--          HiRes_runs(i)  <='0';
+--        end if;
+--      end if;
+--    end if;
+--  end process HiRes_Counter;
+  
+  
 ----------------------------------- Descriptor append logic for PM and HiRes -------------------------------------------------------
 -- Descriptor loaded on 9 following clocks after PM/HiRes DAQ finished. 
 -- PM Timestamp latched on first sysclk after PM finished
@@ -921,7 +950,7 @@ PM_Logic : for I in 1 to ch_num generate
      PM_Descr_reached_7(i)       <= '0';
     elsif rising_edge (clk_i) then
       if Stop_PM_pulse(i) ='1' or Trig_Pulse_HiRes(i)='1' then     --new  Tight coupling of Timestamp to HiRes Trigger Event
-      --if Stop_PM_pulse(i) ='1' or Stop_HiRes_pulse(i)='1' then   -- old
+      --if Stop_PM_pulse(i) ='1' or (i)='1' then   -- old
         PM_Timestamp_latched(i)   <= Timestamp_cntr;
       end if;
       
@@ -953,7 +982,7 @@ PM_Logic : for I in 1 to ch_num generate
       if Stop_PM_pulse(i) ='1' or Stop_HiRes_pulse(i)='1' then
         PM_Descr_cntr(i)      <= (others => '0');
         PM_Descr_runs(i)      <='1';
-      PM_Descr_reached_7(i) <='1';
+        PM_Descr_reached_7(i) <='1';
       elsif PM_Descr_cntr(i) /= x"8"  and PM_Descr_runs(i)='1' then
        if PM_Descr_cntr(i) = x"7" then
             PM_Descr_reached_7(i)   <='0';
@@ -962,7 +991,7 @@ PM_Logic : for I in 1 to ch_num generate
         PM_Descr_runs(i)      <='1';
       else
         PM_Descr_runs(i)      <='0';
-      PM_Descr_reached_7(i) <='0';    
+        PM_Descr_reached_7(i) <='0';    
       end if;
     end if;
   end process PM_Descr_Logic;
