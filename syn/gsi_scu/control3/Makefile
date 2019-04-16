@@ -11,6 +11,8 @@ include ../../build.mk
 
 CFLAGS        += -O2
 
+doc:
+	doxygen Doxyfile
 $(TARGET).elf: $(PATHSCU)/main.c  $(INCPATH)/display.c  $(PATHSCU)/cb.c \
                 $(PATHSCU)/scu_bus.c $(PATHSCU)/scu_mil.c $(PATHSCU)/fg.c  \
 		$(PATHSCU)/dow_crc.c $(PATHSCU)/history.c \

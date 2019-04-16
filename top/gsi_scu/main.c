@@ -87,22 +87,24 @@ void channel_watchdog(int);
 void clear_handler_state(int);
 
 #define SHARED __attribute__((section(".shared")))
-uint64_t SHARED board_id           = -1;
-uint64_t SHARED ext_id             = -1;
-uint64_t SHARED backplane_id       = -1;
-uint32_t SHARED board_temp         = -1;
-uint32_t SHARED ext_temp           = -1;
-uint32_t SHARED backplane_temp     = -1;
+uint64_t SHARED board_id           = -1; /*!< 1Wire ID of the pcb temp sensor */
+uint64_t SHARED ext_id             = -1; /*!< 1Wire ID of the extension board temp sensor */
+uint64_t SHARED backplane_id       = -1; /*!< 1Wire ID of the backplane temp sensor */
+uint32_t SHARED board_temp         = -1; /*!< temperature value of the pcb sensor */
+uint32_t SHARED ext_temp           = -1; /*!< temperature value of the extension board sensor */
+uint32_t SHARED backplane_temp     = -1; /*!< temperature value of the backplane sensor */
 uint32_t SHARED fg_magic_number    = 0xdeadbeef;
-uint32_t SHARED fg_version         = 0x3; // 0x2 saftlib,
-                                          // 0x3 new msi system with mailbox
+uint32_t SHARED fg_version         = 0x3; /*!< 0x2 saftlib, 0x3 new msi system with mailbox */
 uint32_t SHARED fg_mb_slot               = -1;
-uint32_t SHARED fg_num_channels          = MAX_FG_CHANNELS;
-uint32_t SHARED fg_buffer_size           = BUFFER_SIZE;
-uint32_t SHARED fg_macros[MAX_FG_MACROS] = {0}; // hi..lo bytes: slot, device, version, output-bits
-struct channel_regs SHARED fg_regs[MAX_FG_CHANNELS];
-struct channel_buffer SHARED fg_buffer[MAX_FG_CHANNELS];
+uint32_t SHARED fg_num_channels          = MAX_FG_CHANNELS; /*!< tell saftlib the max number of fg channels */
+uint32_t SHARED fg_buffer_size           = BUFFER_SIZE; /*!< tell saftlib the buffer size for one channel */
+uint32_t SHARED fg_macros[MAX_FG_MACROS] = {0}; /*!< hi..lo bytes: slot, device, version, output-bits */
+struct channel_regs SHARED fg_regs[MAX_FG_CHANNELS]; /*!< header of the channel buffers, here are the indexes of the buffers */
+struct channel_buffer SHARED fg_buffer[MAX_FG_CHANNELS]; /*!< array of channel buffers, here is the data for each buffer */
 HistItem SHARED histbuf[HISTSIZE];
+/**
+ * this is a brief description
+ */
 
 volatile unsigned short* scub_base     = 0;
 volatile unsigned int* scub_irq_base   = 0;
@@ -145,7 +147,9 @@ void dev_failure(int status, int slot, char* msg) {
     mprintf("dev bus access in slot %d failed with code %d\n", slot, status);
 }
 
-
+/** debug method
+ * prints the last received message signaled interrupt to the UART
+ */
 void show_msi()
 {
   mprintf(" Msg:\t%08x\nAdr:\t%08x\nSel:\t%01x\n", global_msi.msg, global_msi.adr, global_msi.sel);
@@ -158,7 +162,12 @@ void isr0()
    show_msi();
 }
 
-
+/** @brief enables msi generation for the specified channel.
+ *  Messages from the scu bus are send to the msi queue of this cpu with the offset 0x0.
+ *  Messages from the MIL extension are send to the msi queue of this cpu with the offset 0x20.
+ *  A hardware macro is used, which generates msis from legacy interrupts.
+ *  @param channel number of the channel between 0 and MAX_FG_CHANNELS-1
+ */
 void enable_scub_msis(int channel) {
   int slot;
   slot = fg_macros[fg_regs[channel].macro_number] >> 24;  //dereference slot number
@@ -191,6 +200,10 @@ void enable_scub_msis(int channel) {
   }
 }
 
+/** @brief disables the generation of irqs for the specified channel
+ *  SIO and MIL extension stop generating irqs
+ *  @param channel number of the channel from 0 to MAX_FG_CHANNELS-1
+ */
 void disable_slave_irq(int channel) {
   int slot, dev;
   int status;
@@ -214,6 +227,10 @@ void disable_slave_irq(int channel) {
   }
 }
 
+/** @brief delay in multiples of one millisecond
+ *  uses the system timer
+ *  @param ms delay value in milliseconds
+ */
 void msDelayBig(uint64_t ms)
 {
   uint64_t later = getSysTime() + ms * 1000000ULL / 8;
@@ -224,7 +241,11 @@ void msDelay(uint32_t msecs) {
   usleep(1000 * msecs);
 }
 
-
+/** @brief sends the parameters for the next interpolation interval
+ *  @param slot number of the slot, including the high bits with the information SIO or MIL_EXT
+ *  @param fg_base base address of the function generator macro
+ *  @param cntrl_reg state of the control register. saves one read access.
+ */
 inline void send_fg_param(int slot, int fg_base, unsigned short cntrl_reg) {
   struct param_set pset;
   int fg_num;
@@ -268,6 +289,11 @@ inline void send_fg_param(int slot, int fg_base, unsigned short cntrl_reg) {
   }
 }
 
+/** @brief decide how to react to the interrupt request from the function generator macro
+ *  @param slot encoded slot number with the high bits for SIO / MIL_EXT distinction
+ *  @param fg_base base address of the function generator macro
+ *  @param irq_act_reg state of the irq act register, saves a read access
+ */
 inline void handle(int slot, unsigned fg_base, short irq_act_reg) {
     unsigned short cntrl_reg = 0;
     int status;
@@ -345,6 +371,8 @@ inline void handle(int slot, unsigned fg_base, short irq_act_reg) {
     }
 }
 
+/** @brief as short as possible, just pop the msi queue of the cpu and push it to the message queue of the main loop
+ */
 void irq_handler() {
   struct msi m;
 
@@ -355,6 +383,11 @@ void irq_handler() {
 }
 
 
+/** @brief configures each function generator channel.
+ *  checks first, if the drq line is inactive, if not the line is cleared
+ *  then activate irqs and send the first tuple of data to the function generator
+ *  @param channel number of the specified function generator channel from 0 to MAX_FG_CHANNELS-1
+ */
 int configure_fg_macro(int channel) {
   int i = 0;
   int slot, dev, fg_base, dac_base;
@@ -518,7 +551,8 @@ int configure_fg_macro(int channel) {
   return 0;
 }
 
-/* scans for fgs on mil extension and scu bus */
+/** @brief scans for fgs on mil extension and scu bus
+ */
 void print_fgs() {
   int i=0;
   for(i=0; i < MAX_FG_MACROS; i++)
@@ -536,6 +570,8 @@ void print_fgs() {
   }
 }
 
+/** @brief print the values and states of all channel registers
+ */
 void print_regs() {
   int i;
   for(i=0; i < MAX_FG_CHANNELS; i++) {
@@ -550,6 +586,9 @@ void print_regs() {
   }
 }
 
+/** @brief disable function generator channel
+ *  @param channel number of the function generator channel from 0 to MAX_FG_CHANNELS-1
+ */
 void disable_channel(unsigned int channel) {
   int slot, dev, fg_base, dac_base;
   short data;
@@ -596,6 +635,8 @@ void disable_channel(unsigned int channel) {
   }
 }
 
+/** @brief updates the temperatur information in the shared section
+ */
 void updateTemp() {
   BASE_ONEWIRE = (unsigned char *)wr_1wire_base;
   wrpc_w1_init();
@@ -608,10 +649,8 @@ void updateTemp() {
   wrpc_w1_init();
 }
 
-void tmr_irq_handler() {
-  //updateTemp();
-}
-
+/** @brief initialize the irq table and set the irq mask
+ */
 void init_irq_table() {
   isr_table_clr();
   isr_ptr_table[0] = &irq_handler;
@@ -621,7 +660,8 @@ void init_irq_table() {
   mprintf("IRQ table configured.\n");
 }
 
-
+/** @brief initialize procedure at startup
+ */
 void init() {
   int i;
   hist_init(HISTORY_XYZ_MODULE);
@@ -631,6 +671,8 @@ void init() {
   print_fgs();                        //scans for slave cards and fgs
 }
 
+/** @brief segfault handler, not used at the moment
+ */
 void _segfault(int sig)
 {
   mprintf("KABOOM!\n");
@@ -638,6 +680,8 @@ void _segfault(int sig)
   return;
 }
 
+/** @brief helper function which clears the state of a dev bus after malfunction
+ */
 void clear_handler_state(int slot) {
   struct msi m;
   if (slot & DEV_SIO) {
@@ -656,6 +700,11 @@ void clear_handler_state(int slot) {
   }
 }
 
+/** @brief software irq handler
+ *  dispatch the calls from linux to the helper functions
+ *  called via scheduler in main loop
+ *  @param id task id
+ */
 void sw_irq_handler(int id) {
   int i;
   unsigned int code, value;
@@ -700,7 +749,7 @@ void sw_irq_handler(int id) {
 }
 
 /*************************************************************
-* 
+* @brief
 * demonstrate how to poll actions ("events") from ECA
 * HERE: get WB address of relevant ECA queue
 * code written by D.Beck, example.c
@@ -736,7 +785,7 @@ void findECAQ()
 } // findECAQ
 
 /*************************************************************
-* 
+* @brief
 * demonstrate how to poll actions ("events") from ECA
 * HERE: poll ECA, get data of action and do something
 *
@@ -845,7 +894,12 @@ int tsk_getNumTasks(void) {
   return sizeof(tasks) / sizeof(*tasks);
 }
 
-/* task definition of scu_bus_handler */
+/**
+ * @brief task definition of scu_bus_handler
+ * called by the scheduler in the main loop
+ * decides which action for a scu bus interrupt is suitable
+ * @param id task id
+ */
 void scu_bus_handler(int id) {
   volatile unsigned int slv_int_act_reg;
   unsigned char slave_nr;
@@ -886,8 +940,11 @@ void scu_bus_handler(int id) {
 
 }
 
-/* can have multiple instances, one for each active sio card controlling a dev bus       */
-/* persistent data, like the state or the sio slave_nr, is stored in a global structure */
+/**
+ * @brief can have multiple instances, one for each active sio card controlling a dev bus
+ * persistent data, like the state or the sio slave_nr, is stored in a global structure
+ * @param id task id
+ */
 void dev_sio_handler(int id) {
   int i;
   int slot, dev;
@@ -1043,6 +1100,11 @@ void dev_sio_handler(int id) {
 
 }
 
+/**
+ * @brief has only one instance
+ * persistent data is stored in a global structure
+ * @param id task id
+ */
 void dev_bus_handler(int id) {
   int i;
   int slot, dev;
@@ -1203,6 +1265,9 @@ uint64_t getTick() {
   return tick;
 }
 
+/**
+ * @brief after the init phase at startup, the scheduler loop runs forever
+ */
 int main(void) {
   int i, mb_slot;
   sdb_location found_sdb[20];

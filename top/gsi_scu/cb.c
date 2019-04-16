@@ -4,7 +4,12 @@
 #include <aux.h>
 #include <mprintf.h>
 
-
+/** @brief write parameter set to circular buffer
+ *  @param cb pointer to the channel buffer
+ *  @param cr pointer to the channel register
+ *  @param channel number of the channel
+ *  @param pset pointer to parameter set
+ */
 void cbWrite(volatile struct channel_buffer* cb, volatile struct channel_regs* cr, int channel, struct param_set *pset) {
   unsigned int wptr = cr[channel].wr_ptr;
   /* write element to free slot */
@@ -17,6 +22,11 @@ void cbWrite(volatile struct channel_buffer* cb, volatile struct channel_regs* c
 }
 
 
+/** @brief debug method for dumping a circular buffer
+ *  @param cb pointer to the channel buffer
+ *  @param cr pointer to the channel register
+ *  @param channel number of the channel
+ */
 void cbDump(volatile struct channel_buffer *cb, volatile struct channel_regs* cr, int channel) {
   int i = 0, col;
   struct param_set *pset;
@@ -31,6 +41,11 @@ void cbDump(volatile struct channel_buffer *cb, volatile struct channel_regs* cr
   }
 }
 
+/** @brief add a message to a message buffer
+ *  @param mb pointer to the first message buffer
+ *  @param queue number of the queue
+ *  @param m message which will be added to the queue
+ */
 int add_msg(volatile struct message_buffer *mb, int queue, struct msi m) {
     ring_pos_t next_head = (mb[queue].ring_head + 1) % RING_SIZE;
     if (next_head != mb[queue].ring_tail) {
@@ -45,6 +60,10 @@ int add_msg(volatile struct message_buffer *mb, int queue, struct msi m) {
     }
 }
 
+/** @brief remove a message from a message buffer
+ *  @param mb pointer to the first message buffer
+ *  @param queue number of the queue
+ */
 struct msi remove_msg(volatile struct message_buffer *mb, int queue) {
     struct msi m;
     if (mb[queue].ring_head != mb[queue].ring_tail) {
@@ -58,6 +77,10 @@ struct msi remove_msg(volatile struct message_buffer *mb, int queue) {
     }
 }
 
+/** @brief test if a queue has any messages
+ *  @param mb pointer to the first message buffer
+ *  @param queue number of the queue
+ */
 int has_msg(volatile struct message_buffer *mb, int queue) {
     if (mb[queue].ring_head != mb[queue].ring_tail)
       return 1;
