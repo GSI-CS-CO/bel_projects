@@ -348,7 +348,23 @@ namespace gsi
 template <typename TYP> TYP convertByteEndian( const TYP value )
    __FUNCTION_BODY_CONVERT_BYTE_ENDIAN( TYP )
 
-}      /* namespace gsi */
+/*!
+ * @brief Checks whether a number is within the given range of
+ *        minimum and maximum.
+ * @note For C++ only!
+ * @param v Value to test
+ * @param minimum Lower border
+ * @param maximum Upper border
+ * @retval true Value is within the borders.
+ * @retval false Value is outside of the borders.
+ */
+template <typename TYP> bool isInRange( const TYP v, const TYP minimum,
+                                                     const TYP maximum )
+{
+   return ((v >= minimum) && (v <= maximum));
+}
+
+} /* namespace gsi */
 #endif /* __cplusplus   */
 
 #ifndef __cplusplus
