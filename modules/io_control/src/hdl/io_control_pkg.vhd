@@ -83,6 +83,7 @@ package io_control_pkg is
       gpio_mux_o      : out std_logic_vector(f_sub1(g_gpio_inout+g_gpio_out)  downto 0);
       gpio_pps_mux_o  : out std_logic_vector(f_sub1(g_gpio_inout+g_gpio_out)  downto 0);
       gpio_sel_o      : out std_logic_vector(f_sub1(g_gpio_inout+g_gpio_out)  downto 0);
+      gpio_out_gate_o : out std_logic_vector(f_sub1(g_gpio_inout+g_gpio_out)  downto 0);
       gpio_in_gate_o  : out std_logic_vector(f_sub1(g_gpio_inout+g_gpio_in)   downto 0);
       lvds_oe_o       : out std_logic_vector(f_sub1(g_lvds_inout+g_lvds_out)  downto 0);
       lvds_term_o     : out std_logic_vector(f_sub1(g_lvds_inout+g_lvds_in)   downto 0);
@@ -91,6 +92,7 @@ package io_control_pkg is
       lvds_mux_o      : out std_logic_vector(f_sub1(g_lvds_inout+g_lvds_out)  downto 0);
       lvds_pps_mux_o  : out std_logic_vector(f_sub1(g_lvds_inout+g_lvds_out)  downto 0);
       lvds_sel_o      : out std_logic_vector(f_sub1(g_lvds_inout+g_lvds_out)  downto 0);
+      lvds_out_gate_o : out std_logic_vector(f_sub1(g_lvds_inout+g_lvds_out)  downto 0);
       lvds_in_gate_o  : out std_logic_vector(f_sub1(g_lvds_inout+g_lvds_in)   downto 0));
   end component;
 
