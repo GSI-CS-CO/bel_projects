@@ -48,8 +48,19 @@ vector<OPTION> CommandLine::c_optList =
    {
       OPT_LAMBDA( poParser,
       {
-         static_cast<CommandLine*>(poParser)->m_doScan = true;
-         return 1;
+         DaqAdministration* poAllDaq =
+            static_cast<CommandLine*>(poParser)->m_poAllDaq;
+         if( poAllDaq == nullptr )
+         {
+            ERROR_MESSAGE( "<proto/host/port> must be specified before!" );
+            return -1;
+         }
+         for( unsigned int i = 1; i <= poAllDaq->getMaxFoundDevices(); i++ )
+         {
+            cout << poAllDaq->getSlotNumber( i ) << " "
+                 <<  poAllDaq->readMaxChannels( i ) << endl;
+         }
+         return 0;
       }),
       .m_hasArg   = OPTION::NO_ARG,
       .m_id       = 0,
@@ -62,8 +73,10 @@ vector<OPTION> CommandLine::c_optList =
 
 CommandLine::CommandLine( int argc, char** ppArgv )
    :PARSER( argc, ppArgv )
+   ,FSM_INIT_FSM( READ_EB_NAME )
    ,m_poAllDaq( nullptr )
-   ,m_doScan( false )
+   ,m_poCurrentDevice( nullptr )
+   ,m_poCurrentChannel( nullptr )
 {
    add( c_optList );
 }
@@ -76,12 +89,72 @@ CommandLine::~CommandLine( void )
 
 int CommandLine::onArgument( void )
 {
-   if( m_poAllDaq == nullptr )
+   const string arg = getArgVect()[getArgIndex()];
+   unsigned int number;
+   switch( m_state )
    {
-      m_poAllDaq = new DaqAdministration(getArgVect()[getArgIndex()]);
-      return 1;
+      case READ_SLOT:
+      case READ_CHANNEL:
+      {
+         SCU_ASSERT( m_poAllDaq != nullptr );
+         try
+         {
+            number = stoi( arg );
+         }
+         catch( std::exception& e )
+         {
+            ERROR_MESSAGE( "Integer number is expected and not that: \""
+                           << arg << "\" !" );
+            return -1;
+         }
+         break;
+      }
    }
-   return 0;
+   switch( m_state )
+   {
+      case READ_EB_NAME:
+      {
+         SCU_ASSERT( m_poAllDaq == nullptr );
+         m_poAllDaq = new DaqContainer( arg, this );
+         FSM_TRANSITION( READ_SLOT );
+         break;
+      }
+      case READ_SLOT:
+      {
+         m_poCurrentChannel = nullptr;
+         if( !gsi::isInRange( number, DaqInterface::c_startSlot,
+                                      DaqInterface::c_maxSlots ) )
+         {
+            ERROR_MESSAGE( "Given slot " << number <<
+                           " is out of the range of: " <<
+                           DaqInterface::c_startSlot << " and " <<
+                           DaqInterface::c_maxSlots << " !" );
+            return -1;
+         }
+         if( !m_poAllDaq->isDevicePresent( number ) )
+         {
+            ERROR_MESSAGE( "In slot " << number << " isn't a DAQ!" );
+            return -1;
+         }
+         m_poCurrentDevice = m_poAllDaq->getDeviceBySlot( number );
+         if( m_poCurrentDevice == nullptr )
+         {
+            m_poCurrentDevice = new DaqDevice( number );
+            m_poAllDaq->registerDevice( m_poCurrentDevice );
+         }
+         FSM_TRANSITION( READ_CHANNEL );
+         break;
+      }
+      case READ_CHANNEL:
+      {  //TODO
+         SCU_ASSERT( m_poCurrentDevice != nullptr );
+         cout << "Channel " << arg << endl;
+         FSM_TRANSITION( READ_SLOT );
+         break;
+      }
+   }
+
+   return 1;
 }
 
 //================================== EOF ======================================

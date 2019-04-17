@@ -50,8 +50,8 @@ DaqChannel::~DaqChannel( void )
 /*! ---------------------------------------------------------------------------
  */
 DaqDevice::DaqDevice( unsigned int number )
-   :m_deviceNumber( number )
-   ,m_slot( 0 )
+   :m_deviceNumber( 0 )
+   ,m_slot( number )
    ,m_maxChannels( 0 )
    ,m_pParent(nullptr)
 {

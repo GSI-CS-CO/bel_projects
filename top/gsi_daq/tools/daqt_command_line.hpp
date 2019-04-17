@@ -24,8 +24,11 @@
  */
 #ifndef _DAQT_COMMAND_LINE_HPP
 #define _DAQT_COMMAND_LINE_HPP
-#include <parse_opts.hpp>
-#include "daqt.hpp"
+#ifndef __DOCFSM__
+ #include "daqt_messages.hpp"
+ #include "parse_opts.hpp"
+ #include "daqt.hpp"
+#endif
 
 using namespace CLOP;
 
@@ -34,13 +37,25 @@ namespace daqt
 
 using namespace daq;
 
+#define FSM_DECLARE_STATE( state, attr... ) state
+#define FSM_INIT_FSM( state, attr... )      m_state( state )
+#define FSM_TRANSITION( newState, attr... ) m_state = newState
+
 class CommandLine: public PARSER
 {
+   enum STATE_T
+   {
+      FSM_DECLARE_STATE( READ_EB_NAME ),
+      FSM_DECLARE_STATE( READ_SLOT ),
+      FSM_DECLARE_STATE( READ_CHANNEL )
+   };
    static std::vector<OPTION> c_optList;
 
-   DaqAdministration*  m_poAllDaq;
+   STATE_T        m_state;
+   DaqContainer*  m_poAllDaq;
+   DaqDevice*     m_poCurrentDevice;
+   Channel*       m_poCurrentChannel;
 
-   bool                m_doScan;
 public:
    CommandLine( int argc, char** ppArgv );
    virtual ~CommandLine( void );

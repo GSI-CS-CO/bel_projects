@@ -27,10 +27,42 @@
 #include <eb_console_helper.h>
 #include <stdlib.h>
 #include <daq_administration.hpp>
+#include <string>
 
 namespace daqt
 {
+using namespace daq;
+
+class CommandLine;
+///////////////////////////////////////////////////////////////////////////////
+class DaqContainer: public DaqAdministration
+{
+   CommandLine*   m_poCommandLine;
+
+public:
+   DaqContainer( const std::string ebName, CommandLine* poCommandLine )
+      :DaqAdministration( ebName )
+      ,m_poCommandLine( poCommandLine )
+      {}
+
+   CommandLine* getCommandLinePtr( void )
+   {
+      return m_poCommandLine;
+   }
 };
+
+///////////////////////////////////////////////////////////////////////////////
+class Channel: public DaqChannel
+{
+public:
+   Channel( unsigned int number )
+      :DaqChannel( number )
+    {}
+
+   bool onDataBlock( DAQ_DATA_T* pData, std::size_t wordLen ) override;
+};
+
+}
 
 
 #endif // ifndef _DAQT_HPP

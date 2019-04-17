@@ -23,39 +23,53 @@
  ******************************************************************************
  */
 #include "daqt.hpp"
+#include "daqt_messages.hpp"
 #include "daqt_command_line.hpp"
 #include "daqt_scan.hpp"
 
 using namespace daqt;
 
+/*! ---------------------------------------------------------------------------
+ */
+bool Channel::onDataBlock( DAQ_DATA_T* pData, std::size_t wordLen )
+{
+   return false;
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+inline int daqtMain( int argc, char** ppArgv )
+{
+   CommandLine cmdLine( argc, ppArgv );
+   if( cmdLine() < 0 )
+      return EXIT_FAILURE;
+   return EXIT_SUCCESS;
+}
+
+/*! ---------------------------------------------------------------------------
+ */
 int main( int argc, char** ppArgv )
 {
    try
    {
-      CommandLine cmdLine( argc, ppArgv );
-      cmdLine();
- //     Scan s( ppArgv[1] );
- //     s( cout );
-      return EXIT_SUCCESS;
+      return daqtMain( argc, ppArgv );
    }
    catch( daq::EbException& e )
    {
-      cerr << ESC_FG_RED "daq::EbException occurred: " << e.what()
-          << ESC_NORMAL << endl;
+      ERROR_MESSAGE( "daq::EbException occurred: " << e.what() );
    }
    catch( daq::DaqException& e )
    {
-      cerr << ESC_FG_RED "daq::DaqException occurred: " << e.what();
-      cerr << "\nStatus: " <<  e.getStatusString() <<  ESC_NORMAL << endl;
+      ERROR_MESSAGE( "daq::DaqException occurred: " << e.what()
+                     << "\nStatus: " <<  e.getStatusString() );
    }
    catch( std::exception& e )
    {
-      cerr << ESC_FG_RED "std::exception occurred: " << e.what()
-           << ESC_NORMAL << endl;
+      ERROR_MESSAGE( "std::exception occurred: " << e.what() );
    }
    catch( ... )
    {
-      cerr << ESC_FG_RED "Undefined exception occurred!" ESC_NORMAL << endl;
+      ERROR_MESSAGE( "Undefined exception occurred!" );
    }
 
    return EXIT_FAILURE;
