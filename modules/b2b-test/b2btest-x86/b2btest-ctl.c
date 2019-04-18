@@ -262,14 +262,8 @@ void printCycleHeader()
 
 void printCycle(uint32_t cycles, uint32_t tCycleAvg, uint32_t msgFreqAvg, uint32_t confStat, uint32_t nLate, uint32_t vaccAvg, uint32_t pzAvg, uint32_t mode)
 {
-  int i;
-  
   // past cycles
   printf("b2b-test: ST %010d ", cycles);
-  for (i=0; i < B2BTEST_NVACC; i++) printf("%d", (((1 << i) & vaccAvg) > 0));
-  printf(" ");
-  for (i=0; i < B2BTEST_NPZ;   i++) printf("%d", (((1 << i) & pzAvg) > 0));
-  printf(" |");
 
   // diag
   printf("DG %6.3f %05d %05d %1d %1d |", 1000000000.0/(double)tCycleAvg, msgFreqAvg, nLate, confStat, mode);
@@ -427,32 +421,16 @@ int main(int argc, char** argv) {
   b2btest_status       = lm32_base + SHARED_OFFS + B2BTEST_SHARED_SUMSTATUS;
   b2btest_cmd          = lm32_base + SHARED_OFFS + B2BTEST_SHARED_CMD;
   b2btest_state        = lm32_base + SHARED_OFFS + B2BTEST_SHARED_STATE;;
-  b2btest_tCycleAvg    = lm32_base + SHARED_OFFS + B2BTEST_SHARED_TCYCLEAVG;
   b2btest_version      = lm32_base + SHARED_OFFS + B2BTEST_SHARED_VERSION;
   b2btest_macHi        = lm32_base + SHARED_OFFS + B2BTEST_SHARED_MACHI;
   b2btest_macLo        = lm32_base + SHARED_OFFS + B2BTEST_SHARED_MACLO;
   b2btest_ip           = lm32_base + SHARED_OFFS + B2BTEST_SHARED_IP;
   b2btest_nBadStatus   = lm32_base + SHARED_OFFS + B2BTEST_SHARED_NBADSTATUS;
   b2btest_nBadState    = lm32_base + SHARED_OFFS + B2BTEST_SHARED_NBADSTATE;
-  b2btest_cycles       = lm32_base + SHARED_OFFS + B2BTEST_SHARED_NCYCLE;
-  b2btest_nMessageHi   = lm32_base + SHARED_OFFS + B2BTEST_SHARED_NMESSAGEHI;
-  b2btest_nMessageLo   = lm32_base + SHARED_OFFS + B2BTEST_SHARED_NMESSAGELO;
-  b2btest_msgFreqAvg   = lm32_base + SHARED_OFFS + B2BTEST_SHARED_MSGFREQAVG;
-  b2btest_dtMax        = lm32_base + SHARED_OFFS + B2BTEST_SHARED_DTMAX;
-  b2btest_dtMin        = lm32_base + SHARED_OFFS + B2BTEST_SHARED_DTMIN;
-  b2btest_nLate        = lm32_base + SHARED_OFFS + B2BTEST_SHARED_NLATE;
-  b2btest_vaccAvg      = lm32_base + SHARED_OFFS + B2BTEST_SHARED_VACCAVG;
-  b2btest_pzAvg        = lm32_base + SHARED_OFFS + B2BTEST_SHARED_PZAVG;
-  b2btest_mode         = lm32_base + SHARED_OFFS + B2BTEST_SHARED_MODE;
   b2btest_tDiagHi      = lm32_base + SHARED_OFFS + B2BTEST_SHARED_TDIAGHI;
   b2btest_tDiagLo      = lm32_base + SHARED_OFFS + B2BTEST_SHARED_TDIAGLO;
   b2btest_tS0Hi        = lm32_base + SHARED_OFFS + B2BTEST_SHARED_TS0HI;
   b2btest_tS0Lo        = lm32_base + SHARED_OFFS + B2BTEST_SHARED_TS0LO;
-  b2btest_confVacc     = lm32_base + SHARED_OFFS + B2BTEST_SHARED_CONF_VACC;
-  b2btest_confStat     = lm32_base + SHARED_OFFS + B2BTEST_SHARED_CONF_STAT;
-  b2btest_confPz       = lm32_base + SHARED_OFFS + B2BTEST_SHARED_CONF_PZ;
-  b2btest_confData     = lm32_base + SHARED_OFFS + B2BTEST_SHARED_CONF_DATA;
-  b2btest_confFlag     = lm32_base + SHARED_OFFS + B2BTEST_SHARED_CONF_FLAG;
 
   // printf("b2b-test: lm32_base 0x%08x, 0x%08x\n", lm32_base, b2btest_iterations);
 
@@ -512,24 +490,6 @@ int main(int argc, char** argv) {
       printDiags(sumStatus, state, nBadStatus, nBadState, cycles, messages, dtMax, dtMin, nLate, tDiag, tS0);
     } // "diag"
 
-    if (!strcasecmp(command, "kill")) {
-      eb_device_write(device, b2btest_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)B2BTEST_CMD_CONFKILL, 0, eb_block);
-      if (state != B2BTEST_STATE_OPREADY) printf("b2b-test: WARNING command has no effect (not in state OPREADY)\n");
-    } // "kill"
-    if (!strcasecmp(command, "cleartables")) {
-      eb_device_write(device, b2btest_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)B2BTEST_CMD_CONFCLEAR, 0, eb_block);
-      if (state != B2BTEST_STATE_OPREADY) printf("b2b-test: WARNING command has no effect (not in state OPREADY)\n");
-    } // "cleartables"
-    if (!strcasecmp(command, "modespz")) {
-      eb_device_write(device, b2btest_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)B2BTEST_CMD_MODESPZ, 0, eb_block);
-      if (state != B2BTEST_STATE_OPREADY) printf("b2b-test: WARNING command has no effect (not in state OPREADY)\n");
-    } // "modespz"
-    if (!strcasecmp(command, "modetest")) {
-      eb_device_write(device, b2btest_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)B2BTEST_CMD_MODETEST, 0, eb_block);
-      if (state != B2BTEST_STATE_OPREADY) printf("b2b-test: WARNING command has no effect (not in state OPREADY)\n");
-    } // "modetest"
-    
-      
   } //if command
   
 

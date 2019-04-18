@@ -51,17 +51,11 @@ const char* b2btest_status_text(uint32_t bit) {
   case B2BTEST_STATUS_ERROR            : sprintf(message, "error %d, %s",    bit, "an error occured"); break;
   case B2BTEST_STATUS_TIMEDOUT         : sprintf(message, "error %d, %s",    bit, "a timeout occured"); break;
   case B2BTEST_STATUS_OUTOFRANGE       : sprintf(message, "error %d, %s",    bit, "some value is out of range"); break;
-  case B2BTEST_STATUS_LATE             : sprintf(message, "error %d, %s",    bit, "a timing messages is not dispatched in time"); break;
-  case B2BTEST_STATUS_EARLY            : sprintf(message, "error %d, %s",    bit, "a timing messages is dispatched unreasonably early (dt > UNILAC period)"); break;
   case B2BTEST_STATUS_TRANSACTION      : sprintf(message, "error %d, %s",    bit, "transaction failed"); break;
   case B2BTEST_STATUS_EB               : sprintf(message, "error %d, %s",    bit, "an Etherbone error occured"); break;
   case B2BTEST_STATUS_NOIP             : sprintf(message, "error %d, %s",    bit, "DHCP request via WR network failed"); break;
   case B2BTEST_STATUS_EBREADTIMEDOUT   : sprintf(message, "error %d, %s",    bit, "EB read via WR network timed out"); break;
-  case B2BTEST_STATUS_WRONGVIRTACC     : sprintf(message, "error %d, %s",    bit, "mismatching virtual accelerator for EVT_READY_TO_SIS from UNIPZ"); break;
   case B2BTEST_STATUS_SAFETYMARGIN     : sprintf(message, "error %d, %s",    bit, "violation of safety margin for data master and timing network"); break;
-  case B2BTEST_STATUS_NOTIMESTAMP      : sprintf(message, "error %d, %s",    bit, "received EVT_READY_TO_SIS in MIL FIFO but no TS via TLU -> ECA"); break;
-  case B2BTEST_STATUS_BADTIMESTAMP     : sprintf(message, "error %d, %s",    bit, "TS from TLU->ECA does not coincide with MIL Event from FIFO"); break;
-  case B2BTEST_STATUS_WAIT4UNIEVENT    : sprintf(message, "error %d, %s",    bit, "timeout while waiting for EVT_READY_TO_SIS"); break;
   case B2BTEST_STATUS_WRBADSYNC        : sprintf(message, "error %d, %s",    bit, "White Rabbit: not in 'TRACK_PHASE'"); break;
   case B2BTEST_STATUS_AUTORECOVERY     : sprintf(message, "errorFix %d, %s", bit, "attempting auto-recovery from state ERROR"); break;
   default                              : sprintf(message, "error %d, %s",    bit, "wr-unipz: undefined error code"); break;

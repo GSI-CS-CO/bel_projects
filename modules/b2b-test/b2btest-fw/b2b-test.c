@@ -90,7 +90,6 @@ uint64_t SHARED  dummy = 0;
 
 // global variables 
 volatile uint32_t *pECAQ;               // WB address of ECA queue
-volatile uint32_t *pMILPiggy;           // WB address of MIL device bus (MIL piggy)
 volatile uint32_t *pPPSGen;             // WB address of PPS Gen
 volatile uint32_t *pWREp;               // WB address of WR Endpoint
 
@@ -105,24 +104,11 @@ volatile uint32_t *pSharedData4EB;      // pointer to a n x u32 register; here: 
 uint32_t *pSharedMacHi;                 // pointer to a "user defined" u32 register; here: high bits of MAC
 uint32_t *pSharedMacLo;                 // pointer to a "user defined" u32 register; here: low bits of MAC
 uint32_t *pSharedIp;                    // pointer to a "user defined" u32 register; here: IP
-uint32_t *pSharedNMessageHi;            // pointer to a "user defined" u32 register; here: high bits # of messages
-uint32_t *pSharedNMessageLo;            // pointer to a "user defined" u32 register; here: lo bits # of messages
-uint32_t *pSharedMsgFreqAvg;            // pointer to a "user defined" u32 register; here: message rate (average over one second)
-uint32_t *pSharedDtMax;                 // pointer to a "user defined" u32 register; here: max diff between deadline and time of dispatching
-uint32_t *pSharedDtMin;                 // pointer to a "user defined" u32 register; here: min diff between deadline and time of dispatching
-uint32_t *pSharedNLate;                 // pointer to a "user defined" u32 register; here: # late messages
-uint32_t *pSharedVaccAvg;               // pointer to a "user defined" u32 register; here: virt accs played during past second
-uint32_t *pSharedPzAvg;                 // pointer to a "user defined" u32 register; here: PZs used during the past second
-uint32_t *pSharedMode;                  // pointer to a "user defined" u32 register; here: mode (see B2BTEST_MODE...)
+uint32_t *pSharedNTransfer;             // pointer to a "user defined" u32 register; here: # of transfers
 uint32_t *pSharedTDiagHi;               // pointer to a "user defined" u32 register; here: time when diag was cleared, high bits
 uint32_t *pSharedTDiagLo;               // pointer to a "user defined" u32 register; here: time when diag was cleared, low bits
 uint32_t *pSharedTS0Hi;                 // pointer to a "user defined" u32 register; here: time when FW was in S0 state, high bits
 uint32_t *pSharedTS0Lo;                 // pointer to a "user defined" u32 register; here: time when FW was in S0 state, low bits
-uint32_t *pSharedConfStat;              // pointer to a "user defined" u32 register; here: status of config data transaction
-uint32_t *pSharedConfVacc;              // pointer to a "user defined" u32 register; here: virt acc of config data
-uint32_t *pSharedConfData;              // pointer to a "user defined" u32 register; here: config data
-uint32_t *pSharedConfFlag;              // pointer to a "user defined" u32 register; here: config flags
-uint32_t *pSharedConfPz;                // pointer to a "user defined" u32 register; here: PZ bit field (bit N is set: transsaction for PZ N)
 
 uint32_t *pCpuRamExternal;              // external address (seen from host bridge) of this CPU's RAM            
 uint32_t *pCpuRamExternalData4EB;       // external address (seen from host bridge) of this CPU's RAM: field for EB return values
@@ -130,26 +116,10 @@ uint32_t *pCpuRamExternalData4EB;       // external address (seen from host brid
 uint32_t sumStatus;                     // all status infos are ORed bit-wise into sum status, sum status is then published
 uint32_t nBadStatus;                    // # of bad status (=error) incidents
 uint32_t nBadState;                     // # of bad state (=FATAL, ERROR, UNKNOWN) incidents
-int32_t  dtMax;                         // dT max (deadline - dispatch time)
-int32_t  dtMin;                         // dT min (deadline - dispatch time)
-uint32_t nLate;                         // # of late messages
-uint32_t vaccAvg;                       // virt accs played over the past second
-uint32_t pzAvg;                         // PZs used over the past second
-uint32_t mode;                          // 1: test mode
-uint32_t nCycleAct;                     // number of cycles
-uint32_t nCyclePrev;                    // previous number of cycles
-uint64_t nMsgAct;                       // # of messages sent
-uint64_t nMsgPrev;                      // previous number of messages
-uint64_t tSyncPrev;                     // timestamp of previous 50Hz sync event from SPZ
+
+uint64_t tH1;                           // rise edge of H = 1 signal
 
 
-// big data contains the event tables for all PZs, and for all virtual accelerators
-// there are two sets of 16 virtual accelerators ('Kanal0' and 'Kanal1')
-dataTable bigData[B2BTEST_NPZ][B2BTEST_NVACC * B2BTEST_NCHN];
-uint32_t  vaccNext[B2BTEST_NPZ];
-
-uint32_t gid[] =                 {1000, 1001, 1002, 1003, 1004, 1005, 1006};              /* hackish: GIDs for PZs, to be clarified with Hanno */
-                                                                        
 uint64_t wrGetMac() // get my own MAC
 {
   uint32_t macHi, macLo;
@@ -189,38 +159,7 @@ uint32_t ebmInit(uint32_t msTimeout, uint64_t dstMac, uint32_t dstIp, uint32_t e
 } // ebminit
 
 
-uint32_t data2TM(uint32_t *idLo, uint32_t *idHi, uint32_t *paramLo, uint32_t *paramHi, uint32_t *res, uint32_t *tef, uint32_t *offset, uint32_t data, uint32_t gid, uint32_t virtAcc)  //converts event UNILAC event data to timing message
-{
-  uint32_t  t;
-  uint32_t  evtCode;
-  uint32_t  status;
-
-  t        = (uint32_t)((data >> 16) & 0xffff);      // get time relative to begining of UNILAC cycle [us]
-  evtCode  = (uint32_t)(data & 0xff);                // get event number
-  status   = (uint32_t)((data >> 6) & 0xff);         // get status info
-
-  *idHi     = (uint32_t)(                            // EventID
-                          0x1     << 28     |        // FID = 1
-                         (gid     << 16)    |        // GID
-                         (evtCode <<  4)    |        // EVTNO
-                          0x0                        // flags
-                        );
-  *idLo     = (uint32_t)(
-                         (virtAcc << 20)    |        // SID
-                         (0x0     <<  6)    |        // BPID
-                         (0x0     <<  5)    |        // reserved
-                         (0x0     <<  4)    |        // reqNoBeam
-                          0x0                        // virtAcc only for DM-UNIPZ gateway
-                        );
-  *paramLo  = status;                                // parameter field  /* chk, probably rquires Hanno */ 
-  *paramHi  = 0x0;                                
-  *res      = 0x0;                                   // reserved
-  *tef      = 0x0;                                   // timing extension field
-  *offset   = t * 1000;                              // convert offset -> ns
-} // data2TM
-
-
-uint32_t ebmWriteTM(dataTable evts, uint64_t tStart, uint32_t pz, uint32_t virtAcc, uint32_t isPrep)
+uint32_t ebmWriteTM()
 {
   int      i;
   uint64_t deadline;
@@ -228,53 +167,42 @@ uint32_t ebmWriteTM(dataTable evts, uint64_t tStart, uint32_t pz, uint32_t virtA
   uint32_t deadlineLo, deadlineHi, offset;
   uint32_t idLo, idHi;
   uint32_t paramLo, paramHi;
-  int32_t  tDiff;
 
   // set high bits for EB master
   ebm_hi(B2BTEST_ECA_ADDRESS);
 
   // pack Ethernet frame with messages
-  for (i=0; i<B2BTEST_NEVT; i++) {                     // loop over all data fields
-    if ((evts.validFlags >> i) & 0x1) {                // data is valid?
-      if ((evts.evtFlags >> i) & 0x1) {                // data is an event?
-        if (((evts.prepFlags >> i) & 0x1) == isPrep) { // data matches 'isPrep condition'
-          // convert data
-          data2TM(&idLo, &idHi, &paramLo, &paramHi, &res, &tef, &offset, evts.data[i], gid[pz], virtAcc);  //convert data
-            
-          // calc deadline
-          deadline   = tStart + (uint64_t)offset; 
-          deadlineHi = (uint32_t)((deadline >> 32) & 0xffffffff);
-          deadlineLo = (uint32_t)(deadline & 0xffffffff);
+  idHi    = 0x01234567;
+  idLo    = 0x89abcdef;
+  tef     = 0x00000000;
+  res     = 0x00000000;
+  paramLo = 0x00000000;
+  paramHi = 0x00000000;
+
+  // calc deadline
+  deadline   = tH1 + (uint64_t)1000000000 - (uint64_t)50000000; 
+  deadlineHi = (uint32_t)((deadline >> 32) & 0xffffffff);
+  deadlineLo = (uint32_t)(deadline & 0xffffffff);
           
-          // pack timing message
-          atomic_on();                                  
-          ebm_op(B2BTEST_ECA_ADDRESS, idHi,       EBM_WRITE);             
-          ebm_op(B2BTEST_ECA_ADDRESS, idLo,       EBM_WRITE);             
-          ebm_op(B2BTEST_ECA_ADDRESS, paramHi,    EBM_WRITE);
-          ebm_op(B2BTEST_ECA_ADDRESS, paramLo,    EBM_WRITE);
-          ebm_op(B2BTEST_ECA_ADDRESS, tef,        EBM_WRITE);
-          ebm_op(B2BTEST_ECA_ADDRESS, res,        EBM_WRITE);
-          ebm_op(B2BTEST_ECA_ADDRESS, deadlineHi, EBM_WRITE);
-          ebm_op(B2BTEST_ECA_ADDRESS, deadlineLo, EBM_WRITE);
-          atomic_off();
-
-          // send timing message
-          ebm_flush();
+  // pack timing message
+  atomic_on();                                  
+  ebm_op(B2BTEST_ECA_ADDRESS, idHi,       EBM_WRITE);             
+  ebm_op(B2BTEST_ECA_ADDRESS, idLo,       EBM_WRITE);             
+  ebm_op(B2BTEST_ECA_ADDRESS, paramHi,    EBM_WRITE);
+  ebm_op(B2BTEST_ECA_ADDRESS, paramLo,    EBM_WRITE);
+  ebm_op(B2BTEST_ECA_ADDRESS, tef,        EBM_WRITE);
+  ebm_op(B2BTEST_ECA_ADDRESS, res,        EBM_WRITE);
+  ebm_op(B2BTEST_ECA_ADDRESS, deadlineHi, EBM_WRITE);
+  ebm_op(B2BTEST_ECA_ADDRESS, deadlineLo, EBM_WRITE);
+  atomic_off();
           
-          // diag and status
-          tDiff = deadline - getSysTime();
-          if (tDiff < 0    ) nLate++;
-          if (tDiff < dtMin) dtMin = tDiff;
-          if (tDiff > dtMax) dtMax = tDiff;
-
-          vaccAvg = vaccAvg | (1 << virtAcc);
-          pzAvg   = pzAvg   | (1 << pz);
-          nMsgAct++;
-        } // if 'isPrep'
-      } // is event
-    } // is valid
-  } // for i
-
+  // send timing message
+  ebm_flush();
+          
+  // diag and status
+  // ... /* chk */
+  mprintf("b2b-test: write timing message\n");
+  
   return B2BTEST_STATUS_OK;
 } //ebmWriteTM
 
@@ -327,27 +255,14 @@ void initSharedMem() // determine address and clear shared mem
   pSharedData4EB          = (uint32_t *)(pShared + (B2BTEST_SHARED_DATA_4EB >> 2));
   pSharedNBadStatus       = (uint32_t *)(pShared + (B2BTEST_SHARED_NBADSTATUS >> 2));
   pSharedNBadState        = (uint32_t *)(pShared + (B2BTEST_SHARED_NBADSTATE >> 2));
+  pSharedNTransfer        = (uint32_t *)(pShared + (B2BTEST_SHARED_NTRANSFER >> 2));
   pSharedMacHi            = (uint32_t *)(pShared + (B2BTEST_SHARED_MACHI >> 2));
   pSharedMacLo            = (uint32_t *)(pShared + (B2BTEST_SHARED_MACLO >> 2));
   pSharedIp               = (uint32_t *)(pShared + (B2BTEST_SHARED_IP >> 2));
-  pSharedNMessageHi       = (uint32_t *)(pShared + (B2BTEST_SHARED_NMESSAGEHI >> 2));
-  pSharedNMessageLo       = (uint32_t *)(pShared + (B2BTEST_SHARED_NMESSAGELO >> 2));
-  pSharedMsgFreqAvg       = (uint32_t *)(pShared + (B2BTEST_SHARED_MSGFREQAVG >> 2));
-  pSharedDtMax            = (uint32_t *)(pShared + (B2BTEST_SHARED_DTMAX >> 2));
-  pSharedDtMin            = (uint32_t *)(pShared + (B2BTEST_SHARED_DTMIN >> 2));
-  pSharedNLate            = (uint32_t *)(pShared + (B2BTEST_SHARED_NLATE >> 2));
-  pSharedVaccAvg          = (uint32_t *)(pShared + (B2BTEST_SHARED_VACCAVG >> 2));
-  pSharedPzAvg            = (uint32_t *)(pShared + (B2BTEST_SHARED_PZAVG >> 2));
-  pSharedMode             = (uint32_t *)(pShared + (B2BTEST_SHARED_MODE >> 2));
   pSharedTDiagHi          = (uint32_t *)(pShared + (B2BTEST_SHARED_TDIAGHI >> 2));
   pSharedTDiagLo          = (uint32_t *)(pShared + (B2BTEST_SHARED_TDIAGLO >> 2));
   pSharedTS0Hi            = (uint32_t *)(pShared + (B2BTEST_SHARED_TS0HI >> 2));
   pSharedTS0Lo            = (uint32_t *)(pShared + (B2BTEST_SHARED_TS0LO >> 2));
-  pSharedConfStat         = (uint32_t *)(pShared + (B2BTEST_SHARED_CONF_STAT >> 2));
-  pSharedConfVacc         = (uint32_t *)(pShared + (B2BTEST_SHARED_CONF_VACC >> 2));
-  pSharedConfData         = (uint32_t *)(pShared + (B2BTEST_SHARED_CONF_DATA >> 2));
-  pSharedConfFlag         = (uint32_t *)(pShared + (B2BTEST_SHARED_CONF_FLAG >> 2));
-  pSharedConfPz           = (uint32_t *)(pShared + (B2BTEST_SHARED_CONF_PZ >> 2));
   
   // find address of CPU from external perspective
   idx = 0;
@@ -375,20 +290,7 @@ void initSharedMem() // determine address and clear shared mem
   *pSharedVersion      = B2BTEST_FW_VERSION; // of all the shared variabes, only VERSION is a constant. Set it now!
   *pSharedNBadStatus   = 0;
   *pSharedNBadState    = 0;
-  *pSharedConfStat     = B2BTEST_CONFSTAT_IDLE;
 } // initSharedMem 
-
-
-uint32_t findMILPiggy() //find WB address of MIL Piggy
-{
-  pMILPiggy = 0x0;
-  
-  // get Wishbone address for MIL Piggy
-  pMILPiggy = find_device_adr(GSI, SCU_MIL);
-
-  if (!pMILPiggy) {DBPRINT1("b2b-test: can't find MIL piggy\n"); return B2BTEST_STATUS_ERROR;}
-  else                                                           return B2BTEST_STATUS_OK;
-} // findMILPiggy
 
 
 uint32_t findPPSGen() //find WB address of WR PPS Gen
@@ -481,15 +383,17 @@ uint32_t wait4ECAEvent(uint32_t msTimeout, uint64_t *deadline, uint32_t *isLate)
       *(pECAQ + (ECA_QUEUE_POP_OWR >> 2)) = 0x1;
 
       // here: do s.th. according to tag
-      switch (actTag) 
-        {
-        case B2BTEST_ECADO_MIL :
-          nextAction = B2BTEST_ECADO_MIL;
-          break;
-        default: 
-          nextAction = B2BTEST_ECADO_UNKOWN;
-          break;
-        } // switch
+      switch (actTag) {
+      case B2BTEST_ECADO_PHASE :
+        nextAction = B2BTEST_ECADO_PHASE;
+        break;
+      case B2BTEST_ECADO_INPUT :
+        nextAction = B2BTEST_ECADO_INPUT;
+        break;
+      default: 
+        nextAction = B2BTEST_ECADO_UNKOWN;
+        break;
+      } // switch
 
       return nextAction;
 
@@ -511,13 +415,6 @@ void clearDiag() // clears all statistics
 {
   uint64_t now;
   
-  dtMax          = 0x80000000;
-  dtMin          = 0x7fffffff;
-  nLate          = 0;
-  nCycleAct      = 0;
-  nCyclePrev     = 0;
-  nMsgAct        = 0;
-  nMsgPrev       = 0;
   sumStatus      = 0;
   nBadStatus     = 0;
 
@@ -527,75 +424,6 @@ void clearDiag() // clears all statistics
 
 } // clearDiag
 
-uint32_t configTransactInit()          // initializes transaction for config data
-{
-  int i,j;
-  
-  if (*pSharedConfStat != B2BTEST_CONFSTAT_IDLE) return B2BTEST_STATUS_TRANSACTION;
-
-  *pSharedConfPz    = 0;
-  *pSharedConfVacc  = 0;
-  for (i=0; i < (B2BTEST_NCONFFLAG); i++) *(pSharedConfFlag   + i) = 0;
-  for (i=0; i < (B2BTEST_NCONFDATA); i++) *(pSharedConfData   + i) = 0;
-
-  DBPRINT2("b2b-test: request completed\n");
-    
-  *pSharedConfStat = B2BTEST_CONFSTAT_INIT;
-
-  return B2BTEST_STATUS_OK;
-} // configTransactInit
-
-uint32_t configTransactSubmit() // submit transferred config data
-{
-  if (*pSharedConfStat != B2BTEST_CONFSTAT_INIT) return B2BTEST_STATUS_TRANSACTION;
-
-  /* hack: code below shall be triggered by "commit" event from Masterpulszentrale */
-  int      i,j,k;
-  int      vacc;
-  uint32_t pzFlag;
-
-  // get vacc and submit flags
-  vacc    = *pSharedConfVacc;
-  pzFlag  = *pSharedConfPz;
-
-  for (i=0; i < B2BTEST_NPZ; i++) {        // for all Pulszentralen
-    for (j=0; j < B2BTEST_NCHN; j++) {     // for all channels
-      if (pzFlag & (1 << i)) {             // check, if Pulszentrale (defined by "i") shall be submitted
-        // flags
-        bigData[i][j * B2BTEST_NVACC + vacc].validFlags = *(pSharedConfFlag + j * B2BTEST_NFLAG + i * B2BTEST_NPZ * B2BTEST_NCHN + 0);
-        bigData[i][j * B2BTEST_NVACC + vacc].prepFlags  = *(pSharedConfFlag + j * B2BTEST_NFLAG + i * B2BTEST_NPZ * B2BTEST_NCHN + 1);
-        bigData[i][j * B2BTEST_NVACC + vacc].evtFlags   = *(pSharedConfFlag + j * B2BTEST_NFLAG + i * B2BTEST_NPZ * B2BTEST_NCHN + 2);
-
-        // data
-        for (k=0; k < B2BTEST_NEVT; k++) 
-          bigData[i][j * B2BTEST_NVACC + vacc].data[k]  = *(pSharedConfData + j * B2BTEST_NEVT  + i * B2BTEST_NEVT * B2BTEST_NCHN + k);
-      } // if submit flag
-    } // for j
-  } // for i
-  /* end hack */
-
-  DBPRINT2("b2b-test: submit completed\n");
-  
-  /* *pSharedConfDataStat = B2BTEST_CONFSTAT_REQ | B2BTEST_CONFSTAT_SUBMIT; commented: this shall be used once code above is triggered by event */
-  *pSharedConfStat = B2BTEST_CONFSTAT_IDLE;
-
-  return B2BTEST_STATUS_OK;
-} // configTransactSubmit
-
-
-void clearPZ()
-{
-  int i,j,k;
-
-  for (i=0; i < B2BTEST_NPZ; i++)
-    for (j=0; j < (B2BTEST_NVACC * B2BTEST_NCHN); j++) {
-      bigData[i][j].validFlags = 0x0;
-      bigData[i][j].prepFlags  = 0x0;
-      bigData[i][j].evtFlags   = 0x0;
-      for (k=0; k < B2BTEST_NEVT; k++) bigData[i][j].data[k] = 0x0;
-    } // for j
-} // clear PZ
-
 
 uint32_t doActionS0()
 {
@@ -603,12 +431,10 @@ uint32_t doActionS0()
   uint64_t now;
 
   if (findECAQueue() != B2BTEST_STATUS_OK) status = B2BTEST_STATUS_ERROR; 
-  if (findMILPiggy() != B2BTEST_STATUS_OK) status = B2BTEST_STATUS_ERROR;
   if (findPPSGen()   != B2BTEST_STATUS_OK) status = B2BTEST_STATUS_ERROR;
   if (findWREp()     != B2BTEST_STATUS_OK) status = B2BTEST_STATUS_ERROR;
 
   nBadState     = 0;
-  mode          = B2BTEST_MODE_SPZ;
   now           = getSysTime();
   *pSharedTS0Hi = (uint32_t)(now >> 32);
   *pSharedTS0Lo = (uint32_t)now & 0xffffffff;
@@ -640,8 +466,6 @@ uint32_t entryActionConfigured()
   ip  = *(pEbCfg + (EBC_SRC_IP>>2));
   *pSharedIp    = ip;
 
-  *pSharedConfStat = B2BTEST_CONFSTAT_IDLE; /* chk */
-  mode             = B2BTEST_MODE_SPZ;
   return status;
 } // entryActionConfigured
 
@@ -705,30 +529,6 @@ void cmdHandler(uint32_t *reqState) // handle commands from the outside world
       DBPRINT3("b2b-test: received cmd %d\n", cmd);
       clearDiag();
       break;
-    case B2BTEST_CMD_CONFINIT :
-      DBPRINT3("b2b-test: received cmd %d\n", cmd);
-      if (configTransactInit() != B2BTEST_STATUS_OK) DBPRINT1("b2b-test: request to start config data transaction failed\n");
-      break;
-    case B2BTEST_CMD_CONFSUBMIT :
-      DBPRINT3("b2b-test: received cmd %d\n", cmd);
-      if (configTransactSubmit() != B2BTEST_STATUS_OK) DBPRINT1("b2b-test: submission of config data failed\n");
-      break;
-    case B2BTEST_CMD_CONFKILL :
-      DBPRINT3("b2b-test: received cmd %d\n", cmd);
-      *pSharedConfStat = B2BTEST_CONFSTAT_IDLE;
-      break;     
-    case B2BTEST_CMD_CONFCLEAR :
-      DBPRINT3("b2b-test: received cmd %d\n", cmd);
-      clearPZ();
-      break;
-    case B2BTEST_CMD_MODESPZ :
-      DBPRINT3("b2b-test: received cmd %d\n", cmd);
-      mode = B2BTEST_MODE_SPZ;
-      break;
-    case B2BTEST_CMD_MODETEST :
-      DBPRINT3("b2b-test: received cmd %d\n", cmd);
-      mode = B2BTEST_MODE_TEST;
-      break;
     default:
       DBPRINT3("b2b-test: received unknown command '0x%08x'\n", cmd);
     } // switch 
@@ -791,94 +591,57 @@ uint32_t changeState(uint32_t *actState, uint32_t *reqState, uint32_t actStatus)
 } //changeState
 
 
-uint32_t doActionOperation(uint32_t *nCycle,                  // total number of UNILAC cycle since FW start
-                           uint64_t *tAct,                    // actual time
+uint32_t doActionOperation(uint64_t *tAct,                    // actual time
                            uint32_t actStatus)                // actual status of firmware
 {
   uint32_t status;                                            // status returned by routines
   uint32_t flagIsLate;                                        // flag indicating that we received a 'late' event from ECA
   uint32_t ecaAction;                                         // action triggered by event received from ECA
   uint64_t deadline;                                          // deadline of event received via ECA
-  uint64_t tMIL;                                              // time when MIL event was received
   uint64_t tDummy;                                            // dummy timestamp
-  uint16_t evtData;                                           // MIL event: data
-  uint16_t evtCode;                                           // MIL event: code
-  uint32_t virtAcc;                                           // MIL event: virtAcc
-  uint32_t milStatus;                                         // status for receiving of MIL events
-  uint32_t nLateLocal;                                        // remember actual counter
-  uint32_t isPrepFlag;                                        // flag 'isPrep': prep-events are sent immediately, non-prep-events are sent at 50 Hz trigger
   int      i,j;
+  int      nInput;
+  uint32_t tsHi;
+  uint32_t tsLo;
 
 
   status = actStatus;
+
+  ecaAction = wait4ECAEvent(B2BTEST_ECATIMEOUT, &deadline, &flagIsLate);
+
   
-  evtCode = 0xffff; /* chk */
   
-  switch (evtCode) {
-
-  case B2BTEST_EVT_50HZ_SYNCH :                                // next UNILAC cycle starts
-    (*nCycle)++;
-    DBPRINT3("b2b-test: 50Hz, data %d, evtcode %d, virtAcc %d\n", evtData, evtCode, virtAcc);
-
-    // get timestamp from TLU -> ECA
-    ecaAction = wait4ECAEvent(B2BTEST_ECATIMEOUT, &deadline, &flagIsLate);
+  switch (ecaAction) {
+  case B2BTEST_ECADO_PHASE :
+    tsHi = (uint32_t)((deadline >> 32) & 0xffffffff);
+    tsLo = (uint32_t)(deadline & 0xffffffff);
+    mprintf("b2b-test: action phase, action %d, ts %u %u\n", ecaAction, tsHi, tsLo);
+    nInput = 0;
+    tH1    = 0xffffffffffffffff;
+    while (nInput < 2) {                                      // treat 1st input as junk
+      ecaAction = wait4ECAEvent(100, &deadline, &flagIsLate);
+      tsHi = (uint32_t)((deadline >> 32) & 0xffffffff);
+      tsLo = (uint32_t)(deadline & 0xffffffff);
+      mprintf("b2b-test: action TLU,   action %d, ts %u %u\n", ecaAction, tsHi, tsLo);
+      if (ecaAction == B2BTEST_ECADO_INPUT)   nInput++;
+      if (ecaAction == B2BTEST_ECADO_TIMEOUT) break; 
+    } // while nInput
+    mprintf("b2b-test: action phase, nInput %d\n", nInput);
     
-    // check, if timestamping via TLU failed
-    if (ecaAction == B2BTEST_ECADO_TIMEOUT) {      
-      deadline = tMIL;                                          // continue with TS from MIL
-      status   = B2BTEST_STATUS_NOTIMESTAMP;
-    } // if ecaAction
-    
-    // check, if timestamps form TLU and MIL are out of order
-    if (deadline > tMIL) {
-      deadline = tMIL;                                          // continue with TS from MIL
-      status   = B2BTEST_STATUS_ORDERTIMESTAMP;
-    } // if deadline
-    
-    // check, if timestamp from TLU is not reasonable
-    if ((tMIL - deadline) > B2BTEST_MATCHWINDOW) {
-      deadline = tMIL;                                          // continue with TS from MIL
-      status   = B2BTEST_STATUS_BADTIMESTAMP;
-    } // if tMIL
-    
-
-    ebm_clr();
-
-    // walk through all PZs and run requested virt acc (non-prep events)
-    nLateLocal = nLate;                                        // for bookkepping for late messages
-    isPrepFlag = 0;                                            // 50 Hz synch: no preperation - use actual deadline from TLU
-    for (i=0; i < B2BTEST_NPZ; i++) {
-      if (vaccNext[i] != 0xffffffff) {
-        ebmWriteTM(bigData[i][vaccNext[i]], deadline, i, vaccNext[i], isPrepFlag);
-        DBPRINT3("b2b-test: playing pz %d, vacc %d\n", i, vaccNext[i]);
-      } // if vaccNext
-    } // for i
-    if ((nLate != nLateLocal) && (status == B2BTEST_STATUS_OK)) status = B2BTEST_STATUS_LATE;
-    *tAct = deadline;                                           // remember 50 Hz tick
-    DBPRINT3("b2b-test: vA played:  %x %x %x %x %x %x %x\n", vaccNext[0], vaccNext[1], vaccNext[2], vaccNext[3], vaccNext[4], vaccNext[5], vaccNext[6]);
-
-    // reset requested virt accs; flush ECA queue
-    for (i=0; i < B2BTEST_NPZ; i++) vaccNext[i] = 0xffffffff;   // 0xffffffff: no virt acc for PZ
-    DBPRINT3("b2b-test: vA reset:  %x %x %x %x %x %x %x\n", vaccNext[0], vaccNext[1], vaccNext[2], vaccNext[3], vaccNext[4], vaccNext[5], vaccNext[6]);
-    while (wait4ECAEvent(0, &tDummy, &flagIsLate) !=  B2BTEST_ECADO_TIMEOUT) {asm("nop");}
-    
-    break;
-  case B2BTEST_EVT_PZ1 ... B2BTEST_EVT_PZ7 :                    // announce what happens in next UNILAC cycle
-    vaccNext[evtCode-1] = virtAcc;                              // PZ: sPZ counts from 1..7, we count from 0..6
-    DBPRINT3("b2b-test: vA set:  %x %x %x %x %x %x %x\n", vaccNext[0], vaccNext[1], vaccNext[2], vaccNext[3], vaccNext[4], vaccNext[5], vaccNext[6]);
-
-    nLateLocal = nLate;
-    isPrepFlag = 1;                                             // PZ1..7: preperation - use deadline from past 50 Hz tick
-    deadline   = tSyncPrev + (uint64_t)B2BTEST_UNILACPERIOD;
-    ebmWriteTM(bigData[evtCode - 1][virtAcc], deadline, evtCode - 1, virtAcc, isPrepFlag);
-    DBPRINT3("b2b-test: playing pz %d, vacc %d\n", i, virtAcc);
-    if ((nLate != nLateLocal) && (status == B2BTEST_STATUS_OK)) status = B2BTEST_STATUS_LATE;
+    if (nInput == 2) {
+      tH1 = deadline;
+      ebmWriteTM();
+    } // if nInput
+    else actStatus = B2BTEST_STATUS_PHASEFAILED;
 
     break;
+    
   default :
     break;
-  } // switch evtCode
+  } // switch ecaActione
 
+  status = actStatus; /* chk */
+  
   return status;
 } // doActionOperation
 
@@ -944,7 +707,7 @@ void main(void) {
         break;
       case B2BTEST_STATE_OPREADY :
         flagRecover = 0;
-        status = doActionOperation(&nCycleAct, &tActCycle, status);
+        status = doActionOperation(&tActCycle, status);
         if (status == B2BTEST_STATUS_WRBADSYNC)      reqState = B2BTEST_STATE_ERROR;
         if (status == B2BTEST_STATUS_ERROR)          reqState = B2BTEST_STATE_ERROR;
         break;
@@ -967,8 +730,6 @@ void main(void) {
     // update shared memory
     // ... 
         
-    nCyclePrev = nCycleAct;
-
     switch (status) {
     case B2BTEST_STATUS_OK :                                                  // status OK
       sumStatus = sumStatus |  (0x1 << B2BTEST_STATUS_OK);                    // set OK bit
@@ -985,11 +746,5 @@ void main(void) {
     *pSharedState        = actState;
     *pSharedNBadStatus   = nBadStatus;
     *pSharedNBadState    = nBadState;
-    *pSharedDtMax        = dtMax;
-    *pSharedDtMin        = dtMin;
-    *pSharedNLate        = nLate;
-    *pSharedMode         = mode;
-    *pSharedNMessageHi   = (uint32_t)(nMsgAct >> 32);
-    *pSharedNMessageLo   = (uint32_t)(nMsgAct & 0xffffffff);
   } // while  
 } // main
