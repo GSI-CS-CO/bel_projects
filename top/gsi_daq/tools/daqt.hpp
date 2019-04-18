@@ -33,11 +33,52 @@ namespace daqt
 {
 using namespace daq;
 
+constexpr int INVALID_LIMIT = -1;
+
 class CommandLine;
+class Device;
+
+///////////////////////////////////////////////////////////////////////////////
+struct Attributes
+{
+   template<typename VT> struct Value
+   {
+      bool m_valid;
+      VT   m_value;
+
+      Value( void ): m_valid( false ) {}
+
+      void set( const Value<VT>& rHigherPrio )
+      {
+         if( rHigherPrio.m_valid )
+            *this = rHigherPrio;
+      }
+
+      void set( const VT value )
+      {
+         m_value = value;
+         m_valid = true;
+      }
+   };
+
+   typedef Value<bool> BoolValue;
+   typedef Value<unsigned int> NumValue;
+
+   void set( const Attributes& rHigherPrio );
+
+   BoolValue     m_continueTreggerSouce;
+   BoolValue     m_highResTriggerSource;
+   NumValue      m_blockLimit;
+};
+
 ///////////////////////////////////////////////////////////////////////////////
 class DaqContainer: public DaqAdministration
 {
+   friend class CommandLine;
+   friend class Device;
+
    CommandLine*   m_poCommandLine;
+   Attributes     m_oAttributes;
 
 public:
    DaqContainer( const std::string ebName, CommandLine* poCommandLine )
@@ -49,12 +90,22 @@ public:
    {
       return m_poCommandLine;
    }
+
+   Device* getDeviceBySlot( unsigned int slot );
+
+   void prioritizeAttributes( void );
 };
 
 ///////////////////////////////////////////////////////////////////////////////
 class Channel: public DaqChannel
 {
+   friend class CommandLine;
+   friend class DaqContainer;
+   Attributes  m_oAttributes;
+
 public:
+
+
    Channel( unsigned int number )
       :DaqChannel( number )
     {}
@@ -62,8 +113,36 @@ public:
    bool onDataBlock( DAQ_DATA_T* pData, std::size_t wordLen ) override;
 };
 
+//////////////////////////////////////////////////////////////////////////////
+class Device: public DaqDevice
+{
+   friend class CommandLine;
+   friend class DaqContainer;
+
+   Attributes  m_oAttributes;
+
+public:
+
+   Device( unsigned int slot )
+      :DaqDevice( slot )
+   {}
+
+   Channel* getChannel( const unsigned int number )
+   {
+      return static_cast<Channel*>(DaqDevice::getChannel( number ));
+   }
+};
+
+///////////////////////////////////////////////////////////////////////////////
+/*! ---------------------------------------------------------------------------
+ */
+inline Device* DaqContainer::getDeviceBySlot( unsigned int slot )
+{
+   return static_cast<Device*>(DaqAdministration::getDeviceBySlot( slot ));
 }
 
 
+
+} // namespace daqt
 #endif // ifndef _DAQT_HPP
 //================================== EOF ======================================

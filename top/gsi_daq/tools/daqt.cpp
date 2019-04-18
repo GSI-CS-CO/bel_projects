@@ -29,6 +29,19 @@
 
 using namespace daqt;
 
+///////////////////////////////////////////////////////////////////////////////
+/*-----------------------------------------------------------------------------
+ */
+void Attributes::set( const Attributes& rHigherPrio )
+{
+   #define __SET_MEMBER( member )  member.set( rHigherPrio.member )
+   __SET_MEMBER( m_continueTreggerSouce );
+   __SET_MEMBER( m_highResTriggerSource );
+   __SET_MEMBER( m_blockLimit );
+   #undef __SET_MEMBER
+}
+
+///////////////////////////////////////////////////////////////////////////////
 /*! ---------------------------------------------------------------------------
  */
 bool Channel::onDataBlock( DAQ_DATA_T* pData, std::size_t wordLen )
@@ -36,6 +49,24 @@ bool Channel::onDataBlock( DAQ_DATA_T* pData, std::size_t wordLen )
    return false;
 }
 
+///////////////////////////////////////////////////////////////////////////////
+/*! ---------------------------------------------------------------------------
+ */
+void DaqContainer::prioritizeAttributes( void )
+{
+   for( auto& iDev: *this )
+   {
+      static_cast<Device*>(&(*iDev))->m_oAttributes.set( m_oAttributes );
+      for( auto& iChannel: *iDev )
+      {
+         static_cast<Channel*>(*(&iChannel))->
+            m_oAttributes.set( static_cast<Device*>(&(*iDev))->m_oAttributes );
+      }
+   }
+}
+
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
 /*! ---------------------------------------------------------------------------
  */
 inline int daqtMain( int argc, char** ppArgv )

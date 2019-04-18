@@ -53,12 +53,18 @@ class CommandLine: public PARSER
 
    STATE_T        m_state;
    DaqContainer*  m_poAllDaq;
-   DaqDevice*     m_poCurrentDevice;
+   Device*        m_poCurrentDevice;
    Channel*       m_poCurrentChannel;
+
+   static bool readInteger( unsigned int&, const std::string& );
 
 public:
    CommandLine( int argc, char** ppArgv );
    virtual ~CommandLine( void );
+
+   int operator()(void);
+
+   Attributes* getAttributesToSet( void );
 
    int onArgument( void ) override;
 };

@@ -27,6 +27,8 @@
 using namespace daqt;
 using namespace std;
 
+/*! ---------------------------------------------------------------------------
+*/
 vector<OPTION> CommandLine::c_optList =
 {
    {
@@ -34,7 +36,10 @@ vector<OPTION> CommandLine::c_optList =
       {
          assert( !poParser->isOptArgPersent() );
          cout << "Usage: " << poParser->getProgramName()
-              << " [options,...] <proto/host/port> \n";
+              << " <proto/host/port> [global-options] "
+                 "[<slot-number> <channel-number> [channel-options]] \n\n"
+                 "NOTE: The lowest slot-number begins at 1; "
+                 "the lowest channel-number begins at 1.\n";
          poParser->list( cout );
          cout << endl;
          return 0;
@@ -67,10 +72,165 @@ vector<OPTION> CommandLine::c_optList =
       .m_shortOpt = 's',
       .m_longOpt  = "scan",
       .m_helpText = "Scan the entire SCU-bus for DAQ- devices and its"
-                    " channels"
-   }//,
+                    " channels and print the results as table."
+   },
+   {
+      OPT_LAMBDA( poParser,
+      {
+         return 0;
+      }),
+      .m_hasArg   = OPTION::OPTIONAL_ARG,
+      .m_id       = 0,
+      .m_shortOpt = 'C',
+      .m_longOpt  = "continue",
+      .m_helpText = "Starts the continuous mode"
+   },
+   {
+      OPT_LAMBDA( poParser,
+      {
+         return 1;
+      }),
+      .m_hasArg   = OPTION::NO_ARG,
+      .m_id       = 0,
+      .m_shortOpt = 'H',
+      .m_longOpt  = "high-resolution",
+      .m_helpText = "Starts the high resolution mode"
+   },
+   {
+      OPT_LAMBDA( poParser,
+      {
+         return 1;
+      }),
+      .m_hasArg   = OPTION::NO_ARG,
+      .m_id       = 0,
+      .m_shortOpt = 'P',
+      .m_longOpt  = "post-mortem",
+      .m_helpText = "Starts the post-mortem mode"
+   },
+   {
+      OPT_LAMBDA( poParser,
+      {
+         unsigned int limit;
+         if( readInteger( limit, poParser->getOptArg() ) )
+            return -1;
+         if( limit > static_cast<DAQ_REGISTER_T>(~0) )
+         {
+            ERROR_MESSAGE( "Requested block limit: " << limit <<
+                           " is out of range!" );
+            return -1;
+         }
+         Attributes* poAttr =
+            static_cast<CommandLine*>(poParser)->getAttributesToSet();
+         if( poAttr == nullptr )
+         {
+            ERROR_MESSAGE( "<proto/host/port> must be specified before!" );
+            return -1;
+         }
+         poAttr->m_blockLimit.set( limit );
+         return 1;
+      }),
+      .m_hasArg   = OPTION::REQUIRED_ARG,
+      .m_id       = 0,
+      .m_shortOpt = 'l',
+      .m_longOpt  = "limit",
+      .m_helpText = "Limits the maximum of data blocks in the continuous"
+                    "mode.\n"
+                    "The value zero (default) establishes the endless mode."
+   },
+   {
+      OPT_LAMBDA( poParser,
+      {
+         return 1;
+      }),
+      .m_hasArg   = OPTION::REQUIRED_ARG,
+      .m_id       = 0,
+      .m_shortOpt = 'd',
+      .m_longOpt  = "delay",
+      .m_helpText = "PARAM sets the trigger delay in samples"
+                    " for the continuous mode"
+   },
+   {
+      OPT_LAMBDA( poParser,
+      {
+         return 1;
+      }),
+      .m_hasArg   = OPTION::REQUIRED_ARG,
+      .m_id       = 0,
+      .m_shortOpt = 'c',
+      .m_longOpt  = "condition",
+      .m_helpText = "PARAM sets the timing value of the trigger condition"
+   },
+   {
+      OPT_LAMBDA( poParser,
+      {
+         return 1;
+      }),
+      .m_hasArg   = OPTION::NO_ARG,
+      .m_id       = 0,
+      .m_shortOpt = 't',
+      .m_longOpt  = "trigger",
+      .m_helpText = "Enables the trigger mode for continuous- and"
+                     " high-resolution mode"
+   },
+   {
+      OPT_LAMBDA( poParser,
+      {
+         return 1;
+      }),
+      .m_hasArg   = OPTION::NO_ARG,
+      .m_id       = 0,
+      .m_shortOpt = 'E',
+      .m_longOpt  = "continuous-extern",
+      .m_helpText = "Sets the trigger source for the continuous mode "
+                    "from the event-trigger (default)\n"
+                    "into the external trigger input"
+   },
+   {
+      OPT_LAMBDA( poParser,
+      {
+         return 1;
+      }),
+      .m_hasArg   = OPTION::NO_ARG,
+      .m_id       = 0,
+      .m_shortOpt = 'e',
+      .m_longOpt  = "highres-extern",
+      .m_helpText = "Sets the trigger source for the high-resolution mode "
+                    "from the event-trigger (default)\n"
+                    "into the external trigger input"
+   },
+   {
+      OPT_LAMBDA( poParser,
+      {
+         return 1;
+      }),
+      .m_hasArg   = OPTION::NO_ARG,
+      .m_id       = 0,
+      .m_shortOpt = 'r',
+      .m_longOpt  = "restart",
+      .m_helpText = "Restarts the high-resolution or post-mortem mode after"
+                    " an event"
+   }
 };
 
+/*! ---------------------------------------------------------------------------
+*/
+bool CommandLine::readInteger( unsigned int& rValue, const string& roStr )
+{
+   try
+   {
+      rValue = stoi( roStr );
+   }
+   catch( std::exception& e )
+   {
+      ERROR_MESSAGE( "Integer number is expected and not that: \""
+                     << roStr << "\" !" );
+      return true;
+   }
+   return false;
+}
+
+/*! ---------------------------------------------------------------------------
+*/
 CommandLine::CommandLine( int argc, char** ppArgv )
    :PARSER( argc, ppArgv )
    ,FSM_INIT_FSM( READ_EB_NAME )
@@ -81,12 +241,42 @@ CommandLine::CommandLine( int argc, char** ppArgv )
    add( c_optList );
 }
 
+/*! ---------------------------------------------------------------------------
+*/
 CommandLine::~CommandLine( void )
 {
    if( m_poAllDaq != nullptr )
        delete m_poAllDaq;
 }
 
+/*! ---------------------------------------------------------------------------
+*/
+int CommandLine::operator()( void )
+{
+   int ret = PARSER::operator()();
+   if( ret < 0 )
+      return ret;
+   if( m_poAllDaq == nullptr )
+      return ret;
+   m_poAllDaq->prioritizeAttributes();
+   return ret;
+}
+
+/*! ---------------------------------------------------------------------------
+*/
+Attributes* CommandLine::getAttributesToSet( void )
+{
+   if( m_poAllDaq == nullptr )
+      return nullptr;
+   if( m_poCurrentChannel != nullptr )
+      return &m_poCurrentChannel->m_oAttributes;
+   if( m_poCurrentDevice != nullptr )
+      return &m_poCurrentDevice->m_oAttributes;
+   return &m_poAllDaq->m_oAttributes;
+}
+
+/*! ---------------------------------------------------------------------------
+*/
 int CommandLine::onArgument( void )
 {
    const string arg = getArgVect()[getArgIndex()];
@@ -97,16 +287,8 @@ int CommandLine::onArgument( void )
       case READ_CHANNEL:
       {
          SCU_ASSERT( m_poAllDaq != nullptr );
-         try
-         {
-            number = stoi( arg );
-         }
-         catch( std::exception& e )
-         {
-            ERROR_MESSAGE( "Integer number is expected and not that: \""
-                           << arg << "\" !" );
+         if( readInteger( number, arg ) )
             return -1;
-         }
          break;
       }
    }
@@ -139,16 +321,31 @@ int CommandLine::onArgument( void )
          m_poCurrentDevice = m_poAllDaq->getDeviceBySlot( number );
          if( m_poCurrentDevice == nullptr )
          {
-            m_poCurrentDevice = new DaqDevice( number );
+            m_poCurrentDevice = new Device( number );
             m_poAllDaq->registerDevice( m_poCurrentDevice );
          }
          FSM_TRANSITION( READ_CHANNEL );
          break;
       }
       case READ_CHANNEL:
-      {  //TODO
+      {
          SCU_ASSERT( m_poCurrentDevice != nullptr );
-         cout << "Channel " << arg << endl;
+         SCU_ASSERT( m_poCurrentChannel == nullptr );
+         if( !gsi::isInRange( number, static_cast<unsigned int>(1),
+                                      m_poCurrentDevice->getMaxChannels() ) )
+         {
+            ERROR_MESSAGE( "Requested channel " << number <<
+                           " of DAQ in slot " <<
+                           m_poCurrentDevice->getSlot() <<
+                           " isn't present!" );
+            return -1;
+         }
+         m_poCurrentChannel = m_poCurrentDevice->getChannel( number );
+         if( m_poCurrentChannel == nullptr )
+         {
+            m_poCurrentChannel = new Channel( number );
+            m_poCurrentDevice->registerChannel( m_poCurrentChannel );
+         }
          FSM_TRANSITION( READ_SLOT );
          break;
       }
