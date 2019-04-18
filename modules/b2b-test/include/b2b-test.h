@@ -48,11 +48,12 @@
 #define  B2BTEST_STATE_ERROR      6           // gateway in error -> IDLE ("recover")
 #define  B2BTEST_STATE_FATAL      7           // gateway in fatal error; RIP                                                             
 
-// activity requested by ECA Handler, the relevant codes are also used as "tags".
+// activity requested by ECA Handler, the relevant codes are also used as "tags"
 #define  B2BTEST_ECADO_TIMEOUT    0           // timeout: no activity requested
 #define  B2BTEST_ECADO_UNKOWN     1           // unkown activity requested (unexpected action by ECA)
-#define  B2BTEST_ECADO_PHASE      2           // command: perform phase measurement
-#define  B2BTEST_ECADO_INPUT      3           // event from input (TLU)
+#define  B2BTEST_ECADO_TLUINPUT   2           // event from input (TLU)
+#define  B2BTEST_ECADO_PHASEMEAS  2048        // command: perform phase measurement
+#define  B2BTEST_ECADO_PHASERES   2049        // command: this is the phase
 
 // define log levels for print statements
 #define  B2BTEST_LOGLEVEL_ALL     0           // info on every incident

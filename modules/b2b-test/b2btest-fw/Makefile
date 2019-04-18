@@ -1,4 +1,4 @@
-TARGET		= b2btest
+TARGET		?= b2bpm
 #PLATFPATH       = ../../../syn/gsi_exploder5/exploder5_csco_tr
 #PLATFPATH       = ../../../syn/gsi_scu/control3
 PLATFPATH	= ../../../syn/gsi_pexarria5/control
@@ -40,7 +40,8 @@ include ../../../syn/build.mk
 
 fwbin: $(TARGET).bin 
 
-$(TARGET).elf: $(PATHFW)/b2b-test.c $(INCPATH)/ebm.c
+#$(TARGET).elf: $(PATHFW)/b2b-test.c $(INCPATH)/ebm.c
+b2bpm.elf: $(PATHFW)/b2b-pm.c $(INCPATH)/ebm.c
 
 clean::
 	rm -f $(PATHFW)/*.o $(PATHFW)/*.a $(PATHFW)/*.elf $(PATHFW)/*.bin
