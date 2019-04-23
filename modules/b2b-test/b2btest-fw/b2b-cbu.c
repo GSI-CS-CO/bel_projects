@@ -175,14 +175,14 @@ uint32_t ebmWriteTM(uint64_t deadline, uint64_t evtId, uint64_t param)
   ebm_hi(B2BTEST_ECA_ADDRESS);
 
   // pack Ethernet frame with messages
-  idHi       = (uint32_t)((evtId >> 32) & 0xffffffff);
-  idLo       = (uint32_t)(evtId         & 0xffffffff);
+  idHi       = (uint32_t)((evtId >> 32)    & 0xffffffff);
+  idLo       = (uint32_t)(evtId            & 0xffffffff);
   tef        = 0x00000000;
   res        = 0x00000000;
-  paramLo    = (uint32_t)((param >> 32) & 0xffffffff);
-  paramHi    = (uint32_t)(param         & 0xffffffff);
+  paramHi    = (uint32_t)((param >> 32)    & 0xffffffff);
+  paramLo    = (uint32_t)(param            & 0xffffffff);
   deadlineHi = (uint32_t)((deadline >> 32) & 0xffffffff);
-  deadlineLo = (uint32_t)(deadline & 0xffffffff);
+  deadlineLo = (uint32_t)(deadline         & 0xffffffff);
           
   // pack timing message
   atomic_on();                                  
@@ -201,7 +201,6 @@ uint32_t ebmWriteTM(uint64_t deadline, uint64_t evtId, uint64_t param)
           
   // diag and status
   // ... /* chk */
-  mprintf("b2b-test: write timing message\n");
   
   return B2BTEST_STATUS_OK;
 } //ebmWriteTM
@@ -263,6 +262,10 @@ void initSharedMem() // determine address and clear shared mem
   pSharedTDiagLo          = (uint32_t *)(pShared + (B2BTEST_SHARED_TDIAGLO >> 2));
   pSharedTS0Hi            = (uint32_t *)(pShared + (B2BTEST_SHARED_TS0HI >> 2));
   pSharedTS0Lo            = (uint32_t *)(pShared + (B2BTEST_SHARED_TS0LO >> 2));
+  pSharedTH1ExtHi         = (uint32_t *)(pShared + (B2BTEST_SHARED_TH1EXTHI >> 2));
+  pSharedTH1ExtLo         = (uint32_t *)(pShared + (B2BTEST_SHARED_TH1EXTLO >> 2));
+  pSharedTH1InjHi         = (uint32_t *)(pShared + (B2BTEST_SHARED_TH1INJHI >> 2));
+  pSharedTH1InjLo         = (uint32_t *)(pShared + (B2BTEST_SHARED_TH1INJLO >> 2));
   
   // find address of CPU from external perspective
   idx = 0;
@@ -621,23 +624,26 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
     // received: B2B_START from DM
     // send command: phase measurement at extraction machine
     sendEvtId    = 0x1fff000000000000;                                        // FID, GID
-    sendEvtId    = sendEvtId || ((uint64_t)B2BTEST_ECADO_B2B_PMEXT << 36);    // EVTNO
+    sendEvtId    = sendEvtId | ((uint64_t)B2BTEST_ECADO_B2B_PMEXT << 36);     // EVTNO
 
-    sendParam    = (uint64_t)(*pSharedTH1ExtHi) << 32 || (uint64_t)(*pSharedTH1ExtLo);
+    sendParam    = (uint64_t)(*pSharedTH1ExtHi) << 32 | (uint64_t)(*pSharedTH1ExtLo);
 
-    sendDeadLine = getSysTime() + (uint64_t)B2BTEST_AHEADT;
+    sendDeadline = getSysTime() + (uint64_t)B2BTEST_AHEADT;
 
     ebmWriteTM(sendDeadline, sendEvtId, sendParam);
+    mprintf("b2b-test: got B2B_START\n");
+
+
 
     break;
   case B2BTEST_ECADO_B2B_PREXT :
     // received: measured phase from extraction machine
     // do some math
-    sendDeadLine = recParam + (uint64_t)100000000; /* chk, hack: 1. fixed period 2. need PRINJ too */
+    sendDeadline = recParam + (uint64_t)100000000; /* chk, hack: 1. fixed period 2. need PRINJ too */
 
     // send TR_EXT_INJ to extraction machine
     sendEvtId    = 0x1fff000000000000;                                        // FID, GID
-    sendEvtId    = sendEvtId || ((uint64_t)B2BTEST_ECADO_B2B_SYNCEXT << 36);  // EVTNO
+    sendEvtId    = sendEvtId | ((uint64_t)B2BTEST_ECADO_B2B_SYNCEXT << 36);   // EVTNO
     
     sendParam    = 0x0;
 

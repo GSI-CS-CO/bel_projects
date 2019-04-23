@@ -98,7 +98,7 @@
 #define B2BTEST_SHARED_TDIAGLO        (B2BTEST_SHARED_TDIAGHI    + _32b_SIZE_)          // time when diagnostics was cleared, low bits
 #define B2BTEST_SHARED_TS0HI          (B2BTEST_SHARED_TDIAGLO    + _32b_SIZE_)          // time when FW was in S0 state (start of FW), high bits
 #define B2BTEST_SHARED_TS0LO          (B2BTEST_SHARED_TS0HI      + _32b_SIZE_)          // time when FW was in S0 state (start of FW), low bits
-#define B2BTEST_SHARED_TH1EXTHI       (B2BTEST_SHARED_TS0L0      + _32b_SIZE_)          // period of h=1 extraction, high bits
+#define B2BTEST_SHARED_TH1EXTHI       (B2BTEST_SHARED_TS0LO      + _32b_SIZE_)          // period of h=1 extraction, high bits
 #define B2BTEST_SHARED_TH1EXTLO       (B2BTEST_SHARED_TH1EXTHI   + _32b_SIZE_)          // period of h=1 extraction, low bits
 #define B2BTEST_SHARED_TH1INJHI       (B2BTEST_SHARED_TH1EXTLO   + _32b_SIZE_)          // period of h=1 injecction, high bits
 #define B2BTEST_SHARED_TH1INJLO       (B2BTEST_SHARED_TH1INJHI   + _32b_SIZE_)          // period of h=1 injecction, low bits
