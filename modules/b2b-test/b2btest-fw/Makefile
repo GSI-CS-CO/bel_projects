@@ -40,8 +40,9 @@ include ../../../syn/build.mk
 
 fwbin: $(TARGET).bin 
 
-#$(TARGET).elf: $(PATHFW)/b2b-test.c $(INCPATH)/ebm.c
-b2bpm.elf: $(PATHFW)/b2b-pm.c $(INCPATH)/ebm.c
+# $(TARGET).elf: $(PATHFW)/b2b-test.c $(INCPATH)/ebm.c
+b2bpm.elf:  $(PATHFW)/b2b-pm.c $(INCPATH)/ebm.c
+b2bcbu.elf: $(PATHFW)/b2b-cbu.c $(INCPATH)/ebm.c
 
 clean::
 	rm -f $(PATHFW)/*.o $(PATHFW)/*.a $(PATHFW)/*.elf $(PATHFW)/*.bin

@@ -1,15 +1,11 @@
 /********************************************************************************************
- *  b2b-pm.c
+ *  b2b-cbu.c
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 15-Apr-2019
+ *  version : 23-Apr-2019
  *
- *  firmware required for measuring the h=1 phase for ring machine
- *  
- *  - when receiving B2BTEST_ECADO_PHASEMEAS, the phase is measured as a timestamp for an 
- *    arbitraty period
- *  - the phase timestamp is then sent as a timing message to the network
+ *  firmware required to implement the CBU (Central Buncht-To-Bucket Unit)
  *  
  * -------------------------------------------------------------------------------------------
  * License Agreement for this software:
@@ -36,9 +32,9 @@
  *  License along with this library. If not, see <http://www.gnu.org/licenses/>.
  *
  * For all questions and ideas contact: d.beck@gsi.de
- * Last update: 15-April-2019
+ * Last update: 23-April-2019
  ********************************************************************************************/
-//#define B2BTEST_FW_VERSION 0x000001                                     // make this consistent with makefile
+// #define B2BTEST_FW_VERSION 0x000001                                     // make this consistent with makefile
 
 /* standard includes */
 #include <stdio.h>
@@ -113,6 +109,10 @@ uint32_t *pSharedTDiagHi;               // pointer to a "user defined" u32 regis
 uint32_t *pSharedTDiagLo;               // pointer to a "user defined" u32 register; here: time when diag was cleared, low bits
 uint32_t *pSharedTS0Hi;                 // pointer to a "user defined" u32 register; here: time when FW was in S0 state, high bits
 uint32_t *pSharedTS0Lo;                 // pointer to a "user defined" u32 register; here: time when FW was in S0 state, low bits
+volatile uint32_t *pSharedTH1ExtHi;     // pointer to a "user defined" u32 register; here: period of h=1 extraction, high bits
+volatile uint32_t *pSharedTH1ExtLo;     // pointer to a "user defined" u32 register; here: period of h=1 extraction, low bits
+volatile uint32_t *pSharedTH1InjHi;     // pointer to a "user defined" u32 register; here: period of h=1 injection, high bits
+volatile uint32_t *pSharedTH1InjLo;     // pointer to a "user defined" u32 register; here: period of h=1 injecion, low bits
 
 uint32_t *pCpuRamExternal;              // external address (seen from host bridge) of this CPU's RAM            
 uint32_t *pCpuRamExternalData4EB;       // external address (seen from host bridge) of this CPU's RAM: field for EB return values
@@ -163,10 +163,9 @@ uint32_t ebmInit(uint32_t msTimeout, uint64_t dstMac, uint32_t dstIp, uint32_t e
 } // ebminit
 
 
-uint32_t ebmWriteTM()
+uint32_t ebmWriteTM(uint64_t deadline, uint64_t evtId, uint64_t param)
 {
   int      i;
-  uint64_t deadline;
   uint32_t res, tef;
   uint32_t deadlineLo, deadlineHi, offset;
   uint32_t idLo, idHi;
@@ -176,15 +175,12 @@ uint32_t ebmWriteTM()
   ebm_hi(B2BTEST_ECA_ADDRESS);
 
   // pack Ethernet frame with messages
-  idHi    = 0x1fff8010;
-  idLo    = 0x00000000;
-  tef     = 0x00000000;
-  res     = 0x00000000;
-  paramLo = 0x00000000;
-  paramHi = 0x00000000;
-
-  // calc deadline
-  deadline   = tH1 + (uint64_t)100000000; 
+  idHi       = (uint32_t)((evtId >> 32) & 0xffffffff);
+  idLo       = (uint32_t)(evtId         & 0xffffffff);
+  tef        = 0x00000000;
+  res        = 0x00000000;
+  paramLo    = (uint32_t)((param >> 32) & 0xffffffff);
+  paramHi    = (uint32_t)(param         & 0xffffffff);
   deadlineHi = (uint32_t)((deadline >> 32) & 0xffffffff);
   deadlineLo = (uint32_t)(deadline & 0xffffffff);
           
@@ -348,7 +344,7 @@ uint32_t findECAQueue() // find WB address of ECA channel for LM32
 } // findECAQueue
 
 
-uint32_t wait4ECAEvent(uint32_t msTimeout, uint64_t *deadline, uint32_t *isLate)  // 1. query ECA for actions, 2. trigger activity
+uint32_t wait4ECAEvent(uint32_t msTimeout, uint64_t *deadline, uint64_t *param, uint32_t *isLate)  // 1. query ECA for actions, 2. trigger activity
 {
   uint32_t *pECAFlag;           // address of ECA flag
   uint32_t evtIdHigh;           // high 32bit of eventID   
@@ -382,17 +378,15 @@ uint32_t wait4ECAEvent(uint32_t msTimeout, uint64_t *deadline, uint32_t *isLate)
       *isLate      = *pECAFlag & (0x0001 << ECA_LATE);
 
       *deadline    = ((uint64_t)evtDeadlHigh << 32) + (uint64_t)evtDeadlLow;
+      *param       = ((uint64_t)evtParamHigh << 32) + (uint64_t)evtParamLow;
       
       // pop action from channel
       *(pECAQ + (ECA_QUEUE_POP_OWR >> 2)) = 0x1;
 
       // here: do s.th. according to tag
       switch (actTag) {
-      case B2BTEST_ECADO_PHASEMEAS :
-        nextAction = B2BTEST_ECADO_PHASEMEAS;
-        break;
-      case B2BTEST_ECADO_TLUINPUT :
-        nextAction = B2BTEST_ECADO_TLUINPUT;
+      case  B2BTEST_ECADO_B2B_START :
+        nextAction = B2BTEST_ECADO_B2B_START;
         break;
       default: 
         nextAction = B2BTEST_ECADO_UNKOWN;
@@ -478,13 +472,14 @@ uint32_t entryActionOperation()
 {
   int      i;
   uint64_t tDummy;
+  uint64_t pDummy;
   uint32_t flagDummy;
   
   clearDiag();                                               // clear diagnostics
 
   // flush ECA queue for lm32
   i = 0;
-  while (wait4ECAEvent(1, &tDummy, &flagDummy) !=  B2BTEST_ECADO_TIMEOUT) {i++;}
+  while (wait4ECAEvent(1, &tDummy, &pDummy, &flagDummy) !=  B2BTEST_ECADO_TIMEOUT) {i++;}
   DBPRINT1("b2b-test: ECA queue flushed - removed %d pending entries from ECA queue\n", i);
 
   return B2BTEST_STATUS_OK;
@@ -601,42 +596,52 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
   uint32_t status;                                            // status returned by routines
   uint32_t flagIsLate;                                        // flag indicating that we received a 'late' event from ECA
   uint32_t ecaAction;                                         // action triggered by event received from ECA
-  uint64_t deadline;                                          // deadline of event received via ECA
   uint64_t tDummy;                                            // dummy timestamp
   int      i,j;
   int      nInput;
   uint32_t tsHi;
   uint32_t tsLo;
+  uint64_t sendDeadline;                                      // deadline to send of event received via ECA
+  uint64_t sendEvtId;                                         // evtID to send
+  uint64_t sendParam;                                         // param to send
+  uint64_t recDeadline;                                       // deadline received
+  uint64_t recEvtId;                                          // evtID received
+  uint64_t recParam;                                          // param received
+    
 
 
   status = actStatus;
 
-  ecaAction = wait4ECAEvent(B2BTEST_ECATIMEOUT, &deadline, &flagIsLate);
+  ecaAction = wait4ECAEvent(B2BTEST_ECATIMEOUT, &recDeadline, &recParam, &flagIsLate);
 
   
   
   switch (ecaAction) {
-  case B2BTEST_ECADO_PHASEMEAS :
-    tsHi = (uint32_t)((deadline >> 32) & 0xffffffff);
-    tsLo = (uint32_t)(deadline & 0xffffffff);
-    mprintf("b2b-test: action phase, action %d, ts %u %u\n", ecaAction, tsHi, tsLo);
-    nInput = 0;
-    tH1    = 0xffffffffffffffff;
-    while (nInput < 2) {                                      // treat 1st input as junk
-      ecaAction = wait4ECAEvent(100, &deadline, &flagIsLate);
-      tsHi = (uint32_t)((deadline >> 32) & 0xffffffff);
-      tsLo = (uint32_t)(deadline & 0xffffffff);
-      mprintf("b2b-test: action TLU,   action %d, ts %u %u\n", ecaAction, tsHi, tsLo);
-      if (ecaAction == B2BTEST_ECADO_TLUINPUT)   nInput++;
-      if (ecaAction == B2BTEST_ECADO_TIMEOUT)    break; 
-    } // while nInput
-    mprintf("b2b-test: action phase, nInput %d\n", nInput);
+  case B2BTEST_ECADO_B2B_START :
+    // received: B2B_START from DM
+    // send command: phase measurement at extraction machine
+    sendEvtId    = 0x1fff000000000000;                                        // FID, GID
+    sendEvtId    = sendEvtId || ((uint64_t)B2BTEST_ECADO_B2B_PMEXT << 36);    // EVTNO
+
+    sendParam    = (uint64_t)(*pSharedTH1ExtHi) << 32 || (uint64_t)(*pSharedTH1ExtLo);
+
+    sendDeadLine = getSysTime() + (uint64_t)B2BTEST_AHEADT;
+
+    ebmWriteTM(sendDeadline, sendEvtId, sendParam);
+
+    break;
+  case B2BTEST_ECADO_B2B_PREXT :
+    // received: measured phase from extraction machine
+    // do some math
+    sendDeadLine = recParam + (uint64_t)100000000; /* chk, hack: 1. fixed period 2. need PRINJ too */
+
+    // send TR_EXT_INJ to extraction machine
+    sendEvtId    = 0x1fff000000000000;                                        // FID, GID
+    sendEvtId    = sendEvtId || ((uint64_t)B2BTEST_ECADO_B2B_SYNCEXT << 36);  // EVTNO
     
-    if (nInput == 2) {
-      tH1 = deadline;
-      ebmWriteTM();
-    } // if nInput
-    else actStatus = B2BTEST_STATUS_PHASEFAILED;
+    sendParam    = 0x0;
+
+    ebmWriteTM(sendDeadline, sendEvtId, sendParam);
 
     break;
     
@@ -697,6 +702,10 @@ void main(void) {
 
   init();                                                                   // initialize stuff for lm32
   initSharedMem();                                                          // initialize shared memory
+
+ /* hack init chk */
+  *pSharedTH1ExtHi = 0x00002D79; // 20 Hz
+  *pSharedTH1ExtLo = 0x883D2000;
   
   while (1) {
     cmdHandler(&reqState);                                                  // check for commands and possibly request state changes

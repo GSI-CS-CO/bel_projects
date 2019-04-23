@@ -31,8 +31,8 @@ saft-ecpu-ctl tr0 -c 0x1fff800000000005 0xffffffffffffffff 0 0x800 -d
 
 # testing pulse upon phase message from TR source
 saft-io-ctl tr1 -n IO2 -o 1 -t 0
-saft-io-ctl tr1 -n IO2 -c 0x0123456789abcdef 0xffffffffffffffff 0 0x0 1 -u
-saft-io-ctl tr1 -n IO2 -c 0x0123456789abcdef 0xffffffffffffffff 1000000 0x0 0 -u
+saft-io-ctl tr1 -n IO2 -c 0x1fff801000000000 0xffffffffffffffff 0 0x0 1 -u
+saft-io-ctl tr1 -n IO2 -c 0x1fff801000000000 0xffffffffffffffff 10000000 0x0 0 -u
 
 
 
