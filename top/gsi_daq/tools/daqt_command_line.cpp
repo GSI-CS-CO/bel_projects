@@ -27,6 +27,18 @@
 using namespace daqt;
 using namespace std;
 
+#define CONTINUE_1MS   "1MS"
+#define CONTINUE_100US "100US"
+#define CONTINUE_10US  "10US"
+
+
+/*! ---------------------------------------------------------------------------
+*/
+void CommandLine::specifiedBeforeErrorMessage( void )
+{
+   ERROR_MESSAGE( "<proto/host/port> must be specified before!" );
+}
+
 /*! ---------------------------------------------------------------------------
 */
 vector<OPTION> CommandLine::c_optList =
@@ -42,6 +54,7 @@ vector<OPTION> CommandLine::c_optList =
                  "the lowest channel-number begins at 1.\n";
          poParser->list( cout );
          cout << endl;
+         ::exit( EXIT_SUCCESS );
          return 0;
       }),
       .m_hasArg   = OPTION::NO_ARG,
@@ -57,7 +70,7 @@ vector<OPTION> CommandLine::c_optList =
             static_cast<CommandLine*>(poParser)->m_poAllDaq;
          if( poAllDaq == nullptr )
          {
-            ERROR_MESSAGE( "<proto/host/port> must be specified before!" );
+            specifiedBeforeErrorMessage();
             return -1;
          }
          for( unsigned int i = 1; i <= poAllDaq->getMaxFoundDevices(); i++ )
@@ -65,6 +78,7 @@ vector<OPTION> CommandLine::c_optList =
             cout << poAllDaq->getSlotNumber( i ) << " "
                  <<  poAllDaq->readMaxChannels( i ) << endl;
          }
+         ::exit( EXIT_SUCCESS );
          return 0;
       }),
       .m_hasArg   = OPTION::NO_ARG,
@@ -77,13 +91,54 @@ vector<OPTION> CommandLine::c_optList =
    {
       OPT_LAMBDA( poParser,
       {
-         return 0;
+         Attributes* poAttr =
+            static_cast<CommandLine*>(poParser)->getAttributesToSet();
+         if( poAttr == nullptr )
+         {
+            specifiedBeforeErrorMessage();
+            return -1;
+         }
+         if( poParser->getOptArg().empty() )
+         {
+            poAttr->m_continueMode.set( DAQ_SAMPLE_1MS );
+            return 0;
+         }
+         if( poParser->getOptArg() == CONTINUE_1MS )
+         {
+            poAttr->m_continueMode.set( DAQ_SAMPLE_1MS );
+            return 0;
+         }
+         if( poParser->getOptArg() == CONTINUE_100US )
+         {
+            poAttr->m_continueMode.set( DAQ_SAMPLE_100US );
+            return 0;
+         }
+         if( poParser->getOptArg() == CONTINUE_10US )
+         {
+            poAttr->m_continueMode.set( DAQ_SAMPLE_10US );
+            return 0;
+         }
+         ERROR_MESSAGE( "Wrong sample parameter: \"" <<
+                        poParser->getOptArg() << "\"\n"
+                        "Known values: "
+                        CONTINUE_1MS ", " CONTINUE_100US ", or "
+                        CONTINUE_10US );
+         return -1;
       }),
       .m_hasArg   = OPTION::OPTIONAL_ARG,
       .m_id       = 0,
       .m_shortOpt = 'C',
       .m_longOpt  = "continue",
-      .m_helpText = "Starts the continuous mode"
+      .m_helpText = "Starts the continuous mode \n"
+                    "PARAM:\n"
+                    "   " CONTINUE_1MS   " Sample rate   1 ms\n"
+                    "   " CONTINUE_100US " Sample rate 100 us\n"
+                    "   " CONTINUE_10US  " Sample rate  10 us\n"
+                    "Default value is 1ms\n"
+                    "Example:\n"
+                    "   C=" CONTINUE_100US "\n"
+                    "   means: Continuous mode with sample rate of 100 us"
+
    },
    {
       OPT_LAMBDA( poParser,
@@ -123,11 +178,11 @@ vector<OPTION> CommandLine::c_optList =
             static_cast<CommandLine*>(poParser)->getAttributesToSet();
          if( poAttr == nullptr )
          {
-            ERROR_MESSAGE( "<proto/host/port> must be specified before!" );
+            specifiedBeforeErrorMessage();
             return -1;
          }
          poAttr->m_blockLimit.set( limit );
-         return 1;
+         return 0;
       }),
       .m_hasArg   = OPTION::REQUIRED_ARG,
       .m_id       = 0,
@@ -140,7 +195,24 @@ vector<OPTION> CommandLine::c_optList =
    {
       OPT_LAMBDA( poParser,
       {
-         return 1;
+         unsigned int delay;
+         if( readInteger( delay, poParser->getOptArg() ) )
+            return -1;
+         if( delay > static_cast<DAQ_REGISTER_T>(~0) )
+         {
+            ERROR_MESSAGE( "Requested trigger delay: " << delay <<
+                           " is out of range!" );
+            return -1;
+         }
+         Attributes* poAttr =
+            static_cast<CommandLine*>(poParser)->getAttributesToSet();
+         if( poAttr == nullptr )
+         {
+            specifiedBeforeErrorMessage();
+            return -1;
+         }
+         poAttr->m_triggerDelay.set( delay );
+         return 0;
       }),
       .m_hasArg   = OPTION::REQUIRED_ARG,
       .m_id       = 0,
@@ -152,7 +224,24 @@ vector<OPTION> CommandLine::c_optList =
    {
       OPT_LAMBDA( poParser,
       {
-         return 1;
+         unsigned int condition;
+         if( readInteger( condition, poParser->getOptArg() ) )
+            return -1;
+         if( condition > static_cast<uint32_t>(~0) )
+         {
+            ERROR_MESSAGE( "Requested trigger condition: " << condition <<
+                           " is out of range!" );
+            return -1;
+         }
+         Attributes* poAttr =
+            static_cast<CommandLine*>(poParser)->getAttributesToSet();
+         if( poAttr == nullptr )
+         {
+            specifiedBeforeErrorMessage();
+            return -1;
+         }
+         poAttr->m_triggerCondition.set( condition );
+         return 0;
       }),
       .m_hasArg   = OPTION::REQUIRED_ARG,
       .m_id       = 0,
@@ -163,7 +252,15 @@ vector<OPTION> CommandLine::c_optList =
    {
       OPT_LAMBDA( poParser,
       {
-         return 1;
+         Attributes* poAttr =
+            static_cast<CommandLine*>(poParser)->getAttributesToSet();
+         if( poAttr == nullptr )
+         {
+            specifiedBeforeErrorMessage();
+            return -1;
+         }
+         poAttr->m_triggerEnable.set( true );
+         return 0;
       }),
       .m_hasArg   = OPTION::NO_ARG,
       .m_id       = 0,
@@ -175,7 +272,15 @@ vector<OPTION> CommandLine::c_optList =
    {
       OPT_LAMBDA( poParser,
       {
-         return 1;
+         Attributes* poAttr =
+            static_cast<CommandLine*>(poParser)->getAttributesToSet();
+         if( poAttr == nullptr )
+         {
+            specifiedBeforeErrorMessage();
+            return -1;
+         }
+         poAttr->m_continueTreggerSouce.set( true );
+         return 0;
       }),
       .m_hasArg   = OPTION::NO_ARG,
       .m_id       = 0,
@@ -188,7 +293,15 @@ vector<OPTION> CommandLine::c_optList =
    {
       OPT_LAMBDA( poParser,
       {
-         return 1;
+         Attributes* poAttr =
+            static_cast<CommandLine*>(poParser)->getAttributesToSet();
+         if( poAttr == nullptr )
+         {
+            specifiedBeforeErrorMessage();
+            return -1;
+         }
+         poAttr->m_highResTriggerSource.set( true );
+         return 0;
       }),
       .m_hasArg   = OPTION::NO_ARG,
       .m_id       = 0,
@@ -201,7 +314,15 @@ vector<OPTION> CommandLine::c_optList =
    {
       OPT_LAMBDA( poParser,
       {
-         return 1;
+         Attributes* poAttr =
+            static_cast<CommandLine*>(poParser)->getAttributesToSet();
+         if( poAttr == nullptr )
+         {
+            specifiedBeforeErrorMessage();
+            return -1;
+         }
+         poAttr->m_restart.set( true );
+         return 0;
       }),
       .m_hasArg   = OPTION::NO_ARG,
       .m_id       = 0,
@@ -251,6 +372,7 @@ CommandLine::~CommandLine( void )
 
 /*! ---------------------------------------------------------------------------
 */
+//#define CONFIG_DBG_ATTRIBUTES
 int CommandLine::operator()( void )
 {
    int ret = PARSER::operator()();
@@ -259,6 +381,28 @@ int CommandLine::operator()( void )
    if( m_poAllDaq == nullptr )
       return ret;
    m_poAllDaq->prioritizeAttributes();
+
+#ifdef CONFIG_DBG_ATTRIBUTES
+   if( m_poAllDaq->m_oAttributes.m_blockLimit.m_valid )
+      cerr << "Attribute: " << m_poAllDaq->m_oAttributes.m_blockLimit.m_value << endl;
+   for( auto& iDev: *m_poAllDaq )
+   {
+      Device* pDev = static_cast<Device*>(iDev);
+      cerr << "   Slot: " << pDev->getSlot();
+      if( pDev->m_oAttributes.m_blockLimit.m_valid )
+         cerr << ", Attribute: " << pDev->m_oAttributes.m_blockLimit.m_value;
+      cerr << endl;
+      for( auto& iCha: *iDev )
+      {
+         Channel* pCha = static_cast<Channel*>(iCha);
+         cerr << "     Channel: " << pCha->getNumber();
+         if( pCha->m_oAttributes.m_blockLimit.m_valid )
+            cerr << ", Attribute: " << pCha->m_oAttributes.m_blockLimit.m_value;
+         cerr << endl;
+      }
+   }
+#endif
+   m_poAllDaq->sendAttributes();
    return ret;
 }
 

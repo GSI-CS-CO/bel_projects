@@ -32,20 +32,43 @@ using namespace daqt;
 ///////////////////////////////////////////////////////////////////////////////
 /*-----------------------------------------------------------------------------
  */
-void Attributes::set( const Attributes& rHigherPrio )
+void Attributes::set( const Attributes& rMyContainer )
 {
-   #define __SET_MEMBER( member )  member.set( rHigherPrio.member )
+   #define __SET_MEMBER( member )  member.set( rMyContainer.member )
    __SET_MEMBER( m_continueTreggerSouce );
    __SET_MEMBER( m_highResTriggerSource );
+   __SET_MEMBER( m_triggerEnable );
+   __SET_MEMBER( m_triggerDelay );
+   __SET_MEMBER( m_triggerCondition );
    __SET_MEMBER( m_blockLimit );
+   __SET_MEMBER( m_restart );
    #undef __SET_MEMBER
 }
 
 ///////////////////////////////////////////////////////////////////////////////
+void Channel::sendAttributes( void )
+{
+   if( m_oAttributes.m_continueTreggerSouce.m_valid )
+      sendTriggerSourceContinue( m_oAttributes.m_continueTreggerSouce.m_value );
+
+   if( m_oAttributes.m_highResTriggerSource.m_valid )
+      sendTriggerSourceHiRes( m_oAttributes.m_highResTriggerSource.m_value );
+
+   if( m_oAttributes.m_triggerDelay.m_valid )
+      sendTriggerDelay( m_oAttributes.m_triggerDelay.m_value );
+
+   if( m_oAttributes.m_triggerCondition.m_valid )
+      sendTriggerCondition( m_oAttributes.m_triggerCondition.m_value );
+
+   if( m_oAttributes.m_triggerEnable.m_valid )
+      sendTriggerMode( m_oAttributes.m_triggerEnable.m_value );
+}
+
 /*! ---------------------------------------------------------------------------
  */
 bool Channel::onDataBlock( DAQ_DATA_T* pData, std::size_t wordLen )
 {
+   cerr << '*' << endl;
    return false;
 }
 
@@ -56,14 +79,26 @@ void DaqContainer::prioritizeAttributes( void )
 {
    for( auto& iDev: *this )
    {
-      static_cast<Device*>(&(*iDev))->m_oAttributes.set( m_oAttributes );
-      for( auto& iChannel: *iDev )
+      static_cast<Device*>(iDev)->m_oAttributes.set( m_oAttributes );
+      for( auto& iCha: *iDev )
       {
-         static_cast<Channel*>(*(&iChannel))->
-            m_oAttributes.set( static_cast<Device*>(&(*iDev))->m_oAttributes );
+         static_cast<Channel*>(iCha)->
+            m_oAttributes.set( static_cast<Device*>(iDev)->m_oAttributes );
       }
    }
 }
+
+/*! ---------------------------------------------------------------------------
+ */
+void DaqContainer::sendAttributes( void )
+{
+   for( auto& iDev: *this )
+   {
+      for( auto& iCha: *iDev )
+         static_cast<Channel*>(iCha)->sendAttributes();
+   }
+}
+
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////

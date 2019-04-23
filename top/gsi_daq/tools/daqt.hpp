@@ -48,10 +48,14 @@ struct Attributes
 
       Value( void ): m_valid( false ) {}
 
-      void set( const Value<VT>& rHigherPrio )
-      {
-         if( rHigherPrio.m_valid )
-            *this = rHigherPrio;
+      void set( const Value<VT>& rMyContainer )
+      { /*
+         * If the attribute of my container valid but my own not,
+         * then making the value of my attribute to the value of my
+         * containers attribute.
+         */
+         if( rMyContainer.m_valid && !m_valid )
+            *this = rMyContainer;
       }
 
       void set( const VT value )
@@ -61,14 +65,20 @@ struct Attributes
       }
    };
 
-   typedef Value<bool> BoolValue;
-   typedef Value<unsigned int> NumValue;
+   typedef Value<bool>              BoolValue;
+   typedef Value<unsigned int>      NumValue;
+   typedef Value<DAQ_SAMPLE_RATE_T> SampleValue;
 
-   void set( const Attributes& rHigherPrio );
+   void set( const Attributes& rMyContainer );
 
+   SampleValue   m_continueMode;
    BoolValue     m_continueTreggerSouce;
    BoolValue     m_highResTriggerSource;
+   BoolValue     m_triggerEnable;
+   NumValue      m_triggerDelay;
+   NumValue      m_triggerCondition;
    NumValue      m_blockLimit;
+   BoolValue     m_restart;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -94,6 +104,8 @@ public:
    Device* getDeviceBySlot( unsigned int slot );
 
    void prioritizeAttributes( void );
+
+   void sendAttributes( void );
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -104,11 +116,11 @@ class Channel: public DaqChannel
    Attributes  m_oAttributes;
 
 public:
-
-
    Channel( unsigned int number )
       :DaqChannel( number )
     {}
+
+   void sendAttributes( void );
 
    bool onDataBlock( DAQ_DATA_T* pData, std::size_t wordLen ) override;
 };

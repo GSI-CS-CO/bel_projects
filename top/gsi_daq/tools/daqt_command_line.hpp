@@ -59,6 +59,7 @@ class CommandLine: public PARSER
    static bool readInteger( unsigned int&, const std::string& );
 
 public:
+   static void specifiedBeforeErrorMessage( void );
    CommandLine( int argc, char** ppArgv );
    virtual ~CommandLine( void );
 
