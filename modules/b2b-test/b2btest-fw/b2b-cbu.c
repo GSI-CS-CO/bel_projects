@@ -604,7 +604,7 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
   int      nInput;
   uint32_t tsHi;
   uint32_t tsLo;
-  uint64_t sendDeadline;                                      // deadline to send of event received via ECA
+  uint64_t sendDeadline;                                      // deadline to send
   uint64_t sendEvtId;                                         // evtID to send
   uint64_t sendParam;                                         // param to send
   uint64_t recDeadline;                                       // deadline received
