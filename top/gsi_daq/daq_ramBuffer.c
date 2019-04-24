@@ -142,9 +142,13 @@ void ramRreadItem( register RAM_SCU_T* pThis, const RAM_RING_INDEX_T index,
 #if defined(__lm32__) || defined(__DOXYGEN__)
 
 /*! ---------------------------------------------------------------------------
- */
-/*
- * Awful I know...
+ * @brief Macro ease the read access to the channel mode register in the
+ *        device descriptor storing as data block in the DAQ-RAM.
+ * @see _DAQ_CHANNEL_CONTROL
+ * @see _DAQ_DISCRIPTOR_STRUCT_T
+ * @see RAM_DAQ_PAYLOAD_T
+ * @param item RAM payload item including the channel mode register of
+ *             the device descriptor.
  */
 #define RAM_ACCESS_CHANNEL_MODE( item )                                       \
 (                                                                             \
@@ -155,9 +159,21 @@ void ramRreadItem( register RAM_SCU_T* pThis, const RAM_RING_INDEX_T index,
        sizeof(DAQ_DATA_T)                                                     \
    ])                                                                         \
 )
+/* Awful I know... */
 
 /*! ---------------------------------------------------------------------------
- * @see scu_ramBuffer.h
+ * @brief Definition of return values of function ramRingGetTypeOfOldestBlock
+ */
+typedef enum
+{
+   RAM_DAQ_EMPTY,     //!<@brief No block present
+   RAM_DAQ_UNDEFINED, //!<@brief No block recognized
+   RAM_DAQ_SHORT,     //!<@brief Short block
+   RAM_DAQ_LONG       //!<@brief Long block
+} RAM_DAQ_BLOCK_T;
+
+/*! ---------------------------------------------------------------------------
+ * @see RAM_DAQ_BLOCK_T
  */
 static inline
 RAM_DAQ_BLOCK_T ramRingGetTypeOfOldestBlock( register RAM_SCU_T* pThis )
@@ -181,13 +197,16 @@ RAM_DAQ_BLOCK_T ramRingGetTypeOfOldestBlock( register RAM_SCU_T* pThis )
 
 #if  (DEBUGLEVEL>1)
    for( unsigned int i = 0; i < ARRAY_SIZE(item.ad16); i++ )
-      DBPRINT1( "DBG: item: %d 0x%04x %d\n", i, item.ad16[i], item.ad16[i] );
+      DBPRINT2( "DBG: item: %d 0x%04x %d\n", i, item.ad16[i], item.ad16[i] );
 
-   DBPRINT1( "DBG: daq:   0x%x\n", RAM_ACCESS_CHANNEL_MODE( item ).daqMode );
-   DBPRINT1( "DBG: pm:    0x%x\n", RAM_ACCESS_CHANNEL_MODE( item ).pmMode );
-   DBPRINT1( "DBG: hiRes: 0x%x\n", RAM_ACCESS_CHANNEL_MODE( item ).hiResMode );
+   DBPRINT2( "DBG: daq:   0x%x\n", RAM_ACCESS_CHANNEL_MODE( item ).daqMode );
+   DBPRINT2( "DBG: pm:    0x%x\n", RAM_ACCESS_CHANNEL_MODE( item ).pmMode );
+   DBPRINT2( "DBG: hiRes: 0x%x\n", RAM_ACCESS_CHANNEL_MODE( item ).hiResMode );
 #endif
 
+   /*
+    * Rough check of the device descriptors integrity.
+    */
    if( ((int)RAM_ACCESS_CHANNEL_MODE( item ).daqMode)   +
        ((int)RAM_ACCESS_CHANNEL_MODE( item ).hiResMode) +
        ((int)RAM_ACCESS_CHANNEL_MODE( item ).pmMode)    != 1 )
@@ -203,8 +222,6 @@ RAM_DAQ_BLOCK_T ramRingGetTypeOfOldestBlock( register RAM_SCU_T* pThis )
 
    return RAM_DAQ_LONG;
 }
-
-
 
 /*! ---------------------------------------------------------------------------
  * @brief Removes the oldest DAQ- block in the ring boffer
@@ -256,7 +273,7 @@ void ramMakeSpaceIfNecessary( register RAM_SCU_T* pThis, const bool isShort )
 {
    while( !ramDoesBlockFit( pThis, isShort ) )
    {
-      DBPRINT1( "DBG Removing block!\n" );
+      DBPRINT1( "DBG: "ESC_FG_YELLOW"Removing block!\n"ESC_NORMAL );
       ramRemoveOldestBlock( pThis );
    }
 }

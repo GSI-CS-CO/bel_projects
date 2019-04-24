@@ -95,17 +95,6 @@ extern "C" {
     / sizeof(DAQ_DATA_T)                                                      \
 )
 
-/*! ---------------------------------------------------------------------------
- * @brief Definition of return values of function ramRingGetTypeOfOldestBlock
- */
-typedef enum
-{
-   RAM_DAQ_EMPTY,     //!<@brief No block present
-   RAM_DAQ_UNDEFINED, //!<@brief No block recognized
-   RAM_DAQ_SHORT,     //!<@brief Short block
-   RAM_DAQ_LONG       //!<@brief Long block
-} RAM_DAQ_BLOCK_T;
-
 #ifdef CONFIG_SCU_USE_DDR3
 
 /*!
@@ -137,6 +126,7 @@ typedef DDR3_POLL_FT   RAM_DAQ_POLL_FT;
     */
    #define RAM_DAQ_MIN_INDEX 0
 #endif
+//#define RAM_DAQ_MAX_INDEX 2816
 #ifndef RAM_DAQ_MAX_INDEX
    /*!
     * @brief Maximum value for ring buffer read and write index
@@ -227,14 +217,6 @@ typedef uint32_t RAM_RING_INDEX_T;
    sizeof(RAM_DAQ_PAYLOAD_T)                                                  \
 )
 
-#if 0
-#define RAM_DAQ_DAQ_WORD_OFFSET_OF_CHANNEL_CONTROL    \
-(                                                     \
-   (offsetof( _DAQ_DISCRIPTOR_STRUCT_T, cControl ) /  \
-   sizeof(RAM_DAQ_PAYLOAD_T) )                        \
-)
-#endif
-
 /*! ---------------------------------------------------------------------------
  * @brief Calculates the data length to read from the DAQ-RAM to obtain the
  *        channel control register in the device descriptor.
@@ -252,7 +234,8 @@ typedef uint32_t RAM_RING_INDEX_T;
  */
 typedef struct PACKED_SIZE
 {
-   RAM_RING_INDEX_T offset;   /*!<@brief offset in alignment units of physical memory */
+   RAM_RING_INDEX_T offset;   /*!<@brief offset in alignment units of physical
+                               *         memory */
    RAM_RING_INDEX_T capacity; /*!<@brief Maximum capacity of ring- buffer */
    RAM_RING_INDEX_T start;    /*!<@brief Start index of ring buffer */
    RAM_RING_INDEX_T end;      /*!<@brief End- index of ring buffer */
@@ -319,6 +302,7 @@ typedef struct
     */
    DDR3_T   ram;
 #else
+   #error Unknown RAM-object!
    //TODO maybe in the future will use a other memory type
 #endif
    /*!
