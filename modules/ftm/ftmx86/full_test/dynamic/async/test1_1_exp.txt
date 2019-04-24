@@ -1,0 +1,14 @@
+******* Reading Stat BLOCK_A ****
+flags 0x0
+ wrSet true rdSet true wrstat false rdstat false
+******* Reading Stat BLOCK_B ****
+flags 0x3
+ wrSet true rdSet true wrstat true rdstat true
+******* Reading Stat BLOCK_LOOP ****
+flags 0x0
+ wrSet true rdSet true wrstat false rdstat false
+AnySet: wrSet true rdSet true wrStat false rdStat false res false
+AnySet: wrSet true rdSet true wrStat true rdStat true res true
+AnySet: wrSet true rdSet true wrStat false rdStat false res false
+Locked Blocks: 1
+BLOCK_B

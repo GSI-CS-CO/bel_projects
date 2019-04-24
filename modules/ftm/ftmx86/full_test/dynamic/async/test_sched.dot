@@ -1,0 +1,20 @@
+digraph g {
+name="Async Test";
+edge  [type="defdst"]
+node  [cpu="0"];
+  
+  MSG_A    [type="tmsg",  pattern="A",  patentry="true", toffs=0, id="0x1000000000000000", par="0x0000000000000000", tef="0"];
+  BLOCK_A  [type="block", pattern="A",  patexit="true", qlo="1", tperiod=1000];
+  BLOCK_B  [type="block", pattern="B",  patentry="true", patexit="true", qlo="1", tperiod=500000000];
+  CMD_LOOP   [type="flow",  pattern="LOOP", patentry="true",  toffs  = 0, tvalid=0, qty=99999, prio="0", vabs="true"]; 
+  BLOCK_LOOP  [type="block", pattern="LOOP",  patexit="true", tperiod=1000];
+
+
+  CMD_LOOP->BLOCK_LOOP->BLOCK_B->BLOCK_B;
+  MSG_A->BLOCK_A->BLOCK_B;
+  BLOCK_B->MSG_A [type="altdst"];
+  CMD_LOOP -> BLOCK_B [type="target"];
+  CMD_LOOP -> BLOCK_B [type="flowdst"];
+
+
+}
