@@ -1,6 +1,10 @@
 #!/bin/sh
 # startup script for timing receivers as b2b-tlu on tsl022
-
+#
+# pro tip: event snooping via tcpdump on wrs
+# - connect a WR port to management port (with media converter in between)
+# ==> management port exposed to WR network traffic
+# - snoop 'tcpdump host 192.168.0.101 -i eth0 -X' snoops traffice from IP
 # set -x
 
 
@@ -29,8 +33,8 @@ saft-ecpu-ctl tr0 -c 0x1fff801000000000 0xfffffff000000000 0 0x801 -d
 
 # testing pulse upon phase message from TR source
 saft-io-ctl tr1 -n IO2 -o 1 -t 0
-saft-io-ctl tr1 -n IO2 -c 0x1fff801000000000 0xffffffffffffffff 0 0x0 1 -u
-saft-io-ctl tr1 -n IO2 -c 0x1fff801000000000 0xffffffffffffffff 10000000 0x0 0 -u
+saft-io-ctl tr1 -n IO2 -c 0x1fff805000000000 0xffffffffffffffff 0 0x0 1 -u
+saft-io-ctl tr1 -n IO2 -c 0x1fff805000000000 0xffffffffffffffff 10000000 0x0 0 -u
 
 
 

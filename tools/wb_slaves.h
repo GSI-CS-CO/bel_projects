@@ -193,7 +193,24 @@
 // see dm_diag_regs.h
 
 
-//-- TLU --
+
+//-- IO CONTROL  --
+// device ID
+#define IO_CTRL_VENDOR               WB_GSI            // vendor ID
+#define IO_CTRL_PRODUCT              0x10c05791        // product ID
+#define IO_CTRL_VMAJOR               0                 // major revision
+#define IO_CTRL_VMINOR               0                 // minor revision
+
+// register offsets
+#define IO_CTRL_LVDSINGATESETLOW     0x2000            // LVDS input gate set low, one bit per input   /* chk, subject to change */
+#define IO_CTRL_LVDSINGATERESETLOW   0x2008            // LVDS input gate reset low, one bit per input /* chk, subject to change */
+
+// masks
+ 
+
+
+
+//-- TLU -- 
 //device ID
 #define GSI_TM_LATCH_VENDOR          WB_GSI      //vendor ID
 #define GSI_TM_LATCH_PRODUCT         0x10051981  //product ID

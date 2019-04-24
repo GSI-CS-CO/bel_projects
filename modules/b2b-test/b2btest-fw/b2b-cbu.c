@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 23-Apr-2019
+ *  version : 24-Apr-2019
  *
  *  firmware required to implement the CBU (Central Buncht-To-Bucket Unit)
  *  
@@ -387,9 +387,13 @@ uint32_t wait4ECAEvent(uint32_t msTimeout, uint64_t *deadline, uint64_t *param, 
       *(pECAQ + (ECA_QUEUE_POP_OWR >> 2)) = 0x1;
 
       // here: do s.th. according to tag
+      mprintf("b2b-test: act tag %x\n", actTag);
       switch (actTag) {
-      case  B2BTEST_ECADO_B2B_START :
+      case B2BTEST_ECADO_B2B_START :
         nextAction = B2BTEST_ECADO_B2B_START;
+        break;
+      case B2BTEST_ECADO_B2B_PREXT :
+        nextAction = B2BTEST_ECADO_B2B_PREXT;
         break;
       default: 
         nextAction = B2BTEST_ECADO_UNKOWN;
@@ -616,7 +620,6 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
   status = actStatus;
 
   ecaAction = wait4ECAEvent(B2BTEST_ECATIMEOUT, &recDeadline, &recParam, &flagIsLate);
-
   
   
   switch (ecaAction) {
@@ -633,8 +636,6 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
     ebmWriteTM(sendDeadline, sendEvtId, sendParam);
     mprintf("b2b-test: got B2B_START\n");
 
-
-
     break;
   case B2BTEST_ECADO_B2B_PREXT :
     // received: measured phase from extraction machine
@@ -648,6 +649,7 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
     sendParam    = 0x0;
 
     ebmWriteTM(sendDeadline, sendEvtId, sendParam);
+    mprintf("b2b-test: got B2B_START\n");
 
     break;
     
