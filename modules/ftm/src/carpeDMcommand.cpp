@@ -39,7 +39,7 @@ vEbwrs& CarpeDM::blockAsyncClearQueues(vEbwrs& ew, const std::string& sBlock) {
   //reset read and write indices
   vAdr tmp = {(adrBase + BLOCK_CMDQ_RD_IDXS), (adrBase + BLOCK_CMDQ_WR_IDXS)};
   ew.va += tmp;
-  ew.vb += {0, 0};
+  ew.vb += {0, 0, 0, 0, 0, 0, 0, 0}; // TODO: tidy this up, this is hackish
   ew.vcs += leadingOne(tmp.size());
   return ew;
 }
