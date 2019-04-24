@@ -1,10 +1,9 @@
-
 /********************************************************************************************
  *  b2btest-ctl.c
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 15-April-2019
+ *  version : 24-April-2019
  *
  * Command-line interface for wrunipz
  *
@@ -51,7 +50,7 @@
 // b2b-test
 #include <b2btest-api.h>                 // API
 #include <b2b-test.h>                    // FW
-#include <b2btest_shared_mmap.h>         // LM32
+#include <b2bpm_shared_mmap.h>           // LM32
 
 const char* program;
 static int getInfo    = 0;
@@ -290,13 +289,13 @@ void printDiags(uint32_t sumStatus, uint32_t state, uint32_t nBadStatus, uint32_
   strftime(timestr, sizeof(timestr), "%Y-%m-%d %H:%M:%S TAI", tm);
   printf("diagnostics reset at  : %s\n", timestr);
   
-  printf("state (# of changes)  : %s (%u)\n", b2btest_state_text(state), nBadState);
+  printf("state (# of changes)  : %s (%u)\n", common_state_text(state), nBadState);
   printf("sum status (# changes): 0x%08x (%u)\n", sumStatus, nBadStatus);
-  if ((sumStatus >> B2BTEST_STATUS_OK) & 0x1)
+  if ((sumStatus >> COMMON_STATUS_OK) & 0x1)
     printf("overall status        : OK\n");
   else
     printf("overall status        : NOT OK\n");  
-  for (i= B2BTEST_STATUS_OK + 1; i<(sizeof(sumStatus)*8); i++) {
+  for (i= COMMON_STATUS_OK + 1; i<(sizeof(sumStatus)*8); i++) {
     if ((sumStatus >> i) & 0x1)
       printf("sum status bit ist set: %s\n", b2btest_status_text(i));
   } // for i
@@ -350,7 +349,7 @@ int main(int argc, char** argv) {
   uint64_t tS0;
 
   uint32_t actCycles;                          // actual number of cycles
-  uint32_t actState = B2BTEST_STATE_UNKNOWN;   // actual state of gateway
+  uint32_t actState = COMMON_STATE_UNKNOWN;    // actual state of gateway
   uint32_t actSumStatus;                       // actual sum status of gateway
   uint32_t sleepTime;                          // time to sleep [us]
   uint32_t printFlag;                          // flag for printing
@@ -378,7 +377,7 @@ int main(int argc, char** argv) {
         fprintf(stderr, "Specify a proper number, not '%s'!\n", optarg);
         exit(1);
       } /* if *tail */
-      if ((logLevel < B2BTEST_LOGLEVEL_ALL) || (logLevel > B2BTEST_LOGLEVEL_STATE)) fprintf(stderr, "log level out of range\n");
+      if ((logLevel < COMMON_LOGLEVEL_ALL) || (logLevel > COMMON_LOGLEVEL_STATE)) fprintf(stderr, "log level out of range\n");
       break;
     case 'h':
       help();
@@ -418,19 +417,19 @@ int main(int argc, char** argv) {
   if ((eb_status = eb_sdb_find_by_identity(device, GSI, LM32_RAM_USER, &sdbDevice, &nDevices)) != EB_OK) die("find lm32", eb_status);
   lm32_base =  sdbDevice.sdb_component.addr_first;
 
-  b2btest_status       = lm32_base + SHARED_OFFS + B2BTEST_SHARED_SUMSTATUS;
-  b2btest_cmd          = lm32_base + SHARED_OFFS + B2BTEST_SHARED_CMD;
-  b2btest_state        = lm32_base + SHARED_OFFS + B2BTEST_SHARED_STATE;;
-  b2btest_version      = lm32_base + SHARED_OFFS + B2BTEST_SHARED_VERSION;
-  b2btest_macHi        = lm32_base + SHARED_OFFS + B2BTEST_SHARED_MACHI;
-  b2btest_macLo        = lm32_base + SHARED_OFFS + B2BTEST_SHARED_MACLO;
-  b2btest_ip           = lm32_base + SHARED_OFFS + B2BTEST_SHARED_IP;
-  b2btest_nBadStatus   = lm32_base + SHARED_OFFS + B2BTEST_SHARED_NBADSTATUS;
-  b2btest_nBadState    = lm32_base + SHARED_OFFS + B2BTEST_SHARED_NBADSTATE;
-  b2btest_tDiagHi      = lm32_base + SHARED_OFFS + B2BTEST_SHARED_TDIAGHI;
-  b2btest_tDiagLo      = lm32_base + SHARED_OFFS + B2BTEST_SHARED_TDIAGLO;
-  b2btest_tS0Hi        = lm32_base + SHARED_OFFS + B2BTEST_SHARED_TS0HI;
-  b2btest_tS0Lo        = lm32_base + SHARED_OFFS + B2BTEST_SHARED_TS0LO;
+  b2btest_status       = lm32_base + SHARED_OFFS + COMMON_SHARED_SUMSTATUS;
+  b2btest_cmd          = lm32_base + SHARED_OFFS + COMMON_SHARED_CMD;
+  b2btest_state        = lm32_base + SHARED_OFFS + COMMON_SHARED_STATE;;
+  b2btest_version      = lm32_base + SHARED_OFFS + COMMON_SHARED_VERSION;
+  b2btest_macHi        = lm32_base + SHARED_OFFS + COMMON_SHARED_MACHI;
+  b2btest_macLo        = lm32_base + SHARED_OFFS + COMMON_SHARED_MACLO;
+  b2btest_ip           = lm32_base + SHARED_OFFS + COMMON_SHARED_IP;
+  b2btest_nBadStatus   = lm32_base + SHARED_OFFS + COMMON_SHARED_NBADSTATUS;
+  b2btest_nBadState    = lm32_base + SHARED_OFFS + COMMON_SHARED_NBADSTATE;
+  b2btest_tDiagHi      = lm32_base + SHARED_OFFS + COMMON_SHARED_TDIAGHI;
+  b2btest_tDiagLo      = lm32_base + SHARED_OFFS + COMMON_SHARED_TDIAGLO;
+  b2btest_tS0Hi        = lm32_base + SHARED_OFFS + COMMON_SHARED_TS0HI;
+  b2btest_tS0Lo        = lm32_base + SHARED_OFFS + COMMON_SHARED_TS0LO;
 
   // printf("b2b-test: lm32_base 0x%08x, 0x%08x\n", lm32_base, b2btest_iterations);
 
@@ -450,7 +449,7 @@ int main(int argc, char** argv) {
     readInfo(&sumStatus, &state, &cycles, &nBadStatus, &nBadState, &tCycle, &fMessages, &confStat, &nLate, &vaccAvg, &pzAvg, &mode);
     printCycleHeader();
     printCycle(cycles, tCycle, fMessages, confStat, nLate, vaccAvg, pzAvg, mode);
-    printf(" %s (%6u), status 0x%08x (%6u)\n", b2btest_state_text(state), nBadState, sumStatus, nBadStatus);
+    printf(" %s (%6u), status 0x%08x (%6u)\n", common_state_text(state), nBadState, sumStatus, nBadStatus);
   } // if getInfo
 
   if (command) {
@@ -460,30 +459,30 @@ int main(int argc, char** argv) {
 
     // request state changes
     if (!strcasecmp(command, "configure")) {
-      eb_device_write(device, b2btest_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)B2BTEST_CMD_CONFIGURE, 0, eb_block);
-      if ((state != B2BTEST_STATE_CONFIGURED) && (state != B2BTEST_STATE_IDLE)) printf("b2b-test: WARNING command has no effect (not in state CONFIGURED or IDLE)\n");
+      eb_device_write(device, b2btest_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)COMMON_CMD_CONFIGURE, 0, eb_block);
+      if ((state != COMMON_STATE_CONFIGURED) && (state != COMMON_STATE_IDLE)) printf("b2b-test: WARNING command has no effect (not in state CONFIGURED or IDLE)\n");
     } // "configure"
     if (!strcasecmp(command, "startop")) {
-      eb_device_write(device, b2btest_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)B2BTEST_CMD_STARTOP  , 0, eb_block);
-      if (state != B2BTEST_STATE_CONFIGURED) printf("b2b-test: WARNING command has no effect (not in state CONFIGURED)\n");
+      eb_device_write(device, b2btest_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)COMMON_CMD_STARTOP  , 0, eb_block);
+      if (state != COMMON_STATE_CONFIGURED) printf("b2b-test: WARNING command has no effect (not in state CONFIGURED)\n");
     } // "startop"
     if (!strcasecmp(command, "stopop")) {
-      eb_device_write(device, b2btest_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)B2BTEST_CMD_STOPOP   , 0, eb_block);
-      if (state != B2BTEST_STATE_OPREADY) printf("b2b-test: WARNING command has no effect (not in state OPREADY)\n");
+      eb_device_write(device, b2btest_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)COMMON_CMD_STOPOP   , 0, eb_block);
+      if (state != COMMON_STATE_OPREADY) printf("b2b-test: WARNING command has no effect (not in state OPREADY)\n");
     } // "startop"
     if (!strcasecmp(command, "recover")) {
-      eb_device_write(device, b2btest_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)B2BTEST_CMD_RECOVER  , 0, eb_block);
-      if (state != B2BTEST_STATE_ERROR) printf("b2b-test: WARNING command has no effect (not in state ERROR)\n");
+      eb_device_write(device, b2btest_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)COMMON_CMD_RECOVER  , 0, eb_block);
+      if (state != COMMON_STATE_ERROR) printf("b2b-test: WARNING command has no effect (not in state ERROR)\n");
     } // "recover"
     if (!strcasecmp(command, "idle")) {
-      eb_device_write(device, b2btest_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)B2BTEST_CMD_IDLE     , 0, eb_block);
-      if (state != B2BTEST_STATE_CONFIGURED) printf("b2b-test: WARNING command has no effect (not in state CONFIGURED)\n");
+      eb_device_write(device, b2btest_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)COMMON_CMD_IDLE     , 0, eb_block);
+      if (state != COMMON_STATE_CONFIGURED) printf("b2b-test: WARNING command has no effect (not in state CONFIGURED)\n");
     } // "idle"
 
     // diagnostics
     if (!strcasecmp(command, "cleardiag")) {
-      eb_device_write(device, b2btest_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)B2BTEST_CMD_CLEARDIAG , 0, eb_block);
-      if (state != B2BTEST_STATE_OPREADY) printf("b2b-test: WARNING command has no effect (not in state OPREADY)\n");
+      eb_device_write(device, b2btest_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)COMMON_CMD_CLEARDIAG , 0, eb_block);
+      if (state != COMMON_STATE_OPREADY) printf("b2b-test: WARNING command has no effect (not in state OPREADY)\n");
     } // "cleardiag"
     if (!strcasecmp(command, "diag")) {
       readDiags(&sumStatus, &state, &nBadStatus, &nBadState, &cycles, &messages, &dtMax, &dtMin, &nLate, &tDiag, &tS0);
@@ -497,7 +496,7 @@ int main(int argc, char** argv) {
     printf("b2b-test: continous monitoring of gateway, loglevel = %d\n", logLevel);
     
     actCycles    = 0;
-    actState     = B2BTEST_STATE_UNKNOWN;
+    actState     = COMMON_STATE_UNKNOWN;
     actSumStatus = 0;
 
     printCycleHeader();
@@ -506,26 +505,26 @@ int main(int argc, char** argv) {
       readInfo(&sumStatus, &state, &cycles, &nBadStatus, &nBadState, &tCycle, &fMessages, &confStat, &nLate, &vaccAvg, &pzAvg, &mode); // read info from lm32
 
       switch(state) {
-      case B2BTEST_STATE_OPREADY :
-        if (actCycles != cycles) sleepTime = B2BTEST_DEFAULT_TIMEOUT * 1000 * 2;              // ongoing cycle: reduce polling rate ...
-        else                     sleepTime = B2BTEST_DEFAULT_TIMEOUT * 1000;                  // sleep for default timeout to catch next cycle
+      case COMMON_STATE_OPREADY :
+        if (actCycles != cycles) sleepTime = COMMON_DEFAULT_TIMEOUT * 1000 * 2;              // ongoing cycle: reduce polling rate ...
+        else                     sleepTime = COMMON_DEFAULT_TIMEOUT * 1000;                  // sleep for default timeout to catch next cycle
         break;
       default:
-        sleepTime = B2BTEST_DEFAULT_TIMEOUT * 1000;                          
+        sleepTime = COMMON_DEFAULT_TIMEOUT * 1000;                          
       } // switch actState
       
       // if required, print status change
-      if  ((actState != state) && (logLevel <= B2BTEST_LOGLEVEL_STATE)) printFlag = 1;
+      if  ((actState != state) && (logLevel <= COMMON_LOGLEVEL_STATE)) printFlag = 1;
 
       // determine when to print info
       printFlag = 0;
 
-      if ((actState     != state)        && (logLevel <= B2BTEST_LOGLEVEL_STATE))                                         {printFlag = 1; actState  = state;}
-      if ((actSumStatus != sumStatus)    && (logLevel <= B2BTEST_LOGLEVEL_STATUS))                                        {printFlag = 1; actSumStatus = sumStatus;}
+      if ((actState     != state)        && (logLevel <= COMMON_LOGLEVEL_STATE))   {printFlag = 1; actState  = state;}
+      if ((actSumStatus != sumStatus)    && (logLevel <= COMMON_LOGLEVEL_STATUS))  {printFlag = 1; actSumStatus = sumStatus;}
 
       if (printFlag) {
         printCycle(cycles, tCycle, fMessages, confStat, nLate, vaccAvg, pzAvg, mode); 
-        printf(" %s (%6u), status 0x%08x (%d)\n", b2btest_state_text(state), nBadState, sumStatus, nBadStatus);
+        printf(" %s (%6u), status 0x%08x (%d)\n", common_state_text(state), nBadState, sumStatus, nBadStatus);
       } // if printFlag
 
       fflush(stdout);                                                                         // required for immediate writing (if stdout is piped to syslog)

@@ -45,7 +45,7 @@
 uint64_t getSysTime();     
 
 // convert status code to status text
-const char* b2btest_state_text(uint32_t code              // status code
+const char* common_state_text(uint32_t code              // status code
                                );
 
 // convert state code to state text
