@@ -27,8 +27,13 @@
 
 #include <eb_console_helper.h>
 
-#define ERROR_MESSAGE( args... ) std::cerr << ESC_FG_RED ESC_BOLD "ERROR: " \
-                                 << args << ESC_NORMAL << std::endl
+#define ERROR_MESSAGE( args... )                                              \
+   std::cerr << ESC_FG_RED ESC_BOLD "ERROR: "                                 \
+             << args << ESC_NORMAL << std::endl
 
-#endif
+#define WARNING_MESSAGE( args... )                                            \
+   std::cerr << ESC_FG_YELLOW ESC_BOLD "WARNING: "                            \
+             << args << ESC_NORMAL << std::endl                               \
+
+#endif // ifndef _DAQT_MESSAGES_HPP
 //================================== EOF ======================================

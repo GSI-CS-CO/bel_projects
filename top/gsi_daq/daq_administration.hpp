@@ -142,6 +142,11 @@ public:
       return m_channelPtrList.end();
    }
 
+   const bool empty( void )
+   {
+      return m_channelPtrList.empty();
+   }
+
    const unsigned int getDeviceNumber( void ) const
    {
       return m_deviceNumber;
@@ -236,6 +241,11 @@ public:
    const DEVICE_LIST_T::iterator end( void )
    {
       return m_devicePtrList.end();
+   }
+
+   const bool empty( void )
+   {
+      return  m_devicePtrList.empty();
    }
 
    unsigned int getMaxChannels( void ) const

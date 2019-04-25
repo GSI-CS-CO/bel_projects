@@ -63,6 +63,15 @@ struct Attributes
          m_value = value;
          m_valid = true;
       }
+
+      bool operator==( const Value<VT>& rMyContainer )
+      {
+         if( m_valid != rMyContainer.m_valid )
+            return false;
+         if( m_value != rMyContainer.m_value )
+            return false;
+         return true;
+      }
    };
 
    typedef Value<bool>              BoolValue;
@@ -71,8 +80,10 @@ struct Attributes
 
    void set( const Attributes& rMyContainer );
 
+   BoolValue     m_highResolution;
+   BoolValue     m_postMortem;
    SampleValue   m_continueMode;
-   BoolValue     m_continueTreggerSouce;
+   BoolValue     m_continueTriggerSouce;
    BoolValue     m_highResTriggerSource;
    BoolValue     m_triggerEnable;
    NumValue      m_triggerDelay;
@@ -103,9 +114,13 @@ public:
 
    Device* getDeviceBySlot( unsigned int slot );
 
+   bool checkCommandLineParameter( void );
    void prioritizeAttributes( void );
+   bool checkForAttributeConflicts( void );
+   bool checkWhetherChannelsBecomesOperating( void );
 
    void sendAttributes( void );
+   void start( void );
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -121,6 +136,7 @@ public:
     {}
 
    void sendAttributes( void );
+   void start( void );
 
    bool onDataBlock( DAQ_DATA_T* pData, std::size_t wordLen ) override;
 };

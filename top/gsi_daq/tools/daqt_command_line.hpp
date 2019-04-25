@@ -41,6 +41,7 @@ using namespace daq;
 #define FSM_INIT_FSM( state, attr... )      m_state( state )
 #define FSM_TRANSITION( newState, attr... ) m_state = newState
 
+///////////////////////////////////////////////////////////////////////////////
 class CommandLine: public PARSER
 {
    enum STATE_T
@@ -55,6 +56,7 @@ class CommandLine: public PARSER
    DaqContainer*  m_poAllDaq;
    Device*        m_poCurrentDevice;
    Channel*       m_poCurrentChannel;
+   bool           m_verbose;
 
    static bool readInteger( unsigned int&, const std::string& );
 
@@ -63,11 +65,16 @@ public:
    CommandLine( int argc, char** ppArgv );
    virtual ~CommandLine( void );
 
-   int operator()(void);
+   DaqContainer* operator()(void);
 
    Attributes* getAttributesToSet( void );
 
    int onArgument( void ) override;
+
+   bool isVerbose( void ) const
+   {
+      return m_verbose;
+   }
 };
 
 } // namespace daqt

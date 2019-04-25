@@ -31,6 +31,28 @@ using namespace std;
 #define CONTINUE_100US "100US"
 #define CONTINUE_10US  "10US"
 
+/*! ---------------------------------------------------------------------------
+*/
+#define __GET_ATTRIBUTE_PTR()                                                 \
+  Attributes* poAttr =                                                        \
+     static_cast<CommandLine*>(poParser)->getAttributesToSet();               \
+     if( poAttr == nullptr )                                                  \
+     {                                                                        \
+        specifiedBeforeErrorMessage();                                        \
+        return -1;                                                            \
+     }
+
+/*! ---------------------------------------------------------------------------
+*/
+#define __SET_BOOL_ATTRIBUTE( member )                                        \
+   __GET_ATTRIBUTE_PTR()                                                      \
+   poAttr->member.set( true )
+
+/*! ---------------------------------------------------------------------------
+*/
+#define __SET_NUM_ATTRIBUTE( member, value )                                  \
+   __GET_ATTRIBUTE_PTR()                                                      \
+   poAttr->member.set( value )
 
 /*! ---------------------------------------------------------------------------
 */
@@ -73,10 +95,21 @@ vector<OPTION> CommandLine::c_optList =
             specifiedBeforeErrorMessage();
             return -1;
          }
-         for( unsigned int i = 1; i <= poAllDaq->getMaxFoundDevices(); i++ )
+         if( static_cast<CommandLine*>(poParser)->isVerbose() )
          {
-            cout << poAllDaq->getSlotNumber( i ) << " "
-                 <<  poAllDaq->readMaxChannels( i ) << endl;
+            for( unsigned int i = 1; i <= poAllDaq->getMaxFoundDevices(); i++ )
+            {
+               cout << "slot " << poAllDaq->getSlotNumber( i )
+                    << ": channels: " << poAllDaq->readMaxChannels( i ) << endl;
+            }
+         }
+         else
+         {
+            for( unsigned int i = 1; i <= poAllDaq->getMaxFoundDevices(); i++ )
+            {
+               cout << poAllDaq->getSlotNumber( i ) << " "
+                    <<  poAllDaq->readMaxChannels( i ) << endl;
+            }
          }
          ::exit( EXIT_SUCCESS );
          return 0;
@@ -85,19 +118,21 @@ vector<OPTION> CommandLine::c_optList =
       .m_id       = 0,
       .m_shortOpt = 's',
       .m_longOpt  = "scan",
-      .m_helpText = "Scan the entire SCU-bus for DAQ- devices and its"
-                    " channels and print the results as table."
+      .m_helpText = "Scanning of the entire SCU-bus for"
+                    " DAQ- devices and its channels and"
+                    " print the results as table and exit.\n"
+                    "The first column shows the slot number and the second"
+                    " column the number of channels.\n"
+                    "Output example:\n"
+                    "   3 4\n"
+                    "   9 4\n"
+                    "   Means: DAQ in slot 3 found with 4 channels and "
+                    "DAQ in slot 9 found with 4 channels."
    },
    {
       OPT_LAMBDA( poParser,
       {
-         Attributes* poAttr =
-            static_cast<CommandLine*>(poParser)->getAttributesToSet();
-         if( poAttr == nullptr )
-         {
-            specifiedBeforeErrorMessage();
-            return -1;
-         }
+         __GET_ATTRIBUTE_PTR()
          if( poParser->getOptArg().empty() )
          {
             poAttr->m_continueMode.set( DAQ_SAMPLE_1MS );
@@ -137,13 +172,14 @@ vector<OPTION> CommandLine::c_optList =
                     "Default value is 1ms\n"
                     "Example:\n"
                     "   C=" CONTINUE_100US "\n"
-                    "   means: Continuous mode with sample rate of 100 us"
+                    "   Means: Continuous mode with sample rate of 100 us"
 
    },
    {
       OPT_LAMBDA( poParser,
       {
-         return 1;
+         __SET_BOOL_ATTRIBUTE( m_highResolution );
+         return 0;
       }),
       .m_hasArg   = OPTION::NO_ARG,
       .m_id       = 0,
@@ -154,7 +190,8 @@ vector<OPTION> CommandLine::c_optList =
    {
       OPT_LAMBDA( poParser,
       {
-         return 1;
+         __SET_BOOL_ATTRIBUTE( m_postMortem );
+         return 0;
       }),
       .m_hasArg   = OPTION::NO_ARG,
       .m_id       = 0,
@@ -174,14 +211,7 @@ vector<OPTION> CommandLine::c_optList =
                            " is out of range!" );
             return -1;
          }
-         Attributes* poAttr =
-            static_cast<CommandLine*>(poParser)->getAttributesToSet();
-         if( poAttr == nullptr )
-         {
-            specifiedBeforeErrorMessage();
-            return -1;
-         }
-         poAttr->m_blockLimit.set( limit );
+         __SET_NUM_ATTRIBUTE( m_blockLimit, limit );
          return 0;
       }),
       .m_hasArg   = OPTION::REQUIRED_ARG,
@@ -204,14 +234,7 @@ vector<OPTION> CommandLine::c_optList =
                            " is out of range!" );
             return -1;
          }
-         Attributes* poAttr =
-            static_cast<CommandLine*>(poParser)->getAttributesToSet();
-         if( poAttr == nullptr )
-         {
-            specifiedBeforeErrorMessage();
-            return -1;
-         }
-         poAttr->m_triggerDelay.set( delay );
+         __SET_NUM_ATTRIBUTE( m_triggerDelay, delay );
          return 0;
       }),
       .m_hasArg   = OPTION::REQUIRED_ARG,
@@ -233,14 +256,7 @@ vector<OPTION> CommandLine::c_optList =
                            " is out of range!" );
             return -1;
          }
-         Attributes* poAttr =
-            static_cast<CommandLine*>(poParser)->getAttributesToSet();
-         if( poAttr == nullptr )
-         {
-            specifiedBeforeErrorMessage();
-            return -1;
-         }
-         poAttr->m_triggerCondition.set( condition );
+         __SET_NUM_ATTRIBUTE( m_triggerCondition, condition );
          return 0;
       }),
       .m_hasArg   = OPTION::REQUIRED_ARG,
@@ -252,14 +268,7 @@ vector<OPTION> CommandLine::c_optList =
    {
       OPT_LAMBDA( poParser,
       {
-         Attributes* poAttr =
-            static_cast<CommandLine*>(poParser)->getAttributesToSet();
-         if( poAttr == nullptr )
-         {
-            specifiedBeforeErrorMessage();
-            return -1;
-         }
-         poAttr->m_triggerEnable.set( true );
+         __SET_BOOL_ATTRIBUTE( m_triggerEnable );
          return 0;
       }),
       .m_hasArg   = OPTION::NO_ARG,
@@ -272,14 +281,7 @@ vector<OPTION> CommandLine::c_optList =
    {
       OPT_LAMBDA( poParser,
       {
-         Attributes* poAttr =
-            static_cast<CommandLine*>(poParser)->getAttributesToSet();
-         if( poAttr == nullptr )
-         {
-            specifiedBeforeErrorMessage();
-            return -1;
-         }
-         poAttr->m_continueTreggerSouce.set( true );
+         __SET_BOOL_ATTRIBUTE( m_continueTriggerSouce );
          return 0;
       }),
       .m_hasArg   = OPTION::NO_ARG,
@@ -293,14 +295,7 @@ vector<OPTION> CommandLine::c_optList =
    {
       OPT_LAMBDA( poParser,
       {
-         Attributes* poAttr =
-            static_cast<CommandLine*>(poParser)->getAttributesToSet();
-         if( poAttr == nullptr )
-         {
-            specifiedBeforeErrorMessage();
-            return -1;
-         }
-         poAttr->m_highResTriggerSource.set( true );
+         __SET_BOOL_ATTRIBUTE( m_highResTriggerSource );
          return 0;
       }),
       .m_hasArg   = OPTION::NO_ARG,
@@ -314,14 +309,7 @@ vector<OPTION> CommandLine::c_optList =
    {
       OPT_LAMBDA( poParser,
       {
-         Attributes* poAttr =
-            static_cast<CommandLine*>(poParser)->getAttributesToSet();
-         if( poAttr == nullptr )
-         {
-            specifiedBeforeErrorMessage();
-            return -1;
-         }
-         poAttr->m_restart.set( true );
+         __SET_BOOL_ATTRIBUTE( m_restart );
          return 0;
       }),
       .m_hasArg   = OPTION::NO_ARG,
@@ -330,6 +318,18 @@ vector<OPTION> CommandLine::c_optList =
       .m_longOpt  = "restart",
       .m_helpText = "Restarts the high-resolution or post-mortem mode after"
                     " an event"
+   },
+   {
+      OPT_LAMBDA( poParser,
+      {
+         static_cast<CommandLine*>(poParser)->m_verbose = true;
+         return 0;
+      }),
+      .m_hasArg   = OPTION::NO_ARG,
+      .m_id       = 0,
+      .m_shortOpt = 'v',
+      .m_longOpt  = "verbose",
+      .m_helpText = "Be verbose"
    }
 };
 
@@ -358,6 +358,7 @@ CommandLine::CommandLine( int argc, char** ppArgv )
    ,m_poAllDaq( nullptr )
    ,m_poCurrentDevice( nullptr )
    ,m_poCurrentChannel( nullptr )
+   ,m_verbose( false )
 {
    add( c_optList );
 }
@@ -373,15 +374,13 @@ CommandLine::~CommandLine( void )
 /*! ---------------------------------------------------------------------------
 */
 //#define CONFIG_DBG_ATTRIBUTES
-int CommandLine::operator()( void )
+DaqContainer* CommandLine::operator()( void )
 {
-   int ret = PARSER::operator()();
-   if( ret < 0 )
-      return ret;
+   if( PARSER::operator()() < 0 )
+      return nullptr;
    if( m_poAllDaq == nullptr )
-      return ret;
+      return nullptr;
    m_poAllDaq->prioritizeAttributes();
-
 #ifdef CONFIG_DBG_ATTRIBUTES
    if( m_poAllDaq->m_oAttributes.m_blockLimit.m_valid )
       cerr << "Attribute: " << m_poAllDaq->m_oAttributes.m_blockLimit.m_value << endl;
@@ -402,8 +401,14 @@ int CommandLine::operator()( void )
       }
    }
 #endif
+   if( m_poAllDaq->checkWhetherChannelsBecomesOperating() )
+      return nullptr;
+   if( m_poAllDaq->checkCommandLineParameter() )
+      return nullptr;
+   if( m_poAllDaq->checkForAttributeConflicts() )
+      return nullptr;
    m_poAllDaq->sendAttributes();
-   return ret;
+   return m_poAllDaq;
 }
 
 /*! ---------------------------------------------------------------------------
