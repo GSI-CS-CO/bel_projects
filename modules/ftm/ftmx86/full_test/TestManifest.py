@@ -8,6 +8,6 @@ testfiles = [
   "./dynamic/branch/qty/test.py",
   "./dynamic/loop/test.py",
   "./dynamic/locking/test.py",
-#  "./dynamic/timeout/test.py",
+  "./dynamic/async/test.py",
   ]
 

@@ -11,16 +11,27 @@ diffHeaderLen = 2
 
 class Filter(object):
     # Create based on class name:
-    def factory(type):
+    def factory(auxtype):
         #return eval(type + "()")
-        if type is not None:
-          if type == "reltime": 
-            #print("creating timefilert")
-            return Timefilter()
-          if type == "msgcnt": 
-            #print("creating timefilert")
-            return Msgcntfilter()  
-          assert 0, "Bad filter creation: " + type
+        type = auxtype
+        if auxtype is not None:
+          if isinstance(auxtype, list):
+            for type in auxtype:
+              if type == "reltime": 
+                return Timefilter()
+              if type == "msgcnt": 
+                return Msgcntfilter()
+              if type == "cmdqty": 
+                return CmdQtyfilter()  
+              assert 0, "Bad filter creation: %s" % type
+          else:
+            if type == "reltime": 
+              return Timefilter()
+            if type == "msgcnt": 
+              return Msgcntfilter()
+            if type == "cmdqty": 
+              return CmdQtyfilter()  
+            assert 0, "Bad filter creation: %s" % type  
     factory = staticmethod(factory)
 
 class Timefilter:
@@ -53,7 +64,22 @@ class Msgcntfilter:
         toRemove.append(line)
     for line in toRemove:
       diff.remove(line)        
-    return diff           
+    return diff
+
+class CmdQtyfilter:
+  
+  #  self.lambdas = lambdas
+  #  self.paras = parameters
+#
+  #def run:
+  def run(self, diff):
+    toRemove = []
+    for line in diff:
+      if "QTY:" in line:
+        toRemove.append(line)
+    for line in toRemove:
+      diff.remove(line)        
+    return diff                 
       
 
 class Op:
@@ -64,16 +90,23 @@ class Op:
     self.execTime   = float(execTime)
     self.optFile    = optFile
     self.expResFile = expResFile
-    self.__filter     = Filter.factory(filtertype)
+    self.__filters  = []
+    if filtertype is not None:
+      if isinstance(filtertype, list):
+        for ft in filtertype:
+          if ft is not None:
+            self.__filters.append(Filter.factory(filtertype))
+      else:
+        self.__filters.append(Filter.factory(filtertype))
+
     self.expRes     = None
     self.path       = None
     self.result     = None 
     self.passed     = None   
   
   def runFilter(self, diff):
-    if self.__filter is not None:
-      ##print("op %s has a filter" % (self.desc))
-      return self.__filter.run(diff)
+    for f in self.__filters:
+      diff = f.run(diff)
     return diff    
 
   def setPath(self, path):
