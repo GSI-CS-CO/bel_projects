@@ -44,8 +44,72 @@ class DaqChannel
    friend class DaqDevice;
    friend class DaqAdministration;
 
-   unsigned int m_number;
-   DaqDevice*   m_pParent;
+   /*!
+    * @brief Object type for the administration of the
+    *        data block sequence numbers for the continuous and
+    *        PostMortem/HighRes mode.
+    */
+   struct SequenceNumber
+   {
+      /*!
+       * @brief Becomes true when the sequence numbers can be verified.
+       */
+      bool    m_continued;
+
+      /*!
+       * @brief Becomes true, when since the last compare a lost of
+       *        data blocks was detected.
+       */
+      bool    m_blockLost;
+
+      /*!
+       * @brief Modulo 256 counter.
+       */
+      uint8_t m_sequence;
+
+      SequenceNumber( void )
+         :m_continued( false )
+         ,m_blockLost( false )
+         ,m_sequence( 0 )
+      {}
+
+      /*!
+       * @brief Returns true when a sequence error was detected.
+       * @param sequence Sequence number form the actual received
+       *                 device descriptor.
+       */
+      bool compare( uint8_t sequence );
+
+      void reset( void )
+      {
+         m_continued = false;
+         m_blockLost = false;
+      }
+
+      bool wasLost( void ) const
+      {
+         return m_blockLost;
+      }
+   };
+
+   /*!
+    * @brief Channel number.
+    */
+   unsigned int   m_number;
+
+   /*!
+    * @brief Pointer to the DAQ device object including this channel object.
+    */
+   DaqDevice*     m_pParent;
+
+   SequenceNumber m_oSequenceContinueMode;
+   SequenceNumber m_oSequencePmHighResMode;
+
+   /*!
+    * @brief Pointer to object of the sequence number object of the last received
+    *        block. If no block was received yet than the value is "nullptr".
+    */
+   SequenceNumber* m_poSequence;
 
 public:
    constexpr static std::size_t  c_discriptorWordSize =
@@ -104,8 +168,27 @@ public:
    uint64_t descriptorGetTimeStamp( void );
    unsigned int descriptorGetTimeBase( void );
 
+   SequenceNumber* getSequencePtr( void ) const
+   {
+      SCU_ASSERT( m_poSequence != nullptr );
+      return m_poSequence;
+   }
+
+   bool descriptorWasBlockLost( void ) const
+   {
+      return getSequencePtr()->wasLost();
+   }
+
+   uint8_t getExpectedSequence( void ) const
+   {
+      return getSequencePtr()->m_sequence;
+   }
+
 protected:
    virtual bool onDataBlock( DAQ_DATA_T* pData, std::size_t wordLen ) = 0;
+
+private:
+   void verifySequence( void );
 
 };
 
@@ -505,6 +588,7 @@ inline const unsigned int DaqChannel::getDeviceNumber( void )
  */
 inline int DaqChannel::sendEnablePostMortem( const bool restart )
 {
+   m_oSequencePmHighResMode.reset();
    return getParent()->sendEnablePostMortem( m_number, restart );
 }
 
@@ -512,6 +596,7 @@ inline int DaqChannel::sendEnablePostMortem( const bool restart )
  */
 inline int DaqChannel::sendEnableHighResolution( const bool restart )
 {
+   m_oSequencePmHighResMode.reset();
    return getParent()->sendEnableHighResolution( m_number, restart );
 }
 
@@ -520,6 +605,7 @@ inline int DaqChannel::sendEnableHighResolution( const bool restart )
 inline int DaqChannel::sendEnableContineous( const DAQ_SAMPLE_RATE_T sampleRate,
                                              const unsigned int maxBlocks )
 {
+   m_oSequenceContinueMode.reset();
    return getParent()->sendEnableContineous( m_number, sampleRate, maxBlocks );
 }
 

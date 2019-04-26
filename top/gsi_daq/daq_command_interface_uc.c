@@ -27,6 +27,9 @@
 #include <scu_lm32_macros.h>
 #include <daq_ramBuffer.h>
 #include <dbg.h>
+#ifdef DEBUGLEVEL
+  #include <eb_console_helper.h>
+#endif
 
 #ifdef CONFIG_DAQ_SINGLE_APP
 /*!!!!!!!!!!!!!!!!!!!!!! Begin of shared memory area !!!!!!!!!!!!!!!!!!!!!!!!*/
@@ -63,7 +66,9 @@ typedef struct
  */
 static void printFunctionName( const char* str )
 {
-   DBPRINT1( "DBG: executing %s(),\tDevice: %d, Channel: %d\n",
+   DBPRINT1( ESC_FG_CYAN ESC_BOLD
+             "DBG: executing %s(),\tDevice: %d, Channel: %d\n"
+             ESC_NORMAL,
              str,
              g_shared.operation.ioData.location.deviceNumber,
              g_shared.operation.ioData.location.channel

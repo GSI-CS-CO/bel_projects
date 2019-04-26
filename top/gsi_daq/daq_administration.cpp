@@ -27,14 +27,39 @@
 #include <iostream>
 #include <cstddef>
 #include <unistd.h>
+#include <dbg.h>
+
+
 using namespace daq;
 
 ///////////////////////////////////////////////////////////////////////////////
 /*! ---------------------------------------------------------------------------
  */
+bool DaqChannel::SequenceNumber::compare( uint8_t sequence )
+{
+   m_blockLost = (m_sequence != sequence) && m_continued;
+#ifdef DEBUGLEVEL
+   if( m_blockLost )
+   {
+      DBPRINT1( ESC_FG_RED
+                "DBG: ERROR: Sequence is: %d, expected: %d\n"
+                ESC_NORMAL,
+                sequence, m_sequence
+              );
+   }
+#endif
+   m_continued = true;
+   m_sequence = sequence;
+   m_sequence++;
+   return m_blockLost;
+}
+
+/*! ---------------------------------------------------------------------------
+ */
 DaqChannel::DaqChannel( unsigned int number )
    :m_number( number )
    ,m_pParent(nullptr)
+   ,m_poSequence(nullptr)
 {
    SCU_ASSERT( m_number <= DaqInterface::c_maxChannels );
 }
@@ -45,6 +70,17 @@ DaqChannel::~DaqChannel( void )
 {
 }
 
+/*! ---------------------------------------------------------------------------
+ */
+void DaqChannel::verifySequence( void )
+{
+   if( descriptorWasContinuous() )
+      m_poSequence = &m_oSequenceContinueMode;
+   else
+      m_poSequence = &m_oSequencePmHighResMode;
+
+   m_poSequence->compare( descriptorGetSequence() );
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 /*! ---------------------------------------------------------------------------
@@ -386,9 +422,9 @@ int DaqAdministration::distributeData( void )
    if( size % c_ramBlockShortLen != 0 )
    {
       //TODO data perhaps corrupt!
-      clearBuffer();
-      throw( DaqException( "Memory size not dividable by block size" ) );
-      //return -1;
+     // clearBuffer();
+     // throw( DaqException( "Memory size not dividable by block size" ) );
+     return size;
    }
 
    PROBE_BUFFER_T probe;
@@ -451,6 +487,7 @@ int DaqAdministration::distributeData( void )
    if( pChannel != nullptr )
    {
       m_poCurrentDescriptor = &probe.descriptor;
+      pChannel->verifySequence();
       pChannel->onDataBlock( &probe.buffer[c_discriptorWordSize], wordLen );
       m_poCurrentDescriptor = nullptr;
    }

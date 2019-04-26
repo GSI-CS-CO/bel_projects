@@ -334,12 +334,16 @@ static inline void ramPollAccessLock( RAM_SCU_T* pThis )
    if( pThis->pSharedObj->ramAccessLock )
    {
       unsigned int pollCount = 0;
-      DBG_RAM_INFO( "DBG: Enter RAM-access polling\n" );
+      DBG_RAM_INFO( ESC_FG_MAGNETA ESC_BOLD
+                    "DBG: Enter RAM-access polling\n"
+                    ESC_NORMAL );
       while( pThis->pSharedObj->ramAccessLock )
       {
          pollCount++;
       }
-      DBG_RAM_INFO( "DBG: Leaving RAM-access polling. %d loops\n", pollCount );
+      DBG_RAM_INFO( ESC_FG_MAGNETA ESC_BOLD
+                    "DBG: Leaving RAM-access polling. %d loops\n"
+                    ESC_NORMAL, pollCount );
    }
 #else
    while( pThis->pSharedObj->ramAccessLock ) {}
@@ -405,6 +409,12 @@ void ramWriteDaqData( register RAM_SCU_T* pThis, DAQ_CANNEL_T* pDaqChannel,
       pSequence     = &pDaqChannel->sequencePmHires;
    }
 
+   /*
+    * Sequence number becomes incremented here in any cases,
+    * so the possible lost of blocks can be detected by the Linux-host.
+    */
+   (*pSequence)++;
+
 #ifndef CONFIG_DAQ_DECREMENT
    /*
     * The data wort which includes the CRC isn't a part of the fifo content,
@@ -460,12 +470,16 @@ void ramWriteDaqData( register RAM_SCU_T* pThis, DAQ_CANNEL_T* pDaqChannel,
             RAM_ASSERT( di < ARRAY_SIZE(oDescriptor.index) );
             if( di == offsetof(_DAQ_DISCRIPTOR_STRUCT_T, crcReg ) /
                                sizeof(DAQ_DATA_T) )
-            {
-               ((_DAQ_BF_CRC_REG*)&data)->sequence = *pSequence;
-               (*pSequence)++;
+            { /*
+               * Setting of the sequence number in the device descriptor.
+               * Sequence number has been already incremented above,
+               * therefore the 1 must be deducted here again.
+               */
+               ((_DAQ_BF_CRC_REG*)&data)->sequence = *pSequence - 1;
             }
             oDescriptor.index[di++] = data;
          }
+
          ramFillItem( &ramItem, payloadIndex, data );
 
          /*
@@ -549,7 +563,7 @@ void ramWriteDaqData( register RAM_SCU_T* pThis, DAQ_CANNEL_T* pDaqChannel,
       * Making the new received data block in ring buffer valid.
       */
       publishWrittenData( pThis, &oDataIndexes );
-
+      DBPRINT1( "DBG: Sequence: %d\n", *pSequence - 1 );
       if( pDaqChannel->properties.restart )
       {
          if( daqDescriptorWasHiRes( &oDescriptor ) )
