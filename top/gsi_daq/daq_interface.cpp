@@ -392,6 +392,8 @@ DaqInterface::RETURN_CODE_T DaqInterface::readRamIndexes( void )
    return m_oSharedData.operation.retCode;
 }
 
+/*! ---------------------------------------------------------------------------
+ */
 void DaqInterface::sendUnlockRamAccess( void )
 {
    EB_MAKE_CB_OW_ARG( cArg );

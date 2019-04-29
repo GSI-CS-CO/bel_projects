@@ -93,6 +93,23 @@ void Attributes::set( const Attributes& rMyContainer )
 ///////////////////////////////////////////////////////////////////////////////
 /*-----------------------------------------------------------------------------
  */
+Channel::Channel( unsigned int number )
+   :DaqChannel( number )
+   ,m_poGnuplot( nullptr )
+{
+   m_poGnuplot = ::gnuplot_init();
+}
+
+/*-----------------------------------------------------------------------------
+ */
+Channel::~Channel( void )
+{
+   if( m_poGnuplot != nullptr )
+      ::gnuplot_close( m_poGnuplot );
+}
+
+/*-----------------------------------------------------------------------------
+ */
 void Channel::sendAttributes( void )
 {
    if( m_oAttributes.m_continueTriggerSouce.m_valid )
@@ -115,6 +132,12 @@ void Channel::sendAttributes( void )
  */
 void Channel::start( void )
 {
+   if( m_poGnuplot != nullptr )
+   {
+      ::gnuplot_cmd( m_poGnuplot, "set grid" );
+      ::gnuplot_setstyle( m_poGnuplot, "lines" );
+      ::gnuplot_cmd( m_poGnuplot, "set yrange [-10.0:10.0]" );
+   }
    if( m_oAttributes.m_continueMode.m_valid )
       sendEnableContineous( m_oAttributes.m_continueMode.m_value,
                             m_oAttributes.m_blockLimit.m_value );
@@ -129,7 +152,33 @@ void Channel::start( void )
  */
 bool Channel::onDataBlock( DAQ_DATA_T* pData, std::size_t wordLen )
 {
-   cerr << '*' << endl;
+   cerr << '*' << wordLen << endl;
+
+   if( m_poGnuplot == nullptr )
+      return true;
+
+   double* px = new double[wordLen];
+   double* py = new double[wordLen];
+
+   for( std::size_t i = 0; i < wordLen; i++ )
+   {
+      px[i] = static_cast<double>(i);
+      py[i] = rawToVoltage( pData[i] );
+   }
+
+   ::gnuplot_cmd( m_poGnuplot, "set xrange [0:%d]", wordLen );
+   ::gnuplot_resetplot( m_poGnuplot );
+
+   string legende = "SCU: ";
+   legende += getWbDevice();
+   legende += "; Slot: ";
+   legende += to_string(getSlot());
+   legende += "; Channel: ";
+   legende += to_string(getNumber());
+   ::gnuplot_plot_xy(m_poGnuplot, px, py, wordLen, legende.c_str() ) ;
+
+   delete [] px;
+   delete [] py;
    return false;
 }
 

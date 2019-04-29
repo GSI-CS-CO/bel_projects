@@ -28,6 +28,7 @@
 #include <stdlib.h>
 #include <daq_administration.hpp>
 #include <string>
+#include "gnuplot_i.h"
 
 namespace daqt
 {
@@ -126,14 +127,15 @@ public:
 ///////////////////////////////////////////////////////////////////////////////
 class Channel: public DaqChannel
 {
-   friend class CommandLine;
-   friend class DaqContainer;
-   Attributes  m_oAttributes;
+   friend class  CommandLine;
+   friend class  DaqContainer;
+
+   Attributes    m_oAttributes;
+   gnuplot_ctrl* m_poGnuplot;
 
 public:
-   Channel( unsigned int number )
-      :DaqChannel( number )
-    {}
+   Channel( unsigned int number );
+   ~Channel( void );
 
    void sendAttributes( void );
    void start( void );

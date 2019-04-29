@@ -130,7 +130,7 @@ public:
       SCU_ASSERT( m_pParent != nullptr );
       return m_pParent;
    }
-
+   const std::string& getWbDevice( void );
    const unsigned int getSlot( void );
    const unsigned int getDeviceNumber( void );
 
@@ -253,6 +253,8 @@ public:
       SCU_ASSERT( m_pParent != nullptr );
       return m_pParent;
    }
+
+   const std::string& getWbDevice( void );
 
    unsigned int readMacroVersion( void );
 
@@ -440,6 +442,13 @@ private:
 ///////////////////////////////////////////////////////////////////////////////
 /*! ---------------------------------------------------------------------------
  */
+inline const std::string& DaqDevice::getWbDevice( void )
+{
+   return getParent()->getWbDevice();
+}
+
+/*! ---------------------------------------------------------------------------
+ */
 inline unsigned int DaqDevice::readMacroVersion( void )
 {
    return getParent()->readMacroVersion( m_deviceNumber );
@@ -570,6 +579,13 @@ inline bool DaqDevice::receiveTriggerSourceHiRes( const unsigned int channel )
 
 
 ///////////////////////////////////////////////////////////////////////////////
+/*! ---------------------------------------------------------------------------
+ */
+inline const std::string& DaqChannel::getWbDevice( void )
+{
+   return getParent()->getWbDevice();
+}
+
 /*! ---------------------------------------------------------------------------
  */
 inline const unsigned int DaqChannel::getSlot( void )
