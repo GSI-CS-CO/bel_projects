@@ -14,11 +14,10 @@
 // ****************************************************************************************
 // general things
 // ****************************************************************************************
-#define  B2BTEST_FW_VERSION       0x000001     // make this consistent with makefile
 
 // (error) status, each status will be represented by one bit, bits will be ORed into a 32bit word
 #define  B2BTEST_STATUS_PHASEFAILED      20    // phase measurement failed
-#define  B2BTEST_STATUS_TRANSACTION      21    // transaction failed
+#define  B2BTEST_STATUS_TRANSFER         21    // transfer failed
 #define  B2BTEST_STATUS_SAFETYMARGIN     22    // violation of safety margin for data master and timing network
 
 // activity requested by ECA Handler, the relevant codes are also used as "tags"
@@ -38,7 +37,7 @@
 // ****************************************************************************************
 
 // offsets
-#define B2BTEST_SHARED_NTRANSFER      (COMMON_SHARED_END  + _32b_SIZE_)                 // # of UNILAC cycles
+#define B2BTEST_SHARED_NTRANSFER      (COMMON_SHARED_END  + _32b_SIZE_)                 // # of transfers
 #define B2BTEST_SHARED_TH1EXTHI       (B2BTEST_SHARED_NTRANSFER     + _32b_SIZE_)       // period of h=1 extraction, high bits
 #define B2BTEST_SHARED_TH1EXTLO       (B2BTEST_SHARED_TH1EXTHI      + _32b_SIZE_)       // period of h=1 extraction, low bits
 #define B2BTEST_SHARED_TH1INJHI       (B2BTEST_SHARED_TH1EXTLO      + _32b_SIZE_)       // period of h=1 injecction, high bits

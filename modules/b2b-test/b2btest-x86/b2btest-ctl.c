@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 24-April-2019
+ *  version : 30-April-2019
  *
  * Command-line interface for wrunipz
  *
@@ -50,7 +50,7 @@
 // b2b-test
 #include <b2btest-api.h>                 // API
 #include <b2b-test.h>                    // FW
-#include <b2bpm_shared_mmap.h>           // LM32
+#include <b2bcbu_shared_mmap.h>          // LM32
 
 const char* program;
 static int getInfo    = 0;
@@ -61,10 +61,10 @@ static int logLevel   = 0;
 
 eb_device_t  device;               // keep this and below global
 eb_address_t lm32_base;            // base address of lm32
+
+// common stuff
 eb_address_t b2btest_status;       // status of b2btest, read
 eb_address_t b2btest_state;        // state, read
-eb_address_t b2btest_iterations;   // # of iterations of main loop, read
-eb_address_t b2btest_cycles;       // # of UNILAC cycles
 eb_address_t b2btest_cmd;          // command, write
 eb_address_t b2btest_version;      // version, read
 eb_address_t b2btest_macHi;        // ebm src mac, read
@@ -72,25 +72,17 @@ eb_address_t b2btest_macLo;        // ebm src mac, read
 eb_address_t b2btest_ip;           // ebm src ip, read
 eb_address_t b2btest_nBadStatus;   // # of bad status ("ERROR") incidents, read
 eb_address_t b2btest_nBadState;    // # of bad state ("not in operation") incidents, read
-eb_address_t b2btest_tCycleAvg;    // period of cycle [us] (average over one second), read
-eb_address_t b2btest_nMessageLo;   // number of messages, read
-eb_address_t b2btest_nMessageHi;   // number of messages, read
-eb_address_t b2btest_msgFreqAvg;   // message rate (average over one second), read
-eb_address_t b2btest_dtMax;        // delta T (max) between message time of dispatching and deadline, read
-eb_address_t b2btest_dtMin;        // delta T (min) between message time of dispatching and deadline, read
-eb_address_t b2btest_nLate;        // # of late messages, read
-eb_address_t b2btest_vaccAvg;      // virtual accelerators played over the past second, read
-eb_address_t b2btest_pzAvg;        // PZs used over the past second, read
-eb_address_t b2btest_mode;         // mode, see B2BTEST_MODE_...
 eb_address_t b2btest_tDiagHi;      // time when diagnostics was cleared, high bits
 eb_address_t b2btest_tDiagLo;      // time when diagnostics was cleared, low bits
 eb_address_t b2btest_tS0Hi;        // time when FW was in S0 state (start of FW), high bits
 eb_address_t b2btest_tS0Lo;        // time when FW was in S0 state (start of FW), low bits
-eb_address_t b2btest_confVacc;     // virtAcc of config, write
-eb_address_t b2btest_confStat;     // status of config transaction, read
-eb_address_t b2btest_confPz;       // bit field (indicates, which PZ is submitted), write
-eb_address_t b2btest_confFlag;     // flags of config, write
-eb_address_t b2btest_confData;     // data of config, write
+
+// application specific stuff
+eb_address_t b2btest_nTransfer;    // # of transfers
+eb_address_t b2btest_TH1ExtHi;     // period of h=1 extraction, high bits
+eb_address_t b2btest_TH1ExtLo;     // period of h=1 extraction, low bits
+eb_address_t b2btest_TH1InjHi;     // period of h=1 injection, high bits
+eb_address_t b2btest_TH1InjLo;     // period of h=1 injection, low bits
 
 eb_data_t   data1;
  
@@ -120,8 +112,6 @@ static void help(void) {
   fprintf(stderr, "  recover             command tries to recover from state ERROR and transit to state IDLE\n");
   fprintf(stderr, "  idle                command requests state change to IDLE\n");
   fprintf(stderr, "\n");
-  fprintf(stderr, "  modespz             command sets to PZ mode (listen to SuperPZ)\n");
-  fprintf(stderr, "  modetest            command sets to test mode (listen to internal 50 Hz trigger)\n");
   fprintf(stderr, "  test <vacc> <pz>    command loads dummy event table for virtual accelerator <vacc> to pulszentrale <pz>\n");
   fprintf(stderr, "  testfull            command loads dummy event tables for ALL virt accs (except virt acc 0xf) and all PZs\n");
   fprintf(stderr, "  cleartables         command clears all event tables of all PZs\n");
@@ -144,7 +134,7 @@ static void help(void) {
 } //help
 
 
-int readInfo(uint32_t *sumStatus, uint32_t *state, uint32_t *cycles, uint32_t *nBadStatus, uint32_t *nBadState, uint32_t *tCycleAvg, uint32_t *msgFreqAvg, uint32_t *confStat, uint32_t *nLate, uint32_t *vaccAvg, uint32_t *pzAvg, uint32_t *mode)
+int readInfo(uint32_t *sumStatus, uint32_t *state, uint32_t *nBadStatus, uint32_t *nBadState)
 {
   eb_cycle_t  cycle;
   eb_status_t eb_status;
@@ -155,34 +145,18 @@ int readInfo(uint32_t *sumStatus, uint32_t *state, uint32_t *cycles, uint32_t *n
   eb_cycle_read(cycle, b2btest_state,         EB_BIG_ENDIAN|EB_DATA32, &(data[1]));
   eb_cycle_read(cycle, b2btest_nBadStatus,    EB_BIG_ENDIAN|EB_DATA32, &(data[2]));
   eb_cycle_read(cycle, b2btest_nBadState,     EB_BIG_ENDIAN|EB_DATA32, &(data[3]));
-  eb_cycle_read(cycle, b2btest_cycles,        EB_BIG_ENDIAN|EB_DATA32, &(data[4]));
-  eb_cycle_read(cycle, b2btest_tCycleAvg,     EB_BIG_ENDIAN|EB_DATA32, &(data[5]));
-  eb_cycle_read(cycle, b2btest_msgFreqAvg,    EB_BIG_ENDIAN|EB_DATA32, &(data[6]));
-  eb_cycle_read(cycle, b2btest_confStat,      EB_BIG_ENDIAN|EB_DATA32, &(data[7]));
-  eb_cycle_read(cycle, b2btest_nLate,         EB_BIG_ENDIAN|EB_DATA32, &(data[8]));
-  eb_cycle_read(cycle, b2btest_vaccAvg,       EB_BIG_ENDIAN|EB_DATA32, &(data[9]));
-  eb_cycle_read(cycle, b2btest_pzAvg,         EB_BIG_ENDIAN|EB_DATA32, &(data[10]));
-  eb_cycle_read(cycle, b2btest_mode,          EB_BIG_ENDIAN|EB_DATA32, &(data[11]));
   if ((eb_status = eb_cycle_close(cycle)) != EB_OK) die("b2b-test: eb_cycle_close", eb_status);
 
   *sumStatus     = data[0];
   *state         = data[1];
   *nBadStatus    = data[2];
   *nBadState     = data[3];
-  *cycles        = data[4];
-  *tCycleAvg     = data[5];
-  *msgFreqAvg    = data[6];
-  *confStat      = data[7];
-  *nLate         = data[8];
-  *vaccAvg       = data[9];
-  *pzAvg         = data[10];
-  *mode          = data[11];
 
   return eb_status;
 } // readInfo
 
 
-int readDiags(uint32_t *sumStatus, uint32_t *state, uint32_t *nBadStatus, uint32_t *nBadState, uint32_t *nCycles, uint64_t *nMessages, int32_t *dtMax, int32_t *dtMin, uint32_t *nLate, uint64_t *tDiag, uint64_t *tS0)
+int readDiags(uint32_t *sumStatus, uint32_t *state, uint32_t *nBadStatus, uint32_t *nBadState, uint64_t *tDiag, uint64_t *tS0, uint32_t *nTransfer, uint64_t *TH1Ext, uint64_t *TH1Inj)
 {
   eb_cycle_t  cycle;
   eb_status_t eb_status;
@@ -193,32 +167,31 @@ int readDiags(uint32_t *sumStatus, uint32_t *state, uint32_t *nBadStatus, uint32
   eb_cycle_read(cycle, b2btest_state,         EB_BIG_ENDIAN|EB_DATA32, &(data[1]));
   eb_cycle_read(cycle, b2btest_nBadStatus,    EB_BIG_ENDIAN|EB_DATA32, &(data[2]));
   eb_cycle_read(cycle, b2btest_nBadState,     EB_BIG_ENDIAN|EB_DATA32, &(data[3]));
-  eb_cycle_read(cycle, b2btest_cycles,        EB_BIG_ENDIAN|EB_DATA32, &(data[4]));
-  eb_cycle_read(cycle, b2btest_nMessageHi,    EB_BIG_ENDIAN|EB_DATA32, &(data[5]));
-  eb_cycle_read(cycle, b2btest_nMessageLo,    EB_BIG_ENDIAN|EB_DATA32, &(data[6]));
-  eb_cycle_read(cycle, b2btest_dtMax,         EB_BIG_ENDIAN|EB_DATA32, &(data[7]));
-  eb_cycle_read(cycle, b2btest_dtMin,         EB_BIG_ENDIAN|EB_DATA32, &(data[8])); 
-  eb_cycle_read(cycle, b2btest_nLate,         EB_BIG_ENDIAN|EB_DATA32, &(data[9]));
-  eb_cycle_read(cycle, b2btest_tDiagHi,       EB_BIG_ENDIAN|EB_DATA32, &(data[10]));
-  eb_cycle_read(cycle, b2btest_tDiagLo,       EB_BIG_ENDIAN|EB_DATA32, &(data[11]));
-  eb_cycle_read(cycle, b2btest_tS0Hi,         EB_BIG_ENDIAN|EB_DATA32, &(data[12]));
-  eb_cycle_read(cycle, b2btest_tS0Lo,         EB_BIG_ENDIAN|EB_DATA32, &(data[13]));
+  eb_cycle_read(cycle, b2btest_tDiagHi,       EB_BIG_ENDIAN|EB_DATA32, &(data[4]));
+  eb_cycle_read(cycle, b2btest_tDiagLo,       EB_BIG_ENDIAN|EB_DATA32, &(data[5]));
+  eb_cycle_read(cycle, b2btest_tS0Hi,         EB_BIG_ENDIAN|EB_DATA32, &(data[6]));
+  eb_cycle_read(cycle, b2btest_tS0Lo,         EB_BIG_ENDIAN|EB_DATA32, &(data[7]));
+  eb_cycle_read(cycle, b2btest_nTransfer,     EB_BIG_ENDIAN|EB_DATA32, &(data[8]));
+  eb_cycle_read(cycle, b2btest_TH1ExtHi,      EB_BIG_ENDIAN|EB_DATA32, &(data[9]));
+  eb_cycle_read(cycle, b2btest_TH1ExtLo,      EB_BIG_ENDIAN|EB_DATA32, &(data[10]));
+  eb_cycle_read(cycle, b2btest_TH1InjHi,      EB_BIG_ENDIAN|EB_DATA32, &(data[11]));
+  eb_cycle_read(cycle, b2btest_TH1InjLo,      EB_BIG_ENDIAN|EB_DATA32, &(data[12]));
+
   if ((eb_status = eb_cycle_close(cycle)) != EB_OK) die("b2b-test: eb_cycle_close", eb_status);
 
   *sumStatus     = data[0];
   *state         = data[1];
   *nBadStatus    = data[2];
   *nBadState     = data[3];
-  *nCycles       = data[4];
-  *nMessages     = (uint64_t)(data[5]) << 32;
-  *nMessages    += data[6];
-  *dtMax         = data[7];
-  *dtMin         = data[8];
-  *nLate         = data[9];
-  *tDiag         = (uint64_t)(data[10]) << 32;
-  *tDiag        += data[11];
-  *tS0           = (uint64_t)(data[12]) << 32;
-  *tS0          += data[13];
+  *tDiag         = (uint64_t)(data[4]) << 32;
+  *tDiag        += data[5];
+  *tS0           = (uint64_t)(data[6]) << 32;
+  *tS0          += data[7];
+  *nTransfer     = data[8];
+  *TH1Ext        = (uint64_t)(data[9]) << 32;
+  *TH1Ext       += data[10];
+  *TH1Inj        = (uint64_t)(data[11]) << 32;
+  *TH1Inj       += data[12];
  
   return eb_status;
 } // readDiags
@@ -252,25 +225,22 @@ int readConfig(uint64_t *mac, uint32_t *ip)
 } //readConfig
 
 
-void printCycleHeader()
+void printTransferHeader()
 {
-  printf("b2b-test:        cycles      virtAcc        PZ   |         DIAGNOSIS        |                 INFO           \n");
-  printf("b2b-test: STATUS      n 0....5....A....F 0.....6 |     fUni  fMsg nLate T M |   state      nchng stat   nchng\n");
-} // printCycleHeader
+  printf("b2b-test:        nTrans      virtAcc        PZ   |        DIAGNOSIS   |                 INFO           \n");
+  printf("b2b-test: STATUS      n 0....5....A....F 0.....6 |     fUni  fMsg T M |   state      nchng stat   nchng\n");
+} // printTransferHeader
 
 
-void printCycle(uint32_t cycles, uint32_t tCycleAvg, uint32_t msgFreqAvg, uint32_t confStat, uint32_t nLate, uint32_t vaccAvg, uint32_t pzAvg, uint32_t mode)
+void printTransfer()
 {
-  // past cycles
-  printf("b2b-test: ST %010d ", cycles);
-
   // diag
-  printf("DG %6.3f %05d %05d %1d %1d |", 1000000000.0/(double)tCycleAvg, msgFreqAvg, nLate, confStat, mode);
+  printf("DG blabla |");
 
-} // printCycle
+} // printTransfer
 
 
-void printDiags(uint32_t sumStatus, uint32_t state, uint32_t nBadStatus, uint32_t nBadState, uint32_t nCycles, uint64_t nMessages, int32_t dtMax, int32_t dtMin, uint32_t nLate, uint64_t tDiag, uint64_t tS0)
+void printDiags(uint32_t sumStatus, uint32_t state, uint32_t nBadStatus, uint32_t nBadState, uint64_t tDiag, uint64_t tS0, uint32_t nTransfers, uint64_t TH1Ext, uint64_t TH1Inj)
 {
   const struct tm* tm;
   char             timestr[60];
@@ -299,11 +269,10 @@ void printDiags(uint32_t sumStatus, uint32_t state, uint32_t nBadStatus, uint32_
     if ((sumStatus >> i) & 0x1)
       printf("sum status bit ist set: %s\n", b2btest_status_text(i));
   } // for i
-  printf("# of cycles           : %010u\n",   nCycles);
-  printf("# of messages         : %010lu\n",  nMessages);
-  printf("# of late messages    : %010u\n",   nLate);
-  printf("dt min [us]           : %08.1f\n",  (double)dtMin / 1000.0);
-  printf("dt max [us]           : %08.1f\n",  (double)dtMax / 1000.0);
+
+  printf("# of transfers        : %010u\n", nTransfers);
+  printf("period h=1 extraction : %010.6f ns\n", (double)TH1Ext/1000000.0);
+  printf("period h=1 injection  : %010.6f ns\n", (double)TH1Inj/1000000.0);
 } // printDiags
 
 
@@ -333,22 +302,13 @@ int main(int argc, char** argv) {
   uint32_t state;
   uint32_t nBadStatus;
   uint32_t nBadState;
-  uint32_t cycles;
-  uint64_t messages;
-  uint32_t fMessages;
-  uint32_t tCycle;
   uint32_t version;
-  int32_t  dtMax;
-  int32_t  dtMin;
-  uint32_t nLate;
-  uint32_t vaccAvg;
-  uint32_t pzAvg;
-  uint32_t mode;
-  uint32_t confStat;
   uint64_t tDiag;
   uint64_t tS0;
+  uint32_t nTransfer;
+  uint64_t TH1Ext;
+  uint64_t TH1Inj;
 
-  uint32_t actCycles;                          // actual number of cycles
   uint32_t actState = COMMON_STATE_UNKNOWN;    // actual state of gateway
   uint32_t actSumStatus;                       // actual sum status of gateway
   uint32_t sleepTime;                          // time to sleep [us]
@@ -430,8 +390,12 @@ int main(int argc, char** argv) {
   b2btest_tDiagLo      = lm32_base + SHARED_OFFS + COMMON_SHARED_TDIAGLO;
   b2btest_tS0Hi        = lm32_base + SHARED_OFFS + COMMON_SHARED_TS0HI;
   b2btest_tS0Lo        = lm32_base + SHARED_OFFS + COMMON_SHARED_TS0LO;
-
-  // printf("b2b-test: lm32_base 0x%08x, 0x%08x\n", lm32_base, b2btest_iterations);
+  b2btest_nTransfer    = lm32_base + SHARED_OFFS + B2BTEST_SHARED_NTRANSFER;
+  b2btest_TH1ExtHi     = lm32_base + SHARED_OFFS + B2BTEST_SHARED_TH1EXTHI;
+  b2btest_TH1ExtLo     = lm32_base + SHARED_OFFS + B2BTEST_SHARED_TH1EXTLO;
+  b2btest_TH1InjHi     = lm32_base + SHARED_OFFS + B2BTEST_SHARED_TH1INJHI;
+  b2btest_TH1InjLo     = lm32_base + SHARED_OFFS + B2BTEST_SHARED_TH1INJLO;
+  
 
   if (getConfig) {
     readConfig(&mac, &ip);
@@ -446,9 +410,9 @@ int main(int argc, char** argv) {
 
   if (getInfo) {
     // status
-    readInfo(&sumStatus, &state, &cycles, &nBadStatus, &nBadState, &tCycle, &fMessages, &confStat, &nLate, &vaccAvg, &pzAvg, &mode);
-    printCycleHeader();
-    printCycle(cycles, tCycle, fMessages, confStat, nLate, vaccAvg, pzAvg, mode);
+    readInfo(&sumStatus, &state, &nBadStatus, &nBadState);
+    printTransferHeader();
+    printTransfer();
     printf(" %s (%6u), status 0x%08x (%6u)\n", common_state_text(state), nBadState, sumStatus, nBadStatus);
   } // if getInfo
 
@@ -485,8 +449,8 @@ int main(int argc, char** argv) {
       if (state != COMMON_STATE_OPREADY) printf("b2b-test: WARNING command has no effect (not in state OPREADY)\n");
     } // "cleardiag"
     if (!strcasecmp(command, "diag")) {
-      readDiags(&sumStatus, &state, &nBadStatus, &nBadState, &cycles, &messages, &dtMax, &dtMin, &nLate, &tDiag, &tS0);
-      printDiags(sumStatus, state, nBadStatus, nBadState, cycles, messages, dtMax, dtMin, nLate, tDiag, tS0);
+      readDiags(&sumStatus, &state, &nBadStatus, &nBadState, &tDiag, &tS0, &nTransfer, &TH1Ext, &TH1Inj);
+      printDiags(sumStatus, state, nBadStatus, nBadState, tDiag, tS0, nTransfer, TH1Ext, TH1Inj);
     } // "diag"
 
   } //if command
@@ -495,19 +459,16 @@ int main(int argc, char** argv) {
   if (snoop) {
     printf("b2b-test: continous monitoring of gateway, loglevel = %d\n", logLevel);
     
-    actCycles    = 0;
     actState     = COMMON_STATE_UNKNOWN;
     actSumStatus = 0;
 
-    printCycleHeader();
+    printTransferHeader();
 
     while (1) {
-      readInfo(&sumStatus, &state, &cycles, &nBadStatus, &nBadState, &tCycle, &fMessages, &confStat, &nLate, &vaccAvg, &pzAvg, &mode); // read info from lm32
+      readInfo(&sumStatus, &state, &nBadStatus, &nBadState); // read info from lm32
 
       switch(state) {
       case COMMON_STATE_OPREADY :
-        if (actCycles != cycles) sleepTime = COMMON_DEFAULT_TIMEOUT * 1000 * 2;              // ongoing cycle: reduce polling rate ...
-        else                     sleepTime = COMMON_DEFAULT_TIMEOUT * 1000;                  // sleep for default timeout to catch next cycle
         break;
       default:
         sleepTime = COMMON_DEFAULT_TIMEOUT * 1000;                          
@@ -523,7 +484,7 @@ int main(int argc, char** argv) {
       if ((actSumStatus != sumStatus)    && (logLevel <= COMMON_LOGLEVEL_STATUS))  {printFlag = 1; actSumStatus = sumStatus;}
 
       if (printFlag) {
-        printCycle(cycles, tCycle, fMessages, confStat, nLate, vaccAvg, pzAvg, mode); 
+        printTransfer(); 
         printf(" %s (%6u), status 0x%08x (%d)\n", common_state_text(state), nBadState, sumStatus, nBadStatus);
       } // if printFlag
 

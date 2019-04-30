@@ -134,10 +134,10 @@ void common_publishState(uint32_t state);
 void common_publishSumStatus(uint32_t sumStatus);
 
 // publish number of bad status incidents
-void common_publishNBadStatus(uint32_t nBadStatus);
+void common_incBadStatusCnt();
 
 // publish number of bad state incidents
-void common_publishNBadState(uint32_t nBadState);
+void common_incBadStateCnt();
 
 // handle commands from the outside world
 void common_cmdHandler(uint32_t *reqState);
@@ -150,5 +150,8 @@ uint32_t common_changeState(uint32_t *actState, uint32_t *reqState, uint32_t act
 
 // do autorecovery from error state
 uint32_t common_doAutoRecovery(uint32_t actState, uint32_t *reqState);
+
+// intialize Etherbone master
+uint32_t common_ebmInit(uint32_t msTimeout, uint64_t dstMac, uint32_t dstIp, uint32_t eb_ops);
 
 #endif

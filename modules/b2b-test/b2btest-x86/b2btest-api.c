@@ -70,7 +70,7 @@ const char* b2btest_status_text(uint32_t bit) {
 
   switch (bit) {
   case B2BTEST_STATUS_PHASEFAILED      : sprintf(message, "error %d, %s",    bit, "phase measurement failed"); break;
-  case B2BTEST_STATUS_TRANSACTION      : sprintf(message, "error %d, %s",    bit, "transaction failed"); break;
+  case B2BTEST_STATUS_TRANSFER         : sprintf(message, "error %d, %s",    bit, "transfer failed"); break;
   case B2BTEST_STATUS_SAFETYMARGIN     : sprintf(message, "error %d, %s",    bit, "violation of safety margin for data master and timing network"); break;
   default                              : common_status_text(bit) ; break;
   }
