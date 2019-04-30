@@ -393,6 +393,14 @@ static int ramReadPoll( const DDR3_T* pThis UNUSED, unsigned int count )
 
 /*! ---------------------------------------------------------------------------
  */
+inline bool DaqAdministration::dataBlocksPresent( void )
+{
+   std::size_t size = getCurrentRamSize( true );
+   return ((size != 0) && ((size % c_ramBlockShortLen) == 0));
+}
+
+/*! ---------------------------------------------------------------------------
+ */
 int DaqAdministration::distributeData( void )
 {
    union PROBE_BUFFER_T
@@ -411,28 +419,48 @@ int DaqAdministration::distributeData( void )
                   "sizeof(PROBE_BUFFER_T) has to be dividable by "
                   "sizeof(RAM_DAQ_PAYLOAD_T) !" );
 
-   std::size_t size = getCurrentRamSize( true );
-   if( size == 0 )
+   /*
+    * For performance reasons the RAM-Size will at first read in the
+    * unlocked state.
+    * At least one block in RAM?
+    */
+   if( !dataBlocksPresent() )
    { /*
-      * Nothing to do...
+      * No, nothing to do.
       */
-      return 0;
+      return getCurrentRamSize( false );
    }
 
-   if( size % c_ramBlockShortLen != 0 )
-   {
-      //TODO data perhaps corrupt!
-     // clearBuffer();
-     // throw( DaqException( "Memory size not dividable by block size" ) );
-     return size;
+   /*
+    * At least one date block in RAM. For further actions
+    * the LM32 has to be locked, otherwise it could crash in the
+    * wishbone-bus. >:-O
+    */
+   sendLockRamAccess();
+
+   /*
+    * After the access locking for the LM32 the RAM size has to be read again.
+    * Because it could be that in the meanwhile the LM32 has been received
+    * further data- blocks.
+    */
+   std::size_t size = getCurrentRamSize( true );
+   if( (size == 0) || (size % c_ramBlockShortLen != 0) )
+   { /*
+      * Nothing to do?
+      * Or does the LM32 has made bullshit?!?
+      * Very unlikely but not excluded.
+      * Data in RAM could be corrupt,
+      * therefore the entire RAM becomes cleared.
+      */
+      clearBuffer();
+      sendUnlockRamAccess();
+      return size;
    }
 
    PROBE_BUFFER_T probe;
 #ifdef CONFIG_DAQ_DEBUG
    ::memset( &probe, 0, sizeof( probe ) );
 #endif
-
-   sendLockRamAccess();
 
    /*
     * At first a short block is supposed. It's necessary to read this data
@@ -478,6 +506,10 @@ int DaqAdministration::distributeData( void )
       */
       wordLen = c_contineousDataLen - c_discriptorWordSize;
    }
+
+   /*
+    * Unlock the LM32!
+    */
    writeRamIndexesAndUnlock();
 
    //TODO Make CRC check here!

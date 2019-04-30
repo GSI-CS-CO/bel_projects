@@ -87,6 +87,7 @@ void Attributes::set( const Attributes& rMyContainer )
    __SET_MEMBER( m_triggerCondition );
    __SET_MEMBER( m_blockLimit );
    __SET_MEMBER( m_restart );
+   __SET_MEMBER( m_zoomGnuPlot );
    #undef __SET_MEMBER
 }
 
@@ -136,8 +137,10 @@ void Channel::start( void )
    {
       ::gnuplot_cmd( m_poGnuplot, "set grid" );
       ::gnuplot_setstyle( m_poGnuplot, "lines" );
-      ::gnuplot_cmd( m_poGnuplot, "set yrange [-10.0:10.0]" );
+      if( !m_oAttributes.m_zoomGnuPlot.m_value )
+         ::gnuplot_cmd( m_poGnuplot, "set yrange [-10.0:10.0]" );
    }
+
    if( m_oAttributes.m_continueMode.m_valid )
       sendEnableContineous( m_oAttributes.m_continueMode.m_value,
                             m_oAttributes.m_blockLimit.m_value );
@@ -152,7 +155,9 @@ void Channel::start( void )
  */
 bool Channel::onDataBlock( DAQ_DATA_T* pData, std::size_t wordLen )
 {
-   cerr << '*' << wordLen << endl;
+   for( int i = 0; i < wordLen; i++ )
+      cout << i << ": " << pData[i] << "\n";
+   cout << flush;
 
    if( m_poGnuplot == nullptr )
       return true;
@@ -167,15 +172,18 @@ bool Channel::onDataBlock( DAQ_DATA_T* pData, std::size_t wordLen )
    }
 
    ::gnuplot_cmd( m_poGnuplot, "set xrange [0:%d]", wordLen );
+
    ::gnuplot_resetplot( m_poGnuplot );
 
    string legende = "SCU: ";
-   legende += getWbDevice();
+   legende += getScuDomainName();
    legende += "; Slot: ";
    legende += to_string(getSlot());
    legende += "; Channel: ";
    legende += to_string(getNumber());
-   ::gnuplot_plot_xy(m_poGnuplot, px, py, wordLen, legende.c_str() ) ;
+   ::gnuplot_plot_xy(m_poGnuplot, px, py, wordLen, legende.c_str() );
+   ::gnuplot_set_xlabel( m_poGnuplot, "Time" );
+   ::gnuplot_set_ylabel( m_poGnuplot, "Voltage" );
 
    delete [] px;
    delete [] py;

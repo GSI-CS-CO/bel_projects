@@ -36,7 +36,7 @@ static DAQ_ADMIN_T g_DaqAdmin;
 static inline uint32_t getInterruptPending( void )
 {
    uint32_t ip;
-   asm ("rcsr %0, ip": "=r"(ip));
+   asm volatile ("rcsr %0, ip": "=r"(ip));
    return ip;
 }
 
@@ -127,8 +127,8 @@ static inline bool forEachHiresChannel( DAQ_DEVICE_T* pDevice )
    for( unsigned int channelNr = 0;
         channelNr < daqDeviceGetMaxChannels( pDevice ); channelNr++ )
    {
-      if( executeIfRequested( &g_DaqAdmin ) )
-         return true;
+      //if( executeIfRequested( &g_DaqAdmin ) )
+      //   return true;
       handleHiresMode( daqDeviceGetChannelObject( pDevice, channelNr ) );
    }
    return false;
@@ -177,6 +177,10 @@ void forEachScuDevice( void )
    // TODO enable irq
 
    isIrq = true; //!!
+
+   uint32_t pending = getInterruptPending();
+   if( pending != 0 )
+      DBPRINT1( "DBG: pending: 0x%08x\n", pending );
 
    for( unsigned int deviceNr = 0;
        deviceNr < daqBusGetFoundDevices( &g_DaqAdmin.oDaqDevs ); deviceNr++ )

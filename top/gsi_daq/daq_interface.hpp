@@ -177,6 +177,11 @@ public:
 
    const std::string& getWbDevice( void ) const { return m_wbDevice; }
 
+   const std::string getScuDomainName( void )
+   {
+      return getWbDevice().substr( getWbDevice().find( '/' ) + 1 );
+   }
+
    const std::string getEbStatusString( void ) const
    {
       static_cast<const std::string>(::ebGetStatusString( m_poEbHandle ));

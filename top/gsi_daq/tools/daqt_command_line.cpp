@@ -330,6 +330,18 @@ vector<OPTION> CommandLine::c_optList =
       .m_shortOpt = 'v',
       .m_longOpt  = "verbose",
       .m_helpText = "Be verbose"
+   },
+   {
+      OPT_LAMBDA( poParser,
+      {
+         __SET_BOOL_ATTRIBUTE( m_zoomGnuPlot );
+         return 0;
+      }),
+      .m_hasArg   = OPTION::NO_ARG,
+      .m_id       = 0,
+      .m_shortOpt = 'z',
+      .m_longOpt  = "zoom",
+      .m_helpText = "Zooming of the Y-axis in GNUPLOT."
    }
 };
 

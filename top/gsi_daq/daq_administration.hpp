@@ -131,6 +131,7 @@ public:
       return m_pParent;
    }
    const std::string& getWbDevice( void );
+   const std::string getScuDomainName( void );
    const unsigned int getSlot( void );
    const unsigned int getDeviceNumber( void );
 
@@ -255,6 +256,8 @@ public:
    }
 
    const std::string& getWbDevice( void );
+
+   const std::string getScuDomainName( void );
 
    unsigned int readMacroVersion( void );
 
@@ -435,7 +438,8 @@ private:
                                      + 1 );
    }
 
-   void thread( unsigned int toSleep );
+   bool dataBlocksPresent( void );
+//   void thread( unsigned int toSleep );
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -445,6 +449,13 @@ private:
 inline const std::string& DaqDevice::getWbDevice( void )
 {
    return getParent()->getWbDevice();
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+inline const std::string DaqDevice::getScuDomainName( void )
+{
+   return getParent()->getScuDomainName();
 }
 
 /*! ---------------------------------------------------------------------------
@@ -585,6 +596,14 @@ inline const std::string& DaqChannel::getWbDevice( void )
 {
    return getParent()->getWbDevice();
 }
+
+/*! ---------------------------------------------------------------------------
+ */
+inline const std::string DaqChannel::getScuDomainName( void )
+{
+   return getParent()->getScuDomainName();
+}
+
 
 /*! ---------------------------------------------------------------------------
  */

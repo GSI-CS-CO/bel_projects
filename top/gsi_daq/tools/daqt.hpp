@@ -91,6 +91,7 @@ struct Attributes
    NumValue      m_triggerCondition;
    NumValue      m_blockLimit;
    BoolValue     m_restart;
+   BoolValue     m_zoomGnuPlot;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
