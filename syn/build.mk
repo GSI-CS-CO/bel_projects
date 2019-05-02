@@ -38,14 +38,14 @@ include $(INCPATH)/build_lm32.mk
 
 all:	$(TARGET).mif $(TARGET)_stub.mif $(TARGET).sof $(TARGET).jic $(TARGET).rpd
 
-$(TARGET)_shared_mmap.h:
-	@(printf %b $(SMM)) > $@
+$(TARGET)_shared_mmap.h: $(INCPATH)/shared_mmap.h.S
+	sed $(APPLY_CONFIG) $^ > $@
 
 buildid.c:
 	@(printf %b $(CBR)) > $@
 
-ram.ld:
-	@(printf %b $(LDS)) > $@
+ram.ld: $(INCPATH)/ram.ld.S
+	sed $(APPLY_CONFIG) $^ > $@
 
 $(PATHPKG)/ramsize_pkg.vhd:
 	@(printf %b $(PKG)) > $@
