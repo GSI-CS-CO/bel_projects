@@ -24,7 +24,7 @@ STUBS	?= $(STUBD)/stubs.c $(STUBD)/crt0.S
 INCLUDES  += 	$(INCPATH)/dbg.c $(INCPATH)/aux.c $(INCPATH)/irq.c $(INCPATH)/mini_sdb.c $(INCPATH)/mprintf.c \
 		$(W1)/dev/uart.c $(W1)/lib/usleep.c $(W1)/dev/devicelist.c $(W1)/dev/syscon.c $(W1)/pp_printf/printf.c \
 		$(W1)/sdb-lib/glue.c $(W1)/pp_printf/vsprintf-mini.c $(INCPATH)/sdb_add.S
-LDFLAGS		?= -nostdlib -T ram.ld -Wl,--defsym,_fstack=$$(($(RAM_SIZE)-4)) -lgcc -lc
+LDFLAGS		?= -nostdlib -T ram.ld -lgcc -lc
 
 ifndef RAM_SIZE
 $(error Missing mandatory RAM_SIZE parameter! Quitting ...)
