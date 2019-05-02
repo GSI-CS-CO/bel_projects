@@ -30,7 +30,7 @@ ifndef RAM_SIZE
 $(error Missing mandatory RAM_SIZE parameter! Quitting ...)
 endif
 
-.PHONY: ram.ld buildid.c $(PATHPKG)/ramsize_pkg.vhd $(TARGET)_shared_mmap.h
+.PRECIOUS: ram.ld buildid.c $(PATHPKG)/ramsize_pkg.vhd $(TARGET)_shared_mmap.h
 .PRECIOUS: $(TARGET).bin
 
 include $(INCPATH)/build_lm32.mk
