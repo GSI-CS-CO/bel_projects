@@ -45,4 +45,10 @@ SECTIONS
 	_fbss = .;
 	.bss : { *(.bss .bss.*) *(COMMON) } > ram
 	_ebss = .;
+
+	PROVIDE(mprintf = pp_printf);
+	PROVIDE(printf = pp_printf);
+	PROVIDE(sprintf = pp_sprintf);
+	PROVIDE(vprintf = pp_vprintf);
+	PROVIDE(vsprintf = pp_vsprintf);
 }
