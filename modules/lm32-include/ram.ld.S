@@ -13,24 +13,34 @@ SECTIONS
 	. = ORIGIN(ram);
 	_fstack = . + LENGTH(ram) - 4;
 
+	_fboot = .;
 	.boot :
 		{ *(.boot) } > ram
+	_eboot = .;
 
 	.buildid ADDR(.boot) + CONFIG_BOOTSIZE :
 		{ *(.buildid .buildid.*) } > ram
 
+	_fshared = .;
 	.shared ADDR(.buildid) + CONFIG_BUILDIDSIZE :
 		{ PROVIDE(_startshared = .); *(.shared .shared.*) } > ram
+	_eshared = .;
 
+	_ftext = .;
 	.text ADDR(.shared) + CONFIG_SHAREDSIZE :
 		{ *(.text .text.*) } > ram
+	_etext = .;
 
+	_frodata = .;
 	.rodata :
 		{ *(.rodata .rodata.*) } > ram
+	_erodata = .;
 
 
+	_fdata = .;
 	.data :
 		{ *(.data .data.*) } > ram
+	_edata = .;
 
 	_fbss = .;
 	.bss : { *(.bss .bss.*) *(COMMON) } > ram
