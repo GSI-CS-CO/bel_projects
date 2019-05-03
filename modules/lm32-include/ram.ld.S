@@ -5,13 +5,18 @@ MEMORY
 {
 	ram (rwx) :
 	ORIGIN = CONFIG_RAMADDR,
-	LENGTH = CONFIG_RAMSIZE
+	LENGTH = CONFIG_RAMSIZE - CONFIG_STACKSIZE
+	stack (rw) :
+	ORIGIN = CONFIG_RAMADDR + CONFIG_RAMSIZE - CONFIG_STACKSIZE,
+	LENGTH = CONFIG_STACKSIZE
 }
+
+_fstack = ORIGIN(stack) + LENGTH(stack) - 4;
+_endram = ORIGIN(stack);
 
 SECTIONS
 {
 	. = ORIGIN(ram);
-	_fstack = . + LENGTH(ram) - 4;
 
 	_fboot = .;
 	.boot :
