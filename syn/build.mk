@@ -65,7 +65,8 @@ prog:
 %_stub.elf:  ram.ld
 	$(CC) $(CFLAGS) -o $@ $^ $(STUBS) $(LDFLAGS)
 
-%.elf:	buildid.c ram.ld $(TARGET)_shared_mmap.h
+%.elf:	buildid.c $(TARGET)_shared_mmap.h
+	$(MAKE) ram.ld
 	$(CC) $(CFLAGS) -o $@ $^ $(STUBS) $(INCLUDES) $(LDFLAGS)
 
 %.bin:	%.elf
