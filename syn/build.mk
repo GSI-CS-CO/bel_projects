@@ -23,7 +23,7 @@ STUBD	?= $(TOP)/modules/lm32_stub
 STUBS	?= $(STUBD)/stubs.c $(STUBD)/crt0.S
 INCLUDES  += 	$(INCPATH)/dbg.c $(INCPATH)/aux.c $(INCPATH)/irq.c $(INCPATH)/mini_sdb.c \
 		$(W1)/dev/uart.c $(W1)/lib/usleep.c $(W1)/dev/devicelist.c $(W1)/dev/syscon.c $(W1)/pp_printf/printf.c \
-		$(W1)/sdb-lib/glue.c $(W1)/pp_printf/vsprintf-full.c $(W1)/pp_printf/div64.c $(INCPATH)/sdb_add.S
+		$(W1)/sdb-lib/glue.c $(W1)/pp_printf/vsprintf-full.c $(W1)/pp_printf/div64.c $(INCPATH)/sdb_add.c
 LDFLAGS		?= -nostdlib -T ram.ld -lgcc -lc
 
 ifndef RAM_SIZE
