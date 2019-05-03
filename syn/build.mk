@@ -23,11 +23,16 @@ STUBD	?= $(TOP)/modules/lm32_stub
 STUBS	?= $(STUBD)/stubs.c $(STUBD)/crt0.S
 INCLUDES  += 	$(INCPATH)/dbg.c $(INCPATH)/aux.c $(INCPATH)/irq.c $(INCPATH)/mini_sdb.c \
 		$(W1)/dev/uart.c $(W1)/lib/usleep.c $(W1)/dev/devicelist.c $(W1)/dev/syscon.c $(W1)/pp_printf/printf.c \
-		$(W1)/sdb-lib/glue.c $(W1)/pp_printf/vsprintf-full.c $(W1)/pp_printf/div64.c $(INCPATH)/sdb_add.c
+		$(W1)/sdb-lib/glue.c $(W1)/pp_printf/vsprintf-full.c $(W1)/pp_printf/div64.c $(INCPATH)/sdb_add.c \
+		$(INCPATH)/assert.c $(INCPATH)/stack-check.c
 LDFLAGS		?= -nostdlib -T ram.ld -lgcc -lc
 
 ifndef RAM_SIZE
 $(error Missing mandatory RAM_SIZE parameter! Quitting ...)
+endif
+
+ifndef CONFIG_NO_ASSERT
+	CFLAGS += -DCONFIG_ASSERT
 endif
 
 .PRECIOUS: ram.ld buildid.c $(PATHPKG)/ramsize_pkg.vhd $(TARGET)_shared_mmap.h
