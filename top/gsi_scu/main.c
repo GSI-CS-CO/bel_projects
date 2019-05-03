@@ -3,6 +3,7 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
+#include <stack.h>
 
 #include "syscon.h"
 #include "hw/memlayout.h"
@@ -1293,6 +1294,7 @@ int main(void) {
   task_ptr = tsk_getConfig();             // get a pointer to the task configuration
 
   while(1) {
+    check_stack();
     tick = getSysTime(); /* FIXME get the current system tick */
 
     // loop through all task: if interval is 0, run every time, otherwise obey interval
