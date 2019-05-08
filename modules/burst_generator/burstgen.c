@@ -703,6 +703,7 @@ void initSharedBuffers()
       (uint32_t)pSharedInput, (uint32_t)(pCpuRamExternal + ((SHARED_INPUT + SHARED_OFFS) >> 2)));
   mprintf("\n");
 
+  *pShared = BG_FW_ID; // label the starting point of the shared memory with the firmware id
   *pSharedCmd = 0x0;  // initalize command value: 0x0 means 'no command'
 }
 

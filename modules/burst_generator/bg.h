@@ -32,8 +32,11 @@ extern uint32_t*       _startshared[];
 #define ECACHANNELFORLM32 2     // the id of an ECA channel for embedded CPU
 
 /* definitions of buffers in shared memory */
-#define SHARED_CMD        0x00UL
+#define SHARED_CMD        0x08UL
 #define SHARED_INPUT      0x10UL
+
+/* id number to identify the LM32 firmware for burst generator */
+#define BG_FW_ID          0xb2b2b2b2UL
 
 #define CMD_SHOW_ALL      0x1UL
 #define CMD_GET_PARAM     0x2UL
