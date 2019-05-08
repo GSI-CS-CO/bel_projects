@@ -92,21 +92,50 @@ void Attributes::set( const Attributes& rMyContainer )
 }
 
 ///////////////////////////////////////////////////////////////////////////////
+Channel::Mode::Mode( Channel* pParent, std::size_t size, std::string text )
+   :m_pParent( pParent )
+   ,m_size( size )
+   ,m_text( text )
+{
+   m_poPoint = new Point[m_size];
+}
+
+/*-----------------------------------------------------------------------------
+ */
+Channel::Mode::~Mode( void )
+{
+   delete m_poPoint;
+}
+
+/*-----------------------------------------------------------------------------
+ */
+void Channel::Mode::plot( void )
+{
+   for( std::size_t i = 0; i < m_size; i++ )
+      m_pParent->m_oPlot << m_poPoint[i].m_x << ' '
+                         << m_poPoint[i].m_y << endl;
+
+   m_pParent->m_oPlot << 'e' << endl;
+}
+
 /*-----------------------------------------------------------------------------
  */
 Channel::Channel( unsigned int number )
    :DaqChannel( number )
-   ,m_poGnuplot( nullptr )
+   ,m_oPlot( "-noraise" )
+   ,m_poModeContinuous( nullptr )
+   ,m_poModePmHires( nullptr )
 {
-   m_poGnuplot = ::gnuplot_init();
 }
 
 /*-----------------------------------------------------------------------------
  */
 Channel::~Channel( void )
 {
-   if( m_poGnuplot != nullptr )
-      ::gnuplot_close( m_poGnuplot );
+   if( m_poModeContinuous != nullptr )
+      delete m_poModeContinuous;
+   if( m_poModePmHires != nullptr )
+      delete m_poModePmHires;
 }
 
 /*-----------------------------------------------------------------------------
@@ -133,60 +162,57 @@ void Channel::sendAttributes( void )
  */
 void Channel::start( void )
 {
-   if( m_poGnuplot != nullptr )
-   {
-      ::gnuplot_cmd( m_poGnuplot, "set grid" );
-      ::gnuplot_setstyle( m_poGnuplot, "lines" );
-      if( !m_oAttributes.m_zoomGnuPlot.m_value )
-         ::gnuplot_cmd( m_poGnuplot, "set yrange [-10.0:10.0]" );
-   }
+   m_oPlot << "set terminal X11 title \"SCU: " << getScuDomainName()
+           << "\"" << endl;
+
+   m_oPlot << "set grid" << endl;
+   m_oPlot << "set xlabel \"Time\"" << endl;
+   m_oPlot << "set ylabel \"Voltage\"" << endl;
+
+   if( !m_oAttributes.m_zoomGnuPlot.m_value )
+       m_oPlot << "set yrange ["
+               << -(DAQ_VSS_MAX/2) << ':' << (DAQ_VSS_MAX/2) << ']' << endl;
 
    if( m_oAttributes.m_continueMode.m_valid )
+   {
+      m_poModeContinuous =
+         new Mode( this,
+                   DaqInterface::c_contineousPayloadLen,
+                   "Continuous" );
       sendEnableContineous( m_oAttributes.m_continueMode.m_value,
                             m_oAttributes.m_blockLimit.m_value );
+   }
 
    if( m_oAttributes.m_highResolution.m_valid )
+   {
+      m_poModePmHires =
+         new Mode( this,
+                   DaqInterface::c_pmHiresPayloadLen,
+                   "High Resolution" );
       sendEnableHighResolution( m_oAttributes.m_restart.m_value );
+   }
    else if( m_oAttributes.m_postMortem.m_valid )
+   {
+      m_poModePmHires =
+         new Mode( this,
+                   DaqInterface::c_pmHiresPayloadLen,
+                   "Post Mortem" );
       sendEnablePostMortem( m_oAttributes.m_restart.m_value );
+   }
 }
 
 /*! ---------------------------------------------------------------------------
  */
 bool Channel::onDataBlock( DAQ_DATA_T* pData, std::size_t wordLen )
 {
+   m_oPlot <<  "set xrange [0:" << wordLen << "]" << endl;
+
+   m_oPlot << "plot '-' title \"Slot: " << getSlot()
+           << ", Channel: " << getNumber()
+           << "\" with lines" << endl;
    for( int i = 0; i < wordLen; i++ )
-      cout << i << ": " << pData[i] << "\n";
-   cout << flush;
-
-   if( m_poGnuplot == nullptr )
-      return true;
-
-   double* px = new double[wordLen];
-   double* py = new double[wordLen];
-
-   for( std::size_t i = 0; i < wordLen; i++ )
-   {
-      px[i] = static_cast<double>(i);
-      py[i] = rawToVoltage( pData[i] );
-   }
-
-   ::gnuplot_cmd( m_poGnuplot, "set xrange [0:%d]", wordLen );
-
-   ::gnuplot_resetplot( m_poGnuplot );
-
-   string legende = "SCU: ";
-   legende += getScuDomainName();
-   legende += "; Slot: ";
-   legende += to_string(getSlot());
-   legende += "; Channel: ";
-   legende += to_string(getNumber());
-   ::gnuplot_plot_xy(m_poGnuplot, px, py, wordLen, legende.c_str() );
-   ::gnuplot_set_xlabel( m_poGnuplot, "Time" );
-   ::gnuplot_set_ylabel( m_poGnuplot, "Voltage" );
-
-   delete [] px;
-   delete [] py;
+      m_oPlot << static_cast<double>(i) << ' ' << rawToVoltage( pData[i] ) << endl;
+   m_oPlot << 'e' << endl;
    return false;
 }
 

@@ -28,7 +28,8 @@
 #include <stdlib.h>
 #include <daq_administration.hpp>
 #include <string>
-#include "gnuplot_i.h"
+#include <gnuplotstream.hpp>
+//#include "gnuplot_i.h"
 
 namespace daqt
 {
@@ -131,8 +132,33 @@ class Channel: public DaqChannel
    friend class  CommandLine;
    friend class  DaqContainer;
 
-   Attributes    m_oAttributes;
-   gnuplot_ctrl* m_poGnuplot;
+   class Mode
+   {
+      friend class Channel;
+      struct Point
+      {
+         double m_x;
+         double m_y;
+         Point( void ): m_x(0.0), m_y(0.0) {}
+      };
+
+      Channel*          m_pParent;
+      std::size_t       m_size;
+      Point*            m_poPoint;
+      const std::string m_text;
+
+   public:
+      Mode( Channel* pParent,
+            std::size_t size,
+            std::string text );
+      ~Mode( void );
+      void plot( void );
+   };
+
+   Attributes        m_oAttributes;
+   gpstr::PlotStream m_oPlot;
+   Mode*             m_poModeContinuous;
+   Mode*             m_poModePmHires;
 
 public:
    Channel( unsigned int number );
