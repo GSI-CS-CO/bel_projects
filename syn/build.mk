@@ -15,21 +15,27 @@ EBPATH  := $(TOP)/ip_cores/etherbone-core/hdl/eb_master_core
 W1    	:= $(TOP)/ip_cores/wrpc-sw
 USRCPUCLK	?= 62500
 CFLAGS	+= 	-mmultiply-enabled -mbarrel-shift-enabled -Os -DUSRCPUCLK=$(USRCPUCLK) -I$(INCPATH) -I$(W1)/include \
-		-I$(W1)/sdb-lib -I$(W1)/pp_printf -I$(EBPATH) -std=gnu99 -DCONFIG_WR_NODE -DCONFIG_PRINT_BUFSIZE=128 -DSDBFS_BIG_ENDIAN
+		-I$(W1)/sdb-lib -I$(W1)/pp_printf -I$(EBPATH) -std=gnu99 -DCONFIG_WR_NODE -DCONFIG_PRINT_BUFSIZE=128 -DCONFIG_PRINTF_64BIT -DSDBFS_BIG_ENDIAN
 
+CFLAGS += -ffunction-sections -fdata-sections -Wl,--gc-sections
 
 STUBD	?= $(TOP)/modules/lm32_stub
 STUBS	?= $(STUBD)/stubs.c $(STUBD)/crt0.S
-INCLUDES  += 	$(INCPATH)/dbg.c $(INCPATH)/aux.c $(INCPATH)/irq.c $(INCPATH)/mini_sdb.c $(INCPATH)/mprintf.c \
+INCLUDES  += 	$(INCPATH)/dbg.c $(INCPATH)/aux.c $(INCPATH)/irq.c $(INCPATH)/mini_sdb.c \
 		$(W1)/dev/uart.c $(W1)/lib/usleep.c $(W1)/dev/devicelist.c $(W1)/dev/syscon.c $(W1)/pp_printf/printf.c \
-		$(W1)/sdb-lib/glue.c $(W1)/pp_printf/vsprintf-mini.c $(INCPATH)/sdb_add.S
-LDFLAGS		?= -nostdlib -T ram.ld -Wl,--defsym,_fstack=$$(($(RAM_SIZE)-4)) -lgcc -lc
+		$(W1)/sdb-lib/glue.c $(W1)/pp_printf/vsprintf-full.c $(W1)/pp_printf/div64.c $(INCPATH)/sdb_add.c \
+		$(INCPATH)/assert.c $(INCPATH)/stack-check.c
+LDFLAGS		?= -nostdlib -T ram.ld -lgcc -lc
 
 ifndef RAM_SIZE
 $(error Missing mandatory RAM_SIZE parameter! Quitting ...)
 endif
 
-.PHONY: ram.ld buildid.c $(PATHPKG)/ramsize_pkg.vhd $(TARGET)_shared_mmap.h
+ifndef CONFIG_NO_ASSERT
+	CFLAGS += -DCONFIG_ASSERT
+endif
+
+.PRECIOUS: ram.ld buildid.c $(PATHPKG)/ramsize_pkg.vhd $(TARGET)_shared_mmap.h
 .PRECIOUS: $(TARGET).bin
 
 include $(INCPATH)/build_lm32.mk
@@ -37,14 +43,14 @@ include $(INCPATH)/build_lm32.mk
 
 all:	$(TARGET).mif $(TARGET)_stub.mif $(TARGET).sof $(TARGET).jic $(TARGET).rpd
 
-$(TARGET)_shared_mmap.h:
-	@(printf %b $(SMM)) > $@
+$(TARGET)_shared_mmap.h: $(INCPATH)/shared_mmap.h.S
+	sed $(APPLY_CONFIG) $^ > $@
 
 buildid.c:
 	@(printf %b $(CBR)) > $@
 
-ram.ld:
-	@(printf %b $(LDS)) > $@
+ram.ld: $(INCPATH)/ram.ld.S
+	sed $(APPLY_CONFIG) $^ > $@
 
 $(PATHPKG)/ramsize_pkg.vhd:
 	@(printf %b $(PKG)) > $@
@@ -64,7 +70,8 @@ prog:
 %_stub.elf:  ram.ld
 	$(CC) $(CFLAGS) -o $@ $^ $(STUBS) $(LDFLAGS)
 
-%.elf:	buildid.c ram.ld $(TARGET)_shared_mmap.h
+%.elf:	buildid.c $(TARGET)_shared_mmap.h
+	$(MAKE) ram.ld
 	$(CC) $(CFLAGS) -o $@ $^ $(STUBS) $(INCLUDES) $(LDFLAGS)
 
 %.bin:	%.elf
@@ -74,6 +81,7 @@ prog:
 	$(GENRAMMIF) $< $(RAM_SIZE) > $@
 
 %.sof:	%.qsf %.mif $(PATHPKG)/ramsize_pkg.vhd 
+	mv $*.qsf $*.qsf-tmp; sort $*.qsf-tmp > $*.qsf; rm $*.qsf-tmp
 	$(HDLMAKE) makefile -f hdlmake.mk ; make -f hdlmake.mk project
 	find $(TOP) -name Manifest.py > $*.dep
 	sed -n -e 's/"//g;s/quartus_sh://;s/set_global_assignment.*-name.*_FILE //p' < $< >> $*.dep

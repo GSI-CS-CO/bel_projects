@@ -3,6 +3,7 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
+#include <stack.h>
 
 #include "syscon.h"
 #include "hw/memlayout.h"
@@ -1293,26 +1294,20 @@ int main(void) {
   task_ptr = tsk_getConfig();             // get a pointer to the task configuration
 
   while(1) {
+    check_stack();
     tick = getSysTime(); /* FIXME get the current system tick */
 
-    // loop through all task. first, run all continuous tasks. then, if the number of ticks
-    // since the last time the task was run is greater than or equal to the task interval, execute the task
+    // loop through all task: if interval is 0, run every time, otherwise obey interval
     for(taskIndex = 0; taskIndex < numTasks; taskIndex++) {
 
       // call the dispatch task before every other task
       dispatch(numTasks);
 
-      if (task_ptr[taskIndex].interval == 0) {
-        // run contiuous tasks
-        (*task_ptr[taskIndex].func)(taskIndex);
-
-      } else if ((tick - task_ptr[taskIndex].lasttick) >= task_ptr[taskIndex].interval) {
+      if ((tick - task_ptr[taskIndex].lasttick) >= task_ptr[taskIndex].interval) {
         // run task
         (*task_ptr[taskIndex].func)(taskIndex);
         task_ptr[taskIndex].lasttick = tick; // save last tick the task was ran
-
       }
-
     }
   }
 
