@@ -52,63 +52,98 @@
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
+use ieee.math_real.all;
+
 
 library work;
 use work.wishbone_pkg.all;
 use work.wb_arria_reset_pkg.all;
+use work.aux_functions_pkg.all;
 
 entity wb_arria_reset is
   generic (
-            arria_family: string := "Arria II";
-            rst_channels: integer range 1 to 32 := 2
-          );
+    arria_family : string := "Arria II";
+    rst_channels : integer range 1 to 32 := 2;
+    clk_in_hz    : integer;
+    en_wd_tmr    : boolean
+  );
   port (
-          clk_sys_i:  in std_logic;
-          rstn_sys_i: in std_logic;
-          clk_upd_i:  in std_logic;
-          rstn_upd_i: in std_logic;
-          
-          hw_version: in std_logic_vector(31 downto 0);
-          
-          slave_o:    out t_wishbone_slave_out;
-          slave_i:    in t_wishbone_slave_in;
-           
-          rstn_o:     out std_logic_vector(rst_channels-1 downto 0)
-      );
+    clk_sys_i  : in std_logic;
+    rstn_sys_i : in std_logic;
+    clk_upd_i  : in std_logic;
+    rstn_upd_i : in std_logic;
+
+    hw_version : in std_logic_vector(31 downto 0);
+
+    slave_o    : out t_wishbone_slave_out;
+    slave_i    : in t_wishbone_slave_in;
+
+    rstn_o     : out std_logic_vector(rst_channels-1 downto 0)
+  );
 end entity;
 
 
 architecture wb_arria_reset_arch of wb_arria_reset is
-  signal reset_reg: std_logic_vector(31 downto 0);
-  signal reset : std_logic;
+  signal reset_reg        : std_logic_vector(31 downto 0);
+  signal reset            : std_logic;
+  signal en_1ms           : std_logic;
+  signal trigger_reconfig : std_logic;
+  signal halt_wd          : std_logic;
+  constant cnt_value      : integer := 1000 * 60 * 10; -- 10 min with 1ms granularity
+  constant cnt_width      : integer := integer(ceil(log2(real(cnt_value)))) + 1;
 begin
   
   reset <= not rstn_upd_i;
   
   ruc_gen_a2 : if arria_family = "Arria II" generate
     arria_reset_inst : arria_reset PORT MAP (
-      clock	      => clk_upd_i,
-      param	      => "000",
-      read_param	=> '0',
-      reconfig	  => reset_reg(0),
-      reset	      => reset,
-      reset_timer	=> '0',
-      busy	      => open,
-      data_out	  => open
+      clock       => clk_upd_i,
+      param       => "000",
+      read_param  => '0',
+      reconfig    => reset_reg(0) or trigger_reconfig,
+      reset       => reset,
+      reset_timer => '0',
+      busy        => open,
+      data_out    => open
     );
   end generate;
   
   ruc_gen_a5 : if arria_family = "Arria V" generate
     arria5_reset_inst : arria5_reset PORT MAP (
-      clock	      => clk_upd_i,
-      param	      => "000",
-      read_param	=> '0',
-      reconfig	  => reset_reg(0),
-      reset	      => reset,
-      reset_timer	=> '0',
-      busy	      => open,
-      data_out	  => open
+      clock       => clk_upd_i,
+      param       => "000",
+      read_param  => '0',
+      reconfig    => reset_reg(0) or trigger_reconfig,
+      reset       => reset,
+      reset_timer => '0',
+      busy        => open,
+      data_out    => open
     );
+  end generate;
+
+  gen_wd: if en_wd_tmr = true generate
+    wd_div : div_n generic map (
+      n => (clk_in_hz / 1000) + 2 -- 1ms
+    )
+    port map (
+      res => reset,
+      clk => clk_sys_i,
+      ena => '1',
+      div_o => en_1ms
+    );
+
+    wd_cnt : process(clk_sys_i)
+      variable cnt : unsigned(cnt_width-1 downto 0) := to_unsigned(cnt_value, cnt_width);
+    begin
+      if rising_edge(clk_sys_i) then
+        if en_1ms = '1' and halt_wd = '0' then
+          cnt := cnt - 1;
+        end if;
+        if cnt(cnt'high) = '1' then
+          trigger_reconfig <= '1';
+        end if;
+      end if;
+    end process;
   end generate;
   
   rst_out_gen: for i in 0 to rst_channels-1 generate
@@ -131,9 +166,16 @@ begin
         if slave_i.cyc = '1' and slave_i.stb = '1' and slave_i.sel(0) = '1' then
           if(slave_i.we = '1') then
             case to_integer(unsigned(slave_i.adr(3 downto 2))) is
-              when 0 => if(slave_i.dat = x"DEADBEEF") then
-                reset_reg(0) <= '1';
-							end if;
+              when 0 =>
+                if(slave_i.dat = x"DEADBEEF") then
+                  reset_reg(0) <= '1';
+                end if;
+
+              when 1 =>
+                -- disable the watchdog
+                if(slave_i.dat = x"CAFEBABE") then
+                  halt_wd <= '1';
+                end if;
               when 2 => reset_reg(reset_reg'left downto 1) <= reset_reg(reset_reg'left downto 1) OR slave_i.dat(reset_reg'left-1 downto 0);
               when 3 => reset_reg(reset_reg'left downto 1) <= reset_reg(reset_reg'left downto 1) AND NOT slave_i.dat(reset_reg'left-1 downto 0);
               when others => null;
