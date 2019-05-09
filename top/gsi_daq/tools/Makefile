@@ -5,8 +5,8 @@ MIAN_MODULE := daqt.cpp
 
 SOURCE += parse_opts.cpp
 SOURCE += daqt_command_line.cpp
-SOURCE += gnuplot_i.c
-SOURCE += daqt_gnuplot.cpp
+SOURCE += gnuplotstream.cpp
+SOURCE += find_process.c
 
 SOURCE += $(SCU_LIB_SRC_DIR)/scu_ddr3.c
 SOURCE += $(DAQ_DIR)/daq_ramBuffer.c
@@ -17,7 +17,7 @@ SOURCE += $(DAQ_DIR)/scu_eb_interface.cpp
 
 
 DEFINES += _BSD_SOURCE
-
+DEFINES += _POSIX_C_SOURCE
 DEFINES += CONFIG_SCU_USE_DDR3
 #DEFINES += DEBUGLEVEL=1
 DEFINES += CONFIG_DAQ_TEST

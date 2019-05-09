@@ -29,7 +29,6 @@
 #include <daq_administration.hpp>
 #include <string>
 #include <gnuplotstream.hpp>
-//#include "gnuplot_i.h"
 
 namespace daqt
 {
@@ -76,8 +75,12 @@ struct Attributes
       }
    };
 
+   struct NumValue: public Value<unsigned int>
+   {
+      NumValue( void ) { m_value = 0; }
+   };
+
    typedef Value<bool>              BoolValue;
-   typedef Value<unsigned int>      NumValue;
    typedef Value<DAQ_SAMPLE_RATE_T> SampleValue;
 
    void set( const Attributes& rMyContainer );

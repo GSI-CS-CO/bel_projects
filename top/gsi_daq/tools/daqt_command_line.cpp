@@ -22,6 +22,8 @@
  * License along with this library. If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************
  */
+#include <find_process.h>
+#include <unistd.h>
 #include "daqt_command_line.hpp"
 
 using namespace daqt;
@@ -156,7 +158,7 @@ vector<OPTION> CommandLine::c_optList =
          ERROR_MESSAGE( "Wrong sample parameter: \"" <<
                         poParser->getOptArg() << "\"\n"
                         "Known values: "
-                        CONTINUE_1MS ", " CONTINUE_100US ", or "
+                        CONTINUE_1MS ", " CONTINUE_100US " or "
                         CONTINUE_10US );
          return -1;
       }),
@@ -436,11 +438,55 @@ Attributes* CommandLine::getAttributesToSet( void )
    return &m_poAllDaq->m_oAttributes;
 }
 
+/*! ----------------------------------------------------------------------------
+ * @brief Callback function of findProcesses in CommandLine::onArgument
+ */
+extern "C" {
+static int onFoundProcess( OFP_ARG_T* pArg )
+{  /*
+    * Checking whether the found process is himself.
+    */
+   if( pArg->pid == ::getpid() )
+      return 0; // Process has found himself.
+
+   string* pEbTarget = static_cast<string*>(pArg->pUser);
+   const char* currentArg = reinterpret_cast<char*>(pArg->commandLine.buffer);
+
+   /*
+    * Skipping over the program name from the concurrent process command line.
+    */
+   currentArg += ::strlen( currentArg ) + 1;
+
+   for( ::size_t i = 1; i < pArg->commandLine.argc; i++ )
+   {
+      if( *currentArg != '-' )
+         break;
+      /*
+       * Skipping over possibly leading options from the concurrent
+       * process command line.
+       */
+      currentArg += ::strlen( currentArg ) + 1;
+   }
+
+   if( pEbTarget->compare( currentArg ) != 0 )
+   { /*
+      * Concurrent processes accessing to different EB-targets are allowed.
+      */
+      return 0;
+   }
+
+   ERROR_MESSAGE( "A concurrent process accessing \"" << *pEbTarget <<
+                  "\" is already running with the PID: " << pArg->pid );
+
+   return -1;
+}
+} // extern "C"
+
 /*! ---------------------------------------------------------------------------
 */
 int CommandLine::onArgument( void )
 {
-   const string arg = getArgVect()[getArgIndex()];
+   string arg = getArgVect()[getArgIndex()];
    unsigned int number;
    switch( m_state )
    {
@@ -458,6 +504,14 @@ int CommandLine::onArgument( void )
       case READ_EB_NAME:
       {
          SCU_ASSERT( m_poAllDaq == nullptr );
+#if 1
+         if( ::findProcesses( getProgramName().c_str(),
+                              ::onFoundProcess, &arg,
+                              static_cast<FPROC_MODE_T>
+                                 (FPROC_BASENAME | FPROC_RLINK) )
+             < 0 )
+            return -1;
+#endif
          m_poAllDaq = new DaqContainer( arg, this );
          FSM_TRANSITION( READ_SLOT );
          break;
