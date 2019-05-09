@@ -1,219 +1,180 @@
-set_global_assignment -name FAMILY "Arria II GX"
+
+
+
+set_global_assignment -name ACTIVE_SERIAL_CLOCK FREQ_40MHZ
+set_global_assignment -name ADV_NETLIST_OPT_SYNTH_WYSIWYG_REMAP ON
+set_global_assignment -name AHDL_FILE ../../modules/modulbus/i2c.tdf
+set_global_assignment -name ALLOW_POWER_UP_DONT_CARE ON
+set_global_assignment -name AUTO_RESTART_CONFIGURATION OFF
+set_global_assignment -name CONFIGURATION_VCCIO_LEVEL 3.3V
+set_global_assignment -name CYCLONEII_RESERVE_NCEO_AFTER_CONFIGURATION "USE AS PROGRAMMING PIN"
 set_global_assignment -name DEVICE ep2agx125df25c5
-set_global_assignment -name ORIGINAL_QUARTUS_VERSION 11.1
-set_global_assignment -name PROJECT_CREATION_TIME_DATE "09:36:27 JUNE 18, 2012"
-set_global_assignment -name LAST_QUARTUS_VERSION 16.0.2
-set_global_assignment -name MIN_CORE_JUNCTION_TEMP 0
-set_global_assignment -name MAX_CORE_JUNCTION_TEMP 85
-set_global_assignment -name ERROR_CHECK_FREQUENCY_DIVISOR 2
-set_global_assignment -name EDA_SIMULATION_TOOL "ModelSim-Altera (VHDL)"
+set_global_assignment -name DEVICE_FILTER_PACKAGE FBGA
+set_global_assignment -name DEVICE_FILTER_PIN_COUNT 572
+set_global_assignment -name DEVICE_FILTER_SPEED_GRADE 5
 set_global_assignment -name EDA_OUTPUT_DATA_FORMAT VHDL -section_id eda_simulation
+set_global_assignment -name EDA_SIMULATION_TOOL "ModelSim-Altera (VHDL)"
+set_global_assignment -name ENABLE_DRC_SETTINGS ON
+set_global_assignment -name ENABLE_SIGNALTAP ON
+set_global_assignment -name ERROR_CHECK_FREQUENCY_DIVISOR 2
+set_global_assignment -name FAMILY "Arria II GX"
+set_global_assignment -name FITTER_EARLY_TIMING_ESTIMATE_MODE PESSIMISTIC
+set_global_assignment -name FITTER_EFFORT "STANDARD FIT"
+set_global_assignment -name FLOW_ENABLE_RTL_VIEWER ON
 set_global_assignment -name IOBANK_VCCIO 2.5V -section_id 3A
 set_global_assignment -name IOBANK_VCCIO 2.5V -section_id 6A
 set_global_assignment -name IOBANK_VCCIO 3.3V -section_id 4A
 set_global_assignment -name IOBANK_VCCIO 3.3V -section_id 5A
 set_global_assignment -name IOBANK_VCCIO 3.3V -section_id 7A
 set_global_assignment -name IOBANK_VCCIO 3.3V -section_id 8A
-set_location_assignment PIN_Y13 -to clk_fpga
-set_location_assignment PIN_AC3 -to EIO[2]
-set_location_assignment PIN_Y4 -to EIO[8]
-set_location_assignment PIN_V5 -to EIO[10]
-set_location_assignment PIN_V7 -to EIO[13]
-set_location_assignment PIN_AB5 -to EIO[16]
-set_location_assignment PIN_AD5 -to EIO[17]
-set_location_assignment PIN_AD4 -to EIO[15]
-set_location_assignment PIN_AA5 -to EIO[14]
-set_location_assignment PIN_V4 -to EIO[12]
-set_location_assignment PIN_AC4 -to EIO[4]
-set_location_assignment PIN_W4 -to EIO[6]
-set_location_assignment PIN_AA4 -to EIO[7]
-set_location_assignment PIN_AB4 -to EIO[9]
-set_location_assignment PIN_V6 -to EIO[11]
-set_location_assignment PIN_U6 -to EIO[5]
-set_location_assignment PIN_T6 -to EIO[3]
-set_location_assignment PIN_AD3 -to EIO[1]
-set_location_assignment PIN_P7 -to EIO[0]
-set_location_assignment PIN_AB7 -to nExtension_Res_Out
-set_location_assignment PIN_AD7 -to GP_Ext_In
-set_location_assignment PIN_AC18 -to IO_2_5V[4]
-set_location_assignment PIN_AA18 -to IO_2_5V[1]
-set_location_assignment PIN_AB18 -to IO_2_5V[3]
-set_location_assignment PIN_AC21 -to IO_2_5V[11]
-set_location_assignment PIN_AD20 -to IO_2_5V[8]
-set_location_assignment PIN_AB21 -to IO_2_5V[9]
-set_location_assignment PIN_AD21 -to IO_2_5V[10]
-set_location_assignment PIN_AB19 -to IO_2_5V[6]
-set_location_assignment PIN_U16 -to IO_2_5V[5]
-set_location_assignment PIN_AA20 -to IO_2_5V[12]
-set_location_assignment PIN_V16 -to IO_2_5V[7]
-set_location_assignment PIN_AB20 -to IO_2_5V[14]
-set_location_assignment PIN_W15 -to IO_2_5V[0]
-set_location_assignment PIN_AB17 -to IO_2_5V[2]
-set_location_assignment PIN_W16 -to IO_2_5V[13]
-set_location_assignment PIN_Y16 -to IO_2_5V[15]
-set_location_assignment IOBANK_3A -to IO_2_5V
-set_location_assignment PIN_V3 -to A_A[15]
-set_location_assignment PIN_AA3 -to A_A[14]
-set_location_assignment PIN_AB3 -to A_A[13]
-set_location_assignment PIN_W2 -to A_A[12]
-set_location_assignment PIN_W3 -to A_A[11]
-set_location_assignment PIN_T5 -to A_A[10]
-set_location_assignment PIN_AB1 -to A_A[9]
-set_location_assignment PIN_T2 -to A_A[8]
-set_location_assignment PIN_AB2 -to A_A[7]
-set_location_assignment PIN_R6 -to A_A[6]
-set_location_assignment PIN_AC1 -to A_A[5]
-set_location_assignment PIN_AA1 -to A_A[4]
-set_location_assignment PIN_R5 -to A_A[3]
-set_location_assignment PIN_Y3 -to A_A[2]
-set_location_assignment PIN_T3 -to A_A[1]
-set_location_assignment PIN_T4 -to A_A[0]
-set_location_assignment PIN_W12 -to A_D[15]
-set_location_assignment PIN_AD12 -to A_D[14]
-set_location_assignment PIN_V12 -to A_D[13]
-set_location_assignment PIN_AD11 -to A_D[12]
-set_location_assignment PIN_AB11 -to A_D[11]
-set_location_assignment PIN_AA12 -to A_D[10]
-set_location_assignment PIN_AA11 -to A_D[9]
-set_location_assignment PIN_Y12 -to A_D[8]
-set_location_assignment PIN_W11 -to A_D[7]
-set_location_assignment PIN_AD10 -to A_D[6]
-set_location_assignment PIN_V11 -to A_D[5]
-set_location_assignment PIN_AD9 -to A_D[4]
-set_location_assignment PIN_AB10 -to A_D[3]
-set_location_assignment PIN_AC9 -to A_D[2]
-set_location_assignment PIN_AA10 -to A_D[1]
-set_location_assignment PIN_AB9 -to A_D[0]
-set_location_assignment PIN_E13 -to A_TA[15]
-set_location_assignment PIN_A12 -to A_TA[14]
-set_location_assignment PIN_D13 -to A_TA[13]
-set_location_assignment PIN_A11 -to A_TA[12]
-set_location_assignment PIN_B13 -to A_TA[11]
-set_location_assignment PIN_G13 -to A_TA[10]
-set_location_assignment PIN_A13 -to A_TA[9]
-set_location_assignment PIN_F13 -to A_TA[8]
-set_location_assignment PIN_D14 -to A_TA[7]
-set_location_assignment PIN_B15 -to A_TA[6]
-set_location_assignment PIN_C13 -to A_TA[5]
-set_location_assignment PIN_A14 -to A_TA[4]
-set_location_assignment PIN_D15 -to A_TA[3]
-set_location_assignment PIN_G14 -to A_TA[2]
-set_location_assignment PIN_C15 -to A_TA[1]
-set_location_assignment PIN_F14 -to A_TA[0]
-set_location_assignment PIN_C9 -to A_TB[15]
-set_location_assignment PIN_G11 -to A_TB[14]
-set_location_assignment PIN_G10 -to A_TB[13]
-set_location_assignment PIN_B6 -to A_TB[12]
-set_location_assignment PIN_B10 -to A_TB[11]
-set_location_assignment PIN_A3 -to A_TB[10]
-set_location_assignment PIN_B7 -to A_TB[9]
-set_location_assignment PIN_A10 -to A_TB[8]
-set_location_assignment PIN_F10 -to A_TB[7]
-set_location_assignment PIN_A6 -to A_TB[6]
-set_location_assignment PIN_D8 -to A_TB[5]
-set_location_assignment PIN_A2 -to A_TB[4]
-set_location_assignment PIN_E10 -to A_TB[3]
-set_location_assignment PIN_C7 -to A_TB[2]
-set_location_assignment PIN_A4 -to A_TB[1]
-set_location_assignment PIN_B3 -to A_TB[0]
-set_location_assignment PIN_AA15 -to A_nLED[15]
-set_location_assignment PIN_Y15 -to A_nLED[13]
-set_location_assignment PIN_AB14 -to A_nLED[12]
-set_location_assignment PIN_AC15 -to A_nLED[11]
-set_location_assignment PIN_AA14 -to A_nLED[10]
-set_location_assignment PIN_AB15 -to A_nLED[9]
-set_location_assignment PIN_J5 -to A_nLED[8]
-set_location_assignment PIN_G1 -to A_nLED[7]
-set_location_assignment PIN_J6 -to A_nLED[6]
-set_location_assignment PIN_G2 -to A_nLED[5]
-set_location_assignment PIN_F1 -to A_nLED[4]
-set_location_assignment PIN_H3 -to A_nLED[3]
-set_location_assignment PIN_E1 -to A_nLED[2]
-set_location_assignment PIN_H4 -to A_nLED[1]
-set_location_assignment PIN_H6 -to A_nLED[0]
-set_location_assignment PIN_E12 -to A_SEL[3]
-set_location_assignment PIN_C12 -to A_SEL[2]
-set_location_assignment PIN_D12 -to A_SEL[1]
-set_location_assignment PIN_B12 -to A_SEL[0]
-set_location_assignment PIN_AD8 -to A_nDtack
-set_location_assignment PIN_W9 -to A_nSRQ
-set_location_assignment PIN_AB8 -to A_nSel_Ext_Data_Drv
-set_location_assignment PIN_AA7 -to A_Ext_Data_RD
-set_location_assignment PIN_AA8 -to A_nADR_EN
-set_location_assignment PIN_V9 -to A_nADR_SCUB
-set_location_assignment PIN_AD6 -to A_nExt_Signal_In
-set_location_assignment PIN_U9 -to A_nSEL_Ext_Signal_RDV
-set_location_assignment PIN_AD13 -to A_SysClock
-set_location_assignment PIN_U4 -to A_Spare1
-set_location_assignment PIN_U3 -to A_Spare0
-set_location_assignment PIN_V1 -to A_nBoardSel
-set_location_assignment PIN_Y1 -to A_RnW
-set_location_assignment PIN_U1 -to A_nDS
-set_location_assignment PIN_N6 -to A_nReset
-set_location_assignment PIN_C16 -to A_ME_BOI
-set_location_assignment PIN_A16 -to A_ME_BZI
-set_location_assignment PIN_B16 -to A_ME_UDI
-set_location_assignment PIN_F8 -to A_ME_12MHZ
-set_location_assignment PIN_A18 -to A_ME_SDI
-set_location_assignment PIN_F15 -to A_ME_EE
-set_location_assignment PIN_A17 -to A_ME_SS
-set_location_assignment PIN_E15 -to A_MIL1_nBZO
-set_location_assignment PIN_C19 -to A_MIL1_Out_Ena
-set_location_assignment PIN_A20 -to A_MIL1_nBOO
-set_location_assignment PIN_B18 -to A_LEMO_1_EN_IN
-set_location_assignment PIN_A19 -to A_LEMO_2_EN_IN
-set_location_assignment PIN_C20 -to A_LEMO_3_EN_IN
-set_location_assignment PIN_H16 -to A_LEMO_4_EN_IN
-set_location_assignment PIN_B19 -to A_ME_DSC
-set_location_assignment PIN_D17 -to A_ME_VW
-set_location_assignment PIN_F16 -to A_ME_CDS
-set_location_assignment PIN_C18 -to A_ME_TD
-set_location_assignment PIN_E16 -to A_ME_ESC
-set_location_assignment PIN_AC13 -to A_ME_SD
-set_location_assignment PIN_AC12 -to A_ME_nBOO
-set_location_assignment PIN_AB13 -to A_ME_nBZO
-set_location_assignment PIN_AB12 -to A_MIL1_BOI
-set_location_assignment PIN_AA6 -to A_MIL1_BZI
-set_location_assignment PIN_W8 -to A_UMIL15V
-set_location_assignment PIN_Y7 -to A_UMIL5V
-set_location_assignment PIN_AC6 -to A_LEMO_1_IO
-set_location_assignment PIN_AA9 -to A_LEMO_2_IO
-set_location_assignment PIN_AB6 -to A_LEMO_3_IO
-set_location_assignment PIN_Y9 -to A_LEMO_4_IO
-set_location_assignment PIN_V8 -to A_nSEL_ME
-set_location_assignment PIN_N7 -to A_MIL1_nIN_Ena
-set_location_assignment PIN_A8 -to A_nOPK_INL
-set_location_assignment PIN_A7 -to A_nOPK_DRDY
-set_location_assignment PIN_D9 -to A_nOPK_DRQ
-set_location_assignment PIN_C6 -to A_Timing
-set_location_assignment PIN_G16 -to A_ME_SDO
-set_location_assignment PIN_T1 -to A_OneWire
-set_location_assignment PIN_E9 -to A_nEvent_Str
-set_location_assignment PIN_P4 -to clk_20
-set_location_assignment PIN_R1 -to A_OneWire_EEPROM
-set_location_assignment PIN_B1 -to A_nLED_Timing
-set_location_assignment PIN_G9 -to A_nLEMO_1_LED
-set_location_assignment PIN_H9 -to A_nLEMO_2_LED
-set_location_assignment PIN_B4 -to A_nLEMO_3_LED
-set_location_assignment PIN_C4 -to A_nLEMO_4_LED
-set_global_assignment -name USE_CONFIGURATION_DEVICE ON
-set_global_assignment -name ACTIVE_SERIAL_CLOCK FREQ_40MHZ
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to A_TA*
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to A_TB*
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to A_D*
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to EIO*
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to A_LEMO*
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to A_nLEMO*
-set_global_assignment -name ALLOW_POWER_UP_DONT_CARE ON
-set_global_assignment -name SYNTH_TIMING_DRIVEN_SYNTHESIS ON
+set_global_assignment -name LAST_QUARTUS_VERSION 16.0.2
+set_global_assignment -name LL_MEMBER_STATE LOCKED -section_id "Root Region"
+set_global_assignment -name LL_ROOT_REGION ON -section_id "Root Region"
+set_global_assignment -name LOGICLOCK_INCREMENTAL_COMPILE_ASSIGNMENT ON
+set_global_assignment -name MAX_CORE_JUNCTION_TEMP 85
+set_global_assignment -name MIN_CORE_JUNCTION_TEMP 0
+set_global_assignment -name MUX_RESTRUCTURE OFF
+set_global_assignment -name OPTIMIZATION_TECHNIQUE SPEED
+set_global_assignment -name OPTIMIZE_HOLD_TIMING "ALL PATHS"
+set_global_assignment -name OPTIMIZE_MULTI_CORNER_TIMING ON
+set_global_assignment -name ORIGINAL_QUARTUS_VERSION 11.1
+set_global_assignment -name PARTITION_COLOR 16764057 -section_id Top
+set_global_assignment -name PARTITION_FITTER_PRESERVATION_LEVEL PLACEMENT_AND_ROUTING -section_id Top
+set_global_assignment -name PARTITION_NETLIST_TYPE SOURCE -section_id Top
+set_global_assignment -name PHYSICAL_SYNTHESIS_COMBO_LOGIC_FOR_AREA ON
+set_global_assignment -name PHYSICAL_SYNTHESIS_COMBO_LOGIC ON
+set_global_assignment -name PHYSICAL_SYNTHESIS_REGISTER_DUPLICATION ON
+set_global_assignment -name PHYSICAL_SYNTHESIS_REGISTER_RETIMING ON
+set_global_assignment -name POWER_BOARD_THERMAL_MODEL "NONE (CONSERVATIVE)"
+set_global_assignment -name POWER_PRESET_COOLING_SOLUTION "23 MM HEAT SINK WITH 200 LFPM AIRFLOW"
+set_global_assignment -name PRE_FLOW_SCRIPT_FILE "quartus_sh:scu_sio3.tcl"
+set_global_assignment -name PROJECT_CREATION_TIME_DATE "09:36:27 JUNE 18, 2012"
+set_global_assignment -name QII_AUTO_PACKED_REGISTERS NORMAL
+set_global_assignment -name QIP_FILE "../../ip_cores/general-cores/platform/altera/networks/arria2gx_networks.qip"
+set_global_assignment -name QIP_FILE "../../ip_cores/general-cores/platform/altera/wb_pcie/arria2_pcie.qip"
+set_global_assignment -name QIP_FILE "../../ip_cores/wr-cores/platform/altera/wr_arria2_phy/wr_arria2_phy.qip"
+set_global_assignment -name QIP_FILE ../../modules/ddr3/arria2/arria2_ddr3.qip
+set_global_assignment -name QIP_FILE ../../modules/pll/arria2/arria2_pll.qip
+set_global_assignment -name QIP_FILE ../../modules/pll/arria2/dmtd_pll.qip
+set_global_assignment -name QIP_FILE ../../modules/pll/arria2/ref_pll.qip
+set_global_assignment -name QIP_FILE ../../modules/pll/arria2/sys_pll.qip
+set_global_assignment -name ROUTER_CLOCKING_TOPOLOGY_ANALYSIS ON
+set_global_assignment -name ROUTER_LCELL_INSERTION_AND_LOGIC_DUPLICATION ON
+set_global_assignment -name ROUTER_TIMING_OPTIMIZATION_LEVEL MAXIMUM
+set_global_assignment -name SAVE_DISK_SPACE OFF
+set_global_assignment -name SDC_FILE ../../top/scu_sio3/scu_sio3.sdc
 set_global_assignment -name STRATIX_DEVICE_IO_STANDARD "3.3-V LVTTL"
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to F_PLL_5 -disable
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to GP_Ext_In
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to GP_Ext_Out_B -disable
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to nExtension_Res_Out
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to A_nDtack
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to A_nSRQ
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to A_nSel_Ext_Data_Drv
+set_global_assignment -name STRATIXII_CONFIGURATION_DEVICE EPCS128
+set_global_assignment -name STRATIXIII_CONFIGURATION_SCHEME "ACTIVE SERIAL"
+set_global_assignment -name SYNTH_TIMING_DRIVEN_SYNTHESIS ON
+set_global_assignment -name SYSTEMVERILOG_FILE "../../ip_cores/general-cores/modules/wishbone/wb_lm32/generated/lm32_allprofiles.v" -library work
+set_global_assignment -name SYSTEMVERILOG_FILE "../../ip_cores/general-cores/modules/wishbone/wb_lm32/platform/altera/jtag_tap.v" -library work
+set_global_assignment -name SYSTEMVERILOG_FILE "../../ip_cores/general-cores/modules/wishbone/wb_lm32/platform/generic/lm32_multiplier.v" -library work
+set_global_assignment -name SYSTEMVERILOG_FILE "../../ip_cores/general-cores/modules/wishbone/wb_lm32/src/jtag_cores.v" -library work
+set_global_assignment -name SYSTEMVERILOG_FILE "../../ip_cores/general-cores/modules/wishbone/wb_lm32/src/lm32_adder.v" -library work
+set_global_assignment -name SYSTEMVERILOG_FILE "../../ip_cores/general-cores/modules/wishbone/wb_lm32/src/lm32_addsub.v" -library work
+set_global_assignment -name SYSTEMVERILOG_FILE "../../ip_cores/general-cores/modules/wishbone/wb_lm32/src/lm32_include.v" -library work
+set_global_assignment -name SYSTEMVERILOG_FILE "../../ip_cores/general-cores/modules/wishbone/wb_lm32/src/lm32_logic_op.v" -library work
+set_global_assignment -name SYSTEMVERILOG_FILE "../../ip_cores/general-cores/modules/wishbone/wb_lm32/src/lm32_shifter.v" -library work
+set_global_assignment -name SYSTEMVERILOG_FILE "../../ip_cores/general-cores/modules/wishbone/wb_onewire_master/sockit_owm.v" -library work
+set_global_assignment -name TIMEQUEST_DO_CCPP_REMOVAL ON
+set_global_assignment -name TIMEQUEST_MULTICORNER_ANALYSIS ON
+set_global_assignment -name TOP_LEVEL_ENTITY scu_sio3
+set_global_assignment -name USE_CONFIGURATION_DEVICE ON
+set_global_assignment -name VHDL_FILE "../../ip_cores/general-cores/modules/common/gc_sync_ffs.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../ip_cores/general-cores/modules/common/gc_sync_register.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../ip_cores/general-cores/modules/common/gencores_pkg.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../ip_cores/general-cores/modules/genrams/altera/generic_dpram.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../ip_cores/general-cores/modules/genrams/altera/generic_simple_dpram.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../ip_cores/general-cores/modules/genrams/altera/generic_spram.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../ip_cores/general-cores/modules/genrams/common/inferred_async_fifo.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../ip_cores/general-cores/modules/genrams/common/inferred_sync_fifo.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../ip_cores/general-cores/modules/genrams/generic/generic_async_fifo.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../ip_cores/general-cores/modules/genrams/generic/generic_sync_fifo.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../ip_cores/general-cores/modules/genrams/genram_pkg.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../ip_cores/general-cores/modules/wishbone/wb_clock_crossing/xwb_clock_crossing.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../ip_cores/general-cores/modules/wishbone/wb_crossbar/sdb_rom.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../ip_cores/general-cores/modules/wishbone/wb_crossbar/xwb_crossbar.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../ip_cores/general-cores/modules/wishbone/wb_crossbar/xwb_sdb_crossbar.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../ip_cores/general-cores/modules/wishbone/wb_dpram/xwb_dpram.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../ip_cores/general-cores/modules/wishbone/wb_irq/wb_irq_pkg.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../ip_cores/general-cores/modules/wishbone/wb_lm32/generated/xwb_lm32.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../ip_cores/general-cores/modules/wishbone/wb_lm32/src/lm32_dp_ram.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../ip_cores/general-cores/modules/wishbone/wb_lm32/src/lm32_ram.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../ip_cores/general-cores/modules/wishbone/wb_onewire_master/wb_onewire_master.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../ip_cores/general-cores/modules/wishbone/wb_onewire_master/xwb_onewire_master.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../ip_cores/general-cores/modules/wishbone/wb_slave_adapter/wb_slave_adapter.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../ip_cores/general-cores/modules/wishbone/wb_uart/simple_uart_pkg.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../ip_cores/general-cores/modules/wishbone/wb_uart/simple_uart_wb.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../ip_cores/general-cores/modules/wishbone/wb_uart/uart_async_rx.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../ip_cores/general-cores/modules/wishbone/wb_uart/uart_async_tx.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../ip_cores/general-cores/modules/wishbone/wb_uart/uart_baud_gen.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../ip_cores/general-cores/modules/wishbone/wb_uart/wb_simple_uart.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../ip_cores/general-cores/modules/wishbone/wb_uart/xwb_simple_uart.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../ip_cores/general-cores/modules/wishbone/wishbone_pkg.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../ip_cores/general-cores/platform/altera/flash/altera_spi.vhd" -library work
+set_global_assignment -name VHDL_FILE "../../ip_cores/general-cores/platform/altera/networks/altera_networks_pkg.vhd" -library work
+set_global_assignment -name VHDL_FILE ../../modules/aux_functions/aux_functions_pkg.vhd -library work
+set_global_assignment -name VHDL_FILE ../../modules/aux_functions/Debounce.vhd -library work
+set_global_assignment -name VHDL_FILE ../../modules/aux_functions/div_n.vhd -library work
+set_global_assignment -name VHDL_FILE ../../modules/aux_functions/led_n.vhd -library work
+set_global_assignment -name VHDL_FILE ../../modules/aux_functions/local_125_to_12p5.vhd -library work
+set_global_assignment -name VHDL_FILE ../../modules/aux_functions/local_20_to_12p5.vhd -library work
+set_global_assignment -name VHDL_FILE ../../modules/aux_functions/slave_clk_switch.vhd -library work
+set_global_assignment -name VHDL_FILE ../../modules/aux_functions/sys_clk_or_local_clk.vhd -library work
+set_global_assignment -name VHDL_FILE ../../modules/aux_functions/Zeitbasis.vhd -library work
+set_global_assignment -name VHDL_FILE ../../modules/ftm/ftm_pkg.vhd -library work
+set_global_assignment -name VHDL_FILE ../../modules/mil/hw6408_vhdl.vhd -library work
+set_global_assignment -name VHDL_FILE ../../modules/mil/Mil_bipol_dec.vhd -library work
+set_global_assignment -name VHDL_FILE ../../modules/mil/Mil_dec_edge_timed.vhd -library work
+set_global_assignment -name VHDL_FILE ../../modules/mil/Mil_Enc_Vhdl.vhd -library work
+set_global_assignment -name VHDL_FILE ../../modules/mil/mil_en_decoder.vhd -library work
+set_global_assignment -name VHDL_FILE ../../modules/mil/mil_hw_or_soft_ip.vhd -library work
+set_global_assignment -name VHDL_FILE ../../modules/mil/Mil_pkg.vhd -library work
+set_global_assignment -name VHDL_FILE ../../modules/monster/monster_pkg.vhd -library work
+set_global_assignment -name VHDL_FILE ../../modules/pll/altera_reset.vhd -library work
+set_global_assignment -name VHDL_FILE ../../modules/pll/pll_pkg.vhd -library work
+set_global_assignment -name VHDL_FILE ../../modules/remote_update/altasmi.vhd -library work
+set_global_assignment -name VHDL_FILE ../../modules/remote_update/remote_update_pkg.vhd -library work
+set_global_assignment -name VHDL_FILE ../../modules/remote_update/remote_update.vhd -library work
+set_global_assignment -name VHDL_FILE ../../modules/remote_update/wb_asmi.vhd -library work
+set_global_assignment -name VHDL_FILE ../../modules/remote_update/wb_remote_update.vhd -library work
+set_global_assignment -name VHDL_FILE ../../modules/scu_bus/housekeeping.vhd -library work
+set_global_assignment -name VHDL_FILE ../../modules/scu_bus/scu_bus_slave_pkg.vhd -library work
+set_global_assignment -name VHDL_FILE ../../modules/scu_bus/scu_bus_slave.vhd -library work
+set_global_assignment -name VHDL_FILE ../../modules/wb_mil_scu/event_processing.vhd -library work
+set_global_assignment -name VHDL_FILE ../../modules/wb_mil_scu/wb_mil_scu_pkg.vhd -library work
+set_global_assignment -name VHDL_FILE ../../modules/wb_mil_scu/wb_mil_scu.vhd -library work
+set_global_assignment -name VHDL_FILE ../../modules/wb_scu_reg/wb_scu_reg_pkg.vhd -library work
+set_global_assignment -name VHDL_FILE ../../modules/wb_scu_reg/wb_scu_reg.vhd -library work
+set_global_assignment -name VHDL_FILE ../../top/scu_sio3/scu_sio3_pkg.vhd -library work
+set_global_assignment -name VHDL_FILE ../../top/scu_sio3/scu_sio3.vhd -library work
+set_global_assignment -name VHDL_FILE ../../top/scu_sio3/wb_mil_wrapper_sio.vhd -library work
+set_global_assignment -name VHDL_INPUT_VERSION VHDL_2008
+set_global_assignment -name VHDL_SHOW_LMF_MAPPING_MESSAGES OFF
+set_instance_assignment -name GLOBAL_SIGNAL GLOBAL_CLOCK -to "altera_reset:reset|nresets[0][0]"
+set_instance_assignment -name IO_STANDARD "2.5 V" -to A_nLED[0]
+set_instance_assignment -name IO_STANDARD "2.5 V" -to A_nLED[1]
+set_instance_assignment -name IO_STANDARD "2.5 V" -to A_nLED[10]
+set_instance_assignment -name IO_STANDARD "2.5 V" -to A_nLED[11]
+set_instance_assignment -name IO_STANDARD "2.5 V" -to A_nLED[12]
+set_instance_assignment -name IO_STANDARD "2.5 V" -to A_nLED[13]
+set_instance_assignment -name IO_STANDARD "2.5 V" -to A_nLED[14]
+set_instance_assignment -name IO_STANDARD "2.5 V" -to A_nLED[15]
+set_instance_assignment -name IO_STANDARD "2.5 V" -to A_nLED[2]
+set_instance_assignment -name IO_STANDARD "2.5 V" -to A_nLED[3]
+set_instance_assignment -name IO_STANDARD "2.5 V" -to A_nLED[4]
+set_instance_assignment -name IO_STANDARD "2.5 V" -to A_nLED[5]
+set_instance_assignment -name IO_STANDARD "2.5 V" -to A_nLED[6]
+set_instance_assignment -name IO_STANDARD "2.5 V" -to A_nLED[7]
+set_instance_assignment -name IO_STANDARD "2.5 V" -to A_nLED[8]
+set_instance_assignment -name IO_STANDARD "2.5 V" -to A_nLED[9]
+set_instance_assignment -name IO_STANDARD "2.5 V" -to A_nLED_Timing
+set_instance_assignment -name IO_STANDARD "2.5 V" -to IO_2_5V
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to A_D*
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to A_Ext_Data_RD
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to A_LEMO*
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to A_ME_12MHZ
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to A_ME_BOI
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to A_ME_BZI
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to A_ME_CDS
@@ -229,177 +190,216 @@ set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to A_ME_SS
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to A_ME_TD
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to A_ME_UDI
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to A_ME_VW
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to A_ME_12MHZ
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to A_MIL1_BOI
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to A_MIL1_BZI
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to A_MIL1_nBOO
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to A_MIL1_nBZO
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to A_MIL1_nIN_Ena
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to A_MIL1_Out_Ena
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to A_MIL1_BOI
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to A_OneWire_EEPROM
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to A_OneWire
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to A_nADR_EN
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to A_nADR_SCUB
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to A_nDtack
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to A_nExt_Signal_In
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to A_nLEMO*
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to A_nSel_Ext_Data_Drv
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to A_nSEL_Ext_Signal_RDV
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to A_Ext_Data_RD
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to clk_20
-set_global_assignment -name AUTO_RESTART_CONFIGURATION OFF
-set_instance_assignment -name IO_STANDARD "2.5 V" -to A_nLED[4]
-set_instance_assignment -name IO_STANDARD "2.5 V" -to A_nLED[8]
-set_instance_assignment -name IO_STANDARD "2.5 V" -to A_nLED[7]
-set_instance_assignment -name IO_STANDARD "2.5 V" -to A_nLED[6]
-set_instance_assignment -name IO_STANDARD "2.5 V" -to A_nLED[5]
-set_instance_assignment -name IO_STANDARD "2.5 V" -to A_nLED[3]
-set_instance_assignment -name IO_STANDARD "2.5 V" -to A_nLED[2]
-set_instance_assignment -name IO_STANDARD "2.5 V" -to A_nLED[1]
-set_instance_assignment -name IO_STANDARD "2.5 V" -to A_nLED[0]
-set_instance_assignment -name IO_STANDARD "2.5 V" -to A_nLED_Timing
-set_instance_assignment -name IO_STANDARD "2.5 V" -to A_nLED[13]
-set_instance_assignment -name IO_STANDARD "2.5 V" -to A_nLED[15]
-set_instance_assignment -name IO_STANDARD "2.5 V" -to A_nLED[14]
-set_instance_assignment -name IO_STANDARD "2.5 V" -to A_nLED[12]
-set_instance_assignment -name IO_STANDARD "2.5 V" -to A_nLED[11]
-set_instance_assignment -name IO_STANDARD "2.5 V" -to A_nLED[10]
-set_instance_assignment -name IO_STANDARD "2.5 V" -to A_nLED[9]
-set_instance_assignment -name IO_STANDARD "2.5 V" -to IO_2_5V
-set_global_assignment -name CYCLONEII_RESERVE_NCEO_AFTER_CONFIGURATION "USE AS PROGRAMMING PIN"
-set_global_assignment -name STRATIXIII_CONFIGURATION_SCHEME "ACTIVE SERIAL"
-set_global_assignment -name STRATIXII_CONFIGURATION_DEVICE EPCS128
-set_global_assignment -name CONFIGURATION_VCCIO_LEVEL 3.3V
-set_global_assignment -name ENABLE_SIGNALTAP ON
-set_instance_assignment -name IO_STANDARD LVDS -to clk_fpga
-set_location_assignment PIN_V15 -to A_nLED[14]
-set_global_assignment -name SAVE_DISK_SPACE OFF
-set_global_assignment -name OPTIMIZATION_TECHNIQUE SPEED
-set_global_assignment -name VHDL_INPUT_VERSION VHDL_2008
-set_global_assignment -name VHDL_SHOW_LMF_MAPPING_MESSAGES OFF
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to A_nSRQ
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to A_OneWire
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to A_OneWire_EEPROM
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to A_SysClock
-set_global_assignment -name POWER_PRESET_COOLING_SOLUTION "23 MM HEAT SINK WITH 200 LFPM AIRFLOW"
-set_global_assignment -name POWER_BOARD_THERMAL_MODEL "NONE (CONSERVATIVE)"
-set_global_assignment -name ADV_NETLIST_OPT_SYNTH_WYSIWYG_REMAP ON
-set_global_assignment -name FLOW_ENABLE_RTL_VIEWER ON
-set_global_assignment -name TIMEQUEST_MULTICORNER_ANALYSIS ON
-set_global_assignment -name TIMEQUEST_DO_CCPP_REMOVAL ON
-set_global_assignment -name LOGICLOCK_INCREMENTAL_COMPILE_ASSIGNMENT ON
-set_global_assignment -name PARTITION_NETLIST_TYPE SOURCE -section_id Top
-set_global_assignment -name PARTITION_FITTER_PRESERVATION_LEVEL PLACEMENT_AND_ROUTING -section_id Top
-set_global_assignment -name PARTITION_COLOR 16764057 -section_id Top
-set_global_assignment -name LL_ROOT_REGION ON -section_id "Root Region"
-set_global_assignment -name LL_MEMBER_STATE LOCKED -section_id "Root Region"
-set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to nExtension_Res_Out
-set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to A_nLED_Timing
-set_global_assignment -name DEVICE_FILTER_PACKAGE FBGA
-set_global_assignment -name DEVICE_FILTER_PIN_COUNT 572
-set_global_assignment -name DEVICE_FILTER_SPEED_GRADE 5
-set_global_assignment -name PHYSICAL_SYNTHESIS_REGISTER_RETIMING ON
-set_global_assignment -name PHYSICAL_SYNTHESIS_REGISTER_DUPLICATION ON
-set_global_assignment -name ENABLE_DRC_SETTINGS ON
-set_global_assignment -name PHYSICAL_SYNTHESIS_COMBO_LOGIC_FOR_AREA ON
-set_global_assignment -name OPTIMIZE_HOLD_TIMING "ALL PATHS"
-set_global_assignment -name OPTIMIZE_MULTI_CORNER_TIMING ON
-set_global_assignment -name ROUTER_TIMING_OPTIMIZATION_LEVEL MAXIMUM
-set_global_assignment -name QII_AUTO_PACKED_REGISTERS NORMAL
-set_global_assignment -name FITTER_EFFORT "STANDARD FIT"
-set_global_assignment -name FITTER_EARLY_TIMING_ESTIMATE_MODE PESSIMISTIC
-set_global_assignment -name PHYSICAL_SYNTHESIS_COMBO_LOGIC ON
-set_global_assignment -name ROUTER_LCELL_INSERTION_AND_LOGIC_DUPLICATION ON
-set_global_assignment -name MUX_RESTRUCTURE OFF
-set_global_assignment -name ROUTER_CLOCKING_TOPOLOGY_ANALYSIS ON
-
-
-
-set_global_assignment -name PRE_FLOW_SCRIPT_FILE "quartus_sh:scu_sio3.tcl"
-set_instance_assignment -name GLOBAL_SIGNAL GLOBAL_CLOCK -to "altera_reset:reset|nresets[0][0]"
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to A_TA*
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to A_TB*
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to clk_20
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to EIO*
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to F_PLL_5 -disable
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to GP_Ext_In
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to GP_Ext_Out_B -disable
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to nExtension_Res_Out
+set_instance_assignment -name IO_STANDARD LVDS -to clk_fpga
 set_instance_assignment -name MAX_FANOUT 64 -to "wb_mil_wrapper_sio:mil_slave_1|wb_mil_scu:mil|schedule_mux~1"
 set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
-set_global_assignment -name AHDL_FILE ../../modules/modulbus/i2c.tdf
-set_global_assignment -name SDC_FILE ../../top/scu_sio3/scu_sio3.sdc
-set_global_assignment -name SYSTEMVERILOG_FILE "../../ip_cores/general-cores/modules/wishbone/wb_onewire_master/sockit_owm.v" -library work
-set_global_assignment -name SYSTEMVERILOG_FILE "../../ip_cores/general-cores/modules/wishbone/wb_lm32/src/jtag_cores.v" -library work
-set_global_assignment -name SYSTEMVERILOG_FILE "../../ip_cores/general-cores/modules/wishbone/wb_lm32/platform/generic/lm32_multiplier.v" -library work
-set_global_assignment -name SYSTEMVERILOG_FILE "../../ip_cores/general-cores/modules/wishbone/wb_lm32/src/lm32_shifter.v" -library work
-set_global_assignment -name VHDL_FILE ../../modules/wb_mil_scu/wb_mil_scu.vhd -library work
-set_global_assignment -name VHDL_FILE ../../modules/mil/hw6408_vhdl.vhd -library work
-set_global_assignment -name SYSTEMVERILOG_FILE "../../ip_cores/general-cores/modules/wishbone/wb_lm32/src/lm32_adder.v" -library work
-set_global_assignment -name SYSTEMVERILOG_FILE "../../ip_cores/general-cores/modules/wishbone/wb_lm32/platform/altera/jtag_tap.v" -library work
-set_global_assignment -name SYSTEMVERILOG_FILE "../../ip_cores/general-cores/modules/wishbone/wb_lm32/generated/lm32_allprofiles.v" -library work
-set_global_assignment -name VHDL_FILE "../../ip_cores/general-cores/modules/wishbone/wb_uart/uart_async_tx.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../ip_cores/general-cores/modules/wishbone/wb_onewire_master/xwb_onewire_master.vhd" -library work
-set_global_assignment -name SYSTEMVERILOG_FILE "../../ip_cores/general-cores/modules/wishbone/wb_lm32/src/lm32_logic_op.v" -library work
-set_global_assignment -name VHDL_FILE "../../ip_cores/general-cores/modules/common/gencores_pkg.vhd" -library work
-set_global_assignment -name VHDL_FILE ../../modules/aux_functions/sys_clk_or_local_clk.vhd -library work
-set_global_assignment -name VHDL_FILE ../../modules/aux_functions/Zeitbasis.vhd -library work
-set_global_assignment -name VHDL_FILE "../../ip_cores/general-cores/modules/wishbone/wb_slave_adapter/wb_slave_adapter.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../ip_cores/general-cores/modules/genrams/altera/generic_simple_dpram.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../ip_cores/general-cores/modules/genrams/common/inferred_async_fifo.vhd" -library work
-set_global_assignment -name VHDL_FILE ../../modules/monster/monster_pkg.vhd -library work
-set_global_assignment -name VHDL_FILE "../../ip_cores/general-cores/modules/genrams/altera/generic_dpram.vhd" -library work
-set_global_assignment -name VHDL_FILE ../../top/scu_sio3/scu_sio3_pkg.vhd -library work
-set_global_assignment -name VHDL_FILE "../../ip_cores/general-cores/modules/wishbone/wb_uart/xwb_simple_uart.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../ip_cores/general-cores/modules/common/gc_sync_ffs.vhd" -library work
-set_global_assignment -name VHDL_FILE ../../modules/remote_update/wb_remote_update.vhd -library work
-set_global_assignment -name VHDL_FILE "../../ip_cores/general-cores/modules/wishbone/wb_crossbar/xwb_crossbar.vhd" -library work
-set_global_assignment -name VHDL_FILE ../../modules/wb_mil_scu/wb_mil_scu_pkg.vhd -library work
-set_global_assignment -name VHDL_FILE "../../ip_cores/general-cores/platform/altera/flash/altera_spi.vhd" -library work
-set_global_assignment -name VHDL_FILE ../../modules/mil/Mil_dec_edge_timed.vhd -library work
-set_global_assignment -name VHDL_FILE "../../ip_cores/general-cores/platform/altera/networks/altera_networks_pkg.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../ip_cores/general-cores/modules/wishbone/wb_crossbar/sdb_rom.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../ip_cores/general-cores/modules/wishbone/wb_crossbar/xwb_sdb_crossbar.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../ip_cores/general-cores/modules/wishbone/wb_lm32/src/lm32_ram.vhd" -library work
-set_global_assignment -name VHDL_FILE ../../modules/mil/Mil_Enc_Vhdl.vhd -library work
-set_global_assignment -name VHDL_FILE ../../modules/scu_bus/scu_bus_slave_pkg.vhd -library work
-set_global_assignment -name VHDL_FILE ../../modules/aux_functions/local_20_to_12p5.vhd -library work
-set_global_assignment -name VHDL_FILE ../../modules/ftm/ftm_pkg.vhd -library work
-set_global_assignment -name VHDL_FILE ../../modules/mil/mil_en_decoder.vhd -library work
-set_global_assignment -name VHDL_FILE "../../ip_cores/general-cores/modules/genrams/generic/generic_sync_fifo.vhd" -library work
-set_global_assignment -name VHDL_FILE ../../top/scu_sio3/wb_mil_wrapper_sio.vhd -library work
-set_global_assignment -name VHDL_FILE ../../modules/aux_functions/Debounce.vhd -library work
-set_global_assignment -name VHDL_FILE ../../modules/aux_functions/div_n.vhd -library work
-set_global_assignment -name VHDL_FILE "../../ip_cores/general-cores/modules/wishbone/wishbone_pkg.vhd" -library work
-set_global_assignment -name VHDL_FILE ../../modules/mil/mil_hw_or_soft_ip.vhd -library work
-set_global_assignment -name VHDL_FILE ../../modules/mil/Mil_pkg.vhd -library work
-set_global_assignment -name VHDL_FILE ../../modules/remote_update/wb_asmi.vhd -library work
-set_global_assignment -name VHDL_FILE ../../modules/remote_update/remote_update.vhd -library work
-set_global_assignment -name VHDL_FILE "../../ip_cores/general-cores/modules/genrams/genram_pkg.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../ip_cores/general-cores/modules/wishbone/wb_uart/uart_baud_gen.vhd" -library work
-set_global_assignment -name VHDL_FILE ../../modules/wb_mil_scu/event_processing.vhd -library work
-set_global_assignment -name VHDL_FILE ../../modules/mil/Mil_bipol_dec.vhd -library work
-set_global_assignment -name VHDL_FILE "../../ip_cores/general-cores/modules/wishbone/wb_lm32/generated/xwb_lm32.vhd" -library work
-set_global_assignment -name VHDL_FILE ../../modules/aux_functions/local_125_to_12p5.vhd -library work
-set_global_assignment -name VHDL_FILE "../../ip_cores/general-cores/modules/genrams/common/inferred_sync_fifo.vhd" -library work
-set_global_assignment -name VHDL_FILE ../../modules/aux_functions/led_n.vhd -library work
-set_global_assignment -name VHDL_FILE "../../ip_cores/general-cores/modules/wishbone/wb_onewire_master/wb_onewire_master.vhd" -library work
-set_global_assignment -name VHDL_FILE ../../modules/aux_functions/aux_functions_pkg.vhd -library work
-set_global_assignment -name VHDL_FILE ../../modules/pll/pll_pkg.vhd -library work
-set_global_assignment -name VHDL_FILE ../../modules/scu_bus/housekeeping.vhd -library work
-set_global_assignment -name VHDL_FILE "../../ip_cores/general-cores/modules/wishbone/wb_lm32/src/lm32_dp_ram.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../ip_cores/general-cores/modules/genrams/altera/generic_spram.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../ip_cores/general-cores/modules/genrams/generic/generic_async_fifo.vhd" -library work
-set_global_assignment -name SYSTEMVERILOG_FILE "../../ip_cores/general-cores/modules/wishbone/wb_lm32/src/lm32_include.v" -library work
-set_global_assignment -name SYSTEMVERILOG_FILE "../../ip_cores/general-cores/modules/wishbone/wb_lm32/src/lm32_addsub.v" -library work
-set_global_assignment -name VHDL_FILE "../../ip_cores/general-cores/modules/wishbone/wb_clock_crossing/xwb_clock_crossing.vhd" -library work
-set_global_assignment -name VHDL_FILE ../../modules/remote_update/remote_update_pkg.vhd -library work
-set_global_assignment -name VHDL_FILE ../../modules/scu_bus/scu_bus_slave.vhd -library work
-set_global_assignment -name VHDL_FILE ../../modules/remote_update/altasmi.vhd -library work
-set_global_assignment -name VHDL_FILE "../../ip_cores/general-cores/modules/wishbone/wb_uart/simple_uart_pkg.vhd" -library work
-set_global_assignment -name VHDL_FILE ../../top/scu_sio3/scu_sio3.vhd -library work
-set_global_assignment -name VHDL_FILE ../../modules/pll/altera_reset.vhd -library work
-set_global_assignment -name VHDL_FILE "../../ip_cores/general-cores/modules/common/gc_sync_register.vhd" -library work
-set_global_assignment -name VHDL_FILE ../../modules/wb_scu_reg/wb_scu_reg.vhd -library work
-set_global_assignment -name VHDL_FILE "../../ip_cores/general-cores/modules/wishbone/wb_irq/wb_irq_pkg.vhd" -library work
-set_global_assignment -name VHDL_FILE ../../modules/aux_functions/slave_clk_switch.vhd -library work
-set_global_assignment -name VHDL_FILE "../../ip_cores/general-cores/modules/wishbone/wb_uart/uart_async_rx.vhd" -library work
-set_global_assignment -name VHDL_FILE ../../modules/wb_scu_reg/wb_scu_reg_pkg.vhd -library work
-set_global_assignment -name VHDL_FILE "../../ip_cores/general-cores/modules/wishbone/wb_uart/wb_simple_uart.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../ip_cores/general-cores/modules/wishbone/wb_uart/simple_uart_wb.vhd" -library work
-set_global_assignment -name VHDL_FILE "../../ip_cores/general-cores/modules/wishbone/wb_dpram/xwb_dpram.vhd" -library work
-set_global_assignment -name QIP_FILE ../../modules/ddr3/arria2/arria2_ddr3.qip
-set_global_assignment -name QIP_FILE "../../ip_cores/general-cores/platform/altera/networks/arria2gx_networks.qip"
-set_global_assignment -name QIP_FILE "../../ip_cores/wr-cores/platform/altera/wr_arria2_phy/wr_arria2_phy.qip"
-set_global_assignment -name QIP_FILE ../../modules/pll/arria2/arria2_pll.qip
-set_global_assignment -name QIP_FILE "../../ip_cores/general-cores/platform/altera/wb_pcie/arria2_pcie.qip"
-set_global_assignment -name TOP_LEVEL_ENTITY scu_sio3
-set_global_assignment -name QIP_FILE ../../modules/pll/arria2/sys_pll.qip
-set_global_assignment -name QIP_FILE ../../modules/pll/arria2/ref_pll.qip
-set_global_assignment -name QIP_FILE ../../modules/pll/arria2/dmtd_pll.qip
+set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to A_nLED_Timing
+set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to nExtension_Res_Out
+set_location_assignment IOBANK_3A -to IO_2_5V
+set_location_assignment PIN_A10 -to A_TB[8]
+set_location_assignment PIN_A11 -to A_TA[12]
+set_location_assignment PIN_A12 -to A_TA[14]
+set_location_assignment PIN_A13 -to A_TA[9]
+set_location_assignment PIN_A14 -to A_TA[4]
+set_location_assignment PIN_A16 -to A_ME_BZI
+set_location_assignment PIN_A17 -to A_ME_SS
+set_location_assignment PIN_A18 -to A_ME_SDI
+set_location_assignment PIN_A19 -to A_LEMO_2_EN_IN
+set_location_assignment PIN_A20 -to A_MIL1_nBOO
+set_location_assignment PIN_A2 -to A_TB[4]
+set_location_assignment PIN_A3 -to A_TB[10]
+set_location_assignment PIN_A4 -to A_TB[1]
+set_location_assignment PIN_A6 -to A_TB[6]
+set_location_assignment PIN_A7 -to A_nOPK_DRDY
+set_location_assignment PIN_A8 -to A_nOPK_INL
+set_location_assignment PIN_AA10 -to A_D[1]
+set_location_assignment PIN_AA11 -to A_D[9]
+set_location_assignment PIN_AA12 -to A_D[10]
+set_location_assignment PIN_AA14 -to A_nLED[10]
+set_location_assignment PIN_AA15 -to A_nLED[15]
+set_location_assignment PIN_AA18 -to IO_2_5V[1]
+set_location_assignment PIN_AA1 -to A_A[4]
+set_location_assignment PIN_AA20 -to IO_2_5V[12]
+set_location_assignment PIN_AA3 -to A_A[14]
+set_location_assignment PIN_AA4 -to EIO[7]
+set_location_assignment PIN_AA5 -to EIO[14]
+set_location_assignment PIN_AA6 -to A_MIL1_BZI
+set_location_assignment PIN_AA7 -to A_Ext_Data_RD
+set_location_assignment PIN_AA8 -to A_nADR_EN
+set_location_assignment PIN_AA9 -to A_LEMO_2_IO
+set_location_assignment PIN_AB10 -to A_D[3]
+set_location_assignment PIN_AB11 -to A_D[11]
+set_location_assignment PIN_AB12 -to A_MIL1_BOI
+set_location_assignment PIN_AB13 -to A_ME_nBZO
+set_location_assignment PIN_AB14 -to A_nLED[12]
+set_location_assignment PIN_AB15 -to A_nLED[9]
+set_location_assignment PIN_AB17 -to IO_2_5V[2]
+set_location_assignment PIN_AB18 -to IO_2_5V[3]
+set_location_assignment PIN_AB19 -to IO_2_5V[6]
+set_location_assignment PIN_AB1 -to A_A[9]
+set_location_assignment PIN_AB20 -to IO_2_5V[14]
+set_location_assignment PIN_AB21 -to IO_2_5V[9]
+set_location_assignment PIN_AB2 -to A_A[7]
+set_location_assignment PIN_AB3 -to A_A[13]
+set_location_assignment PIN_AB4 -to EIO[9]
+set_location_assignment PIN_AB5 -to EIO[16]
+set_location_assignment PIN_AB6 -to A_LEMO_3_IO
+set_location_assignment PIN_AB7 -to nExtension_Res_Out
+set_location_assignment PIN_AB8 -to A_nSel_Ext_Data_Drv
+set_location_assignment PIN_AB9 -to A_D[0]
+set_location_assignment PIN_AC12 -to A_ME_nBOO
+set_location_assignment PIN_AC13 -to A_ME_SD
+set_location_assignment PIN_AC15 -to A_nLED[11]
+set_location_assignment PIN_AC18 -to IO_2_5V[4]
+set_location_assignment PIN_AC1 -to A_A[5]
+set_location_assignment PIN_AC21 -to IO_2_5V[11]
+set_location_assignment PIN_AC3 -to EIO[2]
+set_location_assignment PIN_AC4 -to EIO[4]
+set_location_assignment PIN_AC6 -to A_LEMO_1_IO
+set_location_assignment PIN_AC9 -to A_D[2]
+set_location_assignment PIN_AD10 -to A_D[6]
+set_location_assignment PIN_AD11 -to A_D[12]
+set_location_assignment PIN_AD12 -to A_D[14]
+set_location_assignment PIN_AD13 -to A_SysClock
+set_location_assignment PIN_AD20 -to IO_2_5V[8]
+set_location_assignment PIN_AD21 -to IO_2_5V[10]
+set_location_assignment PIN_AD3 -to EIO[1]
+set_location_assignment PIN_AD4 -to EIO[15]
+set_location_assignment PIN_AD5 -to EIO[17]
+set_location_assignment PIN_AD6 -to A_nExt_Signal_In
+set_location_assignment PIN_AD7 -to GP_Ext_In
+set_location_assignment PIN_AD8 -to A_nDtack
+set_location_assignment PIN_AD9 -to A_D[4]
+set_location_assignment PIN_B10 -to A_TB[11]
+set_location_assignment PIN_B12 -to A_SEL[0]
+set_location_assignment PIN_B13 -to A_TA[11]
+set_location_assignment PIN_B15 -to A_TA[6]
+set_location_assignment PIN_B16 -to A_ME_UDI
+set_location_assignment PIN_B18 -to A_LEMO_1_EN_IN
+set_location_assignment PIN_B19 -to A_ME_DSC
+set_location_assignment PIN_B1 -to A_nLED_Timing
+set_location_assignment PIN_B3 -to A_TB[0]
+set_location_assignment PIN_B4 -to A_nLEMO_3_LED
+set_location_assignment PIN_B6 -to A_TB[12]
+set_location_assignment PIN_B7 -to A_TB[9]
+set_location_assignment PIN_C12 -to A_SEL[2]
+set_location_assignment PIN_C13 -to A_TA[5]
+set_location_assignment PIN_C15 -to A_TA[1]
+set_location_assignment PIN_C16 -to A_ME_BOI
+set_location_assignment PIN_C18 -to A_ME_TD
+set_location_assignment PIN_C19 -to A_MIL1_Out_Ena
+set_location_assignment PIN_C20 -to A_LEMO_3_EN_IN
+set_location_assignment PIN_C4 -to A_nLEMO_4_LED
+set_location_assignment PIN_C6 -to A_Timing
+set_location_assignment PIN_C7 -to A_TB[2]
+set_location_assignment PIN_C9 -to A_TB[15]
+set_location_assignment PIN_D12 -to A_SEL[1]
+set_location_assignment PIN_D13 -to A_TA[13]
+set_location_assignment PIN_D14 -to A_TA[7]
+set_location_assignment PIN_D15 -to A_TA[3]
+set_location_assignment PIN_D17 -to A_ME_VW
+set_location_assignment PIN_D8 -to A_TB[5]
+set_location_assignment PIN_D9 -to A_nOPK_DRQ
+set_location_assignment PIN_E10 -to A_TB[3]
+set_location_assignment PIN_E12 -to A_SEL[3]
+set_location_assignment PIN_E13 -to A_TA[15]
+set_location_assignment PIN_E15 -to A_MIL1_nBZO
+set_location_assignment PIN_E16 -to A_ME_ESC
+set_location_assignment PIN_E1 -to A_nLED[2]
+set_location_assignment PIN_E9 -to A_nEvent_Str
+set_location_assignment PIN_F10 -to A_TB[7]
+set_location_assignment PIN_F13 -to A_TA[8]
+set_location_assignment PIN_F14 -to A_TA[0]
+set_location_assignment PIN_F15 -to A_ME_EE
+set_location_assignment PIN_F16 -to A_ME_CDS
+set_location_assignment PIN_F1 -to A_nLED[4]
+set_location_assignment PIN_F8 -to A_ME_12MHZ
+set_location_assignment PIN_G10 -to A_TB[13]
+set_location_assignment PIN_G11 -to A_TB[14]
+set_location_assignment PIN_G13 -to A_TA[10]
+set_location_assignment PIN_G14 -to A_TA[2]
+set_location_assignment PIN_G16 -to A_ME_SDO
+set_location_assignment PIN_G1 -to A_nLED[7]
+set_location_assignment PIN_G2 -to A_nLED[5]
+set_location_assignment PIN_G9 -to A_nLEMO_1_LED
+set_location_assignment PIN_H16 -to A_LEMO_4_EN_IN
+set_location_assignment PIN_H3 -to A_nLED[3]
+set_location_assignment PIN_H4 -to A_nLED[1]
+set_location_assignment PIN_H6 -to A_nLED[0]
+set_location_assignment PIN_H9 -to A_nLEMO_2_LED
+set_location_assignment PIN_J5 -to A_nLED[8]
+set_location_assignment PIN_J6 -to A_nLED[6]
+set_location_assignment PIN_N6 -to A_nReset
+set_location_assignment PIN_N7 -to A_MIL1_nIN_Ena
+set_location_assignment PIN_P4 -to clk_20
+set_location_assignment PIN_P7 -to EIO[0]
+set_location_assignment PIN_R1 -to A_OneWire_EEPROM
+set_location_assignment PIN_R5 -to A_A[3]
+set_location_assignment PIN_R6 -to A_A[6]
+set_location_assignment PIN_T1 -to A_OneWire
+set_location_assignment PIN_T2 -to A_A[8]
+set_location_assignment PIN_T3 -to A_A[1]
+set_location_assignment PIN_T4 -to A_A[0]
+set_location_assignment PIN_T5 -to A_A[10]
+set_location_assignment PIN_T6 -to EIO[3]
+set_location_assignment PIN_U16 -to IO_2_5V[5]
+set_location_assignment PIN_U1 -to A_nDS
+set_location_assignment PIN_U3 -to A_Spare0
+set_location_assignment PIN_U4 -to A_Spare1
+set_location_assignment PIN_U6 -to EIO[5]
+set_location_assignment PIN_U9 -to A_nSEL_Ext_Signal_RDV
+set_location_assignment PIN_V11 -to A_D[5]
+set_location_assignment PIN_V12 -to A_D[13]
+set_location_assignment PIN_V15 -to A_nLED[14]
+set_location_assignment PIN_V16 -to IO_2_5V[7]
+set_location_assignment PIN_V1 -to A_nBoardSel
+set_location_assignment PIN_V3 -to A_A[15]
+set_location_assignment PIN_V4 -to EIO[12]
+set_location_assignment PIN_V5 -to EIO[10]
+set_location_assignment PIN_V6 -to EIO[11]
+set_location_assignment PIN_V7 -to EIO[13]
+set_location_assignment PIN_V8 -to A_nSEL_ME
+set_location_assignment PIN_V9 -to A_nADR_SCUB
+set_location_assignment PIN_W11 -to A_D[7]
+set_location_assignment PIN_W12 -to A_D[15]
+set_location_assignment PIN_W15 -to IO_2_5V[0]
+set_location_assignment PIN_W16 -to IO_2_5V[13]
+set_location_assignment PIN_W2 -to A_A[12]
+set_location_assignment PIN_W3 -to A_A[11]
+set_location_assignment PIN_W4 -to EIO[6]
+set_location_assignment PIN_W8 -to A_UMIL15V
+set_location_assignment PIN_W9 -to A_nSRQ
+set_location_assignment PIN_Y12 -to A_D[8]
+set_location_assignment PIN_Y13 -to clk_fpga
+set_location_assignment PIN_Y15 -to A_nLED[13]
+set_location_assignment PIN_Y16 -to IO_2_5V[15]
+set_location_assignment PIN_Y1 -to A_RnW
+set_location_assignment PIN_Y3 -to A_A[2]
+set_location_assignment PIN_Y4 -to EIO[8]
+set_location_assignment PIN_Y7 -to A_UMIL5V
+set_location_assignment PIN_Y9 -to A_LEMO_4_IO

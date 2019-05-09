@@ -2,6 +2,7 @@
 #include <string.h>
 #include <inttypes.h>
 #include <stdint.h>
+#include <pp-printf.h>
 #include "mprintf.h"
 #include "mini_sdb.h"
 #include "irq.h"
@@ -42,7 +43,7 @@ void ebmInit()
 
    while (*(pEbCfg + (EBC_SRC_IP>>2)) == EBC_DEFAULT_IP) {
      for (j = 0; j < (125000000/2); ++j) { asm("nop"); }
-     mprintf("#%02u: DM cores Waiting for IP from WRC...\n", cpuId);
+     pp_printf("#%02u: DM cores Waiting for IP from WRC...\n", cpuId);
    }
 
    ebm_init();

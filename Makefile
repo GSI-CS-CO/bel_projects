@@ -122,7 +122,8 @@ toolchain-clean::
 	rm -rf toolchain
 
 wrpc-sw-config::
-	$(MAKE) -C ip_cores/wrpc-sw/ gsi_defconfig
+	test -s ip_cores/wrpc-sw/.config || \
+		$(MAKE) -C ip_cores/wrpc-sw/ gsi_defconfig
 
 firmware:	sdbfs etherbone toolchain wrpc-sw-config
 	$(MAKE) -C ip_cores/wrpc-sw SDBFS=$(PWD)/ip_cores/fpga-config-space/sdbfs/userspace all
