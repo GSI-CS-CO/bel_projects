@@ -24,6 +24,7 @@
  */
 #include <find_process.h>
 #include <unistd.h>
+#include <netdb.h>
 #include "daqt_command_line.hpp"
 
 using namespace daqt;
@@ -390,6 +391,11 @@ CommandLine::~CommandLine( void )
 //#define CONFIG_DBG_ATTRIBUTES
 DaqContainer* CommandLine::operator()( void )
 {
+   if( getArgCount() < 2 )
+   {
+      ERROR_MESSAGE( "Missing argument!" );
+      return nullptr;
+   }
    if( PARSER::operator()() < 0 )
       return nullptr;
    if( m_poAllDaq == nullptr )
@@ -447,9 +453,11 @@ static int onFoundProcess( OFP_ARG_T* pArg )
     * Checking whether the found process is himself.
     */
    if( pArg->pid == ::getpid() )
-      return 0; // Process has found himself.
+      return 0; // Process has found himself. Program continue.
 
    string* pEbTarget = static_cast<string*>(pArg->pUser);
+   string ebSelfAddr = pEbTarget->substr( pEbTarget->find( '/' ) + 1 );
+
    const char* currentArg = reinterpret_cast<char*>(pArg->commandLine.buffer);
 
    /*
@@ -468,17 +476,29 @@ static int onFoundProcess( OFP_ARG_T* pArg )
       currentArg += ::strlen( currentArg ) + 1;
    }
 
-   if( pEbTarget->compare( currentArg ) != 0 )
-   { /*
-      * Concurrent processes accessing to different EB-targets are allowed.
-      */
-      return 0;
+   string ebConcurrentAddr = currentArg;
+   ebConcurrentAddr = ebConcurrentAddr.substr( ebConcurrentAddr.find( '/' ) + 1 );
+
+   struct hostent* pHostConcurrent = ::gethostbyname( ebConcurrentAddr.c_str() );
+   struct hostent* pHostSelf       = ::gethostbyname( ebSelfAddr.c_str() );
+   if( pHostConcurrent == nullptr || pHostSelf == nullptr )
+   {
+      if( ebConcurrentAddr != ebSelfAddr )
+         return 0; // Program continue.
    }
+   if( pHostConcurrent != nullptr && pHostSelf != nullptr )
+   {
+      if( ::strcmp( pHostConcurrent->h_name, pHostSelf->h_name ) != 0 )
+         return 0; // Program continue.
+   }
+
+   if( (pHostConcurrent != nullptr) != (pHostSelf != nullptr) )
+      return 0; // Program continue.
 
    ERROR_MESSAGE( "A concurrent process accessing \"" << *pEbTarget <<
                   "\" is already running with the PID: " << pArg->pid );
 
-   return -1;
+   return -1; // Program termination.
 }
 } // extern "C"
 
