@@ -127,6 +127,8 @@ public:
 
    void sendAttributes( void );
    void start( void );
+
+   void showRunState( void );
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -149,12 +151,14 @@ class Channel: public DaqChannel
       std::size_t       m_size;
       Point*            m_poPoint;
       const std::string m_text;
+      bool              m_notFirst;
 
    public:
       Mode( Channel* pParent,
             std::size_t size,
             std::string text );
       ~Mode( void );
+      void write( DAQ_DATA_T* pData, std::size_t wordLen );
       void plot( void );
    };
 
@@ -169,6 +173,11 @@ public:
 
    void sendAttributes( void );
    void start( void );
+
+   bool isMultiplot( void )
+   {
+      return (m_poModeContinuous != nullptr) && (m_poModePmHires != nullptr);
+   }
 
    bool onDataBlock( DAQ_DATA_T* pData, std::size_t wordLen ) override;
 };

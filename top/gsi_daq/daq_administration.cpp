@@ -243,7 +243,10 @@ bool DaqAdministration::registerDevice( DaqDevice* pDevice )
    // Is device number forced?
    if( pDevice->m_deviceNumber == 0 )
    { // No, allocation automatically.
-      pDevice->m_deviceNumber = m_devicePtrList.size() + 1;
+      if( pDevice->m_slot == 0 )
+         pDevice->m_deviceNumber = m_devicePtrList.size() + 1;
+      else
+         pDevice->m_deviceNumber = getDeviceNumber( pDevice->m_slot );
    }
 
    if( pDevice->m_slot != 0 )
@@ -376,6 +379,8 @@ DaqAdministration::getChannelBySlotNumber( const unsigned int slotNumber,
 }
 
 #ifdef CONFIG_SCU_USE_DDR3
+/*! ---------------------------------------------------------------------------
+ */
 extern "C" {
 
 static int ramReadPoll( const DDR3_T* pThis UNUSED, unsigned int count )

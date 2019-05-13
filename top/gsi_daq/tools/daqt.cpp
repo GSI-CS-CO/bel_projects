@@ -31,6 +31,17 @@
 
 using namespace daqt;
 
+const char* getSampleRateText( ::DAQ_SAMPLE_RATE_T rate )
+{
+   switch( rate )
+   {
+      case ::DAQ_SAMPLE_1MS:   return "1 ms";
+      case ::DAQ_SAMPLE_100US: return "100 us";
+      case ::DAQ_SAMPLE_10US:  return "10 us";
+   }
+   return "unknown";
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 class Terminal
 {
@@ -96,6 +107,7 @@ Channel::Mode::Mode( Channel* pParent, std::size_t size, std::string text )
    :m_pParent( pParent )
    ,m_size( size )
    ,m_text( text )
+   ,m_notFirst( false )
 {
    m_poPoint = new Point[m_size];
 }
@@ -109,8 +121,39 @@ Channel::Mode::~Mode( void )
 
 /*-----------------------------------------------------------------------------
  */
+void Channel::Mode::write( DAQ_DATA_T* pData, std::size_t wordLen )
+{
+   std::size_t len = std::min( wordLen, m_size );
+
+   for( std::size_t i = 0; i < len; i++ )
+   {
+      m_poPoint[i].m_x = static_cast<double>(i); //TODO real time scale!
+      m_poPoint[i].m_y = rawToVoltage( pData[i] );
+   }
+}
+
+/*-----------------------------------------------------------------------------
+ */
 void Channel::Mode::plot( void )
 {
+   if( m_notFirst )
+      m_pParent->m_oPlot << "replot" << endl;
+   else
+   {
+      m_pParent->m_oPlot << "set xrange [0:" << m_size << "]" << endl;
+      m_pParent->m_oPlot << "set title \"";
+      if( !m_pParent->isMultiplot() )
+      {
+         m_pParent->m_oPlot << "Slot: " << m_pParent->getSlot()
+                            << ", Channel: " << m_pParent->getNumber()
+                            << ";   ";
+      }
+      m_pParent->m_oPlot << "Mode: " << m_text << "\"" << "font \",14\"" << endl;
+
+      m_pParent->m_oPlot << "plot '-' title \"\" with lines" << endl;
+      m_notFirst = true;
+   }
+
    for( std::size_t i = 0; i < m_size; i++ )
       m_pParent->m_oPlot << m_poPoint[i].m_x << ' '
                          << m_poPoint[i].m_y << endl;
@@ -175,10 +218,11 @@ void Channel::start( void )
 
    if( m_oAttributes.m_continueMode.m_valid )
    {
+      string sRate = getSampleRateText(m_oAttributes.m_continueMode.m_value  );
       m_poModeContinuous =
          new Mode( this,
                    DaqInterface::c_contineousPayloadLen,
-                   "Continuous" );
+                   "continuous sample rate: " + sRate );
       sendEnableContineous( m_oAttributes.m_continueMode.m_value,
                             m_oAttributes.m_blockLimit.m_value );
    }
@@ -188,7 +232,7 @@ void Channel::start( void )
       m_poModePmHires =
          new Mode( this,
                    DaqInterface::c_pmHiresPayloadLen,
-                   "High Resolution" );
+                   "high resolution" );
       sendEnableHighResolution( m_oAttributes.m_restart.m_value );
    }
    else if( m_oAttributes.m_postMortem.m_valid )
@@ -196,23 +240,40 @@ void Channel::start( void )
       m_poModePmHires =
          new Mode( this,
                    DaqInterface::c_pmHiresPayloadLen,
-                   "Post Mortem" );
+                   "post mortem" );
       sendEnablePostMortem( m_oAttributes.m_restart.m_value );
    }
+
 }
 
 /*! ---------------------------------------------------------------------------
  */
 bool Channel::onDataBlock( DAQ_DATA_T* pData, std::size_t wordLen )
 {
-   m_oPlot <<  "set xrange [0:" << wordLen << "]" << endl;
+   if( isMultiplot() )
+      m_oPlot << "set multiplot layout 2, 1 title \"Slot: " << getSlot() <<
+                 " Channel: " << getNumber() << "\" font \",14\"" << endl;
 
-   m_oPlot << "plot '-' title \"Slot: " << getSlot()
-           << ", Channel: " << getNumber()
-           << "\" with lines" << endl;
-   for( int i = 0; i < wordLen; i++ )
-      m_oPlot << static_cast<double>(i) << ' ' << rawToVoltage( pData[i] ) << endl;
-   m_oPlot << 'e' << endl;
+   if( descriptorWasContinuous() )
+   {
+      if( m_poModeContinuous != nullptr )
+         m_poModeContinuous->write( pData, wordLen );
+   }
+   else
+   {
+      if( m_poModePmHires != nullptr )
+         m_poModePmHires->write( pData, wordLen );
+   }
+
+   if( m_poModeContinuous != nullptr )
+      m_poModeContinuous->plot();
+
+   if( m_poModePmHires != nullptr )
+      m_poModePmHires->plot();
+
+   if( isMultiplot() )
+      m_oPlot << "unset multiplot" << endl;
+
    return false;
 }
 
@@ -324,6 +385,36 @@ void DaqContainer::start( void )
    }
 }
 
+/*-----------------------------------------------------------------------------
+ */
+void DaqContainer::showRunState( void )
+{
+   for( auto& iDev: *this )
+   {
+      cout << "Slot " << iDev->getSlot() << ':' << endl;
+      for( auto& iCha: *iDev )
+      {
+         cout << "\tChannel " << iCha->getNumber() << ':' << endl;
+         Channel* pChannel = static_cast<Channel*>(iCha);
+         if( pChannel->m_oAttributes.m_continueMode.m_valid )
+         {
+            cout << "\t\tcontinuous: "
+                 << getSampleRateText(
+                      pChannel->m_oAttributes.m_continueMode.m_value )
+                 << endl;
+         }
+         if( pChannel->m_oAttributes.m_postMortem.m_valid )
+         {
+            cout << "\t\tpost mortem" << endl;
+         }
+         if( pChannel->m_oAttributes.m_highResolution.m_valid )
+         {
+            cout << "\t\thigh resolution" << endl;
+         }
+      }
+   }
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 /*! ---------------------------------------------------------------------------
@@ -341,6 +432,14 @@ inline int daqtMain( int argc, char** ppArgv )
    while( (key = Terminal::readKey()) != '\e' )
    {
       pDaqContainer->distributeData();
+      switch( key )
+      {
+         case 's':
+         {
+            pDaqContainer->showRunState();
+            break;
+         }
+      }
    }
    return EXIT_SUCCESS;
 }

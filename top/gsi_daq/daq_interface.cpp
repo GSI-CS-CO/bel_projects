@@ -416,7 +416,6 @@ void DaqInterface::sendUnlockRamAccess( void )
       __THROW_EB_EXCEPTION();
 }
 
-
 /*! ---------------------------------------------------------------------------
  */
 void DaqInterface::writeParam1( void )
@@ -585,6 +584,25 @@ unsigned int DaqInterface::getSlotNumber( const unsigned int deviceNumber )
          return slot;
    }
    return 0;
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+unsigned int DaqInterface::getDeviceNumber( const unsigned int slotNumber )
+{
+   SCU_ASSERT( slotNumber > 0 );
+   SCU_ASSERT( slotNumber <= c_maxSlots );
+
+   if( !isDevicePresent( slotNumber ) )
+      return 0;
+
+   unsigned int deviceNumber = 0;
+   for( unsigned int slot = 1; slot <= slotNumber; slot++ )
+   {
+      if( isDevicePresent( slot ) )
+         deviceNumber++;
+   }
+   return deviceNumber;
 }
 
 /*! ---------------------------------------------------------------------------

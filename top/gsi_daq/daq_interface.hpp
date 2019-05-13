@@ -233,6 +233,8 @@ public:
 
    unsigned int getSlotNumber( const unsigned int deviceNumber );
 
+   unsigned int getDeviceNumber( const unsigned int slotNumber );
+
    unsigned int readMaxChannels( const unsigned int deviceNumber );
 
    int sendEnablePostMortem( const unsigned int deviceNumber,
