@@ -4,6 +4,9 @@ import sys
 import os.path
 import subprocess
 import time
+import argparse
+
+
 
 prefix ="/usr/local/bin/dm-"
 diffHeaderLen = 2
@@ -354,10 +357,13 @@ class Manager:
 
 
 def main(argv):
+  parser = argparse.ArgumentParser(description='Usage: ')
+  parser.add_argument('ebdev', metavar='ebdev', type=str, help='the DM\' etherbone device name')
+  args = parser.parse_args()
   pathandfile = os.path.realpath(__file__)
   mypath, myfile = os.path.split(pathandfile) 
   #print (mypath)
-  m = Manager(mypath, "TestManifest.py", "dev/ttyUSB0")
+  m = Manager(mypath, "TestManifest.py", args.ebdev)
   print("Loading %u Tests" % len(m.tests))
   #m.showTestList()
   print("\n########################\n")
