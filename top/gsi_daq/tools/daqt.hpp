@@ -113,6 +113,8 @@ public:
       ,m_poCommandLine( poCommandLine )
       {}
 
+   ~DaqContainer( void );
+
    CommandLine* getCommandLinePtr( void )
    {
       return m_poCommandLine;
@@ -129,6 +131,9 @@ public:
    void start( void );
 
    void showRunState( void );
+   void doPostMortem( void );
+   void doHighRes( void );
+   void doReset( void );
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -140,26 +145,22 @@ class Channel: public DaqChannel
    class Mode
    {
       friend class Channel;
-      struct Point
-      {
-         double m_x;
-         double m_y;
-         Point( void ): m_x(0.0), m_y(0.0) {}
-      };
 
       Channel*          m_pParent;
       std::size_t       m_size;
-      Point*            m_poPoint;
+      double*           m_pY;
       const std::string m_text;
       bool              m_notFirst;
+      unsigned int      m_blockCount;
+      unsigned int      m_sequence;
+      unsigned int      m_sampleTime;
 
    public:
-      Mode( Channel* pParent,
-            std::size_t size,
-            std::string text );
+      Mode( Channel* pParent, std::size_t size, std::string text );
       ~Mode( void );
       void write( DAQ_DATA_T* pData, std::size_t wordLen );
       void plot( void );
+      void reset( void );
    };
 
    Attributes        m_oAttributes;
@@ -180,6 +181,10 @@ public:
    }
 
    bool onDataBlock( DAQ_DATA_T* pData, std::size_t wordLen ) override;
+   void showRunState( void );
+   void doPostMortem( void );
+   void doHighRes( void );
+   void reset( void );
 };
 
 //////////////////////////////////////////////////////////////////////////////

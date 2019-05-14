@@ -31,6 +31,8 @@
 
 using namespace daqt;
 
+/*-----------------------------------------------------------------------------
+ */
 const char* getSampleRateText( ::DAQ_SAMPLE_RATE_T rate )
 {
    switch( rate )
@@ -103,20 +105,25 @@ void Attributes::set( const Attributes& rMyContainer )
 }
 
 ///////////////////////////////////////////////////////////////////////////////
+/*-----------------------------------------------------------------------------
+ */
 Channel::Mode::Mode( Channel* pParent, std::size_t size, std::string text )
    :m_pParent( pParent )
    ,m_size( size )
    ,m_text( text )
    ,m_notFirst( false )
+   ,m_blockCount( 0 )
+   ,m_sequence( 0 )
+   ,m_sampleTime( 0 )
 {
-   m_poPoint = new Point[m_size];
+   m_pY = new double[m_size];
 }
 
 /*-----------------------------------------------------------------------------
  */
 Channel::Mode::~Mode( void )
 {
-   delete m_poPoint;
+   delete [] m_pY;
 }
 
 /*-----------------------------------------------------------------------------
@@ -125,40 +132,52 @@ void Channel::Mode::write( DAQ_DATA_T* pData, std::size_t wordLen )
 {
    std::size_t len = std::min( wordLen, m_size );
 
+   m_blockCount++;
+   m_sequence   = m_pParent->descriptorGetSequence();
+   m_sampleTime = m_pParent->descriptorGetTimeBase();
+
    for( std::size_t i = 0; i < len; i++ )
-   {
-      m_poPoint[i].m_x = static_cast<double>(i); //TODO real time scale!
-      m_poPoint[i].m_y = rawToVoltage( pData[i] );
-   }
+      m_pY[i] = rawToVoltage( pData[i] );
 }
 
 /*-----------------------------------------------------------------------------
  */
 void Channel::Mode::plot( void )
 {
+   m_pParent->m_oPlot << "set xrange [0:" << m_size << "]" << endl;
+   m_pParent->m_oPlot << "set xtics 0,50," << m_size << endl;
+   m_pParent->m_oPlot << "set title \"";
+   if( !m_pParent->isMultiplot() )
+   {
+      m_pParent->m_oPlot << "Slot: " << m_pParent->getSlot()
+                         << ", Channel: " << m_pParent->getNumber()
+                         << ";   ";
+   }
+   m_pParent->m_oPlot << "Mode: " << m_text << ", Block: " << m_blockCount
+                      << ", Sequence: " <<  m_sequence
+                      << ", Sample time: " << m_sampleTime
+                      << " ns\"" << "font \",14\"" << endl;
    if( m_notFirst )
       m_pParent->m_oPlot << "replot" << endl;
    else
    {
-      m_pParent->m_oPlot << "set xrange [0:" << m_size << "]" << endl;
-      m_pParent->m_oPlot << "set title \"";
-      if( !m_pParent->isMultiplot() )
-      {
-         m_pParent->m_oPlot << "Slot: " << m_pParent->getSlot()
-                            << ", Channel: " << m_pParent->getNumber()
-                            << ";   ";
-      }
-      m_pParent->m_oPlot << "Mode: " << m_text << "\"" << "font \",14\"" << endl;
-
       m_pParent->m_oPlot << "plot '-' title \"\" with lines" << endl;
       m_notFirst = true;
    }
 
    for( std::size_t i = 0; i < m_size; i++ )
-      m_pParent->m_oPlot << m_poPoint[i].m_x << ' '
-                         << m_poPoint[i].m_y << endl;
+      m_pParent->m_oPlot << static_cast<double>(i) << ' ' << m_pY[i] << endl;
 
    m_pParent->m_oPlot << 'e' << endl;
+}
+
+/*-----------------------------------------------------------------------------
+ *  For detailed information about Gnuplot look in to the PDF documentation of Gnuplot.
+ */
+void Channel::Mode::reset( void )
+{
+   m_notFirst   = false;
+   m_blockCount = 0;
 }
 
 /*-----------------------------------------------------------------------------
@@ -250,10 +269,6 @@ void Channel::start( void )
  */
 bool Channel::onDataBlock( DAQ_DATA_T* pData, std::size_t wordLen )
 {
-   if( isMultiplot() )
-      m_oPlot << "set multiplot layout 2, 1 title \"Slot: " << getSlot() <<
-                 " Channel: " << getNumber() << "\" font \",14\"" << endl;
-
    if( descriptorWasContinuous() )
    {
       if( m_poModeContinuous != nullptr )
@@ -265,19 +280,134 @@ bool Channel::onDataBlock( DAQ_DATA_T* pData, std::size_t wordLen )
          m_poModePmHires->write( pData, wordLen );
    }
 
-   if( m_poModeContinuous != nullptr )
-      m_poModeContinuous->plot();
+   try
+   {
+      if( isMultiplot() )
+         m_oPlot << "set multiplot layout 2, 1 title \"Slot: " << getSlot() <<
+                    " Channel: " << getNumber() << "\" font \",14\"" << endl;
+      if( m_poModeContinuous != nullptr )
+         m_poModeContinuous->plot();
 
-   if( m_poModePmHires != nullptr )
-      m_poModePmHires->plot();
+      if( m_poModePmHires != nullptr )
+         m_poModePmHires->plot();
 
-   if( isMultiplot() )
-      m_oPlot << "unset multiplot" << endl;
-
+      if( isMultiplot() )
+         m_oPlot << "unset multiplot" << endl;
+   }
+   catch( std::exception& e )
+   {
+      ERROR_MESSAGE( e.what() );
+   }
    return false;
 }
 
+/*! ---------------------------------------------------------------------------
+ */
+void Channel::showRunState( void )
+{
+   cout << "\tChannel " << getNumber() << ':' << endl;
+   if( m_oAttributes.m_continueMode.m_valid )
+   {
+      cout << "\t\tcontinuous: "
+           << getSampleRateText(m_oAttributes.m_continueMode.m_value ) << "; ";
+      if( m_oAttributes.m_blockLimit.m_valid )
+         cout << " limit: " << m_oAttributes.m_blockLimit.m_value
+              << " blocks; ";
+      if( m_oAttributes.m_triggerEnable.m_value )
+      {
+         cout << "Trigger: ";
+         if( m_oAttributes.m_continueTriggerSouce.m_value )
+            cout << " extern,";
+         else
+         {
+            cout << " event: ";
+            if( m_oAttributes.m_triggerCondition.m_valid )
+               cout << m_oAttributes.m_triggerCondition.m_value;
+            cout << ", ";
+         }
+         cout << " delay: ";
+         if( m_oAttributes.m_triggerDelay.m_valid )
+            cout << m_oAttributes.m_triggerDelay.m_value
+                 << " samples;";
+      }
+      cout << endl;
+   }
+   if( m_oAttributes.m_postMortem.m_valid ||
+       m_oAttributes.m_highResolution.m_valid )
+   {
+      if( m_oAttributes.m_postMortem.m_valid )
+         cout << "\t\tpost mortem";
+      else
+      {
+         cout << "\t\thigh resolution";
+         if( m_oAttributes.m_triggerEnable.m_value )
+         {
+            cout << ", trigger: ";
+            if( m_oAttributes.m_highResTriggerSource.m_value )
+               cout << " extern,";
+            else
+            {
+               cout << " event: ";
+               if( m_oAttributes.m_triggerCondition.m_valid )
+                  cout << m_oAttributes.m_triggerCondition.m_value;
+            }
+         }
+      }
+      if( m_oAttributes.m_restart.m_valid )
+         cout << ", restart";
+      cout << endl;
+   }
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+void Channel::doPostMortem( void )
+{
+   if( !m_oAttributes.m_postMortem.m_valid )
+      return;
+
+   if( static_cast<DaqContainer*>(getParent()->getParent())->
+       getCommandLinePtr()->isVerbose() )
+      cout << "\tSlot: " << getSlot() << ", Channel: " << getNumber() << endl;
+
+   sendDisablePmHires( m_oAttributes.m_restart.m_value );
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+void Channel::doHighRes( void )
+{
+   if( !m_oAttributes.m_highResolution.m_valid )
+      return;
+
+   if( static_cast<DaqContainer*>(getParent()->getParent())->
+       getCommandLinePtr()->isVerbose() )
+      cout << "\tSlot: " << getSlot() << ", Channel: " << getNumber() << endl;
+
+   sendDisablePmHires( m_oAttributes.m_restart.m_value );
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+void Channel::reset( void )
+{
+   if( m_poModeContinuous != nullptr )
+      m_poModeContinuous->reset();
+
+   if( m_poModePmHires != nullptr )
+      m_poModePmHires->reset();
+}
+
 ///////////////////////////////////////////////////////////////////////////////
+/*! ---------------------------------------------------------------------------
+ */
+DaqContainer::~DaqContainer( void )
+{
+   if( m_poCommandLine->isVerbose() )
+      cout << "End " << getScuDomainName() << endl;
+   sendReset();
+}
+
 /*! ---------------------------------------------------------------------------
  */
 bool DaqContainer::checkCommandLineParameter( void )
@@ -389,30 +519,90 @@ void DaqContainer::start( void )
  */
 void DaqContainer::showRunState( void )
 {
+   if( m_poCommandLine->isVerbose() )
+      cout << "Status of SCU: " << getScuDomainName() << endl;
+
    for( auto& iDev: *this )
    {
       cout << "Slot " << iDev->getSlot() << ':' << endl;
       for( auto& iCha: *iDev )
       {
-         cout << "\tChannel " << iCha->getNumber() << ':' << endl;
-         Channel* pChannel = static_cast<Channel*>(iCha);
-         if( pChannel->m_oAttributes.m_continueMode.m_valid )
+         static_cast<Channel*>(iCha)->showRunState();
+      }
+   }
+}
+
+/*-----------------------------------------------------------------------------
+ */
+void DaqContainer::doPostMortem( void )
+{
+   if( m_poCommandLine->isVerbose() )
+      cout << "Post mortem of SCU: " << getScuDomainName() << ", ";
+
+   try
+   {
+      for( auto& iDev: *this )
+      {
+         for( auto& iCha: *iDev )
          {
-            cout << "\t\tcontinuous: "
-                 << getSampleRateText(
-                      pChannel->m_oAttributes.m_continueMode.m_value )
-                 << endl;
-         }
-         if( pChannel->m_oAttributes.m_postMortem.m_valid )
-         {
-            cout << "\t\tpost mortem" << endl;
-         }
-         if( pChannel->m_oAttributes.m_highResolution.m_valid )
-         {
-            cout << "\t\thigh resolution" << endl;
+            static_cast<Channel*>(iCha)->doPostMortem();
          }
       }
    }
+   catch( std::exception& e )
+   {
+      ERROR_MESSAGE( __func__ << " " << e.what() );
+   }
+}
+
+/*-----------------------------------------------------------------------------
+ */
+void DaqContainer::doHighRes( void )
+{
+   if( m_poCommandLine->isVerbose() )
+      cout << "High resolution of SCU: " << getScuDomainName() << endl;
+
+   try
+   {
+      for( auto& iDev: *this )
+      {
+         for( auto& iCha: *iDev )
+         {
+            static_cast<Channel*>(iCha)->doHighRes();
+         }
+      }
+   }
+   catch( std::exception& e )
+   {
+      ERROR_MESSAGE( __func__ << " " << e.what() );
+   }
+}
+
+/*-----------------------------------------------------------------------------
+ */
+void DaqContainer::doReset( void )
+{
+   if( m_poCommandLine->isVerbose() )
+      cout << "Reset of SCU: " << getScuDomainName() << endl;
+
+   try
+   {
+      sendReset();
+      for( auto& iDev: *this )
+      {
+         for( auto& iCha: *iDev )
+         {
+            static_cast<Channel*>(iCha)->reset();
+         }
+      }
+      sendAttributes();
+      start();
+   }
+   catch( std::exception& e )
+   {
+      ERROR_MESSAGE( __func__ << " " << e.what() );
+   }
+
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -437,6 +627,21 @@ inline int daqtMain( int argc, char** ppArgv )
          case 's':
          {
             pDaqContainer->showRunState();
+            break;
+         }
+         case 'p':
+         {
+            pDaqContainer->doPostMortem();
+            break;
+         }
+         case 'h':
+         {
+            pDaqContainer->doHighRes();
+            break;
+         }
+         case 'r':
+         {
+            pDaqContainer->doReset();
             break;
          }
       }
