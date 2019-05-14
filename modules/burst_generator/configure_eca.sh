@@ -14,13 +14,41 @@ get_usr_answer()
   fi
 }
 
+write_pulse_params_to_ram()
+{
+  echo writing id, delay, conditions, offset and production cycle to RAM:
+
+  local USR_RAM_ADDR=$USR_RAM_START
+  eb-write dev/wbm0 ${USR_RAM_ADDR}/4 ${IO_EVNT_ID::10}
+  printf ' io evnt id @ 0x%08x : 0x%s\n' $USR_RAM_ADDR "$(eb-read dev/wbm0 ${USR_RAM_ADDR}/4)"
+
+  USR_RAM_ADDR=$(($USR_RAM_ADDR + 4))
+  eb-write dev/wbm0 ${USR_RAM_ADDR}/4 $PULSE_DELAY
+  printf ' delay      @ 0x%08x : 0x%s\n' $USR_RAM_ADDR "$(eb-read dev/wbm0 ${USR_RAM_ADDR}/4)"
+
+  USR_RAM_ADDR=$(($USR_RAM_ADDR + 4))
+  eb-write dev/wbm0 ${USR_RAM_ADDR}/4 $IO_RULES
+  printf ' conditions @ 0x%08x : 0x%s\n' $USR_RAM_ADDR "$(eb-read dev/wbm0 ${USR_RAM_ADDR}/4)"
+
+  USR_RAM_ADDR=$(($USR_RAM_ADDR + 4))
+  eb-write dev/wbm0 ${USR_RAM_ADDR}/4 $IO_EVNT_OFF
+  printf ' offset     @ 0x%08x : 0x%s\n' $USR_RAM_ADDR "$(eb-read dev/wbm0 ${USR_RAM_ADDR}/4)"
+
+  USR_RAM_ADDR=$(($USR_RAM_ADDR + 4))
+  eb-write dev/wbm0 ${USR_RAM_ADDR}/4 $PULSE_CYCLE_HI32
+  printf ' cycle_hi32 @ 0x%08x : 0x%s\n' $USR_RAM_ADDR "$(eb-read dev/wbm0 ${USR_RAM_ADDR}/4)"
+
+  USR_RAM_ADDR=$(($USR_RAM_ADDR + 4))
+  eb-write dev/wbm0 ${USR_RAM_ADDR}/4 $PULSE_CYCLE_LO32
+  printf ' cycle_lo32 @ 0x%08x : 0x%s\n' $USR_RAM_ADDR "$(eb-read dev/wbm0 ${USR_RAM_ADDR}/4)"
+
+  echo
+}
+
 ############## globals #########################################################
 
 TR_NAME=""
 IO_NAME="IO1"
-
-#get the name of a timing receiver
-TR_NAME=$(saft-ctl bla -f -j | grep -oE "name:(.*?)path" | sed s/,//g | cut -d" " -f2)
 
 # default number of ECA rules for the IO action channel
 IO_RULES=100
@@ -38,8 +66,10 @@ PULSE_DELAY=0;
 PULSE_CYCLE_HI32=0
 PULSE_CYCLE_LO32=5 # inject timing messages for IO action 5 times
 
+OPTION_WRITE_PULSE_PARAMS_TO_RAM=0
+
 if [ $# -ne 0 ]; then
-  while getopts ":h:n:f:o:c:d:" opt; do
+  while getopts ":h:n:f:o:c:d:p" opt; do
     case $opt in
       h ) # help
         echo "$0 -n <conditions> -o <offset> -f <flags>"
@@ -59,6 +89,8 @@ if [ $# -ne 0 ]; then
         PULSE_CYCLE_HI32=$OPTARG ;;
       d ) # pulse cycle low 32-bit
         PULSE_CYCLE_LO32=$OPTARG ;;
+      p ) # allow to store the pulse params to RAM
+        OPTION_WRITE_PULSE_PARAMS_TO_RAM=1 ;;
       : )
         echo "Bad option: $OPTARG requires an argument" 1>&2
         exit 1 ;;
@@ -73,35 +105,11 @@ fi
 ############# write pulse parameters to shared memory #########################
 
 # write conditions and offset to shared RAM
-USR_RAM_START=0x200a0510
-echo writing id, delay, conditions, offset and production cycle to RAM:
 
-USR_RAM_ADDR=$USR_RAM_START
-eb-write dev/wbm0 ${USR_RAM_ADDR}/4 ${IO_EVNT_ID::10}
-printf ' io evnt id @ 0x%08x : 0x%s\n' $USR_RAM_ADDR "$(eb-read dev/wbm0 ${USR_RAM_ADDR}/4)"
-
-USR_RAM_ADDR=$(($USR_RAM_ADDR + 4))
-eb-write dev/wbm0 ${USR_RAM_ADDR}/4 $PULSE_DELAY
-printf ' delay      @ 0x%08x : 0x%s\n' $USR_RAM_ADDR "$(eb-read dev/wbm0 ${USR_RAM_ADDR}/4)"
-
-USR_RAM_ADDR=$(($USR_RAM_ADDR + 4))
-eb-write dev/wbm0 ${USR_RAM_ADDR}/4 $IO_RULES
-printf ' conditions @ 0x%08x : 0x%s\n' $USR_RAM_ADDR "$(eb-read dev/wbm0 ${USR_RAM_ADDR}/4)"
-
-USR_RAM_ADDR=$(($USR_RAM_ADDR + 4))
-eb-write dev/wbm0 ${USR_RAM_ADDR}/4 $IO_EVNT_OFF
-printf ' offset     @ 0x%08x : 0x%s\n' $USR_RAM_ADDR "$(eb-read dev/wbm0 ${USR_RAM_ADDR}/4)"
-
-USR_RAM_ADDR=$(($USR_RAM_ADDR + 4))
-eb-write dev/wbm0 ${USR_RAM_ADDR}/4 $PULSE_CYCLE_HI32
-printf ' cycle_hi32 @ 0x%08x : 0x%s\n' $USR_RAM_ADDR "$(eb-read dev/wbm0 ${USR_RAM_ADDR}/4)"
-
-USR_RAM_ADDR=$(($USR_RAM_ADDR + 4))
-eb-write dev/wbm0 ${USR_RAM_ADDR}/4 $PULSE_CYCLE_LO32
-printf ' cycle_lo32 @ 0x%08x : 0x%s\n' $USR_RAM_ADDR "$(eb-read dev/wbm0 ${USR_RAM_ADDR}/4)"
-
-echo
-
+if [ $OPTION_WRITE_PULSE_PARAMS_TO_RAM -eq 1 ]; then
+  USR_RAM_START=0x200a0510
+  write_pulse_params_to_ram
+fi
 ############# set action rules for LM32 ########################################
 
 LM32_EVNT_ID=0x8484000000000000
@@ -111,6 +119,9 @@ LM32_EVNT_OFF=0
 echo "Are you sure to set ECA rules for the LM32 action channel:"
 echo " id: $LM32_EVNT_ID, mask: $LM32_EVNT_MSK, offset: $LM32_EVNT_OFF, tag: $LM32_EVNT_TAG (y/n) ?"
 get_usr_answer
+
+#get the name of a timing receiver
+TR_NAME=$(saft-ctl bla -f -j | grep -oE "name:(.*?)path" | sed s/,//g | cut -d" " -f2)
 
 # clean current rules
 saft-ecpu-ctl $TR_NAME -x
