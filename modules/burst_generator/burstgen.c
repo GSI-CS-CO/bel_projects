@@ -722,6 +722,16 @@ void setupMsiHandlers(void)
   }
   else  {
     mprintf("Mailbox slot for host MSIs  : %d (base +0x%x)\n", gMbSlot, gMbSlot*8);
+
+    if (pShared)
+    {
+      *(pShared + (SHARED_MB_SLOT >> 2)) = gMbSlot; // write the subscribed mailbox slot into the shared memory
+    }
+    else
+    {
+      mprintf("Logic error: shared memory must be initialized prior to the mailbox slot subscription");
+      return;
+    }
   }
 
   configureEcaMsi(1, gEcaChECPU); // ECA MSIs are sent to destination address of pMyMsi

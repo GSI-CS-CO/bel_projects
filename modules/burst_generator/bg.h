@@ -32,6 +32,7 @@ extern uint32_t*       _startshared[];
 #define ECACHANNELFORLM32 2     // the id of an ECA channel for embedded CPU
 
 /* definitions of buffers in shared memory */
+#define SHARED_MB_SLOT    0x04UL
 #define SHARED_CMD        0x08UL
 #define SHARED_INPUT      0x10UL
 
