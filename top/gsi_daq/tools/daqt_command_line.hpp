@@ -37,6 +37,22 @@ namespace daqt
 
 using namespace daq;
 
+#ifndef HOT_KEY_SHOW_STATE
+  #define HOT_KEY_SHOW_STATE   's'
+#endif
+#ifndef HOT_KEY_POST_MORTEM
+  #define HOT_KEY_POST_MORTEM  'p'
+#endif
+#ifndef HOT_KEY_HIGH_RES
+  #define HOT_KEY_HIGH_RES     'h'
+#endif
+#ifndef HOT_KEY_RESET
+  #define HOT_KEY_RESET        'r'
+#endif
+#ifndef HOT_KEY_RECEIVE
+  #define HOT_KEY_RECEIVE      'i'
+#endif
+
 #define FSM_DECLARE_STATE( state, attr... ) state
 #define FSM_INIT_FSM( state, attr... )      m_state( state )
 #define FSM_TRANSITION( newState, attr... ) m_state = newState

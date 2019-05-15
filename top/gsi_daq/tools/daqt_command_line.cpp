@@ -71,12 +71,21 @@ vector<OPTION> CommandLine::c_optList =
    {
       OPT_LAMBDA( poParser,
       {
-         assert( !poParser->isOptArgPersent() );
          cout << "Usage: " << poParser->getProgramName()
               << " <proto/host/port> [global-options] "
-                 "[<slot-number> <channel-number> [channel-options]] \n\n"
+                 "[<slot-number> [device-options] "
+                 "<channel-number> [channel-options]] \n\n"
+                 "Global-options can be overwritten by device-options "
+                 "and device options can be overwritten by channel-options.\n"
                  "NOTE: The lowest slot-number begins at 1; "
-                 "the lowest channel-number begins at 1.\n";
+                 "the lowest channel-number begins at 1.\n\n"
+                 "Hot keys:\n"
+              << HOT_KEY_SHOW_STATE << ": Shows the currently configuration\n"
+              << HOT_KEY_POST_MORTEM << ": Triggering a post mortem event\n"
+              << HOT_KEY_HIGH_RES << ": Triggering a high resolution event\n"
+              << HOT_KEY_RESET    << ": Reset\n"
+              << HOT_KEY_RECEIVE << ": Toggling receiving on / off\n"
+                 "\nCommandline options:\n";
          poParser->list( cout );
          cout << endl;
          ::exit( EXIT_SUCCESS );
@@ -87,6 +96,19 @@ vector<OPTION> CommandLine::c_optList =
       .m_shortOpt = 'h',
       .m_longOpt  = "help",
       .m_helpText = "Print this help and exit"
+   },
+   {
+      OPT_LAMBDA( poParser,
+      {
+         cout << TO_STRING( VERSION ) << endl;
+         ::exit( EXIT_SUCCESS );
+         return 0;
+      }),
+      .m_hasArg   = OPTION::NO_ARG,
+      .m_id       = 0,
+      .m_shortOpt = 'V',
+      .m_longOpt  = "version",
+      .m_helpText = "Print the software version and exit"
    },
    {
       OPT_LAMBDA( poParser,
@@ -524,7 +546,7 @@ int CommandLine::onArgument( void )
       case READ_EB_NAME:
       {
          SCU_ASSERT( m_poAllDaq == nullptr );
-#if 0
+#if 1
          if( ::findProcesses( getProgramName().c_str(),
                               ::onFoundProcess, &arg,
                               static_cast<FPROC_MODE_T>

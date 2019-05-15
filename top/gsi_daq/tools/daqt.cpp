@@ -117,6 +117,10 @@ Channel::Mode::Mode( Channel* pParent, std::size_t size, std::string text )
    ,m_sampleTime( 0 )
 {
    m_pY = new double[m_size];
+   if( m_pParent->m_oAttributes.m_postMortem.m_value )
+      m_sampleTime = 100000;
+   else if( m_pParent->m_oAttributes.m_highResolution.m_value )
+      m_sampleTime = 250;
 }
 
 /*-----------------------------------------------------------------------------
@@ -142,10 +146,17 @@ void Channel::Mode::write( DAQ_DATA_T* pData, std::size_t wordLen )
 
 /*-----------------------------------------------------------------------------
  */
+inline double nsecToSec( unsigned int nsec )
+{
+   return nsec / 1000000000.0;
+}
+
 void Channel::Mode::plot( void )
 {
-   m_pParent->m_oPlot << "set xrange [0:" << m_size << "]" << endl;
-   m_pParent->m_oPlot << "set xtics 0,50," << m_size << endl;
+   double visibleTime = nsecToSec( m_size * m_sampleTime );
+   m_pParent->m_oPlot << "set xrange [0:" << visibleTime << "]" << endl;
+   m_pParent->m_oPlot << "set xtics 0," << visibleTime / 10.0 << ","
+                                        << visibleTime << endl;
    m_pParent->m_oPlot << "set title \"";
    if( !m_pParent->isMultiplot() )
    {
@@ -155,8 +166,9 @@ void Channel::Mode::plot( void )
    }
    m_pParent->m_oPlot << "Mode: " << m_text << ", Block: " << m_blockCount
                       << ", Sequence: " <<  m_sequence
-                      << ", Sample time: " << m_sampleTime
-                      << " ns\"" << "font \",14\"" << endl;
+                      << ", Sample time: " << nsecToSec( m_sampleTime )
+                      << " s\"" << "font \",14\"" << endl;
+   //m_pParent->m_oPlot << "unset yrange" << endl;
    if( m_notFirst )
       m_pParent->m_oPlot << "replot" << endl;
    else
@@ -166,7 +178,7 @@ void Channel::Mode::plot( void )
    }
 
    for( std::size_t i = 0; i < m_size; i++ )
-      m_pParent->m_oPlot << static_cast<double>(i) << ' ' << m_pY[i] << endl;
+      m_pParent->m_oPlot << nsecToSec(i * m_sampleTime) << ' ' << m_pY[i] << endl;
 
    m_pParent->m_oPlot << 'e' << endl;
 }
@@ -619,32 +631,41 @@ inline int daqtMain( int argc, char** ppArgv )
    int key;
    Terminal oTerminal;
    pDaqContainer->start();
+   bool doRead = true;
    while( (key = Terminal::readKey()) != '\e' )
    {
-      pDaqContainer->distributeData();
       switch( key )
       {
-         case 's':
+         case HOT_KEY_SHOW_STATE:
          {
             pDaqContainer->showRunState();
             break;
          }
-         case 'p':
+         case HOT_KEY_POST_MORTEM:
          {
             pDaqContainer->doPostMortem();
             break;
          }
-         case 'h':
+         case HOT_KEY_HIGH_RES:
          {
             pDaqContainer->doHighRes();
             break;
          }
-         case 'r':
+         case HOT_KEY_RESET:
          {
             pDaqContainer->doReset();
             break;
          }
+         case HOT_KEY_RECEIVE:
+         {
+            doRead = !doRead;
+            if( cmdLine.isVerbose() )
+               cout << "Receiving: " << (doRead? "enabled" : "disabled") << endl;
+         }
       }
+
+      if( doRead )
+         pDaqContainer->distributeData();
    }
    return EXIT_SUCCESS;
 }
