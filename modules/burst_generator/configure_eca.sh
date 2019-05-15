@@ -67,9 +67,10 @@ PULSE_CYCLE_HI32=0
 PULSE_CYCLE_LO32=5 # inject timing messages for IO action 5 times
 
 OPTION_WRITE_PULSE_PARAMS_TO_RAM=0
+OPTION_USER_INTERACTION=1
 
 if [ $# -ne 0 ]; then
-  while getopts ":h:n:f:o:c:d:p" opt; do
+  while getopts ":h:n:f:o:c:d:pu" opt; do
     case $opt in
       h ) # help
         echo "$0 -n <conditions> -o <offset> -f <flags>"
@@ -91,6 +92,8 @@ if [ $# -ne 0 ]; then
         PULSE_CYCLE_LO32=$OPTARG ;;
       p ) # allow to store the pulse params to RAM
         OPTION_WRITE_PULSE_PARAMS_TO_RAM=1 ;;
+      u ) # disable user interaction
+        OPTION_USER_INTERACTION=0 ;;
       : )
         echo "Bad option: $OPTARG requires an argument" 1>&2
         exit 1 ;;
@@ -116,9 +119,12 @@ LM32_EVNT_ID=0x8484000000000000
 LM32_EVNT_MSK=0xFFFF000000000000
 LM32_EVNT_TAG=0x42
 LM32_EVNT_OFF=0
-echo "Are you sure to set ECA rules for the LM32 action channel:"
-echo " id: $LM32_EVNT_ID, mask: $LM32_EVNT_MSK, offset: $LM32_EVNT_OFF, tag: $LM32_EVNT_TAG (y/n) ?"
-get_usr_answer
+
+if [ $OPTION_USER_INTERACTION -eq 1 ]; then
+  echo "Are you sure to set ECA rules for the LM32 action channel:"
+  echo " id: $LM32_EVNT_ID, mask: $LM32_EVNT_MSK, offset: $LM32_EVNT_OFF, tag: $LM32_EVNT_TAG (y/n) ?"
+  get_usr_answer
+fi
 
 #get the name of a timing receiver
 TR_NAME=$(saft-ctl bla -f -j | grep -oE "name:(.*?)path" | sed s/,//g | cut -d" " -f2)
@@ -146,13 +152,15 @@ if [ "$AVAIL_IO" != "" ]; then
   IO_NAME=$AVAIL_IO
 fi
 
-# ask user agreement prior to configuration
-echo "set $IO_NAME of $TR_NAME as output (y/n) ?"
-get_usr_answer
+if [ $OPTION_USER_INTERACTION -eq 1 ]; then
+  # ask user agreement prior to configuration
+  echo "set $IO_NAME of $TR_NAME as output (y/n) ?"
+  get_usr_answer
 
-echo "Are you sure to set $IO_RULES ECA rules for the IO channel:"
-echo " id: $IO_EVNT_ID, mask: $IO_EVNT_MSK, flag: $IO_EVNT_FLG, offset: $IO_EVNT_OFF (y/n) ?"
-get_usr_answer
+  echo "Are you sure to set $IO_RULES ECA rules for the IO channel:"
+  echo " id: $IO_EVNT_ID, mask: $IO_EVNT_MSK, flag: $IO_EVNT_FLG, offset: $IO_EVNT_OFF (y/n) ?"
+  get_usr_answer
+fi
 
 # clean current rules
 saft-io-ctl $TR_NAME -x
