@@ -35,7 +35,7 @@ ifndef CONFIG_NO_ASSERT
 	CFLAGS += -DCONFIG_ASSERT
 endif
 
-.PRECIOUS: ram.ld buildid.c $(PATHPKG)/ramsize_pkg.vhd $(TARGET)_shared_mmap.h
+.PHONY: ram.ld buildid.c $(PATHPKG)/ramsize_pkg.vhd $(TARGET)_shared_mmap.h
 .PRECIOUS: $(TARGET).bin
 
 include $(INCPATH)/build_lm32.mk
