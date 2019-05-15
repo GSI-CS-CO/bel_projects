@@ -70,10 +70,18 @@ OPTION_WRITE_PULSE_PARAMS_TO_RAM=0
 OPTION_USER_INTERACTION=1
 
 if [ $# -ne 0 ]; then
-  while getopts ":h:n:f:o:c:d:pu" opt; do
+  while getopts ":hn:f:o:c:d:pu" opt; do
     case $opt in
       h ) # help
-        echo "$0 -n <conditions> -o <offset> -f <flags>"
+        echo "$0 <options>"
+        echo -e "\noptions:"
+        echo "-n <conditions>   number of ECA IO conditions"
+        echo "-o <offset>       regular offset for each ECA IO conditions"
+        echo "-f <flags>        condition flags (1:?, 2:?, 4: ?, 8: ?)"
+        echo "-c <cycle, hi32>  production cycle, high 32-bit value"
+        echo "-d <cycle, lo32>  production cycle, low 32-bit value"
+        echo "-p                store the given pulse parameter to RAM"
+        echo "-u                user interaction is not needed"
         exit 0 ;;
       n ) # number of ECA conditions (must be even number)
         if [ $(($OPTARG % 2)) ]; then
