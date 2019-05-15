@@ -3,7 +3,7 @@
  *
  *  created : 2018
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 16-January-2019
+ *  version : 25-Feb-2019
  *
  * API for wrunipz
  *
@@ -37,7 +37,7 @@
 #ifndef __WR_UNIPZ_API_H_
 #define __WR_UNIPZ_API_H_
 
-#define WRUNIPZ_X86_VERSION "0.0.8"
+#define WRUNIPZ_X86_VERSION "0.0.11"
 
 #include <wr-unipz.h>
 
@@ -85,14 +85,24 @@ uint32_t wrunipz_transaction_upload(eb_device_t device,   // EB device
                                     uint32_t nDataChn1    // # of data for 'Kanal 1'
                                     );
 
-
-
-
-  
-
-
-
-
-
+// set channel data with 'real' data from a textfile
+void wrunipz_fill_channel_file(char     *filename,        // filename
+			       uint32_t pz,               // # of UNIPZ
+                               uint32_t vAcc,             // # of virtual accelerator
+                               uint32_t *dataChn0,        // data for 'Kanal 0'
+                               uint32_t *nDataChn0,       // # of data for 'Kanal 0'
+                               uint32_t *dataChn1,        // data for 'Kanal 1'
+                               uint32_t *nDataChn1        // # of data for 'Kanal 1'
+                              );
+                                  
+// set channel data with dummy data; used for testing
+void wrunipz_fill_channel_dummy(uint32_t offset,          // filename
+                                uint32_t pz,              // # of UNIPZ
+                                uint32_t vAcc,            // # of virtual accelerator
+                                uint32_t *dataChn0,       // data for 'Kanal 0'
+                                uint32_t *nDataChn0,      // # of data for 'Kanal 0'
+                                uint32_t *dataChn1,       // data for 'Kanal 1'
+                                uint32_t *nDataChn1       // # of data for 'Kanal 1'
+                                );
 
 #endif

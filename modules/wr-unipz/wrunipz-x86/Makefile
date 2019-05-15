@@ -10,7 +10,7 @@ ARCH        ?= x86_64
 EB          ?= ../../../ip_cores/etherbone-core/api
 FW          ?=../wrunipz-fw
 INCLUDE     ?=../include
-TARGETS     := wrunipz-ctl 
+TARGETS     := wrunipz-ctl wrunipz-load 
 
 
 EXTRA_FLAGS ?=
@@ -21,6 +21,9 @@ all: $(TARGETS)
 
 wrunipz-ctl: wrunipz-ctl.c
 	$(CC) $(CFLAGS) wrunipz-api.c -o wrunipz-ctl wrunipz-ctl.c $(LIBS)
+
+wrunipz-load: wrunipz-load.c
+	$(CC) $(CFLAGS) wrunipz-api.c -o wrunipz-load wrunipz-load.c $(LIBS)
 
 clean:
 	rm -f *.o $(TARGETS)
