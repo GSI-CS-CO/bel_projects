@@ -115,6 +115,7 @@ Channel::Mode::Mode( Channel* pParent, std::size_t size, std::string text )
    ,m_blockCount( 0 )
    ,m_sequence( 0 )
    ,m_sampleTime( 0 )
+   ,m_timeStamp( 0 )
 {
    m_pY = new double[m_size];
    if( m_pParent->m_oAttributes.m_postMortem.m_value )
@@ -139,6 +140,7 @@ void Channel::Mode::write( DAQ_DATA_T* pData, std::size_t wordLen )
    m_blockCount++;
    m_sequence   = m_pParent->descriptorGetSequence();
    m_sampleTime = m_pParent->descriptorGetTimeBase();
+   m_timeStamp  = m_pParent->descriptorGetTimeStamp() - m_sampleTime * wordLen;
 
    for( std::size_t i = 0; i < len; i++ )
       m_pY[i] = rawToVoltage( pData[i] );
@@ -146,15 +148,21 @@ void Channel::Mode::write( DAQ_DATA_T* pData, std::size_t wordLen )
 
 /*-----------------------------------------------------------------------------
  */
-inline double nsecToSec( unsigned int nsec )
+inline double nsecToSec( uint64_t nsec )
 {
    return nsec / 1000000000.0;
 }
 
+inline uint64_t trunc100( uint64_t nsec )
+{
+   return nsec - (nsec % 100);
+}
+
 void Channel::Mode::plot( void )
 {
-   double visibleTime = nsecToSec( m_size * m_sampleTime );
-   m_pParent->m_oPlot << "set xrange [0:" << visibleTime << "]" << endl;
+   double visibleTime = nsecToSec( trunc100(m_size) * m_sampleTime );
+   m_pParent->m_oPlot << "set xrange [0:"
+                      << nsecToSec( m_size * m_sampleTime ) << "]" << endl;
    m_pParent->m_oPlot << "set xtics 0," << visibleTime / 10.0 << ","
                                         << visibleTime << endl;
    m_pParent->m_oPlot << "set title \"";
@@ -168,14 +176,15 @@ void Channel::Mode::plot( void )
                       << ", Sequence: " <<  m_sequence
                       << ", Sample time: " << nsecToSec( m_sampleTime )
                       << " s\"" << "font \",14\"" << endl;
-   //m_pParent->m_oPlot << "unset yrange" << endl;
-   if( m_notFirst )
-      m_pParent->m_oPlot << "replot" << endl;
-   else
-   {
+
+   m_pParent->m_oPlot << "set xlabel \"Time: " << m_timeStamp <<"\"" << endl;
+//   if( m_notFirst )
+//      m_pParent->m_oPlot << "replot" << endl;
+//   else
+//   {
       m_pParent->m_oPlot << "plot '-' title \"\" with lines" << endl;
       m_notFirst = true;
-   }
+//   }
 
    for( std::size_t i = 0; i < m_size; i++ )
       m_pParent->m_oPlot << nsecToSec(i * m_sampleTime) << ' ' << m_pY[i] << endl;
@@ -194,9 +203,9 @@ void Channel::Mode::reset( void )
 
 /*-----------------------------------------------------------------------------
  */
-Channel::Channel( unsigned int number )
+Channel::Channel( unsigned int number, const string& rGnuplot )
    :DaqChannel( number )
-   ,m_oPlot( "-noraise" )
+   ,m_oPlot( "-noraise", rGnuplot )
    ,m_poModeContinuous( nullptr )
    ,m_poModePmHires( nullptr )
 {
@@ -236,11 +245,14 @@ void Channel::sendAttributes( void )
  */
 void Channel::start( void )
 {
-   m_oPlot << "set terminal X11 title \"SCU: " << getScuDomainName()
-           << "\"" << endl;
+   SCU_ASSERT( dynamic_cast<DaqContainer*>(getParent()->getParent()) != nullptr );
+   m_oPlot << "set terminal "
+           << static_cast<DaqContainer*>(getParent()->getParent())->
+                                getCommandLinePtr()->getTerminal()
+           << " title \"SCU: " << getScuDomainName()
+           << '"' << endl;
 
    m_oPlot << "set grid" << endl;
-   m_oPlot << "set xlabel \"Time\"" << endl;
    m_oPlot << "set ylabel \"Voltage\"" << endl;
 
    if( !m_oAttributes.m_zoomGnuPlot.m_value )
@@ -533,6 +545,11 @@ void DaqContainer::showRunState( void )
 {
    if( m_poCommandLine->isVerbose() )
       cout << "Status of SCU: " << getScuDomainName() << endl;
+
+   cout << "Using Gnuplot binary: \"" << m_poCommandLine->getGnuplotBinary()
+        << '"' << endl;
+   cout << "Using terminal: \"" << m_poCommandLine->getTerminal() << '"' <<
+       endl;
 
    for( auto& iDev: *this )
    {

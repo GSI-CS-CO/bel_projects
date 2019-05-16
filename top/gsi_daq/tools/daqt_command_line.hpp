@@ -28,6 +28,7 @@
  #include "daqt_messages.hpp"
  #include "parse_opts.hpp"
  #include "daqt.hpp"
+ #include "gnuplotstream.hpp"
 #endif
 
 using namespace CLOP;
@@ -53,6 +54,11 @@ using namespace daq;
   #define HOT_KEY_RECEIVE      'i'
 #endif
 
+#ifndef GNUPLOT_DEFAULT_TERMINAL
+  #define GNUPLOT_DEFAULT_TERMINAL "X11"
+#endif
+
+
 #define FSM_DECLARE_STATE( state, attr... ) state
 #define FSM_INIT_FSM( state, attr... )      m_state( state )
 #define FSM_TRANSITION( newState, attr... ) m_state = newState
@@ -73,6 +79,8 @@ class CommandLine: public PARSER
    Device*        m_poCurrentDevice;
    Channel*       m_poCurrentChannel;
    bool           m_verbose;
+   std::string    m_gnuplotBin;
+   std::string    m_gnuplotTerminal;
 
    static bool readInteger( unsigned int&, const std::string& );
 
@@ -90,6 +98,16 @@ public:
    bool isVerbose( void ) const
    {
       return m_verbose;
+   }
+
+   const std::string& getGnuplotBinary( void )
+   {
+      return m_gnuplotBin;
+   }
+
+   const std::string& getTerminal( void )
+   {
+      return m_gnuplotTerminal;
    }
 };
 

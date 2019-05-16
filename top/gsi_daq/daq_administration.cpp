@@ -162,8 +162,6 @@ DaqAdministration::DaqAdministration( const std::string wbDevice )
   :DaqInterface( wbDevice )
   ,m_maxChannels( 0 )
   ,m_poCurrentDescriptor( nullptr )
-//  ,m_pThread( nullptr )
-//  ,m_finalizeThread( false )
 {
 }
 
@@ -171,61 +169,7 @@ DaqAdministration::DaqAdministration( const std::string wbDevice )
  */
 DaqAdministration::~DaqAdministration( void )
 {
-  // stop();
 }
-
-/*! ---------------------------------------------------------------------------
- */
-#if 0
-void DaqAdministration::start( unsigned int toSleep )
-{
-   SCU_ASSERT( m_pThread == nullptr );
-   m_finalizeThread = false;
-   m_pThread = new boost::thread( boost::bind( &DaqAdministration::thread,
-                                               this,
-                                               toSleep
-                                             ));
-}
-
-/*! ---------------------------------------------------------------------------
- */
-void DaqAdministration::stop( void )
-{
-   if( m_pThread == nullptr )
-      return;
-
-   m_finalizeThread = true;
-   m_pThread->join();
-   delete m_pThread;
-   m_pThread = nullptr;
-   if( c_exceptionPtr == nullptr )
-      return;
-  // std::rethrow_exception( c_exceptionPtr );
-   throw( c_exceptionPtr );
-}
-
-/*! ---------------------------------------------------------------------------
- */
-void DaqAdministration::thread( unsigned int toSleep )
-{
-   try {
-   while( !m_finalizeThread )
-   {
-      //distributeData();
-      //throw( DaqException( "Test" ) );
-      throw( std::exception(  ));
-      ::usleep( toSleep );
-
-   }
-   }
-   catch( ... )
-   {
-      std::cerr << "Exception in thread" << std::endl;
-      c_exceptionPtr = std::current_exception();
-   }
-   std::cout << "Thread left" << std::endl;
-}
-#endif
 
 /*! ---------------------------------------------------------------------------
  */

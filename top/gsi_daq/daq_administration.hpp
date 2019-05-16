@@ -25,8 +25,6 @@
 #ifndef _DAQ_ADMINISTRATION_HPP
 #define _DAQ_ADMINISTRATION_HPP
 
-//#include <boost/thread.hpp>
-//#include <boost/bind.hpp>
 #include <list>
 #include <daq_interface.hpp>
 
@@ -305,11 +303,7 @@ class DaqAdministration: public DaqInterface
 {
    unsigned int      m_maxChannels;
    DAQ_DESCRIPTOR_T* m_poCurrentDescriptor;
-#if 0
-   boost::thread* m_pThread;
-   bool           m_finalizeThread;
-   boost::mutex   m_oMutex;
-#endif
+
    static std::exception_ptr c_exceptionPtr;
 
 protected:
@@ -418,18 +412,6 @@ public:
    void start( unsigned int toSleep = 100 );
    void stop( void );
 
-protected:
-#if 0
-   void lock( void )
-   {
-      m_oMutex.lock();
-   }
-
-   void unlock( void )
-   {
-      m_oMutex.unlock();
-   }
-#endif
 private:
    DaqChannel* getChannelByDescriptor( DAQ_DESCRIPTOR_T& roDescriptor )
    {
@@ -439,7 +421,6 @@ private:
    }
 
    bool dataBlocksPresent( void );
-//   void thread( unsigned int toSleep );
 };
 
 ///////////////////////////////////////////////////////////////////////////////

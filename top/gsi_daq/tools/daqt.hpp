@@ -154,6 +154,7 @@ class Channel: public DaqChannel
       unsigned int      m_blockCount;
       unsigned int      m_sequence;
       unsigned int      m_sampleTime;
+      uint64_t          m_timeStamp;
 
    public:
       Mode( Channel* pParent, std::size_t size, std::string text );
@@ -169,7 +170,7 @@ class Channel: public DaqChannel
    Mode*             m_poModePmHires;
 
 public:
-   Channel( unsigned int number );
+   Channel( unsigned int number, const std::string& rGnuplot );
    ~Channel( void );
 
    void sendAttributes( void );

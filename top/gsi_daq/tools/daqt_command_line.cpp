@@ -367,6 +367,34 @@ vector<OPTION> CommandLine::c_optList =
       .m_shortOpt = 'z',
       .m_longOpt  = "zoom",
       .m_helpText = "Zooming of the Y-axis in GNUPLOT."
+   },
+   {
+      OPT_LAMBDA( poParser,
+      {
+         static_cast<CommandLine*>(poParser)->m_gnuplotBin =
+                                                       poParser->getOptArg();
+         return 0;
+      }),
+      .m_hasArg   = OPTION::REQUIRED_ARG,
+      .m_id       = 0,
+      .m_shortOpt = 'G',
+      .m_longOpt  = "gnuplot",
+      .m_helpText = "Replacing of the default Gnuplot binary by the in PARAM"
+                    " given binary. Default is: " GPSTR_DEFAULT_GNUPLOT_EXE
+   },
+   {
+      OPT_LAMBDA( poParser,
+      {
+         static_cast<CommandLine*>(poParser)->m_gnuplotTerminal =
+                                                       poParser->getOptArg();
+         return 0;
+      }),
+      .m_hasArg   = OPTION::REQUIRED_ARG,
+      .m_id       = 0,
+      .m_shortOpt = 'T',
+      .m_longOpt  = "terminal",
+      .m_helpText = "PARAM replaces the terminal which is used by Gnuplot."
+                    " Default is: " GNUPLOT_DEFAULT_TERMINAL
    }
 };
 
@@ -396,6 +424,8 @@ CommandLine::CommandLine( int argc, char** ppArgv )
    ,m_poCurrentDevice( nullptr )
    ,m_poCurrentChannel( nullptr )
    ,m_verbose( false )
+   ,m_gnuplotBin( GPSTR_DEFAULT_GNUPLOT_EXE )
+   ,m_gnuplotTerminal( GNUPLOT_DEFAULT_TERMINAL )
 {
    add( c_optList );
 }
@@ -600,7 +630,7 @@ int CommandLine::onArgument( void )
          m_poCurrentChannel = m_poCurrentDevice->getChannel( number );
          if( m_poCurrentChannel == nullptr )
          {
-            m_poCurrentChannel = new Channel( number );
+            m_poCurrentChannel = new Channel( number, m_gnuplotBin );
             m_poCurrentDevice->registerChannel( m_poCurrentChannel );
          }
          FSM_TRANSITION( READ_SLOT );
