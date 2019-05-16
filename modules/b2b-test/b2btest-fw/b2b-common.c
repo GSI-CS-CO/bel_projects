@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 30-Apr-2019
+ *  version : 16-May-2019
  *
  *  common functions used by various B2B firmware
  *  
@@ -46,9 +46,10 @@
 #include "ebm.h"
 #include "aux.h"
 #include "dbg.h"
-#include "mprintf.h"
+#include "pp-printf.h"
 #include "mini_sdb.h"
 #include "syscon.h"
+#include "../../../top/gsi_scu/scu_mil.h"                               // register layout MIL piggy
 #include "../../../ip_cores/wr-cores/modules/wr_eca/eca_queue_regs.h"   // register layout ECA queue
 #include "../../../ip_cores/wr-cores/modules/wr_eca/eca_regs.h"         // register layout ECA control
 // #include "../../../ip_cores/wr-cores/modules/wr_pps_gen/pps_gen_regs.h" // useless register layout, I can't handle this wbgen stuff here
@@ -60,14 +61,15 @@
 
 // these routines are typically application specific
 extern void     clearDiag();
-extern uint32_t entryActionConfigured();
-extern uint32_t entryActionOperation();
-extern uint32_t exitActionOperation();
+extern uint32_t extern_entryActionConfigured();
+extern uint32_t extern_entryActionOperation();
+extern uint32_t extern_exitActionOperation();
 
 volatile uint32_t *pECAQ;               // WB address of ECA queue
 volatile uint32_t *pPPSGen;             // WB address of PPS Gen
 volatile uint32_t *pWREp;               // WB address of WR Endpoint
 volatile uint32_t *pIOCtrl;             // WB address of IO Control
+volatile uint32_t *pMILPiggy;           // WB address of MIL device bus (MIL piggy)
 
 // global variables
 uint32_t *pSharedVersion;               // pointer to a "user defined" u32 register; here: publish version
@@ -146,9 +148,8 @@ uint32_t common_ebmInit(uint32_t msTimeout, uint64_t dstMac, uint32_t dstIp, uin
 
 uint32_t common_ebmWriteTM(uint64_t deadline, uint64_t evtId, uint64_t param)  
 {
-  int      i;
   uint32_t res, tef;
-  uint32_t deadlineLo, deadlineHi, offset;
+  uint32_t deadlineLo, deadlineHi;
   uint32_t idLo, idHi;
   uint32_t paramLo, paramHi;
 
@@ -253,7 +254,7 @@ uint32_t findPPSGen() //find WB address of WR PPS Gen
   // get Wishbone address for PPS Gen
   pPPSGen = find_device_adr(CERN, WR_PPS_GEN);
 
-  if (!pPPSGen) {DBPRINT1("b2b-test: can't find WR PPS Gen\n"); return COMMON_STATUS_ERROR;}
+  if (!pPPSGen) {DBPRINT1("b2b-common: can't find WR PPS Gen\n"); return COMMON_STATUS_ERROR;}
   else                                                          return COMMON_STATUS_OK;
 } // findPPSGen
 
@@ -264,7 +265,7 @@ uint32_t findWREp() //find WB address of WR Endpoint
   
   pWREp = find_device_adr(WR_ENDPOINT_VENDOR, WR_ENDPOINT_PRODUCT);
 
-  if (!pWREp) {DBPRINT1("b2b-test: can't find WR Endpoint\n"); return COMMON_STATUS_ERROR;}
+  if (!pWREp) {DBPRINT1("b2b-common: can't find WR Endpoint\n"); return COMMON_STATUS_ERROR;}
   else                                                         return COMMON_STATUS_OK;
 } // findWREp
 
@@ -275,7 +276,7 @@ uint32_t findIOCtrl() // find WB address of IO Control
 
   pIOCtrl = find_device_adr(IO_CTRL_VENDOR, IO_CTRL_PRODUCT);
 
-  if (!pIOCtrl) {DBPRINT1("b2b-test: can't find IO Control\n"); return COMMON_STATUS_ERROR;}
+  if (!pIOCtrl) {DBPRINT1("b2b-common: can't find IO Control\n"); return COMMON_STATUS_ERROR;}
   else                                                          return COMMON_STATUS_OK;    
 } // find IOCtrol
 
@@ -302,10 +303,21 @@ uint32_t findECAQueue() // find WB address of ECA channel for LM32
     if ( *(tmp + (ECA_QUEUE_QUEUE_ID_GET >> 2)) == ECACHANNELFORLM32) pECAQ = tmp;
   }
 
-  if (!pECAQ) {DBPRINT1("b2b-test: can't find ECA queue\n"); return COMMON_STATUS_ERROR;}
+  if (!pECAQ) {DBPRINT1("b2b-common: can't find ECA queue\n"); return COMMON_STATUS_ERROR;}
   else                                                       return COMMON_STATUS_OK;
 } // findECAQueue
 
+
+uint32_t findMILPiggy() //find WB address of MIL Piggy
+{
+  pMILPiggy = 0x0;
+  
+  // get Wishbone address for MIL Piggy
+  pMILPiggy = find_device_adr(GSI, SCU_MIL);
+
+  if (!pMILPiggy) {DBPRINT1("b2b-common: can't find MIL piggy\n"); return COMMON_STATUS_ERROR;}
+  else                                                           return COMMON_STATUS_OK;
+} // findMILPiggy
 
 uint32_t common_wait4ECAEvent(uint32_t msTimeout, uint64_t *deadline, uint64_t *param, uint32_t *isLate)  // 1. query ECA for actions, 2. trigger activity
 {
@@ -357,6 +369,58 @@ uint32_t common_wait4ECAEvent(uint32_t msTimeout, uint64_t *deadline, uint64_t *
 } // wait for ECA event
 
 
+// wait for MIL event or timeout
+uint32_t common_wait4MILEvent(uint32_t *evtData, uint32_t *evtCode, uint32_t *virtAcc, uint32_t *validEvtCodes, uint32_t nValidEvtCodes, uint32_t msTimeout) 
+{
+  uint32_t evtRec;             // one MIL event
+  uint32_t evtCodeRec;         // "event number"
+  uint32_t evtDataRec;         // "event data"
+  uint32_t virtAccRec;         // "virt Acc"
+  uint64_t timeoutT;           // when to time out
+  int      valid;              // evt is valid
+  int      i;                
+
+  timeoutT    = getSysTime() + (uint64_t)msTimeout * (uint64_t)1000000;
+  *virtAcc    = 0xffff;           
+  *evtData    = 0xffff;
+  *evtCode    = 0xffff;
+  valid       = 0;
+  
+  while(getSysTime() < timeoutT) {              // while not timed out...
+    while (fifoNotemptyEvtMil(pMILPiggy)) {     // while fifo contains data
+      popFifoEvtMil(pMILPiggy, &evtRec);    
+      evtCodeRec  = evtRec & 0x000000ff;        // extract event code
+      virtAccRec  = (evtRec >> 8)  & 0x0f;      // extract virtual accelerator
+      evtDataRec  = (evtRec >> 12) & 0x0f;      // extract event data
+
+      for (i=0; i<nValidEvtCodes; i++) {        // loop over valid evt codes
+        if (evtCodeRec == validEvtCodes[i]) {valid = 1; break;}
+      } // for i
+
+      if (valid) {
+        *evtData     = evtDataRec;
+        *evtCode     = evtCodeRec;
+        *virtAcc     = virtAccRec;
+        return COMMON_STATUS_OK;
+      } // if valid;
+    } // while fifo contains data
+    asm("nop");                                 // wait a bit...
+  } // while not timed out
+
+  return COMMON_STATUS_TIMEDOUT;  
+} // common_wait4MILEvent
+
+
+void common_milPulseLemo(uint32_t nLemo) // pulse lemo for debugging with scope
+{
+  uint32_t i;
+
+  setLemoOutputEvtMil(pMILPiggy, nLemo, 1);
+  for (i=0; i< 10 * COMMON_US_ASMNOP; i++) asm("nop");
+  setLemoOutputEvtMil(pMILPiggy, nLemo, 0);
+} // common_milPulseLemo
+
+
 void common_initCmds() // init stuff for handling commands, trivial for now, will be extended
 {
   //  initalize command value: 0x0 means 'no command'
@@ -399,6 +463,12 @@ uint32_t common_doActionS0()
 } // common_doActionS0
 
 
+volatile uint32_t* common_getMilPiggy()
+{
+  return pMILPiggy;
+} // common_getMilPiggy
+
+
 void common_publishNICData()
 {
   uint64_t mac;
@@ -418,12 +488,6 @@ void common_publishState(uint32_t state)
   *pSharedState = state; 
 } // common_publishState
 
-
-/* void common_publishStatus(uint32_t status)
-{
-  *pSharedStatus = status; 
-} // common_publishState
-*/
 
 void common_publishSumStatus(uint32_t sumStatus)
 {
@@ -452,47 +516,47 @@ uint32_t exitActionError()
   return COMMON_STATUS_OK;
 } // exitActionError
 
-void common_cmdHandler(uint32_t *reqState) // handle commands from the outside world
+
+void common_cmdHandler(uint32_t *reqState, uint32_t *cmd) // handle commands from the outside world
 {
-  uint32_t cmd;
-  
-  cmd = *pSharedCmd;
-  // check, if the command is valid and request state change
-  if (cmd) {
-    switch (cmd) {
+
+  *cmd = *pSharedCmd;
+
+  if (*cmd) {                                // check, if the command is valid
+    switch (*cmd) {                          // request state changes according to cmd
     case COMMON_CMD_CONFIGURE :
       *reqState =  COMMON_STATE_CONFIGURED;
-      DBPRINT3("b2b-test: received cmd %d\n", cmd);
+      DBPRINT3("b2b-common: received cmd %d\n", *cmd);
       break;
     case COMMON_CMD_STARTOP :
       *reqState = COMMON_STATE_OPREADY;
-      DBPRINT3("b2b-test: received cmd %d\n", cmd);
+      DBPRINT3("b2b-common: received cmd %d\n", *cmd);
       break;
     case COMMON_CMD_STOPOP :
       *reqState = COMMON_STATE_STOPPING;
-      DBPRINT3("b2b-test: received cmd %d\n", cmd);
+      DBPRINT3("b2b-common: received cmd %d\n", *cmd);
       break;
     case COMMON_CMD_IDLE :
       *reqState = COMMON_STATE_IDLE;
-      DBPRINT3("b2b-test: received cmd %d\n", cmd);
+      DBPRINT3("b2b-common: received cmd %d\n", *cmd);
       break;
     case COMMON_CMD_RECOVER :
       *reqState = COMMON_STATE_IDLE;
-      DBPRINT3("b2b-test: received cmd %d\n", cmd);
+      DBPRINT3("b2b-common: received cmd %d\n", *cmd);
       break;
     case COMMON_CMD_CLEARDIAG :
-      DBPRINT3("b2b-test: received cmd %d\n", cmd);
+      DBPRINT3("b2b-common: received cmd %d\n", *cmd);
       common_clearDiag();
       break;
     default:
-      DBPRINT3("b2b-test: received unknown command '0x%08x'\n", cmd);
+      DBPRINT3("b2b-common: common_cmdHandler received unknown command '0x%08x'\n", *cmd);
     } // switch 
-    *pSharedCmd = 0x0; // reset cmd value in shared memory 
+    *pSharedCmd = 0x0;                       // reset cmd value in shared memory 
   } // if command 
 } // common_cmdHandler
 
 
-uint32_t common_changeState(uint32_t *actState, uint32_t *reqState, uint32_t actStatus)   //state machine; see b2b-test.h for possible states and transitions
+uint32_t common_changeState(uint32_t *actState, uint32_t *reqState, uint32_t actStatus)   //state machine; see b2b-common.h for possible states and transitions
 {
   uint32_t statusTransition= COMMON_STATUS_OK;
   uint32_t status;
@@ -506,23 +570,23 @@ uint32_t common_changeState(uint32_t *actState, uint32_t *reqState, uint32_t act
     nextState = *actState;                       // per default: remain in actual state without exit or entry action
     switch (*actState) {                         // check for allowed transitions: 1. determine next state, 2. perform exit or entry actions if required
     case COMMON_STATE_S0:
-      if      (*reqState == COMMON_STATE_IDLE)       {                                             nextState = *reqState;}      
+      if      (*reqState == COMMON_STATE_IDLE)       {                                                    nextState = *reqState;}      
       break;
     case COMMON_STATE_IDLE:
-      if      (*reqState == COMMON_STATE_CONFIGURED)  {statusTransition = entryActionConfigured(); nextState = *reqState;}
+      if      (*reqState == COMMON_STATE_CONFIGURED)  {statusTransition = extern_entryActionConfigured(); nextState = *reqState;}
       break;
     case COMMON_STATE_CONFIGURED:
-      if      (*reqState == COMMON_STATE_IDLE)       {                                             nextState = *reqState;}
-      else if (*reqState == COMMON_STATE_CONFIGURED) {statusTransition = entryActionConfigured();  nextState = *reqState;}
-      else if (*reqState == COMMON_STATE_OPREADY)    {statusTransition = entryActionOperation();   nextState = *reqState;}
+      if      (*reqState == COMMON_STATE_IDLE)       {                                                    nextState = *reqState;}
+      else if (*reqState == COMMON_STATE_CONFIGURED) {statusTransition = extern_entryActionConfigured();  nextState = *reqState;}
+      else if (*reqState == COMMON_STATE_OPREADY)    {statusTransition = extern_entryActionOperation();   nextState = *reqState;}
       break;
     case COMMON_STATE_OPREADY:
-      if      (*reqState == COMMON_STATE_STOPPING)   {statusTransition = exitActionOperation();    nextState = *reqState;}
+      if      (*reqState == COMMON_STATE_STOPPING)   {statusTransition = extern_exitActionOperation();    nextState = *reqState;}
       break;
     case COMMON_STATE_STOPPING:
       nextState = COMMON_STATE_CONFIGURED;      //automatic transition but without entryActionConfigured
     case COMMON_STATE_ERROR:
-      if      (*reqState == COMMON_STATE_IDLE)       {statusTransition = exitActionError();        nextState = *reqState;}
+      if      (*reqState == COMMON_STATE_IDLE)       {statusTransition = exitActionError();               nextState = *reqState;}
       break;
     default: 
       nextState = COMMON_STATE_S0;
@@ -534,7 +598,7 @@ uint32_t common_changeState(uint32_t *actState, uint32_t *reqState, uint32_t act
 
   // if the state changes
   if (*actState != nextState) {                   
-    mprintf("b2b-test: changed to state %d\n", nextState);
+    pp_printf("b2b-common: changed to state %u\n", (unsigned int)nextState);
     *actState = nextState;                      
     status = statusTransition;
   } // if state change
@@ -546,7 +610,8 @@ uint32_t common_changeState(uint32_t *actState, uint32_t *reqState, uint32_t act
 } //changeState
 
 
-uint32_t common_doAutoRecovery(uint32_t actState, uint32_t *reqState)                    // do autorecovery from error state
+// do autorecovery from error state
+void common_doAutoRecovery(uint32_t actState, uint32_t *reqState)
 {
   switch (actState)
     {

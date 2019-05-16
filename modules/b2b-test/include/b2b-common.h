@@ -109,6 +109,12 @@ uint32_t common_ebmWriteTM(uint64_t deadline, uint64_t evtId, uint64_t param);
 // 1. query ECA for actions, 2. trigger activity
 uint32_t common_wait4ECAEvent(uint32_t msTimeout, uint64_t *deadline, uint64_t *param, uint32_t *isLate);
 
+// wait for MIL event or timeout
+uint32_t common_wait4MILEvent(uint32_t *evtData, uint32_t *evtCode, uint32_t *virtAcc, uint32_t *validEvtCodes, uint32_t nValidEvtCodes, uint32_t msTimeout);
+
+// pulse lemo for debugging with scope
+void common_milPulseLemo(uint32_t nLemo);
+
 // initialize common stuff and WB slave addresses
 void common_init(uint32_t *startShared, uint32_t fwVersion);
 
@@ -121,14 +127,14 @@ void common_clearDiag();
 // do action S0 state
 uint32_t common_doActionS0();
 
+// get address of MIL piggy
+volatile uint32_t * common_getMilPiggy();
+
 // acquire and publish NIC data
 void common_publishNICData();
 
 // publish state
 void common_publishState(uint32_t state);
-
-// publish status
-// void common_publishStatus(uint32_t status);
 
 // publish sum status
 void common_publishSumStatus(uint32_t sumStatus);
@@ -140,7 +146,7 @@ void common_incBadStatusCnt();
 void common_incBadStateCnt();
 
 // handle commands from the outside world
-void common_cmdHandler(uint32_t *reqState);
+void common_cmdHandler(uint32_t *reqState, uint32_t *cmd);
 
 // set gate of LVDS input
 uint32_t common_ioCtrlSetGate(uint32_t enable, uint32_t io);
@@ -149,7 +155,7 @@ uint32_t common_ioCtrlSetGate(uint32_t enable, uint32_t io);
 uint32_t common_changeState(uint32_t *actState, uint32_t *reqState, uint32_t actStatus);
 
 // do autorecovery from error state
-uint32_t common_doAutoRecovery(uint32_t actState, uint32_t *reqState);
+void common_doAutoRecovery(uint32_t actState, uint32_t *reqState);
 
 // intialize Etherbone master
 uint32_t common_ebmInit(uint32_t msTimeout, uint64_t dstMac, uint32_t dstIp, uint32_t eb_ops);
