@@ -379,7 +379,7 @@ uint32_t configMILEvent()   // configure SoC to receive events via MIL bus
 
 
 // clears all statistics
-void clearDiag() 
+void extern_clearDiag() 
 {
   dtMax          = 0x80000000;
   dtMin          = 0x7fffffff;
@@ -518,7 +518,6 @@ uint32_t extern_entryActionOperation()
   uint32_t flagDummy;
 
   common_clearDiag();
-  clearDiag();                                               // clear diagnostics
   clearAllPZ();                                              // clear all event tables
 
   flagClearAllPZ        = 0;
@@ -552,10 +551,6 @@ void cmdHandler(uint32_t *reqState, uint32_t cmd)
   // check, if the command is valid and request state change
   if (cmd) {                             // check, if cmd is valid
     switch (cmd) {                       // do action according to command
-    case WRUNIPZ_CMD_CLEARDIAG :
-      DBPRINT3("wr-unipz: received cmd %d\n", cmd);
-      clearDiag();
-      break;
     case WRUNIPZ_CMD_CONFINIT :
       DBPRINT3("wr-unipz: received cmd %d\n", cmd);
       flagTransactionInit = 1;
@@ -768,7 +763,7 @@ int main(void) {
   pubState       = WRUNIPZ_STATE_UNKNOWN;
   status         = WRUNIPZ_STATUS_OK;
   flagRecover    = 0;
-  clearDiag();
+  common_clearDiag();
 
   init();                                                           // initialize stuff for lm32
   initSharedMem();                                                  // initialize shared memory

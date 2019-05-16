@@ -5,7 +5,7 @@
  *  author  : Dietrich Beck, GSI-Darmstadt
  *  version : 16-May-2019
  *
- *  common functions used by various B2B firmware
+ *  common functions used by various B2B firmware projects
  *  
  * -------------------------------------------------------------------------------------------
  * License Agreement for this software:
@@ -60,7 +60,7 @@
 #include <b2b-common.h>                                                 // common stuff for b2b
 
 // these routines are typically application specific
-extern void     clearDiag();
+extern void     extern_clearDiag();
 extern uint32_t extern_entryActionConfigured();
 extern uint32_t extern_entryActionOperation();
 extern uint32_t extern_exitActionOperation();
@@ -181,9 +181,6 @@ uint32_t common_ebmWriteTM(uint64_t deadline, uint64_t evtId, uint64_t param)
   // send timing message
   ebm_flush();
           
-  // diag and status
-  // ... /* chk */
-  
   return COMMON_STATUS_OK;
 } //ebmWriteTM
 
@@ -432,7 +429,7 @@ void common_clearDiag()// clears all statistics
 {
   uint64_t now;
 
-  clearDiag(); 
+  extern_clearDiag(); 
 
   nBadStatus = 0;
   nBadState  = 0;
