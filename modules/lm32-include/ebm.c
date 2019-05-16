@@ -45,9 +45,6 @@ void ebm_init()
 
 void ebm_config_if(target_t conf, uint64_t mac, uint32_t ip, uint16_t port)
 {
-  
-  uint32_t offset;
-  
   if(conf == SOURCE) {
     *(pEbm + (EBM_SRC_MAC_RW_0 >>2)) = (uint32_t)(mac);      
     *(pEbm + (EBM_SRC_MAC_RW_1 >>2)) = (uint32_t)((mac>>32) & 0xffff);  
@@ -68,7 +65,7 @@ void ebm_config_if(target_t conf, uint64_t mac, uint32_t ip, uint16_t port)
 void ebm_config_if_str(target_t conf, const char* con_info)
 {
   eb_lm32_udp_link link;
-  uint32_t offset;
+  uint32_t offset=0x0;    // todo: a 'define' would be better 
   
   uint32_t tmp;
   ebm_parse_adr(&link, con_info);
@@ -85,7 +82,6 @@ void ebm_config_if_str(target_t conf, const char* con_info)
 
   }
   if(conf == DESTINATION) {
-
     tmp = (link.mac[0] << 24) | (link.mac[1] << 16) | (link.mac[2] << 8) | link.mac[3];
     *(pEbm + ((offset + EBM_DST_MAC_RW_1)   >>2)) =  tmp;  
     tmp = (link.mac[4] << 8) | (link.mac[5] << 0);
@@ -93,14 +89,8 @@ void ebm_config_if_str(target_t conf, const char* con_info)
     tmp = (link.ipv4[0] << 24) | (link.ipv4[1] << 16) | (link.ipv4[2] << 8) | link.ipv4[3];
     *(pEbm + ((offset + EBM_DST_IP_RW)     >>2)) =  tmp;  
     *(pEbm + ((offset + EBM_DST_PORT_RW) >>2)) = (uint32_t)link.port;
-
-
   }
-  
-  
-  
 }
-
 
 
 void ebm_config_meta(uint32_t mtu, uint32_t hi_bits, uint32_t eb_ops)
