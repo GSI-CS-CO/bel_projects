@@ -3,7 +3,7 @@
  *
  *  created : 2018
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 15-May-2019
+ *  version : 16-May-2019
  *
  *  lm32 program for gateway between UNILAC Pulszentrale and a White Rabbit network
  *  this basically serves a Data Master for UNILAC
@@ -54,16 +54,18 @@
 #include <inttypes.h>
 #include <stdint.h>
 
-// includes specific for bel_projects
-#include "mini_sdb.h"
-#include "ebm.h"
-#include "aux.h"
-#include "dbg.h"
-#include "pp-printf.h"
+// includes specific for bel_projects 
+#include "dbg.h"                                                        // debug outputs
+#include "ebm.h"                                                        // EB master
+#include "pp-printf.h"                                                  // print to console
+#include "mini_sdb.h"                                                   // sdb stuff
+#include "syscon.h"                                                     // usleep et al
+#include "aux.h"                                                        // cpu and IRQ
+#include "uart.h"                                                       
 #include "../../../top/gsi_scu/scu_mil.h"                               // register layout of 'MIL macro'
-#include "../../../ip_cores/wr-cores/modules/wr_eca/eca_queue_regs.h"   // register layout ECA queue
-#include "../../../ip_cores/wr-cores/modules/wr_eca/eca_regs.h"         // register layout ECA control
-#include "../../../ip_cores/saftlib/drivers/eca_flags.h"                // register layout for ECA queue
+//#include "../../../ip_cores/wr-cores/modules/wr_eca/eca_queue_regs.h"   // register layout ECA queue
+//#include "../../../ip_cores/wr-cores/modules/wr_eca/eca_regs.h"         // register layout ECA control
+//#include "../../../ip_cores/saftlib/drivers/eca_flags.h"                // register layout for ECA queue
 
 // includes for this project
 #include <b2b-common.h>                                                 // common stuff for b2b-type firmware
@@ -217,7 +219,7 @@ uint32_t pzRunVacc(dataTable evts, uint64_t tStart, uint32_t pz, uint32_t virtAc
     } // is valid
   } // for i
 
-  return WRUNIPZ_STATUS_OK;
+  return COMMON_STATUS_OK;
 } // pzRunVacc
 
 
@@ -323,14 +325,15 @@ void initSharedMem()
   find_device_multi_in_subtree(&found_clu, &found_sdb[0], &idx, c_Max_Rams, GSI, LM32_RAM_USER);
   if(idx >= cpuId) {
     pCpuRamExternal           = (uint32_t *)(getSdbAdr(&found_sdb[cpuId]) & 0x7FFFFFFF); // CPU sees the 'world' under 0x8..., remove that bit to get host bridge perspective
-    pCpuRamExternalData4EB    = (uint32_t *)(pCpuRamExternal + ((WRUNIPZ_SHARED_DATA_4EB + SHARED_OFFS) >> 2));
+    pCpuRamExternalData4EB    = (uint32_t *)(pCpuRamExternal + ((COMMON_SHARED_DATA_4EB + SHARED_OFFS) >> 2));
   }
 
   DBPRINT2("wr-unipz: CPU RAM External 0x%8x, begin shared 0x%08x\n", pCpuRamExternal, SHARED_OFFS);
 
   // clear shared mem
   i = 0;
-  pSharedTemp          = (uint32_t *)(pShared + (WRUNIPZ_SHARED_BEGIN >> 2 ));
+  pSharedTemp        = (uint32_t *)(pShared + (COMMON_SHARED_BEGIN >> 2 ));
+  DBPRINT2("wr-unipz: COMMON_SHARED_BEGIN 0x%08x\n", pSharedTemp);
   while (pSharedTemp < (uint32_t *)(pShared + (WRUNIPZ_SHARED_END >> 2 ))) {
     *pSharedTemp = 0x0;
     pSharedTemp++;
@@ -351,30 +354,30 @@ uint32_t configMILEvent()   // configure SoC to receive events via MIL bus
   pMilPiggy = common_getMilPiggy();
 
   // initialize status and command register with initial values; disable event filtering; clear filter RAM
-  if (writeCtrlStatRegEvtMil(pMilPiggy, MIL_CTRL_STAT_ENDECODER_FPGA | MIL_CTRL_STAT_INTR_DEB_ON) != MIL_STAT_OK) return WRUNIPZ_STATUS_ERROR; //chk sure we go for status error?
+  if (writeCtrlStatRegEvtMil(pMilPiggy, MIL_CTRL_STAT_ENDECODER_FPGA | MIL_CTRL_STAT_INTR_DEB_ON) != MIL_STAT_OK) return COMMON_STATUS_ERROR; //chk sure we go for status error?
 
   // clean up 
-  if (disableLemoEvtMil(pMilPiggy, 1) != MIL_STAT_OK) return WRUNIPZ_STATUS_ERROR;
-  if (disableLemoEvtMil(pMilPiggy, 2) != MIL_STAT_OK) return WRUNIPZ_STATUS_ERROR;
-  if (disableFilterEvtMil(pMilPiggy)  != MIL_STAT_OK) return WRUNIPZ_STATUS_ERROR; 
-  if (clearFilterEvtMil(pMilPiggy)    != MIL_STAT_OK) return WRUNIPZ_STATUS_ERROR; 
+  if (disableLemoEvtMil(pMilPiggy, 1) != MIL_STAT_OK) return COMMON_STATUS_ERROR;
+  if (disableLemoEvtMil(pMilPiggy, 2) != MIL_STAT_OK) return COMMON_STATUS_ERROR;
+  if (disableFilterEvtMil(pMilPiggy)  != MIL_STAT_OK) return COMMON_STATUS_ERROR; 
+  if (clearFilterEvtMil(pMilPiggy)    != MIL_STAT_OK) return COMMON_STATUS_ERROR; 
 
   for (i=0; i < (0xf+1); i++) {
     // set filter for all possible virtual accelerators; set filter and LEMO for 50 Hz sync
-    if (setFilterEvtMil(pMilPiggy, WRUNIPZ_EVT_50HZ_SYNCH, i, MIL_FILTER_EV_TO_FIFO | MIL_FILTER_EV_PULS1_S) != MIL_STAT_OK) return WRUNIPZ_STATUS_ERROR;
-    if (setFilterEvtMil(pMilPiggy, WRUNIPZ_EVT_PZ1       , i, MIL_FILTER_EV_TO_FIFO                        ) != MIL_STAT_OK) return WRUNIPZ_STATUS_ERROR;
-    if (setFilterEvtMil(pMilPiggy, WRUNIPZ_EVT_PZ2       , i, MIL_FILTER_EV_TO_FIFO                        ) != MIL_STAT_OK) return WRUNIPZ_STATUS_ERROR;
-    if (setFilterEvtMil(pMilPiggy, WRUNIPZ_EVT_PZ3       , i, MIL_FILTER_EV_TO_FIFO                        ) != MIL_STAT_OK) return WRUNIPZ_STATUS_ERROR;
-    if (setFilterEvtMil(pMilPiggy, WRUNIPZ_EVT_PZ4       , i, MIL_FILTER_EV_TO_FIFO                        ) != MIL_STAT_OK) return WRUNIPZ_STATUS_ERROR;
-    if (setFilterEvtMil(pMilPiggy, WRUNIPZ_EVT_PZ5       , i, MIL_FILTER_EV_TO_FIFO                        ) != MIL_STAT_OK) return WRUNIPZ_STATUS_ERROR;
-    if (setFilterEvtMil(pMilPiggy, WRUNIPZ_EVT_PZ6       , i, MIL_FILTER_EV_TO_FIFO                        ) != MIL_STAT_OK) return WRUNIPZ_STATUS_ERROR;
-    if (setFilterEvtMil(pMilPiggy, WRUNIPZ_EVT_PZ7       , i, MIL_FILTER_EV_TO_FIFO                        ) != MIL_STAT_OK) return WRUNIPZ_STATUS_ERROR;
+    if (setFilterEvtMil(pMilPiggy, WRUNIPZ_EVT_50HZ_SYNCH, i, MIL_FILTER_EV_TO_FIFO | MIL_FILTER_EV_PULS1_S) != MIL_STAT_OK) return COMMON_STATUS_ERROR;
+    if (setFilterEvtMil(pMilPiggy, WRUNIPZ_EVT_PZ1       , i, MIL_FILTER_EV_TO_FIFO                        ) != MIL_STAT_OK) return COMMON_STATUS_ERROR;
+    if (setFilterEvtMil(pMilPiggy, WRUNIPZ_EVT_PZ2       , i, MIL_FILTER_EV_TO_FIFO                        ) != MIL_STAT_OK) return COMMON_STATUS_ERROR;
+    if (setFilterEvtMil(pMilPiggy, WRUNIPZ_EVT_PZ3       , i, MIL_FILTER_EV_TO_FIFO                        ) != MIL_STAT_OK) return COMMON_STATUS_ERROR;
+    if (setFilterEvtMil(pMilPiggy, WRUNIPZ_EVT_PZ4       , i, MIL_FILTER_EV_TO_FIFO                        ) != MIL_STAT_OK) return COMMON_STATUS_ERROR;
+    if (setFilterEvtMil(pMilPiggy, WRUNIPZ_EVT_PZ5       , i, MIL_FILTER_EV_TO_FIFO                        ) != MIL_STAT_OK) return COMMON_STATUS_ERROR;
+    if (setFilterEvtMil(pMilPiggy, WRUNIPZ_EVT_PZ6       , i, MIL_FILTER_EV_TO_FIFO                        ) != MIL_STAT_OK) return COMMON_STATUS_ERROR;
+    if (setFilterEvtMil(pMilPiggy, WRUNIPZ_EVT_PZ7       , i, MIL_FILTER_EV_TO_FIFO                        ) != MIL_STAT_OK) return COMMON_STATUS_ERROR;
   }
 
   // configure LEMO1 for pulse generation
-  if (configLemoPulseEvtMil(pMilPiggy, 1) != MIL_STAT_OK) return WRUNIPZ_STATUS_ERROR;
+  if (configLemoPulseEvtMil(pMilPiggy, 1) != MIL_STAT_OK) return COMMON_STATUS_ERROR;
 
-  return WRUNIPZ_STATUS_OK;
+  return COMMON_STATUS_OK;
 } // configMILEvent
 
 
@@ -401,6 +404,8 @@ uint32_t configTransactInit()
   uint64_t t1, t2;
   uint32_t dt;
 
+  DBPRINT2("wr-unipz: transaction init start\n");
+  
   t1 = getSysTime();
   
   if (*pSharedConfStat != WRUNIPZ_CONFSTAT_IDLE) return WRUNIPZ_STATUS_TRANSACTION;
@@ -410,7 +415,7 @@ uint32_t configTransactInit()
   for (i=0; i < (WRUNIPZ_NCONFFLAG); i++) *(pSharedConfFlag   + i) = 0;
   for (i=0; i < (WRUNIPZ_NCONFDATA); i++) *(pSharedConfData   + i) = 0;
 
-  DBPRINT2("wr-unipz: request completed\n");
+  DBPRINT2("wr-unipz: transaction init completed\n");
     
   *pSharedConfStat = WRUNIPZ_CONFSTAT_INIT;
 
@@ -418,7 +423,7 @@ uint32_t configTransactInit()
   dt = (uint32_t)(t2-t1);
   //pp_printf("wr-unipz: confTransInit dt %u\n", dt);
 
-  return WRUNIPZ_STATUS_OK;
+  return COMMON_STATUS_OK;
 } // configTransactInit
 
 // submit transferred config data
@@ -455,7 +460,7 @@ uint32_t configTransactSubmit()
   /* *pSharedConfDataStat = WRUNIPZ_CONFSTAT_REQ | WRUNIPZ_CONFSTAT_SUBMIT; commented: this shall be used once code above is triggered by event */
   *pSharedConfStat = WRUNIPZ_CONFSTAT_IDLE;
 
-  return WRUNIPZ_STATUS_OK;
+  return COMMON_STATUS_OK;
 } // configTransactSubmit
 
 // clears data of all PZs
@@ -476,12 +481,12 @@ void clearAllPZ()
 // entry action configured state
 uint32_t extern_entryActionConfigured()
 {
-  uint32_t status = WRUNIPZ_STATUS_OK;
+  uint32_t status = COMMON_STATUS_OK;
 
   // configure EB master (SRC and DST MAC/IP are set from host)
   //  ebmInit(100, 0xffffffffffff, 0xffffffff, EBM_NOREPLY);
-  if ((status = common_ebmInit(2000, 0xffffffffffff, 0xffffffff, EBM_NOREPLY)) != WRUNIPZ_STATUS_OK) {
-    DBPRINT1("wr-unipz: ERROR - init of EB master failed! %d\n", status);
+  if ((status = common_ebmInit(2000, 0xffffffffffff, 0xffffffff, EBM_NOREPLY)) != COMMON_STATUS_OK) {
+    DBPRINT1("wr-unipz: ERROR - init of EB master failed! %u\n", (unsigned int)status);
     return status;
   } 
 
@@ -493,10 +498,10 @@ uint32_t extern_entryActionConfigured()
     DBPRINT1("wr-unipz: ERROR - can't reset MIL Piggy\n");
     return WRUNIPZ_STATUS_MIL;
   } 
-  
+
   // configure MIL piggy for timing events for all 16 virtual accelerators
-  if ((status = configMILEvent()) != WRUNIPZ_STATUS_OK) {
-    DBPRINT1("wr-unipz: ERROR - failed to configure MIL piggy for receiving timing events! %d\n", status);
+  if ((status = configMILEvent()) != COMMON_STATUS_OK) {
+    DBPRINT1("wr-unipz: ERROR - failed to configure MIL piggy for receiving timing events! %u\n", (unsigned int)status);
     return status;
   } 
 
@@ -534,14 +539,14 @@ uint32_t extern_entryActionOperation()
   while (common_wait4ECAEvent(1, &tDummy, &pDummy, &flagDummy) !=  WRUNIPZ_ECADO_TIMEOUT) {i++;}
   DBPRINT1("wr-unipz: ECA queue flushed - removed %d pending entries from ECA queue\n", i);
 
-  return WRUNIPZ_STATUS_OK;
+  return COMMON_STATUS_OK;
 } // entryActionOperation
 
 // exit action state 'op ready'
 uint32_t extern_exitActionOperation(){
-  if (disableFilterEvtMil(common_getMilPiggy()) != MIL_STAT_OK) return WRUNIPZ_STATUS_ERROR; 
+  if (disableFilterEvtMil(common_getMilPiggy()) != MIL_STAT_OK) return COMMON_STATUS_ERROR; 
   
-  return WRUNIPZ_STATUS_OK;
+  return COMMON_STATUS_OK;
 } // exitActionOperation
 
 
@@ -557,7 +562,7 @@ void cmdHandler(uint32_t *reqState, uint32_t cmd)
       break;
     case WRUNIPZ_CMD_CONFSUBMIT :
       DBPRINT3("wr-unipz: received cmd %d\n", cmd);
-      if (configTransactSubmit() != WRUNIPZ_STATUS_OK) DBPRINT1("wr-unipz: submission of config data failed\n");
+      if (configTransactSubmit() != COMMON_STATUS_OK) DBPRINT1("wr-unipz: submission of config data failed\n");
       // takes about 51us, possibly just set a flag here and call routine after WRUNIPZ_EVT_50HZ_SYNCH
       break;
     case WRUNIPZ_CMD_CONFKILL :
@@ -604,9 +609,9 @@ uint32_t doActionOperation(uint32_t *nCycle,                  // total number of
   status = actStatus;
 
   // wait for MIL event
-  milStatus = common_wait4MILEvent(&evtData, &evtCode, &virtAcc, milEvts, sizeof(milEvts), WRUNIPZ_MILTIMEOUT);
-  if (milStatus == WRUNIPZ_STATUS_TIMEDOUT) return WRUNIPZ_STATUS_NOMILEVENTS; // error: no MIL event, maybe dead UNIPZ?
-  if (milStatus != WRUNIPZ_STATUS_OK)       return WRUNIPZ_STATUS_MIL;         // some other error
+  milStatus = common_wait4MILEvent(&evtData, &evtCode, &virtAcc, milEvts, sizeof(milEvts)/sizeof(int), COMMON_MILTIMEOUT);
+  if (milStatus == COMMON_STATUS_TIMEDOUT) return WRUNIPZ_STATUS_NOMILEVENTS; // error: no MIL event, maybe dead UNIPZ?
+  if (milStatus != COMMON_STATUS_OK)       return WRUNIPZ_STATUS_MIL;         // some other error
 
   tMIL      = getSysTime();
 
@@ -617,7 +622,7 @@ uint32_t doActionOperation(uint32_t *nCycle,                  // total number of
     DBPRINT3("wr-unipz: 50Hz, data %d, evtcode %d, virtAcc %d\n", evtData, evtCode, virtAcc);
 
     // get timestamp from TLU -> ECA
-    ecaAction = common_wait4ECAEvent(WRUNIPZ_ECATIMEOUT, &recDeadline, &recParam, &flagIsLate);
+    ecaAction = common_wait4ECAEvent(COMMON_ECATIMEOUT, &recDeadline, &recParam, &flagIsLate);
 
     deadline = recDeadline;
     
@@ -654,7 +659,7 @@ uint32_t doActionOperation(uint32_t *nCycle,                  // total number of
       } // if nextVacc
     } // for i
     
-    if ((nLate != nLateLocal) && (status == WRUNIPZ_STATUS_OK)) status = WRUNIPZ_STATUS_LATE;
+    if ((nLate != nLateLocal) && (status == COMMON_STATUS_OK)) status = WRUNIPZ_STATUS_LATE;
     DBPRINT3("wr-unipz: vA played:  %x %x %x %x %x %x %x\n", nextVacc[0], nextVacc[1], nextVacc[2], nextVacc[3], nextVacc[4], nextVacc[5], nextVacc[6]);
 
     // at this point we have scheduled all timing messages of the running cycle and completed the real-time critical stuff
@@ -704,7 +709,7 @@ uint32_t doActionOperation(uint32_t *nCycle,                  // total number of
       isPrepFlag = 1;                                                  
       deadline   = predictNxtCycle();                         // predict start of next cycle
       pzRunVacc(bigData[ipz][chn * WRUNIPZ_NVACC + virtAcc], deadline, ipz, virtAcc, isPrepFlag);
-      if ((nLate != nLateLocal) && (status == WRUNIPZ_STATUS_OK)) status = WRUNIPZ_STATUS_LATE;
+      if ((nLate != nLateLocal) && (status == COMMON_STATUS_OK)) status = WRUNIPZ_STATUS_LATE;
     } // if !SERVICE
     else {                                                    // B: super PZ has sent info on a service event: bits 12..15 encode event type
       DBPRINT3("wr-unipz: service event for pz %d, vacc %d\n", ipz, virtAcc);
@@ -758,10 +763,10 @@ int main(void) {
   pp_printf("\n");
   
   // init local variables
-  reqState       = WRUNIPZ_STATE_S0;
-  actState       = WRUNIPZ_STATE_UNKNOWN;
-  pubState       = WRUNIPZ_STATE_UNKNOWN;
-  status         = WRUNIPZ_STATUS_OK;
+  reqState       = COMMON_STATE_S0;
+  actState       = COMMON_STATE_UNKNOWN;
+  pubState       = COMMON_STATE_UNKNOWN;
+  status         = COMMON_STATUS_OK;
   flagRecover    = 0;
   common_clearDiag();
 
@@ -772,25 +777,25 @@ int main(void) {
   while (1) {
     common_cmdHandler(&reqState, &cmd);                             // check for commands and possibly request state changes
     cmdHandler(&reqState, cmd);                                     // commands specific for this project
-    status = WRUNIPZ_STATUS_OK;                                     // reset status for each iteration
+    status = COMMON_STATUS_OK;                                      // reset status for each iteration
     status = common_changeState(&actState, &reqState, status);      // handle requested state changes
     switch(actState)                                                // state specific do actions
       {
-      case WRUNIPZ_STATE_S0 :
+      case COMMON_STATE_S0 :
         status = common_doActionS0();                               // important initialization that must succeed!
-        if (status != WRUNIPZ_STATUS_OK) reqState = WRUNIPZ_STATE_FATAL;    // failed:  -> FATAL
-        else                             reqState = WRUNIPZ_STATE_IDLE;     // success: -> IDLE
+        if (status != COMMON_STATUS_OK) reqState = COMMON_STATE_FATAL;    // failed:  -> FATAL
+        else                            reqState = COMMON_STATE_IDLE;     // success: -> IDLE
         break;
-      case WRUNIPZ_STATE_OPREADY :
+      case COMMON_STATE_OPREADY :
         flagRecover = 0;
         status = doActionOperation(&nCycleAct, status);
-        if (status == WRUNIPZ_STATUS_WRBADSYNC)      reqState = WRUNIPZ_STATE_ERROR;
-        if (status == WRUNIPZ_STATUS_ERROR)          reqState = WRUNIPZ_STATE_ERROR;
+        if (status == COMMON_STATUS_WRBADSYNC) reqState = COMMON_STATE_ERROR;
+        if (status == COMMON_STATUS_ERROR)     reqState = COMMON_STATE_ERROR;
         break;
-      case WRUNIPZ_STATE_ERROR :
+      case COMMON_STATE_ERROR :
         flagRecover = 1;                                      // start autorecovery
         break; 
-      case WRUNIPZ_STATE_FATAL :
+      case COMMON_STATE_FATAL :
         pubState = actState;
         common_publishState(pubState);
         common_publishSumStatus(sumStatus);
@@ -798,7 +803,7 @@ int main(void) {
         while (1) asm("nop"); // RIP!
         break;
       default :                                               // avoid flooding WB bus with unnecessary activity
-        for (j = 0; j < (WRUNIPZ_DEFAULT_TIMEOUT * WRUNIPZ_MS_ASMNOP); j++) { asm("nop"); }
+        for (j = 0; j < (COMMON_DEFAULT_TIMEOUT * COMMON_MS_ASMNOP); j++) { asm("nop"); }
       } // switch
 
     // autorecovery from state ERROR
@@ -823,23 +828,23 @@ int main(void) {
       } // if nCycleAct %
       
       // reset status (hackish solution); chk: consider changing status info to bits encoded into a 32bit number 
-      // if ((nCycleAct % (WRUNIPZ_UNILACFREQ * 5)) == 0) status = WRUNIPZ_STATUS_OK; 
+      // if ((nCycleAct % (WRUNIPZ_UNILACFREQ * 5)) == 0) status = COMMON_STATUS_OK; 
         
       nCyclePrev = nCycleAct;
     } // if nCycleAct
 
     switch (status) {
-    case WRUNIPZ_STATUS_OK :                                                    // status OK
-      sumStatus = sumStatus |  (0x1 << WRUNIPZ_STATUS_OK);                      // set OK bit
+    case COMMON_STATUS_OK :                                                     // status OK
+      sumStatus = sumStatus |  (0x1 << COMMON_STATUS_OK);                       // set OK bit
       break;
     default :                                                                   // status not OK
-      if ((sumStatus >> WRUNIPZ_STATUS_OK) & 0x1)common_incBadStatusCnt();      // changing status from OK to 'not OK': increase 'bad status count'
-      sumStatus = sumStatus & ~(0x1 << WRUNIPZ_STATUS_OK);                      // clear OK bit
+      if ((sumStatus >> COMMON_STATUS_OK) & 0x1)common_incBadStatusCnt();       // changing status from OK to 'not OK': increase 'bad status count'
+      sumStatus = sumStatus & ~(0x1 << COMMON_STATUS_OK);                       // clear OK bit
       sumStatus = sumStatus |  (0x1 << status);                                 // set status bit and remember other bits set
       break;
     } // switch status
 
-    if ((pubState == WRUNIPZ_STATE_OPREADY) && (actState  != WRUNIPZ_STATE_OPREADY))  common_incBadStateCnt();
+    if ((pubState == COMMON_STATE_OPREADY) && (actState  != COMMON_STATE_OPREADY))  common_incBadStateCnt();
     common_publishSumStatus(sumStatus);
     pubState             = actState;
     common_publishState(pubState);

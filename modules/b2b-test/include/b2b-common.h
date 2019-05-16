@@ -16,6 +16,7 @@
 #define  COMMON_MS_ASMNOP        31 * 1000    // # of asm("nop") operations per microsecond
 #define  COMMON_DEFAULT_TIMEOUT  100          // default timeout used by main loop [ms]
 #define  COMMON_ECATIMEOUT       1            // timeout for querying ECA action
+#define  COMMON_MILTIMEOUT       100          // timeout for querying MIL events
 #define  COMMON_AHEADT           500000       // ahead interval for sending timing messages [ns]
 #define  COMMON_ECA_ADDRESS      0x7ffffff0   // address of ECA input
 #define  COMMON_EB_HACKISH       0x12345678   // value for EB read handshake
@@ -30,7 +31,7 @@
 #define  COMMON_STATUS_EBREADTIMEDOUT     6    // EB read via WR network timed out
 #define  COMMON_STATUS_WRBADSYNC          7    // White Rabbit: not in 'TRACK_PHASE'
 #define  COMMON_STATUS_AUTORECOVERY       8    // trying auto-recovery from state ERROR
-#define  COMMON_STATUS_RESERVEDTILHERE   19    // reserved for common error codes
+#define  COMMON_STATUS_RESERVEDTILHERE   15    // reserved for common error codes
 
 // commands from the outside
 #define  COMMON_CMD_NOCMD                 0    // no command ...
@@ -40,6 +41,7 @@
 #define  COMMON_CMD_IDLE                  4    // requests gateway to enter idle state
 #define  COMMON_CMD_RECOVER               5    // recovery from error state
 #define  COMMON_CMD_CLEARDIAG             6    // reset statistics information
+#define  COMMON_CMD_RESERVEDTILHERE      10    // reserved for commmon commands
 
 // states; implicitely, all states may transit to the ERROR or FATAL state
 #define  COMMON_STATE_UNKNOWN             0    // unknown state

@@ -382,7 +382,7 @@ uint32_t common_wait4MILEvent(uint32_t *evtData, uint32_t *evtCode, uint32_t *vi
   *evtData    = 0xffff;
   *evtCode    = 0xffff;
   valid       = 0;
-  
+
   while(getSysTime() < timeoutT) {              // while not timed out...
     while (fifoNotemptyEvtMil(pMILPiggy)) {     // while fifo contains data
       popFifoEvtMil(pMILPiggy, &evtRec);    
@@ -449,6 +449,7 @@ uint32_t common_doActionS0()
   if (findPPSGen()   != COMMON_STATUS_OK) status = COMMON_STATUS_ERROR;
   if (findWREp()     != COMMON_STATUS_OK) status = COMMON_STATUS_ERROR;
   if (findIOCtrl()   != COMMON_STATUS_OK) status = COMMON_STATUS_ERROR;
+  findMILPiggy();
 
   now           = getSysTime();
   *pSharedTS0Hi = (uint32_t)(now >> 32);
