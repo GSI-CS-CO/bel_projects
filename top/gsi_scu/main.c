@@ -1122,6 +1122,8 @@ void dev_bus_handler(int id) {
   int status;
   short data_aquisition;
   struct msi m;
+  struct daq d;
+  uint64_t daq_time;
   static TaskType *task_ptr;              // task pointer
   task_ptr = tsk_getConfig();             // get a pointer to the task configuration
 
@@ -1249,6 +1251,16 @@ void dev_bus_handler(int id) {
               mprintf("unknown error when reading task %d\n", task_ptr[id].slave_nr);
             }
           }
+          d.setpoint = 0;
+          d.actvalue = data_aquisition;
+          daq_time = getSysTime();
+          d.tmstmp_l = daq_time & 0xffffffff;
+          d.tmstmp_h = daq_time >> 32;
+          d.channel = i;
+          add_daq_msg(&daq_buf, d);
+
+          hist_addx(HISTORY_XYZ_MODULE, "daq_high", data_aquisition >> 8);
+          hist_addx(HISTORY_XYZ_MODULE, "daq_low", data_aquisition & 0xff);
         };
       }
       if (status == RCV_TASK_BSY) {
