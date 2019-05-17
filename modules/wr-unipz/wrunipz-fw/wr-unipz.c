@@ -3,7 +3,7 @@
  *
  *  created : 2018
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 16-May-2019
+ *  version : 17-May-2019
  *
  *  lm32 program for gateway between UNILAC Pulszentrale and a White Rabbit network
  *  this basically serves a Data Master for UNILAC
@@ -14,7 +14,7 @@
  *  - https://www-acc.gsi.de/viewvc/view/devacc/trunk/eqmodels/pz/pzus/src/pzus-helper.hh (masks and definitions)
  * 
  *  'announce' events for the next cycle (received from the SuperPZ) have the following format:
- *  31..24: code (defined in pzus-dpr-def-h, lines 72ff; example: 0x10(use 'Kanal 1'), 0x00(use 'Kanal 0')
+ *  31..24: code (defined in pzus-dpr-def-h, lines 72 ff; example: 0x10(use 'Kanal 1'), 0x00(use 'Kanal 0')
  *  23..16: virt acc
  *  15...8: 0
  *   7...1: # of PZ (** counting starts at 1(!) **)
@@ -57,15 +57,12 @@
 // includes specific for bel_projects 
 #include "dbg.h"                                                        // debug outputs
 #include "ebm.h"                                                        // EB master
-#include "pp-printf.h"                                                  // print to console
+#include "pp-printf.h"                                                  // print statement
 #include "mini_sdb.h"                                                   // sdb stuff
 #include "syscon.h"                                                     // usleep et al
 #include "aux.h"                                                        // cpu and IRQ
-#include "uart.h"                                                       
+#include "uart.h"                                                       // WR console
 #include "../../../top/gsi_scu/scu_mil.h"                               // register layout of 'MIL macro'
-//#include "../../../ip_cores/wr-cores/modules/wr_eca/eca_queue_regs.h"   // register layout ECA queue
-//#include "../../../ip_cores/wr-cores/modules/wr_eca/eca_regs.h"         // register layout ECA control
-//#include "../../../ip_cores/saftlib/drivers/eca_flags.h"                // register layout for ECA queue
 
 // includes for this project
 #include <b2b-common.h>                                                 // common stuff for b2b-type firmware
@@ -139,8 +136,8 @@ uint32_t nextVacc[WRUNIPZ_NPZ];         // vacc
 uint32_t nextChan[WRUNIPZ_NPZ];         // channel
 uint32_t nextNochop[WRUNIPZ_NPZ];       // flag: 'no chopper'
 
-uint32_t gid[]     = {448, 449, 450, 451, 452, 453, 454};
-uint32_t milEvts[] = {WRUNIPZ_EVT_PZ1,
+uint32_t gid[]     = {448, 449, 450, 451, 452, 453, 454};  // GID for UNILAC
+uint32_t milEvts[] = {WRUNIPZ_EVT_PZ1,  // MIL evt codes we are listening for
                       WRUNIPZ_EVT_PZ2,
                       WRUNIPZ_EVT_PZ3,
                       WRUNIPZ_EVT_PZ4,
@@ -178,13 +175,12 @@ uint64_t writeTM(uint32_t uniEvt, uint64_t tStart, uint32_t pz, uint32_t virtAcc
              ((uint64_t)0x0       <<  6)     |       // BPID
              ((uint64_t)0x0       <<  5)     |       // reserved
              ((uint64_t)0x0       <<  4)     |       // reqNoBeam
-             ((uint64_t)0x0                          // virtAcc only for DM-UNIPZ gateway
-                        );
-  param    = ((uint64_t)evtData  << 32);             // parameter field   /* chk with hanno */
-  offset   = (uint64_t)t * 1000;                     // convert offset -> ns
+             ((uint64_t)0x0            );            // virtAcc only for DM-UNIPZ gateway
+  param    = ((uint64_t)evtData   << 32);            // parameter field   /* chk with hanno */
   
   // calc deadline
-  deadline   = tStart + (uint64_t)offset + (uint64_t)WRUNIPZ_MILCALIBOFFSET; 
+  offset   = (uint64_t)t * 1000;                     // convert offset -> ns
+  deadline = tStart + (uint64_t)offset + (uint64_t)WRUNIPZ_MILCALIBOFFSET; 
 
   // send message
   common_ebmWriteTM(deadline, id, param);
@@ -201,6 +197,7 @@ uint64_t writeTM(uint32_t uniEvt, uint64_t tStart, uint32_t pz, uint32_t virtAcc
 
   return deadline;
 } // writeTm
+
 
 // plays virtual accelerators for all 'Pulszentralen'
 uint32_t pzRunVacc(dataTable evts, uint64_t tStart, uint32_t pz, uint32_t virtAcc, uint32_t isPrep)
@@ -346,7 +343,8 @@ void initSharedMem()
 } // initSharedMem 
 
 
-uint32_t configMILEvent()   // configure SoC to receive events via MIL bus
+// configure SoC to receive events via MIL bus
+uint32_t configMILEvent()
 {
   uint32_t i;
   volatile uint32_t *pMilPiggy;
@@ -396,6 +394,7 @@ void extern_clearDiag()
   sumStatus      = 0;
 } // clearDiag
 
+
 // initializes transaction for config data
 uint32_t configTransactInit()
 {
@@ -425,6 +424,7 @@ uint32_t configTransactInit()
 
   return COMMON_STATUS_OK;
 } // configTransactInit
+
 
 // submit transferred config data
 uint32_t configTransactSubmit() 
@@ -463,6 +463,7 @@ uint32_t configTransactSubmit()
   return COMMON_STATUS_OK;
 } // configTransactSubmit
 
+
 // clears data of all PZs
 void clearAllPZ()
 {
@@ -484,7 +485,6 @@ uint32_t extern_entryActionConfigured()
   uint32_t status = COMMON_STATUS_OK;
 
   // configure EB master (SRC and DST MAC/IP are set from host)
-  //  ebmInit(100, 0xffffffffffff, 0xffffffff, EBM_NOREPLY);
   if ((status = common_ebmInit(2000, 0xffffffffffff, 0xffffffff, EBM_NOREPLY)) != COMMON_STATUS_OK) {
     DBPRINT1("wr-unipz: ERROR - init of EB master failed! %u\n", (unsigned int)status);
     return status;
@@ -513,6 +513,7 @@ uint32_t extern_entryActionConfigured()
 
   return status;
 } // entryActionConfigured
+
 
 // entry action state 'op ready'
 uint32_t extern_entryActionOperation()
@@ -556,31 +557,32 @@ void cmdHandler(uint32_t *reqState, uint32_t cmd)
   // check, if the command is valid and request state change
   if (cmd) {                             // check, if cmd is valid
     switch (cmd) {                       // do action according to command
-    case WRUNIPZ_CMD_CONFINIT :
-      DBPRINT3("wr-unipz: received cmd %d\n", cmd);
-      flagTransactionInit = 1;
-      break;
-    case WRUNIPZ_CMD_CONFSUBMIT :
-      DBPRINT3("wr-unipz: received cmd %d\n", cmd);
-      if (configTransactSubmit() != COMMON_STATUS_OK) DBPRINT1("wr-unipz: submission of config data failed\n");
-      // takes about 51us, possibly just set a flag here and call routine after WRUNIPZ_EVT_50HZ_SYNCH
-      break;
-    case WRUNIPZ_CMD_CONFKILL :
-      DBPRINT3("wr-unipz: received cmd %d\n", cmd);
-      *pSharedConfStat = WRUNIPZ_CONFSTAT_IDLE;
-      break;     
-    case WRUNIPZ_CMD_CONFCLEAR :
-      DBPRINT3("wr-unipz: received cmd %d\n", cmd);
-      flagClearAllPZ = 1;
-      break;
-    default:
-      DBPRINT3("wr-unipz: received unknown command '0x%08x'\n", cmd);
+      case WRUNIPZ_CMD_CONFINIT :
+        DBPRINT3("wr-unipz: received cmd %d\n", cmd);
+        flagTransactionInit = 1;
+        break;
+      case WRUNIPZ_CMD_CONFSUBMIT :
+        DBPRINT3("wr-unipz: received cmd %d\n", cmd);
+        if (configTransactSubmit() != COMMON_STATUS_OK) DBPRINT1("wr-unipz: submission of config data failed\n");
+        // takes about 51us, possibly just set a flag here and call routine after WRUNIPZ_EVT_50HZ_SYNCH
+        break;
+      case WRUNIPZ_CMD_CONFKILL :
+        DBPRINT3("wr-unipz: received cmd %d\n", cmd);
+        *pSharedConfStat = WRUNIPZ_CONFSTAT_IDLE;
+        break;     
+      case WRUNIPZ_CMD_CONFCLEAR :
+        DBPRINT3("wr-unipz: received cmd %d\n", cmd);
+        flagClearAllPZ = 1;
+        break;
+      default:
+        DBPRINT3("wr-unipz: received unknown command '0x%08x'\n", cmd);
+        break;
     } // switch 
   } // if command 
 } // cmdHandler
 
 
-// do action state 'op ready' - main code of this FW
+// do action state 'op ready' - this is the main code of this FW
 uint32_t doActionOperation(uint32_t *nCycle,                  // total number of UNILAC cycle since FW start
                            uint32_t actStatus)                // actual status of firmware
 {
@@ -611,138 +613,135 @@ uint32_t doActionOperation(uint32_t *nCycle,                  // total number of
   // wait for MIL event
   milStatus = common_wait4MILEvent(&evtData, &evtCode, &virtAcc, milEvts, sizeof(milEvts)/sizeof(int), COMMON_MILTIMEOUT);
   if (milStatus == COMMON_STATUS_TIMEDOUT) return WRUNIPZ_STATUS_NOMILEVENTS; // error: no MIL event, maybe dead UNIPZ?
-  if (milStatus != COMMON_STATUS_OK)       return WRUNIPZ_STATUS_MIL;         // some other error
+  if (milStatus != COMMON_STATUS_OK)       return WRUNIPZ_STATUS_MIL;         // some other MIL error
 
-  tMIL      = getSysTime();
+  tMIL      = getSysTime();                                     // required as backup in case timestamping via TLU fails
+  ebm_clr();                                                    // clear EB master (to be on the safe side)
 
+  // handle MIL event
   switch (evtCode) {
-
-  case WRUNIPZ_EVT_50HZ_SYNCH :                               // next UNILAC cycle starts
-    (*nCycle)++;
-    DBPRINT3("wr-unipz: 50Hz, data %d, evtcode %d, virtAcc %d\n", evtData, evtCode, virtAcc);
-
-    // get timestamp from TLU -> ECA
-    ecaAction = common_wait4ECAEvent(COMMON_ECATIMEOUT, &recDeadline, &recParam, &flagIsLate);
-
-    deadline = recDeadline;
-    
-    // check, if timestamping via TLU failed
-    if (ecaAction == WRUNIPZ_ECADO_TIMEOUT) {      
-      deadline = tMIL;                                        // continue with TS from MIL
-      status   = WRUNIPZ_STATUS_NOTIMESTAMP;
-    } // if ecaAction
-    
-    // check, if timestamps form TLU and MIL are out of order
-    if (deadline > tMIL) {
-      deadline = tMIL;                                        // continue with TS from MIL
+    case WRUNIPZ_EVT_50HZ_SYNCH :                               // next UNILAC cycle starts
+      (*nCycle)++;
+      DBPRINT3("wr-unipz: 50Hz, data %d, evtcode %d, virtAcc %d\n", evtData, evtCode, virtAcc);
+      
+      // get timestamp from TLU -> ECA
+      ecaAction = common_wait4ECAEvent(COMMON_ECATIMEOUT, &recDeadline, &recParam, &flagIsLate);
+      deadline = recDeadline;
+      
+      // check, if timestamping via TLU failed; if yes, continue with TS from MIL
+      if (ecaAction == WRUNIPZ_ECADO_TIMEOUT) {      
+        deadline = tMIL;                                        
+        status   = WRUNIPZ_STATUS_NOTIMESTAMP;
+      } // if ecaAction
+      
+      // check, if timestamps form TLU and MIL are out of order; if yes, continue with TS from MIL
+      if (deadline > tMIL) {
+      deadline = tMIL;
       status   = WRUNIPZ_STATUS_ORDERTIMESTAMP;
-    } // if deadline
-    
-    // check, if timestamp from TLU is not reasonable
-    if ((tMIL - deadline) > WRUNIPZ_MATCHWINDOW) {
-      deadline = tMIL;                                        // continue with TS from MIL
-      status   = WRUNIPZ_STATUS_BADTIMESTAMP;
-    } // if tMIL
-    
-
-    ebm_clr();
-
-    // walk through all PZs and run requested virt acc (non-prep events)
-    nLateLocal  = nLate;                                      // for bookkepping for late messages
-    isPrepFlag  = 0;                                          // 50 Hz synch: no preparation - use actual deadline from TLU
-    for (i=0; i < WRUNIPZ_NPZ; i++) {
-      if (nextVacc[i] != 0xffffffff) {
-        actVacc[i] = nextVacc[i];                             // remember vacc for actual cycle
-        actChan[i] = nextChan[i],
-        pzRunVacc(bigData[i][nextChan[i] * WRUNIPZ_NVACC + nextVacc[i]], deadline, i, nextVacc[i], isPrepFlag); // run vaccs
-        DBPRINT3("wr-unipz: playing pz %d, vacc %d\n", i, nextVacc[i]);
-      } // if nextVacc
-    } // for i
-    
-    if ((nLate != nLateLocal) && (status == COMMON_STATUS_OK)) status = WRUNIPZ_STATUS_LATE;
-    DBPRINT3("wr-unipz: vA played:  %x %x %x %x %x %x %x\n", nextVacc[0], nextVacc[1], nextVacc[2], nextVacc[3], nextVacc[4], nextVacc[5], nextVacc[6]);
-
-    // at this point we have scheduled all timing messages of the running cycle and completed the real-time critical stuff
-    // now we can do other things...
-
-    tJump       = (int32_t)(predictNxtCycle() - deadline);    // compare prediction and deadline
-    if (tJump > cycJmpMax) cycJmpMax = tJump;
-    if (tJump < cycJmpMin) cycJmpMin = tJump;
-
-    syncPrevT0  = syncPrevT1;                                 // remember time of a previous cycle
-    syncPrevT1  = syncPrevT2;                                 // remember time of a previous cycle
-    syncPrevT2  = syncPrevT3;                                 // remember time of a previous cycle
-    syncPrevT3  = syncPrevT4;                                 // remember time of a previous cycle
-    syncPrevT4  = deadline;                                   // remember time of the previous cycle
-    
-    if (flagClearAllPZ)        {clearAllPZ();           flagClearAllPZ = 0;       }
-    if (flagTransactionInit)   {configTransactInit();   flagTransactionInit = 0;  }  /* chk: error handling */
-    /* chk !!! bug: in the same cycle where data becomes commited the routine getVacclen will fail (fix after we know commit mechanism) !!! */ 
-    
-    // reset requested virt accs; flush ECA queue
-    for (i=0; i < WRUNIPZ_NPZ; i++) nextVacc[i] = 0xffffffff; // 0xffffffff: no virt acc for PZ
-    while (common_wait4ECAEvent(0, &tDummy, &pDummy, &flagIsLate) !=  WRUNIPZ_ECADO_TIMEOUT) {asm("nop");}
-
-    break;
-    
-  case WRUNIPZ_EVT_PZ1 ... WRUNIPZ_EVT_PZ7 :                  // super PZ announces what happens in next UNILAC cycle
-    // extract information from event from super PZ
-    ipz            = evtCode - 1;                             // PZ: sPZ counts from 1..7, we count from 0..6
-    nextVacc[ipz]  = virtAcc;
-    chn            =  ((evtData & WRUNIPZ_EVTDATA_CHANNEL) != 0); // use relevant bit as channel number (there are only two channels)
-    
-    // there are two different types of announce events
-    // A: The announce event contains information about the vacc to played in the next cycle
-    //    In this case 1. handle chopper mode, 2. send all 'prep events'
-    // B: The announce event contains information about a service event to be sent
-    //    In this case we just take care of the service event and nothing else
-
-    if ((evtData & WRUNIPZ_EVTDATA_SERVICE) == 0) {           // A: super PZ has announced vacc for next cycle: bits 12 (channel number), bits 13..15 (chooper mode)
-      DBPRINT3("wr-unipz: playing prep events, pz %d, vacc %d\n", ipz, virtAcc);
-      // get chopper mode
-      nextChan[ipz]    = chn;
-      nextNochop[ipz]  = ((evtData & WRUNIPZ_EVTDATA_NOCHOP)  != 0);
-
-      // PZ1..7: preperation; as the next cycle has been announced, we may send all 'prep events' already now
-      // as deadline, we use the prediciton based on previous UNILAC cycles
-      nLateLocal = nLate;
-      isPrepFlag = 1;                                                  
-      deadline   = predictNxtCycle();                         // predict start of next cycle
-      pzRunVacc(bigData[ipz][chn * WRUNIPZ_NVACC + virtAcc], deadline, ipz, virtAcc, isPrepFlag);
+      } // if deadline
+      
+      // check, if timestamp from TLU is not reasonable; if yes, continue with TS from MIL
+      if ((tMIL - deadline) > WRUNIPZ_MATCHWINDOW) {
+        deadline = tMIL;
+        status   = WRUNIPZ_STATUS_BADTIMESTAMP;
+      } // if tMIL
+      
+      // walk through all PZs and run requested virt acc (time critical stuff)
+      nLateLocal  = nLate;                                      // for bookkepping of late messages
+      isPrepFlag  = 0;                                          // 50 Hz synch: time critical operation - use actual deadline from TLU
+      for (i=0; i < WRUNIPZ_NPZ; i++) {
+        if (nextVacc[i] != 0xffffffff) {
+          actVacc[i] = nextVacc[i];                             // remember vacc for actual cycle
+          actChan[i] = nextChan[i];                             // remember channel for actual cycle
+          pzRunVacc(bigData[i][nextChan[i] * WRUNIPZ_NVACC + nextVacc[i]], deadline, i, nextVacc[i], isPrepFlag); // run virtual accelerator
+          DBPRINT3("wr-unipz: playing pz %d, vacc %d\n", i, nextVacc[i]);
+        } // if nextVacc
+      } // for i
+      
       if ((nLate != nLateLocal) && (status == COMMON_STATUS_OK)) status = WRUNIPZ_STATUS_LATE;
-    } // if !SERVICE
-    else {                                                    // B: super PZ has sent info on a service event: bits 12..15 encode event type
-      DBPRINT3("wr-unipz: service event for pz %d, vacc %d\n", ipz, virtAcc);
-      servOffs = getVaccLen(bigData[ipz][chn * WRUNIPZ_NVACC + virtAcc]) & 0xffff;
-      servEvt  = 0x0;
-      if (evtData == WRUNIPZ_EVTDATA_PREPACC) {
-        servEvt = EVT_AUX_PRP_NXT_ACC | ((virtAcc & 0xf) << 8) | ((servOffs & 0xffff)        << 16); // send after last event of current PZ cycle
-        writeTM(servEvt, syncPrevT4, ipz, virtAcc, 0);                                               // send message
-      } // if PREPACC
-      if (evtData == WRUNIPZ_EVTDATA_ZEROACC) {
-        servEvt = EVT_MAGN_DOWN       | ((virtAcc & 0xf) << 8) | ((servOffs & 0xffff)        << 16); // send after last event of current PZ cycle
-        writeTM(servEvt, syncPrevT4, ipz, virtAcc, 0);                                               // send message
-      } // if ZEROACC
-      if (evtData == WRUNIPZ_EVTDATA_PREPACCNOW) {
-        servEvt = EVT_AUX_PRP_NXT_ACC | ((virtAcc & 0xf) << 8) | ((uint16_t)WRUNIPZ_QQOFFSET << 16); // send 'now' /* chk QQOFFSET */
-        writeTM(servEvt, getSysTime(), ipz, virtAcc, 0);                                             // send message
-      } // if PREPACCNOW
-    } // else SERVICE
-  
-    break;
-    
-  case WRUNIPZ_EVT_SYNCH_DATA :                               // super PZ commits recently supplied virt acc -> replace active data by the new ones
-    if (flagTransactionSubmit) {
-      configTransactSubmit();                                 // this takes 51us /* chk: error handling */
-      flagTransactionSubmit = 0;
-    }  // if transaction submit
-    
-    break;
-    
-  default :
-    break;
+      DBPRINT3("wr-unipz: vA played:  %x %x %x %x %x %x %x\n", nextVacc[0], nextVacc[1], nextVacc[2], nextVacc[3], nextVacc[4], nextVacc[5], nextVacc[6]);
+      
+      // at this point we have scheduled all timing messages of the running cycle and completed the real-time critical stuff
+      // now we can do other things...
+      
+      tJump       = (int32_t)(predictNxtCycle() - deadline);    // compare prediction and deadline
+      if (tJump > cycJmpMax) cycJmpMax = tJump;
+      if (tJump < cycJmpMin) cycJmpMin = tJump;
+      
+      syncPrevT0  = syncPrevT1;                                 // remember time of a previous cycle
+      syncPrevT1  = syncPrevT2;                                 // remember time of a previous cycle
+      syncPrevT2  = syncPrevT3;                                 // remember time of a previous cycle
+      syncPrevT3  = syncPrevT4;                                 // remember time of a previous cycle
+      syncPrevT4  = deadline;                                   // remember time of the previous cycle
+      
+      if (flagClearAllPZ)        {clearAllPZ();           flagClearAllPZ = 0;       }
+      if (flagTransactionInit)   {configTransactInit();   flagTransactionInit = 0;  }  /* chk: error handling */
+      /* chk !!! bug: in the same cycle where data becomes commited the routine getVacclen will fail (fix after we know commit mechanism) !!! */ 
+      
+      // reset requested virt accs; flush ECA queue
+      for (i=0; i < WRUNIPZ_NPZ; i++) nextVacc[i] = 0xffffffff; // 0xffffffff: no virt acc for PZ
+      while (common_wait4ECAEvent(0, &tDummy, &pDummy, &flagIsLate) !=  WRUNIPZ_ECADO_TIMEOUT) {asm("nop");}
+      
+      break;
+      
+    case WRUNIPZ_EVT_PZ1 ... WRUNIPZ_EVT_PZ7 :                  // super PZ announces what happens in next UNILAC cycle
+      // extract information from event from super PZ
+      ipz            = evtCode - 1;                             // PZ: sPZ counts from 1..7, we count from 0..6
+      nextVacc[ipz]  = virtAcc;
+      chn            =  ((evtData & WRUNIPZ_EVTDATA_CHANNEL) != 0); // use relevant bit as channel number (there are only two channels)
+      
+      // there are two different types of announce events
+      // A: The announce event contains information about the vacc to played in the next cycle
+      //    In this case 1. handle chopper mode, 2. send all 'prep events'
+      // B: The announce event contains information about a service event to be sent
+      //    In this case we just take care of the service event and do nothing else
+      
+      if ((evtData & WRUNIPZ_EVTDATA_SERVICE) == 0) {           // A: super PZ has announced vacc for next cycle: bits 12 (channel number), bits 13..15 (chopper mode)
+        DBPRINT3("wr-unipz: playing prep events, pz %d, vacc %d\n", ipz, virtAcc);
+        // get chopper mode
+        nextChan[ipz]    = chn;
+        nextNochop[ipz]  = ((evtData & WRUNIPZ_EVTDATA_NOCHOP)  != 0);
+        
+        // PZ1..7: preperation; as the next cycle has been announced, we may send all 'prep events' already now
+        // as deadline, we use the prediciton based on previous UNILAC cycles
+        nLateLocal = nLate;
+        isPrepFlag = 1;                                                  
+        deadline   = predictNxtCycle();                         // predict start of next cycle
+        pzRunVacc(bigData[ipz][chn * WRUNIPZ_NVACC + virtAcc], deadline, ipz, virtAcc, isPrepFlag);
+        if ((nLate != nLateLocal) && (status == COMMON_STATUS_OK)) status = WRUNIPZ_STATUS_LATE;
+      } // if !SERVICE
+      else {                                                    // B: super PZ has sent info on a service event: bits 12..15 encode event type
+        DBPRINT3("wr-unipz: service event for pz %d, vacc %d\n", ipz, virtAcc);
+        servOffs = getVaccLen(bigData[ipz][chn * WRUNIPZ_NVACC + virtAcc]) & 0xffff;
+        servEvt  = 0x0;
+        if (evtData == WRUNIPZ_EVTDATA_PREPACC) {
+          servEvt = EVT_AUX_PRP_NXT_ACC | ((virtAcc & 0xf) << 8) | ((servOffs & 0xffff)        << 16); // send after last event of current PZ cycle
+          writeTM(servEvt, syncPrevT4, ipz, virtAcc, 0);                                               // send message
+        } // if PREPACC
+        if (evtData == WRUNIPZ_EVTDATA_ZEROACC) {
+          servEvt = EVT_MAGN_DOWN       | ((virtAcc & 0xf) << 8) | ((servOffs & 0xffff)        << 16); // send after last event of current PZ cycle
+          writeTM(servEvt, syncPrevT4, ipz, virtAcc, 0);                                               // send message
+        } // if ZEROACC
+        if (evtData == WRUNIPZ_EVTDATA_PREPACCNOW) {
+          servEvt = EVT_AUX_PRP_NXT_ACC | ((virtAcc & 0xf) << 8) | ((uint16_t)WRUNIPZ_QQOFFSET << 16); // send 'now' /* chk QQOFFSET */
+          writeTM(servEvt, getSysTime(), ipz, virtAcc, 0);                                             // send message
+        } // if PREPACCNOW
+      } // else SERVICE
+      
+      break;
+      
+    case WRUNIPZ_EVT_SYNCH_DATA :                               // super PZ commits recently supplied virt acc -> replace active data by the new ones
+      if (flagTransactionSubmit) {
+        configTransactSubmit();                                 // this takes 51us /* chk: error handling */
+        flagTransactionSubmit = 0;
+      }  // if transaction submit
+      
+      break;
+      
+    default :
+      break;
   } // switch evtCode
-
+  
   return status;
 } // doActionOperation
 
@@ -758,33 +757,29 @@ int main(void) {
   uint32_t reqState;                                          // requested FSM state
   uint32_t flagRecover;                                       // flag indicating auto-recovery from error state;  
 
-  pp_printf("\n");
-  pp_printf("wr-unipz: ***** firmware v %06d started from scratch *****\n", WRUNIPZ_FW_VERSION);
-  pp_printf("\n");
-  
   // init local variables
   reqState       = COMMON_STATE_S0;
   actState       = COMMON_STATE_UNKNOWN;
   pubState       = COMMON_STATE_UNKNOWN;
   status         = COMMON_STATUS_OK;
   flagRecover    = 0;
-  common_clearDiag();
 
-  init();                                                           // initialize stuff for lm32
-  initSharedMem();                                                  // initialize shared memory
-  common_init((uint32_t *)_startshared, WRUNIPZ_FW_VERSION);        // init common stuff
-  
+  // init 
+  init();                                                              // initialize stuff for lm32
+  initSharedMem();                                                     // initialize shared memory
+  common_init((uint32_t *)_startshared, WRUNIPZ_FW_VERSION);           // init common stuff
+  common_clearDiag();                                                  // clear common diagnostic data
+
   while (1) {
-    common_cmdHandler(&reqState, &cmd);                             // check for commands and possibly request state changes
-    cmdHandler(&reqState, cmd);                                     // commands specific for this project
-    status = COMMON_STATUS_OK;                                      // reset status for each iteration
-    status = common_changeState(&actState, &reqState, status);      // handle requested state changes
-    switch(actState)                                                // state specific do actions
-      {
+    common_cmdHandler(&reqState, &cmd);                                // check for common commands and possibly request state changes
+    cmdHandler(&reqState, cmd);                                        // check for project relevant commands
+    status = COMMON_STATUS_OK;                                         // reset status for each iteration
+    status = common_changeState(&actState, &reqState, status);         // handle requested state changes
+    switch(actState) {                                                 // state specific do actions 
       case COMMON_STATE_S0 :
-        status = common_doActionS0();                               // important initialization that must succeed!
-        if (status != COMMON_STATUS_OK) reqState = COMMON_STATE_FATAL;    // failed:  -> FATAL
-        else                            reqState = COMMON_STATE_IDLE;     // success: -> IDLE
+        status = common_doActionS0();                                  // important initialization that must succeed!
+        if (status != COMMON_STATUS_OK) reqState = COMMON_STATE_FATAL; // failed:  -> FATAL
+        else                            reqState = COMMON_STATE_IDLE;  // success: -> IDLE
         break;
       case COMMON_STATE_OPREADY :
         flagRecover = 0;
@@ -793,25 +788,26 @@ int main(void) {
         if (status == COMMON_STATUS_ERROR)     reqState = COMMON_STATE_ERROR;
         break;
       case COMMON_STATE_ERROR :
-        flagRecover = 1;                                      // start autorecovery
+        flagRecover = 1;                                               // start autorecovery
         break; 
       case COMMON_STATE_FATAL :
         pubState = actState;
         common_publishState(pubState);
         common_publishSumStatus(sumStatus);
         pp_printf("wr-unipz: a FATAL error has occured. Good bye.\n");
-        while (1) asm("nop"); // RIP!
+        while (1) asm("nop");                                          // RIP!
         break;
-      default :                                               // avoid flooding WB bus with unnecessary activity
+      default :                                                        // avoid flooding WB bus with unnecessary activity
         for (j = 0; j < (COMMON_DEFAULT_TIMEOUT * COMMON_MS_ASMNOP); j++) { asm("nop"); }
-      } // switch
-
+        break;
+    } // switch
+    
     // autorecovery from state ERROR
     if (flagRecover) common_doAutoRecovery(actState, &reqState);
-
-    // update shared memory
-    if (nCycleAct != nCyclePrev) {                            // update only once per cycle 
-      if ((nCycleAct % WRUNIPZ_UNILACFREQ) == 0) {            // about only once per second
+    
+    // update shared memory for data that are averaged over a longer period
+    if (nCycleAct != nCyclePrev) {                                     // update only once per cycle 
+      if ((nCycleAct % WRUNIPZ_UNILACFREQ) == 0) {                     // about only once per second
         
         // length of UNILAC cycle [ns]
         *pSharedTCycleAvg  = (uint32_t)((syncPrevT4 - syncPrevT0) >> 2);
@@ -827,24 +823,23 @@ int main(void) {
         pzAvg              = 0;
       } // if nCycleAct %
       
-      // reset status (hackish solution); chk: consider changing status info to bits encoded into a 32bit number 
-      // if ((nCycleAct % (WRUNIPZ_UNILACFREQ * 5)) == 0) status = COMMON_STATUS_OK; 
-        
       nCyclePrev = nCycleAct;
     } // if nCycleAct
 
+    // update sum status
     switch (status) {
-    case COMMON_STATUS_OK :                                                     // status OK
-      sumStatus = sumStatus |  (0x1 << COMMON_STATUS_OK);                       // set OK bit
-      break;
-    default :                                                                   // status not OK
-      if ((sumStatus >> COMMON_STATUS_OK) & 0x1)common_incBadStatusCnt();       // changing status from OK to 'not OK': increase 'bad status count'
-      sumStatus = sumStatus & ~(0x1 << COMMON_STATUS_OK);                       // clear OK bit
-      sumStatus = sumStatus |  (0x1 << status);                                 // set status bit and remember other bits set
-      break;
+      case COMMON_STATUS_OK :                                                     // status OK
+        sumStatus = sumStatus |  (0x1 << COMMON_STATUS_OK);                       // set OK bit
+        break;
+      default :                                                                   // status not OK
+        if ((sumStatus >> COMMON_STATUS_OK) & 0x1) common_incBadStatusCnt();      // changing status from OK to 'not OK': increase 'bad status count'
+        sumStatus = sumStatus & ~(0x1 << COMMON_STATUS_OK);                       // clear OK bit
+        sumStatus = sumStatus |  (0x1 << status);                                 // set status bit and remember other bits set
+        break;
     } // switch status
-
-    if ((pubState == COMMON_STATE_OPREADY) && (actState  != COMMON_STATE_OPREADY))  common_incBadStateCnt();
+    
+    // update shared memory
+    if ((pubState == COMMON_STATE_OPREADY) && (actState  != COMMON_STATE_OPREADY)) common_incBadStateCnt();
     common_publishSumStatus(sumStatus);
     pubState             = actState;
     common_publishState(pubState);

@@ -199,14 +199,14 @@ uint32_t wrCheckSyncState() //check status of White Rabbit (link up, tracking)
 
 void common_init(uint32_t *startShared, uint32_t fwVersion) // determine address and clear shared mem
 {
-  /*uint32_t idx;
-    const uint32_t c_Max_Rams = 10;
-  sdb_location found_sdb[c_Max_Rams];
-  sdb_location found_clu;*/
-
   uint32_t *pSharedTemp;
   uint32_t *pShared;
-  int      i; 
+  int      i;
+
+  // basic info to wr console
+  DBPRINT1("\n");
+  DBPRINT1("b2b-common: ***** firmware v %06u started from scratch *****\n", (unsigned int)fwVersion);
+  DBPRINT1("\n");
   
   // set pointer to shared memory
   pShared                 = startShared;
@@ -522,32 +522,33 @@ void common_cmdHandler(uint32_t *reqState, uint32_t *cmd) // handle commands fro
 
   if (*cmd) {                                // check, if the command is valid
     switch (*cmd) {                          // request state changes according to cmd
-    case COMMON_CMD_CONFIGURE :
-      *reqState =  COMMON_STATE_CONFIGURED;
-      DBPRINT3("b2b-common: received cmd %d\n", *cmd);
-      break;
-    case COMMON_CMD_STARTOP :
-      *reqState = COMMON_STATE_OPREADY;
-      DBPRINT3("b2b-common: received cmd %d\n", *cmd);
-      break;
-    case COMMON_CMD_STOPOP :
-      *reqState = COMMON_STATE_STOPPING;
-      DBPRINT3("b2b-common: received cmd %d\n", *cmd);
-      break;
-    case COMMON_CMD_IDLE :
-      *reqState = COMMON_STATE_IDLE;
-      DBPRINT3("b2b-common: received cmd %d\n", *cmd);
-      break;
-    case COMMON_CMD_RECOVER :
-      *reqState = COMMON_STATE_IDLE;
-      DBPRINT3("b2b-common: received cmd %d\n", *cmd);
-      break;
-    case COMMON_CMD_CLEARDIAG :
-      DBPRINT3("b2b-common: received cmd %d\n", *cmd);
-      common_clearDiag();
-      break;
-    default:
-      DBPRINT3("b2b-common: common_cmdHandler received unknown command '0x%08x'\n", *cmd);
+      case COMMON_CMD_CONFIGURE :
+        *reqState =  COMMON_STATE_CONFIGURED;
+        DBPRINT3("b2b-common: received cmd %d\n", *cmd);
+        break;
+      case COMMON_CMD_STARTOP :
+        *reqState = COMMON_STATE_OPREADY;
+        DBPRINT3("b2b-common: received cmd %d\n", *cmd);
+        break;
+      case COMMON_CMD_STOPOP :
+        *reqState = COMMON_STATE_STOPPING;
+        DBPRINT3("b2b-common: received cmd %d\n", *cmd);
+        break;
+      case COMMON_CMD_IDLE :
+        *reqState = COMMON_STATE_IDLE;
+        DBPRINT3("b2b-common: received cmd %d\n", *cmd);
+        break;
+      case COMMON_CMD_RECOVER :
+        *reqState = COMMON_STATE_IDLE;
+        DBPRINT3("b2b-common: received cmd %d\n", *cmd);
+        break;
+      case COMMON_CMD_CLEARDIAG :
+        DBPRINT3("b2b-common: received cmd %d\n", *cmd);
+        common_clearDiag();
+        break;
+      default:
+        DBPRINT3("b2b-common: common_cmdHandler received unknown command '0x%08x'\n", *cmd);
+        break;
     } // switch 
     *pSharedCmd = 0x0;                       // reset cmd value in shared memory 
   } // if command 
@@ -567,27 +568,28 @@ uint32_t common_changeState(uint32_t *actState, uint32_t *reqState, uint32_t act
   else {
     nextState = *actState;                       // per default: remain in actual state without exit or entry action
     switch (*actState) {                         // check for allowed transitions: 1. determine next state, 2. perform exit or entry actions if required
-    case COMMON_STATE_S0:
-      if      (*reqState == COMMON_STATE_IDLE)       {                                                    nextState = *reqState;}      
-      break;
-    case COMMON_STATE_IDLE:
-      if      (*reqState == COMMON_STATE_CONFIGURED)  {statusTransition = extern_entryActionConfigured(); nextState = *reqState;}
-      break;
-    case COMMON_STATE_CONFIGURED:
-      if      (*reqState == COMMON_STATE_IDLE)       {                                                    nextState = *reqState;}
-      else if (*reqState == COMMON_STATE_CONFIGURED) {statusTransition = extern_entryActionConfigured();  nextState = *reqState;}
-      else if (*reqState == COMMON_STATE_OPREADY)    {statusTransition = extern_entryActionOperation();   nextState = *reqState;}
-      break;
-    case COMMON_STATE_OPREADY:
-      if      (*reqState == COMMON_STATE_STOPPING)   {statusTransition = extern_exitActionOperation();    nextState = *reqState;}
-      break;
-    case COMMON_STATE_STOPPING:
-      nextState = COMMON_STATE_CONFIGURED;      //automatic transition but without entryActionConfigured
-    case COMMON_STATE_ERROR:
-      if      (*reqState == COMMON_STATE_IDLE)       {statusTransition = exitActionError();               nextState = *reqState;}
-      break;
-    default: 
-      nextState = COMMON_STATE_S0;
+      case COMMON_STATE_S0:
+        if      (*reqState == COMMON_STATE_IDLE)       {                                                    nextState = *reqState;}      
+        break;
+      case COMMON_STATE_IDLE:
+        if      (*reqState == COMMON_STATE_CONFIGURED)  {statusTransition = extern_entryActionConfigured(); nextState = *reqState;}
+        break;
+      case COMMON_STATE_CONFIGURED:
+        if      (*reqState == COMMON_STATE_IDLE)       {                                                    nextState = *reqState;}
+        else if (*reqState == COMMON_STATE_CONFIGURED) {statusTransition = extern_entryActionConfigured();  nextState = *reqState;}
+        else if (*reqState == COMMON_STATE_OPREADY)    {statusTransition = extern_entryActionOperation();   nextState = *reqState;}
+        break;
+      case COMMON_STATE_OPREADY:
+        if      (*reqState == COMMON_STATE_STOPPING)   {statusTransition = extern_exitActionOperation();    nextState = *reqState;}
+        break;
+      case COMMON_STATE_STOPPING:
+        nextState = COMMON_STATE_CONFIGURED;      //automatic transition but without entryActionConfigured
+      case COMMON_STATE_ERROR:
+        if      (*reqState == COMMON_STATE_IDLE)       {statusTransition = exitActionError();               nextState = *reqState;}
+        break;
+      default: 
+        nextState = COMMON_STATE_S0;
+        break;
     } // switch actState
   }  // else something severe happened
   
@@ -611,8 +613,7 @@ uint32_t common_changeState(uint32_t *actState, uint32_t *reqState, uint32_t act
 // do autorecovery from error state
 void common_doAutoRecovery(uint32_t actState, uint32_t *reqState)
 {
-  switch (actState)
-    {
+  switch (actState) {
     case COMMON_STATE_ERROR :
       DBPRINT3("b2b-common: attempting autorecovery ERROR -> IDLE\n");
       usleep(10000000);
@@ -628,7 +629,8 @@ void common_doAutoRecovery(uint32_t actState, uint32_t *reqState)
       usleep(5000000);
       *reqState = COMMON_STATE_OPREADY;
       break;
-    default : ;
+    default :
+      break;
     } // switch actState
 } // doAutoRecovery
 
