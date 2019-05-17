@@ -192,7 +192,7 @@ public:
 
    const std::string getScuDomainName( void )
    {
-      return getWbDevice().substr( getWbDevice().find( '/' ) + 1 );
+      return getWbDevice().substr( getWbDevice().find_first_of( '/' ) + 1 );
    }
 
    const std::string getEbStatusString( void ) const

@@ -168,6 +168,7 @@ class Channel: public DaqChannel
    gpstr::PlotStream m_oPlot;
    Mode*             m_poModeContinuous;
    Mode*             m_poModePmHires;
+   std::string       m_oOutputFileName;
 
 public:
    Channel( unsigned int number, const std::string& rGnuplot );

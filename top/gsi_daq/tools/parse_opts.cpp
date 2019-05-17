@@ -171,6 +171,8 @@ int PARSER::_parse( int offset )
          return ret;
       }
 
+      m_optArg.clear();
+
       if( *pCurrent == '-' ) // Long option?
       { // Yes
          pCurrent++;
@@ -216,7 +218,6 @@ int PARSER::_parse( int offset )
          #ifndef CONFIG_CLOP_NO_NO_ARG
             case OPTION::NO_ARG:
             {
-               m_optArg.clear();
                _RETURN_HANDLING( m_pCurrentOption->m_func( this ) )
                break;
             }
@@ -242,7 +243,6 @@ int PARSER::_parse( int offset )
                {
                   if( ((m_index+1) == m_argc) || (m_ppArgv[m_index+1][0] != '=') )
                   { // No argument
-                     m_optArg.clear();
                      _RETURN_HANDLING( m_pCurrentOption->m_func( this ) )
                      break;
                   }
@@ -322,7 +322,6 @@ int PARSER::_parse( int offset )
          #ifndef CONFIG_CLOP_NO_NO_ARG
             case OPTION::NO_ARG:
             {
-               m_optArg.clear();
                _RETURN_HANDLING( m_pCurrentOption->m_func( this ) )
                break;
             }
@@ -393,9 +392,7 @@ int PARSER::_parse( int offset )
                      }
                   }
                }
-               else
-                  m_optArg.clear(); // No argument
-               
+
                _RETURN_HANDLING( m_pCurrentOption->m_func( this ) )   
 
                if( m_optArg.empty() )

@@ -178,22 +178,20 @@ void Channel::Mode::plot( void )
                       << " s\"" << "font \",14\"" << endl;
 
    m_pParent->m_oPlot << "set xlabel \"Time: " << m_timeStamp <<"\"" << endl;
-//   if( m_notFirst )
-//      m_pParent->m_oPlot << "replot" << endl;
-//   else
-//   {
-      m_pParent->m_oPlot << "plot '-' title \"\" with lines" << endl;
-      m_notFirst = true;
-//   }
+
+   m_pParent->m_oPlot << "plot '-' title \"\" with lines" << endl;
+   m_notFirst = true;
 
    for( std::size_t i = 0; i < m_size; i++ )
-      m_pParent->m_oPlot << nsecToSec(i * m_sampleTime) << ' ' << m_pY[i] << endl;
+      m_pParent->m_oPlot << nsecToSec(i * m_sampleTime) << ' ' << m_pY[i] <<
+                                                                          endl;
 
    m_pParent->m_oPlot << 'e' << endl;
 }
 
 /*-----------------------------------------------------------------------------
- *  For detailed information about Gnuplot look in to the PDF documentation of Gnuplot.
+ *  For detailed information about Gnuplot look in to the PDF documentation of
+ *  Gnuplot.
  */
 void Channel::Mode::reset( void )
 {
@@ -246,11 +244,29 @@ void Channel::sendAttributes( void )
 void Channel::start( void )
 {
    SCU_ASSERT( dynamic_cast<DaqContainer*>(getParent()->getParent()) != nullptr );
-   m_oPlot << "set terminal "
-           << static_cast<DaqContainer*>(getParent()->getParent())->
-                                getCommandLinePtr()->getTerminal()
-           << " title \"SCU: " << getScuDomainName()
-           << '"' << endl;
+   CommandLine* poCommandLine =
+     static_cast<DaqContainer*>(getParent()->getParent())->getCommandLinePtr();
+
+   m_oPlot << "set terminal " << poCommandLine->getTerminal();
+   if( poCommandLine->isOutputFileDefined() )
+   {
+      m_oPlot << endl;
+      m_oOutputFileName = poCommandLine->getOutputName();
+      string inserter = "_";
+      for( auto& it: getScuDomainName() )
+      {
+         if( it == '.' )
+            inserter += '_';
+         else
+            inserter += it;
+      }
+      inserter += '_' + to_string( getSlot() )
+                + '_' + to_string( getNumber() );
+      m_oOutputFileName.insert( m_oOutputFileName.find_last_of( '.' ),
+                                inserter );
+   }
+   else
+      m_oPlot << " title \"SCU: " << getScuDomainName() << '"' << endl;
 
    m_oPlot << "set grid" << endl;
    m_oPlot << "set ylabel \"Voltage\"" << endl;
@@ -286,7 +302,6 @@ void Channel::start( void )
                    "post mortem" );
       sendEnablePostMortem( m_oAttributes.m_restart.m_value );
    }
-
 }
 
 /*! ---------------------------------------------------------------------------
@@ -306,9 +321,23 @@ bool Channel::onDataBlock( DAQ_DATA_T* pData, std::size_t wordLen )
 
    try
    {
+      if( !m_oOutputFileName.empty() )
+      {
+         string currentName = m_oOutputFileName;
+         string inserter = '_' + to_string( descriptorGetTimeStamp() );
+         currentName.insert( currentName.find_last_of( '.' ), inserter );
+         m_oPlot << "set output '" << currentName << '\'' << endl;
+         if( static_cast<DaqContainer*>(getParent()->getParent())->
+                                            getCommandLinePtr()->isVerbose() )
+         {
+            cout << "Generating output file: \"" << currentName << '"' << endl;
+         }
+      }
+
       if( isMultiplot() )
          m_oPlot << "set multiplot layout 2, 1 title \"Slot: " << getSlot() <<
                     " Channel: " << getNumber() << "\" font \",14\"" << endl;
+
       if( m_poModeContinuous != nullptr )
          m_poModeContinuous->plot();
 
@@ -330,6 +359,13 @@ bool Channel::onDataBlock( DAQ_DATA_T* pData, std::size_t wordLen )
 void Channel::showRunState( void )
 {
    cout << "\tChannel " << getNumber() << ':' << endl;
+   if( !m_oOutputFileName.empty() )
+   {
+      string outputFileName = m_oOutputFileName;
+      outputFileName.insert( outputFileName.find_last_of( '.' ),
+                                                          "_<wr-time-stamp>" );
+      cout << "\t\tOutput: \"" << outputFileName << '"'  << endl;
+   }
    if( m_oAttributes.m_continueMode.m_valid )
    {
       cout << "\t\tcontinuous: "

@@ -395,6 +395,26 @@ vector<OPTION> CommandLine::c_optList =
       .m_longOpt  = "terminal",
       .m_helpText = "PARAM replaces the terminal which is used by Gnuplot."
                     " Default is: " GNUPLOT_DEFAULT_TERMINAL
+   },
+   {
+      OPT_LAMBDA( poParser,
+      {
+         static_cast<CommandLine*>(poParser)->m_gnuplotOutput =
+                                                       poParser->getOptArg();
+         return 0;
+      }),
+      .m_hasArg   = OPTION::REQUIRED_ARG,
+      .m_id       = 0,
+      .m_shortOpt = 'o',
+      .m_longOpt  = "output",
+      .m_helpText = "Setting the prefix and suffix file name for Gnuplot."
+                    " PARAM is the path and name of the output file.\n"
+                    "NOTE: The final file name becomes generated as follows:\n"
+                    "      <SUFFIX>_<SCU-name>_<slot number>_<channel number>_"
+                    "<wr-time stamp>.<PREFIX>\n"
+                    "Example: PARAM = myFile.png:\n"
+                    "         result: myFile_scuxl0035_acc_gsi_de_3_1_"
+                    "12439792657334272.png"
    }
 };
 

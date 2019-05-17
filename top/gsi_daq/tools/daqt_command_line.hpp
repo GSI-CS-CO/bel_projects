@@ -81,6 +81,7 @@ class CommandLine: public PARSER
    bool           m_verbose;
    std::string    m_gnuplotBin;
    std::string    m_gnuplotTerminal;
+   std::string    m_gnuplotOutput;
 
    static bool readInteger( unsigned int&, const std::string& );
 
@@ -108,6 +109,16 @@ public:
    const std::string& getTerminal( void )
    {
       return m_gnuplotTerminal;
+   }
+
+   const std::string& getOutputName( void )
+   {
+      return m_gnuplotOutput;
+   }
+
+   bool isOutputFileDefined( void )
+   {
+      return !m_gnuplotOutput.empty();
    }
 };
 
