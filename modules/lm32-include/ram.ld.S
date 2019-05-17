@@ -24,7 +24,7 @@ SECTIONS
 	_eboot = .;
 
 	.buildid ADDR(.boot) + CONFIG_BOOTSIZE :
-		{ *(.buildid .buildid.*) } > ram
+		{ KEEP(*(.buildid .buildid.*)) } > ram
 
 	_fshared = .;
 	.shared ADDR(.buildid) + CONFIG_BUILDIDSIZE :
