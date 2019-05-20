@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 29-Apr-2019
+ *  version : 20-May-2019
  *
  *  firmware required for measuring the h=1 phase for ring machine
  *  
@@ -38,7 +38,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  ********************************************************************************************/
-#define B2BPM_FW_VERSION 0x000001                                       // make this consistent with makefile
+#define B2BPM_FW_VERSION 0x000002                                       // make this consistent with makefile
 
 /* standard includes */
 #include <stdio.h>
@@ -126,16 +126,19 @@ void initSharedMem() // determine address and clear shared mem
 } // initSharedMem 
 
 
-uint32_t entryActionConfigured()
+// clear project specific diagnostics
+void extern_clearDiag()
+{
+} // extern_clearDiag
+  
+
+uint32_t extern_entryActionConfigured()
 {
   uint32_t status = COMMON_STATUS_OK;
-  uint64_t mac;
-  uint32_t ip;
 
   // configure EB master (SRC and DST MAC/IP are set from host)
-  //  ebmInit(100, 0xffffffffffff, 0xffffffff, EBM_NOREPLY);
   if ((status = common_ebmInit(2000, 0xffffffffffff, 0xffffffff, EBM_NOREPLY)) != COMMON_STATUS_OK) {
-    DBPRINT1("b2b-test: ERROR - init of EB master failed! %d\n", status);
+    DBPRINT1("b2b-test: ERROR - init of EB master failed! %u\n", (unsigned int)status);
     return status;
   } 
 
@@ -143,10 +146,10 @@ uint32_t entryActionConfigured()
   common_publishNICData();
 
   return status;
-} // entryActionConfigured
+} // extern_entryActionConfigured
 
 
-uint32_t entryActionOperation()
+uint32_t extern_entryActionOperation()
 {
   int      i;
   uint64_t tDummy;
@@ -162,13 +165,13 @@ uint32_t entryActionOperation()
   DBPRINT1("b2b-test: ECA queue flushed - removed %d pending entries from ECA queue\n", i);
 
   return COMMON_STATUS_OK;
-} // entryActionOperation
+} // extern_entryActionOperation
 
 
-uint32_t exitActionOperation()
+uint32_t extern_exitActionOperation()
 {
   return COMMON_STATUS_OK;
-} // exitActionOperation
+} // extern_exitActionOperation
 
 
 uint32_t doActionOperation(uint64_t *tAct,                    // actual time
@@ -183,8 +186,6 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
   uint64_t sendEvtId;                                         // evtid to send
   uint64_t sendParam;                                         // parameter to send
   
-  uint64_t tDummy;                                            // dummy timestamp
-  int      i,j;
   int      nInput;
   uint32_t tsHi;
   uint32_t tsLo;
@@ -241,22 +242,16 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
 } // doActionOperation
 
 
-void main(void) {
- 
-  uint32_t j;
- 
-  uint64_t tPrevCycle;                          // time of previous UNILAC cycle
+int main(void) {
   uint64_t tActCycle;                           // time of actual UNILAC cycle
   uint32_t status;                              // (error) status
   uint32_t actState;                            // actual FSM state
   uint32_t pubState;                            // value of published state
   uint32_t reqState;                            // requested FSM state
-  uint32_t flagRecover;                         // flag indicating auto-recovery from error state;  
-
-  mprintf("\n");
-  mprintf("b2b-test: ***** firmware v %06d started from scratch *****\n", B2BPM_FW_VERSION);
-  mprintf("\n");
-  
+  uint32_t flagRecover;                         // flag indicating auto-recovery from error state;
+  uint32_t dummy1;                              // dummy parameter
+  uint32_t j;
+ 
   // init local variables
   reqState       = COMMON_STATE_S0;
   actState       = COMMON_STATE_UNKNOWN;
@@ -270,7 +265,7 @@ void main(void) {
   common_init((uint32_t *)_startshared, B2BPM_FW_VERSION);                  // init common stuff
   
   while (1) {
-    common_cmdHandler(&reqState);                                           // check for commands and possibly request state changes
+    common_cmdHandler(&reqState, &dummy1);                                  // check for commands and possibly request state changes
     status = COMMON_STATUS_OK;                                              // reset status for each iteration
     status = common_changeState(&actState, &reqState, status);              // handle requested state changes
     switch(actState)                                                        // state specific do actions
@@ -320,5 +315,6 @@ void main(void) {
     common_publishSumStatus(sumStatus);
     pubState = actState;
     common_publishState(pubState);
-  } // while  
+  } // while
+  return(1); // this should never happen ...
 } // main

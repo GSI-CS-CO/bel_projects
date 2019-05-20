@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 24-Apr-2019
+ *  version : 20-May-2019
  *
  *  firmware required to implement the CBU (Central Buncht-To-Bucket Unit)
  *  
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 23-April-2019
  ********************************************************************************************/
-#define B2BCBU_FW_VERSION 0x000001                                      // make this consistent with makefile
+#define B2BCBU_FW_VERSION 0x000002                                      // make this consistent with makefile
 
 /* standard includes */
 #include <stdio.h>
@@ -45,10 +45,11 @@
 /* includes specific for bel_projects */
 #include "dbg.h"
 #include "ebm.h"
-#include "mprintf.h"                                                    // print to console
+#include "pp-printf.h"                                                  // print stuff
 #include "mini_sdb.h"                                                   // sdb stuff
 #include "syscon.h"                                                     // usleep et al
 #include "aux.h"                                                        // cpu and IRQ
+#include "uart.h"                                                       // WR console
 
 /* includes for this project */
 #include <b2b-common.h>                                                 // common stuff for b2b
@@ -128,23 +129,20 @@ void initSharedMem() // determine address and clear shared mem
   } // initSharedMem
 
 
-void clearDiag() // clears all statistics
+void extern_clearDiag() // clears all statistics
 {
   sumStatus = 0;
   nTransfer = 0;
-} // clearDiag 
+} // extern_clearDiag 
 
 
-uint32_t entryActionConfigured()
+uint32_t extern_entryActionConfigured()
 {
   uint32_t status = COMMON_STATUS_OK;
-  uint64_t mac;
-  uint32_t ip;
 
   // configure EB master (SRC and DST MAC/IP are set from host)
-  //  ebmInit(100, 0xffffffffffff, 0xffffffff, EBM_NOREPLY);
   if ((status = common_ebmInit(2000, 0xffffffffffff, 0xffffffff, EBM_NOREPLY)) != COMMON_STATUS_OK) {
-    DBPRINT1("b2b-test: ERROR - init of EB master failed! %d\n", status);
+    DBPRINT1("b2b-test: ERROR - init of EB master failed! %u\n", (unsigned int)status);
     return status;
   } 
 
@@ -152,10 +150,10 @@ uint32_t entryActionConfigured()
   common_publishNICData();
 
   return status;
-} // entryActionConfigured
+} // extern_entryActionConfigured
 
 
-uint32_t entryActionOperation()
+uint32_t extern_entryActionOperation()
 {
   int      i;
   uint64_t tDummy;
@@ -177,13 +175,13 @@ uint32_t entryActionOperation()
   *pSharedTH1InjLo = 0xA94A2000;
 
   return COMMON_STATUS_OK;
-} // entryActionOperation
+} // extern_entryActionOperation
 
 
-uint32_t exitActionOperation()
+uint32_t extern_exitActionOperation()
 {
   return COMMON_STATUS_OK;
-} // exitActionOperation
+} // extern_exitActionOperation
 
 
 uint32_t doActionOperation(uint64_t *tAct,                    // actual time
@@ -192,14 +190,10 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
   uint32_t status;                                            // status returned by routines
   uint32_t flagIsLate;                                        // flag indicating that we received a 'late' event from ECA
   uint32_t ecaAction;                                         // action triggered by event received from ECA
-  uint64_t tDummy;                                            // dummy timestamp
-  int      i,j;
-  int      nInput;
   uint64_t sendDeadline;                                      // deadline to send
   uint64_t sendEvtId;                                         // evtID to send
   uint64_t sendParam;                                         // param to send
   uint64_t recDeadline;                                       // deadline received
-  uint64_t recEvtId;                                          // evtID received
   uint64_t recParam;                                          // param received
     
 
@@ -220,7 +214,7 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
     sendDeadline = getSysTime() + (uint64_t)COMMON_AHEADT;
 
     common_ebmWriteTM(sendDeadline, sendEvtId, sendParam);
-    mprintf("b2b-test: got B2B_START\n");
+    pp_printf("b2b-test: got B2B_START\n");
 
     nTransfer++;
 
@@ -237,7 +231,7 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
     sendParam    = 0x0;
 
     common_ebmWriteTM(sendDeadline, sendEvtId, sendParam);
-    mprintf("b2b-test: got B2B_START\n");
+    pp_printf("b2b-test: got B2B_START\n");
 
     break;
     
@@ -251,7 +245,7 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
 } // doActionOperation
 
 
-void main(void) {
+int main(void) {
  
   uint32_t j;
  
@@ -262,10 +256,7 @@ void main(void) {
   uint32_t pubState;                            // published state value
   uint32_t reqState;                            // requested FSM state
   uint32_t flagRecover;                         // flag indicating auto-recovery from error state;
-
-  mprintf("\n");
-  mprintf("b2b-test: ***** firmware v %06d started from scratch *****\n", B2BCBU_FW_VERSION);
-  mprintf("\n");
+  uint32_t dummy1;                              // dummy parameter
 
   // init local variables
   reqState       = COMMON_STATE_S0;
@@ -279,11 +270,8 @@ void main(void) {
   initSharedMem();                                                          // initialize shared memory
   common_init((uint32_t *)_startshared, B2BCBU_FW_VERSION);                 // init common stuff
 
-
-  /* chk treatment of nBadState, nBadStatus, sumStatus ????? */
-  
   while (1) {
-    common_cmdHandler(&reqState);                                           // check for commands and possibly request state changes
+    common_cmdHandler(&reqState, &dummy1);                                  // check for commands and possibly request state changes
     status = COMMON_STATUS_OK;                                              // reset status for each iteration
     status = common_changeState(&actState, &reqState, status);              // handle requested state changes
     switch(actState)                                                        // state specific do actions
@@ -306,7 +294,7 @@ void main(void) {
         pubState = actState;
         common_publishState(pubState);
         common_publishSumStatus(sumStatus);
-        mprintf("b2b-test: a FATAL error has occured. Good bye.\n");
+        pp_printf("b2b-test: a FATAL error has occured. Good bye.\n");
         while (1) asm("nop"); // RIP!
         break;
       default :                                                             // avoid flooding WB bus with unnecessary activity
@@ -335,5 +323,6 @@ void main(void) {
     pubState          = actState;
     common_publishState(pubState);
     *pSharedNTransfer = nTransfer;
-  } // while  
+  } // while
+  return (1); // this should never happen ...
 } // main

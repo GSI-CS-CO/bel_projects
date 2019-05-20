@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 30-April-2019
+ *  version : 20-May-2019
  *
  * Command-line interface for wrunipz
  *
