@@ -29,6 +29,7 @@
 #include <iostream>
 #include <iomanip>
 #include <sstream>
+#include <exception>
 
 /*!
  * @brief Namespace for GunPlotStream
@@ -50,17 +51,17 @@ namespace gpstr
  * @brief Exception class of the class PlotStream for the case that something
  *        has been gone wrong.
  */
-class Exception
+class Exception: public std::exception
 {
    const std::string m_message;
 
 public:
-   Exception( const std::string msg ):
-      m_message( msg ) {}
+   Exception( const std::string& message ):
+      m_message( "gpstr::PlotStream: " + message ) {}
 
-   const std::string& what( void ) const
+   const char* what( void ) const noexcept override
    {
-      return m_message;
+      return m_message.c_str();
    }
 };
 
@@ -68,7 +69,7 @@ public:
 /*! ---------------------------------------------------------------------------
  * @brief Gnuplot interface class with stream ability.
  *
- * Ecample:
+ * Example:
  * @code
  * #include <gnuplotstream.hpp>
  *
@@ -79,12 +80,10 @@ public:
  * {
  *    try
  *    {
- *       PlotStream plot;
+ *       PlotStream plot( "--persist" );
  *       plot << "plot sin(x)/x" << endl;
- *       cout << "Press the enter key to end." << endl;
- *       ::fgetc( stdin );
  *    }
- *    catch( Exception& e )
+ *    catch( exception& e )
  *    {
  *       cerr << e.what() << endl;
  *       return EXIT_FAILURE;
@@ -97,7 +96,6 @@ class PlotStream: public std::ostream
 {
    class StringBuffer: public std::stringbuf
    {
-      friend class PlotStream;
       PlotStream*   m_pParent;
 
    public:
@@ -120,7 +118,7 @@ public:
     * @note In the case of an error a exception becomes thrown.
     * @param gpOpt Call options for Gnuplot executable.
     * @param gpExe Path and name of the Gnuplot executable.
-    * @param pipeSize Pinesize in bytes for the communication to Gnuplot.
+    * @param pipeSize Pipe size in bytes for the communication to Gnuplot.
     */
    PlotStream( const std::string gpOpt    = GPSTR_DEFAULT_OPTIONS,
                const std::string gpExe    = GPSTR_DEFAULT_GNUPLOT_EXE,
@@ -128,7 +126,9 @@ public:
              );
 
    /*!
-    * @brief Destructor. Closes the pipe to Gnuplot and terminates it.
+    * @brief Destructor. Closes the pipe to Gnuplot and the running Gnuplot
+    *        process becomes terminated if the constructor was not called
+    *        with the parameter "--persist" or "-p".
     */
    ~PlotStream( void );
 

@@ -154,6 +154,7 @@ private:
    DAQ_SHARED_IO_T          m_oSharedData;
    SLOT_FLAGS_T             m_slotFlags;
    unsigned int             m_maxDevices;
+   DAQ_LAST_STATUS_T        m_lastStatus;
 
 protected:
    RAM_SCU_T                m_oScuRam;
@@ -207,6 +208,7 @@ public:
 
    const std::string getLastReturnCodeString( void );
 
+
    RETURN_CODE_T readSlotStatus( void );
    SLOT_FLAGS_T  getSlotStatus( void ) const
    {
@@ -227,6 +229,15 @@ public:
    {
       sendUnlockRamAccess();
       sendCommand( DAQ_OP_RESET );
+   }
+
+   DAQ_LAST_STATUS_T readLastStatus( void );
+
+   const std::string getLastStatusString( void );
+
+   DAQ_LAST_STATUS_T getLastStatus( void ) const
+   {
+      return m_lastStatus;
    }
 
    unsigned int readMacroVersion( const unsigned int deviceNumber );
@@ -331,6 +342,8 @@ protected:
    void sendUnlockRamAccess( void );
    void clearBuffer( bool update = true );
    void writeRamIndexesAndUnlock( void );
+
+   virtual void onBlockReceiveError( void );
 
 private:
 

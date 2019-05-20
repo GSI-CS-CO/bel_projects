@@ -409,12 +409,6 @@ void ramWriteDaqData( register RAM_SCU_T* pThis, DAQ_CANNEL_T* pDaqChannel,
       pSequence     = &pDaqChannel->sequencePmHires;
    }
 
-   /*
-    * Sequence number becomes incremented here in any cases,
-    * so the possible lost of blocks can be detected by the Linux-host.
-    */
-   (*pSequence)++;
-
 #ifndef CONFIG_DAQ_DECREMENT
    /*
     * The data wort which includes the CRC isn't a part of the fifo content,
@@ -430,6 +424,7 @@ void ramWriteDaqData( register RAM_SCU_T* pThis, DAQ_CANNEL_T* pDaqChannel,
                 ESC_NORMAL,
                 remainingDataWords,
                 expectedWords );
+      daqChannelSetStatus( pDaqChannel, DAQ_RECEIVE_STATE_DATA_LOST );
       return;
    }
 #endif
@@ -556,10 +551,10 @@ void ramWriteDaqData( register RAM_SCU_T* pThis, DAQ_CANNEL_T* pDaqChannel,
 #ifndef CONFIG_DAQ_DECREMENT
        && (getRemaining( pDaqChannel ) == 0)
 #endif
-       && daqDescriptorVerifyMode( &oDescriptor ) )
-   {
-      RAM_ASSERT( isShort == daqDescriptorIsShortBlock( &oDescriptor ) );
-     /*
+       && daqDescriptorVerifyMode( &oDescriptor )
+       && (isShort == daqDescriptorIsShortBlock( &oDescriptor )) )
+   { /*
+      * Block integrity seems to be okay.
       * Making the new received data block in ring buffer valid.
       */
       publishWrittenData( pThis, &oDataIndexes );
@@ -580,14 +575,16 @@ void ramWriteDaqData( register RAM_SCU_T* pThis, DAQ_CANNEL_T* pDaqChannel,
    }
 #ifdef DEBUGLEVEL
    else
-   {
+   { /*
+      * Block integrity is corrupt!
+      */
+      daqChannelSetStatus( pDaqChannel, DAQ_RECEIVE_STATE_CORRUPT_BLOCK );
    #ifndef CONFIG_DAQ_DECREMENT
       if( getRemaining( pDaqChannel ) != 0 )
       {
          DBPRINT1( ESC_BOLD ESC_FG_RED
                    "DBG ERROR: PmHires fifo: %d\n"
                    ESC_NORMAL, getRemaining( pDaqChannel ) );
-
       }
       else
    #endif
@@ -598,6 +595,7 @@ void ramWriteDaqData( register RAM_SCU_T* pThis, DAQ_CANNEL_T* pDaqChannel,
                    ESC_NORMAL,
                    dataWordCounter,
                    expectedWords );
+
    }
 #endif /* ifdef DEBUGLEVEL */
    ramRingDbgPrintIndexes( &pThis->pSharedObj->ringIndexes,
@@ -613,24 +611,49 @@ int ramPushDaqDataBlock( register RAM_SCU_T* pThis, DAQ_CANNEL_T* pDaqChannel,
 {
    RAM_ASSERT( pThis != NULL );
    RAM_ASSERT( pDaqChannel != NULL );
-   RAM_ASSERT( !isShort || (daqChannelGetDaqFifoWords( pDaqChannel ) >
-               DAQ_DESCRIPTOR_WORD_SIZE) );
-   RAM_ASSERT( isShort || (daqChannelGetPmFifoWords( pDaqChannel ) >
-               DAQ_DESCRIPTOR_WORD_SIZE) );
-#ifdef CONFIG_DAQ_SIMULATE_CHANNEL
+
+   /*
+    * Sequence number becomes incremented here in any cases,
+    * so the possible lost of blocks can be detected by the Linux-host.
+    *
+    * Following debug error messages can be happen, when the external
+    * interrupts follows to fast.
+    */
    if( isShort )
    {
-      daqDescriptorSetPM( &pDaqChannel->simulatedDescriptor, false );
-      daqDescriptorSetHiRes( &pDaqChannel->simulatedDescriptor, false );
-      daqDescriptorSetDaq( &pDaqChannel->simulatedDescriptor, true );
-   }
-   else
-   {
+      pDaqChannel->sequenceContinuous++;
+      if( daqChannelGetDaqFifoWords( pDaqChannel ) < DAQ_DESCRIPTOR_WORD_SIZE )
+      {
+         DBPRINT1( ESC_BOLD ESC_FG_RED
+                   "DBG ERROR: Short block < descriptor size!\n"
+                   ESC_NORMAL );
+         daqChannelSetStatus( pDaqChannel, DAQ_RECEIVE_STATE_CORRUPT_BLOCK );
+         return -1;
+      }
+#ifdef CONFIG_DAQ_SIMULATE_CHANNEL
       daqDescriptorSetPM( &pDaqChannel->simulatedDescriptor, false );
       daqDescriptorSetHiRes( &pDaqChannel->simulatedDescriptor, true );
       daqDescriptorSetDaq( &pDaqChannel->simulatedDescriptor, false );
+#endif
    }
-#endif /* ifdef CONFIG_DAQ_SIMULATE_CHANNEL */
+   else
+   {
+      pDaqChannel->sequencePmHires++;
+      if( daqChannelGetPmFifoWords( pDaqChannel ) < DAQ_DESCRIPTOR_WORD_SIZE )
+      {
+         DBPRINT1( ESC_BOLD ESC_FG_RED
+                   "DBG ERROR: Long block < descriptor size!\n"
+                   ESC_NORMAL );
+         daqChannelSetStatus( pDaqChannel, DAQ_RECEIVE_STATE_CORRUPT_BLOCK );
+         return -1;
+      }
+#ifdef CONFIG_DAQ_SIMULATE_CHANNEL
+      daqDescriptorSetPM( &pDaqChannel->simulatedDescriptor, false );
+      daqDescriptorSetHiRes( &pDaqChannel->simulatedDescriptor, false );
+      daqDescriptorSetDaq( &pDaqChannel->simulatedDescriptor, true );
+#endif
+   }
+
    ramPollAccessLock( pThis );
    ramMakeSpaceIfNecessary( pThis, isShort );
    ramWriteDaqData( pThis, pDaqChannel, isShort );

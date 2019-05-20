@@ -25,6 +25,9 @@
 #include <daq_interface.hpp>
 #include <sys/select.h>
 #include <helper_macros.h>
+#include <iostream>
+
+
 using namespace daq;
 
 #define FUNCTION_NAME_TO_STD_STRING static_cast<const std::string>(__func__)
@@ -627,6 +630,46 @@ DaqInterface::RETURN_CODE_T DaqInterface::readSlotStatus( void )
       m_maxDevices = 0;
    }
    return m_oSharedData.operation.retCode;
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+DAQ_LAST_STATUS_T DaqInterface::readLastStatus( void )
+{
+   sendCommand( DAQ_OP_GET_ERROR_STATUS );
+   readParam1();
+   m_lastStatus = *reinterpret_cast<DAQ_LAST_STATUS_T*>
+                                      (&m_oSharedData.operation.ioData.param1);
+   return m_lastStatus;
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+const std::string DaqInterface::getLastStatusString( void )
+{
+#define __CASE_ITEM( status ) case status: retString += #status; break
+   std::string retString =  "Slot: " + std::to_string( m_lastStatus.slot )
+                      + ", Channel: " + std::to_string( m_lastStatus.channel )
+                      + ", Error-code: ";
+
+   switch( m_lastStatus.status )
+   {
+      __CASE_ITEM( DAQ_RECEIVE_STATE_OK );
+      __CASE_ITEM( DAQ_RECEIVE_STATE_DATA_LOST );
+      __CASE_ITEM( DAQ_RECEIVE_STATE_CORRUPT_BLOCK );
+      default:
+         retString += "unknown " + std::to_string(m_lastStatus.status );
+         break;
+   }
+   return retString;
+#undef __CASE_ITEM
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+void DaqInterface::onBlockReceiveError( void )
+{
+   std::cerr << "Block error:  " << getLastStatusString() << std::endl;
 }
 
 /*! ---------------------------------------------------------------------------

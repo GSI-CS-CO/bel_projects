@@ -79,7 +79,13 @@ void DaqChannel::verifySequence( void )
    else
       m_poSequence = &m_oSequencePmHighResMode;
 
-   m_poSequence->compare( descriptorGetSequence() );
+   if( m_poSequence->compare( descriptorGetSequence() ) )
+   {
+      DaqAdministration* pAdmin = getParent()->getParent();
+      SCU_ASSERT( dynamic_cast<DaqAdministration*>(pAdmin) != nullptr );
+      pAdmin->readLastStatus();
+      pAdmin->onBlockReceiveError();
+   }
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -310,10 +316,17 @@ DaqChannel*
 DaqAdministration::getChannelBySlotNumber( const unsigned int slotNumber,
                                            const unsigned int channelNumber )
 {
-   SCU_ASSERT( slotNumber > 0 );
-   SCU_ASSERT( slotNumber <= c_maxSlots );
-   SCU_ASSERT( channelNumber > 0 );
-   SCU_ASSERT( channelNumber <= c_maxChannels );
+   if( slotNumber == 0 )
+      return nullptr;
+
+   if( slotNumber > c_maxSlots )
+      return nullptr;
+
+   if( channelNumber == 0 )
+      return nullptr;
+
+   if( channelNumber > c_maxChannels )
+      return nullptr;
 
    DaqDevice* poDevice = getDeviceBySlot( slotNumber );
    if( poDevice == nullptr )
@@ -471,6 +484,11 @@ int DaqAdministration::distributeData( void )
       pChannel->verifySequence();
       pChannel->onDataBlock( &probe.buffer[c_discriptorWordSize], wordLen );
       m_poCurrentDescriptor = nullptr;
+   }
+   else
+   {
+      readLastStatus();
+      onBlockReceiveError();
    }
 
    return getCurrentRamSize( false );

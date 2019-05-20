@@ -146,10 +146,24 @@ verifyChannelAccess( DAQ_BUS_T* pDaqBus,
  */
 static
 DAQ_RETURN_CODE_T opLock( DAQ_ADMIN_T* pDaqAdmin,
-                          volatile DAQ_OPERATION_IO_T* pData )
+                                           volatile DAQ_OPERATION_IO_T* pData )
 {
    DBG_FUNCTION_INFO();
    g_shared.ramIndexes.ramAccessLock = true;
+   return DAQ_RET_OK;
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+static
+DAQ_RETURN_CODE_T opReadErrorStatus( DAQ_ADMIN_T* pDaqAdmin,
+                                           volatile DAQ_OPERATION_IO_T* pData )
+{
+   DBG_FUNCTION_INFO();
+   pData->param1 = *((DAQ_REGISTER_T*)&pDaqAdmin->oDaqDevs.lastErrorState);
+   pDaqAdmin->oDaqDevs.lastErrorState.status = DAQ_RECEIVE_STATE_OK;
+   pDaqAdmin->oDaqDevs.lastErrorState.slot = 0;
+   pDaqAdmin->oDaqDevs.lastErrorState.channel = 0;
    return DAQ_RET_OK;
 }
 
@@ -657,6 +671,7 @@ DAQ_RETURN_CODE_T opGetTriggerSourceHir( DAQ_ADMIN_T* pDaqAdmin,
 static const DAQ_OPERATION_TAB_ITEM_T g_operationTab[] =
 {
    OPERATION_ITEM( DAQ_OP_LOCK,                   opLock                ),
+   OPERATION_ITEM( DAQ_OP_GET_ERROR_STATUS,       opReadErrorStatus     ),
    OPERATION_ITEM( DAQ_OP_RESET,                  opReset               ),
    OPERATION_ITEM( DAQ_OP_GET_MACRO_VERSION,      opGetMacroVersion     ),
    OPERATION_ITEM( DAQ_OP_GET_SLOTS,              opGetSlots            ),

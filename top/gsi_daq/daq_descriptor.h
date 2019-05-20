@@ -341,6 +341,40 @@ STATIC_ASSERT( sizeof( DAQ_DESCRIPTOR_T ) ==
 #endif
 
 ///////////////////////////////////////////////////////////////////////////////
+
+/*! ---------------------------------------------------------------------------
+ * @brief Constants of receive states.
+ * @ingroup DAQ_CHANNEL
+ */
+typedef enum
+{
+   DAQ_RECEIVE_STATE_OK             = 0,
+   DAQ_RECEIVE_STATE_DATA_LOST      = 1,
+   DAQ_RECEIVE_STATE_CORRUPT_BLOCK  = 2
+} DAQ_REC_STAT_T;
+
+/*! ---------------------------------------------------------------------------
+ * @brief Datatype for holding the last appeared error.
+ * @ingroup DAQ_CHANNEL
+ */
+typedef struct PACKED_SIZE
+{
+#if (__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__)
+   DAQ_REC_STAT_T   status:   7;
+   uint16_t         slot:     4;
+   uint16_t         channel:  5;
+#else
+   uint16_t         channel:  5;
+   uint16_t         slot:     4;
+   DAQ_REC_STAT_T   status:   7;
+#endif
+} DAQ_LAST_STATUS_T;
+
+#ifndef __DOXYGEN__
+STATIC_ASSERT( sizeof( DAQ_LAST_STATUS_T ) == sizeof( DAQ_REGISTER_T ) );
+#endif
+
+///////////////////////////////////////////////////////////////////////////////
 /*! ---------------------------------------------------------------------------
  * @brief Tells the origin slot of the last record
  * @param pThis Pointer to the DAQ- descriptor object, that means to the last

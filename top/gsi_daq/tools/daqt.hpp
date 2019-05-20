@@ -134,6 +134,9 @@ public:
    void doPostMortem( void );
    void doHighRes( void );
    void doReset( void );
+
+   void onBlockReceiveError( void ) override;
+
 };
 
 ///////////////////////////////////////////////////////////////////////////////

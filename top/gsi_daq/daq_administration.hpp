@@ -301,6 +301,8 @@ public:
  */
 class DaqAdministration: public DaqInterface
 {
+   friend class DaqChannel;
+
    unsigned int      m_maxChannels;
    DAQ_DESCRIPTOR_T* m_poCurrentDescriptor;
 

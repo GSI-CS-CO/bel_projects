@@ -386,6 +386,8 @@ typedef struct
    SCUBUS_SLAVE_FLAGS_T  slotDaqUsedFlags;
    //! @brief Number of found DAQs
    unsigned int          foundDevices;
+   //! @brief Holding of the last error for the Linux host.
+   DAQ_LAST_STATUS_T     lastErrorState;
    //! @brief Array of all possible existing DAQs
    DAQ_DEVICE_T          aDaq[DAQ_MAX];
 } DAQ_BUS_T;
@@ -565,6 +567,15 @@ static inline int daqChannelGetNumber( const register DAQ_CANNEL_T* pThis )
 {
    return pThis->n;
 }
+
+/*! ---------------------------------------------------------------------------
+ * @ingroup DAQ_CHANNEL
+ * @brief Set a error state which can happen during reading the DAQ-FiFo.
+ * @see DAQ_LAST_STATUS_T
+ * @param pThis Pointer to the channel object.
+ * @param state Error status.
+ */
+void daqChannelSetStatus( register DAQ_CANNEL_T* pThis, DAQ_REC_STAT_T state );
 
 /*! ---------------------------------------------------------------------------
  * @ingroup DAQ_CHANNEL

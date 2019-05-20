@@ -65,11 +65,12 @@ PlotStream::PlotStream( const std::string gpOpt,
    ,m_pPipeBuffer( nullptr )
    ,m_pipeBufferSize( 0 )
 {
+#ifndef CONFIG_GPSTR_NO_DISPLAY_CHECK
    if( ::getenv( "DISPLAY" ) == nullptr )
    {
       throw Exception( "Environment variable DISPLAY not found!" );
    }
-
+#endif
    if( ::access( gpExe.c_str(), X_OK ) != 0 )
    {
       throw Exception( "Executable file: \"" + gpExe + "\" not found! -> " +

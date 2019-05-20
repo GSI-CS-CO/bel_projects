@@ -80,6 +80,17 @@ DAQ_REGISTER_T daqChannelGetReg( DAQ_REGISTER_ACCESS_T* volatile pReg,
 
 /*! ---------------------------------------------------------------------------
  */
+void daqChannelSetStatus( register DAQ_CANNEL_T* pThis, DAQ_REC_STAT_T state )
+{
+   DAQ_LAST_STATUS_T* pLastState = &DAQ_CHANNEL_GET_GRANDPARENT_OF( pThis )->
+                                                                lastErrorState;
+   pLastState->status  = state;
+   pLastState->slot    = daqChannelGetSlot( pThis );
+   pLastState->channel = pThis->n + 1;
+}
+
+/*! ---------------------------------------------------------------------------
+ */
 bool daqChannelIsPmHiResFiFoFull( register DAQ_CANNEL_T* pThis )
 { /*
    * Because of possible transitions in the FoFo-level register during
@@ -707,18 +718,13 @@ void daqBusSetAllTimeStampCounterTags( register DAQ_BUS_T* pThis, uint32_t tsTag
 /*! ---------------------------------------------------------------------------
  * @see daq.h
  */
-unsigned int daqBusDistributeMemory( register DAQ_BUS_T* pThis )
-{
-   //TODO!!!
-   return 0;
-}
-
-/*! ---------------------------------------------------------------------------
- * @see daq.h
- */
 void daqBusReset( register DAQ_BUS_T* pThis )
 {
    DAQ_ASSERT( pThis != NULL );
+
+   pThis->lastErrorState.status  = DAQ_RECEIVE_STATE_OK;
+   pThis->lastErrorState.channel = 0;
+   pThis->lastErrorState.slot    = 0;
 
    for( int i = daqBusGetFoundDevices( pThis )-1; i >= 0; i-- )
       daqDeviceReset( daqBusGetDeviceObject( pThis, i ) );
