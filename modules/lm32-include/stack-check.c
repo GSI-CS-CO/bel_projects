@@ -9,5 +9,5 @@ void check_stack(void)
 		inited++;
 		_endram = ENDRAM_MAGIC;
 	}
-	assert(_endram == ENDRAM_MAGIC, "Stack overflow! (%x)\n", _endram);
+	assert(_endram == ENDRAM_MAGIC, "Stack overflow! (%x)\n", (unsigned int)_endram);
 }
