@@ -42,6 +42,9 @@ extern uint32_t*       _startshared[];
 #define CMD_SHOW_ALL      0x1UL
 #define CMD_GET_PARAM     0x2UL
 #define CMD_GET_CYCLE     0x3UL
+#define CMD_RD_ECA_MSI_ECPU 0x10UL
+#define CMD_RD_ECA_CHAN   0x11UL
+#define CMD_RD_ECA_QUEUE  0x12UL
 
 /* definitions of timing messages & ECA actions */
 #define ECA_VALID_ACTION  0x00040000UL  // ECA valid action

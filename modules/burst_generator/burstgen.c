@@ -662,7 +662,45 @@ void execHostCmd(int32_t cmd)
       pTask[0].interval = ALWAYS;
       break;
 
-    default:
+    case CMD_RD_ECA_MSI_ECPU: // read the ECA MSI settings for eCPU
+      mprintf("\ncmd 0x%x: get MSI cfg\n", cmd);
+
+      atomic_on();
+      *(pEcaCtl + (ECA_CHANNEL_SELECT_RW >> 2)) = gEcaChECPU;              // select channel for eCPU
+      uint32_t dest   = *(pEcaCtl + (ECA_CHANNEL_MSI_GET_TARGET_GET >> 2));  // get MSI destination address
+      uint32_t enable = *(pEcaCtl + (ECA_CHANNEL_MSI_GET_ENABLE_GET >> 2));  // get the MSI enable flag
+      atomic_off();
+
+      mprintf("MSI dest addr   = 0x%08x\n", dest);
+      mprintf("MSI enable flag = 0x%x\n", enable);
+
+      break;
+
+    case CMD_RD_ECA_CHAN: // read the content of the ECA eCPU channel
+      mprintf("\ncmd 0x%x: get ECA chan counter\n", cmd);
+
+      uint32_t valid    = *(pEcaCtl + (ECA_CHANNEL_VALID_COUNT_GET >> 2));
+      uint32_t overflow = *(pEcaCtl + (ECA_CHANNEL_OVERFLOW_COUNT_GET >> 2));
+      uint32_t failed   = *(pEcaCtl + (ECA_CHANNEL_FAILED_COUNT_GET >> 2));
+      uint32_t full     = *(pEcaCtl + (ECA_CHANNEL_MOSTFULL_ACK_GET >> 2));
+      mprintf("valid: 0x%x, overflow: 0x%x, failed: 0x%x, full: 0x%x\n",
+                valid, overflow, failed, full);
+      break;
+
+    case CMD_RD_ECA_QUEUE: // read the content of ECA queue connected to eCPU channel
+      mprintf("\ncmd 0x%x: get ECA queue content\n", cmd);
+
+      uint32_t flag      = *(pECAQ + (ECA_QUEUE_FLAGS_GET >> 2));
+      uint32_t evtHigh   = *(pECAQ + (ECA_QUEUE_EVENT_ID_HI_GET >> 2));
+      uint32_t evtLow    = *(pECAQ + (ECA_QUEUE_EVENT_ID_LO_GET >> 2));
+      uint32_t tag       = *(pECAQ + (ECA_QUEUE_TAG_GET >> 2));
+      uint32_t paramHigh = *(pECAQ + (ECA_QUEUE_PARAM_HI_GET >> 2));
+      uint32_t paramLow  = *(pECAQ + (ECA_QUEUE_PARAM_LO_GET >> 2));
+      mprintf("event: 0x%08x:%08x, param: 0x%08x:%08x, tag: 0x%08x, flag: 0x%08x\n",
+                evtHigh, evtLow, paramHigh, paramLow, tag, flag);
+      break;
+
+   default:
       mprintf("unknown host cmd '0x%08x'\n",cmd);
       result = STATUS_ERR;
     }
