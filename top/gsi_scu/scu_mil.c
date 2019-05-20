@@ -228,8 +228,8 @@ int scub_read_mil(volatile unsigned short *base, int slot, short *data, short fc
 
 /* reset all task slots */
 int scub_reset_mil(volatile unsigned short *base, int slot) {
-  unsigned short data;
-  int i;
+  // unsigned short data;
+  // int i;
   base[CALC_OFFS(slot) + MIL_SIO3_RST] = 0x0;
   usleep(1000);
   base[CALC_OFFS(slot) + MIL_SIO3_RST] = 0xff;
@@ -242,8 +242,8 @@ int scub_reset_mil(volatile unsigned short *base, int slot) {
 }
 /* reset all task slots */
 int reset_mil(volatile unsigned *base) {
-  unsigned short data;
-  int i;
+  // unsigned short data;
+  // int i;
   base[MIL_SIO3_RST] = 0x0;
   usleep(1000);
   base[MIL_SIO3_RST] = 0xff;

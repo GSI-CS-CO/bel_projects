@@ -3,7 +3,7 @@
  *
  *  created : 2018
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 05-February-2019
+ *  version : 16-May-2019
  *
  *  command-line interface for wrunipz
  *
@@ -310,15 +310,15 @@ void printDiags(uint32_t sumStatus, uint32_t state, uint32_t nBadStatus, uint32_
   strftime(timestr, sizeof(timestr), "%Y-%m-%d %H:%M:%S TAI", tm);
   printf("diagnostics reset at  : %s\n", timestr);
   
-  printf("state (# of changes)  : %s (%u)\n", wrunipz_state_text(state), nBadState);
+  printf("state (# of changes)  : %s (%u)\n", common_state_text(state), nBadState);
   printf("sum status (# changes): 0x%08x (%u)\n", sumStatus, nBadStatus);
-  if ((sumStatus >> WRUNIPZ_STATUS_OK) & 0x1)
+  if ((sumStatus >> COMMON_STATUS_OK) & 0x1)
     printf("overall status        : OK\n");
   else
     printf("overall status        : NOT OK\n");  
-  for (i= WRUNIPZ_STATUS_OK + 1; i<(sizeof(sumStatus)*8); i++) {
+  for (i= COMMON_STATUS_OK + 1; i<(sizeof(sumStatus)*8); i++) {
     if ((sumStatus >> i) & 0x1)
-      printf("sum status bit ist set: %s\n", wrunipz_status_text(i));
+      printf("sum status bit is set : %s\n", wrunipz_status_text(i));
   } // for i
   printf("# of cycles           : %010u\n",   nCycles);
   printf("# of messages         : %010lu\n",  nMessages);
@@ -375,7 +375,7 @@ int main(int argc, char** argv) {
   uint64_t tS0;
 
   //  uint32_t actCycles;                          // actual number of cycles
-  uint32_t actState = WRUNIPZ_STATE_UNKNOWN;   // actual state of gateway
+  uint32_t actState = COMMON_STATE_UNKNOWN;   // actual state of gateway
   uint32_t actSumStatus;                       // actual sum status of gateway
   uint32_t sleepTime;                          // time to sleep [us]
   uint32_t printFlag;                          // flag for printing
@@ -414,7 +414,7 @@ int main(int argc, char** argv) {
         fprintf(stderr, "Specify a proper number, not '%s'!\n", optarg);
         exit(1);
       } /* if *tail */
-      if ((logLevel < WRUNIPZ_LOGLEVEL_ALL) || (logLevel > WRUNIPZ_LOGLEVEL_STATE)) fprintf(stderr, "log level out of range\n");
+      if ((logLevel < COMMON_LOGLEVEL_ALL) || (logLevel > COMMON_LOGLEVEL_STATE)) fprintf(stderr, "log level out of range\n");
       break;
     case 'h':
       help();
@@ -454,16 +454,20 @@ int main(int argc, char** argv) {
   if ((eb_status = eb_sdb_find_by_identity(device, GSI, LM32_RAM_USER, &sdbDevice, &nDevices)) != EB_OK) die("find lm32", eb_status);
   lm32_base =  sdbDevice.sdb_component.addr_first;
 
-  wrunipz_status       = lm32_base + SHARED_OFFS + WRUNIPZ_SHARED_SUMSTATUS;
-  wrunipz_cmd          = lm32_base + SHARED_OFFS + WRUNIPZ_SHARED_CMD;
-  wrunipz_state        = lm32_base + SHARED_OFFS + WRUNIPZ_SHARED_STATE;;
+  wrunipz_status       = lm32_base + SHARED_OFFS + COMMON_SHARED_SUMSTATUS;
+  wrunipz_cmd          = lm32_base + SHARED_OFFS + COMMON_SHARED_CMD;
+  wrunipz_state        = lm32_base + SHARED_OFFS + COMMON_SHARED_STATE;;
+  wrunipz_version      = lm32_base + SHARED_OFFS + COMMON_SHARED_VERSION;
+  wrunipz_macHi        = lm32_base + SHARED_OFFS + COMMON_SHARED_MACHI;
+  wrunipz_macLo        = lm32_base + SHARED_OFFS + COMMON_SHARED_MACLO;
+  wrunipz_ip           = lm32_base + SHARED_OFFS + COMMON_SHARED_IP;
+  wrunipz_nBadStatus   = lm32_base + SHARED_OFFS + COMMON_SHARED_NBADSTATUS;
+  wrunipz_nBadState    = lm32_base + SHARED_OFFS + COMMON_SHARED_NBADSTATE;
+  wrunipz_tDiagHi      = lm32_base + SHARED_OFFS + COMMON_SHARED_TDIAGHI;
+  wrunipz_tDiagLo      = lm32_base + SHARED_OFFS + COMMON_SHARED_TDIAGLO;
+  wrunipz_tS0Hi        = lm32_base + SHARED_OFFS + COMMON_SHARED_TS0HI;
+  wrunipz_tS0Lo        = lm32_base + SHARED_OFFS + COMMON_SHARED_TS0LO;
   wrunipz_tCycleAvg    = lm32_base + SHARED_OFFS + WRUNIPZ_SHARED_TCYCLEAVG;
-  wrunipz_version      = lm32_base + SHARED_OFFS + WRUNIPZ_SHARED_VERSION;
-  wrunipz_macHi        = lm32_base + SHARED_OFFS + WRUNIPZ_SHARED_MACHI;
-  wrunipz_macLo        = lm32_base + SHARED_OFFS + WRUNIPZ_SHARED_MACLO;
-  wrunipz_ip           = lm32_base + SHARED_OFFS + WRUNIPZ_SHARED_IP;
-  wrunipz_nBadStatus   = lm32_base + SHARED_OFFS + WRUNIPZ_SHARED_NBADSTATUS;
-  wrunipz_nBadState    = lm32_base + SHARED_OFFS + WRUNIPZ_SHARED_NBADSTATE;
   wrunipz_cycles       = lm32_base + SHARED_OFFS + WRUNIPZ_SHARED_NCYCLE;
   wrunipz_nMessageHi   = lm32_base + SHARED_OFFS + WRUNIPZ_SHARED_NMESSAGEHI;
   wrunipz_nMessageLo   = lm32_base + SHARED_OFFS + WRUNIPZ_SHARED_NMESSAGELO;
@@ -475,10 +479,6 @@ int main(int argc, char** argv) {
   wrunipz_nLate        = lm32_base + SHARED_OFFS + WRUNIPZ_SHARED_NLATE;
   wrunipz_vaccAvg      = lm32_base + SHARED_OFFS + WRUNIPZ_SHARED_VACCAVG;
   wrunipz_pzAvg        = lm32_base + SHARED_OFFS + WRUNIPZ_SHARED_PZAVG;
-  wrunipz_tDiagHi      = lm32_base + SHARED_OFFS + WRUNIPZ_SHARED_TDIAGHI;
-  wrunipz_tDiagLo      = lm32_base + SHARED_OFFS + WRUNIPZ_SHARED_TDIAGLO;
-  wrunipz_tS0Hi        = lm32_base + SHARED_OFFS + WRUNIPZ_SHARED_TS0HI;
-  wrunipz_tS0Lo        = lm32_base + SHARED_OFFS + WRUNIPZ_SHARED_TS0LO;
   wrunipz_confVacc     = lm32_base + SHARED_OFFS + WRUNIPZ_SHARED_CONF_VACC;
   wrunipz_confStat     = lm32_base + SHARED_OFFS + WRUNIPZ_SHARED_CONF_STAT;
   wrunipz_confPz       = lm32_base + SHARED_OFFS + WRUNIPZ_SHARED_CONF_PZ;
@@ -503,7 +503,7 @@ int main(int argc, char** argv) {
     readInfo(&sumStatus, &state, &cycles, &nBadStatus, &nBadState, &tCycle, &fMessages, &confStat, &nLate, &vaccAvg, &pzAvg);
     printCycleHeader();
     printCycle(cycles, tCycle, fMessages, confStat, nLate, vaccAvg, pzAvg);
-    printf(" %s (%6u), status 0x%08x (%6u)\n", wrunipz_state_text(state), nBadState, sumStatus, nBadStatus);
+    printf(" %s (%6u), status 0x%08x (%6u)\n", common_state_text(state), nBadState, sumStatus, nBadStatus);
   } // if getInfo
 
   if (command) {
@@ -513,30 +513,28 @@ int main(int argc, char** argv) {
 
     // request state changes
     if (!strcasecmp(command, "configure")) {
-      eb_device_write(device, wrunipz_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)WRUNIPZ_CMD_CONFIGURE, 0, eb_block);
-      if ((state != WRUNIPZ_STATE_CONFIGURED) && (state != WRUNIPZ_STATE_IDLE)) printf("wr-unipz: WARNING command has no effect (not in state CONFIGURED or IDLE)\n");
+      eb_device_write(device, wrunipz_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)COMMON_CMD_CONFIGURE, 0, eb_block);
+      if ((state != COMMON_STATE_CONFIGURED) && (state != COMMON_STATE_IDLE)) printf("wr-unipz: WARNING command has no effect (not in state CONFIGURED or IDLE)\n");
     } // "configure"
     if (!strcasecmp(command, "startop")) {
-      eb_device_write(device, wrunipz_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)WRUNIPZ_CMD_STARTOP  , 0, eb_block);
-      if (state != WRUNIPZ_STATE_CONFIGURED) printf("wr-unipz: WARNING command has no effect (not in state CONFIGURED)\n");
+      eb_device_write(device, wrunipz_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)COMMON_CMD_STARTOP  , 0, eb_block);
+      if (state != COMMON_STATE_CONFIGURED) printf("wr-unipz: WARNING command has no effect (not in state CONFIGURED)\n");
     } // "startop"
     if (!strcasecmp(command, "stopop")) {
-      eb_device_write(device, wrunipz_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)WRUNIPZ_CMD_STOPOP   , 0, eb_block);
-      if (state != WRUNIPZ_STATE_OPREADY) printf("wr-unipz: WARNING command has no effect (not in state OPREADY)\n");
+      eb_device_write(device, wrunipz_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)COMMON_CMD_STOPOP   , 0, eb_block);
+      if (state != COMMON_STATE_OPREADY) printf("wr-unipz: WARNING command has no effect (not in state OPREADY)\n");
     } // "startop"
     if (!strcasecmp(command, "recover")) {
-      eb_device_write(device, wrunipz_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)WRUNIPZ_CMD_RECOVER  , 0, eb_block);
-      if (state != WRUNIPZ_STATE_ERROR) printf("wr-unipz: WARNING command has no effect (not in state ERROR)\n");
+      eb_device_write(device, wrunipz_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)COMMON_CMD_RECOVER  , 0, eb_block);
+      if (state != COMMON_STATE_ERROR) printf("wr-unipz: WARNING command has no effect (not in state ERROR)\n");
     } // "recover"
     if (!strcasecmp(command, "idle")) {
-      eb_device_write(device, wrunipz_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)WRUNIPZ_CMD_IDLE     , 0, eb_block);
-      if (state != WRUNIPZ_STATE_CONFIGURED) printf("wr-unipz: WARNING command has no effect (not in state CONFIGURED)\n");
+      eb_device_write(device, wrunipz_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)COMMON_CMD_IDLE     , 0, eb_block);
+      if (state != COMMON_STATE_CONFIGURED) printf("wr-unipz: WARNING command has no effect (not in state CONFIGURED)\n");
     } // "idle"
-
-    // diagnostics
     if (!strcasecmp(command, "cleardiag")) {
-      eb_device_write(device, wrunipz_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)WRUNIPZ_CMD_CLEARDIAG , 0, eb_block);
-      if (state != WRUNIPZ_STATE_OPREADY) printf("wr-unipz: WARNING command has no effect (not in state OPREADY)\n");
+      eb_device_write(device, wrunipz_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)COMMON_CMD_CLEARDIAG , 0, eb_block);
+      if (state != COMMON_STATE_OPREADY) printf("wr-unipz: WARNING command has no effect (not in state OPREADY)\n");
     } // "cleardiag"
     if (!strcasecmp(command, "diag")) {
       readDiags(&sumStatus, &state, &nBadStatus, &nBadState, &cycles, &messages, &dtMax, &dtMin, &cycJmpMax, &cycJmpMin, &nLate, &tDiag, &tS0);
@@ -545,7 +543,7 @@ int main(int argc, char** argv) {
 
     // test with data
     if (!strcasecmp(command, "test")) {
-      if (state != WRUNIPZ_STATE_OPREADY) printf("wr-unipz: WARNING command has no effect (not in state OPREADY)\n");
+      if (state != COMMON_STATE_OPREADY) printf("wr-unipz: WARNING command has no effect (not in state OPREADY)\n");
       if (optind+4  != argc)                     {printf("wr-unipz: expecting exactly three arguments: test <offset> <vacc> <pz>\n"); return 1;}
       offset = strtoul(argv[optind+1], &tail, 0);
       if (offset > 10000)                        {printf("wr-unipz: offset must be smaller than 10000 us -- %s\n", argv[optind+1]); return 1;}
@@ -556,7 +554,7 @@ int main(int argc, char** argv) {
 
       t1 = getSysTime();
 
-      if ((status = wrunipz_transaction_init(device, wrunipz_cmd, wrunipz_confVacc, wrunipz_confStat, vacc)) !=  WRUNIPZ_STATUS_OK) {
+      if ((status = wrunipz_transaction_init(device, wrunipz_cmd, wrunipz_confVacc, wrunipz_confStat, vacc)) !=  COMMON_STATUS_OK) {
         printf("wr-unipz: transaction init - %s\n", wrunipz_status_text(status));
       }
       else {
@@ -564,7 +562,7 @@ int main(int argc, char** argv) {
 	wrunipz_fill_channel_dummy(offset, pz, vacc, dataChn0, &nDataChn0, dataChn1, &nDataChn1);
 
         // upload
-        if ((status = wrunipz_transaction_upload(device, wrunipz_confStat, wrunipz_confPz, wrunipz_confData, wrunipz_confFlag, pz, dataChn0, nDataChn0, dataChn1, nDataChn1)) != WRUNIPZ_STATUS_OK)
+        if ((status = wrunipz_transaction_upload(device, wrunipz_confStat, wrunipz_confPz, wrunipz_confData, wrunipz_confFlag, pz, dataChn0, nDataChn0, dataChn1, nDataChn1)) != COMMON_STATUS_OK)
           printf("wr-unipz: transaction upload - %s\n", wrunipz_status_text(status));
         
         // submit
@@ -575,7 +573,7 @@ int main(int argc, char** argv) {
       }
     } // "test"
     if (!strcasecmp(command, "testfull")) {
-      if (state != WRUNIPZ_STATE_OPREADY)  printf("wr-unipz: WARNING command has no effect (not in state OPREADY)\n");
+      if (state != COMMON_STATE_OPREADY)  printf("wr-unipz: WARNING command has no effect (not in state OPREADY)\n");
       if (optind+2  != argc)              {printf("wr-unipz: expecting exactly one argument: testfull <offset>\n"); return 1;}
       offset = strtoul(argv[optind+1], &tail, 0);
       if (offset > 10000)                 {printf("wr-unipz: offset must be smaller than 10000 us -- %s\n", argv[optind+1]); return 1;}
@@ -583,14 +581,14 @@ int main(int argc, char** argv) {
       t1 = getSysTime();
 
       for (j=0; j < WRUNIPZ_NVACC - 1; j++) {  // only virt acc 0..14
-        if ((status = wrunipz_transaction_init(device, wrunipz_cmd, wrunipz_confVacc, wrunipz_confStat, j)) !=  WRUNIPZ_STATUS_OK) {
+        if ((status = wrunipz_transaction_init(device, wrunipz_cmd, wrunipz_confVacc, wrunipz_confStat, j)) !=  COMMON_STATUS_OK) {
           printf("wr-unipz: transaction init (virt acc %d) - %s\n", j, wrunipz_status_text(status));
         } // if status
         else {
 	  // load data and upload table
           for (k=0; k < WRUNIPZ_NPZ; k++) {
 	    wrunipz_fill_channel_dummy(offset, k, j, dataChn0, &nDataChn0, dataChn1, &nDataChn1);
-            if ((status = wrunipz_transaction_upload(device, wrunipz_confStat, wrunipz_confPz, wrunipz_confData, wrunipz_confFlag, k, dataChn0, nDataChn0, dataChn1, nDataChn1)) != WRUNIPZ_STATUS_OK)
+            if ((status = wrunipz_transaction_upload(device, wrunipz_confStat, wrunipz_confPz, wrunipz_confData, wrunipz_confFlag, k, dataChn0, nDataChn0, dataChn1, nDataChn1)) != COMMON_STATUS_OK)
               printf("wr-unipz: transaction upload (virt acc %d, pz %d) - %s\n", j, k, wrunipz_status_text(status));
           } // for k
         } // else
@@ -605,7 +603,7 @@ int main(int argc, char** argv) {
 
     } // "testfull"
     if (!strcasecmp(command, "ftest")) {
-      if (state != WRUNIPZ_STATE_OPREADY) printf("wr-unipz: WARNING command has no effect (not in state OPREADY)\n");
+      if (state != COMMON_STATE_OPREADY) printf("wr-unipz: WARNING command has no effect (not in state OPREADY)\n");
       if (optind+4  != argc)             {printf("wr-unipz: expecting exactly three arguments: test <file> <vacc> <pz>\n"); return 1;}
       filename = argv[optind+1];
       vacc   = strtoul(argv[optind+2], &tail, 0);
@@ -615,7 +613,7 @@ int main(int argc, char** argv) {
 
       t1 = getSysTime();
 
-      if ((status = wrunipz_transaction_init(device, wrunipz_cmd, wrunipz_confVacc, wrunipz_confStat, vacc)) !=  WRUNIPZ_STATUS_OK) {
+      if ((status = wrunipz_transaction_init(device, wrunipz_cmd, wrunipz_confVacc, wrunipz_confStat, vacc)) !=  COMMON_STATUS_OK) {
         printf("wr-unipz: transaction init - %s\n", wrunipz_status_text(status));
       }
       else {
@@ -623,7 +621,7 @@ int main(int argc, char** argv) {
 	wrunipz_fill_channel_file(filename, pz, vacc, dataChn0, &nDataChn0, dataChn1, &nDataChn1);
 
 	// upload table
-	if ((status = wrunipz_transaction_upload(device, wrunipz_confStat, wrunipz_confPz, wrunipz_confData, wrunipz_confFlag, pz, dataChn0, nDataChn0, dataChn1, nDataChn1)) != WRUNIPZ_STATUS_OK)
+	if ((status = wrunipz_transaction_upload(device, wrunipz_confStat, wrunipz_confPz, wrunipz_confData, wrunipz_confFlag, pz, dataChn0, nDataChn0, dataChn1, nDataChn1)) != COMMON_STATUS_OK)
           printf("wr-unipz: transaction upload - %s\n", wrunipz_status_text(status));
         
         // submit
@@ -634,7 +632,7 @@ int main(int argc, char** argv) {
       }
     } // "ftest"
     if (!strcasecmp(command, "ftestfull")) {
-      if (state != WRUNIPZ_STATE_OPREADY) printf("wr-unipz: WARNING command has no effect (not in state OPREADY)\n");
+      if (state != COMMON_STATE_OPREADY) printf("wr-unipz: WARNING command has no effect (not in state OPREADY)\n");
       if (optind+2  != argc)             {printf("wr-unipz: expecting exactly one argument: ftestfull <file>\n"); return 1;}
       filename = argv[optind+1];
 
@@ -642,14 +640,14 @@ int main(int argc, char** argv) {
 
       for (j=0; j < WRUNIPZ_NVACC; j++) {  // only virt acc 0..14
 
-        if ((status = wrunipz_transaction_init(device, wrunipz_cmd, wrunipz_confVacc, wrunipz_confStat, j)) !=  WRUNIPZ_STATUS_OK) {
+        if ((status = wrunipz_transaction_init(device, wrunipz_cmd, wrunipz_confVacc, wrunipz_confStat, j)) !=  COMMON_STATUS_OK) {
           printf("wr-unipz: transaction init (virt acc %d) - %s\n", j, wrunipz_status_text(status));
         } // if status
         else {
 	  // load data and upload table
           for (k=0; k < WRUNIPZ_NPZ; k++) {
 	    wrunipz_fill_channel_file(filename, k, j, dataChn0, &nDataChn0, dataChn1, &nDataChn1);
-            if ((status = wrunipz_transaction_upload(device, wrunipz_confStat, wrunipz_confPz, wrunipz_confData, wrunipz_confFlag, k, dataChn0, nDataChn0, dataChn1, nDataChn1)) != WRUNIPZ_STATUS_OK)
+            if ((status = wrunipz_transaction_upload(device, wrunipz_confStat, wrunipz_confPz, wrunipz_confData, wrunipz_confFlag, k, dataChn0, nDataChn0, dataChn1, nDataChn1)) != COMMON_STATUS_OK)
               printf("wr-unipz: transaction upload (virt acc %d, pz %d) - %s\n", j, k, wrunipz_status_text(status));
           } // for k
         } // else
@@ -666,11 +664,11 @@ int main(int argc, char** argv) {
     } // "ftestfull"
     if (!strcasecmp(command, "kill")) {
       eb_device_write(device, wrunipz_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)WRUNIPZ_CMD_CONFKILL, 0, eb_block);
-      if (state != WRUNIPZ_STATE_OPREADY) printf("wr-unipz: WARNING command has no effect (not in state OPREADY)\n");
+      if (state != COMMON_STATE_OPREADY) printf("wr-unipz: WARNING command has no effect (not in state OPREADY)\n");
     } // "kill"
     if (!strcasecmp(command, "cleartables")) {
       eb_device_write(device, wrunipz_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)WRUNIPZ_CMD_CONFCLEAR, 0, eb_block);
-      if (state != WRUNIPZ_STATE_OPREADY) printf("wr-unipz: WARNING command has no effect (not in state OPREADY)\n");
+      if (state != COMMON_STATE_OPREADY) printf("wr-unipz: WARNING command has no effect (not in state OPREADY)\n");
     } // "cleartables"
   } //if command
   
@@ -679,7 +677,7 @@ int main(int argc, char** argv) {
     printf("wr-unipz: continous monitoring of 'Data Master', loglevel = %d\n", logLevel);
     
     //    actCycles    = 0;
-    actState     = WRUNIPZ_STATE_UNKNOWN;
+    actState     = COMMON_STATE_UNKNOWN;
     actSumStatus = 0;
 
     printCycleHeader();
@@ -687,23 +685,23 @@ int main(int argc, char** argv) {
     while (1) {
       readInfo(&sumStatus, &state, &cycles, &nBadStatus, &nBadState, &tCycle, &fMessages, &confStat, &nLate, &vaccAvg, &pzAvg); // read info from lm32
 
-      if (logLevel == 1) sleepTime = WRUNIPZ_DEFAULT_TIMEOUT * 100000;
-      else               sleepTime = WRUNIPZ_DEFAULT_TIMEOUT * 10000;
+      if (logLevel == 1) sleepTime = COMMON_DEFAULT_TIMEOUT * 100000;
+      else               sleepTime = COMMON_DEFAULT_TIMEOUT * 10000;
       
       // if required, print status change
-      if  ((actState != state) && (logLevel <= WRUNIPZ_LOGLEVEL_STATE)) printFlag = 1;
+      if  ((actState != state) && (logLevel <= COMMON_LOGLEVEL_STATE)) printFlag = 1;
 
       // determine when to print info
       printFlag = 0;
 
       if (logLevel <= 1) printFlag = 1;
 
-      if ((actState     != state)        && (logLevel <= WRUNIPZ_LOGLEVEL_STATE))   {printFlag = 1; actState  = state;}
-      if ((actSumStatus != sumStatus)    && (logLevel <= WRUNIPZ_LOGLEVEL_STATUS))  {printFlag = 1; actSumStatus = sumStatus;}
+      if ((actState     != state)        && (logLevel <= COMMON_LOGLEVEL_STATE))   {printFlag = 1; actState  = state;}
+      if ((actSumStatus != sumStatus)    && (logLevel <= COMMON_LOGLEVEL_STATUS))  {printFlag = 1; actSumStatus = sumStatus;}
 
       if (printFlag) {
         printCycle(cycles, tCycle, fMessages, confStat, nLate, vaccAvg, pzAvg); 
-        printf(" %s (%6u), status 0x%08x (%d)\n", wrunipz_state_text(state), nBadState, sumStatus, nBadStatus);
+        printf(" %s (%6u), status 0x%08x (%d)\n", common_state_text(state), nBadState, sumStatus, nBadStatus);
       } // if printFlag
 
       fflush(stdout);                                                                         // required for immediate writing (if stdout is piped to syslog)

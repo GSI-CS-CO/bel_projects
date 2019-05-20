@@ -40,7 +40,7 @@
 #include <string.h>
 #include <inttypes.h>
 #include <stdint.h>
-#include "mprintf.h"
+#include "pp-printf.h"
 #include "mini_sdb.h"
 
 /* includes specific for bel_projects */
@@ -70,10 +70,10 @@ void main(void) {
   // wait 1 second and print initial message to UART
   // pro tip: try 'eb-console' to view printed messages
   for (j = 0; j < (31000000); ++j) { asm("nop"); } // 31.25 x 'asm("nop")' operations take 1 us.
-  mprintf("Hello World!\n");
+  pp_printf("Hello World!\n");
 
   while (1) {
-    mprintf("boring...\n");
+    pp_printf("boring...\n");
     for (j = 0; j < (31000000); ++j) { asm("nop"); }
   } // while
 } /* main */

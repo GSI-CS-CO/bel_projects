@@ -16,9 +16,9 @@
 // ****************************************************************************************
 
 // (error) status, each status will be represented by one bit, bits will be ORed into a 32bit word
-#define  B2BTEST_STATUS_PHASEFAILED      20    // phase measurement failed
-#define  B2BTEST_STATUS_TRANSFER         21    // transfer failed
-#define  B2BTEST_STATUS_SAFETYMARGIN     22    // violation of safety margin for data master and timing network
+#define  B2BTEST_STATUS_PHASEFAILED      16    // phase measurement failed
+#define  B2BTEST_STATUS_TRANSFER         17    // transfer failed
+#define  B2BTEST_STATUS_SAFETYMARGIN     18    // violation of safety margin for data master and timing network
 
 // activity requested by ECA Handler, the relevant codes are also used as "tags"
 #define  B2BTEST_ECADO_TIMEOUT         COMMON_ECADO_TIMEOUT

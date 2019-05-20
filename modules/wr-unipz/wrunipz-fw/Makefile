@@ -11,14 +11,14 @@ RAM_SIZE        := $(shell cat 	$(PLATFMAKEFILE) | grep -m1 RAM_SIZE  | cut -d'=
 
 SHARED_SIZE    	?= 8K
 USRCPUCLK      	?= 125000
-VERSION  	= 00.00.13
+VERSION  	= 00.00.14
 
 .DEFAULT_GOAL	:= fwbin
 
 PATHFW 	        = .
 DEBUGLVL    	= 1
 EXTRA_FLAGS	?=
-CFLAGS 	    	= -I../include -I$(PATHFW) -DDEBUGLEVEL=$(DEBUGLVL) $(EXTRA_FLAGS)
+CFLAGS 	    	= -I../include -I../../b2b-test/include -I$(PATHFW) -DDEBUGLEVEL=$(DEBUGLVL) $(EXTRA_FLAGS)
 
 $(info    >>>>)
 $(info    building is done by importing the following data from $(PLATFMAKEFILE):)
@@ -39,7 +39,7 @@ include ../../../syn/build.mk
 
 fwbin: $(TARGET).bin 
 
-$(TARGET).elf: $(PATHFW)/wr-unipz.c $(INCPATH)/ebm.c $(PATHFW)/../../../top/gsi_scu/scu_mil.c
+$(TARGET).elf: $(PATHFW)/wr-unipz.c $(INCPATH)/ebm.c $(PATHFW)/../../../top/gsi_scu/scu_mil.c $(PATHFW)/../../b2b-test/b2btest-fw/b2b-common.c
 
 clean::
 	rm -f $(PATHFW)/*.o $(PATHFW)/*.a $(PATHFW)/*.elf $(PATHFW)/*.bin

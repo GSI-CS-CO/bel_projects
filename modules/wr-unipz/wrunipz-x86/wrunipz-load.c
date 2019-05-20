@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 18-February-2019
+ *  version : 16-May-2019
  *
  * command-line example for wrunipz; how-to load event data for a virt acc
  *
@@ -157,7 +157,7 @@ int main(int argc, char** argv) {
   if ((eb_status = eb_sdb_find_by_identity(device, GSI, LM32_RAM_USER, &sdbDevice, &nDevices)) != EB_OK) die("find lm32", eb_status);
   lm32_base =  sdbDevice.sdb_component.addr_first;
 
-  wrunipz_cmd          = lm32_base + SHARED_OFFS + WRUNIPZ_SHARED_CMD;
+  wrunipz_cmd          = lm32_base + SHARED_OFFS + COMMON_SHARED_CMD;
   wrunipz_confVacc     = lm32_base + SHARED_OFFS + WRUNIPZ_SHARED_CONF_VACC;
   wrunipz_confStat     = lm32_base + SHARED_OFFS + WRUNIPZ_SHARED_CONF_STAT;
   wrunipz_confPz       = lm32_base + SHARED_OFFS + WRUNIPZ_SHARED_CONF_PZ;
@@ -176,7 +176,7 @@ int main(int argc, char** argv) {
       if ((vacc < 0) || (vacc >= WRUNIPZ_NVACC)) {printf("wr-unipz: invalid virtual accelerator -- %s\n", argv[optind+2]); return 1;}
 
       // initialize transaction: tell wr-unipz which virtual accelerator will get new data
-      if ((status = wrunipz_transaction_init(device, wrunipz_cmd, wrunipz_confVacc, wrunipz_confStat, vacc)) !=  WRUNIPZ_STATUS_OK) {
+      if ((status = wrunipz_transaction_init(device, wrunipz_cmd, wrunipz_confVacc, wrunipz_confStat, vacc)) !=  COMMON_STATUS_OK) {
         printf("wr-unipz: transaction init - %s\n", wrunipz_status_text(status));
       }
       else {
@@ -198,7 +198,7 @@ int main(int argc, char** argv) {
           // in principle, uploading data is the only thing that needs to be done from the host system
           // upload data to wr-unipz
           // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-          if ((status = wrunipz_transaction_upload(device, wrunipz_confStat, wrunipz_confPz, wrunipz_confData, wrunipz_confFlag, pz, dataChn0, nDataChn0, dataChn1, nDataChn1)) != WRUNIPZ_STATUS_OK)
+          if ((status = wrunipz_transaction_upload(device, wrunipz_confStat, wrunipz_confPz, wrunipz_confData, wrunipz_confFlag, pz, dataChn0, nDataChn0, dataChn1, nDataChn1)) != COMMON_STATUS_OK)
             printf("wr-unipz: transaction upload - %s\n", wrunipz_status_text(status));
         }  // for i 
         
