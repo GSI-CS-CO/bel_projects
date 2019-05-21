@@ -163,26 +163,26 @@ typedef uint16_t DAQ_REGISTER_T;
  * Sample10us:            Bit [1] use 10 us sample.
  * Ena_PM:                Bit [0] starts PM sampling with 100 us.
  */
-   #define __DAQ_BF_CONTROL_REGISTER_BITS   \
-      uint16_t ExtTrig_nEvTrig_HiRes: 1;    \
-      uint16_t Ena_HiRes:             1;    \
-      uint16_t ExtTrig_nEvTrig:       1;    \
-      uint16_t Ena_TrigMod:           1;    \
-      uint16_t Sample1ms:             1;    \
-      uint16_t Sample100us:           1;    \
-      uint16_t Sample10us:            1;    \
-      uint16_t Ena_PM:                1;
+   #define __DAQ_BF_CONTROL_REGISTER_BITS         \
+      DAQ_REGISTER_T ExtTrig_nEvTrig_HiRes: 1;    \
+      DAQ_REGISTER_T Ena_HiRes:             1;    \
+      DAQ_REGISTER_T ExtTrig_nEvTrig:       1;    \
+      DAQ_REGISTER_T Ena_TrigMod:           1;    \
+      DAQ_REGISTER_T Sample1ms:             1;    \
+      DAQ_REGISTER_T Sample100us:           1;    \
+      DAQ_REGISTER_T Sample10us:            1;    \
+      DAQ_REGISTER_T Ena_PM:                1;
 
 #else /* Little endian. */
-   #define __DAQ_BF_CONTROL_REGISTER_BITS   \
-      uint16_t Ena_PM:                1;    \
-      uint16_t Sample10us:            1;    \
-      uint16_t Sample100us:           1;    \
-      uint16_t Sample1ms:             1;    \
-      uint16_t Ena_TrigMod:           1;    \
-      uint16_t ExtTrig_nEvTrig:       1;    \
-      uint16_t Ena_HiRes:             1;    \
-      uint16_t ExtTrig_nEvTrig_HiRes: 1;
+   #define __DAQ_BF_CONTROL_REGISTER_BITS         \
+      DAQ_REGISTER_T Ena_PM:                1;    \
+      DAQ_REGISTER_T Sample10us:            1;    \
+      DAQ_REGISTER_T Sample100us:           1;    \
+      DAQ_REGISTER_T Sample1ms:             1;    \
+      DAQ_REGISTER_T Ena_TrigMod:           1;    \
+      DAQ_REGISTER_T ExtTrig_nEvTrig:       1;    \
+      DAQ_REGISTER_T Ena_HiRes:             1;    \
+      DAQ_REGISTER_T ExtTrig_nEvTrig_HiRes: 1;
 #endif
 
 /*! ---------------------------------------------------------------------------

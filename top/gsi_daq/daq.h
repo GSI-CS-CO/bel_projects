@@ -1102,7 +1102,7 @@ void daqChannelSetTriggerDelay( register DAQ_CANNEL_T* pThis,
  * @return Pointer to the 16 bit DAQ interrupt pending register
  */
 static inline volatile
-uint16_t* daqChannelGetDaqIntPendingPtr( register DAQ_CANNEL_T* pThis )
+DAQ_REGISTER_T* daqChannelGetDaqIntPendingPtr( register DAQ_CANNEL_T* pThis )
 {
    DAQ_ASSERT( pThis != NULL );
    return &daqChannelGetRegPtr(pThis)->i[DAQ_INTS];
@@ -1136,7 +1136,7 @@ bool daqChannelTestAndClearDaqIntPending( register DAQ_CANNEL_T* pThis )
  * @return Pointer to the 16 bit HiRes interrupt pending register
  */
 static inline volatile
-uint16_t* daqChannelGetHiResIntPendingPtr( register DAQ_CANNEL_T* pThis )
+DAQ_REGISTER_T* daqChannelGetHiResIntPendingPtr( register DAQ_CANNEL_T* pThis )
 {
    DAQ_ASSERT( pThis != NULL );
    return &daqChannelGetRegPtr(pThis)->i[HIRES_INTS];
@@ -1250,7 +1250,7 @@ static inline int daqChannelGetMacroVersion( register DAQ_CANNEL_T* pThis )
  * @return Remaining number of words during read out.
  */
 static inline
-unsigned int daqChannelGetDaqFifoWords( register DAQ_CANNEL_T* pThis )
+DAQ_REGISTER_T daqChannelGetDaqFifoWords( register DAQ_CANNEL_T* pThis )
 {
    DAQ_ASSERT( pThis != NULL );
 #ifdef CONFIG_DAQ_SIMULATE_CHANNEL
@@ -1270,7 +1270,7 @@ unsigned int daqChannelGetDaqFifoWords( register DAQ_CANNEL_T* pThis )
  * @return Number of used channels
  */
 static inline
-unsigned int daqChannelGetMaxCannels( register DAQ_CANNEL_T* pThis )
+DAQ_REGISTER_T daqChannelGetMaxCannels( register DAQ_CANNEL_T* pThis )
 {
    DAQ_ASSERT( pThis != NULL );
    __DAQ_VERIFY_CHANNEL_REG_ACCESS( PM_FIFO_WORDS );
@@ -1286,7 +1286,7 @@ unsigned int daqChannelGetMaxCannels( register DAQ_CANNEL_T* pThis )
  * @return Remaining number of words during read out.
  */
 static inline
-unsigned int daqChannelGetPmFifoWords( register DAQ_CANNEL_T* pThis )
+DAQ_REGISTER_T daqChannelGetPmFifoWords( register DAQ_CANNEL_T* pThis )
 {
    DAQ_ASSERT( pThis != NULL );
 #ifdef CONFIG_DAQ_SIMULATE_CHANNEL
@@ -1414,9 +1414,11 @@ void daqDeviceDisableScuSlaveInterrupt( register DAQ_DEVICE_T* pThis )
  * @return Pointer to the interrupt active flag register.
  */
 static inline
-uint16_t* volatile daqDeviceGetInterruptFlags( register DAQ_DEVICE_T* pThis )
+DAQ_REGISTER_T* volatile daqDeviceGetInterruptFlags
+                                               ( register DAQ_DEVICE_T* pThis )
 {
-   return &((uint16_t*)daqDeviceGetScuBusSlaveBaseAddress( pThis ))[Intr_Active];
+   return &((DAQ_REGISTER_T*)daqDeviceGetScuBusSlaveBaseAddress( pThis ))
+                                                                 [Intr_Active];
 }
 
 /*! ---------------------------------------------------------------------------
@@ -1427,7 +1429,7 @@ uint16_t* volatile daqDeviceGetInterruptFlags( register DAQ_DEVICE_T* pThis )
  * @retval false No DAQ interrupt was pending.
  */
 static inline
-bool _daqDeviceTestAndClearDaqInt( uint16_t* volatile pFlags )
+bool _daqDeviceTestAndClearDaqInt( DAQ_REGISTER_T* volatile pFlags )
 {
    if( (*pFlags & (1 << DAQ_IRQ_DAQ_FIFO_FULL)) != 0 )
    { /*

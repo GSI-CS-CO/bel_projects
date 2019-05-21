@@ -360,14 +360,14 @@ static inline
 void ramWriteDaqData( register RAM_SCU_T* pThis, DAQ_CANNEL_T* pDaqChannel,
                       bool isShort )
 {
-   unsigned int (*getRemaining)( register DAQ_CANNEL_T* );
+   DAQ_REGISTER_T (*getRemaining)( register DAQ_CANNEL_T* );
    volatile DAQ_DATA_T (*pop)( register DAQ_CANNEL_T* );
 
    uint8_t*     pSequence;
-   unsigned int remainingDataWords;
+   DAQ_REGISTER_T remainingDataWords;
    unsigned int dataWordCounter;
    unsigned int payloadIndex;
-   unsigned int expectedWords;
+   DAQ_REGISTER_T expectedWords;
    unsigned int di;
 
    DAQ_DESCRIPTOR_T    oDescriptor;
@@ -467,8 +467,9 @@ void ramWriteDaqData( register RAM_SCU_T* pThis, DAQ_CANNEL_T* pDaqChannel,
                                sizeof(DAQ_DATA_T) )
             { /*
                * Setting of the sequence number in the device descriptor.
-               * Sequence number has been already incremented above,
-               * therefore the 1 must be deducted here again.
+               * Sequence number has been already incremented before in
+               * function ramPushDaqDataBlock(), therefore the 1 must be
+               * deducted here again.
                */
                ((_DAQ_BF_CRC_REG*)&data)->sequence = *pSequence - 1;
             }

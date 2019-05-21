@@ -66,6 +66,16 @@ void CommandLine::specifiedBeforeErrorMessage( void )
 
 /*! ---------------------------------------------------------------------------
 */
+DaqAdministration* CommandLine::getDaqAdmin( PARSER* poParser )
+{
+   DaqAdministration* pAdmin = static_cast<CommandLine*>(poParser)->m_poAllDaq;
+   if( pAdmin == nullptr )
+      specifiedBeforeErrorMessage();
+   return pAdmin;
+}
+
+/*! ---------------------------------------------------------------------------
+*/
 vector<OPTION> CommandLine::c_optList =
 {
    {
@@ -113,13 +123,9 @@ vector<OPTION> CommandLine::c_optList =
    {
       OPT_LAMBDA( poParser,
       {
-         DaqAdministration* poAllDaq =
-            static_cast<CommandLine*>(poParser)->m_poAllDaq;
+         DaqAdministration* poAllDaq = getDaqAdmin( poParser );
          if( poAllDaq == nullptr )
-         {
-            specifiedBeforeErrorMessage();
             return -1;
-         }
          if( static_cast<CommandLine*>(poParser)->isVerbose() )
          {
             for( unsigned int i = 1; i <= poAllDaq->getMaxFoundDevices(); i++ )
@@ -371,6 +377,9 @@ vector<OPTION> CommandLine::c_optList =
    {
       OPT_LAMBDA( poParser,
       {
+         if( getDaqAdmin( poParser ) == nullptr )
+            return -1;
+
          static_cast<CommandLine*>(poParser)->m_gnuplotBin =
                                                        poParser->getOptArg();
          return 0;
@@ -385,6 +394,9 @@ vector<OPTION> CommandLine::c_optList =
    {
       OPT_LAMBDA( poParser,
       {
+         if( getDaqAdmin( poParser ) == nullptr )
+            return -1;
+
          static_cast<CommandLine*>(poParser)->m_gnuplotTerminal =
                                                        poParser->getOptArg();
          return 0;
@@ -399,6 +411,9 @@ vector<OPTION> CommandLine::c_optList =
    {
       OPT_LAMBDA( poParser,
       {
+         if( getDaqAdmin( poParser ) == nullptr )
+            return -1;
+
          static_cast<CommandLine*>(poParser)->m_gnuplotOutput =
                                                        poParser->getOptArg();
          return 0;

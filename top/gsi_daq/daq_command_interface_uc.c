@@ -49,8 +49,7 @@ typedef DAQ_RETURN_CODE_T (*DAQ_OPERATION_FT)( DAQ_ADMIN_T* pDaqAdmin,
  * @brief Definition of the item for the operation match list.
  */
 typedef struct
-{
-   /*!
+{  /*!
     * @brief Operation code
     * @see DAQ_OPERATION_CODE_T
     */

@@ -84,7 +84,7 @@ static inline void handleContinuousMode( DAQ_CANNEL_T* pChannel )
       return;
    if( daqChannelGetDaqFifoWords( pChannel ) == 0 )
    {
-      DBPRINT1( ESC_BOLD ESC_FG_RED
+      DBPRINT1( ESC_BOLD ESC_FG_YELLOW
                 "DBG WARNING: Discarding continuous block!\n"
                 ESC_NORMAL );
       return;
@@ -186,10 +186,11 @@ void forEachScuDevice( void )
        deviceNr < daqBusGetFoundDevices( &g_DaqAdmin.oDaqDevs ); deviceNr++ )
    {
       DAQ_DEVICE_T* pDevice = daqBusGetDeviceObject( &g_DaqAdmin.oDaqDevs,
-                                                     deviceNr );
+                                                                    deviceNr );
       if( isIrq )
       {
-         uint16_t* volatile pIntFlags = daqDeviceGetInterruptFlags( pDevice );
+         DAQ_REGISTER_T* volatile pIntFlags =
+                                         daqDeviceGetInterruptFlags( pDevice );
          if( _daqDeviceTestAndClearDaqInt( pIntFlags ) )
          {
             if( forEachContinuousCahnnel( pDevice ))

@@ -87,6 +87,8 @@ class CommandLine: public PARSER
 
 public:
    static void specifiedBeforeErrorMessage( void );
+   static DaqAdministration* getDaqAdmin( PARSER* poParser );
+
    CommandLine( int argc, char** ppArgv );
    virtual ~CommandLine( void );
 

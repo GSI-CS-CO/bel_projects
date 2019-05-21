@@ -80,8 +80,15 @@ struct Attributes
       NumValue( void ) { m_value = 0; }
    };
 
-   typedef Value<bool>              BoolValue;
-   typedef Value<DAQ_SAMPLE_RATE_T> SampleValue;
+   struct BoolValue: public Value<bool>
+   {
+      BoolValue( void ) { m_value = false; }
+   };
+
+   struct SampleValue: public Value<::DAQ_SAMPLE_RATE_T>
+   {
+      SampleValue( void ) { m_value = ::DAQ_SAMPLE_1MS; }
+   };
 
    void set( const Attributes& rMyContainer );
 
