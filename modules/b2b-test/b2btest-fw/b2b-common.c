@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 16-May-2019
+ *  version : 21-May-2019
  *
  *  common functions used by various B2B firmware projects
  *  
@@ -89,6 +89,7 @@ uint32_t *pSharedTS0Lo;                 // pointer to a "user defined" u32 regis
 
 uint32_t nBadStatus;                    // # of bad status (=error) incidents
 uint32_t nBadState;                     // # of bad state (=FATAL, ERROR, UNKNOWN) incidents
+uint32_t flagRecover;                   // flag indicating auto-recovery from error state;
 
 
 uint64_t wrGetMac()  // get my own MAC
@@ -241,6 +242,8 @@ void common_init(uint32_t *startShared, uint32_t fwVersion) // determine address
   *pSharedVersion      = fwVersion; // of all the shared variabes, only VERSION is a constant. Set it now!
   *pSharedNBadStatus   = 0;
   *pSharedNBadState    = 0;
+  flagRecover          = 0;
+
 } // initCommon
 
 
@@ -609,6 +612,38 @@ uint32_t common_changeState(uint32_t *actState, uint32_t *reqState, uint32_t act
   return status;
 } //changeState
 
+
+// do state specific do action
+uint32_t common_doActionState(uint32_t *reqState, uint32_t actState, uint32_t status)
+{
+  int j;
+   
+  switch(actState) {                                                      // state specific do actions
+    case COMMON_STATE_S0 :
+      status = common_doActionS0();                                       // important initialization that must succeed!
+      if (status != COMMON_STATUS_OK) *reqState = COMMON_STATE_FATAL;     // failed:  -> FATAL
+      else                            *reqState = COMMON_STATE_IDLE;      // success: -> IDLE
+      break;
+    case COMMON_STATE_OPREADY :
+      flagRecover = 0;
+      break;
+    case COMMON_STATE_ERROR :
+        flagRecover = 1;                                                  // start autorecovery
+        break; 
+    case COMMON_STATE_FATAL :
+      common_publishState(actState);
+      pp_printf("b2b-common: a FATAL error has occured. Good bye.\n");
+      while (1) asm("nop"); // RIP!
+        break;
+    default :                                                             // avoid flooding WB bus with unnecessary activity
+      for (j = 0; j < (COMMON_DEFAULT_TIMEOUT * COMMON_MS_ASMNOP); j++) { asm("nop"); }
+  } // switch
+
+  // autorecovery from state ERROR
+  if (flagRecover) common_doAutoRecovery(actState, reqState);
+
+  return status;
+} // common_doActionState
 
 // do autorecovery from error state
 void common_doAutoRecovery(uint32_t actState, uint32_t *reqState)

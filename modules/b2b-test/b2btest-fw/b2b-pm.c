@@ -38,7 +38,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  ********************************************************************************************/
-#define B2BPM_FW_VERSION 0x000002                                       // make this consistent with makefile
+#define B2BPM_FW_VERSION 0x000003                                       // make this consistent with makefile
 
 /* standard includes */
 #include <stdio.h>
@@ -49,10 +49,11 @@
 /* includes specific for bel_projects */
 #include "dbg.h"                                                        // debug outputs
 #include "ebm.h"                                                        // EB master
-#include "mprintf.h"                                                    // print to console
+#include "pp-printf.h"                                                  // print
 #include "mini_sdb.h"                                                   // sdb stuff
 #include "syscon.h"                                                     // usleep et al
 #include "aux.h"                                                        // cpu and IRQ
+#include "uart.h"                                                       // WR console
 
 /* includes for this project */
 #include <b2b-common.h>                                                 // common stuff for b2b
@@ -248,69 +249,48 @@ int main(void) {
   uint32_t actState;                            // actual FSM state
   uint32_t pubState;                            // value of published state
   uint32_t reqState;                            // requested FSM state
-  uint32_t flagRecover;                         // flag indicating auto-recovery from error state;
   uint32_t dummy1;                              // dummy parameter
-  uint32_t j;
  
   // init local variables
   reqState       = COMMON_STATE_S0;
   actState       = COMMON_STATE_UNKNOWN;
   pubState       = COMMON_STATE_UNKNOWN;
   status         = COMMON_STATUS_OK;
-  flagRecover    = 0;
   common_clearDiag();
 
-  init();                                                                   // initialize stuff for lm32
-  initSharedMem();                                                          // initialize shared memory
-  common_init((uint32_t *)_startshared, B2BPM_FW_VERSION);                  // init common stuff
+  init();                                                                     // initialize stuff for lm32
+  initSharedMem();                                                            // initialize shared memory
+  common_init((uint32_t *)_startshared, B2BPM_FW_VERSION);                    // init common stuff
   
   while (1) {
-    common_cmdHandler(&reqState, &dummy1);                                  // check for commands and possibly request state changes
-    status = COMMON_STATUS_OK;                                              // reset status for each iteration
-    status = common_changeState(&actState, &reqState, status);              // handle requested state changes
-    switch(actState)                                                        // state specific do actions
-      {
-      case COMMON_STATE_S0 :
-        status = common_doActionS0();                                       // important initialization that must succeed!
-        if (status != COMMON_STATUS_OK) reqState = COMMON_STATE_FATAL;      // failed:  -> FATAL
-        else                            reqState = COMMON_STATE_IDLE;       // success: -> IDLE
-        break;
+    common_cmdHandler(&reqState, &dummy1);                                    // check for commands and possibly request state changes
+    status = COMMON_STATUS_OK;                                                // reset status for each iteration
+
+    // state machine
+    status = common_changeState(&actState, &reqState, status);                // handle requested state changes
+    switch(actState) {                                                        // state specific do actions
       case COMMON_STATE_OPREADY :
-        flagRecover = 0;
         status = doActionOperation(&tActCycle, status);
         if (status == COMMON_STATUS_WRBADSYNC)      reqState = COMMON_STATE_ERROR;
         if (status == COMMON_STATUS_ERROR)          reqState = COMMON_STATE_ERROR;
         break;
-      case COMMON_STATE_ERROR :
-        flagRecover = 1;                                                    // start autorecovery
-        break; 
-      case COMMON_STATE_FATAL :
-        pubState = actState;
-        common_publishState(pubState);
-        common_publishSumStatus(sumStatus);
-        mprintf("b2b-test: a FATAL error has occured. Good bye.\n");
-        while (1) asm("nop"); // RIP!
+      default :                                                               // avoid flooding WB bus with unnecessary activity
+        status = common_doActionState(&reqState, actState, status);           // other 'do actions' are handled here
         break;
-      default :                                                             // avoid flooding WB bus with unnecessary activity
-        for (j = 0; j < (COMMON_DEFAULT_TIMEOUT * COMMON_MS_ASMNOP); j++) { asm("nop"); }
-      } // switch
-
-    // autorecovery from state ERROR
-    if (flagRecover) common_doAutoRecovery(actState, &reqState);
+    } // switch
 
     // update shared memory
-
     switch (status) {
-    case COMMON_STATUS_OK :                                                   // status OK
-      sumStatus = sumStatus |  (0x1 << COMMON_STATUS_OK);                     // set OK bit
-      break;
-    default :                                                                 // status not OK
-      if ((sumStatus >> COMMON_STATUS_OK) & 0x1) common_incBadStatusCnt();    // changing status from OK to 'not OK': increase 'bad status count'
-      sumStatus = sumStatus & ~(0x1 << COMMON_STATUS_OK);                     // clear OK bit
-      sumStatus = sumStatus |  (0x1 << status);                               // set status bit and remember other bits set
-      break;
+      case COMMON_STATUS_OK :                                                 // status OK
+        sumStatus = sumStatus |  (0x1 << COMMON_STATUS_OK);                   // set OK bit
+        break;
+      default :                                                               // status not OK
+        if ((sumStatus >> COMMON_STATUS_OK) & 0x1) common_incBadStatusCnt();  // changing status from OK to 'not OK': increase 'bad status count'
+        sumStatus = sumStatus & ~(0x1 << COMMON_STATUS_OK);                   // clear OK bit
+        sumStatus = sumStatus |  (0x1 << status);                             // set status bit and remember other bits set
+        break;
     } // switch status
-
+    
     if ((pubState == COMMON_STATE_OPREADY) && (actState  != COMMON_STATE_OPREADY)) common_incBadStateCnt();
     common_publishSumStatus(sumStatus);
     pubState = actState;

@@ -150,6 +150,9 @@ void common_incBadStateCnt();
 // handle commands from the outside world
 void common_cmdHandler(uint32_t *reqState, uint32_t *cmd);
 
+// do state specific action
+uint32_t common_doActionState(uint32_t *reqState, uint32_t actState, uint32_t status);
+
 // set gate of LVDS input
 uint32_t common_ioCtrlSetGate(uint32_t enable, uint32_t io);
 
