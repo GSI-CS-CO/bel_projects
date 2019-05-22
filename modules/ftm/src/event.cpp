@@ -31,12 +31,11 @@ void TimingMsg::serialise(const vAdr &va, uint8_t* b) const {
 
   //Careful - the fact that these can be pointers does not mean the LM32 has to interprete them!
   //That still depends on the flags
-  if (va[ADR_DYN_ID]    != LM32_NULL_PTR) id  &= ~0xffffffffULL; id   |= va[ADR_DYN_ID];;
-  if (va[ADR_DYN_PAR1]  != LM32_NULL_PTR) par &= ~(0xffffffffULL << 32); par  |= ((uint64_t)va[ADR_DYN_PAR1] << 32);
-  if (va[ADR_DYN_PAR0]  != LM32_NULL_PTR) par &= ~0xffffffffULL; par  |= va[ADR_DYN_PAR0];
-  if (va[ADR_DYN_TEF]   != LM32_NULL_PTR) tef  = va[ADR_DYN_TEF];
-  if (va[ADR_DYN_RES]   != LM32_NULL_PTR) res  = va[ADR_DYN_RES];
-
+  if (va[ADR_DYN_ID]    != LM32_NULL_PTR) {id  &= ~0xffffffffULL;         id   |= va[ADR_DYN_ID];}
+  if (va[ADR_DYN_PAR1]  != LM32_NULL_PTR) {par &= ~(0xffffffffULL << 32); par  |= ((uint64_t)va[ADR_DYN_PAR1] << 32);}
+  if (va[ADR_DYN_PAR0]  != LM32_NULL_PTR) {par &= ~0xffffffffULL;         par  |= va[ADR_DYN_PAR0];}
+  if (va[ADR_DYN_TEF]   != LM32_NULL_PTR) {                               tef   = va[ADR_DYN_TEF];}
+  if (va[ADR_DYN_RES]   != LM32_NULL_PTR) {                               res   = va[ADR_DYN_RES];}
 
   writeLeNumberToBeBytes(b + (ptrdiff_t)TMSG_ID,  id);
   writeLeNumberToBeBytes(b + (ptrdiff_t)TMSG_PAR, par);
@@ -55,7 +54,6 @@ void Command::serialise(const vAdr &va, uint8_t* b) const {
   writeLeNumberToBeBytes(b + (ptrdiff_t)CMD_TARGET,     va[ADR_CMD_TARGET]);
   writeLeNumberToBeBytes(b + (ptrdiff_t)CMD_VALID_TIME, this->tValid);
   writeLeNumberToBeBytes(b + (ptrdiff_t)CMD_ACT,        this->act);
-
 }
 
 void Noop::deserialise(uint8_t* b)  {
@@ -85,7 +83,6 @@ void Wait::deserialise(uint8_t* b)  {
 void Wait::serialise(const vAdr &va, uint8_t* b) const {
   Command::serialise(va, b);
   writeLeNumberToBeBytes(b + (ptrdiff_t)CMD_WAIT_TIME, this->tWait);
-
 }
 
 void Flush::deserialise(uint8_t* b)  {
@@ -107,7 +104,6 @@ void Flush::serialise(const vAdr &va, uint8_t* b) const {
   b[CMD_FLUSHRNG_HI_TO]   = this->toHi;
   b[CMD_FLUSHRNG_LO_FRM]  = this->frmLo;
   b[CMD_FLUSHRNG_LO_TO]   = this->toLo;
-
 }
 
 const uint16_t Flush::getRng(uint8_t q) const {
@@ -169,7 +165,6 @@ void Flow::show(uint32_t cnt, const char* prefix) const {
   else p = (char*)prefix;
 
   Command::show( cnt, p);
-
 }
 
 void Wait::show(void) const {
@@ -182,16 +177,11 @@ void Wait::show(uint32_t cnt, const char* prefix) const {
   else p = (char*)prefix;
 
   Command::show( cnt, p);
-
 }
-
 
 void Noop::show(void) const {
   Noop::show(0, "");
 }
-
-
-
 
 void Noop::show(uint32_t cnt, const char* prefix) const {
   char* p;

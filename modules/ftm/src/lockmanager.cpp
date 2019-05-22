@@ -109,7 +109,7 @@ bool LockManager::isReady() {
       bool newWrStat = (bool)(flags >> BLOCK_CMDQ_DNW_POS); //wr lock is set when flag bit is present
       bool newRdStat = (bool)(flags >> BLOCK_CMDQ_DNR_POS); //rd lock is set when flag bit is present
 
-      bool allNewSet = ((vBl[idx].wr.set & newWrStat) | ~vBl[idx].wr.set) & ((vBl[idx].rd.set & newRdStat) | ~vBl[idx].rd.set);
+      bool allNewSet = ((vBl[idx].wr.set & newWrStat) | !vBl[idx].wr.set) & ((vBl[idx].rd.set & newRdStat) | !vBl[idx].rd.set);
 
       vBl[idx].wr.act  = wrIdx0 == wrIdx1;                    //wr lock is active when no index diff was detected
       vBl[idx].rd.act  = rdIdx0 == rdIdx1;                    //rd lock is active when no index diff was detected

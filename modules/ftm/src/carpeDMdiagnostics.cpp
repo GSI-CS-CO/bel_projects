@@ -7,6 +7,7 @@
 #include <boost/graph/graphviz.hpp>
 #include <boost/graph/copy.hpp>
 #include <boost/algorithm/string.hpp>
+#include <random>
 
 #include "common.h"
 

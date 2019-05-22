@@ -225,7 +225,7 @@ bool CarpeDM::isSafeToRemove(std::set<std::string> patterns, std::string& report
 
   if (optimisedS2R && isSafe) {
     for (auto& it : covenants)  {
-      allCovenantsUncritical &= ~isSafetyCritical(covenantsPerVertex[it]);
+      allCovenantsUncritical &= !isSafetyCritical(covenantsPerVertex[it]);
       report += "//Covenants to honour:\n";
       //std::cout << "Was optimised" << std::endl;
       if (it == null_vertex) {report += "//None\n"; continue;}

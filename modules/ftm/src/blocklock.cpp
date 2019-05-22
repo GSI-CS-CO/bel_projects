@@ -18,7 +18,7 @@ vEbwrs& BlockLock::unlock(vEbwrs& ew ) {
   // no set and    clear -> 0
   //    set and    clear -> stat
 
-  uint32_t ret = ((uint32_t)(((wr.stat & (wr.set == wr.clr)) | (wr.set & ~wr.clr)) << BLOCK_CMDQ_DNW_POS)) | ((uint32_t)(((rd.stat & (rd.set == rd.clr)) | (rd.set & ~rd.clr)) << BLOCK_CMDQ_DNR_POS));
+  uint32_t ret = ((uint32_t)(((wr.stat & (wr.set == wr.clr)) | (wr.set & !wr.clr)) << BLOCK_CMDQ_DNW_POS)) | ((uint32_t)(((rd.stat & (rd.set == rd.clr)) | (rd.set & !rd.clr)) << BLOCK_CMDQ_DNR_POS));
   
 
 
@@ -44,7 +44,7 @@ vEbrds& BlockLock::updateAct(vEbrds& er) {
 
 bool BlockLock::isAllSet()  const {
   //check if any lock bits is requested but not present. If so, return false.
-  return ( ((wr.set & wr.stat) | ~wr.set) & ((rd.set & rd.stat) | ~rd.set) );
+  return ( ((wr.set & wr.stat) | !wr.set) & ((rd.set & rd.stat) | !rd.set) );
 }
 
 bool BlockLock::isAnySet() const {
@@ -60,6 +60,6 @@ bool BlockLock::isAnySet() const {
 bool BlockLock::isAct() const {
   //check if any lock bits is requested but not present. If so, return false.
 
-  return ( ((wr.set & wr.act) | ~wr.set) & ((rd.set & rd.act) | ~rd.set) );
+  return ( ((wr.set & wr.act) | !wr.set) & ((rd.set & rd.act) | !rd.set) );
 }
 
