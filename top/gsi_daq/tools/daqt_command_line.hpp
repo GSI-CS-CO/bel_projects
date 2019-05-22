@@ -79,6 +79,7 @@ class CommandLine: public PARSER
    Device*        m_poCurrentDevice;
    Channel*       m_poCurrentChannel;
    bool           m_verbose;
+   bool           m_noReset;
    std::string    m_gnuplotBin;
    std::string    m_gnuplotTerminal;
    std::string    m_gnuplotOutput;

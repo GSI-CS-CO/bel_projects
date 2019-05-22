@@ -314,7 +314,8 @@ protected:
    DEVICE_LIST_T  m_devicePtrList;
 
 public:
-   DaqAdministration( const std::string = DAQ_DEFAULT_WB_DEVICE );
+   DaqAdministration( const std::string = DAQ_DEFAULT_WB_DEVICE,
+                                                         bool doReset = true );
    virtual ~DaqAdministration( void );
 
    const DEVICE_LIST_T::iterator begin( void )

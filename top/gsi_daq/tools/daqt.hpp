@@ -115,8 +115,9 @@ class DaqContainer: public DaqAdministration
    Attributes     m_oAttributes;
 
 public:
-   DaqContainer( const std::string ebName, CommandLine* poCommandLine )
-      :DaqAdministration( ebName )
+   DaqContainer( const std::string ebName, CommandLine* poCommandLine,
+                                                                bool noReset )
+      :DaqAdministration( ebName, noReset )
       ,m_poCommandLine( poCommandLine )
       {}
 

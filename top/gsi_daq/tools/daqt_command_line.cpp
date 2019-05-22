@@ -163,6 +163,22 @@ vector<OPTION> CommandLine::c_optList =
    {
       OPT_LAMBDA( poParser,
       {
+         static_cast<CommandLine*>(poParser)->m_noReset = true;
+         return 0;
+      }),
+      .m_hasArg   = OPTION::NO_ARG,
+      .m_id       = 0,
+      .m_shortOpt = 'n',
+      .m_longOpt  = "noreset",
+      .m_helpText = "Omitting of the reset command.\n"
+                    "CAUTION: If this option appearing before the first"
+                    " argument <proto/host/port>\nthen the reset command"
+                    " becomes omitted on program start and end,\notherwise"
+                    " only on program end the reset command becomes omitted."
+   },
+   {
+      OPT_LAMBDA( poParser,
+      {
          __GET_ATTRIBUTE_PTR()
          if( poParser->getOptArg().empty() )
          {
@@ -459,6 +475,7 @@ CommandLine::CommandLine( int argc, char** ppArgv )
    ,m_poCurrentDevice( nullptr )
    ,m_poCurrentChannel( nullptr )
    ,m_verbose( false )
+   ,m_noReset( false )
    ,m_gnuplotBin( GPSTR_DEFAULT_GNUPLOT_EXE )
    ,m_gnuplotTerminal( GNUPLOT_DEFAULT_TERMINAL )
 {
@@ -615,11 +632,11 @@ int CommandLine::onArgument( void )
          if( ::findProcesses( getProgramName().c_str(),
                               ::onFoundProcess, &arg,
                               static_cast<FPROC_MODE_T>
-                                 (FPROC_BASENAME | FPROC_RLINK) )
+                                 (::FPROC_BASENAME | ::FPROC_RLINK) )
              < 0 )
             return -1;
 #endif
-         m_poAllDaq = new DaqContainer( arg, this );
+         m_poAllDaq = new DaqContainer( arg, this, !m_noReset );
          FSM_TRANSITION( READ_SLOT );
          break;
       }

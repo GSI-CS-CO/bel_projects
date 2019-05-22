@@ -155,6 +155,7 @@ private:
    SLOT_FLAGS_T             m_slotFlags;
    unsigned int             m_maxDevices;
    DAQ_LAST_STATUS_T        m_lastStatus;
+   const bool               m_doReset;
 
 protected:
    RAM_SCU_T                m_oScuRam;
@@ -185,7 +186,7 @@ public:
    constexpr static std::size_t  c_pmHiresPayloadLen
              = c_hiresPmDataLen - c_discriptorWordSize;
 
-   DaqInterface( const std::string = DAQ_DEFAULT_WB_DEVICE );
+   DaqInterface( const std::string = DAQ_DEFAULT_WB_DEVICE, bool doReset = true );
 
    virtual ~DaqInterface( void );
 
@@ -229,6 +230,11 @@ public:
    {
       sendUnlockRamAccess();
       sendCommand( DAQ_OP_RESET );
+   }
+
+   bool isDoReset( void ) const
+   {
+      return m_doReset;
    }
 
    DAQ_LAST_STATUS_T readLastStatus( void );

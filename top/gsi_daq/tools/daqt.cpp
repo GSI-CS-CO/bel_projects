@@ -465,7 +465,9 @@ DaqContainer::~DaqContainer( void )
 {
    if( m_poCommandLine->isVerbose() )
       cout << "End " << getScuDomainName() << endl;
-   sendReset();
+
+   if( isDoReset() )
+      sendReset();
 }
 
 /*! ---------------------------------------------------------------------------

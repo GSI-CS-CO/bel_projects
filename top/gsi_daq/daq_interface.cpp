@@ -70,11 +70,12 @@ const std::string daq::status2String( DAQ_RETURN_CODE_T status )
 /*! ---------------------------------------------------------------------------
  * @brief Constructor of class daq::DaqInterface
  */
-DaqInterface::DaqInterface( const std::string wbDevice )
+DaqInterface::DaqInterface( const std::string wbDevice, bool doReset )
    :m_wbDevice( wbDevice )
    ,m_poEbHandle( nullptr )
    ,m_slotFlags( 0 )
    ,m_maxDevices( 0 )
+   ,m_doReset( doReset )
 {
    if( ::ebOpen( &m_oEbHandle, m_wbDevice.c_str() ) != EB_OK )
       throw EbException( ::ebGetStatusString( &m_oEbHandle ) );
@@ -89,7 +90,8 @@ DaqInterface::DaqInterface( const std::string wbDevice )
 
    readSharedTotal();
    sendUnlockRamAccess();
-   sendReset();
+   if( m_doReset )
+      sendReset();
    readSlotStatus();
 }
 

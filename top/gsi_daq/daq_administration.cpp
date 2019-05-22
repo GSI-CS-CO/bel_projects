@@ -164,8 +164,8 @@ std::exception_ptr DaqAdministration::c_exceptionPtr = nullptr;
 
 /*! ---------------------------------------------------------------------------
  */
-DaqAdministration::DaqAdministration( const std::string wbDevice )
-  :DaqInterface( wbDevice )
+DaqAdministration::DaqAdministration( const std::string wbDevice, bool doReset )
+  :DaqInterface( wbDevice, doReset )
   ,m_maxChannels( 0 )
   ,m_poCurrentDescriptor( nullptr )
 {
