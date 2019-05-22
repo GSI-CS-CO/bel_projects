@@ -102,9 +102,9 @@ void remove_daq_message() {
       die("eb_device_write ring_tail", status);
 
     //printf("setpoint: 0x%"EB_DATA_FMT"", message[0]);
-    printf("%lld", message[2] | (message[3] << 32));
-    printf(" 0x%"EB_DATA_FMT"", message[1]);
-    printf(" channel:0x%"EB_DATA_FMT"\n", message[4]);
+    printf("%ld", message[2] | (message[3] << 32));
+    printf(" %d", (signed)message[1]);
+    printf(" chn:0x%"EB_DATA_FMT"\n", message[4]);
   }
 
 }
