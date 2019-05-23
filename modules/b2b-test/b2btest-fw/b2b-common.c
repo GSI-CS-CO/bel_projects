@@ -236,7 +236,7 @@ void common_init(uint32_t *startShared, uint32_t fwVersion) // determine address
     pSharedTemp++;
     i++;
   } // while pSharedTemp
-  DBPRINT2("b2b-common: common part of shared mem is %d words (uint32_t), begin %x, end %x\n", i, pShared, pSharedTemp-1);
+  DBPRINT2("b2b-common: common part of shared mem is %d words (uint32_t), begin %x, end %x\n", i, (unsigned int)pShared, (unsigned int)pSharedTemp-1);
   
   // set initial values;
   *pSharedVersion      = fwVersion; // of all the shared variabes, only VERSION is a constant. Set it now!

@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 20-May-2019
+ *  version : 21-May-2019
  *
  * Command-line interface for wrunipz
  *
@@ -112,13 +112,11 @@ static void help(void) {
   fprintf(stderr, "  recover             command tries to recover from state ERROR and transit to state IDLE\n");
   fprintf(stderr, "  idle                command requests state change to IDLE\n");
   fprintf(stderr, "\n");
-  fprintf(stderr, "  test <vacc> <pz>    command loads dummy event table for virtual accelerator <vacc> to pulszentrale <pz>\n");
-  fprintf(stderr, "  testfull            command loads dummy event tables for ALL virt accs (except virt acc 0xf) and all PZs\n");
-  fprintf(stderr, "  cleartables         command clears all event tables of all PZs\n");
-  fprintf(stderr, "  kill                command kills possibly ongoing transactions\n");  
-  fprintf(stderr, "\n");
   fprintf(stderr, "  diag                shows statistics and detailled information\n");
   fprintf(stderr, "  cleardiag           command clears FW statistics\n");
+  fprintf(stderr, "\n");
+  fprintf(stderr, "  seth1inj <freq>     set h=1 frequency [Hz] of injection machine\n");
+  fprintf(stderr, "  seth1ext <freq>     set h=1 frequency [Hz] of extraction machine\n");
   fprintf(stderr, "\n");
   fprintf(stderr, "Use this tool to control B2B-TEST from the command line\n");
   fprintf(stderr, "Example1: '%s dev/wbm0 bla bla bla\n", program);
@@ -271,8 +269,8 @@ void printDiags(uint32_t sumStatus, uint32_t state, uint32_t nBadStatus, uint32_
   } // for i
 
   printf("# of transfers        : %010u\n", nTransfers);
-  printf("period h=1 extraction : %010.6f ns\n", (double)TH1Ext/1000000.0);
-  printf("period h=1 injection  : %010.6f ns\n", (double)TH1Inj/1000000.0);
+  printf("period h=1 extraction : %012.6f ns\n", (double)TH1Ext/1000000000.0);
+  printf("period h=1 injection  : %012.6f ns\n", (double)TH1Inj/1000000000.0);
 } // printDiags
 
 
@@ -306,9 +304,10 @@ int main(int argc, char** argv) {
   uint64_t tDiag;
   uint64_t tS0;
   uint32_t nTransfer;
-  uint64_t TH1Ext;
-  uint64_t TH1Inj;
-
+  uint64_t TH1Ext;                             // h=1 period [as] of extraction machine
+  uint64_t TH1Inj;                             // h=1 period [as] of injection machine
+  uint32_t fH1Ext;                             // h=1 frequency [Hz] of extraction machine
+  uint32_t fH1Inj;                             // h=1 frequency [Hz] of injection machine
   uint32_t actState = COMMON_STATE_UNKNOWN;    // actual state of gateway
   uint32_t actSumStatus;                       // actual sum status of gateway
   uint32_t sleepTime;                          // time to sleep [us]
@@ -452,6 +451,25 @@ int main(int argc, char** argv) {
       readDiags(&sumStatus, &state, &nBadStatus, &nBadState, &tDiag, &tS0, &nTransfer, &TH1Ext, &TH1Inj);
       printDiags(sumStatus, state, nBadStatus, nBadState, tDiag, tS0, nTransfer, TH1Ext, TH1Inj);
     } // "diag"
+
+    if (!strcasecmp(command, "seth1inj")) {
+      if (optind+2  != argc) {printf("b2b-test: expecting exactly one argument: seth1inj <freq>\n"); return 1;}
+      fH1Inj = strtoul(argv[optind+1], &tail, 0);
+      if (*tail != 0)        {printf("b2b-test: invalid frequency -- %s\n", argv[optind+2]); return 1;}
+
+      TH1Inj = (double)1000000000000000000.0 / (double)fH1Inj;  // period in attoseconds
+      eb_device_write(device, b2btest_TH1InjHi, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)(TH1Inj >> 32)       , 0, eb_block);
+      eb_device_write(device, b2btest_TH1InjLo, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)(TH1Inj & 0xffffffff), 0, eb_block);
+    } // "seth1inj"
+    if (!strcasecmp(command, "seth1ext")) {
+      if (optind+2  != argc) {printf("b2b-test: expecting exactly one argument: seth1ext <freq>\n"); return 1;}
+      fH1Ext = strtoul(argv[optind+1], &tail, 0);
+      if (*tail != 0)        {printf("b2b-test: invalid frequency -- %s\n", argv[optind+2]); return 1;}
+
+      TH1Ext = (double)1000000000000000000.0 / (double)fH1Ext;  // period in attoseconds
+      eb_device_write(device, b2btest_TH1ExtHi, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)(TH1Ext >> 32)       , 0, eb_block);
+      eb_device_write(device, b2btest_TH1ExtLo, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)(TH1Ext & 0xffffffff), 0, eb_block);
+    } // "seth1inj"
 
   } //if command
   

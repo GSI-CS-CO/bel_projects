@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 20-May-2019
+ *  version : 21-May-2019
  *
  *  firmware required to implement the CBU (Central Buncht-To-Bucket Unit)
  *  
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 23-April-2019
  ********************************************************************************************/
-#define B2BCBU_FW_VERSION 0x000002                                      // make this consistent with makefile
+#define B2BCBU_FW_VERSION 0x000003                                      // make this consistent with makefile
 
 /* standard includes */
 #include <stdio.h>
@@ -100,10 +100,10 @@ void initSharedMem() // determine address and clear shared mem
   pShared           = (uint32_t *)_startshared;
 
   pSharedNTransfer        = (uint32_t *)(pShared + (B2BTEST_SHARED_NTRANSFER >> 2));
-  pSharedTH1ExtHi         = (uint32_t *)(pShared + (B2BTEST_SHARED_TH1EXTHI >> 2));
-  pSharedTH1ExtLo         = (uint32_t *)(pShared + (B2BTEST_SHARED_TH1EXTLO >> 2));
-  pSharedTH1InjHi         = (uint32_t *)(pShared + (B2BTEST_SHARED_TH1INJHI >> 2));
-  pSharedTH1InjLo         = (uint32_t *)(pShared + (B2BTEST_SHARED_TH1INJLO >> 2));
+  pSharedTH1ExtHi         = (uint32_t *)(pShared + (B2BTEST_SHARED_TH1EXTHI  >> 2));
+  pSharedTH1ExtLo         = (uint32_t *)(pShared + (B2BTEST_SHARED_TH1EXTLO  >> 2));
+  pSharedTH1InjHi         = (uint32_t *)(pShared + (B2BTEST_SHARED_TH1INJHI  >> 2));
+  pSharedTH1InjLo         = (uint32_t *)(pShared + (B2BTEST_SHARED_TH1INJLO  >> 2));
   
   // find address of CPU from external perspective
   idx = 0;
@@ -115,7 +115,7 @@ void initSharedMem() // determine address and clear shared mem
     pCpuRamExternalData4EB    = (uint32_t *)(pCpuRamExternal + ((COMMON_SHARED_DATA_4EB + SHARED_OFFS) >> 2));
   }
 
-  DBPRINT2("b2b-test: CPU RAM External 0x%8x, begin shared 0x%08x\n", pCpuRamExternal, SHARED_OFFS);
+  DBPRINT2("b2b-cbu: CPU RAM External 0x%8x, begin shared 0x%08x\n", pCpuRamExternal, SHARED_OFFS);
 
   // clear shared mem
   i = 0;
@@ -125,7 +125,7 @@ void initSharedMem() // determine address and clear shared mem
     pSharedTemp++;
     i++;
   } // while pSharedTemp
-  DBPRINT2("b2b-test: used size of shared mem is %d words (uint32_t), begin %x, end %x\n", i, pShared, pSharedTemp-1);
+  DBPRINT2("b2b-cbu: used size of shared mem is %d words (uint32_t), begin %x, end %x\n", i, pShared, pSharedTemp-1);
   } // initSharedMem
 
 
@@ -142,7 +142,7 @@ uint32_t extern_entryActionConfigured()
 
   // configure EB master (SRC and DST MAC/IP are set from host)
   if ((status = common_ebmInit(2000, 0xffffffffffff, 0xffffffff, EBM_NOREPLY)) != COMMON_STATUS_OK) {
-    DBPRINT1("b2b-test: ERROR - init of EB master failed! %u\n", (unsigned int)status);
+    DBPRINT1("b2b-cbu: ERROR - init of EB master failed! %u\n", (unsigned int)status);
     return status;
   } 
 
@@ -166,7 +166,7 @@ uint32_t extern_entryActionOperation()
   // flush ECA queue for lm32
   i = 0;
   while (common_wait4ECAEvent(1, &tDummy, &pDummy, &flagDummy) !=  COMMON_ECADO_TIMEOUT) {i++;}
-  DBPRINT1("b2b-test: ECA queue flushed - removed %d pending entries from ECA queue\n", i);
+  DBPRINT1("b2b-cbu: ECA queue flushed - removed %d pending entries from ECA queue\n", i);
 
   // set initial nonsense values
   *pSharedTH1ExtHi = 0x000000E8; // 1 kHz dummy
@@ -194,6 +194,8 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
   uint64_t sendParam;                                         // param to send
   uint64_t recDeadline;                                       // deadline received
   uint64_t recParam;                                          // param received
+  uint64_t TH1Ext;                                            // h=1 period [as] of extraction machine
+  uint32_t test, test1;
 
   status = actStatus;
 
@@ -211,7 +213,7 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
     sendDeadline = getSysTime() + (uint64_t)COMMON_AHEADT;
 
     common_ebmWriteTM(sendDeadline, sendEvtId, sendParam);
-    pp_printf("b2b-test: got B2B_START\n");
+    DBPRINT2("b2b-cbu: got B2B_START\n");
 
     nTransfer++;
 
@@ -219,7 +221,9 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
   case B2BTEST_ECADO_B2B_PREXT :
     // received: measured phase from extraction machine
     // do some math
-    sendDeadline = recParam + (uint64_t)100000000; /* chk, hack: 1. fixed period 2. need PRINJ too */
+    TH1Ext       = (uint64_t)(*pSharedTH1ExtHi) << 32;
+    TH1Ext       = (uint64_t)(*pSharedTH1ExtLo) | TH1Ext;
+    sendDeadline = recParam + ((uint64_t)100000 * TH1Ext) / (uint64_t)1000000000; /* chk, hack: 100000 periods, convert to ns need PRINJ too */
 
     // send TR_EXT_INJ to extraction machine
     sendEvtId    = 0x1fff000000000000;                                        // FID, GID
@@ -227,8 +231,10 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
     
     sendParam    = 0x0;
 
+    test  = (uint32_t)(sendDeadline - getSysTime());
+    test1 = (uint32_t)(TH1Ext / 1000000000);
     common_ebmWriteTM(sendDeadline, sendEvtId, sendParam);
-    pp_printf("b2b-test: got B2B_START\n");
+    DBPRINT2("b2b-cbu: got B2B_PREXT %u %u\n", test, test1);
 
     break;
     
@@ -294,5 +300,6 @@ int main(void) {
     common_publishState(pubState);
     *pSharedNTransfer = nTransfer;
   } // while
+
   return (1); // this should never happen ...
 } // main
