@@ -22,9 +22,11 @@
  * License along with this library. If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************
  */
-#include <find_process.h>
-#include <unistd.h>
-#include <netdb.h>
+#ifndef __DOCFSM__
+ #include <find_process.h>
+ #include <unistd.h>
+ #include <netdb.h>
+#endif
 #include "daqt_command_line.hpp"
 
 using namespace daqt;
@@ -422,7 +424,7 @@ vector<OPTION> CommandLine::c_optList =
       .m_shortOpt = 'T',
       .m_longOpt  = "terminal",
       .m_helpText = "PARAM replaces the terminal which is used by Gnuplot."
-                    " Default is: " GNUPLOT_DEFAULT_TERMINAL
+                    " Default is: \"" GNUPLOT_DEFAULT_TERMINAL "\""
    },
    {
       OPT_LAMBDA( poParser,
@@ -629,11 +631,8 @@ int CommandLine::onArgument( void )
       {
          SCU_ASSERT( m_poAllDaq == nullptr );
 #if 1
-         if( ::findProcesses( getProgramName().c_str(),
-                              ::onFoundProcess, &arg,
-                              static_cast<FPROC_MODE_T>
-                                 (::FPROC_BASENAME | ::FPROC_RLINK) )
-             < 0 )
+         if( ::findProcesses( getProgramName().c_str(), ::onFoundProcess, &arg,
+            static_cast<FPROC_MODE_T>(::FPROC_BASENAME | ::FPROC_RLINK) ) < 0 )
             return -1;
 #endif
          m_poAllDaq = new DaqContainer( arg, this, !m_noReset );

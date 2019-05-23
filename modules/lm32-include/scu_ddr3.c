@@ -118,30 +118,30 @@ int ddr3FlushFiFo( register const DDR3_T* pThis, unsigned int start,
       if( pThis->pEbHandle->status != EB_OK )
          return pThis->pEbHandle->status;
    #endif
+      unsigned int pollCount = 0;
+      while( (ddr3GetFifoStatus( pThis ) & DDR3_FIFO_STATUS_MASK_EMPTY) != 0 )
+      {
+      #ifdef __linux__
+         if( pThis->pEbHandle->status != EB_OK )
+            return pThis->pEbHandle->status;
+      #endif
+         if( poll == NULL )
+            continue;
+         pollRet = poll( pThis, pollCount );
+         if( pollRet < 0 )
+            return pollRet;
+         if( pollRet > 0 )
+            break;
+         pollCount++;
+      }
+
       for( unsigned int i = 0; i < blkLen; i++ )
       {
-         unsigned int pollCount = 0;
-         while( (ddr3GetFifoStatus( pThis ) & DDR3_FIFO_STATUS_MASK_EMPTY) != 0 )
-         {
-         #ifdef __linux__
-            if( pThis->pEbHandle->status != EB_OK )
-               return pThis->pEbHandle->status;
-         #endif
-            if( poll == NULL )
-               continue;
-            pollRet = poll( pThis, pollCount );
-            if( pollRet < 0 )
-               return pollRet;
-            if( pollRet > 0 )
-               break;
-            pollCount++;
-         }
          ddr3PopFifo( pThis, &pTarget[targetIndex++] );
       #ifdef __linux__
          if( pThis->pEbHandle->status != EB_OK )
             return pThis->pEbHandle->status;
       #endif
-         //start++;
       }
       start     += blkLen;
       word64len -= blkLen;

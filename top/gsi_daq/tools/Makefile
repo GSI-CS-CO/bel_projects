@@ -47,7 +47,12 @@ HOST ?= tcp/$(SCU_URL)
 #CALL_ARGS         ?= $(HOST)  -d10 -vtEC 3 1 3 2 -z 9 2
 #CALL_ARGS         ?= $(HOST) -Hte 3 1
 #CALL_ARGS         ?= $(HOST) -Hrtev 9 1
-CALL_ARGS         ?= $(HOST) -G /usr/bin/gnuplot -PrzvC 3 1
+#CALL_ARGS         ?=  $(HOST) -G /usr/bin/gnuplot -PrzvC 3 1
+
+#CALL_ARGS         ?=  $(HOST) -C 3 1 3 2 9 1 9 2 9 3 9 4
+CALL_ARGS         ?=  $(HOST) -C 3 1 3 2
+#CALL_ARGS         ?= $(HOST) -n
+#CALL_ARGS         ?= -n
 
 REMOTE_CALL_ARGS  ?= "dev/wbm0"
 

@@ -390,9 +390,11 @@ void ramWriteDaqData( register RAM_SCU_T* pThis, DAQ_CANNEL_T* pDaqChannel,
    ramRingDbgPrintIndexes( &pThis->pSharedObj->ringIndexes, "Origin indexes:");
    ramRingDbgPrintIndexes( poIndexes, "Data indexes:" );
 
-   DBG_RAM_INFO( "DBG: %s() : Slot: %d, Channel: %d\n", __func__,
-             daqChannelGetSlot( pDaqChannel ),
-             daqChannelGetNumber( pDaqChannel ) + 1 );
+   DBG_RAM_INFO( "DBG: %s(): "
+                 ESC_BOLD " Slot: %d, Channel: %d\n" ESC_NORMAL,
+                 __func__,
+                 daqChannelGetSlot( pDaqChannel ),
+                 daqChannelGetNumber( pDaqChannel ) + 1 );
 
    if( isShort )
    {
@@ -559,7 +561,7 @@ void ramWriteDaqData( register RAM_SCU_T* pThis, DAQ_CANNEL_T* pDaqChannel,
       * Making the new received data block in ring buffer valid.
       */
       publishWrittenData( pThis, &oDataIndexes );
-      DBPRINT1( "DBG: Sequence: %d\n", *pSequence - 1 );
+      DBG_RAM_INFO( "DBG: Sequence: %d\n", *pSequence - 1 );
       if( pDaqChannel->properties.restart )
       {
          if( daqDescriptorWasHiRes( &oDescriptor ) )
@@ -574,12 +576,12 @@ void ramWriteDaqData( register RAM_SCU_T* pThis, DAQ_CANNEL_T* pDaqChannel,
          }
       }
    }
-#ifdef DEBUGLEVEL
    else
    { /*
       * Block integrity is corrupt!
       */
       daqChannelSetStatus( pDaqChannel, DAQ_RECEIVE_STATE_CORRUPT_BLOCK );
+#ifdef DEBUGLEVEL
    #ifndef CONFIG_DAQ_DECREMENT
       if( getRemaining( pDaqChannel ) != 0 )
       {
@@ -596,9 +598,8 @@ void ramWriteDaqData( register RAM_SCU_T* pThis, DAQ_CANNEL_T* pDaqChannel,
                    ESC_NORMAL,
                    dataWordCounter,
                    expectedWords );
-
-   }
 #endif /* ifdef DEBUGLEVEL */
+   }
    ramRingDbgPrintIndexes( &pThis->pSharedObj->ringIndexes,
                            ESC_FG_WHITE ESC_BOLD "Final indexes" ESC_NORMAL );
    daqDescriptorPrintInfo( &oDescriptor );

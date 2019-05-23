@@ -55,7 +55,7 @@ using namespace daq;
 #endif
 
 #ifndef GNUPLOT_DEFAULT_TERMINAL
-  #define GNUPLOT_DEFAULT_TERMINAL "X11"
+  #define GNUPLOT_DEFAULT_TERMINAL "X11 size 800,600"
 #endif
 
 

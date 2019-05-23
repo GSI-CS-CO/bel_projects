@@ -162,6 +162,8 @@ typedef uint16_t DAQ_REGISTER_T;
  * Sample100us:           Bit [2] use 100 us sample.
  * Sample10us:            Bit [1] use 10 us sample.
  * Ena_PM:                Bit [0] starts PM sampling with 100 us.
+ *
+ * Big endian (LM32):
  */
    #define __DAQ_BF_CONTROL_REGISTER_BITS         \
       DAQ_REGISTER_T ExtTrig_nEvTrig_HiRes: 1;    \
@@ -173,7 +175,10 @@ typedef uint16_t DAQ_REGISTER_T;
       DAQ_REGISTER_T Sample10us:            1;    \
       DAQ_REGISTER_T Ena_PM:                1;
 
-#else /* Little endian. */
+#else
+/*
+ * Little endian (Linux):
+ */
    #define __DAQ_BF_CONTROL_REGISTER_BITS         \
       DAQ_REGISTER_T Ena_PM:                1;    \
       DAQ_REGISTER_T Sample10us:            1;    \
