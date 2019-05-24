@@ -2,8 +2,8 @@
 # debug enable
 #set -x
 
-echo $#
-echo -e "$@\n\n" # new line
+#echo $#
+#echo $@
 
 get_usr_answer()
 {
@@ -16,31 +16,48 @@ get_usr_answer()
 
 write_pulse_params_to_ram()
 {
-  echo writing id, delay, conditions, offset and production cycle to RAM:
+  echo writing event id, delay, conditions, offset to RAM:
 
-  local USR_RAM_ADDR=$USR_RAM_START
+  local USR_RAM_ADDR=$1
   eb-write dev/wbm0 ${USR_RAM_ADDR}/4 ${IO_EVNT_ID::10}
-  printf ' io evnt id @ 0x%08x : 0x%s\n' $USR_RAM_ADDR "$(eb-read dev/wbm0 ${USR_RAM_ADDR}/4)"
+  printf ' io evnt id   @ 0x%08x : 0x%s\n' $USR_RAM_ADDR "$(eb-read dev/wbm0 ${USR_RAM_ADDR}/4)"
 
   USR_RAM_ADDR=$(($USR_RAM_ADDR + 4))
   eb-write dev/wbm0 ${USR_RAM_ADDR}/4 $PULSE_DELAY
-  printf ' delay      @ 0x%08x : 0x%s\n' $USR_RAM_ADDR "$(eb-read dev/wbm0 ${USR_RAM_ADDR}/4)"
+  printf ' delay        @ 0x%08x : 0x%s\n' $USR_RAM_ADDR "$(eb-read dev/wbm0 ${USR_RAM_ADDR}/4)"
 
   USR_RAM_ADDR=$(($USR_RAM_ADDR + 4))
   eb-write dev/wbm0 ${USR_RAM_ADDR}/4 $IO_RULES
-  printf ' conditions @ 0x%08x : 0x%s\n' $USR_RAM_ADDR "$(eb-read dev/wbm0 ${USR_RAM_ADDR}/4)"
+  printf ' conditions   @ 0x%08x : 0x%s\n' $USR_RAM_ADDR "$(eb-read dev/wbm0 ${USR_RAM_ADDR}/4)"
 
   USR_RAM_ADDR=$(($USR_RAM_ADDR + 4))
-  eb-write dev/wbm0 ${USR_RAM_ADDR}/4 $IO_EVNT_OFF
-  printf ' offset     @ 0x%08x : 0x%s\n' $USR_RAM_ADDR "$(eb-read dev/wbm0 ${USR_RAM_ADDR}/4)"
+  eb-write dev/wbm0 ${USR_RAM_ADDR}/4 $IO_BLOCK_PERIOD
+  printf ' block period @ 0x%08x : 0x%s\n' $USR_RAM_ADDR "$(eb-read dev/wbm0 ${USR_RAM_ADDR}/4)"
+
+  # instruct LM32 to load params from RAM
+  eb-write dev/wbm0 ${2}/4 2
+
+  echo
+}
+
+write_prod_cycles_to_ram()
+{
+  echo writing production cycles to RAM:
+
+  local USR_RAM_ADDR=$1
+  eb-write dev/wbm0 ${USR_RAM_ADDR}/4 ${IO_EVNT_ID::10}
+  printf ' io evnt id   @ 0x%08x : 0x%s\n' $USR_RAM_ADDR "$(eb-read dev/wbm0 ${USR_RAM_ADDR}/4)"
 
   USR_RAM_ADDR=$(($USR_RAM_ADDR + 4))
   eb-write dev/wbm0 ${USR_RAM_ADDR}/4 $PULSE_CYCLE_HI32
-  printf ' cycle_hi32 @ 0x%08x : 0x%s\n' $USR_RAM_ADDR "$(eb-read dev/wbm0 ${USR_RAM_ADDR}/4)"
+  printf ' cycle_hi32   @ 0x%08x : 0x%s\n' $USR_RAM_ADDR "$(eb-read dev/wbm0 ${USR_RAM_ADDR}/4)"
 
   USR_RAM_ADDR=$(($USR_RAM_ADDR + 4))
   eb-write dev/wbm0 ${USR_RAM_ADDR}/4 $PULSE_CYCLE_LO32
-  printf ' cycle_lo32 @ 0x%08x : 0x%s\n' $USR_RAM_ADDR "$(eb-read dev/wbm0 ${USR_RAM_ADDR}/4)"
+  printf ' cycle_lo32   @ 0x%08x : 0x%s\n' $USR_RAM_ADDR "$(eb-read dev/wbm0 ${USR_RAM_ADDR}/4)"
+
+  # instruct LM32 to load production cycles from RAM
+  eb-write dev/wbm0 ${2}/4 3
 
   echo
 }
@@ -50,58 +67,66 @@ write_pulse_params_to_ram()
 TR_NAME=""
 IO_NAME="IO1"
 
-# default number of ECA rules for the IO action channel
-IO_RULES=100
+# default number of ECA rules for a pulse block
+IO_RULES=10
 
-# default event offset is 1000ns (1us duty cycle -> 2us period -> 500KHz)
-IO_EVNT_OFF=1000
+# default length of the signal active state, nanoseconds
+IO_ACT_LEN=1000
+
+# default period of a signal, nanoseconds (IO_ACT_LEN < IO_PERIOD)
+IO_PERIOD=2000
+
 
 # default event flags (delayed)
 IO_EVNT_FLG=0x8
 
-IO_EVNT_ID=0xEEEE000000000000
-IO_EVNT_MSK=0xFFFF000000000000
+IO_EVNT_ID=0x0000FCA000000000
+IO_EVNT_MSK=0xFFFFFFF000000000
 
 PULSE_DELAY=0;
 PULSE_CYCLE_HI32=0
 PULSE_CYCLE_LO32=5 # inject timing messages for IO action 5 times
 
-OPTION_WRITE_PULSE_PARAMS_TO_RAM=0
-OPTION_USER_INTERACTION=1
+OPT_SHARED_RAM=0
+OPT_USR_INTERACTION=1
 
 if [ $# -ne 0 ]; then
-  while getopts ":hn:f:o:c:d:pu" opt; do
+  while getopts ":hn:a:b:f:c:d:p:u" opt; do
     case $opt in
       h ) # help
         echo "$0 <options>"
-        echo -e "\noptions:"
-        echo "-n <conditions>   number of ECA IO conditions"
-        echo "-o <offset>       regular offset for each ECA IO conditions"
+        echo  "options:"
+        echo
+        echo "-a <active>       active state length of a signal, nanoseconds"
+        echo "-b <period>       signal period, nanoseconds"
+        echo "-n <conditions>   number of conditions (pulse block)"
         echo "-f <flags>        condition flags (1:?, 2:?, 4: ?, 8: ?)"
-        echo "-c <cycle, hi32>  production cycle, high 32-bit value"
-        echo "-d <cycle, lo32>  production cycle, low 32-bit value"
-        echo "-p                store the given pulse parameter to RAM"
+        echo "-c <cycles, h32>  pulse cycles (high 32-bit value), nanoseconds"
+        echo "-d <cycles, l32>  pulse cycles (low 32-bit value)"
+        echo "-p <mb_slot addr> send parameters to LM32 using shared RAM"
         echo "-u                user interaction is not needed"
         exit 0 ;;
-      n ) # number of ECA conditions (must be even number)
-        if [ $(($OPTARG % 2)) ]; then
-          IO_RULES=$OPTARG
-        else
-          echo "$OPTARG must be even number!" 1>&2
+      n ) # number of ECA conditions (builds up a pulse block)
+        IO_RULES=$OPTARG ;;
+      a ) # active state length of a signal
+        IO_ACT_LEN=$OPTARG ;;
+      b ) # period of a signal
+        IO_PERIOD=$OPTARG
+        if [ $IO_PERIOD -le $IO_ACT_LEN ]; then
+          echo "Invalid signal period (less or equal to active state of $IO_ACT_LEN)"
           exit 1
         fi ;;
       f ) # flags
         IO_EVNT_FLG=$OPTARG ;;
-      o ) # offsets
-        IO_EVNT_OFF=$OPTARG ;;
       c ) # pulse cycle high 32-bit
         PULSE_CYCLE_HI32=$OPTARG ;;
       d ) # pulse cycle low 32-bit
         PULSE_CYCLE_LO32=$OPTARG ;;
       p ) # allow to store the pulse params to RAM
-        OPTION_WRITE_PULSE_PARAMS_TO_RAM=1 ;;
+        OPT_SHARED_RAM=1
+        OPT_SHARED_RAM_ARGS=$OPTARG ;;
       u ) # disable user interaction
-        OPTION_USER_INTERACTION=0 ;;
+        OPT_USR_INTERACTION=0 ;;
       : )
         echo "Bad option: $OPTARG requires an argument" 1>&2
         exit 1 ;;
@@ -113,24 +138,40 @@ if [ $# -ne 0 ]; then
   shift $((OPTIND -1))
 fi
 
+remainder=$( expr $IO_RULES % 2 )
+periods=$( expr $IO_RULES / 2 )
+
+# pulse block period, nanoseconds
+IO_BLOCK_PERIOD=$( expr $periods \* $IO_PERIOD )
+
+if [ $remainder -eq 1 ]; then
+  IO_BLOCK_PERIOD=$( expr $IO_BLOCK_PERIOD + $IO_ACT_LEN )
+fi
+
+echo "pulse block period = $IO_BLOCK_PERIOD ns"
+
 ############# write pulse parameters to shared memory #########################
 
 # write conditions and offset to shared RAM
 
-if [ $OPTION_WRITE_PULSE_PARAMS_TO_RAM -eq 1 ]; then
-  USR_RAM_START=0x200a0510
-  write_pulse_params_to_ram
+if [ $OPT_SHARED_RAM -eq 1 ]; then
+  write_pulse_params_to_ram 0x200a0510 $OPT_SHARED_RAM_ARGS
+  write_prod_cycles_to_ram 0x200a0510 $OPT_SHARED_RAM_ARGS
 fi
 ############# set action rules for LM32 ########################################
 
-LM32_EVNT_ID=0x8484000000000000
-LM32_EVNT_MSK=0xFFFF000000000000
-LM32_EVNT_TAG=0x42
+LM32_EVNT_BG_ON=0x0000991000000000
+LM32_EVNT_BG_OFF=0x0000990000000000
+LM32_EVNT_MSK=0xFFFFFFF000000000
+LM32_EVNT_TAG=0xb2b2b2b2
 LM32_EVNT_OFF=0
 
-if [ $OPTION_USER_INTERACTION -eq 1 ]; then
-  echo "Are you sure to set ECA rules for the LM32 action channel:"
-  echo " id: $LM32_EVNT_ID, mask: $LM32_EVNT_MSK, offset: $LM32_EVNT_OFF, tag: $LM32_EVNT_TAG (y/n) ?"
+if [ $OPT_USR_INTERACTION -eq 1 ]; then
+  echo "Conditions below are required to generate pulses at chosen output:"
+  echo " e_id: $LM32_EVNT_BG_ON, e_mask: $LM32_EVNT_MSK, offset: $LM32_EVNT_OFF, tag: $LM32_EVNT_TAG"
+  echo " e_id: $LM32_EVNT_BG_OFF, e_mask: $LM32_EVNT_MSK, offset: $LM32_EVNT_OFF, tag: $LM32_EVNT_TAG"
+  echo
+  echo "Are you sure to set them in ECA for the LM32 action channel (y/n ?)"
   get_usr_answer
 fi
 
@@ -141,7 +182,8 @@ TR_NAME=$(saft-ctl bla -f -j | grep -oE "name:(.*?)path" | sed s/,//g | cut -d" 
 saft-ecpu-ctl $TR_NAME -x
 
 # set ECA rules for the LM32 action channel
-saft-ecpu-ctl $TR_NAME -d -c $LM32_EVNT_ID $LM32_EVNT_MSK $LM32_EVNT_OFF $LM32_EVNT_TAG
+saft-ecpu-ctl $TR_NAME -d -c $LM32_EVNT_BG_ON $LM32_EVNT_MSK $LM32_EVNT_OFF $LM32_EVNT_TAG
+saft-ecpu-ctl $TR_NAME -d -c $LM32_EVNT_BG_OFF $LM32_EVNT_MSK $LM32_EVNT_OFF $LM32_EVNT_TAG
 
 # verify ECA rules for the LM32 action channel
 echo Current ECA rules the LM32 action channel
@@ -151,6 +193,7 @@ echo
 
 ############## configure IO ####################################################
 
+echo "Detecting available IO in system ..."
 # list all IO and their capabilities
 saft-io-ctl $TR_NAME -i
 
@@ -160,13 +203,16 @@ if [ "$AVAIL_IO" != "" ]; then
   IO_NAME=$AVAIL_IO
 fi
 
-if [ $OPTION_USER_INTERACTION -eq 1 ]; then
+if [ $OPT_USR_INTERACTION -eq 1 ]; then
   # ask user agreement prior to configuration
-  echo "set $IO_NAME of $TR_NAME as output (y/n) ?"
+  echo
+  echo "Do you want to set $IO_NAME of $TR_NAME as output (y/n) ?"
   get_usr_answer
 
-  echo "Are you sure to set $IO_RULES ECA rules for the IO channel:"
-  echo " id: $IO_EVNT_ID, mask: $IO_EVNT_MSK, flag: $IO_EVNT_FLG, offset: $IO_EVNT_OFF (y/n) ?"
+  echo "Conditions below are required to generate pulses at output $IO_NAME :"
+  echo " e_id: $IO_EVNT_ID, e_mask: $IO_EVNT_MSK, flag: $IO_EVNT_FLG, active: $IO_ACT_LEN, period: $IO_PERIOD"
+  echo
+  echo "Are you sure to set $IO_RULES conditions in ECA for the IO action channel (y/n) ?"
   get_usr_answer
 fi
 
@@ -183,23 +229,51 @@ echo
 # set ECA rules for chosen output channel
 i=1
 val=1
-offset=$IO_EVNT_OFF
+offset=0
+inactive=$(expr $IO_PERIOD - $IO_ACT_LEN )
 
 while [ $i -le $IO_RULES ]; do
 
-  offset=$( expr $i \* $IO_EVNT_OFF )
-#  echo rule: $IO_EVNT_ID mask: $IO_EVNT_MSK offset: $offset flag: $IO_EVNT_FLG value: $val
+  # active state of a signal
+#  echo rule: e_id: $IO_EVNT_ID e_mask: $IO_EVNT_MSK offset: $offset flag: $IO_EVNT_FLG value: $val
   saft-io-ctl $TR_NAME -n $IO_NAME -u -c $IO_EVNT_ID $IO_EVNT_MSK $offset $IO_EVNT_FLG $val
-  if [ $val -eq 0 ]
-  then val=1;
-  else val=0; fi
+
+  offset=$( expr $offset + $IO_ACT_LEN )
+
+  if [ $val -eq 0 ]; then
+    val=1;
+  else
+    val=0;
+  fi
 
   i=$( expr $i + 1 )
+
+  if [ $i -gt $IO_RULES ]; then
+    break
+  fi
+
+  # inactive state
+#  echo rule: e_id: $IO_EVNT_ID e_mask: $IO_EVNT_MSK offset: $offset flag: $IO_EVNT_FLG value: $val
+  saft-io-ctl $TR_NAME -n $IO_NAME -u -c $IO_EVNT_ID $IO_EVNT_MSK $offset $IO_EVNT_FLG $val
+
+  offset=$( expr $offset + $inactive )
+
+  if [ $val -eq 0 ]; then
+    val=1;
+  else
+    val=0;
+  fi
+
+  i=$( expr $i + 1 )
+
 done
+
+# print period of a pulse block
+echo "Pulse block period = $offset ( $(printf '0x%x' $offset ) ) ns"
+echo
 
 # verify ECA rules for the IO actions
 echo Current ECA rules for the IO action channel
 saft-io-ctl $TR_NAME -l
 
 echo
-

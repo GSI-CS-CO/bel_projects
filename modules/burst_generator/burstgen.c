@@ -59,9 +59,14 @@
  *    	eb-write dev/wbm0 0x200A0518/4 10
  *  - each IO action offset
  *    	eb-write dev/wbm0 0x200A051C/4 10000
- *  - production cycle, hi32 and lo32 values
+ *  and instruct LM32 to load pluse parameters (see below in 2.)
+ *
+ *  write production cycles to shared RAM:
+ *  - production cycles, hi32 and lo32 values
+ *  	eb-write dev/wbm0 0x200A0510/4 0x0000FCA0
  *    	eb-write dev/wbm0 0x200A0520/4 0x88776655
  *    	eb-write dev/wbm0 0x200A0524/4 0x44332211
+ *  and instruct LM32 to load production cycles (see below in 2.)
  *
  *  These commands are also packed in configure_eca.sh and can be invoked as:
  *    ./configure_eca.sh -n 10 -o 10000 -f 0xf -c 0x88776655 -d 0x44332211
@@ -73,7 +78,7 @@
  *    	eb-write dev/wbm0 0x808/4 1
  *  - load pulse parameters from shared RAM
  *    	eb-write dev/wbm0 0x808/4 2
- *  - load production cycle from shared RAM
+ *  - load production cycles from shared RAM
  *    	eb-write dev/wbm0 0x808/4 3
  *  - show actual pulse parameters again for verification (optional)
  *  	eb-write dev/wbm0 0x808/4 1
@@ -148,10 +153,10 @@ enum {
 
 /* task configuration table */
 static Task_t tasks[4]= {
-  {0, 0, 0, 0, 0, ALWAYS, 0, triggerIoActions  },
-  {0, 0, 0, 0, 0, ALWAYS, 0, ecaMsiHandler     },
-  {0, 0, 0, 0, 0, ALWAYS, 0, hostMsiHandler    },
-  {0, 0, 0, 0, 0, INTERVAL_2000MS, 0, dummyTask},
+  {0, 0, 0, 0, 0, 0, ALWAYS, 0, ecaMsiHandler     },
+  {0, 0, 0, 0, 0, 0, ALWAYS, 0, triggerIoActions  },
+  {0, 0, 0, 0, 0, 0, ALWAYS, 0, hostMsiHandler    },
+  {0, 0, 0, 0, 0, 0, INTERVAL_2000MS, 0, dummyTask},
 };
 
 static Task_t *pTask = &tasks[0];                      // task table pointer
@@ -638,10 +643,12 @@ void execHostCmd(int32_t cmd)
   int result = STATUS_OK;
   // check, if a command has been issued (no cmd: 0x0)
   if (cmd) {
+    mprintf("\ncmd 0x%x: ", cmd);
     switch (cmd) {
 
     case CMD_SHOW_ALL:    // show pulse parameters
-      mprintf("\ncmd 0x%x: show\n", cmd);  // show actual state
+      mprintf("show\n");  // show actual state
+
       mprintf("id=0x%x, cycle=0x%x:%x, period=0x%x:%x, deadline=0x%x:%x, interval=0x%x:%x\n",
 	  (uint32_t)(*bufTimMsg),
 	  (uint32_t)(pTask[0].cycle >> 32), (uint32_t)pTask[0].cycle,
@@ -650,31 +657,38 @@ void execHostCmd(int32_t cmd)
 	  (uint32_t)(pTask[0].interval >> 32), (uint32_t)pTask[0].interval);
       break;
 
-    case CMD_GET_PARAM:    // get pulse parameters (id, delay, period = nCond * tOff) from shared RAM
-      mprintf("\ncmd 0x%x: get parameters)\n", cmd);
-      mprintf("%x @ 0x%x\n", *pSharedInput, (uint32_t)pSharedInput);           // id
-      mprintf("%x @ 0x%x\n", *(pSharedInput +1), (uint32_t)(pSharedInput +1)); // delay
-      mprintf("%x @ 0x%x\n", *(pSharedInput +2), (uint32_t)(pSharedInput +2)); // nCond
-      mprintf("%x @ 0x%x\n", *(pSharedInput +3), (uint32_t)(pSharedInput +3)); // tOff
+    case CMD_GET_PARAM:    // get pulse parameters expressed by ECA conditions (e_id, delay, nConds, period) from shared RAM
+      mprintf("get parameters\n");
 
+      mprintf("%8x @ 0x%x\n", *(pSharedInput   ), (uint32_t)(pSharedInput   )); // e_id, h32
+      mprintf("%8x @ 0x%x\n", *(pSharedInput +1), (uint32_t)(pSharedInput +1)); // delay
+      mprintf("%8x @ 0x%x\n", *(pSharedInput +2), (uint32_t)(pSharedInput +2)); // number of conditions (pulse block)
+      mprintf("%8x @ 0x%x\n", *(pSharedInput +3), (uint32_t)(pSharedInput +3)); // period of a pulse block, nanoseconds
+
+      toU64(*pSharedInput, EVT_ID_IO_L32, pTask[0].event);
       buildTimingMsg(bufTimMsg, *pSharedInput);                 // re-build timing msg for IO actions
-      pTask[0].period = *(pSharedInput +2) * *(pSharedInput +3);
+      pTask[0].period = *(pSharedInput +3);
       break;
 
-    case CMD_GET_CYCLE:    // get pulse cycle (n * period) from shared RAM
-      mprintf("\ncmd 0x%x: get cycle\n", cmd);
-      mprintf("%x @ 0x%x\n", *(pSharedInput +4), (uint32_t)(pSharedInput +4));
-      mprintf("%x @ 0x%x\n", *(pSharedInput +5), (uint32_t)(pSharedInput +5));
+    case CMD_GET_CYCLE:    // get pulse cycle (e_id, cycles * period of a pulse block) from shared RAM
+      mprintf("get cycle\n");
 
-      toU64(*(pSharedInput +4), *(pSharedInput +5), pTask[0].cycle);
+      mprintf("%8x @ 0x%x\n", *(pSharedInput   ), (uint32_t)(pSharedInput   )); // e_id, h32
+      mprintf("%8x @ 0x%x\n", *(pSharedInput +1), (uint32_t)(pSharedInput +1)); // pulse cycles (h32), nanoseconds
+      mprintf("%8x @ 0x%x\n", *(pSharedInput +2), (uint32_t)(pSharedInput +2)); // pulse cycles (l32), nanoseconds
 
-      // init task deadline and interval
-      pTask[0].deadline = 0;
-      pTask[0].interval = ALWAYS;
+      if ((pTask[0].event >> 32) == *pSharedInput)
+      {
+	toU64(*(pSharedInput +1), *(pSharedInput +2), pTask[0].cycle);
+
+	// init task deadline and interval
+	pTask[0].deadline = 0;
+	pTask[0].interval = ALWAYS;
+      }
       break;
 
-    case CMD_RD_ECA_MSI_ECPU: // read the ECA MSI settings for eCPU
-      mprintf("\ncmd 0x%x: get MSI cfg\n", cmd);
+    case CMD_RD_MSI_ECPU: // read the ECA MSI settings for eCPU
+      mprintf("read MSI cfg\n");
 
       atomic_on();
       *(pEcaCtl + (ECA_CHANNEL_SELECT_RW >> 2)) = gEcaChECPU;              // select channel for eCPU
@@ -687,32 +701,38 @@ void execHostCmd(int32_t cmd)
 
       break;
 
-    case CMD_RD_ECA_CHAN: // read the content of the ECA eCPU channel
-      mprintf("\ncmd 0x%x: get ECA chan counter\n", cmd);
+    case CMD_RD_ECPU_CHAN: // read the content of the ECA eCPU channel
+      mprintf("read eCPU chan counter\n");
 
+      atomic_on();
+      *(pEcaCtl + (ECA_CHANNEL_SELECT_RW >> 2)) = gEcaChECPU;
       uint32_t valid    = *(pEcaCtl + (ECA_CHANNEL_VALID_COUNT_GET >> 2));
       uint32_t overflow = *(pEcaCtl + (ECA_CHANNEL_OVERFLOW_COUNT_GET >> 2));
       uint32_t failed   = *(pEcaCtl + (ECA_CHANNEL_FAILED_COUNT_GET >> 2));
       uint32_t full     = *(pEcaCtl + (ECA_CHANNEL_MOSTFULL_ACK_GET >> 2));
-      mprintf("valid: 0x%x, overflow: 0x%x, failed: 0x%x, full: 0x%x\n",
-                valid, overflow, failed, full);
+      atomic_off();
+      mprintf("failed: 0x%x, valid: 0x%x, overflow: 0x%x, full: 0x%x\n",
+                failed, valid, overflow, full);
       break;
 
-    case CMD_RD_ECA_QUEUE: // read the content of ECA queue connected to eCPU channel
-      mprintf("\ncmd 0x%x: get ECA queue content\n", cmd);
+    case CMD_RD_ECPU_QUEUE: // read the content of ECA queue connected to eCPU channel
+      mprintf("read eCPU queue\n");
 
+      atomic_on();
+      *(pEcaCtl + (ECA_CHANNEL_SELECT_RW >> 2)) = gEcaChECPU;
       uint32_t flag      = *(pECAQ + (ECA_QUEUE_FLAGS_GET >> 2));
       uint32_t evtHigh   = *(pECAQ + (ECA_QUEUE_EVENT_ID_HI_GET >> 2));
       uint32_t evtLow    = *(pECAQ + (ECA_QUEUE_EVENT_ID_LO_GET >> 2));
       uint32_t tag       = *(pECAQ + (ECA_QUEUE_TAG_GET >> 2));
       uint32_t paramHigh = *(pECAQ + (ECA_QUEUE_PARAM_HI_GET >> 2));
       uint32_t paramLow  = *(pECAQ + (ECA_QUEUE_PARAM_LO_GET >> 2));
+      atomic_off();
       mprintf("event: 0x%08x:%08x, param: 0x%08x:%08x, tag: 0x%08x, flag: 0x%08x\n",
                 evtHigh, evtLow, paramHigh, paramLow, tag, flag);
       break;
 
    default:
-      mprintf("unknown host cmd '0x%08x'\n",cmd);
+      mprintf("unknown\n");
       result = STATUS_ERR;
     }
 

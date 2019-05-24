@@ -42,9 +42,9 @@ extern uint32_t*       _startshared[];
 #define CMD_SHOW_ALL      0x1UL
 #define CMD_GET_PARAM     0x2UL
 #define CMD_GET_CYCLE     0x3UL
-#define CMD_RD_ECA_MSI_ECPU 0x10UL
-#define CMD_RD_ECA_CHAN   0x11UL
-#define CMD_RD_ECA_QUEUE  0x12UL
+#define CMD_RD_MSI_ECPU   0x10UL
+#define CMD_RD_ECPU_CHAN  0x11UL
+#define CMD_RD_ECPU_QUEUE 0x12UL
 
 /* definitions of timing messages & ECA actions */
 #define ECA_VALID_ACTION  0x00040000UL  // ECA valid action
@@ -101,6 +101,7 @@ typedef struct {
 typedef struct {
   int state;
   int task_timeout_cnt;
+  uint64_t event;        /* event ID */
   int64_t cycle;         /* handler-specific: number of cycles */
   uint64_t period;       /* handler-specific: period in ns */
   uint64_t deadline;     /* handler-specific: deadline */
