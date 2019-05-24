@@ -298,6 +298,24 @@ void handleValidActions()
     ecaHandler(valCnt);                             // pop pending valid actions
 }
 
+void handleFailedActions()
+{
+  atomic_on();
+  *(pEcaCtl + (ECA_CHANNEL_SELECT_RW >> 2)) = gEcaChECPU;    // select ECA channel for LM32
+
+  *(pEcaCtl + (ECA_CHANNEL_OVERFLOW_COUNT_GET >> 2));        // read and clear overflow counter
+
+  *(pEcaCtl + (ECA_CHANNEL_CODE_SELECT_RW >> 2)) = (ECA_FG_DELAYED >> 16);
+  *(pEcaCtl + (ECA_CHANNEL_FAILED_COUNT_GET >> 2));          // read and clear delayed counter
+  *(pEcaCtl + (ECA_CHANNEL_CODE_SELECT_RW >> 2)) = (ECA_FG_CONFLICT >> 16);
+  *(pEcaCtl + (ECA_CHANNEL_FAILED_COUNT_GET >> 2));          // read and clear conflict counter
+  *(pEcaCtl + (ECA_CHANNEL_CODE_SELECT_RW >> 2)) = (ECA_FG_EARLY >> 16);
+  *(pEcaCtl + (ECA_CHANNEL_FAILED_COUNT_GET >> 2));          // read and clear early counter
+  *(pEcaCtl + (ECA_CHANNEL_CODE_SELECT_RW >> 2)) = (ECA_FG_LATE >> 16);
+  *(pEcaCtl + (ECA_CHANNEL_FAILED_COUNT_GET >> 2));          // read and clear late counter
+  atomic_off();
+}
+
 /*******************************************************************************
  *
  * Handle a pending ECA MSI
@@ -309,8 +327,19 @@ void ecaMsiHandler(int id)
 
     struct msi m = remove_msg(pMsgBufHead, ECA_MSI);
 
-    if ((m.msg & ECA_VALID_ACTION) == ECA_VALID_ACTION) // valid actions are pending
-      handleValidActions();                             // ECA MSI handling
+    mprintf("\n!Got MSI 0x%08x (h16: 0-3 faild, 4 vald, 5 ovrflw, 6 full)\n", m.msg); // debugging, remove later
+
+    switch (m.msg & ECA_FG_MASK)
+    {
+      case ECA_FG_VALID: // valid actions are pending
+	handleValidActions(); // ECA MSI handling
+	break;
+      case ECA_FG_MOSTFULL:
+	break;
+      default:
+	handleFailedActions();
+	break;
+    }
   }
 }
 

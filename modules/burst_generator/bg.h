@@ -47,7 +47,15 @@ extern uint32_t*       _startshared[];
 #define CMD_RD_ECPU_QUEUE 0x12UL
 
 /* definitions of timing messages & ECA actions */
-#define ECA_VALID_ACTION  0x00040000UL  // ECA valid action
+#define ECA_FG_MOSTFULL   0x00060000UL  // ECA mostfull flag
+#define ECA_FG_OVERFLOW   0x00050000UL  // ECA overflow flag (overflow cnt)
+#define ECA_FG_VALID      0x00040000UL  // ECA valid flag (valid cnt)
+#define ECA_FG_DELAYED    0x00030000UL  // ECA delayed flag (failed cnt)
+#define ECA_FG_CONFLICT   0x00020000UL  // ECA conflict (failed cnt)
+#define ECA_FG_EARLY      0x00010000UL  // ECA early (failed cnt)
+#define ECA_FG_LATE       0x00000000UL  // ECA late (failed cnt)
+#define ECA_FG_MASK       0x000F0000UL  // flag mask
+
 #define MY_ACT_TAG        BG_FW_ID      // ECA actions tagged for me
 #define IO_CYC_START      0x00009910UL  // start the IO pulse cycle
 #define IO_CYC_STOP       0x00009900UL  // stop the IO pulse cycle
