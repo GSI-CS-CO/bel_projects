@@ -38,25 +38,6 @@ namespace daqt
 
 using namespace daq;
 
-#ifndef HOT_KEY_SHOW_STATE
-  #define HOT_KEY_SHOW_STATE   's'
-#endif
-#ifndef HOT_KEY_POST_MORTEM
-  #define HOT_KEY_POST_MORTEM  'p'
-#endif
-#ifndef HOT_KEY_HIGH_RES
-  #define HOT_KEY_HIGH_RES     'h'
-#endif
-#ifndef HOT_KEY_RESET
-  #define HOT_KEY_RESET        'r'
-#endif
-#ifndef HOT_KEY_RECEIVE
-  #define HOT_KEY_RECEIVE      'i'
-#endif
-
-#ifndef GNUPLOT_DEFAULT_TERMINAL
-  #define GNUPLOT_DEFAULT_TERMINAL "X11 size 800,600"
-#endif
 
 
 #define FSM_DECLARE_STATE( state, attr... ) state

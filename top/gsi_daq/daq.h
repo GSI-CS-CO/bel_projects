@@ -313,7 +313,7 @@ typedef struct PACKED_SIZE
     * reaches zero.
     */
    uint16_t blockDownCounter;
-
+#ifdef CONFIG_DAQ_SW_SEQUENCE
    /*!
     * @brief Sequence number respectively modulo 256 block counter for
     *        blocks in continuous mode.
@@ -329,7 +329,7 @@ typedef struct PACKED_SIZE
     * Becomes incremented for each received hiRes or PM data block.
     */
    uint8_t  sequencePmHires;
-
+#endif
    DAQ_CHANNEL_BF_PROPERTY_T properties; //!<@see DAQ_CHANNEL_PROPERTY_T
 #ifdef CONFIG_DAQ_SIMULATE_CHANNEL
    uint16_t          callCount;   //!<@brief For simulation purposes only!

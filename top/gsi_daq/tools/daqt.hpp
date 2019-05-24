@@ -27,83 +27,39 @@
 #include <eb_console_helper.h>
 #include <stdlib.h>
 #include <daq_administration.hpp>
+#include <daqt_attributes.hpp>
 #include <string>
 #include <gnuplotstream.hpp>
 
 namespace daqt
 {
+
 using namespace daq;
 
 constexpr int INVALID_LIMIT = -1;
 
+#ifndef HOT_KEY_SHOW_STATE
+  #define HOT_KEY_SHOW_STATE   's'
+#endif
+#ifndef HOT_KEY_POST_MORTEM
+  #define HOT_KEY_POST_MORTEM  'p'
+#endif
+#ifndef HOT_KEY_HIGH_RES
+  #define HOT_KEY_HIGH_RES     'h'
+#endif
+#ifndef HOT_KEY_RESET
+  #define HOT_KEY_RESET        'r'
+#endif
+#ifndef HOT_KEY_RECEIVE
+  #define HOT_KEY_RECEIVE      'i'
+#endif
+
+#ifndef GNUPLOT_DEFAULT_TERMINAL
+  #define GNUPLOT_DEFAULT_TERMINAL "X11 size 1200,600"
+#endif
+
 class CommandLine;
 class Device;
-
-///////////////////////////////////////////////////////////////////////////////
-struct Attributes
-{
-   template<typename VT> struct Value
-   {
-      bool m_valid;
-      VT   m_value;
-
-      Value( void ): m_valid( false ) {}
-
-      void set( const Value<VT>& rMyContainer )
-      { /*
-         * If the attribute of my container valid but my own not,
-         * then making the value of my attribute to the value of my
-         * containers attribute.
-         */
-         if( rMyContainer.m_valid && !m_valid )
-            *this = rMyContainer;
-      }
-
-      void set( const VT value )
-      {
-         m_value = value;
-         m_valid = true;
-      }
-
-      bool operator==( const Value<VT>& rMyContainer )
-      {
-         if( m_valid != rMyContainer.m_valid )
-            return false;
-         if( m_value != rMyContainer.m_value )
-            return false;
-         return true;
-      }
-   };
-
-   struct NumValue: public Value<unsigned int>
-   {
-      NumValue( void ) { m_value = 0; }
-   };
-
-   struct BoolValue: public Value<bool>
-   {
-      BoolValue( void ) { m_value = false; }
-   };
-
-   struct SampleValue: public Value<::DAQ_SAMPLE_RATE_T>
-   {
-      SampleValue( void ) { m_value = ::DAQ_SAMPLE_1MS; }
-   };
-
-   void set( const Attributes& rMyContainer );
-
-   BoolValue     m_highResolution;
-   BoolValue     m_postMortem;
-   SampleValue   m_continueMode;
-   BoolValue     m_continueTriggerSouce;
-   BoolValue     m_highResTriggerSource;
-   BoolValue     m_triggerEnable;
-   NumValue      m_triggerDelay;
-   NumValue      m_triggerCondition;
-   NumValue      m_blockLimit;
-   BoolValue     m_restart;
-   BoolValue     m_zoomGnuPlot;
-};
 
 ///////////////////////////////////////////////////////////////////////////////
 class DaqContainer: public DaqAdministration

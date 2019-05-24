@@ -22,12 +22,12 @@
  * License along with this library. If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************
  */
-#include <unistd.h>
-#include <termios.h>
 #include "daqt.hpp"
 #include "daqt_messages.hpp"
 #include "daqt_command_line.hpp"
 #include "daqt_scan.hpp"
+#include "daqt_attributes.hpp"
+#include "daqt_read_stdin.hpp"
 
 using namespace daqt;
 
@@ -42,66 +42,6 @@ const char* getSampleRateText( ::DAQ_SAMPLE_RATE_T rate )
       case ::DAQ_SAMPLE_10US:  return "10 us";
    }
    return "unknown";
-}
-
-///////////////////////////////////////////////////////////////////////////////
-class Terminal
-{
-   struct termios m_originTerminal;
-
-public:
-   Terminal( void )
-   {
-      struct termios newTerminal;
-      ::tcgetattr( STDIN_FILENO, &m_originTerminal );
-      newTerminal = m_originTerminal;
-      newTerminal.c_lflag     &= ~(ICANON | ECHO);  /* Disable canonic mode and echo.*/
-      newTerminal.c_cc[VMIN]  = 1;  /* Reading is complete after one byte only. */
-      newTerminal.c_cc[VTIME] = 0; /* No timer. */
-      ::tcsetattr( STDIN_FILENO, TCSANOW, &newTerminal );
-   }
-
-   ~Terminal( void )
-   {
-      ::tcsetattr( STDIN_FILENO, TCSANOW, &m_originTerminal );
-   }
-
-   static int readKey( void )
-   {
-      int inKey = 0;
-      fd_set rfds;
-
-      struct timeval sleepTime = {0, 10};
-      FD_ZERO( &rfds );
-      FD_SET( STDIN_FILENO, &rfds );
-
-      if( ::select( STDIN_FILENO+1, &rfds, NULL, NULL, &sleepTime ) > 0 )
-         ::read( STDIN_FILENO, &inKey, sizeof( inKey ) );
-      else
-         inKey = 0;
-      return (inKey & 0xFF);
-   }
-};
-
-
-///////////////////////////////////////////////////////////////////////////////
-/*-----------------------------------------------------------------------------
- */
-void Attributes::set( const Attributes& rMyContainer )
-{
-   #define __SET_MEMBER( member )  member.set( rMyContainer.member )
-   __SET_MEMBER( m_highResolution );
-   __SET_MEMBER( m_postMortem );
-   __SET_MEMBER( m_continueMode );
-   __SET_MEMBER( m_continueTriggerSouce );
-   __SET_MEMBER( m_highResTriggerSource );
-   __SET_MEMBER( m_triggerEnable );
-   __SET_MEMBER( m_triggerDelay );
-   __SET_MEMBER( m_triggerCondition );
-   __SET_MEMBER( m_blockLimit );
-   __SET_MEMBER( m_restart );
-   __SET_MEMBER( m_zoomGnuPlot );
-   #undef __SET_MEMBER
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -277,7 +217,7 @@ void Channel::start( void )
 
    if( m_oAttributes.m_continueMode.m_valid )
    {
-      string sRate = getSampleRateText(m_oAttributes.m_continueMode.m_value  );
+      string sRate = ::getSampleRateText(m_oAttributes.m_continueMode.m_value);
       m_poModeContinuous =
          new Mode( this,
                    DaqInterface::c_contineousPayloadLen,
@@ -369,7 +309,8 @@ void Channel::showRunState( void )
    if( m_oAttributes.m_continueMode.m_valid )
    {
       cout << "\t\tcontinuous: "
-           << getSampleRateText(m_oAttributes.m_continueMode.m_value ) << "; ";
+           << ::getSampleRateText(m_oAttributes.m_continueMode.m_value )
+           << "; ";
       if( m_oAttributes.m_blockLimit.m_valid )
          cout << " limit: " << m_oAttributes.m_blockLimit.m_value
               << " blocks; ";

@@ -282,7 +282,9 @@ DAQ_RETURN_CODE_T opPostMortemOn( DAQ_ADMIN_T* pDaqAdmin,
    DAQ_CANNEL_T* pChannel = getChannel( pDaqAdmin, pData );
 
    pChannel->properties.restart = (pData->param1 != 0);
+#ifdef CONFIG_DAQ_SW_SEQUENCE
    pChannel->sequencePmHires = 0;
+#endif
    daqChannelDisableHighResolution( pChannel );
    daqChannelEnablePostMortem( pChannel );
 
@@ -306,7 +308,9 @@ static DAQ_RETURN_CODE_T opHighResolutionOn( DAQ_ADMIN_T* pDaqAdmin,
 
    DAQ_CANNEL_T* pChannel = getChannel( pDaqAdmin, pData );
    pChannel->properties.restart = (pData->param1 != 0);
+#ifdef CONFIG_DAQ_SW_SEQUENCE
    pChannel->sequencePmHires = 0;
+#endif
    daqChannelDisablePostMortem( pChannel );
    daqChannelEnableHighResolution( pChannel );
 
@@ -354,8 +358,9 @@ static DAQ_RETURN_CODE_T opContinueOn( DAQ_ADMIN_T* pDaqAdmin,
       return ret;
 
    DAQ_CANNEL_T* pChannel = getChannel( pDaqAdmin, pData );
-
+#ifdef CONFIG_DAQ_SW_SEQUENCE
    pChannel->sequenceContinuous = 0;
+#endif
    pChannel->blockDownCounter = pData->param2;
    DBPRINT1( "DBG: blockDownCounter = %d\n", pChannel->blockDownCounter );
 

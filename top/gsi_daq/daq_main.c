@@ -24,12 +24,9 @@
  */
 #include <daq_command_interface_uc.h>
 #include <daq_main.h>
-
-#ifdef DEBUGLEVEL
-  #include <mini_sdb.h>
-  #include <eb_console_helper.h>
-  #include <dbg.h>
-#endif
+#include <mini_sdb.h>
+#include <eb_console_helper.h>
+#include <dbg.h>
 
 static DAQ_ADMIN_T g_DaqAdmin;
 

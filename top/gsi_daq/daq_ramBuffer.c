@@ -362,8 +362,9 @@ void ramWriteDaqData( register RAM_SCU_T* pThis, DAQ_CANNEL_T* pDaqChannel,
 {
    DAQ_REGISTER_T (*getRemaining)( register DAQ_CANNEL_T* );
    volatile DAQ_DATA_T (*pop)( register DAQ_CANNEL_T* );
-
+#ifdef CONFIG_DAQ_SW_SEQUENCE
    uint8_t*     pSequence;
+#endif
    DAQ_REGISTER_T remainingDataWords;
    unsigned int dataWordCounter;
    unsigned int payloadIndex;
@@ -401,14 +402,18 @@ void ramWriteDaqData( register RAM_SCU_T* pThis, DAQ_CANNEL_T* pDaqChannel,
       getRemaining  = daqChannelGetDaqFifoWords;
       pop           = daqChannelPopDaqFifo;
       expectedWords = DAQ_FIFO_DAQ_WORD_SIZE_CRC;
+#ifdef CONFIG_DAQ_SW_SEQUENCE
       pSequence     = &pDaqChannel->sequenceContinuous;
+#endif
    }
    else
    {
       getRemaining  = daqChannelGetPmFifoWords;
       pop           = daqChannelPopPmFifo;
       expectedWords = DAQ_FIFO_PM_HIRES_WORD_SIZE_CRC;
+#ifdef CONFIG_DAQ_SW_SEQUENCE
       pSequence     = &pDaqChannel->sequencePmHires;
+#endif
    }
 
 #ifndef CONFIG_DAQ_DECREMENT
@@ -465,6 +470,7 @@ void ramWriteDaqData( register RAM_SCU_T* pThis, DAQ_CANNEL_T* pDaqChannel,
             * Descriptor becomes received.
             */
             RAM_ASSERT( di < ARRAY_SIZE(oDescriptor.index) );
+         #ifdef CONFIG_DAQ_SW_SEQUENCE
             if( di == offsetof(_DAQ_DISCRIPTOR_STRUCT_T, crcReg ) /
                                sizeof(DAQ_DATA_T) )
             { /*
@@ -475,6 +481,7 @@ void ramWriteDaqData( register RAM_SCU_T* pThis, DAQ_CANNEL_T* pDaqChannel,
                */
                ((_DAQ_BF_CRC_REG*)&data)->sequence = *pSequence - 1;
             }
+         #endif
             oDescriptor.index[di++] = data;
          }
 
@@ -561,7 +568,9 @@ void ramWriteDaqData( register RAM_SCU_T* pThis, DAQ_CANNEL_T* pDaqChannel,
       * Making the new received data block in ring buffer valid.
       */
       publishWrittenData( pThis, &oDataIndexes );
+   #ifdef CONFIG_DAQ_SW_SEQUENCE
       DBG_RAM_INFO( "DBG: Sequence: %d\n", *pSequence - 1 );
+   #endif
       if( pDaqChannel->properties.restart )
       {
          if( daqDescriptorWasHiRes( &oDescriptor ) )
@@ -623,7 +632,9 @@ int ramPushDaqDataBlock( register RAM_SCU_T* pThis, DAQ_CANNEL_T* pDaqChannel,
     */
    if( isShort )
    {
+   #ifdef CONFIG_DAQ_SW_SEQUENCE
       pDaqChannel->sequenceContinuous++;
+   #endif
       if( daqChannelGetDaqFifoWords( pDaqChannel ) < DAQ_DESCRIPTOR_WORD_SIZE )
       {
          DBPRINT1( ESC_BOLD ESC_FG_RED
@@ -632,15 +643,17 @@ int ramPushDaqDataBlock( register RAM_SCU_T* pThis, DAQ_CANNEL_T* pDaqChannel,
          daqChannelSetStatus( pDaqChannel, DAQ_RECEIVE_STATE_CORRUPT_BLOCK );
          return -1;
       }
-#ifdef CONFIG_DAQ_SIMULATE_CHANNEL
+   #ifdef CONFIG_DAQ_SIMULATE_CHANNEL
       daqDescriptorSetPM( &pDaqChannel->simulatedDescriptor, false );
       daqDescriptorSetHiRes( &pDaqChannel->simulatedDescriptor, true );
       daqDescriptorSetDaq( &pDaqChannel->simulatedDescriptor, false );
-#endif
+   #endif
    }
    else
    {
+   #ifdef CONFIG_DAQ_SW_SEQUENCE
       pDaqChannel->sequencePmHires++;
+   #endif
       if( daqChannelGetPmFifoWords( pDaqChannel ) < DAQ_DESCRIPTOR_WORD_SIZE )
       {
          DBPRINT1( ESC_BOLD ESC_FG_RED
@@ -649,11 +662,11 @@ int ramPushDaqDataBlock( register RAM_SCU_T* pThis, DAQ_CANNEL_T* pDaqChannel,
          daqChannelSetStatus( pDaqChannel, DAQ_RECEIVE_STATE_CORRUPT_BLOCK );
          return -1;
       }
-#ifdef CONFIG_DAQ_SIMULATE_CHANNEL
+   #ifdef CONFIG_DAQ_SIMULATE_CHANNEL
       daqDescriptorSetPM( &pDaqChannel->simulatedDescriptor, false );
       daqDescriptorSetHiRes( &pDaqChannel->simulatedDescriptor, false );
       daqDescriptorSetDaq( &pDaqChannel->simulatedDescriptor, true );
-#endif
+   #endif
    }
 
    ramPollAccessLock( pThis );
