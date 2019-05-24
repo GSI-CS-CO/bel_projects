@@ -176,12 +176,7 @@ uint64_t SHARED dummy = 0;
 volatile uint32_t *pEcaCtl;         // WB address of ECA control
 volatile uint32_t *pEca;            // WB address of ECA event input (discoverPeriphery())
 volatile uint32_t *pECAQ;           // WB address of ECA queue
-volatile uint32_t *pPsram;          // WB address of psram
-volatile uint32_t *pPsram1;         // pointer to buffer in pseudo ram
-volatile uint32_t *pPsram2;         // pointer to buffer in pseudo ram
 volatile uint32_t *pShared;         // pointer to begin of shared memory region
-volatile uint32_t *pSharedBuff1;    // pointer to buffer in shared memory
-volatile uint32_t *pSharedBuff2;    // pointer to buffer in shared memory
 volatile uint32_t *pCpuRamExternal; // external address (seen from host bridge) of this CPU's RAM
 volatile uint32_t *pSharedInput;    // pointer to a "user defined" u32 register; here: get input from host system
 volatile uint32_t *pSharedCmd;      // pointer to a "user defined" u32 register; here: get commnand from host system
@@ -485,8 +480,6 @@ void initSharedMem()
 
   // get pointer to shared memory; internal perspective of this LM32
   pShared        = (uint32_t *)_startshared;                // begin of shared mem
-  pSharedBuff1   = (uint32_t *)(pShared +      0);          // 1st buffer in shared memory
-  pSharedBuff2   = (uint32_t *)(pShared + NWORDS);          // 2nd buffer in shared memory
 
   // print pointer info to UART
   mprintf("\n");
