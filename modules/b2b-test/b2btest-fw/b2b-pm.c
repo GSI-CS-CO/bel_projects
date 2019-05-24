@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 21-May-2019
+ *  version : 24-May-2019
  *
  *  firmware required for measuring the h=1 phase for ring machine
  *  
@@ -38,7 +38,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  ********************************************************************************************/
-#define B2BPM_FW_VERSION 0x000003                                       // make this consistent with makefile
+#define B2BPM_FW_VERSION 0x000004                                       // make this consistent with makefile
 
 /* standard includes */
 #include <stdio.h>
@@ -80,6 +80,7 @@ uint32_t *pCpuRamExternalData4EB;       // external address (seen from host brid
 uint32_t sumStatus;                     // all status infos are ORed bit-wise into sum status, sum status is then published
 uint32_t nTransfer;                     // # of transfers
 
+// for phase measurement
 #define NSAMPLES 8                      // # of timestamps for sampling h=1
 uint64_t tStamp[NSAMPLES];              // timestamp samples
 
@@ -277,21 +278,18 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
   uint64_t sendParam;                                         // parameter to send
   
   int      nInput;                                            // # of timestamps
-  uint64_t TH1Ext;                                            // h=1 period of extraction
+  uint64_t TH1;                                               // h=1 period
   uint64_t tH1Ext;                                            // h=1 timestamp of extraction ( = 'phase')
-
+  uint64_t tH1Inj;                                            // h=1 timestamp of injection ( = 'phase')
 
   status = actStatus;
 
-  ecaAction = common_wait4ECAEvent(COMMON_ECATIMEOUT, &recDeadline, &TH1Ext, &flagIsLate);
+  ecaAction = common_wait4ECAEvent(COMMON_ECATIMEOUT, &recDeadline, &TH1, &flagIsLate);
   
   switch (ecaAction) {
     case B2BTEST_ECADO_B2B_PMEXT :
-      // tsHi             = (uint32_t)((recDeadline >> 32) & 0xffffffff);
-      // tsLo             = (uint32_t)(recDeadline         & 0xffffffff);
-
-      *pSharedTH1ExtHi = (uint32_t)((TH1Ext >> 32)    & 0xffffffff);
-      *pSharedTH1ExtLo = (uint32_t)( TH1Ext           & 0xffffffff);
+      *pSharedTH1ExtHi = (uint32_t)((TH1 >> 32)    & 0xffffffff);
+      *pSharedTH1ExtLo = (uint32_t)( TH1           & 0xffffffff);
       
       nInput = 0;
       common_ioCtrlSetGate(1, 2);                                      // enable input gate
@@ -302,9 +300,9 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
       } // while nInput
       common_ioCtrlSetGate(0, 2);                                      // disable input gate 
 
-      DBPRINT2("b2b-pm: samples %d\n", nInput);
+      DBPRINT2("b2b-pm: extraction phase measurement with samples %d\n", nInput);
       
-      if ((nInput == NSAMPLES) && (poorMansFit(TH1Ext, NSAMPLES, &tH1Ext) == COMMON_STATUS_OK)) {
+      if ((nInput == NSAMPLES) && (poorMansFit(TH1, NSAMPLES, &tH1Ext) == COMMON_STATUS_OK)) {
         // send command: transmit measured phase value
         sendEvtId    = 0x1fff000000000000;                                        // FID, GID
         sendEvtId    = sendEvtId | ((uint64_t)B2BTEST_ECADO_B2B_PREXT << 36);     // EVTNO
@@ -319,9 +317,39 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
       nTransfer++;
       
       break;
+    case B2BTEST_ECADO_B2B_PMINJ :
+      *pSharedTH1InjHi = (uint32_t)((TH1 >> 32)    & 0xffffffff);
+      *pSharedTH1InjLo = (uint32_t)( TH1           & 0xffffffff);
+      
+      nInput = 0;
+      common_ioCtrlSetGate(1, 2);                                      // enable input gate
+      while (nInput < NSAMPLES) {                                      // treat 1st TS as junk
+        ecaAction = common_wait4ECAEvent(100, &recDeadline, &recParam, &flagIsLate);
+        if (ecaAction == B2BTEST_ECADO_TLUINPUT)  {tStamp[nInput] = recDeadline; nInput++;}
+        if (ecaAction == B2BTEST_ECADO_TIMEOUT)   break; 
+      } // while nInput
+      common_ioCtrlSetGate(0, 2);                                      // disable input gate 
+
+      DBPRINT2("b2b-pm: injection phase measurement with samples %d\n", nInput);
+      
+      if ((nInput == NSAMPLES) && (poorMansFit(TH1, NSAMPLES, &tH1Inj) == COMMON_STATUS_OK)) {
+        // send command: transmit measured phase value
+        sendEvtId    = 0x1fff000000000000;                                        // FID, GID
+        sendEvtId    = sendEvtId | ((uint64_t)B2BTEST_ECADO_B2B_PRINJ << 36);     // EVTNO
+        sendParam    = tH1Inj;
+        sendDeadline = getSysTime() + COMMON_AHEADT;
+        
+        common_ebmWriteTM(sendDeadline, sendEvtId, sendParam);
+        
+      } // if nInput
+      else actStatus = B2BTEST_STATUS_PHASEFAILED;
+      
+      nTransfer++;
+      
+      break;
     default :
     break;
-  } // switch ecaActione
+  } // switch ecaAction
 
   status = actStatus; /* chk */
   

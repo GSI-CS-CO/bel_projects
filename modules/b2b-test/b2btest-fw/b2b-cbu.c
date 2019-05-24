@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 21-May-2019
+ *  version : 24-May-2019
  *
  *  firmware required to implement the CBU (Central Buncht-To-Bucket Unit)
  *  
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 23-April-2019
  ********************************************************************************************/
-#define B2BCBU_FW_VERSION 0x000003                                      // make this consistent with makefile
+#define B2BCBU_FW_VERSION 0x000004                                      // make this consistent with makefile
 
 /* standard includes */
 #include <stdio.h>
@@ -195,24 +195,33 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
   uint64_t recDeadline;                                       // deadline received
   uint64_t recParam;                                          // param received
   uint64_t TH1Ext;                                            // h=1 period [as] of extraction machine
-  uint32_t test, test1;
+  uint64_t TH1Inj;                                            // h=1 period [as] of injection machine
 
   status = actStatus;
+
+  /* chk: code neede for beating stuff; idea: use a flag indicating that we received all measured phase data,
+     if so, do the math and send messages for TDUs */
 
   ecaAction = common_wait4ECAEvent(COMMON_ECATIMEOUT, &recDeadline, &recParam, &flagIsLate);
     
   switch (ecaAction) {
   case B2BTEST_ECADO_B2B_START :
     // received: B2B_START from DM
+
     // send command: phase measurement at extraction machine
     sendEvtId    = 0x1fff000000000000;                                        // FID, GID
     sendEvtId    = sendEvtId | ((uint64_t)B2BTEST_ECADO_B2B_PMEXT << 36);     // EVTNO
-
     sendParam    = (uint64_t)(*pSharedTH1ExtHi) << 32 | (uint64_t)(*pSharedTH1ExtLo);
-
     sendDeadline = getSysTime() + (uint64_t)COMMON_AHEADT;
-
     common_ebmWriteTM(sendDeadline, sendEvtId, sendParam);
+
+    // send command: phase measurement at injection machine
+    sendEvtId    = 0x1fff000000000000;                                        // FID, GID
+    sendEvtId    = sendEvtId | ((uint64_t)B2BTEST_ECADO_B2B_PMINJ << 36);     // EVTNO
+    sendParam    = (uint64_t)(*pSharedTH1InjHi) << 32 | (uint64_t)(*pSharedTH1InjLo);
+    sendDeadline = getSysTime() + (uint64_t)COMMON_AHEADT;
+    common_ebmWriteTM(sendDeadline, sendEvtId, sendParam);
+    
     DBPRINT2("b2b-cbu: got B2B_START\n");
 
     nTransfer++;
@@ -223,24 +232,37 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
     // do some math
     TH1Ext       = (uint64_t)(*pSharedTH1ExtHi) << 32;
     TH1Ext       = (uint64_t)(*pSharedTH1ExtLo) | TH1Ext;
-    sendDeadline = recParam + ((uint64_t)100000 * TH1Ext) / (uint64_t)1000000000; /* chk, hack: 100000 periods, convert to ns need PRINJ too */
+    sendDeadline = recParam + ((uint64_t)100000 * TH1Ext) / (uint64_t)1000000000; // project 100000 periods into the future
 
-    // send TR_EXT_INJ to extraction machine
+    // send DIAGEXT to extraction machine
     sendEvtId    = 0x1fff000000000000;                                        // FID, GID
-    sendEvtId    = sendEvtId | ((uint64_t)B2BTEST_ECADO_B2B_SYNCEXT << 36);   // EVTNO
-    
+    sendEvtId    = sendEvtId | ((uint64_t)B2BTEST_ECADO_B2B_DIAGEXT << 36);   // EVTNO
     sendParam    = 0x0;
-
-    test  = (uint32_t)(sendDeadline - getSysTime());
-    test1 = (uint32_t)(TH1Ext / 1000000000);
     common_ebmWriteTM(sendDeadline, sendEvtId, sendParam);
-    DBPRINT2("b2b-cbu: got B2B_PREXT %u %u\n", test, test1);
+
+    /* chk code needed for beating stuff */
+
+    break;
+  case B2BTEST_ECADO_B2B_PRINJ :
+    // received: measured phase from extraction machine
+    // do some math
+    TH1Inj       = (uint64_t)(*pSharedTH1InjHi) << 32;
+    TH1Inj       = (uint64_t)(*pSharedTH1InjLo) | TH1Inj;
+    sendDeadline = recParam + ((uint64_t)100000 * TH1Inj) / (uint64_t)1000000000; // project 100000 periods into the future
+
+    // send DIAGEXT to extraction machine
+    sendEvtId    = 0x1fff000000000000;                                        // FID, GID
+    sendEvtId    = sendEvtId | ((uint64_t)B2BTEST_ECADO_B2B_DIAGINJ << 36);   // EVTNO
+    sendParam    = 0x0;
+    common_ebmWriteTM(sendDeadline, sendEvtId, sendParam);
+
+    /* chk code needed for beating stuff */
 
     break;
     
   default :
     break;
-  } // switch ecaActione
+  } // switch ecaAction
 
   status = actStatus; /* chk */
   
@@ -270,8 +292,7 @@ int main(void) {
     common_cmdHandler(&reqState, &dummy1);                                    // check for commands and possibly request state changes
     status = COMMON_STATUS_OK;                                                // reset status for each iteration
     status = common_changeState(&actState, &reqState, status);                // handle requested state changes
-    switch(actState)                                                          // state specific do actions
-      {
+    switch(actState) {                                                        // state specific do actions
       case COMMON_STATE_OPREADY :
         status = doActionOperation(status);
         if (status == COMMON_STATUS_WRBADSYNC)      reqState = COMMON_STATE_ERROR;
@@ -280,8 +301,8 @@ int main(void) {
       default :                                                               // avoid flooding WB bus with unnecessary activity
         status = common_doActionState(&reqState, actState, status);
         break;
-      } // switch
-
+    } // switch
+    
     // update shared memory
     switch (status) {
       case COMMON_STATUS_OK :                                                 // status OK
@@ -289,11 +310,11 @@ int main(void) {
         break;
       default :                                                               // status not OK
         if ((sumStatus >> COMMON_STATUS_OK) & 0x1) common_incBadStatusCnt();  // changing status from OK to 'not OK': increase 'bad status count'
-      sumStatus = sumStatus & ~(0x1 << COMMON_STATUS_OK);                     // clear OK bit
-      sumStatus = sumStatus |  (0x1 << status);                               // set status bit and remember other bits set
+        sumStatus = sumStatus & ~(0x1 << COMMON_STATUS_OK);                   // clear OK bit
+        sumStatus = sumStatus |  (0x1 << status);                             // set status bit and remember other bits set
       break;
     } // switch status
-
+    
     if ((pubState == COMMON_STATE_OPREADY) && (actState  != COMMON_STATE_OPREADY)) common_incBadStateCnt();
     common_publishSumStatus(sumStatus);
     pubState          = actState;
