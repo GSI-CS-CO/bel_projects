@@ -48,7 +48,7 @@ extern uint32_t*       _startshared[];
 
 /* definitions of timing messages & ECA actions */
 #define ECA_VALID_ACTION  0x00040000UL  // ECA valid action
-#define MY_ACT_TAG        0x42UL        // ECA actions tagged for me
+#define MY_ACT_TAG        BG_FW_ID      // ECA actions tagged for me
 #define IO_CYC_START      0x00009910UL  // start the IO pulse cycle
 #define IO_CYC_STOP       0x00009900UL  // stop the IO pulse cycle
 #define EVTNO_MIL         0x00000FF0UL  // event numbers used for MIL based system (0..255)
