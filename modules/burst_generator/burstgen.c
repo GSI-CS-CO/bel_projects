@@ -40,18 +40,19 @@
  *  cycle for LM32 into the shared memory:
  *
  *  set ECA rules for IO actions (10 entries with 10000 ns offset):
- *    saft-io-ctl tr0 -u -c -n B1 0xEEEE000000000000 0xFFFF000000000000 10000 0xf 1
- *    saft-io-ctl tr0 -u -c -n B1 0xEEEE000000000000 0xFFFF000000000000 20000 0xf 0
+ *    saft-io-ctl tr0 -n B1 -u -c 0x0000FCA000000000 0xFFFFFFF000000000 10000 0xf 1
+ *    saft-io-ctl tr0 -n B1 -u -c 0x0000FCA000000000 0xFFFFFFF000000000 20000 0xf 0
  *    ...
- *    saft-io-ctl tr0 -u -c -n B1 0xEEEE000000000000 0xFFFF000000000000 90000 0xf 1
- *    saft-io-ctl tr0 -u -c -n B1 0xEEEE000000000000 0xFFFF000000000000 100000 0xf 0
+ *    saft-io-ctl tr0 -n B1 -u -c 0x0000FCA000000000 0xFFFFFFF000000000 90000 0xf 1
+ *    saft-io-ctl tr0 -n B1 -u -c 0x0000FCA000000000 0xFFFFFFF000000000 100000 0xf 0
  *
  *  set ECA rules for eCPU actions:
- *    saft-ecpu-ctl tr0 -d -c 0x8484000000000000 0xFFFF000000000000 0 0x42
+ *    saft-ecpu-ctl tr0 -d -c 0x0000991000000000 0xFFFFFFF000000000 0 0xb2b2b2b2
+ *    saft-ecpu-ctl tr0 -d -c 0x0000990000000000 0xFFFFFFF000000000 0 0xb2b2b2b2
  *
  *  write pulse parameters to shared RAM:
  *  - IO event id
- *    	eb-write dev/wbm0 0x200A0510/4 0xEEEE0000
+ *    	eb-write dev/wbm0 0x200A0510/4 0x0000FCA0
  *  - delay, currently not used
  *    	eb-write dev/wbm0 0x200A0514/4 0
  *  - number of IO action rules
@@ -81,9 +82,9 @@
  *  Users need to inject timing messages to start and stop pulse generation:
  *
  *  - start pulse generation:
- *    	saft-ctl -p tr0 inject 0x8484114455667788 100000000 0
+ *    	saft-ctl -p tr0 inject 0x0000991000000000 100000000 0
  *  - stop pulse generation:
- *    	saft-ctl -p tr0 inject 0x8484994455667788 0 0
+ *    	saft-ctl -p tr0 inject 0x0000990000000000 0 0
  *
  * -----------------------------------------------------------------------------
  * License Agreement for this software:
@@ -587,7 +588,7 @@ void ecaHandler(uint32_t cnt)
 	toU64(evtDeadlHigh, evtDeadlLow, d);
 	toU64(paramHigh, paramLow, p);
 
-	switch (evtIdHigh & IO_CYC_MASK) {
+	switch (evtIdHigh & EVTNO_MASK) {
 
 	  case IO_CYC_START: // start the IO pulse cycle
 	    d += p;
@@ -839,7 +840,7 @@ void injectTimingMsg(uint32_t *msg)
  ******************************************************************************/
 void setupTimingMsg(uint32_t *msg)
 {
-  buildTimingMsg(msg, EVNT_ID_IO << 1); // build a dummy timing message
+  buildTimingMsg(msg, EVT_ID_IO_H32 << 1); // build a dummy timing message
 
   uint64_t deadline = getSysTime();
 
@@ -852,7 +853,7 @@ void setupTimingMsg(uint32_t *msg)
   gInjection <<= 1;
   mprintf("Injection (ns)              : 0x%x%08x\n", (uint32_t) (gInjection >> 32), (uint32_t) gInjection );
 
-  buildTimingMsg(msg, EVNT_ID_IO); // build the default timing message for IO actions
+  buildTimingMsg(msg, EVT_ID_IO_H32); // build the default timing message for IO actions
 }
 
 /*******************************************************************************

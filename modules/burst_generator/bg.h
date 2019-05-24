@@ -49,12 +49,16 @@ extern uint32_t*       _startshared[];
 /* definitions of timing messages & ECA actions */
 #define ECA_VALID_ACTION  0x00040000UL  // ECA valid action
 #define MY_ACT_TAG        0x42UL        // ECA actions tagged for me
-#define IO_CYC_START      0x00001100UL  // start the IO pulse cycle
+#define IO_CYC_START      0x00009910UL  // start the IO pulse cycle
 #define IO_CYC_STOP       0x00009900UL  // stop the IO pulse cycle
-#define IO_CYC_MASK       0x0000FF00UL  // cycle command mask
+#define EVTNO_MIL         0x00000FF0UL  // event numbers used for MIL based system (0..255)
+#define EVTNO_WR          0x0000F9F0UL  // event numbers used for WR based system (256..3999)
+#define EVTNO_INTERN      0x0000FFF0UL  // event numbers for internal use (4000...4095)
+#define EVTNO_MASK        0x0000FFF0UL  // event number mask
 
 #define LEN_TIM_MSG       0x8           // length of timing message in bytes
-#define EVNT_ID_IO        0xEEEE0000UL  // event id of timing message for IO
+#define EVT_ID_IO_H32     0x0000FCA0UL  // event id of timing message for IO actions (hi32)
+#define EVT_ID_IO_L32     0x00000000UL  // event id of timing message for IO actions (lo32)
 
 /* MSI sender offsets */
 #define MSI_OFFS_ECA      0x00UL        // ECA
