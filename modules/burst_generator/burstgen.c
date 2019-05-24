@@ -417,10 +417,20 @@ void irqHandler() {
  ******************************************************************************/
 void initIrqTable() {
   isr_table_clr();
+  memset((void *)pMsgBufHead, 0, N_MSI_BUF * sizeof(struct message_buffer));
+  if (hasPendingMsi())
+  {
+    mprintf("MSI buffers are not empty!!!\n");
+    mprintf("Cannot enable interrupt!!!\n");
+    return;
+  }
+  else
+    mprintf("MSI buffers are clean.\n");
+
   isr_ptr_table[0] = &irqHandler;
   irq_set_mask(0x01);
   irq_enable();
-  mprintf("\nInit IRQ table is done.\n");
+  mprintf("Init IRQ table is done.\n");
 }
 
 /*******************************************************************************
