@@ -630,17 +630,26 @@ void ecaHandler(uint32_t cnt)
 
 	    if (p >= (d + gInjection)) {
 	      pTask[0].deadline = 0;
-	      mprintf("late: 0x%08x:%08x\n", (uint32_t)(p >> 32), (uint32_t)p);
+	      mprintf("late! now >= (due + inj)\n");
+	      mprintf("now: 0x%08x:%08x\n", (uint32_t)(p >> 32), (uint32_t)p);
+	      mprintf("due: 0x%08x:%08x\n", (uint32_t)(d >> 32), (uint32_t)d);
+	      mprintf("inj: 0x%08x:%08x\n", (uint32_t)(gInjection >> 32), (uint32_t)gInjection);
+	      mprintf("cycle ignored!\n");
 	    }
 	    else {
 	      pTask[0].deadline = d;           // set deadline
 	      pTask[0].interval = gInjection;  // set task sched. interval
+	      mprintf("cycle ready\n");
 	    }
 	    break;
 
 	  case IO_CYC_STOP: // stop the IO pulse cycle
 	    d += p;
-	    if (pTask[0].deadline > d) {  // deadline is over, stop now
+	    if (pTask[0].deadline == 0) {      // cycle never run or already stopped, cancel it
+	      pTask[0].cycle = 0;
+	      mprintf("cycle cancelled!\n");
+	    }
+	    else if (pTask[0].deadline > d) {  // deadline is over, stop immediatelly
 	      pTask[0].deadline = 0;
 	      pTask[0].cycle = 0;
 	      mprintf("cycle stopped!\n");
@@ -649,6 +658,7 @@ void ecaHandler(uint32_t cnt)
 	      p = d - pTask[0].deadline;
 	      p = p / pTask[0].period;
 	      pTask[0].cycle = p;
+	      mprintf("cycle changed!\n");
 	    }
 	    break;
 
