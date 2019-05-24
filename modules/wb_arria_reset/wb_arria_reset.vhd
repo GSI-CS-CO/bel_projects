@@ -1,5 +1,5 @@
 -------------------------------------------------------------------------------
--- Title      : FPGA reset for Arria 
+-- Title      : FPGA reset for Arria
 -- Project    : all Arria platforms
 -------------------------------------------------------------------------------
 -- File       : altera_reset.vhd
@@ -10,7 +10,7 @@
 -- Platform   : Altera
 -- Standard   : VHDL'93
 -------------------------------------------------------------------------------
--- Description: resets FPGA with internal logic using alt remote update 
+-- Description: resets FPGA with internal logic using alt remote update
 -- n: number of user LM32 cores in system
 --
 -- Bit 0 => reload FPGA configuration (active high)
@@ -19,22 +19,22 @@
 --
 -- Copyright (c) 2013 GSI / Stefan Rauch
 --
--- This source file is free software; you can redistribute it   
--- and/or modify it under the terms of the GNU Lesser General   
--- Public License as published by the Free Software Foundation; 
--- either version 2.1 of the License, or (at your option) any   
--- later version.                                               
+-- This source file is free software; you can redistribute it
+-- and/or modify it under the terms of the GNU Lesser General
+-- Public License as published by the Free Software Foundation;
+-- either version 2.1 of the License, or (at your option) any
+-- later version.
 --
--- This source is distributed in the hope that it will be       
--- useful, but WITHOUT ANY WARRANTY; without even the implied   
--- warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR      
--- PURPOSE.  See the GNU Lesser General Public License for more 
--- details.                                                     
+-- This source is distributed in the hope that it will be
+-- useful, but WITHOUT ANY WARRANTY; without even the implied
+-- warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+-- PURPOSE.  See the GNU Lesser General Public License for more
+-- details.
 --
--- You should have received a copy of the GNU Lesser General    
--- Public License along with this source; if not, download it   
+-- You should have received a copy of the GNU Lesser General
+-- Public License along with this source; if not, download it
 -- from http://www.gnu.org/licenses/lgpl-2.1.html
--- 
+--
 --
 -------------------------------------------------------------------------------
 -- Revisions  :
@@ -44,10 +44,10 @@
 -- 2014-09-16  1.1      mkreider 	- FPGA reset needs DEADBEEF as magic
 --					word at address 0x0
 --					- 0x4 - 0xC are now GET, SET, CLR for
---                                        individual LM32 reset lines  		
+--                                        individual LM32 reset lines
 -------------------------------------------------------------------------------
 -- 2016-01-7  1.2      srauch 	- added register for hw version number
---					                    - read from address offset 0x8	
+--					                    - read from address offset 0x8
 -------------------------------------------------------------------------------
 library ieee;
 use ieee.std_logic_1164.all;
@@ -92,9 +92,9 @@ architecture wb_arria_reset_arch of wb_arria_reset is
   constant cnt_value      : integer := 1000 * 60 * 10; -- 10 min with 1ms granularity
   constant cnt_width      : integer := integer(ceil(log2(real(cnt_value)))) + 1;
 begin
-  
+
   reset <= not rstn_upd_i;
-  
+
   ruc_gen_a2 : if arria_family = "Arria II" generate
     arria_reset_inst : arria_reset PORT MAP (
       clock       => clk_upd_i,
@@ -107,7 +107,7 @@ begin
       data_out    => open
     );
   end generate;
-  
+
   ruc_gen_a5 : if arria_family = "Arria V" generate
     arria5_reset_inst : arria5_reset PORT MAP (
       clock       => clk_upd_i,
@@ -145,20 +145,24 @@ begin
       end if;
     end process;
   end generate;
-  
+
   rst_out_gen: for i in 0 to rst_channels-1 generate
     rstn_o(i) <= not reset_reg(i+1);
   end generate;
-  
+
+  gen_wd_off: if en_wd_tmr = false generate
+    trigger_reconfig <= '0';
+  end generate;
+
   slave_o.err <= '0';
   slave_o.stall <= '0';
-  
+
   wb_reg: process(clk_sys_i)
   begin
     if rising_edge(clk_sys_i) then
       slave_o.ack <= slave_i.cyc and slave_i.stb;
       slave_o.dat <= (others => '0');
-  
+
       if rstn_sys_i = '0' then
         reset_reg <= (others => '0');
       else
@@ -180,7 +184,7 @@ begin
               when 3 => reset_reg(reset_reg'left downto 1) <= reset_reg(reset_reg'left downto 1) AND NOT slave_i.dat(reset_reg'left-1 downto 0);
               when others => null;
             end case;
-          else -- read 
+          else -- read
             case to_integer(unsigned(slave_i.adr(3 downto 2))) is
               when 1 => slave_o.dat <= '0' & reset_reg(reset_reg'left downto 1);
               when 2 => slave_o.dat <= hw_version;
@@ -188,7 +192,7 @@ begin
             end case;
           end if;
         end if;
-		  
+
       end if; -- of sync reset
     end if; -- of rising_edge
   end process;
