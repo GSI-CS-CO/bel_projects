@@ -66,3 +66,7 @@ You need to have installed the following packages before you can configure and b
 * autotools-dev
 * autoconf
 * libtool (glibtoolize)
+
+## Common Errors and Warnings
+### Error: quartus: error while loading shared libraries: libpng12-0.0: ... [Ubuntu/Mint/...]
+Get the package from here: https://packages.ubuntu.com/xenial/amd64/libpng12-0/download
