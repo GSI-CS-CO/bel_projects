@@ -353,10 +353,22 @@ DDR3_RETURN_T ddr3PopFifo( register const DDR3_T* pThis,
   #error DDR3_FIFO_LOW_WORD_OFFSET_ADDR has to be DDR3_FIFO_HIGH_WORD_OFFSET_ADDR+1
  #endif
 
+#if 1
    return ebReadData32( pThis->pEbHandle,
                         pThis->pBurstModeBase +
                         DDR3_FIFO_LOW_WORD_OFFSET_ADDR  * sizeof(DDR3_ADDR_T),
                         pData->ad32, ARRAY_SIZE( pData->ad32 ) );
+#else
+   ebDeviceRead( pThis->pEbHandle,
+                 pThis->pBurstModeBase + DDR3_FIFO_LOW_WORD_OFFSET_ADDR * sizeof(DDR3_ADDR_T),
+                 EB_DATA32 | EB_LITTLE_ENDIAN,
+                 (eb_data_t*)&pData->ad32[0] );
+   ebDeviceRead( pThis->pEbHandle,
+                 pThis->pBurstModeBase + DDR3_FIFO_HIGH_WORD_OFFSET_ADDR * sizeof(DDR3_ADDR_T),
+                 EB_DATA32 | EB_LITTLE_ENDIAN,
+                 (eb_data_t*)&pData->ad32[1] );
+   return 0;
+#endif
 #endif
 }
 

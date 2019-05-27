@@ -97,6 +97,28 @@ int ddr3init( register DDR3_T* pThis
 }
 
 #ifndef CONFIG_DDR3_NO_BURST_FUNCTIONS
+
+static inline
+DDR3_RETURN_T _ddr3PopFifo( register const DDR3_T* pThis,
+                           DDR3_PAYLOAD_T* pData )
+{
+   DDR_ASSERT( pThis != NULL );
+   DDR_ASSERT( pThis->pBurstModeBase != DDR3_INVALID );
+
+#if defined(__linux__)
+ #if (DDR3_FIFO_HIGH_WORD_OFFSET_ADDR != DDR3_FIFO_LOW_WORD_OFFSET_ADDR+1)
+  #error DDR3_FIFO_LOW_WORD_OFFSET_ADDR has to be DDR3_FIFO_HIGH_WORD_OFFSET_ADDR+1
+ #endif
+
+   return ebReadData32( pThis->pEbHandle,
+                        pThis->pBurstModeBase +
+                        DDR3_FIFO_LOW_WORD_OFFSET_ADDR  * sizeof(DDR3_ADDR_T),
+                        pData->ad32, ARRAY_SIZE( pData->ad32 ) );
+
+#endif
+}
+
+
 /*! ---------------------------------------------------------------------------
  * @see scu_ddr3.h
  */
@@ -135,6 +157,52 @@ int ddr3FlushFiFo( register const DDR3_T* pThis, unsigned int start,
          pollCount++;
       }
 
+#define CONFIG_EB_BLOCK_READING
+#if defined(__linux__) && defined( CONFIG_EB_BLOCK_READING )
+      const uint32_t lowAddr  = pThis->pBurstModeBase + DDR3_FIFO_LOW_WORD_OFFSET_ADDR  * sizeof(DDR3_ADDR_T);
+      const uint32_t highAddr = pThis->pBurstModeBase + DDR3_FIFO_HIGH_WORD_OFFSET_ADDR * sizeof(DDR3_ADDR_T);
+
+      const size_t infoSize = ARRAY_SIZE( pTarget->ad32 );
+      EB_CYCLE_OR_CB_ARG_T arg;
+      EB_MEMBER_INFO_T info[infoSize];
+
+      for( unsigned int i = 0; i < blkLen; i++ )
+      {
+
+         for( size_t i = 0; i < ARRAY_SIZE( pTarget->ad32 ); i++ )
+         {
+            info[i].pData = (uint8_t*)&pTarget[targetIndex].ad32[i];
+            info[i].size = sizeof( uint32_t );
+         }
+         targetIndex++;
+
+
+         arg.aInfo   = info;
+         arg.infoLen = infoSize;
+         arg.exit    = false;
+         if( ebObjectReadCycleOpen( pThis->pEbHandle, &arg ) != EB_OK )
+         {
+            fprintf( stderr, ESC_FG_RED ESC_BOLD
+                             "Error: failed to create cycle for read: %s\n"
+                             ESC_NORMAL,
+                            ebGetStatusString( pThis->pEbHandle ));
+            return pThis->pEbHandle->status;
+         }
+
+         eb_cycle_read( pThis->pEbHandle->cycle, lowAddr,  EB_DATA32 | EB_LITTLE_ENDIAN, NULL );
+         eb_cycle_read( pThis->pEbHandle->cycle, highAddr, EB_DATA32 | EB_LITTLE_ENDIAN, NULL );
+
+         ebCycleClose( pThis->pEbHandle );
+         while( !arg.exit )
+            ebSocketRun( pThis->pEbHandle );
+
+         pThis->pEbHandle->status = arg.status;
+
+         if( pThis->pEbHandle->status != EB_OK )
+             return pThis->pEbHandle->status;
+
+      }
+#else
       for( unsigned int i = 0; i < blkLen; i++ )
       {
          ddr3PopFifo( pThis, &pTarget[targetIndex++] );
@@ -143,6 +211,7 @@ int ddr3FlushFiFo( register const DDR3_T* pThis, unsigned int start,
             return pThis->pEbHandle->status;
       #endif
       }
+#endif
       start     += blkLen;
       word64len -= blkLen;
    }
