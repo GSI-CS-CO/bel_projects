@@ -70,3 +70,6 @@ You need to have installed the following packages before you can configure and b
 ## Common Errors and Warnings
 ### Error: quartus: error while loading shared libraries: libpng12-0.0: ... [Ubuntu/Mint/...]
 Get the package from here: https://packages.ubuntu.com/xenial/amd64/libpng12-0/download
+
+### Error: error while loading shared libraries: libmpfr.so.4: cannot open shared object file: No such file or directory [Ubuntu/Mint/...]
+Create a new symlink: sudo ln -s /usr/lib/x86_64-linux-gnu/libmpfr.so.6 /usr/lib/x86_64-linux-gnu/libmpfr.so.4
