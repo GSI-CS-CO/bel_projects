@@ -131,6 +131,7 @@ set_false_path -from [get_clocks {main|\ref_a10:ref_inst|iopll_0|outclk3}] -to [
 set_false_path -from [get_clocks {main|\ref_a10:ref_inst|iopll_0|outclk4}] -to [get_clocks {main|\pcie_y:pcie|pcie_phy|\arria10gx_e3p1:hip|pcie_a10_hip_0|coreclkout}]
 # cut ref and butis 200MHz
 set_false_path -from [get_clocks {main|\ref_a10:ref_inst|iopll_0|outclk0}] -to [get_clocks {main|\ref_a10:ref_inst|iopll_0|outclk1}]
+set_false_path -from [get_clocks {main|\ref_a10:ref_inst|iopll_0|outclk1}] -to [get_clocks {main|\ref_a10:ref_inst|iopll_0|outclk0}]
 # input clocks
 set_false_path -from [get_clocks {main|\phy_a10_e3p1:phy|\det_phy:inst_phy|xcvr_native_a10_0|rx_clkout}] -to [get_clocks {clk_125m_sfpref_i}]
 set_false_path -from [get_clocks {main|\phy_a10_e3p1:phy|\det_phy:inst_phy|xcvr_native_a10_0|tx_clkout}] -to [get_clocks {clk_125m_sfpref_i}]
