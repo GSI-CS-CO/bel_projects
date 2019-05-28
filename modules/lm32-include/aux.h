@@ -50,7 +50,7 @@ inline uint32_t  getCores()  {return *pCluInfo & 0xff;}
 
 inline  uint32_t  atomic_get(void)
 {
-	 return *pCpuAtomic;	             	
+  return *pCpuAtomic;	             	
 }
 
 inline void atomic_on()
@@ -62,15 +62,15 @@ inline void atomic_on()
 
 inline void atomic_off()
 {
-	*pCpuAtomic = 0;
-	uint32_t foo;
-	// or the IE bit with ier
-	asm volatile ("rcsr  %0, IE\n"      \
-	              "or    %0, %0, %1\n"  \
-	              "wcsr  IE, %0\n"      \
-                : "+r" (foo)           \
-                : "r" (ier)            \
-        );        	
+  *pCpuAtomic = 0;
+  uint32_t foo=0x0;
+  // or the IE bit with ier
+  asm volatile ("rcsr  %0, IE\n"            \
+                "or    %0, %0, %1\n"        \
+                "wcsr  IE, %0\n"            \
+                : "+r" (foo)                \
+                : "r" (ier)                 \
+                );        	
 }
 
 

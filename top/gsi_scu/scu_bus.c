@@ -2,7 +2,7 @@
 #include "display.h"
 #include "w1.h"
 #include "inttypes.h"
-#include "mprintf.h"
+#include "pp-printf.h"
 #include "dow_crc.h"
 
 #define DEBUG
@@ -35,24 +35,24 @@ void ReadTempDevices(int bus, uint64_t *id, uint32_t *temp) {
           if ((calc_crc((int)(d->rom >> 32), (int)d->rom)) != 0)
             continue;
           #ifdef DEBUG
-          mprintf("bus,device (%d,%d): 0x%08x%08x ", wrpc_w1_bus.detail, i, (int)(d->rom >> 32), (int)d->rom);
+          pp_printf("bus,device (%d,%d): 0x%08x%08x ", wrpc_w1_bus.detail, i, (int)(d->rom >> 32), (int)d->rom);
           #endif
           if ((char)d->rom == 0x42) {
             *id = d->rom;
             tvalue = w1_read_temp(d, 0);
             *temp = (tvalue >> 12); //full precision with 1/16 degree C
             #ifdef DEBUG
-            mprintf("temp: %dC", tvalue >> 16); //show only integer part for debug
+            pp_printf("temp: %dC", tvalue >> 16); //show only integer part for debug
             #endif
           }
           #ifdef DEBUG
-          mprintf("\n");
+          pp_printf("\n");
           #endif
         }
     }
   } else {
     #ifdef DEBUG
-    mprintf("no devices found on bus %d\n", wrpc_w1_bus.detail);
+    pp_printf("no devices found on bus %d\n", wrpc_w1_bus.detail);
     #endif
   }
 } 

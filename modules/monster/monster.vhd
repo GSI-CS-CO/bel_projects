@@ -112,7 +112,8 @@ entity monster is
     g_lm32_are_ftm         : boolean;
     g_en_tempsens          : boolean;
     g_delay_diagnostics    : boolean;
-    g_en_eca               : boolean);
+    g_en_eca               : boolean;
+    g_en_wd_tmr            : boolean);
   port(
     -- Required: core signals
     core_clk_20m_vcxo_i    : in    std_logic;
@@ -795,20 +796,32 @@ architecture rtl of monster is
   constant c_tlu_gpio : natural := g_gpio_inout + g_gpio_in;
   constant c_tlu_io   : natural := c_tlu_lvds + c_tlu_gpio;
 
-  signal s_eca_io   : t_gpio_array(c_eca_io-1 downto 0);
-  signal s_tlu_io   : t_gpio_array(c_tlu_io-1 downto 0);
+  signal s_eca_io             : t_gpio_array(c_eca_io-1 downto 0);
+  signal s_tlu_io             : t_gpio_array(c_tlu_io-1 downto 0);
+  signal s_tlu_gated_io       : t_gpio_array(c_tlu_io-1 downto 0);
+  signal s_tlu_gated_io_sync  : t_gpio_array(c_tlu_io-1 downto 0);
 
-  signal s_gpio_out          : std_logic_vector(f_sub1(c_eca_gpio) downto 0);
-  signal s_gpio_src_eca      : std_logic_vector(f_sub1(c_eca_gpio) downto 0);
-  signal s_gpio_src_ioc      : std_logic_vector(f_sub1(c_eca_gpio) downto 0);
-  signal s_gpio_src_wr_pps   : std_logic_vector(f_sub1(c_eca_gpio) downto 0);
-  signal s_gpio_src_butis_t0 : std_logic_vector(f_sub1(c_eca_gpio) downto 0);
+  signal s_gpio_out           : std_logic_vector(f_sub1(c_eca_gpio) downto 0);
+  signal s_gpio_out_gated     : std_logic_vector(f_sub1(c_eca_gpio) downto 0);
+  signal s_gpio_src_eca       : std_logic_vector(f_sub1(c_eca_gpio) downto 0);
+  signal s_gpio_src_ioc       : std_logic_vector(f_sub1(c_eca_gpio) downto 0);
+  signal s_gpio_src_wr_pps    : std_logic_vector(f_sub1(c_eca_gpio) downto 0);
+  signal s_gpio_src_butis_t0  : std_logic_vector(f_sub1(c_eca_gpio) downto 0);
 
-  signal s_gpio_mux      : std_logic_vector(f_sub1(c_eca_gpio) downto 0);
-  signal s_lvds_mux      : std_logic_vector(f_sub1(c_eca_lvds) downto 0);
-  signal s_gpio_pps_mux  : std_logic_vector(f_sub1(c_eca_gpio) downto 0);
-  signal s_lvds_pps_mux  : std_logic_vector(f_sub1(c_eca_lvds) downto 0);
-  signal s_lvds_vec_i    : t_lvds_byte_array(f_sub1(g_lvds_inout+g_lvds_in) downto 0);
+  signal s_gpio_mux           : std_logic_vector(f_sub1(c_eca_gpio) downto 0);
+  signal s_lvds_mux           : std_logic_vector(f_sub1(c_eca_lvds) downto 0);
+  signal s_gpio_pps_mux       : std_logic_vector(f_sub1(c_eca_gpio) downto 0);
+  signal s_lvds_pps_mux       : std_logic_vector(f_sub1(c_eca_lvds) downto 0);
+  signal s_gpio_in_gate       : std_logic_vector(f_sub1(c_tlu_gpio) downto 0);
+  signal s_lvds_in_gate       : std_logic_vector(f_sub1(c_tlu_lvds) downto 0);
+  signal s_gpio_in_gate_sync  : std_logic_vector(f_sub1(c_tlu_gpio) downto 0);
+  signal s_lvds_in_gate_sync  : std_logic_vector(f_sub1(c_tlu_lvds) downto 0);
+  signal s_gpio_out_gate      : std_logic_vector(f_sub1(c_eca_gpio) downto 0);
+  signal s_lvds_out_gate      : std_logic_vector(f_sub1(c_eca_lvds) downto 0);
+  signal s_gpio_out_gate_sync : std_logic_vector(f_sub1(c_eca_gpio) downto 0);
+  signal s_lvds_out_gate_sync : std_logic_vector(f_sub1(c_eca_lvds) downto 0);
+
+  signal s_lvds_vec_i         : t_lvds_byte_array(f_sub1(g_lvds_inout+g_lvds_in) downto 0);
 
   signal lvds_dat_fr_butis_t0 : t_lvds_byte_array(f_sub1(c_eca_lvds) downto 0);
   signal lvds_dat_fr_ioc      : t_lvds_byte_array(f_sub1(c_eca_lvds) downto 0);
@@ -816,6 +829,8 @@ architecture rtl of monster is
   signal lvds_dat_fr_clk_gen  : t_lvds_byte_array(f_sub1(c_eca_lvds) downto 0);
   signal lvds_dat_fr_wr_pps   : t_lvds_byte_array(f_sub1(c_eca_lvds) downto 0);
   signal lvds_dat             : t_lvds_byte_array(f_sub1(c_eca_lvds) downto 0);
+  signal lvds_dat_combined    : t_lvds_byte_array(f_sub1(c_eca_lvds) downto 0);
+  signal lvds_dat_gated       : t_lvds_byte_array(f_sub1(c_eca_lvds) downto 0);
   signal lvds_i               : t_lvds_byte_array(f_sub1(g_lvds_inout+g_lvds_in) downto 0);
 
   signal s_triggers : t_trigger_array(g_gpio_in + g_gpio_inout + g_lvds_inout + g_lvds_in -1 downto 0);
@@ -1817,7 +1832,9 @@ end generate;
   wb_reset : wb_arria_reset
     generic map(
       arria_family => g_family,
-      rst_channels => g_lm32_cores)
+      rst_channels => g_lm32_cores,
+      clk_in_hz    => 62_500_000,
+      en_wd_tmr    => g_en_wd_tmr)
     port map(
       clk_sys_i  => clk_sys,
       rstn_sys_i => rstn_sys,
@@ -1856,12 +1873,16 @@ end generate;
       gpio_spec_out_o => gpio_spec_out_o,
       gpio_spec_in_o  => gpio_spec_in_o,
       gpio_mux_o      => s_gpio_mux,
+      gpio_out_gate_o => s_gpio_out_gate,
+      gpio_in_gate_o  => s_gpio_in_gate,
       gpio_pps_mux_o  => s_gpio_pps_mux,
       lvds_oe_o       => lvds_oen_o,
       lvds_term_o     => lvds_term_o,
       lvds_spec_out_o => lvds_spec_out_o,
       lvds_spec_in_o  => lvds_spec_in_o,
       lvds_mux_o      => s_lvds_mux,
+      lvds_out_gate_o => s_lvds_out_gate,
+      lvds_in_gate_o  => s_lvds_in_gate,
       lvds_pps_mux_o  => s_lvds_pps_mux);
 
   lvds_vec_in_zero : if (g_lvds_inout + g_lvds_in = 0) generate
@@ -1881,7 +1902,15 @@ end generate;
   end generate;
 
   s_gpio_out <= s_gpio_src_eca or s_gpio_src_ioc or s_gpio_src_butis_t0 or s_gpio_src_wr_pps;
-  gpio_o     <= s_gpio_out;
+  process(clk_ref, rstn_ref)
+  begin
+    if(rstn_ref = '0') then
+      s_gpio_out_gated <= (others => '0');
+    elsif rising_edge(clk_ref) then
+      s_gpio_out_gated <= s_gpio_out and s_gpio_out_gate_sync;
+    end if;
+  end process;
+  gpio_o <= s_gpio_out_gated;
 
   lvds_out_selector : for i in 0 to f_sub1(c_eca_lvds) generate
     lvds_dat_fr_butis_t0(i) <= (others => clk_butis_t0_ts and s_lvds_mux(i)); -- !!! This is just a STUB and UNSAFE -> Clock domain crossing 1bit 20MHz <-> 8bit 125MHz
@@ -1916,10 +1945,26 @@ end generate;
 
   -- LVDS component data input is OR between ECA chan output and SERDES clk. gen.
   gen_lvds_dat : for i in lvds_dat'range generate
-    lvds_dat(i) <= lvds_dat_fr_eca_chan(i) or lvds_dat_fr_clk_gen(i) or lvds_dat_fr_ioc(i) or lvds_dat_fr_butis_t0(i) or lvds_dat_fr_wr_pps(i);
+    --lvds_dat(i) <= lvds_dat_fr_eca_chan(i) or lvds_dat_fr_clk_gen(i) or lvds_dat_fr_ioc(i) or lvds_dat_fr_butis_t0(i) or lvds_dat_fr_wr_pps(i);
+    lvds_dat_combined(i) <= lvds_dat_fr_eca_chan(i) or lvds_dat_fr_clk_gen(i) or lvds_dat_fr_ioc(i) or lvds_dat_fr_butis_t0(i) or lvds_dat_fr_wr_pps(i);
+    process(clk_ref, rstn_ref)
+    begin
+      if(rstn_ref = '0') then
+        lvds_dat_gated(i) <= (others => '0');
+      elsif rising_edge(clk_ref) then
+        lvds_dat_gated(i)(0) <= lvds_dat_combined(i)(0) and s_lvds_out_gate_sync(i);
+        lvds_dat_gated(i)(1) <= lvds_dat_combined(i)(1) and s_lvds_out_gate_sync(i);
+        lvds_dat_gated(i)(2) <= lvds_dat_combined(i)(2) and s_lvds_out_gate_sync(i);
+        lvds_dat_gated(i)(3) <= lvds_dat_combined(i)(3) and s_lvds_out_gate_sync(i);
+        lvds_dat_gated(i)(4) <= lvds_dat_combined(i)(4) and s_lvds_out_gate_sync(i);
+        lvds_dat_gated(i)(5) <= lvds_dat_combined(i)(5) and s_lvds_out_gate_sync(i);
+        lvds_dat_gated(i)(6) <= lvds_dat_combined(i)(6) and s_lvds_out_gate_sync(i);
+        lvds_dat_gated(i)(7) <= lvds_dat_combined(i)(7) and s_lvds_out_gate_sync(i);
+      end if;
+    end process;
+    lvds_dat(i) <= lvds_dat_gated(i);
   end generate gen_lvds_dat;
-
-  --FIXME not sure about those ... do they need initialising when there is no ECA/TLU?
+  --FIXME not sure about those ... do they need initialising when there is no ECA/TLU? => YES!
 
 
 
@@ -1985,25 +2030,102 @@ end generate;
 
    end generate;
 
-   genTluStuff : if c_use_tlu generate
-   tlu : wr_tlu
-     generic map(
-       g_num_triggers => g_gpio_in + g_gpio_inout + g_lvds_inout + g_lvds_in,
-       g_fifo_depth   => g_tlu_fifo_size)
-     port map(
-       clk_ref_i      => clk_ref,
-       rst_ref_n_i    => rstn_ref,
-       clk_sys_i      => clk_sys,
-       rst_sys_n_i    => rstn_sys,
-       triggers_i     => s_triggers,
-       tm_tai_cyc_i   => ref_tai8ns,
-       ctrl_slave_i   => dev_bus_master_o(c_devs_tlu),
-       ctrl_slave_o   => dev_bus_master_i(c_devs_tlu),
-       irq_master_o   => dev_msi_slave_i (c_devs_tlu),
-       irq_master_i   => dev_msi_slave_o (c_devs_tlu));
-  end generate;
+
 
    genEcaStuff : if g_en_eca generate
+
+      genTLUStuff : if c_use_tlu generate
+      tlu : wr_tlu
+        generic map(
+          g_num_triggers => g_gpio_in + g_gpio_inout + g_lvds_inout + g_lvds_in,
+          g_fifo_depth   => g_tlu_fifo_size)
+        port map(
+          clk_ref_i      => clk_ref,
+          rst_ref_n_i    => rstn_ref,
+          clk_sys_i      => clk_sys,
+          rst_sys_n_i    => rstn_sys,
+          triggers_i     => s_triggers,
+          tm_tai_cyc_i   => ref_tai8ns,
+          ctrl_slave_i   => dev_bus_master_o(c_devs_tlu),
+          ctrl_slave_o   => dev_bus_master_i(c_devs_tlu),
+          irq_master_o   => dev_msi_slave_i (c_devs_tlu),
+          irq_master_i   => dev_msi_slave_o (c_devs_tlu));
+        end generate genTLUStuff;
+
+        -- Synchronize and relax paths
+        gpio_gated_io_sync_in : if c_tlu_gpio > 0 generate
+          gpio_gated_io_sync_in : for i in 0 to c_tlu_gpio-1 generate
+            sync_gated_gpio_in : gc_sync_ffs
+              port map (
+                clk_i    => clk_ref,
+                rst_n_i  => '1',
+                data_i   => s_gpio_in_gate(i),
+                synced_o => s_gpio_in_gate_sync(i));
+          end generate;
+        end generate;
+
+        lvds_gated_io_sync_in : if c_tlu_lvds > 0 generate
+          lvds_gated_io_sync_in : for i in 0 to c_tlu_lvds-1 generate
+            sync_gated_lvds_in : gc_sync_ffs
+              port map (
+                clk_i    => clk_ref,
+                rst_n_i  => '1',
+                data_i   => s_lvds_in_gate(i),
+                synced_o => s_lvds_in_gate_sync(i));
+          end generate;
+        end generate;
+
+        gpio_gated_io_sync_out : if c_eca_gpio > 0 generate
+          gpio_gated_io_sync_out : for i in 0 to c_eca_gpio-1 generate
+            sync_gated_gpio_out : gc_sync_ffs
+              port map (
+                clk_i    => clk_ref,
+                rst_n_i  => '1',
+                data_i   => s_gpio_out_gate(i),
+                synced_o => s_gpio_out_gate_sync(i));
+          end generate;
+        end generate;
+
+        lvds_gated_io_sync_out : if c_eca_lvds > 0 generate
+          lvds_gated_io_sync_out : for i in 0 to c_eca_lvds-1 generate
+            sync_gated_lvds_out : gc_sync_ffs
+              port map (
+                clk_i    => clk_ref,
+                rst_n_i  => '1',
+                data_i   => s_lvds_out_gate(i),
+                synced_o => s_lvds_out_gate_sync(i));
+          end generate;
+        end generate;
+
+          -- GPIO input to the TLU
+          gpi1_gated : if c_tlu_gpio > 0 generate
+            gpio_gated : for i in 0 to c_tlu_gpio-1 generate
+              s_tlu_gated_io(i) <= (others => gpio_i(i) and s_gpio_in_gate_sync(i));
+              bits_gated : for b in 0 to 7 generate -- 0 goes first for ECA
+                sync_gated : gc_sync_ffs
+                  port map (
+                    clk_i    => clk_ref,
+                    rst_n_i  => '1',
+                    data_i   => s_tlu_gated_io(i)(b),
+                    synced_o => s_tlu_gated_io_sync(i)(b));
+              end generate;
+            end generate;
+          end generate;
+
+          -- LVDS input to the TLU
+          lvd1_gated : if c_tlu_lvds > 0 generate
+            lvds_gated : for i in 0 to c_tlu_lvds-1 generate
+              bits_gated : for b in 0 to 7 generate -- 0 goes first for ECA
+                s_tlu_gated_io(i+c_tlu_gpio)(b) <= lvds_i(i)(7-b) and s_lvds_in_gate_sync(i);
+                  sync_gated : gc_sync_ffs
+                  port map (
+                    clk_i    => clk_ref,
+                    rst_n_i  => '1',
+                    data_i   => s_tlu_gated_io(i+c_tlu_gpio)(b),
+                    synced_o => s_tlu_gated_io_sync(i+c_tlu_gpio)(b));
+              end generate;
+            end generate;
+          end generate;
 
       ecawb : eca_wb_event
         port map(
@@ -2027,7 +2149,7 @@ end generate;
           a_clk_i    => clk_ref,
           a_rst_n_i  => rstn_ref,
           a_time_i   => s_time,
-          a_gpio_i   => s_tlu_io,
+          a_gpio_i   => s_tlu_gated_io,
           a_stream_o => s_stream_i(1),
           a_stall_i  => s_stall_o(1));
 

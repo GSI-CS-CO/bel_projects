@@ -38,12 +38,13 @@ diag                [type="slave", shape="rectangle", style="filled", fillcolor=
 user_1wire          [type="slave", shape="rectangle", style="filled", fillcolor="gray68", color="black", fixedsize=true, width=1.8, height=.4];
 tempsens            [type="slave", shape="rectangle", style="filled", fillcolor="gray68", color="black", fixedsize=true, width=1.8, height=.4];
 prioq_ctl           [type="slave", shape="rectangle", style="filled", fillcolor="gray68", color="black", fixedsize=true, width=1.8, height=.4];
-wr_mini_nic         [type="slave", shape="rectangle", style="filled", fillcolor="gray68" , color="black", fixedsize=true, width=1.8, height=.4];
-wr_endpoint         [type="slave", shape="rectangle", style="filled", fillcolor="gray68" , color="black", fixedsize=true, width=1.8, height=.4];
-wr_soft_pll         [type="slave", shape="rectangle", style="filled", fillcolor="gray68" , color="black", fixedsize=true, width=1.8, height=.4];
-wr_pps_gen          [type="slave", shape="rectangle", style="filled", fillcolor="gray68" , color="black", fixedsize=true, width=1.8, height=.4];
-wr_periph_syscon    [type="slave", shape="rectangle", style="filled", fillcolor="gray68" , color="black", fixedsize=true, width=1.8, height=.4];
-wr_periph_1wire     [type="slave", shape="rectangle", style="filled", fillcolor="gray68" , color="black", fixedsize=true, width=1.8, height=.4];
+wr_mini_nic         [type="slave", shape="rectangle", style="filled", fillcolor="gray68", color="black", fixedsize=true, width=1.8, height=.4];
+psram               [type="slave", shape="rectangle", style="filled", fillcolor="gray68", color="black", fixedsize=true, width=1.8, height=.4];
+wr_endpoint         [type="slave", shape="rectangle", style="filled", fillcolor="gray68", color="black", fixedsize=true, width=1.8, height=.4];
+wr_soft_pll         [type="slave", shape="rectangle", style="filled", fillcolor="gray68", color="black", fixedsize=true, width=1.8, height=.4];
+wr_pps_gen          [type="slave", shape="rectangle", style="filled", fillcolor="gray68", color="black", fixedsize=true, width=1.8, height=.4];
+wr_periph_syscon    [type="slave", shape="rectangle", style="filled", fillcolor="gray68", color="black", fixedsize=true, width=1.8, height=.4];
+wr_periph_1wire     [type="slave", shape="rectangle", style="filled", fillcolor="gray68", color="black", fixedsize=true, width=1.8, height=.4];
 wb_slave            [type="slave", shape="rectangle", style="filled", fillcolor="gray68", color="black", fixedsize=true, width=1.8, height=.4];
 
 // wb masters
@@ -85,11 +86,12 @@ dev               -> eca_ctl          [type="slaveconnect", color="black", arrow
 dev               -> eca_aq           [type="slaveconnect", color="black", arrowhead=normal];      
 dev               -> eca_tlu          [type="slaveconnect", color="black", arrowhead=normal];      
 dev               -> eca_wbm_m        [type="slaveconnect", color="black", arrowhead=normal];      
-dev               -> emb_cpu          [type="slaveconnect", color="black", arrowhead=normal];      
+dev               -> emb_cpu          [type="slaveconnect", color="black", arrowhead=normal];
 dev               -> serdes_clk_gen   [type="slaveconnect", color="black", arrowhead=normal];      
 dev               -> control          [type="slaveconnect", color="black", arrowhead=normal];      
 dev               -> user_1wire       [type="slaveconnect", color="black", arrowhead=normal];      
 dev               -> tempsens         [type="slaveconnect", color="black", arrowhead=normal];      
+dev               -> psram            [type="slaveconnect", color="black", arrowhead=normal];      
 ftm_cluster       -> lm32_ram_user_1  [type="slaveconnect", color="black", arrowhead=normal];      
 ftm_cluster       -> lm32_ram_user_N  [type="slaveconnect", color="black", arrowhead=normal];      
 ftm_cluster       -> cluster_info     [type="slaveconnect", color="black", arrowhead=normal];      
@@ -104,8 +106,8 @@ wrcore            -> wr_periph_syscon [type="slaveconnect", color="black", arrow
 wrcore            -> wr_periph_1wire  [type="slaveconnect", color="black", arrowhead=normal];
 
 // special connects
-lm32_ram_user_1  -> lm32_core_1      [type="specialconnect", color="red",  arrowhead=normal, style=dashed, label="dp ram", dir=back];      
-lm32_ram_user_N  -> lm32_core_N      [type="specialconnect", color="red",  arrowhead=normal, style=dashed, label="dp ram", dir=back];
+lm32_ram_user_1  -> lm32_core_1       [type="specialconnect", color="red",  arrowhead=normal, style=dashed, label="dp ram", dir=back];      
+lm32_ram_user_N  -> lm32_core_N       [type="specialconnect", color="red",  arrowhead=normal, style=dashed, label="dp ram", dir=back];
 
 rank=same;
 
@@ -161,6 +163,7 @@ subgraph cluster_dev {
        control;        
        user_1wire;
        tempsens;
+       psram;
 
        //fontcolor="deeppink4"; color=deeppink4;
        style=invis;

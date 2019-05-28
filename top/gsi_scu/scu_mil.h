@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 #include <board.h>
-#include <mprintf.h>
+#include <pp-printf.h>
 #include <syscon.h>
 #include <aux.h>
 

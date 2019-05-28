@@ -2,7 +2,7 @@
 --! @brief Control unit for bidirectional IO and more
 --! @author CSCO-TG <csco-tg@gsi.de>
 --!
---! Copyright (C) 2015 GSI Helmholtz Centre for Heavy Ion Research GmbH 
+--! Copyright (C) 2015 GSI Helmholtz Centre for Heavy Ion Research GmbH
 --!
 --------------------------------------------------------------------------------
 --! This library is free software; you can redistribute it and/or
@@ -14,7 +14,7 @@
 --! but WITHOUT ANY WARRANTY; without even the implied warranty of
 --! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 --! Lesser General Public License for more details.
---!  
+--!
 --! You should have received a copy of the GNU Lesser General Public
 --! License along with this library. If not, see <http://www.gnu.org/licenses/>.
 ---------------------------------------------------------------------------------
@@ -29,11 +29,11 @@ use work.monster_pkg.all;
 use work.altera_lvds_pkg.all;
 
 package io_control_pkg is
-  
+
   -- SERDES INOUT (in case altera_lvds_pkg/t_lvds_byte_array is not available/suitable)
   subtype t_serdes_byte is std_logic_vector(7 downto 0);
   type t_serdes_byte_array is array(natural range <>) of t_serdes_byte;
-  
+
   constant c_io_control_sdb : t_sdb_device := (
     abi_class     => x"0000", -- undocumented device
     abi_ver_major => x"00",
@@ -50,7 +50,7 @@ package io_control_pkg is
     date          => x"20150916",
     name          => "IO_CONTROL         "))
     );
-  
+
   component io_control is
     generic(
       g_project     : string;
@@ -83,13 +83,17 @@ package io_control_pkg is
       gpio_mux_o      : out std_logic_vector(f_sub1(g_gpio_inout+g_gpio_out)  downto 0);
       gpio_pps_mux_o  : out std_logic_vector(f_sub1(g_gpio_inout+g_gpio_out)  downto 0);
       gpio_sel_o      : out std_logic_vector(f_sub1(g_gpio_inout+g_gpio_out)  downto 0);
+      gpio_out_gate_o : out std_logic_vector(f_sub1(g_gpio_inout+g_gpio_out)  downto 0);
+      gpio_in_gate_o  : out std_logic_vector(f_sub1(g_gpio_inout+g_gpio_in)   downto 0);
       lvds_oe_o       : out std_logic_vector(f_sub1(g_lvds_inout+g_lvds_out)  downto 0);
       lvds_term_o     : out std_logic_vector(f_sub1(g_lvds_inout+g_lvds_in)   downto 0);
       lvds_spec_out_o : out std_logic_vector(f_sub1(g_lvds_inout+g_lvds_out)  downto 0);
       lvds_spec_in_o  : out std_logic_vector(f_sub1(g_lvds_inout+g_lvds_in)   downto 0);
       lvds_mux_o      : out std_logic_vector(f_sub1(g_lvds_inout+g_lvds_out)  downto 0);
       lvds_pps_mux_o  : out std_logic_vector(f_sub1(g_lvds_inout+g_lvds_out)  downto 0);
-      lvds_sel_o      : out std_logic_vector(f_sub1(g_lvds_inout+g_lvds_out)  downto 0));
+      lvds_sel_o      : out std_logic_vector(f_sub1(g_lvds_inout+g_lvds_out)  downto 0);
+      lvds_out_gate_o : out std_logic_vector(f_sub1(g_lvds_inout+g_lvds_out)  downto 0);
+      lvds_in_gate_o  : out std_logic_vector(f_sub1(g_lvds_inout+g_lvds_in)   downto 0));
   end component;
-  
+
 end package;
