@@ -13,6 +13,7 @@ modules = {
     "trans_pll",
     "modulbus",
     "chopper",
+    "cpri_phy_reconf",
     "cfi_flash",
     "ddr3",
     "lpc_uart",
