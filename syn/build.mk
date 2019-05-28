@@ -107,8 +107,10 @@ endif
 ifndef CFI
 	$(QUARTUS_BIN)/quartus_cpf -c -o $*.opt -d $(FLASH) -m $(SPI_LANES) $< $@
 endif
+ifdef SKIP_CFI
 ifdef CFI
 	$(QUARTUS_BIN)/quartus_cpf -c -o $*.opt -d $(CFI_NAME) -m $(CFI_LANES) $< $@
+endif
 endif
 
 %.rpd:	%.pof %.opt
