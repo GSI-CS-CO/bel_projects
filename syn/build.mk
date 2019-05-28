@@ -96,7 +96,12 @@ ifdef SKIP_JIC
 endif
 
 %.pof:	%.sof %.opt
+ifndef CFI
 	$(QUARTUS_BIN)/quartus_cpf -c -o $*.opt -d $(FLASH) -m $(SPI_LANES) $< $@
+endif
+ifdef CFI
+	$(QUARTUS_BIN)/quartus_cpf -c -o $*.opt -d $(CFI_NAME) -m $(CFI_LANES) $< $@
+endif
 
 %.rpd:	%.pof %.opt
 	$(QUARTUS_BIN)/quartus_cpf -c -o $*.opt $< $@
