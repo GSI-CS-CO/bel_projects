@@ -111,6 +111,7 @@ package monster_pkg is
       g_en_pmc               : boolean := false;
       g_a10_use_sys_fpll     : boolean := false;
       g_a10_use_ref_fpll     : boolean := false;
+      g_a10_en_phy_reconf    : boolean := false;
       g_en_butis             : boolean := true;
       g_lm32_cores           : natural := 1;
       g_lm32_MSIs            : natural := 1;
@@ -139,6 +140,7 @@ package monster_pkg is
       core_clk_200m_o        : out   std_logic;
       core_clk_20m_o         : out   std_logic;
       core_debug_o           : out   std_logic_vector(15 downto 0);
+      core_clk_debug_i       : in    std_logic := '0';
       -- Required: white rabbit pins
       wr_onewire_io          : inout std_logic;
       wr_sfp_sda_io          : inout std_logic;
@@ -158,6 +160,10 @@ package monster_pkg is
       sfp_tx_disable_o       : out   std_logic;
       sfp_tx_fault_i         : in    std_logic;
       sfp_los_i              : in    std_logic;
+      phy_rx_ready_o         : out   std_logic;
+      phy_tx_ready_o         : out   std_logic;
+      phy_debug_o            : out   std_logic;
+      phy_debug_i            : in    std_logic_vector(7 downto 0) := (others => '0');
       -- GPIO for the board (inouts start at 0, dedicated in/outs come after)
       gpio_i                 : in    std_logic_vector(f_sub1(g_gpio_inout+g_gpio_in)  downto 0) := (others => '1');
       gpio_o                 : out   std_logic_vector(f_sub1(g_gpio_inout+g_gpio_out) downto 0);
