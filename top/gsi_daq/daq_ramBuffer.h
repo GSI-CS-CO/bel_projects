@@ -102,10 +102,12 @@ extern "C" {
  */
 typedef DDR3_PAYLOAD_T RAM_DAQ_PAYLOAD_T;
 
+#ifndef CONFIG_DDR3_NO_BURST_FUNCTIONS
 /*!
  * @see DDR3_POLL_FT
  */
 typedef DDR3_POLL_FT   RAM_DAQ_POLL_FT;
+#endif
 
 /*!
  * @defgroup SCU_RING_BUFFER_INDEXES
@@ -457,12 +459,15 @@ int ramPushDaqDataBlock( register RAM_SCU_T* pThis,
 
 #endif /* if defined(__lm32__) || defined(__DOXYGEN__) */
 
-#if defined(__linux__) || defined(__DOXYGEN__)
-
+#if (defined(__linux__) || defined(__DOXYGEN__))
 /*! ---------------------------------------------------------------------------
  */
 int ramReadDaqDataBlock( register RAM_SCU_T* pThis, RAM_DAQ_PAYLOAD_T* pData,
-                         unsigned int len, RAM_DAQ_POLL_FT poll );
+                         unsigned int len
+                       #ifndef CONFIG_DDR3_NO_BURST_FUNCTIONS
+                         , RAM_DAQ_POLL_FT poll
+                       #endif
+                       );
 
 #endif /* defined(__linux__) || defined(__DOXYGEN__) */
 

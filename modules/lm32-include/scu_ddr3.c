@@ -122,6 +122,7 @@ DDR3_RETURN_T _ddr3PopFifo( register const DDR3_T* pThis,
 /*! ---------------------------------------------------------------------------
  * @see scu_ddr3.h
  */
+#define CONFIG_EB_BLOCK_READING
 int ddr3FlushFiFo( register const DDR3_T* pThis, unsigned int start,
                    unsigned int word64len, DDR3_PAYLOAD_T* pTarget,
                    DDR3_POLL_FT poll )
@@ -130,7 +131,10 @@ int ddr3FlushFiFo( register const DDR3_T* pThis, unsigned int start,
    unsigned int targetIndex = 0;
    DDR_ASSERT( pTarget != NULL );
    DDR_ASSERT( (word64len + start) <= DDR3_MAX_INDEX64 );
-
+#if defined(__linux__) && defined( CONFIG_EB_BLOCK_READING )
+   const uint32_t lowAddr  = pThis->pBurstModeBase + DDR3_FIFO_LOW_WORD_OFFSET_ADDR  * sizeof(DDR3_ADDR_T);
+   const uint32_t highAddr = pThis->pBurstModeBase + DDR3_FIFO_HIGH_WORD_OFFSET_ADDR * sizeof(DDR3_ADDR_T);
+#endif
    while( word64len > 0 )
    {
       unsigned int blkLen = min( word64len, DDR3_XFER_FIFO_SIZE );
@@ -157,11 +161,8 @@ int ddr3FlushFiFo( register const DDR3_T* pThis, unsigned int start,
          pollCount++;
       }
 
-#define CONFIG_EB_BLOCK_READING
 #if defined(__linux__) && defined( CONFIG_EB_BLOCK_READING )
-      const uint32_t lowAddr  = pThis->pBurstModeBase + DDR3_FIFO_LOW_WORD_OFFSET_ADDR  * sizeof(DDR3_ADDR_T);
-      const uint32_t highAddr = pThis->pBurstModeBase + DDR3_FIFO_HIGH_WORD_OFFSET_ADDR * sizeof(DDR3_ADDR_T);
-
+#if 1
       const size_t infoSize = ARRAY_SIZE( pTarget->ad32 );
       EB_CYCLE_OR_CB_ARG_T arg;
       EB_MEMBER_INFO_T info[infoSize];
@@ -202,6 +203,51 @@ int ddr3FlushFiFo( register const DDR3_T* pThis, unsigned int start,
              return pThis->pEbHandle->status;
 
       }
+#else
+      const size_t infoSize = ARRAY_SIZE( pTarget->ad32 ) + blkLen;
+      EB_CYCLE_OR_CB_ARG_T arg;
+      EB_MEMBER_INFO_T info[infoSize];
+
+      for( unsigned int i = 0; i < blkLen; i++ )
+      {
+
+         for( size_t j = 0; j < ARRAY_SIZE( pTarget->ad32 ); j++ )
+         {
+            info[i+j].pData = (uint8_t*)&pTarget[targetIndex].ad32[j];
+            info[i+j].size = sizeof( uint32_t );
+         }
+         targetIndex++;
+      }
+
+         arg.aInfo   = info;
+         arg.infoLen = infoSize;
+         //arg.infoLen =  ARRAY_SIZE( pTarget->ad32 );
+         arg.exit    = false;
+         if( ebObjectReadCycleOpen( pThis->pEbHandle, &arg ) != EB_OK )
+         {
+            fprintf( stderr, ESC_FG_RED ESC_BOLD
+                             "Error: failed to create cycle for read: %s\n"
+                             ESC_NORMAL,
+                            ebGetStatusString( pThis->pEbHandle ));
+            return pThis->pEbHandle->status;
+         }
+
+         for( unsigned int i = 0; i < blkLen; i++ )
+         {
+            eb_cycle_read( pThis->pEbHandle->cycle, lowAddr,  EB_DATA32 | EB_LITTLE_ENDIAN, NULL );
+            eb_cycle_read( pThis->pEbHandle->cycle, highAddr, EB_DATA32 | EB_LITTLE_ENDIAN, NULL );
+         }
+         ebCycleClose( pThis->pEbHandle );
+         while( !arg.exit )
+            ebSocketRun( pThis->pEbHandle );
+
+         pThis->pEbHandle->status = arg.status;
+
+         if( pThis->pEbHandle->status != EB_OK )
+             return pThis->pEbHandle->status;
+
+     // }
+#endif
 #else
       for( unsigned int i = 0; i < blkLen; i++ )
       {

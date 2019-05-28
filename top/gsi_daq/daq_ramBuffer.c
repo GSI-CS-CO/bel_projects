@@ -677,7 +677,17 @@ int ramPushDaqDataBlock( register RAM_SCU_T* pThis, DAQ_CANNEL_T* pDaqChannel,
 
 #endif /* if defined(__lm32__) || defined(__DOXYGEN__) */
 
-#if defined(__linux__) || defined(__DOXYGEN__)
+#if (defined(__linux__) || defined(__DOXYGEN__))
+/*! ---------------------------------------------------------------------------
+ */
+#if defined( CONFIG_DDR3_NO_BURST_FUNCTIONS )
+int ramReadDaqDataBlock( register RAM_SCU_T* pThis, RAM_DAQ_PAYLOAD_T* pData,
+                         unsigned int len )
+{
+   RAM_RING_INDEXES_T indexes = pThis->pSharedObj->ringIndexes;
+   return EB_OK;
+}
+#else /* if defined( CONFIG_DDR3_NO_BURST_FUNCTIONS ) */
 /*! ---------------------------------------------------------------------------
  */
 int ramReadDaqDataBlock( register RAM_SCU_T* pThis, RAM_DAQ_PAYLOAD_T* pData,
@@ -711,7 +721,7 @@ int ramReadDaqDataBlock( register RAM_SCU_T* pThis, RAM_DAQ_PAYLOAD_T* pData,
 #error Unknown memory type for function: ramReadDaqDataBlock()
 #endif
 }
-
+#endif /* if defined( CONFIG_DDR3_NO_BURST_FUNCTIONS ) */
 #endif /* defined(__linux__) || defined(__DOXYGEN__) */
 
 /*================================== EOF ====================================*/

@@ -38,16 +38,15 @@ using namespace daq;
 bool DaqChannel::SequenceNumber::compare( uint8_t sequence )
 {
    m_blockLost = (m_sequence != sequence) && m_continued;
-#ifdef DEBUGLEVEL
    if( m_blockLost )
    {
+      m_lostCount++;
       DBPRINT1( ESC_FG_RED
                 "DBG: ERROR: Sequence is: %d, expected: %d\n"
                 ESC_NORMAL,
                 sequence, m_sequence
               );
    }
-#endif
    m_continued = true;
    m_sequence = sequence;
    m_sequence++;
@@ -335,7 +334,7 @@ DaqAdministration::getChannelBySlotNumber( const unsigned int slotNumber,
    return poDevice->getChannel( channelNumber );
 }
 
-#ifdef CONFIG_SCU_USE_DDR3
+#if defined( CONFIG_SCU_USE_DDR3 ) && !defined( CONFIG_DDR3_NO_BURST_FUNCTIONS )
 /*! ---------------------------------------------------------------------------
  */
 extern "C" {
@@ -429,7 +428,11 @@ int DaqAdministration::distributeData( void )
     * obtaining the device-descriptor.
     */
    if( ::ramReadDaqDataBlock( &m_oScuRam, probe.ramItems,
-                              c_ramBlockShortLen, ramReadPoll ) != EB_OK )
+                              c_ramBlockShortLen
+                            #ifndef CONFIG_DDR3_NO_BURST_FUNCTIONS
+                              , ::ramReadPoll
+                            #endif
+                            ) != EB_OK )
    {
       sendUnlockRamAccess();
       throw EbException( "Unable to read SCU-Ram buffer first part" );
@@ -454,8 +457,11 @@ int DaqAdministration::distributeData( void )
       */
       if( ::ramReadDaqDataBlock( &m_oScuRam,
                                  &probe.ramItems[c_ramBlockShortLen],
-                                 c_ramBlockLongLen - c_ramBlockShortLen,
-                                 ramReadPoll ) != EB_OK )
+                                 c_ramBlockLongLen - c_ramBlockShortLen
+                               #ifndef CONFIG_DDR3_NO_BURST_FUNCTIONS
+                                 , ::ramReadPoll
+                               #endif
+                               ) != EB_OK )
       {
          sendUnlockRamAccess();
          throw EbException( "Unable to read SCU-Ram buffer second part" );

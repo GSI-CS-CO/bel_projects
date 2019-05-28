@@ -349,6 +349,7 @@ DDR3_RETURN_T ddr3PopFifo( register const DDR3_T* pThis,
    pData->ad32[1] = pThis->pBurstModeBase[DDR3_FIFO_HIGH_WORD_OFFSET_ADDR];
 
 #elif defined(__linux__)
+
  #if (DDR3_FIFO_HIGH_WORD_OFFSET_ADDR != DDR3_FIFO_LOW_WORD_OFFSET_ADDR+1)
   #error DDR3_FIFO_LOW_WORD_OFFSET_ADDR has to be DDR3_FIFO_HIGH_WORD_OFFSET_ADDR+1
  #endif

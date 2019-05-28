@@ -65,10 +65,16 @@ class DaqChannel
        */
       uint8_t m_sequence;
 
+      /*!
+       * @brief Becomes incremented with each lost data block.
+       */
+      unsigned int m_lostCount;
+
       SequenceNumber( void )
          :m_continued( false )
          ,m_blockLost( false )
          ,m_sequence( 0 )
+         ,m_lostCount( 0 )
       {}
 
       /*!
@@ -82,11 +88,17 @@ class DaqChannel
       {
          m_continued = false;
          m_blockLost = false;
+         m_lostCount = 0;
       }
 
       bool wasLost( void ) const
       {
          return m_blockLost;
+      }
+
+      unsigned int getLostCount( void ) const
+      {
+         return m_lostCount;
       }
    };
 
@@ -181,6 +193,11 @@ public:
    uint8_t getExpectedSequence( void ) const
    {
       return getSequencePtr()->m_sequence;
+   }
+
+   unsigned int getLostCount( void ) const
+   {
+      return getSequencePtr()->getLostCount();
    }
 
 protected:
