@@ -66,6 +66,7 @@ use work.wb_pmc_host_bridge_pkg.all;
 use work.wb_temp_sense_pkg.all;
 use work.ddr3_wrapper_pkg.all;
 use work.endpoint_pkg.all;
+use work.cpri_phy_reconf_pkg.all;
 
 entity monster is
   generic(
@@ -101,6 +102,7 @@ entity monster is
     g_en_pmc               : boolean;
     g_a10_use_sys_fpll     : boolean;
     g_a10_use_ref_fpll     : boolean;
+    g_a10_en_phy_reconf    : boolean;
     g_en_butis             : boolean;
     g_lm32_cores           : natural;
     g_lm32_MSIs            : natural;
@@ -128,6 +130,7 @@ entity monster is
     core_clk_200m_o        : out   std_logic;
     core_clk_20m_o         : out   std_logic;
     core_debug_o           : out   std_logic_vector(15 downto 0) := (others => 'Z');
+    core_clk_debug_i       : in    std_logic;
     -- Required: white rabbit pins
     wr_onewire_io          : inout std_logic;
     wr_sfp_sda_io          : inout std_logic;
@@ -147,6 +150,10 @@ entity monster is
     sfp_tx_disable_o       : out   std_logic;
     sfp_tx_fault_i         : in    std_logic;
     sfp_los_i              : in    std_logic;
+    phy_rx_ready_o         : out   std_logic;
+    phy_tx_ready_o         : out   std_logic;
+    phy_debug_o            : out   std_logic;
+    phy_debug_i            : in    std_logic_vector(7 downto 0) := (others => '0');
     -- GPIO for the board
     gpio_i                 : in    std_logic_vector(f_sub1(g_gpio_inout+g_gpio_in)  downto 0);
     gpio_o                 : out   std_logic_vector(f_sub1(g_gpio_inout+g_gpio_out) downto 0) := (others => 'Z');
@@ -427,7 +434,7 @@ architecture rtl of monster is
   ----------------------------------------------------------------------------------
 
   -- required slaves
-  constant c_dev_slaves          : natural := 28;
+  constant c_dev_slaves          : natural := 29;
   constant c_devs_build_id       : natural := 0;
   constant c_devs_watchdog       : natural := 1;
   constant c_devs_flash          : natural := 2;
@@ -458,6 +465,7 @@ architecture rtl of monster is
   constant c_devs_DDR3_if2       : natural := 25;
   constant c_devs_DDR3_ctrl      : natural := 26;
   constant c_devs_tempsens       : natural := 27;
+  constant c_devs_a10_phy_reconf : natural := 28;
 
   -- Cut off TLU
   constant c_use_tlu : boolean := (g_lm32_are_ftm and g_en_tlu) or (not(g_lm32_are_ftm) and g_en_tlu);
@@ -494,7 +502,8 @@ architecture rtl of monster is
     c_devs_ddr3_if1       => f_sdb_auto_device(c_wb_DDR3_if1_sdb,                g_en_ddr3),
     c_devs_ddr3_if2       => f_sdb_auto_device(c_wb_DDR3_if2_sdb,                g_en_ddr3),
     c_devs_ddr3_ctrl      => f_sdb_auto_device(c_irq_master_ctrl_sdb,            g_en_ddr3),
-    c_devs_tempsens       => f_sdb_auto_device(c_temp_sense_sdb,                 g_en_tempsens));
+    c_devs_tempsens       => f_sdb_auto_device(c_temp_sense_sdb,                 g_en_tempsens),
+    c_devs_a10_phy_reconf => f_sdb_auto_device(c_cpri_phy_reconf_sdb,            g_a10_en_phy_reconf));
   constant c_dev_layout      : t_sdb_record_array := f_sdb_auto_layout(c_dev_layout_req_masters, c_dev_layout_req_slaves);
   constant c_dev_sdb_address : t_wishbone_address := f_sdb_auto_sdb   (c_dev_layout_req_masters, c_dev_layout_req_slaves);
   constant c_dev_bridge_sdb  : t_sdb_bridge       := f_xwb_bridge_layout_sdb(true, c_dev_layout, c_dev_sdb_address);
@@ -598,7 +607,14 @@ architecture rtl of monster is
   signal pci_clk_global   : std_logic;
 
   -- Misc.
-  signal clk_tx_pll_a10   : std_logic;
+  signal clk_tx_pll_a10       : std_logic;
+  signal reconfig_reset       : std_logic_vector(0 downto 0);
+  signal reconfig_write       : std_logic_vector(0 downto 0);
+  signal reconfig_read        : std_logic_vector(0 downto 0);
+  signal reconfig_address     : std_logic_vector(9 downto 0);
+  signal reconfig_writedata   : std_logic_vector(31 downto 0);
+  signal reconfig_readdata    : std_logic_vector(31 downto 0);
+  signal reconfig_waitrequest : std_logic_vector(0 downto 0);
 
   -- END OF Clock networks
   ----------------------------------------------------------------------------------
@@ -1626,17 +1642,46 @@ end generate;
   phy_a10_e3p1 : if c_is_arria10gx_e3p1 generate
     phy : wr_arria10_e3p1_transceiver
       generic map (
-        g_use_atx_pll => TRUE)
+        g_use_atx_pll     => true,
+        g_use_cmu_pll     => false,
+        g_use_det_phy     => true,
+        g_use_sfp_los_rst => true,
+        g_use_tx_lcr_dbg  => false,
+        g_use_rx_lcr_dbg  => false,
+        g_use_ext_loop    => true,
+        g_use_ext_rst     => true)
       port map (
-        clk_ref_i      => phy_clk,
-        ready_o        => phy_ready,
-        drop_link_i    => phy_rst,
-        tx_clk_o       => phy_tx_clk,
-        tx_data_i      => phy_tx_data,
-        rx_clk_o       => phy_rx_rbclk,
-        rx_data_o      => phy_rx_data,
-        pad_txp_o      => wr_sfp_tx_o,
-        pad_rxp_i      => wr_sfp_rx_i);
+        clk_ref_i              => clk_ref,
+        clk_phy_i              => phy_clk,
+        reconfig_write_i       => reconfig_write,
+        reconfig_read_i        => reconfig_read,
+        reconfig_address_i     => reconfig_address,
+        reconfig_writedata_i   => reconfig_writedata,
+        reconfig_readdata_o    => reconfig_readdata,
+        reconfig_waitrequest_o => reconfig_waitrequest,
+        reconfig_clk_i(0)      => clk_sys,
+        reconfig_reset_i(0)    => not(rstn_sys),
+        ready_o                => phy_ready,
+        drop_link_i            => phy_rst,
+        loopen_i               => phy_loopen,
+        sfp_los_i              => sfp_los_i,
+        tx_clk_o               => phy_tx_clk,
+        tx_data_i              => phy_tx_data,
+        tx_disparity_o         => phy_tx_disparity,
+        tx_enc_err_o           => phy_tx_enc_err,
+        tx_data_k_i            => phy_tx_k(0),
+        rx_clk_o               => phy_rx_rbclk,
+        rx_data_o              => phy_rx_data,
+        rx_data_k_o            => phy_rx_k(0),
+        rx_enc_err_o           => phy_rx_enc_err,
+        rx_bitslide_o          => phy_rx_bitslide,
+        debug_o                => phy_debug_o,
+        debug_i                => phy_debug_i,
+        pad_txp_o              => wr_sfp_tx_o,
+        pad_rxp_i              => wr_sfp_rx_i);
+
+        phy_rx_ready_o <= phy_ready;
+        phy_tx_ready_o <= phy_ready and not(phy_tx_enc_err);
   end generate phy_a10_e3p1;
 
   phy_a10_scu4 : if c_is_arria10gx_scu4 generate
@@ -1656,6 +1701,30 @@ end generate;
   phy_clk <= core_clk_125m_sfpref_i;
   phy16_o <= c_dummy_phy16_to_wrc;
   phy8_o <= c_dummy_phy8_to_wrc;
+
+  a10_en_phy_reconf_n : if not g_a10_en_phy_reconf generate
+    dev_bus_master_i(c_devs_a10_phy_reconf) <= cc_dummy_slave_out;
+
+    reconfig_write(0)                       <= '0';
+    reconfig_read(0)                        <= '0';
+    reconfig_address                        <= (others => '0');
+    reconfig_writedata                      <= (others => '0');
+  end generate;
+  a10_en_phy_reconf_y : if g_a10_en_phy_reconf generate
+    cpri_phy_reconf_inst : cpri_phy_reconf
+      port map (
+        clk_i                            => clk_sys,
+        rst_n_i                          => rstn_sys,
+        slave_i                          => dev_bus_master_o(c_devs_a10_phy_reconf),
+        slave_o                          => dev_bus_master_i(c_devs_a10_phy_reconf),
+        reconfig_write_o                 => reconfig_write(0),
+        reconfig_read_o                  => reconfig_read(0),
+        reconfig_address_o(9 downto 0)   => reconfig_address,
+        reconfig_address_o(31 downto 10) => open,
+        reconfig_writedata_o             => reconfig_writedata,
+        reconfig_readdata_i              => reconfig_readdata,
+        reconfig_waitrequest_i           => reconfig_waitrequest);
+  end generate;
 
   pps_ext : gc_extend_pulse
     generic map(
