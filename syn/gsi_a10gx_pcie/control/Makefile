@@ -1,8 +1,11 @@
 TARGET		= pci_control
 DEVICE		= 10AX115S2F
-FLASH		= EPCQL512
+FLASH		= NONE
 SPI_LANES	= ASx4
 RAM_SIZE	= 1073741
 SKIP_JIC	= yes
+CFI		= yes
+CFI_NAME        = CFI_128Mb
+CFI_LANES       = AVSTx32
 
 include ../../build.mk
