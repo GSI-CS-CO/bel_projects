@@ -155,7 +155,7 @@ enum {
 static Task_t tasks[4]= {
   {0, 0, 0, 0, 0, 0, ALWAYS, 0, triggerIoActions  },
   {0, 0, 0, 0, 0, 0, ALWAYS, 0, ecaMsiHandler     },
-  {0, 0, 0, 0, 0, 0, ALWAYS, 0, hostMsiHandler    },
+  {0, 0, 0, 0, 0, 0, INTERVAL_1000MS, 0, hostMsiHandler},
   {0, 0, 0, 0, 0, 0, INTERVAL_2000MS, 0, dummyTask},
 };
 
