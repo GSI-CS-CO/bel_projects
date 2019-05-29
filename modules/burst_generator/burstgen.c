@@ -139,10 +139,10 @@ void buildTimingMsg(uint32_t *msg, uint32_t id); // build timing message
 void injectTimingMsg(uint32_t *msg);  // inject timing message to ECA event input
 void ecaHandler(uint32_t);            // pop pending eCPU actions from ECA queue
 
-void ecaMsiHandler(int id);           // handler for the ECA MSIs
-void hostMsiHandler(int id);          // handler for host MSIs
-void triggerIoActions(int id);        // trigger IO actions to generate pulses
-void dummyTask(int id);
+int ecaMsiHandler(int id);           // handler for the ECA MSIs
+int hostMsiHandler(int id);          // handler for host MSIs
+int triggerIoActions(int id);        // trigger IO actions to generate pulses
+int dummyTask(int id);
 
 /* definitions of MSI message buffers */
 enum {
@@ -185,7 +185,7 @@ uint64_t gInjection = 0;            // time duration for local message injection
 int gEcaChECPU = 0;                 // ECA channel for an embedded CPU (LM32), connected to ECA queue pointed by pECAQ
 int gMbSlot = -1;                   // slot in mailbox subscribed by LM32, no slot is subscribed by default
 
-void dummyTask(int id) {
+int dummyTask(int id) {
 
   // wait for 60 seconds
   uint64_t t = getSysTime() - pTask[id].deadline;
@@ -195,6 +195,8 @@ void dummyTask(int id) {
     //mprintf("elapsed %d ms\n",(uint32_t)(t / MS_SCALE)); // enable output msg only for debugging!
     pTask[id].deadline = getSysTime();
   }
+
+  return STATUS_OK;
 }
 
 /*******************************************************************************
@@ -202,13 +204,13 @@ void dummyTask(int id) {
  * Trigger IO actions to generate pulses at IO pin
  *
  ******************************************************************************/
-void triggerIoActions(int id) {
+int triggerIoActions(int id) {
 
   if (pTask[id].deadline == 0)     // deadline is unset, nothing to do!
-    return;
+    return -1;
 
   if (pTask[id].cycle == 0)        // production cycle is over, nothing to do!
-    return;
+    return -2;
 
   uint64_t deadline = pTask[id].deadline;
   uint64_t now = getSysTime();
@@ -231,6 +233,10 @@ void triggerIoActions(int id) {
       }
     }
   }
+  else
+    return STATUS_ERR;
+
+  return STATUS_OK;
 }
 
 /*******************************************************************************
@@ -316,7 +322,7 @@ void handleFailedActions()
  * Handle a pending ECA MSI
  *
  ******************************************************************************/
-void ecaMsiHandler(int id)
+int ecaMsiHandler(int id)
 {
   if (has_msg(pMsgBufHead, ECA_MSI)) {
 
@@ -336,6 +342,8 @@ void ecaMsiHandler(int id)
 	break;
     }
   }
+
+  return STATUS_OK;
 }
 
 /*******************************************************************************
@@ -778,13 +786,15 @@ void execHostCmd(int32_t cmd)
  * Handle a pending host MSI
  *
  ******************************************************************************/
-void hostMsiHandler(int id)
+int hostMsiHandler(int id)
 {
   if (has_msg(pMsgBufHead, HOST_MSI)) {
 
     struct msi m = remove_msg(pMsgBufHead, HOST_MSI);
     execHostCmd(m.msg);
   }
+
+  return STATUS_OK;
 }
 
 /*******************************************************************************

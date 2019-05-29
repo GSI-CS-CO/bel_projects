@@ -115,7 +115,7 @@ typedef struct {
   uint64_t deadline;     /* handler-specific: deadline */
   uint64_t interval;     /* interval of the task */
   uint64_t lasttick;     /* when was the task ran last */
-  void (*func)(int);     /* pointer to the function of the task */
+  int (*func)(int);     /* pointer to the function of the task */
 } Task_t;
 
 extern struct msi remove_msg(volatile struct message_buffer *mb, int queue);
