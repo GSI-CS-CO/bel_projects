@@ -19,8 +19,10 @@
 #define hiU32(u64)  ((uint32_t)(((u64) >> 32) & 0xFFFFFFFF))
 #define loU32(u64)  ((uint32_t)((u64) & 0xFFFFFFFF))
 
-#define  STATUS_OK   COMMON_STATUS_OK
-#define  STATUS_ERR  COMMON_STATUS_ERROR
+#define STATUS_OK        COMMON_STATUS_OK
+#define STATUS_ERR       COMMON_STATUS_ERROR
+#define STATUS_IDLE      20
+#define STATUS_NOT_READY 21
 
 const unsigned char errMsgEcaMsi[] = {"Cannot en/disable ECA MSI path to mailbox.\0"};
 

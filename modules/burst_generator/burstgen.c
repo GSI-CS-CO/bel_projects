@@ -207,21 +207,27 @@ int dummyTask(int id) {
 int triggerIoActions(int id) {
 
   if (pTask[id].deadline == 0)     // deadline is unset, nothing to do!
-    return -1;
+    return STATUS_NOT_READY;
 
   if (pTask[id].cycle == 0)        // production cycle is over, nothing to do!
-    return -2;
+    return STATUS_NOT_READY;
 
   uint64_t deadline = pTask[id].deadline;
   uint64_t now = getSysTime();
+  int64_t elapsed_injection = deadline - now;
 
-  if ((deadline - now) < gInjection || (deadline < now)) // setup due or late!
+  if (elapsed_injection <= 0) // late!
+    return STATUS_ERR;
+
+  if ((elapsed_injection < pTask[id].period) && // next period of a pulse block or initial injection (depends on lasstick)
+      (pTask[id].lasttick < now))               // the only injection in this period
   {
     *(bufTimMsg +6) = hiU32(deadline);
     *(bufTimMsg +7) = loU32(deadline);
 
     injectTimingMsg(bufTimMsg);  // inject internal timing message for IO actions
 
+    pTask[id].lasttick = pTask[id].deadline; // update the task timestamp
     pTask[id].deadline += pTask[id].period;  // update deadline for next trigger
 
     if (pTask[id].cycle > 0)     // verify and update the production cycle
@@ -232,11 +238,11 @@ int triggerIoActions(int id) {
 	mprintf("cycle completed: reload!\n");
       }
     }
+    return STATUS_OK;
   }
-  else
-    return STATUS_ERR;
 
-  return STATUS_OK;
+
+  return STATUS_IDLE;
 }
 
 /*******************************************************************************
@@ -629,9 +635,9 @@ void ecaHandler(uint32_t cnt)
 	    d += p;
 	    p = getSysTime();
 
-	    if (p >= (d + gInjection)) {
+	    if (p >= (d - gInjection)) {
 	      pTask[0].deadline = 0;
-	      mprintf("late! now >= (due + inj)\n");
+	      mprintf("late! now >= (due - inj)\n");
 	      mprintf("now: 0x%08x:%08x\n", (uint32_t)(p >> 32), (uint32_t)p);
 	      mprintf("due: 0x%08x:%08x\n", (uint32_t)(d >> 32), (uint32_t)d);
 	      mprintf("inj: 0x%08x:%08x\n", (uint32_t)(gInjection >> 32), (uint32_t)gInjection);
@@ -639,8 +645,22 @@ void ecaHandler(uint32_t cnt)
 	    }
 	    else {
 	      pTask[0].deadline = d;           // set deadline
-	      pTask[0].interval = gInjection;  // set task sched. interval
-	      mprintf("cycle ready\n");
+	      pTask[0].lasttick = 0;
+
+	      int result = triggerIoActions(0);  // initial injection
+	      pTask[0].state = result;
+
+	      switch (result) {
+		case STATUS_OK:  // mprintf("cycle started\n");
+		  break;
+		case STATUS_ERR:
+		  mprintf("cycle failed (deadline was over)\n");
+		  break;
+		case STATUS_IDLE: // mprintf("idle cycle\n");
+		  break;
+		default:
+		  mprintf("cycle not ready, reload!\n");
+	      }
 	    }
 	    break;
 
@@ -723,7 +743,6 @@ void execHostCmd(int32_t cmd)
 
 	// init task deadline and interval
 	pTask[0].deadline = 0;
-	pTask[0].interval = ALWAYS;
       }
       break;
 
