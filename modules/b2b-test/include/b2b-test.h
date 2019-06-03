@@ -31,6 +31,11 @@
 #define  B2BTEST_ECADO_B2B_PRINJ       2052    // command: result of phase measurement (injeciton)
 #define  B2BTEST_ECADO_B2B_DIAGEXT     2053    // command: projects measured phase 100000 periods into the future (extraction)
 #define  B2BTEST_ECADO_B2B_DIAGINJ     2054    // command: projects measured phase 100000 periods into the future (extraction)
+#define  B2BTEST_ECADO_B2B_DIAGMATCH   2055    // command: projects measured phase 100000 periods into the future (extraction)
+
+#define  B2BTEST_FLAG_TRANSACTIVE       0x1    // flag: transfer active
+#define  B2BTEST_FLAG_TRANSPEXT         0x2    // flag: got measured phase from extraction
+#define  B2BTEST_FLAG_TRANSPINJ         0x4    // flag: got measured phase from injection
 
 // ****************************************************************************************
 // DP RAM
@@ -42,8 +47,9 @@
 #define B2BTEST_SHARED_TH1EXTLO       (B2BTEST_SHARED_TH1EXTHI      + _32b_SIZE_)       // period of h=1 extraction, low bits
 #define B2BTEST_SHARED_TH1INJHI       (B2BTEST_SHARED_TH1EXTLO      + _32b_SIZE_)       // period of h=1 injection, high bits
 #define B2BTEST_SHARED_TH1INJLO       (B2BTEST_SHARED_TH1INJHI      + _32b_SIZE_)       // period of h=1 injection, low bits
+#define B2BTEST_SHARED_TRANSSTAT      (B2BTEST_SHARED_TH1INJLO      + _32b_SIZE_)       // bitwise state of ongoing transfer
 
 // diagnosis: end of used shared memory
-#define B2BTEST_SHARED_END            (B2BTEST_SHARED_TH1INJLO      + _32b_SIZE_) 
+#define B2BTEST_SHARED_END            (B2BTEST_SHARED_TRANSSTAT     + _32b_SIZE_) 
 
 #endif

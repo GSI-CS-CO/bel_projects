@@ -3,9 +3,9 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 21-May-2019
+ *  version : 28-May-2019
  *
- * Command-line interface for wrunipz
+ * Command-line interface for b2btest
  *
  * ------------------------------------------------------------------------------------------
  * License Agreement for this software:
@@ -79,6 +79,7 @@ eb_address_t b2btest_tS0Lo;        // time when FW was in S0 state (start of FW)
 
 // application specific stuff
 eb_address_t b2btest_nTransfer;    // # of transfers
+eb_address_t b2btest_transStat;    // status of transfer
 eb_address_t b2btest_TH1ExtHi;     // period of h=1 extraction, high bits
 eb_address_t b2btest_TH1ExtLo;     // period of h=1 extraction, low bits
 eb_address_t b2btest_TH1InjHi;     // period of h=1 injection, high bits
@@ -154,7 +155,7 @@ int readInfo(uint32_t *sumStatus, uint32_t *state, uint32_t *nBadStatus, uint32_
 } // readInfo
 
 
-int readDiags(uint32_t *sumStatus, uint32_t *state, uint32_t *nBadStatus, uint32_t *nBadState, uint64_t *tDiag, uint64_t *tS0, uint32_t *nTransfer, uint64_t *TH1Ext, uint64_t *TH1Inj)
+int readDiags(uint32_t *sumStatus, uint32_t *state, uint32_t *nBadStatus, uint32_t *nBadState, uint64_t *tDiag, uint64_t *tS0, uint32_t *nTransfer, uint32_t *transStat, uint64_t *TH1Ext, uint64_t *TH1Inj)
 {
   eb_cycle_t  cycle;
   eb_status_t eb_status;
@@ -170,10 +171,11 @@ int readDiags(uint32_t *sumStatus, uint32_t *state, uint32_t *nBadStatus, uint32
   eb_cycle_read(cycle, b2btest_tS0Hi,         EB_BIG_ENDIAN|EB_DATA32, &(data[6]));
   eb_cycle_read(cycle, b2btest_tS0Lo,         EB_BIG_ENDIAN|EB_DATA32, &(data[7]));
   eb_cycle_read(cycle, b2btest_nTransfer,     EB_BIG_ENDIAN|EB_DATA32, &(data[8]));
-  eb_cycle_read(cycle, b2btest_TH1ExtHi,      EB_BIG_ENDIAN|EB_DATA32, &(data[9]));
-  eb_cycle_read(cycle, b2btest_TH1ExtLo,      EB_BIG_ENDIAN|EB_DATA32, &(data[10]));
-  eb_cycle_read(cycle, b2btest_TH1InjHi,      EB_BIG_ENDIAN|EB_DATA32, &(data[11]));
-  eb_cycle_read(cycle, b2btest_TH1InjLo,      EB_BIG_ENDIAN|EB_DATA32, &(data[12]));
+  eb_cycle_read(cycle, b2btest_transStat,     EB_BIG_ENDIAN|EB_DATA32, &(data[9]));
+  eb_cycle_read(cycle, b2btest_TH1ExtHi,      EB_BIG_ENDIAN|EB_DATA32, &(data[10]));
+  eb_cycle_read(cycle, b2btest_TH1ExtLo,      EB_BIG_ENDIAN|EB_DATA32, &(data[11]));
+  eb_cycle_read(cycle, b2btest_TH1InjHi,      EB_BIG_ENDIAN|EB_DATA32, &(data[12]));
+  eb_cycle_read(cycle, b2btest_TH1InjLo,      EB_BIG_ENDIAN|EB_DATA32, &(data[13]));
 
   if ((eb_status = eb_cycle_close(cycle)) != EB_OK) die("b2b-test: eb_cycle_close", eb_status);
 
@@ -186,10 +188,11 @@ int readDiags(uint32_t *sumStatus, uint32_t *state, uint32_t *nBadStatus, uint32
   *tS0           = (uint64_t)(data[6]) << 32;
   *tS0          += data[7];
   *nTransfer     = data[8];
-  *TH1Ext        = (uint64_t)(data[9]) << 32;
-  *TH1Ext       += data[10];
-  *TH1Inj        = (uint64_t)(data[11]) << 32;
-  *TH1Inj       += data[12];
+  *transStat     = data[9];
+  *TH1Ext        = (uint64_t)(data[10]) << 32;
+  *TH1Ext       += data[11];
+  *TH1Inj        = (uint64_t)(data[12]) << 32;
+  *TH1Inj       += data[13];
  
   return eb_status;
 } // readDiags
@@ -238,7 +241,7 @@ void printTransfer()
 } // printTransfer
 
 
-void printDiags(uint32_t sumStatus, uint32_t state, uint32_t nBadStatus, uint32_t nBadState, uint64_t tDiag, uint64_t tS0, uint32_t nTransfers, uint64_t TH1Ext, uint64_t TH1Inj)
+void printDiags(uint32_t sumStatus, uint32_t state, uint32_t nBadStatus, uint32_t nBadState, uint64_t tDiag, uint64_t tS0, uint32_t nTransfers, uint32_t transStat, uint64_t TH1Ext, uint64_t TH1Inj)
 {
   const struct tm* tm;
   char             timestr[60];
@@ -269,6 +272,7 @@ void printDiags(uint32_t sumStatus, uint32_t state, uint32_t nBadStatus, uint32_
   } // for i
 
   printf("# of transfers        : %010u\n", nTransfers);
+  printf("status of act transfer: %010x\n", transStat);
   printf("period h=1 extraction : %012.6f ns\n", (double)TH1Ext/1000000000.0);
   printf("period h=1 injection  : %012.6f ns\n", (double)TH1Inj/1000000000.0);
 } // printDiags
@@ -304,6 +308,7 @@ int main(int argc, char** argv) {
   uint64_t tDiag;
   uint64_t tS0;
   uint32_t nTransfer;
+  uint32_t transStat;
   uint64_t TH1Ext;                             // h=1 period [as] of extraction machine
   uint64_t TH1Inj;                             // h=1 period [as] of injection machine
   uint32_t fH1Ext;                             // h=1 frequency [Hz] of extraction machine
@@ -390,6 +395,7 @@ int main(int argc, char** argv) {
   b2btest_tS0Hi        = lm32_base + SHARED_OFFS + COMMON_SHARED_TS0HI;
   b2btest_tS0Lo        = lm32_base + SHARED_OFFS + COMMON_SHARED_TS0LO;
   b2btest_nTransfer    = lm32_base + SHARED_OFFS + B2BTEST_SHARED_NTRANSFER;
+  b2btest_transStat    = lm32_base + SHARED_OFFS + B2BTEST_SHARED_TRANSSTAT;
   b2btest_TH1ExtHi     = lm32_base + SHARED_OFFS + B2BTEST_SHARED_TH1EXTHI;
   b2btest_TH1ExtLo     = lm32_base + SHARED_OFFS + B2BTEST_SHARED_TH1EXTLO;
   b2btest_TH1InjHi     = lm32_base + SHARED_OFFS + B2BTEST_SHARED_TH1INJHI;
@@ -448,8 +454,8 @@ int main(int argc, char** argv) {
       if (state != COMMON_STATE_OPREADY) printf("b2b-test: WARNING command has no effect (not in state OPREADY)\n");
     } // "cleardiag"
     if (!strcasecmp(command, "diag")) {
-      readDiags(&sumStatus, &state, &nBadStatus, &nBadState, &tDiag, &tS0, &nTransfer, &TH1Ext, &TH1Inj);
-      printDiags(sumStatus, state, nBadStatus, nBadState, tDiag, tS0, nTransfer, TH1Ext, TH1Inj);
+      readDiags(&sumStatus, &state, &nBadStatus, &nBadState, &tDiag, &tS0, &nTransfer, &transStat, &TH1Ext, &TH1Inj);
+      printDiags(sumStatus, state, nBadStatus, nBadState, tDiag, tS0, nTransfer, transStat, TH1Ext, TH1Inj);
     } // "diag"
 
     if (!strcasecmp(command, "seth1inj")) {
