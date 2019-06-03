@@ -319,9 +319,13 @@
 #define TMSG_TEF                (TMSG_RES     + _32b_SIZE_)
 
 
+#define SWITCH_TARGET           (EVT_HDR_END)
+#define SWITCH_DEST				(SWITCH_TARGET + _PTR_SIZE_ + _TS_SIZE_ + _32b_SIZE_) //make this equal to command layout
+
 //////////////////////////////////////////////////////////////////////
 //// Generic Command Attributes //////////////////////////////////////
 #define CMD_BEGIN               (EVT_HDR_END)
+
 #define CMD_TARGET              (CMD_BEGIN)
 #define CMD_VALID_TIME          (CMD_TARGET         + _PTR_SIZE_)
 #define CMD_VALID_TIME_HI       (CMD_VALID_TIME     + 0)
@@ -388,11 +392,13 @@
 #define ADR_DYN_RES        5
 
 //
-// Command
-#define ADR_CMD_TARGET     1
-#define ADR_CMD_FLOW_DEST  2 // only if command is Flow change
+#define ADR_SWITCH_TARGET  		1
+#define ADR_SWITCH_DEST  		2 // only if is Switch change
 
-#define ADR_CMD_FLUSH_DEST_OVR 2 // only if command is Flush with override
+// Command
+#define ADR_CMD_TARGET     		1
+#define ADR_CMD_FLOW_DEST  		2 // only if command is Flow change
+#define ADR_CMD_FLUSH_DEST_OVR 	2 // only if command is Flush with override
 
 // Command Queue
 #define ADR_CMDQ_BUF_ARRAY 1
@@ -487,7 +493,8 @@
 #define NODE_TYPE_MGMT          (NODE_TYPE_SYNC         +1)   // contain the part of the groups and node name table in compressed form
 #define NODE_TYPE_COVENANT      (NODE_TYPE_MGMT         +1)   // contain the addresses of commands (in queues) which the user agrees not to preempt if optimised safe2remove is to work
 #define NODE_TYPE_NULL          (NODE_TYPE_COVENANT     +1)   // type returned by getNodeType if the node ptr was NULL. Intentionally not 0x000...
-#define _NODE_TYPE_END_         (NODE_TYPE_NULL         +1)   // Node type Quantity
+#define NODE_TYPE_CSWITCH       (NODE_TYPE_NULL         +1)   // instantaneously switch defdest of a block. Like permanent flow with no queue
+#define _NODE_TYPE_END_         (NODE_TYPE_CSWITCH      +1)   // Node type Quantity
 //Node type
 #define NFLG_TYPE_MSK           0xff
 #define NFLG_TYPE_POS           0

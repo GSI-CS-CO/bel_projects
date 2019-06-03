@@ -3,8 +3,8 @@
 vEbwrs& BlockLock::lock(vEbwrs& ew) {
   ew.va  += qflagsAdr;
   uint32_t ret = (((uint32_t)(wr.set | wr.stat) << BLOCK_CMDQ_DNW_POS) | ((uint32_t)(rd.set | rd.stat) << BLOCK_CMDQ_DNR_POS));
-  std::cout << "setting locks: wrset " << std::boolalpha << wr.set << " wrclr " << wr.clr <<" wrstat " << wr.stat << " rdset " << rd.set << " rdclr " << rd.clr << " rdstat " << rd.stat << std::endl;
-  std::cout << "intended outcome: 0x " << std::hex << ret << std::endl;
+  //std::cout << "setting locks: wrset " << std::boolalpha << wr.set << " wrclr " << wr.clr <<" wrstat " << wr.stat << " rdset " << rd.set << " rdclr " << rd.clr << " rdstat " << rd.stat << std::endl;
+  //std::cout << "intended outcome: 0x " << std::hex << ret << std::endl;
   writeLeNumberToBeBytes(ew.vb, ret );
   ew.vcs += leadingOne(1);
   return ew;
@@ -22,8 +22,8 @@ vEbwrs& BlockLock::unlock(vEbwrs& ew ) {
   
 
 
-  std::cout << "setting unlocks: wrset " << std::boolalpha << wr.set << " wrclr " << wr.clr <<" wrstat " << wr.stat << " rdset " << rd.set << " rdclr " << rd.clr << " rdstat " << rd.stat << std::endl;
-  std::cout << "intended outcome: 0x " << std::hex << ret << std::endl;
+  //std::cout << "setting unlocks: wrset " << std::boolalpha << wr.set << " wrclr " << wr.clr <<" wrstat " << wr.stat << " rdset " << rd.set << " rdclr " << rd.clr << " rdstat " << rd.stat << std::endl;
+  //std::cout << "intended outcome: 0x " << std::hex << ret << std::endl;
   writeLeNumberToBeBytes(ew.vb, ret );
   ew.vcs += leadingOne(1);
   return ew;
@@ -51,9 +51,11 @@ bool BlockLock::isAnySet() const {
   //check if any lock bits is requested but not present. If so, return false.
     
     bool res =  ((wr.set & wr.stat) | (rd.set & rd.stat));
+    /*
     std::cout << "AnySet:" 
             << " wrSet " << std::boolalpha << wr.set << " rdSet " << rd.set
             << " wrStat " << wr.stat << " rdStat " << rd.stat << " res " << res << std::endl;
+    */        
   return res;
 }
 

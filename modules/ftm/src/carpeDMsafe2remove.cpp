@@ -344,7 +344,7 @@ void CarpeDM::getReverseNodeTree(vertex_t v, vertex_set_t& sV, Graph& g, vertex_
 bool CarpeDM::addResidentDestinations(Graph& gEq, Graph& gOrig, vertex_set_t cursors) {
   vertex_set_t resCmds; // prepare the set of flow commands to speed things up
   vertex_set_map_t dummy; // this doesn't need to look out for covenant sets, ignore
-  BOOST_FOREACH( vertex_t vChkResCmd, vertices(gEq) ) {if (gEq[vChkResCmd].type == dnt::sCmdFlow) resCmds.insert(vChkResCmd);}
+  BOOST_FOREACH( vertex_t vChkResCmd, vertices(gEq) ) {if ((gEq[vChkResCmd].type == dnt::sCmdFlow) || (gEq[vChkResCmd].type == dnt::sSwitch)) resCmds.insert(vChkResCmd);}
   bool addEdge = (resCmds.size() > 0);
   bool didWork = false;
 
@@ -366,8 +366,8 @@ bool CarpeDM::addResidentDestinations(Graph& gEq, Graph& gOrig, vertex_set_t cur
         //We now intentionally use the unfiltered graph again (to have target and dst edges). works cause vertex indices are equal.
         boost::tie(out_begin, out_end) = out_edges(vRc, gOrig);
         for (out_cur = out_begin; out_cur != out_end; ++out_cur) {
-          if(gOrig[*out_cur].type == det::sCmdTarget)  {vBlock  = target(*out_cur, gOrig);}
-          if(gOrig[*out_cur].type == det::sCmdFlowDst) {vDst    = target(*out_cur, gOrig);}
+          if(gOrig[*out_cur].type == det::sCmdTarget || gOrig[*out_cur].type == det::sSwitchTarget)   {vBlock  = target(*out_cur, gOrig);}
+          if(gOrig[*out_cur].type == det::sCmdFlowDst || gOrig[*out_cur].type == det::sSwitchDst)     {vDst    = target(*out_cur, gOrig);}
         }
         if ((vBlock  == null_vertex) || (vDst == null_vertex)) {throw std::runtime_error(isSafeToRemove::exIntro + "Could not find block and dst for resident equivalents");}
 

@@ -305,7 +305,8 @@ std::pair<int, int> findRunningPattern(const std::string& sPattern); // get cpu 
             vEbwrs& clearHealth(vEbwrs& ew, uint8_t cpuIdx);
             vEbwrs& clearHealth(vEbwrs& ew);
             vEbwrs& resetThrMsgCnt(vEbwrs& ew, uint8_t cpuIdx, uint8_t thrIdx);
-            vEbwrs& blockAsyncClearQueues(vEbwrs& ew, const std::string& sBlock);
+            vEbwrs& blockAsyncClearQueues(vEbwrs& ew, const std::string& sTarget);
+            vEbwrs& switching(vEbwrs& ew, const std::string& sTarget, const std::string& sDst);
             vEbwrs& createNonQCommand(vEbwrs& ew, const std::string& type, const std::string& target);
             vEbwrs& createLockCtrlCommand(vEbwrs& ew, const std::string& type, const std::string& target, bool lockRd, bool lockWr );
             vEbwrs& createQCommand(vEbwrs& ew, const std::string& type, const std::string& target, uint8_t cmdPrio, uint8_t cmdQty, bool vabs, uint64_t cmdTvalid);

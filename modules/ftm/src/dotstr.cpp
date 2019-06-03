@@ -46,6 +46,8 @@ namespace DotStr {
       const std::string sAltDst       = "altdst";     // Links to Alternative Destination
       const std::string sBadDefDst    = "baddefdst";  // Links to Bad Default Destination
       const std::string sCmdTarget    = "target";     // Links to Command's Target Block
+      const std::string sSwitchTarget = "target";     // Links to Switch's Target 
+      const std::string sSwitchDst    = "switchdst";     // Links to Switch's Target Block
       const std::string sCmdFlowDst   = "flowdst";    // Links to Flow Command's destination node
       const std::string sCmdFlushOvr  = "flushovr";   // Links to Flush Command's destination overrride
       const std::string sDynId        = "dynid";      // Links to Source for dynamic ID field in Tmsg nodes
@@ -143,6 +145,7 @@ namespace DotStr {
       const std::string sTMsg          = "tmsg";        // timing message
       const std::string sCmdNoop       = "noop";        // no operation command (dummy/padding)
       const std::string sCmdFlow       = "flow";        // flow command (changes path through schedule)
+      const std::string sSwitch        = "switch";      // switch command (instantaneously switch defdest of a block. Like permanent flow with no queue )
       const std::string sCmdFlush      = "flush";       // flush command (clears a command queue)
       const std::string sCmdWait       = "wait";        // wait command (relative prolongs block duration, abs waits til given time is reached )
       const std::string sCmdStart      = "start";       // For cmd dots, starts a thread (by cpu/thread, patternname or node name)
@@ -212,9 +215,12 @@ namespace DotStr {
       }
       namespace Cmd {
         const std::string sLookDef       = "shape     = \"hexagon\"";
+      }
 
+      namespace Switch {
+        const std::string sLookDef       = "shape     = \"pentagon\"";
+      }
 
- }
       namespace Meta {
         const std::string sLookDef       = "shape     = \"rectangle\", color  = \"gray\", style  = \"dashed\"";
       }

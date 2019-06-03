@@ -30,12 +30,8 @@ namespace carpeDMcommand {
   const std::string exIntro = "carpeDMcommand: ";
 }
 
-vEbwrs& CarpeDM::blockAsyncClearQueues(vEbwrs& ew, const std::string& sBlock) {
-  uint32_t hash;
-  hash      = hm.lookup(sBlock, "block: unknown target ");
-  auto it   = atDown.lookupHash(hash, carpeDMcommand::exIntro);
-  auto* x   = (AllocMeta*)&(*it);
-  uint32_t adrBase    = atDown.adrConv(AdrType::MGMT, AdrType::EXT, x->cpu, x->adr);
+vEbwrs& CarpeDM::blockAsyncClearQueues(vEbwrs& ew, const std::string& sTarget) {
+  uint32_t adrBase    = getNodeAdr(sTarget, TransferDir::DOWNLOAD, AdrType::EXT);
   //reset read and write indices
   vAdr tmp = {(adrBase + BLOCK_CMDQ_RD_IDXS), (adrBase + BLOCK_CMDQ_WR_IDXS)};
   ew.va += tmp;
@@ -43,6 +39,18 @@ vEbwrs& CarpeDM::blockAsyncClearQueues(vEbwrs& ew, const std::string& sBlock) {
   ew.vcs += leadingOne(tmp.size());
   return ew;
 }
+
+vEbwrs& CarpeDM::switching(vEbwrs& ew, const std::string& sTarget, const std::string& sDst) {
+  uint32_t tadr = getNodeAdr(sTarget, TransferDir::DOWNLOAD, AdrType::EXT) + NODE_DEF_DEST_PTR;
+  uint32_t dadr = getNodeAdr(sDst, TransferDir::DOWNLOAD, AdrType::INT);
+  //sLog << "switch conv 0x" << std::hex << dadr << std::endl;
+  //overwrite def dst ptr
+  ew.va += tadr;
+  writeLeNumberToBeBytes<uint32_t>(ew.vb, dadr);
+  ew.vcs += leadingOne(1);
+  return ew;
+}
+
 
 vStrC CarpeDM::getLockedBlocks(bool checkReadLock, bool checkWriteLock) {
   vStrC ret;
@@ -110,8 +118,6 @@ vEbwrs& CarpeDM::createCommand(vEbwrs& ew, const std::string& type, const std::s
   uint8_t  cmdPrio, uint8_t cmdQty, bool vabs, uint64_t cmdTvalid, bool perma, bool qIl, bool qHi, bool qLo,  uint64_t cmdTwait, bool abswait, bool lockRd, bool lockWr )
 {
     mc_ptr mc;
-    sLog << "Command  type <" << type << ">" << std::endl;
-            sLog << "DEBUG: VABS: " << std::boolalpha << " b " << vabs << std::endl;
     adjustValidTime(cmdTvalid, vabs);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -119,7 +125,7 @@ vEbwrs& CarpeDM::createCommand(vEbwrs& ew, const std::string& type, const std::s
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     if (type == dnt::sCmdStart)   {
-      if (hm.lookup(target)) {sLog << " Starting at <" << target << ">" << std::endl; startNodeOrigin(ew, target);  }
+      if (hm.lookup(destination)) {sLog << " Starting at <" << target << ">" << std::endl; startNodeOrigin(ew, destination);  }
       else {throw std::runtime_error("Cannot execute command '" + type + "' No valid cpu/thr provided and '" + target + "' is not a valid node name\n");}
       return ew;
     }
@@ -189,6 +195,11 @@ vEbwrs& CarpeDM::createCommand(vEbwrs& ew, const std::string& type, const std::s
       lock.wr.set = true;
       lock.wr.clr = true;
 
+    } else if (type == dnt::sSwitch) {
+      
+      switching(ew, target, destination);
+      return ew;
+    
     } else if (type == dnt::sCmdFlush) { // << " Flushing <" << target < < "> Queues IL " << s2u<int>(g[v].qIl) << " HI " << s2u<int>(g[v].qHi) << " LO " << s2u<int>(g[v].qLo) <<  std::endl;
       uint32_t adr = LM32_NULL_PTR;
       try { adr = getNodeAdr(destination, TransferDir::DOWNLOAD, AdrType::INT); } catch (std::runtime_error const& err) {
@@ -285,11 +296,15 @@ vEbwrs& CarpeDM::createCommandBurst(vEbwrs& ew, Graph& g) {
     else  {target = g[v].cmdTarget;}
 
 
+    destination = target; // covers the start/startpattern case, where the entry node is needed, but linguistically, one would only supply pattern, not destpattern
 
     //use the destPattern and destBeamprocess tags to determine the destination
     if (g[v].cmdDestPat  != DotStr::Misc::sUndefined)      { destination = getPatternEntryNode(g[v].cmdDestPat); }
     else  if (g[v].cmdDestBp != DotStr::Misc::sUndefined)  { destination = getBeamprocEntryNode(g[v].cmdDestBp); }
-    else                                                   { destination = g[v].cmdDest;}
+    else  if (g[v].cmdDest != DotStr::Misc::sUndefined)    { destination = g[v].cmdDest;}
+    
+
+
 
     type      = g[v].type;
     cmdPrio   = s2u<uint8_t>(g[v].prio);
@@ -301,7 +316,7 @@ vEbwrs& CarpeDM::createCommandBurst(vEbwrs& ew, Graph& g) {
     qHi       = s2u<bool>(g[v].qHi);
     qLo       = s2u<bool>(g[v].qLo);
     perma     = s2u<bool>(g[v].perma);
-    sLog << "DEBUG: VABS: " << g[v].vabs << std::boolalpha << " recon " << vabs << std::endl;
+    //sLog << "DEBUG: VABS: " << g[v].vabs << std::boolalpha << " recon " << vabs << std::endl;
     lockRd    = true;
     lockWr    = true;
     //fixme hack to test compile
@@ -318,18 +333,18 @@ vEbwrs& CarpeDM::createCommandBurst(vEbwrs& ew, Graph& g) {
   int CarpeDM::send(vEbwrs& ew) {
 
     bool locksRdy;
-    sLog << "reading lockstates...";
+    //sLog << "reading lockstates...";
     lm.readInStat(); //read current lock states
-    sLog << "done" << std::endl << " Setting locks...";
+    //sLog << "done" << std::endl << " Setting locks...";
     lm.processLockRequests(); //set requested locks (or'ed with already set locks)
-    sLog << "done" << std::endl; 
+    //sLog << "done" << std::endl; 
     //3 retries for lock readiness
     for(unsigned i = 0; i < 3; i++) {
-      sLog << "checking locks";
+      //sLog << "checking locks";
       locksRdy = lm.isReady();
-      sLog << "check performed" << std::endl;
+      //sLog << "check performed" << std::endl;
       if (locksRdy) {
-        sLog << "locks ready. writing commands";
+        //sLog << "locks ready. writing commands";
         ebd.writeCycle(ew.va, ew.vb, ew.vcs); //if ready, write commands. if not, restore locks and throw exception
         //sLog << "writing commands" << std::endl;
         break;
@@ -337,10 +352,10 @@ vEbwrs& CarpeDM::createCommandBurst(vEbwrs& ew, Graph& g) {
       std::chrono::milliseconds timespan(1);
       std::this_thread::sleep_for(timespan);  
     }
-    sLog << "done." << std::endl << "Unlocking...";
+    //sLog << "done." << std::endl << "Unlocking...";
     lm.processUnlockRequests(); //restore lock bits
     if (!locksRdy) throw std::runtime_error("Could not write commands, locking failed");
-    sLog << "done." << std::endl;
+    //sLog << "done." << std::endl;
     return ew.vb.size();
   }
 

@@ -1,12 +1,12 @@
-TARGET		= ftm
-DEVICE		= 5AGXMA3D4
-FLASH		= EPCQ256
-SPI_LANES	= ASx4
-RAM_SIZE	= 131072 
+TARGET			= ftm
+DEVICE			= 5AGXMA3D4
+FLASH			= EPCQ256
+SPI_LANES		= ASx4
+RAM_SIZE		= 131072 
 SHARED_SIZE     = 98304 
 USRCPUCLK       = 125000
-VERSION         = 6.1.3
-DEBUGLVL  	= 0 
+VERSION         = 6.2.0
+DEBUGLVL  		= 0 
 
 EBMPATH   = ../../../ip_cores/etherbone-core/hdl/eb_master_core
 PRIOPATH  = ../../../modules/prioq2

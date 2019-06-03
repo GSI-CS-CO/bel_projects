@@ -22,6 +22,12 @@ void VisitorValidation::visit(const Flow& el) const  {
   //destcheck
 }
 
+void VisitorValidation::visit(const Switch& el) const  {
+  eventSequenceCheck();
+  //targetcheck
+  //destcheck
+}
+
 void VisitorValidation::visit(const Flush& el) const {
   eventSequenceCheck();
   //targetcheck

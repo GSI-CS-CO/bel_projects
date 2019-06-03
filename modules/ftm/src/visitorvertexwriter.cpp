@@ -153,6 +153,17 @@ void VisitorVertexWriter::visit(const Flow& el) const  {
   pushEnd();
 }
 
+void VisitorVertexWriter::visit(const Switch& el) const  {
+  pushNodeInfo((Node&)el);
+  pushPair(dnp::Base::sType, dnt::sSwitch);
+  pushEventInfo((Event&)el);
+  pushSingle(ec::Node::Switch::sLookDef);
+  //pushSingle(ec::Node::Cmd::sLookFlow);
+  pushPaintedEyecandy((Node&)el);
+  pushStartEyecandy((Node&)el);
+  pushEnd();
+}
+
 void VisitorVertexWriter::visit(const Flush& el) const {
   pushNodeInfo((Node&)el);
   pushPair(dnp::Base::sType, dnt::sCmdFlush);

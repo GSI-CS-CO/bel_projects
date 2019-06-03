@@ -1,0 +1,24 @@
+digraph G {
+graph [root="Demo",rankdir   = TB, nodesep           = 0.6, mindist     = 1.0, ranksep = 1.0, overlap = false]
+node [style     = "filled", fillcolor = "white", color = "black"]
+BLOCK_A[cpu="0", flags="0x0000a007", type="block", tperiod="100000000", pattern="A", patentry="true", patexit="true", beamproc="undefined", bpentry="false", bpexit="false", qlo="false", qhi="false", qil="false", shape     = "rectangle", fillcolor = "white", penwidth=2, color = "darkorange3", penwidth=2, color = "purple"];
+BLOCK_B[cpu="0", flags="0x0000a007", type="block", tperiod="100000000", pattern="B", patentry="true", patexit="true", beamproc="undefined", bpentry="false", bpexit="false", qlo="false", qhi="false", qil="false", shape     = "rectangle", fillcolor = "white", penwidth=2, color = "darkorange3", penwidth=2, color = "purple"];
+BLOCK_C0[cpu="0", flags="0x00002007", type="block", tperiod="100000", pattern="C", patentry="true", patexit="false", beamproc="undefined", bpentry="false", bpexit="false", qlo="false", qhi="false", qil="false", shape     = "rectangle", fillcolor = "white", penwidth=2, color = "darkorange3"];
+BLOCK_C1[cpu="0", flags="0x00008007", type="block", tperiod="100000", pattern="C", patentry="false", patexit="true", beamproc="undefined", bpentry="false", bpexit="false", qlo="false", qhi="false", qil="false", shape     = "rectangle", fillcolor = "white", penwidth=2, color = "purple"];
+BLOCK_CW[cpu="0", flags="0x00000007", type="block", tperiod="1000", pattern="C", patentry="false", patexit="false", beamproc="undefined", bpentry="false", bpexit="false", qlo="false", qhi="false", qil="false", shape     = "rectangle", fillcolor = "white"];
+BLOCK_IN0[cpu="0", flags="0x0070a107", type="block", tperiod="100000000", pattern="IN0", patentry="true", patexit="true", beamproc="undefined", bpentry="false", bpexit="false", qlo="true", qhi="true", qil="true", shape     = "rectangle", fillcolor = "green", penwidth=2, color = "darkorange3", penwidth=2, color = "purple"];
+BLOCK_IN1[cpu="0", flags="0x0070a007", type="block", tperiod="100000000", pattern="IN1", patentry="true", patexit="true", beamproc="undefined", bpentry="false", bpexit="false", qlo="true", qhi="true", qil="true", shape     = "rectangle", fillcolor = "white", penwidth=2, color = "darkorange3", penwidth=2, color = "purple"];
+BLOCK_IN2[cpu="0", flags="0x0070a007", type="block", tperiod="100000000", pattern="IN2", patentry="true", patexit="true", beamproc="undefined", bpentry="false", bpexit="false", qlo="true", qhi="true", qil="true", shape     = "rectangle", fillcolor = "white", penwidth=2, color = "darkorange3", penwidth=2, color = "purple"];
+BLOCK_CCTL[cpu="1", flags="0x00008107", type="block", tperiod="1000000000", pattern="D", patentry="false", patexit="true", beamproc="undefined", bpentry="false", bpexit="false", qlo="false", qhi="false", qil="false", shape     = "rectangle", fillcolor = "green", penwidth=2, color = "purple"];
+CMD_SWITCH_C[cpu="1", flags="0x00002011", type="switch", toffs="0", pattern="D", patentry="true", patexit="false", beamproc="undefined", bpentry="false", bpexit="false", shape     = "pentagon", fillcolor = "white", penwidth=2, color = "darkorange3"];
+CMD_SWITCH_C->BLOCK_CCTL [type="defdst", color     = "red"];
+CMD_SWITCH_C->BLOCK_C0 [type="target", color     = "blue"];
+CMD_SWITCH_C->BLOCK_C1 [type="switchdst", color     = "pink"];
+BLOCK_C0->BLOCK_C0 [type="defdst", color     = "red"];
+BLOCK_C0->BLOCK_C1 [type="altdst", color     = "black"];
+BLOCK_IN0->BLOCK_A [type="altdst", color     = "black"];
+BLOCK_IN0->BLOCK_B [type="defdst", color     = "red"];
+BLOCK_IN1->BLOCK_B [type="defdst", color     = "red"];
+BLOCK_IN1->BLOCK_A [type="altdst", color     = "black"];
+BLOCK_IN2->BLOCK_C0 [type="defdst", color     = "red"];
+}

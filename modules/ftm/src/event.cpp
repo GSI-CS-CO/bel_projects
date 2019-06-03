@@ -43,6 +43,16 @@ void TimingMsg::serialise(const vAdr &va, uint8_t* b) const {
   writeLeNumberToBeBytes(b + (ptrdiff_t)TMSG_TEF, tef);
 }
 
+void Switch::serialise(const vAdr &va, uint8_t* b) const {
+  Event::serialise(va, b);
+  writeLeNumberToBeBytes(b + (ptrdiff_t)SWITCH_TARGET, va[ADR_SWITCH_TARGET]);
+  writeLeNumberToBeBytes(b + (ptrdiff_t)SWITCH_DEST,   va[ADR_SWITCH_DEST]);
+}
+
+void Switch::deserialise(uint8_t* b) {
+  Event::deserialise(b);
+}
+
 void Command::deserialise(uint8_t* b)   {
   Event::deserialise(b);
   this->tValid  = writeBeBytesToLeNumber<uint64_t>((uint8_t*)&b[CMD_VALID_TIME]);
@@ -125,6 +135,18 @@ void TimingMsg::show(uint32_t cnt, const char* prefix) const {
   printf("%sID 0x%08x%08x, Par 0x%08x%08x, Tef 0x%08x\n", p, (uint32_t)(this->id >> 32),
   (uint32_t)this->id, (uint32_t)(this->par >> 32), (uint32_t)this->par, this->tef);
 }
+
+void Switch::show(void) const {
+  Switch::show(0, "");
+}
+
+void Switch::show(uint32_t cnt, const char* prefix) const {
+  char* p;
+  if (prefix == nullptr) p = (char*)"";
+  else p = (char*)prefix;
+  printf("%s***------- %3u -------\n", p, cnt);
+  printf("%s*** Switch @ %llu, ", p, (long long unsigned int)this->tOffs);
+}  
 
 void Command::show(void) const {
   Command::show(0, "");

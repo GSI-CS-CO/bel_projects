@@ -23,6 +23,7 @@
 #define PRINT64_FACTOR  1000000000LL
 
 #define SHARED __attribute__((section(".shared")))
+#define PEER_ADR_MSK         (RAM_SIZE-1) //FIXME this is built on two questionable assumptions: 1. RAM_SIZE is a power of 2 2. all ram sizes are equal
 
 #define pDL(x)  (uint64_t*)(x + (T_TD_DEADLINE >> 2))
 #define DL(x)   *(pDL(x))
@@ -135,6 +136,7 @@ uint32_t* execFlow(uint32_t* node, uint32_t* cmd, uint32_t* thrData);
 uint32_t* execFlush(uint32_t* node, uint32_t* cmd, uint32_t* thrData);
 uint32_t* execWait(uint32_t* node, uint32_t* cmd, uint32_t* thrData);
 uint32_t* cmd(uint32_t* node, uint32_t* thrData);
+uint32_t* cswitch(uint32_t* node, uint32_t* thrData);
 uint32_t* tmsg(uint32_t* node, uint32_t* thrData);
 uint32_t* block(uint32_t* node, uint32_t* thrData);
 uint32_t* blockFixed(uint32_t* node, uint32_t* thrData);
