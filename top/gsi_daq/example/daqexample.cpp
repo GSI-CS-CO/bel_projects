@@ -76,6 +76,8 @@ bool MyChannel::onDataBlock( ::DAQ_DATA_T* pData, std::size_t wordLen )
    cout << "Slot:            " << getSlot() << endl;
    cout << "Channel:         " << getNumber() << endl;
    cout << "Block number:    " << m_receivedBlockCount << endl;
+   cout << "Sequence number: " <<
+                    static_cast<unsigned int>(descriptorGetSequence()) << endl;
    cout << "Timestamp:       " << descriptorGetTimeStamp() << endl;
    cout << "Sample time:     " << descriptorGetTimeBase() << " ns" << endl;
    cout << "Received values: " << wordLen << " in 16 bit words" << endl;

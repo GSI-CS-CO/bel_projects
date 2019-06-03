@@ -266,7 +266,19 @@ eb_status_t ebObjectReadCycleOpen( EB_HANDLE_T* pThis,
    pThis->status = eb_cycle_open( pThis->device, pCArg,
                                   __ebCycleReadIoObjectCb,
                                   &pThis->cycle );
+   if( pThis->status != EB_OK )
+      pThis->cycle = 0;
    return pThis->status;
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+static inline
+void ebCycleRead( EB_HANDLE_T* pThis, eb_address_t addr,
+                                         eb_format_t format, eb_data_t* pData )
+{
+   SCU_ASSERT( pThis->cycle != 0 );
+   eb_cycle_read( pThis->cycle, addr, format, pData );
 }
 
 /*! ---------------------------------------------------------------------------
@@ -307,7 +319,17 @@ static inline
 eb_status_t ebCycleClose( EB_HANDLE_T* pThis )
 {
    pThis->status = eb_cycle_close( pThis->cycle );
+   if( pThis->status == EB_OK )
+      pThis->cycle = 0;
    return pThis->status;
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+static inline
+void _ebSetOrStatus( EB_HANDLE_T* pThis, EB_CYCLE_OR_CB_ARG_T* pArg )
+{
+   pThis->status = pArg->status;
 }
 
 /*! ---------------------------------------------------------------------------
@@ -316,6 +338,19 @@ static inline
 eb_status_t ebSocketRun( EB_HANDLE_T* pThis )
 {
    pThis->status = eb_socket_run( pThis->socket, 10000 );
+   return pThis->status;
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+static inline
+eb_status_t ebDeviceRead( EB_HANDLE_T* pThis,
+                          eb_address_t   address,
+                          eb_format_t    format,
+                          eb_data_t*     pData )
+{
+   pThis->status = eb_device_read( pThis->device, address, format, pData,
+                                                                  NULL, eb_block );
    return pThis->status;
 }
 

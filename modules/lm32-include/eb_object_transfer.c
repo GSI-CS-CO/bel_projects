@@ -155,10 +155,9 @@ eb_status_t ebReadData32( EB_HANDLE_T* pThis, uint32_t addr, uint32_t* pData,
       return pThis->status;
    }
 
-   for( size_t i = 0; i < len; i++ )
+   for( size_t i = 0; i < len; i++, addr += sizeof(uint32_t) )
    {
-      eb_cycle_read( pThis->cycle, addr + i * sizeof(uint32_t),
-                     EB_DATA32 | EB_LITTLE_ENDIAN, NULL );
+      eb_cycle_read( pThis->cycle, addr, EB_DATA32 | EB_LITTLE_ENDIAN, NULL );
    }
 
    ebCycleClose( pThis );

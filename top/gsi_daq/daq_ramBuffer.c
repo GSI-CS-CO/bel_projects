@@ -679,16 +679,76 @@ int ramPushDaqDataBlock( register RAM_SCU_T* pThis, DAQ_CANNEL_T* pDaqChannel,
 
 #if (defined(__linux__) || defined(__DOXYGEN__))
 /*! ---------------------------------------------------------------------------
+ * @todo Make a cleaner separation of the software-layers.
  */
 #if defined( CONFIG_DDR3_NO_BURST_FUNCTIONS )
 int ramReadDaqDataBlock( register RAM_SCU_T* pThis, RAM_DAQ_PAYLOAD_T* pData,
                          unsigned int len )
 {
+#ifdef CONFIG_SCU_USE_DDR3
    RAM_RING_INDEXES_T indexes = pThis->pSharedObj->ringIndexes;
-   return EB_OK;
+   EB_HANDLE_T*       pEb     = pThis->ram.pEbHandle;
+
+   EB_MEMBER_INFO_T info[len * ARRAY_SIZE( pData->ad32 )];
+   for( size_t i = 0; i < ARRAY_SIZE( info ); i++ )
+   {
+      info[i].pData = (uint8_t*)&pData[i / ARRAY_SIZE( pData->ad32 )].ad32
+                                               [i % ARRAY_SIZE( pData->ad32 )];
+      info[i].size = sizeof( pData->ad32[0] );
+   }
+
+   EB_CYCLE_OR_CB_ARG_T arg;
+   arg.aInfo   = info;
+   arg.infoLen = ARRAY_SIZE( info );
+   arg.exit    = false;
+
+   if( ebObjectReadCycleOpen(  pEb, &arg ) != EB_OK )
+   {
+      fprintf( stderr, ESC_FG_RED ESC_BOLD
+                       "Error: failed to create cycle for read: %s\n"
+                       ESC_NORMAL,
+                       ebGetStatusString( pEb ));
+      return ebGetStatus( pEb );
+   }
+
+   for( size_t i = 0; i < len; i++ )
+   { /*
+      * The read-index of the ring buffer doesn't becomes incremented
+      * continuously, therefore it's necessary to reinitialize
+      * the variable readIndex for each new iteration step.
+      */
+      size_t readIndex = pThis->ram.pTrModeBase +
+                       ramRingGeReadIndex( &indexes ) * sizeof(DDR3_PAYLOAD_T);
+      ramRingAddToReadIndex( &indexes, 1 );
+      for( size_t j = 0; j < ARRAY_SIZE( pData->ad32 ); j++  )
+      {
+         ebCycleRead( pEb, readIndex, EB_DATA32 | EB_LITTLE_ENDIAN, NULL );
+         readIndex += sizeof( pData->ad32[0] );
+      }
+   }
+
+   ebCycleClose( pEb );
+
+   while( !arg.exit )
+      ebSocketRun( pEb );
+
+   _ebSetOrStatus( pEb, &arg );
+
+   if( ebGetStatus( pEb ) == EB_OK )
+      pThis->pSharedObj->ringIndexes = indexes;
+
+   return ebGetStatus( pEb );
+#else
+   #error Unknown memory type for function: ramReadDaqDataBlock()
+#endif
 }
 #else /* if defined( CONFIG_DDR3_NO_BURST_FUNCTIONS ) */
-/*! ---------------------------------------------------------------------------
+#warning At the moment the burst mode is slow!
+/*
+ * In the theory the burst mode should to be clearly faster than the
+ * conventional 64 bit oriented mode like above.
+ * But at the moment the libEtherbone.so seems doesn't allow a memory mapped IO
+ * respectively the access to the same address within the same EB-cycle.
  */
 int ramReadDaqDataBlock( register RAM_SCU_T* pThis, RAM_DAQ_PAYLOAD_T* pData,
                          unsigned int len, RAM_DAQ_POLL_FT poll )
@@ -718,7 +778,7 @@ int ramReadDaqDataBlock( register RAM_SCU_T* pThis, RAM_DAQ_PAYLOAD_T* pData,
 
    return EB_OK;
 #else
-#error Unknown memory type for function: ramReadDaqDataBlock()
+   #error Unknown memory type for function: ramReadDaqDataBlock()
 #endif
 }
 #endif /* if defined( CONFIG_DDR3_NO_BURST_FUNCTIONS ) */

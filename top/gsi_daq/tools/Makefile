@@ -14,6 +14,8 @@ MIAN_MODULE := daqt.cpp
 
 SOURCE += parse_opts.cpp
 SOURCE += daqt_command_line.cpp
+SOURCE += daqt_attributes.cpp
+SOURCE += daqt_read_stdin.cpp
 SOURCE += gnuplotstream.cpp
 SOURCE += find_process.c
 
@@ -35,6 +37,8 @@ DEFINES += CONFIG_DAQ_TEST
 DEFINES += CONFIG_DAQ_DEBUG
 DEFINES += VERSION=0.1
 DEFINES += GPSTR_DEFAULT_GNUPLOT_EXE=\"$(GNUPLOT_BIN)\"
+
+ DEFINES += CONFIG_DDR3_NO_BURST_FUNCTIONS
 
 HOST ?= tcp/$(SCU_URL)
 
