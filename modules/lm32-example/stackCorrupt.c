@@ -90,7 +90,7 @@ void main(void) {
     pp_printf("boring... (doing bad things)\n");
 
     // ohps!!!! (this overwrites the magic word protecting the stack)
-    //_endram = 0xcafebabe;
+    _endram = 0xcafebabe;
     
     for (j = 0; j < (31000000); ++j) { asm("nop"); }
   } // while
