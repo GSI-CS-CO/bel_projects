@@ -302,7 +302,6 @@ endif
 
 # ------------ Additional defines for Doxygen ---------------------------------
 DOX_INPUT += $(SCU_LIB_SRC_DIR)/scu_assert.h
-DOX_INPUT += $(SCU_DIR)/daq_descriptor.h
 DOX_INPUT += $(GENERATED_DIR)/$(SHARED_MAP_HEADDER)
 DOX_INPUT += $(WORK_DIR)/$(LINKER_SCRIPT)
 DOX_INPUT += $(MAKEFILE_DIR)/makefile.scu

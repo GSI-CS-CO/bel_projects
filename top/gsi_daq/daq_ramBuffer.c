@@ -81,7 +81,8 @@ void ramRingAddToReadIndex( RAM_RING_INDEXES_T* pThis, RAM_RING_INDEX_T toAdd )
     #define mprintf printf
   #endif
   static
-  void ramRingDbgPrintIndexes( const RAM_RING_INDEXES_T* pThis, const char* txt )
+  void ramRingDbgPrintIndexes( const RAM_RING_INDEXES_T* pThis,
+                                                              const char* txt )
   {
      if( txt != NULL )
        mprintf( "DBG: %s\n", txt );
@@ -355,6 +356,10 @@ static inline void ramPollAccessLock( RAM_SCU_T* pThis )
 /*! ---------------------------------------------------------------------------
  * @brief Copies the data of the given DAQ-channel in to the RAM and
  *        exchanges the order of DAQ data with device descriptor.
+ *
+ * That means, the device descriptor, which will received at last,
+ * becomes copied in the ring buffer at the begin of the data block, following
+ * by the payload data.
  */
 static inline
 void ramWriteDaqData( register RAM_SCU_T* pThis, DAQ_CANNEL_T* pDaqChannel,
@@ -384,7 +389,8 @@ void ramWriteDaqData( register RAM_SCU_T* pThis, DAQ_CANNEL_T* pDaqChannel,
    poIndexes          = &oDataIndexes;
 
    /*
-    * Skipping over the intended place of the device descriptor.
+    * Skipping over the intended place of the device descriptor
+    * which will received at last.
     */
    ramRingAddToWriteIndex( poIndexes, RAM_DAQ_DATA_START_OFFSET );
 
@@ -461,7 +467,11 @@ void ramWriteDaqData( register RAM_SCU_T* pThis, DAQ_CANNEL_T* pDaqChannel,
       else
       {
          if( dataWordCounter == ARRAY_SIZE( firstData ) )
-         {
+         { /*
+            * The first two data words making the device descriptor dividable
+            * by RAM_DAQ_PAYLOAD_T has been received. The filling of the
+            * ring buffer starts here.
+            */
             payloadIndex = 0;
          }
 
@@ -676,7 +686,7 @@ int ramPushDaqDataBlock( register RAM_SCU_T* pThis, DAQ_CANNEL_T* pDaqChannel,
 }
 
 #endif /* if defined(__lm32__) || defined(__DOXYGEN__) */
-
+///////////////////////////////////////////////////////////////////////////////
 #if (defined(__linux__) || defined(__DOXYGEN__))
 /*! ---------------------------------------------------------------------------
  * @todo Make a cleaner separation of the software-layers.
