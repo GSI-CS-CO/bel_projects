@@ -299,7 +299,7 @@ void handleValidActions()
   uint32_t valCnt;
   *(pEcaCtl + (ECA_CHANNEL_SELECT_RW >> 2)) = gEcaChECPU;    // select ECA channel for LM32
   valCnt = *(pEcaCtl + (ECA_CHANNEL_VALID_COUNT_GET >> 2));  // read and clear valid counter
-  mprintf("\nvalid=%d\n", valCnt);
+  //mprintf("\nvalid=%d\n", valCnt);
 
   if (valCnt != 0)
     ecaHandler(valCnt);                             // pop pending valid actions
@@ -334,7 +334,7 @@ int ecaMsiHandler(int id)
 
     struct msi m = remove_msg(pMsgBufHead, ECA_MSI);
 
-    mprintf("\n!Got MSI 0x%08x (h16: 0-3 faild, 4 vald, 5 ovrflw, 6 full)\n", m.msg); // debugging, remove later
+    //mprintf("\n!Got MSI 0x%08x (h16: 0-3 faild, 4 vald, 5 ovrflw, 6 full)\n", m.msg); // debugging, remove later
 
     switch (m.msg & ECA_FG_MASK)
     {
@@ -621,8 +621,8 @@ void ecaHandler(uint32_t cnt)
 
       // here: do s.th. according to action
       if (actTag == MY_ACT_TAG) {
-        mprintf("id: 0x%08x:%08x; deadline: 0x%08x:%08x; param: 0x%08x:%08x; flag: 0x%08x\n",
-                evtIdHigh, evtIdLow, evtDeadlHigh, evtDeadlLow, paramHigh, paramLow, flag);
+        //mprintf("id: 0x%08x:%08x; deadline: 0x%08x:%08x; param: 0x%08x:%08x; flag: 0x%08x\n",
+          //      evtIdHigh, evtIdLow, evtDeadlHigh, evtDeadlLow, paramHigh, paramLow, flag);
 
 	uint64_t d, p;
 
