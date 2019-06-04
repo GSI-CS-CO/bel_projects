@@ -45,7 +45,6 @@
 // includes specific for bel_projects
 #include <uart.h>
 #include <stack.h>
-// #include <system_checks.h>
 #include "pp-printf.h"
 #include "mini_sdb.h"
 #include "aux.h"
@@ -67,15 +66,11 @@ void init(){
 } // init
 
 
-void main(void) {
+int main(void) {
   int j;
   
   uint32_t *buildID;
-  uint32_t *stackStatus;
-  uint32_t *addressInStack;
 
-  //check_reset();
-  
   init();
 
   buildID           = (uint32_t *)(INT_BASE_ADR + BUILDID_OFFS);
@@ -94,4 +89,5 @@ void main(void) {
     
     for (j = 0; j < (31000000); ++j) { asm("nop"); }
   } // while
-} /* main */
+  return (1); // this should never happen
+} // main

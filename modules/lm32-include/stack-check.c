@@ -11,7 +11,7 @@ void check_stack(void)
 		inited++;
 		_endram = ENDRAM_MAGIC;
 	}
-	assert(_endram == ENDRAM_MAGIC, "Stack overflow! (%x)\n", _endram);
+	assert(_endram == ENDRAM_MAGIC, "Stack overflow! (%x)\n", (unsigned int)_endram);
 }
 
 
@@ -31,7 +31,7 @@ void check_stack_fwid(uint32_t *fwid)
   }
   if (_endram != ENDRAM_MAGIC) {
     // avoid trailing '/0'
-    pp_sprintf(help, "Stack overflow! (0x%x)", _endram);
+    pp_sprintf(help, "Stack overflow! (0x%x)", (unsigned int)_endram);
     for (i=0; i<strlen(help); i++) ((char *)fwid)[i+STACKSTATUS_OFFSET] = help[i];
   } // if _endram
 } // check_stack_fwid
