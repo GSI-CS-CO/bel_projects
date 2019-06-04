@@ -20,14 +20,15 @@ void check_stack_fwid(uint32_t *fwid)
 {
 #define STACKSTATUS_OFFSET 24
   
-  // lazily, initialize at first invocation (no init function is there) 
   static int  inited;
   char help[64];
   int i;
-  
+
+  // lazily, initialize at first invocation (no init function is there) 
   if (!inited) {
     inited++;
     _endram = ENDRAM_MAGIC;
+    fwid[(STACKSTATUS_OFFSET >> 2)] = 0x6f6b6f6b;
   }
   if (_endram != ENDRAM_MAGIC) {
     // avoid trailing '/0'
