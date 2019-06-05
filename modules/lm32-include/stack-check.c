@@ -34,6 +34,8 @@ void check_stack_fwid(uint32_t *fwid)
     // avoid trailing '/0'
     pp_sprintf(help, "Stack overflow! (0x%x)", (unsigned int)_endram);
     for (i=0; i<strlen(help); i++) ((char *)fwid)[i+STACKSTATUS_OFFSET] = help[i];
+
+    assert(0, "Stack overflow! (%x)\n", (unsigned int)_endram);
   } // if _endram
 } // check_stack_fwid
 
