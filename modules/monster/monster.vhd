@@ -1388,7 +1388,7 @@ end generate;
       g_records_for_phy           => FALSE,
       g_pcs_16bit                 => FALSE,
       g_dpram_initf               => "../../../ip_cores/wrpc-sw/wrc.mif",
-      g_dpram_size                => 139264/4,
+      g_dpram_size                => 131072/4,
       g_interface_mode            => PIPELINED,
       g_address_granularity       => BYTE,
       g_aux_sdb                   => c_etherbone_sdb,
