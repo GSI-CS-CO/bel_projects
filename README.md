@@ -73,3 +73,7 @@ Get the package from here: https://packages.ubuntu.com/xenial/amd64/libpng12-0/d
 
 ### Error: error while loading shared libraries: libmpfr.so.4: cannot open shared object file: No such file or directory [Ubuntu/Mint/...]
 Create a new symlink: sudo ln -s /usr/lib/x86_64-linux-gnu/libmpfr.so.6 /usr/lib/x86_64-linux-gnu/libmpfr.so.4
+
+### Error: Executing qmegawiz: child process exited abnormally + Time value XXX,YYYMbps and time unit are illegal
+Change your LC_NUMERIC setting: export LC_NUMERIC="en_US.UTF-8"
+
