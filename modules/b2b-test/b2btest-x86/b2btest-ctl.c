@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 28-May-2019
+ *  version : 05-June-2019
  *
  * Command-line interface for b2btest
  *
@@ -82,8 +82,10 @@ eb_address_t b2btest_nTransfer;    // # of transfers
 eb_address_t b2btest_transStat;    // status of transfer
 eb_address_t b2btest_TH1ExtHi;     // period of h=1 extraction, high bits
 eb_address_t b2btest_TH1ExtLo;     // period of h=1 extraction, low bits
+eb_address_t b2btest_nHExt;        // harmonic number of extraction RF
 eb_address_t b2btest_TH1InjHi;     // period of h=1 injection, high bits
 eb_address_t b2btest_TH1InjLo;     // period of h=1 injection, low bits
+eb_address_t b2btest_nHInj;        // harmonic number of injection RF
 
 eb_data_t   data1;
  
@@ -116,8 +118,8 @@ static void help(void) {
   fprintf(stderr, "  diag                shows statistics and detailled information\n");
   fprintf(stderr, "  cleardiag           command clears FW statistics\n");
   fprintf(stderr, "\n");
-  fprintf(stderr, "  seth1inj <freq>     set h=1 frequency [Hz] of injection machine\n");
-  fprintf(stderr, "  seth1ext <freq>     set h=1 frequency [Hz] of extraction machine\n");
+  fprintf(stderr, "  seth1inj <freq> <h> set h=1 frequency [Hz] and harmonic number of injection machine\n");
+  fprintf(stderr, "  seth1ext <freq> <h> set h=1 frequency [Hz] and harmonic number of extraction machine\n");
   fprintf(stderr, "\n");
   fprintf(stderr, "Use this tool to control B2B-TEST from the command line\n");
   fprintf(stderr, "Example1: '%s dev/wbm0 bla bla bla\n", program);
@@ -155,7 +157,7 @@ int readInfo(uint32_t *sumStatus, uint32_t *state, uint32_t *nBadStatus, uint32_
 } // readInfo
 
 
-int readDiags(uint32_t *sumStatus, uint32_t *state, uint32_t *nBadStatus, uint32_t *nBadState, uint64_t *tDiag, uint64_t *tS0, uint32_t *nTransfer, uint32_t *transStat, uint64_t *TH1Ext, uint64_t *TH1Inj)
+int readDiags(uint32_t *sumStatus, uint32_t *state, uint32_t *nBadStatus, uint32_t *nBadState, uint64_t *tDiag, uint64_t *tS0, uint32_t *nTransfer, uint32_t *transStat, uint64_t *TH1Ext, uint32_t *nHExt, uint64_t *TH1Inj, uint32_t *nHInj)
 {
   eb_cycle_t  cycle;
   eb_status_t eb_status;
@@ -174,8 +176,10 @@ int readDiags(uint32_t *sumStatus, uint32_t *state, uint32_t *nBadStatus, uint32
   eb_cycle_read(cycle, b2btest_transStat,     EB_BIG_ENDIAN|EB_DATA32, &(data[9]));
   eb_cycle_read(cycle, b2btest_TH1ExtHi,      EB_BIG_ENDIAN|EB_DATA32, &(data[10]));
   eb_cycle_read(cycle, b2btest_TH1ExtLo,      EB_BIG_ENDIAN|EB_DATA32, &(data[11]));
-  eb_cycle_read(cycle, b2btest_TH1InjHi,      EB_BIG_ENDIAN|EB_DATA32, &(data[12]));
-  eb_cycle_read(cycle, b2btest_TH1InjLo,      EB_BIG_ENDIAN|EB_DATA32, &(data[13]));
+  eb_cycle_read(cycle, b2btest_nHExt,         EB_BIG_ENDIAN|EB_DATA32, &(data[12]));
+  eb_cycle_read(cycle, b2btest_TH1InjHi,      EB_BIG_ENDIAN|EB_DATA32, &(data[13]));
+  eb_cycle_read(cycle, b2btest_TH1InjLo,      EB_BIG_ENDIAN|EB_DATA32, &(data[14]));
+  eb_cycle_read(cycle, b2btest_nHInj,         EB_BIG_ENDIAN|EB_DATA32, &(data[15]));
 
   if ((eb_status = eb_cycle_close(cycle)) != EB_OK) die("b2b-test: eb_cycle_close", eb_status);
 
@@ -191,8 +195,10 @@ int readDiags(uint32_t *sumStatus, uint32_t *state, uint32_t *nBadStatus, uint32
   *transStat     = data[9];
   *TH1Ext        = (uint64_t)(data[10]) << 32;
   *TH1Ext       += data[11];
-  *TH1Inj        = (uint64_t)(data[12]) << 32;
-  *TH1Inj       += data[13];
+  *nHExt         = data[12];
+  *TH1Inj        = (uint64_t)(data[13]) << 32;
+  *TH1Inj       += data[14];
+  *nHInj         = data[15];
  
   return eb_status;
 } // readDiags
@@ -241,7 +247,7 @@ void printTransfer()
 } // printTransfer
 
 
-void printDiags(uint32_t sumStatus, uint32_t state, uint32_t nBadStatus, uint32_t nBadState, uint64_t tDiag, uint64_t tS0, uint32_t nTransfers, uint32_t transStat, uint64_t TH1Ext, uint64_t TH1Inj)
+void printDiags(uint32_t sumStatus, uint32_t state, uint32_t nBadStatus, uint32_t nBadState, uint64_t tDiag, uint64_t tS0, uint32_t nTransfers, uint32_t transStat, uint64_t TH1Ext, uint32_t nHExt, uint64_t TH1Inj, uint32_t nHInj)
 {
   const struct tm* tm;
   char             timestr[60];
@@ -275,6 +281,8 @@ void printDiags(uint32_t sumStatus, uint32_t state, uint32_t nBadStatus, uint32_
   printf("status of act transfer: %010x\n", transStat);
   printf("period h=1 extraction : %012.6f ns\n", (double)TH1Ext/1000000000.0);
   printf("period h=1 injection  : %012.6f ns\n", (double)TH1Inj/1000000000.0);
+  printf("harmonic number extr. : %012d\n"     , nHExt);
+  printf("harmonic number inj.  : %012d\n"     , nHInj);
 } // printDiags
 
 
@@ -311,6 +319,8 @@ int main(int argc, char** argv) {
   uint32_t transStat;
   uint64_t TH1Ext;                             // h=1 period [as] of extraction machine
   uint64_t TH1Inj;                             // h=1 period [as] of injection machine
+  uint32_t nHExt;                              // harmonic number extraction machine
+  uint32_t nHInj;                              // harmonic number injection machine
   uint32_t fH1Ext;                             // h=1 frequency [Hz] of extraction machine
   uint32_t fH1Inj;                             // h=1 frequency [Hz] of injection machine
   uint32_t actState = COMMON_STATE_UNKNOWN;    // actual state of gateway
@@ -398,8 +408,10 @@ int main(int argc, char** argv) {
   b2btest_transStat    = lm32_base + SHARED_OFFS + B2BTEST_SHARED_TRANSSTAT;
   b2btest_TH1ExtHi     = lm32_base + SHARED_OFFS + B2BTEST_SHARED_TH1EXTHI;
   b2btest_TH1ExtLo     = lm32_base + SHARED_OFFS + B2BTEST_SHARED_TH1EXTLO;
+  b2btest_nHExt        = lm32_base + SHARED_OFFS + B2BTEST_SHARED_NHEXT;
   b2btest_TH1InjHi     = lm32_base + SHARED_OFFS + B2BTEST_SHARED_TH1INJHI;
   b2btest_TH1InjLo     = lm32_base + SHARED_OFFS + B2BTEST_SHARED_TH1INJLO;
+  b2btest_nHInj        = lm32_base + SHARED_OFFS + B2BTEST_SHARED_NHINJ;
   
 
   if (getConfig) {
@@ -454,28 +466,41 @@ int main(int argc, char** argv) {
       if (state != COMMON_STATE_OPREADY) printf("b2b-test: WARNING command has no effect (not in state OPREADY)\n");
     } // "cleardiag"
     if (!strcasecmp(command, "diag")) {
-      readDiags(&sumStatus, &state, &nBadStatus, &nBadState, &tDiag, &tS0, &nTransfer, &transStat, &TH1Ext, &TH1Inj);
-      printDiags(sumStatus, state, nBadStatus, nBadState, tDiag, tS0, nTransfer, transStat, TH1Ext, TH1Inj);
+      readDiags(&sumStatus, &state, &nBadStatus, &nBadState, &tDiag, &tS0, &nTransfer, &transStat, &TH1Ext, &nHExt, &TH1Inj, &nHInj);
+      printDiags(sumStatus, state, nBadStatus, nBadState, tDiag, tS0, nTransfer, transStat, TH1Ext, nHExt, TH1Inj, nHInj);
     } // "diag"
 
     if (!strcasecmp(command, "seth1inj")) {
-      if (optind+2  != argc) {printf("b2b-test: expecting exactly one argument: seth1inj <freq>\n"); return 1;}
+      if (optind+3  != argc) {printf("b2b-test: expecting exactly two arguments: seth1inj <freq> <h>\n"); return 1;}
+
       fH1Inj = strtoul(argv[optind+1], &tail, 0);
       if (*tail != 0)        {printf("b2b-test: invalid frequency -- %s\n", argv[optind+2]); return 1;}
-
       TH1Inj = (double)1000000000000000000.0 / (double)fH1Inj;  // period in attoseconds
+
+      nHInj  = strtoul(argv[optind+2], &tail, 0);
+      if (*tail != 0)        {printf("b2b-test: invalid harmonic number -- %s\n", argv[optind+3]); return 1;}
+
+      /* chk, consider using one cycle */
       eb_device_write(device, b2btest_TH1InjHi, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)(TH1Inj >> 32)       , 0, eb_block);
       eb_device_write(device, b2btest_TH1InjLo, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)(TH1Inj & 0xffffffff), 0, eb_block);
+      eb_device_write(device, b2btest_nHInj,    EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)nHInj                , 0, eb_block);
     } // "seth1inj"
+    
     if (!strcasecmp(command, "seth1ext")) {
-      if (optind+2  != argc) {printf("b2b-test: expecting exactly one argument: seth1ext <freq>\n"); return 1;}
+      if (optind+3  != argc) {printf("b2b-test: expecting exactly two arguments: seth1ext <freq> <h> \n"); return 1;}
+
       fH1Ext = strtoul(argv[optind+1], &tail, 0);
       if (*tail != 0)        {printf("b2b-test: invalid frequency -- %s\n", argv[optind+2]); return 1;}
-
       TH1Ext = (double)1000000000000000000.0 / (double)fH1Ext;  // period in attoseconds
+
+      nHExt  = strtoul(argv[optind+2], &tail, 0);
+      if (*tail != 0)        {printf("b2b-test: invalid harmonic number -- %s\n", argv[optind+3]); return 1;}
+      
+      /* chk, consider using one cycle */      
       eb_device_write(device, b2btest_TH1ExtHi, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)(TH1Ext >> 32)       , 0, eb_block);
       eb_device_write(device, b2btest_TH1ExtLo, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)(TH1Ext & 0xffffffff), 0, eb_block);
-    } // "seth1inj"
+      eb_device_write(device, b2btest_nHExt,    EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)nHExt                , 0, eb_block);
+    } // "seth1ext"
 
   } //if command
   

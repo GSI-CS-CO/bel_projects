@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 27-May-2019
+ *  version : 05-June-2019
  *
  *  firmware required for measuring the h=1 phase for ring machine
  *  
@@ -28,7 +28,7 @@
  *  version 3 of the License, or (at your option) any later version.
  *
  *  This library is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+p *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *  Lesser General Public License for more details.
  *  
@@ -38,7 +38,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  ********************************************************************************************/
-#define B2BPM_FW_VERSION 0x000005                                       // make this consistent with makefile
+#define B2BPM_FW_VERSION 0x000007                                       // make this consistent with makefile
 
 /* standard includes */
 #include <stdio.h>
@@ -72,8 +72,10 @@ volatile uint32_t *pShared;             // pointer to begin of shared memory reg
 uint32_t *pSharedNTransfer;             // pointer to a "user defined" u32 register; here: # of transfers
 volatile uint32_t *pSharedTH1ExtHi;     // pointer to a "user defined" u32 register; here: period of h=1 extraction, high bits
 volatile uint32_t *pSharedTH1ExtLo;     // pointer to a "user defined" u32 register; here: period of h=1 extraction, low bits
+volatile uint32_t *pSharedNHExt;        // pointer to a "user defined" u32 register; here: harmonic number extraction
 volatile uint32_t *pSharedTH1InjHi;     // pointer to a "user defined" u32 register; here: period of h=1 injection, high bits
 volatile uint32_t *pSharedTH1InjLo;     // pointer to a "user defined" u32 register; here: period of h=1 injecion, low bits
+volatile uint32_t *pSharedNHInj;        // pointer to a "user defined" u32 register; here: harmonic number injection
 
 uint32_t *pCpuRamExternal;              // external address (seen from host bridge) of this CPU's RAM            
 uint32_t *pCpuRamExternalData4EB;       // external address (seen from host bridge) of this CPU's RAM: field for EB return values
@@ -111,8 +113,10 @@ void initSharedMem() // determine address and clear shared mem
   pSharedNTransfer        = (uint32_t *)(pShared + (B2BTEST_SHARED_NTRANSFER >> 2));
   pSharedTH1ExtHi         = (uint32_t *)(pShared + (B2BTEST_SHARED_TH1EXTHI  >> 2));
   pSharedTH1ExtLo         = (uint32_t *)(pShared + (B2BTEST_SHARED_TH1EXTLO  >> 2));
+  pSharedNHExt            = (uint32_t *)(pShared + (B2BTEST_SHARED_NHEXT     >> 2));
   pSharedTH1InjHi         = (uint32_t *)(pShared + (B2BTEST_SHARED_TH1INJHI  >> 2));
   pSharedTH1InjLo         = (uint32_t *)(pShared + (B2BTEST_SHARED_TH1INJLO  >> 2));
+  pSharedNHInj            = (uint32_t *)(pShared + (B2BTEST_SHARED_NHINJ     >> 2));
   
   // find address of CPU from external perspective
   idx = 0;
@@ -168,6 +172,7 @@ uint32_t extern_entryActionOperation()
 {
   int      i;
   uint64_t tDummy;
+  uint64_t eDummy;
   uint64_t pDummy;
   uint32_t flagDummy;
 
@@ -176,7 +181,7 @@ uint32_t extern_entryActionOperation()
 
   // flush ECA queue for lm32
   i = 0;
-  while (common_wait4ECAEvent(1, &tDummy, &pDummy, &flagDummy) !=  COMMON_ECADO_TIMEOUT) {i++;}
+  while (common_wait4ECAEvent(1, &tDummy, &eDummy, &pDummy, &flagDummy) !=  COMMON_ECADO_TIMEOUT) {i++;}
   DBPRINT1("b2b-pm: ECA queue flushed - removed %d pending entries from ECA queue\n", i);
 
   return COMMON_STATUS_OK;
@@ -272,6 +277,7 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
   uint32_t flagIsLate;                                        // flag indicating that we received a 'late' event from ECA
   uint32_t ecaAction;                                         // action triggered by event received from ECA
   uint64_t recDeadline;                                       // deadline received
+  uint64_t recEvtId;                                          // evt ID received
   uint64_t recParam;                                          // param received
   uint64_t sendDeadline;                                      // deadline to send
   uint64_t sendEvtId;                                         // evtid to send
@@ -284,17 +290,18 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
 
   status = actStatus;
 
-  ecaAction = common_wait4ECAEvent(COMMON_ECATIMEOUT, &recDeadline, &TH1, &flagIsLate);
+  ecaAction = common_wait4ECAEvent(COMMON_ECATIMEOUT, &recDeadline, &recEvtId, &TH1, &flagIsLate);
   
   switch (ecaAction) {
     case B2BTEST_ECADO_B2B_PMEXT :
       *pSharedTH1ExtHi = (uint32_t)((TH1 >> 32)    & 0xffffffff);
       *pSharedTH1ExtLo = (uint32_t)( TH1           & 0xffffffff);
+      *pSharedNHExt    = (uint32_t)( recEvtId      & 0xf       );
       
       nInput = 0;
       common_ioCtrlSetGate(1, 2);                                      // enable input gate
       while (nInput < NSAMPLES) {                                      // treat 1st TS as junk
-        ecaAction = common_wait4ECAEvent(100, &recDeadline, &recParam, &flagIsLate);
+        ecaAction = common_wait4ECAEvent(100, &recDeadline, &recEvtId, &recParam, &flagIsLate);
         if (ecaAction == B2BTEST_ECADO_TLUINPUT)  {tStamp[nInput] = recDeadline; nInput++;}
         if (ecaAction == B2BTEST_ECADO_TIMEOUT)   break; 
       } // while nInput
@@ -320,11 +327,12 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
     case B2BTEST_ECADO_B2B_PMINJ :
       *pSharedTH1InjHi = (uint32_t)((TH1 >> 32)    & 0xffffffff);
       *pSharedTH1InjLo = (uint32_t)( TH1           & 0xffffffff);
+      *pSharedNHInj    = (uint32_t)( recEvtId      & 0xf       );
       
       nInput = 0;
       common_ioCtrlSetGate(1, 2);                                      // enable input gate
       while (nInput < NSAMPLES) {                                      // treat 1st TS as junk
-        ecaAction = common_wait4ECAEvent(100, &recDeadline, &recParam, &flagIsLate);
+        ecaAction = common_wait4ECAEvent(100, &recDeadline, &recEvtId, &recParam, &flagIsLate);
         if (ecaAction == B2BTEST_ECADO_TLUINPUT)  {tStamp[nInput] = recDeadline; nInput++;}
         if (ecaAction == B2BTEST_ECADO_TIMEOUT)   break; 
       } // while nInput

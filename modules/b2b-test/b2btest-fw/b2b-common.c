@@ -319,7 +319,7 @@ uint32_t findMILPiggy() //find WB address of MIL Piggy
   else                                                           return COMMON_STATUS_OK;
 } // findMILPiggy
 
-uint32_t common_wait4ECAEvent(uint32_t msTimeout, uint64_t *deadline, uint64_t *param, uint32_t *isLate)  // 1. query ECA for actions, 2. trigger activity
+uint32_t common_wait4ECAEvent(uint32_t msTimeout, uint64_t *deadline, uint64_t *evtId, uint64_t *param, uint32_t *isLate)  // 1. query ECA for actions, 2. trigger activity
 {
   uint32_t *pECAFlag;           // address of ECA flag
   uint32_t evtIdHigh;           // high 32bit of eventID   
@@ -351,8 +351,9 @@ uint32_t common_wait4ECAEvent(uint32_t msTimeout, uint64_t *deadline, uint64_t *
       evtParamLow  = *(pECAQ + (ECA_QUEUE_PARAM_LO_GET >> 2));
       evtTef       = *(pECAQ + (ECA_QUEUE_TEF_GET >> 2));
       *isLate      = *pECAFlag & (0x0001 << ECA_LATE);
-
+      
       *deadline    = ((uint64_t)evtDeadlHigh << 32) + (uint64_t)evtDeadlLow;
+      *evtId       = ((uint64_t)evtIdHigh    << 32) + (uint64_t)evtIdLow;
       *param       = ((uint64_t)evtParamHigh << 32) + (uint64_t)evtParamLow;
       
       // pop action from channel

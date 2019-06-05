@@ -109,7 +109,7 @@ uint32_t common_ebmWriteTM(uint64_t deadline, uint64_t evtId, uint64_t param);
 //uint32_t findWREp();
 
 // 1. query ECA for actions, 2. trigger activity
-uint32_t common_wait4ECAEvent(uint32_t msTimeout, uint64_t *deadline, uint64_t *param, uint32_t *isLate);
+uint32_t common_wait4ECAEvent(uint32_t msTimeout, uint64_t *deadline, uint64_t *evtId, uint64_t *param, uint32_t *isLate);
 
 // wait for MIL event or timeout
 uint32_t common_wait4MILEvent(uint32_t *evtData, uint32_t *evtCode, uint32_t *virtAcc, uint32_t *validEvtCodes, uint32_t nValidEvtCodes, uint32_t msTimeout);

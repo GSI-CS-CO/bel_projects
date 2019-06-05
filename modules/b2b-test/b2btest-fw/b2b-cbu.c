@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 03-June-2019
+ *  version : 05-June-2019
  *
  *  firmware required to implement the CBU (Central Buncht-To-Bucket Unit)
  *  
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 23-April-2019
  ********************************************************************************************/
-#define B2BCBU_FW_VERSION 0x000005                                      // make this consistent with makefile
+#define B2BCBU_FW_VERSION 0x000007                                      // make this consistent with makefile
 
 /* standard includes */
 #include <stdio.h>
@@ -69,8 +69,10 @@ uint32_t *pSharedNTransfer;             // pointer to a "user defined" u32 regis
 uint32_t *pSharedTransStat;             // pointer to a "user defined" u32 register; here: status of transfer
 volatile uint32_t *pSharedTH1ExtHi;     // pointer to a "user defined" u32 register; here: period of h=1 extraction, high bits
 volatile uint32_t *pSharedTH1ExtLo;     // pointer to a "user defined" u32 register; here: period of h=1 extraction, low bits
+volatile uint32_t *pSharedNHExt;        // pointer to a "user defined" u32 register; here: harmonic number extraction
 volatile uint32_t *pSharedTH1InjHi;     // pointer to a "user defined" u32 register; here: period of h=1 injection, high bits
 volatile uint32_t *pSharedTH1InjLo;     // pointer to a "user defined" u32 register; here: period of h=1 injecion, low bits
+volatile uint32_t *pSharedNHInj;        // pointer to a "user defined" u32 register; here: harmonic number injection
 
 uint32_t *pCpuRamExternal;              // external address (seen from host bridge) of this CPU's RAM            
 uint32_t *pCpuRamExternalData4EB;       // external address (seen from host bridge) of this CPU's RAM: field for EB return values
@@ -79,6 +81,8 @@ uint32_t nTransfer;                     // # of transfers
 uint32_t transStat;                     // status of ongoing transfer
 uint64_t TH1Ext;                        // h=1 period [as] of extraction machine
 uint64_t TH1Inj;                        // h=1 period [as] of injection machine
+uint32_t NHExt;                         // harmonic number of extraction machine 0..15
+uint32_t NHInj;                         // harmonic number of injection machine 0..15
 uint64_t tH1Ext;                        // h=1 phase  [ns] of extraction machine
 uint64_t tH1Inj;                        // h=1 phase  [ns] of injection machine
 
@@ -108,8 +112,10 @@ void initSharedMem() // determine address and clear shared mem
   pSharedNTransfer        = (uint32_t *)(pShared + (B2BTEST_SHARED_NTRANSFER >> 2));
   pSharedTH1ExtHi         = (uint32_t *)(pShared + (B2BTEST_SHARED_TH1EXTHI  >> 2));
   pSharedTH1ExtLo         = (uint32_t *)(pShared + (B2BTEST_SHARED_TH1EXTLO  >> 2));
+  pSharedNHExt            = (uint32_t *)(pShared + (B2BTEST_SHARED_NHEXT     >> 2));
   pSharedTH1InjHi         = (uint32_t *)(pShared + (B2BTEST_SHARED_TH1INJHI  >> 2));
   pSharedTH1InjLo         = (uint32_t *)(pShared + (B2BTEST_SHARED_TH1INJLO  >> 2));
+  pSharedNHInj            = (uint32_t *)(pShared + (B2BTEST_SHARED_NHINJ     >> 2));
   pSharedTransStat        = (uint32_t *)(pShared + (B2BTEST_SHARED_TRANSSTAT >> 2));
   
   // find address of CPU from external perspective
@@ -179,8 +185,10 @@ uint32_t extern_entryActionOperation()
   // set initial nonsense values
   *pSharedTH1ExtHi = 0x000000E8; // 1 kHz dummy
   *pSharedTH1ExtLo = 0xD4A51000;
+  *pSharedNHExt    = 1;
   *pSharedTH1InjHi = 0x000001D1; // 2 kHz dummy
   *pSharedTH1InjLo = 0xA94A2000;
+  *pSharedNHInj    = 1;
 
   return COMMON_STATUS_OK;
 } // extern_entryActionOperation
@@ -194,7 +202,7 @@ uint32_t extern_exitActionOperation()
 
 uint32_t calcPhaseMatch(uint64_t *tPhaseMatch)  // calculates when extraction and injection machines are synchronized
 {
-  uint64_t TSlow;                                   // period of 'slow' frequency     [as]
+  uint64_t TSlow;                                   // period of 'slow' frequency     [as] // sic! atoseconds
   uint64_t TFast;                                   // period of 'fast' frequency     [as]
   uint64_t TBeat;                                   // period of frequency beating    [as]
   uint64_t tSlow;                                   // phase of 'slow' frequency      [as]
@@ -291,17 +299,28 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
     case B2BTEST_ECADO_B2B_START :
       // received: B2B_START from DM
       
+      TH1Ext       = (uint64_t)(*pSharedTH1ExtHi) << 32;
+      TH1Ext       = (uint64_t)(*pSharedTH1ExtLo) | TH1Ext;
+      NHExt        = *pSharedNHExt;
+      TH1Inj       = (uint64_t)(*pSharedTH1InjHi) << 32;
+      TH1Inj       = (uint64_t)(*pSharedTH1InjLo) | TH1Inj;
+      NHInj        = *pSharedNHInj;
+      tH1Ext       = 0x0;
+      tH1Inj       = 0x0;
+
       // send command: phase measurement at extraction machine
       sendEvtId    = 0x1fff000000000000;                                        // FID, GID
       sendEvtId    = sendEvtId | ((uint64_t)B2BTEST_ECADO_B2B_PMEXT << 36);     // EVTNO
-      sendParam    = (uint64_t)(*pSharedTH1ExtHi) << 32 | (uint64_t)(*pSharedTH1ExtLo);
+      sendEvtId    = sendEvtId | (uint64_t)(NHExt & 0xf);                       // RESERVED, use only four bits
+      sendParam    = TH1Ext;
       sendDeadline = getSysTime() + (uint64_t)COMMON_AHEADT;
       common_ebmWriteTM(sendDeadline, sendEvtId, sendParam);
       
       // send command: phase measurement at injection machine
       sendEvtId    = 0x1fff000000000000;                                        // FID, GID
       sendEvtId    = sendEvtId | ((uint64_t)B2BTEST_ECADO_B2B_PMINJ << 36);     // EVTNO
-      sendParam    = (uint64_t)(*pSharedTH1InjHi) << 32 | (uint64_t)(*pSharedTH1InjLo);
+      sendEvtId    = sendEvtId | (uint64_t)(NHInj & 0xf);                       // RESERVED, use only four bits
+      sendParam    = TH1Inj;
       sendDeadline = getSysTime() + (uint64_t)COMMON_AHEADT;
       common_ebmWriteTM(sendDeadline, sendEvtId, sendParam);
       
@@ -309,12 +328,6 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
       
       nTransfer++;
       transStat    = B2BTEST_FLAG_TRANSACTIVE;
-      TH1Ext       = (uint64_t)(*pSharedTH1ExtHi) << 32;
-      TH1Ext       = (uint64_t)(*pSharedTH1ExtLo) | TH1Ext;
-      TH1Inj       = (uint64_t)(*pSharedTH1InjHi) << 32;
-      TH1Inj       = (uint64_t)(*pSharedTH1InjLo) | TH1Inj;
-      tH1Ext       = 0x0;
-      tH1Inj       = 0x0;
       
       break;
     case B2BTEST_ECADO_B2B_PREXT :
