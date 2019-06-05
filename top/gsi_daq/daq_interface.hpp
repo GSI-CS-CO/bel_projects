@@ -199,7 +199,7 @@ public:
 
    const std::string getEbStatusString( void ) const
    {
-      static_cast<const std::string>(::ebGetStatusString( m_poEbHandle ));
+      return static_cast<const std::string>(::ebGetStatusString( m_poEbHandle ));
    }
 
    RETURN_CODE_T getLastReturnCode( void ) const

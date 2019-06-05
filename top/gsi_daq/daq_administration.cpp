@@ -218,6 +218,7 @@ bool DaqAdministration::registerDevice( DaqDevice* pDevice )
  */
 bool DaqAdministration::unregisterDevice( DaqDevice* pDevice )
 {
+   return false;
 }
 
 /*! ---------------------------------------------------------------------------
@@ -370,7 +371,7 @@ int DaqAdministration::distributeData( void )
       RAM_DAQ_PAYLOAD_T ramItems[sizeof(PROBE_BUFFER_T::buffer) /
                                  sizeof(RAM_DAQ_PAYLOAD_T)];
       DAQ_DESCRIPTOR_T  descriptor;
-   } PACKED_SIZE;
+   };
 
    static_assert( sizeof(PROBE_BUFFER_T)
                    == c_hiresPmDataLen * sizeof(DAQ_DATA_T),
@@ -427,7 +428,7 @@ int DaqAdministration::distributeData( void )
     * At first a short block is supposed. It's necessary to read this data
     * obtaining the device-descriptor.
     */
-   if( ::ramReadDaqDataBlock( &m_oScuRam, probe.ramItems,
+   if( ::ramReadDaqDataBlock( &m_oScuRam, &probe.ramItems[0],
                               c_ramBlockShortLen
                             #ifndef CONFIG_DDR3_NO_BURST_FUNCTIONS
                               , ::ramReadPoll

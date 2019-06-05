@@ -6,11 +6,13 @@ LINUX_TEST_DIR = $(REPOSITORY_DIR)/modules/lm32-test/daq_app_test
 all:
 	$(MAKE) -C ./buildLm32  all
 	$(MAKE) -C $(LINUX_TEST_DIR) all
+	$(MAKE) -C ./tools           all
 
 .PHOMY: clean
 clean:
 	$(MAKE) -C ./buildLm32  clean
 	$(MAKE) -C $(LINUX_TEST_DIR) clean
+	$(MAKE) -C ./tools clean
 
 .PHOMY: load
 load:
