@@ -125,7 +125,7 @@ CXX_ARG ?= $(CC_ARG)
 AS_ARG ?= $(CC_ARG)
 
 .PHONY: all
-all: $(WORK_DIR) $(TARGET_DIR) $(RESULT_FILE) size version
+all: check_src $(WORK_DIR) $(TARGET_DIR) $(RESULT_FILE) size version
 
 .PHONY: version
 version:
@@ -134,6 +134,12 @@ ifeq ($(V), 1)
 else
 	@$(CC) --version | head -n1
 endif
+
+.PHONY: check_src
+check_src:
+	$(QUIET)(for i in $(SOURCE); do \
+		[ -f "$$i" ] || echo -e $(ESC_FG_RED)"ERROR: Sourcefile \"$$i\" not found!"$(ESC_NORMAL) 1>&2; \
+	done)
 
 $(WORK_DIR):
 	$(QUIET)mkdir -p $(WORK_DIR)
