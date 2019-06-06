@@ -24,7 +24,7 @@ SOURCE += $(DAQ_DIR)/daq_ramBuffer.c
 SOURCE += $(SCU_LIB_SRC_DIR)/eb_object_transfer.c
 SOURCE += $(DAQ_DIR)/daq_interface.cpp
 SOURCE += $(DAQ_DIR)/daq_administration.cpp
-SOURCE += $(DAQ_DIR)/scu_eb_interface.cpp
+# SOURCE += $(DAQ_DIR)/scu_eb_interface.cpp
 
 GNUPLOT_BIN ?= $(shell which gnuplot)
 
