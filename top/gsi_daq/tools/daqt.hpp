@@ -29,6 +29,7 @@
 #include <daq_administration.hpp>
 #include <daqt_attributes.hpp>
 #include <string>
+#include <iostream>
 #include <gnuplotstream.hpp>
 
 namespace daqt

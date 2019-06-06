@@ -25,10 +25,10 @@
 #include "daqt.hpp"
 #include "daqt_messages.hpp"
 #include "daqt_command_line.hpp"
-#include "daqt_scan.hpp"
 #include "daqt_attributes.hpp"
 #include "daqt_read_stdin.hpp"
 
+using namespace std;
 using namespace daqt;
 
 /*-----------------------------------------------------------------------------
@@ -115,7 +115,8 @@ void Channel::Mode::plot( void )
    m_pParent->m_oPlot << "Mode: " << m_text << ", Block: " << m_blockCount
                       << ", Sequence: " <<  m_sequence
                       << ", Sample time: " << nsecToSec( m_sampleTime )
-                      << " s\"" << "font \",14\"" << endl;
+                      << " s, Lost: " << m_pParent->getLostCount()
+                      << "\" font \",14\"" << endl;
 
    m_pParent->m_oPlot << "set xlabel \"Time: " << m_timeStamp <<"\"" << endl;
 
@@ -221,7 +222,7 @@ void Channel::start( void )
       m_poModeContinuous =
          new Mode( this,
                    DaqInterface::c_contineousPayloadLen,
-                   "continuous sample rate: " + sRate );
+                   "continuous, sample rate: " + sRate );
       sendEnableContineous( m_oAttributes.m_continueMode.m_value,
                             m_oAttributes.m_blockLimit.m_value );
    }
