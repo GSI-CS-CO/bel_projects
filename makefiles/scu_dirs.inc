@@ -19,9 +19,9 @@ SCU_LIB_SRC_DIR = $(REPOSITORY_DIR)/modules/lm32-include
 IP_CORE_DIR     = $(REPOSITORY_DIR)/ip_cores
 WR_DIR          = $(IP_CORE_DIR)/wrpc-sw
 
+INCLUDE_DIRS += $(DAQ_DIR)
 INCLUDE_DIRS += $(SCU_LIB_SRC_DIR)
 INCLUDE_DIRS += $(SCU_DIR)
-INCLUDE_DIRS += $(DAQ_DIR)
 INCLUDE_DIRS += $(REPOSITORY_DIR)/tools
 INCLUDE_DIRS += $(WR_DIR)/sdb-lib
 INCLUDE_DIRS += $(WR_DIR)/pp_printf
