@@ -65,5 +65,9 @@ LIBS += etherbone
 
 DEBUG = 1
 
+DOX_INPUT += $(DAQ_DIR)/daq_descriptor.h
+DOX_INPUT += $(DAQ_DIR)/daq_command_interface.h
+DOX_OPTIMIZE_OUTPUT_FOR_C = "NO"
+
 include $(REPOSITORY_DIR)/makefiles/makefile.scun
 #=================================== EOF ======================================
