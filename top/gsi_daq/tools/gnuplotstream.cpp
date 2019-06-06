@@ -103,8 +103,8 @@ PlotStream::~PlotStream( void )
 
    if( ::pclose( m_pPipe ) < 0 )
    {
-      throw Exception( "Can't close pipe to gnuplot -> " +
-                        static_cast<std::string>(::strerror( errno )) );
+      std::cerr << "ERROR: Can't close pipe to gnuplot -> " <<
+                                              ::strerror( errno ) << std::endl;
    }
 }
 
