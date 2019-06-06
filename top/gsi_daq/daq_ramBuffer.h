@@ -95,7 +95,7 @@ extern "C" {
     / sizeof(DAQ_DATA_T)                                                      \
 )
 
-#ifdef CONFIG_SCU_USE_DDR3
+#if defined( CONFIG_SCU_USE_DDR3 ) || defined(__DOXYGEN__)
 
 /*!
  * @brief Smallest memory unit of the used memory type.

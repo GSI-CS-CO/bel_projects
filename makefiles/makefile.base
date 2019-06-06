@@ -182,7 +182,8 @@ clean:
 	rmdir $(WORK_DIR); \
 	rmdir $(TARGET_DIR); \
 	rmdir $(DEPLOY_DIR); \
-	rmdir $(GENERATED_DIR) ) 2>/dev/null
+	rmdir $(GENERATED_DIR); \
+	exit 0 ) 2>/dev/null
 
 #-------------------------------- Doxygen -------------------------------------
 DOX_PROJECT_NAME          ?= "$(shell echo $(TARGET) | tr '_' ' ' )"

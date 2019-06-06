@@ -40,9 +40,31 @@
 /*!
  * @ingroup DAQ
  * @defgroup DAQ_INTERFACE
- * @brief DAQ communication module between Linux and LM32
+ * @brief DAQ communication module between Linux client and LM32 server
  * @{
  */
+
+/*!
+ * @ingroup DAQ
+ * @brief Macro is a is a alias for the keyword "const" within the LM32
+ *        environment otherwise it's empty.
+ *
+ * In the DAQ software the LM32 program acts as server, the Linux host as
+ * client. \n
+ * The access to the shared memory is form the host side only implicit via the
+ * etherbone-library possible, therefore a mirror of the shared memory within
+ * a Linux application, will accomplished by the ehterbone-library which will
+ * initialized this mirror. \n
+ * For this reason it's not possible to mirror constants, because constants
+ * will written within the initializing phase by the etherbone-library.
+ * That means, constants in the shared memory are read-only in the
+ * server part only.
+ */
+#ifdef __lm32__
+  #define DAQ_SERVER_CONST const
+#else
+  #define DAQ_SERVER_CONST
+#endif
 
 /*!
  * @brief Magic number of DAQ application. Useful in recognizing
@@ -178,19 +200,19 @@ typedef struct PACKED_SIZE
    /*!
     * @brief Magic number
     */
-   uint32_t                 magicNumber;
+   DAQ_SERVER_CONST uint32_t magicNumber;
 
    /*!
     * @brief Access parameters for the SCU RAM,
     *        for now the DDR3 RAM.
     */
-   RAM_RING_SHARED_OBJECT_T ramIndexes;
+   RAM_RING_SHARED_OBJECT_T  ramIndexes;
 
    /*!
     * @brief Operation parameter to invoke a
     *        LM32 function form the Linux host.
     */
-   DAQ_OPERATION_T          operation;
+   DAQ_OPERATION_T           operation;
 } DAQ_SHARED_IO_T;
 #ifndef __DOXYGEN__
 STATIC_ASSERT( sizeof( DAQ_SHARED_IO_T ) == (sizeof(uint32_t)

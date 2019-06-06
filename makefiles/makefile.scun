@@ -16,8 +16,11 @@ EB_API_DIR   = $(IP_CORE_DIR)/etherbone-core/api
 INCLUDE_DIRS += $(EB_API_DIR)
 LIB_DIRS     += $(EB_API_DIR)/.libs
 
+# ------------ Additional defines for Doxygen ---------------------------------
+DOX_INPUT    += $(SCU_DIR)/scu_bus.h
 DOX_INPUT    += $(EB_API_DIR)
 DOX_INPUT    += $(MAKEFILE_DIR)/makefile.scun
+# -------------- End of defines for Doxygen -----------------------------------
 
 include $(MAKEFILE_DIR)/makefile.native
 

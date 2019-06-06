@@ -151,17 +151,17 @@ typedef uint16_t DAQ_REGISTER_T;
  * code redundancy.
  *
  * ExtTrig_nEvTrig_HiRes: Bit [7] trigger source in high resolution mode
- *                                1= external trigger, 0= event trigger.
+ *                                1= external trigger, 0= event trigger. \n
  * Ena_HiRes:             Bit [6] high resolution sampling with 4 MHz.
- *                                CAUTION:
- *                                Ena_PM shall not be active at the same time!
+ *                                <b>CAUTION:</b>
+ *                                Ena_PM shall not be active at the same time! \n
  * ExtTrig_nEvTrig:       Bit [5] trigger source in DAQ mode:
- *                                1=ext trigger, 0= event trigger.
- * Ena_TrigMod:           Bit [4] prevents sampling till triggering.
- * Sample1ms:             Bit [3] use 1 ms sample.
- * Sample100us:           Bit [2] use 100 us sample.
- * Sample10us:            Bit [1] use 10 us sample.
- * Ena_PM:                Bit [0] starts PM sampling with 100 us.
+ *                                1=ext trigger, 0= event trigger. \n
+ * Ena_TrigMod:           Bit [4] prevents sampling till triggering. \n
+ * Sample1ms:             Bit [3] use 1 ms sample. \n
+ * Sample100us:           Bit [2] use 100 us sample. \n
+ * Sample10us:            Bit [1] use 10 us sample. \n
+ * Ena_PM:                Bit [0] starts PM sampling with 100 us. \n
  *
  * Big endian (LM32):
  */
