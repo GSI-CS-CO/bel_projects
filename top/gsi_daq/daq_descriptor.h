@@ -10,6 +10,7 @@
  *  <a href="https://www-acc.gsi.de/wiki/Hardware/Intern/DataAquisitionMacrof%C3%BCrSCUSlaveBaugruppen">
  *     Data Aquisition Macro fuer SCU Slave Baugruppen</a>
  *  @date 22.11.2018
+ *  Revision: 06.06.2019
  *  @copyright (C) 2018 GSI Helmholtz Centre for Heavy Ion Research GmbH
  *
  *  @author Ulrich Becker <u.becker@gsi.de>
@@ -744,7 +745,7 @@ unsigned int daqDescriptorGetTimeBase( register DAQ_DESCRIPTOR_T* pThis )
 #ifdef __cplusplus
 }
 #endif
-
+// Revision: 06.06.2019
 #endif /* ifndef _DAQ_DESCRIPTOR_H */
 /*================================== EOF ====================================*/
 

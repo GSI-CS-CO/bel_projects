@@ -8,8 +8,8 @@
 ## (C:)    2019 GSI Helmholtz Centre for Heavy Ion Research GmbH             ##
 ## Date:   27.02.2019                                                        ##
 ###############################################################################
-REPOSITORY_DIR := $(shell git rev-parse --show-toplevel)
-
+# REPOSITORY_DIR := $(shell git rev-parse --show-toplevel)
+REPOSITORY_DIR := ./../../..
 # TARGET_DIR     := ..
 # DEPLOY_DIR     := .
 TARGET         := daq_control
