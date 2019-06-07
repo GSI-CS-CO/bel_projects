@@ -6,5 +6,6 @@
 
 extern uint32_t _endram;
 extern void check_stack(void);
+extern void check_stack_fwid(uint32_t *stackStatus);
 
 #endif /* __STACK_H__ */

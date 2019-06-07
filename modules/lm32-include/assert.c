@@ -4,6 +4,16 @@
 #include <assert.h>
 #include <pp-printf.h>
 
+unsigned int assertWait(int us)
+{
+  volatile unsigned int i;
+
+  for (i = 0; i < 6 * us ; i++)
+    ;
+
+  return i;
+} // wait 
+
 void panic(const char *fmt, ...)
 {
 	va_list args;
@@ -16,7 +26,7 @@ void panic(const char *fmt, ...)
 
 	while (1) {
 		pp_printf(message);
-		usleep(1000 * 1000);
+		assertWait(1000 * 1000);
 	}
 }
 
@@ -38,7 +48,8 @@ void __assert(const char *func, int line, int forever,
 	while (1) {
 		pp_printf(message);
 		if (!forever)
-			break;
-		usleep(1000 * 1000);
+                  break;
+
+                assertWait(1000 * 1000);
 	}
 }
