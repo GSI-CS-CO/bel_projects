@@ -12,12 +12,12 @@ RAM_SIZE        := $(shell cat 	$(PLATFMAKEFILE) | grep -m1 RAM_SIZE  | cut -d'=
 
 SHARED_SIZE    	?= 8K
 USRCPUCLK      	?= 125000
-VERSION  	= 00.00.07
+VERSION  	= 00.00.08
 
 .DEFAULT_GOAL	:= fwbin
 
 PATHFW 	        = .
-DEBUGLVL    	= 1
+DEBUGLVL    	= 2
 EXTRA_FLAGS	?=
 CFLAGS 	    	= -I../include -I$(PATHFW) -DDEBUGLEVEL=$(DEBUGLVL) $(EXTRA_FLAGS)
 
@@ -46,5 +46,3 @@ b2bcbu.elf: $(PATHFW)/b2b-cbu.c $(INCPATH)/ebm.c $(PATHFW)/b2b-common.c
 
 clean::
 	rm -f $(PATHFW)/*.o $(PATHFW)/*.a $(PATHFW)/*.elf $(PATHFW)/*.bin
-
-

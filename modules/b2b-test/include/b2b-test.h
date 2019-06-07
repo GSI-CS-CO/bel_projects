@@ -28,7 +28,7 @@
 #define  B2BTEST_ECADO_B2B_PMEXT       2049    // command: perform phase measurement (extraction)
 #define  B2BTEST_ECADO_B2B_PMINJ       2050    // command: perform phase measurement (injection)
 #define  B2BTEST_ECADO_B2B_PREXT       2051    // command: result of phase measurement (extraction)
-#define  B2BTEST_ECADO_B2B_PRINJ       2052    // command: result of phase measurement (injeciton)
+#define  B2BTEST_ECADO_B2B_PRINJ       2052    // command: result of phase measurement (injecton)
 #define  B2BTEST_ECADO_B2B_DIAGEXT     2053    // command: projects measured phase 100000 periods into the future (extraction)
 #define  B2BTEST_ECADO_B2B_DIAGINJ     2054    // command: projects measured phase 100000 periods into the future (extraction)
 #define  B2BTEST_ECADO_B2B_DIAGMATCH   2055    // command: projects measured phase 100000 periods into the future (extraction)

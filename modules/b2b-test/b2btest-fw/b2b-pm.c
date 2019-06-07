@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 05-June-2019
+ *  version : 06-June-2019
  *
  *  firmware required for measuring the h=1 phase for ring machine
  *  
@@ -38,7 +38,7 @@ p *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  ********************************************************************************************/
-#define B2BPM_FW_VERSION 0x000007                                       // make this consistent with makefile
+#define B2BPM_FW_VERSION 0x000008                                       // make this consistent with makefile
 
 /* standard includes */
 #include <stdio.h>
@@ -83,7 +83,7 @@ uint32_t sumStatus;                     // all status infos are ORed bit-wise in
 uint32_t nTransfer;                     // # of transfers
 
 // for phase measurement
-#define NSAMPLES 8                      // # of timestamps for sampling h=1
+#define NSAMPLES 16                     // # of timestamps for sampling h=1
 uint64_t tStamp[NSAMPLES];              // timestamp samples
 
 void init() // typical init for lm32
@@ -198,6 +198,7 @@ uint32_t poorMansFit(uint64_t period, uint32_t nSamples, uint64_t *phase)
 {
 #define MATCHWINDOW 5    // samples are only accepted, if they are within this window [ns]
 #define FITRANGE    2    // use this value for 'fitting' [ns]
+#define FIRSTTS     2    // index of first timestamp we use  
 
   int64_t  delta;        // diff between timestamp and tTmp
   int64_t  sumDelta;     // sum of all 'valid' delta
@@ -213,12 +214,17 @@ uint32_t poorMansFit(uint64_t period, uint32_t nSamples, uint64_t *phase)
 
   uint64_t t1,t2;
 
+  /* chk hack begin ....... */
+  *phase = tStamp[2];
+  return COMMON_STATUS_OK;
+  /* hack end               */
+
   t1 = getSysTime();
 
-  if ((nSamples < 2) || (nSamples > NSAMPLES)) return B2BTEST_STATUS_PHASEFAILED; // we need at least two samples (otherwise tStamp[1] is invalid)
+  if ((nSamples < FIRSTTS) || (nSamples > NSAMPLES)) return B2BTEST_STATUS_PHASEFAILED; // we need at least more timestamps than the ones to be thrown away
 
   // the following algorithm is applied
-  // - don't use the first sample at we don't know when exactly the input
+  // - don't use the first sample as we don't know when exactly the input
   //   gate became active
   // - use the second sample to start with ( ~'t0')
   // samples may not be ordered, calculate overal deviation:
@@ -232,7 +238,7 @@ uint32_t poorMansFit(uint64_t period, uint32_t nSamples, uint64_t *phase)
   
   sumDeltaMin = FITRANGE * NSAMPLES;
   tFit        = 0x0;
-  tInit       = tStamp[1];
+  tInit       = tStamp[FIRSTTS];                                       // throw away the first timestamps
   nUsedFit    = 0;
   trickPeriod = (uint64_t)((double)period * 1.073741824);              // this allows using '>> 30' instead of '/ 1000000000'
 
@@ -240,9 +246,9 @@ uint32_t poorMansFit(uint64_t period, uint32_t nSamples, uint64_t *phase)
     sumDelta = 0;
     nUsed    = 0;
     t0       = tInit + h;                                              // use 2nd sample
-    for (i=1; i<nSamples; i++) {                                       // loop over expected timestamps (starting at t0)
+    for (i=FIRSTTS; i<nSamples; i++) {                                 // loop over expected timestamps (starting at t0)
       tTheo = t0 + ((((uint64_t)(i-1)) * trickPeriod) >> 30);          // expected time; note that trickPeriod is in [as]; use '>> 30' for conversion to [ns]
-      for (j=1; j<nSamples; j++) {                                     // loop over measured samples
+      for (j=FIRSTTS; j<nSamples; j++) {                               // loop over measured samples
         delta = tStamp[j] - tTheo;                                     // decide whether actual sample is useful
         if (abs(delta) < MATCHWINDOW){
           nUsed++;
@@ -260,9 +266,9 @@ uint32_t poorMansFit(uint64_t period, uint32_t nSamples, uint64_t *phase)
   t2 = getSysTime();
   DBPRINT2("b2b-pm: sumDeltaMin %d, nUsedFit %d, tFit - tStamp[1] %d, time for fit %u\n", (int)sumDeltaMin, (int)nUsedFit, (int)(tFit - tStamp[1]), (uint32_t)(t2-t1));
 
-  if (tFit == 0x0)               return B2BTEST_STATUS_PHASEFAILED;    // fit failed entirely
-  if (nUsedFit < (nSamples / 2)) return B2BTEST_STATUS_PHASEFAILED;    // at least half of the samples must match; if not s.th. is wrong
-  if (sumDeltaMin > FITRANGE)    return B2BTEST_STATUS_PHASEFAILED;    // the sum of deviations must be small; FITRANGE is used as a measure
+  if (tFit == 0x0)                 return B2BTEST_STATUS_PHASEFAILED;    // fit failed entirely
+  if (nUsedFit < (nSamples >> 2))  return B2BTEST_STATUS_PHASEFAILED;    // at least a quarter of the samples must match; if not s.th. is wrong
+  if (sumDeltaMin > FITRANGE)      return B2BTEST_STATUS_PHASEFAILED;    // the sum of deviations must be small; FITRANGE is used as a measure
 
   *phase = tFit;
 
