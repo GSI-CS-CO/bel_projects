@@ -1,8 +1,10 @@
 /*!
+ * @defgroup GENERATED_SOURCE
+ * @{
  * @file /common/home/bel/ubecker/lnx/src/gsi/readable/bel_projects/top/gsi_daq/generated/shared_mmap.h
  * @brief Location of Buildid and Shared Section in LM32 Memory, to be used by host
  * @note 'This file has been created automatically, do not modify it by hand!'
- * @date Fri May 31 08:47:55 CEST 2019
+ * @date Fri Jun  7 12:16:18 CEST 2019
  * @author makefile.scu
  */
 
@@ -16,3 +18,4 @@
 #define SHARED_OFFS   0x500
 
 #endif
+/*!@}*/

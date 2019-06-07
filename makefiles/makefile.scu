@@ -66,13 +66,15 @@ DEFINES += CONFIG_PRINT_BUFSIZE=$(PRINT_BUFSIZE)
 DEFINES += SDBFS_BIG_ENDIAN
 DEFINES += USRCPUCLK=$(USRCPUCLK)
 
+DOX_GEN_GROUP_NAME ?= GENERATED_SOURCE
+
 CFLAGS += -nostdlib
 CFLAGS += -mmultiply-enabled
 CFLAGS += -mbarrel-shift-enabled
 
-RAM_OFFS      = 0x10000000
-BOOTL_SIZE    = 0x100
-BUILDID_SIZE  = 0x400
+RAM_OFFS      ?= 0x10000000
+BOOTL_SIZE    ?= 0x100
+BUILDID_SIZE  ?= 0x400
 BUILDID_NAME  ?= buildid
 BUILDID_START = $(shell printf "0x%x" $(BOOTL_SIZE))
 SHARED_START  = $(shell printf "0x%x" $$(( $(BUILDID_START) + $(BUILDID_SIZE) )) )
@@ -101,6 +103,8 @@ LDS_LIBS  += gcc
 # LDS_LIBS  += nosys   # Some OS dummy-functions
 
 LDS  = "/*!\n"
+LDS += " * @defgroup $(DOX_GEN_GROUP_NAME)\n"
+LDS += " * @{\n"
 LDS += " * @file $(LINKER_SCRIPT)\n"
 LDS += " * @brief $(CPU)-Linkerscript for target: $(TARGET)\n"
 LDS += " * @note $(COMMENT_TEXT)\n"
@@ -212,6 +216,7 @@ LDS += "     _end = .;\n"
 LDS += "     PROVIDE(end = .);\n"
 LDS += "   } > ram = 0\n"
 LDS += "} /* End of SECTIONS */\n"
+LDS += "/*!@}*/\n"
 
 CBR_DATE := $$(date +"%a %b %d %H:%M:%S %Z %Y")
 CBR_USR  := $$(git config user.name)
@@ -229,6 +234,8 @@ CBR_GIT4 := $$(git log HEAD~3 --oneline --decorate=no -n 1 | cut -c1-100)
 CBR_GIT5 := $$(git log HEAD~4 --oneline --decorate=no -n 1 | cut -c1-100)
 
 CBR  = "/*!\n"
+CBR += " * @defgroup $(DOX_GEN_GROUP_NAME)\n"
+CBR += " * @{\n"
 CBR += " * @file $(BUILD_ID_FILE)\n"
 CBR += " * @note $(COMMENT_TEXT)\n"
 CBR += " * @date $(DATE)\n"
@@ -254,11 +261,14 @@ CBR += "   $(CBR_GIT2)"'\\n\\'"\n"
 CBR += "   $(CBR_GIT3)"'\\n\\'"\n"
 CBR += "   $(CBR_GIT4)"'\\n\\'"\n"
 CBR += "   $(CBR_GIT5)"'\\n\\'"\n\";\n\n"
+CBR += "/*!@}*/\n"
 
 SHARED_MAP_HEADDER ?= shared_mmap.h
 
 UCTARGET = "_$$(echo $(SHARED_MAP_HEADDER) | tr a-z A-Z | tr '.' '_')"
 SMM  = "/*!\n"
+SMM += " * @defgroup $(DOX_GEN_GROUP_NAME)\n"
+SMM += " * @{\n"
 SMM += " * @file $(GENERATED_DIR)/$(SHARED_MAP_HEADDER)\n"
 SMM += " * @brief Location of Buildid and Shared Section in LM32 Memory,"
 SMM += " to be used by host\n"
@@ -274,6 +284,7 @@ SMM += "\#define SHARED_SIZE   $(SHARED_SIZE)\n"
 SMM += "\#define BUILDID_OFFS  $(BUILDID_START)\n"
 SMM += "\#define SHARED_OFFS   $(SHARED_START)\n\n"
 SMM += "\#endif\n"
+SMM += "/*!@}*/\n"
 
 #ADDITIONAL_DEPENDENCES += Makefile
 ADDITIONAL_DEPENDENCES += $(GENERATED_DIR)/$(SHARED_MAP_HEADDER)

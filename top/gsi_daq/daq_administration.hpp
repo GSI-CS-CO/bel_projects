@@ -2,6 +2,9 @@
  *  @file daq_administration.hpp
  *  @brief DAQ administration
  *
+ * <a href="https://www-acc.gsi.de/wiki/Hardware/Intern/DataAquisitionMacrofürSCUSlaveBaugruppen">
+ *    Data Aquisition Macro fuer SCU Slave Baugruppen</a>
+ *
  *  @date 04.03.2019
  *  @copyright (C) 2019 GSI Helmholtz Centre for Heavy Ion Research GmbH
  *
@@ -33,6 +36,15 @@ namespace daq
 class DaqAdministration;
 class DaqDevice;
 
+/*!
+ * @defgroup onDataBlock
+ * @brief Functions belonging to this group can be invoked only within the
+ *        call back function onDataBlock. Otherwise the system will crash or
+ *        in the debug version a assertion becomes triggered!
+ * @see onDataBlock
+ * @todo Throwing a exception when one of these functions will invoked outside
+ *       of its scope?
+ */
 ///////////////////////////////////////////////////////////////////////////////
 /*! ---------------------------------------------------------------------------
  * @brief Object of this type represents a single DAQ channel.
@@ -136,7 +148,8 @@ public:
    DaqDevice* getParent( void )
    {
       if( m_pParent == nullptr )
-         throw( DaqException( "Object of DaqChannel is not registered in DaqDevice!" ) );
+         throw( DaqException( "Object of DaqChannel is not"
+                                               " registered in DaqDevice!" ) );
       SCU_ASSERT( m_pParent != nullptr );
       return m_pParent;
    }
@@ -145,26 +158,112 @@ public:
    const unsigned int getSlot( void );
    const unsigned int getDeviceNumber( void );
 
+   /*!
+    * @brief Enables the Post-Mortem mode.
+    * @param restart When true, restarting of the Post-Mortem mode after a
+    *                trigger event, else it's a single shoot event.
+    * @see sendDisablePmHires
+    */
    int sendEnablePostMortem( const bool restart = false );
+
+   /*!
+    * @brief Enables the High-Resolution mode
+    * @param restart When true, restarting of the High-Resolution mode after a
+    *                trigger event, else it's a single shoot event.
+    * @see sendDisablePmHires
+    */
    int sendEnableHighResolution( const bool restart = false );
+
+   /*!
+    * @brief Enables the Continuous-Mode
+    * @see sendDisableContinue
+    * @see DAQ_SAMPLE_RATE_T
+    * @param sampleRate Sample rate: 1ms, 100us or 10us
+    * @param maxBlocks Limit of block receiving.
+    *        if the number of received blocks equal this parameter,
+    *        the Continuous-Mode becomes disabled. The value of zero is
+    *        the endless mode.
+    */
    int sendEnableContineous( const DAQ_SAMPLE_RATE_T sampleRate,
                              const unsigned int maxBlocks = 0 );
+
+   /*!
+    * @brief Disables the continuous mode.
+    * @see sendEnableContineous
+    */
    int sendDisableContinue( void );
+
+   /*!
+    * @brief Disables the Post-Mortem and High-Resolution mode.
+    * @see sendEnablePostMortem
+    * @see sendEnableHighResolution
+    */
    int sendDisablePmHires( const bool restart = false );
 
+   /*!
+    * @ingroup onDataBlock
+    * @brief Returns true when the received block are Post_Mortem data.
+    */
    bool descriptorWasPostMortem( void );
+
+   /*!
+    * @ingroup onDataBlock
+    * @brief Returns true when the received block are High-Resolution data.
+    */
    bool descriptorWasHighResolution( void );
+
+   /*!
+    * @ingroup onDataBlock
+    * @brief Returns true when the received block are continuous data.
+    */
    bool descriptorWasContinuous( void );
 
    int sendTriggerCondition( const uint32_t trgCondition );
    uint32_t receiveTriggerCondition( void );
+
+   /*!
+    * @ingroup onDataBlock
+    * @brief Returns the trigger condition of this block.
+    * @see sendTriggerCondition
+    * @see receiveTriggerCondition
+    */
    uint32_t descriptorGetTriggerCondition( void );
 
+   /*!
+    * @brief Set a trigger delay in LM32 tact cycles
+    * @see receiveTriggerDelay
+    */
    int sendTriggerDelay( const uint16_t delay );
+
+   /*!
+    * @brief Queries the by the function sendTriggerDelay adjusted
+    *        trigger delay in LM32 tact cycles.
+    * @see sendTriggerDelay
+    * @return Trigger delay in LM32 tact cycles
+    */
    uint16_t receiveTriggerDelay( void );
+
+   /*!
+    * @ingroup onDataBlock
+    * @brief Returns the trigger delay of this block.
+    * @see sendTriggerDelay
+    * @see receiveTriggerDelay
+    */
    uint16_t descriptorGetTriggerDelay( void );
 
+   /*!
+    * @brief Enables/disables the receive trigger.
+    * @see receiveTriggerMode
+    * @param mode true: trigger enable; false; trigger disable (default)
+    */
    int sendTriggerMode( bool mode );
+
+   /*!
+    * @brief Queries the by sendTriggerMode adjusted trigger mode.
+    * @see sendTriggerMode
+    * @retval true: enabled
+    * @retval false: disabled
+    */
    bool receiveTriggerMode( void );
 
    int sendTriggerSourceContinue( bool extInput );
@@ -173,10 +272,36 @@ public:
    int sendTriggerSourceHiRes( bool extInput );
    bool receiveTriggerSourceHiRes( void );
 
+   /*!
+    * @ingroup onDataBlock
+    * @brief Returns the 8 bit sequence number of this block.
+    * @see getExpectedSequence
+    */
    uint8_t descriptorGetSequence( void );
+
+   /*!
+    * @ingroup onDataBlock
+    * @brief Returns the 8 bit CRC check sum of this block.
+    */
    uint8_t descriptorGetCrc( void );
 
+   /*!
+    * @ingroup onDataBlock
+    * @brief Returns the white rabbit time stamp of the last received
+    *        data word of this block.
+    *
+    * By the help of the function descriptorGetTimeBase it becomes possible
+    * to calculate the time stamp of all received data words.
+    *
+    * @see descriptorGetTimeBase
+    */
    uint64_t descriptorGetTimeStamp( void );
+
+   /*!
+    * @ingroup onDataBlock
+    * @brief Returns the sample rate in nanoseconds of this block.
+    * @see descriptorGetTimeStamp
+    */
    unsigned int descriptorGetTimeBase( void );
 
    SequenceNumber* getSequencePtr( void ) const
@@ -185,22 +310,50 @@ public:
       return m_poSequence;
    }
 
+   /*!
+    * @ingroup onDataBlock
+    * @brief Returns true when a lost between consecutive blocks was detected.
+    * @see descriptorGetSequence
+    * @see getExpectedSequence
+    * @see getLostCount
+    */
    bool descriptorWasBlockLost( void ) const
    {
       return getSequencePtr()->wasLost();
    }
 
+   /*!
+    * @ingroup onDataBlock
+    * @brief Returns the expected 8 bit sequence number.
+    */
    uint8_t getExpectedSequence( void ) const
    {
       return getSequencePtr()->m_sequence;
    }
 
+   /*!
+    * @ingroup onDataBlock
+    * @brief Returns the number of detected lost data blocks.
+    */
    unsigned int getLostCount( void ) const
    {
       return getSequencePtr()->getLostCount();
    }
 
 protected:
+   /*!
+    * @ingroup onDataBlock
+    * @brief Call back function becomes invoked when a data bock has been
+    *        received.
+    *
+    * @param pData Pointer to the received raw payload data.\n
+    *              <b>CAUTION:</b> This pointer is only within this function
+    *              valid!
+    *              If this data will be stored or used outside this scope,
+    *              so a deep copy (e.g. memcpy()) becomes necessary.
+    * @param wordLen Number of received payload raw data words of type
+    *                DAQ_DATA_T (16 bit values).
+    */
    virtual bool onDataBlock( DAQ_DATA_T* pData, std::size_t wordLen ) = 0;
 
 private:

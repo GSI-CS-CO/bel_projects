@@ -27,7 +27,7 @@ DEFINES += CONFIG_DAQ_TEST
 DEFINES += CONFIG_DAQ_DEBUG
 DEFINES += VERSION=0.1
 
- DEFINES += CONFIG_DDR3_NO_BURST_FUNCTIONS
+DEFINES += CONFIG_DDR3_NO_BURST_FUNCTIONS
 
 CALL_ARGS         = "tcp/$(SCU_URL)"
 REMOTE_CALL_ARGS  ?= "dev/wbm0"
@@ -37,8 +37,14 @@ LIBS += etherbone
 
 DEBUG = 1
 
+#------------------------------------------------------------------------------
+# Additional source code for Doxygen which will not integrated automatically:
 DOX_INPUT += $(DAQ_DIR)/daq_descriptor.h
 DOX_INPUT += $(DAQ_DIR)/daq_command_interface.h
+DOX_INPUT += $(DAQ_DIR)/generated/shared_mmap.h
+DOX_OPTIMIZE_OUTPUT_FOR_C = "NO"
+DOX_RECURSIVE = "YES"
+#------------------------------------------------------------------------------
 
 include $(REPOSITORY_DIR)/makefiles/makefile.scun
 #=================================== EOF ======================================
