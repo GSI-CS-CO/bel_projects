@@ -398,7 +398,7 @@ int DaqAdministration::distributeData( void )
     * the LM32 has to be locked, otherwise it could crash in the
     * wishbone-bus. >:-O
     */
-   sendLockRamAccess();
+ //!!  sendLockRamAccess();
 
    /*
     * After the access locking for the LM32 the RAM size has to be read again.
