@@ -547,8 +547,8 @@ void DaqInterface::writeRamIndexesAndUnlock( void )
 
    EB_LM32_OJECT_MEMBER_WRITE( m_poEbHandle, &m_oSharedData,
                                ramIndexes.ringIndexes.start );
-   EB_LM32_OJECT_MEMBER_WRITE( m_poEbHandle, &m_oSharedData,
-                               ramIndexes.ringIndexes.end );
+ //!!  EB_LM32_OJECT_MEMBER_WRITE( m_poEbHandle, &m_oSharedData,
+ //!!                              ramIndexes.ringIndexes.end );
 
    m_oSharedData.ramIndexes.ramAccessLock = false;
    EB_LM32_OJECT_MEMBER_WRITE( m_poEbHandle, &m_oSharedData,

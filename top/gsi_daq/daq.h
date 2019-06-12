@@ -2,7 +2,7 @@
  * @file daq.h
  * @brief Control module for Data Acquisition Unit (DAQ)
  * @see
- * <a href="https://www-acc.gsi.de/wiki/Hardware/Intern/DataAquisitionMacrof%C3%BCrSCUSlaveBaugruppen">
+ * <a href="https://www-acc.gsi.de/wiki/Hardware/Intern/DataAquisitionMacrofürSCUSlaveBaugruppen">
  *    Data Aquisition Macro fuer SCU Slave Baugruppen</a>
  * @see
  * <a href="https://www-acc.gsi.de/wiki/Hardware/Intern/StdRegScuBusSlave">

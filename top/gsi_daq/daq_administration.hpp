@@ -45,6 +45,10 @@ class DaqDevice;
  * @todo Throwing a exception when one of these functions will invoked outside
  *       of its scope?
  */
+/*!
+ * @defgroup REGISTRATION
+ * @brief Functions for registration of DAQ channels and DAQ devices
+ */
 ///////////////////////////////////////////////////////////////////////////////
 /*! ---------------------------------------------------------------------------
  * @brief Object of this type represents a single DAQ channel.
@@ -422,7 +426,7 @@ protected:
     * @ingroup onDataBlock
     * @brief Call back function becomes invoked when a data bock has been
     *        received.
-    *
+    * @see DaqAdministration::distributeData
     * @param pData Pointer to the received raw payload data.\n
     *              <b>CAUTION:</b> This pointer is only within this function
     *              valid!
@@ -435,7 +439,6 @@ protected:
 
 private:
    void verifySequence( void );
-
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -554,6 +557,7 @@ public:
    unsigned int readMacroVersion( void );
 
    /*!
+    * @ingroup REGISTRATION
     * @brief Registering of a channel object.
     * @param pChannel Pointer of the channel object to register.
     */
@@ -771,23 +775,88 @@ public:
    }
 
    /*!
-    * @brief
+    * @ingroup REGISTRATION
+    * @brief Registering of a DAQ device object object.
+    * @param pDevice Pointer to a object of type DaqDevice
     */
    bool registerDevice( DaqDevice* pDevice );
 
    bool unregisterDevice( DaqDevice* pDevice );
+
+   /*!
+    * @brief Reads the slot-state of DAQs in the SCU and
+    *        actualized the slot number of all registered DAQ devices.
+    */
    int redistributeSlotNumbers( void );
 
+   /*!
+    * @brief Returns the pointer of a registered DAQ-device with the given
+    *        number.
+    * @param number Device number in the range of 1 to 12.
+    * @retval nullptr Device with the given number not registered.
+    * @return Pointer to the DAQ device object.
+    */
    DaqDevice* getDeviceByNumber( const unsigned int number );
+
+   /*!
+    * @brief Returns the pointer of a registered DAQ-device which is
+    *        in the SCU-bus-slot with the given slot number.
+    * @param slot Slot number in the range of 1 to 12.
+    * @retval nullptr No DAQ device in the given slot number respectively
+    *                 Device is not registered.
+    * @return Pointer to the DAQ device object which is in the given slot
+    *         number.
+    */
    DaqDevice* getDeviceBySlot( const unsigned int slot );
 
+   /*!
+    * @brief Returns the pointer of a registered DAQ-channel object by
+    *        the absolute channel number over all registered DAQ devices.
+    *
+    * The counting of channels begins at the first channel of the first
+    * DAQ device seen from the left side of the SCU-bus slots.
+    *
+    * @param absChannelNumber Absolute channel number
+    *        @note The lowest number begins at 1.
+    * @retval nullptr No channel withe the given absolute number present,
+    *                 respectively given number is out of the maximum of
+    *                 existing channels.
+    * @return Pointer to the DAQ channel object.
+    */
    DaqChannel* getChannelByAbsoluteNumber( unsigned int absChannelNumber );
+
+   /*!
+    * @brief Returns the pointer of a registered DAQ-channel object by
+    *        the device number and channel number.
+    *
+    * The counting of the DAQ device number begins at the first device
+    * in the SCU-bus seen from the left side. The range is 1 to 12.\n
+    * The range of the channel number is 1 to DaqDevice::getMaxChannels().
+    * @param deviceNumber DAQ device number
+    * @param channelNumber Channel number of the concerning DAQ device.
+    * @retval nullptr Channel not present.
+    * @return Pointer to the DAQ channel object.
+    */
    DaqChannel* getChannelByDeviceNumber( const unsigned int deviceNumber,
                                          const unsigned int channelNumber );
+
+   /*!
+    * @brief Returns the pointer of a registered DAQ-channel object by
+    *        the slot number and channel number.
+    *
+    * The counting of slot numbers begins at the first SCU-bus slot
+    * seen from the left side.\n
+    * The range of the channel number is 1 to DaqDevice::getMaxChannels().
+    * @param slotNumber Slot number in the range of 1 to 12.
+    * @param channelNumber Channel number of the concerning DAQ device.
+    * @retval nullptr Channel not present.
+    * @return Pointer to the DAQ channel object.
+    */
    DaqChannel* getChannelBySlotNumber( const unsigned int slotNumber,
                                        const unsigned int channelNumber );
 
    /*!
+    * @ingroup onDataBlock
     * @brief Main-loop function.
     *
     * This polls the size of the DDR3 ring-buffer.
@@ -795,65 +864,113 @@ public:
     * of one block, so this data will copied in the concerning channel object.
     * That means the corresponding call-back function
     * DaqChannel::onDataBlock() becomes invoked by this.
+    * @see DaqChannel::onDataBlock
     */
    int distributeData( void );
 
+   /*!
+    * @ingroup onDataBlock
+    * @brief Returns the trigger condition of currently received block.
+    * @note This function can only be used within the validity range
+    *       of the callback function DaqChannel::onDataBlock!
+    */
    uint32_t descriptorGetTriggerCondition( void )
    {
       SCU_ASSERT( m_poCurrentDescriptor != nullptr );
       return ::daqDescriptorGetTriggerCondition( m_poCurrentDescriptor );
    }
 
+   /*!
+    * @ingroup onDataBlock
+    * @brief Returns the trigger delay of LM32 cycles of currently received
+    *        block.
+    * @note This function can only be used within the validity range
+    *       of the callback function DaqChannel::onDataBlock!
+    */
    DAQ_REGISTER_T descriptorGetTriggerDelay( void )
    {
       SCU_ASSERT( m_poCurrentDescriptor != nullptr );
       return ::daqDescriptorGetTriggerDelay( m_poCurrentDescriptor );
    }
 
+   /*!
+    * @ingroup onDataBlock
+    * @brief Returns the sequence number of the currently received block.
+    * @note This function can only be used within the validity range
+    *       of the callback function DaqChannel::onDataBlock!
+    */
    uint8_t descriptorGetSequence( void )
    {
       SCU_ASSERT( m_poCurrentDescriptor != nullptr );
       return ::daqDescriptorGetSequence( m_poCurrentDescriptor );
    }
 
+   /*!
+    * @ingroup onDataBlock
+    * @brief Returns the CRC number of the currently received block.
+    * @note This function can only be used within the validity range
+    *       of the callback function DaqChannel::onDataBlock!
+    */
    uint8_t descriptorGetCrc( void )
    {
       SCU_ASSERT( m_poCurrentDescriptor != nullptr );
       return ::daqDescriptorGetCRC( m_poCurrentDescriptor );
    }
 
+   /*!
+    * @ingroup onDataBlock
+    * @note This function can only be used within the validity range
+    *       of the callback function DaqChannel::onDataBlock!
+    */
    bool descriptorWasPostMortem( void )
    {
       SCU_ASSERT( m_poCurrentDescriptor != nullptr );
       return ::daqDescriptorWasPM( m_poCurrentDescriptor );
    }
 
+   /*!
+    * @ingroup onDataBlock
+    * @note This function can only be used within the validity range
+    *       of the callback function DaqChannel::onDataBlock!
+    */
    bool descriptorWasHighResolution( void )
    {
       SCU_ASSERT( m_poCurrentDescriptor != nullptr );
       return ::daqDescriptorWasHiRes( m_poCurrentDescriptor );
    }
 
+   /*!
+    * @ingroup onDataBlock
+    * @note This function can only be used within the validity range
+    *       of the callback function DaqChannel::onDataBlock!
+    */
    bool descriptorWasContinuous( void )
    {
       SCU_ASSERT( m_poCurrentDescriptor != nullptr );
       return ::daqDescriptorWasDaq( m_poCurrentDescriptor );
    }
 
+   /*!
+    * @ingroup onDataBlock
+    * @note This function can only be used within the validity range
+    *       of the callback function DaqChannel::onDataBlock!
+    */
    uint64_t descriptorGetTimeStamp( void )
    {
       SCU_ASSERT( m_poCurrentDescriptor != nullptr );
       return ::daqDescriptorGetTimeStamp( m_poCurrentDescriptor );
    }
 
+   /*!
+    * @ingroup onDataBlock
+    * @note This function can only be used within the validity range
+    *       of the callback function DaqChannel::onDataBlock!
+    */
    unsigned int descriptorGetTimeBase( void )
    {
       SCU_ASSERT( m_poCurrentDescriptor != nullptr );
       return ::daqDescriptorGetTimeBase( m_poCurrentDescriptor );
    }
-
-   void start( unsigned int toSleep = 100 );
-   void stop( void );
 
 private:
    DaqChannel* getChannelByDescriptor( DAQ_DESCRIPTOR_T& roDescriptor )
