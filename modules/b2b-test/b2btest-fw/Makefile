@@ -12,12 +12,12 @@ RAM_SIZE        := $(shell cat 	$(PLATFMAKEFILE) | grep -m1 RAM_SIZE  | cut -d'=
 
 SHARED_SIZE    	?= 8K
 USRCPUCLK      	?= 125000
-VERSION  	= 00.00.08
+VERSION  	= 00.00.09
 
 .DEFAULT_GOAL	:= fwbin
 
 PATHFW 	        = .
-DEBUGLVL    	= 2
+DEBUGLVL    	= 1
 EXTRA_FLAGS	?=
 CFLAGS 	    	= -I../include -I$(PATHFW) -DDEBUGLEVEL=$(DEBUGLVL) $(EXTRA_FLAGS)
 
