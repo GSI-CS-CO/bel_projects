@@ -120,6 +120,8 @@ else
   CFLAGS += -O$(CODE_OPTIMIZATION)
 endif
 
+CFLAGS += -Wfatal-errors
+
 CC_ARG = $(CFLAGS) $(OPT_INCLUDE) $(OPT_DEFINES)
 CXX_ARG ?= $(CC_ARG)
 AS_ARG ?= $(CC_ARG)
