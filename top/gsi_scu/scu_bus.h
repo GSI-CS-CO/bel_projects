@@ -26,6 +26,9 @@
  */
 #ifndef __SCU_H
 #define __SCU_H
+#ifndef __lm32__
+  #error Module is for target Lattice Micro 32 (LM32) only!
+#endif
 
 #include <stdbool.h>
 #include "inttypes.h"
@@ -228,7 +231,7 @@ typedef enum
 
 extern struct w1_bus wrpc_w1_bus;
 void ReadTemperatureDevices(int bus, uint64_t *id, uint16_t *temp);
-void probe_scu_bus(volatile unsigned short*, unsigned short, unsigned short, int*) DEPRECATED;
+void probe_scu_bus(volatile unsigned short*, unsigned short, unsigned short, int*) GSI_DEPRECATED;
 void ReadTempDevices(int bus, uint64_t *id, uint32_t *temp);
 
 #ifndef CONFIG_OLD_SCU_SW

@@ -145,10 +145,7 @@
  * However, any access to a deprecated variable or function creates a warning
  * but still compiles.
  */
-#ifdef DEPRECATED
- #undef DEPRECATED
-#endif
-#define DEPRECATED __attribute__((deprecated))
+#define GSI_DEPRECATED __attribute__((deprecated))
 
 /*!
  * @brief Declares a function as always inline.
