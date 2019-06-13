@@ -97,6 +97,8 @@ vector<OPTION> CommandLine::c_optList =
               << HOT_KEY_HIGH_RES << ": Triggering a high resolution event\n"
               << HOT_KEY_RESET    << ": Reset\n"
               << HOT_KEY_RECEIVE << ": Toggling receiving on / off\n"
+              << HOT_KEY_SHOW_RAM_LEVEL << ": Show currently RAM level\n"
+              << "Esc: Program termination\n"
                  "\nCommandline options:\n";
          poParser->list( cout );
          cout << endl;

@@ -40,19 +40,22 @@ using namespace daq;
 constexpr int INVALID_LIMIT = -1;
 
 #ifndef HOT_KEY_SHOW_STATE
-  #define HOT_KEY_SHOW_STATE   's'
+  #define HOT_KEY_SHOW_STATE      's'
 #endif
 #ifndef HOT_KEY_POST_MORTEM
-  #define HOT_KEY_POST_MORTEM  'p'
+  #define HOT_KEY_POST_MORTEM     'p'
 #endif
 #ifndef HOT_KEY_HIGH_RES
-  #define HOT_KEY_HIGH_RES     'h'
+  #define HOT_KEY_HIGH_RES        'h'
 #endif
 #ifndef HOT_KEY_RESET
-  #define HOT_KEY_RESET        'r'
+  #define HOT_KEY_RESET           'r'
 #endif
 #ifndef HOT_KEY_RECEIVE
-  #define HOT_KEY_RECEIVE      'i'
+  #define HOT_KEY_RECEIVE         'i'
+#endif
+#ifndef HOT_KEY_SHOW_RAM_LEVEL
+  #define HOT_KEY_SHOW_RAM_LEVEL  'l'
 #endif
 
 #ifndef GNUPLOT_DEFAULT_TERMINAL
@@ -116,6 +119,7 @@ class Channel: public DaqChannel
 
       Channel*          m_pParent;
       std::size_t       m_size;
+      std::size_t       m_ramLevel;
       double*           m_pY;
       const std::string m_text;
       bool              m_notFirst;

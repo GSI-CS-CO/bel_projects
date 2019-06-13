@@ -159,7 +159,7 @@ DaqChannel* DaqDevice::getChannel( const unsigned int number )
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-std::exception_ptr DaqAdministration::c_exceptionPtr = nullptr;
+//std::exception_ptr DaqAdministration::c_exceptionPtr = nullptr;
 
 /*! ---------------------------------------------------------------------------
  */

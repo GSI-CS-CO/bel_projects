@@ -66,7 +66,7 @@
   #define DAQ_SERVER_CONST
 #endif
 
-/*!
+/*! ---------------------------------------------------------------------------
  * @brief Magic number of DAQ application. Useful in recognizing
  *        the LM32 DAQ application in the shared memory.
  */
@@ -78,7 +78,7 @@
  * @{
  */
 
-/*!
+/*! ---------------------------------------------------------------------------
  * @brief Return code type of the DAQ LM32 application.
  */
 typedef int32_t DAQ_RETURN_CODE_T;
@@ -101,7 +101,7 @@ typedef int32_t DAQ_RETURN_CODE_T;
   #define DAQ_OP_OFFSET 0
 #endif
 
-/*!
+/*! ---------------------------------------------------------------------------
  * @brief Operation code to controlling the DAQs from host.
  */
 typedef enum
@@ -134,7 +134,7 @@ typedef enum
 STATIC_ASSERT( sizeof( DAQ_OPERATION_CODE_T ) == sizeof(uint32_t) );
 #endif
 
-/*!
+/*! ---------------------------------------------------------------------------
  * @brief Sub operation code of the sample rate for the DAQ continuous mode.
  * @see DAQ_OP_CONTINUE_ON
  */
@@ -145,7 +145,7 @@ typedef enum
    DAQ_SAMPLE_10US  = 3  /*!<@brief Sample rate 10 microseconds.  */
 } DAQ_SAMPLE_RATE_T;
 
-/*!
+/*! ---------------------------------------------------------------------------
  * @brief Data type for selecting a DAQ residing in a SCU slot
  *        and one of its channel.
  */
@@ -158,7 +158,7 @@ typedef struct PACKED_SIZE
 STATIC_ASSERT( sizeof( DAQ_CHANNEL_LOCATION_T ) == 2 * sizeof(uint16_t));
 #endif
 
-/*!
+/*! ---------------------------------------------------------------------------
  * @brief Data type for locating a DAQ device and channel plus optional
  *        parameter list of maximum four parameters.
  */
@@ -175,7 +175,7 @@ STATIC_ASSERT( sizeof(DAQ_OPERATION_IO_T) == (sizeof(DAQ_CHANNEL_LOCATION_T)
                                             + 4 * sizeof( DAQ_REGISTER_T ) ));
 #endif
 
-/*!
+/*! ---------------------------------------------------------------------------
  * @brief Complete operation type which is necessary to perform a
  *        DAQ operation of the LM32 application from the Linux host.
  */
@@ -192,13 +192,12 @@ STATIC_ASSERT( sizeof(DAQ_OPERATION_T) == (sizeof(DAQ_OPERATION_CODE_T)
                                          + sizeof(DAQ_OPERATION_IO_T) ));
 #endif
 
-/*!
- * @brief Final data type in shared memory for DAQ.
+/*! ---------------------------------------------------------------------------
+ * @brief Final data type in <b>shared memory</b> for DAQ.
  */
 typedef struct PACKED_SIZE
-{
-   /*!
-    * @brief Magic number
+{  /*!
+    * @brief Magic number will used to recognize the shared memory area of DAQ.
     */
    DAQ_SERVER_CONST uint32_t magicNumber;
 
@@ -221,7 +220,7 @@ STATIC_ASSERT( sizeof( DAQ_SHARED_IO_T ) == (sizeof(uint32_t)
 STATIC_ASSERT( sizeof( DAQ_SHARED_IO_T ) <= SHARED_SIZE );
 #endif
 
-/*!
+/*! ---------------------------------------------------------------------------
  * @brief Initializer of DAQ shared memory.
  * @see DAQ_SHARED_IO_T
  */
@@ -236,6 +235,6 @@ STATIC_ASSERT( sizeof( DAQ_SHARED_IO_T ) <= SHARED_SIZE );
    }                                                  \
 }
 
-/*!@} */
+/*!@} *//*defgroup DAQ_INTERFACE */
 #endif /* ifndef _DAQ_COMMAND_INTERFACE_H */
 /*================================== EOF ====================================*/

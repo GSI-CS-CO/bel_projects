@@ -249,18 +249,24 @@ public:
    /*!
     * @ingroup onDataBlock
     * @brief Returns true when the received block are Post_Mortem data.
+    * @note This function can only be used within the validity range
+    *       of the callback function DaqChannel::onDataBlock!
     */
    bool descriptorWasPostMortem( void );
 
    /*!
     * @ingroup onDataBlock
     * @brief Returns true when the received block are High-Resolution data.
+    * @note This function can only be used within the validity range
+    *       of the callback function DaqChannel::onDataBlock!
     */
    bool descriptorWasHighResolution( void );
 
    /*!
     * @ingroup onDataBlock
     * @brief Returns true when the received block are continuous data.
+    * @note This function can only be used within the validity range
+    *       of the callback function DaqChannel::onDataBlock!
     */
    bool descriptorWasContinuous( void );
 
@@ -270,6 +276,8 @@ public:
    /*!
     * @ingroup onDataBlock
     * @brief Returns the trigger condition of this block.
+    * @note This function can only be used within the validity range
+    *       of the callback function DaqChannel::onDataBlock!
     * @see sendTriggerCondition
     * @see receiveTriggerCondition
     */
@@ -292,6 +300,8 @@ public:
    /*!
     * @ingroup onDataBlock
     * @brief Returns the trigger delay of this block.
+    * @note This function can only be used within the validity range
+    *       of the callback function DaqChannel::onDataBlock!
     * @see sendTriggerDelay
     * @see receiveTriggerDelay
     */
@@ -351,6 +361,8 @@ public:
    /*!
     * @ingroup onDataBlock
     * @brief Returns the 8 bit sequence number of this block.
+    * @note This function can only be used within the validity range
+    *       of the callback function DaqChannel::onDataBlock!
     * @see getExpectedSequence
     */
    uint8_t descriptorGetSequence( void );
@@ -358,6 +370,8 @@ public:
    /*!
     * @ingroup onDataBlock
     * @brief Returns the 8 bit CRC check sum of this block.
+    * @note This function can only be used within the validity range
+    *       of the callback function DaqChannel::onDataBlock!
     */
    uint8_t descriptorGetCrc( void );
 
@@ -368,7 +382,8 @@ public:
     *
     * By the help of the function descriptorGetTimeBase it becomes possible
     * to calculate the time stamp of all received data words.
-    *
+    * @note This function can only be used within the validity range
+    *       of the callback function DaqChannel::onDataBlock!
     * @see descriptorGetTimeBase
     */
    uint64_t descriptorGetTimeStamp( void );
@@ -377,6 +392,8 @@ public:
     * @ingroup onDataBlock
     * @brief Returns the sample rate in nanoseconds of this block.
     * @see descriptorGetTimeStamp
+    * @note This function can only be used within the validity range
+    *       of the callback function DaqChannel::onDataBlock!
     */
    unsigned int descriptorGetTimeBase( void );
 
@@ -384,6 +401,8 @@ public:
     * @ingroup onDataBlock
     * @brief Returns the pointer of the currently used sequence
     *        number object.
+    * @note This function can only be used within the validity range
+    *       of the callback function DaqChannel::onDataBlock!
     */
    SequenceNumber* getSequencePtr( void ) const
    {
@@ -394,6 +413,8 @@ public:
    /*!
     * @ingroup onDataBlock
     * @brief Returns true when a lost between consecutive blocks was detected.
+    * @note This function can only be used within the validity range
+    *       of the callback function DaqChannel::onDataBlock!
     * @see descriptorGetSequence
     * @see getExpectedSequence
     * @see getLostCount
@@ -717,8 +738,6 @@ class DaqAdministration: public DaqInterface
    unsigned int      m_maxChannels;
    DAQ_DESCRIPTOR_T* m_poCurrentDescriptor;
 
-   static std::exception_ptr c_exceptionPtr;
-
 protected:
    #define DEVICE_LIST_BASE std::list
    typedef DEVICE_LIST_BASE<DaqDevice*> DEVICE_LIST_T;
@@ -919,6 +938,7 @@ public:
 
    /*!
     * @ingroup onDataBlock
+    * @brief Returns true when the received block are Post_Mortem data.
     * @note This function can only be used within the validity range
     *       of the callback function DaqChannel::onDataBlock!
     */
@@ -930,6 +950,7 @@ public:
 
    /*!
     * @ingroup onDataBlock
+    * @brief Returns true when the received block are High-Resolution data.
     * @note This function can only be used within the validity range
     *       of the callback function DaqChannel::onDataBlock!
     */
@@ -941,6 +962,7 @@ public:
 
    /*!
     * @ingroup onDataBlock
+    * @brief Returns true when the received block are continuous data.
     * @note This function can only be used within the validity range
     *       of the callback function DaqChannel::onDataBlock!
     */
@@ -952,6 +974,8 @@ public:
 
    /*!
     * @ingroup onDataBlock
+    * @brief Returns the white rabbit time stamp of the last received
+    *        data word of the currently block.
     * @note This function can only be used within the validity range
     *       of the callback function DaqChannel::onDataBlock!
     */
@@ -963,6 +987,7 @@ public:
 
    /*!
     * @ingroup onDataBlock
+    * @brief Returns the sample rate in nanoseconds of the currently block.
     * @note This function can only be used within the validity range
     *       of the callback function DaqChannel::onDataBlock!
     */

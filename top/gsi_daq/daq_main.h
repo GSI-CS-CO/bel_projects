@@ -24,6 +24,9 @@
  */
 #ifndef _DAQ_MAIN_H
 #define _DAQ_MAIN_H
+#ifndef __lm32__
+  #error Module is for target Lattice Micro 32 (LM32) only!
+#endif
 
 #include <daq.h>
 #include <daq_ramBuffer.h>

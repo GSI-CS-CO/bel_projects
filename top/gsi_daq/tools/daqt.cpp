@@ -50,6 +50,7 @@ const char* getSampleRateText( ::DAQ_SAMPLE_RATE_T rate )
 Channel::Mode::Mode( Channel* pParent, std::size_t size, std::string text )
    :m_pParent( pParent )
    ,m_size( size )
+   ,m_ramLevel( 0 )
    ,m_text( text )
    ,m_notFirst( false )
    ,m_blockCount( 0 )
@@ -81,6 +82,7 @@ void Channel::Mode::write( DAQ_DATA_T* pData, std::size_t wordLen )
    m_sequence   = m_pParent->descriptorGetSequence();
    m_sampleTime = m_pParent->descriptorGetTimeBase();
    m_timeStamp  = m_pParent->descriptorGetTimeStamp() - m_sampleTime * wordLen;
+   m_ramLevel   = m_pParent->getParent()->getParent()->getCurrentRamSize( false );
 
    for( std::size_t i = 0; i < len; i++ )
       m_pY[i] = rawToVoltage( pData[i] );
@@ -118,9 +120,15 @@ void Channel::Mode::plot( void )
                       << " s, Lost: " << m_pParent->getLostCount()
                       << "\" font \",14\"" << endl;
 
-   m_pParent->m_oPlot << "set xlabel \"Time: " << m_timeStamp <<"\"" << endl;
+   m_pParent->m_oPlot << "set xlabel \"Time: " << m_timeStamp <<
+                         ", RAM-level: " << m_ramLevel <<
+                         " items -> " << std::fixed << setprecision( 2 )
+                         << static_cast<double>(m_ramLevel * 100.0
+                                   / RAM_DAQ_MAX_CAPACITY)
+                         << "%\"" << endl;
 
-   m_pParent->m_oPlot << "plot '-' title \"\" with lines" << endl;
+   m_pParent->m_oPlot << "plot '-' title \"\" with lines"  << setprecision( 8 )
+                      << endl;
    m_notFirst = true;
 
    for( std::size_t i = 0; i < m_size; i++ )
@@ -664,7 +672,19 @@ inline int daqtMain( int argc, char** ppArgv )
          {
             doRead = !doRead;
             if( cmdLine.isVerbose() )
-               cout << "Receiving: " << (doRead? "enabled" : "disabled") << endl;
+               cout << "Receiving: " << (doRead? "enabled" : "disabled")
+                    << endl;
+            break;
+         }
+         case HOT_KEY_SHOW_RAM_LEVEL:
+         {
+            std::size_t level = pDaqContainer->getCurrentRamSize( !doRead );
+            cout << "RAM-level: " << level << " items -> "
+                 << std::fixed << setprecision( 2 )
+                 << static_cast<double>(level * 100.0 /
+                                        RAM_DAQ_MAX_CAPACITY)
+                 << "%\"" << endl;
+            break;
          }
       }
 
