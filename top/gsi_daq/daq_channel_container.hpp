@@ -28,7 +28,8 @@
 #define _DAQ_CHANNEL_CONTAINER_HPP
 
 #include <daq_administration.hpp>
-
+namespace Scu
+{
 namespace daq
 {
 
@@ -120,5 +121,6 @@ public:
 }; // class DaqChannelContainer
 
 } // namespace daq
+} // namespace Scu
 #endif // ifndef _DAQ_CHANNEL_CONTAINER_HPP
 //================================== EOF ======================================

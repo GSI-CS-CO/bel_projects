@@ -65,6 +65,10 @@
 
 #ifdef __cplusplus
 extern "C" {
+namespace Scu
+{
+namespace daq
+{
 #endif
 
 /*! ---------------------------------------------------------------------------
@@ -473,6 +477,8 @@ int ramReadDaqDataBlock( register RAM_SCU_T* pThis, RAM_DAQ_PAYLOAD_T* pData,
 
 /*! @} */ //End of group DAQ_RAM_BUFFER
 #ifdef __cplusplus
+}
+}
 }
 #endif
 #endif /* ifndef _DAQ_RAMBUFFER_H */

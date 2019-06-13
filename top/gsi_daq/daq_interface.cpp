@@ -27,7 +27,7 @@
 #include <helper_macros.h>
 #include <iostream>
 
-
+using namespace Scu;
 using namespace daq;
 
 #define FUNCTION_NAME_TO_STD_STRING static_cast<const std::string>(__func__)

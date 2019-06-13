@@ -28,6 +28,10 @@
 
 #include <daq_command_interface.h>
 
+namespace Scu
+{
+namespace daq
+{
 namespace daqt
 {
 ///////////////////////////////////////////////////////////////////////////////
@@ -77,9 +81,9 @@ struct Attributes
       BoolValue( void ) { m_value = false; }
    };
 
-   struct SampleValue: public Value<::DAQ_SAMPLE_RATE_T>
+   struct SampleValue: public Value<DAQ_SAMPLE_RATE_T>
    {
-      SampleValue( void ) { m_value = ::DAQ_SAMPLE_1MS; }
+      SampleValue( void ) { m_value = DAQ_SAMPLE_1MS; }
    };
 
    void set( const Attributes& rMyContainer );
@@ -98,5 +102,7 @@ struct Attributes
 };
 
 }  // namespace daqt
+}  // namespace daq
+}  // namespace Scu
 #endif // ifndef _DAQT_ATTRIBUTES_HPP
 //================================== EOF =====================================

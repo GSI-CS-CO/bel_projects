@@ -33,10 +33,14 @@
 
 using namespace CLOP;
 
+namespace Scu
+{
+namespace daq
+{
 namespace daqt
 {
 
-using namespace daq;
+
 
 
 
@@ -107,6 +111,7 @@ public:
 };
 
 } // namespace daqt
-
+}
+}
 #endif // _DAQT_COMMAND_LINE_HPP
 //================================== EOF ======================================

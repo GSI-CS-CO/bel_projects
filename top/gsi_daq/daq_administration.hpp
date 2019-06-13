@@ -30,7 +30,8 @@
 
 #include <list>
 #include <daq_interface.hpp>
-
+namespace Scu
+{
 namespace daq
 {
 class DaqAdministration;
@@ -284,16 +285,17 @@ public:
    uint32_t descriptorGetTriggerCondition( void );
 
    /*!
-    * @brief Set a trigger delay in LM32 tact cycles
+    * @brief Set a trigger delay in ADC-samples
     * @see receiveTriggerDelay
+    * @param delay Trigger dalay in ADC-samples maximum is 65535 samples.
     */
    int sendTriggerDelay( const DAQ_REGISTER_T delay );
 
    /*!
     * @brief Queries the by the function sendTriggerDelay adjusted
-    *        trigger delay in LM32 tact cycles.
+    *        trigger delay in ADC-samples.
     * @see sendTriggerDelay
-    * @return Trigger delay in LM32 tact cycles
+    * @return Trigger delay in ADC-samples
     */
    DAQ_REGISTER_T receiveTriggerDelay( void );
 
@@ -642,8 +644,9 @@ public:
    uint32_t receiveTriggerCondition( const unsigned int channel );
 
    /*!
-    * @brief Set a trigger delay in LM32 tact cycles
+    * @brief Set a trigger delay in ADC-samples
     * @param channel Channel number
+    * @param delay Trigger dalay in ADC-samples maximum is 65535 samples.
     * @see DaqDevice::receiveTriggerDelay
     */
    int sendTriggerDelay( const unsigned int channel,
@@ -651,10 +654,10 @@ public:
 
    /*!
     * @brief Queries the by the function sendTriggerDelay adjusted
-    *        trigger delay in LM32 tact cycles.
+    *        trigger delay in ADC-samples.
     * @see DaqDevice::sendTriggerDelay
     * @param channel Channel number
-    * @return Trigger delay in LM32 tact cycles
+    * @return Trigger delay in ADC-samples
     */
    DAQ_REGISTER_T receiveTriggerDelay( const unsigned int channel );
 
@@ -896,7 +899,7 @@ public:
    uint32_t descriptorGetTriggerCondition( void )
    {
       SCU_ASSERT( m_poCurrentDescriptor != nullptr );
-      return ::daqDescriptorGetTriggerCondition( m_poCurrentDescriptor );
+      return daqDescriptorGetTriggerCondition( m_poCurrentDescriptor );
    }
 
    /*!
@@ -909,7 +912,7 @@ public:
    DAQ_REGISTER_T descriptorGetTriggerDelay( void )
    {
       SCU_ASSERT( m_poCurrentDescriptor != nullptr );
-      return ::daqDescriptorGetTriggerDelay( m_poCurrentDescriptor );
+      return daqDescriptorGetTriggerDelay( m_poCurrentDescriptor );
    }
 
    /*!
@@ -921,7 +924,7 @@ public:
    uint8_t descriptorGetSequence( void )
    {
       SCU_ASSERT( m_poCurrentDescriptor != nullptr );
-      return ::daqDescriptorGetSequence( m_poCurrentDescriptor );
+      return daqDescriptorGetSequence( m_poCurrentDescriptor );
    }
 
    /*!
@@ -933,7 +936,7 @@ public:
    uint8_t descriptorGetCrc( void )
    {
       SCU_ASSERT( m_poCurrentDescriptor != nullptr );
-      return ::daqDescriptorGetCRC( m_poCurrentDescriptor );
+      return daqDescriptorGetCRC( m_poCurrentDescriptor );
    }
 
    /*!
@@ -945,7 +948,7 @@ public:
    bool descriptorWasPostMortem( void )
    {
       SCU_ASSERT( m_poCurrentDescriptor != nullptr );
-      return ::daqDescriptorWasPM( m_poCurrentDescriptor );
+      return daqDescriptorWasPM( m_poCurrentDescriptor );
    }
 
    /*!
@@ -957,7 +960,7 @@ public:
    bool descriptorWasHighResolution( void )
    {
       SCU_ASSERT( m_poCurrentDescriptor != nullptr );
-      return ::daqDescriptorWasHiRes( m_poCurrentDescriptor );
+      return daqDescriptorWasHiRes( m_poCurrentDescriptor );
    }
 
    /*!
@@ -969,7 +972,7 @@ public:
    bool descriptorWasContinuous( void )
    {
       SCU_ASSERT( m_poCurrentDescriptor != nullptr );
-      return ::daqDescriptorWasDaq( m_poCurrentDescriptor );
+      return daqDescriptorWasDaq( m_poCurrentDescriptor );
    }
 
    /*!
@@ -982,7 +985,7 @@ public:
    uint64_t descriptorGetTimeStamp( void )
    {
       SCU_ASSERT( m_poCurrentDescriptor != nullptr );
-      return ::daqDescriptorGetTimeStamp( m_poCurrentDescriptor );
+      return daqDescriptorGetTimeStamp( m_poCurrentDescriptor );
    }
 
    /*!
@@ -994,14 +997,14 @@ public:
    unsigned int descriptorGetTimeBase( void )
    {
       SCU_ASSERT( m_poCurrentDescriptor != nullptr );
-      return ::daqDescriptorGetTimeBase( m_poCurrentDescriptor );
+      return daqDescriptorGetTimeBase( m_poCurrentDescriptor );
    }
 
 private:
    DaqChannel* getChannelByDescriptor( DAQ_DESCRIPTOR_T& roDescriptor )
    {
-      return getChannelBySlotNumber( ::daqDescriptorGetSlot( &roDescriptor ),
-                                     ::daqDescriptorGetChannel( &roDescriptor )
+      return getChannelBySlotNumber( daqDescriptorGetSlot( &roDescriptor ),
+                                     daqDescriptorGetChannel( &roDescriptor )
                                      + 1 );
    }
 
@@ -1360,6 +1363,6 @@ inline unsigned int DaqChannel::descriptorGetTimeBase( void )
 }
 
 } //namespace daq
-
+} //namespace Scu
 #endif //  ifndef _DAQ_ADMINISTRATION_HPP
 //================================== EOF ======================================

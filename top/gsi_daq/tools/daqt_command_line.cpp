@@ -29,6 +29,8 @@
 #endif
 #include "daqt_command_line.hpp"
 
+using namespace Scu;
+using namespace daq;
 using namespace daqt;
 using namespace std;
 
@@ -186,22 +188,22 @@ vector<OPTION> CommandLine::c_optList =
          __GET_ATTRIBUTE_PTR()
          if( poParser->getOptArg().empty() )
          {
-            poAttr->m_continueMode.set( ::DAQ_SAMPLE_1MS );
+            poAttr->m_continueMode.set( DAQ_SAMPLE_1MS );
             return 0;
          }
          if( poParser->getOptArg() == CONTINUE_1MS )
          {
-            poAttr->m_continueMode.set( ::DAQ_SAMPLE_1MS );
+            poAttr->m_continueMode.set( DAQ_SAMPLE_1MS );
             return 0;
          }
          if( poParser->getOptArg() == CONTINUE_100US )
          {
-            poAttr->m_continueMode.set( ::DAQ_SAMPLE_100US );
+            poAttr->m_continueMode.set( DAQ_SAMPLE_100US );
             return 0;
          }
          if( poParser->getOptArg() == CONTINUE_10US )
          {
-            poAttr->m_continueMode.set( ::DAQ_SAMPLE_10US );
+            poAttr->m_continueMode.set( DAQ_SAMPLE_10US );
             return 0;
          }
          ERROR_MESSAGE( "Wrong sample parameter: \"" <<

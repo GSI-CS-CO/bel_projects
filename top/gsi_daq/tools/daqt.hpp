@@ -32,10 +32,13 @@
 #include <iostream>
 #include <gnuplotstream.hpp>
 
+
+namespace Scu
+{
+namespace daq
+{
 namespace daqt
 {
-
-using namespace daq;
 
 constexpr int INVALID_LIMIT = -1;
 
@@ -192,5 +195,7 @@ inline Device* DaqContainer::getDeviceBySlot( unsigned int slot )
 
 
 } // namespace daqt
+}
+}
 #endif // ifndef _DAQT_HPP
 //================================== EOF ======================================

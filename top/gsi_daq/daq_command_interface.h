@@ -37,6 +37,13 @@
 #include <daq_ramBuffer.h>
 #include <stdint.h>
 
+#ifdef __cplusplus
+namespace Scu
+{
+namespace daq
+{
+#endif
+
 /*!
  * @ingroup DAQ
  * @defgroup DAQ_INTERFACE
@@ -236,5 +243,9 @@ STATIC_ASSERT( sizeof( DAQ_SHARED_IO_T ) <= SHARED_SIZE );
 }
 
 /*!@} *//*defgroup DAQ_INTERFACE */
+#ifdef __cplusplus
+} /* nanespace Scu */
+} /* namespace Daq */
+#endif
 #endif /* ifndef _DAQ_COMMAND_INTERFACE_H */
 /*================================== EOF ====================================*/

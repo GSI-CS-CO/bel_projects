@@ -29,7 +29,10 @@
 #include "daqt_read_stdin.hpp"
 
 using namespace std;
+using namespace Scu;
+using namespace daq;
 using namespace daqt;
+
 
 /*-----------------------------------------------------------------------------
  */

@@ -53,9 +53,11 @@
 #ifndef DAQ_VSS_MAX
    #define DAQ_VSS_MAX 20.0
 #endif
-
+namespace Scu
+{
 namespace daq
 {
+
 /*! ---------------------------------------------------------------------------
  * @ingroup DAQ
  * @brief Converts raw data of the DAQ ADC in to voltage.
@@ -395,6 +397,7 @@ private:
 }; // end class DaqInterface
 
 } //namespace daq
+} //namespace Scu
 
 #endif //ifndef _DAQ_INTERFACE_HPP
 //================================== EOF ======================================
