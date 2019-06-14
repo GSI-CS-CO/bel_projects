@@ -130,6 +130,7 @@ class Channel: public DaqChannel
       unsigned int      m_sequence;
       unsigned int      m_sampleTime;
       uint64_t          m_timeStamp;
+      double            m_frequency;
 
    public:
       Mode( Channel* pParent, std::size_t size, std::string text );
@@ -162,6 +163,13 @@ public:
    void doPostMortem( void );
    void doHighRes( void );
    void reset( void );
+
+protected:
+   static DAQ_DATA_T buildAverage( const DAQ_DATA_T* pData,
+                                    const std::size_t wordLen );
+
+   bool calcFrequency( double& rFrequency, const DAQ_DATA_T* pData,
+                                                  const std::size_t wordLen );
 };
 
 //////////////////////////////////////////////////////////////////////////////

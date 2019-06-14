@@ -60,6 +60,7 @@ Channel::Mode::Mode( Channel* pParent, std::size_t size, std::string text )
    ,m_sequence( 0 )
    ,m_sampleTime( 0 )
    ,m_timeStamp( 0 )
+   ,m_frequency( 0.0 )
 {
    m_pY = new double[m_size];
    if( m_pParent->m_oAttributes.m_postMortem.m_value )
@@ -86,7 +87,7 @@ void Channel::Mode::write( DAQ_DATA_T* pData, std::size_t wordLen )
    m_sampleTime = m_pParent->descriptorGetTimeBase();
    m_timeStamp  = m_pParent->descriptorGetTimeStamp() - m_sampleTime * wordLen;
    m_ramLevel   = m_pParent->getParent()->getParent()->getCurrentRamSize( false );
-
+   m_pParent->calcFrequency( m_frequency, pData, wordLen );
    for( std::size_t i = 0; i < len; i++ )
       m_pY[i] = rawToVoltage( pData[i] );
 }
@@ -95,7 +96,7 @@ void Channel::Mode::write( DAQ_DATA_T* pData, std::size_t wordLen )
  */
 inline double nsecToSec( uint64_t nsec )
 {
-   return nsec / 1000000000.0;
+   return nsec / NanosecsPerSec;
 }
 
 inline uint64_t trunc100( uint64_t nsec )
@@ -128,7 +129,7 @@ void Channel::Mode::plot( void )
                          " items -> " << std::fixed << setprecision( 2 )
                          << static_cast<double>(m_ramLevel * 100.0
                                    / RAM_DAQ_MAX_CAPACITY)
-                         << "%\"" << endl;
+                         << "%; Frequency: " << m_frequency << "Hz\"" << endl;
 
    m_pParent->m_oPlot << "plot '-' title \"\" with lines"  << setprecision( 8 )
                       << endl;
@@ -254,6 +255,83 @@ void Channel::start( void )
                    "post mortem" );
       sendEnablePostMortem( m_oAttributes.m_restart.m_value );
    }
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+DAQ_DATA_T Channel::buildAverage( const DAQ_DATA_T* pData,
+                                                   const std::size_t wordLen )
+{
+   SCU_ASSERT( wordLen > 0 );
+
+   unsigned int summe = 0;
+   for( std::size_t i = 0; i < wordLen; i++ )
+      summe += pData[i];
+
+   return summe / wordLen;
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+bool Channel::calcFrequency( double& rFrequency, const DAQ_DATA_T* pData,
+                                                    const std::size_t wordLen )
+{
+   DAQ_DATA_T average = buildAverage( pData, wordLen );
+
+   enum EDGE_STATE
+   {
+      NON,
+      RISING,
+      FALLING
+   };
+
+   rFrequency = 0.0;
+   EDGE_STATE edge = NON;
+   unsigned int sampleCount = 0;
+   unsigned int compleatedPeriods = 0;
+   unsigned int samplesPerPeriod = 0;
+   for( std::size_t i = 1; i < wordLen; i++ )
+   {
+      if( pData[i-1] < average && pData[i] >= average )
+      {
+         if( edge == NON )
+         {
+            sampleCount = 0;
+            edge = RISING;
+         }
+         else if( edge == RISING )
+         {
+            samplesPerPeriod += sampleCount;
+            sampleCount = 0;
+            compleatedPeriods++;
+         }
+      }
+      else if( pData[i-1] >= average && pData[i] < average )
+      {
+         if( edge == NON )
+         {
+            sampleCount = 0;
+            edge = FALLING;
+         }
+         else if( edge == FALLING )
+         {
+            samplesPerPeriod += sampleCount;
+            sampleCount = 0;
+            compleatedPeriods++;
+         }
+      }
+      sampleCount++;
+   }
+
+   if( compleatedPeriods == 0 )
+      return false;
+
+   double divisor = samplesPerPeriod * descriptorGetTimeBase() / compleatedPeriods;
+   if( divisor == 0.0 )
+      return false;
+
+   rFrequency = NanosecsPerSec / divisor;
+   return false;
 }
 
 /*! ---------------------------------------------------------------------------
