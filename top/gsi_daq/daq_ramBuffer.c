@@ -486,8 +486,9 @@ void ramWriteDaqData( register RAM_SCU_T* pThis, DAQ_CANNEL_T* pDaqChannel,
             { /*
                * Setting of the sequence number in the device descriptor.
                * Sequence number has been already incremented before in
-               * function ramPushDaqDataBlock(), therefore the 1 must be
-               * deducted here again.
+               * functions handleHiresMode(), handleContinuousMode(),
+               * and handlePostMortemMode() in daq_main.c therefore the 1
+               * must be deducted here again.
                */
                ((_DAQ_BF_CRC_REG*)&data)->sequence = *pSequence - 1;
             }
@@ -642,9 +643,6 @@ int ramPushDaqDataBlock( register RAM_SCU_T* pThis, DAQ_CANNEL_T* pDaqChannel,
     */
    if( isShort )
    {
-   #ifdef CONFIG_DAQ_SW_SEQUENCE
-      pDaqChannel->sequenceContinuous++;
-   #endif
       if( daqChannelGetDaqFifoWords( pDaqChannel ) < DAQ_DESCRIPTOR_WORD_SIZE )
       {
          DBPRINT1( ESC_BOLD ESC_FG_RED
@@ -661,9 +659,6 @@ int ramPushDaqDataBlock( register RAM_SCU_T* pThis, DAQ_CANNEL_T* pDaqChannel,
    }
    else
    {
-   #ifdef CONFIG_DAQ_SW_SEQUENCE
-      pDaqChannel->sequencePmHires++;
-   #endif
       if( daqChannelGetPmFifoWords( pDaqChannel ) < DAQ_DESCRIPTOR_WORD_SIZE )
       {
          DBPRINT1( ESC_BOLD ESC_FG_RED

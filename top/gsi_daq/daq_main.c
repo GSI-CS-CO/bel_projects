@@ -79,11 +79,18 @@ static inline void handleContinuousMode( DAQ_CANNEL_T* pChannel )
 {
    if( !daqChannelTestAndClearDaqIntPending( pChannel ) )
       return;
+#ifdef CONFIG_DAQ_SW_SEQUENCE
+   pChannel->sequenceContinuous++;
+#endif
    if( daqChannelGetDaqFifoWords( pChannel ) == 0 )
    {
-      DBPRINT1( ESC_BOLD ESC_FG_YELLOW
-                "DBG WARNING: Discarding continuous block!\n"
-                ESC_NORMAL );
+      DBPRINT1( ESC_BOLD ESC_FG_RED
+                "DBG: WARNING: Discarding continuous block: "
+                      "Slot: %d, Channel: %d !\n"
+                ESC_NORMAL,
+                daqChannelGetSlot( pChannel ),
+                daqChannelGetNumber( pChannel )
+              );
       return;
    }
 
@@ -114,6 +121,9 @@ static inline void handleHiresMode( DAQ_CANNEL_T* pChannel )
       return;
 
    daqChannelDisableHighResolution( pChannel );
+#ifdef CONFIG_DAQ_SW_SEQUENCE
+   pChannel->sequencePmHires++;
+#endif
    ramPushDaqDataBlock( &g_DaqAdmin.oRam, pChannel, false );
 }
 
@@ -142,6 +152,9 @@ static inline void handlePostMortemMode( DAQ_CANNEL_T* pChannel )
 
    pChannel->properties.postMortemEvent = false;
    daqChannelDisablePostMortem( pChannel ); //!!
+#ifdef CONFIG_DAQ_SW_SEQUENCE
+   pChannel->sequencePmHires++;
+#endif
    ramPushDaqDataBlock( &g_DaqAdmin.oRam, pChannel, false );
 }
 

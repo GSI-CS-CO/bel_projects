@@ -477,9 +477,9 @@ int ramReadDaqDataBlock( register RAM_SCU_T* pThis, RAM_DAQ_PAYLOAD_T* pData,
 
 /*! @} */ //End of group DAQ_RAM_BUFFER
 #ifdef __cplusplus
-}
-}
-}
+} /* namespace daq */
+} /* namespace Scu */
+} /* extern "C"    */
 #endif
 #endif /* ifndef _DAQ_RAMBUFFER_H */
 /* ================================= EOF ====================================*/
