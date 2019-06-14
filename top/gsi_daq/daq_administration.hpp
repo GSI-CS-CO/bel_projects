@@ -34,8 +34,14 @@ namespace Scu
 {
 namespace daq
 {
+
 class DaqAdministration;
 class DaqDevice;
+
+/*!
+ * @brief Conversion factor: nanoseconds per second
+ */
+constexpr double NanosecsPerSec = 1000000000.0;
 
 /*!
  * @defgroup onDataBlock
