@@ -3,7 +3,7 @@
  *
  *  created : 2019, GSI Darmstadt
  *  author  : Dietrich Beck, Enkhbold Ochirsuren
- *  version : 27-Mar-2019
+ *  version : 14-Jun-2019
  *
  *  This example demonstrates the pulse generation at IO (of SCU) according to
  *  the ECA timing event principle: ECA condition table is configured with
@@ -20,76 +20,13 @@
  *      The pulse generation is stopped either after a certain time period or
  *      by another dedicated eCPU action.
  *
- *  LM32 uses MSIs to catch host requests and eCPU actions.
- *  The saftlib tools are used to configure the ECA unit with required rules and
- *  inject timing messages for eCPU actions.
- *  The eb tools are used to provide pulse parameters and production cycle
- *  to LM32.
+ *  A dedicated saftlib tool, saft-burst-ctl, is used to configure bursts.
  *
  *  build:  make clean && make TARGET=burstgen
  *  deploy: scp burstgen.bin root@scuxl0304.acc:.
  *  load:   eb-fwload dev/wbm0 u 0x0 burstgen.bin
  *  run:    eb-reset dev/wbm0 cpureset 0 (assume only one LM32 is instantiated)
  *  debug:  eb-console dev/wbm0
- *
- *  A set of commands used to generate continous pulses of 50KHz at the B1 IO
- *  pin of SCU3 is given below as an example. Please consider that the presented
- *  Wishbone addresses might differ!
- *
- *  1. Commands to configure ECA, write pulse parameters and pulse production
- *  cycle for LM32 into the shared memory:
- *
- *  set ECA rules for IO actions (10 entries with 10000 ns offset):
- *    saft-io-ctl tr0 -n B1 -u -c 0x0000FCA000000000 0xFFFFFFF000000000 10000 0xf 1
- *    saft-io-ctl tr0 -n B1 -u -c 0x0000FCA000000000 0xFFFFFFF000000000 20000 0xf 0
- *    ...
- *    saft-io-ctl tr0 -n B1 -u -c 0x0000FCA000000000 0xFFFFFFF000000000 90000 0xf 1
- *    saft-io-ctl tr0 -n B1 -u -c 0x0000FCA000000000 0xFFFFFFF000000000 100000 0xf 0
- *
- *  set ECA rules for eCPU actions:
- *    saft-ecpu-ctl tr0 -d -c 0x0000991000000000 0xFFFFFFF000000000 0 0xb2b2b2b2
- *    saft-ecpu-ctl tr0 -d -c 0x0000990000000000 0xFFFFFFF000000000 0 0xb2b2b2b2
- *
- *  write pulse parameters to shared RAM:
- *  - IO event id
- *    	eb-write dev/wbm0 0x200A0510/4 0x0000FCA0
- *  - delay, currently not used
- *    	eb-write dev/wbm0 0x200A0514/4 0
- *  - number of IO action rules
- *    	eb-write dev/wbm0 0x200A0518/4 10
- *  - each IO action offset
- *    	eb-write dev/wbm0 0x200A051C/4 10000
- *  and instruct LM32 to load pluse parameters (see below in 2.)
- *
- *  write production cycles to shared RAM:
- *  - production cycles, hi32 and lo32 values
- *  	eb-write dev/wbm0 0x200A0510/4 0x0000FCA0
- *    	eb-write dev/wbm0 0x200A0520/4 0x88776655
- *    	eb-write dev/wbm0 0x200A0524/4 0x44332211
- *  and instruct LM32 to load production cycles (see below in 2.)
- *
- *  These commands are also packed in configure_eca.sh and can be invoked as:
- *    ./configure_eca.sh -n 10 -o 10000 -f 0xf -c 0x88776655 -d 0x44332211
- *
- *  2. Host requests to LM32 that instruct the embedded soft CPU to get
- *  the pulse parameters and production cycle from a shared memory:
- *
- *  - show actual pulse parameters
- *    	eb-write dev/wbm0 0x808/4 1
- *  - load pulse parameters from shared RAM
- *    	eb-write dev/wbm0 0x808/4 2
- *  - load production cycles from shared RAM
- *    	eb-write dev/wbm0 0x808/4 3
- *  - show actual pulse parameters again for verification (optional)
- *  	eb-write dev/wbm0 0x808/4 1
- *
- *  3. A target timing receiver is now ready to generate pulses at its output.
- *  Users need to inject timing messages to start and stop pulse generation:
- *
- *  - start pulse generation:
- *    	saft-ctl -p tr0 inject 0x0000991000000000 100000000 0
- *  - stop pulse generation:
- *    	saft-ctl -p tr0 inject 0x0000990000000000 0 0
  *
  * -----------------------------------------------------------------------------
  * License Agreement for this software:
