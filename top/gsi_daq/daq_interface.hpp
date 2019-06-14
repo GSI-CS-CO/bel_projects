@@ -201,7 +201,7 @@ public:
 
    const std::string getEbStatusString( void ) const
    {
-      return static_cast<const std::string>(::ebGetStatusString( m_poEbHandle ));
+      return static_cast<const std::string>(ebGetStatusString( m_poEbHandle ));
    }
 
    RETURN_CODE_T getLastReturnCode( void ) const
@@ -223,9 +223,9 @@ public:
       return m_maxDevices;
    }
 
-   bool isDevicePresent( const unsigned int slot )
+   bool isDevicePresent( const unsigned int slot ) const
    {
-      return ::scuBusIsSlavePresent( m_slotFlags, slot );
+      return scuBusIsSlavePresent( m_slotFlags, slot );
    }
 
    void sendReset( void )
@@ -357,24 +357,24 @@ private:
 
    EB_STATUS_T ebSocketRun( void )
    {
-      return ::ebSocketRun( m_poEbHandle );
+      return Scu::ebSocketRun( m_poEbHandle );
    }
 
    void ebClose( void );
 
    EB_STATUS_T ebReadObjectCycleOpen( EB_CYCLE_OR_CB_ARG_T& rCArg )
    {
-      return ::ebObjectReadCycleOpen( m_poEbHandle, &rCArg );
+      return Scu::ebObjectReadCycleOpen( m_poEbHandle, &rCArg );
    }
 
    EB_STATUS_T ebWriteObjectCycleOpen( EB_CYCLE_OW_CB_ARG_T& rCArg )
    {
-      return ::ebObjectWriteCycleOpen( m_poEbHandle, &rCArg );
+      return Scu::ebObjectWriteCycleOpen( m_poEbHandle, &rCArg );
    }
 
    void ebCycleClose( void )
    {
-      ::ebCycleClose( m_poEbHandle );
+      Scu::ebCycleClose( m_poEbHandle );
    }
 
    bool cmdReadyWait( void );

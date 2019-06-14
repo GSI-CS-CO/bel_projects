@@ -39,6 +39,8 @@
 
 #ifdef __cplusplus
 extern "C" {
+namespace Scu
+{
 #endif
 /*!
  * @defgroup SCU_DDR3
@@ -473,6 +475,7 @@ int ddr3FlushFiFo( register const DDR3_T* pThis, unsigned int start,
 #endif /* ifndef CONFIG_DDR3_NO_BURST_FUNCTIONS */
 /*! @} */ //End of group  SCU_DDR3
 #ifdef __cplusplus
+}
 }
 #endif
 

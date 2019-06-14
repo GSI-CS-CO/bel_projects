@@ -42,6 +42,12 @@
    #define SCUBUS_ASSERT(__e) ((void)0)
 #endif
 
+#ifdef __cplusplus
+extern "C" {
+namespace Scu
+{
+#endif
+
 /*!
  * @ingroup SCU_BUS
  * @brief Physical maximum number of SCU-Bus slots
@@ -65,15 +71,15 @@
  * @see MAX_SCU_SLAVES
  */
 typedef uint16_t SCUBUS_SLAVE_FLAGS_T;
+#ifndef __DOXYGEN__
 STATIC_ASSERT( BIT_SIZEOF( SCUBUS_SLAVE_FLAGS_T ) >= MAX_SCU_SLAVES );
-
-#ifdef __cplusplus
-extern "C" {
 #endif
+
 
 /*! ---------------------------------------------------------------------------
  * @ingroup SCU_BUS
- * @brief Extract a single slave-present-flag from the SCU-slave-flag-present field
+ * @brief Extract a single slave-present-flag from the SCU-slave-flag-present
+ *        field
  * @see scuBusFindSpecificSlaves
  * @see scuFindAllSlaves
  * @param flags packed slave present flags of all SCU bus slots
@@ -82,7 +88,8 @@ extern "C" {
  * @return false: slave not present
  */
 static inline
-bool scuBusIsSlavePresent( const SCUBUS_SLAVE_FLAGS_T flags, const int slot )
+bool scuBusIsSlavePresent( const SCUBUS_SLAVE_FLAGS_T flags,
+                                                     const unsigned int slot )
 {
    SCUBUS_ASSERT( slot >= SCUBUS_START_SLOT );
    SCUBUS_ASSERT( slot <= MAX_SCU_SLAVES );
@@ -91,7 +98,8 @@ bool scuBusIsSlavePresent( const SCUBUS_SLAVE_FLAGS_T flags, const int slot )
 }
 
 #ifdef __cplusplus
-}
+} /* namespace Scu */
+} /* extern "C"    */
 #endif
 
 #endif /* ifndef _SCU_BUS_DEFINES_H */
