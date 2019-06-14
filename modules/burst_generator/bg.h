@@ -23,6 +23,7 @@
 #define STATUS_ERR       COMMON_STATUS_ERROR
 #define STATUS_IDLE      20
 #define STATUS_NOT_READY 21
+#define STATUS_DISABLED  22
 
 const unsigned char errMsgEcaMsi[] = {"Cannot en/disable ECA MSI path to mailbox.\0"};
 
@@ -41,9 +42,18 @@ extern uint32_t*       _startshared[];
 /* id number to identify the LM32 firmware for burst generator */
 #define BG_FW_ID          0xb2b2b2b2UL
 
+#define N_BURSTS          16    // maximum number of bursts can be generated (1..N_BURSTS]
+#define N_TASKS           N_BURSTS + 1 + 1    // number of all periodic tasks (N_BURSTS + 1 burst triggers and 1 host MSI handler)
+#define N_BURST_INFO      8     // the length of burst info (id, io_type, io_idx, trigger_h32/l32, toggle_h32/l32, flag)
+
+/* user commands for the burst generator */
 #define CMD_SHOW_ALL      0x1UL
 #define CMD_GET_PARAM     0x2UL
 #define CMD_GET_CYCLE     0x3UL
+#define CMD_LS_BURST      0x4UL  // list burst (ids or burst info)
+#define CMD_MK_BURST      0x5UL  // declare new burst
+#define CMD_RM_BURST      0x6UL  // remove burst
+#define CMD_DE_BURST      0x7UL  // dis/enable burst
 #define CMD_RD_MSI_ECPU   0x10UL
 #define CMD_RD_ECPU_CHAN  0x11UL
 #define CMD_RD_ECPU_QUEUE 0x12UL
@@ -69,6 +79,7 @@ extern uint32_t*       _startshared[];
 #define LEN_TIM_MSG       0x8           // length of timing message in bytes
 #define EVT_ID_IO_H32     0x0000FCA0UL  // event id of timing message for IO actions (hi32)
 #define EVT_ID_IO_L32     0x00000000UL  // event id of timing message for IO actions (lo32)
+#define EVT_MASK_IO       0xFFFFFFFF00000000ULL
 
 /* MSI sender offsets */
 #define MSI_OFFS_ECA      0x00UL        // ECA
@@ -108,15 +119,23 @@ typedef struct {
 #define MS_SCALE          1000000ULL
 #define US_SCALE          1000ULL
 
+#define CTL_DIS           0x0000UL
+#define CTL_EN            0x0001UL
+#define CTL_VALID         0x8000UL
+
 typedef struct {
   int state;
-  int task_timeout_cnt;
-  uint64_t event;        /* event ID */
-  int64_t cycle;         /* handler-specific: number of cycles */
+  uint32_t flag;         /* control flag: CTL_VALID & CTL_EN, CTL_DIS */
+  uint8_t  io_type;      /* IO port type: 0=GPIO, 1=LVDS, 2=FIXED (io_control_regs.h */
+  uint8_t  io_index;     /* IO port index, info_index of t_io_mapping_table in monster_pkg.vhd */
+  uint64_t trigger;      /* trigger event ID */
+  uint64_t toggle;       /* toggling event ID */
+  int64_t  cycle;        /* handler-specific: number of cycles */
   uint64_t period;       /* handler-specific: period in ns */
   uint64_t deadline;     /* handler-specific: deadline */
   uint64_t interval;     /* interval of the task */
   uint64_t lasttick;     /* when was the task ran last */
+  uint64_t failed;       /* task failed timestamp */
   int (*func)(int);     /* pointer to the function of the task */
 } Task_t;
 

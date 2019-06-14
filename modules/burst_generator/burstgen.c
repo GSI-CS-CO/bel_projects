@@ -152,15 +152,10 @@ enum {
 };
 
 /* task configuration table */
-static Task_t tasks[4]= {
-  {0, 0, 0, 0, 0, 0, ALWAYS, 0, triggerIoActions  },
-  {0, 0, 0, 0, 0, 0, ALWAYS, 0, ecaMsiHandler     },
-  {0, 0, 0, 0, 0, 0, INTERVAL_1000MS, 0, hostMsiHandler},
-  {0, 0, 0, 0, 0, 0, INTERVAL_2000MS, 0, dummyTask},
-};
-
-static Task_t *pTask = &tasks[0];                      // task table pointer
-const int cNumTasks = sizeof(tasks) / sizeof(Task_t);  // number of tasks
+static Task_t tasks[N_TASKS];
+static Task_t *pTask = &tasks[0];     // task table pointer
+static uint32_t gBurstsCreated = 0x0; // created bursts, bitwise, bit 0 = burst 1
+static uint32_t gBurstsCycled = 0x0;  // triggered & completed bursts, bitwise, bit 0 = burst 1
 
 volatile struct message_buffer msg_buf[N_MSI_BUF] = {0};   // MSI message buffers
 volatile struct message_buffer *pMsgBufHead = &msg_buf[0]; // pointer to MSI msg buffer head
@@ -185,6 +180,14 @@ uint64_t gInjection = 0;            // time duration for local message injection
 int gEcaChECPU = 0;                 // ECA channel for an embedded CPU (LM32), connected to ECA queue pointed by pECAQ
 int gMbSlot = -1;                   // slot in mailbox subscribed by LM32, no slot is subscribed by default
 
+int printSharedInput(int start, int end)
+{
+  int i = 0;
+  for (i = start; i < end; ++i)
+    mprintf("%8x @ 0x%x\n", *(pSharedInput +i), (uint32_t)(pSharedInput +i));
+
+  return i;
+}
 int dummyTask(int id) {
 
   // wait for 60 seconds
@@ -206,25 +209,45 @@ int dummyTask(int id) {
  ******************************************************************************/
 int triggerIoActions(int id) {
 
-  if (pTask[id].deadline == 0)     // deadline is unset, nothing to do!
-    return STATUS_NOT_READY;
+  int result = STATUS_OK;
 
-  if (pTask[id].cycle == 0)        // production cycle is over, nothing to do!
-    return STATUS_NOT_READY;
+  if (pTask[id].flag & CTL_EN == CTL_DIS)   // burst is disabled, do not trigger!
+    result = STATUS_DISABLED;
+
+  if (pTask[id].deadline == 0)     // deadline is unset, cannot trigger!
+    result = STATUS_NOT_READY;
+
+  if (pTask[id].cycle == 0)        // production cycle is over, cannot trigger!
+    result = STATUS_NOT_READY;
 
   uint64_t deadline = pTask[id].deadline;
   uint64_t now = getSysTime();
   int64_t elapsed_injection = deadline - now;
 
+  *(bufTimMsg   ) = EVT_ID_IO_H32 + (id << 4); // update peripheral timing message
+  *(bufTimMsg +6) = hiU32(deadline);
+  *(bufTimMsg +7) = loU32(deadline);
+
   if (elapsed_injection <= 0) // late!
-    return STATUS_ERR;
-
-  if ((elapsed_injection < pTask[id].period) && // next period of a pulse block or initial injection (depends on lasstick)
-      (pTask[id].lasttick < now))               // the only injection in this period
   {
-    *(bufTimMsg +6) = hiU32(deadline);
-    *(bufTimMsg +7) = loU32(deadline);
+    if (pTask[id].failed == 0)
+      pTask[id].failed = now;
+    result = STATUS_ERR;
+  }
 
+  if (result != STATUS_OK)
+  {
+    // delay generation: 183 for 7376 ns (doubled time duration to execute the trigger operations)
+    // 150/6320 ns, 120/5888 ns, 100/5248, 90/4928, 70/4288
+    for (int i = 0; i < 70; i++) // TODO: execute short periodic task (ie., MSI handling takes 12 us, ECA handling takes 14 us)
+      asm("nop");
+
+    return result;
+  }
+  else if ((pTask[id].lasttick == 0) ||
+      (( elapsed_injection < pTask[id].period) && // next period of a pulse block or initial injection (depends on lasstick)
+      (pTask[id].lasttick < now)))               // the only injection in this period
+  {
     injectTimingMsg(bufTimMsg);  // inject internal timing message for IO actions
 
     pTask[id].lasttick = pTask[id].deadline; // update the task timestamp
@@ -235,12 +258,11 @@ int triggerIoActions(int id) {
       if (--pTask[id].cycle == 0)
       {
 	pTask[id].deadline = 0;
-	mprintf("cycle completed: reload!\n");
+	gBurstsCycled |= (0x1 << (id - 1));
       }
     }
-    return STATUS_OK;
+    return result;
   }
-
 
   return STATUS_IDLE;
 }
@@ -602,8 +624,9 @@ void ecaHandler(uint32_t cnt)
   uint32_t actTag;              // tag of action
   uint32_t paramHigh;           // event parameter (high 32bit)
   uint32_t paramLow;            // event parameter (low 32bit)
+  uint64_t evtId;
 
-  for (int i = 0; i < cnt; ++i) {
+  for (int i = 0; i < cnt; ++i) {  // TODO: avoid loop!!!
     // read flag and check if there was an action
     flag         = *(pECAQ + (ECA_QUEUE_FLAGS_GET >> 2));
     if (flag & (0x0001 << ECA_VALID)) {
@@ -624,67 +647,86 @@ void ecaHandler(uint32_t cnt)
         //mprintf("id: 0x%08x:%08x; deadline: 0x%08x:%08x; param: 0x%08x:%08x; flag: 0x%08x\n",
           //      evtIdHigh, evtIdLow, evtDeadlHigh, evtDeadlLow, paramHigh, paramLow, flag);
 
+	toU64(evtIdHigh, evtIdLow, evtId);
+
 	uint64_t d, p;
 
 	toU64(evtDeadlHigh, evtDeadlLow, d);
 	toU64(paramHigh, paramLow, p);
 
-	switch (evtIdHigh & EVTNO_MASK) {
+	d += p;
 
-	  case IO_CYC_START: // start the IO pulse cycle
-	    d += p;
-	    p = getSysTime();
+	int id = 1;
+	uint32_t bursts = gBurstsCreated;
+	uint32_t bMask = 1;
 
-	    if (p >= (d - gInjection)) {
-	      pTask[0].deadline = 0;
-	      mprintf("late! now >= (due - inj)\n");
-	      mprintf("now: 0x%08x:%08x\n", (uint32_t)(p >> 32), (uint32_t)p);
-	      mprintf("due: 0x%08x:%08x\n", (uint32_t)(d >> 32), (uint32_t)d);
-	      mprintf("inj: 0x%08x:%08x\n", (uint32_t)(gInjection >> 32), (uint32_t)gInjection);
-	      mprintf("cycle ignored!\n");
-	    }
-	    else {
-	      pTask[0].deadline = d;           // set deadline
-	      pTask[0].lasttick = 0;
+	while (bursts && id <= N_BURSTS)
+	{
+	  if (gBurstsCreated & bMask) {
 
-	      int result = triggerIoActions(0);  // initial injection
-	      pTask[0].state = result;
+	    if (pTask[id].flag & CTL_EN)
+	    {
+	      if (pTask[id].trigger == evtId) { // start the burst cycle
+		p = getSysTime();
 
-	      switch (result) {
-		case STATUS_OK:  // mprintf("cycle started\n");
-		  break;
-		case STATUS_ERR:
-		  mprintf("cycle failed (deadline was over)\n");
-		  break;
-		case STATUS_IDLE: // mprintf("idle cycle\n");
-		  break;
-		default:
-		  mprintf("cycle not ready, reload!\n");
+		if (p >= (d - gInjection)) {
+		  pTask[id].deadline = 0;
+		  mprintf("late! now >= (due - inj)\n");
+		  mprintf("now: 0x%08x:%08x\n", (uint32_t)(p >> 32), (uint32_t)p);
+		  mprintf("due: 0x%08x:%08x\n", (uint32_t)(d >> 32), (uint32_t)d);
+		  mprintf("inj: 0x%08x:%08x\n", (uint32_t)(gInjection >> 32), (uint32_t)gInjection);
+		  mprintf("cycle ignored!\n");
+		}
+		else {
+		  pTask[id].deadline = d;           // set deadline
+		  pTask[id].lasttick = 0;
+		  pTask[id].failed = 0;
+
+		  int result = triggerIoActions(id);  // initial injection
+		  pTask[id].state = result;
+
+		  switch (result) {
+		    case STATUS_OK:  // mprintf("cycle started\n");
+		      gBurstsCycled &= (0x1 << (id - 1));
+		      break;
+		    case STATUS_ERR:
+		      mprintf("cycle failed (deadline was over)\n");
+		      break;
+		    case STATUS_IDLE: // mprintf("idle cycle\n");
+		    case STATUS_DISABLED:
+		      break;
+		    default:
+		      mprintf("cycle not ready, reload!\n");
+		  }
+		}
+	      }
+	      else if (pTask[id].toggle == evtId) { // stop the burst cycle
+		if (pTask[id].deadline == 0) {      // cycle never run or already stopped, cancel it
+		  pTask[id].cycle = 0;
+		  mprintf("cycle cancelled!\n");
+		}
+		else if (pTask[id].deadline >= d) {  // deadline is over, stop immediatelly
+		  pTask[id].deadline = 0;
+		  pTask[id].cycle = 0;
+		  gBurstsCycled |= (0x1 << (id - 1));
+		}
+		else if (pTask[id].cycle > 0) { // update remaining cycle
+		  p = d - pTask[id].deadline;
+		  if (p < pTask[id].period)
+		    pTask[id].cycle = 1;
+		  else {
+		    p = p / pTask[id].period;
+		    pTask[id].cycle = p + 1;
+		  }
+		  mprintf("c\n");//mprintf("cycle changed!\n");
+		}
 	      }
 	    }
-	    break;
+	  }
 
-	  case IO_CYC_STOP: // stop the IO pulse cycle
-	    d += p;
-	    if (pTask[0].deadline == 0) {      // cycle never run or already stopped, cancel it
-	      pTask[0].cycle = 0;
-	      mprintf("cycle cancelled!\n");
-	    }
-	    else if (pTask[0].deadline > d) {  // deadline is over, stop immediatelly
-	      pTask[0].deadline = 0;
-	      pTask[0].cycle = 0;
-	      mprintf("cycle stopped!\n");
-	    }
-	    else if (pTask[0].cycle > 0) { // update remaining cycle
-	      p = d - pTask[0].deadline;
-	      p = p / pTask[0].period;
-	      pTask[0].cycle = p;
-	      mprintf("cycle changed!\n");
-	    }
-	    break;
-
-	  default:
-	    break;
+	  bursts >>= 1;
+	  bMask  <<= 1;
+	  ++id;
 	}
       }
     }
@@ -701,98 +743,239 @@ void ecaHandler(uint32_t cnt)
 void execHostCmd(int32_t cmd)
 {
   int result = STATUS_OK;
+  uint64_t e_id;
+  uint32_t h32, l32, id;
+  int first, last;
   // check, if a command has been issued (no cmd: 0x0)
   if (cmd) {
     mprintf("\ncmd 0x%x: ", cmd);
     switch (cmd) {
 
-    case CMD_SHOW_ALL:    // show pulse parameters
-      mprintf("show\n");  // show actual state
+      case CMD_SHOW_ALL:    // show pulse parameters
+	mprintf("show\n");  // show actual state
 
-      mprintf("id=0x%x, cycle=0x%x:%x, period=0x%x:%x, deadline=0x%x:%x, interval=0x%x:%x\n",
-	  (uint32_t)(*bufTimMsg),
-	  (uint32_t)(pTask[0].cycle >> 32), (uint32_t)pTask[0].cycle,
-	  (uint32_t)(pTask[0].period >> 32), (uint32_t)pTask[0].period,
-	  (uint32_t)(pTask[0].deadline >> 32), (uint32_t)pTask[0].deadline,
-	  (uint32_t)(pTask[0].interval >> 32), (uint32_t)pTask[0].interval);
-      break;
+	id = *pSharedInput;
+	if (0 < id && id <= N_BURSTS) {
+	  mprintf("trig=0x%x:%x, togg=0x%x:%x, cycle=0x%x:%x, period=0x%x:%x, deadln=0x%x:%x, flag=0x%x\n",
+	    (uint32_t)(pTask[id].trigger >> 32),  (uint32_t)pTask[id].trigger,
+	    (uint32_t)(pTask[id].toggle >> 32),   (uint32_t)pTask[id].toggle,
+	    (uint32_t)(pTask[id].cycle >> 32),    (uint32_t)pTask[id].cycle,
+	    (uint32_t)(pTask[id].period >> 32),   (uint32_t)pTask[id].period,
+	    (uint32_t)(pTask[id].deadline >> 32), (uint32_t)pTask[id].deadline,
+	    (uint32_t)(pTask[id].flag >> 0));
+	}
+	break;
 
-    case CMD_GET_PARAM:    // get pulse parameters expressed by ECA conditions (e_id, delay, nConds, period) from shared RAM
-      mprintf("get parameters\n");
+      case CMD_GET_PARAM:    // get parameters of the given burst
+	mprintf("get parameters\n");
 
-      mprintf("%8x @ 0x%x\n", *(pSharedInput   ), (uint32_t)(pSharedInput   )); // e_id, h32
-      mprintf("%8x @ 0x%x\n", *(pSharedInput +1), (uint32_t)(pSharedInput +1)); // delay
-      mprintf("%8x @ 0x%x\n", *(pSharedInput +2), (uint32_t)(pSharedInput +2)); // number of conditions (pulse block)
-      mprintf("%8x @ 0x%x\n", *(pSharedInput +3), (uint32_t)(pSharedInput +3)); // period of a pulse block, nanoseconds
+	id = *pSharedInput;
+	if (0 < id && id <= N_BURSTS) {
+	  if ((pTask[id].flag & CTL_VALID) != 0) {
+	    uint32_t b_flag = *(pSharedInput +4);
+	    if (b_flag == 1)
+	      pTask[id].period += *(pSharedInput +3);
+	    else
+	      pTask[id].period = *(pSharedInput +3);
 
-      toU64(*pSharedInput, EVT_ID_IO_L32, pTask[0].event);
-      buildTimingMsg(bufTimMsg, *pSharedInput);                 // re-build timing msg for IO actions
-      pTask[0].period = *(pSharedInput +3);
-      break;
+	    if (*(pSharedInput +5)) // verbose
+	      printSharedInput(0, 5);
+	  }
+	}
 
-    case CMD_GET_CYCLE:    // get pulse cycle (e_id, cycles * period of a pulse block) from shared RAM
-      mprintf("get cycle\n");
+	*pSharedCmd = cmd;
+	break;
 
-      mprintf("%8x @ 0x%x\n", *(pSharedInput   ), (uint32_t)(pSharedInput   )); // e_id, h32
-      mprintf("%8x @ 0x%x\n", *(pSharedInput +1), (uint32_t)(pSharedInput +1)); // pulse cycles (h32), nanoseconds
-      mprintf("%8x @ 0x%x\n", *(pSharedInput +2), (uint32_t)(pSharedInput +2)); // pulse cycles (l32), nanoseconds
+      case CMD_GET_CYCLE:    // get the number of cycles (cycles * period of a pulse block) of the given burst
+	mprintf("get cycle\n");
 
-      if ((pTask[0].event >> 32) == *pSharedInput)
-      {
-	toU64(*(pSharedInput +1), *(pSharedInput +2), pTask[0].cycle);
+	id = *pSharedInput;
+	if (0 < id && id <= N_BURSTS) {
+	  if ((pTask[id].flag & CTL_VALID) != 0) {
+	    toU64(*(pSharedInput +1), *(pSharedInput +2), pTask[id].cycle);
 
-	// init task deadline and interval
-	pTask[0].deadline = 0;
-      }
-      break;
+	    if (*(pSharedInput + 3)) // verbose
+	      printSharedInput(0, 3);
 
-    case CMD_RD_MSI_ECPU: // read the ECA MSI settings for eCPU
-      mprintf("read MSI cfg\n");
+	    pTask[id].deadline = 0;
+	  }
+	}
 
-      atomic_on();
-      *(pEcaCtl + (ECA_CHANNEL_SELECT_RW >> 2)) = gEcaChECPU;              // select channel for eCPU
-      uint32_t dest   = *(pEcaCtl + (ECA_CHANNEL_MSI_GET_TARGET_GET >> 2));  // get MSI destination address
-      uint32_t enable = *(pEcaCtl + (ECA_CHANNEL_MSI_GET_ENABLE_GET >> 2));  // get the MSI enable flag
-      atomic_off();
+	*pSharedCmd = cmd;
+	break;
 
-      mprintf("MSI dest addr   = 0x%08x\n", dest);
-      mprintf("MSI enable flag = 0x%x\n", enable);
+      case CMD_RD_MSI_ECPU: // read the ECA MSI settings for eCPU
+	mprintf("read MSI cfg\n");
 
-      break;
+	atomic_on();
+	*(pEcaCtl + (ECA_CHANNEL_SELECT_RW >> 2)) = gEcaChECPU;              // select channel for eCPU
+	uint32_t dest   = *(pEcaCtl + (ECA_CHANNEL_MSI_GET_TARGET_GET >> 2));  // get MSI destination address
+	uint32_t enable = *(pEcaCtl + (ECA_CHANNEL_MSI_GET_ENABLE_GET >> 2));  // get the MSI enable flag
+	atomic_off();
 
-    case CMD_RD_ECPU_CHAN: // read the content of the ECA eCPU channel
-      mprintf("read eCPU chan counter\n");
+	mprintf("MSI dest addr   = 0x%08x\n", dest);
+	mprintf("MSI enable flag = 0x%x\n", enable);
 
-      atomic_on();
-      *(pEcaCtl + (ECA_CHANNEL_SELECT_RW >> 2)) = gEcaChECPU;
-      uint32_t valid    = *(pEcaCtl + (ECA_CHANNEL_VALID_COUNT_GET >> 2));
-      uint32_t overflow = *(pEcaCtl + (ECA_CHANNEL_OVERFLOW_COUNT_GET >> 2));
-      uint32_t failed   = *(pEcaCtl + (ECA_CHANNEL_FAILED_COUNT_GET >> 2));
-      uint32_t full     = *(pEcaCtl + (ECA_CHANNEL_MOSTFULL_ACK_GET >> 2));
-      atomic_off();
-      mprintf("failed: 0x%x, valid: 0x%x, overflow: 0x%x, full: 0x%x\n",
-                failed, valid, overflow, full);
-      break;
+	break;
 
-    case CMD_RD_ECPU_QUEUE: // read the content of ECA queue connected to eCPU channel
-      mprintf("read eCPU queue\n");
+      case CMD_RD_ECPU_CHAN: // read the content of the ECA eCPU channel
+	mprintf("read eCPU chan counter\n");
 
-      atomic_on();
-      *(pEcaCtl + (ECA_CHANNEL_SELECT_RW >> 2)) = gEcaChECPU;
-      uint32_t flag      = *(pECAQ + (ECA_QUEUE_FLAGS_GET >> 2));
-      uint32_t evtHigh   = *(pECAQ + (ECA_QUEUE_EVENT_ID_HI_GET >> 2));
-      uint32_t evtLow    = *(pECAQ + (ECA_QUEUE_EVENT_ID_LO_GET >> 2));
-      uint32_t tag       = *(pECAQ + (ECA_QUEUE_TAG_GET >> 2));
-      uint32_t paramHigh = *(pECAQ + (ECA_QUEUE_PARAM_HI_GET >> 2));
-      uint32_t paramLow  = *(pECAQ + (ECA_QUEUE_PARAM_LO_GET >> 2));
-      atomic_off();
-      mprintf("event: 0x%08x:%08x, param: 0x%08x:%08x, tag: 0x%08x, flag: 0x%08x\n",
-                evtHigh, evtLow, paramHigh, paramLow, tag, flag);
-      break;
+	atomic_on();
+	*(pEcaCtl + (ECA_CHANNEL_SELECT_RW >> 2)) = gEcaChECPU;
+	uint32_t valid    = *(pEcaCtl + (ECA_CHANNEL_VALID_COUNT_GET >> 2));
+	uint32_t overflow = *(pEcaCtl + (ECA_CHANNEL_OVERFLOW_COUNT_GET >> 2));
+	uint32_t failed   = *(pEcaCtl + (ECA_CHANNEL_FAILED_COUNT_GET >> 2));
+	uint32_t full     = *(pEcaCtl + (ECA_CHANNEL_MOSTFULL_ACK_GET >> 2));
+	atomic_off();
+	mprintf("failed: 0x%x, valid: 0x%x, overflow: 0x%x, full: 0x%x\n",
+		  failed, valid, overflow, full);
+	break;
 
-   default:
-      mprintf("unknown\n");
-      result = STATUS_ERR;
+      case CMD_RD_ECPU_QUEUE: // read the content of ECA queue connected to eCPU channel
+	mprintf("read eCPU queue\n");
+
+	atomic_on();
+	*(pEcaCtl + (ECA_CHANNEL_SELECT_RW >> 2)) = gEcaChECPU;
+	uint32_t flag      = *(pECAQ + (ECA_QUEUE_FLAGS_GET >> 2));
+	uint32_t evtHigh   = *(pECAQ + (ECA_QUEUE_EVENT_ID_HI_GET >> 2));
+	uint32_t evtLow    = *(pECAQ + (ECA_QUEUE_EVENT_ID_LO_GET >> 2));
+	uint32_t tag       = *(pECAQ + (ECA_QUEUE_TAG_GET >> 2));
+	uint32_t paramHigh = *(pECAQ + (ECA_QUEUE_PARAM_HI_GET >> 2));
+	uint32_t paramLow  = *(pECAQ + (ECA_QUEUE_PARAM_LO_GET >> 2));
+	atomic_off();
+	mprintf("event: 0x%08x:%08x, param: 0x%08x:%08x, tag: 0x%08x, flag: 0x%08x\n",
+		  evtHigh, evtLow, paramHigh, paramLow, tag, flag);
+	break;
+
+      case CMD_LS_BURST: // list burst (if id==0, then IDs of available bursts are written into memory, otherwise burst info)
+	mprintf("ls burst\n");
+
+	id = *pSharedInput;
+	uint32_t verbose = *(pSharedInput + 1);
+
+	if (id == 0) {
+	  *pSharedInput = gBurstsCreated;
+	  *(pSharedInput + 1) = gBurstsCycled;
+
+	  if (verbose)
+	    mprintf(" created: %x, cycled: %x\n", gBurstsCreated, gBurstsCycled);
+	}
+	else if (id <= N_BURSTS) {
+	  *(pSharedInput +1) = (uint32_t)pTask[id].io_type;  // IO type and index (type << 16| index)
+	  *(pSharedInput +2) = (uint32_t)pTask[id].io_index;
+	  *(pSharedInput +3) = (uint32_t)(pTask[id].trigger >> 32); // trigger event id
+	  *(pSharedInput +4) = (uint32_t)pTask[id].trigger;
+	  *(pSharedInput +5) = (uint32_t)(pTask[id].toggle >> 32); // get toggle event id
+	  *(pSharedInput +6) = (uint32_t)pTask[id].toggle;
+	  *(pSharedInput +7) = (uint32_t)pTask[id].flag;
+
+	  if (verbose)
+	    printSharedInput(0, N_BURST_INFO);
+	}
+
+	*pSharedCmd = cmd;
+	break;
+
+      case CMD_MK_BURST: // declare burst with the id number
+	mprintf("new burst\n");
+
+	id = *pSharedInput;
+	verbose = *(pSharedInput + 6);
+
+	if (0 < id && id <= N_BURSTS) {
+	  l32 = *(pSharedInput +1); // IO type and index (type << 16| index)
+	  pTask[id].io_type = (uint8_t)(l32 >> 16);
+	  pTask[id].io_index = (uint8_t)l32;
+	  h32 = *(pSharedInput +2); // get trigger event id
+	  l32 = *(pSharedInput +3);
+	  toU64(h32, l32, e_id);
+	  pTask[id].trigger = e_id;
+
+	  h32 = *(pSharedInput +4); // get toggle event id
+	  l32 = *(pSharedInput +5);
+	  toU64(h32, l32, e_id);
+	  pTask[id].toggle = e_id;
+
+	  pTask[id].period = 0;
+	  pTask[id].cycle = 0;
+	  pTask[id].deadline = 0;
+	  pTask[id].state = 0;
+	  pTask[id].flag = CTL_VALID;
+	  gBurstsCreated |= 0x1 << (id - 1);
+
+	  if (verbose)
+	    mprintf(" %x: %x, %x, %x, %llx, %llx\n", id, pTask[id].flag, pTask[id].io_type, pTask[id].io_index, pTask[id].trigger, pTask[id].toggle);
+	}
+	else
+	  mprintf("failed: %d\n", id);
+
+	*pSharedCmd = cmd;
+	break;
+
+      case CMD_RM_BURST: // remove burst
+	mprintf("remove burst\n");
+
+	id = *pSharedInput;
+	verbose = *(pSharedInput + 1);
+
+	if (0 < id && id <= N_BURSTS) {
+	  pTask[id].flag = CTL_DIS;
+	  gBurstsCreated &= ~(0x1 << (id -1));
+	  pTask[id].io_type = 0;
+	  pTask[id].io_index = 0;
+	  pTask[id].trigger = 0;
+	  pTask[id].toggle = 0;
+
+	  if (verbose)
+	    mprintf(" %x: %x, %x, %x, %llx, %llx\n", id, pTask[id].flag, pTask[id].io_type, pTask[id].io_index, pTask[id].trigger, pTask[id].toggle);
+	}
+	else
+	  mprintf("failed: %d\n", id);
+
+	*pSharedCmd = cmd;
+	break;
+
+      case CMD_DE_BURST: // dis/enable burst with the id number (=0 all)
+	mprintf("dis/enable burst\n");
+
+	id = *pSharedInput;                   // burst id
+	uint32_t disen = *(pSharedInput + 1); // dis/enable selection
+
+	verbose = *(pSharedInput +2);         // verbose
+	first = -1;
+	last = -1;
+
+	if (id == 0) {
+	  first = 1;
+	  last = N_BURSTS;
+	}
+	else if (id <= N_BURSTS) {
+	  first = last = id;
+	}
+
+	if (first < 0)                               // break here, if burst ID is invalid
+	  break;
+
+	if ((pTask[id].flag & CTL_VALID) == CTL_DIS) // break here, if burst is undeclared
+	  break;
+
+	for (int i = first; i <= last; ++i) {
+	  if (disen)
+	    pTask[id].flag |= CTL_EN;
+	  else
+	    pTask[id].flag &= ~CTL_EN;
+
+	  if (verbose)
+	    mprintf(" %x: %x, %x, %x, %llx, %llx\n", id, pTask[id].flag, pTask[id].io_type, pTask[id].io_index, pTask[id].trigger, pTask[id].toggle);
+	}
+
+	*pSharedCmd = cmd;
+	break;
+
+      default:
+	mprintf("unknown\n");
+	result = STATUS_ERR;
     }
 
     if (result == STATUS_ERR)
@@ -923,14 +1106,28 @@ void setupTimingMsg(uint32_t *msg)
 {
   buildTimingMsg(msg, EVT_ID_IO_H32 << 1); // build a dummy timing message
 
-  uint64_t deadline = getSysTime();
+  // estimate the time duration of message injection
+  uint64_t deadline = getSysTime(); // start measurement
 
   *(msg +6) = hiU32(deadline); // deadline can be late, don't care it
   *(msg +7) = loU32(deadline);
 
-  injectTimingMsg(msg);        // inject a dummy message to estimate message injection duration
+  injectTimingMsg(msg);        // inject a dummy message
 
-  gInjection = getSysTime() -deadline; // get the injection duration
+  pTask[0].lasttick = pTask[0].deadline; // post-injection operations
+  pTask[0].deadline += pTask[0].period;
+  pTask[0].cycle = 1;
+
+  if (pTask[0].cycle > 0)
+  {
+    if (--pTask[0].cycle == 0)
+    {
+      pTask[0].deadline = 0;
+      gBurstsCycled |= (0x0 << (1 - 1));
+    }
+  }
+
+  gInjection = getSysTime() -deadline; // stop measurement and calculate the injection duration
   gInjection <<= 1;
   mprintf("Injection (ns)              : 0x%x%08x\n", (uint32_t) (gInjection >> 32), (uint32_t) gInjection );
 
@@ -1002,7 +1199,26 @@ void main(void) {
   setupMsiHandlers();         // set up MSI handlers
 
   int taskIdx = 0;            // reset task index
-  pTask[cNumTasks - 1].deadline = getSysTime(); // update the deadline of dummy task handler
+
+  for (taskIdx = 0; taskIdx < N_TASKS; ++taskIdx)
+  {
+    pTask[taskIdx].state = 0;
+    pTask[taskIdx].flag = CTL_DIS;
+    pTask[taskIdx].trigger = 0;
+    pTask[taskIdx].toggle = 0;
+    pTask[taskIdx].cycle = 0;
+    pTask[taskIdx].period = 0;
+    pTask[taskIdx].deadline = 0;
+    pTask[taskIdx].interval = ALWAYS;
+    pTask[taskIdx].lasttick = 0;
+    pTask[taskIdx].failed = 0;
+  }
+
+  for (taskIdx = 0; taskIdx <= N_BURSTS; ++taskIdx)
+    pTask[taskIdx].func = triggerIoActions;
+
+  pTask[taskIdx].interval = INTERVAL_1000MS;
+  pTask[taskIdx].func = hostMsiHandler;
 
   mprintf("\nwaiting host commmand ...\n");
 
@@ -1010,7 +1226,7 @@ void main(void) {
 
     // loop through all task. first, run all continuous tasks. then, if the number of ticks
     // since the last time the task was run is greater than or equal to the task interval, execute the task
-    for (taskIdx = 0; taskIdx < cNumTasks; taskIdx++) {
+    for (taskIdx = 0; taskIdx < N_TASKS; taskIdx++) {
 
       tick = getSysTime();
 
@@ -1023,6 +1239,8 @@ void main(void) {
         (*pTask[taskIdx].func)(taskIdx);
         pTask[taskIdx].lasttick = tick; // save last tick the task was ran
       }
+
+      ecaMsiHandler(0);
     }
   }
 }
