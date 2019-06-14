@@ -124,8 +124,9 @@ vEbwrs& CarpeDM::createCommand(vEbwrs& ew, const std::string& type, const std::s
     // Global Commands (not targeted at cmd queues of individual blocks)
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+    //Start is different to stop - start uses 'destination', stop uses target (entry node vs exit block)
     if (type == dnt::sCmdStart)   {
-      if (hm.lookup(destination)) {sLog << " Starting at <" << target << ">" << std::endl; startNodeOrigin(ew, destination);  }
+      if (hm.lookup(destination)) {sLog << " Starting at <" << destination << ">" << std::endl; startNodeOrigin(ew, destination);  }
       else {throw std::runtime_error("Cannot execute command '" + type + "' No valid cpu/thr provided and '" + target + "' is not a valid node name\n");}
       return ew;
     }
@@ -290,23 +291,16 @@ vEbwrs& CarpeDM::createCommandBurst(vEbwrs& ew, Graph& g) {
     uint32_t cmdQty;
     uint8_t cmdPrio;
 
-
-
     //use the pattern and beamprocess tags to determine the target. Pattern overrides Beamprocess overrides cpu/thread
-          if (g[v].patName  != DotStr::Misc::sUndefined)    { target = getPatternExitNode(g[v].patName); }
-    else  if (g[v].bpName != DotStr::Misc::sUndefined)      { target = getBeamprocExitNode(g[v].bpName); }
-    else  {target = g[v].cmdTarget;}
-
-
-    destination = target; // covers the start/startpattern case, where the entry node is needed, but linguistically, one would only supply pattern, not destpattern
-
-    //use the destPattern and destBeamprocess tags to determine the destination
-    if (g[v].cmdDestPat  != DotStr::Misc::sUndefined)      { destination = getPatternEntryNode(g[v].cmdDestPat); }
-    else  if (g[v].cmdDestBp != DotStr::Misc::sUndefined)  { destination = getBeamprocEntryNode(g[v].cmdDestBp); }
-    else  if (g[v].cmdDest != DotStr::Misc::sUndefined)    { destination = g[v].cmdDest;}
+          if (g[v].patName  != DotStr::Misc::sUndefined)  { target = getPatternExitNode(g[v].patName); destination = getPatternEntryNode(g[v].patName); }
+    else  if (g[v].bpName   != DotStr::Misc::sUndefined)  { target = getBeamprocExitNode(g[v].bpName); destination = getBeamprocEntryNode(g[v].patName); }
+    else  { target = g[v].cmdTarget; }
     
-
-
+    //use the destPattern and destBeamprocess tags to determine the destination
+    if       (g[v].cmdDestPat   != DotStr::Misc::sUndefined)  { destination = getPatternEntryNode(g[v].cmdDestPat); }
+    else  if (g[v].cmdDestBp    != DotStr::Misc::sUndefined)  { destination = getBeamprocEntryNode(g[v].cmdDestBp); }
+    else  if (g[v].cmdDest      != DotStr::Misc::sUndefined)  { destination = g[v].cmdDest;}
+    else  { destination = target; } // if there is no destination, assign target to destination
 
     type      = g[v].type;
     cmdPrio   = s2u<uint8_t>(g[v].prio);
@@ -318,7 +312,6 @@ vEbwrs& CarpeDM::createCommandBurst(vEbwrs& ew, Graph& g) {
     qHi       = s2u<bool>(g[v].qHi);
     qLo       = s2u<bool>(g[v].qLo);
     perma     = s2u<bool>(g[v].perma);
-    //sLog << "DEBUG: VABS: " << g[v].vabs << std::boolalpha << " recon " << vabs << std::endl;
     lockRd    = true;
     lockWr    = true;
     //fixme hack to test compile
