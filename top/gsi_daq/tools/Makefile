@@ -38,6 +38,7 @@ DEFINES += CONFIG_DAQ_DEBUG
 DEFINES += VERSION=0.1
 DEFINES += GPSTR_DEFAULT_GNUPLOT_EXE=\"$(GNUPLOT_BIN)\"
 
+ DEFINES += CONFIG_NO_FE_ETHERBONE_CONNECTION
  DEFINES += CONFIG_DDR3_NO_BURST_FUNCTIONS
 
 HOST ?= tcp/$(SCU_URL)
@@ -53,8 +54,8 @@ HOST ?= tcp/$(SCU_URL)
 #CALL_ARGS         ?= $(HOST) -Hrtev 9 1
 #CALL_ARGS         ?=  $(HOST) -G /usr/bin/gnuplot -PrzvC 3 1
 
-#CALL_ARGS         ?=  $(HOST) -C 3 1 3 2 9 1 9 2 9 3 9 4
-CALL_ARGS         ?=  $(HOST) -C 3 1 3 2
+CALL_ARGS         ?=  $(HOST) -C=100US 3 1 3 2
+#CALL_ARGS         ?=  $(HOST) -PrC 3 1 3 2 9 1 9 2
 #CALL_ARGS         ?= $(HOST) -n
 #CALL_ARGS         ?= -n
 

@@ -164,12 +164,23 @@ DaqChannel* DaqDevice::getChannel( const unsigned int number )
 
 /*! ---------------------------------------------------------------------------
  */
-DaqAdministration::DaqAdministration( const std::string wbDevice, bool doReset )
+DaqAdministration::DaqAdministration( const std::string wbDevice,
+                                                                 bool doReset )
   :DaqInterface( wbDevice, doReset )
   ,m_maxChannels( 0 )
   ,m_poCurrentDescriptor( nullptr )
 {
 }
+
+#ifndef CONFIG_NO_FE_ETHERBONE_CONNECTION
+DaqAdministration::DaqAdministration( DaqEb::EtherboneConnection* poEtherbone,
+                                                                 bool doReset )
+   :DaqInterface( poEtherbone, doReset )
+   ,m_maxChannels( 0 )
+   ,m_poCurrentDescriptor( nullptr )
+{
+}
+#endif
 
 /*! ---------------------------------------------------------------------------
  */

@@ -73,6 +73,9 @@ const std::string daq::status2String( DAQ_RETURN_CODE_T status )
 DaqInterface::DaqInterface( const std::string wbDevice, bool doReset )
    :m_wbDevice( wbDevice )
    ,m_poEbHandle( nullptr )
+#ifndef CONFIG_NO_FE_ETHERBONE_CONNECTION
+   ,m_poEbConnection( nullptr )
+#endif
    ,m_slotFlags( 0 )
    ,m_maxDevices( 0 )
    ,m_doReset( doReset )
@@ -94,6 +97,19 @@ DaqInterface::DaqInterface( const std::string wbDevice, bool doReset )
       sendReset();
    readSlotStatus();
 }
+
+#ifndef CONFIG_NO_FE_ETHERBONE_CONNECTION
+DaqInterface::DaqInterface( DaqEb::EtherboneConnection* poEtherbone,
+                            bool doReset )
+   :m_poEbHandle( nullptr )
+   ,m_poEbConnection( poEtherbone )
+   ,m_slotFlags( 0 )
+   ,m_maxDevices( 0 )
+   ,m_doReset( doReset )
+{
+
+}
+#endif
 
 /*! ---------------------------------------------------------------------------
  * @brief Destructor of class daq::DaqInterfaceInterface

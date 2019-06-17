@@ -755,6 +755,10 @@ protected:
 public:
    DaqAdministration( const std::string = DAQ_DEFAULT_WB_DEVICE,
                                                          bool doReset = true );
+#ifndef CONFIG_NO_FE_ETHERBONE_CONNECTION
+   DaqAdministration( DaqEb::EtherboneConnection* poEtherbone,
+                                                         bool doReset = true );
+#endif
    virtual ~DaqAdministration( void );
 
    /*!

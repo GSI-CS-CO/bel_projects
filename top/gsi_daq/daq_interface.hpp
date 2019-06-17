@@ -29,10 +29,15 @@
 #include <scu_bus_defines.h>
 #include <daq_ramBuffer.h>
 #include <daq_descriptor.h>
-#include <eb_object_transfer.h>
 #include <stddef.h>
 #include <string>
 #include <exception>
+
+#include <eb_object_transfer.h>
+
+#ifndef CONFIG_NO_FE_ETHERBONE_CONNECTION
+  #include <EtherboneConnection.hpp>
+#endif
 
 #ifndef DAQ_DEFAULT_WB_DEVICE
    #define DAQ_DEFAULT_WB_DEVICE "dev/wbm0"
@@ -53,10 +58,15 @@
 #ifndef DAQ_VSS_MAX
    #define DAQ_VSS_MAX 20.0
 #endif
+#ifndef CONFIG_NO_FE_ETHERBONE_CONNECTION
+namespace DaqEb = FeSupport::Scu::Etherbone;
+#endif
+
 namespace Scu
 {
 namespace daq
 {
+
 
 /*! ---------------------------------------------------------------------------
  * @ingroup DAQ
@@ -150,19 +160,22 @@ public:
    typedef DAQ_RETURN_CODE_T    RETURN_CODE_T;
 
 private:
-   const std::string        m_wbDevice;
-   EB_HANDLE_T              m_oEbHandle;
-   EB_HANDLE_T*             m_poEbHandle;
-   DAQ_SHARED_IO_T          m_oSharedData;
-   SLOT_FLAGS_T             m_slotFlags;
-   unsigned int             m_maxDevices;
-   DAQ_LAST_STATUS_T        m_lastStatus;
-   const bool               m_doReset;
+   const std::string            m_wbDevice;
+   EB_HANDLE_T                  m_oEbHandle;
+   EB_HANDLE_T*                 m_poEbHandle;
+#ifndef CONFIG_NO_FE_ETHERBONE_CONNECTION
+   DaqEb::EtherboneConnection*  m_poEbConnection;
+#endif
+   DAQ_SHARED_IO_T              m_oSharedData;
+   SLOT_FLAGS_T                 m_slotFlags;
+   unsigned int                 m_maxDevices;
+   DAQ_LAST_STATUS_T            m_lastStatus;
+   const bool                   m_doReset;
 
 protected:
-   RAM_SCU_T                m_oScuRam;
+   RAM_SCU_T                    m_oScuRam;
 
-   constexpr static unsigned int c_maxCmdPoll         = 200;
+   constexpr static unsigned int c_maxCmdPoll  = 200;
 
 public:
    constexpr static unsigned int c_maxDevices
@@ -189,6 +202,10 @@ public:
              = c_hiresPmDataLen - c_discriptorWordSize;
 
    DaqInterface( const std::string = DAQ_DEFAULT_WB_DEVICE, bool doReset = true );
+
+#ifndef CONFIG_NO_FE_ETHERBONE_CONNECTION
+   DaqInterface( DaqEb::EtherboneConnection* poEtherbone, bool doReset = true );
+#endif
 
    virtual ~DaqInterface( void );
 

@@ -27,6 +27,8 @@
 #include <daq_administration.hpp>
 #include <unistd.h>
 
+
+using namespace Scu;
 using namespace daq;
 using namespace std;
 
@@ -124,8 +126,15 @@ int main( int argc, const char** ppArgv )
        * Instead of the SCU-URL at now, a pointer or reverence of a
        * wishbone/etherbone object will it be in the future!
        */
+#ifdef CONFIG_NO_FE_ETHERBONE_CONNECTION
       DaqAdministration scuWithDaq( ppArgv[1] );
-
+#else
+      DaqEb::EtherboneConnection ebConnection( ppArgv[1] );
+      ebConnection.setDebug( true );
+      ebConnection.connect();
+      DaqAdministration scuWithDaq( &ebConnection );
+#endif
+#if 0
       /*
        * If this SCU doesn't have any DAQ...
        */
@@ -226,6 +235,10 @@ int main( int argc, const char** ppArgv )
          * At least we send a reset command to the LM32 program:
          */
         scuWithDaq.sendReset();
+#ifndef CONFIG_NO_FE_ETHERBONE_CONNECTION
+        ebConnection.disconnect();
+#endif
+#endif
    } // End try()
 
    catch( exception& e )
