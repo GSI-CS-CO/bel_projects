@@ -224,7 +224,9 @@ vEbwrs& CarpeDM::createCommand(vEbwrs& ew, const std::string& type, const std::s
   
 }    
 
-//convenience wrappers
+
+// FIXME god this is awful ... replace with builder pattern!
+//wrappers
 //commands with no extras
 vEbwrs& CarpeDM::createNonQCommand(vEbwrs& ew, const std::string& type, const std::string& target) {
   return createCommand(ew, type, target, "", 0, 1, true, 0, false, false, false, false, 0, false, false, false);
