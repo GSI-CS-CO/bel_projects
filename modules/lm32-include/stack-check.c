@@ -1,6 +1,7 @@
 #include <stack.h>
 #include <assert.h>
 #include <pp-printf.h>
+#include <aux.h>
 #include <string.h>
 
 void check_stack(void)
@@ -21,8 +22,8 @@ void check_stack_fwid(uint32_t *fwid)
 #define STACKSTATUS_OFFSET 24
   
   static int  inited;
-  char help[64];
-  int i;
+  char        help[64];
+  int         i,j;
 
   // lazily, initialize at first invocation (no init function is there) 
   if (!inited) {
@@ -31,9 +32,15 @@ void check_stack_fwid(uint32_t *fwid)
     fwid[(STACKSTATUS_OFFSET >> 2)] = 0x6f6b6f6b;
   }
   if (_endram != ENDRAM_MAGIC) {
+    // print error message and value to firmware ID
     // avoid trailing '/0'
-    pp_sprintf(help, "Stack overflow! (0x%x)", (unsigned int)_endram);
+    pp_sprintf(help, "Stack overflow! (0x%x", (unsigned int)_endram);
     for (i=0; i<strlen(help); i++) ((char *)fwid)[i+STACKSTATUS_OFFSET] = help[i];
+
+    // print actual WR time to firmware ID too
+    j = i;
+    pp_sprintf(help, ", 0x%016llx)", getSysTime());
+    for (i=0; i<strlen(help); i++) ((char *)fwid)[i+j+STACKSTATUS_OFFSET] = help[i];    
 
     assert(0, "Stack overflow! (%x)\n", (unsigned int)_endram);
   } // if _endram
