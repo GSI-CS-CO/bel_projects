@@ -31,17 +31,26 @@ void TimingMsg::serialise(const vAdr &va, uint8_t* b) const {
 
   //Careful - the fact that these can be pointers does not mean the LM32 has to interprete them!
   //That still depends on the flags
-  if (va[ADR_DYN_ID]    != LM32_NULL_PTR) id  &= ~0xffffffffULL; id   |= va[ADR_DYN_ID];;
-  if (va[ADR_DYN_PAR1]  != LM32_NULL_PTR) par &= ~(0xffffffffULL << 32); par  |= ((uint64_t)va[ADR_DYN_PAR1] << 32);
-  if (va[ADR_DYN_PAR0]  != LM32_NULL_PTR) par &= ~0xffffffffULL; par  |= va[ADR_DYN_PAR0];
-  if (va[ADR_DYN_TEF]   != LM32_NULL_PTR) tef  = va[ADR_DYN_TEF];
-  if (va[ADR_DYN_RES]   != LM32_NULL_PTR) res  = va[ADR_DYN_RES];
-
+  if (va[ADR_DYN_ID]    != LM32_NULL_PTR) {id  &= ~0xffffffffULL;         id   |= va[ADR_DYN_ID];}
+  if (va[ADR_DYN_PAR1]  != LM32_NULL_PTR) {par &= ~(0xffffffffULL << 32); par  |= ((uint64_t)va[ADR_DYN_PAR1] << 32);}
+  if (va[ADR_DYN_PAR0]  != LM32_NULL_PTR) {par &= ~0xffffffffULL;         par  |= va[ADR_DYN_PAR0];}
+  if (va[ADR_DYN_TEF]   != LM32_NULL_PTR) {                               tef   = va[ADR_DYN_TEF];}
+  if (va[ADR_DYN_RES]   != LM32_NULL_PTR) {                               res   = va[ADR_DYN_RES];}
 
   writeLeNumberToBeBytes(b + (ptrdiff_t)TMSG_ID,  id);
   writeLeNumberToBeBytes(b + (ptrdiff_t)TMSG_PAR, par);
   writeLeNumberToBeBytes(b + (ptrdiff_t)TMSG_RES, res);
   writeLeNumberToBeBytes(b + (ptrdiff_t)TMSG_TEF, tef);
+}
+
+void Switch::serialise(const vAdr &va, uint8_t* b) const {
+  Event::serialise(va, b);
+  writeLeNumberToBeBytes(b + (ptrdiff_t)SWITCH_TARGET, va[ADR_SWITCH_TARGET]);
+  writeLeNumberToBeBytes(b + (ptrdiff_t)SWITCH_DEST,   va[ADR_SWITCH_DEST]);
+}
+
+void Switch::deserialise(uint8_t* b) {
+  Event::deserialise(b);
 }
 
 void Command::deserialise(uint8_t* b)   {
@@ -55,7 +64,6 @@ void Command::serialise(const vAdr &va, uint8_t* b) const {
   writeLeNumberToBeBytes(b + (ptrdiff_t)CMD_TARGET,     va[ADR_CMD_TARGET]);
   writeLeNumberToBeBytes(b + (ptrdiff_t)CMD_VALID_TIME, this->tValid);
   writeLeNumberToBeBytes(b + (ptrdiff_t)CMD_ACT,        this->act);
-
 }
 
 void Noop::deserialise(uint8_t* b)  {
@@ -85,7 +93,6 @@ void Wait::deserialise(uint8_t* b)  {
 void Wait::serialise(const vAdr &va, uint8_t* b) const {
   Command::serialise(va, b);
   writeLeNumberToBeBytes(b + (ptrdiff_t)CMD_WAIT_TIME, this->tWait);
-
 }
 
 void Flush::deserialise(uint8_t* b)  {
@@ -107,7 +114,6 @@ void Flush::serialise(const vAdr &va, uint8_t* b) const {
   b[CMD_FLUSHRNG_HI_TO]   = this->toHi;
   b[CMD_FLUSHRNG_LO_FRM]  = this->frmLo;
   b[CMD_FLUSHRNG_LO_TO]   = this->toLo;
-
 }
 
 const uint16_t Flush::getRng(uint8_t q) const {
@@ -129,6 +135,18 @@ void TimingMsg::show(uint32_t cnt, const char* prefix) const {
   printf("%sID 0x%08x%08x, Par 0x%08x%08x, Tef 0x%08x\n", p, (uint32_t)(this->id >> 32),
   (uint32_t)this->id, (uint32_t)(this->par >> 32), (uint32_t)this->par, this->tef);
 }
+
+void Switch::show(void) const {
+  Switch::show(0, "");
+}
+
+void Switch::show(uint32_t cnt, const char* prefix) const {
+  char* p;
+  if (prefix == nullptr) p = (char*)"";
+  else p = (char*)prefix;
+  printf("%s***------- %3u -------\n", p, cnt);
+  printf("%s*** Switch @ %llu, ", p, (long long unsigned int)this->tOffs);
+}  
 
 void Command::show(void) const {
   Command::show(0, "");
@@ -169,7 +187,6 @@ void Flow::show(uint32_t cnt, const char* prefix) const {
   else p = (char*)prefix;
 
   Command::show( cnt, p);
-
 }
 
 void Wait::show(void) const {
@@ -182,16 +199,11 @@ void Wait::show(uint32_t cnt, const char* prefix) const {
   else p = (char*)prefix;
 
   Command::show( cnt, p);
-
 }
-
 
 void Noop::show(void) const {
   Noop::show(0, "");
 }
-
-
-
 
 void Noop::show(uint32_t cnt, const char* prefix) const {
   char* p;

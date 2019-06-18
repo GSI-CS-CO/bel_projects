@@ -45,6 +45,8 @@ namespace DotStr {
       extern const std::string sAltDst;
       extern const std::string sBadDefDst;
       extern const std::string sCmdTarget;
+      extern const std::string sSwitchTarget;     // Links to Switch's Target 
+      extern const std::string sSwitchDst;     // Links to Switch's Target Block
       extern const std::string sCmdFlowDst;
       extern const std::string sCmdFlushOvr;
       extern const std::string sDynId;
@@ -122,6 +124,7 @@ namespace DotStr {
         extern const std::string sPermanent;
 
 
+
       }
     }
 
@@ -143,12 +146,16 @@ namespace DotStr {
       extern const std::string sTMsg;
       extern const std::string sCmdNoop;
       extern const std::string sCmdFlow;
+      extern const std::string sSwitch;
       extern const std::string sCmdFlush;
       extern const std::string sCmdWait;
       extern const std::string sCmdStart;
       extern const std::string sCmdStop;
       extern const std::string sCmdAbort;
       extern const std::string sCmdOrigin;
+      extern const std::string sCmdLock;
+      extern const std::string sCmdUnlock;
+      extern const std::string sCmdAsyncClear;
       extern const std::string sBlock;
       extern const std::string sBlockFixed;
       extern const std::string sBlockAlign;
@@ -158,6 +165,7 @@ namespace DotStr {
       extern const std::string sMeta;
       extern const bool bMetaNode;
       extern const bool bRealNode;
+
 
     }
   }
@@ -207,6 +215,11 @@ namespace DotStr {
         extern const std::string sLookDef;
 
       }
+      namespace Switch {
+        extern const std::string sLookDef;
+
+      }
+
       namespace Meta {
         extern const std::string sLookDef;
       }

@@ -1,0 +1,36 @@
+
+Download Table
+
+Idx   S/R   Cpu   Name                Hash         Int. Adr     Ext. Adr  
+   0    0     0   BLOCK_A             0x84075cd6   0x10000938   0x04120938
+   1    0     0   BLOCK_B             0x5e04e26d   0x1000096c   0x0412096c
+   2    0     0   BLOCK_IN0           0x886e00bc   0x100009a0   0x041209a0
+   3    0     0   BLOCK_IN1           0xae707b25   0x100009d4   0x041209d4
+   4    0     0   BLOCK_IN0_QBl_Il    0x15a86432   0x10000a08   0x04120a08
+   5    0     0   BLOCK_IN0_Qb_Il0    0x1ae2682e   0x10000a3c   0x04120a3c
+   6    0     0   BLOCK_IN0_Qb_Il1    0x40e4e297   0x10000a70   0x04120a70
+   7    0     0   BLOCK_IN0_QBl_Hi    0xa61f9308   0x10000aa4   0x04120aa4
+   8    0     0   BLOCK_IN0_Qb_Hi0    0x7faab9b0   0x10000ad8   0x04120ad8
+   9    0     0   BLOCK_IN0_Qb_Hi1    0xa5ad3419   0x10000b0c   0x04120b0c
+  10    0     0   BLOCK_IN0_QBl_Lo    0xf4509052   0x10000b40   0x04120b40
+  11    0     0   BLOCK_IN0_Qb_Lo0    0x23b48f4e   0x10000b74   0x04120b74
+  12    0     0   BLOCK_IN0_Qb_Lo1    0x49b709b7   0x10000ba8   0x04120ba8
+  13    0     0   BLOCK_IN0_ListDst   0x65c4b56c   0x10000bdc   0x04120bdc
+  14    0     0   BLOCK_IN1_QBl_Il    0xcd9a5cc1   0x10000c10   0x04120c10
+  15    0     0   BLOCK_IN1_Qb_Il0    0xbebd5221   0x10000c44   0x04120c44
+  16    0     0   BLOCK_IN1_Qb_Il1    0x98bad7b8   0x10000c78   0x04120c78
+  17    0     0   BLOCK_IN1_QBl_Hi    0x4cc00d83   0x10000cac   0x04120cac
+  18    0     0   BLOCK_IN1_Qb_Hi0    0x6824ac27   0x10000ce0   0x04120ce0
+  19    0     0   BLOCK_IN1_Qb_Hi1    0x422231be   0x10000d14   0x04120d14
+  20    0     0   BLOCK_IN1_QBl_Lo    0xeef230a1   0x10000d48   0x04120d48
+  21    0     0   BLOCK_IN1_Qb_Lo0    0x02a0bdd5   0x10000d7c   0x04120d7c
+  22    0     0   BLOCK_IN1_Qb_Lo1    0xdc9e436c   0x10000db0   0x04120db0
+  23    0     0   BLOCK_IN1_ListDst   0x808340d1   0x10000de4   0x04120de4
+
+
+Patterns:
+A
+B
+IN0
+IN1
+

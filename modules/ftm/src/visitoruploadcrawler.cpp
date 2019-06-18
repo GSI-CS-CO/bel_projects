@@ -27,6 +27,10 @@ void VisitorUploadCrawler::visit(const Flow& el) const  {
   el.serialise( getDefDst() + getCmdTarget((Command&)el) + getFlowDst(), b);
 }
 
+void VisitorUploadCrawler::visit(const Switch& el) const {
+  el.serialise( getDefDst() + getSwitchTarget() + getSwitchDst(), b);
+}
+
 void VisitorUploadCrawler::visit(const Flush& el) const {
   el.serialise( getDefDst() + getCmdTarget((Command&)el) + getFlushOvr(), b);
 }
@@ -208,6 +212,17 @@ vAdr VisitorUploadCrawler::getCmdTarget(Command& el) const {
   return ret;
 }
 
+vAdr VisitorUploadCrawler::getSwitchTarget() const {
+
+  vAdr ret;
+  //search for cmd target
+  childrenAdrs(getChildrenByEdgeType(v, det::sSwitchTarget), ret, 1, 1, true); // if this command is not connected, return a null pointer as target
+
+  return ret;
+}
+
+//TODO cleanup the dst function redundancies
+
 vAdr VisitorUploadCrawler::getFlowDst() const {
   vAdr ret;
 
@@ -217,6 +232,25 @@ vAdr VisitorUploadCrawler::getFlowDst() const {
   auto tgt = at.lookupVertex(*vsTgt.begin());
 
   vertex_set_t vsDst = getChildrenByEdgeType(v, det::sCmdFlowDst);
+  if((vsTgt.size() == 0) || (vsDst.size() == 0)) { ret.push_back(LM32_NULL_PTR); return ret;}// if this command is not connected, return a null pointer as flowdst
+
+  auto x = at.lookupVertex(*vsDst.begin());
+
+  if (x->cpu != tgt->cpu) throw std::runtime_error(  exIntro + "Target " + g[*vsTgt.begin()].name + "'s CPU must not differ from Dst " + g[*vsDst.begin()].name + "'s CPU\n");
+  ret.push_back(at.adrConv(AdrType::MGMT, AdrType::INT , x->cpu, x->adr));
+
+  return ret;
+}
+
+vAdr VisitorUploadCrawler::getSwitchDst() const {
+  vAdr ret;
+
+  //this will return exactly one target, otherwise neighbourhood check would have detected the misshapen schedule
+  vertex_set_t vsTgt = getChildrenByEdgeType(v, det::sSwitchTarget);
+  //command cross over to other CPUs is okay. Find out what Cpu the command target is on
+  auto tgt = at.lookupVertex(*vsTgt.begin());
+
+  vertex_set_t vsDst = getChildrenByEdgeType(v, det::sSwitchDst);
   if((vsTgt.size() == 0) || (vsDst.size() == 0)) { ret.push_back(LM32_NULL_PTR); return ret;}// if this command is not connected, return a null pointer as flowdst
 
   auto x = at.lookupVertex(*vsDst.begin());

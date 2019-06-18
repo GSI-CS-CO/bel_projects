@@ -17,6 +17,7 @@ class Command;
 class Noop;
 class TimingMsg;
 class Flow;
+class Switch;
 class Flush;
 class Wait;
 
@@ -37,6 +38,7 @@ class DestList;
     uint8_t         cpu;
 
     std::pair<uint8_t, AdrType> createCmd(const Command& el) const;
+    std::pair<uint8_t, AdrType> createSwitch(const Switch& el) const;
     void setDefDst(void) const;
     static const std::string exIntro;
 
@@ -46,6 +48,7 @@ class DestList;
     virtual void visit(const Block& el) const;
     virtual void visit(const TimingMsg& el) const;
     virtual void visit(const Flow& el) const;
+    virtual void visit(const Switch& el) const;
     virtual void visit(const Flush& el) const;
     virtual void visit(const Noop& el) const;
     virtual void visit(const Wait& el) const;

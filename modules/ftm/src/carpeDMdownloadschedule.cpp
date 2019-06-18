@@ -200,7 +200,8 @@ namespace dnt = DotStr::Node::TypeVal;
             case NODE_TYPE_TMSG         : g[v].np = (node_ptr) new  TimingMsg(g[v].name, g[v].patName, g[v].bpName, x->hash, x->cpu, flags); g[v].type = dnt::sTMsg;       g[v].np->deserialise((uint8_t*)x->b); break;
             case NODE_TYPE_CNOOP        : g[v].np = (node_ptr) new       Noop(g[v].name, g[v].patName, g[v].bpName, x->hash, x->cpu, flags); g[v].type = dnt::sCmdNoop;    g[v].np->deserialise((uint8_t*)x->b); break;
             case NODE_TYPE_CFLOW        : g[v].np = (node_ptr) new       Flow(g[v].name, g[v].patName, g[v].bpName, x->hash, x->cpu, flags); g[v].type = dnt::sCmdFlow;    g[v].np->deserialise((uint8_t*)x->b); break;
-            case NODE_TYPE_CFLUSH       : g[v].np = (node_ptr) new      Flush(g[v].name, g[v].patName, g[v].bpName, x->hash, x->cpu, flags); g[v].type = dnt::sCmdFlush;   g[v].np->deserialise((uint8_t*)x->b); break;
+            case NODE_TYPE_CSWITCH      : g[v].np = (node_ptr) new     Switch(g[v].name, g[v].patName, g[v].bpName, x->hash, x->cpu, flags); g[v].type = dnt::sCmdFlow;    g[v].np->deserialise((uint8_t*)x->b); break;
+            case NODE_TYPE_CFLUSH       : g[v].np = (node_ptr) new      Flush(g[v].name, g[v].patName, g[v].bpName, x->hash, x->cpu, flags); g[v].type = dnt::sSwitch;     g[v].np->deserialise((uint8_t*)x->b); break;
             case NODE_TYPE_CWAIT        : g[v].np = (node_ptr) new       Wait(g[v].name, g[v].patName, g[v].bpName, x->hash, x->cpu, flags); g[v].type = dnt::sCmdWait;    g[v].np->deserialise((uint8_t*)x->b); break;
             case NODE_TYPE_BLOCK_FIXED  : g[v].np = (node_ptr) new BlockFixed(g[v].name, g[v].patName, g[v].bpName, x->hash, x->cpu, flags); g[v].type = dnt::sBlockFixed; g[v].np->deserialise((uint8_t*)x->b); break;
             case NODE_TYPE_BLOCK_ALIGN  : g[v].np = (node_ptr) new BlockAlign(g[v].name, g[v].patName, g[v].bpName, x->hash, x->cpu, flags); g[v].type = dnt::sBlockAlign; g[v].np->deserialise((uint8_t*)x->b); break;
@@ -255,7 +256,7 @@ namespace dnt = DotStr::Node::TypeVal;
     er.va.push_back(modAdrBase + T_META_COVTAB_SIZE);
     er.vcs += leadingOne(4);
 
-    vDl = ebReadCycle(ebd, er.va, er.vcs);
+    vDl = ebd.readCycle(er.va, er.vcs);
     atDown.setMgmtLLstartAdr(writeBeBytesToLeNumber<uint32_t>((uint8_t*)&vDl[T_META_START_PTR]));
 
     uint32_t grp, cov;
@@ -283,7 +284,7 @@ namespace dnt = DotStr::Node::TypeVal;
     gDown.clear();
     //get all BMPs so we know which nodes to download
     if(verbose) sLog << "Downloading ...";
-    vDlBmpD = ebReadCycle(ebd, erBmp.va, erBmp.vcs);
+    vDlBmpD = ebd.readCycle(erBmp.va, erBmp.vcs);
     /*
     sLog << "Tried to read " << std::dec << erBmp.va.size() << " bmp addresses " << std::endl;
     sLog << "Got back " << std::dec << vDlBmpD.size() << " bmp bytes " << std::endl;
@@ -291,7 +292,7 @@ namespace dnt = DotStr::Node::TypeVal;
     */
     atDown.setBmps( vDlBmpD );
     erData = gatherDownloadDataVector();
-    vDlD   = ebReadCycle(ebd, erData.va, erData.vcs);
+    vDlD   = ebd.readCycle(erData.va, erData.vcs);
     /*
     sLog << "Tried to read " << erData.va.size() << " data addresses " << std::endl;
     sLog << "Got back " << vDlD.size() << " data bytes " << std::endl;

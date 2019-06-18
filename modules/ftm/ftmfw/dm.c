@@ -63,6 +63,7 @@ void dmInit() {
   nodeFuncs[NODE_TYPE_TMSG]             = tmsg;
   nodeFuncs[NODE_TYPE_CNOOP]            = cmd;
   nodeFuncs[NODE_TYPE_CFLOW]            = cmd;
+  nodeFuncs[NODE_TYPE_CSWITCH]          = cswitch;  
   nodeFuncs[NODE_TYPE_CFLUSH]           = cmd;
   nodeFuncs[NODE_TYPE_CWAIT]            = cmd;
   nodeFuncs[NODE_TYPE_BLOCK_FIXED]      = blockFixed;
@@ -80,6 +81,7 @@ void dmInit() {
   deadlineFuncs[NODE_TYPE_TMSG]         = dlEvt;
   deadlineFuncs[NODE_TYPE_CNOOP]        = dlEvt;
   deadlineFuncs[NODE_TYPE_CFLOW]        = dlEvt;
+  deadlineFuncs[NODE_TYPE_CSWITCH]      = dlEvt; 
   deadlineFuncs[NODE_TYPE_CFLUSH]       = dlEvt;
   deadlineFuncs[NODE_TYPE_CWAIT]        = dlEvt;
   deadlineFuncs[NODE_TYPE_BLOCK_FIXED]  = dlBlock;
@@ -187,12 +189,28 @@ uint32_t* execFlow(uint32_t* node, uint32_t* cmd, uint32_t* thrData) {
 }
 
 uint32_t* execFlush(uint32_t* node, uint32_t* cmd, uint32_t* thrData) {
-  uint8_t prios = (cmd[T_CMD_ACT >> 2] >> ACT_FLUSH_PRIO_POS) & ACT_FLUSH_PRIO_MSK;
-  if(prios & (1 << PRIO_LO)) *((uint8_t *)node + BLOCK_CMDQ_RD_IDXS + _32b_SIZE_  - PRIO_LO -1) = *((uint8_t *)node + BLOCK_CMDQ_WR_IDXS + _32b_SIZE_  - PRIO_LO -1);
-  if(prios & (1 << PRIO_HI)) *((uint8_t *)node + BLOCK_CMDQ_RD_IDXS + _32b_SIZE_  - PRIO_HI -1) = *((uint8_t *)node + BLOCK_CMDQ_WR_IDXS + _32b_SIZE_  - PRIO_HI -1);
-  // makes no sense to flush interlock priority, skipping
-  
-  //override successor ?
+  uint32_t action     = cmd[T_CMD_ACT >> 2];  
+  uint8_t  flushees   =       (action >> ACT_FLUSH_PRIO_POS) & ACT_FLUSH_PRIO_MSK;  // msk of flushee prios
+  uint8_t  flusher    =  1 << ((action >> ACT_PRIO_POS)      & ACT_PRIO_MSK);       // msk of flusher prio
+  uint8_t  qtyIsOne   = (1 ==  ((action >> ACT_QTY_POS)       & ACT_QTY_MSK));        // last qty left? (should always be 1 for flushes, but we better make sure)
+  uint32_t wrIdxs     = node[BLOCK_CMDQ_WR_IDXS >> 2] & BLOCK_CMDQ_WR_IDXS_SMSK;    // buffer current wr indices
+  uint32_t rdIdxs     = node[BLOCK_CMDQ_RD_IDXS >> 2] & BLOCK_CMDQ_RD_IDXS_SMSK;    // buffer current read indices
+
+  uint8_t prio;
+  for(prio = PRIO_LO; prio <= PRIO_IL; prio++) { // iterate priorities of flushees
+    // if execution would flush the very queue containing the flush command (the flusher), we must prevent the queue from being popped in block() function afterwards.
+    // Otherwise, rd idx will overtake wr idx -> queue corrupted. To minimize corner case impact, we do this by adjusting the
+    // new read idx to be wr idx-1. Then the queue pop leaves us with new rd idx = wr idx as it should be after a flush.
+    uint8_t flushMyselfB4pop  = ((flushees & flusher) >> prio) & 1 & qtyIsOne;                      // check if this is the only qty left and if flushee and flusher prios match
+    // new rd idx = wr idx, adjust by -1 if necessary. Don't forget to mask to proper qidx width afterwards!
+    uint8_t newRdIdx          = (*((uint8_t *)&wrIdxs + _32b_SIZE_ - prio -1) - flushMyselfB4pop) & Q_IDX_MAX_OVF_MSK;  
+
+    if(flushees & (1 << prio)) { *((uint8_t *)&rdIdxs + _32b_SIZE_  - prio -1) = newRdIdx; } // execute flush if current prio is a flushee
+  }
+  //write back potentially updated read indices
+  node[BLOCK_CMDQ_RD_IDXS >> 2] = rdIdxs;
+
+  //Flush override handling. Override successor ?
   uint32_t* ret = (uint32_t*)cmd[T_CMD_FLUSH_OVR >> 2];
   if((uint32_t)ret != LM32_NULL_PTR) { // no override to idle allowed!
     //permanent change?
@@ -203,6 +221,8 @@ uint32_t* execFlush(uint32_t* node, uint32_t* cmd, uint32_t* thrData) {
 
 
 }
+
+
 
 uint32_t* execWait(uint32_t* node, uint32_t* cmd, uint32_t* thrData) {
 
@@ -231,7 +251,7 @@ uint32_t* cmd(uint32_t* node, uint32_t* thrData) {
         uint32_t *ret = (uint32_t*)node[NODE_DEF_DEST_PTR >> 2];
   const uint32_t prio = (node[CMD_ACT >> 2] >> ACT_PRIO_POS) & ACT_PRIO_MSK;
   const uint32_t *tg  = (uint32_t*)node[CMD_TARGET >> 2];
-  const uint32_t adrPrefix = (uint32_t)tg & 0xffff0000; // if target is on a different RAM, all ptrs must be translated from the local to our (peer) perspective
+  const uint32_t adrPrefix = (uint32_t)tg & PEER_ADR_MSK; // if target is on a different RAM, all ptrs must be translated from the local to our (peer) perspective
 
   uint32_t *bl, *b, *e;
   uint8_t  *wrIdx;
@@ -241,6 +261,12 @@ uint32_t* cmd(uint32_t* node, uint32_t* thrData) {
   if(tg == LM32_NULL_PTR) { // check if the target is a null pointer. Used to allow removal of pattern containing target nodes
     return ret;
   }
+
+  //check if the target queues are write locked
+  const uint32_t qFlags = tg[BLOCK_CMDQ_FLAGS >> 2];
+    //  TODO find out if a retry makes sense
+  if(qFlags & BLOCK_CMDQ_DNW_SMSK) { return ret; }
+
 
   wrIdx   = ((uint8_t *)tg + BLOCK_CMDQ_WR_IDXS + _32b_SIZE_  - prio -1);                           // calculate pointer (8b) to current write index
   bufOffs = (*wrIdx & Q_IDX_MAX_MSK) / (_MEM_BLOCK_SIZE / _T_CMD_SIZE_  ) * _PTR_SIZE_;             // calculate Offsets
@@ -284,6 +310,30 @@ uint32_t* cmd(uint32_t* node, uint32_t* thrData) {
   *wrIdx = (*wrIdx + 1) & Q_IDX_MAX_OVF_MSK; //increase write index
 
   DBPRINT2("#%02u: Sending Cmd 0x%08x, Target: 0x%08x, next: 0x%08x\n", cpuId, node[NODE_HASH >> 2], (uint32_t)tg, node[NODE_DEF_DEST_PTR >> 2]);
+  return ret;
+}
+
+uint32_t* cswitch(uint32_t* node, uint32_t* thrData) {
+        uint32_t *ret = (uint32_t*)node[NODE_DEF_DEST_PTR >> 2];
+        node[NODE_FLAGS >> 2] |= NFLG_PAINT_LM32_SMSK; // set paint bit to mark this node as visited
+  
+        uint32_t *tg  = (uint32_t*)node[SWITCH_TARGET >> 2];
+  const uint32_t adrPrefix = (uint32_t)tg & PEER_ADR_MSK; // if target is on a different RAM, all ptrs must be translated from the local to our (peer) perspective
+
+  
+
+  // check if the target is a null pointer, if so abort. Used to allow removal of pattern containing target nodes
+  if(tg == LM32_NULL_PTR) { return ret; }
+
+  //check if the target queues are write locked
+  const uint32_t qFlags = tg[BLOCK_CMDQ_FLAGS >> 2];
+  if(qFlags & BLOCK_CMDQ_DNW_SMSK) { return ret; }
+  
+  //overwrite target defdst
+  tg[NODE_DEF_DEST_PTR >> 2] = (uint32_t)node[SWITCH_DEST >> 2];
+
+  DBPRINT2("#%02u: Sending Cmd 0x%08x, Target: 0x%08x, next: 0x%08x\n", cpuId, node[NODE_HASH >> 2], (uint32_t)tg, node[NODE_DEF_DEST_PTR >> 2]);
+  
   return ret;
 }
 
@@ -338,13 +388,15 @@ uint32_t* block(uint32_t* node, uint32_t* thrData) {
   uint8_t skipOne = 0;
 
   uint32_t *ardOffs = node + (BLOCK_CMDQ_RD_IDXS >> 2), *awrOffs = node + (BLOCK_CMDQ_WR_IDXS >> 2);
-  uint32_t bufOffs, elOffs, prio, actTmp, atype;
+  uint32_t bufOffs, elOffs, prio, actTmp, atype, qFlags = *((uint32_t*)(node + (BLOCK_CMDQ_FLAGS >> 2)));
   uint32_t qty;
 
   node[NODE_FLAGS >> 2] |= NFLG_PAINT_LM32_SMSK; // set paint bit to mark this node as visited
 
-  //3 ringbuffers -> 3 wr indices, 3 rd indices (one per priority). If any differ, there's work to do
-  if( (*awrOffs & 0x00ffffff) != (*ardOffs & 0x00ffffff) ) {
+  //3 ringbuffers -> 3 wr indices, 3 rd indices (one per priority).
+  //If Do not Read flag is not set and the indices differ, there's work to do
+  if(!(qFlags & BLOCK_CMDQ_DNR_SMSK) 
+  && ((*awrOffs & BLOCK_CMDQ_WR_IDXS_SMSK) != (*ardOffs & BLOCK_CMDQ_RD_IDXS_SMSK)) ) {
     //only process one command, and that of the highest priority. default is low, check up
     prio = PRIO_LO;
     //MSB first: bit 31 is at byte offset 0!
@@ -379,14 +431,14 @@ uint32_t* block(uint32_t* node, uint32_t* thrData) {
       actTmp |= ((--qty) & ACT_QTY_MSK) << ACT_QTY_POS;
       *act    = actTmp;
     } else {
-      skipOne = 1; //qty was exhausted before decrement, can be skipped
+      skipOne = 1; //qty was exhausted before decrement, action can be skipped
       DBPRINT2("#%02u: Found deactivated command\n" );
     }
 
     *(rdIdx) = (*rdIdx + (uint8_t)(qty == 0) ) & Q_IDX_MAX_OVF_MSK; //pop element if qty exhausted
 
     //If we could skip and there are more cmds pending, exit and let the scheduler come back directly to this block for the next cmd in our queue
-    if( skipOne && ((*awrOffs & 0x00ffffff) != (*ardOffs & 0x00ffffff)) ) {
+    if( skipOne && ((*awrOffs & BLOCK_CMDQ_WR_IDXS_SMSK) != (*ardOffs & BLOCK_CMDQ_RD_IDXS_SMSK)) ) {
       DBPRINT2("#%02u: Found more pending commands, skip deactivated cmd and process next cmd\n" );
       return node;
     }

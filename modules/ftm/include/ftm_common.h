@@ -236,16 +236,46 @@
 #define BLOCK_CMDQ_WR_IDXS      (BLOCK_CMDQ_IL_PTR  + _PTR_SIZE_)
 #define BLOCK_CMDQ_RD_IDXS      (BLOCK_CMDQ_WR_IDXS + _32b_SIZE_)
 #define BLOCK_CMDQ_PTRS          BLOCK_CMDQ_LO_PTR
+#define BLOCK_CMDQ_FLAGS        (BLOCK_CMDQ_RD_IDXS + _32b_SIZE_)
 
 #define BLOCK_CMDQ_IDX_IL    (3 - PRIO_IL)
 #define BLOCK_CMDQ_IDX_HI    (3 - PRIO_HI)
 #define BLOCK_CMDQ_IDX_LO    (3 - PRIO_LO)
+
+//Lock Flags. Signals DM to not change this queue's content
+#define BLOCK_CMDQ_FLGS_MSK   0x7
+#define BLOCK_CMDQ_FLGS_POS   0
+#define BLOCK_CMDQ_FLGS_SMSK  (BLOCK_CMDQ_FLGS_MSK << BLOCK_CMDQ_FLGS_POS)
+
+//DNW - signal Do not Write to DM
+#define BLOCK_CMDQ_DNW_MSK   0x1
+#define BLOCK_CMDQ_DNW_POS   0
+#define BLOCK_CMDQ_DNW_SMSK  (BLOCK_CMDQ_DNW_MSK << BLOCK_CMDQ_DNW_POS)
+
+//DNR - signal Do Not Read to DM
+#define BLOCK_CMDQ_DNR_MSK   0x1
+#define BLOCK_CMDQ_DNR_POS   1
+#define BLOCK_CMDQ_DNR_SMSK  (BLOCK_CMDQ_DNR_MSK << BLOCK_CMDQ_DNR_POS)
+
+//RWL - signal Retry Write when Locked to DM
+#define BLOCK_CMDQ_RWL_MSK   0x1
+#define BLOCK_CMDQ_RWL_POS   2
+#define BLOCK_CMDQ_RWL_SMSK  (BLOCK_CMDQ_DNR_MSK << BLOCK_CMDQ_DNR_POS)
+
+#define BLOCK_CMDQ_WR_IDXS_MSK  0x00ffffff
+#define BLOCK_CMDQ_WR_IDXS_POS  0
+#define BLOCK_CMDQ_WR_IDXS_SMSK BLOCK_CMDQ_WR_IDXS_MSK
+
+#define BLOCK_CMDQ_RD_IDXS_MSK  BLOCK_CMDQ_WR_IDXS_MSK
+#define BLOCK_CMDQ_RD_IDXS_POS  BLOCK_CMDQ_WR_IDXS_POS
+#define BLOCK_CMDQ_RD_IDXS_SMSK BLOCK_CMDQ_WR_IDXS_MSK
 
 
 #define Q_IDX_MAX_OVF          3
 #define Q_IDX_MAX              2
 #define Q_IDX_MAX_OVF_MSK      ~(-(1 << Q_IDX_MAX_OVF))
 #define Q_IDX_MAX_MSK          ~(-(1 << Q_IDX_MAX))
+
 
 ///// CMDQ Meta Node
 //
@@ -289,9 +319,13 @@
 #define TMSG_TEF                (TMSG_RES     + _32b_SIZE_)
 
 
+#define SWITCH_TARGET           (EVT_HDR_END)
+#define SWITCH_DEST				(SWITCH_TARGET + _PTR_SIZE_ + _TS_SIZE_ + _32b_SIZE_) //make this equal to command layout
+
 //////////////////////////////////////////////////////////////////////
 //// Generic Command Attributes //////////////////////////////////////
 #define CMD_BEGIN               (EVT_HDR_END)
+
 #define CMD_TARGET              (CMD_BEGIN)
 #define CMD_VALID_TIME          (CMD_TARGET         + _PTR_SIZE_)
 #define CMD_VALID_TIME_HI       (CMD_VALID_TIME     + 0)
@@ -358,11 +392,13 @@
 #define ADR_DYN_RES        5
 
 //
-// Command
-#define ADR_CMD_TARGET     1
-#define ADR_CMD_FLOW_DEST  2 // only if command is Flow change
+#define ADR_SWITCH_TARGET  		1
+#define ADR_SWITCH_DEST  		2 // only if is Switch change
 
-#define ADR_CMD_FLUSH_DEST_OVR 2 // only if command is Flush with override
+// Command
+#define ADR_CMD_TARGET     		1
+#define ADR_CMD_FLOW_DEST  		2 // only if command is Flow change
+#define ADR_CMD_FLUSH_DEST_OVR 	2 // only if command is Flush with override
 
 // Command Queue
 #define ADR_CMDQ_BUF_ARRAY 1
@@ -457,7 +493,8 @@
 #define NODE_TYPE_MGMT          (NODE_TYPE_SYNC         +1)   // contain the part of the groups and node name table in compressed form
 #define NODE_TYPE_COVENANT      (NODE_TYPE_MGMT         +1)   // contain the addresses of commands (in queues) which the user agrees not to preempt if optimised safe2remove is to work
 #define NODE_TYPE_NULL          (NODE_TYPE_COVENANT     +1)   // type returned by getNodeType if the node ptr was NULL. Intentionally not 0x000...
-#define _NODE_TYPE_END_         (NODE_TYPE_NULL         +1)   // Node type Quantity
+#define NODE_TYPE_CSWITCH       (NODE_TYPE_NULL         +1)   // instantaneously switch defdest of a block. Like permanent flow with no queue
+#define _NODE_TYPE_END_         (NODE_TYPE_CSWITCH      +1)   // Node type Quantity
 //Node type
 #define NFLG_TYPE_MSK           0xff
 #define NFLG_TYPE_POS           0
