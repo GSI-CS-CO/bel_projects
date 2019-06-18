@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 05-June-2019
+ *  version : 18-June-2019
  *
  * Command-line interface for b2btest
  *
@@ -135,7 +135,7 @@ static void help(void) {
 } //help
 
 
-int readInfo(uint32_t *sumStatus, uint32_t *state, uint32_t *nBadStatus, uint32_t *nBadState)
+int readInfo(uint32_t *sumStatus, uint32_t *state, uint32_t *nBadStatus, uint32_t *nBadState, uint32_t *nTransfer)
 {
   eb_cycle_t  cycle;
   eb_status_t eb_status;
@@ -146,12 +146,14 @@ int readInfo(uint32_t *sumStatus, uint32_t *state, uint32_t *nBadStatus, uint32_
   eb_cycle_read(cycle, b2btest_state,         EB_BIG_ENDIAN|EB_DATA32, &(data[1]));
   eb_cycle_read(cycle, b2btest_nBadStatus,    EB_BIG_ENDIAN|EB_DATA32, &(data[2]));
   eb_cycle_read(cycle, b2btest_nBadState,     EB_BIG_ENDIAN|EB_DATA32, &(data[3]));
+  eb_cycle_read(cycle, b2btest_nTransfer,     EB_BIG_ENDIAN|EB_DATA32, &(data[4]));
   if ((eb_status = eb_cycle_close(cycle)) != EB_OK) die("b2b-test: eb_cycle_close", eb_status);
 
   *sumStatus     = data[0];
   *state         = data[1];
   *nBadStatus    = data[2];
   *nBadState     = data[3];
+  *nTransfer     = data[4];
 
   return eb_status;
 } // readInfo
@@ -234,15 +236,15 @@ int readConfig(uint64_t *mac, uint32_t *ip)
 
 void printTransferHeader()
 {
-  printf("b2b-test:        nTrans      virtAcc        PZ   |        DIAGNOSIS   |                 INFO           \n");
-  printf("b2b-test: STATUS      n 0....5....A....F 0.....6 |     fUni  fMsg T M |   state      nchng stat   nchng\n");
+  printf("b2b-test:        nTrans |                 INFO                  \n");
+  printf("b2b-test: STATUS      n |   state      nchng     stat      nchng\n");
 } // printTransferHeader
 
 
-void printTransfer()
+void printTransfer(uint32_t nTransfer)
 {
   // diag
-  printf("DG blabla |");
+  printf("b2b-test:    %010u |", nTransfer);
 
 } // printTransfer
 
@@ -325,13 +327,14 @@ int main(int argc, char** argv) {
   uint32_t fH1Inj;                             // h=1 frequency [Hz] of injection machine
   uint32_t actState = COMMON_STATE_UNKNOWN;    // actual state of gateway
   uint32_t actSumStatus;                       // actual sum status of gateway
+  uint32_t actNTransfer = 0;                   // actual number of transfers
   uint32_t sleepTime;                          // time to sleep [us]
   uint32_t printFlag;                          // flag for printing
 
   uint64_t mac;                                // mac for config of EB master
   uint32_t ip;                                 // ip for config of EB master
 
-   program = argv[0];    
+  program = argv[0];    
 
   while ((opt = getopt(argc, argv, "s:ceih")) != -1) {
     switch (opt) {
@@ -427,9 +430,9 @@ int main(int argc, char** argv) {
 
   if (getInfo) {
     // status
-    readInfo(&sumStatus, &state, &nBadStatus, &nBadState);
+    readInfo(&sumStatus, &state, &nBadStatus, &nBadState, &nTransfer);
     printTransferHeader();
-    printTransfer();
+    printTransfer(nTransfer);
     printf(" %s (%6u), status 0x%08x (%6u)\n", common_state_text(state), nBadState, sumStatus, nBadStatus);
   } // if getInfo
 
@@ -503,7 +506,6 @@ int main(int argc, char** argv) {
     } // "seth1ext"
 
   } //if command
-  
 
   if (snoop) {
     printf("b2b-test: continous monitoring of gateway, loglevel = %d\n", logLevel);
@@ -514,7 +516,7 @@ int main(int argc, char** argv) {
     printTransferHeader();
 
     while (1) {
-      readInfo(&sumStatus, &state, &nBadStatus, &nBadState); // read info from lm32
+      readInfo(&sumStatus, &state, &nBadStatus, &nBadState, &nTransfer); // read info from lm32
 
       switch(state) {
       case COMMON_STATE_OPREADY :
@@ -523,17 +525,16 @@ int main(int argc, char** argv) {
         sleepTime = COMMON_DEFAULT_TIMEOUT * 1000;                          
       } // switch actState
       
-      // if required, print status change
-      if  ((actState != state) && (logLevel <= COMMON_LOGLEVEL_STATE)) printFlag = 1;
-
       // determine when to print info
       printFlag = 0;
 
-      if ((actState     != state)        && (logLevel <= COMMON_LOGLEVEL_STATE))   {printFlag = 1; actState  = state;}
+      
+      if ((actState     != state)        && (logLevel <= COMMON_LOGLEVEL_STATE))   {printFlag = 1; actState     = state;}
       if ((actSumStatus != sumStatus)    && (logLevel <= COMMON_LOGLEVEL_STATUS))  {printFlag = 1; actSumStatus = sumStatus;}
+      if ((actNTransfer != nTransfer)    && (logLevel <= COMMON_LOGLEVEL_ONCE))    {printFlag = 1; actNTransfer = nTransfer;}
 
       if (printFlag) {
-        printTransfer(); 
+        printTransfer(nTransfer); 
         printf(" %s (%6u), status 0x%08x (%d)\n", common_state_text(state), nBadState, sumStatus, nBadStatus);
       } // if printFlag
 
