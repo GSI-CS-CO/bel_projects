@@ -27,8 +27,29 @@
 #include <helper_macros.h>
 #include <iostream>
 
+#ifndef CONFIG_NO_FE_ETHERBONE_CONNECTION
+#include <BusException.hpp>
+namespace EB = FeSupport::Scu::Etherbone;
+namespace IPC = EB::IPC;
+#define EB_SCOPED_LOCK() IPC::scoped_lock<IPC::named_mutex> \
+        lock(m_poEbConnection->getMutex());
+
+#define EB_THROW_MESSAGE( _m )                                                 \
+   {                                                                           \
+      std::stringstream messageBuilder;                                        \
+      messageBuilder << __FILE__ << "::" << __FUNCTION__ << "::"               \
+                           << std::dec << __LINE__ << ": "                     \
+                           << "ERROR: " _m " etherbone cycle failed! - "       \
+                           "ErrorCode: " << status << " ErrorMsg: "            \
+                           << ::eb_status(status) << std::endl;                \
+      throw EB::BusException(messageBuilder.str());                            \
+   }
+
+#endif
+
 using namespace Scu;
 using namespace daq;
+
 
 #define FUNCTION_NAME_TO_STD_STRING static_cast<const std::string>(__func__)
 
@@ -70,12 +91,10 @@ const std::string daq::status2String( DAQ_RETURN_CODE_T status )
 /*! ---------------------------------------------------------------------------
  * @brief Constructor of class daq::DaqInterface
  */
+#ifdef CONFIG_NO_FE_ETHERBONE_CONNECTION
 DaqInterface::DaqInterface( const std::string wbDevice, bool doReset )
    :m_wbDevice( wbDevice )
    ,m_poEbHandle( nullptr )
-#ifndef CONFIG_NO_FE_ETHERBONE_CONNECTION
-   ,m_poEbConnection( nullptr )
-#endif
    ,m_slotFlags( 0 )
    ,m_maxDevices( 0 )
    ,m_doReset( doReset )
@@ -97,17 +116,25 @@ DaqInterface::DaqInterface( const std::string wbDevice, bool doReset )
       sendReset();
    readSlotStatus();
 }
-
-#ifndef CONFIG_NO_FE_ETHERBONE_CONNECTION
+#else
 DaqInterface::DaqInterface( DaqEb::EtherboneConnection* poEtherbone,
                             bool doReset )
-   :m_poEbHandle( nullptr )
-   ,m_poEbConnection( poEtherbone )
+   :m_poEbConnection( poEtherbone )
+   ,m_connectedBySelf( false )
    ,m_slotFlags( 0 )
    ,m_maxDevices( 0 )
    ,m_doReset( doReset )
 {
-
+   if( !m_poEbConnection->isConnected() )
+   {
+      m_poEbConnection->connect();
+      m_connectedBySelf = true;
+   }
+   readSharedTotal();
+   sendUnlockRamAccess();
+   if( m_doReset )
+      sendReset();
+   readSlotStatus();
 }
 #endif
 
@@ -116,7 +143,12 @@ DaqInterface::DaqInterface( DaqEb::EtherboneConnection* poEtherbone,
  */
 DaqInterface::~DaqInterface( void )
 {
+#ifdef CONFIG_NO_FE_ETHERBONE_CONNECTION
    ebClose();
+#else
+   if( m_connectedBySelf )
+      m_poEbConnection->disconnect();
+#endif
 }
 
 
@@ -129,6 +161,7 @@ const std::string DaqInterface::getLastReturnCodeString( void )
 
 /*! ---------------------------------------------------------------------------
  */
+#ifdef CONFIG_NO_FE_ETHERBONE_CONNECTION
 void DaqInterface::ebClose( void )
 {
    if( m_poEbHandle == nullptr )
@@ -139,11 +172,22 @@ void DaqInterface::ebClose( void )
 
    m_poEbHandle = nullptr;
 }
+#endif
 
+#ifndef CONFIG_NO_FE_ETHERBONE_CONNECTION
+#define EB_READ_LM32_SHARAD_OBJECT( oEbCycle, type, object, member )         \
+   oEbCycle.read( EB_LM32_FOR_MEMBER( type, member ),                        \
+                  reinterpret_cast<etherbone::data_t*>(&object.member) )
+
+#define EB_READ_LM32_DAQ_OBJECT( oEbCycle, object, member )                  \
+    EB_READ_LM32_SHARAD_OBJECT( oEbCycle, DAQ_SHARED_IO_T, object, member )
+
+#endif
 /*! ---------------------------------------------------------------------------
  */
 void DaqInterface::readSharedTotal( void )
 {
+#ifdef CONFIG_NO_FE_ETHERBONE_CONNECTION
    EB_MEMBER_INFO_T info[7];
    EB_INIT_INFO_ITEM_STATIC( info, 0, m_oSharedData.magicNumber );
    EB_INIT_INFO_ITEM_STATIC( info, 1, m_oSharedData.ramIndexes.ringIndexes.offset );
@@ -174,6 +218,26 @@ void DaqInterface::readSharedTotal( void )
    if( m_poEbHandle->status != EB_OK )
       __THROW_EB_EXCEPTION();
 
+#else
+   EB_SCOPED_LOCK();
+   etherbone::Cycle oEbCycle;
+   eb_status_t status;
+   if( (status = oEbCycle.open(m_poEbConnection->getEbDevice(), this,
+        eb_block)) != EB_OK )
+      EB_THROW_MESSAGE( "opening" );
+
+   EB_READ_LM32_DAQ_OBJECT( oEbCycle, m_oSharedData, magicNumber );
+   EB_READ_LM32_DAQ_OBJECT( oEbCycle, m_oSharedData, ramIndexes.ringIndexes.offset );
+   EB_READ_LM32_DAQ_OBJECT( oEbCycle, m_oSharedData, ramIndexes.ringIndexes.capacity );
+   EB_READ_LM32_DAQ_OBJECT( oEbCycle, m_oSharedData, ramIndexes.ringIndexes.start );
+   EB_READ_LM32_DAQ_OBJECT( oEbCycle, m_oSharedData, ramIndexes.ringIndexes.end );
+   EB_READ_LM32_DAQ_OBJECT( oEbCycle, m_oSharedData, operation.code );
+   EB_READ_LM32_DAQ_OBJECT( oEbCycle, m_oSharedData, operation.retCode );
+
+   if( (status = oEbCycle.close()) != EB_OK )
+      EB_THROW_MESSAGE( "closing" );
+
+#endif
    if( m_oSharedData.magicNumber != DAQ_MAGIC_NUMBER )
       throw DaqException( "Wrong DAQ magic number respectively not found" );
 }
@@ -210,6 +274,7 @@ bool DaqInterface::cmdReadyWait( void )
 DaqInterface::RETURN_CODE_T DaqInterface::sendCommand( DAQ_OPERATION_CODE_T cmd )
 {
    m_oSharedData.operation.code = cmd;
+#ifdef CONFIG_NO_FE_ETHERBONE_CONNECTION
    EB_MAKE_CB_OW_ARG( cArg );
 
    if( ebWriteObjectCycleOpen( cArg ) != EB_OK )
@@ -232,7 +297,18 @@ DaqInterface::RETURN_CODE_T DaqInterface::sendCommand( DAQ_OPERATION_CODE_T cmd 
    if( m_oSharedData.operation.retCode < DAQ_RET_OK )
       throw DaqException( "DAQ firmware error",
                           m_oSharedData.operation.retCode );
-
+#else
+#warning Fill with live!
+   EB_SCOPED_LOCK();
+   etherbone::Cycle oEbCycle;
+   eb_status_t status;
+   if( (status = oEbCycle.open(m_poEbConnection->getEbDevice(), this,
+        eb_block)) != EB_OK )
+      EB_THROW_MESSAGE( "opening" );
+//TODO
+   if( (status = oEbCycle.close()) != EB_OK )
+      EB_THROW_MESSAGE( "closing" );
+#endif
    return m_oSharedData.operation.retCode;
 }
 
@@ -240,6 +316,7 @@ DaqInterface::RETURN_CODE_T DaqInterface::sendCommand( DAQ_OPERATION_CODE_T cmd 
  */
 DAQ_OPERATION_CODE_T DaqInterface::getCommand( void )
 {
+#ifdef CONFIG_NO_FE_ETHERBONE_CONNECTION
    EB_MEMBER_INFO_T info[2];
 
    EB_INIT_INFO_ITEM_STATIC( info, 0, m_oSharedData.operation.code );
@@ -259,7 +336,18 @@ DAQ_OPERATION_CODE_T DaqInterface::getCommand( void )
    m_poEbHandle->status = cArg.status;
    if( m_poEbHandle->status != EB_OK )
       __THROW_EB_EXCEPTION();
-
+#else
+#warning Fill with live!
+   EB_SCOPED_LOCK();
+   etherbone::Cycle oEbCycle;
+   eb_status_t status;
+   if( (status = oEbCycle.open(m_poEbConnection->getEbDevice(), this,
+        eb_block)) != EB_OK )
+      EB_THROW_MESSAGE( "opening" );
+//TODO
+   if( (status = oEbCycle.close()) != EB_OK )
+      EB_THROW_MESSAGE( "closing" );
+#endif
    return m_oSharedData.operation.code;
 }
 
@@ -267,6 +355,7 @@ DAQ_OPERATION_CODE_T DaqInterface::getCommand( void )
  */
 DaqInterface::RETURN_CODE_T DaqInterface::readParam1( void )
 {
+#ifdef CONFIG_NO_FE_ETHERBONE_CONNECTION
    EB_MEMBER_INFO_T info[2];
 
    EB_INIT_INFO_ITEM_STATIC( info, 0, m_oSharedData.operation.retCode );
@@ -286,7 +375,18 @@ DaqInterface::RETURN_CODE_T DaqInterface::readParam1( void )
    m_poEbHandle->status = cArg.status;
    if( m_poEbHandle->status != EB_OK )
       __THROW_EB_EXCEPTION();
-
+#else
+#warning Fill with live!
+   EB_SCOPED_LOCK();
+   etherbone::Cycle oEbCycle;
+   eb_status_t status;
+   if( (status = oEbCycle.open(m_poEbConnection->getEbDevice(), this,
+        eb_block)) != EB_OK )
+      EB_THROW_MESSAGE( "opening" );
+//TODO
+   if( (status = oEbCycle.close()) != EB_OK )
+      EB_THROW_MESSAGE( "closing" );
+#endif
    return m_oSharedData.operation.retCode;
 }
 
@@ -294,6 +394,7 @@ DaqInterface::RETURN_CODE_T DaqInterface::readParam1( void )
  */
 DaqInterface::RETURN_CODE_T DaqInterface::readParam12( void )
 {
+#ifdef CONFIG_NO_FE_ETHERBONE_CONNECTION
    EB_MEMBER_INFO_T info[3];
 
    EB_INIT_INFO_ITEM_STATIC( info, 0, m_oSharedData.operation.retCode );
@@ -315,7 +416,18 @@ DaqInterface::RETURN_CODE_T DaqInterface::readParam12( void )
    m_poEbHandle->status = cArg.status;
    if( m_poEbHandle->status != EB_OK )
       __THROW_EB_EXCEPTION();
-
+#else
+#warning Fill with live!
+   EB_SCOPED_LOCK();
+   etherbone::Cycle oEbCycle;
+   eb_status_t status;
+   if( (status = oEbCycle.open(m_poEbConnection->getEbDevice(), this,
+        eb_block)) != EB_OK )
+      EB_THROW_MESSAGE( "opening" );
+//TODO
+   if( (status = oEbCycle.close()) != EB_OK )
+      EB_THROW_MESSAGE( "closing" );
+#endif
    return m_oSharedData.operation.retCode;
 }
 
@@ -323,6 +435,7 @@ DaqInterface::RETURN_CODE_T DaqInterface::readParam12( void )
  */
 DaqInterface::RETURN_CODE_T DaqInterface::readParam123( void )
 {
+#ifdef CONFIG_NO_FE_ETHERBONE_CONNECTION
    EB_MEMBER_INFO_T info[4];
 
    EB_INIT_INFO_ITEM_STATIC( info, 0, m_oSharedData.operation.retCode );
@@ -346,7 +459,18 @@ DaqInterface::RETURN_CODE_T DaqInterface::readParam123( void )
    m_poEbHandle->status = cArg.status;
    if( m_poEbHandle->status != EB_OK )
       __THROW_EB_EXCEPTION();
-
+#else
+#warning Fill with live!
+   EB_SCOPED_LOCK();
+   etherbone::Cycle oEbCycle;
+   eb_status_t status;
+   if( (status = oEbCycle.open(m_poEbConnection->getEbDevice(), this,
+        eb_block)) != EB_OK )
+      EB_THROW_MESSAGE( "opening" );
+//TODO
+   if( (status = oEbCycle.close()) != EB_OK )
+      EB_THROW_MESSAGE( "closing" );
+#endif
    return m_oSharedData.operation.retCode;
 }
 
@@ -354,6 +478,7 @@ DaqInterface::RETURN_CODE_T DaqInterface::readParam123( void )
  */
 DaqInterface::RETURN_CODE_T DaqInterface::readParam1234( void )
 {
+#ifdef CONFIG_NO_FE_ETHERBONE_CONNECTION
    EB_MEMBER_INFO_T info[5];
 
    EB_INIT_INFO_ITEM_STATIC( info, 0, m_oSharedData.operation.retCode );
@@ -379,8 +504,18 @@ DaqInterface::RETURN_CODE_T DaqInterface::readParam1234( void )
    m_poEbHandle->status = cArg.status;
    if( m_poEbHandle->status != EB_OK )
       __THROW_EB_EXCEPTION();
-
-
+#else
+#warning Fill with live!
+   EB_SCOPED_LOCK();
+   etherbone::Cycle oEbCycle;
+   eb_status_t status;
+   if( (status = oEbCycle.open(m_poEbConnection->getEbDevice(), this,
+        eb_block)) != EB_OK )
+      EB_THROW_MESSAGE( "opening" );
+//TODO
+   if( (status = oEbCycle.close()) != EB_OK )
+      EB_THROW_MESSAGE( "closing" );
+#endif
    return m_oSharedData.operation.retCode;
 }
 
@@ -388,6 +523,7 @@ DaqInterface::RETURN_CODE_T DaqInterface::readParam1234( void )
  */
 DaqInterface::RETURN_CODE_T DaqInterface::readRamIndexes( void )
 {
+#ifdef CONFIG_NO_FE_ETHERBONE_CONNECTION
    EB_MEMBER_INFO_T info[2];
    EB_INIT_INFO_ITEM_STATIC( info, 0, m_oSharedData.ramIndexes.ringIndexes.start );
    EB_INIT_INFO_ITEM_STATIC( info, 1, m_oSharedData.ramIndexes.ringIndexes.end );
@@ -409,7 +545,18 @@ DaqInterface::RETURN_CODE_T DaqInterface::readRamIndexes( void )
    m_poEbHandle->status = cArg.status;
    if( m_poEbHandle->status != EB_OK )
       __THROW_EB_EXCEPTION();
-
+#else
+#warning Fill with live!
+   EB_SCOPED_LOCK();
+   etherbone::Cycle oEbCycle;
+   eb_status_t status;
+   if( (status = oEbCycle.open(m_poEbConnection->getEbDevice(), this,
+        eb_block)) != EB_OK )
+      EB_THROW_MESSAGE( "opening" );
+//TODO
+   if( (status = oEbCycle.close()) != EB_OK )
+      EB_THROW_MESSAGE( "closing" );
+#endif
    return m_oSharedData.operation.retCode;
 }
 
@@ -417,6 +564,7 @@ DaqInterface::RETURN_CODE_T DaqInterface::readRamIndexes( void )
  */
 void DaqInterface::sendUnlockRamAccess( void )
 {
+#ifdef CONFIG_NO_FE_ETHERBONE_CONNECTION
    EB_MAKE_CB_OW_ARG( cArg );
 
    m_oSharedData.ramIndexes.ramAccessLock = false;
@@ -435,12 +583,25 @@ void DaqInterface::sendUnlockRamAccess( void )
    m_poEbHandle->status = cArg.status;
    if( m_poEbHandle->status != EB_OK )
       __THROW_EB_EXCEPTION();
+#else
+#warning Fill with live!
+   EB_SCOPED_LOCK();
+   etherbone::Cycle oEbCycle;
+   eb_status_t status;
+   if( (status = oEbCycle.open(m_poEbConnection->getEbDevice(), this,
+        eb_block)) != EB_OK )
+      EB_THROW_MESSAGE( "opening" );
+//TODO
+   if( (status = oEbCycle.close()) != EB_OK )
+      EB_THROW_MESSAGE( "closing" );
+#endif
 }
 
 /*! ---------------------------------------------------------------------------
  */
 void DaqInterface::writeParam1( void )
 {
+#ifdef CONFIG_NO_FE_ETHERBONE_CONNECTION
    EB_MAKE_CB_OW_ARG( cArg );
 
    if( ebWriteObjectCycleOpen( cArg ) != EB_OK )
@@ -460,12 +621,25 @@ void DaqInterface::writeParam1( void )
    m_poEbHandle->status = cArg.status;
    if( m_poEbHandle->status != EB_OK )
       __THROW_EB_EXCEPTION();
+#else
+#warning Fill with live!
+   EB_SCOPED_LOCK();
+   etherbone::Cycle oEbCycle;
+   eb_status_t status;
+   if( (status = oEbCycle.open(m_poEbConnection->getEbDevice(), this,
+        eb_block)) != EB_OK )
+      EB_THROW_MESSAGE( "opening" );
+//TODO
+   if( (status = oEbCycle.close()) != EB_OK )
+      EB_THROW_MESSAGE( "closing" );
+#endif
 }
 
 /*! ---------------------------------------------------------------------------
  */
 void DaqInterface::writeParam12( void )
 {
+#ifdef CONFIG_NO_FE_ETHERBONE_CONNECTION
    EB_MAKE_CB_OW_ARG( cArg );
 
    if( ebWriteObjectCycleOpen( cArg ) != EB_OK )
@@ -488,12 +662,25 @@ void DaqInterface::writeParam12( void )
    m_poEbHandle->status = cArg.status;
    if( m_poEbHandle->status != EB_OK )
       __THROW_EB_EXCEPTION();
+#else
+#warning Fill with live!
+   EB_SCOPED_LOCK();
+   etherbone::Cycle oEbCycle;
+   eb_status_t status;
+   if( (status = oEbCycle.open(m_poEbConnection->getEbDevice(), this,
+        eb_block)) != EB_OK )
+      EB_THROW_MESSAGE( "opening" );
+//TODO
+   if( (status = oEbCycle.close()) != EB_OK )
+      EB_THROW_MESSAGE( "closing" );
+#endif
 }
 
 /*! ---------------------------------------------------------------------------
  */
 void DaqInterface::writeParam123( void )
 {
+#ifdef CONFIG_NO_FE_ETHERBONE_CONNECTION
    EB_MAKE_CB_OW_ARG( cArg );
 
    if( ebWriteObjectCycleOpen( cArg ) != EB_OK )
@@ -518,12 +705,25 @@ void DaqInterface::writeParam123( void )
    m_poEbHandle->status = cArg.status;
    if( m_poEbHandle->status != EB_OK )
       __THROW_EB_EXCEPTION();
+#else
+#warning Fill with live!
+   EB_SCOPED_LOCK();
+   etherbone::Cycle oEbCycle;
+   eb_status_t status;
+   if( (status = oEbCycle.open(m_poEbConnection->getEbDevice(), this,
+        eb_block)) != EB_OK )
+      EB_THROW_MESSAGE( "opening" );
+//TODO
+   if( (status = oEbCycle.close()) != EB_OK )
+      EB_THROW_MESSAGE( "closing" );
+#endif
 }
 
 /*! ---------------------------------------------------------------------------
  */
 void DaqInterface::writeParam1234( void )
 {
+#ifdef CONFIG_NO_FE_ETHERBONE_CONNECTION
    EB_MAKE_CB_OW_ARG( cArg );
 
    if( ebWriteObjectCycleOpen( cArg ) != EB_OK )
@@ -550,12 +750,25 @@ void DaqInterface::writeParam1234( void )
    m_poEbHandle->status = cArg.status;
    if( m_poEbHandle->status != EB_OK )
       __THROW_EB_EXCEPTION();
+#else
+#warning Fill with live!
+   EB_SCOPED_LOCK();
+   etherbone::Cycle oEbCycle;
+   eb_status_t status;
+   if( (status = oEbCycle.open(m_poEbConnection->getEbDevice(), this,
+        eb_block)) != EB_OK )
+      EB_THROW_MESSAGE( "opening" );
+//TODO
+   if( (status = oEbCycle.close()) != EB_OK )
+      EB_THROW_MESSAGE( "closing" );
+#endif
 }
 
 /*! ---------------------------------------------------------------------------
  */
 void DaqInterface::writeRamIndexesAndUnlock( void )
 {
+#ifdef CONFIG_NO_FE_ETHERBONE_CONNECTION
    EB_MAKE_CB_OW_ARG( cArg );
 
    if( ebWriteObjectCycleOpen( cArg ) != EB_OK )
@@ -578,6 +791,18 @@ void DaqInterface::writeRamIndexesAndUnlock( void )
    m_poEbHandle->status = cArg.status;
    if( m_poEbHandle->status != EB_OK )
       __THROW_EB_EXCEPTION();
+#else
+#warning Fill with live!
+   EB_SCOPED_LOCK();
+   etherbone::Cycle oEbCycle;
+   eb_status_t status;
+   if( (status = oEbCycle.open(m_poEbConnection->getEbDevice(), this,
+        eb_block)) != EB_OK )
+      EB_THROW_MESSAGE( "opening" );
+//TODO
+   if( (status = oEbCycle.close()) != EB_OK )
+      EB_THROW_MESSAGE( "closing" );
+#endif
 }
 
 /*! ---------------------------------------------------------------------------

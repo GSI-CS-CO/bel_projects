@@ -3,8 +3,12 @@
 #include <etherbone.h>
 #include <utility>      // std::pair, std::make_pair
 #include <string>
+#include <boost/interprocess/sync/named_mutex.hpp>
+#include <boost/interprocess/sync/scoped_lock.hpp>
 
 #include "feSupport/scu/etherbone/Constants.hpp"
+
+
 
 namespace FeSupport {
   namespace Scu {
@@ -13,11 +17,14 @@ namespace FeSupport {
      * classes.
      */
     namespace Etherbone {
+      namespace IPC = boost::interprocess;
       /*!
        * \brief Connection abstraction for an etherbone bus.
        */
       class EtherboneConnection {
         public:
+           typedef IPC::named_mutex MUTEX_T;
+
           /*!
            * \brief Basic constuctor
            */
@@ -96,12 +103,48 @@ namespace FeSupport {
 
           uint32_t getSlaveMacroVersion(VendorId vendorId, DeviceId deviceId);
 
-          bool isConnected( void ) const
+          /*!
+           * @brief Returns true if connection has been successful established.
+           * @author UB
+           */
+          bool isConnected() const
           {
              return connectionOpened;
           }
 
+          /*!
+           * @brief Returns the net address given as first argument of
+           *        the constructor.
+           * @author UB
+           */
+          const std::string& getNetAddress()
+          {
+             return netaddress_;
+          }
+
+          /*!
+           * @brief Returns a reverence to the whishbone/etherbone device.
+           * @author UB
+           */
+          etherbone::Device& getEbDevice()
+          {
+             return eb_device_;
+          }
+
+          /*!
+           * @brief Returns a reverence to the system-mutex;
+           * @author UB
+           */
+          MUTEX_T& getMutex()
+          {
+             return _sysMu;
+          }
+
         private:
+          /*!
+           * @brief System mutex
+           */
+          MUTEX_T _sysMu;
           // EB-Device to talk to
           //
           std::string netaddress_;

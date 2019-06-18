@@ -10,8 +10,6 @@
 #include "feSupport/scu/etherbone/BusException.hpp"
 
 #include <boost/thread.hpp>
-#include <boost/interprocess/sync/named_mutex.hpp>
-#include <boost/interprocess/sync/scoped_lock.hpp>
 #include <boost/date_time.hpp>
 
 #include <sstream>
@@ -25,18 +23,13 @@ namespace Etherbone {
    #define ETHERBONE_CONNECTION_MUTEX "EtherBoneConnectionMutexDaq"
 #endif
 
-namespace IPC = boost::interprocess;
-
-//static boost::mutex _widgetMu;
-static IPC::named_mutex
-              _sysMu(IPC::open_or_create, ETHERBONE_CONNECTION_MUTEX);
-
 ///////////////////////////////////////////////////////////////////////////////
 /* ----------------------------------------------------------------------------
  */
 EtherboneConnection::EtherboneConnection(std::string netaddress,
                                                          unsigned int timeout)
-   :netaddress_(netaddress)
+   :_sysMu( IPC::open_or_create, ETHERBONE_CONNECTION_MUTEX )
+   ,netaddress_(netaddress)
    ,connectionOpened(false)
    ,debug_(false)
 {
@@ -104,7 +97,11 @@ void EtherboneConnection::connect()
 
    //boost::lock_guard<IPC::named_mutex> lock(_sysMu);
    IPC::scoped_lock<IPC::named_mutex> lock(_sysMu);
-   {
+   // What is the purpose of this curly braces, marked by a question mark?
+   // They aren't the scope of the Mutex above!
+   // If that shall be the purpose, so the Mutex has to be declared
+   // within the braces and not outside! UB
+   { //?
       status = eb_socket_.open(0, EB_ADDRX|EB_DATAX);
       if( status != EB_OK )
       {
@@ -124,7 +121,7 @@ void EtherboneConnection::connect()
                 << netaddress_ << " Error code: " << status;
          throw BusException(stream.str());
       }
-   }
+   } // ?
    this->connectionOpened = true;
 }
 
@@ -132,12 +129,12 @@ void EtherboneConnection::connect()
  */
 void EtherboneConnection::disconnect()
 {
-   IPC::scoped_lock<IPC::named_mutex> lock(_sysMu);
-   {
+   IPC::scoped_lock<IPC::named_mutex> lock(_sysMu); // See comment above! (UB)
+   { //?
       eb_device_.close();
       eb_socket_.close();
       this->connectionOpened = false;
-   }
+   } //?
 }
 
 /* ----------------------------------------------------------------------------
@@ -180,11 +177,11 @@ uint64_t EtherboneConnection::findDeviceBaseAddress( VendorId vendorId,
    sdb_device device;
    deviceVector.push_back(device);
 
-   IPC::scoped_lock<IPC::named_mutex> lock(_sysMu);
-   {
+   IPC::scoped_lock<IPC::named_mutex> lock(_sysMu); // See comment above! (UB)
+   { //?
       status = eb_device_.sdb_find_by_identity( vendorId, deviceId,
                                                 deviceVector);
-   }
+   } //?
 
    if( status != EB_OK )
    {
@@ -242,23 +239,23 @@ void EtherboneConnection::doRead( etherbone::address_t eb_address,
 {
    if ( size == 1 )
    {
-      IPC::scoped_lock<IPC::named_mutex> lock(_sysMu);
-      {
+      IPC::scoped_lock<IPC::named_mutex> lock(_sysMu); // See comment above! (UB
+      { //?
          eb_device_.read(eb_address, format, data);
          if (debug_)
               std::cout << __FILE__ << "::" << __FUNCTION__ << "::"
                         << std::dec << __LINE__
                         << " addr 0x" << std::hex << eb_address
                         << " data 0x" << *data << std::dec << std::endl;
-      }
+      } //?
    }
    else
    {
       etherbone::Cycle eb_cycle;
       eb_status_t status;
 
-      IPC::scoped_lock<IPC::named_mutex> lock(_sysMu);
-      {
+      IPC::scoped_lock<IPC::named_mutex> lock(_sysMu); // See comment above! (UB
+      { //?
          if ((status = eb_cycle.open(eb_device_, this, eb_block)) != EB_OK)
          {
               // TODO: a specific exception would be nice
@@ -290,7 +287,7 @@ void EtherboneConnection::doRead( etherbone::address_t eb_address,
                            << status_str << std::endl;
             throw BusException(messageBuilder.str());
          }
-      }
+      } //?
 
       if (debug_)
       {
@@ -317,8 +314,8 @@ void EtherboneConnection::doVectorRead( const etherbone::address_t &eb_address,
    etherbone::Cycle eb_cycle;
    eb_status_t status;
 
-   IPC::scoped_lock<IPC::named_mutex> lock(_sysMu);
-   {
+   IPC::scoped_lock<IPC::named_mutex> lock(_sysMu); // See comment above! (UB
+   { //?
       if ((status = eb_cycle.open(eb_device_, this, eb_block)) != EB_OK)
       {
         // TODO: a specific exception would be nice
@@ -354,7 +351,7 @@ void EtherboneConnection::doVectorRead( const etherbone::address_t &eb_address,
                         << status_str << std::endl;
          throw BusException(messageBuilder.str());
       }
-   }
+   } //?
 
    if (debug_)
    {
@@ -379,23 +376,23 @@ void EtherboneConnection::doWrite( const etherbone::address_t &eb_address,
 {
    if ( size == 1 )
    {
-      IPC::scoped_lock<IPC::named_mutex> lock(_sysMu);
-      {
+      IPC::scoped_lock<IPC::named_mutex> lock(_sysMu); // See comment above! (UB)
+      { //?
          eb_device_.write( eb_address, format, data[0] );
          if (debug_)
             std::cout << __FILE__ << "::" << __FUNCTION__ << "::"
                       << std::dec << __LINE__ << " addr 0x" << std::hex
                       << eb_address << " data 0x" << *data
                       << std::dec << std::endl;
-      }
+      } //?
    }
    else
    {
       etherbone::Cycle eb_cycle;
       eb_status_t status;
 
-      IPC::scoped_lock<IPC::named_mutex> lock(_sysMu);
-      {
+      IPC::scoped_lock<IPC::named_mutex> lock(_sysMu); // See comment above! (UB)
+      { //?
          if ((status = eb_cycle.open(eb_device_, this, eb_block)) != EB_OK)
          {
               // TODO: a specific exception would be nice
@@ -428,7 +425,7 @@ void EtherboneConnection::doWrite( const etherbone::address_t &eb_address,
                            << "ErrorCode: " << status << " ErrorMsg: " << status_str << std::endl;
             throw BusException(messageBuilder.str());
          }
-      }
+      } //?
    } // else
 } // doWrite
 
@@ -443,8 +440,8 @@ void EtherboneConnection::doVectorWrite(const etherbone::address_t &eb_address,
    etherbone::Cycle eb_cycle;
    eb_status_t status;
 
-   IPC::scoped_lock<IPC::named_mutex> lock(_sysMu);
-   {
+   IPC::scoped_lock<IPC::named_mutex> lock(_sysMu); // See comment above! (UB)
+   { //?
       if ((status = eb_cycle.open(eb_device_, this, eb_block)) != EB_OK)
       {
         // TODO: a specific exception would be nice
@@ -484,7 +481,7 @@ void EtherboneConnection::doVectorWrite(const etherbone::address_t &eb_address,
                         << status_str << std::endl;
          throw BusException(messageBuilder.str());
       }
-   }
+   } //?
 }
 
 } /* namespace EtherboneAccesss */

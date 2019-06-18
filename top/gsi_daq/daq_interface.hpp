@@ -160,11 +160,13 @@ public:
    typedef DAQ_RETURN_CODE_T    RETURN_CODE_T;
 
 private:
+#ifdef CONFIG_NO_FE_ETHERBONE_CONNECTION
    const std::string            m_wbDevice;
    EB_HANDLE_T                  m_oEbHandle;
    EB_HANDLE_T*                 m_poEbHandle;
-#ifndef CONFIG_NO_FE_ETHERBONE_CONNECTION
+#else
    DaqEb::EtherboneConnection*  m_poEbConnection;
+   bool                         m_connectedBySelf;
 #endif
    DAQ_SHARED_IO_T              m_oSharedData;
    SLOT_FLAGS_T                 m_slotFlags;
@@ -201,15 +203,22 @@ public:
    constexpr static std::size_t  c_pmHiresPayloadLen
              = c_hiresPmDataLen - c_discriptorWordSize;
 
+#ifdef CONFIG_NO_FE_ETHERBONE_CONNECTION
    DaqInterface( const std::string = DAQ_DEFAULT_WB_DEVICE, bool doReset = true );
-
-#ifndef CONFIG_NO_FE_ETHERBONE_CONNECTION
+#else
    DaqInterface( DaqEb::EtherboneConnection* poEtherbone, bool doReset = true );
 #endif
 
    virtual ~DaqInterface( void );
 
+#ifdef CONFIG_NO_FE_ETHERBONE_CONNECTION
    const std::string& getWbDevice( void ) const { return m_wbDevice; }
+#else
+   const std::string& getWbDevice( void ) const
+   {
+      return m_poEbConnection->getNetAddress();
+   }
+#endif
 
    const std::string getScuDomainName( void )
    {
@@ -218,7 +227,11 @@ public:
 
    const std::string getEbStatusString( void ) const
    {
+   #ifdef CONFIG_NO_FE_ETHERBONE_CONNECTION
       return static_cast<const std::string>(ebGetStatusString( m_poEbHandle ));
+   #else
+      return static_cast<const std::string>("Noch nix");
+   #endif
    }
 
    RETURN_CODE_T getLastReturnCode( void ) const
@@ -371,7 +384,7 @@ protected:
    virtual void onBlockReceiveError( void );
 
 private:
-
+#ifdef CONFIG_NO_FE_ETHERBONE_CONNECTION
    EB_STATUS_T ebSocketRun( void )
    {
       return Scu::ebSocketRun( m_poEbHandle );
@@ -393,7 +406,7 @@ private:
    {
       Scu::ebCycleClose( m_poEbHandle );
    }
-
+#endif
    bool cmdReadyWait( void );
    void readSharedTotal( void );
    RETURN_CODE_T sendCommand( DAQ_OPERATION_CODE_T );

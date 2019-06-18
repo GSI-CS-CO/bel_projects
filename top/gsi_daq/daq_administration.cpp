@@ -164,6 +164,7 @@ DaqChannel* DaqDevice::getChannel( const unsigned int number )
 
 /*! ---------------------------------------------------------------------------
  */
+#ifdef CONFIG_NO_FE_ETHERBONE_CONNECTION
 DaqAdministration::DaqAdministration( const std::string wbDevice,
                                                                  bool doReset )
   :DaqInterface( wbDevice, doReset )
@@ -171,8 +172,7 @@ DaqAdministration::DaqAdministration( const std::string wbDevice,
   ,m_poCurrentDescriptor( nullptr )
 {
 }
-
-#ifndef CONFIG_NO_FE_ETHERBONE_CONNECTION
+#else
 DaqAdministration::DaqAdministration( DaqEb::EtherboneConnection* poEtherbone,
                                                                  bool doReset )
    :DaqInterface( poEtherbone, doReset )

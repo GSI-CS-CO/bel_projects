@@ -753,9 +753,10 @@ protected:
    DEVICE_LIST_T  m_devicePtrList;
 
 public:
+#ifdef CONFIG_NO_FE_ETHERBONE_CONNECTION
    DaqAdministration( const std::string = DAQ_DEFAULT_WB_DEVICE,
                                                          bool doReset = true );
-#ifndef CONFIG_NO_FE_ETHERBONE_CONNECTION
+#else
    DaqAdministration( DaqEb::EtherboneConnection* poEtherbone,
                                                          bool doReset = true );
 #endif
