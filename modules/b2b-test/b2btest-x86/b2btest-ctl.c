@@ -125,11 +125,15 @@ static void help(void) {
   fprintf(stderr, "Example1: '%s dev/wbm0 bla bla bla\n", program);
   fprintf(stderr, "\n");
   fprintf(stderr, "When using option '-s<n>', the following information is displayed\n");
-  fprintf(stderr, "b2b-test:                  TRANSFERS                |                   INJECTION                     | DIAGNOSIS  |                    INFO   \n");
-  fprintf(stderr, "b2b-test:              n    sum(tkr)  set(get)/noBm | n(r2s/sumr2s)   sum( prep/bmrq/r2sis->mbtrig)   | DIAG margn | status         state      nchng stat   nchng\n");
-  fprintf(stderr, "b2b-test: TRANS 00057399,  5967( 13)ms, va 10(10)/0 | INJ 06(06/06),  964(0.146/   0/ 954 -> 9.979)ms | DG 1.453ms | 1 1 1 1 1 1, OpReady    (     0), OK (     4)\n");
-  fprintf(stderr, "          |            '      '   '         '  '  ' |      '  '  '      '     '    '    '        '    |        '   | ' ' ' ' ' '        '          '    '       ' \n");
-  fprintf(stderr, "          |            '      '   '         '  '  ' |      '  '  '      '     '    '    '        '    |        '   | ' ' ' ' ' '        '          '    '       ' - # of 'bad status' incidents\n");
+  fprintf(stderr, "b2b-test:        nTrans |                 INFO\n");
+  fprintf(stderr, "b2b-test: STATUS      n |   state      nchng     stat      nchng\n");
+  fprintf(stderr, "b2b-test:    0000065325 | OpReady    (     1), status 0x00000001 (     0)\n");
+  fprintf(stderr, "                      ' |       '          '                   '       '\n");
+  fprintf(stderr, "                      ' |       '          '                   '       '- # of bad status incidents\n");
+  fprintf(stderr, "                      ' |       '          '                   '- status (bitwise ored)\n");
+  fprintf(stderr, "                      ' |       '          '- # of bad state incidents\n");
+  fprintf(stderr, "                      ' |       '- state\n");
+  fprintf(stderr, "                      '- # of transfers\n");
   fprintf(stderr, "Report software bugs to <d.beck@gsi.de>\n");
   fprintf(stderr, "Version %s. Licensed under the LGPL v3.\n", B2BTEST_X86_VERSION);
 } //help
