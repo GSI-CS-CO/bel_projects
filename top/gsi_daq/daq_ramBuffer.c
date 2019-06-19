@@ -30,102 +30,28 @@
 #include <eb_console_helper.h>
 #include <daq_ramBuffer.h>
 
-/*! ---------------------------------------------------------------------------
- * @see scu_ramBuffer.h
- */
-RAM_RING_INDEX_T ramRingGetSize( const RAM_RING_INDEXES_T* pThis )
-{
-   if( pThis->end == pThis->capacity) /* Is ring-buffer full? */
-      return pThis->capacity;
-   if( pThis->end >= pThis->start )
-      return pThis->end - pThis->start;
-//   mprintf( "***\n" );
-   return (pThis->capacity - pThis->start) + pThis->end;
-}
-
-/*! ---------------------------------------------------------------------------
- * @see scu_ramBuffer.h
- */
-void ramRingAddToWriteIndex( RAM_RING_INDEXES_T* pThis, RAM_RING_INDEX_T toAdd )
-{
-   RAM_ASSERT( ramRingGetRemainingCapacity( pThis ) >= toAdd );
-   RAM_ASSERT( pThis->end < pThis->capacity );
-
-   pThis->end = (pThis->end + toAdd) % pThis->capacity;
-
-   if( pThis->end == pThis->start )
-      pThis->end = pThis->capacity; /* Ring buffer is full. */
-}
-
-/*! ---------------------------------------------------------------------------
- * @see scu_ramBuffer.h
- */
-void ramRingAddToReadIndex( RAM_RING_INDEXES_T* pThis, RAM_RING_INDEX_T toAdd )
-{
-   RAM_ASSERT( ramRingGetSize( pThis ) >= toAdd );
-
-   /* Is ring-buffer full? */
-   if( (toAdd != 0) && (pThis->end == pThis->capacity) )
-      pThis->end = pThis->start;
-
-   pThis->start = (pThis->start + toAdd) % pThis->capacity;
-}
-
-//#define CONFIG_DAQ_DEBUG
-
-#ifdef CONFIG_DAQ_DEBUG
-/*! ---------------------------------------------------------------------------
- * @brief Prints the values of the members of RAM_RING_INDEXES_T
- */
-  #ifndef __lm32__
-    #define mprintf printf
-  #endif
-  static
-  void ramRingDbgPrintIndexes( const RAM_RING_INDEXES_T* pThis,
-                                                              const char* txt )
-  {
-     if( txt != NULL )
-       mprintf( "DBG: %s\n", txt );
-     mprintf( "  DBG: offset:   %d\n"
-              "  DBG: capacity: %d\n"
-              "  DBG: start:    %d\n"
-              "  DBG: end:      %d\n"
-              "  DBG: used:     %d\n"
-              "  DBG: free      %d\n\n",
-              pThis->offset,
-              pThis->capacity,
-              pThis->start,
-              pThis->end,
-              ramRingGetSize( pThis ),
-              ramRingGetRemainingCapacity( pThis )
-            );
-  }
-#else
-  #define ramRingDbgPrintIndexes( __a, __b ) ((void)0)
-#endif
-
 //////////////////////////////////////////////////////////////////////////////
 
 /*! ---------------------------------------------------------------------------
  * @see scu_ramBuffer.h
  */
 int ramInit( register RAM_SCU_T* pThis, RAM_RING_SHARED_OBJECT_T* pSharedObj
-          #ifdef __linux__
+       #if defined( __linux__ ) && defined( CONFIG_NO_FE_ETHERBONE_CONNECTION)
            , EB_HANDLE_T* pEbHandle
-          #endif
+       #endif
            )
 {
    pThis->pSharedObj = pSharedObj;
    ramRingReset( &pSharedObj->ringIndexes );
 #ifdef CONFIG_SCU_USE_DDR3
- #ifdef __lm32__
-   return ddr3init( &pThis->ram );
- #else
+ #if defined( __linux__ ) && defined( CONFIG_NO_FE_ETHERBONE_CONNECTION)
    return ddr3init( &pThis->ram, pEbHandle );
+ #else
+   return ddr3init( &pThis->ram );
  #endif
 #endif
 }
-
+#if defined(__lm32__) || defined(__DOXYGEN__)
 /*! ---------------------------------------------------------------------------
  * @brief Generalized function to read a item from the ring buffer.
  */
@@ -139,8 +65,6 @@ void ramRreadItem( register RAM_SCU_T* pThis, const RAM_RING_INDEX_T index,
    #error Nothing implemented in function ramRreadItem()!
 #endif
 }
-
-#if defined(__lm32__) || defined(__DOXYGEN__)
 
 /*! ---------------------------------------------------------------------------
  * @brief Macro ease the read access to the channel mode register in the

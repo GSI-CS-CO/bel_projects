@@ -32,7 +32,7 @@
 namespace EB = FeSupport::Scu::Etherbone;
 namespace IPC = EB::IPC;
 #define EB_SCOPED_LOCK() IPC::scoped_lock<IPC::named_mutex> \
-        lock(m_poEbConnection->getMutex());
+        lock(m_oEbAccess.getEbObjectPtr()->getMutex());
 
 #define EB_THROW_MESSAGE( _m )                                                 \
    {                                                                           \
@@ -119,15 +119,16 @@ DaqInterface::DaqInterface( const std::string wbDevice, bool doReset )
 #else
 DaqInterface::DaqInterface( DaqEb::EtherboneConnection* poEtherbone,
                             bool doReset )
-   :m_poEbConnection( poEtherbone )
+   //:m_poEbConnection( poEtherbone )
+   :m_oEbAccess( poEtherbone )
    ,m_connectedBySelf( false )
    ,m_slotFlags( 0 )
    ,m_maxDevices( 0 )
    ,m_doReset( doReset )
 {
-   if( !m_poEbConnection->isConnected() )
+   if( !m_oEbAccess.getEbObjectPtr()->isConnected() )
    {
-      m_poEbConnection->connect();
+      m_oEbAccess.getEbObjectPtr()->connect();
       m_connectedBySelf = true;
    }
    readSharedTotal();
@@ -147,7 +148,7 @@ DaqInterface::~DaqInterface( void )
    ebClose();
 #else
    if( m_connectedBySelf )
-      m_poEbConnection->disconnect();
+      m_oEbAccess.getEbObjectPtr()->disconnect();
 #endif
 }
 
@@ -175,14 +176,22 @@ void DaqInterface::ebClose( void )
 #endif
 
 #ifndef CONFIG_NO_FE_ETHERBONE_CONNECTION
-#define EB_READ_LM32_SHARAD_OBJECT( oEbCycle, type, object, member )         \
-   oEbCycle.read( EB_LM32_FOR_MEMBER( type, member ),                        \
-                  reinterpret_cast<etherbone::data_t*>(&object.member) )
 
-#define EB_READ_LM32_DAQ_OBJECT( oEbCycle, object, member )                  \
-    EB_READ_LM32_SHARAD_OBJECT( oEbCycle, DAQ_SHARED_IO_T, object, member )
+#define EB_READ_LM32_SHARAD_OBJECT( type, object, member )                    \
+   read( EB_LM32_FOR_MEMBER( type, member ),                                  \
+         reinterpret_cast<etherbone::data_t*>(&object.member) )
 
-#endif
+#define EB_READ_LM32_DAQ_OBJECT( object, member )                             \
+    EB_READ_LM32_SHARAD_OBJECT( DAQ_SHARED_IO_T, object, member )
+
+#define EB_WRITE_LM32_SHARED_OBJECT( type, object, member )                   \
+    write( EB_LM32_FOR_MEMBER( type, member ), object.member )
+
+#define EB_WRITE_LM32_DAQ_OBJECT( object, member )                            \
+    EB_WRITE_LM32_SHARED_OBJECT( DAQ_SHARED_IO_T, object, member )
+
+#endif // ifndef CONFIG_NO_FE_ETHERBONE_CONNECTION
+
 /*! ---------------------------------------------------------------------------
  */
 void DaqInterface::readSharedTotal( void )
@@ -222,17 +231,17 @@ void DaqInterface::readSharedTotal( void )
    EB_SCOPED_LOCK();
    etherbone::Cycle oEbCycle;
    eb_status_t status;
-   if( (status = oEbCycle.open(m_poEbConnection->getEbDevice(), this,
+   if( (status = oEbCycle.open(m_oEbAccess.getEbObjectPtr()->getEbDevice(), this,
         eb_block)) != EB_OK )
       EB_THROW_MESSAGE( "opening" );
 
-   EB_READ_LM32_DAQ_OBJECT( oEbCycle, m_oSharedData, magicNumber );
-   EB_READ_LM32_DAQ_OBJECT( oEbCycle, m_oSharedData, ramIndexes.ringIndexes.offset );
-   EB_READ_LM32_DAQ_OBJECT( oEbCycle, m_oSharedData, ramIndexes.ringIndexes.capacity );
-   EB_READ_LM32_DAQ_OBJECT( oEbCycle, m_oSharedData, ramIndexes.ringIndexes.start );
-   EB_READ_LM32_DAQ_OBJECT( oEbCycle, m_oSharedData, ramIndexes.ringIndexes.end );
-   EB_READ_LM32_DAQ_OBJECT( oEbCycle, m_oSharedData, operation.code );
-   EB_READ_LM32_DAQ_OBJECT( oEbCycle, m_oSharedData, operation.retCode );
+   oEbCycle.EB_READ_LM32_DAQ_OBJECT( m_oSharedData, magicNumber );
+   oEbCycle.EB_READ_LM32_DAQ_OBJECT( m_oSharedData, ramIndexes.ringIndexes.offset );
+   oEbCycle.EB_READ_LM32_DAQ_OBJECT( m_oSharedData, ramIndexes.ringIndexes.capacity );
+   oEbCycle.EB_READ_LM32_DAQ_OBJECT( m_oSharedData, ramIndexes.ringIndexes.start );
+   oEbCycle.EB_READ_LM32_DAQ_OBJECT( m_oSharedData, ramIndexes.ringIndexes.end );
+   oEbCycle.EB_READ_LM32_DAQ_OBJECT( m_oSharedData, operation.code );
+   oEbCycle.EB_READ_LM32_DAQ_OBJECT( m_oSharedData, operation.retCode );
 
    if( (status = oEbCycle.close()) != EB_OK )
       EB_THROW_MESSAGE( "closing" );
@@ -294,21 +303,33 @@ DaqInterface::RETURN_CODE_T DaqInterface::sendCommand( DAQ_OPERATION_CODE_T cmd 
       throw DaqException( "Timeout at waiting for command feedback",
                           DAQ_ERR_RESPONSE_TIMEOUT );
 
+#else
+   { /*
+      * We need this validity area in {} avoiding a mutex- conflict with
+      * EB_SCOPED_LOCK() in function cmdReadyWait().
+      */
+      EB_SCOPED_LOCK();
+      etherbone::Cycle oEbCycle;
+      eb_status_t status;
+      if( (status = oEbCycle.open(m_oEbAccess.getEbObjectPtr()->getEbDevice(), this,
+           eb_block)) != EB_OK )
+         EB_THROW_MESSAGE( "opening" );
+
+      oEbCycle.EB_WRITE_LM32_DAQ_OBJECT( m_oSharedData, operation.code );
+
+      if( (status = oEbCycle.close()) != EB_OK )
+         EB_THROW_MESSAGE( "closing" );
+   }
+#endif
+
+   if( cmdReadyWait() )
+      throw DaqException( "Timeout at waiting for command feedback",
+                          DAQ_ERR_RESPONSE_TIMEOUT );
+
    if( m_oSharedData.operation.retCode < DAQ_RET_OK )
       throw DaqException( "DAQ firmware error",
                           m_oSharedData.operation.retCode );
-#else
-#warning Fill with live!
-   EB_SCOPED_LOCK();
-   etherbone::Cycle oEbCycle;
-   eb_status_t status;
-   if( (status = oEbCycle.open(m_poEbConnection->getEbDevice(), this,
-        eb_block)) != EB_OK )
-      EB_THROW_MESSAGE( "opening" );
-//TODO
-   if( (status = oEbCycle.close()) != EB_OK )
-      EB_THROW_MESSAGE( "closing" );
-#endif
+
    return m_oSharedData.operation.retCode;
 }
 
@@ -337,14 +358,16 @@ DAQ_OPERATION_CODE_T DaqInterface::getCommand( void )
    if( m_poEbHandle->status != EB_OK )
       __THROW_EB_EXCEPTION();
 #else
-#warning Fill with live!
    EB_SCOPED_LOCK();
    etherbone::Cycle oEbCycle;
    eb_status_t status;
-   if( (status = oEbCycle.open(m_poEbConnection->getEbDevice(), this,
+   if( (status = oEbCycle.open(m_oEbAccess.getEbObjectPtr()->getEbDevice(), this,
         eb_block)) != EB_OK )
       EB_THROW_MESSAGE( "opening" );
-//TODO
+
+   oEbCycle.EB_READ_LM32_DAQ_OBJECT( m_oSharedData, operation.code );
+   oEbCycle.EB_READ_LM32_DAQ_OBJECT( m_oSharedData, operation.retCode );
+
    if( (status = oEbCycle.close()) != EB_OK )
       EB_THROW_MESSAGE( "closing" );
 #endif
@@ -376,14 +399,16 @@ DaqInterface::RETURN_CODE_T DaqInterface::readParam1( void )
    if( m_poEbHandle->status != EB_OK )
       __THROW_EB_EXCEPTION();
 #else
-#warning Fill with live!
    EB_SCOPED_LOCK();
    etherbone::Cycle oEbCycle;
    eb_status_t status;
-   if( (status = oEbCycle.open(m_poEbConnection->getEbDevice(), this,
+   if( (status = oEbCycle.open(m_oEbAccess.getEbObjectPtr()->getEbDevice(), this,
         eb_block)) != EB_OK )
       EB_THROW_MESSAGE( "opening" );
-//TODO
+
+   oEbCycle.EB_READ_LM32_DAQ_OBJECT( m_oSharedData, operation.retCode );
+   oEbCycle.EB_READ_LM32_DAQ_OBJECT( m_oSharedData, operation.ioData.param1 );
+
    if( (status = oEbCycle.close()) != EB_OK )
       EB_THROW_MESSAGE( "closing" );
 #endif
@@ -417,14 +442,17 @@ DaqInterface::RETURN_CODE_T DaqInterface::readParam12( void )
    if( m_poEbHandle->status != EB_OK )
       __THROW_EB_EXCEPTION();
 #else
-#warning Fill with live!
    EB_SCOPED_LOCK();
    etherbone::Cycle oEbCycle;
    eb_status_t status;
-   if( (status = oEbCycle.open(m_poEbConnection->getEbDevice(), this,
+   if( (status = oEbCycle.open(m_oEbAccess.getEbObjectPtr()->getEbDevice(), this,
         eb_block)) != EB_OK )
       EB_THROW_MESSAGE( "opening" );
-//TODO
+
+   oEbCycle.EB_READ_LM32_DAQ_OBJECT( m_oSharedData, operation.retCode );
+   oEbCycle.EB_READ_LM32_DAQ_OBJECT( m_oSharedData, operation.ioData.param1 );
+   oEbCycle.EB_READ_LM32_DAQ_OBJECT( m_oSharedData, operation.ioData.param2 );
+
    if( (status = oEbCycle.close()) != EB_OK )
       EB_THROW_MESSAGE( "closing" );
 #endif
@@ -460,14 +488,18 @@ DaqInterface::RETURN_CODE_T DaqInterface::readParam123( void )
    if( m_poEbHandle->status != EB_OK )
       __THROW_EB_EXCEPTION();
 #else
-#warning Fill with live!
    EB_SCOPED_LOCK();
    etherbone::Cycle oEbCycle;
    eb_status_t status;
-   if( (status = oEbCycle.open(m_poEbConnection->getEbDevice(), this,
+   if( (status = oEbCycle.open(m_oEbAccess.getEbObjectPtr()->getEbDevice(), this,
         eb_block)) != EB_OK )
       EB_THROW_MESSAGE( "opening" );
-//TODO
+
+   oEbCycle.EB_READ_LM32_DAQ_OBJECT( m_oSharedData, operation.retCode );
+   oEbCycle.EB_READ_LM32_DAQ_OBJECT( m_oSharedData, operation.ioData.param1 );
+   oEbCycle.EB_READ_LM32_DAQ_OBJECT( m_oSharedData, operation.ioData.param2 );
+   oEbCycle.EB_READ_LM32_DAQ_OBJECT( m_oSharedData, operation.ioData.param3 );
+
    if( (status = oEbCycle.close()) != EB_OK )
       EB_THROW_MESSAGE( "closing" );
 #endif
@@ -505,14 +537,19 @@ DaqInterface::RETURN_CODE_T DaqInterface::readParam1234( void )
    if( m_poEbHandle->status != EB_OK )
       __THROW_EB_EXCEPTION();
 #else
-#warning Fill with live!
    EB_SCOPED_LOCK();
    etherbone::Cycle oEbCycle;
    eb_status_t status;
-   if( (status = oEbCycle.open(m_poEbConnection->getEbDevice(), this,
+   if( (status = oEbCycle.open(m_oEbAccess.getEbObjectPtr()->getEbDevice(), this,
         eb_block)) != EB_OK )
       EB_THROW_MESSAGE( "opening" );
-//TODO
+
+   oEbCycle.EB_READ_LM32_DAQ_OBJECT( m_oSharedData, operation.retCode );
+   oEbCycle.EB_READ_LM32_DAQ_OBJECT( m_oSharedData, operation.ioData.param1 );
+   oEbCycle.EB_READ_LM32_DAQ_OBJECT( m_oSharedData, operation.ioData.param2 );
+   oEbCycle.EB_READ_LM32_DAQ_OBJECT( m_oSharedData, operation.ioData.param3 );
+   oEbCycle.EB_READ_LM32_DAQ_OBJECT( m_oSharedData, operation.ioData.param4 );
+
    if( (status = oEbCycle.close()) != EB_OK )
       EB_THROW_MESSAGE( "closing" );
 #endif
@@ -546,14 +583,16 @@ DaqInterface::RETURN_CODE_T DaqInterface::readRamIndexes( void )
    if( m_poEbHandle->status != EB_OK )
       __THROW_EB_EXCEPTION();
 #else
-#warning Fill with live!
    EB_SCOPED_LOCK();
    etherbone::Cycle oEbCycle;
    eb_status_t status;
-   if( (status = oEbCycle.open(m_poEbConnection->getEbDevice(), this,
+   if( (status = oEbCycle.open(m_oEbAccess.getEbObjectPtr()->getEbDevice(), this,
         eb_block)) != EB_OK )
       EB_THROW_MESSAGE( "opening" );
-//TODO
+
+   oEbCycle.EB_READ_LM32_DAQ_OBJECT( m_oSharedData, ramIndexes.ringIndexes.start );
+   oEbCycle.EB_READ_LM32_DAQ_OBJECT( m_oSharedData, ramIndexes.ringIndexes.end );
+
    if( (status = oEbCycle.close()) != EB_OK )
       EB_THROW_MESSAGE( "closing" );
 #endif
@@ -564,10 +603,9 @@ DaqInterface::RETURN_CODE_T DaqInterface::readRamIndexes( void )
  */
 void DaqInterface::sendUnlockRamAccess( void )
 {
+   m_oSharedData.ramIndexes.ramAccessLock = false;
 #ifdef CONFIG_NO_FE_ETHERBONE_CONNECTION
    EB_MAKE_CB_OW_ARG( cArg );
-
-   m_oSharedData.ramIndexes.ramAccessLock = false;
 
    if( ebWriteObjectCycleOpen( cArg ) != EB_OK )
       __THROW_EB_EXCEPTION();
@@ -583,15 +621,17 @@ void DaqInterface::sendUnlockRamAccess( void )
    m_poEbHandle->status = cArg.status;
    if( m_poEbHandle->status != EB_OK )
       __THROW_EB_EXCEPTION();
+
 #else
-#warning Fill with live!
    EB_SCOPED_LOCK();
    etherbone::Cycle oEbCycle;
    eb_status_t status;
-   if( (status = oEbCycle.open(m_poEbConnection->getEbDevice(), this,
+   if( (status = oEbCycle.open(m_oEbAccess.getEbObjectPtr()->getEbDevice(), this,
         eb_block)) != EB_OK )
       EB_THROW_MESSAGE( "opening" );
-//TODO
+
+   oEbCycle.EB_WRITE_LM32_DAQ_OBJECT( m_oSharedData, ramIndexes.ramAccessLock );
+
    if( (status = oEbCycle.close()) != EB_OK )
       EB_THROW_MESSAGE( "closing" );
 #endif
@@ -622,14 +662,17 @@ void DaqInterface::writeParam1( void )
    if( m_poEbHandle->status != EB_OK )
       __THROW_EB_EXCEPTION();
 #else
-#warning Fill with live!
    EB_SCOPED_LOCK();
    etherbone::Cycle oEbCycle;
    eb_status_t status;
-   if( (status = oEbCycle.open(m_poEbConnection->getEbDevice(), this,
+   if( (status = oEbCycle.open(m_oEbAccess.getEbObjectPtr()->getEbDevice(), this,
         eb_block)) != EB_OK )
       EB_THROW_MESSAGE( "opening" );
-//TODO
+
+   oEbCycle.EB_WRITE_LM32_DAQ_OBJECT( m_oSharedData, operation.ioData.location.deviceNumber );
+   oEbCycle.EB_WRITE_LM32_DAQ_OBJECT( m_oSharedData, operation.ioData.location.channel );
+   oEbCycle.EB_WRITE_LM32_DAQ_OBJECT( m_oSharedData, operation.ioData.param1 );
+
    if( (status = oEbCycle.close()) != EB_OK )
       EB_THROW_MESSAGE( "closing" );
 #endif
@@ -663,14 +706,18 @@ void DaqInterface::writeParam12( void )
    if( m_poEbHandle->status != EB_OK )
       __THROW_EB_EXCEPTION();
 #else
-#warning Fill with live!
    EB_SCOPED_LOCK();
    etherbone::Cycle oEbCycle;
    eb_status_t status;
-   if( (status = oEbCycle.open(m_poEbConnection->getEbDevice(), this,
+   if( (status = oEbCycle.open(m_oEbAccess.getEbObjectPtr()->getEbDevice(), this,
         eb_block)) != EB_OK )
       EB_THROW_MESSAGE( "opening" );
-//TODO
+
+   oEbCycle.EB_WRITE_LM32_DAQ_OBJECT( m_oSharedData, operation.ioData.location.deviceNumber );
+   oEbCycle.EB_WRITE_LM32_DAQ_OBJECT( m_oSharedData, operation.ioData.location.channel );
+   oEbCycle.EB_WRITE_LM32_DAQ_OBJECT( m_oSharedData, operation.ioData.param1 );
+   oEbCycle.EB_WRITE_LM32_DAQ_OBJECT( m_oSharedData, operation.ioData.param2 );
+
    if( (status = oEbCycle.close()) != EB_OK )
       EB_THROW_MESSAGE( "closing" );
 #endif
@@ -706,14 +753,19 @@ void DaqInterface::writeParam123( void )
    if( m_poEbHandle->status != EB_OK )
       __THROW_EB_EXCEPTION();
 #else
-#warning Fill with live!
    EB_SCOPED_LOCK();
    etherbone::Cycle oEbCycle;
    eb_status_t status;
-   if( (status = oEbCycle.open(m_poEbConnection->getEbDevice(), this,
+   if( (status = oEbCycle.open(m_oEbAccess.getEbObjectPtr()->getEbDevice(), this,
         eb_block)) != EB_OK )
       EB_THROW_MESSAGE( "opening" );
-//TODO
+
+   oEbCycle.EB_WRITE_LM32_DAQ_OBJECT( m_oSharedData, operation.ioData.location.deviceNumber );
+   oEbCycle.EB_WRITE_LM32_DAQ_OBJECT( m_oSharedData, operation.ioData.location.channel );
+   oEbCycle.EB_WRITE_LM32_DAQ_OBJECT( m_oSharedData, operation.ioData.param1 );
+   oEbCycle.EB_WRITE_LM32_DAQ_OBJECT( m_oSharedData, operation.ioData.param2 );
+   oEbCycle.EB_WRITE_LM32_DAQ_OBJECT( m_oSharedData, operation.ioData.param3 );
+
    if( (status = oEbCycle.close()) != EB_OK )
       EB_THROW_MESSAGE( "closing" );
 #endif
@@ -751,14 +803,20 @@ void DaqInterface::writeParam1234( void )
    if( m_poEbHandle->status != EB_OK )
       __THROW_EB_EXCEPTION();
 #else
-#warning Fill with live!
    EB_SCOPED_LOCK();
    etherbone::Cycle oEbCycle;
    eb_status_t status;
-   if( (status = oEbCycle.open(m_poEbConnection->getEbDevice(), this,
+   if( (status = oEbCycle.open(m_oEbAccess.getEbObjectPtr()->getEbDevice(), this,
         eb_block)) != EB_OK )
       EB_THROW_MESSAGE( "opening" );
-//TODO
+
+   oEbCycle.EB_WRITE_LM32_DAQ_OBJECT( m_oSharedData, operation.ioData.location.deviceNumber );
+   oEbCycle.EB_WRITE_LM32_DAQ_OBJECT( m_oSharedData, operation.ioData.location.channel );
+   oEbCycle.EB_WRITE_LM32_DAQ_OBJECT( m_oSharedData, operation.ioData.param3 );
+   oEbCycle.EB_WRITE_LM32_DAQ_OBJECT( m_oSharedData, operation.ioData.param2 );
+   oEbCycle.EB_WRITE_LM32_DAQ_OBJECT( m_oSharedData, operation.ioData.param3 );
+   oEbCycle.EB_WRITE_LM32_DAQ_OBJECT( m_oSharedData, operation.ioData.param4 );
+
    if( (status = oEbCycle.close()) != EB_OK )
       EB_THROW_MESSAGE( "closing" );
 #endif
@@ -768,6 +826,7 @@ void DaqInterface::writeParam1234( void )
  */
 void DaqInterface::writeRamIndexesAndUnlock( void )
 {
+   m_oSharedData.ramIndexes.ramAccessLock = false;
 #ifdef CONFIG_NO_FE_ETHERBONE_CONNECTION
    EB_MAKE_CB_OW_ARG( cArg );
 
@@ -779,7 +838,7 @@ void DaqInterface::writeRamIndexesAndUnlock( void )
  //!!  EB_LM32_OJECT_MEMBER_WRITE( m_poEbHandle, &m_oSharedData,
  //!!                              ramIndexes.ringIndexes.end );
 
-   m_oSharedData.ramIndexes.ramAccessLock = false;
+
    EB_LM32_OJECT_MEMBER_WRITE( m_poEbHandle, &m_oSharedData,
                                ramIndexes.ramAccessLock );
 
@@ -792,14 +851,17 @@ void DaqInterface::writeRamIndexesAndUnlock( void )
    if( m_poEbHandle->status != EB_OK )
       __THROW_EB_EXCEPTION();
 #else
-#warning Fill with live!
    EB_SCOPED_LOCK();
    etherbone::Cycle oEbCycle;
    eb_status_t status;
-   if( (status = oEbCycle.open(m_poEbConnection->getEbDevice(), this,
+   if( (status = oEbCycle.open(m_oEbAccess.getEbObjectPtr()->getEbDevice(), this,
         eb_block)) != EB_OK )
       EB_THROW_MESSAGE( "opening" );
-//TODO
+
+   oEbCycle.EB_WRITE_LM32_DAQ_OBJECT( m_oSharedData, ramIndexes.ringIndexes.start );
+   //!! oEbCycle.EB_WRITE_LM32_DAQ_OBJECT( m_oSharedData, ramIndexes.ringIndexes.end );
+   oEbCycle.EB_WRITE_LM32_DAQ_OBJECT( m_oSharedData, ramIndexes.ramAccessLock );
+
    if( (status = oEbCycle.close()) != EB_OK )
       EB_THROW_MESSAGE( "closing" );
 #endif

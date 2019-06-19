@@ -36,7 +36,7 @@
 #include <eb_object_transfer.h>
 
 #ifndef CONFIG_NO_FE_ETHERBONE_CONNECTION
-  #include <EtherboneConnection.hpp>
+  #include <daq_eb_ram_buffer.hpp>
 #endif
 
 #ifndef DAQ_DEFAULT_WB_DEVICE
@@ -57,9 +57,6 @@
 
 #ifndef DAQ_VSS_MAX
    #define DAQ_VSS_MAX 20.0
-#endif
-#ifndef CONFIG_NO_FE_ETHERBONE_CONNECTION
-namespace DaqEb = FeSupport::Scu::Etherbone;
 #endif
 
 namespace Scu
@@ -165,7 +162,9 @@ private:
    EB_HANDLE_T                  m_oEbHandle;
    EB_HANDLE_T*                 m_poEbHandle;
 #else
-   DaqEb::EtherboneConnection*  m_poEbConnection;
+protected:
+   EbRamAccess                  m_oEbAccess;
+private:
    bool                         m_connectedBySelf;
 #endif
    DAQ_SHARED_IO_T              m_oSharedData;
@@ -211,14 +210,15 @@ public:
 
    virtual ~DaqInterface( void );
 
-#ifdef CONFIG_NO_FE_ETHERBONE_CONNECTION
-   const std::string& getWbDevice( void ) const { return m_wbDevice; }
-#else
-   const std::string& getWbDevice( void ) const
+
+   const std::string& getWbDevice( void )
    {
-      return m_poEbConnection->getNetAddress();
+   #ifdef CONFIG_NO_FE_ETHERBONE_CONNECTION
+      return m_wbDevice;
+   #else
+      return m_oEbAccess.getEbObjectPtr()->getNetAddress();
+   #endif
    }
-#endif
 
    const std::string getScuDomainName( void )
    {

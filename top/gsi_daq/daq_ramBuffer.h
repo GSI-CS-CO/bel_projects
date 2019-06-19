@@ -29,6 +29,8 @@
 #ifndef _DAQ_RAMBUFFER_H
 #define _DAQ_RAMBUFFER_H
 
+#include <daq_ring_admin.h>
+
 #ifdef CONFIG_SCU_USE_DDR3
 #include <scu_ddr3.h>
 #else
@@ -41,6 +43,7 @@
  #include <daq_descriptor.h>
 #endif
 
+
 /*!
  * @defgroup DAQ_RAM_BUFFER
  * @brief Abstraction layer for handling SCU RAM-Buffer
@@ -49,19 +52,6 @@
  * @see SCU_DDR3
  * @{
  */
-
-#ifdef CONFIG_RAM_PEDANTIC_CHECK
-   /* CAUTION:
-    * Assert-macros could be expensive in memory consuming and the
-    * latency time can increase as well!
-    * Especially in embedded systems with small resources.
-    * Therefore use them for bug-fixing or developing purposes only!
-    */
-   #include <scu_assert.h>
-   #define RAM_ASSERT SCU_ASSERT
-#else
-   #define RAM_ASSERT(__e) ((void)0)
-#endif
 
 #ifdef __cplusplus
 extern "C" {
@@ -112,46 +102,6 @@ typedef DDR3_PAYLOAD_T RAM_DAQ_PAYLOAD_T;
  */
 typedef DDR3_POLL_FT   RAM_DAQ_POLL_FT;
 #endif
-
-/*!
- * @defgroup SCU_RING_BUFFER_INDEXES
- * @brief Administration of write and read indexes for
- *        a ring-buffer.
- * @note A problem in administration of ring- buffer indexes is,
- *       that read index and write index are equal in the case of
- *       buffer is empty and full! \n
- *       To distinguish this both cases the write index will set to the
- *       invalid value of the maximum capacity in the case when the
- *       buffer is full.
- * @{
- */
-
-#ifndef RAM_DAQ_MIN_INDEX
-   /*!
-    * @brief Minimum value for ring buffer read and write index
-    */
-   #define RAM_DAQ_MIN_INDEX 0
-#endif
-//#define RAM_DAQ_MAX_INDEX 2816
-#ifndef RAM_DAQ_MAX_INDEX
-   /*!
-    * @brief Maximum value for ring buffer read and write index
-    */
-   #define RAM_DAQ_MAX_INDEX DDR3_MAX_INDEX64
-#endif
-
-
-/*!
- * @brief Maximum capacity of ring buffer in RAM_DAQ_PAYLOAD_T
- */
-#define RAM_DAQ_MAX_CAPACITY (RAM_DAQ_MAX_INDEX - RAM_DAQ_MIN_INDEX)
-
-/*!
- * @brief Data type for read, write, offset and capacity for
- *        ring buffer access.
- */
-typedef uint32_t RAM_RING_INDEX_T;
-
 #endif /* ifdef CONFIG_SCU_USE_DDR3 */
 
 /*! ---------------------------------------------------------------------------
@@ -236,68 +186,6 @@ typedef uint32_t RAM_RING_INDEX_T;
 )
 
 /*! ---------------------------------------------------------------------------
- * @brief Data type of ring buffer indexes.
- */
-typedef struct PACKED_SIZE
-{
-   RAM_RING_INDEX_T offset;   /*!<@brief offset in alignment units of physical
-                               *         memory */
-   RAM_RING_INDEX_T capacity; /*!<@brief Maximum capacity of ring- buffer */
-   RAM_RING_INDEX_T start;    /*!<@brief Start index of ring buffer */
-   RAM_RING_INDEX_T end;      /*!<@brief End- index of ring buffer */
-} RAM_RING_INDEXES_T;
-#ifndef __DOXYGEN__
-STATIC_ASSERT( sizeof(RAM_RING_INDEXES_T) == 4 * sizeof(RAM_RING_INDEX_T));
-#endif
-
-/*! ---------------------------------------------------------------------------
- * @brief Initializer for object of data type RAM_RING_INDEXES_T
- */
-#define RAM_RING_INDEXES_INITIALIZER                                          \
-{                                                                             \
-   .offset   = RAM_DAQ_MIN_INDEX,                                             \
-   .capacity = RAM_DAQ_MAX_CAPACITY,                                          \
-   .start    = 0,                                                             \
-   .end      = 0                                                              \
-}
-
-/*! ---------------------------------------------------------------------------
- * @brief Data type for data residing in the shared memory for the
- *        communication between uC server and Linux client.
- * @note The implementation has to be within the shared memory!
- *       They must be visible in the LM32 and in the Linux side.
- */
-typedef struct PACKED_SIZE
-{
-   /*!
-    * @brief Flag becomes 1 by the server if he has modified
-    *        the ring indexes.
-    *
-    * To avoid partial register access by LM32, the size of the following
-    * flag is equal to the LM32 register size.
-    */
-   uint32_t           serverHasWritten;
-   uint32_t           ramAccessLock;
-   RAM_RING_INDEXES_T ringIndexes;
-} RAM_RING_SHARED_OBJECT_T;
-#ifndef __DOXYGEN__
-STATIC_ASSERT( sizeof(RAM_RING_SHARED_OBJECT_T) ==
-               sizeof(RAM_RING_INDEXES_T) +
-               2 * sizeof(uint32_t) );
-#endif
-
-/*! ---------------------------------------------------------------------------
- * @brief Initializer of the shared object for the communication between
- *        server and Linux client.
- */
-#define RAM_RING_SHARED_OBJECT_INITIALIZER                                    \
-{                                                                             \
-   .serverHasWritten = false,                                                 \
-   .ramAccessLock    = false,                                                 \
-   .ringIndexes      = RAM_RING_INDEXES_INITIALIZER                           \
-}
-
-/*! ---------------------------------------------------------------------------
  * @brief Generalized object type for SCU RAM buffer
  */
 typedef struct
@@ -355,78 +243,6 @@ uint16_t ramGetPayload16( RAM_DAQ_PAYLOAD_T* pPl, const unsigned int i )
    //TODO
 #endif
 }
-
-
-/*! ---------------------------------------------------------------------------
- * @brief Resets respectively clears the ring buffer
- * @param pThis Pointer to the ring index object
- */
-static inline void ramRingReset( register RAM_RING_INDEXES_T* pThis )
-{
-   pThis->start = 0;
-   pThis->end   = 0;
-}
-
-#define RAM_RING_GET_CAPACITY() (RAM_DAQ_MAX_INDEX - RAM_DAQ_MIN_INDEX)
-
-/*! ---------------------------------------------------------------------------
- * @brief Returns the number of currently used memory items
- * @param pThis Pointer to the ring index object
- * @return Actual number written items
- */
-RAM_RING_INDEX_T ramRingGetSize( const RAM_RING_INDEXES_T* pThis );
-
-/*! ---------------------------------------------------------------------------
- * @brief Returns the remaining free items of the currently used memory
- * @param pThis Pointer to the ring index object
- * @return Number of free memory items.
- */
-static inline
-RAM_RING_INDEX_T ramRingGetRemainingCapacity( const RAM_RING_INDEXES_T* pThis )
-{
-   return pThis->capacity - ramRingGetSize( pThis );
-}
-
-/*! ---------------------------------------------------------------------------
- * @brief Adds a value to the write index.
- * @param pThis Pointer to the ring index object
- * @param value to add to the write index.
- */
-void ramRingAddToWriteIndex( RAM_RING_INDEXES_T* pThis, RAM_RING_INDEX_T toAdd );
-
-/*! ---------------------------------------------------------------------------
- * @brief Adds a value to the read index.
- * @param pThis Pointer to the ring index object
- * @param value to add to the read index.
- */
-void ramRingAddToReadIndex( RAM_RING_INDEXES_T* pThis, RAM_RING_INDEX_T toAdd );
-
-/*! ---------------------------------------------------------------------------
- * @brief Gets the actual write-index for a write access to the physical
- *        memory.
- * @param pThis Pointer to the ring index object
- * @return Index value for write access.
- */
-static inline
-RAM_RING_INDEX_T ramRingGetWriteIndex( register RAM_RING_INDEXES_T* pThis )
-{
-   if( pThis->end == pThis->capacity )
-      return pThis->start + pThis->offset;
-   return pThis->end + pThis->offset;
-}
-
-/*! ---------------------------------------------------------------------------
- * @brief Gets the actual read index for a read access to the physical memory.
- * @param pThis Pointer to the ring index object
- * @return Index value for read access.
- */
-static inline
-RAM_RING_INDEX_T ramRingGeReadIndex( register RAM_RING_INDEXES_T* pThis )
-{
-   return pThis->start + pThis->offset;
-}
-
-/*! @} */ // End SCU_RING_BUFFER_INDEXES
 
 /*! ---------------------------------------------------------------------------
  * @brief Initializing SCU RAM buffer ready to use.

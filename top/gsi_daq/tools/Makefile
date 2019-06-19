@@ -21,6 +21,7 @@ SOURCE += find_process.c
 
 SOURCE += $(SCU_LIB_SRC_DIR)/scu_ddr3.c
 SOURCE += $(DAQ_DIR)/daq_ramBuffer.c
+SOURCE += $(DAQ_DIR)/daq_ring_admin.c
 SOURCE += $(SCU_LIB_SRC_DIR)/eb_object_transfer.c
 SOURCE += $(DAQ_DIR)/daq_interface.cpp
 SOURCE += $(DAQ_DIR)/daq_administration.cpp

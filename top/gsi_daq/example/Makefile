@@ -10,21 +10,25 @@
 ###############################################################################
 REPOSITORY_DIR := $(shell git rev-parse --show-toplevel)
 
- USE_FE_LIB_ETHERBONE=1
+  USE_FE_LIB_ETHERBONE=1
 
 
 
 MIAN_MODULE := daqexample.cpp
 
-SOURCE += $(SCU_LIB_SRC_DIR)/scu_ddr3.c
-SOURCE += $(DAQ_DIR)/daq_ramBuffer.c
-SOURCE += $(SCU_LIB_SRC_DIR)/eb_object_transfer.c
+
+SOURCE += $(DAQ_DIR)/daq_ring_admin.c
 SOURCE += $(DAQ_DIR)/daq_interface.cpp
 SOURCE += $(DAQ_DIR)/daq_administration.cpp
 ifdef USE_FE_LIB_ETHERBONE
   EB_SRC= $(DAQ_DIR)/feSupport/scu/etherbone
   SOURCE += $(EB_SRC)/EtherboneConnection.cpp
   SOURCE += $(EB_SRC)/BusException.cpp
+  SOURCE += $(DAQ_DIR)/daq_eb_ram_buffer.cpp
+else
+  SOURCE += $(SCU_LIB_SRC_DIR)/scu_ddr3.c
+  SOURCE += $(SCU_LIB_SRC_DIR)/eb_object_transfer.c
+  SOURCE += $(DAQ_DIR)/daq_ramBuffer.c
 endif
 
 DEFINES += _BSD_SOURCE
@@ -40,7 +44,7 @@ DEFINES += CONFIG_DAQ_DEBUG
 DEFINES += CONFIG_DDR3_NO_BURST_FUNCTIONS
 
 ifdef USE_FE_LIB_ETHERBONE
- # DEFINES += ETHERBONE_CONNECTION_MUTEX="EtherBoneConnectionMutexDaq"
+  DEFINES += __ETHERBONE_CONNECTION_MUTEX="EtherBoneConnectionMutexDaq"
   INCLUDE_DIRS += $(EB_SRC)
   LIBS += boost_system
   LIBS += pthread
