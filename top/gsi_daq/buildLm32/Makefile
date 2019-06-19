@@ -21,7 +21,10 @@ SOURCE += $(WR_DIR)/dev/w1-temp.c
 SOURCE += $(DAQ_DIR)/daq.c
 SOURCE += $(DAQ_DIR)/daq_command_interface_uc.c
 SOURCE += $(SCU_LIB_SRC_DIR)/scu_ddr3.c
+SOURCE += $(DAQ_DIR)/daq_ring_admin.c
 SOURCE += $(DAQ_DIR)/daq_ramBuffer.c
+
+DEFINES += DAQ_MAX_CHANNELS=4
 
 DEFINES += CONFIG_DAQ_SINGLE_APP
 DEFINES += CONFIG_SCU_USE_DDR3
