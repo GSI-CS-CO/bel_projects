@@ -75,10 +75,10 @@ namespace daq
  * @param rawData raw data from the DAQ ADC.
  * @return Voltage in the range 0.0V to 10.0V
  */
-inline double rawToVoltage( DAQ_DATA_T rawData )
+inline float rawToVoltage( DAQ_DATA_T rawData )
 {
-   return (static_cast<double>(static_cast<int16_t>(rawData)) * DAQ_VSS_MAX) /
-             static_cast<double>(static_cast<DAQ_DATA_T>(~0));
+   return (static_cast<float>(static_cast<int16_t>(rawData)) * DAQ_VSS_MAX) /
+             static_cast<float>(static_cast<DAQ_DATA_T>(~0));
 }
 
 /*! ---------------------------------------------------------------------------
