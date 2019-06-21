@@ -47,20 +47,20 @@ entity pci_control is
     ------------------------------------------------------------------------
     -- Input clocks
     ------------------------------------------------------------------------
-    clk_20m_vcxo_i        : in std_logic; -- 20MHz VCXO clock
-    clk_20m_vcxo_alt_i    : in std_logic; -- 20MHz VCXO clock alternative
+    --clk_20m_vcxo_i        : in std_logic; -- 20MHz VCXO clock
+    --clk_20m_vcxo_alt_i    : in std_logic; -- 20MHz VCXO clock alternative
 
     clk_125m_pllref_i     : in std_logic; -- 125 MHz PLL reference
     clk_125m_local_i      : in std_logic; -- Local clk from 125Mhz oszillator
     clk_125m_sfpref_i     : in std_logic; -- PLL/SFP reference clk from 125Mhz oszillator
 
-    clk_125m_pllref_alt_i : in std_logic; -- 125 MHz PLL reference alternative
-    clk_125m_local_alt_i  : in std_logic; -- Local clk from 125Mhz oszillator alternative
-    clk_125m_sfpref_alt_i : in std_logic; -- PLL/SFP reference clk from 125Mhz oszillator alternative
+    --clk_125m_pllref_alt_i : in std_logic; -- 125 MHz PLL reference alternative
+    --clk_125m_local_alt_i  : in std_logic; -- Local clk from 125Mhz oszillator alternative
+    --clk_125m_sfpref_alt_i : in std_logic; -- PLL/SFP reference clk from 125Mhz oszillator alternative
 
-    clk_125m_tcb_pllref_i : in std_logic; -- 125 MHz PLL reference at tranceiver bank
-    clk_125m_tcb_local_i  : in std_logic; -- Local clk from 125Mhz oszillator at tranceiver bank
-    clk_125m_tcb_sfpref_i : in std_logic; -- PLL/SFP reference clk from 125Mhz oszillator at tranceiver bank
+    --clk_125m_tcb_pllref_i : in std_logic; -- 125 MHz PLL reference at tranceiver bank
+    --clk_125m_tcb_local_i  : in std_logic; -- Local clk from 125Mhz oszillator at tranceiver bank
+    --clk_125m_tcb_sfpref_i : in std_logic; -- PLL/SFP reference clk from 125Mhz oszillator at tranceiver bank
 
     clk_pll_i             : in std_logic; -- Evaluation board
 
@@ -87,16 +87,16 @@ entity pci_control is
     -----------------------------------------------------------------------
     -- Misc.
     -----------------------------------------------------------------------
-    fpga_res_i : in std_logic;
-    nres_i     : in std_logic;
+    --fpga_res_i : in std_logic;
+    --nres_i     : in std_logic;
 
     -----------------------------------------------------------------------
     -- LVTTL IOs
     -----------------------------------------------------------------------
-    lemo_p_i : in    std_logic_vector(1 downto 0);
-    lemo_n_i : in    std_logic_vector(1 downto 0);
-    lemo_p_o : out   std_logic_vector(1 downto 0);
-    lemo_n_o : out   std_logic_vector(1 downto 0);
+    --lemo_p_i : in    std_logic_vector(1 downto 0);
+    --lemo_n_i : in    std_logic_vector(1 downto 0);
+    --lemo_p_o : out   std_logic_vector(1 downto 0);
+    --lemo_n_o : out   std_logic_vector(1 downto 0);
 
     -----------------------------------------------------------------------
     -- leds onboard
@@ -112,8 +112,8 @@ entity pci_control is
     -----------------------------------------------------------------------
     sfp_rs0_o        : out   std_logic; -- RS0=0 -> RX datarates <= 4.25GB/s, RS0=1 -> RX datarates > 4.25GB/s
     sfp_rs1_o        : out   std_logic; -- RS1=0 -> TX datarates <= 4.25GB/s, RS1=1 -> TX datarates > 4.25GB/s
-    sfp_led_fpg_o    : out   std_logic;
-    sfp_led_fpr_o    : out   std_logic;
+    --sfp_led_fpg_o    : out   std_logic;
+    --sfp_led_fpr_o    : out   std_logic;
     sfp_tx_disable_o : out   std_logic := '0';
     sfp_tx_fault_i   : in    std_logic;
     sfp_los_i        : in    std_logic;
@@ -217,7 +217,7 @@ begin
       wr_dac_sclk_o           => wr_dac_sclk_o,
       wr_dac_din_o            => wr_dac_din_o,
       wr_ndac_cs_o            => wr_ndac_cs_o,
-      sfp_tx_disable_o        => open,
+      sfp_tx_disable_o        => sfp_tx_disable_o,
       sfp_tx_fault_i          => s_sfp_tx_fault_i,
       sfp_los_i               => s_sfp_los_i,
       phy_rx_ready_o          => s_phy_rx_ready,
@@ -225,10 +225,10 @@ begin
       phy_debug_o             => s_phy_debug,
       phy_debug_i             => phy_debug_i,
       gpio_o                  => s_gpio_o,
-      lvds_p_i                => s_lvds_p_i,
-      lvds_n_i                => s_lvds_n_i,
-      lvds_p_o                => s_lvds_p_o,
-      lvds_n_o                => s_lvds_n_o,
+      --lvds_p_i                => s_lvds_p_i,
+      --lvds_n_i                => s_lvds_n_i,
+      --lvds_p_o                => s_lvds_p_o,
+      --lvds_n_o                => s_lvds_n_o,
       led_link_up_o           => s_led_link_up,
       led_link_act_o          => s_led_link_act,
       led_track_o             => s_led_track,
@@ -239,11 +239,9 @@ begin
       pcie_tx_o               => pcie_tx_o);
 
   -- SFP
-  sfp_tx_disable_o <= '0';
+  --sfp_tx_disable_o <= '0';
   sfp_rs0_o        <= '1';
   sfp_rs1_o        <= '1';
-  --sfp_mod2_io      <= s_sfp_mod2_io;
-  --sfp_mod1_io      <= s_sfp_mod1_io;
   s_sfp_los_i      <= sfp_los_i;
   s_sfp_tx_fault_i <= sfp_tx_fault_i;
 
@@ -272,12 +270,12 @@ begin
   green_leds_n_o(7) <= s_sfp_los_i;
 
   -- LEMOs
-  lemos : for i in 0 to 1 generate
-    s_lvds_p_i(i)      <= lemo_p_i(i);
-    s_lvds_n_i(i)      <= lemo_n_i(i);
-    lemo_p_o(i)        <= s_lvds_p_o(i);
-    lemo_n_o(i)        <= s_lvds_n_o(i);
-  end generate;
+  --lemos : for i in 0 to 1 generate
+  --  s_lvds_p_i(i)      <= lemo_p_i(i);
+  --  s_lvds_n_i(i)      <= lemo_n_i(i);
+  --  lemo_p_o(i)        <= s_lvds_p_o(i);
+  --  lemo_n_o(i)        <= s_lvds_n_o(i);
+  --end generate;
 
   real_pll_a10 : if not(c_use_stub_pll) generate
     s_clk_20m_vcxo    <= s_clk_20m_loop;
