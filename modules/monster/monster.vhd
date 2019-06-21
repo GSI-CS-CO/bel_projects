@@ -608,14 +608,15 @@ architecture rtl of monster is
   signal pci_clk_global   : std_logic;
 
   -- Misc.
-  signal clk_tx_pll_a10       : std_logic;
-  signal reconfig_reset       : std_logic_vector(0 downto 0);
-  signal reconfig_write       : std_logic_vector(0 downto 0);
-  signal reconfig_read        : std_logic_vector(0 downto 0);
-  signal reconfig_address     : std_logic_vector(9 downto 0);
-  signal reconfig_writedata   : std_logic_vector(31 downto 0);
-  signal reconfig_readdata    : std_logic_vector(31 downto 0);
-  signal reconfig_waitrequest : std_logic_vector(0 downto 0);
+  signal clk_tx_pll_a10        : std_logic;
+  signal reconfig_reset        : std_logic_vector(0 downto 0);
+  signal reconfig_write        : std_logic_vector(0 downto 0);
+  signal reconfig_read         : std_logic_vector(0 downto 0);
+  signal reconfig_address      : std_logic_vector(9 downto 0);
+  signal reconfig_address_dump : std_logic_vector(21 downto 0);
+  signal reconfig_writedata    : std_logic_vector(31 downto 0);
+  signal reconfig_readdata     : std_logic_vector(31 downto 0);
+  signal reconfig_waitrequest  : std_logic_vector(0 downto 0);
 
   -- END OF Clock networks
   ----------------------------------------------------------------------------------
@@ -1657,8 +1658,9 @@ end generate;
   phy_a10_e3p1 : if c_is_arria10gx_e3p1 generate
     phy : wr_arria10_e3p1_transceiver
       generic map (
-        g_use_atx_pll     => true,
-        g_use_cmu_pll     => false,
+        g_use_atx_pll     => false,
+        g_use_cmu_pll     => true,
+        g_use_simple_wa   => true,
         g_use_det_phy     => true,
         g_use_sfp_los_rst => true,
         g_use_tx_lcr_dbg  => false,
@@ -1735,7 +1737,7 @@ end generate;
         reconfig_write_o                 => reconfig_write(0),
         reconfig_read_o                  => reconfig_read(0),
         reconfig_address_o(9 downto 0)   => reconfig_address,
-        reconfig_address_o(31 downto 10) => open,
+        reconfig_address_o(31 downto 10) => reconfig_address_dump,
         reconfig_writedata_o             => reconfig_writedata,
         reconfig_readdata_i              => reconfig_readdata,
         reconfig_waitrequest_i           => reconfig_waitrequest);
