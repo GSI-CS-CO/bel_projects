@@ -48,7 +48,7 @@ begin
   main : process(clk_i, rst_n_i) is
   begin
     if rst_n_i = '0' then
-      r_ack                <= slave_i.cyc and slave_i.stb;
+      r_ack                <= '0';
       r_dat                <= (others => '0');
       reconfig_read_o      <= '0';
       reconfig_write_o     <= '0';
