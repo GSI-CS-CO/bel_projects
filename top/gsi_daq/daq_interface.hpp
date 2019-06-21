@@ -165,7 +165,6 @@ private:
 protected:
    EbRamAccess                  m_oEbAccess;
 private:
-   bool                         m_connectedBySelf;
 #endif
    DAQ_SHARED_IO_T              m_oSharedData;
    SLOT_FLAGS_T                 m_slotFlags;
@@ -216,7 +215,7 @@ public:
    #ifdef CONFIG_NO_FE_ETHERBONE_CONNECTION
       return m_wbDevice;
    #else
-      return m_oEbAccess.getEbObjectPtr()->getNetAddress();
+      return m_oEbAccess.getNetAddress();
    #endif
    }
 

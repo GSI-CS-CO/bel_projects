@@ -29,6 +29,7 @@
 #ifndef _DAQ_EB_RAM_BUFFER_HPP
 #define _DAQ_EB_RAM_BUFFER_HPP
 #include <EtherboneConnection.hpp>
+#include <daq_ramBuffer.h>
 
 namespace DaqEb = FeSupport::Scu::Etherbone;
 
@@ -45,21 +46,38 @@ namespace daq
 class EbRamAccess
 {
    DaqEb::EtherboneConnection* m_poEb;
+   bool                        m_connectedBySelf;
+   RAM_SCU_T*                  m_pRam;
 
 public:
-   EbRamAccess( DaqEb::EtherboneConnection* poEb )
-      :m_poEb( poEb )
+   EbRamAccess( DaqEb::EtherboneConnection* poEb );
+
+   ~EbRamAccess( void );
+
+   void ramInit( RAM_SCU_T* pRam, RAM_RING_SHARED_OBJECT_T* pSharedObj );
+
+   const std::string& getNetAddress( void )
    {
+      return m_poEb->getNetAddress();
    }
 
-   ~EbRamAccess( void )
+   DaqEb::EtherboneConnection::MUTEX_T& getMutex( void )
    {
+      return m_poEb->getMutex();
    }
 
-   DaqEb::EtherboneConnection* getEbObjectPtr( void )
+   etherbone::Device& getEbDevice( void )
    {
-      return m_poEb;
+      return m_poEb->getEbDevice();
    }
+
+   int readDaqDataBlock( RAM_DAQ_PAYLOAD_T* pData,
+                         unsigned int len
+                       #ifndef CONFIG_DDR3_NO_BURST_FUNCTIONS
+                         , RAM_DAQ_POLL_FT poll
+                       #endif
+                       );
+
 };
 
 } // namespace daq

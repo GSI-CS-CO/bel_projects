@@ -440,17 +440,25 @@ int DaqAdministration::distributeData( void )
     * At first a short block is supposed. It's necessary to read this data
     * obtaining the device-descriptor.
     */
+#ifdef CONFIG_NO_FE_ETHERBONE_CONNECTION
    if( ::ramReadDaqDataBlock( &m_oScuRam, &probe.ramItems[0],
                               c_ramBlockShortLen
                             #ifndef CONFIG_DDR3_NO_BURST_FUNCTIONS
                               , ::ramReadPoll
                             #endif
                             ) != EB_OK )
+#else
+   if( m_oEbAccess.readDaqDataBlock( &probe.ramItems[0], c_ramBlockShortLen
+                                  #ifndef CONFIG_DDR3_NO_BURST_FUNCTIONS
+                                     , ::ramReadPoll
+                                  #endif
+                                   ) != EB_OK )
+
+#endif
    {
       sendUnlockRamAccess();
       throw EbException( "Unable to read SCU-Ram buffer first part" );
    }
-
    /*
     * Rough check of the device descriptors integrity.
     */
@@ -463,11 +471,13 @@ int DaqAdministration::distributeData( void )
    }
 
    std::size_t wordLen;
+
    if( ::daqDescriptorIsLongBlock( &probe.descriptor ) )
    { /*
       * Long block has been detected, in this case the rest of the data
       * has still to be read from the DAQ-Ram-buffer.
       */
+   #ifdef CONFIG_NO_FE_ETHERBONE_CONNECTION
       if( ::ramReadDaqDataBlock( &m_oScuRam,
                                  &probe.ramItems[c_ramBlockShortLen],
                                  c_ramBlockLongLen - c_ramBlockShortLen
@@ -475,6 +485,15 @@ int DaqAdministration::distributeData( void )
                                  , ::ramReadPoll
                                #endif
                                ) != EB_OK )
+   #else
+      if( m_oEbAccess.readDaqDataBlock( &probe.ramItems[c_ramBlockShortLen],
+                                        c_ramBlockShortLen - c_ramBlockShortLen
+                                     #ifndef CONFIG_DDR3_NO_BURST_FUNCTIONS
+                                       , ::ramReadPoll
+                                     #endif
+                                      ) != EB_OK )
+
+   #endif
       {
          sendUnlockRamAccess();
          throw EbException( "Unable to read SCU-Ram buffer second part" );
