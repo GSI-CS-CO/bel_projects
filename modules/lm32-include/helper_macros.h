@@ -6,20 +6,20 @@
  * @copyright GSI Helmholtz Centre for Heavy Ion Research GmbH
  * @author    Ulrich Becker <u.becker@gsi.de>
  * @date      30.10.2018
- *******************************************************************************
- *  This library is free software; you can redistribute it and/or
- *  modify it under the terms of the GNU Lesser General Public
- *  License as published by the Free Software Foundation; either
- *  version 3 of the License, or (at your option) any later version.
+ ******************************************************************************
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 3 of the License, or (at your option) any later version.
  *
- *  This library is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- *  Lesser General Public License for more details.
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
  *
- *  You should have received a copy of the GNU Lesser General Public
- *  License along with this library. If not, see <http://www.gnu.org/licenses/>.
- *******************************************************************************
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library. If not, see <http://www.gnu.org/licenses/>.
+ ******************************************************************************
  */
 #ifndef _HELPER_MACROS_H
 #define _HELPER_MACROS_H
@@ -27,8 +27,10 @@
 #include <stddef.h> // Necessary for the macro "offsetof()"
 #include <limits.h> // Necessary for constant "CHAR_BIT" (in the most cases always 8)
 
-#ifndef typeof
-   #define typeof __typeof__
+#ifdef typeof
+   #define TYPEOF typeof
+#else
+   #define TYPEOF __typeof__
 #endif
 
 /*!
@@ -225,7 +227,7 @@
  */
 #define CONTAINER_OF( ptr, type, member )                  \
 ({                                                         \
-   const typeof( ((type *)0)->member ) *__mptr = (ptr);    \
+   const TYPEOF( ((type *)0)->member ) *__mptr = (ptr);    \
    (type *)( (char *)__mptr - offsetof(type, member) );    \
 })
 
@@ -234,7 +236,7 @@
  */
 #define CONTAINER_OF_ARRAY(ptr, type, mArray, index)       \
 ({                                                         \
-   const typeof( ((type *)0)->mArray[0] ) *__mptr = (ptr); \
+   const TYPEOF( ((type *)0)->mArray[0] ) *__mptr = (ptr); \
    (type *)( (char *)__mptr - (offsetof(type, mArray[0]) + \
       (index) * sizeof(mArray[0])));                       \
 })
@@ -372,8 +374,8 @@ template <typename TYP> bool isInRange( const TYP v, const TYP minimum,
     */
    #define min( a, b )    \
    ({                     \
-      typeof(a) _a = (a); \
-      typeof(b) _b = (b); \
+      TYPEOF(a) _a = (a); \
+      TYPEOF(b) _b = (b); \
       (_a < _b)? _a : _b; \
    })
 #endif
@@ -384,8 +386,8 @@ template <typename TYP> bool isInRange( const TYP v, const TYP minimum,
     */
    #define max( a, b )    \
    ({                     \
-      typeof(a) _a = (a); \
-      typeof(b) _b = (b); \
+      TYPEOF(a) _a = (a); \
+      TYPEOF(b) _b = (b); \
       (_a > _b)? _a : _b; \
    })
 #endif

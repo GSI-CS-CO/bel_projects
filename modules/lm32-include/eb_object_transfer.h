@@ -148,6 +148,18 @@
    eb_cycle_read( pThis->cycle, EB_LM32_FOR_MEMBER( type, member ), NULL )
 
 /*! ---------------------------------------------------------------------------
+ * @brief Macro builds the argument list of the last three arguments for
+ *        the function eb_cycle_write() to simplify the communication
+ *        with LM32.
+ * @param ptr Pointer to the concerning object.
+ * @param member Name of the member variable.
+ */
+#define EB_LM32_OJECT_MEMBER_WRITE_ARG( ptr, member )                         \
+      EB_LM32_GET_ADDR_OF_MEMBER( TYPEOF( *(ptr) ), member ),                 \
+                   sizeof( (ptr)->member ) | EB_BIG_ENDIAN,                   \
+                   (ptr)->member
+
+/*! ---------------------------------------------------------------------------
  * @brief Macro for sending a member variable via eb/wb bus to LM32.
  * @param pThis Pointer to the EB_HANDLE_T
  * @param ptr Pointer to the concerning object.
@@ -155,9 +167,32 @@
  */
 #define EB_LM32_OJECT_MEMBER_WRITE( pThis, ptr, member )                      \
    eb_cycle_write( pThis->cycle,                                              \
-                   EB_LM32_GET_ADDR_OF_MEMBER( typeof( *(ptr) ), member ),    \
-                   sizeof( (ptr)->member ) | EB_BIG_ENDIAN,                   \
-                   (ptr)->member )
+                            EB_LM32_OJECT_MEMBER_WRITE_ARG( ptr, member ) )
+
+/*! ---------------------------------------------------------------------------
+ * @brief Macro builds the argument list of the last three arguments for
+ *        the function eb_cycle_write() to simplify the communication
+ *        with LM32. Especially for bit fields.
+ * @note <b>CAUTION:</b> This macro includes a "bad cast" preventing a
+ *       compiler error! \n
+ *       Use this macro for bit-fields only and if you exactly know
+ *       what you do.
+ *       The size of these bit fields shall not exceed the size of
+ *       "eb_data_t"! \n
+ *       When the concerning bit field is the last element of the whole
+ *       transfer object and its size is smaller than "eb_data_t", so a
+ *       following padding field becomes necessary, \n
+ *       otherwise a segmentation error could occur!
+ * @note Keep in mind: The order of bit field elements depends on the
+ *       endianness convention!
+ * @param ptr Pointer to the concerning object.
+ * @param bfMember Name of the member variable of type bit field.
+ */
+#define EB_LM32_OJECT_MEMBER_WRITE_BF_ARG( ptr, bfMember )                    \
+   EB_LM32_GET_ADDR_OF_MEMBER( TYPEOF( *(ptr) ), bfMember ),                  \
+   sizeof( (ptr)->bfMember ) | EB_BIG_ENDIAN,                                 \
+   *((eb_data_t*)&((ptr)->bfMember)) &                                        \
+   ~(((eb_data_t)~0) << BIT_SIZEOF( (ptr)->bfMember )) )
 
 /*! ---------------------------------------------------------------------------
  * @brief Macro for sending bit fields via eb/wb bus to LM32.
@@ -179,17 +214,17 @@
  */
 #define EB_LM32_OJECT_MEMBER_WRITE_BF( pThis, ptr, bfMember )                 \
    eb_cycle_write( pThis->cycle,                                              \
-                   EB_LM32_GET_ADDR_OF_MEMBER( typeof( *(ptr) ), bfMember ),  \
-                   sizeof( (ptr)->bfMember ) | EB_BIG_ENDIAN,                 \
-                   *((eb_data_t*)&((ptr)->bfMember)) &                        \
-                   ~(((eb_data_t)~0) << BIT_SIZEOF( (ptr)->bfMember )) )
-
+                   EB_LM32_OJECT_MEMBER_WRITE_BF_ARG( ptr, bfMember ))
 
 #ifdef __cplusplus
 extern "C" {
+namespace Scu
+{
 #endif
 
-
+/*! ---------------------------------------------------------------------------
+ * @brief Wishbone/etherbone handle type.
+ */
 typedef struct
 {
    eb_socket_t socket;
@@ -198,23 +233,43 @@ typedef struct
    eb_status_t status;
 } EB_HANDLE_T;
 
+/*! ---------------------------------------------------------------------------
+ * @brief Information type for each single data target.
+ * @see EB_CYCLE_OR_CB_ARG_T
+ */
 typedef struct
 {
-   uint8_t* pData;
-   size_t   size;
+   uint8_t* pData; /*!<@brief Target address */
+   size_t   size;  /*!<@brief Length in bytes of the target data type */
 } EB_MEMBER_INFO_T;
 
+/*! ---------------------------------------------------------------------------
+ * @brief Argument data type for object read callback functions.
+ */
 typedef struct
 {
+   /*! @brief Exit flag */
    bool              exit;
+
+   /*! @brief Storing of the status of the callback function.*/
    eb_status_t       status;
+
+   /*! @brief Array size of "aInfo" */
    size_t            infoLen;
+
+   /*! @brief Start address of info array with "infoLen elements. */
    EB_MEMBER_INFO_T* aInfo;
 } EB_CYCLE_OR_CB_ARG_T;
 
+/*! ---------------------------------------------------------------------------
+ * @brief Argument data type for object write callback functions.
+ */
 typedef struct
 {
+   /*! @brief Exit flag */
    bool        exit;
+
+   /*! @brief Storing of the status of the callback function.*/
    eb_status_t status;
 } EB_CYCLE_OW_CB_ARG_T;
 
@@ -350,12 +405,13 @@ eb_status_t ebDeviceRead( EB_HANDLE_T* pThis,
                           eb_data_t*     pData )
 {
    pThis->status = eb_device_read( pThis->device, address, format, pData,
-                                                                  NULL, eb_block );
+                                                              NULL, eb_block );
    return pThis->status;
 }
 
 #ifdef __cplusplus
-}
+} /* namespace Scu */
+} /* extern "C" */
 #endif
 /*!@}*/
 #endif /* ifndef _EB_OBJECT_TRANSFER_H */
