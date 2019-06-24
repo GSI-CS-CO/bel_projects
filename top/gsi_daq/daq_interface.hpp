@@ -33,9 +33,11 @@
 #include <string>
 #include <exception>
 
-#include <eb_object_transfer.h>
 
-#ifndef CONFIG_NO_FE_ETHERBONE_CONNECTION
+
+#ifdef CONFIG_NO_FE_ETHERBONE_CONNECTION
+  #include <eb_object_transfer.h>
+#else
   #include <daq_eb_ram_buffer.hpp>
 #endif
 

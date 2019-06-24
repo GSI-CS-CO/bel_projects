@@ -47,56 +47,18 @@
 #include <stdbool.h>
 #include <scu_assert.h>
 #include <eb_console_helper.h>
-#include <helper_macros.h>
+#include <eb_lm32_helper.h>
 
-/*!
- * @defgroup EB_HELPER
- * @brief Some helper functions and macros simplifying the
- *        data transfer of flat objects of types struct, union or class
- *        via wishbone/etherbone bus.
- * @{
- */
 
 /*! ---------------------------------------------------------------------------
- */
-#ifndef EB_LM32_BASE
-   #define EB_LM32_BASE 0x100A0000
-#endif
-
-/*! ---------------------------------------------------------------------------
- * @brief Base address of the Linux perspective of the shared memory for
- *        the communication between LM32 and Linux.
- * @note The macros INT_BASE_ADR and SHARED_OFFS are project dependent and
- *       will be defined in the automatically generated header file
- *       "generated/shared_mmap.h". Therefore this file has to be also
- *       registered in the header file include path of the associated Linux
- *       project. For this reason the Linux module depends on the
- *       LM32 module, whereby the LM32-module has to be compiled first.
- */
-#define EB_LM32_SHARED_BASE_ADDRESS (EB_LM32_BASE + INT_BASE_ADR + SHARED_OFFS)
-
-/*! ---------------------------------------------------------------------------
- * @brief Macro calculates the eb/wb address of a member variable of a
- *        transfer object for the communication between LM32 and Linux.
- * @param type Name of the data type including the concerning member.
- * @param member Name of the member variable.
- */
-#define EB_LM32_GET_ADDR_OF_MEMBER( type, member )                            \
-   (EB_LM32_SHARED_BASE_ADDRESS + offsetof( type, member ))
-
-/*! ---------------------------------------------------------------------------
- */
-#define EB_LM32_FOR_MEMBER( type, member )                                    \
-   EB_LM32_GET_ADDR_OF_MEMBER( type, member ),                                \
-   GET_SIZE_OF_MEMBER( type, member ) | EB_BIG_ENDIAN
-
-/*! ---------------------------------------------------------------------------
+ * @ingroup EB_HELPER
  */
 #define __EB_INIT_INFO_ITEM( name, index, memberAcess )                       \
    name[index].pData = (uint8_t*)&(memberAcess);                              \
    name[index].size  = sizeof( memberAcess )                                  \
 
 /*! ---------------------------------------------------------------------------
+ * @ingroup EB_HELPER
  */
 #define EB_INIT_INFO_ITEM_STATIC( name, index, memberAcess )                  \
 {                                                                             \
@@ -106,6 +68,7 @@
 }
 
 /*! ---------------------------------------------------------------------------
+ * @ingroup EB_HELPER
  */
 #define EB_INIT_INFO_ITEM( name, index, memberAcess )                         \
 {                                                                             \
@@ -115,6 +78,7 @@
 }
 
 /*! ---------------------------------------------------------------------------
+ * @ingroup EB_HELPER
  */
 #define EB_INIT_CB_OR_ARG( arg, infoArray )                                   \
 {                                                                             \
@@ -124,12 +88,14 @@
 }
 
 /*! ---------------------------------------------------------------------------
+ * @ingroup EB_HELPER
  */
 #define EB_MAKE_CB_OR_ARG( arg, infoArray )                                   \
    EB_CYCLE_OR_CB_ARG_T arg;                                                  \
    EB_INIT_CB_OR_ARG( arg, infoArray )
 
 /*! ---------------------------------------------------------------------------
+ * @ingroup EB_HELPER
  */
 #define EB_INIT_CB_OW_ARG( arg )                                              \
 {                                                                             \
@@ -137,6 +103,7 @@
 }
 
 /*! ---------------------------------------------------------------------------
+ * @ingroup EB_HELPER
  */
 #define EB_MAKE_CB_OW_ARG( arg )                                              \
    EB_CYCLE_OW_CB_ARG_T arg;                                                  \
@@ -223,6 +190,7 @@ namespace Scu
 #endif
 
 /*! ---------------------------------------------------------------------------
+ * @ingroup EB_HELPER
  * @brief Wishbone/etherbone handle type.
  */
 typedef struct
@@ -234,6 +202,7 @@ typedef struct
 } EB_HANDLE_T;
 
 /*! ---------------------------------------------------------------------------
+ * @ingroup EB_HELPER
  * @brief Information type for each single data target.
  * @see EB_CYCLE_OR_CB_ARG_T
  */
@@ -244,6 +213,7 @@ typedef struct
 } EB_MEMBER_INFO_T;
 
 /*! ---------------------------------------------------------------------------
+ * @ingroup EB_HELPER
  * @brief Argument data type for object read callback functions.
  */
 typedef struct
@@ -262,6 +232,7 @@ typedef struct
 } EB_CYCLE_OR_CB_ARG_T;
 
 /*! ---------------------------------------------------------------------------
+ * @ingroup EB_HELPER
  * @brief Argument data type for object write callback functions.
  */
 typedef struct

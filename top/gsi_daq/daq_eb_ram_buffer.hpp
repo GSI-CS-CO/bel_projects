@@ -29,6 +29,7 @@
 #ifndef _DAQ_EB_RAM_BUFFER_HPP
 #define _DAQ_EB_RAM_BUFFER_HPP
 #include <EtherboneConnection.hpp>
+//#include <eb_lm32_helper.h>
 #include <daq_ramBuffer.h>
 
 namespace DaqEb = FeSupport::Scu::Etherbone;
