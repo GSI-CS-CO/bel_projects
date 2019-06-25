@@ -407,6 +407,8 @@ int DaqAdministration::distributeData( void )
       return getCurrentRamSize( false );
    }
 
+   m_receiveCount++;
+
    /*
     * At least one date block in RAM. For further actions
     * the LM32 has to be locked, otherwise it could crash in the
@@ -531,7 +533,6 @@ int DaqAdministration::distributeData( void )
       onBlockReceiveError();
    }
 
-   m_receiveCount++;
 
    return getCurrentRamSize( false );
 }

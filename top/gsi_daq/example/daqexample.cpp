@@ -22,11 +22,11 @@
  * License along with this library. If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************
  */
-
 #include <iostream>
 #include <daq_administration.hpp>
 #include <unistd.h>
 
+#include <boost/scope_exit.hpp>
 
 using namespace Scu;
 using namespace daq;
@@ -115,7 +115,7 @@ int main( int argc, const char** ppArgv )
       return EXIT_FAILURE;
    }
    cout << "SCU-URL: " << ppArgv[1] << endl;
-
+   cout << "sizeof( etherbone::data_t ): " << sizeof( etherbone::data_t ) << endl;
    try
    {  /*
        * The class "DaqAdministration" represents a SCU including at least one
@@ -127,14 +127,21 @@ int main( int argc, const char** ppArgv )
        * wishbone/etherbone object will it be in the future!
        */
 #ifdef CONFIG_NO_FE_ETHERBONE_CONNECTION
+      #warning deprecated configuration!
       DaqAdministration scuWithDaq( ppArgv[1] );
 #else
       DaqEb::EtherboneConnection ebConnection( ppArgv[1] );
-      ebConnection.setDebug( true );
+     // ebConnection.setDebug( true );
+      /*
+       * If the etherbone connection will not made outside of the class
+       * DaqAdministration, so this class will accomplished this
+       * in its constructor and the disconnect will made by the destructor.
+       * In this example the connection will made outside.
+       */
       ebConnection.connect();
       DaqAdministration scuWithDaq( &ebConnection );
 #endif
-#if 0
+
       /*
        * If this SCU doesn't have any DAQ...
        */
@@ -228,16 +235,28 @@ int main( int argc, const char** ppArgv )
            * the corresponding call-back function DaqChannel::onDataBlock()
            * becomes invoked by the function DaqAdministration::distributeData().
            */
-           scuWithDaq.distributeData();
-        }
+           try
+           {
+              scuWithDaq.distributeData();
+           }
+           catch( exception& e )
+           {
+              cerr << "ERROR: Block receiving: " << e.what() << endl;
+              break;
+           }
+         }
 
         /*
          * At least we send a reset command to the LM32 program:
          */
         scuWithDaq.sendReset();
 #ifndef CONFIG_NO_FE_ETHERBONE_CONNECTION
+        /*
+         * In this example the etherbone-connection was made outside
+         * of the class DaqAdministration, so we have also to disconnect
+         * outside.
+         */
         ebConnection.disconnect();
-#endif
 #endif
    } // End try()
 

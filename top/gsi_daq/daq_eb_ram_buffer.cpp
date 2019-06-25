@@ -95,16 +95,26 @@ int EbRamAccess::readDaqDataBlock( RAM_DAQ_PAYLOAD_T* pData,
 #ifdef CONFIG_SCU_USE_DDR3
   #if defined( CONFIG_DDR3_NO_BURST_FUNCTIONS )
    RAM_RING_INDEXES_T indexes = m_pRam->pSharedObj->ringIndexes;
+   uint lenToEnd = indexes.capacity - indexes.start;
+   if( lenToEnd < len )
+   {
+       m_poEb->doRead( m_pRam->ram.pTrModeBase +
+                       ramRingGeReadIndex( &indexes ) * sizeof(DDR3_PAYLOAD_T),
+                       reinterpret_cast<etherbone::data_t*>(pData),
+                       sizeof( pData->ad32[0] ) | EB_LITTLE_ENDIAN,
+                       lenToEnd * ARRAY_SIZE( pData->ad32 ));
+       ramRingAddToReadIndex( &indexes, lenToEnd );
+       len   -= lenToEnd;
+       pData += lenToEnd;
+   }
 
-
-   //TODO knallt noch!!!
    m_poEb->doRead( m_pRam->ram.pTrModeBase +
-                    ramRingGeReadIndex( &indexes ) * sizeof(DDR3_PAYLOAD_T),
+                   ramRingGeReadIndex( &indexes ) * sizeof(DDR3_PAYLOAD_T),
                    reinterpret_cast<etherbone::data_t*>(pData),
                    sizeof( pData->ad32[0] ) | EB_LITTLE_ENDIAN,
                    len * ARRAY_SIZE( pData->ad32 ));
-
    ramRingAddToReadIndex( &indexes, len );
+
    m_pRam->pSharedObj->ringIndexes = indexes;
 
    return EB_OK;
@@ -112,7 +122,7 @@ int EbRamAccess::readDaqDataBlock( RAM_DAQ_PAYLOAD_T* pData,
    #warning At the moment the burst mode is slow!
    int ret;
    RAM_RING_INDEXES_T indexes = m_pRam->pSharedObj->ringIndexes;
-   unsigned int lenToEnd = indexes.capacity - indexes.start;
+   uint lenToEnd = indexes.capacity - indexes.start;
 
    if( lenToEnd < len )
    {
