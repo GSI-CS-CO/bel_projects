@@ -170,6 +170,7 @@ DaqAdministration::DaqAdministration( const std::string wbDevice,
   :DaqInterface( wbDevice, doReset )
   ,m_maxChannels( 0 )
   ,m_poCurrentDescriptor( nullptr )
+  ,m_receiveCount( 0 )
 {
 }
 #else
@@ -178,6 +179,7 @@ DaqAdministration::DaqAdministration( DaqEb::EtherboneConnection* poEtherbone,
    :DaqInterface( poEtherbone, doReset )
    ,m_maxChannels( 0 )
    ,m_poCurrentDescriptor( nullptr )
+   ,m_receiveCount( 0 )
 {
 }
 #endif
@@ -528,6 +530,8 @@ int DaqAdministration::distributeData( void )
       readLastStatus();
       onBlockReceiveError();
    }
+
+   m_receiveCount++;
 
    return getCurrentRamSize( false );
 }

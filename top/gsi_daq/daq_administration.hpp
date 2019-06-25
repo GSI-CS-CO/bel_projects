@@ -744,8 +744,9 @@ class DaqAdministration: public DaqInterface
 {
    friend class DaqChannel;
 
-   unsigned int      m_maxChannels;
+   uint              m_maxChannels;
    DAQ_DESCRIPTOR_T* m_poCurrentDescriptor;
+   uint              m_receiveCount;
 
 protected:
    #define DEVICE_LIST_BASE std::list
@@ -789,12 +790,30 @@ public:
    }
 
    /*!
+    * @brief Resets all existing DAQ's in this SCU.
+    */
+   void sendReset( void )
+   {
+      DaqInterface::sendReset();
+      m_receiveCount = 0;
+   }
+
+   /*!
+    * @brief Returns the number of received data-blocks after the last reset,
+    *        doesn't matter whether the received blocks was valid or corrupt.
+    */
+   uint getReceiveCount( void ) const
+   {
+      return m_receiveCount;
+   }
+
+   /*!
     * @brief Returns the summation of registered channels of all
     *        registered DAQ devices.
     *
     * That means: the number of all DAQ-channels of this SCU.
     */
-   unsigned int getMaxChannels( void ) const
+   uint getMaxChannels( void ) const
    {
       return m_maxChannels;
    }
@@ -802,7 +821,7 @@ public:
    /*!
     * @brief Returns the number of all registered DAQ devices
     */
-   unsigned int getMaxDevices( void ) const
+   uint getMaxDevices( void ) const
    {
       return m_devicePtrList.size();
    }
@@ -1005,7 +1024,7 @@ public:
     * @note This function can only be used within the validity range
     *       of the callback function DaqChannel::onDataBlock!
     */
-   unsigned int descriptorGetTimeBase( void )
+   uint descriptorGetTimeBase( void )
    {
       SCU_ASSERT( m_poCurrentDescriptor != nullptr );
       return daqDescriptorGetTimeBase( m_poCurrentDescriptor );
