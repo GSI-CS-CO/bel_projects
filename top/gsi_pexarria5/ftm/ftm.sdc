@@ -1,6 +1,8 @@
 derive_pll_clocks -create_base_clocks
 derive_clock_uncertainty
 
+create_clock -name {monster:main|ref_pll5:\ref_a5:ref_inst|ref_pll5_0002:ref_pll5_inst|altera_pll:altera_pll_i|altera_arriav_pll:arriav_pll|altera_arriav_pll_base:fpll_0|PLL_RECONFIG~FMAX_CAP_FF} -period 8.000 [get_pins {main|phase|raw_trap|clk}]
+
 # Cut the clock domains from each other
 set_clock_groups -asynchronous                           \
  -group { altera_reserved_tck                          } \
