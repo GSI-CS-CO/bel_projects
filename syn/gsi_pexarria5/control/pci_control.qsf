@@ -39,7 +39,7 @@ set_global_assignment -name DEVICE 5AGXMA3D4F27I3
 set_global_assignment -name ENABLE_BOOT_SEL_PIN OFF
 set_global_assignment -name ENABLE_CONFIGURATION_PINS OFF
 set_global_assignment -name ENABLE_OCT_DONE OFF
-set_global_assignment -name ERROR_CHECK_FREQUENCY_DIVISOR 256
+set_global_assignment -name ERROR_CHECK_FREQUENCY_DIVISOR 2
 set_global_assignment -name FAMILY "Arria V"
 set_global_assignment -name LAST_QUARTUS_VERSION "18.1.0 Standard Edition"
 set_global_assignment -name MAX_CORE_JUNCTION_TEMP 100
