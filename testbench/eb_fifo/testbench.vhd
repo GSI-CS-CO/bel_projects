@@ -29,8 +29,6 @@ architecture simulation of testbench is
   signal push, pop   : std_logic := '0';
   signal full, empty : std_logic := '0';
 
-  signal data : std_logic_vector(fifo_width-1 downto 0) := (others => '0');
-
   -- signals for alternative implementation of eb_fifo
   signal my_r_dat          : std_logic_vector(fifo_width-1 downto 0) := (others => '0');
   signal my_full, my_empty : std_logic := '0';
@@ -126,8 +124,7 @@ begin
   generate_input_data: process
   begin
     wait until rising_edge(clk);
-    data <= std_logic_vector(unsigned(data)+1);
-    w_dat <= data;
+    w_dat <= std_logic_vector(unsigned(w_dat)+1);
   end process;
 
   verify_identical_output: process
