@@ -1,0 +1,52 @@
+[*]
+[*] GTKWave Analyzer v3.3.94 (w)1999-2018 BSI
+[*] Mon Jun 24 13:15:31 2019
+[*]
+[dumpfile] "/home/michael/work/PCIe_simulation/bel_projects/testbench/eb_fifo/simulation.ghw"
+[dumpfile_mtime] "Mon Jun 24 13:10:32 2019"
+[dumpfile_size] 19163
+[savefile] "/home/michael/work/PCIe_simulation/bel_projects/testbench/eb_fifo/simulation.gtkw"
+[timestart] 0
+[size] 1918 1045
+[pos] -1 -1
+*-29.451437 1760000000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[treeopen] top.
+[treeopen] top.testbench.
+[treeopen] top.testbench.fifo.ram.case_nobe_single.memory.
+[treeopen] top.testbench.my_fifo.
+[sst_width] 330
+[signals_width] 293
+[sst_expanded] 1
+[sst_vpaned_height] 429
+@28
+top.testbench.clk
+top.testbench.rst
+top.testbench.rst_n
+top.testbench.pop
+top.testbench.push
+@24
+#{top.testbench.w_dat[7:0]} top.testbench.w_dat[7] top.testbench.w_dat[6] top.testbench.w_dat[5] top.testbench.w_dat[4] top.testbench.w_dat[3] top.testbench.w_dat[2] top.testbench.w_dat[1] top.testbench.w_dat[0]
+@200
+-bel_projects eb_fifo
+@28
+top.testbench.full
+top.testbench.my_full
+top.testbench.empty
+top.testbench.my_empty
+@24
+#{top.testbench.r_dat[7:0]} top.testbench.r_dat[7] top.testbench.r_dat[6] top.testbench.r_dat[5] top.testbench.r_dat[4] top.testbench.r_dat[3] top.testbench.r_dat[2] top.testbench.r_dat[1] top.testbench.r_dat[0]
+@c00024
+#{top.testbench.my_r_dat[7:0]} top.testbench.my_r_dat[7] top.testbench.my_r_dat[6] top.testbench.my_r_dat[5] top.testbench.my_r_dat[4] top.testbench.my_r_dat[3] top.testbench.my_r_dat[2] top.testbench.my_r_dat[1] top.testbench.my_r_dat[0]
+@28
+top.testbench.my_r_dat[7]
+top.testbench.my_r_dat[6]
+top.testbench.my_r_dat[5]
+top.testbench.my_r_dat[4]
+top.testbench.my_r_dat[3]
+top.testbench.my_r_dat[2]
+top.testbench.my_r_dat[1]
+top.testbench.my_r_dat[0]
+@1401200
+-group_end
+[pattern_trace] 1
+[pattern_trace] 0
