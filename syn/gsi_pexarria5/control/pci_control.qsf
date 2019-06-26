@@ -3,6 +3,7 @@
 
 
 
+
 #
 #
 #
@@ -36,7 +37,7 @@
 set_global_assignment -name ACTIVE_SERIAL_CLOCK FREQ_100MHZ
 set_global_assignment -name AHDL_FILE ../../../modules/modulbus/i2c.tdf
 set_global_assignment -name CRC_ERROR_OPEN_DRAIN ON
-set_global_assignment -name DEVICE 5AGXMA3D4F27I3
+set_global_assignment -name DEVICE 5agxma3d4f27i3
 set_global_assignment -name ENABLE_BOOT_SEL_PIN OFF
 set_global_assignment -name ENABLE_CONFIGURATION_PINS OFF
 set_global_assignment -name ENABLE_OCT_DONE OFF
@@ -883,3 +884,9 @@ set_location_assignment PIN_Y9 -to pa[2]
 # to the terms and conditions of the Intel Program License 
 # Version 18.1.0 Build 625 09/12/2018 SJ Standard Edition
 # Your use of Intel Corporation's design tools, logic functions 
+
+set_global_assignment -name PARTITION_NETLIST_TYPE SOURCE -section_id Top
+set_global_assignment -name PARTITION_FITTER_PRESERVATION_LEVEL PLACEMENT_AND_ROUTING -section_id Top
+set_global_assignment -name PARTITION_COLOR 16764057 -section_id Top
+set_global_assignment -name OPTIMIZATION_MODE "HIGH PERFORMANCE EFFORT"
+set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
