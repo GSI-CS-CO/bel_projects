@@ -43,7 +43,7 @@ class MyChannel: public DaqChannel
     * In this example we need something like a counter which counts the
     * incoming data-blocks to limit the maximum of received blocks.
     */
-   unsigned int  m_receivedBlockCount;
+   uint  m_receivedBlockCount;
 
 public:
    MyChannel( unsigned int channelNumber )
@@ -51,7 +51,7 @@ public:
       ,m_receivedBlockCount( 0 )
    {}
 
-   unsigned int getBlockCount( void ) const
+   uint getBlockCount( void ) const
    {
       return m_receivedBlockCount;
    }
@@ -79,7 +79,7 @@ bool MyChannel::onDataBlock( ::DAQ_DATA_T* pData, std::size_t wordLen )
    cout << "Channel:         " << getNumber() << endl;
    cout << "Block number:    " << m_receivedBlockCount << endl;
    cout << "Sequence number: " <<
-                    static_cast<unsigned int>(descriptorGetSequence()) << endl;
+                    static_cast<uint>(descriptorGetSequence()) << endl;
    cout << "Timestamp:       " << descriptorGetTimeStamp() << endl;
    cout << "Sample time:     " << descriptorGetTimeBase() << " ns" << endl;
    cout << "Received values: " << wordLen << " in 16 bit words" << endl;
@@ -115,23 +115,14 @@ int main( int argc, const char** ppArgv )
       return EXIT_FAILURE;
    }
    cout << "SCU-URL: " << ppArgv[1] << endl;
-   cout << "sizeof( etherbone::data_t ): " << sizeof( etherbone::data_t ) << endl;
+
    try
    {  /*
-       * The class "DaqAdministration" represents a SCU including at least one
-       * DAQ in a arbitrary SCU-BUS slot.
-       *
-       * CAUTION: The the argument of the Constructor will changed in the
-       *           future!!!
-       * Instead of the SCU-URL at now, a pointer or reverence of a
-       * wishbone/etherbone object will it be in the future!
+       * Building a object of etherbone-connection for tie communication
+       * whith a DAQ via wishbone/etherbone.
        */
-#ifdef CONFIG_NO_FE_ETHERBONE_CONNECTION
-      #warning deprecated configuration!
-      DaqAdministration scuWithDaq( ppArgv[1] );
-#else
       DaqEb::EtherboneConnection ebConnection( ppArgv[1] );
-     // ebConnection.setDebug( true );
+
       /*
        * If the etherbone connection will not made outside of the class
        * DaqAdministration, so this class will accomplished this
@@ -139,8 +130,12 @@ int main( int argc, const char** ppArgv )
        * In this example the connection will made outside.
        */
       ebConnection.connect();
+
+      /*
+       * The class "DaqAdministration" represents a SCU including at least one
+       * DAQ in a arbitrary SCU-BUS slot.
+       */
       DaqAdministration scuWithDaq( &ebConnection );
-#endif
 
       /*
        * If this SCU doesn't have any DAQ...
@@ -159,7 +154,7 @@ int main( int argc, const char** ppArgv )
        * NOTE: The counting of DAQs and its channels begins at 1 and not
        *       at zero!
        */
-       for( unsigned int i = 1; i <= scuWithDaq.getMaxFoundDevices(); i++ )
+       for( uint i = 1; i <= scuWithDaq.getMaxFoundDevices(); i++ )
        {
           cout << "slot " << scuWithDaq.getSlotNumber( i )
                << ": channels: " << scuWithDaq.readMaxChannels( i ) << endl;
@@ -244,20 +239,19 @@ int main( int argc, const char** ppArgv )
               cerr << "ERROR: Block receiving: " << e.what() << endl;
               break;
            }
-         }
+        }
 
         /*
          * At least we send a reset command to the LM32 program:
          */
         scuWithDaq.sendReset();
-#ifndef CONFIG_NO_FE_ETHERBONE_CONNECTION
+
         /*
          * In this example the etherbone-connection was made outside
          * of the class DaqAdministration, so we have also to disconnect
          * outside.
          */
         ebConnection.disconnect();
-#endif
    } // End try()
 
    catch( exception& e )
