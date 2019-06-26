@@ -57,6 +57,11 @@ public:
 
    void ramInit( RAM_SCU_T* pRam, RAM_RING_SHARED_OBJECT_T* pSharedObj );
 
+   DaqEb::EtherboneConnection* getEbPtr( void )
+   {
+      return m_poEb;
+   }
+
    const std::string& getNetAddress( void )
    {
       return m_poEb->getNetAddress();

@@ -78,12 +78,21 @@ class DaqContainer: public DaqAdministration
    Attributes     m_oAttributes;
 
 public:
+#ifdef CONFIG_NO_FE_ETHERBONE_CONNECTION
    DaqContainer( const std::string ebName, CommandLine* poCommandLine,
                                                                 bool noReset )
       :DaqAdministration( ebName, noReset )
       ,m_poCommandLine( poCommandLine )
       {}
+#else
+   DaqContainer( DaqEb::EtherboneConnection* poEtherbone,
+                 CommandLine* poCommandLine,
+                                                                bool noReset )
+      :DaqAdministration( poEtherbone, noReset )
+      ,m_poCommandLine( poCommandLine )
+      {}
 
+#endif
    ~DaqContainer( void );
 
    CommandLine* getCommandLinePtr( void )

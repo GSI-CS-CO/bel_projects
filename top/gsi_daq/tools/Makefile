@@ -10,6 +10,8 @@
 ###############################################################################
 REPOSITORY_DIR := $(shell git rev-parse --show-toplevel)
 
+ USE_FE_LIB_ETHERBONE=1
+
 MIAN_MODULE := daqt.cpp
 
 SOURCE += parse_opts.cpp
@@ -19,13 +21,21 @@ SOURCE += daqt_read_stdin.cpp
 SOURCE += gnuplotstream.cpp
 SOURCE += find_process.c
 
-SOURCE += $(SCU_LIB_SRC_DIR)/scu_ddr3.c
-SOURCE += $(DAQ_DIR)/daq_ramBuffer.c
 SOURCE += $(DAQ_DIR)/daq_ring_admin.c
-SOURCE += $(SCU_LIB_SRC_DIR)/eb_object_transfer.c
 SOURCE += $(DAQ_DIR)/daq_interface.cpp
 SOURCE += $(DAQ_DIR)/daq_administration.cpp
-# SOURCE += $(DAQ_DIR)/scu_eb_interface.cpp
+
+ifdef USE_FE_LIB_ETHERBONE
+  EB_SRC= $(DAQ_DIR)/feSupport/scu/etherbone
+  SOURCE += $(EB_SRC)/EtherboneConnection.cpp
+  SOURCE += $(EB_SRC)/BusException.cpp
+  SOURCE += $(DAQ_DIR)/daq_eb_ram_buffer.cpp
+else
+  SOURCE += $(SCU_LIB_SRC_DIR)/scu_ddr3.c
+  SOURCE += $(SCU_LIB_SRC_DIR)/eb_object_transfer.c
+  SOURCE += $(DAQ_DIR)/daq_ramBuffer.c
+endif
+
 
 GNUPLOT_BIN ?= $(shell which gnuplot)
 
@@ -39,8 +49,20 @@ DEFINES += CONFIG_DAQ_DEBUG
 DEFINES += VERSION=0.1
 DEFINES += GPSTR_DEFAULT_GNUPLOT_EXE=\"$(GNUPLOT_BIN)\"
 
- DEFINES += CONFIG_NO_FE_ETHERBONE_CONNECTION
  DEFINES += CONFIG_DDR3_NO_BURST_FUNCTIONS
+
+ifdef USE_FE_LIB_ETHERBONE
+  DEFINES += __ETHERBONE_CONNECTION_MUTEX="EtherBoneConnectionMutexDaq"
+  INCLUDE_DIRS += $(EB_SRC)
+  LIBS += boost_system
+  LIBS += pthread
+else
+  DEFINES += CONFIG_NO_FE_ETHERBONE_CONNECTION
+endif
+
+LIBS += stdc++
+LIBS += etherbone
+
 
 HOST ?= tcp/$(SCU_URL)
 
@@ -62,8 +84,6 @@ CALL_ARGS         ?=  $(HOST) -C=100US 3 1 3 2
 
 REMOTE_CALL_ARGS  ?= "dev/wbm0"
 
-LIBS += stdc++
-LIBS += etherbone
 
 DEBUG = 1
 

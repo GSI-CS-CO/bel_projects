@@ -490,11 +490,23 @@ CommandLine::CommandLine( int argc, char** ppArgv )
 
 /*! ---------------------------------------------------------------------------
 */
+#ifdef CONFIG_NO_FE_ETHERBONE_CONNECTION
 CommandLine::~CommandLine( void )
 {
    if( m_poAllDaq != nullptr )
        delete m_poAllDaq;
 }
+#else
+CommandLine::~CommandLine( void )
+{
+   if( m_poAllDaq != nullptr )
+   {
+      DaqEb::EtherboneConnection* pEbC = m_poAllDaq->getEbPtr();
+      delete m_poAllDaq;
+      delete pEbC;
+   }
+}
+#endif
 
 /*! ---------------------------------------------------------------------------
 */
@@ -639,7 +651,12 @@ int CommandLine::onArgument( void )
             static_cast<FPROC_MODE_T>(::FPROC_BASENAME | ::FPROC_RLINK) ) < 0 )
             return -1;
 #endif
+#ifdef CONFIG_NO_FE_ETHERBONE_CONNECTION
          m_poAllDaq = new DaqContainer( arg, this, !m_noReset );
+#else
+         m_poAllDaq = new DaqContainer( new DaqEb::EtherboneConnection( arg ),
+                                        this, !m_noReset );
+#endif
          FSM_TRANSITION( READ_SLOT );
          break;
       }

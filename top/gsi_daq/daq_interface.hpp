@@ -235,6 +235,13 @@ public:
    #endif
    }
 
+#ifndef CONFIG_NO_FE_ETHERBONE_CONNECTION
+   DaqEb::EtherboneConnection* getEbPtr( void )
+   {
+      return m_oEbAccess.getEbPtr();
+   }
+#endif
+
    RETURN_CODE_T getLastReturnCode( void ) const
    {
       return m_oSharedData.operation.retCode;

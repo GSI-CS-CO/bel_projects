@@ -755,7 +755,7 @@ protected:
 
 public:
 #ifdef CONFIG_NO_FE_ETHERBONE_CONNECTION
-   DaqAdministration( const std::string = DAQ_DEFAULT_WB_DEVICE,
+  GSI_DEPRECATED DaqAdministration( const std::string = DAQ_DEFAULT_WB_DEVICE,
                                                          bool doReset = true );
 #else
    DaqAdministration( DaqEb::EtherboneConnection* poEtherbone,
