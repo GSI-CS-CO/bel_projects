@@ -17,16 +17,15 @@
 -- Revisions  :
 -- Date        Version  Author          Description
 -- 2013-04-08  1.0      terpstra        Created
+-- 2019-06-26           reese           Use array instead of explicit 
+--                                        resource instantiation
 -------------------------------------------------------------------------------
 
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
---library work;
---use work.wishbone_pkg.all;
---use work.eb_internals_pkg.all;
---use work.genram_pkg.all;
+use work.wishbone_pkg.f_ceil_log2;
 
 -- r_dat_o is valid when r_empty_o=0 (show ahead)
 -- w_dat_i is valid when w_push_i =1
@@ -48,14 +47,6 @@ entity my_eb_fifo is
 end my_eb_fifo;
 
 architecture rtl of my_eb_fifo is
-  function f_ceil_log2(x : natural) return natural is
-  begin
-    if x <= 1
-    then return 0;
-    else return f_ceil_log2((x+1)/2) +1;
-    end if;
-  end f_ceil_log2;
-
 
   constant c_depth : natural := f_ceil_log2(g_size);
   
@@ -71,17 +62,13 @@ architecture rtl of my_eb_fifo is
 
   type data_array_t is array ( 0 to g_size-1) 
             of std_logic_vector ( g_width-1 downto 0);
-  -- define the storage array          
   signal data : data_array_t := (others => (others => 'X'));
 
 begin
 
   r_empty_o <= empty;
   r_dat_o <= data(to_integer(r_idx(c_depth-1 downto 0))); 
-              --when empty = '0' else 
-              --  (others => 'U');
 
-  
   r_idx1 <= (r_idx+1) when r_pop_i ='1' else r_idx;
   w_idx1 <= (w_idx+1) when w_push_i='1' else w_idx;
   

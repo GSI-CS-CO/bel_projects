@@ -2,11 +2,6 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;  
 
--- package with component to test on this testbench
---use work.pcie_tlp.all;
-use work.genram_pkg.all;
-
-
 entity testbench is
 end entity;
 
