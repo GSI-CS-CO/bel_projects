@@ -72,7 +72,7 @@ architecture rtl of my_eb_fifo is
   type data_array_t is array ( 0 to g_size-1) 
             of std_logic_vector ( g_width-1 downto 0);
   -- define the storage array          
-  signal data : data_array_t;
+  signal data : data_array_t := (others => (others => 'X'));
 
 begin
 

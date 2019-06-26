@@ -13,8 +13,8 @@ end entity;
 architecture simulation of testbench is
 
   -- clock/reset generation
-  signal rst              : std_logic := '1';
-  signal rst_n            : std_logic := '0';
+  signal rst           : std_logic := '1';
+  signal rst_n         : std_logic := '0';
   constant clk_period  : time      := 20 ns;
   signal clk           : std_logic := '1';
 
@@ -31,9 +31,16 @@ architecture simulation of testbench is
 
   signal data : std_logic_vector(fifo_width-1 downto 0) := (others => '0');
 
-  -- my implementation of eb_fifo
+  -- signals for alternative implementation of eb_fifo
   signal my_r_dat          : std_logic_vector(fifo_width-1 downto 0) := (others => '0');
   signal my_full, my_empty : std_logic := '0';
+
+  procedure wait_clock_cycles(constant cycles : in natural; signal clk : in std_logic) is
+  begin
+    for i in 1 to cycles loop
+      wait until rising_edge(clk);
+    end loop;
+  end procedure;
 
 begin
   ---- generate clock and reset signal -------
@@ -41,7 +48,8 @@ begin
   rst   <= '0'      after clk_period*20;
   rst_n <= not rst;
   --------------------------------------------
-  fifo: entity work.eb_fifo
+
+  reference_fifo: entity work.eb_fifo
     generic map(
       g_width => fifo_width,
       g_size  => fifo_size)
@@ -70,70 +78,64 @@ begin
       r_dat_o   => my_r_dat);
 
 
-  testing: process 
+  test_cycle: process 
   begin
     -- initialize
     push <= '0';
     pop  <= '0';
 
-    wait until rising_edge(rst_n);
-    wait until rising_edge(clk);
+    wait_clock_cycles(2, clk);
 
-    w_dat <= (others=>'0');
+    -- completely fill fifo
     push  <= '1';
-    for i in 1 to fifo_size loop
-      wait until rising_edge(clk);
-      w_dat <= std_logic_vector(unsigned(w_dat)+1);
-    end loop;
+    wait_clock_cycles(fifo_size, clk);
     push <= '0';
 
-    wait until rising_edge(clk);
-    wait until rising_edge(clk);
+    -- wait a bit
+    wait_clock_cycles(2, clk);
 
+    -- half empty fifo
     pop  <= '1';
-    for i in 1 to fifo_size/2 loop
-      wait until rising_edge(clk);
-      --w_dat <= std_logic_vector(unsigned(w_dat)+1);
-    end loop;
+    wait_clock_cycles(fifo_size/2, clk);
     pop <= '0';
 
-    wait until rising_edge(clk);
-    wait until rising_edge(clk);
+    -- wait a bit
+    wait_clock_cycles(2, clk);
 
-    w_dat <= (others=>'0');
+    -- fill fifo again
     push  <= '1';
-    for i in 1 to fifo_size/2 loop
-      wait until rising_edge(clk);
-      w_dat <= std_logic_vector(unsigned(w_dat)+1);
-    end loop;
+    wait_clock_cycles(fifo_size/2, clk);
     push <= '0';
 
+    -- wait a bit
+    wait_clock_cycles(2, clk);
 
-    wait until rising_edge(clk);
-    wait until rising_edge(clk);
-
+    -- completely empty fifo
     pop  <= '1';
-    for i in 1 to fifo_size loop
-      wait until rising_edge(clk);
-      --w_dat <= std_logic_vector(unsigned(w_dat)+1);
-    end loop;
+    wait_clock_cycles(fifo_size, clk);
     pop <= '0';
 
-    w_dat <= data;
+    -- write an read at the same time 
     push <= '1';
     wait until falling_edge(empty);
     pop <= '1';
 
-
     wait;
   end process;
 
-  makedata: process
+  generate_input_data: process
   begin
     wait until rising_edge(clk);
     data <= std_logic_vector(unsigned(data)+1);
-
+    w_dat <= data;
   end process;
 
+  verify_identical_output: process
+  begin
+    wait until rising_edge(clk);
+    assert full = my_full                     report "full differs";
+    assert empty = my_empty                   report "empty differs";
+    assert r_dat = my_r_dat or my_empty = '1' report "data differs while empty is low";
+  end process;
 
 end architecture;
