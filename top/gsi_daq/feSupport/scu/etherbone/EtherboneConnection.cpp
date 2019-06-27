@@ -392,7 +392,7 @@ void EtherboneConnection::doVectorRead( const etherbone::address_t &eb_address,
 
 /* ----------------------------------------------------------------------------
  */
-void EtherboneConnection::doWrite( const etherbone::address_t &eb_address,
+void EtherboneConnection::doWrite( const etherbone::address_t eb_address,
                                    const etherbone::data_t* data,
                                    etherbone::format_t format,
                                    const uint16_t size )
@@ -432,17 +432,19 @@ void EtherboneConnection::doWrite( const etherbone::address_t &eb_address,
    }
 
    // write data block
+   eb_data_t mask = ~(static_cast<eb_data_t>(~0) << (whide * 8));
    uint j = 0;
    for( uint i = 0; i < size; i++, j += whide )
    {
-      eb_cycle.write(eb_address + j, format, *addByteOffset( data, j ));
+      eb_data_t d = *addByteOffset( data, j ) & mask;
+      eb_cycle.write(eb_address + j, format, d );
       if (!debug_)
          continue;
       std::cout << __FILE__ << "::" << __FUNCTION__ << "::"
                 << std::dec << __LINE__ << ": " << "addr 0x"
                 << std::hex << eb_address + j
                 << " data[" << std::dec << i <<"] 0x"
-                << std::hex << *addByteOffset( data, j ) << std::endl;
+                << std::hex << d << std::endl;
    }
 
    if ((status = eb_cycle.close()) != EB_OK)

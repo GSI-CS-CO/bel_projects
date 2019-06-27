@@ -86,7 +86,7 @@ namespace FeSupport {
            * @param format 32 or 16 bit
            * @param size Length of data array
            */
-          void doWrite(const etherbone::address_t &eb_address, 
+          void doWrite(const etherbone::address_t eb_address,
                        const etherbone::data_t* data,
                        etherbone::format_t format,
                        const uint16_t size = 1);
