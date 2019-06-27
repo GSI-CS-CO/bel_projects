@@ -211,9 +211,9 @@ int main( int argc, const char** ppArgv )
          * Sending the command "continuous on" with a sample rate of 1 ms to
          * the LM32.
          * The enum constant DAQ_SAMPLE_1MS is in file
-         * daq_descriptor.h defined.
+         * daq_command_interface.h defined.
          */
-        myChannel.sendEnableContineous( ::DAQ_SAMPLE_1MS );
+        myChannel.sendEnableContineous( DAQ_SAMPLE_1MS );
 
         /*
          *                   *** Main loop ***

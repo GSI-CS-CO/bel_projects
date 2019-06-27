@@ -432,6 +432,15 @@ void EtherboneConnection::doWrite( const etherbone::address_t eb_address,
    }
 
    // write data block
+   /*
+    * The function Cycle::write() expect as third parameter the data of
+    * type eb_data_t. In this layer the single data-words will get from
+    * the pointer "data" in the case the format in argument "format" is lower
+    * than sizeof(eb_data_t), the etherbone layer could return with
+    * a format-error.
+    * Therefore it becomes necessary to use a dynamical mask masking out the
+    * bits over the real payload size which becomes to send.
+    */
    eb_data_t mask = ~(static_cast<eb_data_t>(~0) << (whide * 8));
    uint j = 0;
    for( uint i = 0; i < size; i++, j += whide )

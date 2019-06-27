@@ -29,8 +29,9 @@
 #ifndef _DAQ_EB_RAM_BUFFER_HPP
 #define _DAQ_EB_RAM_BUFFER_HPP
 #include <EtherboneConnection.hpp>
-//#include <eb_lm32_helper.h>
+#include <eb_lm32_helper.h>
 #include <daq_ramBuffer.h>
+#include <generated/shared_mmap.h>
 
 namespace DaqEb = FeSupport::Scu::Etherbone;
 
@@ -84,6 +85,21 @@ public:
                        #endif
                        );
 
+   void readLM32( void* pData, std::size_t len, std::size_t offset = 0 )
+   {
+      m_poEb->doRead( EB_LM32_SHARED_BASE_ADDRESS + offset,
+                      reinterpret_cast<etherbone::data_t*>(pData),
+                      EB_BIG_ENDIAN | EB_DATA8,
+                      len );
+   }
+
+   void writeLM32( void* pData, std::size_t len, std::size_t offset = 0 )
+   {
+      m_poEb->doWrite( EB_LM32_SHARED_BASE_ADDRESS + offset,
+                       reinterpret_cast<const etherbone::data_t*>(pData),
+                       EB_BIG_ENDIAN | EB_DATA8,
+                       len );
+   }
 };
 
 } // namespace daq

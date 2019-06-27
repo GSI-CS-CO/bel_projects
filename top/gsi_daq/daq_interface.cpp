@@ -184,6 +184,11 @@ void DaqInterface::ebClose( void )
 
 #endif // ifndef CONFIG_NO_FE_ETHERBONE_CONNECTION
 
+#define CONV_ENDIAN( t, s, m ) \
+   t.m = gsi::convertByteEndian( s.m )
+
+ // #define CONFIG_VIA_EB_CYCLE
+
 /*! ---------------------------------------------------------------------------
  */
 void DaqInterface::readSharedTotal( void )
@@ -220,6 +225,7 @@ void DaqInterface::readSharedTotal( void )
       __THROW_EB_EXCEPTION();
 
 #else
+#ifdef CONFIG_VIA_EB_CYCLE
    EB_SCOPED_LOCK();
    etherbone::Cycle oEbCycle;
    eb_status_t status;
@@ -237,7 +243,17 @@ void DaqInterface::readSharedTotal( void )
 
    if( (status = oEbCycle.close()) != EB_OK )
       EB_THROW_MESSAGE( "closing" );
-
+#else
+   DAQ_SHARED_IO_T temp;
+   m_oEbAccess.readLM32( &temp, sizeof(temp) );
+   CONV_ENDIAN( m_oSharedData, temp, magicNumber );
+   CONV_ENDIAN( m_oSharedData, temp, ramIndexes.ringIndexes.offset );
+   CONV_ENDIAN( m_oSharedData, temp, ramIndexes.ringIndexes.capacity );
+   CONV_ENDIAN( m_oSharedData, temp, ramIndexes.ringIndexes.start );
+   CONV_ENDIAN( m_oSharedData, temp, ramIndexes.ringIndexes.end );
+   CONV_ENDIAN( m_oSharedData, temp, operation.code );
+   CONV_ENDIAN( m_oSharedData, temp, operation.retCode );
+#endif
 #endif
    if( m_oSharedData.magicNumber != DAQ_MAGIC_NUMBER )
       throw DaqException( "Wrong DAQ magic number respectively not found" );
@@ -296,6 +312,7 @@ DaqInterface::RETURN_CODE_T DaqInterface::sendCommand( DAQ_OPERATION_CODE_T cmd 
                           DAQ_ERR_RESPONSE_TIMEOUT );
 
 #else
+#ifdef CONFIG_VIA_EB_CYCLE
    { /*
       * We need this validity area in {} avoiding a mutex- conflict with
       * EB_SCOPED_LOCK() in function cmdReadyWait().
@@ -312,6 +329,10 @@ DaqInterface::RETURN_CODE_T DaqInterface::sendCommand( DAQ_OPERATION_CODE_T cmd 
       if( (status = oEbCycle.close()) != EB_OK )
          EB_THROW_MESSAGE( "closing" );
    }
+#else
+   DAQ_OPERATION_CODE_T temp = gsi::convertByteEndian( m_oSharedData.operation.code );
+   m_oEbAccess.writeLM32( &temp, sizeof( temp ), offsetof( DAQ_SHARED_IO_T, operation.code ) );
+#endif
 #endif
 
    if( cmdReadyWait() )
@@ -350,6 +371,7 @@ DAQ_OPERATION_CODE_T DaqInterface::getCommand( void )
    if( m_poEbHandle->status != EB_OK )
       __THROW_EB_EXCEPTION();
 #else
+#ifdef CONFIG_VIA_EB_CYCLE
    EB_SCOPED_LOCK();
    etherbone::Cycle oEbCycle;
    eb_status_t status;
@@ -362,6 +384,13 @@ DAQ_OPERATION_CODE_T DaqInterface::getCommand( void )
 
    if( (status = oEbCycle.close()) != EB_OK )
       EB_THROW_MESSAGE( "closing" );
+#else
+   DAQ_OPERATION_T temp;
+   m_oEbAccess.readLM32( &temp, sizeof(temp), offsetof( DAQ_SHARED_IO_T, operation )  );
+   CONV_ENDIAN( m_oSharedData.operation, temp, code );
+   CONV_ENDIAN( m_oSharedData.operation, temp, retCode );
+
+#endif
 #endif
    return m_oSharedData.operation.code;
 }
