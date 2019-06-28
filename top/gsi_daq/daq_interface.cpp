@@ -385,8 +385,17 @@ DAQ_OPERATION_CODE_T DaqInterface::getCommand( void )
    if( (status = oEbCycle.close()) != EB_OK )
       EB_THROW_MESSAGE( "closing" );
 #else
+   static_assert( static_cast<int>(offsetof( DAQ_OPERATION_T, ioData )) -
+                  static_cast<int>(offsetof( DAQ_OPERATION_T, code )) > 0,
+                  "Wrong order in DAQ_OPERATION_T" );
+   static_assert( static_cast<int>(offsetof( DAQ_OPERATION_T, retCode )) -
+                  static_cast<int>(offsetof( DAQ_OPERATION_T, code )) > 0,
+                  "Wrong order in DAQ_OPERATION_T" );
    DAQ_OPERATION_T temp;
-   m_oEbAccess.readLM32( &temp, sizeof(temp), offsetof( DAQ_SHARED_IO_T, operation )  );
+   m_oEbAccess.readLM32( &temp,
+                         offsetof(DAQ_OPERATION_T, ioData) -
+                                offsetof(DAQ_OPERATION_T, code),
+                         offsetof( DAQ_SHARED_IO_T, operation )  );
    CONV_ENDIAN( m_oSharedData.operation, temp, code );
    CONV_ENDIAN( m_oSharedData.operation, temp, retCode );
 
@@ -420,6 +429,7 @@ DaqInterface::RETURN_CODE_T DaqInterface::readParam1( void )
    if( m_poEbHandle->status != EB_OK )
       __THROW_EB_EXCEPTION();
 #else
+#ifdef CONFIG_VIA_EB_CYCLE
    EB_SCOPED_LOCK();
    etherbone::Cycle oEbCycle;
    eb_status_t status;
@@ -432,6 +442,15 @@ DaqInterface::RETURN_CODE_T DaqInterface::readParam1( void )
 
    if( (status = oEbCycle.close()) != EB_OK )
       EB_THROW_MESSAGE( "closing" );
+#else
+   DAQ_OPERATION_T temp;
+   m_oEbAccess.readLM32( &temp, (offsetof( DAQ_OPERATION_T, ioData.param1 ) +
+                                sizeof( temp.ioData.param1 )) -
+                                offsetof( DAQ_OPERATION_T, code ),
+                                offsetof( DAQ_SHARED_IO_T, operation ));
+   CONV_ENDIAN( m_oSharedData.operation, temp, retCode );
+   CONV_ENDIAN( m_oSharedData.operation, temp, ioData.param1 );
+#endif
 #endif
    return m_oSharedData.operation.retCode;
 }
@@ -463,6 +482,7 @@ DaqInterface::RETURN_CODE_T DaqInterface::readParam12( void )
    if( m_poEbHandle->status != EB_OK )
       __THROW_EB_EXCEPTION();
 #else
+ #ifdef CONFIG_VIA_EB_CYCLE
    EB_SCOPED_LOCK();
    etherbone::Cycle oEbCycle;
    eb_status_t status;
@@ -476,6 +496,16 @@ DaqInterface::RETURN_CODE_T DaqInterface::readParam12( void )
 
    if( (status = oEbCycle.close()) != EB_OK )
       EB_THROW_MESSAGE( "closing" );
+ #else
+   DAQ_OPERATION_T temp;
+   m_oEbAccess.readLM32( &temp, (offsetof( DAQ_OPERATION_T, ioData.param2 ) +
+                                sizeof( temp.ioData.param2 )) -
+                                offsetof( DAQ_OPERATION_T, code ),
+                                offsetof( DAQ_SHARED_IO_T, operation ));
+   CONV_ENDIAN( m_oSharedData.operation, temp, retCode );
+   CONV_ENDIAN( m_oSharedData.operation, temp, ioData.param1 );
+   CONV_ENDIAN( m_oSharedData.operation, temp, ioData.param2 );
+ #endif
 #endif
    return m_oSharedData.operation.retCode;
 }
@@ -509,6 +539,7 @@ DaqInterface::RETURN_CODE_T DaqInterface::readParam123( void )
    if( m_poEbHandle->status != EB_OK )
       __THROW_EB_EXCEPTION();
 #else
+  #ifdef CONFIG_VIA_EB_CYCLE
    EB_SCOPED_LOCK();
    etherbone::Cycle oEbCycle;
    eb_status_t status;
@@ -523,6 +554,18 @@ DaqInterface::RETURN_CODE_T DaqInterface::readParam123( void )
 
    if( (status = oEbCycle.close()) != EB_OK )
       EB_THROW_MESSAGE( "closing" );
+ #else
+   DAQ_OPERATION_T temp;
+   m_oEbAccess.readLM32( &temp, (offsetof( DAQ_OPERATION_T, ioData.param3 ) +
+                                sizeof( temp.ioData.param3 )) -
+                                offsetof( DAQ_OPERATION_T, code ),
+                                offsetof( DAQ_SHARED_IO_T, operation ));
+   CONV_ENDIAN( m_oSharedData.operation, temp, retCode );
+   CONV_ENDIAN( m_oSharedData.operation, temp, ioData.param1 );
+   CONV_ENDIAN( m_oSharedData.operation, temp, ioData.param2 );
+   CONV_ENDIAN( m_oSharedData.operation, temp, ioData.param3 );
+ #endif
+
 #endif
    return m_oSharedData.operation.retCode;
 }
@@ -558,6 +601,7 @@ DaqInterface::RETURN_CODE_T DaqInterface::readParam1234( void )
    if( m_poEbHandle->status != EB_OK )
       __THROW_EB_EXCEPTION();
 #else
+ #ifdef CONFIG_VIA_EB_CYCLE
    EB_SCOPED_LOCK();
    etherbone::Cycle oEbCycle;
    eb_status_t status;
@@ -573,6 +617,19 @@ DaqInterface::RETURN_CODE_T DaqInterface::readParam1234( void )
 
    if( (status = oEbCycle.close()) != EB_OK )
       EB_THROW_MESSAGE( "closing" );
+ #else
+   DAQ_OPERATION_T temp;
+   m_oEbAccess.readLM32( &temp, (offsetof( DAQ_OPERATION_T, ioData.param4 ) +
+                                sizeof( temp.ioData.param4 )) -
+                                offsetof( DAQ_OPERATION_T, code ),
+                                offsetof( DAQ_SHARED_IO_T, operation ));
+   CONV_ENDIAN( m_oSharedData.operation, temp, retCode );
+   CONV_ENDIAN( m_oSharedData.operation, temp, ioData.param1 );
+   CONV_ENDIAN( m_oSharedData.operation, temp, ioData.param2 );
+   CONV_ENDIAN( m_oSharedData.operation, temp, ioData.param3 );
+   CONV_ENDIAN( m_oSharedData.operation, temp, ioData.param4 );
+ #endif
+
 #endif
    return m_oSharedData.operation.retCode;
 }
@@ -604,6 +661,8 @@ DaqInterface::RETURN_CODE_T DaqInterface::readRamIndexes( void )
    if( m_poEbHandle->status != EB_OK )
       __THROW_EB_EXCEPTION();
 #else
+ // #ifdef CONFIG_VIA_EB_CYCLE
+#if 1
    EB_SCOPED_LOCK();
    etherbone::Cycle oEbCycle;
    eb_status_t status;
@@ -618,6 +677,13 @@ DaqInterface::RETURN_CODE_T DaqInterface::readRamIndexes( void )
 
    if( (status = oEbCycle.close()) != EB_OK )
       EB_THROW_MESSAGE( "closing" );
+  #else
+   RAM_RING_INDEXES_T temp;
+   m_oEbAccess.readLM32( &temp, sizeof( RAM_RING_INDEXES_T ),
+                        offsetof( DAQ_SHARED_IO_T, ramIndexes.ringIndexes ));
+   CONV_ENDIAN( m_oSharedData.ramIndexes.ringIndexes, temp, start );
+   CONV_ENDIAN( m_oSharedData.ramIndexes.ringIndexes, temp, end );
+  #endif
 #endif
    return m_oSharedData.operation.retCode;
 }

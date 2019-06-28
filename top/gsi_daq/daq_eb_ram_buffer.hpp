@@ -50,6 +50,7 @@ class EbRamAccess
    DaqEb::EtherboneConnection* m_poEb;
    bool                        m_connectedBySelf;
    RAM_SCU_T*                  m_pRam;
+   uint                        m_lm32SharedMemAddr;
 
 public:
    EbRamAccess( DaqEb::EtherboneConnection* poEb );
@@ -87,7 +88,7 @@ public:
 
    void readLM32( void* pData, std::size_t len, std::size_t offset = 0 )
    {
-      m_poEb->doRead( EB_LM32_SHARED_BASE_ADDRESS + offset,
+      m_poEb->doRead( m_lm32SharedMemAddr + offset,
                       reinterpret_cast<etherbone::data_t*>(pData),
                       EB_BIG_ENDIAN | EB_DATA8,
                       len );
@@ -95,7 +96,7 @@ public:
 
    void writeLM32( void* pData, std::size_t len, std::size_t offset = 0 )
    {
-      m_poEb->doWrite( EB_LM32_SHARED_BASE_ADDRESS + offset,
+      m_poEb->doWrite( m_lm32SharedMemAddr + offset,
                        reinterpret_cast<const etherbone::data_t*>(pData),
                        EB_BIG_ENDIAN | EB_DATA8,
                        len );
