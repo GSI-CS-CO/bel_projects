@@ -240,6 +240,7 @@ void clearActions()
   uint32_t valCnt;
 
   *(pEcaCtl + (ECA_CHANNEL_SELECT_RW >> 2)) = gEcaChECPU;    // select ECA channel for LM32
+  *(pEcaCtl + (ECA_CHANNEL_NUM_SELECT_RW >> 2)) = 0;         // set the subchannel index to 0
   valCnt = *(pEcaCtl + (ECA_CHANNEL_VALID_COUNT_GET >> 2));  // get/clear valid count
   if (valCnt) {
     mprintf("pending actions: %d\n", valCnt);
@@ -256,8 +257,11 @@ void clearActions()
 void handleValidActions()
 {
   uint32_t valCnt;
+  atomic_on();
   *(pEcaCtl + (ECA_CHANNEL_SELECT_RW >> 2)) = gEcaChECPU;    // select ECA channel for LM32
+  *(pEcaCtl + (ECA_CHANNEL_NUM_SELECT_RW >> 2)) = 0;         // set the subchannel index to 0
   valCnt = *(pEcaCtl + (ECA_CHANNEL_VALID_COUNT_GET >> 2));  // read and clear valid counter
+  atomic_off();
   //mprintf("\nvalid=%d\n", valCnt);
 
   if (valCnt != 0)
@@ -339,6 +343,7 @@ void configureEcaMsi(int enable, uint32_t channel) {
 
   atomic_on();
   *(pEcaCtl + (ECA_CHANNEL_SELECT_RW >> 2)) = channel;            // select channel
+  *(pEcaCtl + (ECA_CHANNEL_NUM_SELECT_RW >> 2)) = 0;         // set the subchannel index to 0
   *(pEcaCtl + (ECA_CHANNEL_MSI_SET_ENABLE_OWR >> 2)) = 0;         // disable ECA MSI (required to set a target address)
   *(pEcaCtl + (ECA_CHANNEL_MSI_SET_TARGET_OWR >> 2)) = (uint32_t)pMyMsi;  // set MSI destination address as a target address
   *(pEcaCtl + (ECA_CHANNEL_MSI_SET_ENABLE_OWR >> 2)) = enable;    // enable ECA MSI
@@ -746,6 +751,7 @@ void execHostCmd(int32_t cmd)
 
 	atomic_on();
 	*(pEcaCtl + (ECA_CHANNEL_SELECT_RW >> 2)) = gEcaChECPU;              // select channel for eCPU
+	*(pEcaCtl + (ECA_CHANNEL_NUM_SELECT_RW >> 2)) = 0;         // set the subchannel index to 0
 	uint32_t dest   = *(pEcaCtl + (ECA_CHANNEL_MSI_GET_TARGET_GET >> 2));  // get MSI destination address
 	uint32_t enable = *(pEcaCtl + (ECA_CHANNEL_MSI_GET_ENABLE_GET >> 2));  // get the MSI enable flag
 	atomic_off();
@@ -759,7 +765,8 @@ void execHostCmd(int32_t cmd)
 	mprintf("read eCPU chan counter\n");
 
 	atomic_on();
-	*(pEcaCtl + (ECA_CHANNEL_SELECT_RW >> 2)) = gEcaChECPU;
+	*(pEcaCtl + (ECA_CHANNEL_SELECT_RW >> 2)) = gEcaChECPU;    // select ECA channel for eCPU
+	*(pEcaCtl + (ECA_CHANNEL_NUM_SELECT_RW >> 2)) = 0;         // set the subchannel index to 0
 	uint32_t valid    = *(pEcaCtl + (ECA_CHANNEL_VALID_COUNT_GET >> 2));
 	uint32_t overflow = *(pEcaCtl + (ECA_CHANNEL_OVERFLOW_COUNT_GET >> 2));
 	uint32_t failed   = *(pEcaCtl + (ECA_CHANNEL_FAILED_COUNT_GET >> 2));
@@ -773,7 +780,8 @@ void execHostCmd(int32_t cmd)
 	mprintf("read eCPU queue\n");
 
 	atomic_on();
-	*(pEcaCtl + (ECA_CHANNEL_SELECT_RW >> 2)) = gEcaChECPU;
+	*(pEcaCtl + (ECA_CHANNEL_SELECT_RW >> 2)) = gEcaChECPU;    // select ECA channel for eCPU
+	*(pEcaCtl + (ECA_CHANNEL_NUM_SELECT_RW >> 2)) = 0;         // set the subchannel index to 0
 	uint32_t flag      = *(pECAQ + (ECA_QUEUE_FLAGS_GET >> 2));
 	uint32_t evtHigh   = *(pECAQ + (ECA_QUEUE_EVENT_ID_HI_GET >> 2));
 	uint32_t evtLow    = *(pECAQ + (ECA_QUEUE_EVENT_ID_LO_GET >> 2));
