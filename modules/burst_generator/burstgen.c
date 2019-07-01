@@ -206,47 +206,51 @@ int triggerIoActions(int id) {
 
 /*******************************************************************************
  *
- * Clear ECA queue
- *
- * @param[in] cnt The number pending actions
- * \return        The number of cleared actions
+ * Clear failed actions
  *
  ******************************************************************************/
-uint32_t clearEcaQueue(uint32_t cnt)
+void clearFailedActions()
 {
-  uint32_t flag;                // flag for the next action
-  uint32_t i, j = 0;
+  atomic_on();
 
-  for ( i = 0; i < cnt; ++i) {
+  *(pEcaCtl + (ECA_CHANNEL_SELECT_RW >> 2)) = gEcaChECPU;    // select ECA channel for LM32
+  *(pEcaCtl + (ECA_CHANNEL_NUM_SELECT_RW >> 2)) = 0;         // set the subchannel index to 0
 
-    flag = *(pECAQ + (ECA_QUEUE_FLAGS_GET >> 2));  // read flag and check if there was an action
+  *(pEcaCtl + (ECA_CHANNEL_CODE_SELECT_RW >> 2)) = (ECA_FG_DELAYED >> 16);
+  *(pEcaCtl + (ECA_CHANNEL_FAILED_COUNT_GET >> 2));          // read and clear the delayed counter
+  *(pEcaCtl + (ECA_CHANNEL_CODE_SELECT_RW >> 2)) = (ECA_FG_CONFLICT >> 16);
+  *(pEcaCtl + (ECA_CHANNEL_FAILED_COUNT_GET >> 2));          // read and clear the conflict counter
+  *(pEcaCtl + (ECA_CHANNEL_CODE_SELECT_RW >> 2)) = (ECA_FG_EARLY >> 16);
+  *(pEcaCtl + (ECA_CHANNEL_FAILED_COUNT_GET >> 2));          // read and clear the early counter
+  *(pEcaCtl + (ECA_CHANNEL_CODE_SELECT_RW >> 2)) = (ECA_FG_LATE >> 16);
+  *(pEcaCtl + (ECA_CHANNEL_FAILED_COUNT_GET >> 2));          // read and clear the late counter
 
-    if (flag & (0x0001 << ECA_VALID)) {
-      *(pECAQ + (ECA_QUEUE_POP_OWR >> 2)) = 0x1;   // pop action from channel
-      ++j;
-    }
-  }
-
-  return j;
+  atomic_off();
 }
 
 /*******************************************************************************
  *
- * Clear pending valid actions
+ * Clear old actions
  *
  ******************************************************************************/
-void clearActions()
+void clearOldActions()
 {
-  uint32_t valCnt;
+  atomic_on();
 
   *(pEcaCtl + (ECA_CHANNEL_SELECT_RW >> 2)) = gEcaChECPU;    // select ECA channel for LM32
   *(pEcaCtl + (ECA_CHANNEL_NUM_SELECT_RW >> 2)) = 0;         // set the subchannel index to 0
-  valCnt = *(pEcaCtl + (ECA_CHANNEL_VALID_COUNT_GET >> 2));  // get/clear valid count
-  if (valCnt) {
-    mprintf("pending actions: %d\n", valCnt);
-    valCnt = clearEcaQueue(valCnt);                          // pop pending actions
-    mprintf("cleared actions: %d\n", valCnt);
-  }
+
+  uint32_t full  = *(pEcaCtl + (ECA_CHANNEL_MOSTFULL_ACK_GET >> 2)) & 0xFFFF0000;
+  full >>= 16;
+  for (int i = 0; i < full; ++i)
+    *(pECAQ + (ECA_QUEUE_POP_OWR >> 2)) = 0x1;               // clear the fill status of the ECA channel for LM32
+
+  *(pEcaCtl + (ECA_CHANNEL_OVERFLOW_COUNT_GET >> 2));        // read and clear the overflow counter
+  *(pEcaCtl + (ECA_CHANNEL_VALID_COUNT_GET >> 2));           // read and clear the valid counter
+
+  atomic_off();
+
+  clearFailedActions();
 }
 
 /*******************************************************************************
@@ -268,23 +272,6 @@ void handleValidActions()
     ecaHandler(valCnt);                             // pop pending valid actions
 }
 
-void handleFailedActions()
-{
-  atomic_on();
-  *(pEcaCtl + (ECA_CHANNEL_SELECT_RW >> 2)) = gEcaChECPU;    // select ECA channel for LM32
-
-  *(pEcaCtl + (ECA_CHANNEL_OVERFLOW_COUNT_GET >> 2));        // read and clear overflow counter
-
-  *(pEcaCtl + (ECA_CHANNEL_CODE_SELECT_RW >> 2)) = (ECA_FG_DELAYED >> 16);
-  *(pEcaCtl + (ECA_CHANNEL_FAILED_COUNT_GET >> 2));          // read and clear delayed counter
-  *(pEcaCtl + (ECA_CHANNEL_CODE_SELECT_RW >> 2)) = (ECA_FG_CONFLICT >> 16);
-  *(pEcaCtl + (ECA_CHANNEL_FAILED_COUNT_GET >> 2));          // read and clear conflict counter
-  *(pEcaCtl + (ECA_CHANNEL_CODE_SELECT_RW >> 2)) = (ECA_FG_EARLY >> 16);
-  *(pEcaCtl + (ECA_CHANNEL_FAILED_COUNT_GET >> 2));          // read and clear early counter
-  *(pEcaCtl + (ECA_CHANNEL_CODE_SELECT_RW >> 2)) = (ECA_FG_LATE >> 16);
-  *(pEcaCtl + (ECA_CHANNEL_FAILED_COUNT_GET >> 2));          // read and clear late counter
-  atomic_off();
-}
 
 /*******************************************************************************
  *
@@ -307,7 +294,7 @@ int ecaMsiHandler(int id)
       case ECA_FG_MOSTFULL:
 	break;
       default:
-	handleFailedActions();
+	clearFailedActions();
 	break;
     }
   }
@@ -339,7 +326,7 @@ void configureEcaMsi(int enable, uint32_t channel) {
     return;
   }
 
-  clearActions();     // clean ECA queue and channel from previous actions
+  clearOldActions();     // clean ECA queue and channel from previous actions
 
   atomic_on();
   *(pEcaCtl + (ECA_CHANNEL_SELECT_RW >> 2)) = channel;            // select channel
