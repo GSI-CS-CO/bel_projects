@@ -66,10 +66,26 @@ namespace FeSupport {
            * @param data Array to store read data
            * @param format 32 or 16 bit
            * @param size Length of data array
+           * @param packedTarget If false (default) the target-pointer (data)
+           *                     will added with sizeof( etherbone::data_t )
+           *                     for each data word,
+           *                     else the target pointer will added with
+           *                     the size defined in parameter format.
+           * @note CAUTION!\n
+           *       packedTarget=true could be dangerous! Because at the moment
+           *       the etherbone library supposes in any cases that
+           *       the target pointer can take the place of sizeof(etherbone::data_t). \n
+           *       If the target-size defined in parameter "format" smaller than
+           *       sizeof(etherbone::data_t) a segmentation fault could happen respectively
+           *       variables could be overwritten.\n
+           *       To prevent this the use of padding space of \n
+           *       at least sizeof(etherbone::data_t) - (format & EB_DATAX)
+           *       becomes necessary.
            */
           void doRead(etherbone::address_t eb_address, etherbone::data_t* data,
                       etherbone::format_t format,
-                      const uint16_t size = 1);
+                      const uint16_t size = 1,
+                      bool packedTarget = false);
 
           void doVectorRead(const etherbone::address_t &eb_address, 
                             std::vector  <std::pair <etherbone::data_t, etherbone::data_t> >& v,
@@ -85,15 +101,22 @@ namespace FeSupport {
            * @param data Array of data to write
            * @param format 32 or 16 bit
            * @param size Length of data array
+           * @param packedSource If false (default) a source data array of type
+           *                     etherbone::data_t is expected, otherwise a source
+           *                     data array of a type-size defined in argument "format"
+           *                     is expected.
            */
           void doWrite(const etherbone::address_t eb_address,
                        const etherbone::data_t* data,
                        etherbone::format_t format,
-                       const uint16_t size = 1);
+                       const uint16_t size = 1,
+                       bool packedSource = false
+                      );
 
           void doVectorWrite(const etherbone::address_t &eb_address, 
                              const std::vector <std::pair <etherbone::data_t, etherbone::data_t> >& v,
                              etherbone::format_t format);
+
           /*!
            * \brief Activate debugging outputs on console. 
            *
@@ -122,6 +145,7 @@ namespace FeSupport {
              return netaddress_;
           }
 
+#ifdef CONFIG_VIA_EB_CYCLE
           /*!
            * @brief Returns a reverence to the whishbone/etherbone device.
            * @author UB
@@ -139,7 +163,7 @@ namespace FeSupport {
           {
              return _sysMu;
           }
-
+#endif
         private:
           /*!
            * @brief System mutex

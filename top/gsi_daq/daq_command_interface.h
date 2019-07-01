@@ -163,6 +163,8 @@ typedef struct PACKED_SIZE
 } DAQ_CHANNEL_LOCATION_T;
 #ifndef __DOXYGEN__
 STATIC_ASSERT( sizeof( DAQ_CHANNEL_LOCATION_T ) == 2 * sizeof(uint16_t));
+STATIC_ASSERT( offsetof( DAQ_CHANNEL_LOCATION_T, deviceNumber ) <
+               offsetof( DAQ_CHANNEL_LOCATION_T, channel ) );
 #endif
 
 /*! ---------------------------------------------------------------------------
@@ -180,6 +182,14 @@ typedef struct PACKED_SIZE
 #ifndef __DOXYGEN__
 STATIC_ASSERT( sizeof(DAQ_OPERATION_IO_T) == (sizeof(DAQ_CHANNEL_LOCATION_T)
                                             + 4 * sizeof( DAQ_REGISTER_T ) ));
+STATIC_ASSERT( offsetof( DAQ_OPERATION_IO_T, location ) <
+               offsetof( DAQ_OPERATION_IO_T, param1 ));
+STATIC_ASSERT( offsetof( DAQ_OPERATION_IO_T, param1 ) <
+               offsetof( DAQ_OPERATION_IO_T, param2 ));
+STATIC_ASSERT( offsetof( DAQ_OPERATION_IO_T, param2 ) <
+               offsetof( DAQ_OPERATION_IO_T, param3 ));
+STATIC_ASSERT( offsetof( DAQ_OPERATION_IO_T, param3 ) <
+               offsetof( DAQ_OPERATION_IO_T, param4 ));
 #endif
 
 /*! ---------------------------------------------------------------------------
@@ -197,6 +207,10 @@ typedef struct PACKED_SIZE
 STATIC_ASSERT( sizeof(DAQ_OPERATION_T) == (sizeof(DAQ_OPERATION_CODE_T)
                                          + sizeof(DAQ_RETURN_CODE_T)
                                          + sizeof(DAQ_OPERATION_IO_T) ));
+STATIC_ASSERT( offsetof( DAQ_OPERATION_T, code ) <
+               offsetof( DAQ_OPERATION_T, retCode ) );
+STATIC_ASSERT( offsetof( DAQ_OPERATION_T, retCode ) <
+               offsetof( DAQ_OPERATION_T, ioData ) );
 #endif
 
 /*! ---------------------------------------------------------------------------
@@ -225,6 +239,11 @@ STATIC_ASSERT( sizeof( DAQ_SHARED_IO_T ) == (sizeof(uint32_t)
                                            + sizeof(RAM_RING_SHARED_OBJECT_T)
                                            + sizeof(DAQ_OPERATION_T) ));
 STATIC_ASSERT( sizeof( DAQ_SHARED_IO_T ) <= SHARED_SIZE );
+STATIC_ASSERT( offsetof( DAQ_SHARED_IO_T, magicNumber ) == 0 );
+STATIC_ASSERT( offsetof( DAQ_SHARED_IO_T, magicNumber ) <
+               offsetof( DAQ_SHARED_IO_T, ramIndexes ) );
+STATIC_ASSERT( offsetof( DAQ_SHARED_IO_T, ramIndexes ) <
+               offsetof( DAQ_SHARED_IO_T, operation ) );
 #endif
 
 /*! ---------------------------------------------------------------------------

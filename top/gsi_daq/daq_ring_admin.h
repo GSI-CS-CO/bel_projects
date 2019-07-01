@@ -108,6 +108,8 @@ typedef struct PACKED_SIZE
 } RAM_RING_INDEXES_T;
 #ifndef __DOXYGEN__
 STATIC_ASSERT( sizeof(RAM_RING_INDEXES_T) == 4 * sizeof(RAM_RING_INDEX_T));
+STATIC_ASSERT( offsetof( RAM_RING_INDEXES_T, start ) <
+               offsetof( RAM_RING_INDEXES_T, end ));
 #endif
 
 /*! ---------------------------------------------------------------------------
@@ -144,6 +146,8 @@ typedef struct PACKED_SIZE
 STATIC_ASSERT( sizeof(RAM_RING_SHARED_OBJECT_T) ==
                sizeof(RAM_RING_INDEXES_T) +
                2 * sizeof(uint32_t) );
+STATIC_ASSERT( offsetof( RAM_RING_SHARED_OBJECT_T, ramAccessLock ) <
+               offsetof( RAM_RING_SHARED_OBJECT_T, ringIndexes ));
 #endif
 
 /*! ---------------------------------------------------------------------------

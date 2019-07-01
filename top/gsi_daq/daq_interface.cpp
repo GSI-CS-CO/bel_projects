@@ -32,8 +32,10 @@
 namespace EB = FeSupport::Scu::Etherbone;
 namespace IPC = EB::IPC;
 
+#ifdef CONFIG_VIA_EB_CYCLE
 #define EB_SCOPED_LOCK() IPC::scoped_lock<IPC::named_mutex> \
         lock( m_oEbAccess.getMutex() );
+#endif
 
 #define EB_THROW_MESSAGE( _m )                                                 \
    {                                                                           \
@@ -244,15 +246,16 @@ void DaqInterface::readSharedTotal( void )
    if( (status = oEbCycle.close()) != EB_OK )
       EB_THROW_MESSAGE( "closing" );
 #else
-   DAQ_SHARED_IO_T temp;
-   m_oEbAccess.readLM32( &temp, sizeof(temp) );
-   CONV_ENDIAN( m_oSharedData, temp, magicNumber );
-   CONV_ENDIAN( m_oSharedData, temp, ramIndexes.ringIndexes.offset );
-   CONV_ENDIAN( m_oSharedData, temp, ramIndexes.ringIndexes.capacity );
-   CONV_ENDIAN( m_oSharedData, temp, ramIndexes.ringIndexes.start );
-   CONV_ENDIAN( m_oSharedData, temp, ramIndexes.ringIndexes.end );
-   CONV_ENDIAN( m_oSharedData, temp, operation.code );
-   CONV_ENDIAN( m_oSharedData, temp, operation.retCode );
+   EB_TEMP_T( DAQ_SHARED_IO_T, data ) temp;
+
+   m_oEbAccess.readLM32( &temp.data, sizeof(DAQ_SHARED_IO_T) );
+   CONV_ENDIAN( m_oSharedData, temp.data, magicNumber );
+   CONV_ENDIAN( m_oSharedData, temp.data, ramIndexes.ringIndexes.offset );
+   CONV_ENDIAN( m_oSharedData, temp.data, ramIndexes.ringIndexes.capacity );
+   CONV_ENDIAN( m_oSharedData, temp.data, ramIndexes.ringIndexes.start );
+   CONV_ENDIAN( m_oSharedData, temp.data, ramIndexes.ringIndexes.end );
+   CONV_ENDIAN( m_oSharedData, temp.data, operation.code );
+   CONV_ENDIAN( m_oSharedData, temp.data, operation.retCode );
 #endif
 #endif
    if( m_oSharedData.magicNumber != DAQ_MAGIC_NUMBER )
@@ -391,13 +394,15 @@ DAQ_OPERATION_CODE_T DaqInterface::getCommand( void )
    static_assert( static_cast<int>(offsetof( DAQ_OPERATION_T, retCode )) -
                   static_cast<int>(offsetof( DAQ_OPERATION_T, code )) > 0,
                   "Wrong order in DAQ_OPERATION_T" );
-   DAQ_OPERATION_T temp;
-   m_oEbAccess.readLM32( &temp,
+
+   EB_TEMP_T( DAQ_OPERATION_T, data ) temp;
+
+   m_oEbAccess.readLM32( &temp.data,
                          offsetof(DAQ_OPERATION_T, ioData) -
                                 offsetof(DAQ_OPERATION_T, code),
                          offsetof( DAQ_SHARED_IO_T, operation )  );
-   CONV_ENDIAN( m_oSharedData.operation, temp, code );
-   CONV_ENDIAN( m_oSharedData.operation, temp, retCode );
+   CONV_ENDIAN( m_oSharedData.operation, temp.data, code );
+   CONV_ENDIAN( m_oSharedData.operation, temp.data, retCode );
 
 #endif
 #endif
@@ -443,13 +448,15 @@ DaqInterface::RETURN_CODE_T DaqInterface::readParam1( void )
    if( (status = oEbCycle.close()) != EB_OK )
       EB_THROW_MESSAGE( "closing" );
 #else
-   DAQ_OPERATION_T temp;
-   m_oEbAccess.readLM32( &temp, (offsetof( DAQ_OPERATION_T, ioData.param1 ) +
-                                sizeof( temp.ioData.param1 )) -
+   EB_TEMP_T( DAQ_OPERATION_T, data ) temp;
+
+   m_oEbAccess.readLM32( &temp.data,
+                         (offsetof( DAQ_OPERATION_T, ioData.param1 ) +
+                                sizeof( temp.data.ioData.param1 )) -
                                 offsetof( DAQ_OPERATION_T, code ),
                                 offsetof( DAQ_SHARED_IO_T, operation ));
-   CONV_ENDIAN( m_oSharedData.operation, temp, retCode );
-   CONV_ENDIAN( m_oSharedData.operation, temp, ioData.param1 );
+   CONV_ENDIAN( m_oSharedData.operation, temp.data, retCode );
+   CONV_ENDIAN( m_oSharedData.operation, temp.data, ioData.param1 );
 #endif
 #endif
    return m_oSharedData.operation.retCode;
@@ -497,14 +504,16 @@ DaqInterface::RETURN_CODE_T DaqInterface::readParam12( void )
    if( (status = oEbCycle.close()) != EB_OK )
       EB_THROW_MESSAGE( "closing" );
  #else
-   DAQ_OPERATION_T temp;
-   m_oEbAccess.readLM32( &temp, (offsetof( DAQ_OPERATION_T, ioData.param2 ) +
-                                sizeof( temp.ioData.param2 )) -
+   EB_TEMP_T( DAQ_OPERATION_T, data ) temp;
+
+   m_oEbAccess.readLM32( &temp.data,
+                         (offsetof( DAQ_OPERATION_T, ioData.param2 ) +
+                                sizeof( temp.data.ioData.param2 )) -
                                 offsetof( DAQ_OPERATION_T, code ),
                                 offsetof( DAQ_SHARED_IO_T, operation ));
-   CONV_ENDIAN( m_oSharedData.operation, temp, retCode );
-   CONV_ENDIAN( m_oSharedData.operation, temp, ioData.param1 );
-   CONV_ENDIAN( m_oSharedData.operation, temp, ioData.param2 );
+   CONV_ENDIAN( m_oSharedData.operation, temp.data, retCode );
+   CONV_ENDIAN( m_oSharedData.operation, temp.data, ioData.param1 );
+   CONV_ENDIAN( m_oSharedData.operation, temp.data, ioData.param2 );
  #endif
 #endif
    return m_oSharedData.operation.retCode;
@@ -555,15 +564,16 @@ DaqInterface::RETURN_CODE_T DaqInterface::readParam123( void )
    if( (status = oEbCycle.close()) != EB_OK )
       EB_THROW_MESSAGE( "closing" );
  #else
-   DAQ_OPERATION_T temp;
-   m_oEbAccess.readLM32( &temp, (offsetof( DAQ_OPERATION_T, ioData.param3 ) +
-                                sizeof( temp.ioData.param3 )) -
+   EB_TEMP_T( DAQ_OPERATION_T, data ) temp;
+
+   m_oEbAccess.readLM32( &temp.data, (offsetof( DAQ_OPERATION_T, ioData.param3 ) +
+                                sizeof( temp.data.ioData.param3 )) -
                                 offsetof( DAQ_OPERATION_T, code ),
                                 offsetof( DAQ_SHARED_IO_T, operation ));
-   CONV_ENDIAN( m_oSharedData.operation, temp, retCode );
-   CONV_ENDIAN( m_oSharedData.operation, temp, ioData.param1 );
-   CONV_ENDIAN( m_oSharedData.operation, temp, ioData.param2 );
-   CONV_ENDIAN( m_oSharedData.operation, temp, ioData.param3 );
+   CONV_ENDIAN( m_oSharedData.operation, temp.data, retCode );
+   CONV_ENDIAN( m_oSharedData.operation, temp.data, ioData.param1 );
+   CONV_ENDIAN( m_oSharedData.operation, temp.data, ioData.param2 );
+   CONV_ENDIAN( m_oSharedData.operation, temp.data, ioData.param3 );
  #endif
 
 #endif
@@ -618,16 +628,16 @@ DaqInterface::RETURN_CODE_T DaqInterface::readParam1234( void )
    if( (status = oEbCycle.close()) != EB_OK )
       EB_THROW_MESSAGE( "closing" );
  #else
-   DAQ_OPERATION_T temp;
+   EB_TEMP_T( DAQ_OPERATION_T, data ) temp;
    m_oEbAccess.readLM32( &temp, (offsetof( DAQ_OPERATION_T, ioData.param4 ) +
-                                sizeof( temp.ioData.param4 )) -
+                                sizeof( temp.data.ioData.param4 )) -
                                 offsetof( DAQ_OPERATION_T, code ),
                                 offsetof( DAQ_SHARED_IO_T, operation ));
-   CONV_ENDIAN( m_oSharedData.operation, temp, retCode );
-   CONV_ENDIAN( m_oSharedData.operation, temp, ioData.param1 );
-   CONV_ENDIAN( m_oSharedData.operation, temp, ioData.param2 );
-   CONV_ENDIAN( m_oSharedData.operation, temp, ioData.param3 );
-   CONV_ENDIAN( m_oSharedData.operation, temp, ioData.param4 );
+   CONV_ENDIAN( m_oSharedData.operation, temp.data, retCode );
+   CONV_ENDIAN( m_oSharedData.operation, temp.data, ioData.param1 );
+   CONV_ENDIAN( m_oSharedData.operation, temp.data, ioData.param2 );
+   CONV_ENDIAN( m_oSharedData.operation, temp.data, ioData.param3 );
+   CONV_ENDIAN( m_oSharedData.operation, temp.data, ioData.param4 );
  #endif
 
 #endif
@@ -661,8 +671,7 @@ DaqInterface::RETURN_CODE_T DaqInterface::readRamIndexes( void )
    if( m_poEbHandle->status != EB_OK )
       __THROW_EB_EXCEPTION();
 #else
- // #ifdef CONFIG_VIA_EB_CYCLE
-#if 1
+ #ifdef CONFIG_VIA_EB_CYCLE
    EB_SCOPED_LOCK();
    etherbone::Cycle oEbCycle;
    eb_status_t status;
@@ -678,11 +687,11 @@ DaqInterface::RETURN_CODE_T DaqInterface::readRamIndexes( void )
    if( (status = oEbCycle.close()) != EB_OK )
       EB_THROW_MESSAGE( "closing" );
   #else
-   RAM_RING_INDEXES_T temp;
-   m_oEbAccess.readLM32( &temp, sizeof( RAM_RING_INDEXES_T ),
+   EB_TEMP_T( RAM_RING_INDEXES_T, data ) temp;
+   m_oEbAccess.readLM32( &temp.data, sizeof( RAM_RING_INDEXES_T ),
                         offsetof( DAQ_SHARED_IO_T, ramIndexes.ringIndexes ));
-   CONV_ENDIAN( m_oSharedData.ramIndexes.ringIndexes, temp, start );
-   CONV_ENDIAN( m_oSharedData.ramIndexes.ringIndexes, temp, end );
+   CONV_ENDIAN( m_oSharedData.ramIndexes.ringIndexes, temp.data, start );
+   CONV_ENDIAN( m_oSharedData.ramIndexes.ringIndexes, temp.data, end );
   #endif
 #endif
    return m_oSharedData.operation.retCode;
@@ -712,6 +721,7 @@ void DaqInterface::sendUnlockRamAccess( void )
       __THROW_EB_EXCEPTION();
 
 #else
+ #ifdef CONFIG_VIA_EB_CYCLE
    EB_SCOPED_LOCK();
    etherbone::Cycle oEbCycle;
    eb_status_t status;
@@ -724,6 +734,11 @@ void DaqInterface::sendUnlockRamAccess( void )
 
    if( (status = oEbCycle.close()) != EB_OK )
       EB_THROW_MESSAGE( "closing" );
+ #else
+   uint32_t temp = 0;
+   m_oEbAccess.writeLM32( &temp, sizeof( temp ),
+                          offsetof(DAQ_SHARED_IO_T, ramIndexes.ramAccessLock ));
+ #endif
 #endif
 }
 
@@ -752,6 +767,8 @@ void DaqInterface::writeParam1( void )
    if( m_poEbHandle->status != EB_OK )
       __THROW_EB_EXCEPTION();
 #else
+   #ifdef CONFIG_VIA_EB_CYCLE
+
    EB_SCOPED_LOCK();
    etherbone::Cycle oEbCycle;
    eb_status_t status;
@@ -767,9 +784,18 @@ void DaqInterface::writeParam1( void )
 
    if( (status = oEbCycle.close()) != EB_OK )
       EB_THROW_MESSAGE( "closing" );
+  #else
+   DAQ_OPERATION_IO_T temp;
+
+   CONV_ENDIAN( temp, m_oSharedData.operation.ioData, location.deviceNumber );
+   CONV_ENDIAN( temp, m_oSharedData.operation.ioData, location.channel );
+   CONV_ENDIAN( temp, m_oSharedData.operation.ioData, param1 );
+   m_oEbAccess.writeLM32( &temp,
+                          GET_OFFSET_AFTER( DAQ_OPERATION_IO_T, param1 ),
+                          offsetof( DAQ_SHARED_IO_T, operation.ioData ));
+  #endif
 #endif
 }
-
 /*! ---------------------------------------------------------------------------
  */
 void DaqInterface::writeParam12( void )
@@ -798,6 +824,7 @@ void DaqInterface::writeParam12( void )
    if( m_poEbHandle->status != EB_OK )
       __THROW_EB_EXCEPTION();
 #else
+ #ifdef CONFIG_VIA_EB_CYCLE
    EB_SCOPED_LOCK();
    etherbone::Cycle oEbCycle;
    eb_status_t status;
@@ -814,6 +841,17 @@ void DaqInterface::writeParam12( void )
 
    if( (status = oEbCycle.close()) != EB_OK )
       EB_THROW_MESSAGE( "closing" );
+ #else
+   DAQ_OPERATION_IO_T temp;
+
+   CONV_ENDIAN( temp, m_oSharedData.operation.ioData, location.deviceNumber );
+   CONV_ENDIAN( temp, m_oSharedData.operation.ioData, location.channel );
+   CONV_ENDIAN( temp, m_oSharedData.operation.ioData, param1 );
+   CONV_ENDIAN( temp, m_oSharedData.operation.ioData, param2 );
+   m_oEbAccess.writeLM32( &temp,
+                          GET_OFFSET_AFTER( DAQ_OPERATION_IO_T, param2 ),
+                          offsetof( DAQ_SHARED_IO_T, operation.ioData ));
+ #endif
 #endif
 }
 
@@ -847,6 +885,7 @@ void DaqInterface::writeParam123( void )
    if( m_poEbHandle->status != EB_OK )
       __THROW_EB_EXCEPTION();
 #else
+  #ifdef CONFIG_VIA_EB_CYCLE
    EB_SCOPED_LOCK();
    etherbone::Cycle oEbCycle;
    eb_status_t status;
@@ -862,6 +901,19 @@ void DaqInterface::writeParam123( void )
 
    if( (status = oEbCycle.close()) != EB_OK )
       EB_THROW_MESSAGE( "closing" );
+ #else
+   DAQ_OPERATION_IO_T temp;
+
+   CONV_ENDIAN( temp, m_oSharedData.operation.ioData, location.deviceNumber );
+   CONV_ENDIAN( temp, m_oSharedData.operation.ioData, location.channel );
+   CONV_ENDIAN( temp, m_oSharedData.operation.ioData, param1 );
+   CONV_ENDIAN( temp, m_oSharedData.operation.ioData, param2 );
+   CONV_ENDIAN( temp, m_oSharedData.operation.ioData, param3 );
+   m_oEbAccess.writeLM32( &temp,
+                          GET_OFFSET_AFTER( DAQ_OPERATION_IO_T, param3 ),
+                          offsetof( DAQ_SHARED_IO_T, operation.ioData ));
+
+ #endif
 #endif
 }
 
@@ -897,6 +949,7 @@ void DaqInterface::writeParam1234( void )
    if( m_poEbHandle->status != EB_OK )
       __THROW_EB_EXCEPTION();
 #else
+ #ifdef CONFIG_VIA_EB_CYCLE
    EB_SCOPED_LOCK();
    etherbone::Cycle oEbCycle;
    eb_status_t status;
@@ -913,6 +966,20 @@ void DaqInterface::writeParam1234( void )
 
    if( (status = oEbCycle.close()) != EB_OK )
       EB_THROW_MESSAGE( "closing" );
+ #else
+   DAQ_OPERATION_IO_T temp;
+
+   CONV_ENDIAN( temp, m_oSharedData.operation.ioData, location.deviceNumber );
+   CONV_ENDIAN( temp, m_oSharedData.operation.ioData, location.channel );
+   CONV_ENDIAN( temp, m_oSharedData.operation.ioData, param1 );
+   CONV_ENDIAN( temp, m_oSharedData.operation.ioData, param2 );
+   CONV_ENDIAN( temp, m_oSharedData.operation.ioData, param3 );
+   CONV_ENDIAN( temp, m_oSharedData.operation.ioData, param4 );
+   m_oEbAccess.writeLM32( &temp,
+                          GET_OFFSET_AFTER( DAQ_OPERATION_IO_T, param4 ),
+                          offsetof( DAQ_SHARED_IO_T, operation.ioData ));
+
+ #endif
 #endif
 }
 
@@ -945,6 +1012,7 @@ void DaqInterface::writeRamIndexesAndUnlock( void )
    if( m_poEbHandle->status != EB_OK )
       __THROW_EB_EXCEPTION();
 #else
+  #ifdef CONFIG_VIA_EB_CYCLE
    EB_SCOPED_LOCK();
    etherbone::Cycle oEbCycle;
    eb_status_t status;
@@ -958,6 +1026,19 @@ void DaqInterface::writeRamIndexesAndUnlock( void )
 
    if( (status = oEbCycle.close()) != EB_OK )
       EB_THROW_MESSAGE( "closing" );
+ #else
+   RAM_RING_SHARED_OBJECT_T temp;
+   CONV_ENDIAN( temp, m_oSharedData.ramIndexes, ramAccessLock );
+   CONV_ENDIAN( temp.ringIndexes, m_oSharedData.ramIndexes.ringIndexes, offset );
+   CONV_ENDIAN( temp.ringIndexes, m_oSharedData.ramIndexes.ringIndexes, capacity );
+   CONV_ENDIAN( temp.ringIndexes, m_oSharedData.ramIndexes.ringIndexes, start );
+   //!! CONV_ENDIAN( temp.ringIndexes, m_oSharedData.ramIndexes.ringIndexes, end );
+   m_oEbAccess.writeLM32( &temp,
+                          GET_OFFSET_AFTER( RAM_RING_SHARED_OBJECT_T,
+                                            ringIndexes.start ),
+                          offsetof( DAQ_SHARED_IO_T, ramIndexes ));
+
+ #endif
 #endif
 }
 

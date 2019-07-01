@@ -111,7 +111,9 @@ int EbRamAccess::readDaqDataBlock( RAM_DAQ_PAYLOAD_T* pData,
                        ramRingGeReadIndex( &indexes ) * sizeof(DDR3_PAYLOAD_T),
                        reinterpret_cast<etherbone::data_t*>(pData),
                        sizeof( pData->ad32[0] ) | EB_LITTLE_ENDIAN,
-                       lenToEnd * ARRAY_SIZE( pData->ad32 ));
+                       lenToEnd * ARRAY_SIZE( pData->ad32 ),
+                       true
+                     );
        ramRingAddToReadIndex( &indexes, lenToEnd );
        len   -= lenToEnd;
        pData += lenToEnd;
@@ -121,7 +123,9 @@ int EbRamAccess::readDaqDataBlock( RAM_DAQ_PAYLOAD_T* pData,
                    ramRingGeReadIndex( &indexes ) * sizeof(DDR3_PAYLOAD_T),
                    reinterpret_cast<etherbone::data_t*>(pData),
                    sizeof( pData->ad32[0] ) | EB_LITTLE_ENDIAN,
-                   len * ARRAY_SIZE( pData->ad32 ));
+                   len * ARRAY_SIZE( pData->ad32 ),
+                   true
+                 );
    ramRingAddToReadIndex( &indexes, len );
 
    m_pRam->pSharedObj->ringIndexes = indexes;

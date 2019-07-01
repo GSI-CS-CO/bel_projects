@@ -251,7 +251,9 @@ template<typename T> T* addByteOffset( T* pData, uint ofs )
 void EtherboneConnection::doRead( etherbone::address_t eb_address,
                                   etherbone::data_t* data,
                                   etherbone::format_t format,
-                                  const uint16_t size )
+                                  const uint16_t size,
+                                  bool packedTarget
+                                )
 {
    if( size == 0 )
       return;
@@ -292,10 +294,10 @@ void EtherboneConnection::doRead( etherbone::address_t eb_address,
       }
       // read data block
 
-      uint j = 0;
-      for( uint i = 0; i < size; i++, j += whide )
+      uint offset = packedTarget? whide : sizeof( etherbone::data_t );
+      for( uint i = 0, j = 0, k = 0; i < size; i++, j += whide, k += offset )
       {
-         eb_cycle.read( eb_address + j, format, addByteOffset( data, j ) );
+         eb_cycle.read( eb_address + j, format, addByteOffset( data, k ) );
       }
 
       if ((status = eb_cycle.close()) != EB_OK)
@@ -395,7 +397,9 @@ void EtherboneConnection::doVectorRead( const etherbone::address_t &eb_address,
 void EtherboneConnection::doWrite( const etherbone::address_t eb_address,
                                    const etherbone::data_t* data,
                                    etherbone::format_t format,
-                                   const uint16_t size )
+                                   const uint16_t size,
+                                   bool packedSource
+                                 )
 {
    if( size == 0 )
       return;
@@ -442,11 +446,11 @@ void EtherboneConnection::doWrite( const etherbone::address_t eb_address,
     * bits over the real payload size which becomes to send.
     */
    eb_data_t mask = ~(static_cast<eb_data_t>(~0) << (whide * 8));
-   uint j = 0;
-   for( uint i = 0; i < size; i++, j += whide )
+   uint offset = packedSource? whide : sizeof(etherbone::data_t);
+   for( uint i = 0, j = 0, k = 0; i < size; i++, j += whide, k += offset )
    {
-      eb_data_t d = *addByteOffset( data, j ) & mask;
-      eb_cycle.write(eb_address + j, format, d );
+      eb_data_t d = *addByteOffset( data, k ) & mask;
+      eb_cycle.write( eb_address + j, format, d );
       if (!debug_)
          continue;
       std::cout << __FILE__ << "::" << __FUNCTION__ << "::"

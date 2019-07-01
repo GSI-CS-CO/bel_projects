@@ -40,6 +40,24 @@ namespace Scu
 namespace daq
 {
 
+#define EB_PADDING_SIZE sizeof( etherbone::data_t )
+
+#define EB_PADDING_PLACE etherbone::data_t __padding;
+
+/*!
+ * This macro is necessary to prevent a segmentation fault.
+ * Because at the moment the etherbone layer supposes in any cases that the
+ * target pointer points to a value of type etherbone::data_t. But if the
+ * target data type is a smaller type as etherbone::data_t it could crash.
+ * In this case the excess bytes will written in a padding variable.
+ */
+#define EB_TEMP_T( type, object )                                             \
+struct                                                                        \
+{                                                                             \
+   type object;                                                               \
+   EB_PADDING_PLACE                                                           \
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 /*!
  * @brief Interface class for SCU DDR3 RAM access via the class
@@ -68,7 +86,7 @@ public:
    {
       return m_poEb->getNetAddress();
    }
-
+#ifdef CONFIG_VIA_EB_CYCLE
    DaqEb::EtherboneConnection::MUTEX_T& getMutex( void )
    {
       return m_poEb->getMutex();
@@ -78,7 +96,7 @@ public:
    {
       return m_poEb->getEbDevice();
    }
-
+#endif
    int readDaqDataBlock( RAM_DAQ_PAYLOAD_T* pData,
                          unsigned int len
                        #ifndef CONFIG_DDR3_NO_BURST_FUNCTIONS
@@ -91,7 +109,7 @@ public:
       m_poEb->doRead( m_lm32SharedMemAddr + offset,
                       reinterpret_cast<etherbone::data_t*>(pData),
                       EB_BIG_ENDIAN | EB_DATA8,
-                      len );
+                      len, true );
    }
 
    void writeLM32( void* pData, std::size_t len, std::size_t offset = 0 )
@@ -99,7 +117,7 @@ public:
       m_poEb->doWrite( m_lm32SharedMemAddr + offset,
                        reinterpret_cast<const etherbone::data_t*>(pData),
                        EB_BIG_ENDIAN | EB_DATA8,
-                       len );
+                       len, true );
    }
 };
 
