@@ -253,6 +253,20 @@
    sizeof( __c.member );                                   \
 })
 
+/*!
+ * @brief Similar like "offsetof" but the different is
+ *        this macro returns the offset after the concerning
+ *        member variable and NOT before.
+ * @param type Name of struct union or class.
+ * @param member Name of the concerning member variable.
+ * @return Offset in bytes AFTER the given member variable.
+ */
+#define GET_OFFSET_AFTER( type, member )                          \
+(                                                                 \
+   offsetof( type, member ) + GET_SIZE_OF_MEMBER( type, member )  \
+)
+
+
 #ifdef TO_STRING_LITERAL
    #undef TO_STRING_LITERAL
 #endif
