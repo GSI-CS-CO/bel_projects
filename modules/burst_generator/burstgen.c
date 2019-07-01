@@ -99,6 +99,15 @@ volatile struct message_buffer *pMsgBufHead = &msg_buf[0]; // pointer to MSI msg
 
 uint32_t bufTimMsg[LEN_TIM_MSG];  // buffer of timing message for IO action (will be sent by this LM32)
 
+/* burst trigger/toggle control */
+static Config_t gTrigConfigs[N_CONFIGS] = {0, 0};
+static Config_t gToggConfigs[N_CONFIGS] = {0, 0};
+static Config_t *pTrigConfigs = &gTrigConfigs[0];
+static Config_t *pToggConfigs = &gToggConfigs[0];
+
+static Control_t gTrigCtrl = {0, 0};
+static Control_t gToggCtrl = {0, 0};
+
 /* stuff required for environment */
 unsigned int cpuId, cpuQty;
 #define SHARED __attribute__((section(".shared")))
@@ -138,7 +147,37 @@ int dummyTask(int id) {
 
   return STATUS_OK;
 }
+int updateConfigs(Config_t *configs, uint64_t e_id, int id, int set) {
 
+  int i, pos = N_CONFIGS;
+  for (i = 0; i < N_CONFIGS; ++i)
+    if ((configs + i)->id == e_id)
+      pos = i;
+
+  i = 0;
+  while ((pos == N_CONFIGS) && (i < N_CONFIGS)) {
+    if ((configs + i)->id == 0) {
+      pos = i;
+      i = N_CONFIGS;
+    }
+    ++i;
+  }
+
+  if (pos == N_CONFIGS)
+    return pos;
+
+  if (set) {
+    (configs + pos)->bursts |= 0x1 << (id - 1);
+    (configs + pos)->id = e_id;
+  }
+  else {
+    (configs + pos)->bursts &= ~(0x1 << (id -1));
+    if ((configs + pos)->bursts == 0 )
+      (configs + pos)->id = 0;
+  }
+
+  return pos;
+}
 /*******************************************************************************
  *
  * Trigger IO actions to generate pulses at IO pin
@@ -147,6 +186,37 @@ int dummyTask(int id) {
 int triggerIoActions(int id) {
 
   int result = STATUS_OK;
+
+  if (id == 0)
+    return result;
+
+  // check trigger/toggle control flags
+  uint32_t bMask = 0x1 << (id - 1);
+
+  if (gTrigCtrl.bursts & bMask) {  // trigger flag is set
+    gTrigCtrl.bursts &= ~bMask;
+    pTask[id].lasttick = 0;
+    pTask[id].failed = 0;
+    pTask[id].deadline = gTrigCtrl.deadline;
+  }
+  else if (gToggCtrl.bursts & bMask) { // toggle flag is set
+    gToggCtrl.bursts &= ~bMask;
+    if (pTask[id].deadline == 0) {     // cycle never run or already stopped, cancel it
+      pTask[id].cycle = 0;
+    }
+    else if (pTask[id].deadline >= gToggCtrl.deadline) {  // deadline is over, stop immediatelly
+      pTask[id].deadline = 0;
+      pTask[id].cycle = 0;
+      gBurstsCycled |= (0x1 << (id - 1));
+    }
+    else if (pTask[id].cycle != 0) { // update remaining cycle (consider endless loop)
+      uint64_t remaining = gToggCtrl.deadline - pTask[id].deadline;
+      if (remaining < pTask[id].period)
+	pTask[id].cycle = 1;
+      else
+	pTask[id].cycle = remaining / pTask[id].period + 1;
+    }
+  }
 
   if (pTask[id].flag & CTL_EN == CTL_DIS)   // burst is disabled, do not trigger!
     result = STATUS_DISABLED;
@@ -176,7 +246,7 @@ int triggerIoActions(int id) {
   {
     // delay generation: 183 for 7376 ns (doubled time duration to execute the trigger operations)
     // 150/6320 ns, 120/5888 ns, 100/5248, 90/4928, 70/4288
-    for (int i = 0; i < 70; i++) // TODO: execute short periodic task (ie., MSI handling takes 12 us, ECA handling takes 14 us)
+    for (int i = 0; i < 150; i++) // FIXME: extended the dry-run period
       asm("nop");
 
     return result;
@@ -585,77 +655,43 @@ void ecaHandler(uint32_t cnt)
 
 	d += p;
 
-	int id = 1;
-	uint32_t bursts = gBurstsCreated;
-	uint32_t bMask = 1;
+	// find an entry with the given e_id in the config table
+	// update control flag
+	// - check if the flag equals to zero before update
+	// - check the forbidden state (trig and togg must not be set at the same time)
+	int trigger_idx = N_CONFIGS;
+	int toggle_idx = N_CONFIGS;
 
-	while (bursts && id <= N_BURSTS)
-	{
-	  if (gBurstsCreated & bMask) {
+	for (int j = 0; j < N_CONFIGS; ++j) { // FIXME: search takes longer! Make it periodic with const short execution time!
+	  if ((pTrigConfigs + j)->id == evtId)
+	    trigger_idx = j;
+	  if ((pToggConfigs + j)->id == evtId)
+	    toggle_idx = j;
+	}
 
-	    if (pTask[id].flag & CTL_EN)
-	    {
-	      if (pTask[id].trigger == evtId) { // start the burst cycle
-		p = getSysTime();
-
-		if (p >= (d - gInjection)) {
-		  pTask[id].deadline = 0;
-		  mprintf("late! now >= (due - inj)\n");
-		  mprintf("now: 0x%08x:%08x\n", (uint32_t)(p >> 32), (uint32_t)p);
-		  mprintf("due: 0x%08x:%08x\n", (uint32_t)(d >> 32), (uint32_t)d);
-		  mprintf("inj: 0x%08x:%08x\n", (uint32_t)(gInjection >> 32), (uint32_t)gInjection);
-		  mprintf("cycle ignored!\n");
-		}
-		else {
-		  pTask[id].deadline = d;           // set deadline
-		  pTask[id].lasttick = 0;
-		  pTask[id].failed = 0;
-
-		  int result = triggerIoActions(id);  // initial injection
-		  pTask[id].state = result;
-
-		  switch (result) {
-		    case STATUS_OK:  // mprintf("cycle started\n");
-		      gBurstsCycled &= (0x1 << (id - 1));
-		      break;
-		    case STATUS_ERR:
-		      mprintf("cycle failed (deadline was over)\n");
-		      break;
-		    case STATUS_IDLE: // mprintf("idle cycle\n");
-		    case STATUS_DISABLED:
-		      break;
-		    default:
-		      mprintf("cycle not ready, reload!\n");
-		  }
-		}
-	      }
-	      else if (pTask[id].toggle == evtId) { // stop the burst cycle
-		if (pTask[id].deadline == 0) {      // cycle never run or already stopped, cancel it
-		  pTask[id].cycle = 0;
-		  mprintf("cycle cancelled!\n");
-		}
-		else if (pTask[id].deadline >= d) {  // deadline is over, stop immediatelly
-		  pTask[id].deadline = 0;
-		  pTask[id].cycle = 0;
-		  gBurstsCycled |= (0x1 << (id - 1));
-		}
-		else if (pTask[id].cycle > 0) { // update remaining cycle
-		  p = d - pTask[id].deadline;
-		  if (p < pTask[id].period)
-		    pTask[id].cycle = 1;
-		  else {
-		    p = p / pTask[id].period;
-		    pTask[id].cycle = p + 1;
-		  }
-		  mprintf("c\n");//mprintf("cycle changed!\n");
-		}
-	      }
-	    }
+	if (trigger_idx != N_CONFIGS) {
+	  if (gTrigCtrl.bursts != 0) {
+	    // Busy: pending trigger requests exist TODO: react!
 	  }
-
-	  bursts >>= 1;
-	  bMask  <<= 1;
-	  ++id;
+	  else if ((gToggCtrl.bursts & gTrigCtrl.bursts) != 0) {
+	    // Conflict: toggle and trigger for the same bursts! TODO: react!
+	  }
+	  else {
+	    gTrigCtrl.bursts = (pTrigConfigs + trigger_idx)->bursts;
+	    gTrigCtrl.deadline = d;
+	  }
+	}
+	else if (toggle_idx != N_CONFIGS) {
+	  if (gToggCtrl.bursts != 0) {
+	    // Busy: pending toggle requests exist TODO: react
+	  }
+	  else if ((gTrigCtrl.bursts & gToggCtrl.bursts) != 0) {
+	    // Conflict: trigger and toggle for the same bursts! TODO: react
+	  }
+	  else {
+	    gToggCtrl.bursts = (pToggConfigs + toggle_idx)->bursts;
+	    gToggCtrl.deadline = d;
+	  }
 	}
       }
     }
@@ -836,6 +872,10 @@ void execHostCmd(int32_t cmd)
 	  pTask[id].flag = CTL_VALID;
 	  gBurstsCreated |= 0x1 << (id - 1);
 
+	  // update trigger/toggle configuration tables
+	  updateConfigs(pTrigConfigs, pTask[id].trigger, id, 1);
+	  updateConfigs(pToggConfigs, pTask[id].toggle, id, 1);
+
 	  if (verbose)
 	    mprintf(" %x: %x, %x, %x, %llx, %llx\n", id, pTask[id].flag, pTask[id].io_type, pTask[id].io_index, pTask[id].trigger, pTask[id].toggle);
 	}
@@ -854,6 +894,11 @@ void execHostCmd(int32_t cmd)
 	if (0 < id && id <= N_BURSTS) {
 	  pTask[id].flag = CTL_DIS;
 	  gBurstsCreated &= ~(0x1 << (id -1));
+
+	  // update trigger/toggle configuration tables
+	  updateConfigs(pTrigConfigs, pTask[id].trigger, id, 0);
+	  updateConfigs(pToggConfigs, pTask[id].toggle, id, 0);
+
 	  pTask[id].io_type = 0;
 	  pTask[id].io_index = 0;
 	  pTask[id].trigger = 0;

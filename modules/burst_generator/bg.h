@@ -139,6 +139,19 @@ typedef struct {
   int (*func)(int);     /* pointer to the function of the task */
 } Task_t;
 
+/* burst trigger/toggle control */
+typedef struct {
+  uint64_t deadline;
+  uint32_t bursts;
+} Control_t;
+
+typedef struct {
+  uint64_t id;
+  uint32_t bursts;
+} Config_t;
+
+#define N_CONFIGS         64 /* configuration table entries, limited by HW */
+
 extern struct msi remove_msg(volatile struct message_buffer *mb, int queue);
 extern int add_msg(volatile struct message_buffer *mb, int queue, struct msi m);
 extern int has_msg(volatile struct message_buffer *mb, int queue);
