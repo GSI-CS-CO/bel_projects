@@ -729,6 +729,19 @@ void execHostCmd(int32_t cmd)
 	    (uint32_t)(pTask[id].deadline >> 32), (uint32_t)pTask[id].deadline,
 	    (uint32_t)(pTask[id].flag >> 0));
 	}
+	else if (id == 0) {
+	  for (int i = 1; i <= N_BURSTS; ++i) {
+	    if (pTask[i].flag & CTL_VALID) {
+	      mprintf("trig=0x%x:%x, togg=0x%x:%x, cycle=0x%x:%x, period=0x%x:%x, deadln=0x%x:%x, flag=0x%x\n",
+		(uint32_t)(pTask[i].trigger >> 32),  (uint32_t)pTask[i].trigger,
+		(uint32_t)(pTask[i].toggle >> 32),   (uint32_t)pTask[i].toggle,
+		(uint32_t)(pTask[i].cycle >> 32),    (uint32_t)pTask[i].cycle,
+		(uint32_t)(pTask[i].period >> 32),   (uint32_t)pTask[i].period,
+		(uint32_t)(pTask[i].deadline >> 32), (uint32_t)pTask[i].deadline,
+		(uint32_t)(pTask[i].flag >> 0));
+	    }
+	  }
+	}
 	break;
 
       case CMD_GET_PARAM:    // get parameters of the given burst
