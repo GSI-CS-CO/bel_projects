@@ -1519,7 +1519,7 @@ end generate;
       phy_sfp_tx_fault_i   => '0',
       phy_sfp_los_i        => '0',
       phy_sfp_tx_disable_o => open,
-      phy_ref_clk_i        => clk_ref,
+      phy_ref_clk_i        => phy_tx_clk,
       phy_tx_data_o        => phy_tx_data,
       phy_tx_k_o           => phy_tx_k,
       phy_tx_disparity_i   => phy_tx_disparity,
