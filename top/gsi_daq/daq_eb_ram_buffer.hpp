@@ -31,7 +31,7 @@
 #include <EtherboneConnection.hpp>
 #include <eb_lm32_helper.h>
 #include <daq_ramBuffer.h>
-#include <generated/shared_mmap.h>
+#include "generated/shared_mmap.h"
 
 namespace DaqEb = FeSupport::Scu::Etherbone;
 

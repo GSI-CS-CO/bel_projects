@@ -10,9 +10,9 @@ all:
 
 .PHOMY: clean
 clean:
-	$(MAKE) -C ./buildLm32  clean
 	$(MAKE) -C $(LINUX_TEST_DIR) clean
 	$(MAKE) -C ./tools clean
+	$(MAKE) -C ./buildLm32  clean
 
 .PHOMY: load
 load:

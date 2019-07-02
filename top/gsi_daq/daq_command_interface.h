@@ -32,7 +32,7 @@
 #ifndef _DAQ_COMMAND_INTERFACE_H
 #define _DAQ_COMMAND_INTERFACE_H
 
-#include <generated/shared_mmap.h>
+#include <shared_mmap.h>
 #include <scu_bus_defines.h>
 #include <daq_ramBuffer.h>
 #include <stdint.h>
