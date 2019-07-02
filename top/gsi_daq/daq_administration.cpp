@@ -438,9 +438,9 @@ int DaqAdministration::distributeData( void )
       return size;
    }
 
-   EB_PADDING_T( PROBE_BUFFER_T, data ) probe;
+   EB_PADDING_T( PROBE_BUFFER_T, probe ) padding;
 #ifdef CONFIG_DAQ_DEBUG
-   ::memset( &probe, 0, sizeof( probe ) );
+   ::memset( &padding, 0, sizeof( padding ) );
 #endif
 
    /*
@@ -448,14 +448,14 @@ int DaqAdministration::distributeData( void )
     * obtaining the device-descriptor.
     */
 #ifdef CONFIG_NO_FE_ETHERBONE_CONNECTION
-   if( ::ramReadDaqDataBlock( &m_oScuRam, &probe.data.ramItems[0],
+   if( ::ramReadDaqDataBlock( &m_oScuRam, &padding.probe.ramItems[0],
                               c_ramBlockShortLen
                             #ifndef CONFIG_DDR3_NO_BURST_FUNCTIONS
                               , ::ramReadPoll
                             #endif
                             ) != EB_OK )
 #else
-   if( m_oEbAccess.readDaqDataBlock( &probe.data.ramItems[0], c_ramBlockShortLen
+   if( m_oEbAccess.readDaqDataBlock( &padding.probe.ramItems[0], c_ramBlockShortLen
                                   #ifndef CONFIG_DDR3_NO_BURST_FUNCTIONS
                                      , ::ramReadPoll
                                   #endif
@@ -469,7 +469,7 @@ int DaqAdministration::distributeData( void )
    /*
     * Rough check of the device descriptors integrity.
     */
-   if( !::daqDescriptorVerifyMode( &probe.data.descriptor ) )
+   if( !::daqDescriptorVerifyMode( &padding.probe.descriptor ) )
    {
       //TODO Maybe clearing the entire buffer?
       clearBuffer();
@@ -479,21 +479,21 @@ int DaqAdministration::distributeData( void )
 
    std::size_t wordLen;
 
-   if( ::daqDescriptorIsLongBlock( &probe.data.descriptor ) )
+   if( ::daqDescriptorIsLongBlock( &padding.probe.descriptor ) )
    { /*
       * Long block has been detected, in this case the rest of the data
       * has still to be read from the DAQ-Ram-buffer.
       */
    #ifdef CONFIG_NO_FE_ETHERBONE_CONNECTION
       if( ::ramReadDaqDataBlock( &m_oScuRam,
-                                 &probe.data.ramItems[c_ramBlockShortLen],
+                                 &padding.probe.ramItems[c_ramBlockShortLen],
                                  c_ramBlockLongLen - c_ramBlockShortLen
                                #ifndef CONFIG_DDR3_NO_BURST_FUNCTIONS
                                  , ::ramReadPoll
                                #endif
                                ) != EB_OK )
    #else
-      if( m_oEbAccess.readDaqDataBlock( &probe.data.ramItems[c_ramBlockShortLen],
+      if( m_oEbAccess.readDaqDataBlock( &padding.probe.ramItems[c_ramBlockShortLen],
                                         c_ramBlockShortLen - c_ramBlockShortLen
                                      #ifndef CONFIG_DDR3_NO_BURST_FUNCTIONS
                                        , ::ramReadPoll
@@ -521,13 +521,13 @@ int DaqAdministration::distributeData( void )
 
    //TODO Make CRC check here!
 
-   DaqChannel* pChannel = getChannelByDescriptor( probe.data.descriptor );
+   DaqChannel* pChannel = getChannelByDescriptor( padding.probe.descriptor );
 
    if( pChannel != nullptr )
    {
-      m_poCurrentDescriptor = &probe.data.descriptor;
+      m_poCurrentDescriptor = &padding.probe.descriptor;
       pChannel->verifySequence();
-      pChannel->onDataBlock( &probe.data.buffer[c_discriptorWordSize], wordLen );
+      pChannel->onDataBlock( &padding.probe.buffer[c_discriptorWordSize], wordLen );
       m_poCurrentDescriptor = nullptr;
    }
    else
