@@ -6970,14 +6970,14 @@ BEGIN
 
     In16_ADC_Data_FF_i(15 DOWNTO 0)    <=  In16_Input(15 downto 0);  -- Input zum Daten-Input_FF
 
-    IF  (AW_Config1(1) = '0')  THEN  In16_ADC_Strobe_i <=  NOT In16_Strobe; -- pos. Flanke vom Strobe (Default)
-                               Else  In16_ADC_Strobe_i <=      In16_Strobe; -- neg. Flanke vom Strobe
+    IF  (AW_Config2(5) = '0')  THEN  In16_ADC_Strobe_i <=    NOT In16_Strobe; -- pos. Flanke vom Strobe (Default)
+                               Else  In16_ADC_Strobe_i <=        In16_Strobe; -- neg. Flanke vom Strobe  
     END IF;
 
 
  --################################         Input-Mode     ##################################
 
-    IF  (AW_Config1(0) = '0')  THEN                                       -- 0 = Input-Mode
+    IF  (AW_Config2(7 downto 6) = "00")  THEN                                       -- 0 = Input-Mode
       AW_Input_Reg(2)(15 DOWNTO 0)  <=  In16_Input(15 DOWNTO 0);          -- Daten-Input  Deb/Syn
       AW_Input_Reg(1)(0)            <=  In16_Strobe;                      -- Strobe-Input Deb/Syn
     ELSE
@@ -7321,12 +7321,3 @@ END PROCESS p_AW_MUX;
 
 
 end architecture;
-
-
-
-
-
-
-
-
-
