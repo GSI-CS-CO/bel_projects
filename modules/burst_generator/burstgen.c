@@ -441,7 +441,7 @@ int hasPendingMsi(void)
  * Any WB device connected to MSI crossbar as a master can send MSIs: ECA, SCU bus etc.
  * Besides data value, an MSI message includes also a destination address.
  * In order to identify a particular sender, LM32 has to inform them distinct
- * MSI destinations as its destination.
+ * MSI destinations as its destination address.
  *
  * Handling ECA MSIs
  * If interrupt was caused by a valid ECA action, then MSI has value of (4<<16|num).
