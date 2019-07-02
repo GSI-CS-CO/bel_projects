@@ -6977,13 +6977,18 @@ BEGIN
 
  --################################         Input-Mode     ##################################
 
-    IF  (AW_Config2(7 downto 6) = "00")  THEN                                       -- 0 = Input-Mode
+    CASE (AW_Config2(7 downto 6)) is
+        when "00" =>                                       -- 0 = Input-Mode
       AW_Input_Reg(2)(15 DOWNTO 0)  <=  In16_Input(15 DOWNTO 0);          -- Daten-Input  Deb/Syn
       AW_Input_Reg(1)(0)            <=  In16_Strobe;                      -- Strobe-Input Deb/Syn
-    ELSE
-      AW_Input_Reg(2)(15 DOWNTO 0)  <=  In16_ADC_Data_FF_o(15 DOWNTO 0);  -- Daten aus dem Input-Register
+        when "01" =>
+      AW_Input_Reg(2)(15 DOWNTO 0)  <=  In16_ADC_Data_FF_o(15 DOWNTO 0);  -- Daten aus dem Input-Register 
       AW_Input_Reg(1)(0)            <=  In16_ADC_Strobe_o;                -- Daten-Strobe für die Input-Daten
-    END IF;
+      -- when "11" => --32 Bit ADC Mode
+        when OTHERS =>
+      AW_Input_Reg(2)(15 DOWNTO 0)  <=  In16_Input(15 DOWNTO 0);          -- Daten-Input  Deb/Syn
+      AW_Input_Reg(1)(0)            <=  In16_Strobe;                      -- Strobe-Input Deb/Syn    
+    END CASE;
 
 
     --################################### Output-Enable ##################################
