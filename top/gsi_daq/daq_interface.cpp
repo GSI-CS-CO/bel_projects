@@ -246,7 +246,7 @@ void DaqInterface::readSharedTotal( void )
    if( (status = oEbCycle.close()) != EB_OK )
       EB_THROW_MESSAGE( "closing" );
 #else
-   EB_TEMP_T( DAQ_SHARED_IO_T, data ) temp;
+   EB_PADDING_T( DAQ_SHARED_IO_T, data ) temp;
 
    m_oEbAccess.readLM32( &temp.data, sizeof(DAQ_SHARED_IO_T) );
    CONV_ENDIAN( m_oSharedData, temp.data, magicNumber );
@@ -395,7 +395,7 @@ DAQ_OPERATION_CODE_T DaqInterface::getCommand( void )
                   static_cast<int>(offsetof( DAQ_OPERATION_T, code )) > 0,
                   "Wrong order in DAQ_OPERATION_T" );
 
-   EB_TEMP_T( DAQ_OPERATION_T, data ) temp;
+   EB_PADDING_T( DAQ_OPERATION_T, data ) temp;
 
    m_oEbAccess.readLM32( &temp.data,
                          offsetof(DAQ_OPERATION_T, ioData) -
@@ -448,7 +448,7 @@ DaqInterface::RETURN_CODE_T DaqInterface::readParam1( void )
    if( (status = oEbCycle.close()) != EB_OK )
       EB_THROW_MESSAGE( "closing" );
 #else
-   EB_TEMP_T( DAQ_OPERATION_T, data ) temp;
+   EB_PADDING_T( DAQ_OPERATION_T, data ) temp;
 
    m_oEbAccess.readLM32( &temp.data,
                          (offsetof( DAQ_OPERATION_T, ioData.param1 ) +
@@ -504,7 +504,7 @@ DaqInterface::RETURN_CODE_T DaqInterface::readParam12( void )
    if( (status = oEbCycle.close()) != EB_OK )
       EB_THROW_MESSAGE( "closing" );
  #else
-   EB_TEMP_T( DAQ_OPERATION_T, data ) temp;
+   EB_PADDING_T( DAQ_OPERATION_T, data ) temp;
 
    m_oEbAccess.readLM32( &temp.data,
                          (offsetof( DAQ_OPERATION_T, ioData.param2 ) +
@@ -564,7 +564,7 @@ DaqInterface::RETURN_CODE_T DaqInterface::readParam123( void )
    if( (status = oEbCycle.close()) != EB_OK )
       EB_THROW_MESSAGE( "closing" );
  #else
-   EB_TEMP_T( DAQ_OPERATION_T, data ) temp;
+   EB_PADDING_T( DAQ_OPERATION_T, data ) temp;
 
    m_oEbAccess.readLM32( &temp.data, (offsetof( DAQ_OPERATION_T, ioData.param3 ) +
                                 sizeof( temp.data.ioData.param3 )) -
@@ -628,7 +628,7 @@ DaqInterface::RETURN_CODE_T DaqInterface::readParam1234( void )
    if( (status = oEbCycle.close()) != EB_OK )
       EB_THROW_MESSAGE( "closing" );
  #else
-   EB_TEMP_T( DAQ_OPERATION_T, data ) temp;
+   EB_PADDING_T( DAQ_OPERATION_T, data ) temp;
    m_oEbAccess.readLM32( &temp, (offsetof( DAQ_OPERATION_T, ioData.param4 ) +
                                 sizeof( temp.data.ioData.param4 )) -
                                 offsetof( DAQ_OPERATION_T, code ),
@@ -687,7 +687,7 @@ DaqInterface::RETURN_CODE_T DaqInterface::readRamIndexes( void )
    if( (status = oEbCycle.close()) != EB_OK )
       EB_THROW_MESSAGE( "closing" );
   #else
-   EB_TEMP_T( RAM_RING_INDEXES_T, data ) temp;
+   EB_PADDING_T( RAM_RING_INDEXES_T, data ) temp;
    m_oEbAccess.readLM32( &temp.data, sizeof( RAM_RING_INDEXES_T ),
                         offsetof( DAQ_SHARED_IO_T, ramIndexes.ringIndexes ));
    CONV_ENDIAN( m_oSharedData.ramIndexes.ringIndexes, temp.data, start );

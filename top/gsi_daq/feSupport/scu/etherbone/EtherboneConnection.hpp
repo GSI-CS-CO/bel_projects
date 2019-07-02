@@ -8,6 +8,32 @@
 
 #include "feSupport/scu/etherbone/Constants.hpp"
 
+/*! ---------------------------------------------------------------------------
+ * @brief Upholstering the object for etherbone/wishbone receiving
+ *
+ * This macro will used for the function EtherboneConnection::doRead
+ * when the last argument "packedTarget" is equal "true".
+ *
+ * This macro is necessary to prevent a segmentation fault.
+ * Because at the moment the etherbone layer supposes in any cases that the
+ * target pointer points to a value of type etherbone::data_t. But if the
+ * target data type is a smaller type as etherbone::data_t it could crash.
+ * In this case the excess bytes will written in a padding variable.
+ *
+ * @see FeSupport::Scu::Etherbone::EtherboneConnection::doRead
+ *
+ * @param type Payload data type.
+ * @param object Instance name of payload type
+ * @return Padded data type
+ */
+#define EB_PADDING_T( type, object )                                          \
+   class                                                                      \
+   {                                                                          \
+   public:                                                                    \
+      type object;                                                            \
+   private:                                                                   \
+      etherbone::data_t __padding;                                            \
+   }
 
 
 namespace FeSupport {
@@ -81,6 +107,8 @@ namespace FeSupport {
            *       To prevent this the use of padding space of \n
            *       at least sizeof(etherbone::data_t) - (format & EB_DATAX)
            *       becomes necessary.
+           *
+           * @see EB_PADDING_T
            */
           void doRead(etherbone::address_t eb_address, etherbone::data_t* data,
                       etherbone::format_t format,

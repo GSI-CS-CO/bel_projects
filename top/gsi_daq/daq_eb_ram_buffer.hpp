@@ -44,19 +44,6 @@ namespace daq
 
 #define EB_PADDING_PLACE etherbone::data_t __padding;
 
-/*!
- * This macro is necessary to prevent a segmentation fault.
- * Because at the moment the etherbone layer supposes in any cases that the
- * target pointer points to a value of type etherbone::data_t. But if the
- * target data type is a smaller type as etherbone::data_t it could crash.
- * In this case the excess bytes will written in a padding variable.
- */
-#define EB_TEMP_T( type, object )                                             \
-struct                                                                        \
-{                                                                             \
-   type object;                                                               \
-   EB_PADDING_PLACE                                                           \
-}
 
 ///////////////////////////////////////////////////////////////////////////////
 /*!

@@ -379,6 +379,9 @@ inline bool DaqAdministration::dataBlocksPresent( void )
  */
 int DaqAdministration::distributeData( void )
 {
+#ifdef CONFIG_NO_FE_ETHERBONE_CONNECTION
+   #define EB_PADDING_T( type, object ) struct { type object; }
+#endif
    union PROBE_BUFFER_T
    {
       DAQ_DATA_T        buffer[c_hiresPmDataLen];
@@ -435,8 +438,7 @@ int DaqAdministration::distributeData( void )
       return size;
    }
 
-   //PROBE_BUFFER_T probe;
-   EB_TEMP_T( PROBE_BUFFER_T, data ) probe;
+   EB_PADDING_T( PROBE_BUFFER_T, data ) probe;
 #ifdef CONFIG_DAQ_DEBUG
    ::memset( &probe, 0, sizeof( probe ) );
 #endif

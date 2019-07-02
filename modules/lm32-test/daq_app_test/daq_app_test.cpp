@@ -7,6 +7,7 @@
 #include <assert.h>
 #include <termios.h>
 
+using namespace Scu;
 using namespace daq;
 using namespace std;
 
@@ -101,6 +102,7 @@ bool MyDaqChannel::onDataBlock( DAQ_DATA_T* pData, std::size_t wordLen )
      cout << "Delta time: " << descriptorGetTimeStamp() - m_LastTimestamp << endl;
   m_LastTimestamp = descriptorGetTimeStamp();
 
+  cout << "Block: " << (descriptorWasBlockLost()? ESC_FG_RED "lost" ESC_NORMAL : "ok") << endl;
 
   cout << "Data:" << endl;
   DAQ_DATA_T minimum = static_cast<DAQ_DATA_T>(~0);
@@ -124,7 +126,9 @@ bool MyDaqChannel::onDataBlock( DAQ_DATA_T* pData, std::size_t wordLen )
      cout << "Continuous";
   cout << ", Timebase: " << descriptorGetTimeBase() << " ns"
        << ESC_NORMAL << " Sequence: " <<
-       static_cast<unsigned int>(descriptorGetSequence()) << endl;
+       static_cast<unsigned int>(descriptorGetSequence()) <<
+       " expected: " << static_cast<unsigned int>(getExpectedSequence())
+       << endl;
 
   DAQ_DATA_T average = summe / wordLen;
 
@@ -138,8 +142,12 @@ bool MyDaqChannel::onDataBlock( DAQ_DATA_T* pData, std::size_t wordLen )
 //------------------------------------------------------------------------------
 void doTest( const string wbName )
 {
+#ifdef CONFIG_NO_FE_ETHERBONE_CONNECTION
    DaqChannelContainer< MyDaqChannel > oDaqInterface( wbName );
-
+#else
+   DaqEb::EtherboneConnection ebConnection( wbName );
+   DaqChannelContainer< MyDaqChannel > oDaqInterface( &ebConnection );
+#endif
    cout << "WB-interface:        " << oDaqInterface.getWbDevice() << endl;
    cout << "Found devices:       " << oDaqInterface.getMaxFoundDevices() << endl;
    cout << "Registered channels: " << oDaqInterface.getMaxChannels() << endl;
@@ -168,7 +176,7 @@ void doTest( const string wbName )
 
    MyDaqChannel* pChannel_a = oDaqInterface.getChannelByAbsoluteNumber( 1 );
    assert( pChannel_a != nullptr );
-   MyDaqChannel* pChannel_b = oDaqInterface.getChannelByAbsoluteNumber( 5 );
+   MyDaqChannel* pChannel_b = oDaqInterface.getChannelByAbsoluteNumber( 2 );
    assert( pChannel_b != nullptr );
 //   pChannel_a->sendTriggerDelay( 0x55 );
 //   pChannel_a->sendTriggerCondition( 0xCAFEAFFE );
