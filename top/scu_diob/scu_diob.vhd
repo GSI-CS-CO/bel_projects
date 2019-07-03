@@ -1532,8 +1532,10 @@ end component;
   signal In16_Deb_Strobe_out:    std_logic;                       -- Input Strobe
 
   signal In16_ADC_Strobe_i:      std_logic;                       -- input  "Strobe-Signal für den ADC"
-  signal In16_ADC_Strobe_o:      std_logic;                       -- Output "Strobe-Signal für den ADC (1 CLK breit)"
+  signal In16_ADC_Strobe_pulse:  std_logic;                       -- "Strobe-Signal für den ADC (1 CLK breit)"
+  signal In16_ADC_Strobe_o:      std_logic;                       -- Output "Strobe-Signal für den ADC"
   signal In16_ADC_shift:         std_logic_vector(2  downto 0);   -- Shift-Reg.
+  signal In16_ADC_Strobe_Expo:       integer range 0 to 7;        -- Anzahl der Counts
 
   signal In16_ADC_Data_FF_i:     std_logic_vector(15  downto 0);  -- input  "Daten ADC-Register"
   signal In16_ADC_Data_FF_o:     std_logic_vector(15  downto 0);  -- Output "Daten ADC-Register"
@@ -3870,22 +3872,31 @@ In16_LED_Lemo_Out: led_n
 
 --------- Puls als Strobe (1 Clock breit) --------------------
 
-p_In16_ADC_Strobe_Start:  PROCESS (clk_sys, rstn_sys, In16_ADC_Strobe_i)
+p_In16_ADC_Strobe_Pulse:  PROCESS (clk_sys, rstn_sys, In16_ADC_Strobe_i)
   BEGin
     IF not rstn_sys  = '1' THEN
       In16_ADC_shift  <= (OTHERS => '0');
-      In16_ADC_Strobe_o    <= '0';
+      In16_ADC_Strobe_pulse    <= '0';
 
     ELSIF rising_edge(clk_sys) THEN
       In16_ADC_shift <= (In16_ADC_shift(In16_ADC_shift'high-1 downto 0) & (In16_ADC_Strobe_i));
 
       IF In16_ADC_shift(In16_ADC_shift'high) = '0' AND In16_ADC_shift(In16_ADC_shift'high-1) = '1' THEN
-        In16_ADC_Strobe_o <= '1';
+        In16_ADC_Strobe_pulse <= '1';
       ELSE
-        In16_ADC_Strobe_o <= '0';
+        In16_ADC_Strobe_pulse <= '0';
       END IF;
     END IF;
-  END PROCESS p_In16_ADC_Strobe_Start;
+  END PROCESS p_In16_ADC_Strobe_Pulse;
+  
+  
+  IN16_ADC_Strobe: outpuls port map(nReset   => rstn_sys,
+                                   CLK      => clk_sys,
+                                   Cnt_ena  => '1',
+                                   Start    => (In16_ADC_Strobe_pulse),
+                                   Base_cnt => C_Strobe_100ns, 
+                                   Mult_cnt => Wert_Strobe_2_Hoch_n(In16_ADC_Strobe_Expo),
+                                   Sign_Out => In16_ADC_Strobe_o);
 
 
 p_In16_ADC_FF:
@@ -6977,18 +6988,19 @@ BEGIN
 
  --################################         Input-Mode     ##################################
 
-    CASE (AW_Config2(7 downto 6)) is
-        when "00" =>                                       -- 0 = Input-Mode
+    CASE (AW_Config2(6)) is
+        when '0' =>                                       -- 0 = Input-Mode
       AW_Input_Reg(2)(15 DOWNTO 0)  <=  In16_Input(15 DOWNTO 0);          -- Daten-Input  Deb/Syn
       AW_Input_Reg(1)(0)            <=  In16_Strobe;                      -- Strobe-Input Deb/Syn
-        when "01" =>
+        when '1' =>
       AW_Input_Reg(2)(15 DOWNTO 0)  <=  In16_ADC_Data_FF_o(15 DOWNTO 0);  -- Daten aus dem Input-Register 
       AW_Input_Reg(1)(0)            <=  In16_ADC_Strobe_o;                -- Daten-Strobe für die Input-Daten
-      -- when "11" => --32 Bit ADC Mode
-        when OTHERS =>
-      AW_Input_Reg(2)(15 DOWNTO 0)  <=  In16_Input(15 DOWNTO 0);          -- Daten-Input  Deb/Syn
-      AW_Input_Reg(1)(0)            <=  In16_Strobe;                      -- Strobe-Input Deb/Syn    
+--        when OTHERS =>
+--      AW_Input_Reg(2)(15 DOWNTO 0)  <=  In16_Input(15 DOWNTO 0);          -- Daten-Input  Deb/Syn
+--      AW_Input_Reg(1)(0)            <=  In16_Strobe;                      -- Strobe-Input Deb/Syn    
     END CASE;
+    
+    In16_ADC_Strobe_Expo  <=  (to_integer(unsigned(AW_Config2)(4 downto 2)));  -- Multiplikationswert für 100ns aus Wertetabelle 2^n
 
 
     --################################### Output-Enable ##################################
