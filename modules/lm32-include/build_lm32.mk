@@ -39,14 +39,17 @@ PKG += "package ramsize_pkg is\n"
 PKG += "  constant c_lm32_ramsizes : natural := $(CONFIG_RAMSIZE);\n"
 PKG += "end ramsize_pkg;\n"
 
-
+GCC_PATH  = $(shell which 'lm32-elf-gcc')
+GCC_BUILD = $(shell strings $(GCC_PATH) | grep /share/locale | grep -oP 'lm32-gcc-\K.*' | cut -d'/' -f1)
+GCC_VER   := `lm32-elf-gcc --version | grep gcc`
+CBR_GCC   = "$(GCC_VER) " (build " $(GCC_BUILD)")""
 
 VERSION  ?= "1.0.0"
 CBR_DATE := `date +"%a %b %d %H:%M:%S %Z %Y"`
 CBR_USR  := `git config user.name`
 CBR_MAIL := `git config user.email`
 CBR_HOST := `hostname`
-CBR_GCC  := `lm32-elf-gcc --version | grep gcc`
+#CBR_GCC  := `lm32-elf-gcc --version | grep gcc`
 CBR_FLGS := $(CFLAGS)
 CBR_KRNL := `uname -mrs`
 CBR_OS   := `lsb_release -d -s | tr -d '"'` 
@@ -57,5 +60,5 @@ CBR_GIT3  := `git log HEAD~2 --oneline --decorate=no -n 1 | cut -c1-100`
 CBR_GIT4  := `git log HEAD~3 --oneline --decorate=no -n 1 | cut -c1-100`
 CBR_GIT5  := `git log HEAD~4 --oneline --decorate=no -n 1 | cut -c1-100`
 
-CBR = "\#define BUILDID __attribute__((section(\".buildid\")))\nconst char BUILDID build_id_rom[] = \""'\\'"\nUserLM32"'\\n\\'"\nProject     : $(TARGET)"'\\n\\'"\nVersion     : $(VERSION)"'\\n\\'"\nPlatform    : $(CBR_PF)"'\\n\\'"\nBuild Date  : $(CBR_DATE)"'\\n\\'"\nPrepared by : $(USER) $(CBR_USR) <$(CBR_MAIL)>"'\\n\\'"\nPrepared on : $(CBR_HOST)"'\\n\\'"\nOS Version  : $(CBR_OS) $(CBR_KRNL)"'\\n\\'"\nGCC Version : $(CBR_GCC)"'\\n\\'"\nIntAdrOffs  : $(CONFIG_RAMADDR)"'\\n\\'"\nSharedOffs  : $(SHARED_START)"'\\n\\'"\nSharedSize  : $(SHARED_SIZE)"'\\n\\'"\nFW-ID ROM will contain:"'\\n\\n\\'"\n   $(CBR_GIT1)"'\\n\\'"\n   $(CBR_GIT2)"'\\n\\'"\n   $(CBR_GIT3)"'\\n\\'"\n   $(CBR_GIT4)"'\\n\\'"\n   $(CBR_GIT5)"'\\n\\'"\n\";\n"
+CBR = "\#define BUILDID __attribute__((section(\".buildid\")))\nconst char BUILDID build_id_rom[] = \""'\\'"\nUserLM32"'\\n\\'"\nStack Status:                                                       "'\\n\\'"\nProject     : $(TARGET)"'\\n\\'"\nVersion     : $(VERSION)"'\\n\\'"\nPlatform    : $(CBR_PF)"'\\n\\'"\nBuild Date  : $(CBR_DATE)"'\\n\\'"\nPrepared by : $(USER) $(CBR_USR) <$(CBR_MAIL)>"'\\n\\'"\nPrepared on : $(CBR_HOST)"'\\n\\'"\nOS Version  : $(CBR_OS) $(CBR_KRNL)"'\\n\\'"\nGCC Version : $(CBR_GCC)"'\\n\\'"\nIntAdrOffs  : $(CONFIG_RAMADDR)"'\\n\\'"\nSharedOffs  : $(SHARED_START)"'\\n\\'"\nSharedSize  : $(SHARED_SIZE)"'\\n\\'"\nFW-ID ROM will contain:"'\\n\\n\\'"\n   $(CBR_GIT1)"'\\n\\'"\n   $(CBR_GIT2)"'\\n\\'"\n   $(CBR_GIT3)"'\\n\\'"\n   $(CBR_GIT4)"'\\n\\'"\n   $(CBR_GIT5)"'\\n\\'"\n\";\n"
 

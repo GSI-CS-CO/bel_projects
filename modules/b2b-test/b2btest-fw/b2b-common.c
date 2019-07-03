@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 16-May-2019
+ *  version : 21-May-2019
  *
  *  common functions used by various B2B firmware projects
  *  
@@ -89,6 +89,7 @@ uint32_t *pSharedTS0Lo;                 // pointer to a "user defined" u32 regis
 
 uint32_t nBadStatus;                    // # of bad status (=error) incidents
 uint32_t nBadState;                     // # of bad state (=FATAL, ERROR, UNKNOWN) incidents
+uint32_t flagRecover;                   // flag indicating auto-recovery from error state;
 
 
 uint64_t wrGetMac()  // get my own MAC
@@ -235,12 +236,14 @@ void common_init(uint32_t *startShared, uint32_t fwVersion) // determine address
     pSharedTemp++;
     i++;
   } // while pSharedTemp
-  DBPRINT2("b2b-common: common part of shared mem is %d words (uint32_t), begin %x, end %x\n", i, pShared, pSharedTemp-1);
+  DBPRINT2("b2b-common: common part of shared mem is %d words (uint32_t), begin %x, end %x\n", i, (unsigned int)pShared, (unsigned int)pSharedTemp-1);
   
   // set initial values;
   *pSharedVersion      = fwVersion; // of all the shared variabes, only VERSION is a constant. Set it now!
   *pSharedNBadStatus   = 0;
   *pSharedNBadState    = 0;
+  flagRecover          = 0;
+
 } // initCommon
 
 
@@ -316,7 +319,7 @@ uint32_t findMILPiggy() //find WB address of MIL Piggy
   else                                                           return COMMON_STATUS_OK;
 } // findMILPiggy
 
-uint32_t common_wait4ECAEvent(uint32_t msTimeout, uint64_t *deadline, uint64_t *param, uint32_t *isLate)  // 1. query ECA for actions, 2. trigger activity
+uint32_t common_wait4ECAEvent(uint32_t msTimeout, uint64_t *deadline, uint64_t *evtId, uint64_t *param, uint32_t *isLate)  // 1. query ECA for actions, 2. trigger activity
 {
   uint32_t *pECAFlag;           // address of ECA flag
   uint32_t evtIdHigh;           // high 32bit of eventID   
@@ -348,8 +351,9 @@ uint32_t common_wait4ECAEvent(uint32_t msTimeout, uint64_t *deadline, uint64_t *
       evtParamLow  = *(pECAQ + (ECA_QUEUE_PARAM_LO_GET >> 2));
       evtTef       = *(pECAQ + (ECA_QUEUE_TEF_GET >> 2));
       *isLate      = *pECAFlag & (0x0001 << ECA_LATE);
-
+      
       *deadline    = ((uint64_t)evtDeadlHigh << 32) + (uint64_t)evtDeadlLow;
+      *evtId       = ((uint64_t)evtIdHigh    << 32) + (uint64_t)evtIdLow;
       *param       = ((uint64_t)evtParamHigh << 32) + (uint64_t)evtParamLow;
       
       // pop action from channel
@@ -609,6 +613,38 @@ uint32_t common_changeState(uint32_t *actState, uint32_t *reqState, uint32_t act
   return status;
 } //changeState
 
+
+// do state specific do action
+uint32_t common_doActionState(uint32_t *reqState, uint32_t actState, uint32_t status)
+{
+  int j;
+   
+  switch(actState) {                                                      // state specific do actions
+    case COMMON_STATE_S0 :
+      status = common_doActionS0();                                       // important initialization that must succeed!
+      if (status != COMMON_STATUS_OK) *reqState = COMMON_STATE_FATAL;     // failed:  -> FATAL
+      else                            *reqState = COMMON_STATE_IDLE;      // success: -> IDLE
+      break;
+    case COMMON_STATE_OPREADY :
+      flagRecover = 0;
+      break;
+    case COMMON_STATE_ERROR :
+        flagRecover = 1;                                                  // start autorecovery
+        break; 
+    case COMMON_STATE_FATAL :
+      common_publishState(actState);
+      pp_printf("b2b-common: a FATAL error has occured. Good bye.\n");
+      while (1) asm("nop"); // RIP!
+        break;
+    default :                                                             // avoid flooding WB bus with unnecessary activity
+      for (j = 0; j < (COMMON_DEFAULT_TIMEOUT * COMMON_MS_ASMNOP); j++) { asm("nop"); }
+  } // switch
+
+  // autorecovery from state ERROR
+  if (flagRecover) common_doAutoRecovery(actState, reqState);
+
+  return status;
+} // common_doActionState
 
 // do autorecovery from error state
 void common_doAutoRecovery(uint32_t actState, uint32_t *reqState)

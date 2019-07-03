@@ -37,7 +37,7 @@
 #ifndef __B2B_TEST_API_H_
 #define __B2B_TEST_API_H_
 
-#define B2BTEST_X86_VERSION "0.0.8"
+#define B2BTEST_X86_VERSION "0.0.7"
 
 #include <b2b-test.h>
 

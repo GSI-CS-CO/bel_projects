@@ -1,0 +1,9 @@
+digraph g {
+name="Locking!CMD!";
+
+graph []
+
+  CMD_A   [type="lock",   pattern="B" ];
+
+
+}

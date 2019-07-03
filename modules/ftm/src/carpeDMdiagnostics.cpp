@@ -7,6 +7,7 @@
 #include <boost/graph/graphviz.hpp>
 #include <boost/graph/copy.hpp>
 #include <boost/algorithm/string.hpp>
+#include <random>
 
 #include "common.h"
 
@@ -195,7 +196,7 @@ namespace coverage {
                                                                  + "   2 (" + dnt::sQPrio[2] + "): " + (qe.flushIl ? sYes : sNo)
                                                                  + "   1 (" + dnt::sQPrio[1] + "): " + (qe.flushHi ? sYes : sNo)
                                                                  + "   0 (" + dnt::sQPrio[0] + "): " + (qe.flushLo ? sYes : sNo)
-                                                                 + "\n";
+                                                                 + "    Qty: " + std::to_string(qe.qty) + "    " + blockName + " --> " + qe.flushOvr + " \n";
                                   break;
                                 }
           case ACT_TYPE_WAIT  : { report += qe.sType + (qe.waitAbs ? " - until " : " - make block period ") + std::to_string(qe.waitTime) + "ns\n";
@@ -212,6 +213,46 @@ namespace coverage {
 
     return report;
   }
+
+
+std::string& CarpeDM::getRawQReport(const std::string& blockName, std::string& report) {
+
+    QueueReport qr;
+    qr = getQReport(blockName, qr);
+
+    report += "RAWREP:" + blockName + "\n";
+
+    report += "PRIO_AVL:"; for (int8_t prio = PRIO_IL; prio >= PRIO_LO; prio--) {report += qr.hasQ[prio] ? "1" : "0";} report += "\n";
+
+    for (int8_t prio = PRIO_IL; prio >= PRIO_LO; prio--) {
+
+      report += "PRIO:" + std::to_string((int)prio);
+      if (!qr.hasQ[prio]) {report += "_-\n"; continue;}
+
+      report += ",RI:" + std::to_string((int)qr.aQ[prio].rdIdx)
+              + ",WI:" + std::to_string((int)qr.aQ[prio].wrIdx)
+              + ",PC:" + std::to_string((int)qr.aQ[prio].pendingCnt) + "\n";
+
+      //find buffers of all non empty slots
+      for (uint8_t i, idx = qr.aQ[prio].rdIdx; idx < qr.aQ[prio].rdIdx + 4; idx++) {
+        i = idx & Q_IDX_MAX_MSK;
+        QueueElement& qe = qr.aQ[prio].aQe[i];
+
+        report += "@RI:" + std::to_string(i) + ",PEN:" + (qe.pending ? std::string("1") : std::string("0")) + ",ORPH:" + (qe.orphaned ? std::string("1") : std::string("0"));
+        report += "\nVABS:" + (qe.validAbs ? std::string("1") : std::string("0")) + ",VTIME:" + std::to_string(qe.validTime);
+        report += "\nTYPE:" + std::to_string(qe.type) + ",STYPE:" + qe.sType;
+        report += "\nQTY:" + std::to_string(qe.qty) + ",FLOWDST:" + qe.flowDst + ",FLOWDSTPAT:" + qe.flowDstPattern;
+        report += "\nPERMA:" + (qe.flowPerma ? std::string("1") : std::string("0")) + ",FPRIO:" + (qe.flushIl ? std::string("1") : std::string("0")) + (qe.flushHi ? std::string("1") : std::string("0")) + (qe.flushLo ? std::string("1") : std::string("0"));
+        report += "\nWABS:" + (qe.waitAbs ? std::string("1") : std::string("0")) + ",WTIME:" + std::to_string(qe.waitTime);
+        report += "\n";
+      }
+
+    }
+
+    return report;
+  }
+
+
 
 
   QueueReport& CarpeDM::getQReport(const std::string& blockName, QueueReport& qr) {
@@ -352,6 +393,35 @@ namespace coverage {
                               qe.flushIl = flPrio & (1<<PRIO_IL);
                               qe.flushHi = flPrio & (1<<PRIO_HI);
                               qe.flushLo = flPrio & (1<<PRIO_LO);
+
+                              uint32_t dstAdr = writeBeBytesToLeNumber<uint32_t>((uint8_t*)&b[T_CMD_FLUSH_OVR]);
+                              std::string sDst;
+
+                              if (dstAdr == LM32_NULL_PTR) { sDst = "No Ovr"; }// pointing to idle is always okay
+                              else {
+                                //Find out if Destination is on this core ('cpu') or on a peer core ('dstCpuAux')
+                                uint8_t dstCpuAux, dstCpu;
+                                AdrType dstAdrType;
+                                std::tie(dstCpuAux, dstAdrType) = at.adrClassification(dstAdr);
+                                dstCpu = (dstAdrType == AdrType::PEER ? dstCpuAux : cpu);
+                                //get allocentry of the destination by its cpu idx and memory address
+                                try {
+                                  auto dst = at.lookupAdr( dstCpu, at.adrConv(dstAdrType, AdrType::MGMT, dstCpu, dstAdr) );
+                                  sDst = g[dst->v].name;
+                                  for (auto& itOrphan : futureOrphan) {
+                                    if (sDst == itOrphan) {
+                                      if (verbose) sLog << "found orphaned command pointing to " << itOrphan << " in slot " << (int)idx << std::endl;
+                                      qe.orphaned = true;
+                                      break;}
+                                  }
+                                } catch (...) {
+                                  if (verbose) sLog << "found orphaned command pointing to unknown destination (#" << std::dec << (int)dstCpu << " 0x" << std::hex << dstAdr << std::dec << " in slot " << (int)idx << std::endl;
+                                  sDst = DotStr::Misc::sUndefined;
+                                  qe.orphaned = true;
+                                }
+
+                              }
+                              qe.flushOvr = sDst;
                               break;
                             }
       case ACT_TYPE_WAIT  : {
@@ -370,7 +440,7 @@ namespace coverage {
 
 
 
-void CarpeDM::dumpNode(uint8_t cpuIdx, const std::string& name) {
+void CarpeDM::dumpNode(const std::string& name) {
 
   Graph& g = gDown;
   if (hm.contains(name)) {
@@ -378,6 +448,25 @@ void CarpeDM::dumpNode(uint8_t cpuIdx, const std::string& name) {
     auto* x = (AllocMeta*)&(*it);
     hexDump(g[x->v].name.c_str(), (const char*)x->b, _MEM_BLOCK_SIZE);
   }
+}
+
+bool CarpeDM::isPainted(const std::string& name) {
+  Graph& g = gDown;
+  if (hm.contains(name)) {
+    auto it = atDown.lookupHash(hm.lookup(name));
+    auto* x = (AllocMeta*)&(*it);
+  
+    return g[x->v].np->isPainted();
+  }
+  return false;
+
+}
+
+void CarpeDM::showPaint() {
+  Graph& g = gDown;
+  BOOST_FOREACH( vertex_t v, vertices(g) ) {
+    if (!g[v].np->isMeta()) std::cout << g[v].name << ":" << (int)(g[v].np->isPainted() ? 1 : 0) << std::endl;
+  }  
 }
 
 void CarpeDM::inspectHeap(uint8_t cpuIdx) {
@@ -390,7 +479,7 @@ void CarpeDM::inspectHeap(uint8_t cpuIdx) {
   uint32_t thrAdr  = baseAdr + SHCTL_THR_DAT;
 
   for(int i=0; i<_THR_QTY_; i++) vRa.push_back(heapAdr + i * _PTR_SIZE_);
-  heap = ebReadCycle(ebd, vRa);
+  heap = ebd.readCycle(vRa);
 
 
   sLog << std::setfill(' ') << std::setw(4) << "Rank  " << std::setfill(' ') << std::setw(5) << "Thread  " << std::setfill(' ') << std::setw(21)
@@ -408,19 +497,15 @@ void CarpeDM::inspectHeap(uint8_t cpuIdx) {
 }
 
 
-void CarpeDM::clearHealth(uint8_t cpuIdx) {
-  vEbwrs ew;
-  clearHealth(cpuIdx, ew);
-  ebWriteCycle(ebd, ew.va, ew.vb, ew.vcs);
+
+vEbwrs& CarpeDM::clearHealth(vEbwrs& ew) {
+  for(int cpuIdx = 0; cpuIdx < ebd.getCpuQty(); cpuIdx++) { clearHealth(ew, cpuIdx); }
+  return ew;
 }
 
-void CarpeDM::clearHealth() {
-  vEbwrs ew;
-  for(int cpuIdx = 0; cpuIdx < getCpuQty(); cpuIdx++) { clearHealth(cpuIdx, ew); }
-  ebWriteCycle(ebd, ew.va, ew.vb, ew.vcs);
-}
 
-vEbwrs& CarpeDM::clearHealth(uint8_t cpuIdx, vEbwrs& ew) {
+vEbwrs& CarpeDM::clearHealth(vEbwrs& ew, uint8_t cpuIdx) {
+ 
   uint32_t const baseAdr = atDown.getMemories()[cpuIdx].extBaseAdr + atDown.getMemories()[cpuIdx].sharedOffs;
 
   uint8_t buf[8];
@@ -436,7 +521,7 @@ vEbwrs& CarpeDM::clearHealth(uint8_t cpuIdx, vEbwrs& ew) {
   //printf("VA size before %u, VCS size \n", ew.va.size(), ew.vcs.size());
   for (uint8_t thrIdx = 0; thrIdx < _THR_QTY_; thrIdx++) {
 
-    resetThrMsgCnt(cpuIdx, thrIdx, ew);
+    resetThrMsgCnt(ew, cpuIdx, thrIdx);
     //printf("VA size %u, VCS size \n", ew.va.size(), ew.vcs.size());
   }
 
@@ -509,7 +594,7 @@ HealthReport& CarpeDM::getHealth(uint8_t cpuIdx, HealthReport &hr) {
   // this is possible because T_DIAG offsets start at 0, see ftm_common.h for definition
   for (uint32_t offs = 0; offs < _T_DIAG_SIZE_; offs += _32b_SIZE_) diagAdr.push_back(baseAdr + SHCTL_DIAG + offs);
   diagAdr.push_back(baseAdr + SHCTL_STATUS);
-  diagBuf = ebReadCycle(ebd, diagAdr);
+  diagBuf = ebd.readCycle(diagAdr);
   b = (uint8_t*)&diagBuf[0];
 
   //hexDump("TEST", diagBuf );
@@ -631,7 +716,7 @@ void CarpeDM::show(const std::string& title, const std::string& logDictFile, Tra
   if(debug) {
     BOOST_FOREACH( vertex_t v, vertices(g) ) {
       auto x = at.lookupVertex(v);
-      dumpNode(x->cpu, g[x->v].name);
+      dumpNode(g[x->v].name);
     }
   }
 
@@ -713,9 +798,11 @@ void CarpeDM::coverage3Upload(uint64_t seed ) {
   //writeDownDotFile("coverage.dot", false);
 
   coverage3GenerateDynamic(gCmd, seed );
-  send(createCommandBurst(gCmd, tmpWr));
-  setThrOrigin(0, 0, coverage3GenerateCursor(g, seed));
+  createCommandBurst(tmpWr, gCmd);
+  setThrOrigin(tmpWr, 0, 0, coverage3GenerateCursor(g, seed));
   forceThrCursor(0, 0);
+  send(tmpWr);
+
   download();
 
 

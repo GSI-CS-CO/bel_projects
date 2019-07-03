@@ -110,12 +110,12 @@ sdbfs::
 sdbfs-clean::
 	$(MAKE) -C ip_cores/fpga-config-space/sdbfs DIRS="lib userspace" clean
 
-gcc-4.5.3-lm32.tar.xz:
-	wget https://www.ohwr.org/project/general-cores/uploads/84a8c35f99f67f5072c2169dfe68ba1c/gcc-4.5.3-lm32.tar.xz
+lm32-elf-gcc.tar.xz:
+	wget https://github.com/GSI-CS-CO/lm32-toolchain/releases/download/v1.0-2019-05-27/lm32-elf-gcc.tar.xz
 
-toolchain:	gcc-4.5.3-lm32.tar.xz
-	tar xvJf gcc-4.5.3-lm32.tar.xz
-	mv lm32 toolchain
+toolchain:	lm32-elf-gcc.tar.xz
+	tar xvJf lm32-elf-gcc.tar.xz
+	mv lm32-elf-gcc toolchain
 	touch toolchain
 
 toolchain-clean::

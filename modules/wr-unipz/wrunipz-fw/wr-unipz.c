@@ -3,7 +3,7 @@
  *
  *  created : 2018
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 17-May-2019
+ *  version : 21-May-2019
  *
  *  lm32 program for gateway between UNILAC Pulszentrale and a White Rabbit network
  *  this basically serves a Data Master for UNILAC
@@ -747,22 +747,17 @@ uint32_t doActionOperation(uint32_t *nCycle,                  // total number of
 
 
 int main(void) {
- 
-  uint32_t j;
- 
   uint32_t status;                                            // (error) status
   uint32_t cmd;                                               // command via shared memory
   uint32_t actState;                                          // actual FSM state
   uint32_t pubState;                                          // value of published state
   uint32_t reqState;                                          // requested FSM state
-  uint32_t flagRecover;                                       // flag indicating auto-recovery from error state;  
 
   // init local variables
   reqState       = COMMON_STATE_S0;
   actState       = COMMON_STATE_UNKNOWN;
   pubState       = COMMON_STATE_UNKNOWN;
   status         = COMMON_STATUS_OK;
-  flagRecover    = 0;
 
   // init 
   init();                                                              // initialize stuff for lm32
@@ -776,34 +771,15 @@ int main(void) {
     status = COMMON_STATUS_OK;                                         // reset status for each iteration
     status = common_changeState(&actState, &reqState, status);         // handle requested state changes
     switch(actState) {                                                 // state specific do actions 
-      case COMMON_STATE_S0 :
-        status = common_doActionS0();                                  // important initialization that must succeed!
-        if (status != COMMON_STATUS_OK) reqState = COMMON_STATE_FATAL; // failed:  -> FATAL
-        else                            reqState = COMMON_STATE_IDLE;  // success: -> IDLE
-        break;
       case COMMON_STATE_OPREADY :
-        flagRecover = 0;
         status = doActionOperation(&nCycleAct, status);
         if (status == COMMON_STATUS_WRBADSYNC) reqState = COMMON_STATE_ERROR;
         if (status == COMMON_STATUS_ERROR)     reqState = COMMON_STATE_ERROR;
         break;
-      case COMMON_STATE_ERROR :
-        flagRecover = 1;                                               // start autorecovery
-        break; 
-      case COMMON_STATE_FATAL :
-        pubState = actState;
-        common_publishState(pubState);
-        common_publishSumStatus(sumStatus);
-        pp_printf("wr-unipz: a FATAL error has occured. Good bye.\n");
-        while (1) asm("nop");                                          // RIP!
-        break;
       default :                                                        // avoid flooding WB bus with unnecessary activity
-        for (j = 0; j < (COMMON_DEFAULT_TIMEOUT * COMMON_MS_ASMNOP); j++) { asm("nop"); }
+        status = common_doActionState(&reqState, actState, status);    // handle do actions states
         break;
     } // switch
-    
-    // autorecovery from state ERROR
-    if (flagRecover) common_doAutoRecovery(actState, &reqState);
     
     // update shared memory for data that are averaged over a longer period
     if (nCycleAct != nCyclePrev) {                                     // update only once per cycle 

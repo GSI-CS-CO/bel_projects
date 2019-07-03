@@ -1,0 +1,11 @@
+digraph g {
+name="Locking!CMD!";
+
+graph []
+
+  CMD_LOCK   [type="lock",   pattern="B" ];
+  //CMD_CLEAR   [type="asyncclear",   pattern="B" ];
+  //CMD_FLOW    [type="flow",   pattern="B", destpattern="A" ];
+
+
+}

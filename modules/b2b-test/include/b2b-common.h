@@ -109,7 +109,7 @@ uint32_t common_ebmWriteTM(uint64_t deadline, uint64_t evtId, uint64_t param);
 //uint32_t findWREp();
 
 // 1. query ECA for actions, 2. trigger activity
-uint32_t common_wait4ECAEvent(uint32_t msTimeout, uint64_t *deadline, uint64_t *param, uint32_t *isLate);
+uint32_t common_wait4ECAEvent(uint32_t msTimeout, uint64_t *deadline, uint64_t *evtId, uint64_t *param, uint32_t *isLate);
 
 // wait for MIL event or timeout
 uint32_t common_wait4MILEvent(uint32_t *evtData, uint32_t *evtCode, uint32_t *virtAcc, uint32_t *validEvtCodes, uint32_t nValidEvtCodes, uint32_t msTimeout);
@@ -149,6 +149,9 @@ void common_incBadStateCnt();
 
 // handle commands from the outside world
 void common_cmdHandler(uint32_t *reqState, uint32_t *cmd);
+
+// do state specific action
+uint32_t common_doActionState(uint32_t *reqState, uint32_t actState, uint32_t status);
 
 // set gate of LVDS input
 uint32_t common_ioCtrlSetGate(uint32_t enable, uint32_t io);

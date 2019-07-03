@@ -1034,3 +1034,4 @@ set_location_assignment PIN_Y9 -to vme_addr_data_b[3]
 set_location_assignment PLL_2 -to "monster:main|sys_pll:\\sys_a2:sys_inst|altpll:altpll_component|sys_pll_altpll:auto_generated|pll1"
 set_location_assignment PLL_3 -to "monster:main|dmtd_pll:\\dmtd_a2:dmtd_inst|altpll:altpll_component|dmtd_pll_altpll:auto_generated|pll1"
 set_location_assignment PLL_4 -to "monster:main|ref_pll:\\ref_a2:ref_inst|altpll:altpll_component|ref_pll_altpll:auto_generated|pll1"
+set_global_assignment -name SEED 197

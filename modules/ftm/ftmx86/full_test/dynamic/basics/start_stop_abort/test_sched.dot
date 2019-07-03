@@ -1,0 +1,12 @@
+digraph g {
+name="BasicRun_CPU0_StartStopAbort";
+edge  [type="defdst"]
+node  [cpu="0"];
+  
+  MSG_IN_C0_EN    [type="tmsg",  pattern="IN_C0",  patentry="true", toffs=10, id="0x1000000000000000", par="0x0000000000000000", tef="0"];
+  BLOCK_IN_C0_MID [type="block", pattern="IN_C0",  tperiod=1000000000];
+  BLOCK_IN_C0_EX  [type="block", pattern="IN_C0",  patexit="true", qlo="1", tperiod=1000];
+  BLOCK_A  [type="block", pattern="A",  patentry="true", patexit="true", qlo="1", tperiod=1000];
+
+  MSG_IN_C0_EN->BLOCK_IN_C0_MID->BLOCK_IN_C0_EX->BLOCK_A->MSG_IN_C0_EN;
+}

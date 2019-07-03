@@ -83,7 +83,7 @@ using namespace DotStr::Misc;
 
 
     // save modification infos
-    for (auto& itMod : moddedCpus) { createSchedModInfo(itMod, modCnt, opType, ew); }
+    for (auto& itMod : moddedCpus) { createSchedModInfo(ew, itMod, modCnt, opType); }
 
     // save global meta info for management linked list
     uint8_t b[4 * _32b_SIZE_];
@@ -305,6 +305,7 @@ using namespace DotStr::Misc;
                                             gUp[v].np = (node_ptr) new  TimingMsg(gUp[v].name, gUp[v].patName, gUp[v].bpName, x->hash, x->cpu, flags, s2u<uint64_t>(gUp[v].tOffs), s2u<uint64_t>(gUp[v].id), s2u<uint64_t>(gUp[v].par), s2u<uint32_t>(gUp[v].tef), s2u<uint32_t>(gUp[v].res)); }
         else if (cmp == dnt::sCmdNoop)     {gUp[v].np = (node_ptr) new       Noop(gUp[v].name, gUp[v].patName, gUp[v].bpName, x->hash, x->cpu, flags, s2u<uint64_t>(gUp[v].tOffs), s2u<uint64_t>(gUp[v].tValid), s2u<uint8_t>(gUp[v].prio), s2u<uint32_t>(gUp[v].qty), s2u<bool>(gUp[v].vabs)); }
         else if (cmp == dnt::sCmdFlow)     {gUp[v].np = (node_ptr) new       Flow(gUp[v].name, gUp[v].patName, gUp[v].bpName, x->hash, x->cpu, flags, s2u<uint64_t>(gUp[v].tOffs), s2u<uint64_t>(gUp[v].tValid), s2u<uint8_t>(gUp[v].prio), s2u<uint32_t>(gUp[v].qty), s2u<bool>(gUp[v].vabs), s2u<bool>(gUp[v].perma)); }
+        else if (cmp == dnt::sSwitch)      {gUp[v].np = (node_ptr) new     Switch(gUp[v].name, gUp[v].patName, gUp[v].bpName, x->hash, x->cpu, flags, s2u<uint64_t>(gUp[v].tOffs) ); }
         else if (cmp == dnt::sCmdFlush)    {gUp[v].np = (node_ptr) new      Flush(gUp[v].name, gUp[v].patName, gUp[v].bpName, x->hash, x->cpu, flags, s2u<uint64_t>(gUp[v].tOffs), s2u<uint64_t>(gUp[v].tValid), s2u<uint8_t>(gUp[v].prio),
                                                                               s2u<bool>(gUp[v].qIl), s2u<bool>(gUp[v].qHi), s2u<bool>(gUp[v].qLo), s2u<bool>(gUp[v].vabs), s2u<bool>(gUp[v].perma), s2u<uint8_t>(gUp[v].frmIl), s2u<uint8_t>(gUp[v].toIl), s2u<uint8_t>(gUp[v].frmHi),
                                                                               s2u<uint8_t>(gUp[v].toHi), s2u<uint8_t>(gUp[v].frmLo), s2u<uint8_t>(gUp[v].toLo) ); }
@@ -356,15 +357,64 @@ using namespace DotStr::Misc;
     for(unsigned int i = 0; i < atUp.getMemories().size(); i++) {
       if (!freshDownload || (atUp.getMemories()[i].getBmp() != atDown.getMemories()[i].getBmp()) ) moddedCpus.insert(i); // mark cpu as modified if alloctable empty or Bmp Changed
     }
-
+    vEbwrs ew, ewChg, ewOrphans;
     generateMgmtData();
-    vEbwrs ew = gatherUploadVector(moddedCpus, 0, opType); //TODO not using modCnt right now, maybe implement later
-    deactivateOrphanedCommands(vQr, ew);
+    ewChg = gatherUploadVector(moddedCpus, 0, opType); //TODO not using modCnt right now, maybe implement later
+    deactivateOrphanedCommands(ewOrphans, vQr);
+  /*  
+    //Simulate orphan cleanup memory corruption bug
+    const  int dummy = 14;
+    ewOrphans.va.push_back(ewChg.va[dummy]);
+    ewOrphans.vb.push_back(0xDE);
+    ewOrphans.vb.push_back(0xAD);
+    ewOrphans.vb.push_back(0xBE);
+    ewOrphans.vb.push_back(0xEF);
+    ewOrphans.vcs.push_back(ewChg.vcs[dummy]);
+   /
+    std::string sDebug;
+    auto adri = ewOrphans.va.begin();
+    auto dati = ewOrphans.vb.begin();
+    while (adri != ewOrphans.va.end() and dati != ewOrphans.vb.end())
+    {
+      auto adr = adri;
+      auto dat = dati;
+      uint8_t b[4] = {*(dat+0), *(dat+1), *(dat+2), *(dat+3)};
+      auto iHit = std::find(ewChg.va.begin(), ewChg.va.end(), *adr);
+
+      if(iHit != ewChg.va.end()) {
+        std::stringstream auxstream;
+        uint32_t val = writeBeBytesToLeNumber<uint32_t>((uint8_t*)&b[0]);
+        auto idx = (iHit - ewChg.va.begin()) * 4;
+      
+        ewChg.vb[idx+0] = 0xca;
+        ewChg.vb[idx+1] = 0xfe;
+        ewChg.vb[idx+2] = 0xba;
+        ewChg.vb[idx+3] = 0xbe;
+
+        uint8_t b1[4] = {ewChg.vb[idx+0], ewChg.vb[idx+1], ewChg.vb[idx+2], ewChg.vb[idx+3]};
+ 
+        uint32_t hitval = writeBeBytesToLeNumber<uint32_t>((uint8_t*)&b1[0]);
+ 
+        auxstream << " A 0x" << std::setfill('0') << std::setw(8) << std::hex << *adr << " D 0x" << std::setfill('0') << std::setw(8) << std::hex << val << " Destroys: 0x" << std::setfill('0') << std::setw(8) << std::hex << hitval << std::endl;
+        sDebug += auxstream.str();
+      }
+      adri++;
+      dati+=4;  
+    }
+    if (sDebug.size()  > 0) {
+      sErr << "Possible access violation: Orphaned command cleanup routine tried to overwrite otherwise modified nodes. List of conflicting EB write ops:\n" << sDebug << std::endl;
+      //throw std::runtime_error("Possible access violation: Orphaned command cleanup routine tried to overwrite otherwise modified nodes. List of conflicting EB write ops:\n" + sDebug);
+    
+    }  
+*/      
+    ew = ewOrphans + ewChg; //order is critical !!!
+
     //Upload
-    ebWriteCycle(ebd, ew.va, ew.vb, ew.vcs);
+    ebd.writeCycle(ew.va, ew.vb, ew.vcs);
     if(verbose) sLog << "Done." << std::endl;
     freshDownload = false;
     return ew.va.size();
+    
   }
 
   void CarpeDM::baseUploadOnDownload() {
@@ -646,7 +696,7 @@ using namespace DotStr::Misc;
     nullify(); // read out current time for upload mod time (seconds, but probably better to use same format as DM FW. Convert to ns)
     // check if there are any threads still running first
     uint32_t activity = 0;
-    for(uint8_t cpuIdx=0; cpuIdx < getCpuQty(); cpuIdx++) {
+    for(uint8_t cpuIdx=0; cpuIdx < ebd.getCpuQty(); cpuIdx++) {
       uint32_t s = getThrStart(cpuIdx);
       uint32_t r = getThrRun(cpuIdx);
       //printf("#%u ThrStartBits: 0x%08x, ThrRunBits: 0x%08x, force=%u\n", cpuIdx, s, r, (int)force );
@@ -666,7 +716,7 @@ using namespace DotStr::Misc;
     validate(gUp, atUp, force);
     // check if there are any threads still running first
     uint32_t activity = 0;
-    for(uint8_t cpuIdx=0; cpuIdx < getCpuQty(); cpuIdx++) {
+    for(uint8_t cpuIdx=0; cpuIdx < ebd.getCpuQty(); cpuIdx++) {
       activity |= getThrRun(cpuIdx);
     }
     if (!force && activity)  {throw std::runtime_error("Cannot overwrite, threads are still running. Call stop/abort/halt first\n");}
