@@ -493,6 +493,7 @@ int DaqAdministration::distributeData( void )
                                #endif
                                ) != EB_OK )
    #else
+      // FIXME Error in Post Mortem!
       if( m_oEbAccess.readDaqDataBlock( &padding.probe.ramItems[c_ramBlockShortLen],
                                         c_ramBlockShortLen - c_ramBlockShortLen
                                      #ifndef CONFIG_DDR3_NO_BURST_FUNCTIONS

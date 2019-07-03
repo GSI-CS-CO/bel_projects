@@ -228,6 +228,7 @@ void DaqInterface::readSharedTotal( void )
 
 #else
 #ifdef CONFIG_VIA_EB_CYCLE
+#warning Old EB design!
    EB_SCOPED_LOCK();
    etherbone::Cycle oEbCycle;
    eb_status_t status;
