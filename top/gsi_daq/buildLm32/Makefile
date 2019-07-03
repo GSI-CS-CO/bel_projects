@@ -42,5 +42,7 @@ DOX_INPUT += $(DAQ_DIR)/daq_command_interface.h
 
 SHARED_SIZE = 48
 
+RAM_SIZE    = 147456
+
 include $(REPOSITORY_DIR)/makefiles/makefile.scu
 #=================================== EOF ======================================

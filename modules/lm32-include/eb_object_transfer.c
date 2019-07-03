@@ -32,8 +32,11 @@
  */
 #include <eb_object_transfer.h>
 #include <dbg.h>
+#include <sdb_ids.h>
 
 #define ATTEMPTS 3
+
+uint32_t g_lm32Base;
 
 /*! ---------------------------------------------------------------------------
  */
@@ -62,7 +65,11 @@ eb_status_t ebOpen( EB_HANDLE_T* pThis, const char* name )
                name, ebGetStatusString( pThis ));
       eb_socket_close( pThis->socket );
    }
+   if( pThis->status != EB_OK )
+      return pThis->status;
 
+   pThis->status = ebFindFirstDeviceAddrById( pThis, GSI, LM32_RAM_USER,
+                                              &g_lm32Base );
    return pThis->status;
 }
 

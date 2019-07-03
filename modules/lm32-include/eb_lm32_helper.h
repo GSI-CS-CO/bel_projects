@@ -1,6 +1,7 @@
 /*!
- * @brief Some helper macros to simplifying the data transfer between LM32
- *        and Linux host of heterogeneous flat structures via shared memory.
+ * @file  eb_lm32_helper.h Some helper macros to simplifying the data transfer
+ *        between LM32 and Linux host of heterogeneous flat structures via
+ *        shared memory.
  *
  * @note Flat objects means: the object doesn't contain members of type
  *       pointer or reverence, but the use of nested sub-structures can be
@@ -42,6 +43,8 @@
 #include <etherbone.h>
 #include <helper_macros.h>
 
+extern uint32_t g_lm32Base;
+
 /*!
  * @defgroup EB_HELPER
  * @brief Some helper macros simplifying the
@@ -52,7 +55,8 @@
 /*! ---------------------------------------------------------------------------
  */
 #ifndef EB_LM32_BASE
-   #define EB_LM32_BASE 0x100A0000
+   //#define EB_LM32_BASE 0x100A0000
+   #define EB_LM32_BASE g_lm32Base
 #endif
 
 /*! ---------------------------------------------------------------------------

@@ -763,14 +763,25 @@ inline int daqtMain( int argc, char** ppArgv )
             cout << "RAM-level: " << level << " items -> "
                  << std::fixed << setprecision( 2 )
                  << static_cast<double>(level * 100.0 /
-                                        RAM_DAQ_MAX_CAPACITY)
+                                         RAM_DAQ_MAX_CAPACITY)
                  << "%\"" << endl;
             break;
          }
       }
 
-      if( doRead )
+      if( !doRead )
+         continue;
+
+      try
+      {
          pDaqContainer->distributeData();
+      }
+      catch( std::exception& e )
+      {
+         doRead = false;
+         ERROR_MESSAGE( "Exception on function \"distributeData()\" occurred: "
+                        "\"" << e.what() << '"' );
+      }
    }
    return EXIT_SUCCESS;
 }
