@@ -41,7 +41,7 @@ include $(MAKEFILE_DIR)/makefile.base
 
 ifndef IS_LIBRARY
 $(BIN_FILE): $(OBJ_FILES) $(ADDITIONAL_LD_DEPENDENCES)
-	$(LD_F) -o $@ $(OBJ_FILES) $(LD_FLAGS)
+	$(LD_F) -o $@ $(OBJ_FILES) $(ADDITIONAL_OBJECTS) $(LD_FLAGS)
 
 .PHONY: size
 size: $(BIN_FILE)
