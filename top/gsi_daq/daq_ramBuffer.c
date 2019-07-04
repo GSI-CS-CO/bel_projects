@@ -118,7 +118,7 @@ RAM_DAQ_BLOCK_T ramRingGetTypeOfOldestBlock( register RAM_SCU_T* pThis )
    RAM_DAQ_PAYLOAD_T  item;
    RAM_RING_INDEXES_T indexes = pThis->pSharedObj->ringIndexes;
    ramRingAddToReadIndex( &indexes, RAM_DAQ_INDEX_OFFSET_OF_CHANNEL_CONTROL );
-   ramRreadItem( pThis, ramRingGeReadIndex( &indexes ), &item );
+   ramRreadItem( pThis, ramRingGetReadIndex( &indexes ), &item );
 
 #if  (DEBUGLEVEL>1)
    for( unsigned int i = 0; i < ARRAY_SIZE(item.ad16); i++ )
@@ -647,7 +647,7 @@ int ramReadDaqDataBlock( register RAM_SCU_T* pThis, RAM_DAQ_PAYLOAD_T* pData,
       * the variable readIndex for each new iteration step.
       */
       size_t readIndex = pThis->ram.pTrModeBase +
-                       ramRingGeReadIndex( &indexes ) * sizeof(DDR3_PAYLOAD_T);
+                       ramRingGetReadIndex( &indexes ) * sizeof(DDR3_PAYLOAD_T);
       ramRingAddToReadIndex( &indexes, 1 );
       for( size_t j = 0; j < ARRAY_SIZE( pData->ad32 ); j++  )
       {

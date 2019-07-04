@@ -749,6 +749,10 @@ class DaqAdministration: public DaqInterface
    uint              m_receiveCount;
 
 protected:
+#ifdef CONFIG_DAQ_TIME_MEASUREMENT
+   uint64_t          m_elapsedTime;
+#endif
+
    #define DEVICE_LIST_BASE std::list
    typedef DEVICE_LIST_BASE<DaqDevice*> DEVICE_LIST_T;
    DEVICE_LIST_T  m_devicePtrList;
@@ -788,6 +792,17 @@ public:
    {
       return  m_devicePtrList.empty();
    }
+
+#ifdef CONFIG_DAQ_TIME_MEASUREMENT
+   /*!
+    * @brief Returns the elapsed time of the last block-reading in
+    *        microseconds.
+    */
+    uint64_t getElapsedTime( void ) const
+    {
+       return m_elapsedTime;
+    }
+#endif
 
    /*!
     * @brief Resets all existing DAQ's in this SCU.

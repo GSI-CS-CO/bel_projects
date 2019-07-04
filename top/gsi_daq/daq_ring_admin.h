@@ -212,7 +212,7 @@ void ramRingAddToReadIndex( RAM_RING_INDEXES_T* pThis, RAM_RING_INDEX_T toAdd );
  * @return Index value for read access.
  */
 static inline
-RAM_RING_INDEX_T ramRingGeReadIndex( register RAM_RING_INDEXES_T* pThis )
+RAM_RING_INDEX_T ramRingGetReadIndex( register RAM_RING_INDEXES_T* pThis )
 {
    return pThis->start + pThis->offset;
 }
@@ -227,7 +227,7 @@ static inline
 RAM_RING_INDEX_T ramRingGetWriteIndex( register RAM_RING_INDEXES_T* pThis )
 {
    if( pThis->end == pThis->capacity )
-      return ramRingGeReadIndex( pThis );
+      return ramRingGetReadIndex( pThis );
    return pThis->end + pThis->offset;
 }
 

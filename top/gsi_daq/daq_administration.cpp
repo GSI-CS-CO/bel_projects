@@ -28,7 +28,9 @@
 #include <cstddef>
 #include <unistd.h>
 #include <dbg.h>
-
+#ifdef CONFIG_DAQ_TIME_MEASUREMENT
+#include <sys/time.h>
+#endif
 
 using namespace Scu;
 using namespace daq;
@@ -171,6 +173,9 @@ DaqAdministration::DaqAdministration( const std::string wbDevice,
   ,m_maxChannels( 0 )
   ,m_poCurrentDescriptor( nullptr )
   ,m_receiveCount( 0 )
+#ifdef CONFIG_DAQ_TIME_MEASUREMENT
+  ,m_elapsedTime( 0 );
+#endif
 {
 }
 #else
@@ -180,6 +185,9 @@ DaqAdministration::DaqAdministration( DaqEb::EtherboneConnection* poEtherbone,
    ,m_maxChannels( 0 )
    ,m_poCurrentDescriptor( nullptr )
    ,m_receiveCount( 0 )
+#ifdef CONFIG_DAQ_TIME_MEASUREMENT
+   ,m_elapsedTime( 0 )
+#endif
 {
 }
 #endif
@@ -397,7 +405,6 @@ int DaqAdministration::distributeData( void )
    static_assert( sizeof(PROBE_BUFFER_T) % sizeof(RAM_DAQ_PAYLOAD_T) == 0,
                   "sizeof(PROBE_BUFFER_T) has to be dividable by "
                   "sizeof(RAM_DAQ_PAYLOAD_T) !" );
-
    /*
     * For performance reasons the RAM-Size will at first read in the
     * unlocked state.
@@ -417,7 +424,7 @@ int DaqAdministration::distributeData( void )
     * the LM32 has to be locked, otherwise it could crash in the
     * wishbone-bus. >:-O
     */
- //!!  sendLockRamAccess();
+  //!! sendLockRamAccess();
 
    /*
     * After the access locking for the LM32 the RAM size has to be read again.
@@ -440,7 +447,12 @@ int DaqAdministration::distributeData( void )
 
    EB_PADDING_T( PROBE_BUFFER_T, probe ) padding;
 #ifdef CONFIG_DAQ_DEBUG
-   ::memset( &padding, 0, sizeof( padding ) );
+   ::memset( &padding, 0x7f, sizeof( padding ) );
+#endif
+
+#ifdef CONFIG_DAQ_TIME_MEASUREMENT
+   struct timeval t1, t2;
+   ::gettimeofday( &t1, nullptr );
 #endif
 
    /*
@@ -466,6 +478,13 @@ int DaqAdministration::distributeData( void )
       sendUnlockRamAccess();
       throw EbException( "Unable to read SCU-Ram buffer first part" );
    }
+#ifdef CONFIG_DAQ_TIME_MEASUREMENT
+   ::gettimeofday( &t2, nullptr );
+   m_elapsedTime = std::max( static_cast<uint64_t>
+                             ((t2.tv_sec - t1.tv_sec) * 1000000 +
+                             (t2.tv_usec - t1.tv_usec)),
+                             m_elapsedTime );
+#endif
    /*
     * Rough check of the device descriptors integrity.
     */
@@ -484,6 +503,9 @@ int DaqAdministration::distributeData( void )
       * Long block has been detected, in this case the rest of the data
       * has still to be read from the DAQ-Ram-buffer.
       */
+   #ifdef CONFIG_DAQ_TIME_MEASUREMENT
+      ::gettimeofday( &t1, nullptr );
+   #endif
    #ifdef CONFIG_NO_FE_ETHERBONE_CONNECTION
       if( ::ramReadDaqDataBlock( &m_oScuRam,
                                  &padding.probe.ramItems[c_ramBlockShortLen],
@@ -493,9 +515,8 @@ int DaqAdministration::distributeData( void )
                                #endif
                                ) != EB_OK )
    #else
-      // FIXME Error in Post Mortem!
       if( m_oEbAccess.readDaqDataBlock( &padding.probe.ramItems[c_ramBlockShortLen],
-                                        c_ramBlockShortLen - c_ramBlockShortLen
+                                        c_ramBlockLongLen - c_ramBlockShortLen
                                      #ifndef CONFIG_DDR3_NO_BURST_FUNCTIONS
                                        , ::ramReadPoll
                                      #endif
@@ -506,6 +527,14 @@ int DaqAdministration::distributeData( void )
          sendUnlockRamAccess();
          throw EbException( "Unable to read SCU-Ram buffer second part" );
       }
+   #ifdef CONFIG_DAQ_TIME_MEASUREMENT
+      ::gettimeofday( &t2, nullptr );
+      m_elapsedTime = std::max( static_cast<uint64_t>
+                               ((t2.tv_sec - t1.tv_sec) * 1000000 +
+                               (t2.tv_usec - t1.tv_usec)),
+                               m_elapsedTime );
+   #endif
+
       wordLen = c_hiresPmDataLen - c_discriptorWordSize;
    }
    else
