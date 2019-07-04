@@ -177,31 +177,25 @@ private:
 protected:
    RAM_SCU_T                    m_oScuRam;
 
-   constexpr static unsigned int c_maxCmdPoll  = 200;
+   constexpr static uint c_maxCmdPoll  = 1000;
 
 public:
-   constexpr static unsigned int c_maxDevices
-             = DAQ_MAX;
-   constexpr static unsigned int c_maxSlots
-             = MAX_SCU_SLAVES;
-   constexpr static unsigned int c_startSlot
-             = SCUBUS_START_SLOT;
-   constexpr static unsigned int c_maxChannels
-             = DAQ_MAX_CHANNELS;
-   constexpr static std::size_t  c_ramBlockShortLen
-             = RAM_DAQ_SHORT_BLOCK_LEN;
-   constexpr static std::size_t  c_ramBlockLongLen
-             = RAM_DAQ_LONG_BLOCK_LEN;
-   constexpr static std::size_t  c_hiresPmDataLen
-             = DAQ_FIFO_PM_HIRES_WORD_SIZE_CRC;
-   constexpr static std::size_t  c_contineousDataLen
-             = DAQ_FIFO_DAQ_WORD_SIZE_CRC;
-   constexpr static std::size_t  c_discriptorWordSize
-             = DAQ_DESCRIPTOR_WORD_SIZE;
-   constexpr static std::size_t  c_contineousPayloadLen
-             = c_contineousDataLen - c_discriptorWordSize;
-   constexpr static std::size_t  c_pmHiresPayloadLen
-             = c_hiresPmDataLen - c_discriptorWordSize;
+   constexpr static uint         c_maxDevices        = DAQ_MAX;
+   constexpr static uint         c_maxSlots          = MAX_SCU_SLAVES;
+   constexpr static uint         c_startSlot         = SCUBUS_START_SLOT;
+   constexpr static uint         c_maxChannels       = DAQ_MAX_CHANNELS;
+   constexpr static std::size_t  c_ramBlockShortLen  = RAM_DAQ_SHORT_BLOCK_LEN;
+   constexpr static std::size_t  c_ramBlockLongLen   = RAM_DAQ_LONG_BLOCK_LEN;
+   constexpr static std::size_t  c_hiresPmDataLen    =
+                                               DAQ_FIFO_PM_HIRES_WORD_SIZE_CRC;
+   constexpr static std::size_t  c_contineousDataLen =
+                                                    DAQ_FIFO_DAQ_WORD_SIZE_CRC;
+   constexpr static std::size_t  c_discriptorWordSize =
+                                                      DAQ_DESCRIPTOR_WORD_SIZE;
+   constexpr static std::size_t  c_contineousPayloadLen =
+                                    c_contineousDataLen - c_discriptorWordSize;
+   constexpr static std::size_t  c_pmHiresPayloadLen =
+                                       c_hiresPmDataLen - c_discriptorWordSize;
 
 #ifdef CONFIG_NO_FE_ETHERBONE_CONNECTION
    DaqInterface( const std::string = DAQ_DEFAULT_WB_DEVICE, bool doReset = true );
