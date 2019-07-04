@@ -124,6 +124,16 @@ eb_status_t ebFindFirstDeviceAddrById( EB_HANDLE_T* pThis,
    }
 
    *pDevAddr = devices[0].sdb_component.addr_first;
+   if( *pDevAddr == 0 )
+   {
+      fprintf( stderr,
+               ESC_FG_RED ESC_BOLD"Error: No device address found!\n"
+               "Vendor ID: 0x%08X\n"
+               "Device ID: 0x%08X\n"ESC_NORMAL,
+               vendorId, deviceId );
+      pThis->status = EB_FAIL;
+      return pThis->status;
+   }
 
    DBPRINT1( "DBG: INFO: Found device at addr: 0x%08X\n", *pDevAddr );
 

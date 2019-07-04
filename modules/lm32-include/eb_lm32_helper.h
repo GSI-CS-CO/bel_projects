@@ -43,7 +43,6 @@
 #include <etherbone.h>
 #include <helper_macros.h>
 
-extern uint32_t g_lm32Base;
 
 /*!
  * @defgroup EB_HELPER
@@ -52,6 +51,11 @@ extern uint32_t g_lm32Base;
  *        via wishbone/etherbone bus.
  * @{
  */
+/*!
+ * @brief Global variable contains the base address of the LM32 user RAM.
+ */
+extern uint32_t g_lm32Base;
+
 /*! ---------------------------------------------------------------------------
  */
 #ifndef EB_LM32_BASE
@@ -62,14 +66,14 @@ extern uint32_t g_lm32Base;
 /*! ---------------------------------------------------------------------------
  * @brief Base address of the Linux perspective of the shared memory for
  *        the communication between LM32 and Linux.
- * @note The macros INT_BASE_ADR and SHARED_OFFS are project dependent and
+ * @note The macro SHARED_OFFS are project dependent and
  *       will be defined in the automatically generated header file
  *       "generated/shared_mmap.h". Therefore this file has to be also
  *       registered in the header file include path of the associated Linux
  *       project. For this reason the Linux module depends on the
  *       LM32 module, whereby the LM32-module has to be compiled first.
  */
-#define EB_LM32_SHARED_BASE_ADDRESS (EB_LM32_BASE + INT_BASE_ADR + SHARED_OFFS)
+#define EB_LM32_SHARED_BASE_ADDRESS (EB_LM32_BASE + SHARED_OFFS)
 
 /*! ---------------------------------------------------------------------------
  * @brief Macro calculates the eb/wb address of a member variable of a
