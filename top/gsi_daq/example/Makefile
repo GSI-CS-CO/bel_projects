@@ -10,21 +10,17 @@
 ###############################################################################
 REPOSITORY_DIR := $(shell git rev-parse --show-toplevel)
 
-  USE_FE_LIB_ETHERBONE=1
-
-
+EB_SRC= $(DAQ_DIR)/feSupport/scu/etherbone
 
 MIAN_MODULE := daqexample.cpp
-
 
 SOURCE += $(DAQ_DIR)/daq_ring_admin.c
 SOURCE += $(DAQ_DIR)/daq_interface.cpp
 SOURCE += $(DAQ_DIR)/daq_administration.cpp
-
-EB_SRC= $(DAQ_DIR)/feSupport/scu/etherbone
 SOURCE += $(EB_SRC)/EtherboneConnection.cpp
 SOURCE += $(EB_SRC)/BusException.cpp
 SOURCE += $(DAQ_DIR)/daq_eb_ram_buffer.cpp
+
 
 DEFINES += _BSD_SOURCE
 DEFINES += _POSIX_C_SOURCE
@@ -40,7 +36,8 @@ DEFINES += CONFIG_DDR3_NO_BURST_FUNCTIONS
 DEFINES += __ETHERBONE_CONNECTION_MUTEX="EtherBoneConnectionMutexDaq"
 
 INCLUDE_DIRS += $(EB_SRC)
-LIBS += boost_system
+# LIBS += boost_system
+ ADDITIONAL_OBJECTS += /opt/gsi/3rdparty/boost/1.54.0/lib/x86_64/libboost_system.a
 LIBS += pthread
 LIBS += stdc++
 LIBS += etherbone
