@@ -240,7 +240,10 @@ int main( int argc, const char** ppArgv )
               break;
            }
         }
-
+#ifdef CONFIG_DAQ_TIME_MEASUREMENT
+        cout << "Maximum WB/EB cycle time: " << scuWithDaq.getElapsedTime()
+             << " us" << endl;
+#endif
         /*
          * At least we send a reset command to the LM32 program:
          */
