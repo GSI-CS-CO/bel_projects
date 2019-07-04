@@ -79,7 +79,6 @@ void ecaHandler(uint32_t);            // pop pending eCPU actions from ECA queue
 int ecaMsiHandler(int id);           // handler for the ECA MSIs
 int hostMsiHandler(int id);          // handler for host MSIs
 int triggerIoActions(int id);        // trigger IO actions to generate pulses
-int dummyTask(int id);
 
 /* definitions of MSI message buffers */
 enum {
@@ -134,19 +133,7 @@ int printSharedInput(int start, int end)
 
   return i;
 }
-int dummyTask(int id) {
 
-  // wait for 60 seconds
-  uint64_t t = getSysTime() - pTask[id].deadline;
-
-  if (t > INTERVAL_60S)
-  {
-    //mprintf("elapsed %d ms\n",(uint32_t)(t / MS_SCALE)); // enable output msg only for debugging!
-    pTask[id].deadline = getSysTime();
-  }
-
-  return STATUS_OK;
-}
 int updateConfigs(Config_t *configs, uint64_t e_id, int id, int set) {
 
   int i, pos = N_CONFIGS;
