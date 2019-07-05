@@ -65,7 +65,7 @@ struct msi {
 }; 
 
 struct daq {
-  unsigned int setpoint;
+  unsigned int setvalue;
   unsigned int actvalue;
   unsigned int tmstmp_l;
   unsigned int tmstmp_h;

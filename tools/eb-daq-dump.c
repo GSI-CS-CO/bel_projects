@@ -101,9 +101,9 @@ void remove_daq_message() {
     if ((status = eb_device_write(device, lm32_ram_base + DAQ_BUF + 4, EB_DATA32, ring_tail, 0, 0)) != EB_OK)
       die("eb_device_write ring_tail", status);
 
-    //printf("setpoint: 0x%"EB_DATA_FMT"", message[0]);
     printf("%ld", message[2] | (message[3] << 32));
     printf(" %d", (signed)message[1]);
+    printf(" %d", (signed)(message[0] >> 16));
     printf(" chn:0x%"EB_DATA_FMT"\n", message[4]);
   }
 

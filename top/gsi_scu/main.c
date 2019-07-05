@@ -117,12 +117,9 @@ volatile uint32_t     *pECAQ           = 0; // WB address of ECA queue
 volatile unsigned int param_sent[MAX_FG_CHANNELS];
 volatile int initialized[MAX_SCU_SLAVES] = {0};
 int clear_is_active[MAX_SCU_SLAVES + 1] = {0};
-
 volatile struct message_buffer msg_buf[QUEUE_CNT] = {0};
-
-
-
 uint64_t timeout[MAX_FG_CHANNELS] = {0};
+signed int last_c_coeff[MAX_FG_CHANNELS];
 
 
 void dev_failure(int status, int slot, char* msg) {
@@ -245,7 +242,7 @@ void msDelay(uint32_t msecs) {
  *  @param fg_base base address of the function generator macro
  *  @param cntrl_reg state of the control register. saves one read access.
  */
-inline void send_fg_param(int slot, int fg_base, unsigned short cntrl_reg) {
+inline void send_fg_param(int slot, int fg_base, unsigned short cntrl_reg, signed int* setvalue) {
   struct param_set pset;
   int fg_num;
   unsigned short cntrl_reg_wr;
@@ -262,6 +259,8 @@ inline void send_fg_param(int slot, int fg_base, unsigned short cntrl_reg) {
     blk_data[3] = (pset.control & 0x3ffc0) >> 6;     // shift a 17..12 shift b 11..6
     blk_data[4] = pset.coeff_c & 0xffff;
     blk_data[5] = (pset.coeff_c & 0xffff0000) >> 16; // data written with high word
+    // save coeff_c as setvalue
+    *setvalue = pset.coeff_c;
 
     if ((slot & 0xf0) == 0) {
       scub_base[OFFS(slot) + fg_base + FG_CNTRL]  = blk_data[0];
@@ -293,7 +292,7 @@ inline void send_fg_param(int slot, int fg_base, unsigned short cntrl_reg) {
  *  @param fg_base base address of the function generator macro
  *  @param irq_act_reg state of the irq act register, saves a read access
  */
-inline void handle(int slot, unsigned fg_base, short irq_act_reg) {
+inline void handle(int slot, unsigned fg_base, short irq_act_reg, signed int* setvalue) {
     unsigned short cntrl_reg = 0;
     int status;
     int channel;
@@ -348,11 +347,11 @@ inline void handle(int slot, unsigned fg_base, short irq_act_reg) {
           hist_addx(HISTORY_XYZ_MODULE, "sig_start", channel);
         if (cbgetCount(&fg_regs[0], channel) == THRESHOLD)
           SEND_SIG(SIG_REFILL);
-        send_fg_param(slot, fg_base, cntrl_reg);
+        send_fg_param(slot, fg_base, cntrl_reg, setvalue);
       } else if ((cntrl_reg & FG_RUNNING) && (cntrl_reg & FG_DREQ)) {
         if (cbgetCount(&fg_regs[0], channel) == THRESHOLD)
           SEND_SIG(SIG_REFILL);
-        send_fg_param(slot, fg_base, cntrl_reg);
+        send_fg_param(slot, fg_base, cntrl_reg, setvalue);
       }
     } else {
       if ((irq_act_reg & FG_RUNNING) && (irq_act_reg & DEV_STATE_IRQ)){
@@ -361,11 +360,11 @@ inline void handle(int slot, unsigned fg_base, short irq_act_reg) {
           hist_addx(HISTORY_XYZ_MODULE, "sig_start", channel);
         if (cbgetCount(&fg_regs[0], channel) == THRESHOLD)
           SEND_SIG(SIG_REFILL);
-        send_fg_param(slot, fg_base, irq_act_reg);
+        send_fg_param(slot, fg_base, irq_act_reg, setvalue);
       } else if (irq_act_reg & (FG_RUNNING | DEV_DRQ)) {
         if (cbgetCount(&fg_regs[0], channel) == THRESHOLD)
           SEND_SIG(SIG_REFILL);
-        send_fg_param(slot, fg_base, irq_act_reg);
+        send_fg_param(slot, fg_base, irq_act_reg, setvalue);
       }
     }
 }
@@ -495,6 +494,9 @@ int configure_fg_macro(int channel) {
       blk_data[3] = (pset.control & 0x3ffc0) >> 6;     // shift a 17..12 shift b 11..6
       blk_data[4] = pset.coeff_c & 0xffff;
       blk_data[5] = (pset.coeff_c & 0xffff0000) >> 16; // data written with high word
+      
+      // save the coeff_c for mil daq
+      last_c_coeff[channel] = pset.coeff_c;
 
       if ((slot & 0xf0) == 0) {
         //set virtual fg number Bit 9..4
@@ -862,27 +864,28 @@ void ecaHandler()
 
 typedef struct {
   int state;
-  int slave_nr;                    /* slave nr of the controlling sio card */
-  short irq_data[MAX_FG_CHANNELS];
-  int i;
-  int task_timeout_cnt;
-  uint64_t interval;               /* interval of the task */
-  uint64_t lasttick;               /* when was the task ran last */
-  uint64_t timestamp1;             /* timestamp */
-  void (*func)(int);               /* pointer to the function of the task */
+  int slave_nr;                             /* slave nr of the controlling sio card */
+  short irq_data[MAX_FG_CHANNELS];          /* saved irq state */
+  int i;                                    /* loop index for channel */
+  int task_timeout_cnt;                     /* timeout counter */
+  uint64_t interval;                        /* interval of the task */
+  uint64_t lasttick;                        /* when was the task ran last */
+  uint64_t timestamp1;                      /* timestamp */
+  signed int setvalue[MAX_FG_CHANNELS];     /* setvalue from the tuple sent */
+  uint64_t daq_timestamp[MAX_FG_CHANNELS];  /* timestamp of daq sampling */
+  void (*func)(int);                        /* pointer to the function of the task */
 }TaskType;
 
 /* task configuration table */
 static TaskType tasks[] = {
-  { 0, 0, {0}, 0, 0, ALWAYS         , 0, 0, dev_sio_handler    }, // sio task 1
-  { 0, 0, {0}, 0, 0, ALWAYS         , 0, 0, dev_sio_handler    }, // sio task 2
-  { 0, 0, {0}, 0, 0, ALWAYS         , 0, 0, dev_sio_handler    }, // sio task 3
-  { 0, 0, {0}, 0, 0, ALWAYS         , 0, 0, dev_sio_handler    }, // sio task 4
-  { 0, 0, {0}, 0, 0, ALWAYS         , 0, 0, dev_bus_handler    },
-  { 0, 0, {0}, 0, 0, ALWAYS         , 0, 0, scu_bus_handler    },
-  { 0, 0, {0}, 0, 0, ALWAYS         , 0, 0, ecaHandler         },
-  { 0, 0, {0}, 0, 0, ALWAYS         , 0, 0, sw_irq_handler     },
-
+  { 0, 0, {0}, 0, 0, ALWAYS         , 0, 0, {0}, {0}, dev_sio_handler    }, // sio task 1
+  { 0, 0, {0}, 0, 0, ALWAYS         , 0, 0, {0}, {0}, dev_sio_handler    }, // sio task 2
+  { 0, 0, {0}, 0, 0, ALWAYS         , 0, 0, {0}, {0}, dev_sio_handler    }, // sio task 3
+  { 0, 0, {0}, 0, 0, ALWAYS         , 0, 0, {0}, {0}, dev_sio_handler    }, // sio task 4
+  { 0, 0, {0}, 0, 0, ALWAYS         , 0, 0, {0}, {0}, dev_bus_handler    },
+  { 0, 0, {0}, 0, 0, ALWAYS         , 0, 0, {0}, {0}, scu_bus_handler    },
+  { 0, 0, {0}, 0, 0, ALWAYS         , 0, 0, {0}, {0}, ecaHandler         },
+  { 0, 0, {0}, 0, 0, ALWAYS         , 0, 0, {0}, {0}, sw_irq_handler     },
 };
 
 TaskType *tsk_getConfig(void) {
@@ -906,6 +909,7 @@ void scu_bus_handler(int id) {
   struct msi m;
   static TaskType *task_ptr;              // task pointer
   task_ptr = tsk_getConfig();             // get a pointer to the task configuration
+  signed int dummy;
 
   if (has_msg(&msg_buf[0], SCUBUS)) {
 
@@ -921,11 +925,11 @@ void scu_bus_handler(int id) {
         slave_acks |= 0x1;
       }
       if (slv_int_act_reg & FG1_IRQ) { //FG irq?
-        handle(slave_nr, FG1_BASE, 0);
+        handle(slave_nr, FG1_BASE, 0, &dummy);
         slave_acks |= FG1_IRQ;
       }
       if (slv_int_act_reg & FG2_IRQ) { //FG irq?
-        handle(slave_nr, FG2_BASE, 0);
+        handle(slave_nr, FG2_BASE, 0, &dummy);
         slave_acks |= FG2_IRQ;
       }
       if (slv_int_act_reg & DREQ) { //DRQ irq?
@@ -936,7 +940,6 @@ void scu_bus_handler(int id) {
     }
   }
   return;
-
 }
 
 /**
@@ -951,7 +954,6 @@ void dev_sio_handler(int id) {
   short data_aquisition;
   struct msi m;
   struct daq d;
-  uint64_t daq_time;
   static TaskType *task_ptr;              // task pointer
   task_ptr = tsk_getConfig();             // get a pointer to the task configuration
 
@@ -1033,9 +1035,11 @@ void dev_sio_handler(int id) {
         if (task_ptr[id].irq_data[i] & (DEV_STATE_IRQ | DEV_DRQ)) { // any irq pending?
           slot = fg_macros[fg_regs[i].macro_number] >> 24;
           dev = (fg_macros[fg_regs[i].macro_number] & 0x00ff0000) >> 16;
-          handle(slot, dev, task_ptr[id].irq_data[i]);
+          handle(slot, dev, task_ptr[id].irq_data[i], &(task_ptr[id].setvalue[i]));
           //clear irq pending and end block transfer
           if ((status = scub_write_mil(scub_base, task_ptr[id].slave_nr, 0, FC_IRQ_ACT_WR | dev)) != OKAY) dev_failure(status, 22, "dev_sio end handle");
+          // store the sample timestamp for daq
+          task_ptr[id].daq_timestamp[i] = getSysTime();
         }
       }
       task_ptr[id].state = 4;
@@ -1079,16 +1083,18 @@ void dev_sio_handler(int id) {
               mprintf("unknown error when reading task %d\n", task_ptr[id].slave_nr);
             }
           }
-          d.setpoint = 0;
           d.actvalue = data_aquisition;
-          daq_time = getSysTime();
-          d.tmstmp_l = daq_time & 0xffffffff;
-          d.tmstmp_h = daq_time >> 32;
-          d.channel = i;
+          d.tmstmp_l = task_ptr[id].daq_timestamp[i] & 0xffffffff;
+          d.tmstmp_h = task_ptr[id].daq_timestamp[i] >> 32;
+          d.channel  = i;
+          d.setvalue = last_c_coeff[i];
           add_daq_msg(&daq_buf, d);
 
           hist_addx(HISTORY_XYZ_MODULE, "daq_high", data_aquisition >> 8);
           hist_addx(HISTORY_XYZ_MODULE, "daq_low", data_aquisition & 0xff);
+
+          // save the setvalue from the tuple sent for the next drq handling
+          last_c_coeff[i] = task_ptr[id].setvalue[i];
         }
       }
       if (status == RCV_TASK_BSY) {
@@ -1123,7 +1129,6 @@ void dev_bus_handler(int id) {
   short data_aquisition;
   struct msi m;
   struct daq d;
-  uint64_t daq_time;
   static TaskType *task_ptr;              // task pointer
   task_ptr = tsk_getConfig();             // get a pointer to the task configuration
 
@@ -1205,7 +1210,7 @@ void dev_bus_handler(int id) {
         if (task_ptr[id].irq_data[i] & (DEV_STATE_IRQ | DEV_DRQ)) { // any irq pending?
           slot = fg_macros[fg_regs[i].macro_number] >> 24;
           dev = (fg_macros[fg_regs[i].macro_number] & 0x00ff0000) >> 16;
-          handle(slot, dev, task_ptr[id].irq_data[i]);
+          handle(slot, dev, task_ptr[id].irq_data[i], &(task_ptr[id].setvalue[i]));
           //clear irq pending and end block transfer
           if ((status = write_mil(scu_mil_base, 0, FC_IRQ_ACT_WR | dev)) != OKAY) dev_failure(status, 22, "");
 
@@ -1222,6 +1227,8 @@ void dev_bus_handler(int id) {
           dev = (fg_macros[fg_regs[i].macro_number] & 0x00ff0000) >> 16;
           // non blocking read for DAQ
           if ((status = set_task_mil(scu_mil_base, id + i + 1, FC_ACT_RD | dev)) != OKAY) dev_failure(status, 23, "");
+          // store the sample timestamp for daq
+          task_ptr[id].daq_timestamp[i] = getSysTime();
         }
       }
       task_ptr[id].state = 5;
@@ -1251,16 +1258,18 @@ void dev_bus_handler(int id) {
               mprintf("unknown error when reading task %d\n", task_ptr[id].slave_nr);
             }
           }
-          d.setpoint = 0;
           d.actvalue = data_aquisition;
-          daq_time = getSysTime();
-          d.tmstmp_l = daq_time & 0xffffffff;
-          d.tmstmp_h = daq_time >> 32;
-          d.channel = i;
+          d.tmstmp_l = task_ptr[id].daq_timestamp[i] & 0xffffffff;
+          d.tmstmp_h = task_ptr[id].daq_timestamp[i] >> 32;
+          d.channel  = i;
+          d.setvalue = last_c_coeff[i];
           add_daq_msg(&daq_buf, d);
 
           hist_addx(HISTORY_XYZ_MODULE, "daq_high", data_aquisition >> 8);
           hist_addx(HISTORY_XYZ_MODULE, "daq_low", data_aquisition & 0xff);
+
+          // save the setvalue from the tuple sent for the next drq handling
+          last_c_coeff[i] = task_ptr[id].setvalue[i];
         };
       }
       if (status == RCV_TASK_BSY) {
