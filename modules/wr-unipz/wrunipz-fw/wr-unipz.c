@@ -3,7 +3,7 @@
  *
  *  created : 2018
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 21-May-2019
+ *  version : 04-July-2019
  *
  *  lm32 program for gateway between UNILAC Pulszentrale and a White Rabbit network
  *  this basically serves a Data Master for UNILAC
@@ -46,7 +46,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 22-November-2018
  ********************************************************************************************/
-#define WRUNIPZ_FW_VERSION 0x000014                                     // make this consistent with makefile
+#define WRUNIPZ_FW_VERSION 0x000015                                     // make this consistent with makefile
 
 // standard includes
 #include <stdio.h>
@@ -95,8 +95,8 @@ uint32_t *pSharedConfVacc;              // pointer to a "user defined" u32 regis
 uint32_t *pSharedConfData;              // pointer to a "user defined" u32 register; here: config data
 uint32_t *pSharedConfFlag;              // pointer to a "user defined" u32 register; here: config flags
 uint32_t *pSharedConfPz;                // pointer to a "user defined" u32 register; here: PZ bit field (bit N is set: transsaction for PZ N)
-uint32_t *pCpuRamExternal;              // external address (seen from host bridge) of this CPU's RAM            
-uint32_t *pCpuRamExternalData4EB;       // external address (seen from host bridge) of this CPU's RAM: field for EB return values
+uint32_t *cpuRamExternal;               // external address (seen from host bridge) of this CPU's RAM            
+/*uint32_t *pCpuRamExternalData4EB;       // external address (seen from host bridge) of this CPU's RAM: field for EB return values*/
 
 // lots of stuff to remember
 uint32_t sumStatus;                     // all status infos are ORed bit-wise into sum status, sum status is then published
@@ -320,10 +320,7 @@ void initSharedMem()
   find_device_multi(&found_clu, &idx, 1, GSI, LM32_CB_CLUSTER);	
   idx = 0;
   find_device_multi_in_subtree(&found_clu, &found_sdb[0], &idx, c_Max_Rams, GSI, LM32_RAM_USER);
-  if(idx >= cpuId) {
-    pCpuRamExternal           = (uint32_t *)(getSdbAdr(&found_sdb[cpuId]) & 0x7FFFFFFF); // CPU sees the 'world' under 0x8..., remove that bit to get host bridge perspective
-    pCpuRamExternalData4EB    = (uint32_t *)(pCpuRamExternal + ((COMMON_SHARED_DATA_4EB + SHARED_OFFS) >> 2));
-  }
+  if(idx >= cpuId) cpuRamExternal           = (uint32_t *)(getSdbAdr(&found_sdb[cpuId]) & 0x7FFFFFFF); // CPU sees the 'world' under 0x8..., remove that bit to get host bridge perspective
 
   DBPRINT2("wr-unipz: CPU RAM External 0x%8x, begin shared 0x%08x\n", pCpuRamExternal, SHARED_OFFS);
 
@@ -520,6 +517,7 @@ uint32_t extern_entryActionOperation()
 {
   int      i;
   uint64_t tDummy;
+  uint64_t iDummy;
   uint64_t pDummy;
   uint32_t flagDummy;
 
@@ -537,7 +535,7 @@ uint32_t extern_entryActionOperation()
 
   // flush ECA queue for lm32
   i = 0;
-  while (common_wait4ECAEvent(1, &tDummy, &pDummy, &flagDummy) !=  WRUNIPZ_ECADO_TIMEOUT) {i++;}
+  while (common_wait4ECAEvent(1, &tDummy, &iDummy, &pDummy, &flagDummy) !=  WRUNIPZ_ECADO_TIMEOUT) {i++;}
   DBPRINT1("wr-unipz: ECA queue flushed - removed %d pending entries from ECA queue\n", i);
 
   return COMMON_STATUS_OK;
@@ -590,10 +588,12 @@ uint32_t doActionOperation(uint32_t *nCycle,                  // total number of
   uint32_t flagIsLate;                                        // flag indicating that we received a 'late' event from ECA
   uint32_t ecaAction;                                         // action triggered by event received from ECA
   uint64_t recDeadline;                                       // deadline of event received via ECA
+  uint64_t recEvtId;                                          // event ID received
   uint64_t recParam;                                          // param received
   uint64_t deadline;                                          // deadline to be used for action
   uint64_t tMIL;                                              // time when MIL event was received
   uint64_t tDummy;                                            // dummy timestamp
+  uint64_t iDummy;                                            // dummy evt id
   uint64_t pDummy;                                            // dummy parameter
   uint32_t evtData;                                           // MIL event: data
   uint32_t evtCode;                                           // MIL event: code
@@ -611,7 +611,7 @@ uint32_t doActionOperation(uint32_t *nCycle,                  // total number of
   status = actStatus;
 
   // wait for MIL event
-  milStatus = common_wait4MILEvent(&evtData, &evtCode, &virtAcc, milEvts, sizeof(milEvts)/sizeof(int), COMMON_MILTIMEOUT);
+  milStatus = common_wait4MILEvent( COMMON_MILTIMEOUT, &evtData, &evtCode, &virtAcc, milEvts, sizeof(milEvts)/sizeof(int));
   if (milStatus == COMMON_STATUS_TIMEDOUT) return WRUNIPZ_STATUS_NOMILEVENTS; // error: no MIL event, maybe dead UNIPZ?
   if (milStatus != COMMON_STATUS_OK)       return WRUNIPZ_STATUS_MIL;         // some other MIL error
 
@@ -625,7 +625,7 @@ uint32_t doActionOperation(uint32_t *nCycle,                  // total number of
       DBPRINT3("wr-unipz: 50Hz, data %d, evtcode %d, virtAcc %d\n", evtData, evtCode, virtAcc);
       
       // get timestamp from TLU -> ECA
-      ecaAction = common_wait4ECAEvent(COMMON_ECATIMEOUT, &recDeadline, &recParam, &flagIsLate);
+      ecaAction = common_wait4ECAEvent(COMMON_ECATIMEOUT, &recDeadline, &recEvtId, &recParam, &flagIsLate);
       deadline = recDeadline;
       
       // check, if timestamping via TLU failed; if yes, continue with TS from MIL
@@ -680,7 +680,7 @@ uint32_t doActionOperation(uint32_t *nCycle,                  // total number of
       
       // reset requested virt accs; flush ECA queue
       for (i=0; i < WRUNIPZ_NPZ; i++) nextVacc[i] = 0xffffffff; // 0xffffffff: no virt acc for PZ
-      while (common_wait4ECAEvent(0, &tDummy, &pDummy, &flagIsLate) !=  WRUNIPZ_ECADO_TIMEOUT) {asm("nop");}
+      while (common_wait4ECAEvent(0, &tDummy, &iDummy, &pDummy, &flagIsLate) !=  WRUNIPZ_ECADO_TIMEOUT) {asm("nop");}
       
       break;
       
@@ -762,7 +762,7 @@ int main(void) {
   // init 
   init();                                                              // initialize stuff for lm32
   initSharedMem();                                                     // initialize shared memory
-  common_init((uint32_t *)_startshared, WRUNIPZ_FW_VERSION);           // init common stuff
+  common_init((uint32_t *)_startshared, cpuRamExternal, SHARED_OFFS, WRUNIPZ_FW_VERSION); // init common stuff
   common_clearDiag();                                                  // clear common diagnostic data
 
   while (1) {
