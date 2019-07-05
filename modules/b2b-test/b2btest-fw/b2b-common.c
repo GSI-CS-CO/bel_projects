@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 21-May-2019
+ *  version : 04-July-2019
  *
  *  common functions used by various B2B firmware projects
  *  
@@ -42,14 +42,16 @@
 #include <stdint.h>
 
 /* includes specific for bel_projects */
-#include "irq.h"
-#include "ebm.h"
-#include "aux.h"
+/*#include "irq.h"*/
 #include "dbg.h"
+#include "ebm.h"
 #include "pp-printf.h"
 #include "mini_sdb.h"
 #include "syscon.h"
+#include "aux.h"
+#include "uart.h"
 #include "../../../top/gsi_scu/scu_mil.h"                               // register layout MIL piggy
+#include "../../oled_display/oled_regs.h"                               // register layout of OLED display
 #include "../../../ip_cores/wr-cores/modules/wr_eca/eca_queue_regs.h"   // register layout ECA queue
 #include "../../../ip_cores/wr-cores/modules/wr_eca/eca_regs.h"         // register layout ECA control
 // #include "../../../ip_cores/wr-cores/modules/wr_pps_gen/pps_gen_regs.h" // useless register layout, I can't handle this wbgen stuff here
@@ -70,10 +72,12 @@ volatile uint32_t *pPPSGen;             // WB address of PPS Gen
 volatile uint32_t *pWREp;               // WB address of WR Endpoint
 volatile uint32_t *pIOCtrl;             // WB address of IO Control
 volatile uint32_t *pMILPiggy;           // WB address of MIL device bus (MIL piggy)
+volatile uint32_t *pOLED;               // WB address of OLED (display)
 
 // global variables
 uint32_t *pSharedVersion;               // pointer to a "user defined" u32 register; here: publish version
-uint32_t *pSharedSumStatus;             // pointer to a "user defined" u32 register; here: publish OR of all (actual) error bits
+uint32_t *pSharedSumStatusLo;           // pointer to a "user defined" u32 register; here: publish OR of all (actual) error bits; low word
+uint32_t *pSharedSumStatusHi;           // pointer to a "user defined" u32 register; here: publish OR of all (actual) error bits; high word
 uint32_t *pSharedNBadStatus;            // pointer to a "user defined" u32 register; here: publish # of bad status (=error) incidents
 uint32_t *pSharedNBadState;             // pointer to a "user defined" u32 register; here: publish # of bad state (=FATAL, ERROR, UNKNOWN) incidents
 volatile uint32_t *pSharedCmd;          // pointer to a "user defined" u32 register; here: get command from host
@@ -86,6 +90,11 @@ uint32_t *pSharedTDiagHi;               // pointer to a "user defined" u32 regis
 uint32_t *pSharedTDiagLo;               // pointer to a "user defined" u32 register; here: time when diag was cleared, low bits
 uint32_t *pSharedTS0Hi;                 // pointer to a "user defined" u32 register; here: time when FW was in S0 state, high bits
 uint32_t *pSharedTS0Lo;                 // pointer to a "user defined" u32 register; here: time when FW was in S0 state, low bits
+uint32_t *pSharedNTransfer;             // pointer to a "user defined" u32 register; here: # of transfers
+uint32_t *pSharedNInject;               // pointer to a "user defined" u32 register; here: # of injections within current transfer
+uint32_t *pSharedTransStat;             // pointer to a "user defined" u32 register; here: status of transfer
+
+uint32_t *cpuRamExternalData4EB;        // external address (seen from host bridge) of this CPU's RAM: field for EB return values
 
 uint32_t nBadStatus;                    // # of bad status (=error) incidents
 uint32_t nBadState;                     // # of bad state (=FATAL, ERROR, UNKNOWN) incidents
@@ -106,6 +115,14 @@ uint64_t wrGetMac()  // get my own MAC
 
   return mac;
 } // wrGetMac
+
+
+void ebmClearSharedMem()
+{
+  uint32_t i;
+
+  for (i=0; i< (COMMON_DATA4EBSIZE >> 2); i++) pSharedData4EB[i] = 0x0;
+} //ebmClearSharedMem
 
 
 uint32_t common_ioCtrlSetGate(uint32_t enable, uint32_t io)  // set gate of LVDS input
@@ -147,6 +164,58 @@ uint32_t common_ebmInit(uint32_t msTimeout, uint64_t dstMac, uint32_t dstIp, uin
 } // ebminit
 
 
+uint32_t common_ebmWriteN(uint32_t address, uint32_t *data, uint32_t n32BitWords)
+{
+  int i;
+
+  if (n32BitWords > (COMMON_DATA4EBSIZE >> 2)) return COMMON_STATUS_OUTOFRANGE;
+  if (n32BitWords == 0)                        return COMMON_STATUS_OUTOFRANGE;
+
+  ebmClearSharedMem();                                                      // clear my shared memory used for EB replies
+
+  ebm_hi(address);                                                          // EB operation starts here
+  for (i=0; i<n32BitWords; i++) ebm_op(address + i*4, data[i], EBM_WRITE);  // put data into EB cycle
+  if (n32BitWords == 1)         ebm_op(address      , data[0], EBM_WRITE);  // workaround runt frame issue
+  ebm_flush();                                                              // commit EB cycle via the network
+  
+  return COMMON_STATUS_OK;
+} // common_ebmWriteN
+
+
+uint32_t common_ebmReadN(uint32_t msTimeout, uint32_t address, uint32_t *data, uint32_t n32BitWords)
+{
+  uint64_t timeoutT;
+  int      i;
+  uint32_t handshakeIdx;
+
+  handshakeIdx = n32BitWords + 1;
+
+  if (n32BitWords >= ( COMMON_DATA4EBSIZE >> 2)) return COMMON_STATUS_OUTOFRANGE;
+  if (n32BitWords == 0)                          return COMMON_STATUS_OUTOFRANGE;
+
+  for (i=0; i< n32BitWords; i++) data[i] = 0x0;
+
+  ebmClearSharedMem();                                                                               // clear shared data for EB return values
+  pSharedData4EB[handshakeIdx] = COMMON_EB_HACKISH;                                                  // see below
+
+  ebm_hi(address);                                                                                   // EB operation starts here
+  for (i=0; i<n32BitWords; i++) ebm_op(address + i*4, (uint32_t)(&(cpuRamExternalData4EB[i])), EBM_READ);            // put data into EB cycle
+                                ebm_op(address      , (uint32_t)(&(cpuRamExternalData4EB[handshakeIdx])), EBM_READ); // handshake data
+  ebm_flush();                                                                                       // commit EB cycle via the network
+  
+  timeoutT = getSysTime() + (uint64_t)msTimeout * (uint64_t)1000000;                                                     
+  while (getSysTime() < timeoutT) {                                                                  // wait for received data until timeout
+    if (pSharedData4EB[handshakeIdx] != COMMON_EB_HACKISH) {                                         // hackish solution to determine if a reply value has been received
+      for (i=0; i<n32BitWords; i++) data[i] = pSharedData4EB[i];
+      // dbg mprintf("dm-unipz: ebmReadN EB_address 0x%08x, nWords %d, data[0] 0x%08x, hackish 0x%08x, return 0x%08x\n", address, n32BitWords, data[0], DMUNIPZ_EB_HACKISH, pSharedData4EB[handshakeIdx]);
+      return COMMON_STATUS_OK;
+    }
+  } //while not timed out
+
+  return COMMON_STATUS_EBREADTIMEDOUT; 
+} //common_ebmReadN
+
+
 uint32_t common_ebmWriteTM(uint64_t deadline, uint64_t evtId, uint64_t param)  
 {
   uint32_t res, tef;
@@ -186,7 +255,7 @@ uint32_t common_ebmWriteTM(uint64_t deadline, uint64_t evtId, uint64_t param)
 } //ebmWriteTM
 
 
-uint32_t wrCheckSyncState() //check status of White Rabbit (link up, tracking)
+uint32_t common_wrCheckSyncState() //check status of White Rabbit (link up, tracking)
 {
   uint32_t syncState;
 
@@ -198,7 +267,7 @@ uint32_t wrCheckSyncState() //check status of White Rabbit (link up, tracking)
 } //wrCheckStatus
 
 
-void common_init(uint32_t *startShared, uint32_t fwVersion) // determine address and clear shared mem
+void common_init(uint32_t *startShared, uint32_t *cpuRamExternal, uint32_t sharedOffs, char * name, uint32_t fwVersion) // determine address and clear shared mem
 {
   uint32_t *pSharedTemp;
   uint32_t *pShared;
@@ -206,15 +275,19 @@ void common_init(uint32_t *startShared, uint32_t fwVersion) // determine address
 
   // basic info to wr console
   DBPRINT1("\n");
-  DBPRINT1("b2b-common: ***** firmware v %06u started from scratch *****\n", (unsigned int)fwVersion);
+  DBPRINT1("b2b-common: ***** firmware %s v%06x started from scratch *****\n", name, (unsigned int)fwVersion);
   DBPRINT1("\n");
   
   // set pointer to shared memory
   pShared                 = startShared;
 
+  // set pointer ('external view') for EB return values
+  cpuRamExternalData4EB   = (uint32_t *)(cpuRamExternal + ((COMMON_SHARED_DATA_4EB + sharedOffs) >> 2));
+
   // get address to data
   pSharedVersion          = (uint32_t *)(pShared + (COMMON_SHARED_VERSION >> 2));
-  pSharedSumStatus        = (uint32_t *)(pShared + (COMMON_SHARED_SUMSTATUS >> 2));
+  pSharedSumStatusHi      = (uint32_t *)(pShared + (COMMON_SHARED_STATUSHI >> 2));
+  pSharedSumStatusLo      = (uint32_t *)(pShared + (COMMON_SHARED_STATUSLO >> 2));
   pSharedCmd              = (uint32_t *)(pShared + (COMMON_SHARED_CMD >> 2));
   pSharedState            = (uint32_t *)(pShared + (COMMON_SHARED_STATE >> 2));
   pSharedData4EB          = (uint32_t *)(pShared + (COMMON_SHARED_DATA_4EB >> 2));
@@ -227,7 +300,10 @@ void common_init(uint32_t *startShared, uint32_t fwVersion) // determine address
   pSharedTDiagLo          = (uint32_t *)(pShared + (COMMON_SHARED_TDIAGLO >> 2));
   pSharedTS0Hi            = (uint32_t *)(pShared + (COMMON_SHARED_TS0HI >> 2));
   pSharedTS0Lo            = (uint32_t *)(pShared + (COMMON_SHARED_TS0LO >> 2));
-
+  pSharedNTransfer        = (uint32_t *)(pShared + (COMMON_SHARED_NTRANSFER >> 2));
+  pSharedNInject          = (uint32_t *)(pShared + (COMMON_SHARED_NINJECT >> 2));  
+  pSharedTransStat        = (uint32_t *)(pShared + (COMMON_SHARED_TRANSSTAT >> 2));
+    
   // clear shared mem
   i = 0;
   pSharedTemp        = (uint32_t *)(pShared + (COMMON_SHARED_BEGIN >> 2 ));
@@ -239,11 +315,11 @@ void common_init(uint32_t *startShared, uint32_t fwVersion) // determine address
   DBPRINT2("b2b-common: common part of shared mem is %d words (uint32_t), begin %x, end %x\n", i, (unsigned int)pShared, (unsigned int)pSharedTemp-1);
   
   // set initial values;
+  ebmClearSharedMem();
   *pSharedVersion      = fwVersion; // of all the shared variabes, only VERSION is a constant. Set it now!
   *pSharedNBadStatus   = 0;
   *pSharedNBadState    = 0;
   flagRecover          = 0;
-
 } // initCommon
 
 
@@ -304,7 +380,7 @@ uint32_t findECAQueue() // find WB address of ECA channel for LM32
   }
 
   if (!pECAQ) {DBPRINT1("b2b-common: can't find ECA queue\n"); return COMMON_STATUS_ERROR;}
-  else                                                       return COMMON_STATUS_OK;
+  else                                                         return COMMON_STATUS_OK;
 } // findECAQueue
 
 
@@ -316,10 +392,41 @@ uint32_t findMILPiggy() //find WB address of MIL Piggy
   pMILPiggy = find_device_adr(GSI, SCU_MIL);
 
   if (!pMILPiggy) {DBPRINT1("b2b-common: can't find MIL piggy\n"); return COMMON_STATUS_ERROR;}
-  else                                                           return COMMON_STATUS_OK;
+  else                                                             return COMMON_STATUS_OK;
 } // findMILPiggy
 
-uint32_t common_wait4ECAEvent(uint32_t msTimeout, uint64_t *deadline, uint64_t *evtId, uint64_t *param, uint32_t *isLate)  // 1. query ECA for actions, 2. trigger activity
+
+uint32_t findOLED() //find WB address of OLED
+{
+  pOLED = 0x0;
+  
+  // get Wishbone address for OLED
+  pOLED = find_device_adr(OLED_SDB_VENDOR_ID, OLED_SDB_DEVICE_ID);
+
+  if (!pOLED) {DBPRINT1("dm-unipz: can't find OLED\n"); return COMMON_STATUS_ERROR;}
+  else                                                  return COMMON_STATUS_OK;
+} // findOLED
+
+
+void common_printOLED(char *chars)
+{
+  uint32_t i;
+
+  if (!pOLED) return;                         // no OLED: just return
+  
+  for (i=0;i<strlen(chars);i++) *(pOLED + (OLED_UART_OWR >> 2)) = chars[i];
+} // printOLED
+
+
+void common_clearOLED()
+{
+  if (!pOLED) return;                         // no OLED: just return
+
+  *(pOLED + (OLED_UART_OWR >> 2)) = 0xc;      // clear display
+} // clearOLED
+
+
+uint32_t common_wait4ECAEvent(uint32_t msTimeout, uint64_t *deadline, uint64_t *evtId, uint64_t *param, uint32_t *tef, uint32_t *isLate)  // 1. query ECA for actions, 2. trigger activity
 {
   uint32_t *pECAFlag;           // address of ECA flag
   uint32_t evtIdHigh;           // high 32bit of eventID   
@@ -328,7 +435,6 @@ uint32_t common_wait4ECAEvent(uint32_t msTimeout, uint64_t *deadline, uint64_t *
   uint32_t evtDeadlLow;         // low 32bit of deadline   
   uint32_t evtParamHigh;        // high 32 bit of parameter field
   uint32_t evtParamLow ;        // low 32 bit of parameter field
-  uint32_t evtTef;              // 32 bit TEF field
   uint32_t actTag;              // tag of action           
   uint32_t nextAction;          // describes what to do next
   uint64_t timeoutT;            // when to time out
@@ -349,7 +455,7 @@ uint32_t common_wait4ECAEvent(uint32_t msTimeout, uint64_t *deadline, uint64_t *
       actTag       = *(pECAQ + (ECA_QUEUE_TAG_GET >> 2));
       evtParamHigh = *(pECAQ + (ECA_QUEUE_PARAM_HI_GET >> 2));
       evtParamLow  = *(pECAQ + (ECA_QUEUE_PARAM_LO_GET >> 2));
-      evtTef       = *(pECAQ + (ECA_QUEUE_TEF_GET >> 2));
+      *tef         = *(pECAQ + (ECA_QUEUE_TEF_GET >> 2));
       *isLate      = *pECAFlag & (0x0001 << ECA_LATE);
       
       *deadline    = ((uint64_t)evtDeadlHigh << 32) + (uint64_t)evtDeadlLow;
@@ -371,7 +477,7 @@ uint32_t common_wait4ECAEvent(uint32_t msTimeout, uint64_t *deadline, uint64_t *
 
 
 // wait for MIL event or timeout
-uint32_t common_wait4MILEvent(uint32_t *evtData, uint32_t *evtCode, uint32_t *virtAcc, uint32_t *validEvtCodes, uint32_t nValidEvtCodes, uint32_t msTimeout) 
+uint32_t common_wait4MILEvent(uint32_t msTimeout, uint32_t *evtData, uint32_t *evtCode, uint32_t *virtAcc, uint32_t *validEvtCodes, uint32_t nValidEvtCodes) 
 {
   uint32_t evtRec;             // one MIL event
   uint32_t evtCodeRec;         // "event number"
@@ -453,11 +559,14 @@ uint32_t common_doActionS0()
   if (findPPSGen()   != COMMON_STATUS_OK) status = COMMON_STATUS_ERROR;
   if (findWREp()     != COMMON_STATUS_OK) status = COMMON_STATUS_ERROR;
   if (findIOCtrl()   != COMMON_STATUS_OK) status = COMMON_STATUS_ERROR;
-  findMILPiggy();
+  findOLED();       // ignore error; not every TR has a MIL piggy
+  findMILPiggy();   // ignore error; not every TR has a MIL piggy
 
   now           = getSysTime();
   *pSharedTS0Hi = (uint32_t)(now >> 32);
   *pSharedTS0Lo = (uint32_t)now & 0xffffffff;
+
+  common_publishNICData();
   
   common_initCmds();                    
 
@@ -471,6 +580,12 @@ volatile uint32_t* common_getMilPiggy()
 } // common_getMilPiggy
 
 
+volatile uint32_t* common_getOLED()
+{
+  return pOLED;
+} // common_getMilOLED
+
+
 void common_publishNICData()
 {
   uint64_t mac;
@@ -478,7 +593,7 @@ void common_publishNICData()
   
   mac = wrGetMac(pWREp);
   *pSharedMacHi = (uint32_t)(mac >> 32) & 0xffff;
-  *pSharedMacLo = (uint32_t)mac         & 0xffffffff;
+  *pSharedMacLo = (uint32_t)(mac        & 0xffffffff);
 
   ip  = *(pEbCfg + (EBC_SRC_IP>>2));
   *pSharedIp    = ip;
@@ -491,10 +606,19 @@ void common_publishState(uint32_t state)
 } // common_publishState
 
 
-void common_publishSumStatus(uint32_t sumStatus)
+void common_publishSumStatus(uint64_t sumStatus)
 {
-  *pSharedSumStatus = sumStatus; 
+  *pSharedSumStatusHi = (uint32_t)(sumStatus >> 32);
+  *pSharedSumStatusLo = (uint32_t)(sumStatus & 0xffffffff);
 } // common_publishSumStatus
+
+
+void common_publishTransferStatus(uint32_t nTransfer, uint32_t nInject, uint32_t transStat)
+{
+  *pSharedNTransfer = nTransfer;
+  *pSharedNInject   = nInject;
+  *pSharedTransStat = transStat;
+} // common_publishTransferStatus
 
 
 void common_incBadStatusCnt()

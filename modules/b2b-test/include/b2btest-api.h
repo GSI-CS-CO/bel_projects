@@ -42,14 +42,16 @@
 #include <b2b-test.h>
 
 // small helper function
-uint64_t getSysTime();     
-
-// convert status code to status text
-const char* common_state_text(uint32_t code              // status code
-                              );
+uint64_t getSysTime();
 
 // convert state code to state text
-const char* b2btest_status_text(uint32_t code            // state code
+const char* common_state_text(uint32_t  bit              // state code
+                              );
+// convert status code to status text
+const char* common_status_text(uint32_t  bit             // status code
+                               );
+// convert status code to status text
+const char* b2btest_status_text(uint32_t bit             // status code
                                 );
 
 #endif

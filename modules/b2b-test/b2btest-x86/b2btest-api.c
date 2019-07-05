@@ -3,7 +3,7 @@
  *
  *  created : 2018
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 20-May-2019
+ *  version : 05-July-2019
  *
  *  implementation for b2btest
  * 
@@ -56,6 +56,7 @@ const char* common_status_text(uint32_t bit) {
     case COMMON_STATUS_OUTOFRANGE       : sprintf(message, "error %d, %s",    bit, "some value is out of range"); break;
     case COMMON_STATUS_EB               : sprintf(message, "error %d, %s",    bit, "an Etherbone error occured"); break;
     case COMMON_STATUS_NOIP             : sprintf(message, "error %d, %s",    bit, "DHCP request via WR network failed"); break;
+    case COMMON_STATUS_WRONGIP          : sprintf(message, "error %d, %s",    bit, "IP received via DHCP does not match local config"); break;
     case COMMON_STATUS_EBREADTIMEDOUT   : sprintf(message, "error %d, %s",    bit, "EB read via WR network timed out"); break;
     case COMMON_STATUS_WRBADSYNC        : sprintf(message, "error %d, %s",    bit, "White Rabbit: not in 'TRACK_PHASE'"); break;
     case COMMON_STATUS_AUTORECOVERY     : sprintf(message, "errorFix %d, %s", bit, "attempting auto-recovery from state ERROR"); break;
@@ -78,3 +79,4 @@ const char* b2btest_status_text(uint32_t bit) {
 
   return message;
 } // b2btest_status_text
+
