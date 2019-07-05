@@ -280,7 +280,7 @@ void printDiags(uint32_t sumStatus, uint32_t state, uint32_t nBadStatus, uint32_
     printf("overall status        : NOT OK\n");  
   for (i= COMMON_STATUS_OK + 1; i<(sizeof(sumStatus)*8); i++) {
     if ((sumStatus >> i) & 0x1)
-      printf("sum status bit ist set: %s\n", b2btest_status_text(i));
+      printf("sum status bit is set : %s\n", b2btest_status_text(i));
   } // for i
 
   printf("# of transfers        : %010u\n", nTransfers);
