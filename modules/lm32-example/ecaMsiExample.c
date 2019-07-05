@@ -125,6 +125,7 @@ void clearActions()
   uint32_t valCnt;
 
   *(pEcaCtl + (ECA_CHANNEL_SELECT_RW >> 2)) = gEcaChECPU;    // select ECA channel for LM32
+  *(pEcaCtl + (ECA_CHANNEL_NUM_SELECT_RW >> 2)) = 0x00;      // set the sub channel index
   valCnt = *(pEcaCtl + (ECA_CHANNEL_VALID_COUNT_GET >> 2));  // get/clear valid count
 
   if (valCnt) {
@@ -160,6 +161,7 @@ void configureEcaMsi(int enable, uint32_t channel) {
 
   atomic_on();
   *(pEcaCtl + (ECA_CHANNEL_SELECT_RW >> 2)) = channel;            // select channel
+  *(pEcaCtl + (ECA_CHANNEL_NUM_SELECT_RW >> 2)) = 0x00;           // set the sub channel index
   *(pEcaCtl + (ECA_CHANNEL_MSI_SET_ENABLE_OWR >> 2)) = 0;         // disable ECA MSI (required to set a target address)
   *(pEcaCtl + (ECA_CHANNEL_MSI_SET_TARGET_OWR >> 2)) = (uint32_t)pMyMsi;  // set MSI destination address as a target address
   *(pEcaCtl + (ECA_CHANNEL_MSI_SET_ENABLE_OWR >> 2)) = enable;    // enable ECA MSI
@@ -227,6 +229,7 @@ void handleValidActions()
 {
   uint32_t valCnt;
   *(pEcaCtl + (ECA_CHANNEL_SELECT_RW >> 2)) = gEcaChECPU;    // select ECA channel for LM32
+  *(pEcaCtl + (ECA_CHANNEL_NUM_SELECT_RW >> 2)) = 0x00;      // set the sub channel index
   valCnt = *(pEcaCtl + (ECA_CHANNEL_VALID_COUNT_GET >> 2));  // read and clear valid counter
   mprintf("valid=%d\n", valCnt);
 
