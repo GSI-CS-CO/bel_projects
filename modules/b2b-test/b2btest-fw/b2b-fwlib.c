@@ -1,9 +1,9 @@
 /********************************************************************************************
- *  b2b-common.c
+ *  b2b-fwlib.c
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 04-July-2019
+ *  version : 08-July-2019
  *
  *  common functions used by various B2B firmware projects
  *  
@@ -60,6 +60,7 @@
 
 /* includes for this project */
 #include <b2b-common.h>                                                 // common stuff for b2b
+#include <b2b-fwlib.h>                                                  // fwlib
 
 // these routines are typically application specific
 extern void     extern_clearDiag();
