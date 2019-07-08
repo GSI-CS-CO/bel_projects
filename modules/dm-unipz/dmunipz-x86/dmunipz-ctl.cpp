@@ -390,8 +390,8 @@ int readConfig(uint32_t *flexOffset, uint32_t *uniTimeout, uint32_t *tkTimeout, 
 
 void printTransferHeader()
 {
-  printf("dm-unipz:                  TRANSFERS                |                    INJECTION                     | DIAGNOSIS  |                    INFO                       \n");
-  printf("dm-unipz:              n    sum(tkr)  set(get)/noBm | n(r2s/sumr2s)   sum( prep/bmrq/r2sis->mbtrig )   | DIAG margn | status         state      nchng   stat   nchng\n");
+  printf("dm-unipz:                  TRANSFERS                |                    INJECTION                    | DIAGNOSIS  |                    INFO                       \n");
+  printf("dm-unipz:              n    sum(tkr)  set(get)/noBm | n(r2s/sumr2s)   sum( prep/bmrq/r2sis->mbtrig)   | DIAG margn | status         state      nchng   stat   nchng\n");
 } // printTransferHeader
 
 
@@ -441,7 +441,7 @@ void printTransfer(uint32_t transfers,
   else                           sprintf(temp3, "%4d", (uint32_t)((double)dtBreq / 1000.0));
   if (dtReady2Sis == 0xffffffff) sprintf(temp4, "----");
   else                           sprintf(temp4, "%4d", (uint32_t)((double)dtReady2Sis / 1000.0));
-  if (dtSync      == 0xffffffff) sprintf(temp5, "-------");
+  if (dtSync      == 0xffffffff) sprintf(temp5, "------");
   else                           sprintf(temp5, "%6.3f", (double)dtSync / 1000.0);
 
   printf("INJ %02d(%02d/%02d), %s(%s/%s/%s ->%s)ms | ", injections, nR2sTransfer, nR2sCycle, temp1, temp2, temp3, temp4, temp5);
