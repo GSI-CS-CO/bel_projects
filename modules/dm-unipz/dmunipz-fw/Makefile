@@ -12,7 +12,7 @@ RAM_SIZE        := $(shell cat 	$(PLATFMAKEFILE) | grep -m1 RAM_SIZE  | cut -d'=
 
 SHARED_SIZE    	?= 8K
 USRCPUCLK      	?= 125000
-VERSION         = 00.05.01
+VERSION         = 00.05.02
 
 .DEFAULT_GOAL	:= fwbin
 
@@ -40,7 +40,7 @@ include ../../../syn/build.mk
 
 fwbin: $(TARGET).bin 
 
-dmunipz.elf: $(PATHFW)/dm-unipz.c $(INCPATH)/ebm.c $(PATHFW)/../../../top/gsi_scu/scu_mil.c $(PATHFW)/../../b2b-test/b2btest-fw/b2b-common.c
+dmunipz.elf: $(PATHFW)/dm-unipz.c $(INCPATH)/ebm.c $(PATHFW)/../../../top/gsi_scu/scu_mil.c $(PATHFW)/../../b2b-test/b2btest-fw/b2b-fwlib.c
 
 clean::
 	rm -f $(PATHFW)/*.o $(PATHFW)/*.a $(PATHFW)/*.elf $(PATHFW)/*.bin
