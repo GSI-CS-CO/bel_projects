@@ -251,7 +251,7 @@ uint32_t* cmd(uint32_t* node, uint32_t* thrData) {
         uint32_t *ret = (uint32_t*)node[NODE_DEF_DEST_PTR >> 2];
   const uint32_t prio = (node[CMD_ACT >> 2] >> ACT_PRIO_POS) & ACT_PRIO_MSK;
   const uint32_t *tg  = (uint32_t*)node[CMD_TARGET >> 2];
-  const uint32_t adrPrefix = (uint32_t)tg & PEER_ADR_MSK; // if target is on a different RAM, all ptrs must be translated from the local to our (peer) perspective
+  const uint32_t adrPrefix = (uint32_t)tg & ~PEER_ADR_MSK; // if target is on a different RAM, all ptrs must be translated from the local to our (peer) perspective
 
   uint32_t *bl, *b, *e;
   uint8_t  *wrIdx;
