@@ -390,8 +390,8 @@ int readConfig(uint32_t *flexOffset, uint32_t *uniTimeout, uint32_t *tkTimeout, 
 
 void printTransferHeader()
 {
-  printf("dm-unipz:                  TRANSFERS                |                   INJECTION                     | DIAGNOSIS  |                    INFO                       \n");
-  printf("dm-unipz:              n    sum(tkr)  set(get)/noBm | n(r2s/sumr2s)   sum( prep/bmrq/r2sis->mbtrig)   | DIAG margn | status         state      nchng   stat   nchng\n");
+  printf("dm-unipz:                  TRANSFERS                |                    INJECTION                     | DIAGNOSIS  |                    INFO                       \n");
+  printf("dm-unipz:              n    sum(tkr)  set(get)/noBm | n(r2s/sumr2s)   sum( prep/bmrq/r2sis->mbtrig )   | DIAG margn | status         state      nchng   stat   nchng\n");
 } // printTransferHeader
 
 
@@ -441,7 +441,7 @@ void printTransfer(uint32_t transfers,
   else                           sprintf(temp3, "%4d", (uint32_t)((double)dtBreq / 1000.0));
   if (dtReady2Sis == 0xffffffff) sprintf(temp4, "----");
   else                           sprintf(temp4, "%4d", (uint32_t)((double)dtReady2Sis / 1000.0));
-  if (dtSync      == 0xffffffff) sprintf(temp5, "------");
+  if (dtSync      == 0xffffffff) sprintf(temp5, "-------");
   else                           sprintf(temp5, "%6.3f", (double)dtSync / 1000.0);
 
   printf("INJ %02d(%02d/%02d), %s(%s/%s/%s ->%s)ms | ", injections, nR2sTransfer, nR2sCycle, temp1, temp2, temp3, temp4, temp5);
@@ -453,12 +453,12 @@ void printTransfer(uint32_t transfers,
 
   // status
   printf("%d %d %d %d %d %d", 
-         ((statTrans & DMUNIPZ_TRANS_REQTK    ) > 0),  
-         ((statTrans & DMUNIPZ_TRANS_REQTKOK  ) > 0), 
-         ((statTrans & DMUNIPZ_TRANS_RELTK    ) > 0),
-         ((statTrans & DMUNIPZ_TRANS_REQBEAM  ) > 0),
-         ((statTrans & DMUNIPZ_TRANS_REQBEAMOK) > 0),
-         ((statTrans & DMUNIPZ_TRANS_RELBEAM  ) > 0)
+         ((statTrans & (0x1 << DMUNIPZ_TRANS_REQTK)    ) > 0),  
+         ((statTrans & (0x1 << DMUNIPZ_TRANS_REQTKOK)  ) > 0), 
+         ((statTrans & (0x1 << DMUNIPZ_TRANS_RELTK)    ) > 0),
+         ((statTrans & (0x1 << DMUNIPZ_TRANS_REQBEAM)  ) > 0),
+         ((statTrans & (0x1 << DMUNIPZ_TRANS_REQBEAMOK)) > 0),
+         ((statTrans & (0x1 << DMUNIPZ_TRANS_RELBEAM)  ) > 0)
          );
 } // printTransfer
 
@@ -508,7 +508,7 @@ int main(int argc, char** argv) {
   uint32_t actTransfers;                       // actual number of transfers
   uint32_t actInjections;                      // actual number of injections
   uint32_t actState = COMMON_STATE_UNKNOWN;    // actual state of gateway
-  uint32_t actStatus;                          // actual status of gateway
+  uint64_t actStatus;                          // actual status of gateway
   // chk uint32_t actStatTrans;                // actual status of ongoing transfer
   uint32_t sleepTime;                          // time to sleep [us]
   uint32_t printFlag;                          // flag for printing
@@ -727,7 +727,7 @@ int main(int argc, char** argv) {
     actTransfers  = 0;
     actInjections = 0;
     actState      = COMMON_STATE_UNKNOWN;
-    actStatus     = COMMON_STATUS_OK;
+    actStatus     = 0x1 << COMMON_STATUS_OK;
     // actStatTrans = DMUNIPZ_TRANS_UNKNOWN; chk
 
 #ifdef USEMASP 
@@ -759,21 +759,32 @@ int main(int argc, char** argv) {
       // determine when to print info
       printFlag = 0;
 
-      if ((actState      != state)     && (logLevel <= COMMON_LOGLEVEL_STATE))                                     {printFlag = 1; actState = state;}
-      if ((actStatus     != status)    && (logLevel <= COMMON_LOGLEVEL_STATUS))                                    {printFlag = 1; actStatus = status;}
-      if ((actTransfers  != transfers) && (logLevel <= COMMON_LOGLEVEL_ONCE) && (statTrans & DMUNIPZ_TRANS_RELTK)) {printFlag = 1; actTransfers = transfers;}
-      if (((actTransfers != transfers) || ((actInjections != injections) && (statTrans & DMUNIPZ_TRANS_RELBEAM)))
-          && (logLevel <= COMMON_LOGLEVEL_ALL))                                                                    {printFlag = 1; actTransfers = transfers; actInjections = injections;}
+      if ((actState != state)  && (logLevel <= COMMON_LOGLEVEL_STATE)) {
+        printFlag = 1; actState = state;
+      } // if actstate
+      if ((actStatus != status) && (logLevel <= COMMON_LOGLEVEL_STATUS)) {
+        printFlag = 1;
+        actStatus = status;
+      } // if actstatus
+      if ((actTransfers  != transfers) && (logLevel <= COMMON_LOGLEVEL_ONCE) && (statTrans & (0x1 << DMUNIPZ_TRANS_RELTK))) {
+        printFlag = 1;
+        actTransfers = transfers;
+      } // if acttransfer
+      if (((actTransfers != transfers) || ((actInjections != injections) && (statTrans & (0x1 << DMUNIPZ_TRANS_RELBEAM)))) && (logLevel <= COMMON_LOGLEVEL_ALL)) {
+        printFlag = 1;
+        actTransfers = transfers;
+        actInjections = injections;
+      } // if ....
 
       if (printFlag) {
         printTransfer(transfers, injections, virtAccReq, virtAccRec, noBeam, dtStart, dtSync, dtInject, dtTransfer, dtTkreq, dtBreq, dtBprep, dtReady2Sis, nR2sTransfer, nR2sCycle, statTrans); 
         printf(", %s (%6u), ",  common_state_text(state), nBadState);
         if ((status >> COMMON_STATUS_OK) & 0x1) printf("OK   (%6u)\n", nBadStatus);
-        else                                    printf("NOTOK(%6u)\n", nBadStatus);
+        else printf("NOTOK(%6u)\n", nBadStatus);
+        // print set status bits (except OK)
         for (i= COMMON_STATUS_OK + 1; i<(sizeof(status)*8); i++) {
-          if ((status >> i) & 0x1) 
-            printf("  ------ status bit is set : %s\n", dmunipz_status_text(i));
-        } // for i
+          if ((status >> i) & 0x1)  printf("  ------ status bit is set : %s\n", dmunipz_status_text(i));
+        } // else printFlag
       } // if printFlag
 
       fflush(stdout);                                                                         // required for immediate writing (if stdout is piped to syslog)

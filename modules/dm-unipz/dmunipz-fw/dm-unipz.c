@@ -1098,13 +1098,13 @@ void updateOLED(uint32_t statusTransfer, uint32_t virtAcc, uint32_t nTransfer, u
   pp_sprintf(c, "vA %7u\n", (unsigned int)virtAcc);   common_printOLED(c);
   pp_sprintf(c, "nT %7u\n", (unsigned int)nTransfer); common_printOLED(c);
   pp_sprintf(c, "sT  %d%d%d%d%d%d\n",
-          ((statusTransfer & DMUNIPZ_TRANS_REQTK    ) > 0),  
-          ((statusTransfer & DMUNIPZ_TRANS_REQTKOK  ) > 0), 
-          ((statusTransfer & DMUNIPZ_TRANS_RELTK    ) > 0),
-          ((statusTransfer & DMUNIPZ_TRANS_REQBEAM  ) > 0),
-          ((statusTransfer & DMUNIPZ_TRANS_REQBEAMOK) > 0),
-          ((statusTransfer & DMUNIPZ_TRANS_RELBEAM  ) > 0)
-          );                                        common_printOLED(c);
+             ((statusTransfer & (0x1 << DMUNIPZ_TRANS_REQTK)    ) > 0),  
+             ((statusTransfer & (0x1 << DMUNIPZ_TRANS_REQTKOK)  ) > 0), 
+             ((statusTransfer & (0x1 << DMUNIPZ_TRANS_RELTK)    ) > 0),
+             ((statusTransfer & (0x1 << DMUNIPZ_TRANS_REQBEAM)  ) > 0),
+             ((statusTransfer & (0x1 << DMUNIPZ_TRANS_REQBEAMOK)) > 0),
+             ((statusTransfer & (0x1 << DMUNIPZ_TRANS_RELBEAM)  ) > 0)
+             );                                       common_printOLED(c);
 } // updateOLED
 
 /*
@@ -1232,12 +1232,12 @@ void cmdHandler(uint32_t *reqState, uint32_t cmd, uint32_t *statusTransfer) // h
     switch (cmd) {
     case DMUNIPZ_CMD_RELEASETK :
       releaseTK();   // force release of TK request independently of state or status
-      *statusTransfer = *statusTransfer |  DMUNIPZ_TRANS_RELTK;
+      *statusTransfer = *statusTransfer |  (0x1 << DMUNIPZ_TRANS_RELTK);
       DBPRINT1("dm-unipz: received cmd %u, forcing release of TK request\n", (unsigned int)cmd);
       break;
     case DMUNIPZ_CMD_RELEASEBEAM :
       releaseBeam(uniTimeout); // force release of beam request indpendently of state or status
-      *statusTransfer = *statusTransfer |  DMUNIPZ_TRANS_RELBEAM;   
+      *statusTransfer = *statusTransfer |  (0x1 << DMUNIPZ_TRANS_RELBEAM);   
       DBPRINT1("dm-unipz: received cmd %u, forcing release of beam request\n", (unsigned int)cmd);
       break;
     default:
@@ -1372,7 +1372,7 @@ uint32_t doActionOperation(uint32_t *statusTransfer,          // status bits ind
       *virtAccReq     = ecaVirtAcc;                                                // number of virtual accelerator is set when DM requests TK
       *virtAccRec     = 42;
       *noBeam         = ecaFlagDryRun;                                             // UNILAC requested without beam
-      *statusTransfer = DMUNIPZ_TRANS_REQTK;                                       // update status of transfer
+      *statusTransfer = 0x1 << DMUNIPZ_TRANS_REQTK;                                // update status of transfer
       *nInject        = 0;                                                         // number of injections is reset when DM requests TK
       *dtSync         = 0xffffffffffffffff;                                        // time difference between EVT_READY_TO_SIS and EVT_MB_TRIGGER
       *dtTransfer     = 0xffffffffffffffff;                                        // time difference between CMD_UNI_TKREQ and EVT_MB_TRIGGER
@@ -1387,15 +1387,13 @@ uint32_t doActionOperation(uint32_t *statusTransfer,          // status bits ind
       nR2sTransfer    = 0;
 
       //---- reserve TK
-      pp_printf("ecavirtacc %x\n", ecaVirtAcc);
       status   = requestTK(tkTimeout, ecaVirtAcc, ecaFlagDryRun);                  // request TK from UNIPZ
       checkClearReqNotOk(uniTimeout);                                              // check and possibly clear 'req not ok' flag at UNIPZ
 
       *dtTkreq = getSysTime() - ecaDeadline;                                       // diagnostics: time difference between CMD_UNI_TKREQ and reply from UNIPZ
 
       if (status == COMMON_STATUS_OK)
-        *statusTransfer = *statusTransfer | DMUNIPZ_TRANS_REQTKOK;                 // update status of transfer
-      pp_printf("reqtk status %x\n", status);
+        *statusTransfer = *statusTransfer | (0x1 << DMUNIPZ_TRANS_REQTKOK);        // update status of transfer
 
       break;
 
@@ -1441,7 +1439,7 @@ uint32_t doActionOperation(uint32_t *statusTransfer,          // status bits ind
       clearFifoEvtMil(pMilPiggy);                                                  // get rid of junk in FIFO @ MIL piggy
 
       *dtBprep = getSysTime() - ecaDeadline;                                       // diagnostics: time difference between CMD_UNI_BREQ and begine to request at UNIPZ
-      *statusTransfer = *statusTransfer | DMUNIPZ_TRANS_REQBEAM;                   // diagnostics: update status of transfer
+      *statusTransfer = *statusTransfer | (0x1 << DMUNIPZ_TRANS_REQBEAM);          // diagnostics: update status of transfer
 
       //---- request beam from UNIPZ and wait for EVT_READY_TO_SIS
       if ((status = requestBeam(uniTimeout)) == COMMON_STATUS_OK) {                // request beam from UNIPZ
@@ -1509,9 +1507,9 @@ uint32_t doActionOperation(uint32_t *statusTransfer,          // status bits ind
       disableFilterEvtMil(pMilPiggy);                                              // disable filter @ MIL piggy to avoid accumulation of junk
 
       //---- conclude be setting status of transfer and status of gateway
-      *statusTransfer = *statusTransfer |  DMUNIPZ_TRANS_RELBEAM;                  // diagnostics: update status of transfer
+      *statusTransfer = *statusTransfer | (0x1 << DMUNIPZ_TRANS_RELBEAM);          // diagnostics: update status of transfer
       if (status == COMMON_STATUS_OK)
-        *statusTransfer = *statusTransfer | DMUNIPZ_TRANS_REQBEAMOK;
+        *statusTransfer = *statusTransfer | (0x1 << DMUNIPZ_TRANS_REQBEAMOK);
 
       if ((status == COMMON_STATUS_OK) && flagEBTimeout)                          // handle warning in case we needed two attempts for our "Schnitzeljagd" within Data Master
         status = COMMON_STATUS_EBREADTIMEDOUT;                                           
@@ -1527,7 +1525,7 @@ uint32_t doActionOperation(uint32_t *statusTransfer,          // status bits ind
       dmClearCmd(REQBEAMA);                                                        // with TK release, command data becomes invalid and must not be used any more
       dmClearCmd(REQBEAMB);                                                        // with TK release, command data becomes invalid and must not be used any more
       releaseTK();                                                                 // release TK
-      *statusTransfer = *statusTransfer |  DMUNIPZ_TRANS_RELTK;                    // update status of transfer
+      *statusTransfer = *statusTransfer | (0x1 << DMUNIPZ_TRANS_RELTK);            // update status of transfer
 
       //---- diagnostics
       flagTkReq = 0;                                                               
@@ -1689,7 +1687,7 @@ int main(void) {
       case COMMON_STATE_OPREADY :
         /*flagRecover = 0;*/
         status = doActionOperation(&statusTransfer, &virtAccReq, &virtAccRec, &noBeam, &dtStart, &dtSync, &dtInject, &dtTransfer, &dtTkreq, &dtBreq, &dtBprep, &dtReady2Sis, &nTransfer, &nInject, status);
-        pp_printf("mainstatus %x\n", status);
+        //pp_printf("mainstatus %x\n", status);
         if (status == COMMON_STATUS_WRBADSYNC)     reqState = COMMON_STATE_ERROR;
         if (status == DMUNIPZ_STATUS_DEVBUSERROR)  reqState = COMMON_STATE_ERROR; 
         if (status == COMMON_STATUS_ERROR)         reqState = COMMON_STATE_ERROR;
@@ -1722,7 +1720,7 @@ int main(void) {
 
     switch (status) {
       case COMMON_STATUS_OK :                                                 // status OK
-        sumStatus = 0; /* chk */
+        if ((statusTransfer & (0x1 << DMUNIPZ_TRANS_REQBEAM)) == 0)  sumStatus = 0; // reset when starting a new transfer
         sumStatus = sumStatus |  (0x1 << COMMON_STATUS_OK);                   // set OK bit
         
         break;

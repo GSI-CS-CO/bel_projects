@@ -40,7 +40,7 @@
 #define  DMUNIPZ_STATUS_BADSYNC         32    // t(EVT_MB_TRIGGER) - t(EVT_READY_TO_SIS) != 10ms
 #define  DMUNIPZ_STATUS_WAIT4UNIEVENT   33    // timeout while waiting for EVT_READY_TO_SIS
 #define  DMUNIPZ_STATUS_BADSCHEDULEA    34    // t(EVT_MB_TRIGGER) - t(CMD_UNI_BREQ) < 10ms
-#define  DMUNIPZ_STATUS_BADSCHEDULEB    35    // unexpected even
+#define  DMUNIPZ_STATUS_BADSCHEDULEB    35    // unexpected event
 #define  DMUNIPZ_STATUS_INVALIDBLKADDR  36    // invalid address of block for Data Master
 #define  DMUNIPZ_STATUS_NODM            37    // Data Master unreachable
 
@@ -59,12 +59,12 @@
 #define  DMUNIPZ_ECADO_MBTRIGGER  7           // received EVT_MB_TRIGGER via TLU
 
 // status of transfer (status bits)
-#define DMUNIPZ_TRANS_REQTK       1           // TK requested
-#define DMUNIPZ_TRANS_REQTKOK     2           // TK request succeeded
-#define DMUNIPZ_TRANS_RELTK       3           // TK released
-#define DMUNIPZ_TRANS_REQBEAM     4           // beam requested
-#define DMUNIPZ_TRANS_REQBEAMOK   5           // beam request succeeded
-#define DMUNIPZ_TRANS_RELBEAM     6           // beam released
+#define DMUNIPZ_TRANS_REQTK       0           // TK requested
+#define DMUNIPZ_TRANS_REQTKOK     1           // TK request succeeded
+#define DMUNIPZ_TRANS_RELTK       2           // TK released
+#define DMUNIPZ_TRANS_REQBEAM     3           // beam requested
+#define DMUNIPZ_TRANS_REQBEAMOK   4           // beam request succeeded
+#define DMUNIPZ_TRANS_RELBEAM     5           // beam released
 
 
 typedef struct {                              // group together all information required for modifying blocks within the data master via Etherbone
