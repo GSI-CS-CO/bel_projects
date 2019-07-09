@@ -20,7 +20,7 @@ BIN_FILE    = $(TARGET_DIR)/$(TARGET).bin
 include $(MAKEFILE_DIR)/makefile.base
 
 $(ELF_FILE): $(OBJ_FILES) $(ADDITIONAL_LD_DEPENDENCES)
-	$(LD_F) -o $@ $(OBJ_FILES) $(LD_FLAGS)
+	$(LD_F) -o $@ $(OBJ_FILES) $(_LD_FLAGS)
 
 $(BIN_FILE): $(ELF_FILE) # $(TARGET_DIR)
 	$(OBJCPY_F) -O $(OUTPUT_FORMAT) $(ELF_FILE) $(BIN_FILE)
