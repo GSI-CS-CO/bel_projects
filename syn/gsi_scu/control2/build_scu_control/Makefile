@@ -16,15 +16,22 @@ TARGET         := scu_control
 MIAN_MODULE    = $(SCU_DIR)/main.c
 
 DEFINES += HISTORY
+DEFINES += CONFIG_PRINTF_64BIT
 DEFINES += CONFIG_NO_LM32_ASSERT
-
+DEFINES += CONFIG_PRINTF_64BIT
 # New functions will not compiled when the following switch is set.
 DEFINES += CONFIG_OLD_SCU_SW
+DEFINES += CONFIG_ASSERT
 
 SOURCE += $(SCU_LIB_SRC_DIR)/aux.c
 SOURCE += $(SCU_LIB_SRC_DIR)/irq.c
 SOURCE += $(SCU_LIB_SRC_DIR)/display.c
-SOURCE += $(SCU_LIB_SRC_DIR)/wr_time.c
+SOURCE += $(SCU_LIB_SRC_DIR)/assert.c
+SOURCE += $(SCU_LIB_SRC_DIR)/stack-check.c
+
+# SOURCE += $(SCU_LIB_SRC_DIR)/wr_time.c
+SOURCE += $(WR_DIR)/pp_printf/div64.c
+
 SOURCE += $(SCU_LIB_SRC_DIR)/dbg.c
 SOURCE += $(SCU_DIR)/scu_bus.c
 SOURCE += $(SCU_DIR)/fg.c
@@ -34,8 +41,10 @@ SOURCE += $(SCU_DIR)/history.c
 SOURCE += $(SCU_DIR)/scu_mil.c
 SOURCE += $(WR_DIR)/dev/w1-temp.c
 
-CODE_OPTIMIZATION = 2
-SHARED_SIZE = 34816
+
+CODE_OPTIMIZATION = s
+RAM_SIZE    = 147456
+SHARED_SIZE = 81920
 
 # Absolutely necessary for the correct order of the variables
 # within the shared memory!

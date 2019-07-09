@@ -44,5 +44,8 @@ SHARED_SIZE = 48
 
 RAM_SIZE    = 147456
 
+# NO_REMOVE_UNUSED=1
+# NO_PRINTF_SUBST=1
+
 include $(REPOSITORY_DIR)/makefiles/makefile.scu
 #=================================== EOF ======================================

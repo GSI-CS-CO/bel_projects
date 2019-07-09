@@ -230,22 +230,28 @@ void forEachScuDevice( void )
 
 /*================================= main ====================================*/
 #ifdef CONFIG_DAQ_SINGLE_APP
+extern uint32_t _endram;
+#define STACK_MAGIC 0xAAAAAAAA
+
 /*! ---------------------------------------------------------------------------
  */
 void main( void )
 {
+   _endram = STACK_MAGIC;
 #ifdef DEBUGLEVEL
    discoverPeriphery();
    uart_init_hw();
    gotoxy( 0, 0 );
    clrscr();
    DBPRINT1( "DAQ control started; Compiler: "COMPILER_VERSION_STRING"\n" );
+   DBPRINT1( "DAQ End of RAM:  0x%08x [0x%08x]\n", &_endram, _endram );
 #endif
 
    daqInitialize( &g_DaqAdmin );
 
    while( true )
    {
+      SCU_ASSERT( _endram == STACK_MAGIC );
       forEachScuDevice();
    }
 }
