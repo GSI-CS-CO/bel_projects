@@ -21,7 +21,7 @@
 #define  COMMON_ECA_ADDRESS      0x7ffffff0   // address of ECA input
 #define  COMMON_EB_HACKISH       0x12345678   // value for EB read handshake
 
-// (error) status, each status will be represented by one bit, bits will be ORed into a 32bit word
+// (error) status
 #define  COMMON_STATUS_OK                 0    // OK
 #define  COMMON_STATUS_ERROR              1    // an error occured
 #define  COMMON_STATUS_TIMEDOUT           2    // a timeout occured

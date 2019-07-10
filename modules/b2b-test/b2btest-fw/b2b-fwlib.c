@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 08-July-2019
+ *  version : 10-July-2019
  *
  *  common functions used by various B2B firmware projects
  *  
@@ -77,8 +77,8 @@ volatile uint32_t *pOLED;               // WB address of OLED (display)
 
 // global variables
 uint32_t *pSharedVersion;               // pointer to a "user defined" u32 register; here: publish version
-uint32_t *pSharedSumStatusLo;           // pointer to a "user defined" u32 register; here: publish OR of all (actual) error bits; low word
-uint32_t *pSharedSumStatusHi;           // pointer to a "user defined" u32 register; here: publish OR of all (actual) error bits; high word
+uint32_t *pSharedStatusArrayLo;         // pointer to a "user defined" u32 register; here: publish OR of all (actual) error bits; low word
+uint32_t *pSharedStatusArrayHi;         // pointer to a "user defined" u32 register; here: publish OR of all (actual) error bits; high word
 uint32_t *pSharedNBadStatus;            // pointer to a "user defined" u32 register; here: publish # of bad status (=error) incidents
 uint32_t *pSharedNBadState;             // pointer to a "user defined" u32 register; here: publish # of bad state (=FATAL, ERROR, UNKNOWN) incidents
 volatile uint32_t *pSharedCmd;          // pointer to a "user defined" u32 register; here: get command from host
@@ -102,7 +102,111 @@ uint32_t nBadState;                     // # of bad state (=FATAL, ERROR, UNKNOW
 uint32_t flagRecover;                   // flag indicating auto-recovery from error state;
 
 
-uint64_t wrGetMac()  // get my own MAC
+//---------------------------------------------------
+// private routines
+//---------------------------------------------------
+void ebmClearSharedMem()
+{
+  uint32_t i;
+
+  for (i=0; i< (COMMON_DATA4EBSIZE >> 2); i++) pSharedData4EB[i] = 0x0;
+} //ebmClearSharedMem
+
+
+uint32_t findPPSGen() //find WB address of WR PPS Gen
+{
+  pPPSGen = 0x0;
+  
+  // get Wishbone address for PPS Gen
+  pPPSGen = find_device_adr(CERN, WR_PPS_GEN);
+
+  if (!pPPSGen) {DBPRINT1("b2b-fwlib: can't find WR PPS Gen\n"); return COMMON_STATUS_ERROR;}
+  else                                                           return COMMON_STATUS_OK;
+} // findPPSGen
+
+
+uint32_t findWREp() //find WB address of WR Endpoint
+{
+  pWREp = 0x0;
+  
+  pWREp = find_device_adr(WR_ENDPOINT_VENDOR, WR_ENDPOINT_PRODUCT);
+
+  if (!pWREp) {DBPRINT1("b2b-fwlib: can't find WR Endpoint\n"); return COMMON_STATUS_ERROR;}
+  else                                                          return COMMON_STATUS_OK;
+} // findWREp
+
+
+uint32_t findIOCtrl() // find WB address of IO Control
+{
+  pIOCtrl = 0x0;
+
+  pIOCtrl = find_device_adr(IO_CTRL_VENDOR, IO_CTRL_PRODUCT);
+
+  if (!pIOCtrl) {DBPRINT1("b2b-fwlib: can't find IO Control\n"); return COMMON_STATUS_ERROR;}
+  else                                                           return COMMON_STATUS_OK;    
+} // findIOCtrol
+
+
+uint32_t findECAQueue() // find WB address of ECA channel for LM32
+{
+#define ECAQMAX           4     // max number of ECA channels in the system
+#define ECACHANNELFORLM32 2     // this is a hack! suggest implementing finding via sdb-record and info
+
+  // stuff below needed to get WB address of ECA queue
+  sdb_location ECAQ_base[ECAQMAX];
+  uint32_t ECAQidx = 0;         
+  uint32_t *tmp;                
+  int i;
+
+  // get Wishbone address of ECA queue 
+  // get list of ECA queues
+  find_device_multi(ECAQ_base, &ECAQidx, ECAQMAX, ECA_QUEUE_SDB_VENDOR_ID, ECA_QUEUE_SDB_DEVICE_ID);
+  pECAQ = 0x0;
+
+  // find ECA queue connected to ECA chanel for LM32
+  for (i=0; i < ECAQidx; i++) {
+    tmp = (uint32_t *)(getSdbAdr(&ECAQ_base[i]));  
+    if ( *(tmp + (ECA_QUEUE_QUEUE_ID_GET >> 2)) == ECACHANNELFORLM32) pECAQ = tmp;
+  }
+
+  if (!pECAQ) {DBPRINT1("b2b-fwlib: can't find ECA queue\n"); return COMMON_STATUS_ERROR;}
+  else                                                        return COMMON_STATUS_OK;
+} // findECAQueue
+
+
+uint32_t findMILPiggy() //find WB address of MIL Piggy
+{
+  pMILPiggy = 0x0;
+  
+  // get Wishbone address for MIL Piggy
+  pMILPiggy = find_device_adr(GSI, SCU_MIL);
+
+  if (!pMILPiggy) {DBPRINT1("b2b-fwlib: can't find MIL piggy\n"); return COMMON_STATUS_ERROR;}
+  else                                                            return COMMON_STATUS_OK;
+} // findMILPiggy
+
+
+uint32_t findOLED() //find WB address of OLED
+{
+  pOLED = 0x0;
+  
+  // get Wishbone address for OLED
+  pOLED = find_device_adr(OLED_SDB_VENDOR_ID, OLED_SDB_DEVICE_ID);
+
+  if (!pOLED) {DBPRINT1("dm-unipz: can't find OLED\n"); return COMMON_STATUS_ERROR;}
+  else                                                  return COMMON_STATUS_OK;
+} // findOLED
+
+
+uint32_t exitActionError()
+{
+  return COMMON_STATUS_OK;
+} // exitActionError
+
+//---------------------------------------------------
+// public routines
+//---------------------------------------------------
+uint64_t fwlib_wrGetMac()  // get my own MAC
 {
   uint32_t macHi, macLo;
   uint64_t mac;
@@ -115,18 +219,10 @@ uint64_t wrGetMac()  // get my own MAC
   mac = mac + macLo;
 
   return mac;
-} // wrGetMac
+} // fwlib_wrGetMac
 
 
-void ebmClearSharedMem()
-{
-  uint32_t i;
-
-  for (i=0; i< (COMMON_DATA4EBSIZE >> 2); i++) pSharedData4EB[i] = 0x0;
-} //ebmClearSharedMem
-
-
-uint32_t common_ioCtrlSetGate(uint32_t enable, uint32_t io)  // set gate of LVDS input
+uint32_t fwlib_ioCtrlSetGate(uint32_t enable, uint32_t io)  // set gate of LVDS input
 {
   uint32_t offset;
   
@@ -139,10 +235,10 @@ uint32_t common_ioCtrlSetGate(uint32_t enable, uint32_t io)  // set gate of LVDS
   *(pIOCtrl + (offset >> 2)) = (1 << io);
 
   return COMMON_STATUS_OK;
-} // common_ioCtrlSetGate
+} // fwlib_ioCtrlSetGate
 
 
-uint32_t common_ebmInit(uint32_t msTimeout, uint64_t dstMac, uint32_t dstIp, uint32_t eb_ops) // intialize Etherbone master
+uint32_t fwlib_ebmInit(uint32_t msTimeout, uint64_t dstMac, uint32_t dstIp, uint32_t eb_ops) // intialize Etherbone master
 {
   uint64_t timeoutT;
 
@@ -156,16 +252,16 @@ uint32_t common_ebmInit(uint32_t msTimeout, uint64_t dstMac, uint32_t dstIp, uin
 
   // init ebm
   ebm_init();
-  ebm_config_if(DESTINATION, dstMac    , dstIp,                       0xebd0); 
-  ebm_config_if(SOURCE,      wrGetMac(), *(pEbCfg + (EBC_SRC_IP>>2)), 0xebd0); 
+  ebm_config_if(DESTINATION,  dstMac    , dstIp,                       0xebd0); 
+  ebm_config_if(SOURCE, fwlib_wrGetMac(), *(pEbCfg + (EBC_SRC_IP>>2)), 0xebd0); 
   ebm_config_meta(1500, 0x0, eb_ops);
   ebm_clr();
 
   return COMMON_STATUS_OK;
-} // ebminit
+} // fwlib_ebminit
 
 
-uint32_t common_ebmWriteN(uint32_t address, uint32_t *data, uint32_t n32BitWords)
+uint32_t fwlib_ebmWriteN(uint32_t address, uint32_t *data, uint32_t n32BitWords)
 {
   int i;
 
@@ -180,10 +276,10 @@ uint32_t common_ebmWriteN(uint32_t address, uint32_t *data, uint32_t n32BitWords
   ebm_flush();                                                              // commit EB cycle via the network
   
   return COMMON_STATUS_OK;
-} // common_ebmWriteN
+} // fwlib_ebmWriteN
 
 
-uint32_t common_ebmReadN(uint32_t msTimeout, uint32_t address, uint32_t *data, uint32_t n32BitWords)
+uint32_t fwlib_ebmReadN(uint32_t msTimeout, uint32_t address, uint32_t *data, uint32_t n32BitWords)
 {
   uint64_t timeoutT;
   int      i;
@@ -214,10 +310,10 @@ uint32_t common_ebmReadN(uint32_t msTimeout, uint32_t address, uint32_t *data, u
   } //while not timed out
 
   return COMMON_STATUS_EBREADTIMEDOUT; 
-} //common_ebmReadN
+} //fwlib_ebmReadN
 
 
-uint32_t common_ebmWriteTM(uint64_t deadline, uint64_t evtId, uint64_t param)  
+uint32_t fwlib_ebmWriteTM(uint64_t deadline, uint64_t evtId, uint64_t param)  
 {
   uint32_t res, tef;
   uint32_t deadlineLo, deadlineHi;
@@ -253,22 +349,22 @@ uint32_t common_ebmWriteTM(uint64_t deadline, uint64_t evtId, uint64_t param)
   ebm_flush();
           
   return COMMON_STATUS_OK;
-} //ebmWriteTM
+} //fwlib_bmWriteTM
 
 
-uint32_t common_wrCheckSyncState() //check status of White Rabbit (link up, tracking)
+uint32_t fwlib_wrCheckSyncState() //check status of White Rabbit (link up, tracking)
 {
   uint32_t syncState;
 
   syncState =  *(pPPSGen + (WR_PPS_GEN_ESCR >> 2));                         // read status
   syncState = syncState & WR_PPS_GEN_ESCR_MASK;                             // apply mask
 
-  if ((syncState == WR_PPS_GEN_ESCR_MASK)) return COMMON_STATUS_OK;        // check if all relevant bits are set
+  if ((syncState == WR_PPS_GEN_ESCR_MASK)) return COMMON_STATUS_OK;         // check if all relevant bits are set
   else                                     return COMMON_STATUS_WRBADSYNC;
-} //wrCheckStatus
+} //fwlib_wrCheckStatus
 
 
-void common_init(uint32_t *startShared, uint32_t *cpuRamExternal, uint32_t sharedOffs, char * name, uint32_t fwVersion) // determine address and clear shared mem
+void fwlib_init(uint32_t *startShared, uint32_t *cpuRamExternal, uint32_t sharedOffs, char * name, uint32_t fwVersion) // determine address and clear shared mem
 {
   uint32_t *pSharedTemp;
   uint32_t *pShared;
@@ -276,7 +372,7 @@ void common_init(uint32_t *startShared, uint32_t *cpuRamExternal, uint32_t share
 
   // basic info to wr console
   DBPRINT1("\n");
-  DBPRINT1("b2b-common: ***** firmware %s v%06x started from scratch *****\n", name, (unsigned int)fwVersion);
+  DBPRINT1("b2b-fwlib: ***** firmware %s v%06x started from scratch *****\n", name, (unsigned int)fwVersion);
   DBPRINT1("\n");
   
   // set pointer to shared memory
@@ -287,8 +383,8 @@ void common_init(uint32_t *startShared, uint32_t *cpuRamExternal, uint32_t share
 
   // get address to data
   pSharedVersion          = (uint32_t *)(pShared + (COMMON_SHARED_VERSION >> 2));
-  pSharedSumStatusHi      = (uint32_t *)(pShared + (COMMON_SHARED_STATUSHI >> 2));
-  pSharedSumStatusLo      = (uint32_t *)(pShared + (COMMON_SHARED_STATUSLO >> 2));
+  pSharedStatusArrayHi    = (uint32_t *)(pShared + (COMMON_SHARED_STATUSHI >> 2));
+  pSharedStatusArrayLo    = (uint32_t *)(pShared + (COMMON_SHARED_STATUSLO >> 2));
   pSharedCmd              = (uint32_t *)(pShared + (COMMON_SHARED_CMD >> 2));
   pSharedState            = (uint32_t *)(pShared + (COMMON_SHARED_STATE >> 2));
   pSharedData4EB          = (uint32_t *)(pShared + (COMMON_SHARED_DATA_4EB >> 2));
@@ -313,7 +409,7 @@ void common_init(uint32_t *startShared, uint32_t *cpuRamExternal, uint32_t share
     pSharedTemp++;
     i++;
   } // while pSharedTemp
-  DBPRINT2("b2b-common: common part of shared mem is %d words (uint32_t), begin %x, end %x\n", i, (unsigned int)pShared, (unsigned int)pSharedTemp-1);
+  DBPRINT2("b2b-fwlib: common part of shared mem is %d words (uint32_t), begin %x, end %x\n", i, (unsigned int)pShared, (unsigned int)pSharedTemp-1);
   
   // set initial values;
   ebmClearSharedMem();
@@ -321,113 +417,30 @@ void common_init(uint32_t *startShared, uint32_t *cpuRamExternal, uint32_t share
   *pSharedNBadStatus   = 0;
   *pSharedNBadState    = 0;
   flagRecover          = 0;
-} // initCommon
+} // fwlib_init
 
 
-uint32_t findPPSGen() //find WB address of WR PPS Gen
-{
-  pPPSGen = 0x0;
-  
-  // get Wishbone address for PPS Gen
-  pPPSGen = find_device_adr(CERN, WR_PPS_GEN);
-
-  if (!pPPSGen) {DBPRINT1("b2b-common: can't find WR PPS Gen\n"); return COMMON_STATUS_ERROR;}
-  else                                                          return COMMON_STATUS_OK;
-} // findPPSGen
 
 
-uint32_t findWREp() //find WB address of WR Endpoint
-{
-  pWREp = 0x0;
-  
-  pWREp = find_device_adr(WR_ENDPOINT_VENDOR, WR_ENDPOINT_PRODUCT);
-
-  if (!pWREp) {DBPRINT1("b2b-common: can't find WR Endpoint\n"); return COMMON_STATUS_ERROR;}
-  else                                                         return COMMON_STATUS_OK;
-} // findWREp
-
-
-uint32_t findIOCtrl() // find WB address of IO Control
-{
-  pIOCtrl = 0x0;
-
-  pIOCtrl = find_device_adr(IO_CTRL_VENDOR, IO_CTRL_PRODUCT);
-
-  if (!pIOCtrl) {DBPRINT1("b2b-common: can't find IO Control\n"); return COMMON_STATUS_ERROR;}
-  else                                                          return COMMON_STATUS_OK;    
-} // find IOCtrol
-
-
-uint32_t findECAQueue() // find WB address of ECA channel for LM32
-{
-#define ECAQMAX           4     // max number of ECA channels in the system
-#define ECACHANNELFORLM32 2     // this is a hack! suggest implementing finding via sdb-record and info
-
-  // stuff below needed to get WB address of ECA queue
-  sdb_location ECAQ_base[ECAQMAX];
-  uint32_t ECAQidx = 0;         
-  uint32_t *tmp;                
-  int i;
-
-  // get Wishbone address of ECA queue 
-  // get list of ECA queues
-  find_device_multi(ECAQ_base, &ECAQidx, ECAQMAX, ECA_QUEUE_SDB_VENDOR_ID, ECA_QUEUE_SDB_DEVICE_ID);
-  pECAQ = 0x0;
-
-  // find ECA queue connected to ECA chanel for LM32
-  for (i=0; i < ECAQidx; i++) {
-    tmp = (uint32_t *)(getSdbAdr(&ECAQ_base[i]));  
-    if ( *(tmp + (ECA_QUEUE_QUEUE_ID_GET >> 2)) == ECACHANNELFORLM32) pECAQ = tmp;
-  }
-
-  if (!pECAQ) {DBPRINT1("b2b-common: can't find ECA queue\n"); return COMMON_STATUS_ERROR;}
-  else                                                         return COMMON_STATUS_OK;
-} // findECAQueue
-
-
-uint32_t findMILPiggy() //find WB address of MIL Piggy
-{
-  pMILPiggy = 0x0;
-  
-  // get Wishbone address for MIL Piggy
-  pMILPiggy = find_device_adr(GSI, SCU_MIL);
-
-  if (!pMILPiggy) {DBPRINT1("b2b-common: can't find MIL piggy\n"); return COMMON_STATUS_ERROR;}
-  else                                                             return COMMON_STATUS_OK;
-} // findMILPiggy
-
-
-uint32_t findOLED() //find WB address of OLED
-{
-  pOLED = 0x0;
-  
-  // get Wishbone address for OLED
-  pOLED = find_device_adr(OLED_SDB_VENDOR_ID, OLED_SDB_DEVICE_ID);
-
-  if (!pOLED) {DBPRINT1("dm-unipz: can't find OLED\n"); return COMMON_STATUS_ERROR;}
-  else                                                  return COMMON_STATUS_OK;
-} // findOLED
-
-
-void common_printOLED(char *chars)
+void fwlib_printOLED(char *chars)
 {
   uint32_t i;
 
   if (!pOLED) return;                         // no OLED: just return
   
   for (i=0;i<strlen(chars);i++) *(pOLED + (OLED_UART_OWR >> 2)) = chars[i];
-} // printOLED
+} // fwlib_printOLED
 
 
-void common_clearOLED()
+void fwlib_clearOLED()
 {
   if (!pOLED) return;                         // no OLED: just return
 
   *(pOLED + (OLED_UART_OWR >> 2)) = 0xc;      // clear display
-} // clearOLED
+} // fwlib_clearOLED
 
 
-uint32_t common_wait4ECAEvent(uint32_t msTimeout, uint64_t *deadline, uint64_t *evtId, uint64_t *param, uint32_t *tef, uint32_t *isLate)  // 1. query ECA for actions, 2. trigger activity
+uint32_t fwlib_wait4ECAEvent(uint32_t msTimeout, uint64_t *deadline, uint64_t *evtId, uint64_t *param, uint32_t *tef, uint32_t *isLate)  // 1. query ECA for actions, 2. trigger activity
 {
   uint32_t *pECAFlag;           // address of ECA flag
   uint32_t evtIdHigh;           // high 32bit of eventID   
@@ -473,12 +486,12 @@ uint32_t common_wait4ECAEvent(uint32_t msTimeout, uint64_t *deadline, uint64_t *
     } // if data is valid
   } // while not timed out
 
-  return  COMMON_ECADO_TIMEOUT;
-} // wait for ECA event
+  return COMMON_ECADO_TIMEOUT;
+} // fwlib_wait4ECAEvent
 
 
 // wait for MIL event or timeout
-uint32_t common_wait4MILEvent(uint32_t msTimeout, uint32_t *evtData, uint32_t *evtCode, uint32_t *virtAcc, uint32_t *validEvtCodes, uint32_t nValidEvtCodes) 
+uint32_t fwlib_wait4MILEvent(uint32_t msTimeout, uint32_t *evtData, uint32_t *evtCode, uint32_t *virtAcc, uint32_t *validEvtCodes, uint32_t nValidEvtCodes) 
 {
   uint32_t evtRec;             // one MIL event
   uint32_t evtCodeRec;         // "event number"
@@ -516,27 +529,27 @@ uint32_t common_wait4MILEvent(uint32_t msTimeout, uint32_t *evtData, uint32_t *e
   } // while not timed out
 
   return COMMON_STATUS_TIMEDOUT;  
-} // common_wait4MILEvent
+} // fwlib_wait4MILEvent
 
 
-void common_milPulseLemo(uint32_t nLemo) // pulse lemo for debugging with scope
+void fwlib_milPulseLemo(uint32_t nLemo) // pulse lemo for debugging with scope
 {
   uint32_t i;
 
   setLemoOutputEvtMil(pMILPiggy, nLemo, 1);
   for (i=0; i< 10 * COMMON_US_ASMNOP; i++) asm("nop");
   setLemoOutputEvtMil(pMILPiggy, nLemo, 0);
-} // common_milPulseLemo
+} // fwlib_milPulseLemo
 
 
-void common_initCmds() // init stuff for handling commands, trivial for now, will be extended
+void fwlib_initCmds() // init stuff for handling commands, trivial for now, will be extended
 {
   //  initalize command value: 0x0 means 'no command'
   *pSharedCmd     = 0x0;
-} // common_initCmds
+} // fwlib_initCmds
 
  
-void common_clearDiag()// clears all statistics
+void fwlib_clearDiag()// clears all statistics
 {
   uint64_t now;
 
@@ -548,10 +561,10 @@ void common_clearDiag()// clears all statistics
   *pSharedTDiagHi = (uint32_t)(now >> 32);
   *pSharedTDiagLo = (uint32_t)now & 0xffffffff;
 
-} // common_clearDiag
+} // fwlib_clearDiag
 
 
-uint32_t common_doActionS0()
+uint32_t fwlib_doActionS0()
 {
   uint32_t status = COMMON_STATUS_OK;
   uint64_t now;
@@ -567,84 +580,78 @@ uint32_t common_doActionS0()
   *pSharedTS0Hi = (uint32_t)(now >> 32);
   *pSharedTS0Lo = (uint32_t)now & 0xffffffff;
 
-  common_publishNICData();
+  fwlib_publishNICData();
   
-  common_initCmds();                    
+  fwlib_initCmds();                    
 
   return status;
-} // common_doActionS0
+} // fwlib_doActionS0
 
 
-volatile uint32_t* common_getMilPiggy()
+volatile uint32_t* fwlib_getMilPiggy()
 {
   return pMILPiggy;
-} // common_getMilPiggy
+} // fwlib_getMilPiggy
 
 
-volatile uint32_t* common_getOLED()
+volatile uint32_t* fwlib_getOLED()
 {
   return pOLED;
-} // common_getMilOLED
+} // fwlib_getMilOLED
 
 
-void common_publishNICData()
+void fwlib_publishNICData()
 {
   uint64_t mac;
   uint32_t ip;
   
-  mac = wrGetMac(pWREp);
+  mac = fwlib_wrGetMac(pWREp);
   *pSharedMacHi = (uint32_t)(mac >> 32) & 0xffff;
   *pSharedMacLo = (uint32_t)(mac        & 0xffffffff);
 
   ip  = *(pEbCfg + (EBC_SRC_IP>>2));
   *pSharedIp    = ip;
-} //common_publishNICData
+} //fwlib_publishNICData
 
 
-void common_publishState(uint32_t state)
+void fwlib_publishState(uint32_t state)
 {
   *pSharedState = state; 
-} // common_publishState
+} // fwlib_publishState
 
 
-void common_publishSumStatus(uint64_t sumStatus)
+void fwlib_publishStatusArray(uint64_t statusArray)
 {
-  *pSharedSumStatusHi = (uint32_t)(sumStatus >> 32);
-  *pSharedSumStatusLo = (uint32_t)(sumStatus & 0xffffffff);
-} // common_publishSumStatus
+  *pSharedStatusArrayHi = (uint32_t)(statusArray >> 32);
+  *pSharedStatusArrayLo = (uint32_t)(statusArray & 0xffffffff);
+} // fwlib_publishStatusArray
 
 
-void common_publishTransferStatus(uint32_t nTransfer, uint32_t nInject, uint32_t transStat)
+void fwlib_publishTransferStatus(uint32_t nTransfer, uint32_t nInject, uint32_t transStat)
 {
   *pSharedNTransfer = nTransfer;
   *pSharedNInject   = nInject;
   *pSharedTransStat = transStat;
-} // common_publishTransferStatus
+} // fwlib_publishTransferStatus
 
 
-void common_incBadStatusCnt()
+void fwlib_incBadStatusCnt()
 {
   nBadStatus++;
   
   *pSharedNBadStatus = nBadStatus;
-} // common_publishNBadStatus
+} // fwlib_incBadStatusCnt
 
 
-void common_incBadStateCnt()
+void fwlib_incBadStateCnt()
 {
   nBadState++;
   
   *pSharedNBadState = nBadState;
-} // common_publishNBadState
+} // fwlib_incBadStateCnt
 
 
-uint32_t exitActionError()
-{
-  return COMMON_STATUS_OK;
-} // exitActionError
-
-
-void common_cmdHandler(uint32_t *reqState, uint32_t *cmd) // handle commands from the outside world
+void fwlib_cmdHandler(uint32_t *reqState, uint32_t *cmd) // handle commands from the outside world
 {
 
   *cmd = *pSharedCmd;
@@ -653,40 +660,40 @@ void common_cmdHandler(uint32_t *reqState, uint32_t *cmd) // handle commands fro
     switch (*cmd) {                          // request state changes according to cmd
       case COMMON_CMD_CONFIGURE :
         *reqState =  COMMON_STATE_CONFIGURED;
-        DBPRINT3("b2b-common: received cmd %d\n", *cmd);
+        DBPRINT3("b2b-fwlib: received cmd %d\n", *cmd);
         break;
       case COMMON_CMD_STARTOP :
         *reqState = COMMON_STATE_OPREADY;
-        DBPRINT3("b2b-common: received cmd %d\n", *cmd);
+        DBPRINT3("b2b-fwlib: received cmd %d\n", *cmd);
         break;
       case COMMON_CMD_STOPOP :
         *reqState = COMMON_STATE_STOPPING;
-        DBPRINT3("b2b-common: received cmd %d\n", *cmd);
+        DBPRINT3("b2b-fwlib: received cmd %d\n", *cmd);
         break;
       case COMMON_CMD_IDLE :
         *reqState = COMMON_STATE_IDLE;
-        DBPRINT3("b2b-common: received cmd %d\n", *cmd);
+        DBPRINT3("b2b-fwlib: received cmd %d\n", *cmd);
         break;
       case COMMON_CMD_RECOVER :
         *reqState = COMMON_STATE_IDLE;
-        DBPRINT3("b2b-common: received cmd %d\n", *cmd);
+        DBPRINT3("b2b-fwlib: received cmd %d\n", *cmd);
         break;
       case COMMON_CMD_CLEARDIAG :
-        DBPRINT3("b2b-common: received cmd %d\n", *cmd);
-        common_clearDiag();
+        DBPRINT3("b2b-fwlib: received cmd %d\n", *cmd);
+        fwlib_clearDiag();
         break;
       default:
-        DBPRINT3("b2b-common: common_cmdHandler received unknown command '0x%08x'\n", *cmd);
+        DBPRINT3("b2b-fwlib: common_cmdHandler received unknown command '0x%08x'\n", *cmd);
         break;
     } // switch 
     *pSharedCmd = 0x0;                       // reset cmd value in shared memory 
   } // if command 
-} // common_cmdHandler
+} // fwlib_cmdHandler
 
 
-uint32_t common_changeState(uint32_t *actState, uint32_t *reqState, uint32_t actStatus)   //state machine; see b2b-common.h for possible states and transitions
+uint32_t fwlib_changeState(uint32_t *actState, uint32_t *reqState, uint32_t actStatus)   //state machine; see b2b-common.h for possible states and transitions
 {
-  uint32_t statusTransition= COMMON_STATUS_OK;
+  uint64_t statusTransition = COMMON_STATUS_OK;
   uint32_t status;
   uint32_t nextState;                   
 
@@ -701,7 +708,7 @@ uint32_t common_changeState(uint32_t *actState, uint32_t *reqState, uint32_t act
         if      (*reqState == COMMON_STATE_IDLE)       {                                                    nextState = *reqState;}      
         break;
       case COMMON_STATE_IDLE:
-        if      (*reqState == COMMON_STATE_CONFIGURED)  {statusTransition = extern_entryActionConfigured(); nextState = *reqState;}
+        if      (*reqState == COMMON_STATE_CONFIGURED) {statusTransition = extern_entryActionConfigured();  nextState = *reqState;}
         break;
       case COMMON_STATE_CONFIGURED:
         if      (*reqState == COMMON_STATE_IDLE)       {                                                    nextState = *reqState;}
@@ -727,7 +734,7 @@ uint32_t common_changeState(uint32_t *actState, uint32_t *reqState, uint32_t act
 
   // if the state changes
   if (*actState != nextState) {                   
-    pp_printf("b2b-common: changed to state %u\n", (unsigned int)nextState);
+    pp_printf("b2b-fwlib: changed to state %u\n", (unsigned int)nextState);
     *actState = nextState;                      
     status = statusTransition;
   } // if state change
@@ -736,29 +743,29 @@ uint32_t common_changeState(uint32_t *actState, uint32_t *reqState, uint32_t act
   *reqState = COMMON_STATE_UNKNOWN;              // reset requested state (= no change state requested)  
 
   return status;
-} //changeState
+} //fwlib_changeState
 
 
 // do state specific do action
-uint32_t common_doActionState(uint32_t *reqState, uint32_t actState, uint32_t status)
+uint32_t fwlib_doActionState(uint32_t *reqState, uint32_t actState, uint32_t status)
 {
   int j;
    
-  switch(actState) {                                                      // state specific do actions
+  switch(actState) {                                                   // state specific do actions
     case COMMON_STATE_S0 :
-      status = common_doActionS0();                                       // important initialization that must succeed!
-      if (status != COMMON_STATUS_OK) *reqState = COMMON_STATE_FATAL;     // failed:  -> FATAL
-      else                            *reqState = COMMON_STATE_IDLE;      // success: -> IDLE
+      status = fwlib_doActionS0();                                     // important initialization that must succeed!
+      if (status != COMMON_STATUS_OK) *reqState = COMMON_STATE_FATAL;  // failed:  -> FATAL
+      else                            *reqState = COMMON_STATE_IDLE;   // success: -> IDLE
       break;
     case COMMON_STATE_OPREADY :
       flagRecover = 0;
       break;
     case COMMON_STATE_ERROR :
-        flagRecover = 1;                                                  // start autorecovery
+        flagRecover = 1;                                                // start autorecovery
         break; 
     case COMMON_STATE_FATAL :
-      common_publishState(actState);
-      pp_printf("b2b-common: a FATAL error has occured. Good bye.\n");
+      fwlib_publishState(actState);
+      pp_printf("b2b-fwlib: a FATAL error has occured. Good bye.\n");
       while (1) asm("nop"); // RIP!
         break;
     default :                                                             // avoid flooding WB bus with unnecessary activity
@@ -766,33 +773,31 @@ uint32_t common_doActionState(uint32_t *reqState, uint32_t actState, uint32_t st
   } // switch
 
   // autorecovery from state ERROR
-  if (flagRecover) common_doAutoRecovery(actState, reqState);
+  if (flagRecover) fwlib_doAutoRecovery(actState, reqState);
 
   return status;
-} // common_doActionState
+} // fwlib_doActionState
 
 // do autorecovery from error state
-void common_doAutoRecovery(uint32_t actState, uint32_t *reqState)
+void fwlib_doAutoRecovery(uint32_t actState, uint32_t *reqState)
 {
   switch (actState) {
     case COMMON_STATE_ERROR :
-      DBPRINT3("b2b-common: attempting autorecovery ERROR -> IDLE\n");
+      DBPRINT3("b2b-fwlib: attempting autorecovery ERROR -> IDLE\n");
       usleep(10000000);
       *reqState = COMMON_STATE_IDLE; 
       break;
     case COMMON_STATE_IDLE :
-      DBPRINT3("b2b-common: attempting autorecovery IDLE -> CONFIGURED\n");
+      DBPRINT3("b2b-fwlib: attempting autorecovery IDLE -> CONFIGURED\n");
       usleep(5000000);
       *reqState = COMMON_STATE_CONFIGURED;
       break;
     case COMMON_STATE_CONFIGURED :
-      DBPRINT3("b2b-common: attempting autorecovery CONFIGURED -> OPREADY\n");
+      DBPRINT3("b2b-fwlib: attempting autorecovery CONFIGURED -> OPREADY\n");
       usleep(5000000);
       *reqState = COMMON_STATE_OPREADY;
       break;
     default :
       break;
     } // switch actState
-} // doAutoRecovery
-
-
+} // fwlib_doAutoRecovery
