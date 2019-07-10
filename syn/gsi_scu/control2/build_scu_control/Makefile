@@ -15,18 +15,29 @@ DEPLOY_DIR     := .
 TARGET         := scu_control
 MIAN_MODULE    = $(SCU_DIR)/main.c
 
+ # SCU_DAQ=1
+
 DEFINES += HISTORY
 DEFINES += CONFIG_PRINTF_64BIT
 DEFINES += CONFIG_NO_LM32_ASSERT
 DEFINES += CONFIG_PRINTF_64BIT
-# New functions will not compiled when the following switch is set.
-DEFINES += CONFIG_OLD_SCU_SW
 DEFINES += CONFIG_ASSERT
+
+ifdef SCU_DAQ
+  DEFINES += CONFIG_SCU_DAQ_INTEGRATION
+  DEFINES += CONFIG_SCU_USE_DDR3
+  DEFINES += CONFIG_DAQ_SW_SEQUENCE
+else
+  # New functions will not compiled when the following switch is set.
+  DEFINES += CONFIG_OLD_SCU_SW
+endif
+
+
 
 SOURCE += $(SCU_LIB_SRC_DIR)/aux.c
 SOURCE += $(SCU_LIB_SRC_DIR)/irq.c
 SOURCE += $(SCU_LIB_SRC_DIR)/display.c
-SOURCE += $(SCU_LIB_SRC_DIR)/assert.c
+SOURCE += $(SCU_LIB_SRC_DIR)/LM32assert.c
 SOURCE += $(SCU_LIB_SRC_DIR)/stack-check.c
 
 # SOURCE += $(SCU_LIB_SRC_DIR)/wr_time.c
@@ -40,6 +51,16 @@ SOURCE += $(SCU_DIR)/dow_crc.c
 SOURCE += $(SCU_DIR)/history.c
 SOURCE += $(SCU_DIR)/scu_mil.c
 SOURCE += $(WR_DIR)/dev/w1-temp.c
+
+ifdef SCU_DAQ
+SOURCE += $(SCU_LIB_SRC_DIR)/scu_ddr3.c
+SOURCE += $(DAQ_DIR)/daq.c
+SOURCE += $(DAQ_DIR)/daq_command_interface_uc.c
+SOURCE += $(DAQ_DIR)/daq_ring_admin.c
+SOURCE += $(DAQ_DIR)/daq_ramBuffer.c
+SOURCE += $(DAQ_DIR)/daq_main.c
+endif
+
 
 
 CODE_OPTIMIZATION = s

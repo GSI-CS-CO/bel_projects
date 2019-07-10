@@ -11,7 +11,6 @@
 ifndef OBJCPY
    $(error No objcopy defined in variable OBJCPY !)
 endif
-
 DOX_INPUT   += $(MAKEFILE_DIR)/makefile.uc
 
 ELF_FILE    = $(WORK_DIR)/$(TARGET).elf
@@ -31,15 +30,20 @@ size: $(ELF_FILE)
 ifdef USABLE_MEM_SIZE
 	$(QUIET)(appSize=$$($(SIZE) $(ELF_FILE) | tail -n1 | awk '{printf $$4}'); \
 	size=$$(echo $$(($${appSize}+$(RESERVED_MEM_SIZE)))); \
-	free=$$(($(USABLE_MEM_SIZE)-$${size}));\
+	free=$$(($(RAM_SIZE)-$${appSize}));\
 	if [ "$${free}" -lt "0" ]; then \
 		ec=$(ESC_FG_RED); \
 	else \
-		ec=$(ESC_NORMAL); \
+		ec=$(ESC_FG_CYAN); \
 	fi; \
-	echo -e "$${ec}$${size} of $(USABLE_MEM_SIZE) bytes used, $${free} \
+	echo "Total RAM size:     $$(($(RAM_SIZE))) bytes";\
+	echo "Stack size:         $$(($(STACK_SIZE))) bytes";\
+	echo "Shared memory size: $$(($(SHARED_SIZE))) bytes";\
+	echo "Build-ID size:      $$(($(BUILDID_SIZE))) bytes";\
+	echo "Boot size:          $$(($(BOOTL_SIZE))) bytes";\
+	echo -e "$${ec}Consumption:        $${appSize} of $(USABLE_MEM_SIZE) bytes used, $${free} \
 	bytes free"; \
-	echo -e "$(ESC_BOLD)>> Memory usage: $$(echo $${size}*100/$(USABLE_MEM_SIZE) \
+	echo -e "$(ESC_BOLD)>> Memory usage: $$(echo $${appSize}*100/$(USABLE_MEM_SIZE) \
 	| bc)% <<$(ESC_NORMAL)")
 endif
 
