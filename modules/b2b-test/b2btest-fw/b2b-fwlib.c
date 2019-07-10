@@ -622,6 +622,8 @@ void fwlib_publishState(uint32_t state)
 
 void fwlib_publishStatusArray(uint64_t statusArray)
 {
+  if (flagRecover) statusArray = statusArray |  ((uint64_t)0x1 << COMMON_STATUS_AUTORECOVERY);
+  else             statusArray = statusArray & ~((uint64_t)0x1 << COMMON_STATUS_AUTORECOVERY);
   *pSharedStatusArrayHi = (uint32_t)(statusArray >> 32);
   *pSharedStatusArrayLo = (uint32_t)(statusArray & 0xffffffff);
 } // fwlib_publishStatusArray
@@ -757,12 +759,9 @@ uint32_t fwlib_doActionState(uint32_t *reqState, uint32_t actState, uint32_t sta
       if (status != COMMON_STATUS_OK) *reqState = COMMON_STATE_FATAL;  // failed:  -> FATAL
       else                            *reqState = COMMON_STATE_IDLE;   // success: -> IDLE
       break;
-    case COMMON_STATE_OPREADY :
-      flagRecover = 0;
-      break;
     case COMMON_STATE_ERROR :
-        flagRecover = 1;                                                // start autorecovery
-        break; 
+      flagRecover = 1;                                                 // start autorecovery
+      break; 
     case COMMON_STATE_FATAL :
       fwlib_publishState(actState);
       pp_printf("b2b-fwlib: a FATAL error has occured. Good bye.\n");
@@ -796,6 +795,7 @@ void fwlib_doAutoRecovery(uint32_t actState, uint32_t *reqState)
       DBPRINT3("b2b-fwlib: attempting autorecovery CONFIGURED -> OPREADY\n");
       usleep(5000000);
       *reqState = COMMON_STATE_OPREADY;
+      flagRecover = 0;
       break;
     default :
       break;

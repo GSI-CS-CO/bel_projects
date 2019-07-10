@@ -32,7 +32,7 @@
 #define  COMMON_STATUS_EBREADTIMEDOUT     7    // EB read via WR network timed out
 #define  COMMON_STATUS_WRBADSYNC          8    // White Rabbit: not in 'TRACK_PHASE'
 #define  COMMON_STATUS_AUTORECOVERY       9    // trying auto-recovery from state ERROR
-#define  COMMON_STATUS_RESERVEDTILHERE   15    // reserved for common error codes
+#define  COMMON_STATUS_RESERVEDTILHERE   15    // 00..15 reserved for common error codes
 
 // commands from the outside
 #define  COMMON_CMD_NOCMD                 0    // no command ...
@@ -42,7 +42,7 @@
 #define  COMMON_CMD_IDLE                  4    // requests gateway to enter idle state
 #define  COMMON_CMD_RECOVER               5    // recovery from error state
 #define  COMMON_CMD_CLEARDIAG             6    // reset statistics information
-#define  COMMON_CMD_RESERVEDTILHERE      10    // reserved for commmon commands
+#define  COMMON_CMD_RESERVEDTILHERE      10    // 0..10 reserved for commmon commands
 
 // states; implicitely, all states may transit to the ERROR or FATAL state
 #define  COMMON_STATE_UNKNOWN             0    // unknown state
@@ -74,8 +74,8 @@
 // offsets
 // simple values
 #define COMMON_SHARED_BEGIN            0x0                                              // begin of used shared memory
-#define COMMON_SHARED_STATUSLO         COMMON_SHARED_BEGIN                              // error status, LO word; all actual error bits are ORed into here
-#define COMMON_SHARED_STATUSHI        (COMMON_SHARED_STATUSLO     + _32b_SIZE_)         // error status, HI word
+#define COMMON_SHARED_STATUSLO         COMMON_SHARED_BEGIN                              // status array, LO word; all actual error bits are ORed into here
+#define COMMON_SHARED_STATUSHI        (COMMON_SHARED_STATUSLO     + _32b_SIZE_)         // status array, HI word
 #define COMMON_SHARED_CMD             (COMMON_SHARED_STATUSHI     + _32b_SIZE_)         // input of 32bit command
 #define COMMON_SHARED_STATE           (COMMON_SHARED_CMD          + _32b_SIZE_)         // state of state machine
 #define COMMON_SHARED_VERSION         (COMMON_SHARED_STATE        + _32b_SIZE_)         // version of firmware
