@@ -422,7 +422,7 @@ begin
             s_rd_ifp_io <= '1';
             
           when c_rd_ifp_id =>
-            s_rd_ifp_io <= '1';
+            s_rd_ifp_id <= '1';
             
           when c_rd_if_mode =>
             s_rd_if_mode <= '1';
@@ -461,7 +461,7 @@ begin
           when c_wr_ifp_led =>
             s_ifp_led <= di;
             
-          when c_wr_ifP_out =>
+          when c_wr_ifp_out =>
             s_ifp_out <= di;
           when others =>  
         end case; 
