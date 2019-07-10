@@ -6888,11 +6888,6 @@ applicable agreement for further details.
 	(pt 1152 528)
 )
 (connector
-	(text "STG_STR" (rect 1624 632 1683 645)(font "Arial" (font_size 8)))
-	(pt 1616 648)
-	(pt 1696 648)
-)
-(connector
 	(text "FG_NEW_DATA" (rect 1592 512 1687 525)(font "Arial" (font_size 8)))
 	(pt 1584 528)
 	(pt 1664 528)
@@ -6908,11 +6903,6 @@ applicable agreement for further details.
 	(pt 1584 480)
 	(pt 1664 480)
 	(bus)
-)
-(connector
-	(text "FG_SW_EN" (rect 1624 608 1693 621)(font "Arial" (font_size 8)))
-	(pt 1616 624)
-	(pt 1696 624)
 )
 (connector
 	(text "FG_RD_Aktiv" (rect 1592 448 1671 461)(font "Arial" (font_size 8)))
@@ -6933,12 +6923,6 @@ applicable agreement for further details.
 	(text "FG_VERS[6..0]" (rect 1592 544 1679 557)(font "Arial" (font_size 8)))
 	(pt 1584 560)
 	(pt 1664 560)
-	(bus)
-)
-(connector
-	(text "FG_T[15..0]" (rect 1728 616 1795 629)(font "Arial" (font_size 8)))
-	(pt 1720 632)
-	(pt 1800 632)
 	(bus)
 )
 (connector
@@ -7105,6 +7089,11 @@ applicable agreement for further details.
 	(pt 1448 -112)
 	(pt 1552 -112)
 )
+(connector
+	(text "FG_NEW_DATA" (rect 2856 1560 2939 1571)(font "Arial" ))
+	(pt 2976 1576)
+	(pt 2848 1576)
+)
 (junction (pt 664 16))
 (junction (pt 664 32))
 (text "Test_ein_oder_aus" (rect 1712 744 1820 757)(font "Arial" (font_size 8)))
@@ -7115,7 +7104,7 @@ applicable agreement for further details.
 	(section (rect 0 48 368 72)(text "DESIGNER" (rect 2 0 59 11)(font "Arial" ))(text "RHart/BELAB" (rect 56 2 171 21)(font "Arial" (font_size 12)))(border))
 	(section (rect 0 72 280 96)(text "NUMBER" (rect 2 0 50 11)(font "Arial" ))(text "1.00" (rect 56 1 86 17)(font "Arial" (font_size 10)))(border))
 	(section (rect 280 72 368 96)(text "REV" (rect 2 1 26 12)(font "Arial" ))(text "B" (rect 43 1 53 17)(font "Arial" (font_size 10)))(border))
-	(section (rect 0 96 240 120)(text "DATE" (rect 2 0 31 11)(font "Arial" ))(text "Mon May 13 11:15:23 2019" (rect 56 3 248 19)(font "Arial" (font_size 10)))(date)(border))
+	(section (rect 0 96 240 120)(text "DATE" (rect 2 0 31 11)(font "Arial" ))(text "Tue Jul  9 16:46:51 2019" (rect 56 3 230 19)(font "Arial" (font_size 10)))(date)(border))
 	(section (rect 240 96 310 120)(text "SHEET" (rect 2 0 39 11)(font "Arial" ))(text "1" (rect 55 5 64 21)(font "Arial" (font_size 10))))
 	(section (rect 310 96 368 120)(text "OF" (rect 10 0 25 11)(font "Arial" ))(text "1" (rect 34 4 43 20)(font "Arial" (font_size 10))))
 	(drawing
