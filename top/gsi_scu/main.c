@@ -1038,8 +1038,6 @@ void dev_sio_handler(int id) {
           handle(slot, dev, task_ptr[id].irq_data[i], &(task_ptr[id].setvalue[i]));
           //clear irq pending and end block transfer
           if ((status = scub_write_mil(scub_base, task_ptr[id].slave_nr, 0, FC_IRQ_ACT_WR | dev)) != OKAY) dev_failure(status, 22, "dev_sio end handle");
-          // store the sample timestamp for daq
-          task_ptr[id].daq_timestamp[i] = getSysTime();
         }
       }
       task_ptr[id].state = 4;
@@ -1053,6 +1051,8 @@ void dev_sio_handler(int id) {
           dev = (fg_macros[fg_regs[i].macro_number] & 0x00ff0000) >> 16;
           // non blocking read for DAQ
           if ((status = scub_set_task_mil(scub_base, task_ptr[id].slave_nr, id + i + 1, FC_ACT_RD | dev)) != OKAY) dev_failure(status, 23, "dev_sio read daq");
+          // store the sample timestamp for daq
+          task_ptr[id].daq_timestamp[i] = getSysTime();
         }
       }
       task_ptr[id].state = 5;
@@ -1213,7 +1213,6 @@ void dev_bus_handler(int id) {
           handle(slot, dev, task_ptr[id].irq_data[i], &(task_ptr[id].setvalue[i]));
           //clear irq pending and end block transfer
           if ((status = write_mil(scu_mil_base, 0, FC_IRQ_ACT_WR | dev)) != OKAY) dev_failure(status, 22, "");
-
         }
       }
       task_ptr[id].state = 4;
