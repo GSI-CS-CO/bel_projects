@@ -735,10 +735,14 @@ void sw_irq_handler(int id) {
           disable_channel(value);
         break;
         case 4:
-          hist_print(1);
+          //rescan for fg macros
+          print_fgs();
         break;
         case 5:
           clear_handler_state(value);
+        break;
+        case 6:
+          hist_print(1);
         break;
         default:
           mprintf("swi: 0x%x\n", m.adr);
