@@ -20,7 +20,7 @@
 #define  DMUNIPZ_CMD_RELEASETK    6           // release TK request at UNILAC
 #define  DMUNIPZ_CMD_RELEASEBEAM  7           // release beam request at UNILAC
 
-// (error) status, each status will be represented by one bit, bits will be ORed into a 32bit word
+// (error) status
 #define  DMUNIPZ_STATUS_REQTKFAILED     16    // UNILAC refuses TK request
 #define  DMUNIPZ_STATUS_REQTKTIMEOUT    17    // UNILAC TK request timed out
 #define  DMUNIPZ_STATUS_REQBEAMFAILED   18    // UNILAC refuses beam request
