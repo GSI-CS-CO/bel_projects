@@ -724,8 +724,8 @@ int main(int argc, char** argv) {
       fflush(stdout);                                                                         // required for immediate writing (if stdout is piped to syslog)
 
 #ifdef USEMASP
-      if (actState  == DMUNIPZ_STATE_OPREADY) maspSigOpReady  = true;
-      else                                    maspSigOpReady  = false;
+      if (actState  == COMMON_STATE_OPREADY) maspSigOpReady  = true;
+      else                                   maspSigOpReady  = false;
 
       maspSigTransfer = true;   // ok, this is dummy for now, e.g. in case of MIL troubles or so
       
