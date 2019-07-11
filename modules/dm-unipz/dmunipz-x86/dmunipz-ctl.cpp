@@ -568,8 +568,8 @@ int main(int argc, char** argv) {
 
   if (getInfo) {
     // status
-    readInfo(&iterations, &virtAccReq, &virtAccRec, &noBeam, &dtStart, &dtSync, &dtInject, &dtTransfer, &dtTkreq, &dtBreq, &dtBprep, &dtReady2Sis, &nR2sTransfer, &nR2sCycle);
     api_readDiag(device, &statusArray, &state, &version, &mac, &ip, &nBadStatus, &nBadState, &tDiag, &tS0, &nTransfer, &nInjection, &statTrans, 0);
+    readInfo(&iterations, &virtAccReq, &virtAccRec, &noBeam, &dtStart, &dtSync, &dtInject, &dtTransfer, &dtTkreq, &dtBreq, &dtBprep, &dtReady2Sis, &nR2sTransfer, &nR2sCycle);
     printTransferHeader();
     printTransfer(nTransfer, nInjection, virtAccReq, virtAccRec, noBeam, dtStart, dtSync, dtInject, dtTransfer, dtTkreq, dtBreq, dtBprep, dtReady2Sis, nR2sTransfer, nR2sCycle, statTrans); 
     printf(", %s (%6u), ",  api_stateText(state), nBadState);
@@ -677,6 +677,7 @@ int main(int argc, char** argv) {
 
     while (1) {
       api_readDiag(device, &statusArray, &state, &version, &mac, &ip, &nBadStatus, &nBadState, &tDiag, &tS0, &nTransfer, &nInjection, &statTrans, 0);
+      readInfo(&iterations, &virtAccReq, &virtAccRec, &noBeam, &dtStart, &dtSync, &dtInject, &dtTransfer, &dtTkreq, &dtBreq, &dtBprep, &dtReady2Sis, &nR2sTransfer, &nR2sCycle);
 
       switch(state) {
       case COMMON_STATE_OPREADY :
