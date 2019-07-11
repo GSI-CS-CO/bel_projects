@@ -14,35 +14,34 @@
 #include "dbg.h"
 #include "ftm_shared_mmap.h"
 
-uint64_t SHARED dummy = 0; /// dummy using the SHARED type so nothing gets optimized away
+uint64_t SHARED dummy = 0; ///< dummy using the SHARED type so nothing gets optimized away
 
-deadlineFuncPtr deadlineFuncs[_NODE_TYPE_END_]; /// Function pointer array to deadline generating Functions
-nodeFuncPtr     nodeFuncs[_NODE_TYPE_END_];     /// Function pointer array to node handler functions
-actionFuncPtr   actionFuncs[_ACT_TYPE_END_];    /// Function pointer array to command action handler functions
+deadlineFuncPtr deadlineFuncs[_NODE_TYPE_END_]; 
+nodeFuncPtr     nodeFuncs[_NODE_TYPE_END_];     
+actionFuncPtr   actionFuncs[_ACT_TYPE_END_];    
 
 // Assigning pointer shortcuts into shared memory area
-uint32_t* const p         = (uint32_t*)&_startshared;                                             /// pointer shortcut to start of shared memory area
-uint32_t* const status    = (uint32_t*)&_startshared[SHCTL_STATUS >> 2];                          /// pointer to status register
-uint64_t* const count     = (uint64_t*)&_startshared[(SHCTL_DIAG  + T_DIAG_MSG_CNT)  >> 2];       /// pointer to global message count register
-uint64_t* const boottime  = (uint64_t*)&_startshared[(SHCTL_DIAG  + T_DIAG_BOOT_TS)  >> 2];       /// pointer to bootime registers
+uint32_t* const p         = (uint32_t*)&_startshared;                                             
+uint32_t* const status    = (uint32_t*)&_startshared[SHCTL_STATUS >> 2];                          
+uint64_t* const count     = (uint64_t*)&_startshared[(SHCTL_DIAG  + T_DIAG_MSG_CNT)  >> 2];       
+uint64_t* const boottime  = (uint64_t*)&_startshared[(SHCTL_DIAG  + T_DIAG_BOOT_TS)  >> 2];       
 #ifdef DIAGNOSTICS      
-int64_t* const diffsum    = (int64_t*) &_startshared[(SHCTL_DIAG  + T_DIAG_DIF_SUM ) >> 2];       /// pointer to diagnostics - dispatch delta sum
-int64_t* const diffmax    = (int64_t*) &_startshared[(SHCTL_DIAG  + T_DIAG_DIF_MAX ) >> 2];       /// pointer to diagnostics - dispatch delta max
-int64_t* const diffmin    = (int64_t*) &_startshared[(SHCTL_DIAG  + T_DIAG_DIF_MIN ) >> 2];       /// pointer to diagnostics - dispatch delta min
-int64_t* const diffwth    = (int64_t*) &_startshared[(SHCTL_DIAG  + T_DIAG_DIF_WTH ) >> 2];       /// pointer to diagnostics - dispatch delta warning threshold
-uint32_t* const diffwcnt  = (uint32_t*) &_startshared[(SHCTL_DIAG + T_DIAG_WAR_CNT ) >> 2];       /// pointer to diagnostics - dispatch delta warning count
-uint32_t* const diffwhash = (uint32_t*) &_startshared[(SHCTL_DIAG + T_DIAG_WAR_1ST_HASH ) >> 2];  /// pointer to diagnostics - dispatch delta warning node hash of 1st occurrence
-uint64_t* const diffwts   = (uint64_t*) &_startshared[(SHCTL_DIAG + T_DIAG_WAR_1ST_TS ) >> 2];    /// pointer to diagnostics - dispatch delta warning timestamp of 1st occurrence
-uint32_t* const bcklogmax = (uint32_t*) &_startshared[(SHCTL_DIAG + T_DIAG_BCKLOG_STRK )  >> 2];  /// pointer to diagnostics - dispatch backlog max
-uint32_t* const badwaitcnt = (uint32_t*) &_startshared[(SHCTL_DIAG + T_DIAG_BAD_WAIT_CNT )  >> 2];/// pointer to diagnostics - dispatch bad waittime count
+int64_t* const diffsum    = (int64_t*) &_startshared[(SHCTL_DIAG  + T_DIAG_DIF_SUM ) >> 2];       
+int64_t* const diffmax    = (int64_t*) &_startshared[(SHCTL_DIAG  + T_DIAG_DIF_MAX ) >> 2];       
+int64_t* const diffmin    = (int64_t*) &_startshared[(SHCTL_DIAG  + T_DIAG_DIF_MIN ) >> 2];       
+int64_t* const diffwth    = (int64_t*) &_startshared[(SHCTL_DIAG  + T_DIAG_DIF_WTH ) >> 2];       
+uint32_t* const diffwcnt  = (uint32_t*) &_startshared[(SHCTL_DIAG + T_DIAG_WAR_CNT ) >> 2];       
+uint32_t* const diffwhash = (uint32_t*) &_startshared[(SHCTL_DIAG + T_DIAG_WAR_1ST_HASH ) >> 2];  
+uint64_t* const diffwts   = (uint64_t*) &_startshared[(SHCTL_DIAG + T_DIAG_WAR_1ST_TS ) >> 2];    
+uint32_t* const bcklogmax = (uint32_t*) &_startshared[(SHCTL_DIAG + T_DIAG_BCKLOG_STRK )  >> 2];  
+uint32_t* const badwaitcnt = (uint32_t*) &_startshared[(SHCTL_DIAG + T_DIAG_BAD_WAIT_CNT )  >> 2];
 #endif
-uint32_t* const start   = (uint32_t*)&_startshared[(SHCTL_THR_CTL + T_TC_START)   >> 2];          /// pointer to thread control - start bits
-uint32_t* const running = (uint32_t*)&_startshared[(SHCTL_THR_CTL + T_TC_RUNNING) >> 2];          /// pointer to thread control - running bits
-uint32_t* const abort1  = (uint32_t*)&_startshared[(SHCTL_THR_CTL + T_TC_ABORT)   >> 2];          /// pointer to thread control - abort bits (name awkwardly chosen to avoid clash with WR global)
-uint32_t** const hp     = (uint32_t**)&_startshared[SHCTL_HEAP >> 2];                             /// pointer array of EDF scheduler heap
+uint32_t* const start   = (uint32_t*)&_startshared[(SHCTL_THR_CTL + T_TC_START)   >> 2];          
+uint32_t* const running = (uint32_t*)&_startshared[(SHCTL_THR_CTL + T_TC_RUNNING) >> 2];          
+uint32_t* const abort1  = (uint32_t*)&_startshared[(SHCTL_THR_CTL + T_TC_ABORT)   >> 2];          
+uint32_t** const hp     = (uint32_t**)&_startshared[SHCTL_HEAP >> 2];                             
 
-/// Initialiser for the priority queue
-/** Init priority queue so it knows where to find the ECA and set message and time limits */
+
 void prioQueueInit()
 {
 
@@ -57,8 +56,6 @@ void prioQueueInit()
                                       PRIO_BIT_TIME_LIMIT;
 }
 
-/// Initialiser for the data master
-/** Init data master function pointer arrays. Clear heap, thread control data and diagnostic infos. */
 void dmInit() {
 
   nodeFuncs[NODE_TYPE_UNKNOWN]          = dummyNodeFunc;
@@ -131,8 +128,6 @@ void dmInit() {
 
 }
 
-/// Validate WR time
-/** Checks WR module status bits for valid PPS signal and timestamp  */
 uint8_t wrTimeValid() {
 
   const uint32_t STATE_REG       = 0x1C;
@@ -144,26 +139,16 @@ uint8_t wrTimeValid() {
 
 }
 
-/// Handler for null node (idle), returns a null node
-/** The returned next node to process is a null pointer, which will cause MAX_INT as deadline (see deadlineNull())  */
 uint32_t* nodeNull (uint32_t* node, uint32_t* thrData)                        { return LM32_NULL_PTR;}
 
-/// Returns the deadline for a null node (idle)
-/** The returned deadline will be MAX_INT, so the thread is not called again*/
 uint64_t  deadlineNull (uint32_t* node, uint32_t* thrData)                    { return -1ULL; } //return infinity
 
-/// Dummy node function, used to catch bad node types
-/** Reports bad/unknown node type to error register and calls the handler for a null node*/
 uint32_t* dummyNodeFunc (uint32_t* node, uint32_t* thrData)                   { *status |= SHCTL_STATUS_BAD_NODE_TYPE_SMSK; return nodeNull(node, thrData); }
-/// Dummy deadline function, used to catch bad node types
-/** Reports bad/unknown node type to error register and calls the handler for a null node deadline*/
+
 uint64_t  dummyDeadlineFunc (uint32_t* node, uint32_t* thrData)               { *status |= SHCTL_STATUS_BAD_NODE_TYPE_SMSK; return deadlineNull(node, thrData); } //return infinity
-/// Dummy action function, used to catch bad action types
-/** Reports bad/unknown command action type to error register and returns a nulll node as successor*/
+
 uint32_t* dummyActionFunc (uint32_t* node, uint32_t* cmd, uint32_t* thrData)  { *status |= SHCTL_STATUS_BAD_ACT_TYPE_SMSK;  return LM32_NULL_PTR;}
 
-/// Get node type
-/** Returns the 4 bit type value of a node if valid, type NULL if the node does not exist or type UNKNOWN if the code not a defined type.  */
 uint8_t getNodeType(uint32_t* node) {
   uint32_t* tmpType;
   uint32_t msk;
@@ -183,26 +168,18 @@ uint8_t getNodeType(uint32_t* node) {
   return type;
 }
 
-/// Calculates next deadline for a node of basetype event
-/** Returns the 64 bit deadline for this event node by adding its offset to the thread time sum  */
 uint64_t dlEvt(uint32_t* node, uint32_t* thrData) {
   return *(uint64_t*)&thrData[T_TD_CURRTIME >> 2] + *(uint64_t*)&node[EVT_OFFS_TIME >> 2];
 }
 
-/// Calculates next deadline for a node of basetype block
-/** Returns the 64 bit deadline for this block node which is the thread time sum  */
 uint64_t dlBlock(uint32_t* node, uint32_t* thrData) {
   return *(uint64_t*)&thrData[T_TD_DEADLINE >> 2];
 }
 
-/// Executes a command action of type Noop
-/** Noops only effect is the return of the target blocks' default successor as next node to process  */
 uint32_t* execNoop(uint32_t* node, uint32_t* cmd, uint32_t* thrData) {
   return (uint32_t*)node[NODE_DEF_DEST_PTR >> 2];
 }
 
-/// Executes a command action of type Flow
-/** Returns the destination of the flow command as next node to process. If action is permanent, destination also overwrites to target blocks' default successor   */
 uint32_t* execFlow(uint32_t* node, uint32_t* cmd, uint32_t* thrData) {
   uint32_t* ret = (uint32_t*)cmd[T_CMD_FLOW_DEST >> 2];
   DBPRINT3("#%02u: Routing Flow to 0x%08x\n", cpuId, (uint32_t)ret);
@@ -212,32 +189,29 @@ uint32_t* execFlow(uint32_t* node, uint32_t* cmd, uint32_t* thrData) {
 
 }
 
-/// Executes a command action of type Flush
-/** Clears zero or more queues of target block. Returns target's default successor  as next node to process */
 uint32_t* execFlush(uint32_t* node, uint32_t* cmd, uint32_t* thrData) {
-  uint32_t action     = cmd[T_CMD_ACT >> 2];  
-  uint8_t  flushees   =       (action >> ACT_FLUSH_PRIO_POS) & ACT_FLUSH_PRIO_MSK;  // msk of flushee prios
-  uint8_t  flusher    =  1 << ((action >> ACT_PRIO_POS)      & ACT_PRIO_MSK);       // msk of flusher prio
-  uint8_t  qtyIsOne   = (1 ==  ((action >> ACT_QTY_POS)       & ACT_QTY_MSK));        // last qty left? (should always be 1 for flushes, but we better make sure)
-  uint32_t wrIdxs     = node[BLOCK_CMDQ_WR_IDXS >> 2] & BLOCK_CMDQ_WR_IDXS_SMSK;    // buffer current wr indices
-  uint32_t rdIdxs     = node[BLOCK_CMDQ_RD_IDXS >> 2] & BLOCK_CMDQ_RD_IDXS_SMSK;    // buffer current read indices
+  uint32_t action     = cmd[T_CMD_ACT >> 2];  // command action field
+  uint8_t  flushees   =         (action >> ACT_FLUSH_PRIO_POS) & ACT_FLUSH_PRIO_MSK;  // mask of flushee (target queue) priorities
+  uint8_t  flusher    =  1 <<  ((action >> ACT_PRIO_POS)       & ACT_PRIO_MSK);       // mask of flusher (current command) priority
+  uint8_t  qtyIsOne   = (1 ==  ((action >> ACT_QTY_POS)        & ACT_QTY_MSK));       // flag: flush is attempted exactly once (flusher qty == 1). Should always be true, but we better make sure
+  uint32_t wrIdxs     = node[BLOCK_CMDQ_WR_IDXS >> 2] & BLOCK_CMDQ_WR_IDXS_SMSK;      // flushee buffer wr indices
+  uint32_t rdIdxs     = node[BLOCK_CMDQ_RD_IDXS >> 2] & BLOCK_CMDQ_RD_IDXS_SMSK;      // flushee buffer read indices
 
-  uint8_t prio;
+  uint8_t prio; // loop variable, iterate over all  priorities
   for(prio = PRIO_LO; prio <= PRIO_IL; prio++) { // iterate priorities of flushees
     // if execution would flush the very queue containing the flush command (the flusher), we must prevent the queue from being popped in block() function afterwards.
     // Otherwise, rd idx will overtake wr idx -> queue corrupted. To minimize corner case impact, we do this by adjusting the
     // new read idx to be wr idx-1. Then the queue pop leaves us with new rd idx = wr idx as it should be after a flush.
-    uint8_t flushMyselfB4pop  = ((flushees & flusher) >> prio) & 1 & qtyIsOne;                      // check if this is the only qty left and if flushee and flusher prios match
-    // new rd idx = wr idx, adjust by -1 if necessary. Don't forget to mask to proper qidx width afterwards!
-    uint8_t newRdIdx          = (*((uint8_t *)&wrIdxs + _32b_SIZE_ - prio -1) - flushMyselfB4pop) & Q_IDX_MAX_OVF_MSK;  
+    uint8_t flushMyselfB4pop  = ((flushees & flusher) >> prio) & 1 & qtyIsOne; // flag: selfflush requested (flush cmd is in flushed queue)
+    uint8_t newRdIdx          = (*((uint8_t *)&wrIdxs + _32b_SIZE_ - prio -1) - flushMyselfB4pop) & Q_IDX_MAX_OVF_MSK;  // The new rd idx. Must equal the wr idx for queue to be empty, adjust by -1 if this is a selfflush 
 
-    if(flushees & (1 << prio)) { *((uint8_t *)&rdIdxs + _32b_SIZE_  - prio -1) = newRdIdx; } // execute flush if current prio is a flushee
+    if(flushees & (1 << prio)) { *((uint8_t *)&rdIdxs + _32b_SIZE_  - prio -1) = newRdIdx; } // execute flush if loop variable prio matches a flushee
   }
   //write back potentially updated read indices
   node[BLOCK_CMDQ_RD_IDXS >> 2] = rdIdxs;
 
   //Flush override handling. Override successor ?
-  uint32_t* ret = (uint32_t*)cmd[T_CMD_FLUSH_OVR >> 2];
+  uint32_t* ret = (uint32_t*)cmd[T_CMD_FLUSH_OVR >> 2]; // Flush override: If requested, this return value changes from default successor to flush override
   if((uint32_t)ret != LM32_NULL_PTR) { // no override to idle allowed!
     //permanent change?
     if((cmd[T_CMD_ACT >> 2] & ACT_CHP_SMSK)) node[NODE_DEF_DEST_PTR >> 2] = (uint32_t)ret;
@@ -248,17 +222,14 @@ uint32_t* execFlush(uint32_t* node, uint32_t* cmd, uint32_t* thrData) {
 
 }
 
-/// Executes a command action of type Wait
-/** If relative, wait extends target block's period by its own value. If absolute, wait extends target block's period until its own timestamp is reached. Returns target's default successor as next node to process */
 uint32_t* execWait(uint32_t* node, uint32_t* cmd, uint32_t* thrData) {
 
   // the block period is added in blockFixed or blockAligned.
   // we must therefore subtract it here if we modify current time, as execWait is optional
 
-  uint64_t  tWait = *(uint64_t*)&cmd[T_CMD_WAIT_TIME >> 2] - *(uint64_t*)&node[BLOCK_PERIOD >> 2];
-  uint64_t*  tCur = (uint64_t*)&thrData[T_TD_CURRTIME >> 2];
-  uint32_t    act = cmd[T_CMD_ACT >> 2];
-
+  uint64_t  tWait = *(uint64_t*)&cmd[T_CMD_WAIT_TIME >> 2] - *(uint64_t*)&node[BLOCK_PERIOD >> 2]; // auxiliary wait time. The block handler adds its period, so to avoid corner case, subtract period here.
+  uint64_t*  tCur = (uint64_t*)&thrData[T_TD_CURRTIME >> 2]; // current TAI in ns
+  uint32_t    act = cmd[T_CMD_ACT >> 2]; // command action field
   if ( act & ACT_WAIT_ABS_SMSK) {
     // absolute wait time. Replaces current time sum
     if ( getSysTime() < tWait ) { *tCur = tWait; } //1.1 if wait time is greater than Now, proceed
@@ -273,34 +244,46 @@ uint32_t* execWait(uint32_t* node, uint32_t* cmd, uint32_t* thrData) {
 
 }
 
-/// Dispatches the action of command node in the schedule to its target
-/** Writes action (noop, flush, flow ...) of a command node to its target node (can be on a different CPU) */
 uint32_t* cmd(uint32_t* node, uint32_t* thrData) {
-        uint32_t *ret = (uint32_t*)node[NODE_DEF_DEST_PTR >> 2];
-  const uint32_t prio = (node[CMD_ACT >> 2] >> ACT_PRIO_POS) & ACT_PRIO_MSK;
-  const uint32_t *tg  = (uint32_t*)node[CMD_TARGET >> 2];
-  const uint32_t adrPrefix = (uint32_t)tg & ~PEER_ADR_MSK; // if target is on a different RAM, all ptrs must be translated from the local to our (peer) perspective
+        uint32_t *ret = (uint32_t*)node[NODE_DEF_DEST_PTR >> 2]; // ptr to successor node
+  const uint32_t prio = (node[CMD_ACT >> 2] >> ACT_PRIO_POS) & ACT_PRIO_MSK; // action priority, ie. which queue it is to be delivered to
+  const uint32_t *tg  = (uint32_t*)node[CMD_TARGET >> 2]; // ptr to target block
+  const uint32_t adrPrefix = (uint32_t)tg & ~PEER_ADR_MSK; // Address prefix. If target is on a different RAM, the B (Host) Port is used and the global adr prefix must be added 
 
-  uint32_t *bl, *b, *e;
-  uint8_t  *wrIdx;
-  uint32_t bufOffs, elOffs;
+
+ 
+  uint32_t *bl;     // ptr to buffer list of target queue
+  uint32_t *b;      // ptr to specific buffer
+  uint32_t *e;      // ptr to specific element
+  uint8_t  *wrIdx;  // ptr to write index of queue
+  uint32_t bufOffs; // buffer's offset in buffer list
+  uint32_t elOffs;  // element's offset in buffer
   node[NODE_FLAGS >> 2] |= NFLG_PAINT_LM32_SMSK; // set paint bit to mark this node as visited
-
+  //mprintf("tg 0x%08x adrpre 0x%08x INTB 0x%08x\n", (uint32_t)tg, adrPrefix, INT_BASE_ADR);
   if(tg == LM32_NULL_PTR) { // check if the target is a null pointer. Used to allow removal of pattern containing target nodes
     return ret;
   }
 
   //check if the target queues are write locked
-  const uint32_t qFlags = tg[BLOCK_CMDQ_FLAGS >> 2];
-    //  TODO find out if a retry makes sense
+  const uint32_t qFlags = tg[BLOCK_CMDQ_FLAGS >> 2]; // queue flags field, contains lock bits. Only copy cmd action into buffer if Do not write (DNW) is false
+    
   if(qFlags & BLOCK_CMDQ_DNW_SMSK) { return ret; }
 
+  /*                    tg
+   *       _____________/|\___________  
+   *      /              |            \
+   *     Bl(Lo)       Bl(Md)        Bl(Hi)
+   *    /    \        /    \        /    \
+   *   b0    b1      b0    b1      b0    b1
+   *   / \   / \    / \   / \      / \   / \
+   *  e0 e1 e2 e3  e0 e1 e2 e3    e0 e1 e2 e3
+   */
 
   wrIdx   = ((uint8_t *)tg + BLOCK_CMDQ_WR_IDXS + _32b_SIZE_  - prio -1);                           // calculate pointer (8b) to current write index
   bufOffs = (*wrIdx & Q_IDX_MAX_MSK) / (_MEM_BLOCK_SIZE / _T_CMD_SIZE_  ) * _PTR_SIZE_;             // calculate Offsets
   elOffs  = (*wrIdx & Q_IDX_MAX_MSK) % (_MEM_BLOCK_SIZE / _T_CMD_SIZE_  ) * _T_CMD_SIZE_;
-  bl      = (uint32_t*)(tg[(BLOCK_CMDQ_PTRS + prio * _PTR_SIZE_) >> 2] - INT_BASE_ADR + adrPrefix); // get pointer to buf list
-  b       = (uint32_t*)(bl[bufOffs >> 2] - INT_BASE_ADR + adrPrefix);                               // get pointer to buf
+  bl      = (uint32_t*)(tg[(BLOCK_CMDQ_PTRS + prio * _PTR_SIZE_) >> 2]  - INT_BASE_ADR + adrPrefix); // get pointer to buf list
+  b       = (uint32_t*)(bl[bufOffs >> 2]  - INT_BASE_ADR + adrPrefix);                              // get pointer to buf
   e       = (uint32_t*)&b[elOffs >> 2];                                                             // get pointer to Element to write
 
   DBPRINT3("#%02u: Prio: %u, pre: 0x%08x, base: 0x%08x, wrIdx: 0x%08x, target: 0x%08x, BufList: 0x%08x, Buf: 0x%08x, Element: 0x%08x\n", cpuId, prio, adrPrefix, INT_BASE_ADR, (uint32_t)wrIdx, (uint32_t)tg, (uint32_t)bl, (uint32_t)b, (uint32_t)e );
@@ -312,9 +295,9 @@ uint32_t* cmd(uint32_t* node, uint32_t* thrData) {
   // !!! CAVEAT !!! when tvalid is used as relative offset in multiple commands to synchronise them, the sum of block start (current time sume) + tvalid
   // must always be greater than tMinimum, else the commands get differing tvalids assigned and will no longer synchronously become valid !!!
 
-  uint64_t* ptValid   = (uint64_t*)&node[CMD_VALID_TIME   >> 2];
-  uint64_t* ptCurrent = (uint64_t*)&thrData[T_TD_CURRTIME >> 2];
-  uint64_t tValid;
+  uint64_t* ptValid   = (uint64_t*)&node[CMD_VALID_TIME   >> 2]; // valid time value of this command action, usually used to sync multiple commands. can absolute or relative
+  uint64_t* ptCurrent = (uint64_t*)&thrData[T_TD_CURRTIME >> 2]; // current TAI in ns
+  uint64_t tValid; // final valid time, absolute or relative depending on VABS flag in action field.
 
   if((node[CMD_ACT  >> 2] >> ACT_VABS_POS) & ACT_VABS_MSK) tValid = *ptValid;
   else                                                     tValid = *ptCurrent + *ptValid;
@@ -341,16 +324,12 @@ uint32_t* cmd(uint32_t* node, uint32_t* thrData) {
   return ret;
 }
 
-/// Processes a switch node, changing a target's successor
-/** Overwrites target's successor. No queueing involved, effect is immediate. */
 uint32_t* cswitch(uint32_t* node, uint32_t* thrData) {
         uint32_t *ret = (uint32_t*)node[NODE_DEF_DEST_PTR >> 2];
         node[NODE_FLAGS >> 2] |= NFLG_PAINT_LM32_SMSK; // set paint bit to mark this node as visited
   
         uint32_t *tg  = (uint32_t*)node[SWITCH_TARGET >> 2];
   const uint32_t adrPrefix = (uint32_t)tg & PEER_ADR_MSK; // if target is on a different RAM, all ptrs must be translated from the local to our (peer) perspective
-
-  
 
   // check if the target is a null pointer, if so abort. Used to allow removal of pattern containing target nodes
   if(tg == LM32_NULL_PTR) { return ret; }
@@ -367,12 +346,6 @@ uint32_t* cswitch(uint32_t* node, uint32_t* thrData) {
   return ret;
 }
 
-/// Generates a timing message and dispatches it to priority queue
-/** Reformats timing node content and generates a timing message. 
-    Replaces relative offset with absolute deadline from controlling thread
-    and dispatches resulting message to it to priority queue 
-    Bus access of priority queue is a single cycle and cannot be interrupted.
-*/
 uint32_t* tmsg(uint32_t* node, uint32_t* thrData) {
   node[NODE_FLAGS >> 2] |= NFLG_PAINT_LM32_SMSK; // set paint bit to mark this node as visited
   DBPRINT2("#%02u: Sending Evt 0x%08x, next: 0x%08x\n", cpuId, node[NODE_HASH >> 2], node[NODE_DEF_DEST_PTR >> 2]);
@@ -414,11 +387,6 @@ uint32_t* tmsg(uint32_t* node, uint32_t* thrData) {
   return (uint32_t*)node[NODE_DEF_DEST_PTR >> 2];
 }
 
-/// Processes a block node. Updates thread time sum and executes an available action from the command queues.
-/** Block node is evaluated, thread time sum is increased by block period. 
-    The next available action in the command queues is executed and its quantity count decreased. 
-    If it reached zero, the action is popped from the queue. 
-    If action is a Flow, its destination node is returned to be processed next, otherwise the block's default successor node is. */
 uint32_t* block(uint32_t* node, uint32_t* thrData) {
   DBPRINT2("#%02u: Checking Block 0x%08x\n", cpuId, node[NODE_HASH >> 2]);
   uint32_t *ret = (uint32_t*)node[NODE_DEF_DEST_PTR >> 2];
@@ -493,8 +461,6 @@ uint32_t* block(uint32_t* node, uint32_t* thrData) {
 }
 
 
-/// Calls block node handler with fixed period (default)
-/** Default block node processing, see block() */
 uint32_t* blockFixed(uint32_t* node, uint32_t* thrData) {
   uint32_t* ret = block(node, thrData);
 
@@ -504,8 +470,6 @@ uint32_t* blockFixed(uint32_t* node, uint32_t* thrData) {
   return ret;
 }
 
-/// Calls block node handler with a self aligning period
-/** Block node period is dynamically elongated so the block ends aligned to a global time grid (currently 10µs starting at time 0) */
 uint32_t* blockAlign(uint32_t* node, uint32_t* thrData) {
   uint32_t     *ret = block(node, thrData);
   uint64_t      *tx =  (uint64_t*)&thrData[T_TD_CURRTIME >> 2]; // current time
@@ -524,21 +488,12 @@ uint32_t* blockAlign(uint32_t* node, uint32_t* thrData) {
 }
 
 
-/// Sorts the whole heap of the EDF thread scheduler
-/** EDF scheduler's heap is completely sorted by due deadline. 
-    This is only necessary if threads were aborted or new threads were started because this can mean more than one changed element. 
-    Otherwise a replace of the top element (earliest deadline) is sufficient. Stopped threads obtain MAX_INT 
-    as new deadline and are moved to the bottom of the heap normally by a single heapReplace() */
 void heapify() {
   int startSrc;
   //go through the heap, restore heap property
   for(startSrc=(_HEAP_SIZE_-1)>>1; startSrc >= 0; startSrc--) { heapReplace(startSrc); }
 }
 
-/// Main routine of the EDF thread scheduler. Replaces the top element (earliest deadline) of the heap and sorts the new deadline.
-/** Main routine of the EDF thread scheduler. Removes the top element (earliest deadline) from the heap and replaces it with its returned deadline.
-    The new deadline is sorted into its proper place in the heap. Deactivated/Idle threads obtain MAX_INT 
-    as new deadline and end up at the bottom of the heap.*/
 void heapReplace(uint32_t src) {
   uint32_t  dst = src, cl = 1, cr = 1, mask, lLEr, mGr, mGl, l, r;
   uint32_t* mov = hp[dst];
