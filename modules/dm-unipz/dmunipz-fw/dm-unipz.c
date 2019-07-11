@@ -1087,7 +1087,7 @@ void printOLED(char *chars)
 } // printOLED
 */
 
-void updateOLED(uint32_t statusTransfer, uint32_t virtAcc, uint32_t nTransfer, uint32_t nInject, uint32_t status, uint32_t actState)
+void updateOLED(uint32_t statusTransfer, uint32_t virtAcc, uint32_t nTransfer, uint32_t nInject, uint64_t statusArray, uint32_t actState)
 {
   char     c[32];
   volatile uint32_t *pOLED;
@@ -1097,10 +1097,18 @@ void updateOLED(uint32_t statusTransfer, uint32_t virtAcc, uint32_t nTransfer, u
 
   fwlib_clearOLED();
 
-  /*pp_sprintf(c, "%s\n", dmunipz_state_text(actState)); common_printOLED(c);chk */
-  /*pp_sprintf(c, "%s\n", dmunipz_status_text(status));  common_printOLED(c);chk */
-  pp_sprintf(c, "vA %7u\n", (unsigned int)virtAcc);   fwlib_printOLED(c);
-  pp_sprintf(c, "nT %7u\n", (unsigned int)nTransfer); fwlib_printOLED(c);
+  pp_sprintf(c, "state: %u\n", (unsigned int)actState);
+  fwlib_printOLED(c);
+
+  pp_sprintf(c, "OK?  : %d\n", (int)((statusArray >> COMMON_STATUS_OK) & 0x1));
+  fwlib_printOLED(c);
+
+  pp_sprintf(c, "vA %7u\n", (unsigned int)virtAcc);
+  fwlib_printOLED(c);
+  
+  pp_sprintf(c, "nT %7u\n", (unsigned int)nTransfer);
+  fwlib_printOLED(c);
+
   pp_sprintf(c, "sT  %d%d%d%d%d%d\n",
              ((statusTransfer & (0x1 << DMUNIPZ_TRANS_REQTK)    ) > 0),  
              ((statusTransfer & (0x1 << DMUNIPZ_TRANS_REQTKOK)  ) > 0), 
@@ -1108,7 +1116,8 @@ void updateOLED(uint32_t statusTransfer, uint32_t virtAcc, uint32_t nTransfer, u
              ((statusTransfer & (0x1 << DMUNIPZ_TRANS_REQBEAM)  ) > 0),
              ((statusTransfer & (0x1 << DMUNIPZ_TRANS_REQBEAMOK)) > 0),
              ((statusTransfer & (0x1 << DMUNIPZ_TRANS_RELBEAM)  ) > 0)
-             );                                       fwlib_printOLED(c);
+             );
+  fwlib_printOLED(c);
 } // updateOLED
 
 /*
@@ -1772,7 +1781,7 @@ int main(void) {
     *pSharedNR2sCycle    = nR2sCycle;
 
     // update OLED display
-    updateOLED(statusTransfer, virtAccReq, nTransfer, nInject, status, actState);
+    updateOLED(statusTransfer, virtAccReq, nTransfer, nInject, statusArray, actState);
   } // while
 
   return (1);
