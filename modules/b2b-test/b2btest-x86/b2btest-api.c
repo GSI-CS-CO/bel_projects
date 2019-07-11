@@ -152,7 +152,7 @@ void api_printDiag(uint64_t  statusArray, uint32_t  state, uint32_t  version, ui
     printf("overall status        : OK\n");
   else
     printf("overall status        : NOT OK\n");  
-  for (i= COMMON_STATUS_OK + 1; i<(sizeof(statusArray)*8); i++) {
+  for (i= COMMON_STATUS_OK + 1; i<(int)(sizeof(statusArray)*8); i++) {
     if ((statusArray >> i) & 0x1)
       printf("   status bit is set : %s\n", api_statusText(i));
   } // for i
