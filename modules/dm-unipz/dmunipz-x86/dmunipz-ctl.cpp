@@ -676,7 +676,7 @@ int main(int argc, char** argv) {
     printTransferHeader();
 
     while (1) {
-      api_readDiag(device, &statusArray, &state, &version, &mac, &ip, &nBadStatus, &nBadState, &tDiag, &tS0, &nTransfer, &nInjection, &statTrans, 1);
+      api_readDiag(device, &statusArray, &state, &version, &mac, &ip, &nBadStatus, &nBadState, &tDiag, &tS0, &nTransfer, &nInjection, &statTrans, 0);
 
       switch(state) {
       case COMMON_STATE_OPREADY :
