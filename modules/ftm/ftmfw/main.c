@@ -46,8 +46,8 @@
  */
 
 
-uint8_t cpuId;  /// Id number of this cpu
-uint8_t cpuQty; /// total number of cpus on the DM
+uint8_t cpuId;  
+uint8_t cpuQty;
 
 
 
@@ -77,7 +77,7 @@ void isr1()
 
 
 /// Etherbone Master init routine
-/** EBM init. Waits for WR core to receive IP from bootp and then sets src & dst MAC and IP addressesin EBM. */
+/** EBM init. Waits for WR core to receive IP from bootp and then sets src & dst MAC and IP addresses in EBM. */
 void ebmInit()
 {
 
