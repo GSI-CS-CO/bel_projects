@@ -3,7 +3,7 @@
  *
  *  created : 2017
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 10-jul-2019
+ *  version : 11-jul-2019
  *
  *  lm32 program for gateway between UNILAC Pulszentrale and FAIR-style Data Master
  * 
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 25-April-2015
  ********************************************************************************************/
-#define DMUNIPZ_FW_VERSION 0x000503                                     // make this consistent with makefile
+#define DMUNIPZ_FW_VERSION 0x000504                                     // make this consistent with makefile
 
 // standard includes
 #include <stdio.h>
@@ -165,6 +165,9 @@ uint32_t *cpuRamExternal;               // external address (seen from host brid
 WriteToPZU_Type  writePZUData;          // Modulbus SIS, I/O-Modul 1, Bits 0..15
 
 uint64_t statusArray;                   // all status infos are ORed bit-wise into statusArray, statusArray is then published
+uint32_t statusTransfer;                // status of transfer
+uint32_t nTransfer;                     // # of transfers
+uint32_t nInject;                       // # of injections within current transfer
 uint32_t flexOffset;                    // offset added to obtain timestamp for "flex wait"
 uint32_t uniTimeout;                    // timeout value for UNIPZ
 uint32_t tkTimeout;                     // timeout value for TK (via UNIPZ)
@@ -1217,6 +1220,10 @@ volatile uint32_t *pMilPiggy;
 
 void extern_clearDiag()
 {
+  statusArray     = 0x0; 
+  statusTransfer  = 0x0;
+  nTransfer       = 0x0;
+  nInject         = 0x0;
 } // extern_clearDiag
 
 /*
@@ -1611,9 +1618,6 @@ int main(void) {
   uint32_t cmd;
   /*uint32_t flagRecover;                         // flag indicating auto-recovery from error state; */
 
-  uint32_t statusTransfer;                      // status of transfer
-  uint32_t nTransfer;                           // number of transfers
-  uint32_t nInject;                             // number of injections within current transfer
   uint32_t virtAccReq;                          // number of virtual accelerator requested by Data Master
   uint32_t virtAccRec;                          // number of virtual accelerator received from UNIPZ
   uint32_t noBeam;                              // no beam flag requested by Data Master
