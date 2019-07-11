@@ -139,6 +139,20 @@ static void help(void) {
 } //help
 
 
+const char* statusText(uint32_t bit) {  
+  static char message[256];
+
+  switch (bit) {
+    case B2BTEST_STATUS_PHASEFAILED      : sprintf(message, "error %d, %s",    bit, "phase measurement failed"); break;
+    case B2BTEST_STATUS_TRANSFER         : sprintf(message, "error %d, %s",    bit, "transfer failed"); break;
+    case B2BTEST_STATUS_SAFETYMARGIN     : sprintf(message, "error %d, %s",    bit, "violation of safety margin for data master and timing network"); break;
+    default                              : sprintf(message, "%s",  api_statusText(bit)) ; break;
+  }
+
+  return message;
+} // b2btest_status_text
+
+
 int readInfo(uint32_t *sumStatus, uint32_t *state, uint32_t *nBadStatus, uint32_t *nBadState, uint32_t *nTransfer)
 {
   eb_cycle_t  cycle;
@@ -272,7 +286,7 @@ void printDiags(uint32_t sumStatus, uint32_t state, uint32_t nBadStatus, uint32_
   strftime(timestr, sizeof(timestr), "%Y-%m-%d %H:%M:%S TAI", tm);
   printf("diagnostics reset at  : %s\n", timestr);
   
-  printf("state (# of changes)  : %s (%u)\n", common_state_text(state), nBadState);
+  printf("state (# of changes)  : %s (%u)\n", api_stateText(state), nBadState);
   printf("sum status (# changes): 0x%08x (%u)\n", sumStatus, nBadStatus);
   if ((sumStatus >> COMMON_STATUS_OK) & 0x1)
     printf("overall status        : OK\n");
@@ -437,7 +451,7 @@ int main(int argc, char** argv) {
     readInfo(&sumStatus, &state, &nBadStatus, &nBadState, &nTransfer);
     printTransferHeader();
     printTransfer(nTransfer);
-    printf(" %s (%6u), status 0x%08x (%6u)\n", common_state_text(state), nBadState, sumStatus, nBadStatus);
+    printf(" %s (%6u), status 0x%08x (%6u)\n", api_stateText(state), nBadState, sumStatus, nBadStatus);
   } // if getInfo
 
   if (command) {
@@ -539,7 +553,7 @@ int main(int argc, char** argv) {
 
       if (printFlag) {
         printTransfer(nTransfer); 
-        printf(" %s (%6u), status 0x%08x (%d)\n", common_state_text(state), nBadState, sumStatus, nBadStatus);
+        printf(" %s (%6u), status 0x%08x (%d)\n", api_stateText(state), nBadState, sumStatus, nBadStatus);
       } // if printFlag
 
       fflush(stdout);                                                                         // required for immediate writing (if stdout is piped to syslog)
