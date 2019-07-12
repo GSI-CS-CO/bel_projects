@@ -259,8 +259,6 @@ inline void send_fg_param(int slot, int fg_base, unsigned short cntrl_reg, signe
     blk_data[3] = (pset.control & 0x3ffc0) >> 6;     // shift a 17..12 shift b 11..6
     blk_data[4] = pset.coeff_c & 0xffff;
     blk_data[5] = (pset.coeff_c & 0xffff0000) >> 16; // data written with high word
-    // save coeff_c as setvalue
-    *setvalue = pset.coeff_c;
 
     if ((slot & 0xf0) == 0) {
       scub_base[OFFS(slot) + fg_base + FG_CNTRL]  = blk_data[0];
@@ -269,11 +267,17 @@ inline void send_fg_param(int slot, int fg_base, unsigned short cntrl_reg, signe
       scub_base[OFFS(slot) + fg_base + FG_SHIFT]  = blk_data[3];
       scub_base[OFFS(slot) + fg_base + FG_STARTL] = blk_data[4];
       scub_base[OFFS(slot) + fg_base + FG_STARTH] = blk_data[5];
+      // no setvalue for scu bus daq 
+      *setvalue = 0;
     } else if (slot & DEV_MIL_EXT) {
+      // save coeff_c as setvalue
+      *setvalue = pset.coeff_c;
       // transmit in one block transfer over the dev bus
       if((status = write_mil_blk(scu_mil_base, &blk_data[0], FC_BLK_WR | fg_base)) != OKAY) dev_failure(status, slot & 0xf, "send_fg_param");
       // still in block mode !
     } else if (slot & DEV_SIO) {
+      // save coeff_c as setvalue
+      *setvalue = pset.coeff_c;
       // transmit in one block transfer over the dev bus
       if((status = scub_write_mil_blk(scub_base, slot & 0xf, &blk_data[0], FC_BLK_WR | fg_base)) != OKAY) {
         dev_failure(status, slot & 0xf, "send_fg_param");
@@ -494,9 +498,6 @@ int configure_fg_macro(int channel) {
       blk_data[3] = (pset.control & 0x3ffc0) >> 6;     // shift a 17..12 shift b 11..6
       blk_data[4] = pset.coeff_c & 0xffff;
       blk_data[5] = (pset.coeff_c & 0xffff0000) >> 16; // data written with high word
-      
-      // save the coeff_c for mil daq
-      last_c_coeff[channel] = pset.coeff_c;
 
       if ((slot & 0xf0) == 0) {
         //set virtual fg number Bit 9..4
@@ -508,12 +509,16 @@ int configure_fg_macro(int channel) {
         scub_base[OFFS(slot) + fg_base + FG_STARTH] = blk_data[5];
 
       } else if (slot & DEV_MIL_EXT) {
+        // save the coeff_c for mil daq
+        last_c_coeff[channel] = pset.coeff_c;
         // transmit in one block transfer over the dev bus
         if((status = write_mil_blk(scu_mil_base, &blk_data[0], FC_BLK_WR | dev)) != OKAY) dev_failure (status, 0, "blk trm");
         // still in block mode !
         if((status = write_mil(scu_mil_base, cntrl_reg_wr, FC_CNTRL_WR | dev)) != OKAY)   dev_failure (status, 0, "end blk trm");
 
       } else if (slot & DEV_SIO) {
+        // save the coeff_c for mil daq
+        last_c_coeff[channel] = pset.coeff_c;
         // transmit in one block transfer over the dev bus
         if((status = scub_write_mil_blk(scub_base, slot & 0xf, &blk_data[0], FC_BLK_WR | dev))  != OKAY) dev_failure (status, slot & 0xf, "blk trm");
         // still in block mode !
