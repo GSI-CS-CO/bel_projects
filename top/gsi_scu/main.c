@@ -119,7 +119,7 @@ volatile int initialized[MAX_SCU_SLAVES] = {0};
 int clear_is_active[MAX_SCU_SLAVES + 1] = {0};
 volatile struct message_buffer msg_buf[QUEUE_CNT] = {0};
 uint64_t timeout[MAX_FG_CHANNELS] = {0};
-signed int last_c_coeff[MAX_FG_CHANNELS];
+signed int last_c_coeff[MAX_FG_CHANNELS] = {0};
 
 
 void dev_failure(int status, int slot, char* msg) {
