@@ -321,9 +321,13 @@ typedef struct PACKED_SIZE
  * we have a bit of paranoia, which can't hurt. ;-)
  */
 STATIC_ASSERT( offsetof(_DAQ_DISCRIPTOR_STRUCT_T, slotDiob ) == 0 );
+#if 1
 STATIC_ASSERT( offsetof(_DAQ_DISCRIPTOR_STRUCT_T, wr ) ==
                offsetof(_DAQ_DISCRIPTOR_STRUCT_T, slotDiob ) +
                sizeof( _DAQ_BF_SLOT_DIOB ));
+#else
+STATIC_ASSERT( offsetof(_DAQ_DISCRIPTOR_STRUCT_T, wr ) == GET_OFFSET_AFTER( _DAQ_DISCRIPTOR_STRUCT_T, slotDiob ) )
+#endif
 STATIC_ASSERT( offsetof(_DAQ_DISCRIPTOR_STRUCT_T, trigger ) ==
                offsetof(_DAQ_DISCRIPTOR_STRUCT_T, wr ) + sizeof( _DAQ_WR_T ));
 STATIC_ASSERT( offsetof(_DAQ_DISCRIPTOR_STRUCT_T, cControl ) ==

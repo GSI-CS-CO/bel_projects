@@ -107,18 +107,27 @@ int EbRamAccess::readDaqDataBlock( RAM_DAQ_PAYLOAD_T* pData,
    uint lenToEnd = indexes.capacity - ramRingGetReadIndex( &indexes );
    if( lenToEnd < len )
    {
-       m_poEb->doRead( m_pRam->ram.pTrModeBase +
-                       ramRingGetReadIndex( &indexes ) * sizeof(DDR3_PAYLOAD_T),
-                       reinterpret_cast<etherbone::data_t*>(pData),
-                       sizeof( pData->ad32[0] ) | EB_LITTLE_ENDIAN,
-                       lenToEnd * ARRAY_SIZE( pData->ad32 ),
-                       true
-                     );
-       ramRingAddToReadIndex( &indexes, lenToEnd );
-       len   -= lenToEnd;
-       pData += lenToEnd;
-   }
+#if 0
+      m_poEb->doRead( m_pRam->ram.pTrModeBase +
+                      ramRingGetReadIndex( &indexes ) * sizeof(DDR3_PAYLOAD_T),
+                      reinterpret_cast<etherbone::data_t*>(pData),
+                      sizeof( pData->ad32[0] ) | EB_LITTLE_ENDIAN,
+                      lenToEnd * ARRAY_SIZE( pData->ad32 ),
+                      true
+                    );
+#else
+      m_poEb->read( m_pRam->ram.pTrModeBase +
+                      ramRingGetReadIndex( &indexes ) * sizeof(DDR3_PAYLOAD_T),
+                    reinterpret_cast<etherbone::data_t*>(pData),
+                    sizeof( pData->ad32[0] ) | EB_LITTLE_ENDIAN,
+                    lenToEnd * ARRAY_SIZE( pData->ad32 ) );
 
+#endif
+      ramRingAddToReadIndex( &indexes, lenToEnd );
+      len   -= lenToEnd;
+      pData += lenToEnd;
+   }
+#if 0
    m_poEb->doRead( m_pRam->ram.pTrModeBase +
                    ramRingGetReadIndex( &indexes ) * sizeof(DDR3_PAYLOAD_T),
                    reinterpret_cast<etherbone::data_t*>(pData),
@@ -126,6 +135,13 @@ int EbRamAccess::readDaqDataBlock( RAM_DAQ_PAYLOAD_T* pData,
                    len * ARRAY_SIZE( pData->ad32 ),
                    true
                  );
+#else
+   m_poEb->read( m_pRam->ram.pTrModeBase +
+                   ramRingGetReadIndex( &indexes ) * sizeof(DDR3_PAYLOAD_T),
+                 reinterpret_cast<etherbone::data_t*>(pData),
+                 sizeof( pData->ad32[0] ) | EB_LITTLE_ENDIAN,
+                 len * ARRAY_SIZE( pData->ad32 ) );
+#endif
    ramRingAddToReadIndex( &indexes, len );
 
    m_pRam->pSharedObj->ringIndexes = indexes;

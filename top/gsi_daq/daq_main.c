@@ -251,7 +251,7 @@ void main( void )
 
    while( true )
    {
-      SCU_ASSERT( _endram == STACK_MAGIC );
+      DAQ_ASSERT( _endram == STACK_MAGIC );
       forEachScuDevice();
    }
 }

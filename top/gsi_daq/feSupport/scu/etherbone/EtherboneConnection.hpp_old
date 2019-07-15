@@ -82,20 +82,6 @@ namespace FeSupport {
           uint64_t findDeviceBaseAddress(Etherbone::VendorId vendorId,
                                          Etherbone::DeviceId deviceId,
                                          uint32_t ind=0);
-
-          /*!
-           * @brief Copies a data array in 1:1 manner form the bus.
-           * @author Ulrich Becker
-           * @param eb_address Address to read from
-           * @param pData Destination address to store data
-           * @param format Or-link of endian convention and data format
-           *               (8, 16, 32 or 64) bit.
-           * @param size Length of data array.
-           */
-          void read( etherbone::address_t eb_address, void* pData,
-                     etherbone::format_t format,
-                     const std::size_t size = 1 );
-
           /*!
            * \brief Reads a value from the bus in etherbone format. 
            *
@@ -158,19 +144,6 @@ namespace FeSupport {
           void doVectorWrite(const etherbone::address_t &eb_address, 
                              const std::vector <std::pair <etherbone::data_t, etherbone::data_t> >& v,
                              etherbone::format_t format);
-
-          /*!
-           * @brief Copies a data array in 1:1 manner to the bus.
-           * @author Ulrich Becker
-           * @param eb_address Address to write to
-           * @param pData Array of data to write
-           * @param format Or-link of endian convention and data format
-           *               (8, 16, 32 or 64) bit.
-           * @param size Length of data array.
-           */
-          void write( etherbone::address_t eb_address, const void* pData,
-                      etherbone::format_t format,
-                      const std::size_t size = 1 );
 
           /*!
            * \brief Activate debugging outputs on console. 
