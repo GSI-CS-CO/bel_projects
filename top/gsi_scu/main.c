@@ -1095,7 +1095,7 @@ void dev_sio_handler(int id) {
           d.actvalue = data_aquisition;
           d.tmstmp_l = task_ptr[id].daq_timestamp[i] & 0xffffffff;
           d.tmstmp_h = task_ptr[id].daq_timestamp[i] >> 32;
-          d.channel  = i;
+          d.channel  = fg_macros[fg_regs[i].macro_number];
           d.setvalue = last_c_coeff[i];
           add_daq_msg(&daq_buf, d);
 
@@ -1269,7 +1269,7 @@ void dev_bus_handler(int id) {
           d.actvalue = data_aquisition;
           d.tmstmp_l = task_ptr[id].daq_timestamp[i] & 0xffffffff;
           d.tmstmp_h = task_ptr[id].daq_timestamp[i] >> 32;
-          d.channel  = i;
+          d.channel  = fg_macros[fg_regs[i].macro_number];
           d.setvalue = last_c_coeff[i];
           add_daq_msg(&daq_buf, d);
 
