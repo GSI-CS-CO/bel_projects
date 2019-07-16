@@ -234,20 +234,6 @@ uint64_t EtherboneConnection::findDeviceBaseAddress( VendorId vendorId,
     return deviceVector[ind].sdb_component.addr_first;
 }
 
-
-
-/*! ---------------------------------------------------------------------------
- * @brief Adds a byte oriented offset to the given pointer
- * @author Ulrich Becker
- * @param pData Base pointer
- * @param ofs Offset in bytes.
- * @return Base address + offset.
- */
-template<typename T> T* addByteOffset( T* pData, uint ofs )
-{
-   return reinterpret_cast<T*>( &((uint8_t*)( pData ))[ofs] );
-}
-
 /*! ---------------------------------------------------------------------------
  * @brief Tyoe of data-object used by callback function __onEbRead and
  *        __onEbWrite
@@ -257,13 +243,37 @@ template<typename T> T* addByteOffset( T* pData, uint ofs )
  */
 struct EB_USER_CB_T
 {
-   bool         m_finished;     //!<@brief becomes true when transfer finished.
-   eb_status_t  m_status;       //!<@brief etherbone status
-   std::size_t  m_len;          //!<@brief length of data field to copy
-   void*        m_pUserAddress; //!<@brief Linux user address
+   bool           m_finished;     //!<@brief becomes true when transfer finished.
+   eb_status_t    m_status;       //!<@brief etherbone status
+   std::size_t    m_len;          //!<@brief length of data field to copy
+   eb_user_data_t m_pUserAddress; //!<@brief Linux user address
+
+   EB_USER_CB_T( std::size_t len, eb_user_data_t pUserAddress = nullptr )
+      :m_finished( false )
+      ,m_status( EB_OK )
+      ,m_len( len )
+      ,m_pUserAddress( pUserAddress )
+   {}
+
+   bool isFinished( void ) const
+   {
+      return m_finished;
+   }
+
+   eb_status_t getStatus( void ) const
+   {
+      return m_status;
+   }
 };
 
-extern "C" {
+/*
+ * The callback functions __onEbRead and __onEbWrite becomes invoked within
+ * the C-module libEtherbone. Therefore it's necessary to declare the
+ * call-convention of both as pure C-function.
+ */
+extern "C"
+{
+
 /*! ---------------------------------------------------------------------------
  * @brief Callback function becomes invoked by member function
  *        EtherboneConnection::read
@@ -281,8 +291,8 @@ static void  __onEbRead( eb_user_data_t pUser, eb_device_t dev,
    std::size_t i = 0;
    while( (op != EB_NULL) && (i < static_cast<EB_USER_CB_T*>(pUser)->m_len) )
    {
-      eb_data_t data = ::eb_operation_data( op );
-      size_t size = ::eb_operation_format( op ) & EB_DATAX;
+      etherbone::data_t data = ::eb_operation_data( op );
+      std::size_t size = ::eb_operation_format( op ) & EB_DATAX;
       ::memcpy( &(static_cast<uint8_t*>(static_cast<EB_USER_CB_T*>
                    (pUser)->m_pUserAddress))[i * size],
                 &data, size );
@@ -322,29 +332,32 @@ static void __onEbWrite( eb_user_data_t pUser, eb_device_t dev,
 } // extern "c"
 
 /*! ---------------------------------------------------------------------------
+ * @author Ulrich Becker
+ * @see EtherboneConnection.hpp
  */
-void EtherboneConnection::read( etherbone::address_t eb_address, void* pData,
-                                etherbone::format_t format,
+void EtherboneConnection::read( const etherbone::address_t eb_address,
+                                eb_user_data_t pData,
+                                const etherbone::format_t format,
                                 const std::size_t size )
 {
+   /*
+    * A size of zero is legal but there is nothing to do.
+    */
    if( size == 0 )
       return;
 
-   EB_USER_CB_T userObj =
-   {
-      .m_finished     = false,
-      .m_status       = EB_OK,
-      .m_len          = size,
-      .m_pUserAddress = pData
-   };
+   /*
+    * Initializing the argument object of the callback function "__onEbRead"
+    */
+   EB_USER_CB_T userObj( size, pData );
 
    eb_status_t status;
-   uint whide = format & EB_DATAX;
+   const std::size_t whide = format & EB_DATAX;
 
    {
       IPC::scoped_lock<IPC::named_mutex> lock(_sysMu);
       etherbone::Cycle eb_cycle;
-      if ((status = eb_cycle.open(eb_device_, &userObj, __onEbRead)) != EB_OK)
+      if( (status = eb_cycle.open(eb_device_, &userObj, __onEbRead)) != EB_OK )
       {
            // TODO: a specific exception would be nice
          std::string status_str(eb_status(status));
@@ -362,7 +375,7 @@ void EtherboneConnection::read( etherbone::address_t eb_address, void* pData,
          eb_cycle.read( eb_address + j, format, nullptr );
       }
 
-      if ((status = eb_cycle.close()) != EB_OK)
+      if( (status = eb_cycle.close()) != EB_OK )
       {
            // TODO: a specific exception would be nice
          std::string status_str(eb_status(status));
@@ -375,24 +388,26 @@ void EtherboneConnection::read( etherbone::address_t eb_address, void* pData,
          throw BusException(messageBuilder.str());
       }
 
-      while( !userObj.m_finished )
+      while( !userObj.isFinished() )
       {
          eb_socket_.run( timeout_ );
       }
-
    } // End of Mutex scope
 
-   if( userObj.m_status != EB_OK )
+   /*
+    * Checking whether an error in the callback function "__onEbRead"
+    * has occurred.
+    */
+   if( userObj.getStatus() != EB_OK )
    {
-      std::string status_str( eb_status(userObj.m_status) );
+      std::string status_str( eb_status(userObj.getStatus()) );
       std::stringstream messageBuilder;
       messageBuilder << __FILE__ << "::" << __FUNCTION__ << "::"
                      << std::dec << __LINE__
                      << ": ERROR: Callback function __onEbRead failed! - "
-                        "ErrorCode: " << userObj.m_status << " ErrorMsg: "
+                        "ErrorCode: " << userObj.getStatus() << " ErrorMsg: "
                      << status_str << std::endl;
       throw BusException(messageBuilder.str());
-
    }
 
    if( !debug_)
@@ -412,84 +427,59 @@ void EtherboneConnection::read( etherbone::address_t eb_address, void* pData,
 
 /* ----------------------------------------------------------------------------
  */
-void EtherboneConnection::doRead( etherbone::address_t eb_address,
-                                  etherbone::data_t* data,
-                                  etherbone::format_t format,
-                                  const uint16_t size,
-                                  bool packedTarget
-                                )
-{
-   if( size == 0 )
-      return;
+void EtherboneConnection::doRead(etherbone::address_t eb_address,
+                                 etherbone::data_t* data,
+                                 etherbone::format_t format,
+                                 const uint16_t size) {
 
-   if ( size == 1 )
-   {
-      {
-         IPC::scoped_lock<IPC::named_mutex> lock(_sysMu);
-         eb_device_.read(eb_address, format, data);
-      } // End of mutex scope
-      if( !debug_)
-         return;
-      std::cout << __FILE__ << "::" << __FUNCTION__ << "::"
-                << std::dec << __LINE__
-                << " addr 0x" << std::hex << eb_address
-                << " data 0x" << *data << std::dec << std::endl;
-      return;
-   }
-
-   etherbone::Cycle eb_cycle;
-   eb_status_t status;
-   uint whide = format & EB_DATAX;
-
-   {
+  if ( size == 1 ) {
+    IPC::scoped_lock<IPC::named_mutex> lock(_sysMu);
+    {
+      eb_device_.read(eb_address, format, data);
+      if (debug_)
+        std::cout << __FILE__ << "::" << __FUNCTION__ << "::" << std::dec << __LINE__
+                  << " addr 0x" << std::hex << eb_address << " data 0x" << *data
+                  << std::dec << std::endl;
+    }
+  }
+  else {
+    etherbone::Cycle eb_cycle;
+    eb_status_t status;
+    {
       IPC::scoped_lock<IPC::named_mutex> lock(_sysMu);
-
-      if ((status = eb_cycle.open(eb_device_, this, eb_block)) != EB_OK)
-      {
-           // TODO: a specific exception would be nice
-         std::string status_str(eb_status(status));
-         std::stringstream messageBuilder;
-         messageBuilder << __FILE__ << "::" << __FUNCTION__ << "::"
-                        << std::dec << __LINE__ << ": "
-                        << "ERROR: opening etherbone cycle failed! - "
-                        "ErrorCode: " << status << " ErrorMsg: "
-                        << status_str << std::endl;
-         throw BusException(messageBuilder.str());
+      if ((status = eb_cycle.open(eb_device_, this, eb_block)) != EB_OK) {
+        // TODO: a specific exception would be nice
+        std::string status_str(eb_status(status));
+        std::stringstream messageBuilder;
+        messageBuilder << __FILE__ << "::" << __FUNCTION__ << "::" << std::dec << __LINE__ << ": "
+                       << "ERROR: opening etherbone cycle failed! - "
+                       << "ErrorCode: " << status << " ErrorMsg: " << status_str << std::endl;
+        throw BusException(messageBuilder.str());
       }
+
       // read data block
-
-      uint offset = packedTarget? whide : sizeof( etherbone::data_t );
-      for( uint i = 0, j = 0, k = 0; i < size; i++, j += whide, k += offset )
-      {
-         eb_cycle.read( eb_address + j, format, addByteOffset( data, k ) );
+      for(int i = 0; i < size; i++) {
+        eb_cycle.read(eb_address+(i*(format & EB_DATAX)), format, &(data[i]));
       }
 
-      if ((status = eb_cycle.close()) != EB_OK)
-      {
-           // TODO: a specific exception would be nice
-         std::string status_str(eb_status(status));
-         std::stringstream messageBuilder;
-         messageBuilder << __FILE__ << "::" << __FUNCTION__ << "::"
-                        << std::dec << __LINE__
-                        << ": ERROR: closing etherbone cycle failed! - "
-                        "ErrorCode: " << status << " ErrorMsg: "
-                        << status_str << std::endl;
-         throw BusException(messageBuilder.str());
+      if ((status = eb_cycle.close()) != EB_OK) {
+        // TODO: a specific exception would be nice
+        std::string status_str(eb_status(status));
+        std::stringstream messageBuilder;
+        messageBuilder << __FILE__ << "::" << __FUNCTION__ << "::" << std::dec << __LINE__ << ": "
+                       << "ERROR: closing etherbone cycle failed! - "
+                       << "ErrorCode: " << status << " ErrorMsg: " << status_str << std::endl;
+        throw BusException(messageBuilder.str());
       }
-   } // End of mutex scope
-
-   if( !debug_)
-      return;
-
-   uint j = 0;
-   for( uint i = 0; i < size; i++, j += whide )
-   {
-      std::cout << __FILE__ << "::" << __FUNCTION__ << "::"
-                << std::dec << __LINE__ << ": " << "addr 0x"
-                << std::hex << eb_address + j
-                << " data[" << std::dec << i <<"] 0x" << std::hex
-                << *addByteOffset( data, j ) << std::dec << std::endl;
-   }
+    } // End of Mutex scope
+    if (debug_) {
+      for(uint i = 0; i < size; i++) {
+        std::cout << __FILE__ << "::" << __FUNCTION__ << "::" << std::dec << __LINE__ << ": " << "addr 0x"
+                  << std::hex << eb_address+(i*(format & EB_DATAX))
+                  << " data[" << std::dec << i <<"] 0x" << std::hex << data[i] << std::dec << std::endl;
+      }
+    }
+  }
 }
 
 /* ----------------------------------------------------------------------------
@@ -503,8 +493,8 @@ void EtherboneConnection::doVectorRead( const etherbone::address_t &eb_address,
    etherbone::Cycle eb_cycle;
    eb_status_t status;
 
-   IPC::scoped_lock<IPC::named_mutex> lock(_sysMu); // See comment above! (UB
-   { //?
+   {
+      IPC::scoped_lock<IPC::named_mutex> lock(_sysMu);
       if ((status = eb_cycle.open(eb_device_, this, eb_block)) != EB_OK)
       {
         // TODO: a specific exception would be nice
@@ -540,7 +530,7 @@ void EtherboneConnection::doVectorRead( const etherbone::address_t &eb_address,
                         << status_str << std::endl;
          throw BusException(messageBuilder.str());
       }
-   } //?
+   } // End of Mutex scope
 
    if (debug_)
    {
@@ -556,85 +546,168 @@ void EtherboneConnection::doVectorRead( const etherbone::address_t &eb_address,
    }
 }
 
-/* ----------------------------------------------------------------------------
+/*! ---------------------------------------------------------------------------
+ * @author Ulrich Becker
+ * @see EtherboneConnection.hpp
  */
-void EtherboneConnection::doWrite( const etherbone::address_t eb_address,
-                                   const etherbone::data_t* data,
-                                   etherbone::format_t format,
-                                   const uint16_t size,
-                                   bool packedSource
-                                 )
+void EtherboneConnection::write( const etherbone::address_t eb_address,
+                                 const eb_user_data_t pData,
+                                 const etherbone::format_t format,
+                                 const std::size_t size )
 {
+   /*
+    * A size of zero is legal but there is nothing to do.
+    */
    if( size == 0 )
       return;
 
-   if ( size == 1 )
-   {
-      {
-         IPC::scoped_lock<IPC::named_mutex> lock(_sysMu);
-         eb_device_.write( eb_address, format, data[0] );
-      } // End of mutex scope
-      if (!debug_)
-         return;
-      std::cout << __FILE__ << "::" << __FUNCTION__ << "::"
-                << std::dec << __LINE__ << " addr 0x" << std::hex
-                << eb_address << " data 0x" << *data
-                << std::dec << std::endl;
-      return;
-   }
-
-   etherbone::Cycle eb_cycle;
-   eb_status_t status;
-   uint whide = format & EB_DATAX;
-
-   IPC::scoped_lock<IPC::named_mutex> lock(_sysMu);
-   if ((status = eb_cycle.open(eb_device_, this, eb_block)) != EB_OK)
-   {
-       // TODO: a specific exception would be nice
-      std::string status_str(eb_status(status));
-      std::stringstream messageBuilder;
-      messageBuilder << __FILE__ << "::" << __FUNCTION__ << "::" << std::dec << __LINE__ << ": "
-                     << "ERROR: opening etherbone cycle failed! - "
-                     << "ErrorCode: " << status << " ErrorMsg: " << status_str << std::endl;
-      throw BusException(messageBuilder.str());
-   }
-
-   // write data block
    /*
-    * The function Cycle::write() expect as third parameter the data of
-    * type eb_data_t. In this layer the single data-words will get from
-    * the pointer "data" in the case the format in argument "format" is lower
-    * than sizeof(eb_data_t), the etherbone layer could return with
-    * a format-error.
-    * Therefore it becomes necessary to use a dynamical mask masking out the
-    * bits over the real payload size which becomes to send.
+    * Initializing the argument object of the callback function "__onEbWrite"
     */
-   eb_data_t mask = ~(static_cast<eb_data_t>(~0) << (whide * 8));
-   uint offset = packedSource? whide : sizeof(etherbone::data_t);
-   for( uint i = 0, j = 0, k = 0; i < size; i++, j += whide, k += offset )
-   {
-      eb_data_t d = *addByteOffset( data, k ) & mask;
-      eb_cycle.write( eb_address + j, format, d );
-      if (!debug_)
-         continue;
-      std::cout << __FILE__ << "::" << __FUNCTION__ << "::"
-                << std::dec << __LINE__ << ": " << "addr 0x"
-                << std::hex << eb_address + j
-                << " data[" << std::dec << i <<"] 0x"
-                << std::hex << d << std::endl;
-   }
+   EB_USER_CB_T userObj( size );
 
-   if ((status = eb_cycle.close()) != EB_OK)
+   eb_status_t status;
+   const std::size_t whide = format & EB_DATAX;
+
    {
-       // TODO: a specific exception would be nice
-      std::string status_str(eb_status(status));
+      IPC::scoped_lock<IPC::named_mutex> lock(_sysMu);
+      etherbone::Cycle eb_cycle;
+      if ((status = eb_cycle.open(eb_device_, &userObj, __onEbWrite)) != EB_OK)
+      {
+           // TODO: a specific exception would be nice
+         std::string status_str(eb_status(status));
+         std::stringstream messageBuilder;
+         messageBuilder << __FILE__ << "::" << __FUNCTION__ << "::"
+                        << std::dec << __LINE__ << ": "
+                        << "ERROR: opening etherbone cycle failed! - "
+                        "ErrorCode: " << status << " ErrorMsg: "
+                        << status_str << std::endl;
+         throw BusException(messageBuilder.str());
+      }
+
+      for( std::size_t i = 0, j = 0; i < size; i++, j += whide )
+      {
+         eb_data_t data;
+         switch( whide )
+         {
+            case sizeof(uint8_t):
+            {
+               data = static_cast<const uint8_t*>(pData)[i];
+               break;
+            }
+            case sizeof(uint16_t):
+            {
+               data = static_cast<const uint16_t*>(pData)[i];
+               break;
+            }
+            case sizeof(uint32_t):
+            {
+               data = static_cast<const uint32_t*>(pData)[i];
+               break;
+            }
+            case sizeof(uint64_t):
+            {
+               data = static_cast<const uint64_t*>(pData)[i];
+               break;
+            }
+            default:
+            {
+               assert( false );
+               break;
+            }
+         }
+         eb_cycle.write( eb_address + j, format, data );
+      }
+
+      if ((status = eb_cycle.close()) != EB_OK)
+      {
+           // TODO: a specific exception would be nice
+         std::string status_str(eb_status(status));
+         std::stringstream messageBuilder;
+         messageBuilder << __FILE__ << "::" << __FUNCTION__ << "::"
+                        << std::dec << __LINE__
+                        << ": ERROR: closing etherbone cycle failed! - "
+                        "ErrorCode: " << status << " ErrorMsg: "
+                        << status_str << std::endl;
+         throw BusException(messageBuilder.str());
+      }
+
+      while( !userObj.isFinished() )
+      {
+         eb_socket_.run( timeout_ );
+      }
+   } // End Mutex scope
+
+   /*
+    * Checking whether an error in the callback function "__onEbWrite"
+    * has occurred.
+    */
+   if( userObj.getStatus() != EB_OK )
+   {
+      std::string status_str( eb_status(userObj.getStatus()) );
       std::stringstream messageBuilder;
-      messageBuilder << __FILE__ << "::" << __FUNCTION__ << "::" << std::dec << __LINE__ << ": "
-                     << "ERROR: closing etherbone cycle failed! - "
-                     << "ErrorCode: " << status << " ErrorMsg: " << status_str << std::endl;
+      messageBuilder << __FILE__ << "::" << __FUNCTION__ << "::"
+                     << std::dec << __LINE__
+                     << ": ERROR: Callback function __onEbWrite failed! - "
+                        "ErrorCode: " << userObj.getStatus() << " ErrorMsg: "
+                     << status_str << std::endl;
       throw BusException(messageBuilder.str());
    }
-} // doWrite, end of mutex scope
+}
+
+/* ----------------------------------------------------------------------------
+ */
+void EtherboneConnection::doWrite(const etherbone::address_t &eb_address,
+                                  const etherbone::data_t* data,
+                                  etherbone::format_t format,
+                                  const uint16_t size) {
+
+  if ( size == 1 ) {
+    IPC::scoped_lock<IPC::named_mutex> lock(_sysMu);
+    {
+      eb_device_.write(eb_address, format, data[0]);
+      if (debug_)
+        std::cout << __FILE__ << "::" << __FUNCTION__ << "::" << std::dec << __LINE__
+                  << " addr 0x" << std::hex << eb_address << " data 0x" << *data
+                  << std::dec << std::endl;
+    }
+  }
+  else {
+    etherbone::Cycle eb_cycle;
+    eb_status_t status;
+
+    IPC::scoped_lock<IPC::named_mutex> lock(_sysMu);
+    {
+      if ((status = eb_cycle.open(eb_device_, this, eb_block)) != EB_OK) {
+        // TODO: a specific exception would be nice
+        std::string status_str(eb_status(status));
+        std::stringstream messageBuilder;
+        messageBuilder << __FILE__ << "::" << __FUNCTION__ << "::" << std::dec << __LINE__ << ": "
+                       << "ERROR: opening etherbone cycle failed! - "
+                       << "ErrorCode: " << status << " ErrorMsg: " << status_str << std::endl;
+        throw BusException(messageBuilder.str());
+      }
+
+      // write data block
+      for(int i = 0; i < size; i++) {
+        eb_cycle.write(eb_address+(i*(format & EB_DATAX)), format, data[i]);
+        if (debug_)
+          std::cout << __FILE__ << "::" << __FUNCTION__ << "::" << std::dec << __LINE__ << ": " << "addr 0x"
+                    << std::hex << eb_address+(i*(format & EB_DATAX)) << " data[" << std::dec << i <<"] 0x"
+                    << std::hex << data[i] << std::endl;
+      }
+      if ((status = eb_cycle.close()) != EB_OK) {
+        // TODO: a specific exception would be nice
+        std::string status_str(eb_status(status));
+        std::stringstream messageBuilder;
+        messageBuilder << __FILE__ << "::" << __FUNCTION__ << "::" << std::dec << __LINE__ << ": "
+                       << "ERROR: closing etherbone cycle failed! - "
+                       << "ErrorCode: " << status << " ErrorMsg: " << status_str << std::endl;
+        throw BusException(messageBuilder.str());
+      }
+    }
+  } // else
+} // doWrite
 
 /* ----------------------------------------------------------------------------
  */
@@ -647,7 +720,7 @@ void EtherboneConnection::doVectorWrite(const etherbone::address_t &eb_address,
    etherbone::Cycle eb_cycle;
    eb_status_t status;
 
-   IPC::scoped_lock<IPC::named_mutex> lock(_sysMu); // See comment above! (UB)
+   IPC::scoped_lock<IPC::named_mutex> lock(_sysMu);
    { //?
       if ((status = eb_cycle.open(eb_device_, this, eb_block)) != EB_OK)
       {
@@ -690,90 +763,6 @@ void EtherboneConnection::doVectorWrite(const etherbone::address_t &eb_address,
       }
    } //?
 }
-
-/*! ---------------------------------------------------------------------------
- */
-void EtherboneConnection::write( etherbone::address_t eb_address,
-                                 const void* pData,
-                                 etherbone::format_t format,
-                                 const std::size_t size )
-{
-   if( size == 0 )
-      return;
-
-   EB_USER_CB_T userObj =
-   {
-      .m_finished     = false,
-      .m_status       = EB_OK,
-      .m_len          = size,
-      .m_pUserAddress = nullptr
-   };
-
-   eb_status_t status;
-   std::size_t whide = format & EB_DATAX;
-
-   {
-      IPC::scoped_lock<IPC::named_mutex> lock(_sysMu);
-      etherbone::Cycle eb_cycle;
-      if ((status = eb_cycle.open(eb_device_, &userObj, __onEbWrite)) != EB_OK)
-      {
-           // TODO: a specific exception would be nice
-         std::string status_str(eb_status(status));
-         std::stringstream messageBuilder;
-         messageBuilder << __FILE__ << "::" << __FUNCTION__ << "::"
-                        << std::dec << __LINE__ << ": "
-                        << "ERROR: opening etherbone cycle failed! - "
-                        "ErrorCode: " << status << " ErrorMsg: "
-                        << status_str << std::endl;
-         throw BusException(messageBuilder.str());
-      }
-
-      for( std::size_t i = 0, j = 0; i < size; i++, j += whide )
-      {
-         eb_data_t data;
-         switch( whide )
-         {
-            case sizeof(uint8_t):  data = static_cast<const uint8_t*>(pData)[i];  break;
-            case sizeof(uint16_t): data = static_cast<const uint16_t*>(pData)[i]; break;
-            case sizeof(uint32_t): data = static_cast<const uint32_t*>(pData)[i]; break;
-            case sizeof(uint64_t): data = static_cast<const uint64_t*>(pData)[i]; break;
-            default: assert( false ); break;
-         }
-         eb_cycle.write( eb_address + j, format, data );
-      }
-
-      if ((status = eb_cycle.close()) != EB_OK)
-      {
-           // TODO: a specific exception would be nice
-         std::string status_str(eb_status(status));
-         std::stringstream messageBuilder;
-         messageBuilder << __FILE__ << "::" << __FUNCTION__ << "::"
-                        << std::dec << __LINE__
-                        << ": ERROR: closing etherbone cycle failed! - "
-                        "ErrorCode: " << status << " ErrorMsg: "
-                        << status_str << std::endl;
-         throw BusException(messageBuilder.str());
-      }
-
-      while( !userObj.m_finished )
-      {
-         eb_socket_.run( timeout_ );
-      }
-   } // End Mutex scope
-
-   if( userObj.m_status != EB_OK )
-   {
-      std::string status_str( eb_status(userObj.m_status) );
-      std::stringstream messageBuilder;
-      messageBuilder << __FILE__ << "::" << __FUNCTION__ << "::"
-                     << std::dec << __LINE__
-                     << ": ERROR: Callback function __onEbWrite failed! - "
-                        "ErrorCode: " << userObj.m_status << " ErrorMsg: "
-                     << status_str << std::endl;
-      throw BusException(messageBuilder.str());
-   }
-}
-
 } /* namespace EtherboneAccesss */
 } // namespace Scu
 } // namespace FeSupport
