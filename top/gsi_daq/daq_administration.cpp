@@ -180,6 +180,19 @@ DaqAdministration::DaqAdministration( DaqEb::EtherboneConnection* poEtherbone,
 
 /*! ---------------------------------------------------------------------------
  */
+DaqAdministration::DaqAdministration( EbRamAccess* poEbAccess, bool doReset )
+   :DaqInterface( poEbAccess, doReset )
+   ,m_maxChannels( 0 )
+   ,m_poCurrentDescriptor( nullptr )
+   ,m_receiveCount( 0 )
+#ifdef CONFIG_DAQ_TIME_MEASUREMENT
+   ,m_elapsedTime( 0 )
+#endif
+{
+}
+
+/*! ---------------------------------------------------------------------------
+ */
 DaqAdministration::~DaqAdministration( void )
 {
 }
@@ -442,7 +455,7 @@ int DaqAdministration::distributeData( void )
     * At first a short block is supposed. It's necessary to read this data
     * obtaining the device-descriptor.
     */
-   if( m_oEbAccess.readDaqDataBlock( &probe.ramItems[0], c_ramBlockShortLen
+   if( m_poEbAccess->readDaqDataBlock( &probe.ramItems[0], c_ramBlockShortLen
                                   #ifndef CONFIG_DDR3_NO_BURST_FUNCTIONS
                                      , ::ramReadPoll
                                   #endif
@@ -479,7 +492,7 @@ int DaqAdministration::distributeData( void )
    #ifdef CONFIG_DAQ_TIME_MEASUREMENT
       ::gettimeofday( &t1, nullptr );
    #endif
-      if( m_oEbAccess.readDaqDataBlock( &probe.ramItems[c_ramBlockShortLen],
+      if( m_poEbAccess->readDaqDataBlock( &probe.ramItems[c_ramBlockShortLen],
                                         c_ramBlockLongLen - c_ramBlockShortLen
                                      #ifndef CONFIG_DDR3_NO_BURST_FUNCTIONS
                                        , ::ramReadPoll

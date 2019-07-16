@@ -761,6 +761,8 @@ public:
    DaqAdministration( DaqEb::EtherboneConnection* poEtherbone,
                                                          bool doReset = true );
 
+   DaqAdministration( EbRamAccess* poEbAccess, bool doReset = true );
+
    virtual ~DaqAdministration( void );
 
    /*!

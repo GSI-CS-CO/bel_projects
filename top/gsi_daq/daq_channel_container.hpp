@@ -53,18 +53,29 @@ class DaqChannelContainer: public DaqAdministration
    static_assert( std::is_base_of<DaqDevice, DEVICE_T>::value,
                   "DEVICE_T has not inherited from class daq::DaqDevice!" );
 
+   void init( void )
+   {
+      for( uint i = 1; i <= getMaxFoundDevices(); i++ )
+      {
+         DEVICE_T* pDevice = new DEVICE_T;
+         registerDevice( pDevice );
+         for( uint j = 1; j <= pDevice->getMaxChannels(); j++ )
+            pDevice->registerChannel( new CHANNEL_T );
+      }
+   }
+
 public:
    DaqChannelContainer( DaqEb::EtherboneConnection* poEtherbone,
                                                         bool doReset = true ):
       DaqAdministration( poEtherbone, doReset )
    {
-      for( unsigned int i = 1; i <= getMaxFoundDevices(); i++ )
-      {
-         DEVICE_T* pDevice = new DEVICE_T;
-         registerDevice( pDevice );
-         for( unsigned int j = 1; j <= pDevice->getMaxChannels(); j++ )
-            pDevice->registerChannel( new CHANNEL_T );
-      }
+      init();
+   }
+
+   DaqChannelContainer(  EbRamAccess* poEbAccess, bool doReset = true ):
+      DaqAdministration( poEbAccess, doReset )
+   {
+      init();
    }
 
    virtual ~DaqChannelContainer( void )

@@ -152,9 +152,10 @@ public:
    typedef DAQ_RETURN_CODE_T    RETURN_CODE_T;
 
 protected:
-   EbRamAccess                  m_oEbAccess;
+   EbRamAccess*                 m_poEbAccess;
 
 private:
+   bool                         m_ebAccessSelfCreated;
    DAQ_SHARED_IO_T              m_oSharedData;
    SLOT_FLAGS_T                 m_slotFlags;
    uint                         m_maxDevices;
@@ -184,14 +185,16 @@ public:
                                     c_contineousDataLen - c_discriptorWordSize;
    constexpr static std::size_t  c_pmHiresPayloadLen =
                                        c_hiresPmDataLen - c_discriptorWordSize;
-
+// --  --  --  --  --  --  --  --  --  --  --  --  --  --  --  --  --  --  --
    DaqInterface( DaqEb::EtherboneConnection* poEtherbone, bool doReset = true );
+
+   DaqInterface( EbRamAccess* poEbAccess, bool doReset = true );
 
    virtual ~DaqInterface( void );
 
    const std::string& getWbDevice( void )
    {
-      return m_oEbAccess.getNetAddress();
+      return m_poEbAccess->getNetAddress();
    }
 
    const std::string getScuDomainName( void )
@@ -206,7 +209,7 @@ public:
 
    DaqEb::EtherboneConnection* getEbPtr( void )
    {
-      return m_oEbAccess.getEbPtr();
+      return m_poEbAccess->getEbPtr();
    }
 
    RETURN_CODE_T getLastReturnCode( void ) const
@@ -332,14 +335,14 @@ protected:
                   std::size_t len,
                   std::size_t offset = 0 )
    {
-      m_oEbAccess.readLM32( pData, len, offset + m_daqLM32Offset );
+      m_poEbAccess->readLM32( pData, len, offset + m_daqLM32Offset );
    }
 
    void writeLM32( const eb_user_data_t pData,
                    std::size_t len,
                    std::size_t offset = 0 )
    {
-      m_oEbAccess.writeLM32( pData, len, offset + m_daqLM32Offset );
+      m_poEbAccess->writeLM32( pData, len, offset + m_daqLM32Offset );
    }
 
 
@@ -373,6 +376,7 @@ protected:
    virtual void onBlockReceiveError( void );
 
 private:
+   void init( void );
    bool cmdReadyWait( void );
    void readSharedTotal( void );
    RETURN_CODE_T sendCommand( DAQ_OPERATION_CODE_T );

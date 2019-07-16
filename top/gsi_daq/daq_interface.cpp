@@ -65,13 +65,33 @@ const std::string daq::status2String( DAQ_RETURN_CODE_T status )
  */
 DaqInterface::DaqInterface( DaqEb::EtherboneConnection* poEtherbone,
                             bool doReset )
-   :m_oEbAccess( poEtherbone )
+   :m_poEbAccess( new EbRamAccess( poEtherbone ) )
+   ,m_ebAccessSelfCreated( true )
    ,m_slotFlags( 0 )
    ,m_maxDevices( 0 )
    ,m_doReset( doReset )
    ,m_daqLM32Offset( 0 )
 {
-   m_oEbAccess.ramInit( &m_oScuRam, &m_oSharedData.ramIndexes );
+   init();
+}
+
+DaqInterface::DaqInterface( EbRamAccess* poEbAccess, bool doReset )
+   :m_poEbAccess( poEbAccess )
+   ,m_ebAccessSelfCreated( false )
+   ,m_slotFlags( 0 )
+   ,m_maxDevices( 0 )
+   ,m_doReset( doReset )
+   ,m_daqLM32Offset( 0 )
+{
+   init();
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+void DaqInterface::init( void )
+{
+   SCU_ASSERT( m_poEbAccess != nullptr );
+   m_poEbAccess->ramInit( &m_oScuRam, &m_oSharedData.ramIndexes );
    readSharedTotal();
    sendUnlockRamAccess();
    if( m_doReset )
@@ -84,8 +104,9 @@ DaqInterface::DaqInterface( DaqEb::EtherboneConnection* poEtherbone,
  */
 DaqInterface::~DaqInterface( void )
 {
+   if( m_ebAccessSelfCreated )
+      delete m_poEbAccess;
 }
-
 
 /*! ---------------------------------------------------------------------------
  */
