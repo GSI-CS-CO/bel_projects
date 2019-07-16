@@ -91,32 +91,22 @@ public:
                        #endif
                        );
 
-   void readLM32( void* pData, std::size_t len, std::size_t offset = 0 )
+   void readLM32( eb_user_data_t pData,
+                  std::size_t len,
+                  std::size_t offset = 0 )
    {
-#if 0
-      m_poEb->doRead( m_lm32SharedMemAddr + offset,
-                      reinterpret_cast<etherbone::data_t*>(pData),
-                      EB_BIG_ENDIAN | EB_DATA8,
-                      len, true );
-#else
       m_poEb->read( m_lm32SharedMemAddr + offset, pData,
                     EB_BIG_ENDIAN | EB_DATA8,
                     len );
-#endif
    }
 
-   void writeLM32( const void* pData, std::size_t len, std::size_t offset = 0 )
+   void writeLM32( const eb_user_data_t pData,
+                   std::size_t len,
+                   std::size_t offset = 0 )
    {
-#if 0
-      m_poEb->doWrite( m_lm32SharedMemAddr + offset,
-                       reinterpret_cast<const etherbone::data_t*>(pData),
-                       EB_BIG_ENDIAN | EB_DATA8,
-                       len, true );
-#else
       m_poEb->write( m_lm32SharedMemAddr + offset, pData,
                      EB_BIG_ENDIAN | EB_DATA8,
                      len );
-#endif
    }
 };
 

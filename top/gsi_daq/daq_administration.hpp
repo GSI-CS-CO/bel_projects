@@ -758,13 +758,9 @@ protected:
    DEVICE_LIST_T  m_devicePtrList;
 
 public:
-#ifdef CONFIG_NO_FE_ETHERBONE_CONNECTION
-  GSI_DEPRECATED DaqAdministration( const std::string = DAQ_DEFAULT_WB_DEVICE,
-                                                         bool doReset = true );
-#else
    DaqAdministration( DaqEb::EtherboneConnection* poEtherbone,
                                                          bool doReset = true );
-#endif
+
    virtual ~DaqAdministration( void );
 
    /*!

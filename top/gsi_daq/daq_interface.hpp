@@ -32,14 +32,7 @@
 #include <stddef.h>
 #include <string>
 #include <exception>
-
-
-
-#ifdef CONFIG_NO_FE_ETHERBONE_CONNECTION
-  #include <eb_object_transfer.h>
-#else
-  #include <daq_eb_ram_buffer.hpp>
-#endif
+#include <daq_eb_ram_buffer.hpp>
 
 #ifndef DAQ_DEFAULT_WB_DEVICE
    #define DAQ_DEFAULT_WB_DEVICE "dev/wbm0"
@@ -158,21 +151,16 @@ public:
    typedef SCUBUS_SLAVE_FLAGS_T SLOT_FLAGS_T;
    typedef DAQ_RETURN_CODE_T    RETURN_CODE_T;
 
-private:
-#ifdef CONFIG_NO_FE_ETHERBONE_CONNECTION
-   const std::string            m_wbDevice;
-   EB_HANDLE_T                  m_oEbHandle;
-   EB_HANDLE_T*                 m_poEbHandle;
-#else
 protected:
    EbRamAccess                  m_oEbAccess;
+
 private:
-#endif
    DAQ_SHARED_IO_T              m_oSharedData;
    SLOT_FLAGS_T                 m_slotFlags;
-   unsigned int                 m_maxDevices;
+   uint                         m_maxDevices;
    DAQ_LAST_STATUS_T            m_lastStatus;
    const bool                   m_doReset;
+   uint                         m_daqLM32Offset;
 
 protected:
    RAM_SCU_T                    m_oScuRam;
@@ -197,22 +185,13 @@ public:
    constexpr static std::size_t  c_pmHiresPayloadLen =
                                        c_hiresPmDataLen - c_discriptorWordSize;
 
-#ifdef CONFIG_NO_FE_ETHERBONE_CONNECTION
-   DaqInterface( const std::string = DAQ_DEFAULT_WB_DEVICE, bool doReset = true );
-#else
    DaqInterface( DaqEb::EtherboneConnection* poEtherbone, bool doReset = true );
-#endif
 
    virtual ~DaqInterface( void );
 
-
    const std::string& getWbDevice( void )
    {
-   #ifdef CONFIG_NO_FE_ETHERBONE_CONNECTION
-      return m_wbDevice;
-   #else
       return m_oEbAccess.getNetAddress();
-   #endif
    }
 
    const std::string getScuDomainName( void )
@@ -222,19 +201,13 @@ public:
 
    const std::string getEbStatusString( void ) const
    {
-   #ifdef CONFIG_NO_FE_ETHERBONE_CONNECTION
-      return static_cast<const std::string>(ebGetStatusString( m_poEbHandle ));
-   #else
       return static_cast<const std::string>("Noch nix");
-   #endif
    }
 
-#ifndef CONFIG_NO_FE_ETHERBONE_CONNECTION
    DaqEb::EtherboneConnection* getEbPtr( void )
    {
       return m_oEbAccess.getEbPtr();
    }
-#endif
 
    RETURN_CODE_T getLastReturnCode( void ) const
    {
@@ -242,7 +215,6 @@ public:
    }
 
    const std::string getLastReturnCodeString( void );
-
 
    RETURN_CODE_T readSlotStatus( void );
    SLOT_FLAGS_T  getSlotStatus( void ) const
@@ -356,6 +328,21 @@ public:
 protected:
    virtual bool onCommandReadyPoll( unsigned int pollCount );
 
+   void readLM32( eb_user_data_t pData,
+                  std::size_t len,
+                  std::size_t offset = 0 )
+   {
+      m_oEbAccess.readLM32( pData, len, offset + m_daqLM32Offset );
+   }
+
+   void writeLM32( const eb_user_data_t pData,
+                   std::size_t len,
+                   std::size_t offset = 0 )
+   {
+      m_oEbAccess.writeLM32( pData, len, offset + m_daqLM32Offset );
+   }
+
+
 #ifdef CONFIG_DAQ_TEST
    void clearData( void )
    {
@@ -386,29 +373,6 @@ protected:
    virtual void onBlockReceiveError( void );
 
 private:
-#ifdef CONFIG_NO_FE_ETHERBONE_CONNECTION
-   EB_STATUS_T ebSocketRun( void )
-   {
-      return Scu::ebSocketRun( m_poEbHandle );
-   }
-
-   void ebClose( void );
-
-   EB_STATUS_T ebReadObjectCycleOpen( EB_CYCLE_OR_CB_ARG_T& rCArg )
-   {
-      return Scu::ebObjectReadCycleOpen( m_poEbHandle, &rCArg );
-   }
-
-   EB_STATUS_T ebWriteObjectCycleOpen( EB_CYCLE_OW_CB_ARG_T& rCArg )
-   {
-      return Scu::ebObjectWriteCycleOpen( m_poEbHandle, &rCArg );
-   }
-
-   void ebCycleClose( void )
-   {
-      Scu::ebCycleClose( m_poEbHandle );
-   }
-#endif
    bool cmdReadyWait( void );
    void readSharedTotal( void );
    RETURN_CODE_T sendCommand( DAQ_OPERATION_CODE_T );

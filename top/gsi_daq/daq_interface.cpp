@@ -27,39 +27,8 @@
 #include <helper_macros.h>
 #include <iostream>
 
-#ifndef CONFIG_NO_FE_ETHERBONE_CONNECTION
-#include <BusException.hpp>
-namespace EB = FeSupport::Scu::Etherbone;
-namespace IPC = EB::IPC;
-
-#ifdef CONFIG_VIA_EB_CYCLE
-#define EB_SCOPED_LOCK() IPC::scoped_lock<IPC::named_mutex> \
-        lock( m_oEbAccess.getMutex() );
-#endif
-
-#define EB_THROW_MESSAGE( _m )                                                 \
-   {                                                                           \
-      std::stringstream messageBuilder;                                        \
-      messageBuilder << __FILE__ << "::" << __FUNCTION__ << "::"               \
-                           << std::dec << __LINE__ << ": "                     \
-                           << "ERROR: " _m " etherbone cycle failed! - "       \
-                           "ErrorCode: " << status << " ErrorMsg: "            \
-                           << ::eb_status(status) << std::endl;                \
-      throw EB::BusException(messageBuilder.str());                            \
-   }
-
-#endif
-
 using namespace Scu;
 using namespace daq;
-
-
-#define FUNCTION_NAME_TO_STD_STRING static_cast<const std::string>(__func__)
-
-#define __THROW_EB_EXCEPTION() \
-   throw EbException( FUNCTION_NAME_TO_STD_STRING + "(): "\
-   + static_cast<const std::string>(::ebGetStatusString( m_poEbHandle )) )
-
 
 #define DAQ_SET_CHANNEL_LOCATION( deviceNumber, channel )  \
 {                                                          \
@@ -94,38 +63,13 @@ const std::string daq::status2String( DAQ_RETURN_CODE_T status )
 /*! ---------------------------------------------------------------------------
  * @brief Constructor of class daq::DaqInterface
  */
-#ifdef CONFIG_NO_FE_ETHERBONE_CONNECTION
-DaqInterface::DaqInterface( const std::string wbDevice, bool doReset )
-   :m_wbDevice( wbDevice )
-   ,m_poEbHandle( nullptr )
-   ,m_slotFlags( 0 )
-   ,m_maxDevices( 0 )
-   ,m_doReset( doReset )
-{
-   if( ::ebOpen( &m_oEbHandle, m_wbDevice.c_str() ) != EB_OK )
-      throw EbException( ::ebGetStatusString( &m_oEbHandle ) );
-
-   m_poEbHandle = &m_oEbHandle;
-
-   if( ::ramInit( &m_oScuRam, &m_oSharedData.ramIndexes, m_poEbHandle ) < 0 )
-   {
-      ebClose();
-      throw( EbException( "Could not find RAM-device!" ) );
-   }
-
-   readSharedTotal();
-   sendUnlockRamAccess();
-   if( m_doReset )
-      sendReset();
-   readSlotStatus();
-}
-#else
 DaqInterface::DaqInterface( DaqEb::EtherboneConnection* poEtherbone,
                             bool doReset )
    :m_oEbAccess( poEtherbone )
    ,m_slotFlags( 0 )
    ,m_maxDevices( 0 )
    ,m_doReset( doReset )
+   ,m_daqLM32Offset( 0 )
 {
    m_oEbAccess.ramInit( &m_oScuRam, &m_oSharedData.ramIndexes );
    readSharedTotal();
@@ -134,16 +78,12 @@ DaqInterface::DaqInterface( DaqEb::EtherboneConnection* poEtherbone,
       sendReset();
    readSlotStatus();
 }
-#endif
 
 /*! ---------------------------------------------------------------------------
  * @brief Destructor of class daq::DaqInterfaceInterface
  */
 DaqInterface::~DaqInterface( void )
 {
-#ifdef CONFIG_NO_FE_ETHERBONE_CONNECTION
-   ebClose();
-#endif
 }
 
 
@@ -154,111 +94,25 @@ const std::string DaqInterface::getLastReturnCodeString( void )
    return status2String( getLastReturnCode() );
 }
 
-/*! ---------------------------------------------------------------------------
- */
-#ifdef CONFIG_NO_FE_ETHERBONE_CONNECTION
-void DaqInterface::ebClose( void )
-{
-   if( m_poEbHandle == nullptr )
-      return;
-
-   if( ::ebClose( m_poEbHandle ) != EB_OK )
-     __THROW_EB_EXCEPTION();
-
-   m_poEbHandle = nullptr;
-}
-#endif
-
-#ifndef CONFIG_NO_FE_ETHERBONE_CONNECTION
-
-#define EB_READ_LM32_SHARAD_OBJECT( type, object, member )                    \
-   read( EB_LM32_FOR_MEMBER( type, member ),                                  \
-         reinterpret_cast<etherbone::data_t*>(&object.member) )
-
-#define EB_READ_LM32_DAQ_OBJECT( object, member )                             \
-    EB_READ_LM32_SHARAD_OBJECT( DAQ_SHARED_IO_T, object, member )
-
-#define EB_WRITE_LM32_SHARED_OBJECT( type, object, member )                   \
-    write( EB_LM32_FOR_MEMBER( type, member ), object.member )
-
-#define EB_WRITE_LM32_DAQ_OBJECT( object, member )                            \
-    EB_WRITE_LM32_SHARED_OBJECT( DAQ_SHARED_IO_T, object, member )
-
-#endif // ifndef CONFIG_NO_FE_ETHERBONE_CONNECTION
-
 #define CONV_ENDIAN( t, s, m ) \
    t.m = gsi::convertByteEndian( s.m )
 
- // #define CONFIG_VIA_EB_CYCLE
 
 /*! ---------------------------------------------------------------------------
  */
 void DaqInterface::readSharedTotal( void )
 {
-#ifdef CONFIG_NO_FE_ETHERBONE_CONNECTION
-   EB_MEMBER_INFO_T info[7];
-   EB_INIT_INFO_ITEM_STATIC( info, 0, m_oSharedData.magicNumber );
-   EB_INIT_INFO_ITEM_STATIC( info, 1, m_oSharedData.ramIndexes.ringIndexes.offset );
-   EB_INIT_INFO_ITEM_STATIC( info, 2, m_oSharedData.ramIndexes.ringIndexes.capacity );
-   EB_INIT_INFO_ITEM_STATIC( info, 3, m_oSharedData.ramIndexes.ringIndexes.start );
-   EB_INIT_INFO_ITEM_STATIC( info, 4, m_oSharedData.ramIndexes.ringIndexes.end );
-   EB_INIT_INFO_ITEM_STATIC( info, 5, m_oSharedData.operation.code );
-   EB_INIT_INFO_ITEM_STATIC( info, 6, m_oSharedData.operation.retCode );
+   DAQ_SHARED_IO_T temp;
 
-   EB_MAKE_CB_OR_ARG( cArg, info );
+   readLM32( &temp, sizeof(DAQ_SHARED_IO_T) );
+   CONV_ENDIAN( m_oSharedData, temp, magicNumber );
+   CONV_ENDIAN( m_oSharedData, temp, ramIndexes.ringIndexes.offset );
+   CONV_ENDIAN( m_oSharedData, temp, ramIndexes.ringIndexes.capacity );
+   CONV_ENDIAN( m_oSharedData, temp, ramIndexes.ringIndexes.start );
+   CONV_ENDIAN( m_oSharedData, temp, ramIndexes.ringIndexes.end );
+   CONV_ENDIAN( m_oSharedData, temp, operation.code );
+   CONV_ENDIAN( m_oSharedData, temp, operation.retCode );
 
-   if( ebReadObjectCycleOpen( cArg ) != EB_OK )
-      __THROW_EB_EXCEPTION();
-
-   EB_OJECT_MEMBER_READ( m_poEbHandle, DAQ_SHARED_IO_T, magicNumber );
-   EB_OJECT_MEMBER_READ( m_poEbHandle, DAQ_SHARED_IO_T, ramIndexes.ringIndexes.offset );
-   EB_OJECT_MEMBER_READ( m_poEbHandle, DAQ_SHARED_IO_T, ramIndexes.ringIndexes.capacity );
-   EB_OJECT_MEMBER_READ( m_poEbHandle, DAQ_SHARED_IO_T, ramIndexes.ringIndexes.start );
-   EB_OJECT_MEMBER_READ( m_poEbHandle, DAQ_SHARED_IO_T, ramIndexes.ringIndexes.end );
-   EB_OJECT_MEMBER_READ( m_poEbHandle, DAQ_SHARED_IO_T, operation.code );
-   EB_OJECT_MEMBER_READ( m_poEbHandle, DAQ_SHARED_IO_T, operation.retCode );
-   ebCycleClose();
-
-   while( !cArg.exit )
-      ebSocketRun();
-
-   m_poEbHandle->status = cArg.status;
-   if( m_poEbHandle->status != EB_OK )
-      __THROW_EB_EXCEPTION();
-
-#else
-#ifdef CONFIG_VIA_EB_CYCLE
-#warning Old EB design!
-   EB_SCOPED_LOCK();
-   etherbone::Cycle oEbCycle;
-   eb_status_t status;
-   if( (status = oEbCycle.open(m_oEbAccess.getEbDevice(), this,
-        eb_block)) != EB_OK )
-      EB_THROW_MESSAGE( "opening" );
-
-   oEbCycle.EB_READ_LM32_DAQ_OBJECT( m_oSharedData, magicNumber );
-   oEbCycle.EB_READ_LM32_DAQ_OBJECT( m_oSharedData, ramIndexes.ringIndexes.offset );
-   oEbCycle.EB_READ_LM32_DAQ_OBJECT( m_oSharedData, ramIndexes.ringIndexes.capacity );
-   oEbCycle.EB_READ_LM32_DAQ_OBJECT( m_oSharedData, ramIndexes.ringIndexes.start );
-   oEbCycle.EB_READ_LM32_DAQ_OBJECT( m_oSharedData, ramIndexes.ringIndexes.end );
-   oEbCycle.EB_READ_LM32_DAQ_OBJECT( m_oSharedData, operation.code );
-   oEbCycle.EB_READ_LM32_DAQ_OBJECT( m_oSharedData, operation.retCode );
-
-   if( (status = oEbCycle.close()) != EB_OK )
-      EB_THROW_MESSAGE( "closing" );
-#else
-   EB_PADDING_T( DAQ_SHARED_IO_T, data ) temp;
-
-   m_oEbAccess.readLM32( &temp.data, sizeof(DAQ_SHARED_IO_T) );
-   CONV_ENDIAN( m_oSharedData, temp.data, magicNumber );
-   CONV_ENDIAN( m_oSharedData, temp.data, ramIndexes.ringIndexes.offset );
-   CONV_ENDIAN( m_oSharedData, temp.data, ramIndexes.ringIndexes.capacity );
-   CONV_ENDIAN( m_oSharedData, temp.data, ramIndexes.ringIndexes.start );
-   CONV_ENDIAN( m_oSharedData, temp.data, ramIndexes.ringIndexes.end );
-   CONV_ENDIAN( m_oSharedData, temp.data, operation.code );
-   CONV_ENDIAN( m_oSharedData, temp.data, operation.retCode );
-#endif
-#endif
    if( m_oSharedData.magicNumber != DAQ_MAGIC_NUMBER )
       throw DaqException( "Wrong DAQ magic number respectively not found" );
 }
@@ -292,52 +146,14 @@ bool DaqInterface::cmdReadyWait( void )
 
 /*! ---------------------------------------------------------------------------
  */
-DaqInterface::RETURN_CODE_T DaqInterface::sendCommand( DAQ_OPERATION_CODE_T cmd )
+DaqInterface::RETURN_CODE_T
+DaqInterface::sendCommand( DAQ_OPERATION_CODE_T cmd )
 {
    m_oSharedData.operation.code = cmd;
-#ifdef CONFIG_NO_FE_ETHERBONE_CONNECTION
-   EB_MAKE_CB_OW_ARG( cArg );
-
-   if( ebWriteObjectCycleOpen( cArg ) != EB_OK )
-       __THROW_EB_EXCEPTION();
-
-   EB_LM32_OJECT_MEMBER_WRITE( m_poEbHandle, &m_oSharedData, operation.code );
-   ebCycleClose();
-
-   while( !cArg.exit )
-      ebSocketRun();
-
-   m_poEbHandle->status = cArg.status;
-   if( m_poEbHandle->status != EB_OK )
-      __THROW_EB_EXCEPTION();
-
-   if( cmdReadyWait() )
-      throw DaqException( "Timeout at waiting for command feedback",
-                          DAQ_ERR_RESPONSE_TIMEOUT );
-
-#else
-#ifdef CONFIG_VIA_EB_CYCLE
-   { /*
-      * We need this validity area in {} avoiding a mutex- conflict with
-      * EB_SCOPED_LOCK() in function cmdReadyWait().
-      */
-      EB_SCOPED_LOCK();
-      etherbone::Cycle oEbCycle;
-      eb_status_t status;
-      if( (status = oEbCycle.open(m_oEbAccess.getEbDevice(), this, eb_block ))
-                                                                     != EB_OK )
-         EB_THROW_MESSAGE( "opening" );
-
-      oEbCycle.EB_WRITE_LM32_DAQ_OBJECT( m_oSharedData, operation.code );
-
-      if( (status = oEbCycle.close()) != EB_OK )
-         EB_THROW_MESSAGE( "closing" );
-   }
-#else
-   DAQ_OPERATION_CODE_T temp = gsi::convertByteEndian( m_oSharedData.operation.code );
-   m_oEbAccess.writeLM32( &temp, sizeof( temp ), offsetof( DAQ_SHARED_IO_T, operation.code ) );
-#endif
-#endif
+   DAQ_OPERATION_CODE_T temp =
+                        gsi::convertByteEndian( m_oSharedData.operation.code );
+   writeLM32( &temp, sizeof( temp ),
+                                 offsetof( DAQ_SHARED_IO_T, operation.code ) );
 
    if( cmdReadyWait() )
       throw DaqException( "Timeout at waiting for command feedback",
@@ -354,41 +170,6 @@ DaqInterface::RETURN_CODE_T DaqInterface::sendCommand( DAQ_OPERATION_CODE_T cmd 
  */
 DAQ_OPERATION_CODE_T DaqInterface::getCommand( void )
 {
-#ifdef CONFIG_NO_FE_ETHERBONE_CONNECTION
-   EB_MEMBER_INFO_T info[2];
-
-   EB_INIT_INFO_ITEM_STATIC( info, 0, m_oSharedData.operation.code );
-   EB_INIT_INFO_ITEM_STATIC( info, 1, m_oSharedData.operation.retCode );
-   EB_MAKE_CB_OR_ARG( cArg, info );
-
-   if( ebReadObjectCycleOpen( cArg ) != EB_OK )
-      __THROW_EB_EXCEPTION();
-
-   EB_OJECT_MEMBER_READ( m_poEbHandle, DAQ_SHARED_IO_T, operation.code );
-   EB_OJECT_MEMBER_READ( m_poEbHandle, DAQ_SHARED_IO_T, operation.retCode );
-   ebCycleClose();
-
-   while( !cArg.exit )
-      ebSocketRun();
-
-   m_poEbHandle->status = cArg.status;
-   if( m_poEbHandle->status != EB_OK )
-      __THROW_EB_EXCEPTION();
-#else
-#ifdef CONFIG_VIA_EB_CYCLE
-   EB_SCOPED_LOCK();
-   etherbone::Cycle oEbCycle;
-   eb_status_t status;
-   if( (status = oEbCycle.open( m_oEbAccess.getEbDevice(), this, eb_block ))
-                                                                     != EB_OK )
-      EB_THROW_MESSAGE( "opening" );
-
-   oEbCycle.EB_READ_LM32_DAQ_OBJECT( m_oSharedData, operation.code );
-   oEbCycle.EB_READ_LM32_DAQ_OBJECT( m_oSharedData, operation.retCode );
-
-   if( (status = oEbCycle.close()) != EB_OK )
-      EB_THROW_MESSAGE( "closing" );
-#else
    static_assert( static_cast<int>(offsetof( DAQ_OPERATION_T, ioData )) -
                   static_cast<int>(offsetof( DAQ_OPERATION_T, code )) > 0,
                   "Wrong order in DAQ_OPERATION_T" );
@@ -396,17 +177,15 @@ DAQ_OPERATION_CODE_T DaqInterface::getCommand( void )
                   static_cast<int>(offsetof( DAQ_OPERATION_T, code )) > 0,
                   "Wrong order in DAQ_OPERATION_T" );
 
-   EB_PADDING_T( DAQ_OPERATION_T, data ) temp;
+   DAQ_OPERATION_T temp;
 
-   m_oEbAccess.readLM32( &temp.data,
+   readLM32( &temp,
                          offsetof(DAQ_OPERATION_T, ioData) -
                                 offsetof(DAQ_OPERATION_T, code),
                          offsetof( DAQ_SHARED_IO_T, operation )  );
-   CONV_ENDIAN( m_oSharedData.operation, temp.data, code );
-   CONV_ENDIAN( m_oSharedData.operation, temp.data, retCode );
+   CONV_ENDIAN( m_oSharedData.operation, temp, code );
+   CONV_ENDIAN( m_oSharedData.operation, temp, retCode );
 
-#endif
-#endif
    return m_oSharedData.operation.code;
 }
 
@@ -414,52 +193,16 @@ DAQ_OPERATION_CODE_T DaqInterface::getCommand( void )
  */
 DaqInterface::RETURN_CODE_T DaqInterface::readParam1( void )
 {
-#ifdef CONFIG_NO_FE_ETHERBONE_CONNECTION
-   EB_MEMBER_INFO_T info[2];
+   DAQ_OPERATION_T temp;
 
-   EB_INIT_INFO_ITEM_STATIC( info, 0, m_oSharedData.operation.retCode );
-   EB_INIT_INFO_ITEM_STATIC( info, 1, m_oSharedData.operation.ioData.param1 );
-   EB_MAKE_CB_OR_ARG( cArg, info );
-
-   if( ebReadObjectCycleOpen( cArg ) != EB_OK )
-      __THROW_EB_EXCEPTION();
-
-   EB_OJECT_MEMBER_READ( m_poEbHandle, DAQ_SHARED_IO_T, operation.retCode );
-   EB_OJECT_MEMBER_READ( m_poEbHandle, DAQ_SHARED_IO_T, operation.ioData.param1 );
-   ebCycleClose();
-
-   while( !cArg.exit )
-      ebSocketRun();
-
-   m_poEbHandle->status = cArg.status;
-   if( m_poEbHandle->status != EB_OK )
-      __THROW_EB_EXCEPTION();
-#else
-#ifdef CONFIG_VIA_EB_CYCLE
-   EB_SCOPED_LOCK();
-   etherbone::Cycle oEbCycle;
-   eb_status_t status;
-   if( (status = oEbCycle.open(m_oEbAccess.getEbDevice(), this, eb_block ))
-                                                                    != EB_OK )
-      EB_THROW_MESSAGE( "opening" );
-
-   oEbCycle.EB_READ_LM32_DAQ_OBJECT( m_oSharedData, operation.retCode );
-   oEbCycle.EB_READ_LM32_DAQ_OBJECT( m_oSharedData, operation.ioData.param1 );
-
-   if( (status = oEbCycle.close()) != EB_OK )
-      EB_THROW_MESSAGE( "closing" );
-#else
-   EB_PADDING_T( DAQ_OPERATION_T, data ) temp;
-
-   m_oEbAccess.readLM32( &temp.data,
+   readLM32( &temp,
                          (offsetof( DAQ_OPERATION_T, ioData.param1 ) +
-                                sizeof( temp.data.ioData.param1 )) -
+                                sizeof( temp.ioData.param1 )) -
                                 offsetof( DAQ_OPERATION_T, code ),
                                 offsetof( DAQ_SHARED_IO_T, operation ));
-   CONV_ENDIAN( m_oSharedData.operation, temp.data, retCode );
-   CONV_ENDIAN( m_oSharedData.operation, temp.data, ioData.param1 );
-#endif
-#endif
+   CONV_ENDIAN( m_oSharedData.operation, temp, retCode );
+   CONV_ENDIAN( m_oSharedData.operation, temp, ioData.param1 );
+
    return m_oSharedData.operation.retCode;
 }
 
@@ -467,56 +210,17 @@ DaqInterface::RETURN_CODE_T DaqInterface::readParam1( void )
  */
 DaqInterface::RETURN_CODE_T DaqInterface::readParam12( void )
 {
-#ifdef CONFIG_NO_FE_ETHERBONE_CONNECTION
-   EB_MEMBER_INFO_T info[3];
+   DAQ_OPERATION_T temp;
 
-   EB_INIT_INFO_ITEM_STATIC( info, 0, m_oSharedData.operation.retCode );
-   EB_INIT_INFO_ITEM_STATIC( info, 1, m_oSharedData.operation.ioData.param1 );
-   EB_INIT_INFO_ITEM_STATIC( info, 2, m_oSharedData.operation.ioData.param2 );
-   EB_MAKE_CB_OR_ARG( cArg, info );
-
-   if( ebReadObjectCycleOpen( cArg ) != EB_OK )
-      __THROW_EB_EXCEPTION();
-
-   EB_OJECT_MEMBER_READ( m_poEbHandle, DAQ_SHARED_IO_T, operation.retCode );
-   EB_OJECT_MEMBER_READ( m_poEbHandle, DAQ_SHARED_IO_T, operation.ioData.param1 );
-   EB_OJECT_MEMBER_READ( m_poEbHandle, DAQ_SHARED_IO_T, operation.ioData.param2 );
-   ebCycleClose();
-
-   while( !cArg.exit )
-      ebSocketRun();
-
-   m_poEbHandle->status = cArg.status;
-   if( m_poEbHandle->status != EB_OK )
-      __THROW_EB_EXCEPTION();
-#else
- #ifdef CONFIG_VIA_EB_CYCLE
-   EB_SCOPED_LOCK();
-   etherbone::Cycle oEbCycle;
-   eb_status_t status;
-   if( (status = oEbCycle.open( m_oEbAccess.getEbDevice(), this, eb_block ))
-                                                                     != EB_OK )
-      EB_THROW_MESSAGE( "opening" );
-
-   oEbCycle.EB_READ_LM32_DAQ_OBJECT( m_oSharedData, operation.retCode );
-   oEbCycle.EB_READ_LM32_DAQ_OBJECT( m_oSharedData, operation.ioData.param1 );
-   oEbCycle.EB_READ_LM32_DAQ_OBJECT( m_oSharedData, operation.ioData.param2 );
-
-   if( (status = oEbCycle.close()) != EB_OK )
-      EB_THROW_MESSAGE( "closing" );
- #else
-   EB_PADDING_T( DAQ_OPERATION_T, data ) temp;
-
-   m_oEbAccess.readLM32( &temp.data,
+   readLM32( &temp,
                          (offsetof( DAQ_OPERATION_T, ioData.param2 ) +
-                                sizeof( temp.data.ioData.param2 )) -
+                                sizeof( temp.ioData.param2 )) -
                                 offsetof( DAQ_OPERATION_T, code ),
                                 offsetof( DAQ_SHARED_IO_T, operation ));
-   CONV_ENDIAN( m_oSharedData.operation, temp.data, retCode );
-   CONV_ENDIAN( m_oSharedData.operation, temp.data, ioData.param1 );
-   CONV_ENDIAN( m_oSharedData.operation, temp.data, ioData.param2 );
- #endif
-#endif
+   CONV_ENDIAN( m_oSharedData.operation, temp, retCode );
+   CONV_ENDIAN( m_oSharedData.operation, temp, ioData.param1 );
+   CONV_ENDIAN( m_oSharedData.operation, temp, ioData.param2 );
+
    return m_oSharedData.operation.retCode;
 }
 
@@ -524,60 +228,17 @@ DaqInterface::RETURN_CODE_T DaqInterface::readParam12( void )
  */
 DaqInterface::RETURN_CODE_T DaqInterface::readParam123( void )
 {
-#ifdef CONFIG_NO_FE_ETHERBONE_CONNECTION
-   EB_MEMBER_INFO_T info[4];
+   DAQ_OPERATION_T temp;
 
-   EB_INIT_INFO_ITEM_STATIC( info, 0, m_oSharedData.operation.retCode );
-   EB_INIT_INFO_ITEM_STATIC( info, 1, m_oSharedData.operation.ioData.param1 );
-   EB_INIT_INFO_ITEM_STATIC( info, 2, m_oSharedData.operation.ioData.param2 );
-   EB_INIT_INFO_ITEM_STATIC( info, 3, m_oSharedData.operation.ioData.param3 );
-   EB_MAKE_CB_OR_ARG( cArg, info );
-
-   if( ebReadObjectCycleOpen( cArg ) != EB_OK )
-      __THROW_EB_EXCEPTION();
-
-   EB_OJECT_MEMBER_READ( m_poEbHandle, DAQ_SHARED_IO_T, operation.retCode );
-   EB_OJECT_MEMBER_READ( m_poEbHandle, DAQ_SHARED_IO_T, operation.ioData.param1 );
-   EB_OJECT_MEMBER_READ( m_poEbHandle, DAQ_SHARED_IO_T, operation.ioData.param2 );
-   EB_OJECT_MEMBER_READ( m_poEbHandle, DAQ_SHARED_IO_T, operation.ioData.param3 );
-   ebCycleClose();
-
-   while( !cArg.exit )
-      ebSocketRun();
-
-   m_poEbHandle->status = cArg.status;
-   if( m_poEbHandle->status != EB_OK )
-      __THROW_EB_EXCEPTION();
-#else
-  #ifdef CONFIG_VIA_EB_CYCLE
-   EB_SCOPED_LOCK();
-   etherbone::Cycle oEbCycle;
-   eb_status_t status;
-   if( (status = oEbCycle.open( m_oEbAccess.getEbDevice(), this, eb_block ))
-                                                                     != EB_OK )
-      EB_THROW_MESSAGE( "opening" );
-
-   oEbCycle.EB_READ_LM32_DAQ_OBJECT( m_oSharedData, operation.retCode );
-   oEbCycle.EB_READ_LM32_DAQ_OBJECT( m_oSharedData, operation.ioData.param1 );
-   oEbCycle.EB_READ_LM32_DAQ_OBJECT( m_oSharedData, operation.ioData.param2 );
-   oEbCycle.EB_READ_LM32_DAQ_OBJECT( m_oSharedData, operation.ioData.param3 );
-
-   if( (status = oEbCycle.close()) != EB_OK )
-      EB_THROW_MESSAGE( "closing" );
- #else
-   EB_PADDING_T( DAQ_OPERATION_T, data ) temp;
-
-   m_oEbAccess.readLM32( &temp.data, (offsetof( DAQ_OPERATION_T, ioData.param3 ) +
-                                sizeof( temp.data.ioData.param3 )) -
+   readLM32( &temp, (offsetof( DAQ_OPERATION_T, ioData.param3 ) +
+                                sizeof( temp.ioData.param3 )) -
                                 offsetof( DAQ_OPERATION_T, code ),
                                 offsetof( DAQ_SHARED_IO_T, operation ));
-   CONV_ENDIAN( m_oSharedData.operation, temp.data, retCode );
-   CONV_ENDIAN( m_oSharedData.operation, temp.data, ioData.param1 );
-   CONV_ENDIAN( m_oSharedData.operation, temp.data, ioData.param2 );
-   CONV_ENDIAN( m_oSharedData.operation, temp.data, ioData.param3 );
- #endif
+   CONV_ENDIAN( m_oSharedData.operation, temp, retCode );
+   CONV_ENDIAN( m_oSharedData.operation, temp, ioData.param1 );
+   CONV_ENDIAN( m_oSharedData.operation, temp, ioData.param2 );
+   CONV_ENDIAN( m_oSharedData.operation, temp, ioData.param3 );
 
-#endif
    return m_oSharedData.operation.retCode;
 }
 
@@ -585,63 +246,17 @@ DaqInterface::RETURN_CODE_T DaqInterface::readParam123( void )
  */
 DaqInterface::RETURN_CODE_T DaqInterface::readParam1234( void )
 {
-#ifdef CONFIG_NO_FE_ETHERBONE_CONNECTION
-   EB_MEMBER_INFO_T info[5];
-
-   EB_INIT_INFO_ITEM_STATIC( info, 0, m_oSharedData.operation.retCode );
-   EB_INIT_INFO_ITEM_STATIC( info, 1, m_oSharedData.operation.ioData.param1 );
-   EB_INIT_INFO_ITEM_STATIC( info, 2, m_oSharedData.operation.ioData.param2 );
-   EB_INIT_INFO_ITEM_STATIC( info, 3, m_oSharedData.operation.ioData.param3 );
-   EB_INIT_INFO_ITEM_STATIC( info, 4, m_oSharedData.operation.ioData.param4 );
-   EB_MAKE_CB_OR_ARG( cArg, info );
-
-   if( ebReadObjectCycleOpen( cArg ) != EB_OK )
-      __THROW_EB_EXCEPTION();
-
-   EB_OJECT_MEMBER_READ( m_poEbHandle, DAQ_SHARED_IO_T, operation.retCode );
-   EB_OJECT_MEMBER_READ( m_poEbHandle, DAQ_SHARED_IO_T, operation.ioData.param1 );
-   EB_OJECT_MEMBER_READ( m_poEbHandle, DAQ_SHARED_IO_T, operation.ioData.param2 );
-   EB_OJECT_MEMBER_READ( m_poEbHandle, DAQ_SHARED_IO_T, operation.ioData.param3 );
-   EB_OJECT_MEMBER_READ( m_poEbHandle, DAQ_SHARED_IO_T, operation.ioData.param4 );
-   ebCycleClose();
-
-   while( !cArg.exit )
-      ebSocketRun();
-
-   m_poEbHandle->status = cArg.status;
-   if( m_poEbHandle->status != EB_OK )
-      __THROW_EB_EXCEPTION();
-#else
- #ifdef CONFIG_VIA_EB_CYCLE
-   EB_SCOPED_LOCK();
-   etherbone::Cycle oEbCycle;
-   eb_status_t status;
-   if( (status = oEbCycle.open( m_oEbAccess.getEbDevice(), this, eb_block ))
-                                                                     != EB_OK )
-      EB_THROW_MESSAGE( "opening" );
-
-   oEbCycle.EB_READ_LM32_DAQ_OBJECT( m_oSharedData, operation.retCode );
-   oEbCycle.EB_READ_LM32_DAQ_OBJECT( m_oSharedData, operation.ioData.param1 );
-   oEbCycle.EB_READ_LM32_DAQ_OBJECT( m_oSharedData, operation.ioData.param2 );
-   oEbCycle.EB_READ_LM32_DAQ_OBJECT( m_oSharedData, operation.ioData.param3 );
-   oEbCycle.EB_READ_LM32_DAQ_OBJECT( m_oSharedData, operation.ioData.param4 );
-
-   if( (status = oEbCycle.close()) != EB_OK )
-      EB_THROW_MESSAGE( "closing" );
- #else
-   EB_PADDING_T( DAQ_OPERATION_T, data ) temp;
-   m_oEbAccess.readLM32( &temp, (offsetof( DAQ_OPERATION_T, ioData.param4 ) +
-                                sizeof( temp.data.ioData.param4 )) -
+   DAQ_OPERATION_T temp;
+   readLM32( &temp, (offsetof( DAQ_OPERATION_T, ioData.param4 ) +
+                                sizeof( temp.ioData.param4 )) -
                                 offsetof( DAQ_OPERATION_T, code ),
                                 offsetof( DAQ_SHARED_IO_T, operation ));
-   CONV_ENDIAN( m_oSharedData.operation, temp.data, retCode );
-   CONV_ENDIAN( m_oSharedData.operation, temp.data, ioData.param1 );
-   CONV_ENDIAN( m_oSharedData.operation, temp.data, ioData.param2 );
-   CONV_ENDIAN( m_oSharedData.operation, temp.data, ioData.param3 );
-   CONV_ENDIAN( m_oSharedData.operation, temp.data, ioData.param4 );
- #endif
+   CONV_ENDIAN( m_oSharedData.operation, temp, retCode );
+   CONV_ENDIAN( m_oSharedData.operation, temp, ioData.param1 );
+   CONV_ENDIAN( m_oSharedData.operation, temp, ioData.param2 );
+   CONV_ENDIAN( m_oSharedData.operation, temp, ioData.param3 );
+   CONV_ENDIAN( m_oSharedData.operation, temp, ioData.param4 );
 
-#endif
    return m_oSharedData.operation.retCode;
 }
 
@@ -649,52 +264,12 @@ DaqInterface::RETURN_CODE_T DaqInterface::readParam1234( void )
  */
 DaqInterface::RETURN_CODE_T DaqInterface::readRamIndexes( void )
 {
-#ifdef CONFIG_NO_FE_ETHERBONE_CONNECTION
-   EB_MEMBER_INFO_T info[2];
-   EB_INIT_INFO_ITEM_STATIC( info, 0, m_oSharedData.ramIndexes.ringIndexes.start );
-   EB_INIT_INFO_ITEM_STATIC( info, 1, m_oSharedData.ramIndexes.ringIndexes.end );
-
-   EB_MAKE_CB_OR_ARG( cArg, info );
-
-   if( ebReadObjectCycleOpen( cArg ) != EB_OK )
-      __THROW_EB_EXCEPTION();
-
-   EB_OJECT_MEMBER_READ( m_poEbHandle, DAQ_SHARED_IO_T,
-                         ramIndexes.ringIndexes.start );
-   EB_OJECT_MEMBER_READ( m_poEbHandle, DAQ_SHARED_IO_T,
-                         ramIndexes.ringIndexes.end );
-   ebCycleClose();
-
-   while( !cArg.exit )
-      ebSocketRun();
-
-   m_poEbHandle->status = cArg.status;
-   if( m_poEbHandle->status != EB_OK )
-      __THROW_EB_EXCEPTION();
-#else
- #ifdef CONFIG_VIA_EB_CYCLE
-   EB_SCOPED_LOCK();
-   etherbone::Cycle oEbCycle;
-   eb_status_t status;
-   if( (status = oEbCycle.open( m_oEbAccess.getEbDevice(), this, eb_block ))
-                                                                     != EB_OK )
-      EB_THROW_MESSAGE( "opening" );
-
-   oEbCycle.EB_READ_LM32_DAQ_OBJECT( m_oSharedData,
-                                                ramIndexes.ringIndexes.start );
-   oEbCycle.EB_READ_LM32_DAQ_OBJECT( m_oSharedData,
-                                                  ramIndexes.ringIndexes.end );
-
-   if( (status = oEbCycle.close()) != EB_OK )
-      EB_THROW_MESSAGE( "closing" );
-  #else
-   EB_PADDING_T( RAM_RING_INDEXES_T, data ) temp;
-   m_oEbAccess.readLM32( &temp.data, sizeof( RAM_RING_INDEXES_T ),
+   RAM_RING_INDEXES_T temp;
+   readLM32( &temp, sizeof( RAM_RING_INDEXES_T ),
                         offsetof( DAQ_SHARED_IO_T, ramIndexes.ringIndexes ));
-   CONV_ENDIAN( m_oSharedData.ramIndexes.ringIndexes, temp.data, start );
-   CONV_ENDIAN( m_oSharedData.ramIndexes.ringIndexes, temp.data, end );
-  #endif
-#endif
+   CONV_ENDIAN( m_oSharedData.ramIndexes.ringIndexes, temp, start );
+   CONV_ENDIAN( m_oSharedData.ramIndexes.ringIndexes, temp, end );
+
    return m_oSharedData.operation.retCode;
 }
 
@@ -703,206 +278,42 @@ DaqInterface::RETURN_CODE_T DaqInterface::readRamIndexes( void )
 void DaqInterface::sendUnlockRamAccess( void )
 {
    m_oSharedData.ramIndexes.ramAccessLock = false;
-#ifdef CONFIG_NO_FE_ETHERBONE_CONNECTION
-   EB_MAKE_CB_OW_ARG( cArg );
-
-   if( ebWriteObjectCycleOpen( cArg ) != EB_OK )
-      __THROW_EB_EXCEPTION();
-
-   EB_LM32_OJECT_MEMBER_WRITE( m_poEbHandle, &m_oSharedData,
-                               ramIndexes.ramAccessLock );
-
-   ebCycleClose();
-
-   while( !cArg.exit )
-      ebSocketRun();
-
-   m_poEbHandle->status = cArg.status;
-   if( m_poEbHandle->status != EB_OK )
-      __THROW_EB_EXCEPTION();
-
-#else
- #ifdef CONFIG_VIA_EB_CYCLE
-   EB_SCOPED_LOCK();
-   etherbone::Cycle oEbCycle;
-   eb_status_t status;
-   if( (status = oEbCycle.open( m_oEbAccess.getEbDevice(), this, eb_block ))
-                                                                     != EB_OK )
-      EB_THROW_MESSAGE( "opening" );
-
-   oEbCycle.EB_WRITE_LM32_DAQ_OBJECT( m_oSharedData,
-                                                    ramIndexes.ramAccessLock );
-
-   if( (status = oEbCycle.close()) != EB_OK )
-      EB_THROW_MESSAGE( "closing" );
- #else
    uint32_t temp = 0;
-   m_oEbAccess.writeLM32( &temp, sizeof( temp ),
+   writeLM32( &temp, sizeof( temp ),
                           offsetof(DAQ_SHARED_IO_T, ramIndexes.ramAccessLock ));
- #endif
-#endif
 }
 
 /*! ---------------------------------------------------------------------------
  */
 void DaqInterface::writeParam1( void )
 {
-#ifdef CONFIG_NO_FE_ETHERBONE_CONNECTION
-   EB_MAKE_CB_OW_ARG( cArg );
-
-   if( ebWriteObjectCycleOpen( cArg ) != EB_OK )
-      __THROW_EB_EXCEPTION();
-
-   EB_LM32_OJECT_MEMBER_WRITE( m_poEbHandle, &m_oSharedData,
-                               operation.ioData.location.deviceNumber );
-   EB_LM32_OJECT_MEMBER_WRITE( m_poEbHandle, &m_oSharedData,
-                               operation.ioData.location.channel );
-   EB_LM32_OJECT_MEMBER_WRITE( m_poEbHandle, &m_oSharedData,
-                               operation.ioData.param1 );
-   ebCycleClose();
-
-   while( !cArg.exit )
-      ebSocketRun();
-
-   m_poEbHandle->status = cArg.status;
-   if( m_poEbHandle->status != EB_OK )
-      __THROW_EB_EXCEPTION();
-#else
-   #ifdef CONFIG_VIA_EB_CYCLE
-
-   EB_SCOPED_LOCK();
-   etherbone::Cycle oEbCycle;
-   eb_status_t status;
-   if( (status = oEbCycle.open( m_oEbAccess.getEbDevice(), this, eb_block ))
-                                                                     != EB_OK )
-      EB_THROW_MESSAGE( "opening" );
-
-   oEbCycle.EB_WRITE_LM32_DAQ_OBJECT( m_oSharedData,
-                                      operation.ioData.location.deviceNumber );
-   oEbCycle.EB_WRITE_LM32_DAQ_OBJECT( m_oSharedData,
-                                           operation.ioData.location.channel );
-   oEbCycle.EB_WRITE_LM32_DAQ_OBJECT( m_oSharedData, operation.ioData.param1 );
-
-   if( (status = oEbCycle.close()) != EB_OK )
-      EB_THROW_MESSAGE( "closing" );
-  #else
    DAQ_OPERATION_IO_T temp;
 
    CONV_ENDIAN( temp, m_oSharedData.operation.ioData, location.deviceNumber );
    CONV_ENDIAN( temp, m_oSharedData.operation.ioData, location.channel );
    CONV_ENDIAN( temp, m_oSharedData.operation.ioData, param1 );
-   m_oEbAccess.writeLM32( &temp,
-                          GET_OFFSET_AFTER( DAQ_OPERATION_IO_T, param1 ),
-                          offsetof( DAQ_SHARED_IO_T, operation.ioData ));
-  #endif
-#endif
+   writeLM32( &temp, GET_OFFSET_AFTER( DAQ_OPERATION_IO_T, param1 ),
+                     offsetof( DAQ_SHARED_IO_T, operation.ioData ));
 }
+
 /*! ---------------------------------------------------------------------------
  */
 void DaqInterface::writeParam12( void )
 {
-#ifdef CONFIG_NO_FE_ETHERBONE_CONNECTION
-   EB_MAKE_CB_OW_ARG( cArg );
-
-   if( ebWriteObjectCycleOpen( cArg ) != EB_OK )
-      __THROW_EB_EXCEPTION();
-
-   EB_LM32_OJECT_MEMBER_WRITE( m_poEbHandle, &m_oSharedData,
-                               operation.ioData.location.deviceNumber );
-   EB_LM32_OJECT_MEMBER_WRITE( m_poEbHandle, &m_oSharedData,
-                               operation.ioData.location.channel );
-   EB_LM32_OJECT_MEMBER_WRITE( m_poEbHandle, &m_oSharedData,
-                               operation.ioData.param1 );
-   EB_LM32_OJECT_MEMBER_WRITE( m_poEbHandle, &m_oSharedData,
-                               operation.ioData.param2 );
-
-   ebCycleClose();
-
-   while( !cArg.exit )
-      ebSocketRun();
-
-   m_poEbHandle->status = cArg.status;
-   if( m_poEbHandle->status != EB_OK )
-      __THROW_EB_EXCEPTION();
-#else
- #ifdef CONFIG_VIA_EB_CYCLE
-   EB_SCOPED_LOCK();
-   etherbone::Cycle oEbCycle;
-   eb_status_t status;
-   if( (status = oEbCycle.open( m_oEbAccess.getEbDevice(), this, eb_block ))
-                                                                     != EB_OK )
-      EB_THROW_MESSAGE( "opening" );
-
-   oEbCycle.EB_WRITE_LM32_DAQ_OBJECT( m_oSharedData,
-                                      operation.ioData.location.deviceNumber );
-   oEbCycle.EB_WRITE_LM32_DAQ_OBJECT( m_oSharedData,
-                                           operation.ioData.location.channel );
-   oEbCycle.EB_WRITE_LM32_DAQ_OBJECT( m_oSharedData, operation.ioData.param1 );
-   oEbCycle.EB_WRITE_LM32_DAQ_OBJECT( m_oSharedData, operation.ioData.param2 );
-
-   if( (status = oEbCycle.close()) != EB_OK )
-      EB_THROW_MESSAGE( "closing" );
- #else
    DAQ_OPERATION_IO_T temp;
 
    CONV_ENDIAN( temp, m_oSharedData.operation.ioData, location.deviceNumber );
    CONV_ENDIAN( temp, m_oSharedData.operation.ioData, location.channel );
    CONV_ENDIAN( temp, m_oSharedData.operation.ioData, param1 );
    CONV_ENDIAN( temp, m_oSharedData.operation.ioData, param2 );
-   m_oEbAccess.writeLM32( &temp,
-                          GET_OFFSET_AFTER( DAQ_OPERATION_IO_T, param2 ),
-                          offsetof( DAQ_SHARED_IO_T, operation.ioData ));
- #endif
-#endif
+   writeLM32( &temp, GET_OFFSET_AFTER( DAQ_OPERATION_IO_T, param2 ),
+                     offsetof( DAQ_SHARED_IO_T, operation.ioData ));
 }
 
 /*! ---------------------------------------------------------------------------
  */
 void DaqInterface::writeParam123( void )
 {
-#ifdef CONFIG_NO_FE_ETHERBONE_CONNECTION
-   EB_MAKE_CB_OW_ARG( cArg );
-
-   if( ebWriteObjectCycleOpen( cArg ) != EB_OK )
-      __THROW_EB_EXCEPTION();
-
-   EB_LM32_OJECT_MEMBER_WRITE( m_poEbHandle, &m_oSharedData,
-                               operation.ioData.location.deviceNumber );
-   EB_LM32_OJECT_MEMBER_WRITE( m_poEbHandle, &m_oSharedData,
-                               operation.ioData.location.channel );
-   EB_LM32_OJECT_MEMBER_WRITE( m_poEbHandle, &m_oSharedData,
-                               operation.ioData.param1 );
-   EB_LM32_OJECT_MEMBER_WRITE( m_poEbHandle, &m_oSharedData,
-                               operation.ioData.param2 );
-   EB_LM32_OJECT_MEMBER_WRITE( m_poEbHandle, &m_oSharedData,
-                               operation.ioData.param3 );
-
-   ebCycleClose();
-
-   while( !cArg.exit )
-      ebSocketRun();
-
-   m_poEbHandle->status = cArg.status;
-   if( m_poEbHandle->status != EB_OK )
-      __THROW_EB_EXCEPTION();
-#else
-  #ifdef CONFIG_VIA_EB_CYCLE
-   EB_SCOPED_LOCK();
-   etherbone::Cycle oEbCycle;
-   eb_status_t status;
-   if( (status = oEbCycle.open( m_oEbAccess.getEbDevice(), this, eb_block ))
-                                                                     != EB_OK )
-      EB_THROW_MESSAGE( "opening" );
-
-   oEbCycle.EB_WRITE_LM32_DAQ_OBJECT( m_oSharedData, operation.ioData.location.deviceNumber );
-   oEbCycle.EB_WRITE_LM32_DAQ_OBJECT( m_oSharedData, operation.ioData.location.channel );
-   oEbCycle.EB_WRITE_LM32_DAQ_OBJECT( m_oSharedData, operation.ioData.param1 );
-   oEbCycle.EB_WRITE_LM32_DAQ_OBJECT( m_oSharedData, operation.ioData.param2 );
-   oEbCycle.EB_WRITE_LM32_DAQ_OBJECT( m_oSharedData, operation.ioData.param3 );
-
-   if( (status = oEbCycle.close()) != EB_OK )
-      EB_THROW_MESSAGE( "closing" );
- #else
    DAQ_OPERATION_IO_T temp;
 
    CONV_ENDIAN( temp, m_oSharedData.operation.ioData, location.deviceNumber );
@@ -910,64 +321,14 @@ void DaqInterface::writeParam123( void )
    CONV_ENDIAN( temp, m_oSharedData.operation.ioData, param1 );
    CONV_ENDIAN( temp, m_oSharedData.operation.ioData, param2 );
    CONV_ENDIAN( temp, m_oSharedData.operation.ioData, param3 );
-   m_oEbAccess.writeLM32( &temp,
-                          GET_OFFSET_AFTER( DAQ_OPERATION_IO_T, param3 ),
-                          offsetof( DAQ_SHARED_IO_T, operation.ioData ));
-
- #endif
-#endif
+   writeLM32( &temp, GET_OFFSET_AFTER( DAQ_OPERATION_IO_T, param3 ),
+                     offsetof( DAQ_SHARED_IO_T, operation.ioData ));
 }
 
 /*! ---------------------------------------------------------------------------
  */
 void DaqInterface::writeParam1234( void )
 {
-#ifdef CONFIG_NO_FE_ETHERBONE_CONNECTION
-   EB_MAKE_CB_OW_ARG( cArg );
-
-   if( ebWriteObjectCycleOpen( cArg ) != EB_OK )
-      __THROW_EB_EXCEPTION();
-
-   EB_LM32_OJECT_MEMBER_WRITE( m_poEbHandle, &m_oSharedData,
-                               operation.ioData.location.deviceNumber );
-   EB_LM32_OJECT_MEMBER_WRITE( m_poEbHandle, &m_oSharedData,
-                               operation.ioData.location.channel );
-   EB_LM32_OJECT_MEMBER_WRITE( m_poEbHandle, &m_oSharedData,
-                               operation.ioData.param1 );
-   EB_LM32_OJECT_MEMBER_WRITE( m_poEbHandle, &m_oSharedData,
-                               operation.ioData.param2 );
-   EB_LM32_OJECT_MEMBER_WRITE( m_poEbHandle, &m_oSharedData,
-                               operation.ioData.param3 );
-   EB_LM32_OJECT_MEMBER_WRITE( m_poEbHandle, &m_oSharedData,
-                               operation.ioData.param4 );
-
-   ebCycleClose();
-
-   while( !cArg.exit )
-      ebSocketRun();
-
-   m_poEbHandle->status = cArg.status;
-   if( m_poEbHandle->status != EB_OK )
-      __THROW_EB_EXCEPTION();
-#else
- #ifdef CONFIG_VIA_EB_CYCLE
-   EB_SCOPED_LOCK();
-   etherbone::Cycle oEbCycle;
-   eb_status_t status;
-   if( (status = oEbCycle.open( m_oEbAccess.getEbDevice(), this, eb_block ))
-                                                                      != EB_OK )
-      EB_THROW_MESSAGE( "opening" );
-
-   oEbCycle.EB_WRITE_LM32_DAQ_OBJECT( m_oSharedData, operation.ioData.location.deviceNumber );
-   oEbCycle.EB_WRITE_LM32_DAQ_OBJECT( m_oSharedData, operation.ioData.location.channel );
-   oEbCycle.EB_WRITE_LM32_DAQ_OBJECT( m_oSharedData, operation.ioData.param3 );
-   oEbCycle.EB_WRITE_LM32_DAQ_OBJECT( m_oSharedData, operation.ioData.param2 );
-   oEbCycle.EB_WRITE_LM32_DAQ_OBJECT( m_oSharedData, operation.ioData.param3 );
-   oEbCycle.EB_WRITE_LM32_DAQ_OBJECT( m_oSharedData, operation.ioData.param4 );
-
-   if( (status = oEbCycle.close()) != EB_OK )
-      EB_THROW_MESSAGE( "closing" );
- #else
    DAQ_OPERATION_IO_T temp;
 
    CONV_ENDIAN( temp, m_oSharedData.operation.ioData, location.deviceNumber );
@@ -976,12 +337,8 @@ void DaqInterface::writeParam1234( void )
    CONV_ENDIAN( temp, m_oSharedData.operation.ioData, param2 );
    CONV_ENDIAN( temp, m_oSharedData.operation.ioData, param3 );
    CONV_ENDIAN( temp, m_oSharedData.operation.ioData, param4 );
-   m_oEbAccess.writeLM32( &temp,
-                          GET_OFFSET_AFTER( DAQ_OPERATION_IO_T, param4 ),
-                          offsetof( DAQ_SHARED_IO_T, operation.ioData ));
-
- #endif
-#endif
+   writeLM32( &temp, GET_OFFSET_AFTER( DAQ_OPERATION_IO_T, param4 ),
+                     offsetof( DAQ_SHARED_IO_T, operation.ioData ));
 }
 
 /*! ---------------------------------------------------------------------------
@@ -989,58 +346,16 @@ void DaqInterface::writeParam1234( void )
 void DaqInterface::writeRamIndexesAndUnlock( void )
 {
    m_oSharedData.ramIndexes.ramAccessLock = false;
-#ifdef CONFIG_NO_FE_ETHERBONE_CONNECTION
-   EB_MAKE_CB_OW_ARG( cArg );
 
-   if( ebWriteObjectCycleOpen( cArg ) != EB_OK )
-      __THROW_EB_EXCEPTION();
-
-   EB_LM32_OJECT_MEMBER_WRITE( m_poEbHandle, &m_oSharedData,
-                               ramIndexes.ringIndexes.start );
- //!!  EB_LM32_OJECT_MEMBER_WRITE( m_poEbHandle, &m_oSharedData,
- //!!                              ramIndexes.ringIndexes.end );
-
-
-   EB_LM32_OJECT_MEMBER_WRITE( m_poEbHandle, &m_oSharedData,
-                               ramIndexes.ramAccessLock );
-
-   ebCycleClose();
-
-   while( !cArg.exit )
-      ebSocketRun();
-
-   m_poEbHandle->status = cArg.status;
-   if( m_poEbHandle->status != EB_OK )
-      __THROW_EB_EXCEPTION();
-#else
-  #ifdef CONFIG_VIA_EB_CYCLE
-   EB_SCOPED_LOCK();
-   etherbone::Cycle oEbCycle;
-   eb_status_t status;
-   if( (status = oEbCycle.open(m_oEbAccess.getEbDevice(), this, eb_block))
-                                                                     != EB_OK )
-      EB_THROW_MESSAGE( "opening" );
-
-   oEbCycle.EB_WRITE_LM32_DAQ_OBJECT( m_oSharedData, ramIndexes.ringIndexes.start );
-   //!! oEbCycle.EB_WRITE_LM32_DAQ_OBJECT( m_oSharedData, ramIndexes.ringIndexes.end );
-   oEbCycle.EB_WRITE_LM32_DAQ_OBJECT( m_oSharedData, ramIndexes.ramAccessLock );
-
-   if( (status = oEbCycle.close()) != EB_OK )
-      EB_THROW_MESSAGE( "closing" );
- #else
    RAM_RING_SHARED_OBJECT_T temp;
    CONV_ENDIAN( temp, m_oSharedData.ramIndexes, ramAccessLock );
    CONV_ENDIAN( temp.ringIndexes, m_oSharedData.ramIndexes.ringIndexes, offset );
    CONV_ENDIAN( temp.ringIndexes, m_oSharedData.ramIndexes.ringIndexes, capacity );
    CONV_ENDIAN( temp.ringIndexes, m_oSharedData.ramIndexes.ringIndexes, start );
    //!! CONV_ENDIAN( temp.ringIndexes, m_oSharedData.ramIndexes.ringIndexes, end );
-   m_oEbAccess.writeLM32( &temp,
-                          GET_OFFSET_AFTER( RAM_RING_SHARED_OBJECT_T,
-                                            ringIndexes.start ),
-                          offsetof( DAQ_SHARED_IO_T, ramIndexes ));
-
- #endif
-#endif
+   writeLM32( &temp, GET_OFFSET_AFTER( RAM_RING_SHARED_OBJECT_T,
+                     ringIndexes.start ),
+                     offsetof( DAQ_SHARED_IO_T, ramIndexes ));
 }
 
 /*! ---------------------------------------------------------------------------

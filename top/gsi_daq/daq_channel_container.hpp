@@ -28,6 +28,7 @@
 #define _DAQ_CHANNEL_CONTAINER_HPP
 
 #include <daq_administration.hpp>
+
 namespace Scu
 {
 namespace daq
@@ -53,14 +54,9 @@ class DaqChannelContainer: public DaqAdministration
                   "DEVICE_T has not inherited from class daq::DaqDevice!" );
 
 public:
-#ifdef CONFIG_NO_FE_ETHERBONE_CONNECTION
-   DaqChannelContainer( const std::string wbDevName = DAQ_DEFAULT_WB_DEVICE ):
-      DaqAdministration( wbDevName )
-#else
    DaqChannelContainer( DaqEb::EtherboneConnection* poEtherbone,
                                                         bool doReset = true ):
       DaqAdministration( poEtherbone, doReset )
-#endif
    {
       for( unsigned int i = 1; i <= getMaxFoundDevices(); i++ )
       {

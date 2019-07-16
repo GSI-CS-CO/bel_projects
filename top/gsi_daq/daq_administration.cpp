@@ -166,19 +166,6 @@ DaqChannel* DaqDevice::getChannel( const unsigned int number )
 
 /*! ---------------------------------------------------------------------------
  */
-#ifdef CONFIG_NO_FE_ETHERBONE_CONNECTION
-DaqAdministration::DaqAdministration( const std::string wbDevice,
-                                                                 bool doReset )
-  :DaqInterface( wbDevice, doReset )
-  ,m_maxChannels( 0 )
-  ,m_poCurrentDescriptor( nullptr )
-  ,m_receiveCount( 0 )
-#ifdef CONFIG_DAQ_TIME_MEASUREMENT
-  ,m_elapsedTime( 0 );
-#endif
-{
-}
-#else
 DaqAdministration::DaqAdministration( DaqEb::EtherboneConnection* poEtherbone,
                                                                  bool doReset )
    :DaqInterface( poEtherbone, doReset )
@@ -190,7 +177,6 @@ DaqAdministration::DaqAdministration( DaqEb::EtherboneConnection* poEtherbone,
 #endif
 {
 }
-#endif
 
 /*! ---------------------------------------------------------------------------
  */
@@ -387,9 +373,6 @@ inline bool DaqAdministration::dataBlocksPresent( void )
  */
 int DaqAdministration::distributeData( void )
 {
-#ifdef CONFIG_NO_FE_ETHERBONE_CONNECTION
-   #define EB_PADDING_T( type, object ) struct { type object; }
-#endif
    union PROBE_BUFFER_T
    {
       DAQ_DATA_T        buffer[c_hiresPmDataLen];
@@ -445,9 +428,9 @@ int DaqAdministration::distributeData( void )
       return size;
    }
 
-   EB_PADDING_T( PROBE_BUFFER_T, probe ) padding;
+   PROBE_BUFFER_T probe;
 #ifdef CONFIG_DAQ_DEBUG
-   ::memset( &padding, 0x7f, sizeof( padding ) );
+   ::memset( &probe, 0x7f, sizeof( probe ) );
 #endif
 
 #ifdef CONFIG_DAQ_TIME_MEASUREMENT
@@ -459,21 +442,11 @@ int DaqAdministration::distributeData( void )
     * At first a short block is supposed. It's necessary to read this data
     * obtaining the device-descriptor.
     */
-#ifdef CONFIG_NO_FE_ETHERBONE_CONNECTION
-   if( ::ramReadDaqDataBlock( &m_oScuRam, &padding.probe.ramItems[0],
-                              c_ramBlockShortLen
-                            #ifndef CONFIG_DDR3_NO_BURST_FUNCTIONS
-                              , ::ramReadPoll
-                            #endif
-                            ) != EB_OK )
-#else
-   if( m_oEbAccess.readDaqDataBlock( &padding.probe.ramItems[0], c_ramBlockShortLen
+   if( m_oEbAccess.readDaqDataBlock( &probe.ramItems[0], c_ramBlockShortLen
                                   #ifndef CONFIG_DDR3_NO_BURST_FUNCTIONS
                                      , ::ramReadPoll
                                   #endif
                                    ) != EB_OK )
-
-#endif
    {
       sendUnlockRamAccess();
       throw EbException( "Unable to read SCU-Ram buffer first part" );
@@ -488,7 +461,7 @@ int DaqAdministration::distributeData( void )
    /*
     * Rough check of the device descriptors integrity.
     */
-   if( !::daqDescriptorVerifyMode( &padding.probe.descriptor ) )
+   if( !::daqDescriptorVerifyMode( &probe.descriptor ) )
    {
       //TODO Maybe clearing the entire buffer?
       clearBuffer();
@@ -498,7 +471,7 @@ int DaqAdministration::distributeData( void )
 
    std::size_t wordLen;
 
-   if( ::daqDescriptorIsLongBlock( &padding.probe.descriptor ) )
+   if( ::daqDescriptorIsLongBlock( &probe.descriptor ) )
    { /*
       * Long block has been detected, in this case the rest of the data
       * has still to be read from the DAQ-Ram-buffer.
@@ -506,23 +479,12 @@ int DaqAdministration::distributeData( void )
    #ifdef CONFIG_DAQ_TIME_MEASUREMENT
       ::gettimeofday( &t1, nullptr );
    #endif
-   #ifdef CONFIG_NO_FE_ETHERBONE_CONNECTION
-      if( ::ramReadDaqDataBlock( &m_oScuRam,
-                                 &padding.probe.ramItems[c_ramBlockShortLen],
-                                 c_ramBlockLongLen - c_ramBlockShortLen
-                               #ifndef CONFIG_DDR3_NO_BURST_FUNCTIONS
-                                 , ::ramReadPoll
-                               #endif
-                               ) != EB_OK )
-   #else
-      if( m_oEbAccess.readDaqDataBlock( &padding.probe.ramItems[c_ramBlockShortLen],
+      if( m_oEbAccess.readDaqDataBlock( &probe.ramItems[c_ramBlockShortLen],
                                         c_ramBlockLongLen - c_ramBlockShortLen
                                      #ifndef CONFIG_DDR3_NO_BURST_FUNCTIONS
                                        , ::ramReadPoll
                                      #endif
                                       ) != EB_OK )
-
-   #endif
       {
          sendUnlockRamAccess();
          throw EbException( "Unable to read SCU-Ram buffer second part" );
@@ -551,13 +513,13 @@ int DaqAdministration::distributeData( void )
 
    //TODO Make CRC check here!
 
-   DaqChannel* pChannel = getChannelByDescriptor( padding.probe.descriptor );
+   DaqChannel* pChannel = getChannelByDescriptor( probe.descriptor );
 
    if( pChannel != nullptr )
    {
-      m_poCurrentDescriptor = &padding.probe.descriptor;
+      m_poCurrentDescriptor = &probe.descriptor;
       pChannel->verifySequence();
-      pChannel->onDataBlock( &padding.probe.buffer[c_discriptorWordSize], wordLen );
+      pChannel->onDataBlock( &probe.buffer[c_discriptorWordSize], wordLen );
       m_poCurrentDescriptor = nullptr;
    }
    else
