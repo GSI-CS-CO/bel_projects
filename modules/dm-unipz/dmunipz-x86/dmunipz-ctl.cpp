@@ -719,7 +719,7 @@ int main(int argc, char** argv) {
         // print set status bits (except OK)
         for (i= COMMON_STATUS_OK + 1; i<(int)(sizeof(statusArray)*8); i++) {
           if ((statusArray >> i) & 0x1)  printf("  ------ status bit is set : %s\n", dmunipz_statusText(i));
-        } // else printFlag
+        } // for i
       } // if printFlag
 
       fflush(stdout);                                                                         // required for immediate writing (if stdout is piped to syslog)
