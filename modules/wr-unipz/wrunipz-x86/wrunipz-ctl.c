@@ -3,7 +3,7 @@
  *
  *  created : 2018
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 16-May-2019
+ *  version : 16-July-2019
  *
  *  command-line interface for wrunipz
  *
@@ -48,7 +48,8 @@
 #include <etherbone.h>
 
 // wr-unipz
-#include <wrunipz-api.h>                 // API
+#include <wrunipz-api.h>                 // API wrunipz
+#include <b2btest-api.h>                 // API B2B
 #include <wr-unipz.h>                    // FW
 #include <wrunipz_shared_mmap.h>         // LM32
 
@@ -61,17 +62,9 @@ static int logLevel   = 0;
 
 eb_device_t  device;               // keep this and below global
 eb_address_t lm32_base;            // base address of lm32
-eb_address_t wrunipz_status;       // status of wrunipz, read
-eb_address_t wrunipz_state;        // state, read
 eb_address_t wrunipz_iterations;   // # of iterations of main loop, read
 eb_address_t wrunipz_cycles;       // # of UNILAC cycles
 eb_address_t wrunipz_cmd;          // command, write
-eb_address_t wrunipz_version;      // version, read
-eb_address_t wrunipz_macHi;        // ebm src mac, read
-eb_address_t wrunipz_macLo;        // ebm src mac, read
-eb_address_t wrunipz_ip;           // ebm src ip, read
-eb_address_t wrunipz_nBadStatus;   // # of bad status ("ERROR") incidents, read
-eb_address_t wrunipz_nBadState;    // # of bad state ("not in operation") incidents, read
 eb_address_t wrunipz_tCycleAvg;    // period of cycle [us] (average over one second), read
 eb_address_t wrunipz_nMessageLo;   // number of messages, read
 eb_address_t wrunipz_nMessageHi;   // number of messages, read
@@ -83,10 +76,6 @@ eb_address_t wrunipz_cycJmpMin;    // delta T (min) between expected and actual 
 eb_address_t wrunipz_nLate;        // # of late messages, read
 eb_address_t wrunipz_vaccAvg;      // virtual accelerators played over the past second, read
 eb_address_t wrunipz_pzAvg;        // PZs used over the past second, read
-eb_address_t wrunipz_tDiagHi;      // time when diagnostics was cleared, high bits
-eb_address_t wrunipz_tDiagLo;      // time when diagnostics was cleared, low bits
-eb_address_t wrunipz_tS0Hi;        // time when FW was in S0 state (start of FW), high bits
-eb_address_t wrunipz_tS0Lo;        // time when FW was in S0 state (start of FW), low bits
 eb_address_t wrunipz_confVacc;     // virtAcc of config, write
 eb_address_t wrunipz_confStat;     // status of config transaction, read
 eb_address_t wrunipz_confPz;       // bit field (indicates, which PZ is submitted), write
@@ -157,88 +146,65 @@ static void help(void) {
 } //help
 
 
-int readInfo(uint32_t *sumStatus, uint32_t *state, uint32_t *cycles, uint32_t *nBadStatus, uint32_t *nBadState, uint32_t *tCycleAvg, uint32_t *msgFreqAvg, uint32_t *confStat, uint32_t *nLate, uint32_t *vaccAvg, uint32_t *pzAvg)
+int readInfo(uint32_t *cycles, uint32_t *tCycleAvg, uint32_t *msgFreqAvg, uint32_t *confStat, uint32_t *nLate, uint32_t *vaccAvg, uint32_t *pzAvg)
 {
   eb_cycle_t  cycle;
   eb_status_t eb_status;
   eb_data_t   data[30];
 
   if ((eb_status = eb_cycle_open(device, 0, eb_block, &cycle)) != EB_OK) die("wr-unipz: eb_cycle_open", eb_status);
-  eb_cycle_read(cycle, wrunipz_status,        EB_BIG_ENDIAN|EB_DATA32, &(data[0]));
-  eb_cycle_read(cycle, wrunipz_state,         EB_BIG_ENDIAN|EB_DATA32, &(data[1]));
-  eb_cycle_read(cycle, wrunipz_nBadStatus,    EB_BIG_ENDIAN|EB_DATA32, &(data[2]));
-  eb_cycle_read(cycle, wrunipz_nBadState,     EB_BIG_ENDIAN|EB_DATA32, &(data[3]));
-  eb_cycle_read(cycle, wrunipz_cycles,        EB_BIG_ENDIAN|EB_DATA32, &(data[4]));
-  eb_cycle_read(cycle, wrunipz_tCycleAvg,     EB_BIG_ENDIAN|EB_DATA32, &(data[5]));
-  eb_cycle_read(cycle, wrunipz_msgFreqAvg,    EB_BIG_ENDIAN|EB_DATA32, &(data[6]));
-  eb_cycle_read(cycle, wrunipz_confStat,      EB_BIG_ENDIAN|EB_DATA32, &(data[7]));
-  eb_cycle_read(cycle, wrunipz_nLate,         EB_BIG_ENDIAN|EB_DATA32, &(data[8]));
-  eb_cycle_read(cycle, wrunipz_vaccAvg,       EB_BIG_ENDIAN|EB_DATA32, &(data[9]));
-  eb_cycle_read(cycle, wrunipz_pzAvg,         EB_BIG_ENDIAN|EB_DATA32, &(data[10]));
+  eb_cycle_read(cycle, wrunipz_cycles,        EB_BIG_ENDIAN|EB_DATA32, &(data[0]));
+  eb_cycle_read(cycle, wrunipz_tCycleAvg,     EB_BIG_ENDIAN|EB_DATA32, &(data[1]));
+  eb_cycle_read(cycle, wrunipz_msgFreqAvg,    EB_BIG_ENDIAN|EB_DATA32, &(data[2]));
+  eb_cycle_read(cycle, wrunipz_confStat,      EB_BIG_ENDIAN|EB_DATA32, &(data[3]));
+  eb_cycle_read(cycle, wrunipz_nLate,         EB_BIG_ENDIAN|EB_DATA32, &(data[4]));
+  eb_cycle_read(cycle, wrunipz_vaccAvg,       EB_BIG_ENDIAN|EB_DATA32, &(data[5]));
+  eb_cycle_read(cycle, wrunipz_pzAvg,         EB_BIG_ENDIAN|EB_DATA32, &(data[6]));
   if ((eb_status = eb_cycle_close(cycle)) != EB_OK) die("wr-unipz: eb_cycle_close", eb_status);
 
-  *sumStatus     = data[0];
-  *state         = data[1];
-  *nBadStatus    = data[2];
-  *nBadState     = data[3];
-  *cycles        = data[4];
-  *tCycleAvg     = data[5];
-  *msgFreqAvg    = data[6];
-  *confStat      = data[7];
-  *nLate         = data[8];
-  *vaccAvg       = data[9];
-  *pzAvg         = data[10];
+  *cycles        = data[0];
+  *tCycleAvg     = data[1];
+  *msgFreqAvg    = data[2];
+  *confStat      = data[3];
+  *nLate         = data[4];
+  *vaccAvg       = data[5];
+  *pzAvg         = data[6];
 
   return eb_status;
 } // readInfo
 
 
-int readDiags(uint32_t *sumStatus, uint32_t *state, uint32_t *nBadStatus, uint32_t *nBadState, uint32_t *nCycles, uint64_t *nMessages, int32_t *dtMax, int32_t *dtMin, int32_t *cycJmpMax, int32_t *cycJmpMin, uint32_t *nLate, uint64_t *tDiag, uint64_t *tS0)
+int readDiags(uint32_t *nCycles, uint64_t *nMessages, int32_t *dtMax, int32_t *dtMin, int32_t *cycJmpMax, int32_t *cycJmpMin, uint32_t *nLate)
 {
   eb_cycle_t  cycle;
   eb_status_t eb_status;
   eb_data_t   data[30];
 
   if ((eb_status = eb_cycle_open(device, 0, eb_block, &cycle)) != EB_OK) die("wr-unipz: eb_cycle_open", eb_status);
-  eb_cycle_read(cycle, wrunipz_status,        EB_BIG_ENDIAN|EB_DATA32, &(data[0]));
-  eb_cycle_read(cycle, wrunipz_state,         EB_BIG_ENDIAN|EB_DATA32, &(data[1]));
-  eb_cycle_read(cycle, wrunipz_nBadStatus,    EB_BIG_ENDIAN|EB_DATA32, &(data[2]));
-  eb_cycle_read(cycle, wrunipz_nBadState,     EB_BIG_ENDIAN|EB_DATA32, &(data[3]));
-  eb_cycle_read(cycle, wrunipz_cycles,        EB_BIG_ENDIAN|EB_DATA32, &(data[4]));
-  eb_cycle_read(cycle, wrunipz_nMessageHi,    EB_BIG_ENDIAN|EB_DATA32, &(data[5]));
-  eb_cycle_read(cycle, wrunipz_nMessageLo,    EB_BIG_ENDIAN|EB_DATA32, &(data[6]));
-  eb_cycle_read(cycle, wrunipz_dtMax,         EB_BIG_ENDIAN|EB_DATA32, &(data[7]));
-  eb_cycle_read(cycle, wrunipz_dtMin,         EB_BIG_ENDIAN|EB_DATA32, &(data[8])); 
-  eb_cycle_read(cycle, wrunipz_nLate,         EB_BIG_ENDIAN|EB_DATA32, &(data[9]));
-  eb_cycle_read(cycle, wrunipz_tDiagHi,       EB_BIG_ENDIAN|EB_DATA32, &(data[10]));
-  eb_cycle_read(cycle, wrunipz_tDiagLo,       EB_BIG_ENDIAN|EB_DATA32, &(data[11]));
-  eb_cycle_read(cycle, wrunipz_tS0Hi,         EB_BIG_ENDIAN|EB_DATA32, &(data[12]));
-  eb_cycle_read(cycle, wrunipz_tS0Lo,         EB_BIG_ENDIAN|EB_DATA32, &(data[13]));
-  eb_cycle_read(cycle, wrunipz_cycJmpMax,     EB_BIG_ENDIAN|EB_DATA32, &(data[14]));
-  eb_cycle_read(cycle, wrunipz_cycJmpMin,     EB_BIG_ENDIAN|EB_DATA32, &(data[15]));
+  eb_cycle_read(cycle, wrunipz_cycles,        EB_BIG_ENDIAN|EB_DATA32, &(data[0]));
+  eb_cycle_read(cycle, wrunipz_nMessageHi,    EB_BIG_ENDIAN|EB_DATA32, &(data[1]));
+  eb_cycle_read(cycle, wrunipz_nMessageLo,    EB_BIG_ENDIAN|EB_DATA32, &(data[2]));
+  eb_cycle_read(cycle, wrunipz_dtMax,         EB_BIG_ENDIAN|EB_DATA32, &(data[3]));
+  eb_cycle_read(cycle, wrunipz_dtMin,         EB_BIG_ENDIAN|EB_DATA32, &(data[4])); 
+  eb_cycle_read(cycle, wrunipz_nLate,         EB_BIG_ENDIAN|EB_DATA32, &(data[5]));
+  eb_cycle_read(cycle, wrunipz_cycJmpMax,     EB_BIG_ENDIAN|EB_DATA32, &(data[6]));
+  eb_cycle_read(cycle, wrunipz_cycJmpMin,     EB_BIG_ENDIAN|EB_DATA32, &(data[7]));
   if ((eb_status = eb_cycle_close(cycle)) != EB_OK) die("wr-unipz: eb_cycle_close", eb_status);
 
-  *sumStatus     = data[0];
-  *state         = data[1];
-  *nBadStatus    = data[2];
-  *nBadState     = data[3];
-  *nCycles       = data[4];
-  *nMessages     = (uint64_t)(data[5]) << 32;
-  *nMessages    += data[6];
-  *dtMax         = data[7];
-  *dtMin         = data[8];
-  *nLate         = data[9];
-  *tDiag         = (uint64_t)(data[10]) << 32;
-  *tDiag        += data[11];
-  *tS0           = (uint64_t)(data[12]) << 32;
-  *tS0          += data[13];
-  *cycJmpMax     = data[14]; 
-  *cycJmpMin     = data[15];
+  *nCycles       = data[0];
+  *nMessages     = (uint64_t)(data[1]) << 32;
+  *nMessages    += data[2];
+  *dtMax         = data[3];
+  *dtMin         = data[4];
+  *nLate         = data[5];
+  *cycJmpMax     = data[6]; 
+  *cycJmpMin     = data[7];
  
   return eb_status;
 } // readDiags
 
 
+/*
 int readConfig(uint64_t *mac, uint32_t *ip)
 {
   eb_cycle_t  cycle;
@@ -265,7 +231,7 @@ int readConfig(uint64_t *mac, uint32_t *ip)
 
   return eb_status;
 } //readConfig
-
+*/
 
 void printCycleHeader()
 {
@@ -291,35 +257,9 @@ void printCycle(uint32_t cycles, uint32_t tCycleAvg, uint32_t msgFreqAvg, uint32
 } // printCycle
 
 
-void printDiags(uint32_t sumStatus, uint32_t state, uint32_t nBadStatus, uint32_t nBadState, uint32_t nCycles, uint64_t nMessages, int32_t dtMax, int32_t dtMin, int32_t cycJmpMax, int32_t cycJmpMin, uint32_t nLate, uint64_t tDiag, uint64_t tS0)
+void printDiags(uint32_t nCycles, uint64_t nMessages, int32_t dtMax, int32_t dtMin, int32_t cycJmpMax, int32_t cycJmpMin, uint32_t nLate)
 {
-  const struct tm* tm;
-  char             timestr[60];
-  time_t           secs;
-  int              i;
-
   printf("wr-unipz: statistics ...\n\n");
-
-  secs     = (unsigned long)((double)tS0 / 1000000000.0);
-  tm = gmtime(&secs);
-  strftime(timestr, sizeof(timestr), "%Y-%m-%d %H:%M:%S TAI", tm);
-  printf("firmware boot at      : %s\n", timestr);
-
-  secs     = (unsigned long)((double)tDiag / 1000000000.0);
-  tm = gmtime(&secs);
-  strftime(timestr, sizeof(timestr), "%Y-%m-%d %H:%M:%S TAI", tm);
-  printf("diagnostics reset at  : %s\n", timestr);
-  
-  printf("state (# of changes)  : %s (%u)\n", common_state_text(state), nBadState);
-  printf("sum status (# changes): 0x%08x (%u)\n", sumStatus, nBadStatus);
-  if ((sumStatus >> COMMON_STATUS_OK) & 0x1)
-    printf("overall status        : OK\n");
-  else
-    printf("overall status        : NOT OK\n");  
-  for (i= COMMON_STATUS_OK + 1; i<(sizeof(sumStatus)*8); i++) {
-    if ((sumStatus >> i) & 0x1)
-      printf("sum status bit is set : %s\n", wrunipz_status_text(i));
-  } // for i
   printf("# of cycles           : %010u\n",   nCycles);
   printf("# of messages         : %010lu\n",  nMessages);
   printf("# of late messages    : %010u\n",   nLate);
@@ -339,8 +279,7 @@ int main(int argc, char** argv) {
   
   eb_status_t         eb_status;
   eb_socket_t         socket;
-  eb_data_t           data;
-  int                 j,k;
+  int                 i,j,k;
 
   struct sdb_device   sdbDevice;          // instantiated lm32 core
   int                 nDevices;           // number of instantiated cores
@@ -354,10 +293,13 @@ int main(int argc, char** argv) {
   char *tail;
 
   uint32_t status;
-  uint32_t sumStatus;
+  uint64_t statusArray;
   uint32_t state;
   uint32_t nBadStatus;
   uint32_t nBadState;
+  uint32_t nDummyT;
+  uint32_t nDummyI;
+  uint32_t statDummy;
   uint32_t cycles;
   uint64_t messages;
   uint32_t fMessages;
@@ -375,8 +317,8 @@ int main(int argc, char** argv) {
   uint64_t tS0;
 
   //  uint32_t actCycles;                          // actual number of cycles
-  uint32_t actState = COMMON_STATE_UNKNOWN;   // actual state of gateway
-  uint32_t actSumStatus;                       // actual sum status of gateway
+  uint32_t actState = COMMON_STATE_UNKNOWN;    // actual state of gateway
+  uint64_t actStatusArray;                     // actual sum status of gateway
   uint32_t sleepTime;                          // time to sleep [us]
   uint32_t printFlag;                          // flag for printing
   uint64_t t1, t2;
@@ -454,19 +396,7 @@ int main(int argc, char** argv) {
   if ((eb_status = eb_sdb_find_by_identity(device, GSI, LM32_RAM_USER, &sdbDevice, &nDevices)) != EB_OK) die("find lm32", eb_status);
   lm32_base =  sdbDevice.sdb_component.addr_first;
 
-  wrunipz_status       = lm32_base + SHARED_OFFS + COMMON_SHARED_SUMSTATUS;
   wrunipz_cmd          = lm32_base + SHARED_OFFS + COMMON_SHARED_CMD;
-  wrunipz_state        = lm32_base + SHARED_OFFS + COMMON_SHARED_STATE;;
-  wrunipz_version      = lm32_base + SHARED_OFFS + COMMON_SHARED_VERSION;
-  wrunipz_macHi        = lm32_base + SHARED_OFFS + COMMON_SHARED_MACHI;
-  wrunipz_macLo        = lm32_base + SHARED_OFFS + COMMON_SHARED_MACLO;
-  wrunipz_ip           = lm32_base + SHARED_OFFS + COMMON_SHARED_IP;
-  wrunipz_nBadStatus   = lm32_base + SHARED_OFFS + COMMON_SHARED_NBADSTATUS;
-  wrunipz_nBadState    = lm32_base + SHARED_OFFS + COMMON_SHARED_NBADSTATE;
-  wrunipz_tDiagHi      = lm32_base + SHARED_OFFS + COMMON_SHARED_TDIAGHI;
-  wrunipz_tDiagLo      = lm32_base + SHARED_OFFS + COMMON_SHARED_TDIAGLO;
-  wrunipz_tS0Hi        = lm32_base + SHARED_OFFS + COMMON_SHARED_TS0HI;
-  wrunipz_tS0Lo        = lm32_base + SHARED_OFFS + COMMON_SHARED_TS0LO;
   wrunipz_tCycleAvg    = lm32_base + SHARED_OFFS + WRUNIPZ_SHARED_TCYCLEAVG;
   wrunipz_cycles       = lm32_base + SHARED_OFFS + WRUNIPZ_SHARED_NCYCLE;
   wrunipz_nMessageHi   = lm32_base + SHARED_OFFS + WRUNIPZ_SHARED_NMESSAGEHI;
@@ -488,28 +418,30 @@ int main(int argc, char** argv) {
   // printf("wr-unipz: lm32_base 0x%08x, 0x%08x\n", lm32_base, wrunipz_iterations);
 
   if (getConfig) {
-    readConfig(&mac, &ip);
+    api_readDiag(device, &statusArray, &state, &version, &mac, &ip, &nBadStatus, &nBadState, &tDiag, &tS0, &nDummyT, &nDummyI, &statDummy, 0);
     printf("wr-unipz: EB Master: mac 0x%012"PRIx64", ip %03d.%03d.%03d.%03d\n", mac, (ip & 0xff000000) >> 24, (ip & 0x00ff0000) >> 16, (ip & 0x0000ff00) >> 8, (ip & 0x000000ff));
   } // if getConfig
 
   if (getVersion) {
-    eb_device_read(device, wrunipz_version, EB_BIG_ENDIAN|EB_DATA32, &data, 0, eb_block);
-    version = data;
+    api_readDiag(device, &statusArray, &state, &version, &mac, &ip, &nBadStatus, &nBadState, &tDiag, &tS0, &nDummyT, &nDummyI, &statDummy, 0);
     printf("wr-unipz: software (firmware) version %s (%06x)\n",  WRUNIPZ_X86_VERSION, version);     
   } // if getEBVersion
 
   if (getInfo) {
     // status
-    readInfo(&sumStatus, &state, &cycles, &nBadStatus, &nBadState, &tCycle, &fMessages, &confStat, &nLate, &vaccAvg, &pzAvg);
+    api_readDiag(device, &statusArray, &state, &version, &mac, &ip, &nBadStatus, &nBadState, &tDiag, &tS0, &nDummyT, &nDummyI, &statDummy, 0);
+    readInfo(&cycles, &tCycle, &fMessages, &confStat, &nLate, &vaccAvg, &pzAvg);
     printCycleHeader();
     printCycle(cycles, tCycle, fMessages, confStat, nLate, vaccAvg, pzAvg);
-    printf(" %s (%6u), status 0x%08x (%6u)\n", common_state_text(state), nBadState, sumStatus, nBadStatus);
+    /*    printf(" %s (%6u), status 0x%08x (%6u)\n", common_state_text(state), nBadState, statusArray, nBadStatus); */
+    printf(", %s (%6u), ",  api_stateText(state), nBadState);
+    if ((statusArray >> COMMON_STATUS_OK) & 0x1) printf("OK   (%6u)\n", nBadStatus);
+    else                                         printf("NOTOK(%6u)\n", nBadStatus);
   } // if getInfo
 
   if (command) {
     // state required to give proper warnings
-    eb_device_read(device, wrunipz_state, EB_BIG_ENDIAN|EB_DATA32, &data, 0, eb_block);
-    state = data;
+    readInfo(&cycles, &tCycle, &fMessages, &confStat, &nLate, &vaccAvg, &pzAvg);
 
     // request state changes
     if (!strcasecmp(command, "configure")) {
@@ -537,8 +469,9 @@ int main(int argc, char** argv) {
       if (state != COMMON_STATE_OPREADY) printf("wr-unipz: WARNING command has no effect (not in state OPREADY)\n");
     } // "cleardiag"
     if (!strcasecmp(command, "diag")) {
-      readDiags(&sumStatus, &state, &nBadStatus, &nBadState, &cycles, &messages, &dtMax, &dtMin, &cycJmpMax, &cycJmpMin, &nLate, &tDiag, &tS0);
-      printDiags(sumStatus, state, nBadStatus, nBadState, cycles, messages, dtMax, dtMin, cycJmpMax, cycJmpMin, nLate, tDiag, tS0);
+      readDiags(&cycles, &messages, &dtMax, &dtMin, &cycJmpMax, &cycJmpMin, &nLate);
+      printDiags(cycles, messages, dtMax, dtMin, cycJmpMax, cycJmpMin, nLate);
+      api_readDiag(device, &statusArray, &state, &version, &mac, &ip, &nBadStatus, &nBadState, &tDiag, &tS0, &nDummyT, &nDummyI, &statDummy, 1);
     } // "diag"
 
     // test with data
@@ -677,14 +610,15 @@ int main(int argc, char** argv) {
     printf("wr-unipz: continous monitoring of 'Data Master', loglevel = %d\n", logLevel);
     
     //    actCycles    = 0;
-    actState     = COMMON_STATE_UNKNOWN;
-    actSumStatus = 0;
+    actState       = COMMON_STATE_UNKNOWN;
+    actStatusArray = 0x1 << COMMON_STATUS_OK;
 
     printCycleHeader();
 
     while (1) {
-      readInfo(&sumStatus, &state, &cycles, &nBadStatus, &nBadState, &tCycle, &fMessages, &confStat, &nLate, &vaccAvg, &pzAvg); // read info from lm32
-
+      api_readDiag(device, &statusArray, &state, &version, &mac, &ip, &nBadStatus, &nBadState, &tDiag, &tS0, &nDummyT, &nDummyI, &statDummy, 0);
+      readInfo(&cycles, &tCycle, &fMessages, &confStat, &nLate, &vaccAvg, &pzAvg); // read info from lm32
+      
       if (logLevel == 1) sleepTime = COMMON_DEFAULT_TIMEOUT * 100000;
       else               sleepTime = COMMON_DEFAULT_TIMEOUT * 10000;
       
@@ -696,12 +630,18 @@ int main(int argc, char** argv) {
 
       if (logLevel <= 1) printFlag = 1;
 
-      if ((actState     != state)        && (logLevel <= COMMON_LOGLEVEL_STATE))   {printFlag = 1; actState  = state;}
-      if ((actSumStatus != sumStatus)    && (logLevel <= COMMON_LOGLEVEL_STATUS))  {printFlag = 1; actSumStatus = sumStatus;}
+      if ((actState       != state)       && (logLevel <= COMMON_LOGLEVEL_STATE))   {printFlag = 1; actState       = state;}
+      if ((actStatusArray != statusArray) && (logLevel <= COMMON_LOGLEVEL_STATUS))  {printFlag = 1; actStatusArray = actStatusArray;}
 
       if (printFlag) {
-        printCycle(cycles, tCycle, fMessages, confStat, nLate, vaccAvg, pzAvg); 
-        printf(" %s (%6u), status 0x%08x (%d)\n", common_state_text(state), nBadState, sumStatus, nBadStatus);
+        printCycle(cycles, tCycle, fMessages, confStat, nLate, vaccAvg, pzAvg);
+        printf(", %s (%6u), ",  api_stateText(state), nBadState);
+        if ((statusArray >> COMMON_STATUS_OK) & 0x1) printf("OK   (%6u)\n", nBadStatus);
+        else printf("NOTOK(%6u)\n", nBadStatus);
+        // print set status bits (except OK)
+        for (i= COMMON_STATUS_OK + 1; i<(int)(sizeof(statusArray)*8); i++) {
+          if ((statusArray >> i) & 0x1)  printf("  ------ status bit is set : %s\n", wrunipz_status_text(i));
+        } // for i
       } // if printFlag
 
       fflush(stdout);                                                                         // required for immediate writing (if stdout is piped to syslog)
