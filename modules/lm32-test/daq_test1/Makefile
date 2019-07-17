@@ -3,7 +3,7 @@ MIAN_MODULE := daq_test1.c
 
 REPOSITORY_DIR := $(shell git rev-parse --show-toplevel)
 
-SOURCE += $(DAQ_DIR)/daq.c
+SOURCE += $(DAQ_LM32_DIR)/daq.c
 SOURCE += $(SCU_DIR)/scu_bus.c
 SOURCE += $(SCU_DIR)/dow_crc.c
 
