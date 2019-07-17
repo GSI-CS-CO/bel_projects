@@ -31,7 +31,7 @@
 #include <EtherboneConnection.hpp>
 #include <eb_lm32_helper.h>
 #include <daq_ramBuffer.h>
-#include "generated/shared_mmap.h"
+
 
 namespace DaqEb = FeSupport::Scu::Etherbone;
 
@@ -69,40 +69,58 @@ public:
       return m_poEb;
    }
 
+   /*!
+    * @brief Returns the TCP address e.g. "tcp/scuxl4711
+    *        or in the case the application runs in the IPC of the SCU:
+    *        "dev/wbm0"
+    */
    const std::string& getNetAddress( void )
    {
       return m_poEb->getNetAddress();
    }
-#ifdef CONFIG_VIA_EB_CYCLE
-   DaqEb::EtherboneConnection::MUTEX_T& getMutex( void )
-   {
-      return m_poEb->getMutex();
-   }
 
-   etherbone::Device& getEbDevice( void )
-   {
-      return m_poEb->getEbDevice();
-   }
-#endif
    int readDaqDataBlock( RAM_DAQ_PAYLOAD_T* pData,
-                         unsigned int len
+                         std::size_t  len
                        #ifndef CONFIG_DDR3_NO_BURST_FUNCTIONS
                          , RAM_DAQ_POLL_FT poll
                        #endif
                        );
 
+   /*!
+    * @brief Reads data from the LM32 shared memory area.
+    * @note In this case a homogeneous data object is provided so
+    *       the etherbone-library cant convert that in to little endian.\n
+    *       Therefore in the case of the receiving of heterogeneous data e.g.
+    *       structures, the conversion in little endian has to be made
+    *       in upper software layers after.
+    * @param pData Destination address for the received data.
+    * @param len   Data length (array size) in bytes.
+    * @param offset Offset in bytes in the shared memory (default is zero)
+    */
    void readLM32( eb_user_data_t pData,
-                  std::size_t len,
-                  std::size_t offset = 0 )
+                  const std::size_t len,
+                  const std::size_t offset = 0 )
    {
       m_poEb->read( m_lm32SharedMemAddr + offset, pData,
                     EB_BIG_ENDIAN | EB_DATA8,
                     len );
    }
 
+
+   /*!
+    * @brief Writes data in the LM32 shared memory area.
+    * @note In this case a homogeneous data object is provided so
+    *       the etherbone-library cant convert that in to big endian.\n
+    *       Therefore in the case of the sending of heterogeneous data e.g.
+    *       structures, the conversion in little endian has to be made
+    *       in upper software layers at first.
+    * @param pData Source address of the data to copy
+    * @param len Data length (array size) in bytes.
+    * @param offset Offset in bytes in the shared memory (default is zero)
+    */
    void writeLM32( const eb_user_data_t pData,
-                   std::size_t len,
-                   std::size_t offset = 0 )
+                   const std::size_t len,
+                   const std::size_t offset = 0 )
    {
       m_poEb->write( m_lm32SharedMemAddr + offset, pData,
                      EB_BIG_ENDIAN | EB_DATA8,

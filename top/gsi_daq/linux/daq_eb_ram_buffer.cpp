@@ -27,6 +27,7 @@
  *******************************************************************************
  */
 #include <daq_eb_ram_buffer.hpp>
+#include <generated/shared_mmap.h>
 #include <dbg.h>
 using namespace Scu;
 using namespace daq;
@@ -94,7 +95,7 @@ void EbRamAccess::ramInit( RAM_SCU_T* pRam,
 /*! ---------------------------------------------------------------------------
  */
 int EbRamAccess::readDaqDataBlock( RAM_DAQ_PAYLOAD_T* pData,
-                                   unsigned int len
+                                   std::size_t len
                                  #ifndef CONFIG_DDR3_NO_BURST_FUNCTIONS
                                    , RAM_DAQ_POLL_FT poll
                                  #endif
@@ -104,7 +105,7 @@ int EbRamAccess::readDaqDataBlock( RAM_DAQ_PAYLOAD_T* pData,
 #ifdef CONFIG_SCU_USE_DDR3
   #if defined( CONFIG_DDR3_NO_BURST_FUNCTIONS )
    RAM_RING_INDEXES_T indexes = m_pRam->pSharedObj->ringIndexes;
-   uint lenToEnd = indexes.capacity - ramRingGetReadIndex( &indexes );
+   std::size_t lenToEnd = indexes.capacity - ramRingGetReadIndex( &indexes );
    if( lenToEnd < len )
    {
       m_poEb->read( m_pRam->ram.pTrModeBase +

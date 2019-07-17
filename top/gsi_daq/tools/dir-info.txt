@@ -1,0 +1,1 @@
+Common DAQ tools source files which concerns Linux tools for SCU- and MIL- DAQs,

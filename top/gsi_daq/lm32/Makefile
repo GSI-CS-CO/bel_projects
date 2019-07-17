@@ -13,16 +13,19 @@ REPOSITORY_DIR := $(shell git rev-parse --show-toplevel)
 # TARGET_DIR     := ..
 # DEPLOY_DIR     := .
 TARGET         := daq_control
-MIAN_MODULE    = $(DAQ_DIR)/daq_main.c
+
+
+MIAN_MODULE    = $(DAQ_LM32_DIR)/daq_main.c
 
 SOURCE += $(SCU_DIR)/scu_bus.c
 SOURCE += $(SCU_DIR)/dow_crc.c
 SOURCE += $(WR_DIR)/dev/w1-temp.c
-SOURCE += $(DAQ_DIR)/daq.c
-SOURCE += $(DAQ_DIR)/daq_command_interface_uc.c
+SOURCE += $(DAQ_LM32_DIR)/daq.c
+SOURCE += $(DAQ_LM32_DIR)/daq_command_interface_uc.c
+SOURCE += $(DAQ_LM32_DIR)/daq_ramBuffer.c
 SOURCE += $(SCU_LIB_SRC_DIR)/scu_ddr3.c
 SOURCE += $(DAQ_DIR)/daq_ring_admin.c
-SOURCE += $(DAQ_DIR)/daq_ramBuffer.c
+
 
 DEFINES += DAQ_MAX_CHANNELS=4
 
