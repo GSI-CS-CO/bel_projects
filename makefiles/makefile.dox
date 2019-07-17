@@ -7,6 +7,7 @@
 ## Author:   Ulrich Becker                                                   ##
 ## Date:     29.08.2016                                                      ##
 ## Revision:                                                                 ##
+## GitHub Repository: "https://github.com/UlrichBecker/DoxygenMakefile"      ##
 ###############################################################################
 
 DOXY_CFG_FILE ?= ./Doxyfile

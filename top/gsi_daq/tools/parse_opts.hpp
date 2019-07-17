@@ -1,3 +1,8 @@
+/*!
+ * @see
+ * <a href="https://github.com/UlrichBecker/command_line_option_parser_cpp11">
+ * GitHub Repository</a>
+ */
 /*****************************************************************************/
 /*                                                                           */
 /*!      @brief Redundancy free command-line option parser for C++>=11       */
