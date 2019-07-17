@@ -1,13 +1,17 @@
 /*!
- *  @file gnuplotstream.hpp
- *  @brief Minimal C++ interface for Gnuplot with stream ability.
+ * @file gnuplotstream.hpp
+ * @brief Minimal C++ interface for Gnuplot with stream ability.
  *
- *  @date 07.05.2019
- *  @copyright (C) 2019 GSI Helmholtz Centre for Heavy Ion Research GmbH
+ * @date 07.05.2019
+ * @copyright (C) 2019 GSI Helmholtz Centre for Heavy Ion Research GmbH
  *
- *  @author Ulrich Becker <u.becker@gsi.de>
+ * @author Ulrich Becker <u.becker@gsi.de>
  *
- *  @see gnuplotstream.cpp
+ * @see gnuplotstream.cpp
+ *
+ * @see
+ * <a href="https://github.com/UlrichBecker/gnu-plotstream">
+ * GitHub Repository</a>
  ******************************************************************************
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public

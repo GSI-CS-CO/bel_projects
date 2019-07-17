@@ -1,3 +1,8 @@
+/*!
+ * @see
+ * <a href="https://github.com/UlrichBecker/get_linux_process_id">
+ * GitHub Repository</a>
+ */
 /*****************************************************************************/
 /*                                                                           */
 /*! @brief Module for finding process-IDs of running LINUX processes         */
