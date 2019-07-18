@@ -38,6 +38,10 @@
 extern "C" {
 #endif
 
+#ifdef CONFIG_DAQ_SINGLE_APP
+  #define GET_SHARED() g_shared
+#endif
+
 /*! ---------------------------------------------------------------------------
  * @brief Executes a a from host (Linux) requested function.
  */

@@ -32,6 +32,7 @@
 #endif
 
 #ifdef CONFIG_DAQ_SINGLE_APP
+
 /*!!!!!!!!!!!!!!!!!!!!!! Begin of shared memory area !!!!!!!!!!!!!!!!!!!!!!!!*/
 volatile DAQ_SHARED_IO_T SHARED g_shared = DAQ_SHARAD_MEM_INITIALIZER;
 /*!!!!!!!!!!!!!!!!!!!!!!! End of shared memory area !!!!!!!!!!!!!!!!!!!!!!!!!*/
@@ -69,8 +70,8 @@ static void printFunctionName( const char* str )
              "DBG: executing %s(),\tDevice: %d, Channel: %d\n"
              ESC_NORMAL,
              str,
-             g_shared.operation.ioData.location.deviceNumber,
-             g_shared.operation.ioData.location.channel
+             GET_SHARED().operation.ioData.location.deviceNumber,
+             GET_SHARED().operation.ioData.location.channel
            );
 }
   #define DBG_FUNCTION_INFO() printFunctionName( __func__ )
@@ -83,7 +84,7 @@ static void printFunctionName( const char* str )
  */
 int initBuffer( RAM_SCU_T* poRam )
 {
-   return ramInit( poRam, (RAM_RING_SHARED_OBJECT_T*)&g_shared.ramIndexes );
+   return ramInit( poRam, (RAM_RING_SHARED_OBJECT_T*)&GET_SHARED().ramIndexes );
 }
 
 /*! ---------------------------------------------------------------------------
@@ -148,7 +149,7 @@ DAQ_RETURN_CODE_T opLock( DAQ_ADMIN_T* pDaqAdmin,
                                            volatile DAQ_OPERATION_IO_T* pData )
 {
    DBG_FUNCTION_INFO();
-   g_shared.ramIndexes.ramAccessLock = true;
+   GET_SHARED().ramIndexes.ramAccessLock = true;
    return DAQ_RET_OK;
 }
 
@@ -177,7 +178,7 @@ DAQ_RETURN_CODE_T opReset( DAQ_ADMIN_T* pDaqAdmin,
    DBG_FUNCTION_INFO();
    daqBusReset( &pDaqAdmin->oDaqDevs );
    ramRingReset( &pDaqAdmin->oRam.pSharedObj->ringIndexes );
-   g_shared.ramIndexes.ramAccessLock = false;
+   GET_SHARED().ramIndexes.ramAccessLock = false;
    return DAQ_RET_OK;
 }
 
@@ -711,7 +712,7 @@ bool executeIfRequested( DAQ_ADMIN_T* pDaqAdmin )
    /*
     * Requests the Linux host an operation?
     */
-   if( g_shared.operation.code == DAQ_OP_IDLE )
+   if( GET_SHARED().operation.code == DAQ_OP_IDLE )
    { /*
       * No, there is nothing to do...
       */
@@ -725,11 +726,11 @@ bool executeIfRequested( DAQ_ADMIN_T* pDaqAdmin )
    unsigned int i = 0;
    while( g_operationTab[i].operation != NULL )
    {
-      if( g_operationTab[i].code == g_shared.operation.code )
+      if( g_operationTab[i].code == GET_SHARED().operation.code )
       {
-         g_shared.operation.retCode =
+         GET_SHARED().operation.retCode =
             g_operationTab[i].operation( pDaqAdmin,
-                                         &g_shared.operation.ioData );
+                                         &GET_SHARED().operation.ioData );
          break;
       }
       i++;
@@ -743,13 +744,13 @@ bool executeIfRequested( DAQ_ADMIN_T* pDaqAdmin )
       * No, making known this for the Linux host.
       */
       DBPRINT1( "DBG: DAQ_RET_ERR_UNKNOWN_OPERATION\n" );
-      g_shared.operation.retCode = DAQ_RET_ERR_UNKNOWN_OPERATION;
+      GET_SHARED().operation.retCode = DAQ_RET_ERR_UNKNOWN_OPERATION;
    }
 
    bool ret;
-   if( g_shared.operation.retCode == DAQ_RET_RESCAN )
+   if( GET_SHARED().operation.retCode == DAQ_RET_RESCAN )
    {
-      g_shared.operation.retCode = DAQ_RET_OK;
+      GET_SHARED().operation.retCode = DAQ_RET_OK;
       ret = true;
    }
    else
@@ -759,7 +760,7 @@ bool executeIfRequested( DAQ_ADMIN_T* pDaqAdmin )
     * Making known for the Linux host that this application is ready
     * for the next operation.
     */
-   g_shared.operation.code = DAQ_OP_IDLE;
+   GET_SHARED().operation.code = DAQ_OP_IDLE;
    return ret;
 }
 

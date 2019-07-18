@@ -27,6 +27,7 @@ ifdef SCU_DAQ
   DEFINES += CONFIG_SCU_DAQ_INTEGRATION
   DEFINES += CONFIG_SCU_USE_DDR3
   DEFINES += CONFIG_DAQ_SW_SEQUENCE
+  DEFINES += DAQ_MAX_CHANNELS=4
 else
   # New functions will not compiled when the following switch is set.
   DEFINES += CONFIG_OLD_SCU_SW
@@ -54,14 +55,12 @@ SOURCE += $(WR_DIR)/dev/w1-temp.c
 
 ifdef SCU_DAQ
 SOURCE += $(SCU_LIB_SRC_DIR)/scu_ddr3.c
-SOURCE += $(DAQ_DIR)/daq.c
-SOURCE += $(DAQ_DIR)/daq_command_interface_uc.c
 SOURCE += $(DAQ_DIR)/daq_ring_admin.c
-SOURCE += $(DAQ_DIR)/daq_ramBuffer.c
-SOURCE += $(DAQ_DIR)/daq_main.c
+SOURCE += $(DAQ_LM32_DIR)/daq.c
+SOURCE += $(DAQ_LM32_DIR)/daq_command_interface_uc.c
+SOURCE += $(DAQ_LM32_DIR)/daq_ramBuffer.c
+SOURCE += $(DAQ_LM32_DIR)/daq_main.c
 endif
-
-
 
 CODE_OPTIMIZATION = s
 RAM_SIZE    = 147456

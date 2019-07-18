@@ -1,3 +1,10 @@
+/*
+ * EtherboneConnection.hpp
+ *
+ *  Created on: Feb 14, 2013
+ *      Author: Vitaliy Rapp
+ *      Revised: 2018 by Ulrich Becker
+ */
 #pragma once
 
 #include <etherbone.h>
@@ -25,6 +32,7 @@ namespace FeSupport {
        */
       class EtherboneConnection {
         public:
+
            typedef IPC::named_mutex MUTEX_T;
 
           /*!
@@ -154,6 +162,40 @@ namespace FeSupport {
              return netaddress_;
           }
 
+        protected:
+          /*!
+           * @brief Function will used from EtherboneConnection::write
+           *        and EtherboneConnection::read
+           * @note The real WB/EB hardware access will made within the
+           *       function etherbone::Socket::run().\n
+           *       If a real cycle callback function is given instead of
+           *       "eb_block" then etherbone::Cycle::close() wont invoke
+           *       this.\n
+           *       The both functions mentioned above have to do this self.\n
+           *       Therefore its meaningful to make the Mutex locking here,\n
+           *       keeping the lock time as short as possible.
+           *
+           * @author UB
+           */
+          int run()
+          {
+             IPC::scoped_lock<IPC::named_mutex> lock(_sysMu);
+             return eb_socket_.run( timeout_ );
+          }
+
+          /*!
+           * @brief Optional callback function becomes invoked during
+           *        the final socked polling in the functions
+           *        EtherboneConnection::write and EtherboneConnection::read.
+           * @retval true Continue the polling loop
+           * @retval false Polling loop will break.
+           * @author UB
+           */
+          virtual bool onSockedPoll()
+          {
+             return true;
+          }
+
         private:
           /*!
            * @brief System mutex
@@ -163,7 +205,9 @@ namespace FeSupport {
           //
           std::string netaddress_;
 
-          // How long we want to wait for eb to answer [ms] TODO NOT USED!
+          // How long we want to wait for eb to answer [ms]
+          // TODO Only used in function run() respectively in write()
+          //      and read()
           unsigned int timeout_;
 
           // TODO Add RAII, initialize eb things in ctor
@@ -182,6 +226,9 @@ namespace FeSupport {
           // debug flag, when set detailed infos for each etherbone access
           // will be printed to console output
           bool debug_;
+
+          static std::string c_mutexName;
+          static const char* makeMutexName( const std::string& rName );
       };
 
     } // namespace Etherbone 
