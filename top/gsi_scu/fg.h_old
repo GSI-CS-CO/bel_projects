@@ -2,9 +2,8 @@
 #define __FG_H_
 
 #include <stdint.h>
-#ifdef __lm32__
 #include <scu_bus.h>
-#endif
+
 // 12 SIOs with dev busses and 1 mil extension
 #define   MAX_FG_MACROS     256
 #define   MAX_FG_CHANNELS   16
@@ -43,13 +42,13 @@
 #define FC_IRQ_ACT_WR 0x21 << 8
 #define FC_IFAMODE_WR 0x60 << 8
 #define FC_BLK_WR     0x6b << 8
-#define FC_ACT_RD     0x81 << 8
 
-struct param_set {
+struct param_set
+{
   signed short coeff_a;
   signed short coeff_b;
   signed int coeff_c;
-  unsigned int control; /* Bit 2..0   step
+  unsigned int control; /*!< @brief Bit 2..0   step
                                5..3   freq
                               11..6   shift_b
                               17..12  shift_a */                           
@@ -59,7 +58,8 @@ struct param_set {
 #define STATE_ACTIVE  1
 #define STATE_ARMED   2
 
-struct channel_regs {
+struct channel_regs
+{
   unsigned int wr_ptr;
   unsigned int rd_ptr;
   unsigned int mbx_slot;
@@ -69,12 +69,12 @@ struct channel_regs {
   unsigned int state; // meaning private to LM32
 };
 
-struct channel_buffer {
+struct channel_buffer
+{
   struct param_set pset[BUFFER_SIZE];
 };
 
-#ifdef __lm32__
 void scan_scu_bus(volatile unsigned short *base_adr, volatile unsigned int *mil_base, uint32_t *fglist, uint64_t *ext_id);
 void init_buffers(struct channel_regs *cr, int channel, uint32_t *macro, volatile unsigned short* scub_base, volatile unsigned int* devb_base);
-#endif
+
 #endif

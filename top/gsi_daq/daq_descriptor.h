@@ -278,6 +278,10 @@ typedef struct PACKED_SIZE
 } _DAQ_TRIGGER;
 
 #ifndef __DOXYGEN__
+/*
+ * We have to made a static check verifying whether the structure-format
+ * is equal on both platforms: Linux and LM32.
+ */
 STATIC_ASSERT( offsetof( _DAQ_TRIGGER, low )   == 0 * sizeof(DAQ_DATA_T) );
 STATIC_ASSERT( offsetof( _DAQ_TRIGGER, high )  == 1 * sizeof(DAQ_DATA_T) );
 STATIC_ASSERT( offsetof( _DAQ_TRIGGER, delay ) == 2 * sizeof(DAQ_DATA_T) );

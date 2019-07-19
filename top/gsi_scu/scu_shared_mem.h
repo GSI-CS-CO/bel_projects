@@ -27,21 +27,26 @@
 #define _SCU_SHARED_MEM_H
 
 #include <fg.h>
+#include <cb.h>
 #include <helper_macros.h>
 #ifdef CONFIG_SCU_DAQ_INTEGRATION
   #include <daq_command_interface.h>
 #endif
 
+/*! ---------------------------------------------------------------------------
+ * @brief Definition of shared memory area for the communication between LM32
+ *        and Linux.
+ */
 typedef struct PACKED_SIZE
 {
-   uint64_t board_id;       /*!< 1Wire ID of the pcb temp sensor */
-   uint64_t ext_id;         /*!< 1Wire ID of the extension board temp sensor */
-   uint64_t backplane_id;   /*!< 1Wire ID of the backplane temp sensor */
-   uint32_t board_temp;     /*!< temperature value of the pcb sensor */
-   uint32_t ext_temp;       /*!< temperature value of the extension board sensor */
-   uint32_t backplane_temp; /*!< temperature value of the backplane sensor */
+   uint64_t board_id;       /*!<@brief 1Wire ID of the pcb temp sensor */
+   uint64_t ext_id;         /*!<@brief 1Wire ID of the extension board temp sensor */
+   uint64_t backplane_id;   /*!<@brief 1Wire ID of the backplane temp sensor */
+   uint32_t board_temp;     /*!<@brief temperature value of the pcb sensor */
+   uint32_t ext_temp;       /*!<@brief temperature value of the extension board sensor */
+   uint32_t backplane_temp; /*!<@brief temperature value of the backplane sensor */
    uint32_t fg_magic_number;
-   uint32_t fg_version;     /*!< 0x2 saftlib, 0x3 new msi system with mailbox */
+   uint32_t fg_version;     /*!<@brief 0x2 saftlib, 0x3 new msi system with mailbox */
    uint32_t fg_mb_slot;
    uint32_t fg_num_channels;
    uint32_t fg_buffer_size;
@@ -54,10 +59,91 @@ typedef struct PACKED_SIZE
 #endif
 } SCU_SHARED_DATA_T;
 
+
 #define GET_SCU_SHM_OFFSET( m ) offsetof( SCU_SHARED_DATA_T, m )
 
 #ifndef __DOXYGEN__
+/*
+ * Unfortunately necessary because in some elements of some sub-structures of
+ * the main structure SCU_SHARED_DATA_T are still declared as "unsigned int",
+ * and it's never guaranteed that the type "unsigned int" is a 32 bit type
+ * on all platforms!
+ */
+STATIC_ASSERT( sizeof(uint32_t) == sizeof(unsigned int) );
+STATIC_ASSERT( sizeof(int32_t) == sizeof(signed int) );
+STATIC_ASSERT( sizeof(uint16_t) == sizeof(signed short) );
 
+/*
+ * We have to made a static check verifying whether the structure-format
+ * is equal on both platforms: Linux and LM32.
+ */
+STATIC_ASSERT( offsetof( param_set, coeff_a ) == 0 );
+STATIC_ASSERT( offsetof( param_set, coeff_b ) ==
+               offsetof( param_set, coeff_a ) + sizeof( uint16_t ));
+STATIC_ASSERT( offsetof( param_set, coeff_c ) ==
+               offsetof( param_set, coeff_b ) + sizeof( uint16_t ));
+STATIC_ASSERT( offsetof( param_set, control ) ==
+               offsetof( param_set, coeff_c ) + sizeof(int32_t) );
+STATIC_ASSERT( sizeof( param_set ) ==
+               offsetof( param_set, control ) + sizeof(uint32_t) );
+
+STATIC_ASSERT( sizeof( channel_buffer ) == BUFFER_SIZE * sizeof( param_set ) );
+
+STATIC_ASSERT( offsetof( channel_regs, wr_ptr  ) == 0 );
+STATIC_ASSERT( offsetof( channel_regs, rd_ptr  ) ==
+               offsetof( channel_regs, wr_ptr  ) + sizeof( uint32_t ));
+STATIC_ASSERT( offsetof( channel_regs, mbx_slot ) ==
+               offsetof( channel_regs, rd_ptr  ) + sizeof( uint32_t ));
+STATIC_ASSERT( offsetof( channel_regs, macro_number ) ==
+               offsetof( channel_regs, mbx_slot ) + sizeof( uint32_t ));
+STATIC_ASSERT( offsetof( channel_regs, ramp_count ) ==
+               offsetof( channel_regs, macro_number ) + sizeof( uint32_t ));
+STATIC_ASSERT( offsetof( channel_regs, tag ) ==
+               offsetof( channel_regs, ramp_count ) + sizeof( uint32_t ));
+STATIC_ASSERT( offsetof( channel_regs, state ) ==
+               offsetof( channel_regs, tag ) + sizeof( uint32_t ));
+STATIC_ASSERT( sizeof( channel_regs ) ==
+               offsetof( channel_regs, state ) + sizeof( uint32_t ));
+
+STATIC_ASSERT( offsetof( SCU_SHARED_DATA_T, board_id ) == 0 );
+STATIC_ASSERT( offsetof( SCU_SHARED_DATA_T, ext_id ) ==
+               offsetof( SCU_SHARED_DATA_T, board_id ) + sizeof( uint64_t ));
+STATIC_ASSERT( offsetof( SCU_SHARED_DATA_T, backplane_id ) ==
+               offsetof( SCU_SHARED_DATA_T, ext_id ) + sizeof( uint64_t ));
+STATIC_ASSERT( offsetof( SCU_SHARED_DATA_T, board_temp ) ==
+               offsetof( SCU_SHARED_DATA_T, backplane_id ) + sizeof( uint64_t ));
+STATIC_ASSERT( offsetof( SCU_SHARED_DATA_T, ext_temp ) ==
+               offsetof( SCU_SHARED_DATA_T, board_temp ) + sizeof( uint32_t ));
+STATIC_ASSERT( offsetof( SCU_SHARED_DATA_T, backplane_temp ) ==
+               offsetof( SCU_SHARED_DATA_T, ext_temp ) + sizeof( uint32_t ));
+STATIC_ASSERT( offsetof( SCU_SHARED_DATA_T, fg_magic_number ) ==
+               offsetof( SCU_SHARED_DATA_T, backplane_temp ) + sizeof( uint32_t ));
+STATIC_ASSERT( offsetof( SCU_SHARED_DATA_T, fg_version ) ==
+               offsetof( SCU_SHARED_DATA_T, fg_magic_number ) + sizeof( uint32_t ));
+STATIC_ASSERT( offsetof( SCU_SHARED_DATA_T, fg_mb_slot ) ==
+               offsetof( SCU_SHARED_DATA_T, fg_version ) + sizeof( uint32_t ));
+STATIC_ASSERT( offsetof( SCU_SHARED_DATA_T, fg_num_channels ) ==
+               offsetof( SCU_SHARED_DATA_T, fg_mb_slot ) + sizeof( uint32_t ));
+STATIC_ASSERT( offsetof( SCU_SHARED_DATA_T, fg_buffer_size ) ==
+               offsetof( SCU_SHARED_DATA_T, fg_num_channels ) + sizeof( uint32_t ));
+STATIC_ASSERT( offsetof( SCU_SHARED_DATA_T, fg_macros ) ==
+               offsetof( SCU_SHARED_DATA_T, fg_buffer_size ) + sizeof( uint32_t ));
+STATIC_ASSERT( offsetof( SCU_SHARED_DATA_T, fg_regs ) ==
+               offsetof( SCU_SHARED_DATA_T, fg_macros ) + MAX_FG_MACROS * sizeof( uint32_t ));
+STATIC_ASSERT( offsetof( SCU_SHARED_DATA_T, fg_buffer ) ==
+               offsetof( SCU_SHARED_DATA_T, fg_regs ) + MAX_FG_CHANNELS * sizeof( struct channel_regs ));
+
+STATIC_ASSERT( offsetof( SCU_SHARED_DATA_T, daq_buf ) ==
+               offsetof( SCU_SHARED_DATA_T, fg_buffer ) + MAX_FG_CHANNELS * sizeof( struct channel_buffer ));
+#ifdef CONFIG_SCU_DAQ_INTEGRATION
+STATIC_ASSERT( offsetof( SCU_SHARED_DATA_T, daq ) ==
+               offsetof( SCU_SHARED_DATA_T, daq_buf ) + sizeof( struct daq_buffer ));
+STATIC_ASSERT( sizeof( SCU_SHARED_DATA_T ) ==
+               offsetof( SCU_SHARED_DATA_T, daq ) + sizeof( DAQ_SHARED_IO_T ));
+#else
+STATIC_ASSERT( sizeof( SCU_SHARED_DATA_T ) ==
+               offsetof( SCU_SHARED_DATA_T, daq_buf ) + sizeof( struct daq_buffer ));
+#endif
 #endif
 
 
