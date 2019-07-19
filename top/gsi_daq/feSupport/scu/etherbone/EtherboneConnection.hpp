@@ -79,7 +79,7 @@ namespace FeSupport {
           void read( const etherbone::address_t eb_address,
                      eb_user_data_t pData,
                      const etherbone::format_t format,
-                     const std::size_t size = 1 );
+                     const uint size = 1 );
 
           /*!
            * \brief Reads a value from the bus in etherbone format.
@@ -112,7 +112,7 @@ namespace FeSupport {
           void write( const etherbone::address_t eb_address,
                       const eb_user_data_t pData,
                       const etherbone::format_t format,
-                      const std::size_t size = 1 );
+                      const uint size = 1 );
 
           /*!
            * \brief Writes a single etherbone value to the bus.
