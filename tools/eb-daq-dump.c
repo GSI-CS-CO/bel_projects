@@ -104,7 +104,8 @@ void remove_daq_message() {
     printf("%ld", message[2] | (message[3] << 32));
     printf(" %d", (signed)message[1]);
     printf(" %d", ((signed)message[0]) >> 16);
-    printf(" chn:0x%"EB_DATA_FMT"\n", message[4]);
+
+    printf(" fg-%u-%u\n", (unsigned)message[4] >> 24, (unsigned)(message[4] & 0x00ff0000) >> 16);
   }
 
 }
