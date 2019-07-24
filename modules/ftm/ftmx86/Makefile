@@ -2,8 +2,8 @@
 #hack for fuckin lib chaos (both on asl cluster and my computer... )
 
 ifeq ($(findstring asl,$(shell hostname)),asl)
-  EB_INC        =-I/common/export/timing-rte/tg-cherry-v2/x86_64/include
-  EB_LIB        =/common/export/timing-rte/tg-cherry-v2/x86_64/lib/libetherbone.so
+  EB_INC        =-I/common/export/timing-rte/tg-enigma-v5.0.0-pre-alpha/x86_64/include
+  EB_LIB        =/common/export/timing-rte/tg-enigma-v5.0.0-pre-alpha/x86_64/lib/libetherbone.so
 else
   EB_LIB        =-letherbone
 endif

@@ -179,6 +179,12 @@ pexarria5:	firmware
 pexarria5-clean::
 	$(MAKE) -C syn/gsi_pexarria5/control clean
 
+ftm:	firmware
+	$(MAKE) -C syn/gsi_pexarria5/ftm all
+
+ftm-clean::
+	$(MAKE) -C syn/gsi_pexarria5/ftm clean
+
 microtca:	firmware
 	$(MAKE) -C syn/gsi_microtca/control all
 
