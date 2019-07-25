@@ -196,22 +196,6 @@ inline std::vector<T> &operator+=(std::vector<T> &A, const T &B)
   (byte & 0x02 ? '1' : '0'), \
   (byte & 0x01 ? '1' : '0') ///< Convert byte to ascii sequence of 1/0
 
-/// Hexdump to std::out
-/** Creates a formatted hexadecimal version of a char array and puts it on std::cout
- * @param desc Char array containig dump title
- * @param addr Char array containig bytes to be hex dumped
- * @param len Number of bytes to be hex dumped
- */
-void hexDump (const char *desc, const char* addr, int len);
-
-/// Hexdump to std::out
-/** Creates a formatted hexadecimal version of a vector of bytes and puts it on std::cout
- * @param desc Char array containig dump title
- * @param vb Vector of bytes to be hex dumped
- */
-void hexDump (const char *desc, vBuf vb);
-//@}
-
 /** @name Diagnostic data structures
  * Report structures for diagnostics and queue report
  */
@@ -508,7 +492,21 @@ inline T s2u(const std::string& s) {
 std::string fixArchiveVersion(const std::string& s);
 
 
+/// Hexdump to std::out
+/** Creates a formatted hexadecimal version of a char array and puts it on std::cout
+ * @param desc Char array containig dump title
+ * @param addr Char array containig bytes to be hex dumped
+ * @param len Number of bytes to be hex dumped
+ */
+void hexDump (const char *desc, const char* addr, int len);
 
+/// Hexdump to std::out
+/** Creates a formatted hexadecimal version of a vector of bytes and puts it on std::cout
+ * @param desc Char array containig dump title
+ * @param vb Vector of bytes to be hex dumped
+ */
+void hexDump (const char *desc, vBuf vb);
+//@}
 
 
 
