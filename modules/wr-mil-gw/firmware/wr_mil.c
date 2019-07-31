@@ -41,7 +41,7 @@
 #include <stdint.h>
 
 /* includes specific for bel_projects */
-#include "mprintf.h"
+#include "pp-printf.h"
 #include "mini_sdb.h"
 #include "irq.h"
 #include "aux.h"
@@ -171,7 +171,7 @@ void eventHandler(volatile uint32_t    *eca,
       if (too_late || trials)
       { 
         ++config->late_events;
-        mprintf("evtCode: %u trials: %u  late: %u\n",evtCode, trials, too_late);
+        pp_printf("evtCode: %u trials: %u  late: %u\n",evtCode, trials, too_late);
       }
     }
     // remove action from ECA queue 
@@ -194,20 +194,20 @@ void main(void)
   // ECAQueue 
   volatile uint32_t *eca_queue = ECAQueue_init();
   uint32_t n_events = ECAQueue_clear(eca_queue);
-  mprintf("popped %d events from the eca queue\n", n_events);
+  pp_printf("popped %d events from the eca queue\n", n_events);
 
   // ECACtrl 
   volatile uint32_t *eca_ctrl = ECACtrl_init();
-  mprintf("eca ctrl regs at %08x\n", eca_ctrl);
+  pp_printf("eca ctrl regs at %08x\n", eca_ctrl);
 
   // Command
   volatile WrMilConfig *config = config_init();
-  mprintf("mil cmd regs at %08x\n", config);
+  pp_printf("mil cmd regs at %08x\n", config);
 
   // say hello on the console
   TAI_t nowTAI; 
   ECACtrl_getTAI(eca_ctrl, &nowTAI);
-  mprintf("TAI now: 0x%08x%08x\n", nowTAI.part.hi, nowTAI.part.lo);
+  pp_printf("TAI now: 0x%08x%08x\n", nowTAI.part.hi, nowTAI.part.lo);
 
   while (1) {
     //poll user commands

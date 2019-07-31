@@ -2,7 +2,7 @@
 
 #include "wr_mil_config.h"
 #include "mini_sdb.h"
-#include "mprintf.h"
+#include "pp-printf.h"
 #include "wr_mil_delay.h"
 #include "wr_mil_eca_queue.h"
 #include "wr_mil_events.h"
@@ -41,11 +41,11 @@ void config_command_handler(volatile WrMilConfig *config)
     switch(config->cmd)
     {
       case WR_MIL_GW_CMD_KILL:
-        mprintf("stop MCU\n");
+        pp_printf("stop MCU\n");
         config->state = WR_MIL_GW_STATE_PAUSED;
         while(1);
       case WR_MIL_GW_CMD_RESET:
-        mprintf("wr-mil-gw reset after pause of 1 sec\n");
+        pp_printf("wr-mil-gw reset after pause of 1 sec\n");
         { 
           int current_state = config->state; 
           config->state = WR_MIL_GW_STATE_PAUSED;
@@ -62,7 +62,7 @@ void config_command_handler(volatile WrMilConfig *config)
         {
           config->event_source = WR_MIL_GW_EVENT_SOURCE_SIS;
           config->state = WR_MIL_GW_STATE_CONFIGURED;
-          mprintf("wr-mil-gw configured as SIS event source\n");
+          pp_printf("wr-mil-gw configured as SIS event source\n");
         }
         break;
       case WR_MIL_GW_CMD_CONFIG_ESR: // allow configuration of PZ-id only if not configured yet
@@ -70,11 +70,11 @@ void config_command_handler(volatile WrMilConfig *config)
         {
           config->event_source = WR_MIL_GW_EVENT_SOURCE_ESR;
           config->state = WR_MIL_GW_STATE_CONFIGURED;
-          mprintf("wr-mil-gw configured as ESR event source\n");
+          pp_printf("wr-mil-gw configured as ESR event source\n");
         }
         break;
       default:
-        mprintf("wr-mil-gw unknown command %08x\n", config->cmd);
+        pp_printf("wr-mil-gw unknown command %08x\n", config->cmd);
         break;
     }
     config->cmd = UINT32_C(0);  
@@ -90,7 +90,7 @@ void config_poll(volatile WrMilConfig *config)
   {
     case WR_MIL_GW_STATE_INIT:
       if (config->event_source == WR_MIL_GW_EVENT_SOURCE_UNKNOWN) {
-        mprintf("wr-mil-gw not configured\n");
+        pp_printf("wr-mil-gw not configured\n");
         config->state = WR_MIL_GW_STATE_UNCONFIGURED;
       }
       else
@@ -107,7 +107,7 @@ void config_poll(volatile WrMilConfig *config)
       config_command_handler(config);
       break;
     default:
-      mprintf("wr-mil-gw unknown state\n");
+      pp_printf("wr-mil-gw unknown state\n");
       config->state = WR_MIL_GW_STATE_INIT;
   }
 }

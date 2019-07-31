@@ -1,14 +1,3 @@
-# Two examples are provided
-# - miniExample: 'hello world' for lm32
-# - example: demo program including
-# -- shared memory for exchange of data via Wishbone
-# -- access to other Wishbone devices
-# -- receive commands via shared memory
-# -- get actions from the ECA by polling
-#
-# Example usage:
-#   make TARGET=example
-#   ... will compile the more complex example program
 TARGET		?= wr_mil
 .DEFAULT_GOAL := fwbin
 DEVICE		= 5AGXMA3D4
