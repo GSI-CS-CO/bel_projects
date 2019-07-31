@@ -6,7 +6,7 @@ PREFIX      ?= /usr/local
 STAGING     ?=
 EB          ?= ../../ip_cores/etherbone-core/api
 FW          ?= ..
-TARGETS     := wr-mil-gw-ctl
+TARGETS     := saft-wrmilgw-ctl
 
 # set MASP to YES, if dmunipz-ctl should function as status emitter to MASP (when in monitoring mode)
 MASP        ?= NO              
@@ -56,9 +56,9 @@ endif
 
 
 EXTRA_FLAGS ?= $(USEMASP) $(PRODUCTIVE)
-CFLAGS      ?= $(EXTRA_FLAGS) -Wall -O2 -g -I $(EB) -I $(FW) $(BOOST_INCL) $(MASP_INCL) 
-LIBS        ?= -L $(EB)/.libs $(BOOST_LIBPATH) $(MASP_LIBPATH) -Wl,-rpath,$(PREFIX)/lib -letherbone -lm $(MASP_LIBS) $(GENERAL_LIBS) $(BOOST_LIBS) 
-CC          = g++ 
+CFLAGS      ?= `pkg-config saftlib --cflags` $(EXTRA_FLAGS) -Wall -O2 -g -I $(EB) -I $(FW) $(BOOST_INCL) $(MASP_INCL) 
+LIBS        ?= `pkg-config saftlib --libs` -L $(EB)/.libs $(BOOST_LIBPATH) $(MASP_LIBPATH) -Wl,-rpath,$(PREFIX)/lib -letherbone -lm $(MASP_LIBS) $(GENERAL_LIBS) $(BOOST_LIBS) 
+CC          = g++ --std=c++0x
 
 #EXTRA_FLAGS ?=
 #CFLAGS      ?= $(EXTRA_FLAGS) -Wall -O2 -I $(EB) -I $(FW) -I. 
@@ -67,11 +67,11 @@ CC          = g++
 
 all: $(TARGETS)
 
-wr-mil-gw-ctl: wr-mil-gw-ctl.cpp
-	$(CC) $(CFLAGS) -o wr-mil-gw-ctl wr-mil-gw-ctl.cpp  $(LIBS)
+saft-wrmilgw-ctl: saft-wrmilgw-ctl.cpp
+	$(CC) $(CFLAGS) -o saft-wrmilgw-ctl saft-wrmilgw-ctl.cpp  $(LIBS)
 
 clean:
-	rm -f *.o wr-mil-gw-ctl
+	rm -f *.o saft-wrmilgw-ctl
 
 install:
 	mkdir -p $(STAGING)$(PREFIX)/bin

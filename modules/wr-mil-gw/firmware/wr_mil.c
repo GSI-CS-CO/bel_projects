@@ -54,6 +54,8 @@
 #include "wr_mil_config.h"
 #include "wr_mil_delay.h"
 #include "wr_mil_events.h"
+#include "wr_mil_msi.h"
+#include "wr_mil_oled.h"
 #include "../../../top/gsi_scu/scu_mil.h"
 
 // for the event handler
@@ -75,6 +77,15 @@ int init()
 uint32_t mil_piggy_write_event(volatile uint32_t *piggy, uint32_t cmd)
 {
   piggy[MIL_SIO3_TX_CMD] = cmd;
+  return 0;
+}
+
+uint32_t mil_piggy_reset(volatile uint32_t *piggy)
+{
+  piggy[MIL_SIO3_RST] = 0x0;
+  DELAY1000us;
+  piggy[MIL_SIO3_RST] = 0xff;
+  DELAY100us;
   return 0;
 }
 
@@ -100,7 +111,7 @@ void make_mil_timestamp(uint64_t TAI, uint32_t *EVT_UTC, uint64_t UTC_offset_ms)
   uint32_t mil_sec          = mil_timestamp_ms / 1000;
 
   // The following converion code for the UTC timestamps is based on 
-  // some sample code that was kinkly provided by Peter Kainberger.
+  // some sample code that was kindly provided by Peter Kainberger.
   union UTCtime_t
   {
     uint8_t bytes[8];
@@ -153,6 +164,7 @@ void eventHandler(volatile uint32_t    *eca,
       too_late = wait_until_tai(eca, mil_event_time);
       trials = mil_piggy_write_event(mil_piggy, milTelegram); 
       ++config->num_events.value;
+      ++config->mil_histogram[milTelegram & 0xff];
       if (evtCode == config->utc_trigger)
       {
         // generate EVT_UTC_1/2/3/4/5 EVENTS
@@ -170,8 +182,16 @@ void eventHandler(volatile uint32_t    *eca,
       }
       if (too_late || trials)
       { 
+        // inform saftlib that there was a late event
+        send_MSI(config->mb_slot, WR_MIL_GW_MSI_LATE_EVENT);
         ++config->late_events;
-        pp_printf("evtCode: %u trials: %u  late: %u\n",evtCode, trials, too_late);
+        //pp_printf("evtCode: %u trials: %u  late: %u\n",evtCode, trials, too_late);
+        for (int i = 0; i < 16; ++i) {
+          if (too_late>>(i+10) == 0 || i == 15) {
+            ++config->late_histogram[i];
+            break;
+          } 
+        }
       }
     }
     // remove action from ECA queue 
@@ -190,9 +210,11 @@ void main(void)
 
   // MilPiggy 
   volatile uint32_t *mil_piggy = (volatile uint32_t*) find_device_adr(GSI, SCU_MIL);
+  pp_printf("mil_piggy adr: %08x\n", mil_piggy);
 
   // ECAQueue 
   volatile uint32_t *eca_queue = ECAQueue_init();
+  pp_printf("eca_queue adr: %08x\n", eca_queue);
   uint32_t n_events = ECAQueue_clear(eca_queue);
   pp_printf("popped %d events from the eca queue\n", n_events);
 
@@ -204,10 +226,21 @@ void main(void)
   volatile WrMilConfig *config = config_init();
   pp_printf("mil cmd regs at %08x\n", config);
 
+
+  volatile uint32_t *oled = (volatile uint32_t*) find_device_adr(GSI, 0x93a6f3c4);
+  oled[0] = 0;
+
+  // // Where is the MSI message box
+  // pp_printf("pCpuMsiBox %08x      pMyMsi %08x\n", pCpuMsiBox, pMyMsi);
+  // config->mb_slot = getMsiBoxSlot(0xa0);
+  // pp_printf("mb_slot %d\n", config->mb_slot);
+
   // say hello on the console
   TAI_t nowTAI; 
   ECACtrl_getTAI(eca_ctrl, &nowTAI);
   pp_printf("TAI now: 0x%08x%08x\n", nowTAI.part.hi, nowTAI.part.lo);
+
+  mil_piggy_reset(mil_piggy);
 
   while (1) {
     //poll user commands
@@ -222,6 +255,9 @@ void main(void)
       eventHandler(eca_ctrl, eca_queue, mil_piggy, config);
     }
 
-    DELAY1us;
+    if (!oled_loop(config, oled)) {
+      DELAY1us; // little delay if nothing was written to display
+    }
+
   } 
 } 

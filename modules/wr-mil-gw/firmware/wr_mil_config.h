@@ -23,6 +23,14 @@ typedef struct
 	Value64Bit_t num_events;        // base + 0x28: number of translated events from WR to MIL, high word
 									// base + 0x2C: number of translated events from WR to MIL, low word
 	uint32_t	 late_events;       // base + 0x30: number of translated events that could not be delivered in time
+	uint32_t     late_histogram[16];// histogram of delays 
+	                                //            [0] -> delay < 2^10 ns
+	                                //            [1] -> delay < 2^11 ns
+	                                //           ...
+	                                //           [14] -> delay < 2^24 ns
+	                                //           [15] -> delay >= 2^24 ns
+	uint32_t     mil_histogram[256];// histogram of MIL events
+	uint32_t     mb_slot;           // MSI slot number (?)
 } WrMilConfig;
 
 

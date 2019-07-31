@@ -6,7 +6,9 @@
 #include <string.h>
 #include <stdint.h>
 #include <time.h>
+#include <ctime>
 #include <sys/time.h>
+#include <string>
 
 // Etherbone
 #include <etherbone.h>
@@ -14,31 +16,42 @@
 // dm-unipz
 #include <wr_mil_gw.h>
 
+#ifdef USEMASP
+  #include "MASP/Emitter/StatusEmitter.h"
+  #include "MASP/StatusDefinition/DeviceStatus.h"
+  #include "MASP/Util/Logger.h"
+  #include "MASP/Common/StatusNames.h"
+  #include "MASP/Emitter/End_of_scope_status_emitter.h"
+  #include <boost/thread/thread.hpp> // (sleep)
+  #include <iostream>
+  #include <string>
+#endif // USEMASP
+
 void die(const char *program, const char* where, eb_status_t status) {
   fprintf(stderr, "%s: %s failed: %s\n",
           program, where, eb_status(status));
   exit(1);
 } //die
 
-const char* state_str(uint32_t state)
+const char* state_str(uint32_t state, bool human_readable = false)
 {
   switch(state)
   {
-    case WR_MIL_GW_STATE_INIT:         return "WR_MIL_GW_STATE_INIT";
-    case WR_MIL_GW_STATE_UNCONFIGURED: return "WR_MIL_GW_STATE_UNCONFIGURED";
-    case WR_MIL_GW_STATE_CONFIGURED:   return "WR_MIL_GW_STATE_CONFIGURED";
-    case WR_MIL_GW_STATE_PAUSED:       return "WR_MIL_GW_STATE_PAUSED";
+    case WR_MIL_GW_STATE_INIT:         return human_readable?"initial":"WR_MIL_GW_STATE_INIT";
+    case WR_MIL_GW_STATE_UNCONFIGURED: return human_readable?"unconfigured":"WR_MIL_GW_STATE_UNCONFIGURED";
+    case WR_MIL_GW_STATE_CONFIGURED:   return human_readable?"configured":"WR_MIL_GW_STATE_CONFIGURED";
+    case WR_MIL_GW_STATE_PAUSED:       return human_readable?"paused":"WR_MIL_GW_STATE_PAUSED";
   }
   return "";
 }
 
-const char* event_source_str(uint32_t source)
+const char* event_source_str(uint32_t source, bool human_readable = false)
 {
   switch(source)
   {
-    case WR_MIL_GW_EVENT_SOURCE_UNKNOWN:  return "WR_MIL_GW_EVENT_SOURCE_UNKNOWN";
-    case WR_MIL_GW_EVENT_SOURCE_SIS:      return "WR_MIL_GW_EVENT_SOURCE_SIS";
-    case WR_MIL_GW_EVENT_SOURCE_ESR:      return "WR_MIL_GW_EVENT_SOURCE_ESR";
+    case WR_MIL_GW_EVENT_SOURCE_UNKNOWN:  return human_readable?"unknown":"WR_MIL_GW_EVENT_SOURCE_UNKNOWN";
+    case WR_MIL_GW_EVENT_SOURCE_SIS:      return human_readable?"SIS":"WR_MIL_GW_EVENT_SOURCE_SIS";
+    case WR_MIL_GW_EVENT_SOURCE_ESR:      return human_readable?"ESR":"WR_MIL_GW_EVENT_SOURCE_ESR";
   }
   return "";
 }
@@ -57,11 +70,16 @@ void help(const char *program) {
   fprintf(stderr, "  -k              kill WR-MIL gateway, only reset or eb-fwload can recover (useful for eb-fwload)\n");
   fprintf(stderr, "  -i              print information about the WR-MIL gateway (register content)\n");
   fprintf(stderr, "  -m              monitor gateway status registers and report irregularities on stdout\n");
+#ifdef USEMASP
+
+  fprintf(stderr, "  -M SIS18|ESR      monitor gateway status registers and send MASP status as SIS or ESR nomen\n");
+#endif // USEMASP
   fprintf(stderr, "  -h              display this help and exit\n");
   fprintf(stderr, "\n");
   fprintf(stderr, "Report software bugs to <m.reese@gsi.de>\n");
-  fprintf(stderr, "Version: %s\n%s\nLicensed under the LGPL v3.\n", eb_source_version(), eb_build_info());
+  fprintf(stderr, "Licensed under the LGPL v3.\n");//, eb_source_version(), eb_build_info());
 }
+
 
 int main(int argc, char *argv[])
 {
@@ -84,9 +102,12 @@ int main(int argc, char *argv[])
   int     info        =  0;
   int     monitor     =  0;
   int     opt,error   =  0;
+#ifdef USEMASP
+  std::string MASP_SIS_ESR;
+#endif
 
   /* Process the command-line arguments */
-  while ((opt = getopt(argc, argv, "l:d:u:o:t:sehrkim")) != -1) {
+  while ((opt = getopt(argc, argv, "l:d:u:o:t:sehrkimM:")) != -1) {
     switch (opt) {
     case 'd':
       value = strtol(optarg, &value_end, 0);
@@ -144,6 +165,24 @@ int main(int argc, char *argv[])
     case 'm':
       monitor = 1;
       break;
+#ifdef USEMASP
+    case 'M':
+      monitor = 1;
+      if (!optarg)
+      {
+        fprintf(stderr, "%s: specify MASP nomen \"%s\", use SIS or ESR\n", argv[0], optarg);
+        error = 1;
+        break;
+      }
+      printf("optarg = %s\n", optarg);
+      MASP_SIS_ESR = std::string(optarg);
+      if (MASP_SIS_ESR != "SIS18" && MASP_SIS_ESR != "ESR")
+      {
+        fprintf(stderr, "%s: invalid MASP nomen \"%s\", use SIS or ESR\n", argv[0], optarg);
+        error = 1;
+      }
+      break;
+#endif // USEMASP
     case 'i':
       info = 1;
       break;
@@ -180,16 +219,15 @@ int main(int argc, char *argv[])
   if ((eb_status = eb_socket_open(EB_ABI_CODE, 0, EB_ADDR32|EB_DATA32, &socket)) != EB_OK) die(argv[0], "eb_socket_open", eb_status);
   if ((eb_status = eb_device_open(socket, devName, EB_ADDR32|EB_DATA32, 3, &device)) != EB_OK) die(argv[0], "eb_device_open", eb_status);
 
+  // find user LM32 devices
   #define MAX_DEVICES 8
   struct sdb_device devices[MAX_DEVICES];
   int num_devices = MAX_DEVICES;
   eb_sdb_find_by_identity(device, UINT64_C(0x651), UINT32_C(0x54111351), devices, &num_devices);
-  //eb_sdb_find_by_identity(device, UINT64_C(0x651), UINT32_C(0xaa7bfb3c), &devices[0], &num_devices);
   if (num_devices == 0) {
     fprintf(stderr, "%s: no matching devices found\n", argv[0]);
     return 1;
   }
-
 
   //printf("found %d devices\n", num_devices);
   int device_idx = -1;
@@ -223,6 +261,7 @@ int main(int argc, char *argv[])
     fprintf(stderr, "no WR-MIL gateway found\n");
     return 1;
   }
+
 
   // the register adresses 
   uint32_t reg_shared_addr          = device_addr+WR_MIL_GW_SHARED_OFFSET;
@@ -323,11 +362,15 @@ int main(int argc, char *argv[])
 
   if (info)
   {
-    printf("%s: WR-MIL regitster content:\n", argv[0]);
+    printf("WR-MIL shared memory regitster content:\n");
+    uint32_t magic_number;
+    uint32_t gateway_state;
+    uint32_t event_source;
     uint32_t value;
     uint64_t value64_bit;
     eb_status = eb_device_read(device, reg_magic_addr,          EB_BIG_ENDIAN|EB_DATA32, (eb_data_t*)&value, 0, eb_block);
     printf("    WR_MIL_GW_REG_MAGIC_NUMBER:   0x%08x\n", value);
+    magic_number = value; // is used later
     eb_status = eb_device_read(device, reg_command_addr,        EB_BIG_ENDIAN|EB_DATA32, (eb_data_t*)&value, 0, eb_block);
     printf("    WR_MIL_GW_REG_COMMAND:        0x%08x\n", value);
     eb_status = eb_device_read(device, reg_utc_trigger_addr,    EB_BIG_ENDIAN|EB_DATA32, (eb_data_t*)&value, 0, eb_block);
@@ -338,10 +381,12 @@ int main(int argc, char *argv[])
     printf("    WR_MIL_GW_REG_TRIG_UTC_DELAY: 0x%08x = %d us\n", value, value);
     eb_status = eb_device_read(device, reg_event_source_addr,   EB_BIG_ENDIAN|EB_DATA32, (eb_data_t*)&value, 0, eb_block);
     printf("    WR_MIL_GW_REG_EVENT_SOURCE:   0x%08x = %s\n", value, event_source_str(value));
+    event_source = value;
     eb_status = eb_device_read(device, reg_latency_addr,        EB_BIG_ENDIAN|EB_DATA32, (eb_data_t*)&value, 0, eb_block);
     printf("    WR_MIL_GW_REG_LATENCY:        0x%08x = %d us\n", value, value);
     eb_status = eb_device_read(device, reg_state_addr,          EB_BIG_ENDIAN|EB_DATA32, (eb_data_t*)&value, 0, eb_block);
     printf("    WR_MIL_GW_REG_STATE:          0x%08x = %s\n", value, state_str(value));
+    gateway_state = value;
     eb_status = eb_device_read(device, reg_utc_offset_hi_addr,  EB_BIG_ENDIAN|EB_DATA32, (eb_data_t*)&value, 0, eb_block);
     value64_bit = value;
     value64_bit <<= 32;
@@ -358,15 +403,72 @@ int main(int argc, char *argv[])
     printf("    WR_MIL_GW_REG_NUM_EVENTS_LO:  0x%08x = %ld\n", value, value64_bit);
     eb_status = eb_device_read(device, reg_late_events_addr,    EB_BIG_ENDIAN|EB_DATA32, (eb_data_t*)&value, 0, eb_block);
     printf("    WR_MIL_GW_REG_LATE_EVENTS:    0x%08x = %d\n", value, value);
+
+    // see if the firmware is running (it should reset the CMD register to 0 after a command is put there)
+    // submit a test command 
+    if ((eb_status = eb_device_write(device, reg_command_addr, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)WR_MIL_GW_CMD_TEST, 0, eb_block)) != EB_OK) {
+      die(argv[0],"command WR_MIL_GW_CMD_TEST", eb_status);
+    }
+    usleep(50000);
+    eb_device_read(device, reg_command_addr,  EB_BIG_ENDIAN|EB_DATA32, (eb_data_t*)&value, 0, eb_block);
+    if (magic_number == WR_MIL_GW_MAGIC_NUMBER)
+    {
+      printf("\nWR-MIL-GATEWAY firmware was found on user LM32[%d]. \n", device_idx);
+      if (value) printf("  firmware : not running!\n");
+      else       printf("  firmware : running\n");
+      printf("  state    : %s\n", state_str(gateway_state,true));
+      printf("  source   : %s\n", event_source_str(event_source,true));
+    }
+    else
+    {
+      printf("\nNo WR-MIL-GATEWAY firmware was found\n");
+    }
+   
   }
 
   if (monitor)
   {
     uint32_t last_late_events = 0;
     uint64_t last_num_events = 0;
+    uint32_t missing_events_message_written = 0;
+
+#ifdef USEMASP
+        // send MASP status
+        std::string nomen("U_WR2MIL");
+        nomen.append("_");
+        nomen.append(MASP_SIS_ESR);
+        char hostname_cstr[100];
+        gethostname(hostname_cstr,100);
+        std::string hostname(hostname_cstr);
+        std::string source_id(nomen);
+        source_id.append(".");
+        source_id.append(hostname);
+        bool masp_productive = 
+  #ifdef PRODUCTIVE
+            true;
+  #else 
+            false;
+  #endif //PRODUCTIVE
+
+        MASP::StatusEmitter emitter(MASP::StatusEmitterConfig(
+            MASP::StatusEmitterConfig::CUSTOM_EMITTER_DEFAULT(),
+            source_id, masp_productive ));
+        //printf ("prepare MASP status emitter with source_id: %s, nomen: %s, productive: %\n");
+        std::cout << "prepare MASP status emitter with "
+                  << "source_id: " << source_id 
+                  << ",  nomen: " << nomen
+                  << ",  productive: " << (masp_productive?"true":"false")
+                  << std::endl;
+
+   MASP::no_logger no_log;
+   MASP::Logger::middleware_logger = &no_log;
+
+#endif  // USEMASP
+      fprintf(stderr,"loop\n");
 
     for (;;)
     {
+
       uint32_t value;
       uint64_t value64_bit;
       eb_status = eb_device_read(device, reg_num_events_hi_addr,  EB_BIG_ENDIAN|EB_DATA32, (eb_data_t*)&value, 0, eb_block);
@@ -381,9 +483,23 @@ int main(int argc, char *argv[])
 
       if (last_num_events && last_num_events == value64_bit)
       {
-        printf("WR-MIL-GATEWAY WARNING: Number of translated MIL events did not increase!\n"
-               "  Check if wr-mil-gateway and Data Master are both active\n");
-        fflush(stdout);
+        if (!missing_events_message_written)
+        { // complain that no events are arriving, but complain only once
+          printf("WR-MIL-GATEWAY WARNING: Number of translated MIL events did not increase!\n"
+                 "  If lack of MIL events is not intentional: check if wr-mil-gateway and Data Master are both active\n");
+          fflush(stdout);
+          missing_events_message_written = 1;
+        }
+      }
+      else
+      {
+        if (missing_events_message_written)
+        {
+          // the number of translated MIL events increased, we can reset the message indicator and log that MIL events are back
+          printf("WR-MIL-GATEWAY: There are MIL events again!\n");
+          fflush(stdout);
+          missing_events_message_written = 0;
+        }
       }
       if (last_late_events < value)
       {
@@ -395,9 +511,67 @@ int main(int argc, char *argv[])
       last_late_events = value;
       last_num_events  = value64_bit;
 
-      sleep(10);
+      // wait for 10 s until the number of events is checked again
+      for (int i = 0; i < 60; ++i) 
+      {
+        // check if the firmware is still running (it should reset the CMD register to 0 after a command is put there)
+        // submit a test command 
+        if ((eb_status = eb_device_write(device, reg_command_addr, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)WR_MIL_GW_CMD_TEST, 0, eb_block)) != EB_OK) {
+          die(argv[0],"command WR_MIL_GW_CMD_TEST", eb_status);
+        }
+        fflush(stdout);
+        sleep(1);
+        eb_device_read(device, reg_command_addr,  EB_BIG_ENDIAN|EB_DATA32, (eb_data_t*)&value, 0, eb_block);
+        bool firmware_running = (value==0);
+        // the firmware should have set value to 0, if not the firmware is not running
+        if (!firmware_running) 
+        { // the firmware is not running. This schould not happen!
+          printf("WR-MIL-GATEWAY: firmware not running!\n");
+        }
+        // read gateway state
+        eb_status = eb_device_read(device, reg_state_addr,          EB_BIG_ENDIAN|EB_DATA32, (eb_data_t*)&value, 0, eb_block);
+        int gateway_state = value;
+        bool gateway_active = (gateway_state==WR_MIL_GW_STATE_CONFIGURED);
+        if (!gateway_active) 
+        { // the firmware is not running. This schould not happen!
+          printf("WR-MIL-GATEWAY: gateway is not active!\n");
+        }
+
+#ifdef USEMASP
+        // read gateway source type
+        eb_status = eb_device_read(device, reg_event_source_addr,   EB_BIG_ENDIAN|EB_DATA32, (eb_data_t*)&value, 0, eb_block);
+        int event_source = value;
+        bool correct_source_type = false;
+        if (MASP_SIS_ESR == "ESR" && event_source == WR_MIL_GW_EVENT_SOURCE_ESR) correct_source_type = true;
+        if (MASP_SIS_ESR == "SIS18" && event_source == WR_MIL_GW_EVENT_SOURCE_SIS) correct_source_type = true;
+
+        if (!correct_source_type) 
+        { // the monitor tool is started on the wrong gateway
+          printf("WR-MIL-GATEWAY: gateway has wrong source type!\n");
+        }
+        // send MASP status
+        if (MASP_SIS_ESR == "ESR" || MASP_SIS_ESR == "SIS18")
+        {
+          //printf ("send MASP message\n");
+          {
+              bool op_ready = false;
+              // send OP_READY only if firmware is running and the gateway is configured as the correct source type
+              if (firmware_running && gateway_active && correct_source_type) op_ready = true;
+
+              // update display
+              //fill_display_content(device, oled_reg_reset, op_ready, MASP_SIS_ESR.c_str(), last_num_events, last_late_events);
+
+              MASP::End_of_scope_status_emitter scoped_emitter(nomen,emitter);
+              scoped_emitter.set_OP_READY(op_ready);
+              //std::cout << "send op_ready " << op_ready << std::endl;
+              //scoped_emitter.set_custom_status("TEST_SIGNAL",true);
+          } // <--- status is send when the End_of_scope_emitter goes out of scope
+        }
+#endif  // USEMASP          
+
+      }
     }
   }
-
+  fprintf(stderr, "%s\n", "done");
   return 0;
 }

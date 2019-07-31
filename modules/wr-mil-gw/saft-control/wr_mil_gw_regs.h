@@ -31,7 +31,6 @@
 #define WR_MIL_GW_REG_LATE_EVENTS    0x30  // number of translated events that could not be delivered in time
 #define WR_MIL_GW_REG_LATE_HISTOGRAM 0x34  // dummy register to indicate position after the last valid register
 #define WR_MIL_GW_REG_MIL_HISTOGRAM  0x74  // dummy register to indicate position after the last valid register
-#define WR_MIL_GW_REG_MSI_SLOT       0x474 // MSI slot is stored here
 
 // states of the software
 #define WR_MIL_GW_STATE_INIT         0
@@ -46,9 +45,5 @@
 #define WR_MIL_GW_EVENT_SOURCE_UNKNOWN 0x0
 #define WR_MIL_GW_EVENT_SOURCE_SIS     0x1
 #define WR_MIL_GW_EVENT_SOURCE_ESR     0x2
-
-// Interrupts
-#define WR_MIL_GW_MSI_LATE_EVENT       0x1
-#define WR_MIL_GW_MSI_STATE_CHANGED    0x2
 
 #endif
