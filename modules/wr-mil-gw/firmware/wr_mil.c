@@ -41,7 +41,7 @@
 #include <stdint.h>
 
 /* includes specific for bel_projects */
-#include "mprintf.h"
+#include "pp-printf.h"
 #include "mini_sdb.h"
 #include "irq.h"
 #include "aux.h"
@@ -60,8 +60,6 @@
 
 // for the event handler
 //#include "../../ip_cores/saftlib/drivers/eca_flags.h"
-
-
 
 int init()
 {
@@ -187,7 +185,7 @@ void eventHandler(volatile uint32_t    *eca,
         // inform saftlib that there was a late event
         send_MSI(config->mb_slot, WR_MIL_GW_MSI_LATE_EVENT);
         ++config->late_events;
-        //mprintf("evtCode: %u trials: %u  late: %u\n",evtCode, trials, too_late);
+        //pp_printf("evtCode: %u trials: %u  late: %u\n",evtCode, trials, too_late);
         for (int i = 0; i < 16; ++i) {
           if (too_late>>(i+10) == 0 || i == 15) {
             ++config->late_histogram[i];
@@ -209,37 +207,38 @@ void eventHandler(volatile uint32_t    *eca,
 void main(void) 
 {
   init();   
+
   // MilPiggy 
   volatile uint32_t *mil_piggy = (volatile uint32_t*) find_device_adr(GSI, SCU_MIL);
-  mprintf("mil_piggy adr: %08x\n", mil_piggy);
+  pp_printf("mil_piggy adr: %08x\n", mil_piggy);
 
   // ECAQueue 
   volatile uint32_t *eca_queue = ECAQueue_init();
-  mprintf("eca_queue adr: %08x\n", eca_queue);
+  pp_printf("eca_queue adr: %08x\n", eca_queue);
   uint32_t n_events = ECAQueue_clear(eca_queue);
-  mprintf("popped %d events from the eca queue\n", n_events);
+  pp_printf("popped %d events from the eca queue\n", n_events);
 
   // ECACtrl 
   volatile uint32_t *eca_ctrl = ECACtrl_init();
-  mprintf("eca ctrl regs at %08x\n", eca_ctrl);
+  pp_printf("eca ctrl regs at %08x\n", eca_ctrl);
 
   // Command
   volatile WrMilConfig *config = config_init();
-  mprintf("mil cmd regs at %08x\n", config);
+  pp_printf("mil cmd regs at %08x\n", config);
 
 
   volatile uint32_t *oled = (volatile uint32_t*) find_device_adr(GSI, 0x93a6f3c4);
   oled[0] = 0;
 
   // // Where is the MSI message box
-  // mprintf("pCpuMsiBox %08x      pMyMsi %08x\n", pCpuMsiBox, pMyMsi);
+  // pp_printf("pCpuMsiBox %08x      pMyMsi %08x\n", pCpuMsiBox, pMyMsi);
   // config->mb_slot = getMsiBoxSlot(0xa0);
-  // mprintf("mb_slot %d\n", config->mb_slot);
+  // pp_printf("mb_slot %d\n", config->mb_slot);
 
   // say hello on the console
   TAI_t nowTAI; 
   ECACtrl_getTAI(eca_ctrl, &nowTAI);
-  mprintf("TAI now: 0x%08x%08x\n", nowTAI.part.hi, nowTAI.part.lo);
+  pp_printf("TAI now: 0x%08x%08x\n", nowTAI.part.hi, nowTAI.part.lo);
 
   mil_piggy_reset(mil_piggy);
 

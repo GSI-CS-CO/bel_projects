@@ -11,7 +11,7 @@
 // ==================================================================================================== 
 #include <stdio.h>
 #include <iostream>
-#include <giomm.h>
+#include <getopt.h>
 
 #include "SAFTd.h"
 #include "EmbeddedCPUActionSink.h"
@@ -46,19 +46,19 @@ static const char *program    = NULL; // Name of the application
 // ==================================================================================================== 
 static void wrmilgw_help (void);
 bool op_ready(bool receiver_locked, bool firmware_running, int firmware_state);
-void print_firmware_state(guint32 firmware_state);
-void print_event_source(guint32 event_source);
+void print_firmware_state(uint32_t firmware_state);
+void print_event_source(uint32_t event_source);
 void print_in_use(bool in_use);
 void print_info1(std::shared_ptr<TimingReceiver_Proxy> receiver, std::shared_ptr<WrMilGateway_Proxy> wrmilgw);
 void print_info2(std::shared_ptr<TimingReceiver_Proxy> receiver, std::shared_ptr<WrMilGateway_Proxy> wrmilgw);
 void print_info3(std::shared_ptr<TimingReceiver_Proxy> receiver, std::shared_ptr<WrMilGateway_Proxy> wrmilgw);
-void createCondition(std::shared_ptr<TimingReceiver_Proxy> receiver, guint64 eventID);
+void createCondition(std::shared_ptr<TimingReceiver_Proxy> receiver, uint64_t eventID);
 void destroyGatewayConditions(std::shared_ptr<TimingReceiver_Proxy> receiver);
 void on_locked(bool is_locked);
 void on_firmware_running(bool is_running);
-void on_firmware_state(guint32 state);
-void on_event_source(guint32 source);
-void on_num_late_mil_events(guint32 total, guint32 since_last_signal, std::shared_ptr<WrMilGateway_Proxy> wrmilgw);
+void on_firmware_state(uint32_t state);
+void on_event_source(uint32_t source);
+void on_num_late_mil_events(uint32_t total, uint32_t since_last_signal, std::shared_ptr<WrMilGateway_Proxy> wrmilgw);
 void on_in_use(bool in_use);
 
 // Function wrmilgw_help() 
@@ -105,7 +105,7 @@ bool op_ready(bool receiver_locked, bool firmware_running, int firmware_state)
           && (firmware_state   == WR_MIL_GW_STATE_CONFIGURED);
 }
 
-void print_firmware_state(guint32 firmware_state)
+void print_firmware_state(uint32_t firmware_state)
 {
   switch(firmware_state) {
     case WR_MIL_GW_STATE_INIT:
@@ -125,7 +125,7 @@ void print_firmware_state(guint32 firmware_state)
   }  
 }
 
-void print_event_source(guint32 event_source)
+void print_event_source(uint32_t event_source)
 {
   switch(event_source) {
     case WR_MIL_GW_EVENT_SOURCE_SIS:
@@ -228,7 +228,7 @@ void print_info3(std::shared_ptr<TimingReceiver_Proxy> receiver, std::shared_ptr
 const auto SIS18EventID = UINT64_C(0x112c000000000000);
 const auto   ESREventID = UINT64_C(0x1154000000000000);
 
-void createCondition(std::shared_ptr<TimingReceiver_Proxy> receiver, guint64 eventID)
+void createCondition(std::shared_ptr<TimingReceiver_Proxy> receiver, uint64_t eventID)
 {
   // create the embedded CPU action sink for SIS18 WR events
   std::map<std::string, std::string> e_cpus = receiver->getInterfaces()["EmbeddedCPUActionSink"];
@@ -294,19 +294,19 @@ void on_firmware_running(bool is_running)
   }
 }
 
-void on_firmware_state(guint32 state) 
+void on_firmware_state(uint32_t state) 
 {
   std::cout << "WR-MIL-Gateway: firmware state changed to "; 
   print_firmware_state(state);
 }
 
-void on_event_source(guint32 source) 
+void on_event_source(uint32_t source) 
 {
   std::cout << "WR-MIL-Gateway: source type changed to    "; 
   print_event_source(source);
 }
 
-void on_num_late_mil_events(guint32 total, guint32 since_last_signal, std::shared_ptr<WrMilGateway_Proxy> wrmilgw) 
+void on_num_late_mil_events(uint32_t total, uint32_t since_last_signal, std::shared_ptr<WrMilGateway_Proxy> wrmilgw) 
 {
   // If gateway is reset, callback will be called with total=0
   // To prevent this to be displayed as "late MIL event detected", 
@@ -419,9 +419,6 @@ int main (int argc, char** argv)
   // Get the device name 
   deviceName = argv[optind];
   
-  // Initialize Glib stuff 
-  Gio::init();
-  
   // Try to connect to saftd 
   try 
   {
@@ -438,10 +435,8 @@ int main (int argc, char** argv)
     }
 
 
-    saftlib::SignalGroup signal_group;
-
     // Get TimingReceiver Proxy
-    std::shared_ptr<TimingReceiver_Proxy> receiver = TimingReceiver_Proxy::create(devices[deviceName], signal_group);
+    std::shared_ptr<TimingReceiver_Proxy> receiver = TimingReceiver_Proxy::create(devices[deviceName]);
 
     // Search for WR-MIL Gateway 
     map<std::string, std::string> wrmilgws = receiver->getInterfaces()["WrMilGateway"];
@@ -450,7 +445,7 @@ int main (int argc, char** argv)
       return -1;
     }
     // Get Gateway Proxy
-    std::shared_ptr<WrMilGateway_Proxy> wrmilgw = WrMilGateway_Proxy::create(wrmilgws.begin()->second, signal_group);
+    std::shared_ptr<WrMilGateway_Proxy> wrmilgw = WrMilGateway_Proxy::create(wrmilgws.begin()->second);
 
     if (clearStat) {
       wrmilgw->ClearStatistics();
@@ -686,7 +681,7 @@ int main (int argc, char** argv)
 
       std::cout << "WrMilGateway: starting monitoring loop" << std::endl;
       while(true) {
-        signal_group.wait_for_signal();
+        saftlib::wait_for_signal();
         // check OP_READY and notify on change
         bool new_opReady = op_ready(receiver->getLocked(), 
                                     wrmilgw->getFirmwareRunning(),
