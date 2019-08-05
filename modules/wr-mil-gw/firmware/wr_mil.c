@@ -140,6 +140,7 @@ void make_mil_timestamp(uint64_t TAI, uint32_t *EVT_UTC, uint64_t UTC_offset_ms)
 void eventHandler(volatile uint32_t    *eca,
                   volatile uint32_t    *eca_queue, 
                   volatile uint32_t    *mil_piggy,
+                  volatile uint32_t    *oled,
                   volatile WrMilConfig *config)
 {
   if (ECAQueue_actionPresent(eca_queue))
@@ -168,8 +169,8 @@ void eventHandler(volatile uint32_t    *eca,
       if (evtCode == config->utc_trigger)
       {
         // generate EVT_UTC_1/2/3/4/5 EVENTS
-        make_mil_timestamp(mil_event_time, EVT_UTC, config->utc_offset_ms.value);     
-        delay_96plus32n_ns(config->trigger_utc_delay*32);
+        make_mil_timestamp(mil_event_time, EVT_UTC, config->utc_offset_ms.value);
+        //delay_96plus32n_ns(config->trigger_utc_delay*32);
         for (int i = 0; i < N_UTC_EVENTS; ++i)
         {
           // Churn out the EVT_UTC MIL events with a configurable delay between the individual events.
@@ -179,6 +180,8 @@ void eventHandler(volatile uint32_t    *eca,
             delay_96plus32n_ns(config->utc_delay*32);
           }
         }
+        oled_array(config, oled); // mil piggy is busy writing events. 
+                                   // use the time to update OLED display
       }
       if (too_late || trials)
       { 
@@ -242,9 +245,13 @@ void main(void)
 
   mil_piggy_reset(mil_piggy);
 
+
+  oled_array(config, oled);
+
+  int i = 0;
   while (1) {
     //poll user commands
-    config_poll(config);
+    config_poll(config, oled);
     if (config->state == WR_MIL_GW_STATE_UNCONFIGURED)
     {
       ECAQueue_clear(eca_queue);
@@ -252,12 +259,9 @@ void main(void)
     // do whatever has to be done
     if (config->state == WR_MIL_GW_STATE_CONFIGURED)
     {
-      eventHandler(eca_ctrl, eca_queue, mil_piggy, config);
+      eventHandler(eca_ctrl, eca_queue, mil_piggy, oled, config);
     }
 
-    if (!oled_loop(config, oled)) {
-      DELAY1us; // little delay if nothing was written to display
-    }
-
+    DELAY1us; // little delay 
   } 
 } 
