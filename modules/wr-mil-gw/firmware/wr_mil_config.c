@@ -35,6 +35,7 @@ volatile WrMilConfig *config_init()
     config->mil_histogram[i] = UINT32_C(0);
   }
   config->mb_slot              = UINT32_C(0xffffffff); // this is an invalid value
+  config->op_ready             = UINT32_C(0);
   return config;
 }
 
@@ -87,6 +88,9 @@ void config_command_handler(volatile WrMilConfig *config, volatile uint32_t *ole
         }
         break;
       case WR_MIL_GW_CMD_TEST: // do nothing 
+        break;
+      case WR_MIL_GW_CMD_UPDATE_OLED: 
+        oled_array(config, oled);
         break;
       default:
         pp_printf("wr-mil-gw unknown command %08x\n", config->cmd);

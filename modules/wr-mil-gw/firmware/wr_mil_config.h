@@ -30,7 +30,8 @@ typedef struct
 	                                //           [14] -> delay < 2^24 ns
 	                                //           [15] -> delay >= 2^24 ns
 	uint32_t     mil_histogram[256];// histogram of MIL events
-	uint32_t     mb_slot;           // MSI slot number (?)
+	uint32_t     mb_slot;           // MSI slot number 
+	uint32_t     op_ready;          // this is set by the host (used for the display only)
 } WrMilConfig;
 
 

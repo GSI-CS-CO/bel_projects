@@ -228,7 +228,7 @@ void print_info3(std::shared_ptr<TimingReceiver_Proxy> receiver, std::shared_ptr
 const auto SIS18EventID = UINT64_C(0x112c000000000000);
 const auto   ESREventID = UINT64_C(0x1154000000000000);
 
-void createCondition(std::shared_ptr<TimingReceiver_Proxy> receiver, uint64_t eventID)
+void createCondition(std::shared_ptr<WrMilGateway_Proxy> wrmilgw, std::shared_ptr<TimingReceiver_Proxy> receiver, uint64_t eventID)
 {
   // create the embedded CPU action sink for SIS18 WR events
   std::map<std::string, std::string> e_cpus = receiver->getInterfaces()["EmbeddedCPUActionSink"];
@@ -238,7 +238,7 @@ void createCondition(std::shared_ptr<TimingReceiver_Proxy> receiver, uint64_t ev
   std::shared_ptr<EmbeddedCPUActionSink_Proxy> e_cpu 
       = EmbeddedCPUActionSink_Proxy::create(e_cpus.begin()->second);
   auto eventMask = UINT64_C(0xfffff00000000000);
-  auto offset    = INT64_C(-100000);
+  auto offset    = INT64_C(-wrmilgw->getEventLatency()*1000); // set the negative latency as offset so that the execution will be at 0
   auto tag       = UINT32_C(0x4);
 
   std::shared_ptr<EmbeddedCPUCondition_Proxy> condition 
@@ -504,7 +504,7 @@ int main (int argc, char** argv)
         if (wrmilgw->getFirmwareState() == WR_MIL_GW_STATE_UNCONFIGURED) {
           std::cout << "Starting WR-MIL Gateway as SIS18 Pulszentrale" << std::endl;
           destroyGatewayConditions(receiver);
-          createCondition(receiver, SIS18EventID);
+          createCondition(wrmilgw, receiver, SIS18EventID);
           wrmilgw->StartSIS18();
         } else if (wrmilgw->getFirmwareState() == WR_MIL_GW_STATE_CONFIGURED) {
           std::cerr << red_color << "Gateway is already configured and running." << default_color << std::endl;
@@ -515,7 +515,7 @@ int main (int argc, char** argv)
         if (wrmilgw->getFirmwareState() == WR_MIL_GW_STATE_UNCONFIGURED) {
           std::cout << "Starting WR-MIL Gateway as ESR Pulszentrale" << std::endl;
           destroyGatewayConditions(receiver);
-          createCondition(receiver, ESREventID);
+          createCondition(wrmilgw, receiver, ESREventID);
           wrmilgw->StartESR();
         } else if (wrmilgw->getFirmwareState() == WR_MIL_GW_STATE_CONFIGURED) {
           std::cerr << red_color << "Gateway is already configured and running." << default_color << std::endl;
@@ -694,6 +694,8 @@ int main (int argc, char** argv)
 #endif 
         if (new_opReady != opReady) {
           std::cout << "WR-MIL-Gateway: OP_READY=" << (new_opReady?"YES":"NO ") << std::endl;
+          wrmilgw->setOpReady(new_opReady);
+          wrmilgw->UpdateOLED();
           opReady = new_opReady;
         }
       }

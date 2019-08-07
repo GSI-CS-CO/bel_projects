@@ -13,6 +13,7 @@
 #define WR_MIL_GW_CMD_CONFIG_SIS     0x3   // command to configure the gateway for SIS operation
 #define WR_MIL_GW_CMD_CONFIG_ESR     0x4   // command to configure the gateway for ESR operation
 #define WR_MIL_GW_CMD_TEST           0x5   // command that does nothing. it is useful to initiate to see if the firmware cleans the command register (see if the firmware runs at all)
+#define WR_MIL_GW_CMD_UPDATE_OLED    0x6   // redraw content on OLED
 
 
 // Configuration register mapping in shared memory region
@@ -32,6 +33,7 @@
 #define WR_MIL_GW_REG_LATE_HISTOGRAM 0x34  // dummy register to indicate position after the last valid register
 #define WR_MIL_GW_REG_MIL_HISTOGRAM  0x74  // dummy register to indicate position after the last valid register
 #define WR_MIL_GW_REG_MSI_SLOT       0x474 // MSI slot is stored here
+#define WR_MIL_GW_REG_SET_OP_READY   0x478 // Host writes 1 if OP-READY, 0 otherwise
 
 // states of the software
 #define WR_MIL_GW_STATE_INIT         0
