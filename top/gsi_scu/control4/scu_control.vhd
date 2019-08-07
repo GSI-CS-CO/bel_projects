@@ -47,6 +47,25 @@ entity scu_control is
     rom_data_io : inout std_logic;
 
     -----------------------------------------------------------------------
+    -- SCU Bus
+    -----------------------------------------------------------------------
+    A_D               : inout std_logic_vector(15 downto 0);
+    A_A               : out   std_logic_vector(15 downto 0);
+    A_nTiming_Cycle   : out   std_logic;
+    A_nDS             : out   std_logic;
+    A_nReset          : out   std_logic;
+    nSel_Ext_Data_DRV : out   std_logic;
+    A_RnW             : out   std_logic;
+    A_Spare           : out   std_logic_vector(1 downto 0);
+    A_nSEL            : out   std_logic_vector(12 downto 1);
+    A_nDtack          : in    std_logic;
+    A_nSRQ            : in    std_logic_vector(12 downto 1);
+    A_SysClock        : out   std_logic;
+    ADR_TO_SCUB       : out   std_logic;
+    nADR_EN           : out   std_logic;
+    A_OneWire         : inout std_logic;
+
+    -----------------------------------------------------------------------
     -- Misc.
     -----------------------------------------------------------------------
     fpga_res_i : in std_logic;
@@ -129,6 +148,7 @@ begin
       g_flash_bits       => 25, -- !!! TODO: Check this
       g_gpio_out         => 4,
       g_lvds_inout       => 2,
+      g_en_scubus        => true,
       g_en_pcie          => true,
       g_en_tlu           => false,
       g_en_usb           => false,
@@ -167,6 +187,16 @@ begin
       led_link_act_o          => s_led_link_act,
       led_track_o             => s_led_track,
       led_pps_o               => s_led_pps,
+      scubus_a_a              => A_A,
+      scubus_a_d              => A_D,
+      scubus_nsel_data_drv    => nSel_Ext_Data_DRV,
+      scubus_a_nds            => A_nDS,
+      scubus_a_rnw            => A_RnW,
+      scubus_a_ndtack         => A_nDtack,
+      scubus_a_nsrq           => A_nSRQ,
+      scubus_a_nsel           => A_nSEL,
+      scubus_a_ntiming_cycle  => A_nTiming_Cycle,
+      scubus_a_sysclock       => A_SysClock,
       pcie_refclk_i           => pcie_refclk_i,
       pcie_rstn_i             => nPCI_RESET_i,
       pcie_rx_i               => pcie_rx_i,
