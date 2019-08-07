@@ -238,17 +238,30 @@ void createCondition(std::shared_ptr<WrMilGateway_Proxy> wrmilgw, std::shared_pt
   std::shared_ptr<EmbeddedCPUActionSink_Proxy> e_cpu 
       = EmbeddedCPUActionSink_Proxy::create(e_cpus.begin()->second);
   auto eventMask = UINT64_C(0xfffff00000000000);
-  auto offset    = INT64_C(-wrmilgw->getEventLatency()*1000); // set the negative latency as offset so that the execution will be at 0
+  auto offset    = INT64_C(-1000)*wrmilgw->getEventLatency(); // set the negative latency as offset so that the execution will be at 0
   auto tag       = UINT32_C(0x4);
 
-  std::shared_ptr<EmbeddedCPUCondition_Proxy> condition 
-      = EmbeddedCPUCondition_Proxy::create(e_cpu->NewCondition(true, eventID, eventMask, offset, tag));
+  // Destroy all unowned conditions
+  std::vector< std::string > all_conditions = e_cpu->getAllConditions();  
+  for (unsigned int condition_it = 0; condition_it < all_conditions.size(); condition_it++) {
+    std::shared_ptr<EmbeddedCPUCondition_Proxy> destroy_condition = EmbeddedCPUCondition_Proxy::create(all_conditions[condition_it]);
+    if (destroy_condition->getDestructible() && (destroy_condition->getOwner() == "")) { 
+      destroy_condition->Destroy();
+    }
+  }
+
+  e_cpu->Own();
+  e_cpu->setMinOffset(-300000000);
+  e_cpu->setMaxOffset(300000000);
+  std::shared_ptr<EmbeddedCPUCondition_Proxy> condition
+     = EmbeddedCPUCondition_Proxy::create(e_cpu->NewCondition(true, eventID, eventMask, offset, tag));
   // Accept every kind of event 
   condition->setAcceptConflict(true);
   condition->setAcceptDelayed(true);
   condition->setAcceptEarly(true);
   condition->setAcceptLate(true);
   condition->Disown();
+  e_cpu->Disown();
 }
 void destroyGatewayConditions(std::shared_ptr<TimingReceiver_Proxy> receiver)
 {
