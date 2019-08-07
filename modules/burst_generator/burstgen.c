@@ -640,7 +640,14 @@ void ecaHandler(uint32_t cnt)
 	toU64(evtDeadlHigh, evtDeadlLow, d);
 	toU64(paramHigh, paramLow, p);
 
-	d += p;
+	// extend the trigger and toggle deadlines with an extra delay giving the task scheduler
+	// enough time to trigger/stop the burst generation within its period:
+	// T_scheduler = T_ecaMsiHandler + N_tasks * T_tasks
+	// T_scheduler = 20 us + 16 * 9 us = 164 us (measured)
+	if (p && p > INTERVAL_200US)
+	  d +=p;       // apply an external delay
+	else
+	  d += INTERVAL_200US; // apply an internal delay
 
 	// find an entry with the given e_id in the config table
 	// update control flag
