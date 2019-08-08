@@ -27,13 +27,4 @@ uint32_t ECAQueue_actionPresent(volatile uint32_t *queue);
 // remove single event from the ECA queue
 void ECAQueue_actionPop(volatile uint32_t *queue);
 
-// Extract event number, event code and virtual accelerator number from the EventId in the ECA queue. 
-// parameters: 
-//    queue:   pointer to ECA queue registers as obtained from ECAQueue_init()
-//    evtCode: the event code of the MIL event (this is only valid if function returns 1)
-//    milTelegram: correcly formatted MIL telegram that can be passed to the mil piggy 
-//
-// return value: is nonzero if the event code must be forwarded to MIL event bus, zero otherwise
-uint32_t ECAQueue_getMilEventData(volatile uint32_t *queue, uint32_t *evtCode, uint32_t *milTelegram, uint32_t evtSource);
-
 #endif

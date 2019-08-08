@@ -89,6 +89,59 @@ uint32_t mil_piggy_reset(volatile uint32_t *piggy)
   return 0;
 }
 
+
+uint32_t convert_WReventID_to_milTelegram(EvtId_t evtId, uint32_t *evtCode, uint32_t *milTelegram, uint32_t evtSource)
+{
+  // EventID 
+  // |---------------evtIdHi---------------|  |---------------evtIdLo---------------|
+  // FFFF GGGG GGGG GGGG EEEE EEEE EEEE FFFF  SSSS SSSS SSSS BBBB BBBB BBBB BBRR RRRR
+  //                          cccc cccc irrr  ssss ssss vvvv
+  //                                               xxxx xxxx
+  //                              
+  // F: FID(4)
+  // G: GID(12)
+  // E: EVTNO(12) = evtNo
+  // F: FLAGS(4)
+  // S: SID(12)
+  // B: BPID(14)
+  // R: Reserved(10)
+  // s: status bits
+  // v: virtAcc = virtual accellerator
+  // c: evtCode = MIL relevant part of the evtNo (only 0..255)
+  // i: InBeam(1)
+  // r: reserved(3)
+  // x: other content for special events like (code=200..208 command events)
+  //    or (code=200 beam status event) 
+
+  uint32_t evtNo   = (evtId.part.hi>>4)  & 0x00000fff;
+          *evtCode =  evtNo              & 0x000000ff;
+  uint32_t tophalf = (evtId.part.lo>>20) & 0x000000ff; // the top half bits (15..8) of the mil telegram.
+                                                       // the meaning depends on the evtCode.
+  uint32_t virtAcc     = tophalf & 0xf;
+  uint32_t statusBits  = tophalf >> 4;
+  uint32_t pzKennung   = evtSource;
+
+  if (*evtCode >= 200 && *evtCode <= 208) // commands: top half of the MIL bits (15..8) are extracted from the status bits of EventID
+  {
+    // tophalf = tophalf;  // no modification (just take all bits from the sequence-ID)
+  }
+  else if (*evtCode == 255)               // command event: top half of the MIL bits (15..8) are pppp1111
+  {                                       //                p: Pulszentralenkennung ( SIS = 1, ESR = 2[?])
+    tophalf = ( pzKennung << 4 ) | 0xf;
+  }
+  else                                    // all other events: top haltf of MIL bits (15..8) are ppppvvvv
+  {                                       //                     p: Pulszentralenkennung ( SIS = 1, ESR = 2[?])
+                                          //                     v: virtial accelerator
+    tophalf = ( pzKennung << 4 ) | virtAcc;
+  }
+
+  *milTelegram = (tophalf << 8) | *evtCode; 
+                                           
+  // For MIL events, the upper 4 bits ov evtNo are zero
+  return (evtNo & 0x00000f00) == 0; 
+}
+
+
 // convert 64-bit TAI from WR into an array of five MIL events (EVT_UTC_1/2/3/4/5 events with evtNr 0xE0 - 0xE4)
 // arguments:
 //   TAI:     a 64-bit WR-TAI value
@@ -146,11 +199,13 @@ void eventHandler(volatile uint32_t    *eca,
   if (ECAQueue_actionPresent(eca_queue))
   {
     uint32_t evtCode, milTelegram;
+    EvtId_t evtId;
+    ECAQueue_getEvtId(eca_queue, &evtId);
     // select all events from the eca queue that are for the LM32 
     // AND that have an evtNo that is supposed to be translated into a MIL event (indicated
     //     by the return value of ECAQueue_getMilEventData being != 0)
     if ((ECAQueue_getActTag(eca_queue) == ECA_QUEUE_LM32_TAG) &&
-         ECAQueue_getMilEventData(eca_queue, &evtCode, &milTelegram, config->event_source))
+         convert_WReventID_to_milTelegram(evtId, &evtCode, &milTelegram, config->event_source))
     {
       TAI_t    tai_deadl; 
       uint32_t EVT_UTC[N_UTC_EVENTS];
