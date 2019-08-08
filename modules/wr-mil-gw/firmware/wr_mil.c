@@ -190,7 +190,8 @@ void make_mil_timestamp(uint64_t TAI, uint32_t *EVT_UTC, uint64_t UTC_offset_ms)
                                           // this value was determined by measuring the time difference
                                           // of the MIL event rising edge and the ECA output rising edge (no offset)
                                           // and tuning this time difference to 100.0(5)us
-void eventHandler(volatile uint32_t    *eca,
+void eventHandler(TAI_t tai_now,
+                  volatile uint32_t    *eca,
                   volatile uint32_t    *eca_queue, 
                   volatile uint32_t    *mil_piggy,
                   volatile uint32_t    *oled,
@@ -199,9 +200,10 @@ void eventHandler(volatile uint32_t    *eca,
   if (ECAQueue_actionPresent(eca_queue))
   {
     uint32_t evtCode, milTelegram;
-    EvtId_t evtId;
-    ECAQueue_getEvtId(eca_queue, &evtId);
+    EvtId_t  evtId;
     TAI_t    tai_deadl; 
+    // read info about event from eca queue
+    ECAQueue_getEvtId(eca_queue, &evtId);
     ECAQueue_getDeadl(eca_queue, &tai_deadl);
     // select all events from the eca queue that are for the LM32 
     // AND that have an evtNo that is supposed to be translated into a MIL event (indicated
@@ -212,15 +214,13 @@ void eventHandler(volatile uint32_t    *eca,
       uint32_t EVT_UTC[N_UTC_EVENTS];
       uint32_t too_late;
       uint32_t trials;
-      ECAQueue_actionPop(eca_queue);
       uint64_t mil_event_time = tai_deadl.value + WR_MIL_GATEWAY_LATENCY + ((int32_t)config->latency-100)*1000; // add latency to the deadline
-      //make_mil_timestamp(mil_event_time, EVT_UTC);     
 
-      // generate MIL event
-      TAI_t tai_now;
-      ECACtrl_getTAI(eca, &tai_now);
+      // precision wait 
       too_late = wait_until_tai(eca, mil_event_time, tai_now);
+      // generate MIL event
       trials = mil_piggy_write_event(mil_piggy, milTelegram); 
+      ECAQueue_actionPop(eca_queue); // remove event from queue
       ++config->num_events.value;
       ++config->mil_histogram[milTelegram & 0xff];
       if (evtCode == config->utc_trigger)
@@ -316,7 +316,8 @@ void main(void)
     // do whatever has to be done
     if (config->state == WR_MIL_GW_STATE_CONFIGURED)
     {
-      eventHandler(eca_ctrl, eca_queue, mil_piggy, oled, config);
+      ECACtrl_getTAI(eca_ctrl, &nowTAI);
+      eventHandler(nowTAI, eca_ctrl, eca_queue, mil_piggy, oled, config);
     }
 
     DELAY1us; // little delay 
