@@ -292,30 +292,30 @@ void destroyGatewayConditions(std::shared_ptr<TimingReceiver_Proxy> receiver)
 void on_locked(bool is_locked) 
 {
   if (is_locked) {
-    std::cout << "WR-MIL-Gateway: got WR-Lock" << std::endl;
+    std::cout << "got WR-Lock" << std::endl;
   } else {
-    std::cout << "WR-MIL-Gateway: WR-Lock lost!" << std::endl;
+    std::cout << "WR-Lock lost!" << std::endl;
   }
 }
 
 void on_firmware_running(bool is_running) 
 {
   if (is_running) {
-    std::cout << "WR-MIL-Gateway: firmware started" << std::endl;
+    std::cout << "firmware started" << std::endl;
   } else {
-    std::cout << "WR-MIL-Gateway: firmware stopped" << std::endl;
+    std::cout << "firmware stopped" << std::endl;
   }
 }
 
 void on_firmware_state(uint32_t state) 
 {
-  std::cout << "WR-MIL-Gateway: firmware state changed to "; 
+  std::cout << "firmware state changed to "; 
   print_firmware_state(state);
 }
 
 void on_event_source(uint32_t source) 
 {
-  std::cout << "WR-MIL-Gateway: source type changed to    "; 
+  std::cout << "source type changed to    "; 
   print_event_source(source);
 }
 
@@ -325,7 +325,7 @@ void on_num_late_mil_events(uint32_t total, uint32_t since_last_signal, std::sha
   // To prevent this to be displayed as "late MIL event detected", 
   //  we treat this as a special case.
   if (total > 0) {
-    std::cout << "WR-MIL-Gateway: late MIL event detected. Total/New = " 
+    std::cout << "late MIL event detected. Total/New = " 
               << total << '/' << since_last_signal
               << ". Histogram = ";
     auto histogram = wrmilgw->getLateHistogram();
@@ -339,9 +339,9 @@ void on_num_late_mil_events(uint32_t total, uint32_t since_last_signal, std::sha
 void on_in_use(bool in_use) 
 {
   if (in_use) {
-    std::cout << "WR-MIL-Gateway: gateway is in use (seeing MIL events)" << std::endl; 
+    std::cout << "gateway is in use (seeing MIL events)" << std::endl; 
   } else {
-    std::cout << "WR-MIL-Gateway: gateway not used (no MIL events for more than 10 seconds)" << std::endl;
+    std::cout << "gateway not used (no MIL events for more than 10 seconds)" << std::endl;
   }
 }
 
@@ -706,7 +706,7 @@ int main (int argc, char** argv)
         }
 #endif 
         if (new_opReady != opReady) {
-          std::cout << "WR-MIL-Gateway: OP_READY=" << (new_opReady?"YES":"NO ") << std::endl;
+          std::cout << "OP_READY=" << (new_opReady?"YES":"NO ") << std::endl;
           wrmilgw->setOpReady(new_opReady);
           wrmilgw->UpdateOLED();
           opReady = new_opReady;
