@@ -184,9 +184,11 @@ void make_mil_timestamp(uint64_t TAI, uint32_t *EVT_UTC, uint64_t UTC_offset_ms)
 }
 
 
+uint64_t mil_event_time = 0; // this is global so that main loop can see when the last MIL-Event was sent
+
 #define N_UTC_EVENTS           5          // number of generated EVT_UTC events
 #define ECA_QUEUE_LM32_TAG     0x00000004 // the tag for ECA actions we (the LM32) want to receive
-#define WR_MIL_GATEWAY_LATENCY 73650      // additional latency in units of nanoseconds
+#define WR_MIL_GATEWAY_LATENCY 70650      // additional latency in units of nanoseconds
                                           // this value was determined by measuring the time difference
                                           // of the MIL event rising edge and the ECA output rising edge (no offset)
                                           // and tuning this time difference to 100.0(5)us
@@ -214,7 +216,7 @@ void eventHandler(TAI_t tai_now,
       uint32_t EVT_UTC[N_UTC_EVENTS];
       uint32_t too_late;
       uint32_t trials;
-      uint64_t mil_event_time = tai_deadl.value + WR_MIL_GATEWAY_LATENCY + ((int32_t)config->latency-100)*1000; // add latency to the deadline
+      mil_event_time = tai_deadl.value + WR_MIL_GATEWAY_LATENCY + ((int32_t)config->latency-100)*1000; // add latency to the deadline
 
       // precision wait 
       too_late = wait_until_tai(eca, mil_event_time, tai_now);
@@ -254,7 +256,6 @@ void eventHandler(TAI_t tai_now,
         }
       }
     }
-    // remove action from ECA queue 
   }
 }
 
@@ -317,6 +318,12 @@ void main(void)
     if (config->state == WR_MIL_GW_STATE_CONFIGURED)
     {
       ECACtrl_getTAI(eca_ctrl, &nowTAI);
+      if (nowTAI.value - mil_event_time > 10000000000) { // if gateway wasn't used, generate MIL fill events
+        const fill_event = 0x000000c7;
+        mil_piggy_write_event(mil_piggy, fill_event); 
+        mil_event_time = nowTAI.value;
+        ++config->mil_histogram[fill_event & 0xff];
+      }
       eventHandler(nowTAI, eca_ctrl, eca_queue, mil_piggy, oled, config);
     }
 
