@@ -201,24 +201,25 @@ void eventHandler(volatile uint32_t    *eca,
     uint32_t evtCode, milTelegram;
     EvtId_t evtId;
     ECAQueue_getEvtId(eca_queue, &evtId);
+    TAI_t    tai_deadl; 
+    ECAQueue_getDeadl(eca_queue, &tai_deadl);
     // select all events from the eca queue that are for the LM32 
     // AND that have an evtNo that is supposed to be translated into a MIL event (indicated
     //     by the return value of ECAQueue_getMilEventData being != 0)
     if ((ECAQueue_getActTag(eca_queue) == ECA_QUEUE_LM32_TAG) &&
          convert_WReventID_to_milTelegram(evtId, &evtCode, &milTelegram, config->event_source))
     {
-      TAI_t    tai_deadl; 
       uint32_t EVT_UTC[N_UTC_EVENTS];
       uint32_t too_late;
       uint32_t trials;
-      ECAQueue_getDeadl(eca_queue, &tai_deadl);
       ECAQueue_actionPop(eca_queue);
       uint64_t mil_event_time = tai_deadl.value + WR_MIL_GATEWAY_LATENCY + ((int32_t)config->latency-100)*1000; // add latency to the deadline
       //make_mil_timestamp(mil_event_time, EVT_UTC);     
 
       // generate MIL event
       TAI_t tai_now;
-      too_late = wait_until_tai(eca, mil_event_time, &tai_now);
+      ECACtrl_getTAI(eca, &tai_now);
+      too_late = wait_until_tai(eca, mil_event_time, tai_now);
       trials = mil_piggy_write_event(mil_piggy, milTelegram); 
       ++config->num_events.value;
       ++config->mil_histogram[milTelegram & 0xff];

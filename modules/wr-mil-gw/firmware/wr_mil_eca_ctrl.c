@@ -19,13 +19,12 @@ void ECACtrl_getTAI(volatile uint32_t *eca, TAI_t *tai)
   /* repeat until high time did not change while reading low time */
 }
 
-uint32_t wait_until_tai(volatile uint32_t *eca, uint64_t stopTAI, TAI_t *tai_now)
+uint32_t wait_until_tai(volatile uint32_t *eca, uint64_t stopTAI, TAI_t tai_now)
 {
   // Get current time, ...
-  ECACtrl_getTAI(eca, tai_now);
-  if (stopTAI < tai_now->value) return tai_now->value-stopTAI; // (stopTAI is in the past)
+  if (stopTAI < tai_now.value) return tai_now.value-stopTAI; // (stopTAI is in the past)
   // ... calculate waiting time, ...
-  uint32_t delay = (stopTAI - tai_now->value); 
+  uint32_t delay = (stopTAI - tai_now.value); 
   // ... and wait.
   delay_96plus32n_ns(delay/32);
   return 0;
