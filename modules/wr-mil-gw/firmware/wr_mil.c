@@ -65,7 +65,7 @@ int init()
 {
   int cpu_id;
   discoverPeriphery();    // mini-sdb: get info on important Wishbone infrastructure, such as (this) CPU, flash, ...
-  uart_init_hw();         // init UART, required for printf... . To view print message, you may use 'eb-console' from the host
+  //uart_init_hw();         // init UART, required for printf... . To view print message, you may use 'eb-console' from the host
   cpu_id = getCpuIdx();            // get ID of THIS CPU
   isr_table_clr();        // set MSI IRQ handler
   irq_set_mask(0x01);     // ...
@@ -162,7 +162,8 @@ void eventHandler(volatile uint32_t    *eca,
       //make_mil_timestamp(mil_event_time, EVT_UTC);     
 
       // generate MIL event
-      too_late = wait_until_tai(eca, mil_event_time);
+      TAI_t tai_now;
+      too_late = wait_until_tai(eca, mil_event_time, &tai_now);
       trials = mil_piggy_write_event(mil_piggy, milTelegram); 
       ++config->num_events.value;
       ++config->mil_histogram[milTelegram & 0xff];
