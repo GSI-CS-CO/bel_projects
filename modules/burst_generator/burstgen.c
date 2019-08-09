@@ -130,18 +130,31 @@ int gMbSlot = -1;                   // slot in mailbox subscribed by LM32, no sl
 uint64_t tElapsed[N_ELAPSED] = {0};
 #define N_ACT_CNT  5                // counters for ECA MSIs
 volatile uint32_t *pSharedActCnt;   // pointer to ECA action counters (located at shared memory)
+#define N_TICK     6                // points to measure time interval to execute all io action tasks
+volatile uint64_t tickFirstTask;    // time point to execute the first io action task
+volatile uint64_t intervalCur, intervalMax;   // current and maximum time intervals spent to execute all io action tasks
+volatile uint32_t *pSharedTicks;    // ticks for each tasks
+int doMsrSchedPeriod = 1;           // control flag to dis/enable the scheduler period measurement (cmd 0x66 toggles it)
 
 void initMeasurements(void)
 {
+  tickFirstTask = intervalCur = intervalMax = 0;
+
   if (pShared) {
     pSharedActCnt = (uint32_t *)(pShared + (0x200 >> 2));
+    pSharedTicks = (uint32_t *)(pShared + (0x100 >> 2));
 
     for (int idx = 0; idx < N_ACT_CNT; ++idx)  // clear ECA action counters
       *(pSharedActCnt +idx) = 0;
+
+    for (int idx = 0; idx <= (N_TASKS + N_TICK); ++idx) // clear buffers at 0x200a0600-0x200a0658 (to measure the task scheduler period)
+      *(pSharedTicks +idx) = 0;
+
     mprintf("Built-in measurements are activated.\n");
   }
   else {
     pSharedActCnt = 0;
+    pSharedTicks = 0;
     mprintf("No built-in measurements!\n");
   }
 }
@@ -173,6 +186,35 @@ void printTrgTggCtlCfg(void)
     mprintf("%llx:%x ", gToggConfigs[i].id, gToggConfigs[i].bursts);
     if (((i + 1) % 8) == 0)
       mprintf("\n\t");
+  }
+}
+
+void measureSchedulerPeriod(int taskIdx, uint64_t tick)
+{
+  if (pSharedTicks == 0)
+    return;
+
+  if (doMsrSchedPeriod == 0)
+    return;
+
+  //*(pSharedTicks + taskIdx) = (uint32_t)tick;                     // kepp the tick of each task
+  if (taskIdx == 1)                                               // keep the tick of the first io task at +0x48
+  {
+    *(pSharedTicks +N_TASKS+1) = (uint32_t)(tick >> 32);
+    *(pSharedTicks +N_TASKS+2) = (uint32_t)tick;
+    tickFirstTask = tick;
+  }
+  else if ((taskIdx +1) == N_TASKS)                               // the last io task is done, now measure the elapsed time to execute all io tasks
+  {
+    intervalCur = tick - tickFirstTask;                           // get time interval to execute all IO action tasks
+    toU64(*(pSharedTicks +N_TASKS+3), *(pSharedTicks +N_TASKS+4), intervalMax);
+    if (intervalCur > intervalMax)
+    {
+      *(pSharedTicks +N_TASKS+3) = (uint32_t)(intervalCur >> 32); // keep the maximum interval at +0x50
+      *(pSharedTicks +N_TASKS+4) = (uint32_t)intervalCur;
+    }
+    *(pSharedTicks +N_TASKS+5) = (uint32_t)(intervalCur >> 32);   // keep the current interval at +0x58
+    *(pSharedTicks +N_TASKS+6) = (uint32_t)intervalCur;
   }
 }
 
@@ -1062,6 +1104,17 @@ void execHostCmd(int32_t cmd)
 	}
 	break;
 
+      case 0x77: // dis/enable to measure the task scheduler period
+	mprintf("measure\n");
+	doMsrSchedPeriod ^= 1;
+
+	mprintf("\tscheduler period: ");
+	if (doMsrSchedPeriod)
+	  mprintf("enabled\n");
+	else
+	  mprintf("disabled\n");
+	break;
+
       default:
 	mprintf("unknown\n");
 	result = STATUS_ERR;
@@ -1343,6 +1396,8 @@ void main(void) {
       }
 
       ecaMsiHandler(0);
+
+      measureSchedulerPeriod(taskIdx, tick); // measure a time interval to execute all io action tasks
     }
   }
 }
