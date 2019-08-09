@@ -1184,7 +1184,7 @@ void main(void) {
 
   int taskIdx = 0;            // reset task index
 
-  for (taskIdx = 0; taskIdx <= N_TASKS; ++taskIdx)
+  for (taskIdx = 0; taskIdx < N_TASKS; ++taskIdx)
   {
     pTask[taskIdx].state = 0;
     pTask[taskIdx].flag = CTL_DIS;
@@ -1198,11 +1198,11 @@ void main(void) {
     pTask[taskIdx].failed = 0;
   }
 
-  for (taskIdx = 0; taskIdx <= N_BURSTS; ++taskIdx)
+  for (taskIdx = 0; taskIdx < N_BURSTS; ++taskIdx)
     pTask[taskIdx].func = triggerIoActions;
 
-  pTask[N_TASKS].interval = INTERVAL_1000MS;
-  pTask[N_TASKS].func = hostMsiHandler;
+  pTask[N_TASKS -1].interval = INTERVAL_1000MS;
+  pTask[N_TASKS -1].func = hostMsiHandler;
 
   mprintf("\nwaiting host commmand ...\n");
 
@@ -1210,7 +1210,7 @@ void main(void) {
 
     // loop through all tasks except a dummy task with index 0. first, run all continuous tasks. then, if the number of ticks
     // since the last time the task was run is greater than or equal to the task interval, execute the task
-    for (taskIdx = 1; taskIdx <= N_TASKS; taskIdx++) {
+    for (taskIdx = 1; taskIdx < N_TASKS; taskIdx++) {
 
       tick = getSysTime();
 

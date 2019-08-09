@@ -42,7 +42,7 @@ extern uint32_t*       _startshared[];
 /* id number to identify the LM32 firmware for burst generator */
 #define BG_FW_ID          0xb2b2b2b2UL
 
-#define N_BURSTS          16    // maximum number of bursts can be generated (1..N_BURSTS]
+#define N_BURSTS          17    // maximum number of bursts can be generated, but bursts 1..N_BURSTS-1 are used
 #define N_TASKS           N_BURSTS + 1    // number of all periodic tasks (N_BURSTS + 1 host MSI handler)
 #define N_BURST_INFO      8     // the length of burst info (id, io_type, io_idx, trigger_h32/l32, toggle_h32/l32, flag)
 
