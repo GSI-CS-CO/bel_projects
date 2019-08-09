@@ -1038,6 +1038,37 @@ void setupMsiHandlers(void)
 
 /*******************************************************************************
  *
+ * Set up tasks: 0..N_BURSTS-1 for IO tasks, N_BURSTS..N_TASKS-1 for host comm
+ *
+ ******************************************************************************/
+void setupTasks(void)
+{
+  memset((void *)pTrigConfigs, 0, N_CONFIGS * sizeof(Config_t));
+  memset((void *)pToggConfigs, 0, N_CONFIGS * sizeof(Config_t));
+
+  for (int taskIdx = 0; taskIdx < N_TASKS; ++taskIdx)
+  {
+    pTask[taskIdx].state = 0;
+    pTask[taskIdx].flag = CTL_DIS;
+    pTask[taskIdx].trigger = 0;
+    pTask[taskIdx].toggle = 0;
+    pTask[taskIdx].cycle = 0;
+    pTask[taskIdx].period = 0;
+    pTask[taskIdx].deadline = 0;
+    pTask[taskIdx].interval = ALWAYS;
+    pTask[taskIdx].lasttick = 0;
+    pTask[taskIdx].failed = 0;
+  }
+
+  for (int taskIdx = 0; taskIdx < N_BURSTS; ++taskIdx)
+    pTask[taskIdx].func = triggerIoActions;
+
+  pTask[N_TASKS -1].interval = INTERVAL_1000MS;
+  pTask[N_TASKS -1].func = hostMsiHandler;
+}
+
+/*******************************************************************************
+ *
  * Build a timing message
  *
  * @param[out] msg The location of message buffer
@@ -1174,6 +1205,7 @@ void init()
 void main(void) {
 
   uint64_t tick;
+  int taskIdx;          // task index
 
   init();               // discover mailbox, own MSI path, ECA event input, ECA queue for LM32 channel
   initSharedMem();      // init shared memory
@@ -1181,28 +1213,8 @@ void main(void) {
 
   setupTimingMsg(bufTimMsg);  // build default timing msg for IO action, estimate the duration of message injection to the ECA event input
   setupMsiHandlers();         // set up MSI handlers
+  setupTasks();               // set up tasks for the IO actions and host communication, initialize the trg/tgg config table
 
-  int taskIdx = 0;            // reset task index
-
-  for (taskIdx = 0; taskIdx < N_TASKS; ++taskIdx)
-  {
-    pTask[taskIdx].state = 0;
-    pTask[taskIdx].flag = CTL_DIS;
-    pTask[taskIdx].trigger = 0;
-    pTask[taskIdx].toggle = 0;
-    pTask[taskIdx].cycle = 0;
-    pTask[taskIdx].period = 0;
-    pTask[taskIdx].deadline = 0;
-    pTask[taskIdx].interval = ALWAYS;
-    pTask[taskIdx].lasttick = 0;
-    pTask[taskIdx].failed = 0;
-  }
-
-  for (taskIdx = 0; taskIdx < N_BURSTS; ++taskIdx)
-    pTask[taskIdx].func = triggerIoActions;
-
-  pTask[N_TASKS -1].interval = INTERVAL_1000MS;
-  pTask[N_TASKS -1].func = hostMsiHandler;
 
   mprintf("\nwaiting host commmand ...\n");
 
