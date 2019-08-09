@@ -157,6 +157,25 @@ void printMsiHandleMeasurement(void)
   mprintf("\teM> %x:%8x\n", (uint32_t)(p >> 32), (uint32_t)p);
   memset(tElapsed, 0, sizeof(uint64_t) * N_ELAPSED);
 }
+
+void printTrgTggCtlCfg(void)
+{
+  mprintf("\n\ttrg: %x, %llx, tgg: %x, %llx\n\t", gTrigCtrl.bursts, gTrigCtrl.deadline, gToggCtrl.bursts, gToggCtrl.deadline);
+
+  for (int i = 0; i < N_CONFIGS; ++i) {
+    mprintf("%llx:%x ", gTrigConfigs[i].id, gTrigConfigs[i].bursts);
+    if (((i + 1) % 8) == 0)
+      mprintf("\n\t");
+  }
+
+  mprintf("\n\t");
+  for (int i = 0; i < N_CONFIGS; ++i) {
+    mprintf("%llx:%x ", gToggConfigs[i].id, gToggConfigs[i].bursts);
+    if (((i + 1) % 8) == 0)
+      mprintf("\n\t");
+  }
+}
+
 int printSharedInput(int start, int end)
 {
   int i = 0;
@@ -1025,6 +1044,11 @@ void execHostCmd(int32_t cmd)
       case 0x44: // print elapsed time to handle MSIs
 	mprintf("MSI handle\n");
 	printMsiHandleMeasurement();
+	break;
+
+      case 0x55: // print the trigger/toggle control and trigger/toggle configuration tables
+	mprintf("trg/tgg\n");
+	printTrgTggCtlCfg();
 	break;
 
       default:
