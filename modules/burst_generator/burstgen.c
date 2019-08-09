@@ -1051,6 +1051,17 @@ void execHostCmd(int32_t cmd)
 	printTrgTggCtlCfg();
 	break;
 
+      case 0x66: // print elapsed time between tasks (requires the burst id in the shared input)
+	mprintf("task ticks\n\tstate lasttick failed\n");
+	id = *pSharedInput;
+	if (id) {
+	  mprintf("\t%llx %16llx %8x\n", pTask[id].lasttick, pTask[id].failed, (uint32_t)pTask[id].failed);
+	} else {
+	  for (int i = 1; i <= 10; ++i)
+	    mprintf("\t%llx %16llx %8x\n", pTask[i].lasttick, pTask[i].failed, (uint32_t)pTask[i].failed);
+	}
+	break;
+
       default:
 	mprintf("unknown\n");
 	result = STATUS_ERR;
