@@ -125,6 +125,21 @@ uint64_t gInjection = 0;            // time duration for local message injection
 int gEcaChECPU = 0;                 // ECA channel for an embedded CPU (LM32), connected to ECA queue pointed by pECAQ
 int gMbSlot = -1;                   // slot in mailbox subscribed by LM32, no slot is subscribed by default
 
+/* stuff for built-in measurements */
+#define N_ELAPSED  4                // points to measure elapsed time to handle ECA MSIs
+uint64_t tElapsed[N_ELAPSED] = {0};
+
+void printMsiHandleMeasurement(void)
+{
+  mprintf("\tiH  %x:%8x\n", (uint32_t)(tElapsed[0] >> 32), (uint32_t)tElapsed[0]);
+  uint64_t p = tElapsed[1] - tElapsed[0];
+  mprintf("\teM< %x:%8x\n", (uint32_t)(p >> 32), (uint32_t)p);
+  p = tElapsed[2] - tElapsed[1];
+  mprintf("\teH  %x:%8x\n", (uint32_t)(p >> 32), (uint32_t)p);
+  p = tElapsed[3] - tElapsed[1];
+  mprintf("\teM> %x:%8x\n", (uint32_t)(p >> 32), (uint32_t)p);
+  memset(tElapsed, 0, sizeof(uint64_t) * N_ELAPSED);
+}
 int printSharedInput(int start, int end)
 {
   int i = 0;
@@ -324,6 +339,7 @@ void handleValidActions()
   valCnt = *(pEcaCtl + (ECA_CHANNEL_VALID_COUNT_GET >> 2));  // read and clear valid counter
   atomic_off();
   //mprintf("\nvalid=%d\n", valCnt);
+  tElapsed[2] = getSysTime();
 
   if (valCnt != 0)
     ecaHandler(valCnt);                             // pop pending valid actions
@@ -341,6 +357,8 @@ int ecaMsiHandler(int id)
 
     struct msi m = remove_msg(pMsgBufHead, ECA_MSI);
 
+    tElapsed[1] = getSysTime();
+    tElapsed[2] = tElapsed[1];
     //mprintf("\n!Got MSI 0x%08x (h16: 0-3 faild, 4 vald, 5 ovrflw, 6 full)\n", m.msg); // debugging, remove later
 
     switch (m.msg & ECA_FG_MASK)
@@ -354,6 +372,8 @@ int ecaMsiHandler(int id)
 	clearFailedActions();
 	break;
     }
+
+    tElapsed[3] = getSysTime();
   }
 
   return STATUS_OK;
@@ -447,6 +467,8 @@ void irqHandler() {
   switch (sender) {
 
     case MSI_OFFS_ECA:     // ECA
+      tElapsed[0] = getSysTime();
+
       add_msg(pMsgBufHead, ECA_MSI, m);
       break;
 
@@ -955,6 +977,12 @@ void execHostCmd(int32_t cmd)
 	}
 
 	*pSharedCmd = cmd;
+	break;
+
+      /* commands used in firmware development */
+      case 0x44: // print elapsed time to handle MSIs
+	mprintf("MSI handle\n");
+	printMsiHandleMeasurement();
 	break;
 
       default:
