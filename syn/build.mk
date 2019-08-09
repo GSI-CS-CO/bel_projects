@@ -100,16 +100,20 @@ ifndef SKIP_JIC
 	$(QUARTUS_BIN)/quartus_cpf -c -o $*.opt -d $(FLASH) -s $(DEVICE) $< $@
 endif
 ifdef SKIP_JIC
-	@echo "Skipping JIC file..."
+	echo "Skipping JIC file..."
 endif
 
 %.pof:	%.sof %.opt
 ifndef CFI
+	echo "Building FLASH..."
 	$(QUARTUS_BIN)/quartus_cpf -c -o $*.opt -d $(FLASH) -m $(SPI_LANES) $< $@
 endif
-ifdef SKIP_CFI
 ifdef CFI
-	$(QUARTUS_BIN)/quartus_cpf -c -o $*.opt -d $(CFI_NAME) -m $(CFI_LANES) $< $@
+ifeq ($(SKIP_CFI), yes)
+		echo "Skipping CFI..."
+else
+		echo "Building CFI..."
+		$(QUARTUS_BIN)/quartus_cpf -c -o $*.opt -d $(CFI_NAME) -m $(CFI_LANES) $< $@
 endif
 endif
 
