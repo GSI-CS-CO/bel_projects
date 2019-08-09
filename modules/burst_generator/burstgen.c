@@ -128,6 +128,23 @@ int gMbSlot = -1;                   // slot in mailbox subscribed by LM32, no sl
 /* stuff for built-in measurements */
 #define N_ELAPSED  4                // points to measure elapsed time to handle ECA MSIs
 uint64_t tElapsed[N_ELAPSED] = {0};
+#define N_ACT_CNT  5                // counters for ECA MSIs
+volatile uint32_t *pSharedActCnt;   // pointer to ECA action counters (located at shared memory)
+
+void initMeasurements(void)
+{
+  if (pShared) {
+    pSharedActCnt = (uint32_t *)(pShared + (0x200 >> 2));
+
+    for (int idx = 0; idx < N_ACT_CNT; ++idx)  // clear ECA action counters
+      *(pSharedActCnt +idx) = 0;
+    mprintf("Built-in measurements are activated.\n");
+  }
+  else {
+    pSharedActCnt = 0;
+    mprintf("No built-in measurements!\n");
+  }
+}
 
 void printMsiHandleMeasurement(void)
 {
@@ -343,8 +360,17 @@ void handleValidActions()
 
   if (valCnt != 0)
     ecaHandler(valCnt);                             // pop pending valid actions
-}
 
+  if (pSharedActCnt) {
+    valCnt = *(pSharedActCnt);
+    *(pSharedActCnt) = ++valCnt;                    // count the valid actions (cnt value at +0x00)
+
+    if (valCnt == 0) {                              // something went wrong to read the valid action counter!
+      valCnt = *(pSharedActCnt + 3);                // count the not-valid actions (cnt value at +0x0c)
+      *(pSharedActCnt +3) = ++valCnt;
+    }
+  }
+}
 
 /*******************************************************************************
  *
@@ -359,6 +385,7 @@ int ecaMsiHandler(int id)
 
     tElapsed[1] = getSysTime();
     tElapsed[2] = tElapsed[1];
+    uint32_t cnt = 0;
     //mprintf("\n!Got MSI 0x%08x (h16: 0-3 faild, 4 vald, 5 ovrflw, 6 full)\n", m.msg); // debugging, remove later
 
     switch (m.msg & ECA_FG_MASK)
@@ -367,9 +394,24 @@ int ecaMsiHandler(int id)
 	handleValidActions(); // ECA MSI handling
 	break;
       case ECA_FG_MOSTFULL:
+	if (pSharedActCnt) {
+	  cnt = *(pSharedActCnt +1);
+	  *(pSharedActCnt +1) = ++cnt; // count the full messages (cnt value at +0x04)
+	}
+	break;
+      case ECA_FG_LATE:
+	clearFailedActions();
+	if (pSharedActCnt) {
+	  cnt = *(pSharedActCnt +4);
+	  *(pSharedActCnt +4) = ++cnt; // count the late actions (cnt value at +0x10)
+	}
 	break;
       default:
 	clearFailedActions();
+	if (pSharedActCnt) {
+	  cnt = *(pSharedActCnt +2);
+	  *(pSharedActCnt +2) = ++cnt; // count other actions (cnt value at +0x08)
+	}
 	break;
     }
 
@@ -1243,6 +1285,7 @@ void main(void) {
   setupMsiHandlers();         // set up MSI handlers
   setupTasks();               // set up tasks for the IO actions and host communication, initialize the trg/tgg config table
 
+  initMeasurements();         // init pointers, buffers, counters for the built-in measurements
 
   mprintf("\nwaiting host commmand ...\n");
 
