@@ -1082,6 +1082,12 @@ void execHostCmd(int32_t cmd)
 	*pSharedCmd = cmd;
 	break;
 
+      case CMD_LS_FW_ID: // list the firmware id
+	mprintf("fw id\n");
+
+	*pSharedInput = BG_FW_ID;
+	break;
+
       /* commands used in firmware development */
       case 0x44: // print elapsed time to handle MSIs
 	mprintf("MSI handle\n");

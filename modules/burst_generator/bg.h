@@ -57,6 +57,7 @@ extern uint32_t*       _startshared[];
 #define CMD_RD_MSI_ECPU   0x10UL
 #define CMD_RD_ECPU_CHAN  0x11UL
 #define CMD_RD_ECPU_QUEUE 0x12UL
+#define CMD_LS_FW_ID      0x13UL // list the firmware id
 
 /* definitions of timing messages & ECA actions */
 #define ECA_FG_MOSTFULL   0x00060000UL  // ECA mostfull flag
