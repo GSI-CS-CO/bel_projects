@@ -960,6 +960,8 @@ void execHostCmd(int32_t cmd)
 
 	  if (verbose)
 	    mprintf(" created: %x, cycled: %x\n", gBurstsCreated, gBurstsCycled);
+
+	  gBurstsCycled = 0; // clear after read
 	}
 	else if (id <= N_BURSTS) {
 	  *(pSharedInput +1) = (uint32_t)pTask[id].io_type;  // IO type and index (type << 16| index)
