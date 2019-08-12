@@ -30,6 +30,7 @@ ifndef CPP
   $(error No C-PreProcessor defined in variable CPP !)
 endif
 
+
 DEFINES += CONFIG_GSI
 DEFINES += CONFIG_GSI_FE
 
@@ -80,6 +81,25 @@ else
    QUIET       = @
 endif
 
+GCC_VERSION := $(shell $(CC) --version | head -n1 | awk '{print $$3}' | tr -d . )
+
+LTO_ABILITY := $(shell [ "$(GCC_VERSION)" -gt "469" ] && echo "1" )
+ifeq ($(DEBUG), 1)
+  NO_LTO = 1
+endif
+ifdef LTO_ABILITY
+ ifndef NO_LTO
+   LTO = -flto
+   DEFINES += CONFIG_LTO_SUPPORT
+ endif
+else
+ ifndef NO_LTO
+   $(warning "WARNING: Compiler is obsolete, therefore no link time optimization (LTO) support!" )
+ endif
+endif
+LD_FLAGS += $(LTO)
+
+
 RESULT_FILE  ?= $(BIN_FILE)
 SOURCE       += $(MIAN_MODULE)
 INCLUDE_DIRS += $(dir $(MIAN_MODULE))
@@ -120,6 +140,7 @@ else
   CFLAGS += -O$(CODE_OPTIMIZATION)
 endif
 
+CFLAGS += $(LTO)
 CFLAGS += -Wfatal-errors
 
 CC_ARG = $(CFLAGS) $(OPT_INCLUDE) $(OPT_DEFINES)
