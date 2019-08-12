@@ -80,6 +80,21 @@ uint32_t mil_piggy_write_event(volatile uint32_t *piggy, uint32_t cmd)
   return 0;
 }
 
+void inject_mil_event(uint32_t cmd, TAI_t time) 
+{
+  atomic_on();
+  *pEca = 0xffffffff;
+  *pEca = cmd & 0x000000ff;
+  *pEca = 0;
+  *pEca = 0;
+  *pEca = 0;
+  *pEca = 0;
+  *pEca = time.part.hi;
+  *pEca = time.part.lo;
+  atomic_off();
+  pp_printf("injected\n");
+}
+
 uint32_t mil_piggy_reset(volatile uint32_t *piggy)
 {
   piggy[MIL_SIO3_RST] = 0x0;
@@ -184,7 +199,7 @@ void make_mil_timestamp(uint64_t TAI, uint32_t *EVT_UTC, uint64_t UTC_offset_ms)
 }
 
 
-uint64_t mil_event_time = 0; // this is global so that main loop can see when the last MIL-Event was sent
+//uint64_t mil_event_time = 0; // this is global so that main loop can see when the last MIL-Event was sent
 
 #define N_UTC_EVENTS           5          // number of generated EVT_UTC events
 #define ECA_QUEUE_LM32_TAG     0x00000004 // the tag for ECA actions we (the LM32) want to receive
@@ -192,8 +207,7 @@ uint64_t mil_event_time = 0; // this is global so that main loop can see when th
                                           // this value was determined by measuring the time difference
                                           // of the MIL event rising edge and the ECA output rising edge (no offset)
                                           // and tuning this time difference to 100.0(5)us
-void eventHandler(TAI_t tai_now,
-                  volatile uint32_t    *eca,
+void eventHandler(volatile uint32_t    *eca,
                   volatile uint32_t    *eca_queue, 
                   volatile uint32_t    *mil_piggy,
                   volatile uint32_t    *oled,
@@ -216,45 +230,50 @@ void eventHandler(TAI_t tai_now,
       uint32_t EVT_UTC[N_UTC_EVENTS];
       uint32_t too_late;
       uint32_t trials;
-      mil_event_time = tai_deadl.value + WR_MIL_GATEWAY_LATENCY + ((int32_t)config->latency-100)*1000; // add latency to the deadline
+      TAI_t mil_event_time = {
+        .value = tai_deadl.value + ((int32_t)config->latency)*1000 // add latency to the deadline
+      };
 
-      // precision wait 
-      too_late = wait_until_tai(eca, mil_event_time, tai_now);
+      //too_late = wait_until_tai(eca, mil_event_time, tai_now);
       // generate MIL event
-      trials = mil_piggy_write_event(mil_piggy, milTelegram); 
+      //trials = mil_piggy_write_event(mil_piggy, milTelegram); 
+      inject_mil_event(milTelegram, mil_event_time);
       ECAQueue_actionPop(eca_queue); // remove event from queue
       ++config->num_events.value;
       ++config->mil_histogram[milTelegram & 0xff];
+      //oled_array(config, oled);
       if (evtCode == config->utc_trigger)
       {
         // generate EVT_UTC_1/2/3/4/5 EVENTS
-        make_mil_timestamp(mil_event_time, EVT_UTC, config->utc_offset_ms.value);
+        make_mil_timestamp(mil_event_time.value, EVT_UTC, config->utc_offset_ms.value);
         //delay_96plus32n_ns(config->trigger_utc_delay*32);
         for (int i = 0; i < N_UTC_EVENTS; ++i)
         {
           // Churn out the EVT_UTC MIL events with a configurable delay between the individual events.
-          trials = mil_piggy_write_event(mil_piggy, EVT_UTC[i]); 
-          if (i < N_UTC_EVENTS-1)
-          {
-            delay_96plus32n_ns(config->utc_delay*32);
-          }
-        }
-        oled_array(config, oled); // mil piggy is busy writing events. 
-                                   // use the time to update OLED display
-      }
-      if (too_late || trials)
-      { 
-        // inform saftlib that there was a late event
-        send_MSI(config->mb_slot, WR_MIL_GW_MSI_LATE_EVENT);
-        ++config->late_events;
-        //pp_printf("evtCode: %u trials: %u  late: %u\n",evtCode, trials, too_late);
-        for (int i = 0; i < 16; ++i) {
-          if (too_late>>(i+10) == 0 || i == 15) {
-            ++config->late_histogram[i];
-            break;
-          } 
+          //trials = mil_piggy_write_event(mil_piggy, EVT_UTC[i]); 
+          mil_event_time.value += 30000; // 30 us between utc events
+          inject_mil_event(milTelegram, mil_event_time);
+          // if (i < N_UTC_EVENTS-1)
+          // {
+          //   delay_96plus32n_ns(config->utc_delay*32);
+          // }
         }
       }
+      oled_array(config, oled); // mil piggy is busy writing events. 
+                                 // use the time to update OLED display
+      // if (too_late || trials)
+      // { 
+      //   // inform saftlib that there was a late event
+      //   send_MSI(config->mb_slot, WR_MIL_GW_MSI_LATE_EVENT);
+      //   ++config->late_events;
+      //   //pp_printf("evtCode: %u trials: %u  late: %u\n",evtCode, trials, too_late);
+      //   for (int i = 0; i < 16; ++i) {
+      //     if (too_late>>(i+10) == 0 || i == 15) {
+      //       ++config->late_histogram[i];
+      //       break;
+      //     } 
+      //   }
+      // }
     }
   }
 }
@@ -306,7 +325,7 @@ void main(void)
 
   oled_array(config, oled);
 
-  int i = 0;
+  uint32_t i = 0;
   while (1) {
     //poll user commands
     config_poll(config, oled);
@@ -317,14 +336,7 @@ void main(void)
     // do whatever has to be done
     if (config->state == WR_MIL_GW_STATE_CONFIGURED)
     {
-      ECACtrl_getTAI(eca_ctrl, &nowTAI);
-      if (nowTAI.value - mil_event_time > 10000000000) { // if gateway wasn't used, generate MIL fill events
-        const fill_event = 0x000000c7;
-        mil_piggy_write_event(mil_piggy, fill_event); 
-        mil_event_time = nowTAI.value;
-        ++config->mil_histogram[fill_event & 0xff];
-      }
-      eventHandler(nowTAI, eca_ctrl, eca_queue, mil_piggy, oled, config);
+      eventHandler(eca_ctrl, eca_queue, mil_piggy, oled, config);
     }
 
     DELAY1us; // little delay 

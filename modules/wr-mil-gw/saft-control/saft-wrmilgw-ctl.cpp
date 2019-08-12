@@ -16,6 +16,8 @@
 #include "SAFTd.h"
 #include "EmbeddedCPUActionSink.h"
 #include "EmbeddedCPUCondition.h"
+#include "WbmActionSink.h"
+#include "WbmCondition.h"
 #include "TimingReceiver.h"
 #include "WrMilGateway.h"
 #include "wr_mil_gw_regs.h"
@@ -230,38 +232,80 @@ const auto   ESREventID = UINT64_C(0x1154000000000000);
 
 void createCondition(std::shared_ptr<WrMilGateway_Proxy> wrmilgw, std::shared_ptr<TimingReceiver_Proxy> receiver, uint64_t eventID)
 {
-  // create the embedded CPU action sink for SIS18 WR events
-  std::map<std::string, std::string> e_cpus = receiver->getInterfaces()["EmbeddedCPUActionSink"];
-  if (e_cpus.size() != 1)  {
-    throw saftbus::Error(saftbus::Error::FAILED, "No embedded CPU action sink found");
-  }
-  std::shared_ptr<EmbeddedCPUActionSink_Proxy> e_cpu 
-      = EmbeddedCPUActionSink_Proxy::create(e_cpus.begin()->second);
-  auto eventMask = UINT64_C(0xfffff00000000000);
-  auto offset    = INT64_C(-1000)*wrmilgw->getEventLatency(); // set the negative latency as offset so that the execution will be at 0
-  auto tag       = UINT32_C(0x4);
-
-  // Destroy all unowned conditions
-  std::vector< std::string > all_conditions = e_cpu->getAllConditions();  
-  for (unsigned int condition_it = 0; condition_it < all_conditions.size(); condition_it++) {
-    std::shared_ptr<EmbeddedCPUCondition_Proxy> destroy_condition = EmbeddedCPUCondition_Proxy::create(all_conditions[condition_it]);
-    if (destroy_condition->getDestructible() && (destroy_condition->getOwner() == "")) { 
-      destroy_condition->Destroy();
+  {
+    // create the embedded CPU action sink for SIS18 WR events
+    std::map<std::string, std::string> e_cpus = receiver->getInterfaces()["EmbeddedCPUActionSink"];
+    if (e_cpus.size() != 1)  {
+      throw saftbus::Error(saftbus::Error::FAILED, "No embedded CPU action sink found");
     }
-  }
+    std::shared_ptr<EmbeddedCPUActionSink_Proxy> e_cpu 
+        = EmbeddedCPUActionSink_Proxy::create(e_cpus.begin()->second);
+    auto eventMask = UINT64_C(0xfffff00000000000);
+    auto offset    = INT64_C(-1000)*wrmilgw->getEventLatency(); // set the negative latency as offset so that the execution will be at 0
+    auto tag       = UINT32_C(0x4);
 
-  e_cpu->Own();
-  e_cpu->setMinOffset(-300000000);
-  e_cpu->setMaxOffset(300000000);
-  std::shared_ptr<EmbeddedCPUCondition_Proxy> condition
-     = EmbeddedCPUCondition_Proxy::create(e_cpu->NewCondition(true, eventID, eventMask, offset, tag));
-  // Accept every kind of event 
-  condition->setAcceptConflict(true);
-  condition->setAcceptDelayed(true);
-  condition->setAcceptEarly(true);
-  condition->setAcceptLate(true);
-  condition->Disown();
-  e_cpu->Disown();
+    // Destroy all unowned conditions
+    std::vector< std::string > all_conditions = e_cpu->getAllConditions();  
+    for (unsigned int condition_it = 0; condition_it < all_conditions.size(); condition_it++) {
+      std::shared_ptr<EmbeddedCPUCondition_Proxy> destroy_condition = EmbeddedCPUCondition_Proxy::create(all_conditions[condition_it]);
+      if (destroy_condition->getDestructible() && (destroy_condition->getOwner() == "")) { 
+        destroy_condition->Destroy();
+      }
+    }
+
+    e_cpu->Own();
+    e_cpu->setMinOffset(-300000000);
+    e_cpu->setMaxOffset(300000000);
+    std::shared_ptr<EmbeddedCPUCondition_Proxy> condition
+       = EmbeddedCPUCondition_Proxy::create(e_cpu->NewCondition(true, eventID, eventMask, offset, tag));
+    // Accept every kind of event 
+    condition->setAcceptConflict(true);
+    condition->setAcceptDelayed(true);
+    condition->setAcceptEarly(true);
+    condition->setAcceptLate(true);
+    condition->Disown();
+    e_cpu->Disown();
+  }
+  {
+  // create a Wbm Action sink
+    /* Search for embedded CPU channel */
+    map<std::string, std::string> acwbms = receiver->getInterfaces()["WbmActionSink"];
+    if (acwbms.size() != 1)
+    {
+      throw saftbus::Error(saftbus::Error::FAILED, "No Wbm action sink found");
+    }
+    std::shared_ptr<WbmActionSink_Proxy> acwbm = WbmActionSink_Proxy::create(acwbms.begin()->second);
+    // record macro sequence to access the mil piggy
+    std::vector<std::vector<uint32_t> > commands(1, std::vector<uint32_t>(3)); // a sequence with one command
+    commands[0][0] = 0x9004;     // WB-adr.
+    commands[0][1] = 0x000000aa; // payload (will not be used)
+    commands[0][2] = 0x0000003f; // use low part of eventID as WB-data
+    uint macroIdx = 0;
+    acwbm->RecordMacro(macroIdx, commands); // program macro index 0
+
+    std::vector< std::string > all_conditions = acwbm->getAllConditions();  
+    for (unsigned int condition_it = 0; condition_it < all_conditions.size(); condition_it++) {
+      std::shared_ptr<WbmCondition_Proxy> destroy_condition = WbmCondition_Proxy::create(all_conditions[condition_it]);
+      if (destroy_condition->getDestructible() && (destroy_condition->getOwner() == "")) { 
+        destroy_condition->Destroy();
+      }
+    }
+
+    acwbm->Own();
+    auto eventID   = UINT64_C(0xffffffff00000000);
+    auto eventMask = UINT64_C(0xffffffff00000000);
+    auto offset    = -0;
+    auto Tag       = macroIdx; // to target the recorded macro sequence
+    std::shared_ptr<WbmCondition_Proxy> condition
+       = WbmCondition_Proxy::create(acwbm->NewCondition(true, eventID, eventMask, offset, Tag));
+    // Accept every kind of event 
+    condition->setAcceptConflict(true);
+    condition->setAcceptDelayed(true);
+    condition->setAcceptEarly(true);
+    condition->setAcceptLate(true);
+    condition->Disown();
+    acwbm->Disown();
+  }
 }
 void destroyGatewayConditions(std::shared_ptr<TimingReceiver_Proxy> receiver)
 {

@@ -93,8 +93,10 @@ void config_command_handler(volatile WrMilConfig *config, volatile uint32_t *ole
         oled_array(config, oled);
         break;
       default:
+      {
         pp_printf("wr-mil-gw unknown command %08x\n", config->cmd);
         break;
+      }
     }
     config->cmd = UINT32_C(0);  
   }
