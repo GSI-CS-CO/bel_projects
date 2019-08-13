@@ -4,15 +4,15 @@
 #   'make MASP=YES PRO=NO PREFIX= all'                                                  (hack: leave PREFIX empty for SCU path)
 #   'make MASP=YES PRO=YES PREFIX= all'                                                 (hack: leave PREFIX empty for SCU path)
 # Example deploy:
-#   'make MASP=YES PRO=NO PREFIX= STAGING=/common/export/timing-rte/dmunipz-dev deploy' (hack: leave PREFIX empty for SCU path)
-#   'make MASP=YES PRO=YES PREFIX= STAGING=/common/export/timing-rte/dmunipz deploy'    (hack: leave PREFIX empty for SCU path)
+#   'make MASP=YES PRO=NO PREFIX= STAGING=/common/export/timing-rte/wrunipz-dev deploy' (hack: leave PREFIX empty for SCU path)
+#   'make MASP=YES PRO=YES PREFIX= STAGING=/common/export/timing-rte/wrunipz deploy'    (hack: leave PREFIX empty for SCU path)
 PREFIX      ?= /usr/local
 STAGING     ?=
 ARCH        ?= /x86_64
 # EB          ?= ../../ip_cores/etherbone-core/api
-FW          ?= dmunipz-fw
-SW          ?= dmunipz-x86
-ASL         ?= dmunipz-asl
+FW          ?= wrunipz-fw
+SW          ?= wrunipz-x86
+ASL         ?= wrunipz-asl
 #TARGETS     := firmware software
 
 #EXTRA_FLAGS ?=
@@ -35,11 +35,11 @@ deploy:
 	mkdir -p $(STAGING)$(ARCH)$(PREFIX)/usr/bin # '/usr' is a hack
 	mkdir -p $(STAGING)/firmware
 	cp ../../tools/eb-fwload $(STAGING)$(ARCH)$(PREFIX)/usr/bin # '/usr' is a hack
-	cp $(ASL)/dmunipz.sh $(STAGING)
-	cp $(SW)/dm-unipz_start.sh $(STAGING)$(ARCH)$(PREFIX)/usr/bin # '/usr' is a hack
-	cp $(SW)/dmunipz-ctl $(STAGING)$(ARCH)$(PREFIX)/usr/bin # '/usr' is a hack
-	cp $(FW)/dmunipz.bin $(STAGING)/firmware
-#	script /common/export/nfsinit/global/timing-rte-dmunipz-dev is _here_ in sub-folder dmunipz-asl 
+	cp $(ASL)/wrunipz.sh $(STAGING)
+	cp $(SW)/wr-unipz_start.sh $(STAGING)$(ARCH)$(PREFIX)/usr/bin # '/usr' is a hack
+	cp $(SW)/wrunipz-ctl $(STAGING)$(ARCH)$(PREFIX)/usr/bin # '/usr' is a hack
+	cp $(FW)/wrunipz.bin $(STAGING)/firmware
+#	script /common/export/nfsinit/global/timing-rte-wrunipz-dev is _here_ in sub-folder wrunipz-asl 
 
 .PHONY: all clean
 

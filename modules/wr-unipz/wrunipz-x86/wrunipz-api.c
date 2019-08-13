@@ -21,67 +21,26 @@
 
 // wr-unipz
 #include <b2b-common.h>
+#include <b2btest-api.h>
 #include <wr-unipz.h>
 #include <wrunipz-api.h>
 
-uint64_t getSysTime() {
-  struct timeval tv;
-  gettimeofday(&tv,NULL);
-  return tv.tv_sec*(uint64_t)1000000+tv.tv_usec;
-} // small helper function
-
-
-const char* common_state_text(uint32_t code) {
-  switch (code) {
-  case COMMON_STATE_UNKNOWN      : return "UNKNOWN   ";
-  case COMMON_STATE_S0           : return "S0        ";
-  case COMMON_STATE_IDLE         : return "IDLE      ";                                       
-  case COMMON_STATE_CONFIGURED   : return "CONFIGURED";
-  case COMMON_STATE_OPREADY      : return "OpReady   ";
-  case COMMON_STATE_STOPPING     : return "STOPPING  ";
-  case COMMON_STATE_ERROR        : return "ERROR     ";
-  case COMMON_STATE_FATAL        : return "FATAL(RIP)";
-  default                        : return "undefined ";
-  }
-} // wrunipz_state_text
-
-
-const char* common_status_text(uint32_t bit) {  
+const char* wrunipz_status_text(uint32_t bit) {  
   static char message[256];
   
   switch (bit) {
-  case COMMON_STATUS_OK               : sprintf(message, "OK"); break;
-  case COMMON_STATUS_ERROR            : sprintf(message, "error %d, %s",    bit, "an error occured"); break;
-  case COMMON_STATUS_TIMEDOUT         : sprintf(message, "error %d, %s",    bit, "a timeout occured"); break;
-  case COMMON_STATUS_OUTOFRANGE       : sprintf(message, "error %d, %s",    bit, "some value is out of range"); break;
-  case COMMON_STATUS_EB               : sprintf(message, "error %d, %s",    bit, "an Etherbone error occured"); break;
-  case COMMON_STATUS_NOIP             : sprintf(message, "error %d, %s",    bit, "DHCP request via WR network failed"); break;
-  case COMMON_STATUS_EBREADTIMEDOUT   : sprintf(message, "error %d, %s",    bit, "EB read via WR network timed out"); break;
-  case COMMON_STATUS_WRBADSYNC        : sprintf(message, "error %d, %s",    bit, "White Rabbit: not in 'TRACK_PHASE'"); break;
-  case COMMON_STATUS_AUTORECOVERY     : sprintf(message, "errorFix %d, %s", bit, "attempting auto-recovery from state ERROR"); break;
-  default                             : sprintf(message, "error %d, %s",    bit, "undefined error code"); break;
-  }
-
-  return message;
-} // common_status_text
-
-
-const char* wrunipz_status_text(uint32_t bit) {  
-  static char message[256];
-
-  switch (bit) {
-  case WRUNIPZ_STATUS_LATE             : sprintf(message, "error %d, %s",    bit, "a timing messages is not dispatched in time"); break;                            
-  case WRUNIPZ_STATUS_EARLY            : sprintf(message, "error %d, %s",    bit, "a timing messages is dispatched unreasonably early (dt > UNILACPERIOD)"); break;
-  case WRUNIPZ_STATUS_TRANSACTION      : sprintf(message, "error %d, %s",    bit, "transaction failed"); break;
-  case WRUNIPZ_STATUS_MIL              : sprintf(message, "error %d, %s",    bit, "an error on MIL hardware occured (MIL piggy etc...)"); break;
-  case WRUNIPZ_STATUS_NOMILEVENTS      : sprintf(message, "error %d, %s",    bit, "no MIL events from UNIPZ"); break;          
-  case WRUNIPZ_STATUS_WRONGVIRTACC     : sprintf(message, "error %d, %s",    bit, "received EVT_READY_TO_SIS with wrong virt acc number"); break;
-  case WRUNIPZ_STATUS_SAFETYMARGIN     : sprintf(message, "error %d, %s",    bit, "violation of safety margin for data master and timing network"); break;         
-  case WRUNIPZ_STATUS_NOTIMESTAMP      : sprintf(message, "error %d, %s",    bit, "received EVT_READY_TO_SIS in MIL FIFO but not via TLU -> ECA"); break;
-  case WRUNIPZ_STATUS_BADTIMESTAMP     : sprintf(message, "error %d, %s",    bit, "TS from TLU->ECA does not coincide with MIL Event from FIFO"); break; 
-  case WRUNIPZ_STATUS_ORDERTIMESTAMP   : sprintf(message, "error %d, %s",    bit, "TS from TLU->ECA and MIL Events are out of order"); break;
-  default                              : sprintf(message, "%s", common_status_text(bit)) ; break;
-  }
+    case WRUNIPZ_STATUS_LATE             : sprintf(message, "error %d, %s",    bit, "a timing messages is not dispatched in time"); break;                            
+    case WRUNIPZ_STATUS_EARLY            : sprintf(message, "error %d, %s",    bit, "a timing messages is dispatched unreasonably early (dt > UNILACPERIOD)"); break;
+    case WRUNIPZ_STATUS_TRANSACTION      : sprintf(message, "error %d, %s",    bit, "transaction failed"); break;
+    case WRUNIPZ_STATUS_MIL              : sprintf(message, "error %d, %s",    bit, "an error on MIL hardware occured (MIL piggy etc...)"); break;
+    case WRUNIPZ_STATUS_NOMILEVENTS      : sprintf(message, "error %d, %s",    bit, "no MIL events from UNIPZ"); break;          
+    case WRUNIPZ_STATUS_WRONGVIRTACC     : sprintf(message, "error %d, %s",    bit, "received EVT_READY_TO_SIS with wrong virt acc number"); break;
+    case WRUNIPZ_STATUS_SAFETYMARGIN     : sprintf(message, "error %d, %s",    bit, "violation of safety margin for data master and timing network"); break;         
+    case WRUNIPZ_STATUS_NOTIMESTAMP      : sprintf(message, "error %d, %s",    bit, "received EVT_READY_TO_SIS in MIL FIFO but not via TLU -> ECA"); break;
+    case WRUNIPZ_STATUS_BADTIMESTAMP     : sprintf(message, "error %d, %s",    bit, "TS from TLU->ECA does not coincide with MIL Event from FIFO"); break; 
+    case WRUNIPZ_STATUS_ORDERTIMESTAMP   : sprintf(message, "error %d, %s",    bit, "TS from TLU->ECA and MIL Events are out of order"); break;
+    default                              : sprintf(message, "%s", api_statusText(bit)); break;
+  } // switch bit
   
   return message;
 } // wrunipz_status_text

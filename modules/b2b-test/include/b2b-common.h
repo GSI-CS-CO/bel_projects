@@ -21,17 +21,18 @@
 #define  COMMON_ECA_ADDRESS      0x7ffffff0   // address of ECA input
 #define  COMMON_EB_HACKISH       0x12345678   // value for EB read handshake
 
-// (error) status, each status will be represented by one bit, bits will be ORed into a 32bit word
+// (error) status
 #define  COMMON_STATUS_OK                 0    // OK
 #define  COMMON_STATUS_ERROR              1    // an error occured
 #define  COMMON_STATUS_TIMEDOUT           2    // a timeout occured
 #define  COMMON_STATUS_OUTOFRANGE         3    // some value is out of range
 #define  COMMON_STATUS_EB                 4    // an Etherbone error occured
-#define  COMMON_STATUS_NOIP               5    // DHCP request via WR network failed                                
-#define  COMMON_STATUS_EBREADTIMEDOUT     6    // EB read via WR network timed out
-#define  COMMON_STATUS_WRBADSYNC          7    // White Rabbit: not in 'TRACK_PHASE'
-#define  COMMON_STATUS_AUTORECOVERY       8    // trying auto-recovery from state ERROR
-#define  COMMON_STATUS_RESERVEDTILHERE   15    // reserved for common error codes
+#define  COMMON_STATUS_NOIP               5    // DHCP request via WR network failed
+#define  COMMON_STATUS_WRONGIP            6    // IP received via DHCP does not match local config
+#define  COMMON_STATUS_EBREADTIMEDOUT     7    // EB read via WR network timed out
+#define  COMMON_STATUS_WRBADSYNC          8    // White Rabbit: not in 'TRACK_PHASE'
+#define  COMMON_STATUS_AUTORECOVERY       9    // trying auto-recovery from state ERROR
+#define  COMMON_STATUS_RESERVEDTILHERE   15    // 00..15 reserved for common error codes
 
 // commands from the outside
 #define  COMMON_CMD_NOCMD                 0    // no command ...
@@ -41,7 +42,7 @@
 #define  COMMON_CMD_IDLE                  4    // requests gateway to enter idle state
 #define  COMMON_CMD_RECOVER               5    // recovery from error state
 #define  COMMON_CMD_CLEARDIAG             6    // reset statistics information
-#define  COMMON_CMD_RESERVEDTILHERE      10    // reserved for commmon commands
+#define  COMMON_CMD_RESERVEDTILHERE      10    // 0..10 reserved for commmon commands
 
 // states; implicitely, all states may transit to the ERROR or FATAL state
 #define  COMMON_STATE_UNKNOWN             0    // unknown state
@@ -72,97 +73,27 @@
 
 // offsets
 // simple values
-#define COMMON_SHARED_BEGIN           0x0                                               // begin of used shared memory
-#define COMMON_SHARED_SUMSTATUS       COMMON_SHARED_BEGIN                               // error sum status; all actual error bits are ORed into here                      
-#define COMMON_SHARED_CMD             (COMMON_SHARED_SUMSTATUS  + _32b_SIZE_)           // input of 32bit command
-#define COMMON_SHARED_STATE           (COMMON_SHARED_CMD        + _32b_SIZE_)           // state of state machine
-#define COMMON_SHARED_VERSION         (COMMON_SHARED_STATE      + _32b_SIZE_)           // version of firmware
-#define COMMON_SHARED_MACHI           (COMMON_SHARED_VERSION    + _32b_SIZE_)           // WR MAC of wrunipz, bits 31..16 unused
-#define COMMON_SHARED_MACLO           (COMMON_SHARED_MACHI      + _32b_SIZE_)           // WR MAC of wrunipz
-#define COMMON_SHARED_IP              (COMMON_SHARED_MACLO      + _32b_SIZE_)           // IP of wrunipz
-#define COMMON_SHARED_NBADSTATUS      (COMMON_SHARED_IP         + _32b_SIZE_)           // # of bad status (=error) incidents
-#define COMMON_SHARED_NBADSTATE       (COMMON_SHARED_NBADSTATUS + _32b_SIZE_)           // # of bad state (=FATAL, ERROR, UNKNOWN) incidents
-#define COMMON_SHARED_TDIAGHI         (COMMON_SHARED_NBADSTATE  + _32b_SIZE_)           // time when diagnostics was cleared, high bits
-#define COMMON_SHARED_TDIAGLO         (COMMON_SHARED_TDIAGHI    + _32b_SIZE_)           // time when diagnostics was cleared, low bits
-#define COMMON_SHARED_TS0HI           (COMMON_SHARED_TDIAGLO    + _32b_SIZE_)           // time when FW was in S0 state (start of FW), high bits
-#define COMMON_SHARED_TS0LO           (COMMON_SHARED_TS0HI      + _32b_SIZE_)           // time when FW was in S0 state (start of FW), low bits
+#define COMMON_SHARED_BEGIN            0x0                                              // begin of used shared memory
+#define COMMON_SHARED_STATUSLO         COMMON_SHARED_BEGIN                              // status array, LO word; all actual error bits are ORed into here
+#define COMMON_SHARED_STATUSHI        (COMMON_SHARED_STATUSLO     + _32b_SIZE_)         // status array, HI word
+#define COMMON_SHARED_CMD             (COMMON_SHARED_STATUSHI     + _32b_SIZE_)         // input of 32bit command
+#define COMMON_SHARED_STATE           (COMMON_SHARED_CMD          + _32b_SIZE_)         // state of state machine
+#define COMMON_SHARED_VERSION         (COMMON_SHARED_STATE        + _32b_SIZE_)         // version of firmware
+#define COMMON_SHARED_MACHI           (COMMON_SHARED_VERSION      + _32b_SIZE_)         // WR MAC of wrunipz, bits 31..16 unused
+#define COMMON_SHARED_MACLO           (COMMON_SHARED_MACHI        + _32b_SIZE_)         // WR MAC of wrunipz
+#define COMMON_SHARED_IP              (COMMON_SHARED_MACLO        + _32b_SIZE_)         // IP of wrunipz
+#define COMMON_SHARED_NBADSTATUS      (COMMON_SHARED_IP           + _32b_SIZE_)         // # of bad status (=error) incidents
+#define COMMON_SHARED_NBADSTATE       (COMMON_SHARED_NBADSTATUS   + _32b_SIZE_)         // # of bad state (=FATAL, ERROR, UNKNOWN) incidents
+#define COMMON_SHARED_TDIAGHI         (COMMON_SHARED_NBADSTATE    + _32b_SIZE_)         // time when diagnostics was cleared, high bits
+#define COMMON_SHARED_TDIAGLO         (COMMON_SHARED_TDIAGHI      + _32b_SIZE_)         // time when diagnostics was cleared, low bits
+#define COMMON_SHARED_TS0HI           (COMMON_SHARED_TDIAGLO      + _32b_SIZE_)         // time when FW was in S0 state (start of FW), high bits
+#define COMMON_SHARED_TS0LO           (COMMON_SHARED_TS0HI        + _32b_SIZE_)         // time when FW was in S0 state (start of FW), low bits
+#define COMMON_SHARED_NTRANSFER       (COMMON_SHARED_TS0LO        + _32b_SIZE_)         // # of transfers
+#define COMMON_SHARED_NINJECT         (COMMON_SHARED_NTRANSFER    + _32b_SIZE_)         // # of injections (within current transfer)*/
+#define COMMON_SHARED_TRANSSTAT       (COMMON_SHARED_NINJECT      + _32b_SIZE_)         // bitwise state of ongoing transfer
 
 // shared memory for EB return values
-#define COMMON_SHARED_DATA_4EB        (COMMON_SHARED_TS0LO      + _32b_SIZE_)           // shared area for EB return values
-#define COMMON_SHARED_END             (COMMON_SHARED_DATA_4EB   + (COMMON_DATA4EBSIZE << 2)) // here the common part of the shared memory ends
+#define COMMON_SHARED_DATA_4EB        (COMMON_SHARED_TRANSSTAT    + _32b_SIZE_)         // shared area for EB return values
+#define COMMON_SHARED_END             (COMMON_SHARED_DATA_4EB     + (COMMON_DATA4EBSIZE << 2)) // here the common part of the shared memory ends
 
-
-// ****************************************************************************************
-// public routines
-// ****************************************************************************************
-
-// get my own MAC
-uint64_t common_wrGetMac();
-
-// intialize Etherbone master
-// uint32_t common_ebmInit(uint32_t msTimeout, uint64_t dstMac, uint32_t dstIp, uint32_t eb_ops);
-
-// write timing message
-uint32_t common_ebmWriteTM(uint64_t deadline, uint64_t evtId, uint64_t param);
-
-//find WB address of WR Endpoint
-//uint32_t findWREp();
-
-// 1. query ECA for actions, 2. trigger activity
-uint32_t common_wait4ECAEvent(uint32_t msTimeout, uint64_t *deadline, uint64_t *evtId, uint64_t *param, uint32_t *isLate);
-
-// wait for MIL event or timeout
-uint32_t common_wait4MILEvent(uint32_t *evtData, uint32_t *evtCode, uint32_t *virtAcc, uint32_t *validEvtCodes, uint32_t nValidEvtCodes, uint32_t msTimeout);
-
-// pulse lemo for debugging with scope
-void common_milPulseLemo(uint32_t nLemo);
-
-// initialize common stuff and WB slave addresses
-void common_init(uint32_t *startShared, uint32_t fwVersion);
-
-// init stuff for handling commands, trivial for now, will be extended
-void common_initCmds();
-
-// clears all statistics
-void common_clearDiag();
-
-// do action S0 state
-uint32_t common_doActionS0();
-
-// get address of MIL piggy
-volatile uint32_t * common_getMilPiggy();
-
-// acquire and publish NIC data
-void common_publishNICData();
-
-// publish state
-void common_publishState(uint32_t state);
-
-// publish sum status
-void common_publishSumStatus(uint32_t sumStatus);
-
-// publish number of bad status incidents
-void common_incBadStatusCnt();
-
-// publish number of bad state incidents
-void common_incBadStateCnt();
-
-// handle commands from the outside world
-void common_cmdHandler(uint32_t *reqState, uint32_t *cmd);
-
-// do state specific action
-uint32_t common_doActionState(uint32_t *reqState, uint32_t actState, uint32_t status);
-
-// set gate of LVDS input
-uint32_t common_ioCtrlSetGate(uint32_t enable, uint32_t io);
-
-// state machine
-uint32_t common_changeState(uint32_t *actState, uint32_t *reqState, uint32_t actStatus);
-
-// do autorecovery from error state
-void common_doAutoRecovery(uint32_t actState, uint32_t *reqState);
-
-// intialize Etherbone master
-uint32_t common_ebmInit(uint32_t msTimeout, uint64_t dstMac, uint32_t dstIp, uint32_t eb_ops);
-
-#endif
+#endif 
