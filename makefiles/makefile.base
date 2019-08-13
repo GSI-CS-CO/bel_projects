@@ -155,7 +155,7 @@ version:
 ifeq ($(V), 1)
 	$(CC) --version
 else
-	@$(CC) --version | head -n1
+	@echo "Compiler: $$($(CC) --version | head -n1)"
 endif
 
 .PHONY: check_src

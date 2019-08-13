@@ -24,15 +24,21 @@ SOURCE += $(BASE_DIR)/gnuplotstream.cpp
 SOURCE += $(BASE_DIR)/find_process.c
 
 SOURCE += $(DAQ_DIR)/daq_ring_admin.c
-SOURCE += $(DAQ_DIR)/daq_interface.cpp
-SOURCE += $(DAQ_DIR)/daq_administration.cpp
-SOURCE += $(DAQ_DIR)/daq_eb_ram_buffer.cpp
+SOURCE += $(DAQ_LINUX_DIR)/daq_eb_ram_buffer.cpp
+SOURCE += $(SDAQ_LINUX_DIR)/daq_interface.cpp
+SOURCE += $(SDAQ_LINUX_DIR)/daq_administration.cpp
+
 
 SOURCE += $(EB_SRC)/EtherboneConnection.cpp
 SOURCE += $(EB_SRC)/BusException.cpp
 
 
 GNUPLOT_BIN ?= $(shell which gnuplot)
+
+#---- Necessary for backward compatibility if the compiler version greater or equal 5 ----
+DEFINES += _GLIBCXX_USE_CXX11_ABI=0
+DEFINES += BOOST_NO_CXX11_EXPLICIT_CONVERSION_OPERATORS
+#-----------------------------------------------------------------------------------------
 
 DEFINES += _BSD_SOURCE
 DEFINES += _POSIX_C_SOURCE
@@ -49,6 +55,7 @@ DEFINES += GPSTR_DEFAULT_GNUPLOT_EXE=\"$(GNUPLOT_BIN)\"
 DEFINES += __ETHERBONE_CONNECTION_MUTEX="EtherBoneConnectionMutexDaq"
 INCLUDE_DIRS += $(EB_SRC)
 INCLUDE_DIRS += $(BASE_DIR)
+INCLUDE_DIRS += $(DAQ_LINUX_DIR)/sdaq
 
 LIBS += boost_system
 LIBS += pthread

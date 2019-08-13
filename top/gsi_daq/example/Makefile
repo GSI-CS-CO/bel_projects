@@ -15,15 +15,19 @@ EB_SRC= $(DAQ_DIR)/feSupport/scu/etherbone
 MIAN_MODULE := daqexample.cpp
 
 SOURCE += $(DAQ_DIR)/daq_ring_admin.c
-SOURCE += $(DAQ_DIR)/daq_interface.cpp
-SOURCE += $(DAQ_DIR)/daq_administration.cpp
+SOURCE += $(DAQ_LINUX_DIR)/daq_eb_ram_buffer.cpp
+SOURCE += $(SDAQ_LINUX_DIR)/daq_interface.cpp
+SOURCE += $(SDAQ_LINUX_DIR)/daq_administration.cpp
 SOURCE += $(EB_SRC)/EtherboneConnection.cpp
 SOURCE += $(EB_SRC)/BusException.cpp
-SOURCE += $(DAQ_DIR)/daq_eb_ram_buffer.cpp
-
 
 DEFINES += _BSD_SOURCE
 DEFINES += _POSIX_C_SOURCE
+#---- Necessary for backward compatibility if the compiler version greater or equal 5 ----
+DEFINES += _GLIBCXX_USE_CXX11_ABI=0
+DEFINES += BOOST_NO_CXX11_EXPLICIT_CONVERSION_OPERATORS
+#-----------------------------------------------------------------------------------------
+
 DEFINES += CONFIG_SCU_USE_DDR3
 DEFINES += DEBUGLEVEL=1
 DEFINES += CONFIG_DAQ_TEST
@@ -38,6 +42,7 @@ DEFINES += CONFIG_DDR3_NO_BURST_FUNCTIONS
 DEFINES += __ETHERBONE_CONNECTION_MUTEX="EtherBoneConnectionMutexDaq"
 
 INCLUDE_DIRS += $(EB_SRC)
+INCLUDE_DIRS += $(SDAQ_LINUX_DIR)
 # LIBS += boost_system
  ADDITIONAL_OBJECTS += /opt/gsi/3rdparty/boost/1.54.0/lib/x86_64/libboost_system.a
 LIBS += pthread

@@ -228,7 +228,7 @@ namespace FeSupport {
           bool debug_;
 
           static std::string c_mutexName;
-          static const char* makeMutexName( const std::string& rName );
+          static const char* __makeMutexName( const std::string& rName );
       };
 
     } // namespace Etherbone 

@@ -38,7 +38,8 @@ std::string EtherboneConnection::c_mutexName;
  * @retval "wbm0_Mutex" In the case the application runs in the SCU's IPC
  * @retval "scuxl4711.acc.gsi.de_Mutex" In the case of remote.
  */
-const char* EtherboneConnection::makeMutexName( const std::string& rName )
+inline
+const char* EtherboneConnection::__makeMutexName( const std::string& rName )
 {  /*
     * Removing prefix "tcp/" or "dev/"
     */
@@ -48,7 +49,8 @@ const char* EtherboneConnection::makeMutexName( const std::string& rName )
     * In the case of "tcp/" obtaining the full URL name.
     */
    struct hostent* pHost = ::gethostbyname( c_mutexName.c_str() );
-   if( (pHost != nullptr) && (pHost->h_name != '\0') )
+   if( (pHost != nullptr) && (pHost->h_name != nullptr) &&
+       (*pHost->h_name != '\0' ) )
       c_mutexName = pHost->h_name;
 
    c_mutexName += "_Mutex";
@@ -61,7 +63,7 @@ const char* EtherboneConnection::makeMutexName( const std::string& rName )
  */
 EtherboneConnection::EtherboneConnection(std::string netaddress,
                                                          unsigned int timeout)
-   :_sysMu( IPC::open_or_create, makeMutexName( netaddress ) )
+   :_sysMu( IPC::open_or_create, __makeMutexName( netaddress ) )
    ,netaddress_(netaddress)
    ,timeout_( timeout )
    ,connectionOpened(false)
@@ -328,9 +330,14 @@ static void  __onEbSocked( eb_user_data_t pUser, eb_device_t dev,
          static_cast<EB_USER_CB_T*>(pUser)->m_status = EB_SEGFAULT;
          return;
       }
+
+      /*
+       * Is in EtherboneConnection::read() ?
+       */
       if( static_cast<EB_USER_CB_T*>(pUser)->m_pUserAddress != nullptr )
       { /*
-         * Function is called by EtherboneConnection::read
+         * Yes, section will run by EtherboneConnection::read.
+         * Copying from Wishbone/Etherbone to user-buffer.
          */
          data_t data = ::eb_operation_data( op );
          std::size_t size = ::eb_operation_format( op ) & EB_DATAX;
@@ -339,6 +346,7 @@ static void  __onEbSocked( eb_user_data_t pUser, eb_device_t dev,
                    &data, size );
          j += size;
       }
+
       op = ::eb_operation_next( op );
       i++;
    }

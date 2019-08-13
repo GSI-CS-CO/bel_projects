@@ -43,7 +43,7 @@ ifdef USABLE_MEM_SIZE
 	echo "Boot size:          $$(($(BOOTL_SIZE))) bytes";\
 	echo -e "$${ec}Consumption:        $${appSize} of $(USABLE_MEM_SIZE) bytes used, $${free} \
 	bytes free"; \
-	echo -e "$(ESC_BOLD)>> Memory usage of $(CPU): $$(echo $${appSize}*100/$(USABLE_MEM_SIZE) \
+	echo -e "$(ESC_BOLD)>> Memory consumption of \"$(TARGET)\" in $(CPU): $$(echo $${appSize}*100/$(USABLE_MEM_SIZE) \
 	| bc)% <<$(ESC_NORMAL)")
 endif
 
