@@ -281,7 +281,9 @@ void createCondition(std::shared_ptr<WrMilGateway_Proxy> wrmilgw, std::shared_pt
     commands[0][1] = 0x000000aa; // payload (will not be used)
     commands[0][2] = 0x0000003f; // use low part of eventID as WB-data
     uint macroIdx = 0;
+    acwbm->setEnable(false);
     acwbm->RecordMacro(macroIdx, commands); // program macro index 0
+    acwbm->setEnable(true);
 
     std::vector< std::string > all_conditions = acwbm->getAllConditions();  
     for (unsigned int condition_it = 0; condition_it < all_conditions.size(); condition_it++) {
