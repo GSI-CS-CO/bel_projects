@@ -71,6 +71,7 @@ void remove_daq_message() {
   eb_status_t status;
   eb_data_t message[MESSAGE_SIZE];
   eb_data_t ring_head, ring_tail;
+  int i;
 
   // get ring_head and ring_tail
   if ((status = eb_cycle_open(device, 0, eb_block, &cycle)) != EB_OK)
@@ -86,7 +87,7 @@ void remove_daq_message() {
     // get the message from position ring_tail
     if ((status = eb_cycle_open(device, 0, eb_block, &cycle)) != EB_OK)
       die("EP eb_cycle_open", status);
-    for (int i = 0; i < MESSAGE_SIZE; i++) {
+    for (i = 0; i < MESSAGE_SIZE; i++) {
       eb_cycle_read(cycle, lm32_ram_base + DAQ_BUF                      // begin of daq buffer in shared memory
                                          + DAQ_RING_HEADER              // header with head and tail
                                          + 4 * MESSAGE_SIZE * ring_tail // position of message in the buffer
@@ -177,7 +178,7 @@ int main(int argc, char * const* argv) {
      
   eb_data_t value[7];
   int offset = 0;
-  for (int i = 0; i < 7; i++) {
+  for (i = 0; i < 7; i++) {
     eb_cycle_read(cycle, lm32_ram_base + DAQ_BUF + offset, EB_BIG_ENDIAN|EB_DATA32, &value[i]);   
     offset+=4;
   }
@@ -185,7 +186,7 @@ int main(int argc, char * const* argv) {
     printf("eb_cycle_close failed\n");
     exit(1);
   }
-  for (int i = 0; i < 7; i++) {
+  for (i = 0; i < 7; i++) {
     printf("daq: 0x%"EB_DATA_FMT"\n", value[i]);
   }
 */
