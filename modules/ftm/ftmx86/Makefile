@@ -21,7 +21,7 @@ GRAPH_LIB       =-lboost_graph
 TOP            ?= ../../..
 
 VERSION_FW     = 6.2.0
-VERSION_TOOL   = 0.32.0
+VERSION_TOOL   = 0.32.1
 
 BUILD_DATE     = $(shell date +'%Y%m%d')
 BUILD_ID_ROM_ADR = 0x100
