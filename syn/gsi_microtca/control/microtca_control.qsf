@@ -258,7 +258,7 @@ set_global_assignment -name PRE_FLOW_SCRIPT_FILE "quartus_sh:microtca_control.tc
 set_global_assignment -name PROJECT_CREATION_TIME_DATE "11:00:25 FEBRUARY 13, 2012"
 set_global_assignment -name RELEASE_CLEARS_BEFORE_TRI_STATES ON
 set_global_assignment -name ROUTER_TIMING_OPTIMIZATION_LEVEL MAXIMUM
-set_global_assignment -name SEED 138
+set_global_assignment -name SEED 34
 set_global_assignment -name SMART_RECOMPILE ON
 set_global_assignment -name STRATIX_DEVICE_IO_STANDARD "2.5 V"
 set_global_assignment -name STRATIXII_CONFIGURATION_DEVICE EPCQ256
