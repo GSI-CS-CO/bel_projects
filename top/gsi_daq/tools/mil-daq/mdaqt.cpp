@@ -34,10 +34,12 @@ using namespace Scu;
 using namespace MiLdaq;
 using namespace MiLdaqt;
 
-
+/*! ---------------------------------------------------------------------------
+ */
 int mdaqtMain( int argc, char** ppArgv )
 {
-   cout << "HuuuHu" << endl;
+   DaqEb::EtherboneConnection ebConnection( ppArgv[1] );
+   DaqInterface milDaqAdmin( &ebConnection );
    return EXIT_SUCCESS;
 }
 
@@ -49,15 +51,10 @@ int main( int argc, char** ppArgv )
    {
       return mdaqtMain( argc, ppArgv );
    }
-#if 0
-   catch( daq::EbException& e )
+#if 1
+   catch( MiLdaq::Exception& e )
    {
-      ERROR_MESSAGE( "daq::EbException occurred: " << e.what() );
-   }
-   catch( daq::DaqException& e )
-   {
-      ERROR_MESSAGE( "daq::DaqException occurred: " << e.what()
-                     << "\nStatus: " <<  e.getStatusString() );
+      ERROR_MESSAGE( "Exception occurred: " << e.what() );
    }
 #endif
    catch( std::exception& e )
@@ -71,3 +68,5 @@ int main( int argc, char** ppArgv )
 
    return EXIT_FAILURE;
 }
+
+//================================== EOF ======================================

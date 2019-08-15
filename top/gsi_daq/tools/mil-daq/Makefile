@@ -21,12 +21,12 @@ EB_SRC= $(DAQ_DIR)/feSupport/scu/etherbone
 SOURCE += $(BASE_DIR)/daqt_read_stdin.cpp
 SOURCE += $(BASE_DIR)/parse_opts.cpp
 SOURCE += $(BASE_DIR)/gnuplotstream.cpp
-#SOURCE += $(BASE_DIR)/find_process.c
+SOURCE += $(BASE_DIR)/find_process.c
 
 SOURCE += $(DAQ_DIR)/daq_ring_admin.c
 SOURCE += $(DAQ_LINUX_DIR)/daq_eb_ram_buffer.cpp
 SOURCE += $(MDAQ_LINUX_DIR)/mdaq_interface.cpp
-#SOURCE += $(MDAQ_LINUX_DIR)/mdaq_administration.cpp
+SOURCE += $(MDAQ_LINUX_DIR)/mdaq_administration.cpp
 
 
 SOURCE += $(EB_SRC)/EtherboneConnection.cpp
@@ -65,21 +65,10 @@ LIBS += etherbone
 
 HOST ?= tcp/$(SCU_URL)
 
-#CALL_ARGS         ?=  -h
-#CALL_ARGS         ?= $(HOST) --continue 3 1
-#CALL_ARGS         ?= $(HOST) -vs
-#CALL_ARGS         ?= $(HOST) 3 -l5 1 3 2 9 3 9 4 -l7 -e
-#CALL_ARGS         ?= $(HOST)  -eC 3 1 3 2 3 3 3 4 9 1 9 2 9 3 9 4
-#CALL_ARGS         ?= $(HOST) -tEC  3 1
-#CALL_ARGS         ?= $(HOST)  -d10 -vtEC 3 1 3 2 -z 9 2
-#CALL_ARGS         ?= $(HOST) -Hte 3 1
-#CALL_ARGS         ?= $(HOST) -Hrtev 9 1
-#CALL_ARGS         ?=  $(HOST) -G /usr/bin/gnuplot -PrzvC 3 1
 
-CALL_ARGS         ?=  $(HOST) -C=100US 3 1 3 2
-#CALL_ARGS         ?=  $(HOST) -PrC 3 1 3 2 9 1 9 2
-#CALL_ARGS         ?= $(HOST) -n
-#CALL_ARGS         ?= -n
+#CALL_ARGS         ?=  $(HOST)
+
+CALL_ARGS = tcp/scuxl0128
 
 REMOTE_CALL_ARGS  ?= "dev/wbm0"
 

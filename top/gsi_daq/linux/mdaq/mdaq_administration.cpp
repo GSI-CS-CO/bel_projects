@@ -1,8 +1,8 @@
 /*!
- *  @file mdaqt.hpp
- *  @brief Main module of MIL-Data Acquisition Tool
+ *  @file mdaq_administration.cpp
+ *  @brief MIL-DAQ administration
  *
- *  @date 14.08.2019
+ *  @date 15.08.2019
  *  @copyright (C) 2019 GSI Helmholtz Centre for Heavy Ion Research GmbH
  *
  *  @author Ulrich Becker <u.becker@gsi.de>
@@ -22,26 +22,7 @@
  * License along with this library. If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************
  */
-#ifndef _MDAQT_HPP
-#define _MDAQT_HPP
-
-#include <string>
-#include <stdlib.h>
-#include <iostream>
-#include <gnuplotstream.hpp>
-#include <mdaq_interface.hpp>
-#include <daq_eb_ram_buffer.hpp>
-
-namespace Scu
-{
-namespace MiLdaq
-{
-namespace MiLdaqt
-{
+#include <mdaq_administration.hpp>
 
 
-} // namespace MiLdaqt
-} // namespace MilDaq
-} // namespace Scu
-#endif // ifndef _MDAQT_HPP
 //================================== EOF ======================================

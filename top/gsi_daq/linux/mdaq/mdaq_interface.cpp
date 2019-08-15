@@ -23,4 +23,60 @@
  ******************************************************************************
  */
 #include <mdaq_interface.hpp>
+#include <generated/shared_mmap.h> //!!
+using namespace Scu::MiLdaq;
+using namespace std;
+
+///////////////////////////////////////////////////////////////////////////////
+/*! ---------------------------------------------------------------------------
+ */
+DaqInterface::DaqInterface( DaqEb::EtherboneConnection* poEtherbone )
+   :m_ebAccessSelfCreated( true )
+   ,m_poEbAccess( new daq::EbRamAccess( poEtherbone ) )
+{
+   init();
+}
+
+DaqInterface::DaqInterface( daq::EbRamAccess* poEbAccess )
+   :m_ebAccessSelfCreated( false )
+   ,m_poEbAccess( poEbAccess )
+{
+   init();
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+DaqInterface::~DaqInterface( void )
+{
+   if( m_ebAccessSelfCreated )
+      delete m_poEbAccess;
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+void DaqInterface::init( void )
+{
+   uint32_t tmpMagicNumber;
+
+   m_poEbAccess->readLM32( &tmpMagicNumber, sizeof( tmpMagicNumber ),
+                           offsetof( SCU_SHARED_DATA_T, fg_magic_number ) );
+   tmpMagicNumber = gsi::convertByteEndian( tmpMagicNumber );
+   if( tmpMagicNumber != FG_MAGIC_NUMBER )
+   {
+      throw Exception( "Wrong magic number!" );
+   }
+   readRingPosition();
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+void DaqInterface::readRingPosition( void )
+{
+   DAQ_RING_T tmp;
+   m_poEbAccess->readLM32( &tmp, sizeof( tmp ),
+                                 offsetof( SCU_SHARED_DATA_T, daq_buf ) );
+   m_oRing.m_head = gsi::convertByteEndian( tmp.m_head );
+   m_oRing.m_tail = gsi::convertByteEndian( tmp.m_tail );
+}
+
 //================================== EOF ======================================

@@ -1,13 +1,13 @@
 /*!
- *  @file mdaqt.hpp
- *  @brief Main module of MIL-Data Acquisition Tool
+ *  @file daq_exception.hpp
+ *  @brief Base-class of exception for all DAQ-applications
  *
- *  @date 14.08.2019
+ *  @date 15.08.2019
  *  @copyright (C) 2019 GSI Helmholtz Centre for Heavy Ion Research GmbH
  *
  *  @author Ulrich Becker <u.becker@gsi.de>
  *
- ******************************************************************************
+ *******************************************************************************
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
@@ -19,29 +19,38 @@
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
- * License along with this library. If not, see <http://www.gnu.org/licenses/>.
+ * License along with this library. If not, see <http://www.gnu.org/licenses/>
  ******************************************************************************
  */
-#ifndef _MDAQT_HPP
-#define _MDAQT_HPP
-
-#include <string>
-#include <stdlib.h>
-#include <iostream>
-#include <gnuplotstream.hpp>
-#include <mdaq_interface.hpp>
-#include <daq_eb_ram_buffer.hpp>
+#ifndef _DAQ_EXCEPTION_HPP
+#define _DAQ_EXCEPTION_HPP
+#include <exception>
 
 namespace Scu
 {
-namespace MiLdaq
+namespace daq
 {
-namespace MiLdaqt
+///////////////////////////////////////////////////////////////////////////////
+/*!
+ * @brief Base exception class for all DAQ- exceptions
+ * @ingroup DAQ_EXCEPTION
+ */
+class Exception: public std::exception
 {
+   const std::string m_message;
 
+public:
+   Exception( const std::string& rMsg ):
+      m_message( rMsg ) {}
 
-} // namespace MiLdaqt
-} // namespace MilDaq
+   const char* what( void ) const noexcept override
+   {
+      return m_message.c_str();
+   }
+};
+
+} // namespace daq
 } // namespace Scu
-#endif // ifndef _MDAQT_HPP
+
+#endif
 //================================== EOF ======================================

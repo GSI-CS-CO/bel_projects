@@ -31,7 +31,7 @@
 #include <daq_descriptor.h>
 #include <stddef.h>
 #include <string>
-#include <exception>
+#include <daq_exception.hpp>
 #include <daq_eb_ram_buffer.hpp>
 
 #ifndef DAQ_DEFAULT_WB_DEVICE
@@ -85,24 +85,6 @@ const std::string status2String( DAQ_RETURN_CODE_T status );
  * @brief Error exceptions in communication with the LM32 firmware.
  * @{
  */
-
-///////////////////////////////////////////////////////////////////////////////
-/*!
- * @brief Base exception class for all DAQ- exceptions
- */
-class Exception: public std::exception
-{
-   const std::string m_message;
-
-public:
-   Exception( const std::string& rMsg ):
-      m_message( rMsg ) {}
-
-   const char* what( void ) const noexcept override
-   {
-      return m_message.c_str();
-   }
-};
 
 ///////////////////////////////////////////////////////////////////////////////
 /*!
