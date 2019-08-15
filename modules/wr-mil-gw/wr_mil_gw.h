@@ -34,6 +34,7 @@
 #define WR_MIL_GW_REG_MIL_HISTOGRAM  0x74  // dummy register to indicate position after the last valid register
 #define WR_MIL_GW_REG_MSI_SLOT       0x474 // MSI slot is stored here
 #define WR_MIL_GW_REG_SET_OP_READY   0x478 // Host writes 1 if OP-READY, 0 otherwise
+#define WR_MIL_GW_REG_REQUEST_FILL_EVT 0x47c // if this is written to 1, the gateway will send a fill event as soon as possible
 
 // states of the software
 #define WR_MIL_GW_STATE_INIT         0
@@ -52,5 +53,6 @@
 // Interrupts
 #define WR_MIL_GW_MSI_LATE_EVENT       0x1
 #define WR_MIL_GW_MSI_STATE_CHANGED    0x2
+#define WR_MIL_GW_MSI_EVENT            0x3 // ored with (mil_event_number << 8)
 
 #endif

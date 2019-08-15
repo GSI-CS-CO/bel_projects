@@ -282,6 +282,7 @@ void createCondition(std::shared_ptr<WrMilGateway_Proxy> wrmilgw, std::shared_pt
     commands[0][2] = 0x0000003f; // use low part of eventID as WB-data
     uint macroIdx = 0;
     acwbm->setEnable(false);
+    acwbm->ClearAllMacros();
     acwbm->RecordMacro(macroIdx, commands); // program macro index 0
     acwbm->setEnable(true);
 
@@ -415,13 +416,14 @@ int main (int argc, char** argv)
   bool    lateHist       = false;
   bool    show_histogram = false;
   bool    read_registers = false;
+  bool    request_fill   = false;
   
   // Get the application name 
   program = argv[0]; 
   
   // Parse arguments 
   //while ((opt = getopt(argc, argv, "c:dgxzlvh")) != -1)
-  while ((opt = getopt(argc, argv, "l:d:u:o:t:sehrkicCLmM:HR")) != -1) 
+  while ((opt = getopt(argc, argv, "l:d:u:o:t:sehrkifcCLmM:HR")) != -1) 
   {
     switch (opt)
     {
@@ -434,6 +436,7 @@ int main (int argc, char** argv)
       case 's': { configSIS18 = true; break; }
       case 'e': { configESR   = true; break; }
       case 'i': { ++info; break; } // more info by putting -i multiple times
+      case 'f': { request_fill = true; break; }
       case 'l': {
          if (argv[optind-1] != NULL) { mil_latency = strtoull(argv[optind-1], &pEnd, 0); }
          else                        { std::cerr << "Error: missing latency value [us]" << std::endl; return -1; } 
@@ -553,6 +556,11 @@ int main (int argc, char** argv)
       ///////////////////////////////////////////
       // Gateway actions (only if firmware runs)
       ///////////////////////////////////////////
+
+      if (request_fill) {
+        std::cerr << "send fill request" << std::endl;
+        wrmilgw->RequestFillEvent();
+      }
 
       // config and start Gateway
       if (configSIS18 && configESR) {

@@ -6,6 +6,7 @@
 #define MIL_EVT_BEGIN_CMD_EXEC 0xf6
 #define MIL_EVT_COMMAND        0xff
 #define MIL_EVT_END_CMD_EXEC   0xf5
+#define MIL_EVT_FILL           0xc7
 
 #define MIL_EVT_UTC_1          0xE0
 #define MIL_EVT_UTC_2          0xE1

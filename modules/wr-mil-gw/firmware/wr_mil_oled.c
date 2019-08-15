@@ -6,6 +6,23 @@ static uint32_t oled_char_counter = 0;
 static uint64_t oled_num_events = 0;
 static uint32_t oled_num_delayed_events = 0;
 
+void oled_numbers(uint32_t *six_numbers, volatile uint32_t *oled) {
+	for (int row = 0; row < 6; ++row) {
+		for (int col = 0; col < 11; ++col) {
+			char ch = ' ';
+			if (col == 0) {
+				ch = '0';
+			} else if (col == 1) {
+				ch = 'x';
+			} else if (col < 10) {
+				int digit = ((six_numbers[row]) >> (((9-col)*4))&0xf);
+				if (digit < 10) ch = digit + '0'; else ch = digit-10+'a';
+			}
+			oled[3] = (row<<12) | (col<<8) | ch;
+		}
+	}
+}
+
 void oled_array(volatile WrMilConfig *config, volatile uint32_t *oled) {
 	static char text[6][14] = {
 		          "WR-MIL-GW   ",

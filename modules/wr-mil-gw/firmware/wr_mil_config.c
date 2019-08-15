@@ -23,8 +23,8 @@ volatile WrMilConfig *config_init()
   config->magic                = WR_MIL_GW_MAGIC_NUMBER;
   config->cmd                  = WR_MIL_GW_CMD_NONE;
   config->utc_trigger          = MIL_EVT_BEGIN_CMD_EXEC;
-  config->utc_delay            = 100; // 100 us delay
-  config->trigger_utc_delay    = 200; // 200 us delay
+  config->utc_delay            = 30; // us delay between utc events
+  config->trigger_utc_delay    = 0;  // us delay between utc-trigger and first utc event
   config->event_source         = WR_MIL_GW_EVENT_SOURCE_UNKNOWN; // not configured by default
   config->latency              = 100; // us
   config->state                = WR_MIL_GW_STATE_INIT;
@@ -36,6 +36,7 @@ volatile WrMilConfig *config_init()
   }
   config->mb_slot              = UINT32_C(0xffffffff); // this is an invalid value
   config->op_ready             = UINT32_C(0);
+  config->request_fill_evt     = UINT32_C(0);
   return config;
 }
 
@@ -50,23 +51,23 @@ void config_command_handler(volatile WrMilConfig *config, volatile uint32_t *ole
       case WR_MIL_GW_CMD_KILL:
         pp_printf("stop MCU\n");
         config->state = WR_MIL_GW_STATE_PAUSED;
-        send_MSI(config->mb_slot, WR_MIL_GW_MSI_STATE_CHANGED);
-        oled_array(config, oled);
+        //send_MSI(config->mb_slot, WR_MIL_GW_MSI_STATE_CHANGED);
+        //oled_array(config, oled);
         while(1);
       case WR_MIL_GW_CMD_RESET:
         pp_printf("wr-mil-gw reset after pause of 1 sec\n");
         { 
           int current_state = config->state; 
           config->state = WR_MIL_GW_STATE_PAUSED;
-          send_MSI(config->mb_slot, WR_MIL_GW_MSI_STATE_CHANGED);
+          //send_MSI(config->mb_slot, WR_MIL_GW_MSI_STATE_CHANGED);
           config->event_source = WR_MIL_GW_EVENT_SOURCE_UNKNOWN; //reset the source type
           for (int i = 0; i < 1000; ++i) DELAY1000us;
             
           config->state             = WR_MIL_GW_STATE_INIT;
-          send_MSI(config->mb_slot, WR_MIL_GW_MSI_STATE_CHANGED);
+          //send_MSI(config->mb_slot, WR_MIL_GW_MSI_STATE_CHANGED);
           config->num_events.value  = UINT64_C(0);
           config->late_events       = UINT64_C(0);
-          oled_array(config, oled);
+          //oled_array(config, oled);
         }
         break;
       case WR_MIL_GW_CMD_CONFIG_SIS: // allow configuration of PZ-id only if not configured yet
@@ -75,7 +76,7 @@ void config_command_handler(volatile WrMilConfig *config, volatile uint32_t *ole
           config->event_source = WR_MIL_GW_EVENT_SOURCE_SIS;
           config->state = WR_MIL_GW_STATE_CONFIGURED;
           pp_printf("wr-mil-gw configured as SIS event source\n");
-          oled_array(config, oled);
+          //oled_array(config, oled);
         }
         break;
       case WR_MIL_GW_CMD_CONFIG_ESR: // allow configuration of PZ-id only if not configured yet
@@ -84,13 +85,13 @@ void config_command_handler(volatile WrMilConfig *config, volatile uint32_t *ole
           config->event_source = WR_MIL_GW_EVENT_SOURCE_ESR;
           config->state = WR_MIL_GW_STATE_CONFIGURED;
           pp_printf("wr-mil-gw configured as ESR event source\n");
-          oled_array(config, oled);
+          //oled_array(config, oled);
         }
         break;
       case WR_MIL_GW_CMD_TEST: // do nothing 
         break;
       case WR_MIL_GW_CMD_UPDATE_OLED: 
-        oled_array(config, oled);
+        //oled_array(config, oled);
         break;
       default:
       {
@@ -113,20 +114,20 @@ void config_poll(volatile WrMilConfig *config, volatile uint32_t *oled)
       if (config->event_source == WR_MIL_GW_EVENT_SOURCE_UNKNOWN) {
         pp_printf("wr-mil-gw not configured\n");
         config->state = WR_MIL_GW_STATE_UNCONFIGURED;
-        send_MSI(config->mb_slot, WR_MIL_GW_MSI_STATE_CHANGED);
+        //send_MSI(config->mb_slot, WR_MIL_GW_MSI_STATE_CHANGED);
       }
       else
       {
         config->state = WR_MIL_GW_STATE_CONFIGURED;
-        send_MSI(config->mb_slot, WR_MIL_GW_MSI_STATE_CHANGED);
-        oled_array(config, oled);
+        //send_MSI(config->mb_slot, WR_MIL_GW_MSI_STATE_CHANGED);
+        //oled_array(config, oled);
       }
       break;
     case WR_MIL_GW_STATE_UNCONFIGURED:
       if (config->event_source != WR_MIL_GW_EVENT_SOURCE_UNKNOWN) {
         config->state = WR_MIL_GW_STATE_CONFIGURED;
-        send_MSI(config->mb_slot, WR_MIL_GW_MSI_STATE_CHANGED);
-        oled_array(config, oled);
+        //send_MSI(config->mb_slot, WR_MIL_GW_MSI_STATE_CHANGED);
+        //oled_array(config, oled);
       }
       // fall through
     case WR_MIL_GW_STATE_CONFIGURED:
@@ -135,6 +136,6 @@ void config_poll(volatile WrMilConfig *config, volatile uint32_t *oled)
     default:
       pp_printf("wr-mil-gw unknown state\n");
       config->state = WR_MIL_GW_STATE_INIT;
-      send_MSI(config->mb_slot, WR_MIL_GW_MSI_STATE_CHANGED);
+      //send_MSI(config->mb_slot, WR_MIL_GW_MSI_STATE_CHANGED);
   }
 }

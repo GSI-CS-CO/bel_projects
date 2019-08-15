@@ -32,6 +32,7 @@ typedef struct
 	uint32_t     mil_histogram[256];// histogram of MIL events
 	uint32_t     mb_slot;           // MSI slot number 
 	uint32_t     op_ready;          // this is set by the host (used for the display only)
+	uint32_t     request_fill_evt;  // 
 } WrMilConfig;
 
 
