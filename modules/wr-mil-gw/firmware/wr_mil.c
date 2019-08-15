@@ -50,25 +50,16 @@
 /* local includes for wr_mil firmware*/
 #include "wr_mil_value64bit.h"
 #include "wr_mil_eca_queue.h"
-#include "wr_mil_eca_ctrl.h"
 #include "wr_mil_config.h"
 #include "wr_mil_delay.h"
 #include "wr_mil_events.h"
-#include "wr_mil_msi.h"
-#include "wr_mil_oled.h"
 #include "../../../top/gsi_scu/scu_mil.h"
-
-// for the event handler
-//#include "../../ip_cores/saftlib/drivers/eca_flags.h"
 
 int init()
 {
   int cpu_id;
   discoverPeriphery();    // mini-sdb: get info on important Wishbone infrastructure, such as (this) CPU, flash, ...
-  //uart_init_hw();         // init UART, required for printf... . To view print message, you may use 'eb-console' from the host
-  cpu_id = getCpuIdx();            // get ID of THIS CPU
-  isr_table_clr();        // set MSI IRQ handler
-  irq_set_mask(0x01);     // ...
+  cpu_id = getCpuIdx();   // get ID of THIS CPU
   irq_disable();          // ...
   return cpu_id;
 }
@@ -141,11 +132,11 @@ uint32_t convert_WReventID_to_milTelegram(EvtId_t evtId, uint32_t *evtCode, uint
     // tophalf = tophalf;  // no modification (just take all bits from the sequence-ID)
   }
   else if (*evtCode == 255)               // command event: top half of the MIL bits (15..8) are pppp1111
-  {                                       //                p: Pulszentralenkennung ( SIS = 1, ESR = 2[?])
+  {                                       //                p: Pulszentralenkennung ( SIS = 1, ESR = 2)
     tophalf = ( pzKennung << 4 ) | 0xf;
   }
   else                                    // all other events: top haltf of MIL bits (15..8) are ppppvvvv
-  {                                       //                     p: Pulszentralenkennung ( SIS = 1, ESR = 2[?])
+  {                                       //                     p: Pulszentralenkennung ( SIS = 1, ESR = 2)
                                           //                     v: virtial accelerator
     tophalf = ( pzKennung << 4 ) | virtAcc;
   }
@@ -210,10 +201,8 @@ uint32_t inhibit_fill_events = 0; // this is a counter to block any sending of f
                                           // this value was determined by measuring the time difference
                                           // of the MIL event rising edge and the ECA output rising edge (no offset)
                                           // and tuning this time difference to 100.0(5)us
-void eventHandler(volatile uint32_t    *eca,
-                  volatile uint32_t    *eca_queue, 
+void eventHandler(volatile uint32_t    *eca_queue, 
                   volatile uint32_t    *mil_piggy,
-                  volatile uint32_t    *oled,
                   volatile WrMilConfig *config)
 {
   if (ECAQueue_actionPresent(eca_queue))
@@ -237,7 +226,6 @@ void eventHandler(volatile uint32_t    *eca,
       ECAQueue_actionPop(eca_queue); // remove event from queue
       ++config->num_events.value;
       ++config->mil_histogram[milTelegram & 0xff];
-      //send_MSI(config->mb_slot, WR_MIL_GW_MSI_EVENT);
       if (evtCode == config->utc_trigger)
       {
         // generate EVT_UTC_1/2/3/4/5 EVENTS
@@ -260,14 +248,13 @@ void eventHandler(volatile uint32_t    *eca,
   if (inhibit_fill_events) {
     --inhibit_fill_events;
   }
-  //if (!inhibit_fill_events && config->request_fill_evt) 
   if (config->request_fill_evt) 
   {
     // there was a request and the last mil event is so far in the past that the inhibit counter is zero
     //  so lets send the fill event, clear the request and reset inhibit counter
     mil_piggy_write_event(mil_piggy, MIL_EVT_FILL); 
     ++config->mil_histogram[MIL_EVT_FILL & 0xff];
-    //++config->num_events.value;
+    //++config->num_events.value; // fill events don't count as mil events
     config->request_fill_evt = 0;
     inhibit_fill_events = RESET_INHIBIT_COUNTER;
   }
@@ -293,43 +280,17 @@ void main(void)
   uint32_t n_events = ECAQueue_clear(eca_queue);
   pp_printf("popped %d events from the eca queue\n", n_events);
 
-  // ECACtrl 
-  volatile uint32_t *eca_ctrl = ECACtrl_init();
-  pp_printf("eca ctrl regs at %08x\n", eca_ctrl);
-
   // Command
   volatile WrMilConfig *config = config_init();
   pp_printf("mil cmd regs at %08x\n", config);
 
-
-  volatile uint32_t *oled = (volatile uint32_t*) find_device_adr(GSI, 0x93a6f3c4);
-  oled[0] = 0;
-
-  // // Where is the MSI message box
-  // pp_printf("pCpuMsiBox %08x      pMyMsi %08x\n", pCpuMsiBox, pMyMsi);
-  // config->mb_slot = getMsiBoxSlot(0xa0);
-  // pp_printf("mb_slot %d\n", config->mb_slot);
-
-  // say hello on the console
-  TAI_t nowTAI; 
-  ECACtrl_getTAI(eca_ctrl, &nowTAI);
-  pp_printf("TAI now: 0x%08x%08x\n", nowTAI.part.hi, nowTAI.part.lo);
-
   mil_piggy_reset(mil_piggy);
-
-
-  //oled_array(config, oled);
 
   uint32_t i = 0;
   uint32_t debug_numbers[6] = {0,};
   while (1) {
     //poll user commands
-
-    config_poll(config, oled);
-    // debug_numbers[0] = config->state;
-    // debug_numbers[2] = inhibit_fill_events;
-    // debug_numbers[3] = config->request_fill_evt;
-    // oled_numbers(debug_numbers, oled);
+    config_poll(config);
 
     if (config->state == WR_MIL_GW_STATE_UNCONFIGURED)
     {
@@ -338,7 +299,7 @@ void main(void)
     // do whatever has to be done
     if (config->state == WR_MIL_GW_STATE_CONFIGURED)
     {
-      eventHandler(eca_ctrl, eca_queue, mil_piggy, oled, config);
+      eventHandler(eca_queue, mil_piggy, config);
     }
 
     DELAY1us; // little delay 

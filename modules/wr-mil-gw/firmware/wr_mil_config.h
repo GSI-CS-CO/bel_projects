@@ -38,6 +38,6 @@ typedef struct
 
 volatile WrMilConfig *config_init();
 
-void config_poll(volatile WrMilConfig *cmd, volatile uint32_t *oled);
+void config_poll(volatile WrMilConfig *cmd);
 
 #endif
