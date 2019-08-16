@@ -189,6 +189,7 @@ public:
 
    bool unregisterDevice( DaqDevice* pDevice );
 
+   int distributeData( void );
 
 };
 

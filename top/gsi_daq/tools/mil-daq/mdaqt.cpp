@@ -39,7 +39,9 @@ using namespace MiLdaqt;
 int mdaqtMain( int argc, char** ppArgv )
 {
    DaqEb::EtherboneConnection ebConnection( ppArgv[1] );
-   DaqInterface milDaqAdmin( &ebConnection );
+   DaqAdministration milDaqAdmin( &ebConnection );
+   DEBUG_MESSAGE( "Head: " << milDaqAdmin.getHeadRingIndex() );
+   DEBUG_MESSAGE( "Tail: " << milDaqAdmin.getTailRingIndex() );
    return EXIT_SUCCESS;
 }
 

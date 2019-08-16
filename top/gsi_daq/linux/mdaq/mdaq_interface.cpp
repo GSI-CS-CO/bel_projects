@@ -62,21 +62,70 @@ void DaqInterface::init( void )
                            offsetof( SCU_SHARED_DATA_T, fg_magic_number ) );
    tmpMagicNumber = gsi::convertByteEndian( tmpMagicNumber );
    if( tmpMagicNumber != FG_MAGIC_NUMBER )
-   {
-      throw Exception( "Wrong magic number!" );
-   }
+      throw Exception( "Wrong magic number respectively wrong LM32 app!" );
    readRingPosition();
+   incrementRingTail();
+   updateRingTail(); //!!
+   readRingPosition();
+
+   RingItem item;
+   readRingItem( item );
+   cout << "Channel:   " << std::hex << item.getChannel() << std::dec << endl;
+   cout << "Timestamp: " << item.getTimestamp() << endl;
+   cout << "Set-Value: " << item.getSetValue() << endl;
+   cout << "Act-Value: " << item.getActValue() << endl;
+
 }
 
 /*! ---------------------------------------------------------------------------
  */
-void DaqInterface::readRingPosition( void )
+bool DaqInterface::readRingPosition( void )
 {
    DAQ_RING_T tmp;
+
    m_poEbAccess->readLM32( &tmp, sizeof( tmp ),
                                  offsetof( SCU_SHARED_DATA_T, daq_buf ) );
+
    m_oRing.m_head = gsi::convertByteEndian( tmp.m_head );
+   if( m_oRing.m_head >= c_ringBufferCapacity )
+      throw Exception( "Head-index of ring buffer is corrupt!" );
+
    m_oRing.m_tail = gsi::convertByteEndian( tmp.m_tail );
+   if( m_oRing.m_tail >= c_ringBufferCapacity )
+      throw Exception( "Tail-index of ring buffer is corrupt!" );
+
+   return areDataToRead();
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+void DaqInterface::updateRingTail( void )
+{
+   RING_INDEX_T convTail = gsi::convertByteEndian( getTailRingIndex() );
+   m_poEbAccess->writeLM32( &convTail, sizeof( convTail ),
+                            offsetof( SCU_SHARED_DATA_T, daq_buf.ring_tail ) );
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+void DaqInterface::readRingItem( RingItem& rRingItem )
+{
+   #define __CONV_MEMBER( m ) \
+       rRingItem.m = gsi::convertByteEndian( unconvItem.m )
+
+   RING_ITEM_T unconvItem;
+
+   m_poEbAccess->readLM32( &unconvItem, sizeof( unconvItem ),
+                           offsetof( SCU_SHARED_DATA_T, daq_buf.ring_data ) +
+                           getTailRingIndex() * sizeof( unconvItem ) );
+
+   __CONV_MEMBER( setvalue );
+   __CONV_MEMBER( actvalue );
+   __CONV_MEMBER( tmstmp_l );
+   __CONV_MEMBER( tmstmp_h );
+   __CONV_MEMBER( channel );
+
+   #undef __CONV_MEMBER
 }
 
 //================================== EOF ======================================

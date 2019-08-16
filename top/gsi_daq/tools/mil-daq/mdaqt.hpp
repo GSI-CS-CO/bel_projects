@@ -29,7 +29,7 @@
 #include <stdlib.h>
 #include <iostream>
 #include <gnuplotstream.hpp>
-#include <mdaq_interface.hpp>
+#include <mdaq_administration.hpp>
 #include <daq_eb_ram_buffer.hpp>
 
 namespace Scu

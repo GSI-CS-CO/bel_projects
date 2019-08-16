@@ -24,5 +24,40 @@
  */
 #include <mdaq_administration.hpp>
 
+using namespace Scu::MiLdaq;
+
+///////////////////////////////////////////////////////////////////////////////
+/*-----------------------------------------------------------------------------
+ */
+DaqAdministration::DaqAdministration( DaqEb::EtherboneConnection* poEtherbone )
+  :DaqInterface( poEtherbone )
+{
+}
+
+DaqAdministration::DaqAdministration( daq::EbRamAccess* poEbAccess )
+  :DaqInterface( poEbAccess )
+{
+}
+
+/*-----------------------------------------------------------------------------
+ */
+DaqAdministration::~DaqAdministration( void )
+{
+}
+
+/*-----------------------------------------------------------------------------
+ */
+int DaqAdministration::distributeData( void )
+{
+   if( !readRingPosition() )
+      return 0;
+
+   RingItem oRingItem;
+   readRingItem( oRingItem );
+// TODO
+   incrementRingTail();
+   updateRingTail();
+   return 0;
+}
 
 //================================== EOF ======================================

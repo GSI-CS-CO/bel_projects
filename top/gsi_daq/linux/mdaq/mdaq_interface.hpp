@@ -53,10 +53,52 @@ public:
 ///////////////////////////////////////////////////////////////////////////////
 class DaqInterface
 {
+public:
+   typedef ring_pos_t RING_INDEX_T;
+   typedef struct daq RING_ITEM_T;
+
+   class RingItem: public RING_ITEM_T
+   {
+   public:
+      uint64_t getTimestamp( void ) const
+      {
+         return (static_cast<uint64_t>(tmstmp_h) << BIT_SIZEOF(tmstmp_l)) |
+                 tmstmp_l;
+      }
+
+      uint getSetValue( void ) const
+      {
+         return setvalue >> BIT_SIZEOF(uint16_t);
+      }
+
+      uint getSetValue32( void ) const
+      {
+         return setvalue;
+      }
+
+      uint getActValue( void ) const
+      {
+         return actvalue;
+      }
+
+      uint getActValue32( void ) const
+      {
+         return actvalue << BIT_SIZEOF(uint16_t);
+      }
+
+      uint getChannel( void ) const
+      {
+         return channel;
+      }
+   };
+
+   static constexpr RING_INDEX_T c_ringBufferCapacity = DAQ_RING_SIZE;
+
+private:
    struct DAQ_RING_T
    {
-      ring_pos_t  m_head;
-      ring_pos_t  m_tail;
+      RING_INDEX_T  m_head;
+      RING_INDEX_T  m_tail;
    } PACKED_SIZE;
    static_assert( offsetof( DAQ_RING_T, m_head ) ==
                   offsetof( struct daq_buffer, ring_head ), "Offset-error!" );
@@ -74,9 +116,32 @@ public:
    DaqInterface( daq::EbRamAccess* poEbAccess );
    virtual ~DaqInterface( void );
 
-protected:
-   void readRingPosition( void );
+   RING_INDEX_T getHeadRingIndex( void ) const
+   {
+      return m_oRing.m_head;
+   }
 
+   RING_INDEX_T getTailRingIndex( void ) const
+   {
+      return m_oRing.m_tail;
+   }
+
+   bool areDataToRead( void ) const
+   {
+      return getHeadRingIndex() != getTailRingIndex();
+   }
+
+protected:
+   bool readRingPosition( void );
+   void updateRingTail( void );
+
+   void incrementRingTail( void )
+   {
+      m_oRing.m_tail++;
+      m_oRing.m_tail %= c_ringBufferCapacity;
+   }
+
+   void readRingItem( RingItem& rRingItem );
 
 private:
    void init( void );

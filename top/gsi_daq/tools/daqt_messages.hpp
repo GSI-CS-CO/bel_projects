@@ -33,7 +33,15 @@
 
 #define WARNING_MESSAGE( args... )                                            \
    std::cerr << ESC_FG_YELLOW ESC_BOLD "WARNING: "                            \
-             << args << ESC_NORMAL << std::endl                               \
+             << args << ESC_NORMAL << std::endl
+
+#ifdef DEBUGLEVEL
+   #define DEBUG_MESSAGE( args... )                                           \
+      std::cerr << ESC_FG_YELLOW "DBG: "                                      \
+                << args << ESC_NORMAL << std::endl
+#else
+   #define DEBUG_MESSAGE( args... )
+#endif
 
 #endif // ifndef _DAQT_MESSAGES_HPP
 //================================== EOF ======================================
