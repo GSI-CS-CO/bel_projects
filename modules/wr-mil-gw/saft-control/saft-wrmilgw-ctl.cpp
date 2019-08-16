@@ -17,6 +17,8 @@
 #include "SAFTd.h"
 #include "EmbeddedCPUActionSink.h"
 #include "EmbeddedCPUCondition.h"
+#include "SoftwareActionSink.h"
+#include "SoftwareCondition.h"
 #include "WbmActionSink.h"
 #include "WbmCondition.h"
 #include "TimingReceiver.h"
@@ -100,6 +102,26 @@ std::string default_color   = "\033[0m";
 
 const int key_width = 25;
 const int value_width = 15;
+
+// this will be called, in case we are snooping for events
+static void on_action(uint64_t id, uint64_t param, saftlib::Time deadline, saftlib::Time executed, uint16_t flags)
+{
+  bool late     = flags&1;
+  bool early    = flags&2;
+  bool conflict = flags&4;
+  //bool delayed  = flags&8;
+
+  if (late) {
+    std::cout << "late MIL event: " << executed-deadline << " ns" << std::endl;
+  }
+  if (early) {
+    std::cout << "early MIL event: " << executed-deadline << " ns" << std::endl;
+  }
+  if (conflict) {
+    std::cout << "conflicting MIL event" << std::endl;
+  }
+} 
+
 
 bool op_ready(bool receiver_locked, bool firmware_running, int firmware_state)
 {
@@ -698,6 +720,20 @@ int main (int argc, char** argv)
     // Monitoring Loop
     ///////////////////////////////////////////
     if (monitoring) {
+
+      // snoop for late MIL events 
+      std::shared_ptr<SoftwareActionSink_Proxy> sink = SoftwareActionSink_Proxy::create(receiver->NewSoftwareActionSink(""));
+      std::shared_ptr<SoftwareCondition_Proxy> condition 
+        = SoftwareCondition_Proxy::create(sink->NewCondition(false, 0xffffffff00000000, 0xffffffff00000000, 0));
+      // Accept all errors
+      condition->setAcceptLate(true);
+      condition->setAcceptEarly(true);
+      condition->setAcceptConflict(true);
+      condition->setAcceptDelayed(true);
+      condition->SigAction.connect(sigc::ptr_fun(&on_action));
+      condition->setActive(true);
+
+
       // switch off colors in monitoring mode
       red_color = green_color = default_color = "";
       // if monitoring was called on a running gateway and 
