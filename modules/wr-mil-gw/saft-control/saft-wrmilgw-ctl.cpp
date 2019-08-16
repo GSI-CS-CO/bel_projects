@@ -762,6 +762,8 @@ int main (int argc, char** argv)
       bool opReady = op_ready(receiver->getLocked(), 
                               wrmilgw->getFirmwareRunning(),
                               wrmilgw->getFirmwareState());
+      // initially set the opReady state
+      wrmilgw->setOpReady(opReady);
 
       std::cout << "WrMilGateway: starting monitoring loop" << std::endl;
       while(true) {
