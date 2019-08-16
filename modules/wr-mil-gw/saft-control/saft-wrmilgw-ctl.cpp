@@ -112,13 +112,13 @@ static void on_action(uint64_t id, uint64_t param, saftlib::Time deadline, saftl
   //bool delayed  = flags&8;
 
   if (late) {
-    std::cout << "late MIL event: " << executed-deadline << " ns" << std::endl;
+    std::cout << "late MIL event: "       << (id & 0xff) << "   " << executed-deadline << " ns" << std::endl;
   }
   if (early) {
-    std::cout << "early MIL event: " << executed-deadline << " ns" << std::endl;
+    std::cout << "early MIL event: "      << (id & 0xff) << "   " << executed-deadline << " ns" << std::endl;
   }
   if (conflict) {
-    std::cout << "conflicting MIL event" << std::endl;
+    std::cout << "conflicting MIL event " << (id & 0xff) << "   " << std::endl;
   }
 } 
 
