@@ -12,6 +12,7 @@
 #include <stdio.h>
 #include <iostream>
 #include <getopt.h>
+#include <unistd.h>
 
 #include "SAFTd.h"
 #include "EmbeddedCPUActionSink.h"
@@ -386,9 +387,9 @@ void on_num_late_mil_events(uint32_t total, uint32_t since_last_signal, std::sha
 void on_in_use(bool in_use) 
 {
   if (in_use) {
-    std::cout << "gateway is in use (seeing MIL events)" << std::endl; 
+    std::cout << "gateway used" << std::endl; 
   } else {
-    std::cout << "gateway not used (no MIL events for more than 10 seconds)" << std::endl;
+    std::cout << "gateway idle, generating MIL_FILL events" << std::endl;
   }
 }
 
@@ -408,6 +409,7 @@ int main (int argc, char** argv)
   int     mil_latency    = -1;
   bool    reset          =  0;
   bool    kill           =  0;
+  bool    wait_for_firmware = false;
   bool    configSIS18    = false;
   bool    configESR      = false;
   bool    show_help      = false;
@@ -423,7 +425,7 @@ int main (int argc, char** argv)
   
   // Parse arguments 
   //while ((opt = getopt(argc, argv, "c:dgxzlvh")) != -1)
-  while ((opt = getopt(argc, argv, "l:d:u:o:t:sehrkifcCLmM:HR")) != -1) 
+  while ((opt = getopt(argc, argv, "l:d:u:o:t:wsehrkifcCLmM:HR")) != -1) 
   {
     switch (opt)
     {
@@ -433,6 +435,7 @@ int main (int argc, char** argv)
       case 'c': { red_color = green_color = default_color = ""; break; }
       case 'C': { clearStat = true; break; }
       case 'L': { lateHist = true; break; }
+      case 'w': { wait_for_firmware = true; break;}
       case 's': { configSIS18 = true; break; }
       case 'e': { configESR   = true; break; }
       case 'i': { ++info; break; } // more info by putting -i multiple times
@@ -508,6 +511,20 @@ int main (int argc, char** argv)
     }
     // Get Gateway Proxy
     std::shared_ptr<WrMilGateway_Proxy> wrmilgw = WrMilGateway_Proxy::create(wrmilgws.begin()->second);
+
+    if (wait_for_firmware) {
+      for (int i = 0; i < 10; ++i) {
+        if (wrmilgw->getFirmwareRunning()) {
+          break;
+        }
+        if (i == 9) {
+          std::cerr << "timeout while waiting for firmware" << std::endl;
+          return 1;
+        }
+        sleep(1);
+      }
+    }
+
 
     if (clearStat) {
       wrmilgw->ClearStatistics();
