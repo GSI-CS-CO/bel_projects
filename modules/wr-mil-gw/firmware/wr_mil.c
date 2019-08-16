@@ -79,7 +79,7 @@ void inject_mil_event(uint32_t cmd, TAI_t time)
     time.value = previous_time+25000;
   }
   previous_time = time.value;
-  
+
   // inject event 
   atomic_on();
   *pEca = 0xffffffff;
