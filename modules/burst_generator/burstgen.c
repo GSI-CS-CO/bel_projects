@@ -970,7 +970,9 @@ void execHostCmd(int32_t cmd)
 	  *(pSharedInput +4) = (uint32_t)pTask[id].trigger;
 	  *(pSharedInput +5) = (uint32_t)(pTask[id].toggle >> 32); // get toggle event id
 	  *(pSharedInput +6) = (uint32_t)pTask[id].toggle;
-	  *(pSharedInput +7) = (uint32_t)pTask[id].flag;
+	  *(pSharedInput +7) = (uint32_t)(pTask[id].cycle >> 32); // get cycle count
+	  *(pSharedInput +8) = (uint32_t)pTask[id].cycle;
+	  *(pSharedInput +9) = (uint32_t)pTask[id].flag;
 
 	  if (verbose)
 	    printSharedInput(0, N_BURST_INFO);
