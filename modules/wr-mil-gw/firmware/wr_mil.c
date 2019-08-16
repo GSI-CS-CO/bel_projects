@@ -73,6 +73,14 @@ uint32_t mil_piggy_write_event(volatile uint32_t *piggy, uint32_t cmd)
 
 void inject_mil_event(uint32_t cmd, TAI_t time) 
 {
+  // protect from nonsense hi-frequency bursts
+  static uint64_t previous_time = 0;
+  if (time.value < previous_time+25000) {
+    time.value = previous_time+25000;
+  }
+  previous_time = time.value;
+  
+  // inject event 
   atomic_on();
   *pEca = 0xffffffff;
   *pEca = cmd & 0x000000ff;
@@ -83,7 +91,6 @@ void inject_mil_event(uint32_t cmd, TAI_t time)
   *pEca = time.part.hi;
   *pEca = time.part.lo;
   atomic_off();
-  pp_printf("injected\n");
 }
 
 uint32_t mil_piggy_reset(volatile uint32_t *piggy)
