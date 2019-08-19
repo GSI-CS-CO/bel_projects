@@ -1,4 +1,4 @@
-#Test for write lock behaviour, read lock behaviour and locking from cmd dot
+#Test for locking and asynchronous queue manipulation
 
 testcase = TestCase(
   "Test Async Flush and Rewrite",
