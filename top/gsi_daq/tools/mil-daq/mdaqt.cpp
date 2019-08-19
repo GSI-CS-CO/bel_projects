@@ -28,6 +28,7 @@
 #include "mdaqt.hpp"
 #include "daqt_read_stdin.hpp"
 #include "daqt_messages.hpp"
+#include "daqt_read_stdin.hpp"
 
 using namespace std;
 using namespace Scu;
@@ -40,8 +41,15 @@ int mdaqtMain( int argc, char** ppArgv )
 {
    DaqEb::EtherboneConnection ebConnection( ppArgv[1] );
    DaqAdministration milDaqAdmin( &ebConnection );
-   DEBUG_MESSAGE( "Head: " << milDaqAdmin.getHeadRingIndex() );
-   DEBUG_MESSAGE( "Tail: " << milDaqAdmin.getTailRingIndex() );
+
+   int key;
+   Terminal oTerminal;
+   while( (key = Terminal::readKey()) != '\e' )
+   {
+      milDaqAdmin.distributeData();
+  //    DEBUG_MESSAGE( "Head: " << milDaqAdmin.getHeadRingIndex() );
+  //    DEBUG_MESSAGE( "Tail: " << milDaqAdmin.getTailRingIndex() );
+   }
    return EXIT_SUCCESS;
 }
 

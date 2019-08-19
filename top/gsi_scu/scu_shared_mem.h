@@ -177,5 +177,53 @@ STATIC_ASSERT( sizeof( SCU_SHARED_DATA_T ) ==
    __DAQ_SHARAD_MEM_INITIALIZER_ITEM       \
 }
 
+/*! ---------------------------------------------------------------------------
+ */
+static inline
+unsigned int getMilDaqAddress( const register struct daq* pMilDaq )
+{
+   return (pMilDaq->channel >> 16) & 0xFF;
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+static inline
+unsigned int getMilDaqLocation( const register struct daq* pMilDaq )
+{
+   return pMilDaq->channel >> 24;
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+static inline
+unsigned int getDaqMilScuBusSlotbyLocation( const unsigned int loc )
+{
+   return loc & 0x0F;
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+static inline
+unsigned int getDaqMilExrentionByLocation( const unsigned int loc )
+{
+   return loc >> 4;
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+static inline
+unsigned int getMilDaqScuBusSlot( const register struct daq* pMilDaq )
+{
+   return getDaqMilScuBusSlotbyLocation( getMilDaqLocation( pMilDaq ));
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+static inline
+unsigned int getMilDaqScuMilExtention( const register struct daq* pMilDaq )
+{
+   return getDaqMilExrentionByLocation( getMilDaqLocation( pMilDaq ) );
+}
+
 #endif
 /*================================== EOF ====================================*/
