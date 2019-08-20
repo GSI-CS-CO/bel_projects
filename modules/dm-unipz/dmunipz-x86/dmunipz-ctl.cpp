@@ -3,7 +3,7 @@
  *
  *  created : 2017
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 15-August-2019
+ *  version : 20-August-2019
  *
  * Command-line interface for dmunipz
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 17-May-2017
  ********************************************************************************************/
-#define DMUNIPZ_X86_VERSION "0.5.6"
+#define DMUNIPZ_X86_VERSION "0.5.7"
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -52,9 +52,7 @@
 // includes for this project
 #include "../../ftm/include/ftm_common.h"  // defs and regs for data master
 #include <dm-unipz.h>
-extern "C" {                               // b2b is pure C, but due to MAPS THIS code needs to be C++ :-/
-#include <b2btest-api.h>
-}
+#include <b2btest-api.h>                   // this is C code, >> always compile using g++ <<
 #include <dmunipz_shared_mmap.h>
 
 // USE MASP
