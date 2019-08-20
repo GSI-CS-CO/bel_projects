@@ -27,6 +27,7 @@
 #define _MDAQ_PLOT_HPP
 
 #include <gnuplotstream.hpp>
+#include "mdaqt.hpp"
 
 namespace Scu
 {
@@ -38,8 +39,11 @@ namespace MiLdaqt
 ///////////////////////////////////////////////////////////////////////////////
 class Plot: public gpstr::PlotStream
 {
+   DaqMilCompare*  m_pParent;
+
 public:
-   Plot( const std::string gpOpt    = GPSTR_DEFAULT_OPTIONS,
+   Plot( DaqMilCompare* pParent,
+         const std::string gpOpt    = GPSTR_DEFAULT_OPTIONS,
          const std::string gpExe    = GPSTR_DEFAULT_GNUPLOT_EXE,
          const std::size_t pipeSize = GPSTR_DEFAULT_PIPE_BUFFER_SIZE
        );

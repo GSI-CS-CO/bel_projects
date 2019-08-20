@@ -26,6 +26,75 @@
 
 using namespace Scu::MiLdaq;
 
+
+///////////////////////////////////////////////////////////////////////////////
+/*-----------------------------------------------------------------------------
+ */
+DaqCompare::DaqCompare( const uint iterfaceAddress )
+   :m_iterfaceAddress( iterfaceAddress )
+   ,m_pParent( nullptr )
+{
+}
+
+/*-----------------------------------------------------------------------------
+ */
+DaqCompare::~DaqCompare( void )
+{
+}
+
+///////////////////////////////////////////////////////////////////////////////
+/*-----------------------------------------------------------------------------
+ */
+DaqDevice::DaqDevice( uint location )
+   :m_location( location )
+   ,m_pParent( nullptr )
+{
+}
+
+/*-----------------------------------------------------------------------------
+ */
+DaqDevice::~DaqDevice( void )
+{
+}
+
+/*-----------------------------------------------------------------------------
+ */
+bool DaqDevice::registerDaqCompare( DaqCompare* poCompare )
+{
+   assert( poCompare != nullptr );
+   for( auto& i: m_channelPtrList )
+   {
+      if( poCompare->getAddress() == i->getAddress() )
+         return true;
+   }
+   poCompare->m_pParent = this;
+   m_channelPtrList.push_back( poCompare );
+   if( m_pParent != nullptr )
+      poCompare->onInit();
+   return false;
+}
+
+/*-----------------------------------------------------------------------------
+ */
+DaqCompare* DaqDevice::getDaqCompare( const uint address )
+{
+   for( auto& i: m_channelPtrList )
+   {
+      if( i->getAddress() == address )
+         return i;
+   }
+
+   return nullptr;
+}
+
+/*-----------------------------------------------------------------------------
+ */
+void DaqDevice::initAll( void )
+{
+   for( auto& i: m_channelPtrList )
+      i->onInit();
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 /*-----------------------------------------------------------------------------
  */
@@ -47,6 +116,47 @@ DaqAdministration::~DaqAdministration( void )
 
 /*-----------------------------------------------------------------------------
  */
+bool DaqAdministration::registerDevice( DaqDevice* pDevice )
+{
+   assert( pDevice != nullptr );
+
+   for( auto& i: m_devicePtrList )
+   {
+      if( i->getLocation() == pDevice->getLocation() )
+         return true;
+   }
+   pDevice->m_pParent = this;
+   m_devicePtrList.push_back( pDevice );
+   pDevice->initAll();
+   return false;
+}
+
+/*-----------------------------------------------------------------------------
+ */
+DaqDevice* DaqAdministration::getDvice( const uint location )
+{
+   for( auto& i: m_devicePtrList )
+   {
+      if( i->getLocation() == location )
+         return i;
+   }
+   return nullptr;
+}
+
+/*-----------------------------------------------------------------------------
+ */
+inline
+DaqCompare* DaqAdministration::findDaqCompare( const uint channel )
+{
+   DaqDevice* pDaqDevice = getDvice( getMilDaqLocationByChannel( channel ) );
+   if( pDaqDevice == nullptr )
+      return nullptr;
+
+   return pDaqDevice->getDaqCompare( getMilDaqAdressByChannel( channel ) );
+}
+
+/*-----------------------------------------------------------------------------
+ */
 int DaqAdministration::distributeData( void )
 {
    if( !readRingPosition() )
@@ -54,7 +164,34 @@ int DaqAdministration::distributeData( void )
 
    RingItem oRingItem;
    readRingItem( oRingItem );
-// TODO
+#if 0
+   std::cout << "Timestamp: " << oRingItem.getTimestamp() << std::endl;
+   time_t wrStampSeconds = oRingItem.getTimestamp() / 1000000000;
+   struct tm * timeinfo;
+   timeinfo = localtime( &wrStampSeconds );
+   std::cout << "WR stamp human readable: " <<  asctime(timeinfo) << std::endl;
+   std::cout << "Channel:   " << std::hex << oRingItem.getChannel() << std::dec << std::endl;
+   //if( oRingItem.getMilDaqScuBusSlot() != 0 )
+   //   std::cout << "SCU-Slot: " << oRingItem.getMilDaqScuBusSlot() << std::endl;
+   //if( oRingItem.getMilDaqScuMilExtention() != 0 )
+   //   std::cout << "Mil-Extention: " << oRingItem.getMilDaqScuMilExtention() << std::endl;
+
+   std::cout << "Location: " << std::hex <<  oRingItem.getMilDaqLocation() << std::dec << std::endl;
+   std::cout << "Address:  " << oRingItem.getMilDaqAddress()  << std::endl;
+
+   std::cout << "Set-Value: " << oRingItem.getSetValue() << std::endl;
+   std::cout << "Act-Value: " << oRingItem.getActValue() << std::endl;
+#endif
+
+   DaqCompare* pCurrent = findDaqCompare( oRingItem.getChannel() );
+   if( pCurrent != nullptr )
+      pCurrent->onData( oRingItem.getTimestamp(),
+                        oRingItem.getActValue32(),
+                        oRingItem.getSetValue32() );
+   else
+      onUnregistered( &oRingItem );
+
+
    incrementRingTail();
    updateRingTail();
    return 0;

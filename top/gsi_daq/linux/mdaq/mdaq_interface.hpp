@@ -90,6 +90,26 @@ public:
       {
          return channel;
       }
+
+      uint getMilDaqAddress( void )
+      {
+         return Scu::MiLdaq::getMilDaqAddress( this );
+      }
+
+      uint getMilDaqLocation( void ) const
+      {
+         return Scu::MiLdaq::getMilDaqLocation( this );
+      }
+
+      uint getMilDaqScuBusSlot( void )
+      {
+         return Scu::MiLdaq::getMilDaqScuBusSlot( this );
+      }
+
+      uint getMilDaqScuMilExtention( void )
+      {
+         return Scu::MiLdaq::getMilDaqScuMilExtention( this );
+      }
    };
 
    static constexpr RING_INDEX_T c_ringBufferCapacity = DAQ_RING_SIZE;

@@ -35,14 +35,23 @@ namespace MiLdaq
 
 typedef uint32_t MIL_DAQ_T;
 
+class DaqAdministration;
+class DaqDevice;
+
 ///////////////////////////////////////////////////////////////////////////////
 class DaqCompare
 {
    friend class DaqDevice;
    friend class DaqAdministration;
 
-   uint   m_iterfaceAddress;
+   const uint   m_iterfaceAddress;
 
+   /*!
+    * @brief Pointer to the DAQ device object including this channel object.
+    */
+   DaqDevice*     m_pParent;
+
+public:
    /*!
     * @brief Constructor
     * @see DaqDevice::getMaxChannels
@@ -54,7 +63,7 @@ class DaqCompare
     *               DaqDevice::registerChannel gives this channel-object
     *               the next free number.
     */
-   DaqCompare( uint m_iterfaceAddress = 0 );
+   DaqCompare( uint iterfaceAddress );
 
    /*!
     * @brief Destructor
@@ -70,18 +79,28 @@ class DaqCompare
       return m_iterfaceAddress;
    }
 
+   DaqDevice* getParent( void )
+   {
+      assert( m_pParent != nullptr );
+      return m_pParent;
+   }
+
 protected:
-   virtual void onData( uint64_t wrTimeStamp, MIL_DAQ_T actualValue,
-                                              MIL_DAQ_T referenceValue ) = 0;
+   virtual void onData( uint64_t wrTimeStamp, MIL_DAQ_T actlValue,
+                                              MIL_DAQ_T setValue ) = 0;
+
+   virtual void onInit( void ) {}
 };
 
 ///////////////////////////////////////////////////////////////////////////////
 class DaqDevice
 {
+   friend class DaqAdministration;
    #define MIL_CHANNEL_LIST_T_BASE std::list
    typedef MIL_CHANNEL_LIST_T_BASE<DaqCompare*>  CHANNEL_LIST_T;
    CHANNEL_LIST_T     m_channelPtrList;
-   uint               m_slot;
+   const uint         m_location;
+   DaqAdministration* m_pParent;
 
 public:
    /*!
@@ -92,7 +111,7 @@ public:
     *        DaqAdministration::registerDevice will set the slot number of
     *        next unregistered DAQ seen from the left side of the SCU slots.
     */
-   DaqDevice( unsigned int slot = 0 );
+   DaqDevice( uint location );
 
    /*!
     * @brief Destructor
@@ -133,10 +152,25 @@ public:
     *       except the DAQ device is in slot 1!
     * @see getDeviceNumber
     */
-   const unsigned int getSlot( void ) const
+   const unsigned int getLocation( void ) const
    {
-      return m_slot;
+      return m_location;
    }
+
+   DaqAdministration* getParent( void )
+   {
+      assert( m_pParent != nullptr );
+      return m_pParent;
+   }
+
+   bool registerDaqCompare( DaqCompare* poCompare );
+
+   DaqCompare* getDaqCompare( const uint address );
+
+protected:
+   void initAll( void );
+
+   virtual void onInit( void ) {}
 
 };
 
@@ -152,7 +186,7 @@ protected:
 public:
    DaqAdministration( DaqEb::EtherboneConnection* poEtherbone );
    DaqAdministration( daq::EbRamAccess* poEbAccess );
-   ~DaqAdministration( void );
+   virtual ~DaqAdministration( void );
 
    /*!
     * @brief Returns the iterator to the begin of the pointer list of
@@ -187,9 +221,17 @@ public:
     */
    bool registerDevice( DaqDevice* pDevice );
 
+   DaqDevice* getDvice( const uint location );
+
    bool unregisterDevice( DaqDevice* pDevice );
 
    int distributeData( void );
+
+protected:
+   virtual void onUnregistered( RingItem* pUnknownItem ) {}
+
+private:
+   DaqCompare* findDaqCompare( const uint channel );
 
 };
 

@@ -23,24 +23,116 @@
  ******************************************************************************
  */
 
-#include <stdlib.h>
-#include <iostream>
+#ifndef __DOCFSM__
+ #include <stdlib.h>
+ #include <iostream>
+ #include "daqt_read_stdin.hpp"
+ #include "daqt_messages.hpp"
+ #include "daqt_read_stdin.hpp"
+ #include "mdaq_plot.hpp"
+#endif
 #include "mdaqt.hpp"
-#include "daqt_read_stdin.hpp"
-#include "daqt_messages.hpp"
-#include "daqt_read_stdin.hpp"
 
 using namespace std;
 using namespace Scu;
 using namespace MiLdaq;
 using namespace MiLdaqt;
 
+///////////////////////////////////////////////////////////////////////////////
+/*! ---------------------------------------------------------------------------
+ */
+DaqMilCompare::DaqMilCompare( uint iterfaceAddress )
+   :DaqCompare( iterfaceAddress )
+   ,m_pPlot( nullptr )
+{
+   reset();
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+DaqMilCompare::~DaqMilCompare( void )
+{
+   if( m_pPlot != nullptr )
+      delete m_pPlot;
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+void DaqMilCompare::reset( void )
+{
+   FSM_INIT_FSM( wait );
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+void DaqMilCompare::onInit( void )
+{
+   if( m_pPlot != nullptr )
+      return;
+   m_pPlot = new Plot( this );
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+void DaqMilCompare::onData( uint64_t wrTimeStamp, MIL_DAQ_T actValue,
+                                                          MIL_DAQ_T setValue )
+{
+   if( (m_lastSetRawValue == setValue) )//&& (m_lastActRawValue == actlValue) )
+      return;
+
+   std::cout << "timestamp: " << wrTimeStamp
+             << ", rel time: "
+             << (static_cast<double>(wrTimeStamp - m_lastTime) /  1000000000.0)
+             << ", act: " << (actValue >> 16)
+             << ", set: " << (setValue >> 16) << std::endl;
+
+   m_lastSetRawValue = setValue;
+   m_lastActRawValue = actValue;
+   m_lastTime = wrTimeStamp;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+/*! ---------------------------------------------------------------------------
+ */
+MilDaqAdministration::MilDaqAdministration( std::string ebAddress )
+   :DaqAdministration( new DaqEb::EtherboneConnection( ebAddress ) )
+{
+   m_showUnregistered = false;
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+MilDaqAdministration::~MilDaqAdministration( void )
+{
+
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+void MilDaqAdministration::onUnregistered( RingItem* pUnknownItem )
+{
+   if( !m_showUnregistered )
+      return;
+
+   std::cout << pUnknownItem->getTimestamp() << ' '
+             << static_cast<int>(pUnknownItem->getActValue()) << ' '
+             << static_cast<int>(pUnknownItem->getSetValue())
+             << " fg-" << pUnknownItem->getMilDaqLocation() << '-'
+             <<  pUnknownItem->getMilDaqAddress() << std::endl;
+}
+
+///////////////////////////////////////////////////////////////////////////////
 /*! ---------------------------------------------------------------------------
  */
 int mdaqtMain( int argc, char** ppArgv )
 {
-   DaqEb::EtherboneConnection ebConnection( ppArgv[1] );
-   DaqAdministration milDaqAdmin( &ebConnection );
+   MilDaqAdministration milDaqAdmin( ppArgv[1] );
+
+   DaqMilCompare daqCompare( 130 );
+   DaqDevice daqDevice( 39 );
+
+   daqDevice.registerDaqCompare( &daqCompare );
+   milDaqAdmin.registerDevice( &daqDevice );
 
    int key;
    Terminal oTerminal;

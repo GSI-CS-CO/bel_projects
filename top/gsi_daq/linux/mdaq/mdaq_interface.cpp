@@ -64,17 +64,6 @@ void DaqInterface::init( void )
    if( tmpMagicNumber != FG_MAGIC_NUMBER )
       throw Exception( "Wrong magic number respectively wrong LM32 app!" );
    readRingPosition();
-   incrementRingTail();
-   updateRingTail(); //!!
-   readRingPosition();
-
-   RingItem item;
-   readRingItem( item );
-   cout << "Channel:   " << std::hex << item.getChannel() << std::dec << endl;
-   cout << "Timestamp: " << item.getTimestamp() << endl;
-   cout << "Set-Value: " << item.getSetValue() << endl;
-   cout << "Act-Value: " << item.getActValue() << endl;
-
 }
 
 /*! ---------------------------------------------------------------------------

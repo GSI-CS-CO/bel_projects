@@ -159,6 +159,10 @@ STATIC_ASSERT( sizeof( SCU_SHARED_DATA_T ) ==
   #define __DAQ_SHARAD_MEM_INITIALIZER_ITEM
 #endif
 
+/*! ---------------------------------------------------------------------------
+ * @brief Initializer of the entire LM32 shared memory of application
+ *        scu_control.
+ */
 #define SCU_SHARED_DATA_INITIALIZER        \
 {                                          \
    .board_id         = SCU_INVALID_VALUE,  \
@@ -177,12 +181,35 @@ STATIC_ASSERT( sizeof( SCU_SHARED_DATA_T ) ==
    __DAQ_SHARAD_MEM_INITIALIZER_ITEM       \
 }
 
+#ifdef __cplusplus
+namespace Scu
+{
+namespace MiLdaq
+{
+#endif
+
+/*! ---------------------------------------------------------------------------
+ */
+static inline
+unsigned int getMilDaqAdressByChannel( const unsigned int channel )
+{
+   return (channel >> 16) & 0xFF;
+}
+
 /*! ---------------------------------------------------------------------------
  */
 static inline
 unsigned int getMilDaqAddress( const register struct daq* pMilDaq )
 {
-   return (pMilDaq->channel >> 16) & 0xFF;
+   return getMilDaqAdressByChannel( pMilDaq->channel );
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+static inline
+unsigned int getMilDaqLocationByChannel( const unsigned int channel )
+{
+   return channel >> 24;
 }
 
 /*! ---------------------------------------------------------------------------
@@ -190,7 +217,7 @@ unsigned int getMilDaqAddress( const register struct daq* pMilDaq )
 static inline
 unsigned int getMilDaqLocation( const register struct daq* pMilDaq )
 {
-   return pMilDaq->channel >> 24;
+   return getMilDaqLocationByChannel( pMilDaq->channel );
 }
 
 /*! ---------------------------------------------------------------------------
@@ -225,5 +252,10 @@ unsigned int getMilDaqScuMilExtention( const register struct daq* pMilDaq )
    return getDaqMilExrentionByLocation( getMilDaqLocation( pMilDaq ) );
 }
 
+#ifdef __cplusplus
+} // namespace MiLdaq
+} // namespace Scu
 #endif
+
+#endif /* ifndef _SCU_SHARED_MEM_H */
 /*================================== EOF ====================================*/
