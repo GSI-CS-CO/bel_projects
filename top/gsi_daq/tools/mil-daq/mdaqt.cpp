@@ -97,7 +97,7 @@ void DaqMilCompare::onData( uint64_t wrTimeStamp, MIL_DAQ_T actValue,
 MilDaqAdministration::MilDaqAdministration( std::string ebAddress )
    :DaqAdministration( new DaqEb::EtherboneConnection( ebAddress ) )
 {
-   m_showUnregistered = false;
+   m_showUnregistered = true;
 }
 
 /*! ---------------------------------------------------------------------------
@@ -126,6 +126,7 @@ void MilDaqAdministration::onUnregistered( RingItem* pUnknownItem )
  */
 int mdaqtMain( int argc, char** ppArgv )
 {
+   DEBUG_MESSAGE( "SCU: " << ppArgv[1] );
    MilDaqAdministration milDaqAdmin( ppArgv[1] );
 
    DaqMilCompare daqCompare( 130 );
@@ -136,12 +137,14 @@ int mdaqtMain( int argc, char** ppArgv )
 
    int key;
    Terminal oTerminal;
+   DEBUG_MESSAGE( "Entering loop" );
    while( (key = Terminal::readKey()) != '\e' )
    {
       milDaqAdmin.distributeData();
   //    DEBUG_MESSAGE( "Head: " << milDaqAdmin.getHeadRingIndex() );
   //    DEBUG_MESSAGE( "Tail: " << milDaqAdmin.getTailRingIndex() );
    }
+   DEBUG_MESSAGE( "Loop left" );
    return EXIT_SUCCESS;
 }
 

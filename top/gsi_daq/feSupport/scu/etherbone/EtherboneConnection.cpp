@@ -367,7 +367,7 @@ static void  __onEbSocked( eb_user_data_t pUser, eb_device_t dev,
  *        returns a  8, 16, 32 or 64 bit value depending on the parameter wide.
  * @author Ulrich Becker
  * @param pData Base address
- * @param wide Data wide in bytes (8, 16, 32 or 64)
+ * @param wide Data wide in bytes (1, 2, 4 or 8)
  * @param index Read index depending on parameter wide
  * @return 8, 16, 32 or 64 bit value of type etherbone::data_t.
  */

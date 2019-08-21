@@ -47,6 +47,12 @@ public:
          const std::string gpExe    = GPSTR_DEFAULT_GNUPLOT_EXE,
          const std::size_t pipeSize = GPSTR_DEFAULT_PIPE_BUFFER_SIZE
        );
+
+   void plot( void );
+   void operator()( void )
+   {
+      plot();
+   }
 };
 
 

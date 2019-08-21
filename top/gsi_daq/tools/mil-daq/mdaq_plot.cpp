@@ -28,6 +28,8 @@
 using namespace Scu::MiLdaq::MiLdaqt;
 using namespace std;
 
+/*! ----------------------------------------------------------------------------
+ */
 Plot::Plot( DaqMilCompare* pParent,
             const std::string gpOpt,
             const std::string gpExe,
@@ -37,7 +39,12 @@ Plot::Plot( DaqMilCompare* pParent,
 {
    *this << "set terminal X11 title \"" "\"" << endl;
    *this << "set grid" << endl;
-   *this << "set datafile separator ','" << endl;
+}
+
+/*! ----------------------------------------------------------------------------
+ */
+void Plot::plot( void )
+{
 }
 
 //================================== EOF ======================================
