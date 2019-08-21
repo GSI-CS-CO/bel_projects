@@ -272,7 +272,13 @@ struct EB_USER_CB_T
    const eb_user_data_t m_pUserAddress; //!<@brief Linux user address
 
    /*!
-    * @brief
+    * @brief Constructor
+    * @param len Number of data elements to transfer this can be
+    *            8, 16, 32 or 64-Bit types.
+    * @param pUserAddress Target address in the Linux memory when
+    *        function EtherboneConnection::read is used. \n
+    *        If function EtherboneConnection::write will used this
+    *        value has to be the "nullptr" (default).
     */
    EB_USER_CB_T( uint len, eb_user_data_t pUserAddress = nullptr )
       :m_finished( false )
@@ -325,7 +331,7 @@ static void  __onEbSocked( eb_user_data_t pUser, eb_device_t dev,
    uint j = 0;
    while( (op != EB_NULL) && (i < static_cast<EB_USER_CB_T*>(pUser)->m_len) )
    {
-      if( eb_operation_had_error( op ) )
+      if( ::eb_operation_had_error( op ) )
       {
          static_cast<EB_USER_CB_T*>(pUser)->m_status = EB_SEGFAULT;
          return;

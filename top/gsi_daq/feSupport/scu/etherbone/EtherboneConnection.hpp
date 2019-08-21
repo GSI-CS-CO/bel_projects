@@ -38,7 +38,7 @@ namespace FeSupport {
           /*!
            * \brief Basic constuctor
            */
-          EtherboneConnection(std::string netaddress, unsigned int timeout = EB_DEFAULT_TIMEOUT );
+          EtherboneConnection(std::string netaddress, uint timeout = EB_DEFAULT_TIMEOUT );
 
           /*!
            * \brief Destructor
