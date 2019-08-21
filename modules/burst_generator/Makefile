@@ -1,10 +1,21 @@
-# This firmware includes:
-# - lm32 sends events to ECA event input
-# - lm32 handles MSI message from ECA
+# Build a firmware binary for the burst generator
+SHELL           := /bin/bash
 TARGET		?= burstgen
 PLATFPATH       = ../../syn/gsi_scu/control3
-PLATFMAKEFILE   = $(PLATFPATH)/Makefile
 
+# find a target form-factor with the least RAM size (SCU3, Pexarria5, Exploder5)
+DEF_RAMSIZE     := $(shell grep -m1 RAM_SIZE "$(PLATFPATH)/Makefile" | cut -d'=' -f2 | sed 's/[^a-zA-Z0-9]//g')
+MIN_RAM_TARGET  := $(shell declare -a targets=( "../../syn/gsi_scu/control3"	"../../syn/gsi_pexarria5/control" "../../syn/gsi_exploder5/exploder5_csco_tr" ) ; \
+		path=$(PLATFPATH) ; \
+		declare -i min_ramsize=$(DEF_RAMSIZE) ; \
+		for idx in "$${!targets[@]}" ; do \
+				declare -i target_ramsize=$$(grep -m1 RAM_SIZE "$${targets[$${idx}]}/Makefile" | cut -d'=' -f2 | sed 's/[^a-zA-Z0-9]//g') ; \
+				if [ $${target_ramsize} -lt $${min_ramsize} ] ; \
+				then path=$${targets[$${idx}]} ; min_ramsize=$${target_ramsize} ; fi ; \
+		done ; \
+		echo $${path} )
+
+PLATFMAKEFILE   = $(MIN_RAM_TARGET)/Makefile
 PLATFORM	:= $(shell cat 	$(PLATFMAKEFILE) | grep -m1 TARGET    | cut -d'=' -f2 | sed 's/[^a-zA-Z0-9]//g')
 DEVICE		:= $(shell cat 	$(PLATFMAKEFILE) | grep -m1 DEVICE    | cut -d'=' -f2 | sed 's/[^a-zA-Z0-9]//g')
 FLASH		:= $(shell cat 	$(PLATFMAKEFILE) | grep -m1 FLASH     | cut -d'=' -f2 | sed 's/[^a-zA-Z0-9]//g')
@@ -13,7 +24,7 @@ RAM_SIZE        := $(shell cat 	$(PLATFMAKEFILE) | grep -m1 RAM_SIZE  | cut -d'=
 
 SHARED_SIZE    	?= 16K
 USRCPUCLK      	?= 125000
-VERSION  	= 00.00.01
+VERSION  	= 00.00.02
 
 .DEFAULT_GOAL := fwbin
 
