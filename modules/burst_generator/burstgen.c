@@ -1186,8 +1186,6 @@ void setupMsiHandlers(void)
     return;
   }
   else  {
-    mprintf("Mailbox slot for host MSIs  : %d (base +0x%x)\n", gMbSlot, gMbSlot*8);
-
     if (pShared)
     {
       *(pShared + (SHARED_MB_SLOT >> 2)) = gMbSlot; // write the subscribed mailbox slot into the shared memory
@@ -1197,6 +1195,12 @@ void setupMsiHandlers(void)
       mprintf("Logic error: shared memory must be initialized prior to the mailbox slot subscription");
       return;
     }
+
+    uint32_t *pMyMbSlot = pCpuMsiBox + ((gMbSlot * 8) >> 2);
+    mprintf("Mailbox slot for burst generator: %d, avialable for host at 0x%x (ext 0x%x)\n",
+	gMbSlot, (uint32_t)(pShared + (SHARED_MB_SLOT >> 2)),
+	(uint32_t)(pCpuRamExternal + ((SHARED_MB_SLOT + SHARED_OFFS) >> 2)));
+    mprintf("Address of the mailbox slot (ext): 0x%x (0x%x)\n", (uint32_t)pMyMbSlot, (uint32_t)pMyMbSlot & 0x7FFFFFFF);
   }
 
   configureEcaMsi(1, gEcaChECPU); // ECA MSIs are sent to destination address of pMyMsi
