@@ -92,6 +92,7 @@ architecture rtl of dm_diag is
   signal ra_stall_cnt, ra_stall_observer_cnt,
          ra_stall_max                         : u32_array(g_cores-1 downto 0)   := (others => (others => '0'));
   signal s_stall_observer_dec, s_stall_inc    : std_logic_vector(g_cores-1 downto 0) := (others => '0');
+  signal r_stall_observer_dec, r_stall_inc    : std_logic_vector(g_cores-1 downto 0) := (others => '0');
   signal ra_stall_max_ts                      : u64_array(g_cores-1 downto 0)   := (others => (others => '0')); -- Timestamp of last max update
 
   signal s_selector                           : natural;
@@ -174,10 +175,20 @@ begin
   -- Listens until given number of bus transfer cycles are collected, i.e., you need bus traffic to get a result
   G1: for I in 0 to g_cores-1 generate
 
+    
     --Increment & Decrement for Stall observer process
     s_stall_observer_dec(I)  <= cyc_diag_i(I) AND s_ctrl_enable_o(0);         -- only decrement observer countdown if cycle line and enable were high
     s_stall_inc(I)           <= s_stall_observer_dec(I) AND stall_diag_i(I);  -- only increment stall count if cycle line and stall line and enable were high
 
+	 register_buslines : process (clk_ref_i)
+	 begin
+		if rising_edge(clk_ref_i) then
+		  r_stall_observer_dec(I) <= s_stall_observer_dec(I);
+		  r_stall_inc(I)          <= s_stall_inc(I);
+		end if;  
+	 end process;
+	 
+	 
     stall_observer : process (clk_ref_i)
     begin
 
@@ -201,8 +212,8 @@ begin
 
           else
             -- countdown and stall count
-            ra_stall_observer_cnt(I) <= ra_stall_observer_cnt(I)  - resize(unsigned(s_stall_observer_dec(I downto I)), ra_stall_observer_cnt(I)'length);
-            ra_stall_cnt(I)          <= ra_stall_cnt(I)           + resize(unsigned(s_stall_inc(I downto I)),          ra_stall_cnt(I)'length);
+            ra_stall_observer_cnt(I) <= ra_stall_observer_cnt(I)  - resize(unsigned(r_stall_observer_dec(I downto I)), ra_stall_observer_cnt(I)'length);
+            ra_stall_cnt(I)          <= ra_stall_cnt(I)           + resize(unsigned(r_stall_inc(I downto I)),          ra_stall_cnt(I)'length);
           end if;
         end if;
       end if;

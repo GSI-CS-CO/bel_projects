@@ -42,17 +42,18 @@
 // ****************************************************************************************
 
 // offsets
-#define B2BTEST_SHARED_NTRANSFER      (COMMON_SHARED_END            + _32b_SIZE_)       // # of transfers
-#define B2BTEST_SHARED_TH1EXTHI       (B2BTEST_SHARED_NTRANSFER     + _32b_SIZE_)       // period of h=1 extraction, high bits
+/*#define B2BTEST_SHARED_NTRANSFER      (COMMON_SHARED_END            + _32b_SIZE_)       // # of transfers
+  #define B2BTEST_SHARED_NINJECT        (B2BTEST_SHARED_NTRANSFER     + _32b_SIZE_)       // # of injections (within current transfer)*/
+#define B2BTEST_SHARED_TH1EXTHI       (COMMON_SHARED_END            + _32b_SIZE_)       // period of h=1 extraction, high bits
 #define B2BTEST_SHARED_TH1EXTLO       (B2BTEST_SHARED_TH1EXTHI      + _32b_SIZE_)       // period of h=1 extraction, low bits
 #define B2BTEST_SHARED_NHEXT          (B2BTEST_SHARED_TH1EXTLO      + _32b_SIZE_)       // harmonic number of extraction RF
 #define B2BTEST_SHARED_TH1INJHI       (B2BTEST_SHARED_NHEXT         + _32b_SIZE_)       // period of h=1 injection, high bits
 #define B2BTEST_SHARED_TH1INJLO       (B2BTEST_SHARED_TH1INJHI      + _32b_SIZE_)       // period of h=1 injection, low bits
 #define B2BTEST_SHARED_NHINJ          (B2BTEST_SHARED_TH1INJLO      + _32b_SIZE_)       // harmonic number of injection RF
-#define B2BTEST_SHARED_TRANSSTAT      (B2BTEST_SHARED_NHINJ         + _32b_SIZE_)       // bitwise state of ongoing transfer
+/*#define B2BTEST_SHARED_TRANSSTAT      (B2BTEST_SHARED_NHINJ         + _32b_SIZE_)       // bitwise state of ongoing transfer*/
 
 
 // diagnosis: end of used shared memory
-#define B2BTEST_SHARED_END            (B2BTEST_SHARED_TRANSSTAT     + _32b_SIZE_) 
+#define B2BTEST_SHARED_END            (B2BTEST_SHARED_NHINJ         + _32b_SIZE_) 
 
 #endif

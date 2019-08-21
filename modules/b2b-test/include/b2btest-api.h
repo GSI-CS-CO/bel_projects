@@ -34,22 +34,62 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  ********************************************************************************************/
-#ifndef __B2B_TEST_API_H_
-#define __B2B_TEST_API_H_
+#ifndef _B2B_TEST_API_H_
+#define _B2B_TEST_API_H_
 
 #define B2BTEST_X86_VERSION "0.0.7"
 
 #include <b2b-test.h>
+#include <etherbone.h>
 
 // small helper function
-uint64_t getSysTime();     
-
-// convert status code to status text
-const char* common_state_text(uint32_t code              // status code
-                              );
+uint64_t getSysTime();
 
 // convert state code to state text
-const char* b2btest_status_text(uint32_t code            // state code
-                                );
+const char* api_stateText(uint32_t  bit                // state code
+                          );
+// convert status code to status text
+const char* api_statusText(uint32_t  bit               // status code
+                           );
+// init for communicaiton with shared mem
+void api_initShared(eb_address_t lm32_base,            // base address of lm32
+                    eb_address_t sharedOffset          // offset of shared area
+                    );
+
+// read (and print) diagnostic data, returns eb_status
+int api_readDiag(eb_device_t device,                   // Etherbone device
+                 uint64_t    *statusArray,             // array with status bits
+                 uint32_t    *state,                   // state
+                 uint32_t    *version,                 // firmware version
+                 uint64_t    *mac,                     // WR MAC
+                 uint32_t    *ip,                      // WR IP
+                 uint32_t    *nBadStatus,              // # of bad status incidents
+                 uint32_t    *nBadState,               // # of bad state incidents
+                 uint64_t    *tDiag,                   // time, when diag data was reset
+                 uint64_t    *tS0,                     // time, when entering S0 state (firmware boot)
+                 uint32_t    *nTransfer,               // # of transfers
+                 uint32_t    *nInjection,              // # of injection within ongoing transfers
+                 uint32_t    *statTrans,               // status bits of transfer (application specific)
+                 uint32_t    printFlag                 // '1' print information to stdout
+                 );
+
+void api_printDiag(uint64_t  statusArray,            // array with status bits
+                   uint32_t  state,                  // state
+                   uint32_t  version,                // firmware version
+                   uint64_t  mac,                    // WR MAC
+                   uint32_t  ip,                     // WR IP
+                   uint32_t  nBadStatus,             // # of bad status incidents
+                   uint32_t  nBadState,              // # of bad state incidents
+                   uint64_t  tDiag,                  // time, when diag data was reset
+                   uint64_t  tS0,                    // time, when entering S0 state (firmware boot)
+                   uint32_t  nTransfer,              // # of transfers
+                   uint32_t  nInjection,             // # of injection within ongoing transfers
+                   uint32_t  statTrans               // status bits of transfer (application specific)
+                   );
+
+
+
+
+                 
 
 #endif

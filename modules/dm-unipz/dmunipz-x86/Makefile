@@ -47,13 +47,13 @@ endif
 # stuff above required for MASP support
 
 EXTRA_FLAGS ?= $(USEMASP) $(PRODUCTIVE)
-CFLAGS      ?= $(EXTRA_FLAGS) -Wall -O2 -g -I $(EB) -I $(FW) $(BOOST_INCL) $(MASP_INCL) 
+CFLAGS      ?= $(EXTRA_FLAGS) -Wall -O2 -g -I $(EB) -I $(FW) -I $(FW)/../include -I $(FW)/../../b2b-test/include $(BOOST_INCL) $(MASP_INCL) 
 LIBS        ?= -L $(EB)/.libs $(BOOST_LIBPATH) $(MASP_LIBPATH) -Wl,-rpath,$(PREFIX)/lib -letherbone -lm $(MASP_LIBS) $(GENERAL_LIBS) $(BOOST_LIBS) 
 
 all: $(TARGETS)
 
 dmunipz-ctl: dmunipz-ctl.cpp
-	$(CC) $(CFLAGS) -o dmunipz-ctl dmunipz-ctl.cpp $(LIBS)
+	$(CC) $(CFLAGS) ../../b2b-test/b2btest-x86/b2btest-api.c -o dmunipz-ctl dmunipz-ctl.cpp $(LIBS)
 
 clean:
 	rm -f *.o $(TARGETS)
