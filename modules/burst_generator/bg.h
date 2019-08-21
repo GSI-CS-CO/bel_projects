@@ -36,8 +36,10 @@ extern uint32_t*       _startshared[];
 
 /* definitions of buffers in shared memory */
 #define SHARED_MB_SLOT    0x04UL
-#define SHARED_CMD        0x08UL
-#define SHARED_INPUT      0x10UL
+#define SHARED_MB_SLOT_H  0x0CUL
+#define SHARED_CMD        0x10UL
+#define SHARED_INPUT      0x20UL
+#define MB_SLOT_CFG_FREE  0xFFFFFFFFUL
 
 /* id number to identify the LM32 firmware for burst generator */
 #define BG_FW_ID          0xb2b2b2b2UL

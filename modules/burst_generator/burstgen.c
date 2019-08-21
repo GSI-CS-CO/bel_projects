@@ -120,6 +120,7 @@ volatile uint32_t *pShared;         // pointer to begin of shared memory region
 volatile uint32_t *pCpuRamExternal; // external address (seen from host bridge) of this CPU's RAM
 volatile uint32_t *pSharedInput;    // pointer to a "user defined" u32 register; here: get input from host system
 volatile uint32_t *pSharedCmd;      // pointer to a "user defined" u32 register; here: get commnand from host system
+volatile uint32_t *pHostMbSlot;     // WB address of a mailbox slot subscribed by a host system
 
 uint64_t gInjection = 0;            // time duration for local message injection to ECA event input
 int gEcaChECPU = 0;                 // ECA channel for an embedded CPU (LM32), connected to ECA queue pointed by pECAQ
@@ -529,7 +530,10 @@ void configureEcaMsi(int enable, uint32_t channel) {
  ******************************************************************************/
 void respondToHost(uint32_t data)
 {
-  mprintf("host request %s\n", data == STATUS_OK ? "accepted" : "rejected!");
+  if (pHostMbSlot) {
+    *pHostMbSlot = data;
+    //mprintf("\t0x%x is written into 0x%x\n", data, (uint32_t)pHostMbSlot);
+  }
 }
 
 /*******************************************************************************
@@ -1090,6 +1094,7 @@ void execHostCmd(int32_t cmd)
 	mprintf("fw id\n");
 
 	*pSharedInput = BG_FW_ID;
+
 	break;
 
       /* commands used in firmware development */
@@ -1130,8 +1135,8 @@ void execHostCmd(int32_t cmd)
 	result = STATUS_ERR;
     }
 
-    if (result == STATUS_ERR)
-      respondToHost(result);
+    if (result == STATUS_OK)
+      respondToHost((uint32_t)cmd);
   }
 }
 
@@ -1206,6 +1211,18 @@ void setupMsiHandlers(void)
   configureEcaMsi(1, gEcaChECPU); // ECA MSIs are sent to destination address of pMyMsi
 
   initIrqTable();     // set up MSI handler
+
+  // get a mailbox slot subscribed by host
+  uint32_t host_slot = *(pShared + (SHARED_MB_SLOT_H >> 2));
+  if (host_slot == MB_SLOT_CFG_FREE || host_slot == 0)       // valid slot ranges are 1-127
+    mprintf("Invalid mailbox slot for host = 0x%x\n", host_slot);
+  else {
+    pHostMbSlot = pCpuMsiBox + (host_slot << 1);
+    mprintf("Mailbox slot for host            : 0x%x, available at 0x%x (ext 0x%x)\n", host_slot,
+	(uint32_t)(pShared + (SHARED_MB_SLOT_H >> 2)),
+	(uint32_t)(pCpuRamExternal + ((SHARED_MB_SLOT_H + SHARED_OFFS) >> 2)));
+    mprintf("Address of the mailbox slot (ext): 0x%x (0x%x)\n", (uint32_t)pHostMbSlot, (uint32_t)pHostMbSlot & 0x7FFFFFFF);
+  }
 }
 
 /*******************************************************************************
@@ -1388,8 +1405,6 @@ void main(void) {
   setupTasks();               // set up tasks for the IO actions and host communication, initialize the trg/tgg config table
 
   initMeasurements();         // init pointers, buffers, counters for the built-in measurements
-
-  mprintf("\nwaiting host commmand ...\n");
 
   while(1) {
 
