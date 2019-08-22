@@ -33,6 +33,7 @@
 #include <string>
 #include <daq_exception.hpp>
 #include <daq_eb_ram_buffer.hpp>
+#include <daq_calculations.hpp>
 
 #ifndef DAQ_DEFAULT_WB_DEVICE
    #define DAQ_DEFAULT_WB_DEVICE "dev/wbm0"
@@ -49,29 +50,10 @@
    SCU_ASSERT( channel <= c_maxChannels );                 \
 }
 
-
-#ifndef DAQ_VSS_MAX
-   #define DAQ_VSS_MAX 20.0
-#endif
-
 namespace Scu
 {
 namespace daq
 {
-
-
-/*! ---------------------------------------------------------------------------
- * @ingroup DAQ
- * @brief Converts raw data of the DAQ ADC in to voltage.
- *  (Nice to have function)
- * @param rawData raw data from the DAQ ADC.
- * @return Voltage in the range 0.0V to 10.0V
- */
-inline float rawToVoltage( DAQ_DATA_T rawData )
-{
-   return (static_cast<float>(static_cast<int16_t>(rawData)) * DAQ_VSS_MAX) /
-             static_cast<float>(static_cast<DAQ_DATA_T>(~0));
-}
 
 /*! ---------------------------------------------------------------------------
  * @ingroup DAQ
