@@ -24,16 +24,72 @@
  */
 #ifndef _DAQ_CALCULATIONS_HPP
 #define _DAQ_CALCULATIONS_HPP
+#include <time.h>
 
 namespace Scu
 {
 namespace daq
 {
 
+/*!
+ * @ingroup DAQ
+ * @brief Calculation factor converting nanoseconds to seconds and vice versa.
+ *
+ * Preventing of the possible miscounting of zeros. ;-)
+ */
+constexpr uint64_t NANOSECS_PER_SEC = 1000000000;
+
+/*!
+ * @ingroup DAQ
+ * @brief Type of POSIX time object.
+ *
+ * Removing the old fashioned structure definition.
+ */
+typedef struct ::tm TIME_DATE_T;
+
+/*! ---------------------------------------------------------------------------
+ * @ingroup DAQ
+ * @brief Converts the 64 bit white rabbit value in to the POSIX time object
+ *        of type "struct tm",
+ * @param rTm Reverence to the POSIX time object
+ * @param wrt White rabbit time
+ * @return Reverence to the POSIX time object including the actual time.
+ */
+inline TIME_DATE_T& wrToTimeDate( TIME_DATE_T& rTm, uint64_t wrt )
+{
+   ::time_t seconds = wrt / NANOSECS_PER_SEC;
+   TIME_DATE_T* pTmpTm = ::localtime( &seconds );
+   rTm = *pTmpTm;
+   return rTm;
+}
+
+/*! ---------------------------------------------------------------------------
+ * @ingroup DAQ
+ * @brief Converts the POSIX time object in a human readable string.
+ * @param rTm Reverence to the POSIX time object.
+ * @return Human readable string.
+ */
+inline std::string timeToString( TIME_DATE_T& rTm )
+{
+   return ::asctime( &rTm );
+}
+
+/*! ---------------------------------------------------------------------------
+ * @ingroup DAQ
+ * @brief Converts a 64 bit white rabbit value in a human readable
+ *        string including the date and time.
+ * @param wrt 64 bit white rabbit time.
+ * @return Human readable string with date and time.
+ */
+inline std::string wrToTimeDateString( uint64_t wrt )
+{
+   TIME_DATE_T time;
+   return timeToString( wrToTimeDate( time, wrt ) );
+}
+
 #ifndef DAQ_VPP_MAX
    #define DAQ_VPP_MAX 20.0
 #endif
-
 
 /*! ---------------------------------------------------------------------------
  * @ingroup DAQ
@@ -42,15 +98,15 @@ namespace daq
  * @param maxVss Difference of minimum and maximum voltage
  * @return Voltage in the range -maxVpp/2 to +maxVpp/2
  */
-template< typename T >
-float rawToVoltage( const T rawData, const float maxVpp = DAQ_VPP_MAX )
+template< typename IT, typename FT = float >
+FT rawToVoltage( const IT rawData, const FT maxVpp = DAQ_VPP_MAX )
 {
 #define __CALC_VOLTAGE_CASE( size )                                           \
    case sizeof( uint##size##_t ):                                             \
-   return (static_cast<float>(static_cast<int##size##_t>(rawData)) * maxVpp) /\
-             static_cast<float>(static_cast<T>(~0))
+     return (static_cast<FT>(static_cast<int##size##_t>(rawData)) * maxVpp) / \
+             static_cast<FT>(static_cast<IT>(~0))
 
-   switch( sizeof( T ) )
+   switch( sizeof( IT ) )
    {
       __CALC_VOLTAGE_CASE(  8 );
       __CALC_VOLTAGE_CASE( 16 );

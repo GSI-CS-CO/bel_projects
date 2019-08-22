@@ -32,6 +32,7 @@
  #include <vector>
  #include <mdaq_administration.hpp>
  #include <daq_eb_ram_buffer.hpp>
+ #include <daq_calculations.hpp>
 #endif
 
 namespace Scu
@@ -40,6 +41,11 @@ namespace MiLdaq
 {
 namespace MiLdaqt
 {
+
+#ifndef GNUPLOT_DEFAULT_TERMINAL
+  #define GNUPLOT_DEFAULT_TERMINAL "X11 size 1200,600"
+#endif
+
 #define FSM_DECLARE_STATE( state, attr... ) state
 #define FSM_INIT_FSM( startState, attr... ) m_state = startState
 #define FSM_TRANSITION( nextState, attr... ) m_state = nextState
@@ -49,6 +55,7 @@ class Plot;
 //////////////////////////////////////////////////////////////////////////////
 class DaqMilCompare: public DaqCompare
 {
+   friend class Plot;
    struct PLOT_T
    {
       double  m_time;
@@ -58,10 +65,10 @@ class DaqMilCompare: public DaqCompare
 
    enum STATE_T
    {
-      FSM_DECLARE_STATE( wait, label='waiting for trigger condition' ),
-      FSM_DECLARE_STATE( start, label='initialize new window' ),
-      FSM_DECLARE_STATE( collect, label='collecting data' ),
-      FSM_DECLARE_STATE( plot, label='plot values' )
+      FSM_DECLARE_STATE( WAIT, label='waiting for trigger condition' ),
+      FSM_DECLARE_STATE( START, label='initialize new plot' ),
+      FSM_DECLARE_STATE( COLLECT, label='collecting data' ),
+      FSM_DECLARE_STATE( PLOT, label='plot values' )
    };
 
    STATE_T            m_state;
@@ -79,10 +86,39 @@ public:
    DaqMilCompare( uint iterfaceAddress );
    virtual ~DaqMilCompare( void );
 
+   uint64_t getPlotStartTime( void ) const
+   {
+      return m_startTime;
+   }
+
+   uint64_t getTimeLimitNanoSec( void ) const
+   {
+      return 10 * daq::NANOSECS_PER_SEC;
+   }
+
+   double getTimeLimit( void ) const
+   {
+      return static_cast<double>(getTimeLimitNanoSec()) /
+             static_cast<double>(daq::NANOSECS_PER_SEC);
+   }
+
    void reset( void );
+
+   std::size_t getItemLimit( void ) const
+   {
+      return 10000;
+   }
+
+   std::string getOutputTerminal( void )
+   {
+      return GNUPLOT_DEFAULT_TERMINAL;
+   }
+
 private:
    void onData( uint64_t wrTimeStamp, MIL_DAQ_T actValue,
                                       MIL_DAQ_T setValue ) override;
+
+   void addItem( uint64_t time, MIL_DAQ_T actValue, MIL_DAQ_T setValue );
 
    void onInit( void ) override;
 };

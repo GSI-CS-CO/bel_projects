@@ -136,6 +136,16 @@ public:
    DaqInterface( daq::EbRamAccess* poEbAccess );
    virtual ~DaqInterface( void );
 
+   const std::string& getWbDevice( void )
+   {
+      return m_poEbAccess->getNetAddress();
+   }
+
+   const std::string getScuDomainName( void )
+   {
+      return getWbDevice().substr( getWbDevice().find_first_of( '/' ) + 1 );
+   }
+
    RING_INDEX_T getHeadRingIndex( void ) const
    {
       return m_oRing.m_head;

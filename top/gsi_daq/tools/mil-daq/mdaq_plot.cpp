@@ -24,6 +24,7 @@
  ******************************************************************************
  */
 #include "mdaq_plot.hpp"
+#include <daq_calculations.hpp>
 
 using namespace Scu::MiLdaq::MiLdaqt;
 using namespace std;
@@ -37,14 +38,43 @@ Plot::Plot( DaqMilCompare* pParent,
    :gpstr::PlotStream( gpOpt, gpExe, pipeSize )
    ,m_pParent( pParent )
 {
-   *this << "set terminal X11 title \"" "\"" << endl;
+   *this << "set terminal " << m_pParent->getOutputTerminal()
+         << " title \"SCU: "
+         << m_pParent->getParent()->getParent()->getScuDomainName()
+         << "\"" << endl;
    *this << "set grid" << endl;
+   *this << "set ylabel \"Voltage\"" << endl;
+   *this << "set yrange [" << -DAQ_VPP_MAX/2 << ':'
+                           << DAQ_VPP_MAX/2 << ']' << endl;
 }
 
 /*! ----------------------------------------------------------------------------
  */
 void Plot::plot( void )
 {
+   *this << "set title \"fg-" << m_pParent->getParent()->getLocation()
+         << '-' << m_pParent->getAddress()
+         << "  Date: "
+         << daq::wrToTimeDateString( m_pParent->getPlotStartTime() ) << endl;
+
+   *this << "set xrange [0:" << m_pParent->getTimeLimit() << ']' << endl;
+   *this << "set xlabel \"Plot start time: " << m_pParent->getPlotStartTime()
+         << " ns\"" << endl;
+
+   *this << "plot '-' title 'set value' with lines,"
+                " '-' title 'actual value' with lines" << endl;
+
+   for( auto& i: m_pParent->m_aPlotList )
+   {
+      *this << i.m_time << ' ' << i.m_set << endl;
+   }
+   *this << 'e' << endl;
+
+   for( auto& i: m_pParent->m_aPlotList )
+   {
+      *this << i.m_time << ' ' << i.m_act << endl;
+   }
+   *this << 'e' << endl;
 }
 
 //================================== EOF ======================================

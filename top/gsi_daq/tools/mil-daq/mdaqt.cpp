@@ -30,6 +30,7 @@
  #include "daqt_messages.hpp"
  #include "daqt_read_stdin.hpp"
  #include "mdaq_plot.hpp"
+ #include <daq_calculations.hpp>
 #endif
 #include "mdaqt.hpp"
 
@@ -44,6 +45,7 @@ using namespace MiLdaqt;
 DaqMilCompare::DaqMilCompare( uint iterfaceAddress )
    :DaqCompare( iterfaceAddress )
    ,m_pPlot( nullptr )
+   ,m_startTime( 0 )
 {
    reset();
 }
@@ -60,7 +62,7 @@ DaqMilCompare::~DaqMilCompare( void )
  */
 void DaqMilCompare::reset( void )
 {
-   FSM_INIT_FSM( wait );
+   FSM_INIT_FSM( START, label='Start' );
 }
 
 /*! ---------------------------------------------------------------------------
@@ -70,6 +72,22 @@ void DaqMilCompare::onInit( void )
    if( m_pPlot != nullptr )
       return;
    m_pPlot = new Plot( this );
+
+   m_pPlot->plot();
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+void
+DaqMilCompare::addItem( uint64_t time, MIL_DAQ_T actValue, MIL_DAQ_T setValue )
+{
+   m_aPlotList.push_back(
+   {
+     .m_time = static_cast<double>(time) /
+               static_cast<double>(daq::NANOSECS_PER_SEC),
+     .m_set  = daq::rawToVoltage( static_cast<uint16_t>(setValue >> 16) ),
+     .m_act  = daq::rawToVoltage( static_cast<uint16_t>(actValue >> 16) )
+   } );
 }
 
 /*! ---------------------------------------------------------------------------
@@ -85,6 +103,48 @@ void DaqMilCompare::onData( uint64_t wrTimeStamp, MIL_DAQ_T actValue,
              << (static_cast<double>(wrTimeStamp - m_lastTime) /  1000000000.0)
              << ", act: " << (actValue >> 16)
              << ", set: " << (setValue >> 16) << std::endl;
+
+   bool next;
+   do
+   {
+      next = false;
+      switch( m_state )
+      {
+         case START:
+         {
+            m_aPlotList.clear();
+            m_startTime = wrTimeStamp;
+            addItem( 0, actValue, setValue );
+            FSM_TRANSITION( COLLECT );
+            break;
+         }
+         case COLLECT:
+         {
+            uint64_t plotTime = wrTimeStamp - m_startTime;
+            if( plotTime > getTimeLimitNanoSec() ||
+                m_aPlotList.size() >= getItemLimit() )
+            {
+               next = true;
+               FSM_TRANSITION( PLOT );
+               break;
+            }
+            addItem( plotTime, actValue, setValue );
+        #ifdef __DOCFSM__
+            FSM_TRANSITION( COLLECT );
+        #endif
+            break;
+         }
+         case PLOT:
+         {
+            m_pPlot->plot();
+            next = true;
+            FSM_TRANSITION( START );
+            break;
+         }
+         default: assert( false ); break;
+      }
+   }
+   while( next );
 
    m_lastSetRawValue = setValue;
    m_lastActRawValue = actValue;
