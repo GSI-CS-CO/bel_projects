@@ -172,14 +172,11 @@ namespace FeSupport {
            *       "eb_block" then etherbone::Cycle::close() wont invoke
            *       this.\n
            *       The both functions mentioned above have to do this self.\n
-           *       Therefore its meaningful to make the Mutex locking here,\n
-           *       keeping the lock time as short as possible.
            *
            * @author UB
            */
           int run()
           {
-             IPC::scoped_lock<IPC::named_mutex> lock(_sysMu);
              return eb_socket_.run( timeout_ );
           }
 

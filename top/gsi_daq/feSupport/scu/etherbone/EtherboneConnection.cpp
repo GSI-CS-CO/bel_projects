@@ -413,47 +413,49 @@ void EtherboneConnection::write( const address_t eb_address,
    eb_status_t status;
    const std::size_t wide = format & EB_DATAX;
 
-   Cycle eb_cycle;
-   if ((status = eb_cycle.open(eb_device_, &userObj, __onEbSocked)) != EB_OK)
    {
+      IPC::scoped_lock<IPC::named_mutex> lock(_sysMu);
+      Cycle eb_cycle;
+      if((status = eb_cycle.open(eb_device_, &userObj, __onEbSocked)) != EB_OK)
+      {
         // TODO: a specific exception would be nice
-      std::string status_str(eb_status(status));
-      std::stringstream messageBuilder;
-      messageBuilder << __FILE__ << "::" << __FUNCTION__ << "::"
-                     << std::dec << __LINE__ << ": "
-                     << "ERROR: opening etherbone cycle failed! - "
-                     "ErrorCode: " << status << " ErrorMsg: "
-                     << status_str << std::endl;
-      throw BusException(messageBuilder.str());
-   }
+         std::string status_str(eb_status(status));
+         std::stringstream messageBuilder;
+         messageBuilder << __FILE__ << "::" << __FUNCTION__ << "::"
+                        << std::dec << __LINE__ << ": "
+                        << "ERROR: opening etherbone cycle failed! - "
+                        "ErrorCode: " << status << " ErrorMsg: "
+                        << status_str << std::endl;
+         throw BusException(messageBuilder.str());
+      }
 
-   for( uint i = 0, j = 0; i < size; i++, j += wide )
-   {
-      eb_cycle.write( eb_address + j, format,
-                      getValueByFormat( pData, wide, i ));
-   }
+      for( uint i = 0, j = 0; i < size; i++, j += wide )
+      {
+         eb_cycle.write( eb_address + j, format,
+                         getValueByFormat( pData, wide, i ));
+      }
 
-   if ((status = eb_cycle.close()) != EB_OK)
-   {
+      if ((status = eb_cycle.close()) != EB_OK)
+      {
         // TODO: a specific exception would be nice
-      std::string status_str(eb_status(status));
-      std::stringstream messageBuilder;
-      messageBuilder << __FILE__ << "::" << __FUNCTION__ << "::"
-                     << std::dec << __LINE__
-                     << ": ERROR: closing etherbone cycle failed! - "
-                     "ErrorCode: " << status << " ErrorMsg: "
-                     << status_str << std::endl;
-      throw BusException(messageBuilder.str());
-   }
+         std::string status_str(eb_status(status));
+         std::stringstream messageBuilder;
+         messageBuilder << __FILE__ << "::" << __FUNCTION__ << "::"
+                        << std::dec << __LINE__
+                        << ": ERROR: closing etherbone cycle failed! - "
+                        "ErrorCode: " << status << " ErrorMsg: "
+                        << status_str << std::endl;
+         throw BusException(messageBuilder.str());
+      }
 
-   do
-   {
-      run(); // Mutex will locked/unlocked within this function.
-      if( userObj.isFinished() )
-         break;
-   }
-   while( onSockedPoll() );
-
+      do
+      {
+         run();
+         if( userObj.isFinished() )
+            break;
+      }
+      while( onSockedPoll() );
+   } // End of Mutex scope.
    /*
     * Checking whether an error in the callback function "__onEbSocked"
     * has occurred.
@@ -494,46 +496,48 @@ void EtherboneConnection::read( const address_t eb_address,
    eb_status_t status;
    const std::size_t wide = format & EB_DATAX;
 
-   Cycle eb_cycle;
-   if( (status = eb_cycle.open(eb_device_, &userObj, __onEbSocked) ) != EB_OK )
    {
+      IPC::scoped_lock<IPC::named_mutex> lock(_sysMu);
+      Cycle eb_cycle;
+      if((status = eb_cycle.open(eb_device_, &userObj, __onEbSocked)) != EB_OK)
+      {
         // TODO: a specific exception would be nice
-      std::string status_str(eb_status(status));
-      std::stringstream messageBuilder;
-      messageBuilder << __FILE__ << "::" << __FUNCTION__ << "::"
-                     << std::dec << __LINE__ << ": "
-                     << "ERROR: opening etherbone cycle failed! - "
-                     "ErrorCode: " << status << " ErrorMsg: "
-                     << status_str << std::endl;
-      throw BusException(messageBuilder.str());
-   }
+         std::string status_str(eb_status(status));
+         std::stringstream messageBuilder;
+         messageBuilder << __FILE__ << "::" << __FUNCTION__ << "::"
+                        << std::dec << __LINE__ << ": "
+                        << "ERROR: opening etherbone cycle failed! - "
+                        "ErrorCode: " << status << " ErrorMsg: "
+                        << status_str << std::endl;
+         throw BusException(messageBuilder.str());
+      }
 
-   for( uint i = 0, j = 0; i < size; i++, j += wide )
-   {
-      eb_cycle.read( eb_address + j, format, nullptr );
-   }
+      for( uint i = 0, j = 0; i < size; i++, j += wide )
+      {
+         eb_cycle.read( eb_address + j, format, nullptr );
+      }
 
-   if( (status = eb_cycle.close()) != EB_OK )
-   {
+      if( (status = eb_cycle.close()) != EB_OK )
+      {
         // TODO: a specific exception would be nice
-      std::string status_str(eb_status(status));
-      std::stringstream messageBuilder;
-      messageBuilder << __FILE__ << "::" << __FUNCTION__ << "::"
-                     << std::dec << __LINE__
-                     << ": ERROR: closing etherbone cycle failed! - "
-                     "ErrorCode: " << status << " ErrorMsg: "
-                     << status_str << std::endl;
-      throw BusException(messageBuilder.str());
-   }
+         std::string status_str(eb_status(status));
+         std::stringstream messageBuilder;
+         messageBuilder << __FILE__ << "::" << __FUNCTION__ << "::"
+                        << std::dec << __LINE__
+                        << ": ERROR: closing etherbone cycle failed! - "
+                        "ErrorCode: " << status << " ErrorMsg: "
+                        << status_str << std::endl;
+         throw BusException(messageBuilder.str());
+      }
 
-   do
-   {
-      run(); // Mutex will locked/unlocked within this function.
-      if( userObj.isFinished() )
-         break;
-   }
-   while( onSockedPoll() );
-
+      do
+      {
+         run();
+         if( userObj.isFinished() )
+            break;
+      }
+      while( onSockedPoll() );
+   } // End of Mutex scope.
    /*
     * Checking whether an error in the callback function "__onEbSocked"
     * has occurred.
