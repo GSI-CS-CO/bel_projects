@@ -21,7 +21,7 @@ namespace dnt = DotStr::Node::TypeVal;
 
 
   //Generate download Bmp addresses. For downloads, this has to be two pass: get bmps first, then use them to get the node locations to read
-  vEbrds CarpeDM::gatherDownloadBmpVector() {
+  vEbrds CarpeDMInterface::CarpeDM::gatherDownloadBmpVector() {
     //sLog << "Starting download bmp address vectors" << std::endl;
     AllocTable& at = atDown;
     vEbrds er;
@@ -39,7 +39,7 @@ namespace dnt = DotStr::Node::TypeVal;
 
 
 
-  vEbrds CarpeDM::gatherDownloadDataVector() {
+  vEbrds CarpeDMInterface::CarpeDM::gatherDownloadDataVector() {
     //sLog << "Starting download bmp data vectors" << std::endl;
     AllocTable& at = atDown;
     vEbrds er;
@@ -64,7 +64,7 @@ namespace dnt = DotStr::Node::TypeVal;
     return er;
   }
 
-   void CarpeDM::parseDownloadMgmt(const vBuf& downloadData) {
+   void CarpeDMInterface::CarpeDM::parseDownloadMgmt(const vBuf& downloadData) {
     AllocTable& at = atDown;
 
 
@@ -129,7 +129,7 @@ namespace dnt = DotStr::Node::TypeVal;
 
 
 
-  void CarpeDM::parseDownloadData(const vBuf& downloadData) {
+  void CarpeDMInterface::CarpeDM::parseDownloadData(const vBuf& downloadData) {
     Graph& g = gDown;
     AllocTable& at = atDown;
     std::stringstream stream;
@@ -246,7 +246,7 @@ namespace dnt = DotStr::Node::TypeVal;
 
     //TODO assign to CPUs/threads
 
-  void CarpeDM::readMgmtLLMeta() {
+  void CarpeDMInterface::CarpeDM::readMgmtLLMeta() {
     vEbrds er;
     vBuf vDl;
     uint32_t modAdrBase = atDown.getMemories()[0].extBaseAdr + atDown.getMemories()[0].sharedOffs + SHCTL_META;
@@ -269,7 +269,7 @@ namespace dnt = DotStr::Node::TypeVal;
 
   }
 
-  int CarpeDM::download() {
+  int CarpeDMInterface::CarpeDM::download() {
     vBuf vDlBmpD, vDlD;
     //FIXME get mgmt linked list meta data
 

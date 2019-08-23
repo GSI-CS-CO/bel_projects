@@ -7,7 +7,7 @@
   CarpeDMInterface::~CarpeDMInterface() = default;
 
 // Etherbone interface
-  bool CarpeDMInterface::connect(const std::string& en, bool simulation=false, bool test=false) {return impl_->connect(en, simulation, test);} //Open connection to a DM via Etherbone
+  bool CarpeDMInterface::connect(const std::string& en, bool simulation, bool test)             {return impl_->connect(en, simulation, test);} //Open connection to a DM via Etherbone
   bool CarpeDMInterface::disconnect()                                                           {return impl_->disconnect();} //Close connection
                // SDB and DM HW detection Functions
 
@@ -89,7 +89,7 @@ uint64_t CarpeDMInterface::getThrDeadline(uint8_t cpuIdx, uint8_t thrIdx)       
 uint64_t CarpeDMInterface::getThrStartTime(uint8_t cpuIdx, uint8_t thrIdx)                                               { return impl_->getThrStartTime(cpuIdx, thrIdx);}
 uint32_t CarpeDMInterface::getThrStart(uint8_t cpuIdx)                                                                   { return impl_->getThrStart(cpuIdx);}
 uint64_t CarpeDMInterface::getThrPrepTime(uint8_t cpuIdx, uint8_t thrIdx)                                                { return impl_->getThrPrepTime(cpuIdx, thrIdx);}
-bool CarpeDMInterface::isThrRunning(uint8_t cpuIdx, uint8_t thrIdx)                                                      { return impl_->isThrRunning(cpuIdx, _t thrIdx);}                   // true if thread <thrIdx> is running
+bool CarpeDMInterface::isThrRunning(uint8_t cpuIdx, uint8_t thrIdx)                                                      { return impl_->isThrRunning(cpuIdx, thrIdx);}                   // true if thread <thrIdx> is running
 bool CarpeDMInterface::isSafeToRemove(const std::string& pattern, std::string& report, std::vector<QueueReport>& vQr)    { return impl_->isSafeToRemove(pattern, report, vQr);}
 bool CarpeDMInterface::isSafeToRemove(const std::string& pattern, std::string& report)                                   { return impl_->isSafeToRemove(pattern, report);}
 std::pair<int, int> CarpeDMInterface::findRunningPattern(const std::string& sPattern)                                    { return impl_->findRunningPattern(sPattern);} // get cpu and thread assignment of running pattern
@@ -185,7 +185,7 @@ vEbwrs& CarpeDMInterface::createCommand(vEbwrs& ew, const std::string& type, con
      void CarpeDMInterface::optimisedS2ROff()                                                        { return impl_->optimisedS2ROff();}                   // Optimised Safe2remove off
      bool CarpeDMInterface::isOptimisedS2R() const                                                   { return impl_->isOptimisedS2R();}                                     // tell if Safe2remove optimisation is on or off
      bool CarpeDMInterface::isValidDMCpu(uint8_t cpuIdx)                                             { return impl_->isValidDMCpu(cpuIdx);}                               // Check if CPU is registered as running a valid firmware
-     HealthReport& CarpeDMInterface::getHealth(uint8_t cpuIdx, HealthReport &hr)                     { return impl_->cgetHealth(cpuIdx, hr);}                // FIXME why reference in, reference out ? its not like you can add to this report ...
+     HealthReport& CarpeDMInterface::getHealth(uint8_t cpuIdx, HealthReport &hr)                     { return impl_->getHealth(cpuIdx, hr);}                // FIXME why reference in, reference out ? its not like you can add to this report ...
      QueueReport& CarpeDMInterface::getQReport(const std::string& blockName, QueueReport& qr)        { return impl_->getQReport(blockName, qr);}  // FIXME why reference in, reference out ? its not like you can add to this report ...
      std::string& CarpeDMInterface::getRawQReport(const std::string& blockName, std::string& report) { return impl_->getRawQReport(blockName, report);}
      uint64_t CarpeDMInterface::getDmWrTime()                                                        { return impl_->getDmWrTime();}
@@ -215,7 +215,7 @@ vEbwrs& CarpeDMInterface::createCommand(vEbwrs& ew, const std::string& type, con
             void CarpeDMInterface::lockManagerClear()                 { return impl_->lockManagerClear();}
             bool CarpeDMInterface::lockManagerHasEntries()            { return impl_->lockManagerHasEntries();}
             void CarpeDMInterface::softwareReset(bool clearStatistic) { return impl_->softwareReset(clearStatistic);}
-               std::CarpeDMInterface::vector<std::vector<uint64_t>> coverage3TestData(uint64_t seedStart, uint64_t cases, uint8_t parts, uint8_t percentage ) {return impl_->coverage3TestData(seedStart, cases, parts, percentage );}
+               std::vector<std::vector<uint64_t>> CarpeDMInterface::coverage3TestData(uint64_t seedStart, uint64_t cases, uint8_t parts, uint8_t percentage ) {return impl_->coverage3TestData(seedStart, cases, parts, percentage );}
 
 
 
