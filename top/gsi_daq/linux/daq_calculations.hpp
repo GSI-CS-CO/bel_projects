@@ -67,11 +67,13 @@ inline TIME_DATE_T& wrToTimeDate( TIME_DATE_T& rTm, uint64_t wrt )
  * @ingroup DAQ
  * @brief Converts the POSIX time object in a human readable string.
  * @param rTm Reverence to the POSIX time object.
- * @return Human readable string.
+ * @return Human readable string without linefeed.
  */
 inline std::string timeToString( TIME_DATE_T& rTm )
 {
-   return ::asctime( &rTm );
+   std::string ret( ::asctime( &rTm ) );
+   ret.pop_back(); // Removes the final linefeed character ('\n').
+   return ret;
 }
 
 /*! ---------------------------------------------------------------------------
