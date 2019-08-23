@@ -6,10 +6,10 @@
 #include <unistd.h>
 
 
-#include "carpeDM.h"
-#include "node.h"
-#include "block.h"
-#include "minicommand.h"
+#include "carpeDMInterface.h"
+//#include "node.h"
+//#include "block.h"
+//#include "minicommand.h"
 #include "dotstr.h"
 #include "strprintf.h"
 #include "filenames.h"
@@ -434,7 +434,7 @@ int main(int argc, char* argv[]) {
     if (optind+2 < argc) targetName      = argv[optind+2];
     if (optind+3 < argc) para            = argv[optind+3];
 
-  CarpeDM cdm = CarpeDM();
+  CarpeDMInterface cdm = CarpeDMInterface();
 
   if(verbose) cdm.verboseOn();
   if(debug)   cdm.debugOn();
