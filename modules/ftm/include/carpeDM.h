@@ -7,10 +7,10 @@
 #include <iostream>
 #include <string>
 #include <inttypes.h>
-#include <map>
-#include <boost/graph/graphviz.hpp>
-#include <boost/optional.hpp>
-#include <etherbone.h>
+//#include <map>
+//#include <boost/graph/graphviz.hpp>
+//#include <boost/optional.hpp>
+//#include <etherbone.h>
 #include "graph.h"
 #include "common.h"
 #include "hashmap.h"
@@ -19,6 +19,7 @@
 #include "covenanttable.h"
 #include "validation.h"
 #include "lockmanager.h"
+#include "carpeDMInterface.h"
 
 
 
@@ -28,7 +29,7 @@ class MiniCommand;
 
 
 
-class CarpeDM {
+class CarpeDMInterface::CarpeDM {
 
 private:
 
