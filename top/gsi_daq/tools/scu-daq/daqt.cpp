@@ -124,7 +124,10 @@ void Channel::Mode::plot( void )
                       << " s, Lost: " << m_pParent->getLostCount()
                       << "\" font \",14\"" << endl;
 
-   m_pParent->m_oPlot << "set xlabel \"Time: " << m_timeStamp <<
+   m_pParent->m_oPlot << "set xlabel \"Time: " << wrToTimeDateString(m_timeStamp)
+                      << " WR: 0x" <<
+                      hex << m_timeStamp << dec << ", " << m_timeStamp << " nsec"
+
                          ", RAM-level: " << m_ramLevel <<
                          " items -> " << std::fixed << setprecision( 2 )
                          << static_cast<double>(m_ramLevel * 100.0
@@ -136,9 +139,8 @@ void Channel::Mode::plot( void )
    m_notFirst = true;
 
    for( std::size_t i = 0; i < m_size; i++ )
-      m_pParent->m_oPlot << nsecToSec(i * m_sampleTime) << ' ' << m_pY[i] <<
-                                                                          endl;
-
+      m_pParent->m_oPlot << nsecToSec(i * m_sampleTime) << ' '
+                         << m_pY[i] << endl;
    m_pParent->m_oPlot << 'e' << endl;
 }
 
