@@ -343,7 +343,6 @@ void CarpeDM::getReverseNodeTree(vertex_t v, vertex_set_t& sV, Graph& g, vertex_
 
 bool CarpeDM::addResidentDestinations(Graph& gEq, Graph& gOrig, vertex_set_t cursors) {
   vertex_set_t resCmds; // prepare the set of flow commands to speed things up
-  edge_set_t resEdges; 
   vertex_set_map_t dummy; // this doesn't need to look out for covenant sets, ignore
   
   //FIXME what about flush with override ???
@@ -374,38 +373,18 @@ bool CarpeDM::addResidentDestinations(Graph& gEq, Graph& gOrig, vertex_set_t cur
         }
         if ((vBlock  == null_vertex) || (vDst == null_vertex)) {throw std::runtime_error(isSafeToRemove::exIntro + "Could not find block and dst for resident equivalents when scanning <" + gOrig[vRc].name + ">");}
 
-          
-        // save edge in case we need to change the type later to inactive
-        
          //check for equivalent resident edges
         boost::tie(out_begin, out_end) = out_edges(vBlock, gEq);
-        for (out_cur = out_begin; out_cur != out_end; ++out_cur) { if(gEq[*out_cur].type == det::sResFlowDst)  {resEdges.insert(*out_cur); found = true;}}
+        for (out_cur = out_begin; out_cur != out_end; ++out_cur) { if(gEq[*out_cur].type == det::sResFlowDst)  found = true;}
         if (!found) {
           if (verbose) { sLog << "Adding ResFlowAuxEdge: " << gEq[vBlock].name << " -> " << gEq[vDst].name << std::endl; }
-          auto e = boost::add_edge(vBlock, vDst, myEdge(det::sResFlowDst), gEq);
-          resEdges.insert(e.first);
+          boost::add_edge(vBlock, vDst, myEdge(det::sResFlowDst), gEq);
           addEdge = true;
           didWork = true;
         }
       }
     }
   }
-
-  // check if blocks at source of resflows are in an active area. Otherwise, the resflow edge can be ignored
-  if(verbose) std::cout << "Checking if any resflow paths can be deemed inactive" << std::endl;
-  for(auto& eX : resEdges) {
-    vertex_set_t actTree, actSi;
-    vertex_t vActBlock = source(eX, gEq);
-    if(verbose) std::cout << "Scanning at Block " << gEq[vActBlock].name << std::endl;
-    getReverseNodeTree(vActBlock, actTree, gEq, dummy);
-    for(auto& vChkTree : actTree) if(verbose) std::cout << gEq[vChkTree].name << ", ";
-    if(verbose) std::cout << std::endl;
-    set_intersection(actTree.begin(),actTree.end(),cursors.begin(),cursors.end(), std::inserter(actSi,actSi.begin()));
-    if ( actSi.size() == 0 ) {
-      if(verbose) std::cout << "No connection to active area found " << gEq[vActBlock].name << std::endl;
-      gEq[eX].type = "INACTIVE_resflowdst";
-    }
-  }  
   return didWork;
 }
 

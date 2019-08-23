@@ -8,6 +8,7 @@
 #include <boost/graph/graphviz.hpp>
 #include "ftm_common.h"
 #include "common.h"
+#include "aux_boost.h"
 #include "dotstr.h"
 
 using namespace DotStr::Misc;
@@ -126,6 +127,7 @@ typedef boost::graph_traits<Graph>::edge_descriptor edge_t;
 typedef boost::container::vector<vertex_t> vVertices;
 typedef std::map<vertex_t, vertex_t> vertex_map_t;
 typedef std::set<vertex_t> vertex_set_t;
+typedef std::set<edge_t> edge_set_t;
 typedef std::map<vertex_t, std::set<vertex_t>> vertex_set_map_t;
 
 typedef boost::property_map<Graph, std::string myVertex::*>::type NameMap;
