@@ -1,16 +1,12 @@
 #ifndef _CARPEDM_H_
 #define _CARPEDM_H_
 
-
-
 #include <stdio.h>
 #include <iostream>
 #include <string>
 #include <inttypes.h>
-//#include <map>
-//#include <boost/graph/graphviz.hpp>
-//#include <boost/optional.hpp>
-//#include <etherbone.h>
+
+#include "carpeDMInterface.h"
 #include "graph.h"
 #include "common.h"
 #include "hashmap.h"
@@ -19,12 +15,11 @@
 #include "covenanttable.h"
 #include "validation.h"
 #include "lockmanager.h"
-#include "carpeDMInterface.h"
 
 
 
 
-
+//class CarpeDMInterface;
 class MiniCommand;
 
 
@@ -174,23 +169,14 @@ protected:
 
 
 public:
-  CarpeDM()                                        : sLog(std::cout),  sErr(std::cerr) {Validation::init();}
-  CarpeDM(std::ostream& sLog)                      : sLog(sLog),       sErr(std::cerr) {Validation::init();}
-  CarpeDM(std::ostream& sLog, std::ostream& sErr)  : sLog(sLog),       sErr(sErr)      {Validation::init();}
-  ~CarpeDM() {};
+  CarpeDM();
+  CarpeDM(std::ostream& sLog);
+  CarpeDM(std::ostream& sLog, std::ostream& sErr);
+  ~CarpeDM();
 
 // Etherbone interface
-               bool connect(const std::string& en, bool simulation=false, bool test=false) {
-                    atUp.clear();
-                    atUp.removeMemories();
-                    gUp.clear();
-                    atDown.clear();
-                    atDown.removeMemories();
-                    gDown.clear();
-                    //sLog << "eb connect with" << en << std::endl;
-                    return ebd.connect(en, atUp, atDown); 
-                } //Open connection to a DM via Etherbone
-               bool disconnect() {return ebd.disconnect();} //Close connection
+               bool connect(const std::string& en, bool simulation=false, bool test=false);
+               bool disconnect(); //Close connection
                // SDB and DM HW detection Functions
 
 
