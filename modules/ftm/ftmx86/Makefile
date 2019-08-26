@@ -21,7 +21,7 @@ GRAPH_LIB       =-lboost_graph
 TOP            ?= ../../..
 
 VERSION_FW     = 6.2.0
-VERSION_TOOL   = 0.32.1
+VERSION_TOOL   = 0.33.0
 
 BUILD_DATE     = $(shell date +'%Y%m%d')
 BUILD_ID_ROM_ADR = 0x100
@@ -52,7 +52,7 @@ CDM_SRC_FILES   = event.cpp meta.cpp block.cpp visitoruploadcrawler.cpp visitord
 T_SOURCES       = $(addprefix $(SRCPATH)/, $(CDM_SRC_FILES)) $(addprefix $(LZMAPATH)/, $(LZMA_SRC_FILES))
 T_OBJECTS       = $(subst .c,.o,$(LZMA_SRC_FILES)) $(subst .cpp,.o,$(CDM_SRC_FILES))
 T_LIBS          = -Wl,-rpath,/usr/local/lib $(EB_LIB) $(GRAPH_LIB) $(SER_LIB)
-EXECS           = dm-sched dm-cmd dm-test
+EXECS           = dm-sched dm-cmd 
 TOOLS           = $(addprefix $(TOOLPATH)/, $(EXECS))
 BINS            = $(addprefix $(BINPATH)/, $(EXECS))
 
@@ -63,8 +63,8 @@ lib: libcarpedm.so
 tools: $(TOOLS)
 
 
-carpeDM.o: $(SRCPATH)/carpeDMInterface.cpp
-	$(T_CXX) $(T_CXXFLAGS) $(T_CXXFLAGS_CDM) -c $< -o $@ $(T_LIBS)
+carpeDMInterface.o: $(SRCPATH)/carpeDMInterface.cpp
+	$(T_CXX) $(T_CXXFLAGS) $(T_CXXFLAGS_CDM) -c $< -o $@
 
 %.o: 	$(SRCPATH)/%.cpp
 	$(T_CXX) $(T_CXXFLAGS) $(T_CXXFLAGS_CDM) -c $< -o $@ $(T_LIBS)

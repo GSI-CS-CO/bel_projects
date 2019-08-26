@@ -114,7 +114,7 @@ int main(int argc, char* argv[]) {
 
 
 
-  CarpeDMInterface cdm = CarpeDMInterface();
+  CarpeDMInterface cdm;
 
 
   if(verbose) cdm.verboseOn();
