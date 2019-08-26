@@ -8,10 +8,8 @@ EB          ?= ../../ip_cores/etherbone-core/api
 FW          ?= ..
 TARGETS     := saft-wrmilgw-ctl
 
-# set MASP to YES, if dmunipz-ctl should function as status emitter to MASP (when in monitoring mode)
+# set MASP to YES, if saft-wrmilgw-ctl has additional command line parameters to be configured as status emitter to MASP (when in monitoring mode)
 MASP        ?= NO              
-# set PRO to YES, if dmunipz-ctl should function as status emitter to MASP PRO(otherwise: MASP DEV)
-PRO         ?= NO
 
 # stuff below required for MASP support
 ifeq ($(MASP), YES)
@@ -46,10 +44,6 @@ INCLUDES += $(BOOST_INCL) $(GENERAL_INCL) $(MASP_INCL)
 MASP_LIBS +=  $(BOOST_LIBS) $(GENERAL_LIBS)
 
 USEMASP        = -D USEMASP
-
-ifeq ($(PRO), YES)
-PRODUCTIVE     = -D PRODUCTIVE
-endif
 
 endif
 # stuff above required for MASP support

@@ -92,6 +92,9 @@ static void wrmilgw_help (void)
   std::cout << "  -k                            Kill gateway. Only LM32 reset can recover."     << std::endl;
   std::cout << "                                 This is useful before flashing new firmware."  << std::endl;
   std::cout << "  -c                            No color on console ouput"                      << std::endl;
+#ifdef USEMASP
+  std::cout << "  -P                            MASP emitter in productive mode"                << std::endl;
+#endif
   std::cout << "  -h                            Print help (this message)"                      << std::endl;
   std::cout << std::endl;
 }
@@ -411,7 +414,7 @@ void on_in_use(bool in_use)
   if (in_use) {
     std::cout << "gateway used" << std::endl; 
   } else {
-    std::cout << "gateway idle, generating MIL_FILL events" << std::endl;
+    std::cout << "gateway idle, generating EVT_INTERNAL_FILL events" << std::endl;
   }
 }
 
@@ -441,13 +444,16 @@ int main (int argc, char** argv)
   bool    show_histogram = false;
   bool    read_registers = false;
   bool    request_fill   = false;
-  
+#ifdef USEMASP
+  bool    masp_productive= false;
+#endif
+
   // Get the application name 
   program = argv[0]; 
   
   // Parse arguments 
   //while ((opt = getopt(argc, argv, "c:dgxzlvh")) != -1)
-  while ((opt = getopt(argc, argv, "l:d:u:o:t:wsehrkifcCLmM:HR")) != -1) 
+  while ((opt = getopt(argc, argv, "l:d:u:o:t:wsehrkifPcCLmM:HR")) != -1) 
   {
     switch (opt)
     {
@@ -462,6 +468,9 @@ int main (int argc, char** argv)
       case 'e': { configESR   = true; break; }
       case 'i': { ++info; break; } // more info by putting -i multiple times
       case 'f': { request_fill = true; break; }
+#ifdef USEMASP
+      case 'P': { masp_productive = true; break; }
+#endif
       case 'l': {
          if (argv[optind-1] != NULL) { mil_latency = strtoull(argv[optind-1], &pEnd, 0); }
          else                        { std::cerr << "Error: missing latency value [us]" << std::endl; return -1; } 
@@ -767,12 +776,6 @@ int main (int argc, char** argv)
       std::string source_id(nomen);
       source_id.append(".");
       source_id.append(hostname);
-      bool masp_productive = 
-  #ifdef PRODUCTIVE
-            true;
-  #else 
-            false;
-  #endif //PRODUCTIVE
       MASP::StatusEmitter emitter(MASP::StatusEmitterConfig(
           MASP::StatusEmitterConfig::CUSTOM_EMITTER_DEFAULT(),
           source_id, masp_productive ));
@@ -801,7 +804,7 @@ int main (int argc, char** argv)
       // initially set the opReady state
       wrmilgw->setOpReady(opReady);
 
-      std::cout << "WrMilGateway: starting monitoring loop" << std::endl;
+      std::cout << "start monitoring loop" << std::endl;
       while(true) {
         saftlib::wait_for_signal();
         // check OP_READY and notify on change
