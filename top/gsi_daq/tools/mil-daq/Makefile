@@ -27,6 +27,7 @@ SOURCE += $(DAQ_DIR)/daq_ring_admin.c
 SOURCE += $(DAQ_LINUX_DIR)/daq_eb_ram_buffer.cpp
 SOURCE += $(MDAQ_LINUX_DIR)/mdaq_interface.cpp
 SOURCE += $(MDAQ_LINUX_DIR)/mdaq_administration.cpp
+SOURCE += mdaq_plot.cpp
 
 
 SOURCE += $(EB_SRC)/EtherboneConnection.cpp
@@ -62,6 +63,7 @@ LIBS += pthread
 LIBS += stdc++
 LIBS += etherbone
 
+DOX_INPUT += $(DAQ_LINUX_DIR)/daq_calculations.hpp
 
 HOST ?= tcp/$(SCU_URL)
 

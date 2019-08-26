@@ -52,7 +52,7 @@ DEFINES += GPSTR_DEFAULT_GNUPLOT_EXE=\"$(GNUPLOT_BIN)\"
 
  DEFINES += CONFIG_DDR3_NO_BURST_FUNCTIONS
 
-DEFINES += __ETHERBONE_CONNECTION_MUTEX="EtherBoneConnectionMutexDaq"
+#DEFINES += __ETHERBONE_CONNECTION_MUTEX="EtherBoneConnectionMutexDaq"
 INCLUDE_DIRS += $(EB_SRC)
 INCLUDE_DIRS += $(BASE_DIR)
 INCLUDE_DIRS += $(DAQ_LINUX_DIR)/sdaq
@@ -62,6 +62,7 @@ LIBS += pthread
 LIBS += stdc++
 LIBS += etherbone
 
+DOX_INPUT += $(DAQ_LINUX_DIR)/daq_calculations.hpp
 
 HOST ?= tcp/$(SCU_URL)
 
@@ -76,7 +77,9 @@ HOST ?= tcp/$(SCU_URL)
 #CALL_ARGS         ?= $(HOST) -Hrtev 9 1
 #CALL_ARGS         ?=  $(HOST) -G /usr/bin/gnuplot -PrzvC 3 1
 
-CALL_ARGS         ?=  $(HOST) -C=100US 3 1 3 2
+#CALL_ARGS         ?=  $(HOST) -C=100US 3 1 3 2
+CALL_ARGS         ?=  $(HOST) -C=100US 3 2
+#CALL_ARGS         ?=  $(HOST) -Pr 3 2
 #CALL_ARGS         ?=  $(HOST) -PrC 3 1 3 2 9 1 9 2
 #CALL_ARGS         ?= $(HOST) -n
 #CALL_ARGS         ?= -n

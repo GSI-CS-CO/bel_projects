@@ -29,6 +29,7 @@
  #include "daqt_read_stdin.hpp"
  #include "daqt_messages.hpp"
  #include "daqt_read_stdin.hpp"
+ #include "mdaqt_command_line.hpp"
  #include "mdaq_plot.hpp"
  #include <daq_calculations.hpp>
 #endif
@@ -187,6 +188,8 @@ void MilDaqAdministration::onUnregistered( RingItem* pUnknownItem )
 int mdaqtMain( int argc, char** ppArgv )
 {
    DEBUG_MESSAGE( "SCU: " << ppArgv[1] );
+   CommandLine cmdLine( argc, ppArgv );
+
    MilDaqAdministration milDaqAdmin( ppArgv[1] );
 
    DaqMilCompare daqCompare( 130 );

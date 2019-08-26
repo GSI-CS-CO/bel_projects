@@ -79,6 +79,11 @@ public:
       return m_poEb->getNetAddress();
    }
 
+   const std::string getScuDomainName( void )
+   {
+      return getNetAddress().substr( getNetAddress().find_first_of( '/' ) + 1 );
+   }
+
    int readDaqDataBlock( RAM_DAQ_PAYLOAD_T* pData,
                          std::size_t  len
                        #ifndef CONFIG_DDR3_NO_BURST_FUNCTIONS

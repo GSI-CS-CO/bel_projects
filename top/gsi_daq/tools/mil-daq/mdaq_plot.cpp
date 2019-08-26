@@ -62,7 +62,8 @@ void Plot::plot( void )
          << " ns\"" << endl;
 
    *this << "plot '-' title 'set value' with lines,"
-                " '-' title 'actual value' with lines" << endl;
+                " '-' title 'actual value' with lines"
+         << endl;
 
    for( auto& i: m_pParent->m_aPlotList )
    {

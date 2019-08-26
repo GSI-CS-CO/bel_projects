@@ -143,7 +143,7 @@ public:
 
    const std::string getScuDomainName( void )
    {
-      return getWbDevice().substr( getWbDevice().find_first_of( '/' ) + 1 );
+      return m_poEbAccess->getScuDomainName();
    }
 
    RING_INDEX_T getHeadRingIndex( void ) const

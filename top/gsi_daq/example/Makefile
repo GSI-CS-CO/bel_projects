@@ -60,6 +60,7 @@ DEBUG = 1
 DOX_INPUT += $(DAQ_DIR)/daq_descriptor.h
 DOX_INPUT += $(DAQ_DIR)/daq_command_interface.h
 DOX_INPUT += $(DAQ_DIR)/generated/shared_mmap.h
+DOX_INPUT += $(DAQ_LINUX_DIR)/daq_calculations.hpp
 DOX_OPTIMIZE_OUTPUT_FOR_C = "NO"
 DOX_RECURSIVE = "YES"
 #------------------------------------------------------------------------------

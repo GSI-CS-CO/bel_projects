@@ -23,7 +23,8 @@
  ******************************************************************************
  */
 #include <mdaq_interface.hpp>
-#include <generated/shared_mmap.h> //!!
+#include <byteswap.h>
+
 using namespace Scu::MiLdaq;
 using namespace std;
 
@@ -60,8 +61,8 @@ void DaqInterface::init( void )
 
    m_poEbAccess->readLM32( &tmpMagicNumber, sizeof( tmpMagicNumber ),
                            offsetof( SCU_SHARED_DATA_T, fg_magic_number ) );
-   tmpMagicNumber = gsi::convertByteEndian( tmpMagicNumber );
-   if( tmpMagicNumber != FG_MAGIC_NUMBER )
+
+   if( tmpMagicNumber != __bswap_constant_32( FG_MAGIC_NUMBER ) )
       throw Exception( "Wrong magic number respectively wrong LM32 app!" );
    readRingPosition();
 }
