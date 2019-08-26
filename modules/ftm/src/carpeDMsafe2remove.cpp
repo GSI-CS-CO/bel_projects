@@ -9,7 +9,7 @@
 #include <boost/algorithm/string.hpp>
 
 #include "common.h"
-#include "carpeDM.h"
+#include "carpeDMimpl.h"
 #include "propwrite.h"
 
 #include "node.h"
@@ -25,7 +25,7 @@ namespace isSafeToRemove {
 }
 
 
-bool CarpeDMInterface::CarpeDM::isSafeToRemove(Graph& gRem, std::string& report, std::vector<QueueReport>& vQr) {
+bool CarpeDM::CarpeDMimpl::isSafeToRemove(Graph& gRem, std::string& report, std::vector<QueueReport>& vQr) {
   std::set<std::string> patterns;
   bool warnUndefined = false;
   //Find all patterns 2B removed
@@ -37,13 +37,13 @@ bool CarpeDMInterface::CarpeDM::isSafeToRemove(Graph& gRem, std::string& report,
   return isSafeToRemove(patterns, report, vQr);
 }
 
-bool CarpeDMInterface::CarpeDM::isSafeToRemove(const std::string& pattern, std::string& report, std::vector<QueueReport>& vQr) {
+bool CarpeDM::CarpeDMimpl::isSafeToRemove(const std::string& pattern, std::string& report, std::vector<QueueReport>& vQr) {
   std::set<std::string> p = {pattern};
   return isSafeToRemove(p, report, vQr);
 }
 
 
-bool CarpeDMInterface::CarpeDM::isSafeToRemove(std::set<std::string> patterns, std::string& report, std::vector<QueueReport>& vQr ) {
+bool CarpeDM::CarpeDMimpl::isSafeToRemove(std::set<std::string> patterns, std::string& report, std::vector<QueueReport>& vQr ) {
   //std::cout << "verbose " << (int)verbose << " debug " << (int)debug << " sim " << (int)sim << " testmode " << (int)testmode << " optimisedS2R " << (int)optimisedS2R << std::endl;
 
 
@@ -259,7 +259,7 @@ bool CarpeDMInterface::CarpeDM::isSafeToRemove(std::set<std::string> patterns, s
   return isSafe;
 }
 
-bool CarpeDMInterface::CarpeDM::isOptimisableEdge(edge_t e, Graph& g) {
+bool CarpeDM::CarpeDMimpl::isOptimisableEdge(edge_t e, Graph& g) {
 
   vertex_t toBeChecked = target(e, g);
   Graph::in_edge_iterator in_begin, in_end, in_cur;
@@ -271,7 +271,7 @@ bool CarpeDMInterface::CarpeDM::isOptimisableEdge(edge_t e, Graph& g) {
   return true;
 }
 
-bool CarpeDMInterface::CarpeDM::isCovenantPending(const std::string& covName) {
+bool CarpeDM::CarpeDMimpl::isCovenantPending(const std::string& covName) {
 
   cmI x = ct.lookup(covName);
   if (!ct.isOk(x)) {
@@ -280,7 +280,7 @@ bool CarpeDMInterface::CarpeDM::isCovenantPending(const std::string& covName) {
   return isCovenantPending(x);
 }
 
-bool CarpeDMInterface::CarpeDM::isCovenantPending(cmI cov) {
+bool CarpeDM::CarpeDMimpl::isCovenantPending(cmI cov) {
   QueueReport qr;
   getQReport(cov->name, qr);
   QueueElement& qe = qr.aQ[cov->prio].aQe[cov->slot];
@@ -289,7 +289,7 @@ bool CarpeDMInterface::CarpeDM::isCovenantPending(cmI cov) {
   else                                    return false;
 }
 
-unsigned CarpeDMInterface::CarpeDM::updateCovenants() {
+unsigned CarpeDM::CarpeDMimpl::updateCovenants() {
 
   unsigned cnt = 0;
   vStrC toDelete;
@@ -307,14 +307,14 @@ unsigned CarpeDMInterface::CarpeDM::updateCovenants() {
 }
 
 
-bool CarpeDMInterface::CarpeDM::isSafetyCritical(vertex_set_t& c) {
+bool CarpeDM::CarpeDMimpl::isSafetyCritical(vertex_set_t& c) {
   if (c.find(null_vertex) != c.end()) return true;
   else return false;
 }
 
 
 //recursively inserts all vertex idxs of the tree reachable (via in edges) from start vertex into the referenced set
-void CarpeDMInterface::CarpeDM::getReverseNodeTree(vertex_t v, vertex_set_t& sV, Graph& g, vertex_set_map_t& covenantsPerVertex, vertex_t covenant) {
+void CarpeDM::CarpeDMimpl::getReverseNodeTree(vertex_t v, vertex_set_t& sV, Graph& g, vertex_set_map_t& covenantsPerVertex, vertex_t covenant) {
   vertex_t nextCovenant;
   Graph::in_edge_iterator in_begin, in_end, in_cur;
   //Do the crawl
@@ -341,7 +341,7 @@ void CarpeDMInterface::CarpeDM::getReverseNodeTree(vertex_t v, vertex_set_t& sV,
   }
 }
 
-bool CarpeDMInterface::CarpeDM::addResidentDestinations(Graph& gEq, Graph& gOrig, vertex_set_t cursors) {
+bool CarpeDM::CarpeDMimpl::addResidentDestinations(Graph& gEq, Graph& gOrig, vertex_set_t cursors) {
   vertex_set_t resCmds; // prepare the set of flow commands to speed things up
   vertex_set_map_t dummy; // this doesn't need to look out for covenant sets, ignore
   
@@ -388,7 +388,7 @@ bool CarpeDMInterface::CarpeDM::addResidentDestinations(Graph& gEq, Graph& gOrig
   return didWork;
 }
 
-bool CarpeDMInterface::CarpeDM::updateStaleDefaultDestinations(Graph& g, AllocTable& at, CovenantTable& covTab, std::string& qAnalysis) {
+bool CarpeDM::CarpeDMimpl::updateStaleDefaultDestinations(Graph& g, AllocTable& at, CovenantTable& covTab, std::string& qAnalysis) {
   bool didWork = false;
   edge_t edgeToDelete;
 
@@ -420,7 +420,7 @@ bool CarpeDMInterface::CarpeDM::updateStaleDefaultDestinations(Graph& g, AllocTa
   return didWork;
 }
 
-vertex_set_t CarpeDMInterface::CarpeDM::getDominantFlowDst(vertex_t vQ, Graph& g, AllocTable& at, CovenantTable& covTab, std::string& qAnalysis) {
+vertex_set_t CarpeDM::CarpeDMimpl::getDominantFlowDst(vertex_t vQ, Graph& g, AllocTable& at, CovenantTable& covTab, std::string& qAnalysis) {
   vertex_set_t ret;
 
   //FIXME what about flush with override ???
@@ -479,7 +479,7 @@ vertex_set_t CarpeDMInterface::CarpeDM::getDominantFlowDst(vertex_t vQ, Graph& g
 
 
 
-bool CarpeDMInterface::CarpeDM::addDynamicDestinations(Graph& g, AllocTable& at) {
+bool CarpeDM::CarpeDMimpl::addDynamicDestinations(Graph& g, AllocTable& at) {
   bool didWork = false;
 
   BOOST_FOREACH( vertex_t vChkBlock, vertices(g) ) {
@@ -498,7 +498,7 @@ bool CarpeDMInterface::CarpeDM::addDynamicDestinations(Graph& g, AllocTable& at)
 }
 
 
-vertex_set_t CarpeDMInterface::CarpeDM::getDynamicDestinations(vertex_t vQ, Graph& g, AllocTable& at) {
+vertex_set_t CarpeDM::CarpeDMimpl::getDynamicDestinations(vertex_t vQ, Graph& g, AllocTable& at) {
 
 
   vertex_set_t ret;

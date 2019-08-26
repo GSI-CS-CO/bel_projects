@@ -4,10 +4,10 @@
 #include <inttypes.h>
 #include "common.h"
 
-#include "carpeDM.h"
+#include "carpeDMimpl.h"
 #include "dm_diag_regs.h"
 
-HwDelayReport& CarpeDMInterface::CarpeDM::getHwDelayReport(HwDelayReport& hdr) {
+HwDelayReport& CarpeDM::CarpeDMimpl::getHwDelayReport(HwDelayReport& hdr) {
   //create delayreport
   if (sim) {
     hdr.timeObservIntvl   = 1000000;
@@ -67,17 +67,17 @@ HwDelayReport& CarpeDMInterface::CarpeDM::getHwDelayReport(HwDelayReport& hdr) {
 
 }
 
-void CarpeDMInterface::CarpeDM::clearHwDiagnostics() {
+void CarpeDM::CarpeDMimpl::clearHwDiagnostics() {
   uint32_t devAdr = ebd.getDiagDevAdr();
   ebd.write32b(devAdr + DM_DIAG_RESET_OWR, 1);
 }
 
-void CarpeDMInterface::CarpeDM::startStopHwDiagnostics(bool enable) {
+void CarpeDM::CarpeDMimpl::startStopHwDiagnostics(bool enable) {
   uint32_t devAdr = ebd.getDiagDevAdr();
   ebd.write32b(devAdr + DM_DIAG_STALL_OBSERVATION_INTERVAL_RW, (uint32_t)enable);
 }
 
-void CarpeDMInterface::CarpeDM::configHwDiagnostics(uint64_t timeIntvl, uint32_t stallIntvl) {
+void CarpeDM::CarpeDMimpl::configHwDiagnostics(uint64_t timeIntvl, uint32_t stallIntvl) {
   uint32_t devAdr = ebd.getDiagDevAdr();
   timeIntvl = timeIntvl < 8 ? 0 : timeIntvl - 8; // hardware has 1 cycle to latch, so there is always intvl of 8ns + x
   //quick n dirty
@@ -86,7 +86,7 @@ void CarpeDMInterface::CarpeDM::configHwDiagnostics(uint64_t timeIntvl, uint32_t
 
 }
 
-void CarpeDMInterface::CarpeDM::configFwDiagnostics(uint64_t warnThrshld) {
+void CarpeDM::CarpeDMimpl::configFwDiagnostics(uint64_t warnThrshld) {
   vEbwrs ew;
   uint8_t b[_TS_SIZE_];
   writeLeNumberToBeBytes<uint64_t>(b, warnThrshld);
