@@ -6,7 +6,7 @@
 #include <unistd.h>
 
 
-#include "carpeDMInterface.h"
+#include "carpeDM.h"
 //#include "node.h"
 //#include "block.h"
 //#include "minicommand.h"
@@ -97,7 +97,7 @@ std::string nsTimeToDate(uint64_t t) {
 }
 
 
-void showStatus(const char *netaddress, CarpeDMInterface& cdm, bool verbose) {
+void showStatus(const char *netaddress, CarpeDM& cdm, bool verbose) {
   std::string show;
   cdm.showMemSpace();
   if(cdm.isOptimisedS2R()) cdm.dirtyCtShow();
@@ -166,7 +166,7 @@ void showStatus(const char *netaddress, CarpeDMInterface& cdm, bool verbose) {
 
 }
 
-void showRawStatus(const char *netaddress, CarpeDMInterface& cdm) {
+void showRawStatus(const char *netaddress, CarpeDM& cdm) {
   uint8_t cpuQty = cdm.getCpuQty();
   uint8_t thrQty = _THR_QTY_;
 
@@ -206,7 +206,7 @@ void showRawStatus(const char *netaddress, CarpeDMInterface& cdm) {
 }
 
 
-void showHealth(const char *netaddress, CarpeDMInterface& cdm, bool verbose) {
+void showHealth(const char *netaddress, CarpeDM& cdm, bool verbose) {
   std::string show;
   uint8_t cpuQty = cdm.getCpuQty();
 
@@ -434,7 +434,7 @@ int main(int argc, char* argv[]) {
     if (optind+2 < argc) targetName      = argv[optind+2];
     if (optind+3 < argc) para            = argv[optind+3];
 
-  CarpeDMInterface cdm;
+  CarpeDM cdm;
 
   if(verbose) cdm.verboseOn();
   if(debug)   cdm.debugOn();

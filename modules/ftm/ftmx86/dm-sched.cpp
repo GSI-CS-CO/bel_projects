@@ -5,7 +5,7 @@
 #include <unistd.h>
 
 
-#include "carpeDMInterface.h"
+#include "carpeDM.h"
 #include "filenames.h"
 
 
@@ -114,7 +114,7 @@ int main(int argc, char* argv[]) {
 
 
 
-  CarpeDMInterface cdm;
+  CarpeDM cdm;
 
 
   if(verbose) cdm.verboseOn();

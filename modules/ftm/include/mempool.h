@@ -18,7 +18,7 @@ typedef std::set<uint32_t> aPool; // contains all available addresses in LM32 me
 
 class MemPool {
   friend class AllocTable;
-  friend class CarpeDMInterface;
+  friend class CarpeDM;
   //friend class CarpeDM;
 
 
