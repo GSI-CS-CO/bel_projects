@@ -133,7 +133,7 @@ bool DaqAdministration::registerDevice( DaqDevice* pDevice )
 
 /*-----------------------------------------------------------------------------
  */
-DaqDevice* DaqAdministration::getDvice( const uint location )
+DaqDevice* DaqAdministration::getDevice( const uint location )
 {
    for( auto& i: m_devicePtrList )
    {
@@ -148,7 +148,7 @@ DaqDevice* DaqAdministration::getDvice( const uint location )
 inline
 DaqCompare* DaqAdministration::findDaqCompare( const uint channel )
 {
-   DaqDevice* pDaqDevice = getDvice( getMilDaqLocationByChannel( channel ) );
+   DaqDevice* pDaqDevice = getDevice( getMilDaqLocationByChannel( channel ) );
    if( pDaqDevice == nullptr )
       return nullptr;
 
@@ -164,24 +164,6 @@ int DaqAdministration::distributeData( void )
 
    RingItem oRingItem;
    readRingItem( oRingItem );
-#if 0
-   std::cout << "Timestamp: " << oRingItem.getTimestamp() << std::endl;
-   time_t wrStampSeconds = oRingItem.getTimestamp() / 1000000000;
-   struct tm * timeinfo;
-   timeinfo = localtime( &wrStampSeconds );
-   std::cout << "WR stamp human readable: " <<  asctime(timeinfo) << std::endl;
-   std::cout << "Channel:   " << std::hex << oRingItem.getChannel() << std::dec << std::endl;
-   //if( oRingItem.getMilDaqScuBusSlot() != 0 )
-   //   std::cout << "SCU-Slot: " << oRingItem.getMilDaqScuBusSlot() << std::endl;
-   //if( oRingItem.getMilDaqScuMilExtention() != 0 )
-   //   std::cout << "Mil-Extention: " << oRingItem.getMilDaqScuMilExtention() << std::endl;
-
-   std::cout << "Location: " << std::hex <<  oRingItem.getMilDaqLocation() << std::dec << std::endl;
-   std::cout << "Address:  " << oRingItem.getMilDaqAddress()  << std::endl;
-
-   std::cout << "Set-Value: " << oRingItem.getSetValue() << std::endl;
-   std::cout << "Act-Value: " << oRingItem.getActValue() << std::endl;
-#endif
 
    DaqCompare* pCurrent = findDaqCompare( oRingItem.getChannel() );
    if( pCurrent != nullptr )

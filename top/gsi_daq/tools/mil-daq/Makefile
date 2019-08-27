@@ -15,7 +15,7 @@ MIAN_MODULE := mdaqt.cpp
 BASE_DIR := ..
 EB_SRC= $(DAQ_DIR)/feSupport/scu/etherbone
 
-#SOURCE += daqt_command_line.cpp
+SOURCE += mdaqt_command_line.cpp
 #SOURCE += daqt_attributes.cpp
 
 SOURCE += $(BASE_DIR)/daqt_read_stdin.cpp
@@ -70,7 +70,7 @@ HOST ?= tcp/$(SCU_URL)
 
 #CALL_ARGS         ?=  $(HOST)
 
-CALL_ARGS = tcp/scuxl0107
+CALL_ARGS = tcp/scuxl0107 39 130 39 129 39 1 39 2
 
 REMOTE_CALL_ARGS  ?= "dev/wbm0"
 

@@ -33,6 +33,7 @@
  #include <mdaq_administration.hpp>
  #include <daq_eb_ram_buffer.hpp>
  #include <daq_calculations.hpp>
+ #include <mdaqt_command_line.hpp>
 #endif
 
 namespace Scu
@@ -46,11 +47,13 @@ namespace MiLdaqt
   #define GNUPLOT_DEFAULT_TERMINAL "X11 size 1200,600"
 #endif
 
+#ifdef FSM_DECLARE_STATE
+   #undef  FSM_DECLARE_STATE
+#endif
 #define FSM_DECLARE_STATE( state, attr... ) state
-#define FSM_INIT_FSM( startState, attr... ) m_state = startState
-#define FSM_TRANSITION( nextState, attr... ) m_state = nextState
 
 class Plot;
+class Device;
 
 //////////////////////////////////////////////////////////////////////////////
 class DaqMilCompare: public DaqCompare
@@ -86,6 +89,8 @@ public:
    DaqMilCompare( uint iterfaceAddress );
    virtual ~DaqMilCompare( void );
 
+   Device* getParent( void );
+
    uint64_t getPlotStartTime( void ) const
    {
       return m_startTime;
@@ -106,7 +111,7 @@ public:
 
    std::size_t getItemLimit( void ) const
    {
-      return 10000;
+      return 20000;
    }
 
    std::string getOutputTerminal( void )
@@ -123,16 +128,58 @@ private:
    void onInit( void ) override;
 };
 
+class MilDaqAdministration;
+//////////////////////////////////////////////////////////////////////////////
+class Device: public DaqDevice
+{
+public:
+   Device( uint n ): DaqDevice( n ) {}
+   DaqMilCompare* getDaqCompare( const uint address )
+   {
+      return static_cast<DaqMilCompare*>(DaqDevice::getDaqCompare( address ));
+   }
+
+   MilDaqAdministration* getParent( void );
+};
+
+class CommandLine;
+
 //////////////////////////////////////////////////////////////////////////////
 class MilDaqAdministration: public DaqAdministration
 {
-   bool m_showUnregistered;
+   friend class CommandLine;
+   CommandLine*   m_poCommandLine;
 
 public:
-   MilDaqAdministration( std::string ebAddress );
+   MilDaqAdministration( CommandLine* m_poCommandLine, std::string ebAddress );
    virtual ~MilDaqAdministration( void );
+
+   CommandLine* getCommandLine( void )
+   {
+      return m_poCommandLine;
+   }
+
+   Device* getDevice( const uint number )
+   {
+      return static_cast<Device*>(DaqAdministration::getDevice( number ));
+   }
+
    void onUnregistered( RingItem* pUnknownItem ) override;
+
+   bool showUngegistered( void );
 };
+
+inline
+Device* DaqMilCompare::getParent( void )
+{
+   return static_cast<Device*>(DaqCompare::getParent());
+}
+
+inline
+MilDaqAdministration* Device::getParent( void )
+{
+   return static_cast<MilDaqAdministration*>(DaqDevice::getParent());
+}
 
 
 } // namespace MiLdaqt

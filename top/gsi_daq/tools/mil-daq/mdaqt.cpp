@@ -37,8 +37,12 @@
 
 using namespace std;
 using namespace Scu;
+using namespace Scu::daq;
 using namespace MiLdaq;
 using namespace MiLdaqt;
+
+#define FSM_INIT_FSM( startState, attr... ) m_state = startState
+#define FSM_TRANSITION( nextState, attr... ) m_state = nextState
 
 ///////////////////////////////////////////////////////////////////////////////
 /*! ---------------------------------------------------------------------------
@@ -96,14 +100,8 @@ DaqMilCompare::addItem( uint64_t time, MIL_DAQ_T actValue, MIL_DAQ_T setValue )
 void DaqMilCompare::onData( uint64_t wrTimeStamp, MIL_DAQ_T actValue,
                                                           MIL_DAQ_T setValue )
 {
-   if( (m_lastSetRawValue == setValue) )//&& (m_lastActRawValue == actlValue) )
-      return;
-
-   std::cout << "timestamp: " << wrTimeStamp
-             << ", rel time: "
-             << (static_cast<double>(wrTimeStamp - m_lastTime) /  1000000000.0)
-             << ", act: " << (actValue >> 16)
-             << ", set: " << (setValue >> 16) << std::endl;
+//   if( (m_lastSetRawValue == setValue) )//&& (m_lastActRawValue == actlValue) )
+//      return;
 
    bool next;
    do
@@ -130,6 +128,8 @@ void DaqMilCompare::onData( uint64_t wrTimeStamp, MIL_DAQ_T actValue,
                break;
             }
             addItem( plotTime, actValue, setValue );
+            //if( plotTime > NANOSECS_PER_SEC / 50 )
+            //   m_pPlot->plot();
         #ifdef __DOCFSM__
             FSM_TRANSITION( COLLECT );
         #endif
@@ -155,10 +155,11 @@ void DaqMilCompare::onData( uint64_t wrTimeStamp, MIL_DAQ_T actValue,
 ///////////////////////////////////////////////////////////////////////////////
 /*! ---------------------------------------------------------------------------
  */
-MilDaqAdministration::MilDaqAdministration( std::string ebAddress )
+MilDaqAdministration::MilDaqAdministration( CommandLine* m_poCommandLine,
+                                            std::string ebAddress )
    :DaqAdministration( new DaqEb::EtherboneConnection( ebAddress ) )
+   ,m_poCommandLine( m_poCommandLine )
 {
-   m_showUnregistered = true;
 }
 
 /*! ---------------------------------------------------------------------------
@@ -172,7 +173,7 @@ MilDaqAdministration::~MilDaqAdministration( void )
  */
 void MilDaqAdministration::onUnregistered( RingItem* pUnknownItem )
 {
-   if( !m_showUnregistered )
+   if( !m_poCommandLine->isVerbose() )
       return;
 
    std::cout << pUnknownItem->getTimestamp() << ' '
@@ -187,23 +188,21 @@ void MilDaqAdministration::onUnregistered( RingItem* pUnknownItem )
  */
 int mdaqtMain( int argc, char** ppArgv )
 {
-   DEBUG_MESSAGE( "SCU: " << ppArgv[1] );
+
    CommandLine cmdLine( argc, ppArgv );
 
-   MilDaqAdministration milDaqAdmin( ppArgv[1] );
+   MilDaqAdministration* pDaqAdmin = cmdLine();
 
-   DaqMilCompare daqCompare( 130 );
-   DaqDevice daqDevice( 39 );
+   if( pDaqAdmin == nullptr )
+      return EXIT_FAILURE;
 
-   daqDevice.registerDaqCompare( &daqCompare );
-   milDaqAdmin.registerDevice( &daqDevice );
-
+   DEBUG_MESSAGE( "SCU: " << pDaqAdmin->getWbDevice() );
    int key;
    Terminal oTerminal;
    DEBUG_MESSAGE( "Entering loop" );
    while( (key = Terminal::readKey()) != '\e' )
    {
-      milDaqAdmin.distributeData();
+      pDaqAdmin->distributeData();
   //    DEBUG_MESSAGE( "Head: " << milDaqAdmin.getHeadRingIndex() );
   //    DEBUG_MESSAGE( "Tail: " << milDaqAdmin.getTailRingIndex() );
    }
@@ -219,12 +218,10 @@ int main( int argc, char** ppArgv )
    {
       return mdaqtMain( argc, ppArgv );
    }
-#if 1
    catch( MiLdaq::Exception& e )
    {
       ERROR_MESSAGE( "Exception occurred: " << e.what() );
    }
-#endif
    catch( std::exception& e )
    {
       ERROR_MESSAGE( "std::exception occurred: " << e.what() );

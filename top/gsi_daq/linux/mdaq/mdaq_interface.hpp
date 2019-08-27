@@ -54,6 +54,11 @@ public:
 class DaqInterface
 {
 public:
+   constexpr static uint         c_maxDevices        = 40;
+   constexpr static uint         c_maxSlots          = 12;
+   constexpr static uint         c_startSlot         = 0;
+   constexpr static uint         c_maxChannels       = 254;
+
    typedef ring_pos_t RING_INDEX_T;
    typedef struct daq RING_ITEM_T;
 

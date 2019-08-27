@@ -40,21 +40,44 @@ namespace MiLdaq
 namespace MiLdaqt
 {
 
+#ifdef FSM_DECLARE_STATE
+   #undef  FSM_DECLARE_STATE
+#endif
+#define FSM_DECLARE_STATE( state, attr... ) state
+
+class MilDaqAdministration; // Loest Henne-Ei Problem...
+class Device;
+class DaqMilCompare;
+
 ///////////////////////////////////////////////////////////////////////////////
 class CommandLine: public PARSER
 {
+   enum STATE_T
+   {
+      FSM_DECLARE_STATE( READ_EB_NAME ),
+      FSM_DECLARE_STATE( READ_SLOT ),
+      FSM_DECLARE_STATE( READ_CHANNEL )
+   };
+
    static std::vector<OPTION> c_optList;
+   STATE_T                    m_state;
    bool                       m_verbose;
 
-   std::string    m_gnuplotBin;
-   std::string    m_gnuplotTerminal;
-   std::string    m_gnuplotOutput;
+   MilDaqAdministration*      m_poAllDaq;
+   Device*                    m_poCurrentDevice;
+   DaqMilCompare*             m_poCurrentChannel;
 
-   static bool readInteger( unsigned int&, const std::string& );
+   std::string                m_gnuplotBin;
+   std::string                m_gnuplotTerminal;
+   std::string                m_gnuplotOutput;
+
+   static bool readInteger( uint&, const std::string& );
 
 public:
    CommandLine( int argc, char** ppArgv );
    virtual ~CommandLine( void );
+
+   MilDaqAdministration* operator()( void );
 
    int onArgument( void ) override;
 
@@ -82,7 +105,9 @@ public:
    {
       return !m_gnuplotOutput.empty();
    }
-
+protected:
+   int onErrorUnrecognizedShortOption( char unrecognized ) override;
+   int onErrorUnrecognizedLongOption( const std::string& unrecognized ) override;
 };
 
 } // namespace MiLdaqt

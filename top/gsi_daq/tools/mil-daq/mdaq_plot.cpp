@@ -38,7 +38,8 @@ Plot::Plot( DaqMilCompare* pParent,
    :gpstr::PlotStream( gpOpt, gpExe, pipeSize )
    ,m_pParent( pParent )
 {
-   *this << "set terminal " << m_pParent->getOutputTerminal()
+   *this << "set terminal "
+         << m_pParent->getParent()->getParent()->getCommandLine()->getTerminal()
          << " title \"SCU: "
          << m_pParent->getParent()->getParent()->getScuDomainName()
          << "\"" << endl;
@@ -60,6 +61,9 @@ void Plot::plot( void )
    *this << "set xrange [0:" << m_pParent->getTimeLimit() << ']' << endl;
    *this << "set xlabel \"Plot start time: " << m_pParent->getPlotStartTime()
          << " ns\"" << endl;
+
+   //if( m_pParent->m_aPlotList.empty() )
+   //   return;
 
    *this << "plot '-' title 'set value' with lines,"
                 " '-' title 'actual value' with lines"

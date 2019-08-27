@@ -221,7 +221,7 @@ public:
     */
    bool registerDevice( DaqDevice* pDevice );
 
-   DaqDevice* getDvice( const uint location );
+   DaqDevice* getDevice( const uint location );
 
    bool unregisterDevice( DaqDevice* pDevice );
 
