@@ -23,6 +23,15 @@
  ******************************************************************************
  */
 
+/*
+folgende Kommandos versorgen die FGs in der scuxl0107 mit Daten
+
+
+fesa-fg-load --dev ~kain/fgtest/aeg/gs11mu2.rmp xgs11mu2 -v
+
+fesa-fg-load --dev ~kain/fgtest/aeg/gs11mu2.rmp xgs11mu3 -v
+*/
+
 #ifndef __DOCFSM__
  #include <stdlib.h>
  #include <iostream>
@@ -51,8 +60,13 @@ DaqMilCompare::DaqMilCompare( uint iterfaceAddress )
    :DaqCompare( iterfaceAddress )
    ,m_pPlot( nullptr )
    ,m_startTime( 0 )
+   ,m_lastTime( 0 )
+   ,m_timeToPlot( 0 )
+   //,m_aPlotList( 1000, {0.0, 0.0, 0.0 } )
+   ,m_iterator(m_aPlotList.begin())
 {
    reset();
+
 }
 
 /*! ---------------------------------------------------------------------------
@@ -78,7 +92,7 @@ void DaqMilCompare::onInit( void )
       return;
    m_pPlot = new Plot( this );
 
-   m_pPlot->plot();
+  // m_pPlot->plot();
 }
 
 /*! ---------------------------------------------------------------------------
@@ -86,6 +100,7 @@ void DaqMilCompare::onInit( void )
 void
 DaqMilCompare::addItem( uint64_t time, MIL_DAQ_T actValue, MIL_DAQ_T setValue )
 {
+#if 1
    m_aPlotList.push_back(
    {
      .m_time = static_cast<double>(time) /
@@ -93,6 +108,18 @@ DaqMilCompare::addItem( uint64_t time, MIL_DAQ_T actValue, MIL_DAQ_T setValue )
      .m_set  = daq::rawToVoltage( static_cast<uint16_t>(setValue >> 16) ),
      .m_act  = daq::rawToVoltage( static_cast<uint16_t>(actValue >> 16) )
    } );
+#else
+   if( m_iterator == m_aPlotList.end() )
+      return;
+   *m_iterator =
+   {
+     .m_time = static_cast<double>(time) /
+               static_cast<double>(daq::NANOSECS_PER_SEC),
+     .m_set  = daq::rawToVoltage( static_cast<uint16_t>(setValue >> 16) ),
+     .m_act  = daq::rawToVoltage( static_cast<uint16_t>(actValue >> 16) )
+   };
+   m_iterator++;
+#endif
 }
 
 /*! ---------------------------------------------------------------------------
@@ -112,7 +139,10 @@ void DaqMilCompare::onData( uint64_t wrTimeStamp, MIL_DAQ_T actValue,
          case START:
          {
             m_aPlotList.clear();
+            m_iterator = m_aPlotList.begin();
             m_startTime = wrTimeStamp;
+            if( getCommandLine()->isContinuePlottingEnabled() )
+               m_timeToPlot = wrTimeStamp + c_minimumPlotInterval;
             addItem( 0, actValue, setValue );
             FSM_TRANSITION( COLLECT );
             break;
@@ -120,16 +150,21 @@ void DaqMilCompare::onData( uint64_t wrTimeStamp, MIL_DAQ_T actValue,
          case COLLECT:
          {
             uint64_t plotTime = wrTimeStamp - m_startTime;
-            if( plotTime > getTimeLimitNanoSec() ||
-                m_aPlotList.size() >= getItemLimit() )
+            if( plotTime > getTimeLimitNanoSec()
+               || m_aPlotList.size() >= getItemLimit()
+            )
             {
                next = true;
                FSM_TRANSITION( PLOT );
                break;
             }
             addItem( plotTime, actValue, setValue );
-            //if( plotTime > NANOSECS_PER_SEC / 50 )
-            //   m_pPlot->plot();
+            if( getCommandLine()->isContinuePlottingEnabled() &&
+                (wrTimeStamp >= m_timeToPlot) )
+            {
+               m_pPlot->plot();
+               m_timeToPlot = wrTimeStamp + c_minimumPlotInterval;
+            }
         #ifdef __DOCFSM__
             FSM_TRANSITION( COLLECT );
         #endif
@@ -140,6 +175,7 @@ void DaqMilCompare::onData( uint64_t wrTimeStamp, MIL_DAQ_T actValue,
             m_pPlot->plot();
             next = true;
             FSM_TRANSITION( START );
+            //cout << m_aPlotList.size() << endl;
             break;
          }
          default: assert( false ); break;
@@ -173,14 +209,26 @@ MilDaqAdministration::~MilDaqAdministration( void )
  */
 void MilDaqAdministration::onUnregistered( RingItem* pUnknownItem )
 {
-   if( !m_poCommandLine->isVerbose() )
+   if( m_poCommandLine->isVerbose() )
+   {
+      std::cout << pUnknownItem->getTimestamp() << ' '
+                << static_cast<int>(pUnknownItem->getActValue()) << ' '
+                << static_cast<int>(pUnknownItem->getSetValue())
+                << " fg-" << pUnknownItem->getMilDaqLocation() << '-'
+                <<  pUnknownItem->getMilDaqAddress() << std::endl;
+   }
+
+   if( !m_poCommandLine->isAutoBuilding() )
       return;
 
-   std::cout << pUnknownItem->getTimestamp() << ' '
-             << static_cast<int>(pUnknownItem->getActValue()) << ' '
-             << static_cast<int>(pUnknownItem->getSetValue())
-             << " fg-" << pUnknownItem->getMilDaqLocation() << '-'
-             <<  pUnknownItem->getMilDaqAddress() << std::endl;
+   Device* pDevice = getDevice( pUnknownItem->getMilDaqLocation() );
+   if( pDevice == nullptr )
+   {
+      pDevice = new Device( pUnknownItem->getMilDaqLocation() );
+      registerDevice( pDevice );
+   }
+   pDevice->registerDaqCompare(
+                        new DaqMilCompare( pUnknownItem->getMilDaqAddress()));
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -200,11 +248,20 @@ int mdaqtMain( int argc, char** ppArgv )
    int key;
    Terminal oTerminal;
    DEBUG_MESSAGE( "Entering loop" );
+   bool doReceive = true;
    while( (key = Terminal::readKey()) != '\e' )
    {
-      pDaqAdmin->distributeData();
-  //    DEBUG_MESSAGE( "Head: " << milDaqAdmin.getHeadRingIndex() );
-  //    DEBUG_MESSAGE( "Tail: " << milDaqAdmin.getTailRingIndex() );
+      switch( key )
+      {
+         case HOT_KEY_RECEIVE:
+         {
+            doReceive = !doReceive;
+            DEBUG_MESSAGE( "Plot " << (doReceive? "enable" : "disable" ) );
+            break;
+         }
+      }
+      if( doReceive )
+         pDaqAdmin->distributeData();
    }
    DEBUG_MESSAGE( "Loop left" );
    return EXIT_SUCCESS;

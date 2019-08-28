@@ -36,6 +36,11 @@
  #include <mdaqt_command_line.hpp>
 #endif
 
+#ifndef HOT_KEY_RECEIVE
+  #define HOT_KEY_RECEIVE         'i'
+#endif
+
+
 namespace Scu
 {
 namespace MiLdaq
@@ -54,11 +59,14 @@ namespace MiLdaqt
 
 class Plot;
 class Device;
+class CommandLine;
+class MilDaqAdministration;
 
 //////////////////////////////////////////////////////////////////////////////
 class DaqMilCompare: public DaqCompare
 {
    friend class Plot;
+   constexpr static uint64_t c_minimumPlotInterval = daq::NANOSECS_PER_SEC / 10;
    struct PLOT_T
    {
       double  m_time;
@@ -78,12 +86,14 @@ class DaqMilCompare: public DaqCompare
 
    typedef std::vector<PLOT_T> PLOT_LIST_T;
 
-   MIL_DAQ_T          m_lastSetRawValue;
-   MIL_DAQ_T          m_lastActRawValue;
-   uint64_t           m_startTime;
-   uint64_t           m_lastTime;
-   PLOT_LIST_T        m_aPlotList;
-   Plot*              m_pPlot;
+   MIL_DAQ_T             m_lastSetRawValue;
+   MIL_DAQ_T             m_lastActRawValue;
+   uint64_t              m_startTime;
+   uint64_t              m_lastTime;
+   uint64_t              m_timeToPlot;
+   PLOT_LIST_T           m_aPlotList;
+   PLOT_LIST_T::iterator m_iterator;
+   Plot*                 m_pPlot;
 
 public:
    DaqMilCompare( uint iterfaceAddress );
@@ -111,13 +121,17 @@ public:
 
    std::size_t getItemLimit( void ) const
    {
-      return 20000;
+      return 1000;
    }
 
    std::string getOutputTerminal( void )
    {
       return GNUPLOT_DEFAULT_TERMINAL;
    }
+
+   CommandLine* getCommandLine( void );
+
+   bool plotDuringCollecting( void );
 
 private:
    void onData( uint64_t wrTimeStamp, MIL_DAQ_T actValue,
@@ -126,9 +140,10 @@ private:
    void addItem( uint64_t time, MIL_DAQ_T actValue, MIL_DAQ_T setValue );
 
    void onInit( void ) override;
+
 };
 
-class MilDaqAdministration;
+
 //////////////////////////////////////////////////////////////////////////////
 class Device: public DaqDevice
 {
@@ -142,7 +157,6 @@ public:
    MilDaqAdministration* getParent( void );
 };
 
-class CommandLine;
 
 //////////////////////////////////////////////////////////////////////////////
 class MilDaqAdministration: public DaqAdministration
@@ -170,6 +184,20 @@ public:
 };
 
 inline
+CommandLine* DaqMilCompare::getCommandLine( void )
+{
+   return getParent()->getParent()->getCommandLine();
+}
+
+#if 0
+inline
+bool DaqMilCompare::plotDuringCollecting( void )
+{
+   return getCommandLine()->isContinuePlottingEnabled();
+}
+#endif
+
+inline
 Device* DaqMilCompare::getParent( void )
 {
    return static_cast<Device*>(DaqCompare::getParent());
@@ -180,6 +208,8 @@ MilDaqAdministration* Device::getParent( void )
 {
    return static_cast<MilDaqAdministration*>(DaqDevice::getParent());
 }
+
+
 
 
 } // namespace MiLdaqt

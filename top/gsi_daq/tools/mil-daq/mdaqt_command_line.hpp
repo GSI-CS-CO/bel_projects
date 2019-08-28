@@ -62,6 +62,9 @@ class CommandLine: public PARSER
    static std::vector<OPTION> c_optList;
    STATE_T                    m_state;
    bool                       m_verbose;
+   bool                       m_autoBuilding;
+   bool                       m_deviationEnable;
+   bool                       m_continuePlotting;
 
    MilDaqAdministration*      m_poAllDaq;
    Device*                    m_poCurrentDevice;
@@ -105,6 +108,22 @@ public:
    {
       return !m_gnuplotOutput.empty();
    }
+
+   bool isAutoBuilding( void ) const
+   {
+      return m_autoBuilding;
+   }
+
+   bool isDeviationPlottingEnabled( void ) const
+   {
+      return m_deviationEnable;
+   }
+
+   bool isContinuePlottingEnabled( void ) const
+   {
+      return m_continuePlotting;
+   }
+
 protected:
    int onErrorUnrecognizedShortOption( char unrecognized ) override;
    int onErrorUnrecognizedLongOption( const std::string& unrecognized ) override;

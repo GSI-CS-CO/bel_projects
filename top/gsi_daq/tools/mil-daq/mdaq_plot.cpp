@@ -31,15 +31,12 @@ using namespace std;
 
 /*! ----------------------------------------------------------------------------
  */
-Plot::Plot( DaqMilCompare* pParent,
-            const std::string gpOpt,
-            const std::string gpExe,
-            const std::size_t pipeSize )
-   :gpstr::PlotStream( gpOpt, gpExe, pipeSize )
+Plot::Plot( DaqMilCompare* pParent )
+   :gpstr::PlotStream( "-noraise", pParent->getCommandLine()->getGnuplotBinary() )
    ,m_pParent( pParent )
 {
    *this << "set terminal "
-         << m_pParent->getParent()->getParent()->getCommandLine()->getTerminal()
+         << m_pParent->getCommandLine()->getTerminal()
          << " title \"SCU: "
          << m_pParent->getParent()->getParent()->getScuDomainName()
          << "\"" << endl;
@@ -47,6 +44,7 @@ Plot::Plot( DaqMilCompare* pParent,
    *this << "set ylabel \"Voltage\"" << endl;
    *this << "set yrange [" << -DAQ_VPP_MAX/2 << ':'
                            << DAQ_VPP_MAX/2 << ']' << endl;
+   *this << "set xrange [0:" << m_pParent->getTimeLimit() << ']' << endl;
 }
 
 /*! ----------------------------------------------------------------------------
@@ -58,7 +56,7 @@ void Plot::plot( void )
          << "  Date: "
          << daq::wrToTimeDateString( m_pParent->getPlotStartTime() ) << endl;
 
-   *this << "set xrange [0:" << m_pParent->getTimeLimit() << ']' << endl;
+
    *this << "set xlabel \"Plot start time: " << m_pParent->getPlotStartTime()
          << " ns\"" << endl;
 
@@ -66,8 +64,10 @@ void Plot::plot( void )
    //   return;
 
    *this << "plot '-' title 'set value' with lines,"
-                " '-' title 'actual value' with lines"
-         << endl;
+                " '-' title 'actual value' with lines";
+   if( m_pParent->getCommandLine()->isDeviationPlottingEnabled() )
+      *this << ", '-' title 'deviation' with lines";
+   *this << endl;
 
    for( auto& i: m_pParent->m_aPlotList )
    {
@@ -78,6 +78,15 @@ void Plot::plot( void )
    for( auto& i: m_pParent->m_aPlotList )
    {
       *this << i.m_time << ' ' << i.m_act << endl;
+   }
+   *this << 'e' << endl;
+
+   if( !m_pParent->getCommandLine()->isDeviationPlottingEnabled() )
+      return;
+
+   for( auto& i: m_pParent->m_aPlotList )
+   {
+      *this << i.m_time << ' ' << (i.m_set - i.m_act) << endl;
    }
    *this << 'e' << endl;
 }

@@ -85,7 +85,44 @@ vector<OPTION> CommandLine::c_optList =
       .m_id       = 0,
       .m_shortOpt = 'V',
       .m_longOpt  = "version",
-      .m_helpText = "Print the software version and exit"
+      .m_helpText = "Print the software version and exit."
+   },
+   {
+      OPT_LAMBDA( poParser,
+      {
+         static_cast<CommandLine*>(poParser)->m_autoBuilding = true;
+         return 0;
+      }),
+      .m_hasArg   = OPTION::NO_ARG,
+      .m_id       = 0,
+      .m_shortOpt = 'a',
+      .m_longOpt  = "auto",
+      .m_helpText = "Automatically building of channel plot windows."
+   },
+   {
+      OPT_LAMBDA( poParser,
+      {
+         static_cast<CommandLine*>(poParser)->m_deviationEnable = true;
+         return 0;
+      }),
+      .m_hasArg   = OPTION::NO_ARG,
+      .m_id       = 0,
+      .m_shortOpt = 'd',
+      .m_longOpt  = "deviation",
+      .m_helpText = "Plot deviation graph."
+   },
+   {
+      OPT_LAMBDA( poParser,
+      {
+         static_cast<CommandLine*>(poParser)->m_continuePlotting = true;
+         return 0;
+      }),
+      .m_hasArg   = OPTION::NO_ARG,
+      .m_id       = 0,
+      .m_shortOpt = 'c',
+      .m_longOpt  = "continue",
+      .m_helpText = "Plotting continuously and not when enough data present "
+                     "only."
    },
    {
       OPT_LAMBDA( poParser,
@@ -172,6 +209,9 @@ CommandLine::CommandLine( int argc, char** ppArgv )
    :PARSER( argc, ppArgv )
    ,FSM_INIT_FSM( READ_EB_NAME )
    ,m_verbose( false )
+   ,m_autoBuilding( false )
+   ,m_deviationEnable( false )
+   ,m_continuePlotting( false )
    ,m_poAllDaq( nullptr )
    ,m_poCurrentDevice( nullptr )
    ,m_poCurrentChannel( nullptr )
