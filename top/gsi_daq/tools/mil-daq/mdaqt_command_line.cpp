@@ -23,9 +23,7 @@
  ******************************************************************************
  */
 #ifndef __DOCFSM__
- #include <find_process.h>
- #include <unistd.h>
- #include <netdb.h>
+ #include <daqt_onFoundProcess.hpp>
 #endif
 
 #include "mdaqt_command_line.hpp"
@@ -33,6 +31,12 @@
 using namespace Scu::MiLdaq::MiLdaqt;
 using namespace std;
 
+#ifndef MINIMUM_X_AXIS
+   #define MINIMUM_X_AXIS 1.0
+#endif
+#ifndef MAXIMUM_X_AXIS
+   #define MAXIMUM_X_AXIS 60.0
+#endif
 
 #define FSM_INIT_FSM( state, attr... )      m_state( state )
 #define FSM_TRANSITION( newState, attr... ) m_state = newState
@@ -42,15 +46,10 @@ vector<OPTION> CommandLine::c_optList =
    {
       OPT_LAMBDA( poParser,
       {
-         cout << "Usage: " << poParser->getProgramName()
-              << " <proto/host/port> [global-options] "
-                 "[<slot-number> [device-options] "
-                 "<channel-number> [channel-options]] \n\n"
-                 "Global-options can be overwritten by device-options "
-                 "and device options can be overwritten by channel-options.\n"
-                 "NOTE: The lowest slot-number begins at 1; "
-                 "the lowest channel-number begins at 1.\n\n"
-                 "Hot keys:\n";
+         cout << "MIL-DAQ Plotter\n"
+                 "(c) 2019 GSI; Author: Ulrich Becker <u.becker@gsi.de>\n"
+              << "Usage: " << poParser->getProgramName()
+              << " <proto/host/port> [options] [slot channel [slot channel ...]]\n";
          poParser->list( cout );
          cout << endl;
          ::exit( EXIT_SUCCESS );
@@ -97,7 +96,9 @@ vector<OPTION> CommandLine::c_optList =
       .m_id       = 0,
       .m_shortOpt = 'a',
       .m_longOpt  = "auto",
-      .m_helpText = "Automatically building of channel plot windows."
+      .m_helpText = "Automatically building of channel plot windows.\n"
+                    "That means no further arguments of slot and channel"
+                    " number necessary."
    },
    {
       OPT_LAMBDA( poParser,
@@ -109,7 +110,8 @@ vector<OPTION> CommandLine::c_optList =
       .m_id       = 0,
       .m_shortOpt = 'd',
       .m_longOpt  = "deviation",
-      .m_helpText = "Plot deviation graph."
+      .m_helpText = "Enabling of plotting the deviation graph: "
+                    "set value minus actual value."
    },
    {
       OPT_LAMBDA( poParser,
@@ -123,6 +125,57 @@ vector<OPTION> CommandLine::c_optList =
       .m_longOpt  = "continue",
       .m_helpText = "Plotting continuously and not when enough data present "
                      "only."
+   },
+   {
+      OPT_LAMBDA( poParser,
+      {
+         float temp;
+         if( readFloat( temp, poParser->getOptArg() ) )
+            return -1;
+         if( temp < 0.0 )
+         {
+            ERROR_MESSAGE( "A negative time of " << temp
+                          << "  doesn't exist!" );
+            return -1;
+         }
+         if( temp < MINIMUM_X_AXIS )
+         {
+            ERROR_MESSAGE( "Value of X axis is to small, expecting at least "
+                           TO_STRING(MINIMUM_X_AXIS) " and not " << temp
+                           << " !" );
+            return -1;
+         }
+         if( temp > MAXIMUM_X_AXIS )
+         {
+            ERROR_MESSAGE( "Value of X axis it to large, expecting a maximum "
+                           "of " TO_STRING(MAXIMUM_X_AXIS) " and not " << temp
+                           << " !" );
+            return -1;
+         }
+         static_cast<CommandLine*>(poParser)->m_xAxisLen = temp;
+         return 0;
+      }),
+      .m_hasArg   = OPTION::REQUIRED_ARG,
+      .m_id       = 0,
+      .m_shortOpt = 't',
+      .m_longOpt  = "time",
+      .m_helpText = "Length of the X-axis (time axis) in a range of "
+                    TO_STRING(MINIMUM_X_AXIS) " to " TO_STRING(MAXIMUM_X_AXIS)
+                    " in seconds.\n"
+                    "If this option not given, so the default value of "
+                    TO_STRING(DEFAULT_X_AXIS_LEN) " seconds will used."
+   },
+   {
+      OPT_LAMBDA( poParser,
+      {
+         static_cast<CommandLine*>(poParser)->m_zoomYAxis = true;
+         return 0;
+      }),
+      .m_hasArg   = OPTION::NO_ARG,
+      .m_id       = 0,
+      .m_shortOpt = 'z',
+      .m_longOpt  = "zoom",
+      .m_helpText = "Zooming of the Y-axis (voltage axis) in GNUPLOT."
    },
    {
       OPT_LAMBDA( poParser,
@@ -178,7 +231,7 @@ vector<OPTION> CommandLine::c_optList =
                     "      <SUFFIX>_<SCU-name>_<slot number>_<channel number>_"
                     "<wr-time stamp>.<PREFIX>\n"
                     "Example: PARAM = myFile.png:\n"
-                    "         result: myFile_scuxl0035_acc_gsi_de_3_1_"
+                    "         result: myFile_scuxl4711_acc_gsi_de_39_130_"
                     "12439792657334272.png"
    }
 
@@ -188,7 +241,7 @@ vector<OPTION> CommandLine::c_optList =
 ///////////////////////////////////////////////////////////////////////////////
 /*! ---------------------------------------------------------------------------
 */
-bool CommandLine::readInteger( unsigned int& rValue, const string& roStr )
+bool CommandLine::readInteger( uint& rValue, const string& roStr )
 {
    try
    {
@@ -197,6 +250,23 @@ bool CommandLine::readInteger( unsigned int& rValue, const string& roStr )
    catch( std::exception& e )
    {
       ERROR_MESSAGE( "Integer number is expected and not that: \""
+                     << roStr << "\" !" );
+      return true;
+   }
+   return false;
+}
+
+/*! ---------------------------------------------------------------------------
+*/
+bool CommandLine::readFloat( float& rValue, const string& roStr )
+{
+   try
+   {
+      rValue = stof( roStr );
+   }
+   catch( std::exception& e )
+   {
+      ERROR_MESSAGE( "Floating point number is expected and not that: \""
                      << roStr << "\" !" );
       return true;
    }
@@ -212,6 +282,8 @@ CommandLine::CommandLine( int argc, char** ppArgv )
    ,m_autoBuilding( false )
    ,m_deviationEnable( false )
    ,m_continuePlotting( false )
+   ,m_zoomYAxis( false )
+   ,m_xAxisLen( DEFAULT_X_AXIS_LEN )
    ,m_poAllDaq( nullptr )
    ,m_poCurrentDevice( nullptr )
    ,m_poCurrentChannel( nullptr )
@@ -219,6 +291,7 @@ CommandLine::CommandLine( int argc, char** ppArgv )
    ,m_gnuplotTerminal( GNUPLOT_DEFAULT_TERMINAL )
 {
    add( c_optList );
+   sortShort();
 }
 
 /*-----------------------------------------------------------------------------
@@ -247,64 +320,6 @@ MilDaqAdministration* CommandLine::operator()( void )
    return m_poAllDaq;
 }
 
-/*! ----------------------------------------------------------------------------
- * @brief Callback function of findProcesses in CommandLine::onArgument
- */
-extern "C" {
-static int onFoundProcess( OFP_ARG_T* pArg )
-{  /*
-    * Checking whether the found process is himself.
-    */
-   if( pArg->pid == ::getpid() )
-      return 0; // Process has found himself. Program continue.
-
-   string* pEbTarget = static_cast<string*>(pArg->pUser);
-   string ebSelfAddr = pEbTarget->substr( pEbTarget->find( '/' ) + 1 );
-
-   const char* currentArg = reinterpret_cast<char*>(pArg->commandLine.buffer);
-
-   /*
-    * Skipping over the program name from the concurrent process command line.
-    */
-   currentArg += ::strlen( currentArg ) + 1;
-
-   for( ::size_t i = 1; i < pArg->commandLine.argc; i++ )
-   {
-      if( *currentArg != '-' )
-         break;
-      /*
-       * Skipping over possibly leading options from the concurrent
-       * process command line.
-       */
-      currentArg += ::strlen( currentArg ) + 1;
-   }
-
-   string ebConcurrentAddr = currentArg;
-   ebConcurrentAddr = ebConcurrentAddr.substr( ebConcurrentAddr.find( '/' ) + 1 );
-
-   struct hostent* pHostConcurrent = ::gethostbyname( ebConcurrentAddr.c_str() );
-   struct hostent* pHostSelf       = ::gethostbyname( ebSelfAddr.c_str() );
-   if( pHostConcurrent == nullptr || pHostSelf == nullptr )
-   {
-      if( ebConcurrentAddr != ebSelfAddr )
-         return 0; // Program continue.
-   }
-   if( pHostConcurrent != nullptr && pHostSelf != nullptr )
-   {
-      if( ::strcmp( pHostConcurrent->h_name, pHostSelf->h_name ) != 0 )
-         return 0; // Program continue.
-   }
-
-   if( (pHostConcurrent != nullptr) != (pHostSelf != nullptr) )
-      return 0; // Program continue.
-
-   ERROR_MESSAGE( "A concurrent process accessing \"" << *pEbTarget <<
-                  "\" is already running with the PID: " << pArg->pid );
-
-   return -1; // Program termination.
-}
-} // extern "C"
-
 /*-----------------------------------------------------------------------------
  */
 int CommandLine::onArgument( void )
@@ -328,10 +343,10 @@ int CommandLine::onArgument( void )
       {
          SCU_ASSERT( m_poAllDaq == nullptr );
 #if 1
-         if( ::findProcesses( getProgramName().c_str(), ::onFoundProcess, &arg,
-            static_cast<FPROC_MODE_T>(::FPROC_BASENAME | ::FPROC_RLINK) ) < 0 )
+         if( daq::isConcurrentProcessRunning( getProgramName(), arg ) )
             return -1;
 #endif
+
          m_poAllDaq = new MilDaqAdministration( this, arg );
          FSM_TRANSITION( READ_SLOT );
          break;

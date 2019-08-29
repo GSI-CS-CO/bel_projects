@@ -39,6 +39,9 @@
 #ifndef HOT_KEY_RECEIVE
   #define HOT_KEY_RECEIVE         'i'
 #endif
+#ifndef HOT_KEY_RESET
+  #define HOT_KEY_RESET           'r'
+#endif
 
 
 namespace Scu
@@ -50,6 +53,10 @@ namespace MiLdaqt
 
 #ifndef GNUPLOT_DEFAULT_TERMINAL
   #define GNUPLOT_DEFAULT_TERMINAL "X11 size 1200,600"
+#endif
+
+#ifndef MAX_ITEMS_PER_SECOND
+   #define MAX_ITEMS_PER_SECOND 200
 #endif
 
 #ifdef FSM_DECLARE_STATE
@@ -106,23 +113,11 @@ public:
       return m_startTime;
    }
 
-   uint64_t getTimeLimitNanoSec( void ) const
-   {
-      return 10 * daq::NANOSECS_PER_SEC;
-   }
-
-   double getTimeLimit( void ) const
-   {
-      return static_cast<double>(getTimeLimitNanoSec()) /
-             static_cast<double>(daq::NANOSECS_PER_SEC);
-   }
+   uint64_t getTimeLimitNanoSec( void );
 
    void reset( void );
 
-   std::size_t getItemLimit( void ) const
-   {
-      return 1000;
-   }
+   std::size_t getItemLimit( void );
 
    std::string getOutputTerminal( void )
    {
@@ -140,7 +135,7 @@ private:
    void addItem( uint64_t time, MIL_DAQ_T actValue, MIL_DAQ_T setValue );
 
    void onInit( void ) override;
-
+   void onReset( void ) override;
 };
 
 

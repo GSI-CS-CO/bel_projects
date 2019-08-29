@@ -25,6 +25,7 @@
 #ifndef _DAQT_MESSAGES_HPP
 #define _DAQT_MESSAGES_HPP
 
+#include <iostream>
 #include <eb_console_helper.h>
 
 #define ERROR_MESSAGE( args... )                                              \

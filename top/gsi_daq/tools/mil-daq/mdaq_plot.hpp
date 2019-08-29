@@ -49,6 +49,8 @@ public:
    {
       plot();
    }
+
+   void init( void );
 };
 
 

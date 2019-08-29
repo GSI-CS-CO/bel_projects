@@ -23,10 +23,9 @@
  ******************************************************************************
  */
 #ifndef __DOCFSM__
- #include <find_process.h>
- #include <unistd.h>
- #include <netdb.h>
+ #include <daqt_onFoundProcess.hpp>
 #endif
+
 #include "daqt_command_line.hpp"
 
 using namespace Scu;
@@ -566,70 +565,12 @@ Attributes* CommandLine::getAttributesToSet( void )
    return &m_poAllDaq->m_oAttributes;
 }
 
-/*! ----------------------------------------------------------------------------
- * @brief Callback function of findProcesses in CommandLine::onArgument
- */
-extern "C" {
-static int onFoundProcess( OFP_ARG_T* pArg )
-{  /*
-    * Checking whether the found process is himself.
-    */
-   if( pArg->pid == ::getpid() )
-      return 0; // Process has found himself. Program continue.
-
-   string* pEbTarget = static_cast<string*>(pArg->pUser);
-   string ebSelfAddr = pEbTarget->substr( pEbTarget->find( '/' ) + 1 );
-
-   const char* currentArg = reinterpret_cast<char*>(pArg->commandLine.buffer);
-
-   /*
-    * Skipping over the program name from the concurrent process command line.
-    */
-   currentArg += ::strlen( currentArg ) + 1;
-
-   for( ::size_t i = 1; i < pArg->commandLine.argc; i++ )
-   {
-      if( *currentArg != '-' )
-         break;
-      /*
-       * Skipping over possibly leading options from the concurrent
-       * process command line.
-       */
-      currentArg += ::strlen( currentArg ) + 1;
-   }
-
-   string ebConcurrentAddr = currentArg;
-   ebConcurrentAddr = ebConcurrentAddr.substr( ebConcurrentAddr.find( '/' ) + 1 );
-
-   struct hostent* pHostConcurrent = ::gethostbyname( ebConcurrentAddr.c_str() );
-   struct hostent* pHostSelf       = ::gethostbyname( ebSelfAddr.c_str() );
-   if( pHostConcurrent == nullptr || pHostSelf == nullptr )
-   {
-      if( ebConcurrentAddr != ebSelfAddr )
-         return 0; // Program continue.
-   }
-   if( pHostConcurrent != nullptr && pHostSelf != nullptr )
-   {
-      if( ::strcmp( pHostConcurrent->h_name, pHostSelf->h_name ) != 0 )
-         return 0; // Program continue.
-   }
-
-   if( (pHostConcurrent != nullptr) != (pHostSelf != nullptr) )
-      return 0; // Program continue.
-
-   ERROR_MESSAGE( "A concurrent process accessing \"" << *pEbTarget <<
-                  "\" is already running with the PID: " << pArg->pid );
-
-   return -1; // Program termination.
-}
-} // extern "C"
-
 /*! ---------------------------------------------------------------------------
 */
 int CommandLine::onArgument( void )
 {
    string arg = getArgVect()[getArgIndex()];
-   unsigned int number;
+   uint number;
    switch( m_state )
    {
       case READ_SLOT:
@@ -647,10 +588,10 @@ int CommandLine::onArgument( void )
       {
          SCU_ASSERT( m_poAllDaq == nullptr );
 #if 1
-         if( ::findProcesses( getProgramName().c_str(), ::onFoundProcess, &arg,
-            static_cast<FPROC_MODE_T>(::FPROC_BASENAME | ::FPROC_RLINK) ) < 0 )
+         if( daq::isConcurrentProcessRunning( getProgramName(), arg ) )
             return -1;
 #endif
+
 #ifdef CONFIG_NO_FE_ETHERBONE_CONNECTION
          m_poAllDaq = new DaqContainer( arg, this, !m_noReset );
 #else

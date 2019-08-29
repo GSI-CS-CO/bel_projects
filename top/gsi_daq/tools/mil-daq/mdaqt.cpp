@@ -86,6 +86,18 @@ void DaqMilCompare::reset( void )
 
 /*! ---------------------------------------------------------------------------
  */
+uint64_t DaqMilCompare::getTimeLimitNanoSec( void )
+{
+   return getCommandLine()->getXAxisLen() * daq::NANOSECS_PER_SEC;
+}
+
+std::size_t DaqMilCompare::getItemLimit( void )
+{
+   return getCommandLine()->getXAxisLen() * MAX_ITEMS_PER_SECOND;
+}
+
+/*! ---------------------------------------------------------------------------
+ */
 void DaqMilCompare::onInit( void )
 {
    if( m_pPlot != nullptr )
@@ -93,6 +105,17 @@ void DaqMilCompare::onInit( void )
    m_pPlot = new Plot( this );
 
   // m_pPlot->plot();
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+void DaqMilCompare::onReset( void )
+{
+   if( m_pPlot == nullptr )
+      return;
+
+   m_pPlot->init();
+   m_pPlot->plot();
 }
 
 /*! ---------------------------------------------------------------------------
@@ -256,7 +279,15 @@ int mdaqtMain( int argc, char** ppArgv )
          case HOT_KEY_RECEIVE:
          {
             doReceive = !doReceive;
-            DEBUG_MESSAGE( "Plot " << (doReceive? "enable" : "disable" ) );
+            if( cmdLine.isVerbose() )
+               cout << "Plot " << (doReceive? "enable" : "disable" ) << endl;
+            break;
+         }
+         case HOT_KEY_RESET:
+         {
+            pDaqAdmin->reset();
+            if( cmdLine.isVerbose() )
+               cout << "Reset" << endl;
             break;
          }
       }

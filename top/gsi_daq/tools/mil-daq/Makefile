@@ -22,6 +22,7 @@ SOURCE += $(BASE_DIR)/daqt_read_stdin.cpp
 SOURCE += $(BASE_DIR)/parse_opts.cpp
 SOURCE += $(BASE_DIR)/gnuplotstream.cpp
 SOURCE += $(BASE_DIR)/find_process.c
+SOURCE += $(BASE_DIR)/daqt_onFoundProcess.cpp
 
 SOURCE += $(DAQ_DIR)/daq_ring_admin.c
 SOURCE += $(DAQ_LINUX_DIR)/daq_eb_ram_buffer.cpp
@@ -70,9 +71,10 @@ HOST ?= tcp/$(SCU_URL)
 
 #CALL_ARGS         ?=  $(HOST)
 
-CALL_ARGS = tcp/scuxl0107 39 130 39 129 39 1 39 2
-
-REMOTE_CALL_ARGS  ?= "dev/wbm0"
+#CALL_ARGS = tcp/scuxl0107 39 130 39 129 39 1 39 2
+#CALL_ARGS = tcp/scuxl0107 39 130
+CALL_ARGS = tcp/scuxl0107 -avdc --time 5 -G /home/bel/ubecker/lnx/.local/bin/gnuplot
+REMOTE_CALL_ARGS  ?= "dev/wbm0"makefilema
 
 
 DEBUG = 1

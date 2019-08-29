@@ -90,6 +90,7 @@ protected:
                                               MIL_DAQ_T setValue ) = 0;
 
    virtual void onInit( void ) {}
+   virtual void onReset( void ) {}
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -171,6 +172,7 @@ protected:
    void initAll( void );
 
    virtual void onInit( void ) {}
+   virtual void onReset( void );
 
 };
 
@@ -226,6 +228,8 @@ public:
    bool unregisterDevice( DaqDevice* pDevice );
 
    int distributeData( void );
+
+   void reset( void );
 
 protected:
    virtual void onUnregistered( RingItem* pUnknownItem ) {}

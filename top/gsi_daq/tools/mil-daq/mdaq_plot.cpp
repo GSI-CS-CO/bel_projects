@@ -35,6 +35,13 @@ Plot::Plot( DaqMilCompare* pParent )
    :gpstr::PlotStream( "-noraise", pParent->getCommandLine()->getGnuplotBinary() )
    ,m_pParent( pParent )
 {
+   init();
+}
+
+/*! ----------------------------------------------------------------------------
+ */
+void Plot::init( void )
+{
    *this << "set terminal "
          << m_pParent->getCommandLine()->getTerminal()
          << " title \"SCU: "
@@ -42,9 +49,12 @@ Plot::Plot( DaqMilCompare* pParent )
          << "\"" << endl;
    *this << "set grid" << endl;
    *this << "set ylabel \"Voltage\"" << endl;
-   *this << "set yrange [" << -DAQ_VPP_MAX/2 << ':'
-                           << DAQ_VPP_MAX/2 << ']' << endl;
-   *this << "set xrange [0:" << m_pParent->getTimeLimit() << ']' << endl;
+   if( !m_pParent->getCommandLine()->isZoomYAxis() )
+      *this << "set yrange [" << -DAQ_VPP_MAX/2 << ':'
+                              << DAQ_VPP_MAX/2 << ']' << endl;
+   *this << "set xrange [0.0:"
+         << m_pParent->getCommandLine()->getXAxisLen() << ']' << endl;
+   //*this << "set style line 1 linecolor rgb \"red\"" << endl;
 }
 
 /*! ----------------------------------------------------------------------------

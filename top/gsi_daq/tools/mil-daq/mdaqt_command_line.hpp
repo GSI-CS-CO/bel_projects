@@ -45,6 +45,10 @@ namespace MiLdaqt
 #endif
 #define FSM_DECLARE_STATE( state, attr... ) state
 
+#ifndef DEFAULT_X_AXIS_LEN
+   #define DEFAULT_X_AXIS_LEN 10.0
+#endif
+
 class MilDaqAdministration; // Loest Henne-Ei Problem...
 class Device;
 class DaqMilCompare;
@@ -65,6 +69,8 @@ class CommandLine: public PARSER
    bool                       m_autoBuilding;
    bool                       m_deviationEnable;
    bool                       m_continuePlotting;
+   bool                       m_zoomYAxis;
+   float                      m_xAxisLen;
 
    MilDaqAdministration*      m_poAllDaq;
    Device*                    m_poCurrentDevice;
@@ -75,6 +81,7 @@ class CommandLine: public PARSER
    std::string                m_gnuplotOutput;
 
    static bool readInteger( uint&, const std::string& );
+   static bool readFloat( float&, const std::string& );
 
 public:
    CommandLine( int argc, char** ppArgv );
@@ -122,6 +129,16 @@ public:
    bool isContinuePlottingEnabled( void ) const
    {
       return m_continuePlotting;
+   }
+
+   bool isZoomYAxis( void ) const
+   {
+      return m_zoomYAxis;
+   }
+
+   float getXAxisLen( void ) const
+   {
+      return m_xAxisLen;
    }
 
 protected:

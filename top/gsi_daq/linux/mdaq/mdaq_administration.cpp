@@ -95,6 +95,14 @@ void DaqDevice::initAll( void )
       i->onInit();
 }
 
+/*-----------------------------------------------------------------------------
+ */
+void DaqDevice::onReset( void )
+{
+   for( auto& i: m_channelPtrList )
+      i->onReset();
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 /*-----------------------------------------------------------------------------
  */
@@ -129,6 +137,14 @@ bool DaqAdministration::registerDevice( DaqDevice* pDevice )
    m_devicePtrList.push_back( pDevice );
    pDevice->initAll();
    return false;
+}
+
+/*-----------------------------------------------------------------------------
+ */
+void DaqAdministration::reset( void )
+{
+   for( auto& i: m_devicePtrList )
+      i->onReset();
 }
 
 /*-----------------------------------------------------------------------------
