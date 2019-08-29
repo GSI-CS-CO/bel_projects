@@ -147,7 +147,7 @@ bool CarpeDM::CarpeDMimpl::isSafeToRemove(std::set<std::string> patterns, std::s
   for (auto& vRem : remlist) {
     if(verbose) { sLog << "Starting Crawler from " << gEq[vRem].name << std::endl; }
     vertex_set_t tmpTree;
-    getReverseNodeTree(vRem, tmpTree, gEq, covenantsPerVertex);
+    getReverseNodeTree(vRem, tmpTree, gEq, covenantsPerVertex, null_vertex, 1, 0); //start with non traversible limit of 1, count 0
     blacklist.insert(tmpTree.begin(), tmpTree.end());
   }
   if(verbose) { sLog << "Blacklist complete" << std::endl; }
@@ -314,7 +314,7 @@ bool CarpeDM::CarpeDMimpl::isSafetyCritical(vertex_set_t& c) {
 
 
 //recursively inserts all vertex idxs of the tree reachable (via in edges) from start vertex into the referenced set
-void CarpeDM::CarpeDMimpl::getReverseNodeTree(vertex_t v, vertex_set_t& sV, Graph& g, vertex_set_map_t& covenantsPerVertex, vertex_t covenant) {
+void CarpeDM::CarpeDMimpl::getReverseNodeTree(vertex_t v, vertex_set_t& sV, Graph& g, vertex_set_map_t& covenantsPerVertex, vertex_t covenant, int32_t maxNtEdges, int32_t tNtEdges) {
   vertex_t nextCovenant;
   Graph::in_edge_iterator in_begin, in_end, in_cur;
   //Do the crawl
@@ -323,7 +323,16 @@ void CarpeDM::CarpeDMimpl::getReverseNodeTree(vertex_t v, vertex_set_t& sV, Grap
     if (verbose) { sLog << g[target(*in_cur, g)].name << "<-- " << g[*in_cur].type << " --" << g[source(*in_cur, g)].name  << " propcov " << ((covenant == null_vertex) ? "NULL" : g[covenant].name) << std::endl; }
     vertex_set_t& cpvs = covenantsPerVertex[source(*in_cur, g)];
 
+    
+    if ( (g[*in_cur].type != det::sDefDst && g[*in_cur].type != det::sResFlowDst) ) { // if its a non-traversiable edge and the traversal limit is reached, don't follow this trail
+      if ( (maxNtEdges > 0) && (tNtEdges >= maxNtEdges) ) {
+        if (verbose) sLog << "Non-Traversible edge limit reached, not crossing " << g[source(*in_cur, g)].name << " -> " << g[target(*in_cur, g)].name << std::endl;
+        continue;
+      } else {tNtEdges++;}
+    }
+   
     sV.insert(source(*in_cur, g));
+
     if (cpvs.find(covenant) != cpvs.end()) { continue; }
 
     if (isOptimisableEdge(*in_cur, g)) {
@@ -334,7 +343,7 @@ void CarpeDM::CarpeDMimpl::getReverseNodeTree(vertex_t v, vertex_set_t& sV, Grap
     }
 
     cpvs.insert(nextCovenant);
-    getReverseNodeTree(source(*in_cur, g), sV, g, covenantsPerVertex, nextCovenant);
+    getReverseNodeTree(source(*in_cur, g), sV, g, covenantsPerVertex, nextCovenant, maxNtEdges, tNtEdges);
 
 
 
