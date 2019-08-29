@@ -883,8 +883,11 @@ void execHostCmd(int32_t cmd)
 	      printSharedInput(0, 5);
 	  }
 	}
-
-	*pSharedCmd = cmd;
+	else {
+	  result = STATUS_ERR;
+	  mprintf("failed: %d\n", id);
+	  break;
+	}
 	break;
 
       case CMD_GET_CYCLE:    // get the number of cycles (cycles * period of a pulse block) of the given burst
@@ -901,8 +904,11 @@ void execHostCmd(int32_t cmd)
 	    pTask[id].deadline = 0;
 	  }
 	}
-
-	*pSharedCmd = cmd;
+	else {
+	  result = STATUS_ERR;
+	  mprintf("failed: %d\n", id);
+	  break;
+	}
 	break;
 
       case CMD_RD_MSI_ECPU: // read the ECA MSI settings for eCPU
@@ -981,8 +987,11 @@ void execHostCmd(int32_t cmd)
 	  if (verbose)
 	    printSharedInput(0, N_BURST_INFO);
 	}
-
-	*pSharedCmd = cmd;
+	else {
+	  result = STATUS_ERR;
+	  mprintf("failed: %d\n", id);
+	  break;
+	}
 	break;
 
       case CMD_MK_BURST: // declare burst with the id number
@@ -1019,10 +1028,11 @@ void execHostCmd(int32_t cmd)
 	  if (verbose)
 	    mprintf(" %x: %x, %x, %x, %llx, %llx\n", id, pTask[id].flag, pTask[id].io_type, pTask[id].io_index, pTask[id].trigger, pTask[id].toggle);
 	}
-	else
+	else {
+	  result = STATUS_ERR;
 	  mprintf("failed: %d\n", id);
-
-	*pSharedCmd = cmd;
+	  break;
+	}
 	break;
 
       case CMD_RM_BURST: // remove burst
@@ -1047,10 +1057,11 @@ void execHostCmd(int32_t cmd)
 	  if (verbose)
 	    mprintf(" %x: %x, %x, %x, %llx, %llx\n", id, pTask[id].flag, pTask[id].io_type, pTask[id].io_index, pTask[id].trigger, pTask[id].toggle);
 	}
-	else
+	else {
+	  result = STATUS_ERR;
 	  mprintf("failed: %d\n", id);
-
-	*pSharedCmd = cmd;
+	  break;
+	}
 	break;
 
       case CMD_DE_BURST: // dis/enable burst with the id number (=0 all)
@@ -1070,12 +1081,17 @@ void execHostCmd(int32_t cmd)
 	else if (id <= N_BURSTS) {
 	  first = last = id;
 	}
-
-	if (first < 0)                               // break here, if burst ID is invalid
+	else {
+	  result = STATUS_ERR;
+	  mprintf("failed: %d\n", id);
 	  break;
+	}
 
-	if ((pTask[id].flag & CTL_VALID) == CTL_DIS) // break here, if burst is undeclared
+	if ((pTask[id].flag & CTL_VALID) == CTL_DIS) { // break here, if burst is undeclared
+	  result = STATUS_ERR;
+	  mprintf("unknown: %d\n", id);
 	  break;
+	}
 
 	for (int i = first; i <= last; ++i) {
 	  if (disen)
@@ -1086,15 +1102,11 @@ void execHostCmd(int32_t cmd)
 	  if (verbose)
 	    mprintf(" %x: %x, %x, %x, %llx, %llx\n", id, pTask[id].flag, pTask[id].io_type, pTask[id].io_index, pTask[id].trigger, pTask[id].toggle);
 	}
-
-	*pSharedCmd = cmd;
 	break;
 
       case CMD_LS_FW_ID: // list the firmware id
 	mprintf("fw id\n");
-
 	*pSharedInput = BG_FW_ID;
-
 	break;
 
       /* commands used in firmware development */
@@ -1135,6 +1147,7 @@ void execHostCmd(int32_t cmd)
 	result = STATUS_ERR;
     }
 
+    *pSharedCmd = cmd;
     if (result == STATUS_OK)
       respondToHost((uint32_t)cmd);
   }
