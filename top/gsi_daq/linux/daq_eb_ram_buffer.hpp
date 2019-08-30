@@ -99,15 +99,19 @@ public:
     *       structures, the conversion in little endian has to be made
     *       in upper software layers after.
     * @param pData Destination address for the received data.
-    * @param len   Data length (array size) in bytes.
+    * @param len   Data length (array size).
     * @param offset Offset in bytes in the shared memory (default is zero)
+    * @param format Base data size can be EB_DATA8, EB_DATA16, EB_ADDR32 or
+    *               EB_ADDR64 defined in "etherbone.h" \n
+    *               Default is EB_DATA8.
     */
    void readLM32( eb_user_data_t pData,
                   const std::size_t len,
-                  const std::size_t offset = 0 )
+                  const std::size_t offset = 0,
+                  const etherbone::format_t format = EB_DATA8 )
    {
       m_poEb->read( m_lm32SharedMemAddr + offset, pData,
-                    EB_BIG_ENDIAN | EB_DATA8,
+                    EB_BIG_ENDIAN | format,
                     len );
    }
 
@@ -120,15 +124,19 @@ public:
     *       structures, the conversion in little endian has to be made
     *       in upper software layers at first.
     * @param pData Source address of the data to copy
-    * @param len Data length (array size) in bytes.
+    * @param len   Data length (array size)
     * @param offset Offset in bytes in the shared memory (default is zero)
+    * @param format Base data size can be EB_DATA8, EB_DATA16, EB_ADDR32 or
+    *               EB_ADDR64 defined in "etherbone.h" \n
+    *               Default is EB_DATA8.
     */
    void writeLM32( const eb_user_data_t pData,
                    const std::size_t len,
-                   const std::size_t offset = 0 )
+                   const std::size_t offset = 0,
+                   const etherbone::format_t format = EB_DATA8 )
    {
       m_poEb->write( m_lm32SharedMemAddr + offset, pData,
-                     EB_BIG_ENDIAN | EB_DATA8,
+                     EB_BIG_ENDIAN | format,
                      len );
    }
 };

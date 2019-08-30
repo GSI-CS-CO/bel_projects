@@ -300,17 +300,20 @@ protected:
    virtual bool onCommandReadyPoll( USEC_T pollCount );
 
    void readLM32( eb_user_data_t pData,
-                  std::size_t len,
-                  std::size_t offset = 0 )
+                  const std::size_t len,
+                  const std::size_t offset = 0,
+                  const etherbone::format_t format = EB_DATA8
+                )
    {
-      m_poEbAccess->readLM32( pData, len, offset + m_daqLM32Offset );
+      m_poEbAccess->readLM32( pData, len, offset + m_daqLM32Offset, format );
    }
 
    void writeLM32( const eb_user_data_t pData,
-                   std::size_t len,
-                   std::size_t offset = 0 )
+                   const std::size_t len,
+                   const std::size_t offset = 0,
+                   const etherbone::format_t format = EB_DATA8 )
    {
-      m_poEbAccess->writeLM32( pData, len, offset + m_daqLM32Offset );
+      m_poEbAccess->writeLM32( pData, len, offset + m_daqLM32Offset, format );
    }
 
 
