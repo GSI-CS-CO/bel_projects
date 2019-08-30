@@ -58,7 +58,7 @@ bool DaqChannel::SequenceNumber::compare( uint8_t sequence )
 
 /*! ---------------------------------------------------------------------------
  */
-DaqChannel::DaqChannel( unsigned int number )
+DaqChannel::DaqChannel( uint number )
    :m_number( number )
    ,m_pParent(nullptr)
    ,m_poSequence(nullptr)
@@ -93,7 +93,7 @@ void DaqChannel::verifySequence( void )
 ///////////////////////////////////////////////////////////////////////////////
 /*! ---------------------------------------------------------------------------
  */
-DaqDevice::DaqDevice( unsigned int number )
+DaqDevice::DaqDevice( uint number )
    :m_deviceNumber( 0 )
    ,m_slot( number )
    ,m_maxChannels( 0 )
@@ -148,7 +148,7 @@ bool DaqDevice::unregisterChannel( DaqChannel* pChannel )
 
 /* ----------------------------------------------------------------------------
  */
-DaqChannel* DaqDevice::getChannel( const unsigned int number )
+DaqChannel* DaqDevice::getChannel( const uint number )
 {
    SCU_ASSERT( number > 0 );
    SCU_ASSERT( number <= DaqInterface::c_maxChannels );
@@ -265,7 +265,7 @@ int DaqAdministration::redistributeSlotNumbers( void )
 
 /*! ---------------------------------------------------------------------------
  */
-DaqDevice* DaqAdministration::getDeviceByNumber( const unsigned int number )
+DaqDevice* DaqAdministration::getDeviceByNumber( const uint number )
 {
    SCU_ASSERT( number > 0 );
    SCU_ASSERT( number <= c_maxDevices );
@@ -281,7 +281,7 @@ DaqDevice* DaqAdministration::getDeviceByNumber( const unsigned int number )
 
 /*! ---------------------------------------------------------------------------
  */
-DaqDevice* DaqAdministration::getDeviceBySlot( const unsigned int slot )
+DaqDevice* DaqAdministration::getDeviceBySlot( const uint slot )
 {
    SCU_ASSERT( slot > 0 );
    SCU_ASSERT( slot <= c_maxSlots );
@@ -298,7 +298,7 @@ DaqDevice* DaqAdministration::getDeviceBySlot( const unsigned int slot )
 /*! ---------------------------------------------------------------------------
  */
 DaqChannel*
-DaqAdministration::getChannelByAbsoluteNumber( unsigned int absChannelNumber )
+DaqAdministration::getChannelByAbsoluteNumber( uint absChannelNumber )
 {
    SCU_ASSERT( absChannelNumber > 0 );
    SCU_ASSERT( absChannelNumber <= (c_maxChannels * c_maxDevices) );
@@ -319,8 +319,8 @@ DaqAdministration::getChannelByAbsoluteNumber( unsigned int absChannelNumber )
 /*! ---------------------------------------------------------------------------
  */
 DaqChannel*
-DaqAdministration::getChannelByDeviceNumber( const unsigned int deviceNumber,
-                                             const unsigned int channelNumber )
+DaqAdministration::getChannelByDeviceNumber( const uint deviceNumber,
+                                             const uint channelNumber )
 {
    DAQ_ASSERT_CHANNEL_ACCESS( deviceNumber, channelNumber );
 
@@ -334,8 +334,8 @@ DaqAdministration::getChannelByDeviceNumber( const unsigned int deviceNumber,
 /*! ---------------------------------------------------------------------------
  */
 DaqChannel*
-DaqAdministration::getChannelBySlotNumber( const unsigned int slotNumber,
-                                           const unsigned int channelNumber )
+DaqAdministration::getChannelBySlotNumber( const uint slotNumber,
+                                           const uint channelNumber )
 {
    if( slotNumber == 0 )
       return nullptr;
@@ -361,7 +361,7 @@ DaqAdministration::getChannelBySlotNumber( const unsigned int slotNumber,
  */
 extern "C" {
 
-static int ramReadPoll( const DDR3_T* pThis UNUSED, unsigned int count )
+static int ramReadPoll( const DDR3_T* pThis UNUSED, uint count )
 {
    if( count >= 10 )
    {
@@ -447,8 +447,7 @@ int DaqAdministration::distributeData( void )
 #endif
 
 #ifdef CONFIG_DAQ_TIME_MEASUREMENT
-   struct timeval t1, t2;
-   ::gettimeofday( &t1, nullptr );
+   USEC_T startTime = getSysMicrosecs();
 #endif
 
    /*
@@ -465,11 +464,7 @@ int DaqAdministration::distributeData( void )
       throw EbException( "Unable to read SCU-Ram buffer first part" );
    }
 #ifdef CONFIG_DAQ_TIME_MEASUREMENT
-   ::gettimeofday( &t2, nullptr );
-   m_elapsedTime = std::max( static_cast<uint64_t>
-                             ((t2.tv_sec - t1.tv_sec) * 1000000 +
-                             (t2.tv_usec - t1.tv_usec)),
-                             m_elapsedTime );
+   m_elapsedTime = std::max( getSysMicrosecs() - startTime, m_elapsedTime );
 #endif
    /*
     * Rough check of the device descriptors integrity.
@@ -490,7 +485,7 @@ int DaqAdministration::distributeData( void )
       * has still to be read from the DAQ-Ram-buffer.
       */
    #ifdef CONFIG_DAQ_TIME_MEASUREMENT
-      ::gettimeofday( &t1, nullptr );
+      startTime = getSysMicrosecs();
    #endif
       if( m_poEbAccess->readDaqDataBlock( &probe.ramItems[c_ramBlockShortLen],
                                         c_ramBlockLongLen - c_ramBlockShortLen
@@ -503,14 +498,9 @@ int DaqAdministration::distributeData( void )
          throw EbException( "Unable to read SCU-Ram buffer second part" );
       }
    #ifdef CONFIG_DAQ_TIME_MEASUREMENT
-      ::gettimeofday( &t2, nullptr );
-      m_elapsedTime = std::max( static_cast<uint64_t>
-                               ((t2.tv_sec - t1.tv_sec) * 1000000 +
-                               (t2.tv_usec - t1.tv_usec)),
-                               m_elapsedTime );
+       m_elapsedTime = std::max( getSysMicrosecs() - startTime, m_elapsedTime );
    #endif
-
-      wordLen = c_hiresPmDataLen - c_discriptorWordSize;
+       wordLen = c_hiresPmDataLen - c_discriptorWordSize;
    }
    else
    { /*

@@ -24,7 +24,11 @@
  */
 #ifndef _DAQ_CALCULATIONS_HPP
 #define _DAQ_CALCULATIONS_HPP
+
 #include <time.h>
+#include <stdint.h>
+#include <errno.h>
+#include <system_error>
 
 namespace Scu
 {
@@ -37,7 +41,40 @@ namespace daq
  *
  * Preventing of the possible miscounting of zeros. ;-)
  */
-constexpr uint64_t NANOSECS_PER_SEC = 1000000000;
+constexpr uint64_t NANOSECS_PER_SEC  = 1000000000;
+
+/*!
+ * @ingroup DAQ
+ * @brief Calculation factor converting microseconds to seconds and vice versa.
+ *
+ * Preventing of the possible miscounting of zeros. ;-)
+ */
+constexpr uint32_t MICROSECS_PER_SEC = 1000000;
+
+typedef uint64_t USEC_T;
+
+/*! ---------------------------------------------------------------------------
+ * @ingroup DAQ
+ * @brief Returns the absolute system time of Linux in microseconds.
+ *
+ * Can be used for time measurement and/or timeout detection.
+ */
+inline USEC_T getSysMicrosecs( void )
+{
+   struct ::timeval oTime;
+   int fail;
+
+   do
+   {
+      fail = ::gettimeofday( &oTime, nullptr );
+   }
+   while( (fail == -1) && (errno == EAGAIN) );
+
+   if( fail == -1 )
+      throw( std::system_error( errno, std::generic_category(), __func__ ));
+
+   return oTime.tv_sec * MICROSECS_PER_SEC + oTime.tv_usec;
+}
 
 /*!
  * @ingroup DAQ

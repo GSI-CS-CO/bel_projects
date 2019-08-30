@@ -29,8 +29,8 @@
 #include <scu_bus_defines.h>
 #include <daq_ramBuffer.h>
 #include <daq_descriptor.h>
-#include <stddef.h>
-#include <string>
+//#include <stddef.h>
+//#include <string>
 #include <daq_exception.hpp>
 #include <daq_eb_ram_buffer.hpp>
 #include <daq_calculations.hpp>
@@ -130,7 +130,11 @@ private:
 protected:
    RAM_SCU_T                    m_oScuRam;
 
-   constexpr static uint c_maxCmdPoll  = 1000;
+   /*!
+    * @brief Response timeout for LM32 commands in milliseconds.
+    */
+   constexpr static USEC_T       c_LM32CommandResponseTimeout
+                                   = MICROSECS_PER_SEC / 10;
 
 public:
    constexpr static uint         c_maxDevices        = DAQ_MAX;
@@ -189,12 +193,12 @@ public:
       return m_slotFlags;
    }
 
-   unsigned int getMaxFoundDevices( void ) const
+   uint getMaxFoundDevices( void ) const
    {
       return m_maxDevices;
    }
 
-   bool isDevicePresent( const unsigned int slot ) const
+   bool isDevicePresent( const uint slot ) const
    {
       return scuBusIsSlavePresent( m_slotFlags, slot );
    }
@@ -219,81 +223,81 @@ public:
       return m_lastStatus;
    }
 
-   unsigned int readMacroVersion( const unsigned int deviceNumber );
+   uint readMacroVersion( const uint deviceNumber );
 
-   unsigned int getSlotNumber( const unsigned int deviceNumber );
+   uint getSlotNumber( const uint deviceNumber );
 
-   unsigned int getDeviceNumber( const unsigned int slotNumber );
+   uint getDeviceNumber( const uint slotNumber );
 
-   unsigned int readMaxChannels( const unsigned int deviceNumber );
+   uint readMaxChannels( const uint deviceNumber );
 
-   int sendEnablePostMortem( const unsigned int deviceNumber,
-                             const unsigned int channel,
+   int sendEnablePostMortem( const uint deviceNumber,
+                             const uint channel,
                              const bool restart = false
                            );
 
-   int sendEnableHighResolution( const unsigned int deviceNumber,
-                                 const unsigned int channel,
+   int sendEnableHighResolution( const uint deviceNumber,
+                                 const uint channel,
                                  const bool restart = false
                                );
 
-   int sendDisablePmHires( const unsigned int deviceNumber,
-                           const unsigned int channel,
+   int sendDisablePmHires( const uint deviceNumber,
+                           const uint channel,
                            const bool restart = false
                          );
 
-   int sendEnableContineous( const unsigned int deviceNumber,
-                             const unsigned int channel,
+   int sendEnableContineous( const uint deviceNumber,
+                             const uint channel,
                              const DAQ_SAMPLE_RATE_T sampleRate,
-                             const unsigned int maxBlocks = 0
+                             const uint maxBlocks = 0
                            );
 
-   int sendDisableContinue( const unsigned int deviceNumber,
-                            const unsigned int channel );
+   int sendDisableContinue( const uint deviceNumber,
+                            const uint channel );
 
 
-   int sendTriggerCondition( const unsigned int deviceNumber,
-                             const unsigned int channel,
+   int sendTriggerCondition( const uint deviceNumber,
+                             const uint channel,
                              const uint32_t trgCondition );
 
-   uint32_t receiveTriggerCondition( const unsigned int deviceNumber,
-                                     const unsigned int channel );
+   uint32_t receiveTriggerCondition( const uint deviceNumber,
+                                     const uint channel );
 
 
-   int sendTriggerDelay( const unsigned int deviceNumber,
-                         const unsigned int channel,
+   int sendTriggerDelay( const uint deviceNumber,
+                         const uint channel,
                          const uint16_t delay );
 
-   uint16_t receiveTriggerDelay( const unsigned int deviceNumber,
-                                 const unsigned int channel );
+   uint16_t receiveTriggerDelay( const uint deviceNumber,
+                                 const uint channel );
 
 
-   int sendTriggerMode( const unsigned int deviceNumber,
-                        const unsigned int channel,
+   int sendTriggerMode( const uint deviceNumber,
+                        const uint channel,
                         const bool mode );
 
-   bool receiveTriggerMode( const unsigned int deviceNumber,
-                            const unsigned int channel );
+   bool receiveTriggerMode( const uint deviceNumber,
+                            const uint channel );
 
-   int sendTriggerSourceContinue( const unsigned int deviceNumber,
-                          const unsigned int channel,
-                          const bool extInput );
+   int sendTriggerSourceContinue( const uint deviceNumber,
+                                  const uint channel,
+                                  const bool extInput );
 
-   bool receiveTriggerSourceContinue( const unsigned int deviceNumber,
-                                      const unsigned int channel );
+   bool receiveTriggerSourceContinue( const uint deviceNumber,
+                                      const uint channel );
 
-   int sendTriggerSourceHiRes( const unsigned int deviceNumber,
-                               const unsigned int channel,
+   int sendTriggerSourceHiRes( const uint deviceNumber,
+                               const uint channel,
                                const bool extInput );
 
-   bool receiveTriggerSourceHiRes( const unsigned int deviceNumber,
-                                   const unsigned int channel );
+   bool receiveTriggerSourceHiRes( const uint deviceNumber,
+                                   const uint channel );
 
 
    RAM_RING_INDEX_T getCurrentRamSize( bool update = true );
 
 protected:
-   virtual bool onCommandReadyPoll( unsigned int pollCount );
+   virtual bool onCommandReadyPoll( USEC_T pollCount );
 
    void readLM32( eb_user_data_t pData,
                   std::size_t len,
@@ -318,8 +322,8 @@ protected:
    }
 #endif
 
-   void setLocation( const unsigned int deviceNumber,
-                     const unsigned int channel )
+   void setLocation( const uint deviceNumber,
+                     const uint channel )
    {
 #ifdef CONFIG_DAQ_TEST
       clearData();

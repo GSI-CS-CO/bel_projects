@@ -91,7 +91,7 @@ class DaqChannel
       /*!
        * @brief Becomes incremented with each lost data block.
        */
-      unsigned int m_lostCount;
+      uint m_lostCount;
 
       SequenceNumber( void )
          :m_continued( false )
@@ -119,7 +119,7 @@ class DaqChannel
          return m_blockLost;
       }
 
-      unsigned int getLostCount( void ) const
+      uint getLostCount( void ) const
       {
          return m_lostCount;
       }
@@ -128,7 +128,7 @@ class DaqChannel
    /*!
     * @brief Channel number.
     */
-   unsigned int   m_number;
+   uint   m_number;
 
    /*!
     * @brief Pointer to the DAQ device object including this channel object.
@@ -159,7 +159,7 @@ public:
     *               DaqDevice::registerChannel gives this channel-object
     *               the next free number.
     */
-   DaqChannel( unsigned int number = 0 );
+   DaqChannel( uint number = 0 );
 
    /*!
     * @brief Destructor
@@ -170,7 +170,7 @@ public:
     * @brief Returns the channel number in the possible range from 1 to
     *        DaqDevice::getMaxChannels.
     */
-   const unsigned int getNumber( void ) const
+   const uint getNumber( void ) const
    {
       return m_number;
    }
@@ -201,7 +201,7 @@ public:
     *       except the DAQ device is in slot 1!
     * @see getDeviceNumber
     */
-   const unsigned int getSlot( void );
+   const uint getSlot( void );
 
    /*!
     * @brief Returns the DAQ device number.
@@ -209,7 +209,7 @@ public:
     *       of the SCU-bus with 1
     * @see getSlot
     */
-   const unsigned int getDeviceNumber( void );
+   const uint getDeviceNumber( void );
 
    /*!
     * @brief Starts the Post-Mortem mode.
@@ -238,7 +238,7 @@ public:
     *        the endless mode.
     */
    int sendEnableContineous( const DAQ_SAMPLE_RATE_T sampleRate,
-                             const unsigned int maxBlocks = 0 );
+                             const uint maxBlocks = 0 );
 
    /*!
     * @brief Stops the continuous mode.
@@ -403,7 +403,7 @@ public:
     * @note This function can only be used within the validity range
     *       of the callback function DaqChannel::onDataBlock!
     */
-   unsigned int descriptorGetTimeBase( void );
+   uint descriptorGetTimeBase( void );
 
    /*!
     * @ingroup onDataBlock
@@ -445,7 +445,7 @@ public:
     * @ingroup onDataBlock
     * @brief Returns the number of detected lost data blocks.
     */
-   unsigned int getLostCount( void ) const
+   uint getLostCount( void ) const
    {
       return getSequencePtr()->getLostCount();
    }
@@ -479,9 +479,9 @@ class DaqDevice
 {
    friend class DaqAdministration;
 
-   unsigned int       m_deviceNumber;
-   unsigned int       m_slot;
-   unsigned int       m_maxChannels;
+   uint       m_deviceNumber;
+   uint       m_slot;
+   uint       m_maxChannels;
    DaqAdministration* m_pParent;
 
 protected:
@@ -498,7 +498,7 @@ public:
     *        DaqAdministration::registerDevice will set the slot number of
     *        next unregistered DAQ seen from the left side of the SCU slots.
     */
-   DaqDevice( unsigned int slot = 0 );
+   DaqDevice( uint slot = 0 );
 
    /*!
     * @brief Destructor
@@ -537,7 +537,7 @@ public:
     *       of the SCU-bus with 1
     * @see getSlot
     */
-   const unsigned int getDeviceNumber( void ) const
+   const uint getDeviceNumber( void ) const
    {
       return m_deviceNumber;
    }
@@ -550,7 +550,7 @@ public:
     *       except the DAQ device is in slot 1!
     * @see getDeviceNumber
     */
-   const unsigned int getSlot( void ) const
+   const uint getSlot( void ) const
    {
       return m_slot;
    }
@@ -558,7 +558,7 @@ public:
    /*!
     * @brief Returns the number of channels of this DAQ device.
     */
-   const unsigned int getMaxChannels( void ) const
+   const uint getMaxChannels( void ) const
    {
       return m_maxChannels;
    }
@@ -583,7 +583,7 @@ public:
    /*!
     * @brief Returns the VHDL macro version number of the DAQ device.
     */
-   unsigned int readMacroVersion( void );
+   uint readMacroVersion( void );
 
    /*!
     * @ingroup REGISTRATION
@@ -601,7 +601,7 @@ public:
     *                trigger event, else it's a single shoot event.
     * @see DaqDevice::sendDisablePmHires
     */
-   int sendEnablePostMortem( const unsigned int channel,
+   int sendEnablePostMortem( const uint channel,
                              const bool restart = false );
 
    /*!
@@ -611,7 +611,7 @@ public:
     *                trigger event, else it's a single shoot event.
     * @see DaqDevice::sendDisablePmHires
     */
-   int sendEnableHighResolution( const unsigned int channel,
+   int sendEnableHighResolution( const uint channel,
                                  const bool restart = false );
    /*!
     * @brief Starts the Continuous-Mode
@@ -624,16 +624,16 @@ public:
     *        the Continuous-Mode becomes disabled. The value of zero is
     *        the endless mode.
     */
-   int sendEnableContineous( const unsigned int channel,
+   int sendEnableContineous( const uint channel,
                              const DAQ_SAMPLE_RATE_T sampleRate,
-                             const unsigned int maxBlocks = 0 );
+                             const uint maxBlocks = 0 );
 
    /*!
     * @brief Stops the continuous mode.
     * @param channel Channel number
     * @see DaqDevice::sendEnableContineous
     */
-   int sendDisableContinue( const unsigned int channel );
+   int sendDisableContinue( const uint channel );
 
    /*!
     * @brief Stops the Post-Mortem and High-Resolution mode.
@@ -641,13 +641,13 @@ public:
     * @see DaqDevice::sendEnableHighResolution
     * @param channel Channel number
     */
-   int sendDisablePmHires( const unsigned int channel,
+   int sendDisablePmHires( const uint channel,
                            const bool restart = false );
 
 
-   int sendTriggerCondition( const unsigned int channel,
+   int sendTriggerCondition( const uint channel,
                              const uint32_t trgCondition );
-   uint32_t receiveTriggerCondition( const unsigned int channel );
+   uint32_t receiveTriggerCondition( const uint channel );
 
    /*!
     * @brief Set a trigger delay in ADC-samples
@@ -655,7 +655,7 @@ public:
     * @param delay Trigger dalay in ADC-samples maximum is 65535 samples.
     * @see DaqDevice::receiveTriggerDelay
     */
-   int sendTriggerDelay( const unsigned int channel,
+   int sendTriggerDelay( const uint channel,
                          const DAQ_REGISTER_T delay );
 
    /*!
@@ -665,7 +665,7 @@ public:
     * @param channel Channel number
     * @return Trigger delay in ADC-samples
     */
-   DAQ_REGISTER_T receiveTriggerDelay( const unsigned int channel );
+   DAQ_REGISTER_T receiveTriggerDelay( const uint channel );
 
    /*!
     * @brief Enables/disables the receive trigger.
@@ -673,7 +673,7 @@ public:
     * @param channel Channel number
     * @param mode true: trigger enable; false; trigger disable (default)
     */
-   int sendTriggerMode( const unsigned int channel, bool mode );
+   int sendTriggerMode( const uint channel, bool mode );
 
    /*!
     * @brief Queries the by DaqDevice::sendTriggerMode adjusted trigger mode.
@@ -682,7 +682,7 @@ public:
     * @retval true: enabled
     * @retval false: disabled
     */
-   bool receiveTriggerMode( const unsigned int channel );
+   bool receiveTriggerMode( const uint channel );
 
    /*!
     * @brief Setting the trigger source of the continuous mode to
@@ -692,7 +692,7 @@ public:
     * @param channel Channel number
     * @param extInput If true the trigger source is extern.
     */
-   int sendTriggerSourceContinue( const unsigned int channel, bool extInput );
+   int sendTriggerSourceContinue( const uint channel, bool extInput );
 
    /*!
     * @brief Querying the by sendTriggerSource Continue currently adjusted
@@ -702,7 +702,7 @@ public:
     * @retval true External trigger source adjusted
     * @retval false Internal event trigger adjusted.
     */
-   bool receiveTriggerSourceContinue( const unsigned int channel );
+   bool receiveTriggerSourceContinue( const uint channel );
 
    /*!
     * @brief Setting the trigger source of the high resolution mode to
@@ -712,7 +712,7 @@ public:
     * @param channel Channel number
     * @param extInput If true the trigger source is extern.
     */
-   int sendTriggerSourceHiRes( const unsigned int channel, bool extInput );
+   int sendTriggerSourceHiRes( const uint channel, bool extInput );
 
    /*!
     * @brief Querying the by sendTriggerSource Continue currently adjusted
@@ -722,7 +722,7 @@ public:
     * @retval true External trigger source adjusted
     * @retval false Internal event trigger adjusted.
     */
-   bool receiveTriggerSourceHiRes( const unsigned int channel );
+   bool receiveTriggerSourceHiRes( const uint channel );
 
    /*!
     * @brief Returns the pointer of a registered channel object to which
@@ -732,7 +732,7 @@ public:
     * @return Pointer to the registered channel object to which belongs the
     *         given number.
     */
-   DaqChannel* getChannel( const unsigned int number );
+   DaqChannel* getChannel( const uint number );
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -750,7 +750,7 @@ class DaqAdministration: public DaqInterface
 
 protected:
 #ifdef CONFIG_DAQ_TIME_MEASUREMENT
-   uint64_t          m_elapsedTime;
+   USEC_T            m_elapsedTime;
 #endif
 
    #define DEVICE_LIST_BASE std::list
@@ -861,7 +861,7 @@ public:
     * @retval nullptr Device with the given number not registered.
     * @return Pointer to the DAQ device object.
     */
-   DaqDevice* getDeviceByNumber( const unsigned int number );
+   DaqDevice* getDeviceByNumber( const uint number );
 
    /*!
     * @brief Returns the pointer of a registered DAQ-device which is
@@ -872,7 +872,7 @@ public:
     * @return Pointer to the DAQ device object which is in the given slot
     *         number.
     */
-   DaqDevice* getDeviceBySlot( const unsigned int slot );
+   DaqDevice* getDeviceBySlot( const uint slot );
 
    /*!
     * @brief Returns the pointer of a registered DAQ-channel object by
@@ -888,7 +888,7 @@ public:
     *                 existing channels.
     * @return Pointer to the DAQ channel object.
     */
-   DaqChannel* getChannelByAbsoluteNumber( unsigned int absChannelNumber );
+   DaqChannel* getChannelByAbsoluteNumber( uint absChannelNumber );
 
    /*!
     * @brief Returns the pointer of a registered DAQ-channel object by
@@ -902,8 +902,8 @@ public:
     * @retval nullptr Channel not present.
     * @return Pointer to the DAQ channel object.
     */
-   DaqChannel* getChannelByDeviceNumber( const unsigned int deviceNumber,
-                                         const unsigned int channelNumber );
+   DaqChannel* getChannelByDeviceNumber( const uint deviceNumber,
+                                         const uint channelNumber );
 
    /*!
     * @brief Returns the pointer of a registered DAQ-channel object by
@@ -917,8 +917,8 @@ public:
     * @retval nullptr Channel not present.
     * @return Pointer to the DAQ channel object.
     */
-   DaqChannel* getChannelBySlotNumber( const unsigned int slotNumber,
-                                       const unsigned int channelNumber );
+   DaqChannel* getChannelBySlotNumber( const uint slotNumber,
+                                       const uint channelNumber );
 
    /*!
     * @ingroup onDataBlock
@@ -1072,14 +1072,14 @@ inline const std::string DaqDevice::getScuDomainName( void )
 
 /*! ---------------------------------------------------------------------------
  */
-inline unsigned int DaqDevice::readMacroVersion( void )
+inline uint DaqDevice::readMacroVersion( void )
 {
    return getParent()->readMacroVersion( m_deviceNumber );
 }
 
 /*! ---------------------------------------------------------------------------
  */
-inline int DaqDevice::sendEnablePostMortem( const unsigned int channel,
+inline int DaqDevice::sendEnablePostMortem( const uint channel,
                                             const bool restart )
 {
    return getParent()->sendEnablePostMortem( m_deviceNumber, channel,
@@ -1088,7 +1088,7 @@ inline int DaqDevice::sendEnablePostMortem( const unsigned int channel,
 
 /*! ---------------------------------------------------------------------------
  */
-inline int DaqDevice::sendEnableHighResolution( const unsigned int channel,
+inline int DaqDevice::sendEnableHighResolution( const uint channel,
                                                 const bool restart )
 {
    return getParent()->sendEnableHighResolution( m_deviceNumber, channel,
@@ -1098,9 +1098,9 @@ inline int DaqDevice::sendEnableHighResolution( const unsigned int channel,
 /*! ---------------------------------------------------------------------------
  */
 inline
-int DaqDevice::sendEnableContineous( const unsigned int channel,
+int DaqDevice::sendEnableContineous( const uint channel,
                                      const DAQ_SAMPLE_RATE_T sampleRate,
-                                     const unsigned int maxBlocks )
+                                     const uint maxBlocks )
 {
    return getParent()->sendEnableContineous( m_deviceNumber, channel,
                                              sampleRate, maxBlocks );
@@ -1108,14 +1108,14 @@ int DaqDevice::sendEnableContineous( const unsigned int channel,
 
 /*! ---------------------------------------------------------------------------
  */
-inline int DaqDevice::sendDisableContinue( const unsigned int channel )
+inline int DaqDevice::sendDisableContinue( const uint channel )
 {
    return getParent()->sendDisableContinue( m_deviceNumber, channel );
 }
 
 /*! ---------------------------------------------------------------------------
  */
-inline int DaqDevice::sendDisablePmHires( const unsigned int channel,
+inline int DaqDevice::sendDisablePmHires( const uint channel,
                                           const bool restart )
 {
    return getParent()->sendDisablePmHires( m_deviceNumber, channel,
@@ -1124,7 +1124,7 @@ inline int DaqDevice::sendDisablePmHires( const unsigned int channel,
 
 /*! ---------------------------------------------------------------------------
  */
-inline int DaqDevice::sendTriggerCondition( const unsigned int channel,
+inline int DaqDevice::sendTriggerCondition( const uint channel,
                                            const uint32_t trgCondition )
 {
    return getParent()->sendTriggerCondition( m_deviceNumber, channel,
@@ -1134,7 +1134,7 @@ inline int DaqDevice::sendTriggerCondition( const unsigned int channel,
 /*! ---------------------------------------------------------------------------
  */
 inline
-uint32_t DaqDevice::receiveTriggerCondition( const unsigned int channel )
+uint32_t DaqDevice::receiveTriggerCondition( const uint channel )
 {
    return getParent()->receiveTriggerCondition( m_deviceNumber, channel );
 }
@@ -1143,7 +1143,7 @@ uint32_t DaqDevice::receiveTriggerCondition( const unsigned int channel )
 /*! ---------------------------------------------------------------------------
  */
 inline int
-DaqDevice::sendTriggerDelay( const unsigned int channel,
+DaqDevice::sendTriggerDelay( const uint channel,
                                                    const DAQ_REGISTER_T delay )
 {
    return getParent()->sendTriggerDelay( m_deviceNumber, channel, delay );
@@ -1152,28 +1152,28 @@ DaqDevice::sendTriggerDelay( const unsigned int channel,
 /*! ---------------------------------------------------------------------------
  */
 inline DAQ_REGISTER_T
-DaqDevice::receiveTriggerDelay( const unsigned int channel )
+DaqDevice::receiveTriggerDelay( const uint channel )
 {
    return getParent()->receiveTriggerDelay( m_deviceNumber, channel );
 }
 
 /*! ---------------------------------------------------------------------------
  */
-inline int DaqDevice::sendTriggerMode( const unsigned int channel, bool mode )
+inline int DaqDevice::sendTriggerMode( const uint channel, bool mode )
 {
    return getParent()->sendTriggerMode( m_deviceNumber, channel, mode );
 }
 
 /*! ---------------------------------------------------------------------------
  */
-inline bool DaqDevice::receiveTriggerMode( const unsigned int channel )
+inline bool DaqDevice::receiveTriggerMode( const uint channel )
 {
    return getParent()->receiveTriggerMode( m_deviceNumber, channel );
 }
 
 /*! ---------------------------------------------------------------------------
  */
-inline int DaqDevice::sendTriggerSourceContinue( const unsigned int channel,
+inline int DaqDevice::sendTriggerSourceContinue( const uint channel,
                                                  bool extInput )
 {
    return getParent()->sendTriggerSourceContinue( m_deviceNumber, channel,
@@ -1182,22 +1182,23 @@ inline int DaqDevice::sendTriggerSourceContinue( const unsigned int channel,
 
 /*! ---------------------------------------------------------------------------
  */
-inline bool DaqDevice::receiveTriggerSourceContinue( const unsigned int channel )
+inline bool DaqDevice::receiveTriggerSourceContinue( const uint channel )
 {
    return getParent()->receiveTriggerSourceContinue( m_deviceNumber, channel );
 }
 
 /*! ---------------------------------------------------------------------------
  */
-inline int DaqDevice::sendTriggerSourceHiRes( const unsigned int channel,
+inline int DaqDevice::sendTriggerSourceHiRes( const uint channel,
                                               bool extInput )
 {
-   return getParent()->sendTriggerSourceHiRes( m_deviceNumber, channel, extInput );
+   return getParent()->sendTriggerSourceHiRes( m_deviceNumber,
+                                                           channel, extInput );
 }
 
 /*! ---------------------------------------------------------------------------
  */
-inline bool DaqDevice::receiveTriggerSourceHiRes( const unsigned int channel )
+inline bool DaqDevice::receiveTriggerSourceHiRes( const uint channel )
 {
    return getParent()->receiveTriggerSourceHiRes( m_deviceNumber, channel );
 }
@@ -1221,14 +1222,14 @@ inline const std::string DaqChannel::getScuDomainName( void )
 
 /*! ---------------------------------------------------------------------------
  */
-inline const unsigned int DaqChannel::getSlot( void )
+inline const uint DaqChannel::getSlot( void )
 {
    return getParent()->getSlot();
 }
 
 /*! ---------------------------------------------------------------------------
  */
-inline const unsigned int DaqChannel::getDeviceNumber( void )
+inline const uint DaqChannel::getDeviceNumber( void )
 {
    return getParent()->getDeviceNumber();
 }
@@ -1252,7 +1253,7 @@ inline int DaqChannel::sendEnableHighResolution( const bool restart )
 /*! ---------------------------------------------------------------------------
  */
 inline int DaqChannel::sendEnableContineous( const DAQ_SAMPLE_RATE_T sampleRate,
-                                             const unsigned int maxBlocks )
+                                             const uint maxBlocks )
 {
    m_oSequenceContinueMode.reset();
    return getParent()->sendEnableContineous( m_number, sampleRate, maxBlocks );
@@ -1400,7 +1401,7 @@ inline uint64_t DaqChannel::descriptorGetTimeStamp( void )
 
 /*! ---------------------------------------------------------------------------
  */
-inline unsigned int DaqChannel::descriptorGetTimeBase( void )
+inline uint DaqChannel::descriptorGetTimeBase( void )
 {
    return getParent()->getParent()->descriptorGetTimeBase();
 }

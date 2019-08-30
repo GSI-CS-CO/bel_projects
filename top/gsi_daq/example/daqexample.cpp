@@ -67,6 +67,14 @@ public:
    bool onDataBlock( ::DAQ_DATA_T* pData, std::size_t wordLen ) override;
 };
 
+void dump64( uint64_t v )
+{
+   cout << hex;
+   for( int i = sizeof( uint64_t )-1; i >= 0; i-- )
+     cout << "0x" << static_cast<uint>(reinterpret_cast<uint8_t*>(&v)[i]) << ' ';
+   cout << dec;
+}
+
 /*
  * The example call back function for the received raw data calculates
  * the maximum, minimum and the average value over the entire received block.
@@ -74,13 +82,21 @@ public:
 bool MyChannel::onDataBlock( ::DAQ_DATA_T* pData, std::size_t wordLen )
 {
    m_receivedBlockCount++;
-
+#if 1
    cout << "Slot:            " << getSlot() << endl;
    cout << "Channel:         " << getNumber() << endl;
    cout << "Block number:    " << m_receivedBlockCount << endl;
    cout << "Sequence number: " <<
                     static_cast<uint>(descriptorGetSequence()) << endl;
-   cout << "Timestamp:       " << descriptorGetTimeStamp() << endl;
+#endif
+#if 1
+   cout << "Timestamp:       " << wrToTimeDateString( descriptorGetTimeStamp() ) <<
+        std::hex << ",    0x" << descriptorGetTimeStamp() << std::dec
+                              << "  " << descriptorGetTimeStamp() << "  ";
+        dump64(  descriptorGetTimeStamp() );
+        cout << endl;
+#endif
+#if 1
    cout << "Sample time:     " << descriptorGetTimeBase() << " ns" << endl;
    cout << "Received values: " << wordLen << " in 16 bit words" << endl;
 
@@ -101,7 +117,7 @@ bool MyChannel::onDataBlock( ::DAQ_DATA_T* pData, std::size_t wordLen )
         << rawToVoltage( average ) << " Volt" << endl;
    cout << "Maximum: " << maximum << " -> "
         << rawToVoltage( maximum ) << " Volt\n" << endl;
-
+#endif
    return false;
 }
 
@@ -109,6 +125,12 @@ bool MyChannel::onDataBlock( ::DAQ_DATA_T* pData, std::size_t wordLen )
 ///////////////////////////////////////////////////////////////////////////////
 int main( int argc, const char** ppArgv )
 {
+   //uint64_t T = 0xc698000200000000;
+  // uint64_t T = 0x0002c69800000000;
+   //uint64_t T = 0x2c77e00000000000;
+  // uint64_t T = 0xe0002c7700000000;
+  // cout << "Test: " << wrToTimeDateString( T ) << endl;
+  // return 0;
    if( argc < 2 )
    {
       cerr << "ERROR: No SCU-URL given!" << endl;

@@ -88,7 +88,7 @@ public:
       }
    }
 
-   DEVICE_T* getDeviceByNumber( const unsigned int number )
+   DEVICE_T* getDeviceByNumber( const uint number )
    {
       return static_cast<DEVICE_T*>
       (
@@ -96,7 +96,7 @@ public:
       );
    }
 
-   DEVICE_T* getDeviceBySlot( const unsigned int slot )
+   DEVICE_T* getDeviceBySlot( const uint slot )
    {
       return static_cast<DEVICE_T*>
       (
@@ -104,7 +104,7 @@ public:
       );
    }
 
-   CHANNEL_T* getChannelByAbsoluteNumber( unsigned int absChannelNumber )
+   CHANNEL_T* getChannelByAbsoluteNumber( uint absChannelNumber )
    {
       return static_cast<CHANNEL_T*>
       (
@@ -112,8 +112,8 @@ public:
       );
    }
 
-   CHANNEL_T* getChannelByDeviceNumber( const unsigned int deviceNumber,
-                                        const unsigned int channelNumber )
+   CHANNEL_T* getChannelByDeviceNumber( const uint deviceNumber,
+                                        const uint channelNumber )
    {
       return static_cast<CHANNEL_T*>
       (
@@ -122,8 +122,8 @@ public:
       );
    }
 
-   CHANNEL_T* getChannelBySlotNumber( const unsigned int slotNumber,
-                                      const unsigned int channelNumber )
+   CHANNEL_T* getChannelBySlotNumber( const uint slotNumber,
+                                      const uint channelNumber )
    {
       return static_cast<CHANNEL_T*>
       (

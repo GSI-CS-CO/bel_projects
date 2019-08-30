@@ -140,27 +140,26 @@ void DaqInterface::readSharedTotal( void )
 
 /*! ---------------------------------------------------------------------------
  */
-bool DaqInterface::onCommandReadyPoll( unsigned int pollCount )
+bool DaqInterface::onCommandReadyPoll( USEC_T timeout )
 {
-   if( pollCount >= c_maxCmdPoll )
+   if( getSysMicrosecs() > timeout )
       return true;
 
-   struct timeval sleepTime = {0, 10};
-   ::select( 0, nullptr, nullptr, nullptr, &sleepTime );
+   ::usleep( 10 );
 
    return false;
 }
 
 /*! ---------------------------------------------------------------------------
  */
+inline
 bool DaqInterface::cmdReadyWait( void )
 {
-   unsigned int pollCount = 0;
+   USEC_T timeout = getSysMicrosecs() + c_LM32CommandResponseTimeout;
    while( getCommand() != DAQ_OP_IDLE )
    {
-      if( onCommandReadyPoll( pollCount ) )
+      if( onCommandReadyPoll( timeout ) )
          return true;
-      pollCount++;
    }
    return false;
 }
@@ -200,10 +199,10 @@ DAQ_OPERATION_CODE_T DaqInterface::getCommand( void )
 
    DAQ_OPERATION_T temp;
 
-   readLM32( &temp,
-                         offsetof(DAQ_OPERATION_T, ioData) -
-                                offsetof(DAQ_OPERATION_T, code),
-                         offsetof( DAQ_SHARED_IO_T, operation )  );
+   readLM32( &temp, offsetof(DAQ_OPERATION_T, ioData) -
+                                               offsetof(DAQ_OPERATION_T, code),
+                    offsetof( DAQ_SHARED_IO_T, operation )  );
+
    CONV_ENDIAN( m_oSharedData.operation, temp, code );
    CONV_ENDIAN( m_oSharedData.operation, temp, retCode );
 
@@ -390,13 +389,13 @@ RAM_RING_INDEX_T DaqInterface::getCurrentRamSize( bool update )
 
 /*! ---------------------------------------------------------------------------
  */
-unsigned int DaqInterface::getSlotNumber( const unsigned int deviceNumber )
+uint DaqInterface::getSlotNumber( const uint deviceNumber )
 {
    SCU_ASSERT( deviceNumber > 0 );
    SCU_ASSERT( deviceNumber <= c_maxDevices );
 
-   unsigned int i = 0;
-   for( unsigned int slot = 1; slot <= c_maxSlots; slot++ )
+   uint i = 0;
+   for( uint slot = 1; slot <= c_maxSlots; slot++ )
    {
       if( isDevicePresent( slot ) )
          i++;
@@ -408,7 +407,7 @@ unsigned int DaqInterface::getSlotNumber( const unsigned int deviceNumber )
 
 /*! ---------------------------------------------------------------------------
  */
-unsigned int DaqInterface::getDeviceNumber( const unsigned int slotNumber )
+uint DaqInterface::getDeviceNumber( const uint slotNumber )
 {
    SCU_ASSERT( slotNumber > 0 );
    SCU_ASSERT( slotNumber <= c_maxSlots );
@@ -416,8 +415,8 @@ unsigned int DaqInterface::getDeviceNumber( const unsigned int slotNumber )
    if( !isDevicePresent( slotNumber ) )
       return 0;
 
-   unsigned int deviceNumber = 0;
-   for( unsigned int slot = 1; slot <= slotNumber; slot++ )
+   uint deviceNumber = 0;
+   for( uint slot = 1; slot <= slotNumber; slot++ )
    {
       if( isDevicePresent( slot ) )
          deviceNumber++;
@@ -435,7 +434,7 @@ DaqInterface::RETURN_CODE_T DaqInterface::readSlotStatus( void )
    {
       m_slotFlags = m_oSharedData.operation.ioData.param1;
       m_maxDevices = 0;
-      for( unsigned int slot = 1; slot <= c_maxSlots; slot++ )
+      for( uint slot = 1; slot <= c_maxSlots; slot++ )
       {
          if( isDevicePresent( slot ) )
             m_maxDevices++;
@@ -491,7 +490,7 @@ void DaqInterface::onBlockReceiveError( void )
 
 /*! ---------------------------------------------------------------------------
  */
-unsigned int DaqInterface::readMaxChannels( const unsigned int deviceNumber )
+uint DaqInterface::readMaxChannels( const uint deviceNumber )
 {
    SCU_ASSERT( deviceNumber > 0 );
    SCU_ASSERT( deviceNumber <= c_maxDevices );
@@ -504,7 +503,7 @@ unsigned int DaqInterface::readMaxChannels( const unsigned int deviceNumber )
 
 /*! ---------------------------------------------------------------------------
  */
-unsigned int DaqInterface::readMacroVersion( const unsigned int deviceNumber )
+uint DaqInterface::readMacroVersion( const uint deviceNumber )
 {
    SCU_ASSERT( deviceNumber > 0 );
    SCU_ASSERT( deviceNumber <= c_maxDevices );
@@ -517,8 +516,8 @@ unsigned int DaqInterface::readMacroVersion( const unsigned int deviceNumber )
 
 /*! ---------------------------------------------------------------------------
  */
-int DaqInterface::sendEnablePostMortem( const unsigned int deviceNumber,
-                                        const unsigned int channel,
+int DaqInterface::sendEnablePostMortem( const uint deviceNumber,
+                                        const uint channel,
                                         const bool restart
                                       )
 {
@@ -531,8 +530,8 @@ int DaqInterface::sendEnablePostMortem( const unsigned int deviceNumber,
 
 /*! ---------------------------------------------------------------------------
  */
-int DaqInterface::sendEnableHighResolution( const unsigned int deviceNumber,
-                                            const unsigned int channel,
+int DaqInterface::sendEnableHighResolution( const uint deviceNumber,
+                                            const uint channel,
                                             const bool restart
                                           )
 {
@@ -545,10 +544,10 @@ int DaqInterface::sendEnableHighResolution( const unsigned int deviceNumber,
 
 /*! ---------------------------------------------------------------------------
  */
-int DaqInterface::sendEnableContineous( const unsigned int deviceNumber,
-                                        const unsigned int channel,
+int DaqInterface::sendEnableContineous( const uint deviceNumber,
+                                        const uint channel,
                                         const DAQ_SAMPLE_RATE_T sampleRate,
-                                        const unsigned int maxBlocks
+                                        const uint maxBlocks
                                       )
 {
    SCU_ASSERT( maxBlocks <= static_cast<uint16_t>(~0) );
@@ -562,8 +561,8 @@ int DaqInterface::sendEnableContineous( const unsigned int deviceNumber,
 
 /*! ---------------------------------------------------------------------------
  */
-int DaqInterface::sendDisableContinue( const unsigned int deviceNumber,
-                                       const unsigned int channel )
+int DaqInterface::sendDisableContinue( const uint deviceNumber,
+                                       const uint channel )
 {
    DAQ_SET_CHANNEL_LOCATION( deviceNumber, channel );
 
@@ -573,8 +572,8 @@ int DaqInterface::sendDisableContinue( const unsigned int deviceNumber,
 
 /*! ---------------------------------------------------------------------------
  */
-int DaqInterface::sendDisablePmHires( const unsigned int deviceNumber,
-                                      const unsigned int channel,
+int DaqInterface::sendDisablePmHires( const uint deviceNumber,
+                                      const uint channel,
                                       const bool restart
                                     )
 {
@@ -587,8 +586,8 @@ int DaqInterface::sendDisablePmHires( const unsigned int deviceNumber,
 
 /*! ---------------------------------------------------------------------------
  */
-int DaqInterface::sendTriggerCondition( const unsigned int deviceNumber,
-                                        const unsigned int channel,
+int DaqInterface::sendTriggerCondition( const uint deviceNumber,
+                                        const uint channel,
                                         const uint32_t trgCondition )
 {
    DAQ_SET_CHANNEL_LOCATION( deviceNumber, channel );
@@ -611,8 +610,8 @@ int DaqInterface::sendTriggerCondition( const unsigned int deviceNumber,
 /*! ---------------------------------------------------------------------------
  */
 uint32_t
-DaqInterface::receiveTriggerCondition( const unsigned int deviceNumber,
-                                       const unsigned int channel )
+DaqInterface::receiveTriggerCondition( const uint deviceNumber,
+                                       const uint channel )
 {
    DAQ_SET_CHANNEL_LOCATION( deviceNumber, channel );
 
@@ -637,9 +636,9 @@ DaqInterface::receiveTriggerCondition( const unsigned int deviceNumber,
 
 /*! ---------------------------------------------------------------------------
  */
-int DaqInterface::sendTriggerDelay( const unsigned int deviceNumber,
-                                   const unsigned int channel,
-                                   const uint16_t delay )
+int DaqInterface::sendTriggerDelay( const uint deviceNumber,
+                                    const uint channel,
+                                    const uint16_t delay )
 {
    DAQ_SET_CHANNEL_LOCATION( deviceNumber, channel );
 
@@ -650,8 +649,8 @@ int DaqInterface::sendTriggerDelay( const unsigned int deviceNumber,
 
 /*! ---------------------------------------------------------------------------
  */
-uint16_t DaqInterface::receiveTriggerDelay( const unsigned int deviceNumber,
-                                            const unsigned int channel )
+uint16_t DaqInterface::receiveTriggerDelay( const uint deviceNumber,
+                                            const uint channel )
 {
    DAQ_SET_CHANNEL_LOCATION( deviceNumber, channel );
 
@@ -663,8 +662,8 @@ uint16_t DaqInterface::receiveTriggerDelay( const unsigned int deviceNumber,
 
 /*! ---------------------------------------------------------------------------
  */
-int DaqInterface::sendTriggerMode( const unsigned int deviceNumber,
-                                   const unsigned int channel,
+int DaqInterface::sendTriggerMode( const uint deviceNumber,
+                                   const uint channel,
                                    const bool mode )
 {
    DAQ_SET_CHANNEL_LOCATION( deviceNumber, channel );
@@ -676,8 +675,8 @@ int DaqInterface::sendTriggerMode( const unsigned int deviceNumber,
 
 /*! ---------------------------------------------------------------------------
  */
-bool DaqInterface::receiveTriggerMode( const unsigned int deviceNumber,
-                                       const unsigned int channel )
+bool DaqInterface::receiveTriggerMode( const uint deviceNumber,
+                                       const uint channel )
 {
    DAQ_SET_CHANNEL_LOCATION( deviceNumber, channel );
 
@@ -688,8 +687,8 @@ bool DaqInterface::receiveTriggerMode( const unsigned int deviceNumber,
 
 /*! ---------------------------------------------------------------------------
  */
-int DaqInterface::sendTriggerSourceContinue( const unsigned int deviceNumber,
-                                             const unsigned int channel,
+int DaqInterface::sendTriggerSourceContinue( const uint deviceNumber,
+                                             const uint channel,
                                              const bool extInput )
 {
    DAQ_SET_CHANNEL_LOCATION( deviceNumber, channel );
@@ -701,8 +700,8 @@ int DaqInterface::sendTriggerSourceContinue( const unsigned int deviceNumber,
 
 /*! ---------------------------------------------------------------------------
  */
-bool DaqInterface::receiveTriggerSourceContinue( const unsigned int deviceNumber,
-                                                 const unsigned int channel )
+bool DaqInterface::receiveTriggerSourceContinue( const uint deviceNumber,
+                                                 const uint channel )
 {
    DAQ_SET_CHANNEL_LOCATION( deviceNumber, channel );
 
@@ -713,8 +712,8 @@ bool DaqInterface::receiveTriggerSourceContinue( const unsigned int deviceNumber
 
 /*! ---------------------------------------------------------------------------
  */
-int DaqInterface::sendTriggerSourceHiRes( const unsigned int deviceNumber,
-                                          const unsigned int channel,
+int DaqInterface::sendTriggerSourceHiRes( const uint deviceNumber,
+                                          const uint channel,
                                           const bool extInput )
 {
    DAQ_SET_CHANNEL_LOCATION( deviceNumber, channel );
@@ -726,8 +725,8 @@ int DaqInterface::sendTriggerSourceHiRes( const unsigned int deviceNumber,
 
 /*! ---------------------------------------------------------------------------
  */
-bool DaqInterface::receiveTriggerSourceHiRes( const unsigned int deviceNumber,
-                                              const unsigned int channel )
+bool DaqInterface::receiveTriggerSourceHiRes( const uint deviceNumber,
+                                              const uint channel )
 {
    DAQ_SET_CHANNEL_LOCATION( deviceNumber, channel );
 
