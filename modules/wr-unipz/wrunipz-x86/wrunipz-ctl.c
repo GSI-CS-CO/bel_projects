@@ -3,7 +3,7 @@
  *
  *  created : 2018
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 21-August-2019
+ *  version : 30-August-2019
  *
  *  command-line interface for wrunipz
  *
@@ -102,7 +102,7 @@ const char* wrunipz_statusText(uint32_t bit) {
     case WRUNIPZ_STATUS_MIL             : sprintf(message, "error %d, %s",    bit, "an error on MIL hardware occured (MIL piggy etc...)"); break;
     case WRUNIPZ_STATUS_NOMILEVENTS     : sprintf(message, "error %d, %s",    bit, "no MIL events from UNIPZ"); break;
     case WRUNIPZ_STATUS_WRONGVIRTACC    : sprintf(message, "error %d, %s",    bit, "received EVT_READY_TO_SIS with wrong virt acc number"); break;
-    case WRUNIPZ_STATUS_SAFETYMARGIN    : sprintf(message, "error %d, %s",    bit, "violation of safety margin for data master and timing network"); break;
+    case WRUNIPZ_STATUS_SAFETYMARGIN    : sprintf(message, "error %d, %s",    bit, "violation of safety margin for sending data to the timing network"); break;
     case WRUNIPZ_STATUS_NOTIMESTAMP     : sprintf(message, "error %d, %s",    bit, "received EVT_READY_TO_SIS in MIL FIFO but not via TLU -> ECA"); break;
     case WRUNIPZ_STATUS_BADTIMESTAMP    : sprintf(message, "error %d, %s",    bit, "TS from TLU->ECA does not coincide with MIL Event from FIFO"); break;                     
     case WRUNIPZ_STATUS_ORDERTIMESTAMP  : sprintf(message, "error %d, %s",    bit, "TS from TLU->ECA and MIL Events are out of order"); break;
@@ -636,7 +636,7 @@ int main(int argc, char** argv) {
   
 
   if (snoop) {
-    printf("wr-unipz: continous monitoring of 'Data Master', loglevel = %d\n", logLevel);
+    printf("wr-unipz: continous monitoring of 'UNIPZ (WR)', loglevel = %d\n", logLevel);
     
     //    actCycles    = 0;
     actState       = COMMON_STATE_UNKNOWN;
