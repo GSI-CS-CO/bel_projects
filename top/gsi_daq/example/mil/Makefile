@@ -1,23 +1,23 @@
 ###############################################################################
 ##                                                                           ##
-##       Makefile to create a minimal example of using a DAQ channel.        ##
+##      Makefile to create a minimal example of using a MIL-DAQ channel.     ##
 ##                                                                           ##
 ##---------------------------------------------------------------------------##
-## File:     gsi_daq/example/scu/Makefile                                    ##
+## File:     gsi_daq/example/mil/Makefile                                    ##
 ## Author:   Ulrich Becker                                                   ##
 ## Company:  GSI Helmholtz Centre for Heavy Ion Research GmbH                ##
-## Date:     31.05.2019                                                      ##
+## Date:     02.09.2019                                                      ##
 ###############################################################################
 REPOSITORY_DIR := $(shell git rev-parse --show-toplevel)
 
 EB_SRC= $(DAQ_DIR)/feSupport/scu/etherbone
 
-MIAN_MODULE := daqexample.cpp
+MIAN_MODULE := mdaqexample.cpp
 
 SOURCE += $(DAQ_DIR)/daq_ring_admin.c
 SOURCE += $(DAQ_LINUX_DIR)/daq_eb_ram_buffer.cpp
-SOURCE += $(SDAQ_LINUX_DIR)/daq_interface.cpp
-SOURCE += $(SDAQ_LINUX_DIR)/daq_administration.cpp
+SOURCE += $(MDAQ_LINUX_DIR)/mdaq_interface.cpp
+SOURCE += $(MDAQ_LINUX_DIR)/mdaq_administration.cpp
 SOURCE += $(EB_SRC)/EtherboneConnection.cpp
 SOURCE += $(EB_SRC)/BusException.cpp
 
@@ -42,7 +42,7 @@ DEFINES += CONFIG_DDR3_NO_BURST_FUNCTIONS
 DEFINES += __ETHERBONE_CONNECTION_MUTEX="EtherBoneConnectionMutexDaq"
 
 INCLUDE_DIRS += $(EB_SRC)
-INCLUDE_DIRS += $(SDAQ_LINUX_DIR)
+INCLUDE_DIRS += $(MDAQ_LINUX_DIR)
 # LIBS += boost_system
  ADDITIONAL_OBJECTS += /opt/gsi/3rdparty/boost/1.54.0/lib/x86_64/libboost_system.a
 LIBS += pthread
@@ -50,7 +50,7 @@ LIBS += stdc++
 LIBS += etherbone
 
 
-CALL_ARGS         = "tcp/$(SCU_URL)"
+CALL_ARGS         = "tcp/scuxl0107"
 REMOTE_CALL_ARGS  ?= "dev/wbm0"
 
 DEBUG = 1
