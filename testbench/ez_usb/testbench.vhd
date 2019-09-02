@@ -55,21 +55,7 @@ architecture simulation of testbench is
   signal s_usb_fd_o    : std_logic_vector(7 downto 0) := (others => '0');
   signal s_usb_fd_oen  : std_logic := '0';
 
-
-  procedure write_word(constant data : in std_logic_vector(31 downto 0); 
-                        signal slrd_i : in  std_logic; 
-                        signal fd_o : out std_logic_vector(7 downto 0)) is
-  begin
-    fd_o   <= data(31 downto 24);
-    wait until falling_edge(slrd_i);  wait until rising_edge(slrd_i);
-    fd_o   <= data(23 downto 16);
-    wait until falling_edge(slrd_i);  wait until rising_edge(slrd_i);
-    fd_o   <= data(15 downto 8);
-    wait until falling_edge(slrd_i);  wait until rising_edge(slrd_i);
-    fd_o   <= data(7 downto 0);
-    wait until falling_edge(slrd_i);  wait until rising_edge(slrd_i);
-    fd_o <= (others => 'Z');
- end procedure;
+  signal counter : integer := 0;
 
 begin
 
@@ -136,7 +122,6 @@ begin
     variable char_in, char_out : character;
     subtype byte_t is natural range 0 to 255;
     variable byte_v : byte_t;
-    variable counter : integer := 0;
   begin
 
     
@@ -153,19 +138,21 @@ begin
 
 
 
-    -- I'm the EZ-USB chip, nobody knows where my data actually comes from...
+    -- I'm the EZ-USB chip, nobody knows where my data really comes from...
     -- ...  I'll read it from a file in this case (not from the D+/D- wires)
     file_open(char_file_read, DEVICE_READ, read_mode); 
     file_open(char_file_write, DEVICE_WRITE, write_mode); 
-    -- I'm the EZ-USB chip. I received data and de-assert my emty line
-    --  and set the cycle line 
     usb_ebcyc_i <= '1';
     wait until rising_edge(clk_sys);
-    while not endfile(char_file_read) loop
+    --while not endfile(char_file_read) loop
+    while counter < 32 loop
 
+      -- I'm the EZ-USB chip. I received data and de-assert my empty line
+      --  and set the cycle line 
       usb_emptyn_i <= '1'; -- not empty when high:
       for i in 1 to 8 loop
         read(char_file_read, char_in);
+        counter <= counter + 1;
         byte_v := character'pos(char_in);
         report "read char: " & integer'image(byte_v);
         usb_fd_io   <= std_logic_vector(to_unsigned(byte_v, 8));
@@ -185,66 +172,11 @@ begin
       while usb_pktendn_o = '1' loop
         wait until rising_edge(clk_sys);
       end loop;
-
-      --  --for i in 0 to 50 loop wait until rising_edge(clk_sys); end loop;    
+      -- mimic a flush (which is only available in vhdl2008)
       file_close(char_file_write);
       file_open(char_file_write, DEVICE_WRITE, write_mode); 
-      --  --for i in 0 to 50 loop wait until rising_edge(clk_sys); end loop;    
+      -- 
     end loop;
-
-
-    --usb_ebcyc_i <= '1';
-    --wait until rising_edge(clk_sys);
-    --usb_emptyn_i <= '1'; -- not empty when high:
-    --while not endfile(char_file) loop
-    ----for i in 1 to 8 loop
-    --  read(char_file, char_v);
-    --  byte_v := character'pos(char_v); 
-    --  report "2-read char: " & integer'image(byte_v);
-    --  usb_fd_io   <= std_logic_vector(to_unsigned(byte_v, 8));
-    --  wait until falling_edge(usb_slrdn_o);  wait until rising_edge(usb_slrdn_o);
-    --end loop;
-    --usb_ebcyc_i <= '0';
-    --usb_emptyn_i <= '0'; -- empty when low:
-
-    --file_close(char_file);
-    --file_open(char_file, DEVICE, write_mode);
-    --write(char_file, char_v);
-    --file_close(char_file);
-
-    ---- I'm the EZ-USB chip and I got some data from the host. I'll de-assert my empty line
-    --                               write these words  =>    ********
---pcimem /sys/bus/pci/devices/0000:02:00.0/resource2 0xA0 w 0x4e6f11ff
---pcimem /sys/bus/pci/devices/0000:02:00.0/resource2 0xA0 w 0x00000086
---pcimem /sys/bus/pci/devices/0000:02:00.0/resource2 0xA0 w 0xe80f0101
---pcimem /sys/bus/pci/devices/0000:02:00.0/resource2 0xA0 w 0x04060000
---pcimem /sys/bus/pci/devices/0000:02:00.0/resource2 0xA0 w 0xB00BBABE
---pcimem /sys/bus/pci/devices/0000:02:00.0/resource2 0xA0 w 0x00008001
---pcimem /sys/bus/pci/devices/0000:02:00.0/resource2 0xA0 w 0x00000004
-
- 
-    --usb_ebcyc_i <= '1';
-    --wait until rising_edge(clk_sys);
-    --usb_emptyn_i <= '1'; -- not empty when high: send data 4e6f11ff
-    --write_word(x"4e6f11ff", usb_slrdn_o, usb_fd_io); -- eb-header (magic, etc.)
-    --usb_emptyn_i <= '0'; -- empty when low
-    --for i in 0 to 521 loop wait until rising_edge(clk_sys); end loop;    
-    --usb_emptyn_i <= '1'; -- 
-    --write_word(x"00000086", usb_slrdn_o, usb_fd_io);
-    --usb_emptyn_i <= '0'; -- empty when low
-    --for i in 0 to 521 loop wait until rising_edge(clk_sys); end loop;    
-    --usb_emptyn_i <= '1'; -- 
-    --write_word(x"280f0202", usb_slrdn_o, usb_fd_io); -- record header
-    --write_word(x"04060000", usb_slrdn_o, usb_fd_io);
-    --write_word(x"B00BBABE", usb_slrdn_o, usb_fd_io);
-    --write_word(x"CAFE1234", usb_slrdn_o, usb_fd_io);
-    --write_word(x"04060000", usb_slrdn_o, usb_fd_io);
-    --write_word(x"00000004", usb_slrdn_o, usb_fd_io);
-    --write_word(x"00000004", usb_slrdn_o, usb_fd_io);
-    --wait until rising_edge(clk_sys);
-    --usb_emptyn_i <= '0'; -- empty when low
-    --for i in 0 to 521 loop wait until rising_edge(clk_sys); end loop;    
-    --usb_ebcyc_i <= '0';
 
 
     while true loop 

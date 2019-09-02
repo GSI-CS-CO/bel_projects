@@ -13,7 +13,7 @@ entity wb_minislave is
 end entity;
 
 architecture rtl of wb_minislave is
-    signal wb_register : std_logic_vector(31 downto 0) := x"12ff5678";
+    signal wb_register : std_logic_vector(31 downto 0) := x"affebabe";
     signal stall : std_logic := '1';
     signal n_rd_access : integer := 0;
     signal n_wr_access : integer := 0;
