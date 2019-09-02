@@ -1,0 +1,35 @@
+digraph g {
+name="DynCoupling";
+edge  [type="defdst"]
+node  [cpu="0"];
+  
+  ESR_00_Go_SIS       [cpu="2", type="flush", pattern="ESR", patentry="true", toffs=0, prio="0", qty=1, tvalid=0, qlo="true",  vabs="true"]; 
+  ESR_01_MSG_A          [cpu="2", type="tmsg", pattern="ESR", toffs=1000, par="0x0", id="0x1000000000000E58"];
+  ESR_02_Skip_SIS         [cpu="2", type="flush", pattern="ESR", toffs=2000, prio="1", qty=1, tvalid=0, qlo="true", qhi="true", vabs="true"]; 
+  ESR_03_Init_ESR_Wait  [cpu="2", type="flow", pattern="ESR",  toffs=3000, prio="0", qty=100, tvalid=0, vabs="true"];
+  ESR_04_BlockDuration  [cpu="2", type="block", pattern="ESR", tperiod=1000000000]; // 1 sec
+  ESR_05_Block          [cpu="2", type="block", pattern="ESR", patexit="true", tperiod=100000000, qhi="true", qlo="true"]; // 0.1 sec
+
+  ESR_00_Go_SIS -> ESR_01_MSG_A -> ESR_02_Skip_SIS -> ESR_03_Init_ESR_Wait -> ESR_04_BlockDuration -> ESR_05_Block -> ESR_00_Go_SIS;
+  ESR_00_Go_SIS -> SIS_04_Block [type="target"];
+  ESR_05_Block -> ESR_05_Block [type="altdst"];
+  ESR_03_Init_ESR_Wait -> ESR_05_Block [type="target"];
+  ESR_03_Init_ESR_Wait -> ESR_05_Block [type="flowdst"];
+  ESR_02_Skip_SIS -> SIS_04_Block [type="target"];
+  ESR_02_Skip_SIS -> SIS_00_InBlock  [type="flushovr"];
+
+  SIS_00_InBlock        [type="block", pattern="SIS", patentry="true", tperiod=10000]; 
+  SIS_01_MSG_A          [type="tmsg", pattern="SIS", toffs=1000, par="0x0", id="0x1000000005150AAA"];
+  SIS_02_CancelESRWait  [type="flush", pattern="SIS", toffs=2000, prio="1", qty=1, tvalid=0, qhi="true", qlo="true", vabs="true"]; 
+  SIS_04_Block          [type="block", pattern="SIS", patexit="true", tperiod=100000, qhi="true", qlo="true"]; // 10 sec
+  SIS_05_Skip_MSG       [type="tmsg", pattern="SIS", toffs=1000, par="0x0", id="0x1000000005150541"];
+  SIS_06_Skip_Block     [type="block", pattern="SIS", tperiod=100000]; 
+
+
+  SIS_05_Skip_MSG -> SIS_06_Skip_Block -> SIS_04_Block -> SIS_05_Skip_MSG;
+  SIS_00_InBlock  -> SIS_01_MSG_A -> SIS_02_CancelESRWait -> SIS_04_Block;
+  SIS_04_Block -> SIS_00_InBlock [type="altdst"];
+  SIS_02_CancelESRWait -> ESR_05_Block [type="target"];
+
+
+}
