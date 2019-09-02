@@ -1148,8 +1148,8 @@ void execHostCmd(int32_t cmd)
     }
 
     *pSharedCmd = cmd;
-    if (result == STATUS_OK)
-      respondToHost((uint32_t)cmd);
+    cmd = (result << 16) | (cmd & 0x0000FFFF); // both instruction result and instruction code are sent by MSI
+    respondToHost((uint32_t)cmd);
   }
 }
 
