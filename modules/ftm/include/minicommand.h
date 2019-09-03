@@ -14,7 +14,7 @@ protected:
   MiniCommand(uint64_t tValid, uint32_t act) : tValid(tValid), act(act) {}
 public:
 
-  ~MiniCommand() {};
+  virtual ~MiniCommand() = default;
   virtual uint32_t getAct() const {return this->act;};
   virtual void serialise(uint8_t* b) const {
     writeLeNumberToBeBytes(b + (ptrdiff_t)T_CMD_TIME, this->tValid);
