@@ -13,6 +13,9 @@ package file_access is
   procedure file_access_write(x : integer);
   attribute foreign of file_access_write : procedure is "VHPIDIRECT file_access_write";
 
+  procedure file_access_flush;
+  attribute foreign of file_access_flush : procedure is "VHPIDIRECT file_access_flush";
+
 
   shared variable my_var : integer := 43;
 end package;
@@ -35,6 +38,11 @@ package body file_access is
   end function;
 
   procedure file_access_write(x : integer) is
+  begin
+    assert false report "VHPI" severity failure;
+  end procedure;
+
+  procedure file_access_flush is
   begin
     assert false report "VHPI" severity failure;
   end procedure;

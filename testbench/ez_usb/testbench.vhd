@@ -54,7 +54,7 @@ architecture simulation of testbench is
   signal usb_slrdn_o   : std_logic := '0';
   signal usb_slwrn_o   : std_logic := '0';
   signal usb_pktendn_o : std_logic := '0';
-  signal usb_fd_io     : std_logic_vector(7 downto 0) := (others => '0');
+  signal usb_fd_io     : std_logic_vector(7 downto 0) := (others => 'Z');
   signal s_usb_fd_o    : std_logic_vector(7 downto 0) := (others => '0');
   signal s_usb_fd_oen  : std_logic := '0';
 
@@ -137,32 +137,25 @@ begin
     usb_fulln_i <= '1'; -- I'm never full (I'm a never-ending fifo)
     wait until rising_edge(clk_sys);
 
-
-
     -- I'm the EZ-USB chip, nobody knows where my data really comes from...
     -- ...  I'll read it from a file in this case (not from the D+/D- wires)
-    --file_open(char_file_read, DEVICE_READ, read_mode); 
-    --file_open(char_file_write, DEVICE_WRITE, write_mode); 
     file_access_init;
 
     usb_ebcyc_i <= '1';
     while true loop    
 
-      --wait until rising_edge(clk_sys);
-
+      usb_emptyn_i <= '1'; -- we have data -> de-assert empty line
       in_value := file_access_read;
-      say_hello(in_value);
       while in_value >= 0 loop
-        usb_emptyn_i <= '1'; -- we have data -> de-assert empty line
         usb_fd_io <= std_logic_vector(to_signed(in_value, 8));
         wait until falling_edge(usb_slrdn_o);  wait until rising_edge(usb_slrdn_o);
         in_value := file_access_read;
       end loop;
 
-      --wait until rising_edge(clk_sys);
       usb_fd_io <= (others => 'Z');
       usb_emptyn_i <= '0'; -- we are empty
-      wait until rising_edge(clk_sys);
+      
+      wait until rising_edge(clk_sys) or falling_edge(usb_slwrn_o);
 
       if usb_slwrn_o = '0' then 
         while usb_pktendn_o = '1' loop
@@ -172,14 +165,13 @@ begin
             file_access_write(out_value);
           end if;
         end loop;
+        wait until rising_edge(usb_pktendn_o);
+        file_access_flush;
       end if;
+
 
     end loop;
     usb_ebcyc_i <= '1';
-
-
-    --file_close(char_file_write);
-    --file_close(char_file_read);
 
   end process;
 
