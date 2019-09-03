@@ -141,12 +141,23 @@ begin
     -- ...  I'll read it from a file in this case (not from the D+/D- wires)
     file_access_init;
 
-    usb_ebcyc_i <= '1';
     while true loop    
+      counter <= counter + 1;
+      if counter > 50 then 
+        counter <= 0;
+        usb_ebcyc_i <= '0';
+        for i in 0 to 3 loop 
+          wait until rising_edge(clk_sys); 
+        end loop;
+      end if;
 
-      usb_emptyn_i <= '1'; -- we have data -> de-assert empty line
       in_value := file_access_read;
       while in_value >= 0 loop
+        usb_ebcyc_i <= '1';
+        counter <= 0;
+        wait until rising_edge(clk_sys);
+        wait until rising_edge(clk_sys);
+        usb_emptyn_i <= '1'; -- we have data -> de-assert empty line
         usb_fd_io <= std_logic_vector(to_signed(in_value, 8));
         wait until falling_edge(usb_slrdn_o);  wait until rising_edge(usb_slrdn_o);
         in_value := file_access_read;
@@ -158,6 +169,7 @@ begin
       wait until rising_edge(clk_sys) or falling_edge(usb_slwrn_o);
 
       if usb_slwrn_o = '0' then 
+        counter <= 0;
         while usb_pktendn_o = '1' loop
           wait until rising_edge(usb_slwrn_o) or falling_edge(usb_pktendn_o);
           if usb_pktendn_o = '1' then

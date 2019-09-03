@@ -16,7 +16,7 @@ view: simulation.ghw
 
 # regenerate wave output and update viewer
 simulation.ghw: compile_testbench 
-	ghdl -r testbench --stop-time=100000ns --wave=simulation.ghw --ieee-asserts=disable 
+	ghdl -r testbench --stop-time=1000000ns --wave=simulation.ghw --ieee-asserts=disable 
 	#vcd2fst simulation.vcd simulation.fst && rm simulation.vcd
 	gsettings set com.geda.gtkwave reload 0
 
