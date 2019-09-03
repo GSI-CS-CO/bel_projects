@@ -6,12 +6,15 @@ use ieee.numeric_std.all;
 --use work.pcie_tlp.all;
 use work.wishbone_pkg.all;
 use work.ez_usb_pkg.all;
+use work.file_access.all; -- a library implemented in C
+
 
 -- use with socat pseudo terminals:
 --   socat -d -d pty,raw,echo=0 pty,raw,echo=0  # creates /dev/pts/40 and /dev/pts/39
 --   socat -u -d -d file:/dev/pts/40 pty,raw,echo=0 # creates /dev/pts/42
 --   socat -U -d -d file:/dev/pts/40 pty,raw,echo=0 # creates /dev/pts/44
-
+-- then start simulation and call:
+--   eb-read -p dev/pts/39 0x01000000/4
 entity testbench is
 generic (
     DEVICE_READ : string := "/dev/pts/42" ;
@@ -145,8 +148,9 @@ begin
     usb_ebcyc_i <= '1';
     wait until rising_edge(clk_sys);
     --while not endfile(char_file_read) loop
-    while counter < 32 loop
+    while counter < 32 loop 
 
+      say_hello(1);
       -- I'm the EZ-USB chip. I received data and de-assert my empty line
       --  and set the cycle line 
       usb_emptyn_i <= '1'; -- not empty when high:
@@ -154,7 +158,7 @@ begin
         read(char_file_read, char_in);
         counter <= counter + 1;
         byte_v := character'pos(char_in);
-        report "read char: " & integer'image(byte_v);
+        --report "read char: " & integer'image(byte_v);
         usb_fd_io   <= std_logic_vector(to_unsigned(byte_v, 8));
         wait until falling_edge(usb_slrdn_o);  wait until rising_edge(usb_slrdn_o);
       end loop;
@@ -167,7 +171,7 @@ begin
         char_out := character'val(to_integer(unsigned(usb_fd_io)));
         write(char_file_write, char_out);
         byte_v := character'pos(char_out);
-        report "wrote char: " & integer'image(byte_v); 
+        --report "wrote char: " & integer'image(byte_v);  
       end loop;
       while usb_pktendn_o = '1' loop
         wait until rising_edge(clk_sys);
