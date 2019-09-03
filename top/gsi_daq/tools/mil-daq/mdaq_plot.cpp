@@ -61,22 +61,29 @@ void Plot::init( void )
  */
 void Plot::plot( void )
 {
+   constexpr float MILISECS_PER_NANOSEC = 1000000.0;
+
    *this << "set title \"fg-" << m_pParent->getParent()->getLocation()
          << '-' << m_pParent->getAddress()
          << "  Date: "
-         << daq::wrToTimeDateString( m_pParent->getPlotStartTime() ) << endl;
+         << daq::wrToTimeDateString( m_pParent->getCurrentTime() ) << endl;
 
 
    *this << "set xlabel \"Plot start time: " << m_pParent->getPlotStartTime()
-         << " ns\"" << endl;
+         << " ns; interval min: " << (m_pParent->m_minTime / MILISECS_PER_NANOSEC)
+         << " ms, interval max: " << (m_pParent->m_maxTime / MILISECS_PER_NANOSEC)
+         << " ms; Samples: " << m_pParent->m_aPlotList.size() << "\"" << endl;
 
    //if( m_pParent->m_aPlotList.empty() )
    //   return;
+   bool isDeviationPlottingEnabled =
+                  m_pParent->getCommandLine()->isDeviationPlottingEnabled();
 
-   *this << "plot '-' title 'set value' with lines,"
-                " '-' title 'actual value' with lines";
-   if( m_pParent->getCommandLine()->isDeviationPlottingEnabled() )
-      *this << ", '-' title 'deviation' with lines";
+   const string& style = m_pParent->getCommandLine()->getLineStyle();
+   *this << "plot '-' title 'set value' with " << style <<
+                ", '-' title 'actual value' with " << style;
+   if( isDeviationPlottingEnabled )
+      *this << ", '-' title 'deviation' with " << style;
    *this << endl;
 
    for( auto& i: m_pParent->m_aPlotList )
@@ -91,7 +98,7 @@ void Plot::plot( void )
    }
    *this << 'e' << endl;
 
-   if( !m_pParent->getCommandLine()->isDeviationPlottingEnabled() )
+   if( !isDeviationPlottingEnabled )
       return;
 
    for( auto& i: m_pParent->m_aPlotList )

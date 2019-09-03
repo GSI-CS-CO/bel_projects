@@ -94,10 +94,6 @@ void Channel::Mode::write( DAQ_DATA_T* pData, std::size_t wordLen )
 
 /*-----------------------------------------------------------------------------
  */
-inline double nsecToSec( uint64_t nsec )
-{
-   return nsec / NanosecsPerSec;
-}
 
 inline uint64_t trunc100( uint64_t nsec )
 {
@@ -106,9 +102,9 @@ inline uint64_t trunc100( uint64_t nsec )
 
 void Channel::Mode::plot( void )
 {
-   double visibleTime = nsecToSec( trunc100(m_size) * m_sampleTime );
+   double visibleTime = nanoSecsToSecs( trunc100(m_size) * m_sampleTime );
    m_pParent->m_oPlot << "set xrange [0:"
-                      << nsecToSec( m_size * m_sampleTime ) << "]" << endl;
+                      << nanoSecsToSecs( m_size * m_sampleTime ) << "]" << endl;
    m_pParent->m_oPlot << "set xtics 0," << visibleTime / 10.0 << ","
                                         << visibleTime << endl;
    m_pParent->m_oPlot << "set title \"";
@@ -120,7 +116,7 @@ void Channel::Mode::plot( void )
    }
    m_pParent->m_oPlot << "Mode: " << m_text << ", Block: " << m_blockCount
                       << ", Sequence: " <<  m_sequence
-                      << ", Sample time: " << nsecToSec( m_sampleTime )
+                      << ", Sample time: " << nanoSecsToSecs( m_sampleTime )
                       << " s, Lost: " << m_pParent->getLostCount()
                       << "\" font \",14\"" << endl;
 
@@ -139,7 +135,7 @@ void Channel::Mode::plot( void )
    m_notFirst = true;
 
    for( std::size_t i = 0; i < m_size; i++ )
-      m_pParent->m_oPlot << nsecToSec(i * m_sampleTime) << ' '
+      m_pParent->m_oPlot << nanoSecsToSecs(i * m_sampleTime) << ' '
                          << m_pY[i] << endl;
    m_pParent->m_oPlot << 'e' << endl;
 }
@@ -332,7 +328,7 @@ bool Channel::calcFrequency( double& rFrequency, const DAQ_DATA_T* pData,
    if( divisor == 0.0 )
       return false;
 
-   rFrequency = NanosecsPerSec / divisor;
+   rFrequency = NANOSECS_PER_SEC / divisor;
    return false;
 }
 

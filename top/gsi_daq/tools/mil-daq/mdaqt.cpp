@@ -61,6 +61,8 @@ DaqMilCompare::DaqMilCompare( uint iterfaceAddress )
    ,m_pPlot( nullptr )
    ,m_startTime( 0 )
    ,m_lastTime( 0 )
+   ,m_minTime( static_cast<uint64_t>(~0) )
+   ,m_maxTime( 0 )
    ,m_timeToPlot( 0 )
    //,m_aPlotList( 1000, {0.0, 0.0, 0.0 } )
    ,m_iterator(m_aPlotList.begin())
@@ -104,6 +106,8 @@ void DaqMilCompare::onInit( void )
       return;
    m_pPlot = new Plot( this );
 
+   //m_aPlotList.reserve( 1000000 );
+
   // m_pPlot->plot();
 }
 
@@ -111,6 +115,8 @@ void DaqMilCompare::onInit( void )
  */
 void DaqMilCompare::onReset( void )
 {
+   m_minTime = static_cast<uint64_t>(~0);
+   m_maxTime = 0;
    if( m_pPlot == nullptr )
       return;
 
@@ -128,8 +134,8 @@ DaqMilCompare::addItem( uint64_t time, MIL_DAQ_T actValue, MIL_DAQ_T setValue )
    {
      .m_time = static_cast<double>(time) /
                static_cast<double>(daq::NANOSECS_PER_SEC),
-     .m_set  = daq::rawToVoltage( static_cast<uint16_t>(setValue >> 16) ),
-     .m_act  = daq::rawToVoltage( static_cast<uint16_t>(actValue >> 16) )
+     .m_set  = daq::rawToVoltage( setValue ),
+     .m_act  = daq::rawToVoltage( actValue )
    } );
 #else
    if( m_iterator == m_aPlotList.end() )
@@ -138,8 +144,8 @@ DaqMilCompare::addItem( uint64_t time, MIL_DAQ_T actValue, MIL_DAQ_T setValue )
    {
      .m_time = static_cast<double>(time) /
                static_cast<double>(daq::NANOSECS_PER_SEC),
-     .m_set  = daq::rawToVoltage( static_cast<uint16_t>(setValue >> 16) ),
-     .m_act  = daq::rawToVoltage( static_cast<uint16_t>(actValue >> 16) )
+     .m_set  = daq::rawToVoltage( setValue ),
+     .m_act  = daq::rawToVoltage( actValue )
    };
    m_iterator++;
 #endif
@@ -152,6 +158,13 @@ void DaqMilCompare::onData( uint64_t wrTimeStamp, MIL_DAQ_T actValue,
 {
 //   if( (m_lastSetRawValue == setValue) )//&& (m_lastActRawValue == actlValue) )
 //      return;
+   m_currentTime = wrTimeStamp;
+   if( m_state != START )
+   {
+      uint64_t timeinterval = m_currentTime - m_lastTime;
+      m_minTime = std::min( m_minTime, timeinterval );
+      m_maxTime = std::max( m_maxTime, timeinterval );
+   }
 
    bool next;
    do
@@ -163,19 +176,20 @@ void DaqMilCompare::onData( uint64_t wrTimeStamp, MIL_DAQ_T actValue,
          {
             m_aPlotList.clear();
             m_iterator = m_aPlotList.begin();
-            m_startTime = wrTimeStamp;
+            m_startTime = m_currentTime;
             if( getCommandLine()->isContinuePlottingEnabled() )
-               m_timeToPlot = wrTimeStamp + c_minimumPlotInterval;
+               m_timeToPlot = m_currentTime + c_minimumPlotInterval;
             addItem( 0, actValue, setValue );
+            m_minTime = static_cast<uint64_t>(~0);
+            m_maxTime = 0;
             FSM_TRANSITION( COLLECT );
             break;
          }
          case COLLECT:
          {
-            uint64_t plotTime = wrTimeStamp - m_startTime;
+            uint64_t plotTime = m_currentTime - m_startTime;
             if( plotTime > getTimeLimitNanoSec()
-               || m_aPlotList.size() >= getItemLimit()
-            )
+               || m_aPlotList.size() >= getItemLimit() )
             {
                next = true;
                FSM_TRANSITION( PLOT );
@@ -183,10 +197,10 @@ void DaqMilCompare::onData( uint64_t wrTimeStamp, MIL_DAQ_T actValue,
             }
             addItem( plotTime, actValue, setValue );
             if( getCommandLine()->isContinuePlottingEnabled() &&
-                (wrTimeStamp >= m_timeToPlot) )
+                (m_currentTime >= m_timeToPlot) )
             {
                m_pPlot->plot();
-               m_timeToPlot = wrTimeStamp + c_minimumPlotInterval;
+               m_timeToPlot = m_currentTime + c_minimumPlotInterval;
             }
         #ifdef __DOCFSM__
             FSM_TRANSITION( COLLECT );
@@ -198,7 +212,6 @@ void DaqMilCompare::onData( uint64_t wrTimeStamp, MIL_DAQ_T actValue,
             m_pPlot->plot();
             next = true;
             FSM_TRANSITION( START );
-            //cout << m_aPlotList.size() << endl;
             break;
          }
          default: assert( false ); break;
@@ -208,7 +221,7 @@ void DaqMilCompare::onData( uint64_t wrTimeStamp, MIL_DAQ_T actValue,
 
    m_lastSetRawValue = setValue;
    m_lastActRawValue = actValue;
-   m_lastTime = wrTimeStamp;
+   m_lastTime = m_currentTime;
 }
 
 ///////////////////////////////////////////////////////////////////////////////

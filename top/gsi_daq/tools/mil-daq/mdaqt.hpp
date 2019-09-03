@@ -97,6 +97,9 @@ class DaqMilCompare: public DaqCompare
    MIL_DAQ_T             m_lastActRawValue;
    uint64_t              m_startTime;
    uint64_t              m_lastTime;
+   uint64_t              m_currentTime;
+   uint64_t              m_minTime;
+   uint64_t              m_maxTime;
    uint64_t              m_timeToPlot;
    PLOT_LIST_T           m_aPlotList;
    PLOT_LIST_T::iterator m_iterator;
@@ -111,6 +114,11 @@ public:
    uint64_t getPlotStartTime( void ) const
    {
       return m_startTime;
+   }
+
+   uint64_t getCurrentTime( void ) const
+   {
+      return m_currentTime;
    }
 
    uint64_t getTimeLimitNanoSec( void );

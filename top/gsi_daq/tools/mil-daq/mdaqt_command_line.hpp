@@ -49,6 +49,10 @@ namespace MiLdaqt
    #define DEFAULT_X_AXIS_LEN 10.0
 #endif
 
+#ifndef DEFAULT_LINE_STYLE
+   #define DEFAULT_LINE_STYLE "lines"
+#endif
+
 class MilDaqAdministration; // Loest Henne-Ei Problem...
 class Device;
 class DaqMilCompare;
@@ -79,6 +83,7 @@ class CommandLine: public PARSER
    std::string                m_gnuplotBin;
    std::string                m_gnuplotTerminal;
    std::string                m_gnuplotOutput;
+   std::string                m_gnuplotLineStyle;
 
    static bool readInteger( uint&, const std::string& );
    static bool readFloat( float&, const std::string& );
@@ -111,7 +116,12 @@ public:
       return m_gnuplotOutput;
    }
 
-   bool isOutputFileDefined( void )
+   const std::string& getLineStyle( void )
+   {
+      return m_gnuplotLineStyle;
+   }
+
+   bool isOutputFileDefined( void ) const
    {
       return !m_gnuplotOutput.empty();
    }
@@ -128,7 +138,7 @@ public:
 
    bool isContinuePlottingEnabled( void ) const
    {
-      return m_continuePlotting;
+      return m_continuePlotting && !isOutputFileDefined();
    }
 
    bool isZoomYAxis( void ) const

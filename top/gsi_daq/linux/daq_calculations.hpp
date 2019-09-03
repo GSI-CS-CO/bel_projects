@@ -55,6 +55,16 @@ typedef uint64_t USEC_T;
 
 /*! ---------------------------------------------------------------------------
  * @ingroup DAQ
+ * @brief Converts nanoseconds to seconds.
+ */
+template< typename FT = double >
+FT nanoSecsToSecs( uint64_t nanoSecs )
+{
+   return nanoSecs / static_cast<FT>(NANOSECS_PER_SEC);
+}
+
+/*! ---------------------------------------------------------------------------
+ * @ingroup DAQ
  * @brief Returns the absolute system time of Linux in microseconds.
  *
  * Can be used for time measurement and/or timeout detection.

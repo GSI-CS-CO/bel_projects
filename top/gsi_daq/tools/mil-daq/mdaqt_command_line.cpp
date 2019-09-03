@@ -35,7 +35,7 @@ using namespace std;
    #define MINIMUM_X_AXIS 1.0
 #endif
 #ifndef MAXIMUM_X_AXIS
-   #define MAXIMUM_X_AXIS 60.0
+   #define MAXIMUM_X_AXIS 300.0
 #endif
 
 #define FSM_INIT_FSM( state, attr... )      m_state( state )
@@ -211,6 +211,7 @@ vector<OPTION> CommandLine::c_optList =
       .m_helpText = "PARAM replaces the terminal which is used by Gnuplot."
                     " Default is: \"" GNUPLOT_DEFAULT_TERMINAL "\""
    },
+#if 0
    {
       OPT_LAMBDA( poParser,
       {
@@ -234,7 +235,21 @@ vector<OPTION> CommandLine::c_optList =
                     "         result: myFile_scuxl4711_acc_gsi_de_39_130_"
                     "12439792657334272.png"
    }
-
+#endif
+   {
+      OPT_LAMBDA( poParser,
+      {
+         static_cast<CommandLine*>(poParser)->m_gnuplotLineStyle =
+                                                        poParser->getOptArg();
+         return 0;
+      }),
+      .m_hasArg   = OPTION::REQUIRED_ARG,
+      .m_id       = 0,
+      .m_shortOpt = 's',
+      .m_longOpt  = "style",
+      .m_helpText = "Setting of the Gnuplot line-style default is: \""
+                     DEFAULT_LINE_STYLE "\""
+   }
 };
 
 
@@ -289,6 +304,7 @@ CommandLine::CommandLine( int argc, char** ppArgv )
    ,m_poCurrentChannel( nullptr )
    ,m_gnuplotBin( GPSTR_DEFAULT_GNUPLOT_EXE )
    ,m_gnuplotTerminal( GNUPLOT_DEFAULT_TERMINAL )
+   ,m_gnuplotLineStyle( DEFAULT_LINE_STYLE )
 {
    add( c_optList );
    sortShort();
