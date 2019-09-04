@@ -20,83 +20,63 @@ entity ez_usb_chip is
 end entity;
 
 architecture simulation of ez_usb_chip is
+	signal out_value : std_logic_vector(7 downto 0) := (others => '0');
+	signal counter   : integer := 0;
 begin
 
+	fd_io <= out_value when sloen_i = '0' else (others => 'Z');
+
 	main: process 
-		variable in_value : integer;
+		variable value_from_file : integer;
 	begin
+		-- initialization
 		wait until rising_edge(rstn_i);
+		fulln_o <= '1'; -- we are never full
+		readyn_o <= '0'; -- we are ready
 		file_access_init(30);
+
+		-- worker loop
 		while true loop
-			in_value := file_access_read(timeout=>0);
-			wait until fifoadr_i = "00";
-			emptyn_o <= '1'; -- show the master that there is data
-			wait until falling_edge(slrdn_i);
-			fd_io <= std_logic_vector(to_signed(in_value, 8));
-			wait until rising_edge(slrdn_i);
-			fd_io <= (others => 'Z');
+			-- reset the cycle indicator for the master
+			counter <= counter + 1;
+			if counter > 4 then 
+				counter <= 0;
+				ebcyc_o <= '0';
+				wait until fifoadr_i = "00"; 
+				wait until fifoadr_i = "01"; 
+			end if;
+
+  			-- reading from file and provide it to the master
+			value_from_file := file_access_read(timeout=>0);
+			if value_from_file >= 0 then
+				ebcyc_o <= '1';
+				wait until fifoadr_i = "00";
+			end if;
+			while value_from_file >= 0 loop
+				counter <= 0;
+				emptyn_o <= '1'; -- show the master that there is data
+				wait until falling_edge(slrdn_i);
+				out_value <= std_logic_vector(to_signed(value_from_file, 8));
+				wait until rising_edge(slrdn_i);
+				value_from_file := file_access_read(timeout=>0);
+			end loop;	
+			emptyn_o <= '0'; -- show the master that all data was read - we're empty now
+
+			-- writing master data to file 
+			wait until falling_edge(slwrn_i) or fifoadr_i = "00";
+			if slwrn_i = '0' then		
+				counter <= 0;
+				while pktendn_i = '1' loop
+					wait until rising_edge(slwrn_i) or falling_edge(pktendn_i);
+					if pktendn_i = '1' then
+						file_access_write(to_integer(unsigned(fd_io)));
+					end if;
+				end loop;
+				wait until rising_edge(pktendn_i);
+				file_access_flush;
+			end if;
 		end loop;
 	end process;
-
-  --USB_chip: process 
-  --  variable in_value : integer := 0;
-  --  variable out_value : integer := 0;
-  --begin
-  --  usb_readyn_io <= '1';
-  --  wait until rising_edge(rstn_i);
-
-  --  for i in 0 to 50 loop wait until rising_edge(clk_sys); end loop;    
-
-  --  -- My cpu booted, I'll tell the world that I'm ready
-  --  usb_readyn_io <= '0';
-  --  usb_fulln_i <= '1'; -- I'm never full 
-  --  wait until rising_edge(clk_sys);
-
-  --  -- In this simulation I'll read data from a file instead of the D+/D- wires like in the real world
-  --  file_access_init(PTS_NUMBER);
-
-  --  while true loop    
-  --    counter <= counter + 1;
-  --    if counter > 50 then 
-  --      counter <= 0;
-  --      ebcyc_o <= '0';
-  --      for i in 0 to 3 loop 
-  --        wait until rising_edge(clk_sys); 
-  --      end loop;
-  --    end if;
-
-  --    in_value := file_access_read;
-  --    while in_value >= 0 loop
-  --      ebcyc_o <= '1';
-  --      counter <= 0;
-  --      wait until rising_edge(clk_sys);
-  --      wait until rising_edge(clk_sys);
-  --      usb_emptyn_i <= '1'; -- we have data -> de-assert empty line
-  --      fd_io <= std_logic_vector(to_signed(in_value, 8));
-  --      wait until falling_edge(usb_slrdn_o);  wait until rising_edge(usb_slrdn_o);
-  --      in_value := file_access_read;
-  --    end loop;
-
-  --    fd_io <= (others => 'Z');
-  --    usb_emptyn_i <= '0'; -- we are empty
-      
-  --    wait until rising_edge(clk_sys) or falling_edge(usb_slwrn_o);
-
-  --    if usb_slwrn_o = '0' then 
-  --      counter <= 0;
-  --      while usb_pktendn_o = '1' loop
-  --        wait until rising_edge(usb_slwrn_o) or falling_edge(usb_pktendn_o);
-  --        if usb_pktendn_o = '1' then
-  --          out_value := to_integer(unsigned(fd_io));
-  --          file_access_write(out_value);
-  --        end if;
-  --      end loop;
-  --      wait until rising_edge(usb_pktendn_o);
-  --      file_access_flush;
-  --    end if;
-  --  end loop;
-  --  ebcyc_o <= '1';
-  --end process;
 
 end architecture;
 
