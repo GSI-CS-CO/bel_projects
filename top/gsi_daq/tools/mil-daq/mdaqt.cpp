@@ -51,7 +51,11 @@ using namespace MiLdaq;
 using namespace MiLdaqt;
 
 #define FSM_INIT_FSM( startState, attr... ) m_state = startState
-#define FSM_TRANSITION( nextState, attr... ) m_state = nextState
+#define FSM_TRANSITION( nextState, attr... ) \
+{                                            \
+   m_state = nextState;                      \
+   break;                                    \
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 /*! ---------------------------------------------------------------------------
@@ -64,8 +68,10 @@ DaqMilCompare::DaqMilCompare( uint iterfaceAddress )
    ,m_minTime( static_cast<uint64_t>(~0) )
    ,m_maxTime( 0 )
    ,m_timeToPlot( 0 )
+   ,m_plotIntervalTime( c_minimumPlotInterval )
    //,m_aPlotList( 1000, {0.0, 0.0, 0.0 } )
    ,m_iterator(m_aPlotList.begin())
+   ,m_singleShoot( false )
 {
    reset();
 
@@ -93,9 +99,20 @@ uint64_t DaqMilCompare::getTimeLimitNanoSec( void )
    return getCommandLine()->getXAxisLen() * daq::NANOSECS_PER_SEC;
 }
 
+/*! ---------------------------------------------------------------------------
+ */
 std::size_t DaqMilCompare::getItemLimit( void )
 {
    return getCommandLine()->getXAxisLen() * MAX_ITEMS_PER_SECOND;
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+uint64_t DaqMilCompare::getPlotIntervalTime( void )
+{
+   return std::max( m_plotIntervalTime,
+                    getCommandLine()->getPoltTime() / 5 * m_plotIntervalTime );
+
 }
 
 /*! ---------------------------------------------------------------------------
@@ -178,12 +195,11 @@ void DaqMilCompare::onData( uint64_t wrTimeStamp, MIL_DAQ_T actValue,
             m_iterator = m_aPlotList.begin();
             m_startTime = m_currentTime;
             if( getCommandLine()->isContinuePlottingEnabled() )
-               m_timeToPlot = m_currentTime + c_minimumPlotInterval;
+               m_timeToPlot = m_currentTime + getPlotIntervalTime();
             addItem( 0, actValue, setValue );
             m_minTime = static_cast<uint64_t>(~0);
             m_maxTime = 0;
             FSM_TRANSITION( COLLECT );
-            break;
          }
          case COLLECT:
          {
@@ -193,26 +209,30 @@ void DaqMilCompare::onData( uint64_t wrTimeStamp, MIL_DAQ_T actValue,
             {
                next = true;
                FSM_TRANSITION( PLOT );
-               break;
             }
             addItem( plotTime, actValue, setValue );
             if( getCommandLine()->isContinuePlottingEnabled() &&
                 (m_currentTime >= m_timeToPlot) )
             {
                m_pPlot->plot();
-               m_timeToPlot = m_currentTime + c_minimumPlotInterval;
+               m_timeToPlot = m_currentTime + getPlotIntervalTime();
             }
-        #ifdef __DOCFSM__
             FSM_TRANSITION( COLLECT );
-        #endif
-            break;
          }
          case PLOT:
          {
             m_pPlot->plot();
             next = true;
+            if( isSingleShoot() )
+               FSM_TRANSITION( WAIT, label='Single shoot enabled' );
             FSM_TRANSITION( START );
-            break;
+         }
+         case WAIT:
+         {
+            if( isSingleShoot() )
+               FSM_TRANSITION( WAIT );
+            next = true;
+            FSM_TRANSITION( START, label='Single shoot\ndisabled', color=green );
          }
          default: assert( false ); break;
       }
@@ -267,9 +287,23 @@ void MilDaqAdministration::onUnregistered( RingItem* pUnknownItem )
                         new DaqMilCompare( pUnknownItem->getMilDaqAddress()));
 }
 
+/*! ---------------------------------------------------------------------------
+ */
+void MilDaqAdministration::setSingleShoot( bool enable )
+{
+   for( auto& i: *this )
+   {
+      for( auto& j : *i )
+      {
+         static_cast<DaqMilCompare*>(j)->setSingleShoot( enable );
+      }
+   }
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 /*! ---------------------------------------------------------------------------
  */
+inline
 int mdaqtMain( int argc, char** ppArgv )
 {
 
@@ -285,6 +319,7 @@ int mdaqtMain( int argc, char** ppArgv )
    Terminal oTerminal;
    DEBUG_MESSAGE( "Entering loop" );
    bool doReceive = true;
+   bool singleShoot = false;
    while( (key = Terminal::readKey()) != '\e' )
    {
       switch( key )
@@ -293,7 +328,8 @@ int mdaqtMain( int argc, char** ppArgv )
          {
             doReceive = !doReceive;
             if( cmdLine.isVerbose() )
-               cout << "Plot " << (doReceive? "enable" : "disable" ) << endl;
+               cout << "Plot "
+                    << (doReceive? "enable" : "disable" ) << endl;
             break;
          }
          case HOT_KEY_RESET:
@@ -301,6 +337,15 @@ int mdaqtMain( int argc, char** ppArgv )
             pDaqAdmin->reset();
             if( cmdLine.isVerbose() )
                cout << "Reset" << endl;
+            break;
+         }
+         case HOT_KEY_TOGGLE_SINGLE_SHOOT:
+         {
+            singleShoot = !singleShoot;
+            pDaqAdmin->setSingleShoot( singleShoot );
+            if( cmdLine.isVerbose() )
+               cout << "Single shoot is: "
+                    << (singleShoot? "enabled":"disabled") << endl;
             break;
          }
       }

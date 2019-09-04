@@ -66,7 +66,10 @@ void Plot::plot( void )
    *this << "set title \"fg-" << m_pParent->getParent()->getLocation()
          << '-' << m_pParent->getAddress()
          << "  Date: "
-         << daq::wrToTimeDateString( m_pParent->getCurrentTime() ) << endl;
+         << daq::wrToTimeDateString( m_pParent->getCurrentTime() );
+         if( m_pParent->isSingleShoot() )
+            *this << " Single shoot!";
+         *this << endl;
 
 
    *this << "set xlabel \"Plot start time: " << m_pParent->getPlotStartTime()

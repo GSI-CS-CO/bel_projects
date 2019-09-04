@@ -37,12 +37,14 @@
 #endif
 
 #ifndef HOT_KEY_RECEIVE
-  #define HOT_KEY_RECEIVE         'i'
+  #define HOT_KEY_RECEIVE             'i'
 #endif
 #ifndef HOT_KEY_RESET
-  #define HOT_KEY_RESET           'r'
+  #define HOT_KEY_RESET               'r'
 #endif
-
+#ifndef HOT_KEY_TOGGLE_SINGLE_SHOOT
+  #define HOT_KEY_TOGGLE_SINGLE_SHOOT 's'
+#endif
 
 namespace Scu
 {
@@ -83,10 +85,11 @@ class DaqMilCompare: public DaqCompare
 
    enum STATE_T
    {
-      FSM_DECLARE_STATE( WAIT, label='waiting for trigger condition' ),
-      FSM_DECLARE_STATE( START, label='initialize new plot' ),
-      FSM_DECLARE_STATE( COLLECT, label='collecting data' ),
-      FSM_DECLARE_STATE( PLOT, label='plot values' )
+      FSM_DECLARE_STATE( WAIT, label='waiting for single shoot\ndisabled',
+                               color=red ),
+      FSM_DECLARE_STATE( START, label='initialize new plot', color=blue ),
+      FSM_DECLARE_STATE( COLLECT, label='collecting data', color=blue ),
+      FSM_DECLARE_STATE( PLOT, label='plot final values', color=green )
    };
 
    STATE_T            m_state;
@@ -101,9 +104,11 @@ class DaqMilCompare: public DaqCompare
    uint64_t              m_minTime;
    uint64_t              m_maxTime;
    uint64_t              m_timeToPlot;
+   uint64_t              m_plotIntervalTime;
    PLOT_LIST_T           m_aPlotList;
    PLOT_LIST_T::iterator m_iterator;
    Plot*                 m_pPlot;
+   bool                  m_singleShoot;
 
 public:
    DaqMilCompare( uint iterfaceAddress );
@@ -123,6 +128,8 @@ public:
 
    uint64_t getTimeLimitNanoSec( void );
 
+   uint64_t getPlotIntervalTime( void );
+
    void reset( void );
 
    std::size_t getItemLimit( void );
@@ -136,6 +143,16 @@ public:
 
    bool plotDuringCollecting( void );
 
+   bool isSingleShoot( void ) const
+   {
+      return m_singleShoot;
+   }
+
+   void setSingleShoot( bool enable )
+   {
+      m_singleShoot = enable;
+   }
+
 private:
    void onData( uint64_t wrTimeStamp, MIL_DAQ_T actValue,
                                       MIL_DAQ_T setValue ) override;
@@ -144,6 +161,7 @@ private:
 
    void onInit( void ) override;
    void onReset( void ) override;
+
 };
 
 
@@ -158,6 +176,7 @@ public:
    }
 
    MilDaqAdministration* getParent( void );
+  // void setSingleShoot( enable );
 };
 
 
@@ -184,6 +203,8 @@ public:
    void onUnregistered( RingItem* pUnknownItem ) override;
 
    bool showUngegistered( void );
+
+   void setSingleShoot( bool enable );
 };
 
 inline

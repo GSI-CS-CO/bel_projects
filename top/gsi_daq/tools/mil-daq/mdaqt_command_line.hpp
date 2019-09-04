@@ -151,6 +151,11 @@ public:
       return m_xAxisLen;
    }
 
+   uint64_t getPoltTime( void ) const
+   {
+      return static_cast<uint64_t>(m_xAxisLen);
+   }
+
 protected:
    int onErrorUnrecognizedShortOption( char unrecognized ) override;
    int onErrorUnrecognizedLongOption( const std::string& unrecognized ) override;
