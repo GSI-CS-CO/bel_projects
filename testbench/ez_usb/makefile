@@ -16,7 +16,7 @@ view: simulation.ghw
 
 # regenerate wave output and update viewer
 simulation.ghw: compile_testbench 
-	ghdl -r testbench --stop-time=1000000ns --wave=simulation.ghw --ieee-asserts=disable 
+	ghdl -r testbench --stop-time=100000ns --wave=simulation.ghw --ieee-asserts=disable 
 	#vcd2fst simulation.vcd simulation.fst && rm simulation.vcd
 	gsettings set com.geda.gtkwave reload 0
 
@@ -57,6 +57,7 @@ testbench: 	\
 			../../ip_cores/etherbone-core/hdl/eb_usb_core/ez_usb_fifos.vhd				\
 			../../ip_cores/etherbone-core/hdl/eb_usb_core/ez_usb.vhd					\
 			file_access.vhd    \
+			ez_usb_chip.vhd    \
 			wb_minislave.vhd   \
 			testbench.vhd
 	ghdl -a $(GHDLFLAGS) $?

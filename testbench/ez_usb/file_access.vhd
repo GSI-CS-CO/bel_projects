@@ -4,10 +4,10 @@ package file_access is
   procedure say_hello(f : integer);
   attribute foreign of say_hello : procedure is "VHPIDIRECT say_hello";
 
-  procedure file_access_init;
+  procedure file_access_init(pts : integer);
   attribute foreign of file_access_init : procedure is "VHPIDIRECT file_access_init";
 
-  function file_access_read return integer;
+  function file_access_read(timeout : integer) return integer;
   attribute foreign of file_access_read : function is "VHPIDIRECT file_access_read";
 
   procedure file_access_write(x : integer);
@@ -26,12 +26,12 @@ package body file_access is
     assert false report "VHPI" severity failure;
   end procedure;
 
-  procedure file_access_init is
+  procedure file_access_init(pts : integer) is
   begin
     assert false report "VHPI" severity failure;
   end procedure;
 
-  function file_access_read return integer is
+  function file_access_read(timeout : integer) return integer is
   begin
     assert false report "VHPI" severity failure;
     return 0;

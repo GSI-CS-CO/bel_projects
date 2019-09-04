@@ -16,18 +16,20 @@ struct pollfd pfds[1];
 unsigned char write_buffer[256] = {0,};
 int write_buffer_length = 0;
 
-void file_access_init() {
-	pfds[0].fd = open("/dev/pts/30", O_RDWR | O_DSYNC | O_NONBLOCK);
+void file_access_init(int pts) {
+	char name_buffer[256];
+	sprintf(name_buffer,"/dev/pts/%d", pts);
+	pfds[0].fd = open(name_buffer, O_RDWR | O_DSYNC | O_NONBLOCK);
 	pfds[0].events = POLLIN;
 	printf("poll ...\n");
 	poll(pfds,1,-1);
 	printf("... done\n");
 }
 
-int file_access_read() {
+int file_access_read(int timeout) {
 	unsigned char ch = 0;
 	pfds[0].events = POLLIN;
-	if (poll(pfds,1,0) == 0) {
+	if (poll(pfds,1,timeout) == 0) {
 		//printf("file_access_read timed out\n");
 		return -1;
 	}
