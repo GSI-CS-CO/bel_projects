@@ -16,7 +16,11 @@ view: simulation.ghw
 
 # regenerate wave output and update viewer
 simulation.ghw: compile_testbench 
-	ghdl -r testbench --stop-time=100000ns --wave=simulation.ghw --ieee-asserts=disable 
+	socat -d -d pty,raw,echo=0 pty,raw,echo=0 2> pts.dat &
+	printf "simulation connected to /dev/pts/%d\n" `grep PTY pts.dat | head -n 1 | cut -d"N" -f 2 | cut -d"/" -f4`
+	printf "eb-tool device is /dev/pts/%d\n"       `grep PTY pts.dat | tail -n 1 | cut -d"N" -f 2 | cut -d"/" -f4`
+	ghdl -r testbench --stop-time=100000ns --wave=simulation.ghw --ieee-asserts=disable -gPTS_NUMBER=`grep PTY pts.dat | head -n 1 | cut -d"N" -f 2 | cut -d"/" -f4`
+	pkill socat; rm pts.dat
 	#vcd2fst simulation.vcd simulation.fst && rm simulation.vcd
 	gsettings set com.geda.gtkwave reload 0
 

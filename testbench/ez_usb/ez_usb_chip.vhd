@@ -4,6 +4,9 @@ use ieee.numeric_std.all;
 use work.file_access.all; 
 
 entity ez_usb_chip is
+	generic (
+		PTS_NUMBER : integer
+	);
 	port (
       rstn_i    : in  std_logic; 
       ebcyc_o   : out std_logic := '0'; 
@@ -22,6 +25,7 @@ end entity;
 architecture simulation of ez_usb_chip is
 	signal out_value : std_logic_vector(7 downto 0) := (others => '0');
 	signal counter   : integer := 0;
+	constant max_counter_cycle_termination : integer := 5;
 begin
 
 	fd_io <= out_value when sloen_i = '0' else (others => 'Z');
@@ -33,13 +37,13 @@ begin
 		wait until rising_edge(rstn_i);
 		fulln_o <= '1'; -- we are never full
 		readyn_o <= '0'; -- we are ready
-		file_access_init(30);
+		file_access_init(PTS_NUMBER);
 
 		-- worker loop
 		while true loop
 			-- reset the cycle indicator for the master
 			counter <= counter + 1;
-			if counter > 4 then 
+			if counter >= max_counter_cycle_termination then 
 				counter <= 0;
 				ebcyc_o <= '0';
 				wait until fifoadr_i = "00"; 
