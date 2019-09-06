@@ -1,23 +1,21 @@
 
 #hack for fuckin lib chaos (both on asl cluster and my computer... )
 
-ifeq ($(findstring asl,$(shell hostname)),asl)
-  EB_INC        =-I/common/export/timing-rte/tg-enigma-v5.0.0-pre-alpha/x86_64/include
-  EB_LIB        =/common/export/timing-rte/tg-enigma-v5.0.0-pre-alpha/x86_64/lib/libetherbone.so
-else
-  EB_LIB        =-letherbone
-endif
+#ifeq ($(findstring asl,$(shell hostname)),asl)
+  EBPATH        =/common/export/timing-rte/tg-enigma-v5.0.0-pre-alpha/x86_64
+  BOOSTPATH     =/common/usr/timing/libs_for_generator_fesa/boost_1_69_0/installation
+#  SER_LIB       =/lib/libboost_serialization.so
+#  GRAPH_LIB     =/common/usr/timing/libs_for_generator_fesa/boost_1_69_0/installation/lib/libboost_graph.so
+#else
+# FIXME WTF ? why doesn't this work with all rpath's and -llib notation ? it does for graph!
+  EB_LIB        =$(EBPATH)/lib/libetherbone.so
+  GRAPH_LIB     =/common/usr/timing/libs_for_generator_fesa/boost_1_69_0/installation/lib/libboost_graph.so
+  SER_LIB       =/common/usr/timing/libs_for_generator_fesa/boost_1_69_0/installation/lib/libboost_serialization.so
+  RE_LIB       =/common/usr/timing/libs_for_generator_fesa/boost_1_69_0/installation/lib/libboost_regex.so
+#  SER_LIB       =-lboost_serialization   
+#  BOOSTPATH     =..
+#endif
 
-# support for installations with /opt/usr
-OPTPATH       ?= NO
-
-ifneq ($(OPTPATH), NO)
-EB_INC        =-I$(OPTPATH)/include
-EB_LIB        =$(OPTPATH)/lib/libetherbone.so
-endif
-
-SER_LIB         =-lboost_serialization
-GRAPH_LIB       =-lboost_graph
 TOP            ?= ../../..
 
 VERSION_FW     = 6.2.0
@@ -41,7 +39,7 @@ PREFIX         ?= /usr/local
 INSTALLPATH     = $(PREFIX)/bin
 
 T_CXX           = g++
-T_CXXFLAGS      = -g -std=c++11 -fPIC -I$(FTMPATH)/include $(EB_INC) -I$(DIAGPATH) -I$(LZMAPATH) -Wall
+T_CXXFLAGS      = -g -std=c++11 -fPIC -I$(FTMPATH)/include -I$(EBPATH)/include -I$(DIAGPATH) -I$(LZMAPATH) -I$(BOOSTPATH)/include -Wall
 T_CXXFLAGS_CDM  = -DBUILD_DATE=\"$(BUILD_DATE)\" -DTOOL_VER=\"$(VERSION_TOOL)\"  -DEXP_VER=\"$(VERSION_FW)\" -DETHERBONE_THROWS=1 -DBUILDID_OFFS=$(BUILD_ID_ROM_ADR) -DBUILDID_SIZE=$(BUILD_ID_ROM_SIZE)
 T_CC            = gcc
 T_CFLAGS        = -Wall -g -I$(LZMAPATH) -fPIC -Wfatal-errors -D_7ZIP_ST 
@@ -51,7 +49,7 @@ CDM_SRC_FILES   = event.cpp meta.cpp block.cpp visitoruploadcrawler.cpp visitord
 
 T_SOURCES       = $(addprefix $(SRCPATH)/, $(CDM_SRC_FILES)) $(addprefix $(LZMAPATH)/, $(LZMA_SRC_FILES))
 T_OBJECTS       = $(subst .c,.o,$(LZMA_SRC_FILES)) $(subst .cpp,.o,$(CDM_SRC_FILES))
-T_LIBS          = -Wl,-rpath,/usr/local/lib $(EB_LIB) $(GRAPH_LIB) $(SER_LIB)
+T_LIBS          = -Wl,-rpath,$(EBPATH)/lib,-rpath,$(BOOSTPATH)/lib,-rpath,/usr/local/lib $(EB_LIB) $(GRAPH_LIB) $(SER_LIB) $(RE_LIB)
 EXECS           = dm-sched dm-cmd 
 TOOLS           = $(addprefix $(TOOLPATH)/, $(EXECS))
 BINS            = $(addprefix $(BINPATH)/, $(EXECS))
