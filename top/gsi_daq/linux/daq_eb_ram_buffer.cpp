@@ -38,7 +38,9 @@ using namespace daq;
 EbRamAccess::EbRamAccess( DaqEb::EtherboneConnection* poEb )
    :m_poEb( poEb )
    ,m_connectedBySelf( false )
+#ifndef CONFIG_NO_SCU_RAM
    ,m_pRam( nullptr )
+#endif
 {
    if( !m_poEb->isConnected() )
    {
@@ -64,6 +66,7 @@ EbRamAccess::~EbRamAccess( void )
       m_poEb->disconnect();
 }
 
+#ifndef CONFIG_NO_SCU_RAM
 /*! ---------------------------------------------------------------------------
  */
 void EbRamAccess::ramInit( RAM_SCU_T* pRam,
@@ -160,7 +163,7 @@ int EbRamAccess::readDaqDataBlock( RAM_DAQ_PAYLOAD_T* pData,
    #error Unknown memory type for function: EbRamAccess::readDaqDataBlock()
 #endif
 }
-
+#endif //ifnedf CONFIG_NO_SCU_RAM
 
 
 //================================== EOF =======================================

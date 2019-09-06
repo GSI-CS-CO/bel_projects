@@ -30,8 +30,9 @@
 #define _DAQ_EB_RAM_BUFFER_HPP
 #include <EtherboneConnection.hpp>
 #include <eb_lm32_helper.h>
-#include <daq_ramBuffer.h>
-
+#ifndef CONFIG_NO_SCU_RAM
+ #include <daq_ramBuffer.h>
+#endif
 
 namespace DaqEb = FeSupport::Scu::Etherbone;
 
@@ -54,15 +55,18 @@ class EbRamAccess
 {
    DaqEb::EtherboneConnection* m_poEb;
    bool                        m_connectedBySelf;
-   RAM_SCU_T*                  m_pRam;
    uint                        m_lm32SharedMemAddr;
-
+#ifndef CONFIG_NO_SCU_RAM
+   RAM_SCU_T*                  m_pRam;
+#endif
 public:
    EbRamAccess( DaqEb::EtherboneConnection* poEb );
 
    ~EbRamAccess( void );
 
+#ifndef CONFIG_NO_SCU_RAM
    void ramInit( RAM_SCU_T* pRam, RAM_RING_SHARED_OBJECT_T* pSharedObj );
+#endif
 
    DaqEb::EtherboneConnection* getEbPtr( void )
    {
@@ -84,12 +88,14 @@ public:
       return getNetAddress().substr( getNetAddress().find_first_of( '/' ) + 1 );
    }
 
+#ifndef CONFIG_NO_SCU_RAM
    int readDaqDataBlock( RAM_DAQ_PAYLOAD_T* pData,
                          std::size_t  len
                        #ifndef CONFIG_DDR3_NO_BURST_FUNCTIONS
                          , RAM_DAQ_POLL_FT poll
                        #endif
                        );
+#endif
 
    /*!
     * @brief Reads data from the LM32 shared memory area.

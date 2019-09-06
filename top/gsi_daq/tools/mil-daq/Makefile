@@ -24,7 +24,7 @@ SOURCE += $(BASE_DIR)/gnuplotstream.cpp
 SOURCE += $(BASE_DIR)/find_process.c
 SOURCE += $(BASE_DIR)/daqt_onFoundProcess.cpp
 
-SOURCE += $(DAQ_DIR)/daq_ring_admin.c
+# SOURCE += $(DAQ_DIR)/daq_ring_admin.c
 SOURCE += $(DAQ_LINUX_DIR)/daq_eb_ram_buffer.cpp
 SOURCE += $(MDAQ_LINUX_DIR)/mdaq_interface.cpp
 SOURCE += $(MDAQ_LINUX_DIR)/mdaq_administration.cpp
@@ -52,9 +52,10 @@ DEFINES += CONFIG_DAQ_DEBUG
 DEFINES += VERSION=0.1
 DEFINES += GPSTR_DEFAULT_GNUPLOT_EXE=\"$(GNUPLOT_BIN)\"
 
+DEFINES += CONFIG_NO_SCU_RAM
+
  DEFINES += CONFIG_DDR3_NO_BURST_FUNCTIONS
 
-DEFINES += __ETHERBONE_CONNECTION_MUTEX="EtherBoneConnectionMutexDaq"
 INCLUDE_DIRS += $(EB_SRC)
 INCLUDE_DIRS += $(BASE_DIR)
 INCLUDE_DIRS += $(DAQ_LINUX_DIR)/mdaq
@@ -73,7 +74,8 @@ HOST ?= tcp/$(SCU_URL)
 
 #CALL_ARGS = tcp/scuxl0107 39 130 39 129 39 1 39 2
 #CALL_ARGS = tcp/scuxl0107 39 130
-CALL_ARGS = tcp/scuxl0107 -avdc --time 5 -G /home/bel/ubecker/lnx/.local/bin/gnuplot
+CALL_ARGS = tcp/scuxl0107 -avdc --time 25 -G /home/bel/ubecker/lnx/.local/bin/gnuplot
+#CALL_ARGS = tcp/scuxl0107 -avdc --time 10
 REMOTE_CALL_ARGS  ?= "dev/wbm0"makefilema
 
 

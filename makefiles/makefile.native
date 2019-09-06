@@ -29,6 +29,9 @@ STRINGS = $(GCC_BIN_DIR)strings
 ifdef SHARED_OBJECT
   IS_LIBRARY = 1
 endif
+ifdef STATIC_LIBRARY
+  IS_LIBRARY = 1
+endif
 
 TARGET   ?= $(notdir $(basename $(MIAN_MODULE)))
 BIN_FILE ?= $(TARGET_DIR)/$(TARGET)
@@ -71,5 +74,14 @@ dbg: $(WORK_DIR) $(TARGET_DIR) $(RESULT_FILE)
 	$(DEBUG_GUI) $(BIN_FILE) $(DBG_ARGS))
 
 endif # ifeq ($(DEBUG), 1)
-endif # ifndef IS_LIBRARY
+
+ifdef STATIC_LIBRARY
+$(BIN_FILE): $(OBJ_FILES) $(ADDITIONAL_LD_DEPENDENCES)
+	$(AR_F) rcs $(BIN_FILE).a $(OBJ_FILES) $(ADDITIONAL_OBJECTS)
+
+endif # ifdef STATIC_LIBRARY
+
+else # ifndef IS_LIBRARY
+
+endif # else if ifndef IS_LIBRARY
 #=================================== EOF ======================================

@@ -136,6 +136,27 @@ inline std::string wrToTimeDateString( uint64_t wrt )
    return timeToString( wrToTimeDate( time, wrt ) );
 }
 
+/*! ---------------------------------------------------------------------------
+ * @ingroup DAQ
+ * @brief Performing of a linear interpolation between two given
+ *        points in a two dimensional coordinate system.
+ * @param x  X-value for which the Y-value shall be calculated.
+ * @param x1 X-value of the known first point.
+ * @param y1 Y-value of the known first point.
+ * @param x2 X-value of the known second point.
+ * @param y2 Y-value of the known second point.
+ * @return Interpolated Y-value of the given X-value.
+ */
+template< typename XT = float, typename YT = float >
+YT interpolate( XT x, XT x1, YT y1, XT x2, YT y2 )
+{
+   if( x2 == x1 )
+      return (y1 + y2) / 2; //TODO Workaround prevents a division by zero.
+
+   return (y2 - y1) * static_cast<YT>(x - x1) /
+              static_cast<YT>(x2 - x1) + y1;
+}
+
 #ifndef DAQ_VPP_MAX
    #define DAQ_VPP_MAX 20.0
 #endif
