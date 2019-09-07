@@ -1,9 +1,5 @@
 package file_access is
 
-
-  procedure say_hello(f : integer);
-  attribute foreign of say_hello : procedure is "VHPIDIRECT say_hello";
-
   procedure file_access_init(pts : integer);
   attribute foreign of file_access_init : procedure is "VHPIDIRECT file_access_init";
 
@@ -21,11 +17,6 @@ package file_access is
 end package;
 
 package body file_access is
-  procedure say_hello(f : integer) is
-  begin
-    assert false report "VHPI" severity failure;
-  end procedure;
-
   procedure file_access_init(pts : integer) is
   begin
     assert false report "VHPI" severity failure;

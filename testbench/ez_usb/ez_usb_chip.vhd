@@ -1,3 +1,8 @@
+-- behavioral simulation of the FIFO slave interface
+-- of an EZUSB chip. It redirects the signals into 
+-- a raw file (socket, pseudo terminal in raw mode, etc)
+-- and allows real host software tools to access the 
+-- simulation attached to the chip
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
@@ -9,7 +14,7 @@ entity ez_usb_chip is
 	);
 	port (
       rstn_i    : in  std_logic; 
-      ebcyc_o   : out std_logic := '0'; 
+      ebcyc_o   : out std_logic := '0'; -- not really a line of ez-usb-chip but this is needed by etherbone slave to work
       readyn_o  : out std_logic := '0'; 
       fifoadr_i : in  std_logic_vector(1 downto 0); 
       fulln_o   : out std_logic := '1'; 
@@ -25,7 +30,7 @@ end entity;
 architecture simulation of ez_usb_chip is
 	signal out_value : std_logic_vector(7 downto 0) := (others => '0');
 	signal counter   : integer := 0;
-	constant max_counter_cycle_termination : integer := 5;
+	constant max_counter_cycle_termination : integer := 2;
 begin
 
 	fd_io <= out_value when sloen_i = '0' else (others => 'Z');

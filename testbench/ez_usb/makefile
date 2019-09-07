@@ -14,13 +14,13 @@ all: simulation.ghw
 view: simulation.ghw 
 	gtkwave simulation.ghw --save=simulation.gtkw &
 
-# regenerate wave output and update viewer
+# start simulation (which regenerates wave file), then update viewer
 simulation.ghw: compile_testbench 
-	socat -d -d pty,raw,echo=0 pty,raw,echo=0 2> pts.dat &
-	printf "simulation connected to /dev/pts/%d\n" `grep PTY pts.dat | head -n 1 | cut -d"N" -f 2 | cut -d"/" -f4`
-	printf "eb-tool device is /dev/pts/%d\n"       `grep PTY pts.dat | tail -n 1 | cut -d"N" -f 2 | cut -d"/" -f4`
-	ghdl -r testbench --stop-time=100000ns --wave=simulation.ghw --ieee-asserts=disable -gPTS_NUMBER=`grep PTY pts.dat | head -n 1 | cut -d"N" -f 2 | cut -d"/" -f4`
-	pkill socat; rm pts.dat
+	@socat -d -d pty,raw,echo=0 pty,raw,echo=0 2> pts.dat &
+	@printf "device for eb-tools is /dev/pts/%d\n"       `grep PTY pts.dat | tail -n 1 | cut -d"N" -f 2 | cut -d"/" -f4`
+	@printf "simulation connects to /dev/pts/%d\n" `grep PTY pts.dat | head -n 1 | cut -d"N" -f 2 | cut -d"/" -f4`
+	ghdl -r testbench --stop-time=200000ns --wave=simulation.ghw --ieee-asserts=disable -gPTS_NUMBER=`grep PTY pts.dat | head -n 1 | cut -d"N" -f 2 | cut -d"/" -f4`
+	@killall socat; rm pts.dat
 	#vcd2fst simulation.vcd simulation.fst && rm simulation.vcd
 	gsettings set com.geda.gtkwave reload 0
 
@@ -33,8 +33,12 @@ testbench: 	\
 			../../ip_cores/general-cores/modules/common/gencores_pkg.vhd                 \
 			../../ip_cores/general-cores/modules/genrams/generic/generic_async_fifo.vhd  \
 			../../ip_cores/general-cores/modules/genrams/common/inferred_async_fifo.vhd  \
+			../../ip_cores/general-cores/modules/genrams/altera/generic_spram.vhd        \
 			../../ip_cores/general-cores/modules/genrams/altera/generic_simple_dpram.vhd \
 			../../ip_cores/general-cores/modules/wishbone/wishbone_pkg.vhd               \
+			../../ip_cores/general-cores/modules/wishbone/wb_crossbar/sdb_rom.vhd        \
+			../../ip_cores/general-cores/modules/wishbone/wb_crossbar/xwb_crossbar.vhd   \
+			../../ip_cores/general-cores/modules/wishbone/wb_crossbar/xwb_sdb_crossbar.vhd \
 			../../ip_cores/general-cores/modules/wishbone/wb_clock_crossing/xwb_clock_crossing.vhd \
 			../../ip_cores/wr-cores/modules/fabric/wr_fabric_pkg.vhd                    \
 			../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_hdr_pkg.vhd              \
@@ -60,6 +64,8 @@ testbench: 	\
 			../../ip_cores/etherbone-core/hdl/eb_usb_core/ez_usb_pkg.vhd				\
 			../../ip_cores/etherbone-core/hdl/eb_usb_core/ez_usb_fifos.vhd				\
 			../../ip_cores/etherbone-core/hdl/eb_usb_core/ez_usb.vhd					\
+			../../modules/mbox/mbox_pkg.vhd	                                            \
+			../../modules/mbox/mbox.vhd    	                                            \
 			file_access.vhd    \
 			ez_usb_chip.vhd    \
 			wb_minislave.vhd   \

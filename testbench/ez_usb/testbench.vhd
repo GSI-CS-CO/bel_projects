@@ -6,6 +6,7 @@ use ieee.numeric_std.all;
 --use work.pcie_tlp.all;
 use work.wishbone_pkg.all;
 use work.ez_usb_pkg.all;
+use work.mbox_pkg.all;
 
 
 -- use with socat pseudo terminals:
@@ -56,6 +57,74 @@ architecture simulation of testbench is
 
   signal counter : integer := 0;
 
+  -- SDB stuff
+ constant c_minislave_sdb : t_sdb_device := (
+    abi_class     => x"0000", -- undocumented device
+    abi_ver_major => x"01",
+    abi_ver_minor => x"00",
+    wbd_endian    => c_sdb_endian_big,
+    wbd_width     => x"7", -- 8/16/32-bit port granularity
+    sdb_component => (
+    addr_first    => x"0000000000000000",
+    addr_last     => x"000000000000000f",
+    product => (
+    vendor_id     => x"0000000000000651",
+    device_id     => x"12345678",
+    version       => x"00000001",
+    date          => x"20100905",
+    name          => "GSI:MSI_MINISLAVE  ")));
+
+  constant c_zero_master : t_wishbone_master_out := (
+    cyc => '0',
+    stb => '0',
+    adr => (others => '0'),
+    sel => (others => '0'),
+    we  => '0',
+    dat => (others => '0'));
+
+
+  ----------------------------------------------------------------------------------
+  -- GSI Top Crossbar Masters ------------------------------------------------------
+  ----------------------------------------------------------------------------------
+
+  constant c_top_masters : natural := 1;
+  constant c_topm_usb    : natural := 0;
+
+
+  constant c_top_layout_req_masters : t_sdb_record_array(c_top_masters-1 downto 0) :=
+   (c_topm_usb     => f_sdb_auto_msi(c_usb_msi, false));
+
+  constant c_top_layout_masters : t_sdb_record_array := f_sdb_auto_layout(c_top_layout_req_masters);
+  constant c_top_bridge_msi     : t_sdb_msi          := f_xwb_msi_layout_sdb(c_top_layout_masters);
+
+  signal top_bus_slave_i  : t_wishbone_slave_in_array  (c_top_masters-1 downto 0);
+  signal top_bus_slave_o  : t_wishbone_slave_out_array (c_top_masters-1 downto 0);
+  signal top_msi_master_i : t_wishbone_master_in_array (c_top_masters-1 downto 0);
+  signal top_msi_master_o : t_wishbone_master_out_array(c_top_masters-1 downto 0);
+
+  ----------------------------------------------------------------------------------
+  -- GSI Top Crossbar Slaves -------------------------------------------------------
+  ----------------------------------------------------------------------------------
+
+  -- Only put a slave here if it has critical performance requirements!
+  constant c_top_slaves        : natural := 2;
+  constant c_tops_mbox         : natural := 0;
+  constant c_tops_minislave    : natural := 1;
+
+  constant c_top_layout_req_slaves : t_sdb_record_array(c_top_slaves-1 downto 0) :=
+   (c_tops_mbox         => f_sdb_auto_device(c_mbox_sdb,      true),
+    c_tops_minislave    => f_sdb_auto_device(c_minislave_sdb, true));
+
+  constant c_top_layout      : t_sdb_record_array := f_sdb_auto_layout(c_top_layout_req_masters, c_top_layout_req_slaves);
+  constant c_top_sdb_address : t_wishbone_address := f_sdb_auto_sdb   (c_top_layout_req_masters, c_top_layout_req_slaves);
+
+  signal top_msi_slave_i  : t_wishbone_slave_in_array  (c_top_slaves-1 downto 0) := (others => c_zero_master);
+  signal top_msi_slave_o  : t_wishbone_slave_out_array (c_top_slaves-1 downto 0);
+  signal top_bus_master_i : t_wishbone_master_in_array (c_top_slaves-1 downto 0);
+  signal top_bus_master_o : t_wishbone_master_out_array(c_top_slaves-1 downto 0);
+
+
+
 begin
 
 
@@ -87,12 +156,36 @@ begin
       );
 
 
+
+
+
+  top_bar : xwb_sdb_crossbar
+    generic map(
+      g_num_masters => c_top_masters,
+      g_num_slaves  => c_top_slaves,
+      g_registered  => true,
+      g_wraparound  => true,
+      g_layout      => c_top_layout,
+      g_sdb_addr    => c_top_sdb_address)
+    port map(
+      clk_sys_i     => clk_sys,
+      rst_n_i       => rstn_sys,
+      slave_i       => top_bus_slave_i,
+      slave_o       => top_bus_slave_o,
+      msi_master_i  => top_msi_master_i,
+      msi_master_o  => top_msi_master_o,
+      master_i      => top_bus_master_i,
+      master_o      => top_bus_master_o,
+      msi_slave_i   => top_msi_slave_i,
+      msi_slave_o   => top_msi_slave_o);
+
+
   ---- instance of ez_usb component
   --usb_readyn <= 'Z';
   usb_fd_io <= s_usb_fd when s_usb_fd_oen='1' else (others => 'Z');
   usb : ez_usb
     generic map(
-      g_sdb_address => x"10000000",
+      g_sdb_address => c_top_sdb_address,
       g_sys_freq => 10 -- this tells the component our frequency is only 10kHz. 
                         -- reason: so it doesn't wait too many clock tics until 
                         --  it releases the ez_usb chip from its reset
@@ -100,8 +193,8 @@ begin
     port map(
       clk_sys_i => clk_sys,
       rstn_i    => rstn_sys,
-      master_i  => wb_miso,--top_bus_slave_o(c_topm_usb),
-      master_o  => wb_mosi,--top_bus_slave_i(c_topm_usb),
+      master_i  => top_bus_slave_o(c_topm_usb),
+      master_o  => top_bus_slave_i(c_topm_usb),
       uart_o    => uart_usb,
       uart_i    => uart_wrc,
       rstn_o    => usb_rstn,
@@ -124,12 +217,22 @@ begin
   --uart_mux <= uart_usb and wr_uart_i;
 
 
+  mailbox : mbox
+    port map(
+      clk_i        => clk_sys,
+      rst_n_i      => rstn_sys,
+      bus_slave_i  => top_bus_master_o(c_tops_mbox),
+      bus_slave_o  => top_bus_master_i(c_tops_mbox),
+      msi_master_o => top_msi_slave_i (c_tops_mbox),
+      msi_master_i => top_msi_slave_o (c_tops_mbox));
+
+
   minislave : entity work.wb_minislave
   port map (
     clk_i   => clk_sys,
     rst_n_i => rst_n,
-    slave_i => wb_mosi,
-    slave_o => wb_miso
+    slave_i => top_bus_master_o(c_tops_minislave),
+    slave_o => top_bus_master_i(c_tops_minislave)
   );
 
 
