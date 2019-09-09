@@ -59,6 +59,8 @@ architecture simulation of testbench is
   signal s_usb_fd_oen  : std_logic := '0';
 
   signal counter : integer := 0;
+  --signal in_value : integer := 0;
+  --signal out_value : integer := 0;
 
 begin
 
@@ -119,12 +121,8 @@ begin
   );
 
   USB_chip: process 
-    type char_file_t is file of character;
-    file char_file_read : char_file_t;
-    file char_file_write : char_file_t;
-    variable char_in, char_out : character;
-    subtype byte_t is natural range 0 to 255;
-    variable byte_v : byte_t;
+    variable in_value : integer := 0;
+    variable out_value : integer := 0;
   begin
 
     
@@ -143,53 +141,45 @@ begin
 
     -- I'm the EZ-USB chip, nobody knows where my data really comes from...
     -- ...  I'll read it from a file in this case (not from the D+/D- wires)
-    file_open(char_file_read, DEVICE_READ, read_mode); 
-    file_open(char_file_write, DEVICE_WRITE, write_mode); 
+    --file_open(char_file_read, DEVICE_READ, read_mode); 
+    --file_open(char_file_write, DEVICE_WRITE, write_mode); 
+    file_access_init;
+
     usb_ebcyc_i <= '1';
-    wait until rising_edge(clk_sys);
-    --while not endfile(char_file_read) loop
-    while counter < 32 loop 
+    while true loop    
 
-      say_hello(1);
-      -- I'm the EZ-USB chip. I received data and de-assert my empty line
-      --  and set the cycle line 
-      usb_emptyn_i <= '1'; -- not empty when high:
-      for i in 1 to 8 loop
-        read(char_file_read, char_in);
-        counter <= counter + 1;
-        byte_v := character'pos(char_in);
-        --report "read char: " & integer'image(byte_v);
-        usb_fd_io   <= std_logic_vector(to_unsigned(byte_v, 8));
+      --wait until rising_edge(clk_sys);
+
+      in_value := file_access_read;
+      say_hello(in_value);
+      while in_value >= 0 loop
+        usb_emptyn_i <= '1'; -- we have data -> de-assert empty line
+        usb_fd_io <= std_logic_vector(to_signed(in_value, 8));
         wait until falling_edge(usb_slrdn_o);  wait until rising_edge(usb_slrdn_o);
+        in_value := file_access_read;
       end loop;
+
+      --wait until rising_edge(clk_sys);
       usb_fd_io <= (others => 'Z');
-      usb_emptyn_i <= '0'; -- empty when low:
-    
-    
-      for i in 1 to 8 loop
-        wait until rising_edge(usb_slwrn_o);
-        char_out := character'val(to_integer(unsigned(usb_fd_io)));
-        write(char_file_write, char_out);
-        byte_v := character'pos(char_out);
-        --report "wrote char: " & integer'image(byte_v);  
-      end loop;
-      while usb_pktendn_o = '1' loop
-        wait until rising_edge(clk_sys);
-      end loop;
-      -- mimic a flush (which is only available in vhdl2008)
-      file_close(char_file_write);
-      file_open(char_file_write, DEVICE_WRITE, write_mode); 
-      -- 
-    end loop;
-
-
-    while true loop 
+      usb_emptyn_i <= '0'; -- we are empty
       wait until rising_edge(clk_sys);
+
+      if usb_slwrn_o = '0' then 
+        while usb_pktendn_o = '1' loop
+          wait until rising_edge(usb_slwrn_o) or falling_edge(usb_pktendn_o);
+          if usb_pktendn_o = '1' then
+            out_value := to_integer(unsigned(usb_fd_io));
+            file_access_write(out_value);
+          end if;
+        end loop;
+      end if;
+
     end loop;
+    usb_ebcyc_i <= '1';
 
 
-    file_close(char_file_write);
-    file_close(char_file_read);
+    --file_close(char_file_write);
+    --file_close(char_file_read);
 
   end process;
 

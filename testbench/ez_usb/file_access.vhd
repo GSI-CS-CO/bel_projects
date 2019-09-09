@@ -1,9 +1,11 @@
 package file_access is
+
+
   procedure say_hello(f : integer);
   attribute foreign of say_hello : procedure is "VHPIDIRECT say_hello";
 
   procedure file_access_init;
-  attribute foreign of file_access_init : procedure is "VHPIDIRECT init_file_access";
+  attribute foreign of file_access_init : procedure is "VHPIDIRECT file_access_init";
 
   function file_access_read return integer;
   attribute foreign of file_access_read : function is "VHPIDIRECT file_access_read";
