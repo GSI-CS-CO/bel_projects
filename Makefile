@@ -227,6 +227,12 @@ pmc:	firmware
 pmc-clean::
 	$(MAKE) -C syn/gsi_pmc/control clean
 
+pexp:	firmware
+	$(MAKE) -C syn/gsi_pexp/control all
+
+pexp-clean::
+	$(MAKE) -C syn/gsi_pexp/control clean
+
 ifa8:		firmware
 	$(MAKE) -C syn/gsi_ifa8 all
 
