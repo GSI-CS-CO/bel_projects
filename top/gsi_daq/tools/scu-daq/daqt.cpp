@@ -123,15 +123,14 @@ void Channel::Mode::plot( void )
    m_pParent->m_oPlot << "set xlabel \"Time: " << wrToTimeDateString(m_timeStamp)
                       << " WR: 0x" <<
                       hex << m_timeStamp << dec << ", " << m_timeStamp << " nsec"
-
-                         ", RAM-level: " << m_ramLevel <<
-                         " items -> " << std::fixed << setprecision( 2 )
-                         << static_cast<double>(m_ramLevel * 100.0
+                      ", RAM-level: " << m_ramLevel <<
+                      " items -> " << std::fixed << setprecision( 2 )
+                      << static_cast<double>(m_ramLevel * 100.0
                                    / RAM_DAQ_MAX_CAPACITY)
-                         << "%; Frequency: " << m_frequency << "Hz\"" << endl;
+                      << "%; Frequency: " << m_frequency << "Hz\"" << endl;
 
-   m_pParent->m_oPlot << "plot '-' title \"\" with lines"  << setprecision( 8 )
-                      << endl;
+   m_pParent->m_oPlot << "plot '-' title \"\" with lines lc rgb 'green'"
+                      << setprecision( 8 ) << endl;
    m_notFirst = true;
 
    for( std::size_t i = 0; i < m_size; i++ )
@@ -257,6 +256,7 @@ void Channel::start( void )
 
 /*! ---------------------------------------------------------------------------
  */
+inline
 DAQ_DATA_T Channel::buildAverage( const DAQ_DATA_T* pData,
                                                    const std::size_t wordLen )
 {

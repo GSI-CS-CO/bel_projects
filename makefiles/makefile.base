@@ -8,8 +8,10 @@
 ## Author:  Ulrich Becker                                                    ##
 ## Date:    22.01.2019                                                       ##
 ###############################################################################
-ifndef MIAN_MODULE
-  $(error No main module defined in variable MIAN_MODULE !)
+ifndef IS_LIBRARY
+  ifndef MIAN_MODULE
+    $(error No main module defined in variable MIAN_MODULE !)
+  endif
 endif
 ifndef CPU
   $(error No target CPU defined in variable CPU !)
@@ -147,8 +149,14 @@ CC_ARG = $(CFLAGS) $(OPT_INCLUDE) $(OPT_DEFINES)
 CXX_ARG ?= $(CC_ARG)
 AS_ARG ?= $(CC_ARG)
 
+ALL += check_src $(WORK_DIR) $(TARGET_DIR) $(RESULT_FILE)
+#ifndef IS_LIBRARY
+  ALL += size
+#endif
+ALL += version
+
 .PHONY: all
-all: check_src $(WORK_DIR) $(TARGET_DIR) $(RESULT_FILE) size version
+all: $(ALL)
 
 .PHONY: version
 version:

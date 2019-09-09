@@ -10,13 +10,18 @@
 ###############################################################################
 REPOSITORY_DIR := $(shell git rev-parse --show-toplevel)
 
+ USE_SHARED_LIB := 1
+
 EB_SRC= $(DAQ_DIR)/feSupport/scu/etherbone
 
 MIAN_MODULE := mdaqexample.cpp
 
-SOURCE += $(DAQ_LINUX_DIR)/daq_eb_ram_buffer.cpp
-SOURCE += $(MDAQ_LINUX_DIR)/mdaq_interface.cpp
-SOURCE += $(MDAQ_LINUX_DIR)/mdaq_administration.cpp
+ifndef USE_SHARED_LIB
+ SOURCE += $(DAQ_LINUX_DIR)/daq_eb_ram_buffer.cpp
+ SOURCE += $(MDAQ_LINUX_DIR)/mdaq_interface.cpp
+ SOURCE += $(MDAQ_LINUX_DIR)/mdaq_administration.cpp
+endif
+
 SOURCE += $(EB_SRC)/EtherboneConnection.cpp
 SOURCE += $(EB_SRC)/BusException.cpp
 
@@ -27,23 +32,18 @@ DEFINES += _GLIBCXX_USE_CXX11_ABI=0
 DEFINES += BOOST_NO_CXX11_EXPLICIT_CONVERSION_OPERATORS
 #-----------------------------------------------------------------------------------------
 
-DEFINES += CONFIG_SCU_USE_DDR3
-DEFINES += DEBUGLEVEL=1
-DEFINES += CONFIG_DAQ_TEST
-# DEFINES += NDEBUG
-DEFINES += CONFIG_DAQ_DEBUG
-DEFINES += VERSION=0.1
-DEFINES += CONFIG_DAQ_DEBUG
 DEFINES += CONFIG_NO_SCU_RAM
-
-DEFINES += CONFIG_DAQ_TIME_MEASUREMENT
-
-
 
 INCLUDE_DIRS += $(EB_SRC)
 INCLUDE_DIRS += $(MDAQ_LINUX_DIR)
 # LIBS += boost_system
+
  ADDITIONAL_OBJECTS += /opt/gsi/3rdparty/boost/1.54.0/lib/x86_64/libboost_system.a
+ifdef USE_SHARED_LIB
+ MDAQ_LIB = $(MDAQ_LINUX_DIR)/deploy_x86_64/result/mdaq.a
+ ADDITIONAL_OBJECTS += $(MDAQ_LIB)
+endif
+
 LIBS += pthread
 LIBS += stdc++
 LIBS += etherbone
@@ -64,5 +64,15 @@ DOX_OPTIMIZE_OUTPUT_FOR_C = "NO"
 DOX_RECURSIVE = "YES"
 #------------------------------------------------------------------------------
 
+ NO_LTO = 1
+
+ALL = $(MDAQ_LIB)
+
 include $(REPOSITORY_DIR)/makefiles/makefile.scun
+
+ifdef USE_SHARED_LIB
+
+$(MDAQ_LIB):
+	make -C $(MDAQ_LINUX_DIR)
+endif
 #=================================== EOF ======================================

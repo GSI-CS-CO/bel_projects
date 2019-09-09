@@ -24,14 +24,15 @@
  */
 #include <iostream>
 #include <mdaq_administration.hpp>
-#include <daq_calculations.hpp>
 
 using namespace Scu;
-//using namespace MiLdaq;
-
 using namespace std;
 
 ///////////////////////////////////////////////////////////////////////////////
+/*
+ * We need to specializing the class MiLdaq::DaqCompare obtaining
+ * the callback function "MiLdaq::DaqCompare::onData"
+ */
 class MyCompare: public MiLdaq::DaqCompare
 {
 public:
@@ -39,6 +40,9 @@ public:
       MiLdaq::DaqCompare( iterfaceAddress )
       {}
 
+   /*
+    * See comment below.
+    */
    void onData( uint64_t wrTimeStamp, MiLdaq::MIL_DAQ_T actlValue,
                                       MiLdaq::MIL_DAQ_T setValue ) override;
 
@@ -53,6 +57,11 @@ public:
    }
 };
 
+/*-----------------------------------------------------------------------------
+ * This is the central callback function which becomes invoked by the
+ * loop- function "MiLdaq::DaqAdministration::distributeData()" when
+ * the data of a registered function generator has been received.
+ */
 void MyCompare::onData( uint64_t wrTimeStamp, MiLdaq::MIL_DAQ_T actlValue,
                                               MiLdaq::MIL_DAQ_T setValue )
 {
@@ -79,15 +88,24 @@ public:
      :MiLdaq::DaqAdministration( poEtherbone )
      {}
 
-   /*!
+   /*
     * Becomes invoked after each receiving of data which doesn't belongs
     * to a already registered data-compare object.
     */
-     void onUnregistered( RingItem* pUnknownItem ) override;
+   void onUnregistered( RingItem* pUnknownItem ) override;
 };
 
+/*-----------------------------------------------------------------------------
+ * By this optional callback function it becomes possible making a
+ * auto- registration of all received function generators if desired.
+ */
 void MyMilDaqAdministration::onUnregistered( RingItem* pUnknownItem )
 {
+  /*
+   * You can activate the following code by setting #if 0 to #if 1
+   * just for fun, but this will produced a lot of additional output of all
+   * unregistered function generators.
+   */
 #if 0
    cout << pUnknownItem->getTimestamp() << ' '
         << static_cast<int>(pUnknownItem->getActValue()) << ' '
@@ -134,16 +152,28 @@ int main( int argc, const char** ppArgv )
       MyMilDaqAdministration milDaqContainer( &ebConnection );
 
       /*
-       * We need a DAQ device which contains at least one or more
-       * MIL-DAQ compare objects.
+       * In this example the set and actual values of function generator
+       * "fg-39-130" will received and evaluated.
+       *
+       * The order of the following both constructor invocations
+       * doesn't matter.
        */
+
+      /*
+       * 1) We need a DAQ device which contains at least one or more
+       *    MIL-DAQ compare objects.
+       *
+       *                       fg-39-130
+       *                          ||      */
       MiLdaq::DaqDevice myDevice( 39 );
 
 
       /*
-       * We need a DAQ compare object containing the callback function
-       * MyCompare::onData
-       */
+       * 2) We need a DAQ compare object containing the callback function
+       *    MyCompare::onData
+       *
+       *             fg-39-130
+       *                   |||           */
       MyCompare myCompare( 130 );
 
       /*
@@ -152,7 +182,8 @@ int main( int argc, const char** ppArgv )
       myDevice.registerDaqCompare( &myCompare );
 
       /*
-       *
+       * Making the DAQ-administrator respectively the DAQ device container
+       * the DAQ device known.
        */
       milDaqContainer.registerDevice( &myDevice );
 
@@ -178,6 +209,10 @@ int main( int argc, const char** ppArgv )
        * In this example the connection was made outside of the
        * object milDaqContainer (see above), therefore the disconnect has
        * to be made outside as well.
+       *
+       * CAUTION: Only when the connect was made outside like in this example
+       *          its allow to made the disconnect outside as well.
+       *          Otherwise a "Segmentation fault" occurs!
        */
       ebConnection.disconnect();
 
