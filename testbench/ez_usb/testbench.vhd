@@ -92,7 +92,7 @@ architecture simulation of testbench is
 
 
   constant c_top_layout_req_masters : t_sdb_record_array(c_top_masters-1 downto 0) :=
-   (c_topm_usb     => f_sdb_auto_msi(c_usb_msi, false));
+   (c_topm_usb     => f_sdb_auto_msi(c_usb_msi, true));
 
   constant c_top_layout_masters : t_sdb_record_array := f_sdb_auto_layout(c_top_layout_req_masters);
   constant c_top_bridge_msi     : t_sdb_msi          := f_xwb_msi_layout_sdb(c_top_layout_masters);
