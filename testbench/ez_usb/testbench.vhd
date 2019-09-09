@@ -195,6 +195,8 @@ begin
       rstn_i    => rstn_sys,
       master_i  => top_bus_slave_o(c_topm_usb),
       master_o  => top_bus_slave_i(c_topm_usb),
+      slave_i   => top_msi_master_o(c_topm_usb),
+      slave_o   => top_msi_master_i(c_topm_usb),
       uart_o    => uart_usb,
       uart_i    => uart_wrc,
       rstn_o    => usb_rstn,
