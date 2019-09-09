@@ -84,6 +84,21 @@ entity scu_control is
     -----------------------------------------------------------------------
     wr_leds_o : out std_logic_vector(3 downto 0) := (others => '1');
     rt_leds_o : out std_logic_vector(3 downto 0) := (others => '1');
+	 
+	 -----------------------------------------------------------------------
+    -- Pseudo-SRAM (4x 256Mbit)
+    -----------------------------------------------------------------------
+    psram_a            : out   std_logic_vector(23 downto 0) := (others => 'Z');
+    psram_dq           : inout std_logic_vector(15 downto 0) := (others => 'Z');
+    psram_clk          : out   std_logic := 'Z';
+    psram_advn         : out   std_logic := 'Z';
+    psram_cre          : out   std_logic := 'Z';
+    psram_cen          : out   std_logic_vector(3 downto 0) := (others => '1');
+    psram_oen          : out   std_logic := 'Z';
+    psram_wen          : out   std_logic := 'Z';
+    psram_be0          : out   std_logic := 'Z';
+    psram_be1          : out   std_logic := 'Z';
+    psram_wait         : in    std_logic; -- DDR magic
 
     -----------------------------------------------------------------------
     -- SFP
