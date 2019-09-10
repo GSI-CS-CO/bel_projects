@@ -174,18 +174,21 @@ void printMsiHandleMeasurement(void)
 
 void printTrgTggCtlCfg(void)
 {
-  mprintf("\n\ttrg: %x, %llx, tgg: %x, %llx\n\t", gTrigCtrl.bursts, gTrigCtrl.deadline, gToggCtrl.bursts, gToggCtrl.deadline);
+  mprintf("\n\tbursts, deadline\n\t");
+  mprintf("trig: 0x%x, 0x%Lx\n\t", gTrigCtrl.bursts, gTrigCtrl.deadline);
+  mprintf("togg: 0x%x, 0x%Lx\n", gToggCtrl.bursts, gToggCtrl.deadline);
+  mprintf("\n\tevent id : bursts\n\t");
 
   for (int i = 0; i < N_CONFIGS; ++i) {
-    mprintf("%llx:%x ", gTrigConfigs[i].id, gTrigConfigs[i].bursts);
-    if (((i + 1) % 8) == 0)
+    mprintf("%Lx:%x ", gTrigConfigs[i].id, gTrigConfigs[i].bursts);
+    if (((i + 1) % 4) == 0)
       mprintf("\n\t");
   }
 
   mprintf("\n\t");
   for (int i = 0; i < N_CONFIGS; ++i) {
-    mprintf("%llx:%x ", gToggConfigs[i].id, gToggConfigs[i].bursts);
-    if (((i + 1) % 8) == 0)
+    mprintf("%Lx:%x ", gToggConfigs[i].id, gToggConfigs[i].bursts);
+    if (((i + 1) % 4) == 0)
       mprintf("\n\t");
   }
 }
@@ -226,6 +229,14 @@ int printSharedInput(int start, int end)
     mprintf("%8x @ 0x%x\n", *(pSharedInput +i), (uint32_t)(pSharedInput +i));
 
   return i;
+}
+
+static int printTaskContext(int id) {
+  int cnt;
+  cnt =  mprintf(" 0x%x: 0x%x,", id, pTask[id].flag);
+  cnt += mprintf(" 0x%x, 0x%x,", pTask[id].io_type, pTask[id].io_index);
+  cnt += mprintf(" 0x%Lx, 0x%Lx\n", pTask[id].trigger, pTask[id].toggle);
+  return cnt;
 }
 
 int updateConfigs(Config_t *configs, uint64_t e_id, int id, int set) {
@@ -844,24 +855,26 @@ void execHostCmd(int32_t cmd)
 
 	id = *pSharedInput;
 	if (0 < id && id <= N_BURSTS) {
-	  mprintf("trig=0x%x:%x, togg=0x%x:%x, cycle=0x%x:%x, period=0x%x:%x, deadln=0x%x:%x, flag=0x%x\n",
+	  mprintf("id = 0x%x, flag=0x%x\n", id, pTask[id].flag);
+	  mprintf("trig=0x%x:%x, togg=0x%x:%x\n",
 	    (uint32_t)(pTask[id].trigger >> 32),  (uint32_t)pTask[id].trigger,
-	    (uint32_t)(pTask[id].toggle >> 32),   (uint32_t)pTask[id].toggle,
+	    (uint32_t)(pTask[id].toggle >> 32),   (uint32_t)pTask[id].toggle);
+	  mprintf("cycle=0x%x:%x, period=0x%x:%x, deadln=0x%x:%x\n",
 	    (uint32_t)(pTask[id].cycle >> 32),    (uint32_t)pTask[id].cycle,
 	    (uint32_t)(pTask[id].period >> 32),   (uint32_t)pTask[id].period,
-	    (uint32_t)(pTask[id].deadline >> 32), (uint32_t)pTask[id].deadline,
-	    (uint32_t)(pTask[id].flag >> 0));
+	    (uint32_t)(pTask[id].deadline >> 32), (uint32_t)pTask[id].deadline);
 	}
 	else if (id == 0) {
 	  for (int i = 1; i <= N_BURSTS; ++i) {
 	    if (pTask[i].flag & CTL_VALID) {
-	      mprintf("trig=0x%x:%x, togg=0x%x:%x, cycle=0x%x:%x, period=0x%x:%x, deadln=0x%x:%x, flag=0x%x\n",
+	      mprintf("id = 0x%x, flag=0x%x\n", i, pTask[id].flag);
+	      mprintf("trig=0x%x:%x, togg=0x%x:%x\n",
 		(uint32_t)(pTask[i].trigger >> 32),  (uint32_t)pTask[i].trigger,
-		(uint32_t)(pTask[i].toggle >> 32),   (uint32_t)pTask[i].toggle,
+		(uint32_t)(pTask[i].toggle >> 32),   (uint32_t)pTask[i].toggle);
+	      mprintf("cycle=0x%x:%x, period=0x%x:%x, deadln=0x%x:%x\n",
 		(uint32_t)(pTask[i].cycle >> 32),    (uint32_t)pTask[i].cycle,
 		(uint32_t)(pTask[i].period >> 32),   (uint32_t)pTask[i].period,
-		(uint32_t)(pTask[i].deadline >> 32), (uint32_t)pTask[i].deadline,
-		(uint32_t)(pTask[i].flag >> 0));
+		(uint32_t)(pTask[i].deadline >> 32), (uint32_t)pTask[i].deadline);
 	    }
 	  }
 	}
@@ -969,7 +982,7 @@ void execHostCmd(int32_t cmd)
 	  *(pSharedInput + 1) = gBurstsCycled;
 
 	  if (verbose)
-	    mprintf(" created: %x, cycled: %x\n", gBurstsCreated, gBurstsCycled);
+	    mprintf(" created: 0x%x, cycled: 0x%x\n", gBurstsCreated, gBurstsCycled);
 
 	  gBurstsCycled = 0; // clear after read
 	}
@@ -1026,7 +1039,7 @@ void execHostCmd(int32_t cmd)
 	  updateConfigs(pToggConfigs, pTask[id].toggle, id, 1);
 
 	  if (verbose)
-	    mprintf(" %x: %x, %x, %x, %llx, %llx\n", id, pTask[id].flag, pTask[id].io_type, pTask[id].io_index, pTask[id].trigger, pTask[id].toggle);
+	    printTaskContext(id);
 	}
 	else {
 	  result = STATUS_ERR;
@@ -1055,7 +1068,7 @@ void execHostCmd(int32_t cmd)
 	  pTask[id].toggle = 0;
 
 	  if (verbose)
-	    mprintf(" %x: %x, %x, %x, %llx, %llx\n", id, pTask[id].flag, pTask[id].io_type, pTask[id].io_index, pTask[id].trigger, pTask[id].toggle);
+	    printTaskContext(id);
 	}
 	else {
 	  result = STATUS_ERR;
@@ -1100,7 +1113,7 @@ void execHostCmd(int32_t cmd)
 	    pTask[id].flag &= ~CTL_EN;
 
 	  if (verbose)
-	    mprintf(" %x: %x, %x, %x, %llx, %llx\n", id, pTask[id].flag, pTask[id].io_type, pTask[id].io_index, pTask[id].trigger, pTask[id].toggle);
+	    printTaskContext(id);
 	}
 	break;
 
@@ -1121,13 +1134,13 @@ void execHostCmd(int32_t cmd)
 	break;
 
       case 0x66: // print elapsed time between tasks (requires the burst id in the shared input)
-	mprintf("task ticks\n\tstate lasttick failed\n");
+	mprintf("task ticks\n\tlasttick, failed\n");
 	id = *pSharedInput;
 	if (id) {
-	  mprintf("\t%llx %16llx %8x\n", pTask[id].lasttick, pTask[id].failed, (uint32_t)pTask[id].failed);
+	  mprintf("\t0x%016Lx, 0x%016Lx\n", pTask[id].lasttick, pTask[id].failed);
 	} else {
 	  for (int i = 1; i <= 10; ++i)
-	    mprintf("\t%llx %16llx %8x\n", pTask[i].lasttick, pTask[i].failed, (uint32_t)pTask[i].failed);
+	    mprintf("\t0x%016Lx, 0x%016Lx\n", pTask[i].lasttick, pTask[i].failed);
 	}
 	break;
 
