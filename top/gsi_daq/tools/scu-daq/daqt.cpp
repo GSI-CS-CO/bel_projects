@@ -126,7 +126,7 @@ void Channel::Mode::plot( void )
                       ", RAM-level: " << m_ramLevel <<
                       " items -> " << std::fixed << setprecision( 2 )
                       << static_cast<double>(m_ramLevel * 100.0
-                                   / RAM_DAQ_MAX_CAPACITY)
+                                   / RAM_SDAQ_MAX_CAPACITY)
                       << "%; Frequency: " << m_frequency << "Hz\"" << endl;
 
    m_pParent->m_oPlot << "plot '-' title \"\" with lines lc rgb 'green'"
@@ -761,7 +761,7 @@ inline int daqtMain( int argc, char** ppArgv )
             cout << "RAM-level: " << level << " items -> "
                  << std::fixed << setprecision( 2 )
                  << static_cast<double>(level * 100.0 /
-                                         RAM_DAQ_MAX_CAPACITY)
+                                         RAM_SDAQ_MAX_CAPACITY)
                  << "%\"" << endl;
             break;
          }

@@ -1,31 +1,31 @@
 /*!
- *  @file daq_ring_admin.h
- *  @brief Administration of the indexes for a ring-buffer.
+ * @file daq_ring_admin.h
+ * @brief Administration of the indexes for a ring-buffer.
  *
- *  @note This module is suitable for LM32 and Linux
- *  @see scu_ramBuffer.h
+ * @note This module is suitable for LM32 and Linux
+ * @see scu_ramBuffer.h
  *
- *  @see scu_ddr3.h
- *  @see scu_ddr3.c
- *  @date 19.06.2019
- *  @copyright (C) 2019 GSI Helmholtz Centre for Heavy Ion Research GmbH
+ * @see scu_ddr3.h
+ * @see scu_ddr3.c
+ * @date 19.06.2019
+ * @copyright (C) 2019 GSI Helmholtz Centre for Heavy Ion Research GmbH
  *
- *  @author Ulrich Becker <u.becker@gsi.de>
+ * @author Ulrich Becker <u.becker@gsi.de>
  *
- *******************************************************************************
- *  This library is free software; you can redistribute it and/or
- *  modify it under the terms of the GNU Lesser General Public
- *  License as published by the Free Software Foundation; either
- *  version 3 of the License, or (at your option) any later version.
+ ******************************************************************************
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 3 of the License, or (at your option) any later version.
  *
- *  This library is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- *  Lesser General Public License for more details.
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
  *
- *  You should have received a copy of the GNU Lesser General Public
- *  License along with this library. If not, see <http://www.gnu.org/licenses/>.
- *******************************************************************************
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library. If not, see <http://www.gnu.org/licenses/>.
+ ******************************************************************************
  */
 #ifndef _DAQ_RING_ADMIN_H
 #define _DAQ_RING_ADMIN_H
@@ -70,24 +70,37 @@ namespace daq
  * @{
  */
 
-#ifndef RAM_DAQ_MIN_INDEX
-   /*!
-    * @brief Minimum value for ring buffer read and write index
-    */
-   #define RAM_DAQ_MIN_INDEX 0
-#endif
-//#define RAM_DAQ_MAX_INDEX 2816
-#ifndef RAM_DAQ_MAX_INDEX
+//#define RAM_SDAQ_MAX_INDEX 2816
+#ifndef RAM_SDAQ_MAX_INDEX
    /*!
     * @brief Maximum value for ring buffer read and write index
     */
-   #define RAM_DAQ_MAX_INDEX DDR3_MAX_INDEX64
+   #ifdef CONFIG_MIL_DAQ_USE_RAM
+      #define RAM_SDAQ_MAX_INDEX (DDR3_MAX_INDEX64 / 2)
+      #define RAM_MDAQ_MAX_INDEX DDR3_MAX_INDEX64
+   #else
+      #define RAM_SDAQ_MAX_INDEX DDR3_MAX_INDEX64
+   #endif
+#endif
+
+#ifndef RAM_SDAQ_MIN_INDEX
+   /*!
+    * @brief Minimum value for ring buffer read and write index
+    */
+   #define RAM_SDAQ_MIN_INDEX 0
+   #ifdef CONFIG_MIL_DAQ_USE_RAM
+      #define RAM_MDAQ_MIN_INDEX (DDR3_MAX_INDEX64 / 2)
+   #endif
 #endif
 
 /*!
  * @brief Maximum capacity of ring buffer in RAM_DAQ_PAYLOAD_T
  */
-#define RAM_DAQ_MAX_CAPACITY (RAM_DAQ_MAX_INDEX - RAM_DAQ_MIN_INDEX)
+#define RAM_SDAQ_MAX_CAPACITY (RAM_SDAQ_MAX_INDEX - RAM_SDAQ_MIN_INDEX)
+
+#ifdef CONFIG_MIL_DAQ_USE_RAM
+  #define RAM_MDAQ_MAX_CAPACITY (RAM_MDAQ_MAX_INDEX - RAM_MDAQ_MIN_INDEX)
+#endif
 
 /*!
  * @brief Data type for read, write, offset and capacity for
@@ -115,13 +128,23 @@ STATIC_ASSERT( offsetof( RAM_RING_INDEXES_T, start ) <
 /*! ---------------------------------------------------------------------------
  * @brief Initializer for object of data type RAM_RING_INDEXES_T
  */
-#define RAM_RING_INDEXES_INITIALIZER                                          \
+#define RAM_RING_INDEXES_SDAQ_INITIALIZER                                     \
 {                                                                             \
-   .offset   = RAM_DAQ_MIN_INDEX,                                             \
-   .capacity = RAM_DAQ_MAX_CAPACITY,                                          \
+   .offset   = RAM_SDAQ_MIN_INDEX,                                            \
+   .capacity = RAM_SDAQ_MAX_CAPACITY,                                         \
    .start    = 0,                                                             \
    .end      = 0                                                              \
 }
+
+#ifdef CONFIG_MIL_DAQ_USE_RAM
+ #define RAM_RING_INDEXES_MDAQ_INITIALIZER                                    \
+ {                                                                            \
+    .offset   = RAM_MDAQ_MIN_INDEX,                                           \
+    .capacity = RAM_MDAQ_MAX_CAPACITY,                                        \
+    .start    = 0,                                                            \
+    .end      = 0                                                             \
+ }
+#endif
 
 /*! ---------------------------------------------------------------------------
  * @brief Data type for data residing in the shared memory for the
@@ -154,11 +177,11 @@ STATIC_ASSERT( offsetof( RAM_RING_SHARED_OBJECT_T, ramAccessLock ) <
  * @brief Initializer of the shared object for the communication between
  *        server and Linux client.
  */
-#define RAM_RING_SHARED_OBJECT_INITIALIZER                                    \
+#define RAM_RING_SHARED_SDAQ_OBJECT_INITIALIZER                               \
 {                                                                             \
    .serverHasWritten = false,                                                 \
    .ramAccessLock    = false,                                                 \
-   .ringIndexes      = RAM_RING_INDEXES_INITIALIZER                           \
+   .ringIndexes      = RAM_RING_INDEXES_SDAQ_INITIALIZER                      \
 }
 
 /*! ---------------------------------------------------------------------------
@@ -171,7 +194,7 @@ static inline void ramRingReset( register RAM_RING_INDEXES_T* pThis )
    pThis->end   = 0;
 }
 
-#define RAM_RING_GET_CAPACITY() (RAM_DAQ_MAX_INDEX - RAM_DAQ_MIN_INDEX)
+#define RAM_RING_GET_CAPACITY() (RAM_SDAQ_MAX_INDEX - RAM_SDAQ_MIN_INDEX)
 
 /*! ---------------------------------------------------------------------------
  * @brief Returns the number of currently used memory items

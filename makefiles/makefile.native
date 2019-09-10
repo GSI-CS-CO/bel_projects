@@ -27,15 +27,21 @@ NM      = $(GCC_BIN_DIR)nm
 STRIP   = $(GCC_BIN_DIR)strip
 STRINGS = $(GCC_BIN_DIR)strings
 
+
 ifdef SHARED_OBJECT
+  ifdef STATIC_LIBRARY
+    $(error Define SHARED_OBJECT or STATIC_LIBRARY but not both! )
+  endif
   IS_LIBRARY = 1
+  BIN_SUFFIX = .so.$(VERSION)
 endif
 ifdef STATIC_LIBRARY
   IS_LIBRARY = 1
+  BIN_SUFFIX = .a
 endif
 
 TARGET   ?= $(notdir $(basename $(MIAN_MODULE)))
-BIN_FILE ?= $(TARGET_DIR)/$(TARGET)
+BIN_FILE ?= $(TARGET_DIR)/$(TARGET)$(BIN_SUFFIX)
 
 LD_FLAGS += $(ARG_LIBS)
 

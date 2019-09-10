@@ -83,10 +83,10 @@ void Plot::plot( void )
                   m_pParent->getCommandLine()->isDeviationPlottingEnabled();
 
    const string& style = m_pParent->getCommandLine()->getLineStyle();
-   *this << "plot '-' title 'set value' with " << style <<
-                ", '-' title 'actual value' with " << style;
+   *this << "plot '-' title 'set value' with "    << style << " lc rgb 'red'"
+               ", '-' title 'actual value' with " << style << " lc rgb 'green'";
    if( isDeviationPlottingEnabled )
-      *this << ", '-' title 'deviation' with " << style;
+      *this << ", '-' title 'deviation' with "    << style << " lc rgb 'blue'";
    *this << endl;
 
    for( auto& i: m_pParent->m_aPlotList )

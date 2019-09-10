@@ -1,25 +1,26 @@
 ###############################################################################
 ##                                                                           ##
-##  Makefile to generate the static library mdaq.a for Mil-DAQ applications  ##
+##  Makefile to generate the static library sdaq.a for SCU-DAQ applications  ##
 ##                                                                           ##
 ##---------------------------------------------------------------------------##
-## File:    gsi_daq/linux/mdaq/Makefile                                      ##
+## File:    gsi_daq/linux/sdaq/Makefile                                      ##
 ## Author:  Ulrich Becker <u.becker@gsi.de>                                  ##
 ## Company: GSI Helmholtz Centre for Heavy Ion Research GmbH                 ##
-## Date:    09.09.2019                                                       ##
+## Date:    10.09.2019                                                       ##
 ###############################################################################
 REPOSITORY_DIR := $(shell git rev-parse --show-toplevel)
 STATIC_LIBRARY := 1
 
-TARGET         := mdaq
+TARGET         := sdaq
 
 EB_SRC= $(DAQ_DIR)/feSupport/scu/etherbone
 INCLUDE_DIRS += $(EB_SRC)
-INCLUDE_DIRS += $(MDAQ_LINUX_DIR)
+INCLUDE_DIRS += $(SDAQ_LINUX_DIR)
 
-SOURCE =  $(MDAQ_LINUX_DIR)/mdaq_administration.cpp
-SOURCE += $(MDAQ_LINUX_DIR)/mdaq_interface.cpp
+SOURCE =  $(SDAQ_LINUX_DIR)/daq_administration.cpp
+SOURCE += $(SDAQ_LINUX_DIR)/daq_interface.cpp
 SOURCE += $(DAQ_LINUX_DIR)/daq_eb_ram_buffer.cpp
+SOURCE += $(DAQ_DIR)/daq_ring_admin.c
 
 DEFINES += _BSD_SOURCE
 DEFINES += _POSIX_C_SOURCE
@@ -28,9 +29,9 @@ DEFINES += _GLIBCXX_USE_CXX11_ABI=0
 DEFINES += BOOST_NO_CXX11_EXPLICIT_CONVERSION_OPERATORS
 #-----------------------------------------------------------------------------------------
 
-DEFINES += CONFIG_NO_SCU_RAM
-
- # NO_LTO = 1
+DEFINES += CONFIG_DAQ_TIME_MEASUREMENT
+DEFINES += CONFIG_SCU_USE_DDR3
+DEFINES += CONFIG_DDR3_NO_BURST_FUNCTIONS
 
 include $(REPOSITORY_DIR)/makefiles/makefile.scun
 #=================================== EOF ======================================

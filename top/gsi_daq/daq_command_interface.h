@@ -250,15 +250,15 @@ STATIC_ASSERT( offsetof( DAQ_SHARED_IO_T, ramIndexes ) <
  * @brief Initializer of DAQ shared memory.
  * @see DAQ_SHARED_IO_T
  */
-#define DAQ_SHARAD_MEM_INITIALIZER                    \
-{                                                     \
-   .magicNumber = DAQ_MAGIC_NUMBER,                   \
-   .ramIndexes  = RAM_RING_SHARED_OBJECT_INITIALIZER, \
-   .operation =                                       \
-   {                                                  \
-      .code    = DAQ_OP_IDLE,                         \
-      .retCode = DAQ_RET_OK                           \
-   }                                                  \
+#define DAQ_SHARAD_MEM_INITIALIZER                                           \
+{                                                                            \
+   .magicNumber = DAQ_MAGIC_NUMBER,                                          \
+   .ramIndexes  = RAM_RING_SHARED_SDAQ_OBJECT_INITIALIZER,                   \
+   .operation =                                                              \
+   {                                                                         \
+      .code    = DAQ_OP_IDLE,                                                \
+      .retCode = DAQ_RET_OK                                                  \
+   }                                                                         \
 }
 
 /*!@} *//*defgroup DAQ_INTERFACE */

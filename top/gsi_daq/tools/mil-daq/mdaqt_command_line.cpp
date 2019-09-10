@@ -347,7 +347,7 @@ int CommandLine::onArgument( void )
       case READ_SLOT:
       case READ_CHANNEL:
       {
-         SCU_ASSERT( m_poAllDaq != nullptr );
+         assert( m_poAllDaq != nullptr );
          if( readInteger( number, arg ) )
             return -1;
          break;
@@ -357,7 +357,7 @@ int CommandLine::onArgument( void )
    {
       case READ_EB_NAME:
       {
-         SCU_ASSERT( m_poAllDaq == nullptr );
+         assert( m_poAllDaq == nullptr );
 #if 1
          if( daq::isConcurrentProcessRunning( getProgramName(), arg ) )
             return -1;
@@ -392,8 +392,8 @@ int CommandLine::onArgument( void )
       }
       case READ_CHANNEL:
       {
-         SCU_ASSERT( m_poCurrentDevice != nullptr );
-         SCU_ASSERT( m_poCurrentChannel == nullptr );
+         assert( m_poCurrentDevice != nullptr );
+         assert( m_poCurrentChannel == nullptr );
 #if 0
          if( !gsi::isInRange( number, static_cast<uint>( 1 ),
                                       DaqInterface::c_maxChannels ) )

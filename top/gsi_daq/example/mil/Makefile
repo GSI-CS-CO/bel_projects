@@ -10,7 +10,7 @@
 ###############################################################################
 REPOSITORY_DIR := $(shell git rev-parse --show-toplevel)
 
- USE_SHARED_LIB := 1
+USE_SHARED_LIB := 1
 
 EB_SRC= $(DAQ_DIR)/feSupport/scu/etherbone
 
@@ -56,15 +56,13 @@ DEBUG = 1
 
 #------------------------------------------------------------------------------
 # Additional source code for Doxygen which will not integrated automatically:
-DOX_INPUT += $(DAQ_DIR)/daq_descriptor.h
-DOX_INPUT += $(DAQ_DIR)/daq_command_interface.h
 DOX_INPUT += $(DAQ_DIR)/generated/shared_mmap.h
 DOX_INPUT += $(DAQ_LINUX_DIR)/daq_calculations.hpp
 DOX_OPTIMIZE_OUTPUT_FOR_C = "NO"
 DOX_RECURSIVE = "YES"
 #------------------------------------------------------------------------------
 
- NO_LTO = 1
+ # NO_LTO = 1
 
 ALL = $(MDAQ_LIB)
 
