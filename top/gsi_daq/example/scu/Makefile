@@ -52,7 +52,7 @@ INCLUDE_DIRS += $(SDAQ_LINUX_DIR)
 
  ADDITIONAL_OBJECTS += /opt/gsi/3rdparty/boost/1.54.0/lib/x86_64/libboost_system.a
 ifdef USE_SHARED_LIB
-  SDAQ_LIB = $(SDAQ_LINUX_DIR)/deploy_x86_64/result/sdaq.a
+  SDAQ_LIB = $(SDAQ_LINUX_DIR)/deploy_x86_64/result/libsdaq.a
   ADDITIONAL_OBJECTS += $(SDAQ_LIB)
 endif
 

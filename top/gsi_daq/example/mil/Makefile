@@ -40,7 +40,7 @@ INCLUDE_DIRS += $(MDAQ_LINUX_DIR)
 
  ADDITIONAL_OBJECTS += /opt/gsi/3rdparty/boost/1.54.0/lib/x86_64/libboost_system.a
 ifdef USE_SHARED_LIB
- MDAQ_LIB = $(MDAQ_LINUX_DIR)/deploy_x86_64/result/mdaq.a
+ MDAQ_LIB = $(MDAQ_LINUX_DIR)/deploy_x86_64/result/libmdaq.a
  ADDITIONAL_OBJECTS += $(MDAQ_LIB)
 endif
 

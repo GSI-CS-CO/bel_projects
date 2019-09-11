@@ -15,7 +15,6 @@ CPU     := $(shell uname -m)
 
 CC      = $(GCC_BIN_DIR)gcc -std=c99
 CXX     = $(GCC_BIN_DIR)g++ -std=c++11
-# -fpermissive
 LD      = $(GCC_BIN_DIR)gcc
 OBJCPY  = $(GCC_BIN_DIR)objcopy
 OBJDUMP = $(GCC_BIN_DIR)objdump
@@ -39,9 +38,12 @@ ifdef STATIC_LIBRARY
   IS_LIBRARY = 1
   BIN_SUFFIX = .a
 endif
+ifdef IS_LIBRARY
+   BIN_PREFIX = lib
+endif
 
 TARGET   ?= $(notdir $(basename $(MIAN_MODULE)))
-BIN_FILE ?= $(TARGET_DIR)/$(TARGET)$(BIN_SUFFIX)
+BIN_FILE ?= $(TARGET_DIR)/$(BIN_PREFIX)$(TARGET)$(BIN_SUFFIX)
 
 LD_FLAGS += $(ARG_LIBS)
 
@@ -52,8 +54,6 @@ include $(MAKEFILE_DIR)/makefile.base
 ifndef IS_LIBRARY
 $(BIN_FILE): $(OBJ_FILES) $(ADDITIONAL_LD_DEPENDENCES)
 	$(LD_F) -o $@ $(OBJ_FILES) $(ADDITIONAL_OBJECTS) $(LD_FLAGS)
-
-
 
 ifdef LIB_DIRS
    ADDITIONAL_LIB_PATH = $(addsuffix :,$(LIB_DIRS))
