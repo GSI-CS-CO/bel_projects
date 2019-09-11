@@ -243,9 +243,16 @@ static int printTaskContext(int id) {
   return cnt;
 }
 
-int updateConfigs(Config_t *configs, uint64_t e_id, int id, int set) {
+static int updateConfigs(Config_t *configs, uint64_t e_id, int id, int set) {
 
   int i, pos = N_CONFIGS;
+
+  if (configs == 0)          // null pointer check
+    return pos;
+
+  if (e_id == 0 || id == 0)  // allow only non-zero event id and burst id
+    return pos;
+
   for (i = 0; i < N_CONFIGS; ++i)
     if ((configs + i)->id == e_id)
       pos = i;
@@ -1039,8 +1046,10 @@ void execHostCmd(int32_t cmd)
 	  gBurstsCreated |= 0x1 << (id - 1);
 
 	  // update trigger/toggle configuration tables
-	  updateConfigs(pTrigConfigs, pTask[id].trigger, id, 1);
-	  updateConfigs(pToggConfigs, pTask[id].toggle, id, 1);
+	  if (pTask[id].trigger)
+	    updateConfigs(pTrigConfigs, pTask[id].trigger, id, 1);
+	  if (pTask[id].toggle)
+	    updateConfigs(pToggConfigs, pTask[id].toggle, id, 1);
 
 	  if (verbose)
 	    printTaskContext(id);
@@ -1063,8 +1072,10 @@ void execHostCmd(int32_t cmd)
 	  gBurstsCreated &= ~(0x1 << (id -1));
 
 	  // update trigger/toggle configuration tables
-	  updateConfigs(pTrigConfigs, pTask[id].trigger, id, 0);
-	  updateConfigs(pToggConfigs, pTask[id].toggle, id, 0);
+	  if (pTask[id].trigger)
+	    updateConfigs(pTrigConfigs, pTask[id].trigger, id, 0);
+	  if (pTask[id].toggle)
+	    updateConfigs(pToggConfigs, pTask[id].toggle, id, 0);
 
 	  pTask[id].io_type = 0;
 	  pTask[id].io_index = 0;
