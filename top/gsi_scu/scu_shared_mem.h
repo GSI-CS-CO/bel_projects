@@ -31,6 +31,18 @@
 #include <helper_macros.h>
 #ifdef CONFIG_SCU_DAQ_INTEGRATION
   #include <daq_command_interface.h>
+  #ifdef __cplusplus
+     #define __DAQ_SHARED_IO_T Scu::daq::DAQ_SHARED_IO_T
+  #else
+     #define __DAQ_SHARED_IO_T DAQ_SHARED_IO_T
+  #endif
+#endif
+
+#ifdef __cplusplus
+namespace Scu
+{
+namespace FG
+{
 #endif
 
 /*! ---------------------------------------------------------------------------
@@ -53,9 +65,11 @@ typedef struct PACKED_SIZE
    uint32_t fg_macros[MAX_FG_MACROS]; // hi..lo bytes: slot, device, version, output-bits
    struct channel_regs fg_regs[MAX_FG_CHANNELS];
    struct channel_buffer fg_buffer[MAX_FG_CHANNELS];
+#ifndef CONFIG_MIL_DAQ_USE_RAM
    struct daq_buffer daq_buf;
+#endif
 #ifdef CONFIG_SCU_DAQ_INTEGRATION
-   DAQ_SHARED_IO_T daq;
+   __DAQ_SHARED_IO_T daq;
 #endif
 } SCU_SHARED_DATA_T;
 
@@ -132,14 +146,15 @@ STATIC_ASSERT( offsetof( SCU_SHARED_DATA_T, fg_regs ) ==
                offsetof( SCU_SHARED_DATA_T, fg_macros ) + MAX_FG_MACROS * sizeof( uint32_t ));
 STATIC_ASSERT( offsetof( SCU_SHARED_DATA_T, fg_buffer ) ==
                offsetof( SCU_SHARED_DATA_T, fg_regs ) + MAX_FG_CHANNELS * sizeof( struct channel_regs ));
-
+#ifndef CONFIG_MIL_DAQ_USE_RAM
 STATIC_ASSERT( offsetof( SCU_SHARED_DATA_T, daq_buf ) ==
                offsetof( SCU_SHARED_DATA_T, fg_buffer ) + MAX_FG_CHANNELS * sizeof( struct channel_buffer ));
+#endif
 #ifdef CONFIG_SCU_DAQ_INTEGRATION
 STATIC_ASSERT( offsetof( SCU_SHARED_DATA_T, daq ) ==
                offsetof( SCU_SHARED_DATA_T, daq_buf ) + sizeof( struct daq_buffer ));
 STATIC_ASSERT( sizeof( SCU_SHARED_DATA_T ) ==
-               offsetof( SCU_SHARED_DATA_T, daq ) + sizeof( DAQ_SHARED_IO_T ));
+               offsetof( SCU_SHARED_DATA_T, daq ) + sizeof( __DAQ_SHARED_IO_T ));
 #else
 STATIC_ASSERT( sizeof( SCU_SHARED_DATA_T ) ==
                offsetof( SCU_SHARED_DATA_T, daq_buf ) + sizeof( struct daq_buffer ));
@@ -159,6 +174,12 @@ STATIC_ASSERT( sizeof( SCU_SHARED_DATA_T ) ==
   #define __DAQ_SHARAD_MEM_INITIALIZER_ITEM
 #endif
 
+#ifndef CONFIG_MIL_DAQ_USE_RAM
+   #define __MIL_DAQ_SHARAD_MEM_INITIALIZER_ITEM , .daq_buf = {0}
+#else
+   #define __MIL_DAQ_SHARAD_MEM_INITIALIZER_ITEM
+#endif
+
 /*! ---------------------------------------------------------------------------
  * @brief Initializer of the entire LM32 shared memory of application
  *        scu_control.
@@ -176,14 +197,14 @@ STATIC_ASSERT( sizeof( SCU_SHARED_DATA_T ) ==
    .fg_mb_slot       = SCU_INVALID_VALUE,  \
    .fg_num_channels  = MAX_FG_CHANNELS,    \
    .fg_buffer_size   = BUFFER_SIZE,        \
-   .fg_macros        = {0},                \
-   .daq_buf          = {0}                 \
+   .fg_macros        = {0}                 \
+   __MIL_DAQ_SHARAD_MEM_INITIALIZER_ITEM   \
    __DAQ_SHARAD_MEM_INITIALIZER_ITEM       \
 }
 
 #ifdef __cplusplus
-namespace Scu
-{
+} /* namespace FG */
+
 namespace MiLdaq
 {
 #endif

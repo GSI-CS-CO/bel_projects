@@ -22,10 +22,13 @@
  * License along with this library. If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************
  */
-#include <daq_interface.hpp>
+
+#define CONFIG_SCU_DAQ_INTEGRATION
+#include <scu_shared_mem.h>
 #include <sys/select.h>
-#include <helper_macros.h>
 #include <iostream>
+#include <daq_interface.hpp>
+
 
 using namespace Scu;
 using namespace daq;
@@ -60,6 +63,7 @@ const std::string daq::status2String( DAQ_RETURN_CODE_T status )
 }
 
 ///////////////////////////////////////////////////////////////////////////////
+constexpr uint32_t INVALID_OFFSET = static_cast<uint32_t>(~0);
 /*! ---------------------------------------------------------------------------
  * @brief Constructor of class daq::DaqInterface
  */
@@ -70,7 +74,7 @@ DaqInterface::DaqInterface( DaqEb::EtherboneConnection* poEtherbone,
    ,m_slotFlags( 0 )
    ,m_maxDevices( 0 )
    ,m_doReset( doReset )
-   ,m_daqLM32Offset( 0 )
+   ,m_daqLM32Offset( INVALID_OFFSET )
 {
    init();
 }
@@ -81,7 +85,7 @@ DaqInterface::DaqInterface( EbRamAccess* poEbAccess, bool doReset )
    ,m_slotFlags( 0 )
    ,m_maxDevices( 0 )
    ,m_doReset( doReset )
-   ,m_daqLM32Offset( 0 )
+   ,m_daqLM32Offset( INVALID_OFFSET )
 {
    init();
 }
@@ -91,12 +95,82 @@ DaqInterface::DaqInterface( EbRamAccess* poEbAccess, bool doReset )
 void DaqInterface::init( void )
 {
    SCU_ASSERT( m_poEbAccess != nullptr );
+
+   probe();
+
    m_poEbAccess->ramInit( &m_oScuRam, &m_oSharedData.ramIndexes );
    readSharedTotal();
    sendUnlockRamAccess();
    if( m_doReset )
       sendReset();
    readSlotStatus();
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+inline void DaqInterface::probe( void )
+{
+   uint32_t actMagicNumber;
+
+   /*
+    * First step: Investigation whether the single DAQ LM32
+    * application is loaded.
+    */
+   m_poEbAccess->readLM32( &actMagicNumber, 1,
+                           offsetof( DAQ_SHARED_IO_T, magicNumber ),
+                           sizeof( actMagicNumber ) );
+   if( actMagicNumber == DAQ_MAGIC_NUMBER )
+   {/*
+     * DAQ-LM32 single application found.
+     */
+      m_daqLM32Offset = offsetof( DAQ_SHARED_IO_T, magicNumber );
+   }
+
+   /*
+    * Second step: Investigation whether the FG-LM32 application
+    * is loaded.
+    */
+   m_poEbAccess->readLM32( &actMagicNumber, 1,
+                           offsetof( FG::SCU_SHARED_DATA_T, fg_magic_number ),
+                           sizeof( actMagicNumber ) );
+   if( m_daqLM32Offset != INVALID_OFFSET )
+   {/*
+     * Check whether the DAQ-magic number is not a random number
+     * of SCU_SHARED_DATA_T::board_id.
+     */
+      if( actMagicNumber == FG_MAGIC_NUMBER )
+      {
+         m_daqLM32Offset = INVALID_OFFSET;
+      }
+   }
+
+   if( m_daqLM32Offset != INVALID_OFFSET )
+      return;
+
+   if( actMagicNumber != FG_MAGIC_NUMBER )
+   {
+
+      throw DaqException( "Neither DAQ-application nor FG-application "
+                          "in LM32 found!" );
+
+   }
+
+#ifdef CONFIG_SCU_DAQ_INTEGRATION
+   /*
+    * FG-application is loaded.
+    * Third step: Investigation whether the FG+DAQ-LM32 application
+    * is loaded.
+    */
+   m_poEbAccess->readLM32( &actMagicNumber, 1,
+                           offsetof( FG::SCU_SHARED_DATA_T, daq.magicNumber ),
+                           sizeof( actMagicNumber ) );
+   if( actMagicNumber == DAQ_MAGIC_NUMBER )
+   {
+      m_daqLM32Offset = offsetof( FG::SCU_SHARED_DATA_T, daq.magicNumber );
+      return;
+   }
+#endif
+   throw DaqException( "Single FG application is loaded!" );
 }
 
 /*! ---------------------------------------------------------------------------

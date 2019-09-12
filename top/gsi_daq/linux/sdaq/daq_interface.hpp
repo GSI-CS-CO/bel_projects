@@ -348,6 +348,7 @@ protected:
 
 private:
    void init( void );
+   void probe( void );
    bool cmdReadyWait( void );
    void readSharedTotal( void );
    RETURN_CODE_T sendCommand( DAQ_OPERATION_CODE_T );

@@ -36,7 +36,6 @@
 #include <scu_bus_defines.h>
 #include <daq_ramBuffer.h>
 #include <stdint.h>
-
 #ifdef __cplusplus
 namespace Scu
 {
