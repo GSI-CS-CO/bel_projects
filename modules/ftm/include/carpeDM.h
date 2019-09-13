@@ -105,7 +105,7 @@ public:
            uint32_t getThrStart(uint8_t cpuIdx);
            uint64_t getThrPrepTime(uint8_t cpuIdx, uint8_t thrIdx);
                bool isThrRunning(uint8_t cpuIdx, uint8_t thrIdx);                   // true if thread <thrIdx> is running
-               bool isSafeToRemove(const std::string& pattern, std::string& report, std::vector<QueueReport>& vQr);
+               //bool isSafeToRemove(const std::string& pattern, std::string& report, std::vector<QueueReport>& vQr);
                bool isSafeToRemove(const std::string& pattern, std::string& report) ;
 std::pair<int, int> findRunningPattern(const std::string& sPattern); // get cpu and thread assignment of running pattern
                bool isPatternRunning(const std::string& sPattern);                  // true if Pattern <x> is running
