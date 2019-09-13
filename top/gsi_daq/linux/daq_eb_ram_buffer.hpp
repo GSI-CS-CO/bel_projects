@@ -34,6 +34,12 @@
  #include <daq_ramBuffer.h>
 #endif
 
+// ... a little bit paranoia, I know ... ;-)
+static_assert( EB_DATA8  == sizeof(uint8_t),  "" );
+static_assert( EB_DATA16 == sizeof(uint16_t), "" );
+static_assert( EB_DATA32 == sizeof(uint32_t), "" );
+static_assert( EB_DATA64 == sizeof(uint64_t), "" );
+
 namespace DaqEb = FeSupport::Scu::Etherbone;
 
 namespace Scu

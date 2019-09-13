@@ -27,6 +27,7 @@
 
 #include <list>
 #include <mdaq_interface.hpp>
+#include <daq_calculations.hpp>
 
 namespace Scu
 {

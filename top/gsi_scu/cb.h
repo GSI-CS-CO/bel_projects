@@ -67,11 +67,11 @@ struct msi {
 }; 
 
 struct daq {
-  unsigned int setvalue;
-  unsigned int actvalue;
-  unsigned int tmstmp_l;
-  unsigned int tmstmp_h;
-  unsigned int channel;
+  uint32_t setvalue;
+  uint32_t actvalue;
+  uint32_t tmstmp_l;
+  uint32_t tmstmp_h;
+  uint32_t channel;
 };
 
 typedef uint32_t ring_pos_t;

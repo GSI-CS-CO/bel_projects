@@ -346,10 +346,24 @@ static void  __onEbSocked( eb_user_data_t pUser, eb_device_t dev,
          * Copying from Wishbone/Etherbone to user-buffer.
          */
          data_t data = ::eb_operation_data( op );
-         std::size_t size = ::eb_operation_format( op ) & EB_DATAX;
-         ::memcpy( &(static_cast<uint8_t*>(static_cast<EB_USER_CB_T*>
-                      (pUser)->m_pUserAddress))[j],
-                   &data, size );
+         format_t format = ::eb_operation_format( op );
+         std::size_t size = format & EB_DATAX;
+#ifdef CONFIG_BIT_SWAP_IN_EB_CALLBACK
+         if( (format & EB_BIG_ENDIAN) != 0 )
+         {
+            for( uint k = 0; k < size; k++ )
+            {
+               (&(static_cast<uint8_t*>(static_cast<EB_USER_CB_T*>
+                                         (pUser)->m_pUserAddress))[j])[k] =
+                         reinterpret_cast<uint8_t*>(&data)[size-1-k];
+            }
+         }
+         else
+#endif
+           ::memcpy( &(static_cast<uint8_t*>(static_cast<EB_USER_CB_T*>
+                         (pUser)->m_pUserAddress))[j],
+                      &data, size );
+
          j += size;
       }
 

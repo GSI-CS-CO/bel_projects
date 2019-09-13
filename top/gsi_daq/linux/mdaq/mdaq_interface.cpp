@@ -60,7 +60,7 @@ void DaqInterface::init( void )
    uint32_t tmpMagicNumber;
 
    m_poEbAccess->readLM32( &tmpMagicNumber, sizeof( tmpMagicNumber ),
-                           offsetof( SCU_SHARED_DATA_T, fg_magic_number ) );
+                           offsetof( FG::SCU_SHARED_DATA_T, fg_magic_number ) );
 
    if( tmpMagicNumber != __bswap_constant_32( FG_MAGIC_NUMBER ) )
       throw Exception( "Wrong magic number respectively wrong LM32 app!" );
@@ -74,7 +74,7 @@ bool DaqInterface::readRingPosition( void )
    DAQ_RING_T tmp;
 
    m_poEbAccess->readLM32( &tmp, sizeof( tmp ),
-                                 offsetof( SCU_SHARED_DATA_T, daq_buf ) );
+                                 offsetof( FG::SCU_SHARED_DATA_T, daq_buf ) );
 
    m_oRing.m_head = gsi::convertByteEndian( tmp.m_head );
    if( m_oRing.m_head >= c_ringBufferCapacity )
@@ -93,7 +93,7 @@ void DaqInterface::updateRingTail( void )
 {
    RING_INDEX_T convTail = gsi::convertByteEndian( getTailRingIndex() );
    m_poEbAccess->writeLM32( &convTail, sizeof( convTail ),
-                            offsetof( SCU_SHARED_DATA_T, daq_buf.ring_tail ) );
+                            offsetof( FG::SCU_SHARED_DATA_T, daq_buf.ring_tail ) );
 }
 
 /*! ---------------------------------------------------------------------------
@@ -106,7 +106,7 @@ void DaqInterface::readRingItem( RingItem& rRingItem )
    RING_ITEM_T unconvItem;
 
    m_poEbAccess->readLM32( &unconvItem, sizeof( unconvItem ),
-                           offsetof( SCU_SHARED_DATA_T, daq_buf.ring_data ) +
+                           offsetof( FG::SCU_SHARED_DATA_T, daq_buf.ring_data ) +
                            getTailRingIndex() * sizeof( unconvItem ) );
 
    __CONV_MEMBER( setvalue );

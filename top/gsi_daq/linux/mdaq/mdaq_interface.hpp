@@ -98,22 +98,22 @@ public:
 
       uint getMilDaqAddress( void )
       {
-         return Scu::MiLdaq::getMilDaqAddress( this );
+         return ::Scu::MiLdaq::getMilDaqAddress( this );
       }
 
       uint getMilDaqLocation( void ) const
       {
-         return Scu::MiLdaq::getMilDaqLocation( this );
+         return ::Scu::MiLdaq::getMilDaqLocation( this );
       }
 
       uint getMilDaqScuBusSlot( void )
       {
-         return Scu::MiLdaq::getMilDaqScuBusSlot( this );
+         return ::Scu::MiLdaq::getMilDaqScuBusSlot( this );
       }
 
       uint getMilDaqScuMilExtention( void )
       {
-         return Scu::MiLdaq::getMilDaqScuMilExtention( this );
+         return ::Scu::MiLdaq::getMilDaqScuMilExtention( this );
       }
    };
 
