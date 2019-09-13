@@ -641,14 +641,15 @@ using namespace DotStr::Misc;
 
     std::string report;
     std::vector<QueueReport> vQr;
-    bool isSafe =  isSafeToRemove(g, report, vQr);
+    CovenantTable ctAdditions;
+    bool isSafe =  isSafeToRemove(g, report, vQr, ctAdditions);
     //writeTextFile("safetyReportNormal.dot", report);
     if (!(force | (isSafe))) {throw std::runtime_error("//Subgraph cannot safely be removed!\n\n" + report);}
 
     subtraction(g);
     //writeUpDotFile("upload.dot", false);
     validate(gUp, atUp, force);
-
+    addCovenants(ctAdditions);
     return upload(OP_TYPE_SCH_REMOVE, vQr);
   }
 
@@ -681,14 +682,15 @@ using namespace DotStr::Misc;
 
     std::string report;
     std::vector<QueueReport> vQr;
-    bool isSafe =  isSafeToRemove(gTmpRemove, report, vQr);
+    CovenantTable ctAdditions;
+    bool isSafe =  isSafeToRemove(gTmpRemove, report, vQr, ctAdditions);
     //writeTextFile("safetyReportNormal.dot", report);
     if (!(force | (isSafe))) {throw std::runtime_error("//Subgraph cannot safely be removed!\n\n" + report);}
 
     subtraction(gTmpRemove);
     //writeUpDotFile("upload.dot", false);
     validate(gUp, atUp, force);
-
+    addCovenants(ctAdditions);
     return upload(OP_TYPE_SCH_KEEP, vQr);
   }
 

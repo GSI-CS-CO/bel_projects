@@ -90,7 +90,7 @@ uint64_t CarpeDM::getThrStartTime(uint8_t cpuIdx, uint8_t thrIdx)               
 uint32_t CarpeDM::getThrStart(uint8_t cpuIdx)                                                                   { return impl_->getThrStart(cpuIdx);}
 uint64_t CarpeDM::getThrPrepTime(uint8_t cpuIdx, uint8_t thrIdx)                                                { return impl_->getThrPrepTime(cpuIdx, thrIdx);}
 bool CarpeDM::isThrRunning(uint8_t cpuIdx, uint8_t thrIdx)                                                      { return impl_->isThrRunning(cpuIdx, thrIdx);}                   // true if thread <thrIdx> is running
-bool CarpeDM::isSafeToRemove(const std::string& pattern, std::string& report, std::vector<QueueReport>& vQr)    { return impl_->isSafeToRemove(pattern, report, vQr);}
+//bool CarpeDM::isSafeToRemove(const std::string& pattern, std::string& report, std::vector<QueueReport>& vQr)    { return impl_->isSafeToRemove(pattern, report, vQr);}
 bool CarpeDM::isSafeToRemove(const std::string& pattern, std::string& report)                                   { return impl_->isSafeToRemove(pattern, report);}
 std::pair<int, int> CarpeDM::findRunningPattern(const std::string& sPattern)                                    { return impl_->findRunningPattern(sPattern);} // get cpu and thread assignment of running pattern
 bool CarpeDM::isPatternRunning(const std::string& sPattern)                                                     { return impl_->isPatternRunning(sPattern);}                  // true if Pattern <x> is running
