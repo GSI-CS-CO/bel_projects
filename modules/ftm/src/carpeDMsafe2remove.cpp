@@ -25,7 +25,7 @@ namespace isSafeToRemove {
 }
 
 
-bool CarpeDM::CarpeDMimpl::isSafeToRemove(Graph& gRem, std::string& report, std::vector<QueueReport>& vQr) {
+bool CarpeDM::CarpeDMimpl::isSafeToRemove(Graph& gRem, std::string& report, std::vector<QueueReport>& vQr, CovenantTable& ctAdditions ) {
   std::set<std::string> patterns;
   bool warnUndefined = false;
   //Find all patterns 2B removed
@@ -34,16 +34,16 @@ bool CarpeDM::CarpeDMimpl::isSafeToRemove(Graph& gRem, std::string& report, std:
     else patterns.insert(patternIt);
   }
   if (warnUndefined) sErr << "Warning: isSafeToRemove was handed a graph containing nodes claiming to belong to pattern '" << DotStr::Misc::sUndefined << "'." << std::endl << "These nodes will be ignored for analysis and removal!" << std::endl;
-  return isSafeToRemove(patterns, report, vQr);
+  return isSafeToRemove(patterns, report, vQr, ctAdditions);
 }
 
-bool CarpeDM::CarpeDMimpl::isSafeToRemove(const std::string& pattern, std::string& report, std::vector<QueueReport>& vQr) {
+bool CarpeDM::CarpeDMimpl::isSafeToRemove(const std::string& pattern, std::string& report, std::vector<QueueReport>& vQr, CovenantTable& ctAdditions) {
   std::set<std::string> p = {pattern};
-  return isSafeToRemove(p, report, vQr);
+  return isSafeToRemove(p, report, vQr, ctAdditions);
 }
 
 
-bool CarpeDM::CarpeDMimpl::isSafeToRemove(std::set<std::string> patterns, std::string& report, std::vector<QueueReport>& vQr ) {
+bool CarpeDM::CarpeDMimpl::isSafeToRemove(std::set<std::string> patterns, std::string& report, std::vector<QueueReport>& vQr, CovenantTable& ctAdditions ) {
   //std::cout << "verbose " << (int)verbose << " debug " << (int)debug << " sim " << (int)sim << " testmode " << (int)testmode << " optimisedS2R " << (int)optimisedS2R << std::endl;
 
 
@@ -233,10 +233,10 @@ bool CarpeDM::CarpeDMimpl::isSafeToRemove(std::set<std::string> patterns, std::s
       //find covname in ctAux and copy found entry to ct watchlist
       auto x = ctAux.lookup(covName);
       if (!ctAux.isOk(x)) { throw std::runtime_error(isSafeToRemove::exIntro + ": Lookup of <" + covName + "> in covenantAuxTable failed\n");}
-      ct.insert(x);
+      ctAdditions.insert(x);
       //double check if item exists
-      auto y = ct.lookup(covName);
-      if (!ct.isOk(y)) { throw std::runtime_error(isSafeToRemove::exIntro + ": Lookup of <" + covName + "> in covenantTable failed\n");}
+      auto y = ctAdditions.lookup(covName);
+      if (!ctAdditions.isOk(y)) { throw std::runtime_error(isSafeToRemove::exIntro + ": Lookup of <" + covName + "> in covenantTable failed\n");}
 
       //and report
       report += "//" + covName + " p " + std::to_string(y->prio) + " s " + std::to_string(y->slot) + " chk 0x" + std::to_string(y->chkSum) + "\n";
@@ -304,6 +304,12 @@ unsigned CarpeDM::CarpeDMimpl::updateCovenants() {
   for (auto it : toDelete) { ct.remove(it); }
 
   return cnt;
+}
+
+void CarpeDM::CarpeDMimpl::addCovenants(CovenantTable& ctAdditions) {
+  for (cmI it = ctAdditions.getTable().begin(); it != ctAdditions.getTable().end(); it++ ) {
+    ct.insert(it);
+  }  
 }
 
 
