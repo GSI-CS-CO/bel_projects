@@ -75,6 +75,7 @@
 
 
 extern struct w1_bus wrpc_w1_bus;
+#if 0
 extern inline int cbisEmpty(volatile struct channel_regs*, int);
 extern inline int cbRead(volatile struct channel_buffer*, volatile struct channel_regs*, int, struct param_set*);
 extern inline int cbisFull(volatile struct channel_regs*, int);
@@ -85,7 +86,7 @@ extern struct msi remove_msg(volatile struct message_buffer *mb, int queue);
 extern int add_msg(volatile struct message_buffer *mb, int queue, struct msi m);
 extern int has_msg(volatile struct message_buffer *mb, int queue);
 extern void add_daq_msg(volatile struct daq_buffer *db, struct daq d);
-
+#endif
 /* task prototypes */
 void dev_sio_handler(int);
 void dev_bus_handler(int);
@@ -273,7 +274,7 @@ void msDelay(uint32_t msecs) {
  *  @param fg_base base address of the function generator macro
  *  @param cntrl_reg state of the control register. saves one read access.
  */
-inline void send_fg_param(int slot, int fg_base, unsigned short cntrl_reg, signed int* setvalue) {
+static inline void send_fg_param(int slot, int fg_base, unsigned short cntrl_reg, signed int* setvalue) {
   struct param_set pset;
   int fg_num;
   unsigned short cntrl_reg_wr;
@@ -327,6 +328,7 @@ inline void send_fg_param(int slot, int fg_base, unsigned short cntrl_reg, signe
  *  @param fg_base base address of the function generator macro
  *  @param irq_act_reg state of the irq act register, saves a read access
  */
+static
 inline void handle(int slot, unsigned fg_base, short irq_act_reg, signed int* setvalue) {
     unsigned short cntrl_reg = 0;
     int status;
@@ -595,7 +597,7 @@ void print_fgs( void ) {
   int i=0;
   for(i=0; i < MAX_FG_MACROS; i++)
     g_shared.fg_macros[i] = 0;
-  scan_scu_bus(scub_base, scu_mil_base, (uint32_t*)&g_shared.fg_macros[0], (uint64_t*)&g_shared.ext_id);
+  scan_scu_bus(scub_base, scu_mil_base, &g_shared.fg_macros[0], &g_shared.ext_id);
 
   i=0;
   while(i < MAX_FG_MACROS) {

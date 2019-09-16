@@ -13,8 +13,8 @@ REPOSITORY_DIR := $(shell git rev-parse --show-toplevel)
 TARGET_DIR     := ..
 DEPLOY_DIR     := .
 TARGET         := scu_control
-MIAN_MODULE    = $(SCU_DIR)/main.c
-
+# MIAN_MODULE    = $(SCU_DIR)/main.c
+ MIAN_MODULE    = $(SCU_DIR)/scu_main.c
  # SCU_DAQ=1
 
 DEFINES += HISTORY
@@ -23,6 +23,8 @@ DEFINES += CONFIG_NO_LM32_ASSERT
 DEFINES += CONFIG_PRINTF_64BIT
 DEFINES += CONFIG_ASSERT
 
+# DEFINES += CONFIG_SCU_DAQ_INTEGRATION CONFIG_SCU_USE_DDR3
+
 ifdef SCU_DAQ
   DEFINES += CONFIG_SCU_DAQ_INTEGRATION
   DEFINES += CONFIG_SCU_USE_DDR3
@@ -30,7 +32,7 @@ ifdef SCU_DAQ
   DEFINES += DAQ_MAX_CHANNELS=4
 else
   # New functions will not compiled when the following switch is set.
-  DEFINES += CONFIG_OLD_SCU_SW
+   DEFINES += CONFIG_OLD_SCU_SW
 endif
 
 
@@ -44,7 +46,7 @@ SOURCE += $(SCU_LIB_SRC_DIR)/stack-check.c
 # SOURCE += $(SCU_LIB_SRC_DIR)/wr_time.c
 SOURCE += $(WR_DIR)/pp_printf/div64.c
 
-SOURCE += $(SCU_LIB_SRC_DIR)/dbg.c
+# SOURCE += $(SCU_LIB_SRC_DIR)/dbg.c
 SOURCE += $(SCU_DIR)/scu_bus.c
 SOURCE += $(SCU_DIR)/fg.c
 SOURCE += $(SCU_DIR)/cb.c
@@ -64,17 +66,27 @@ endif
 
 CODE_OPTIMIZATION = s
 RAM_SIZE    = 147456
-SHARED_SIZE = 81920
+
+ifdef SCU_DAQ
+   SHARED_SIZE = 81968
+else
+   SHARED_SIZE = 81920
+endif
 
 # Absolutely necessary for the correct order of the variables
 # within the shared memory!
 CFLAGS += -fno-toplevel-reorder
+# -Waddress-of-packed-member
+
+NO_LTO=1
 
 # To be 100% backward compatible we can use the old toolchain.
 # If the variable TOOLCHAIN_DIR commented out, then the first toolchain found
 # in the environment variable $PATH will used if present,
 # else the included toolchain of this repository will used never the less. 
-TOOLCHAIN_DIR = $(INCLUDED_TOOLCHAIN_DIR)
+ # TOOLCHAIN_DIR = $(INCLUDED_TOOLCHAIN_DIR)
+
+ SCU_URL = scuxl0107
 
 # Including common makefile for arbitrary LM32 software for SCU
 include $(REPOSITORY_DIR)/makefiles/makefile.scu

@@ -69,7 +69,7 @@ typedef struct PACKED_SIZE
    struct daq_buffer daq_buf;
 #endif
 #ifdef CONFIG_SCU_DAQ_INTEGRATION
-   __DAQ_SHARED_IO_T daq;
+   __DAQ_SHARED_IO_T sDaq;
 #endif
 } SCU_SHARED_DATA_T;
 
@@ -165,11 +165,11 @@ STATIC_ASSERT( offsetof( SCU_SHARED_DATA_T, daq_buf ) ==
                MAX_FG_CHANNELS * sizeof( struct channel_buffer ));
 #endif
 #ifdef CONFIG_SCU_DAQ_INTEGRATION
-STATIC_ASSERT( offsetof( SCU_SHARED_DATA_T, daq ) ==
+STATIC_ASSERT( offsetof( SCU_SHARED_DATA_T, sDaq ) ==
                offsetof( SCU_SHARED_DATA_T, daq_buf ) +
                sizeof( struct daq_buffer ));
 STATIC_ASSERT( sizeof( SCU_SHARED_DATA_T ) ==
-               offsetof( SCU_SHARED_DATA_T, daq ) +
+               offsetof( SCU_SHARED_DATA_T, sDaq ) +
                sizeof( __DAQ_SHARED_IO_T ));
 #else
 STATIC_ASSERT( sizeof( SCU_SHARED_DATA_T ) ==
@@ -186,7 +186,7 @@ STATIC_ASSERT( sizeof( SCU_SHARED_DATA_T ) ==
 
 #ifdef CONFIG_SCU_DAQ_INTEGRATION
   #define __DAQ_SHARAD_MEM_INITIALIZER_ITEM \
-             , .daq = DAQ_SHARAD_MEM_INITIALIZER
+             , .sDaq = DAQ_SHARAD_MEM_INITIALIZER
 #else
   #define __DAQ_SHARAD_MEM_INITIALIZER_ITEM
 #endif
