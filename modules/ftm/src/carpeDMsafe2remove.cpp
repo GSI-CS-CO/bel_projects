@@ -330,7 +330,7 @@ void CarpeDM::CarpeDMimpl::getReverseNodeTree(vertex_t v, vertex_set_t& sV, Grap
     vertex_set_t& cpvs = covenantsPerVertex[source(*in_cur, g)];
 
     
-    if ( (g[*in_cur].type != det::sDefDst && g[*in_cur].type != det::sResFlowDst) ) { // if its a non-traversiable edge and the traversal limit is reached, don't follow this trail
+    if ( (g[*in_cur].type != det::sDefDst && g[*in_cur].type != det::sResFlowDst && g[*in_cur].type != det::sDynFlowDst) ) { // if its a non-traversiable edge and the traversal limit is reached, don't follow this trail
       if ( (maxNtEdges > 0) && (tNtEdges >= maxNtEdges) ) {
         if (verbose) sLog << "Non-Traversible edge limit reached, not crossing " << g[source(*in_cur, g)].name << " -> " << g[target(*in_cur, g)].name << std::endl;
         continue;
