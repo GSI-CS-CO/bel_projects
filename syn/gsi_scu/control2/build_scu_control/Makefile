@@ -14,16 +14,16 @@ TARGET_DIR     := ..
 DEPLOY_DIR     := .
 TARGET         := scu_control
 # MIAN_MODULE    = $(SCU_DIR)/main.c
+# MIAN_MODULE    = $(SCU_DIR)/main_origin.c
  MIAN_MODULE    = $(SCU_DIR)/scu_main.c
- # SCU_DAQ=1
+
+   SCU_DAQ=1
 
 DEFINES += HISTORY
 DEFINES += CONFIG_PRINTF_64BIT
 DEFINES += CONFIG_NO_LM32_ASSERT
 DEFINES += CONFIG_PRINTF_64BIT
 DEFINES += CONFIG_ASSERT
-
-# DEFINES += CONFIG_SCU_DAQ_INTEGRATION CONFIG_SCU_USE_DDR3
 
 ifdef SCU_DAQ
   DEFINES += CONFIG_SCU_DAQ_INTEGRATION
@@ -32,7 +32,7 @@ ifdef SCU_DAQ
   DEFINES += DAQ_MAX_CHANNELS=4
 else
   # New functions will not compiled when the following switch is set.
-   DEFINES += CONFIG_OLD_SCU_SW
+  DEFINES += CONFIG_OLD_SCU_SW
 endif
 
 
@@ -64,29 +64,36 @@ SOURCE += $(DAQ_LM32_DIR)/daq_ramBuffer.c
 SOURCE += $(DAQ_LM32_DIR)/daq_main.c
 endif
 
+# To be 100% backward compatible we can use the old toolchain.
+# If the variable TOOLCHAIN_DIR commented out, then the first toolchain found
+# in the environment variable $PATH will used if present,
+# else the included toolchain of this repository will used never the less.
+ # TOOLCHAIN_DIR = $(INCLUDED_TOOLCHAIN_DIR)
+
+
 CODE_OPTIMIZATION = s
 RAM_SIZE    = 147456
 
 ifdef SCU_DAQ
    SHARED_SIZE = 81968
+    STACK_SIZE  =  4096
+   # STACK_SIZE = 5104
 else
    SHARED_SIZE = 81920
 endif
 
+
+
 # Absolutely necessary for the correct order of the variables
 # within the shared memory!
-CFLAGS += -fno-toplevel-reorder
-# -Waddress-of-packed-member
+# CFLAGS += -fno-toplevel-reorder
 
-NO_LTO=1
+CFLAGS += -Wno-address-of-packed-member
 
-# To be 100% backward compatible we can use the old toolchain.
-# If the variable TOOLCHAIN_DIR commented out, then the first toolchain found
-# in the environment variable $PATH will used if present,
-# else the included toolchain of this repository will used never the less. 
- # TOOLCHAIN_DIR = $(INCLUDED_TOOLCHAIN_DIR)
+# NO_LTO=1
 
- SCU_URL = scuxl0107
+
+# SCU_URL = scuxl0107
 
 # Including common makefile for arbitrary LM32 software for SCU
 include $(REPOSITORY_DIR)/makefiles/makefile.scu

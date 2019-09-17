@@ -28,18 +28,32 @@
 #ifndef __lm32__
   #error This module is compilable for LM32 only!
 #endif
+#if defined( CONFIG_SCU_DAQ_INTEGRATION ) && defined( CONFIG_DAQ_SINGLE_APP )
+ #error Either CONFIG_SCU_DAQ_INTEGRATION or CONFIG_DAQ_SINGLE_APP !
+#endif
+#if !defined( CONFIG_SCU_DAQ_INTEGRATION ) && !defined( CONFIG_DAQ_SINGLE_APP )
+ #error Nither CONFIG_SCU_DAQ_INTEGRATION nor CONFIG_DAQ_SINGLE_APP defined!
+#endif
 
 #include <daq.h>
 #include <daq_ramBuffer.h>
 #include <daq_main.h>
-#include <daq_command_interface.h>
+#ifdef CONFIG_SCU_DAQ_INTEGRATION
+   #include <scu_shared_mem.h>
+#else
+   #include <daq_command_interface.h>
+#endif
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 #ifdef CONFIG_DAQ_SINGLE_APP
-  #define GET_SHARED() g_shared
+   #define GET_SHARED() g_shared
+#endif
+#ifdef CONFIG_SCU_DAQ_INTEGRATION
+   extern SCU_SHARED_DATA_T g_shared;
+   #define GET_SHARED() g_shared.sDaq
 #endif
 
 /*! ---------------------------------------------------------------------------

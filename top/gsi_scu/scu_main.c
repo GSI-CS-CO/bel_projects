@@ -31,6 +31,10 @@
 #include "../../../ip_cores/saftlib/drivers/eca_flags.h"
 #include "history.h"
 
+#ifdef CONFIG_SCU_DAQ_INTEGRATION
+#include <daq_main.h>
+#endif
+
 #define MSI_SLAVE 0
 #define MSI_WB_FG 2
 #define SEND_SIG(SIG)     *(volatile unsigned int *)(char*)(pCpuMsiBox + g_shared.fg_regs[channel].mbx_slot * 2) = SIG
@@ -73,27 +77,13 @@
 
 #define MY_ECA_TAG      0xdeadbeef //just define a tag for ECA actions we want to receive
 
-
-extern struct w1_bus wrpc_w1_bus;
-#if 0
-extern inline int cbisEmpty(volatile struct channel_regs*, int);
-extern inline int cbRead(volatile struct channel_buffer*, volatile struct channel_regs*, int, struct param_set*);
-extern inline int cbisFull(volatile struct channel_regs*, int);
-extern int cbgetCount(volatile struct channel_regs*, int);
-extern int scub_write_mil(volatile unsigned short *base, int slot, short data, short fc_ifc_addr);
-extern int scub_write_mil_blk(volatile unsigned short *base, int slot, short *data, short fc_ifc_addr);
-extern struct msi remove_msg(volatile struct message_buffer *mb, int queue);
-extern int add_msg(volatile struct message_buffer *mb, int queue, struct msi m);
-extern int has_msg(volatile struct message_buffer *mb, int queue);
-extern void add_daq_msg(volatile struct daq_buffer *db, struct daq d);
-#endif
 /* task prototypes */
-void dev_sio_handler(int);
-void dev_bus_handler(int);
-void scu_bus_handler(int);
-void cleanup_sio_dev(int);
-void channel_watchdog(int);
-void clear_handler_state(int);
+static void dev_sio_handler(int);
+static void dev_bus_handler(int);
+static void scu_bus_handler(int);
+static void cleanup_sio_dev(int);
+static void channel_watchdog(int);
+static void clear_handler_state(int);
 
 #define SHARED __attribute__((section(".shared")))
 /*!!!!!!!!!!!!!!!!!!!!!! Begin of shared memory area !!!!!!!!!!!!!!!!!!!!!!!!*/
@@ -110,7 +100,7 @@ volatile unsigned int* cpu_info_base   = 0;
 volatile uint32_t     *pECAQ           = 0; // WB address of ECA queue
 
 volatile unsigned int param_sent[MAX_FG_CHANNELS];
-volatile int initialized[MAX_SCU_SLAVES] = {0};
+//volatile int initialized[MAX_SCU_SLAVES] = {0};
 int clear_is_active[MAX_SCU_SLAVES + 1] = {0};
 volatile struct message_buffer msg_buf[QUEUE_CNT] = {0};
 uint64_t timeout[MAX_FG_CHANNELS] = {0};
@@ -597,6 +587,7 @@ void print_fgs( void ) {
   int i=0;
   for(i=0; i < MAX_FG_MACROS; i++)
     g_shared.fg_macros[i] = 0;
+ // void scan_scu_bus(volatile unsigned short *base_adr, volatile unsigned int *mil_base, uint32_t *fglist, uint64_t *ext_id);
   scan_scu_bus(scub_base, scu_mil_base, &g_shared.fg_macros[0], &g_shared.ext_id);
 
   i=0;
@@ -612,7 +603,7 @@ void print_fgs( void ) {
 
 /** @brief print the values and states of all channel registers
  */
-void print_regs() {
+void print_regs(void) {
   int i;
   for(i=0; i < MAX_FG_CHANNELS; i++) {
     mprintf("channel[%d].wr_ptr %d\n", i, g_shared.fg_regs[i].wr_ptr);
@@ -715,7 +706,8 @@ void init() {
 
 /** @brief segfault handler, not used at the moment
  */
-void _segfault(int sig)
+//void _segfault(int sig)
+void _segfault( void )
 {
   mprintf("KABOOM!\n");
   //while (1) {}
@@ -1372,8 +1364,8 @@ uint64_t getTick( void ) {
 int main(void) {
   int i, mb_slot;
   sdb_location found_sdb[20];
-  uint32_t lm32_endp_idx = 0;
-  uint32_t ow_base_idx = 0;
+ // uint32_t lm32_endp_idx = 0;
+ // uint32_t ow_base_idx = 0;
   uint32_t clu_cb_idx = 0;
   discoverPeriphery();
   uart_init_hw();
@@ -1424,11 +1416,14 @@ int main(void) {
 
   init(); // init and scan for fgs
 
-
-
+#ifdef CONFIG_SCU_DAQ_INTEGRATION
+  mprintf("DAQ integrated\n");
+  scuDaqInitialize( &g_scuDaqAdmin );
+#endif
 
   /* definition of task dispatch */
   /* move messages to the correct queue, depending on source */
+#if 0
   void dispatch(int id) {
     struct msi m;
     m = remove_msg(&msg_buf[0], IRQ);
@@ -1452,11 +1447,37 @@ int main(void) {
 
     return;
   }
+#else
+  inline void dispatch( void )
+  {
+    struct msi m;
+    m = remove_msg(&msg_buf[0], IRQ);
+
+    // software message from saftlib
+    if ((m.adr & 0xff) == 0x10)
+    {
+      add_msg(&msg_buf[0], SWI, m);
+      return;
+    }
+    // message from scu bus
+    if ((m.adr & 0xff) == 0x0)
+    {
+      add_msg(&msg_buf[0], SCUBUS, m);
+      return;
+    }
+
+    // message from dev bus
+    if ((m.adr & 0xff) == 0x20)
+    {
+      add_msg(&msg_buf[0], DEVBUS, m);
+    }
+  }
+#endif
 
   static TaskType *task_ptr;              // task pointer
 
   static int taskIndex = 0;               // task index
-  const int numTasks = tsk_getNumTasks(); // number of tasks
+  //const int numTasks = tsk_getNumTasks(); // number of tasks
 
   task_ptr = tsk_getConfig();             // get a pointer to the task configuration
 
@@ -1465,17 +1486,22 @@ int main(void) {
     tick = getSysTime(); /* FIXME get the current system tick */
 
     // loop through all task: if interval is 0, run every time, otherwise obey interval
-    for(taskIndex = 0; taskIndex < numTasks; taskIndex++) {
-
+   // for(taskIndex = 0; taskIndex < numTasks; taskIndex++)
+    for( taskIndex = 0; taskIndex < ARRAY_SIZE( tasks ); taskIndex++ )
+    {
       // call the dispatch task before every other task
-      dispatch(numTasks);
-
+      //dispatch(numTasks);
+      //dispatch( ARRAY_SIZE( tasks ) );
+      dispatch();
       if ((tick - task_ptr[taskIndex].lasttick) >= task_ptr[taskIndex].interval) {
         // run task
         (*task_ptr[taskIndex].func)(taskIndex);
         task_ptr[taskIndex].lasttick = tick; // save last tick the task was ran
       }
     }
+  #ifdef CONFIG_SCU_DAQ_INTEGRATION
+    forEachScuDaqDevice();
+  #endif
   }
 
   return(0);

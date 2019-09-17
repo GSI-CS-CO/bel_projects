@@ -28,7 +28,10 @@
 #include <eb_console_helper.h>
 #include <dbg.h>
 
-static DAQ_ADMIN_T g_DaqAdmin;
+#ifdef CONFIG_DAQ_SINGLE_APP
+static
+#endif
+DAQ_ADMIN_T g_scuDaqAdmin;
 
 static inline uint32_t getInterruptPending( void )
 {
@@ -94,7 +97,7 @@ static inline void handleContinuousMode( DAQ_CANNEL_T* pChannel )
       return;
    }
 
-   ramPushDaqDataBlock( &g_DaqAdmin.oRam, pChannel, true );
+   ramPushDaqDataBlock( &g_scuDaqAdmin.oRam, pChannel, true );
    daqChannelDecrementBlockCounter( pChannel );
 }
 
@@ -106,7 +109,7 @@ static inline bool forEachContinuousCahnnel( DAQ_DEVICE_T* pDevice )
    for( unsigned int channelNr = 0;
         channelNr < daqDeviceGetMaxChannels( pDevice ); channelNr++ )
    {
-      if( executeIfRequested( &g_DaqAdmin ) )
+      if( executeIfRequested( &g_scuDaqAdmin ) )
          return true;
       handleContinuousMode( daqDeviceGetChannelObject( pDevice, channelNr ) );
    }
@@ -124,7 +127,7 @@ static inline void handleHiresMode( DAQ_CANNEL_T* pChannel )
 #ifdef CONFIG_DAQ_SW_SEQUENCE
    pChannel->sequencePmHires++;
 #endif
-   ramPushDaqDataBlock( &g_DaqAdmin.oRam, pChannel, false );
+   ramPushDaqDataBlock( &g_scuDaqAdmin.oRam, pChannel, false );
 }
 
 /*! ---------------------------------------------------------------------------
@@ -155,7 +158,7 @@ static inline void handlePostMortemMode( DAQ_CANNEL_T* pChannel )
 #ifdef CONFIG_DAQ_SW_SEQUENCE
    pChannel->sequencePmHires++;
 #endif
-   ramPushDaqDataBlock( &g_DaqAdmin.oRam, pChannel, false );
+   ramPushDaqDataBlock( &g_scuDaqAdmin.oRam, pChannel, false );
 }
 
 /*! ---------------------------------------------------------------------------
@@ -165,7 +168,7 @@ static inline bool forEachPostMortemChennel( DAQ_DEVICE_T* pDevice )
    for( unsigned int channelNr = 0;
         channelNr < daqDeviceGetMaxChannels( pDevice ); channelNr++ )
    {
-      if( executeIfRequested( &g_DaqAdmin ) )
+      if( executeIfRequested( &g_scuDaqAdmin ) )
          return true;
       handlePostMortemMode( daqDeviceGetChannelObject( pDevice, channelNr ) );
    }
@@ -177,7 +180,7 @@ static inline bool forEachPostMortemChennel( DAQ_DEVICE_T* pDevice )
 #ifdef CONFIG_DAQ_SINGLE_APP
 static inline
 #endif
-void forEachScuDevice( void )
+void forEachScuDaqDevice( void )
 {
    bool isIrq;
 
@@ -193,9 +196,9 @@ void forEachScuDevice( void )
       DBPRINT1( "DBG: pending: 0x%08x\n", pending );
 
    for( unsigned int deviceNr = 0;
-       deviceNr < daqBusGetFoundDevices( &g_DaqAdmin.oDaqDevs ); deviceNr++ )
+       deviceNr < daqBusGetFoundDevices( &g_scuDaqAdmin.oDaqDevs ); deviceNr++ )
    {
-      DAQ_DEVICE_T* pDevice = daqBusGetDeviceObject( &g_DaqAdmin.oDaqDevs,
+      DAQ_DEVICE_T* pDevice = daqBusGetDeviceObject( &g_scuDaqAdmin.oDaqDevs,
                                                                     deviceNr );
       if( isIrq )
       {
@@ -225,7 +228,7 @@ void forEachScuDevice( void )
          return;
       }
    }
-   executeIfRequested( &g_DaqAdmin );
+   executeIfRequested( &g_scuDaqAdmin );
 }
 
 /*================================= main ====================================*/
@@ -247,12 +250,12 @@ void main( void )
    DBPRINT1( "DAQ End of RAM:  0x%08x [0x%08x]\n", &_endram, _endram );
 #endif
 
-   daqInitialize( &g_DaqAdmin );
+   scuDaqInitialize( &g_scuDaqAdmin );
 
    while( true )
    {
       DAQ_ASSERT( _endram == STACK_MAGIC );
-      forEachScuDevice();
+      forEachScuDaqDevice();
    }
 }
 #endif /* CONFIG_DAQ_SINGLE_APP */

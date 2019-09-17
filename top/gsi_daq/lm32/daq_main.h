@@ -28,6 +28,13 @@
   #error Module is for target Lattice Micro 32 (LM32) only!
 #endif
 
+#if defined( CONFIG_SCU_DAQ_INTEGRATION ) && defined( CONFIG_DAQ_SINGLE_APP )
+ #error Either CONFIG_SCU_DAQ_INTEGRATION or CONFIG_DAQ_SINGLE_APP !
+#endif
+#if !defined( CONFIG_SCU_DAQ_INTEGRATION ) && !defined( CONFIG_DAQ_SINGLE_APP )
+ #error Nither CONFIG_SCU_DAQ_INTEGRATION nor CONFIG_DAQ_SINGLE_APP defined!
+#endif
+
 #include <daq.h>
 #include <daq_ramBuffer.h>
 
@@ -47,14 +54,15 @@ int initBuffer( RAM_SCU_T* poRam );
 int scanScuBus( DAQ_BUS_T* pDaqDevices );
 
 
-static inline void daqInitialize( DAQ_ADMIN_T* pDaqAdmin )
+static inline void scuDaqInitialize( DAQ_ADMIN_T* pDaqAdmin )
 {
    scanScuBus( &pDaqAdmin->oDaqDevs );
    initBuffer( &pDaqAdmin->oRam );
 }
 
 #ifndef CONFIG_DAQ_SINGLE_APP
-void forEachScuDevice( void );
+void forEachScuDaqDevice( void );
+extern DAQ_ADMIN_T g_scuDaqAdmin;
 #endif
 
 #ifdef __cplusplus

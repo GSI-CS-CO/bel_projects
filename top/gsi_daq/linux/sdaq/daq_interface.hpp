@@ -110,6 +110,7 @@ public:
 class DaqInterface
 {
    typedef eb_status_t          EB_STATUS_T;
+   constexpr static uint        INVALID_OFFSET = static_cast<uint>(~0);
 
 public:
    typedef SCUBUS_SLAVE_FLAGS_T SLOT_FLAGS_T;
@@ -186,6 +187,14 @@ public:
    }
 
    const std::string getLastReturnCodeString( void );
+
+   /*!
+    * @brief Indicator returns true when the in the LM32 runs concurrent to
+    *        the DAQ application the FG-application.
+    * @retval true FG functions available.
+    * @retval false Single DAQ application.
+    */
+   bool isFgIntegrated( void ) const;
 
    RETURN_CODE_T readSlotStatus( void );
    SLOT_FLAGS_T  getSlotStatus( void ) const
@@ -305,6 +314,7 @@ protected:
                   const etherbone::format_t format = EB_DATA8
                 )
    {
+      assert( m_daqLM32Offset != INVALID_OFFSET );
       m_poEbAccess->readLM32( pData, len, offset + m_daqLM32Offset, format );
    }
 
@@ -313,6 +323,7 @@ protected:
                    const std::size_t offset = 0,
                    const etherbone::format_t format = EB_DATA8 )
    {
+      assert( m_daqLM32Offset != INVALID_OFFSET );
       m_poEbAccess->writeLM32( pData, len, offset + m_daqLM32Offset, format );
    }
 

@@ -142,7 +142,7 @@ int reset_mil(volatile unsigned *base);
 #define   MIL_EV_12_8B        0x4000    // '1' => event decoding 12 bit; '0' => event decoding 8 bit
 #define   MIL_ENDECODER_FPGA  0x8000    // '1' => use manchester en/decoder in fpga; '0' => use external en/decoder 6408
 
-
+static
 inline int scub_write_mil_blk(volatile unsigned short *base, int slot, short *data, short fc_ifc_addr) {
   int i;
   atomic_on();
@@ -156,6 +156,7 @@ inline int scub_write_mil_blk(volatile unsigned short *base, int slot, short *da
   return OKAY;
 }
 
+static
 inline int scub_write_mil(volatile unsigned short *base, int slot, short data, short fc_ifc_addr) {
     atomic_on();
     base[CALC_OFFS(slot) + MIL_SIO3_TX_DATA ] = data;

@@ -5,6 +5,7 @@
 #ifdef __lm32__
 #include <scu_bus.h>
 #endif
+#include <helper_macros.h>
 // 12 SIOs with dev busses and 1 mil extension
 #define   MAX_FG_MACROS     256
 #define   MAX_FG_CHANNELS   16
@@ -45,33 +46,48 @@
 #define FC_BLK_WR     0x6b << 8
 #define FC_ACT_RD     0x81 << 8
 
+//#pragma pack(push, 1)
 struct param_set {
-  signed short coeff_a;
-  signed short coeff_b;
-  signed int coeff_c;
-  unsigned int control; /* Bit 2..0   step
+  int16_t coeff_a;
+  int16_t coeff_b;
+  int32_t coeff_c;
+  uint32_t control; /* Bit 2..0   step
                                5..3   freq
                               11..6   shift_b
-                              17..12  shift_a */                           
-};
+                              17..12  shift_a */
+} PACKED_SIZE;
+
+#ifndef __DOXYGEN__
+STATIC_ASSERT( sizeof( struct param_set ) == 12 );
+#endif
 
 #define STATE_STOPPED 0
 #define STATE_ACTIVE  1
 #define STATE_ARMED   2
 
 struct channel_regs {
-  unsigned int wr_ptr;
-  unsigned int rd_ptr;
-  unsigned int mbx_slot;
-  unsigned int macro_number;
-  unsigned int ramp_count;
-  unsigned int tag;
-  unsigned int state; // meaning private to LM32
-};
+  uint32_t wr_ptr;
+  uint32_t rd_ptr;
+  uint32_t mbx_slot;
+  uint32_t macro_number;
+  uint32_t ramp_count;
+  uint32_t tag;
+  uint32_t state; // meaning private to LM32
+} PACKED_SIZE;
+
+#ifndef __DOXYGEN__
+STATIC_ASSERT( sizeof( struct channel_regs ) == sizeof( uint32_t ) * 7 );
+#endif
 
 struct channel_buffer {
   struct param_set pset[BUFFER_SIZE];
-};
+} PACKED_SIZE;
+
+//#pragma pack(pop)
+
+#ifndef __DOXYGEN__
+STATIC_ASSERT( sizeof( struct channel_buffer ) == sizeof( struct param_set ) * BUFFER_SIZE );
+#endif
 
 #ifdef __lm32__
 void scan_scu_bus(volatile unsigned short *base_adr, volatile unsigned int *mil_base, uint32_t *fglist, uint64_t *ext_id);

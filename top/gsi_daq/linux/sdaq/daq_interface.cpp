@@ -63,7 +63,7 @@ const std::string daq::status2String( DAQ_RETURN_CODE_T status )
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-constexpr uint32_t INVALID_OFFSET = static_cast<uint32_t>(~0);
+
 /*! ---------------------------------------------------------------------------
  * @brief Constructor of class daq::DaqInterface
  */
@@ -121,7 +121,7 @@ inline void DaqInterface::probe( void )
                            sizeof( actMagicNumber ) );
    if( actMagicNumber == DAQ_MAGIC_NUMBER )
    {/*
-     * DAQ-LM32 single application found.
+     * DAQ-LM32 single application found. But...
      */
       m_daqLM32Offset = offsetof( DAQ_SHARED_IO_T, magicNumber );
    }
@@ -149,27 +149,25 @@ inline void DaqInterface::probe( void )
 
    if( actMagicNumber != FG_MAGIC_NUMBER )
    {
-
       throw DaqException( "Neither DAQ-application nor FG-application "
                           "in LM32 found!" );
 
    }
 
-#ifdef CONFIG_SCU_DAQ_INTEGRATION
    /*
     * FG-application is loaded.
     * Third step: Investigation whether the FG+DAQ-LM32 application
     * is loaded.
     */
    m_poEbAccess->readLM32( &actMagicNumber, 1,
-                           offsetof( FG::SCU_SHARED_DATA_T, daq.magicNumber ),
+                           offsetof( FG::SCU_SHARED_DATA_T, sDaq.magicNumber ),
                            sizeof( actMagicNumber ) );
    if( actMagicNumber == DAQ_MAGIC_NUMBER )
    {
-      m_daqLM32Offset = offsetof( FG::SCU_SHARED_DATA_T, daq.magicNumber );
+      m_daqLM32Offset = offsetof( FG::SCU_SHARED_DATA_T, sDaq );
       return;
    }
-#endif
+
    throw DaqException( "Single FG application is loaded!" );
 }
 
@@ -189,9 +187,20 @@ const std::string DaqInterface::getLastReturnCodeString( void )
    return status2String( getLastReturnCode() );
 }
 
+/*! ---------------------------------------------------------------------------
+ */
+inline
+bool DaqInterface::isFgIntegrated( void ) const
+{
+   if( m_daqLM32Offset == INVALID_OFFSET )
+      throw( "Neither DAQ-application nor FG-application running!" );
+
+   return m_daqLM32Offset == offsetof( FG::SCU_SHARED_DATA_T, sDaq );
+}
+
+
 #define CONV_ENDIAN( t, s, m ) \
    t.m = gsi::convertByteEndian( s.m )
-
 
 /*! ---------------------------------------------------------------------------
  */
