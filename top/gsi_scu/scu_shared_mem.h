@@ -39,6 +39,8 @@
 #endif
 
 #ifdef __cplusplus
+extern "C"
+{
 namespace Scu
 {
 namespace FG
@@ -293,6 +295,7 @@ unsigned int getMilDaqScuMilExtention( const register struct daq* pMilDaq )
 #ifdef __cplusplus
 } // namespace MiLdaq
 } // namespace Scu
+} // extern "C"
 #endif
 
 #endif /* ifndef _SCU_SHARED_MEM_H */

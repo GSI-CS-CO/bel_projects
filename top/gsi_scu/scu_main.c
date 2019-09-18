@@ -96,7 +96,7 @@ volatile unsigned int* scu_mil_base    = 0;
 volatile unsigned int* mil_irq_base    = 0;
 volatile unsigned int* wr_1wire_base   = 0;
 volatile unsigned int* user_1wire_base = 0;
-volatile unsigned int* cpu_info_base   = 0;
+//volatile unsigned int* cpu_info_base   = 0;
 volatile uint32_t     *pECAQ           = 0; // WB address of ECA queue
 
 volatile unsigned int param_sent[MAX_FG_CHANNELS];
@@ -113,37 +113,17 @@ static inline uint32_t _get_macro_number( unsigned int channel )
 
 static inline int _get_slot( unsigned int channel )
 {
-   return _get_macro_number( channel ) >> 24;
+   //return _get_macro_number( channel ) >> 24;
+   return getMilDaqLocationByChannel( _get_macro_number( channel ) );
 }
 
 static inline int _get_dev( unsigned int channel )
 {
-   return (_get_macro_number( channel ) >> 16) & 0xFF;
+   //return (_get_macro_number( channel ) >> 16) & 0xFF;
+   return getMilDaqAdressByChannel(_get_macro_number( channel ));
 }
 
-#if 0
-void dev_failure(int status, int slot, char* msg) {
-  char err_message0[20] = "OKAY";
-  char err_message1[20] = "TRM NOT FREE";
-  char err_message2[20] = "RCV ERROR";
-  char err_message3[20] = "RCV TIMEOUT";
-  char err_message4[20] = "RCV_TASK_ERR";
-
-  if (status == OKAY)
-    mprintf("dev bus access in slot %d failed with message %s, %s\n", slot, err_message0, msg);
-  else if (status == TRM_NOT_FREE)
-    mprintf("dev bus access in slot %d failed with message %s, %s\n", slot, err_message1, msg);
-  else if (status == RCV_ERROR)
-    mprintf("dev bus access in slot %d failed with message %s, %s\n", slot, err_message2, msg);
-  else if(status == RCV_TIMEOUT)
-    mprintf("dev bus access in slot %d failed with message %s, %s\n", slot, err_message3, msg);
-  else if(status == RCV_TASK_ERR)
-    mprintf("dev bus access in slot %d failed with message %s, %s\n", slot, err_message4, msg);
-  else
-    mprintf("dev bus access in slot %d failed with code %d\n", slot, status);
-}
-#else
-void dev_failure(int status, int slot, const char* msg)
+static void dev_failure(int status, int slot, const char* msg)
 {
   char* pMessage;
   #define __MSG_ITEM( status ) case status: pMessage = #status; break
@@ -161,18 +141,17 @@ void dev_failure(int status, int slot, const char* msg)
   #undef __MSG_ITEM
   mprintf("dev bus access in slot %d failed with message %s, %s\n", slot, pMessage, msg);
 }
-#endif
 
 /** debug method
  * prints the last received message signaled interrupt to the UART
  */
-void show_msi()
+static void show_msi()
 {
   mprintf(" Msg:\t%08x\nAdr:\t%08x\nSel:\t%01x\n", global_msi.msg, global_msi.adr, global_msi.sel);
 
 }
 
-void isr0()
+static void isr0()
 {
    mprintf("ISR0\n");
    show_msi();
@@ -184,7 +163,7 @@ void isr0()
  *  A hardware macro is used, which generates msis from legacy interrupts.
  *  @param channel number of the channel between 0 and MAX_FG_CHANNELS-1
  */
-void enable_scub_msis(int channel) {
+static void enable_scub_msis(int channel) {
   int slot;
   //slot = g_shared.fg_macros[g_shared.fg_regs[channel].macro_number] >> 24;  //dereference slot number
   slot = _get_slot( channel );
@@ -220,7 +199,7 @@ void enable_scub_msis(int channel) {
  *  SIO and MIL extension stop generating irqs
  *  @param channel number of the channel from 0 to MAX_FG_CHANNELS-1
  */
-void disable_slave_irq(int channel) {
+static void disable_slave_irq(int channel) {
   int slot, dev;
   int status;
   if (channel >= 0 && channel < MAX_FG_CHANNELS) {
@@ -249,13 +228,13 @@ void disable_slave_irq(int channel) {
  *  uses the system timer
  *  @param ms delay value in milliseconds
  */
-void msDelayBig(uint64_t ms)
+static void msDelayBig(uint64_t ms)
 {
   uint64_t later = getSysTime() + ms * 1000000ULL / 8;
   while(getSysTime() < later) {asm("# noop");}
 }
 
-void msDelay(uint32_t msecs) {
+static void msDelay(uint32_t msecs) {
   usleep(1000 * msecs);
 }
 
@@ -413,7 +392,7 @@ void irq_handler() {
  *  then activate irqs and send the first tuple of data to the function generator
  *  @param channel number of the specified function generator channel from 0 to MAX_FG_CHANNELS-1
  */
-int configure_fg_macro(int channel) {
+static int configure_fg_macro(int channel) {
   int i = 0;
   int slot, dev, fg_base, dac_base;
   unsigned short cntrl_reg_wr;
@@ -583,13 +562,18 @@ int configure_fg_macro(int channel) {
 
 /** @brief scans for fgs on mil extension and scu bus
  */
-void print_fgs( void ) {
+static void print_fgs( void ) {
   int i=0;
   for(i=0; i < MAX_FG_MACROS; i++)
     g_shared.fg_macros[i] = 0;
- // void scan_scu_bus(volatile unsigned short *base_adr, volatile unsigned int *mil_base, uint32_t *fglist, uint64_t *ext_id);
+#if __GNUC__ >= 9
+  #pragma GCC diagnostic push
+  #pragma GCC diagnostic ignored "-Waddress-of-packed-member"
+#endif
   scan_scu_bus(scub_base, scu_mil_base, &g_shared.fg_macros[0], &g_shared.ext_id);
-
+#if __GNUC__ >= 9
+  #pragma GCC diagnostic pop
+#endif
   i=0;
   while(i < MAX_FG_MACROS) {
     // hi..lo bytes: slot, device, version, output-bits
@@ -603,7 +587,7 @@ void print_fgs( void ) {
 
 /** @brief print the values and states of all channel registers
  */
-void print_regs(void) {
+inline static void print_regs(void) {
   int i;
   for(i=0; i < MAX_FG_CHANNELS; i++) {
     mprintf("channel[%d].wr_ptr %d\n", i, g_shared.fg_regs[i].wr_ptr);
@@ -620,7 +604,7 @@ void print_regs(void) {
 /** @brief disable function generator channel
  *  @param channel number of the function generator channel from 0 to MAX_FG_CHANNELS-1
  */
-void disable_channel(unsigned int channel) {
+static void disable_channel(unsigned int channel) {
   int slot, dev, fg_base, dac_base;
   short data;
   int status;
@@ -670,21 +654,28 @@ void disable_channel(unsigned int channel) {
 
 /** @brief updates the temperatur information in the shared section
  */
-void updateTemp( void ) {
+static void updateTemp( void ) {
   BASE_ONEWIRE = (unsigned char *)wr_1wire_base;
   wrpc_w1_init();
+#if __GNUC__ >= 9
+  #pragma GCC diagnostic push
+  #pragma GCC diagnostic ignored "-Waddress-of-packed-member"
+#endif
   ReadTempDevices(0, &g_shared.board_id, &g_shared.board_temp);
   BASE_ONEWIRE = (unsigned char *)user_1wire_base;
   wrpc_w1_init();
   ReadTempDevices(0, &g_shared.ext_id, &g_shared.ext_temp);
   ReadTempDevices(1, &g_shared.backplane_id, &g_shared.backplane_temp);
+#if __GNUC__ >= 9
+  #pragma GCC diagnostic pop
+#endif
   BASE_ONEWIRE = (unsigned char *)wr_1wire_base; // important for PTP deamon 
   wrpc_w1_init();
 }
 
 /** @brief initialize the irq table and set the irq mask
  */
-void init_irq_table( void ) {
+static void init_irq_table( void ) {
   isr_table_clr();
   isr_ptr_table[0] = &irq_handler;
   irq_set_mask(0x01);
@@ -695,7 +686,7 @@ void init_irq_table( void ) {
 
 /** @brief initialize procedure at startup
  */
-void init() {
+static void init( void ) {
   int i;
   hist_init(HISTORY_XYZ_MODULE);
   for (i=0; i < MAX_FG_CHANNELS; i++)
@@ -716,7 +707,7 @@ void _segfault( void )
 
 /** @brief helper function which clears the state of a dev bus after malfunction
  */
-void clear_handler_state(int slot) {
+static void clear_handler_state(int slot) {
   struct msi m;
   if (slot & DEV_SIO) {
     // create swi
@@ -739,7 +730,7 @@ void clear_handler_state(int slot) {
  *  called via scheduler in main loop
  *  @param id task id
  */
-void sw_irq_handler(int id) {
+static void sw_irq_handler(int id) {
   int i;
   unsigned int code, value;
   struct msi m;
@@ -755,7 +746,14 @@ void sw_irq_handler(int id) {
       switch(code) {
         case 0:
           hist_addx(HISTORY_XYZ_MODULE, "init_buffers", m.msg);
+        #if __GNUC__ >= 9
+          #pragma GCC diagnostic push
+          #pragma GCC diagnostic ignored "-Waddress-of-packed-member"
+        #endif
           init_buffers(&g_shared.fg_regs[0], m.msg, &g_shared.fg_macros[0], scub_base, scu_mil_base);
+        #if __GNUC__ >= 9
+          #pragma GCC diagnostic pop
+        #endif
           param_sent[value] = 0;
         break;
         case 1:
@@ -793,7 +791,7 @@ void sw_irq_handler(int id) {
 * code written by D.Beck, example.c
 *
 **************************************************************/
-void findECAQ( void )
+static void findECAQ( void )
 {
 #define ECAQMAX           4         //  max number of ECA queues
 #define ECACHANNELFORLM32 2         //  this is a hack! suggest to implement proper sdb-records with info for queues
@@ -834,7 +832,7 @@ void findECAQ( void )
 *   for help
 *
 **************************************************************/
-void ecaHandler( )
+static void ecaHandler( )
 {
   uint32_t flag;                // flag for the next action
   uint32_t evtIdHigh;           // high 32bit of eventID
@@ -912,7 +910,7 @@ typedef struct {
   signed int setvalue[MAX_FG_CHANNELS];     /* setvalue from the tuple sent */
   uint64_t daq_timestamp[MAX_FG_CHANNELS];  /* timestamp of daq sampling */
   void (*func)(int);                        /* pointer to the function of the task */
-}TaskType;
+} TaskType;
 
 /* task configuration table */
 static TaskType tasks[] = {
@@ -940,7 +938,7 @@ int tsk_getNumTasks(void) {
  * decides which action for a scu bus interrupt is suitable
  * @param id task id
  */
-void scu_bus_handler(int id) {
+static void scu_bus_handler(int id) {
   volatile unsigned int slv_int_act_reg;
   unsigned char slave_nr;
   unsigned short slave_acks = 0;
@@ -985,7 +983,7 @@ void scu_bus_handler(int id) {
  * persistent data, like the state or the sio slave_nr, is stored in a global structure
  * @param id task id
  */
-void dev_sio_handler(int id) {
+static void dev_sio_handler(int id) {
   int i;
   int slot, dev;
   int status;
@@ -1021,7 +1019,8 @@ void dev_sio_handler(int id) {
             dev  = _get_dev( i );
             /* test only ifas connected to sio */
             if(((slot & 0xf) == task_ptr[id].slave_nr ) && (slot & DEV_SIO)) {
-              if ((status = scub_set_task_mil(scub_base, task_ptr[id].slave_nr, id + i + 1, FC_IRQ_ACT_RD | dev)) != OKAY) dev_failure(status, 20, "dev_sio set task");
+              if ((status = scub_set_task_mil(scub_base, task_ptr[id].slave_nr, id + i + 1, FC_IRQ_ACT_RD | dev)) != OKAY)
+                 dev_failure(status, 20, "dev_sio set task");
             }
         }
         // clear old irq data
@@ -1172,7 +1171,7 @@ void dev_sio_handler(int id) {
  * persistent data is stored in a global structure
  * @param id task id
  */
-void dev_bus_handler(int id) {
+static void dev_bus_handler(int id) {
   int i;
   int slot, dev;
   int status;
@@ -1181,7 +1180,6 @@ void dev_bus_handler(int id) {
   struct daq d;
   static TaskType *task_ptr;              // task pointer
   task_ptr = tsk_getConfig();             // get a pointer to the task configuration
-
   switch(task_ptr[id].state) {
     case 0:
       // we have nothing to do
@@ -1363,6 +1361,7 @@ uint64_t getTick( void ) {
  */
 int main(void) {
   int i, mb_slot;
+  unsigned int* cpu_info_base;
   sdb_location found_sdb[20];
  // uint32_t lm32_endp_idx = 0;
  // uint32_t ow_base_idx = 0;
