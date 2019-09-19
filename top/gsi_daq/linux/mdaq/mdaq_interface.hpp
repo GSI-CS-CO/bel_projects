@@ -166,6 +166,8 @@ public:
       return getHeadRingIndex() != getTailRingIndex();
    }
 
+   uint getBufferSize( void );
+
 protected:
    bool readRingPosition( void );
    void updateRingTail( void );

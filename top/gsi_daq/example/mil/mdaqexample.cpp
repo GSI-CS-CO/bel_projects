@@ -43,8 +43,8 @@ public:
    /*
     * See comment below.
     */
-   void onData( uint64_t wrTimeStamp, MiLdaq::MIL_DAQ_T actlValue,
-                                      MiLdaq::MIL_DAQ_T setValue ) override;
+   void onData( uint64_t wrTimeStampTAI, MiLdaq::MIL_DAQ_T actlValue,
+                                         MiLdaq::MIL_DAQ_T setValue ) override;
 
    /*
     * Function becomes invoked ones its object is linked to the
@@ -62,12 +62,12 @@ public:
  * loop- function "MiLdaq::DaqAdministration::distributeData()" when
  * the data of a registered function generator has been received.
  */
-void MyCompare::onData( uint64_t wrTimeStamp, MiLdaq::MIL_DAQ_T actlValue,
-                                              MiLdaq::MIL_DAQ_T setValue )
+void MyCompare::onData( uint64_t wrTimeStampTAI, MiLdaq::MIL_DAQ_T actlValue,
+                                                 MiLdaq::MIL_DAQ_T setValue )
 {
    cout << "fg-" << getParent()->getLocation() << '-'
-                 << getAddress() << "\ttime: " << wrTimeStamp << " readable: "
-                 << daq::wrToTimeDateString( wrTimeStamp )
+                 << getAddress() << "\ttime: " << wrTimeStampTAI << " readable: "
+                 << daq::wrToTimeDateString( wrTimeStampTAI )
                  << "\tset value: " << daq::rawToVoltage( setValue )
                  << " Volt\tactual value: " << daq::rawToVoltage( actlValue )
                  << " Volt" << endl;

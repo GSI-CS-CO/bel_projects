@@ -87,7 +87,7 @@ public:
    }
 
 protected:
-   virtual void onData( uint64_t wrTimeStamp, MIL_DAQ_T actlValue,
+   virtual void onData( uint64_t wrTimeStampTAI, MIL_DAQ_T actlValue,
                                               MIL_DAQ_T setValue ) = 0;
 
    virtual void onInit( void ) {}
@@ -228,7 +228,18 @@ public:
 
    bool unregisterDevice( DaqDevice* pDevice );
 
-   int distributeData( void );
+   /*!
+    * @brief Function reads the ring-buffer and invokes the corresponding
+    *        callback function "DaqCompare::onData" if a data item belonging
+    *        a registered object of base-class "DaqCompare" has
+    *        been recognized.
+    *
+    * If a unknown data item was read, so the optional callback-function
+    * "onUnregistered" becomes invoked.
+    *
+    * @return Number of unread ring buffer items.
+    */
+   uint distributeData( void );
 
    void reset( void );
 

@@ -173,7 +173,7 @@ DaqCompare* DaqAdministration::findDaqCompare( const uint channel )
 
 /*-----------------------------------------------------------------------------
  */
-int DaqAdministration::distributeData( void )
+uint DaqAdministration::distributeData( void )
 {
    if( !readRingPosition() )
       return 0;
@@ -192,7 +192,7 @@ int DaqAdministration::distributeData( void )
 
    incrementRingTail();
    updateRingTail();
-   return 0;
+   return getBufferSize();
 }
 
 //================================== EOF ======================================

@@ -98,6 +98,20 @@ void DaqInterface::updateRingTail( void )
 
 /*! ---------------------------------------------------------------------------
  */
+uint DaqInterface::getBufferSize( void )
+{
+#ifndef CONFIG_MIL_DAQ_USE_RAM
+   int size = getHeadRingIndex() - getTailRingIndex();
+   if( size >= 0 )
+      return static_cast<uint>(size);
+   return getHeadRingIndex() + c_ringBufferCapacity - getTailRingIndex();
+#else
+   #error TODO: DDR3-Application requiered!
+#endif
+}
+
+/*! ---------------------------------------------------------------------------
+ */
 void DaqInterface::readRingItem( RingItem& rRingItem )
 {
    #define __CONV_MEMBER( m ) \
