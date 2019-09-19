@@ -6640,7 +6640,7 @@ BEGIN
       --IOBP_Output <= x"00" & "0" & clk_blink & not clk_blink & clk_blink;
       --IOBP_Output <= "0000000" & clk_blink & "0" & AW_Output_Reg(1)( 0)  & spill_abort_command_rst & spill_abort_command;
       spill_req(0) <= Deb60_in(0);
-      spill_pause(0) <= Deb60_in(5);
+      spill_pause(0) <= Deb60_in(1);
       IOBP_Output <= "0000000" & clk_blink & KO_abort & RF_abort  & FQ_rst & FQ_abort;
       spill_abort_armed <= x"00"&"000" & clk_blink & KO_abort & RF_abort  & FQ_rst & FQ_abort;
       
