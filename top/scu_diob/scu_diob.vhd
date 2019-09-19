@@ -1444,7 +1444,6 @@ end component;
                                 led_str_gruen_h, led_str_gruen_l, iobp_led_dis, iobp_led_z, iobp_id_str_h, iobp_rd_id, iobp_id_str_l, iobp_end);
   signal IOBP_state:   IOBP_LED_state_t:= IOBP_idle;
   
-  signal spill_abort_armed:       std_logic_vector (15 downto 0);
   signal spill_abort_command:     std_logic;
   signal spill_abort_command_rst: std_logic;
   signal spill_case_abort:        std_logic_vector (3 downto 0);
@@ -2140,7 +2139,7 @@ port map  (
       Reg_IO3            =>  IOBP_Masken_Reg3,
       Reg_IO4            =>  IOBP_Masken_Reg4,
       Reg_IO5            =>  IOBP_Masken_Reg5,
-      Reg_IO6            =>  spill_abort_armed,
+      Reg_IO6            =>  open,
       Reg_IO7            =>  open,
       Reg_IO8            =>  open,
 --
@@ -3810,20 +3809,39 @@ P_IOBP_LED_ID_Loop:  process (clk_sys, Ena_Every_250ns, rstn_sys, IOBP_state)
     end if;
   end process P_IOBP_LED_ID_Loop;
 
-  spill_cave_a : spill_abort
+  Spill_Abort_Station_Gen:  for J in 0 to 3 generate
+  spill_userstations : spill_abort
     Port map( clk => clk_sys,
               nReset => rstn_sys,
               time_pulse => Ena_Every_20ms,
-              armed => AW_Output_Reg(1)( 0),
-              req => spill_req(0),
-              pause => spill_pause(0),
-              abort => spill_case_abort(0),
-              abort_rst => spill_case_rst(0));
+              armed => AW_Output_Reg(1)(J),
+              req => spill_req(J),
+              pause => spill_pause(J),
+              abort => spill_case_abort(J),
+              abort_rst => spill_case_rst(J));
+    end generate Spill_Abort_Station_Gen;
+    
+    Userstation_select: process(AW_Output_Reg)
+      BEGIN
+      case AW_Output_Reg(1) is
+        when x"0001"    => FQ_abort <= spill_case_abort(0);
+                           FQ_rst   <= spill_case_rst(0);
+                           RF_abort <= spill_case_abort(0);
+                           KO_abort <= spill_case_abort(0);
+                          
+        when others     => FQ_abort <=  '1';
+                           FQ_rst   <= '1';
+                           RF_abort <= '1';
+                           KO_abort <= '1';
+        
+      end case;
+      
+    end  process Userstation_select;
               
-    FQ_abort <= spill_case_abort(0);
-    FQ_rst   <= spill_case_rst(0);
-    RF_abort <= spill_case_abort(0);
-    KO_abort <= spill_case_abort(0);
+    --FQ_abort <= spill_case_abort(0);
+    --FQ_rst   <= spill_case_rst(0);
+    --RF_abort <= spill_case_abort(0);
+    --KO_abort <= spill_case_abort(0);
               
 quench_test_all : quench_detection
     Port map( clk => clk_sys,
@@ -6637,12 +6655,39 @@ BEGIN
     case AW_Config2 is
 
     when x"ABDE" => --SPILL ABORT Development
-      --IOBP_Output <= x"00" & "0" & clk_blink & not clk_blink & clk_blink;
-      --IOBP_Output <= "0000000" & clk_blink & "0" & AW_Output_Reg(1)( 0)  & spill_abort_command_rst & spill_abort_command;
-      spill_req(0) <= Deb60_in(0);
-      spill_pause(0) <= Deb60_in(1);
-      IOBP_Output <= "0000000" & clk_blink & KO_abort & RF_abort  & FQ_rst & FQ_abort;
-      spill_abort_armed <= x"00"&"000" & clk_blink & KO_abort & RF_abort  & FQ_rst & FQ_abort;
+    --Spill Abort Matrix
+     --+------+------------+------------+----------+----------+---+---+---+----------+-----------+-----------+----+----+
+     --| Slot |      1     |      2     |     3    |     4    | 5 | 6 | 7 |     8    |     9     |     10    | 11 | 12 |
+     --+------+------------+------------+----------+----------+---+---+---+----------+-----------+-----------+----+----+
+     --|      |            | DIOB       |          |          |   |   |   |          |           |           |         |
+     --+------+------------+------------+----------+----------+---+---+---+----------+ Interlock | Interlock |         |
+     --|      |                            DIOB Backplane                            | userpin 0 | userpin 1 |         |
+     --+------+------------+------------+----------+----------+---+---+---+----------+           |           |         |
+     --| IN1  | Cave A     | Cave M     |          |          |   |   |   |          |           |           |         |
+     --|      | abort req. | abort req. |          |          |   |   |   |          |           |           |         |
+     --|      | IN_Reg0.0  | IN_Reg0.5  |          |          |   |   |   |          |           |           |         |
+     --|      | In0        | In5        |          |          |   |   |   |          |           |           |         |
+     --+------+------------+------------+----------+----------+---+---+---+----------+           |           |         |
+     --| IN2  | Cave A     | Cave M     |          |          |   |   |   |          |           |           |         |
+     --|      | pause      | pause      |          |          |   |   |   |          |           |           |         |
+     --|      | IN_Reg0.1  | IN_Reg0.6  |          |          |   |   |   |          |           |           |         |
+     --|      | In1        | In6        |          |          |   |   |   |          |           |           |         |
+     --+------+------------+------------+----------+----------+---+---+---+----------+           |           |         |
+     --| IN3  | FRS        | HADES      |          |          |   |   |   |          |           |           |         |
+     --|      | abort req. | abort req. |          |          |   |   |   |          |           |           |         |
+     --|      | IN_Reg0.2  | In_Reg0.7  |          |          |   |   |   |          |           |           |         |
+     --|      | In2        | In7        |          |          |   |   |   |          |           |           |         |
+     --+------+------------+------------+----------+----------+---+---+---+----------+           |           |         |
+     --| IN4  |            |            |          |          |   |   |   |          |           |           |         |
+     --+------+------------+------------+----------+----------+---+---+---+----------+           |           |         |
+     --| IN5  |            |            |          |          |   |   |   |          |           |           |         |
+     --+------+------------+------------+----------+----------+---+---+---+----------+           |           |         |
+     --| OUT  | FQ_Abort   | FQ_Reset   | RF_Abort | KO_Abort |   |   |   | TS_Abort |           |           |         |
+     --+------+------------+------------+----------+----------+---+---+---+----------+-----------+-----------+---------+
+     
+      spill_req <=  Deb60_in(7) & Deb60_in(2) & Deb60_in(5) & Deb60_in(0);
+      spill_pause <= "00" & Deb60_in(6) & Deb60_in(1);
+      IOBP_Output <= "00000000" & KO_abort & RF_abort  & FQ_rst & FQ_abort;
       
     when x"DEDE" => --Quench Detection Development
       IOBP_Output <= "0000000" & quench_out(3) & quench_out(0) & quench_out (2) & quench_out (1) & quench_out(0);
