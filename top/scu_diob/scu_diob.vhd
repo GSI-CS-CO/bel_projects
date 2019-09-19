@@ -745,8 +745,9 @@ component spill_abort is    -- Control Spill Abort
            time_pulse : in STD_LOGIC;
            armed : in STD_LOGIC;
            req : in STD_LOGIC;
-           command : out STD_LOGIC;
-           command_rst : out STD_LOGIC);
+           pause : in STD_LOGIC;
+           abort : out STD_LOGIC;
+           abort_rst : out STD_LOGIC);
 end component;
 
 component quench_detection is
@@ -1446,6 +1447,15 @@ end component;
   signal spill_abort_armed:       std_logic_vector (15 downto 0);
   signal spill_abort_command:     std_logic;
   signal spill_abort_command_rst: std_logic;
+  signal spill_case_abort:        std_logic_vector (3 downto 0);
+  signal spill_case_rst:          std_logic_vector (3 downto 0);
+  signal spill_req:               std_logic_vector (3 downto 0);
+  signal spill_pause:             std_logic_vector (3 downto 0);
+  signal FQ_abort:                std_logic;
+  signal FQ_rst:                  std_logic;
+  signal RF_abort:                std_logic;
+  signal KO_abort:                std_logic;
+  
   signal quench_out:              std_logic_vector (4 downto 0);
 
   --------------------------- IO-Select ----------------------------------------------------------------------
@@ -3800,14 +3810,20 @@ P_IOBP_LED_ID_Loop:  process (clk_sys, Ena_Every_250ns, rstn_sys, IOBP_state)
     end if;
   end process P_IOBP_LED_ID_Loop;
 
-  spill_test : spill_abort
+  spill_cave_a : spill_abort
     Port map( clk => clk_sys,
               nReset => rstn_sys,
               time_pulse => Ena_Every_20ms,
               armed => AW_Output_Reg(1)( 0),
-              req => Deb60_in(0),
-              command => spill_abort_command,
-              command_rst => spill_abort_command_rst);
+              req => spill_req(0),
+              pause => spill_pause(0),
+              abort => spill_case_abort(0),
+              abort_rst => spill_case_rst(0));
+              
+    FQ_abort <= spill_case_abort(0);
+    FQ_rst   <= spill_case_rst(0);
+    RF_abort <= spill_case_abort(0);
+    KO_abort <= spill_case_abort(0);
               
 quench_test_all : quench_detection
     Port map( clk => clk_sys,
@@ -6622,8 +6638,11 @@ BEGIN
 
     when x"ABDE" => --SPILL ABORT Development
       --IOBP_Output <= x"00" & "0" & clk_blink & not clk_blink & clk_blink;
-      IOBP_Output <= "0000000" & clk_blink & "0" & AW_Output_Reg(1)( 0)  & spill_abort_command_rst & spill_abort_command;
-      spill_abort_armed <= X"00"&"000" & clk_blink & "0" & AW_Output_Reg(1)( 0)  & spill_abort_command_rst & spill_abort_command;
+      --IOBP_Output <= "0000000" & clk_blink & "0" & AW_Output_Reg(1)( 0)  & spill_abort_command_rst & spill_abort_command;
+      spill_req(0) <= Deb60_in(0);
+      spill_pause(0) <= Deb60_in(5);
+      IOBP_Output <= "0000000" & clk_blink & KO_abort & RF_abort  & FQ_rst & FQ_abort;
+      spill_abort_armed <= x"00"&"000" & clk_blink & KO_abort & RF_abort  & FQ_rst & FQ_abort;
       
     when x"DEDE" => --Quench Detection Development
       IOBP_Output <= "0000000" & quench_out(3) & quench_out(0) & quench_out (2) & quench_out (1) & quench_out(0);

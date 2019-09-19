@@ -14,8 +14,9 @@ entity spill_abort is
            time_pulse : in STD_LOGIC;
            armed : in STD_LOGIC;
            req : in STD_LOGIC;
-           command : out STD_LOGIC;
-           command_rst : out STD_LOGIC);
+           pause : in STD_LOGIC;
+           abort : out STD_LOGIC;
+           abort_rst : out STD_LOGIC);
 end spill_abort;
 
 architecture Arch_spill_abort of spill_abort is
@@ -73,11 +74,12 @@ end process;
 process (clk)
 begin
         if rising_edge (clk) then
-            if state = P_WAIT then
-            command <= '1';
-            else
-            command <= '0';
-            end if;
+          if ( pause = '0' or STATE /= P_WAIT )
+          then
+            abort<= '0';
+          else
+            abort <= '1';
+          end if;
         end if;
 end process;
 
@@ -101,6 +103,6 @@ end process;
 assert_ctr_tc <= '1' when (assert_count = 0) else '0';
 assert_ctr_load <=  '1' when (State = D2)  else '0';
 
-command_rst <= not assert_ctr_tc;
+abort_rst <= not assert_ctr_tc;
 
 end Arch_spill_abort;
