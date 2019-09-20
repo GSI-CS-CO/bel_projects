@@ -14,7 +14,6 @@ entity spill_abort is
            time_pulse : in STD_LOGIC;
            armed : in STD_LOGIC;
            req : in STD_LOGIC;
-           pause : in STD_LOGIC;
            abort : out STD_LOGIC;
            abort_rst : out STD_LOGIC);
 end spill_abort;
@@ -74,7 +73,7 @@ end process;
 process (clk)
 begin
         if rising_edge (clk) then
-          if ( pause = '0' or STATE /= P_WAIT )
+          if ( STATE /= P_WAIT )
           then
             abort<= '0';
           else

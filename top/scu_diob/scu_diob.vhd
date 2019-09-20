@@ -745,7 +745,6 @@ component spill_abort is    -- Control Spill Abort
            time_pulse : in STD_LOGIC;
            armed : in STD_LOGIC;
            req : in STD_LOGIC;
-           pause : in STD_LOGIC;
            abort : out STD_LOGIC;
            abort_rst : out STD_LOGIC);
 end component;
@@ -3816,7 +3815,6 @@ P_IOBP_LED_ID_Loop:  process (clk_sys, Ena_Every_250ns, rstn_sys, IOBP_state)
               time_pulse => Ena_Every_20ms,
               armed => AW_Output_Reg(1)(J),
               req => spill_req(J),
-              pause => spill_pause(J),
               abort => spill_case_abort(J),
               abort_rst => spill_case_rst(J));
     end generate Spill_Abort_Station_Gen;
@@ -3825,21 +3823,23 @@ P_IOBP_LED_ID_Loop:  process (clk_sys, Ena_Every_250ns, rstn_sys, IOBP_state)
       BEGIN
       case AW_Output_Reg(1) is
         when x"0001"    => FQ_abort <= spill_case_abort(0);
-                           FQ_rst   <= spill_case_rst(0);
+                           --FQ_rst   <= spill_case_rst(0);
                            RF_abort <= spill_case_abort(0);
-                           KO_abort <= spill_case_abort(0);
-                          
+                           if (spill_case_abort(0) = '0' or spill_pause(0) = '0') then 
+                            KO_abort <= '0';
+                           else
+                            KO_abort <= '1';
+                           end if;
         when others     => FQ_abort <=  '1';
-                           FQ_rst   <= '1';
+                           --FQ_rst   <= '1';
                            RF_abort <= '1';
                            KO_abort <= '1';
-        
       end case;
       
     end  process Userstation_select;
               
     --FQ_abort <= spill_case_abort(0);
-    --FQ_rst   <= spill_case_rst(0);
+    FQ_rst   <= spill_case_rst(0);
     --RF_abort <= spill_case_abort(0);
     --KO_abort <= spill_case_abort(0);
               
