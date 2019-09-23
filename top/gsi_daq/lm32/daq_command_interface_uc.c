@@ -248,7 +248,7 @@ static DAQ_RETURN_CODE_T opRescan( DAQ_ADMIN_T* pDaqAdmin,
                                    volatile DAQ_OPERATION_IO_T* pData )
 {
    DBG_FUNCTION_INFO();
-   scanScuBus( &pDaqAdmin->oDaqDevs );
+   daqScanScuBus( &pDaqAdmin->oDaqDevs );
    return DAQ_RET_RESCAN;
 }
 

@@ -31,6 +31,11 @@
 #ifdef CONFIG_DAQ_SINGLE_APP
 static
 #endif
+
+#ifndef CONFIG_DAQ_SINGLE_APP
+extern volatile unsigned short* scub_base;
+#endif
+
 DAQ_ADMIN_T g_scuDaqAdmin;
 
 static inline uint32_t getInterruptPending( void )
@@ -43,8 +48,9 @@ static inline uint32_t getInterruptPending( void )
 
 /*! ---------------------------------------------------------------------------
  */
-int scanScuBus( DAQ_BUS_T* pDaqDevices )
+int daqScanScuBus( DAQ_BUS_T* pDaqDevices )
 {
+#ifdef CONFIG_DAQ_SINGLE_APP
    void* pScuBusBase = find_device_adr( GSI, SCU_BUS_MASTER );
 
    /* That's not fine, but it's not my idea. */
@@ -56,6 +62,9 @@ int scanScuBus( DAQ_BUS_T* pDaqDevices )
       return DAQ_RET_ERR_DEVICE_ADDRESS_NOT_FOUND;
    }
    int ret = daqBusFindAndInitializeAll( pDaqDevices, pScuBusBase );
+#else
+   int ret = daqBusFindAndInitializeAll( pDaqDevices, (void*)scub_base );
+#endif
    if( ret < 0 )
    {
       DBPRINT1(  ESC_BOLD ESC_FG_RED

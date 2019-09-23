@@ -77,12 +77,13 @@ ifdef USE_SCU_EXTERN_RAM
   DEFINES += CONFIG_SCU_USE_DDR3
 endif
 
+DEFINES += FG_OBJECT_ORIENTED
 
 # To be 100% backward compatible we can use the old toolchain.
 # If the variable TOOLCHAIN_DIR commented out, then the first toolchain found
 # in the environment variable $PATH will used if present,
 # else the included toolchain of this repository will used never the less.
-#  TOOLCHAIN_DIR = $(INCLUDED_TOOLCHAIN_DIR)
+ # TOOLCHAIN_DIR = $(INCLUDED_TOOLCHAIN_DIR)
 
 
 CODE_OPTIMIZATION = s

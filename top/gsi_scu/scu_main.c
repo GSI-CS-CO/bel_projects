@@ -90,14 +90,14 @@ static void clear_handler_state(int);
 SCU_SHARED_DATA_T SHARED g_shared = SCU_SHARED_DATA_INITIALIZER;
 /*!!!!!!!!!!!!!!!!!!!!!! Begin of shared memory area !!!!!!!!!!!!!!!!!!!!!!!!*/
 
-volatile unsigned short* scub_base     = 0;
-volatile unsigned int* scub_irq_base   = 0;
-volatile unsigned int* scu_mil_base    = 0;
-volatile unsigned int* mil_irq_base    = 0;
-volatile unsigned int* wr_1wire_base   = 0;
-volatile unsigned int* user_1wire_base = 0;
-//volatile unsigned int* cpu_info_base   = 0;
-volatile uint32_t     *pECAQ           = 0; // WB address of ECA queue
+volatile unsigned short* scub_base     = NULL;
+volatile unsigned int* scub_irq_base   = NULL;
+volatile unsigned int* scu_mil_base    = NULL;
+volatile unsigned int* mil_irq_base    = NULL;
+volatile unsigned int* wr_1wire_base   = NULL;
+volatile unsigned int* user_1wire_base = NULL;
+//volatile unsigned int* cpu_info_base   = NULL;
+volatile uint32_t     *pECAQ           = NULL; // WB address of ECA queue
 
 volatile unsigned int param_sent[MAX_FG_CHANNELS];
 //volatile int initialized[MAX_SCU_SLAVES] = {0};
@@ -113,14 +113,14 @@ static inline uint32_t _get_macro_number( unsigned int channel )
 
 static inline int _get_slot( unsigned int channel )
 {
-   //return _get_macro_number( channel ) >> 24;
-   return getMilDaqLocationByChannel( _get_macro_number( channel ) );
+   return _get_macro_number( channel ) >> 24;
+   //return getMilDaqLocationByChannel( _get_macro_number( channel ) );
 }
 
 static inline int _get_dev( unsigned int channel )
 {
-   //return (_get_macro_number( channel ) >> 16) & 0xFF;
-   return getMilDaqAdressByChannel(_get_macro_number( channel ));
+   return (_get_macro_number( channel ) >> 16) & 0xFF;
+   //return getMilDaqAdressByChannel(_get_macro_number( channel ));
 }
 
 static void dev_failure(int status, int slot, const char* msg)
@@ -217,9 +217,11 @@ static void disable_slave_irq(int channel) {
         scub_base[OFFS(slot) + SLAVE_INT_ENA] &= ~(0x4000);       //disable fg2 irq
     } else if (slot & DEV_MIL_EXT) {
       //write_mil(scu_mil_base, 0x0, FC_COEFF_A_WR | dev);            //ack drq
-      if ((status = write_mil(scu_mil_base, 0x0, FC_IRQ_MSK | dev)) != OKAY) dev_failure(status, slot & 0xf, "disable_slave_irq");  //mask drq
+      if ((status = write_mil(scu_mil_base, 0x0, FC_IRQ_MSK | dev)) != OKAY)
+         dev_failure(status, slot & 0xf, __func__);  //mask drq
     } else if (slot & DEV_SIO) {
-      if ((status = scub_write_mil(scub_base, slot & 0xf, 0x0, FC_IRQ_MSK | dev)) != OKAY) dev_failure(status, slot & 0xf, "disable_slave_irq");  //mask drq
+      if ((status = scub_write_mil(scub_base, slot & 0xf, 0x0, FC_IRQ_MSK | dev)) != OKAY)
+         dev_failure(status, slot & 0xf, __func__);  //mask drq
     }
 
     //mprintf("IRQs for slave %d disabled.\n", slot);
@@ -276,14 +278,15 @@ static inline void send_fg_param(int slot, int fg_base, unsigned short cntrl_reg
       // save coeff_c as setvalue
       *setvalue = pset.coeff_c;
       // transmit in one block transfer over the dev bus
-      if((status = write_mil_blk(scu_mil_base, &blk_data[0], FC_BLK_WR | fg_base)) != OKAY) dev_failure(status, slot & 0xf, "send_fg_param");
+      if((status = write_mil_blk(scu_mil_base, &blk_data[0], FC_BLK_WR | fg_base)) != OKAY)
+         dev_failure(status, slot & 0xf, __func__);
       // still in block mode !
     } else if (slot & DEV_SIO) {
       // save coeff_c as setvalue
       *setvalue = pset.coeff_c;
       // transmit in one block transfer over the dev bus
       if((status = scub_write_mil_blk(scub_base, slot & 0xf, &blk_data[0], FC_BLK_WR | fg_base)) != OKAY) {
-        dev_failure(status, slot & 0xf, "send_fg_param");
+        dev_failure(status, slot & 0xf, __func__);
         mprintf("send_fg_param\n");
       }
       // still in block mode !
@@ -457,7 +460,8 @@ static int configure_fg_macro(int channel) {
         //SEND_SIG(SIG_DISARMED);
         //return 0;
       //}
-      if ((status = write_mil(scu_mil_base, 1 << 13, FC_IRQ_MSK | dev)) != OKAY) dev_failure(status, slot & 0xf, "enable dreq"); //enable Data-Request
+      if ((status = write_mil(scu_mil_base, 1 << 13, FC_IRQ_MSK | dev)) != OKAY)
+         dev_failure(status, slot & 0xf, "enable dreq"); //enable Data-Request
     } else if (slot & DEV_SIO) {
       // check for PUR
       //if((status = scub_read_mil(scub_base, slot & 0xf, &data, FC_IRQ_STAT | dev)) != OKAY)          dev_failure(status, slot & 0xf, "check PUR"); 
@@ -467,7 +471,8 @@ static int configure_fg_macro(int channel) {
       //}
       scub_base[SRQ_ENA] |= (1 << ((slot & 0xf)-1));        // enable irqs for the slave
       scub_base[OFFS(slot & 0xf) + SLAVE_INT_ENA] = 0x0010; // enable receiving of drq
-      if ((status = scub_write_mil(scub_base, slot & 0xf, 1 << 13, FC_IRQ_MSK | dev)) != OKAY) dev_failure(status, slot & 0xf, "enable dreq"); //enable sending of drq
+      if ((status = scub_write_mil(scub_base, slot & 0xf, 1 << 13, FC_IRQ_MSK | dev)) != OKAY)
+         dev_failure(status, slot & 0xf, "enable dreq"); //enable sending of drq
     }
 
     /* which macro are we? */
@@ -488,10 +493,12 @@ static int configure_fg_macro(int channel) {
       //scub_base[OFFS(slot) + fg_base + FG_CNTRL] = 0x1;           // reset fg
       scub_base[OFFS(slot) + fg_base + FG_RAMP_CNT_LO] = 0;       // reset ramp counter
     } else if (slot & DEV_MIL_EXT) {
-      if ((status = write_mil(scu_mil_base, 0x1, FC_IFAMODE_WR | dev)) != OKAY) dev_failure (status, 0, "set FG mode"); // set FG mode
+      if ((status = write_mil(scu_mil_base, 0x1, FC_IFAMODE_WR | dev)) != OKAY)
+         dev_failure (status, 0, "set FG mode"); // set FG mode
       //if ((status = write_mil(scu_mil_base, 0x1, FC_CNTRL_WR | dev)) != OKAY)   dev_failure (status, 0, "reset FG"); // reset fg
     } else if (slot & DEV_SIO) {
-      if ((status = scub_write_mil(scub_base, slot & 0xf, 0x1, FC_IFAMODE_WR | dev)) != OKAY) dev_failure (status, slot & 0xf, "set FG mode"); // set FG mode
+      if ((status = scub_write_mil(scub_base, slot & 0xf, 0x1, FC_IFAMODE_WR | dev)) != OKAY)
+         dev_failure (status, slot & 0xf, "set FG mode"); // set FG mode
       //if ((status = scub_write_mil(scub_base, slot & 0xf, 0x1, FC_CNTRL_WR | dev)) != OKAY)   dev_failure (status, slot & 0xf, "reset FG"); // reset fg
     }
 
@@ -688,7 +695,7 @@ static void init_irq_table( void ) {
   irq_set_mask(0x01);
   msg_buf[IRQ].ring_head = msg_buf[IRQ].ring_tail; // clear msg buffer
   irq_enable();
-  mprintf("IRQ table configured.\n");
+  mprintf("IRQ table configured. 0x%x\n", irq_get_mask());
 }
 
 /** @brief initialize procedure at startup
@@ -917,7 +924,7 @@ typedef struct _TaskType {
   signed int setvalue[MAX_FG_CHANNELS];     /* setvalue from the tuple sent */
   uint64_t daq_timestamp[MAX_FG_CHANNELS];  /* timestamp of daq sampling */
   void (*func)(int);                        /* pointer to the function of the task */
-  void (*f)(struct _TaskType*);
+ // void (*f)(struct _TaskType*);
 } TaskType;
 
 
@@ -933,19 +940,20 @@ static TaskType tasks[] = {
   { 0, 0, {0}, 0, 0, ALWAYS         , 0, 0, {0}, {0}, sw_irq_handler     },
 };
 
+#ifdef FG_OBJECT_ORIENTED
 static inline unsigned int getId( register TaskType* pThis )
 {
    return (pThis - tasks) / sizeof( TaskType );
 }
-
+#endif
 
 TaskType *tsk_getConfig(void) {
   return tasks;
 }
 
-int tsk_getNumTasks(void) {
-  return sizeof(tasks) / sizeof(*tasks);
-}
+//int tsk_getNumTasks(void) {
+//  return sizeof(tasks) / sizeof(*tasks);
+//}
 
 /**
  * @brief task definition of scu_bus_handler
@@ -1095,7 +1103,8 @@ static void dev_sio_handler(int id) {
           dev  = _get_dev( i );
           handle(slot, dev, task_ptr[id].irq_data[i], &(task_ptr[id].setvalue[i]));
           //clear irq pending and end block transfer
-          if ((status = scub_write_mil(scub_base, task_ptr[id].slave_nr, 0, FC_IRQ_ACT_WR | dev)) != OKAY) dev_failure(status, 22, "dev_sio end handle");
+          if ((status = scub_write_mil(scub_base, task_ptr[id].slave_nr, 0, FC_IRQ_ACT_WR | dev)) != OKAY)
+             dev_failure(status, 22, "dev_sio end handle");
         }
       }
       task_ptr[id].state = 4;
@@ -1110,7 +1119,8 @@ static void dev_sio_handler(int id) {
           slot = _get_slot( i );
           dev =  _get_dev( i );
           // non blocking read for DAQ
-          if ((status = scub_set_task_mil(scub_base, task_ptr[id].slave_nr, id + i + 1, FC_ACT_RD | dev)) != OKAY) dev_failure(status, 23, "dev_sio read daq");
+          if ((status = scub_set_task_mil(scub_base, task_ptr[id].slave_nr, id + i + 1, FC_ACT_RD | dev)) != OKAY)
+             dev_failure(status, 23, "dev_sio read daq");
           // store the sample timestamp for daq
           task_ptr[id].daq_timestamp[i] = getSysTime();
         }
@@ -1221,7 +1231,8 @@ static void dev_bus_handler(int id) {
             dev  = _get_dev( i );
             /* test only ifas connected to mil extension */
             if(slot & DEV_MIL_EXT) {
-              if ((status = set_task_mil(scu_mil_base, id + i + 1, FC_IRQ_ACT_RD | dev)) != OKAY) dev_failure(status, 20, "");
+              if ((status = set_task_mil(scu_mil_base, id + i + 1, FC_IRQ_ACT_RD | dev)) != OKAY)
+                 dev_failure(status, 20, "");
             }
         }
         // clear old irq data
@@ -1430,7 +1441,7 @@ int main(void) {
   init(); // init and scan for fgs
 
 #ifdef CONFIG_SCU_DAQ_INTEGRATION
-  scuDaqInitialize( &g_scuDaqAdmin );
+  scuDaqInitialize( &g_scuDaqAdmin ); // Init and scan for DAQs
   mprintf( "SCU-DAQ initialized\n" );
 #endif
 
@@ -1467,7 +1478,7 @@ int main(void) {
       //dispatch(numTasks);
       //dispatch( ARRAY_SIZE( tasks ) );
       dispatch();
-#if 0
+#if FG_OBJECT_ORIENTED
       TaskType* pCurrent = &task_ptr[taskIndex];
       if( tick - pCurrent->lasttick < pCurrent->interval )
          continue;

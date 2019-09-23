@@ -51,12 +51,12 @@ typedef struct
 
 int initBuffer( RAM_SCU_T* poRam );
 
-int scanScuBus( DAQ_BUS_T* pDaqDevices );
+int daqScanScuBus( DAQ_BUS_T* pDaqDevices );
 
 
 static inline void scuDaqInitialize( DAQ_ADMIN_T* pDaqAdmin )
 {
-   scanScuBus( &pDaqAdmin->oDaqDevs );
+   daqScanScuBus( &pDaqAdmin->oDaqDevs );
    initBuffer( &pDaqAdmin->oRam );
 }
 
