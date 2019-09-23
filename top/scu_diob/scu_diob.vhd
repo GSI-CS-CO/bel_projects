@@ -3831,7 +3831,7 @@ P_IOBP_LED_ID_Loop:  process (clk_sys, Ena_Every_250ns, rstn_sys, IOBP_state)
                             KO_abort <= '0';
                            else
                             KO_abort <= '1';
-                          end if;
+                           end if;                      
         --Cave M
         when x"0002"    => FQ_abort <= spill_case_abort(1);
                            spill_armed <= "0010";
@@ -3840,7 +3840,19 @@ P_IOBP_LED_ID_Loop:  process (clk_sys, Ena_Every_250ns, rstn_sys, IOBP_state)
                             KO_abort <= '0';
                            else
                             KO_abort <= '1';
-                           end if;
+                           end if;                       
+       --FRS
+        when x"0004"    => FQ_abort <= spill_case_abort(2);
+                           spill_armed <= "0100";
+                           RF_abort <= spill_case_abort(2);
+                           KO_abort <= spill_case_abort(2);    
+                               
+      --HADES
+        when x"0008"    => FQ_abort <= spill_case_abort(3);
+                           spill_armed <= "1000";
+                           RF_abort <= spill_case_abort(3);
+                           KO_abort <= spill_case_abort(3);
+                           
         when others     => FQ_abort <=  '1';
                            spill_armed <= "0000";
                            RF_abort <= '1';
@@ -3849,7 +3861,7 @@ P_IOBP_LED_ID_Loop:  process (clk_sys, Ena_Every_250ns, rstn_sys, IOBP_state)
       
     end  process Userstation_select;
               
-    FQ_rst   <= spill_case_rst(0) or spill_case_rst(1);
+    FQ_rst   <= spill_case_rst(0) or spill_case_rst(1) or spill_case_rst(2)  or spill_case_rst(3) ;
               
 quench_test_all : quench_detection
     Port map( clk => clk_sys,
