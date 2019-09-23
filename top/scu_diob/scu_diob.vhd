@@ -1450,6 +1450,7 @@ end component;
   signal spill_req:               std_logic_vector (3 downto 0);
   signal spill_pause:             std_logic_vector (3 downto 0);
   signal spill_armed:             std_logic_vector (3 downto 0);
+  signal spill_abort_HWInterlock: std_logic_vector (1 downto 0);
   signal FQ_abort:                std_logic;
   signal FQ_rst:                  std_logic;
   signal RF_abort:                std_logic;
@@ -3827,6 +3828,7 @@ P_IOBP_LED_ID_Loop:  process (clk_sys, Ena_Every_250ns, rstn_sys, IOBP_state)
         when x"0001"    => FQ_abort <= spill_case_abort(0);
                            spill_armed <= "0001";
                            RF_abort <= spill_case_abort(0);
+                           spill_abort_HWInterlock <= (others => '0');
                            if (spill_case_abort(0) = '0' or spill_pause(0) = '0') then 
                             KO_abort <= '0';
                            else
@@ -3836,6 +3838,7 @@ P_IOBP_LED_ID_Loop:  process (clk_sys, Ena_Every_250ns, rstn_sys, IOBP_state)
         when x"0002"    => FQ_abort <= spill_case_abort(1);
                            spill_armed <= "0010";
                            RF_abort <= spill_case_abort(1);
+                           spill_abort_HWInterlock <= (others => '0');
                            if (spill_case_abort(1) = '0' or spill_pause(1) = '0') then 
                             KO_abort <= '0';
                            else
@@ -3845,18 +3848,23 @@ P_IOBP_LED_ID_Loop:  process (clk_sys, Ena_Every_250ns, rstn_sys, IOBP_state)
         when x"0004"    => FQ_abort <= spill_case_abort(2);
                            spill_armed <= "0100";
                            RF_abort <= spill_case_abort(2);
-                           KO_abort <= spill_case_abort(2);    
+                           KO_abort <= spill_case_abort(2); 
+                           spill_abort_HWInterlock(0) <= not spill_case_abort(2);
+                           spill_abort_HWInterlock(1) <= '0';   
                                
       --HADES
         when x"0008"    => FQ_abort <= spill_case_abort(3);
                            spill_armed <= "1000";
                            RF_abort <= spill_case_abort(3);
                            KO_abort <= spill_case_abort(3);
+                           spill_abort_HWInterlock(0) <= '0';
+                           spill_abort_HWInterlock(1) <= not spill_case_abort(3);
                            
         when others     => FQ_abort <=  '1';
                            spill_armed <= "0000";
                            RF_abort <= '1';
                            KO_abort <= '1';
+                           spill_abort_HWInterlock <= (others => '0');
       end case;
       
     end  process Userstation_select;
@@ -6708,6 +6716,10 @@ BEGIN
       spill_req <=  Deb60_in(7) & Deb60_in(2) & Deb60_in(5) & Deb60_in(0);
       spill_pause <= "00" & Deb60_in(6) & Deb60_in(1);
       IOBP_Output <= "00000000" & KO_abort & RF_abort  & FQ_rst & FQ_abort;
+      
+      UIO_Out(0)    <= spill_abort_HWInterlock(0);
+      UIO_Out(1)    <= spill_abort_HWInterlock(1); 
+      UIO_ENA(1 downto 0)    <=  (others => '1');                  -- Output-Enable
       
     when x"DEDE" => --Quench Detection Development
       IOBP_Output <= "0000000" & quench_out(3) & quench_out(0) & quench_out (2) & quench_out (1) & quench_out(0);
