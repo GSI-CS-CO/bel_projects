@@ -167,6 +167,8 @@ public:
       return (m_poModeContinuous != nullptr) && (m_poModePmHires != nullptr);
    }
 
+   bool isFgIntegrated( void );
+
    bool onDataBlock( DAQ_DATA_T* pData, std::size_t wordLen ) override;
    void showRunState( void );
    void doPostMortem( void );
@@ -199,6 +201,11 @@ public:
    {
       return static_cast<Channel*>(DaqDevice::getChannel( number ));
    }
+
+   bool isFgIntegrated( void )
+   {
+      return getParent()->isFgIntegrated();
+   }
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -209,6 +216,12 @@ inline Device* DaqContainer::getDeviceBySlot( unsigned int slot )
    return static_cast<Device*>(DaqAdministration::getDeviceBySlot( slot ));
 }
 
+/*! ---------------------------------------------------------------------------
+ */
+inline bool Channel::isFgIntegrated( void )
+{
+   return static_cast<Device*>(getParent())->isFgIntegrated();
+}
 
 
 } // namespace daqt

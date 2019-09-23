@@ -112,7 +112,7 @@ void Channel::Mode::plot( void )
    {
       m_pParent->m_oPlot << "Slot: " << m_pParent->getSlot()
                          << ", Channel: " << m_pParent->getNumber()
-                         << ";   ";
+                         << "; ";
    }
    m_pParent->m_oPlot << "Mode: " << m_text << ", Block: " << m_blockCount
                       << ", Sequence: " <<  m_sequence
@@ -216,8 +216,14 @@ void Channel::start( void )
                                 inserter );
    }
    else
-      m_oPlot << " title \"SCU: " << getScuDomainName() << '"' << endl;
-
+   {
+      m_oPlot << " title \"SCU: " << getScuDomainName() << ", LM32: ";
+      if( isFgIntegrated() )
+         m_oPlot << "DAQ+FG";
+      else
+         m_oPlot << "DAQ only";
+      m_oPlot << '"' << endl;
+   }
    m_oPlot << "set grid" << endl;
    m_oPlot << "set ylabel \"Voltage\"" << endl;
 

@@ -189,7 +189,6 @@ const std::string DaqInterface::getLastReturnCodeString( void )
 
 /*! ---------------------------------------------------------------------------
  */
-inline
 bool DaqInterface::isFgIntegrated( void ) const
 {
    if( m_daqLM32Offset == INVALID_OFFSET )
