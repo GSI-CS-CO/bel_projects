@@ -83,7 +83,7 @@ void inject_mil_event(uint32_t cmd, TAI_t time)
   // inject event 
   atomic_on();
   *pEca = 0xffffffff;
-  *pEca = cmd & 0x000000ff;
+  *pEca = cmd & 0x0000ffff;
   *pEca = 0;
   *pEca = 0;
   *pEca = 0;
