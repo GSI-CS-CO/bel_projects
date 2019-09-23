@@ -271,7 +271,7 @@ unsigned int getDaqMilScuBusSlotbyLocation( const unsigned int loc )
 /*! ---------------------------------------------------------------------------
  */
 static inline
-unsigned int getDaqMilExrentionByLocation( const unsigned int loc )
+unsigned int getDaqMilExtentionByLocation( const unsigned int loc )
 {
    return loc >> 4;
 }
@@ -289,7 +289,7 @@ unsigned int getMilDaqScuBusSlot( const register struct daq* pMilDaq )
 static inline
 unsigned int getMilDaqScuMilExtention( const register struct daq* pMilDaq )
 {
-   return getDaqMilExrentionByLocation( getMilDaqLocation( pMilDaq ) );
+   return getDaqMilExtentionByLocation( getMilDaqLocation( pMilDaq ) );
 }
 
 #ifdef __cplusplus

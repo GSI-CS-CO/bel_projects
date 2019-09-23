@@ -49,7 +49,13 @@ vector<OPTION> CommandLine::c_optList =
          cout << "MIL-DAQ Plotter\n"
                  "(c) 2019 GSI; Author: Ulrich Becker <u.becker@gsi.de>\n"
               << "Usage: " << poParser->getProgramName()
-              << " <proto/host/port> [options] [slot channel [slot channel ...]]\n";
+              << " <proto/host/port> [options] [slot channel [slot channel ...]]\n\n"
+                 "Hot keys:\n"
+              << HOT_KEY_RESET    << ": Reset zooming of all plot windows\n"
+              << HOT_KEY_RECEIVE  << ": Toggling receiving on / off\n"
+              << HOT_KEY_TOGGLE_SINGLE_SHOOT << ": Toggling single shoot mode on / off\n"
+                 "Esc: Program termination\n"
+                 "\nCommandline options:\n";
          poParser->list( cout );
          cout << endl;
          ::exit( EXIT_SUCCESS );

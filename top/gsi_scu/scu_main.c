@@ -125,6 +125,7 @@ static inline int _get_dev( unsigned int channel )
 
 static void dev_failure(int status, int slot, const char* msg)
 {
+  static const char* pText = "dev bus access in slot ";
   char* pMessage;
   #define __MSG_ITEM( status ) case status: pMessage = #status; break
   switch( status )
@@ -135,12 +136,13 @@ static void dev_failure(int status, int slot, const char* msg)
      __MSG_ITEM( RCV_TIMEOUT );
      __MSG_ITEM( RCV_TASK_ERR );
      default:
-        mprintf("dev bus access in slot %d failed with code %d\n", slot, status);
+        mprintf("%s%d failed with code %d\n", pText, slot, status);
         return;
   }
   #undef __MSG_ITEM
-  mprintf("dev bus access in slot %d failed with message %s, %s\n", slot, pMessage, msg);
+  mprintf("%s%d failed with message %s, %s\n", pText, slot, pMessage, msg);
 }
+
 
 /** debug method
  * prints the last received message signaled interrupt to the UART
@@ -375,7 +377,8 @@ inline void handle(int slot, unsigned fg_base, short irq_act_reg, signed int* se
     }
 }
 
-/** @brief as short as possible, just pop the msi queue of the cpu and push it to the message queue of the main loop
+/** @brief as short as possible, just pop the msi queue of the cpu and
+ *         push it to the message queue of the main loop
  */
 void irq_handler() {
   struct msi m;
@@ -631,14 +634,18 @@ static void disable_channel(unsigned int channel) {
 
   } else if (slot & DEV_MIL_EXT) {
     // disarm hardware
-    if((status = read_mil(scu_mil_base, &data, FC_CNTRL_RD | dev)) != OKAY)          dev_failure(status, 0, "disarm hw"); 
-    if((status = write_mil(scu_mil_base, data & ~(0x2), FC_CNTRL_WR | dev)) != OKAY) dev_failure(status, 0, "disarm hw"); 
+    if((status = read_mil(scu_mil_base, &data, FC_CNTRL_RD | dev)) != OKAY)
+       dev_failure(status, 0, "disarm hw");
+    if((status = write_mil(scu_mil_base, data & ~(0x2), FC_CNTRL_WR | dev)) != OKAY)
+       dev_failure(status, 0, "disarm hw");
     //write_mil(scu_mil_base, 0x0, 0x60 << 8 | dev);             // unset FG mode
 
   } else if (slot & DEV_SIO) {
     // disarm hardware
-    if((status = scub_read_mil(scub_base, slot & 0xf, &data, FC_CNTRL_RD | dev)) != OKAY)          dev_failure(status, slot & 0xf, "disarm hw"); 
-    if((status = scub_write_mil(scub_base, slot & 0xf, data & ~(0x2), FC_CNTRL_WR | dev)) != OKAY) dev_failure(status, slot & 0xf, "disarm hw"); 
+    if((status = scub_read_mil(scub_base, slot & 0xf, &data, FC_CNTRL_RD | dev)) != OKAY)
+       dev_failure(status, slot & 0xf, "disarm hw");
+    if((status = scub_write_mil(scub_base, slot & 0xf, data & ~(0x2), FC_CNTRL_WR | dev)) != OKAY)
+       dev_failure(status, slot & 0xf, "disarm hw");
     //write_mil(scu_mil_base, 0x0, 0x60 << 8 | dev);             // unset FG mode
   }
 
@@ -898,7 +905,7 @@ static void ecaHandler( )
 
 /* declaration for the scheduler */
 
-typedef struct {
+typedef struct _TaskType {
   int state;
   int slave_nr;                             /* slave nr of the controlling sio card */
   short irq_data[MAX_FG_CHANNELS];          /* saved irq state */
@@ -910,7 +917,9 @@ typedef struct {
   signed int setvalue[MAX_FG_CHANNELS];     /* setvalue from the tuple sent */
   uint64_t daq_timestamp[MAX_FG_CHANNELS];  /* timestamp of daq sampling */
   void (*func)(int);                        /* pointer to the function of the task */
+  void (*f)(struct _TaskType*);
 } TaskType;
+
 
 /* task configuration table */
 static TaskType tasks[] = {
@@ -923,6 +932,12 @@ static TaskType tasks[] = {
   { 0, 0, {0}, 0, 0, ALWAYS         , 0, 0, {0}, {0}, ecaHandler         },
   { 0, 0, {0}, 0, 0, ALWAYS         , 0, 0, {0}, {0}, sw_irq_handler     },
 };
+
+static inline unsigned int getId( register TaskType* pThis )
+{
+   return (pThis - tasks) / sizeof( TaskType );
+}
+
 
 TaskType *tsk_getConfig(void) {
   return tasks;
@@ -1378,7 +1393,6 @@ int main(void) {
   wr_1wire_base = (unsigned int*)find_device_adr(CERN, WR_1Wire);          // 1Wire controller in the WRC
   user_1wire_base = (unsigned int*)find_device_adr(GSI, User_1Wire);       // 1Wire controller on dev crossbar
 
-
   mprintf("Compiler: "COMPILER_VERSION_STRING"\n"
           "Found MsgBox at 0x%08x. MSI Path is 0x%08x\n", (uint32_t)pCpuMsiBox, (uint32_t)pMyMsi);
   mb_slot = getMsiBoxSlot(0x10);
@@ -1416,62 +1430,23 @@ int main(void) {
   init(); // init and scan for fgs
 
 #ifdef CONFIG_SCU_DAQ_INTEGRATION
-  mprintf("DAQ integrated\n");
   scuDaqInitialize( &g_scuDaqAdmin );
+  mprintf( "SCU-DAQ initialized\n" );
 #endif
 
   /* definition of task dispatch */
   /* move messages to the correct queue, depending on source */
-#if 0
-  void dispatch(int id) {
-    struct msi m;
-    m = remove_msg(&msg_buf[0], IRQ);
-
-
-    // software message from saftlib
-    if ((m.adr & 0xff) == 0x10) {
-      add_msg(&msg_buf[0], SWI, m);
-      return;
-
-    // message from scu bus
-    } else if ((m.adr & 0xff) == 0x0) {
-      add_msg(&msg_buf[0], SCUBUS, m);
-      return;
-
-    // message from dev bus
-    } else if ((m.adr & 0xff) == 0x20) {
-      add_msg(&msg_buf[0], DEVBUS, m);
-      return;
-    }
-
-    return;
-  }
-#else
   inline void dispatch( void )
   {
-    struct msi m;
-    m = remove_msg(&msg_buf[0], IRQ);
-
-    // software message from saftlib
-    if ((m.adr & 0xff) == 0x10)
-    {
-      add_msg(&msg_buf[0], SWI, m);
-      return;
-    }
-    // message from scu bus
-    if ((m.adr & 0xff) == 0x0)
-    {
-      add_msg(&msg_buf[0], SCUBUS, m);
-      return;
-    }
-
-    // message from dev bus
-    if ((m.adr & 0xff) == 0x20)
-    {
-      add_msg(&msg_buf[0], DEVBUS, m);
-    }
+     struct msi m;
+     m = remove_msg(&msg_buf[0], IRQ);
+     switch( m.adr & 0xff )
+     {
+        case 0x00: add_msg(&msg_buf[0], SCUBUS, m); return; // message from scu bus
+        case 0x10: add_msg(&msg_buf[0], SWI,    m); return; // software message from saftlib
+        case 0x20: add_msg(&msg_buf[0], DEVBUS, m); return; // message from dev bus
+     }
   }
-#endif
 
   static TaskType *task_ptr;              // task pointer
 
@@ -1492,11 +1467,20 @@ int main(void) {
       //dispatch(numTasks);
       //dispatch( ARRAY_SIZE( tasks ) );
       dispatch();
+#if 0
+      TaskType* pCurrent = &task_ptr[taskIndex];
+      if( tick - pCurrent->lasttick < pCurrent->interval )
+         continue;
+      pCurrent->func(taskIndex);
+      pCurrent->lasttick = tick;
+#else
       if ((tick - task_ptr[taskIndex].lasttick) >= task_ptr[taskIndex].interval) {
         // run task
-        (*task_ptr[taskIndex].func)(taskIndex);
+       // (*task_ptr[taskIndex].func)(taskIndex);
+        task_ptr[taskIndex].func(taskIndex);
         task_ptr[taskIndex].lasttick = tick; // save last tick the task was ran
       }
+#endif
     }
   #ifdef CONFIG_SCU_DAQ_INTEGRATION
     forEachScuDaqDevice();

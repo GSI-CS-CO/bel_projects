@@ -62,7 +62,7 @@ PlotStream::PlotStream( const std::string gpOpt,
                         const std::string gpExe,
                         const std::size_t pipeSize
                       )
-   :std::ostream( &m_oBuffer )
+   :std::iostream( &m_oBuffer )
    ,m_oBuffer( this )
    ,m_pPipe( nullptr )
    ,m_pPipeBuffer( nullptr )

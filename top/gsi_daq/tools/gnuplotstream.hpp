@@ -96,7 +96,7 @@ public:
  * }
  * @endcode
  */
-class PlotStream: public std::ostream
+class PlotStream: public std::iostream
 {
    class StringBuffer: public std::stringbuf
    {
