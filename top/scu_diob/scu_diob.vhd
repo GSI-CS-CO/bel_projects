@@ -224,7 +224,8 @@ architecture scu_diob_arch of scu_diob is
 --
     CONSTANT c_IOBP_Masken_Base_Addr:            Integer := 16#0630#;  -- IO-Backplane Masken-Register
     CONSTANT c_IOBP_ID_Base_Addr:                Integer := 16#0638#;  -- IO-Backplane Modul-ID-Register
-    CONSTANT c_IOBP_QD_Base_Addr:                Integer := 16#0640#;  -- IO-Backplane Quench Detection
+    CONSTANT c_HW_Interlock_Base_Addr:           Integer := 16#0640#;  -- IO-Backplane Spill Abort HW Interlock
+    CONSTANT c_IOBP_QD_Base_Addr:                Integer := 16#0650#;  -- IO-Backplane Quench Detection
 
 
 
@@ -758,6 +759,27 @@ component quench_detection is
            mute: in STD_LOGIC_VECTOR (24 downto 0);
            QuDOut : out STD_LOGIC);
 end component;
+
+COMPONENT hw_interlock
+  GENERIC ( Base_addr : INTEGER );
+  PORT
+  (
+    Adr_from_SCUB_LA:    IN  STD_LOGIC_VECTOR(15 DOWNTO 0);
+    Data_from_SCUB_LA:   IN  STD_LOGIC_VECTOR(15 DOWNTO 0);
+    Ext_Adr_Val:         IN  STD_LOGIC;
+    Ext_Rd_active:       IN  STD_LOGIC;
+    Ext_Rd_fin:          IN  STD_LOGIC;
+    Ext_Wr_active:       IN  STD_LOGIC;
+    Ext_Wr_fin:          IN  STD_LOGIC;
+    clk:                 IN  STD_LOGIC;
+    nReset:              IN  STD_LOGIC;
+    HW_ILock_in:				 IN  STD_LOGIC_VECTOR(15 downto 0);
+		HW_ILock_out:				 OUT STD_LOGIC_VECTOR(15 downto 0);	
+    Reg_rd_active:       OUT STD_LOGIC;
+    Data_to_SCUB:        OUT STD_LOGIC_VECTOR(15 DOWNTO 0);
+    Dtack_to_SCUB:       OUT STD_LOGIC
+  );
+END COMPONENT hw_interlock;
 
 
 
@@ -1451,6 +1473,7 @@ end component;
   signal spill_pause:             std_logic_vector (3 downto 0);
   signal spill_armed:             std_logic_vector (3 downto 0);
   signal spill_abort_HWInterlock: std_logic_vector (1 downto 0);
+  signal spill_abort_HWI_out:     std_logic_vector (15 downto 0);
   signal FQ_abort:                std_logic;
   signal FQ_rst:                  std_logic;
   signal RF_abort:                std_logic;
@@ -1480,6 +1503,10 @@ end component;
   signal IOBP_id_rd_active:       std_logic;
   signal IOBP_id_Dtack:           std_logic;
   signal IOBP_id_data_to_SCUB:    std_logic_vector(15 downto 0);
+  
+  signal IOBP_hw_il_rd_active:       std_logic;   
+  signal IOBP_hw_il_Dtack:           std_logic;      
+  signal IOBP_hw_il_data_to_SCUB:    std_logic_vector(15 downto 0);
   
   TYPE   t_quench_array     is array (0 to 4) of std_logic_vector(24 downto 0);
   signal quench_enable_signal: t_quench_array := (others=>(others=>'0'));
@@ -2178,6 +2205,29 @@ port map  (
       Data_to_SCUB       =>  IOBP_id_data_to_SCUB
     );
     
+    IOBP_Hardware_Interlock: hw_interlock    
+    generic map(
+          Base_addr =>  c_HW_Interlock_Base_Addr
+          )
+    port map  (     
+          Adr_from_SCUB_LA   =>  ADR_from_SCUB_LA,
+          Data_from_SCUB_LA  =>  Data_from_SCUB_LA,
+          Ext_Adr_Val        =>  Ext_Adr_Val,
+          Ext_Rd_active      =>  Ext_Rd_active,
+          Ext_Rd_fin         =>  Ext_Rd_fin,
+          Ext_Wr_active      =>  Ext_Wr_active,
+          Ext_Wr_fin         =>  SCU_Ext_Wr_fin,
+          clk                =>  clk_sys,
+          nReset             =>  rstn_sys,
+    --
+          HW_ILock_in		   	 => X"000" & "00" &spill_abort_HWInterlock,
+		      HW_ILock_out  		 => spill_abort_HWI_out,
+    --
+          Reg_rd_active      =>  IOBP_hw_il_rd_active,
+          Dtack_to_SCUB      =>  IOBP_hw_il_Dtack,
+          Data_to_SCUB       =>  IOBP_hw_il_data_to_SCUB
+        );
+    
     QUENCH_MATRIX_Reg: io_reg     
     generic map(
           Base_addr =>  c_IOBP_QD_Base_Addr
@@ -2701,32 +2751,33 @@ rd_port_mux:  process ( clk_switch_rd_active,     clk_switch_rd_data,
                       )
 
 
-  variable sel: unsigned(17 downto 0);
+  variable sel: unsigned(18 downto 0);
   begin
-    sel :=  IOBP_qd_rd_active         & tmr_rd_active             & INL_xor1_rd_active      & INL_msk1_rd_active      &  AW_Port1_rd_active       &
-            FG_1_rd_active            & FG_2_rd_active          & wb_scu_rd_active        & clk_switch_rd_active      &
+    sel :=  IOBP_hw_il_rd_active      & IOBP_qd_rd_active       & tmr_rd_active           & INL_xor1_rd_active        & INL_msk1_rd_active      &  
+            AW_Port1_rd_active        & FG_1_rd_active          & FG_2_rd_active          & wb_scu_rd_active          & clk_switch_rd_active      &
             Conf_Sts1_rd_active       & Tag_Ctrl1_rd_active     & addac_rd_active         & io_port_rd_active         &
             IOBP_msk_rd_active        & IOBP_id_rd_active       & ATR_DAC_rd_active       & atr_comp_ctrl_rd_active   & atr_puls_ctrl_rd_active     ;
 
   case sel IS
-      when "100000000000000000" => Data_to_SCUB <= IOBP_qd_data_to_SCUB;
-      when "010000000000000000" => Data_to_SCUB <= tmr_data_to_SCUB;
-      when "001000000000000000" => Data_to_SCUB <= INL_xor1_data_to_SCUB;
-      when "000100000000000000" => Data_to_SCUB <= INL_msk1_data_to_SCUB;
-      when "000010000000000000" => Data_to_SCUB <= AW_Port1_data_to_SCUB;
-      when "000001000000000000" => Data_to_SCUB <= FG_1_data_to_SCUB;
-      when "000000100000000000" => Data_to_SCUB <= FG_2_data_to_SCUB;
-      when "000000010000000000" => Data_to_SCUB <= wb_scu_data_to_SCUB;
-      when "000000001000000000" => Data_to_SCUB <= clk_switch_rd_data;
-      when "000000000100000000" => Data_to_SCUB <= Conf_Sts1_data_to_SCUB;
-      when "000000000010000000" => Data_to_SCUB <= Tag_Ctrl1_data_to_SCUB;
-      when "000000000001000000" => Data_to_SCUB <= addac_Data_to_SCUB;
-      when "000000000000100000" => Data_to_SCUB <= io_port_data_to_SCUB;
-      when "000000000000010000" => Data_to_SCUB <= IOBP_msk_data_to_SCUB;
-      when "000000000000001000" => Data_to_SCUB <= IOBP_id_data_to_SCUB;
-      when "000000000000000100" => Data_to_SCUB <= ATR_DAC_data_to_SCUB;
-      when "000000000000000010" => Data_to_SCUB <= atr_comp_ctrl_data_to_SCUB;
-      when "000000000000000001" => Data_to_SCUB <= atr_puls_ctrl_data_to_SCUB;
+      when "1000000000000000000" => Data_to_SCUB <= IOBP_hw_il_data_to_SCUB;
+      when "0100000000000000000" => Data_to_SCUB <= IOBP_qd_data_to_SCUB;
+      when "0010000000000000000" => Data_to_SCUB <= tmr_data_to_SCUB;
+      when "0001000000000000000" => Data_to_SCUB <= INL_xor1_data_to_SCUB;
+      when "0000100000000000000" => Data_to_SCUB <= INL_msk1_data_to_SCUB;
+      when "0000010000000000000" => Data_to_SCUB <= AW_Port1_data_to_SCUB;
+      when "0000001000000000000" => Data_to_SCUB <= FG_1_data_to_SCUB;
+      when "0000000100000000000" => Data_to_SCUB <= FG_2_data_to_SCUB;
+      when "0000000010000000000" => Data_to_SCUB <= wb_scu_data_to_SCUB;
+      when "0000000001000000000" => Data_to_SCUB <= clk_switch_rd_data;
+      when "0000000000100000000" => Data_to_SCUB <= Conf_Sts1_data_to_SCUB;
+      when "0000000000010000000" => Data_to_SCUB <= Tag_Ctrl1_data_to_SCUB;
+      when "0000000000001000000" => Data_to_SCUB <= addac_Data_to_SCUB;
+      when "0000000000000100000" => Data_to_SCUB <= io_port_data_to_SCUB;
+      when "0000000000000010000" => Data_to_SCUB <= IOBP_msk_data_to_SCUB;
+      when "0000000000000001000" => Data_to_SCUB <= IOBP_id_data_to_SCUB;
+      when "0000000000000000100" => Data_to_SCUB <= ATR_DAC_data_to_SCUB;
+      when "0000000000000000010" => Data_to_SCUB <= atr_comp_ctrl_data_to_SCUB;
+      when "0000000000000000001" => Data_to_SCUB <= atr_puls_ctrl_data_to_SCUB;
 
 
       when others      => Data_to_SCUB <= (others => '0');
@@ -2740,7 +2791,7 @@ rd_port_mux:  process ( clk_switch_rd_active,     clk_switch_rd_data,
     Dtack_to_SCUB <= ( tmr_dtack      or INL_xor1_Dtack       or INL_msk1_Dtack       or AW_Port1_Dtack   or FG_1_dtack       or
                        FG_2_dtack     or wb_scu_dtack         or clk_switch_dtack     or Conf_Sts1_Dtack  or Tag_Ctrl1_Dtack  or
                        addac_Dtack    or io_port_Dtack        or IOBP_msk_Dtack       or IOBP_id_Dtack    or  IOBP_qd_Dtack   or
-                       ATR_DAC_Dtack  or atr_comp_ctrl_Dtack  or atr_puls_ctrl_Dtack);
+                       ATR_DAC_Dtack  or atr_comp_ctrl_Dtack  or atr_puls_ctrl_Dtack or IOBP_hw_il_Dtack);
 
 
     A_nDtack <= NOT(SCUB_Dtack);
@@ -6717,8 +6768,8 @@ BEGIN
       spill_pause <= "00" & Deb60_in(6) & Deb60_in(1);
       IOBP_Output <= "00000000" & KO_abort & RF_abort  & FQ_rst & FQ_abort;
       
-      UIO_Out(0)    <= spill_abort_HWInterlock(0);
-      UIO_Out(1)    <= spill_abort_HWInterlock(1); 
+      UIO_Out(0)    <= spill_abort_HWI_out(0);
+      UIO_Out(1)    <= spill_abort_HWI_out(1); 
       UIO_ENA(1 downto 0)    <=  (others => '1');                  -- Output-Enable
       
     when x"DEDE" => --Quench Detection Development
