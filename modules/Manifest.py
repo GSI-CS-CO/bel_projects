@@ -46,6 +46,7 @@ modules = {
     "prioq2",
     "temp_sens",
     "beam_dump",
-    "daq"
+    "daq",
+    "diob"
   ]
 }
