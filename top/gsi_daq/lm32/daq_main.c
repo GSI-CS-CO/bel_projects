@@ -28,14 +28,13 @@
 #include <eb_console_helper.h>
 #include <dbg.h>
 
+#ifndef CONFIG_DAQ_SINGLE_APP
+extern volatile uint16_t* scub_base;
+#endif
+
 #ifdef CONFIG_DAQ_SINGLE_APP
 static
 #endif
-
-#ifndef CONFIG_DAQ_SINGLE_APP
-extern volatile unsigned short* scub_base;
-#endif
-
 DAQ_ADMIN_T g_scuDaqAdmin;
 
 static inline uint32_t getInterruptPending( void )

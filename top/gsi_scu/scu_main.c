@@ -90,21 +90,23 @@ static void clear_handler_state(int);
 SCU_SHARED_DATA_T SHARED g_shared = SCU_SHARED_DATA_INITIALIZER;
 /*!!!!!!!!!!!!!!!!!!!!!! Begin of shared memory area !!!!!!!!!!!!!!!!!!!!!!!!*/
 
-volatile unsigned short* scub_base     = NULL;
-volatile unsigned int* scub_irq_base   = NULL;
-volatile unsigned int* scu_mil_base    = NULL;
-volatile unsigned int* mil_irq_base    = NULL;
-volatile unsigned int* wr_1wire_base   = NULL;
-volatile unsigned int* user_1wire_base = NULL;
-//volatile unsigned int* cpu_info_base   = NULL;
-volatile uint32_t     *pECAQ           = NULL; // WB address of ECA queue
+volatile uint16_t* scub_base        = NULL;
+volatile uint32_t* scub_irq_base    = NULL;
+volatile unsigned int* scu_mil_base = NULL;
+volatile uint32_t* mil_irq_base     = NULL;
+volatile uint32_t* wr_1wire_base    = NULL;
+volatile uint32_t* user_1wire_base  = NULL;
+//volatile uint32_t* cpu_info_base   = NULL;
+volatile uint32_t     *pECAQ        = NULL; // WB address of ECA queue
 
-volatile unsigned int param_sent[MAX_FG_CHANNELS];
+volatile uint32_t param_sent[MAX_FG_CHANNELS];
 //volatile int initialized[MAX_SCU_SLAVES] = {0};
 int clear_is_active[MAX_SCU_SLAVES + 1] = {0};
 volatile struct message_buffer msg_buf[QUEUE_CNT] = {0};
 uint64_t timeout[MAX_FG_CHANNELS] = {0};
-signed int last_c_coeff[MAX_FG_CHANNELS] = {0};
+int32_t last_c_coeff[MAX_FG_CHANNELS] = {0};
+
+
 
 static inline uint32_t _get_macro_number( unsigned int channel )
 {
@@ -113,14 +115,12 @@ static inline uint32_t _get_macro_number( unsigned int channel )
 
 static inline int _get_slot( unsigned int channel )
 {
-   return _get_macro_number( channel ) >> 24;
-   //return getMilDaqLocationByChannel( _get_macro_number( channel ) );
+   return getMilDaqLocationByChannel( _get_macro_number( channel ) );
 }
 
 static inline int _get_dev( unsigned int channel )
 {
-   return (_get_macro_number( channel ) >> 16) & 0xFF;
-   //return getMilDaqAdressByChannel(_get_macro_number( channel ));
+   return getMilDaqAdressByChannel(_get_macro_number( channel ));
 }
 
 static void dev_failure(int status, int slot, const char* msg)
@@ -143,6 +143,27 @@ static void dev_failure(int status, int slot, const char* msg)
   mprintf("%s%d failed with message %s, %s\n", pText, slot, pMessage, msg);
 }
 
+static void mil_failure( int status, int slave_nr )
+{
+   switch( status )
+   {
+      case RCV_PARITY:
+      {
+         mprintf("parity error when reading task %d\n", slave_nr );
+         break;
+      }
+      case RCV_TIMEOUT:
+      {
+         mprintf("timeout error when reading task %d\n", slave_nr );
+         break;
+      }
+      case RCV_ERROR:
+      {
+         mprintf("unknown error when reading task %d\n", slave_nr );
+         break;
+      }
+   }
+}
 
 /** debug method
  * prints the last received message signaled interrupt to the UART
@@ -167,7 +188,6 @@ static void isr0()
  */
 static void enable_scub_msis(int channel) {
   int slot;
-  //slot = g_shared.fg_macros[g_shared.fg_regs[channel].macro_number] >> 24;  //dereference slot number
   slot = _get_slot( channel );
   if (channel >= 0 && channel < MAX_FG_CHANNELS) {
 
@@ -410,8 +430,6 @@ static int configure_fg_macro(int channel) {
 
   if (channel >= 0 && channel < MAX_FG_CHANNELS) {
     /* actions per slave card */
-    //slot = g_shared.fg_macros[g_shared.fg_regs[channel].macro_number] >> 24;          //dereference slot number
-    //dev =  (g_shared.fg_macros[g_shared.fg_regs[channel].macro_number] >> 16) & 0xff; //dereference dev number
     slot = _get_slot( channel );
     dev  = _get_dev( channel );
     if (slot & DEV_SIO) {
@@ -525,17 +543,21 @@ static int configure_fg_macro(int channel) {
         // save the coeff_c for mil daq
         last_c_coeff[channel] = pset.coeff_c;
         // transmit in one block transfer over the dev bus
-        if((status = write_mil_blk(scu_mil_base, &blk_data[0], FC_BLK_WR | dev)) != OKAY) dev_failure (status, 0, "blk trm");
+        if((status = write_mil_blk(scu_mil_base, &blk_data[0], FC_BLK_WR | dev)) != OKAY)
+           dev_failure (status, 0, "blk trm");
         // still in block mode !
-        if((status = write_mil(scu_mil_base, cntrl_reg_wr, FC_CNTRL_WR | dev)) != OKAY)   dev_failure (status, 0, "end blk trm");
+        if((status = write_mil(scu_mil_base, cntrl_reg_wr, FC_CNTRL_WR | dev)) != OKAY)
+           dev_failure (status, 0, "end blk trm");
 
       } else if (slot & DEV_SIO) {
         // save the coeff_c for mil daq
         last_c_coeff[channel] = pset.coeff_c;
         // transmit in one block transfer over the dev bus
-        if((status = scub_write_mil_blk(scub_base, slot & 0xf, &blk_data[0], FC_BLK_WR | dev))  != OKAY) dev_failure (status, slot & 0xf, "blk trm");
+        if((status = scub_write_mil_blk(scub_base, slot & 0xf, &blk_data[0], FC_BLK_WR | dev))  != OKAY)
+           dev_failure (status, slot & 0xf, "blk trm");
         // still in block mode !
-        if((status = scub_write_mil(scub_base, slot & 0xf, cntrl_reg_wr, FC_CNTRL_WR | dev))  != OKAY)   dev_failure (status, slot & 0xf, "end blk trm");
+        if((status = scub_write_mil(scub_base, slot & 0xf, cntrl_reg_wr, FC_CNTRL_WR | dev))  != OKAY)
+           dev_failure (status, slot & 0xf, "end blk trm");
 
       }
 
@@ -552,13 +574,15 @@ static int configure_fg_macro(int channel) {
       short data;
       //if ((status = read_mil(scu_mil_base, &data, FC_CNTRL_RD | dev)) != OKAY)                       dev_failure (status, 0);
       // enable and end block mode
-      if ((status = write_mil(scu_mil_base, cntrl_reg_wr | FG_ENABLED, FC_CNTRL_WR | dev)) != OKAY) dev_failure (status, 0, "end blk mode");
+      if ((status = write_mil(scu_mil_base, cntrl_reg_wr | FG_ENABLED, FC_CNTRL_WR | dev)) != OKAY)
+         dev_failure (status, 0, "end blk mode");
 
     } else if (slot & DEV_SIO) {
       short data;
       //if ((status = scub_read_mil(scub_base, slot & 0xf, &data, FC_CNTRL_RD | dev)) != OKAY)                       dev_failure (status, slot & 0xf);
       // enable and end block mode
-      if ((status = scub_write_mil(scub_base, slot & 0xf, cntrl_reg_wr | FG_ENABLED, FC_CNTRL_WR | dev)) != OKAY) dev_failure (status, slot & 0xf, "end blk mode");
+      if ((status = scub_write_mil(scub_base, slot & 0xf, cntrl_reg_wr | FG_ENABLED, FC_CNTRL_WR | dev)) != OKAY)
+         dev_failure (status, slot & 0xf, "end blk mode");
     }
 
     // reset watchdog
@@ -573,7 +597,7 @@ static int configure_fg_macro(int channel) {
 /** @brief scans for fgs on mil extension and scu bus
  */
 static void print_fgs( void ) {
-  int i=0;
+  int i;
   for(i=0; i < MAX_FG_MACROS; i++)
     g_shared.fg_macros[i] = 0;
 #if __GNUC__ >= 9
@@ -618,9 +642,9 @@ static void disable_channel(unsigned int channel) {
   int slot, dev, fg_base, dac_base;
   short data;
   int status;
-  if (g_shared.fg_regs[channel].macro_number == -1) return;
-  //slot = g_shared.fg_macros[g_shared.fg_regs[channel].macro_number] >> 24;         //dereference slot number
-  //dev = (g_shared.fg_macros[g_shared.fg_regs[channel].macro_number] >> 16) & 0xff; //dereference dev number
+  if (g_shared.fg_regs[channel].macro_number == -1)
+     return;
+
   slot = _get_slot( channel );
   dev  = _get_dev( channel );
   //mprintf("disarmed slot %d dev %d in channel[%d] state %d\n", slot, dev, channel, fg_regs[channel].state); //ONLY FOR TESTING
@@ -643,6 +667,7 @@ static void disable_channel(unsigned int channel) {
     // disarm hardware
     if((status = read_mil(scu_mil_base, &data, FC_CNTRL_RD | dev)) != OKAY)
        dev_failure(status, 0, "disarm hw");
+
     if((status = write_mil(scu_mil_base, data & ~(0x2), FC_CNTRL_WR | dev)) != OKAY)
        dev_failure(status, 0, "disarm hw");
     //write_mil(scu_mil_base, 0x0, 0x60 << 8 | dev);             // unset FG mode
@@ -651,6 +676,7 @@ static void disable_channel(unsigned int channel) {
     // disarm hardware
     if((status = scub_read_mil(scub_base, slot & 0xf, &data, FC_CNTRL_RD | dev)) != OKAY)
        dev_failure(status, slot & 0xf, "disarm hw");
+
     if((status = scub_write_mil(scub_base, slot & 0xf, data & ~(0x2), FC_CNTRL_WR | dev)) != OKAY)
        dev_failure(status, slot & 0xf, "disarm hw");
     //write_mil(scu_mil_base, 0x0, 0x60 << 8 | dev);             // unset FG mode
@@ -743,6 +769,9 @@ static void clear_handler_state(int slot) {
  *  dispatch the calls from linux to the helper functions
  *  called via scheduler in main loop
  *  @param id task id
+ * @todo Replace the naked numbers for OP-code, use enums defined in
+ *       scu_shared_mem.h instead! (UB)
+ *       "id" will not used, remove it ASAP (UB)
  */
 static void sw_irq_handler(int id) {
   int i;
@@ -892,7 +921,8 @@ static void ecaHandler( )
     switch (actTag) {
       case MY_ECA_TAG:
         // send broadcast start to mil extension
-        if (dev_mil_armed) scu_mil_base[MIL_SIO3_TX_CMD] = 0x20ff;
+        if (dev_mil_armed)
+           scu_mil_base[MIL_SIO3_TX_CMD] = 0x20ff;
         // send broadcast start to active sio slaves
         if (dev_sio_armed) {
           // select active sio slaves
@@ -943,7 +973,7 @@ static TaskType tasks[] = {
 #ifdef FG_OBJECT_ORIENTED
 static inline unsigned int getId( register TaskType* pThis )
 {
-   return (pThis - tasks) / sizeof( TaskType );
+   return (((uint8_t*)pThis) - ((uint8_t*)tasks)) / sizeof( TaskType );
 }
 #endif
 
@@ -961,50 +991,51 @@ TaskType *tsk_getConfig(void) {
  * decides which action for a scu bus interrupt is suitable
  * @param id task id
  */
-static void scu_bus_handler(int id) {
-  volatile unsigned int slv_int_act_reg;
+static void scu_bus_handler(int id)
+{
+  uint16_t slv_int_act_reg;
   unsigned char slave_nr;
-  unsigned short slave_acks = 0;
+  uint16_t slave_acks = 0;
   struct msi m;
-  static TaskType *task_ptr;              // task pointer
-  task_ptr = tsk_getConfig();             // get a pointer to the task configuration
   signed int dummy;
 
-  if (has_msg(&msg_buf[0], SCUBUS)) {
+  if (!has_msg(&msg_buf[0], SCUBUS))
+     return;
 
-    m = remove_msg(&msg_buf[0], SCUBUS);
-    if (m.adr == 0x0) {
-      slave_nr = m.msg + 1;
-      if (slave_nr < 0 || slave_nr > MAX_SCU_SLAVES) {
-        mprintf("slave nr unknown.\n");
-        return;
-      }
-      slv_int_act_reg = scub_base[OFFS(slave_nr) + SLAVE_INT_ACT];
-      if (slv_int_act_reg & 0x1) {// powerup interrupt
-        slave_acks |= 0x1;
-      }
-      if (slv_int_act_reg & FG1_IRQ) { //FG irq?
-        handle(slave_nr, FG1_BASE, 0, &dummy);
-        slave_acks |= FG1_IRQ;
-      }
-      if (slv_int_act_reg & FG2_IRQ) { //FG irq?
-        handle(slave_nr, FG2_BASE, 0, &dummy);
-        slave_acks |= FG2_IRQ;
-      }
-      if (slv_int_act_reg & DREQ) { //DRQ irq?
-        add_msg(&msg_buf[0], DEVSIO, m);
-        slave_acks |= DREQ;
-      }
-      scub_base[OFFS(slave_nr) + SLAVE_INT_ACT] = slave_acks; // ack all pending irqs 
-    }
+  m = remove_msg(&msg_buf[0], SCUBUS);
+  if (m.adr != 0x0)
+     return;
+
+  slave_nr = m.msg + 1;
+  if (slave_nr < 0 || slave_nr > MAX_SCU_SLAVES) {
+     mprintf("slave nr unknown.\n");
+     return;
   }
-  return;
+
+  slv_int_act_reg = scub_base[OFFS(slave_nr) + SLAVE_INT_ACT];
+  if (slv_int_act_reg & 0x1) {// powerup interrupt
+    slave_acks |= 0x1;
+  }
+  if (slv_int_act_reg & FG1_IRQ) { //FG irq?
+    handle(slave_nr, FG1_BASE, 0, &dummy);
+    slave_acks |= FG1_IRQ;
+  }
+  if (slv_int_act_reg & FG2_IRQ) { //FG irq?
+    handle(slave_nr, FG2_BASE, 0, &dummy);
+    slave_acks |= FG2_IRQ;
+  }
+  if (slv_int_act_reg & DREQ) { //DRQ irq?
+    add_msg(&msg_buf[0], DEVSIO, m);
+    slave_acks |= DREQ;
+  }
+  scub_base[OFFS(slave_nr) + SLAVE_INT_ACT] = slave_acks; // ack all pending irqs
 }
 
 /**
  * @brief can have multiple instances, one for each active sio card controlling a dev bus
  * persistent data, like the state or the sio slave_nr, is stored in a global structure
  * @param id task id
+ * @todo Replace the naked state-nunbers by well named enums! (UB)
  */
 static void dev_sio_handler(int id) {
   int i;
@@ -1018,42 +1049,42 @@ static void dev_sio_handler(int id) {
 
   switch(task_ptr[id].state) {
     case 0:
+    {
       // we have nothing to do
       if (!has_msg(&msg_buf[0], DEVSIO))
         break;
-      else
-        m = remove_msg(&msg_buf[0], DEVSIO);
 
+      m = remove_msg(&msg_buf[0], DEVSIO);
       task_ptr[id].slave_nr = m.msg + 1;
       task_ptr[id].timestamp1 = getSysTime();
       task_ptr[id].state = 1;
       break; //yield
+    }
 
     case 1:
+    {
       // wait for 200 us
       if (getSysTime() < (task_ptr[id].timestamp1 + INTERVAL_200US))
         break; //yield
-      else {
-        /* poll all pending regs on the dev bus; non blocking read operation */
-        for (i = 0; i < MAX_FG_CHANNELS; i++) {
-            //slot = g_shared.fg_macros[g_shared.fg_regs[i].macro_number] >> 24;
-            //dev = (g_shared.fg_macros[g_shared.fg_regs[i].macro_number] & 0x00ff0000) >> 16;
-            slot = _get_slot( i );
-            dev  = _get_dev( i );
-            /* test only ifas connected to sio */
-            if(((slot & 0xf) == task_ptr[id].slave_nr ) && (slot & DEV_SIO)) {
-              if ((status = scub_set_task_mil(scub_base, task_ptr[id].slave_nr, id + i + 1, FC_IRQ_ACT_RD | dev)) != OKAY)
-                 dev_failure(status, 20, "dev_sio set task");
-            }
-        }
-        // clear old irq data
-        for (i = 0; i < MAX_FG_CHANNELS; i++)
-          task_ptr[id].irq_data[i] = 0;
-        task_ptr[id].state = 2;
-        break;
+      /* poll all pending regs on the dev bus; non blocking read operation */
+      for (i = 0; i < MAX_FG_CHANNELS; i++) {
+          slot = _get_slot( i );
+          dev  = _get_dev( i );
+          /* test only ifas connected to sio */
+          if(((slot & 0xf) == task_ptr[id].slave_nr ) && (slot & DEV_SIO)) {
+            if ((status = scub_set_task_mil(scub_base, task_ptr[id].slave_nr, id + i + 1, FC_IRQ_ACT_RD | dev)) != OKAY)
+               dev_failure(status, 20, "dev_sio set task");
+          }
       }
+        // clear old irq data
+      for (i = 0; i < MAX_FG_CHANNELS; i++)
+        task_ptr[id].irq_data[i] = 0;
+      task_ptr[id].state = 2;
+      break;
+    }
 
     case 2:
+    {
       /* if timeout reached, proceed with next task */
       if (task_ptr[id].task_timeout_cnt > TASK_TIMEOUT) {
         mprintf("timeout in dev_sio_handle, state 1, taskid %d , index %d\n", id, task_ptr[id].i);
@@ -1062,23 +1093,16 @@ static void dev_sio_handler(int id) {
       }
       /* fetch status from dev bus controller; */
       for (i = task_ptr[id].i; i < MAX_FG_CHANNELS; i++) {
-          //slot = g_shared.fg_macros[g_shared.fg_regs[i].macro_number] >> 24;
-          //dev = (g_shared.fg_macros[g_shared.fg_regs[i].macro_number] & 0x00ff0000) >> 16;
           slot = _get_slot( i );
-          dev  = _get_dev( i );
+         // dev  = _get_dev( i );
           /* test only ifas connected to sio */
           if(((slot & 0xf) == task_ptr[id].slave_nr ) && (slot & DEV_SIO)) {
             status = scub_get_task_mil(scub_base, task_ptr[id].slave_nr, id + i + 1, &task_ptr[id].irq_data[i]);
             if (status != OKAY) {
               if (status == RCV_TASK_BSY) {
                 break; // break from for loop
-              } else if (status == RCV_PARITY) {
-                mprintf("parity error when reading task %d\n", task_ptr[id].slave_nr);
-              } else if (status == RCV_TIMEOUT) {
-                mprintf("timeout error when reading task %d\n", task_ptr[id].slave_nr);
-              } else if (status == RCV_ERROR) {
-                mprintf("unknown error when reading task %d\n", task_ptr[id].slave_nr);
               }
+              mil_failure( status, task_ptr[id].slave_nr );
             }
           }
       }
@@ -1086,19 +1110,18 @@ static void dev_sio_handler(int id) {
         task_ptr[id].i = i; // start next time from i
         task_ptr[id].task_timeout_cnt++;
         break; //yield
-      } else {
-        task_ptr[id].i = 0; // start next time from 0
-        task_ptr[id].task_timeout_cnt = 0;
-        task_ptr[id].state = 3;
-        break;
       }
+      task_ptr[id].i = 0; // start next time from 0
+      task_ptr[id].task_timeout_cnt = 0;
+      task_ptr[id].state = 3;
+      break;
+    }
 
     case 3:
+    {
       /* handle irqs for ifas with active pending regs; non blocking write */
       for (i = 0; i < MAX_FG_CHANNELS; i++) {
         if (task_ptr[id].irq_data[i] & (DEV_STATE_IRQ | DEV_DRQ)) { // any irq pending?
-          //slot = g_shared.fg_macros[g_shared.fg_regs[i].macro_number] >> 24;
-          //dev = (g_shared.fg_macros[g_shared.fg_regs[i].macro_number] & 0x00ff0000) >> 16;
           slot = _get_slot( i );
           dev  = _get_dev( i );
           handle(slot, dev, task_ptr[id].irq_data[i], &(task_ptr[id].setvalue[i]));
@@ -1109,13 +1132,13 @@ static void dev_sio_handler(int id) {
       }
       task_ptr[id].state = 4;
       break;
+    }
 
     case 4:
+    {
       /* data aquisition */
       for (i = 0; i < MAX_FG_CHANNELS; i++) {
         if (task_ptr[id].irq_data[i] & (DEV_STATE_IRQ | DEV_DRQ)) { // any irq pending?
-          //slot = g_shared.fg_macros[g_shared.fg_regs[i].macro_number] >> 24;
-          //dev = (g_shared.fg_macros[g_shared.fg_regs[i].macro_number] & 0x00ff0000) >> 16;
           slot = _get_slot( i );
           dev =  _get_dev( i );
           // non blocking read for DAQ
@@ -1127,8 +1150,10 @@ static void dev_sio_handler(int id) {
       }
       task_ptr[id].state = 5;
       break;
+    }
 
     case 5:
+    {
       /* if timeout reached, proceed with next task */
       if (task_ptr[id].task_timeout_cnt > TASK_TIMEOUT) {
         mprintf("timeout in dev_sio_handle, state 4, taskid %d , index %d\n", id, task_ptr[id].i);
@@ -1138,8 +1163,6 @@ static void dev_sio_handler(int id) {
       /* fetch daq data */
       for (i = task_ptr[id].i; i < MAX_FG_CHANNELS; i++) {
         if (task_ptr[id].irq_data[i] & (DEV_STATE_IRQ | DEV_DRQ)) { // any irq pending?
-          // slot = g_shared.fg_macros[g_shared.fg_regs[i].macro_number] >> 24;
-          // dev = (g_shared.fg_macros[g_shared.fg_regs[i].macro_number] & 0x00ff0000) >> 16;
           slot = _get_slot( i );
           dev =  _get_dev( i );
 
@@ -1148,13 +1171,8 @@ static void dev_sio_handler(int id) {
           if (status != OKAY) {
             if (status == RCV_TASK_BSY) {
               break; // break from for loop
-            } else if (status == RCV_PARITY) {
-              mprintf("parity error when reading task %d\n", task_ptr[id].slave_nr);
-            } else if (status == RCV_TIMEOUT) {
-              mprintf("timeout error when reading task %d\n", task_ptr[id].slave_nr);
-            } else if (status == RCV_ERROR) {
-              mprintf("unknown error when reading task %d\n", task_ptr[id].slave_nr);
             }
+            mil_failure( status, task_ptr[id].slave_nr );
           }
           d.actvalue = data_aquisition;
           d.tmstmp_l = task_ptr[id].daq_timestamp[i] & 0xffffffff;
@@ -1175,20 +1193,21 @@ static void dev_sio_handler(int id) {
         task_ptr[id].i = i; // start next time from i
         task_ptr[id].task_timeout_cnt++;
         break; //yield
-      } else {
-        task_ptr[id].i = 0; // start next time from 0
-        task_ptr[id].task_timeout_cnt = 0;
-        task_ptr[id].state = 0;
-        break;
       }
+      task_ptr[id].i = 0; // start next time from 0
+      task_ptr[id].task_timeout_cnt = 0;
+      task_ptr[id].state = 0;
+      break;
+    }
     default:
+    {
       mprintf("unknown state of dev bus handler!\n");
       task_ptr[id].state = 0;
       break;
+    }
   }
 
   return;
-
 }
 
 /**
@@ -1204,45 +1223,45 @@ static void dev_bus_handler(int id) {
   struct msi m;
   struct daq d;
   static TaskType *task_ptr;              // task pointer
+
   task_ptr = tsk_getConfig();             // get a pointer to the task configuration
   switch(task_ptr[id].state) {
     case 0:
+    {
       // we have nothing to do
       if (!has_msg(&msg_buf[0], DEVBUS))
         break;
-      else
-        m = remove_msg(&msg_buf[0], DEVBUS);
 
+      m = remove_msg(&msg_buf[0], DEVBUS);
       task_ptr[id].timestamp1 = getSysTime();
       task_ptr[id].state = 1;
       break; //yield
+    }
 
     case 1:
+    {
       // wait for 200us
       if (getSysTime() < (task_ptr[id].timestamp1 + INTERVAL_200US))
         break; //yield
-      else {
-
-        /* poll all pending regs on the dev bus; non blocking read operation */
-        for (i = 0; i < MAX_FG_CHANNELS; i++) {
-            //slot = g_shared.fg_macros[g_shared.fg_regs[i].macro_number] >> 24;
-            //dev = (g_shared.fg_macros[g_shared.fg_regs[i].macro_number] & 0x00ff0000) >> 16;
-            slot = _get_slot( i );
-            dev  = _get_dev( i );
-            /* test only ifas connected to mil extension */
-            if(slot & DEV_MIL_EXT) {
-              if ((status = set_task_mil(scu_mil_base, id + i + 1, FC_IRQ_ACT_RD | dev)) != OKAY)
-                 dev_failure(status, 20, "");
-            }
-        }
-        // clear old irq data
-        for (i = 0; i < MAX_FG_CHANNELS; i++)
-          task_ptr[id].irq_data[i] = 0;
-        task_ptr[id].state = 2;
-        break;
+      /* poll all pending regs on the dev bus; non blocking read operation */
+      for (i = 0; i < MAX_FG_CHANNELS; i++) {
+          slot = _get_slot( i );
+          dev  = _get_dev( i );
+          /* test only ifas connected to mil extension */
+          if(slot & DEV_MIL_EXT) {
+            if ((status = set_task_mil(scu_mil_base, id + i + 1, FC_IRQ_ACT_RD | dev)) != OKAY)
+               dev_failure(status, 20, "");
+          }
       }
+      // clear old irq data
+      for (i = 0; i < MAX_FG_CHANNELS; i++)
+        task_ptr[id].irq_data[i] = 0;
+      task_ptr[id].state = 2;
+      break;
+    }
 
     case 2:
+    {
       /* if timeout reached, proceed with next task */
       if (task_ptr[id].task_timeout_cnt > TASK_TIMEOUT) {
         task_ptr[id].i++;
@@ -1250,8 +1269,6 @@ static void dev_bus_handler(int id) {
       }
       /* fetch status from dev bus controller; */
       for (i = task_ptr[id].i; i < MAX_FG_CHANNELS; i++) {
-          //slot = g_shared.fg_macros[g_shared.fg_regs[i].macro_number] >> 24;
-          //dev = (g_shared.fg_macros[g_shared.fg_regs[i].macro_number] & 0x00ff0000) >> 16;
           slot = _get_slot( i );
           dev  = _get_dev( i );
           /* test only ifas connected to mil extension */
@@ -1260,13 +1277,8 @@ static void dev_bus_handler(int id) {
             if (status != OKAY) {
               if (status == RCV_TASK_BSY) {
                 break; // break from for loop
-              } else if (status == RCV_PARITY) {
-                mprintf("parity error when reading task %d\n", task_ptr[id].slave_nr);
-              } else if (status == RCV_TIMEOUT) {
-                mprintf("timeout error when reading task %d\n", task_ptr[id].slave_nr);
-              } else if (status == RCV_ERROR) {
-                mprintf("unknown error when reading task %d\n", task_ptr[id].slave_nr);
               }
+              mil_failure( status, task_ptr[id].slave_nr );
             }
 
           }
@@ -1275,46 +1287,45 @@ static void dev_bus_handler(int id) {
         task_ptr[id].i = i; // start next time from i
         task_ptr[id].task_timeout_cnt++;
         break; //yield
-      } else {
-        task_ptr[id].i = 0; // start next time from 0
-        task_ptr[id].task_timeout_cnt = 0;
-        task_ptr[id].state = 3;
-        break;
       }
-
+      task_ptr[id].i = 0; // start next time from 0
+      task_ptr[id].task_timeout_cnt = 0;
+      task_ptr[id].state = 3;
+      break;
+    }
     case 3:
+    {
       /* handle irqs for ifas with active pending regs; non blocking write */
       for (i = 0; i < MAX_FG_CHANNELS; i++) {
         if (task_ptr[id].irq_data[i] & (DEV_STATE_IRQ | DEV_DRQ)) { // any irq pending?
-         // slot = g_shared.fg_macros[g_shared.fg_regs[i].macro_number] >> 24;
-         // dev = (g_shared.fg_macros[g_shared.fg_regs[i].macro_number] & 0x00ff0000) >> 16;
           slot = _get_slot( i );
           dev  = _get_dev( i );
           handle(slot, dev, task_ptr[id].irq_data[i], &(task_ptr[id].setvalue[i]));
           //clear irq pending and end block transfer
-          if ((status = write_mil(scu_mil_base, 0, FC_IRQ_ACT_WR | dev)) != OKAY) dev_failure(status, 22, "");
+          if ((status = write_mil(scu_mil_base, 0, FC_IRQ_ACT_WR | dev)) != OKAY)
+             dev_failure(status, 22, "");
         }
       }
       task_ptr[id].state = 4;
       break;
-
+    }
     case 4:
+    {
       /* data aquisition */
       for (i = 0; i < MAX_FG_CHANNELS; i++) {
         if (task_ptr[id].irq_data[i] & (DEV_STATE_IRQ | DEV_DRQ)) { // any irq pending?
-          //slot = g_shared.fg_macros[g_shared.fg_regs[i].macro_number] >> 24;
-          //dev = (g_shared.fg_macros[g_shared.fg_regs[i].macro_number] & 0x00ff0000) >> 16;
-          slot = _get_slot( i );
+          //slot = _get_slot( i );
           dev  = _get_dev( i );
           // non blocking read for DAQ
-          if ((status = set_task_mil(scu_mil_base, id + i + 1, FC_ACT_RD | dev)) != OKAY) dev_failure(status, 23, "");
+          if ((status = set_task_mil(scu_mil_base, id + i + 1, FC_ACT_RD | dev)) != OKAY)
+             dev_failure(status, 23, "");
           // store the sample timestamp for daq
           task_ptr[id].daq_timestamp[i] = getSysTime();
         }
       }
       task_ptr[id].state = 5;
       break;
-
+    }
     case 5:
       /* if timeout reached, proceed with next task */
       if (task_ptr[id].task_timeout_cnt > TASK_TIMEOUT) {
@@ -1324,28 +1335,20 @@ static void dev_bus_handler(int id) {
       /* fetch daq data */
       for (i = task_ptr[id].i; i < MAX_FG_CHANNELS; i++) {
         if (task_ptr[id].irq_data[i] & (DEV_STATE_IRQ | DEV_DRQ)) { // any irq pending?
-          //slot = g_shared.fg_macros[g_shared.fg_regs[i].macro_number] >> 24;
-          //dev = (g_shared.fg_macros[g_shared.fg_regs[i].macro_number] & 0x00ff0000) >> 16;
-          slot = _get_slot( i );
-          dev  = _get_dev( i );
+          //slot = _get_slot( i );
+          //dev  = _get_dev( i );
 
           // fetch DAQ
           status = get_task_mil(scu_mil_base, id +  i + 1, &data_aquisition);
           if (status != OKAY) {
             if (status == RCV_TASK_BSY) {
               break; // break from for loop
-            } else if (status == RCV_PARITY) {
-              mprintf("parity error when reading task %d\n", task_ptr[id].slave_nr);
-            } else if (status == RCV_TIMEOUT) {
-              mprintf("timeout error when reading task %d\n", task_ptr[id].slave_nr);
-            } else if (status == RCV_ERROR) {
-              mprintf("unknown error when reading task %d\n", task_ptr[id].slave_nr);
             }
+            mil_failure( status, task_ptr[id].slave_nr );
           }
           d.actvalue = data_aquisition;
           d.tmstmp_l = task_ptr[id].daq_timestamp[i] & 0xffffffff;
           d.tmstmp_h = task_ptr[id].daq_timestamp[i] >> 32;
-          //d.channel  = g_shared.fg_macros[g_shared.fg_regs[i].macro_number];
           d.channel = _get_macro_number( i );
           d.setvalue = last_c_coeff[i];
           add_daq_msg(&g_shared.daq_buf, d);
@@ -1361,12 +1364,12 @@ static void dev_bus_handler(int id) {
         task_ptr[id].i = i; // start next time from i
         task_ptr[id].task_timeout_cnt++;
         break; //yield
-      } else {
-        task_ptr[id].i = 0; // start next time from 0
-        task_ptr[id].task_timeout_cnt = 0;
-        task_ptr[id].state = 0;
-        break;
       }
+      task_ptr[id].i = 0; // start next time from 0
+      task_ptr[id].task_timeout_cnt = 0;
+      task_ptr[id].state = 0;
+      break;
+
     default:
       mprintf("unknown state of dev bus handler!\n");
       task_ptr[id].state = 0;
@@ -1396,13 +1399,13 @@ int main(void) {
   uart_init_hw();
   /* additional periphery needed for scu */
   cpu_info_base = (unsigned int*)find_device_adr(GSI, CPU_INFO_ROM);
-  scub_base     = (unsigned short*)find_device_adr(GSI, SCU_BUS_MASTER);
-  scub_irq_base = (unsigned int*)find_device_adr(GSI, SCU_IRQ_CTRL);       // irq controller for scu bus
-  find_device_multi(&found_sdb[0], &clu_cb_idx, 20, GSI, LM32_CB_CLUSTER); // find location of cluster crossbar
+  scub_base     = (volatile uint16_t*)find_device_adr(GSI, SCU_BUS_MASTER);
+  scub_irq_base = (volatile uint32_t*)find_device_adr(GSI, SCU_IRQ_CTRL);       // irq controller for scu bus
+  find_device_multi(&found_sdb[0], &clu_cb_idx, ARRAY_SIZE(found_sdb), GSI, LM32_CB_CLUSTER); // find location of cluster crossbar
   scu_mil_base  = (unsigned int*)find_device_adr(GSI,SCU_MIL);             // mil extension macro
-  mil_irq_base  = (unsigned int*)find_device_adr(GSI, MIL_IRQ_CTRL);       // irq controller for dev bus extension
-  wr_1wire_base = (unsigned int*)find_device_adr(CERN, WR_1Wire);          // 1Wire controller in the WRC
-  user_1wire_base = (unsigned int*)find_device_adr(GSI, User_1Wire);       // 1Wire controller on dev crossbar
+  mil_irq_base  = (volatile uint32_t*)find_device_adr(GSI, MIL_IRQ_CTRL);       // irq controller for dev bus extension
+  wr_1wire_base = (volatile uint32_t*)find_device_adr(CERN, WR_1Wire);          // 1Wire controller in the WRC
+  user_1wire_base = (volatile uint32_t*)find_device_adr(GSI, User_1Wire);       // 1Wire controller on dev crossbar
 
   mprintf("Compiler: "COMPILER_VERSION_STRING"\n"
           "Found MsgBox at 0x%08x. MSI Path is 0x%08x\n", (uint32_t)pCpuMsiBox, (uint32_t)pMyMsi);
@@ -1471,27 +1474,15 @@ int main(void) {
     tick = getSysTime(); /* FIXME get the current system tick */
 
     // loop through all task: if interval is 0, run every time, otherwise obey interval
-   // for(taskIndex = 0; taskIndex < numTasks; taskIndex++)
     for( taskIndex = 0; taskIndex < ARRAY_SIZE( tasks ); taskIndex++ )
     {
       // call the dispatch task before every other task
-      //dispatch(numTasks);
-      //dispatch( ARRAY_SIZE( tasks ) );
       dispatch();
-#if FG_OBJECT_ORIENTED
       TaskType* pCurrent = &task_ptr[taskIndex];
-      if( tick - pCurrent->lasttick < pCurrent->interval )
+      if( (tick - pCurrent->lasttick) < pCurrent->interval )
          continue;
       pCurrent->func(taskIndex);
       pCurrent->lasttick = tick;
-#else
-      if ((tick - task_ptr[taskIndex].lasttick) >= task_ptr[taskIndex].interval) {
-        // run task
-       // (*task_ptr[taskIndex].func)(taskIndex);
-        task_ptr[taskIndex].func(taskIndex);
-        task_ptr[taskIndex].lasttick = tick; // save last tick the task was ran
-      }
-#endif
     }
   #ifdef CONFIG_SCU_DAQ_INTEGRATION
     forEachScuDaqDevice();
