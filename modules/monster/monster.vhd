@@ -108,7 +108,8 @@ entity monster is
     g_en_tempsens          : boolean;
     g_delay_diagnostics    : boolean;
     g_en_eca               : boolean;
-    g_en_wd_tmr            : boolean);
+    g_en_wd_tmr            : boolean;
+    g_en_eca_tap           : boolean);
   port(
     -- Required: core signals
     core_clk_20m_vcxo_i    : in    std_logic;
@@ -483,7 +484,7 @@ architecture rtl of monster is
     c_devs_ddr3_if2       => f_sdb_auto_device(c_wb_DDR3_if2_sdb,                g_en_ddr3),
     c_devs_ddr3_ctrl      => f_sdb_auto_device(c_irq_master_ctrl_sdb,            g_en_ddr3),
     c_devs_tempsens       => f_sdb_auto_device(c_temp_sense_sdb,                 g_en_tempsens),
-    c_devs_eca_tap        => f_sdb_auto_device(c_eca_tap_sdb,                    g_en_tap));
+    c_devs_eca_tap        => f_sdb_auto_device(c_eca_tap_sdb,                    g_en_eca_tap));
   constant c_dev_layout      : t_sdb_record_array := f_sdb_auto_layout(c_dev_layout_req_masters, c_dev_layout_req_slaves);
   constant c_dev_sdb_address : t_wishbone_address := f_sdb_auto_sdb   (c_dev_layout_req_masters, c_dev_layout_req_slaves);
   constant c_dev_bridge_sdb  : t_sdb_bridge       := f_xwb_bridge_layout_sdb(true, c_dev_layout, c_dev_sdb_address);
@@ -1777,7 +1778,7 @@ end generate;
  -- transparent wire tap on eca events
   ecatap : eca_tap
   generic map(
-    g_build_tap => g_en_tap
+    g_build_tap => g_en_eca_tap
   )
   port map (
     clk_sys_i    => clk_sys,
@@ -1950,12 +1951,13 @@ end generate;
             end generate;
           end generate;
 
+
       ecawb : eca_wb_event
         port map(
           w_clk_i    => clk_sys,
           w_rst_n_i  => rstn_sys,
-          w_slave_i  => top_bus_master_o(c_tops_eca_event),
-          w_slave_o  => top_bus_master_i(c_tops_eca_event),
+          w_slave_i  => s_eca_evt_m_o,
+          w_slave_o  => s_eca_evt_m_i,
           e_clk_i    => clk_ref,
           e_rst_n_i  => rstn_ref,
           e_stream_o => s_stream_i(0),
