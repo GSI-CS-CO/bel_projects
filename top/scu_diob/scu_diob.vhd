@@ -3865,7 +3865,7 @@ P_IOBP_LED_ID_Loop:  process (clk_sys, Ena_Every_250ns, rstn_sys, IOBP_state)
   spill_userstations : spill_abort
     Port map( clk => clk_sys,
               nReset => rstn_sys,
-              time_pulse => Ena_Every_20ms,
+              time_pulse => Ena_Every_1us,
               armed => spill_armed(J),
               req => spill_req(J),
               abort => spill_case_abort(J),

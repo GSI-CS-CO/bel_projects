@@ -26,7 +26,7 @@ signal NEXT_STATE : SM_STATES := P_Wait;
 
 
 
-signal assert_count  : std_logic_vector (11 downto 0):=X"000";
+signal assert_count :  integer range 0 to 16#FFFF#;
 signal assert_ctr_tc : std_logic;
 signal assert_ctr_en : std_logic;
 signal assert_ctr_load : std_logic;
@@ -88,10 +88,10 @@ end process;
 process (clk, nReset)
 begin
         if nReset = '0' then
-          assert_count <= X"000";
+          assert_count <= 0;
         elsif rising_edge (clk) then
             if assert_ctr_load= '1' then
-                assert_count <= X"032";
+                assert_count <= 10;
             elsif (assert_ctr_tc = '0') then
                 if time_pulse = '1' then
                 assert_count <= assert_count - 1;
