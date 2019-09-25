@@ -86,8 +86,6 @@ ifdef USE_SCU_EXTERN_RAM
   DEFINES += CONFIG_SCU_USE_DDR3
 endif
 
- DEFINES += FG_OBJECT_ORIENTED
-
 # To be 100% backward compatible we can use the old toolchain.
 # If the variable TOOLCHAIN_DIR commented out, then the first toolchain found
 # in the environment variable $PATH will used if present,

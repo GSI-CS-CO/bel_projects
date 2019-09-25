@@ -33,6 +33,8 @@ INCLUDE_DIRS += $(REPOSITORY_DIR)/tools
 INCLUDE_DIRS += $(WR_DIR)/sdb-lib
 INCLUDE_DIRS += $(WR_DIR)/pp_printf
 INCLUDE_DIRS += $(IP_CORE_DIR)/etherbone-core/hdl/eb_master_core
+INCLUDE_DIRS += $(IP_CORE_DIR)/wr-cores/modules/wr_eca
+INCLUDE_DIRS += $(IP_CORE_DIR)/saftlib/drivers
 
 DEFINES += CONFIG_SCU
 
@@ -40,7 +42,7 @@ DEFINES += CONFIG_SCU
 DOX_OUTPUT_DIRECTORY ?= $(HOME)/Documents/scr_doc/$(TARGET)
 DOX_PROJECT_LOGO     ?= $(MAKEFILE_DIR)/GSI_Logo_rgb_72dpi.png
 DOX_INPUT            += $(SCU_LIB_SRC_DIR)/helper_macros.h
-DOX_INPUT            += $(SCU_LIB_SRC_DIR)/scu_assert.
+DOX_INPUT            += $(SCU_LIB_SRC_DIR)/scu_assert.h
 DOX_INPUT            += $(SCU_LIB_SRC_DIR)/scu_bus_defines.h
 DOX_INPUT            += $(SCU_LIB_SRC_DIR)/eb_console_helper.h
 DOX_INPUT            += $(MAKEFILE_DIR)/scu_dirs.inc
