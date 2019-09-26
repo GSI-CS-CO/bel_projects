@@ -300,7 +300,7 @@ vEbwrs& CarpeDM::CarpeDMimpl::createCommandBurst(vEbwrs& ew, Graph& g) {
     if       (g[v].cmdDestPat   != DotStr::Misc::sUndefined)  { destination = getPatternEntryNode(g[v].cmdDestPat); }
     else  if (g[v].cmdDestBp    != DotStr::Misc::sUndefined)  { destination = getBeamprocEntryNode(g[v].cmdDestBp); }
     else  if (g[v].cmdDest      != DotStr::Misc::sUndefined)  { destination = g[v].cmdDest;}
-    else  { destination = target; } // if there is no destination, assign target to destination
+    else  { destination = getPatternEntryNode(g[v].patName); } // if there is no destination, assign target to destination
 
     type      = g[v].type;
     cmdPrio   = s2u<uint8_t>(g[v].prio);
