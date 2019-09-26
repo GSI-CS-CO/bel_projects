@@ -69,6 +69,10 @@ class CommandLine: public PARSER
 
    static std::vector<OPTION> c_optList;
    STATE_T                    m_state;
+   bool                       m_targetUrlGiven;
+   int                        m_numDevs;
+   int                        m_numChannels;
+   bool                       m_optionError;
    bool                       m_verbose;
    bool                       m_autoBuilding;
    bool                       m_deviationEnable;

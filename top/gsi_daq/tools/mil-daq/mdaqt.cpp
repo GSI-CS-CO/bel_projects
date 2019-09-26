@@ -306,13 +306,21 @@ void MilDaqAdministration::setSingleShoot( bool enable )
 inline
 int mdaqtMain( int argc, char** ppArgv )
 {
+   DEBUG_MESSAGE( "Start" );
+#ifdef DEBUGLEVEL
+   for( uint i = 0; i < argc; i++ )
+      DEBUG_MESSAGE( "Arg " << i << ": " << ppArgv[i] );
+#endif
 
    CommandLine cmdLine( argc, ppArgv );
 
    MilDaqAdministration* pDaqAdmin = cmdLine();
 
    if( pDaqAdmin == nullptr )
+   {
+      DEBUG_MESSAGE( "EXIT_FAILURE" );
       return EXIT_FAILURE;
+   }
 
    DEBUG_MESSAGE( "SCU: " << pDaqAdmin->getWbDevice() );
    int key;
@@ -351,6 +359,7 @@ int mdaqtMain( int argc, char** ppArgv )
       }
       if( doReceive )
          pDaqAdmin->distributeData();
+      ::usleep( 10 );
    }
    DEBUG_MESSAGE( "Loop left" );
    return EXIT_SUCCESS;
@@ -376,7 +385,7 @@ int main( int argc, char** ppArgv )
    {
       ERROR_MESSAGE( "Undefined exception occurred!" );
    }
-
+   DEBUG_MESSAGE( "EXIT_FAILURE" );
    return EXIT_FAILURE;
 }
 

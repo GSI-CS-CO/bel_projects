@@ -181,7 +181,8 @@ vector<OPTION> CommandLine::c_optList =
       .m_id       = 0,
       .m_shortOpt = 'z',
       .m_longOpt  = "zoom",
-      .m_helpText = "Zooming of the Y-axis (voltage axis) in GNUPLOT."
+      .m_helpText = "Zooming of the Y-axis (voltage axis) in GNUPLOT "
+                    "(auto-scaling)."
    },
    {
       OPT_LAMBDA( poParser,
@@ -299,6 +300,10 @@ bool CommandLine::readFloat( float& rValue, const string& roStr )
 CommandLine::CommandLine( int argc, char** ppArgv )
    :PARSER( argc, ppArgv )
    ,FSM_INIT_FSM( READ_EB_NAME )
+   ,m_targetUrlGiven( false )
+   ,m_numDevs( 0 )
+   ,m_numChannels( 0 )
+   ,m_optionError( false )
    ,m_verbose( false )
    ,m_autoBuilding( false )
    ,m_deviationEnable( false )
@@ -336,10 +341,28 @@ MilDaqAdministration* CommandLine::operator()( void )
 
    if( PARSER::operator()() < 0 )
       return nullptr;
-   if( m_poAllDaq == nullptr )
-      return nullptr;
 
-   return m_poAllDaq;
+   if( m_poAllDaq != nullptr )
+      return m_poAllDaq;
+
+   if( !m_targetUrlGiven )
+   {
+      ERROR_MESSAGE( "Missing target!" );
+      return nullptr;
+   }
+
+   if( m_numDevs == 0 )
+   {
+      ERROR_MESSAGE( "No slot(s) given!" );
+      return nullptr;
+   }
+
+   if( m_numChannels == 0 )
+   {
+      ERROR_MESSAGE( "No channel(s) given!" );
+      return nullptr;
+   }
+   return nullptr;
 }
 
 /*-----------------------------------------------------------------------------
@@ -364,7 +387,8 @@ int CommandLine::onArgument( void )
       case READ_EB_NAME:
       {
          assert( m_poAllDaq == nullptr );
-#if 1
+         m_targetUrlGiven = true;
+#if 0
          if( daq::isConcurrentProcessRunning( getProgramName(), arg ) )
             return -1;
 #endif
@@ -375,6 +399,7 @@ int CommandLine::onArgument( void )
       }
       case READ_SLOT:
       {
+         m_numDevs++;
          m_poCurrentChannel = nullptr;
 #if 0
          if( !gsi::isInRange( number, DaqInterface::c_startSlot,
@@ -400,6 +425,7 @@ int CommandLine::onArgument( void )
       {
          assert( m_poCurrentDevice != nullptr );
          assert( m_poCurrentChannel == nullptr );
+         m_numChannels++;
 #if 0
          if( !gsi::isInRange( number, static_cast<uint>( 1 ),
                                       DaqInterface::c_maxChannels ) )
@@ -431,6 +457,7 @@ int CommandLine::onArgument( void )
 int CommandLine::onErrorUnrecognizedShortOption( char unrecognized )
 {
    ERROR_MESSAGE( "Unknown option: '-" << unrecognized << '\'' );
+   m_optionError = true;
    return -1;
 }
 
@@ -439,6 +466,7 @@ int CommandLine::onErrorUnrecognizedShortOption( char unrecognized )
 int CommandLine::onErrorUnrecognizedLongOption( const std::string& unrecognized )
 {
    ERROR_MESSAGE( "Unknown option: \"--" << unrecognized << '"' );
+   m_optionError = true;
    return -1;
 }
 
