@@ -55,6 +55,7 @@ bool CarpeDM::CarpeDMimpl::isSafeToRemove(std::set<std::string> patterns, std::s
   vertex_set_t blacklist, remlist, entries, cursors, covenants; //hashes of all covenants
   vertex_set_map_t covenantsPerVertex;
   std::string optmisedAnalysisReport, covenantReport;
+  uint64_t currentTime = getDmWrTime(); 
 
   //if(verbose) {sLog << "Pattern <" << pattern << "> (Entrypoint <" << sTmp << "> safe removal analysis" << std::endl;}
 
@@ -222,13 +223,15 @@ bool CarpeDM::CarpeDMimpl::isSafeToRemove(std::set<std::string> patterns, std::s
 
   report += createDot(gEq, true);
   report += optmisedAnalysisReport;
+  
+
 
   if (optimisedS2R && isSafe) {
+    covenantReport += "//Covenants to honour:\n";
     for (auto& it : covenants)  {
       allCovenantsUncritical &= !isSafetyCritical(covenantsPerVertex[it]);
-      report += "//Covenants to honour:\n";
       //std::cout << "Was optimised" << std::endl;
-      if (it == null_vertex) {report += "//None\n"; continue;}
+      if (it == null_vertex) {covenantReport += "//Null\n"; continue;}
       std::string covName = gEq[it].name;
       //find covname in ctAux and copy found entry to ct watchlist
       auto x = ctAux.lookup(covName);
@@ -239,7 +242,7 @@ bool CarpeDM::CarpeDMimpl::isSafeToRemove(std::set<std::string> patterns, std::s
       if (!ctAdditions.isOk(y)) { throw std::runtime_error(isSafeToRemove::exIntro + ": Lookup of <" + covName + "> in covenantTable failed\n");}
 
       //and report
-      report += "//" + covName + " p " + std::to_string(y->prio) + " s " + std::to_string(y->slot) + " chk 0x" + std::to_string(y->chkSum) + "\n";
+      covenantReport += "//" + covName + " p " + std::to_string(y->prio) + " s " + std::to_string(y->slot) + " chk 0x" + std::to_string(y->chkSum) + "\n";
     }
     report += covenantReport;
 
@@ -255,6 +258,11 @@ bool CarpeDM::CarpeDMimpl::isSafeToRemove(std::set<std::string> patterns, std::s
   if (allCovenantsUncritical == false) {
     throw std::runtime_error(isSafeToRemove::exIntro + " ERROR in algorithm detected: a block listed as a covenant was safety critical itself\n\n" + report);
   }
+  report += "\n//Created: " + nsTimeToDate(currentTime);
+  report += "//Patterns to judge:\n";
+  for (auto s : patterns) {report += "//  " + s + "\n";};
+  report += "//Verdict: ";
+  report += isSafe ? "SAFE\n" : "FORBIDDEN\n";
 
   return isSafe;
 }

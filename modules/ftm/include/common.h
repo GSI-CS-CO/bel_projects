@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
+#include <algorithm>
 #include <vector>
 #include <stdexcept>
 #include "ftm_common.h"
@@ -380,7 +381,10 @@ void hexDump (const char *desc, const char* addr, int len);
 void hexDump (const char *desc, vBuf vb);
 //@}
 
-
+/// Helper function to convert a nanosecond timestamp into a human readable string
+/** Convert a 64 bit nano second timestamp as can be obtained from getWrTime into a human readable string. If noSpaces is set, underscores will be used (useful for filename generation)
+  */
+std::string nsTimeToDate(uint64_t t, bool noSpaces=false);
 
 
 
