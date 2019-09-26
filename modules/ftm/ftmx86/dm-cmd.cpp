@@ -87,16 +87,6 @@ static void help(const char *program) {
 
 }
 
-std::string nsTimeToDate(uint64_t t) {
-  char date[40];
-  uint64_t tAux = t / 1000000000ULL;
-  strftime(date, sizeof(date), "%Y-%m-%d %H:%M:%S", gmtime((time_t*)&tAux));
-  std::string ret(date);
-
-  return ret;
-}
-
-
 void showStatus(const char *netaddress, CarpeDM& cdm, bool verbose) {
   std::string show;
   cdm.showMemSpace();
