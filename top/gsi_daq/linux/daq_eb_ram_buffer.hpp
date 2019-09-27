@@ -29,7 +29,6 @@
 #ifndef _DAQ_EB_RAM_BUFFER_HPP
 #define _DAQ_EB_RAM_BUFFER_HPP
 #include <EtherboneConnection.hpp>
-#include <eb_lm32_helper.h>
 #ifndef CONFIG_NO_SCU_RAM
  #include <daq_ramBuffer.h>
 #endif
@@ -46,11 +45,6 @@ namespace Scu
 {
 namespace daq
 {
-
-#define EB_PADDING_SIZE sizeof( etherbone::data_t )
-
-#define EB_PADDING_PLACE etherbone::data_t __padding;
-
 
 ///////////////////////////////////////////////////////////////////////////////
 /*!

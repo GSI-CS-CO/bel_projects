@@ -472,7 +472,7 @@ static int configure_fg_macro(int channel) {
       scub_base[OFFS(slot) + SLAVE_INT_ENA] |= 0xc000; // enable fg1 and fg2 irq
     } else if (slot & DEV_MIL_EXT) {
       // check for PUR
-      //if((status = read_mil(scu_mil_base, &data, FC_IRQ_STAT | dev)) != OKAY)          dev_failure(status, 0, "check PUR"); 
+      //if((status = read_mil(scu_mil_base, &data, FC_IRQ_STAT | dev)) != OKAY)          dev_failure(status, 0, "check PUR");
       //if (!(data & 0x100)) {
         //SEND_SIG(SIG_DISARMED);
         //return 0;
@@ -481,7 +481,7 @@ static int configure_fg_macro(int channel) {
          dev_failure(status, slot & 0xf, "enable dreq"); //enable Data-Request
     } else if (slot & DEV_SIO) {
       // check for PUR
-      //if((status = scub_read_mil(scub_base, slot & 0xf, &data, FC_IRQ_STAT | dev)) != OKAY)          dev_failure(status, slot & 0xf, "check PUR"); 
+      //if((status = scub_read_mil(scub_base, slot & 0xf, &data, FC_IRQ_STAT | dev)) != OKAY)          dev_failure(status, slot & 0xf, "check PUR");
       //if (!(data & 0x100)) {
         //SEND_SIG(SIG_DISARMED);
         //return 0;
@@ -708,7 +708,7 @@ static void updateTemp( void ) {
 #if __GNUC__ >= 9
   #pragma GCC diagnostic pop
 #endif
-  BASE_ONEWIRE = (unsigned char *)wr_1wire_base; // important for PTP deamon 
+  BASE_ONEWIRE = (unsigned char *)wr_1wire_base; // important for PTP deamon
   wrpc_w1_init();
 }
 
@@ -918,16 +918,17 @@ typedef struct _TaskType {
 } TaskType;
 
 /* task prototypes */
-static void dev_sio_handler( TaskType* );
-static void dev_bus_handler( TaskType* );
-static void scu_bus_handler( TaskType* );
-static void sw_irq_handler( TaskType* );
+static void dev_sio_handler( register TaskType* );
+static void dev_bus_handler( register TaskType* );
+static void scu_bus_handler( register TaskType* );
+static void sw_irq_handler( register TaskType* );
 // static void cleanup_sio_dev(int);
 // static void channel_watchdog(int);
 
 
 /* task configuration table */
-static TaskType tasks[] = {
+static TaskType g_aTasks[] =
+{
   { ST_WAIT, 0, 0, 0, ALWAYS, 0, 0, {{0, 0, 0}}, dev_sio_handler }, // sio task 1
   { ST_WAIT, 0, 0, 0, ALWAYS, 0, 0, {{0, 0, 0}}, dev_sio_handler }, // sio task 2
   { ST_WAIT, 0, 0, 0, ALWAYS, 0, 0, {{0, 0, 0}}, dev_sio_handler }, // sio task 3
@@ -940,13 +941,14 @@ static TaskType tasks[] = {
 
 static unsigned int getId( register TaskType* pThis )
 {
-   return (((uint8_t*)pThis) - ((uint8_t*)tasks)) / sizeof( TaskType );
+   return (((uint8_t*)pThis) - ((uint8_t*)g_aTasks)) / sizeof( TaskType );
 }
 
+#if 0
 TaskType *tsk_getConfig(void) {
-  return tasks;
+  return g_aTasks;
 }
-
+#endif
 
 
 /** @brief software irq handler
@@ -957,7 +959,7 @@ TaskType *tsk_getConfig(void) {
  *       scu_shared_mem.h instead! (UB)
  *       "id" will not used, remove it ASAP (UB)
  */
-static void sw_irq_handler( TaskType* pThis )
+static void sw_irq_handler( register TaskType* pThis )
 {
   int i;
   unsigned int code, value;
@@ -1018,7 +1020,7 @@ static void sw_irq_handler( TaskType* pThis )
  * decides which action for a scu bus interrupt is suitable
  * @param pThis pointer to the current task object (not used)
  */
-static void scu_bus_handler( TaskType* pThis )
+static void scu_bus_handler( register TaskType* pThis )
 {
   uint16_t slv_int_act_reg;
   unsigned char slave_nr;
@@ -1060,247 +1062,285 @@ static void scu_bus_handler( TaskType* pThis )
 
 #define CONFIG_SIO_BUS_HANDLER
 #ifdef CONFIG_SIO_BUS_HANDLER
-static void dev_sio_bus_handler( TaskType* pThis, const bool isScuBus )
-{
-  int i;
-  int slot, dev;
-  int status = OKAY;
-  short data_aquisition;
-  struct msi m;
-  struct daq d;
 
-  switch(pThis->state)
-  {
-    case ST_WAIT:
-    {
-      // we have nothing to do
-      if (!has_msg(&msg_buf[0], isScuBus? DEVSIO : DEVBUS))
+#define CONFIG_LAGE_TIME_DETECT
+#ifdef CONFIG_LAGE_TIME_DETECT
+   static uint64_t lastTime = 0;
+#endif
+static void pushDaqData( uint32_t channel, uint64_t timestamp,
+                         short actValue, uint32_t setValue )
+{
+#ifdef CONFIG_LAGE_TIME_DETECT
+   if( lastTime > 0 )
+   {
+      if( (timestamp - lastTime) > 100000000ULL )
+         mprintf( "Time-gap!\n" );
+   }
+   lastTime = timestamp;
+#endif
+#ifdef CONFIG_MIL_DAQ_USE_RAM
+#error Extern RAM for MIL-DAQ not implemented yet!
+#else
+   struct daq d;
+
+   d.actvalue = actValue;
+   d.tmstmp_l = timestamp & 0xffffffff;
+   d.tmstmp_h = timestamp >> 32;
+   d.channel  = channel;
+   d.setvalue = setValue;
+   add_daq_msg(&g_shared.daq_buf, d);
+#endif
+   hist_addx(HISTORY_XYZ_MODULE, "daq_high", actValue >> 8);
+   hist_addx(HISTORY_XYZ_MODULE, "daq_low", actValue & 0xff);
+}
+
+static void dev_sio_bus_handler( register TaskType* pThis, const bool isScuBus )
+{
+   int i;
+   int slot, dev;
+   int status = OKAY;
+   short data_aquisition;
+   struct msi m;
+
+   switch( pThis->state )
+   {
+      case ST_WAIT:
+      {  // we have nothing to do
+         if( !has_msg(&msg_buf[0], isScuBus? DEVSIO : DEVBUS) )
+         {
+         #ifdef __DOCFSM__
+            FSM_TRANSITION( ST_WAIT, label='No message' );
+         #endif
+            break;
+         }
+
+         m = remove_msg( &msg_buf[0], isScuBus? DEVSIO : DEVBUS );
+         if( isScuBus )
+            pThis->slave_nr = m.msg + 1;
+         pThis->timestamp1 = getSysTime();
+         FSM_TRANSITION( ST_PREPARE, label='Massage received' );
+         break; //yield
+      } // end case ST_WAIT
+
+      case ST_PREPARE:
       {
-      #ifdef __DOCFSM__
-         FSM_TRANSITION( ST_WAIT, label='No message' );
-      #endif
+         // wait for 200 us
+         if( getSysTime() < (pThis->timestamp1 + INTERVAL_200US) )
+         {
+         #ifdef __DOCFSM__
+            FSM_TRANSITION( ST_PREPARE, label='Interval not expired' );
+         #endif
+            break; //yield
+         }
+         /* poll all pending regs on the dev bus; non blocking read operation */
+         for( i = 0; i < MAX_FG_CHANNELS; i++ )
+         {
+            slot = _get_slot( i );
+            dev  = _get_dev( i );
+            pThis->aFgChannels[i].irq_data = 0; // clear old irq data
+            /* test only ifas connected to sio */
+            status = OKAY;
+            if( isScuBus )
+            {
+               if( ((slot & 0xf) != pThis->slave_nr ) || ((slot & DEV_SIO) == 0) )
+                  continue;
+               status = scub_set_task_mil( scub_base,
+                                           pThis->slave_nr,
+                                           getId( pThis ) + i + 1,
+                                           FC_IRQ_ACT_RD | dev );
+            }
+            else
+            {
+               if( (slot & DEV_MIL_EXT) == 0 )
+                  continue;
+               status = set_task_mil( scu_mil_base,
+                                      getId( pThis ) + i + 1,
+                                      FC_IRQ_ACT_RD | dev);
+            }
+            if( status != OKAY )
+               dev_failure( status, 20, "dev_sio set task" );
+         }  // end for
+         pThis->i = 0;
+         FSM_TRANSITION( ST_FETCH_STATUS );
          break;
       }
 
-      m = remove_msg(&msg_buf[0], isScuBus? DEVSIO : DEVBUS);
-      if( isScuBus )
-         pThis->slave_nr = m.msg + 1;
-      pThis->timestamp1 = getSysTime();
-      FSM_TRANSITION( ST_PREPARE, label='Massage received' );
-      break; //yield
-    }
-
-    case ST_PREPARE:
-    {
-      // wait for 200 us
-      if (getSysTime() < (pThis->timestamp1 + INTERVAL_200US))
+      case ST_FETCH_STATUS:
       {
-      #ifdef __DOCFSM__
-         FSM_TRANSITION( ST_PREPARE, label='Interval not expired' );
-      #endif
-         break; //yield
-      }
-      /* poll all pending regs on the dev bus; non blocking read operation */
-      for (i = 0; i < MAX_FG_CHANNELS; i++)
-      {
-          slot = _get_slot( i );
-          dev  = _get_dev( i );
-          pThis->aFgChannels[i].irq_data = 0; // clear old irq data
-          /* test only ifas connected to sio */
-          if( isScuBus )
-          {
-             if(((slot & 0xf) == pThis->slave_nr ) && (slot & DEV_SIO))
-             {
-               if ((status = scub_set_task_mil(scub_base, pThis->slave_nr,
-                             getId( pThis ) + i + 1, FC_IRQ_ACT_RD | dev))
-                  != OKAY)
-                  dev_failure(status, 20, "dev_sio set task");
-             }
-             continue;
-          }
-          if(slot & DEV_MIL_EXT)
-          {
-            if ((status = set_task_mil(scu_mil_base, getId( pThis ) + i + 1,
-                 FC_IRQ_ACT_RD | dev)) != OKAY)
-               dev_failure(status, 20, "");
-          }
-      }
-      FSM_TRANSITION( ST_FETCH_STATUS );
-      break;
-    }
-
-    case ST_FETCH_STATUS:
-    {
-      /* if timeout reached, proceed with next task */
-      if (pThis->task_timeout_cnt > TASK_TIMEOUT)
-      {
-        mprintf("timeout in dev_sio_handle, state 1, taskid %d , index %d\n",
-                getId( pThis ), pThis->i);
-        pThis->i++;
-        pThis->task_timeout_cnt = 0;
-      }
-      /* fetch status from dev bus controller; */
-      for( i = pThis->i; i < MAX_FG_CHANNELS; i++ )
-      {
-          slot = _get_slot( i );
-         /* test only ifas connected to sio */
-          if( isScuBus )
-          {
-             if(((slot & 0xf) == pThis->slave_nr ) && (slot & DEV_SIO))
-             {
-                status = scub_get_task_mil(scub_base, pThis->slave_nr,
+         /* if timeout reached, proceed with next task */
+         if( pThis->task_timeout_cnt > TASK_TIMEOUT )
+         {
+            mprintf( "timeout in dev_sio_handle, state 1, taskid %d,"
+                     " index %d\n",
+                    getId( pThis ), pThis->i);
+            pThis->i++;
+            pThis->task_timeout_cnt = 0;
+         }
+         /* fetch status from dev bus controller; */
+         status = OKAY;
+         for( i = pThis->i; i < MAX_FG_CHANNELS; i++ )
+         {
+            slot = _get_slot( i );
+            /* test only ifas connected to sio */
+            if( isScuBus )
+            {
+               if( ((slot & 0xf) != pThis->slave_nr ) || ((slot & DEV_SIO) == 0) )
+                  continue;
+               status = scub_get_task_mil( scub_base, pThis->slave_nr,
                                            getId( pThis ) + i + 1,
                                            &pThis->aFgChannels[i].irq_data );
-                if (status != OKAY)
-                {
-                  if (status == RCV_TASK_BSY)
-                  {
-                     break; // break from for loop
-                  }
-                  mil_failure( status, pThis->slave_nr );
-                }
-             }
-             continue;
-          }
-          if( slot & DEV_MIL_EXT )
-          {
-            status = get_task_mil(scu_mil_base, getId( pThis ) + i + 1,
-                                  &pThis->aFgChannels[i].irq_data );
-            if (status != OKAY)
-            {
-              if (status == RCV_TASK_BSY)
-              {
-                 break; // break from for loop
-              }
-              mil_failure( status, pThis->slave_nr );
             }
-         }
-      }
-      if (status == RCV_TASK_BSY)
-      {
-        pThis->i = i; // start next time from i
-        pThis->task_timeout_cnt++;
-#ifdef __DOCFSM__
-        FSM_TRANSITION( ST_FETCH_STATUS, label='receive busy' );
-#endif
-        break; //yield
-      }
-      pThis->i = 0; // start next time from 0
-      pThis->task_timeout_cnt = 0;
-      FSM_TRANSITION( ST_HANDLE_IRQS );
-      break;
-    }
-
-    case ST_HANDLE_IRQS:
-    {
-      /* handle irqs for ifas with active pending regs; non blocking write */
-      for (i = 0; i < MAX_FG_CHANNELS; i++)
-      {
-        if (pThis->aFgChannels[i].irq_data & (DEV_STATE_IRQ | DEV_DRQ))
-        { // any irq pending?
-          slot = _get_slot( i );
-          dev  = _get_dev( i );
-          handle(slot, dev, pThis->aFgChannels[i].irq_data, &(pThis->aFgChannels[i].setvalue));
-          //clear irq pending and end block transfer
-          if( isScuBus )
-          {
-             if((status = scub_write_mil(scub_base, pThis->slave_nr, 0, FC_IRQ_ACT_WR | dev)) != OKAY)
-                dev_failure(status, 22, "dev_sio end handle");
-             continue;
-          }
-          if((status = write_mil(scu_mil_base, 0, FC_IRQ_ACT_WR | dev)) != OKAY)
-             dev_failure(status, 22, "");
-        }
-      }
-      FSM_TRANSITION( ST_DATA_AQUISITION );
-      break;
-    }
-
-    case ST_DATA_AQUISITION:
-    {
-      /* data aquisition */
-      for (i = 0; i < MAX_FG_CHANNELS; i++)
-      {
-        if (pThis->aFgChannels[i].irq_data & (DEV_STATE_IRQ | DEV_DRQ))
-        { // any irq pending?
-          pThis->aFgChannels[i].daq_timestamp = getSysTime(); // store the sample timestamp for daq
-          dev =  _get_dev( i );
-          // non blocking read for DAQ
-          if( isScuBus )
-          {
-             if ((status = scub_set_task_mil(scub_base, pThis->slave_nr, getId( pThis ) + i + 1, FC_ACT_RD | dev)) != OKAY)
-                dev_failure(status, 23, "dev_sio read daq");
-             continue;
-          }
-          if ((status = set_task_mil(scu_mil_base, getId( pThis ) + i + 1, FC_ACT_RD | dev)) != OKAY)
-             dev_failure(status, 23, "");
-        }
-      }
-      FSM_TRANSITION( ST_FETCH_DATA );
-      break;
-    }
-
-    case ST_FETCH_DATA:
-    {
-      /* if timeout reached, proceed with next task */
-      if (pThis->task_timeout_cnt > TASK_TIMEOUT) {
-        mprintf("timeout in dev_sio_handle, state 4, taskid %d , index %d\n", getId( pThis ), pThis->i);
-        pThis->i++;
-        pThis->task_timeout_cnt = 0;
-      }
-      /* fetch daq data */
-      for (i = pThis->i; i < MAX_FG_CHANNELS; i++)
-      {
-        if (pThis->aFgChannels[i].irq_data & (DEV_STATE_IRQ | DEV_DRQ))
-        { // any irq pending?
-          // fetch DAQ
-          if( isScuBus )
-             status = scub_get_task_mil(scub_base, pThis->slave_nr, getId( pThis ) + i + 1, &data_aquisition);
-          else
-             status = get_task_mil(scu_mil_base, getId( pThis ) +  i + 1, &data_aquisition);
-          if (status != OKAY)
-          {
-            if (status == RCV_TASK_BSY)
+            else
             {
+               if( (slot & DEV_MIL_EXT) == 0 )
+                  continue;
+               status = get_task_mil( scu_mil_base, getId( pThis ) + i + 1,
+                                      &pThis->aFgChannels[i].irq_data );
+            }
+            if( status == RCV_TASK_BSY )
                break; // break from for loop
+            if( status != OKAY )
+               mil_failure( status, pThis->slave_nr );
+         } // end for
+         if( status == RCV_TASK_BSY )
+         {
+            pThis->i = i; // start next time from i
+            pThis->task_timeout_cnt++;
+         #ifdef __DOCFSM__
+            FSM_TRANSITION( ST_FETCH_STATUS, label='receive busy' );
+         #endif
+            break; //yield
+         }
+
+         pThis->i = 0; // start next time from 0
+         pThis->task_timeout_cnt = 0;
+         FSM_TRANSITION( ST_HANDLE_IRQS );
+         break;
+      } // end case ST_FETCH_STATUS
+
+      case ST_HANDLE_IRQS:
+      {  /* handle irqs for ifas with active pending regs; non blocking write */
+         status = OKAY;
+         for( i = 0; i < MAX_FG_CHANNELS; i++ )
+         {  // any irq pending?
+            if( (pThis->aFgChannels[i].irq_data & (DEV_STATE_IRQ | DEV_DRQ)) == 0 )
+               continue; // No
+
+            slot = _get_slot( i );
+            dev  = _get_dev( i );
+            handle( slot, dev, pThis->aFgChannels[i].irq_data,
+                    &(pThis->aFgChannels[i].setvalue));
+            //clear irq pending and end block transfer
+            if( isScuBus )
+            {
+               status = scub_write_mil( scub_base, pThis->slave_nr,
+                                        0, FC_IRQ_ACT_WR | dev);
             }
-            mil_failure( status, pThis->slave_nr );
-          }
-          d.actvalue = data_aquisition;
-          d.tmstmp_l = pThis->aFgChannels[i].daq_timestamp & 0xffffffff;
-          d.tmstmp_h = pThis->aFgChannels[i].daq_timestamp >> 32;
-          d.channel = _get_macro_number( i );
-          d.setvalue = g_aFgChannels[i].last_c_coeff;
-          add_daq_msg(&g_shared.daq_buf, d);
+            else
+            {
+               status = write_mil( scu_mil_base, 0, FC_IRQ_ACT_WR | dev);
+            }
+            if( status != OKAY )
+               dev_failure(status, 22, "dev_sio end handle");
+         } // end for
+         FSM_TRANSITION( ST_DATA_AQUISITION );
+         break;
+      } // end case ST_HANDLE_IRQS
 
-          hist_addx(HISTORY_XYZ_MODULE, "daq_high", data_aquisition >> 8);
-          hist_addx(HISTORY_XYZ_MODULE, "daq_low", data_aquisition & 0xff);
+      case ST_DATA_AQUISITION:
+      {  /* data aquisition */
+         for( i = 0; i < MAX_FG_CHANNELS; i++ )
+         {  // any irq pending?
+            if( (pThis->aFgChannels[i].irq_data & (DEV_STATE_IRQ | DEV_DRQ)) == 0 )
+               continue; // No
 
-          // save the setvalue from the tuple sent for the next drq handling
-          g_aFgChannels[i].last_c_coeff = pThis->aFgChannels[i].setvalue;
-        }
-      }
-      if (status == RCV_TASK_BSY)
+            pThis->aFgChannels[i].daq_timestamp = getSysTime(); // store the sample timestamp of daq
+            dev = _get_dev( i );
+            // non blocking read for DAQ
+            if( isScuBus )
+            {
+               status = scub_set_task_mil( scub_base, pThis->slave_nr,
+                                          getId( pThis ) + i + 1,
+                                          FC_ACT_RD | dev);
+            }
+            else
+            {
+               status = set_task_mil( scu_mil_base, getId( pThis ) + i + 1,
+                                     FC_ACT_RD | dev);
+            }
+            if( status != OKAY )
+               dev_failure(status, 23, "dev_sio read daq");
+         } // end for
+         FSM_TRANSITION( ST_FETCH_DATA );
+         break;
+      } // end case ST_DATA_AQUISITION
+
+      case ST_FETCH_DATA:
       {
-        pThis->i = i; // start next time from i
-        pThis->task_timeout_cnt++;
-#ifdef __DOCFSM__
-        FSM_TRANSITION( ST_FETCH_DATA, label='Receiving busy' );
-#endif
-        break; //yield
+         /* if timeout reached, proceed with next task */
+         if( pThis->task_timeout_cnt > TASK_TIMEOUT )
+         {
+            mprintf("timeout in dev_sio_handle, state 4, taskid %d , index %d\n",
+                    getId( pThis ), pThis->i );
+            pThis->i++;
+            pThis->task_timeout_cnt = 0;
+         }
+         /* fetch daq data */
+         for( i = pThis->i; i < MAX_FG_CHANNELS; i++ )
+         {  // any irq pending?
+            if( (pThis->aFgChannels[i].irq_data & (DEV_STATE_IRQ | DEV_DRQ)) == 0 )
+               continue; // No
+
+            if( isScuBus )
+            {
+               status = scub_get_task_mil( scub_base, pThis->slave_nr,
+                                           getId( pThis ) + i + 1, &data_aquisition);
+            }
+            else
+            {
+               status = get_task_mil( scu_mil_base, getId( pThis ) +  i + 1,
+                                      &data_aquisition);
+            }
+
+            if( status == RCV_TASK_BSY )
+               break; // break from for loop
+
+            if( status != OKAY )
+            {
+               mil_failure( status, pThis->slave_nr );
+               /* TODO Why not break from loop? */
+            }
+
+            pushDaqData( _get_macro_number( i ),
+                         pThis->aFgChannels[i].daq_timestamp,
+                         data_aquisition,
+                         g_aFgChannels[i].last_c_coeff );
+            // save the setvalue from the tuple sent for the next drq handling
+            g_aFgChannels[i].last_c_coeff = pThis->aFgChannels[i].setvalue;
+         } // end for
+
+         if( status == RCV_TASK_BSY )
+         {
+            pThis->i = i; // start next time from i
+            pThis->task_timeout_cnt++;
+         #ifdef __DOCFSM__
+            FSM_TRANSITION( ST_FETCH_DATA, label='Receiving busy' );
+         #endif
+            break; //yield
+         }
+         pThis->i = 0; // start next time from 0
+         pThis->task_timeout_cnt = 0;
+         FSM_TRANSITION( ST_WAIT );
+         break;
+      } // end case ST_FETCH_DATA
+
+      default:
+      {
+         mprintf("unknown state of dev bus handler!\n");
+         FSM_INIT_FSM( ST_WAIT );
+         break;
       }
-      pThis->i = 0; // start next time from 0
-      pThis->task_timeout_cnt = 0;
-      FSM_TRANSITION( ST_WAIT );
-      break;
-    }
-    default:
-    {
-      mprintf("unknown state of dev bus handler!\n");
-      FSM_INIT_FSM( ST_WAIT );
-      break;
-    }
-  }
+   } // end switch
 }
 
 
@@ -1309,7 +1349,7 @@ static void dev_sio_bus_handler( TaskType* pThis, const bool isScuBus )
  * persistent data, like the state or the sio slave_nr, is stored in a global structure
  * @param pThis pointer to the current task object
  */
-static void dev_sio_handler( TaskType* pThis )
+static void dev_sio_handler( register TaskType* pThis )
 {
    dev_sio_bus_handler( pThis, false );
 }
@@ -1318,7 +1358,7 @@ static void dev_sio_handler( TaskType* pThis )
  * persistent data is stored in a global structure
  * @param pThis pointer to the current task object
  */
-static void dev_bus_handler( TaskType* pThis )
+static void dev_bus_handler( register TaskType* pThis )
 {
    dev_sio_bus_handler( pThis, true );
 }
@@ -1329,7 +1369,7 @@ static void dev_bus_handler( TaskType* pThis )
  * persistent data, like the state or the sio slave_nr, is stored in a global structure
  * @param pThis pointer to the current task object
  */
-static void dev_sio_handler( TaskType* pThis )
+static void dev_sio_handler( register TaskType* pThis )
 {
   int i;
   int slot, dev;
@@ -1522,7 +1562,7 @@ static void dev_sio_handler( TaskType* pThis )
  * persistent data is stored in a global structure
  * @param pThis pointer to the current task object
  */
-static void dev_bus_handler( TaskType* pThis )
+static void dev_bus_handler( register TaskType* pThis )
 {
   int i;
   int slot, dev;
@@ -1721,12 +1761,11 @@ static inline void dispatch( void )
 /**
  * @brief after the init phase at startup, the scheduler loop runs forever
  */
-int main(void) {
+void main( void )
+{
   int i, mb_slot;
   unsigned int* cpu_info_base;
   sdb_location found_sdb[20];
- // uint32_t lm32_endp_idx = 0;
- // uint32_t ow_base_idx = 0;
   uint32_t clu_cb_idx = 0;
   discoverPeriphery();
   uart_init_hw();
@@ -1781,23 +1820,17 @@ int main(void) {
   mprintf( "SCU-DAQ initialized\n" );
 #endif
 
-  static TaskType *task_ptr;              // task pointer
-
-  static int taskIndex = 0;               // task index
-  //const int numTasks = tsk_getNumTasks(); // number of tasks
-
-  task_ptr = tsk_getConfig();             // get a pointer to the task configuration
-
-  while(1) {
+  while( true )
+  {
     check_stack();
     tick = getSysTime(); /* FIXME get the current system tick */
 
     // loop through all task: if interval is 0, run every time, otherwise obey interval
-    for( taskIndex = 0; taskIndex < ARRAY_SIZE( tasks ); taskIndex++ )
+    for( unsigned int i = 0; i < ARRAY_SIZE( g_aTasks ); i++ )
     {
       // call the dispatch task before every other task
       dispatch();
-      TaskType* pCurrent = &task_ptr[taskIndex];
+      TaskType* pCurrent = &g_aTasks[i];
       if( (tick - pCurrent->lasttick) < pCurrent->interval )
          continue;
       pCurrent->func( pCurrent );
@@ -1807,6 +1840,6 @@ int main(void) {
     forEachScuDaqDevice();
   #endif
   }
-
-  return(0);
 }
+
+/*================================== EOF ====================================*/

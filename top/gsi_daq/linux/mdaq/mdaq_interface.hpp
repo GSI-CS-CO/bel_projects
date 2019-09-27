@@ -176,6 +176,11 @@ protected:
    {
       m_oRing.m_tail++;
       m_oRing.m_tail %= c_ringBufferCapacity;
+#if 1
+      static int count = 0;
+      if( m_oRing.m_tail == 0 )
+         std::cerr << "new: " << count++ << std::endl;
+#endif
    }
 
    void readRingItem( RingItem& rRingItem );
