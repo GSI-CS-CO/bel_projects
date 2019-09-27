@@ -145,6 +145,7 @@ void printSnoopData(int snoopInterval, int snoopLockFlag, int64_t contMaxPosDT, 
   if (ecaNMessage == 0) fprintf(stdout, " %9"PRIu64"(%6.1f)   %3d  %3d  %3d %3d   %3d(%3d)   %3d(%3d)", (uint64_t)0, 0.0, 0, 0, 0, 0, 0, 0, 0, 0);
   else                  fprintf(stdout, " %9"PRIu64"(%6.1f)   %3d  %3d  %3d %3d   %3d(%3d)   %3d(%3d)", ecaNMessage, (double)nMessageAct/(double)snoopInterval, ecaLate, ecaEarly, (int)(ecaMin/1000), (int)(ecaMax/1000), average, averageAct, latency, latencyAct);
   fprintf(stdout, "\n");
+  fflush(stdout); 
 
 } // printSnoopData
 
