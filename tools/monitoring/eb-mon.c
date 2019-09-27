@@ -412,28 +412,28 @@ int main(int argc, char** argv) {
       // wr lock
       wb_wr_get_sync_state(device, devIndex, &syncState);
       if (syncState == WR_PPS_GEN_ESCR_MASK) snoopLockFlag = 1;
-      if (!snoopLockFlag)     fprintf(stderr, "%s: error - WR not locked\n", program);
+      if (!snoopLockFlag)     fprintf(stdout, "%s: error - WR not locked\n", program);
 
       // time continuity
       wb_wr_stats_get_continuity(device, devIndex, &contObsT, &contMaxPosDT, &contMaxPosTS, &contMaxNegDT, &contMaxNegTS);
-      if (contMaxPosDT > 16)  fprintf(stderr, "%s: error - WR time jumps by %d [ns]\n", program, (int)contMaxPosDT);
-      if (contMaxNegDT != 0)  fprintf(stderr, "%s: error - WR time jumps by %d [ns]\n", program, (int)contMaxNegDT);
+      if (contMaxPosDT > 16)  fprintf(stdout, "%s: error - WR time jumps by %d [ns]\n", program, (int)contMaxPosDT);
+      if (contMaxNegDT != 0)  fprintf(stdout, "%s: error - WR time jumps by %d [ns]\n", program, (int)contMaxNegDT);
 
       // CPU stalls
       wb_wr_stats_get_stall(device, devIndex, ecpu, &stallObsT, &stallMaxStreak, &stallN, &stallTS);
       snoopStall = (double)stallN/(double)stallObsT;
-      if (snoopStall > 0.5)    fprintf(stderr, "%s: error - max CPU stall %f\n", program, snoopStall);
+      if (snoopStall > 0.5)    fprintf(stdout, "%s: error - max CPU stall %f\n", program, snoopStall);
 
       // ECA
       wb_eca_stats_get(device, devIndex, &ecaNMessage, &ecaDtSum, &ecaDtMin, &ecaDtMax, &ecaNLate, &ecaLateOffset);
       if (ecaDtMin < 0) {  /* chk */
         ecaSumLate++;      /* chk */
-        fprintf(stderr,                        "%s: error - late event %"PRId64" [ns]\n", program, ecaDtMin);
+        fprintf(stdout,                        "%s: error - late event %"PRId64" [ns]\n", program, ecaDtMin);
         wb_eca_stats_clear(device, devIndex, 0x1);
       }
       if (ecaDtMax > 10000000) {  /* chk */
         ecaSumEarly++;            /* chk */
-        fprintf(stderr,                        "%s: error - early event %"PRId64" [ns]\n", program, ecaDtMax);
+        fprintf(stdout,                        "%s: error - early event %"PRId64" [ns]\n", program, ecaDtMax);
         wb_eca_stats_clear(device, devIndex, 0x2);
       }
       
