@@ -60,7 +60,10 @@ architecture rtl of eca_tap is
   signal r_min, r_max, s_dl, r_diff_acc, r_diff, s_diff : signed(63 downto 0) := (others => '0'); --check again - do we need it that wide?
   signal r_cnt_word : unsigned(3 downto 0) := (others => '0'); 
   signal r_cnt_msg  : unsigned(63 downto 0) := (others => '0');
-  signal s_en, r_en0, s_push, s_new_min, s_new_max, s_inc_msg : std_logic := '0';
+  signal r_cnt_late  : unsigned(31 downto 0) := (others => '0');
+  signal s_diff_neg, s_diff_gt_max_offs, s_diff_lo_lt_offs : std_logic := '0';
+  signal r_is_late : std_logic_vector(0 downto 0) := (others => '0');
+  signal s_en, r_en0, r_en1, s_push, s_new_min, s_new_max, s_inc_msg : std_logic := '0';
   signal s_valid : std_logic_vector(0 downto 0) := (others => '0');
 
   signal s_empty, s_full, r_push, s_pop : std_logic;
@@ -69,17 +72,19 @@ architecture rtl of eca_tap is
   constant c_DIFF_MIN   : natural := 0;
   constant c_DIFF_MAX   : natural := 1;
   constant c_DIFF_MEAN  : natural := 2;
+  constant c_CNT_LATE   : natural := 3;
 
   signal s_ctrl_error_i       : std_logic_vector(1-1 downto 0)  := (others => '0'); -- Error control
   signal s_ctrl_stall_i       : std_logic_vector(1-1 downto 0)  := (others => '0'); -- flow control
   signal s_ctrl_reset_o       : std_logic_vector(1-1 downto 0)  := (others => '0'); -- Resets ECA-Tap
-  signal s_ctrl_clear_o       : std_logic_vector(3-1 downto 0)  := (others => '0'); -- b2: clear count/accu, b1: clear max, b0: clear min
+  signal s_ctrl_clear_o       : std_logic_vector(4-1 downto 0)  := (others => '0'); -- b2: clear count/accu, b1: clear max, b0: clear min
   signal s_ctrl_capture_o     : std_logic_vector(1-1 downto 0)  := (others => '0'); -- Enable/Disable Capture
   signal s_ctrl_cnt_msg_i     : std_logic_vector(64-1 downto 0) := (others => '0'); -- Message Count
   signal s_ctrl_diff_acc_i    : std_logic_vector(64-1 downto 0) := (others => '0'); -- Accumulated differences (dl - ts)
   signal s_ctrl_diff_min_i    : std_logic_vector(64-1 downto 0) := (others => '0'); -- Minimum difference
   signal s_ctrl_diff_max_i    : std_logic_vector(64-1 downto 0) := (others => '0'); -- Maximum difference
-  
+  signal s_ctrl_cnt_late_i    : std_logic_vector(32-1 downto 0) := (others => '0'); -- Late Message Count
+  signal s_ctrl_offset_late_o  : std_logic_vector(32-1 downto 0) := (others => '0'); -- Offset on difference. Controls condition for Late Message Counter increment
 
 
 begin
@@ -154,6 +159,10 @@ instOn: if g_build_tap = TRUE generate
     diff_min_i    => s_ctrl_diff_min_i,
     diff_max_V_i  => s_valid,
     diff_max_i    => s_ctrl_diff_max_i,
+
+    cnt_late_i    => s_ctrl_cnt_late_i, 
+    cnt_late_V_i  => s_valid,
+    offset_late_o => s_ctrl_offset_late_o,
     ctrl_i        => ctrl_i,
     ctrl_o        => ctrl_o  );
 
@@ -192,6 +201,34 @@ instOn: if g_build_tap = TRUE generate
       end if;   
     end if;
   end process;
+
+  -- Late Counter begin
+  s_diff_neg         <= r_diff(63);                 -- if difference is negative (bit63 set), msg is definitely late.
+  s_diff_gt_max_offs <= '1' when unsigned(r_diff(63 downto 32)) /= 0   -- if difference is greater 32 bits its greater than the offset, msg cannot be late.
+                   else '0';     
+  s_diff_lo_lt_offs  <= '1' when unsigned(r_diff(31 downto 0)) < unsigned(s_ctrl_offset_late_o) -- if difference low word is less than the offset, msg is possibly late
+                   else '0';
+
+  late_cnt : process(clk_sys_i)
+  begin
+    if rising_edge(clk_sys_i) then
+      if(rst_sys_n_i = '0' or s_ctrl_reset_o = "1" or s_ctrl_clear_o(c_CNT_LATE) = '1' ) then -- reset also on underflow
+        r_cnt_late  <= (others => '0');
+        r_is_late   <= "0";
+      else
+        r_en1 <= r_en0; 
+        if r_en0 = '1' then -- r_diff is valid on r_en0
+          r_is_late(0) <= s_diff_neg or (not s_diff_gt_max_offs and s_diff_lo_lt_offs); -- if diff is negative or fits in 32b and is less than the offset, the message was late.
+        end if;
+        if r_en1 = '1' then -- r_is_late is valid on r_en1
+          r_cnt_late <= r_cnt_late + resize(unsigned(r_is_late), r_cnt_late'length); -- add r_is_late to the late counter
+        end if;
+        
+      end if;   
+    end if;
+  end process;
+
+  -- Late Counter end
 
   main : process(clk_sys_i)
   begin

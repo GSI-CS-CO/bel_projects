@@ -7,12 +7,14 @@
       <registers>
           
           <reg  name="reset"       write="yes"             bits="1"  pulse="yes"   comment="Resets ECA-Tap"></reg>
-          <reg  name="clear"       write="yes"             bits="3"  pulse="yes"   comment="b2: clear count/accu, b1: clear max, b0: clear min"></reg>
+          <reg  name="clear"       write="yes"             bits="4"  pulse="yes"   comment="b3: clear late count, b2: clear count/accu, b1: clear max, b0: clear min"></reg>
           <reg  name="capture"     read="yes"  write="yes" bits="1"                comment="Enable/Disable Capture"></reg>
           <reg  name="cnt_msg"     read="yes"  drive="yes" bits="64"               comment="Message Count"></reg>
           <reg  name="diff_acc"    read="yes"  drive="yes" bits="64"               comment="Accumulated differences (dl - ts)"></reg> 
           <reg  name="diff_min"    read="yes"  drive="yes" bits="64"               comment="Minimum difference"></reg>
           <reg  name="diff_max"    read="yes"  drive="yes" bits="64"               comment="Maximum difference"></reg>
+          <reg  name="cnt_late"    read="yes"  drive="yes" bits="32"               comment="Late Message Count"></reg>
+          <reg  name="offset_late" read="yes"  write="yes" bits="32"               comment="Offset on difference. Controls condition for Late Message Counter increment"></reg>
       </registers>
    </slaveinterface>
 
