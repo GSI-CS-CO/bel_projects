@@ -9,9 +9,9 @@
 //            -- Wesley W. Terpstra <w.terpstra@gsi.de>
 //            -- Alessandro Rubini <rubini@gnudd.com>
 //            -- Tomasz Wlostowski <tomasz.wlostowski@cern.ch>
-//  version : 01-Mar-2019
+//  version : 25-Sep-2019
 //
-#define WB_API_VERSION "012.0"
+#define WB_API_VERSION "0.13.0"
 //
 // Api for wishbone devices for timing receiver nodes. This is not a timing receiver API.
 // 
@@ -118,14 +118,61 @@ eb_status_t wb_wr_get_uptime(eb_device_t device,               // EB device
                              uint32_t *uptime                  // uptime of WR lm32 [s]
                              );
 
-// gets statistics about WR locks
-eb_status_t wb_wr_get_lock_stats(eb_device_t device,           // EB device
+// gets lock statistics about WR 
+eb_status_t wb_wr_stats_get_lock(eb_device_t device,           // EB device
                                  int devIndex,                 // 0,1,2... - there may be more than 1 device on the WB bus
-                                 uint64_t *nsecsLockLoss,      // timestamp of last WR lock loss
-                                 uint64_t *nsecsLockAcq,       // timestamp of last WR lock acquired
-                                 uint32_t *nLockAcq            // number of successful WR locks
+                                 uint64_t *lockLossTS,         // WR lock: timestamp of last lost lock
+                                 uint64_t *lockAcqTS,          // WR lock: timestamp of last lock acquired
+                                 uint32_t *lockNAcq            // WR lock: number of successful acquired locks
                                  );
 
+// gets time continuity statistics about WR 
+eb_status_t wb_wr_stats_get_continuity(eb_device_t device,     // EB device
+                                       int devIndex,           // 0,1,2... - there may be more than 1 device on the WB bus
+                                       uint64_t *contObsT,     // WR time continuity: observation intervall
+                                       int64_t  *contMaxPosDT, // WR time continuity: max positive difference between ECA and WR time
+                                       uint64_t *contMaxPosTS, // WR time continuity: timestamp of last positive diff update
+                                       int64_t  *contMaxNegDT, // WR time continuity: max negative difference between ECA and WR time
+                                       uint64_t *contMaxNegTS  // WR time cotinuity: timestamp of last negative diff update
+                                       );
+
+// gets lm32 stall statistics
+eb_status_t wb_wr_stats_get_stall(eb_device_t device,          // EB device
+                                  int devIndex,                // 0,1,2... - there may be more than 1 device on the WB bus
+                                  uint32_t stallObsCPU,        // lm32 stall: select # of CPU for data below
+                                  uint64_t *stallObsT,         // lm32 stall: observation intervall
+                                  uint32_t *stallMaxStreak,    // lm32 stall: obvserved max continous stall in Wishbone cycles
+                                  uint32_t *stallN,            // lm32 stall: stall time within observation interval
+                                  uint64_t *stallTS            // lm32 stall: timestamp of last update
+                                  );
+
+// resets statistics about WR (and clears counters)
+eb_status_t wb_wr_stats_reset(eb_device_t device,              // EB device
+                              int devIndex,                    // 0,1,2... - there may be more than 1 device on the WB bus
+                              uint64_t contObsT,               // WR time continuity: observation interval (consider using '8')
+                              uint32_t stallObsT               // lm32 stall: observation interval (consider using '0')
+                              );
+
+// gets statistics about ECA
+eb_status_t wb_eca_stats_get(eb_device_t device,               // EB device
+                             int devIndex,                     // 0,1,2... - there may be more than 1 device on the WB bus
+                             uint64_t *nMessage,               // # of messages received
+                             int64_t *dtSum,                   // accumulated differences (deadline - timestamp)
+                             int64_t *dtMin,                   // minimum difference (deadline - timestamp)
+                             int64_t *dtMax                    // maximum difference (deadline - timestamp)
+                             );
+
+// resets statistics about ECA (and clears counters)
+eb_status_t wb_eca_stats_reset(eb_device_t device,             // EB device
+                               int devIndex                    // 0,1,2... - there may be more than 1 device on the WB bus
+                               );
+
+// enables/disables capture of statistics about ECA
+eb_status_t wb_eca_stats_enable(eb_device_t device,            // EB device
+                                int devIndex,                  // 0,1,2... - there may be more than 1 device on the WB bus
+                                uint32_t enableFlag            // 1: enables capture; 0: disables capture            
+                               );
+                             
 // get ID of the 1st 1-wire sensor found on the specified bus
 eb_status_t wb_1wire_get_id(eb_device_t device,                // EB device
                             int devIndex,                      // 0,1,2... - there may be more than 1 device on the WB bus
