@@ -9,9 +9,9 @@
 //            -- Wesley W. Terpstra <w.terpstra@gsi.de>
 //            -- Alessandro Rubini <rubini@gnudd.com>
 //            -- Tomasz Wlostowski <tomasz.wlostowski@cern.ch>
-//  version : 25-Sep-2019
+//  version : 27-Sep-2019
 //
-#define WB_API_VERSION "0.13.0"
+#define WB_API_VERSION "0.14.0"
 //
 // Api for wishbone devices for timing receiver nodes. This is not a timing receiver API.
 // 
@@ -146,32 +146,42 @@ eb_status_t wb_wr_stats_get_stall(eb_device_t device,          // EB device
                                   uint64_t *stallTS            // lm32 stall: timestamp of last update
                                   );
 
-// resets statistics about WR (and clears counters)
+// resets statistics about CPU stall
 eb_status_t wb_wr_stats_reset(eb_device_t device,              // EB device
                               int devIndex,                    // 0,1,2... - there may be more than 1 device on the WB bus
                               uint64_t contObsT,               // WR time continuity: observation interval (consider using '8')
                               uint32_t stallObsT               // lm32 stall: observation interval (consider using '0')
                               );
 
-// gets statistics about ECA
-eb_status_t wb_eca_stats_get(eb_device_t device,               // EB device
-                             int devIndex,                     // 0,1,2... - there may be more than 1 device on the WB bus
-                             uint64_t *nMessage,               // # of messages received
-                             int64_t *dtSum,                   // accumulated differences (deadline - timestamp)
-                             int64_t *dtMin,                   // minimum difference (deadline - timestamp)
-                             int64_t *dtMax                    // maximum difference (deadline - timestamp)
-                             );
-
 // resets statistics about ECA (and clears counters)
 eb_status_t wb_eca_stats_reset(eb_device_t device,             // EB device
-                               int devIndex                    // 0,1,2... - there may be more than 1 device on the WB bus
+                               int devIndex,                   // 0,1,2... - there may be more than 1 device on the WB bus
+                               int32_t lateOffset              // offset for late events
                                );
+
+// clears counter values of ECA statistics
+eb_status_t wb_eca_stats_clear(eb_device_t device,             // EB device
+                               int devIndex,                   // 0,1,2... - there may be more than 1 device on the WB bus
+                               uint32_t clearFlag              // b3: late count, b2: count/accu, b1: max, b0: min
+                               );
+
 
 // enables/disables capture of statistics about ECA
 eb_status_t wb_eca_stats_enable(eb_device_t device,            // EB device
                                 int devIndex,                  // 0,1,2... - there may be more than 1 device on the WB bus
                                 uint32_t enableFlag            // 1: enables capture; 0: disables capture            
                                );
+
+// gets statistics about ECA
+eb_status_t wb_eca_stats_get(eb_device_t device,               // EB device
+                             int devIndex,                     // 0,1,2... - there may be more than 1 device on the WB bus
+                             uint64_t *nMessage,               // # of messages received
+                             int64_t  *dtSum,                  // accumulated differences (deadline - timestamp)
+                             int64_t  *dtMin,                  // minimum difference (deadline - timestamp)
+                             int64_t  *dtMax,                  // maximum difference (deadline - timestamp)
+                             uint32_t *nLate,                  // # of late messages 
+                             int32_t  *lateOffset              // offset for late events
+                             );
                              
 // get ID of the 1st 1-wire sensor found on the specified bus
 eb_status_t wb_1wire_get_id(eb_device_t device,                // EB device

@@ -58,13 +58,16 @@ eb_device_t device;        // needs to be global for 1-wire stuff
 eb_device_t deviceOther;   // other EB device for comparing timestamps
 
 
-static void die(const char* where, eb_status_t status) {
+static void die(const char* where, eb_status_t status)
+{
   fprintf(stderr, "%s: %s failed: %s\n",
           program, where, eb_status(status));
   exit(1);
-}
+} // die
 
-static void help(void) {
+
+static void help(void)
+{
   fprintf(stderr, "Usage: %s [OPTION] <etherbone-device>\n", program);
   fprintf(stderr, "\n");
   fprintf(stderr, "  -a               display gateware 'build type'\n");
@@ -76,14 +79,12 @@ static void help(void) {
   fprintf(stderr, "  -g               display WR statistics (lock, time continuity)\n");
   fprintf(stderr, "  -h               display this help and exit\n");
   fprintf(stderr, "  -i               display WR IP\n");
-  fprintf(stderr, "  -j<cpu>          display lm32 stall info; # of CPU starts with '0'\n");
+  fprintf(stderr, "  -j<cpu>          display lm32 stall info (default: j0) \n");
   fprintf(stderr, "  -k               display 'ECA-Tap' statistics\n");
   fprintf(stderr, "  -l               display WR link status\n");
   fprintf(stderr, "  -m               display WR MAC\n");
   fprintf(stderr, "  -o               display offset between WR time and system time [ms]\n");
-  fprintf(stderr, "  -s<number>       snoop  for information continuously\n");
-  fprintf(stderr, "                      0: print all messages (default)\n");
-  fprintf(stderr, "                      1..N print after N number of seconds\n");
+  fprintf(stderr, "  -s <secs> <cpu>  snoop for information continuously (and print warnings)\n");
   fprintf(stderr, "  -t<busIndex>     display temperature of sensor on the specified 1-wire bus\n");
   fprintf(stderr, "  -u<index>        user 1-wire: specify WB device in case multiple WB devices of the same type exist (default: u0)\n");
   fprintf(stderr, "  -v               display verbose information\n");
@@ -91,19 +92,61 @@ static void help(void) {
   fprintf(stderr, "  -y               display WR sync status\n");
   fprintf(stderr, "  -z               display FPGA uptime [h]\n");
   fprintf(stderr, "\n");
-  fprintf(stderr, "  wrstatclear  <tWrObs> <tStallObs>  command clears statics and sets observation times for 'WR statistics' and 'CPU stall' [ns]\n");
-  fprintf(stderr, "  ecatapclear                        command clears statics on ECA Tap module\n");
-  fprintf(stderr, "  ecatapenable                       command enables capture on ECA Tap module\n");
-  fprintf(stderr, "  ecatapdisable                      command enables capture on ECA Tap module\n");
+  fprintf(stderr, "  wrstatreset  <tWrObs> <tStallObs>  command clears statistics and sets observation times (default: 8 50000)\n");
+  fprintf(stderr, "  ecatapreset                        command resets ECA Tap\n");
+  fprintf(stderr, "  ecatapclear <clearFlag>            command clears ECA Tap counters (b3: late count, b2: count/accu, b1: max, b0: min)\n");
+  fprintf(stderr, "  ecatapenable                       command enables capture on ECA Tap\n");
+  fprintf(stderr, "  ecatapdisable                      command enables capture on ECA Tap\n");
   fprintf(stderr, "\n");  
   fprintf(stderr, "Use this tool to get some info about WR enabled hardware.\n");
   fprintf(stderr, "Example1: '%s -v dev/wbm0' display typical information.\n", program);
   fprintf(stderr, "Example2: '%s -b0 -f0x43 dev/wbm0' read ID of EEPROM connected to 1st (user) 1-wire bus\n", program);
+  fprintf(stderr, "Example3: '%s -b0 -f0x43 dev/wbm0' read ID of EEPROM connected to 1st (user) 1-wire bus\n", program);
   fprintf(stderr, "\n");
   fprintf(stderr, "Report software bugs to <d.beck@gsi.de>\n");
   fprintf(stderr, "Version %s. Licensed under the LGPL v3.\n", EBMON_VERSION);
-}
+} // help
 
+
+void printSnoopHeader()
+{ 
+  fprintf(stdout, "%s     WR [ns]   | CPU |                      [n(Hz)]   ECA                 [us(us)]\n", program);
+  fprintf(stdout, "%s:  lock +dt -dt|stall| nMessages( rate ) early late  min max avrge(act) ltncy(act)\n", program);
+} // printSnoopHeader
+
+
+void printSnoopData(int snoopInterval, int snoopLockFlag, int64_t contMaxPosDT, int64_t contMaxNegDT, double snoopStall, uint64_t ecaNMessage, int64_t ecaMin, int64_t ecaMax, int64_t ecaDtSum, int ecaLate, int ecaEarly)
+{
+  int average;
+  int aheadT = 1000;    /* chk hack */
+  int latency;
+  uint64_t nMessageAct;
+  int64_t  dtSumAct;
+  int      averageAct;
+  int      latencyAct;
+  static uint64_t nMessagePrev = 0;
+  static uint64_t dtSumPrev    = 0;
+
+  average      = (int)(ecaDtSum/(1000*ecaNMessage+1)); // ns -> us
+  latency      = aheadT - average;
+  nMessageAct  = ecaNMessage - nMessagePrev;
+  dtSumAct     = ecaDtSum - dtSumPrev; 
+  averageAct   = (int)(dtSumAct/(1000*nMessageAct+1));
+  latencyAct   = aheadT - averageAct;
+
+  nMessagePrev = ecaNMessage;
+  dtSumPrev    = ecaDtSum;
+  
+  fprintf(stdout, "%s: ", program);
+  fprintf(stdout, "    %1d ", snoopLockFlag);
+  fprintf(stdout, "%3d ", (int)contMaxPosDT);
+  fprintf(stdout, "%3d|", (int)contMaxNegDT);
+  fprintf(stdout, " %4.2f|", snoopStall);
+  if (ecaNMessage == 0) fprintf(stdout, " %9"PRIu64"(%6.1f)   %3d  %3d  %3d %3d   %3d(%3d)   %3d(%3d)", (uint64_t)0, 0.0, 0, 0, 0, 0, 0, 0, 0, 0);
+  else                  fprintf(stdout, " %9"PRIu64"(%6.1f)   %3d  %3d  %3d %3d   %3d(%3d)   %3d(%3d)", ecaNMessage, (double)nMessageAct/(double)snoopInterval, ecaLate, ecaEarly, (int)(ecaMin/1000), (int)(ecaMax/1000), average, averageAct, latency, latencyAct);
+  fprintf(stdout, "\n");
+
+} // printSnoopData
 
 int main(int argc, char** argv) {
   #define BUILDTYPELEN 256
@@ -137,11 +180,16 @@ int main(int argc, char** argv) {
   int         getBuildType=0;
   int         getCPUStall=0;
   int         getECATap=0;
+  int         snoopMode=0;
   int         exitCode=0;
 
-  unsigned int family    = 0;    // 1-Wire: familyCode
-  unsigned int user1Wire = 1;    // 1-Wire: 1 - User-1Wire; 0 - WR-Periph-1Wire
-  unsigned int ecpu      = 0;    // # of embedded cpu (for 'stall' statistics) 
+  unsigned int family         = 0;    // 1-Wire: familyCode
+  unsigned int user1Wire      = 1;    // 1-Wire: 1 - User-1Wire; 0 - WR-Periph-1Wire
+  unsigned int ecpu           = 0;    // # of embedded cpu (for 'stall' statistics)
+  unsigned int snoopSecs      = 0;    // # of seconds; poll rate for snoop mode
+  int          snoopLockFlag  = 0;
+  double       snoopStall     = 0;
+  uint32_t     nSecs;
 
   uint64_t    nsecs64, nsecsOther64;
   uint64_t    nsecsSum64, nsecsSumOther64;
@@ -163,10 +211,15 @@ int main(int argc, char** argv) {
   uint32_t    stallMaxStreak;
   uint32_t    stallN;
   uint64_t    stallTS;
+  short       ecaClearFlag;
   uint64_t    ecaNMessage;
   int64_t     ecaDtSum;
   int64_t     ecaDtMin;
   int64_t     ecaDtMax;
+  uint32_t    ecaNLate;
+  int32_t     ecaLateOffset;
+  int         ecaSumLate;
+  int         ecaSumEarly;
   
   int         link;
   uint32_t    uptime;
@@ -187,7 +240,7 @@ int main(int argc, char** argv) {
 
   program = argv[0];
 
-  while ((opt = getopt(argc, argv, "t:u:w:f:b:c:j:adgoymlievhzk")) != -1) {
+  while ((opt = getopt(argc, argv, "t:u:w:f:b:c:j:s:adgoymlievhzk")) != -1) {
     switch (opt) {
       case 'a':
         getBuildType=1;
@@ -249,6 +302,17 @@ int main(int argc, char** argv) {
         break;
       case 'z':
         getWRUptime=1;
+        break;
+      case 's':
+        snoopMode=1;
+        if (argv[optind-1] != NULL) {snoopSecs = strtol(argv[optind-1], &tail, 0); }
+        else                        {fprintf(stderr, "missing '# of seconds'!\n"); exit(1);}
+        if (argv[optind+0] != NULL) {ecpu      = strtol(argv[optind+0], &tail, 0); }
+        else                        {fprintf(stderr, "missing '# of ecpu'!\n"); exit(1);}
+        if ( ecpu > 16) {
+          fprintf(stderr, "# of cpu '%d' unreasonable large!\n", ecpu);
+          exit(1);
+        } // if ecpu
         break;
       case 't':
         getBoardTemp=1;
@@ -332,6 +396,55 @@ int main(int argc, char** argv) {
     fprintf(stderr, "can't open connection to device %s \n", devName);
     return (1);
   }
+  
+  if (snoopMode) { /* chk: mit der heissen Nadel gestrickt */
+    // init
+    wb_eca_stats_reset(device, devIndex, 0);
+    wb_eca_stats_enable(device, devIndex, 0x1);
+    wb_wr_stats_reset(device, devIndex, 8, 50000); 
+    nSecs           = snoopSecs;
+    ecaSumLate      = 0;
+    ecaSumEarly     = 0;
+    printSnoopHeader();
+    while(1) {
+      // get data
+      // wr lock
+      wb_wr_get_sync_state(device, devIndex, &syncState);
+      if (syncState == WR_PPS_GEN_ESCR_MASK) snoopLockFlag = 1;
+      if (!snoopLockFlag)     fprintf(stderr, "%s: error - WR not locked\n", program);
+
+      // time continuity
+      wb_wr_stats_get_continuity(device, devIndex, &contObsT, &contMaxPosDT, &contMaxPosTS, &contMaxNegDT, &contMaxNegTS);
+      if (contMaxPosDT > 16)  fprintf(stderr, "%s: error - WR time jumps by %d [ns]\n", program, (int)contMaxPosDT);
+      if (contMaxNegDT != 0)  fprintf(stderr, "%s: error - WR time jumps by %d [ns]\n", program, (int)contMaxNegDT);
+
+      // CPU stalls
+      wb_wr_stats_get_stall(device, devIndex, ecpu, &stallObsT, &stallMaxStreak, &stallN, &stallTS);
+      snoopStall = (double)stallN/(double)stallObsT;
+      if (snoopStall > 0.5)    fprintf(stderr, "%s: error - max CPU stall %f\n", program, snoopStall);
+
+      // ECA
+      wb_eca_stats_get(device, devIndex, &ecaNMessage, &ecaDtSum, &ecaDtMin, &ecaDtMax, &ecaNLate, &ecaLateOffset);
+      if (ecaDtMin < 0) {  /* chk */
+        ecaSumLate++;      /* chk */
+        fprintf(stderr,                        "%s: error - late event %"PRId64" [ns]\n", program, ecaDtMin);
+        wb_eca_stats_clear(device, devIndex, 0x1);
+      }
+      if (ecaDtMax > 10000000) {  /* chk */
+        ecaSumEarly++;            /* chk */
+        fprintf(stderr,                        "%s: error - early event %"PRId64" [ns]\n", program, ecaDtMax);
+        wb_eca_stats_clear(device, devIndex, 0x2);
+      }
+      
+      if (nSecs >= snoopSecs) {
+        printSnoopData(snoopSecs, snoopLockFlag, contMaxPosDT, contMaxNegDT, snoopStall,
+                       ecaNMessage, ecaDtMin, ecaDtMax, ecaDtSum, ecaSumLate, ecaSumEarly);
+        nSecs = 1;
+      } // if nSecs
+      else nSecs++;
+      usleep(1000000);  // iterate once per second
+    } // while
+  } // snoopMode
 
   if (getWRDateOther) {
     if ((status = wb_open(devNameOther, &deviceOther, &socket)) != EB_OK) {
@@ -532,7 +645,7 @@ int main(int argc, char** argv) {
   } // if getWRStats
   
   if (getCPUStall) {
-    fprintf(stdout, "= lm32 stalls for CPU %d [ns]\n", ecpu);
+    fprintf(stdout, "= lm32 stalls for CPU %d [cycles]\n", ecpu);
     if ((status = wb_wr_stats_get_stall(device, devIndex, ecpu, &stallObsT, &stallMaxStreak, &stallN, &stallTS)) != EB_OK) die("WR get CPU stall statistics", status);
     fprintf(stdout, "--- observation period: %"PRIu64"\n", stallObsT);
     fprintf(stdout, "---- stall time max   : %u\n", stallMaxStreak);
@@ -540,40 +653,55 @@ int main(int argc, char** argv) {
     secs = (unsigned long)((double)stallTS / 1000000000.0);
     tm = gmtime(&secs);
     strftime(timestr, sizeof(timestr), "%Y-%m-%d %H:%M:%S %Z", tm);
-    fprintf(stdout, "---- TS of neg diff   : %s\n", timestr); 
+    fprintf(stdout, "---- TS of 'time max' : %s\n", timestr); 
   } // if getCPUStall
 
   if (getECATap) {
     int32_t aheadt = 1000000;
     fprintf(stdout, "= ECA-Tap (input) [ns]\n");
-    if ((status = wb_eca_stats_get(device, devIndex, &ecaNMessage, &ecaDtSum, &ecaDtMin, &ecaDtMax)) != EB_OK) fprintf(stdout, "warning: can't ECA-Tap statistics (can't find in gateware)\n");
+    if ((status = wb_eca_stats_get(device, devIndex, &ecaNMessage, &ecaDtSum, &ecaDtMin, &ecaDtMax, &ecaNLate, &ecaLateOffset)) != EB_OK) fprintf(stdout, "warning: can't ECA-Tap statistics (can't find in gateware)\n");
     fprintf(stdout, "--- # of messages     : %"PRIu64"\n", ecaNMessage);
     fprintf(stdout, "--- ave (dl - ts)     : %d\n", (int32_t)((double)ecaDtSum/(double)ecaNMessage));
     fprintf(stdout, "--- min (dl - ts)     : %"PRId64"\n", ecaDtMin);
     fprintf(stdout, "--- max (dl - ts)     : %"PRId64"\n", ecaDtMax);
     fprintf(stdout, "--- calc latency      : %d\n", aheadt - (int32_t)((double)ecaDtSum/(double)ecaNMessage));
+    fprintf(stdout, "--- late offset       : %d\n", ecaLateOffset);
+    fprintf(stdout, "--- # of late messages: %u\n", ecaNLate);
   } // getECATap
   
   if (command) {
-    if (!strcasecmp(command, "wrstatclear")) {
+
+    if (!strcasecmp(command, "wrstatreset")) {
       if (optind+3  != argc) {printf("expecting exactly two arguments: wrstatclear  <tWrObs> <tStallObs>\n"); return 1;}
       contObsT = strtoul(argv[optind+1], &tail, 0);
       stallObsT = strtoul(argv[optind+2], &tail, 0);
       wb_wr_stats_reset(device, devIndex, contObsT, stallObsT);
-    } // wrstatclear
+      fprintf(stdout, "eb-mon: %s\n", command);
+    } // wrstatreset
+
+    if (!strcasecmp(command, "ecatapreset")) {
+      if (optind+2  != argc) {printf("expecting exactly one argument: ecatapreset <lateOffset>\n"); return 1;}
+      ecaLateOffset = strtol(argv[optind+1], &tail, 0);
+      wb_eca_stats_reset(device, devIndex, ecaLateOffset);
+      fprintf(stdout, "eb-mon: %s\n", command);
+    } // ecatapreset
 
     if (!strcasecmp(command, "ecatapclear")) {
-      wb_eca_stats_reset(device, devIndex);
+      if (optind+2  != argc) {printf("expecting exactly one argument: ecatapclear <clearFlag>\n"); return 1;}
+      ecaClearFlag = strtoul(argv[optind+1], &tail, 0);
+      wb_eca_stats_clear(device, devIndex, ecaClearFlag);
+      fprintf(stdout, "eb-mon: %s\n", command);
     } // ecatapclear
 
     if (!strcasecmp(command, "ecatapenable")) {
       wb_eca_stats_enable(device, devIndex, 0x1);
+      fprintf(stdout, "eb-mon: %s\n", command);
     } // ecatapenable
 
     if (!strcasecmp(command, "ecatapdisable")) {
       wb_eca_stats_enable(device, devIndex, 0x0);
+      fprintf(stdout, "eb-mon: %s\n", command);
     } // ecatapdisable
-
     
   } // if command
   
