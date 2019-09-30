@@ -103,7 +103,11 @@ uint DaqInterface::getBufferSize( void )
 #ifndef CONFIG_MIL_DAQ_USE_RAM
    int size = getHeadRingIndex() - getTailRingIndex();
    if( size >= 0 )
+   {
+     // std::cout << ">0" << std::endl;
       return static_cast<uint>(size);
+   }
+  // std::cout << "<0" << std::endl;
    return getHeadRingIndex() + c_ringBufferCapacity - getTailRingIndex();
 #else
    #error TODO: DDR3-Application requiered!
@@ -112,24 +116,43 @@ uint DaqInterface::getBufferSize( void )
 
 /*! ---------------------------------------------------------------------------
  */
-void DaqInterface::readRingItem( RingItem& rRingItem )
+uint DaqInterface::readRingItems( RingItem* pItems, uint size )
 {
-   #define __CONV_MEMBER( m ) \
-       rRingItem.m = gsi::convertByteEndian( unconvItem.m )
+   uint toRead  = std::min( size, getBufferSize() );
+   uint toRead1 = std::min( toRead, c_ringBufferCapacity - getTailRingIndex() );
+   uint toRead2 = toRead - toRead1;
 
-   RING_ITEM_T unconvItem;
+   RING_ITEM_T beItems[toRead];
 
-   m_poEbAccess->readLM32( &unconvItem, sizeof( unconvItem ),
-                           offsetof( FG::SCU_SHARED_DATA_T, daq_buf.ring_data ) +
-                           getTailRingIndex() * sizeof( unconvItem ) );
+   if( toRead1 > 0 )
+   {
+      m_poEbAccess->readLM32( &beItems[0],
+                              sizeof( RING_ITEM_T ) * toRead1,
+                              offsetof( FG::SCU_SHARED_DATA_T, daq_buf.ring_data ) +
+                              getTailRingIndex() * sizeof( RING_ITEM_T ) );
+   }
 
-   __CONV_MEMBER( setvalue );
-   __CONV_MEMBER( actvalue );
-   __CONV_MEMBER( tmstmp_l );
-   __CONV_MEMBER( tmstmp_h );
-   __CONV_MEMBER( channel );
+   if( toRead2 > 0 )
+   {
+      m_poEbAccess->readLM32( &beItems[toRead1],
+                              sizeof( RING_ITEM_T ) * toRead2,
+                              offsetof( FG::SCU_SHARED_DATA_T, daq_buf.ring_data ) );
+   }
 
-   #undef __CONV_MEMBER
+   #define __BYTE_SWAP_ITEM( member ) \
+      pItems[i].member = gsi::convertByteEndian( beItems[i].member )
+   for( uint i = 0; i < toRead; i++ )
+   {
+      __BYTE_SWAP_ITEM( setvalue );
+      __BYTE_SWAP_ITEM( actvalue );
+      __BYTE_SWAP_ITEM( tmstmp_l );
+      __BYTE_SWAP_ITEM( tmstmp_h );
+      __BYTE_SWAP_ITEM( channel );
+      incrementRingTail();
+   }
+   #undef __BYTE_SWAP_ITEM
+   updateRingTail();
+   return toRead;
 }
 
 //================================== EOF ======================================

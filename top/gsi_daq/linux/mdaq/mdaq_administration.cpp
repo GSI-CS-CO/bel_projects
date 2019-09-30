@@ -177,22 +177,27 @@ uint DaqAdministration::distributeData( void )
 {
    if( !readRingPosition() )
       return 0;
+   uint size = getBufferSize();
+   if( size <= 0 )
+      return 0;
 
-   RingItem oRingItem;
-   readRingItem( oRingItem );
+   size = std::min( size, static_cast<uint>(8) );
+   RingItem sDaqData[size];
 
-   DaqCompare* pCurrent = findDaqCompare( oRingItem.getChannel() );
-   if( pCurrent != nullptr )
-      pCurrent->onData( oRingItem.getTimestamp(),
-                        oRingItem.getActValue32(),
-                        oRingItem.getSetValue32() );
-   else
-      onUnregistered( &oRingItem );
+   size = readRingItems( sDaqData, size );
 
-
-   incrementRingTail();
-   updateRingTail();
-   return getBufferSize();
+   for( uint i = 0; i < size; i++ )
+   {
+      RingItem* pItem = &sDaqData[i];
+      DaqCompare* pCurrent = findDaqCompare( pItem->getChannel() );
+      if( pCurrent != nullptr )
+         pCurrent->onData( pItem->getTimestamp(),
+                           pItem->getActValue32(),
+                           pItem->getSetValue32() );
+      else
+         onUnregistered( pItem );
+   }
+   return size;
 }
 
 //================================== EOF ======================================

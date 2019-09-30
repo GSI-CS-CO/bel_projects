@@ -9,6 +9,7 @@
 ## Date:     14.08.2019                                                      ##
 ###############################################################################
 REPOSITORY_DIR := $(shell git rev-parse --show-toplevel)
+DEFINES += VERSION=0.2
 
 MIAN_MODULE := mdaqt.cpp
 
@@ -49,7 +50,6 @@ DEFINES += DEBUGLEVEL=1
 DEFINES += CONFIG_DAQ_TEST
 # DEFINES += NDEBUG
 DEFINES += CONFIG_DAQ_DEBUG
-DEFINES += VERSION=0.1
 DEFINES += GPSTR_DEFAULT_GNUPLOT_EXE=\"$(GNUPLOT_BIN)\"
 
 DEFINES += CONFIG_NO_SCU_RAM
@@ -73,10 +73,13 @@ HOST ?= tcp/$(SCU_URL)
 #CALL_ARGS         ?=  $(HOST)
 
 #CALL_ARGS = tcp/scuxl0107 39 130 39 129 39 1 39 2
+#CALL_ARGS = -cv tcp/scuxl0107 39 130 39 129
+#CALL_ARGS = -c tcp/scuxl0107
 #CALL_ARGS = tcp/scuxl0107 39 130
-CALL_ARGS = tcp/scuxl0107 -avdc --time 25 -G /home/bel/ubecker/lnx/.local/bin/gnuplot
-#CALL_ARGS = tcp/scuxl0107 -avdc --time 10
-REMOTE_CALL_ARGS  ?= "dev/wbm0"makefilema
+#CALL_ARGS = tcp/scuxl0107 -avdc --time 25 -G /home/bel/ubecker/lnx/.local/bin/gnuplot
+CALL_ARGS = tcp/scuxl0107 -avdc
+#CALL_ARGS = -v
+REMOTE_CALL_ARGS  ?= "dev/wbm0"
 
 
 DEBUG = 1
