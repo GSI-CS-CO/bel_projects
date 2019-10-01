@@ -36,7 +36,7 @@
 
 #define MSI_SLAVE 0
 #define MSI_WB_FG 2
-#define SEND_SIG(SIG)     *(volatile unsigned int *)(char*)(pCpuMsiBox + g_shared.fg_regs[channel].mbx_slot * 2) = SIG
+
 #define SIG_REFILL      0
 #define SIG_START       1
 #define SIG_STOP_EMPTY  2
@@ -106,7 +106,9 @@ typedef struct
 
 FG_CHANNEL_T g_aFgChannels[MAX_FG_CHANNELS] = {{0,0,0}};
 
-
+#define SEND_SIG(SIG) \
+   *(volatile uint32_t*)(char*) \
+   (pCpuMsiBox + g_shared.fg_regs[channel].mbx_slot * sizeof(uint16_t)) = SIG
 
 static void clear_handler_state(int);
 
@@ -170,13 +172,13 @@ static void mil_failure( const int status, const int slave_nr )
 /** debug method
  * prints the last received message signaled interrupt to the UART
  */
-static void show_msi()
+static void show_msi( void )
 {
   mprintf(" Msg:\t%08x\nAdr:\t%08x\nSel:\t%01x\n", global_msi.msg, global_msi.adr, global_msi.sel);
 
 }
 
-static void isr0()
+static void isr0( void )
 {
    mprintf("ISR0\n");
    show_msi();
@@ -205,15 +207,6 @@ static void enable_scub_msis(int channel) {
       mil_irq_base[8]   = MIL_DRQ;
       mil_irq_base[9]   = MIL_DRQ;
       mil_irq_base[10]  = (uint32_t)pMyMsi + 0x20;
-
-      //mil_irq_base[8]   = MIL_DRY;
-      //mil_irq_base[9]   = MIL_DRY;
-      //mil_irq_base[10]  = (uint32_t)pMyMsi + 0x20;
-
-      //mil_irq_base[8]   = MIL_INL;
-      //mil_irq_base[9]   = MIL_INL;
-      //mil_irq_base[10]  = (uint32_t)pMyMsi + 0x20;
-      //mil_irq_base[2]   = (1 << MIL_INL) | (1 << MIL_DRY) | (1 << MIL_DRQ);
       mil_irq_base[2]   = (1 << MIL_DRQ);
     }
   }
@@ -323,7 +316,7 @@ static inline void send_fg_param(int slot, int fg_base, unsigned short cntrl_reg
  */
 static
 inline void handle(int slot, unsigned fg_base, short irq_act_reg, signed int* setvalue) {
-    unsigned short cntrl_reg = 0;
+    uint16_t cntrl_reg = 0;
     int status;
     int channel;
 
@@ -402,7 +395,7 @@ inline void handle(int slot, unsigned fg_base, short irq_act_reg, signed int* se
 /** @brief as short as possible, just pop the msi queue of the cpu and
  *         push it to the message queue of the main loop
  */
-void irq_handler() {
+void irq_handler( void ) {
   struct msi m;
 
   // send msi threadsafe to main loop
@@ -420,9 +413,9 @@ void irq_handler() {
 static int configure_fg_macro(int channel) {
   int i = 0;
   int slot, dev, fg_base, dac_base;
-  unsigned short cntrl_reg_wr;
-  unsigned short data;
-  unsigned short dreq_status;
+  uint16_t cntrl_reg_wr;
+ // unsigned short data;
+  uint16_t dreq_status;
   struct param_set pset;
   short blk_data[6];
   int status;
@@ -471,21 +464,9 @@ static int configure_fg_macro(int channel) {
       scub_base[OFFS(slot) + SLAVE_INT_ACT] = 0xc000;  // clear all irqs
       scub_base[OFFS(slot) + SLAVE_INT_ENA] |= 0xc000; // enable fg1 and fg2 irq
     } else if (slot & DEV_MIL_EXT) {
-      // check for PUR
-      //if((status = read_mil(scu_mil_base, &data, FC_IRQ_STAT | dev)) != OKAY)          dev_failure(status, 0, "check PUR");
-      //if (!(data & 0x100)) {
-        //SEND_SIG(SIG_DISARMED);
-        //return 0;
-      //}
       if ((status = write_mil(scu_mil_base, 1 << 13, FC_IRQ_MSK | dev)) != OKAY)
          dev_failure(status, slot & 0xf, "enable dreq"); //enable Data-Request
     } else if (slot & DEV_SIO) {
-      // check for PUR
-      //if((status = scub_read_mil(scub_base, slot & 0xf, &data, FC_IRQ_STAT | dev)) != OKAY)          dev_failure(status, slot & 0xf, "check PUR");
-      //if (!(data & 0x100)) {
-        //SEND_SIG(SIG_DISARMED);
-        //return 0;
-      //}
       scub_base[SRQ_ENA] |= (1 << ((slot & 0xf)-1));        // enable irqs for the slave
       scub_base[OFFS(slot & 0xf) + SLAVE_INT_ENA] = 0x0010; // enable receiving of drq
       if ((status = scub_write_mil(scub_base, slot & 0xf, 1 << 13, FC_IRQ_MSK | dev)) != OKAY)
@@ -507,16 +488,13 @@ static int configure_fg_macro(int channel) {
     /* fg mode and reset */
     if ((slot & 0xf0) == 0) {                                      //scu bus slave
       scub_base[OFFS(slot) + dac_base + DAC_CNTRL] = 0x10;        // set FG mode
-      //scub_base[OFFS(slot) + fg_base + FG_CNTRL] = 0x1;           // reset fg
       scub_base[OFFS(slot) + fg_base + FG_RAMP_CNT_LO] = 0;       // reset ramp counter
     } else if (slot & DEV_MIL_EXT) {
       if ((status = write_mil(scu_mil_base, 0x1, FC_IFAMODE_WR | dev)) != OKAY)
          dev_failure (status, 0, "set FG mode"); // set FG mode
-      //if ((status = write_mil(scu_mil_base, 0x1, FC_CNTRL_WR | dev)) != OKAY)   dev_failure (status, 0, "reset FG"); // reset fg
     } else if (slot & DEV_SIO) {
       if ((status = scub_write_mil(scub_base, slot & 0xf, 0x1, FC_IFAMODE_WR | dev)) != OKAY)
          dev_failure (status, slot & 0xf, "set FG mode"); // set FG mode
-      //if ((status = scub_write_mil(scub_base, slot & 0xf, 0x1, FC_CNTRL_WR | dev)) != OKAY)   dev_failure (status, slot & 0xf, "reset FG"); // reset fg
     }
 
     //fetch first parameter set from buffer
@@ -570,18 +548,14 @@ static int configure_fg_macro(int channel) {
       scub_base[OFFS(slot) + fg_base + FG_CNTRL] |= FG_ENABLED;
 
     } else if (slot & DEV_MIL_EXT) {
-      short data;
-      //if ((status = read_mil(scu_mil_base, &data, FC_CNTRL_RD | dev)) != OKAY)                       dev_failure (status, 0);
       // enable and end block mode
       if ((status = write_mil(scu_mil_base, cntrl_reg_wr | FG_ENABLED, FC_CNTRL_WR | dev)) != OKAY)
          dev_failure (status, 0, "end blk mode");
 
     } else if (slot & DEV_SIO) {
-      short data;
-      //if ((status = scub_read_mil(scub_base, slot & 0xf, &data, FC_CNTRL_RD | dev)) != OKAY)                       dev_failure (status, slot & 0xf);
       // enable and end block mode
-      if ((status = scub_write_mil(scub_base, slot & 0xf, cntrl_reg_wr | FG_ENABLED, FC_CNTRL_WR | dev)) != OKAY)
-         dev_failure (status, slot & 0xf, "end blk mode");
+      if ((status = scub_write_mil(scub_base, slot & SCU_BUS_SLOT_MASK, cntrl_reg_wr | FG_ENABLED, FC_CNTRL_WR | dev)) != OKAY)
+         dev_failure (status, slot & SCU_BUS_SLOT_MASK, "end blk mode");
     }
 
     // reset watchdog
@@ -669,8 +643,6 @@ static void disable_channel(unsigned int channel) {
 
     if((status = write_mil(scu_mil_base, data & ~(0x2), FC_CNTRL_WR | dev)) != OKAY)
        dev_failure(status, 0, "disarm hw");
-    //write_mil(scu_mil_base, 0x0, 0x60 << 8 | dev);             // unset FG mode
-
   } else if (slot & DEV_SIO) {
     // disarm hardware
     if((status = scub_read_mil(scub_base, slot & 0xf, &data, FC_CNTRL_RD | dev)) != OKAY)
@@ -678,7 +650,6 @@ static void disable_channel(unsigned int channel) {
 
     if((status = scub_write_mil(scub_base, slot & 0xf, data & ~(0x2), FC_CNTRL_WR | dev)) != OKAY)
        dev_failure(status, slot & 0xf, "disarm hw");
-    //write_mil(scu_mil_base, 0x0, 0x60 << 8 | dev);             // unset FG mode
   }
 
 
@@ -694,21 +665,21 @@ static void disable_channel(unsigned int channel) {
 /** @brief updates the temperatur information in the shared section
  */
 static void updateTemp( void ) {
-  BASE_ONEWIRE = (unsigned char *)wr_1wire_base;
+  BASE_ONEWIRE = (uint8_t*)wr_1wire_base;
   wrpc_w1_init();
 #if __GNUC__ >= 9
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Waddress-of-packed-member"
 #endif
   ReadTempDevices(0, &g_shared.board_id, &g_shared.board_temp);
-  BASE_ONEWIRE = (unsigned char *)user_1wire_base;
+  BASE_ONEWIRE = (uint8_t*)user_1wire_base;
   wrpc_w1_init();
   ReadTempDevices(0, &g_shared.ext_id, &g_shared.ext_temp);
   ReadTempDevices(1, &g_shared.backplane_id, &g_shared.backplane_temp);
 #if __GNUC__ >= 9
   #pragma GCC diagnostic pop
 #endif
-  BASE_ONEWIRE = (unsigned char *)wr_1wire_base; // important for PTP deamon
+  BASE_ONEWIRE = (uint8_t*)wr_1wire_base; // important for PTP deamon
   wrpc_w1_init();
 }
 
@@ -840,7 +811,7 @@ static void ecaHandler( )
       if(slot & DEV_MIL_EXT) {
         dev_mil_armed = 1;
       } else if (slot & DEV_SIO) {
-        active_sios |= (1 << ((slot & 0xf) - 1));
+        active_sios |= (1 << ((slot & SCU_BUS_SLOT_MASK) - 1));
         dev_sio_armed = 1;
       }
     }
@@ -850,10 +821,6 @@ static void ecaHandler( )
   flag         = *(pECAQ + (ECA_QUEUE_FLAGS_GET >> 2));
   if (flag & (0x0001 << ECA_VALID)) {
     // read data 
-    //evtIdHigh    = *(pECAQ + (ECA_QUEUE_EVENT_ID_HI_GET >> 2));
-    //evtIdLow     = *(pECAQ + (ECA_QUEUE_EVENT_ID_LO_GET >> 2));
-    //evtDeadlHigh = *(pECAQ + (ECA_QUEUE_DEADLINE_HI_GET >> 2));
-    //evtDeadlLow  = *(pECAQ + (ECA_QUEUE_DEADLINE_LO_GET >> 2));
     actTag       = *(pECAQ + (ECA_QUEUE_TAG_GET >> 2));
 
     // pop action from channel
@@ -872,9 +839,8 @@ static void ecaHandler( )
           // send broadcast
           scub_base[OFFS(13) + MIL_SIO3_TX_CMD] = 0x20ff;
         }
-        //mprintf("EvtID: 0x%08x%08x; deadline: 0x%08x%08x; flag: 0x%08x\n", evtIdHigh, evtIdLow, evtDeadlHigh, evtDeadlLow, flag);
       break;
-    
+
       default:
       break;
     } // switch
@@ -943,12 +909,6 @@ static unsigned int getId( register TaskType* pThis )
 {
    return (((uint8_t*)pThis) - ((uint8_t*)g_aTasks)) / sizeof( TaskType );
 }
-
-#if 0
-TaskType *tsk_getConfig(void) {
-  return g_aTasks;
-}
-#endif
 
 
 /** @brief software irq handler
@@ -1142,7 +1102,7 @@ static void dev_sio_bus_handler( register TaskType* pThis, const bool isScuBus )
             status = OKAY;
             if( isScuBus )
             {
-               if( ((slot & 0xf) != pThis->slave_nr ) || ((slot & DEV_SIO) == 0) )
+               if( ((slot & SCU_BUS_SLOT_MASK) != pThis->slave_nr ) || ((slot & DEV_SIO) == 0) )
                   continue;
                status = scub_set_task_mil( scub_base,
                                            pThis->slave_nr,
@@ -1184,7 +1144,7 @@ static void dev_sio_bus_handler( register TaskType* pThis, const bool isScuBus )
             /* test only ifas connected to sio */
             if( isScuBus )
             {
-               if( ((slot & 0xf) != pThis->slave_nr ) || ((slot & DEV_SIO) == 0) )
+               if( ((slot & SCU_BUS_SLOT_MASK) != pThis->slave_nr ) || ((slot & DEV_SIO) == 0) )
                   continue;
                status = scub_get_task_mil( scub_base, pThis->slave_nr,
                                            getId( pThis ) + i + 1,

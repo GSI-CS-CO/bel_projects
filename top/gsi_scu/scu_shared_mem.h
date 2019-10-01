@@ -228,6 +228,8 @@ namespace MiLdaq
 {
 #endif
 
+#define SCU_BUS_SLOT_MASK 0x0F
+
 /*! ---------------------------------------------------------------------------
  */
 static inline
@@ -265,7 +267,7 @@ unsigned int getMilDaqLocation( const register struct daq* pMilDaq )
 static inline
 unsigned int getDaqMilScuBusSlotbyLocation( const unsigned int loc )
 {
-   return loc & 0x0F;
+   return loc & SCU_BUS_SLOT_MASK;
 }
 
 /*! ---------------------------------------------------------------------------
