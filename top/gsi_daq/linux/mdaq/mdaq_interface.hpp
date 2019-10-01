@@ -133,6 +133,8 @@ private:
    bool               m_ebAccessSelfCreated;
    DAQ_RING_T         m_oRing;
 
+   void readRingData( RING_ITEM_T* ptr, uint len, uint offset = 0 );
+
 protected:
    daq::EbRamAccess*  m_poEbAccess;
 

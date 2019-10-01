@@ -116,6 +116,19 @@ uint DaqInterface::getBufferSize( void )
 
 /*! ---------------------------------------------------------------------------
  */
+inline
+void DaqInterface::readRingData( RING_ITEM_T* ptr, uint len, uint offset )
+{
+   m_poEbAccess->readLM32( ptr,
+                           len * sizeof( RING_ITEM_T ),
+                           offsetof( FG::SCU_SHARED_DATA_T,
+                                     daq_buf.ring_data ) +
+                           offset * sizeof( RING_ITEM_T )
+                         );
+}
+
+/*! ---------------------------------------------------------------------------
+ */
 uint DaqInterface::readRingItems( RingItem* pItems, uint size )
 {
    uint toRead  = std::min( size, getBufferSize() );
@@ -126,17 +139,12 @@ uint DaqInterface::readRingItems( RingItem* pItems, uint size )
 
    if( toRead1 > 0 )
    {
-      m_poEbAccess->readLM32( &beItems[0],
-                              sizeof( RING_ITEM_T ) * toRead1,
-                              offsetof( FG::SCU_SHARED_DATA_T, daq_buf.ring_data ) +
-                              getTailRingIndex() * sizeof( RING_ITEM_T ) );
+      readRingData( &beItems[0], toRead1, getTailRingIndex() );
    }
 
    if( toRead2 > 0 )
    {
-      m_poEbAccess->readLM32( &beItems[toRead1],
-                              sizeof( RING_ITEM_T ) * toRead2,
-                              offsetof( FG::SCU_SHARED_DATA_T, daq_buf.ring_data ) );
+      readRingData( &beItems[toRead1], toRead2 );
    }
 
    #define __BYTE_SWAP_ITEM( member ) \
