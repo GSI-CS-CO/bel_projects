@@ -234,7 +234,9 @@ begin
     clk_i   => clk_sys,
     rst_n_i => rst_n,
     slave_i => top_bus_master_o(c_tops_minislave),
-    slave_o => top_bus_master_i(c_tops_minislave)
+    slave_o => top_bus_master_i(c_tops_minislave),
+    msi_master_o => top_msi_slave_i (c_tops_minislave),
+    msi_master_i => top_msi_slave_o (c_tops_minislave)
   );
 
 

@@ -50,7 +50,7 @@ begin
 			counter <= counter + 1;
 			if counter >= max_counter_cycle_termination then 
 				counter <= 0;
-				ebcyc_o <= '0';
+				--ebcyc_o <= '0';
 				wait until fifoadr_i = "00"; 
 				wait until fifoadr_i = "01"; 
 			end if;

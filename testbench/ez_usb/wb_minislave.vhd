@@ -8,16 +8,19 @@ entity wb_minislave is
         clk_i   : in  std_logic;
         rst_n_i : in  std_logic;
         slave_i : in  t_wishbone_slave_in;
-        slave_o : out t_wishbone_slave_out
+        slave_o : out t_wishbone_slave_out;
+        msi_master_o : out t_wishbone_master_out;
+        msi_master_i : in  t_wishbone_master_in
     );
 end entity;
 
 architecture rtl of wb_minislave is
-    signal wb_register : std_logic_vector(31 downto 0) := x"affebabe";
+    signal wb_register : std_logic_vector(31 downto 0) := x"00000100";
     signal stall : std_logic := '1';
     signal n_rd_access : integer := 0;
     signal n_wr_access : integer := 0;
     signal ack : std_logic := '0';
+    signal countdown : unsigned(15 downto 0) := x"0100";
 begin
 
     minislave: process
@@ -38,12 +41,37 @@ begin
             then 
                 n_wr_access <= n_wr_access + 1;
                 wb_register <= slave_i.dat;
+
             else
                 n_rd_access <= n_rd_access + 1;
             end if;
         end if;
     end process;
-    slave_o.dat <= wb_register when ack = '1' else "----1010----0001----0001----1110";
+    slave_o.dat <= wb_register when ack = '1' else "--------------------------------";
     slave_o.stall <= stall;
+
+    msi_emitter: process
+    begin
+        wait until rising_edge(clk_i);
+        msi_master_o.stb <= '0';
+        msi_master_o.cyc <= '0';
+        if n_wr_access > 0 and slave_i.stb = '0' and slave_i.we = '0' then 
+            if countdown >= 9 then 
+                countdown <= countdown -1 ;
+            elsif countdown < 9 then
+                msi_master_o.dat <= x"11112222";
+                msi_master_o.adr <= x"000000aa";
+                msi_master_o.cyc <= '1';
+                msi_master_o.stb <= '1';
+                if msi_master_i.stall = '0' then
+                    if countdown > 0 then 
+                        countdown <= countdown - 1;
+                    else 
+                        countdown <= x"0400";
+                    end if;
+                end if;
+            end if;
+        end if;
+    end process;
 
 end architecture;
