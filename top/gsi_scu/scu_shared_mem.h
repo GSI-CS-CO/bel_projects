@@ -36,6 +36,10 @@
   #else
      #define __DAQ_SHARED_IO_T DAQ_SHARED_IO_T
   #endif
+#else
+  #ifdef CONFIG_MIL_DAQ_USE_RAM
+    #include <daq_ramBuffer.h>
+  #endif
 #endif
 
 #ifdef __cplusplus
@@ -46,6 +50,44 @@ namespace Scu
 namespace FG
 {
 #endif
+
+#ifdef CONFIG_MIL_DAQ_USE_RAM
+
+typedef uint16_t MIL_DAQ_T;
+
+typedef struct PACKED_SIZE
+{
+   uint64_t  timestamp;
+   MIL_DAQ_T setValue;
+   MIL_DAQ_T actValue;
+   uint32_t  channel;
+} MIL_DAQ_RAM_ITEM_T;
+
+#ifndef __DOXYGEN__
+STATIC_ASSERT( offsetof( MIL_DAQ_RAM_ITEM_T, timestamp ) == 0 );
+STATIC_ASSERT( offsetof( MIL_DAQ_RAM_ITEM_T, setValue ) == sizeof(uint64_t) );
+STATIC_ASSERT( offsetof( MIL_DAQ_RAM_ITEM_T, actValue ) ==
+               offsetof( MIL_DAQ_RAM_ITEM_T, setValue ) + sizeof(MIL_DAQ_T) );
+STATIC_ASSERT( offsetof( MIL_DAQ_RAM_ITEM_T, channel ) ==
+               offsetof( MIL_DAQ_RAM_ITEM_T, actValue ) + sizeof(MIL_DAQ_T) );
+STATIC_ASSERT( sizeof( MIL_DAQ_RAM_ITEM_T ) ==
+                offsetof( MIL_DAQ_RAM_ITEM_T, channel ) + sizeof(uint32_t) );
+#endif
+
+/*!
+ * @brief Number of required RAM-items per Mil-DAQ item
+ */
+#define RAM_ITEM_PER_MIL_DAQ_ITEM                                   \
+   (sizeof( MIL_DAQ_RAM_ITEM_T ) / sizeof( RAM_DAQ_PAYLOAD_T ) +    \
+    !!(sizeof( MIL_DAQ_RAM_ITEM_T ) % sizeof( RAM_DAQ_PAYLOAD_T )))
+
+typedef union PACKED_SIZE
+{
+   RAM_DAQ_PAYLOAD_T  ramPayload[RAM_ITEM_PER_MIL_DAQ_ITEM];
+   MIL_DAQ_RAM_ITEM_T item;
+} MIL_DAQ_RAM_ITEM_PAYLOAD_T;
+
+#endif /* ifdef CONFIG_MIL_DAQ_USE_RAM */
 
 /*! ---------------------------------------------------------------------------
  * @brief Definition of shared memory area for the communication between LM32
@@ -67,7 +109,9 @@ typedef struct PACKED_SIZE
    uint32_t fg_macros[MAX_FG_MACROS]; // hi..lo bytes: slot, device, version, output-bits
    struct channel_regs fg_regs[MAX_FG_CHANNELS];
    struct channel_buffer fg_buffer[MAX_FG_CHANNELS];
-#ifndef CONFIG_MIL_DAQ_USE_RAM
+#ifdef CONFIG_MIL_DAQ_USE_RAM
+   RAM_RING_INDEXES_T mdaqRing;
+#else
    struct daq_buffer daq_buf;
 #endif
 #ifdef CONFIG_SCU_DAQ_INTEGRATION
@@ -161,24 +205,40 @@ STATIC_ASSERT( offsetof( SCU_SHARED_DATA_T, fg_regs ) ==
 STATIC_ASSERT( offsetof( SCU_SHARED_DATA_T, fg_buffer ) ==
                offsetof( SCU_SHARED_DATA_T, fg_regs ) +
                MAX_FG_CHANNELS * sizeof( struct channel_regs ));
-#ifndef CONFIG_MIL_DAQ_USE_RAM
-STATIC_ASSERT( offsetof( SCU_SHARED_DATA_T, daq_buf ) ==
-               offsetof( SCU_SHARED_DATA_T, fg_buffer ) +
-               MAX_FG_CHANNELS * sizeof( struct channel_buffer ));
+#ifdef CONFIG_MIL_DAQ_USE_RAM
+ STATIC_ASSERT( offsetof( SCU_SHARED_DATA_T, mdaqRing ) ==
+                offsetof( SCU_SHARED_DATA_T, fg_buffer ) +
+                MAX_FG_CHANNELS * sizeof( struct channel_buffer ));
+#else
+ STATIC_ASSERT( offsetof( SCU_SHARED_DATA_T, daq_buf ) ==
+                offsetof( SCU_SHARED_DATA_T, fg_buffer ) +
+                MAX_FG_CHANNELS * sizeof( struct channel_buffer ));
 #endif
 #ifdef CONFIG_SCU_DAQ_INTEGRATION
-STATIC_ASSERT( offsetof( SCU_SHARED_DATA_T, sDaq ) ==
-               offsetof( SCU_SHARED_DATA_T, daq_buf ) +
-               sizeof( struct daq_buffer ));
-STATIC_ASSERT( sizeof( SCU_SHARED_DATA_T ) ==
-               offsetof( SCU_SHARED_DATA_T, sDaq ) +
-               sizeof( __DAQ_SHARED_IO_T ));
+ #ifdef CONFIG_MIL_DAQ_USE_RAM
+   STATIC_ASSERT( offsetof( SCU_SHARED_DATA_T, sDaq ) ==
+                  offsetof( SCU_SHARED_DATA_T, mdaqRing ) +
+                  sizeof( RAM_RING_INDEXES_T ));
+ #else
+   STATIC_ASSERT( offsetof( SCU_SHARED_DATA_T, sDaq ) ==
+                  offsetof( SCU_SHARED_DATA_T, daq_buf ) +
+                  sizeof( struct daq_buffer ));
+ #endif
+ STATIC_ASSERT( sizeof( SCU_SHARED_DATA_T ) ==
+                offsetof( SCU_SHARED_DATA_T, sDaq ) +
+                sizeof( __DAQ_SHARED_IO_T ));
 #else
-STATIC_ASSERT( sizeof( SCU_SHARED_DATA_T ) ==
-               offsetof( SCU_SHARED_DATA_T, daq_buf ) +
-               sizeof( struct daq_buffer ));
-#endif
-#endif
+ #ifdef CONFIG_MIL_DAQ_USE_RAM
+  STATIC_ASSERT( sizeof( SCU_SHARED_DATA_T ) ==
+                 offsetof( SCU_SHARED_DATA_T, mdaqRing ) +
+                 sizeof( RAM_RING_INDEXES_T ));
+ #else
+  STATIC_ASSERT( sizeof( SCU_SHARED_DATA_T ) ==
+                 offsetof( SCU_SHARED_DATA_T, daq_buf ) +
+                 sizeof( struct daq_buffer ));
+ #endif
+#endif /* / ifdef CONFIG_SCU_DAQ_INTEGRATION */
+#endif /* ifndef __DOXYGEN__ */
 
 
 #define FG_MAGIC_NUMBER ((uint32_t)0xdeadbeef)
@@ -193,10 +253,12 @@ STATIC_ASSERT( sizeof( SCU_SHARED_DATA_T ) ==
   #define __DAQ_SHARAD_MEM_INITIALIZER_ITEM
 #endif
 
-#ifndef CONFIG_MIL_DAQ_USE_RAM
-   #define __MIL_DAQ_SHARAD_MEM_INITIALIZER_ITEM , .daq_buf = {0}
+#ifdef CONFIG_MIL_DAQ_USE_RAM
+  #define __MIL_DAQ_SHARAD_MEM_INITIALIZER_ITEM \
+     , .mdaqRing = RAM_RING_INDEXES_MDAQ_INITIALIZER
 #else
-   #define __MIL_DAQ_SHARAD_MEM_INITIALIZER_ITEM
+  #define __MIL_DAQ_SHARAD_MEM_INITIALIZER_ITEM \
+     , .daq_buf = {0}
 #endif
 
 /*! ---------------------------------------------------------------------------

@@ -1040,6 +1040,11 @@ static void pushDaqData( uint32_t channel, uint64_t timestamp,
 #endif
 #ifdef CONFIG_MIL_DAQ_USE_RAM
 #error Extern RAM for MIL-DAQ not implemented yet!
+   MIL_DAQ_RAM_ITEM_PAYLOAD_T pl;
+   pl.item.timestamp = timestamp;
+   pl.item.setValue = setValue >> (BIT_SIZEOF(uint32_t)/sizeof(MIL_DAQ_T));
+   pl.item.actValue = actValue;
+   pl.item.channel = channel;
 #else
    struct daq d;
 

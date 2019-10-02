@@ -22,7 +22,7 @@ ifdef ORIGIN
 # MIAN_MODULE    = $(SCU_DIR)/main_origin.c
 else
   MIAN_MODULE    = $(SCU_DIR)/scu_main.c
-  # SCU_DAQ=1
+  #  SCU_DAQ=1
   # MIL_DAQ_USE_DDR3=1
 endif
 
@@ -47,7 +47,7 @@ ifdef SCU_DAQ
   DEFINES += DAQ_MAX_CHANNELS=4
 else
   # New functions will not compiled when the following switch is set.
-  DEFINES += CONFIG_OLD_SCU_SW
+ # DEFINES += CONFIG_OLD_SCU_SW
 endif
 
 
