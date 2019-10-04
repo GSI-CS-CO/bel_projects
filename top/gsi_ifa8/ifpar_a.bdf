@@ -4687,121 +4687,6 @@ applicable agreement for further details.
 	)
 )
 (symbol
-	(rect 1368 432 1584 608)
-	(text "fg_quad_ifa" (rect 5 0 64 11)(font "Arial" ))
-	(text "inst7" (rect 8 160 31 171)(font "Arial" ))
-	(port
-		(pt 0 32)
-		(input)
-		(text "fc[7..0]" (rect 0 0 33 11)(font "Arial" ))
-		(text "fc[7..0]" (rect 21 27 54 38)(font "Arial" ))
-		(line (pt 0 32)(pt 16 32)(line_width 3))
-	)
-	(port
-		(pt 0 48)
-		(input)
-		(text "data_i[15..0]" (rect 0 0 61 11)(font "Arial" ))
-		(text "data_i[15..0]" (rect 21 43 82 54)(font "Arial" ))
-		(line (pt 0 48)(pt 16 48)(line_width 3))
-	)
-	(port
-		(pt 0 64)
-		(input)
-		(text "fc_str" (rect 0 0 27 11)(font "Arial" ))
-		(text "fc_str" (rect 21 59 48 70)(font "Arial" ))
-		(line (pt 0 64)(pt 16 64))
-	)
-	(port
-		(pt 0 80)
-		(input)
-		(text "clk" (rect 0 0 14 11)(font "Arial" ))
-		(text "clk" (rect 21 75 35 86)(font "Arial" ))
-		(line (pt 0 80)(pt 16 80))
-	)
-	(port
-		(pt 0 96)
-		(input)
-		(text "nReset" (rect 0 0 35 11)(font "Arial" ))
-		(text "nReset" (rect 21 91 56 102)(font "Arial" ))
-		(line (pt 0 96)(pt 16 96))
-	)
-	(port
-		(pt 0 112)
-		(input)
-		(text "ext_trigger" (rect 0 0 51 11)(font "Arial" ))
-		(text "ext_trigger" (rect 21 107 72 118)(font "Arial" ))
-		(line (pt 0 112)(pt 16 112))
-	)
-	(port
-		(pt 216 32)
-		(output)
-		(text "user_rd_active" (rect 0 0 73 11)(font "Arial" ))
-		(text "user_rd_active" (rect 133 27 206 38)(font "Arial" ))
-		(line (pt 216 32)(pt 200 32))
-	)
-	(port
-		(pt 216 48)
-		(output)
-		(text "Rd_Port[15..0]" (rect 0 0 71 11)(font "Arial" ))
-		(text "Rd_Port[15..0]" (rect 135 43 206 54)(font "Arial" ))
-		(line (pt 216 48)(pt 200 48)(line_width 3))
-	)
-	(port
-		(pt 216 64)
-		(output)
-		(text "nirq" (rect 0 0 18 11)(font "Arial" ))
-		(text "nirq" (rect 179 59 197 70)(font "Arial" ))
-		(line (pt 216 64)(pt 200 64))
-	)
-	(port
-		(pt 216 80)
-		(output)
-		(text "sw_out[31..8]" (rect 0 0 66 11)(font "Arial" ))
-		(text "sw_out[31..8]" (rect 140 75 206 86)(font "Arial" ))
-		(line (pt 216 80)(pt 200 80)(line_width 3))
-	)
-	(port
-		(pt 216 96)
-		(output)
-		(text "sw_strobe" (rect 0 0 50 11)(font "Arial" ))
-		(text "sw_strobe" (rect 152 91 202 102)(font "Arial" ))
-		(line (pt 216 96)(pt 200 96))
-	)
-	(port
-		(pt 216 112)
-		(output)
-		(text "gate_o_bc" (rect 0 0 51 11)(font "Arial" ))
-		(text "gate_o_bc" (rect 151 107 202 118)(font "Arial" ))
-		(line (pt 216 112)(pt 200 112))
-	)
-	(port
-		(pt 216 128)
-		(output)
-		(text "fg_version[6..0]" (rect 0 0 75 11)(font "Arial" ))
-		(text "fg_version[6..0]" (rect 132 123 207 134)(font "Arial" ))
-		(line (pt 216 128)(pt 200 128)(line_width 3))
-	)
-	(parameter
-		"clk_in_hz"
-		"120000000"
-		""
-		(type "PARAMETER_UNSIGNED_DEC")	)
-	(parameter
-		"diag_on_is_1"
-		"0"
-		""
-		(type "PARAMETER_UNSIGNED_DEC")	)
-	(parameter
-		"fw_version"
-		"3"
-		""
-		(type "PARAMETER_UNSIGNED_DEC")	)
-	(drawing
-		(rectangle (rect 16 16 200 160))
-	)
-	(annotation_block (parameter)(rect 1592 376 1823 424))
-)
-(symbol
 	(rect 1552 -144 1808 352)
 	(text "ifa" (rect 5 0 17 11)(font "Arial" ))
 	(text "inst27" (rect 8 480 37 491)(font "Arial" ))
@@ -5190,13 +5075,135 @@ applicable agreement for further details.
 		(type "PARAMETER_UNSIGNED_BIN")	)
 	(parameter
 		"ifa_vers"
-		"00011100"
-		"0x1c"
+		"00011101"
+		"0x1d"
 		(type "PARAMETER_UNSIGNED_BIN")	)
 	(drawing
 		(rectangle (rect 16 16 240 480))
 	)
 	(annotation_block (parameter)(rect 1808 -184 2006 -145))
+)
+(symbol
+	(rect 1368 432 1584 608)
+	(text "fg_quad_ifa" (rect 5 0 64 11)(font "Arial" ))
+	(text "inst7" (rect 8 160 31 171)(font "Arial" ))
+	(port
+		(pt 0 32)
+		(input)
+		(text "fc[7..0]" (rect 0 0 33 11)(font "Arial" ))
+		(text "fc[7..0]" (rect 21 27 54 38)(font "Arial" ))
+		(line (pt 0 32)(pt 16 32)(line_width 3))
+	)
+	(port
+		(pt 0 48)
+		(input)
+		(text "data_i[15..0]" (rect 0 0 61 11)(font "Arial" ))
+		(text "data_i[15..0]" (rect 21 43 82 54)(font "Arial" ))
+		(line (pt 0 48)(pt 16 48)(line_width 3))
+	)
+	(port
+		(pt 0 64)
+		(input)
+		(text "fc_str" (rect 0 0 27 11)(font "Arial" ))
+		(text "fc_str" (rect 21 59 48 70)(font "Arial" ))
+		(line (pt 0 64)(pt 16 64))
+	)
+	(port
+		(pt 0 80)
+		(input)
+		(text "clk" (rect 0 0 14 11)(font "Arial" ))
+		(text "clk" (rect 21 75 35 86)(font "Arial" ))
+		(line (pt 0 80)(pt 16 80))
+	)
+	(port
+		(pt 0 96)
+		(input)
+		(text "nReset" (rect 0 0 35 11)(font "Arial" ))
+		(text "nReset" (rect 21 91 56 102)(font "Arial" ))
+		(line (pt 0 96)(pt 16 96))
+	)
+	(port
+		(pt 0 112)
+		(input)
+		(text "ext_trigger" (rect 0 0 51 11)(font "Arial" ))
+		(text "ext_trigger" (rect 21 107 72 118)(font "Arial" ))
+		(line (pt 0 112)(pt 16 112))
+	)
+	(port
+		(pt 216 32)
+		(output)
+		(text "user_rd_active" (rect 0 0 73 11)(font "Arial" ))
+		(text "user_rd_active" (rect 134 27 195 38)(font "Arial" ))
+		(line (pt 216 32)(pt 200 32))
+	)
+	(port
+		(pt 216 48)
+		(output)
+		(text "Rd_Port[15..0]" (rect 0 0 71 11)(font "Arial" ))
+		(text "Rd_Port[15..0]" (rect 135 43 195 54)(font "Arial" ))
+		(line (pt 216 48)(pt 200 48)(line_width 3))
+	)
+	(port
+		(pt 216 64)
+		(output)
+		(text "nirq" (rect 0 0 18 11)(font "Arial" ))
+		(text "nirq" (rect 180 59 195 70)(font "Arial" ))
+		(line (pt 216 64)(pt 200 64))
+	)
+	(port
+		(pt 216 80)
+		(output)
+		(text "sw_out[31..8]" (rect 0 0 66 11)(font "Arial" ))
+		(text "sw_out[31..8]" (rect 140 75 195 86)(font "Arial" ))
+		(line (pt 216 80)(pt 200 80)(line_width 3))
+	)
+	(port
+		(pt 216 96)
+		(output)
+		(text "sw_strobe" (rect 0 0 50 11)(font "Arial" ))
+		(text "sw_strobe" (rect 153 91 195 102)(font "Arial" ))
+		(line (pt 216 96)(pt 200 96))
+	)
+	(port
+		(pt 216 112)
+		(output)
+		(text "sw_strobe_long" (rect 0 0 77 11)(font "Arial" ))
+		(text "sw_strobe_long" (rect 130 107 195 118)(font "Arial" ))
+		(line (pt 216 112)(pt 200 112))
+	)
+	(port
+		(pt 216 128)
+		(output)
+		(text "gate_o_bc" (rect 0 0 51 11)(font "Arial" ))
+		(text "gate_o_bc" (rect 152 123 195 134)(font "Arial" ))
+		(line (pt 216 128)(pt 200 128))
+	)
+	(port
+		(pt 216 144)
+		(output)
+		(text "fg_version[6..0]" (rect 0 0 75 11)(font "Arial" ))
+		(text "fg_version[6..0]" (rect 132 139 195 150)(font "Arial" ))
+		(line (pt 216 144)(pt 200 144)(line_width 3))
+	)
+	(parameter
+		"clk_in_hz"
+		"120000000"
+		""
+		(type "PARAMETER_UNSIGNED_DEC")	)
+	(parameter
+		"diag_on_is_1"
+		"0"
+		""
+		(type "PARAMETER_UNSIGNED_DEC")	)
+	(parameter
+		"fw_version"
+		"3"
+		""
+		(type "PARAMETER_UNSIGNED_DEC")	)
+	(drawing
+		(rectangle (rect 16 16 200 160))
+	)
+	(annotation_block (parameter)(rect 1592 376 1823 424))
 )
 (connector
 	(pt 248 552)
@@ -6915,14 +6922,14 @@ applicable agreement for further details.
 	(pt 1664 496)
 )
 (connector
-	(text "GATE_O/BC" (rect 1592 528 1665 541)(font "Arial" (font_size 8)))
-	(pt 1584 544)
-	(pt 1664 544)
-)
-(connector
-	(text "FG_VERS[6..0]" (rect 1592 544 1679 557)(font "Arial" (font_size 8)))
+	(text "GATE_O/BC" (rect 1592 544 1665 557)(font "Arial" (font_size 8)))
 	(pt 1584 560)
 	(pt 1664 560)
+)
+(connector
+	(text "FG_VERS[6..0]" (rect 1592 560 1679 573)(font "Arial" (font_size 8)))
+	(pt 1584 576)
+	(pt 1664 576)
 	(bus)
 )
 (connector
@@ -7090,9 +7097,9 @@ applicable agreement for further details.
 	(pt 1552 -112)
 )
 (connector
-	(text "FG_NEW_DATA" (rect 2856 1560 2939 1571)(font "Arial" ))
-	(pt 2976 1576)
-	(pt 2848 1576)
+	(text "STG_STR" (rect 1597 528 1647 539)(font "Arial" ))
+	(pt 1584 544)
+	(pt 1664 544)
 )
 (junction (pt 664 16))
 (junction (pt 664 32))
@@ -7104,7 +7111,7 @@ applicable agreement for further details.
 	(section (rect 0 48 368 72)(text "DESIGNER" (rect 2 0 59 11)(font "Arial" ))(text "RHart/BELAB" (rect 56 2 171 21)(font "Arial" (font_size 12)))(border))
 	(section (rect 0 72 280 96)(text "NUMBER" (rect 2 0 50 11)(font "Arial" ))(text "1.00" (rect 56 1 86 17)(font "Arial" (font_size 10)))(border))
 	(section (rect 280 72 368 96)(text "REV" (rect 2 1 26 12)(font "Arial" ))(text "B" (rect 43 1 53 17)(font "Arial" (font_size 10)))(border))
-	(section (rect 0 96 240 120)(text "DATE" (rect 2 0 31 11)(font "Arial" ))(text "Tue Jul  9 16:46:51 2019" (rect 56 3 230 19)(font "Arial" (font_size 10)))(date)(border))
+	(section (rect 0 96 240 120)(text "DATE" (rect 2 0 31 11)(font "Arial" ))(text "Fri Oct  4 13:43:37 2019" (rect 56 3 225 19)(font "Arial" (font_size 10)))(date)(border))
 	(section (rect 240 96 310 120)(text "SHEET" (rect 2 0 39 11)(font "Arial" ))(text "1" (rect 55 5 64 21)(font "Arial" (font_size 10))))
 	(section (rect 310 96 368 120)(text "OF" (rect 10 0 25 11)(font "Arial" ))(text "1" (rect 34 4 43 20)(font "Arial" (font_size 10))))
 	(drawing

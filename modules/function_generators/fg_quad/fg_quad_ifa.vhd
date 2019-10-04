@@ -15,25 +15,26 @@ entity fg_quad_ifa is
     );
   port (
     -- ifa interface
-    fc:                 in    std_logic_vector(7 downto 0);   -- latched function code from mil interface
-    data_i:             in    std_logic_vector(15 downto 0);  -- latched data from mil interface 
-    fc_str:             in    std_logic;                      -- '1' => fc is valid
+    fc:                 in      std_logic_vector(7 downto 0);   -- latched function code from mil interface
+    data_i:             in      std_logic_vector(15 downto 0);  -- latched data from mil interface 
+    fc_str:             in      std_logic;                      -- '1' => fc is valid
  
 
-    clk:                in    std_logic;                      -- should be the same clk, used by SCU_Bus_Slave
-    nReset:             in    std_logic;
-    ext_trigger:        in    std_logic;                      -- external trigger for ramp start
+    clk:                in      std_logic;                      -- should be the same clk, used by SCU_Bus_Slave
+    nReset:             in      std_logic;
+    ext_trigger:        in      std_logic;                      -- external trigger for ramp start
     
-    user_rd_active:     out   std_logic;                      -- '1' = read data available
-    Rd_Port:            out   std_logic_vector(15 downto 0);  -- output for all read sources of this macro
+    user_rd_active:     out     std_logic;                      -- '1' = read data available
+    Rd_Port:            out     std_logic_vector(15 downto 0);  -- output for all read sources of this macro
 
     -- fg_quad
-    nirq:               out   std_logic;
+    nirq:               out     std_logic;
       
-    sw_out:             out   std_logic_vector(31 downto 8);  -- function generator output
-    sw_strobe:          out   std_logic;
-    gate_o_bc:          out   std_logic;
-    fg_version:         out   std_logic_vector(6 downto 0)  
+    sw_out:             out     std_logic_vector(31 downto 8);  -- function generator output
+    sw_strobe:          buffer  std_logic;
+    sw_strobe_long:     out     std_logic;
+    gate_o_bc:          out     std_logic;
+    fg_version:         out     std_logic_vector(6 downto 0)  
    );
 end entity;
 
@@ -112,6 +113,7 @@ architecture fg_quad_scu_bus_arch of fg_quad_ifa is
   signal fc_edge1    : std_logic;
   signal fc_edge2    : std_logic;
   signal fc_str_edge : std_logic;
+  signal cnt_en      : std_logic;
 
 begin
   quad_fg: fg_quad_datapath 
@@ -452,8 +454,30 @@ begin
   end if;
 end process;
 
+sw_str: process (clk, nreset)
+  variable cnt: unsigned(2 downto 0);
+begin
+  if nreset = '0' then
+    cnt_en <= '0';
+    cnt := (others => '0');
+  elsif rising_edge(clk) then
+    if sw_strobe = '1' then
+      cnt_en <= '1';
+    end if;
+    if cnt_en = '1' then
+      cnt := cnt + 1;
+    end if;
+    if cnt = 4 then
+      cnt_en <= '0';
+      cnt := (others => '0');
+    end if;
+  end if;
+  sw_strobe_long <= cnt_en;
+end process;
+
 nirq        <= not or_reduce(irq_act_reg(1 downto 0)); -- signal as long as one irq is active
 fg_version  <= std_logic_vector(to_unsigned(fw_version, 7));
 sw_out      <= s_sw_out(31 downto 8); -- only 24 Bit are needed for the IFA8
+
             
 end architecture;
