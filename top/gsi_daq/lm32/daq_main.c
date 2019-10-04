@@ -29,7 +29,7 @@
 #include <dbg.h>
 
 #ifndef CONFIG_DAQ_SINGLE_APP
-extern volatile uint16_t* scub_base;
+extern volatile uint16_t* g_pScub_base;
 #endif
 
 #ifdef CONFIG_DAQ_SINGLE_APP
@@ -62,7 +62,7 @@ int daqScanScuBus( DAQ_BUS_T* pDaqDevices )
    }
    int ret = daqBusFindAndInitializeAll( pDaqDevices, pScuBusBase );
 #else
-   int ret = daqBusFindAndInitializeAll( pDaqDevices, (void*)scub_base );
+   int ret = daqBusFindAndInitializeAll( pDaqDevices, (void*)g_pScub_base );
 #endif
    if( ret < 0 )
    {

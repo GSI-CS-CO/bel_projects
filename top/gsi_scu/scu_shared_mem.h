@@ -295,9 +295,25 @@ namespace MiLdaq
 /*! ---------------------------------------------------------------------------
  */
 static inline
-unsigned int getMilDaqAdressByChannel( const unsigned int channel )
+unsigned int getMilDaqAdressByChannel( const unsigned int fgMacro )
 {
-   return (channel >> 16) & 0xFF;
+   return (fgMacro >> 16) & 0xFF;
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+static inline
+unsigned int getFgMacroVersion( const unsigned int fgMacro )
+{
+   return (fgMacro >> 8) & 0xFF;
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+static inline
+unsigned int getFgOutputBits( const unsigned int fgMacro )
+{
+   return fgMacro & 0xFF;
 }
 
 /*! ---------------------------------------------------------------------------

@@ -56,6 +56,10 @@
 #define ESC_NORMAL    "\e[0m"   /*!< @brief All attributes off */
 #define ESC_HIDDEN    "\e[8m"   /*!< @brief Hidden on */
 
+
+#define ESC_ERROR   ESC_BOLD ESC_FG_RED    /*!< @brief Format for error messages */
+#define ESC_WARNING ESC_BOLD ESC_FG_YELLOW /*!< @brief Format for warning messages */
+
 #ifdef __cplusplus
 extern "C" {
 #endif
