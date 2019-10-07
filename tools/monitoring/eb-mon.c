@@ -122,7 +122,7 @@ static void help(void)
   fprintf(stderr, "            '   '   '      '- max rate of eCPU stalls (should be below '50.0')\n");
   fprintf(stderr, "            '   '   '- WR time continuity: maximum negative difference (should be '0')\n");
   fprintf(stderr, "            '   '- WR time continuity: maximum positive difference (should be '8' for a 125 MHz CPU clock)\n");
-  fprintf(stderr, "            '- WR lock: '1' signals TRACK_PHASE'\n");
+  fprintf(stderr, "            '- WR lock: '1' signals 'TRACK_PHASE'\n");
   fprintf(stderr, "\n");
   fprintf(stderr, "Report software bugs to <d.beck@gsi.de>\n");
   fprintf(stderr, "Version %s. Licensed under the LGPL v3.\n", EBMON_VERSION);
@@ -253,6 +253,7 @@ int main(int argc, char** argv) {
   char linkStr[64];
   char syncStr[64];
   char timestr[60];
+  char dummy[64];
   char buildType[BUILDTYPELEN];
   time_t secs;
   const struct tm* tm;
@@ -328,7 +329,11 @@ int main(int argc, char** argv) {
         break;
       case 's':
         snoopMode=1;
-        if (argv[optind-1] != NULL) {snoopSecs = strtol(argv[optind-1], &tail, 0); }
+        if (argv[optind-1] != NULL) {                          // need to parse '-s1 0' as well as '-s 1 0'
+          sprintf(dummy, "huhu%s", argv[optind-1]);            // add dummy text to be sure we have a non-digit as prefix
+          sscanf(dummy,  "%*[^0123456789]%d", &snoopSecs);     // ignore preceeding non-digits
+          if (snoopSecs < 1) snoopSecs = 1;
+        }
         else                        {fprintf(stderr, "missing '# of seconds'!\n"); exit(1);}
         if (argv[optind+0] != NULL) {ecpu      = strtol(argv[optind+0], &tail, 0); }
         else                        {fprintf(stderr, "missing '# of ecpu'!\n"); exit(1);}
