@@ -643,7 +643,16 @@ eb_status_t wb_eca_stats_get(eb_device_t device, int devIndex, uint64_t *nMessag
   *dtMin        = 0xffffffffffffffff;
   *dtMax        = 0xffffffffffffffff;
 
-  if ((status = wb_check_device(device, ECA_TAP_VENDOR, ECA_TAP_PRODUCT, ECA_TAP_VMAJOR, ECA_TAP_VMINOR, devIndex, &eca_tap_addr)) != EB_OK) return status;
+  if ((status = wb_check_device(device, ECA_TAP_VENDOR, ECA_TAP_PRODUCT, ECA_TAP_VMAJOR, ECA_TAP_VMINOR, devIndex, &eca_tap_addr)) != EB_OK) {
+    *nMessage   = 0;
+    *dtSum      = 0;
+    *dtMin      = 0;
+    *dtMax      = 0;
+    *nLate      = 0;
+    *lateOffset = 0;
+
+    return status;
+  } // wb_check_device
 
   if ((status = eb_cycle_open(device, 0, eb_block, &cycle)) != EB_OK) return status;
   eb_cycle_read(cycle, eca_tap_addr + ECA_TAP_CNT_MSG_GET_0,  EB_BIG_ENDIAN|EB_DATA32, &data0);
