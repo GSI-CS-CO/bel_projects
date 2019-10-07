@@ -12,7 +12,7 @@ extern "C" {
 #endif
 
 int vprintf(char const *format,va_list ap);
-static int _p_vsprintf(char const *format,va_list ap, char*dst);
+int _p_vsprintf(char const *format,va_list ap, char*dst);
 int mprintf(char const *format, ...);
 int sprintf(char *dst, char const *format, ...);
 

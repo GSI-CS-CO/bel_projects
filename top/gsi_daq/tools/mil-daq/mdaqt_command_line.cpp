@@ -381,6 +381,7 @@ int CommandLine::onArgument( void )
             return -1;
          break;
       }
+      default: break;
    }
    switch( m_state )
    {

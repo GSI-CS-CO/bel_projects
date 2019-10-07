@@ -283,6 +283,37 @@ STATIC_ASSERT( offsetof( SCU_SHARED_DATA_T, fg_buffer ) ==
    __DAQ_SHARAD_MEM_INITIALIZER_ITEM       \
 }
 
+typedef enum
+{
+   FG_OP_INITIALIZE          = 0,
+   FG_OP_RFU                 = 1,
+   FG_OP_CONFIGURE           = 2,
+   FG_OP_DISABLE_CHANNEL     = 3,
+   FG_OP_RESCAN              = 4,
+   FG_OP_CLEAR_HANDLER_STATE = 5,
+   FG_OP_PRINT_HISTORY       = 6
+} FG_OP_CODE_T;
+
+/*!
+ * @brief Helper function for debug purposes only.
+ */
+static inline const char* fgCommand2String( const FG_OP_CODE_T op )
+{
+   #define __FG_COMMAND_CASE( cmd ) case cmd: return #cmd
+   switch( op )
+   {
+      __FG_COMMAND_CASE( FG_OP_INITIALIZE );
+      __FG_COMMAND_CASE( FG_OP_RFU );
+      __FG_COMMAND_CASE( FG_OP_CONFIGURE );
+      __FG_COMMAND_CASE( FG_OP_DISABLE_CHANNEL );
+      __FG_COMMAND_CASE( FG_OP_RESCAN );
+      __FG_COMMAND_CASE( FG_OP_CLEAR_HANDLER_STATE );
+      __FG_COMMAND_CASE( FG_OP_PRINT_HISTORY );
+   }
+   return "unknown";
+   #undef __FG_COMMAND_CASE
+}
+
 #ifdef __cplusplus
 } /* namespace FG */
 

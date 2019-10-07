@@ -207,7 +207,7 @@ void discoverPeriphery(void)
 
   pUart           = find_device_adr(CERN, WR_UART);
   //pUart          = (uint32_t*)0x84060500;
-  BASE_UART       = (char *)pUart; //make WR happy ...
+  BASE_UART       = (unsigned char *)pUart; //make WR happy ...
   
  
   pCpuId          = find_device_adr(GSI, CPU_INFO_ROM);
@@ -247,7 +247,7 @@ void discoverPeriphery(void)
   find_device_multi(&found_sdb_w1[0], &idx_w1, 2, CERN, WR_1Wire);
   pOneWire        = (uint32_t*)getSdbAdr(&found_sdb_w1[1]);
 
-  BASE_SYSCON     = (char *)find_device_adr(CERN, WR_SYS_CON);
+  BASE_SYSCON     = (unsigned char *)find_device_adr(CERN, WR_SYS_CON);
   pPps            = find_device_adr(CERN, WR_PPS_GEN);
 
 }

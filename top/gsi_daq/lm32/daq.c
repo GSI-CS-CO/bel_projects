@@ -125,7 +125,7 @@ void daqChannelReset( register DAQ_CANNEL_T* pThis )
    daqChannelSetTriggerDelay( pThis, 0 );
 
    unsigned int i;
-   volatile DAQ_DATA_T dummy;
+   volatile DAQ_DATA_T dummy UNUSED;
    /*
     * Making the PM_HiRes Fifo empty and discard the content
     */
@@ -352,7 +352,7 @@ uint64_t daqDeviceGetTimeStampCounter( register DAQ_DEVICE_T* pThis )
    DAQ_ASSERT( pThis != NULL );
    DAQ_ASSERT( pThis->pReg != NULL );
 
-   uint64_t ts;
+   uint64_t ts = 0;
 
    for( unsigned int i = 0; i < (sizeof(uint64_t)/sizeof(uint16_t)); i++ )
       ((uint16_t*)&ts)[i] = pThis->pReg->i[TS_COUNTER_WD1+i];
@@ -380,7 +380,7 @@ uint32_t daqDeviceGetTimeStampTag( register DAQ_DEVICE_T* pThis )
    DAQ_ASSERT( pThis != NULL );
    DAQ_ASSERT( pThis->pReg != NULL );
 
-   uint32_t tsTag;
+   uint32_t tsTag = 0;
 
    for( unsigned int i = 0; i < (sizeof(uint32_t)/sizeof(uint16_t)); i++ )
       ((uint16_t*)&tsTag)[i] = pThis->pReg->i[TS_CNTR_TAG_LW+i];

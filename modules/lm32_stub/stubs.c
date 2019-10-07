@@ -20,13 +20,17 @@
  ******************************************************************************
  */
 
-void __attribute__((weak)) main(void) {
+int __attribute__((weak)) main(void)
+{
+   return 0;
 }
 
-void __attribute__((weak)) _irq_entry(void) {
+void __attribute__((weak)) _irq_entry(void)
+{
 }
 
-void __attribute__((weak)) _segfault(void) {
+void __attribute__((weak)) _segfault(void)
+{
 }
 
 #ifdef CONFIG_CPLUSPLUS_MODULE_PRESENT

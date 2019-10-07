@@ -246,7 +246,7 @@ extern uint32_t _endram;
 
 /*! ---------------------------------------------------------------------------
  */
-void main( void )
+int main( void )
 {
    _endram = STACK_MAGIC;
 #ifdef DEBUGLEVEL
@@ -265,6 +265,7 @@ void main( void )
       DAQ_ASSERT( _endram == STACK_MAGIC );
       forEachScuDaqDevice();
    }
+   return 0;
 }
 #endif /* CONFIG_DAQ_SINGLE_APP */
 /*================================== EOF ====================================*/

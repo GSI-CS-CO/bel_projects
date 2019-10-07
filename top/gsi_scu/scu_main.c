@@ -91,8 +91,6 @@ volatile uint32_t* g_pWr_1wire_base    = NULL;
 volatile uint32_t* g_pUser_1wire_base  = NULL;
 volatile uint32_t* g_pECAQ             = NULL; // WB address of ECA queue
 
-
-//volatile int initialized[MAX_SCU_SLAVES] = {0};
 int g_aClear_is_active[MAX_SCU_SLAVES + 1] = {0};
 volatile struct message_buffer g_aMsg_buf[QUEUE_CNT] = {0};
 
@@ -117,12 +115,12 @@ static inline uint32_t _get_macro_number( unsigned int channel )
    return g_shared.fg_macros[g_shared.fg_regs[channel].macro_number];
 }
 
-static inline int _get_slot( unsigned int channel )
+static inline unsigned int _get_socket( unsigned int channel )
 {
    return getMilDaqLocationByChannel( _get_macro_number( channel ) );
 }
 
-static inline int _get_dev( unsigned int channel )
+static inline unsigned int _get_dev( unsigned int channel )
 {
    return getMilDaqAdressByChannel(_get_macro_number( channel ));
 }
@@ -183,6 +181,7 @@ static void mil_failure( const int status, const int slave_nr )
    }
 }
 
+#if 0
 /** debug method
  * prints the last received message signaled interrupt to the UART
  */
@@ -197,61 +196,76 @@ static void isr0( void )
    mprintf("ISR0\n");
    show_msi();
 }
-
+#endif
 /** @brief enables msi generation for the specified channel.
  *  Messages from the scu bus are send to the msi queue of this cpu with the offset 0x0.
  *  Messages from the MIL extension are send to the msi queue of this cpu with the offset 0x20.
  *  A hardware macro is used, which generates msis from legacy interrupts.
  *  @param channel number of the channel between 0 and MAX_FG_CHANNELS-1
  */
-static void enable_scub_msis(int channel) {
-  int slot;
-  slot = _get_slot( channel );
-  if (channel >= 0 && channel < MAX_FG_CHANNELS) {
+static void enable_scub_msis( unsigned int channel )
+{
+   int socket;
 
-    if (((slot & 0xf0) == 0) || (slot & DEV_SIO)){
+   if( channel >= MAX_FG_CHANNELS )
+      return;
+
+   socket = _get_socket( channel );
+   if (((socket & 0xf0) == 0) || (socket & DEV_SIO))
+   {
       //SCU Bus Master
       g_pScub_base[GLOBAL_IRQ_ENA] = 0x20;              // enable slave irqs in scu bus master
-      g_pScub_irq_base[8]  = (slot & 0xf)-1;            // channel select
-      g_pScub_irq_base[9]  = (slot & 0xf)-1;            // msg: slot number
+      g_pScub_irq_base[8]  = (socket & SCU_BUS_SLOT_MASK)-1;            // channel select
+      g_pScub_irq_base[9]  = (socket & SCU_BUS_SLOT_MASK)-1;            // msg: socket number
       g_pScub_irq_base[10] = (uint32_t)pMyMsi + 0x0;    // msi queue destination address of this cpu
-      g_pScub_irq_base[2]  = (1 << ((slot & 0xf) - 1)); // enable slave
-      //mprintf("IRQs for slave %d enabled.\n", (slot & 0xf));
-    } else if (slot & DEV_MIL_EXT) {
-      g_pMil_irq_base[8]   = MIL_DRQ;
-      g_pMil_irq_base[9]   = MIL_DRQ;
-      g_pMil_irq_base[10]  = (uint32_t)pMyMsi + 0x20;
-      g_pMil_irq_base[2]   = (1 << MIL_DRQ);
-    }
-  }
+      g_pScub_irq_base[2]  = (1 << ((socket & SCU_BUS_SLOT_MASK) - 1)); // enable slave
+      //mprintf("IRQs for slave %d enabled.\n", (socket & SCU_BUS_SLOT_MASK));
+      return;
+   }
+
+   if( (socket & DEV_MIL_EXT) == 0 )
+      return;
+
+   g_pMil_irq_base[8]   = MIL_DRQ;
+   g_pMil_irq_base[9]   = MIL_DRQ;
+   g_pMil_irq_base[10]  = (uint32_t)pMyMsi + 0x20;
+   g_pMil_irq_base[2]   = (1 << MIL_DRQ);
 }
 
 /** @brief disables the generation of irqs for the specified channel
  *  SIO and MIL extension stop generating irqs
  *  @param channel number of the channel from 0 to MAX_FG_CHANNELS-1
  */
-static void disable_slave_irq(int channel) {
-  int slot, dev;
-  int status;
-  if (channel >= 0 && channel < MAX_FG_CHANNELS) {
-    slot = _get_slot( channel );
-    dev  = _get_dev( channel );
-    if ((slot & 0xf0) == 0) {
+static void disable_slave_irq( unsigned int channel )
+{
+   int socket, dev;
+   int status;
+
+   if( channel >= MAX_FG_CHANNELS )
+      return;
+
+   socket = _get_socket( channel );
+   dev  = _get_dev( channel );
+   if ((socket & 0xf0) == 0)
+   {
       if (dev == 0)
-        g_pScub_base[OFFS(slot) + SLAVE_INT_ENA] &= ~(0x8000);       //disable fg1 irq
+        g_pScub_base[OFFS(socket) + SLAVE_INT_ENA] &= ~(0x8000);       //disable fg1 irq
       else if (dev == 1)
-        g_pScub_base[OFFS(slot) + SLAVE_INT_ENA] &= ~(0x4000);       //disable fg2 irq
-    } else if (slot & DEV_MIL_EXT) {
+        g_pScub_base[OFFS(socket) + SLAVE_INT_ENA] &= ~(0x4000);       //disable fg2 irq
+   }
+   else if (socket & DEV_MIL_EXT)
+   {
       //write_mil(g_pScu_mil_base, 0x0, FC_COEFF_A_WR | dev);            //ack drq
       if ((status = write_mil(g_pScu_mil_base, 0x0, FC_IRQ_MSK | dev)) != OKAY)
-         dev_failure(status, slot & SCU_BUS_SLOT_MASK, __func__);  //mask drq
-    } else if (slot & DEV_SIO) {
-      if ((status = scub_write_mil(g_pScub_base, slot & SCU_BUS_SLOT_MASK, 0x0, FC_IRQ_MSK | dev)) != OKAY)
-         dev_failure(status, slot & SCU_BUS_SLOT_MASK, __func__);  //mask drq
-    }
+         dev_failure(status, socket & SCU_BUS_SLOT_MASK, __func__);  //mask drq
+   }
+   else if (socket & DEV_SIO)
+   {
+      if ((status = scub_write_mil(g_pScub_base, socket & SCU_BUS_SLOT_MASK, 0x0, FC_IRQ_MSK | dev)) != OKAY)
+         dev_failure(status, socket & SCU_BUS_SLOT_MASK, __func__);  //mask drq
+   }
 
-    //mprintf("IRQs for slave %d disabled.\n", slot);
-  }
+   //mprintf("IRQs for slave %d disabled.\n", socket);
 }
 
 /** @brief delay in multiples of one millisecond
@@ -260,100 +274,118 @@ static void disable_slave_irq(int channel) {
  */
 static void msDelayBig(uint64_t ms)
 {
-  uint64_t later = getSysTime() + ms * 1000000ULL / 8;
-  while(getSysTime() < later) {asm("# noop");}
+   uint64_t later = getSysTime() + ms * 1000000ULL / 8;
+   while(getSysTime() < later) {asm("# noop");}
 }
 
-static void msDelay(uint32_t msecs) {
+#if 0
+static void msDelay(uint32_t msecs)
+{
   usleep(1000 * msecs);
 }
+#endif
 
 /** @brief sends the parameters for the next interpolation interval
- *  @param slot number of the slot, including the high bits with the information SIO or MIL_EXT
+ *  @param socket number of the slot, including the high bits with the information SIO or MIL_EXT
  *  @param fg_base base address of the function generator macro
  *  @param cntrl_reg state of the control register. saves one read access.
  */
-static inline void send_fg_param(int slot, int fg_base, unsigned short cntrl_reg, signed int* setvalue) {
-  struct param_set pset;
-  int fg_num;
-  unsigned short cntrl_reg_wr;
-  int status;
-  short blk_data[6];
+static inline void send_fg_param(int socket, int fg_base, uint16_t cntrl_reg, signed int* setvalue)
+{
+   struct param_set pset;
+   unsigned int fg_num;
+   uint16_t cntrl_reg_wr;
+   int status;
+   int16_t blk_data[6];
 
-  fg_num = (cntrl_reg & 0x3f0) >> 4; // virtual fg number Bits 9..4
-  if (cbRead(&g_shared.fg_buffer[0], &g_shared.fg_regs[0], fg_num, &pset)) {
-    cntrl_reg_wr = cntrl_reg & ~(0xfc07); // clear freq, step select, fg_running and fg_enabled
-    cntrl_reg_wr |= ((pset.control & 0x38) << 10) | ((pset.control & 0x7) << 10);
-    blk_data[0] = cntrl_reg_wr;
-    blk_data[1] = pset.coeff_a;
-    blk_data[2] = pset.coeff_b;
-    blk_data[3] = (pset.control & 0x3ffc0) >> 6;     // shift a 17..12 shift b 11..6
-    blk_data[4] = pset.coeff_c & 0xffff;
-    blk_data[5] = (pset.coeff_c & 0xffff0000) >> 16; // data written with high word
+   fg_num = (cntrl_reg & 0x3f0) >> 4; // virtual fg number Bits 9..4
 
-    if ((slot & 0xf0) == 0) {
-      g_pScub_base[OFFS(slot) + fg_base + FG_CNTRL]  = blk_data[0];
-      g_pScub_base[OFFS(slot) + fg_base + FG_A]      = blk_data[1];
-      g_pScub_base[OFFS(slot) + fg_base + FG_B]      = blk_data[2];
-      g_pScub_base[OFFS(slot) + fg_base + FG_SHIFT]  = blk_data[3];
-      g_pScub_base[OFFS(slot) + fg_base + FG_STARTL] = blk_data[4];
-      g_pScub_base[OFFS(slot) + fg_base + FG_STARTH] = blk_data[5];
+   if( fg_num >= ARRAY_SIZE( g_aFgChannels ) )
+   {
+      mprintf( ESC_ERROR"FG-number %d out of range!\n"ESC_NORMAL, fg_num );
+      return;
+   }
+
+   if( cbRead(&g_shared.fg_buffer[0], &g_shared.fg_regs[0], fg_num, &pset) == 0 )
+   {
+      hist_addx(HISTORY_XYZ_MODULE, "buffer empty, no parameter sent", socket);
+      return;
+   }
+
+   //TODO remove naked mask numbers by well named constants or inline geter functions.
+   cntrl_reg_wr = cntrl_reg & ~(0xfc07); // clear freq, step select, fg_running and fg_enabled
+   cntrl_reg_wr |= ((pset.control & 0x38) << 10) | ((pset.control & 0x7) << 10);
+   blk_data[0] = cntrl_reg_wr;
+   blk_data[1] = pset.coeff_a;
+   blk_data[2] = pset.coeff_b;
+   blk_data[3] = (pset.control & 0x3ffc0) >> 6;     // shift a 17..12 shift b 11..6
+   blk_data[4] = pset.coeff_c & 0xffff;
+   blk_data[5] = (pset.coeff_c & 0xffff0000) >> 16; // data written with high word
+
+   if ((socket & 0xf0) == 0)
+   {
+      g_pScub_base[OFFS(socket) + fg_base + FG_CNTRL]  = blk_data[0];
+      g_pScub_base[OFFS(socket) + fg_base + FG_A]      = blk_data[1];
+      g_pScub_base[OFFS(socket) + fg_base + FG_B]      = blk_data[2];
+      g_pScub_base[OFFS(socket) + fg_base + FG_SHIFT]  = blk_data[3];
+      g_pScub_base[OFFS(socket) + fg_base + FG_STARTL] = blk_data[4];
+      g_pScub_base[OFFS(socket) + fg_base + FG_STARTH] = blk_data[5];
       // no setvalue for scu bus daq 
       *setvalue = 0;
-    } else if (slot & DEV_MIL_EXT) {
+   }
+   else if (socket & DEV_MIL_EXT)
+   {
       // save coeff_c as setvalue
       *setvalue = pset.coeff_c;
       // transmit in one block transfer over the dev bus
       if((status = write_mil_blk(g_pScu_mil_base, &blk_data[0], FC_BLK_WR | fg_base)) != OKAY)
-         dev_failure(status, slot & SCU_BUS_SLOT_MASK, __func__);
+         dev_failure(status, socket & SCU_BUS_SLOT_MASK, __func__);
       // still in block mode !
-    } else if (slot & DEV_SIO) {
-      // save coeff_c as setvalue
+   }
+   else if (socket & DEV_SIO)
+   {  // save coeff_c as setvalue
       *setvalue = pset.coeff_c;
       // transmit in one block transfer over the dev bus
       if((status = scub_write_mil_blk( g_pScub_base,
-                                       slot & SCU_BUS_SLOT_MASK,
+                                       socket & SCU_BUS_SLOT_MASK,
                                        &blk_data[0],
-                                       FC_BLK_WR | fg_base)) != OKAY) {
-        dev_failure(status, slot & SCU_BUS_SLOT_MASK, __func__);
-        mprintf("send_fg_param\n");
+                                       FC_BLK_WR | fg_base)) != OKAY)
+      {
+         dev_failure(status, socket & SCU_BUS_SLOT_MASK, __func__);
       }
       // still in block mode !
-    }
-    g_aFgChannels[fg_num].param_sent++;
-  } else {
-    hist_addx(HISTORY_XYZ_MODULE, "buffer empty, no parameter sent", slot);
-  }
+   }
+   g_aFgChannels[fg_num].param_sent++;
 }
 
 /** @brief decide how to react to the interrupt request from the function generator macro
- *  @param slot encoded slot number with the high bits for SIO / MIL_EXT distinction
+ *  @param socket encoded slot number with the high bits for SIO / MIL_EXT distinction
  *  @param fg_base base address of the function generator macro
  *  @param irq_act_reg state of the irq act register, saves a read access
  */
 static
-inline void handle(int slot, unsigned fg_base, short irq_act_reg, signed int* setvalue) {
+inline void handle(int socket, unsigned fg_base, short irq_act_reg, signed int* setvalue) {
     uint16_t cntrl_reg = 0;
-    int status;
+ //   int status;
     int channel;
 
-    if ((slot & 0xf0) == 0){
-      cntrl_reg = g_pScub_base[OFFS(slot) + fg_base + FG_CNTRL];
+    if ((socket & 0xf0) == 0){
+      cntrl_reg = g_pScub_base[OFFS(socket) + fg_base + FG_CNTRL];
       channel = (cntrl_reg & 0x3f0) >> 4;     // virtual fg number Bits 9..4
-    } else if ((slot & DEV_MIL_EXT) || (slot & DEV_SIO)) {
+    } else if ((socket & DEV_MIL_EXT) || (socket & DEV_SIO)) {
       channel = (irq_act_reg & 0x3f0) >> 4;   // virtual fg number Bits 9..4
     }
 
-    if ((slot & 0xf0) == 0) {
+    if ((socket & 0xf0) == 0) {
       /* last cnt from from fg macro, read from LO address copies hardware counter to shadow reg */
-      g_shared.fg_regs[channel].ramp_count = g_pScub_base[OFFS(slot) + fg_base + FG_RAMP_CNT_LO];
-      g_shared.fg_regs[channel].ramp_count |= g_pScub_base[OFFS(slot) + fg_base + FG_RAMP_CNT_HI] << 16;
-    } else if ((slot & DEV_MIL_EXT) || (slot & DEV_SIO)) {
+      g_shared.fg_regs[channel].ramp_count = g_pScub_base[OFFS(socket) + fg_base + FG_RAMP_CNT_LO];
+      g_shared.fg_regs[channel].ramp_count |= g_pScub_base[OFFS(socket) + fg_base + FG_RAMP_CNT_HI] << 16;
+    } else if ((socket & DEV_MIL_EXT) || (socket & DEV_SIO)) {
       /* count in software only */
       g_shared.fg_regs[channel].ramp_count++;
     }
 
-    if ((slot & 0xf0) == 0) {
+    if ((socket & 0xf0) == 0) {
       if (!(cntrl_reg  & FG_RUNNING)) {       // fg stopped
         if (cbisEmpty(&g_shared.fg_regs[0], channel)) {
           SEND_SIG(SIG_STOP_EMPTY);           // normal stop
@@ -380,18 +412,18 @@ inline void handle(int slot, unsigned fg_base, short irq_act_reg, signed int* se
       }
     }
 
-    if ((slot & 0xf0) == 0) {
+    if ((socket & 0xf0) == 0) {
       if ((cntrl_reg & FG_RUNNING) && !(cntrl_reg & FG_DREQ)) {
         g_shared.fg_regs[channel].state = STATE_ACTIVE;
         SEND_SIG(SIG_START); // fg has received the tag or brc message
           hist_addx(HISTORY_XYZ_MODULE, "sig_start", channel);
         if (cbgetCount(&g_shared.fg_regs[0], channel) == THRESHOLD)
           SEND_SIG(SIG_REFILL);
-        send_fg_param(slot, fg_base, cntrl_reg, setvalue);
+        send_fg_param(socket, fg_base, cntrl_reg, setvalue);
       } else if ((cntrl_reg & FG_RUNNING) && (cntrl_reg & FG_DREQ)) {
         if (cbgetCount(&g_shared.fg_regs[0], channel) == THRESHOLD)
           SEND_SIG(SIG_REFILL);
-        send_fg_param(slot, fg_base, cntrl_reg, setvalue);
+        send_fg_param(socket, fg_base, cntrl_reg, setvalue);
       }
     } else {
       if ((irq_act_reg & FG_RUNNING) && (irq_act_reg & DEV_STATE_IRQ)){
@@ -400,11 +432,11 @@ inline void handle(int slot, unsigned fg_base, short irq_act_reg, signed int* se
           hist_addx(HISTORY_XYZ_MODULE, "sig_start", channel);
         if (cbgetCount(&g_shared.fg_regs[0], channel) == THRESHOLD)
           SEND_SIG(SIG_REFILL);
-        send_fg_param(slot, fg_base, irq_act_reg, setvalue);
+        send_fg_param(socket, fg_base, irq_act_reg, setvalue);
       } else if (irq_act_reg & (FG_RUNNING | DEV_DRQ)) {
         if (cbgetCount(&g_shared.fg_regs[0], channel) == THRESHOLD)
           SEND_SIG(SIG_REFILL);
-        send_fg_param(slot, fg_base, irq_act_reg, setvalue);
+        send_fg_param(socket, fg_base, irq_act_reg, setvalue);
       }
     }
 }
@@ -427,95 +459,128 @@ void irq_handler( void ) {
  *  then activate irqs and send the first tuple of data to the function generator
  *  @param channel number of the specified function generator channel from 0 to MAX_FG_CHANNELS-1
  */
-static int configure_fg_macro(int channel) {
-  int i = 0;
-  int slot, dev, fg_base, dac_base;
-  uint16_t cntrl_reg_wr;
- // unsigned short data;
-  uint16_t dreq_status;
-  struct param_set pset;
-  short blk_data[6];
-  int status;
+static int configure_fg_macro( unsigned int channel )
+{
+   unsigned int socket;
+   int dev;
+   unsigned int fg_base, dac_base;
+   uint16_t cntrl_reg_wr;
+   uint16_t dreq_status = 0;
+   struct param_set pset;
+   int16_t blk_data[6];
+   int status;
 
-  if (channel >= 0 && channel < MAX_FG_CHANNELS) {
-    /* actions per slave card */
-    slot = _get_slot( channel );
-    dev  = _get_dev( channel );
-    if (slot & DEV_SIO) {
-      scub_status_mil(g_pScub_base, slot & SCU_BUS_SLOT_MASK, &dreq_status);
-    } else if (slot & DEV_MIL_EXT) {
+   if( channel >= MAX_FG_CHANNELS )
+      return -1;
+
+   /* actions per slave card */
+   socket = _get_socket( channel );
+   dev  = _get_dev( channel );
+   if (socket & DEV_SIO)
+   {
+      scub_status_mil(g_pScub_base, socket & SCU_BUS_SLOT_MASK, &dreq_status);
+   }
+   else if (socket & DEV_MIL_EXT)
+   {
       status_mil(g_pScu_mil_base, &dreq_status);
-    }
+   }
 
-    // if dreq is active
-    if (dreq_status & MIL_DATA_REQ_INTR) {
-      if (slot & DEV_SIO) {
-        if (g_aClear_is_active[slot & SCU_BUS_SLOT_MASK] == 0) {
-          clear_handler_state(slot);
-          hist_addx(HISTORY_XYZ_MODULE, "clear_handler_state", slot);
-          g_aClear_is_active[slot & SCU_BUS_SLOT_MASK] = 1;
-        }
-        // yield
-        return -1;
-      } else if (slot & DEV_MIL_EXT) {
-        if (g_aClear_is_active[MAX_SCU_SLAVES] == 0) {
-          clear_handler_state(slot);
-          hist_addx(HISTORY_XYZ_MODULE, "clear_handler_state", slot);
-          g_aClear_is_active[MAX_SCU_SLAVES] = 1;
-        }
-        // yield
-        return -1;
+   // if dreq is active
+   if (dreq_status & MIL_DATA_REQ_INTR)
+   {
+      if (socket & DEV_SIO)
+      {
+         if (g_aClear_is_active[socket & SCU_BUS_SLOT_MASK] == 0)
+         {
+            clear_handler_state(socket);
+            hist_addx(HISTORY_XYZ_MODULE, "clear_handler_state", socket);
+            g_aClear_is_active[socket & SCU_BUS_SLOT_MASK] = 1;
+         }
+         // yield
+         return -1;
       }
-    } else {
-      // reset clear flag
-      if (slot & DEV_SIO) {
-        g_aClear_is_active[slot & SCU_BUS_SLOT_MASK] = 0;
-      } else if (slot & DEV_MIL_EXT) {
-        g_aClear_is_active[MAX_SCU_SLAVES] = 0;
+
+      if (socket & DEV_MIL_EXT)
+      {
+         if (g_aClear_is_active[MAX_SCU_SLAVES] == 0)
+         {
+           clear_handler_state(socket);
+           hist_addx(HISTORY_XYZ_MODULE, "clear_handler_state", socket);
+           g_aClear_is_active[MAX_SCU_SLAVES] = 1;
+         }
+         // yield
+         return -1;
       }
-    }
+   }
+   else
+   {  // reset clear flag
+      if (socket & DEV_SIO)
+      {
+         g_aClear_is_active[socket & SCU_BUS_SLOT_MASK] = 0;
+      }
+      else if (socket & DEV_MIL_EXT)
+      {
+         g_aClear_is_active[MAX_SCU_SLAVES] = 0;
+      }
+   }
 
     /* enable irqs */
-    if ((slot & 0xf0) == 0) {                                      //scu bus slave
-      g_pScub_base[SRQ_ENA] |= (1 << (slot-1));           // enable irqs for the slave
-      g_pScub_base[OFFS(slot) + SLAVE_INT_ACT] = 0xc000;  // clear all irqs
-      g_pScub_base[OFFS(slot) + SLAVE_INT_ENA] |= 0xc000; // enable fg1 and fg2 irq
-    } else if (slot & DEV_MIL_EXT) {
+   if ((socket & 0xf0) == 0)
+   {                                      //scu bus slave
+      g_pScub_base[SRQ_ENA] |= (1 << (socket-1));           // enable irqs for the slave
+      g_pScub_base[OFFS(socket) + SLAVE_INT_ACT] = 0xc000;  // clear all irqs
+      g_pScub_base[OFFS(socket) + SLAVE_INT_ENA] |= 0xc000; // enable fg1 and fg2 irq
+   }
+   else if (socket & DEV_MIL_EXT)
+   {
       if ((status = write_mil(g_pScu_mil_base, 1 << 13, FC_IRQ_MSK | dev)) != OKAY)
-         dev_failure(status, slot & SCU_BUS_SLOT_MASK, "enable dreq"); //enable Data-Request
-    } else if (slot & DEV_SIO) {
-      g_pScub_base[SRQ_ENA] |= (1 << ((slot & SCU_BUS_SLOT_MASK)-1));        // enable irqs for the slave
-      g_pScub_base[OFFS(slot & SCU_BUS_SLOT_MASK) + SLAVE_INT_ENA] = 0x0010; // enable receiving of drq
-      if ((status = scub_write_mil(g_pScub_base, slot & SCU_BUS_SLOT_MASK, 1 << 13, FC_IRQ_MSK | dev)) != OKAY)
-         dev_failure(status, slot & SCU_BUS_SLOT_MASK, "enable dreq"); //enable sending of drq
-    }
+         dev_failure(status, socket & SCU_BUS_SLOT_MASK, "enable dreq"); //enable Data-Request
+   }
+   else if (socket & DEV_SIO)
+   {
+      g_pScub_base[SRQ_ENA] |= (1 << ((socket & SCU_BUS_SLOT_MASK)-1));        // enable irqs for the slave
+      g_pScub_base[OFFS(socket & SCU_BUS_SLOT_MASK) + SLAVE_INT_ENA] = 0x0010; // enable receiving of drq
+      if ((status = scub_write_mil(g_pScub_base, socket & SCU_BUS_SLOT_MASK, 1 << 13, FC_IRQ_MSK | dev)) != OKAY)
+         dev_failure(status, socket & SCU_BUS_SLOT_MASK, "enable dreq"); //enable sending of drq
+   }
 
     /* which macro are we? */
-    if ((slot & 0xf0) == 0) {                                      //scu bus slave
-      if (dev == 0) {
-        fg_base = FG1_BASE;
-        dac_base = DAC1_BASE;
-      } else if (dev == 1) {
-        fg_base = FG2_BASE;
-        dac_base = DAC2_BASE;
-      } else
-        return -1;
-    }
+   if ((socket & 0xf0) == 0)
+   {   //scu bus slave
+      if (dev == 0)
+      {
+         fg_base = FG1_BASE;
+         dac_base = DAC1_BASE;
+      }
+      else if (dev == 1)
+      {
+         fg_base = FG2_BASE;
+         dac_base = DAC2_BASE;
+      }
+      else
+         return -1;
+   }
 
-    /* fg mode and reset */
-    if ((slot & 0xf0) == 0) {                                      //scu bus slave
-      g_pScub_base[OFFS(slot) + dac_base + DAC_CNTRL] = 0x10;        // set FG mode
-      g_pScub_base[OFFS(slot) + fg_base + FG_RAMP_CNT_LO] = 0;       // reset ramp counter
-    } else if (slot & DEV_MIL_EXT) {
+   /* fg mode and reset */
+   if ((socket & 0xf0) == 0)
+   {   //scu bus slave
+      g_pScub_base[OFFS(socket) + dac_base + DAC_CNTRL] = 0x10;        // set FG mode
+      g_pScub_base[OFFS(socket) + fg_base + FG_RAMP_CNT_LO] = 0;       // reset ramp counter
+   }
+   else if (socket & DEV_MIL_EXT)
+   {
       if ((status = write_mil(g_pScu_mil_base, 0x1, FC_IFAMODE_WR | dev)) != OKAY)
          dev_failure (status, 0, "set FG mode"); // set FG mode
-    } else if (slot & DEV_SIO) {
-      if ((status = scub_write_mil(g_pScub_base, slot & 0xf, 0x1, FC_IFAMODE_WR | dev)) != OKAY)
-         dev_failure (status, slot & 0xf, "set FG mode"); // set FG mode
-    }
+   }
+   else if (socket & DEV_SIO)
+   {
+      if ((status = scub_write_mil(g_pScub_base, socket & 0xf, 0x1, FC_IFAMODE_WR | dev)) != OKAY)
+         dev_failure (status, socket & 0xf, "set FG mode"); // set FG mode
+   }
 
     //fetch first parameter set from buffer
-    if (cbRead(&g_shared.fg_buffer[0], &g_shared.fg_regs[0], channel, &pset)) {
+   if (cbRead(&g_shared.fg_buffer[0], &g_shared.fg_regs[0], channel, &pset))
+   {
       cntrl_reg_wr = ((pset.control & 0x38) << 10) | ((pset.control & 0x7) << 10) | channel << 4;
       blk_data[0] = cntrl_reg_wr;
       blk_data[1] = pset.coeff_a;
@@ -524,70 +589,71 @@ static int configure_fg_macro(int channel) {
       blk_data[4] = pset.coeff_c & 0xffff;
       blk_data[5] = (pset.coeff_c & 0xffff0000) >> 16; // data written with high word
 
-      if ((slot & 0xf0) == 0) {
+      if ((socket & 0xf0) == 0)
+      {
         //set virtual fg number Bit 9..4
-        g_pScub_base[OFFS(slot) + fg_base + FG_CNTRL]  = blk_data[0];
-        g_pScub_base[OFFS(slot) + fg_base + FG_A]      = blk_data[1];
-        g_pScub_base[OFFS(slot) + fg_base + FG_B]      = blk_data[2];
-        g_pScub_base[OFFS(slot) + fg_base + FG_SHIFT]  = blk_data[3];
-        g_pScub_base[OFFS(slot) + fg_base + FG_STARTL] = blk_data[4];
-        g_pScub_base[OFFS(slot) + fg_base + FG_STARTH] = blk_data[5];
-
-      } else if (slot & DEV_MIL_EXT) {
-        // save the coeff_c for mil daq
-        g_aFgChannels[channel].last_c_coeff = pset.coeff_c;
-        // transmit in one block transfer over the dev bus
-        if((status = write_mil_blk(g_pScu_mil_base, &blk_data[0], FC_BLK_WR | dev)) != OKAY)
-           dev_failure (status, 0, "blk trm");
-        // still in block mode !
-        if((status = write_mil(g_pScu_mil_base, cntrl_reg_wr, FC_CNTRL_WR | dev)) != OKAY)
-           dev_failure (status, 0, "end blk trm");
-
-      } else if (slot & DEV_SIO) {
-        // save the coeff_c for mil daq
-        g_aFgChannels[channel].last_c_coeff = pset.coeff_c;
-        // transmit in one block transfer over the dev bus
-        if((status = scub_write_mil_blk(g_pScub_base, slot & 0xf, &blk_data[0], FC_BLK_WR | dev))  != OKAY)
-           dev_failure (status, slot & 0xf, "blk trm");
-        // still in block mode !
-        if((status = scub_write_mil(g_pScub_base, slot & 0xf, cntrl_reg_wr, FC_CNTRL_WR | dev))  != OKAY)
-           dev_failure (status, slot & 0xf, "end blk trm");
-
+         g_pScub_base[OFFS(socket) + fg_base + FG_CNTRL]  = blk_data[0];
+         g_pScub_base[OFFS(socket) + fg_base + FG_A]      = blk_data[1];
+         g_pScub_base[OFFS(socket) + fg_base + FG_B]      = blk_data[2];
+         g_pScub_base[OFFS(socket) + fg_base + FG_SHIFT]  = blk_data[3];
+         g_pScub_base[OFFS(socket) + fg_base + FG_STARTL] = blk_data[4];
+         g_pScub_base[OFFS(socket) + fg_base + FG_STARTH] = blk_data[5];
       }
+      else if (socket & DEV_MIL_EXT)
+      {
+        // save the coeff_c for mil daq
+         g_aFgChannels[channel].last_c_coeff = pset.coeff_c;
+        // transmit in one block transfer over the dev bus
+         if((status = write_mil_blk(g_pScu_mil_base, &blk_data[0], FC_BLK_WR | dev)) != OKAY)
+            dev_failure (status, 0, "blk trm");
+        // still in block mode !
+         if((status = write_mil(g_pScu_mil_base, cntrl_reg_wr, FC_CNTRL_WR | dev)) != OKAY)
+            dev_failure (status, 0, "end blk trm");
+      }
+      else if (socket & DEV_SIO)
+      {
+         // save the coeff_c for mil daq
+         g_aFgChannels[channel].last_c_coeff = pset.coeff_c;
+         // transmit in one block transfer over the dev bus
+         if((status = scub_write_mil_blk(g_pScub_base, socket & SCU_BUS_SLOT_MASK, &blk_data[0], FC_BLK_WR | dev))  != OKAY)
+            dev_failure (status, socket & SCU_BUS_SLOT_MASK, "blk trm");
+         // still in block mode !
+         if((status = scub_write_mil(g_pScub_base, socket & SCU_BUS_SLOT_MASK, cntrl_reg_wr, FC_CNTRL_WR | dev))  != OKAY)
+            dev_failure (status, socket & SCU_BUS_SLOT_MASK, "end blk trm");
+      }
+      g_aFgChannels[0].param_sent++;
+   }
 
-      g_aFgChannels[i].param_sent++;
-    }
-
-    /* configure and enable macro */
-    if ((slot & 0xf0) == 0) {
-      g_pScub_base[OFFS(slot) + fg_base + FG_TAG_LOW] = g_shared.fg_regs[channel].tag & 0xffff;
-      g_pScub_base[OFFS(slot) + fg_base + FG_TAG_HIGH] = g_shared.fg_regs[channel].tag >> 16;
-      g_pScub_base[OFFS(slot) + fg_base + FG_CNTRL] |= FG_ENABLED;
-
-    } else if (slot & DEV_MIL_EXT) {
-      // enable and end block mode
+   /* configure and enable macro */
+   if ((socket & 0xf0) == 0)
+   {
+      g_pScub_base[OFFS(socket) + fg_base + FG_TAG_LOW] = g_shared.fg_regs[channel].tag & 0xffff;
+      g_pScub_base[OFFS(socket) + fg_base + FG_TAG_HIGH] = g_shared.fg_regs[channel].tag >> 16;
+      g_pScub_base[OFFS(socket) + fg_base + FG_CNTRL] |= FG_ENABLED;
+   }
+   else if (socket & DEV_MIL_EXT)
+   { // enable and end block mode
       if ((status = write_mil(g_pScu_mil_base, cntrl_reg_wr | FG_ENABLED, FC_CNTRL_WR | dev)) != OKAY)
          dev_failure (status, 0, "end blk mode");
+   }
+   else if (socket & DEV_SIO)
+   { // enable and end block mode
+      if ((status = scub_write_mil(g_pScub_base, socket & SCU_BUS_SLOT_MASK, cntrl_reg_wr | FG_ENABLED, FC_CNTRL_WR | dev)) != OKAY)
+         dev_failure (status, socket & SCU_BUS_SLOT_MASK, "end blk mode");
+   }
 
-    } else if (slot & DEV_SIO) {
-      // enable and end block mode
-      if ((status = scub_write_mil(g_pScub_base, slot & SCU_BUS_SLOT_MASK, cntrl_reg_wr | FG_ENABLED, FC_CNTRL_WR | dev)) != OKAY)
-         dev_failure (status, slot & SCU_BUS_SLOT_MASK, "end blk mode");
-    }
-
-    // reset watchdog
-    g_aFgChannels[channel].timeout = 0;
-    g_shared.fg_regs[channel].state = STATE_ARMED;
-    SEND_SIG(SIG_ARMED);
-    hist_addx(HISTORY_XYZ_MODULE, "sig_armed", channel);
-  }
-  return 0;
+   // reset watchdog
+   g_aFgChannels[channel].timeout = 0;
+   g_shared.fg_regs[channel].state = STATE_ARMED;
+   SEND_SIG(SIG_ARMED);
+   hist_addx(HISTORY_XYZ_MODULE, "sig_armed", channel);
+   return 0;
 }
 
 static inline void printFgs( void )
 {
    for( unsigned int  i = 0; i < ARRAY_SIZE( g_shared.fg_macros ); i++ )
-   { // hi..lo bytes: slot, device, version, output-bits
+   { // hi..lo bytes: socket, device, version, output-bits
       if( g_shared.fg_macros[i] == 0 )
          continue;
       mprintf( "fg-%d-%d ver: %d output-bits: %d\n",
@@ -638,16 +704,16 @@ inline static void print_regs(void) {
  *  @param channel number of the function generator channel from 0 to MAX_FG_CHANNELS-1
  */
 static void disable_channel(unsigned int channel) {
-  int slot, dev, fg_base, dac_base;
+  int socket, dev, fg_base, dac_base;
   short data;
   int status;
   if (g_shared.fg_regs[channel].macro_number == -1)
      return;
 
-  slot = _get_slot( channel );
+  socket = _get_socket( channel );
   dev  = _get_dev( channel );
-  //mprintf("disarmed slot %d dev %d in channel[%d] state %d\n", slot, dev, channel, fg_regs[channel].state); //ONLY FOR TESTING
-  if ((slot & 0xf0) == 0) {
+  //mprintf("disarmed socket %d dev %d in channel[%d] state %d\n", socket, dev, channel, fg_regs[channel].state); //ONLY FOR TESTING
+  if ((socket & 0xf0) == 0) {
     /* which macro are we? */
     if (dev == 0) {
       fg_base = FG1_BASE;
@@ -659,23 +725,23 @@ static void disable_channel(unsigned int channel) {
       return;
 
     // disarm hardware
-    g_pScub_base[OFFS(slot) + fg_base + FG_CNTRL] &= ~(0x2);
-    g_pScub_base[OFFS(slot) + dac_base + DAC_CNTRL] &= ~(0x10); // unset FG mode
+    g_pScub_base[OFFS(socket) + fg_base + FG_CNTRL] &= ~(0x2);
+    g_pScub_base[OFFS(socket) + dac_base + DAC_CNTRL] &= ~(0x10); // unset FG mode
 
-  } else if (slot & DEV_MIL_EXT) {
+  } else if (socket & DEV_MIL_EXT) {
     // disarm hardware
     if((status = read_mil(g_pScu_mil_base, &data, FC_CNTRL_RD | dev)) != OKAY)
        dev_failure(status, 0, "disarm hw");
 
     if((status = write_mil(g_pScu_mil_base, data & ~(0x2), FC_CNTRL_WR | dev)) != OKAY)
        dev_failure(status, 0, "disarm hw");
-  } else if (slot & DEV_SIO) {
+  } else if (socket & DEV_SIO) {
     // disarm hardware
-    if((status = scub_read_mil(g_pScub_base, slot & SCU_BUS_SLOT_MASK, &data, FC_CNTRL_RD | dev)) != OKAY)
-       dev_failure(status, slot & SCU_BUS_SLOT_MASK, "disarm hw");
+    if((status = scub_read_mil(g_pScub_base, socket & SCU_BUS_SLOT_MASK, &data, FC_CNTRL_RD | dev)) != OKAY)
+       dev_failure(status, socket & SCU_BUS_SLOT_MASK, "disarm hw");
 
-    if((status = scub_write_mil(g_pScub_base, slot & SCU_BUS_SLOT_MASK, data & ~(0x2), FC_CNTRL_WR | dev)) != OKAY)
-       dev_failure(status, slot & SCU_BUS_SLOT_MASK, "disarm hw");
+    if((status = scub_write_mil(g_pScub_base, socket & SCU_BUS_SLOT_MASK, data & ~(0x2), FC_CNTRL_WR | dev)) != OKAY)
+       dev_failure(status, socket & SCU_BUS_SLOT_MASK, "disarm hw");
   }
 
 
@@ -742,16 +808,16 @@ void _segfault( void )
 
 /** @brief helper function which clears the state of a dev bus after malfunction
  */
-static void clear_handler_state(int slot) {
+static void clear_handler_state(int socket) {
   struct msi m;
-  if (slot & DEV_SIO) {
+  if (socket & DEV_SIO) {
     // create swi
-    m.msg = (slot & SCU_BUS_SLOT_MASK) - 1;
+    m.msg = (socket & SCU_BUS_SLOT_MASK) - 1;
     m.adr = 0;
     irq_disable();
     add_msg(&g_aMsg_buf[0], DEVSIO, m);
     irq_enable();
-  } else if (slot & DEV_MIL_EXT) {
+  } else if (socket & DEV_MIL_EXT) {
     m.msg = 0;
     m.adr = 0;
     irq_disable();
@@ -859,7 +925,7 @@ static void dev_sio_handler( register TaskType* );
 static void dev_bus_handler( register TaskType* );
 static void scu_bus_handler( register TaskType* );
 static void sw_irq_handler( register TaskType* );
-static void ecaHandler( register TaskType* pThis UNUSED );
+static void ecaHandler( register TaskType* );
 
 /* task configuration table */
 static TaskType g_aTasks[] =
@@ -894,26 +960,22 @@ static unsigned int getId( register TaskType* pThis )
 static void ecaHandler( register TaskType* pThis UNUSED )
 {
   uint32_t flag;                // flag for the next action
-  uint32_t evtIdHigh;           // high 32bit of eventID
-  uint32_t evtIdLow;            // low 32bit of eventID
-  uint32_t evtDeadlHigh;        // high 32bit of deadline
-  uint32_t evtDeadlLow;         // low 32bit of deadline
   uint32_t actTag;              // tag of action
   uint32_t i;
   uint8_t dev_mil_armed = 0;
   uint8_t dev_sio_armed = 0;
-  uint8_t slot;
+  uint8_t socket;
   uint32_t active_sios = 0;     // bitmap with active sios
 
   /* check if there are armed fgs */
   for (i = 0; i < ARRAY_SIZE(g_shared.fg_regs); i++) {
     // only armed fgs
     if (g_shared.fg_regs[i].state == STATE_ARMED) {
-      slot = _get_slot( i );
-      if(slot & DEV_MIL_EXT) {
+      socket = _get_socket( i );
+      if(socket & DEV_MIL_EXT) {
         dev_mil_armed = 1;
-      } else if (slot & DEV_SIO) {
-        active_sios |= (1 << ((slot & SCU_BUS_SLOT_MASK) - 1));
+      } else if (socket & DEV_SIO) {
+        active_sios |= (1 << ((socket & SCU_BUS_SLOT_MASK) - 1));
         dev_sio_armed = 1;
       }
     }
@@ -959,59 +1021,100 @@ static void ecaHandler( register TaskType* pThis UNUSED )
  * @todo Replace the naked numbers for OP-code, use enums defined in
  *       scu_shared_mem.h instead! (UB)
  */
-static void sw_irq_handler( register TaskType* pThis UNUSED )
+//#define CONFIG_DEBUG_FG
+static void sw_irq_handler( register TaskType* pThis )
 {
-  int i;
-  unsigned int code, value;
-  struct msi m;
+   unsigned int code, value;
+   struct msi m;
 
-  if (has_msg(&g_aMsg_buf[0], SWI)) {
+   if( !has_msg(&g_aMsg_buf[0], SWI) )
+      return; /* Nothing to do.. */
 
-    m = remove_msg(&g_aMsg_buf[0], SWI);
-    if (m.adr == 0x10) {
+   m = remove_msg(&g_aMsg_buf[0], SWI);
+   if( m.adr != 0x10 )
+      return;
 
-      code = m.msg >> 16;
-      value = m.msg & 0xffff;
-      //TODO Verifying range of variable "value"
-      switch(code) {
-        case 0:
-          hist_addx(HISTORY_XYZ_MODULE, "init_buffers", m.msg);
+   code = m.msg >> 16;
+   value = m.msg & 0xffff;
+   //TODO Verifying range of variable "value"
+   switch( code )
+   {
+      case FG_OP_INITIALIZE:
+      {
+         hist_addx(HISTORY_XYZ_MODULE, "init_buffers", m.msg);
         #if __GNUC__ >= 9
-          #pragma GCC diagnostic push
-          #pragma GCC diagnostic ignored "-Waddress-of-packed-member"
+         #pragma GCC diagnostic push
+         #pragma GCC diagnostic ignored "-Waddress-of-packed-member"
         #endif
-          init_buffers(&g_shared.fg_regs[0], m.msg, &g_shared.fg_macros[0], g_pScub_base, g_pScu_mil_base);
+         init_buffers( &g_shared.fg_regs[0],
+                       m.msg,
+                       &g_shared.fg_macros[0],
+                       g_pScub_base,
+                       g_pScu_mil_base );
         #if __GNUC__ >= 9
-          #pragma GCC diagnostic pop
+         #pragma GCC diagnostic pop
         #endif
-          g_aFgChannels[value].param_sent = 0;
-        break;
-        case 1:
-        break;
-        case 2:
-          enable_scub_msis(value);
-          configure_fg_macro(value);
-        break;
-        case 3:
-          disable_channel(value);
-        break;
-        case 4:
-          //rescan for fg macros
-          scanFgs();
-        break;
-        case 5:
-          clear_handler_state(value);
-        break;
-        case 6:
-          hist_print(1);
-        break;
-        default:
-          mprintf("swi: 0x%x\n", m.adr);
-          mprintf("     0x%x\n", m.msg);
-        break;
+         if( value >= ARRAY_SIZE( g_aFgChannels ) )
+         {
+            mprintf( ESC_ERROR"Value %d out of range!\n"ESC_NORMAL, value );
+            break;
+         }
+         g_aFgChannels[value].param_sent = 0;
+         break;
       }
-    }
-  }
+
+      case FG_OP_RFU:
+      {
+         break;
+      }
+
+      case FG_OP_CONFIGURE:
+      {
+         enable_scub_msis(value);
+         configure_fg_macro(value);
+         break;
+      }
+
+      case FG_OP_DISABLE_CHANNEL:
+      {
+         disable_channel(value);
+         break;
+      }
+
+      case FG_OP_RESCAN:
+      { //rescan for fg macros
+         scanFgs();
+         break;
+      }
+
+      case FG_OP_CLEAR_HANDLER_STATE:
+      {
+         clear_handler_state(value);
+         break;
+      }
+
+      case FG_OP_PRINT_HISTORY:
+      {
+       #ifdef HISTORY
+         hist_print(1);
+       #else
+         mprintf( "No history!\n" );
+       #endif
+         break;
+      }
+
+      default:
+      {
+         mprintf("swi: 0x%x\n", m.adr);
+         mprintf("     0x%x\n", m.msg);
+         break;
+      }
+   }
+#ifdef CONFIG_DEBUG_FG
+   #warning When CONFIG_DEBUG_FG defined then the timing will destroy!
+   mprintf( ESC_FG_CYAN ESC_BOLD"FG-command: %s: %d\n"ESC_NORMAL,
+            fgCommand2String( code ), value );
+#endif
 }
 
 /**
@@ -1108,7 +1211,7 @@ static void printTimeoutMessage( register TaskType* pThis, const bool isScuBus )
 static void dev_sio_bus_handler( register TaskType* pThis, const bool isScuBus )
 {
    int i;
-   int slot, dev;
+   int socket, dev;
    int status = OKAY;
    short data_aquisition;
    struct msi m;
@@ -1146,14 +1249,14 @@ static void dev_sio_bus_handler( register TaskType* pThis, const bool isScuBus )
          /* poll all pending regs on the dev bus; non blocking read operation */
          for( i = 0; i < MAX_FG_CHANNELS; i++ )
          {
-            slot = _get_slot( i );
+            socket = _get_socket( i );
             dev  = _get_dev( i );
             pThis->aFgChannels[i].irq_data = 0; // clear old irq data
             /* test only ifas connected to sio */
             status = OKAY;
             if( isScuBus )
             {
-               if( ((slot & SCU_BUS_SLOT_MASK) != pThis->slave_nr ) || ((slot & DEV_SIO) == 0) )
+               if( ((socket & SCU_BUS_SLOT_MASK) != pThis->slave_nr ) || ((socket & DEV_SIO) == 0) )
                   continue;
                status = scub_set_task_mil( g_pScub_base,
                                            pThis->slave_nr,
@@ -1162,7 +1265,7 @@ static void dev_sio_bus_handler( register TaskType* pThis, const bool isScuBus )
             }
             else
             {
-               if( (slot & DEV_MIL_EXT) == 0 )
+               if( (socket & DEV_MIL_EXT) == 0 )
                   continue;
                status = set_task_mil( g_pScu_mil_base,
                                       getId( pThis ) + i + 1,
@@ -1189,11 +1292,11 @@ static void dev_sio_bus_handler( register TaskType* pThis, const bool isScuBus )
          status = OKAY;
          for( i = pThis->i; i < MAX_FG_CHANNELS; i++ )
          {
-            slot = _get_slot( i );
+            socket = _get_socket( i );
             /* test only ifas connected to sio */
             if( isScuBus )
             {
-               if( ((slot & SCU_BUS_SLOT_MASK) != pThis->slave_nr ) || ((slot & DEV_SIO) == 0) )
+               if( ((socket & SCU_BUS_SLOT_MASK) != pThis->slave_nr ) || ((socket & DEV_SIO) == 0) )
                   continue;
                status = scub_get_task_mil( g_pScub_base, pThis->slave_nr,
                                            getId( pThis ) + i + 1,
@@ -1201,7 +1304,7 @@ static void dev_sio_bus_handler( register TaskType* pThis, const bool isScuBus )
             }
             else
             {
-               if( (slot & DEV_MIL_EXT) == 0 )
+               if( (socket & DEV_MIL_EXT) == 0 )
                   continue;
                status = get_task_mil( g_pScu_mil_base, getId( pThis ) + i + 1,
                                       &pThis->aFgChannels[i].irq_data );
@@ -1235,9 +1338,9 @@ static void dev_sio_bus_handler( register TaskType* pThis, const bool isScuBus )
             if( (pThis->aFgChannels[i].irq_data & (DEV_STATE_IRQ | DEV_DRQ)) == 0 )
                continue; // No
 
-            slot = _get_slot( i );
+            socket = _get_socket( i );
             dev  = _get_dev( i );
-            handle( slot, dev, pThis->aFgChannels[i].irq_data,
+            handle( socket, dev, pThis->aFgChannels[i].irq_data,
                     &(pThis->aFgChannels[i].setvalue));
             //clear irq pending and end block transfer
             if( isScuBus )
@@ -1408,9 +1511,9 @@ static inline void printCpuId( void )
 /**
  * @brief after the init phase at startup, the scheduler loop runs forever
  */
-void main( void )
+int main( void )
 {
-  int i, mb_slot;
+  int mb_slot;
 
  // unsigned int* cpu_info_base;
  // sdb_location found_sdb[20];
@@ -1421,6 +1524,7 @@ void main( void )
 
   mprintf("Compiler: "COMPILER_VERSION_STRING"\n"
           "Found MsgBox at 0x%08x. MSI Path is 0x%08x\n", (uint32_t)pCpuMsiBox, (uint32_t)pMyMsi);
+
   mb_slot = getMsiBoxSlot(0x10);
   if (mb_slot == -1)
     mprintf(ESC_ERROR"No free slots in MsgBox left!\n"ESC_NORMAL);
@@ -1476,6 +1580,7 @@ void main( void )
     forEachScuDaqDevice();
   #endif
   }
+  return 0;
 }
 
 /*================================== EOF ====================================*/

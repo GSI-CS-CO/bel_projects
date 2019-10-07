@@ -63,7 +63,7 @@ inline void atomic_on()
 inline void atomic_off()
 {
 	*pCpuAtomic = 0;
-	uint32_t foo;
+	uint32_t foo = 0; /* UB */
 	// or the IE bit with ier
 	asm volatile ("rcsr  %0, IE\n"      \
 	              "or    %0, %0, %1\n"  \

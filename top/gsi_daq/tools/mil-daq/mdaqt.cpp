@@ -308,7 +308,7 @@ int mdaqtMain( int argc, char** ppArgv )
 {
    DEBUG_MESSAGE( "Start" );
 #ifdef DEBUGLEVEL
-   for( uint i = 0; i < argc; i++ )
+   for( int i = 0; i < argc; i++ )
       DEBUG_MESSAGE( "Arg " << i << ": " << ppArgv[i] );
 #endif
 

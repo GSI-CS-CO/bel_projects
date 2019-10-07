@@ -96,6 +96,7 @@ class DaqMilCompare: public DaqCompare
 
    typedef std::vector<PLOT_T> PLOT_LIST_T;
 
+   Plot*                 m_pPlot;
    MIL_DAQ_T             m_lastSetRawValue;
    MIL_DAQ_T             m_lastActRawValue;
    uint64_t              m_startTime;
@@ -107,7 +108,6 @@ class DaqMilCompare: public DaqCompare
    uint64_t              m_plotIntervalTime;
    PLOT_LIST_T           m_aPlotList;
    PLOT_LIST_T::iterator m_iterator;
-   Plot*                 m_pPlot;
    bool                  m_singleShoot;
 
 public:
