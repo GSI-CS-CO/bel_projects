@@ -3,7 +3,7 @@
 //
 //  created : 2015
 //  author  : Dietrich Beck, GSI-Darmstadt
-//  version : 27-Sep-2019
+//  version : 07-Oct-2019
 //
 // Command-line interface for WR monitoring via Etherbone.
 //
@@ -34,7 +34,7 @@
 // For all questions and ideas contact: d.beck@gsi.de
 // Last update: 25-April-2015
 //////////////////////////////////////////////////////////////////////////////////////////////
-#define EBMON_VERSION "2.0.0"
+#define EBMON_VERSION "2.0.1"
 
 // standard includes
 #include <unistd.h> // getopt
@@ -104,21 +104,22 @@ static void help(void)
   fprintf(stderr, "Example3: '%s -b0 -f0x43 dev/wbm0' read ID of EEPROM connected to 1st (user) 1-wire bus\n", program);
   fprintf(stderr, "\n");
   fprintf(stderr, "When using option '-s<n>', the following information is displayed\n");
-  fprintf(stderr, "eb-mon     WR [ns]   | CPU |                      [n(Hz)]   ECA                 [us(us)]\n");
-  fprintf(stderr, "eb-mon:  lock +dt -dt|stall| nMessages( rate ) early late  min max avrge(act) ltncy(act)\n");
-  fprintf(stderr, "eb-mon:     1  16   0| 0.26|       555(  24.0)     0    0  883 987   933(934)    67( 66)\n");
-  fprintf(stderr, "            '   '   '     '          '      '      '    '    '   '      '   '       '   ' \n");
-  fprintf(stderr, "            '   '   '     '          '      '      '    '    '   '      '   '       '   '- actual latency\n");
-  fprintf(stderr, "            '   '   '     '          '      '      '    '    '   '      '   '       '- latency\n");
-  fprintf(stderr, "            '   '   '     '          '      '      '    '    '   '      '   '- actual average (dl - ts)\n");
-  fprintf(stderr, "            '   '   '     '          '      '      '    '    '   '      '- average (dl - ts)\n");
-  fprintf(stderr, "            '   '   '     '          '      '      '    '    '   '- max (dl - ts)\n");
-  fprintf(stderr, "            '   '   '     '          '      '      '    '    '- min (deadline - timestamp) [Hz]\n");
-  fprintf(stderr, "            '   '   '     '          '      '      '    '- # of late messages\n");
-  fprintf(stderr, "            '   '   '     '          '      '       - # of early messages\n");
-  fprintf(stderr, "            '   '   '     '          '      ' - actual message rate [Hz]\n");
-  fprintf(stderr, "            '   '   '     '          '- total # of messages\n");
-  fprintf(stderr, "            '   '   '     '- actual rate of lm32 CPU stalls (should be below '0.5')\n");
+  fprintf(stderr, "eb-mon:    WR [ns]   | CPU stall[%%]|                      [n(Hz)]   ECA                 [us(us)]\n");
+  fprintf(stderr, "eb-mon:  lock +dt -dt|   max(  act)| nMessages( rate ) early late  min max avrge(act) ltncy(act)\n");
+  fprintf(stderr, "eb-mon:     1  16   0| 32.71(17.87)|      2501(  69.0)     0    0  879 986   935(935)    65( 65)\n");
+  fprintf(stderr, "            '   '   '      '     '           '      '      '    '    '   '     '   '      '   ' \n");
+  fprintf(stderr, "            '   '   '      '     '           '      '      '    '    '   '     '   '      '   '- actual latency\n");
+  fprintf(stderr, "            '   '   '      '     '           '      '      '    '    '   '     '   '      '- latency\n");
+  fprintf(stderr, "            '   '   '      '     '           '      '      '    '    '   '     '   '- actual average (dl - ts)\n");
+  fprintf(stderr, "            '   '   '      '     '           '      '      '    '    '   '     '- average (dl - ts)\n");
+  fprintf(stderr, "            '   '   '      '     '           '      '      '    '    '   '- max (dl - ts)\n");
+  fprintf(stderr, "            '   '   '      '     '           '      '      '    '    '- min (deadline - timestamp) [Hz]\n");
+  fprintf(stderr, "            '   '   '      '     '           '      '      '    '- # of late messages\n");
+  fprintf(stderr, "            '   '   '      '     '           '      '       - # of early messages\n");
+  fprintf(stderr, "            '   '   '      '     '           '      ' - actual message rate [Hz]\n");
+  fprintf(stderr, "            '   '   '      '     '           '- total # of messages\n");
+  fprintf(stderr, "            '   '   '      '     ' - actual rate of eCPU stalls (should be below '50.0')\n");
+  fprintf(stderr, "            '   '   '      '- max rate of eCPU stalls (should be below '50.0')\n");
   fprintf(stderr, "            '   '   '- WR time continuity: maximum negative difference (should be '0')\n");
   fprintf(stderr, "            '   '- WR time continuity: maximum positive difference (should be '8' for a 125 MHz CPU clock)\n");
   fprintf(stderr, "            '- WR lock: '1' signals TRACK_PHASE'\n");
@@ -130,12 +131,12 @@ static void help(void)
 
 void printSnoopHeader()
 { 
-  fprintf(stdout, "%s     WR [ns]   | CPU |                      [n(Hz)]   ECA                 [us(us)]\n", program);
-  fprintf(stdout, "%s:  lock +dt -dt|stall| nMessages( rate ) early late  min max avrge(act) ltncy(act)\n", program);
+  fprintf(stdout, "%s:    WR [ns]   | CPU stall[%%]|                      [n(Hz)]   ECA                 [us(us)]\n", program);
+  fprintf(stdout, "%s:  lock +dt -dt|   max(  act)| nMessages( rate ) early late  min max avrge(act) ltncy(act)\n", program);
 } // printSnoopHeader
 
 
-void printSnoopData(int snoopInterval, int snoopLockFlag, int64_t contMaxPosDT, int64_t contMaxNegDT, double snoopStall, uint64_t ecaNMessage, int64_t ecaMin, int64_t ecaMax, int64_t ecaDtSum, int ecaLate, int ecaEarly)
+void printSnoopData(int snoopInterval, int snoopLockFlag, int64_t contMaxPosDT, int64_t contMaxNegDT, double snoopStallMax, double snoopStallAct, uint64_t ecaNMessage, int64_t ecaMin, int64_t ecaMax, int64_t ecaDtSum, int ecaLate, int ecaEarly)
 {
   int average;
   int aheadT = 1000;    /* chk hack */
@@ -161,7 +162,7 @@ void printSnoopData(int snoopInterval, int snoopLockFlag, int64_t contMaxPosDT, 
   fprintf(stdout, "    %1d ", snoopLockFlag);
   fprintf(stdout, "%3d ", (int)contMaxPosDT);
   fprintf(stdout, "%3d|", (int)contMaxNegDT);
-  fprintf(stdout, " %4.2f|", snoopStall);
+  fprintf(stdout, " %5.2f(%5.2f)|", snoopStallMax, snoopStallAct);
   if (ecaNMessage == 0) fprintf(stdout, " %9"PRIu64"(%6.1f)   %3d  %3d  %3d %3d   %3d(%3d)   %3d(%3d)", (uint64_t)0, 0.0, 0, 0, 0, 0, 0, 0, 0, 0);
   else                  fprintf(stdout, " %9"PRIu64"(%6.1f)   %3d  %3d  %3d %3d   %3d(%3d)   %3d(%3d)", ecaNMessage, (double)nMessageAct/(double)snoopInterval, ecaLate, ecaEarly, (int)(ecaMin/1000), (int)(ecaMax/1000), average, averageAct, latency, latencyAct);
   fprintf(stdout, "\n");
@@ -209,7 +210,8 @@ int main(int argc, char** argv) {
   unsigned int ecpu           = 0;    // # of embedded cpu (for 'stall' statistics)
   unsigned int snoopSecs      = 0;    // # of seconds; poll rate for snoop mode
   int          snoopLockFlag  = 0;
-  double       snoopStall     = 0;
+  double       snoopStallMax  = 0;
+  double       snoopStallAct  = 0;
   uint32_t     nSecs;
 
   uint64_t    nsecs64, nsecsOther64;
@@ -432,17 +434,18 @@ int main(int argc, char** argv) {
       // wr lock
       wb_wr_get_sync_state(device, devIndex, &syncState);
       if (syncState == WR_PPS_GEN_ESCR_MASK) snoopLockFlag = 1;
-      if (!snoopLockFlag)     fprintf(stdout, "%s: error - WR not locked\n", program);
+      if (!snoopLockFlag)       fprintf(stdout, "%s: error - WR not locked\n", program);
 
       // time continuity
       wb_wr_stats_get_continuity(device, devIndex, &contObsT, &contMaxPosDT, &contMaxPosTS, &contMaxNegDT, &contMaxNegTS);
-      if (contMaxPosDT > 16)  fprintf(stdout, "%s: error - WR time jumps by %d [ns]\n", program, (int)contMaxPosDT);
-      if (contMaxNegDT != 0)  fprintf(stdout, "%s: error - WR time jumps by %d [ns]\n", program, (int)contMaxNegDT);
+      if (contMaxPosDT > 16)    fprintf(stdout, "%s: error - WR time jumps by %d [ns]\n", program, (int)contMaxPosDT);
+      if (contMaxNegDT != 0)    fprintf(stdout, "%s: error - WR time jumps by %d [ns]\n", program, (int)contMaxNegDT);
 
       // CPU stalls
       wb_wr_stats_get_stall(device, devIndex, ecpu, &stallObsT, &stallMaxStreak, &stallN, &stallTS);
-      snoopStall = (double)stallN/(double)stallObsT;
-      if (snoopStall > 0.5)    fprintf(stdout, "%s: error - max CPU stall %f\n", program, snoopStall);
+      snoopStallMax = (double)stallMaxStreak / (double)stallObsT * 100.0;
+      snoopStallAct = (double)stallN         / (double)stallObsT * 100.0;
+      if (snoopStallMax > 50.0) fprintf(stdout, "%s: error - max CPU stall %f\n", program, snoopStallMax);
 
       // ECA
       wb_eca_stats_get(device, devIndex, &ecaNMessage, &ecaDtSum, &ecaDtMin, &ecaDtMax, &ecaNLate, &ecaLateOffset);
@@ -458,7 +461,7 @@ int main(int argc, char** argv) {
       }
       
       if (nSecs >= snoopSecs) {
-        printSnoopData(snoopSecs, snoopLockFlag, contMaxPosDT, contMaxNegDT, snoopStall,
+        printSnoopData(snoopSecs, snoopLockFlag, contMaxPosDT, contMaxNegDT, snoopStallMax, snoopStallAct,
                        ecaNMessage, ecaDtMin, ecaDtMax, ecaDtSum, ecaSumLate, ecaSumEarly);
         nSecs = 1;
       } // if nSecs
