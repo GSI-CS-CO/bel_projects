@@ -321,7 +321,7 @@ namespace MiLdaq
 {
 #endif
 
-#define SCU_BUS_SLOT_MASK 0x0F
+#define SCU_BUS_SLOT_MASK         0x0F
 
 /*! ---------------------------------------------------------------------------
  */

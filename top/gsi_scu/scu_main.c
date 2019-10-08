@@ -83,13 +83,15 @@
 SCU_SHARED_DATA_T SHARED g_shared = SCU_SHARED_DATA_INITIALIZER;
 /*!!!!!!!!!!!!!!!!!!!!!! End of shared memory area !!!!!!!!!!!!!!!!!!!!!!!!!!*/
 
+typedef uint32_t ECA_T;
+
 volatile uint16_t* g_pScub_base        = NULL;
 volatile uint32_t* g_pScub_irq_base    = NULL;
 volatile unsigned int* g_pScu_mil_base = NULL;
 volatile uint32_t* g_pMil_irq_base     = NULL;
 volatile uint32_t* g_pWr_1wire_base    = NULL;
 volatile uint32_t* g_pUser_1wire_base  = NULL;
-volatile uint32_t* g_pECAQ             = NULL; // WB address of ECA queue
+volatile ECA_T*    g_pECAQ             = NULL; // WB address of ECA queue
 
 int g_aClear_is_active[MAX_SCU_SLAVES + 1] = {0};
 volatile struct message_buffer g_aMsg_buf[QUEUE_CNT] = {0};
@@ -108,7 +110,7 @@ FG_CHANNEL_T g_aFgChannels[MAX_FG_CHANNELS] = {{0,0,0}};
    *(volatile uint32_t*)(char*) \
    (pCpuMsiBox + g_shared.fg_regs[channel].mbx_slot * sizeof(uint16_t)) = SIG
 
-static void clear_handler_state(int);
+static void clear_handler_state( unsigned int );
 
 static inline uint32_t _get_macro_number( unsigned int channel )
 {
@@ -285,12 +287,20 @@ static void msDelay(uint32_t msecs)
 }
 #endif
 
+static inline unsigned int getFgNumberFromRegister( const uint16_t reg )
+{
+   return (reg >> 4) & 0x3F; // virtual fg number Bits 9..4
+}
+
 /** @brief sends the parameters for the next interpolation interval
  *  @param socket number of the slot, including the high bits with the information SIO or MIL_EXT
  *  @param fg_base base address of the function generator macro
  *  @param cntrl_reg state of the control register. saves one read access.
  */
-static inline void send_fg_param(int socket, int fg_base, uint16_t cntrl_reg, signed int* setvalue)
+static inline void send_fg_param( const  unsigned int socket,
+                                  const unsigned int fg_base,
+                                  const uint16_t cntrl_reg,
+                                  signed int* pSetvalue )
 {
    struct param_set pset;
    unsigned int fg_num;
@@ -298,8 +308,8 @@ static inline void send_fg_param(int socket, int fg_base, uint16_t cntrl_reg, si
    int status;
    int16_t blk_data[6];
 
-   fg_num = (cntrl_reg & 0x3f0) >> 4; // virtual fg number Bits 9..4
-
+   //fg_num = (cntrl_reg & 0x3f0) >> 4; // virtual fg number Bits 9..4
+   fg_num = getFgNumberFromRegister( cntrl_reg );
    if( fg_num >= ARRAY_SIZE( g_aFgChannels ) )
    {
       mprintf( ESC_ERROR"FG-number %d out of range!\n"ESC_NORMAL, fg_num );
@@ -331,12 +341,12 @@ static inline void send_fg_param(int socket, int fg_base, uint16_t cntrl_reg, si
       g_pScub_base[OFFS(socket) + fg_base + FG_STARTL] = blk_data[4];
       g_pScub_base[OFFS(socket) + fg_base + FG_STARTH] = blk_data[5];
       // no setvalue for scu bus daq 
-      *setvalue = 0;
+      *pSetvalue = 0;
    }
    else if (socket & DEV_MIL_EXT)
    {
       // save coeff_c as setvalue
-      *setvalue = pset.coeff_c;
+      *pSetvalue = pset.coeff_c;
       // transmit in one block transfer over the dev bus
       if((status = write_mil_blk(g_pScu_mil_base, &blk_data[0], FC_BLK_WR | fg_base)) != OKAY)
          dev_failure(status, socket & SCU_BUS_SLOT_MASK, __func__);
@@ -344,7 +354,7 @@ static inline void send_fg_param(int socket, int fg_base, uint16_t cntrl_reg, si
    }
    else if (socket & DEV_SIO)
    {  // save coeff_c as setvalue
-      *setvalue = pset.coeff_c;
+      *pSetvalue = pset.coeff_c;
       // transmit in one block transfer over the dev bus
       if((status = scub_write_mil_blk( g_pScub_base,
                                        socket & SCU_BUS_SLOT_MASK,
@@ -363,84 +373,225 @@ static inline void send_fg_param(int socket, int fg_base, uint16_t cntrl_reg, si
  *  @param fg_base base address of the function generator macro
  *  @param irq_act_reg state of the irq act register, saves a read access
  */
-static
-inline void handle(int socket, unsigned fg_base, short irq_act_reg, signed int* setvalue) {
-    uint16_t cntrl_reg = 0;
- //   int status;
-    int channel;
+#if 0
+static void handle( const unsigned int socket,
+                    const unsigned int fg_base,
+                    const uint16_t irq_act_reg,
+                    signed int* setvalue )
+{
+   uint16_t cntrl_reg = 0;
+   unsigned int channel = 0;
 
-    if ((socket & 0xf0) == 0){
+   if( (socket & 0xf0) == 0 )
+   {
       cntrl_reg = g_pScub_base[OFFS(socket) + fg_base + FG_CNTRL];
-      channel = (cntrl_reg & 0x3f0) >> 4;     // virtual fg number Bits 9..4
-    } else if ((socket & DEV_MIL_EXT) || (socket & DEV_SIO)) {
-      channel = (irq_act_reg & 0x3f0) >> 4;   // virtual fg number Bits 9..4
-    }
+      channel = getFgNumberFromRegister( cntrl_reg );
+   }
+   //else if( (socket & DEV_MIL_EXT) || (socket & DEV_SIO) )
+   else if( (socket & (DEV_MIL_EXT | DEV_SIO)) != 0 )
+   {
+      channel = getFgNumberFromRegister( irq_act_reg );
+   }
 
-    if ((socket & 0xf0) == 0) {
+   if( channel >= ARRAY_SIZE( g_shared.fg_regs ) )
+   {
+      mprintf( ESC_ERROR"%s: Channel out of range: %d\n"ESC_NORMAL, __func__, channel );
+      return;
+   }
+
+   if( (socket & 0xf0) == 0 )
+   {  /* last cnt from from fg macro, read from LO address copies hardware counter to shadow reg */
+      g_shared.fg_regs[channel].ramp_count = g_pScub_base[OFFS(socket) + fg_base + FG_RAMP_CNT_LO];
+      g_shared.fg_regs[channel].ramp_count |= g_pScub_base[OFFS(socket) + fg_base + FG_RAMP_CNT_HI] << 16;
+   }
+   //else if((socket & DEV_MIL_EXT) || (socket & DEV_SIO))
+   else if( (socket & (DEV_MIL_EXT | DEV_SIO)) != 0 )
+   {  /* count in software only */
+      g_shared.fg_regs[channel].ramp_count++;
+   }
+
+   if( (socket & 0xf0) == 0 )
+   {
+      if( !(cntrl_reg  & FG_RUNNING))
+      {       // fg stopped
+         if( cbisEmpty(&g_shared.fg_regs[0], channel))
+         {
+            SEND_SIG(SIG_STOP_EMPTY);           // normal stop
+            hist_addx(HISTORY_XYZ_MODULE, "sig_stop_empty", channel);
+         }
+         else
+         {
+            SEND_SIG(SIG_STOP_NEMPTY);          // something went wrong
+            hist_addx(HISTORY_XYZ_MODULE, "sig_stop_nempty", channel);
+         }
+         disable_slave_irq(channel);
+         g_shared.fg_regs[channel].state = STATE_STOPPED;
+      }
+   }
+   else
+   {
+      if( !(irq_act_reg  & FG_RUNNING) )
+      {     // fg stopped
+         g_shared.fg_regs[channel].ramp_count--;
+         if( cbisEmpty(&g_shared.fg_regs[0], channel) )
+         {
+            SEND_SIG(SIG_STOP_EMPTY);           // normal stop
+            hist_addx(HISTORY_XYZ_MODULE, "sig_stop_empty", channel);
+         }
+         else
+         {
+            SEND_SIG(SIG_STOP_NEMPTY);          // something went wrong
+            hist_addx(HISTORY_XYZ_MODULE, "sig_stop_nempty", channel);
+         }
+         disable_slave_irq(channel);
+         g_shared.fg_regs[channel].state = STATE_STOPPED;
+      }
+   }
+
+   if( (socket & 0xf0) == 0)
+   {
+      if ((cntrl_reg & FG_RUNNING) && !(cntrl_reg & FG_DREQ))
+      {
+         g_shared.fg_regs[channel].state = STATE_ACTIVE;
+         SEND_SIG(SIG_START); // fg has received the tag or brc message
+         hist_addx(HISTORY_XYZ_MODULE, "sig_start", channel);
+         if( cbgetCount(&g_shared.fg_regs[0], channel) == THRESHOLD )
+            SEND_SIG(SIG_REFILL);
+         send_fg_param( socket, fg_base, cntrl_reg, setvalue );
+      }
+      else if( (cntrl_reg & FG_RUNNING) && (cntrl_reg & FG_DREQ) )
+      {
+         if( cbgetCount(&g_shared.fg_regs[0], channel) == THRESHOLD )
+            SEND_SIG(SIG_REFILL);
+        send_fg_param(socket, fg_base, cntrl_reg, setvalue);
+      }
+   }
+   else
+   {
+      if ((irq_act_reg & FG_RUNNING) && (irq_act_reg & DEV_STATE_IRQ))
+      {
+         g_shared.fg_regs[channel].state = STATE_ACTIVE;
+         SEND_SIG(SIG_START); // fg has received the tag or brc message
+         hist_addx(HISTORY_XYZ_MODULE, "sig_start", channel);
+         if( cbgetCount(&g_shared.fg_regs[0], channel) == THRESHOLD )
+          SEND_SIG(SIG_REFILL);
+         send_fg_param( socket, fg_base, irq_act_reg, setvalue );
+      }
+      else if( irq_act_reg & (FG_RUNNING | DEV_DRQ) )
+      {
+         if (cbgetCount(&g_shared.fg_regs[0], channel) == THRESHOLD)
+            SEND_SIG(SIG_REFILL);
+         send_fg_param(socket, fg_base, irq_act_reg, setvalue);
+      }
+   }
+}
+#else
+static void handle( const unsigned int socket,
+                    const unsigned int fg_base,
+                    const uint16_t irq_act_reg,
+                    signed int* setvalue )
+{
+   uint16_t cntrl_reg = 0;
+   unsigned int channel;
+
+   if( (socket & (DEV_MIL_EXT | DEV_SIO)) == 0 )
+   {
+      cntrl_reg = g_pScub_base[OFFS(socket) + fg_base + FG_CNTRL];
+      channel = getFgNumberFromRegister( cntrl_reg );
+   }
+   else
+   {
+      channel = getFgNumberFromRegister( irq_act_reg );
+   }
+
+   if( channel >= ARRAY_SIZE( g_shared.fg_regs ) )
+   {
+      mprintf( ESC_ERROR"%s: Channel out of range: %d\n"ESC_NORMAL, __func__, channel );
+      return;
+   }
+
+   if( (socket & (DEV_MIL_EXT | DEV_SIO)) == 0 )
+   {
       /* last cnt from from fg macro, read from LO address copies hardware counter to shadow reg */
       g_shared.fg_regs[channel].ramp_count = g_pScub_base[OFFS(socket) + fg_base + FG_RAMP_CNT_LO];
       g_shared.fg_regs[channel].ramp_count |= g_pScub_base[OFFS(socket) + fg_base + FG_RAMP_CNT_HI] << 16;
-    } else if ((socket & DEV_MIL_EXT) || (socket & DEV_SIO)) {
+
+      if( (cntrl_reg  & FG_RUNNING) == 0 )
+      {       // fg stopped
+         if( cbisEmpty(&g_shared.fg_regs[0], channel))
+         {
+            SEND_SIG(SIG_STOP_EMPTY);           // normal stop
+            hist_addx(HISTORY_XYZ_MODULE, "sig_stop_empty", channel);
+         }
+         else
+         {
+            SEND_SIG(SIG_STOP_NEMPTY);          // something went wrong
+            hist_addx(HISTORY_XYZ_MODULE, "sig_stop_nempty", channel);
+         }
+         disable_slave_irq(channel);
+         g_shared.fg_regs[channel].state = STATE_STOPPED;
+      }
+      else
+      {
+         if( (cntrl_reg & FG_DREQ) == 0 )
+         {
+            g_shared.fg_regs[channel].state = STATE_ACTIVE;
+            SEND_SIG(SIG_START); // fg has received the tag or brc message
+            hist_addx(HISTORY_XYZ_MODULE, "sig_start", channel);
+            if( cbgetCount(&g_shared.fg_regs[0], channel) == THRESHOLD )
+               SEND_SIG(SIG_REFILL);
+            send_fg_param( socket, fg_base, cntrl_reg, setvalue );
+         }
+         else
+         {
+            if( cbgetCount(&g_shared.fg_regs[0], channel) == THRESHOLD )
+               SEND_SIG(SIG_REFILL);
+           send_fg_param(socket, fg_base, cntrl_reg, setvalue);
+         }
+      }
+   }
+   else /* (socket & (DEV_MIL_EXT | DEV_SIO)) == 0 */
+   {
       /* count in software only */
       g_shared.fg_regs[channel].ramp_count++;
-    }
-
-    if ((socket & 0xf0) == 0) {
-      if (!(cntrl_reg  & FG_RUNNING)) {       // fg stopped
-        if (cbisEmpty(&g_shared.fg_regs[0], channel)) {
-          SEND_SIG(SIG_STOP_EMPTY);           // normal stop
-          hist_addx(HISTORY_XYZ_MODULE, "sig_stop_empty", channel);
-        } else {
-          SEND_SIG(SIG_STOP_NEMPTY);          // something went wrong
-          hist_addx(HISTORY_XYZ_MODULE, "sig_stop_nempty", channel);
-        }
-        disable_slave_irq(channel);
-        g_shared.fg_regs[channel].state = STATE_STOPPED;
+      if( (irq_act_reg  & FG_RUNNING) == 0 )
+      {     // fg stopped
+         g_shared.fg_regs[channel].ramp_count--;
+         if( cbisEmpty(&g_shared.fg_regs[0], channel) )
+         {
+            SEND_SIG(SIG_STOP_EMPTY);           // normal stop
+            hist_addx(HISTORY_XYZ_MODULE, "sig_stop_empty", channel);
+         }
+         else
+         {
+            SEND_SIG(SIG_STOP_NEMPTY);          // something went wrong
+            hist_addx(HISTORY_XYZ_MODULE, "sig_stop_nempty", channel);
+         }
+         disable_slave_irq(channel);
+         g_shared.fg_regs[channel].state = STATE_STOPPED;
       }
-    } else {
-      if (!(irq_act_reg  & FG_RUNNING)) {     // fg stopped
-        g_shared.fg_regs[channel].ramp_count--;
-        if (cbisEmpty(&g_shared.fg_regs[0], channel)) {
-          SEND_SIG(SIG_STOP_EMPTY);           // normal stop
-          hist_addx(HISTORY_XYZ_MODULE, "sig_stop_empty", channel);
-        } else {
-          SEND_SIG(SIG_STOP_NEMPTY);          // something went wrong
-          hist_addx(HISTORY_XYZ_MODULE, "sig_stop_nempty", channel);
-        }
-        disable_slave_irq(channel);
-        g_shared.fg_regs[channel].state = STATE_STOPPED;
+      else
+      {
+         if( (irq_act_reg & DEV_STATE_IRQ) != 0 )
+         {
+            g_shared.fg_regs[channel].state = STATE_ACTIVE;
+            SEND_SIG(SIG_START); // fg has received the tag or brc message
+            hist_addx(HISTORY_XYZ_MODULE, "sig_start", channel);
+            if( cbgetCount(&g_shared.fg_regs[0], channel) == THRESHOLD )
+               SEND_SIG(SIG_REFILL);
+            send_fg_param( socket, fg_base, irq_act_reg, setvalue );
+         }
+         else if( (irq_act_reg & DEV_DRQ) != 0 )
+         {
+            if (cbgetCount(&g_shared.fg_regs[0], channel) == THRESHOLD)
+               SEND_SIG(SIG_REFILL);
+            send_fg_param(socket, fg_base, irq_act_reg, setvalue);
+         }
       }
-    }
-
-    if ((socket & 0xf0) == 0) {
-      if ((cntrl_reg & FG_RUNNING) && !(cntrl_reg & FG_DREQ)) {
-        g_shared.fg_regs[channel].state = STATE_ACTIVE;
-        SEND_SIG(SIG_START); // fg has received the tag or brc message
-          hist_addx(HISTORY_XYZ_MODULE, "sig_start", channel);
-        if (cbgetCount(&g_shared.fg_regs[0], channel) == THRESHOLD)
-          SEND_SIG(SIG_REFILL);
-        send_fg_param(socket, fg_base, cntrl_reg, setvalue);
-      } else if ((cntrl_reg & FG_RUNNING) && (cntrl_reg & FG_DREQ)) {
-        if (cbgetCount(&g_shared.fg_regs[0], channel) == THRESHOLD)
-          SEND_SIG(SIG_REFILL);
-        send_fg_param(socket, fg_base, cntrl_reg, setvalue);
-      }
-    } else {
-      if ((irq_act_reg & FG_RUNNING) && (irq_act_reg & DEV_STATE_IRQ)){
-        g_shared.fg_regs[channel].state = STATE_ACTIVE;
-        SEND_SIG(SIG_START); // fg has received the tag or brc message
-          hist_addx(HISTORY_XYZ_MODULE, "sig_start", channel);
-        if (cbgetCount(&g_shared.fg_regs[0], channel) == THRESHOLD)
-          SEND_SIG(SIG_REFILL);
-        send_fg_param(socket, fg_base, irq_act_reg, setvalue);
-      } else if (irq_act_reg & (FG_RUNNING | DEV_DRQ)) {
-        if (cbgetCount(&g_shared.fg_regs[0], channel) == THRESHOLD)
-          SEND_SIG(SIG_REFILL);
-        send_fg_param(socket, fg_base, irq_act_reg, setvalue);
-      }
-    }
+   } /* else of if (socket & (DEV_MIL_EXT | DEV_SIO)) == 0 */
 }
 
+#endif
 /** @brief as short as possible, just pop the msi queue of the cpu and
  *         push it to the message queue of the main loop
  */
@@ -459,7 +610,7 @@ void irq_handler( void ) {
  *  then activate irqs and send the first tuple of data to the function generator
  *  @param channel number of the specified function generator channel from 0 to MAX_FG_CHANNELS-1
  */
-static int configure_fg_macro( unsigned int channel )
+static int configure_fg_macro( const unsigned int channel )
 {
    unsigned int socket;
    int dev;
@@ -486,11 +637,11 @@ static int configure_fg_macro( unsigned int channel )
    }
 
    // if dreq is active
-   if (dreq_status & MIL_DATA_REQ_INTR)
+   if( (dreq_status & MIL_DATA_REQ_INTR) != 0 )
    {
-      if (socket & DEV_SIO)
+      if( (socket & DEV_SIO) != 0 )
       {
-         if (g_aClear_is_active[socket & SCU_BUS_SLOT_MASK] == 0)
+         if( g_aClear_is_active[socket & SCU_BUS_SLOT_MASK] == 0 )
          {
             clear_handler_state(socket);
             hist_addx(HISTORY_XYZ_MODULE, "clear_handler_state", socket);
@@ -500,9 +651,9 @@ static int configure_fg_macro( unsigned int channel )
          return -1;
       }
 
-      if (socket & DEV_MIL_EXT)
+      if( (socket & DEV_MIL_EXT) != 0 )
       {
-         if (g_aClear_is_active[MAX_SCU_SLAVES] == 0)
+         if( g_aClear_is_active[MAX_SCU_SLAVES] == 0 )
          {
            clear_handler_state(socket);
            hist_addx(HISTORY_XYZ_MODULE, "clear_handler_state", socket);
@@ -514,29 +665,29 @@ static int configure_fg_macro( unsigned int channel )
    }
    else
    {  // reset clear flag
-      if (socket & DEV_SIO)
+      if( (socket & DEV_SIO) != 0)
       {
          g_aClear_is_active[socket & SCU_BUS_SLOT_MASK] = 0;
       }
-      else if (socket & DEV_MIL_EXT)
+      else if( (socket & DEV_MIL_EXT) != 0 )
       {
          g_aClear_is_active[MAX_SCU_SLAVES] = 0;
       }
    }
 
     /* enable irqs */
-   if ((socket & 0xf0) == 0)
+   if( (socket & (DEV_MIL_EXT | DEV_SIO)) == 0 )
    {                                      //scu bus slave
       g_pScub_base[SRQ_ENA] |= (1 << (socket-1));           // enable irqs for the slave
       g_pScub_base[OFFS(socket) + SLAVE_INT_ACT] = 0xc000;  // clear all irqs
       g_pScub_base[OFFS(socket) + SLAVE_INT_ENA] |= 0xc000; // enable fg1 and fg2 irq
    }
-   else if (socket & DEV_MIL_EXT)
+   else if( (socket & DEV_MIL_EXT) != 0 )
    {
-      if ((status = write_mil(g_pScu_mil_base, 1 << 13, FC_IRQ_MSK | dev)) != OKAY)
+      if( (status = write_mil(g_pScu_mil_base, 1 << 13, FC_IRQ_MSK | dev)) != OKAY)
          dev_failure(status, socket & SCU_BUS_SLOT_MASK, "enable dreq"); //enable Data-Request
    }
-   else if (socket & DEV_SIO)
+   else  if( (socket & DEV_SIO) != 0)
    {
       g_pScub_base[SRQ_ENA] |= (1 << ((socket & SCU_BUS_SLOT_MASK)-1));        // enable irqs for the slave
       g_pScub_base[OFFS(socket & SCU_BUS_SLOT_MASK) + SLAVE_INT_ENA] = 0x0010; // enable receiving of drq
@@ -545,7 +696,7 @@ static int configure_fg_macro( unsigned int channel )
    }
 
     /* which macro are we? */
-   if ((socket & 0xf0) == 0)
+   if ((socket & (DEV_MIL_EXT | DEV_SIO)) == 0)
    {   //scu bus slave
       if (dev == 0)
       {
@@ -562,24 +713,24 @@ static int configure_fg_macro( unsigned int channel )
    }
 
    /* fg mode and reset */
-   if ((socket & 0xf0) == 0)
+   if( (socket & (DEV_MIL_EXT | DEV_SIO)) == 0 )
    {   //scu bus slave
       g_pScub_base[OFFS(socket) + dac_base + DAC_CNTRL] = 0x10;        // set FG mode
       g_pScub_base[OFFS(socket) + fg_base + FG_RAMP_CNT_LO] = 0;       // reset ramp counter
    }
-   else if (socket & DEV_MIL_EXT)
+   else if( (socket & DEV_MIL_EXT) != 0 )
    {
       if ((status = write_mil(g_pScu_mil_base, 0x1, FC_IFAMODE_WR | dev)) != OKAY)
          dev_failure (status, 0, "set FG mode"); // set FG mode
    }
-   else if (socket & DEV_SIO)
+   else if( (socket & DEV_SIO) != 0 )
    {
       if ((status = scub_write_mil(g_pScub_base, socket & 0xf, 0x1, FC_IFAMODE_WR | dev)) != OKAY)
          dev_failure (status, socket & 0xf, "set FG mode"); // set FG mode
    }
 
     //fetch first parameter set from buffer
-   if (cbRead(&g_shared.fg_buffer[0], &g_shared.fg_regs[0], channel, &pset))
+   if( cbRead(&g_shared.fg_buffer[0], &g_shared.fg_regs[0], channel, &pset) != 0 )
    {
       cntrl_reg_wr = ((pset.control & 0x38) << 10) | ((pset.control & 0x7) << 10) | channel << 4;
       blk_data[0] = cntrl_reg_wr;
@@ -589,7 +740,7 @@ static int configure_fg_macro( unsigned int channel )
       blk_data[4] = pset.coeff_c & 0xffff;
       blk_data[5] = (pset.coeff_c & 0xffff0000) >> 16; // data written with high word
 
-      if ((socket & 0xf0) == 0)
+      if( (socket & (DEV_MIL_EXT | DEV_SIO)) == 0 )
       {
         //set virtual fg number Bit 9..4
          g_pScub_base[OFFS(socket) + fg_base + FG_CNTRL]  = blk_data[0];
@@ -599,7 +750,7 @@ static int configure_fg_macro( unsigned int channel )
          g_pScub_base[OFFS(socket) + fg_base + FG_STARTL] = blk_data[4];
          g_pScub_base[OFFS(socket) + fg_base + FG_STARTH] = blk_data[5];
       }
-      else if (socket & DEV_MIL_EXT)
+      else if( (socket & DEV_MIL_EXT) != 0 )
       {
         // save the coeff_c for mil daq
          g_aFgChannels[channel].last_c_coeff = pset.coeff_c;
@@ -610,7 +761,7 @@ static int configure_fg_macro( unsigned int channel )
          if((status = write_mil(g_pScu_mil_base, cntrl_reg_wr, FC_CNTRL_WR | dev)) != OKAY)
             dev_failure (status, 0, "end blk trm");
       }
-      else if (socket & DEV_SIO)
+      else if( (socket & DEV_SIO) != 0 )
       {
          // save the coeff_c for mil daq
          g_aFgChannels[channel].last_c_coeff = pset.coeff_c;
@@ -625,18 +776,18 @@ static int configure_fg_macro( unsigned int channel )
    }
 
    /* configure and enable macro */
-   if ((socket & 0xf0) == 0)
+   if( (socket & (DEV_MIL_EXT | DEV_SIO)) == 0 )
    {
       g_pScub_base[OFFS(socket) + fg_base + FG_TAG_LOW] = g_shared.fg_regs[channel].tag & 0xffff;
       g_pScub_base[OFFS(socket) + fg_base + FG_TAG_HIGH] = g_shared.fg_regs[channel].tag >> 16;
       g_pScub_base[OFFS(socket) + fg_base + FG_CNTRL] |= FG_ENABLED;
    }
-   else if (socket & DEV_MIL_EXT)
+   else if( (socket & DEV_MIL_EXT) != 0 )
    { // enable and end block mode
       if ((status = write_mil(g_pScu_mil_base, cntrl_reg_wr | FG_ENABLED, FC_CNTRL_WR | dev)) != OKAY)
          dev_failure (status, 0, "end blk mode");
    }
-   else if (socket & DEV_SIO)
+   else if( (socket & DEV_SIO) != 0 )
    { // enable and end block mode
       if ((status = scub_write_mil(g_pScub_base, socket & SCU_BUS_SLOT_MASK, cntrl_reg_wr | FG_ENABLED, FC_CNTRL_WR | dev)) != OKAY)
          dev_failure (status, socket & SCU_BUS_SLOT_MASK, "end blk mode");
@@ -687,76 +838,94 @@ static void scanFgs( void )
 
 /** @brief print the values and states of all channel registers
  */
-inline static void print_regs(void) {
-  for( unsigned int i = 0; i < ARRAY_SIZE(g_shared.fg_regs); i++) {
-    mprintf("channel[%d].wr_ptr %d\n", i, g_shared.fg_regs[i].wr_ptr);
-    mprintf("channel[%d].rd_ptr %d\n", i, g_shared.fg_regs[i].rd_ptr);
-    mprintf("channel[%d].mbx_slot 0x%x\n", i, g_shared.fg_regs[i].mbx_slot);
-    mprintf("channel[%d].macro_number %d\n", i, g_shared.fg_regs[i].macro_number);
-    mprintf("channel[%d].ramp_count %d\n", i, g_shared.fg_regs[i].ramp_count);
-    mprintf("channel[%d].tag 0x%x\n", i, g_shared.fg_regs[i].tag);
-    mprintf("channel[%d].state %d\n", i, g_shared.fg_regs[i].state);
-    mprintf("\n");
-  }
+inline static void print_regs( void)
+{
+   for( unsigned int i = 0; i < ARRAY_SIZE(g_shared.fg_regs); i++ )
+   {
+      mprintf("channel[%d].wr_ptr %d\n", i, g_shared.fg_regs[i].wr_ptr);
+      mprintf("channel[%d].rd_ptr %d\n", i, g_shared.fg_regs[i].rd_ptr);
+      mprintf("channel[%d].mbx_slot 0x%x\n", i, g_shared.fg_regs[i].mbx_slot);
+      mprintf("channel[%d].macro_number %d\n", i, g_shared.fg_regs[i].macro_number);
+      mprintf("channel[%d].ramp_count %d\n", i, g_shared.fg_regs[i].ramp_count);
+      mprintf("channel[%d].tag 0x%x\n", i, g_shared.fg_regs[i].tag);
+      mprintf("channel[%d].state %d\n", i, g_shared.fg_regs[i].state);
+      mprintf("\n");
+   }
 }
 
 /** @brief disable function generator channel
  *  @param channel number of the function generator channel from 0 to MAX_FG_CHANNELS-1
  */
-static void disable_channel(unsigned int channel) {
-  int socket, dev, fg_base, dac_base;
-  short data;
-  int status;
-  if (g_shared.fg_regs[channel].macro_number == -1)
-     return;
+static void disable_channel( unsigned int channel )
+{
+   struct channel_regs* pFgRegs = &g_shared.fg_regs[channel];
 
-  socket = _get_socket( channel );
-  dev  = _get_dev( channel );
-  //mprintf("disarmed socket %d dev %d in channel[%d] state %d\n", socket, dev, channel, fg_regs[channel].state); //ONLY FOR TESTING
-  if ((socket & 0xf0) == 0) {
-    /* which macro are we? */
-    if (dev == 0) {
-      fg_base = FG1_BASE;
-      dac_base = DAC1_BASE;
-    } else if (dev == 1) {
-      fg_base = FG2_BASE;
-      dac_base = DAC2_BASE;
-    } else
+   if( pFgRegs->macro_number == SCU_INVALID_VALUE )
       return;
 
-    // disarm hardware
-    g_pScub_base[OFFS(socket) + fg_base + FG_CNTRL] &= ~(0x2);
-    g_pScub_base[OFFS(socket) + dac_base + DAC_CNTRL] &= ~(0x10); // unset FG mode
+   int status;
+   int16_t data;
+   unsigned int socket = _get_socket( channel );
+   unsigned int dev  = _get_dev( channel );
+   //mprintf("disarmed socket %d dev %d in channel[%d] state %d\n", socket, dev, channel, pFgRegs->state); //ONLY FOR TESTING
+   if( (socket & (DEV_MIL_EXT | DEV_SIO)) == 0 )
+   {
+      unsigned int fg_base, dac_base;
+      /* which macro are we? */
+      switch( dev )
+      {
+         case 0:
+         {
+            fg_base = FG1_BASE;
+            dac_base = DAC1_BASE;
+            break;
+         }
+         case 1:
+         {
+            fg_base = FG2_BASE;
+            dac_base = DAC2_BASE;
+            break;
+         }
+         default: return;
+      }
 
-  } else if (socket & DEV_MIL_EXT) {
-    // disarm hardware
-    if((status = read_mil(g_pScu_mil_base, &data, FC_CNTRL_RD | dev)) != OKAY)
-       dev_failure(status, 0, "disarm hw");
+     // disarm hardware
+      g_pScub_base[OFFS(socket) + fg_base + FG_CNTRL] &= ~(0x2);
+      g_pScub_base[OFFS(socket) + dac_base + DAC_CNTRL] &= ~(0x10); // unset FG mode
+   }
+   else if( (socket & DEV_MIL_EXT) != 0 )
+   {  // disarm hardware
+      if( (status = read_mil(g_pScu_mil_base, &data, FC_CNTRL_RD | dev)) != OKAY )
+         dev_failure(status, 0, "disarm hw");
 
-    if((status = write_mil(g_pScu_mil_base, data & ~(0x2), FC_CNTRL_WR | dev)) != OKAY)
-       dev_failure(status, 0, "disarm hw");
-  } else if (socket & DEV_SIO) {
-    // disarm hardware
-    if((status = scub_read_mil(g_pScub_base, socket & SCU_BUS_SLOT_MASK, &data, FC_CNTRL_RD | dev)) != OKAY)
-       dev_failure(status, socket & SCU_BUS_SLOT_MASK, "disarm hw");
+      if( (status = write_mil(g_pScu_mil_base, data & ~(0x2), FC_CNTRL_WR | dev)) != OKAY )
+         dev_failure(status, 0, "disarm hw");
+   }
+   else if( (socket & DEV_SIO) != 0 )
+   {  // disarm hardware
+      if((status = scub_read_mil(g_pScub_base, socket & SCU_BUS_SLOT_MASK, &data, FC_CNTRL_RD | dev)) != OKAY)
+         dev_failure(status, socket & SCU_BUS_SLOT_MASK, "disarm hw");
 
-    if((status = scub_write_mil(g_pScub_base, socket & SCU_BUS_SLOT_MASK, data & ~(0x2), FC_CNTRL_WR | dev)) != OKAY)
-       dev_failure(status, socket & SCU_BUS_SLOT_MASK, "disarm hw");
-  }
+      if((status = scub_write_mil(g_pScub_base, socket & SCU_BUS_SLOT_MASK, data & ~(0x2), FC_CNTRL_WR | dev)) != OKAY)
+         dev_failure(status, socket & SCU_BUS_SLOT_MASK, "disarm hw");
+   }
 
-
-  if (g_shared.fg_regs[channel].state == STATE_ACTIVE) {    // hw is running
-    hist_addx(HISTORY_XYZ_MODULE, "flush circular buffer", channel);
-    g_shared.fg_regs[channel].rd_ptr = g_shared.fg_regs[channel].wr_ptr;
-  } else {
-    g_shared.fg_regs[channel].state = STATE_STOPPED;
-    SEND_SIG(SIG_DISARMED);
-  }
+   if( pFgRegs->state == STATE_ACTIVE )
+   {    // hw is running
+      hist_addx( HISTORY_XYZ_MODULE, "flush circular buffer", channel );
+      pFgRegs->rd_ptr =  pFgRegs->wr_ptr;
+   }
+   else
+   {
+      pFgRegs->state = STATE_STOPPED;
+      SEND_SIG(SIG_DISARMED);
+   }
 }
 
 /** @brief updates the temperatur information in the shared section
  */
-static void updateTemp( void ) {
+static void updateTemp( void )
+{
   BASE_ONEWIRE = (uint8_t*)g_pWr_1wire_base;
   wrpc_w1_init();
 #if __GNUC__ >= 9
@@ -777,7 +946,8 @@ static void updateTemp( void ) {
 
 /** @brief initialize the irq table and set the irq mask
  */
-static void init_irq_table( void ) {
+static void init_irq_table( void )
+{
   isr_table_clr();
   isr_ptr_table[0] = &irq_handler;
   irq_set_mask(0x01);
@@ -788,11 +958,12 @@ static void init_irq_table( void ) {
 
 /** @brief initialize procedure at startup
  */
-static void init( void ) {
+static void init( void )
+{
 
   hist_init(HISTORY_XYZ_MODULE);
   for( int i = 0; i < ARRAY_SIZE(g_shared.fg_regs); i++ )
-    g_shared.fg_regs[i].macro_number = SCU_INVALID_VALUE;     //no macros assigned to channels at startup
+     g_shared.fg_regs[i].macro_number = SCU_INVALID_VALUE;     //no macros assigned to channels at startup
   updateTemp();                       //update 1Wire ID and temperatures
   scanFgs();                        //scans for slave cards and fgs
 }
@@ -808,22 +979,29 @@ void _segfault( void )
 
 /** @brief helper function which clears the state of a dev bus after malfunction
  */
-static void clear_handler_state(int socket) {
-  struct msi m;
-  if (socket & DEV_SIO) {
-    // create swi
-    m.msg = (socket & SCU_BUS_SLOT_MASK) - 1;
-    m.adr = 0;
-    irq_disable();
-    add_msg(&g_aMsg_buf[0], DEVSIO, m);
-    irq_enable();
-  } else if (socket & DEV_MIL_EXT) {
-    m.msg = 0;
-    m.adr = 0;
-    irq_disable();
-    add_msg(&g_aMsg_buf[0], DEVBUS, m);
-    irq_enable();
-  }
+static void clear_handler_state( unsigned int socket )
+{
+   struct msi m;
+
+   if( socket & DEV_SIO )
+   {
+      // create swi
+      m.msg = (socket & SCU_BUS_SLOT_MASK) - 1;
+      m.adr = 0;
+      irq_disable();
+      add_msg(&g_aMsg_buf[0], DEVSIO, m);
+      irq_enable();
+      return;
+   }
+
+   if( socket & DEV_MIL_EXT )
+   {
+      m.msg = 0;
+      m.adr = 0;
+      irq_disable();
+      add_msg(&g_aMsg_buf[0], DEVBUS, m);
+      irq_enable();
+   }
 }
 
 
@@ -842,30 +1020,26 @@ static void findECAQ( void )
   // stuff below needed to get WB address of ECA queue 
   sdb_location ECAQ_base[ECAQMAX]; // base addresses of ECA queues
   uint32_t ECAQidx = 0;            // max number of ECA queues in the SoC
-  uint32_t *tmp;
-  uint32_t i;
 
-  g_pECAQ = NULL; //initialize Wishbone address for LM32 ECA queue
+  g_pECAQ = NULL; // Pre-nitialize Wishbone address for LM32 ECA queue
 
   // get Wishbone addresses of all ECA Queues
-  find_device_multi(ECAQ_base, &ECAQidx, ECAQMAX, ECA_QUEUE_SDB_VENDOR_ID, ECA_QUEUE_SDB_DEVICE_ID);
+  find_device_multi(ECAQ_base, &ECAQidx, ARRAY_SIZE(ECAQ_base), ECA_QUEUE_SDB_VENDOR_ID, ECA_QUEUE_SDB_DEVICE_ID);
 
   // walk through all ECA Queues and find the one for the LM32
-  for (i=0; i < ECAQidx; i++) {
-    tmp = (uint32_t *)(getSdbAdr(&ECAQ_base[i]));
-    // TODO Pointer arithmetic with shift operators is a bad idea! (UB)
-    if ( *(tmp + (ECA_QUEUE_QUEUE_ID_GET >> 2)) == ECACHANNELFORLM32)
-       g_pECAQ = tmp;
+  for( uint32_t i = 0; i < ECAQidx; i++ )
+  {
+     ECA_T* tmp = (ECA_T*)(getSdbAdr(&ECAQ_base[i]));
+     if( (tmp != NULL) && (tmp[ECA_QUEUE_QUEUE_ID_GET / sizeof(ECA_T)] == ECACHANNELFORLM32) )
+        g_pECAQ = tmp;
   }
 
-  mprintf("\n");
   if( g_pECAQ == NULL )
   {
-     mprintf(ESC_ERROR"FATAL: can't find ECA queue for lm32, good bye!\n"ESC_NORMAL);
+     mprintf(ESC_ERROR"\nFATAL: can't find ECA queue for lm32, good bye!\n"ESC_NORMAL);
      while(true) asm("nop");
   }
-  mprintf("ECA queue found at: 0x%08x. Waiting for actions with tag 0x%08x ...\n", g_pECAQ, MY_ECA_TAG);
-  mprintf("\n");
+  mprintf("\nECA queue found at: 0x%08x. Waiting for actions with tag 0x%08x ...\n\n", g_pECAQ, MY_ECA_TAG);
 } // findECAQ
 
 
@@ -892,7 +1066,7 @@ typedef enum
 
 static const char* state2string( const FG_STATE_T state )
 {
-#define __CASE_RETURN( s ) case s: return #s
+   #define __CASE_RETURN( s ) case s: return #s
    switch( state )
    {
       __CASE_RETURN( ST_WAIT );
@@ -903,7 +1077,7 @@ static const char* state2string( const FG_STATE_T state )
       __CASE_RETURN( ST_FETCH_DATA );
    }
    return "unknown";
-#undef __CASE_RETURN
+   #undef __CASE_RETURN
 }
 
 /* declaration for the scheduler */
@@ -959,60 +1133,59 @@ static unsigned int getId( register TaskType* pThis )
 **************************************************************/
 static void ecaHandler( register TaskType* pThis UNUSED )
 {
-  uint32_t flag;                // flag for the next action
-  uint32_t actTag;              // tag of action
-  uint32_t i;
-  uint8_t dev_mil_armed = 0;
-  uint8_t dev_sio_armed = 0;
-  uint8_t socket;
-  uint32_t active_sios = 0;     // bitmap with active sios
+   // read flag for the next action and check if there was an action
+   if( (g_pECAQ[ECA_QUEUE_FLAGS_GET / sizeof(ECA_T)] & (1 << ECA_VALID)) == 0 )
+      return;
 
-  /* check if there are armed fgs */
-  for (i = 0; i < ARRAY_SIZE(g_shared.fg_regs); i++) {
-    // only armed fgs
-    if (g_shared.fg_regs[i].state == STATE_ARMED) {
-      socket = _get_socket( i );
-      if(socket & DEV_MIL_EXT) {
-        dev_mil_armed = 1;
-      } else if (socket & DEV_SIO) {
-        active_sios |= (1 << ((socket & SCU_BUS_SLOT_MASK) - 1));
-        dev_sio_armed = 1;
+   bool dev_mil_armed = false;
+   bool dev_sio_armed = false;
+   uint32_t active_sios = 0;     // bitmap with active sios
+
+   /* check if there are armed fgs */
+   for( unsigned int i = 0; i < ARRAY_SIZE(g_shared.fg_regs); i++ )
+   { // only armed fgs
+      if( g_shared.fg_regs[i].state != STATE_ARMED )
+         continue;
+      unsigned int socket = _get_socket( i );
+      if( socket & DEV_MIL_EXT )
+      {
+         dev_mil_armed = true;
+         continue;
       }
-    }
-  }
+      if( socket & DEV_SIO )
+      {
+         active_sios |= (1 << ((socket & SCU_BUS_SLOT_MASK) - 1));
+         dev_sio_armed = true;
+      }
+   }
 
-  // read flag and check if there was an action
-  // TODO Pointer arithmetic with shift operators is a bad idea! (UB)
-  flag         = *(g_pECAQ + (ECA_QUEUE_FLAGS_GET >> 2));
-  if (flag & (0x0001 << ECA_VALID)) {
-    // read data
-    actTag       = *(g_pECAQ + (ECA_QUEUE_TAG_GET >> 2));
+   // read data tag of action
+   ECA_T actTag = g_pECAQ[ECA_QUEUE_TAG_GET / sizeof(ECA_T)];
 
-    // pop action from channel
-    *(g_pECAQ + (ECA_QUEUE_POP_OWR >> 2)) = 0x1;
+   // pop action from channel
+   g_pECAQ[ECA_QUEUE_POP_OWR / sizeof(ECA_T)] = 0x1;
 
-    // here: do s.th. according to action
-    switch (actTag) {
+   // here: do s.th. according to action
+   switch( actTag )
+   {
       case MY_ECA_TAG:
-        // send broadcast start to mil extension
-        if (dev_mil_armed)
-           g_pScu_mil_base[MIL_SIO3_TX_CMD] = 0x20ff;
-        // send broadcast start to active sio slaves
-        if (dev_sio_armed) {
-          // select active sio slaves
-          g_pScub_base[OFFS(0) + MULTI_SLAVE_SEL] = active_sios;
-          // send broadcast
-          g_pScub_base[OFFS(13) + MIL_SIO3_TX_CMD] = 0x20ff;
-        }
-      break;
-
+      {
+         // send broadcast start to mil extension
+         if (dev_mil_armed)
+            g_pScu_mil_base[MIL_SIO3_TX_CMD] = 0x20ff;
+         // send broadcast start to active sio slaves
+         if( dev_sio_armed )
+         {  // select active sio slaves
+            g_pScub_base[OFFS(0) + MULTI_SLAVE_SEL] = active_sios;
+            // send broadcast
+            g_pScub_base[OFFS(13) + MIL_SIO3_TX_CMD] = 0x20ff;
+         }
+         break;
+      }
       default:
       break;
-    } // switch
-
-  } // if data is valid
+   } // switch
 } // ecaHandler
-
 
 /** @brief software irq handler
  *  dispatch the calls from linux to the helper functions
@@ -1211,7 +1384,7 @@ static void printTimeoutMessage( register TaskType* pThis, const bool isScuBus )
 static void dev_sio_bus_handler( register TaskType* pThis, const bool isScuBus )
 {
    int i;
-   int socket, dev;
+   unsigned int socket, dev;
    int status = OKAY;
    short data_aquisition;
    struct msi m;
