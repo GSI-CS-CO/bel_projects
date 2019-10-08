@@ -9,9 +9,9 @@
 //            -- Wesley W. Terpstra <w.terpstra@gsi.de>
 //            -- Alessandro Rubini <rubini@gnudd.com>
 //            -- Tomasz Wlostowski <tomasz.wlostowski@cern.ch>
-//  version : 27-Sep-2019
+//  version : 08-Oct-2019
 //
-#define WB_API_VERSION "0.14.0"
+#define WB_API_VERSION "0.14.1"
 //
 // Api for wishbone devices for timing receiver nodes. This is not a timing receiver API.
 // 
@@ -141,8 +141,8 @@ eb_status_t wb_wr_stats_get_stall(eb_device_t device,          // EB device
                                   int devIndex,                // 0,1,2... - there may be more than 1 device on the WB bus
                                   uint32_t stallObsCPU,        // lm32 stall: select # of CPU for data below
                                   uint64_t *stallObsT,         // lm32 stall: observation intervall
-                                  uint32_t *stallMaxStreak,    // lm32 stall: obvserved max continous stall in Wishbone cycles
-                                  uint32_t *stallN,            // lm32 stall: stall time within observation interval
+                                  uint32_t *stallMax,          // lm32 stall: observed max continous stall in Wishbone cycles
+                                  uint32_t *stallAct,          // lm32 stall: observed stall in most recent observation interval
                                   uint64_t *stallTS            // lm32 stall: timestamp of last update
                                   );
 

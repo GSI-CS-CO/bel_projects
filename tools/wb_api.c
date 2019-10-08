@@ -494,7 +494,7 @@ eb_status_t wb_wr_stats_get_continuity(eb_device_t device, int devIndex, uint64_
 } // wb_wr_stats_get_continuity
 
 
-eb_status_t wb_wr_stats_get_stall(eb_device_t device, int devIndex, uint32_t stallObsCPU, uint64_t *stallObsT, uint32_t *stallMaxStreak, uint32_t *stallN, uint64_t *stallTS)
+eb_status_t wb_wr_stats_get_stall(eb_device_t device, int devIndex, uint32_t stallObsCPU, uint64_t *stallObsT, uint32_t *stallMax, uint32_t *stallAct, uint64_t *stallTS)
 {
   eb_cycle_t   cycle;
   eb_data_t    data0, data1, data2, data3, data4;
@@ -503,16 +503,16 @@ eb_status_t wb_wr_stats_get_stall(eb_device_t device, int devIndex, uint32_t sta
 
 #ifdef WB_SIMULATE
   *stallObsT      = 0x64;
-  *stallMaxStreak = 0x17;
-  *stallN         = 0x42;
+  *stallMax       = 0x17;
+  *stallAct       = 0x42;
   *stallTS        = 0x4711;
 
   return EB_OK;
 #endif
 
   *stallObsT      = 0xffffffffffffffff;
-  *stallMaxStreak = 0xffffffff; 
-  *stallN         = 0xffffffff;
+  *stallMax       = 0xffffffff; 
+  *stallAct       = 0xffffffff;
   *stallTS        = 0xffffffffffffffff;
 
   if ((status = wb_check_device(device, DM_DIAG_VENDOR, DM_DIAG_PRODUCT, DM_DIAG_VMAJOR, DM_DIAG_VMINOR, devIndex, &dm_diag_addr)) != EB_OK) return status;
@@ -533,8 +533,8 @@ eb_status_t wb_wr_stats_get_stall(eb_device_t device, int devIndex, uint32_t sta
 
   *stallObsT      = 0;
   *stallObsT      = *stallObsT + (uint64_t)data0;
-  *stallMaxStreak = (uint32_t)data1;
-  *stallN         = (uint32_t)data2;
+  *stallMax       = (uint32_t)data1;
+  *stallAct       = (uint32_t)data2;
   *stallTS        = (uint64_t)data4 << 32;
   *stallTS        = *stallTS + (uint64_t)data3;
   
@@ -580,7 +580,6 @@ eb_status_t wb_eca_stats_reset(eb_device_t device, int devIndex, int32_t lateOff
   if ((status = eb_cycle_open(device, 0, eb_block, &cycle)) != EB_OK) return status;  
   eb_cycle_write(cycle, eca_tap_addr + ECA_TAP_RESET_OWR, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)0x1);
   if ((status = eb_cycle_close(cycle)) != EB_OK) return status;
-
 
   // clear counters and set late offset
   if ((status = eb_cycle_open(device, 0, eb_block, &cycle)) != EB_OK) return status;
