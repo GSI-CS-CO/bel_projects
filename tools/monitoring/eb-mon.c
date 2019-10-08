@@ -101,7 +101,6 @@ static void help(void)
   fprintf(stderr, "Use this tool to get some info about WR enabled hardware.\n");
   fprintf(stderr, "Example1: '%s -v dev/wbm0' display typical information.\n", program);
   fprintf(stderr, "Example2: '%s -b0 -f0x43 dev/wbm0' read ID of EEPROM connected to 1st (user) 1-wire bus\n", program);
-  fprintf(stderr, "Example3: '%s -b0 -f0x43 dev/wbm0' read ID of EEPROM connected to 1st (user) 1-wire bus\n", program);
   fprintf(stderr, "\n");
   fprintf(stderr, "When using option '-s<n>', the following information is displayed\n");
   fprintf(stderr, "eb-mon:    WR [ns]   | CPU stall[%%]|                      [n(Hz)]   ECA                 [us(us)]\n");
