@@ -3,7 +3,7 @@
 //
 //  created : 2018
 //  author  : Dietrich Beck, GSI-Darmstadt
-//  version : 11-Sep-2018
+//  version : 08-Oct-2019
 //
 // Command-line interface for WR monitoring of many nodes via Etherbone.
 //
@@ -34,7 +34,7 @@
 // For all questions and ideas contact: d.beck@gsi.de
 // Last update: 27-April-2018
 //////////////////////////////////////////////////////////////////////////////////////////////
-#define EBMASSMON_VERSION "0.1.0"
+#define EBMASSMON_VERSION "0.1.1"
 
 // standard includes
 #include <unistd.h> // getopt
@@ -89,7 +89,7 @@ static void help(void) {
   fprintf(stderr, "  -g               include # of acquired WR locks\n");
   fprintf(stderr, "  -h               display this help and exit\n");
   fprintf(stderr, "  -i               include WR IP\n");
-  fprintf(stderr, "  -j               display additional info (requires option '-f1'\n");
+  fprintf(stderr, "  -j               display additional info (requires option '-f1')\n");
   fprintf(stderr, "  -l               include WR link status\n");
   fprintf(stderr, "  -m               include WR MAC\n");
   fprintf(stderr, "  -o               include offset between WR time and system time [ms]\n");
@@ -98,7 +98,7 @@ static void help(void) {
   fprintf(stderr, "  -t               display table with all nodes\n");
   fprintf(stderr, "  -u               display statistics for all nodes\n");
   fprintf(stderr, "  -w<timeout>      timeout [ms] for probing each device (default 1000); might be useful for WRS\n");
-  fprintf(stderr, "  -x<network>      network type (requires option '-f1'\n");
+  fprintf(stderr, "  -x<network>      network type (requires option '-f1')\n");
   fprintf(stderr, "                   0: all\n");
   fprintf(stderr, "                   1: production (default)\n");
   fprintf(stderr, "                   2: user\n");
@@ -796,7 +796,7 @@ int main(int argc, char** argv) {
               nodeUp[nNodes]      = 1;
               if (getWRSync)   {if ((status = wb_wr_get_sync_state(device, devIndex, &tmp)) == EB_OK)                    nodeSyncState[nNodes] = tmp;}
               if (getWRMac)    {if ((status = wb_wr_get_mac(device, devIndex, &tmp64)) == EB_OK)                         nodeMac[nNodes]       = tmp64;}
-              if (getWRLock)   {if ((status = wb_wr_get_lock_stats(device, devIndex, &tmp64, &temp64, &tmp32)) == EB_OK) nodeNLock[nNodes]     = tmp32;}
+              if (getWRLock)   {if ((status = wb_wr_stats_get_lock(device, devIndex, &tmp64, &temp64, &tmp32)) == EB_OK) nodeNLock[nNodes]     = tmp32;}
               if (getWRLink)   {if ((status = wb_wr_get_link(device, devIndex, &tmp)) == EB_OK)                          nodeLink[nNodes]      = tmp;}
               if (getWRIP)     {if ((status = wb_wr_get_ip(device, devIndex, &tmp)) == EB_OK)                            nodeIp[nNodes]        = tmp;}
               if (getWRUptime) {if ((status = wb_wr_get_uptime(device, devIndex, &tmp32)) == EB_OK)                      nodeUptime[nNodes]    = tmp32;}
