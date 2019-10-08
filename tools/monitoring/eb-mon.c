@@ -113,7 +113,7 @@ static void help(void)
   fprintf(stderr, "            '   '   '      '     '           '      '      '    '    '   '     '   '- actual average (dl - ts)\n");
   fprintf(stderr, "            '   '   '      '     '           '      '      '    '    '   '     '- average (dl - ts)\n");
   fprintf(stderr, "            '   '   '      '     '           '      '      '    '    '   '- max (dl - ts) since last 'early event'\n");
-  fprintf(stderr, "            '   '   '      '     '           '      '      '    '    '- min (deadline - timestamp) since last 'late event']\n");
+  fprintf(stderr, "            '   '   '      '     '           '      '      '    '    '- min (deadline - timestamp) since last 'late event'\n");
   fprintf(stderr, "            '   '   '      '     '           '      '      '    '- # of late messages\n");
   fprintf(stderr, "            '   '   '      '     '           '      '       - # of early messages\n");
   fprintf(stderr, "            '   '   '      '     '           '      ' - actual message rate [Hz]\n");
