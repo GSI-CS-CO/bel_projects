@@ -84,7 +84,7 @@ static void help(void)
   fprintf(stderr, "  -l               display WR link status\n");
   fprintf(stderr, "  -m               display WR MAC\n");
   fprintf(stderr, "  -o               display offset between WR time and system time [ms]\n");
-  fprintf(stderr, "  -s <secs> <cpu>  snoop for information continuously (and print warnings)\n");
+  fprintf(stderr, "  -s <secs> <cpu>  snoop for information continuously (and print warnings. THIS OPTION RESETS ALL STATS!)\n");
   fprintf(stderr, "  -t<busIndex>     display temperature of sensor on the specified 1-wire bus\n");
   fprintf(stderr, "  -u<index>        user 1-wire: specify WB device in case multiple WB devices of the same type exist (default: u0)\n");
   fprintf(stderr, "  -v               display verbose information\n");
@@ -93,10 +93,10 @@ static void help(void)
   fprintf(stderr, "  -z               display FPGA uptime [h]\n");
   fprintf(stderr, "\n");
   fprintf(stderr, "  wrstatreset  <tWrObs> <tStallObs>  command clears WR statistics and sets observation times (default: 8 50000)\n");
-  fprintf(stderr, "  ecatapreset                        command resets ECA Tap\n");
-  fprintf(stderr, "  ecatapclear <clearFlag>            command clears ECA Tap counters (b3: late count, b2: count/accu, b1: max, b0: min)\n");
-  fprintf(stderr, "  ecatapenable                       command enables capture on ECA Tap\n");
-  fprintf(stderr, "  ecatapdisable                      command enables capture on ECA Tap\n");
+  fprintf(stderr, "  ecatapreset  <lateOffset>          command resets ECA-Tap and sets offset for detection of late events (default: 0)\n");
+  fprintf(stderr, "  ecatapclear  <clearFlag>           command clears ECA-Tap counters (b3: late count, b2: count/accu, b1: max, b0: min)\n");
+  fprintf(stderr, "  ecatapenable                       command enables capture on ECA-Tap\n");
+  fprintf(stderr, "  ecatapdisable                      command disables capture on ECA-Tap\n");
   fprintf(stderr, "\n");  
   fprintf(stderr, "Use this tool to get some info about WR enabled hardware.\n");
   fprintf(stderr, "Example1: '%s -v dev/wbm0' display typical information.\n", program);
@@ -112,8 +112,8 @@ static void help(void)
   fprintf(stderr, "            '   '   '      '     '           '      '      '    '    '   '     '   '      '- latency\n");
   fprintf(stderr, "            '   '   '      '     '           '      '      '    '    '   '     '   '- actual average (dl - ts)\n");
   fprintf(stderr, "            '   '   '      '     '           '      '      '    '    '   '     '- average (dl - ts)\n");
-  fprintf(stderr, "            '   '   '      '     '           '      '      '    '    '   '- max (dl - ts)\n");
-  fprintf(stderr, "            '   '   '      '     '           '      '      '    '    '- min (deadline - timestamp) [Hz]\n");
+  fprintf(stderr, "            '   '   '      '     '           '      '      '    '    '   '- max (dl - ts) since last 'early event'\n");
+  fprintf(stderr, "            '   '   '      '     '           '      '      '    '    '- min (deadline - timestamp) since last 'late event']\n");
   fprintf(stderr, "            '   '   '      '     '           '      '      '    '- # of late messages\n");
   fprintf(stderr, "            '   '   '      '     '           '      '       - # of early messages\n");
   fprintf(stderr, "            '   '   '      '     '           '      ' - actual message rate [Hz]\n");
@@ -164,7 +164,7 @@ void printSnoopData(int snoopInterval, int snoopLockFlag, int64_t contMaxPosDT, 
   fprintf(stdout, "%3d|", (int)contMaxNegDT);
   fprintf(stdout, " %5.2f(%5.2f)|", snoopStallMax, snoopStallAct);
   if (ecaNMessage == 0) fprintf(stdout, " %9"PRIu64"(%6.1f)   %3d  %3d  %3d %3d   %3d(%3d)   %3d(%3d)", (uint64_t)0, 0.0, 0, 0, 0, 0, 0, 0, 0, 0);
-  else                  fprintf(stdout, " %9"PRIu64"(%6.1f)   %3d  %3d  %3d %3d   %3d(%3d)   %3d(%3d)", ecaNMessage, (double)nMessageAct/(double)snoopInterval, ecaLate, ecaEarly, (int)(ecaMin/1000), (int)(ecaMax/1000), average, averageAct, latency, latencyAct);
+  else                  fprintf(stdout, " %9"PRIu64"(%6.1f)   %3d  %3d  %3d %3d   %3d(%3d)   %3d(%3d)", ecaNMessage, (double)nMessageAct/(double)snoopInterval, ecaEarly, ecaLate, (int)(ecaMin/1000), (int)(ecaMax/1000), average, averageAct, latency, latencyAct);
   fprintf(stdout, "\n");
   fflush(stdout); 
 
@@ -231,8 +231,8 @@ int main(int argc, char** argv) {
   int64_t     contMaxNegDT;
   uint64_t    contMaxNegTS;
   uint64_t    stallObsT;
-  uint32_t    stallMaxStreak;
-  uint32_t    stallN;
+  uint32_t    stallMax;
+  uint32_t    stallAct;
   uint64_t    stallTS;
   short       ecaClearFlag;
   uint64_t    ecaNMessage;
@@ -241,7 +241,6 @@ int main(int argc, char** argv) {
   int64_t     ecaDtMax;
   uint32_t    ecaNLate;
   int32_t     ecaLateOffset;
-  int         ecaSumLate;
   int         ecaSumEarly;
   
   int         link;
@@ -431,7 +430,6 @@ int main(int argc, char** argv) {
     wb_eca_stats_enable(device, devIndex, 0x1);
     wb_wr_stats_reset(device, devIndex, 8, 50000); 
     nSecs           = snoopSecs;
-    ecaSumLate      = 0;
     ecaSumEarly     = 0;
     printSnoopHeader();
     while(1) {
@@ -447,27 +445,26 @@ int main(int argc, char** argv) {
       if (contMaxNegDT != 0)    fprintf(stdout, "%s: error - WR time jumps by %d [ns]\n", program, (int)contMaxNegDT);
 
       // CPU stalls
-      wb_wr_stats_get_stall(device, devIndex, ecpu, &stallObsT, &stallMaxStreak, &stallN, &stallTS);
-      snoopStallMax = (double)stallMaxStreak / (double)stallObsT * 100.0;
-      snoopStallAct = (double)stallN         / (double)stallObsT * 100.0;
+      wb_wr_stats_get_stall(device, devIndex, ecpu, &stallObsT, &stallMax, &stallAct, &stallTS);
+      snoopStallMax = (double)stallMax / (double)stallObsT * 100.0;
+      snoopStallAct = (double)stallAct         / (double)stallObsT * 100.0;
       if (snoopStallMax > 50.0) fprintf(stdout, "%s: error - max CPU stall %f\n", program, snoopStallMax);
 
       // ECA
       wb_eca_stats_get(device, devIndex, &ecaNMessage, &ecaDtSum, &ecaDtMin, &ecaDtMax, &ecaNLate, &ecaLateOffset);
-      if (ecaDtMin < 0) {  /* chk */
-        ecaSumLate++;      /* chk */
-        fprintf(stdout,                        "%s: error - late event %"PRId64" [ns]\n", program, ecaDtMin);
+      if (ecaDtMin < ecaLateOffset) {  
+        fprintf(stdout,                         "%s: error - late event %f [us]\n", program, (double)ecaDtMin/1000.0);
         wb_eca_stats_clear(device, devIndex, 0x1);
       }
-      if (ecaDtMax > 10000000) {  /* chk */
-        ecaSumEarly++;            /* chk */
-        fprintf(stdout,                        "%s: error - early event %"PRId64" [ns]\n", program, ecaDtMax);
+      if (ecaDtMax > 1000000000) {  /* chk */
+        ecaSumEarly++;              /* chk */
+        fprintf(stdout,                         "%s: error - early event %f [us]\n", program, (double)ecaDtMax/1000.0);
         wb_eca_stats_clear(device, devIndex, 0x2);
       }
       
       if (nSecs >= snoopSecs) {
         printSnoopData(snoopSecs, snoopLockFlag, contMaxPosDT, contMaxNegDT, snoopStallMax, snoopStallAct,
-                       ecaNMessage, ecaDtMin, ecaDtMax, ecaDtSum, ecaSumLate, ecaSumEarly);
+                       ecaNMessage, ecaDtMin, ecaDtMax, ecaDtSum, ecaNLate, ecaSumEarly);
         nSecs = 1;
       } // if nSecs
       else nSecs++;
@@ -675,10 +672,10 @@ int main(int argc, char** argv) {
   
   if (getCPUStall) {
     fprintf(stdout, "= lm32 stalls for CPU %d [cycles]\n", ecpu);
-    if ((status = wb_wr_stats_get_stall(device, devIndex, ecpu, &stallObsT, &stallMaxStreak, &stallN, &stallTS)) != EB_OK) die("WR get CPU stall statistics", status);
+    if ((status = wb_wr_stats_get_stall(device, devIndex, ecpu, &stallObsT, &stallMax, &stallAct, &stallTS)) != EB_OK) die("WR get CPU stall statistics", status);
     fprintf(stdout, "--- observation period: %"PRIu64"\n", stallObsT);
-    fprintf(stdout, "---- stall time max   : %u\n", stallMaxStreak);
-    fprintf(stdout, "---- stall time act   : %u\n", stallN);
+    fprintf(stdout, "---- stall time max   : %u\n", stallMax);
+    fprintf(stdout, "---- stall time act   : %u\n", stallAct);
     secs = (unsigned long)((double)stallTS / 1000000000.0);
     tm = gmtime(&secs);
     strftime(timestr, sizeof(timestr), "%Y-%m-%d %H:%M:%S %Z", tm);
