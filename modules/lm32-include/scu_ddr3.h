@@ -33,9 +33,6 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <helper_macros.h>
-#if defined(__linux__)
- #include <eb_object_transfer.h>
-#endif
 
 #ifdef __cplusplus
 extern "C" {
@@ -137,7 +134,7 @@ namespace Scu
    #define LM32_VOLATILE      volatile
 #else
    typedef uint32_t           DDR3_ADDR_T;
-   typedef eb_status_t        DDR3_RETURN_T;
+   typedef void        DDR3_RETURN_T;
    #define DDR3_INVALID       0
    #define LM32_VOLATILE
 #endif

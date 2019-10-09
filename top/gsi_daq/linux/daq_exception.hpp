@@ -25,6 +25,7 @@
 #ifndef _DAQ_EXCEPTION_HPP
 #define _DAQ_EXCEPTION_HPP
 #include <exception>
+#include <string>
 
 namespace Scu
 {

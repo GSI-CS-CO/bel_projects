@@ -253,7 +253,7 @@ uint16_t ramGetPayload16( RAM_DAQ_PAYLOAD_T* pPl, const unsigned int i )
  */
 int ramInit( register RAM_SCU_T* pThis, RAM_RING_SHARED_OBJECT_T* pSharedObj
            #ifdef __linux__
-            , EB_HANDLE_T* pEbHandle
+         //   , EB_HANDLE_T* pEbHandle
            #endif
            );
 

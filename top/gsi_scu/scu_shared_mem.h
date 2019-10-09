@@ -8,6 +8,16 @@
  *
  *  @author Ulrich Becker <u.becker@gsi.de>
  *
+ *  @todo Include this file in "saftlib/drivers/fg_regs.h" and
+ *        replace or define the constants and offset-addresses defined
+ *        in fg_regs.h by the constants and offest-addresses defined
+ *        in this file, reducing dangerous redundancy.\n
+ *        <b>That is highly recommended!</b>\n
+ *        The dependencies building "SAFTLIB" has to be also depend on this
+ *        file!\n
+ *        Find a well defined place for this file, where the front end group
+ *        AND the timing group can access.
+ *
  ******************************************************************************
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -246,6 +256,8 @@ STATIC_ASSERT( offsetof( SCU_SHARED_DATA_T, fg_buffer ) ==
 #define SCU_INVALID_VALUE -1
 #define FG_VERSION         0x03
 
+#define SCU_BUS_SLOT_MASK  0x0F
+
 #ifdef CONFIG_SCU_DAQ_INTEGRATION
   #define __DAQ_SHARAD_MEM_INITIALIZER_ITEM \
              , .sDaq = DAQ_SHARAD_MEM_INITIALIZER
@@ -314,14 +326,41 @@ static inline const char* fgCommand2String( const FG_OP_CODE_T op )
    #undef __FG_COMMAND_CASE
 }
 
+typedef enum
+{
+   SIG_REFILL      = 0,
+   SIG_START       = 1,
+   SIG_STOP_EMPTY  = 2, /*!<@brief normal stop */
+   SIG_STOP_NEMPTY = 3, /*!<@brief something went wrong */
+   SIG_ARMED       = 4,
+   SIG_DISARMED    = 5
+} SIGNAL_T;
+
+/*!
+ * @brief Helper function for debug purposes only.
+ */
+static inline const char* signal2String( const SIGNAL_T sig )
+{
+   #define __SIGNAL_CASE( sig ) case sig: return #sig
+   switch( sig )
+   {
+      __SIGNAL_CASE( SIG_REFILL );
+      __SIGNAL_CASE( SIG_START );
+      __SIGNAL_CASE( SIG_STOP_EMPTY );
+      __SIGNAL_CASE( SIG_STOP_NEMPTY );
+      __SIGNAL_CASE( SIG_ARMED );
+      __SIGNAL_CASE( SIG_DISARMED );
+   }
+   return "unknown";
+   #undef  __SIGNAL_CASE
+}
+
 #ifdef __cplusplus
 } /* namespace FG */
 
 namespace MiLdaq
 {
 #endif
-
-#define SCU_BUS_SLOT_MASK         0x0F
 
 /*! ---------------------------------------------------------------------------
  */

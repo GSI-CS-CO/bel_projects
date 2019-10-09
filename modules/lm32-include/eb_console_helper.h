@@ -59,6 +59,7 @@
 
 #define ESC_ERROR   ESC_BOLD ESC_FG_RED    /*!< @brief Format for error messages */
 #define ESC_WARNING ESC_BOLD ESC_FG_YELLOW /*!< @brief Format for warning messages */
+#define ESC_DEBUG   ESC_FG_YELLOW          /*!< @brief Format for debug messages */
 
 #ifdef __cplusplus
 extern "C" {

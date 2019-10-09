@@ -1,49 +1,55 @@
 /*!
- * @file scu_main.c
- * @brief Revision from main.c
+ *  @file scu_main.c
+ *  @brief Main module of SCU function generators in LM32.
+ *
+ *  @date 10.07.2019
+ *  @copyright (C) 2019 GSI Helmholtz Centre for Heavy Ion Research GmbH
+ *
+ *  @author Stefan Rauch perhaps...
+ *  @revision Ulrich Becker <u.becker@gsi.de>
+ *
+ ******************************************************************************
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 3 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library. If not, see <http://www.gnu.org/licenses/>.
+ ******************************************************************************
  */
+#if !defined(__lm32__) && !defined(__DOXYGEN__) && !defined(__DOCFSM__)
+  #error This module is for the target LM32 only!
+#endif
 
-#ifndef __DOCFSM__
-
+#ifndef __DOCFSM__ /* Headers will not need for FSM analysator "docfsm" */
 #include <stdint.h>
 #include <stack.h>
-
 #include "syscon.h"
-//#include "hw/memlayout.h"
 #include "eb_console_helper.h"
-//#include "mprintf.h"
-#include "display.h"
 #include "irq.h"
 #include "scu_bus.h"
-#include "aux.h"
 #include "mini_sdb.h"
 #include "board.h"
 #include "uart.h"
 #include "w1.h"
-//#include "fg.h"
-//#include "cb.h"
 #include "scu_shared_mem.h"
 #include "scu_mil.h"
-#include "dow_crc.h"
 #include "eca_queue_regs.h"
 #include "eca_flags.h"
 #include "history.h"
-
 #ifdef CONFIG_SCU_DAQ_INTEGRATION
-#include <daq_main.h>
+ #include "daq_main.h"
 #endif
-
 #endif // ifndef __DOCFSM__
 
 #define MSI_SLAVE 0
 #define MSI_WB_FG 2
-
-#define SIG_REFILL      0
-#define SIG_START       1
-#define SIG_STOP_EMPTY  2
-#define SIG_STOP_NEMPTY 3
-#define SIG_ARMED       4
-#define SIG_DISARMED    5
 
 #define QUEUE_CNT 5
 #define IRQ       0
@@ -93,7 +99,8 @@ volatile uint32_t* g_pWr_1wire_base    = NULL;
 volatile uint32_t* g_pUser_1wire_base  = NULL;
 volatile ECA_T*    g_pECAQ             = NULL; // WB address of ECA queue
 
-int g_aClear_is_active[MAX_SCU_SLAVES + 1] = {0};
+uint8_t g_aClear_is_active[MAX_SCU_SLAVES + 1] = {0}; //TODO convert this in a real bitmap!
+                                                      //And check the range!!!!!
 volatile struct message_buffer g_aMsg_buf[QUEUE_CNT] = {0};
 
 
@@ -106,10 +113,26 @@ typedef struct
 
 FG_CHANNEL_T g_aFgChannels[MAX_FG_CHANNELS] = {{0,0,0}};
 
+//#define CONFIG_DEBUG_FG_SIGNAL
+static inline void sendSignal( const SIGNAL_T sig, const unsigned int channel )
+{
+   *(volatile uint32_t*)(char*)
+   (pCpuMsiBox + g_shared.fg_regs[channel].mbx_slot * sizeof(uint16_t)) = sig;
+   hist_addx( HISTORY_XYZ_MODULE, signal2String( sig ), channel );
+#ifdef CONFIG_DEBUG_FG_SIGNAL
+   #warning CONFIG_DEBUG_FG_SIGNAL is defined this will destroy the timing!
+   mprintf( ESC_DEBUG"Signal: %s, channel: %d sent\n"ESC_NORMAL,
+            signal2String( sig ), channel );
+#endif
+}
+
+#if 0
 #define SEND_SIG(SIG) \
    *(volatile uint32_t*)(char*) \
    (pCpuMsiBox + g_shared.fg_regs[channel].mbx_slot * sizeof(uint16_t)) = SIG
-
+#else
+#define SEND_SIG(SIG) sendSignal( SIG, channel )
+#endif
 static void clear_handler_state( unsigned int );
 
 static inline uint32_t _get_macro_number( unsigned int channel )
@@ -139,7 +162,6 @@ static inline void initializeGlobalPointers( void )
    g_pWr_1wire_base = (volatile uint32_t*)find_device_adr(CERN, WR_1Wire);    // 1Wire controller in the WRC
    g_pUser_1wire_base = (volatile uint32_t*)find_device_adr(GSI, User_1Wire); // 1Wire controller on dev crossbar
 }
-
 
 static void dev_failure(const int status, const int slot, const char* msg)
 {
@@ -213,7 +235,7 @@ static void enable_scub_msis( unsigned int channel )
       return;
 
    socket = _get_socket( channel );
-   if (((socket & 0xf0) == 0) || (socket & DEV_SIO))
+   if (((socket & (DEV_MIL_EXT | DEV_SIO)) == 0) || ((socket & DEV_SIO) != 0))
    {
       //SCU Bus Master
       g_pScub_base[GLOBAL_IRQ_ENA] = 0x20;              // enable slave irqs in scu bus master
@@ -230,7 +252,7 @@ static void enable_scub_msis( unsigned int channel )
 
    g_pMil_irq_base[8]   = MIL_DRQ;
    g_pMil_irq_base[9]   = MIL_DRQ;
-   g_pMil_irq_base[10]  = (uint32_t)pMyMsi + 0x20;
+   g_pMil_irq_base[10]  = (uint32_t)pMyMsi + 0x20; //TODO Who the fuck is 0x20?!?
    g_pMil_irq_base[2]   = (1 << MIL_DRQ);
 }
 
@@ -248,7 +270,7 @@ static void disable_slave_irq( unsigned int channel )
 
    socket = _get_socket( channel );
    dev  = _get_dev( channel );
-   if ((socket & 0xf0) == 0)
+   if ((socket & (DEV_MIL_EXT | DEV_SIO)) == 0)
    {
       if (dev == 0)
         g_pScub_base[OFFS(socket) + SLAVE_INT_ENA] &= ~(0x8000);       //disable fg1 irq
@@ -332,7 +354,7 @@ static inline void send_fg_param( const  unsigned int socket,
    blk_data[4] = pset.coeff_c & 0xffff;
    blk_data[5] = (pset.coeff_c & 0xffff0000) >> 16; // data written with high word
 
-   if ((socket & 0xf0) == 0)
+   if ((socket & (DEV_MIL_EXT | DEV_SIO)) == 0)
    {
       g_pScub_base[OFFS(socket) + fg_base + FG_CNTRL]  = blk_data[0];
       g_pScub_base[OFFS(socket) + fg_base + FG_A]      = blk_data[1];
@@ -373,119 +395,6 @@ static inline void send_fg_param( const  unsigned int socket,
  *  @param fg_base base address of the function generator macro
  *  @param irq_act_reg state of the irq act register, saves a read access
  */
-#if 0
-static void handle( const unsigned int socket,
-                    const unsigned int fg_base,
-                    const uint16_t irq_act_reg,
-                    signed int* setvalue )
-{
-   uint16_t cntrl_reg = 0;
-   unsigned int channel = 0;
-
-   if( (socket & 0xf0) == 0 )
-   {
-      cntrl_reg = g_pScub_base[OFFS(socket) + fg_base + FG_CNTRL];
-      channel = getFgNumberFromRegister( cntrl_reg );
-   }
-   //else if( (socket & DEV_MIL_EXT) || (socket & DEV_SIO) )
-   else if( (socket & (DEV_MIL_EXT | DEV_SIO)) != 0 )
-   {
-      channel = getFgNumberFromRegister( irq_act_reg );
-   }
-
-   if( channel >= ARRAY_SIZE( g_shared.fg_regs ) )
-   {
-      mprintf( ESC_ERROR"%s: Channel out of range: %d\n"ESC_NORMAL, __func__, channel );
-      return;
-   }
-
-   if( (socket & 0xf0) == 0 )
-   {  /* last cnt from from fg macro, read from LO address copies hardware counter to shadow reg */
-      g_shared.fg_regs[channel].ramp_count = g_pScub_base[OFFS(socket) + fg_base + FG_RAMP_CNT_LO];
-      g_shared.fg_regs[channel].ramp_count |= g_pScub_base[OFFS(socket) + fg_base + FG_RAMP_CNT_HI] << 16;
-   }
-   //else if((socket & DEV_MIL_EXT) || (socket & DEV_SIO))
-   else if( (socket & (DEV_MIL_EXT | DEV_SIO)) != 0 )
-   {  /* count in software only */
-      g_shared.fg_regs[channel].ramp_count++;
-   }
-
-   if( (socket & 0xf0) == 0 )
-   {
-      if( !(cntrl_reg  & FG_RUNNING))
-      {       // fg stopped
-         if( cbisEmpty(&g_shared.fg_regs[0], channel))
-         {
-            SEND_SIG(SIG_STOP_EMPTY);           // normal stop
-            hist_addx(HISTORY_XYZ_MODULE, "sig_stop_empty", channel);
-         }
-         else
-         {
-            SEND_SIG(SIG_STOP_NEMPTY);          // something went wrong
-            hist_addx(HISTORY_XYZ_MODULE, "sig_stop_nempty", channel);
-         }
-         disable_slave_irq(channel);
-         g_shared.fg_regs[channel].state = STATE_STOPPED;
-      }
-   }
-   else
-   {
-      if( !(irq_act_reg  & FG_RUNNING) )
-      {     // fg stopped
-         g_shared.fg_regs[channel].ramp_count--;
-         if( cbisEmpty(&g_shared.fg_regs[0], channel) )
-         {
-            SEND_SIG(SIG_STOP_EMPTY);           // normal stop
-            hist_addx(HISTORY_XYZ_MODULE, "sig_stop_empty", channel);
-         }
-         else
-         {
-            SEND_SIG(SIG_STOP_NEMPTY);          // something went wrong
-            hist_addx(HISTORY_XYZ_MODULE, "sig_stop_nempty", channel);
-         }
-         disable_slave_irq(channel);
-         g_shared.fg_regs[channel].state = STATE_STOPPED;
-      }
-   }
-
-   if( (socket & 0xf0) == 0)
-   {
-      if ((cntrl_reg & FG_RUNNING) && !(cntrl_reg & FG_DREQ))
-      {
-         g_shared.fg_regs[channel].state = STATE_ACTIVE;
-         SEND_SIG(SIG_START); // fg has received the tag or brc message
-         hist_addx(HISTORY_XYZ_MODULE, "sig_start", channel);
-         if( cbgetCount(&g_shared.fg_regs[0], channel) == THRESHOLD )
-            SEND_SIG(SIG_REFILL);
-         send_fg_param( socket, fg_base, cntrl_reg, setvalue );
-      }
-      else if( (cntrl_reg & FG_RUNNING) && (cntrl_reg & FG_DREQ) )
-      {
-         if( cbgetCount(&g_shared.fg_regs[0], channel) == THRESHOLD )
-            SEND_SIG(SIG_REFILL);
-        send_fg_param(socket, fg_base, cntrl_reg, setvalue);
-      }
-   }
-   else
-   {
-      if ((irq_act_reg & FG_RUNNING) && (irq_act_reg & DEV_STATE_IRQ))
-      {
-         g_shared.fg_regs[channel].state = STATE_ACTIVE;
-         SEND_SIG(SIG_START); // fg has received the tag or brc message
-         hist_addx(HISTORY_XYZ_MODULE, "sig_start", channel);
-         if( cbgetCount(&g_shared.fg_regs[0], channel) == THRESHOLD )
-          SEND_SIG(SIG_REFILL);
-         send_fg_param( socket, fg_base, irq_act_reg, setvalue );
-      }
-      else if( irq_act_reg & (FG_RUNNING | DEV_DRQ) )
-      {
-         if (cbgetCount(&g_shared.fg_regs[0], channel) == THRESHOLD)
-            SEND_SIG(SIG_REFILL);
-         send_fg_param(socket, fg_base, irq_act_reg, setvalue);
-      }
-   }
-}
-#else
 static void handle( const unsigned int socket,
                     const unsigned int fg_base,
                     const uint16_t irq_act_reg,
@@ -517,17 +426,8 @@ static void handle( const unsigned int socket,
       g_shared.fg_regs[channel].ramp_count |= g_pScub_base[OFFS(socket) + fg_base + FG_RAMP_CNT_HI] << 16;
 
       if( (cntrl_reg  & FG_RUNNING) == 0 )
-      {       // fg stopped
-         if( cbisEmpty(&g_shared.fg_regs[0], channel))
-         {
-            SEND_SIG(SIG_STOP_EMPTY);           // normal stop
-            hist_addx(HISTORY_XYZ_MODULE, "sig_stop_empty", channel);
-         }
-         else
-         {
-            SEND_SIG(SIG_STOP_NEMPTY);          // something went wrong
-            hist_addx(HISTORY_XYZ_MODULE, "sig_stop_nempty", channel);
-         }
+      { // fg stopped
+         SEND_SIG( cbisEmpty(&g_shared.fg_regs[0], channel)? SIG_STOP_EMPTY : SIG_STOP_NEMPTY );
          disable_slave_irq(channel);
          g_shared.fg_regs[channel].state = STATE_STOPPED;
       }
@@ -537,7 +437,6 @@ static void handle( const unsigned int socket,
          {
             g_shared.fg_regs[channel].state = STATE_ACTIVE;
             SEND_SIG(SIG_START); // fg has received the tag or brc message
-            hist_addx(HISTORY_XYZ_MODULE, "sig_start", channel);
             if( cbgetCount(&g_shared.fg_regs[0], channel) == THRESHOLD )
                SEND_SIG(SIG_REFILL);
             send_fg_param( socket, fg_base, cntrl_reg, setvalue );
@@ -546,7 +445,7 @@ static void handle( const unsigned int socket,
          {
             if( cbgetCount(&g_shared.fg_regs[0], channel) == THRESHOLD )
                SEND_SIG(SIG_REFILL);
-           send_fg_param(socket, fg_base, cntrl_reg, setvalue);
+            send_fg_param( socket, fg_base, cntrl_reg, setvalue );
          }
       }
    }
@@ -557,16 +456,7 @@ static void handle( const unsigned int socket,
       if( (irq_act_reg  & FG_RUNNING) == 0 )
       {     // fg stopped
          g_shared.fg_regs[channel].ramp_count--;
-         if( cbisEmpty(&g_shared.fg_regs[0], channel) )
-         {
-            SEND_SIG(SIG_STOP_EMPTY);           // normal stop
-            hist_addx(HISTORY_XYZ_MODULE, "sig_stop_empty", channel);
-         }
-         else
-         {
-            SEND_SIG(SIG_STOP_NEMPTY);          // something went wrong
-            hist_addx(HISTORY_XYZ_MODULE, "sig_stop_nempty", channel);
-         }
+         SEND_SIG( cbisEmpty(&g_shared.fg_regs[0], channel)? SIG_STOP_EMPTY : SIG_STOP_NEMPTY );
          disable_slave_irq(channel);
          g_shared.fg_regs[channel].state = STATE_STOPPED;
       }
@@ -576,14 +466,13 @@ static void handle( const unsigned int socket,
          {
             g_shared.fg_regs[channel].state = STATE_ACTIVE;
             SEND_SIG(SIG_START); // fg has received the tag or brc message
-            hist_addx(HISTORY_XYZ_MODULE, "sig_start", channel);
             if( cbgetCount(&g_shared.fg_regs[0], channel) == THRESHOLD )
                SEND_SIG(SIG_REFILL);
             send_fg_param( socket, fg_base, irq_act_reg, setvalue );
          }
          else if( (irq_act_reg & DEV_DRQ) != 0 )
          {
-            if (cbgetCount(&g_shared.fg_regs[0], channel) == THRESHOLD)
+            if (cbgetCount(&g_shared.fg_regs[0], channel) == THRESHOLD )
                SEND_SIG(SIG_REFILL);
             send_fg_param(socket, fg_base, irq_act_reg, setvalue);
          }
@@ -591,7 +480,6 @@ static void handle( const unsigned int socket,
    } /* else of if (socket & (DEV_MIL_EXT | DEV_SIO)) == 0 */
 }
 
-#endif
 /** @brief as short as possible, just pop the msi queue of the cpu and
  *         push it to the message queue of the main loop
  */
@@ -655,9 +543,9 @@ static int configure_fg_macro( const unsigned int channel )
       {
          if( g_aClear_is_active[MAX_SCU_SLAVES] == 0 )
          {
-           clear_handler_state(socket);
-           hist_addx(HISTORY_XYZ_MODULE, "clear_handler_state", socket);
-           g_aClear_is_active[MAX_SCU_SLAVES] = 1;
+            clear_handler_state(socket);
+            hist_addx(HISTORY_XYZ_MODULE, "clear_handler_state", socket);
+            g_aClear_is_active[MAX_SCU_SLAVES] = 1;
          }
          // yield
          return -1;
@@ -1005,7 +893,7 @@ static void clear_handler_state( unsigned int socket )
 }
 
 
-/*************************************************************
+/*!************************************************************
 * @brief
 * demonstrate how to poll actions ("events") from ECA
 * HERE: get WB address of relevant ECA queue
@@ -1383,7 +1271,7 @@ static void printTimeoutMessage( register TaskType* pThis, const bool isScuBus )
 
 static void dev_sio_bus_handler( register TaskType* pThis, const bool isScuBus )
 {
-   int i;
+   unsigned int i;
    unsigned int socket, dev;
    int status = OKAY;
    short data_aquisition;
@@ -1681,79 +1569,79 @@ static inline void printCpuId( void )
    mprintf("number MSI endpoints: %d\n", cpu_info_base[1]);
 }
 
+/*!
+ * @brief tell saftlib the mailbox slot for sw irqs
+ */
+static inline void tellMailboxSlot( void )
+{
+   int slot = getMsiBoxSlot(0x10); //TODO Where does 0x10 come from?
+   if( slot == -1 )
+      mprintf(ESC_ERROR"No free slots in MsgBox left!\n"ESC_NORMAL);
+   else
+      mprintf("Configured slot %d in MsgBox\n", slot );
+   g_shared.fg_mb_slot = slot;
+}
+
 /**
  * @brief after the init phase at startup, the scheduler loop runs forever
  */
 int main( void )
 {
-  int mb_slot;
+   initializeGlobalPointers();
+   mprintf("Compiler: "COMPILER_VERSION_STRING"\n"
+           "Found MsgBox at 0x%08x. MSI Path is 0x%08x\n",
+           (uint32_t)pCpuMsiBox, (uint32_t)pMyMsi);
 
- // unsigned int* cpu_info_base;
- // sdb_location found_sdb[20];
- // uint32_t clu_cb_idx = 0;
-//  cpu_info_base = (unsigned int*)find_device_adr(GSI, CPU_INFO_ROM);
-  initializeGlobalPointers();
- // find_device_multi(&found_sdb[0], &clu_cb_idx, ARRAY_SIZE(found_sdb), GSI, LM32_CB_CLUSTER); // find location of cluster crossbar
+   tellMailboxSlot();
+   init_irq_table();
 
-  mprintf("Compiler: "COMPILER_VERSION_STRING"\n"
-          "Found MsgBox at 0x%08x. MSI Path is 0x%08x\n", (uint32_t)pCpuMsiBox, (uint32_t)pMyMsi);
+   msDelayBig(1500); //wait for wr deamon to read sdbfs
 
-  mb_slot = getMsiBoxSlot(0x10);
-  if (mb_slot == -1)
-    mprintf(ESC_ERROR"No free slots in MsgBox left!\n"ESC_NORMAL);
-  else
-    mprintf("Configured slot %d in MsgBox\n", mb_slot);
-  g_shared.fg_mb_slot = mb_slot; //tell saftlib the mailbox slot for sw irqs
+   if( (int)BASE_SYSCON == ERROR_NOT_FOUND )
+      mprintf(ESC_ERROR"no SYS_CON found!\n"ESC_NORMAL);
+   else
+      mprintf("SYS_CON found on adr: 0x%x\n", BASE_SYSCON);
 
-  init_irq_table();
+   timer_init(1); //needed by usleep_init()
+   usleep_init();
 
-  msDelayBig(1500); //wait for wr deamon to read sdbfs
+   printCpuId();
+   mprintf("g_pWr_1wire_base is:   0x%08x\n", g_pWr_1wire_base);
+   mprintf("g_pUser_1wire_base is: 0x%08x\n", g_pUser_1wire_base);
+   mprintf("g_pScub_irq_base is:   0x%08x\n", g_pScub_irq_base);
+   mprintf("g_pMil_irq_base is:    0x%08x\n", g_pMil_irq_base);
+   findECAQ();
 
-  if ((int)BASE_SYSCON == ERROR_NOT_FOUND)
-    mprintf(ESC_ERROR"no SYS_CON found!\n"ESC_NORMAL);
-  else
-    mprintf("SYS_CON found on adr: 0x%x\n", BASE_SYSCON);
-
-  timer_init(1); //needed by usleep_init() 
-  usleep_init();
-
-  printCpuId();
-  mprintf("g_pWr_1wire_base is: 0x%x\n", g_pWr_1wire_base);
-  mprintf("g_pUser_1wire_base is: 0x%x\n", g_pUser_1wire_base);
-  mprintf("g_pScub_irq_base is: 0x%x\n", g_pScub_irq_base);
-  mprintf("g_pMil_irq_base is: 0x%x\n", g_pMil_irq_base);
-  findECAQ();
-
-  init(); // init and scan for fgs
+   init(); // init and scan for fgs
 
 #ifdef CONFIG_SCU_DAQ_INTEGRATION
-  scuDaqInitialize( &g_scuDaqAdmin ); // Init and scan for DAQs
-  mprintf( "SCU-DAQ initialized\n" );
+   scuDaqInitialize( &g_scuDaqAdmin ); // Init and scan for DAQs
+   mprintf( "SCU-DAQ initialized\n" );
 #endif
 
-  while( true )
-  {
-    check_stack();
-    uint64_t tick = getSysTime(); /* FIXME get the current system tick */
+   while( true )
+   {
+      check_stack();
+      uint64_t tick = getSysTime(); /* FIXME get the current system tick */
 
-    // loop through all task: if interval is 0, run every time, otherwise obey interval
-    for( unsigned int i = 0; i < ARRAY_SIZE( g_aTasks ); i++ )
-    {
-      // call the dispatch task before every other task
-      dispatch();
-      TaskType* pCurrent = &g_aTasks[i];
-      if( (tick - pCurrent->lasttick) < pCurrent->interval )
+      // loop through all task: if interval is 0, run every time, otherwise obey interval
+      for( unsigned int i = 0; i < ARRAY_SIZE( g_aTasks ); i++ )
       {
-         continue;
+         // call the dispatch task before every other task
+         dispatch();
+         TaskType* pCurrent = &g_aTasks[i];
+         if( (tick - pCurrent->lasttick) < pCurrent->interval )
+         {
+            continue;
+         }
+         pCurrent->func( pCurrent );
+         pCurrent->lasttick = tick;
       }
-      pCurrent->func( pCurrent );
-      pCurrent->lasttick = tick;
-    }
-  #ifdef CONFIG_SCU_DAQ_INTEGRATION
-    forEachScuDaqDevice();
-  #endif
-  }
-  return 0;
+    #ifdef CONFIG_SCU_DAQ_INTEGRATION
+      forEachScuDaqDevice();
+    #endif
+   }
+   return 0;
 }
 
 /*================================== EOF ====================================*/
