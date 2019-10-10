@@ -1,18 +1,16 @@
 
 module arria10_scu4_lvds_tx (
-	tx_in,
-	tx_out,
-	tx_coreclock,
-	pll_areset,
+	ext_coreclock,
 	ext_fclk,
 	ext_loaden,
-	ext_coreclock);	
+	tx_coreclock,
+	tx_in,
+	tx_out);	
 
-	input	[7:0]	tx_in;
-	output	[0:0]	tx_out;
-	output		tx_coreclock;
-	input		pll_areset;
+	input		ext_coreclock;
 	input		ext_fclk;
 	input		ext_loaden;
-	input		ext_coreclock;
+	output		tx_coreclock;
+	input	[7:0]	tx_in;
+	output	[0:0]	tx_out;
 endmodule

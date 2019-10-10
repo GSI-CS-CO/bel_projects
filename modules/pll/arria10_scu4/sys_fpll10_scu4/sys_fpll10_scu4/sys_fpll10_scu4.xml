@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <deploy
- date="2019.02.13.14:11:23"
- outputDirectory="/home/alex/workspace/projects/r13/bel_projects/modules/pll/arria10_scu4/sys_fpll10_scu4/sys_fpll10_scu4/">
+ date="2019.10.08.15:48:53"
+ outputDirectory="/home/alex/workspace/tsl021/bel_projects/modules/pll/arria10_scu4/sys_fpll10_scu4/sys_fpll10_scu4/">
  <perimeter>
   <parameter
      name="AUTO_GENERATION_ID"
@@ -108,7 +108,7 @@
  <entity kind="sys_fpll10_scu4" version="1.0" name="sys_fpll10_scu4">
   <parameter name="AUTO_PLL_REFCLK0_RESET_DOMAIN" value="-1" />
   <parameter name="AUTO_PLL_REFCLK0_CLOCK_DOMAIN" value="-1" />
-  <parameter name="AUTO_GENERATION_ID" value="1550063483" />
+  <parameter name="AUTO_GENERATION_ID" value="1570542532" />
   <parameter name="AUTO_DEVICE" value="10AX027E3F29E2SG" />
   <parameter name="AUTO_DEVICE_FAMILY" value="Arria 10" />
   <parameter name="AUTO_UNIQUE_ID" value="" />
@@ -116,27 +116,27 @@
   <parameter name="AUTO_DEVICE_SPEEDGRADE" value="2" />
   <generatedFiles>
    <file
-       path="/home/alex/workspace/projects/r13/bel_projects/modules/pll/arria10_scu4/sys_fpll10_scu4/sys_fpll10_scu4/synth/sys_fpll10_scu4.v"
+       path="/home/alex/workspace/tsl021/bel_projects/modules/pll/arria10_scu4/sys_fpll10_scu4/sys_fpll10_scu4/synth/sys_fpll10_scu4.v"
        attributes="CONTAINS_INLINE_CONFIGURATION" />
    <file
-       path="/home/alex/workspace/projects/r13/bel_projects/modules/pll/arria10_scu4/sys_fpll10_scu4/sys_fpll10_scu4/synth/sys_fpll10_scu4_cfg.v"
+       path="/home/alex/workspace/tsl021/bel_projects/modules/pll/arria10_scu4/sys_fpll10_scu4/sys_fpll10_scu4/synth/sys_fpll10_scu4_cfg.v"
        attributes="CONTAINS_INLINE_CONFIGURATION" />
   </generatedFiles>
   <childGeneratedFiles>
    <file
-       path="/home/alex/workspace/projects/r13/bel_projects/modules/pll/arria10_scu4/sys_fpll10_scu4/sys_fpll10_scu4/synth/sys_fpll10_scu4.v"
+       path="/home/alex/workspace/tsl021/bel_projects/modules/pll/arria10_scu4/sys_fpll10_scu4/sys_fpll10_scu4/synth/sys_fpll10_scu4.v"
        attributes="CONTAINS_INLINE_CONFIGURATION" />
    <file
-       path="/home/alex/workspace/projects/r13/bel_projects/modules/pll/arria10_scu4/sys_fpll10_scu4/sys_fpll10_scu4/synth/sys_fpll10_scu4_cfg.v"
+       path="/home/alex/workspace/tsl021/bel_projects/modules/pll/arria10_scu4/sys_fpll10_scu4/sys_fpll10_scu4/synth/sys_fpll10_scu4_cfg.v"
        attributes="CONTAINS_INLINE_CONFIGURATION" />
   </childGeneratedFiles>
   <sourceFiles>
    <file
-       path="/home/alex/workspace/projects/r13/bel_projects/modules/pll/arria10_scu4/sys_fpll10_scu4/sys_fpll10_scu4.qsys" />
+       path="/home/alex/workspace/tsl021/bel_projects/modules/pll/arria10_scu4/sys_fpll10_scu4/sys_fpll10_scu4.qsys" />
   </sourceFiles>
   <childSourceFiles>
    <file
-       path="/home/alex/workspace/optional/quartus18/ip/altera/alt_xcvr/altera_xcvr_pll/altera_xcvr_fpll_vi/tcl/altera_xcvr_fpll_a10_hw.tcl" />
+       path="/opt/quartus/18/ip/altera/alt_xcvr/altera_xcvr_pll/altera_xcvr_fpll_vi/tcl/altera_xcvr_fpll_a10_hw.tcl" />
   </childSourceFiles>
   <messages>
    <message level="Info" culprit="sys_fpll10_scu4">"Generating: sys_fpll10_scu4"</message>
@@ -850,59 +850,59 @@
   <parameter name="hssi_cascade_c_counter_coarse_dly" value="0 ps" />
   <generatedFiles>
    <file
-       path="/home/alex/workspace/projects/r13/bel_projects/modules/pll/arria10_scu4/sys_fpll10_scu4/sys_fpll10_scu4/altera_xcvr_fpll_a10_181/synth/twentynm_xcvr_avmm.sv"
+       path="/home/alex/workspace/tsl021/bel_projects/modules/pll/arria10_scu4/sys_fpll10_scu4/sys_fpll10_scu4/altera_xcvr_fpll_a10_181/synth/twentynm_xcvr_avmm.sv"
        attributes="" />
    <file
-       path="/home/alex/workspace/projects/r13/bel_projects/modules/pll/arria10_scu4/sys_fpll10_scu4/sys_fpll10_scu4/altera_xcvr_fpll_a10_181/synth/alt_xcvr_resync.sv"
+       path="/home/alex/workspace/tsl021/bel_projects/modules/pll/arria10_scu4/sys_fpll10_scu4/sys_fpll10_scu4/altera_xcvr_fpll_a10_181/synth/alt_xcvr_resync.sv"
        attributes="" />
    <file
-       path="/home/alex/workspace/projects/r13/bel_projects/modules/pll/arria10_scu4/sys_fpll10_scu4/sys_fpll10_scu4/altera_xcvr_fpll_a10_181/synth/altera_xcvr_fpll_a10.sv"
+       path="/home/alex/workspace/tsl021/bel_projects/modules/pll/arria10_scu4/sys_fpll10_scu4/sys_fpll10_scu4/altera_xcvr_fpll_a10_181/synth/altera_xcvr_fpll_a10.sv"
        attributes="" />
    <file
-       path="/home/alex/workspace/projects/r13/bel_projects/modules/pll/arria10_scu4/sys_fpll10_scu4/sys_fpll10_scu4/altera_xcvr_fpll_a10_181/synth/a10_avmm_h.sv"
+       path="/home/alex/workspace/tsl021/bel_projects/modules/pll/arria10_scu4/sys_fpll10_scu4/sys_fpll10_scu4/altera_xcvr_fpll_a10_181/synth/a10_avmm_h.sv"
        attributes="" />
    <file
-       path="/home/alex/workspace/projects/r13/bel_projects/modules/pll/arria10_scu4/sys_fpll10_scu4/sys_fpll10_scu4/altera_xcvr_fpll_a10_181/synth/alt_xcvr_native_avmm_nf.sv"
+       path="/home/alex/workspace/tsl021/bel_projects/modules/pll/arria10_scu4/sys_fpll10_scu4/sys_fpll10_scu4/altera_xcvr_fpll_a10_181/synth/alt_xcvr_native_avmm_nf.sv"
        attributes="" />
    <file
-       path="/home/alex/workspace/projects/r13/bel_projects/modules/pll/arria10_scu4/sys_fpll10_scu4/sys_fpll10_scu4/altera_xcvr_fpll_a10_181/synth/alt_xcvr_pll_embedded_debug.sv"
+       path="/home/alex/workspace/tsl021/bel_projects/modules/pll/arria10_scu4/sys_fpll10_scu4/sys_fpll10_scu4/altera_xcvr_fpll_a10_181/synth/alt_xcvr_pll_embedded_debug.sv"
        attributes="" />
    <file
-       path="/home/alex/workspace/projects/r13/bel_projects/modules/pll/arria10_scu4/sys_fpll10_scu4/sys_fpll10_scu4/altera_xcvr_fpll_a10_181/synth/alt_xcvr_pll_avmm_csr.sv"
+       path="/home/alex/workspace/tsl021/bel_projects/modules/pll/arria10_scu4/sys_fpll10_scu4/sys_fpll10_scu4/altera_xcvr_fpll_a10_181/synth/alt_xcvr_pll_avmm_csr.sv"
        attributes="" />
    <file
-       path="/home/alex/workspace/projects/r13/bel_projects/modules/pll/arria10_scu4/sys_fpll10_scu4/sys_fpll10_scu4/altera_xcvr_fpll_a10_181/synth/plain_files.txt"
+       path="/home/alex/workspace/tsl021/bel_projects/modules/pll/arria10_scu4/sys_fpll10_scu4/sys_fpll10_scu4/altera_xcvr_fpll_a10_181/synth/plain_files.txt"
        attributes="" />
   </generatedFiles>
   <childGeneratedFiles>
    <file
-       path="/home/alex/workspace/projects/r13/bel_projects/modules/pll/arria10_scu4/sys_fpll10_scu4/sys_fpll10_scu4/altera_xcvr_fpll_a10_181/synth/twentynm_xcvr_avmm.sv"
+       path="/home/alex/workspace/tsl021/bel_projects/modules/pll/arria10_scu4/sys_fpll10_scu4/sys_fpll10_scu4/altera_xcvr_fpll_a10_181/synth/twentynm_xcvr_avmm.sv"
        attributes="" />
    <file
-       path="/home/alex/workspace/projects/r13/bel_projects/modules/pll/arria10_scu4/sys_fpll10_scu4/sys_fpll10_scu4/altera_xcvr_fpll_a10_181/synth/alt_xcvr_resync.sv"
+       path="/home/alex/workspace/tsl021/bel_projects/modules/pll/arria10_scu4/sys_fpll10_scu4/sys_fpll10_scu4/altera_xcvr_fpll_a10_181/synth/alt_xcvr_resync.sv"
        attributes="" />
    <file
-       path="/home/alex/workspace/projects/r13/bel_projects/modules/pll/arria10_scu4/sys_fpll10_scu4/sys_fpll10_scu4/altera_xcvr_fpll_a10_181/synth/altera_xcvr_fpll_a10.sv"
+       path="/home/alex/workspace/tsl021/bel_projects/modules/pll/arria10_scu4/sys_fpll10_scu4/sys_fpll10_scu4/altera_xcvr_fpll_a10_181/synth/altera_xcvr_fpll_a10.sv"
        attributes="" />
    <file
-       path="/home/alex/workspace/projects/r13/bel_projects/modules/pll/arria10_scu4/sys_fpll10_scu4/sys_fpll10_scu4/altera_xcvr_fpll_a10_181/synth/a10_avmm_h.sv"
+       path="/home/alex/workspace/tsl021/bel_projects/modules/pll/arria10_scu4/sys_fpll10_scu4/sys_fpll10_scu4/altera_xcvr_fpll_a10_181/synth/a10_avmm_h.sv"
        attributes="" />
    <file
-       path="/home/alex/workspace/projects/r13/bel_projects/modules/pll/arria10_scu4/sys_fpll10_scu4/sys_fpll10_scu4/altera_xcvr_fpll_a10_181/synth/alt_xcvr_native_avmm_nf.sv"
+       path="/home/alex/workspace/tsl021/bel_projects/modules/pll/arria10_scu4/sys_fpll10_scu4/sys_fpll10_scu4/altera_xcvr_fpll_a10_181/synth/alt_xcvr_native_avmm_nf.sv"
        attributes="" />
    <file
-       path="/home/alex/workspace/projects/r13/bel_projects/modules/pll/arria10_scu4/sys_fpll10_scu4/sys_fpll10_scu4/altera_xcvr_fpll_a10_181/synth/alt_xcvr_pll_embedded_debug.sv"
+       path="/home/alex/workspace/tsl021/bel_projects/modules/pll/arria10_scu4/sys_fpll10_scu4/sys_fpll10_scu4/altera_xcvr_fpll_a10_181/synth/alt_xcvr_pll_embedded_debug.sv"
        attributes="" />
    <file
-       path="/home/alex/workspace/projects/r13/bel_projects/modules/pll/arria10_scu4/sys_fpll10_scu4/sys_fpll10_scu4/altera_xcvr_fpll_a10_181/synth/alt_xcvr_pll_avmm_csr.sv"
+       path="/home/alex/workspace/tsl021/bel_projects/modules/pll/arria10_scu4/sys_fpll10_scu4/sys_fpll10_scu4/altera_xcvr_fpll_a10_181/synth/alt_xcvr_pll_avmm_csr.sv"
        attributes="" />
    <file
-       path="/home/alex/workspace/projects/r13/bel_projects/modules/pll/arria10_scu4/sys_fpll10_scu4/sys_fpll10_scu4/altera_xcvr_fpll_a10_181/synth/plain_files.txt"
+       path="/home/alex/workspace/tsl021/bel_projects/modules/pll/arria10_scu4/sys_fpll10_scu4/sys_fpll10_scu4/altera_xcvr_fpll_a10_181/synth/plain_files.txt"
        attributes="" />
   </childGeneratedFiles>
   <sourceFiles>
    <file
-       path="/home/alex/workspace/optional/quartus18/ip/altera/alt_xcvr/altera_xcvr_pll/altera_xcvr_fpll_vi/tcl/altera_xcvr_fpll_a10_hw.tcl" />
+       path="/opt/quartus/18/ip/altera/alt_xcvr/altera_xcvr_pll/altera_xcvr_fpll_vi/tcl/altera_xcvr_fpll_a10_hw.tcl" />
   </sourceFiles>
   <childSourceFiles/>
   <instantiator instantiator="sys_fpll10_scu4" as="xcvr_fpll_a10_0" />

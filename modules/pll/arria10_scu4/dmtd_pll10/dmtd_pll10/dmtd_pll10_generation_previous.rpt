@@ -1,5 +1,5 @@
 Info: Starting: Create HDL design files for synthesis
-Info: qsys-generate /home/alex/workspace/projects/r13/bel_projects/modules/pll/arria10_scu4/dmtd_pll10/dmtd_pll10.qsys --synthesis=VERILOG --output-directory=/home/alex/workspace/projects/r13/bel_projects/modules/pll/arria10_scu4/dmtd_pll10/dmtd_pll10 --family="Arria 10" --part=10AX027E3F29E2SG
+Info: qsys-generate /home/alex/workspace/tsl021/bel_projects/modules/pll/arria10_scu4/dmtd_pll10/dmtd_pll10.qsys --synthesis=VERILOG --output-directory=/home/alex/workspace/tsl021/bel_projects/modules/pll/arria10_scu4/dmtd_pll10/dmtd_pll10 --family="Arria 10" --part=10AX027E3F29E2SG
 Progress: Loading dmtd_pll10/dmtd_pll10.qsys
 Progress: Reading input file
 Progress: Adding iopll_0 [altera_iopll 18.1]
@@ -15,7 +15,7 @@ Info: dmtd_pll10: Running transform generation_view_transform took 0.000s
 Info: iopll_0: Running transform generation_view_transform
 Info: iopll_0: Running transform generation_view_transform took 0.000s
 Info: dmtd_pll10: Running transform merlin_avalon_transform
-Info: dmtd_pll10: Running transform merlin_avalon_transform took 0.062s
+Info: dmtd_pll10: Running transform merlin_avalon_transform took 0.130s
 Info: dmtd_pll10: "Naming system components in system: dmtd_pll10"
 Info: dmtd_pll10: "Processing generation queue"
 Info: dmtd_pll10: "Generating: dmtd_pll10"

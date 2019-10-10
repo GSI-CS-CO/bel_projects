@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <deploy
- date="2019.08.12.14:03:49"
- outputDirectory="/home/bel/ahahn/lnx/workspace/a10_development_wrpc_4_2/bel_projects/modules/lvds/arria10_scu4/arria10_scu4_lvds_tx/">
+ date="2019.08.15.11:37:01"
+ outputDirectory="/home/alex/workspace/tsl021/bel_projects/modules/lvds/arria10_scu4/arria10_scu4_lvds_tx/">
  <perimeter>
   <parameter
      name="AUTO_GENERATION_ID"
@@ -48,11 +48,6 @@
    <property name="associatedReset" value="" />
    <port name="ext_loaden" direction="input" role="export" width="1" />
   </interface>
-  <interface name="pll_areset" kind="conduit" start="0">
-   <property name="associatedClock" value="" />
-   <property name="associatedReset" value="" />
-   <port name="pll_areset" direction="input" role="export" width="1" />
-  </interface>
   <interface name="tx_coreclock" kind="conduit" start="0">
    <property name="associatedClock" value="" />
    <property name="associatedReset" value="" />
@@ -70,30 +65,30 @@
   </interface>
  </perimeter>
  <entity kind="arria10_scu4_lvds_tx" version="1.0" name="arria10_scu4_lvds_tx">
-  <parameter name="AUTO_GENERATION_ID" value="1565611429" />
+  <parameter name="AUTO_GENERATION_ID" value="1565861820" />
   <parameter name="AUTO_DEVICE" value="10AX027E3F29E2SG" />
   <parameter name="AUTO_DEVICE_FAMILY" value="Arria 10" />
   <parameter name="AUTO_UNIQUE_ID" value="" />
   <parameter name="AUTO_DEVICE_SPEEDGRADE" value="2" />
   <generatedFiles>
    <file
-       path="/home/bel/ahahn/lnx/workspace/a10_development_wrpc_4_2/bel_projects/modules/lvds/arria10_scu4/arria10_scu4_lvds_tx/altera_lvds_181/synth/arria10_scu4_lvds_tx_pkg.vhd"
+       path="/home/alex/workspace/tsl021/bel_projects/modules/lvds/arria10_scu4/arria10_scu4_lvds_tx/altera_lvds_181/synth/arria10_scu4_lvds_tx_pkg.vhd"
        attributes="IS_CONFIGURATION_PACKAGE" />
    <file
-       path="/home/bel/ahahn/lnx/workspace/a10_development_wrpc_4_2/bel_projects/modules/lvds/arria10_scu4/arria10_scu4_lvds_tx/synth/arria10_scu4_lvds_tx.vhd"
+       path="/home/alex/workspace/tsl021/bel_projects/modules/lvds/arria10_scu4/arria10_scu4_lvds_tx/synth/arria10_scu4_lvds_tx.vhd"
        attributes="CONTAINS_INLINE_CONFIGURATION" />
   </generatedFiles>
   <childGeneratedFiles>
    <file
-       path="/home/bel/ahahn/lnx/workspace/a10_development_wrpc_4_2/bel_projects/modules/lvds/arria10_scu4/arria10_scu4_lvds_tx/altera_lvds_181/synth/arria10_scu4_lvds_tx_pkg.vhd"
+       path="/home/alex/workspace/tsl021/bel_projects/modules/lvds/arria10_scu4/arria10_scu4_lvds_tx/altera_lvds_181/synth/arria10_scu4_lvds_tx_pkg.vhd"
        attributes="IS_CONFIGURATION_PACKAGE" />
    <file
-       path="/home/bel/ahahn/lnx/workspace/a10_development_wrpc_4_2/bel_projects/modules/lvds/arria10_scu4/arria10_scu4_lvds_tx/synth/arria10_scu4_lvds_tx.vhd"
+       path="/home/alex/workspace/tsl021/bel_projects/modules/lvds/arria10_scu4/arria10_scu4_lvds_tx/synth/arria10_scu4_lvds_tx.vhd"
        attributes="CONTAINS_INLINE_CONFIGURATION" />
   </childGeneratedFiles>
   <sourceFiles>
    <file
-       path="/home/bel/ahahn/lnx/workspace/a10_development_wrpc_4_2/bel_projects/modules/lvds/arria10_scu4/arria10_scu4_lvds_tx.qsys" />
+       path="/home/alex/workspace/tsl021/bel_projects/modules/lvds/arria10_scu4/arria10_scu4_lvds_tx.qsys" />
   </sourceFiles>
   <childSourceFiles>
    <file path="/opt/quartus/18/ip/altera/altera_lvds/top/altera_lvds_hw.tcl" />
@@ -222,14 +217,14 @@
   </childSourceFiles>
   <messages>
    <message level="Info" culprit="arria10_scu4_lvds_tx">"Generating: arria10_scu4_lvds_tx"</message>
-   <message level="Info" culprit="arria10_scu4_lvds_tx">"Generating: arria10_scu4_lvds_tx_altera_lvds_181_xol3abq"</message>
-   <message level="Info" culprit="arria10_scu4_lvds_tx">"Generating: arria10_scu4_lvds_tx_altera_lvds_core20_181_3cwo2jq"</message>
+   <message level="Info" culprit="arria10_scu4_lvds_tx">"Generating: arria10_scu4_lvds_tx_altera_lvds_181_q6uosdy"</message>
+   <message level="Info" culprit="arria10_scu4_lvds_tx">"Generating: arria10_scu4_lvds_tx_altera_lvds_core20_181_wmje4mi"</message>
   </messages>
  </entity>
  <entity
    kind="altera_lvds"
    version="18.1"
-   name="arria10_scu4_lvds_tx_altera_lvds_181_xol3abq">
+   name="arria10_scu4_lvds_tx_altera_lvds_181_q6uosdy">
   <parameter name="TX_OUTCLOCK_DIVISION" value="2" />
   <parameter name="gui_actual_outclk_frequency_0" value="1000.000000" />
   <parameter name="pll_loaden_frequency" value="125.000000 MHz" />
@@ -392,25 +387,25 @@
   <parameter name="gui_outclk_phase_shift_unit_4" value="0" />
   <parameter name="gui_outclk_phase_shift_unit_3" value="0" />
   <parameter name="RX_DPA_LOSE_LOCK_ON_ONE_CHANGE" value="false" />
-  <parameter name="PLL_USE_RESET" value="true" />
+  <parameter name="PLL_USE_RESET" value="false" />
   <parameter name="gui_outclk_phase_shift_unit_6" value="0" />
   <parameter name="gui_outclk_phase_shift_unit_5" value="0" />
   <parameter name="pll_dprio_clk_frequency" value="10.0 MHz" />
   <parameter name="RX_INCLOCK_PHASE_SHIFT_ACTUAL" value="0" />
   <generatedFiles>
    <file
-       path="/home/bel/ahahn/lnx/workspace/a10_development_wrpc_4_2/bel_projects/modules/lvds/arria10_scu4/arria10_scu4_lvds_tx/altera_lvds_181/synth/arria10_scu4_lvds_tx_altera_lvds_181_xol3abq.v"
+       path="/home/alex/workspace/tsl021/bel_projects/modules/lvds/arria10_scu4/arria10_scu4_lvds_tx/altera_lvds_181/synth/arria10_scu4_lvds_tx_altera_lvds_181_q6uosdy.v"
        attributes="CONTAINS_INLINE_CONFIGURATION" />
    <file
-       path="/home/bel/ahahn/lnx/workspace/a10_development_wrpc_4_2/bel_projects/modules/lvds/arria10_scu4/arria10_scu4_lvds_tx/altera_lvds_181/synth/arria10_scu4_lvds_tx_altera_lvds_181_xol3abq_cfg.v"
+       path="/home/alex/workspace/tsl021/bel_projects/modules/lvds/arria10_scu4/arria10_scu4_lvds_tx/altera_lvds_181/synth/arria10_scu4_lvds_tx_altera_lvds_181_q6uosdy_cfg.v"
        attributes="CONTAINS_INLINE_CONFIGURATION" />
   </generatedFiles>
   <childGeneratedFiles>
    <file
-       path="/home/bel/ahahn/lnx/workspace/a10_development_wrpc_4_2/bel_projects/modules/lvds/arria10_scu4/arria10_scu4_lvds_tx/altera_lvds_181/synth/arria10_scu4_lvds_tx_altera_lvds_181_xol3abq.v"
+       path="/home/alex/workspace/tsl021/bel_projects/modules/lvds/arria10_scu4/arria10_scu4_lvds_tx/altera_lvds_181/synth/arria10_scu4_lvds_tx_altera_lvds_181_q6uosdy.v"
        attributes="CONTAINS_INLINE_CONFIGURATION" />
    <file
-       path="/home/bel/ahahn/lnx/workspace/a10_development_wrpc_4_2/bel_projects/modules/lvds/arria10_scu4/arria10_scu4_lvds_tx/altera_lvds_181/synth/arria10_scu4_lvds_tx_altera_lvds_181_xol3abq_cfg.v"
+       path="/home/alex/workspace/tsl021/bel_projects/modules/lvds/arria10_scu4/arria10_scu4_lvds_tx/altera_lvds_181/synth/arria10_scu4_lvds_tx_altera_lvds_181_q6uosdy_cfg.v"
        attributes="CONTAINS_INLINE_CONFIGURATION" />
   </childGeneratedFiles>
   <sourceFiles>
@@ -542,14 +537,14 @@
   </childSourceFiles>
   <instantiator instantiator="arria10_scu4_lvds_tx" as="lvds_0" />
   <messages>
-   <message level="Info" culprit="arria10_scu4_lvds_tx">"Generating: arria10_scu4_lvds_tx_altera_lvds_181_xol3abq"</message>
-   <message level="Info" culprit="arria10_scu4_lvds_tx">"Generating: arria10_scu4_lvds_tx_altera_lvds_core20_181_3cwo2jq"</message>
+   <message level="Info" culprit="arria10_scu4_lvds_tx">"Generating: arria10_scu4_lvds_tx_altera_lvds_181_q6uosdy"</message>
+   <message level="Info" culprit="arria10_scu4_lvds_tx">"Generating: arria10_scu4_lvds_tx_altera_lvds_core20_181_wmje4mi"</message>
   </messages>
  </entity>
  <entity
    kind="altera_lvds_core20"
    version="18.1"
-   name="arria10_scu4_lvds_tx_altera_lvds_core20_181_3cwo2jq">
+   name="arria10_scu4_lvds_tx_altera_lvds_core20_181_wmje4mi">
   <parameter name="pll_loaden_frequency" value="125.000000 MHz" />
   <parameter name="pll_tx_outclock_loaden_frequency" value="0 ps" />
   <parameter name="pll_output_phase_shift_2" value="0 ps" />
@@ -665,7 +660,7 @@
   <parameter name="c_cnt_ph_mux_prst4" value="0" />
   <parameter name="c_cnt_ph_mux_prst3" value="0" />
   <parameter name="RX_DPA_LOSE_LOCK_ON_ONE_CHANGE" value="false" />
-  <parameter name="PLL_USE_RESET" value="true" />
+  <parameter name="PLL_USE_RESET" value="false" />
   <parameter name="c_cnt_ph_mux_prst6" value="0" />
   <parameter name="c_cnt_ph_mux_prst5" value="0" />
   <parameter name="RX_INCLOCK_PHASE_SHIFT_ACTUAL" value="0" />
@@ -839,36 +834,36 @@
   <parameter name="c_cnt_bypass_en5" value="true" />
   <generatedFiles>
    <file
-       path="/home/bel/ahahn/lnx/workspace/a10_development_wrpc_4_2/bel_projects/modules/lvds/arria10_scu4/arria10_scu4_lvds_tx/altera_lvds_core20_181/synth/arria10_scu4_lvds_tx_altera_lvds_core20_181_3cwo2jq.sv"
+       path="/home/alex/workspace/tsl021/bel_projects/modules/lvds/arria10_scu4/arria10_scu4_lvds_tx/altera_lvds_core20_181/synth/arria10_scu4_lvds_tx_altera_lvds_core20_181_wmje4mi.sv"
        attributes="" />
    <file
-       path="/home/bel/ahahn/lnx/workspace/a10_development_wrpc_4_2/bel_projects/modules/lvds/arria10_scu4/arria10_scu4_lvds_tx/altera_lvds_core20_181/synth/altera_lvds_core20.sv"
+       path="/home/alex/workspace/tsl021/bel_projects/modules/lvds/arria10_scu4/arria10_scu4_lvds_tx/altera_lvds_core20_181/synth/altera_lvds_core20.sv"
        attributes="" />
    <file
-       path="/home/bel/ahahn/lnx/workspace/a10_development_wrpc_4_2/bel_projects/modules/lvds/arria10_scu4/arria10_scu4_lvds_tx/altera_lvds_core20_181/synth/altera_lvds_core20_pll.v"
+       path="/home/alex/workspace/tsl021/bel_projects/modules/lvds/arria10_scu4/arria10_scu4_lvds_tx/altera_lvds_core20_181/synth/altera_lvds_core20_pll.v"
        attributes="" />
    <file
-       path="/home/bel/ahahn/lnx/workspace/a10_development_wrpc_4_2/bel_projects/modules/lvds/arria10_scu4/arria10_scu4_lvds_tx/altera_lvds_core20_181/synth/arria10_scu4_lvds_tx_altera_lvds_core20_181_3cwo2jq.sdc"
+       path="/home/alex/workspace/tsl021/bel_projects/modules/lvds/arria10_scu4/arria10_scu4_lvds_tx/altera_lvds_core20_181/synth/arria10_scu4_lvds_tx_altera_lvds_core20_181_wmje4mi.sdc"
        attributes="" />
    <file
-       path="/home/bel/ahahn/lnx/workspace/a10_development_wrpc_4_2/bel_projects/modules/lvds/arria10_scu4/arria10_scu4_lvds_tx/altera_lvds_core20_181/synth/sdc_util.tcl"
+       path="/home/alex/workspace/tsl021/bel_projects/modules/lvds/arria10_scu4/arria10_scu4_lvds_tx/altera_lvds_core20_181/synth/sdc_util.tcl"
        attributes="" />
   </generatedFiles>
   <childGeneratedFiles>
    <file
-       path="/home/bel/ahahn/lnx/workspace/a10_development_wrpc_4_2/bel_projects/modules/lvds/arria10_scu4/arria10_scu4_lvds_tx/altera_lvds_core20_181/synth/arria10_scu4_lvds_tx_altera_lvds_core20_181_3cwo2jq.sv"
+       path="/home/alex/workspace/tsl021/bel_projects/modules/lvds/arria10_scu4/arria10_scu4_lvds_tx/altera_lvds_core20_181/synth/arria10_scu4_lvds_tx_altera_lvds_core20_181_wmje4mi.sv"
        attributes="" />
    <file
-       path="/home/bel/ahahn/lnx/workspace/a10_development_wrpc_4_2/bel_projects/modules/lvds/arria10_scu4/arria10_scu4_lvds_tx/altera_lvds_core20_181/synth/altera_lvds_core20.sv"
+       path="/home/alex/workspace/tsl021/bel_projects/modules/lvds/arria10_scu4/arria10_scu4_lvds_tx/altera_lvds_core20_181/synth/altera_lvds_core20.sv"
        attributes="" />
    <file
-       path="/home/bel/ahahn/lnx/workspace/a10_development_wrpc_4_2/bel_projects/modules/lvds/arria10_scu4/arria10_scu4_lvds_tx/altera_lvds_core20_181/synth/altera_lvds_core20_pll.v"
+       path="/home/alex/workspace/tsl021/bel_projects/modules/lvds/arria10_scu4/arria10_scu4_lvds_tx/altera_lvds_core20_181/synth/altera_lvds_core20_pll.v"
        attributes="" />
    <file
-       path="/home/bel/ahahn/lnx/workspace/a10_development_wrpc_4_2/bel_projects/modules/lvds/arria10_scu4/arria10_scu4_lvds_tx/altera_lvds_core20_181/synth/arria10_scu4_lvds_tx_altera_lvds_core20_181_3cwo2jq.sdc"
+       path="/home/alex/workspace/tsl021/bel_projects/modules/lvds/arria10_scu4/arria10_scu4_lvds_tx/altera_lvds_core20_181/synth/arria10_scu4_lvds_tx_altera_lvds_core20_181_wmje4mi.sdc"
        attributes="" />
    <file
-       path="/home/bel/ahahn/lnx/workspace/a10_development_wrpc_4_2/bel_projects/modules/lvds/arria10_scu4/arria10_scu4_lvds_tx/altera_lvds_core20_181/synth/sdc_util.tcl"
+       path="/home/alex/workspace/tsl021/bel_projects/modules/lvds/arria10_scu4/arria10_scu4_lvds_tx/altera_lvds_core20_181/synth/sdc_util.tcl"
        attributes="" />
   </childGeneratedFiles>
   <sourceFiles>
@@ -936,9 +931,9 @@
    <file path="/opt/quartus/18/quartus/sopc_builder/model/lib/jacl1.3.2a.jar" />
   </sourceFiles>
   <childSourceFiles/>
-  <instantiator instantiator="arria10_scu4_lvds_tx_altera_lvds_181_xol3abq" as="core" />
+  <instantiator instantiator="arria10_scu4_lvds_tx_altera_lvds_181_q6uosdy" as="core" />
   <messages>
-   <message level="Info" culprit="arria10_scu4_lvds_tx">"Generating: arria10_scu4_lvds_tx_altera_lvds_core20_181_3cwo2jq"</message>
+   <message level="Info" culprit="arria10_scu4_lvds_tx">"Generating: arria10_scu4_lvds_tx_altera_lvds_core20_181_wmje4mi"</message>
   </messages>
  </entity>
 </deploy>
