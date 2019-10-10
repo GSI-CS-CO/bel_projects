@@ -328,12 +328,12 @@ static inline const char* fgCommand2String( const FG_OP_CODE_T op )
 
 typedef enum
 {
-   SIG_REFILL      = 0,
-   SIG_START       = 1,
-   SIG_STOP_EMPTY  = 2, /*!<@brief normal stop */
-   SIG_STOP_NEMPTY = 3, /*!<@brief something went wrong */
-   SIG_ARMED       = 4,
-   SIG_DISARMED    = 5
+   IRQ_DAT_REFILL         = 0,
+   IRQ_DAT_START          = 1,
+   IRQ_DAT_STOP_EMPTY     = 2, /*!<@brief normal stop */
+   IRQ_DAT_STOP_NOT_EMPTY = 3, /*!<@brief something went wrong */
+   IRQ_DAT_ARMED          = 4,
+   IRQ_DAT_DISARMED       = 5
 } SIGNAL_T;
 
 /*!
@@ -344,12 +344,12 @@ static inline const char* signal2String( const SIGNAL_T sig )
    #define __SIGNAL_CASE( sig ) case sig: return #sig
    switch( sig )
    {
-      __SIGNAL_CASE( SIG_REFILL );
-      __SIGNAL_CASE( SIG_START );
-      __SIGNAL_CASE( SIG_STOP_EMPTY );
-      __SIGNAL_CASE( SIG_STOP_NEMPTY );
-      __SIGNAL_CASE( SIG_ARMED );
-      __SIGNAL_CASE( SIG_DISARMED );
+      __SIGNAL_CASE( IRQ_DAT_REFILL );
+      __SIGNAL_CASE( IRQ_DAT_START );
+      __SIGNAL_CASE( IRQ_DAT_STOP_EMPTY );
+      __SIGNAL_CASE( IRQ_DAT_STOP_NOT_EMPTY );
+      __SIGNAL_CASE( IRQ_DAT_ARMED );
+      __SIGNAL_CASE( IRQ_DAT_DISARMED );
    }
    return "unknown";
    #undef  __SIGNAL_CASE

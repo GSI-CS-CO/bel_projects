@@ -32,6 +32,7 @@
 #include <stack.h>
 #include "syscon.h"
 #include "eb_console_helper.h"
+#include "scu_lm32_macros.h"
 #include "irq.h"
 #include "scu_bus.h"
 #include "mini_sdb.h"
@@ -48,18 +49,12 @@
 #endif
 #endif // ifndef __DOCFSM__
 
-#define MSI_SLAVE 0
-#define MSI_WB_FG 2
-
 #define QUEUE_CNT 5
 #define IRQ       0
 #define SCUBUS    1
 #define DEVBUS    2
 #define DEVSIO    3
 #define SWI       4
-
-#define DEVB_MSI      0xdeb50000
-#define SCUB_MSI      0x5cb50000
 
 #define MIL_DRQ       0x2
 #define MIL_DRY       0x1
@@ -83,8 +78,6 @@
 
 #define MY_ECA_TAG      0xdeadbeef //just define a tag for ECA actions we want to receive
 
-
-#define SHARED __attribute__((section(".shared")))
 /*!!!!!!!!!!!!!!!!!!!!!! Begin of shared memory area !!!!!!!!!!!!!!!!!!!!!!!!*/
 SCU_SHARED_DATA_T SHARED g_shared = SCU_SHARED_DATA_INITIALIZER;
 /*!!!!!!!!!!!!!!!!!!!!!! End of shared memory area !!!!!!!!!!!!!!!!!!!!!!!!!!*/
@@ -99,21 +92,24 @@ volatile uint32_t* g_pWr_1wire_base    = NULL;
 volatile uint32_t* g_pUser_1wire_base  = NULL;
 volatile ECA_T*    g_pECAQ             = NULL; // WB address of ECA queue
 
-uint8_t g_aClear_is_active[MAX_SCU_SLAVES + 1] = {0}; //TODO convert this in a real bitmap!
-                                                      //And check the range!!!!!
-volatile struct message_buffer g_aMsg_buf[QUEUE_CNT] = {0};
+volatile struct message_buffer g_aMsg_buf[QUEUE_CNT] = {{0, 0}};
 
 
 typedef struct
 {
-   uint64_t timeout;
+  // uint64_t timeout;
    uint32_t param_sent;
    int32_t  last_c_coeff;
 } FG_CHANNEL_T;
 
-FG_CHANNEL_T g_aFgChannels[MAX_FG_CHANNELS] = {{0,0,0}};
+FG_CHANNEL_T g_aFgChannels[MAX_FG_CHANNELS] = {{0,0}};//,0}};
 
 //#define CONFIG_DEBUG_FG_SIGNAL
+/*! ---------------------------------------------------------------------------
+ * @brief Send a signal back to the Linus-host (SAFTLIB)
+ * @param sig Signal
+ * @param channel Concerning channel number.
+ */
 static inline void sendSignal( const SIGNAL_T sig, const unsigned int channel )
 {
    *(volatile uint32_t*)(char*)
@@ -126,30 +122,33 @@ static inline void sendSignal( const SIGNAL_T sig, const unsigned int channel )
 #endif
 }
 
-#if 0
-#define SEND_SIG(SIG) \
-   *(volatile uint32_t*)(char*) \
-   (pCpuMsiBox + g_shared.fg_regs[channel].mbx_slot * sizeof(uint16_t)) = SIG
-#else
-#define SEND_SIG(SIG) sendSignal( SIG, channel )
-#endif
-static void clear_handler_state( unsigned int );
-
+/*! ---------------------------------------------------------------------------
+ * @brief Returns the macro number of the given channel.
+ */
 static inline uint32_t _get_macro_number( unsigned int channel )
 {
    return g_shared.fg_macros[g_shared.fg_regs[channel].macro_number];
 }
 
+/*! ---------------------------------------------------------------------------
+ * @brief Returns the socked number of the given channel.
+ */
 static inline unsigned int _get_socket( unsigned int channel )
 {
    return getMilDaqLocationByChannel( _get_macro_number( channel ) );
 }
 
+/*! ---------------------------------------------------------------------------
+ * @brief Returns the device number of the given channel.
+ */
 static inline unsigned int _get_dev( unsigned int channel )
 {
    return getMilDaqAdressByChannel(_get_macro_number( channel ));
 }
 
+/*! ---------------------------------------------------------------------------
+ * @brief Initializing of all global pointers accessing the hardware.
+ */
 static inline void initializeGlobalPointers( void )
 {
    discoverPeriphery();
@@ -163,6 +162,8 @@ static inline void initializeGlobalPointers( void )
    g_pUser_1wire_base = (volatile uint32_t*)find_device_adr(GSI, User_1Wire); // 1Wire controller on dev crossbar
 }
 
+/*! ---------------------------------------------------------------------------
+ */
 static void dev_failure(const int status, const int slot, const char* msg)
 {
   static const char* pText = ESC_ERROR"dev bus access in slot ";
@@ -183,6 +184,8 @@ static void dev_failure(const int status, const int slot, const char* msg)
   mprintf("%s%d failed with message %s, %s\n"ESC_NORMAL, pText, slot, pMessage, msg);
 }
 
+/*! ---------------------------------------------------------------------------
+ */
 static void mil_failure( const int status, const int slave_nr )
 {
    switch( status )
@@ -221,7 +224,8 @@ static void isr0( void )
    show_msi();
 }
 #endif
-/** @brief enables msi generation for the specified channel.
+/*! ---------------------------------------------------------------------------
+ * @brief enables msi generation for the specified channel.
  *  Messages from the scu bus are send to the msi queue of this cpu with the offset 0x0.
  *  Messages from the MIL extension are send to the msi queue of this cpu with the offset 0x20.
  *  A hardware macro is used, which generates msis from legacy interrupts.
@@ -256,7 +260,8 @@ static void enable_scub_msis( unsigned int channel )
    g_pMil_irq_base[2]   = (1 << MIL_DRQ);
 }
 
-/** @brief disables the generation of irqs for the specified channel
+/*! ---------------------------------------------------------------------------
+ * @brief disables the generation of irqs for the specified channel
  *  SIO and MIL extension stop generating irqs
  *  @param channel number of the channel from 0 to MAX_FG_CHANNELS-1
  */
@@ -292,7 +297,8 @@ static void disable_slave_irq( unsigned int channel )
    //mprintf("IRQs for slave %d disabled.\n", socket);
 }
 
-/** @brief delay in multiples of one millisecond
+/*! ---------------------------------------------------------------------------
+ * @brief delay in multiples of one millisecond
  *  uses the system timer
  *  @param ms delay value in milliseconds
  */
@@ -309,12 +315,15 @@ static void msDelay(uint32_t msecs)
 }
 #endif
 
+/*! ---------------------------------------------------------------------------
+ */
 static inline unsigned int getFgNumberFromRegister( const uint16_t reg )
 {
    return (reg >> 4) & 0x3F; // virtual fg number Bits 9..4
 }
 
-/** @brief sends the parameters for the next interpolation interval
+/*! ---------------------------------------------------------------------------
+ * @brief sends the parameters for the next interpolation interval
  *  @param socket number of the slot, including the high bits with the information SIO or MIL_EXT
  *  @param fg_base base address of the function generator macro
  *  @param cntrl_reg state of the control register. saves one read access.
@@ -390,8 +399,51 @@ static inline void send_fg_param( const  unsigned int socket,
    g_aFgChannels[fg_num].param_sent++;
 }
 
-/** @brief decide how to react to the interrupt request from the function generator macro
- *  @param socket encoded slot number with the high bits for SIO / MIL_EXT distinction
+/*! ---------------------------------------------------------------------------
+ * @brief Send signal REFILL to the SAFTLIB when the fifo level has
+ *        the threshold reached.
+ * @param channel Channel of concerning function generator.
+ */
+static void sendRefillSignalIfThreshold( const unsigned int channel )
+{
+   if( cbgetCount( &g_shared.fg_regs[0], channel ) == THRESHOLD )
+      sendSignal( IRQ_DAT_REFILL, channel );
+}
+
+/*! ---------------------------------------------------------------------------
+ * @brief Sends the signal STOP when the fifo is empty or
+ *        STOP_NOT_EMPTY when the fifo is not empty to the SAFTLIB
+ * @param channel Channel of concerning function generator.
+ */
+static inline void sendStopSignal( const unsigned int channel )
+{
+   sendSignal( cbisEmpty(&g_shared.fg_regs[0], channel)? IRQ_DAT_STOP_EMPTY :
+                                                        IRQ_DAT_STOP_NOT_EMPTY,
+                                                                     channel );
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+static inline void makeStop( const unsigned int channel )
+{
+   sendStopSignal( channel );
+   disable_slave_irq( channel );
+   g_shared.fg_regs[channel].state = STATE_STOPPED;
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+static inline void makeStart( const unsigned int channel )
+{
+   g_shared.fg_regs[channel].state = STATE_ACTIVE;
+   sendSignal( IRQ_DAT_START, channel ); // fg has received the tag or brc message
+}
+
+/*! ---------------------------------------------------------------------------
+ *  @brief decide how to react to the interrupt request from the function
+ *        generator macro
+ *  @param socket encoded slot number with the high bits for SIO / MIL_EXT
+ *                distinction
  *  @param fg_base base address of the function generator macro
  *  @param irq_act_reg state of the irq act register, saves a read access
  */
@@ -425,28 +477,18 @@ static void handle( const unsigned int socket,
       g_shared.fg_regs[channel].ramp_count = g_pScub_base[OFFS(socket) + fg_base + FG_RAMP_CNT_LO];
       g_shared.fg_regs[channel].ramp_count |= g_pScub_base[OFFS(socket) + fg_base + FG_RAMP_CNT_HI] << 16;
 
-      if( (cntrl_reg  & FG_RUNNING) == 0 )
+      if( (cntrl_reg & FG_RUNNING) == 0 )
       { // fg stopped
-         SEND_SIG( cbisEmpty(&g_shared.fg_regs[0], channel)? SIG_STOP_EMPTY : SIG_STOP_NEMPTY );
-         disable_slave_irq(channel);
-         g_shared.fg_regs[channel].state = STATE_STOPPED;
+         makeStop( channel );
       }
       else
       {
          if( (cntrl_reg & FG_DREQ) == 0 )
          {
-            g_shared.fg_regs[channel].state = STATE_ACTIVE;
-            SEND_SIG(SIG_START); // fg has received the tag or brc message
-            if( cbgetCount(&g_shared.fg_regs[0], channel) == THRESHOLD )
-               SEND_SIG(SIG_REFILL);
-            send_fg_param( socket, fg_base, cntrl_reg, setvalue );
+            makeStart( channel );
          }
-         else
-         {
-            if( cbgetCount(&g_shared.fg_regs[0], channel) == THRESHOLD )
-               SEND_SIG(SIG_REFILL);
-            send_fg_param( socket, fg_base, cntrl_reg, setvalue );
-         }
+         sendRefillSignalIfThreshold( channel );
+         send_fg_param( socket, fg_base, cntrl_reg, setvalue );
       }
    }
    else /* (socket & (DEV_MIL_EXT | DEV_SIO)) == 0 */
@@ -456,65 +498,90 @@ static void handle( const unsigned int socket,
       if( (irq_act_reg  & FG_RUNNING) == 0 )
       {     // fg stopped
          g_shared.fg_regs[channel].ramp_count--;
-         SEND_SIG( cbisEmpty(&g_shared.fg_regs[0], channel)? SIG_STOP_EMPTY : SIG_STOP_NEMPTY );
-         disable_slave_irq(channel);
-         g_shared.fg_regs[channel].state = STATE_STOPPED;
+         makeStop( channel );
       }
       else
       {
          if( (irq_act_reg & DEV_STATE_IRQ) != 0 )
          {
-            g_shared.fg_regs[channel].state = STATE_ACTIVE;
-            SEND_SIG(SIG_START); // fg has received the tag or brc message
-            if( cbgetCount(&g_shared.fg_regs[0], channel) == THRESHOLD )
-               SEND_SIG(SIG_REFILL);
-            send_fg_param( socket, fg_base, irq_act_reg, setvalue );
+            makeStart( channel );
          }
-         else if( (irq_act_reg & DEV_DRQ) != 0 )
+         if( (irq_act_reg & (DEV_DRQ | DEV_STATE_IRQ)) != 0 )
          {
-            if (cbgetCount(&g_shared.fg_regs[0], channel) == THRESHOLD )
-               SEND_SIG(SIG_REFILL);
-            send_fg_param(socket, fg_base, irq_act_reg, setvalue);
+            sendRefillSignalIfThreshold( channel );
+            send_fg_param( socket, fg_base, irq_act_reg, setvalue);
          }
       }
    } /* else of if (socket & (DEV_MIL_EXT | DEV_SIO)) == 0 */
 }
 
-/** @brief as short as possible, just pop the msi queue of the cpu and
+/*! ---------------------------------------------------------------------------
+ * @brief as short as possible, just pop the msi queue of the cpu and
  *         push it to the message queue of the main loop
  */
-void irq_handler( void ) {
-  struct msi m;
+void irq_handler( void )
+{
+   struct msi m;
 
   // send msi threadsafe to main loop
-  m.msg = global_msi.msg;
-  m.adr = global_msi.adr;
-  add_msg(&g_aMsg_buf[0], IRQ, m);
+   m.msg = global_msi.msg;
+   m.adr = global_msi.adr;
+   add_msg(&g_aMsg_buf[0], IRQ, m);
 }
 
+/*! ---------------------------------------------------------------------------
+ * @brief helper function which clears the state of a dev bus after malfunction
+ */
+static void clear_handler_state( unsigned int socket )
+{
+   struct msi m;
 
-/** @brief configures each function generator channel.
+   if( socket & DEV_SIO )
+   {
+      // create swi
+      m.msg = (socket & SCU_BUS_SLOT_MASK) - 1;
+      m.adr = 0;
+      irq_disable();
+      add_msg(&g_aMsg_buf[0], DEVSIO, m);
+      irq_enable();
+      return;
+   }
+
+   if( socket & DEV_MIL_EXT )
+   {
+      m.msg = 0;
+      m.adr = 0;
+      irq_disable();
+      add_msg(&g_aMsg_buf[0], DEVBUS, m);
+      irq_enable();
+   }
+}
+
+/*! ---------------------------------------------------------------------------
+ * @brief configures each function generator channel.
+ *
  *  checks first, if the drq line is inactive, if not the line is cleared
  *  then activate irqs and send the first tuple of data to the function generator
- *  @param channel number of the specified function generator channel from 0 to MAX_FG_CHANNELS-1
+ *  @param channel number of the specified function generator channel from
+ *         0 to MAX_FG_CHANNELS-1
  */
 static int configure_fg_macro( const unsigned int channel )
 {
-   unsigned int socket;
-   int dev;
-   unsigned int fg_base, dac_base;
-   uint16_t cntrl_reg_wr;
-   uint16_t dreq_status = 0;
-   struct param_set pset;
-   int16_t blk_data[6];
-   int status;
-
    if( channel >= MAX_FG_CHANNELS )
       return -1;
 
+   #ifndef CONFIG_GSI
+    #warning Maybe old Makefile is used, this could be erroneous in using local static variables!
+   #endif
+   static uint16_t s_clearIsActive = 0;
+   STATIC_ASSERT( BIT_SIZEOF( s_clearIsActive ) >= (MAX_SCU_SLAVES + 1) );
+
+   #define _SLOT_BIT_MASK() (1 << ((socket & SCU_BUS_SLOT_MASK)-1))
+   #define _MIL_BIT_MASK()  (1 << MAX_SCU_SLAVES)
+
+   uint16_t dreq_status = 0;
+   unsigned int socket = _get_socket( channel );
    /* actions per slave card */
-   socket = _get_socket( channel );
-   dev  = _get_dev( channel );
    if (socket & DEV_SIO)
    {
       scub_status_mil(g_pScub_base, socket & SCU_BUS_SLOT_MASK, &dreq_status);
@@ -529,11 +596,11 @@ static int configure_fg_macro( const unsigned int channel )
    {
       if( (socket & DEV_SIO) != 0 )
       {
-         if( g_aClear_is_active[socket & SCU_BUS_SLOT_MASK] == 0 )
+         if( (s_clearIsActive & _SLOT_BIT_MASK()) == 0 )
          {
+            s_clearIsActive |= _SLOT_BIT_MASK();
             clear_handler_state(socket);
             hist_addx(HISTORY_XYZ_MODULE, "clear_handler_state", socket);
-            g_aClear_is_active[socket & SCU_BUS_SLOT_MASK] = 1;
          }
          // yield
          return -1;
@@ -541,11 +608,11 @@ static int configure_fg_macro( const unsigned int channel )
 
       if( (socket & DEV_MIL_EXT) != 0 )
       {
-         if( g_aClear_is_active[MAX_SCU_SLAVES] == 0 )
+         if( (s_clearIsActive & _MIL_BIT_MASK()) == 0 )
          {
+            s_clearIsActive |= _MIL_BIT_MASK();
             clear_handler_state(socket);
             hist_addx(HISTORY_XYZ_MODULE, "clear_handler_state", socket);
-            g_aClear_is_active[MAX_SCU_SLAVES] = 1;
          }
          // yield
          return -1;
@@ -555,14 +622,18 @@ static int configure_fg_macro( const unsigned int channel )
    {  // reset clear flag
       if( (socket & DEV_SIO) != 0)
       {
-         g_aClear_is_active[socket & SCU_BUS_SLOT_MASK] = 0;
+         s_clearIsActive &= ~_SLOT_BIT_MASK();
       }
       else if( (socket & DEV_MIL_EXT) != 0 )
       {
-         g_aClear_is_active[MAX_SCU_SLAVES] = 0;
+         s_clearIsActive &= ~_MIL_BIT_MASK();
       }
    }
 
+   #undef _MIL_BIT_MASK
+
+   int status;
+   unsigned int dev  = _get_dev( channel );
     /* enable irqs */
    if( (socket & (DEV_MIL_EXT | DEV_SIO)) == 0 )
    {                                      //scu bus slave
@@ -577,14 +648,16 @@ static int configure_fg_macro( const unsigned int channel )
    }
    else  if( (socket & DEV_SIO) != 0)
    {
-      g_pScub_base[SRQ_ENA] |= (1 << ((socket & SCU_BUS_SLOT_MASK)-1));        // enable irqs for the slave
+      g_pScub_base[SRQ_ENA] |= _SLOT_BIT_MASK();        // enable irqs for the slave
       g_pScub_base[OFFS(socket & SCU_BUS_SLOT_MASK) + SLAVE_INT_ENA] = 0x0010; // enable receiving of drq
       if ((status = scub_write_mil(g_pScub_base, socket & SCU_BUS_SLOT_MASK, 1 << 13, FC_IRQ_MSK | dev)) != OKAY)
          dev_failure(status, socket & SCU_BUS_SLOT_MASK, "enable dreq"); //enable sending of drq
    }
+   #undef _SLOT_BIT_MASK
 
+   unsigned int fg_base, dac_base;
     /* which macro are we? */
-   if ((socket & (DEV_MIL_EXT | DEV_SIO)) == 0)
+   if( (socket & (DEV_MIL_EXT | DEV_SIO)) == 0 )
    {   //scu bus slave
       if (dev == 0)
       {
@@ -603,8 +676,8 @@ static int configure_fg_macro( const unsigned int channel )
    /* fg mode and reset */
    if( (socket & (DEV_MIL_EXT | DEV_SIO)) == 0 )
    {   //scu bus slave
-      g_pScub_base[OFFS(socket) + dac_base + DAC_CNTRL] = 0x10;        // set FG mode
-      g_pScub_base[OFFS(socket) + fg_base + FG_RAMP_CNT_LO] = 0;       // reset ramp counter
+      g_pScub_base[OFFS(socket) + dac_base + DAC_CNTRL] = 0x10;   // set FG mode
+      g_pScub_base[OFFS(socket) + fg_base + FG_RAMP_CNT_LO] = 0;  // reset ramp counter
    }
    else if( (socket & DEV_MIL_EXT) != 0 )
    {
@@ -613,10 +686,13 @@ static int configure_fg_macro( const unsigned int channel )
    }
    else if( (socket & DEV_SIO) != 0 )
    {
-      if ((status = scub_write_mil(g_pScub_base, socket & 0xf, 0x1, FC_IFAMODE_WR | dev)) != OKAY)
-         dev_failure (status, socket & 0xf, "set FG mode"); // set FG mode
+      if ((status = scub_write_mil(g_pScub_base, socket & SCU_BUS_SLOT_MASK, 0x1, FC_IFAMODE_WR | dev)) != OKAY)
+         dev_failure (status, socket & SCU_BUS_SLOT_MASK, "set FG mode"); // set FG mode
    }
 
+   uint16_t cntrl_reg_wr;
+   int16_t blk_data[6];
+   struct param_set pset;
     //fetch first parameter set from buffer
    if( cbRead(&g_shared.fg_buffer[0], &g_shared.fg_regs[0], channel, &pset) != 0 )
    {
@@ -682,13 +758,15 @@ static int configure_fg_macro( const unsigned int channel )
    }
 
    // reset watchdog
-   g_aFgChannels[channel].timeout = 0;
+ //  g_aFgChannels[channel].timeout = 0;
    g_shared.fg_regs[channel].state = STATE_ARMED;
-   SEND_SIG(SIG_ARMED);
-   hist_addx(HISTORY_XYZ_MODULE, "sig_armed", channel);
+   sendSignal( IRQ_DAT_ARMED, channel );
    return 0;
 }
 
+/*! ---------------------------------------------------------------------------
+ * @brief Prints all found function generators.
+ */
 static inline void printFgs( void )
 {
    for( unsigned int  i = 0; i < ARRAY_SIZE( g_shared.fg_macros ); i++ )
@@ -703,7 +781,8 @@ static inline void printFgs( void )
    }
 }
 
-/** @brief scans for fgs on mil extension and scu bus
+/*! ---------------------------------------------------------------------------
+ * @brief Scans for fgs on mil extension and scu bus.
  */
 static void scanFgs( void )
 {
@@ -724,11 +803,12 @@ static void scanFgs( void )
    printFgs();
 }
 
-/** @brief print the values and states of all channel registers
+/*! ---------------------------------------------------------------------------
+ * @brief Print the values and states of all channel registers.
  */
 inline static void print_regs( void)
 {
-   for( unsigned int i = 0; i < ARRAY_SIZE(g_shared.fg_regs); i++ )
+   for( unsigned int i = 0; i < ARRAY_SIZE( g_shared.fg_regs ); i++ )
    {
       mprintf("channel[%d].wr_ptr %d\n", i, g_shared.fg_regs[i].wr_ptr);
       mprintf("channel[%d].rd_ptr %d\n", i, g_shared.fg_regs[i].rd_ptr);
@@ -741,8 +821,9 @@ inline static void print_regs( void)
    }
 }
 
-/** @brief disable function generator channel
- *  @param channel number of the function generator channel from 0 to MAX_FG_CHANNELS-1
+/*! ---------------------------------------------------------------------------
+ * @brief disable function generator channel
+ * @param channel number of the function generator channel from 0 to MAX_FG_CHANNELS-1
  */
 static void disable_channel( unsigned int channel )
 {
@@ -806,11 +887,12 @@ static void disable_channel( unsigned int channel )
    else
    {
       pFgRegs->state = STATE_STOPPED;
-      SEND_SIG(SIG_DISARMED);
+      sendSignal( IRQ_DAT_DISARMED, channel );
    }
 }
 
-/** @brief updates the temperatur information in the shared section
+/*! ---------------------------------------------------------------------------
+ * @brief updates the temperatur information in the shared section
  */
 static void updateTemp( void )
 {
@@ -832,7 +914,8 @@ static void updateTemp( void )
   wrpc_w1_init();
 }
 
-/** @brief initialize the irq table and set the irq mask
+/*! ---------------------------------------------------------------------------
+ * @brief initialize the irq table and set the irq mask
  */
 static void init_irq_table( void )
 {
@@ -844,7 +927,8 @@ static void init_irq_table( void )
   mprintf("IRQ table configured. 0x%x\n", irq_get_mask());
 }
 
-/** @brief initialize procedure at startup
+/*! ---------------------------------------------------------------------------
+ * @brief initialize procedure at startup
  */
 static void init( void )
 {
@@ -856,50 +940,20 @@ static void init( void )
   scanFgs();                        //scans for slave cards and fgs
 }
 
-/** @brief segfault handler, not used at the moment
+/*! ---------------------------------------------------------------------------
+ * @brief segfault handler, not used at the moment
  */
-//void _segfault(int sig)
 void _segfault( void )
 {
   mprintf(ESC_ERROR"KABOOM!\n"ESC_NORMAL);
   //while (1) {}
 }
 
-/** @brief helper function which clears the state of a dev bus after malfunction
+/*! ---------------------------------------------------------------------------
+ * @brief demonstrate how to poll actions ("events") from ECA
+ * HERE: get WB address of relevant ECA queue
+ * code written by D.Beck, example.c
  */
-static void clear_handler_state( unsigned int socket )
-{
-   struct msi m;
-
-   if( socket & DEV_SIO )
-   {
-      // create swi
-      m.msg = (socket & SCU_BUS_SLOT_MASK) - 1;
-      m.adr = 0;
-      irq_disable();
-      add_msg(&g_aMsg_buf[0], DEVSIO, m);
-      irq_enable();
-      return;
-   }
-
-   if( socket & DEV_MIL_EXT )
-   {
-      m.msg = 0;
-      m.adr = 0;
-      irq_disable();
-      add_msg(&g_aMsg_buf[0], DEVBUS, m);
-      irq_enable();
-   }
-}
-
-
-/*!************************************************************
-* @brief
-* demonstrate how to poll actions ("events") from ECA
-* HERE: get WB address of relevant ECA queue
-* code written by D.Beck, example.c
-*
-**************************************************************/
 static void findECAQ( void )
 {
 #define ECAQMAX           4         //  max number of ECA queues
@@ -930,7 +984,9 @@ static void findECAQ( void )
   mprintf("\nECA queue found at: 0x%08x. Waiting for actions with tag 0x%08x ...\n\n", g_pECAQ, MY_ECA_TAG);
 } // findECAQ
 
-
+/*! ---------------------------------------------------------------------------
+ * @brief
+ */
 typedef struct
 {
    short     irq_data;      /* saved irq state */
@@ -938,10 +994,16 @@ typedef struct
    uint64_t  daq_timestamp; /* timestamp of daq sampling */
 } FG_CHANNEL_TASK_T;
 
+/*! ---------------------------------------------------------------------------
+ * @brief Helper macros for documenting the FSM via the FSM-visualizer DOCFSM.
+ */
 #define FSM_DECLARE_STATE( state, attr... ) state
 #define FSM_TRANSITION( newState, attr... ) pThis->state = newState
-#define FSM_INIT_FSM( init, attr... )      pThis->state = init
+#define FSM_INIT_FSM( init, attr... )       pThis->state = init
 
+/*! --------------------------------------------------------------------------
+ * @brief Declaration of the states of the task- FSM
+ */
 typedef enum
 {
    FSM_DECLARE_STATE( ST_WAIT,            label='Wait for message' ),
@@ -952,6 +1014,10 @@ typedef enum
    FSM_DECLARE_STATE( ST_FETCH_DATA,      label='Fetch MIL-DAQ data' )
 } FG_STATE_T;
 
+/*! ---------------------------------------------------------------------------
+ * @brief Converts the states of the FSM in strings.
+ * @note For debug purposes only!
+ */
 static const char* state2string( const FG_STATE_T state )
 {
    #define __CASE_RETURN( s ) case s: return #s
@@ -968,7 +1034,9 @@ static const char* state2string( const FG_STATE_T state )
    #undef __CASE_RETURN
 }
 
-/* declaration for the scheduler */
+/*! ---------------------------------------------------------------------------
+ * @brief Declaration of the tasp type
+ */
 typedef struct _TaskType
 {
   FG_STATE_T state;
@@ -989,7 +1057,9 @@ static void scu_bus_handler( register TaskType* );
 static void sw_irq_handler( register TaskType* );
 static void ecaHandler( register TaskType* );
 
-/* task configuration table */
+/*! ---------------------------------------------------------------------------
+ * @brief task configuration table
+ */
 static TaskType g_aTasks[] =
 {
   { ST_WAIT, 0, 0, 0, ALWAYS, 0, 0, {{0, 0, 0}}, dev_sio_handler }, // sio task 1
@@ -1002,23 +1072,25 @@ static TaskType g_aTasks[] =
   { ST_WAIT, 0, 0, 0, ALWAYS, 0, 0, {{0, 0, 0}}, sw_irq_handler  }
 };
 
+/*! ---------------------------------------------------------------------------
+ * @brief Returns the task-number of the given task object.
+ */
 static unsigned int getId( register TaskType* pThis )
 {
    return (((uint8_t*)pThis) - ((uint8_t*)g_aTasks)) / sizeof( TaskType );
 }
 
-/*!************************************************************
-* @brief
-* demonstrate how to poll actions ("events") from ECA
-* HERE: poll ECA, get data of action and do something
-*
-* This example assumes that
-* - action for this lm32 are configured by using saft-ecpu-ctl
-*   from the host system
-* - a TAG with value 0x4 has been configure (see saft-ecpu-ctl -h
-*   for help
-*
-**************************************************************/
+/*! ---------------------------------------------------------------------------
+ * @brief demonstrate how to poll actions ("events") from ECA
+ *
+ * HERE: poll ECA, get data of action and do something
+ *
+ * This example assumes that
+ * - action for this lm32 are configured by using saft-ecpu-ctl
+ *   from the host system
+ * - a TAG with value 0x4 has been configure (see saft-ecpu-ctl -h
+ *   for help
+ */
 static void ecaHandler( register TaskType* pThis UNUSED )
 {
    // read flag for the next action and check if there was an action
@@ -1075,15 +1147,15 @@ static void ecaHandler( register TaskType* pThis UNUSED )
    } // switch
 } // ecaHandler
 
-/** @brief software irq handler
+/*! ---------------------------------------------------------------------------
+ * @brief Software irq handler
+ *
  *  dispatch the calls from linux to the helper functions
  *  called via scheduler in main loop
  *  @param pThis pointer to the current task object (not used)
- * @todo Replace the naked numbers for OP-code, use enums defined in
- *       scu_shared_mem.h instead! (UB)
  */
 //#define CONFIG_DEBUG_FG
-static void sw_irq_handler( register TaskType* pThis )
+static void sw_irq_handler( register TaskType* pThis UNUSED )
 {
    unsigned int code, value;
    struct msi m;
@@ -1095,9 +1167,8 @@ static void sw_irq_handler( register TaskType* pThis )
    if( m.adr != 0x10 )
       return;
 
-   code = m.msg >> 16;
+   code = m.msg >> BIT_SIZEOF( uint16_t );
    value = m.msg & 0xffff;
-   //TODO Verifying range of variable "value"
    switch( code )
    {
       case FG_OP_INITIALIZE:
@@ -1178,7 +1249,7 @@ static void sw_irq_handler( register TaskType* pThis )
 #endif
 }
 
-/**
+/*! ---------------------------------------------------------------------------
  * @brief task definition of scu_bus_handler
  * called by the scheduler in the main loop
  * decides which action for a scu bus interrupt is suitable
@@ -1186,50 +1257,69 @@ static void sw_irq_handler( register TaskType* pThis )
  */
 static void scu_bus_handler( register TaskType* pThis UNUSED )
 {
-  uint16_t slv_int_act_reg;
-  unsigned char slave_nr;
-  uint16_t slave_acks = 0;
-  struct msi m;
-  signed int dummy;
+   uint16_t slv_int_act_reg;
+   unsigned char slave_nr;
+   uint16_t slave_acks = 0;
+   struct msi m;
+   signed int dummy;
 
-  if (!has_msg(&g_aMsg_buf[0], SCUBUS))
-     return;
+   if( !has_msg(&g_aMsg_buf[0], SCUBUS) )
+      return;
 
-  m = remove_msg(&g_aMsg_buf[0], SCUBUS);
-  if (m.adr != 0x0)
-     return;
+   m = remove_msg(&g_aMsg_buf[0], SCUBUS);
+   if( m.adr != 0x0 )
+      return;
 
-  slave_nr = m.msg + 1;
-  if (slave_nr < 0 || slave_nr > MAX_SCU_SLAVES) {
-     mprintf(ESC_ERROR"slave nr unknown.\n"ESC_NORMAL);
-     return;
-  }
+   slave_nr = m.msg + 1;
+   if( slave_nr < 0 || slave_nr > MAX_SCU_SLAVES)
+   {
+      mprintf(ESC_ERROR"slave nr unknown.\n"ESC_NORMAL);
+      return;
+   }
 
-  slv_int_act_reg = g_pScub_base[OFFS(slave_nr) + SLAVE_INT_ACT];
-  if (slv_int_act_reg & 0x1) {// powerup interrupt
-    slave_acks |= 0x1;
-  }
-  if (slv_int_act_reg & FG1_IRQ) { //FG irq?
-    handle(slave_nr, FG1_BASE, 0, &dummy);
-    slave_acks |= FG1_IRQ;
-  }
-  if (slv_int_act_reg & FG2_IRQ) { //FG irq?
-    handle(slave_nr, FG2_BASE, 0, &dummy);
-    slave_acks |= FG2_IRQ;
-  }
-  if (slv_int_act_reg & DREQ) { //DRQ irq?
-    add_msg(&g_aMsg_buf[0], DEVSIO, m);
-    slave_acks |= DREQ;
-  }
-  g_pScub_base[OFFS(slave_nr) + SLAVE_INT_ACT] = slave_acks; // ack all pending irqs
+   slv_int_act_reg = g_pScub_base[OFFS(slave_nr) + SLAVE_INT_ACT];
+
+   if( (slv_int_act_reg & 0x1) != 0 )
+   {// powerup interrupt
+      slave_acks |= 0x1;
+   }
+
+   if( (slv_int_act_reg & FG1_IRQ) != 0 )
+   { //FG irq?
+      handle(slave_nr, FG1_BASE, 0, &dummy);
+      slave_acks |= FG1_IRQ;
+   }
+
+   if( (slv_int_act_reg & FG2_IRQ) != 0 )
+   { //FG irq?
+      handle(slave_nr, FG2_BASE, 0, &dummy);
+      slave_acks |= FG2_IRQ;
+   }
+
+   if( (slv_int_act_reg & DREQ) != 0 )
+   { //DRQ irq?
+      add_msg(&g_aMsg_buf[0], DEVSIO, m);
+      slave_acks |= DREQ;
+   }
+
+   g_pScub_base[OFFS(slave_nr) + SLAVE_INT_ACT] = slave_acks; // ack all pending irqs
 }
 
 #define CONFIG_LAGE_TIME_DETECT
 #ifdef CONFIG_LAGE_TIME_DETECT
    static uint64_t lastTime = 0;
 #endif
+
+/*! ---------------------------------------------------------------------------
+ * @brief Writes the data set coming from one of the MIL-DAQs in the
+ *        ring-buffer.
+ * @param channel DAQ-channel where the data come from.
+ * @param timestamp White-Rabbit time-stamp.
+ * @param actValue Actual value.
+ * @param setValue Set-value.
+ */
 static void pushDaqData( uint32_t channel, uint64_t timestamp,
-                         short actValue, uint32_t setValue )
+                         uint16_t actValue, uint32_t setValue )
 {
 #ifdef CONFIG_LAGE_TIME_DETECT
    if( lastTime > 0 )
@@ -1251,15 +1341,18 @@ static void pushDaqData( uint32_t channel, uint64_t timestamp,
 
    d.actvalue = actValue;
    d.tmstmp_l = timestamp & 0xffffffff;
-   d.tmstmp_h = timestamp >> 32;
+   d.tmstmp_h = timestamp >> BIT_SIZEOF(uint32_t);
    d.channel  = channel;
    d.setvalue = setValue;
    add_daq_msg(&g_shared.daq_buf, d);
 #endif
-   hist_addx(HISTORY_XYZ_MODULE, "daq_high", actValue >> 8);
+   hist_addx(HISTORY_XYZ_MODULE, "daq_high", actValue >> BIT_SIZEOF(uint8_t));
    hist_addx(HISTORY_XYZ_MODULE, "daq_low", actValue & 0xff);
 }
 
+/*! ---------------------------------------------------------------------------
+ * @brief Helper function printing a timeout message.
+ */
 static void printTimeoutMessage( register TaskType* pThis, const bool isScuBus )
 {
    mprintf( ESC_WARNING"timeout %s: state %s, taskid %d index %d\n"ESC_NORMAL,
@@ -1269,6 +1362,9 @@ static void printTimeoutMessage( register TaskType* pThis, const bool isScuBus )
             pThis->i );
 }
 
+/*! ---------------------------------------------------------------------------
+ * @brief Task-function for handling all FGs and MIL-DAQs
+ */
 static void dev_sio_bus_handler( register TaskType* pThis, const bool isScuBus )
 {
    unsigned int i;
@@ -1516,16 +1612,18 @@ static void dev_sio_bus_handler( register TaskType* pThis, const bool isScuBus )
 }
 
 
-/**
- * @brief can have multiple instances, one for each active sio card controlling a dev bus
- * persistent data, like the state or the sio slave_nr, is stored in a global structure
+/*! ---------------------------------------------------------------------------
+ * @brief can have multiple instances, one for each active sio card controlling
+ * a dev bus persistent data, like the state or the sio slave_nr, is stored in
+ * a global structure
  * @param pThis pointer to the current task object
  */
 static void dev_sio_handler( register TaskType* pThis )
 {
    dev_sio_bus_handler( pThis, false );
 }
-/**
+
+/*! ---------------------------------------------------------------------------
  * @brief has only one instance
  * persistent data is stored in a global structure
  * @param pThis pointer to the current task object
@@ -1542,8 +1640,10 @@ uint64_t getTick( void ) {
   return tick;
 }
 #endif
-/* definition of task dispatch */
-/* move messages to the correct queue, depending on source */
+
+/*! ---------------------------------------------------------------------------
+ * @brief Move messages to the correct queue, depending on source
+ */
 static inline void dispatch( void )
 {
    struct msi m;
@@ -1556,6 +1656,10 @@ static inline void dispatch( void )
    }
 }
 
+/*! ---------------------------------------------------------------------------
+ * @brief Helper function for printing the CPU-ID and the number of
+ *        MSI endpoints.
+ */
 static inline void printCpuId( void )
 {
    unsigned int* cpu_info_base;
@@ -1569,8 +1673,8 @@ static inline void printCpuId( void )
    mprintf("number MSI endpoints: %d\n", cpu_info_base[1]);
 }
 
-/*!
- * @brief tell saftlib the mailbox slot for sw irqs
+/*! ---------------------------------------------------------------------------
+ * @brief Tells saftlib the mailbox slot for sw irqs
  */
 static inline void tellMailboxSlot( void )
 {
@@ -1582,9 +1686,7 @@ static inline void tellMailboxSlot( void )
    g_shared.fg_mb_slot = slot;
 }
 
-/**
- * @brief after the init phase at startup, the scheduler loop runs forever
- */
+/*================================ MAIN =====================================*/
 int main( void )
 {
    initializeGlobalPointers();

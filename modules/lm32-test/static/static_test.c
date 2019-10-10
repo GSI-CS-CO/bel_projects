@@ -59,7 +59,7 @@ BF_T g_bf =
 
 void printBits16( uint16_t bits )
 {
-   for( uint16_t m = 1 << BIT_SIZEOF(uint16_t) - 1; m != 0; m >>= 1 )
+   for( uint16_t m = 1 << (BIT_SIZEOF(uint16_t) - 1); m != 0; m >>= 1 )
       mprintf( "%c", (m & bits)? '1' : '0' );
    mprintf( "\n" );
 }
@@ -100,7 +100,7 @@ void printContainerFromCintent( CONTENT_T* pContent )
 }
 
 
-void main( void )
+int main( void )
 {
    discoverPeriphery();
    uart_init_hw();
@@ -157,6 +157,7 @@ void main( void )
 //   mprintf( "_DAQ_CHANNEL_CONTROL:\n" );
 
  //  printBits16( *((uint16_t*) &ccontrol) );
+   return 0;
 }
 
 //================================== EOF ======================================
