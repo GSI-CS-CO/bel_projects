@@ -29,32 +29,59 @@ package arria10_lvds_pkg is
 
   component arria10_scu4_lvds_ibuf is
     port(
-      datain   : in  std_logic_vector(0 downto 0);
-      datain_b : in  std_logic_vector(0 downto 0);
-      dataout  : out std_logic_vector(0 downto 0));
+      pad_in   : in  std_logic_vector(0 downto 0);
+      pad_in_b : in  std_logic_vector(0 downto 0);
+      dout     : out std_logic_vector(0 downto 0));
   end component;
 
   component arria10_scu4_lvds_obuf is
     port(
-      datain           : in  std_logic_vector(0 downto 0);
-      dataout          : out std_logic_vector(0 downto 0);
-      dataout_b        : out std_logic_vector(0 downto 0));
+      din       : in  std_logic_vector(0 downto 0);
+      pad_out   : out std_logic_vector(0 downto 0);
+      pad_out_b : out std_logic_vector(0 downto 0));
   end component;
 
   component arria10_scu4_lvds_rx is
     port(
-      rx_inclock : in  std_logic;
-      rx_enable  : in  std_logic;
-      rx_in      : in  std_logic_vector(0 downto 0);
-      rx_out     : out std_logic_vector(7 downto 0));
+      ext_fclk      : in  std_logic;
+      ext_loaden    : in  std_logic;
+      ext_coreclock : in  std_logic;
+      rx_in         : in  std_logic_vector(0 downto 0);
+      rx_out        : out std_logic_vector(7 downto 0));
   end component;
 
   component arria10_scu4_lvds_tx is
     port(
-      tx_inclock : in  std_logic;
-      tx_enable  : in  std_logic;
-      tx_in      : in  std_logic_vector(7 downto 0);
-      tx_out     : out std_logic_vector(0 downto 0));
+      tx_in         : in  std_logic_vector(7 downto 0);
+      tx_out        : out std_logic_vector(0 downto 0);
+      tx_coreclock  : out std_logic;
+      ext_fclk      : in  std_logic;
+      ext_loaden    : in  std_logic;
+      ext_coreclock : in  std_logic);
+  end component;
+
+  component twentynm_lvds_clock_tree is
+    generic (
+      clock_export_compatible : string := "true");
+    port (
+      lvdsfclk_in      : in  std_logic := '0';
+      loaden_in        : in  std_logic := '0';
+      lvdsfclk_out     : out std_logic;
+      loaden_out       : out std_logic;
+      lvdsfclk_top_out : out std_logic;
+      loaden_top_out   : out std_logic;
+      lvdsfclk_bot_out : out std_logic;
+      loaden_bot_out   : out std_logic);
+  end component;
+
+  component arria10_scu4_lvds_pll is
+    port (
+      rst      : in  std_logic := '0';
+      refclk   : in  std_logic := '0'; -- clk
+      locked   : out std_logic;
+      lvds_clk : out std_logic_vector(1 downto 0);
+      loaden   : out std_logic_vector(1 downto 0);
+      outclk_2 : out std_logic);
   end component;
 
 end package;
