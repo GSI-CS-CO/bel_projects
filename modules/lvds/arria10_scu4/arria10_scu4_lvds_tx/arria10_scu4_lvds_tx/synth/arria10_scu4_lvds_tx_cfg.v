@@ -1,0 +1,5 @@
+config arria10_scu4_lvds_tx_cfg;
+		design arria10_scu4_lvds_tx;
+		instance arria10_scu4_lvds_tx.lvds_0 use arria10_scu4_lvds_tx_altera_lvds_181.arria10_scu4_lvds_tx_altera_lvds_181_q6uosdy;
+endconfig
+

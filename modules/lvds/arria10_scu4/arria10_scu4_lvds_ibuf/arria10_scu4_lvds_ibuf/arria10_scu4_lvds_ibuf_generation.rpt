@@ -1,0 +1,30 @@
+Info: Starting: Create HDL design files for synthesis
+Info: qsys-generate /home/bel/ahahn/lnx/workspace/a10_lvds_test/bel_projects/modules/lvds/arria10_scu4/arria10_scu4_lvds_ibuf/arria10_scu4_lvds_ibuf.qsys --synthesis=VERILOG --output-directory=/home/bel/ahahn/lnx/workspace/a10_lvds_test/bel_projects/modules/lvds/arria10_scu4/arria10_scu4_lvds_ibuf/arria10_scu4_lvds_ibuf --family="Arria 10" --part=10AX027E3F29E2SG
+Progress: Loading arria10_scu4_lvds_ibuf/arria10_scu4_lvds_ibuf.qsys
+Progress: Reading input file
+Progress: Adding gpio_0 [altera_gpio 18.1]
+Progress: Parameterizing module gpio_0
+Progress: Building connections
+Progress: Parameterizing connections
+Progress: Validating
+Progress: Done reading input file
+Info: arria10_scu4_lvds_ibuf.gpio_0: Altera GPIO supports a maximum interface frequency of 300 MHZ.
+Info: arria10_scu4_lvds_ibuf: "Transforming system: arria10_scu4_lvds_ibuf"
+Info: arria10_scu4_lvds_ibuf: Running transform generation_view_transform
+Info: arria10_scu4_lvds_ibuf: Running transform generation_view_transform took 0.000s
+Info: gpio_0: Running transform generation_view_transform
+Info: gpio_0: Running transform generation_view_transform took 0.000s
+Info: core: Running transform generation_view_transform
+Info: core: Running transform generation_view_transform took 0.000s
+Info: arria10_scu4_lvds_ibuf: Running transform merlin_avalon_transform
+Info: arria10_scu4_lvds_ibuf: Running transform merlin_avalon_transform took 0.096s
+Info: gpio_0: Running transform merlin_avalon_transform
+Info: gpio_0: Running transform merlin_avalon_transform took 0.008s
+Info: arria10_scu4_lvds_ibuf: "Naming system components in system: arria10_scu4_lvds_ibuf"
+Info: arria10_scu4_lvds_ibuf: "Processing generation queue"
+Info: arria10_scu4_lvds_ibuf: "Generating: arria10_scu4_lvds_ibuf"
+Info: arria10_scu4_lvds_ibuf: "Generating: arria10_scu4_lvds_ibuf_altera_gpio_181_zbulp3i"
+Info: arria10_scu4_lvds_ibuf: "Generating: altera_gpio"
+Info: arria10_scu4_lvds_ibuf: Done "arria10_scu4_lvds_ibuf" with 3 modules, 5 files
+Info: qsys-generate succeeded.
+Info: Finished: Create HDL design files for synthesis

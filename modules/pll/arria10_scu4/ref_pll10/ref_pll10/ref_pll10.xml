@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <deploy
- date="2019.10.08.15:48:36"
- outputDirectory="/home/alex/workspace/tsl021/bel_projects/modules/pll/arria10_scu4/ref_pll10/ref_pll10/">
+ date="2019.10.11.11:09:45"
+ outputDirectory="/home/bel/ahahn/lnx/workspace/a10_lvds_test/bel_projects/modules/pll/arria10_scu4/ref_pll10/ref_pll10/">
  <perimeter>
   <parameter
      name="AUTO_GENERATION_ID"
@@ -138,7 +138,7 @@
  </perimeter>
  <entity kind="ref_pll10" version="1.0" name="ref_pll10">
   <parameter name="AUTO_REFCLK_CLOCK_DOMAIN" value="-1" />
-  <parameter name="AUTO_GENERATION_ID" value="1570542514" />
+  <parameter name="AUTO_GENERATION_ID" value="1570784985" />
   <parameter name="AUTO_DEVICE" value="10AX027E3F29E2SG" />
   <parameter name="AUTO_DEVICE_FAMILY" value="Arria 10" />
   <parameter name="AUTO_REFCLK_CLOCK_RATE" value="-1" />
@@ -147,23 +147,23 @@
   <parameter name="AUTO_DEVICE_SPEEDGRADE" value="2" />
   <generatedFiles>
    <file
-       path="/home/alex/workspace/tsl021/bel_projects/modules/pll/arria10_scu4/ref_pll10/ref_pll10/synth/ref_pll10.v"
+       path="/home/bel/ahahn/lnx/workspace/a10_lvds_test/bel_projects/modules/pll/arria10_scu4/ref_pll10/ref_pll10/synth/ref_pll10.v"
        attributes="CONTAINS_INLINE_CONFIGURATION" />
    <file
-       path="/home/alex/workspace/tsl021/bel_projects/modules/pll/arria10_scu4/ref_pll10/ref_pll10/synth/ref_pll10_cfg.v"
+       path="/home/bel/ahahn/lnx/workspace/a10_lvds_test/bel_projects/modules/pll/arria10_scu4/ref_pll10/ref_pll10/synth/ref_pll10_cfg.v"
        attributes="CONTAINS_INLINE_CONFIGURATION" />
   </generatedFiles>
   <childGeneratedFiles>
    <file
-       path="/home/alex/workspace/tsl021/bel_projects/modules/pll/arria10_scu4/ref_pll10/ref_pll10/synth/ref_pll10.v"
+       path="/home/bel/ahahn/lnx/workspace/a10_lvds_test/bel_projects/modules/pll/arria10_scu4/ref_pll10/ref_pll10/synth/ref_pll10.v"
        attributes="CONTAINS_INLINE_CONFIGURATION" />
    <file
-       path="/home/alex/workspace/tsl021/bel_projects/modules/pll/arria10_scu4/ref_pll10/ref_pll10/synth/ref_pll10_cfg.v"
+       path="/home/bel/ahahn/lnx/workspace/a10_lvds_test/bel_projects/modules/pll/arria10_scu4/ref_pll10/ref_pll10/synth/ref_pll10_cfg.v"
        attributes="CONTAINS_INLINE_CONFIGURATION" />
   </childGeneratedFiles>
   <sourceFiles>
    <file
-       path="/home/alex/workspace/tsl021/bel_projects/modules/pll/arria10_scu4/ref_pll10/ref_pll10.qsys" />
+       path="/home/bel/ahahn/lnx/workspace/a10_lvds_test/bel_projects/modules/pll/arria10_scu4/ref_pll10/ref_pll10.qsys" />
   </sourceFiles>
   <childSourceFiles>
    <file path="/opt/quartus/18/ip/altera/altera_iopll/top/altera_iopll_hw.tcl" />
@@ -905,12 +905,12 @@
   <parameter name="c_cnt_bypass_en5" value="true" />
   <generatedFiles>
    <file
-       path="/home/alex/workspace/tsl021/bel_projects/modules/pll/arria10_scu4/ref_pll10/ref_pll10/altera_iopll_181/synth/ref_pll10_altera_iopll_181_qgg67eq.v"
+       path="/home/bel/ahahn/lnx/workspace/a10_lvds_test/bel_projects/modules/pll/arria10_scu4/ref_pll10/ref_pll10/altera_iopll_181/synth/ref_pll10_altera_iopll_181_qgg67eq.v"
        attributes="" />
   </generatedFiles>
   <childGeneratedFiles>
    <file
-       path="/home/alex/workspace/tsl021/bel_projects/modules/pll/arria10_scu4/ref_pll10/ref_pll10/altera_iopll_181/synth/ref_pll10_altera_iopll_181_qgg67eq.v"
+       path="/home/bel/ahahn/lnx/workspace/a10_lvds_test/bel_projects/modules/pll/arria10_scu4/ref_pll10/ref_pll10/altera_iopll_181/synth/ref_pll10_altera_iopll_181_qgg67eq.v"
        attributes="" />
   </childGeneratedFiles>
   <sourceFiles>

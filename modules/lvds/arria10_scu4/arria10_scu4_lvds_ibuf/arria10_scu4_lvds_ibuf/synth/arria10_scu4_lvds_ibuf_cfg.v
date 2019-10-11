@@ -1,0 +1,5 @@
+config arria10_scu4_lvds_ibuf_cfg;
+		design arria10_scu4_lvds_ibuf;
+		instance arria10_scu4_lvds_ibuf.gpio_0 use arria10_scu4_lvds_ibuf_altera_gpio_181.arria10_scu4_lvds_ibuf_altera_gpio_181_zbulp3i;
+endconfig
+
