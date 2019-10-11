@@ -5,10 +5,10 @@
 `timescale 1 ps / 1 ps
 module ref_pll10 (
 		input  wire [4:0] cntsel,           //           cntsel.cntsel
+		output wire [1:0] loaden,           //           loaden.loaden
 		output wire       locked,           //           locked.export
+		output wire [1:0] lvds_clk,         //         lvds_clk.lvds_clk
 		input  wire [2:0] num_phase_shifts, // num_phase_shifts.num_phase_shifts
-		output wire       outclk_0,         //          outclk0.clk
-		output wire       outclk_1,         //          outclk1.clk
 		output wire       outclk_2,         //          outclk2.clk
 		output wire       outclk_3,         //          outclk3.clk
 		output wire       outclk_4,         //          outclk4.clk
@@ -20,7 +20,7 @@ module ref_pll10 (
 		input  wire       updn              //             updn.updn
 	);
 
-	ref_pll10_altera_iopll_181_2yxsqnq iopll_0 (
+	ref_pll10_altera_iopll_181_qgg67eq iopll_0 (
 		.rst              (rst),              //            reset.reset
 		.refclk           (refclk),           //           refclk.clk
 		.locked           (locked),           //           locked.export
@@ -30,8 +30,8 @@ module ref_pll10 (
 		.cntsel           (cntsel),           //           cntsel.cntsel
 		.phase_done       (phase_done),       //       phase_done.phase_done
 		.num_phase_shifts (num_phase_shifts), // num_phase_shifts.num_phase_shifts
-		.outclk_0         (outclk_0),         //          outclk0.clk
-		.outclk_1         (outclk_1),         //          outclk1.clk
+		.lvds_clk         (lvds_clk),         //         lvds_clk.lvds_clk
+		.loaden           (loaden),           //           loaden.loaden
 		.outclk_2         (outclk_2),         //          outclk2.clk
 		.outclk_3         (outclk_3),         //          outclk3.clk
 		.outclk_4         (outclk_4)          //          outclk4.clk

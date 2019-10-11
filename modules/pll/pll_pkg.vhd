@@ -22,7 +22,7 @@ package pll_pkg is
       clocks_i   : in  std_logic_vector(g_clocks-1 downto 0);
       rstn_o     : out std_logic_vector(g_clocks-1 downto 0));
   end component;
-  
+
   component dmtd_pll is  -- arria2
     port(
       areset : in  std_logic;
@@ -82,11 +82,16 @@ package pll_pkg is
   component ref_pll10 is  -- arria10
     port(
       refclk     : in  std_logic := 'X'; -- 125 MHz
-      outclk_0   : out std_logic;        -- 125 MHz
-      outclk_1   : out std_logic;        -- 200 MHz
-      outclk_2   : out std_logic;        --  25 MHz
-      outclk_3   : out std_logic;        --1000 MHz
-      outclk_4   : out std_logic;        -- 125 MHz, 1/8 duty cycle, -1.5ns phase
+      --outclk_0   : out std_logic;        -- 125 MHz
+      --outclk_1   : out std_logic;        -- 200 MHz
+      --outclk_2   : out std_logic;        --  25 MHz
+      --outclk_3   : out std_logic;        --1000 MHz
+      --outclk_4   : out std_logic;        -- 125 MHz, 1/8 duty cycle, -1.5ns phase
+      outclk_2   : out std_logic; -- 125 MHz
+      outclk_3   : out std_logic; -- 200 MHz
+      outclk_4   : out std_logic; -- 25 MHz
+      lvds_clk   : out std_logic_vector(1 downto 0); --1000 MHz
+      loaden     : out std_logic_vector(1 downto 0); -- 125 MHz, 13% duty cycle, 7000ps phase
       rst        : in  std_logic := 'X';
       locked     : out std_logic;
       scanclk    : in  std_logic;
@@ -192,7 +197,7 @@ package pll_pkg is
       g_output_freq   : natural_vector;
       g_output_select : natural_vector);
     port(
-      clk_i       : in  std_logic; 
+      clk_i       : in  std_logic;
       rstn_i      : in  std_logic; -- phase counters were zero'd
       clks_i      : in  std_logic_vector(g_outputs-1 downto 0);
       rstn_o      : out std_logic_vector(g_outputs-1 downto 0);
@@ -201,7 +206,7 @@ package pll_pkg is
       phasesel_o  : out std_logic_vector(g_select_bits-1 downto 0);
       phasestep_o : out std_logic);
   end component;
-  
+
   component altera_butis is
     port(
       clk_ref_i : in  std_logic;
@@ -209,5 +214,5 @@ package pll_pkg is
       pps_i     : in  std_logic;
       phase_o   : out phase_offset);
   end component;
-  
+
 end pll_pkg;

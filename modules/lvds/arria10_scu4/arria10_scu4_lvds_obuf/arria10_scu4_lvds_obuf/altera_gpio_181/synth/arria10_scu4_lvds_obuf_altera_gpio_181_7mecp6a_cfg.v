@@ -1,0 +1,5 @@
+config arria10_scu4_lvds_obuf_altera_gpio_181_7mecp6a_cfg;
+		design arria10_scu4_lvds_obuf_altera_gpio_181_7mecp6a;
+		instance arria10_scu4_lvds_obuf_altera_gpio_181_7mecp6a.core use arria10_scu4_lvds_obuf_altera_gpio_core20_181.altera_gpio;
+endconfig
+

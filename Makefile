@@ -22,6 +22,18 @@ ECA=$(PWD)/ip_cores/wr-cores/modules/wr_eca
 export ECA
 PATH:=$(PWD)/toolchain/bin:$(PATH)
 
+# This is mainly used to sort QSF files. After sorting it adds and deletes a "GIT marker" which will mark the file as changed.
+# Additionally all empty lines will be removed.
+# Example usage: 
+#   $(call sort_file, "./syn/gsi_vetar2a/ee_butis/vetar2a.qsf")
+define sort_file
+	sort $(1) >> temp_sorted
+	mv temp_sorted $(1)
+	echo "GIT_MARKER" >> $(1)
+	sed -i 's/GIT_MARKER//g' $(1)
+	sed -i '/^$$/d' $(1)
+endef
+
 all:		etherbone tools sdbfs toolchain firmware driver
 
 gateware:	all pexarria5 exploder5 vetar2a vetar2a-ee-butis scu2 scu3 pmc microtca
@@ -151,6 +163,9 @@ scu3-clean::
 
 scu4::
 	$(MAKE) -C syn/gsi_scu/control4 PATH=$(PWD)/toolchain/bin:$(PATH) all
+
+scu4-sort:
+	$(call sort_file, "./syn/gsi_scu/control4/scu_control.qsf")
 
 scu4-clean::
 	$(MAKE) -C syn/gsi_scu/control4 PATH=$(PWD)/toolchain/bin:$(PATH) clean
