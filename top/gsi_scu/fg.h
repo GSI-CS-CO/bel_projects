@@ -1,10 +1,33 @@
+/*!
+ *  @file fg.h
+ *  @brief SCU-Function generator module for LM32.
+ *
+ *  @date 10.07.2019
+ *  @copyright (C) 2019 GSI Helmholtz Centre for Heavy Ion Research GmbH
+ *
+ *  @author Stefan Rauch perhaps...
+ *  @revision Ulrich Becker <u.becker@gsi.de>
+ *
+ ******************************************************************************
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 3 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library. If not, see <http://www.gnu.org/licenses/>.
+ ******************************************************************************
+ */
 #ifndef __FG_H_
 #define __FG_H_
 
 #include <stdint.h>
-#ifdef __lm32__
-#include <scu_bus.h>
-#endif
+
 #include <helper_macros.h>
 // 12 SIOs with dev busses and 1 mil extension
 #define   MAX_FG_MACROS     256
@@ -29,22 +52,22 @@
 #define MIL_EXT_SLOT  13
 #define DEV_SIO       0x20
 #define DEV_MIL_EXT   0x10
-#define FC_CNTRL_WR   0x14 << 8
-#define FC_COEFF_A_WR 0x15 << 8
-#define FC_COEFF_B_WR 0x16 << 8
-#define FC_SHIFT_WR   0x17 << 8
-#define FC_START_L_WR 0x18 << 8
-#define FC_START_H_WR 0x19 << 8
-#define FC_CNTRL_RD   0xa0 << 8
-#define FC_COEFF_A_RD 0xa1 << 8
-#define FC_COEFF_B_RD 0xa2 << 8
-#define FC_IRQ_STAT   0xc9 << 8
-#define FC_IRQ_MSK    0x12 << 8
-#define FC_IRQ_ACT_RD 0xa7 << 8
-#define FC_IRQ_ACT_WR 0x21 << 8
-#define FC_IFAMODE_WR 0x60 << 8
-#define FC_BLK_WR     0x6b << 8
-#define FC_ACT_RD     0x81 << 8
+#define FC_CNTRL_WR   (0x14 << 8)
+#define FC_COEFF_A_WR (0x15 << 8)
+#define FC_COEFF_B_WR (0x16 << 8)
+#define FC_SHIFT_WR   (0x17 << 8)
+#define FC_START_L_WR (0x18 << 8)
+#define FC_START_H_WR (0x19 << 8)
+#define FC_CNTRL_RD   (0xa0 << 8)
+#define FC_COEFF_A_RD (0xa1 << 8)
+#define FC_COEFF_B_RD (0xa2 << 8)
+#define FC_IRQ_STAT   (0xc9 << 8)
+#define FC_IRQ_MSK    (0x12 << 8)
+#define FC_IRQ_ACT_RD (0xa7 << 8)
+#define FC_IRQ_ACT_WR (0x21 << 8)
+#define FC_IFAMODE_WR (0x60 << 8)
+#define FC_BLK_WR     (0x6b << 8)
+#define FC_ACT_RD     (0x81 << 8)
 
 //#pragma pack(push, 1)
 struct param_set {
@@ -90,7 +113,7 @@ STATIC_ASSERT( sizeof( struct channel_buffer ) == sizeof( struct param_set ) * B
 #endif
 
 #ifdef __lm32__
-void scan_scu_bus(volatile unsigned short *base_adr, volatile unsigned int *mil_base, uint32_t *fglist, uint64_t *ext_id);
+void scan_all_fgs(volatile uint16_t *base_adr, volatile unsigned int *mil_base, uint32_t *fglist, uint64_t *ext_id);
 void init_buffers(struct channel_regs *cr, int channel, uint32_t *macro, volatile unsigned short* scub_base, volatile unsigned int* devb_base);
 #endif
 #endif

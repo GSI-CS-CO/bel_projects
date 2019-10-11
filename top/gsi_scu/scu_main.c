@@ -361,9 +361,9 @@ static inline void send_fg_param( const  unsigned int socket,
    blk_data[2] = pset.coeff_b;
    blk_data[3] = (pset.control & 0x3ffc0) >> 6;     // shift a 17..12 shift b 11..6
    blk_data[4] = pset.coeff_c & 0xffff;
-   blk_data[5] = (pset.coeff_c & 0xffff0000) >> 16; // data written with high word
+   blk_data[5] = (pset.coeff_c & 0xffff0000) >> BIT_SIZEOF(int16_t); // data written with high word
 
-   if ((socket & (DEV_MIL_EXT | DEV_SIO)) == 0)
+   if( (socket & (DEV_MIL_EXT | DEV_SIO)) == 0 )
    {
       g_pScub_base[OFFS(socket) + fg_base + FG_CNTRL]  = blk_data[0];
       g_pScub_base[OFFS(socket) + fg_base + FG_A]      = blk_data[1];
@@ -374,7 +374,7 @@ static inline void send_fg_param( const  unsigned int socket,
       // no setvalue for scu bus daq 
       *pSetvalue = 0;
    }
-   else if (socket & DEV_MIL_EXT)
+   else if( (socket & DEV_MIL_EXT) != 0 )
    {
       // save coeff_c as setvalue
       *pSetvalue = pset.coeff_c;
@@ -383,7 +383,7 @@ static inline void send_fg_param( const  unsigned int socket,
          dev_failure(status, socket & SCU_BUS_SLOT_MASK, __func__);
       // still in block mode !
    }
-   else if (socket & DEV_SIO)
+   else if( (socket & DEV_SIO) != 0 )
    {  // save coeff_c as setvalue
       *pSetvalue = pset.coeff_c;
       // transmit in one block transfer over the dev bus
@@ -401,7 +401,8 @@ static inline void send_fg_param( const  unsigned int socket,
 
 /*! ---------------------------------------------------------------------------
  * @brief Send signal REFILL to the SAFTLIB when the fifo level has
- *        the threshold reached.
+ *        the threshold reached. Helper function of function handle().
+ * @see handle
  * @param channel Channel of concerning function generator.
  */
 static void sendRefillSignalIfThreshold( const unsigned int channel )
@@ -411,27 +412,22 @@ static void sendRefillSignalIfThreshold( const unsigned int channel )
 }
 
 /*! ---------------------------------------------------------------------------
- * @brief Sends the signal STOP when the fifo is empty or
- *        STOP_NOT_EMPTY when the fifo is not empty to the SAFTLIB
- * @param channel Channel of concerning function generator.
- */
-static inline void sendStopSignal( const unsigned int channel )
-{
-   sendSignal( cbisEmpty(&g_shared.fg_regs[0], channel)? IRQ_DAT_STOP_EMPTY :
-                                                        IRQ_DAT_STOP_NOT_EMPTY,
-                                                                     channel );
-}
-
-/*! ---------------------------------------------------------------------------
+ * @brief Helper function of function handle().
+ * @see handle
  */
 static inline void makeStop( const unsigned int channel )
 {
-   sendStopSignal( channel );
+   sendSignal( cbisEmpty( &g_shared.fg_regs[0], channel )?
+                                                      IRQ_DAT_STOP_EMPTY :
+                                                      IRQ_DAT_STOP_NOT_EMPTY,
+               channel );
    disable_slave_irq( channel );
    g_shared.fg_regs[channel].state = STATE_STOPPED;
 }
 
 /*! ---------------------------------------------------------------------------
+ * @brief Helper function of function handle().
+ * @see handle
  */
 static inline void makeStart( const unsigned int channel )
 {
@@ -440,8 +436,8 @@ static inline void makeStart( const unsigned int channel )
 }
 
 /*! ---------------------------------------------------------------------------
- *  @brief decide how to react to the interrupt request from the function
- *        generator macro
+ *  @brief Decide how to react to the interrupt request from the function
+ *         generator macro.
  *  @param socket encoded slot number with the high bits for SIO / MIL_EXT
  *                distinction
  *  @param fg_base base address of the function generator macro
@@ -450,7 +446,7 @@ static inline void makeStart( const unsigned int channel )
 static void handle( const unsigned int socket,
                     const unsigned int fg_base,
                     const uint16_t irq_act_reg,
-                    signed int* setvalue )
+                    signed int* pSetvalue )
 {
    uint16_t cntrl_reg = 0;
    unsigned int channel;
@@ -475,7 +471,7 @@ static void handle( const unsigned int socket,
    {
       /* last cnt from from fg macro, read from LO address copies hardware counter to shadow reg */
       g_shared.fg_regs[channel].ramp_count = g_pScub_base[OFFS(socket) + fg_base + FG_RAMP_CNT_LO];
-      g_shared.fg_regs[channel].ramp_count |= g_pScub_base[OFFS(socket) + fg_base + FG_RAMP_CNT_HI] << 16;
+      g_shared.fg_regs[channel].ramp_count |= g_pScub_base[OFFS(socket) + fg_base + FG_RAMP_CNT_HI] << BIT_SIZEOF( uint16_t );
 
       if( (cntrl_reg & FG_RUNNING) == 0 )
       { // fg stopped
@@ -488,7 +484,7 @@ static void handle( const unsigned int socket,
             makeStart( channel );
          }
          sendRefillSignalIfThreshold( channel );
-         send_fg_param( socket, fg_base, cntrl_reg, setvalue );
+         send_fg_param( socket, fg_base, cntrl_reg, pSetvalue );
       }
    }
    else /* (socket & (DEV_MIL_EXT | DEV_SIO)) == 0 */
@@ -509,7 +505,7 @@ static void handle( const unsigned int socket,
          if( (irq_act_reg & (DEV_DRQ | DEV_STATE_IRQ)) != 0 )
          {
             sendRefillSignalIfThreshold( channel );
-            send_fg_param( socket, fg_base, irq_act_reg, setvalue);
+            send_fg_param( socket, fg_base, irq_act_reg, pSetvalue );
          }
       }
    } /* else of if (socket & (DEV_MIL_EXT | DEV_SIO)) == 0 */
@@ -638,56 +634,56 @@ static int configure_fg_macro( const unsigned int channel )
    if( (socket & (DEV_MIL_EXT | DEV_SIO)) == 0 )
    {                                      //scu bus slave
       g_pScub_base[SRQ_ENA] |= (1 << (socket-1));           // enable irqs for the slave
-      g_pScub_base[OFFS(socket) + SLAVE_INT_ACT] = 0xc000;  // clear all irqs
-      g_pScub_base[OFFS(socket) + SLAVE_INT_ENA] |= 0xc000; // enable fg1 and fg2 irq
+      g_pScub_base[OFFS(socket) + SLAVE_INT_ACT] =  (FG1_IRQ | FG2_IRQ); // clear all irqs
+      g_pScub_base[OFFS(socket) + SLAVE_INT_ENA] |= (FG1_IRQ | FG2_IRQ); // enable fg1 and fg2 irq
    }
    else if( (socket & DEV_MIL_EXT) != 0 )
    {
       if( (status = write_mil(g_pScu_mil_base, 1 << 13, FC_IRQ_MSK | dev)) != OKAY)
-         dev_failure(status, socket & SCU_BUS_SLOT_MASK, "enable dreq"); //enable Data-Request
+         dev_failure( status, socket & SCU_BUS_SLOT_MASK, "enable dreq"); //enable Data-Request
    }
    else  if( (socket & DEV_SIO) != 0)
    {
       g_pScub_base[SRQ_ENA] |= _SLOT_BIT_MASK();        // enable irqs for the slave
-      g_pScub_base[OFFS(socket & SCU_BUS_SLOT_MASK) + SLAVE_INT_ENA] = 0x0010; // enable receiving of drq
-      if ((status = scub_write_mil(g_pScub_base, socket & SCU_BUS_SLOT_MASK, 1 << 13, FC_IRQ_MSK | dev)) != OKAY)
-         dev_failure(status, socket & SCU_BUS_SLOT_MASK, "enable dreq"); //enable sending of drq
+      g_pScub_base[OFFS(socket & SCU_BUS_SLOT_MASK) + SLAVE_INT_ENA] = DREQ; // enable receiving of drq
+      if( (status = scub_write_mil(g_pScub_base, socket & SCU_BUS_SLOT_MASK, 1 << 13, FC_IRQ_MSK | dev)) != OKAY)
+         dev_failure( status, socket & SCU_BUS_SLOT_MASK, "enable dreq"); //enable sending of drq
    }
    #undef _SLOT_BIT_MASK
 
-   unsigned int fg_base, dac_base;
-    /* which macro are we? */
-   if( (socket & (DEV_MIL_EXT | DEV_SIO)) == 0 )
-   {   //scu bus slave
-      if (dev == 0)
-      {
-         fg_base = FG1_BASE;
-         dac_base = DAC1_BASE;
-      }
-      else if (dev == 1)
-      {
-         fg_base = FG2_BASE;
-         dac_base = DAC2_BASE;
-      }
-      else
-         return -1;
-   }
-
+   unsigned int fg_base;
    /* fg mode and reset */
    if( (socket & (DEV_MIL_EXT | DEV_SIO)) == 0 )
    {   //scu bus slave
+      unsigned int dac_base;
+      switch( dev )
+      {
+         case 0:
+         {
+            fg_base = FG1_BASE;
+            dac_base = DAC1_BASE;
+            break;
+         }
+         case 1:
+         {
+            fg_base = FG2_BASE;
+            dac_base = DAC2_BASE;
+            break;
+         }
+         default: return -1;
+      }
       g_pScub_base[OFFS(socket) + dac_base + DAC_CNTRL] = 0x10;   // set FG mode
       g_pScub_base[OFFS(socket) + fg_base + FG_RAMP_CNT_LO] = 0;  // reset ramp counter
    }
    else if( (socket & DEV_MIL_EXT) != 0 )
    {
-      if ((status = write_mil(g_pScu_mil_base, 0x1, FC_IFAMODE_WR | dev)) != OKAY)
-         dev_failure (status, 0, "set FG mode"); // set FG mode
+      if( (status = write_mil(g_pScu_mil_base, 0x1, FC_IFAMODE_WR | dev)) != OKAY)
+         dev_failure( status, 0, "set FG mode"); // set FG mode
    }
    else if( (socket & DEV_SIO) != 0 )
    {
-      if ((status = scub_write_mil(g_pScub_base, socket & SCU_BUS_SLOT_MASK, 0x1, FC_IFAMODE_WR | dev)) != OKAY)
-         dev_failure (status, socket & SCU_BUS_SLOT_MASK, "set FG mode"); // set FG mode
+      if( (status = scub_write_mil(g_pScub_base, socket & SCU_BUS_SLOT_MASK, 0x1, FC_IFAMODE_WR | dev)) != OKAY)
+         dev_failure( status, socket & SCU_BUS_SLOT_MASK, "set FG mode"); // set FG mode
    }
 
    uint16_t cntrl_reg_wr;
@@ -702,7 +698,7 @@ static int configure_fg_macro( const unsigned int channel )
       blk_data[2] = pset.coeff_b;
       blk_data[3] = (pset.control & 0x3ffc0) >> 6;     // shift a 17..12 shift b 11..6
       blk_data[4] = pset.coeff_c & 0xffff;
-      blk_data[5] = (pset.coeff_c & 0xffff0000) >> 16; // data written with high word
+      blk_data[5] = (pset.coeff_c & 0xffff0000) >> BIT_SIZEOF(uint16_t);; // data written with high word
 
       if( (socket & (DEV_MIL_EXT | DEV_SIO)) == 0 )
       {
@@ -743,7 +739,7 @@ static int configure_fg_macro( const unsigned int channel )
    if( (socket & (DEV_MIL_EXT | DEV_SIO)) == 0 )
    {
       g_pScub_base[OFFS(socket) + fg_base + FG_TAG_LOW] = g_shared.fg_regs[channel].tag & 0xffff;
-      g_pScub_base[OFFS(socket) + fg_base + FG_TAG_HIGH] = g_shared.fg_regs[channel].tag >> 16;
+      g_pScub_base[OFFS(socket) + fg_base + FG_TAG_HIGH] = g_shared.fg_regs[channel].tag >> BIT_SIZEOF(uint16_t);
       g_pScub_base[OFFS(socket) + fg_base + FG_CNTRL] |= FG_ENABLED;
    }
    else if( (socket & DEV_MIL_EXT) != 0 )
@@ -793,7 +789,7 @@ static void scanFgs( void )
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Waddress-of-packed-member"
 #endif
-   scan_scu_bus( g_pScub_base,
+   scan_all_fgs( g_pScub_base,
                  g_pScu_mil_base,
                  &g_shared.fg_macros[0],
                  &g_shared.ext_id);
