@@ -6,11 +6,11 @@
 #   make STAGING=/tmp/package PREFIX=/usr install
 #   ... will compile the programs to expect installation into /usr, but
 #       will actually install them into /tmp/package/usr for zipping.
-STAGING     ?=
-PREFIX      ?= /usr/local
-SYSCONFDIR  ?= /etc
-PWD         := $(shell pwd)
-EXTRA_FLAGS ?=
+STAGING      ?=
+PREFIX       ?= /usr/local
+SYSCONFDIR   ?= /etc
+PWD          := $(shell pwd)
+EXTRA_FLAGS  ?=
 export EXTRA_FLAGS
 
 # Set variables that are passed down to sub-makes
@@ -21,6 +21,18 @@ export TLU
 ECA=$(PWD)/ip_cores/wr-cores/modules/wr_eca
 export ECA
 PATH:=$(PWD)/toolchain/bin:$(PATH)
+
+# This is mainly used to sort QSF files. After sorting it adds and deletes a "GIT marker" which will mark the file as changed.
+# Additionally all empty lines will be removed.
+# Example usage: 
+#   $(call sort_file, "./syn/gsi_vetar2a/ee_butis/vetar2a.qsf")
+define sort_file
+	sort $(1) >> temp_sorted
+	mv temp_sorted $(1)
+	echo "GIT_MARKER" >> $(1)
+	sed -i 's/GIT_MARKER//g' $(1)
+	sed -i '/^$$/d' $(1)
+endef
 
 all:		etherbone tools sdbfs toolchain firmware driver
 
@@ -140,12 +152,18 @@ avsoc-clean::
 scu2:		firmware
 	$(MAKE) -C syn/gsi_scu/control2 all
 
+scu2-sort:
+	$(call sort_file, "./syn/gsi_scu/control2/scu_control.qsf")
+  
 scu2-clean::
 	$(MAKE) -C syn/gsi_scu/control2 clean
 
 scu3:		firmware
 	$(MAKE) -C syn/gsi_scu/control3 all
 
+scu3-sort:
+	$(call sort_file, "./syn/gsi_scu/control3/scu_control.qsf")
+	
 scu3-clean::
 	$(MAKE) -C syn/gsi_scu/control3 clean
 
@@ -157,12 +175,18 @@ vetar-clean::
 
 vetar2a:	firmware
 	$(MAKE) -C syn/gsi_vetar2a/wr_core_demo all
+	
+vetar2a-sort:
+	$(call sort_file, "./syn/gsi_vetar2a/wr_core_demo/vetar2a.qsf")
 
 vetar2a-clean::
 	$(MAKE) -C syn/gsi_vetar2a/wr_core_demo clean
 
 vetar2a-ee-butis:	firmware
 	$(MAKE) -C syn/gsi_vetar2a/ee_butis all
+	
+vetar2a-ee-butis-sort:
+	$(call sort_file, "./syn/gsi_vetar2a/ee_butis/vetar2a.qsf")
 
 vetar2a-ee-butis-clean::
 	$(MAKE) -C syn/gsi_vetar2a/ee_butis clean
@@ -176,23 +200,35 @@ exploder-clean::
 pexarria5:	firmware
 	$(MAKE) -C syn/gsi_pexarria5/control all
 
+pexarria5-sort:
+	$(call sort_file, "./syn/gsi_pexarria5/control/pci_control.qsf")
+
 pexarria5-clean::
 	$(MAKE) -C syn/gsi_pexarria5/control clean
 
 ftm:	firmware
 	$(MAKE) -C syn/gsi_pexarria5/ftm all
+	
+ftm-sort:
+	$(call sort_file, "./syn/gsi_pexarria5/ftm/ftm.qsf")
 
 ftm-clean::
 	$(MAKE) -C syn/gsi_pexarria5/ftm clean
 
 microtca:	firmware
 	$(MAKE) -C syn/gsi_microtca/control all
+	
+microtca-sort:
+	$(call sort_file, "./syn/gsi_microtca/control/microtca_control.qsf")
 
 microtca-clean::
 	$(MAKE) -C syn/gsi_microtca/control clean
 
 exploder5:	firmware
 	$(MAKE) -C syn/gsi_exploder5/exploder5_csco_tr all
+
+exploder5-sort:
+	$(call sort_file, "./syn/gsi_exploder5/exploder5_csco_tr/exploder5_csco_tr.qsf")
 
 exploder5-clean::
 	$(MAKE) -C syn/gsi_exploder5/exploder5_csco_tr clean
@@ -223,6 +259,9 @@ sio3-clean::
 
 pmc:	firmware
 	$(MAKE) -C syn/gsi_pmc/control all
+	
+pmc-sort:
+	$(call sort_file, "./syn/gsi_pmc/control/pci_pmc.qsf")
 
 pmc-clean::
 	$(MAKE) -C syn/gsi_pmc/control clean
