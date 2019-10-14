@@ -402,6 +402,7 @@ set_global_assignment -name VHDL_FILE ../../../modules/lvds/altera_lvds_pkg.vhd 
 set_global_assignment -name VHDL_FILE ../../../modules/lvds/altera_lvds_rx.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/lvds/altera_lvds_tx.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/lvds/altera_lvds.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/lvds/arria10_lvds_pkg.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/lvds/arria2_lvds_pkg.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/lvds/arria5_lvds_pkg.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/mbox/mbox_pkg.vhd -library work
