@@ -34,84 +34,86 @@
 #include <mini_sdb.h>
 
 #define OFFS(SLOT) ((SLOT) * (1 << 16))
+         // fglist[count] = 16;           // output bits
+         // fglist[count] |= fg_ver << 8; // version
+         // fglist[count] |= dev << 16;   // device: macro number inside of the slave card
+         // fglist[count] |= socked << 24;  // slot
 
-int add_to_fglist(int slot, int dev, int cid_sys, int cid_group, int fg_ver, uint32_t *fglist)
+/*! ---------------------------------------------------------------------------
+ */
+static  void fgInitMacro( FG_MACRO_T* pMacro,
+                                const uint8_t outputBits,
+                                const uint8_t version,
+                                const uint8_t device, /* mil extension */
+                                const uint8_t socket )
 {
-  int found = 0;
-  int count = 0;
+#ifdef CONFIG_FG_MACRO_STRUCT
+   pMacro->outputBits  = outputBits;
+   pMacro->version     = version;
+   pMacro->device      = device;
+   pMacro->socket      = socket;
+#else
+   *pMacro = outputBits | (version << 8) | (device << 16) | (socket << 24);
+#endif
+}
+
+
+static int add_to_fglist( const uint8_t socked, const uint8_t dev,
+                          const int cid_sys, const int cid_group,
+                          const uint8_t fg_ver,
+                          FG_MACRO_T* fglist )
+{
+   int count = 0;
 
   /* find first free slot */
-  while ((fglist[count] != 0) && (count < MAX_FG_MACROS)) {
-    count++;
-  }
-  
-  if (cid_sys == SYS_CSCO || cid_sys == SYS_PBRF || cid_sys == SYS_LOEP) {
-    if (cid_group == GRP_ADDAC1 ||
-        cid_group == GRP_ADDAC2 ||
-        cid_group == GRP_DIOB) {
-      /* two FGs */
-      if (count < MAX_FG_MACROS) {
-        fglist[count] = 16;           // output bits
-        fglist[count] |= fg_ver << 8; // version
-        fglist[count] |= 0x0 << 16;   // device: macro number inside of the slave card
-        fglist[count] |= slot << 24;  // slot
-        count++;                      // next macro
-        found++;
-      }
-      if (count < MAX_FG_MACROS) {
-        fglist[count] = 16;           // output bits
-        fglist[count] |= fg_ver << 8; // version
-        fglist[count] |= 0x1 << 16;   // device: macro number inside of the slave card
-        fglist[count] |= slot << 24;  // slot
-        count++;                      // next macro
-        found++;
-      }
-     
-    /* ACU/MFU */
-    } else if (cid_group == GRP_MFU) {
-      /* two FGs */
-      if (count < MAX_FG_MACROS) {
-        fglist[count] = 20;           // output bits
-        fglist[count] |= fg_ver << 8; // version
-        fglist[count] |= 0x0 << 16;   // device: macro number inside of the slave card
-        fglist[count] |= slot << 24;  // slot
-        count++;                      // next macro
-        found++;
-      }
-      if (count < MAX_FG_MACROS) {
-        fglist[count] = 20;           // output bits
-        fglist[count] |= fg_ver << 8; // version
-        fglist[count] |= 0x1 << 16;   // device: macro number inside of the slave card
-        fglist[count] |= slot << 24;  // slot
-        count++;                      // next macro
-        found++;
-      }
-    
-    /* FIB */ 
-    } else if (cid_group == GRP_FIB_DDS) {
-      /* one FG */
-      if (count < MAX_FG_MACROS) {
-        fglist[count] = 32;           // output bits
-        fglist[count] |= fg_ver << 8; // version
-        fglist[count] |= 0x0 << 16;   // device: macro number inside of the slave card
-        fglist[count] |= slot << 24;  // slot
-        count++;                      // next macro
-        found++;
-      }
-    /* IFA8 */
-    } else if (cid_group == GRP_IFA8) {
-      if (count < MAX_FG_MACROS) {
-        fglist[count] = 16;           // output bits
-        fglist[count] |= fg_ver << 8; // version
-        fglist[count] |= dev << 16;   // device: macro number inside of the slave card
-        fglist[count] |= slot << 24;  // slot
-        count++;                      // next macro
-        found++;
-      }
-    }
-  }
+#ifdef CONFIG_FG_MACRO_STRUCT
+   while( (fglist[count].outputBits != 0) && (count < MAX_FG_MACROS) )
+      count++;
+#else
+   while( (fglist[count] != 0) && (count < MAX_FG_MACROS) )
+      count++;
+#endif
 
-  return count; //return number of found fgs
+   if( !(cid_sys == SYS_CSCO || cid_sys == SYS_PBRF || cid_sys == SYS_LOEP) )
+      return count;
+
+   switch( cid_group )
+   {
+      case GRP_ADDAC1: /* directly to next case */
+      case GRP_ADDAC2: /* directly to next case */
+      case GRP_DIOB:
+      {  /* two FG */
+         if( count < MAX_FG_MACROS )
+            fgInitMacro( &fglist[count++], 16, fg_ver, 0, socked );
+         if( count < MAX_FG_MACROS )
+            fgInitMacro( &fglist[count++], 16, fg_ver, 1, socked );
+         /* ACU/MFU */
+         break;
+      }
+      case GRP_MFU: /* two FGs */
+      {
+         if( count < MAX_FG_MACROS )
+            fgInitMacro( &fglist[count++], 20, fg_ver, 0, socked );
+         if( count < MAX_FG_MACROS )
+            fgInitMacro( &fglist[count++], 20, fg_ver, 1, socked );
+         /* FIB */
+         break;
+      }
+      case GRP_FIB_DDS: /* one FG */
+      {
+         if( count < MAX_FG_MACROS )
+            fgInitMacro( &fglist[count++], 32, fg_ver, 0, socked );
+         /* IFA8 */
+         break;
+      }
+      case GRP_IFA8: /* one FG */
+      {
+         if( count < MAX_FG_MACROS )
+            fgInitMacro( &fglist[count++], 16, fg_ver, dev, socked );
+         break;
+      }
+   }
+   return count; //return number of found fgs
 }
 
 /*! ---------------------------------------------------------------------------
@@ -119,7 +121,7 @@ int add_to_fglist(int slot, int dev, int cid_sys, int cid_group, int fg_ver, uin
  *        connected via SCU-bus-to-MIL-adapter
  */
 static inline
-void scanScuBusFgsViaMil( volatile uint16_t *scub_adr, uint32_t *fglist )
+void scanScuBusFgsViaMil( volatile uint16_t *scub_adr, FG_MACRO_T* fglist )
 {
    SCUBUS_SLAVE_FLAGS_T slotFlags;
 
@@ -160,7 +162,7 @@ void scanScuBusFgsViaMil( volatile uint16_t *scub_adr, uint32_t *fglist )
  *        function generators
  */
 static inline
-void scanScuBusFgsDirect( volatile uint16_t *scub_adr, uint32_t *fglist )
+void scanScuBusFgsDirect( volatile uint16_t *scub_adr, FG_MACRO_T* fglist )
 {
    SCUBUS_SLAVE_FLAGS_T slotFlags;
    slotFlags  = scuBusFindSpecificSlaves( (void*)scub_adr, SYS_CSCO, 38 );
@@ -180,68 +182,17 @@ void scanScuBusFgsDirect( volatile uint16_t *scub_adr, uint32_t *fglist )
  * @brief Scans the whole SCU-bus for all kinda of function generators.
  */
 static inline
-void scanScuBusFgs( volatile uint16_t *scub_adr, uint32_t *fglist )
+void scanScuBusFgs( volatile uint16_t *scub_adr, FG_MACRO_T* fglist )
 {
-
-#if 1
    scanScuBusFgsDirect( scub_adr, fglist );
    scanScuBusFgsViaMil( scub_adr, fglist );
-#else
-   int slot;
-   int cid_group;
-   int cid_sys;
-   int fg_ver;
-   uint16_t ifa_adr;
-   uint16_t ext_clk_reg;
-   int16_t ifa_id, ifa_vers, fg_vers;
-   for( slot = 1; slot <= MAX_SCU_SLAVES; slot++ )
-   {
-      scub_adr[OFFS(slot) + 0x10] = 0; //clear echo reg
-      if( scub_adr[OFFS(slot) + 0x10] == SCUBUS_INVALID_VALUE )
-         continue;
-      cid_group     = scub_adr[OFFS(slot) + CID_GROUP];
-      cid_sys       = scub_adr[OFFS(slot) + CID_SYS];
-//      slave_version = scub_adr[OFFS(i) + SLAVE_VERSION];
-      fg_ver        = scub_adr[OFFS(slot) + FG1_BASE + FG_VER];
-
-      ext_clk_reg = scub_adr[OFFS(slot) + SLAVE_EXT_CLK];          //read clk status from slave
-      if(ext_clk_reg & 0x1)
-         scub_adr[OFFS(slot) + SLAVE_EXT_CLK] = 0x1;                //switch clk to sys clk from scu bus
-
-     if( cid_sys != SYS_CSCO )
-        continue;
-
-     // if slave is a sio3, scan for ifa cards
-      if( cid_group == GRP_SIO3 || cid_group == GRP_SIO2 )
-      {
-        // reset all taskslots by reading value back
-         scub_reset_mil(scub_adr, slot);
-         for( ifa_adr = 0; ifa_adr < IFK_MAX_ADR; ifa_adr++ )
-         {
-            if( scub_read_mil(scub_adr, slot, &ifa_id, IFA_ID << 8 | ifa_adr) != OKAY)     continue;
-            if( scub_read_mil(scub_adr, slot, &ifa_vers, IFA_VERS << 8 | ifa_adr) != OKAY) continue;
-            if( scub_read_mil(scub_adr, slot, &fg_vers, 0xa6 << 8 | ifa_adr) != OKAY)      continue;
-
-            if (((0xffff & fg_vers) >= 0x2) && ((0xffff & ifa_id) == 0xfa00) && ((0xffff & ifa_vers) >= 0x1900))
-            {
-               add_to_fglist(DEV_SIO | slot, ifa_adr, SYS_CSCO, GRP_IFA8, 0xffff & fg_vers, fglist);
-               mprintf( "M-slot: %d\n", slot );
-             //scub_write_mil(scub_adr, slot, 0x100, 0x12 << 8 | ifa_adr); // clear PUR
-            }
-         }
-         continue;
-      }
-      mprintf( "S-slot: %d, group = %d\n", slot, cid_group );
-      add_to_fglist( slot, ifa_adr, cid_sys, cid_group, fg_ver, fglist);
-   }
-#endif
 }
 
 /*! ---------------------------------------------------------------------------
  * @brief Scans the MIL extension for function generators
  */
 static inline
-void scanExtMilFgs( volatile unsigned int *mil_addr, uint32_t *fglist, uint64_t *ext_id )
+void scanExtMilFgs( volatile unsigned int *mil_addr, FG_MACRO_T* fglist, uint64_t *ext_id )
 {
    int16_t ifa_id, ifa_vers, fg_vers;
    uint16_t ifa_adr;
@@ -277,7 +228,7 @@ void scanExtMilFgs( volatile unsigned int *mil_addr, uint32_t *fglist, uint64_t 
  */
 void scan_all_fgs( volatile uint16_t *scub_adr,
                    volatile unsigned int *mil_addr,
-                   uint32_t *fglist, uint64_t *ext_id )
+                   FG_MACRO_T* fglist, uint64_t *ext_id )
 {
    scanScuBusFgs( scub_adr, fglist );
    scanExtMilFgs( mil_addr, fglist, ext_id );
@@ -286,38 +237,65 @@ void scan_all_fgs( volatile uint16_t *scub_adr,
 /*! ---------------------------------------------------------------------------
  * @brief  init the buffers for MAX_FG_CHANNELS
  */
-void init_buffers(struct channel_regs *cr, int channel, uint32_t *fg_macros,
+void init_buffers(struct channel_regs *cr, unsigned int channel, FG_MACRO_T* fg_macros,
                   volatile unsigned short* scub_base, volatile unsigned int* devb_base)
 {
-  uint32_t slot;
-  uint32_t dev;
-  uint32_t macro;
-  if( channel >= 0 && channel < MAX_FG_CHANNELS) {
-    cr[channel].wr_ptr = 0;
-    cr[channel].rd_ptr = 0;
-    cr[channel].state = 0;
-    cr[channel].ramp_count = 0;
+   uint32_t socket;
+   uint32_t dev;
+
+   if( channel > MAX_FG_CHANNELS )
+      return;
+
+   cr[channel].wr_ptr = 0;
+   cr[channel].rd_ptr = 0;
+   cr[channel].state = 0;
+   cr[channel].ramp_count = 0;
+
     //reset hardware
-    reset_mil(devb_base);
-    scub_reset_mil(scub_base, slot);
-    if (cr[channel].macro_number >= 0) {    //there is a macro assigned to that channel
-      macro = cr[channel].macro_number;
-      slot = fg_macros[macro] >> 24;
-      dev = (fg_macros[macro] >> 16) & 0xff;
-      //mprintf("reset fg %d in slot %d\n", device, slot);
-      /* scub slave */
-      if ((slot & (DEV_MIL_EXT | DEV_SIO)) == 0) {
-        if (dev == 0) {
-          scub_base[OFFS(slot) + FG1_BASE + FG_CNTRL] = 0x1; // reset fg
-        } else if (dev == 1) {
-          scub_base[OFFS(slot) + FG2_BASE + FG_CNTRL] = 0x1; // reset fg
-        }
-      /* mil extension */
-      } else if (slot & DEV_MIL_EXT) {
-        write_mil(devb_base, 0x1, FC_CNTRL_WR | dev); // reset fg 
-      } else if (slot & DEV_SIO) {
-        scub_write_mil(scub_base, slot & 0xf, 0x1, FC_CNTRL_WR | dev); // reset fg
+   reset_mil(devb_base);
+   scub_reset_mil(scub_base, socket);
+   if( cr[channel].macro_number < 0)
+      return;
+
+   //there is a macro assigned to that channel
+   uint32_t macro;
+   macro = cr[channel].macro_number;
+
+#ifdef CONFIG_FG_MACRO_STRUCT
+   socket = fg_macros[macro].socket;
+   dev    = fg_macros[macro].device;
+#else
+   socket = fg_macros[macro] >> 24;
+   dev = (fg_macros[macro] >> 16) & 0xff;
+#endif
+   //mprintf("reset fg %d in socked %d\n", device, socked);
+   /* scub slave */
+   if( (socket & (DEV_MIL_EXT | DEV_SIO)) == 0 )
+   {
+      if( dev == 0 )
+      {
+         scub_base[OFFS(socket) + FG1_BASE + FG_CNTRL] = 0x1; // reset fg
+         return;
       }
-    }
-  }
+      if( dev == 1 )
+      {
+         scub_base[OFFS(socket) + FG2_BASE + FG_CNTRL] = 0x1; // reset fg
+      }
+      return;
+   }
+
+   /* mil extension */
+   if (socket & DEV_MIL_EXT)
+   {
+      write_mil(devb_base, 0x1, FC_CNTRL_WR | dev); // reset fg
+      return;
+   }
+
+   if (socket & DEV_SIO)
+   {
+      scub_write_mil(scub_base, socket & 0xf, 0x1, FC_CNTRL_WR | dev); // reset fg
+   }
 }
+
+/*================================== EOF ====================================*/
+

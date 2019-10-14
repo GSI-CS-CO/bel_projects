@@ -125,7 +125,7 @@ static inline void sendSignal( const SIGNAL_T sig, const unsigned int channel )
 /*! ---------------------------------------------------------------------------
  * @brief Returns the macro number of the given channel.
  */
-static inline uint32_t _get_macro_number( unsigned int channel )
+static inline FG_MACRO_T _get_macro_number( unsigned int channel )
 {
    return g_shared.fg_macros[g_shared.fg_regs[channel].macro_number];
 }
@@ -135,7 +135,11 @@ static inline uint32_t _get_macro_number( unsigned int channel )
  */
 static inline unsigned int _get_socket( unsigned int channel )
 {
+#ifdef CONFIG_FG_MACRO_STRUCT
+   return _get_macro_number( channel ).socket;
+#else
    return getMilDaqLocationByChannel( _get_macro_number( channel ) );
+#endif
 }
 
 /*! ---------------------------------------------------------------------------
@@ -143,7 +147,11 @@ static inline unsigned int _get_socket( unsigned int channel )
  */
 static inline unsigned int _get_dev( unsigned int channel )
 {
+#ifdef CONFIG_FG_MACRO_STRUCT
+   return _get_macro_number( channel ).device;
+#else
    return getMilDaqAdressByChannel(_get_macro_number( channel ));
+#endif
 }
 
 /*! ---------------------------------------------------------------------------
@@ -763,27 +771,49 @@ static int configure_fg_macro( const unsigned int channel )
 /*! ---------------------------------------------------------------------------
  * @brief Prints all found function generators.
  */
+#ifdef CONFIG_FG_MACRO_STRUCT
+static inline void printFgs( void )
+{
+   for( unsigned int  i = 0; i < ARRAY_SIZE( g_shared.fg_macros ); i++ )
+   {
+      if( g_shared.fg_macros[i].outputBits == 0 )
+         break;
+      mprintf( "fg-%d-%d ver: %d output-bits: %d\n",
+               g_shared.fg_macros[i].socket,
+               g_shared.fg_macros[i].device,
+               g_shared.fg_macros[i].version,
+               g_shared.fg_macros[i].outputBits);
+   }
+}
+#else
 static inline void printFgs( void )
 {
    for( unsigned int  i = 0; i < ARRAY_SIZE( g_shared.fg_macros ); i++ )
    { // hi..lo bytes: socket, device, version, output-bits
       if( g_shared.fg_macros[i] == 0 )
-         continue;
+         break; //continue;
       mprintf( "fg-%d-%d ver: %d output-bits: %d\n",
                getMilDaqLocationByChannel( g_shared.fg_macros[i] ),
                getMilDaqAdressByChannel( g_shared.fg_macros[i] ),
                getFgMacroVersion( g_shared.fg_macros[i] ),
                getFgOutputBits( g_shared.fg_macros[i] ));
+
    }
 }
-
+#endif
 /*! ---------------------------------------------------------------------------
  * @brief Scans for fgs on mil extension and scu bus.
  */
 static void scanFgs( void )
 {
+
+#ifdef CONFIG_FG_MACRO_STRUCT
+   for( unsigned int i = 0; i < ARRAY_SIZE( g_shared.fg_macros ); i++ )
+      g_shared.fg_macros[i].outputBits = 0;
+#else
    for( unsigned int i = 0; i < ARRAY_SIZE( g_shared.fg_macros ); i++ )
       g_shared.fg_macros[i] = 0;
+#endif
 
 #if __GNUC__ >= 9
   #pragma GCC diagnostic push
@@ -1314,7 +1344,7 @@ static void scu_bus_handler( register TaskType* pThis UNUSED )
  * @param actValue Actual value.
  * @param setValue Set-value.
  */
-static void pushDaqData( uint32_t channel, uint64_t timestamp,
+static void pushDaqData( FG_MACRO_T fgMacro, uint64_t timestamp,
                          uint16_t actValue, uint32_t setValue )
 {
 #ifdef CONFIG_LAGE_TIME_DETECT
@@ -1331,14 +1361,14 @@ static void pushDaqData( uint32_t channel, uint64_t timestamp,
    pl.item.timestamp = timestamp;
    pl.item.setValue = setValue >> (BIT_SIZEOF(uint32_t)/sizeof(MIL_DAQ_T));
    pl.item.actValue = actValue;
-   pl.item.channel = channel;
+   pl.item.channel = *((uint32_t*)&fgMacro);
 #else
    struct daq d;
 
    d.actvalue = actValue;
    d.tmstmp_l = timestamp & 0xffffffff;
    d.tmstmp_h = timestamp >> BIT_SIZEOF(uint32_t);
-   d.channel  = channel;
+   d.channel  = *((uint32_t*)&fgMacro);
    d.setvalue = setValue;
    add_daq_msg(&g_shared.daq_buf, d);
 #endif

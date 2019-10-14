@@ -30,6 +30,30 @@
 
 #include <helper_macros.h>
 // 12 SIOs with dev busses and 1 mil extension
+
+//#define CONFIG_FG_MACRO_STRUCT
+
+#ifdef CONFIG_FG_MACRO_STRUCT
+typedef struct PACKED_SIZE
+{
+   uint8_t socket;
+   uint8_t device;
+   uint8_t version;
+   uint8_t outputBits;
+} FG_MACRO_T;
+
+#ifndef __DOXYGEN__
+STATIC_ASSERT( offsetof( FG_MACRO_T, socket ) == 0 );
+STATIC_ASSERT( offsetof( FG_MACRO_T, device ) == offsetof( FG_MACRO_T, socket ) + sizeof( uint8_t ) );
+STATIC_ASSERT( offsetof( FG_MACRO_T, outputBits ) == offsetof( FG_MACRO_T, version ) + sizeof( uint8_t ) );
+STATIC_ASSERT( sizeof( FG_MACRO_T ) == sizeof( uint32_t ) );
+#endif
+#else
+
+typedef uint32_t FG_MACRO_T;
+
+#endif
+
 #define   MAX_FG_MACROS     256
 #define   MAX_FG_CHANNELS   16
 #define   MAX_FG_PER_SLAVE  2
@@ -113,7 +137,7 @@ STATIC_ASSERT( sizeof( struct channel_buffer ) == sizeof( struct param_set ) * B
 #endif
 
 #ifdef __lm32__
-void scan_all_fgs(volatile uint16_t *base_adr, volatile unsigned int *mil_base, uint32_t *fglist, uint64_t *ext_id);
-void init_buffers(struct channel_regs *cr, int channel, uint32_t *macro, volatile unsigned short* scub_base, volatile unsigned int* devb_base);
+void scan_all_fgs(volatile uint16_t *base_adr, volatile unsigned int *mil_base, FG_MACRO_T* fglist, uint64_t *ext_id);
+void init_buffers(struct channel_regs *cr, unsigned int channel, FG_MACRO_T *macro, volatile unsigned short* scub_base, volatile unsigned int* devb_base);
 #endif
 #endif

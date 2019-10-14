@@ -116,7 +116,7 @@ typedef struct PACKED_SIZE
    uint32_t fg_mb_slot;
    uint32_t fg_num_channels;
    uint32_t fg_buffer_size;
-   uint32_t fg_macros[MAX_FG_MACROS]; // hi..lo bytes: slot, device, version, output-bits
+   FG_MACRO_T fg_macros[MAX_FG_MACROS]; // hi..lo bytes: slot, device, version, output-bits
    struct channel_regs fg_regs[MAX_FG_CHANNELS];
    struct channel_buffer fg_buffer[MAX_FG_CHANNELS];
 #ifdef CONFIG_MIL_DAQ_USE_RAM
@@ -273,6 +273,12 @@ STATIC_ASSERT( offsetof( SCU_SHARED_DATA_T, fg_buffer ) ==
      , .daq_buf = {0}
 #endif
 
+#ifdef CONFIG_FG_MACRO_STRUCT
+  #define __FG_MACRO_INITIALIZER .fg_macros = {{0,0,0,0}}
+#else
+  #define __FG_MACRO_INITIALIZER .fg_macros = {0}
+#endif
+
 /*! ---------------------------------------------------------------------------
  * @brief Initializer of the entire LM32 shared memory of application
  *        scu_control.
@@ -290,7 +296,7 @@ STATIC_ASSERT( offsetof( SCU_SHARED_DATA_T, fg_buffer ) ==
    .fg_mb_slot       = SCU_INVALID_VALUE,  \
    .fg_num_channels  = MAX_FG_CHANNELS,    \
    .fg_buffer_size   = BUFFER_SIZE,        \
-   .fg_macros        = {0}                 \
+   __FG_MACRO_INITIALIZER                  \
    __MIL_DAQ_SHARAD_MEM_INITIALIZER_ITEM   \
    __DAQ_SHARAD_MEM_INITIALIZER_ITEM       \
 }
