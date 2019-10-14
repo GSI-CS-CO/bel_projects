@@ -1478,6 +1478,7 @@ END COMPONENT hw_interlock;
   signal FQ_rst:                  std_logic;
   signal RF_abort:                std_logic;
   signal KO_abort:                std_logic;
+  signal TS_abort:                std_logic;
   
   signal quench_out:              std_logic_vector (4 downto 0);
 
@@ -3921,6 +3922,8 @@ P_IOBP_LED_ID_Loop:  process (clk_sys, Ena_Every_250ns, rstn_sys, IOBP_state)
     end  process Userstation_select;
               
     FQ_rst   <= spill_case_rst(0) or spill_case_rst(1) or spill_case_rst(2)  or spill_case_rst(3) ;
+    
+    TS_abort <= '0' when ((spill_case_abort = "1111") or  (KO_abort = '1')) else '1';
               
 quench_test_all : quench_detection
     Port map( clk => clk_sys,
@@ -6766,7 +6769,7 @@ BEGIN
      
       spill_req <=  Deb60_in(7) & Deb60_in(2) & Deb60_in(5) & Deb60_in(0);
       spill_pause <= "00" & Deb60_in(6) & Deb60_in(1);
-      IOBP_Output <= "00000000" & KO_abort & RF_abort  & FQ_rst & FQ_abort;
+      IOBP_Output <= "0000" & TS_Abort & "000" & KO_abort & RF_abort  & FQ_rst & FQ_abort;
       
       UIO_Out(0)    <= spill_abort_HWI_out(0);
       UIO_Out(1)    <= spill_abort_HWI_out(1); 
