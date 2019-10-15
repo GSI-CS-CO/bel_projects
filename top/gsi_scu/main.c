@@ -100,9 +100,10 @@ uint32_t SHARED fg_mb_slot               = -1;
 uint32_t SHARED fg_num_channels          = MAX_FG_CHANNELS;
 uint32_t SHARED fg_buffer_size           = BUFFER_SIZE;
 uint32_t SHARED fg_macros[MAX_FG_MACROS] = {0}; // hi..lo bytes: slot, device, version, output-bits
-struct channel_regs SHARED fg_regs[MAX_FG_CHANNELS];
+struct channel_regs   SHARED fg_regs[MAX_FG_CHANNELS];
 struct channel_buffer SHARED fg_buffer[MAX_FG_CHANNELS];
-struct daq_buffer SHARED daq_buf = {0};
+struct daq_buffer     SHARED daq_buf = {0};
+uint32_t              SHARED fg_rescan_busy = 0;
 HistItem  histbuf[HISTSIZE];
 
 volatile unsigned short* scub_base     = 0;
@@ -741,7 +742,11 @@ void sw_irq_handler(int id) {
         break;
         case 4:
           //rescan for fg macros
+          //signal busy to saftlib
+          fg_rescan_busy = 1;
           print_fgs();
+          //signal done to saftlib
+          fg_rescan_busy = 0;
         break;
         case 5:
           clear_handler_state(value);
