@@ -287,7 +287,7 @@ inline void send_fg_param(int slot, int fg_base, unsigned short cntrl_reg, signe
     }
     param_sent[fg_num]++;
   } else {
-    hist_addx(HISTORY_XYZ_MODULE, "buffer empty, no parameter sent", slot);
+    hist_addx(HISTORY_XYZ_MODULE, "buffer empty, no parameter sent", fg_num);
   }
 }
 
@@ -1099,8 +1099,8 @@ void dev_sio_handler(int id) {
           d.setvalue = last_c_coeff[i];
           add_daq_msg(&daq_buf, d);
 
-          hist_addx(HISTORY_XYZ_MODULE, "daq_high", data_aquisition >> 8);
-          hist_addx(HISTORY_XYZ_MODULE, "daq_low", data_aquisition & 0xff);
+          //hist_addx(HISTORY_XYZ_MODULE, "daq_high", data_aquisition >> 8);
+          //hist_addx(HISTORY_XYZ_MODULE, "daq_low", data_aquisition & 0xff);
 
           // save the setvalue from the tuple sent for the next drq handling
           last_c_coeff[i] = task_ptr[id].setvalue[i];
@@ -1273,8 +1273,8 @@ void dev_bus_handler(int id) {
           d.setvalue = last_c_coeff[i];
           add_daq_msg(&daq_buf, d);
 
-          hist_addx(HISTORY_XYZ_MODULE, "daq_high", data_aquisition >> 8);
-          hist_addx(HISTORY_XYZ_MODULE, "daq_low", data_aquisition & 0xff);
+          //hist_addx(HISTORY_XYZ_MODULE, "daq_high", data_aquisition >> 8);
+          //hist_addx(HISTORY_XYZ_MODULE, "daq_low", data_aquisition & 0xff);
 
           // save the setvalue from the tuple sent for the next drq handling
           last_c_coeff[i] = task_ptr[id].setvalue[i];
