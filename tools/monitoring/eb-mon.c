@@ -3,7 +3,7 @@
 //
 //  created : 2015
 //  author  : Dietrich Beck, GSI-Darmstadt
-//  version : 07-Oct-2019
+//  version : 10-Oct-2019
 //
 // Command-line interface for WR monitoring via Etherbone.
 //
@@ -34,7 +34,7 @@
 // For all questions and ideas contact: d.beck@gsi.de
 // Last update: 25-April-2015
 //////////////////////////////////////////////////////////////////////////////////////////////
-#define EBMON_VERSION "2.0.1"
+#define EBMON_VERSION "2.0.2"
 
 // standard includes
 #include <unistd.h> // getopt
@@ -362,7 +362,6 @@ int main(int argc, char** argv) {
       case 'v':
         getWRDate=1;
         getWROffset=1;
-        getWRStats=1;
         getWRSync=1;
         getWRMac=1;
         getWRLink=1;
@@ -469,7 +468,7 @@ int main(int argc, char** argv) {
       else nSecs++;
       usleep(1000000);  // iterate once per second
     } // while
-  } // snoopMode
+  } // if snoopMode
 
   if (getWRDateOther) {
     if ((status = wb_open(devNameOther, &deviceOther, &socket)) != EB_OK) {
