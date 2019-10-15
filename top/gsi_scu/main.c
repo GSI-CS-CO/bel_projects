@@ -603,7 +603,6 @@ void disable_channel(unsigned int channel) {
   if (fg_regs[channel].macro_number == -1) return;
   slot = fg_macros[fg_regs[channel].macro_number] >> 24;         //dereference slot number
   dev = (fg_macros[fg_regs[channel].macro_number] >> 16) & 0xff; //dereference dev number
-  //mprintf("disarmed slot %d dev %d in channel[%d] state %d\n", slot, dev, channel, fg_regs[channel].state); //ONLY FOR TESTING
   if ((slot & 0xf0) == 0) {
     /* which macro are we? */
     if (dev == 0) {
@@ -623,13 +622,11 @@ void disable_channel(unsigned int channel) {
     // disarm hardware
     if((status = read_mil(scu_mil_base, &data, FC_CNTRL_RD | dev)) != OKAY)          dev_failure(status, 0, "disarm hw"); 
     if((status = write_mil(scu_mil_base, data & ~(0x2), FC_CNTRL_WR | dev)) != OKAY) dev_failure(status, 0, "disarm hw"); 
-    //write_mil(scu_mil_base, 0x0, 0x60 << 8 | dev);             // unset FG mode
 
   } else if (slot & DEV_SIO) {
     // disarm hardware
     if((status = scub_read_mil(scub_base, slot & 0xf, &data, FC_CNTRL_RD | dev)) != OKAY)          dev_failure(status, slot & 0xf, "disarm hw"); 
     if((status = scub_write_mil(scub_base, slot & 0xf, data & ~(0x2), FC_CNTRL_WR | dev)) != OKAY) dev_failure(status, slot & 0xf, "disarm hw"); 
-    //write_mil(scu_mil_base, 0x0, 0x60 << 8 | dev);             // unset FG mode
   }
 
 
@@ -864,7 +861,6 @@ void ecaHandler()
           // send broadcast
           scub_base[OFFS(13) + MIL_SIO3_TX_CMD] = 0x20ff;
         }
-        //mprintf("EvtID: 0x%08x%08x; deadline: 0x%08x%08x; flag: 0x%08x\n", evtIdHigh, evtIdLow, evtDeadlHigh, evtDeadlLow, flag);
       break;
     
       default:
@@ -1104,9 +1100,6 @@ void dev_sio_handler(int id) {
           d.setvalue = last_c_coeff[i];
           add_daq_msg(&daq_buf, d);
 
-          //hist_addx(HISTORY_XYZ_MODULE, "daq_high", data_aquisition >> 8);
-          //hist_addx(HISTORY_XYZ_MODULE, "daq_low", data_aquisition & 0xff);
-
           // save the setvalue from the tuple sent for the next drq handling
           last_c_coeff[i] = task_ptr[id].setvalue[i];
         }
@@ -1278,9 +1271,6 @@ void dev_bus_handler(int id) {
           d.setvalue = last_c_coeff[i];
           add_daq_msg(&daq_buf, d);
 
-          //hist_addx(HISTORY_XYZ_MODULE, "daq_high", data_aquisition >> 8);
-          //hist_addx(HISTORY_XYZ_MODULE, "daq_low", data_aquisition & 0xff);
-
           // save the setvalue from the tuple sent for the next drq handling
           last_c_coeff[i] = task_ptr[id].setvalue[i];
         };
@@ -1405,7 +1395,7 @@ int main(void) {
 
   while(1) {
     check_stack();
-    tick = getSysTime(); /* FIXME get the current system tick */
+    tick = getSysTime();
 
     // loop through all task: if interval is 0, run every time, otherwise obey interval
     for(taskIndex = 0; taskIndex < numTasks; taskIndex++) {
