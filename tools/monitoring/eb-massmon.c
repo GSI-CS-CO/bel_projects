@@ -91,7 +91,7 @@ static void help(void) {
   fprintf(stderr, "  -h               display this help and exit\n");
   fprintf(stderr, "  -i               include WR IP\n");
   fprintf(stderr, "  -j               display additional info (requires option '-f1')\n");
-  fprintf(stderr, "  -k<cpu>          include rate of max eCPU stalls [%] (default 'k0')\n");
+  fprintf(stderr, "  -k<cpu>          include rate of max eCPU stalls [%%] (default 'k0')\n");
   fprintf(stderr, "  -l               include WR link status\n");
   fprintf(stderr, "  -m               include WR MAC\n");
   fprintf(stderr, "  -o               include offset between WR time and system time [ms]\n");
@@ -601,14 +601,14 @@ int main(int argc, char** argv) {
   int64_t      contMaxPosDT;
   int64_t      contMaxNegDT;
 
-  uint64_t     stallObsCPU;
+  uint64_t     stallObsCPU=0;
   uint64_t     stallObsT;
   uint32_t     stallMax;
 
 
   int          i,j,k,l,m,n,o,nReachable;
   uint64_t     tmp64, temp64, atdTmp64=0;
-  uint32_t     tmp32, tmpa32, tmpb32, tmpc32, atdTmp32=0;
+  uint32_t     tmp32, atdTmp32=0;
  
   int          tmp;
   char         tmpStr[MAXLEN+1], atdTmpStr[MAXLEN+1];
@@ -861,10 +861,8 @@ int main(int argc, char** argv) {
                 } // if status
               } // if getWRTCont
               if (getCPUStalls) 
-                if ((status = wb_wr_stats_get_stall(device, devIndex, stallObsCPU, &stallObsT, &stallMax, &tmp32, &tmp64)) == EB_OK){
+                if ((status = wb_wr_stats_get_stall(device, devIndex, stallObsCPU, &stallObsT, &stallMax, &tmp32, &tmp64)) == EB_OK)
                   if (stallObsT > 5000) nodeCPUStalls[nNodes] = (double)stallMax/(double)(stallObsT) * 100.0;  // stall rate [%]
-                  printf("stallObsT, %d, stallMax %d, rate %f\n", stallObsT, stallMax, nodeCPUStalls[nNodes]);
-                }
             } // check device
             wb_close(device, socket);
           } // wb_open is ok
