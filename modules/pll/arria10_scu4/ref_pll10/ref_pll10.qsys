@@ -186,7 +186,7 @@
   <parameter name="gui_duty_cycle17" value="50.0" />
   <parameter name="gui_duty_cycle2" value="50.0" />
   <parameter name="gui_duty_cycle3" value="50.0" />
-  <parameter name="gui_duty_cycle4" value="12.5" />
+  <parameter name="gui_duty_cycle4" value="50.0" />
   <parameter name="gui_duty_cycle5" value="50.0" />
   <parameter name="gui_duty_cycle6" value="50.0" />
   <parameter name="gui_duty_cycle7" value="50.0" />
