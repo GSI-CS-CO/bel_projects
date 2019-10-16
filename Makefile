@@ -215,6 +215,9 @@ pexarria10_soc-clean::
 a10gx_pcie::	firmware
 	$(MAKE) -C syn/gsi_a10gx_pcie/control PATH=$(PWD)/toolchain/bin:$(PATH) all
 
+a10gx_pcie-sort:
+	$(call sort_file, "./syn/gsi_a10gx_pcie/control/pci_control.qsf")
+	
 a10gx_pcie-clean::
 	$(MAKE) -C syn/gsi_a10gx_pcie/control PATH=$(PWD)/toolchain/bin:$(PATH) clean
 
