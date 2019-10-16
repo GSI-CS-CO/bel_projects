@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <deploy
- date="2019.03.11.10:12:50"
- outputDirectory="/home/alex/workspace/a10_dev/modules/pll/arria10_e3p1/ref_pll10/ref_pll10/">
+ date="2019.10.16.14:05:40"
+ outputDirectory="/home/bel/ahahn/lnx/workspace/a10/bel_projects/modules/pll/arria10_e3p1/ref_pll10/ref_pll10/">
  <perimeter>
   <parameter
      name="AUTO_GENERATION_ID"
@@ -56,10 +56,20 @@
    <property name="associatedReset" value="" />
    <port name="cntsel" direction="input" role="cntsel" width="5" />
   </interface>
+  <interface name="loaden" kind="conduit" start="0">
+   <property name="associatedClock" value="" />
+   <property name="associatedReset" value="" />
+   <port name="loaden" direction="output" role="loaden" width="2" />
+  </interface>
   <interface name="locked" kind="conduit" start="0">
    <property name="associatedClock" value="" />
    <property name="associatedReset" value="" />
    <port name="locked" direction="output" role="export" width="1" />
+  </interface>
+  <interface name="lvds_clk" kind="conduit" start="0">
+   <property name="associatedClock" value="" />
+   <property name="associatedReset" value="" />
+   <port name="lvds_clk" direction="output" role="lvds_clk" width="2" />
   </interface>
   <interface name="num_phase_shifts" kind="conduit" start="0">
    <property name="associatedClock" value="" />
@@ -70,25 +80,9 @@
        role="num_phase_shifts"
        width="3" />
   </interface>
-  <interface name="outclk0" kind="clock" start="1">
-   <property name="associatedDirectClock" value="" />
-   <property name="clockRate" value="125000000" />
-   <property name="clockRateKnown" value="true" />
-   <property name="externallyDriven" value="false" />
-   <property name="ptfSchematicName" value="" />
-   <port name="outclk_0" direction="output" role="clk" width="1" />
-  </interface>
-  <interface name="outclk1" kind="clock" start="1">
-   <property name="associatedDirectClock" value="" />
-   <property name="clockRate" value="200000000" />
-   <property name="clockRateKnown" value="true" />
-   <property name="externallyDriven" value="false" />
-   <property name="ptfSchematicName" value="" />
-   <port name="outclk_1" direction="output" role="clk" width="1" />
-  </interface>
   <interface name="outclk2" kind="clock" start="1">
    <property name="associatedDirectClock" value="" />
-   <property name="clockRate" value="25000000" />
+   <property name="clockRate" value="125000000" />
    <property name="clockRateKnown" value="true" />
    <property name="externallyDriven" value="false" />
    <property name="ptfSchematicName" value="" />
@@ -96,7 +90,7 @@
   </interface>
   <interface name="outclk3" kind="clock" start="1">
    <property name="associatedDirectClock" value="" />
-   <property name="clockRate" value="1000000000" />
+   <property name="clockRate" value="200000000" />
    <property name="clockRateKnown" value="true" />
    <property name="externallyDriven" value="false" />
    <property name="ptfSchematicName" value="" />
@@ -104,7 +98,7 @@
   </interface>
   <interface name="outclk4" kind="clock" start="1">
    <property name="associatedDirectClock" value="" />
-   <property name="clockRate" value="125000000" />
+   <property name="clockRate" value="25000000" />
    <property name="clockRateKnown" value="true" />
    <property name="externallyDriven" value="false" />
    <property name="ptfSchematicName" value="" />
@@ -144,7 +138,7 @@
  </perimeter>
  <entity kind="ref_pll10" version="1.0" name="ref_pll10">
   <parameter name="AUTO_REFCLK_CLOCK_DOMAIN" value="-1" />
-  <parameter name="AUTO_GENERATION_ID" value="1552295570" />
+  <parameter name="AUTO_GENERATION_ID" value="1571227540" />
   <parameter name="AUTO_DEVICE" value="10AX115S2F45I1SG" />
   <parameter name="AUTO_DEVICE_FAMILY" value="Arria 10" />
   <parameter name="AUTO_REFCLK_CLOCK_RATE" value="-1" />
@@ -153,40 +147,40 @@
   <parameter name="AUTO_DEVICE_SPEEDGRADE" value="1" />
   <generatedFiles>
    <file
-       path="/home/alex/workspace/a10_dev/modules/pll/arria10_e3p1/ref_pll10/ref_pll10/synth/ref_pll10.v"
+       path="/home/bel/ahahn/lnx/workspace/a10/bel_projects/modules/pll/arria10_e3p1/ref_pll10/ref_pll10/synth/ref_pll10.v"
        attributes="CONTAINS_INLINE_CONFIGURATION" />
    <file
-       path="/home/alex/workspace/a10_dev/modules/pll/arria10_e3p1/ref_pll10/ref_pll10/synth/ref_pll10_cfg.v"
+       path="/home/bel/ahahn/lnx/workspace/a10/bel_projects/modules/pll/arria10_e3p1/ref_pll10/ref_pll10/synth/ref_pll10_cfg.v"
        attributes="CONTAINS_INLINE_CONFIGURATION" />
   </generatedFiles>
   <childGeneratedFiles>
    <file
-       path="/home/alex/workspace/a10_dev/modules/pll/arria10_e3p1/ref_pll10/ref_pll10/synth/ref_pll10.v"
+       path="/home/bel/ahahn/lnx/workspace/a10/bel_projects/modules/pll/arria10_e3p1/ref_pll10/ref_pll10/synth/ref_pll10.v"
        attributes="CONTAINS_INLINE_CONFIGURATION" />
    <file
-       path="/home/alex/workspace/a10_dev/modules/pll/arria10_e3p1/ref_pll10/ref_pll10/synth/ref_pll10_cfg.v"
+       path="/home/bel/ahahn/lnx/workspace/a10/bel_projects/modules/pll/arria10_e3p1/ref_pll10/ref_pll10/synth/ref_pll10_cfg.v"
        attributes="CONTAINS_INLINE_CONFIGURATION" />
   </childGeneratedFiles>
   <sourceFiles>
    <file
-       path="/home/alex/workspace/a10_dev/modules/pll/arria10_e3p1/ref_pll10/ref_pll10.qsys" />
+       path="/home/bel/ahahn/lnx/workspace/a10/bel_projects/modules/pll/arria10_e3p1/ref_pll10/ref_pll10.qsys" />
   </sourceFiles>
   <childSourceFiles>
    <file path="/opt/quartus/18/ip/altera/altera_iopll/top/altera_iopll_hw.tcl" />
   </childSourceFiles>
   <messages>
    <message level="Info" culprit="ref_pll10">"Generating: ref_pll10"</message>
-   <message level="Info" culprit="ref_pll10">"Generating: ref_pll10_altera_iopll_181_c5qxdni"</message>
-   <message level="Debug" culprit="iopll_0">IN HDL WRAP: reset refclk locked scanclk phase_en updn cntsel phase_done num_phase_shifts outclk0 outclk1 outclk2 outclk3 outclk4</message>
+   <message level="Info" culprit="ref_pll10">"Generating: ref_pll10_altera_iopll_181_ev2meba"</message>
+   <message level="Debug" culprit="iopll_0">IN HDL WRAP: reset refclk locked scanclk phase_en updn cntsel phase_done num_phase_shifts lvds_clk loaden outclk2 outclk3 outclk4</message>
    <message level="Debug" culprit="iopll_0">--hdl_params: c_cnt_bypass_en0 c_cnt_bypass_en1 c_cnt_bypass_en2 c_cnt_bypass_en3 c_cnt_bypass_en4 c_cnt_bypass_en5 c_cnt_bypass_en6 c_cnt_bypass_en7 c_cnt_bypass_en8 c_cnt_hi_div0 c_cnt_hi_div1 c_cnt_hi_div2 c_cnt_hi_div3 c_cnt_hi_div4 c_cnt_hi_div5 c_cnt_hi_div6 c_cnt_hi_div7 c_cnt_hi_div8 c_cnt_in_src0 c_cnt_in_src1 c_cnt_in_src2 c_cnt_in_src3 c_cnt_in_src4 c_cnt_in_src5 c_cnt_in_src6 c_cnt_in_src7 c_cnt_in_src8 c_cnt_lo_div0 c_cnt_lo_div1 c_cnt_lo_div2 c_cnt_lo_div3 c_cnt_lo_div4 c_cnt_lo_div5 c_cnt_lo_div6 c_cnt_lo_div7 c_cnt_lo_div8 c_cnt_odd_div_duty_en0 c_cnt_odd_div_duty_en1 c_cnt_odd_div_duty_en2 c_cnt_odd_div_duty_en3 c_cnt_odd_div_duty_en4 c_cnt_odd_div_duty_en5 c_cnt_odd_div_duty_en6 c_cnt_odd_div_duty_en7 c_cnt_odd_div_duty_en8 c_cnt_ph_mux_prst0 c_cnt_ph_mux_prst1 c_cnt_ph_mux_prst2 c_cnt_ph_mux_prst3 c_cnt_ph_mux_prst4 c_cnt_ph_mux_prst5 c_cnt_ph_mux_prst6 c_cnt_ph_mux_prst7 c_cnt_ph_mux_prst8 c_cnt_prst0 c_cnt_prst1 c_cnt_prst2 c_cnt_prst3 c_cnt_prst4 c_cnt_prst5 c_cnt_prst6 c_cnt_prst7 c_cnt_prst8 clock_name_0 clock_name_1 clock_name_2 clock_name_3 clock_name_4 clock_name_5 clock_name_6 clock_name_7 clock_name_8 clock_name_global_0 clock_name_global_1 clock_name_global_2 clock_name_global_3 clock_name_global_4 clock_name_global_5 clock_name_global_6 clock_name_global_7 clock_name_global_8 duty_cycle0 duty_cycle1 duty_cycle2 duty_cycle3 duty_cycle4 duty_cycle5 duty_cycle6 duty_cycle7 duty_cycle8 m_cnt_bypass_en m_cnt_hi_div m_cnt_lo_div m_cnt_odd_div_duty_en n_cnt_bypass_en n_cnt_hi_div n_cnt_lo_div n_cnt_odd_div_duty_en number_of_clocks operation_mode output_clock_frequency0 output_clock_frequency1 output_clock_frequency2 output_clock_frequency3 output_clock_frequency4 output_clock_frequency5 output_clock_frequency6 output_clock_frequency7 output_clock_frequency8 phase_shift0 phase_shift1 phase_shift2 phase_shift3 phase_shift4 phase_shift5 phase_shift6 phase_shift7 phase_shift8 pll_bw_sel pll_bwctrl pll_cp_current pll_extclk_0_cnt_src pll_extclk_1_cnt_src pll_fbclk_mux_1 pll_fbclk_mux_2 pll_m_cnt_in_src pll_output_clk_frequency pll_slf_rst pll_subtype pll_type reference_clock_frequency</message>
    <message level="Debug" culprit="iopll_0">altera_pll_ports ports: refclk1 {DIRECT_MAPPING true MAPPING_FUNCTION {} TIE_OFF 1'b0} rst {DIRECT_MAPPING true MAPPING_FUNCTION {} TIE_OFF 1'b0} fbclk {DIRECT_MAPPING false MAPPING_FUNCTION map_fbclk_port TIE_OFF {}} fboutclk {DIRECT_MAPPING false MAPPING_FUNCTION map_fboutclk_port TIE_OFF {}} zdbfbclk {DIRECT_MAPPING true MAPPING_FUNCTION {} TIE_OFF { }} locked {DIRECT_MAPPING true MAPPING_FUNCTION {} TIE_OFF { }} loaden {DIRECT_MAPPING true MAPPING_FUNCTION {} TIE_OFF { }} phase_done {DIRECT_MAPPING true MAPPING_FUNCTION {} TIE_OFF { }} reconfig_to_pll {DIRECT_MAPPING false MAPPING_FUNCTION map_reconfig_to_port TIE_OFF {}} refclk {DIRECT_MAPPING true MAPPING_FUNCTION {} TIE_OFF 1'b0} scanclk {DIRECT_MAPPING true MAPPING_FUNCTION {} TIE_OFF 1'b0} phout {DIRECT_MAPPING true MAPPING_FUNCTION {} TIE_OFF { }} num_phase_shifts {DIRECT_MAPPING true MAPPING_FUNCTION {} TIE_OFF 3'b0} cntsel {DIRECT_MAPPING true MAPPING_FUNCTION {} TIE_OFF 5'b0} clkbad {DIRECT_MAPPING true MAPPING_FUNCTION {} TIE_OFF { }} extclk_out {DIRECT_MAPPING true MAPPING_FUNCTION {} TIE_OFF { }} lvds_clk {DIRECT_MAPPING true MAPPING_FUNCTION {} TIE_OFF { }} outclk {DIRECT_MAPPING false MAPPING_FUNCTION map_outclk_port TIE_OFF {}} phase_en {DIRECT_MAPPING true MAPPING_FUNCTION {} TIE_OFF 1'b0} extswitch {DIRECT_MAPPING true MAPPING_FUNCTION {} TIE_OFF 1'b0} cascade_out {DIRECT_MAPPING true MAPPING_FUNCTION {} TIE_OFF { }} activeclk {DIRECT_MAPPING true MAPPING_FUNCTION {} TIE_OFF { }} adjpllin {DIRECT_MAPPING true MAPPING_FUNCTION {} TIE_OFF 1'b0} updn {DIRECT_MAPPING true MAPPING_FUNCTION {} TIE_OFF 1'b0} reconfig_from_pll {DIRECT_MAPPING true MAPPING_FUNCTION {} TIE_OFF { }}</message>
-   <message level="Debug" culprit="iopll_0">module ports: rst refclk locked scanclk phase_en updn cntsel phase_done num_phase_shifts outclk_0 outclk_1 outclk_2 outclk_3 outclk_4</message>
+   <message level="Debug" culprit="iopll_0">module ports: rst refclk locked scanclk phase_en updn cntsel phase_done num_phase_shifts lvds_clk loaden outclk_2 outclk_3 outclk_4</message>
   </messages>
  </entity>
  <entity
    kind="altera_iopll"
    version="18.1"
-   name="ref_pll10_altera_iopll_181_c5qxdni">
+   name="ref_pll10_altera_iopll_181_ev2meba">
   <parameter name="gui_clock_name_string12" value="outclk12" />
   <parameter name="hp_actual_phase_shift_fp5" value="0.0" />
   <parameter name="gui_clock_name_string11" value="outclk11" />
@@ -214,8 +208,8 @@
   <parameter name="c_cnt_bypass_en11" value="true" />
   <parameter name="hp_actual_phase_shift_fp0" value="0.0" />
   <parameter name="gui_actual_phase_shift_deg0" value="0.0" />
-  <parameter name="hp_actual_phase_shift_fp1" value="0.0" />
-  <parameter name="gui_actual_phase_shift_deg1" value="0.0" />
+  <parameter name="hp_actual_phase_shift_fp1" value="7000.0" />
+  <parameter name="gui_actual_phase_shift_deg1" value="315.0" />
   <parameter name="hp_actual_phase_shift_fp2" value="0.0" />
   <parameter name="gui_clock_name_string10" value="outclk10" />
   <parameter name="gui_actual_phase_shift_deg2" value="0.0" />
@@ -223,8 +217,8 @@
   <parameter name="gui_actual_phase_shift_deg3" value="0.0" />
   <parameter name="hp_actual_phase_shift_fp4" value="0.0" />
   <parameter name="gui_parameter_table_hex_file" value="seq_params_sim.hex" />
-  <parameter name="pll_fbclk_mux_2" value="pll_fbclk_mux_2_fb_1" />
-  <parameter name="pll_fbclk_mux_1" value="pll_fbclk_mux_1_lvds" />
+  <parameter name="pll_fbclk_mux_2" value="pll_fbclk_mux_2_m_cnt" />
+  <parameter name="pll_fbclk_mux_1" value="pll_fbclk_mux_1_glb" />
   <parameter name="gui_new_mif_file_path" value="~/pll.mif" />
   <parameter name="gui_vco_frequency" value="1000.0" />
   <parameter name="gui_ps_units10" value="ps" />
@@ -275,9 +269,9 @@
   <parameter name="gui_actual_output_clock_frequency_range12" value="100.0" />
   <parameter name="gui_duty_cycle2" value="50.0" />
   <parameter name="gui_actual_output_clock_frequency_range11" value="100.0" />
-  <parameter name="gui_duty_cycle1" value="50.0" />
+  <parameter name="gui_duty_cycle1" value="13.0" />
   <parameter name="gui_actual_output_clock_frequency_range14" value="100.0" />
-  <parameter name="gui_duty_cycle4" value="12.5" />
+  <parameter name="gui_duty_cycle4" value="50.0" />
   <parameter name="gui_actual_output_clock_frequency_range13" value="100.0" />
   <parameter name="gui_duty_cycle3" value="50.0" />
   <parameter name="gui_use_NDFB_modes" value="false" />
@@ -310,7 +304,7 @@
   <parameter name="gui_feedback_clock" value="Global Clock" />
   <parameter
      name="gui_actual_phase_shift_range1"
-     value="0.0,125.0,250.0,375.0,500.0,625.0" />
+     value="6625.0,6750.0,6875.0,7000.0,7125.0,7250.0" />
   <parameter
      name="gui_actual_phase_shift_range0"
      value="0.0,125.0,250.0,375.0,500.0,625.0" />
@@ -330,7 +324,7 @@
   <parameter name="hp_number_of_family_allowable_clocks" value="9" />
   <parameter name="gui_actual_output_clock_frequency17" value="100.0" />
   <parameter name="gui_actual_duty_cycle0" value="50.0" />
-  <parameter name="gui_actual_duty_cycle1" value="50.0" />
+  <parameter name="gui_actual_duty_cycle1" value="12.5" />
   <parameter name="gui_fix_vco_frequency" value="false" />
   <parameter name="gui_actual_duty_cycle6" value="50.0" />
   <parameter name="gui_actual_duty_cycle7" value="50.0" />
@@ -338,7 +332,7 @@
   <parameter name="gui_actual_duty_cycle9" value="50.0" />
   <parameter name="gui_actual_duty_cycle2" value="50.0" />
   <parameter name="gui_actual_duty_cycle3" value="50.0" />
-  <parameter name="gui_actual_duty_cycle4" value="12.5" />
+  <parameter name="gui_actual_duty_cycle4" value="50.0" />
   <parameter name="gui_actual_duty_cycle5" value="50.0" />
   <parameter name="pll_manu_clk_sw_en" value="false" />
   <parameter name="system_info_device_speed_grade" value="1" />
@@ -355,20 +349,20 @@
   <parameter name="c_cnt_prst0" value="1" />
   <parameter name="gui_device_component" value="10AX115S2F45I1SG" />
   <parameter name="c_cnt_prst2" value="1" />
-  <parameter name="c_cnt_prst1" value="1" />
+  <parameter name="c_cnt_prst1" value="8" />
   <parameter name="c_cnt_prst4" value="1" />
   <parameter name="c_cnt_prst3" value="1" />
   <parameter name="gui_pll_auto_reset" value="false" />
-  <parameter name="gui_divide_factor_c4" value="8" />
+  <parameter name="gui_divide_factor_c4" value="40" />
   <parameter name="phase_shift12" value="0 ps" />
-  <parameter name="gui_divide_factor_c3" value="1" />
+  <parameter name="gui_divide_factor_c3" value="5" />
   <parameter name="phase_shift11" value="0 ps" />
-  <parameter name="gui_divide_factor_c2" value="40" />
+  <parameter name="gui_divide_factor_c2" value="8" />
   <parameter name="n_cnt_lo_div" value="256" />
   <parameter name="phase_shift10" value="0 ps" />
-  <parameter name="gui_divide_factor_c1" value="5" />
-  <parameter name="gui_divide_factor_c0" value="8" />
-  <parameter name="gui_operation_mode" value="lvds" />
+  <parameter name="gui_divide_factor_c1" value="8" />
+  <parameter name="gui_divide_factor_c0" value="1" />
+  <parameter name="gui_operation_mode" value="direct" />
   <parameter name="gui_frac_multiply_factor" value="1" />
   <parameter name="iossm_nios_sim_clk_period_ps" value="1333" />
   <parameter name="gui_clock_name_global" value="false" />
@@ -401,9 +395,9 @@
   <parameter name="duty_cycle6" value="50" />
   <parameter name="clock_name_global" value="false" />
   <parameter name="duty_cycle3" value="50" />
-  <parameter name="duty_cycle4" value="12" />
+  <parameter name="duty_cycle4" value="50" />
   <parameter name="clock_to_compensate" value="0" />
-  <parameter name="duty_cycle1" value="50" />
+  <parameter name="duty_cycle1" value="12" />
   <parameter name="duty_cycle2" value="50" />
   <parameter name="duty_cycle0" value="50" />
   <parameter name="m_cnt_lo_div" value="4" />
@@ -416,7 +410,7 @@
   <parameter name="gui_actual_phase_shift4" value="0.0" />
   <parameter name="gui_actual_phase_shift3" value="0.0" />
   <parameter name="gui_actual_phase_shift2" value="0.0" />
-  <parameter name="gui_actual_phase_shift1" value="0.0" />
+  <parameter name="gui_actual_phase_shift1" value="7000.0" />
   <parameter name="pll_clk_loss_sw_en" value="false" />
   <parameter name="gui_phout_division" value="1" />
   <parameter name="gui_ps_units3" value="ps" />
@@ -429,12 +423,12 @@
   <parameter name="gui_ps_units2" value="ps" />
   <parameter name="gui_actual_output_clock_frequency5" value="100.0" />
   <parameter name="gui_actual_duty_cycle_range15" value="50.0" />
-  <parameter name="gui_actual_output_clock_frequency4" value="125.0" />
+  <parameter name="gui_actual_output_clock_frequency4" value="25.0" />
   <parameter name="gui_actual_duty_cycle_range16" value="50.0" />
   <parameter name="gui_use_locked" value="true" />
-  <parameter name="gui_actual_output_clock_frequency3" value="1000.0" />
+  <parameter name="gui_actual_output_clock_frequency3" value="200.0" />
   <parameter name="gui_actual_duty_cycle_range17" value="50.0" />
-  <parameter name="gui_actual_output_clock_frequency2" value="25.0" />
+  <parameter name="gui_actual_output_clock_frequency2" value="125.0" />
   <parameter name="gui_en_reconf" value="false" />
   <parameter name="gui_actual_output_clock_frequency9" value="100.0" />
   <parameter name="gui_actual_duty_cycle_range11" value="50.0" />
@@ -446,8 +440,8 @@
   <parameter name="gui_actual_duty_cycle_range14" value="50.0" />
   <parameter name="pll_type" value="Arria 10" />
   <parameter name="gui_actual_duty_cycle_range10" value="50.0" />
-  <parameter name="gui_actual_output_clock_frequency1" value="200.0" />
-  <parameter name="gui_actual_output_clock_frequency0" value="125.0" />
+  <parameter name="gui_actual_output_clock_frequency1" value="125.0" />
+  <parameter name="gui_actual_output_clock_frequency0" value="1000.0" />
   <parameter name="gui_actual_phase_shift0" value="0.0" />
   <parameter name="gui_actual_phase_shift_deg_range12" value="0.0" />
   <parameter name="gui_actual_phase_shift_deg_range11" value="0.0" />
@@ -466,7 +460,7 @@
   <parameter name="c_cnt_lo_div13" value="1" />
   <parameter name="gui_phase_shift0" value="0.0" />
   <parameter name="c_cnt_lo_div16" value="1" />
-  <parameter name="gui_phase_shift1" value="0.0" />
+  <parameter name="gui_phase_shift1" value="7000.0" />
   <parameter name="c_cnt_lo_div17" value="1" />
   <parameter name="gui_phase_shift2" value="0.0" />
   <parameter name="gui_phase_shift3" value="0.0" />
@@ -513,23 +507,23 @@
   <parameter name="gui_actual_phase_shift_deg_range5" value="0.0" />
   <parameter
      name="gui_actual_phase_shift_deg_range4"
-     value="0.0,5.6,11.2,16.9,22.5,28.1" />
+     value="0.0,1.1,2.2,3.4,4.5,5.6" />
   <parameter
      name="gui_actual_phase_shift_deg_range3"
-     value="0.0,45.0,90.0,135.0,180.0,225.0" />
+     value="0.0,9.0,18.0,27.0,36.0,45.0" />
   <parameter name="parameter_table_hex_file" value="seq_params_sim.hex" />
   <parameter
      name="gui_actual_phase_shift_deg_range2"
-     value="0.0,1.1,2.2,3.4,4.5,5.6" />
+     value="0.0,5.6,11.2,16.9,22.5,28.1" />
   <parameter
      name="gui_actual_phase_shift_deg_range1"
-     value="0.0,9.0,18.0,27.0,36.0,45.0" />
+     value="298.1,303.8,309.4,315.0,320.6,326.2" />
   <parameter
      name="mifTable_names"
      value="The MIF file specified does not yet exist" />
   <parameter
      name="gui_actual_phase_shift_deg_range0"
-     value="0.0,5.6,11.2,16.9,22.5,28.1" />
+     value="0.0,45.0,90.0,135.0,180.0,225.0" />
   <parameter name="gui_number_of_clocks" value="5" />
   <parameter name="gui_actual_phase_shift_deg_range9" value="0.0" />
   <parameter name="c_cnt_hi_div10" value="1" />
@@ -587,7 +581,7 @@
   <parameter name="gui_divide_factor_c17" value="6" />
   <parameter
      name="hp_parameter_update_message"
-     value="{altera_iopll::util::pll_send_message DEBUG {-- in update gui_device_family }} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_device_component }} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_device_speed_grade }} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_dps_cntr}} {altera_iopll::util::pll_send_message DEBUG { -- in update_gui_extclkout_source}} {altera_iopll::util::pll_send_message DEBUG { -- in update_gui_cascade_outclk_index}} {altera_iopll::util::pll_send_message DEBUG { -- in update gui_clock_to_compensate}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_vco_frequency}} {altera_iopll::util::pll_send_message DEBUG { -- Updating all outclk values in order, starting with freq 0}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_output_clock_frequency0}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_output_clock_frequency1}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_output_clock_frequency2}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_output_clock_frequency3}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_output_clock_frequency4}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_phase_shift0}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_phase_shift1}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_phase_shift2}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_phase_shift3}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_phase_shift4}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_duty_cycle0}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_duty_cycle1}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_duty_cycle2}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_duty_cycle3}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_duty_cycle4}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_output_clock_frequency5}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_phase_shift5}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_duty_cycle5}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_output_clock_frequency6}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_phase_shift6}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_duty_cycle6}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_output_clock_frequency7}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_phase_shift7}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_duty_cycle7}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_output_clock_frequency8}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_phase_shift8}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_duty_cycle8}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_device_family }} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_device_component }} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_device_speed_grade }} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_dps_cntr}} {altera_iopll::util::pll_send_message DEBUG { -- in update_gui_extclkout_source}} {altera_iopll::util::pll_send_message DEBUG { -- in update_gui_cascade_outclk_index}} {altera_iopll::util::pll_send_message DEBUG { -- in update gui_clock_to_compensate}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_vco_frequency}} {altera_iopll::util::pll_send_message DEBUG { -- Updating all outclk values in order, starting with freq 0}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_output_clock_frequency0}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_output_clock_frequency1}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_output_clock_frequency2}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_output_clock_frequency3}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_output_clock_frequency4}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_phase_shift0}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_phase_shift1}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_phase_shift2}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_phase_shift3}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_phase_shift4}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_duty_cycle0}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_duty_cycle1}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_duty_cycle2}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_duty_cycle3}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_duty_cycle4}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_output_clock_frequency5}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_phase_shift5}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_duty_cycle5}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_output_clock_frequency6}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_phase_shift6}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_duty_cycle6}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_output_clock_frequency7}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_phase_shift7}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_duty_cycle7}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_output_clock_frequency8}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_phase_shift8}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_duty_cycle8}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_device_family }} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_device_component }} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_device_speed_grade }} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_dps_cntr}} {altera_iopll::util::pll_send_message DEBUG { -- in update_gui_extclkout_source}} {altera_iopll::util::pll_send_message DEBUG { -- in update_gui_cascade_outclk_index}} {altera_iopll::util::pll_send_message DEBUG { -- in update gui_clock_to_compensate}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_vco_frequency}} {altera_iopll::util::pll_send_message DEBUG { -- Updating all outclk values in order, starting with freq 0}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_output_clock_frequency0}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_output_clock_frequency1}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_output_clock_frequency2}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_output_clock_frequency3}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_output_clock_frequency4}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_phase_shift0}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_phase_shift1}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_phase_shift2}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_phase_shift3}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_phase_shift4}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_duty_cycle0}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_duty_cycle1}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_duty_cycle2}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_duty_cycle3}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_duty_cycle4}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_output_clock_frequency5}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_phase_shift5}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_duty_cycle5}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_output_clock_frequency6}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_phase_shift6}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_duty_cycle6}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_output_clock_frequency7}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_phase_shift7}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_duty_cycle7}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_output_clock_frequency8}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_phase_shift8}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_duty_cycle8}}" />
+     value="{altera_iopll::util::pll_send_message DEBUG {-- in update gui_device_family }} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_device_component }} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_device_speed_grade }} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_dps_cntr}} {altera_iopll::util::pll_send_message DEBUG { -- in update_gui_extclkout_source}} {altera_iopll::util::pll_send_message DEBUG { -- in update_gui_cascade_outclk_index}} {altera_iopll::util::pll_send_message DEBUG { -- in update gui_clock_to_compensate}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_vco_frequency}} {altera_iopll::util::pll_send_message DEBUG { -- Updating all outclk values in order, starting with freq 0}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_output_clock_frequency0}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_output_clock_frequency1}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_output_clock_frequency2}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_output_clock_frequency3}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_output_clock_frequency4}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_phase_shift0}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_phase_shift1}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_phase_shift2}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_phase_shift3}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_phase_shift4}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_duty_cycle0}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_duty_cycle1}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_duty_cycle2}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_duty_cycle3}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_duty_cycle4}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_output_clock_frequency5}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_phase_shift5}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_duty_cycle5}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_output_clock_frequency6}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_phase_shift6}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_duty_cycle6}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_output_clock_frequency7}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_phase_shift7}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_duty_cycle7}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_output_clock_frequency8}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_phase_shift8}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_duty_cycle8}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_device_family }} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_device_component }} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_device_speed_grade }} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_dps_cntr}} {altera_iopll::util::pll_send_message DEBUG { -- in update_gui_extclkout_source}} {altera_iopll::util::pll_send_message DEBUG { -- in update_gui_cascade_outclk_index}} {altera_iopll::util::pll_send_message DEBUG { -- in update gui_clock_to_compensate}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_vco_frequency}} {altera_iopll::util::pll_send_message DEBUG { -- Updating all outclk values in order, starting with freq 0}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_output_clock_frequency0}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_output_clock_frequency1}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_output_clock_frequency2}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_output_clock_frequency3}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_output_clock_frequency4}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_phase_shift0}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_phase_shift1}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_phase_shift2}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_phase_shift3}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_phase_shift4}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_duty_cycle0}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_duty_cycle1}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_duty_cycle2}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_duty_cycle3}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_duty_cycle4}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_output_clock_frequency5}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_phase_shift5}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_duty_cycle5}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_output_clock_frequency6}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_phase_shift6}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_duty_cycle6}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_output_clock_frequency7}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_phase_shift7}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_duty_cycle7}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_output_clock_frequency8}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_phase_shift8}} {altera_iopll::util::pll_send_message DEBUG {-- in update gui_actual_duty_cycle8}}" />
   <parameter name="gui_output_clock_frequency9" value="100.0" />
   <parameter name="gui_output_clock_frequency7" value="100.0" />
   <parameter name="gui_actual_duty_cycle10" value="50.0" />
@@ -624,24 +618,24 @@
   <parameter name="hp_actual_output_clock_frequency_fp9" value="100.0" />
   <parameter name="hp_actual_output_clock_frequency_fp8" value="100.0" />
   <parameter name="gui_refclk_switch" value="false" />
-  <parameter name="hp_actual_output_clock_frequency_fp3" value="1000.0" />
-  <parameter name="hp_actual_output_clock_frequency_fp2" value="25.0" />
+  <parameter name="hp_actual_output_clock_frequency_fp3" value="200.0" />
+  <parameter name="hp_actual_output_clock_frequency_fp2" value="125.0" />
   <parameter name="hp_actual_output_clock_frequency_fp5" value="100.0" />
   <parameter name="gui_pll_cal_done" value="false" />
-  <parameter name="hp_actual_output_clock_frequency_fp4" value="125.0" />
-  <parameter name="hp_actual_output_clock_frequency_fp1" value="200.0" />
-  <parameter name="hp_actual_output_clock_frequency_fp0" value="125.0" />
+  <parameter name="hp_actual_output_clock_frequency_fp4" value="25.0" />
+  <parameter name="hp_actual_output_clock_frequency_fp1" value="125.0" />
+  <parameter name="hp_actual_output_clock_frequency_fp0" value="1000.0" />
   <parameter name="gui_extclkout_0_source" value="C0" />
-  <parameter name="gui_actual_output_clock_frequency_range4" value="125.0" />
+  <parameter name="gui_actual_output_clock_frequency_range4" value="25.0" />
   <parameter name="system_info_device_component" value="10AX115S2F45I1SG" />
   <parameter name="gui_actual_output_clock_frequency_range5" value="100.0" />
   <parameter name="gui_actual_output_clock_frequency_range6" value="100.0" />
   <parameter name="gui_actual_output_clock_frequency_range7" value="100.0" />
   <parameter name="refclk1_frequency" value="100.0 MHz" />
-  <parameter name="gui_actual_output_clock_frequency_range0" value="125.0" />
-  <parameter name="gui_actual_output_clock_frequency_range1" value="200.0" />
-  <parameter name="gui_actual_output_clock_frequency_range2" value="25.0" />
-  <parameter name="gui_actual_output_clock_frequency_range3" value="1000.0" />
+  <parameter name="gui_actual_output_clock_frequency_range0" value="1000.0" />
+  <parameter name="gui_actual_output_clock_frequency_range1" value="125.0" />
+  <parameter name="gui_actual_output_clock_frequency_range2" value="125.0" />
+  <parameter name="gui_actual_output_clock_frequency_range3" value="200.0" />
   <parameter name="gui_actual_output_clock_frequency_range8" value="100.0" />
   <parameter name="clock_name_1" value="outclk1" />
   <parameter name="gui_actual_output_clock_frequency_range9" value="100.0" />
@@ -658,7 +652,7 @@
   <parameter name="gui_divide_factor_n" value="1" />
   <parameter name="gui_en_extclkout_ports" value="false" />
   <parameter name="gui_output_clock_frequency12" value="100.0" />
-  <parameter name="gui_en_lvds_ports" value="Disabled" />
+  <parameter name="gui_en_lvds_ports" value="Enable LVDS_CLK/LOADEN 0" />
   <parameter name="gui_output_clock_frequency13" value="100.0" />
   <parameter name="gui_existing_mif_file_path" value="~/pll.mif" />
   <parameter name="gui_output_clock_frequency10" value="100.0" />
@@ -668,12 +662,12 @@
   <parameter name="gui_output_clock_frequency14" value="100.0" />
   <parameter name="gui_output_clock_frequency15" value="100.0" />
   <parameter name="mifTable_values" value="" />
-  <parameter name="c_cnt_hi_div0" value="4" />
+  <parameter name="c_cnt_hi_div0" value="256" />
   <parameter name="clock_name_global_0" value="false" />
-  <parameter name="c_cnt_hi_div1" value="3" />
-  <parameter name="c_cnt_hi_div2" value="20" />
-  <parameter name="c_cnt_hi_div3" value="256" />
-  <parameter name="c_cnt_hi_div4" value="1" />
+  <parameter name="c_cnt_hi_div1" value="1" />
+  <parameter name="c_cnt_hi_div2" value="4" />
+  <parameter name="c_cnt_hi_div3" value="3" />
+  <parameter name="c_cnt_hi_div4" value="20" />
   <parameter name="clock_name_global_5" value="false" />
   <parameter
      name="parameterTable_names"
@@ -724,7 +718,7 @@
   <parameter name="pll_lock_fltr_cfg" value="100" />
   <parameter name="c_cnt_odd_div_duty_en0" value="false" />
   <parameter name="pll_freqcal_req_flag" value="true" />
-  <parameter name="c_cnt_odd_div_duty_en1" value="true" />
+  <parameter name="c_cnt_odd_div_duty_en1" value="false" />
   <parameter name="c_cnt_in_src14" value="c_m_cnt_in_src_ph_mux_clk" />
   <parameter name="c_cnt_in_src13" value="c_m_cnt_in_src_ph_mux_clk" />
   <parameter name="c_cnt_in_src12" value="c_m_cnt_in_src_ph_mux_clk" />
@@ -736,7 +730,7 @@
   <parameter name="gui_include_iossm" value="false" />
   <parameter name="pll_vco_div" value="1" />
   <parameter name="c_cnt_odd_div_duty_en2" value="false" />
-  <parameter name="c_cnt_odd_div_duty_en3" value="false" />
+  <parameter name="c_cnt_odd_div_duty_en3" value="true" />
   <parameter name="c_cnt_odd_div_duty_en4" value="false" />
   <parameter name="gui_dsm_out_sel" value="1st_order" />
   <parameter name="c_cnt_odd_div_duty_en5" value="false" />
@@ -767,20 +761,20 @@
   <parameter name="hp_actual_phase_shift_fp14" value="0.0" />
   <parameter name="c_cnt_lo_div6" value="256" />
   <parameter name="hp_actual_phase_shift_fp15" value="0.0" />
-  <parameter name="c_cnt_lo_div3" value="256" />
+  <parameter name="c_cnt_lo_div3" value="2" />
   <parameter name="hp_actual_phase_shift_fp16" value="0.0" />
-  <parameter name="c_cnt_lo_div4" value="7" />
+  <parameter name="c_cnt_lo_div4" value="20" />
   <parameter name="pll_vco_freq_band_0" value="pll_freq_clk0_disabled" />
   <parameter name="hp_actual_phase_shift_fp17" value="0.0" />
-  <parameter name="c_cnt_lo_div1" value="2" />
-  <parameter name="c_cnt_lo_div2" value="20" />
-  <parameter name="c_cnt_lo_div0" value="4" />
+  <parameter name="c_cnt_lo_div1" value="7" />
+  <parameter name="c_cnt_lo_div2" value="4" />
+  <parameter name="c_cnt_lo_div0" value="256" />
   <parameter name="hp_actual_phase_shift_fp10" value="0.0" />
   <parameter name="hp_actual_phase_shift_fp11" value="0.0" />
   <parameter name="hp_actual_phase_shift_fp12" value="0.0" />
   <parameter
      name="parameterTable_values"
-     value="8,1,1000.0 MHz,8,5,40,1,8,1,1,1,1,false,4,4,false,false,256,256,false,true,4,3,20,256,1,256,256,256,256,4,2,20,256,7,256,256,256,256,false,true,false,false,false,false,false,false,false,false,false,false,true,false,true,true,true,true,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,pll_cp_setting14,pll_bw_res_setting3" />
+     value="8,1,1000.0 MHz,1,8,8,5,40,1,1,1,1,false,4,4,false,false,256,256,false,true,256,1,4,3,20,256,256,256,256,256,7,4,2,20,256,256,256,256,false,false,false,true,false,false,false,false,false,true,false,false,false,false,true,true,true,true,1,8,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,pll_cp_setting14,pll_bw_res_setting3" />
   <parameter name="hp_actual_phase_shift_fp13" value="0.0" />
   <parameter name="pll_cp_current" value="pll_cp_setting14" />
   <parameter name="gui_usr_device_speed_grade" value="1" />
@@ -797,7 +791,7 @@
   <parameter name="hp_actual_duty_cycle_fp0" value="50.0" />
   <parameter name="gui_actual_phase_shift17" value="0.0" />
   <parameter name="include_iossm" value="false" />
-  <parameter name="hp_actual_duty_cycle_fp1" value="50.0" />
+  <parameter name="hp_actual_duty_cycle_fp1" value="12.5" />
   <parameter name="gui_actual_phase_shift14" value="0.0" />
   <parameter name="gui_actual_phase_shift15" value="0.0" />
   <parameter name="gui_actual_phase_shift12" value="0.0" />
@@ -810,7 +804,7 @@
   <parameter name="hp_actual_duty_cycle_fp9" value="50.0" />
   <parameter name="hp_actual_duty_cycle_fp6" value="50.0" />
   <parameter name="hp_actual_duty_cycle_fp7" value="50.0" />
-  <parameter name="hp_actual_duty_cycle_fp4" value="12.5" />
+  <parameter name="hp_actual_duty_cycle_fp4" value="50.0" />
   <parameter name="pll_extclk_1_cnt_src" value="pll_extclk_cnt_src_vss" />
   <parameter name="hp_actual_duty_cycle_fp5" value="50.0" />
   <parameter name="hp_actual_duty_cycle_fp2" value="50.0" />
@@ -818,7 +812,7 @@
   <parameter name="hp_previous_num_clocks" value="1" />
   <parameter name="gui_cal_error" value="cal_clean" />
   <parameter name="c_cnt_ph_mux_prst17" value="0" />
-  <parameter name="phase_shift1" value="0 ps" />
+  <parameter name="phase_shift1" value="7000 ps" />
   <parameter name="c_cnt_ph_mux_prst16" value="0" />
   <parameter name="phase_shift0" value="0 ps" />
   <parameter name="c_cnt_ph_mux_prst15" value="0" />
@@ -839,20 +833,20 @@
   <parameter name="n_cnt_hi_div" value="256" />
   <parameter
      name="gui_actual_duty_cycle_range2"
-     value="46.25,47.5,48.75,50.0,51.25,52.5" />
-  <parameter name="gui_actual_duty_cycle_range3" value="50.0" />
-  <parameter
-     name="gui_actual_duty_cycle_range0"
      value="31.25,37.5,43.75,50.0,56.25,62.5" />
   <parameter
-     name="gui_actual_duty_cycle_range1"
+     name="gui_actual_duty_cycle_range3"
      value="20.0,30.0,40.0,50.0,60.0,70.0" />
+  <parameter name="gui_actual_duty_cycle_range0" value="50.0" />
+  <parameter
+     name="gui_actual_duty_cycle_range1"
+     value="6.25,12.5,18.75,25.0,31.25,37.5" />
   <parameter name="hp_qsys_scripting_mode" value="false" />
   <parameter name="gui_actual_duty_cycle_range6" value="50.0" />
   <parameter name="gui_actual_duty_cycle_range7" value="50.0" />
   <parameter
      name="gui_actual_duty_cycle_range4"
-     value="6.25,12.5,18.75,25.0,31.25,37.5" />
+     value="46.25,47.5,48.75,50.0,51.25,52.5" />
   <parameter name="gui_switchover_delay" value="0" />
   <parameter name="gui_actual_duty_cycle_range5" value="50.0" />
   <parameter name="gui_clock_name_string9" value="outclk9" />
@@ -880,43 +874,43 @@
   <parameter name="gui_cascade_counter9" value="false" />
   <parameter name="c_cnt_odd_div_duty_en17" value="false" />
   <parameter name="gui_cascade_counter0" value="false" />
-  <parameter name="operation_mode" value="lvds" />
+  <parameter name="operation_mode" value="direct" />
   <parameter name="c_cnt_odd_div_duty_en16" value="false" />
   <parameter name="c_cnt_odd_div_duty_en15" value="false" />
-  <parameter name="output_clock_frequency0" value="125.000000 MHz" />
+  <parameter name="output_clock_frequency0" value="1000.000000 MHz" />
   <parameter name="c_cnt_odd_div_duty_en14" value="false" />
   <parameter name="c_cnt_odd_div_duty_en13" value="false" />
   <parameter name="gui_cascade_counter4" value="false" />
   <parameter name="c_cnt_odd_div_duty_en12" value="false" />
-  <parameter name="output_clock_frequency3" value="1000.000000 MHz" />
+  <parameter name="output_clock_frequency3" value="200.000000 MHz" />
   <parameter name="gui_cascade_counter3" value="false" />
   <parameter name="c_cnt_odd_div_duty_en11" value="false" />
-  <parameter name="output_clock_frequency4" value="125.000000 MHz" />
+  <parameter name="output_clock_frequency4" value="25.000000 MHz" />
   <parameter name="gui_cascade_counter2" value="false" />
   <parameter name="c_cnt_odd_div_duty_en10" value="false" />
-  <parameter name="output_clock_frequency1" value="200.000000 MHz" />
+  <parameter name="output_clock_frequency1" value="125.000000 MHz" />
   <parameter name="gui_cascade_counter1" value="false" />
-  <parameter name="output_clock_frequency2" value="25.000000 MHz" />
+  <parameter name="output_clock_frequency2" value="125.000000 MHz" />
   <parameter name="c_cnt_bypass_en6" value="true" />
   <parameter name="c_cnt_bypass_en7" value="true" />
   <parameter name="c_cnt_bypass_en8" value="true" />
   <parameter name="c_cnt_bypass_en9" value="true" />
   <parameter name="gui_fractional_cout" value="32" />
-  <parameter name="c_cnt_bypass_en0" value="false" />
+  <parameter name="c_cnt_bypass_en0" value="true" />
   <parameter name="c_cnt_bypass_en1" value="false" />
   <parameter name="c_cnt_bypass_en2" value="false" />
   <parameter name="gui_reference_clock_frequency" value="125.0" />
-  <parameter name="c_cnt_bypass_en3" value="true" />
+  <parameter name="c_cnt_bypass_en3" value="false" />
   <parameter name="c_cnt_bypass_en4" value="false" />
   <parameter name="c_cnt_bypass_en5" value="true" />
   <generatedFiles>
    <file
-       path="/home/alex/workspace/a10_dev/modules/pll/arria10_e3p1/ref_pll10/ref_pll10/altera_iopll_181/synth/ref_pll10_altera_iopll_181_c5qxdni.v"
+       path="/home/bel/ahahn/lnx/workspace/a10/bel_projects/modules/pll/arria10_e3p1/ref_pll10/ref_pll10/altera_iopll_181/synth/ref_pll10_altera_iopll_181_ev2meba.v"
        attributes="" />
   </generatedFiles>
   <childGeneratedFiles>
    <file
-       path="/home/alex/workspace/a10_dev/modules/pll/arria10_e3p1/ref_pll10/ref_pll10/altera_iopll_181/synth/ref_pll10_altera_iopll_181_c5qxdni.v"
+       path="/home/bel/ahahn/lnx/workspace/a10/bel_projects/modules/pll/arria10_e3p1/ref_pll10/ref_pll10/altera_iopll_181/synth/ref_pll10_altera_iopll_181_ev2meba.v"
        attributes="" />
   </childGeneratedFiles>
   <sourceFiles>
@@ -925,11 +919,11 @@
   <childSourceFiles/>
   <instantiator instantiator="ref_pll10" as="iopll_0" />
   <messages>
-   <message level="Info" culprit="ref_pll10">"Generating: ref_pll10_altera_iopll_181_c5qxdni"</message>
-   <message level="Debug" culprit="iopll_0">IN HDL WRAP: reset refclk locked scanclk phase_en updn cntsel phase_done num_phase_shifts outclk0 outclk1 outclk2 outclk3 outclk4</message>
+   <message level="Info" culprit="ref_pll10">"Generating: ref_pll10_altera_iopll_181_ev2meba"</message>
+   <message level="Debug" culprit="iopll_0">IN HDL WRAP: reset refclk locked scanclk phase_en updn cntsel phase_done num_phase_shifts lvds_clk loaden outclk2 outclk3 outclk4</message>
    <message level="Debug" culprit="iopll_0">--hdl_params: c_cnt_bypass_en0 c_cnt_bypass_en1 c_cnt_bypass_en2 c_cnt_bypass_en3 c_cnt_bypass_en4 c_cnt_bypass_en5 c_cnt_bypass_en6 c_cnt_bypass_en7 c_cnt_bypass_en8 c_cnt_hi_div0 c_cnt_hi_div1 c_cnt_hi_div2 c_cnt_hi_div3 c_cnt_hi_div4 c_cnt_hi_div5 c_cnt_hi_div6 c_cnt_hi_div7 c_cnt_hi_div8 c_cnt_in_src0 c_cnt_in_src1 c_cnt_in_src2 c_cnt_in_src3 c_cnt_in_src4 c_cnt_in_src5 c_cnt_in_src6 c_cnt_in_src7 c_cnt_in_src8 c_cnt_lo_div0 c_cnt_lo_div1 c_cnt_lo_div2 c_cnt_lo_div3 c_cnt_lo_div4 c_cnt_lo_div5 c_cnt_lo_div6 c_cnt_lo_div7 c_cnt_lo_div8 c_cnt_odd_div_duty_en0 c_cnt_odd_div_duty_en1 c_cnt_odd_div_duty_en2 c_cnt_odd_div_duty_en3 c_cnt_odd_div_duty_en4 c_cnt_odd_div_duty_en5 c_cnt_odd_div_duty_en6 c_cnt_odd_div_duty_en7 c_cnt_odd_div_duty_en8 c_cnt_ph_mux_prst0 c_cnt_ph_mux_prst1 c_cnt_ph_mux_prst2 c_cnt_ph_mux_prst3 c_cnt_ph_mux_prst4 c_cnt_ph_mux_prst5 c_cnt_ph_mux_prst6 c_cnt_ph_mux_prst7 c_cnt_ph_mux_prst8 c_cnt_prst0 c_cnt_prst1 c_cnt_prst2 c_cnt_prst3 c_cnt_prst4 c_cnt_prst5 c_cnt_prst6 c_cnt_prst7 c_cnt_prst8 clock_name_0 clock_name_1 clock_name_2 clock_name_3 clock_name_4 clock_name_5 clock_name_6 clock_name_7 clock_name_8 clock_name_global_0 clock_name_global_1 clock_name_global_2 clock_name_global_3 clock_name_global_4 clock_name_global_5 clock_name_global_6 clock_name_global_7 clock_name_global_8 duty_cycle0 duty_cycle1 duty_cycle2 duty_cycle3 duty_cycle4 duty_cycle5 duty_cycle6 duty_cycle7 duty_cycle8 m_cnt_bypass_en m_cnt_hi_div m_cnt_lo_div m_cnt_odd_div_duty_en n_cnt_bypass_en n_cnt_hi_div n_cnt_lo_div n_cnt_odd_div_duty_en number_of_clocks operation_mode output_clock_frequency0 output_clock_frequency1 output_clock_frequency2 output_clock_frequency3 output_clock_frequency4 output_clock_frequency5 output_clock_frequency6 output_clock_frequency7 output_clock_frequency8 phase_shift0 phase_shift1 phase_shift2 phase_shift3 phase_shift4 phase_shift5 phase_shift6 phase_shift7 phase_shift8 pll_bw_sel pll_bwctrl pll_cp_current pll_extclk_0_cnt_src pll_extclk_1_cnt_src pll_fbclk_mux_1 pll_fbclk_mux_2 pll_m_cnt_in_src pll_output_clk_frequency pll_slf_rst pll_subtype pll_type reference_clock_frequency</message>
    <message level="Debug" culprit="iopll_0">altera_pll_ports ports: refclk1 {DIRECT_MAPPING true MAPPING_FUNCTION {} TIE_OFF 1'b0} rst {DIRECT_MAPPING true MAPPING_FUNCTION {} TIE_OFF 1'b0} fbclk {DIRECT_MAPPING false MAPPING_FUNCTION map_fbclk_port TIE_OFF {}} fboutclk {DIRECT_MAPPING false MAPPING_FUNCTION map_fboutclk_port TIE_OFF {}} zdbfbclk {DIRECT_MAPPING true MAPPING_FUNCTION {} TIE_OFF { }} locked {DIRECT_MAPPING true MAPPING_FUNCTION {} TIE_OFF { }} loaden {DIRECT_MAPPING true MAPPING_FUNCTION {} TIE_OFF { }} phase_done {DIRECT_MAPPING true MAPPING_FUNCTION {} TIE_OFF { }} reconfig_to_pll {DIRECT_MAPPING false MAPPING_FUNCTION map_reconfig_to_port TIE_OFF {}} refclk {DIRECT_MAPPING true MAPPING_FUNCTION {} TIE_OFF 1'b0} scanclk {DIRECT_MAPPING true MAPPING_FUNCTION {} TIE_OFF 1'b0} phout {DIRECT_MAPPING true MAPPING_FUNCTION {} TIE_OFF { }} num_phase_shifts {DIRECT_MAPPING true MAPPING_FUNCTION {} TIE_OFF 3'b0} cntsel {DIRECT_MAPPING true MAPPING_FUNCTION {} TIE_OFF 5'b0} clkbad {DIRECT_MAPPING true MAPPING_FUNCTION {} TIE_OFF { }} extclk_out {DIRECT_MAPPING true MAPPING_FUNCTION {} TIE_OFF { }} lvds_clk {DIRECT_MAPPING true MAPPING_FUNCTION {} TIE_OFF { }} outclk {DIRECT_MAPPING false MAPPING_FUNCTION map_outclk_port TIE_OFF {}} phase_en {DIRECT_MAPPING true MAPPING_FUNCTION {} TIE_OFF 1'b0} extswitch {DIRECT_MAPPING true MAPPING_FUNCTION {} TIE_OFF 1'b0} cascade_out {DIRECT_MAPPING true MAPPING_FUNCTION {} TIE_OFF { }} activeclk {DIRECT_MAPPING true MAPPING_FUNCTION {} TIE_OFF { }} adjpllin {DIRECT_MAPPING true MAPPING_FUNCTION {} TIE_OFF 1'b0} updn {DIRECT_MAPPING true MAPPING_FUNCTION {} TIE_OFF 1'b0} reconfig_from_pll {DIRECT_MAPPING true MAPPING_FUNCTION {} TIE_OFF { }}</message>
-   <message level="Debug" culprit="iopll_0">module ports: rst refclk locked scanclk phase_en updn cntsel phase_done num_phase_shifts outclk_0 outclk_1 outclk_2 outclk_3 outclk_4</message>
+   <message level="Debug" culprit="iopll_0">module ports: rst refclk locked scanclk phase_en updn cntsel phase_done num_phase_shifts lvds_clk loaden outclk_2 outclk_3 outclk_4</message>
   </messages>
  </entity>
 </deploy>

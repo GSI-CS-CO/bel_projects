@@ -41,8 +41,14 @@
  <interface name="cntsel" internal="iopll_0.cntsel" type="conduit" dir="end">
   <port name="cntsel" internal="cntsel" />
  </interface>
+ <interface name="loaden" internal="iopll_0.loaden" type="conduit" dir="end">
+  <port name="loaden" internal="loaden" />
+ </interface>
  <interface name="locked" internal="iopll_0.locked" type="conduit" dir="end">
   <port name="locked" internal="locked" />
+ </interface>
+ <interface name="lvds_clk" internal="iopll_0.lvds_clk" type="conduit" dir="end">
+  <port name="lvds_clk" internal="lvds_clk" />
  </interface>
  <interface
    name="num_phase_shifts"
@@ -51,12 +57,8 @@
    dir="end">
   <port name="num_phase_shifts" internal="num_phase_shifts" />
  </interface>
- <interface name="outclk0" internal="iopll_0.outclk0" type="clock" dir="start">
-  <port name="outclk_0" internal="outclk_0" />
- </interface>
- <interface name="outclk1" internal="iopll_0.outclk1" type="clock" dir="start">
-  <port name="outclk_1" internal="outclk_1" />
- </interface>
+ <interface name="outclk0" internal="iopll_0.outclk0" />
+ <interface name="outclk1" internal="iopll_0.outclk1" />
  <interface name="outclk2" internal="iopll_0.outclk2" type="clock" dir="start">
   <port name="outclk_2" internal="outclk_2" />
  </interface>
@@ -148,8 +150,8 @@
   <parameter name="gui_clock_name_string9" value="outclk9" />
   <parameter name="gui_clock_to_compensate" value="0" />
   <parameter name="gui_debug_mode" value="false" />
-  <parameter name="gui_divide_factor_c0" value="8" />
-  <parameter name="gui_divide_factor_c1" value="5" />
+  <parameter name="gui_divide_factor_c0" value="1" />
+  <parameter name="gui_divide_factor_c1" value="8" />
   <parameter name="gui_divide_factor_c10" value="6" />
   <parameter name="gui_divide_factor_c11" value="6" />
   <parameter name="gui_divide_factor_c12" value="6" />
@@ -158,9 +160,9 @@
   <parameter name="gui_divide_factor_c15" value="6" />
   <parameter name="gui_divide_factor_c16" value="6" />
   <parameter name="gui_divide_factor_c17" value="6" />
-  <parameter name="gui_divide_factor_c2" value="40" />
-  <parameter name="gui_divide_factor_c3" value="1" />
-  <parameter name="gui_divide_factor_c4" value="8" />
+  <parameter name="gui_divide_factor_c2" value="8" />
+  <parameter name="gui_divide_factor_c3" value="5" />
+  <parameter name="gui_divide_factor_c4" value="40" />
   <parameter name="gui_divide_factor_c5" value="6" />
   <parameter name="gui_divide_factor_c6" value="6" />
   <parameter name="gui_divide_factor_c7" value="6" />
@@ -172,7 +174,7 @@
   <parameter name="gui_dps_num" value="1" />
   <parameter name="gui_dsm_out_sel" value="1st_order" />
   <parameter name="gui_duty_cycle0" value="50.0" />
-  <parameter name="gui_duty_cycle1" value="50.0" />
+  <parameter name="gui_duty_cycle1" value="13.0" />
   <parameter name="gui_duty_cycle10" value="50.0" />
   <parameter name="gui_duty_cycle11" value="50.0" />
   <parameter name="gui_duty_cycle12" value="50.0" />
@@ -183,7 +185,7 @@
   <parameter name="gui_duty_cycle17" value="50.0" />
   <parameter name="gui_duty_cycle2" value="50.0" />
   <parameter name="gui_duty_cycle3" value="50.0" />
-  <parameter name="gui_duty_cycle4" value="12.5" />
+  <parameter name="gui_duty_cycle4" value="50.0" />
   <parameter name="gui_duty_cycle5" value="50.0" />
   <parameter name="gui_duty_cycle6" value="50.0" />
   <parameter name="gui_duty_cycle7" value="50.0" />
@@ -192,7 +194,7 @@
   <parameter name="gui_en_adv_params" value="true" />
   <parameter name="gui_en_dps_ports" value="true" />
   <parameter name="gui_en_extclkout_ports" value="false" />
-  <parameter name="gui_en_lvds_ports" value="Disabled" />
+  <parameter name="gui_en_lvds_ports">Enable LVDS_CLK/LOADEN 0</parameter>
   <parameter name="gui_en_phout_ports" value="false" />
   <parameter name="gui_en_reconf" value="false" />
   <parameter name="gui_enable_cascade_in" value="false" />
@@ -214,7 +216,7 @@
   <parameter name="gui_multiply_factor" value="8" />
   <parameter name="gui_new_mif_file_path" value="~/pll.mif" />
   <parameter name="gui_number_of_clocks" value="5" />
-  <parameter name="gui_operation_mode" value="lvds" />
+  <parameter name="gui_operation_mode" value="direct" />
   <parameter name="gui_output_clock_frequency0" value="100.0" />
   <parameter name="gui_output_clock_frequency1" value="100.0" />
   <parameter name="gui_output_clock_frequency10" value="100.0" />
@@ -235,7 +237,7 @@
   <parameter name="gui_output_clock_frequency9" value="100.0" />
   <parameter name="gui_parameter_table_hex_file" value="seq_params_sim.hex" />
   <parameter name="gui_phase_shift0" value="0.0" />
-  <parameter name="gui_phase_shift1" value="0.0" />
+  <parameter name="gui_phase_shift1" value="7000.0" />
   <parameter name="gui_phase_shift10" value="0.0" />
   <parameter name="gui_phase_shift11" value="0.0" />
   <parameter name="gui_phase_shift12" value="0.0" />
@@ -315,7 +317,7 @@
   <parameter name="system_info_device_component" value="10AX115S2F45I1SG" />
   <parameter name="system_info_device_family" value="Arria 10" />
   <parameter name="system_info_device_speed_grade" value="1" />
-  <parameter name="system_part_trait_speed_grade" value="2" />
+  <parameter name="system_part_trait_speed_grade" value="1" />
  </module>
  <interconnectRequirement for="$system" name="qsys_mm.clockCrossingAdapter" value="HANDSHAKE" />
  <interconnectRequirement for="$system" name="qsys_mm.enableEccProtection" value="FALSE" />

@@ -1,32 +1,32 @@
 
 module ref_pll10 (
-	rst,
-	refclk,
+	cntsel,
 	locked,
-	outclk_0,
-	outclk_1,
+	num_phase_shifts,
 	outclk_2,
 	outclk_3,
 	outclk_4,
-	scanclk,
-	phase_en,
-	updn,
-	cntsel,
 	phase_done,
-	num_phase_shifts);	
+	phase_en,
+	refclk,
+	rst,
+	scanclk,
+	updn,
+	lvds_clk,
+	loaden);	
 
-	input		rst;
-	input		refclk;
+	input	[4:0]	cntsel;
 	output		locked;
-	output		outclk_0;
-	output		outclk_1;
+	input	[2:0]	num_phase_shifts;
 	output		outclk_2;
 	output		outclk_3;
 	output		outclk_4;
-	input		scanclk;
-	input		phase_en;
-	input		updn;
-	input	[4:0]	cntsel;
 	output		phase_done;
-	input	[2:0]	num_phase_shifts;
+	input		phase_en;
+	input		refclk;
+	input		rst;
+	input		scanclk;
+	input		updn;
+	output	[1:0]	lvds_clk;
+	output	[1:0]	loaden;
 endmodule
