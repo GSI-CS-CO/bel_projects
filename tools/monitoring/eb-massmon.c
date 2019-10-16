@@ -80,7 +80,7 @@ static void help(void) {
   fprintf(stderr, "Usage: %s [OPTION] <etherbone-protocol> <file with node names> <domain>\n", program);
   fprintf(stderr, "\n");
   fprintf(stderr, "  -a               include FPGA build version\n");
-  fprintf(stderr, "  -b               include info on WR time continuity [ns] (expect '16'('8') for 62.5(125) MHz eCPU)\n");
+  fprintf(stderr, "  -b               include info on WR time continuity [ns] (expected value is '16'('8') for a 62.5(125) MHz eCPU)\n");
   fprintf(stderr, "  -c               check if IP and MAC are correct (requires options '-f1', '-i', 'm')\n");
   fprintf(stderr, "  -d               include WR time\n");
   fprintf(stderr, "  -e               display etherbone version\n");
@@ -91,7 +91,7 @@ static void help(void) {
   fprintf(stderr, "  -h               display this help and exit\n");
   fprintf(stderr, "  -i               include WR IP\n");
   fprintf(stderr, "  -j               display additional info (requires option '-f1')\n");
-  fprintf(stderr, "  -k<cpu>          include rate of max eCPU stalls [%%] (default 'k0')\n");
+  fprintf(stderr, "  -k<cpu>          include max rate of m eCPU stalls [%%] for selected eCPU (default 'k0')\n");
   fprintf(stderr, "  -l               include WR link status\n");
   fprintf(stderr, "  -m               include WR MAC\n");
   fprintf(stderr, "  -o               include offset between WR time and system time [ms]\n");
