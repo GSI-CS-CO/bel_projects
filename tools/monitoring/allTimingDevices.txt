@@ -1,0 +1,3 @@
+00:26:7b:00:03:a8,id:timing,192.168.160.106,scuxl0143t     #NW Production; SCU3; TOS; SCU for monitoring of messages distributed by the data master; BG.2.009 R54; 2015-06-00
+00:26:7b:00:06:25,id:timing,192.168.160.181,scuxl0175t     #NW Production; SCU3; TOS; LSB6 Rack 1; UNILAC snooper; Dietrich Beck 2019-Aug-15
+00:26:7b:00:06:24,id:timing,192.168.160.193,scuxl0183t     #NW Production; SCU3; TOS; LSB6 Rack1; UNILAC MIL->WR gateway; Dietrich Beck 2019-Aug-15
