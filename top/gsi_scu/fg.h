@@ -138,6 +138,6 @@ STATIC_ASSERT( sizeof( struct channel_buffer ) == sizeof( struct param_set ) * B
 
 #ifdef __lm32__
 void scan_all_fgs(volatile uint16_t *base_adr, volatile unsigned int *mil_base, FG_MACRO_T* fglist, uint64_t *ext_id);
-void init_buffers(struct channel_regs *cr, unsigned int channel, FG_MACRO_T *macro, volatile unsigned short* scub_base, volatile unsigned int* devb_base);
+void init_buffers(struct channel_regs *cr, unsigned int channel, FG_MACRO_T *macro, volatile uint16_t* scub_base, volatile unsigned int* devb_base);
 #endif
 #endif

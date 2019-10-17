@@ -91,27 +91,27 @@ public:
          return actvalue << BIT_SIZEOF(uint16_t);
       }
 
-      uint getChannel( void ) const
+      FG_MACRO_T getChannel( void ) const
       {
-         return channel;
+         return fgMacro;
       }
 
-      uint getMilDaqAddress( void )
+      uint getMilDaqAddress( void ) const
       {
-         return ::Scu::MiLdaq::getMilDaqAddress( this );
+         return ::Scu::MiLdaq::getMilDaqDevice( this );
       }
 
       uint getMilDaqLocation( void ) const
       {
-         return ::Scu::MiLdaq::getMilDaqLocation( this );
+         return ::Scu::MiLdaq::getMilDaqSocket( this );
       }
 
-      uint getMilDaqScuBusSlot( void )
+      uint getMilDaqScuBusSlot( void ) const
       {
          return ::Scu::MiLdaq::getMilDaqScuBusSlot( this );
       }
 
-      uint getMilDaqScuMilExtention( void )
+      uint getMilDaqScuMilExtention( void ) const
       {
          return ::Scu::MiLdaq::getMilDaqScuMilExtention( this );
       }

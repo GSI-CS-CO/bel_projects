@@ -238,11 +238,8 @@ void scan_all_fgs( volatile uint16_t *scub_adr,
  * @brief  init the buffers for MAX_FG_CHANNELS
  */
 void init_buffers(struct channel_regs *cr, unsigned int channel, FG_MACRO_T* fg_macros,
-                  volatile unsigned short* scub_base, volatile unsigned int* devb_base)
+                  volatile uint16_t* scub_base, volatile unsigned int* devb_base)
 {
-   uint32_t socket;
-   uint32_t dev;
-
    if( channel > MAX_FG_CHANNELS )
       return;
 
@@ -251,23 +248,23 @@ void init_buffers(struct channel_regs *cr, unsigned int channel, FG_MACRO_T* fg_
    cr[channel].state = 0;
    cr[channel].ramp_count = 0;
 
-    //reset hardware
-   reset_mil(devb_base);
-   scub_reset_mil(scub_base, socket);
-   if( cr[channel].macro_number < 0)
+      //there is a macro assigned to that channel
+   const int32_t macro = cr[channel].macro_number;
+   if( macro < 0 )
       return;
 
-   //there is a macro assigned to that channel
-   uint32_t macro;
-   macro = cr[channel].macro_number;
 
 #ifdef CONFIG_FG_MACRO_STRUCT
-   socket = fg_macros[macro].socket;
-   dev    = fg_macros[macro].device;
+   uint8_t socket = fg_macros[macro].socket;
+   uint8_t dev    = fg_macros[macro].device;
 #else
-   socket = fg_macros[macro] >> 24;
-   dev = (fg_macros[macro] >> 16) & 0xff;
+   uint8_t socket = fg_macros[macro] >> 24;
+   uint8_t dev = (fg_macros[macro] >> 16) & 0xff;
 #endif
+   //reset hardware
+   reset_mil( devb_base );
+   scub_reset_mil(scub_base, socket);
+
    //mprintf("reset fg %d in socked %d\n", device, socked);
    /* scub slave */
    if( (socket & (DEV_MIL_EXT | DEV_SIO)) == 0 )

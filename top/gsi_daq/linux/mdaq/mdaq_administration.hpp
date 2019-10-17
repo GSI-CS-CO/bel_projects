@@ -247,7 +247,7 @@ protected:
    virtual void onUnregistered( RingItem* pUnknownItem ) {}
 
 private:
-   DaqCompare* findDaqCompare( const uint channel );
+   DaqCompare* findDaqCompare( const FG_MACRO_T macro );
 
 };
 

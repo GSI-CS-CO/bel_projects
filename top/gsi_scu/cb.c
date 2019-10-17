@@ -41,9 +41,14 @@ void cbDump(volatile struct channel_buffer *cb, volatile struct channel_regs* cr
   }
 }
 
+//#define CONFIG_PRINT_DAQ_BUFFER_OVERFLOW
 
 void add_daq_msg(volatile struct daq_buffer *mb, struct daq m) {
   ring_pos_t next_head = (mb->ring_head + 1) % DAQ_RING_SIZE;
+#ifdef CONFIG_PRINT_DAQ_BUFFER_OVERFLOW
+  if( next_head == mb->ring_tail )
+     mprintf( "DAQ buffer overflow!\n" );
+#endif
   mb->ring_data[mb->ring_head] = m;
   mb->ring_head = next_head;
 }

@@ -8,8 +8,9 @@ extern "C" {
 #endif
 
 #define RING_SIZE   64
-#define DAQ_RING_SIZE  2048 
-
+#define DAQ_RING_SIZE  2048
+//#define DAQ_RING_SIZE 512
+//#define DAQ_RING_SIZE  1024
 /** @brief check if a channel buffer is empty
  *  @param cr channel register
  *  @param channel number of the channel
@@ -77,11 +78,11 @@ struct msi {
 } PACKED_SIZE;
 
 struct daq {
-  uint32_t setvalue;
-  uint32_t actvalue;
-  uint32_t tmstmp_l;
-  uint32_t tmstmp_h;
-  uint32_t channel;
+  uint32_t   setvalue;
+  uint32_t   actvalue;
+  uint32_t   tmstmp_l;
+  uint32_t   tmstmp_h;
+  FG_MACRO_T fgMacro;
 } PACKED_SIZE;
 
 typedef uint32_t ring_pos_t;

@@ -162,13 +162,13 @@ DaqDevice* DaqAdministration::getDevice( const uint location )
 /*-----------------------------------------------------------------------------
  */
 inline
-DaqCompare* DaqAdministration::findDaqCompare( const uint channel )
+DaqCompare* DaqAdministration::findDaqCompare( FG_MACRO_T macro )
 {
-   DaqDevice* pDaqDevice = getDevice( getMilDaqLocationByChannel( channel ) );
+   DaqDevice* pDaqDevice = getDevice( getSocketByFgMacro( macro ) );
    if( pDaqDevice == nullptr )
       return nullptr;
 
-   return pDaqDevice->getDaqCompare( getMilDaqAdressByChannel( channel ) );
+   return pDaqDevice->getDaqCompare( getDeviceByFgMacro( macro ) );
 }
 
 /*-----------------------------------------------------------------------------

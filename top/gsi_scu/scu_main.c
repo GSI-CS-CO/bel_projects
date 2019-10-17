@@ -138,7 +138,7 @@ static inline unsigned int _get_socket( unsigned int channel )
 #ifdef CONFIG_FG_MACRO_STRUCT
    return _get_macro_number( channel ).socket;
 #else
-   return getMilDaqLocationByChannel( _get_macro_number( channel ) );
+   return getSocketByFgMacro( _get_macro_number( channel ) );
 #endif
 }
 
@@ -150,7 +150,7 @@ static inline unsigned int _get_dev( unsigned int channel )
 #ifdef CONFIG_FG_MACRO_STRUCT
    return _get_macro_number( channel ).device;
 #else
-   return getMilDaqAdressByChannel(_get_macro_number( channel ));
+   return getDeviceByFgMacro(_get_macro_number( channel ));
 #endif
 }
 
@@ -793,8 +793,8 @@ static inline void printFgs( void )
       if( g_shared.fg_macros[i] == 0 )
          break; //continue;
       mprintf( "fg-%d-%d ver: %d output-bits: %d\n",
-               getMilDaqLocationByChannel( g_shared.fg_macros[i] ),
-               getMilDaqAdressByChannel( g_shared.fg_macros[i] ),
+               getSocketByFgMacro( g_shared.fg_macros[i] ),
+               getDeviceByFgMacro( g_shared.fg_macros[i] ),
                getFgMacroVersion( g_shared.fg_macros[i] ),
                getFgOutputBits( g_shared.fg_macros[i] ));
 
@@ -1242,6 +1242,7 @@ static void sw_irq_handler( register TaskType* pThis UNUSED )
       case FG_OP_RESCAN:
       { //rescan for fg macros
          scanFgs();
+         // TODO ACK to the saft-lib!
          break;
       }
 
@@ -1361,14 +1362,14 @@ static void pushDaqData( FG_MACRO_T fgMacro, uint64_t timestamp,
    pl.item.timestamp = timestamp;
    pl.item.setValue = setValue >> (BIT_SIZEOF(uint32_t)/sizeof(MIL_DAQ_T));
    pl.item.actValue = actValue;
-   pl.item.channel = *((uint32_t*)&fgMacro);
+   pl.item.fgMacro = fgMacro;
 #else
    struct daq d;
 
    d.actvalue = actValue;
    d.tmstmp_l = timestamp & 0xffffffff;
    d.tmstmp_h = timestamp >> BIT_SIZEOF(uint32_t);
-   d.channel  = *((uint32_t*)&fgMacro);
+   d.fgMacro  = fgMacro;
    d.setvalue = setValue;
    add_daq_msg(&g_shared.daq_buf, d);
 #endif

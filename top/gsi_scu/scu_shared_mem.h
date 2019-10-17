@@ -67,10 +67,10 @@ typedef uint16_t MIL_DAQ_T;
 
 typedef struct PACKED_SIZE
 {
-   uint64_t  timestamp;
-   MIL_DAQ_T setValue;
-   MIL_DAQ_T actValue;
-   uint32_t  channel;
+   uint64_t   timestamp;
+   MIL_DAQ_T  setValue;
+   MIL_DAQ_T  actValue;
+   FG_MACRO_T fgMacro;
 } MIL_DAQ_RAM_ITEM_T;
 
 #ifndef __DOXYGEN__
@@ -367,59 +367,74 @@ static inline const char* signal2String( const SIGNAL_T sig )
 namespace MiLdaq
 {
 #endif
-
 /*! ---------------------------------------------------------------------------
  */
 static inline
-unsigned int getMilDaqAdressByChannel( const unsigned int fgMacro )
+unsigned int getSocketByFgMacro( const FG_MACRO_T channel )
 {
-   return (fgMacro >> 16) & 0xFF;
-}
-
-/*! ---------------------------------------------------------------------------
- */
-static inline
-unsigned int getFgMacroVersion( const unsigned int fgMacro )
-{
-   return (fgMacro >> 8) & 0xFF;
-}
-
-/*! ---------------------------------------------------------------------------
- */
-static inline
-unsigned int getFgOutputBits( const unsigned int fgMacro )
-{
-   return fgMacro & 0xFF;
-}
-
-/*! ---------------------------------------------------------------------------
- */
-static inline
-unsigned int getMilDaqAddress( const register struct daq* pMilDaq )
-{
-   return getMilDaqAdressByChannel( pMilDaq->channel );
-}
-
-/*! ---------------------------------------------------------------------------
- */
-static inline
-unsigned int getMilDaqLocationByChannel( const unsigned int channel )
-{
+#ifdef CONFIG_FG_MACRO_STRUCT
+   return fgMacro.socket;
+#else
    return channel >> 24;
+#endif
 }
 
 /*! ---------------------------------------------------------------------------
  */
 static inline
-unsigned int getMilDaqLocation( const register struct daq* pMilDaq )
+unsigned int getDeviceByFgMacro( const FG_MACRO_T fgMacro )
 {
-   return getMilDaqLocationByChannel( pMilDaq->channel );
+#ifdef CONFIG_FG_MACRO_STRUCT
+   return fgMacro.device;
+#else
+   return (fgMacro >> 16) & 0xFF;
+#endif
 }
 
 /*! ---------------------------------------------------------------------------
  */
 static inline
-unsigned int getDaqMilScuBusSlotbyLocation( const unsigned int loc )
+unsigned int getFgMacroVersion( const FG_MACRO_T fgMacro )
+{
+#ifdef CONFIG_FG_MACRO_STRUCT
+   return fgMacro.version;
+#else
+   return (fgMacro >> 8) & 0xFF;
+#endif
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+static inline
+unsigned int getFgOutputBits( const FG_MACRO_T fgMacro )
+{
+#ifdef CONFIG_FG_MACRO_STRUCT
+   return fgMacro.outputBits;
+#else
+   return fgMacro & 0xFF;
+#endif
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+static inline
+unsigned int getMilDaqDevice( const register struct daq* pMilDaq )
+{
+   return getDeviceByFgMacro( pMilDaq->fgMacro );
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+static inline
+unsigned int getMilDaqSocket( const register struct daq* pMilDaq )
+{
+   return getSocketByFgMacro( pMilDaq->fgMacro );
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+static inline
+unsigned int getDaqMilScuBusSlotbySocket( const unsigned int loc )
 {
    return loc & SCU_BUS_SLOT_MASK;
 }
@@ -427,7 +442,7 @@ unsigned int getDaqMilScuBusSlotbyLocation( const unsigned int loc )
 /*! ---------------------------------------------------------------------------
  */
 static inline
-unsigned int getDaqMilExtentionByLocation( const unsigned int loc )
+unsigned int getDaqMilExtentionBySocket( const unsigned int loc )
 {
    return loc >> 4;
 }
@@ -437,7 +452,7 @@ unsigned int getDaqMilExtentionByLocation( const unsigned int loc )
 static inline
 unsigned int getMilDaqScuBusSlot( const register struct daq* pMilDaq )
 {
-   return getDaqMilScuBusSlotbyLocation( getMilDaqLocation( pMilDaq ));
+   return getDaqMilScuBusSlotbySocket( getMilDaqSocket( pMilDaq ));
 }
 
 /*! ---------------------------------------------------------------------------
@@ -445,7 +460,7 @@ unsigned int getMilDaqScuBusSlot( const register struct daq* pMilDaq )
 static inline
 unsigned int getMilDaqScuMilExtention( const register struct daq* pMilDaq )
 {
-   return getDaqMilExtentionByLocation( getMilDaqLocation( pMilDaq ) );
+   return getDaqMilExtentionBySocket( getMilDaqSocket( pMilDaq ) );
 }
 
 #ifdef __cplusplus
