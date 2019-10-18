@@ -31,28 +31,6 @@
 #include <helper_macros.h>
 // 12 SIOs with dev busses and 1 mil extension
 
-//#define CONFIG_FG_MACRO_STRUCT
-
-#ifdef CONFIG_FG_MACRO_STRUCT
-typedef struct PACKED_SIZE
-{
-   uint8_t socket;
-   uint8_t device;
-   uint8_t version;
-   uint8_t outputBits;
-} FG_MACRO_T;
-
-#ifndef __DOXYGEN__
-STATIC_ASSERT( offsetof( FG_MACRO_T, socket ) == 0 );
-STATIC_ASSERT( offsetof( FG_MACRO_T, device ) == offsetof( FG_MACRO_T, socket ) + sizeof( uint8_t ) );
-STATIC_ASSERT( offsetof( FG_MACRO_T, outputBits ) == offsetof( FG_MACRO_T, version ) + sizeof( uint8_t ) );
-STATIC_ASSERT( sizeof( FG_MACRO_T ) == sizeof( uint32_t ) );
-#endif
-#else
-
-typedef uint32_t FG_MACRO_T;
-
-#endif
 
 #define   MAX_FG_MACROS     256
 #define   MAX_FG_CHANNELS   16
@@ -92,6 +70,22 @@ typedef uint32_t FG_MACRO_T;
 #define FC_IFAMODE_WR (0x60 << 8)
 #define FC_BLK_WR     (0x6b << 8)
 #define FC_ACT_RD     (0x81 << 8)
+
+typedef struct PACKED_SIZE
+{
+   uint8_t socket;
+   uint8_t device;
+   uint8_t version;
+   uint8_t outputBits;
+} FG_MACRO_T;
+
+#ifndef __DOXYGEN__
+STATIC_ASSERT( offsetof( FG_MACRO_T, socket ) == 0 );
+STATIC_ASSERT( offsetof( FG_MACRO_T, device ) == offsetof( FG_MACRO_T, socket ) + sizeof( uint8_t ) );
+STATIC_ASSERT( offsetof( FG_MACRO_T, outputBits ) == offsetof( FG_MACRO_T, version ) + sizeof( uint8_t ) );
+STATIC_ASSERT( sizeof( FG_MACRO_T ) == sizeof( uint32_t ) );
+#endif
+
 
 //#pragma pack(push, 1)
 struct param_set {
@@ -138,6 +132,6 @@ STATIC_ASSERT( sizeof( struct channel_buffer ) == sizeof( struct param_set ) * B
 
 #ifdef __lm32__
 void scan_all_fgs(volatile uint16_t *base_adr, volatile unsigned int *mil_base, FG_MACRO_T* fglist, uint64_t *ext_id);
-void init_buffers(struct channel_regs *cr, unsigned int channel, FG_MACRO_T *macro, volatile uint16_t* scub_base, volatile unsigned int* devb_base);
+void init_buffers(struct channel_regs *cr, const unsigned int channel, FG_MACRO_T *macro, volatile uint16_t* scub_base, volatile unsigned int* devb_base);
 #endif
 #endif

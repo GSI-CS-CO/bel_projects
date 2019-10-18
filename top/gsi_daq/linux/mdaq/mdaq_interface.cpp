@@ -155,7 +155,7 @@ uint DaqInterface::readRingItems( RingItem* pItems, uint size )
       __BYTE_SWAP_ITEM( actvalue );
       __BYTE_SWAP_ITEM( tmstmp_l );
       __BYTE_SWAP_ITEM( tmstmp_h );
-      __BYTE_SWAP_ITEM( fgMacro ); // TODO check when fgMacro is a struct!
+      pItems[i].fgMacro = beItems[i].fgMacro;
       incrementRingTail();
    }
    #undef __BYTE_SWAP_ITEM

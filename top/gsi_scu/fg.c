@@ -41,23 +41,20 @@
 
 /*! ---------------------------------------------------------------------------
  */
-static  void fgInitMacro( FG_MACRO_T* pMacro,
-                                const uint8_t outputBits,
-                                const uint8_t version,
-                                const uint8_t device, /* mil extension */
-                                const uint8_t socket )
+static void fgInitMacro( FG_MACRO_T* pMacro,
+                         const uint8_t outputBits,
+                         const uint8_t version,
+                         const uint8_t device, /* mil extension */
+                         const uint8_t socket )
 {
-#ifdef CONFIG_FG_MACRO_STRUCT
    pMacro->outputBits  = outputBits;
    pMacro->version     = version;
    pMacro->device      = device;
    pMacro->socket      = socket;
-#else
-   *pMacro = outputBits | (version << 8) | (device << 16) | (socket << 24);
-#endif
 }
 
-
+/*! ---------------------------------------------------------------------------
+ */
 static int add_to_fglist( const uint8_t socked, const uint8_t dev,
                           const int cid_sys, const int cid_group,
                           const uint8_t fg_ver,
@@ -65,14 +62,9 @@ static int add_to_fglist( const uint8_t socked, const uint8_t dev,
 {
    int count = 0;
 
-  /* find first free slot */
-#ifdef CONFIG_FG_MACRO_STRUCT
+   /* find first free slot */
    while( (fglist[count].outputBits != 0) && (count < MAX_FG_MACROS) )
       count++;
-#else
-   while( (fglist[count] != 0) && (count < MAX_FG_MACROS) )
-      count++;
-#endif
 
    if( !(cid_sys == SYS_CSCO || cid_sys == SYS_PBRF || cid_sys == SYS_LOEP) )
       return count;
@@ -230,6 +222,14 @@ void scan_all_fgs( volatile uint16_t *scub_adr,
                    volatile unsigned int *mil_addr,
                    FG_MACRO_T* fglist, uint64_t *ext_id )
 {
+   for( unsigned int i = 0; i < MAX_FG_MACROS; i++ )
+   {
+      fglist[i].socket     = 0;
+      fglist[i].device     = 0;
+      fglist[i].version    = 0;
+      fglist[i].outputBits = 0;
+   }
+
    scanScuBusFgs( scub_adr, fglist );
    scanExtMilFgs( mil_addr, fglist, ext_id );
 }
@@ -237,7 +237,7 @@ void scan_all_fgs( volatile uint16_t *scub_adr,
 /*! ---------------------------------------------------------------------------
  * @brief  init the buffers for MAX_FG_CHANNELS
  */
-void init_buffers(struct channel_regs *cr, unsigned int channel, FG_MACRO_T* fg_macros,
+void init_buffers(struct channel_regs *cr, const unsigned int channel, FG_MACRO_T* fg_macros,
                   volatile uint16_t* scub_base, volatile unsigned int* devb_base)
 {
    if( channel > MAX_FG_CHANNELS )
@@ -254,13 +254,9 @@ void init_buffers(struct channel_regs *cr, unsigned int channel, FG_MACRO_T* fg_
       return;
 
 
-#ifdef CONFIG_FG_MACRO_STRUCT
-   uint8_t socket = fg_macros[macro].socket;
-   uint8_t dev    = fg_macros[macro].device;
-#else
-   uint8_t socket = fg_macros[macro] >> 24;
-   uint8_t dev = (fg_macros[macro] >> 16) & 0xff;
-#endif
+   const uint8_t socket = fg_macros[macro].socket;
+   const uint8_t dev    = fg_macros[macro].device;
+
    //reset hardware
    reset_mil( devb_base );
    scub_reset_mil(scub_base, socket);

@@ -273,12 +273,6 @@ STATIC_ASSERT( offsetof( SCU_SHARED_DATA_T, fg_buffer ) ==
      , .daq_buf = {0}
 #endif
 
-#ifdef CONFIG_FG_MACRO_STRUCT
-  #define __FG_MACRO_INITIALIZER .fg_macros = {{0,0,0,0}}
-#else
-  #define __FG_MACRO_INITIALIZER .fg_macros = {0}
-#endif
-
 /*! ---------------------------------------------------------------------------
  * @brief Initializer of the entire LM32 shared memory of application
  *        scu_control.
@@ -296,7 +290,7 @@ STATIC_ASSERT( offsetof( SCU_SHARED_DATA_T, fg_buffer ) ==
    .fg_mb_slot       = SCU_INVALID_VALUE,  \
    .fg_num_channels  = MAX_FG_CHANNELS,    \
    .fg_buffer_size   = BUFFER_SIZE,        \
-   __FG_MACRO_INITIALIZER                  \
+   .fg_macros        = {{0,0,0,0}}         \
    __MIL_DAQ_SHARAD_MEM_INITIALIZER_ITEM   \
    __DAQ_SHARAD_MEM_INITIALIZER_ITEM       \
 }
@@ -370,13 +364,9 @@ namespace MiLdaq
 /*! ---------------------------------------------------------------------------
  */
 static inline
-unsigned int getSocketByFgMacro( const FG_MACRO_T channel )
+unsigned int getSocketByFgMacro( const FG_MACRO_T fgMacro )
 {
-#ifdef CONFIG_FG_MACRO_STRUCT
    return fgMacro.socket;
-#else
-   return channel >> 24;
-#endif
 }
 
 /*! ---------------------------------------------------------------------------
@@ -384,11 +374,7 @@ unsigned int getSocketByFgMacro( const FG_MACRO_T channel )
 static inline
 unsigned int getDeviceByFgMacro( const FG_MACRO_T fgMacro )
 {
-#ifdef CONFIG_FG_MACRO_STRUCT
    return fgMacro.device;
-#else
-   return (fgMacro >> 16) & 0xFF;
-#endif
 }
 
 /*! ---------------------------------------------------------------------------
@@ -396,11 +382,7 @@ unsigned int getDeviceByFgMacro( const FG_MACRO_T fgMacro )
 static inline
 unsigned int getFgMacroVersion( const FG_MACRO_T fgMacro )
 {
-#ifdef CONFIG_FG_MACRO_STRUCT
    return fgMacro.version;
-#else
-   return (fgMacro >> 8) & 0xFF;
-#endif
 }
 
 /*! ---------------------------------------------------------------------------
@@ -408,11 +390,7 @@ unsigned int getFgMacroVersion( const FG_MACRO_T fgMacro )
 static inline
 unsigned int getFgOutputBits( const FG_MACRO_T fgMacro )
 {
-#ifdef CONFIG_FG_MACRO_STRUCT
    return fgMacro.outputBits;
-#else
-   return fgMacro & 0xFF;
-#endif
 }
 
 /*! ---------------------------------------------------------------------------

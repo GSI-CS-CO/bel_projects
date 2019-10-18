@@ -133,25 +133,17 @@ static inline FG_MACRO_T _get_macro_number( unsigned int channel )
 /*! ---------------------------------------------------------------------------
  * @brief Returns the socked number of the given channel.
  */
-static inline unsigned int _get_socket( unsigned int channel )
+static inline uint8_t _get_socket( unsigned int channel )
 {
-#ifdef CONFIG_FG_MACRO_STRUCT
    return _get_macro_number( channel ).socket;
-#else
-   return getSocketByFgMacro( _get_macro_number( channel ) );
-#endif
 }
 
 /*! ---------------------------------------------------------------------------
  * @brief Returns the device number of the given channel.
  */
-static inline unsigned int _get_dev( unsigned int channel )
+static inline uint8_t _get_dev( unsigned int channel )
 {
-#ifdef CONFIG_FG_MACRO_STRUCT
    return _get_macro_number( channel ).device;
-#else
-   return getDeviceByFgMacro(_get_macro_number( channel ));
-#endif
 }
 
 /*! ---------------------------------------------------------------------------
@@ -275,28 +267,27 @@ static void enable_scub_msis( unsigned int channel )
  */
 static void disable_slave_irq( unsigned int channel )
 {
-   int socket, dev;
-   int status;
-
    if( channel >= MAX_FG_CHANNELS )
       return;
 
-   socket = _get_socket( channel );
-   dev  = _get_dev( channel );
-   if ((socket & (DEV_MIL_EXT | DEV_SIO)) == 0)
+   int status;
+   const uint8_t socket = _get_socket( channel );
+   const uint8_t dev  = _get_dev( channel );
+
+   if( (socket & (DEV_MIL_EXT | DEV_SIO)) == 0 )
    {
       if (dev == 0)
-        g_pScub_base[OFFS(socket) + SLAVE_INT_ENA] &= ~(0x8000);       //disable fg1 irq
+        g_pScub_base[OFFS(socket) + SLAVE_INT_ENA] &= ~(0x8000); //disable fg1 irq
       else if (dev == 1)
-        g_pScub_base[OFFS(socket) + SLAVE_INT_ENA] &= ~(0x4000);       //disable fg2 irq
+        g_pScub_base[OFFS(socket) + SLAVE_INT_ENA] &= ~(0x4000); //disable fg2 irq
    }
-   else if (socket & DEV_MIL_EXT)
+   else if( (socket & DEV_MIL_EXT) != 0 )
    {
       //write_mil(g_pScu_mil_base, 0x0, FC_COEFF_A_WR | dev);            //ack drq
       if ((status = write_mil(g_pScu_mil_base, 0x0, FC_IRQ_MSK | dev)) != OKAY)
          dev_failure(status, socket & SCU_BUS_SLOT_MASK, __func__);  //mask drq
    }
-   else if (socket & DEV_SIO)
+   else if( (socket & DEV_SIO) != 0 )
    {
       if ((status = scub_write_mil(g_pScub_base, socket & SCU_BUS_SLOT_MASK, 0x0, FC_IRQ_MSK | dev)) != OKAY)
          dev_failure(status, socket & SCU_BUS_SLOT_MASK, __func__);  //mask drq
@@ -584,7 +575,7 @@ static int configure_fg_macro( const unsigned int channel )
    #define _MIL_BIT_MASK()  (1 << MAX_SCU_SLAVES)
 
    uint16_t dreq_status = 0;
-   unsigned int socket = _get_socket( channel );
+   const uint8_t socket = _get_socket( channel );
    /* actions per slave card */
    if (socket & DEV_SIO)
    {
@@ -637,7 +628,7 @@ static int configure_fg_macro( const unsigned int channel )
    #undef _MIL_BIT_MASK
 
    int status;
-   unsigned int dev  = _get_dev( channel );
+   const uint8_t dev  = _get_dev( channel );
     /* enable irqs */
    if( (socket & (DEV_MIL_EXT | DEV_SIO)) == 0 )
    {                                      //scu bus slave
@@ -771,10 +762,9 @@ static int configure_fg_macro( const unsigned int channel )
 /*! ---------------------------------------------------------------------------
  * @brief Prints all found function generators.
  */
-#ifdef CONFIG_FG_MACRO_STRUCT
 static inline void printFgs( void )
 {
-   for( unsigned int  i = 0; i < ARRAY_SIZE( g_shared.fg_macros ); i++ )
+   for( unsigned int i = 0; i < ARRAY_SIZE( g_shared.fg_macros ); i++ )
    {
       if( g_shared.fg_macros[i].outputBits == 0 )
          break;
@@ -782,39 +772,15 @@ static inline void printFgs( void )
                g_shared.fg_macros[i].socket,
                g_shared.fg_macros[i].device,
                g_shared.fg_macros[i].version,
-               g_shared.fg_macros[i].outputBits);
+               g_shared.fg_macros[i].outputBits );
    }
 }
-#else
-static inline void printFgs( void )
-{
-   for( unsigned int  i = 0; i < ARRAY_SIZE( g_shared.fg_macros ); i++ )
-   { // hi..lo bytes: socket, device, version, output-bits
-      if( g_shared.fg_macros[i] == 0 )
-         break; //continue;
-      mprintf( "fg-%d-%d ver: %d output-bits: %d\n",
-               getSocketByFgMacro( g_shared.fg_macros[i] ),
-               getDeviceByFgMacro( g_shared.fg_macros[i] ),
-               getFgMacroVersion( g_shared.fg_macros[i] ),
-               getFgOutputBits( g_shared.fg_macros[i] ));
 
-   }
-}
-#endif
 /*! ---------------------------------------------------------------------------
  * @brief Scans for fgs on mil extension and scu bus.
  */
 static void scanFgs( void )
 {
-
-#ifdef CONFIG_FG_MACRO_STRUCT
-   for( unsigned int i = 0; i < ARRAY_SIZE( g_shared.fg_macros ); i++ )
-      g_shared.fg_macros[i].outputBits = 0;
-#else
-   for( unsigned int i = 0; i < ARRAY_SIZE( g_shared.fg_macros ); i++ )
-      g_shared.fg_macros[i] = 0;
-#endif
-
 #if __GNUC__ >= 9
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Waddress-of-packed-member"
@@ -822,7 +788,7 @@ static void scanFgs( void )
    scan_all_fgs( g_pScub_base,
                  g_pScu_mil_base,
                  &g_shared.fg_macros[0],
-                 &g_shared.ext_id);
+                 &g_shared.ext_id );
 #if __GNUC__ >= 9
   #pragma GCC diagnostic pop
 #endif
@@ -860,8 +826,8 @@ static void disable_channel( unsigned int channel )
 
    int status;
    int16_t data;
-   unsigned int socket = _get_socket( channel );
-   unsigned int dev  = _get_dev( channel );
+   const uint8_t socket = _get_socket( channel );
+   const uint8_t dev  = _get_dev( channel );
    //mprintf("disarmed socket %d dev %d in channel[%d] state %d\n", socket, dev, channel, pFgRegs->state); //ONLY FOR TESTING
    if( (socket & (DEV_MIL_EXT | DEV_SIO)) == 0 )
    {
@@ -920,7 +886,7 @@ static void disable_channel( unsigned int channel )
 /*! ---------------------------------------------------------------------------
  * @brief updates the temperatur information in the shared section
  */
-static void updateTemp( void )
+static void updateTemperature( void )
 {
   BASE_ONEWIRE = (uint8_t*)g_pWr_1wire_base;
   wrpc_w1_init();
@@ -962,7 +928,7 @@ static void init( void )
   hist_init(HISTORY_XYZ_MODULE);
   for( int i = 0; i < ARRAY_SIZE(g_shared.fg_regs); i++ )
      g_shared.fg_regs[i].macro_number = SCU_INVALID_VALUE;     //no macros assigned to channels at startup
-  updateTemp();                       //update 1Wire ID and temperatures
+  updateTemperature();                       //update 1Wire ID and temperatures
   scanFgs();                        //scans for slave cards and fgs
 }
 
@@ -1027,7 +993,7 @@ typedef struct
 #define FSM_TRANSITION( newState, attr... ) pThis->state = newState
 #define FSM_INIT_FSM( init, attr... )       pThis->state = init
 
-/*! --------------------------------------------------------------------------
+/*! ---------------------------------------------------------------------------
  * @brief Declaration of the states of the task- FSM
  */
 typedef enum
@@ -1395,9 +1361,8 @@ static void printTimeoutMessage( register TaskType* pThis, const bool isScuBus )
 static void dev_sio_bus_handler( register TaskType* pThis, const bool isScuBus )
 {
    unsigned int i;
-   unsigned int socket, dev;
+   uint8_t socket, dev;
    int status = OKAY;
-   short data_aquisition;
    struct msi m;
 
    switch( pThis->state )
@@ -1585,16 +1550,16 @@ static void dev_sio_bus_handler( register TaskType* pThis, const bool isScuBus )
          {  // any irq pending?
             if( (pThis->aFgChannels[i].irq_data & (DEV_STATE_IRQ | DEV_DRQ)) == 0 )
                continue; // No
-
+            int16_t actAdcValue;
             if( isScuBus )
             {
                status = scub_get_task_mil( g_pScub_base, pThis->slave_nr,
-                                           getId( pThis ) + i + 1, &data_aquisition);
+                                           getId( pThis ) + i + 1, &actAdcValue );
             }
             else
             {
                status = get_task_mil( g_pScu_mil_base, getId( pThis ) + i + 1,
-                                      &data_aquisition);
+                                      &actAdcValue );
             }
 
             if( status == RCV_TASK_BSY )
@@ -1608,7 +1573,7 @@ static void dev_sio_bus_handler( register TaskType* pThis, const bool isScuBus )
 
             pushDaqData( _get_macro_number( i ),
                          pThis->aFgChannels[i].daq_timestamp,
-                         data_aquisition,
+                         actAdcValue,
                          g_aFgChannels[i].last_c_coeff );
             // save the setvalue from the tuple sent for the next drq handling
             g_aFgChannels[i].last_c_coeff = pThis->aFgChannels[i].setvalue;
