@@ -3,7 +3,7 @@
 //
 //  created : 2015
 //  author  : Dietrich Beck, GSI-Darmstadt
-//  version : 10-Oct-2019
+//  version : 17-Oct-2019
 //
 // Command-line interface for WR monitoring via Etherbone.
 //
@@ -34,7 +34,7 @@
 // For all questions and ideas contact: d.beck@gsi.de
 // Last update: 25-April-2015
 //////////////////////////////////////////////////////////////////////////////////////////////
-#define EBMON_VERSION "2.0.2"
+#define EBMON_VERSION "2.0.3"
 
 // standard includes
 #include <unistd.h> // getopt
@@ -118,7 +118,7 @@ static void help(void)
   fprintf(stderr, "            '   '   '      '     '           '      ' - actual message rate [Hz]\n");
   fprintf(stderr, "            '   '   '      '     '           '- total # of messages\n");
   fprintf(stderr, "            '   '   '      '     ' - actual rate of eCPU stalls (should be below '50.0')\n");
-  fprintf(stderr, "            '   '   '      '- max rate of eCPU stalls (should be below '50.0')\n");
+  fprintf(stderr, "            '   '   '      '- max continous eCPU stall (should be below '50.0')\n");
   fprintf(stderr, "            '   '   '- WR time continuity: maximum negative difference (should be '0')\n");
   fprintf(stderr, "            '   '- WR time continuity: maximum positive difference (should be '8' for a 125 MHz CPU clock)\n");
   fprintf(stderr, "            '- WR lock: '1' signals 'TRACK_PHASE'\n");
@@ -170,7 +170,9 @@ void printSnoopData(int snoopInterval, int snoopLockFlag, int64_t contMaxPosDT, 
 } // printSnoopData
 
 int main(int argc, char** argv) {
-  #define BUILDTYPELEN 256
+  #define BUILDTYPELEN   256
+  #define STALLTOBS    50000
+  #define WRTOBS           8
 
   eb_status_t       status;
   eb_socket_t       socket;
@@ -426,7 +428,7 @@ int main(int argc, char** argv) {
     // init
     wb_eca_stats_reset(device, devIndex, 0);
     wb_eca_stats_enable(device, devIndex, 0x1);
-    wb_wr_stats_reset(device, devIndex, 8, 50000); 
+    wb_wr_stats_reset(device, devIndex, WRTOBS, STALLTOBS);
     nSecs           = snoopSecs;
     ecaSumEarly     = 0;
     printSnoopHeader();
@@ -435,12 +437,16 @@ int main(int argc, char** argv) {
       // wr lock
       wb_wr_get_sync_state(device, devIndex, &syncState);
       if (syncState == WR_PPS_GEN_ESCR_MASK) snoopLockFlag = 1;
-      if (!snoopLockFlag)       fprintf(stdout, "%s: error - WR not locked\n", program);
+      else                                   snoopLockFlag = 0;
+      if (!snoopLockFlag) {
+        fprintf(stdout,                         "%s: error - WR not locked (resetting DM-Diagnostics)\n", program);
+        wb_wr_stats_reset(device, devIndex, WRTOBS, STALLTOBS); 
+      } // if !snoopLockFlag
 
       // time continuity
       wb_wr_stats_get_continuity(device, devIndex, &contObsT, &contMaxPosDT, &contMaxPosTS, &contMaxNegDT, &contMaxNegTS);
-      if (contMaxPosDT > 16)    fprintf(stdout, "%s: error - WR time jumps by %d [ns]\n", program, (int)contMaxPosDT);
-      if (contMaxNegDT != 0)    fprintf(stdout, "%s: error - WR time jumps by %d [ns]\n", program, (int)contMaxNegDT);
+      if (contMaxPosDT > 16)    fprintf(stdout, "%s: error - WR time (posDT) jumps by %d [ns]\n", program, (int)contMaxPosDT);
+      if (contMaxNegDT != 0)    fprintf(stdout, "%s: error - WR time (negDT) jumps by %d [ns]\n", program, (int)contMaxNegDT);
 
       // CPU stalls
       wb_wr_stats_get_stall(device, devIndex, ecpu, &stallObsT, &stallMax, &stallAct, &stallTS);
