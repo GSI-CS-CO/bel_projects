@@ -332,7 +332,7 @@ static inline void send_fg_param( const  unsigned int socket,
                                   const uint16_t cntrl_reg,
                                   signed int* pSetvalue )
 {
-   struct param_set pset;
+   FG_PARAM_SET_T pset;
    unsigned int fg_num;
    uint16_t cntrl_reg_wr;
    int status;
@@ -687,7 +687,7 @@ static int configure_fg_macro( const unsigned int channel )
 
    uint16_t cntrl_reg_wr;
    int16_t blk_data[6];
-   struct param_set pset;
+   FG_PARAM_SET_T pset;
     //fetch first parameter set from buffer
    if( cbRead(&g_shared.fg_buffer[0], &g_shared.fg_regs[0], channel, &pset) != 0 )
    {
@@ -819,7 +819,7 @@ inline static void print_regs( void)
  */
 static void disable_channel( unsigned int channel )
 {
-   struct channel_regs* pFgRegs = &g_shared.fg_regs[channel];
+   FG_CHANNEL_REG_T* pFgRegs = &g_shared.fg_regs[channel];
 
    if( pFgRegs->macro_number == SCU_INVALID_VALUE )
       return;

@@ -36,7 +36,7 @@
  *  @param channel number of the channel
  *  @param pset pointer to parameter set
  */
-void cbWrite(volatile struct channel_buffer* cb, volatile struct channel_regs* cr, int channel, struct param_set *pset) {
+void cbWrite(volatile FG_CHANNEL_BUFFER_T* cb, volatile FG_CHANNEL_REG_T* cr, int channel, FG_PARAM_SET_T* pset ) {
   unsigned int wptr = cr[channel].wr_ptr;
   /* write element to free slot */
   cb[channel].pset[wptr] = *pset;
@@ -53,9 +53,9 @@ void cbWrite(volatile struct channel_buffer* cb, volatile struct channel_regs* c
  *  @param cr pointer to the channel register
  *  @param channel number of the channel
  */
-void cbDump(volatile struct channel_buffer *cb, volatile struct channel_regs* cr, int channel) {
+void cbDump(volatile FG_CHANNEL_BUFFER_T* cb, volatile FG_CHANNEL_REG_T* cr, int channel) {
   int i = 0, col;
-  struct param_set *pset;
+  FG_PARAM_SET_T *pset;
   mprintf("dumped cb[%d]: \n", channel);  
   mprintf ("wr_ptr: %d rd_ptr: %d size: %d\n", cr[channel].wr_ptr, cr[channel].rd_ptr, BUFFER_SIZE);
   while(i < BUFFER_SIZE) {
@@ -115,13 +115,4 @@ struct msi remove_msg(volatile struct message_buffer *mb, int queue) {
   }
 }
 
-/** @brief test if a queue has any messages
- *  @param mb pointer to the first message buffer
- *  @param queue number of the queue
- */
-int has_msg(volatile struct message_buffer *mb, int queue) {
-    if (mb[queue].ring_head != mb[queue].ring_tail)
-      return 1;
-    else
-      return 0;
-}
+/*================================== EOF ====================================*/

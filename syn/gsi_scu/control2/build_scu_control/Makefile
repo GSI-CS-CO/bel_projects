@@ -22,7 +22,7 @@ ifdef ORIGIN
 # MIAN_MODULE    = $(SCU_DIR)/main_origin.c
 else
   MIAN_MODULE    = $(SCU_DIR)/scu_main.c
-  #  SCU_DAQ=1
+  SCU_DAQ=1
   # MIL_DAQ_USE_DDR3=1
 endif
 
@@ -59,12 +59,15 @@ SOURCE += $(SCU_LIB_SRC_DIR)/stack-check.c
 
 # SOURCE += $(SCU_LIB_SRC_DIR)/wr_time.c
 SOURCE += $(WR_DIR)/pp_printf/div64.c
-ifdef ORIGIN
-#  SOURCE += $(SCU_LIB_SRC_DIR)/dbg.c
-endif
 SOURCE += $(SCU_DIR)/scu_bus.c
-SOURCE += $(SCU_DIR)/fg.c
-SOURCE += $(SCU_DIR)/cb.c
+ifdef ORIGIN
+ SOURCE += $(SCU_LIB_SRC_DIR)/dbg.c
+ SOURCE += $(SCU_DIR)/fg.c
+ SOURCE += $(SCU_DIR)/cb.c
+else
+ SOURCE += $(SCU_DIR)/scu_function_generator.c
+ SOURCE += $(SCU_DIR)/scu_circular_buffer.c
+endif
 SOURCE += $(SCU_DIR)/dow_crc.c
 ifdef USE_HISTORY
    SOURCE += $(SCU_DIR)/history.c
@@ -98,7 +101,7 @@ ifdef ORIGIN
   CODE_OPTIMIZATION = s
 else
   CODE_OPTIMIZATION = s
-  # TOOLCHAIN_DIR = $(INCLUDED_TOOLCHAIN_DIR)
+ #  TOOLCHAIN_DIR = $(INCLUDED_TOOLCHAIN_DIR)
 endif
 
 RAM_SIZE    = 147456

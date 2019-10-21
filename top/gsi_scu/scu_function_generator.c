@@ -34,10 +34,6 @@
 #include <mini_sdb.h>
 
 #define OFFS(SLOT) ((SLOT) * (1 << 16))
-         // fglist[count] = 16;           // output bits
-         // fglist[count] |= fg_ver << 8; // version
-         // fglist[count] |= dev << 16;   // device: macro number inside of the slave card
-         // fglist[count] |= socked << 24;  // slot
 
 /*! ---------------------------------------------------------------------------
  */
@@ -56,7 +52,7 @@ static void fgInitMacro( FG_MACRO_T* pMacro,
 /*! ---------------------------------------------------------------------------
  */
 static int add_to_fglist( const uint8_t socked, const uint8_t dev,
-                          const int cid_sys, const int cid_group,
+                          const uint16_t cid_sys, const uint16_t cid_group,
                           const uint8_t fg_ver,
                           FG_MACRO_T* fglist )
 {
@@ -184,7 +180,8 @@ void scanScuBusFgs( volatile uint16_t *scub_adr, FG_MACRO_T* fglist )
  * @brief Scans the MIL extension for function generators
  */
 static inline
-void scanExtMilFgs( volatile unsigned int *mil_addr, FG_MACRO_T* fglist, uint64_t *ext_id )
+void scanExtMilFgs( volatile unsigned int *mil_addr,
+                    FG_MACRO_T* fglist, uint64_t *ext_id )
 {
    int16_t ifa_id, ifa_vers, fg_vers;
    uint16_t ifa_adr;
@@ -237,8 +234,10 @@ void scan_all_fgs( volatile uint16_t *scub_adr,
 /*! ---------------------------------------------------------------------------
  * @brief  init the buffers for MAX_FG_CHANNELS
  */
-void init_buffers(struct channel_regs *cr, const unsigned int channel, FG_MACRO_T* fg_macros,
-                  volatile uint16_t* scub_base, volatile unsigned int* devb_base)
+void init_buffers( FG_CHANNEL_REG_T* cr, const unsigned int channel,
+                   FG_MACRO_T* fg_macros,
+                   volatile uint16_t* scub_base,
+                   volatile unsigned int* devb_base )
 {
    if( channel > MAX_FG_CHANNELS )
       return;

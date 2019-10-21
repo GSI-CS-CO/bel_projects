@@ -24,10 +24,11 @@
  * License along with this library. If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************
  */
-#ifndef __CB_H_
-#define __CB_H_
+#ifndef _SCU_CIRCULAR_BUFFER_H
+#define _SCU_CIRCULAR_BUFFER_H
 
 #include <scu_function_generator.h>
+#include <stdbool.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -42,7 +43,8 @@ extern "C" {
  *  @param channel number of the channel
  */
 static
-inline int cbisEmpty(volatile struct channel_regs* cr, int channel) {
+inline bool cbisEmpty(volatile FG_CHANNEL_REG_T* cr, int channel)
+{
   return cr[channel].wr_ptr == cr[channel].rd_ptr;
 }
 
@@ -51,7 +53,7 @@ inline int cbisEmpty(volatile struct channel_regs* cr, int channel) {
  *  @param channel number of the channel
  */
 static
-inline int cbgetCount(volatile struct channel_regs* cr, int channel) {
+inline int cbgetCount(volatile FG_CHANNEL_REG_T* cr, int channel) {
   if (cr[channel].wr_ptr > cr[channel].rd_ptr)
     return cr[channel].wr_ptr - cr[channel].rd_ptr;
   else if (cr[channel].rd_ptr > cr[channel].wr_ptr)
@@ -65,7 +67,7 @@ inline int cbgetCount(volatile struct channel_regs* cr, int channel) {
  *  @param cr channel register
  *  @param channel number of the channel
  */
-inline int cbisFull(volatile struct channel_regs* cr, int channel) {
+inline int cbisFull(volatile FG_CHANNEL_REG_T* cr, int channel) {
   int ret = 0;
   ret = (cr[channel].wr_ptr + 1) % (BUFFER_SIZE) == cr[channel].rd_ptr;
   return ret;
@@ -78,7 +80,7 @@ inline int cbisFull(volatile struct channel_regs* cr, int channel) {
  *  @param pset the data from the buffer is written to this address
  */
 static inline
-int cbRead(volatile struct channel_buffer *cb, volatile struct channel_regs* cr, int channel, struct param_set *pset) {
+int cbRead(volatile FG_CHANNEL_BUFFER_T *cb, volatile FG_CHANNEL_REG_T* cr, int channel, FG_PARAM_SET_T *pset) {
   unsigned int rptr = cr[channel].rd_ptr;
   unsigned int wptr = cr[channel].wr_ptr;
   /* check empty */
@@ -90,7 +92,7 @@ int cbRead(volatile struct channel_buffer *cb, volatile struct channel_regs* cr,
   *pset = cb[channel].pset[rptr];
 #else
   //TODO Workaround, I don't know why yet!
-  *pset = *((struct param_set*) &(cb[channel].pset[rptr]));
+  *pset = *((FG_PARAM_SET_T*) &(cb[channel].pset[rptr]));
 #endif
   /* move read pointer forward */
   cr[channel].rd_ptr = (rptr + 1) % (BUFFER_SIZE);
@@ -126,16 +128,24 @@ struct daq_buffer {
 } PACKED_SIZE;
 //#pragma pack(pop)
 
-void cbWrite(volatile struct channel_buffer *cb, volatile struct channel_regs*, int, struct param_set*);
-void cbDump(volatile struct channel_buffer *cb, volatile struct channel_regs*, int num);
+void cbWrite(volatile FG_CHANNEL_BUFFER_T* cb, volatile FG_CHANNEL_REG_T*, int, FG_PARAM_SET_T*);
+void cbDump(volatile FG_CHANNEL_BUFFER_T* cb, volatile FG_CHANNEL_REG_T*, int num);
 int add_msg(volatile struct message_buffer *mb, int queue, struct msi m);
 struct msi remove_msg(volatile struct message_buffer *mb, int queue);
 void add_daq_msg(volatile struct daq_buffer *db, struct daq d);
-int has_msg(volatile struct message_buffer *mb, int queue);
+//bool has_msg(volatile struct message_buffer *mb, int queue);
+
+/** @brief test if a queue has any messages
+ *  @param mb pointer to the first message buffer
+ *  @param queue number of the queue
+ */
+static inline bool has_msg(volatile struct message_buffer *mb, int queue)
+{
+   return (mb[queue].ring_head != mb[queue].ring_tail);
+}
 
 #ifdef __cplusplus
 } /* extern "C" */
 #endif
-
-
-#endif
+#endif /* ifndef _SCU_CIRCULAR_BUFFER_H */
+/*================================== EOF ====================================*/

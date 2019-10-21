@@ -86,9 +86,8 @@ STATIC_ASSERT( offsetof( FG_MACRO_T, outputBits ) == offsetof( FG_MACRO_T, versi
 STATIC_ASSERT( sizeof( FG_MACRO_T ) == sizeof( uint32_t ) );
 #endif
 
-
-//#pragma pack(push, 1)
-struct param_set {
+typedef struct PACKED_SIZE
+{
   int16_t coeff_a;
   int16_t coeff_b;
   int32_t coeff_c;
@@ -96,42 +95,60 @@ struct param_set {
                                5..3   freq
                               11..6   shift_b
                               17..12  shift_a */
-} PACKED_SIZE;
+} FG_PARAM_SET_T;
+
 
 #ifndef __DOXYGEN__
-STATIC_ASSERT( sizeof( struct param_set ) == 12 );
+STATIC_ASSERT( sizeof( FG_PARAM_SET_T ) == 12 );
 #endif
 
-#define STATE_STOPPED 0
-#define STATE_ACTIVE  1
-#define STATE_ARMED   2
+typedef enum
+{
+   STATE_STOPPED = 0,
+   STATE_ACTIVE  = 1,
+   STATE_ARMED   = 2
+} FG_REG_STATE_T;
 
-struct channel_regs {
-  uint32_t wr_ptr;
-  uint32_t rd_ptr;
-  uint32_t mbx_slot;
-  uint32_t macro_number;
-  uint32_t ramp_count;
-  uint32_t tag;
-  uint32_t state; // meaning private to LM32
-} PACKED_SIZE;
+typedef struct PACKED_SIZE
+{
+  uint32_t       wr_ptr;
+  uint32_t       rd_ptr;
+  uint32_t       mbx_slot;
+  uint32_t       macro_number;
+  uint32_t       ramp_count;
+  uint32_t       tag;
+  FG_REG_STATE_T state; // meaning private to LM32
+} FG_CHANNEL_REG_T;
 
 #ifndef __DOXYGEN__
-STATIC_ASSERT( sizeof( struct channel_regs ) == sizeof( uint32_t ) * 7 );
+STATIC_ASSERT( sizeof( FG_REG_STATE_T ) == sizeof( uint32_t ) );
+STATIC_ASSERT( sizeof( FG_CHANNEL_REG_T ) == sizeof( uint32_t ) * 7 );
 #endif
 
-struct channel_buffer {
-  struct param_set pset[BUFFER_SIZE];
-} PACKED_SIZE;
+
+typedef struct PACKED_SIZE
+{
+  FG_PARAM_SET_T pset[BUFFER_SIZE];
+} FG_CHANNEL_BUFFER_T;
+
+#ifndef __DOXYGEN__
+STATIC_ASSERT( sizeof( FG_CHANNEL_BUFFER_T ) == sizeof( FG_PARAM_SET_T ) * BUFFER_SIZE );
+#endif
 
 //#pragma pack(pop)
 
-#ifndef __DOXYGEN__
-STATIC_ASSERT( sizeof( struct channel_buffer ) == sizeof( struct param_set ) * BUFFER_SIZE );
-#endif
-
 #ifdef __lm32__
-void scan_all_fgs(volatile uint16_t *base_adr, volatile unsigned int *mil_base, FG_MACRO_T* fglist, uint64_t *ext_id);
-void init_buffers(struct channel_regs *cr, const unsigned int channel, FG_MACRO_T *macro, volatile uint16_t* scub_base, volatile unsigned int* devb_base);
-#endif
+void scan_all_fgs( volatile uint16_t *base_adr,
+                   volatile unsigned int* mil_base,
+                   FG_MACRO_T* fglist,
+                   uint64_t *ext_id );
+
+void init_buffers( FG_CHANNEL_REG_T* cr,
+                   const unsigned int channel,
+                   FG_MACRO_T* macro,
+                   volatile uint16_t* scub_base,
+                   volatile unsigned int* devb_base) ;
+#endif /* ifdef __lm32__ */
+
 #endif /* ifndef _SCU_FUNCTION_GENERATOR_H */
+/*================================== EOF ====================================*/
