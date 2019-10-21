@@ -1,6 +1,32 @@
+/*!
+ *  @file scu_circular_buffer.c
+ *  @brief SCU- circular buffer resp. ring buffer administration in
+ *         shared memory of LM32.
+ *
+ *  @date 21.10.2019
+ *  @copyright (C) 2019 GSI Helmholtz Centre for Heavy Ion Research GmbH
+ *
+ *  @author Stefan Rauch perhaps...
+ *  @revision Ulrich Becker <u.becker@gsi.de>
+ *
+ ******************************************************************************
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 3 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library. If not, see <http://www.gnu.org/licenses/>.
+ ******************************************************************************
+ */
 #include <stdlib.h>
-#include <cb.h>
-#include <fg.h>
+#include <scu_function_generator.h>
+#include <scu_circular_buffer.h>
 #include <aux.h>
 #include <mprintf.h>
 
@@ -41,9 +67,14 @@ void cbDump(volatile struct channel_buffer *cb, volatile struct channel_regs* cr
   }
 }
 
+//#define CONFIG_PRINT_DAQ_BUFFER_OVERFLOW
 
 void add_daq_msg(volatile struct daq_buffer *mb, struct daq m) {
   ring_pos_t next_head = (mb->ring_head + 1) % DAQ_RING_SIZE;
+#ifdef CONFIG_PRINT_DAQ_BUFFER_OVERFLOW
+  if( next_head == mb->ring_tail )
+     mprintf( "DAQ buffer overflow!\n" );
+#endif
   mb->ring_data[mb->ring_head] = m;
   mb->ring_head = next_head;
 }

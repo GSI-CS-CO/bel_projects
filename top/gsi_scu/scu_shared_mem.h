@@ -36,9 +36,9 @@
 #ifndef _SCU_SHARED_MEM_H
 #define _SCU_SHARED_MEM_H
 
-#include <fg.h>
-#include <cb.h>
 #include <helper_macros.h>
+#include <scu_function_generator.h>
+#include <scu_circular_buffer.h>
 #ifdef CONFIG_SCU_DAQ_INTEGRATION
   #include <daq_command_interface.h>
   #ifdef __cplusplus
