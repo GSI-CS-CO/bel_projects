@@ -97,7 +97,16 @@ typedef union PACKED_SIZE
    MIL_DAQ_RAM_ITEM_T item;
 } MIL_DAQ_RAM_ITEM_PAYLOAD_T;
 
-#endif /* ifdef CONFIG_MIL_DAQ_USE_RAM */
+#else /* ifdef CONFIG_MIL_DAQ_USE_RAM */
+
+ #ifdef __cplusplus
+   #define _MIL_DAQ_BUFFER_T Scu::MiLdaq::MIL_DAQ_BUFFER_T
+ #else
+   #define _MIL_DAQ_BUFFER_T MIL_DAQ_BUFFER_T
+ #endif
+
+#endif /* else ifdef CONFIG_MIL_DAQ_USE_RAM */
+
 
 /*! ---------------------------------------------------------------------------
  * @brief Definition of shared memory area for the communication between LM32
@@ -122,7 +131,7 @@ typedef struct PACKED_SIZE
 #ifdef CONFIG_MIL_DAQ_USE_RAM
    RAM_RING_INDEXES_T  mdaqRing;
 #else
-   struct daq_buffer daq_buf;
+   _MIL_DAQ_BUFFER_T   daq_buf;
 #endif
 #ifdef CONFIG_SCU_DAQ_INTEGRATION
    __DAQ_SHARED_IO_T sDaq;
@@ -232,7 +241,7 @@ STATIC_ASSERT( offsetof( SCU_SHARED_DATA_T, fg_buffer ) ==
  #else
    STATIC_ASSERT( offsetof( SCU_SHARED_DATA_T, sDaq ) ==
                   offsetof( SCU_SHARED_DATA_T, daq_buf ) +
-                  sizeof( struct daq_buffer ));
+                  sizeof( MIL_DAQ_BUFFER_T ));
  #endif
  STATIC_ASSERT( sizeof( SCU_SHARED_DATA_T ) ==
                 offsetof( SCU_SHARED_DATA_T, sDaq ) +
@@ -245,7 +254,7 @@ STATIC_ASSERT( offsetof( SCU_SHARED_DATA_T, fg_buffer ) ==
  #else
   STATIC_ASSERT( sizeof( SCU_SHARED_DATA_T ) ==
                  offsetof( SCU_SHARED_DATA_T, daq_buf ) +
-                 sizeof( struct daq_buffer ));
+                 sizeof( _MIL_DAQ_BUFFER_T ));
  #endif
 #endif /* / ifdef CONFIG_SCU_DAQ_INTEGRATION */
 #endif /* ifndef __DOXYGEN__ */
@@ -396,7 +405,7 @@ unsigned int getFgOutputBits( const FG_MACRO_T fgMacro )
 /*! ---------------------------------------------------------------------------
  */
 static inline
-unsigned int getMilDaqDevice( const register struct daq* pMilDaq )
+unsigned int getMilDaqDevice( const register MIL_DAQ_OBJ_T* pMilDaq )
 {
    return getDeviceByFgMacro( pMilDaq->fgMacro );
 }
@@ -404,7 +413,7 @@ unsigned int getMilDaqDevice( const register struct daq* pMilDaq )
 /*! ---------------------------------------------------------------------------
  */
 static inline
-unsigned int getMilDaqSocket( const register struct daq* pMilDaq )
+unsigned int getMilDaqSocket( const register MIL_DAQ_OBJ_T* pMilDaq )
 {
    return getSocketByFgMacro( pMilDaq->fgMacro );
 }
@@ -428,7 +437,7 @@ unsigned int getDaqMilExtentionBySocket( const unsigned int loc )
 /*! ---------------------------------------------------------------------------
  */
 static inline
-unsigned int getMilDaqScuBusSlot( const register struct daq* pMilDaq )
+unsigned int getMilDaqScuBusSlot( const register MIL_DAQ_OBJ_T* pMilDaq )
 {
    return getDaqMilScuBusSlotbySocket( getMilDaqSocket( pMilDaq ));
 }
@@ -436,7 +445,7 @@ unsigned int getMilDaqScuBusSlot( const register struct daq* pMilDaq )
 /*! ---------------------------------------------------------------------------
  */
 static inline
-unsigned int getMilDaqScuMilExtention( const register struct daq* pMilDaq )
+unsigned int getMilDaqScuMilExtention( const register MIL_DAQ_OBJ_T* pMilDaq )
 {
    return getDaqMilExtentionBySocket( getMilDaqSocket( pMilDaq ) );
 }

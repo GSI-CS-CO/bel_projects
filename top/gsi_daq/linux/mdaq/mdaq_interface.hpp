@@ -54,13 +54,14 @@ public:
 class DaqInterface
 {
 public:
+   // TODO Replace these naked numbers asap!!!
    constexpr static uint         c_maxDevices        = 40;
    constexpr static uint         c_maxSlots          = 12;
    constexpr static uint         c_startSlot         = 0;
    constexpr static uint         c_maxChannels       = 254;
 
-   typedef ring_pos_t RING_INDEX_T;
-   typedef struct daq RING_ITEM_T;
+   typedef RING_POS_T RING_INDEX_T;
+   typedef MIL_DAQ_OBJ_T RING_ITEM_T;
 
    class RingItem: public RING_ITEM_T
    {
@@ -126,9 +127,9 @@ private:
       RING_INDEX_T  m_tail;
    } PACKED_SIZE;
    static_assert( offsetof( DAQ_RING_T, m_head ) ==
-                  offsetof( struct daq_buffer, ring_head ), "Offset-error!" );
+                  offsetof( MIL_DAQ_BUFFER_T, ring_head ), "Offset-error!" );
    static_assert( offsetof( DAQ_RING_T, m_tail ) ==
-                  offsetof( struct daq_buffer, ring_tail ), "Offset-error!" );
+                  offsetof( MIL_DAQ_BUFFER_T, ring_tail ), "Offset-error!" );
 
    bool               m_ebAccessSelfCreated;
    DAQ_RING_T         m_oRing;
@@ -151,6 +152,11 @@ public:
    const std::string getScuDomainName( void )
    {
       return m_poEbAccess->getScuDomainName();
+   }
+
+   daq::EbRamAccess* getEbRamAccessObj( void )
+   {
+      return m_poEbAccess;
    }
 
    RING_INDEX_T getHeadRingIndex( void ) const

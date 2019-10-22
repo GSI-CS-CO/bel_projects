@@ -32,20 +32,30 @@
 
 #ifdef __cplusplus
 extern "C" {
+namespace Scu
+{
+#endif
+
+typedef uint32_t RING_POS_T;
+
+#ifdef __cplusplus
+namespace FG
+{
 #endif
 
 #define RING_SIZE   64
 #define DAQ_RING_SIZE  2048
 //#define DAQ_RING_SIZE 512
 //#define DAQ_RING_SIZE  1024
+
 /** @brief check if a channel buffer is empty
  *  @param cr channel register
  *  @param channel number of the channel
  */
 static
-inline bool cbisEmpty(volatile FG_CHANNEL_REG_T* cr, int channel)
+inline bool cbisEmpty(volatile FG_CHANNEL_REG_T* cr, const unsigned int channel)
 {
-  return cr[channel].wr_ptr == cr[channel].rd_ptr;
+   return cr[channel].wr_ptr == cr[channel].rd_ptr;
 }
 
 /** @brief get the fill level  of a channel buffer
@@ -53,98 +63,121 @@ inline bool cbisEmpty(volatile FG_CHANNEL_REG_T* cr, int channel)
  *  @param channel number of the channel
  */
 static
-inline int cbgetCount(volatile FG_CHANNEL_REG_T* cr, int channel) {
-  if (cr[channel].wr_ptr > cr[channel].rd_ptr)
-    return cr[channel].wr_ptr - cr[channel].rd_ptr;
-  else if (cr[channel].rd_ptr > cr[channel].wr_ptr)
-    return BUFFER_SIZE - cr[channel].rd_ptr + cr[channel].wr_ptr;
-  else
-    return 0;
-}
+inline RING_POS_T cbgetCount(volatile FG_CHANNEL_REG_T* cr, const unsigned int channel )
+{
+   if( cr[channel].wr_ptr > cr[channel].rd_ptr )
+      return cr[channel].wr_ptr - cr[channel].rd_ptr;
 
+   if( cr[channel].rd_ptr > cr[channel].wr_ptr )
+      return BUFFER_SIZE - cr[channel].rd_ptr + cr[channel].wr_ptr;
+
+   return 0;
+}
 
 /** @brief check if a channel buffer is full
  *  @param cr channel register
  *  @param channel number of the channel
  */
-inline int cbisFull(volatile FG_CHANNEL_REG_T* cr, int channel) {
-  int ret = 0;
-  ret = (cr[channel].wr_ptr + 1) % (BUFFER_SIZE) == cr[channel].rd_ptr;
-  return ret;
+static inline bool cbisFull(volatile FG_CHANNEL_REG_T* cr, const unsigned int channel)
+{
+   return (cr[channel].wr_ptr + 1) % (BUFFER_SIZE) == cr[channel].rd_ptr;
 }
 
 /** @brief read a parameter set from a channel buffer
- *  @param cb pointer to the first channel buffer
- *  @param cr pointer to the first channel register
+ *  @param pCb pointer to the first channel buffer
+ *  @param pCr pointer to the first channel register
  *  @param channel number of the channel
- *  @param pset the data from the buffer is written to this address
+ *  @param pPset the data from the buffer is written to this address
  */
 static inline
-int cbRead(volatile FG_CHANNEL_BUFFER_T *cb, volatile FG_CHANNEL_REG_T* cr, int channel, FG_PARAM_SET_T *pset) {
-  unsigned int rptr = cr[channel].rd_ptr;
-  unsigned int wptr = cr[channel].wr_ptr;
-  /* check empty */
-  if (wptr == rptr) {
-    return 0;
-  }
+bool cbRead( volatile FG_CHANNEL_BUFFER_T* pCb, volatile FG_CHANNEL_REG_T* pCr,
+            const unsigned int channel, FG_PARAM_SET_T* pPset )
+{
+   const uint32_t rptr = pCr[channel].rd_ptr;
+
+   /* check empty */
+   if( pCr[channel].wr_ptr == rptr )
+      return false;
   /* read element */
-#ifdef __lm32__
-  *pset = cb[channel].pset[rptr];
+#ifdef __cplusplus
+   //TODO Workaround, I don't know why yet!
+   *pPset = *((FG_PARAM_SET_T*) &(pCb[channel].pset[rptr]));
 #else
-  //TODO Workaround, I don't know why yet!
-  *pset = *((FG_PARAM_SET_T*) &(cb[channel].pset[rptr]));
+   *pPset = pCb[channel].pset[rptr];
 #endif
-  /* move read pointer forward */
-  cr[channel].rd_ptr = (rptr + 1) % (BUFFER_SIZE);
-  return 1;
+   /* move read pointer forward */
+   pCr[channel].rd_ptr = (rptr + 1) % (BUFFER_SIZE);
+   return true;
 }
-//#pragma pack(push, 1)
-struct msi {
+
+typedef struct PACKED_SIZE
+{
    uint32_t  msg;
    uint32_t  adr;
    uint32_t  sel;
-} PACKED_SIZE;
+} MSI_T;
 
-struct daq {
-  uint32_t   setvalue;
-  uint32_t   actvalue;
-  uint32_t   tmstmp_l;
-  uint32_t   tmstmp_h;
-  FG_MACRO_T fgMacro;
-} PACKED_SIZE;
+typedef struct PACKED_SIZE
+{
+   RING_POS_T ring_head;
+   RING_POS_T ring_tail;
+   MSI_T      ring_data[RING_SIZE];
+} FG_MESSAGE_BUFFER_T;
 
-typedef uint32_t ring_pos_t;
-
-struct message_buffer {
-  ring_pos_t ring_head;
-  ring_pos_t ring_tail;
-  struct msi ring_data[RING_SIZE];
-} PACKED_SIZE;
-
-struct daq_buffer {
-  ring_pos_t ring_head;
-  ring_pos_t ring_tail;
-  struct daq ring_data[DAQ_RING_SIZE];
-} PACKED_SIZE;
 //#pragma pack(pop)
+#ifdef __lm32__
+void cbWrite(volatile FG_CHANNEL_BUFFER_T* cb, volatile FG_CHANNEL_REG_T*, const int, FG_PARAM_SET_T*);
 
-void cbWrite(volatile FG_CHANNEL_BUFFER_T* cb, volatile FG_CHANNEL_REG_T*, int, FG_PARAM_SET_T*);
-void cbDump(volatile FG_CHANNEL_BUFFER_T* cb, volatile FG_CHANNEL_REG_T*, int num);
-int add_msg(volatile struct message_buffer *mb, int queue, struct msi m);
-struct msi remove_msg(volatile struct message_buffer *mb, int queue);
-void add_daq_msg(volatile struct daq_buffer *db, struct daq d);
-//bool has_msg(volatile struct message_buffer *mb, int queue);
+void cbDump(volatile FG_CHANNEL_BUFFER_T* cb, volatile FG_CHANNEL_REG_T*, const int num );
+
+int add_msg(volatile FG_MESSAGE_BUFFER_T* mb, int queue, MSI_T m);
+
+MSI_T remove_msg(volatile FG_MESSAGE_BUFFER_T* mb, int queue);
+
+#endif /* ifdef __lm32__ */
 
 /** @brief test if a queue has any messages
  *  @param mb pointer to the first message buffer
  *  @param queue number of the queue
  */
-static inline bool has_msg(volatile struct message_buffer *mb, int queue)
+static inline bool has_msg(volatile FG_MESSAGE_BUFFER_T* mb, int queue)
 {
    return (mb[queue].ring_head != mb[queue].ring_tail);
 }
 
 #ifdef __cplusplus
+} /* namespace FG */
+namespace MiLdaq
+{
+#endif
+
+#ifndef CONFIG_MIL_DAQ_USE_RAM
+
+typedef struct PACKED_SIZE
+{
+   uint32_t   setvalue;
+   uint32_t   actvalue;
+   uint32_t   tmstmp_l;
+   uint32_t   tmstmp_h;
+   FG_MACRO_T fgMacro;
+} MIL_DAQ_OBJ_T;
+
+typedef struct PACKED_SIZE
+{
+   RING_POS_T    ring_head;
+   RING_POS_T    ring_tail;
+   MIL_DAQ_OBJ_T ring_data[DAQ_RING_SIZE];
+} MIL_DAQ_BUFFER_T;
+
+#ifdef __lm32__
+void add_daq_msg(volatile MIL_DAQ_BUFFER_T* db, MIL_DAQ_OBJ_T d );
+#endif
+
+#endif /* ifndef CONFIG_MIL_DAQ_USE_RAM */
+
+#ifdef __cplusplus
+} /* namespace MiLdaq */
+} /* namespace Scu */
 } /* extern "C" */
 #endif
 #endif /* ifndef _SCU_CIRCULAR_BUFFER_H */

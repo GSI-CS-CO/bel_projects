@@ -30,7 +30,12 @@
 
 #include <helper_macros.h>
 // 12 SIOs with dev busses and 1 mil extension
-
+#ifdef __cplusplus
+extern "C"
+{
+namespace Scu
+{
+#endif
 
 #define   MAX_FG_MACROS     256
 #define   MAX_FG_CHANNELS   16
@@ -149,6 +154,11 @@ void init_buffers( FG_CHANNEL_REG_T* cr,
                    volatile uint16_t* scub_base,
                    volatile unsigned int* devb_base) ;
 #endif /* ifdef __lm32__ */
+
+#ifdef __cplusplus
+} /* namespace Scu */
+} /* extern "C" */
+#endif
 
 #endif /* ifndef _SCU_FUNCTION_GENERATOR_H */
 /*================================== EOF ====================================*/

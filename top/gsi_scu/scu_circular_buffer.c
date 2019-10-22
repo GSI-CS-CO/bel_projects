@@ -28,7 +28,7 @@
 #include <scu_function_generator.h>
 #include <scu_circular_buffer.h>
 #include <aux.h>
-#include <mprintf.h>
+#include <eb_console_helper.h>
 
 /** @brief write parameter set to circular buffer
  *  @param cb pointer to the channel buffer
@@ -36,15 +36,16 @@
  *  @param channel number of the channel
  *  @param pset pointer to parameter set
  */
-void cbWrite(volatile FG_CHANNEL_BUFFER_T* cb, volatile FG_CHANNEL_REG_T* cr, int channel, FG_PARAM_SET_T* pset ) {
-  unsigned int wptr = cr[channel].wr_ptr;
-  /* write element to free slot */
-  cb[channel].pset[wptr] = *pset;
-  /* move write pointer forward */
-  cr[channel].wr_ptr = (wptr + 1) % (BUFFER_SIZE);
-  /* overwrite */
-  if (cr[channel].wr_ptr == cr[channel].rd_ptr)
-    cr[channel].rd_ptr = (cr[channel].rd_ptr + 1) % (BUFFER_SIZE);
+void cbWrite(volatile FG_CHANNEL_BUFFER_T* cb, volatile FG_CHANNEL_REG_T* cr, const int channel, FG_PARAM_SET_T* pset )
+{
+   unsigned int wptr = cr[channel].wr_ptr;
+   /* write element to free slot */
+   cb[channel].pset[wptr] = *pset;
+   /* move write pointer forward */
+   cr[channel].wr_ptr = (wptr + 1) % (BUFFER_SIZE);
+   /* overwrite */
+   if( cr[channel].wr_ptr == cr[channel].rd_ptr )
+      cr[channel].rd_ptr = (cr[channel].rd_ptr + 1) % (BUFFER_SIZE);
 }
 
 
@@ -53,27 +54,31 @@ void cbWrite(volatile FG_CHANNEL_BUFFER_T* cb, volatile FG_CHANNEL_REG_T* cr, in
  *  @param cr pointer to the channel register
  *  @param channel number of the channel
  */
-void cbDump(volatile FG_CHANNEL_BUFFER_T* cb, volatile FG_CHANNEL_REG_T* cr, int channel) {
-  int i = 0, col;
-  FG_PARAM_SET_T *pset;
-  mprintf("dumped cb[%d]: \n", channel);  
-  mprintf ("wr_ptr: %d rd_ptr: %d size: %d\n", cr[channel].wr_ptr, cr[channel].rd_ptr, BUFFER_SIZE);
-  while(i < BUFFER_SIZE) {
-    mprintf("%d ", i);
-    for(col = 0; (col < 8) && (i < BUFFER_SIZE); col++) {
-      *pset = cb[channel].pset[i++];
-      mprintf("0x%x ", pset->coeff_c);
-    }
-  }
+void cbDump(volatile FG_CHANNEL_BUFFER_T* cb, volatile FG_CHANNEL_REG_T* cr, const int channel )
+{
+   int i = 0, col;
+   FG_PARAM_SET_T *pset;
+   mprintf("dumped cb[%d]: \n", channel);
+   mprintf ("wr_ptr: %d rd_ptr: %d size: %d\n", cr[channel].wr_ptr, cr[channel].rd_ptr, BUFFER_SIZE);
+   while(i < BUFFER_SIZE)
+   {
+      mprintf("%d ", i);
+      for(col = 0; (col < 8) && (i < BUFFER_SIZE); col++)
+      {
+         *pset = cb[channel].pset[i++];
+         mprintf("0x%x ", pset->coeff_c);
+      }
+   }
 }
 
 //#define CONFIG_PRINT_DAQ_BUFFER_OVERFLOW
 
-void add_daq_msg(volatile struct daq_buffer *mb, struct daq m) {
-  ring_pos_t next_head = (mb->ring_head + 1) % DAQ_RING_SIZE;
+void add_daq_msg(volatile MIL_DAQ_BUFFER_T* mb, MIL_DAQ_OBJ_T m )
+{
+  RING_POS_T next_head = (mb->ring_head + 1) % DAQ_RING_SIZE;
 #ifdef CONFIG_PRINT_DAQ_BUFFER_OVERFLOW
   if( next_head == mb->ring_tail )
-     mprintf( "DAQ buffer overflow!\n" );
+     mprintf( ESC_WARNING"DAQ buffer overflow!\n"ESC_NORMAL );
 #endif
   mb->ring_data[mb->ring_head] = m;
   mb->ring_head = next_head;
@@ -84,35 +89,37 @@ void add_daq_msg(volatile struct daq_buffer *mb, struct daq m) {
  *  @param queue number of the queue
  *  @param m message which will be added to the queue
  */
-int add_msg(volatile struct message_buffer *mb, int queue, struct msi m) {
-  ring_pos_t next_head = (mb[queue].ring_head + 1) % RING_SIZE;
-  if (next_head != mb[queue].ring_tail) {
+int add_msg(volatile FG_MESSAGE_BUFFER_T* mb, int queue, MSI_T m)
+{
+   RING_POS_T next_head = (mb[queue].ring_head + 1) % RING_SIZE;
+   if (next_head != mb[queue].ring_tail)
+   {
       /* there is room */
       mb[queue].ring_data[mb[queue].ring_head] = m;
       mb[queue].ring_head = next_head;
       return 0;
-  } else {
-      /* no room left in the buffer */
-      mprintf("msg buffer %d full!\n", queue);
-      return -1;
-  }
+   }
+   /* no room left in the buffer */
+   mprintf(ESC_WARNING"msg buffer %d full!\n"ESC_NORMAL, queue);
+   return -1;
 }
 
 /** @brief remove a message from a message buffer
  *  @param mb pointer to the first message buffer
  *  @param queue number of the queue
  */
-struct msi remove_msg(volatile struct message_buffer *mb, int queue) {
-  struct msi m;
-  if (mb[queue].ring_head != mb[queue].ring_tail) {
+MSI_T remove_msg(volatile FG_MESSAGE_BUFFER_T* mb, int queue )
+{
+   MSI_T m;
+   if( mb[queue].ring_head != mb[queue].ring_tail )
+   {
       m = mb[queue].ring_data[mb[queue].ring_tail];
       mb[queue].ring_tail = (mb[queue].ring_tail + 1) % RING_SIZE;
       return m;
-  } else {
-      m.msg = -1;
-      m.adr = -1;
-      return m;
-  }
+   }
+   m.msg = -1;
+   m.adr = -1;
+   return m;
 }
 
 /*================================== EOF ====================================*/

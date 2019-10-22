@@ -92,7 +92,7 @@ volatile uint32_t* g_pWr_1wire_base    = NULL;
 volatile uint32_t* g_pUser_1wire_base  = NULL;
 volatile ECA_T*    g_pECAQ             = NULL; // WB address of ECA queue
 
-volatile struct message_buffer g_aMsg_buf[QUEUE_CNT] = {{0, 0}};
+volatile FG_MESSAGE_BUFFER_T g_aMsg_buf[QUEUE_CNT] = {{0, 0}};
 
 
 typedef struct
@@ -516,12 +516,12 @@ static void handle( const unsigned int socket,
  */
 void irq_handler( void )
 {
-   struct msi m;
+   MSI_T m;
 
   // send msi threadsafe to main loop
    m.msg = global_msi.msg;
    m.adr = global_msi.adr;
-   add_msg(&g_aMsg_buf[0], IRQ, m);
+   add_msg( &g_aMsg_buf[0], IRQ, m );
 }
 
 /*! ---------------------------------------------------------------------------
@@ -529,7 +529,7 @@ void irq_handler( void )
  */
 static void clear_handler_state( unsigned int socket )
 {
-   struct msi m;
+   MSI_T m;
 
    if( socket & DEV_SIO )
    {
@@ -537,7 +537,7 @@ static void clear_handler_state( unsigned int socket )
       m.msg = (socket & SCU_BUS_SLOT_MASK) - 1;
       m.adr = 0;
       irq_disable();
-      add_msg(&g_aMsg_buf[0], DEVSIO, m);
+      add_msg( &g_aMsg_buf[0], DEVSIO, m );
       irq_enable();
       return;
    }
@@ -1150,12 +1150,12 @@ static void ecaHandler( register TaskType* pThis UNUSED )
 static void sw_irq_handler( register TaskType* pThis UNUSED )
 {
    unsigned int code, value;
-   struct msi m;
+   MSI_T m;
 
-   if( !has_msg(&g_aMsg_buf[0], SWI) )
+   if( !has_msg( &g_aMsg_buf[0], SWI ) )
       return; /* Nothing to do.. */
 
-   m = remove_msg(&g_aMsg_buf[0], SWI);
+   m = remove_msg( &g_aMsg_buf[0], SWI );
    if( m.adr != 0x10 )
       return;
 
@@ -1253,7 +1253,7 @@ static void scu_bus_handler( register TaskType* pThis UNUSED )
    uint16_t slv_int_act_reg;
    unsigned char slave_nr;
    uint16_t slave_acks = 0;
-   struct msi m;
+   MSI_T m;
    signed int dummy;
 
    if( !has_msg(&g_aMsg_buf[0], SCUBUS) )
@@ -1330,7 +1330,7 @@ static void pushDaqData( FG_MACRO_T fgMacro, uint64_t timestamp,
    pl.item.actValue = actValue;
    pl.item.fgMacro = fgMacro;
 #else
-   struct daq d;
+   MIL_DAQ_OBJ_T d;
 
    d.actvalue = actValue;
    d.tmstmp_l = timestamp & 0xffffffff;
@@ -1363,7 +1363,7 @@ static void dev_sio_bus_handler( register TaskType* pThis, const bool isScuBus )
    unsigned int i;
    uint8_t socket, dev;
    int status = OKAY;
-   struct msi m;
+   MSI_T m;
 
    switch( pThis->state )
    {
@@ -1638,13 +1638,13 @@ uint64_t getTick( void ) {
  */
 static inline void dispatch( void )
 {
-   struct msi m;
-   m = remove_msg(&g_aMsg_buf[0], IRQ);
+   MSI_T m;
+   m = remove_msg( &g_aMsg_buf[0], IRQ );
    switch( m.adr & 0xff )
-   {
-      case 0x00: add_msg(&g_aMsg_buf[0], SCUBUS, m); return; // message from scu bus
-      case 0x10: add_msg(&g_aMsg_buf[0], SWI,    m); return; // software message from saftlib
-      case 0x20: add_msg(&g_aMsg_buf[0], DEVBUS, m); return; // message from dev bus
+   { //TODO remove these naked numbers asap!
+      case 0x00: add_msg( &g_aMsg_buf[0], SCUBUS, m ); return; // message from scu bus
+      case 0x10: add_msg( &g_aMsg_buf[0], SWI,    m ); return; // software message from saftlib
+      case 0x20: add_msg( &g_aMsg_buf[0], DEVBUS, m ); return; // message from dev bus
    }
 }
 
