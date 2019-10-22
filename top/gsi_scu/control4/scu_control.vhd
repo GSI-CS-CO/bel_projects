@@ -106,7 +106,7 @@ entity scu_control is
      sram_a            : out   std_logic_vector(19 downto 0) := (others => 'Z');
      sram_dq           : inout std_logic_vector(15 downto 0) := (others => 'Z');
      sram_csn          : out   std_logic_vector(1 downto 0) := (others => '1');
-     sram_oen          : out   std_logic := 'Z';
+     sram_oen          : out   std_logic_vector(1 downto 0) := (others => '1');
      sram_wen          : out   std_logic := 'Z';
      sram_lbn          : out   std_logic := 'Z';
      sram_ubn          : out   std_logic := 'Z';
