@@ -78,7 +78,8 @@ entity scu_control is
     lemo_n_i : in    std_logic_vector(1 downto 0);
     lemo_p_o : out   std_logic_vector(1 downto 0);
     lemo_n_o : out   std_logic_vector(1 downto 0);
-	 lemo_out :	out	std_logic_vector(3 downto 0);
+	  lemo_out : out	 std_logic_vector(3 downto 0);
+    lemo_in  : in	   std_logic_vector(1 downto 0);
 
     -----------------------------------------------------------------------
     -- leds onboard
@@ -149,9 +150,11 @@ architecture rtl of scu_control is
   signal s_stub_pll_locked      : std_logic;
   signal s_stub_pll_locked_prev : std_logic;
 
-  constant io_mapping_table : t_io_mapping_table_arg_array(0 to 9) :=
+  constant io_mapping_table : t_io_mapping_table_arg_array(0 to 11) :=
   (
   -- Name[12 Bytes], Special Purpose, SpecOut, SpecIn, Index, Direction,   Channel,  OutputEnable, Termination, Logic Level
+    ("LEMO_IN_0  ",  IO_NONE,         false,   false,  0,     IO_INPUT,    IO_GPIO,  false,        false,       IO_TTL),
+    ("LEMO_IN_1  ",  IO_NONE,         false,   false,  1,     IO_INPUT,    IO_GPIO,  false,        false,       IO_TTL),
     ("LED1_BASE_R",  IO_NONE,         false,   false,  0,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
     ("LED2_BASE_B",  IO_NONE,         false,   false,  1,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
     ("LED3_BASE_G",  IO_NONE,         false,   false,  2,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
@@ -177,6 +180,7 @@ begin
       g_family           => c_family,
       g_project          => c_project,
       g_flash_bits       => 25, -- !!! TODO: Check this
+      g_gpio_in          => 2,
       g_gpio_out         => 8,
       g_lvds_inout       => 2,
       g_en_scubus        => true,
@@ -209,6 +213,7 @@ begin
       sfp_tx_disable_o        => open,
       sfp_tx_fault_i          => sfp_tx_fault_i,
       sfp_los_i               => sfp_los_i,
+      gpio_i                  => lemo_in,
       gpio_o                  => s_gpio_o,
       lvds_p_i                => s_lvds_p_i,
       lvds_n_i                => s_lvds_n_i,
