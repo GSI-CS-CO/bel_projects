@@ -241,7 +241,7 @@ STATIC_ASSERT( offsetof( SCU_SHARED_DATA_T, fg_buffer ) ==
  #else
    STATIC_ASSERT( offsetof( SCU_SHARED_DATA_T, sDaq ) ==
                   offsetof( SCU_SHARED_DATA_T, daq_buf ) +
-                  sizeof( MIL_DAQ_BUFFER_T ));
+                  sizeof( _MIL_DAQ_BUFFER_T ));
  #endif
  STATIC_ASSERT( sizeof( SCU_SHARED_DATA_T ) ==
                 offsetof( SCU_SHARED_DATA_T, sDaq ) +

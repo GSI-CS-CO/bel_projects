@@ -40,6 +40,7 @@ class FgList
    {
    public:
       uint getSocket( void )     const { return socket;     }
+      uint getSlot( void )       const { return socket & SCU_BUS_SLOT_MASK; }
       uint getDevice( void )     const { return device;     }
       uint getVersion( void )    const { return version;    }
       uint getOutputBits( void ) const { return outputBits; }
@@ -47,13 +48,12 @@ class FgList
 
    typedef vector<FgListItem> FG_LIST_T;
 
-   daq::EbRamAccess*   m_poSharedMem;
    FG_LIST_T           m_list;
 
 public:
    constexpr static uint c_maxFgMacros = MAX_FG_MACROS;
 
-   FgList( daq::EbRamAccess* );
+   FgList( void );
 
    virtual ~FgList( void );
 
@@ -72,9 +72,14 @@ public:
       return m_list.empty();
    }
 
-   void scan( void );
+   uint size( void ) const
+   {
+      return m_list.size();
+   }
 
-   void sync( void );
+   void scan( daq::EbRamAccess* );
+
+   void sync( daq::EbRamAccess* );
 };
 
 } // nemespace Scu

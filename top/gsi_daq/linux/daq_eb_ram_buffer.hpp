@@ -29,6 +29,7 @@
 #ifndef _DAQ_EB_RAM_BUFFER_HPP
 #define _DAQ_EB_RAM_BUFFER_HPP
 #include <EtherboneConnection.hpp>
+#include <scu_assert.h>
 #ifndef CONFIG_NO_SCU_RAM
  #include <daq_ramBuffer.h>
 #endif
@@ -86,6 +87,11 @@ public:
    const std::string getScuDomainName( void )
    {
       return getNetAddress().substr( getNetAddress().find_first_of( '/' ) + 1 );
+   }
+
+   bool isConnected( void ) const
+   {
+      return m_poEb->isConnected();
    }
 
 #ifndef CONFIG_NO_SCU_RAM

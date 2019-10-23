@@ -27,40 +27,68 @@
 using namespace Scu;
 
 
-
-FgList::FgList( daq::EbRamAccess* poSharedMem ):
-   m_poSharedMem( poSharedMem )
+///////////////////////////////////////////////////////////////////////////////
+/*! ---------------------------------------------------------------------------
+ */
+FgList::FgList( void )
 {
 }
 
+/*! ---------------------------------------------------------------------------
+ */
 FgList::~FgList( void )
 {
 }
 
-void FgList::scan( void )
+/*! ---------------------------------------------------------------------------
+ */
+void FgList::scan( daq::EbRamAccess* pEbAccess )
 {
+   //TODO Implement this function once a good rescan function call has
+   //     been implemented in LM32.
+   sync( pEbAccess );
 }
 
-void FgList::sync( void )
+/*! ---------------------------------------------------------------------------
+ * @brief Synchronizing the the function generator list of this object by the
+ *        list in the LM32 shared memory.
+ */
+void FgList::sync( daq::EbRamAccess* pEbAccess )
 {
-   m_list.clear();
+   assert( dynamic_cast<daq::EbRamAccess*>(pEbAccess) != nullptr );
+   /*
+    * Assuming the etherbone-connection has been already established.
+    */
+   assert( pEbAccess->isConnected() );
 
    /*
     * Unfortunately we don't know how long the list is
     * therefore the maximum size will assumed.
     */
-   FgListItem tmpBuffer[ c_maxFgMacros ];
+   m_list.clear();
 
-   m_poSharedMem->readLM32( &tmpBuffer, sizeof( tmpBuffer ),
-                            offsetof( FG::SCU_SHARED_DATA_T, fg_macros ) );
-
-   for( uint i = 0; i < ARRAY_SIZE( tmpBuffer ); i++ )
+   /*
+    * This will accomplished in parts because reading the whole list will
+    * produce a error in the etherbone-library when the device-list
+    * is too long.
+    */
+   FgListItem tmpBuffer[ c_maxFgMacros / 32 ];
+   for( uint i = 0; i < (c_maxFgMacros / ARRAY_SIZE(tmpBuffer)); i++ )
    {
-      if( tmpBuffer[i].getOutputBits() == 0 )
-         break;
-      m_list.push_back( tmpBuffer[i] );
+      pEbAccess->readLM32( tmpBuffer, sizeof( tmpBuffer ),
+                               offsetof( FG::SCU_SHARED_DATA_T, fg_macros ) +
+                                 i * sizeof( tmpBuffer ) );
+
+      for( uint j = 0; j < ARRAY_SIZE(tmpBuffer); j++ )
+      {
+         if( tmpBuffer[j].getOutputBits() == 0 )
+         {
+            m_list.shrink_to_fit();
+            return;
+         }
+         m_list.push_back( tmpBuffer[j] );
+      }
    }
-   //m_list.resize();
 }
 
 //================================== EOF ======================================

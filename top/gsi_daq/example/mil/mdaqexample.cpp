@@ -151,6 +151,21 @@ int main( int argc, const char** ppArgv )
        */
       MyMilDaqAdministration milDaqContainer( &ebConnection );
 
+
+      /*
+       * It's possible to list the connected function generators:
+       */
+      cout << "Found function generators in: " << milDaqContainer.getScuDomainName() << endl;
+      for( auto& fg: milDaqContainer.getFgList() )
+      {
+         cout << "Slot " << fg.getSlot() << ": Version: " << fg.getVersion()
+              << ", Bits: " << fg.getOutputBits()
+              << ", fg-" << fg.getSocket() << '-' << fg.getDevice() << endl;
+      }
+      cout << "Press any key + Enter" << endl;
+      int x;
+      cin >> x;
+
       /*
        * In this example the set and actual values of function generator
        * "fg-39-130" will received and evaluated.

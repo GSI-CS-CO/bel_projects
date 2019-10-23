@@ -256,6 +256,28 @@ vector<OPTION> CommandLine::c_optList =
       .m_longOpt  = "style",
       .m_helpText = "Setting of the Gnuplot line-style default is: \""
                      DEFAULT_LINE_STYLE "\""
+   },
+   {
+      OPT_LAMBDA( poParser,
+      {
+         MilDaqAdministration* pAllDaq = static_cast<CommandLine*>(poParser)->m_poAllDaq;
+         if( pAllDaq == nullptr )
+         {
+            ERROR_MESSAGE( "SCU target has to be specified before!" );
+            return -1;
+         }
+         for( auto& fg: pAllDaq->getFgList() )
+         {
+            cout << "fg-" << fg.getSocket() << '-' << fg.getDevice() << endl;
+         }
+         ::exit( EXIT_SUCCESS );
+         return 0;
+      }),
+      .m_hasArg   = OPTION::NO_ARG,
+      .m_id       = 0,
+      .m_shortOpt = 'S',
+      .m_longOpt  = "scan",
+      .m_helpText = "Shows all connected function generators."
    }
 };
 
@@ -413,6 +435,11 @@ int CommandLine::onArgument( void )
             return -1;
          }
 #endif
+         if( !m_poAllDaq->isSocketUsed( number ) )
+         {
+            ERROR_MESSAGE( "No device in socket " << number << " present!" );
+            return -1;
+         }
          m_poCurrentDevice = m_poAllDaq->getDevice( number );
          if( m_poCurrentDevice == nullptr )
          {
@@ -437,6 +464,12 @@ int CommandLine::onArgument( void )
             return -1;
          }
 #endif
+         if( !m_poAllDaq->isPresent( m_poCurrentDevice->getLocation(), number ) )
+         {
+            ERROR_MESSAGE( "No device in socket " << m_poCurrentDevice->getLocation()
+                            << " with the number " << number << " present!" );
+            return -1;
+         }
          if( m_poCurrentDevice->getDaqCompare( number ) == nullptr )
          {
             m_poCurrentChannel = new DaqMilCompare( number );

@@ -9,7 +9,7 @@
 ## Date:     14.08.2019                                                      ##
 ###############################################################################
 REPOSITORY_DIR := $(shell git rev-parse --show-toplevel)
-DEFINES += VERSION=0.2
+DEFINES += VERSION=0.3
 
 MIAN_MODULE := mdaqt.cpp
 
@@ -27,6 +27,7 @@ SOURCE += $(BASE_DIR)/daqt_onFoundProcess.cpp
 
 # SOURCE += $(DAQ_DIR)/daq_ring_admin.c
 SOURCE += $(DAQ_LINUX_DIR)/daq_eb_ram_buffer.cpp
+SOURCE += $(DAQ_LINUX_DIR)/scu_fg_list.cpp
 SOURCE += $(MDAQ_LINUX_DIR)/mdaq_interface.cpp
 SOURCE += $(MDAQ_LINUX_DIR)/mdaq_administration.cpp
 SOURCE += mdaq_plot.cpp
@@ -75,10 +76,11 @@ HOST ?= tcp/$(SCU_URL)
 #CALL_ARGS = tcp/scuxl0107 39 130 39 129 39 1 39 2
 #CALL_ARGS = -cv tcp/scuxl0107 39 130 39 129
 #CALL_ARGS = -c tcp/scuxl0107
-#CALL_ARGS = tcp/scuxl0107 39 130
+#CALL_ARGS = tcp/scuxl0107 39 130 -c
 #CALL_ARGS = tcp/scuxl0107 -avdc --time 25 -G /home/bel/ubecker/lnx/.local/bin/gnuplot
 CALL_ARGS = tcp/scuxl0107 -avdc
-#CALL_ARGS = -v
+#CALL_ARGS = -V
+#CALL_ARGS = tcp/scuxl0107 --scan
 REMOTE_CALL_ARGS  ?= "dev/wbm0"
 
 
