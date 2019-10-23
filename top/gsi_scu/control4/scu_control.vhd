@@ -80,6 +80,17 @@ entity scu_control is
     lemo_n_o : out   std_logic_vector(1 downto 0);
 	  lemo_out : out	 std_logic_vector(3 downto 0);
     lemo_in  : in	   std_logic_vector(1 downto 0);
+    
+    -----------------------------------------------------------------------
+    -- usb
+    -----------------------------------------------------------------------
+    slrd            : out   std_logic;
+    slwr            : out   std_logic;
+    fd              : inout std_logic_vector(7 downto 0) := (others => 'Z');
+    pa              : inout std_logic_vector(7 downto 0) := (others => 'Z');
+    ctl             : in    std_logic_vector(2 downto 0);
+    uclk            : in    std_logic;
+    ures            : out   std_logic;
 
     -----------------------------------------------------------------------
     -- leds onboard
@@ -186,7 +197,7 @@ begin
       g_en_scubus        => true,
       g_en_pcie          => true,
       g_en_tlu           => false,
-      g_en_usb           => false,
+      g_en_usb           => true,
       g_io_table         => io_mapping_table,
       g_en_tempsens      => false,
       g_a10_use_sys_fpll => false,
@@ -236,7 +247,21 @@ begin
       pcie_refclk_i           => pcie_refclk_i,
       pcie_rstn_i             => nPCI_RESET_i,
       pcie_rx_i               => pcie_rx_i,
-      pcie_tx_o               => pcie_tx_o);
+      pcie_tx_o               => pcie_tx_o,
+      
+      usb_rstn_o              => ures,
+      usb_ebcyc_i             => pa(3),
+      usb_speed_i             => pa(0),
+      usb_shift_i             => pa(1),
+      usb_readyn_io           => pa(7),
+      usb_fifoadr_o           => pa(5 downto 4),
+      usb_sloen_o             => pa(2),
+      usb_fulln_i             => ctl(1),
+      usb_emptyn_i            => ctl(2),
+      usb_slrdn_o             => slrd,
+      usb_slwrn_o             => slwr,
+      usb_pktendn_o           => pa(6),
+      usb_fd_io               => fd);
 
   -- SFP
   sfp_tx_disable_o <= '0';
