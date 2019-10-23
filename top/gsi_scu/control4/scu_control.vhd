@@ -78,8 +78,9 @@ entity scu_control is
     lemo_n_i : in    std_logic_vector(1 downto 0);
     lemo_p_o : out   std_logic_vector(1 downto 0);
     lemo_n_o : out   std_logic_vector(1 downto 0);
-	  lemo_out : out	 std_logic_vector(3 downto 0);
-    lemo_in  : in	   std_logic_vector(1 downto 0);
+    
+	  lemo_out : out	 std_logic_vector(3 downto 0);  --Isolated Onboard TTL OUT 
+    lemo_in  : in	   std_logic_vector(1 downto 0);  --Isolated OnBoard TTL IN
     
     -----------------------------------------------------------------------
     -- usb
@@ -183,6 +184,7 @@ architecture rtl of scu_control is
   constant c_cores         : natural:= 1;
   constant c_initf_name    : string := c_project & "_stub.mif";
   constant c_profile_name  : string := "medium_icache_debug";
+  constant c_psram_bits    : natural := 24;
 
 begin
 
@@ -191,6 +193,7 @@ begin
       g_family           => c_family,
       g_project          => c_project,
       g_flash_bits       => 25, -- !!! TODO: Check this
+      g_psram_bits       => c_psram_bits,
       g_gpio_in          => 2,
       g_gpio_out         => 8,
       g_lvds_inout       => 2,
@@ -198,6 +201,7 @@ begin
       g_en_pcie          => true,
       g_en_tlu           => false,
       g_en_usb           => true,
+      g_en_psram         => true,
       g_io_table         => io_mapping_table,
       g_en_tempsens      => false,
       g_a10_use_sys_fpll => false,
@@ -248,7 +252,7 @@ begin
       pcie_rstn_i             => nPCI_RESET_i,
       pcie_rx_i               => pcie_rx_i,
       pcie_tx_o               => pcie_tx_o,
-      
+      --FX2 USB
       usb_rstn_o              => ures,
       usb_ebcyc_i             => pa(3),
       usb_speed_i             => pa(0),
@@ -261,7 +265,19 @@ begin
       usb_slrdn_o             => slrd,
       usb_slwrn_o             => slwr,
       usb_pktendn_o           => pa(6),
-      usb_fd_io               => fd);
+      usb_fd_io               => fd,
+      --PSRAM TODO: Multi Chip 
+      ps_clk                 => psram_clk,
+      ps_addr                => psram_a,
+      ps_data                => psram_dq,
+      ps_seln(0)             => psram_be0,
+      ps_seln(1)             => psram_be1,
+      ps_cen                 => psram_cen (0),
+      ps_oen                 => psram_oen,
+      ps_wen                 => psram_wen,
+      ps_cre                 => psram_cre,
+      ps_advn                => psram_advn,
+      ps_wait                => psram_wait);
 
   -- SFP
   sfp_tx_disable_o <= '0';
