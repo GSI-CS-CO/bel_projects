@@ -78,6 +78,7 @@ entity scu_control is
     lemo_n_i : in    std_logic_vector(1 downto 0);
     lemo_p_o : out   std_logic_vector(1 downto 0);
     lemo_n_o : out   std_logic_vector(1 downto 0);
+	 lemo_out :	out	std_logic_vector(3 downto 0);
 
     -----------------------------------------------------------------------
     -- leds onboard
@@ -134,7 +135,7 @@ architecture rtl of scu_control is
   signal s_led_track    : std_logic;
   signal s_led_pps      : std_logic;
 
-  signal s_gpio_o       : std_logic_vector(3 downto 0);
+  signal s_gpio_o       : std_logic_vector(7 downto 0);
   signal s_lvds_p_i     : std_logic_vector(1 downto 0);
   signal s_lvds_n_i     : std_logic_vector(1 downto 0);
   signal s_lvds_p_o     : std_logic_vector(1 downto 0);
@@ -148,13 +149,17 @@ architecture rtl of scu_control is
   signal s_stub_pll_locked      : std_logic;
   signal s_stub_pll_locked_prev : std_logic;
 
-  constant io_mapping_table : t_io_mapping_table_arg_array(0 to 5) :=
+  constant io_mapping_table : t_io_mapping_table_arg_array(0 to 9) :=
   (
   -- Name[12 Bytes], Special Purpose, SpecOut, SpecIn, Index, Direction,   Channel,  OutputEnable, Termination, Logic Level
     ("LED1_BASE_R",  IO_NONE,         false,   false,  0,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
     ("LED2_BASE_B",  IO_NONE,         false,   false,  1,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
     ("LED3_BASE_G",  IO_NONE,         false,   false,  2,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
     ("LED4_BASE_W",  IO_NONE,         false,   false,  3,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
+    ("LEMO_OUT_0 ",  IO_NONE,         false,   false,  4,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
+    ("LEMO_OUT_1 ",  IO_NONE,         false,   false,  5,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
+    ("LEMO_OUT_2 ",  IO_NONE,         false,   false,  6,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
+    ("LEMO_OUT_3 ",  IO_NONE,         false,   false,  7,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
     ("LVDS_DUMMY1",  IO_NONE,         false,   false,  0,     IO_INOUTPUT, IO_LVDS,  false,        false,       IO_LVDS),
     ("LVDS_DUMMY2",  IO_NONE,         false,   false,  1,     IO_INOUTPUT, IO_LVDS,  false,        false,       IO_LVDS)
   );
@@ -172,7 +177,7 @@ begin
       g_family           => c_family,
       g_project          => c_project,
       g_flash_bits       => 25, -- !!! TODO: Check this
-      g_gpio_out         => 4,
+      g_gpio_out         => 8,
       g_lvds_inout       => 2,
       g_en_scubus        => true,
       g_en_pcie          => true,
@@ -247,5 +252,7 @@ begin
     lemo_p_o(i)        <= s_lvds_p_o(i);
     lemo_n_o(i)        <= s_lvds_n_o(i);
   end generate;
+  
+  lemo_out <= not s_gpio_o(7 downto 4);
 
 end rtl;
