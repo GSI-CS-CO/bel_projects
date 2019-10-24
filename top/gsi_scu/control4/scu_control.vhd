@@ -76,8 +76,14 @@ entity scu_control is
     -----------------------------------------------------------------------
     -- Misc.
     -----------------------------------------------------------------------
-    fpga_res_i : in std_logic;
-    nres_i     : in std_logic;
+    fpga_res_i : in   std_logic;
+    nres_i     : in   std_logic;
+    IO_enable  : out  std_logic;  --Enable Levelshifter 1.8V  ->  3.3V 
+    
+    -----------------------------------------------------------------------
+    -- SCU-CB Version
+    -----------------------------------------------------------------------
+    scu_cb_version    : in  std_logic_vector(3 downto 0); -- must be assigned with weak pull ups
 
     -----------------------------------------------------------------------
     -- LVTTL IOs
@@ -89,6 +95,12 @@ entity scu_control is
     
 	  lemo_out : out	 std_logic_vector(3 downto 0);  --Isolated Onboard TTL OUT 
     lemo_in  : in	   std_logic_vector(1 downto 0);  --Isolated OnBoard TTL IN
+    
+    -----------------------------------------------------------------------
+    -- LA port (Logic Analyzer HDMI Port)
+    -----------------------------------------------------------------------
+    la_ch           : out std_logic_vector(15 downto 0);
+    la_clk          : out std_logic;
     
     -----------------------------------------------------------------------
     -- usb
@@ -106,6 +118,7 @@ entity scu_control is
     -----------------------------------------------------------------------
     wr_leds_o : out std_logic_vector(3 downto 0) := (others => '1');
     rt_leds_o : out std_logic_vector(3 downto 0) := (others => '1');
+    lemo_led  : out std_logic_vector(5 downto 0) := (others => '1');
 	 
 	 -----------------------------------------------------------------------
     -- Pseudo-SRAM (4x 256Mbit)
@@ -310,5 +323,7 @@ begin
   end generate;
   
   lemo_out <= not s_gpio_o(7 downto 4);
+  
+  IO_enable <= '1';  -- LS enable when FPGA ready
 
 end rtl;
