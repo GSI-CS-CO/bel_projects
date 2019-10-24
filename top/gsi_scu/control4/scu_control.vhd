@@ -44,7 +44,15 @@ entity scu_control is
     -----------------------------------------------------------------------
     -- OneWire
     -----------------------------------------------------------------------
-    rom_data_io : inout std_logic;
+    OneWire_CB : inout std_logic;
+    
+    -----------------------------------------------------------------------
+    -- ComExpress signals
+    -----------------------------------------------------------------------     
+    ser0_rxd          : in  std_logic;
+    ser0_txd          : out std_logic;
+    nTHRMTRIP         : in  std_logic;
+    WDT               : in  std_logic;
 
     -----------------------------------------------------------------------
     -- SCU Bus
@@ -216,7 +224,7 @@ begin
       core_clk_125m_pllref_i  => clk_125m_tcb_pllref_i,
       core_clk_125m_local_i   => clk_125m_tcb_local_i,
       core_clk_125m_sfpref_i  => clk_125m_tcb_sfpref_i,
-      wr_onewire_io           => rom_data_io,
+      wr_onewire_io           => OneWire_CB,
       wr_sfp_sda_io           => sfp_mod2_io,
       wr_sfp_scl_io           => sfp_mod1_io,
       wr_sfp_det_i            => sfp_mod0_i,
@@ -225,6 +233,8 @@ begin
       wr_dac_sclk_o           => wr_dac_sclk_o,
       wr_dac_din_o            => wr_dac_din_o,
       wr_ndac_cs_o            => wr_ndac_cs_o,
+      wr_uart_o              => ser0_txd,
+      wr_uart_i              => ser0_rxd,
       sfp_tx_disable_o        => open,
       sfp_tx_fault_i          => sfp_tx_fault_i,
       sfp_los_i               => sfp_los_i,
