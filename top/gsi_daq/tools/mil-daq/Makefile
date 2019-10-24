@@ -61,10 +61,19 @@ INCLUDE_DIRS += $(EB_SRC)
 INCLUDE_DIRS += $(BASE_DIR)
 INCLUDE_DIRS += $(DAQ_LINUX_DIR)/mdaq
 
-LIBS += boost_system
+USE_STATIC_LIBS := 1
+
+ifdef USE_STATIC_LIBS
+ ADDITIONAL_OBJECTS += $(THIRD_PARTY_DIR)/boost/1.54.0/lib/x86_64/libboost_system.a
+ ADDITIONAL_OBJECTS += $(IP_CORE_DIR)/etherbone-core/api/.libs/libetherbone.a
+else
+ LIBS += boost_system
+ LIBS += etherbone
+endif
+
 LIBS += pthread
 LIBS += stdc++
-LIBS += etherbone
+
 
 DOX_INPUT += $(DAQ_LINUX_DIR)/daq_calculations.hpp
 
@@ -78,9 +87,9 @@ HOST ?= tcp/$(SCU_URL)
 #CALL_ARGS = -c tcp/scuxl0107
 #CALL_ARGS = tcp/scuxl0107 39 130 -c
 #CALL_ARGS = tcp/scuxl0107 -avdc --time 25 -G /home/bel/ubecker/lnx/.local/bin/gnuplot
-CALL_ARGS = tcp/scuxl0107 -avdc
+CALL_ARGS = scuxl0107 -avdc
 #CALL_ARGS = -V
-#CALL_ARGS = tcp/scuxl0107 --scan
+#CALL_ARGS = tcp/scuxl0107 -h
 REMOTE_CALL_ARGS  ?= "dev/wbm0"
 
 

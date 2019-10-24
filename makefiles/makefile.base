@@ -144,6 +144,9 @@ endif
 
 CFLAGS += $(LTO)
 CFLAGS += -Wfatal-errors
+CFLAGS += -Wall
+CFLAGS += -Wno-strict-aliasing
+# CFLAGS += -Wmaybe-uninitialized
 
 CC_ARG = $(CFLAGS) $(OPT_INCLUDE) $(OPT_DEFINES)
 CXX_ARG ?= $(CC_ARG)

@@ -49,7 +49,7 @@ vector<OPTION> CommandLine::c_optList =
          cout << "MIL-DAQ Plotter\n"
                  "(c) 2019 GSI; Author: Ulrich Becker <u.becker@gsi.de>\n"
               << "Usage: " << poParser->getProgramName()
-              << " <proto/host/port> [options] [slot channel [slot channel ...]]\n\n"
+              << " <SCU- target IP-address> [options] [slot channel [slot channel ...]]\n\n"
                  "Hot keys:\n"
               << HOT_KEY_RESET    << ": Reset zooming of all plot windows\n"
               << HOT_KEY_RECEIVE  << ": Toggling receiving on / off\n"
@@ -58,6 +58,10 @@ vector<OPTION> CommandLine::c_optList =
                  "\nCommandline options:\n";
          poParser->list( cout );
          cout << endl;
+         cout << "Example:\n\t" << poParser->getProgramName() << " scuxl4711 -ac"
+                 "\n\tor"
+                 "\n\t" << poParser->getProgramName() << " tcp/scuxl4711 -ac"
+                 "\n\n\tWill make a plot of all found MIL-function-generators.\n" << endl;
          ::exit( EXIT_SUCCESS );
          return 0;
       }),
@@ -266,9 +270,19 @@ vector<OPTION> CommandLine::c_optList =
             ERROR_MESSAGE( "SCU target has to be specified before!" );
             return -1;
          }
+         const bool verbose = static_cast<CommandLine*>(poParser)->m_verbose;
          for( auto& fg: pAllDaq->getFgList() )
          {
-            cout << "fg-" << fg.getSocket() << '-' << fg.getDevice() << endl;
+            if( fg.getSocket() != fg.getSlot() || verbose )
+            {
+               if( verbose )
+               {
+                  cout << "Slot: " << fg.getSlot() <<
+                          ", Bits: " << fg.getOutputBits() <<
+                          ", Version: " << fg.getVersion() << ", ";
+               }
+               cout << "fg-" << fg.getSocket() << '-' << fg.getDevice() << endl;
+            }
          }
          ::exit( EXIT_SUCCESS );
          return 0;
@@ -277,7 +291,10 @@ vector<OPTION> CommandLine::c_optList =
       .m_id       = 0,
       .m_shortOpt = 'S',
       .m_longOpt  = "scan",
-      .m_helpText = "Shows all connected function generators."
+      .m_helpText = "Shows all connected function generators.\n"
+                    "NOTE: The verbosity mode (option -v has to be set before) "
+                    "will show all function-generators,\notherwise only MIL- "
+                    "function-generators will shown."
    }
 };
 
@@ -411,6 +428,8 @@ int CommandLine::onArgument( void )
       {
          assert( m_poAllDaq == nullptr );
          m_targetUrlGiven = true;
+         if( arg.find( "tcp/" ) == string::npos )
+            arg = "tcp/" + arg;
 #if 0
          if( daq::isConcurrentProcessRunning( getProgramName(), arg ) )
             return -1;

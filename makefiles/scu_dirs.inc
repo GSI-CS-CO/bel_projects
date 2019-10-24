@@ -23,6 +23,8 @@ SCU_LIB_SRC_DIR = $(REPOSITORY_DIR)/modules/lm32-include
 IP_CORE_DIR     = $(REPOSITORY_DIR)/ip_cores
 WR_DIR          = $(IP_CORE_DIR)/wrpc-sw
 
+THIRD_PARTY_DIR = /opt/gsi/3rdparty
+
 INCLUDE_DIRS += $(DAQ_DIR)
 INCLUDE_DIRS += $(DAQ_LM32_DIR)/generated
 INCLUDE_DIRS += $(DAQ_LM32_DIR)

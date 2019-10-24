@@ -85,7 +85,7 @@ vector<OPTION> CommandLine::c_optList =
       OPT_LAMBDA( poParser,
       {
          cout << "Usage: " << poParser->getProgramName()
-              << " <proto/host/port> [global-options] "
+              << " <SCU- target IP-address> [global-options] "
                  "[<slot-number> [device-options] "
                  "<channel-number> [channel-options]] \n\n"
                  "Global-options can be overwritten by device-options "
@@ -152,7 +152,7 @@ vector<OPTION> CommandLine::c_optList =
       }),
       .m_hasArg   = OPTION::NO_ARG,
       .m_id       = 0,
-      .m_shortOpt = 's',
+      .m_shortOpt = 'S',
       .m_longOpt  = "scan",
       .m_helpText = "Scanning of the entire SCU-bus for"
                     " DAQ- devices and its channels and"
@@ -588,6 +588,8 @@ int CommandLine::onArgument( void )
       case READ_EB_NAME:
       {
          SCU_ASSERT( m_poAllDaq == nullptr );
+         if( arg.find( "tcp/" ) == string::npos )
+            arg = "tcp/" + arg;
 #if 1
          if( daq::isConcurrentProcessRunning( getProgramName(), arg ) )
             return -1;

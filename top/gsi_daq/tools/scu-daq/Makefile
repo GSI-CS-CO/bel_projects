@@ -58,14 +58,23 @@ INCLUDE_DIRS += $(EB_SRC)
 INCLUDE_DIRS += $(BASE_DIR)
 INCLUDE_DIRS += $(DAQ_LINUX_DIR)/sdaq
 
-LIBS += boost_system
+USE_STATIC_LIBS := 1
+
+ifdef USE_STATIC_LIBS
+ ADDITIONAL_OBJECTS += $(THIRD_PARTY_DIR)/boost/1.54.0/lib/x86_64/libboost_system.a
+ ADDITIONAL_OBJECTS += $(IP_CORE_DIR)/etherbone-core/api/.libs/libetherbone.a
+else
+ LIBS += boost_system
+ LIBS += etherbone
+endif
+
 LIBS += pthread
 LIBS += stdc++
-LIBS += etherbone
+
 
 DOX_INPUT += $(DAQ_LINUX_DIR)/daq_calculations.hpp
 
-HOST ?= tcp/$(SCU_URL)
+HOST ?= $(SCU_URL)
 
 #CALL_ARGS         ?=  -h
 #CALL_ARGS         ?= $(HOST) --continue 3 1
