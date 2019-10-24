@@ -107,6 +107,7 @@ typedef union PACKED_SIZE
 
 #endif /* else ifdef CONFIG_MIL_DAQ_USE_RAM */
 
+#define CONFIG_USE_RESCAN_FLAG /* A very bad idea!!! :-( */
 
 /*! ---------------------------------------------------------------------------
  * @brief Definition of shared memory area for the communication between LM32
@@ -132,6 +133,9 @@ typedef struct PACKED_SIZE
    RAM_RING_INDEXES_T  mdaqRing;
 #else
    _MIL_DAQ_BUFFER_T   daq_buf;
+ #ifdef CONFIG_USE_RESCAN_FLAG
+   uint32_t            fg_rescan_busy;
+ #endif
 #endif
 #ifdef CONFIG_SCU_DAQ_INTEGRATION
    __DAQ_SHARED_IO_T sDaq;
@@ -239,22 +243,38 @@ STATIC_ASSERT( offsetof( SCU_SHARED_DATA_T, fg_buffer ) ==
                   offsetof( SCU_SHARED_DATA_T, mdaqRing ) +
                   sizeof( RAM_RING_INDEXES_T ));
  #else
+  #ifdef  CONFIG_USE_RESCAN_FLAG
+   STATIC_ASSERT( offsetof( SCU_SHARED_DATA_T, fg_rescan_busy ) ==
+                  offsetof( SCU_SHARED_DATA_T, daq_buf ) +
+                  sizeof( _MIL_DAQ_BUFFER_T ));
+
+   STATIC_ASSERT( offsetof( SCU_SHARED_DATA_T, sDaq ) ==
+                  offsetof( SCU_SHARED_DATA_T, fg_rescan_busy ) +
+                  sizeof( uint32_t ));
+  #else
    STATIC_ASSERT( offsetof( SCU_SHARED_DATA_T, sDaq ) ==
                   offsetof( SCU_SHARED_DATA_T, daq_buf ) +
                   sizeof( _MIL_DAQ_BUFFER_T ));
+  #endif
  #endif
  STATIC_ASSERT( sizeof( SCU_SHARED_DATA_T ) ==
                 offsetof( SCU_SHARED_DATA_T, sDaq ) +
                 sizeof( __DAQ_SHARED_IO_T ));
-#else
+#else /* ifdef CONFIG_SCU_DAQ_INTEGRATION */
  #ifdef CONFIG_MIL_DAQ_USE_RAM
   STATIC_ASSERT( sizeof( SCU_SHARED_DATA_T ) ==
                  offsetof( SCU_SHARED_DATA_T, mdaqRing ) +
                  sizeof( RAM_RING_INDEXES_T ));
  #else
-  STATIC_ASSERT( sizeof( SCU_SHARED_DATA_T ) ==
-                 offsetof( SCU_SHARED_DATA_T, daq_buf ) +
-                 sizeof( _MIL_DAQ_BUFFER_T ));
+  #ifdef  CONFIG_USE_RESCAN_FLAG
+    STATIC_ASSERT( sizeof( SCU_SHARED_DATA_T ) ==
+                   offsetof( SCU_SHARED_DATA_T, fg_rescan_busy ) +
+                   sizeof( uint32_t ));
+  #else
+    STATIC_ASSERT( sizeof( SCU_SHARED_DATA_T ) ==
+                   offsetof( SCU_SHARED_DATA_T, daq_buf ) +
+                   sizeof( _MIL_DAQ_BUFFER_T ));
+  #endif
  #endif
 #endif /* / ifdef CONFIG_SCU_DAQ_INTEGRATION */
 #endif /* ifndef __DOXYGEN__ */
@@ -274,12 +294,19 @@ STATIC_ASSERT( offsetof( SCU_SHARED_DATA_T, fg_buffer ) ==
   #define __DAQ_SHARAD_MEM_INITIALIZER_ITEM
 #endif
 
+#ifdef CONFIG_USE_RESCAN_FLAG
+  #define __RESCAN_BUSY_INITIALIZER , .fg_rescan_busy = 0
+#else
+  #define __RESCAN_BUSY_INITIALIZER
+#endif
+
 #ifdef CONFIG_MIL_DAQ_USE_RAM
   #define __MIL_DAQ_SHARAD_MEM_INITIALIZER_ITEM \
      , .mdaqRing = RAM_RING_INDEXES_MDAQ_INITIALIZER
 #else
   #define __MIL_DAQ_SHARAD_MEM_INITIALIZER_ITEM \
-     , .daq_buf = {0}
+     , .daq_buf = {0}                           \
+     __RESCAN_BUSY_INITIALIZER
 #endif
 
 /*! ---------------------------------------------------------------------------

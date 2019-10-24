@@ -407,7 +407,10 @@ static inline void send_fg_param( const  unsigned int socket,
 static void sendRefillSignalIfThreshold( const unsigned int channel )
 {
    if( cbgetCount( &g_shared.fg_regs[0], channel ) == THRESHOLD )
+   {
+      //mprintf( "*" );
       sendSignal( IRQ_DAT_REFILL, channel );
+   }
 }
 
 /*! ---------------------------------------------------------------------------
@@ -781,6 +784,9 @@ static inline void printFgs( void )
  */
 static void scanFgs( void )
 {
+#ifdef CONFIG_USE_RESCAN_FLAG
+   g_shared.fg_rescan_busy = 1;
+#endif
 #if __GNUC__ >= 9
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Waddress-of-packed-member"
@@ -791,6 +797,9 @@ static void scanFgs( void )
                  &g_shared.ext_id );
 #if __GNUC__ >= 9
   #pragma GCC diagnostic pop
+#endif
+#ifdef CONFIG_USE_RESCAN_FLAG
+   g_shared.fg_rescan_busy = 0;
 #endif
    printFgs();
 }
@@ -1208,7 +1217,6 @@ static void sw_irq_handler( register TaskType* pThis UNUSED )
       case FG_OP_RESCAN:
       { //rescan for fg macros
          scanFgs();
-         // TODO ACK to the saft-lib!
          break;
       }
 
