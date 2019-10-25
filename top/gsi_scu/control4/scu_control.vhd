@@ -45,6 +45,7 @@ entity scu_control is
     -- OneWire
     -----------------------------------------------------------------------
     OneWire_CB : inout std_logic;
+    onewire_ext: inout std_logic;        -- to extension board
     
     -----------------------------------------------------------------------
     -- ComExpress signals
@@ -76,9 +77,12 @@ entity scu_control is
     -----------------------------------------------------------------------
     -- Misc.
     -----------------------------------------------------------------------
-    fpga_res_i : in   std_logic;
-    nres_i     : in   std_logic;
-    IO_enable  : out  std_logic;  --Enable Levelshifter 1.8V  ->  3.3V 
+    fpga_res_i    : in      std_logic;
+    nres_i        : in      std_logic;
+    user_btn      : in      std_logic;  --User Button 
+    nPfail        : in      std_logic;  --Power fail input
+    IO_enable     : out     std_logic;  --Enable Levelshifter 1.8V  ->  3.3V 
+    max10_connect : inout   std_logic_vector (7 downto 0);  -- Pins reserveriert tbd
     
     -----------------------------------------------------------------------
     -- SCU-CB Version
@@ -103,6 +107,12 @@ entity scu_control is
     la_clk          : out std_logic;
     
     -----------------------------------------------------------------------
+    -- Extension Connector
+    -----------------------------------------------------------------------
+    ext_ch           : inout std_logic_vector(33 downto 0);
+    ext_id           : in std_logic_vector   (3 downto 0);
+    
+    -----------------------------------------------------------------------
     -- usb
     -----------------------------------------------------------------------
     slrd            : out   std_logic;
@@ -117,7 +127,7 @@ entity scu_control is
     -- leds onboard
     -----------------------------------------------------------------------
     wr_leds_o : out std_logic_vector(3 downto 0) := (others => '1');
-    rt_leds_o : out std_logic_vector(3 downto 0) := (others => '1');
+    rt_leds_o : out std_logic_vector(5 downto 0) := (others => '1');
     lemo_led  : out std_logic_vector(5 downto 0) := (others => '1');
 	 
 	 -----------------------------------------------------------------------
@@ -271,6 +281,8 @@ begin
       scubus_a_nsel           => A_nSEL,
       scubus_a_ntiming_cycle  => A_nTiming_Cycle,
       scubus_a_sysclock       => A_SysClock,
+      ow_io(0)                => onewire_ext,
+      ow_io(1)                => A_OneWire,
       pcie_refclk_i           => pcie_refclk_i,
       pcie_rstn_i             => nPCI_RESET_i,
       pcie_rx_i               => pcie_rx_i,
@@ -306,13 +318,13 @@ begin
   sfp_tx_disable_o <= '0';
 
   -- LEDs
-  wr_leds_o(0)  <= not (s_led_link_act and s_led_link_up); -- red   = traffic/no-link
-  wr_leds_o(1)  <= not s_led_link_up;                      -- blue  = link
-  wr_leds_o(2)  <= not s_led_track;                        -- green = timing valid
-  wr_leds_o(3)  <= not s_led_pps;                          -- white = PPS
-  sfp_led_fpg_o <= not s_led_link_up;
-  sfp_led_fpr_o <= not s_led_link_act;
-  rt_leds_o     <= not s_gpio_o(3 downto 0);
+  wr_leds_o(0)          <= not (s_led_link_act and s_led_link_up); -- red   = traffic/no-link
+  wr_leds_o(1)          <= not s_led_link_up;                      -- blue  = link
+  wr_leds_o(2)          <= not s_led_track;                        -- green = timing valid
+  wr_leds_o(3)          <= not s_led_pps;                          -- white = PPS
+  sfp_led_fpg_o         <= not s_led_link_up;
+  sfp_led_fpr_o         <= not s_led_link_act;
+  rt_leds_o(3 downto 0) <= not s_gpio_o(3 downto 0);
 
   -- LEMOs
   lemos : for i in 0 to 1 generate
