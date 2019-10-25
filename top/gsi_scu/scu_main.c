@@ -78,9 +78,9 @@
 
 #define MY_ECA_TAG      0xdeadbeef //just define a tag for ECA actions we want to receive
 
-/*!!!!!!!!!!!!!!!!!!!!!! Begin of shared memory area !!!!!!!!!!!!!!!!!!!!!!!!*/
+/*====================== Begin of shared memory area ========================*/
 SCU_SHARED_DATA_T SHARED g_shared = SCU_SHARED_DATA_INITIALIZER;
-/*!!!!!!!!!!!!!!!!!!!!!! End of shared memory area !!!!!!!!!!!!!!!!!!!!!!!!!!*/
+/*====================== End of shared memory area ==========================*/
 
 typedef uint32_t ECA_T;
 
@@ -177,11 +177,11 @@ static void dev_failure(const int status, const int slot, const char* msg)
      __MSG_ITEM( RCV_TIMEOUT );
      __MSG_ITEM( RCV_TASK_ERR );
      default:
-        mprintf("%s%d failed with code %d\n"ESC_NORMAL, pText, slot, status);
+        mprintf("%s%d failed with code %d"ESC_NORMAL"\n", pText, slot, status);
         return;
   }
   #undef __MSG_ITEM
-  mprintf("%s%d failed with message %s, %s\n"ESC_NORMAL, pText, slot, pMessage, msg);
+  mprintf("%s%d failed with message %s, %s"ESC_NORMAL"\n", pText, slot, pMessage, msg);
 }
 
 /*! ---------------------------------------------------------------------------
@@ -192,17 +192,17 @@ static void mil_failure( const int status, const int slave_nr )
    {
       case RCV_PARITY:
       {
-         mprintf(ESC_ERROR"parity error when reading task %d\n"ESC_NORMAL, slave_nr );
+         mprintf(ESC_ERROR"parity error when reading task %d"ESC_NORMAL"\n", slave_nr );
          break;
       }
       case RCV_TIMEOUT:
       {
-         mprintf(ESC_ERROR"timeout error when reading task %d\n"ESC_NORMAL, slave_nr );
+         mprintf(ESC_ERROR"timeout error when reading task %d"ESC_NORMAL"\n", slave_nr );
          break;
       }
       case RCV_ERROR:
       {
-         mprintf(ESC_ERROR"unknown error when reading task %d\n"ESC_NORMAL, slave_nr );
+         mprintf(ESC_ERROR"unknown error when reading task %d"ESC_NORMAL"\n", slave_nr );
          break;
       }
    }
@@ -342,7 +342,7 @@ static inline void send_fg_param( const  unsigned int socket,
    fg_num = getFgNumberFromRegister( cntrl_reg );
    if( fg_num >= ARRAY_SIZE( g_aFgChannels ) )
    {
-      mprintf( ESC_ERROR"FG-number %d out of range!\n"ESC_NORMAL, fg_num );
+      mprintf( ESC_ERROR"FG-number %d out of range!"ESC_NORMAL"\n", fg_num );
       return;
    }
 
@@ -785,7 +785,7 @@ static inline void printFgs( void )
 static void scanFgs( void )
 {
 #ifdef CONFIG_USE_RESCAN_FLAG
-   g_shared.fg_rescan_busy = 1;
+   g_shared.fg_rescan_busy = 1; //signal busy to saftlib
 #endif
 #if __GNUC__ >= 9
   #pragma GCC diagnostic push
@@ -799,7 +799,7 @@ static void scanFgs( void )
   #pragma GCC diagnostic pop
 #endif
 #ifdef CONFIG_USE_RESCAN_FLAG
-   g_shared.fg_rescan_busy = 0;
+   g_shared.fg_rescan_busy = 0; //signal done to saftlib
 #endif
    printFgs();
 }
@@ -933,7 +933,6 @@ static void init_irq_table( void )
  */
 static void init( void )
 {
-
   hist_init(HISTORY_XYZ_MODULE);
   for( int i = 0; i < ARRAY_SIZE(g_shared.fg_regs); i++ )
      g_shared.fg_regs[i].macro_number = SCU_INVALID_VALUE;     //no macros assigned to channels at startup
@@ -946,7 +945,7 @@ static void init( void )
  */
 void _segfault( void )
 {
-  mprintf(ESC_ERROR"KABOOM!\n"ESC_NORMAL);
+  mprintf(ESC_ERROR"KABOOM!"ESC_NORMAL"\n");
   //while (1) {}
 }
 
@@ -967,7 +966,8 @@ static void findECAQ( void )
   g_pECAQ = NULL; // Pre-nitialize Wishbone address for LM32 ECA queue
 
   // get Wishbone addresses of all ECA Queues
-  find_device_multi(ECAQ_base, &ECAQidx, ARRAY_SIZE(ECAQ_base), ECA_QUEUE_SDB_VENDOR_ID, ECA_QUEUE_SDB_DEVICE_ID);
+  find_device_multi(ECAQ_base, &ECAQidx, ARRAY_SIZE(ECAQ_base),
+                    ECA_QUEUE_SDB_VENDOR_ID, ECA_QUEUE_SDB_DEVICE_ID);
 
   // walk through all ECA Queues and find the one for the LM32
   for( uint32_t i = 0; i < ECAQidx; i++ )
@@ -979,10 +979,11 @@ static void findECAQ( void )
 
   if( g_pECAQ == NULL )
   {
-     mprintf(ESC_ERROR"\nFATAL: can't find ECA queue for lm32, good bye!\n"ESC_NORMAL);
+     mprintf(ESC_ERROR"\nFATAL: can't find ECA queue for lm32, good bye!"ESC_NORMAL"\n");
      while(true) asm("nop");
   }
-  mprintf("\nECA queue found at: 0x%08x. Waiting for actions with tag 0x%08x ...\n\n", g_pECAQ, MY_ECA_TAG);
+  mprintf("\nECA queue found at: 0x%08x. Waiting for actions with tag 0x%08x ...\n\n",
+           g_pECAQ, MY_ECA_TAG);
 } // findECAQ
 
 /*! ---------------------------------------------------------------------------
@@ -1148,6 +1149,35 @@ static void ecaHandler( register TaskType* pThis UNUSED )
    } // switch
 } // ecaHandler
 
+//#define CONFIG_DEBUG_SWI
+
+#ifdef CONFIG_DEBUG_SWI
+#warning Function printSwIrqCode() is activated! In this mode the software will not work!
+/*! ---------------------------------------------------------------------------
+ * @brief For debug purposes only!
+ */
+static void printSwIrqCode( const unsigned int code, const unsigned int value )
+{
+   const char* str;
+   #define _SWI_CASE_ITEM( i ) case i: str = #i; break
+   switch( code )
+   {
+      _SWI_CASE_ITEM( FG_OP_INITIALIZE );
+      _SWI_CASE_ITEM( FG_OP_RFU );
+      _SWI_CASE_ITEM( FG_OP_CONFIGURE );
+      _SWI_CASE_ITEM( FG_OP_DISABLE_CHANNEL );
+      _SWI_CASE_ITEM( FG_OP_RESCAN );
+      _SWI_CASE_ITEM( FG_OP_CLEAR_HANDLER_STATE );
+      _SWI_CASE_ITEM( FG_OP_PRINT_HISTORY );
+      default: str = "unknown"; break;
+   }
+   #undef _SWI_CASE_ITEM
+   mprintf( ESC_DEBUG"SW-IRQ: %s\tValue: %d"ESC_NORMAL"\n", str, value );
+}
+#else
+#define printSwIrqCode( code, value )
+#endif
+
 /*! ---------------------------------------------------------------------------
  * @brief Software irq handler
  *
@@ -1170,6 +1200,7 @@ static void sw_irq_handler( register TaskType* pThis UNUSED )
 
    code = m.msg >> BIT_SIZEOF( uint16_t );
    value = m.msg & 0xffff;
+   printSwIrqCode( code, value );
    switch( code )
    {
       case FG_OP_INITIALIZE:
@@ -1189,7 +1220,7 @@ static void sw_irq_handler( register TaskType* pThis UNUSED )
         #endif
          if( value >= ARRAY_SIZE( g_aFgChannels ) )
          {
-            mprintf( ESC_ERROR"Value %d out of range!\n"ESC_NORMAL, value );
+            mprintf( ESC_ERROR"Value %d out of range!"ESC_NORMAL"\n", value );
             break;
          }
          g_aFgChannels[value].param_sent = 0;
@@ -1308,7 +1339,7 @@ static void scu_bus_handler( register TaskType* pThis UNUSED )
 
 #define CONFIG_LAGE_TIME_DETECT
 #ifdef CONFIG_LAGE_TIME_DETECT
-   static uint64_t lastTime = 0;
+
 #endif
 
 /*! ---------------------------------------------------------------------------
@@ -1323,10 +1354,11 @@ static void pushDaqData( FG_MACRO_T fgMacro, uint64_t timestamp,
                          uint16_t actValue, uint32_t setValue )
 {
 #ifdef CONFIG_LAGE_TIME_DETECT
+   static uint64_t lastTime = 0;
    if( lastTime > 0 )
    {
       if( (timestamp - lastTime) > 100000000ULL )
-         mprintf( ESC_WARNING"Time-gap!\n"ESC_NORMAL );
+         mprintf( ESC_WARNING"Time-gap!"ESC_NORMAL"\n" );
    }
    lastTime = timestamp;
 #endif
@@ -1356,7 +1388,7 @@ static void pushDaqData( FG_MACRO_T fgMacro, uint64_t timestamp,
  */
 static void printTimeoutMessage( register TaskType* pThis, const bool isScuBus )
 {
-   mprintf( ESC_WARNING"timeout %s: state %s, taskid %d index %d\n"ESC_NORMAL,
+   mprintf( ESC_WARNING"timeout %s: state %s, taskid %d index %d"ESC_NORMAL"\n",
             isScuBus? "dev_bus_handler" : "dev_sio_handler",
             state2string( pThis->state ),
             getId( pThis ),
@@ -1604,7 +1636,7 @@ static void dev_sio_bus_handler( register TaskType* pThis, const bool isScuBus )
 
       default:
       {
-         mprintf(ESC_ERROR"unknown state of dev bus handler!\n"ESC_NORMAL);
+         mprintf(ESC_ERROR"unknown state of dev bus handler!"ESC_NORMAL"\n");
          FSM_INIT_FSM( ST_WAIT );
          break;
       }
@@ -1666,7 +1698,7 @@ static inline void printCpuId( void )
    cpu_info_base = (unsigned int*)find_device_adr(GSI, CPU_INFO_ROM);
    if((int)cpu_info_base == ERROR_NOT_FOUND)
    {
-      mprintf(ESC_ERROR"no CPU INFO ROM found!\n"ESC_NORMAL);
+      mprintf(ESC_ERROR"no CPU INFO ROM found!"ESC_NORMAL"\n");
       return;
    }
    mprintf("CPU ID: 0x%x\n", cpu_info_base[0]);
@@ -1680,9 +1712,9 @@ static inline void tellMailboxSlot( void )
 {
    int slot = getMsiBoxSlot(0x10); //TODO Where does 0x10 come from?
    if( slot == -1 )
-      mprintf(ESC_ERROR"No free slots in MsgBox left!\n"ESC_NORMAL);
+      mprintf(ESC_ERROR"No free slots in MsgBox left!"ESC_NORMAL"\n");
    else
-      mprintf("Configured slot %d in MsgBox\n", slot );
+      mprintf( "Configured slot %d in MsgBox\n", slot );
    g_shared.fg_mb_slot = slot;
 }
 
@@ -1700,7 +1732,7 @@ int main( void )
    msDelayBig(1500); //wait for wr deamon to read sdbfs
 
    if( (int)BASE_SYSCON == ERROR_NOT_FOUND )
-      mprintf(ESC_ERROR"no SYS_CON found!\n"ESC_NORMAL);
+      mprintf(ESC_ERROR"no SYS_CON found!"ESC_NORMAL"\n");
    else
       mprintf("SYS_CON found on adr: 0x%x\n", BASE_SYSCON);
 

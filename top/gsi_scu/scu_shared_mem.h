@@ -335,9 +335,9 @@ typedef enum
 {
    FG_OP_INITIALIZE          = 0,
    FG_OP_RFU                 = 1,
-   FG_OP_CONFIGURE           = 2,
-   FG_OP_DISABLE_CHANNEL     = 3,
-   FG_OP_RESCAN              = 4,
+   FG_OP_CONFIGURE           = 2, // SWI_ENABLE
+   FG_OP_DISABLE_CHANNEL     = 3, // SWI_DISABLE
+   FG_OP_RESCAN              = 4, // SWI_SCAN
    FG_OP_CLEAR_HANDLER_STATE = 5,
    FG_OP_PRINT_HISTORY       = 6
 } FG_OP_CODE_T;

@@ -359,7 +359,7 @@ int mdaqtMain( int argc, char** ppArgv )
       }
       if( doReceive )
          pDaqAdmin->distributeData();
-      ::usleep( 10 );
+      ::usleep( 100 );
    }
    DEBUG_MESSAGE( "Loop left" );
    return EXIT_SUCCESS;
