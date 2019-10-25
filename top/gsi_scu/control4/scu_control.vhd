@@ -312,7 +312,8 @@ begin
       ps_wen                 => psram_wen,
       ps_cre                 => psram_cre,
       ps_advn                => psram_advn,
-      ps_wait                => psram_wait);
+      ps_wait                => psram_wait,
+      hw_version             => x"0000000" & not scu_cb_version);
 
   -- SFP
   sfp_tx_disable_o <= '0';
