@@ -27,8 +27,7 @@
 #include <stddef.h>
 #include <string>
 #include <daq_exception.hpp>
-#include <daq_eb_ram_buffer.hpp>
-#include <scu_shared_mem.h>
+#include <scu_fg_list.hpp>
 
 #ifndef DAQ_DEFAULT_WB_DEVICE
    #define DAQ_DEFAULT_WB_DEVICE "dev/wbm0"
@@ -60,8 +59,8 @@ public:
    constexpr static uint         c_startSlot         = 0;
    constexpr static uint         c_maxChannels       = 254;
 
-   typedef RING_POS_T RING_INDEX_T;
-   typedef MIL_DAQ_OBJ_T RING_ITEM_T;
+   using RING_INDEX_T = RING_POS_T;
+   using RING_ITEM_T = MIL_DAQ_OBJ_T;
 
    class RingItem: public RING_ITEM_T
    {
@@ -138,6 +137,7 @@ private:
 
 protected:
    daq::EbRamAccess*  m_poEbAccess;
+   FgList             m_oFgList;
 
 public:
    DaqInterface( DaqEb::EtherboneConnection* poEtherbone );
@@ -175,6 +175,25 @@ public:
    }
 
    uint getBufferSize( void );
+
+   /*!
+    * @brief Returns true if function generator with
+    *        the given socket and given device number present.
+    * @note A scan of function generators before assumed!
+    */
+   bool isPresent( const uint socket, const uint device );
+
+   /*!
+    * @brief Returns true if the given socket number is used by a
+    *        function generator.
+    * @note A scan of function generators before assumed!
+    */
+   bool isSocketUsed( const uint socket );
+
+   FgList& getFgList( void )
+   {
+      return m_oFgList;
+   }
 
 protected:
    bool readRingPosition( void );

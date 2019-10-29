@@ -28,6 +28,7 @@
 #include <cstddef>
 #include <unistd.h>
 #include <dbg.h>
+#include <eb_console_helper.h>
 #ifdef CONFIG_DAQ_TIME_MEASUREMENT
 #include <sys/time.h>
 #endif

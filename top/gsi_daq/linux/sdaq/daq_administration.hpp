@@ -486,7 +486,7 @@ class DaqDevice
 
 protected:
    #define CHANNEL_LIST_T_BASE std::list
-   typedef CHANNEL_LIST_T_BASE<DaqChannel*>  CHANNEL_LIST_T;
+   using CHANNEL_LIST_T = CHANNEL_LIST_T_BASE<DaqChannel*>;
    CHANNEL_LIST_T     m_channelPtrList;
 
 public:
@@ -754,7 +754,7 @@ protected:
 #endif
 
    #define DEVICE_LIST_BASE std::list
-   typedef DEVICE_LIST_BASE<DaqDevice*> DEVICE_LIST_T;
+   using DEVICE_LIST_T = DEVICE_LIST_BASE<DaqDevice*>;
    DEVICE_LIST_T  m_devicePtrList;
 
 public:

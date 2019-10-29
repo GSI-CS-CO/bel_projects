@@ -113,8 +113,10 @@ class DaqInterface
    constexpr static uint        INVALID_OFFSET = static_cast<uint>(~0);
 
 public:
-   typedef SCUBUS_SLAVE_FLAGS_T SLOT_FLAGS_T;
-   typedef DAQ_RETURN_CODE_T    RETURN_CODE_T;
+   //typedef SCUBUS_SLAVE_FLAGS_T SLOT_FLAGS_T;
+   using SLOT_FLAGS_T = SCUBUS_SLAVE_FLAGS_T;
+   //typedef DAQ_RETURN_CODE_T    RETURN_CODE_T;
+   using RETURN_CODE_T = DAQ_RETURN_CODE_T;
 
 protected:
    EbRamAccess*                 m_poEbAccess;

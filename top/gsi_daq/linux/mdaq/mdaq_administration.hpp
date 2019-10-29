@@ -100,7 +100,7 @@ class DaqDevice
 {
    friend class DaqAdministration;
    #define MIL_CHANNEL_LIST_T_BASE std::list
-   typedef MIL_CHANNEL_LIST_T_BASE<DaqCompare*>  CHANNEL_LIST_T;
+   using CHANNEL_LIST_T = MIL_CHANNEL_LIST_T_BASE<DaqCompare*>;
    CHANNEL_LIST_T     m_channelPtrList;
    const uint         m_location;
    DaqAdministration* m_pParent;
@@ -184,7 +184,7 @@ class DaqAdministration: public DaqInterface
 protected:
 
    #define MIL_DEVICE_LIST_BASE std::list
-   typedef MIL_DEVICE_LIST_BASE<DaqDevice*> DEVICE_LIST_T;
+   using DEVICE_LIST_T = MIL_DEVICE_LIST_BASE<DaqDevice*>;
    DEVICE_LIST_T  m_devicePtrList;
 
 public:

@@ -51,7 +51,7 @@ constexpr uint64_t NANOSECS_PER_SEC  = 1000000000;
  */
 constexpr uint32_t MICROSECS_PER_SEC = 1000000;
 
-typedef uint64_t USEC_T;
+using USEC_T = uint64_t;
 
 /*! ---------------------------------------------------------------------------
  * @ingroup DAQ

@@ -46,8 +46,7 @@ class FgList
       uint getOutputBits( void ) const { return outputBits; }
    };
 
-   typedef vector<FgListItem> FG_LIST_T;
-
+   using FG_LIST_T = vector<FgListItem>;
    FG_LIST_T           m_list;
 
 public:
