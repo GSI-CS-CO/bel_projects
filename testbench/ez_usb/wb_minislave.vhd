@@ -20,7 +20,7 @@ architecture rtl of wb_minislave is
     signal n_rd_access : integer := 0;
     signal n_wr_access : integer := 0;
     signal ack : std_logic := '0';
-    signal countdown : unsigned(15 downto 0) := x"0100";
+    signal countdown : unsigned(15 downto 0) := x"0800";
 begin
 
     minislave: process
@@ -56,19 +56,20 @@ begin
         msi_master_o.stb <= '0';
         msi_master_o.cyc <= '0';
         if n_wr_access > 0 and slave_i.stb = '0' and slave_i.we = '0' then 
-            if countdown >= 9 then 
+            if countdown >= 16 then 
                 countdown <= countdown -1 ;
-            elsif countdown < 9 then
-                msi_master_o.dat <= x"11112222";
-                msi_master_o.adr <= x"000000aa";
-                msi_master_o.cyc <= '1';
-                msi_master_o.stb <= '1';
+            elsif countdown < 16 then
                 if msi_master_i.stall = '0' then
                     if countdown > 0 then 
                         countdown <= countdown - 1;
                     else 
-                        countdown <= x"0400";
+                        countdown <= x"0800";
                     end if;
+                else
+                    msi_master_o.dat <= x"0000" & std_logic_vector(countdown);
+                    msi_master_o.adr <= x"000000aa";
+                    msi_master_o.cyc <= '1';
+                    msi_master_o.stb <= '1';
                 end if;
             end if;
         end if;

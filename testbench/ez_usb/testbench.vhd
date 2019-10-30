@@ -140,7 +140,7 @@ begin
   ---- instance of EZUSB-chip 
   -- this simulates the physical chip that is connected to the FPGA
   chip : entity work.ez_usb_chip
-    generic map (PTS_NUMBER => PTS_NUMBER)
+    generic map (PTS_NUMBER)
     port map (
       rstn_i    => usb_rstn,
       ebcyc_o   => usb_ebcyc,
