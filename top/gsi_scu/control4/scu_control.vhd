@@ -109,7 +109,7 @@ entity scu_control is
     -----------------------------------------------------------------------
     -- Extension Connector
     -----------------------------------------------------------------------
-    ext_ch           : inout std_logic_vector(33 downto 0);
+    --ext_ch           : inout std_logic_vector(33 downto 0);
     ext_id           : in std_logic_vector   (3 downto 0);
     
     -----------------------------------------------------------------------
