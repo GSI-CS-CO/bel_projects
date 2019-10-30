@@ -148,7 +148,7 @@ inline std::string wrToTimeDateString( uint64_t wrt )
  * @return Interpolated Y-value of the given X-value.
  */
 template< typename XT = float, typename YT = float >
-YT interpolate( XT x, XT x1, YT y1, XT x2, YT y2 )
+YT interpolate( const XT x, const XT x1, const YT y1, const XT x2, const YT y2 )
 {
    if( x2 == x1 )
       return (y1 + y2) / 2; //TODO Workaround prevents a division by zero.

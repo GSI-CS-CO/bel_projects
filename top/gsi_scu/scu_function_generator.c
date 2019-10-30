@@ -152,8 +152,7 @@ void scanScuBusFgsViaMil( volatile uint16_t *scub_adr, FG_MACRO_T* fglist )
 static inline
 void scanScuBusFgsDirect( volatile uint16_t *scub_adr, FG_MACRO_T* fglist )
 {
-   SCUBUS_SLAVE_FLAGS_T slotFlags;
-   slotFlags  = scuBusFindSpecificSlaves( (void*)scub_adr, SYS_CSCO, 38 );
+   const  SCUBUS_SLAVE_FLAGS_T slotFlags = scuBusFindSpecificSlaves( (void*)scub_adr, SYS_CSCO, 38 );
    if( slotFlags == 0 )
       return;
    for( unsigned int slot = SCUBUS_START_SLOT; slot <= MAX_SCU_SLAVES; slot++ )

@@ -84,13 +84,13 @@ SCU_SHARED_DATA_T SHARED g_shared = SCU_SHARED_DATA_INITIALIZER;
 
 typedef uint32_t ECA_T;
 
-volatile uint16_t* g_pScub_base        = NULL;
-volatile uint32_t* g_pScub_irq_base    = NULL;
-volatile unsigned int* g_pScu_mil_base = NULL;
-volatile uint32_t* g_pMil_irq_base     = NULL;
-volatile uint32_t* g_pWr_1wire_base    = NULL;
-volatile uint32_t* g_pUser_1wire_base  = NULL;
-volatile ECA_T*    g_pECAQ             = NULL; // WB address of ECA queue
+volatile uint16_t*     g_pScub_base        = NULL;
+volatile uint32_t*     g_pScub_irq_base    = NULL;
+volatile unsigned int* g_pScu_mil_base     = NULL;
+volatile uint32_t*     g_pMil_irq_base     = NULL;
+volatile uint32_t*     g_pWr_1wire_base    = NULL;
+volatile uint32_t*     g_pUser_1wire_base  = NULL;
+volatile ECA_T*        g_pECAQ             = NULL; // WB address of ECA queue
 
 volatile FG_MESSAGE_BUFFER_T g_aMsg_buf[QUEUE_CNT] = {{0, 0}};
 
@@ -104,6 +104,7 @@ typedef struct
 
 FG_CHANNEL_T g_aFgChannels[MAX_FG_CHANNELS] = {{0,0}};//,0}};
 
+/*===========================================================================*/
 //#define CONFIG_DEBUG_FG_SIGNAL
 /*! ---------------------------------------------------------------------------
  * @brief Send a signal back to the Linus-host (SAFTLIB)
@@ -125,7 +126,7 @@ static inline void sendSignal( const SIGNAL_T sig, const unsigned int channel )
 /*! ---------------------------------------------------------------------------
  * @brief Returns the macro number of the given channel.
  */
-static inline FG_MACRO_T _get_macro_number( unsigned int channel )
+static inline FG_MACRO_T _get_macro_number( const unsigned int channel )
 {
    return g_shared.fg_macros[g_shared.fg_regs[channel].macro_number];
 }
@@ -133,7 +134,7 @@ static inline FG_MACRO_T _get_macro_number( unsigned int channel )
 /*! ---------------------------------------------------------------------------
  * @brief Returns the socked number of the given channel.
  */
-static inline uint8_t _get_socket( unsigned int channel )
+static inline uint8_t _get_socket( const unsigned int channel )
 {
    return _get_macro_number( channel ).socket;
 }
@@ -141,7 +142,7 @@ static inline uint8_t _get_socket( unsigned int channel )
 /*! ---------------------------------------------------------------------------
  * @brief Returns the device number of the given channel.
  */
-static inline uint8_t _get_dev( unsigned int channel )
+static inline uint8_t _get_dev( const unsigned int channel )
 {
    return _get_macro_number( channel ).device;
 }
@@ -231,14 +232,12 @@ static void isr0( void )
  *  A hardware macro is used, which generates msis from legacy interrupts.
  *  @param channel number of the channel between 0 and MAX_FG_CHANNELS-1
  */
-static void enable_scub_msis( unsigned int channel )
+static void enable_scub_msis( const unsigned int channel )
 {
-   int socket;
-
    if( channel >= MAX_FG_CHANNELS )
       return;
 
-   socket = _get_socket( channel );
+   const unsigned int socket = _get_socket( channel );
    if (((socket & (DEV_MIL_EXT | DEV_SIO)) == 0) || ((socket & DEV_SIO) != 0))
    {
       //SCU Bus Master
@@ -265,14 +264,14 @@ static void enable_scub_msis( unsigned int channel )
  *  SIO and MIL extension stop generating irqs
  *  @param channel number of the channel from 0 to MAX_FG_CHANNELS-1
  */
-static void disable_slave_irq( unsigned int channel )
+static void disable_slave_irq( const unsigned int channel )
 {
    if( channel >= MAX_FG_CHANNELS )
       return;
 
    int status;
-   const uint8_t socket = _get_socket( channel );
-   const uint8_t dev  = _get_dev( channel );
+   const uint32_t socket = _get_socket( channel );
+   const uint32_t dev    = _get_dev( channel );
 
    if( (socket & (DEV_MIL_EXT | DEV_SIO)) == 0 )
    {
@@ -284,13 +283,14 @@ static void disable_slave_irq( unsigned int channel )
    else if( (socket & DEV_MIL_EXT) != 0 )
    {
       //write_mil(g_pScu_mil_base, 0x0, FC_COEFF_A_WR | dev);            //ack drq
-      if ((status = write_mil(g_pScu_mil_base, 0x0, FC_IRQ_MSK | dev)) != OKAY)
-         dev_failure(status, socket & SCU_BUS_SLOT_MASK, __func__);  //mask drq
+      if( (status = write_mil(g_pScu_mil_base, 0x0, FC_IRQ_MSK | dev) ) != OKAY)
+         dev_failure( status, socket & SCU_BUS_SLOT_MASK, __func__);  //mask drq
    }
    else if( (socket & DEV_SIO) != 0 )
    {
-      if ((status = scub_write_mil(g_pScub_base, socket & SCU_BUS_SLOT_MASK, 0x0, FC_IRQ_MSK | dev)) != OKAY)
-         dev_failure(status, socket & SCU_BUS_SLOT_MASK, __func__);  //mask drq
+      if( (status = scub_write_mil(g_pScub_base, socket & SCU_BUS_SLOT_MASK,
+                                   0x0, FC_IRQ_MSK | dev)) != OKAY)
+         dev_failure( status, socket & SCU_BUS_SLOT_MASK, __func__);  //mask drq
    }
 
    //mprintf("IRQs for slave %d disabled.\n", socket);
@@ -301,7 +301,7 @@ static void disable_slave_irq( unsigned int channel )
  *  uses the system timer
  *  @param ms delay value in milliseconds
  */
-static void msDelayBig(uint64_t ms)
+static void msDelayBig( const uint64_t ms )
 {
    uint64_t later = getSysTime() + ms * 1000000ULL / 8;
    while(getSysTime() < later) {asm("# noop");}
@@ -333,13 +333,11 @@ static inline void send_fg_param( const  unsigned int socket,
                                   signed int* pSetvalue )
 {
    FG_PARAM_SET_T pset;
-   unsigned int fg_num;
-   uint16_t cntrl_reg_wr;
-   int status;
-   int16_t blk_data[6];
+   uint16_t       cntrl_reg_wr;
+   int            status;
+   int16_t        blk_data[6];
 
-   //fg_num = (cntrl_reg & 0x3f0) >> 4; // virtual fg number Bits 9..4
-   fg_num = getFgNumberFromRegister( cntrl_reg );
+   const unsigned int fg_num = getFgNumberFromRegister( cntrl_reg );
    if( fg_num >= ARRAY_SIZE( g_aFgChannels ) )
    {
       mprintf( ESC_ERROR"FG-number %d out of range!"ESC_NORMAL"\n", fg_num );
@@ -826,7 +824,7 @@ inline static void print_regs( void)
  * @brief disable function generator channel
  * @param channel number of the function generator channel from 0 to MAX_FG_CHANNELS-1
  */
-static void disable_channel( unsigned int channel )
+static void disable_channel( const unsigned int channel )
 {
    FG_CHANNEL_REG_T* pFgRegs = &g_shared.fg_regs[channel];
 
@@ -835,8 +833,8 @@ static void disable_channel( unsigned int channel )
 
    int status;
    int16_t data;
-   const uint8_t socket = _get_socket( channel );
-   const uint8_t dev  = _get_dev( channel );
+   const uint16_t socket = _get_socket( channel );
+   const uint16_t dev    = _get_dev( channel );
    //mprintf("disarmed socket %d dev %d in channel[%d] state %d\n", socket, dev, channel, pFgRegs->state); //ONLY FOR TESTING
    if( (socket & (DEV_MIL_EXT | DEV_SIO)) == 0 )
    {
@@ -906,7 +904,7 @@ static void updateTemperature( void )
   ReadTempDevices(0, &g_shared.board_id, &g_shared.board_temp);
   BASE_ONEWIRE = (uint8_t*)g_pUser_1wire_base;
   wrpc_w1_init();
-  ReadTempDevices(0, &g_shared.ext_id, &g_shared.ext_temp);
+  ReadTempDevices(0, &g_shared.ext_id,       &g_shared.ext_temp);
   ReadTempDevices(1, &g_shared.backplane_id, &g_shared.backplane_temp);
 #if __GNUC__ >= 9
   #pragma GCC diagnostic pop
@@ -991,7 +989,7 @@ static void findECAQ( void )
  */
 typedef struct
 {
-   short     irq_data;      /* saved irq state */
+   int16_t   irq_data;      /* saved irq state */
    int       setvalue;      /* setvalue from the tuple sent */
    uint64_t  daq_timestamp; /* timestamp of daq sampling */
 } FG_CHANNEL_TASK_T;
@@ -1077,7 +1075,7 @@ static TaskType g_aTasks[] =
 /*! ---------------------------------------------------------------------------
  * @brief Returns the task-number of the given task object.
  */
-static unsigned int getId( register TaskType* pThis )
+static unsigned int getId( const TaskType* pThis )
 {
    return (((uint8_t*)pThis) - ((uint8_t*)g_aTasks)) / sizeof( TaskType );
 }
@@ -1188,18 +1186,15 @@ static void printSwIrqCode( const unsigned int code, const unsigned int value )
 //#define CONFIG_DEBUG_FG
 static void sw_irq_handler( register TaskType* pThis UNUSED )
 {
-   unsigned int code, value;
-   MSI_T m;
-
    if( !has_msg( &g_aMsg_buf[0], SWI ) )
       return; /* Nothing to do.. */
 
-   m = remove_msg( &g_aMsg_buf[0], SWI );
+   const MSI_T m = remove_msg( &g_aMsg_buf[0], SWI );
    if( m.adr != 0x10 )
       return;
 
-   code = m.msg >> BIT_SIZEOF( uint16_t );
-   value = m.msg & 0xffff;
+   const unsigned int code  = m.msg >> BIT_SIZEOF( uint16_t );
+   const unsigned int value = m.msg & 0xffff;
    printSwIrqCode( code, value );
    switch( code )
    {
@@ -1289,33 +1284,29 @@ static void sw_irq_handler( register TaskType* pThis UNUSED )
  */
 static void scu_bus_handler( register TaskType* pThis UNUSED )
 {
-   uint16_t slv_int_act_reg;
-   unsigned char slave_nr;
-   uint16_t slave_acks = 0;
-   MSI_T m;
-   signed int dummy;
-
    if( !has_msg(&g_aMsg_buf[0], SCUBUS) )
       return;
 
-   m = remove_msg(&g_aMsg_buf[0], SCUBUS);
+   const MSI_T m = remove_msg(&g_aMsg_buf[0], SCUBUS);
    if( m.adr != 0x0 )
       return;
 
-   slave_nr = m.msg + 1;
-   if( slave_nr < 0 || slave_nr > MAX_SCU_SLAVES)
+   const uint32_t slave_nr = m.msg + 1;
+   if( slave_nr > MAX_SCU_SLAVES )
    {
-      mprintf(ESC_ERROR"slave nr unknown.\n"ESC_NORMAL);
+      mprintf( ESC_ERROR"slave nr unknown.\n"ESC_NORMAL );
       return;
    }
 
-   slv_int_act_reg = g_pScub_base[OFFS(slave_nr) + SLAVE_INT_ACT];
+   const uint16_t slv_int_act_reg = g_pScub_base[OFFS(slave_nr) + SLAVE_INT_ACT];
+   uint16_t       slave_acks      = 0;
 
    if( (slv_int_act_reg & 0x1) != 0 )
    {// powerup interrupt
       slave_acks |= 0x1;
    }
 
+   int dummy;
    if( (slv_int_act_reg & FG1_IRQ) != 0 )
    { //FG irq?
       handle(slave_nr, FG1_BASE, 0, &dummy);
@@ -1338,9 +1329,6 @@ static void scu_bus_handler( register TaskType* pThis UNUSED )
 }
 
 #define CONFIG_LAGE_TIME_DETECT
-#ifdef CONFIG_LAGE_TIME_DETECT
-
-#endif
 
 /*! ---------------------------------------------------------------------------
  * @brief Writes the data set coming from one of the MIL-DAQs in the
@@ -1355,13 +1343,15 @@ static void pushDaqData( FG_MACRO_T fgMacro, uint64_t timestamp,
 {
 #ifdef CONFIG_LAGE_TIME_DETECT
    static uint64_t lastTime = 0;
+   static unsigned int count = 0;
    if( lastTime > 0 )
    {
       if( (timestamp - lastTime) > 100000000ULL )
-         mprintf( ESC_WARNING"Time-gap!"ESC_NORMAL"\n" );
+         mprintf( ESC_WARNING"Time-gap: %d"ESC_NORMAL"\n", count++ );
    }
    lastTime = timestamp;
 #endif
+
 #ifdef CONFIG_MIL_DAQ_USE_RAM
 #error Extern RAM for MIL-DAQ not implemented yet!
    MIL_DAQ_RAM_ITEM_PAYLOAD_T pl;
@@ -1401,9 +1391,8 @@ static void printTimeoutMessage( register TaskType* pThis, const bool isScuBus )
 static void dev_sio_bus_handler( register TaskType* pThis, const bool isScuBus )
 {
    unsigned int i;
-   uint8_t socket, dev;
+   uint32_t socket, dev;
    int status = OKAY;
-   MSI_T m;
 
    switch( pThis->state )
    {
@@ -1417,7 +1406,7 @@ static void dev_sio_bus_handler( register TaskType* pThis, const bool isScuBus )
             break;
          }
 
-         m = remove_msg( &g_aMsg_buf[0], isScuBus? DEVSIO : DEVBUS );
+         const MSI_T m = remove_msg( &g_aMsg_buf[0], isScuBus? DEVSIO : DEVBUS );
          if( isScuBus )
             pThis->slave_nr = m.msg + 1;
          pThis->timestamp1 = getSysTime();
@@ -1439,10 +1428,9 @@ static void dev_sio_bus_handler( register TaskType* pThis, const bool isScuBus )
          for( i = 0; i < MAX_FG_CHANNELS; i++ )
          {
             socket = _get_socket( i );
-            dev  = _get_dev( i );
+            dev    = _get_dev( i );
             pThis->aFgChannels[i].irq_data = 0; // clear old irq data
             /* test only ifas connected to sio */
-            status = OKAY;
             if( isScuBus )
             {
                if( ((socket & SCU_BUS_SLOT_MASK) != pThis->slave_nr ) || ((socket & DEV_SIO) == 0) )
@@ -1478,7 +1466,6 @@ static void dev_sio_bus_handler( register TaskType* pThis, const bool isScuBus )
             pThis->task_timeout_cnt = 0;
          }
          /* fetch status from dev bus controller; */
-         status = OKAY;
          for( i = pThis->i; i < MAX_FG_CHANNELS; i++ )
          {
             socket = _get_socket( i );
@@ -1521,7 +1508,6 @@ static void dev_sio_bus_handler( register TaskType* pThis, const bool isScuBus )
 
       case ST_HANDLE_IRQS:
       {  /* handle irqs for ifas with active pending regs; non blocking write */
-         status = OKAY;
          for( i = 0; i < MAX_FG_CHANNELS; i++ )
          {  // any irq pending?
             if( (pThis->aFgChannels[i].irq_data & (DEV_STATE_IRQ | DEV_DRQ)) == 0 )
@@ -1570,7 +1556,7 @@ static void dev_sio_bus_handler( register TaskType* pThis, const bool isScuBus )
                                      FC_ACT_RD | dev);
             }
             if( status != OKAY )
-               dev_failure(status, 23, "dev_sio read daq");
+               dev_failure( status, 23, "dev_sio read daq" );
          } // end for
          FSM_TRANSITION( ST_FETCH_DATA );
          break;
@@ -1665,22 +1651,13 @@ static void dev_bus_handler( register TaskType* pThis )
    dev_sio_bus_handler( pThis, true );
 }
 
-
-#if 0
-static uint64_t tick = 0;               // system tick
-uint64_t getTick( void ) {
-  return tick;
-}
-#endif
-
 /*! ---------------------------------------------------------------------------
  * @brief Move messages to the correct queue, depending on source
  */
 static inline void dispatch( void )
 {
-   MSI_T m;
-   m = remove_msg( &g_aMsg_buf[0], IRQ );
-   switch( m.adr & 0xff )
+   const MSI_T m = remove_msg( &g_aMsg_buf[0], IRQ );
+   switch( m.adr & 0xFF )
    { //TODO remove these naked numbers asap!
       case 0x00: add_msg( &g_aMsg_buf[0], SCUBUS, m ); return; // message from scu bus
       case 0x10: add_msg( &g_aMsg_buf[0], SWI,    m ); return; // software message from saftlib
@@ -1710,9 +1687,9 @@ static inline void printCpuId( void )
  */
 static inline void tellMailboxSlot( void )
 {
-   int slot = getMsiBoxSlot(0x10); //TODO Where does 0x10 come from?
+   const int slot = getMsiBoxSlot(0x10); //TODO Where does 0x10 come from?
    if( slot == -1 )
-      mprintf(ESC_ERROR"No free slots in MsgBox left!"ESC_NORMAL"\n");
+      mprintf( ESC_ERROR"No free slots in MsgBox left!"ESC_NORMAL"\n" );
    else
       mprintf( "Configured slot %d in MsgBox\n", slot );
    g_shared.fg_mb_slot = slot;
