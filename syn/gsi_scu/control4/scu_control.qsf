@@ -753,7 +753,9 @@ set_location_assignment PIN_AC3 -to "clk_125m_local_alt_i(n)"
 set_location_assignment PIN_AD13 -to lemo_p_i[1]
 set_location_assignment PIN_AD14 -to lemo_n_i[1]
 set_location_assignment PIN_AD18 -to lemo_p_i[0]
+set_location_assignment PIN_AD20 -to lemo_p_o[0]
 set_location_assignment PIN_AD3 -to clk_125m_local_alt_i
+set_location_assignment PIN_AE19 -to lemo_p_o[1]
 set_location_assignment PIN_AF25 -to "sfp_rxp_i(n)"
 set_location_assignment PIN_AF26 -to sfp_rxp_i
 set_location_assignment PIN_AG27 -to "sfp_txp_o(n)"
