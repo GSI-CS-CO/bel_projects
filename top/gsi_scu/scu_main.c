@@ -76,7 +76,7 @@
 #define INTERVAL_5MS    5000000ULL
 #define ALWAYS          0ULL
 
-#define MY_ECA_TAG      0xdeadbeef //just define a tag for ECA actions we want to receive
+//#define MY_ECA_TAG      0xdeadbeef //just define a tag for ECA actions we want to receive
 
 /*====================== Begin of shared memory area ========================*/
 SCU_SHARED_DATA_T SHARED g_shared = SCU_SHARED_DATA_INITIALIZER;
@@ -84,13 +84,19 @@ SCU_SHARED_DATA_T SHARED g_shared = SCU_SHARED_DATA_INITIALIZER;
 
 typedef uint32_t ECA_T;
 
+typedef struct
+{
+   ECA_T           tag;
+   volatile ECA_T* pQueue; // WB address of ECA queue
+} ECA_OBJ_T;
+
+static ECA_OBJ_T       g_eca               = { 0, NULL };
 volatile uint16_t*     g_pScub_base        = NULL;
 volatile uint32_t*     g_pScub_irq_base    = NULL;
 volatile unsigned int* g_pScu_mil_base     = NULL;
 volatile uint32_t*     g_pMil_irq_base     = NULL;
 volatile uint32_t*     g_pWr_1wire_base    = NULL;
 volatile uint32_t*     g_pUser_1wire_base  = NULL;
-volatile ECA_T*        g_pECAQ             = NULL; // WB address of ECA queue
 
 volatile FG_MESSAGE_BUFFER_T g_aMsg_buf[QUEUE_CNT] = {{0, 0}};
 
@@ -178,8 +184,10 @@ static void dev_failure(const int status, const int slot, const char* msg)
      __MSG_ITEM( RCV_TIMEOUT );
      __MSG_ITEM( RCV_TASK_ERR );
      default:
+     {
         mprintf("%s%d failed with code %d"ESC_NORMAL"\n", pText, slot, status);
         return;
+     }
   }
   #undef __MSG_ITEM
   mprintf("%s%d failed with message %s, %s"ESC_NORMAL"\n", pText, slot, pMessage, msg);
@@ -237,8 +245,8 @@ static void enable_scub_msis( const unsigned int channel )
    if( channel >= MAX_FG_CHANNELS )
       return;
 
-   const unsigned int socket = _get_socket( channel );
-   if (((socket & (DEV_MIL_EXT | DEV_SIO)) == 0) || ((socket & DEV_SIO) != 0))
+   const uint8_t socket = _get_socket( channel );
+   if( ((socket & (DEV_MIL_EXT | DEV_SIO)) == 0) || ((socket & DEV_SIO) != 0) )
    {
       //SCU Bus Master
       g_pScub_base[GLOBAL_IRQ_ENA] = 0x20;              // enable slave irqs in scu bus master
@@ -270,8 +278,8 @@ static void disable_slave_irq( const unsigned int channel )
       return;
 
    int status;
-   const uint32_t socket = _get_socket( channel );
-   const uint32_t dev    = _get_dev( channel );
+   const uint8_t socket = _get_socket( channel );
+   const uint8_t dev    = _get_dev( channel );
 
    if( (socket & (DEV_MIL_EXT | DEV_SIO)) == 0 )
    {
@@ -961,7 +969,7 @@ static void findECAQ( void )
   sdb_location ECAQ_base[ECAQMAX]; // base addresses of ECA queues
   uint32_t ECAQidx = 0;            // max number of ECA queues in the SoC
 
-  g_pECAQ = NULL; // Pre-nitialize Wishbone address for LM32 ECA queue
+  g_eca.pQueue = NULL; // Pre-nitialize Wishbone address for LM32 ECA queue
 
   // get Wishbone addresses of all ECA Queues
   find_device_multi(ECAQ_base, &ECAQidx, ARRAY_SIZE(ECAQ_base),
@@ -972,16 +980,17 @@ static void findECAQ( void )
   {
      ECA_T* tmp = (ECA_T*)(getSdbAdr(&ECAQ_base[i]));
      if( (tmp != NULL) && (tmp[ECA_QUEUE_QUEUE_ID_GET / sizeof(ECA_T)] == ECACHANNELFORLM32) )
-        g_pECAQ = tmp;
+        g_eca.pQueue = tmp;
   }
 
-  if( g_pECAQ == NULL )
+  if( g_eca.pQueue == NULL )
   {
      mprintf(ESC_ERROR"\nFATAL: can't find ECA queue for lm32, good bye!"ESC_NORMAL"\n");
      while(true) asm("nop");
   }
+  g_eca.tag = g_eca.pQueue[ECA_QUEUE_TAG_GET / sizeof(ECA_T)];
   mprintf("\nECA queue found at: 0x%08x. Waiting for actions with tag 0x%08x ...\n\n",
-           g_pECAQ, MY_ECA_TAG);
+           g_eca.pQueue, g_eca.tag );
 } // findECAQ
 
 /*! ---------------------------------------------------------------------------
@@ -1081,7 +1090,8 @@ static unsigned int getId( const TaskType* pThis )
 }
 
 /*! ---------------------------------------------------------------------------
- * @brief demonstrate how to poll actions ("events") from ECA
+ * @brief Event Condition Action (ECA) handler
+ *        demonstrate how to poll actions ("events") from ECA
  *
  * HERE: poll ECA, get data of action and do something
  *
@@ -1091,60 +1101,53 @@ static unsigned int getId( const TaskType* pThis )
  * - a TAG with value 0x4 has been configure (see saft-ecpu-ctl -h
  *   for help
  */
+#define MIL_BROADCAST 0x20ff //TODO Who the fuck is 0x20ff documented!
 static void ecaHandler( register TaskType* pThis UNUSED )
 {
    // read flag for the next action and check if there was an action
-   if( (g_pECAQ[ECA_QUEUE_FLAGS_GET / sizeof(ECA_T)] & (1 << ECA_VALID)) == 0 )
+   if( (g_eca.pQueue[ECA_QUEUE_FLAGS_GET / sizeof(ECA_T)] & (1 << ECA_VALID)) == 0 )
       return;
 
-   bool dev_mil_armed = false;
-   bool dev_sio_armed = false;
-   uint32_t active_sios = 0;     // bitmap with active sios
+   // pop action from channel
+   g_eca.pQueue[ECA_QUEUE_POP_OWR / sizeof(ECA_T)] = 0x1;
+
+   // here: do s.th. according to action; read data tag of action
+   if( g_eca.pQueue[ECA_QUEUE_TAG_GET / sizeof(ECA_T)] != g_eca.tag )
+      return;
+
+   bool                 dev_mil_armed = false;
+   bool                 dev_sio_armed = false;
+   SCUBUS_SLAVE_FLAGS_T active_sios   = 0; // bitmap with active sios
 
    /* check if there are armed fgs */
    for( unsigned int i = 0; i < ARRAY_SIZE(g_shared.fg_regs); i++ )
    { // only armed fgs
       if( g_shared.fg_regs[i].state != STATE_ARMED )
          continue;
-      unsigned int socket = _get_socket( i );
-      if( socket & DEV_MIL_EXT )
+      const uint8_t socket = _get_socket( i );
+      if( (socket & DEV_MIL_EXT) != 0 )
       {
          dev_mil_armed = true;
          continue;
       }
-      if( socket & DEV_SIO )
+      if( (socket & DEV_SIO) != 0 )
       {
-         active_sios |= (1 << ((socket & SCU_BUS_SLOT_MASK) - 1));
+         if( (socket & SCU_BUS_SLOT_MASK) != 0 )
+            active_sios |= (1 << ((socket & SCU_BUS_SLOT_MASK) - 1));
          dev_sio_armed = true;
       }
    }
 
-   // read data tag of action
-   ECA_T actTag = g_pECAQ[ECA_QUEUE_TAG_GET / sizeof(ECA_T)];
+   if( dev_mil_armed )
+      g_pScu_mil_base[MIL_SIO3_TX_CMD] = MIL_BROADCAST;
 
-   // pop action from channel
-   g_pECAQ[ECA_QUEUE_POP_OWR / sizeof(ECA_T)] = 0x1;
-
-   // here: do s.th. according to action
-   switch( actTag )
-   {
-      case MY_ECA_TAG:
-      {
-         // send broadcast start to mil extension
-         if (dev_mil_armed)
-            g_pScu_mil_base[MIL_SIO3_TX_CMD] = 0x20ff;
-         // send broadcast start to active sio slaves
-         if( dev_sio_armed )
-         {  // select active sio slaves
-            g_pScub_base[OFFS(0) + MULTI_SLAVE_SEL] = active_sios;
-            // send broadcast
-            g_pScub_base[OFFS(13) + MIL_SIO3_TX_CMD] = 0x20ff;
-         }
-         break;
-      }
-      default:
-      break;
-   } // switch
+   // send broadcast start to active sio slaves
+   if( dev_sio_armed )
+   {  // select active sio slaves
+      g_pScub_base[OFFS(0) + MULTI_SLAVE_SEL] = active_sios;
+      // send broadcast
+      g_pScub_base[OFFS(13) + MIL_SIO3_TX_CMD] = MIL_BROADCAST;
+   }
 } // ecaHandler
 
 //#define CONFIG_DEBUG_SWI
@@ -1407,8 +1410,7 @@ static void dev_sio_bus_handler( register TaskType* pThis, const bool isScuBus )
          }
 
          const MSI_T m = remove_msg( &g_aMsg_buf[0], isScuBus? DEVSIO : DEVBUS );
-         if( isScuBus )
-            pThis->slave_nr = m.msg + 1;
+         pThis->slave_nr = isScuBus? (m.msg + 1) : 0;
          pThis->timestamp1 = getSysTime();
          FSM_TRANSITION( ST_PREPARE, label='Massage received' );
          break; //yield
