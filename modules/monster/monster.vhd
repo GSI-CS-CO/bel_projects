@@ -70,7 +70,7 @@ use work.cpri_phy_reconf_pkg.all;
 
 entity monster is
   generic(
-    g_family               : string; -- "Arria II" or "Arria V"
+    g_family               : string; -- "Arria II", "Arria V", or "Arria 10"
     g_project              : string;
     g_flash_bits           : natural;
     g_psram_bits           : natural;
@@ -1646,32 +1646,19 @@ end generate;
         pad_rxp_i      => wr_sfp_rx_i);
   end generate phy_a5;
 
-  phy_a10 : if (c_is_arria10gx or c_is_arria10sx) generate
+  phy_a10 : if c_is_arria10 generate
     phy : wr_arria10_transceiver
       generic map (
-        g_use_atx_pll => TRUE)
-      port map (
-        clk_ref_i      => phy_clk,
-        tx_clk_o       => phy_tx_clk,
-        tx_data_i      => phy_tx_data,
-        rx_clk_o       => phy_rx_rbclk,
-        rx_data_o      => phy_rx_data,
-        pad_txp_o      => wr_sfp_tx_o,
-        pad_rxp_i      => wr_sfp_rx_i);
-  end generate phy_a10;
-
-  phy_a10_e3p1 : if c_is_arria10gx_e3p1 generate
-    phy : wr_arria10_e3p1_transceiver
-      generic map (
-        g_use_atx_pll     => false,
-        g_use_cmu_pll     => true,
-        g_use_simple_wa   => true,
-        g_use_det_phy     => true,
-        g_use_sfp_los_rst => true,
-        g_use_tx_lcr_dbg  => false,
-        g_use_rx_lcr_dbg  => false,
-        g_use_ext_loop    => true,
-        g_use_ext_rst     => true)
+        g_family               => g_family,
+        g_use_atx_pll          => false,
+        g_use_cmu_pll          => true,
+        g_use_simple_wa        => true,
+        g_use_det_phy          => true,
+        g_use_sfp_los_rst      => true,
+        g_use_tx_lcr_dbg       => false,
+        g_use_rx_lcr_dbg       => false,
+        g_use_ext_loop         => true,
+        g_use_ext_rst          => true)
       port map (
         clk_ref_i              => clk_ref,
         clk_phy_i              => phy_clk,
@@ -1701,24 +1688,9 @@ end generate;
         debug_i                => phy_debug_i,
         pad_txp_o              => wr_sfp_tx_o,
         pad_rxp_i              => wr_sfp_rx_i);
-
         phy_rx_ready_o <= phy_ready;
         phy_tx_ready_o <= phy_ready and not(phy_tx_enc_err);
-  end generate phy_a10_e3p1;
-
-  phy_a10_scu4 : if c_is_arria10gx_scu4 generate
-    phy : wr_arria10_scu4_transceiver
-      generic map (
-        g_use_atx_pll => TRUE)
-      port map (
-        clk_ref_i      => phy_clk,
-        tx_clk_o       => phy_tx_clk,
-        tx_data_i      => phy_tx_data,
-        rx_clk_o       => phy_rx_rbclk,
-        rx_data_o      => phy_rx_data,
-        pad_txp_o      => wr_sfp_tx_o,
-        pad_rxp_i      => wr_sfp_rx_i);
-  end generate phy_a10_scu4;
+  end generate phy_a10;
 
   phy_clk <= core_clk_125m_sfpref_i;
   phy16_o <= c_dummy_phy16_to_wrc;
