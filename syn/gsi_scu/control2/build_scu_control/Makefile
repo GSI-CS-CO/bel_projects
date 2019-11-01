@@ -121,6 +121,12 @@ endif
 
  SCU_URL = scuxl0107
 
+# DOX_INLINE_SOURCES = "YES"
+DOX_MACRO_EXPANSION        = "YES"
+DOX_EXPAND_ONLY_PREDEF     = "YES"
+DOX_EXPAND_AS_DEFINED      = "FSM_DECLARE_STATE"
+DOX_DOTFILE_DIRS           += $(SCU_DIR)
+
 # Including common makefile for arbitrary LM32 software for SCU
 include $(REPOSITORY_DIR)/makefiles/makefile.scu
 #=================================== EOF ======================================
