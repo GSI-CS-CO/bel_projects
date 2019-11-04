@@ -474,12 +474,6 @@ set_instance_assignment -name IO_STANDARD "1.8 V" -to clk_20m_vcxo_i
 set_instance_assignment -name IO_STANDARD "1.8 V" -to fpga_res_i
 set_instance_assignment -name IO_STANDARD "1.8 V" -to nPCI_RESET_i
 set_instance_assignment -name IO_STANDARD "1.8 V" -to nres_i
-set_instance_assignment -name IO_STANDARD "1.8 V" -to rom_data_io
-set_instance_assignment -name IO_STANDARD "1.8 V" -to rt_leds_o
-set_instance_assignment -name IO_STANDARD "1.8 V" -to rt_leds_o[0]
-set_instance_assignment -name IO_STANDARD "1.8 V" -to rt_leds_o[1]
-set_instance_assignment -name IO_STANDARD "1.8 V" -to rt_leds_o[2]
-set_instance_assignment -name IO_STANDARD "1.8 V" -to rt_leds_o[3]
 set_instance_assignment -name IO_STANDARD "1.8 V" -to sfp_led_fpg_o
 set_instance_assignment -name IO_STANDARD "1.8 V" -to sfp_led_fpr_o
 set_instance_assignment -name IO_STANDARD "1.8 V" -to sfp_los_i
@@ -575,6 +569,10 @@ set_location_assignment IOBANK_2J -to slrd
 set_location_assignment IOBANK_2J -to slwr
 set_location_assignment IOBANK_2J -to uclk
 set_location_assignment IOBANK_2J -to ures
+set_location_assignment IOBANK_2K -to ext_id[0]
+set_location_assignment IOBANK_2K -to ext_id[1]
+set_location_assignment IOBANK_2K -to ext_id[2]
+set_location_assignment IOBANK_2K -to ext_id[3]
 set_location_assignment IOBANK_2K -to psram_a[0]
 set_location_assignment IOBANK_2K -to psram_a[1]
 set_location_assignment IOBANK_2K -to psram_a[10]
@@ -602,12 +600,10 @@ set_location_assignment IOBANK_2K -to psram_a[9]
 set_location_assignment IOBANK_2K -to psram_advn
 set_location_assignment IOBANK_2K -to psram_be0
 set_location_assignment IOBANK_2K -to psram_be1
-set_location_assignment IOBANK_2K -to psram_cen[0]
-set_location_assignment IOBANK_2K -to psram_cen[1]
-set_location_assignment IOBANK_2K -to psram_cen[2]
-set_location_assignment IOBANK_2K -to psram_cen[3]
 set_location_assignment IOBANK_2K -to psram_clk
 set_location_assignment IOBANK_2K -to psram_cre
+set_location_assignment IOBANK_2K -to psram_wait
+set_location_assignment IOBANK_2K -to psram_wen
 set_location_assignment IOBANK_2K -to sram_lbn
 set_location_assignment IOBANK_2K -to sram_oen[0]
 set_location_assignment IOBANK_2K -to sram_oen[1]
@@ -617,6 +613,7 @@ set_location_assignment IOBANK_2K -to wr_leds_o[0]
 set_location_assignment IOBANK_2K -to wr_leds_o[1]
 set_location_assignment IOBANK_2K -to wr_leds_o[2]
 set_location_assignment IOBANK_2K -to wr_leds_o[3]
+set_location_assignment IOBANK_2L -to nTHRMTRIP
 set_location_assignment IOBANK_2L -to sram_a[0]
 set_location_assignment IOBANK_2L -to sram_a[1]
 set_location_assignment IOBANK_2L -to sram_a[10]
@@ -655,6 +652,7 @@ set_location_assignment IOBANK_2L -to sram_dq[6]
 set_location_assignment IOBANK_2L -to sram_dq[7]
 set_location_assignment IOBANK_2L -to sram_dq[8]
 set_location_assignment IOBANK_2L -to sram_dq[9]
+set_location_assignment IOBANK_2L -to WDT
 set_location_assignment IOBANK_3A -to wr_dac_din_o
 set_location_assignment IOBANK_3A -to wr_dac_sclk_o
 set_location_assignment IOBANK_3A -to wr_ndac_cs_o[1]
@@ -725,6 +723,10 @@ set_location_assignment IOBANK_3C -to A_RnW
 set_location_assignment IOBANK_3C -to A_Spare[0]
 set_location_assignment IOBANK_3C -to A_Spare[1]
 set_location_assignment IOBANK_3C -to A_SysClock
+set_location_assignment IOBANK_3D -to psram_cen[0]
+set_location_assignment IOBANK_3D -to psram_cen[1]
+set_location_assignment IOBANK_3D -to psram_cen[2]
+set_location_assignment IOBANK_3D -to psram_cen[3]
 set_location_assignment IOBANK_3D -to psram_dq[0]
 set_location_assignment IOBANK_3D -to psram_dq[1]
 set_location_assignment IOBANK_3D -to psram_dq[10]
@@ -742,8 +744,6 @@ set_location_assignment IOBANK_3D -to psram_dq[7]
 set_location_assignment IOBANK_3D -to psram_dq[8]
 set_location_assignment IOBANK_3D -to psram_dq[9]
 set_location_assignment IOBANK_3D -to psram_oen
-set_location_assignment IOBANK_3D -to psram_wait
-set_location_assignment IOBANK_3D -to psram_wen
 set_location_assignment PIN_A23 -to "clk_125m_pllref_i(n)"
 set_location_assignment PIN_A24 -to clk_125m_pllref_i
 set_location_assignment PIN_AA16 -to "clk_125m_sfpref_alt_i(n)"
@@ -761,13 +761,8 @@ set_location_assignment PIN_AF25 -to "sfp_rxp_i(n)"
 set_location_assignment PIN_AF26 -to sfp_rxp_i
 set_location_assignment PIN_AG27 -to "sfp_txp_o(n)"
 set_location_assignment PIN_AG28 -to sfp_txp_o
-set_location_assignment PIN_AH10 -to rt_leds_o[3]
-set_location_assignment PIN_AH11 -to rt_leds_o[2]
-set_location_assignment PIN_AH12 -to rt_leds_o[1]
-set_location_assignment PIN_AH13 -to rt_leds_o[0]
 set_location_assignment PIN_AH20 -to sfp_led_fpg_o
 set_location_assignment PIN_AH21 -to sfp_led_fpr_o
-set_location_assignment PIN_C23 -to rom_data_io
 set_location_assignment PIN_C7 -to clk_125m_pllref_alt_i
 set_location_assignment PIN_D15 -to clk_125m_local_i
 set_location_assignment PIN_D7 -to "clk_125m_pllref_alt_i(n)"
