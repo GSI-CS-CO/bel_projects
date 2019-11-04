@@ -3,7 +3,7 @@
  *
  *  created : 2017
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 14-Aug-2019
+ *  version : 04-Nov-2019
  *
  *  lm32 program for gateway between UNILAC Pulszentrale and FAIR-style Data Master
  * 
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 25-April-2015
  ********************************************************************************************/
-#define DMUNIPZ_FW_VERSION 0x000506                                     // make this consistent with makefile
+#define DMUNIPZ_FW_VERSION 0x000507                                     // make this consistent with makefile
 
 // standard includes
 #include <stdio.h>
@@ -265,6 +265,7 @@ uint32_t dmPrepCmdCommon(uint32_t blk, uint32_t prio, uint32_t checkEmptyQ, uint
   
   uint32_t extBaseAddr;                                        // external base address of dm; seen from 'world' perspective
 
+  int      i;
   uint32_t status;
 
   if (prio > 2) {
@@ -480,7 +481,7 @@ void init() // typical init for lm32
 } // init
 
 
-void initSharedMem() // determine address and clear shared mem
+void initSharedMem(uint32_t *reqState) // determine address and clear shared mem
 {
   uint32_t idx;
   const uint32_t c_Max_Rams = 10;
@@ -519,13 +520,13 @@ void initSharedMem() // determine address and clear shared mem
   idx = 0;
   find_device_multi(&found_clu, &idx, 1, GSI, LM32_CB_CLUSTER);
   if (idx == 0) {
-    *reqState = DMUNIPZ_STATE_FATAL;
+    *reqState = COMMON_STATE_FATAL;
     DBPRINT1("dm-unipz: fatal error - did not find LM32-CB-CLUSTER!\n");
   } // if idx
   idx = 0;
   find_device_multi_in_subtree(&found_clu, &found_sdb[0], &idx, c_Max_Rams, GSI, LM32_RAM_USER);
   if (idx == 0) {
-    *reqState = DMUNIPZ_STATE_FATAL;
+    *reqState = COMMON_STATE_FATAL;
     DBPRINT1("dm-unipz: fatal error - did not find THIS CPU!\n");
   } // if idx
   else cpuRamExternal = (uint32_t *)(getSdbAdr(&found_sdb[cpuId]) & 0x7FFFFFFF); // CPU sees the 'world' under 0x8..., remove that bit to get host bridge perspective
@@ -1222,7 +1223,7 @@ int main(void) {
   statusTransfer = 0;
 
   init();                                                                   // initialize stuff for lm32
-  initSharedMem();                                                          // initialize shared memory
+  initSharedMem(&reqState);                                                 // initialize shared memory
   fwlib_init((uint32_t *)_startshared, cpuRamExternal, SHARED_OFFS, "dm-unipz", DMUNIPZ_FW_VERSION); // init common stuff
   fwlib_clearDiag();                                                        // clear common diagnostic data
   
