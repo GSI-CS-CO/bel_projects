@@ -88,6 +88,7 @@ entity scu_control is
     -- SCU-CB Version
     -----------------------------------------------------------------------
     scu_cb_version    : in  std_logic_vector(3 downto 0); -- must be assigned with weak pull ups
+    scu_cb_revision   : in  std_logic_vector(3 downto 0); -- must be assigned with weak pull ups
 
     -----------------------------------------------------------------------
     -- LVTTL IOs
