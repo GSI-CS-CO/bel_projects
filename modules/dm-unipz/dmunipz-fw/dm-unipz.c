@@ -515,11 +515,20 @@ void initSharedMem() // determine address and clear shared mem
   pSharedTkTimeout    = (uint32_t *)(pShared + (DMUNIPZ_SHARED_TKTIMEOUT >> 2));
   
   // find address of CPU from external perspective
+  cpuRamExternal = 0x0;
   idx = 0;
-  find_device_multi(&found_clu, &idx, 1, GSI, LM32_CB_CLUSTER);	
+  find_device_multi(&found_clu, &idx, 1, GSI, LM32_CB_CLUSTER);
+  if (idx == 0) {
+    *reqState = DMUNIPZ_STATE_FATAL;
+    DBPRINT1("dm-unipz: fatal error - did not find LM32-CB-CLUSTER!\n");
+  } // if idx
   idx = 0;
   find_device_multi_in_subtree(&found_clu, &found_sdb[0], &idx, c_Max_Rams, GSI, LM32_RAM_USER);
-  if(idx >= cpuId) cpuRamExternal = (uint32_t *)(getSdbAdr(&found_sdb[cpuId]) & 0x7FFFFFFF); // CPU sees the 'world' under 0x8..., remove that bit to get host bridge perspective
+  if (idx == 0) {
+    *reqState = DMUNIPZ_STATE_FATAL;
+    DBPRINT1("dm-unipz: fatal error - did not find THIS CPU!\n");
+  } // if idx
+  else cpuRamExternal = (uint32_t *)(getSdbAdr(&found_sdb[cpuId]) & 0x7FFFFFFF); // CPU sees the 'world' under 0x8..., remove that bit to get host bridge perspective
 
   DBPRINT2("dm-unipz: CPU RAM External 0x%8x, begin shared 0x%08x\n", cpuRamExternal, SHARED_OFFS);
 
