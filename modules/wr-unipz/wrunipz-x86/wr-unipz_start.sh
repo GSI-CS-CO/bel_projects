@@ -7,10 +7,10 @@
 # clean up stuff
 ###########################################
 echo -e wr-unipz - start: bring possibly resident firmware to idle state
-wrunipz-ctl dev/wbm0 stopop
+dmunipz-ctl dev/wbm0 stopop
 sleep 5
 
-wrunipz-ctl dev/wbm0 idle
+dmunipz-ctl dev/wbm0 idle
 sleep 5
 echo -e wr-unipz - start: destroy all unowned conditions for lm32 channel of ECA
 saft-ecpu-ctl tr0 -x
@@ -71,7 +71,7 @@ echo -e wr-unipz - start: make firmware operational
 
 # send CONFIGURE command to firmware
 sleep 5
-wrunipz-ctl dev/wbm0 configure
+dmunipz-ctl dev/wbm0 configure
 
 ###########################################
 # configure ECA for DM
@@ -106,15 +106,7 @@ saft-ecpu-ctl tr0 -c 0xffff100000000001 0xffffffffffffffff 0 0x3 -d
 # send START OPERATATION command to firmware
 sleep 5
 echo -e wr-unipz - start: start operation
-wrunipz-ctl dev/wbm0 startop
-
-sleep 5
-echo -e wr-unipz - loading dummy schedule for all PZs
-wrunipz-ctl dev/wbm0 testfull 0
-
-sleep 5
-echo -e wr-unipz - clear fw diagnostic data
-wrunipz-ctl dev/wbm0 cleardiag
+dmunipz-ctl dev/wbm0 startop
 
 echo -e wr-unipz - start: startup script finished
 
