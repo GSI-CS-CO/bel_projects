@@ -606,13 +606,13 @@ STATIC int configure_fg_macro( const unsigned int channel )
    uint16_t dreq_status = 0;
    const uint8_t socket = getSocket( channel );
    /* actions per slave card */
-   if (socket & DEV_SIO)
+   if( (socket & DEV_SIO) != 0 )
    {
-      scub_status_mil(g_pScub_base, socket & SCU_BUS_SLOT_MASK, &dreq_status);
+      scub_status_mil( g_pScub_base, socket & SCU_BUS_SLOT_MASK, &dreq_status );
    }
-   else if (socket & DEV_MIL_EXT)
+   else if( (socket & DEV_MIL_EXT) != 0 )
    {
-      status_mil(g_pScu_mil_base, &dreq_status);
+      status_mil( g_pScu_mil_base, &dreq_status );
    }
 
    // if dreq is active
@@ -623,8 +623,8 @@ STATIC int configure_fg_macro( const unsigned int channel )
          if( (s_clearIsActive & _SLOT_BIT_MASK()) == 0 )
          {
             s_clearIsActive |= _SLOT_BIT_MASK();
-            clear_handler_state(socket);
-            hist_addx(HISTORY_XYZ_MODULE, "clear_handler_state", socket);
+            clear_handler_state( socket );
+            hist_addx( HISTORY_XYZ_MODULE, "clear_handler_state", socket );
          }
          // yield
          return -1;
@@ -635,8 +635,8 @@ STATIC int configure_fg_macro( const unsigned int channel )
          if( (s_clearIsActive & _MIL_BIT_MASK()) == 0 )
          {
             s_clearIsActive |= _MIL_BIT_MASK();
-            clear_handler_state(socket);
-            hist_addx(HISTORY_XYZ_MODULE, "clear_handler_state", socket);
+            clear_handler_state( socket );
+            hist_addx( HISTORY_XYZ_MODULE, "clear_handler_state", socket );
          }
          // yield
          return -1;
@@ -744,21 +744,21 @@ STATIC int configure_fg_macro( const unsigned int channel )
          g_aFgChannels[channel].last_c_coeff = pset.coeff_c;
         // transmit in one block transfer over the dev bus
          if((status = write_mil_blk(g_pScu_mil_base, &blk_data[0], FC_BLK_WR | dev)) != OKAY)
-            dev_failure (status, 0, "blk trm");
+            dev_failure( status, 0, "blk trm");
         // still in block mode !
          if((status = write_mil(g_pScu_mil_base, cntrl_reg_wr, FC_CNTRL_WR | dev)) != OKAY)
-            dev_failure (status, 0, "end blk trm");
+            dev_failure( status, 0, "end blk trm");
       }
       else if( (socket & DEV_SIO) != 0 )
       {
          // save the coeff_c for mil daq
          g_aFgChannels[channel].last_c_coeff = pset.coeff_c;
          // transmit in one block transfer over the dev bus
-         if((status = scub_write_mil_blk(g_pScub_base, socket & SCU_BUS_SLOT_MASK, &blk_data[0], FC_BLK_WR | dev))  != OKAY)
-            dev_failure (status, socket & SCU_BUS_SLOT_MASK, "blk trm");
+         if( (status = scub_write_mil_blk(g_pScub_base, socket & SCU_BUS_SLOT_MASK, &blk_data[0], FC_BLK_WR | dev)) != OKAY)
+            dev_failure( status, socket & SCU_BUS_SLOT_MASK, "blk trm");
          // still in block mode !
-         if((status = scub_write_mil(g_pScub_base, socket & SCU_BUS_SLOT_MASK, cntrl_reg_wr, FC_CNTRL_WR | dev))  != OKAY)
-            dev_failure (status, socket & SCU_BUS_SLOT_MASK, "end blk trm");
+         if( (status = scub_write_mil(g_pScub_base, socket & SCU_BUS_SLOT_MASK, cntrl_reg_wr, FC_CNTRL_WR | dev)) != OKAY)
+            dev_failure( status, socket & SCU_BUS_SLOT_MASK, "end blk trm");
       }
       g_aFgChannels[0].param_sent++;
    }
@@ -772,13 +772,13 @@ STATIC int configure_fg_macro( const unsigned int channel )
    }
    else if( (socket & DEV_MIL_EXT) != 0 )
    { // enable and end block mode
-      if ((status = write_mil(g_pScu_mil_base, cntrl_reg_wr | FG_ENABLED, FC_CNTRL_WR | dev)) != OKAY)
-         dev_failure (status, 0, "end blk mode");
+      if( (status = write_mil(g_pScu_mil_base, cntrl_reg_wr | FG_ENABLED, FC_CNTRL_WR | dev)) != OKAY)
+         dev_failure( status, 0, "end blk mode");
    }
    else if( (socket & DEV_SIO) != 0 )
    { // enable and end block mode
-      if ((status = scub_write_mil(g_pScub_base, socket & SCU_BUS_SLOT_MASK, cntrl_reg_wr | FG_ENABLED, FC_CNTRL_WR | dev)) != OKAY)
-         dev_failure (status, socket & SCU_BUS_SLOT_MASK, "end blk mode");
+      if( (status = scub_write_mil(g_pScub_base, socket & SCU_BUS_SLOT_MASK, cntrl_reg_wr | FG_ENABLED, FC_CNTRL_WR | dev)) != OKAY)
+         dev_failure( status, socket & SCU_BUS_SLOT_MASK, "end blk mode");
    }
 
    // reset watchdog
