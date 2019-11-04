@@ -343,6 +343,7 @@ uint32_t dmPrepCmdCommon(uint32_t blk, uint32_t prio, uint32_t checkEmptyQ, uint
   DBPRINT3("dm-unipz: prep cmd validTSLo 0x%08x\n", cmdValidTSLo);
   
   // assign prepared values for later use;
+  for (i=0; i<_T_CMD_SIZE_; i++) dmData[blk].cmdData[i] = 0x0;                        // init command data  
   dmData[blk].hash                           = hash;
   dmData[blk].cmdAddr                        = cmdAddr;
   dmData[blk].cmdData[(T_CMD_TIME >> 2) + 0] = cmdValidTSHi;  
@@ -410,7 +411,7 @@ uint32_t dmPrepCmdFlush(uint32_t blk) // prepare flush CMD for DM - need to call
   cmdAction       |= ((1 << PRIO_LO) & ACT_FLUSH_PRIO_MSK) << ACT_FLUSH_PRIO_POS; // flush lo prio q
 
   dmData[blk].cmdData[T_CMD_ACT >> 2]            = cmdAction;
-
+  dmData[blk].cmdData[T_CMD_FLUSH_OVR >> 2]      = 0x0;
   
   return COMMON_STATUS_OK;  
 } //cmdPrepCmdFlush
@@ -784,13 +785,7 @@ uint32_t extern_entryActionConfigured()
     return status;
   } 
 
-  // test if DM is reachable by reading from ECA input
-  if ((status = fwlib_ebmReadN(2000, COMMON_ECA_ADDRESS, &dDummy, 1)) != COMMON_STATUS_OK) {
-    DBPRINT1("dm-unipz: ERROR - Data Master unreachable! %u\n", (unsigned int)status);
-    return status;
-  }
-
-  DBPRINT1("dm-unipz: connection to DM ok - 0x%08x\n", (unsigned int)dDummy);
+  // dropped test if DM is reachable by reading from ECA input: no ECA at DM
 
   // reset MIL piggy and wait
   if ((status = resetPiggyDevMil(pMilPiggy))  != MIL_STAT_OK) {
