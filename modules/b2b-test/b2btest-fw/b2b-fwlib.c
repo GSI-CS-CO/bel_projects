@@ -289,6 +289,7 @@ uint32_t fwlib_ebmReadN(uint32_t msTimeout, uint32_t address, uint32_t *data, ui
 
   if (n32BitWords >= ( COMMON_DATA4EBSIZE >> 2)) return COMMON_STATUS_OUTOFRANGE;
   if (n32BitWords == 0)                          return COMMON_STATUS_OUTOFRANGE;
+  if (pSharedData4EB == 0x0)                     return COMMON_STATUS_OUTOFRANGE;
 
   for (i=0; i< n32BitWords; i++) data[i] = 0x0;
 
