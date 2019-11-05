@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 12-June-2019
+ *  version : 19-June-2019
  *
  *  firmware required to implement the CBU (Central Buncht-To-Bucket Unit)
  *  
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 23-April-2019
  ********************************************************************************************/
-#define B2BCBU_FW_VERSION 0x000009                                      // make this consistent with makefile
+#define B2BCBU_FW_VERSION 0x000010                                      // make this consistent with makefile
 
 /* standard includes */
 #include <stdio.h>
@@ -50,6 +50,7 @@
 #include "syscon.h"                                                     // usleep et al
 #include "aux.h"                                                        // cpu and IRQ
 #include "uart.h"                                                       // WR console
+#include "stack.h"                                                      // stack check
 
 /* includes for this project */
 #include <b2b-common.h>                                                 // common stuff for b2b
@@ -439,6 +440,7 @@ int main(void) {
   uint32_t pubState;                            // published state value
   uint32_t reqState;                            // requested FSM state
   uint32_t dummy1;                              // dummy parameter
+  uint32_t *buildID;                            // WB address of build ID
 
   // init local variables
   reqState       = COMMON_STATE_S0;
@@ -450,8 +452,10 @@ int main(void) {
   init();                                                                     // initialize stuff for lm32
   initSharedMem();                                                            // initialize shared memory
   common_init((uint32_t *)_startshared, B2BCBU_FW_VERSION);                   // init common stuff
+  buildID        = (uint32_t *)(INT_BASE_ADR + BUILDID_OFFS);                 // required for 'stack check'
 
   while (1) {
+    check_stack_fwid(buildID);
     common_cmdHandler(&reqState, &dummy1);                                    // check for commands and possibly request state changes
     status = COMMON_STATUS_OK;                                                // reset status for each iteration
     status = common_changeState(&actState, &reqState, status);                // handle requested state changes
