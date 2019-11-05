@@ -24,14 +24,22 @@ PATH:=$(PWD)/toolchain/bin:$(PATH)
 
 # This is mainly used to sort QSF files. After sorting it adds and deletes a "GIT marker" which will mark the file as changed.
 # Additionally all empty lines will be removed.
-# Example usage: 
-#   $(call sort_file, "./syn/gsi_vetar2a/ee_butis/vetar2a.qsf")
+# Example usage:
+#   $(call sort_file, $(CHECK_SCU4))
+CHECK_SCU4  = ./syn/gsi_scu/control4/scu_control
+CHECK_A10GX = ./syn/gsi_a10gx_pcie/control/pci_control
+
 define sort_file
-	sort $(1) >> temp_sorted
-	mv temp_sorted $(1)
-	echo "GIT_MARKER" >> $(1)
-	sed -i 's/GIT_MARKER//g' $(1)
-	sed -i '/^$$/d' $(1)
+	sort $(1).qsf >> temp_sorted
+	mv temp_sorted $(1).qsf
+	echo "GIT_MARKER" >> $(1).qsf
+	sed -i 's/GIT_MARKER//g' $(1).qsf
+	sed -i '/^$$/d' $(1).qsf
+endef
+
+define check_timing
+	@cat $(1).sta.rpt | grep "Timing requirements not met" && exit 1 || { exit 0; }
+	@echo "Success! All Timing requirements were met!"
 endef
 
 all:		etherbone tools sdbfs toolchain firmware driver
@@ -165,7 +173,10 @@ scu4::
 	$(MAKE) -C syn/gsi_scu/control4 PATH=$(PWD)/toolchain/bin:$(PATH) all
 
 scu4-sort:
-	$(call sort_file, "./syn/gsi_scu/control4/scu_control.qsf")
+	$(call sort_file, $(CHECK_SCU4))
+
+scu4-check:
+	$(call check_timing, $(CHECK_SCU4))
 
 scu4-clean::
 	$(MAKE) -C syn/gsi_scu/control4 PATH=$(PWD)/toolchain/bin:$(PATH) clean
@@ -216,8 +227,11 @@ a10gx_pcie::	firmware
 	$(MAKE) -C syn/gsi_a10gx_pcie/control PATH=$(PWD)/toolchain/bin:$(PATH) all
 
 a10gx_pcie-sort:
-	$(call sort_file, "./syn/gsi_a10gx_pcie/control/pci_control.qsf")
-	
+	$(call sort_file, $(CHECK_A10GX))
+
+a10gx_pcie-check:
+	$(call check_timing, $(CHECK_A10GX))
+
 a10gx_pcie-clean::
 	$(MAKE) -C syn/gsi_a10gx_pcie/control PATH=$(PWD)/toolchain/bin:$(PATH) clean
 
