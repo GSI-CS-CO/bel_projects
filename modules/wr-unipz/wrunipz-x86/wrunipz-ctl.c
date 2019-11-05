@@ -3,7 +3,7 @@
  *
  *  created : 2018
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 16-July-2019
+ *  version : 30-August-2019
  *
  *  command-line interface for wrunipz
  *
@@ -91,6 +91,27 @@ static void die(const char* where, eb_status_t status) {
 } //die
 
 
+const char* wrunipz_statusText(uint32_t bit) {  
+  static char message[256];
+
+  switch (bit) {
+    printf("bit %d\n", bit);
+    case WRUNIPZ_STATUS_LATE            : sprintf(message, "error %d, %s",    bit, "a timing messages is not dispatched in time"); break;
+    case WRUNIPZ_STATUS_EARLY           : sprintf(message, "error %d, %s",    bit, "a timing messages is dispatched unreasonably early (dt > UNILACPERIOD)"); break;
+    case WRUNIPZ_STATUS_TRANSACTION     : sprintf(message, "error %d, %s",    bit, "transaction failed"); break;
+    case WRUNIPZ_STATUS_MIL             : sprintf(message, "error %d, %s",    bit, "an error on MIL hardware occured (MIL piggy etc...)"); break;
+    case WRUNIPZ_STATUS_NOMILEVENTS     : sprintf(message, "error %d, %s",    bit, "no MIL events from UNIPZ"); break;
+    case WRUNIPZ_STATUS_WRONGVIRTACC    : sprintf(message, "error %d, %s",    bit, "received EVT_READY_TO_SIS with wrong virt acc number"); break;
+    case WRUNIPZ_STATUS_SAFETYMARGIN    : sprintf(message, "error %d, %s",    bit, "violation of safety margin for sending data to the timing network"); break;
+    case WRUNIPZ_STATUS_NOTIMESTAMP     : sprintf(message, "error %d, %s",    bit, "received EVT_READY_TO_SIS in MIL FIFO but not via TLU -> ECA"); break;
+    case WRUNIPZ_STATUS_BADTIMESTAMP    : sprintf(message, "error %d, %s",    bit, "TS from TLU->ECA does not coincide with MIL Event from FIFO"); break;                     
+    case WRUNIPZ_STATUS_ORDERTIMESTAMP  : sprintf(message, "error %d, %s",    bit, "TS from TLU->ECA and MIL Events are out of order"); break;
+    default                             : return api_statusText(bit); break;
+  }
+
+  return message;
+} // dmunipz_statusText
+
 static void help(void) {
   fprintf(stderr, "Usage: %s [OPTION] <etherbone-device> [COMMAND]\n", program);
   fprintf(stderr, "\n");
@@ -123,7 +144,7 @@ static void help(void) {
   fprintf(stderr, "  cleardiag                      clears FW statistics\n");
   fprintf(stderr, "\n");
   fprintf(stderr, "Use this tool to control WR-UNIPZ from the command line\n");
-  //fprintf(stderr, "Example1: '%s dev/wbm0 bla bla bla\n", program);
+  fprintf(stderr, "Example1: '%s dev/wbm0 bla bla bla\n", program);
   fprintf(stderr, "\n");
   fprintf(stderr, "When using option '-s<n>' or '-i', the following information is displayed\n");
   fprintf(stderr, "wr-unipz:        cycles      virtAcc        PZ   |         DIAGNOSIS      |                 INFO           \n");
@@ -259,7 +280,7 @@ void printCycle(uint32_t cycles, uint32_t tCycleAvg, uint32_t msgFreqAvg, uint32
 
 void printDiags(uint32_t nCycles, uint64_t nMessages, int32_t dtMax, int32_t dtMin, int32_t cycJmpMax, int32_t cycJmpMin, uint32_t nLate)
 {
-  printf("wr-unipz: statistics ...\n\n");
+  printf("\nwr-unipz: statistics ...\n");
   printf("# of cycles           : %010u\n",   nCycles);
   printf("# of messages         : %010lu\n",  nMessages);
   printf("# of late messages    : %010u\n",   nLate);
@@ -396,6 +417,7 @@ int main(int argc, char** argv) {
   if ((eb_status = eb_sdb_find_by_identity(device, GSI, LM32_RAM_USER, &sdbDevice, &nDevices)) != EB_OK) die("find lm32", eb_status);
   lm32_base =  sdbDevice.sdb_component.addr_first;
 
+  api_initShared(lm32_base, SHARED_OFFS);
   wrunipz_cmd          = lm32_base + SHARED_OFFS + COMMON_SHARED_CMD;
   wrunipz_tCycleAvg    = lm32_base + SHARED_OFFS + WRUNIPZ_SHARED_TCYCLEAVG;
   wrunipz_cycles       = lm32_base + SHARED_OFFS + WRUNIPZ_SHARED_NCYCLE;
@@ -437,6 +459,10 @@ int main(int argc, char** argv) {
     printf(", %s (%6u), ",  api_stateText(state), nBadState);
     if ((statusArray >> COMMON_STATUS_OK) & 0x1) printf("OK   (%6u)\n", nBadStatus);
     else                                         printf("NOTOK(%6u)\n", nBadStatus);
+    // print set status bits (except OK)
+    for (i = COMMON_STATUS_OK + 1; i<(int)(sizeof(statusArray)*8); i++) {
+      if ((statusArray >> i) & 0x1)  printf("  ------ status bit is set : %s\n", wrunipz_statusText(i));
+    } // for i
   } // if getInfo
 
   if (command) {
@@ -466,12 +492,15 @@ int main(int argc, char** argv) {
     } // "idle"
     if (!strcasecmp(command, "cleardiag")) {
       eb_device_write(device, wrunipz_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)COMMON_CMD_CLEARDIAG , 0, eb_block);
-      if (state != COMMON_STATE_OPREADY) printf("wr-unipz: WARNING command has no effect (not in state OPREADY)\n");
     } // "cleardiag"
     if (!strcasecmp(command, "diag")) {
+      api_readDiag(device, &statusArray, &state, &version, &mac, &ip, &nBadStatus, &nBadState, &tDiag, &tS0, &nDummyT, &nDummyI, &statDummy, 1);
+      // print set status bits (except OK)
+      for (i = COMMON_STATUS_OK + 1; i<(int)(sizeof(statusArray)*8); i++) {
+        if ((statusArray >> i) & 0x1)  printf("    status bit is set : %s\n", wrunipz_statusText(i));
+      } // for i
       readDiags(&cycles, &messages, &dtMax, &dtMin, &cycJmpMax, &cycJmpMin, &nLate);
       printDiags(cycles, messages, dtMax, dtMin, cycJmpMax, cycJmpMin, nLate);
-      api_readDiag(device, &statusArray, &state, &version, &mac, &ip, &nBadStatus, &nBadState, &tDiag, &tS0, &nDummyT, &nDummyI, &statDummy, 1);
     } // "diag"
 
     // test with data
@@ -607,7 +636,7 @@ int main(int argc, char** argv) {
   
 
   if (snoop) {
-    printf("wr-unipz: continous monitoring of 'Data Master', loglevel = %d\n", logLevel);
+    printf("wr-unipz: continous monitoring of 'UNIPZ (WR)', loglevel = %d\n", logLevel);
     
     //    actCycles    = 0;
     actState       = COMMON_STATE_UNKNOWN;
