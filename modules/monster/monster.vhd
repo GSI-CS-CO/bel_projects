@@ -1022,16 +1022,11 @@ begin
     ref_inst : ref_pll10 port map(
       rst         => pll_rst,
       refclk      => core_clk_125m_pllref_i, -- 125 MHz
-      --outclk_0    => clk_ref0,         -- LEGACY: 125 MHz
-      --outclk_1    => clk_ref1,         -- LEGACY: 200 MHz
-      --outclk_2    => clk_ref2,         -- LEGACY:  25 MHz
-      --outclk_3    => clk_ref3,         -- LEGACY: 1000 MHz
-      --outclk_4    => clk_ref4,         -- LEGACY: 125 MHz, 1/8 duty, -1.5ns phase
-      outclk_2    => clk_ref0,
-      outclk_3    => clk_ref1,
-      outclk_4    => clk_ref2,
-      lvds_clk(0) => clk_ref3,
-      loaden(0)   => clk_ref4,
+      outclk_2    => clk_ref0, --  125 MHz
+      outclk_3    => clk_ref1, --  200 MHz
+      outclk_4    => clk_ref2, --   25 MHz
+      lvds_clk(0) => clk_ref3, -- 1000 MHz
+      loaden(0)   => clk_ref4, -- 125 MHz, 1/8 duty, -1.5ns phase
       locked      => ref_locked,
       scanclk     => clk_free,
       cntsel      => phase_sel,
