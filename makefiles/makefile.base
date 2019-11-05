@@ -194,7 +194,7 @@ $(DEPENDFILE): $(_SOURCE) $(ADDITIONAL_DEPENDENCES) $(WORK_DIR)
 	$(QUIET)(for i in $(_SOURCE); do \
 		printf "$(WORK_DIR)/"; \
 		case "$${i##*.}" in \
-		"cpp"|"CPP") \
+		"cpp"|"CPP"|"cc"|"CC"|"cxx"|"CXX") \
 			$(CXX) -MM $(CXX_ARG) "$$i"; \
 			[ "$$?" != "0" ] && echo :;  # prevents a makefile syntax error \
 			printf '\t$$(CXX_F) -c -o $$@ $$< $$(CXX_ARG)\n\n'; \
