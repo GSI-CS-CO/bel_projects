@@ -1232,6 +1232,8 @@ int main(void) {
     fwlib_cmdHandler(&reqState, &cmd);                                      // check for common commands and possibly request state changes
     cmdHandler(&reqState, cmd, &statusTransfer);                            // check for commands and possibly request state changes
     status = COMMON_STATUS_OK;
+
+    // state machine
     status = fwlib_changeState(&actState, &reqState, status);               // handle requested state changes
     switch(actState) {                                                      // state specific do actions
       case COMMON_STATE_OPREADY :
