@@ -1723,6 +1723,7 @@ int main( void )
 {
    initializeGlobalPointers();
    mprintf("Compiler: "COMPILER_VERSION_STRING"\n"
+           "Git revision: "TO_STRING(GIT_REVISION)"\n"
            "Found MsgBox at 0x%08x. MSI Path is 0x%08x\n",
            (uint32_t)pCpuMsiBox, (uint32_t)pMyMsi);
 
