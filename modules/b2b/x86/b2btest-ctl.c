@@ -153,70 +153,28 @@ const char* statusText(uint32_t bit) {
 } // b2btest_status_text
 
 
-int readInfo(uint32_t *sumStatus, uint32_t *state, uint32_t *nBadStatus, uint32_t *nBadState, uint32_t *nTransfer)
+int readDiags(uint64_t *TH1Ext, uint32_t *nHExt, uint64_t *TH1Inj, uint32_t *nHInj)
 {
   eb_cycle_t  cycle;
   eb_status_t eb_status;
   eb_data_t   data[30];
 
   if ((eb_status = eb_cycle_open(device, 0, eb_block, &cycle)) != EB_OK) die("b2b-test: eb_cycle_open", eb_status);
-  eb_cycle_read(cycle, b2btest_status,        EB_BIG_ENDIAN|EB_DATA32, &(data[0]));
-  eb_cycle_read(cycle, b2btest_state,         EB_BIG_ENDIAN|EB_DATA32, &(data[1]));
-  eb_cycle_read(cycle, b2btest_nBadStatus,    EB_BIG_ENDIAN|EB_DATA32, &(data[2]));
-  eb_cycle_read(cycle, b2btest_nBadState,     EB_BIG_ENDIAN|EB_DATA32, &(data[3]));
-  eb_cycle_read(cycle, b2btest_nTransfer,     EB_BIG_ENDIAN|EB_DATA32, &(data[4]));
-  if ((eb_status = eb_cycle_close(cycle)) != EB_OK) die("b2b-test: eb_cycle_close", eb_status);
-
-  *sumStatus     = data[0];
-  *state         = data[1];
-  *nBadStatus    = data[2];
-  *nBadState     = data[3];
-  *nTransfer     = data[4];
-
-  return eb_status;
-} // readInfo
-
-
-int readDiags(uint32_t *sumStatus, uint32_t *state, uint32_t *nBadStatus, uint32_t *nBadState, uint64_t *tDiag, uint64_t *tS0, uint32_t *nTransfer, uint32_t *transStat, uint64_t *TH1Ext, uint32_t *nHExt, uint64_t *TH1Inj, uint32_t *nHInj)
-{
-  eb_cycle_t  cycle;
-  eb_status_t eb_status;
-  eb_data_t   data[30];
-
-  if ((eb_status = eb_cycle_open(device, 0, eb_block, &cycle)) != EB_OK) die("b2b-test: eb_cycle_open", eb_status);
-  eb_cycle_read(cycle, b2btest_nBadStatus,    EB_BIG_ENDIAN|EB_DATA32, &(data[2]));
-  eb_cycle_read(cycle, b2btest_nBadState,     EB_BIG_ENDIAN|EB_DATA32, &(data[3]));
-  eb_cycle_read(cycle, b2btest_tDiagHi,       EB_BIG_ENDIAN|EB_DATA32, &(data[4]));
-  eb_cycle_read(cycle, b2btest_tDiagLo,       EB_BIG_ENDIAN|EB_DATA32, &(data[5]));
-  eb_cycle_read(cycle, b2btest_tS0Hi,         EB_BIG_ENDIAN|EB_DATA32, &(data[6]));
-  eb_cycle_read(cycle, b2btest_tS0Lo,         EB_BIG_ENDIAN|EB_DATA32, &(data[7]));
-  eb_cycle_read(cycle, b2btest_nTransfer,     EB_BIG_ENDIAN|EB_DATA32, &(data[8]));
-  eb_cycle_read(cycle, b2btest_transStat,     EB_BIG_ENDIAN|EB_DATA32, &(data[9]));
-  eb_cycle_read(cycle, b2btest_TH1ExtHi,      EB_BIG_ENDIAN|EB_DATA32, &(data[10]));
-  eb_cycle_read(cycle, b2btest_TH1ExtLo,      EB_BIG_ENDIAN|EB_DATA32, &(data[11]));
-  eb_cycle_read(cycle, b2btest_nHExt,         EB_BIG_ENDIAN|EB_DATA32, &(data[12]));
-  eb_cycle_read(cycle, b2btest_TH1InjHi,      EB_BIG_ENDIAN|EB_DATA32, &(data[13]));
-  eb_cycle_read(cycle, b2btest_TH1InjLo,      EB_BIG_ENDIAN|EB_DATA32, &(data[14]));
-  eb_cycle_read(cycle, b2btest_nHInj,         EB_BIG_ENDIAN|EB_DATA32, &(data[15]));
+  eb_cycle_read(cycle, b2btest_TH1ExtHi,      EB_BIG_ENDIAN|EB_DATA32, &(data[0]));
+  eb_cycle_read(cycle, b2btest_TH1ExtLo,      EB_BIG_ENDIAN|EB_DATA32, &(data[1]));
+  eb_cycle_read(cycle, b2btest_nHExt,         EB_BIG_ENDIAN|EB_DATA32, &(data[2]));
+  eb_cycle_read(cycle, b2btest_TH1InjHi,      EB_BIG_ENDIAN|EB_DATA32, &(data[3]));
+  eb_cycle_read(cycle, b2btest_TH1InjLo,      EB_BIG_ENDIAN|EB_DATA32, &(data[4]));
+  eb_cycle_read(cycle, b2btest_nHInj,         EB_BIG_ENDIAN|EB_DATA32, &(data[5]));
 
   if ((eb_status = eb_cycle_close(cycle)) != EB_OK) die("b2b-test: eb_cycle_close", eb_status);
 
-  *sumStatus     = data[0];
-  *state         = data[1];
-  *nBadStatus    = data[2];
-  *nBadState     = data[3];
-  *tDiag         = (uint64_t)(data[4]) << 32;
-  *tDiag        += data[5];
-  *tS0           = (uint64_t)(data[6]) << 32;
-  *tS0          += data[7];
-  *nTransfer     = data[8];
-  *transStat     = data[9];
-  *TH1Ext        = (uint64_t)(data[10]) << 32;
-  *TH1Ext       += data[11];
-  *nHExt         = data[12];
-  *TH1Inj        = (uint64_t)(data[13]) << 32;
-  *TH1Inj       += data[14];
-  *nHInj         = data[15];
+  *TH1Ext        = (uint64_t)(data[0]) << 32;
+  *TH1Ext       += data[1];
+  *nHExt         = data[2];
+  *TH1Inj        = (uint64_t)(data[3]) << 32;
+  *TH1Inj       += data[4];
+  *nHInj         = data[5];
  
   return eb_status;
 } // readDiags
@@ -265,45 +223,21 @@ void printTransfer(uint32_t nTransfer)
 } // printTransfer
 
 
-/*
-void printDiags(uint32_t sumStatus, uint32_t state, uint32_t nBadStatus, uint32_t nBadState, uint64_t tDiag, uint64_t tS0, uint32_t nTransfers, uint32_t transStat, uint64_t TH1Ext, uint32_t nHExt, uint64_t TH1Inj, uint32_t nHInj)
+void printDiags(uint64_t TH1Ext, uint32_t nHExt, uint64_t TH1Inj, uint32_t nHInj)
 {
   const struct tm* tm;
   char             timestr[60];
   time_t           secs;
   int              i;
 
+  printf("\n\n");
   printf("b2b-test: statistics ...\n\n");
 
-  secs     = (unsigned long)((double)tS0 / 1000000000.0);
-  tm = gmtime(&secs);
-  strftime(timestr, sizeof(timestr), "%Y-%m-%d %H:%M:%S TAI", tm);
-  printf("firmware boot at      : %s\n", timestr);
-
-  secs     = (unsigned long)((double)tDiag / 1000000000.0);
-  tm = gmtime(&secs);
-  strftime(timestr, sizeof(timestr), "%Y-%m-%d %H:%M:%S TAI", tm);
-  printf("diagnostics reset at  : %s\n", timestr);
-  
-  printf("state (# of changes)  : %s (%u)\n", api_stateText(state), nBadState);
-  printf("sum status (# changes): 0x%08x (%u)\n", sumStatus, nBadStatus);
-  if ((sumStatus >> COMMON_STATUS_OK) & 0x1)
-    printf("overall status        : OK\n");
-  else
-    printf("overall status        : NOT OK\n");  
-  for (i= COMMON_STATUS_OK + 1; i<(sizeof(sumStatus)*8); i++) {
-    if ((sumStatus >> i) & 0x1)
-      printf("sum status bit is set : %s\n", b2btest_status_text(i));
-  } // for i
-
-  printf("# of transfers        : %010u\n", nTransfers);
-  printf("status of act transfer: %010x\n", transStat);
   printf("period h=1 extraction : %012.6f ns\n", (double)TH1Ext/1000000000.0);
   printf("period h=1 injection  : %012.6f ns\n", (double)TH1Inj/1000000000.0);
   printf("harmonic number extr. : %012d\n"     , nHExt);
   printf("harmonic number inj.  : %012d\n"     , nHInj);
 } // printDiags
-*/
 
 
 int main(int argc, char** argv) {
@@ -478,8 +412,8 @@ int main(int argc, char** argv) {
     } // "cleardiag"
     if (!strcasecmp(command, "diag")) {
       api_readDiag(device, &statusArray, &state, &version, &mac, &ip, &nBadStatus, &nBadState, &tDiag, &tS0, &nTransfer, &nInjection, &statTrans, 1);
-      // readDiags(&sumStatus, &state, &nBadStatus, &nBadState, &tDiag, &tS0, &nTransfer, &transStat, &TH1Ext, &nHExt, &TH1Inj, &nHInj);
-      //printDiags(sumStatus, state, nBadStatus, nBadState, tDiag, tS0, nTransfer, transStat, TH1Ext, nHExt, TH1Inj, nHInj);
+      readDiags(&TH1Ext, &nHExt, &TH1Inj, &nHInj);
+      printDiags(TH1Ext, nHExt, TH1Inj, nHInj);
     } // "diag"
 
     if (!strcasecmp(command, "seth1inj")) {
