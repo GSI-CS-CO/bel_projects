@@ -38,6 +38,7 @@ define sort_file
 endef
 
 define check_timing
+	@ls -l $(1).sta.rpt
 	@cat $(1).sta.rpt | grep "Timing requirements not met" && exit 1 || { exit 0; }
 	@echo "Success! All Timing requirements were met!"
 endef
