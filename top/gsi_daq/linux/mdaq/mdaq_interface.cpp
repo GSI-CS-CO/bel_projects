@@ -161,11 +161,20 @@ uint DaqInterface::readRingItems( RingItem* pItems, uint size )
 
    RING_ITEM_T beItems[toRead];
 
+   /*
+    * Overlaps the end the data set to be read the end of the linear
+    * data buffer, so the data set has to be read in two parts.
+    * Because it's a ring buffer.
+    * First part:
+    */
    if( toRead1 > 0 )
    {
       readRingData( &beItems[0], toRead1, getTailRingIndex() );
    }
 
+   /*
+    * Second part (if necessary):
+    */
    if( toRead2 > 0 )
    {
       readRingData( &beItems[toRead1], toRead2 );
@@ -179,6 +188,11 @@ uint DaqInterface::readRingItems( RingItem* pItems, uint size )
       __BYTE_SWAP_ITEM( actvalue );
       __BYTE_SWAP_ITEM( tmstmp_l );
       __BYTE_SWAP_ITEM( tmstmp_h );
+      /*
+       * All members of object fgMacro being of type uint8_t with a
+       * total size of uint32_t, therefore it will handle
+       * as single object without byte swapping!
+       */
       pItems[i].fgMacro = beItems[i].fgMacro;
       incrementRingTail();
    }
