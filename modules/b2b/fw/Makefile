@@ -1,4 +1,4 @@
-TARGET		?= b2bpm
+TARGET		?= b2bcbu
 #PLATFPATH       = ../../../syn/gsi_exploder5/exploder5_csco_tr
 #PLATFPATH       = ../../../syn/gsi_scu/control3
 PLATFPATH	= ../../../syn/gsi_pexarria5/control
@@ -12,7 +12,7 @@ RAM_SIZE        := $(shell cat 	$(PLATFMAKEFILE) | grep -m1 RAM_SIZE  | cut -d'=
 
 SHARED_SIZE    	?= 8K
 USRCPUCLK      	?= 125000
-VERSION  	= 00.00.10
+VERSION  	= 00.00.11
 
 .DEFAULT_GOAL	:= fwbin
 
@@ -41,8 +41,8 @@ include ../../../syn/build.mk
 fwbin: $(TARGET).bin 
 
 # $(TARGET).elf: $(PATHFW)/b2b-test.c $(INCPATH)/ebm.c
-b2bpm.elf:  $(PATHFW)/b2b-pm.c $(INCPATH)/ebm.c $(PATHFW)/b2b-common.c
-b2bcbu.elf: $(PATHFW)/b2b-cbu.c $(INCPATH)/ebm.c $(PATHFW)/b2b-common.c
+b2bpm.elf:  $(PATHFW)/b2b-pm.c $(INCPATH)/ebm.c $(PATHFW)/../../b2b-test/b2btest-fw/b2b-fwlib.c
+b2bcbu.elf: $(PATHFW)/b2b-cbu.c $(INCPATH)/ebm.c $(PATHFW)/../../b2b-test/b2btest-fw/b2b-fwlib.c
 
 clean::
 	rm -f $(PATHFW)/*.o $(PATHFW)/*.a $(PATHFW)/*.elf $(PATHFW)/*.bin

@@ -1,9 +1,9 @@
-/********************************************************************************************
+/*******************************************************************************************
  *  b2btest-ctl.c
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 18-June-2019
+ *  version : 05-November-2019
  *
  * Command-line interface for b2btest
  *
@@ -184,8 +184,6 @@ int readDiags(uint32_t *sumStatus, uint32_t *state, uint32_t *nBadStatus, uint32
   eb_data_t   data[30];
 
   if ((eb_status = eb_cycle_open(device, 0, eb_block, &cycle)) != EB_OK) die("b2b-test: eb_cycle_open", eb_status);
-  eb_cycle_read(cycle, b2btest_status,        EB_BIG_ENDIAN|EB_DATA32, &(data[0]));
-  eb_cycle_read(cycle, b2btest_state,         EB_BIG_ENDIAN|EB_DATA32, &(data[1]));
   eb_cycle_read(cycle, b2btest_nBadStatus,    EB_BIG_ENDIAN|EB_DATA32, &(data[2]));
   eb_cycle_read(cycle, b2btest_nBadState,     EB_BIG_ENDIAN|EB_DATA32, &(data[3]));
   eb_cycle_read(cycle, b2btest_tDiagHi,       EB_BIG_ENDIAN|EB_DATA32, &(data[4]));
@@ -267,6 +265,7 @@ void printTransfer(uint32_t nTransfer)
 } // printTransfer
 
 
+/*
 void printDiags(uint32_t sumStatus, uint32_t state, uint32_t nBadStatus, uint32_t nBadState, uint64_t tDiag, uint64_t tS0, uint32_t nTransfers, uint32_t transStat, uint64_t TH1Ext, uint32_t nHExt, uint64_t TH1Inj, uint32_t nHInj)
 {
   const struct tm* tm;
@@ -304,8 +303,7 @@ void printDiags(uint32_t sumStatus, uint32_t state, uint32_t nBadStatus, uint32_
   printf("harmonic number extr. : %012d\n"     , nHExt);
   printf("harmonic number inj.  : %012d\n"     , nHInj);
 } // printDiags
-
-
+*/
 
 
 int main(int argc, char** argv) {
@@ -328,7 +326,8 @@ int main(int argc, char** argv) {
   int exitCode   = 0;
   char *tail;
 
-  uint32_t sumStatus;
+  uint64_t statusArray;
+  uint64_t actStatusArray;
   uint32_t state;
   uint32_t nBadStatus;
   uint32_t nBadState;
@@ -336,7 +335,8 @@ int main(int argc, char** argv) {
   uint64_t tDiag;
   uint64_t tS0;
   uint32_t nTransfer;
-  uint32_t transStat;
+  uint32_t nInjection;
+  uint32_t statTrans;
   uint64_t TH1Ext;                             // h=1 period [as] of extraction machine
   uint64_t TH1Inj;                             // h=1 period [as] of injection machine
   uint32_t nHExt;                              // harmonic number extraction machine
@@ -344,13 +344,14 @@ int main(int argc, char** argv) {
   uint32_t fH1Ext;                             // h=1 frequency [Hz] of extraction machine
   uint32_t fH1Inj;                             // h=1 frequency [Hz] of injection machine
   uint32_t actState = COMMON_STATE_UNKNOWN;    // actual state of gateway
-  uint32_t actSumStatus;                       // actual sum status of gateway
-  uint32_t actNTransfer = 0;                   // actual number of transfers
+  uint32_t actNTransfer;                       // actual number of transfers
   uint32_t sleepTime;                          // time to sleep [us]
   uint32_t printFlag;                          // flag for printing
 
   uint64_t mac;                                // mac for config of EB master
   uint32_t ip;                                 // ip for config of EB master
+
+  int      i;
 
   program = argv[0];    
 
@@ -403,6 +404,7 @@ int main(int argc, char** argv) {
 
   if (optind+1 < argc)  command = argv[++optind];
   else command = NULL;
+
   /* open Etherbone device and socket */
   if ((eb_status = eb_socket_open(EB_ABI_CODE, 0, EB_ADDR32|EB_DATA32, &socket)) != EB_OK) die("eb_socket_open", eb_status);
   if ((eb_status = eb_device_open(socket, devName, EB_ADDR32|EB_DATA32, 3, &device)) != EB_OK) die("eb_device_open", eb_status);
@@ -412,21 +414,7 @@ int main(int argc, char** argv) {
   if ((eb_status = eb_sdb_find_by_identity(device, GSI, LM32_RAM_USER, &sdbDevice, &nDevices)) != EB_OK) die("find lm32", eb_status);
   lm32_base =  sdbDevice.sdb_component.addr_first;
 
-  b2btest_status       = lm32_base + SHARED_OFFS + COMMON_SHARED_SUMSTATUS;
-  b2btest_cmd          = lm32_base + SHARED_OFFS + COMMON_SHARED_CMD;
-  b2btest_state        = lm32_base + SHARED_OFFS + COMMON_SHARED_STATE;;
-  b2btest_version      = lm32_base + SHARED_OFFS + COMMON_SHARED_VERSION;
-  b2btest_macHi        = lm32_base + SHARED_OFFS + COMMON_SHARED_MACHI;
-  b2btest_macLo        = lm32_base + SHARED_OFFS + COMMON_SHARED_MACLO;
-  b2btest_ip           = lm32_base + SHARED_OFFS + COMMON_SHARED_IP;
-  b2btest_nBadStatus   = lm32_base + SHARED_OFFS + COMMON_SHARED_NBADSTATUS;
-  b2btest_nBadState    = lm32_base + SHARED_OFFS + COMMON_SHARED_NBADSTATE;
-  b2btest_tDiagHi      = lm32_base + SHARED_OFFS + COMMON_SHARED_TDIAGHI;
-  b2btest_tDiagLo      = lm32_base + SHARED_OFFS + COMMON_SHARED_TDIAGLO;
-  b2btest_tS0Hi        = lm32_base + SHARED_OFFS + COMMON_SHARED_TS0HI;
-  b2btest_tS0Lo        = lm32_base + SHARED_OFFS + COMMON_SHARED_TS0LO;
-  b2btest_nTransfer    = lm32_base + SHARED_OFFS + B2BTEST_SHARED_NTRANSFER;
-  b2btest_transStat    = lm32_base + SHARED_OFFS + B2BTEST_SHARED_TRANSSTAT;
+  api_initShared(lm32_base, SHARED_OFFS);
   b2btest_TH1ExtHi     = lm32_base + SHARED_OFFS + B2BTEST_SHARED_TH1EXTHI;
   b2btest_TH1ExtLo     = lm32_base + SHARED_OFFS + B2BTEST_SHARED_TH1EXTLO;
   b2btest_nHExt        = lm32_base + SHARED_OFFS + B2BTEST_SHARED_NHEXT;
@@ -448,10 +436,12 @@ int main(int argc, char** argv) {
 
   if (getInfo) {
     // status
-    readInfo(&sumStatus, &state, &nBadStatus, &nBadState, &nTransfer);
+    api_readDiag(device, &statusArray, &state, &version, &mac, &ip, &nBadStatus, &nBadState, &tDiag, &tS0, &nTransfer, &nInjection, &statTrans, 0);
     printTransferHeader();
     printTransfer(nTransfer);
-    printf(" %s (%6u), status 0x%08x (%6u)\n", api_stateText(state), nBadState, sumStatus, nBadStatus);
+    printf(", %s (%6u), ",  api_stateText(state), nBadState);
+    if ((statusArray >> COMMON_STATUS_OK) & 0x1) printf("OK   (%6u)\n", nBadStatus);
+    else                                         printf("NOTOK(%6u)\n", nBadStatus);
   } // if getInfo
 
   if (command) {
@@ -487,8 +477,9 @@ int main(int argc, char** argv) {
       if (state != COMMON_STATE_OPREADY) printf("b2b-test: WARNING command has no effect (not in state OPREADY)\n");
     } // "cleardiag"
     if (!strcasecmp(command, "diag")) {
-      readDiags(&sumStatus, &state, &nBadStatus, &nBadState, &tDiag, &tS0, &nTransfer, &transStat, &TH1Ext, &nHExt, &TH1Inj, &nHInj);
-      printDiags(sumStatus, state, nBadStatus, nBadState, tDiag, tS0, nTransfer, transStat, TH1Ext, nHExt, TH1Inj, nHInj);
+      api_readDiag(device, &statusArray, &state, &version, &mac, &ip, &nBadStatus, &nBadState, &tDiag, &tS0, &nTransfer, &nInjection, &statTrans, 1);
+      // readDiags(&sumStatus, &state, &nBadStatus, &nBadState, &tDiag, &tS0, &nTransfer, &transStat, &TH1Ext, &nHExt, &TH1Inj, &nHInj);
+      //printDiags(sumStatus, state, nBadStatus, nBadState, tDiag, tS0, nTransfer, transStat, TH1Ext, nHExt, TH1Inj, nHInj);
     } // "diag"
 
     if (!strcasecmp(command, "seth1inj")) {
@@ -527,14 +518,15 @@ int main(int argc, char** argv) {
 
   if (snoop) {
     printf("b2b-test: continous monitoring of gateway, loglevel = %d\n", logLevel);
-    
-    actState     = COMMON_STATE_UNKNOWN;
-    actSumStatus = 0;
+
+    actNTransfer   = 0;
+    actState       = COMMON_STATE_UNKNOWN;
+    actStatusArray = 0x1 << COMMON_STATUS_OK;
 
     printTransferHeader();
 
     while (1) {
-      readInfo(&sumStatus, &state, &nBadStatus, &nBadState, &nTransfer); // read info from lm32
+      api_readDiag(device, &statusArray, &state, &version, &mac, &ip, &nBadStatus, &nBadState, &tDiag, &tS0, &nTransfer, &nInjection, &statTrans, 0);
 
       switch(state) {
       case COMMON_STATE_OPREADY :
@@ -547,13 +539,19 @@ int main(int argc, char** argv) {
       printFlag = 0;
 
       
-      if ((actState     != state)        && (logLevel <= COMMON_LOGLEVEL_STATE))   {printFlag = 1; actState     = state;}
-      if ((actSumStatus != sumStatus)    && (logLevel <= COMMON_LOGLEVEL_STATUS))  {printFlag = 1; actSumStatus = sumStatus;}
-      if ((actNTransfer != nTransfer)    && (logLevel <= COMMON_LOGLEVEL_ONCE))    {printFlag = 1; actNTransfer = nTransfer;}
+      if ((actState       != state)        && (logLevel <= COMMON_LOGLEVEL_STATE))   {printFlag = 1; actState       = state;}
+      if ((actStatusArray != statusArray)  && (logLevel <= COMMON_LOGLEVEL_STATUS))  {printFlag = 1; actStatusArray = statusArray;}
+      if ((actNTransfer   != nTransfer)    && (logLevel <= COMMON_LOGLEVEL_ONCE))    {printFlag = 1; actNTransfer   = nTransfer;}
 
       if (printFlag) {
         printTransfer(nTransfer); 
-        printf(" %s (%6u), status 0x%08x (%d)\n", api_stateText(state), nBadState, sumStatus, nBadStatus);
+        printf(", %s (%6u), ",  api_stateText(state), nBadState);
+        if ((statusArray >> COMMON_STATUS_OK) & 0x1) printf("OK   (%6u)\n", nBadStatus);
+        else printf("NOTOK(%6u)\n", nBadStatus);
+        // print set status bits (except OK)
+        for (i= COMMON_STATUS_OK + 1; i<(int)(sizeof(statusArray)*8); i++) {
+          if ((statusArray >> i) & 0x1)  printf("  ------ status bit is set : %s\n", api_statusText(i));
+        } // for i
       } // if printFlag
 
       fflush(stdout);                                                                         // required for immediate writing (if stdout is piped to syslog)
