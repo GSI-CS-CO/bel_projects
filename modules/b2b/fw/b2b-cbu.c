@@ -72,6 +72,9 @@ volatile uint32_t *pSharedNHExt;        // pointer to a "user defined" u32 regis
 volatile uint32_t *pSharedTH1InjHi;     // pointer to a "user defined" u32 register; here: period of h=1 injection, high bits
 volatile uint32_t *pSharedTH1InjLo;     // pointer to a "user defined" u32 register; here: period of h=1 injecion, low bits
 volatile uint32_t *pSharedNHInj;        // pointer to a "user defined" u32 register; here: harmonic number injection
+volatile uint32_t *pSharedTBeatHi;      // pointer to a "user defined" u32 register; here: period of beating, high bits
+volatile uint32_t *pSharedTBeatLo;      // pointer to a "user defined" u32 register; here: period of beating, low bits
+volatile int32_t  *pSharedIntCalib;     // pointer to a "user defined" u32 register; here: internal calibration of the B2B system
 
 uint32_t *cpuRamExternal;              // external address (seen from host bridge) of this CPU's RAM            
 
@@ -84,6 +87,7 @@ uint32_t nHExt;                         // harmonic number of extraction machine
 uint32_t nHInj;                         // harmonic number of injection machine 0..15
 uint64_t tH1Ext;                        // h=1 phase  [ns] of extraction machine
 uint64_t tH1Inj;                        // h=1 phase  [ns] of injection machine
+int32_t  intCalib;                      // internal calibration of the B2B system
 
 void init() // typical init for lm32
 {
@@ -106,7 +110,7 @@ void initSharedMem() // determine address and clear shared mem
   sdb_location found_clu;
   
   // get pointer to shared memory
-  pShared           = (uint32_t *)_startshared;
+  pShared                 = (uint32_t *)_startshared;
 
   pSharedTH1ExtHi         = (uint32_t *)(pShared + (B2BTEST_SHARED_TH1EXTHI  >> 2));
   pSharedTH1ExtLo         = (uint32_t *)(pShared + (B2BTEST_SHARED_TH1EXTLO  >> 2));
@@ -114,6 +118,9 @@ void initSharedMem() // determine address and clear shared mem
   pSharedTH1InjHi         = (uint32_t *)(pShared + (B2BTEST_SHARED_TH1INJHI  >> 2));
   pSharedTH1InjLo         = (uint32_t *)(pShared + (B2BTEST_SHARED_TH1INJLO  >> 2));
   pSharedNHInj            = (uint32_t *)(pShared + (B2BTEST_SHARED_NHINJ     >> 2));
+  pSharedTBeatHi          = (uint32_t *)(pShared + (B2BTEST_SHARED_TBEATHI   >> 2));
+  pSharedTBeatLo          = (uint32_t *)(pShared + (B2BTEST_SHARED_TBEATLO   >> 2));
+  pSharedIntCalib         = (uint32_t *)(pShared + (B2BTEST_SHARED_INTCALIB  >> 2));
   
   // find address of CPU from external perspective
   idx = 0;
@@ -187,6 +194,9 @@ uint32_t extern_entryActionOperation()
   *pSharedTH1InjHi = 0x000001D1; // 2 kHz dummy
   *pSharedTH1InjLo = 0xA94A2000;
   *pSharedNHInj    = 1;
+  *pSharedTBeatHi  = 0x000000E8; // 1 kHz dummy
+  *pSharedTBeatLo  = 0xD4A51000;
+  *pSharedIntCalib = 0x0;
 
   return COMMON_STATUS_OK;
 } // extern_entryActionOperation
@@ -198,11 +208,10 @@ uint32_t extern_exitActionOperation()
 } // extern_exitActionOperation
 
 
-uint32_t calcPhaseMatch(uint64_t *tPhaseMatch)  // calculates when extraction and injection machines are synchronized
+uint32_t calcPhaseMatch(uint64_t *tPhaseMatch, uint64_t *TBeat)  // calculates when extraction and injection machines are synchronized
 {
   uint64_t TSlow;                                   // period of 'slow' frequency     [as] // sic! atoseconds
   uint64_t TFast;                                   // period of 'fast' frequency     [as]
-  uint64_t TBeat;                                   // period of frequency beating    [as]
   uint64_t tSlow;                                   // phase of 'slow' frequency      [as]
   uint64_t tFast;                                   // phase of 'fast' frequency      [as]
   uint64_t nHSlow;                                  // harmonic number of 'slow' frequency
@@ -255,7 +264,7 @@ uint32_t calcPhaseMatch(uint64_t *tPhaseMatch)  // calculates when extraction an
   }
 
   // period of frequency beats [as], required if next match is too close
-  TBeat   = (uint64_t)((double)TFast / (double)(TSlow * nHFast - TFast * nHSlow) * (double)TSlow);
+  *TBeat = (uint64_t)((double)TFast / (double)(TSlow * nHFast - TFast * nHSlow) * (double)TSlow);  // period of beating [as]
 
   // make sure tSlow is earlier than tFast; this is a must for the formula below
   // if not, subtract period
@@ -265,51 +274,52 @@ uint32_t calcPhaseMatch(uint64_t *tPhaseMatch)  // calculates when extraction an
   while ((tFast - tSlow) > TFast           ) tFast = tFast - TFast;
 
   // make sure there is sufficient spacing between tSlow and tFast; this is a fudge thing
-  while ((tFast - tSlow) < (TFast / nHFast)) tFast = tFast + TFast;
-
-  DBPRINT3("b2b-cbu: tSlow %llu as, tFast %llu as, diff %llu as\n", tSlow, tFast, tFast - tSlow);
-
-  // now, tSlow is earlier than tFast and both values are at most one period apart
-  // we can now start our calculation
-  Tdiff = TSlow * nHFast - TFast * nHSlow;
-  DBPRINT3("b2b-cbu: TSlow * nHFast %llu as, TFast * nHSlow  %llu as, difference  %llu as\n", TSlow * nHFast, TFast * nHSlow, Tdiff);
-  DBPRINT3("b2b-cbu: TSlow          %llu as, TFast           %llu as, difference  %llu as\n", TSlow, TFast, TSlow - TFast);
-  DBPRINT3("b2b-cbu: tSlow          %llu as, tFast           %llu as, difference  %llu as\n", tSlow, tFast, tFast - tSlow);
-
-  /*
-  // brute force; keep this for explaining the algorithm
-  uint64_t i;
-  uint64_t tFastTmp;                                // temporary variable             [as]
-  uint64_t tSlowTmp;                                // temporary variable             [as]
-  uint64_t TSlowTmp;                                // temporary variable             [as] 
-
-  tSlowTmp = tSlow;
-  TSlowTmp = TSlow * nHFast;
-  tFastTmp = tFast;
-  TFastTmp = TFast * nHSlow; 
-  i        = 0;
-  DBPRINT3("b2b-cbu: TSlowTmp %llu as, TFastTmp %llu as \n", TSlowTmp, TFastTmp);
-  while (tFastTmp > tSlowTmp) {
+  //while ((tFast - tSlow) < (TFast / nHFast)) tFast = tFast + TFast;
+  if ((tFast - tSlow) < nineO) tMatch = tSlow;   // we are closer than 1ns ==> done!
+  else {
+    DBPRINT3("b2b-cbu: tSlow %llu as, tFast %llu as, diff %llu as\n", tSlow, tFast, tFast - tSlow);
+    
+    // now, tSlow is earlier than tFast and both values are at most one period apart
+    // we can now start our calculation
+    Tdiff = TSlow * nHFast - TFast * nHSlow;
+    DBPRINT3("b2b-cbu: TSlow * nHFast %llu as, TFast * nHSlow  %llu as, difference  %llu as\n", TSlow * nHFast, TFast * nHSlow, Tdiff);
+    DBPRINT3("b2b-cbu: TSlow          %llu as, TFast           %llu as, difference  %llu as\n", TSlow, TFast, TSlow - TFast);
+    DBPRINT3("b2b-cbu: tSlow          %llu as, tFast           %llu as, difference  %llu as\n", tSlow, tFast, tFast - tSlow);
+    
+    /*
+    // brute force; keep this for explaining the algorithm
+    uint64_t i;
+    uint64_t tFastTmp;                                // temporary variable             [as]
+    uint64_t tSlowTmp;                                // temporary variable             [as]
+    uint64_t TSlowTmp;                                // temporary variable             [as] 
+    
+    tSlowTmp = tSlow;
+    TSlowTmp = TSlow * nHFast;
+    tFastTmp = tFast;
+    TFastTmp = TFast * nHSlow; 
+    i        = 0;
+    DBPRINT3("b2b-cbu: TSlowTmp %llu as, TFastTmp %llu as \n", TSlowTmp, TFastTmp);
+    while (tFastTmp > tSlowTmp) {
     tFastTmp += TFastTmp;
     tSlowTmp += TSlowTmp;
     i++;
-  } //
-  tMatch = tFastTmp;
-  TMatch = tMatch - tSlow;
-  DBPRINT3("b2b-cbu: TBeat %llu as, TMatch %llu as, i %llu\n", TBeat, TMatch, i);
-  DBPRINT3("b2b-cbu: tMatch %llu, TMatch %llu\n", tMatch, TMatch);
-  */
-
-  // calculate when phases will match
-  TFastTmp = TFast * nHSlow; 
-  TMatch = ((tFast - tSlow) / Tdiff) * TFastTmp + tFast - tSlow;
-  tMatch = TMatch + tSlow;
-  DBPRINT3("b2b-cbu: tMatch %llu, TMatch %llu, TBeat %llu\n", tMatch, TMatch, TBeat);
- 
+    } //
+    tMatch = tFastTmp;
+    TMatch = tMatch - tSlow;
+    DBPRINT3("b2b-cbu: TBeat %llu as, TMatch %llu as, i %llu\n", *TBeat, TMatch, i);
+    DBPRINT3("b2b-cbu: tMatch %llu, TMatch %llu\n", tMatch, TMatch);
+    */
+    
+    // calculate when phases will match
+    TFastTmp = TFast * nHSlow; 
+    TMatch = ((tFast - tSlow) / Tdiff) * TFastTmp + tFast - tSlow;
+    tMatch = TMatch + tSlow;
+    DBPRINT3("b2b-cbu: tMatch %llu, TMatch %llu, TBeat %llu\n", tMatch, TMatch, *TBeat);
+  } // values are further apart than 1ns
   // check, that tMatch is further in the future than COMMON_AHEADT; if not, add one beating period
   if((tSlow + (uint64_t)COMMON_AHEADT * nineO) > tMatch) {
-    tMatch += TBeat * 10;
-    DBPRINT2("b2b-cbu: tMatch %llu, TMatch %llu, TBeat %llu (+ TBeat)\n", tMatch, TMatch, TBeat);
+    tMatch += *TBeat;
+    DBPRINT2("b2b-cbu: tMatch %llu, TMatch %llu, TBeat %llu (+ TBeat)\n", tMatch, TMatch, *TBeat);
     DBPRINT2("b2b-cbu: tSlow          %llu as, tFast           %llu as, difference  %llu as\n", tSlow, tFast, tFast - tSlow);
   }
  
@@ -337,6 +347,7 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
   uint64_t recParam;                                          // param received
   uint32_t recTEF;                                            // TEF received
   uint64_t tMatch;                                            // time when phases of injecion and extraction match
+  uint64_t TBeat;                                             // period of beating
 
   status = actStatus;
 
@@ -346,14 +357,17 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
     case B2BTEST_ECADO_B2B_START :
       // received: B2B_START from DM
       
-      TH1Ext       = (uint64_t)(*pSharedTH1ExtHi) << 32;
-      TH1Ext       = (uint64_t)(*pSharedTH1ExtLo) | TH1Ext;
-      nHExt        = *pSharedNHExt;
-      TH1Inj       = (uint64_t)(*pSharedTH1InjHi) << 32;
-      TH1Inj       = (uint64_t)(*pSharedTH1InjLo) | TH1Inj;
-      nHInj        = *pSharedNHInj;
-      tH1Ext       = 0x0;
-      tH1Inj       = 0x0;
+      TH1Ext          = (uint64_t)(*pSharedTH1ExtHi) << 32;
+      TH1Ext          = (uint64_t)(*pSharedTH1ExtLo) | TH1Ext;
+      nHExt           = *pSharedNHExt;
+      TH1Inj          = (uint64_t)(*pSharedTH1InjHi) << 32;
+      TH1Inj          = (uint64_t)(*pSharedTH1InjLo) | TH1Inj;
+      nHInj           = *pSharedNHInj;
+      tH1Ext          = 0x0;
+      tH1Inj          = 0x0;
+      *pSharedTBeatHi = 0x0;
+      *pSharedTBeatLo = 0x0;
+      intCalib        = *pSharedIntCalib;
 
       // send command: phase measurement at extraction machine
       sendEvtId    = 0x1fff000000000000;                                        // FID, GID
@@ -380,30 +394,32 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
     case B2BTEST_ECADO_B2B_PREXT :
       // received: measured phase from extraction machine
       // do some math
-      tH1Ext       = recParam;
-      sendDeadline = tH1Ext + ((uint64_t)100000 * TH1Ext) / (uint64_t)1000000000; // project 100000 periods into the future
+      tH1Ext        = recParam;
+      sendDeadline  = tH1Ext + ((uint64_t)100000 * TH1Ext) / (uint64_t)1000000000; // project 100000 periods into the future
+      sendDeadline += intCalib;
       
       // send DIAGEXT to extraction machine
-      sendEvtId    = 0x1fff000000000000;                                        // FID, GID
-      sendEvtId    = sendEvtId | ((uint64_t)B2BTEST_ECADO_B2B_DIAGEXT << 36);   // EVTNO
-      sendParam    = 0x0;
+      sendEvtId     = 0x1fff000000000000;                                        // FID, GID
+      sendEvtId     = sendEvtId | ((uint64_t)B2BTEST_ECADO_B2B_DIAGEXT << 36);   // EVTNO
+      sendParam     = 0x0;
       fwlib_ebmWriteTM(sendDeadline, sendEvtId, sendParam);
       
-      transStat    = transStat | B2BTEST_FLAG_TRANSPEXT;
+      transStat     = transStat | B2BTEST_FLAG_TRANSPEXT;
       break;
     case B2BTEST_ECADO_B2B_PRINJ :
       // received: measured phase from injection machine
       // do some math
-      tH1Inj       = recParam;
-      sendDeadline = tH1Inj + ((uint64_t)100000 * TH1Inj) / (uint64_t)1000000000; // project 100000 periods into the future
+      tH1Inj        = recParam;
+      sendDeadline  = tH1Inj + ((uint64_t)100000 * TH1Inj) / (uint64_t)1000000000; // project 100000 periods into the future
+      sendDeadline += intCalib;
       
       // send DIAGEXT to injection machine
-      sendEvtId    = 0x1fff000000000000;                                        // FID, GID
-      sendEvtId    = sendEvtId | ((uint64_t)B2BTEST_ECADO_B2B_DIAGINJ << 36);   // EVTNO
-      sendParam    = 0x0;
+      sendEvtId     = 0x1fff000000000000;                                        // FID, GID
+      sendEvtId     = sendEvtId | ((uint64_t)B2BTEST_ECADO_B2B_DIAGINJ << 36);   // EVTNO
+      sendParam     = 0x0;
       fwlib_ebmWriteTM(sendDeadline, sendEvtId, sendParam);
       
-      transStat    = transStat | B2BTEST_FLAG_TRANSPINJ;
+      transStat     = transStat | B2BTEST_FLAG_TRANSPINJ;
       break;
       
     default :
@@ -415,7 +431,7 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
 
     //DBPRINT2("b2b-test: we have everything we need\n");
     
-    if ((status = calcPhaseMatch(&tMatch)) != COMMON_STATUS_OK) {
+    if ((status = calcPhaseMatch(&tMatch, &TBeat)) != COMMON_STATUS_OK) {
       transStat = 0x0;
       return status;
     } // if status
@@ -423,7 +439,10 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
     sendEvtId = 0x1fff000000000000;                                          // FID, GID
     sendEvtId = sendEvtId | ((uint64_t)B2BTEST_ECADO_B2B_DIAGMATCH << 36);   // EVTNO
     sendParam = 0x0;
-    fwlib_ebmWriteTM(tMatch, sendEvtId, sendParam);
+    fwlib_ebmWriteTM(tMatch + intCalib, sendEvtId, sendParam);
+
+    *pSharedTBeatHi = (uint32_t)(TBeat >> 32);
+    *pSharedTBeatLo = (uint32_t)(TBeat && 0xffffffff);
 
     transStat = 0x0; 
   } // if transStat
