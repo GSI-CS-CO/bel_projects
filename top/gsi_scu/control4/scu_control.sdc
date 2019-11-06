@@ -8,6 +8,9 @@ set_clock_groups -asynchronous \
  -group [get_clocks { clk_125m_local_i } ]                                                                              \
  -group [get_clocks { clk_125m_pllref_i } ]                                                                             \
  -group [get_clocks { clk_125m_sfpref_i } ]                                                                             \
+ -group [get_clocks { clk_125m_tcb_local_i } ]                                                                              \
+ -group [get_clocks { clk_125m_tcb_pllref_i } ]                                                                             \
+ -group [get_clocks { clk_125m_tcb_sfpref_i } ]                                                                             \
  -group [get_clocks { main|\dmtd_a10:dmtd_inst|iopll_0|outclk0 } ]                                                      \
  -group [get_clocks { main|\pcie_y:pcie|pcie_phy|\arria10gx_scu4:hip|pcie_a10_hip_0|coreclkout                          \
                       main|\pcie_y:pcie|pcie_phy|\arria10gx_scu4:hip|pcie_a10_hip_0|g_xcvr_native_insts[0]|pma_hclk_by2 \
