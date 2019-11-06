@@ -114,12 +114,25 @@ endif
 ifeq (.CPP, $(findstring .CPP,$(_SOURCE) ))
    CPLUSPLUS_MODULE_PRESENT := 1
 endif
+ifeq (.cxx, $(findstring .cxx,$(_SOURCE) ))
+   CPLUSPLUS_MODULE_PRESENT := 1
+endif
+ifeq (.CXX, $(findstring .CXX,$(_SOURCE) ))
+   CPLUSPLUS_MODULE_PRESENT := 1
+endif
+ifeq (.cc, $(findstring .cc,$(_SOURCE) ))
+   CPLUSPLUS_MODULE_PRESENT := 1
+endif
+ifeq (.CC, $(findstring .CC,$(_SOURCE) ))
+   CPLUSPLUS_MODULE_PRESENT := 1
+endif
 ifdef CPLUSPLUS_MODULE_PRESENT
    DEFINES += CONFIG_CPLUSPLUS_MODULE_PRESENT
 endif
 
 OPT_INCLUDE := $(addprefix -I,$(strip $(INCLUDE_DIRS)))
 OPT_DEFINES := $(addprefix -D,$(DEFINES) )
+OPT_DEFINES += -DGIT_REVISION="$(shell git --git-dir=$(REPOSITORY_DIR)/.git log -n1 --pretty='format:%h (%ci)')"
 
 ifdef LIBS
    ARG_LIBS := $(addprefix -l,$(LIBS) )

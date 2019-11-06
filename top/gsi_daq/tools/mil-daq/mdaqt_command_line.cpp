@@ -86,7 +86,15 @@ vector<OPTION> CommandLine::c_optList =
    {
       OPT_LAMBDA( poParser,
       {
-         cout << TO_STRING( VERSION ) << endl;
+         if( static_cast<CommandLine*>(poParser)->m_verbose )
+         {
+            cout << "Version: " TO_STRING( VERSION )
+                    ", Git revision: " TO_STRING( GIT_REVISION ) << endl;
+         }
+         else
+         {
+            cout << TO_STRING( VERSION ) << endl;
+         }
          ::exit( EXIT_SUCCESS );
          return 0;
       }),
