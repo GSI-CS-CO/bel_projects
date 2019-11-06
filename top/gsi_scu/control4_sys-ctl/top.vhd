@@ -12,11 +12,11 @@ entity top is
 end top;
 --
 architecture rtl of top is
-  signal countx : std_logic_vector(15 downto 0);
+  signal countx  : std_logic_vector(15 downto 0);
 begin
 
   process(clk_base_i, rst_n_i) begin
-    if (rst_n_i = '1') then
+    if (rst_n_i = '0') then
       countx <= (others => '0');
     elsif (rising_edge(clk_base_i)) then
       countx <= countx + 1;
