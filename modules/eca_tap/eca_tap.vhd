@@ -61,7 +61,7 @@ architecture rtl of eca_tap is
   signal r_cnt_word : unsigned(3 downto 0) := (others => '0'); 
   signal r_cnt_msg  : unsigned(63 downto 0) := (others => '0');
   signal r_cnt_late  : unsigned(31 downto 0) := (others => '0');
-  signal s_diff_neg, s_diff_gt_max_offs, s_diff_lo_lt_offs : std_logic := '0';
+  signal s_diff_neg, s_diff_le_max_offs, s_diff_lo_lt_offs : std_logic := '0';
   signal r_is_late : std_logic_vector(0 downto 0) := (others => '0');
   signal s_en, r_en0, r_en1, s_push, s_new_min, s_new_max, s_inc_msg : std_logic := '0';
   signal s_valid : std_logic_vector(0 downto 0) := (others => '0');
@@ -204,11 +204,13 @@ instOn: if g_build_tap = TRUE generate
 
   -- Late Counter begin
   s_diff_neg         <= r_diff(63);                 -- if difference is negative (bit63 set), msg is definitely late.
-  s_diff_gt_max_offs <= '1' when unsigned(r_diff(63 downto 32)) /= 0   -- if difference is greater 32 bits its greater than the offset, msg cannot be late.
+  s_diff_le_max_offs <= '1' when unsigned(r_diff(63 downto 32)) = 0   -- if difference is greater 32 bits its greater than the offset, msg cannot be late.
                    else '0';     
   s_diff_lo_lt_offs  <= '1' when unsigned(r_diff(31 downto 0)) < unsigned(s_ctrl_offset_late_o) -- if difference low word is less than the offset, msg is possibly late
                    else '0';
 
+  s_ctrl_cnt_late_i <= std_logic_vector(r_cnt_late);
+  
   late_cnt : process(clk_sys_i)
   begin
     if rising_edge(clk_sys_i) then
@@ -216,10 +218,10 @@ instOn: if g_build_tap = TRUE generate
         r_cnt_late  <= (others => '0');
         r_is_late   <= "0";
       else
-        r_en1 <= r_en0; 
-        if r_en0 = '1' then -- r_diff is valid on r_en0
-          r_is_late(0) <= s_diff_neg or (not s_diff_gt_max_offs and s_diff_lo_lt_offs); -- if diff is negative or fits in 32b and is less than the offset, the message was late.
-        end if;
+        r_en1 <= r_en0;
+        if r_en0 = '1' then -- r_is_late is valid on r_en1
+          r_is_late(0) <= s_diff_neg or (s_diff_le_max_offs and s_diff_lo_lt_offs); -- if diff is negative or fits in 32b and is less than the offset, the message was late.
+        end if;  
         if r_en1 = '1' then -- r_is_late is valid on r_en1
           r_cnt_late <= r_cnt_late + resize(unsigned(r_is_late), r_cnt_late'length); -- add r_is_late to the late counter
         end if;
