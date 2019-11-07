@@ -24,7 +24,7 @@ PATH:=$(PWD)/toolchain/bin:$(PATH)
 
 all:		etherbone tools sdbfs toolchain firmware driver
 
-gateware:	all pexarria5 exploder5 vetar2a vetar2a-ee-butis scu2 scu3 pmc microtca
+gateware:	all pexarria5 exploder5 vetar2a vetar2a-ee-butis scu2 scu3 pmc microtca pexp
 
 install:	etherbone-install tools-install driver-install
 
@@ -178,6 +178,12 @@ pexarria5:	firmware
 
 pexarria5-clean::
 	$(MAKE) -C syn/gsi_pexarria5/control clean
+
+pexp:	firmware
+	$(MAKE) -C syn/gsi_pexp/control all
+
+pexp-clean::
+	$(MAKE) -C syn/gsi_pexp/control clean
 
 ftm:	firmware
 	$(MAKE) -C syn/gsi_pexarria5/ftm all
