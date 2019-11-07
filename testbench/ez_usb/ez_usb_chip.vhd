@@ -34,6 +34,7 @@ begin
 	main: process 
 		variable value_from_file : integer;
 		variable client_connected : boolean;
+		variable stop_until_client_connects : boolean := true;
 	begin
 		-- initialization
 		wait until rising_edge(rstn_i);
@@ -41,7 +42,8 @@ begin
 		readyn_o <= '0'; -- we are ready
 
 		while true loop
-			file_access_init;
+			file_access_init(stop_until_client_connects);
+			stop_until_client_connects := false;
 			client_connected := true;
 
 			-- worker loop

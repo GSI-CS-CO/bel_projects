@@ -1,6 +1,6 @@
 package file_access is
 
-  procedure file_access_init;
+  procedure file_access_init(stop_unitl_connected : boolean);
   attribute foreign of file_access_init : procedure is "VHPIDIRECT file_access_init";
 
   -- if the function returns a positive integer, it is a valid value
@@ -23,7 +23,8 @@ package file_access is
 end package;
 
 package body file_access is
-  procedure file_access_init is
+
+  procedure file_access_init(stop_unitl_connected : boolean) is
   begin
     assert false report "VHPI" severity failure;
   end procedure;

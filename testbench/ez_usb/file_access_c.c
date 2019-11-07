@@ -18,21 +18,32 @@ unsigned char write_buffer[32768] = {0,};
 int write_buffer_length = 0;
 
 
-void file_access_init() {
+void file_access_init(int stop_until_connected) {
+	if (stop_until_connected && pfds[0].fd != 0) {
+		close(pfds[0].fd);
+		pfds[0].fd = 0;
+	}
 	if (pfds[0].fd == 0) {
 		int fd = open("/dev/ptmx", O_RDWR | O_NONBLOCK);
 		// print the name of the pseudo terminal in device tree
 		char name[256];
 		ptsname_r(fd, name, 256);
 		printf("eb-device : %s\n",name);
-		printf("waiting for client ...");
+		if (stop_until_connected) {
+			printf("waiting for client, simulation stopped ...");
+		} else {
+			printf("device is ready, simulation is running\n");
+		}
 		fflush(stdout);
 		grantpt(fd);
 		unlockpt(fd);
 		pfds[0].fd = fd;
+	}
+	if (stop_until_connected)
+	{
 		pfds[0].events = POLLIN;
 		poll(pfds,1,-1);
-		printf(" connected\n");
+		printf(" connected, simulation continues\n");
 	}
 }
 
