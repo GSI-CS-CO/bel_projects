@@ -57,7 +57,7 @@ void cbWrite(volatile FG_CHANNEL_BUFFER_T* cb, volatile FG_CHANNEL_REG_T* cr, co
 void cbDump(volatile FG_CHANNEL_BUFFER_T* cb, volatile FG_CHANNEL_REG_T* cr, const int channel )
 {
    int i = 0, col;
-   FG_PARAM_SET_T *pset;
+   volatile FG_PARAM_SET_T *pset;
    mprintf("dumped cb[%d]: \n", channel);
    mprintf ("wr_ptr: %d rd_ptr: %d size: %d\n", cr[channel].wr_ptr, cr[channel].rd_ptr, BUFFER_SIZE);
    while(i < BUFFER_SIZE)
@@ -65,7 +65,7 @@ void cbDump(volatile FG_CHANNEL_BUFFER_T* cb, volatile FG_CHANNEL_REG_T* cr, con
       mprintf("%d ", i);
       for(col = 0; (col < 8) && (i < BUFFER_SIZE); col++)
       {
-         *pset = cb[channel].pset[i++];
+         pset = &cb[channel].pset[i++];
          mprintf("0x%x ", pset->coeff_c);
       }
    }

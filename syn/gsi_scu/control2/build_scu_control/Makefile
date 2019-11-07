@@ -13,7 +13,7 @@ REPOSITORY_DIR := $(shell git rev-parse --show-toplevel)
 TARGET_DIR     := ..
 DEPLOY_DIR     := .
 TARGET         := scu_control
-
+DEFINES += CONFIG_FG_PEDANTIC_CHECK
 # ORIGIN := 1
 
 ifdef ORIGIN
@@ -81,8 +81,12 @@ ifdef SCU_DAQ
   SOURCE += $(DAQ_LM32_DIR)/daq_command_interface_uc.c
   SOURCE += $(DAQ_LM32_DIR)/daq_ramBuffer.c
   SOURCE += $(DAQ_LM32_DIR)/daq_main.c
+  DOX_INPUT += $(DAQ_DIR)/daq_command_interface.h
+  DOX_INPUT += $(DAQ_DIR)/daq_descriptor.h
   USE_SCU_EXTERN_RAM := 1
 endif
+
+DOX_INPUT += $(SCU_DIR)/scu_shared_mem.h
 
 ifdef USE_SCU_EXTERN_RAM
   SOURCE += $(DAQ_DIR)/daq_ring_admin.c

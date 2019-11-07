@@ -48,7 +48,18 @@
  #include "daq_main.h"
 #endif
 #endif // ifndef __DOCFSM__
-
+#ifdef CONFIG_FG_PEDANTIC_CHECK
+   /* CAUTION:
+    * Assert-macros could be expensive in memory consuming and the
+    * latency time can increase as well!
+    * Especially in embedded systems with small resources.
+    * Therefore use them for bug-fixing or developing purposes only!
+    */
+   #include <scu_assert.h>
+   #define FG_ASSERT SCU_ASSERT
+#else
+   #define FG_ASSERT(__e) ((void)0)
+#endif
 /*
  * Maybe a bug in the obsolete DOXYGEN 1.8.5 in the ASL-cluster,
  * otherwise the local functions of this module will not
@@ -679,7 +690,7 @@ STATIC int configure_fg_macro( const unsigned int channel )
    }
    #undef _SLOT_BIT_MASK
 
-   unsigned int fg_base;
+   unsigned int fg_base = 0;
    /* fg mode and reset */
    if( (socket & (DEV_MIL_EXT | DEV_SIO)) == 0 )
    {   //scu bus slave
@@ -731,6 +742,7 @@ STATIC int configure_fg_macro( const unsigned int channel )
       if( (socket & (DEV_MIL_EXT | DEV_SIO)) == 0 )
       {
         //set virtual fg number Bit 9..4
+         FG_ASSERT( fg_base != 0 );
          g_pScub_base[OFFS(socket) + fg_base + FG_CNTRL]  = blk_data[0];
          g_pScub_base[OFFS(socket) + fg_base + FG_A]      = blk_data[1];
          g_pScub_base[OFFS(socket) + fg_base + FG_B]      = blk_data[2];
@@ -761,7 +773,7 @@ STATIC int configure_fg_macro( const unsigned int channel )
             dev_failure( status, socket & SCU_BUS_SLOT_MASK, "end blk trm");
       }
       g_aFgChannels[0].param_sent++;
-   }
+  //!! }
 
    /* configure and enable macro */
    if( (socket & (DEV_MIL_EXT | DEV_SIO)) == 0 )
@@ -780,7 +792,7 @@ STATIC int configure_fg_macro( const unsigned int channel )
       if( (status = scub_write_mil(g_pScub_base, socket & SCU_BUS_SLOT_MASK, cntrl_reg_wr | FG_ENABLED, FC_CNTRL_WR | dev)) != OKAY)
          dev_failure( status, socket & SCU_BUS_SLOT_MASK, "end blk mode");
    }
-
+   } //!!
    // reset watchdog
  //  g_aFgChannels[channel].timeout = 0;
    g_shared.fg_regs[channel].state = STATE_ARMED;
