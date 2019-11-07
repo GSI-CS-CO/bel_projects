@@ -16,11 +16,7 @@ view: simulation.ghw
 
 # start simulation (which regenerates wave file), then update viewer
 simulation.ghw: compile_testbench 
-	@socat -d -d pty,raw,echo=0 pty,raw,echo=0 2> pts.dat &
-	@printf "device for eb-tools is /dev/pts/%d\n"       `grep PTY pts.dat | tail -n 1 | cut -d"N" -f 2 | cut -d"/" -f4`
-	@printf "simulation connects to /dev/pts/%d\n" `grep PTY pts.dat | head -n 1 | cut -d"N" -f 2 | cut -d"/" -f4`
-	ghdl -r testbench --stop-time=700000ns --wave=simulation.ghw --ieee-asserts=disable -gPTS_NUMBER=`grep PTY pts.dat | head -n 1 | cut -d"N" -f 2 | cut -d"/" -f4`
-	@killall socat; rm pts.dat
+	ghdl -r testbench --stop-time=700000ns --wave=simulation.ghw --ieee-asserts=disable
 	#vcd2fst simulation.vcd simulation.fst && rm simulation.vcd
 	gsettings set com.geda.gtkwave reload 0
 
@@ -49,10 +45,10 @@ testbench: 	\
 			../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_tx_mux.vhd               \
 			../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_tag_fifo.vhd             \
 			../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_pass_fifo.vhd            \
+			../../ip_cores/etherbone-core/hdl/eb_slave_core/etherbone_pkg.vhd           \
 			../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_cfg_fifo.vhd             \
 			../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_wbm_fifo.vhd             \
 			../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_msi_fifo.vhd             \
-			../../ip_cores/etherbone-core/hdl/eb_slave_core/etherbone_pkg.vhd           \
 			../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_raw_slave.vhd			\
 			../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_raw_slave.vhd			\
 			../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_stream_widen.vhd   		\

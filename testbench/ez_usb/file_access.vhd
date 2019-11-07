@@ -1,9 +1,13 @@
 package file_access is
 
-  procedure file_access_init(pts : integer);
+  procedure file_access_init;
   attribute foreign of file_access_init : procedure is "VHPIDIRECT file_access_init";
 
-  function file_access_read(timeout : integer) return integer;
+  -- if the function returns a positive integer, it is a valid value
+  -- if the function returns a negative value it  is either
+  --     TIMEOUT, meaning that nothing was read
+  -- or  HANGUP, meaning that the client disconnected
+  function file_access_read(timeout_value : integer) return integer;
   attribute foreign of file_access_read : function is "VHPIDIRECT file_access_read";
 
   procedure file_access_write(x : integer);
@@ -14,15 +18,17 @@ package file_access is
 
 
   shared variable my_var : integer := 43;
+  shared variable TIMEOUT : integer := -1;
+  shared variable HANGUP : integer := -2;
 end package;
 
 package body file_access is
-  procedure file_access_init(pts : integer) is
+  procedure file_access_init is
   begin
     assert false report "VHPI" severity failure;
   end procedure;
 
-  function file_access_read(timeout : integer) return integer is
+  function file_access_read(timeout_value : integer) return integer is
   begin
     assert false report "VHPI" severity failure;
     return 0;

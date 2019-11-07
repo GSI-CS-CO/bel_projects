@@ -16,9 +16,6 @@ use work.mbox_pkg.all;
 -- then start simulation and call:
 --   eb-read -p dev/pts/39 0x01000000/4
 entity testbench is
-generic (
-    PTS_NUMBER : integer
-  );
 end entity;
 
 architecture simulation of testbench is
@@ -140,7 +137,6 @@ begin
   ---- instance of EZUSB-chip 
   -- this simulates the physical chip that is connected to the FPGA
   chip : entity work.ez_usb_chip
-    generic map (PTS_NUMBER)
     port map (
       rstn_i    => usb_rstn,
       ebcyc_o   => usb_ebcyc,
