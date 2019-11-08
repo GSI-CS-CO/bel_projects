@@ -40,6 +40,10 @@ DaqCompare::DaqCompare( const uint iterfaceAddress )
  */
 DaqCompare::~DaqCompare( void )
 {
+   if( m_pParent != nullptr )
+   {
+      m_pParent->unregisterDaqCompare( this );
+   }
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -55,6 +59,10 @@ DaqDevice::DaqDevice( uint location )
  */
 DaqDevice::~DaqDevice( void )
 {
+   if( m_pParent != nullptr )
+   {
+      m_pParent->unregisterDevice( this );
+   }
 }
 
 /*-----------------------------------------------------------------------------
@@ -72,6 +80,22 @@ bool DaqDevice::registerDaqCompare( DaqCompare* poCompare )
    if( m_pParent != nullptr )
       poCompare->onInit();
    return false;
+}
+
+/*-----------------------------------------------------------------------------
+ */
+bool DaqDevice::unregisterDaqCompare( DaqCompare* poCompare )
+{
+   for( auto& i: m_channelPtrList )
+   {
+      if( i == poCompare )
+      {
+         m_channelPtrList.remove( i );
+         i->m_pParent = nullptr;
+         return false;
+      }
+   }
+   return true;
 }
 
 /*-----------------------------------------------------------------------------
@@ -137,6 +161,24 @@ bool DaqAdministration::registerDevice( DaqDevice* pDevice )
    m_devicePtrList.push_back( pDevice );
    pDevice->initAll();
    return false;
+}
+
+/*-----------------------------------------------------------------------------
+ */
+bool DaqAdministration::unregisterDevice( DaqDevice* pDevice )
+{
+   assert( pDevice != nullptr );
+
+   for( auto& i: m_devicePtrList )
+   {
+      if( i == pDevice )
+      {
+         m_devicePtrList.remove( i );
+         i->m_pParent = nullptr;
+         return false;
+      }
+   }
+   return true;
 }
 
 /*-----------------------------------------------------------------------------

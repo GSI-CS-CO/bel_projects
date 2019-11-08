@@ -166,8 +166,34 @@ public:
       return m_pParent;
    }
 
+   /*!
+    * @ingroup REGISTRATION
+    * @brief Registering of a single DAQ-compare object in the
+    *        internal list.\n
+    *
+    * Counterpart of unregisterDaqCompare()
+    * @param poCompare Pointer of the DAQ compare object of type DaqCompare.
+    * @retval true No registering because object is already registered.
+    * @retval false Object successful registered.
+    */
    bool registerDaqCompare( DaqCompare* poCompare );
 
+   /*!
+    * @ingroup REGISTRATION
+    * @brief Removes the given object from the internal list.
+    *
+    * Counterpart of registerDaqCompare();
+    * @retval true No unregistering because object is not registered.
+    * @retval false Object successful unregistered.
+    */
+   bool unregisterDaqCompare( DaqCompare* poCompare );
+
+   /*!
+    * @brief Returns the pointer of a registered DAQ compare object which
+    *        has the given address.
+    * @retval !=nullptr Pointer to the DAQ compare object.
+    * @retval ==nullptr Compare object not registered.
+    */
    DaqCompare* getDaqCompare( const uint address );
 
 protected:
@@ -227,6 +253,14 @@ public:
 
    DaqDevice* getDevice( const uint location );
 
+   /*!
+    * @ingroup REGISTRATION
+    * @brief Removes the given object from the internal list.
+    *
+    * Counterpart of registerDevice();
+    * @retval true No unregistering because object is not registered.
+    * @retval false Object successful unregistered.
+    */
    bool unregisterDevice( DaqDevice* pDevice );
 
    /*!

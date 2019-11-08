@@ -17,9 +17,17 @@ EB_SRC= $(DAQ_DIR)/feSupport/scu/etherbone
 MIAN_MODULE := mdaqexample.cpp
 
 ifndef USE_SHARED_LIB
+ SOURCE += $(DAQ_LINUX_DIR)/scu_fg_list.cpp
  SOURCE += $(DAQ_LINUX_DIR)/daq_eb_ram_buffer.cpp
  SOURCE += $(MDAQ_LINUX_DIR)/mdaq_interface.cpp
  SOURCE += $(MDAQ_LINUX_DIR)/mdaq_administration.cpp
+else
+ # When a library will used so the following header files
+ # has to be told Doxygen explicitly.
+ DOX_INPUT += $(DAQ_LINUX_DIR)/scu_fg_list.hpp
+ DOX_INPUT += $(DAQ_LINUX_DIR)/daq_eb_ram_buffer.hpp
+ DOX_INPUT += $(MDAQ_LINUX_DIR)/mdaq_interface.hpp
+ DOX_INPUT += $(MDAQ_LINUX_DIR)/mdaq_administration.hpp
 endif
 
 SOURCE += $(EB_SRC)/EtherboneConnection.cpp
@@ -50,6 +58,7 @@ LIBS += etherbone
 
 
 CALL_ARGS         = "tcp/scuxl0107"
+# CALL_ARGS         = "tcp/scuxl0035"
 REMOTE_CALL_ARGS  ?= "dev/wbm0"
 
 DEBUG = 1

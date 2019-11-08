@@ -281,16 +281,16 @@ vector<OPTION> CommandLine::c_optList =
          const bool verbose = static_cast<CommandLine*>(poParser)->m_verbose;
          for( auto& fg: pAllDaq->getFgList() )
          {
-            if( fg.getSocket() != fg.getSlot() || verbose )
+            if( !fg.isMIL() && !verbose )
+               continue;
+            if( verbose )
             {
-               if( verbose )
-               {
-                  cout << "Slot: " << fg.getSlot() <<
-                          ", Bits: " << fg.getOutputBits() <<
-                          ", Version: " << fg.getVersion() << ", ";
-               }
-               cout << "fg-" << fg.getSocket() << '-' << fg.getDevice() << endl;
+               cout << "Slot: " << fg.getSlot() <<
+                       ", Bits: " << fg.getOutputBits() <<
+                       ", Version: " << fg.getVersion() << ",\t" <<
+                       (fg.isMIL()? "MIL":"non MIL") << " device\t";
             }
+            cout << "fg-" << fg.getSocket() << '-' << fg.getDevice() << endl;
          }
          ::exit( EXIT_SUCCESS );
          return 0;

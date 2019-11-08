@@ -34,20 +34,73 @@ namespace Scu
 using namespace std;
 
 ///////////////////////////////////////////////////////////////////////////////
+/*!
+ * @brief Administrating of the list of all found function generators.
+ */
 class FgList
 {
+   /*!
+    * @brief Descriptor of a SCU function generator.
+    */
    class FgListItem: protected FG_MACRO_T
    {
    public:
-      uint getSocket( void )     const { return socket;     }
-      uint getSlot( void )       const { return socket & SCU_BUS_SLOT_MASK; }
-      uint getDevice( void )     const { return device;     }
-      uint getVersion( void )    const { return version;    }
-      uint getOutputBits( void ) const { return outputBits; }
+      /*!
+       * @brief Returns the socket number including the SCU-bus slot number
+       *        and the MIL-flags.
+       */
+      uint getSocket( void ) const
+      {
+         return socket;
+      }
+
+      /*!
+       * @brief Returns the SCU-bus slot number (range 1..12).
+       *        If the return value 0, so it is a MIL-device
+       *        connected in the DEV-bus socket of the SCU-host device.
+       */
+      uint getSlot( void ) const
+      {
+         return socket & SCU_BUS_SLOT_MASK;
+      }
+
+      /*!
+       * @brief Returns the MIL bus address of the device
+       *        or the device number when it's a non MIL function generator.
+       */
+      uint getDevice( void ) const
+      {
+         return device;
+      }
+
+      /*!
+       * @brief Returns the version number of the function generator.
+       */
+      uint getVersion( void ) const
+      {
+         return version;
+      }
+
+      /*!
+       * @brief Returns the data wide in bits of the function generator.
+       */
+      uint getOutputBits( void ) const
+      {
+         return outputBits;
+      }
+
+      /*!
+       * @brief Returns true when the function generator is a MIL- device
+       *        otherwise it's a non MIL device.
+       */
+      bool isMIL( void ) const
+      {
+         return getSocket() != getSlot();
+      }
    };
 
    using FG_LIST_T = vector<FgListItem>;
-   FG_LIST_T           m_list;
+   FG_LIST_T         m_list;
 
 public:
    constexpr static uint c_maxFgMacros = MAX_FG_MACROS;
@@ -56,29 +109,59 @@ public:
 
    virtual ~FgList( void );
 
+   /*!
+    * @brief Returns the iterator object for list items of type
+    *        FgList::FgListItem of list begin.
+    */
    const FG_LIST_T::iterator begin( void )
    {
       return m_list.begin();
    }
 
+   /*!
+    * @brief Returns the iterator object for list items of type
+    *        FgList::FgListItem of list end.
+    */
    const FG_LIST_T::iterator end( void )
    {
       return m_list.end();
    }
 
+   /*!
+    * @brief Returns true when the list istempty.
+    */
    const bool empty( void )
    {
       return m_list.empty();
    }
 
+   /*!
+    * @brief Returns the number of list items respectively
+    *        number of found function-generators including
+    *        MIL and non MIL.
+    */
    uint size( void ) const
    {
       return m_list.size();
    }
 
-   void scan( daq::EbRamAccess* );
+   /*!
+    * @brief Performs a scan respectively rescan by the LM32 for
+    *        all function generators including MIL and non MIL.
+    * @note This function is not implemented yet!
+    * @todo Implement this function!
+    * @param pEbAccess Pointer to the object of type daq::EbRamAccess
+    *        for communicating with LM32.
+    */
+   void scan( daq::EbRamAccess* pEbAccess );
 
-   void sync( daq::EbRamAccess* );
+   /*!
+    * @brief Synchronizing by the LM32 found function generators
+    *        with internal device list.
+    * @param pEbAccess Pointer to the object of type daq::EbRamAccess
+    *        for communicating with LM32.
+    */
+   void sync( daq::EbRamAccess* pEbAccess );
 };
 
 } // nemespace Scu

@@ -153,14 +153,18 @@ int main( int argc, const char** ppArgv )
 
 
       /*
-       * It's possible to list the connected function generators:
+       * It's possible to list the connected function generators.
+       * Note: Including MIL devices AND non MIL devices a la Karl Heinz Kaiser.
+       * To distinguish between MIL and non MIL the function "bool FgList::FgListItem::isMIL()"
+       * can be used. See in the following for-loop below.
        */
       cout << "Found function generators in: " << milDaqContainer.getScuDomainName() << endl;
       for( auto& fg: milDaqContainer.getFgList() )
       {
          cout << "Slot " << fg.getSlot() << ": Version: " << fg.getVersion()
               << ", Bits: " << fg.getOutputBits()
-              << ", fg-" << fg.getSocket() << '-' << fg.getDevice() << endl;
+              << ", fg-" << fg.getSocket() << '-' << fg.getDevice()
+              << "\tDAQ: " << (fg.isMIL()? "MIL" : "non MIL") << endl;
       }
       cout << "Press any key + Enter" << endl;
       int x;
@@ -177,6 +181,8 @@ int main( int argc, const char** ppArgv )
       /*
        * 1) We need a DAQ device which contains at least one or more
        *    MIL-DAQ compare objects.
+       *    The constructor argument is the socket number including
+       *    the SCU-bus slot number and MIL-Flags if its a real MIL device.
        *
        *                       fg-39-130
        *                          ||      */
@@ -186,6 +192,8 @@ int main( int argc, const char** ppArgv )
       /*
        * 2) We need a DAQ compare object containing the callback function
        *    MyCompare::onData
+       *    The constructor argument is the number of the MIL address (here)
+       *    or if it's a non MIL the the device number
        *
        *             fg-39-130
        *                   |||           */
@@ -193,12 +201,19 @@ int main( int argc, const char** ppArgv )
 
       /*
        * Making the DAQ device the compare channel known.
+       *
+       * NOTE: The destructor of DaqCompare respectively here the
+       *       destroctor of MyCompare will invoke automatically the counterpart
+       *       of the function below: MiLdaq::DaqDevice::unregisterDaqCompare().
        */
       myDevice.registerDaqCompare( &myCompare );
 
       /*
        * Making the DAQ-administrator respectively the DAQ device container
        * the DAQ device known.
+       *
+       * NOTE: The destructor of DaqDevice will invoke automatically the counterpart
+       *       of the function below: MiLdaq::DaqAdministration::unregisterDvice().
        */
       milDaqContainer.registerDevice( &myDevice );
 

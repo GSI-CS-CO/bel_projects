@@ -64,6 +64,7 @@ void FgList::sync( daq::EbRamAccess* pEbAccess )
    /*
     * Unfortunately we don't know how long the list is
     * therefore the maximum size will assumed.
+    * Deleting the old list if present.
     */
    m_list.clear();
 
