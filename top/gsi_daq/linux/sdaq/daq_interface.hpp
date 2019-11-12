@@ -25,6 +25,8 @@
 #ifndef _DAQ_INTERFACE_HPP
 #define _DAQ_INTERFACE_HPP
 
+#include <string.h>
+
 #include <daq_command_interface.h>
 #include <scu_bus_defines.h>
 #include <daq_ramBuffer.h>

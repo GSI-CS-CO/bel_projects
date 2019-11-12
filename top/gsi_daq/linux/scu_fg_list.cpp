@@ -23,7 +23,7 @@
  ******************************************************************************
  */
 #include <scu_fg_list.hpp>
-
+#include <assert.h>
 using namespace Scu;
 
 

@@ -48,7 +48,7 @@ DEFINES += CONFIG_SCU_USE_DDR3
 DEFINES += CONFIG_DAQ_TEST
 # DEFINES += NDEBUG
 DEFINES += CONFIG_DAQ_DEBUG
-DEFINES += VERSION=0.1
+DEFINES += VERSION=0.2
 DEFINES += GPSTR_DEFAULT_GNUPLOT_EXE=\"$(GNUPLOT_BIN)\"
 
  DEFINES += CONFIG_DDR3_NO_BURST_FUNCTIONS
@@ -61,10 +61,10 @@ INCLUDE_DIRS += $(DAQ_LINUX_DIR)/sdaq
 USE_STATIC_LIBS := 1
 
 ifdef USE_STATIC_LIBS
- ADDITIONAL_OBJECTS += $(THIRD_PARTY_DIR)/boost/1.54.0/lib/x86_64/libboost_system.a
+# ADDITIONAL_OBJECTS += $(THIRD_PARTY_DIR)/boost/1.54.0/lib/x86_64/libboost_system.a
  ADDITIONAL_OBJECTS += $(IP_CORE_DIR)/etherbone-core/api/.libs/libetherbone.a
 else
- LIBS += boost_system
+# LIBS += boost_system
  LIBS += etherbone
 endif
 
@@ -78,7 +78,7 @@ HOST ?= $(SCU_URL)
 
 #CALL_ARGS         ?=  -h
 #CALL_ARGS         ?= $(HOST) --continue 3 1
-#CALL_ARGS         ?= $(HOST) -vs
+#CALL_ARGS         ?= $(HOST) -vS
 #CALL_ARGS         ?= $(HOST) 3 -l5 1 3 2 9 3 9 4 -l7 -e
 #CALL_ARGS         ?= $(HOST)  -eC 3 1 3 2 3 3 3 4 9 1 9 2 9 3 9 4
 #CALL_ARGS         ?= $(HOST) -tEC  3 1
@@ -88,12 +88,13 @@ HOST ?= $(SCU_URL)
 #CALL_ARGS         ?=  $(HOST) -G /usr/bin/gnuplot -PrzvC 3 1
 
 #CALL_ARGS         ?=  $(HOST) -C=100US 3 1 3 2
-CALL_ARGS         ?=  $(HOST) -C=100US 3 2
+#CALL_ARGS         ?=  $(HOST) -C=100US 3 2
 #CALL_ARGS         ?=  $(HOST) -Pr 3 2
 #CALL_ARGS         ?=  $(HOST) -PrC 3 1 3 2 9 1 9 2
 #CALL_ARGS         ?= $(HOST) -n
-#CALL_ARGS         ?= -n
 
+#CALL_ARGS         ?= -n
+CALL_ARGS         ?= -vV
 REMOTE_CALL_ARGS  ?= "dev/wbm0"
 
 

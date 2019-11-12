@@ -3,15 +3,22 @@
  *
  *  Created on: Feb 14, 2013
  *      Author: Vitaliy Rapp
- *      Revised: 2018 by Ulrich Becker
+ *      Revised: 2019 by Ulrich Becker
  */
 #pragma once
 
 #include <etherbone.h>
 #include <utility>      // std::pair, std::make_pair
 #include <string>
-#include <boost/interprocess/sync/named_mutex.hpp>
-#include <boost/interprocess/sync/scoped_lock.hpp>
+
+#define CONFIG_EB_USE_NORMAL_MUTEX
+
+#ifdef CONFIG_EB_USE_NORMAL_MUTEX
+  #include <mutex>
+#else
+  #include <boost/interprocess/sync/named_mutex.hpp>
+  #include <boost/interprocess/sync/scoped_lock.hpp>
+#endif
 
 #include "feSupport/scu/etherbone/Constants.hpp"
 
@@ -26,15 +33,22 @@ namespace FeSupport {
      * classes.
      */
     namespace Etherbone {
+#ifndef CONFIG_EB_USE_NORMAL_MUTEX
       namespace IPC = boost::interprocess;
+#endif
       /*!
        * \brief Connection abstraction for an etherbone bus.
        */
       class EtherboneConnection {
         public:
 
-           typedef IPC::named_mutex MUTEX_T;
-
+       #ifdef CONFIG_EB_USE_NORMAL_MUTEX
+          using MUTEX_T        = std::mutex;
+          using SCOPED_MUTEX_T = std::lock_guard<MUTEX_T>;
+       #else
+          using MUTEX_T        = IPC::named_mutex;
+          using SCOPED_MUTEX_T = IPC::scoped_lock<MUTEX_T>;
+       #endif
           /*!
            * \brief Basic constuctor
            */
@@ -45,12 +59,13 @@ namespace FeSupport {
            */
           virtual ~EtherboneConnection();
 
+#ifndef CONFIG_EB_USE_NORMAL_MUTEX
           /*!
            * \brief check if named mutex is locked
            * @param true: unlock mutex, false: don't
            */
           bool checkMutex(bool unlock=false);
-
+#endif
           /*!
            * \brief Connects to the etherbone bus
            */

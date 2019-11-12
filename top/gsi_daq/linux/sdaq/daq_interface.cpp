@@ -24,6 +24,7 @@
  */
 
 #define CONFIG_SCU_DAQ_INTEGRATION
+#include <unistd.h>
 #include <scu_shared_mem.h>
 #include <sys/select.h>
 #include <iostream>

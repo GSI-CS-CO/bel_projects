@@ -26,8 +26,10 @@
 #define _DAQ_CALCULATIONS_HPP
 
 #include <time.h>
+#include <sys/time.h>
 #include <stdint.h>
 #include <errno.h>
+#include <assert.h>
 #include <system_error>
 
 namespace Scu
@@ -58,7 +60,7 @@ using USEC_T = uint64_t;
  * @brief Converts nanoseconds to seconds.
  */
 template< typename FT = double >
-FT nanoSecsToSecs( uint64_t nanoSecs )
+FT nanoSecsToSecs( const uint64_t nanoSecs )
 {
    return nanoSecs / static_cast<FT>(NANOSECS_PER_SEC);
 }
