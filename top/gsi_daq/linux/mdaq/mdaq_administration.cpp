@@ -59,6 +59,9 @@ DaqDevice::DaqDevice( uint location )
  */
 DaqDevice::~DaqDevice( void )
 {
+   for( auto& i: m_channelPtrList )
+      i->m_pParent = nullptr;
+
    if( m_pParent != nullptr )
    {
       m_pParent->unregisterDevice( this );
@@ -144,6 +147,8 @@ DaqAdministration::DaqAdministration( daq::EbRamAccess* poEbAccess )
  */
 DaqAdministration::~DaqAdministration( void )
 {
+   for( auto& i: m_devicePtrList )
+      i->m_pParent = nullptr;
 }
 
 /*-----------------------------------------------------------------------------
