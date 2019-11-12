@@ -24,14 +24,32 @@ PATH:=$(PWD)/toolchain/bin:$(PATH)
 
 # This is mainly used to sort QSF files. After sorting it adds and deletes a "GIT marker" which will mark the file as changed.
 # Additionally all empty lines will be removed.
-# Example usage: 
-#   $(call sort_file, "./syn/gsi_vetar2a/ee_butis/vetar2a.qsf")
+# Example usage:
+#   $(call sort_file, $(CHECK_SCU4))
+CHECK_SCU2             = ./syn/gsi_scu/control2/scu_control
+CHECK_SCU3             = ./syn/gsi_scu/control3/scu_control
+CHECK_VETAR2A          = ./syn/gsi_vetar2a/wr_core_demo/vetar2a
+CHECK_VETAR2A_EE_BUTIS = ./syn/gsi_vetar2a/ee_butis/vetar2a
+CHECK_PEXARRIA5        = ./syn/gsi_pexarria5/control/pci_control
+CHECK_EXPLODER5        = ./syn/gsi_exploder5/exploder5_csco_tr/exploder5_csco_tr
+CHECK_PMC              = ./syn/gsi_pmc/control/pci_pmc
+CHECK_MICROTCA         = ./syn/gsi_microtca/control
+CHECK_PEXP             = ./syn/gsi_pexp/control/pexp_control
+CHECK_SCU4             = ./syn/gsi_scu/control4/scu_control
+CHECK_A10GX            = ./syn/gsi_a10gx_pcie/control/pci_control
+
 define sort_file
-	sort $(1) >> temp_sorted
-	mv temp_sorted $(1)
-	echo "GIT_MARKER" >> $(1)
-	sed -i 's/GIT_MARKER//g' $(1)
-	sed -i '/^$$/d' $(1)
+	sort $(1).qsf >> temp_sorted
+	mv temp_sorted $(1).qsf
+	echo "GIT_MARKER" >> $(1).qsf
+	sed -i 's/GIT_MARKER//g' $(1).qsf
+	sed -i '/^$$/d' $(1).qsf
+endef
+
+define check_timing
+	@ls -l $(1).sta.rpt
+	@cat $(1).sta.rpt | grep "Timing requirements not met" && exit 1 || { exit 0; }
+	@echo "Success! All Timing requirements were met!"
 endef
 
 all:		etherbone tools sdbfs toolchain firmware driver
@@ -153,8 +171,11 @@ scu2:		firmware
 	$(MAKE) -C syn/gsi_scu/control2 all
 
 scu2-sort:
-	$(call sort_file, "./syn/gsi_scu/control2/scu_control.qsf")
-  
+	$(call sort_file, $(CHECK_SCU2))
+
+scu2-check:
+	$(call check_timing, $(CHECK_SCU2))
+
 scu2-clean::
 	$(MAKE) -C syn/gsi_scu/control2 clean
 
@@ -162,31 +183,52 @@ scu3:		firmware
 	$(MAKE) -C syn/gsi_scu/control3 all
 
 scu3-sort:
-	$(call sort_file, "./syn/gsi_scu/control3/scu_control.qsf")
-	
+	$(call sort_file, $(CHECK_SCU3))
+
+scu3-check:
+	$(call check_timing, $(CHECK_SCU3))
+
 scu3-clean::
 	$(MAKE) -C syn/gsi_scu/control3 clean
 
-vetar:		firmware
-	$(MAKE) -C syn/gsi_vetar/wr_core_demo all
+scu4::
+	$(MAKE) -C syn/gsi_scu/control4 PATH=$(PWD)/toolchain/bin:$(PATH) all
+
+scu4-sort:
+	$(call sort_file, $(CHECK_SCU4))
+
+scu4-check:
+	$(call check_timing, $(CHECK_SCU4))
+
+scu4-clean::
+	$(MAKE) -C syn/gsi_scu/control4 PATH=$(PWD)/toolchain/bin:$(PATH) clean
+
+vetar::		firmware
+	$(MAKE) -C syn/gsi_vetar/wr_core_demo PATH=$(PWD)/toolchain/bin:$(PATH) all
 
 vetar-clean::
 	$(MAKE) -C syn/gsi_vetar/wr_core_demo clean
 
 vetar2a:	firmware
 	$(MAKE) -C syn/gsi_vetar2a/wr_core_demo all
-	
+
 vetar2a-sort:
-	$(call sort_file, "./syn/gsi_vetar2a/wr_core_demo/vetar2a.qsf")
+	$(call sort_file, $(CHECK_VETAR2A))
+
+vetar2a-check:
+	$(call check_timing, $(CHECK_VETAR2A))
 
 vetar2a-clean::
 	$(MAKE) -C syn/gsi_vetar2a/wr_core_demo clean
 
 vetar2a-ee-butis:	firmware
 	$(MAKE) -C syn/gsi_vetar2a/ee_butis all
-	
+
 vetar2a-ee-butis-sort:
-	$(call sort_file, "./syn/gsi_vetar2a/ee_butis/vetar2a.qsf")
+	$(call sort_file, $(CHECK_VETAR2A_EE_BUTIS))
+
+vetar2a-ee-butis-check:
+	$(call check_timing, $(CHECK_VETAR2A_EE_BUTIS))
 
 vetar2a-ee-butis-clean::
 	$(MAKE) -C syn/gsi_vetar2a/ee_butis clean
@@ -201,31 +243,46 @@ pexarria5:	firmware
 	$(MAKE) -C syn/gsi_pexarria5/control all
 
 pexarria5-sort:
-	$(call sort_file, "./syn/gsi_pexarria5/control/pci_control.qsf")
+	$(call sort_file, $(CHECK_PEXARRIA5))
+
+pexarria5-check:
+	$(call check_timing, $(CHECK_PEXARRIA5))
 
 pexarria5-clean::
 	$(MAKE) -C syn/gsi_pexarria5/control clean
 
-pexp:	firmware
-	$(MAKE) -C syn/gsi_pexp/control all
+pexarria10::	firmware
+	$(MAKE) -C syn/gsi_pexarria10/control PATH=$(PWD)/toolchain/bin:$(PATH) all
 
-pexp-clean::
-	$(MAKE) -C syn/gsi_pexp/control clean
+pexarria10-clean::
+	$(MAKE) -C syn/gsi_pexarria10/control PATH=$(PWD)/toolchain/bin:$(PATH) clean
 
-ftm:	firmware
-	$(MAKE) -C syn/gsi_pexarria5/ftm all
-	
-ftm-sort:
-	$(call sort_file, "./syn/gsi_pexarria5/ftm/ftm.qsf")
+pexarria10_soc::	firmware
+	$(MAKE) -C syn/gsi_pexarria10_soc/control PATH=$(PWD)/toolchain/bin:$(PATH) all
 
-ftm-clean::
-	$(MAKE) -C syn/gsi_pexarria5/ftm clean
+pexarria10_soc-clean::
+	$(MAKE) -C syn/gsi_pexarria10_soc/control PATH=$(PWD)/toolchain/bin:$(PATH) clean
 
-microtca:	firmware
-	$(MAKE) -C syn/gsi_microtca/control all
-	
+a10gx_pcie::	firmware
+	$(MAKE) -C syn/gsi_a10gx_pcie/control PATH=$(PWD)/toolchain/bin:$(PATH) all
+
+a10gx_pcie-sort:
+	$(call sort_file, $(CHECK_A10GX))
+
+a10gx_pcie-check:
+	$(call check_timing, $(CHECK_A10GX))
+
+a10gx_pcie-clean::
+	$(MAKE) -C syn/gsi_a10gx_pcie/control PATH=$(PWD)/toolchain/bin:$(PATH) clean
+
+microtca::	firmware
+	$(MAKE) -C syn/gsi_microtca/control PATH=$(PWD)/toolchain/bin:$(PATH) all
+
 microtca-sort:
-	$(call sort_file, "./syn/gsi_microtca/control/microtca_control.qsf")
+	$(call sort_file, $(CHECK_MICROTCA))
+
+microtca-check:
+	$(call check_timing, $(CHECK_MICROTCA))
 
 microtca-clean::
 	$(MAKE) -C syn/gsi_microtca/control clean
@@ -234,7 +291,10 @@ exploder5:	firmware
 	$(MAKE) -C syn/gsi_exploder5/exploder5_csco_tr all
 
 exploder5-sort:
-	$(call sort_file, "./syn/gsi_exploder5/exploder5_csco_tr/exploder5_csco_tr.qsf")
+	$(call sort_file, $(CHECK_EXPLODER5))
+
+exploder5-check:
+	$(call check_timing, $(CHECK_EXPLODER5))
 
 exploder5-clean::
 	$(MAKE) -C syn/gsi_exploder5/exploder5_csco_tr clean
@@ -265,15 +325,24 @@ sio3-clean::
 
 pmc:	firmware
 	$(MAKE) -C syn/gsi_pmc/control all
-	
+
 pmc-sort:
-	$(call sort_file, "./syn/gsi_pmc/control/pci_pmc.qsf")
+	$(call sort_file, $(CHECK_PMC))
+
+pmc-check:
+	$(call check_timing, $(CHECK_PMC))
 
 pmc-clean::
 	$(MAKE) -C syn/gsi_pmc/control clean
 
 pexp:	firmware
 	$(MAKE) -C syn/gsi_pexp/control all
+
+pexp-sort:
+	$(call sort_file, $(CHECK_PEXP))
+
+pexp-check:
+	$(call check_timing, $(CHECK_PEXP))
 
 pexp-clean::
 	$(MAKE) -C syn/gsi_pexp/control clean

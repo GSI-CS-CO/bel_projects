@@ -39,7 +39,7 @@ endif
 .PRECIOUS: $(TARGET).bin
 
 include $(INCPATH)/build_lm32.mk
- 
+
 
 all:	$(TARGET).mif $(TARGET)_stub.mif $(TARGET).sof $(TARGET).jic $(TARGET).rpd
 
@@ -59,7 +59,7 @@ clean::
 	rm -rf db incremental_db PLLJ_PLLSPE_INFO.txt
 	rm -f $(TARGET).*.rpt $(TARGET).*.summary $(TARGET).map* $(TARGET).fit.* $(TARGET).pin $(TARGET).jdi $(TARGET)*.qdf $(TARGET).done $(TARGET).qws
 	rm -f $(TARGET).rpd $(TARGET).jic $(TARGET).pof $(TARGET).sof $(TARGET).dep $(TARGET).elf $(TARGET).o *.mif *.elf
-	rm -f ram.ld buildid.c $(TARGET)_shared_mmap.h 
+	rm -f ram.ld buildid.c $(TARGET)_shared_mmap.h
 	rm -f project project.tcl files.tcl
 
 prog:
@@ -80,7 +80,7 @@ prog:
 %.mif:	%.bin
 	$(GENRAMMIF) $< $(RAM_SIZE) > $@
 
-%.sof:	%.qsf %.mif $(PATHPKG)/ramsize_pkg.vhd 
+%.sof:	%.qsf %.mif $(PATHPKG)/ramsize_pkg.vhd
 	mv $*.qsf $*.qsf-tmp; sort $*.qsf-tmp > $*.qsf; rm $*.qsf-tmp
 	$(HDLMAKE) makefile -f hdlmake.mk ; make -f hdlmake.mk project
 	find $(TOP) -name Manifest.py > $*.dep
@@ -96,10 +96,26 @@ prog:
 	mv $@.tmp $@
 
 %.jic:	%.sof %.opt
+ifndef SKIP_JIC
 	$(QUARTUS_BIN)/quartus_cpf -c -o $*.opt -d $(FLASH) -s $(DEVICE) $< $@
+endif
+ifdef SKIP_JIC
+	echo "Skipping JIC file..."
+endif
 
 %.pof:	%.sof %.opt
+ifndef CFI
+	echo "Building FLASH..."
 	$(QUARTUS_BIN)/quartus_cpf -c -o $*.opt -d $(FLASH) -m $(SPI_LANES) $< $@
+endif
+ifdef CFI
+ifeq ($(SKIP_CFI), yes)
+		echo "Skipping CFI..."
+else
+		echo "Building CFI..."
+		$(QUARTUS_BIN)/quartus_cpf -c -o $*.opt -d $(CFI_NAME) -m $(CFI_LANES) $< $@
+endif
+endif
 
 %.rpd:	%.pof %.opt
 	$(QUARTUS_BIN)/quartus_cpf -c -o $*.opt $< $@

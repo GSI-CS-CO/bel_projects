@@ -13,6 +13,7 @@ modules = {
     "trans_pll",
     "modulbus",
     "chopper",
+    "cpri_phy_reconf",
     "cfi_flash",
     "ddr3",
     "lpc_uart",
@@ -44,6 +45,7 @@ modules = {
     "watchdog",
     "mbox",
     "prioq2",
+    "stub_pll",
     "temp_sens",
   ]
 }

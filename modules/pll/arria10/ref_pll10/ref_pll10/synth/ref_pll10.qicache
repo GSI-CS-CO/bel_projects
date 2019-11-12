@@ -1,0 +1,9 @@
+<?xml version='1.0' encoding='us-ascii'?>
+<qsys_generation_info>
+<qsys_file path="/home/alex/workspace/projects/r13/bel_projects/modules/pll/arria10/ref_pll10/ref_pll10.qsys" />
+<gen_dir path="/home/alex/workspace/projects/r13/bel_projects/modules/pll/arria10/ref_pll10/ref_pll10/" />
+<user_regen_policy value="Never Regenerate Existing IP" />
+<actual_regen_policy value="Never Regenerate Existing IP" />
+<gen_action value="IP Generation Skipped" />
+<gen_status value="IP Generation Succeeded" />
+</qsys_generation_info>

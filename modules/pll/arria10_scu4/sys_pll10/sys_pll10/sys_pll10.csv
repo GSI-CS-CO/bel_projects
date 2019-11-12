@@ -1,0 +1,18 @@
+# system info sys_pll10 on 2019.02.13.11:05:12
+system_info:
+name,value
+DEVICE,10AX027E3F29E2SG
+DEVICE_FAMILY,Arria 10
+GENERATION_ID,1550052310
+#
+#
+# Files generated for sys_pll10 on 2019.02.13.11:05:12
+files:
+filepath,kind,attributes,module,is_top
+sim/sys_pll10.v,VERILOG,CONTAINS_INLINE_CONFIGURATION,sys_pll10,true
+altera_iopll_181/sim/sys_pll10_altera_iopll_181_j3py53y.vo,VERILOG,,sys_pll10_altera_iopll_181_j3py53y,false
+#
+# Map from instance-path to kind of module
+instances:
+instancePath,module
+sys_pll10.iopll_0,sys_pll10_altera_iopll_181_j3py53y
