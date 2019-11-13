@@ -31,7 +31,7 @@ while [ "$counter" -le 8 ]; do
   dword_set="0xffffffff"
   dword_get="0x00000000"
   hex_addr=$(echo $(($base_addr + $hex_offset)))
-  hex_addr=$(echo 16o"${hex_addr}"p |dc)
+  hex_addr=$(echo 16o"${hex_addr}"p | dc)
 
   # get random hex value, cut off spaces and translate upper to lower chars
   dword_set=$(hexdump -n 4 -e '4/4 "%08X" 1 "\n"' /dev/urandom | awk '{$1=$1};1' | tr '[:upper:]' '[:lower:]')
