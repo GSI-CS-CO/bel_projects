@@ -7,7 +7,7 @@ base_addr="0x7fff0000"
 # check if device is available
 test -e /$dev
 if [ $? -ne 0 ]; then
-  echo "Error: Device $dev does not exsist!"
+  echo "Error: Device $dev does not exist!"
   exit 1
 fi
 
