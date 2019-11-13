@@ -8,8 +8,12 @@
 #define DEBUG
 
 
-/*  for every found slave the slotnumber is added to the slave array
-    e.g. [2,3] means slaves in slot 2 and 3
+/** @brief for every found slave the slotnumber is added to the slave array
+*   e.g. [2,3] means slaves in slot 2 and 3
+*   @param bus_addr wishbone address of the scu bus
+*   @param system_addr CID system address
+*   @param group_addr CID group address
+*   @param slaves list with found devices
 */
 void probe_scu_bus(volatile unsigned short* bus_addr, unsigned short system_addr, unsigned short group_addr, int* slaves) {
   int slot;
@@ -23,6 +27,11 @@ void probe_scu_bus(volatile unsigned short* bus_addr, unsigned short system_addr
   *slaves = 0; // end of device list 
 }
 
+/** @brief read temperature from all temp sensors on the bus
+ *  @param bus the 1Wire controller can have multiple busses, starts at 0
+ *  @param id the 1Wire id of the device
+ *  @param temp the temperatur value of the 1Wire device
+ */
 void ReadTempDevices(int bus, uint64_t *id, uint32_t *temp) {
   struct w1_dev *d;
   int i;

@@ -20,10 +20,10 @@ LIBS        ?= -L $(EB)/.libs -Wl,-rpath,$(PREFIX)/lib -letherbone -lm
 all: $(TARGETS)
 
 wrunipz-ctl: wrunipz-ctl.c
-	$(CC) $(CFLAGS) wrunipz-api.c -o wrunipz-ctl wrunipz-ctl.c $(LIBS)
+	$(CC) $(CFLAGS) wrunipz-api.c -o wrunipz-ctl wrunipz-ctl.c ../../b2b-test/b2btest-x86/b2btest-api.c $(LIBS)
 
 wrunipz-load: wrunipz-load.c
-	$(CC) $(CFLAGS) wrunipz-api.c -o wrunipz-load wrunipz-load.c $(LIBS)
+	$(CC) $(CFLAGS) wrunipz-api.c -o wrunipz-load wrunipz-load.c ../../b2b-test/b2btest-x86/b2btest-api.c $(LIBS)
 
 clean:
 	rm -f *.o $(TARGETS)
