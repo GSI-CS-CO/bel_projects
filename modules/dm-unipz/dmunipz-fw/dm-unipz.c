@@ -3,7 +3,7 @@
  *
  *  created : 2017
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 12-Aug-2019
+ *  version : 04-Nov-2019
  *
  *  lm32 program for gateway between UNILAC Pulszentrale and FAIR-style Data Master
  * 
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 25-April-2015
  ********************************************************************************************/
-#define DMUNIPZ_FW_VERSION 0x000505                                     // make this consistent with makefile
+#define DMUNIPZ_FW_VERSION 0x000507                                     // make this consistent with makefile
 
 // standard includes
 #include <stdio.h>
@@ -265,6 +265,7 @@ uint32_t dmPrepCmdCommon(uint32_t blk, uint32_t prio, uint32_t checkEmptyQ, uint
   
   uint32_t extBaseAddr;                                        // external base address of dm; seen from 'world' perspective
 
+  int      i;
   uint32_t status;
 
   if (prio > 2) {
@@ -343,6 +344,7 @@ uint32_t dmPrepCmdCommon(uint32_t blk, uint32_t prio, uint32_t checkEmptyQ, uint
   DBPRINT3("dm-unipz: prep cmd validTSLo 0x%08x\n", cmdValidTSLo);
   
   // assign prepared values for later use;
+  for (i=0; i<_T_CMD_SIZE_; i++) dmData[blk].cmdData[i] = 0x0;                        // init command data  
   dmData[blk].hash                           = hash;
   dmData[blk].cmdAddr                        = cmdAddr;
   dmData[blk].cmdData[(T_CMD_TIME >> 2) + 0] = cmdValidTSHi;  
@@ -410,7 +412,7 @@ uint32_t dmPrepCmdFlush(uint32_t blk) // prepare flush CMD for DM - need to call
   cmdAction       |= ((1 << PRIO_LO) & ACT_FLUSH_PRIO_MSK) << ACT_FLUSH_PRIO_POS; // flush lo prio q
 
   dmData[blk].cmdData[T_CMD_ACT >> 2]            = cmdAction;
-
+  dmData[blk].cmdData[T_CMD_FLUSH_OVR >> 2]      = 0x0;
   
   return COMMON_STATUS_OK;  
 } //cmdPrepCmdFlush
@@ -479,7 +481,7 @@ void init() // typical init for lm32
 } // init
 
 
-void initSharedMem() // determine address and clear shared mem
+void initSharedMem(uint32_t *reqState) // determine address and clear shared mem
 {
   uint32_t idx;
   const uint32_t c_Max_Rams = 10;
@@ -514,11 +516,20 @@ void initSharedMem() // determine address and clear shared mem
   pSharedTkTimeout    = (uint32_t *)(pShared + (DMUNIPZ_SHARED_TKTIMEOUT >> 2));
   
   // find address of CPU from external perspective
+  cpuRamExternal = 0x0;
   idx = 0;
-  find_device_multi(&found_clu, &idx, 1, GSI, LM32_CB_CLUSTER);	
+  find_device_multi(&found_clu, &idx, 1, GSI, LM32_CB_CLUSTER);
+  if (idx == 0) {
+    *reqState = COMMON_STATE_FATAL;
+    DBPRINT1("dm-unipz: fatal error - did not find LM32-CB-CLUSTER!\n");
+  } // if idx
   idx = 0;
   find_device_multi_in_subtree(&found_clu, &found_sdb[0], &idx, c_Max_Rams, GSI, LM32_RAM_USER);
-  if(idx >= cpuId) cpuRamExternal = (uint32_t *)(getSdbAdr(&found_sdb[cpuId]) & 0x7FFFFFFF); // CPU sees the 'world' under 0x8..., remove that bit to get host bridge perspective
+  if (idx == 0) {
+    *reqState = COMMON_STATE_FATAL;
+    DBPRINT1("dm-unipz: fatal error - did not find THIS CPU!\n");
+  } // if idx
+  else cpuRamExternal = (uint32_t *)(getSdbAdr(&found_sdb[cpuId]) & 0x7FFFFFFF); // CPU sees the 'world' under 0x8..., remove that bit to get host bridge perspective
 
   DBPRINT2("dm-unipz: CPU RAM External 0x%8x, begin shared 0x%08x\n", cpuRamExternal, SHARED_OFFS);
 
@@ -784,13 +795,7 @@ uint32_t extern_entryActionConfigured()
     return status;
   } 
 
-  // test if DM is reachable by reading from ECA input
-  if ((status = fwlib_ebmReadN(2000, COMMON_ECA_ADDRESS, &dDummy, 1)) != COMMON_STATUS_OK) {
-    DBPRINT1("dm-unipz: ERROR - Data Master unreachable! %u\n", (unsigned int)status);
-    return status;
-  }
-
-  DBPRINT1("dm-unipz: connection to DM ok - 0x%08x\n", (unsigned int)dDummy);
+  // dropped test if DM is reachable by reading from ECA input: no ECA at DM
 
   // reset MIL piggy and wait
   if ((status = resetPiggyDevMil(pMilPiggy))  != MIL_STAT_OK) {
@@ -1218,7 +1223,7 @@ int main(void) {
   statusTransfer = 0;
 
   init();                                                                   // initialize stuff for lm32
-  initSharedMem();                                                          // initialize shared memory
+  initSharedMem(&reqState);                                                 // initialize shared memory
   fwlib_init((uint32_t *)_startshared, cpuRamExternal, SHARED_OFFS, "dm-unipz", DMUNIPZ_FW_VERSION); // init common stuff
   fwlib_clearDiag();                                                        // clear common diagnostic data
   
