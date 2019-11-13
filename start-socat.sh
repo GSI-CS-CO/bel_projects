@@ -1,12 +1,13 @@
 #/bin/sh
 ###############################################################################
 ##                                                                           ##
-##  Shelscript to activate / deactivate the port forwarder "socat" in a SCU  ##
+## Shellscript to activate / deactivate the port forwarder "socat" in a SCU  ##
 ##                                                                           ##
 ##---------------------------------------------------------------------------##
-## File:    start-socat.sh                                                   ##
-## Author:  Ulrich Becker                                                    ##
-## Date:    13.11.2015                                                       ##
+## File:      start-socat.sh                                                 ##
+## Author:    Ulrich Becker                                                  ##
+## Date:      13.11.2015                                                     ##
+## Copyright: GSI Helmholtz Centre for Heavy Ion Research GmbH               ##
 ###############################################################################
 ESC_ERROR="\e[1m\e[31m"
 ESC_NORMAL="\e[0m"
@@ -30,7 +31,7 @@ checkTarget()
 if [ "$1" == "-h" ]
 then
    echo "Tool for activating or deactivating the port forwarder \"socat\" to the" \
-        "whisbone master \"${DEV}\" in a SCU"
+        " whisbone master \"${DEV}\" in a SCU"
    echo "Usage $0 [-k] <URL of target SCU>"
    echo "Option:"
    echo "-k  Deactivating of socat"
@@ -47,7 +48,7 @@ fi
 
 checkTarget $1
 
-ssh root@${1} "/usr/bin/socat tcp-listen:$PORT,reuseaddr,fork file:$DEV </dev/null &"
+ssh root@${1} "$(which socat) tcp-listen:$PORT,reuseaddr,fork file:$DEV </dev/null &"
 [ "$?" == "0" ] && echo "socat started..."
 exit $?
 
