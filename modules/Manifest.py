@@ -1,7 +1,4 @@
-files = [
-    "led_blink.vhd",
-    "trans_pkg.vhd"
-]
+files = ["led_blink.vhd", "trans_pkg.vhd"]
 
 modules = {
     "local": [
@@ -45,6 +42,6 @@ modules = {
         "mbox",
         "prioq2",
         "temp_sens",
-        "beam_dump"
+        "beam_dump",
     ]
 }
