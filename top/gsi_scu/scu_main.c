@@ -1633,16 +1633,11 @@ STATIC void dev_sio_bus_handler( register TaskType* pThis, const bool isScuBus )
             if( isScuBus )
             {
                status = scub_get_task_mil( g_pScub_base, pThis->slave_nr,
-                                           //getMilTaskNumber( pThis, i ),
-                                           milTaskNo,
-                                           &actAdcValue );
+                                           milTaskNo, &actAdcValue );
             }
             else
             {
-               status = get_task_mil( g_pScu_mil_base,
-                                      //getMilTaskNumber( pThis, i ),
-                                      milTaskNo,
-                                      &actAdcValue );
+               status = get_task_mil( g_pScu_mil_base, milTaskNo, &actAdcValue );
             }
 
             if( status == RCV_TASK_BSY )
