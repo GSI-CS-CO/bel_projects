@@ -163,6 +163,8 @@ STATIC inline void sendSignal( const SIGNAL_T sig, const unsigned int channel )
  */
 STATIC inline FG_MACRO_T getFgMacro( const unsigned int channel )
 {
+   FG_ASSERT( channel < ARRAY_SIZE( g_shared.fg_regs ) );
+   FG_ASSERT( g_shared.fg_regs[channel].macro_number < ARRAY_SIZE( g_shared.fg_macros ));
    return g_shared.fg_macros[g_shared.fg_regs[channel].macro_number];
 }
 
@@ -1113,12 +1115,26 @@ STATIC TaskType g_aTasks[] =
   { ST_WAIT, 0, 0, 0, ALWAYS, 0, 0, {{0, 0, 0}}, sw_irq_handler  }
 };
 
+STATIC_ASSERT( TASKMAX >= (ARRAY_SIZE( g_aTasks ) + MAX_FG_CHANNELS-1 + TASKMIN));
+
 /*! ---------------------------------------------------------------------------
- * @brief Returns the task-number of the given task object.
+ * @brief Returns the task-id-number of the given task object.
+ * @param pThis Pointer to the currently running system task.
  */
-STATIC unsigned int getId( const TaskType* pThis )
+inline STATIC unsigned int getId( const TaskType* pThis )
 {
    return (((uint8_t*)pThis) - ((uint8_t*)g_aTasks)) / sizeof( TaskType );
+}
+
+/*! ---------------------------------------------------------------------------
+ * @brief Returns the task number of a mil device.
+ * @param pThis Pointer to the currently running system task.
+ * @param channel Channel number
+ */
+inline STATIC unsigned char getMilTaskNumber( const TaskType* pThis,
+                                              const unsigned int channel )
+{
+   return TASKMIN + channel + getId( pThis );
 }
 
 /*! ---------------------------------------------------------------------------
@@ -1225,7 +1241,7 @@ STATIC void sw_irq_handler( register TaskType* pThis UNUSED )
       return; /* Nothing to do.. */
 
    const MSI_T m = remove_msg( &g_aMsg_buf[0], SWI );
-   if( m.adr != 0x10 )
+   if( m.adr != 0x10 ) //TODO From where the fuck comes 0x10!!!
       return;
 
    const unsigned int code  = m.msg >> BIT_SIZEOF( uint16_t );
@@ -1344,13 +1360,13 @@ STATIC void scu_bus_handler( register TaskType* pThis UNUSED )
    int dummy;
    if( (slv_int_act_reg & FG1_IRQ) != 0 )
    { //FG irq?
-      handle(slave_nr, FG1_BASE, 0, &dummy);
+      handle( slave_nr, FG1_BASE, 0, &dummy );
       slave_acks |= FG1_IRQ;
    }
 
    if( (slv_int_act_reg & FG2_IRQ) != 0 )
    { //FG irq?
-      handle(slave_nr, FG2_BASE, 0, &dummy);
+      handle( slave_nr, FG2_BASE, 0, &dummy );
       slave_acks |= FG2_IRQ;
    }
 
@@ -1420,6 +1436,9 @@ STATIC void printTimeoutMessage( register TaskType* pThis, const bool isScuBus )
             pThis->i );
 }
 
+STATIC_ASSERT( MAX_FG_CHANNELS == ARRAY_SIZE( g_aTasks[0].aFgChannels ) );
+STATIC_ASSERT( MAX_FG_CHANNELS == ARRAY_SIZE( g_aFgChannels ));
+
 /*! ---------------------------------------------------------------------------
  * @brief Task-function for handling all FGs and MIL-DAQs
  * @dotfile scu_main.gv
@@ -1427,7 +1446,6 @@ STATIC void printTimeoutMessage( register TaskType* pThis, const bool isScuBus )
 STATIC void dev_sio_bus_handler( register TaskType* pThis, const bool isScuBus )
 {
    unsigned int i;
-   uint16_t socket, dev;
    int status = OKAY;
 
    switch( pThis->state )
@@ -1444,7 +1462,7 @@ STATIC void dev_sio_bus_handler( register TaskType* pThis, const bool isScuBus )
 
          const MSI_T m = remove_msg( &g_aMsg_buf[0], isScuBus? DEVSIO : DEVBUS );
          pThis->slave_nr = isScuBus? (m.msg + 1) : 0;
-         pThis->timestamp1 = getSysTime();
+         pThis->timestamp1 = getSysTime() + INTERVAL_200US;
          FSM_TRANSITION( ST_PREPARE, label='Massage received' );
          break; //yield
       } // end case ST_WAIT
@@ -1452,7 +1470,7 @@ STATIC void dev_sio_bus_handler( register TaskType* pThis, const bool isScuBus )
       case ST_PREPARE:
       {
          // wait for 200 us
-         if( getSysTime() < (pThis->timestamp1 + INTERVAL_200US) )
+         if( getSysTime() < pThis->timestamp1 )
          {
          #ifdef __DOCFSM__
             FSM_TRANSITION( ST_PREPARE, label='Interval not expired' );
@@ -1462,26 +1480,24 @@ STATIC void dev_sio_bus_handler( register TaskType* pThis, const bool isScuBus )
          /* poll all pending regs on the dev bus; non blocking read operation */
          for( i = 0; i < MAX_FG_CHANNELS; i++ )
          {
-            socket = getSocket( i );
-            dev    = getDevice( i );
+            const unsigned int socket     = getSocket( i );
+            const unsigned int devAndMode = getDevice( i ) | FC_IRQ_ACT_RD;
+            const unsigned char milTaskNo = getMilTaskNumber( pThis, i );
             pThis->aFgChannels[i].irq_data = 0; // clear old irq data
             /* test only ifas connected to sio */
             if( isScuBus )
             {
-               if( ((socket & SCU_BUS_SLOT_MASK) != pThis->slave_nr ) || ((socket & DEV_SIO) == 0) )
+               if( ((socket & SCU_BUS_SLOT_MASK) != pThis->slave_nr ) ||
+                   ((socket & DEV_SIO) == 0) )
                   continue;
-               status = scub_set_task_mil( g_pScub_base,
-                                           pThis->slave_nr,
-                                           getId( pThis ) + i + 1,
-                                           FC_IRQ_ACT_RD | dev );
+               status = scub_set_task_mil( g_pScub_base, pThis->slave_nr,
+                                           milTaskNo, devAndMode );
             }
             else
             {
                if( (socket & DEV_MIL_EXT) == 0 )
                   continue;
-               status = set_task_mil( g_pScu_mil_base,
-                                      getId( pThis ) + i + 1,
-                                      FC_IRQ_ACT_RD | dev);
+               status = set_task_mil( g_pScu_mil_base, milTaskNo, devAndMode );
             }
             if( status != OKAY )
                dev_failure( status, 20, "dev_sio set task" );
@@ -1501,23 +1517,25 @@ STATIC void dev_sio_bus_handler( register TaskType* pThis, const bool isScuBus )
             pThis->task_timeout_cnt = 0;
          }
          /* fetch status from dev bus controller; */
-         for( i = pThis->i; i < MAX_FG_CHANNELS; i++ )
+         for( i = pThis->i; i <  MAX_FG_CHANNELS; i++ )
          {
-            socket = getSocket( i );
+            const unsigned int socket = getSocket( i );
+            const unsigned char milTaskNo = getMilTaskNumber( pThis, i );
             /* test only ifas connected to sio */
             if( isScuBus )
             {
-               if( ((socket & SCU_BUS_SLOT_MASK) != pThis->slave_nr ) || ((socket & DEV_SIO) == 0) )
+               if( ((socket & SCU_BUS_SLOT_MASK) != pThis->slave_nr ) ||
+                   ((socket & DEV_SIO) == 0) )
                   continue;
                status = scub_get_task_mil( g_pScub_base, pThis->slave_nr,
-                                           getId( pThis ) + i + 1,
+                                           milTaskNo,
                                            &pThis->aFgChannels[i].irq_data );
             }
             else
             {
                if( (socket & DEV_MIL_EXT) == 0 )
                   continue;
-               status = get_task_mil( g_pScu_mil_base, getId( pThis ) + i + 1,
+               status = get_task_mil( g_pScu_mil_base, milTaskNo,
                                       &pThis->aFgChannels[i].irq_data );
             }
             if( status == RCV_TASK_BSY )
@@ -1548,19 +1566,19 @@ STATIC void dev_sio_bus_handler( register TaskType* pThis, const bool isScuBus )
             if( (pThis->aFgChannels[i].irq_data & (DEV_STATE_IRQ | DEV_DRQ)) == 0 )
                continue; // No
 
-            socket = getSocket( i );
-            dev  = getDevice( i );
+            const unsigned int socket = getSocket( i );
+            const unsigned int dev    = getDevice( i );
             handle( socket, dev, pThis->aFgChannels[i].irq_data,
                     &(pThis->aFgChannels[i].setvalue));
             //clear irq pending and end block transfer
             if( isScuBus )
             {
                status = scub_write_mil( g_pScub_base, pThis->slave_nr,
-                                        0, FC_IRQ_ACT_WR | dev);
+                                        0,  dev | FC_IRQ_ACT_WR );
             }
             else
             {
-               status = write_mil( g_pScu_mil_base, 0, FC_IRQ_ACT_WR | dev);
+               status = write_mil( g_pScu_mil_base, 0, dev | FC_IRQ_ACT_WR );
             }
             if( status != OKAY )
                dev_failure(status, 22, "dev_sio end handle");
@@ -1577,18 +1595,17 @@ STATIC void dev_sio_bus_handler( register TaskType* pThis, const bool isScuBus )
                continue; // No
 
             pThis->aFgChannels[i].daq_timestamp = getSysTime(); // store the sample timestamp of daq
-            dev = getDevice( i );
+            const unsigned int  devAndMode = getDevice( i ) | FC_ACT_RD;
+            const unsigned char milTaskNo  = getMilTaskNumber( pThis, i );
             // non blocking read for DAQ
             if( isScuBus )
             {
                status = scub_set_task_mil( g_pScub_base, pThis->slave_nr,
-                                          getId( pThis ) + i + 1,
-                                          FC_ACT_RD | dev);
+                                           milTaskNo, devAndMode );
             }
             else
             {
-               status = set_task_mil( g_pScu_mil_base, getId( pThis ) + i + 1,
-                                     FC_ACT_RD | dev);
+               status = set_task_mil( g_pScu_mil_base, milTaskNo, devAndMode );
             }
             if( status != OKAY )
                dev_failure( status, 23, "dev_sio read daq" );
@@ -1611,15 +1628,20 @@ STATIC void dev_sio_bus_handler( register TaskType* pThis, const bool isScuBus )
          {  // any irq pending?
             if( (pThis->aFgChannels[i].irq_data & (DEV_STATE_IRQ | DEV_DRQ)) == 0 )
                continue; // No
+            const unsigned char milTaskNo = getMilTaskNumber( pThis, i );
             int16_t actAdcValue;
             if( isScuBus )
             {
                status = scub_get_task_mil( g_pScub_base, pThis->slave_nr,
-                                           getId( pThis ) + i + 1, &actAdcValue );
+                                           //getMilTaskNumber( pThis, i ),
+                                           milTaskNo,
+                                           &actAdcValue );
             }
             else
             {
-               status = get_task_mil( g_pScu_mil_base, getId( pThis ) + i + 1,
+               status = get_task_mil( g_pScu_mil_base,
+                                      //getMilTaskNumber( pThis, i ),
+                                      milTaskNo,
                                       &actAdcValue );
             }
 
