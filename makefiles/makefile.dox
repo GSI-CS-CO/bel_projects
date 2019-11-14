@@ -2355,7 +2355,7 @@ DOX_DOT_CLEANUP            ?= YES
 
 
 ###############################################################################
-${DOXY_CFG_FILE}: ${DOX_OUTPUT_DIRECTORY}
+${DOXY_CFG_FILE}: ${DOX_OUTPUT_DIRECTORY} ${DOX_ADDITIONAL_DEPENDENCIES}
 	@echo 'DOXYFILE_ENCODING         = ${DOX_DOXYFILE_ENCODING}'       > ${DOXY_CFG_FILE}
 	@echo 'PROJECT_NAME              = ${DOX_PROJECT_NAME}'           >> ${DOXY_CFG_FILE}
 	@echo 'PROJECT_NUMBER            = ${DOX_PROJECT_NUMBER}'         >> ${DOXY_CFG_FILE}
