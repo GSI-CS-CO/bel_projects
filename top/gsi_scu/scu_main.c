@@ -1646,7 +1646,7 @@ STATIC void dev_sio_bus_handler( register TaskType* pThis, const bool isScuBus )
             if( status != OKAY )
             {
                mil_failure( status, pThis->slave_nr );
-               /* TODO Why not break from loop? */
+               continue;
             }
 
             pushDaqData( getFgMacro( i ),
