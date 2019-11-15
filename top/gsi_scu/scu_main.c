@@ -209,6 +209,15 @@ STATIC inline uint8_t getDevice( const unsigned int channel )
 }
 
 /*! ---------------------------------------------------------------------------
+ * @brief Returns "true" in the case the function generator belonging to the
+ *        given socket is a "non MIL function generator".
+ */
+STATIC inline bool isNonMilFg( const uint8_t socket )
+{
+   return (socket & (DEV_MIL_EXT | DEV_SIO)) == 0;
+}
+
+/*! ---------------------------------------------------------------------------
  * @brief Initializing of all global pointers accessing the hardware.
  */
 STATIC inline void initializeGlobalPointers( void )
@@ -301,7 +310,7 @@ STATIC void enable_scub_msis( const unsigned int channel )
       return;
 
    const uint8_t socket = getSocket( channel );
-   if( ((socket & (DEV_MIL_EXT | DEV_SIO)) == 0) || ((socket & DEV_SIO) != 0) )
+   if( (isNonMilFg( socket )) || ((socket & DEV_SIO) != 0) )
    {
       //SCU Bus Master
       g_pScub_base[GLOBAL_IRQ_ENA] = 0x20;              // enable slave irqs in scu bus master
@@ -336,7 +345,7 @@ STATIC void disable_slave_irq( const unsigned int channel )
    const uint8_t socket = getSocket( channel );
    const uint8_t dev    = getDevice( channel );
 
-   if( (socket & (DEV_MIL_EXT | DEV_SIO)) == 0 )
+   if( isNonMilFg( socket ) )
    {
       if (dev == 0)
         g_pScub_base[OFFS(socket) + SLAVE_INT_ENA] &= ~(0x8000); //disable fg1 irq
@@ -423,7 +432,7 @@ STATIC inline void send_fg_param( const  unsigned int socket,
    blk_data[4] = pset.coeff_c & 0xffff;
    blk_data[5] = (pset.coeff_c & 0xffff0000) >> BIT_SIZEOF(int16_t); // data written with high word
 
-   if( (socket & (DEV_MIL_EXT | DEV_SIO)) == 0 )
+   if( isNonMilFg( socket ) )
    {
       g_pScub_base[OFFS(socket) + fg_base + FG_CNTRL]  = blk_data[0];
       g_pScub_base[OFFS(socket) + fg_base + FG_A]      = blk_data[1];
@@ -514,7 +523,7 @@ STATIC void handle( const unsigned int socket,
    uint16_t cntrl_reg = 0;
    unsigned int channel;
 
-   if( (socket & (DEV_MIL_EXT | DEV_SIO)) == 0 )
+   if( isNonMilFg( socket ) )
    {
       cntrl_reg = g_pScub_base[OFFS(socket) + fg_base + FG_CNTRL];
       channel = getFgNumberFromRegister( cntrl_reg );
@@ -530,7 +539,7 @@ STATIC void handle( const unsigned int socket,
       return;
    }
 
-   if( (socket & (DEV_MIL_EXT | DEV_SIO)) == 0 )
+   if( isNonMilFg( socket ) )
    {
       /* last cnt from from fg macro, read from LO address copies hardware counter to shadow reg */
       g_shared.fg_regs[channel].ramp_count = g_pScub_base[OFFS(socket) + fg_base + FG_RAMP_CNT_LO];
@@ -550,7 +559,7 @@ STATIC void handle( const unsigned int socket,
          send_fg_param( socket, fg_base, cntrl_reg, pSetvalue );
       }
    }
-   else /* (socket & (DEV_MIL_EXT | DEV_SIO)) == 0 */
+   else /* isNonMilFg( socket ) */
    {
       /* count in software only */
       g_shared.fg_regs[channel].ramp_count++;
@@ -571,7 +580,7 @@ STATIC void handle( const unsigned int socket,
             send_fg_param( socket, fg_base, irq_act_reg, pSetvalue );
          }
       }
-   } /* else of if (socket & (DEV_MIL_EXT | DEV_SIO)) == 0 */
+   } /* else of if isNonMilFg( socket ) */
 }
 
 /*! ---------------------------------------------------------------------------
@@ -694,7 +703,7 @@ STATIC int configure_fg_macro( const unsigned int channel )
    int status;
    const uint8_t dev  = getDevice( channel );
     /* enable irqs */
-   if( (socket & (DEV_MIL_EXT | DEV_SIO)) == 0 )
+   if( isNonMilFg( socket ) )
    {                                      //scu bus slave
       g_pScub_base[SRQ_ENA] |= (1 << (socket-1));           // enable irqs for the slave
       g_pScub_base[OFFS(socket) + SLAVE_INT_ACT] =  (FG1_IRQ | FG2_IRQ); // clear all irqs
@@ -716,7 +725,7 @@ STATIC int configure_fg_macro( const unsigned int channel )
 
    unsigned int fg_base = 0;
    /* fg mode and reset */
-   if( (socket & (DEV_MIL_EXT | DEV_SIO)) == 0 )
+   if( isNonMilFg( socket ) )
    {   //scu bus slave
       unsigned int dac_base;
       switch( dev )
@@ -763,7 +772,7 @@ STATIC int configure_fg_macro( const unsigned int channel )
       blk_data[4] = pset.coeff_c & 0xffff;
       blk_data[5] = (pset.coeff_c & 0xffff0000) >> BIT_SIZEOF(uint16_t);; // data written with high word
 
-      if( (socket & (DEV_MIL_EXT | DEV_SIO)) == 0 )
+      if( isNonMilFg( socket ) )
       {
         //set virtual fg number Bit 9..4
          FG_ASSERT( fg_base != 0 );
@@ -800,7 +809,7 @@ STATIC int configure_fg_macro( const unsigned int channel )
   //!! }
 
    /* configure and enable macro */
-   if( (socket & (DEV_MIL_EXT | DEV_SIO)) == 0 )
+   if( isNonMilFg( socket ) )
    {
       g_pScub_base[OFFS(socket) + fg_base + FG_TAG_LOW] = g_shared.fg_regs[channel].tag & 0xffff;
       g_pScub_base[OFFS(socket) + fg_base + FG_TAG_HIGH] = g_shared.fg_regs[channel].tag >> BIT_SIZEOF(uint16_t);
@@ -900,7 +909,7 @@ STATIC void disable_channel( const unsigned int channel )
    const uint16_t socket = getSocket( channel );
    const uint16_t dev    = getDevice( channel );
    //mprintf("disarmed socket %d dev %d in channel[%d] state %d\n", socket, dev, channel, pFgRegs->state); //ONLY FOR TESTING
-   if( (socket & (DEV_MIL_EXT | DEV_SIO)) == 0 )
+   if( isNonMilFg( socket ) )
    {
       unsigned int fg_base, dac_base;
       /* which macro are we? */
