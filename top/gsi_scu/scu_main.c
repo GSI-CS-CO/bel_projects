@@ -58,7 +58,7 @@
    #include <scu_assert.h>
    #define FG_ASSERT SCU_ASSERT
 #else
-   #define FG_ASSERT(__e) ((void)0)
+   #define FG_ASSERT(__e)
 #endif
 /*
  * Maybe a bug in the obsolete DOXYGEN 1.8.5 in the ASL-cluster,
@@ -159,13 +159,22 @@ STATIC inline void sendSignal( const SIGNAL_T sig, const unsigned int channel )
 }
 
 /*! ---------------------------------------------------------------------------
+ * @brief Returns the index number of a FG-macro in the FG-list by the
+ *        channel number
+ */
+STATIC inline unsigned int getFgMacroIndex( const unsigned int channel )
+{
+   FG_ASSERT( channel < ARRAY_SIZE( g_shared.fg_regs ) );
+   return g_shared.fg_regs[channel].macro_number;
+}
+
+/*! ---------------------------------------------------------------------------
  * @brief Returns the Function Generator macro of the given channel.
  */
 STATIC inline FG_MACRO_T getFgMacro( const unsigned int channel )
 {
-   FG_ASSERT( channel < ARRAY_SIZE( g_shared.fg_regs ) );
-   FG_ASSERT( g_shared.fg_regs[channel].macro_number < ARRAY_SIZE( g_shared.fg_macros ));
-   return g_shared.fg_macros[g_shared.fg_regs[channel].macro_number];
+   FG_ASSERT( getFgMacroIndex( channel ) < ARRAY_SIZE( g_shared.fg_macros ));
+   return g_shared.fg_macros[getFgMacroIndex( channel )];
 }
 
 /*! ---------------------------------------------------------------------------
@@ -811,7 +820,7 @@ STATIC inline void printFgs( void )
    {
       if( g_shared.fg_macros[i].outputBits == 0 )
          break;
-      mprintf( "fg-%d-%d ver: %d output-bits: %d\n",
+      mprintf( "fg-%d-%d\tver: %d output-bits: %d\n",
                g_shared.fg_macros[i].socket,
                g_shared.fg_macros[i].device,
                g_shared.fg_macros[i].version,
@@ -1134,6 +1143,7 @@ inline STATIC unsigned int getId( const TaskType* pThis )
 inline STATIC unsigned char getMilTaskNumber( const TaskType* pThis,
                                               const unsigned int channel )
 {
+   //!!return TASKMIN + getFgMacroIndex( channel );
    return TASKMIN + channel + getId( pThis );
 }
 
