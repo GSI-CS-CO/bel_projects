@@ -178,12 +178,24 @@ STATIC inline FG_MACRO_T getFgMacro( const unsigned int channel )
 }
 
 /*! ---------------------------------------------------------------------------
+ * @brief Returns "true" if the function generator of the given channel
+ *        present.
+ */
+STATIC inline bool isFgPresent( const unsigned int channel )
+{
+   if( channel >= ARRAY_SIZE( g_shared.fg_macros ) )
+      return false;
+   return getFgMacro( channel ).outputBits != 0;
+}
+
+/*! ---------------------------------------------------------------------------
  * @brief Returns the socked number of the given channel.
  * @note The lower 4 bits of the socket number contains the slot-number
  *       of the SCU-bus which can masked out by SCU_BUS_SLOT_MASK.
  */
 STATIC inline uint8_t getSocket( const unsigned int channel )
 {
+   FG_ASSERT( isFgPresent( channel ) );
    return getFgMacro( channel ).socket;
 }
 
@@ -192,6 +204,7 @@ STATIC inline uint8_t getSocket( const unsigned int channel )
  */
 STATIC inline uint8_t getDevice( const unsigned int channel )
 {
+   FG_ASSERT( isFgPresent( channel ) );
    return getFgMacro( channel ).device;
 }
 
@@ -1446,8 +1459,19 @@ STATIC void printTimeoutMessage( register TaskType* pThis, const bool isScuBus )
             pThis->i );
 }
 
+/*
+ * A little bit of paranoia doesn't hurt too much. ;-)
+ */
 STATIC_ASSERT( MAX_FG_CHANNELS == ARRAY_SIZE( g_aTasks[0].aFgChannels ) );
 STATIC_ASSERT( MAX_FG_CHANNELS == ARRAY_SIZE( g_aFgChannels ));
+
+/*! ---------------------------------------------------------------------------
+ * @brief Loop control macro for all present function generator channels.
+ * @param channel current channel number, shall be of type unsigned int.
+ * @param start Channel number to start, in the most cases zero.
+ */
+#define FOR_EACH_FG( channel, start ) \
+   for( channel = start; isFgPresent( channel ); channel++ )
 
 /*! ---------------------------------------------------------------------------
  * @brief Task-function for handling all FGs and MIL-DAQs
@@ -1488,7 +1512,7 @@ STATIC void dev_sio_bus_handler( register TaskType* pThis, const bool isScuBus )
             break; //yield
          }
          /* poll all pending regs on the dev bus; non blocking read operation */
-         for( i = 0; i < MAX_FG_CHANNELS; i++ )
+         FOR_EACH_FG( i, 0 )
          {
             const unsigned int socket     = getSocket( i );
             const unsigned int devAndMode = getDevice( i ) | FC_IRQ_ACT_RD;
@@ -1511,7 +1535,7 @@ STATIC void dev_sio_bus_handler( register TaskType* pThis, const bool isScuBus )
             }
             if( status != OKAY )
                dev_failure( status, 20, "dev_sio set task" );
-         }  // end for
+         }  // end FOR_EACH_FG
          pThis->i = 0;
          FSM_TRANSITION( ST_FETCH_STATUS );
          break;
@@ -1527,7 +1551,7 @@ STATIC void dev_sio_bus_handler( register TaskType* pThis, const bool isScuBus )
             pThis->task_timeout_cnt = 0;
          }
          /* fetch status from dev bus controller; */
-         for( i = pThis->i; i <  MAX_FG_CHANNELS; i++ )
+         FOR_EACH_FG( i, 0 )
          {
             const unsigned int socket = getSocket( i );
             const unsigned char milTaskNo = getMilTaskNumber( pThis, i );
@@ -1549,10 +1573,10 @@ STATIC void dev_sio_bus_handler( register TaskType* pThis, const bool isScuBus )
                                       &pThis->aFgChannels[i].irq_data );
             }
             if( status == RCV_TASK_BSY )
-               break; // break from for loop
+               break; // break from FOR_EACH_FG loop
             if( status != OKAY )
                mil_failure( status, pThis->slave_nr );
-         } // end for
+         } // end FOR_EACH_FG
          if( status == RCV_TASK_BSY )
          {
             pThis->i = i; // start next time from i
@@ -1571,7 +1595,7 @@ STATIC void dev_sio_bus_handler( register TaskType* pThis, const bool isScuBus )
 
       case ST_HANDLE_IRQS:
       {  /* handle irqs for ifas with active pending regs; non blocking write */
-         for( i = 0; i < MAX_FG_CHANNELS; i++ )
+         FOR_EACH_FG( i, 0 )
          {  // any irq pending?
             if( (pThis->aFgChannels[i].irq_data & (DEV_STATE_IRQ | DEV_DRQ)) == 0 )
                continue; // No
@@ -1592,14 +1616,14 @@ STATIC void dev_sio_bus_handler( register TaskType* pThis, const bool isScuBus )
             }
             if( status != OKAY )
                dev_failure(status, 22, "dev_sio end handle");
-         } // end for
+         } // end FOR_EACH_FG
          FSM_TRANSITION( ST_DATA_AQUISITION );
          break;
       } // end case ST_HANDLE_IRQS
 
       case ST_DATA_AQUISITION:
       {  /* data aquisition */
-         for( i = 0; i < MAX_FG_CHANNELS; i++ )
+         FOR_EACH_FG( i, 0 )
          {  // any irq pending?
             if( (pThis->aFgChannels[i].irq_data & (DEV_STATE_IRQ | DEV_DRQ)) == 0 )
                continue; // No
@@ -1619,7 +1643,7 @@ STATIC void dev_sio_bus_handler( register TaskType* pThis, const bool isScuBus )
             }
             if( status != OKAY )
                dev_failure( status, 23, "dev_sio read daq" );
-         } // end for
+         } // end FOR_EACH_FG
          FSM_TRANSITION( ST_FETCH_DATA );
          break;
       } // end case ST_DATA_AQUISITION
@@ -1634,7 +1658,7 @@ STATIC void dev_sio_bus_handler( register TaskType* pThis, const bool isScuBus )
             pThis->task_timeout_cnt = 0;
          }
          /* fetch daq data */
-         for( i = pThis->i; i < MAX_FG_CHANNELS; i++ )
+         FOR_EACH_FG( i, pThis->i )
          {  // any irq pending?
             if( (pThis->aFgChannels[i].irq_data & (DEV_STATE_IRQ | DEV_DRQ)) == 0 )
                continue; // No
@@ -1665,7 +1689,7 @@ STATIC void dev_sio_bus_handler( register TaskType* pThis, const bool isScuBus )
                          g_aFgChannels[i].last_c_coeff );
             // save the setvalue from the tuple sent for the next drq handling
             g_aFgChannels[i].last_c_coeff = pThis->aFgChannels[i].setvalue;
-         } // end for
+         } // end FOR_EACH_FG
 
          if( status == RCV_TASK_BSY )
          {
