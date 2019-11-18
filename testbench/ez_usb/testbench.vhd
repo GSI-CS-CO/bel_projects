@@ -104,13 +104,13 @@ architecture simulation of testbench is
   ----------------------------------------------------------------------------------
 
   -- Only put a slave here if it has critical performance requirements!
-  constant c_top_slaves        : natural := 2;
-  constant c_tops_mbox         : natural := 0;
-  constant c_tops_minislave    : natural := 1;
+  constant c_top_slaves        : natural := 1; -- number of slaves (only 1 for now)
+  constant c_tops_minislave    : natural := 0; -- slave index 0
+--constant c_tops_anotherslave : natural := 1; -- slave index 1
+--           ...                 natural := 2: -- salve index 3
 
   constant c_top_layout_req_slaves : t_sdb_record_array(c_top_slaves-1 downto 0) :=
-   (c_tops_mbox         => f_sdb_auto_device(c_mbox_sdb,      true),
-    c_tops_minislave    => f_sdb_auto_device(c_minislave_sdb, true));
+   (c_tops_minislave    => f_sdb_auto_device(c_minislave_sdb, true));
 
   constant c_top_layout      : t_sdb_record_array := f_sdb_auto_layout(c_top_layout_req_masters, c_top_layout_req_slaves);
   constant c_top_sdb_address : t_wishbone_address := f_sdb_auto_sdb   (c_top_layout_req_masters, c_top_layout_req_slaves);
@@ -191,8 +191,6 @@ begin
       rstn_i    => rstn_sys,
       master_i  => top_bus_slave_o(c_topm_usb),
       master_o  => top_bus_slave_i(c_topm_usb),
-      msi_slave_i => top_msi_master_o(c_topm_usb),
-      msi_slave_o => top_msi_master_i(c_topm_usb),
       uart_o    => uart_usb,
       uart_i    => uart_wrc,
       rstn_o    => usb_rstn,
@@ -215,24 +213,12 @@ begin
   --uart_mux <= uart_usb and wr_uart_i;
 
 
-  mailbox : mbox
-    port map(
-      clk_i        => clk_sys,
-      rst_n_i      => rstn_sys,
-      bus_slave_i  => top_bus_master_o(c_tops_mbox),
-      bus_slave_o  => top_bus_master_i(c_tops_mbox),
-      msi_master_o => top_msi_slave_i (c_tops_mbox),
-      msi_master_i => top_msi_slave_o (c_tops_mbox));
-
-
   minislave : entity work.wb_minislave
   port map (
     clk_i   => clk_sys,
     rst_n_i => rst_n,
     slave_i => top_bus_master_o(c_tops_minislave),
-    slave_o => top_bus_master_i(c_tops_minislave),
-    msi_master_o => top_msi_slave_i (c_tops_minislave),
-    msi_master_i => top_msi_slave_o (c_tops_minislave)
+    slave_o => top_bus_master_i(c_tops_minislave)
   );
 
 

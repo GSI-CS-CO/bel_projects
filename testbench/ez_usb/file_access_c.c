@@ -1,3 +1,4 @@
+#define _GNU_SOURCE
 #include <unistd.h>
 #include <fcntl.h>
 #include <stdio.h>
@@ -61,7 +62,7 @@ void file_access_init(int stop_until_connected) {
 			{
 				int err = errno;
 				printf("Error, cant set raw mode: %s\n", strerror(err));
-				return NULL;
+				return;
 			}
 		}
 

@@ -16,7 +16,7 @@ view: simulation.ghw
 
 # start simulation (which regenerates wave file), then update viewer
 simulation.ghw: compile_testbench 
-	ghdl -r testbench --stop-time=700000ns --wave=simulation.ghw --ieee-asserts=disable
+	ghdl -r testbench --stop-time=200000ns --wave=simulation.ghw --ieee-asserts=disable
 	#vcd2fst simulation.vcd simulation.fst && rm simulation.vcd
 	gsettings set com.geda.gtkwave reload 0
 
@@ -48,7 +48,6 @@ testbench: 	\
 			../../ip_cores/etherbone-core/hdl/eb_slave_core/etherbone_pkg.vhd           \
 			../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_cfg_fifo.vhd             \
 			../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_wbm_fifo.vhd             \
-			../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_msi_fifo.vhd             \
 			../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_raw_slave.vhd			\
 			../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_raw_slave.vhd			\
 			../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_stream_widen.vhd   		\
