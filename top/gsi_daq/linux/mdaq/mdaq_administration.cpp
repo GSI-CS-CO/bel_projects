@@ -76,7 +76,10 @@ bool DaqDevice::registerDaqCompare( DaqCompare* poCompare )
    for( auto& i: m_channelPtrList )
    {
       if( poCompare->getAddress() == i->getAddress() )
+      {
+         assert( poCompare->m_pParent == this );
          return true;
+      }
    }
    poCompare->m_pParent = this;
    m_channelPtrList.push_back( poCompare );
@@ -93,6 +96,7 @@ bool DaqDevice::unregisterDaqCompare( DaqCompare* poCompare )
    {
       if( i == poCompare )
       {
+         assert( i->m_pParent == this );
          m_channelPtrList.remove( i );
          i->m_pParent = nullptr;
          return false;
@@ -160,7 +164,10 @@ bool DaqAdministration::registerDevice( DaqDevice* pDevice )
    for( auto& i: m_devicePtrList )
    {
       if( i->getLocation() == pDevice->getLocation() )
+      {
+         assert( pDevice->m_pParent == this );
          return true;
+      }
    }
    pDevice->m_pParent = this;
    m_devicePtrList.push_back( pDevice );
@@ -178,6 +185,7 @@ bool DaqAdministration::unregisterDevice( DaqDevice* pDevice )
    {
       if( i == pDevice )
       {
+         assert( i->m_pParent == this );
          m_devicePtrList.remove( i );
          i->m_pParent = nullptr;
          return false;
