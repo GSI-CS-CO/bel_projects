@@ -130,6 +130,15 @@ int main( int argc, const char** ppArgv )
    {  /*
        * Building a object of etherbone-connection for the communication
        * whith a DAQ via wishbone/etherbone.
+       *
+       * Note: The namespace-name "DaqEb" is defined in the header file
+       *       "daq_eb_ram_buffer.hpp" as:
+       *           "namespace DaqEb = FeSupport::Scu::Etherbone;"
+       *       It's just a shortcut making the source code better readable.
+       *
+       * Assuming the program argument is a SCU-wishbone-address e.g.:
+       * "tcp/scuxl4711" or in the case this example will run directly in
+       * the IPC of a SCU: "dev/wbm0".
        */
       DaqEb::EtherboneConnection ebConnection( ppArgv[1] );
 
