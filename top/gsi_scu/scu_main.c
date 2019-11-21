@@ -162,7 +162,8 @@ STATIC inline void sendSignal( const SIGNAL_T sig, const unsigned int channel )
  * @brief Returns the index number of a FG-macro in the FG-list by the
  *        channel number
  */
-STATIC inline unsigned int getFgMacroIndex( const unsigned int channel )
+STATIC inline
+int getFgMacroIndexFromFgRegister( const unsigned int channel )
 {
    FG_ASSERT( channel < ARRAY_SIZE( g_shared.fg_regs ) );
    return g_shared.fg_regs[channel].macro_number;
@@ -171,22 +172,57 @@ STATIC inline unsigned int getFgMacroIndex( const unsigned int channel )
 /*! ---------------------------------------------------------------------------
  * @brief Returns the Function Generator macro of the given channel.
  */
-STATIC inline FG_MACRO_T getFgMacro( const unsigned int channel )
+STATIC inline FG_MACRO_T getFgMacroViaFgRegister( const unsigned int channel )
 {
-   FG_ASSERT( getFgMacroIndex( channel ) < ARRAY_SIZE( g_shared.fg_macros ));
-   return g_shared.fg_macros[getFgMacroIndex( channel )];
+   FG_ASSERT( getFgMacroIndexFromFgRegister( channel ) >= 0 );
+   FG_ASSERT( getFgMacroIndexFromFgRegister( channel ) < ARRAY_SIZE( g_shared.fg_macros ));
+   return g_shared.fg_macros[getFgMacroIndexFromFgRegister( channel )];
 }
 
 /*! ---------------------------------------------------------------------------
  * @brief Returns "true" if the function generator of the given channel
  *        present.
+ * @see FOR_EACH_FG
  */
 STATIC inline bool isFgPresent( const unsigned int channel )
 {
-   if( channel >= ARRAY_SIZE( g_shared.fg_macros ) )
+   if( channel >= MAX_FG_CHANNELS )
       return false;
-   return getFgMacro( channel ).outputBits != 0;
+   if( getFgMacroIndexFromFgRegister( channel ) < 0 )
+      return false;
+   return getFgMacroViaFgRegister( channel ).outputBits != 0;
 }
+
+/*! ---------------------------------------------------------------------------
+ * @brief Loop control macro for all present function generator channels
+ *        started form given channel in parameter "start"
+ *
+ * Helper-macro for function milDeviceHandler
+ *
+ * It works off the FG-list initialized by function scan_all_fgs() in file
+ * scu_function_generator.c from the in parameter start given channel number.
+ *
+ * @see isFgPresent
+ * @see milDeviceHandler
+ * @param channel current channel number, shall be of type unsigned int.
+ * @param start Channel number to start.
+ */
+#define FOR_EACH_FG_CONTINUING( channel, start ) \
+   for( channel = start; isFgPresent( channel ); channel++ )
+
+/*! ---------------------------------------------------------------------------
+ * @brief Loop control macro for all present function generator channels.
+ *
+ * It works off the entire FG-list initialized by function scan_all_fgs() in
+ * file scu_function_generator.c
+ *
+ * Helper-macro for function milDeviceHandler
+ *
+ * @see isFgPresent
+ * @see milDeviceHandler
+ * @param channel current channel number, shall be of type unsigned int.
+ */
+#define FOR_EACH_FG( channel ) FOR_EACH_FG_CONTINUING( channel, 0 )
 
 /*! ---------------------------------------------------------------------------
  * @brief Returns the socked number of the given channel.
@@ -196,7 +232,7 @@ STATIC inline bool isFgPresent( const unsigned int channel )
 STATIC inline uint8_t getSocket( const unsigned int channel )
 {
    FG_ASSERT( isFgPresent( channel ) );
-   return getFgMacro( channel ).socket;
+   return getFgMacroViaFgRegister( channel ).socket;
 }
 
 /*! ---------------------------------------------------------------------------
@@ -205,14 +241,14 @@ STATIC inline uint8_t getSocket( const unsigned int channel )
 STATIC inline uint8_t getDevice( const unsigned int channel )
 {
    FG_ASSERT( isFgPresent( channel ) );
-   return getFgMacro( channel ).device;
+   return getFgMacroViaFgRegister( channel ).device;
 }
 
 /*! ---------------------------------------------------------------------------
  * @brief Returns "true" in the case the function generator belonging to the
  *        given socket is a "non MIL function generator".
  */
-STATIC inline bool isNonMilFg( const uint8_t socket )
+ALWAYS_INLINE STATIC inline bool isNonMilFg( const uint8_t socket )
 {
    return (socket & (DEV_MIL_EXT | DEV_SIO)) == 0;
 }
@@ -221,7 +257,7 @@ STATIC inline bool isNonMilFg( const uint8_t socket )
  * @brief Returns "true" in the case the function generator belonging to the
  *        given socket is a MIL function generator connected via SCU-bus slave.
  */
-STATIC inline bool isMilScuBusFg( const uint8_t socket )
+ALWAYS_INLINE STATIC inline bool isMilScuBusFg( const uint8_t socket )
 {
    return (socket & DEV_SIO) != 0;
 }
@@ -230,7 +266,7 @@ STATIC inline bool isMilScuBusFg( const uint8_t socket )
  * @brief Returns "true" in the case the function generator belonging to the
  *        given socket is connected via MIL extension.
  */
-STATIC inline bool isMilExtentionFg( const uint8_t socket )
+ALWAYS_INLINE STATIC inline bool isMilExtentionFg( const uint8_t socket )
 {
    return (socket & DEV_MIL_EXT) != 0;
 }
@@ -238,7 +274,7 @@ STATIC inline bool isMilExtentionFg( const uint8_t socket )
 /*! ---------------------------------------------------------------------------
  * @brief Returns the SCU bus slot number from the given socket.
  */
-STATIC inline unsigned int getFgSlotNumber( const uint8_t socket )
+ALWAYS_INLINE STATIC inline unsigned int getFgSlotNumber( const uint8_t socket )
 {
    return socket & SCU_BUS_SLOT_MASK;
 }
@@ -879,7 +915,8 @@ STATIC inline void printFgs( void )
                g_shared.fg_macros[i].socket,
                g_shared.fg_macros[i].device,
                g_shared.fg_macros[i].version,
-               g_shared.fg_macros[i].outputBits );
+               g_shared.fg_macros[i].outputBits
+             );
    }
 }
 
@@ -1200,7 +1237,7 @@ inline STATIC unsigned int getId( const TaskType* pThis )
 inline STATIC unsigned char getMilTaskNumber( const TaskType* pThis,
                                               const unsigned int channel )
 {
-   //!!return TASKMIN + getFgMacroIndex( channel );
+   //!!return TASKMIN + getFgMacroIndexFromFgRegister( channel );
    return TASKMIN + channel + getId( pThis );
 }
 
@@ -1510,18 +1547,24 @@ STATIC_ASSERT( MAX_FG_CHANNELS == ARRAY_SIZE( g_aTasks[0].aFgChannels ) );
 STATIC_ASSERT( MAX_FG_CHANNELS == ARRAY_SIZE( g_aFgChannels ));
 
 /*! ---------------------------------------------------------------------------
- * @brief Loop control macro for all present function generator channels.
- * @param channel current channel number, shall be of type unsigned int.
- * @param start Channel number to start, in the most cases zero.
+ * @brief function returns true when no interrupt of the given channel
+ *        is pending.
+ *
+ * Helper-function for function milDeviceHandler
+ * @see milDeviceHandler
  */
-#define FOR_EACH_FG( channel, start ) \
-   for( channel = start; isFgPresent( channel ); channel++ )
+ALWAYS_INLINE STATIC inline bool isNoIrqPending( register const TaskType* pThis,
+                                                 const unsigned int channel )
+{
+   return
+      (pThis->aFgChannels[channel].irq_data & (DEV_STATE_IRQ | DEV_DRQ)) == 0;
+}
 
 /*! ---------------------------------------------------------------------------
- * @brief Task-function for handling all FGs and MIL-DAQs
+ * @brief Task-function for handling all MIL-FGs and MIL-DAQs
  * @dotfile scu_main.gv
  */
-STATIC void dev_sio_bus_handler( register TaskType* pThis, const bool isScuBus )
+STATIC void milDeviceHandler( register TaskType* pThis, const bool isScuBus )
 {
    unsigned int channel;
    int status = OKAY;
@@ -1529,9 +1572,9 @@ STATIC void dev_sio_bus_handler( register TaskType* pThis, const bool isScuBus )
    switch( pThis->state )
    {
       case ST_WAIT:
-      {  // we have nothing to do
+      {
          if( !has_msg(&g_aMsg_buf[0], isScuBus? DEVSIO : DEVBUS) )
-         {
+         { /* There is nothing to do. */
          #ifdef __DOCFSM__
             FSM_TRANSITION( ST_WAIT, label='No message' );
          #endif
@@ -1542,7 +1585,7 @@ STATIC void dev_sio_bus_handler( register TaskType* pThis, const bool isScuBus )
          pThis->slave_nr = isScuBus? (m.msg + 1) : 0;
          pThis->timestamp1 = getSysTime() + INTERVAL_200US;
          FSM_TRANSITION( ST_PREPARE, label='Massage received' );
-         break; //yield
+         break;
       } // end case ST_WAIT
 
       case ST_PREPARE:
@@ -1553,10 +1596,10 @@ STATIC void dev_sio_bus_handler( register TaskType* pThis, const bool isScuBus )
          #ifdef __DOCFSM__
             FSM_TRANSITION( ST_PREPARE, label='Interval not expired' );
          #endif
-            break; //yield
+            break;
          }
          /* poll all pending regs on the dev bus; non blocking read operation */
-         FOR_EACH_FG( channel, 0 )
+         FOR_EACH_FG( channel )
          {
             const unsigned int socket     = getSocket( channel );
             const unsigned int devAndMode = getDevice( channel ) | FC_IRQ_ACT_RD;
@@ -1567,14 +1610,14 @@ STATIC void dev_sio_bus_handler( register TaskType* pThis, const bool isScuBus )
             {
                if( ( getFgSlotNumber( socket ) != pThis->slave_nr ) ||
                    ((socket & DEV_SIO) == 0) )
-                  continue;
+                  continue; // Go to next channel...
                status = scub_set_task_mil( g_pScub_base, pThis->slave_nr,
                                            milTaskNo, devAndMode );
             }
             else
             {
                if( (socket & DEV_MIL_EXT) == 0 )
-                  continue;
+                  continue; // Go to next channel...
                status = set_task_mil( g_pScu_mil_base, milTaskNo, devAndMode );
             }
             if( status != OKAY )
@@ -1595,7 +1638,7 @@ STATIC void dev_sio_bus_handler( register TaskType* pThis, const bool isScuBus )
             pThis->task_timeout_cnt = 0;
          }
          /* fetch status from dev bus controller; */
-         FOR_EACH_FG( channel, 0 )
+         FOR_EACH_FG( channel )
          {
             const unsigned int socket = getSocket( channel );
             const unsigned char milTaskNo = getMilTaskNumber( pThis, channel );
@@ -1604,7 +1647,7 @@ STATIC void dev_sio_bus_handler( register TaskType* pThis, const bool isScuBus )
             {
                if( (getFgSlotNumber( socket ) != pThis->slave_nr ) ||
                    ((socket & DEV_SIO) == 0) )
-                  continue;
+                  continue; // Go to next channel...
                status = scub_get_task_mil( g_pScub_base, pThis->slave_nr,
                                            milTaskNo,
                                            &pThis->aFgChannels[channel].irq_data );
@@ -1612,7 +1655,7 @@ STATIC void dev_sio_bus_handler( register TaskType* pThis, const bool isScuBus )
             else
             {
                if( (socket & DEV_MIL_EXT) == 0 )
-                  continue;
+                  continue; // Go to next channel...
                status = get_task_mil( g_pScu_mil_base, milTaskNo,
                                       &pThis->aFgChannels[channel].irq_data );
             }
@@ -1628,7 +1671,7 @@ STATIC void dev_sio_bus_handler( register TaskType* pThis, const bool isScuBus )
          #ifdef __DOCFSM__
             FSM_TRANSITION( ST_FETCH_STATUS, label='receive busy' );
          #endif
-            break; //yield
+            break;
          }
 
          pThis->lastChannel = 0; // start next time from channel 0
@@ -1639,10 +1682,10 @@ STATIC void dev_sio_bus_handler( register TaskType* pThis, const bool isScuBus )
 
       case ST_HANDLE_IRQS:
       {  /* handle irqs for ifas with active pending regs; non blocking write */
-         FOR_EACH_FG( channel, 0 )
-         {  // any irq pending?
-            if( (pThis->aFgChannels[channel].irq_data & (DEV_STATE_IRQ | DEV_DRQ)) == 0 )
-               continue; // No
+         FOR_EACH_FG( channel )
+         {
+            if( isNoIrqPending( pThis, channel ) )
+               continue; // Handle next channel...
 
             const unsigned int socket = getSocket( channel );
             const unsigned int dev    = getDevice( channel );
@@ -1667,10 +1710,10 @@ STATIC void dev_sio_bus_handler( register TaskType* pThis, const bool isScuBus )
 
       case ST_DATA_AQUISITION:
       {  /* data aquisition */
-         FOR_EACH_FG( channel, 0 )
-         {  // any irq pending?
-            if( (pThis->aFgChannels[channel].irq_data & (DEV_STATE_IRQ | DEV_DRQ)) == 0 )
-               continue; // No
+         FOR_EACH_FG( channel )
+         {
+            if( isNoIrqPending( pThis, channel ) )
+               continue; // Handle next channel...
 
             pThis->aFgChannels[channel].daq_timestamp = getSysTime(); // store the sample timestamp of daq
             const unsigned int  devAndMode = getDevice( channel ) | FC_ACT_RD;
@@ -1702,10 +1745,11 @@ STATIC void dev_sio_bus_handler( register TaskType* pThis, const bool isScuBus )
             pThis->task_timeout_cnt = 0;
          }
          /* fetch daq data */
-         FOR_EACH_FG( channel, pThis->lastChannel )
-         {  // any irq pending?
-            if( (pThis->aFgChannels[channel].irq_data & (DEV_STATE_IRQ | DEV_DRQ)) == 0 )
-               continue; // No
+         FOR_EACH_FG_CONTINUING( channel, pThis->lastChannel )
+         {
+            if( isNoIrqPending( pThis, channel ) )
+               continue; // Handle next channel...
+
             const unsigned char milTaskNo = getMilTaskNumber( pThis, channel );
             int16_t actAdcValue;
             if( isScuBus )
@@ -1719,7 +1763,7 @@ STATIC void dev_sio_bus_handler( register TaskType* pThis, const bool isScuBus )
             }
 
             if( status == RCV_TASK_BSY )
-               break; // break from FOR_EACH_FG loop
+               break; // break from FOR_EACH_FG_CONTINUING loop
 
             if( status != OKAY )
             {
@@ -1727,13 +1771,13 @@ STATIC void dev_sio_bus_handler( register TaskType* pThis, const bool isScuBus )
                continue;
             }
 
-            pushDaqData( getFgMacro( channel ),
+            pushDaqData( getFgMacroViaFgRegister( channel ),
                          pThis->aFgChannels[channel].daq_timestamp,
                          actAdcValue,
                          g_aFgChannels[channel].last_c_coeff );
             // save the setvalue from the tuple sent for the next drq handling
             g_aFgChannels[channel].last_c_coeff = pThis->aFgChannels[channel].setvalue;
-         } // end FOR_EACH_FG
+         } // end FOR_EACH_FG_CONTINUING
 
          if( status == RCV_TASK_BSY )
          {
@@ -1742,7 +1786,7 @@ STATIC void dev_sio_bus_handler( register TaskType* pThis, const bool isScuBus )
          #ifdef __DOCFSM__
             FSM_TRANSITION( ST_FETCH_DATA, label='Receiving busy' );
          #endif
-            break; //yield
+            break;
          }
          pThis->lastChannel = 0; // start next time from channel 0
          pThis->task_timeout_cnt = 0;
@@ -1750,15 +1794,15 @@ STATIC void dev_sio_bus_handler( register TaskType* pThis, const bool isScuBus )
          break;
       } // end case ST_FETCH_DATA
 
-      default:
+      default: /* Should never be reached! */
       {
-         mprintf(ESC_ERROR"unknown state of dev bus handler!"ESC_NORMAL"\n");
+         mprintf( ESC_ERROR"Unknown FSM-state of %s(): %d !"ESC_NORMAL"\n",
+                  __func__, pThis->state );
          FSM_INIT_FSM( ST_WAIT );
          break;
       }
    } // end switch
-}
-
+} // end function milDeviceHandler
 
 /*! ---------------------------------------------------------------------------
  * @brief can have multiple instances, one for each active sio card controlling
@@ -1768,7 +1812,7 @@ STATIC void dev_sio_bus_handler( register TaskType* pThis, const bool isScuBus )
  */
 STATIC void dev_sio_handler( register TaskType* pThis )
 {
-   dev_sio_bus_handler( pThis, false );
+   milDeviceHandler( pThis, false );
 }
 
 /*! ---------------------------------------------------------------------------
@@ -1778,7 +1822,7 @@ STATIC void dev_sio_handler( register TaskType* pThis )
  */
 STATIC void dev_bus_handler( register TaskType* pThis )
 {
-   dev_sio_bus_handler( pThis, true );
+   milDeviceHandler( pThis, true );
 }
 
 /*! ---------------------------------------------------------------------------
@@ -1860,7 +1904,7 @@ int main( void )
    scuDaqInitialize( &g_scuDaqAdmin ); // Init and scan for DAQs
    mprintf( "SCU-DAQ initialized\n" );
 #endif
-
+   //print_regs();
    while( true )
    {
       check_stack();

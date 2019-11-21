@@ -246,10 +246,10 @@ void init_buffers( FG_CHANNEL_REG_T* cr, const unsigned int channel,
    cr[channel].state = 0;
    cr[channel].ramp_count = 0;
 
-      //there is a macro assigned to that channel
+      // Is a macro assigned to that channel?
    const int32_t macro = cr[channel].macro_number;
    if( macro < 0 )
-      return;
+      return; // No
 
 
    const uint8_t socket = fg_macros[macro].socket;
