@@ -35,9 +35,20 @@
 
 #define OFFS(SLOT) ((SLOT) * (1 << 16))
 
+/*
+ * Maybe a bug in the obsolete DOXYGEN 1.8.5 in the ASL-cluster,
+ * otherwise the local functions of this module will not
+ * documented by DOXYGEN. :-/
+ */
+#ifdef __DOXYGEN__
+  #define STATIC
+#else
+  #define STATIC static
+#endif
+
 /*! ---------------------------------------------------------------------------
  */
-static void fgInitMacro( FG_MACRO_T* pMacro,
+STATIC void fgInitMacro( FG_MACRO_T* pMacro,
                          const uint8_t outputBits,
                          const uint8_t version,
                          const uint8_t device, /* mil extension */
@@ -51,7 +62,7 @@ static void fgInitMacro( FG_MACRO_T* pMacro,
 
 /*! ---------------------------------------------------------------------------
  */
-static int add_to_fglist( const uint8_t socked, const uint8_t dev,
+STATIC int add_to_fglist( const uint8_t socked, const uint8_t dev,
                           const uint16_t cid_sys, const uint16_t cid_group,
                           const uint8_t fg_ver,
                           FG_MACRO_T* fglist )
@@ -108,7 +119,7 @@ static int add_to_fglist( const uint8_t socked, const uint8_t dev,
  * @brief Scans the whole SCU-Bus for functions generators which are
  *        connected via SCU-bus-to-MIL-adapter
  */
-static inline
+STATIC inline
 void scanScuBusFgsViaMil( volatile uint16_t *scub_adr, FG_MACRO_T* fglist )
 {
    SCUBUS_SLAVE_FLAGS_T slotFlags;
@@ -149,7 +160,7 @@ void scanScuBusFgsViaMil( volatile uint16_t *scub_adr, FG_MACRO_T* fglist )
  * @brief Scans the whole SCU-bus direct to the SCU-bus connected
  *        function generators
  */
-static inline
+STATIC inline
 void scanScuBusFgsDirect( volatile uint16_t *scub_adr, FG_MACRO_T* fglist )
 {
    const  SCUBUS_SLAVE_FLAGS_T slotFlags = scuBusFindSpecificSlaves( (void*)scub_adr, SYS_CSCO, 38 );
@@ -168,7 +179,7 @@ void scanScuBusFgsDirect( volatile uint16_t *scub_adr, FG_MACRO_T* fglist )
 /*! ---------------------------------------------------------------------------
  * @brief Scans the whole SCU-bus for all kinda of function generators.
  */
-static inline
+STATIC inline
 void scanScuBusFgs( volatile uint16_t *scub_adr, FG_MACRO_T* fglist )
 {
    scanScuBusFgsDirect( scub_adr, fglist );
@@ -178,7 +189,7 @@ void scanScuBusFgs( volatile uint16_t *scub_adr, FG_MACRO_T* fglist )
 /*! ---------------------------------------------------------------------------
  * @brief Scans the MIL extension for function generators
  */
-static inline
+STATIC inline
 void scanExtMilFgs( volatile unsigned int *mil_addr,
                     FG_MACRO_T* fglist, uint64_t *ext_id )
 {
