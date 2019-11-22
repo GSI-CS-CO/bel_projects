@@ -7,7 +7,7 @@
  *
  *  @author Stefan Rauch perhaps...
  *  @revision Ulrich Becker <u.becker@gsi.de>
- *
+ *  @todo File is going too huge, split it in several files.
  ******************************************************************************
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -70,6 +70,10 @@
 #else
   #define STATIC static
 #endif
+
+/*!
+ * @defgroup MIL_FSM Functions and macros which concerns the MIL-FSM
+ */
 
 #define MIL_DRQ       0x2
 #define MIL_DRY       0x1
@@ -194,6 +198,7 @@ STATIC inline bool isFgPresent( const unsigned int channel )
 }
 
 /*! ---------------------------------------------------------------------------
+ * @ingroup MIL_FSM
  * @brief Loop control macro for all present function generator channels
  *        started form given channel in parameter "start"
  *
@@ -211,6 +216,7 @@ STATIC inline bool isFgPresent( const unsigned int channel )
    for( channel = start; isFgPresent( channel ); channel++ )
 
 /*! ---------------------------------------------------------------------------
+ * @ingroup MIL_FSM
  * @brief Loop control macro for all present function generator channels.
  *
  * It works off the entire FG-list initialized by function scan_all_fgs() in
@@ -1131,6 +1137,7 @@ STATIC void findECAQ( void )
 } // findECAQ
 
 /*! ---------------------------------------------------------------------------
+ * @ingroup MIL_FSM
  * @brief
  */
 typedef struct
@@ -1141,6 +1148,7 @@ typedef struct
 } FG_CHANNEL_TASK_T;
 
 /*! ---------------------------------------------------------------------------
+ * @ingroup MIL_FSM
  * @brief Helper macros for documenting the FSM via the FSM-visualizer DOCFSM.
  */
 #define FSM_DECLARE_STATE( state, attr... ) state
@@ -1148,16 +1156,18 @@ typedef struct
 #define FSM_INIT_FSM( init, attr... )       pThis->state = init
 
 /*! ---------------------------------------------------------------------------
+ * @ingroup MIL_FSM
  * @brief Declaration of the states of the task- FSM
+ * @see https://github.com/UlrichBecker/DocFsm
  */
 typedef enum
 {
-   FSM_DECLARE_STATE( ST_WAIT,            label='Wait for message' ),
-   FSM_DECLARE_STATE( ST_PREPARE,         label='Request MIL-status' ),
-   FSM_DECLARE_STATE( ST_FETCH_STATUS,    label='Read MIL-status' ),
-   FSM_DECLARE_STATE( ST_HANDLE_IRQS,     label='Handle irq' ),
-   FSM_DECLARE_STATE( ST_DATA_AQUISITION, label='Data aquisition' ),
-   FSM_DECLARE_STATE( ST_FETCH_DATA,      label='Read MIL-DAQ data' )
+   FSM_DECLARE_STATE( ST_WAIT,            label='Wait for message', color=blue ),
+   FSM_DECLARE_STATE( ST_PREPARE,         label='Request MIL-status', color=cyan ),
+   FSM_DECLARE_STATE( ST_FETCH_STATUS,    label='Read MIL-status', color=green ),
+   FSM_DECLARE_STATE( ST_HANDLE_IRQS,     label='Handle irq', color=red ),
+   FSM_DECLARE_STATE( ST_DATA_AQUISITION, label='Request MIL-DAQ data', color=cyan ),
+   FSM_DECLARE_STATE( ST_FETCH_DATA,      label='Read MIL-DAQ data',color=green )
 } FG_STATE_T;
 
 /*! ---------------------------------------------------------------------------
@@ -1181,27 +1191,29 @@ STATIC const char* state2string( const FG_STATE_T state )
 }
 
 /*! ---------------------------------------------------------------------------
- * @brief Declaration of the tasp type
+ * @brief Declaration of the task type
  */
 typedef struct _TaskType
 {
-   FG_STATE_T state;
-   int slave_nr;                             /* slave nr of the controlling sio card */
-   unsigned int lastChannel;                 /* loop index for channel */
-   int task_timeout_cnt;                     /* timeout counter */
-   uint64_t interval;                        /* interval of the task */
-   uint64_t lasttick;                        /* when was the task ran last */
-   uint64_t timestamp1;                      /* timestamp */
-   FG_CHANNEL_TASK_T  aFgChannels[ARRAY_SIZE(g_aFgChannels)];
-   void (*func)(struct _TaskType*);          /* pointer to the function of the task */
+   FG_STATE_T state;                         /*!<@brief current FSM state */
+   int slave_nr;                             /*!<@brief slave nr of the controlling sio card */
+   unsigned int lastChannel;                 /*!<@brief loop index for channel */
+   int task_timeout_cnt;                     /*!<@brief timeout counter */
+   uint64_t interval;                        /*!<@brief interval of the task */
+   uint64_t lasttick;                        /*!<@brief when was the task ran last */
+   uint64_t timestamp1;                      /*!<@brief timestamp */
+   FG_CHANNEL_TASK_T  aFgChannels[ARRAY_SIZE(g_aFgChannels)]; /*!<@see FG_CHANNEL_TASK_T */
+   void (*func)(struct _TaskType*);          /*!<@brief pointer to the function of the task */
 } TaskType;
 
 /* task prototypes */
+#ifndef __DOXYGEN__
 static void dev_sio_handler( register TaskType* );
 static void dev_bus_handler( register TaskType* );
 static void scu_bus_handler( register TaskType* );
 static void sw_irq_handler( register TaskType* );
 static void ecaHandler( register TaskType* );
+#endif
 
 /*! ---------------------------------------------------------------------------
  * @brief task configuration table
@@ -1555,6 +1567,8 @@ STATIC_ASSERT( MAX_FG_CHANNELS == ARRAY_SIZE( g_aFgChannels ));
  * Helper-function for function milDeviceHandler
  * @param pThis pointer to the current task object
  * @param channel channel number of function generator
+ * @retval true No interrupt pending
+ * @retval false Any interrupt pending
  * @see milDeviceHandler
  */
 ALWAYS_INLINE STATIC inline bool isNoIrqPending( register const TaskType* pThis,
@@ -1570,6 +1584,7 @@ ALWAYS_INLINE STATIC inline bool isNoIrqPending( register const TaskType* pThis,
  * @param pThis pointer to the current task object
  * @param isScuBus if true via SCU bus MIL adapter
  * @param channel channel number of function generator
+ * @return MIL-device status
  * @see milDeviceHandler
  */
 STATIC inline
@@ -1604,6 +1619,7 @@ int milReqestStatus( register TaskType* pThis, const bool isScuBus,
  * @param pThis pointer to the current task object
  * @param isScuBus if true via SCU bus MIL adapter
  * @param channel channel number of function generator
+ * @return MIL-device status
  * @see milDeviceHandler
  */
 STATIC inline
@@ -1637,6 +1653,7 @@ int milGetStatus( register TaskType* pThis, const bool isScuBus,
  * @param pThis pointer to the current task object
  * @param isScuBus if true via SCU bus MIL adapter
  * @param channel channel number of function generator
+ * @return MIL-device status
  * @see milDeviceHandler
  */
 STATIC inline
@@ -1662,6 +1679,7 @@ int milHandleAndWrite( register TaskType* pThis, const bool isScuBus,
  * @param pThis pointer to the current task object
  * @param isScuBus if true via SCU bus MIL adapter
  * @param channel channel number of function generator
+ * @return MIL-device status
  * @see milDeviceHandler
  */
 STATIC inline
@@ -1684,6 +1702,8 @@ int milSetTask( register TaskType* pThis, const bool isScuBus,
  * @param pThis pointer to the current task object
  * @param isScuBus if true via SCU bus MIL adapter
  * @param channel channel number of function generator
+ * @param pActAdcValue Pointer in which shall the ADC-value copied
+ * @return MIL-device status
  * @see milDeviceHandler
  */
 STATIC inline
@@ -1705,6 +1725,7 @@ int milGetTask( register TaskType* pThis, const bool isScuBus,
  * @param pThis pointer to the current task object
  * @param isScuBus if true via SCU bus MIL adapter
  * @dotfile scu_main.gv
+ * @see https://github.com/UlrichBecker/DocFsm
  */
 STATIC void milDeviceHandler( register TaskType* pThis, const bool isScuBus )
 {
@@ -1718,7 +1739,7 @@ STATIC void milDeviceHandler( register TaskType* pThis, const bool isScuBus )
          if( !has_msg(&g_aMsg_buf[0], isScuBus? DEVSIO : DEVBUS) )
          { /* There is nothing to do. */
          #ifdef __DOCFSM__
-            FSM_TRANSITION( ST_WAIT, label='No message' );
+            FSM_TRANSITION( ST_WAIT, label='No message', color=red );
          #endif
             break;
          }
@@ -1726,7 +1747,7 @@ STATIC void milDeviceHandler( register TaskType* pThis, const bool isScuBus )
          const MSI_T m = remove_msg( &g_aMsg_buf[0], isScuBus? DEVSIO : DEVBUS );
          pThis->slave_nr = isScuBus? (m.msg + 1) : 0;
          pThis->timestamp1 = getSysTime() + INTERVAL_200US;
-         FSM_TRANSITION( ST_PREPARE, label='Massage received' );
+         FSM_TRANSITION( ST_PREPARE, label='Massage received', color=green );
          break;
       } // end case ST_WAIT
 
@@ -1736,7 +1757,7 @@ STATIC void milDeviceHandler( register TaskType* pThis, const bool isScuBus )
          if( getSysTime() < pThis->timestamp1 )
          {
          #ifdef __DOCFSM__
-            FSM_TRANSITION( ST_PREPARE, label='Interval not expired' );
+            FSM_TRANSITION( ST_PREPARE, label='200 us not expired', color=red );
          #endif
             break;
          }
@@ -1748,7 +1769,7 @@ STATIC void milDeviceHandler( register TaskType* pThis, const bool isScuBus )
                dev_failure( status, 20, "dev_sio set task" );
          }
          pThis->lastChannel = 0;
-         FSM_TRANSITION( ST_FETCH_STATUS );
+         FSM_TRANSITION( ST_FETCH_STATUS, color=green );
          break;
       }
 
@@ -1775,14 +1796,14 @@ STATIC void milDeviceHandler( register TaskType* pThis, const bool isScuBus )
             pThis->lastChannel = channel; // start next time from channel
             pThis->task_timeout_cnt++;
          #ifdef __DOCFSM__
-            FSM_TRANSITION( ST_FETCH_STATUS, label='receive busy' );
+            FSM_TRANSITION( ST_FETCH_STATUS, label='Receiving busy', color=red );
          #endif
             break;
          }
 
          pThis->lastChannel = 0; // start next time from channel 0
          pThis->task_timeout_cnt = 0;
-         FSM_TRANSITION( ST_HANDLE_IRQS );
+         FSM_TRANSITION( ST_HANDLE_IRQS, color=green );
          break;
       } // end case ST_FETCH_STATUS
 
@@ -1796,7 +1817,7 @@ STATIC void milDeviceHandler( register TaskType* pThis, const bool isScuBus )
             if( status != OKAY )
                dev_failure(status, 22, "dev_sio end handle");
          }
-         FSM_TRANSITION( ST_DATA_AQUISITION );
+         FSM_TRANSITION( ST_DATA_AQUISITION, color=green );
          break;
       } // end case ST_HANDLE_IRQS
 
@@ -1812,7 +1833,7 @@ STATIC void milDeviceHandler( register TaskType* pThis, const bool isScuBus )
             if( status != OKAY )
                dev_failure( status, 23, "dev_sio read daq" );
          }
-         FSM_TRANSITION( ST_FETCH_DATA );
+         FSM_TRANSITION( ST_FETCH_DATA, color=green );
          break;
       } // end case ST_DATA_AQUISITION
 
@@ -1855,13 +1876,13 @@ STATIC void milDeviceHandler( register TaskType* pThis, const bool isScuBus )
             pThis->lastChannel = channel; // start next time from channel
             pThis->task_timeout_cnt++;
          #ifdef __DOCFSM__
-            FSM_TRANSITION( ST_FETCH_DATA, label='Receiving busy' );
+            FSM_TRANSITION( ST_FETCH_DATA, label='Receiving busy', color=red );
          #endif
             break;
          }
          pThis->lastChannel = 0; // start next time from channel 0
          pThis->task_timeout_cnt = 0;
-         FSM_TRANSITION( ST_WAIT );
+         FSM_TRANSITION( ST_WAIT, color=green );
          break;
       } // end case ST_FETCH_DATA
 
@@ -1869,7 +1890,7 @@ STATIC void milDeviceHandler( register TaskType* pThis, const bool isScuBus )
       {
          mprintf( ESC_ERROR"Unknown FSM-state of %s(): %d !"ESC_NORMAL"\n",
                   __func__, pThis->state );
-         FSM_INIT_FSM( ST_WAIT );
+         FSM_INIT_FSM( ST_WAIT, color=blue );
          break;
       }
    } // end switch
