@@ -8,8 +8,9 @@
 #include <aux.h>
 
 
-/***********************************************************
- * MIL bus library by Wolfgang Panschow
+/*!***********************************************************
+ * @file scu_mil.h MIL bus library
+ * @author  Wolfgang Panschow
  * 
  * This library works but has two issues:
  * 
@@ -40,10 +41,22 @@
  ***********************************************************
  ***********************************************************/
 
+
 extern int usleep(useconds_t usec);
+
+/*!
+ * @defgroup MIL_INTERFACE Functions and constants for MIL-bus.
+ * @{
+ */
+
 int write_mil(volatile unsigned int *base, short data, short fc_ifk_addr);
 int read_mil(volatile unsigned int *base, short *data, short fc_ifk_addr);
 int status_mil(volatile unsigned int *base, unsigned short *status);
+
+/*!
+ * @brief Writs a data block of 16 bit data words to the mil device.
+ * @see MIL_BLOCK_SIZE
+ */
 int write_mil_blk(volatile unsigned int *base, short *data, short fc_ifc_addr);
 int scub_status_mil(volatile unsigned short *base, int slot, unsigned short *status);
 int scub_read_mil(volatile unsigned short *base, int slot, short *data, short fc_ifc_addr);
@@ -100,48 +113,54 @@ int reset_mil(volatile unsigned *base);
   | where addresses are in uint8_t              |
   +---------------------------------------------+
 */
-#define   MIL_RD_WR_DATA      0x0000    // read or write mil bus; only 32bit access alowed; data[31..16] don't care
-#define   MIL_WR_CMD          0x0001    // write command to mil bus; only 32bit access alowed; data[31..16] don't care
-#define   MIL_WR_RD_STATUS    0x0002    // read mil status register; only 32bit access alowed; data[31..16] don't care
-                                        // write mil control register; only 32bit access alowed; data[31..16] don't care
-#define   RD_CLR_NO_VW_CNT    0x0003    // use only when FPGA Manchester Endecoder is enabled;
-                                        // read => valid word error counters; write => clears valid word error counters
-#define   RD_WR_NOT_EQ_CNT    0x0004    // use only when FPGA Manchester Endecoder is enabled;
-                                        // read => rcv pattern not equal errors; write => clears rcv pattern not equal errors
-#define   RD_CLR_EV_FIFO      0x0005    // read => event fifo; write clears event fifo.
-#define   RD_CLR_TIMER        0x0006    // read => event timer; write clear event timer.
-#define   RD_WR_DLY_TIMER     0x0007    // read => delay timer; write set delay timer.
-#define   RD_CLR_WAIT_TIMER   0x0008    // read => wait timer; write => clear wait timer.
-#define   MIL_WR_RD_LEMO_CONF 0x0009    // read/write lemo config register
-#define   MIL_WR_RD_LEMO_DAT  0x000A    // read/write lemo output data register
-#define   MIL_RD_LEMO_INP     0x000B    // read pin status at lemo pins        
-#define   EV_FILT_FIRST       0x1000    // first event filter (ram) address.
-#define   EV_FILT_LAST        0x1FFF    // last event filter (ram) addres.
+#define   MIL_RD_WR_DATA      0x0000    //!<@brief read or write mil bus; only 32bit access alowed; data[31..16] don't care
+#define   MIL_WR_CMD          0x0001    //!<@brief write command to mil bus; only 32bit access alowed; data[31..16] don't care
+#define   MIL_WR_RD_STATUS    0x0002    //!<@brief read mil status register; only 32bit access alowed; data[31..16] don't care
+                                        //!<@brief write mil control register; only 32bit access alowed; data[31..16] don't care
+#define   RD_CLR_NO_VW_CNT    0x0003    //!<@brief use only when FPGA Manchester Endecoder is enabled;
+                                        //!<@brief read => valid word error counters; write => clears valid word error counters
+#define   RD_WR_NOT_EQ_CNT    0x0004    //!<@brief use only when FPGA Manchester Endecoder is enabled;
+                                        //!<@brief read => rcv pattern not equal errors; write => clears rcv pattern not equal errors
+#define   RD_CLR_EV_FIFO      0x0005    //!<@brief read => event fifo; write clears event fifo.
+#define   RD_CLR_TIMER        0x0006    //!<@brief read => event timer; write clear event timer.
+#define   RD_WR_DLY_TIMER     0x0007    //!<@brief read => delay timer; write set delay timer.
+#define   RD_CLR_WAIT_TIMER   0x0008    //!<@brief read => wait timer; write => clear wait timer.
+#define   MIL_WR_RD_LEMO_CONF 0x0009    //!<@brief read/write lemo config register
+#define   MIL_WR_RD_LEMO_DAT  0x000A    //!<@brief read/write lemo output data register
+#define   MIL_RD_LEMO_INP     0x000B    //!<@brief read pin status at lemo pins
+#define   EV_FILT_FIRST       0x1000    //!<@brief first event filter (ram) address.
+#define   EV_FILT_LAST        0x1FFF    //!<@brief last event filter (ram) addres.
 
 /*
   +---------------------------------------------+
   |       mil status register layout            |
   +---------------------------------------------+
 */
-#define   MIL_INTERLOCK_INTR  0x0001    // '1' => interlock interrupt is active
-#define   MIL_DATA_RDY_INTR   0x0002    // '1' => data ready interrupt is active
-#define   MIL_DATA_REQ_INTR   0x0004    // '1' => data request interrupt is active
-#define   MIL_EV_FIFO_NE      0x0008    // '1' => event fifo is not empty
-#define   MIL_EV_FIFO_FULL    0x0010    // '1' => event fifo is full
-#define   MIL_RCV_READY       0x0020    // '1' => mil received data/commands
-#define   MIL_CMD_RCV         0x0040    // '1' => received pattern is a command
-#define   MIL_TRM_READY       0x0080    // '1' => mil is free to transmit a pattern
-#define   MIL_RCV_ERROR       0x0100    // '1' => mil received an error
+#define   MIL_INTERLOCK_INTR  0x0001    //!<@brief '1' => interlock interrupt is active
+#define   MIL_DATA_RDY_INTR   0x0002    //!<@brief '1' => data ready interrupt is active
+#define   MIL_DATA_REQ_INTR   0x0004    //!<@brief '1' => data request interrupt is active
+#define   MIL_EV_FIFO_NE      0x0008    //!<@brief '1' => event fifo is not empty
+#define   MIL_EV_FIFO_FULL    0x0010    //!<@brief '1' => event fifo is full
+#define   MIL_RCV_READY       0x0020    //!<@brief '1' => mil received data/commands
+#define   MIL_CMD_RCV         0x0040    //!<@brief '1' => received pattern is a command
+#define   MIL_TRM_READY       0x0080    //!<@brief '1' => mil is free to transmit a pattern
+#define   MIL_RCV_ERROR       0x0100    //!<@brief '1' => mil received an error
 #define   MIL_EV_RESET_ON     0x0200    //
-#define   MIL_PULS1_FRAME     0x0400    // '1' => one event (defined in event filter) switch puls1 on, an other event switch puls1 off
-                                        // '0' => one event (defined in event filter) generates a pulse on frontpannel lemo1
-#define   MIL_PULS2_FRAME     0x0800    // '1' => one event (defined in event filter) switch puls2 on, an other event switch puls2 off
-                                        // '0' => one event (defined in event filter) generates a pulse on frontpannel lemo2
-#define   MIL_INTR_DEB_ON     0x1000    // '1' => deboune devicebus interrupts is on
-#define   MIL_EV_FILTER_ON    0x2000    // '1' => event filter is generally enabled; you must programm the event filter
-#define   MIL_EV_12_8B        0x4000    // '1' => event decoding 12 bit; '0' => event decoding 8 bit
-#define   MIL_ENDECODER_FPGA  0x8000    // '1' => use manchester en/decoder in fpga; '0' => use external en/decoder 6408
+#define   MIL_PULS1_FRAME     0x0400    //!<@brief '1' => one event (defined in event filter) switch puls1 on, an other event switch puls1 off
+                                        //! '0' => one event (defined in event filter) generates a pulse on frontpannel lemo1
+#define   MIL_PULS2_FRAME     0x0800    //!<@brief '1' => one event (defined in event filter) switch puls2 on, an other event switch puls2 off
+                                        //! '0' => one event (defined in event filter) generates a pulse on frontpannel lemo2
+#define   MIL_INTR_DEB_ON     0x1000    //!<@brief '1' => deboune devicebus interrupts is on
+#define   MIL_EV_FILTER_ON    0x2000    //!<@brief '1' => event filter is generally enabled; you must programm the event filter
+#define   MIL_EV_12_8B        0x4000    //!<@brief '1' => event decoding 12 bit; '0' => event decoding 8 bit
+#define   MIL_ENDECODER_FPGA  0x8000    //!<@brief '1' => use manchester en/decoder in fpga; '0' => use external en/decoder 6408
 
+#define MIL_BLOCK_SIZE 6 //!<@brief MIL data block length in 16-bit words (uint16_t).
+
+/*!
+ * @brief Writes a data-block of 16-bit words to the MIL device via SCU bus.
+ * @see MIL_BLOCK_SIZE
+ */
 static
 inline int scub_write_mil_blk(volatile unsigned short *base, int slot, short *data, short fc_ifc_addr) {
   int i;
@@ -149,7 +168,7 @@ inline int scub_write_mil_blk(volatile unsigned short *base, int slot, short *da
   base[CALC_OFFS(slot) + MIL_SIO3_TX_DATA] = data[0];
   base[CALC_OFFS(slot) + MIL_SIO3_TX_CMD] = fc_ifc_addr;
 
-  for (i = 1; i < 6; i++) {
+  for (i = 1; i < MIL_BLOCK_SIZE; i++) {
       base[CALC_OFFS(slot) + MIL_SIO3_TX_DATA] = data[i];
   }
   atomic_off();
@@ -217,100 +236,100 @@ inline int scub_write_mil(volatile unsigned short *base, int slot, short data, s
 * routines for MIL device bus (Canon socket)      
 ************************************************************/
 
-// write to MIL device bus; returns error code                                                             
-int16_t writeDevMil(volatile uint32_t *base,            // Wishbone address seen from the CPUs perspective 
-                    uint16_t  ifbAddr,                  // MIL address of interface board                  
-                    uint16_t  fctCode,                  // function code                                   
-                    uint16_t  data                      // data                                            
+//!@brief write to MIL device bus; returns error code
+int16_t writeDevMil(volatile uint32_t *base,            //!<@brief Wishbone address seen from the CPUs perspective
+                    uint16_t  ifbAddr,                  //!<@brief MIL address of interface board
+                    uint16_t  fctCode,                  //!<@brief function code
+                    uint16_t  data                      //!<@brief data
                     );
 
-// read from MIL device bus; returns error code                                                            
-int16_t readDevMil(volatile uint32_t *base,             // Wishbone address seen from the CPUs perspective 
-                   uint16_t  ifbAddr,                   // MIL address of interface board                  
-                   uint16_t  fctCode,                   // function code                                   
-                   uint16_t  *data                      // data                                            
+//!@brief read from MIL device bus; returns error code
+int16_t readDevMil(volatile uint32_t *base,             //!<@brief Wishbone address seen from the CPUs perspective
+                   uint16_t  ifbAddr,                   //!<@brief MIL address of interface board
+                   uint16_t  fctCode,                   //!<@brief function code
+                   uint16_t  *data                      //!<@brief data
                    );
 
-// write data to the echo register of a MIL device, then read and compare the data; returns error code                                                            
-int16_t echoTestDevMil(volatile uint32_t *base,         // Wishbone address seen from the CPUs perspective 
-                    uint16_t  ifbAddr,                  // MIL address of interface board                  
-                    uint16_t  data                      // data                                            
+//!@brief write data to the echo register of a MIL device, then read and compare the data; returns error code
+int16_t echoTestDevMil(volatile uint32_t *base,         //!<@brief Wishbone address seen from the CPUs perspective
+                    uint16_t  ifbAddr,                  //!<@brief MIL address of interface board
+                    uint16_t  data                      //!<@brief data
                     );
 
-// reset device bus part of MIL piggy
-int16_t resetPiggyDevMil(volatile uint32_t *base);      // Wishbone address seen from the CPUs perspective 
+//!@brief reset device bus part of MIL piggy
+int16_t resetPiggyDevMil(volatile uint32_t *base);      //!<@brief Wishbone address seen from the CPUs perspective
 
 /***********************************************************
 * routines for MIL event bus receiver (bipolar LEMO socket)
 ************************************************************/
 
-/* clear filter RAM; returns error code */
-int16_t clearFilterEvtMil(volatile uint32_t *base      // Wishbone address seen from the CPUs perspective 
+/*!@brief clear filter RAM; returns error code */
+int16_t clearFilterEvtMil(volatile uint32_t *base      //!<@brief Wishbone address seen from the CPUs perspective
                           );
 
-/* set a filter; returns error code */
-int16_t setFilterEvtMil(volatile uint32_t *base,       // Wishbone address seen from the CPUs perspective 
-                        uint16_t evtCode,              // event code                                      
-                        uint16_t virtAcc,              // virtual accelerator                             
-                        uint32_t filter                // filter value                                    
+/*!@brief set a filter; returns error code */
+int16_t setFilterEvtMil(volatile uint32_t *base,       //!<@brief Wishbone address seen from the CPUs perspective
+                        uint16_t evtCode,              //!<@brief event code
+                        uint16_t virtAcc,              //!<@brief virtual accelerator
+                        uint32_t filter                //!<@brief filter value
                         );
 
-/* enable all filters, filtering is either ON or OFF for all filters; returns error code */
-int16_t enableFilterEvtMil(volatile uint32_t *base     // Wishbone address seen from the CPUs perspective 
+/*!@brief enable all filters, filtering is either ON or OFF for all filters; returns error code */
+int16_t enableFilterEvtMil(volatile uint32_t *base     //!<@brief Wishbone address seen from the CPUs perspective
                            );
 
-/* disble all filters, filtering is either ON or OFF for all filters; returns error code */
-int16_t disableFilterEvtMil(volatile uint32_t *base    // Wishbone address seen from the CPUs perspective 
+/*!@brief disble all filters, filtering is either ON or OFF for all filters; returns error code */
+int16_t disableFilterEvtMil(volatile uint32_t *base    //!<@brief Wishbone address seen from the CPUs perspective
                             );
 
-/* write to status and control register; returns error code */
-int16_t writeCtrlStatRegEvtMil(volatile uint32_t *base,// Wishbone address seen from the CPUs perspective 
-                               uint32_t value          // register value                                  
+/*!@brief write to status and control register; returns error code */
+int16_t writeCtrlStatRegEvtMil(volatile uint32_t *base,//!<@brief Wishbone address seen from the CPUs perspective
+                               uint32_t value          //!<@brief register value
                                );
  
-/* read from status and control register; returns error code */
-int16_t readCtrlStatRegEvtMil(volatile uint32_t *base,    // Wishbone address seen from the CPUs perspective 
-                              uint32_t *value             // register value                                  
+/*!@brief read from status and control register; returns error code */
+int16_t readCtrlStatRegEvtMil(volatile uint32_t *base,    //!<@brief Wishbone address seen from the CPUs perspective
+                              uint32_t *value             //!<@brief register value
                               );
 
-/* query fill state of event FIFO; returns '1' if not empty */
-uint16_t fifoNotemptyEvtMil(volatile uint32_t *base      // Wishbone address seen from the CPUs perspective 
+/*!@brief query fill state of event FIFO; returns '1' if not empty */
+uint16_t fifoNotemptyEvtMil(volatile uint32_t *base      //!<@brief Wishbone address seen from the CPUs perspective
                            );
 
-/* remove all elements from the FIFO; returns error code */
-int16_t clearFifoEvtMil(volatile uint32_t *base         // Wishbone address seen from the CPUs perspective 
+/*!@brief remove all elements from the FIFO; returns error code */
+int16_t clearFifoEvtMil(volatile uint32_t *base         //!<@brief Wishbone address seen from the CPUs perspective
                     );
 
-/* pop on element of the FIFO; returns error code */
-int16_t popFifoEvtMil(volatile uint32_t *base,          // Wishbone address seen from the CPUs perspective 
-                      uint32_t *evtData                 // data of an event                                
+/*!@brief pop on element of the FIFO; returns error code */
+int16_t popFifoEvtMil(volatile uint32_t *base,          //!<@brief Wishbone address seen from the CPUs perspective
+                      uint32_t *evtData                 //!<@brief data of an event
                       );
 
-/*configure a single ended LEMO for pulse generation, remember to set a filter too; returns error code */
+/*!@brief configure a single ended LEMO for pulse generation, remember to set a filter too; returns error code */
 int16_t configLemoPulseEvtMil(volatile uint32_t *base, // Wishbone address seen from the CPUs perspective 
                               uint32_t lemo            // select LEMO 1..4                                
                               );
 
-/* configure a single ended LEMO for gate generation, remember to set a filter too; returns error code */
-int16_t configLemoGateEvtMil(volatile uint32_t *base,   // Wishbone address seen from the CPUs perspective 
-                             uint32_t lemo              // select LEMO 1..4                                
+/*!@brief configure a single ended LEMO for gate generation, remember to set a filter too; returns error code */
+int16_t configLemoGateEvtMil(volatile uint32_t *base,   //!<@brief Wishbone address seen from the CPUs perspective
+                             uint32_t lemo              //!<@brief select LEMO 1..4
                              );
 
-/* configure a single ended LEMO for programmable output (not controlled via event) */
-int16_t configLemoOutputEvtMil(volatile uint32_t *base,   // Wishbone address seen from the CPUs perspective 
-                               uint32_t lemo              // select LEMO 1..4                                
+/*!@brief configure a single ended LEMO for programmable output (not controlled via event) */
+int16_t configLemoOutputEvtMil(volatile uint32_t *base,   //!<@brief Wishbone address seen from the CPUs perspective
+                               uint32_t lemo              //!<@brief select LEMO 1..4
                                );
 
 
-/* set the output value of a single ended LEMO programmatically (not controlled via event) */
-int16_t setLemoOutputEvtMil(volatile uint32_t *base,   // Wishbone address seen from the CPUs perspective 
-                            uint32_t lemo,             // select LEMO 1..4
-                            uint32_t on                // 1: on, 0: off
+/*!@brief set the output value of a single ended LEMO programmatically (not controlled via event) */
+int16_t setLemoOutputEvtMil(volatile uint32_t *base,   //!<@brief Wishbone address seen from the CPUs perspective
+                            uint32_t lemo,             //!<@brief select LEMO 1..4
+                            uint32_t on                //!<@brief 1: on, 0: off
                             );
 
-/* disable a single ended LEMO output; returns error code */
-int16_t disableLemoEvtMil(volatile uint32_t *base,      // Wishbone address seen from the CPUs perspective 
-                          uint32_t lemo                 // select LEMO 1..4                                
+/*!@brief disable a single ended LEMO output; returns error code */
+int16_t disableLemoEvtMil(volatile uint32_t *base,      //!<@brief Wishbone address seen from the CPUs perspective
+                          uint32_t lemo                 //!<@brief select LEMO 1..4
                           );
 
 
@@ -319,29 +338,29 @@ int16_t disableLemoEvtMil(volatile uint32_t *base,      // Wishbone address seen
  * mil registers available via Wishbone
  * 
  ***********************************************************/
-#define   MIL_REG_RD_WR_DATA         (MIL_SIO3_OFFSET + MIL_RD_WR_DATA)   << 2    // read or write mil bus; only 32bit access alowed; data[31..16] don't care
-#define   MIL_REG_WR_CMD             (MIL_SIO3_OFFSET + MIL_WR_CMD)       << 2    // write command to mil bus; only 32bit access alowed; data[31..16] don't care
-#define   MIL_REG_WR_RD_STATUS       (MIL_SIO3_OFFSET + MIL_WR_RD_STATUS) << 2    // read mil status register; only 32bit access alowed; data[31..16] don't care
-                                                                                  // write mil control register; only 32bit access alowed; data[31..16] don't care
-#define   MIL_REG_RD_CLR_NO_VW_CNT   (MIL_SIO3_OFFSET + RD_CLR_NO_VW_CNT) << 2    // use only when FPGA Manchester Endecoder is enabled;
-                                                                                  // read => valid word error counters; write => clears valid word error counters
-#define   MIL_REG_RD_WR_NOT_EQ_CNT   (MIL_SIO3_OFFSET + RD_WR_NOT_EQ_CNT) << 2    // use only when FPGA Manchester Endecoder is enabled;
-                                                                                  // read => rcv pattern not equal errors; write => clears rcv pattern not equal errors
-#define   MIL_REG_RD_CLR_EV_FIFO     (MIL_SIO3_OFFSET + RD_CLR_EV_FIFO) << 2      // read => event fifo; write clears event fifo.
-#define   MIL_REG_RD_CLR_TIMER       (MIL_SIO3_OFFSET + RD_CLR_TIMER)   << 2      // read => event timer; write clear event timer.
-#define   MIL_REG_RD_WR_DLY_TIMER    (MIL_SIO3_OFFSET + RD_WR_DLY_TIMER) << 2     // read => delay timer; write set delay timer.
-#define   MIL_REG_RD_CLR_WAIT_TIMER  (MIL_SIO3_OFFSET + RD_CLR_WAIT_TIMER) << 2   // read => wait timer; write => clear wait timer.
-#define   MIL_REG_WR_RF_LEMO_CONF    (MIL_SIO3_OFFSET + MIL_WR_RD_LEMO_CONF) << 2 // read/write lemo config register     
-#define   MIL_REG_WR_RD_LEMO_DAT     (MIL_SIO3_OFFSET + MIL_WR_RD_LEMO_DAT) << 2  // read/write lemo output data register
-#define   MIL_REG_RD_LEMO_INP_A      (MIL_SIO3_OFFSET + MIL_RD_LEMO_INP) << 2     // read pin status at lemo pins        
-#define   MIL_REG_EV_FILT_FIRST      EV_FILT_FIRST << 2                           // first event filter (ram) address.
-#define   MIL_REG_EV_FILT_LAST       EV_FILT_LAST  << 2                           // last event filter (ram) addres.
-                                                                                  // the filter RAM has a size of 4096 elements
-                                                                                  // each element has a size of 4 bytes
-                                                                                  // (definition of filter bits: see below)
-                                                                                  // the filter RAM is addressed in the following way
-                                                                                  //    uint32_t *pFilter; 
-                                                                                  //    pFilter[virtAcc * 256 + evtCode]
+#define   MIL_REG_RD_WR_DATA         (MIL_SIO3_OFFSET + MIL_RD_WR_DATA)   << 2    //!<@brief read or write mil bus; only 32bit access alowed; data[31..16] don't care
+#define   MIL_REG_WR_CMD             (MIL_SIO3_OFFSET + MIL_WR_CMD)       << 2    //!<@brief write command to mil bus; only 32bit access alowed; data[31..16] don't care
+#define   MIL_REG_WR_RD_STATUS       (MIL_SIO3_OFFSET + MIL_WR_RD_STATUS) << 2    //!<@brief read mil status register; only 32bit access alowed; data[31..16] don't care
+                                                                                  //! write mil control register; only 32bit access alowed; data[31..16] don't care
+#define   MIL_REG_RD_CLR_NO_VW_CNT   (MIL_SIO3_OFFSET + RD_CLR_NO_VW_CNT) << 2    //!<@brief use only when FPGA Manchester Endecoder is enabled;
+                                                                                  //! read => valid word error counters; write => clears valid word error counters
+#define   MIL_REG_RD_WR_NOT_EQ_CNT   (MIL_SIO3_OFFSET + RD_WR_NOT_EQ_CNT) << 2    //!<@brief use only when FPGA Manchester Endecoder is enabled;
+                                                                                  //! read => rcv pattern not equal errors; write => clears rcv pattern not equal errors
+#define   MIL_REG_RD_CLR_EV_FIFO     (MIL_SIO3_OFFSET + RD_CLR_EV_FIFO) << 2      //!<@brief read => event fifo; write clears event fifo.
+#define   MIL_REG_RD_CLR_TIMER       (MIL_SIO3_OFFSET + RD_CLR_TIMER)   << 2      //!<@brief read => event timer; write clear event timer.
+#define   MIL_REG_RD_WR_DLY_TIMER    (MIL_SIO3_OFFSET + RD_WR_DLY_TIMER) << 2     //!<@brief read => delay timer; write set delay timer.
+#define   MIL_REG_RD_CLR_WAIT_TIMER  (MIL_SIO3_OFFSET + RD_CLR_WAIT_TIMER) << 2   //!<@brief read => wait timer; write => clear wait timer.
+#define   MIL_REG_WR_RF_LEMO_CONF    (MIL_SIO3_OFFSET + MIL_WR_RD_LEMO_CONF) << 2 //!<@brief read/write lemo config register
+#define   MIL_REG_WR_RD_LEMO_DAT     (MIL_SIO3_OFFSET + MIL_WR_RD_LEMO_DAT) << 2  //!<@brief read/write lemo output data register
+#define   MIL_REG_RD_LEMO_INP_A      (MIL_SIO3_OFFSET + MIL_RD_LEMO_INP) << 2     //!<@brief read pin status at lemo pins
+#define   MIL_REG_EV_FILT_FIRST      EV_FILT_FIRST << 2                           //!<@brief first event filter (ram) address.
+#define   MIL_REG_EV_FILT_LAST       EV_FILT_LAST  << 2                           //!<@brief last event filter (ram) addres.
+                                                                                  //! the filter RAM has a size of 4096 elements
+                                                                                  //! each element has a size of 4 bytes
+                                                                                  //! (definition of filter bits: see below)
+                                                                                  //! the filter RAM is addressed in the following way
+                                                                                  //!    uint32_t *pFilter;
+                                                                                  //!    pFilter[virtAcc * 256 + evtCode]
 
 
 /***********************************************************
@@ -352,24 +371,24 @@ int16_t disableLemoEvtMil(volatile uint32_t *base,      // Wishbone address seen
  * bits 16..31: unused
  *
  ***********************************************************/
-#define   MIL_CTRL_STAT_INTERLOCK_INTR  MIL_INTERLOCK_INTR  // '1' => interlock interrupt is active
-#define   MIL_CTRL_STAT_DATA_RDY_INTR   MIL_DATA_RDY_INTR   // '1' => data ready interrupt is active
-#define   MIL_CTRL_STAT_DATA_REQ_INTR   MIL_DATA_REQ_INTR   // '1' => data request interrupt is active
-#define   MIL_CTRL_STAT_EV_FIFO_NE      MIL_EV_FIFO_NE      // '1' => event fifo is not empty
-#define   MIL_CTRL_STAT_EV_FIFO_FULL    MIL_EV_FIFO_FULL    // '1' => event fifo is full
-#define   MIL_CTRL_STAT_RCV_READY       MIL_RCV_READY       // '1' => mil received data/commands
-#define   MIL_CTRL_STAT_CMD_RCV         MIL_CMD_RCV         // '1' => received pattern is a command
-#define   MIL_CTRL_STAT_TRM_READY       MIL_TRM_READY       // '1' => mil is free to transmit a pattern
-#define   MIL_CTRL_STAT_RCV_ERROR       MIL_RCV_ERROR       // '1' => mil received an error
+#define   MIL_CTRL_STAT_INTERLOCK_INTR  MIL_INTERLOCK_INTR  //!<@brief '1' => interlock interrupt is active
+#define   MIL_CTRL_STAT_DATA_RDY_INTR   MIL_DATA_RDY_INTR   //!<@brief '1' => data ready interrupt is active
+#define   MIL_CTRL_STAT_DATA_REQ_INTR   MIL_DATA_REQ_INTR   //!<@brief '1' => data request interrupt is active
+#define   MIL_CTRL_STAT_EV_FIFO_NE      MIL_EV_FIFO_NE      //!<@brief '1' => event fifo is not empty
+#define   MIL_CTRL_STAT_EV_FIFO_FULL    MIL_EV_FIFO_FULL    //!<@brief '1' => event fifo is full
+#define   MIL_CTRL_STAT_RCV_READY       MIL_RCV_READY       //!<@brief '1' => mil received data/commands
+#define   MIL_CTRL_STAT_CMD_RCV         MIL_CMD_RCV         //!<@brief '1' => received pattern is a command
+#define   MIL_CTRL_STAT_TRM_READY       MIL_TRM_READY       //!<@brief '1' => mil is free to transmit a pattern
+#define   MIL_CTRL_STAT_RCV_ERROR       MIL_RCV_ERROR       //!<@brief '1' => mil received an error
 #define   MIL_CTRL_STAT_EV_RESET_ON     MIL_EV_RESET_ON     //
-#define   MIL_CTRL_STAT_PULS1_FRAME     MIL_PULS1_FRAME     // '1' => one event (defined in event filter) switch puls1 on, an other event switch puls1 off
-                                                            // '0' => one event (defined in event filter) generates a pulse on frontpannel lemo1
-#define   MIL_CTRL_STAT_PULS2_FRAME     MIL_PULS2_FRAME     // '1' => one event (defined in event filter) switch puls2 on, an other event switch puls2 off
-                                                            // '0' => one event (defined in event filter) generates a pulse on frontpannel lemo2
-#define   MIL_CTRL_STAT_INTR_DEB_ON     MIL_INTR_DEB_ON     // '1' => deboune devicebus interrupts is on
-#define   MIL_CTRL_STAT_EV_FILTER_ON    MIL_EV_FILTER_ON    // '1' => event filter is generally enabled; you must programm the event filter
-#define   MIL_CTRL_STAT_EV_12_8B        MIL_EV_12_8B        // '1' => event decoding 12 bit; '0' => event decoding 8 bit
-#define   MIL_CTRL_STAT_ENDECODER_FPGA  MIL_ENDECODER_FPGA  // '1' => use manchester en/decoder in fpga; '0' => use external en/decoder 6408
+#define   MIL_CTRL_STAT_PULS1_FRAME     MIL_PULS1_FRAME     //!<@brief '1' => one event (defined in event filter) switch puls1 on, an other event switch puls1 off
+                                                            //! '0' => one event (defined in event filter) generates a pulse on frontpannel lemo1
+#define   MIL_CTRL_STAT_PULS2_FRAME     MIL_PULS2_FRAME     //!<@brief '1' => one event (defined in event filter) switch puls2 on, an other event switch puls2 off \n
+                                                            //! '0' => one event (defined in event filter) generates a pulse on frontpannel lemo2
+#define   MIL_CTRL_STAT_INTR_DEB_ON     MIL_INTR_DEB_ON     //!<@brief '1' => deboune devicebus interrupts is on
+#define   MIL_CTRL_STAT_EV_FILTER_ON    MIL_EV_FILTER_ON    //!<@brief '1' => event filter is generally enabled; you must programm the event filter
+#define   MIL_CTRL_STAT_EV_12_8B        MIL_EV_12_8B        //!<@brief '1' => event decoding 12 bit; '0' => event decoding 8 bit
+#define   MIL_CTRL_STAT_ENDECODER_FPGA  MIL_ENDECODER_FPGA  //!<@brief '1' => use manchester en/decoder in fpga; '0' => use external en/decoder 6408
 
 
 /***********************************************************
@@ -380,18 +399,18 @@ int16_t disableLemoEvtMil(volatile uint32_t *base,      // Wishbone address seen
  * bits 6..31: unused
  *
  ***********************************************************/
-#define   MIL_FILTER_EV_TO_FIFO   0x0001    // '1' => incoming event is written to FIFO
-#define   MIL_FILTER_EV_TIMER_RES 0x0002    // '1' => if bit MIL_EV_RESET_ON is set, an incoming event resets the event timer
-#define   MIL_FILTER_EV_PULS1_S   0x0004    // '1' => incoming event controls LEMO1 output
-                                            //        - if MIL_PULS1_FRAME: start of gate ("Rahmenpuls")
-                                            //        - else:               start of event pulse counter for ev_pulse1
-#define   MIL_FILTER_EV_PULS1_E   0x0008    // '1' => incoming event controls LEMO1 output
-                                            //        - if MIL_PULS1_FRAME: stop gate ("Rahmenpuls")
-#define   MIL_FILTER_EV_PULS2_S   0x0010    // '1' => incoming event controls LEMO2 output                            
-                                            //        - if MIL_PULS1_FRAME: start of gate ("Rahmenpuls")       
-                                            //        - else:               start of event pulse counter for ev_pulse1
-#define   MIL_FILTER_EV_PULS2_E   0x0020    //  1' => incoming event controls LEMO1 output                    
-                                            //        - if MIL_PULS1_FRAME: stop of gate ("Rahmenpuls")
+#define   MIL_FILTER_EV_TO_FIFO   0x0001    //!<@brief '1' => incoming event is written to FIFO
+#define   MIL_FILTER_EV_TIMER_RES 0x0002    //!<@brief '1' => if bit MIL_EV_RESET_ON is set, an incoming event resets the event timer
+#define   MIL_FILTER_EV_PULS1_S   0x0004    //!<@brief '1' => incoming event controls LEMO1 output \n
+                                            //!        - if MIL_PULS1_FRAME: start of gate ("Rahmenpuls") \n
+                                            //!        - else:               start of event pulse counter for ev_pulse1
+#define   MIL_FILTER_EV_PULS1_E   0x0008    //!<@brief '1' => incoming event controls LEMO1 output \n
+                                            //!        - if MIL_PULS1_FRAME: stop gate ("Rahmenpuls") \n
+#define   MIL_FILTER_EV_PULS2_S   0x0010    //!<@brief '1' => incoming event controls LEMO2 output \n
+                                            //!        - if MIL_PULS1_FRAME: start of gate ("Rahmenpuls") \n
+                                            //!        - else:               start of event pulse counter for ev_pulse1
+#define   MIL_FILTER_EV_PULS2_E   0x0020    //!<@brief  1' => incoming event controls LEMO1 output \n
+                                            //!        - if MIL_PULS1_FRAME: stop of gate ("Rahmenpuls")
 
 /***********************************************************
  * 
@@ -401,14 +420,14 @@ int16_t disableLemoEvtMil(volatile uint32_t *base,      // Wishbone address seen
  * bits 8..31: unused
  * chk: use cases for MIL and SIO
  ***********************************************************/
-#define   MIL_LEMO_OUT_EN1    0x0001    // '1' ==> LEMO 1 configured as output (MIL Piggy)
-#define   MIL_LEMO_OUT_EN2    0x0002    // '1' ==> LEMO 2 configured as output (MIL Piggy)
-#define   MIL_LEMO_OUT_EN3    0x0004    // '1' ==> LEMO 3 configured as output (SIO)
-#define   MIL_LEMO_OUT_EN4    0x0008    // '1' ==> LEMO 4 configured as output (SIO)
-#define   MIL_LEMO_EVENT_EN1  0x0010    // '1' ==> LEMO 1 can be controlled by event (MIL Piggy)
-#define   MIL_LEMO_EVENT_EN2  0x0020    // '1' ==> LEMO 2 can be controlled by event (MIL Piggy)
-#define   MIL_LEMO_EVENT_EN3  0x0040    // '1' ==> LEMO 3 can be controlled by event (unused?)
-#define   MIL_LEMO_EVENT_EN4  0x0080    // '1' ==> LEMO 4 can be controlled by event (unused?) 
+#define   MIL_LEMO_OUT_EN1    0x0001    //!<@brief '1' ==> LEMO 1 configured as output (MIL Piggy)
+#define   MIL_LEMO_OUT_EN2    0x0002    //!<@brief '1' ==> LEMO 2 configured as output (MIL Piggy)
+#define   MIL_LEMO_OUT_EN3    0x0004    //!<@brief '1' ==> LEMO 3 configured as output (SIO)
+#define   MIL_LEMO_OUT_EN4    0x0008    //!<@brief '1' ==> LEMO 4 configured as output (SIO)
+#define   MIL_LEMO_EVENT_EN1  0x0010    //!<@brief '1' ==> LEMO 1 can be controlled by event (MIL Piggy)
+#define   MIL_LEMO_EVENT_EN2  0x0020    //!<@brief '1' ==> LEMO 2 can be controlled by event (MIL Piggy)
+#define   MIL_LEMO_EVENT_EN3  0x0040    //!<@brief '1' ==> LEMO 3 can be controlled by event (unused?)
+#define   MIL_LEMO_EVENT_EN4  0x0080    //!<@brief '1' ==> LEMO 4 can be controlled by event (unused?)
 
 
 /***********************************************************
@@ -421,10 +440,11 @@ int16_t disableLemoEvtMil(volatile uint32_t *base,      // Wishbone address seen
  * bits 4..31: unused
  * chk: use cases for MIL and SIO
  ***********************************************************/
-#define   MIL_LEMO_DAT1    0x0001    // '1' ==> LEMO 1 is switched active HIGH (MIL Piggy & SIO)
-#define   MIL_LEMO_DAT2    0x0002    // '1' ==> LEMO 2 is switched active HIGH (MIL Piggy & SIO)
-#define   MIL_LEMO_DAT3    0x0004    // '1' ==> LEMO 3 is switched active HIGH (SIO)
-#define   MIL_LEMO_DAT4    0x0008    // '1' ==> LEMO 4 is switched active HIGH (SIO)
+#define   MIL_LEMO_DAT1    0x0001    //!<@brief '1' ==> LEMO 1 is switched active HIGH (MIL Piggy & SIO)
+#define   MIL_LEMO_DAT2    0x0002    //!<@brief '1' ==> LEMO 2 is switched active HIGH (MIL Piggy & SIO)
+#define   MIL_LEMO_DAT3    0x0004    //!<@brief '1' ==> LEMO 3 is switched active HIGH (SIO)
+#define   MIL_LEMO_DAT4    0x0008    //!<@brief '1' ==> LEMO 4 is switched active HIGH (SIO)
 
+//@}
 
 #endif

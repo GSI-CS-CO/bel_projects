@@ -463,11 +463,17 @@ STATIC inline unsigned int getFgNumberFromRegister( const uint16_t reg )
    return (reg >> 4) & 0x3F; // virtual fg number Bits 9..4
 }
 
+/*
+ * Mil-library uses "short" rather than "uint16_t"! :-(
+ */
+STATIC_ASSERT( sizeof( short ) == sizeof( int16_t ) );
+
 /*! ---------------------------------------------------------------------------
  * @brief Sends the parameters for the next interpolation interval.
  * @param socket number of the slot, including the high bits with the information SIO or MIL_EXT
  * @param fg_base base address of the function generator macro
  * @param cntrl_reg state of the control register. saves one read access.
+ * @param pSetvalue Pointer in which shall the set-value copied used for MIL-daq.
  * @todo Remove naked mask numbers by well named constants or inline get()-functions.
  * @todo In the case of a periodical signal, check whether its really necessary to use
  *       a circular buffer respectively a FiFo in which the wishbone bus becomes to much traffic! \n
@@ -481,7 +487,7 @@ STATIC inline void send_fg_param( const unsigned int socket,
    FG_PARAM_SET_T pset;
    uint16_t       cntrl_reg_wr;
    int            status;
-   int16_t        blk_data[6];
+   int16_t        blk_data[MIL_BLOCK_SIZE];
 
    const unsigned int fg_num = getFgNumberFromRegister( cntrl_reg );
    if( fg_num >= ARRAY_SIZE( g_aFgChannels ) )
@@ -838,7 +844,7 @@ STATIC int configure_fg_macro( const unsigned int channel )
    }
 
    uint16_t cntrl_reg_wr;
-   int16_t blk_data[6];
+   int16_t blk_data[MIL_BLOCK_SIZE];
    FG_PARAM_SET_T pset;
     //fetch first parameter set from buffer
    if( cbRead(&g_shared.fg_buffer[0], &g_shared.fg_regs[0], channel, &pset) != 0 )

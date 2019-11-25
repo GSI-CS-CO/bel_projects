@@ -26,7 +26,7 @@ int write_mil_blk(volatile unsigned int *base, short *data, short fc_ifc_addr) {
   atomic_on();
   base[MIL_SIO3_TX_DATA] = data[0];
   base[MIL_SIO3_TX_CMD]  = fc_ifc_addr;
-  for (i = 1; i < 6; i++) {
+  for (i = 1; i < MIL_BLOCK_SIZE; i++) {
       base[MIL_SIO3_TX_DATA] = data[i];
   }
   atomic_off();
