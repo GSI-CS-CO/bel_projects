@@ -464,12 +464,16 @@ STATIC inline unsigned int getFgNumberFromRegister( const uint16_t reg )
 }
 
 /*! ---------------------------------------------------------------------------
- * @brief sends the parameters for the next interpolation interval
- *  @param socket number of the slot, including the high bits with the information SIO or MIL_EXT
- *  @param fg_base base address of the function generator macro
- *  @param cntrl_reg state of the control register. saves one read access.
+ * @brief Sends the parameters for the next interpolation interval.
+ * @param socket number of the slot, including the high bits with the information SIO or MIL_EXT
+ * @param fg_base base address of the function generator macro
+ * @param cntrl_reg state of the control register. saves one read access.
+ * @todo Remove naked mask numbers by well named constants or inline get()-functions.
+ * @todo In the case of a periodical signal, check whether its really necessary to use
+ *       a circular buffer respectively a FiFo in which the wishbone bus becomes to much traffic! \n
+ *       May be its possible to store a full period in the DDR3 RAM.
  */
-STATIC inline void send_fg_param( const  unsigned int socket,
+STATIC inline void send_fg_param( const unsigned int socket,
                                   const unsigned int fg_base,
                                   const uint16_t cntrl_reg,
                                   signed int* pSetvalue )
@@ -486,13 +490,12 @@ STATIC inline void send_fg_param( const  unsigned int socket,
       return;
    }
 
-   if( cbRead(&g_shared.fg_buffer[0], &g_shared.fg_regs[0], fg_num, &pset) == 0 )
+   if( !cbRead( &g_shared.fg_buffer[0], &g_shared.fg_regs[0], fg_num, &pset ) )
    {
       hist_addx(HISTORY_XYZ_MODULE, "buffer empty, no parameter sent", socket);
       return;
    }
 
-   //TODO remove naked mask numbers by well named constants or inline geter functions.
    cntrl_reg_wr = cntrl_reg & ~(0xfc07); // clear freq, step select, fg_running and fg_enabled
    cntrl_reg_wr |= ((pset.control & 0x38) << 10) | ((pset.control & 0x7) << 10);
    blk_data[0] = cntrl_reg_wr;
@@ -503,7 +506,9 @@ STATIC inline void send_fg_param( const  unsigned int socket,
    blk_data[5] = (pset.coeff_c & 0xffff0000) >> BIT_SIZEOF(int16_t); // data written with high word
 
    if( isNonMilFg( socket ) )
-   {
+   { /*
+      * In this case the socket value is equal to the scu-bus slot number.
+      */
       g_pScub_base[OFFS(socket) + fg_base + FG_CNTRL]  = blk_data[0];
       g_pScub_base[OFFS(socket) + fg_base + FG_A]      = blk_data[1];
       g_pScub_base[OFFS(socket) + fg_base + FG_B]      = blk_data[2];
@@ -513,7 +518,7 @@ STATIC inline void send_fg_param( const  unsigned int socket,
       // no setvalue for scu bus daq 
       *pSetvalue = 0;
    }
-   else if( (socket & DEV_MIL_EXT) != 0 )
+   else if( isMilExtentionFg( socket ) )
    {
       // save coeff_c as setvalue
       *pSetvalue = pset.coeff_c;
@@ -522,7 +527,7 @@ STATIC inline void send_fg_param( const  unsigned int socket,
          dev_failure(status, 0, __func__);
       // still in block mode !
    }
-   else if( (socket & DEV_SIO) != 0 )
+   else if( isMilScuBusFg( socket ) )
    {  // save coeff_c as setvalue
       *pSetvalue = pset.coeff_c;
       // transmit in one block transfer over the dev bus
