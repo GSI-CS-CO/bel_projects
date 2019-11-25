@@ -667,6 +667,7 @@ STATIC void handle( const unsigned int socket,
 /*! ---------------------------------------------------------------------------
  * @brief as short as possible, just pop the msi queue of the cpu and
  *         push it to the message queue of the main loop
+ * @see dispatch
  */
 void irq_handler( void )
 {
@@ -677,6 +678,22 @@ void irq_handler( void )
    m.adr = global_msi.adr;
    add_msg( &g_aMsg_buf[0], IRQ, m );
 }
+
+/*! ---------------------------------------------------------------------------
+ * @brief Move messages to the correct queue, depending on source
+ * @see irq_handler
+ */
+STATIC inline void dispatch( void )
+{
+   const MSI_T m = remove_msg( &g_aMsg_buf[0], IRQ );
+   switch( m.adr & 0xFF )
+   { //TODO remove these naked numbers asap!
+      case 0x00: add_msg( &g_aMsg_buf[0], SCUBUS, m ); return; // message from scu bus
+      case 0x10: add_msg( &g_aMsg_buf[0], SWI,    m ); return; // software message from saftlib
+      case 0x20: add_msg( &g_aMsg_buf[0], DEVBUS, m ); return; // message from dev bus
+   }
+}
+
 
 /*! ---------------------------------------------------------------------------
  * @brief helper function which clears the state of a dev bus after malfunction
@@ -1928,20 +1945,6 @@ STATIC void dev_sio_handler( register TaskType* pThis )
 STATIC void dev_bus_handler( register TaskType* pThis )
 {
    milDeviceHandler( pThis, true );
-}
-
-/*! ---------------------------------------------------------------------------
- * @brief Move messages to the correct queue, depending on source
- */
-STATIC inline void dispatch( void )
-{
-   const MSI_T m = remove_msg( &g_aMsg_buf[0], IRQ );
-   switch( m.adr & 0xFF )
-   { //TODO remove these naked numbers asap!
-      case 0x00: add_msg( &g_aMsg_buf[0], SCUBUS, m ); return; // message from scu bus
-      case 0x10: add_msg( &g_aMsg_buf[0], SWI,    m ); return; // software message from saftlib
-      case 0x20: add_msg( &g_aMsg_buf[0], DEVBUS, m ); return; // message from dev bus
-   }
 }
 
 /*! ---------------------------------------------------------------------------
