@@ -5,7 +5,8 @@ use ieee.std_logic_unsigned.all;
 entity top is
   port (
     clk_base_i    : in    std_logic;
-    rst_n_i       : in    std_logic;
+    rst_n_i       : in    std_logic;  
+    scu_cb_revision   : in  std_logic_vector(3 downto 0); -- must be assigned with weak pull ups
     fpga_con_io   : inout std_logic_vector(7 downto 0);
     led_status_o  : out   std_logic_vector(1 downto 0)
   );

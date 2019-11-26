@@ -54,6 +54,8 @@ entity scu_control is
     ser0_txd          : out std_logic;
     nTHRMTRIP         : in  std_logic;
     WDT               : in  std_logic;
+    fpga_res_i        : in  std_logic;
+    nFPGA_Res_Out     : out std_logic;  --Reset  Output
 
     -----------------------------------------------------------------------
     -- SCU Bus
@@ -77,18 +79,16 @@ entity scu_control is
     -----------------------------------------------------------------------
     -- Misc.
     -----------------------------------------------------------------------
-    fpga_res_i    : in      std_logic;
     nres_i        : in      std_logic;
     user_btn      : in      std_logic;  --User Button 
-    nPfail        : in      std_logic;  --Power fail input
-    IO_enable     : out     std_logic;  --Enable Levelshifter 1.8V  ->  3.3V 
+    IO_enable     : out     std_logic;  --Enable Levelshifter 1.8V  ->  3.3V
     max10_connect : inout   std_logic_vector (7 downto 0);  -- Pins reserveriert tbd
     
     -----------------------------------------------------------------------
     -- SCU-CB Version
     -----------------------------------------------------------------------
     scu_cb_version    : in  std_logic_vector(3 downto 0); -- must be assigned with weak pull ups
-    scu_cb_revision   : in  std_logic_vector(3 downto 0); -- must be assigned with weak pull ups
+
 
     -----------------------------------------------------------------------
     -- LVTTL IOs
@@ -110,7 +110,7 @@ entity scu_control is
     -----------------------------------------------------------------------
     -- Extension Connector
     -----------------------------------------------------------------------
-    ext_ch           : inout std_logic_vector(25 downto 0);
+    ext_ch           : inout std_logic_vector(21 downto 0);
     ext_id           : in std_logic_vector   (3 downto 0);
     
     -----------------------------------------------------------------------
