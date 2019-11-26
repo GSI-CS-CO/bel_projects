@@ -94,7 +94,7 @@ void ReadTempDevices(int bus, uint64_t *id, uint32_t *temp)
  * @brief Function will need in function scuBusFindSlavesByMatchList16
  * @see scuBusFindSlavesByMatchList16
  */
-static bool _or( bool a, bool b )
+static bool _or( const bool a, const bool b )
 {
    return (a || b);
 }
@@ -104,7 +104,7 @@ static bool _or( bool a, bool b )
  * @brief Function will need in function scuBusFindSlavesByMatchList16
  * @see scuBusFindSlavesByMatchList16
  */
-static bool _and( bool a, bool b )
+static bool _and( const bool a, const bool b )
 {
    return (a && b);
 }
@@ -134,12 +134,12 @@ SCUBUS_SLAVE_FLAGS_T
                                  const SCUBUS_FIND_MODE_T mode )
 {
    SCUBUS_ASSERT( pMatchList[0].index < SCUBUS_INVALID_INDEX16 );
-   bool (*op)( bool, bool ) = (mode == ALL)? _and : _or;
+   bool (*op)( const bool, const bool ) = (mode == ALL)? _and : _or;
    SCUBUS_SLAVE_FLAGS_T slaveFlags = 0;
-   for( int slot = SCUBUS_START_SLOT; slot <= MAX_SCU_SLAVES; slot++ )
+   for( unsigned int slot = SCUBUS_START_SLOT; slot <= MAX_SCU_SLAVES; slot++ )
    {
       const void* pSlaveAddr = scuBusGetAbsSlaveAddr( pScuBusBase, slot );
-      int i = 0;
+      unsigned int i = 0;
       bool match = (mode == ALL);
       while( pMatchList[i].index < SCUBUS_INVALID_INDEX16 )
       {
@@ -195,7 +195,7 @@ SCUBUS_SLAVE_FLAGS_T scuBusFindAllSlaves( const void* pScuBusBase )
 {
    SCUBUS_SLAVE_FLAGS_T slaveFlags = 0;
 
-   for( int slot = SCUBUS_START_SLOT; slot <= MAX_SCU_SLAVES; slot++ )
+   for( unsigned int slot = SCUBUS_START_SLOT; slot <= MAX_SCU_SLAVES; slot++ )
    {
       const void* pSlaveAddr = scuBusGetAbsSlaveAddr( pScuBusBase, slot );
       if( scuBusGetSlaveValue16( pSlaveAddr, CID_SYS )   != SCUBUS_INVALID_VALUE ||
