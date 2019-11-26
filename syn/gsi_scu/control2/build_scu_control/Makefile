@@ -13,7 +13,7 @@ REPOSITORY_DIR := $(shell git rev-parse --show-toplevel)
 TARGET_DIR     := ..
 DEPLOY_DIR     := .
 TARGET         := scu_control
-DEFINES += CONFIG_FG_PEDANTIC_CHECK
+# DEFINES += CONFIG_FG_PEDANTIC_CHECK
 # ORIGIN := 1
 
 ifdef ORIGIN
@@ -87,6 +87,7 @@ ifdef SCU_DAQ
 endif
 
 DOX_INPUT += $(SCU_DIR)/scu_shared_mem.h
+DOX_INPUT += $(SCU_LIB_SRC_DIR)/scu_bus_defines.h
 
 ifdef USE_SCU_EXTERN_RAM
   SOURCE += $(DAQ_DIR)/daq_ring_admin.c
@@ -124,7 +125,7 @@ endif
 
 
  SCU_URL = scuxl0107
-
+# SCU_URL = scuxl0035
 # DOX_INLINE_SOURCES = "YES"
 DOX_MACRO_EXPANSION        = "YES"
 DOX_EXPAND_ONLY_PREDEF     = "YES"

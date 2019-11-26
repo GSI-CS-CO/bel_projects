@@ -667,6 +667,9 @@ STATIC void handle( const unsigned int socket,
 /*! ---------------------------------------------------------------------------
  * @brief as short as possible, just pop the msi queue of the cpu and
  *         push it to the message queue of the main loop
+ * @see init_irq_table
+ * @see _irq_entry
+ * @see irq_pop_msi
  * @see dispatch
  */
 void irq_handler( void )
@@ -682,6 +685,7 @@ void irq_handler( void )
 /*! ---------------------------------------------------------------------------
  * @brief Move messages to the correct queue, depending on source
  * @see irq_handler
+ * @see schedule
  */
 STATIC inline void dispatch( void )
 {
@@ -1245,6 +1249,7 @@ static void ecaHandler( register TaskType* );
 
 /*! ---------------------------------------------------------------------------
  * @brief task configuration table
+ * @see schedule
  */
 STATIC TaskType g_aTasks[] =
 {
@@ -1292,6 +1297,7 @@ inline STATIC unsigned char getMilTaskNumber( const TaskType* pThis,
  *   from the host system
  * - a TAG with value 0x4 has been configure (see saft-ecpu-ctl -h
  *   for help
+ * @see schedule
  */
 #define MIL_BROADCAST 0x20ff //TODO Who the fuck is 0x20ff documented!
 STATIC void ecaHandler( register TaskType* pThis UNUSED )
@@ -1374,9 +1380,10 @@ STATIC void printSwIrqCode( const unsigned int code, const unsigned int value )
 /*! ---------------------------------------------------------------------------
  * @brief Software irq handler
  *
- *  dispatch the calls from linux to the helper functions
- *  called via scheduler in main loop
- *  @param pThis pointer to the current task object (not used)
+ * dispatch the calls from linux to the helper functions
+ * called via scheduler in main loop
+ * @param pThis pointer to the current task object
+ * @see schedule
  */
 //#define CONFIG_DEBUG_FG
 STATIC void sw_irq_handler( register TaskType* pThis UNUSED )
@@ -1476,6 +1483,7 @@ STATIC void sw_irq_handler( register TaskType* pThis UNUSED )
  * called by the scheduler in the main loop
  * decides which action for a scu bus interrupt is suitable
  * @param pThis pointer to the current task object (not used)
+ * @see schedule
  */
 STATIC void scu_bus_handler( register TaskType* pThis UNUSED )
 {
@@ -1930,6 +1938,7 @@ STATIC void milDeviceHandler( register TaskType* pThis, const bool isScuBus )
  * a dev bus persistent data, like the state or the sio slave_nr, is stored in
  * a global structure
  * @param pThis pointer to the current task object
+ * @see schedule
  */
 STATIC void dev_sio_handler( register TaskType* pThis )
 {
@@ -1941,6 +1950,7 @@ STATIC void dev_sio_handler( register TaskType* pThis )
  * @brief has only one instance
  * persistent data is stored in a global structure
  * @param pThis pointer to the current task object
+ * @see schedule
  */
 STATIC void dev_bus_handler( register TaskType* pThis )
 {
@@ -1975,6 +1985,36 @@ STATIC inline void tellMailboxSlot( void )
    else
       mprintf( "Configured slot %d in MsgBox\n", slot );
    g_shared.fg_mb_slot = slot;
+}
+
+/*! ---------------------------------------------------------------------------
+ * @brief Scheduler for all SCU-tasks defined in g_aTasks. \n
+ *        Performing of a cooperative multitasking.
+ * @see TaskType
+ * @see g_aTasks
+ * @see dev_sio_handler
+ * @see dev_bus_handler
+ * @see scu_bus_handler
+ * @see ecaHandler
+ * @see sw_irq_handler
+ */
+STATIC inline void schedule( void )
+{
+   uint64_t tick = getSysTime(); /* FIXME get the current system tick */
+
+   // loop through all task: if interval is 0, run every time, otherwise obey interval
+   for( unsigned int i = 0; i < ARRAY_SIZE( g_aTasks ); i++ )
+   {
+      // call the dispatch task before every other task
+      dispatch();
+      TaskType* pCurrent = &g_aTasks[i];
+      if( (tick - pCurrent->lasttick) < pCurrent->interval )
+      {
+         continue;
+      }
+      pCurrent->func( pCurrent );
+      pCurrent->lasttick = tick;
+   }
 }
 
 /*================================ MAIN =====================================*/
@@ -2016,21 +2056,7 @@ int main( void )
    while( true )
    {
       check_stack();
-      uint64_t tick = getSysTime(); /* FIXME get the current system tick */
-
-      // loop through all task: if interval is 0, run every time, otherwise obey interval
-      for( unsigned int i = 0; i < ARRAY_SIZE( g_aTasks ); i++ )
-      {
-         // call the dispatch task before every other task
-         dispatch();
-         TaskType* pCurrent = &g_aTasks[i];
-         if( (tick - pCurrent->lasttick) < pCurrent->interval )
-         {
-            continue;
-         }
-         pCurrent->func( pCurrent );
-         pCurrent->lasttick = tick;
-      }
+      schedule();
     #ifdef CONFIG_SCU_DAQ_INTEGRATION
       forEachScuDaqDevice();
     #endif

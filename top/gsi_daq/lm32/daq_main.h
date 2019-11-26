@@ -42,6 +42,9 @@
 extern "C" {
 #endif
 
+/*! ---------------------------------------------------------------------------
+ * @brief Type of data-object for administrating all non-MIL DAQs
+ */
 typedef struct
 {
    DAQ_BUS_T oDaqDevs;
@@ -49,19 +52,37 @@ typedef struct
    volatile bool isIrq;
 } DAQ_ADMIN_T;
 
+/*! ---------------------------------------------------------------------------
+ * @brief Initializes the memory (at now the DDR3-RAM) for the received
+ *        non-MIL-DAQ data.
+ */
 int initBuffer( RAM_SCU_T* poRam );
 
+/*! ---------------------------------------------------------------------------
+ * @brief Scanning the SCU bus for non-MIL-DAQ slaves.
+ */
 int daqScanScuBus( DAQ_BUS_T* pDaqDevices );
 
-
-static inline void scuDaqInitialize( DAQ_ADMIN_T* pDaqAdmin )
+/*! ---------------------------------------------------------------------------
+ * @brief Finding and initializing of all non-MIL DAQs.
+ * @param pDaqAdmin Pointer to the nom-MIL-DAQ administrating object
+ */
+#ifndef __DOXYGEN__
+static // Doxygen 1.8.5 seems to have a problem...
+#endif
+inline void scuDaqInitialize( DAQ_ADMIN_T* pDaqAdmin )
 {
    daqScanScuBus( &pDaqAdmin->oDaqDevs );
    initBuffer( &pDaqAdmin->oRam );
 }
 
 #ifndef CONFIG_DAQ_SINGLE_APP
+/*! ---------------------------------------------------------------------------
+ * @brief Asking all non-MIL-DAQs for received data.
+ */
 void forEachScuDaqDevice( void );
+
+
 extern DAQ_ADMIN_T g_scuDaqAdmin;
 #endif
 

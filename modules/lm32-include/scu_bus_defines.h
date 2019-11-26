@@ -81,14 +81,16 @@ STATIC_ASSERT( BIT_SIZEOF( SCUBUS_SLAVE_FLAGS_T ) >= MAX_SCU_SLAVES );
  * @brief Extract a single slave-present-flag from the SCU-slave-flag-present
  *        field
  * @see scuBusFindSpecificSlaves
- * @see scuFindAllSlaves
+ * @see scuBusFindAllSlaves
  * @param flags packed slave present flags of all SCU bus slots
  * @param slot Slot number, valid range 1 .. MAX_SCU_SLAVES (12)
- * @return true: slave present
- * @return false: slave not present
+ * @retval true slave present
+ * @retval false slave not present
  */
-static inline
-bool scuBusIsSlavePresent( const SCUBUS_SLAVE_FLAGS_T flags,
+#ifndef __DOXYGEN__
+static // Doxygen 1.8.5 seems to have a problem...
+#endif
+inline bool scuBusIsSlavePresent( const SCUBUS_SLAVE_FLAGS_T flags,
                                                      const unsigned int slot )
 {
    SCUBUS_ASSERT( slot >= SCUBUS_START_SLOT );
