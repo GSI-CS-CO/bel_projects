@@ -1,10 +1,10 @@
 /** @file irq.h
  *  @brief Header file for MSI capable IRQ handler for the LM32
  *
- *  Copyright (C) 2011-2012 GSI Helmholtz Centre for Heavy Ion Research GmbH 
+ *  @copyright (C) 2011-2012 GSI Helmholtz Centre for Heavy Ion Research GmbH
  *
  *  Usage:
- * 
+ *  @code
  *  void <an ISR>(void) { <evaluate global_msi and do something useful> }
  *  ...
  *  void _irq_entry(void) {irq_process();}
@@ -19,7 +19,7 @@
  *    irq_enable(); 
  *    ...
  *  }
- *  
+ *  @endcode
  *  @author Mathias Kreider <m.kreider@gsi.de>
  *
  *  @bug None!

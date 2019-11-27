@@ -366,16 +366,19 @@ STATIC void isr0( void )
 }
 #endif
 /*! ---------------------------------------------------------------------------
- * @brief enables msi generation for the specified channel.
- *  Messages from the scu bus are send to the msi queue of this cpu with the offset 0x0.
- *  Messages from the MIL extension are send to the msi queue of this cpu with the offset 0x20.
- *  A hardware macro is used, which generates msis from legacy interrupts.
- *  @param channel number of the channel between 0 and MAX_FG_CHANNELS-1
+ * @brief enables msi generation for the specified channel. \n
+ * Messages from the scu bus are send to the msi queue of this cpu with the offset 0x0. \n
+ * Messages from the MIL extension are send to the msi queue of this cpu with the offset 0x20. \n
+ * A hardware macro is used, which generates msis from legacy interrupts. \n
+ * @param channel number of the channel between 0 and MAX_FG_CHANNELS-1
+ * @see disable_slave_irq
  */
 STATIC void enable_scub_msis( const unsigned int channel )
 {
    if( channel >= MAX_FG_CHANNELS )
       return;
+
+   FG_ASSERT( pMyMsi != NULL );
 
    const uint8_t socket = getSocket( channel );
    if( isNonMilFg( socket ) || ((socket & DEV_SIO) != 0) )
@@ -405,6 +408,7 @@ STATIC void enable_scub_msis( const unsigned int channel )
  * @brief disables the generation of irqs for the specified channel
  *  SIO and MIL extension stop generating irqs
  *  @param channel number of the channel from 0 to MAX_FG_CHANNELS-1
+ * @see enable_scub_msis
  */
 STATIC void disable_slave_irq( const unsigned int channel )
 {
@@ -1181,10 +1185,29 @@ typedef struct
 
 /*! ---------------------------------------------------------------------------
  * @ingroup MIL_FSM
- * @brief Helper macros for documenting the FSM via the FSM-visualizer DOCFSM.
+ * @brief Mecro declares a state of a Finite-State-Machine. \n
+ *        Helper macro for documenting the FSM by the FSM-visualizer DOCFSM.
+ * @see FG_STATE_T
+ * @see https://github.com/UlrichBecker/DocFsm
  */
 #define FSM_DECLARE_STATE( state, attr... ) state
+
+/*! ---------------------------------------------------------------------------
+ * @ingroup MIL_FSM
+ * @brief Macro performs a FSM transition. \n
+ *        Helper macro for documenting the FSM by the FSM-visualizer DOCFSM.
+ * @see milDeviceHandler
+ * @see https://github.com/UlrichBecker/DocFsm
+ */
 #define FSM_TRANSITION( newState, attr... ) pThis->state = newState
+
+/*! ---------------------------------------------------------------------------
+ * @ingroup MIL_FSM
+ * @brief Initializer for Finite-State-Machines. \n
+ *        Helper macro for documenting the FSM by the FSM-visualizer DOCFSM.
+ * @see milDeviceHandler
+ * @see https://github.com/UlrichBecker/DocFsm
+ */
 #define FSM_INIT_FSM( init, attr... )       pThis->state = init
 
 /*! ---------------------------------------------------------------------------
@@ -1224,6 +1247,9 @@ STATIC const char* state2string( const FG_STATE_T state )
 
 /*! ---------------------------------------------------------------------------
  * @brief Declaration of the task type
+ * @todo Put state, slave_nr, lastChannel, task_timeout_cnt timestamp1 and
+ *       aFgChannels
+ *       in a extra structure as member in a union with the name "user"
  */
 typedef struct _TaskType
 {
@@ -1264,6 +1290,36 @@ STATIC TaskType g_aTasks[] =
 };
 
 STATIC_ASSERT( TASKMAX >= (ARRAY_SIZE( g_aTasks ) + MAX_FG_CHANNELS-1 + TASKMIN));
+
+/*! ---------------------------------------------------------------------------
+ * @brief Scheduler for all SCU-tasks defined in g_aTasks. \n
+ *        Performing of a cooperative multitasking.
+ * @see TaskType
+ * @see g_aTasks
+ * @see dev_sio_handler
+ * @see dev_bus_handler
+ * @see scu_bus_handler
+ * @see ecaHandler
+ * @see sw_irq_handler
+ */
+STATIC inline void schedule( void )
+{
+   uint64_t tick = getSysTime(); /* FIXME get the current system tick */
+
+   // loop through all task: if interval is 0, run every time, otherwise obey interval
+   for( unsigned int i = 0; i < ARRAY_SIZE( g_aTasks ); i++ )
+   {
+      // call the dispatch task before every other task
+      dispatch();
+      TaskType* pCurrent = &g_aTasks[i];
+      if( (tick - pCurrent->lasttick) < pCurrent->interval )
+      {
+         continue;
+      }
+      pCurrent->func( pCurrent );
+      pCurrent->lasttick = tick;
+   }
+}
 
 /*! ---------------------------------------------------------------------------
  * @brief Returns the task-id-number of the given task object.
@@ -1985,36 +2041,6 @@ STATIC inline void tellMailboxSlot( void )
    else
       mprintf( "Configured slot %d in MsgBox\n", slot );
    g_shared.fg_mb_slot = slot;
-}
-
-/*! ---------------------------------------------------------------------------
- * @brief Scheduler for all SCU-tasks defined in g_aTasks. \n
- *        Performing of a cooperative multitasking.
- * @see TaskType
- * @see g_aTasks
- * @see dev_sio_handler
- * @see dev_bus_handler
- * @see scu_bus_handler
- * @see ecaHandler
- * @see sw_irq_handler
- */
-STATIC inline void schedule( void )
-{
-   uint64_t tick = getSysTime(); /* FIXME get the current system tick */
-
-   // loop through all task: if interval is 0, run every time, otherwise obey interval
-   for( unsigned int i = 0; i < ARRAY_SIZE( g_aTasks ); i++ )
-   {
-      // call the dispatch task before every other task
-      dispatch();
-      TaskType* pCurrent = &g_aTasks[i];
-      if( (tick - pCurrent->lasttick) < pCurrent->interval )
-      {
-         continue;
-      }
-      pCurrent->func( pCurrent );
-      pCurrent->lasttick = tick;
-   }
 }
 
 /*================================ MAIN =====================================*/
