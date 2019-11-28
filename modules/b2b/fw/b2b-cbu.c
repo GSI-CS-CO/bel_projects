@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 06-November-2019
+ *  version : 28-November-2019
  *
  *  firmware required to implement the CBU (Central Buncht-To-Bucket Unit)
  *  
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 23-April-2019
  ********************************************************************************************/
-#define B2BCBU_FW_VERSION 0x000011                                      // make this consistent with makefile
+#define B2BCBU_FW_VERSION 0x000013                                      // make this consistent with makefile
 
 /* standard includes */
 #include <stdio.h>
@@ -74,7 +74,9 @@ volatile uint32_t *pSharedTH1InjLo;     // pointer to a "user defined" u32 regis
 volatile uint32_t *pSharedNHInj;        // pointer to a "user defined" u32 register; here: harmonic number injection
 volatile uint32_t *pSharedTBeatHi;      // pointer to a "user defined" u32 register; here: period of beating, high bits
 volatile uint32_t *pSharedTBeatLo;      // pointer to a "user defined" u32 register; here: period of beating, low bits
-volatile int32_t  *pSharedIntCalib;     // pointer to a "user defined" u32 register; here: internal calibration of the B2B system
+volatile int32_t  *pSharedIntCalib;     // pointer to a "user defined" u32 register; here: internal calibration, value is added to published B2B_DIAGMATCH
+volatile int32_t  *pSharedExtCalib;     // pointer to a "user defined" u32 register; here: calibration of extraction, value will be added to received B2B_PREXT
+volatile int32_t  *pSharedInjCalib;     // pointer to a "user defined" u32 register; here: calibration of injection, value will be added to received B2B_PRINJ
 
 uint32_t *cpuRamExternal;              // external address (seen from host bridge) of this CPU's RAM            
 
@@ -87,7 +89,9 @@ uint32_t nHExt;                         // harmonic number of extraction machine
 uint32_t nHInj;                         // harmonic number of injection machine 0..15
 uint64_t tH1Ext;                        // h=1 phase  [ns] of extraction machine
 uint64_t tH1Inj;                        // h=1 phase  [ns] of injection machine
-int32_t  intCalib;                      // internal calibration of the B2B system
+int32_t  intCalib;                      // internal calibration
+int32_t  extCalib;                      // calibration of extraction
+int32_t  injCalib;                      // calibration of injection
 
 void init() // typical init for lm32
 {
@@ -121,6 +125,8 @@ void initSharedMem() // determine address and clear shared mem
   pSharedTBeatHi          = (uint32_t *)(pShared + (B2BTEST_SHARED_TBEATHI   >> 2));
   pSharedTBeatLo          = (uint32_t *)(pShared + (B2BTEST_SHARED_TBEATLO   >> 2));
   pSharedIntCalib         = (uint32_t *)(pShared + (B2BTEST_SHARED_INTCALIB  >> 2));
+  pSharedExtCalib         = (uint32_t *)(pShared + (B2BTEST_SHARED_EXTCALIB  >> 2));
+  pSharedInjCalib         = (uint32_t *)(pShared + (B2BTEST_SHARED_INJCALIB  >> 2));
   
   // find address of CPU from external perspective
   idx = 0;
@@ -197,6 +203,8 @@ uint32_t extern_entryActionOperation()
   *pSharedTBeatHi  = 0x000000E8; // 1 kHz dummy
   *pSharedTBeatLo  = 0xD4A51000;
   *pSharedIntCalib = 0x0;
+  *pSharedExtCalib = 0x0;
+  *pSharedInjCalib = 0x0;
 
   return COMMON_STATUS_OK;
 } // extern_entryActionOperation
@@ -368,6 +376,8 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
       *pSharedTBeatHi = 0x0;
       *pSharedTBeatLo = 0x0;
       intCalib        = *pSharedIntCalib;
+      extCalib        = *pSharedExtCalib;
+      injCalib        = *pSharedInjCalib;
 
       // send command: phase measurement at extraction machine
       sendEvtId    = 0x1fff000000000000;                                        // FID, GID
@@ -394,9 +404,8 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
     case B2BTEST_ECADO_B2B_PREXT :
       // received: measured phase from extraction machine
       // do some math
-      tH1Ext        = recParam;
+      tH1Ext        = recParam + extCalib;
       sendDeadline  = tH1Ext + ((uint64_t)100000 * TH1Ext) / (uint64_t)1000000000; // project 100000 periods into the future
-      sendDeadline += intCalib;
       
       // send DIAGEXT to extraction machine
       sendEvtId     = 0x1fff000000000000;                                        // FID, GID
@@ -409,9 +418,8 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
     case B2BTEST_ECADO_B2B_PRINJ :
       // received: measured phase from injection machine
       // do some math
-      tH1Inj        = recParam;
+      tH1Inj        = recParam + injCalib;
       sendDeadline  = tH1Inj + ((uint64_t)100000 * TH1Inj) / (uint64_t)1000000000; // project 100000 periods into the future
-      sendDeadline += intCalib;
       
       // send DIAGEXT to injection machine
       sendEvtId     = 0x1fff000000000000;                                        // FID, GID
@@ -429,7 +437,7 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
   // we have everything we need 
   if (transStat == (B2BTEST_FLAG_TRANSACTIVE | B2BTEST_FLAG_TRANSPEXT | B2BTEST_FLAG_TRANSPINJ)) {
 
-    //DBPRINT2("b2b-test: we have everything we need\n");
+    DBPRINT2("b2b-test: we have everything we need\n");
     
     if ((status = calcPhaseMatch(&tMatch, &TBeat)) != COMMON_STATUS_OK) {
       transStat = 0x0;

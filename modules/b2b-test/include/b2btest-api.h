@@ -37,7 +37,7 @@
 #ifndef _B2B_TEST_API_H_
 #define _B2B_TEST_API_H_
 
-#define B2BTEST_X86_VERSION "0.0.11"
+#define B2BTEST_X86_VERSION "0.0.12"
 
 #include <b2b-test.h>
 #include <etherbone.h>

@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 05-November-2019
+ *  version : 28-November-2019
  *
  * Command-line interface for b2btest
  *
@@ -89,6 +89,8 @@ eb_address_t b2btest_nHInj;        // harmonic number of injection RF
 eb_address_t b2btest_TBeatHi;      // period of beating, high bits
 eb_address_t b2btest_TBeatLo;      // period of beating, low bits
 eb_address_t b2btest_intCalib;     // internal calibration
+eb_address_t b2btest_extCalib;     // extraction calibration
+eb_address_t b2btest_injCalib;     // injection calibration
 
 eb_data_t   data1;
  
@@ -123,7 +125,9 @@ static void help(void) {
   fprintf(stderr, "\n");
   fprintf(stderr, "  seth1inj <freq> <h> set h=1 frequency [Hz] and harmonic number of injection machine\n");
   fprintf(stderr, "  seth1ext <freq> <h> set h=1 frequency [Hz] and harmonic number of extraction machine\n");
-  fprintf(stderr, "  setintcalib  <freq> set internal calibration [ns] of the B2B system\n");
+  fprintf(stderr, "  setintcalib  <offs> set internal calibration [ns] of the B2B system\n");
+  fprintf(stderr, "  setextcalib  <offs> set extraction calibration [ns] of the B2B system\n");
+  fprintf(stderr, "  setinjcalib  <offs> set injection calibration [ns] of the B2B system\n");
   fprintf(stderr, "\n");
   fprintf(stderr, "Tip: For using negative values with commands such as 'snoop', consider\n");
   fprintf(stderr, "using the special argument '--' to terminate option scanning.\n");
@@ -160,7 +164,7 @@ const char* statusText(uint32_t bit) {
 } // b2btest_status_text
 
 
-int readDiags(uint64_t *TH1Ext, uint32_t *nHExt, uint64_t *TH1Inj, uint32_t *nHInj, uint64_t *TBeat, int32_t *intCalib)
+int readDiags(uint64_t *TH1Ext, uint32_t *nHExt, uint64_t *TH1Inj, uint32_t *nHInj, uint64_t *TBeat, int32_t *intCalib, int32_t *extCalib, int32_t *injCalib)
 {
   eb_cycle_t  cycle;
   eb_status_t eb_status;
@@ -176,6 +180,8 @@ int readDiags(uint64_t *TH1Ext, uint32_t *nHExt, uint64_t *TH1Inj, uint32_t *nHI
   eb_cycle_read(cycle, b2btest_TBeatHi,       EB_BIG_ENDIAN|EB_DATA32, &(data[6]));
   eb_cycle_read(cycle, b2btest_TBeatLo,       EB_BIG_ENDIAN|EB_DATA32, &(data[7]));
   eb_cycle_read(cycle, b2btest_intCalib,      EB_BIG_ENDIAN|EB_DATA32, &(data[8]));
+  eb_cycle_read(cycle, b2btest_extCalib,      EB_BIG_ENDIAN|EB_DATA32, &(data[9]));
+  eb_cycle_read(cycle, b2btest_injCalib,      EB_BIG_ENDIAN|EB_DATA32, &(data[10]));
 
   if ((eb_status = eb_cycle_close(cycle)) != EB_OK) die("b2b-test: eb_cycle_close", eb_status);
 
@@ -188,6 +194,8 @@ int readDiags(uint64_t *TH1Ext, uint32_t *nHExt, uint64_t *TH1Inj, uint32_t *nHI
   *TBeat         = (uint64_t)(data[6]) << 32;
   *TBeat        += data[7];
   *intCalib      = data[8];
+  *extCalib      = data[9];
+  *injCalib      = data[10];
  
   return eb_status;
 } // readDiags
@@ -236,13 +244,8 @@ void printTransfer(uint32_t nTransfer)
 } // printTransfer
 
 
-void printDiags(uint64_t TH1Ext, uint32_t nHExt, uint64_t TH1Inj, uint32_t nHInj, uint64_t TBeat, int32_t intCalib)
+void printDiags(uint64_t TH1Ext, uint32_t nHExt, uint64_t TH1Inj, uint32_t nHInj, uint64_t TBeat, int32_t intCalib, int32_t extCalib, int32_t injCalib)
 {
-  const struct tm* tm;
-  char             timestr[60];
-  time_t           secs;
-  int              i;
-
   printf("\n\n");
   printf("b2b-test: statistics ...\n\n");
 
@@ -252,6 +255,8 @@ void printDiags(uint64_t TH1Ext, uint32_t nHExt, uint64_t TH1Inj, uint32_t nHInj
   printf("harmonic number inj.  : %012d\n"     , nHInj);
   printf("period of beating     : %012.6f us\n", (double)TBeat/1000000000000.0);
   printf("internal calibration  : %012d\n"     , intCalib);
+  printf("extration calibration : %012d\n"     , extCalib);
+  printf("injection calibration : %012d\n"     , injCalib);
 } // printDiags
 
 
@@ -292,6 +297,8 @@ int main(int argc, char** argv) {
   uint32_t nHInj;                              // harmonic number injection machine
   uint64_t TBeat;                              // period [as] of frequency beating
   int32_t  intCalib;                           // internal calibration [ns] of the B2B system
+  int32_t  extCalib;                           // extraction calibration [ns] of the B2B system
+  int32_t  injCalib;                           // injection calibration [ns] of the B2B system
   uint32_t fH1Ext;                             // h=1 frequency [Hz] of extraction machine
   uint32_t fH1Inj;                             // h=1 frequency [Hz] of injection machine
   uint32_t actState = COMMON_STATE_UNKNOWN;    // actual state of gateway
@@ -375,6 +382,8 @@ int main(int argc, char** argv) {
   b2btest_TBeatHi      = lm32_base + SHARED_OFFS + B2BTEST_SHARED_TBEATHI;
   b2btest_TBeatLo      = lm32_base + SHARED_OFFS + B2BTEST_SHARED_TBEATLO;
   b2btest_intCalib     = lm32_base + SHARED_OFFS + B2BTEST_SHARED_INTCALIB;
+  b2btest_extCalib     = lm32_base + SHARED_OFFS + B2BTEST_SHARED_EXTCALIB;
+  b2btest_injCalib     = lm32_base + SHARED_OFFS + B2BTEST_SHARED_INJCALIB;
   
   if (getConfig) {
     readConfig(&mac, &ip);
@@ -431,8 +440,8 @@ int main(int argc, char** argv) {
     } // "cleardiag"
     if (!strcasecmp(command, "diag")) {
       api_readDiag(device, &statusArray, &state, &version, &mac, &ip, &nBadStatus, &nBadState, &tDiag, &tS0, &nTransfer, &nInjection, &statTrans, 1);
-      readDiags(&TH1Ext, &nHExt, &TH1Inj, &nHInj, &TBeat, &intCalib);
-      printDiags(TH1Ext, nHExt, TH1Inj, nHInj, TBeat, intCalib);
+      readDiags(&TH1Ext, &nHExt, &TH1Inj, &nHInj, &TBeat, &intCalib, &extCalib, &injCalib);
+      printDiags(TH1Ext, nHExt, TH1Inj, nHInj, TBeat, intCalib, extCalib, injCalib);
     } // "diag"
 
     if (!strcasecmp(command, "seth1inj")) {
@@ -478,9 +487,31 @@ int main(int argc, char** argv) {
       eb_device_write(device, b2btest_intCalib, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)(uint32_t)intCalib   , 0, eb_block);
    } // "setintcalib"  
 
+   if (!strcasecmp(command, "setextcalib")) {
+      if (optind+2  != argc) {printf("b2b-test: expecting exactly one argument: setextcalib <value>\n"); return 1;}
+
+      extCalib = strtol(argv[optind+1], &tail, 0);
+      if (*tail != 0)        {printf("b2b-test: invalid calibration value -- %s\n", argv[optind+2]); return 1;}
+
+      printf("extCalib %d\n", extCalib);
+            
+      eb_device_write(device, b2btest_extCalib, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)(uint32_t)extCalib   , 0, eb_block);
+   } // "setextcalib"  
+
+   if (!strcasecmp(command, "setinjcalib")) {
+      if (optind+2  != argc) {printf("b2b-test: expecting exactly one argument: setinjcalib <value>\n"); return 1;}
+
+      injCalib = strtol(argv[optind+1], &tail, 0);
+      if (*tail != 0)        {printf("b2b-test: invalid calibration value -- %s\n", argv[optind+2]); return 1;}
+
+      printf("intCalib %d\n", injCalib);
+            
+      eb_device_write(device, b2btest_injCalib, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)(uint32_t)injCalib   , 0, eb_block);
+   } // "setinjcalib"  
+
   } //if command
 
-  if (snoop) {
+if (snoop) {
     printf("b2b-test: continous monitoring of gateway, loglevel = %d\n", logLevel);
 
     actNTransfer   = 0;
