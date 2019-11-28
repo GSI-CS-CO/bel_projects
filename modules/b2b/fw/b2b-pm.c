@@ -38,7 +38,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  ********************************************************************************************/
-#define B2BPM_FW_VERSION 0x000011                                       // make this consistent with makefile
+#define B2BPM_FW_VERSION 0x000012                                       // make this consistent with makefile
 
 /* standard includes */
 #include <stdio.h>
@@ -82,6 +82,7 @@ uint32_t *cpuRamExternal;              // external address (seen from host bridg
 
 uint64_t statusArray;                   // all status infos are ORed bit-wise into statusArray, statusArray is then published
 uint32_t nTransfer;                     // # of transfers
+uint32_t transStat;                     // status of transfer, here: meanDelta of 'poor mans fit'
 
 // for phase measurement
 #define NSAMPLES 16                     // # of timestamps for sampling h=1
@@ -153,6 +154,7 @@ void extern_clearDiag()
 {
   statusArray  = 0x0; 
   nTransfer    = 0;
+  transStat    = 0;
 } // extern_clearDiag
   
 
@@ -200,83 +202,30 @@ uint32_t extern_exitActionOperation()
 } // extern_exitActionOperation
 
 
-uint32_t poorMansFit(uint64_t period, uint32_t nSamples, uint64_t *phase)
+uint32_t poorMansFit(uint64_t period, uint32_t nSamples, uint64_t *phase, uint32_t *dt)
 {
-#define MATCHWINDOW 5    // samples are only accepted, if they are within this window [ns]
-#define FITRANGE    2    // use this value for 'fitting' [ns]
-#define FIRSTTS     2    // index of first timestamp we use  
+#define FIRSTTS     2    // index avoid using timestamps with smaller index
 
-  int64_t  delta;        // diff between timestamp and tTmp
-  int64_t  sumDelta;     // sum of all 'valid' delta
-  int64_t  sumDeltaMin;  // min sumDelta
-  uint64_t t0;           // start timestamp
-  uint64_t tInit;        // initial guess of fit
-  uint64_t tTheo;        // expected time for timestamp
-  uint64_t trickPeriod;  // scaled value of period (to ease division by 1e9)
-  uint64_t tFit;         // fitted timestamp
-  uint32_t nUsed;        // # of used timestamps for sumDelta
-  uint32_t nUsedFit;     // # of used timestamps for sumDelta of fit
-  int      h,i,j;
+  int      i;
+  int      usedIdx;      // index of used timestamp
+  uint64_t periodNs;     // period in ns
+  uint64_t tmp;          // 
 
-  uint64_t t1,t2;
+  // determine phase
+  usedIdx     = nSamples / 2;                                          // use a timestamp in the middle
+  if (usedIdx < FIRSTTS)      return B2BTEST_STATUS_PHASEFAILED;       // check range
+  if (usedIdx > nSamples -2)  return B2BTEST_STATUS_PHASEFAILED;       // check range, '-2' is on purpose
+  *phase      = tStamp[usedIdx];
 
-  /* chk hack begin ....... */
-  *phase = tStamp[2];
-  return COMMON_STATUS_OK;
-  /* hack end               */
-
-  t1 = getSysTime();
-
-  if ((nSamples < FIRSTTS) || (nSamples > NSAMPLES)) return B2BTEST_STATUS_PHASEFAILED; // we need at least more timestamps than the ones to be thrown away
-
-  // the following algorithm is applied
-  // - don't use the first sample as we don't know when exactly the input
-  //   gate became active
-  // - use the second sample to start with ( ~'t0')
-  // samples may not be ordered, calculate overal deviation:
-  // - three nested loops
-  // -- loop: t0 is changed within +/- FITRANGE
-  // -- loop: starting from t0 to nSamples * period
-  // -- loop: over all samples: identify matches and calc deviation
-  // note1: this is based on time [ns]. Higher precision will be achieved if moving to [ps].
-  // note2: period is [as] (required for precise propagation into the future) 
-  // note3: using '2' as FITRANGE and '8' as NSAMPLES, this routine takes about 65us
-  
-  sumDeltaMin = FITRANGE * NSAMPLES;
-  tFit        = 0x0;
-  tInit       = tStamp[FIRSTTS];                                       // throw away the first timestamps
-  nUsedFit    = 0;
-  trickPeriod = (uint64_t)((double)period * 1.073741824);              // this allows using '>> 30' instead of '/ 1000000000'
-
-  for (h = -FITRANGE; h <= +FITRANGE; h++) {                           // loop t0 over 'fit range'
-    sumDelta = 0;
-    nUsed    = 0;
-    t0       = tInit + h;                                              // use 2nd sample
-    for (i=FIRSTTS; i<nSamples; i++) {                                 // loop over expected timestamps (starting at t0)
-      tTheo = t0 + ((((uint64_t)(i-1)) * trickPeriod) >> 30);          // expected time; note that trickPeriod is in [as]; use '>> 30' for conversion to [ns]
-      for (j=FIRSTTS; j<nSamples; j++) {                               // loop over measured samples
-        delta = tStamp[j] - tTheo;                                     // decide whether actual sample is useful
-        if (abs(delta) < MATCHWINDOW){
-          nUsed++;
-          sumDelta += delta;                                           // calculate sum deviation for actual 't0'
-        } // if tStamp
-      } // for j
-    } // for i
-    if (abs(sumDelta) < abs(sumDeltaMin)) {                            // check, if actual 't0' is best
-      sumDeltaMin = sumDelta;
-      tFit        = t0;
-      nUsedFit    = nUsed;
-    } // if sumDeltaMax
-  } // for h
-
-  t2 = getSysTime();
-  DBPRINT2("b2b-pm: sumDeltaMin %d, nUsedFit %d, tFit - tStamp[1] %d, time for fit %u\n", (int)sumDeltaMin, (int)nUsedFit, (int)(tFit - tStamp[1]), (uint32_t)(t2-t1));
-
-  if (tFit == 0x0)                 return B2BTEST_STATUS_PHASEFAILED;    // fit failed entirely
-  if (nUsedFit < (nSamples >> 2))  return B2BTEST_STATUS_PHASEFAILED;    // at least a quarter of the samples must match; if not s.th. is wrong
-  if (sumDeltaMin > FITRANGE)      return B2BTEST_STATUS_PHASEFAILED;    // the sum of deviations must be small; FITRANGE is used as a measure
-
-  *phase = tFit;
+  // estimate phase error from preceding and successing array element
+  // this is tricky, as timestamps are not necessarily ordered
+  *dt         = 0;
+  periodNs    = (double)period/1000000000.0;                           // convert to ns
+  for (i=usedIdx;i<(usedIdx+1); i++) {
+    if (tStamp[i] > tStamp[i-1]) tmp = tStamp[i] > tStamp[i-1];
+    else                         tmp = tStamp[i-1] > tStamp[i];
+    *dt      += tmp % periodNs;                                        // remainder is difference to expected value
+  } // for i
 
   return COMMON_STATUS_OK;
 } //poorMansFit
@@ -300,6 +249,7 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
   uint64_t TH1;                                               // h=1 period
   uint64_t tH1Ext;                                            // h=1 timestamp of extraction ( = 'phase')
   uint64_t tH1Inj;                                            // h=1 timestamp of injection ( = 'phase')
+  uint32_t dt;                                                // uncertainty of h=1 timestamp
 
   status = actStatus;
 
@@ -322,7 +272,7 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
       
       DBPRINT2("b2b-pm: extraction phase measurement with samples %d\n", nInput);
       
-      if ((nInput == NSAMPLES) && (poorMansFit(TH1, NSAMPLES, &tH1Ext) == COMMON_STATUS_OK)) {
+      if ((nInput == NSAMPLES) && (poorMansFit(TH1, NSAMPLES, &tH1Ext, &dt) == COMMON_STATUS_OK)) {
         // send command: transmit measured phase value
         sendEvtId    = 0x1fff000000000000;                                        // FID, GID
         sendEvtId    = sendEvtId | ((uint64_t)B2BTEST_ECADO_B2B_PREXT << 36);     // EVTNO
@@ -330,6 +280,8 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
         sendDeadline = getSysTime() + COMMON_AHEADT;
         
         fwlib_ebmWriteTM(sendDeadline, sendEvtId, sendParam);
+
+        transStat    = dt;
         
       } // if nInput
       else actStatus = B2BTEST_STATUS_PHASEFAILED;
@@ -353,7 +305,7 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
       
       DBPRINT2("b2b-pm: injection phase measurement with samples %d\n", nInput);
       
-      if ((nInput == NSAMPLES) && (poorMansFit(TH1, NSAMPLES, &tH1Inj) == COMMON_STATUS_OK)) {
+      if ((nInput == NSAMPLES) && (poorMansFit(TH1, NSAMPLES, &tH1Inj, &dt) == COMMON_STATUS_OK)) {
         // send command: transmit measured phase value
         sendEvtId    = 0x1fff000000000000;                                        // FID, GID
         sendEvtId    = sendEvtId | ((uint64_t)B2BTEST_ECADO_B2B_PRINJ << 36);     // EVTNO
@@ -361,6 +313,8 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
         sendDeadline = getSysTime() + COMMON_AHEADT;
         
         fwlib_ebmWriteTM(sendDeadline, sendEvtId, sendParam);
+
+        transStat    = dt;
         
       } // if nInput
       else actStatus = B2BTEST_STATUS_PHASEFAILED;
@@ -435,7 +389,7 @@ int main(void) {
     fwlib_publishStatusArray(statusArray);
     pubState = actState;
     fwlib_publishState(pubState);
-    fwlib_publishTransferStatus(nTransfer, 0x0, 0x0);
+    fwlib_publishTransferStatus(nTransfer, 0x0, transStat);
   } // while
 
   return(1); // this should never happen ...
