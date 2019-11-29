@@ -77,6 +77,10 @@
  * @defgroup MIL_FSM Functions and macros which concerns the MIL-FSM
  */
 
+/*!
+ * @defgroup TASK Cooperative multitasking entry functions invoked by the scheduler.
+ */
+
 typedef enum
 {
    MIL_INL = 0x00,
@@ -1194,17 +1198,6 @@ STATIC void findECAQ( void )
 
 /*! ---------------------------------------------------------------------------
  * @ingroup MIL_FSM
- * @brief
- */
-typedef struct
-{
-   int16_t   irq_data;      /* saved irq state */
-   int       setvalue;      /* setvalue from the tuple sent */
-   uint64_t  daq_timestamp; /* timestamp of daq sampling */
-} FG_CHANNEL_TASK_T;
-
-/*! ---------------------------------------------------------------------------
- * @ingroup MIL_FSM
  * @brief Mecro declares a state of a Finite-State-Machine. \n
  *        Helper macro for documenting the FSM by the FSM-visualizer DOCFSM.
  * @see FG_STATE_T
@@ -1240,7 +1233,7 @@ typedef enum
    FSM_DECLARE_STATE( ST_WAIT,            label='Wait for message', color=blue ),
    FSM_DECLARE_STATE( ST_PREPARE,         label='Request MIL-status', color=cyan ),
    FSM_DECLARE_STATE( ST_FETCH_STATUS,    label='Read MIL-status', color=green ),
-   FSM_DECLARE_STATE( ST_HANDLE_IRQS,     label='Handle irq', color=red ),
+   FSM_DECLARE_STATE( ST_HANDLE_IRQS,     label='Send data to\nfunction generator', color=red ),
    FSM_DECLARE_STATE( ST_DATA_AQUISITION, label='Request MIL-DAQ data', color=cyan ),
    FSM_DECLARE_STATE( ST_FETCH_DATA,      label='Read MIL-DAQ data',color=green )
 } FG_STATE_T;
@@ -1266,6 +1259,17 @@ STATIC const char* state2string( const FG_STATE_T state )
    #undef __CASE_RETURN
 }
 
+/*! ---------------------------------------------------------------------------
+ * @ingroup MIL_FSM
+ * @brief
+ */
+typedef struct
+{
+   int16_t   irq_data;      /*!<@brief saved irq state */
+   int       setvalue;      /*!<@brief setvalue from the tuple sent */
+   uint64_t  daq_timestamp; /*!<@brief timestamp of daq sampling */
+} FG_CHANNEL_TASK_T;
+
 /*! --------------------------------------------------------------------------
  * @ingroup MIL_FSM
  * @brief Task data type for MIL-FGs and MIL-DAQs
@@ -1284,11 +1288,17 @@ typedef struct
    FG_CHANNEL_TASK_T aFgChannels[ARRAY_SIZE(g_aFgChannels)]; /*!<@see FG_CHANNEL_TASK_T */
 } MIL_TASK_DATA_T;
 
+/*!
+ * @brief Slot-value when no slave selected yet.
+ */
+#define INVALID_SLAVE_NR ((unsigned int)~0)
+
 /*! ---------------------------------------------------------------------------
  * @ingroup MIL_FSM
  * @brief Initializer of a single MIL task
  */
-#define MIL_TASK_DATA_ITEM_INITIALIZER { ST_WAIT, 0, 0, 0, 0, {{0, 0, 0}} }
+#define MIL_TASK_DATA_ITEM_INITIALIZER { ST_WAIT, INVALID_SLAVE_NR, \
+                                         0, 0, 0, {{0, 0, 0}} }
 
 /*! ---------------------------------------------------------------------------
  * @ingroup MIL_FSM
@@ -1306,6 +1316,7 @@ STATIC MIL_TASK_DATA_T g_aMilTaskData[5] =
 STATIC_ASSERT( TASKMAX >= (ARRAY_SIZE( g_aMilTaskData ) + MAX_FG_CHANNELS-1 + TASKMIN));
 
 /*! ---------------------------------------------------------------------------
+ * @ingroup TASK
  * @brief Declaration of the task type
  */
 typedef struct _TASK_T
@@ -1320,17 +1331,24 @@ typedef struct _TASK_T
 #ifndef __DOXYGEN__
 static void dev_sio_handler( register TASK_T* );
 static void dev_bus_handler( register TASK_T* );
-static void scu_bus_handler( register TASK_T* FG_UNUSED);
-static void sw_irq_handler( register TASK_T* FG_UNUSED);
-static void ecaHandler( register TASK_T* FG_UNUSED);
+static void scu_bus_handler( register TASK_T* FG_UNUSED );
+static void sw_irq_handler( register TASK_T* FG_UNUSED  );
+static void ecaHandler( register TASK_T* FG_UNUSED );
+#ifdef CONFIG_SCU_DAQ_INTEGRATION
+static void scuBusDaqTask( register TASK_T* FG_UNUSED );
+#endif
 #endif
 
 /*! ---------------------------------------------------------------------------
+ * @ingroup TASK
  * @brief Task configuration table.
  * @see schedule
  */
 STATIC TASK_T g_aTasks[] =
 {
+#ifdef CONFIG_SCU_DAQ_INTEGRATION
+   { NULL,               ALWAYS, 0, scuBusDaqTask   },
+#endif
    { &g_aMilTaskData[0], ALWAYS, 0, dev_sio_handler }, // sio task 1
    { &g_aMilTaskData[1], ALWAYS, 0, dev_sio_handler }, // sio task 2
    { &g_aMilTaskData[2], ALWAYS, 0, dev_sio_handler }, // sio task 3
@@ -1342,6 +1360,7 @@ STATIC TASK_T g_aTasks[] =
 };
 
 /*! ---------------------------------------------------------------------------
+ * @ingroup TASK
  * @brief Scheduler for all SCU-tasks defined in g_aTasks. \n
  *        Performing of a cooperative multitasking.
  * @see TASK_T
@@ -1351,6 +1370,7 @@ STATIC TASK_T g_aTasks[] =
  * @see scu_bus_handler
  * @see ecaHandler
  * @see sw_irq_handler
+ * @see scuBusDaqTask
  */
 STATIC inline void schedule( void )
 {
@@ -1395,7 +1415,22 @@ inline STATIC unsigned char getMilTaskNumber( const MIL_TASK_DATA_T* pMilTaskDat
    return TASKMIN + channel + getMilTaskId( pMilTaskData );
 }
 
+#ifdef CONFIG_SCU_DAQ_INTEGRATION
 /*! ---------------------------------------------------------------------------
+ * @ingroup DAQ
+ * @ingroup TASK
+ * @brief Handles all detected non-MIL DAQs
+ * @see schedule
+ */
+STATIC void scuBusDaqTask( register TASK_T* pThis FG_UNUSED )
+{
+   FG_ASSERT( pThis->pTaskData == NULL );
+   forEachScuDaqDevice();
+}
+#endif /* ifdef CONFIG_SCU_DAQ_INTEGRATION */
+
+/*! ---------------------------------------------------------------------------
+ * @ingroup TASK
  * @brief Event Condition Action (ECA) handler
  *        demonstrate how to poll actions ("events") from ECA
  *
@@ -1489,6 +1524,7 @@ STATIC void printSwIrqCode( const unsigned int code, const unsigned int value )
 #endif
 
 /*! ---------------------------------------------------------------------------
+ * @ingroup TASK
  * @brief Software irq handler
  *
  * dispatch the calls from linux to the helper functions
@@ -1591,6 +1627,7 @@ STATIC void sw_irq_handler( register TASK_T* pThis FG_UNUSED )
 }
 
 /*! ---------------------------------------------------------------------------
+ * @ingroup TASK
  * @brief task definition of scu_bus_handler
  * called by the scheduler in the main loop
  * decides which action for a scu bus interrupt is suitable
@@ -1649,6 +1686,7 @@ STATIC void scu_bus_handler( register TASK_T* pThis FG_UNUSED )
 
 /*! ---------------------------------------------------------------------------
  * @ingroup MIL_FSM
+ * @ingroup TASK
  * @brief Writes the data set coming from one of the MIL-DAQs in the
  *        ring-buffer.
  * @param channel DAQ-channel where the data come from.
@@ -1746,6 +1784,7 @@ STATIC inline
 int milReqestStatus( register MIL_TASK_DATA_T* pMilTaskData, const bool isScuBus,
                                                   const unsigned int channel )
 {
+   FG_ASSERT( pMilTaskData->slave_nr != INVALID_SLAVE_NR );
    const unsigned int socket     = getSocket( channel );
    const unsigned int devAndMode = getDevice( channel ) | FC_IRQ_ACT_RD;
    const unsigned char milTaskNo = getMilTaskNumber( pMilTaskData, channel );
@@ -1781,6 +1820,7 @@ STATIC inline
 int milGetStatus( register MIL_TASK_DATA_T* pMilTaskData, const bool isScuBus,
                                                   const unsigned int channel )
 {
+   FG_ASSERT( pMilTaskData->slave_nr != INVALID_SLAVE_NR );
    const unsigned int socket = getSocket( channel );
    const unsigned char milTaskNo = getMilTaskNumber( pMilTaskData, channel );
     /* test only if as connected to sio */
@@ -1815,6 +1855,7 @@ STATIC inline
 int milHandleAndWrite( register MIL_TASK_DATA_T* pMilTaskData, const bool isScuBus,
                                                   const unsigned int channel )
 {
+   FG_ASSERT( pMilTaskData->slave_nr != INVALID_SLAVE_NR );
    const unsigned int dev = getDevice( channel );
    handle( getSocket( channel ), dev, pMilTaskData->aFgChannels[channel].irq_data,
                                    &(pMilTaskData->aFgChannels[channel].setvalue) );
@@ -1841,6 +1882,7 @@ STATIC inline
 int milSetTask( register MIL_TASK_DATA_T* pMilTaskData, const bool isScuBus,
                 const unsigned int channel )
 {
+   FG_ASSERT( pMilTaskData->slave_nr != INVALID_SLAVE_NR );
    const unsigned int  devAndMode = getDevice( channel ) | FC_ACT_RD;
    const unsigned char milTaskNo  = getMilTaskNumber( pMilTaskData, channel );
    if( isScuBus )
@@ -1865,6 +1907,7 @@ STATIC inline
 int milGetTask( register MIL_TASK_DATA_T* pMilTaskData, const bool isScuBus,
                 const unsigned int channel, int16_t* pActAdcValue )
 {
+   FG_ASSERT( pMilTaskData->slave_nr != INVALID_SLAVE_NR );
    const unsigned char milTaskNo = getMilTaskNumber( pMilTaskData, channel );
    if( isScuBus )
    {
@@ -1901,7 +1944,7 @@ STATIC void milDeviceHandler( register TASK_T* pThis, const bool isScuBus )
    {
       case ST_WAIT:
       {
-         if( !has_msg(&g_aMsg_buf[0], isScuBus? DEVSIO : DEVBUS) )
+         if( !has_msg( &g_aMsg_buf[0], isScuBus? DEVSIO : DEVBUS ) )
          { /* There is nothing to do. */
          #ifdef __DOCFSM__
             FSM_TRANSITION( ST_WAIT, label='No message', color=red );
@@ -2062,6 +2105,7 @@ STATIC void milDeviceHandler( register TASK_T* pThis, const bool isScuBus )
 } // end function milDeviceHandler
 
 /*! ---------------------------------------------------------------------------
+ * @ingroup TASK
  * @ingroup MIL_FSM
  * @brief can have multiple instances, one for each active sio card controlling
  * a dev bus persistent data, like the state or the sio slave_nr, is stored in
@@ -2075,6 +2119,7 @@ STATIC void dev_sio_handler( register TASK_T* pThis )
 }
 
 /*! ---------------------------------------------------------------------------
+ * @ingroup TASK
  * @ingroup MIL_FSM
  * @brief has only one instance
  * persistent data is stored in a global structure
@@ -2156,9 +2201,6 @@ int main( void )
    {
       check_stack();
       schedule();
-    #ifdef CONFIG_SCU_DAQ_INTEGRATION
-      forEachScuDaqDevice();
-    #endif
    }
    return 0;
 }
