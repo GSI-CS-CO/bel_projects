@@ -88,9 +88,13 @@ eb_address_t b2btest_TH1InjLo;     // period of h=1 injection, low bits
 eb_address_t b2btest_nHInj;        // harmonic number of injection RF
 eb_address_t b2btest_TBeatHi;      // period of beating, high bits
 eb_address_t b2btest_TBeatLo;      // period of beating, low bits
-eb_address_t b2btest_intCalib;     // internal calibration
-eb_address_t b2btest_extCalib;     // extraction calibration
-eb_address_t b2btest_injCalib;     // injection calibration
+eb_address_t b2btest_pcFixExt;     // phase correction, fixed, extraction
+eb_address_t b2btest_pcFixInj;     // phase correction, fixed, injection
+eb_address_t b2btest_pcVarExt;     // phase correction, variable, extraction
+eb_address_t b2btest_pcVarInj;     // phase correction, variable, injection
+eb_address_t b2btest_kcFixExt;     // kicker correction, fixed, extraction
+eb_address_t b2btest_kcFixInj;     // kicker correction, fixed, injection
+
 
 eb_data_t   data1;
  
@@ -125,9 +129,12 @@ static void help(void) {
   fprintf(stderr, "\n");
   fprintf(stderr, "  seth1inj <freq> <h> set h=1 frequency [Hz] and harmonic number of injection machine\n");
   fprintf(stderr, "  seth1ext <freq> <h> set h=1 frequency [Hz] and harmonic number of extraction machine\n");
-  fprintf(stderr, "  setintcalib  <offs> set internal calibration [ns] of the B2B system\n");
-  fprintf(stderr, "  setextcalib  <offs> set extraction calibration [ns] of the B2B system\n");
-  fprintf(stderr, "  setinjcalib  <offs> set injection calibration [ns] of the B2B system\n");
+  fprintf(stderr, "  setpcfixext <offs>  set fixed phase correction of extraction\n");
+  fprintf(stderr, "  setpcfixinj <offs>  set fixed phase correction of injetion\n");
+  fprintf(stderr, "  setpcvarext <offs>  set variable phase correction of extraction\n");
+  fprintf(stderr, "  setpcvarinj <offs>  set variable phase correction of injection\n");
+  fprintf(stderr, "  setkcfixext <offs>  set fixed kicker correction of extraction\n");
+  fprintf(stderr, "  setkcfixinj <offs>  set fixed kicker correction of injection\n");  
   fprintf(stderr, "\n");
   fprintf(stderr, "Tip: For using negative values with commands such as 'snoop', consider\n");
   fprintf(stderr, "using the special argument '--' to terminate option scanning.\n");
@@ -164,7 +171,7 @@ const char* statusText(uint32_t bit) {
 } // b2btest_status_text
 
 
-int readDiags(uint64_t *TH1Ext, uint32_t *nHExt, uint64_t *TH1Inj, uint32_t *nHInj, uint64_t *TBeat, int32_t *intCalib, int32_t *extCalib, int32_t *injCalib)
+int readDiags(uint64_t *TH1Ext, uint32_t *nHExt, uint64_t *TH1Inj, uint32_t *nHInj, uint64_t *TBeat, int32_t *pcFixExt, int32_t *pcFixInj, int32_t *pcVarExt, int32_t *pcVarInj, int32_t *kcFixExt, int32_t *kcFixInj)
 {
   eb_cycle_t  cycle;
   eb_status_t eb_status;
@@ -179,9 +186,12 @@ int readDiags(uint64_t *TH1Ext, uint32_t *nHExt, uint64_t *TH1Inj, uint32_t *nHI
   eb_cycle_read(cycle, b2btest_nHInj,         EB_BIG_ENDIAN|EB_DATA32, &(data[5]));
   eb_cycle_read(cycle, b2btest_TBeatHi,       EB_BIG_ENDIAN|EB_DATA32, &(data[6]));
   eb_cycle_read(cycle, b2btest_TBeatLo,       EB_BIG_ENDIAN|EB_DATA32, &(data[7]));
-  eb_cycle_read(cycle, b2btest_intCalib,      EB_BIG_ENDIAN|EB_DATA32, &(data[8]));
-  eb_cycle_read(cycle, b2btest_extCalib,      EB_BIG_ENDIAN|EB_DATA32, &(data[9]));
-  eb_cycle_read(cycle, b2btest_injCalib,      EB_BIG_ENDIAN|EB_DATA32, &(data[10]));
+  eb_cycle_read(cycle, b2btest_pcFixExt,      EB_BIG_ENDIAN|EB_DATA32, &(data[8]));
+  eb_cycle_read(cycle, b2btest_pcFixInj,      EB_BIG_ENDIAN|EB_DATA32, &(data[9]));
+  eb_cycle_read(cycle, b2btest_pcVarExt,      EB_BIG_ENDIAN|EB_DATA32, &(data[10]));
+  eb_cycle_read(cycle, b2btest_pcVarInj,      EB_BIG_ENDIAN|EB_DATA32, &(data[11]));
+  eb_cycle_read(cycle, b2btest_kcFixExt,      EB_BIG_ENDIAN|EB_DATA32, &(data[12]));
+  eb_cycle_read(cycle, b2btest_kcFixInj,      EB_BIG_ENDIAN|EB_DATA32, &(data[13]));
 
   if ((eb_status = eb_cycle_close(cycle)) != EB_OK) die("b2b-test: eb_cycle_close", eb_status);
 
@@ -193,9 +203,12 @@ int readDiags(uint64_t *TH1Ext, uint32_t *nHExt, uint64_t *TH1Inj, uint32_t *nHI
   *nHInj         = data[5];
   *TBeat         = (uint64_t)(data[6]) << 32;
   *TBeat        += data[7];
-  *intCalib      = data[8];
-  *extCalib      = data[9];
-  *injCalib      = data[10];
+  *pcFixExt      = data[8];
+  *pcFixInj      = data[9];
+  *pcVarExt      = data[10];
+  *pcVarInj      = data[11];
+  *kcFixExt      = data[12];
+  *kcFixInj      = data[13];
  
   return eb_status;
 } // readDiags
@@ -244,7 +257,7 @@ void printTransfer(uint32_t nTransfer)
 } // printTransfer
 
 
-void printDiags(uint64_t TH1Ext, uint32_t nHExt, uint64_t TH1Inj, uint32_t nHInj, uint64_t TBeat, int32_t intCalib, int32_t extCalib, int32_t injCalib)
+void printDiags(uint64_t TH1Ext, uint32_t nHExt, uint64_t TH1Inj, uint32_t nHInj, uint64_t TBeat, int32_t pcFixExt, int32_t pcFixInj, int32_t pcVarExt, int32_t pcVarInj, int32_t kcFixExt, int32_t kcFixInj)
 {
   printf("\n\n");
   printf("b2b-test: statistics ...\n\n");
@@ -254,9 +267,12 @@ void printDiags(uint64_t TH1Ext, uint32_t nHExt, uint64_t TH1Inj, uint32_t nHInj
   printf("harmonic number extr. : %012d\n"     , nHExt);
   printf("harmonic number inj.  : %012d\n"     , nHInj);
   printf("period of beating     : %012.6f us\n", (double)TBeat/1000000000000.0);
-  printf("internal calibration  : %012d\n"     , intCalib);
-  printf("extration calibration : %012d\n"     , extCalib);
-  printf("injection calibration : %012d\n"     , injCalib);
+  printf("phase c. fixed extr.  : %012d\n"     , pcFixExt);
+  printf("phase c. fixed inj.   : %012d\n"     , pcFixInj);
+  printf("phase c. variable extr: %012d\n"     , pcVarExt);
+  printf("phase c. variable inj : %012d\n"     , pcVarInj);
+  printf("kick c. fixed extr.   : %012d\n"     , kcFixExt);
+  printf("kick c. fixed inj.    : %012d\n"     , kcFixInj);
 } // printDiags
 
 
@@ -296,9 +312,12 @@ int main(int argc, char** argv) {
   uint32_t nHExt;                              // harmonic number extraction machine
   uint32_t nHInj;                              // harmonic number injection machine
   uint64_t TBeat;                              // period [as] of frequency beating
-  int32_t  intCalib;                           // internal calibration [ns] of the B2B system
-  int32_t  extCalib;                           // extraction calibration [ns] of the B2B system
-  int32_t  injCalib;                           // injection calibration [ns] of the B2B system
+  int32_t  pcFixExt;                           // phase correction, fixed, extraction
+  int32_t  pcFixInj;                           // phase correction, fixed, injection 
+  int32_t  pcVarExt;                           // phase correction, variable, extraction
+  int32_t  pcVarInj;                           // phase correction, variable, injection
+  int32_t  kcFixExt;                           // kicker correction, fixed, extraction
+  int32_t  kcFixInj;                           // kicker correction, fixed, injection
   uint32_t fH1Ext;                             // h=1 frequency [Hz] of extraction machine
   uint32_t fH1Inj;                             // h=1 frequency [Hz] of injection machine
   uint32_t actState = COMMON_STATE_UNKNOWN;    // actual state of gateway
@@ -381,9 +400,12 @@ int main(int argc, char** argv) {
   b2btest_nHInj        = lm32_base + SHARED_OFFS + B2BTEST_SHARED_NHINJ;
   b2btest_TBeatHi      = lm32_base + SHARED_OFFS + B2BTEST_SHARED_TBEATHI;
   b2btest_TBeatLo      = lm32_base + SHARED_OFFS + B2BTEST_SHARED_TBEATLO;
-  b2btest_intCalib     = lm32_base + SHARED_OFFS + B2BTEST_SHARED_INTCALIB;
-  b2btest_extCalib     = lm32_base + SHARED_OFFS + B2BTEST_SHARED_EXTCALIB;
-  b2btest_injCalib     = lm32_base + SHARED_OFFS + B2BTEST_SHARED_INJCALIB;
+  b2btest_pcFixExt     = lm32_base + SHARED_OFFS + B2BTEST_SHARED_PCFIXEXT;
+  b2btest_pcFixInj     = lm32_base + SHARED_OFFS + B2BTEST_SHARED_PCFIXINJ;
+  b2btest_pcVarExt     = lm32_base + SHARED_OFFS + B2BTEST_SHARED_PCVAREXT;
+  b2btest_pcVarInj     = lm32_base + SHARED_OFFS + B2BTEST_SHARED_PCVARINJ;
+  b2btest_kcFixExt     = lm32_base + SHARED_OFFS + B2BTEST_SHARED_KCFIXEXT;
+  b2btest_kcFixInj     = lm32_base + SHARED_OFFS + B2BTEST_SHARED_KCFIXINJ;
   
   if (getConfig) {
     readConfig(&mac, &ip);
@@ -440,8 +462,8 @@ int main(int argc, char** argv) {
     } // "cleardiag"
     if (!strcasecmp(command, "diag")) {
       api_readDiag(device, &statusArray, &state, &version, &mac, &ip, &nBadStatus, &nBadState, &tDiag, &tS0, &nTransfer, &nInjection, &statTrans, 1);
-      readDiags(&TH1Ext, &nHExt, &TH1Inj, &nHInj, &TBeat, &intCalib, &extCalib, &injCalib);
-      printDiags(TH1Ext, nHExt, TH1Inj, nHInj, TBeat, intCalib, extCalib, injCalib);
+      readDiags(&TH1Ext, &nHExt, &TH1Inj, &nHInj, &TBeat, &pcFixExt, &pcFixInj, &pcVarExt, &pcVarInj, &kcFixExt, &kcFixInj);
+      printDiags(TH1Ext, nHExt, TH1Inj, nHInj, TBeat, pcFixExt, pcFixInj, pcVarExt, pcVarInj, kcFixExt, kcFixInj);
     } // "diag"
 
     if (!strcasecmp(command, "seth1inj")) {
@@ -476,38 +498,71 @@ int main(int argc, char** argv) {
       eb_device_write(device, b2btest_nHExt,    EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)nHExt                , 0, eb_block);
     } // "seth1ext"
 
-   if (!strcasecmp(command, "setintcalib")) {
-      if (optind+2  != argc) {printf("b2b-test: expecting exactly one argument: setintcalib <value>\n"); return 1;}
+   if (!strcasecmp(command, "setpcfixext")) {
+      if (optind+2  != argc) {printf("b2b-test: expecting exactly one argument: setpcfixext <value>\n"); return 1;}
 
-      intCalib = strtol(argv[optind+1], &tail, 0);
+      pcFixExt = strtol(argv[optind+1], &tail, 0);
       if (*tail != 0)        {printf("b2b-test: invalid calibration value -- %s\n", argv[optind+2]); return 1;}
 
-      printf("intCalib %d\n", intCalib);
+      printf("pcFixExt %d\n", pcFixExt);
             
-      eb_device_write(device, b2btest_intCalib, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)(uint32_t)intCalib   , 0, eb_block);
-   } // "setintcalib"  
+      eb_device_write(device, b2btest_pcFixExt, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)(uint32_t)pcFixExt   , 0, eb_block);
+   } // "setpcfixext"  
 
-   if (!strcasecmp(command, "setextcalib")) {
-      if (optind+2  != argc) {printf("b2b-test: expecting exactly one argument: setextcalib <value>\n"); return 1;}
+   if (!strcasecmp(command, "setpcfixinj")) {
+      if (optind+2  != argc) {printf("b2b-test: expecting exactly one argument: setpcfixinj <value>\n"); return 1;}
 
-      extCalib = strtol(argv[optind+1], &tail, 0);
+      pcFixInj = strtol(argv[optind+1], &tail, 0);
       if (*tail != 0)        {printf("b2b-test: invalid calibration value -- %s\n", argv[optind+2]); return 1;}
 
-      printf("extCalib %d\n", extCalib);
+      printf("pcFixInj %d\n", pcFixInj);
             
-      eb_device_write(device, b2btest_extCalib, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)(uint32_t)extCalib   , 0, eb_block);
-   } // "setextcalib"  
+      eb_device_write(device, b2btest_pcFixInj, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)(uint32_t)pcFixInj   , 0, eb_block);
+   } // "setpcfixinj"  
 
-   if (!strcasecmp(command, "setinjcalib")) {
-      if (optind+2  != argc) {printf("b2b-test: expecting exactly one argument: setinjcalib <value>\n"); return 1;}
+   if (!strcasecmp(command, "setpcvarext")) {
+      if (optind+2  != argc) {printf("b2b-test: expecting exactly one argument: setpcvarext <value>\n"); return 1;}
 
-      injCalib = strtol(argv[optind+1], &tail, 0);
+      pcVarExt = strtol(argv[optind+1], &tail, 0);
       if (*tail != 0)        {printf("b2b-test: invalid calibration value -- %s\n", argv[optind+2]); return 1;}
 
-      printf("intCalib %d\n", injCalib);
+      printf("pcVarExt %d\n", pcVarExt);
             
-      eb_device_write(device, b2btest_injCalib, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)(uint32_t)injCalib   , 0, eb_block);
-   } // "setinjcalib"  
+      eb_device_write(device, b2btest_pcVarExt, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)(uint32_t)pcVarExt   , 0, eb_block);
+   } // "setpcvarext"  
+
+   if (!strcasecmp(command, "setpcvarinj")) {
+      if (optind+2  != argc) {printf("b2b-test: expecting exactly one argument: setpcvarinj <value>\n"); return 1;}
+
+      pcVarInj = strtol(argv[optind+1], &tail, 0);
+      if (*tail != 0)        {printf("b2b-test: invalid calibration value -- %s\n", argv[optind+2]); return 1;}
+
+      printf("pcVarInj %d\n", pcVarInj);
+            
+      eb_device_write(device, b2btest_pcVarInj, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)(uint32_t)pcVarInj   , 0, eb_block);
+   } // "setpcvarinj"  
+
+   if (!strcasecmp(command, "setkcfixext")) {
+      if (optind+2  != argc) {printf("b2b-test: expecting exactly one argument: setkcfixext <value>\n"); return 1;}
+
+      kcFixExt = strtol(argv[optind+1], &tail, 0);
+      if (*tail != 0)        {printf("b2b-test: invalid calibration value -- %s\n", argv[optind+2]); return 1;}
+
+      printf("kcFixExt %d\n", kcFixExt);
+            
+      eb_device_write(device, b2btest_kcFixExt, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)(uint32_t)kcFixExt   , 0, eb_block);
+   } // "setkcfixext"  
+
+   if (!strcasecmp(command, "setkcfixinj")) {
+      if (optind+2  != argc) {printf("b2b-test: expecting exactly one argument: setkcfixinj <value>\n"); return 1;}
+
+      kcFixInj = strtol(argv[optind+1], &tail, 0);
+      if (*tail != 0)        {printf("b2b-test: invalid calibration value -- %s\n", argv[optind+2]); return 1;}
+
+      printf("kcFixInj %d\n", kcFixInj);
+            
+      eb_device_write(device, b2btest_kcFixInj, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)(uint32_t)kcFixInj   , 0, eb_block);
+   } // "setkcfixinj"  
 
   } //if command
 

@@ -74,11 +74,15 @@ volatile uint32_t *pSharedTH1InjLo;     // pointer to a "user defined" u32 regis
 volatile uint32_t *pSharedNHInj;        // pointer to a "user defined" u32 register; here: harmonic number injection
 volatile uint32_t *pSharedTBeatHi;      // pointer to a "user defined" u32 register; here: period of beating, high bits
 volatile uint32_t *pSharedTBeatLo;      // pointer to a "user defined" u32 register; here: period of beating, low bits
-volatile int32_t  *pSharedIntCalib;     // pointer to a "user defined" u32 register; here: internal calibration, value is added to published B2B_DIAGMATCH
-volatile int32_t  *pSharedExtCalib;     // pointer to a "user defined" u32 register; here: calibration of extraction, value will be added to received B2B_PREXT
-volatile int32_t  *pSharedInjCalib;     // pointer to a "user defined" u32 register; here: calibration of injection, value will be added to received B2B_PRINJ
+volatile uint32_t *pSharedPcFixExt;     // fixed correction: phase_corrected = phase_measured + PCFIX (extraction)   
+volatile uint32_t *pSharedPcFixInj;     // fixed correction: phase_corrected = phase_measured + PCFIX (injection)    
+volatile uint32_t *pSharedPcVarExt;     // variable correction: phase_corrected += PCVAR (extraction)                
+volatile uint32_t *pSharedPcVarInj;     // variable correction: phase_corrected += PCVAR (injection))                
+volatile uint32_t *pSharedKcFixExt;     // fixed correction: kicker_corrected = kicker + KCFIX (extraction)          
+volatile uint32_t *pSharedKcFixInj;     // fixed correction: kicker_corrected = kicker + KCFIX (injection)           
 
-uint32_t *cpuRamExternal;              // external address (seen from host bridge) of this CPU's RAM            
+
+uint32_t *cpuRamExternal;               // external address (seen from host bridge) of this CPU's RAM            
 
 uint64_t statusArray;                   // all status infos are ORed bit-wise into statusArray, statusArray is then published
 uint32_t nTransfer;                     // # of transfers
@@ -89,9 +93,12 @@ uint32_t nHExt;                         // harmonic number of extraction machine
 uint32_t nHInj;                         // harmonic number of injection machine 0..15
 uint64_t tH1Ext;                        // h=1 phase  [ns] of extraction machine
 uint64_t tH1Inj;                        // h=1 phase  [ns] of injection machine
-int32_t  intCalib;                      // internal calibration
-int32_t  extCalib;                      // calibration of extraction
-int32_t  injCalib;                      // calibration of injection
+int32_t  pcFixExt;                      // fixed correction: phase_corrected = phase_measured + PCFIX (extraction)       
+int32_t  pcFixInj;                      // fixed correction: phase_corrected = phase_measured + PCFIX (injection)        
+int32_t  pcVarExt;                      // variable correction: phase_corrected += PCVAR (extraction)                    
+int32_t  pcVarInj;                      // variable correction: phase_corrected += PCVAR (injection))                    
+int32_t  kcFixExt;                      // fixed correction: kicker_corrected = kicker + KCFIX (extraction)              
+int32_t  kcFixInj;                      // fixed correction: kicker_corrected = kicker + KCFIX (injection)             
 
 void init() // typical init for lm32
 {
@@ -116,17 +123,21 @@ void initSharedMem() // determine address and clear shared mem
   // get pointer to shared memory
   pShared                 = (uint32_t *)_startshared;
 
-  pSharedTH1ExtHi         = (uint32_t *)(pShared + (B2BTEST_SHARED_TH1EXTHI  >> 2));
-  pSharedTH1ExtLo         = (uint32_t *)(pShared + (B2BTEST_SHARED_TH1EXTLO  >> 2));
-  pSharedNHExt            = (uint32_t *)(pShared + (B2BTEST_SHARED_NHEXT     >> 2));
-  pSharedTH1InjHi         = (uint32_t *)(pShared + (B2BTEST_SHARED_TH1INJHI  >> 2));
-  pSharedTH1InjLo         = (uint32_t *)(pShared + (B2BTEST_SHARED_TH1INJLO  >> 2));
-  pSharedNHInj            = (uint32_t *)(pShared + (B2BTEST_SHARED_NHINJ     >> 2));
-  pSharedTBeatHi          = (uint32_t *)(pShared + (B2BTEST_SHARED_TBEATHI   >> 2));
-  pSharedTBeatLo          = (uint32_t *)(pShared + (B2BTEST_SHARED_TBEATLO   >> 2));
-  pSharedIntCalib         = (uint32_t *)(pShared + (B2BTEST_SHARED_INTCALIB  >> 2));
-  pSharedExtCalib         = (uint32_t *)(pShared + (B2BTEST_SHARED_EXTCALIB  >> 2));
-  pSharedInjCalib         = (uint32_t *)(pShared + (B2BTEST_SHARED_INJCALIB  >> 2));
+  pSharedTH1ExtHi         = (uint32_t *)(pShared + (B2BTEST_SHARED_TH1EXTHI   >> 2));
+  pSharedTH1ExtLo         = (uint32_t *)(pShared + (B2BTEST_SHARED_TH1EXTLO   >> 2));
+  pSharedNHExt            = (uint32_t *)(pShared + (B2BTEST_SHARED_NHEXT      >> 2));
+  pSharedTH1InjHi         = (uint32_t *)(pShared + (B2BTEST_SHARED_TH1INJHI   >> 2));
+  pSharedTH1InjLo         = (uint32_t *)(pShared + (B2BTEST_SHARED_TH1INJLO   >> 2));
+  pSharedNHInj            = (uint32_t *)(pShared + (B2BTEST_SHARED_NHINJ      >> 2));
+  pSharedTBeatHi          = (uint32_t *)(pShared + (B2BTEST_SHARED_TBEATHI    >> 2));
+  pSharedTBeatLo          = (uint32_t *)(pShared + (B2BTEST_SHARED_TBEATLO    >> 2));
+  pSharedPcFixExt         = (uint32_t *)(pShared + (B2BTEST_SHARED_PCFIXEXT   >> 2));
+  pSharedPcFixInj         = (uint32_t *)(pShared + (B2BTEST_SHARED_PCFIXINJ   >> 2));
+  pSharedPcVarExt         = (uint32_t *)(pShared + (B2BTEST_SHARED_PCVAREXT   >> 2));
+  pSharedPcVarInj         = (uint32_t *)(pShared + (B2BTEST_SHARED_PCVARINJ   >> 2));
+  pSharedKcFixExt         = (uint32_t *)(pShared + (B2BTEST_SHARED_KCFIXEXT   >> 2));
+  pSharedKcFixInj         = (uint32_t *)(pShared + (B2BTEST_SHARED_KCFIXINJ   >> 2));
+
   
   // find address of CPU from external perspective
   idx = 0;
@@ -194,17 +205,20 @@ uint32_t extern_entryActionOperation()
   DBPRINT1("b2b-cbu: ECA queue flushed - removed %d pending entries from ECA queue\n", i);
 
   // set initial nonsense values
-  *pSharedTH1ExtHi = 0x000000E8; // 1 kHz dummy
-  *pSharedTH1ExtLo = 0xD4A51000;
-  *pSharedNHExt    = 1;
-  *pSharedTH1InjHi = 0x000001D1; // 2 kHz dummy
-  *pSharedTH1InjLo = 0xA94A2000;
-  *pSharedNHInj    = 1;
-  *pSharedTBeatHi  = 0x000000E8; // 1 kHz dummy
-  *pSharedTBeatLo  = 0xD4A51000;
-  *pSharedIntCalib = 0x0;
-  *pSharedExtCalib = 0x0;
-  *pSharedInjCalib = 0x0;
+  *pSharedTH1ExtHi   = 0x000000E8; // 1 kHz dummy
+  *pSharedTH1ExtLo   = 0xD4A51000;
+  *pSharedNHExt      = 1;
+  *pSharedTH1InjHi   = 0x000001D1; // 2 kHz dummy
+  *pSharedTH1InjLo   = 0xA94A2000;
+  *pSharedNHInj      = 1;
+  *pSharedTBeatHi    = 0x000000E8; // 1 kHz dummy
+  *pSharedTBeatLo    = 0xD4A51000;
+  *pSharedPcFixExt   = 0x0;
+  *pSharedPcFixInj   = 0x0;
+  *pSharedPcVarExt   = 0x0;
+  *pSharedPcVarInj   = 0x0;
+  *pSharedKcFixExt   = 0x0;
+  *pSharedKcFixInj   = 0x0;
 
   return COMMON_STATUS_OK;
 } // extern_entryActionOperation
@@ -375,9 +389,12 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
       tH1Inj          = 0x0;
       *pSharedTBeatHi = 0x0;
       *pSharedTBeatLo = 0x0;
-      intCalib        = *pSharedIntCalib;
-      extCalib        = *pSharedExtCalib;
-      injCalib        = *pSharedInjCalib;
+      pcFixExt        = *pSharedPcFixExt;
+      pcFixInj        = *pSharedPcFixInj;
+      pcVarExt        = *pSharedPcVarExt;
+      pcVarInj        = *pSharedPcVarInj;
+      kcFixExt        = *pSharedKcFixExt;
+      kcFixInj        = *pSharedKcFixInj;
 
       // send command: phase measurement at extraction machine
       sendEvtId    = 0x1fff000000000000;                                        // FID, GID
@@ -404,7 +421,7 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
     case B2BTEST_ECADO_B2B_PREXT :
       // received: measured phase from extraction machine
       // do some math
-      tH1Ext        = recParam + extCalib;
+      tH1Ext        = recParam + pcFixExt + pcVarExt;
       sendDeadline  = tH1Ext + ((uint64_t)100000 * TH1Ext) / (uint64_t)1000000000; // project 100000 periods into the future
       
       // send DIAGEXT to extraction machine
@@ -418,7 +435,7 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
     case B2BTEST_ECADO_B2B_PRINJ :
       // received: measured phase from injection machine
       // do some math
-      tH1Inj        = recParam + injCalib;
+      tH1Inj        = recParam + pcFixInj + pcVarInj;
       sendDeadline  = tH1Inj + ((uint64_t)100000 * TH1Inj) / (uint64_t)1000000000; // project 100000 periods into the future
       
       // send DIAGEXT to injection machine
@@ -444,10 +461,26 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
       return status;
     } // if status
 
-    sendEvtId = 0x1fff000000000000;                                          // FID, GID
-    sendEvtId = sendEvtId | ((uint64_t)B2BTEST_ECADO_B2B_DIAGMATCH << 36);   // EVTNO
-    sendParam = 0x0;
-    fwlib_ebmWriteTM(tMatch + intCalib, sendEvtId, sendParam);
+    // DIAGMATCH
+    sendDeadline = tMatch;                                                      // deadline
+    sendEvtId    = 0x1fff000000000000;                                          // FID, GID
+    sendEvtId    = sendEvtId | ((uint64_t)B2BTEST_ECADO_B2B_DIAGMATCH << 36);   // EVTNO
+    sendParam    = 0x0;
+    fwlib_ebmWriteTM(sendDeadline, sendEvtId, sendParam);
+
+    // KICKEXT
+    sendDeadline = tMatch + kcFixExt;                                           // deadline
+    sendEvtId    = 0x1fff000000000000;                                          // FID, GID
+    sendEvtId    = sendEvtId | ((uint64_t)B2BTEST_ECADO_B2B_KICKEXT << 36);     // EVTNO
+    sendParam    = 0x0;
+    fwlib_ebmWriteTM(sendDeadline, sendEvtId, sendParam);
+
+    // KICKINJ
+    sendDeadline = tMatch + kcFixInj;                                           // deadline
+    sendEvtId    = 0x1fff000000000000;                                          // FID, GID
+    sendEvtId    = sendEvtId | ((uint64_t)B2BTEST_ECADO_B2B_KICKINJ << 36);     // EVTNO
+    sendParam    = 0x0;
+    fwlib_ebmWriteTM(sendDeadline, sendEvtId, sendParam);
 
     *pSharedTBeatHi = (uint32_t)(TBeat >> 32);
     *pSharedTBeatLo = (uint32_t)(TBeat && 0xffffffff);

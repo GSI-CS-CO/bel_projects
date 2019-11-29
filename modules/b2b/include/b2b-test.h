@@ -29,9 +29,11 @@
 #define  B2BTEST_ECADO_B2B_PMINJ       2050    // command: perform phase measurement (injection)
 #define  B2BTEST_ECADO_B2B_PREXT       2051    // command: result of phase measurement (extraction)
 #define  B2BTEST_ECADO_B2B_PRINJ       2052    // command: result of phase measurement (injecton)
-#define  B2BTEST_ECADO_B2B_DIAGEXT     2053    // command: projects measured phase 100000 periods into the future (extraction)
-#define  B2BTEST_ECADO_B2B_DIAGINJ     2054    // command: projects measured phase 100000 periods into the future (extraction)
-#define  B2BTEST_ECADO_B2B_DIAGMATCH   2055    // command: time, when h=1 phases of extraction and injection will match
+#define  B2BTEST_ECADO_B2B_DIAGEXT     2053    // command: projects measured phase 100000 periods into the future (extraction), includes phase corrections
+#define  B2BTEST_ECADO_B2B_DIAGINJ     2054    // command: projects measured phase 100000 periods into the future (injection), includes phase corrections
+#define  B2BTEST_ECADO_B2B_DIAGMATCH   2055    // command: time, when h=1 phases of extraction and injection will match, includes phase corrections
+#define  B2BTEST_ECADO_B2B_KICKEXT     2056    // command: trigger signal to kicker, includes kicker corrections (extraction)
+#define  B2BTEST_ECADO_B2B_KICKINJ     2057    // command: trigger signal to kicker, includes kicker corrections (injections)
 
 #define  B2BTEST_FLAG_TRANSACTIVE       0x1    // flag: transfer active
 #define  B2BTEST_FLAG_TRANSPEXT         0x2    // flag: got measured phase from extraction
@@ -50,11 +52,15 @@
 #define B2BTEST_SHARED_NHINJ          (B2BTEST_SHARED_TH1INJLO      + _32b_SIZE_)       // harmonic number of injection RF
 #define B2BTEST_SHARED_TBEATHI        (B2BTEST_SHARED_NHINJ         + _32b_SIZE_)       // period of beating, high bits
 #define B2BTEST_SHARED_TBEATLO        (B2BTEST_SHARED_TBEATHI       + _32b_SIZE_)       // period of beating, low bits
-#define B2BTEST_SHARED_INTCALIB       (B2BTEST_SHARED_TBEATLO       + _32b_SIZE_)       // internal calibration, value is added to published B2B_DIAGMATCH
-#define B2BTEST_SHARED_EXTCALIB       (B2BTEST_SHARED_INTCALIB      + _32b_SIZE_)       // calibration of extraction, value will be added to received B2B_PREXT
-#define B2BTEST_SHARED_INJCALIB       (B2BTEST_SHARED_EXTCALIB      + _32b_SIZE_)       // calibration of injection, value will be added to received B2B_PRINJ
+#define B2BTEST_SHARED_PCFIXEXT       (B2BTEST_SHARED_TBEATLO       + _32b_SIZE_)       // fixed correction: phase_corrected = phase_measured + PCFIX (extraction)
+#define B2BTEST_SHARED_PCFIXINJ       (B2BTEST_SHARED_PCFIXEXT      + _32b_SIZE_)       // fixed correction: phase_corrected = phase_measured + PCFIX (injection)
+#define B2BTEST_SHARED_PCVAREXT       (B2BTEST_SHARED_PCFIXINJ      + _32b_SIZE_)       // variable correction: phase_corrected += PCVAR (extraction)
+#define B2BTEST_SHARED_PCVARINJ       (B2BTEST_SHARED_PCVAREXT      + _32b_SIZE_)       // variable correction: phase_corrected += PCVAR (injection))
+#define B2BTEST_SHARED_KCFIXEXT       (B2BTEST_SHARED_PCVARINJ      + _32b_SIZE_)       // fixed correction: kicker_corrected = kicker + KCFIX (extraction)
+#define B2BTEST_SHARED_KCFIXINJ       (B2BTEST_SHARED_KCFIXEXT      + _32b_SIZE_)       // fixed correction: kicker_corrected = kicker + KCFIX (injection)           
+
 
 // diagnosis: end of used shared memory
-#define B2BTEST_SHARED_END            (B2BTEST_SHARED_INJCALIB      + _32b_SIZE_) 
+#define B2BTEST_SHARED_END            (B2BTEST_SHARED_KCFIXINJ      + _32b_SIZE_) 
 
 #endif
