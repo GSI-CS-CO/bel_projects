@@ -1,11 +1,11 @@
 # PREFIX  controls where programs and libraries get installed
 # Note: during compile (all), PREFIX must be set to the final installation path
 # Example usage:
-#   'make MASP=YES PRO=NO PREFIX= all'                                                  (hack: leave PREFIX empty for SCU path)
-#   'make MASP=YES PRO=YES PREFIX= all'                                                 (hack: leave PREFIX empty for SCU path)
+#   'make MASP=NO PRO=NO PREFIX= all'                                                  (hack: leave PREFIX empty for SCU path)
+#   'make MASP=NO PRO=YES PREFIX= all'                                                 (hack: leave PREFIX empty for SCU path)
 # Example deploy:
-#   'make MASP=YES PRO=NO PREFIX= STAGING=/common/export/timing-rte/dmunipz-dev deploy' (hack: leave PREFIX empty for SCU path)
-#   'make MASP=YES PRO=YES PREFIX= STAGING=/common/export/timing-rte/dmunipz deploy'    (hack: leave PREFIX empty for SCU path)
+#   'make MASP=NO PRO=NO PREFIX= STAGING=/common/export/timing-rte/b2btest-dev deploy' (hack: leave PREFIX empty for SCU path)
+#   'make MASP=NO PRO=YES PREFIX= STAGING=/common/export/timing-rte/b2btest deploy'    (hack: leave PREFIX empty for SCU path)
 PREFIX      ?= /usr/local
 STAGING     ?=
 ARCH        ?= /x86_64
@@ -43,7 +43,6 @@ deploy:
 	cp $(SW)/b2btest-ctl $(STAGING)$(ARCH)$(PREFIX)/usr/bin       # '/usr' is a hack
 	cp $(FW)/b2bcbu.bin $(STAGING)/firmware                   
 	cp $(FW)/b2bpm.bin $(STAGING)/firmware
-#	script /common/export/nfsinit/global/timing-rte-dmunipz-dev is _here_ in sub-folder dmunipz-asl 
 
 .PHONY: all clean
 
