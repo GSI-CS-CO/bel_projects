@@ -10,9 +10,9 @@ PREFIX      ?= /usr/local
 STAGING     ?=
 ARCH        ?= /x86_64
 # EB          ?= ../../ip_cores/etherbone-core/api
-FW          ?= dmunipz-fw
-SW          ?= dmunipz-x86
-ASL         ?= dmunipz-asl
+FW          ?= b2btest-fw
+SW          ?= b2btest-x86
+ASL         ?= b2btest-asl
 #TARGETS     := firmware software
 
 #EXTRA_FLAGS ?=
@@ -25,7 +25,8 @@ software::
 	$(MAKE) -C $(SW) all
 
 firmware:
-	$(MAKE) -C $(FW)
+	$(MAKE) TARGET=b2bcbu -C $(FW)
+	$(MAKE) TARGET=b2bpm -C $(FW)	
 
 clean:
 	$(MAKE) -C $(SW) clean
@@ -35,10 +36,13 @@ deploy:
 	mkdir -p $(STAGING)$(ARCH)$(PREFIX)/usr/bin # '/usr' is a hack
 	mkdir -p $(STAGING)/firmware
 	cp ../../tools/eb-fwload $(STAGING)$(ARCH)$(PREFIX)/usr/bin # '/usr' is a hack
-	cp $(ASL)/dmunipz.sh $(STAGING)
-	cp $(SW)/dm-unipz_start.sh $(STAGING)$(ARCH)$(PREFIX)/usr/bin # '/usr' is a hack
-	cp $(SW)/dmunipz-ctl $(STAGING)$(ARCH)$(PREFIX)/usr/bin # '/usr' is a hack
-	cp $(FW)/dmunipz.bin $(STAGING)/firmware
+	cp $(ASL)/b2btest.sh $(STAGING)                               # nfs init script
+	cp $(SW)/b2btest_start.sh $(STAGING)$(ARCH)$(PREFIX)/usr/bin  # FEC init script
+	cp tr-cbu.sh $(STAGING)$(ARCH)$(PREFIX)/usr/bin               # init stuff for cbu
+	cp tr-pm.sh $(STAGING)$(ARCH)$(PREFIX)/usr/bin                # init stuff for pm
+	cp $(SW)/b2btest-ctl $(STAGING)$(ARCH)$(PREFIX)/usr/bin       # '/usr' is a hack
+	cp $(FW)/b2bcbu.bin $(STAGING)/firmware                   
+	cp $(FW)/b2bpm.bin $(STAGING)/firmware
 #	script /common/export/nfsinit/global/timing-rte-dmunipz-dev is _here_ in sub-folder dmunipz-asl 
 
 .PHONY: all clean
