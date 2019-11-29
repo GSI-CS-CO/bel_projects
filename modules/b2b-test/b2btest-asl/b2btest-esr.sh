@@ -21,4 +21,4 @@ cp -a /opt/$NAME/firmware/* /
 
 log 'starting the gateway'
 #dm-unipz_start.sh | logger -t dmunipz-start -sp local0.info
-b2btest-sis18_start.sh
+b2btest-esr_start.sh
