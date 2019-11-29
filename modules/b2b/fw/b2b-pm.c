@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 06-November-2019
+ *  version : 29-November-2019
  *
  *  firmware required for measuring the h=1 phase for ring machine
  *  
@@ -38,7 +38,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  ********************************************************************************************/
-#define B2BPM_FW_VERSION 0x000012                                       // make this consistent with makefile
+#define B2BPM_FW_VERSION 0x000013                                       // make this consistent with makefile
 
 /* standard includes */
 #include <stdio.h>
@@ -274,7 +274,8 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
       
       if ((nInput == NSAMPLES) && (poorMansFit(TH1, NSAMPLES, &tH1Ext, &dt) == COMMON_STATUS_OK)) {
         // send command: transmit measured phase value
-        sendEvtId    = 0x1fff000000000000;                                        // FID, GID
+        sendEvtId    = 0x1000000000000000;                                        // FID
+        sendEvtId    = sendEvtId | ((uint64_t)B2BTEST_GID << 48);                 // GID chk hackish         
         sendEvtId    = sendEvtId | ((uint64_t)B2BTEST_ECADO_B2B_PREXT << 36);     // EVTNO
         sendParam    = tH1Ext;
         sendDeadline = getSysTime() + COMMON_AHEADT;
@@ -307,7 +308,8 @@ uint32_t doActionOperation(uint64_t *tAct,                    // actual time
       
       if ((nInput == NSAMPLES) && (poorMansFit(TH1, NSAMPLES, &tH1Inj, &dt) == COMMON_STATUS_OK)) {
         // send command: transmit measured phase value
-        sendEvtId    = 0x1fff000000000000;                                        // FID, GID
+        sendEvtId    = 0x1000000000000000;                                        // FID
+        sendEvtId    = sendEvtId | ((uint64_t)B2BTEST_GID << 48);                 // GID chk hackish         
         sendEvtId    = sendEvtId | ((uint64_t)B2BTEST_ECADO_B2B_PRINJ << 36);     // EVTNO
         sendParam    = tH1Inj;
         sendDeadline = getSysTime() + COMMON_AHEADT;

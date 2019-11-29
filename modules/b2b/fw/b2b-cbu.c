@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 28-November-2019
+ *  version : 29-November-2019
  *
  *  firmware required to implement the CBU (Central Buncht-To-Bucket Unit)
  *  
@@ -397,7 +397,8 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
       kcFixInj        = *pSharedKcFixInj;
 
       // send command: phase measurement at extraction machine
-      sendEvtId    = 0x1fff000000000000;                                        // FID, GID
+      sendEvtId    = 0x1000000000000000;                                        // FID
+      sendEvtId    = sendEvtId | ((uint64_t)B2BTEST_GID << 48);                 // GID chk hackish 
       sendEvtId    = sendEvtId | ((uint64_t)B2BTEST_ECADO_B2B_PMEXT << 36);     // EVTNO
       sendEvtId    = sendEvtId | (uint64_t)(nHExt & 0xf);                       // RESERVED, use only four bits
       sendParam    = TH1Ext;
@@ -405,7 +406,8 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
       fwlib_ebmWriteTM(sendDeadline, sendEvtId, sendParam);
       
       // send command: phase measurement at injection machine
-      sendEvtId    = 0x1fff000000000000;                                        // FID, GID
+      sendEvtId    = 0x1000000000000000;                                        // FID
+      sendEvtId    = sendEvtId | ((uint64_t)B2BTEST_GID << 48);                 // GID chk hackish 
       sendEvtId    = sendEvtId | ((uint64_t)B2BTEST_ECADO_B2B_PMINJ << 36);     // EVTNO
       sendEvtId    = sendEvtId | (uint64_t)(nHInj & 0xf);                       // RESERVED, use only four bits
       sendParam    = TH1Inj;
@@ -425,8 +427,9 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
       sendDeadline  = tH1Ext + ((uint64_t)100000 * TH1Ext) / (uint64_t)1000000000; // project 100000 periods into the future
       
       // send DIAGEXT to extraction machine
-      sendEvtId     = 0x1fff000000000000;                                        // FID, GID
-      sendEvtId     = sendEvtId | ((uint64_t)B2BTEST_ECADO_B2B_DIAGEXT << 36);   // EVTNO
+      sendEvtId     = 0x1000000000000000;                                       // FID
+      sendEvtId    = sendEvtId | ((uint64_t)B2BTEST_GID << 48);                 // GID chk hackish 
+      sendEvtId     = sendEvtId | ((uint64_t)B2BTEST_ECADO_B2B_DIAGEXT << 36);  // EVTNO
       sendParam     = 0x0;
       fwlib_ebmWriteTM(sendDeadline, sendEvtId, sendParam);
       
@@ -439,8 +442,9 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
       sendDeadline  = tH1Inj + ((uint64_t)100000 * TH1Inj) / (uint64_t)1000000000; // project 100000 periods into the future
       
       // send DIAGEXT to injection machine
-      sendEvtId     = 0x1fff000000000000;                                        // FID, GID
-      sendEvtId     = sendEvtId | ((uint64_t)B2BTEST_ECADO_B2B_DIAGINJ << 36);   // EVTNO
+      sendEvtId     = 0x1000000000000000;                                       // FID
+      sendEvtId    = sendEvtId | ((uint64_t)B2BTEST_GID << 48);                 // GID chk hackish 
+      sendEvtId     = sendEvtId | ((uint64_t)B2BTEST_ECADO_B2B_DIAGINJ << 36);  // EVTNO
       sendParam     = 0x0;
       fwlib_ebmWriteTM(sendDeadline, sendEvtId, sendParam);
       
@@ -462,23 +466,26 @@ uint32_t doActionOperation(uint32_t actStatus)                // actual status o
     } // if status
 
     // DIAGMATCH
-    sendDeadline = tMatch;                                                      // deadline
-    sendEvtId    = 0x1fff000000000000;                                          // FID, GID
-    sendEvtId    = sendEvtId | ((uint64_t)B2BTEST_ECADO_B2B_DIAGMATCH << 36);   // EVTNO
+    sendDeadline = tMatch;                                                    // deadline
+    sendEvtId    = 0x1000000000000000;                                        // FID
+    sendEvtId    = sendEvtId | ((uint64_t)B2BTEST_GID << 48);                 // GID chk hackish     
+    sendEvtId    = sendEvtId | ((uint64_t)B2BTEST_ECADO_B2B_DIAGMATCH << 36); // EVTNO
     sendParam    = 0x0;
     fwlib_ebmWriteTM(sendDeadline, sendEvtId, sendParam);
 
     // KICKEXT
-    sendDeadline = tMatch + kcFixExt;                                           // deadline
-    sendEvtId    = 0x1fff000000000000;                                          // FID, GID
-    sendEvtId    = sendEvtId | ((uint64_t)B2BTEST_ECADO_B2B_KICKEXT << 36);     // EVTNO
+    sendDeadline = tMatch + kcFixExt;                                         // deadline
+    sendEvtId    = 0x1000000000000000;                                        // FID
+    sendEvtId    = sendEvtId | ((uint64_t)B2BTEST_GID << 48);                 // GID chk hackish     
+    sendEvtId    = sendEvtId | ((uint64_t)B2BTEST_ECADO_B2B_KICKEXT << 36);   // EVTNO
     sendParam    = 0x0;
     fwlib_ebmWriteTM(sendDeadline, sendEvtId, sendParam);
 
     // KICKINJ
-    sendDeadline = tMatch + kcFixInj;                                           // deadline
-    sendEvtId    = 0x1fff000000000000;                                          // FID, GID
-    sendEvtId    = sendEvtId | ((uint64_t)B2BTEST_ECADO_B2B_KICKINJ << 36);     // EVTNO
+    sendDeadline = tMatch + kcFixInj;                                         // deadline
+    sendEvtId    = 0x1000000000000000;                                        // FID
+    sendEvtId    = sendEvtId | ((uint64_t)B2BTEST_GID << 48);                 // GID chk hackish     
+    sendEvtId    = sendEvtId | ((uint64_t)B2BTEST_ECADO_B2B_KICKINJ << 36);   // EVTNO
     sendParam    = 0x0;
     fwlib_ebmWriteTM(sendDeadline, sendEvtId, sendParam);
 

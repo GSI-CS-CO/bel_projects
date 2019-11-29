@@ -39,6 +39,8 @@
 #define  B2BTEST_FLAG_TRANSPEXT         0x2    // flag: got measured phase from extraction
 #define  B2BTEST_FLAG_TRANSPINJ         0x4    // flag: got measured phase from injection
 
+#define  B2BTEST_GID                    0xFA7  // SIS18_B2B_ESR /* chk this is a hack */
+
 // ****************************************************************************************
 // DP RAM
 // ****************************************************************************************

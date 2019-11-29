@@ -1,4 +1,4 @@
-TARGET		?= b2bcbu
+TARGET		?= b2bpm
 #PLATFPATH       = ../../../syn/gsi_exploder5/exploder5_csco_tr
 #PLATFPATH       = ../../../syn/gsi_scu/control3
 PLATFPATH	= ../../../syn/gsi_pexarria5/control
