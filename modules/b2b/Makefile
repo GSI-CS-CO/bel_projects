@@ -1,11 +1,10 @@
 # PREFIX  controls where programs and libraries get installed
 # Note: during compile (all), PREFIX must be set to the final installation path
 # Example usage:
-#   'make MASP=NO PRO=NO PREFIX= all'                                                  (hack: leave PREFIX empty for SCU path)
-#   'make MASP=NO PRO=YES PREFIX= all'                                                 (hack: leave PREFIX empty for SCU path)
+#   'make PREFIX= all'                                                    (hack: leave PREFIX empty for SCU path)
 # Example deploy:
-#   'make MASP=NO PRO=NO PREFIX= STAGING=/common/export/timing-rte/b2btest-dev deploy' (hack: leave PREFIX empty for SCU path)
-#   'make MASP=NO PRO=YES PREFIX= STAGING=/common/export/timing-rte/b2btest deploy'    (hack: leave PREFIX empty for SCU path)
+#   'make PREFIX= STAGING=/common/export/timing-rte/b2btest-sis18 deploy' (hack: leave PREFIX empty for SCU path)
+#   'make PREFIX= STAGING=/common/export/timing-rte/b2btest-esr'          (hack: leave PREFIX empty for SCU path)
 PREFIX      ?= /usr/local
 STAGING     ?=
 ARCH        ?= /x86_64
@@ -35,12 +34,12 @@ clean:
 deploy: 
 	mkdir -p $(STAGING)$(ARCH)$(PREFIX)/usr/bin # '/usr' is a hack
 	mkdir -p $(STAGING)/firmware
-	cp ../../tools/eb-fwload $(STAGING)$(ARCH)$(PREFIX)/usr/bin # '/usr' is a hack
-	cp $(ASL)/b2btest.sh $(STAGING)                               # nfs init script
-	cp $(SW)/b2btest_start.sh $(STAGING)$(ARCH)$(PREFIX)/usr/bin  # FEC init script
-	cp tr-cbu.sh $(STAGING)$(ARCH)$(PREFIX)/usr/bin               # init stuff for cbu
-	cp tr-pm.sh $(STAGING)$(ARCH)$(PREFIX)/usr/bin                # init stuff for pm
-	cp $(SW)/b2btest-ctl $(STAGING)$(ARCH)$(PREFIX)/usr/bin       # '/usr' is a hack
+	cp ../../tools/eb-fwload $(STAGING)$(ARCH)$(PREFIX)/usr/bin         # '/usr' is a hack
+	cp $(ASL)/b2btest-sis18.sh $(STAGING)                               # nfs init script SIS18
+	cp $(ASL)/b2btest-esr.sh $(STAGING)                                 # nfs init script ESR
+	cp $(SW)/b2btest-sis18_start.sh $(STAGING)$(ARCH)$(PREFIX)/usr/bin  # FEC init script SIS18
+	cp $(SW)/b2btest-esr_start.sh $(STAGING)$(ARCH)$(PREFIX)/usr/bin    # FEC init script ESR
+	cp $(SW)/b2btest-ctl $(STAGING)$(ARCH)$(PREFIX)/usr/bin             # '/usr' is a hack
 	cp $(FW)/b2bcbu.bin $(STAGING)/firmware                   
 	cp $(FW)/b2bpm.bin $(STAGING)/firmware
 
