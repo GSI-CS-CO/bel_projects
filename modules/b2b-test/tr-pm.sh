@@ -1,5 +1,5 @@
 #!/bin/sh
-# startup script for timing receivers as b2b-tlu on tsl022
+# startup script for timing receivers as b2b-pm
 #
 # pro tip: event snooping via tcpdump on wrs
 # - connect a WR port to management port (with media converter in between)
