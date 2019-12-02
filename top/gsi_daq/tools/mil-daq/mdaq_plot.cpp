@@ -91,7 +91,8 @@ void Plot::plot( void )
 
    for( auto& i: m_pParent->m_aPlotList )
    {
-      *this << i.m_time << ' ' << i.m_set << endl;
+      if( i.m_actValid )
+         *this << i.m_time << ' ' << i.m_set << endl;
    }
    *this << 'e' << endl;
 
@@ -106,7 +107,8 @@ void Plot::plot( void )
 
    for( auto& i: m_pParent->m_aPlotList )
    {
-      *this << i.m_time << ' ' << (i.m_set - i.m_act) << endl;
+      if( i.m_actValid )
+         *this << i.m_time << ' ' << (i.m_set - i.m_act) << endl;
    }
    *this << 'e' << endl;
 }

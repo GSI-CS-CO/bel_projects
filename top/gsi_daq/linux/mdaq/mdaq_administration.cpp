@@ -33,6 +33,7 @@ using namespace Scu::MiLdaq;
 DaqCompare::DaqCompare( const uint iterfaceAddress )
    :m_iterfaceAddress( iterfaceAddress )
    ,m_pParent( nullptr )
+   ,m_setValueInvalid( true )
 {
 }
 
@@ -246,9 +247,13 @@ uint DaqAdministration::distributeData( void )
       RingItem* pItem = &sDaqData[i];
       DaqCompare* pCurrent = findDaqCompare( pItem->getChannel() );
       if( pCurrent != nullptr )
+      {
+         pCurrent->m_setValueInvalid =
+            (pItem->getChannel().outputBits & SET_VALUE_NOT_VALID_MASK) != 0;
          pCurrent->onData( pItem->getTimestamp(),
                            pItem->getActValue32(),
                            pItem->getSetValue32() );
+      }
       else
          onUnregistered( pItem );
    }

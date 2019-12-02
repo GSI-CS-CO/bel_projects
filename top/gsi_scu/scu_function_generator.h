@@ -76,13 +76,50 @@ namespace Scu
 #define FC_BLK_WR     (0x6b << 8)
 #define FC_ACT_RD     (0x81 << 8)
 
+/*!
+ * @brief Info type of a discovered function generator.
+ */
 typedef struct PACKED_SIZE
 {
+   /*!
+    * @brief Contains the slot number and the MIL connection
+    */
    uint8_t socket;
+
+   /*!
+    * @brief Mil device address in the case of MIL FG or
+    *        device number in the case of non MIL FG.
+    */
    uint8_t device;
+
+   /*!
+    * @brief Version of function generator.
+    */
    uint8_t version;
+
+   /*!
+    * @brief Number of output bits.
+    * @see SET_VALUE_NOT_VALID_MASK
+    * @see OUTPUT_BIT_MASK
+    */
    uint8_t outputBits;
 } FG_MACRO_T;
+
+/*!
+ * @brief Bit mask for "set-value not valid flag" which is integrated
+ *        in the element outputBits of FG_MACRO_T.
+ * @note This flag is in the ring-buffer data present only!
+ * @see FG_MACRO_T::outputBits
+ */
+#define SET_VALUE_NOT_VALID_MASK (1 << (BIT_SIZEOF(uint8_t)-1))
+
+/*!
+ * @brief Mask for obtaining the number of output bits of
+ *        the element  outputBits of FG_MACRO_T.
+ * @note This mask it in the ring-buffer necessary only.
+ * @see FG_MACRO_T::outputBits
+ */
+#define OUTPUT_BIT_MASK          ~SET_VALUE_NOT_VALID_MASK
 
 #ifndef __DOXYGEN__
 STATIC_ASSERT( offsetof( FG_MACRO_T, socket ) == 0 );

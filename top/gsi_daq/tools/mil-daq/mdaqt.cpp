@@ -144,7 +144,8 @@ void DaqMilCompare::onReset( void )
 /*! ---------------------------------------------------------------------------
  */
 void
-DaqMilCompare::addItem( uint64_t time, MIL_DAQ_T actValue, MIL_DAQ_T setValue )
+DaqMilCompare::addItem( uint64_t time, MIL_DAQ_T actValue, MIL_DAQ_T setValue,
+                        bool actValueValid )
 {
 #if 1
    m_aPlotList.push_back(
@@ -152,7 +153,8 @@ DaqMilCompare::addItem( uint64_t time, MIL_DAQ_T actValue, MIL_DAQ_T setValue )
      .m_time = static_cast<double>(time) /
                static_cast<double>(daq::NANOSECS_PER_SEC),
      .m_set  = daq::rawToVoltage( setValue ),
-     .m_act  = daq::rawToVoltage( actValue )
+     .m_act  = daq::rawToVoltage( actValue ),
+     .m_actValid = actValueValid
    } );
 #else
    if( m_iterator == m_aPlotList.end() )
@@ -196,7 +198,7 @@ void DaqMilCompare::onData( uint64_t wrTimeStamp, MIL_DAQ_T actValue,
             m_startTime = m_currentTime;
             if( getCommandLine()->isContinuePlottingEnabled() )
                m_timeToPlot = m_currentTime + getPlotIntervalTime();
-            addItem( 0, actValue, setValue );
+            addItem( 0, actValue, setValue, !isSetValueInvalid() );
             m_minTime = static_cast<uint64_t>(~0);
             m_maxTime = 0;
             FSM_TRANSITION( COLLECT );
@@ -210,7 +212,7 @@ void DaqMilCompare::onData( uint64_t wrTimeStamp, MIL_DAQ_T actValue,
                next = true;
                FSM_TRANSITION( PLOT );
             }
-            addItem( plotTime, actValue, setValue );
+            addItem( plotTime, actValue, setValue, !isSetValueInvalid() );
             if( getCommandLine()->isContinuePlottingEnabled() &&
                 (m_currentTime >= m_timeToPlot) )
             {

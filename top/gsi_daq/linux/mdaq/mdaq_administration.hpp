@@ -53,6 +53,8 @@ class DaqCompare
     */
    DaqDevice*     m_pParent;
 
+   bool           m_setValueInvalid;
+
 public:
    /*!
     * @brief Constructor
@@ -85,6 +87,15 @@ public:
    {
       assert( m_pParent != nullptr );
       return m_pParent;
+   }
+
+   /*!
+    * @brief Returns "true" in the case of gap-reading when the last receives
+    *        set-value was invalid.
+    */
+   bool isSetValueInvalid( void ) const
+   {
+      return m_setValueInvalid;
    }
 
 protected:

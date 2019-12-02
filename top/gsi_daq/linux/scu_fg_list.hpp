@@ -27,6 +27,7 @@
 
 #include <scu_shared_mem.h>
 #include <daq_eb_ram_buffer.hpp>
+//#include <scu_function_generator.h>
 #include <vector>
 
 namespace Scu
@@ -86,7 +87,16 @@ class FgList
        */
       uint getOutputBits( void ) const
       {
-         return outputBits;
+         return outputBits & OUTPUT_BIT_MASK;
+      }
+
+      /*!
+       * @brief Returns "true" in the case of gap reading when the set-value
+       *        is invalid.
+       */
+      bool isSetValueInvalid( void ) const
+      {
+         return (outputBits & SET_VALUE_NOT_VALID_MASK) != 0;
       }
 
       /*!

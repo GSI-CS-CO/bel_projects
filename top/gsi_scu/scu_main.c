@@ -1693,11 +1693,16 @@ STATIC void scu_bus_handler( register TASK_T* pThis FG_UNUSED )
  * @param timestamp White-Rabbit time-stamp.
  * @param actValue Actual value.
  * @param setValue Set-value.
+ * @param setValueInvalid If true, the set value is invalid.
  * @todo Storing the MIL-DAQ data in the DDR3-RAM instead wasting of
  *       shared memory.
  */
 STATIC void pushDaqData( const FG_MACRO_T fgMacro, const uint64_t timestamp,
-                         const uint16_t actValue, const uint32_t setValue )
+                         const uint16_t actValue, const uint32_t setValue
+                      #ifdef CONFIG_READ_MIL_TIME_GAP
+                         , const bool setValueInvalid
+                      #endif
+                       )
 {
 #ifdef CONFIG_LAGE_TIME_DETECT
    static uint64_t lastTime = 0;
@@ -1717,6 +1722,9 @@ STATIC void pushDaqData( const FG_MACRO_T fgMacro, const uint64_t timestamp,
    pl.item.setValue = setValue >> (BIT_SIZEOF(uint32_t)/sizeof(MIL_DAQ_T));
    pl.item.actValue = actValue;
    pl.item.fgMacro = fgMacro;
+ #ifdef CONFIG_READ_MIL_TIME_GAP
+   pl.item.fgMacro.outputBits |= SET_VALUE_NOT_VALID_MASK;
+ #endif
 #else
    MIL_DAQ_OBJ_T d;
 
@@ -1724,6 +1732,10 @@ STATIC void pushDaqData( const FG_MACRO_T fgMacro, const uint64_t timestamp,
    d.tmstmp_l = timestamp & 0xffffffff;
    d.tmstmp_h = timestamp >> BIT_SIZEOF(uint32_t);
    d.fgMacro  = fgMacro;
+ #ifdef CONFIG_READ_MIL_TIME_GAP
+   if( setValueInvalid )
+      d.fgMacro.outputBits |= SET_VALUE_NOT_VALID_MASK;
+ #endif
    d.setvalue = setValue;
    add_daq_msg(&g_shared.daq_buf, d);
 #endif
@@ -1917,6 +1929,8 @@ int milGetTask( register MIL_TASK_DATA_T* pMilTaskData, const bool isScuBus,
    return get_task_mil( g_pScu_mil_base, milTaskNo, pActAdcValue );
 }
 
+
+
 /*! ---------------------------------------------------------------------------
  * @ingroup MIL_FSM
  * @brief Task-function for handling all MIL-FGs and MIL-DAQs via FSM.
@@ -1927,6 +1941,9 @@ int milGetTask( register MIL_TASK_DATA_T* pMilTaskData, const bool isScuBus,
  */
 STATIC void milDeviceHandler( register TASK_T* pThis, const bool isScuBus )
 {
+#ifdef CONFIG_READ_MIL_TIME_GAP
+   static uint64_t gapReadingTime = 0;
+#endif
    unsigned int channel;
    int status = OKAY;
 
@@ -1946,12 +1963,22 @@ STATIC void milDeviceHandler( register TASK_T* pThis, const bool isScuBus )
       {
          if( !has_msg( &g_aMsg_buf[0], isScuBus? DEVSIO : DEVBUS ) )
          { /* There is nothing to do. */
+         #ifdef CONFIG_READ_MIL_TIME_GAP
+            if( (gapReadingTime != 0) && (getSysTime() >= gapReadingTime) )
+            {
+               FSM_TRANSITION( ST_DATA_AQUISITION, label='Gap reading time\nexpired',
+                                                   color=magenta );
+               break;
+            }
+         #endif
          #ifdef __DOCFSM__
             FSM_TRANSITION( ST_WAIT, label='No message', color=red );
          #endif
             break;
          }
-
+      #ifdef CONFIG_READ_MIL_TIME_GAP
+         gapReadingTime = 0;
+      #endif
          const MSI_T m = remove_msg( &g_aMsg_buf[0], isScuBus? DEVSIO : DEVBUS );
          pMilData->slave_nr = isScuBus? (m.msg + 1) : 0;
          pMilData->timestamp1 = getSysTime() + INTERVAL_200US;
@@ -2074,7 +2101,11 @@ STATIC void milDeviceHandler( register TASK_T* pThis, const bool isScuBus )
             pushDaqData( getFgMacroViaFgRegister( channel ),
                          pMilData->aFgChannels[channel].daq_timestamp,
                          actAdcValue,
-                         g_aFgChannels[channel].last_c_coeff );
+                         g_aFgChannels[channel].last_c_coeff
+                      #ifdef CONFIG_READ_MIL_TIME_GAP
+                         , gapReadingTime != 0
+                      #endif
+                       );
             // save the setvalue from the tuple sent for the next drq handling
             g_aFgChannels[channel].last_c_coeff = pMilData->aFgChannels[channel].setvalue;
          } // end FOR_EACH_FG_CONTINUING
@@ -2090,6 +2121,9 @@ STATIC void milDeviceHandler( register TASK_T* pThis, const bool isScuBus )
          }
          pMilData->lastChannel = 0; // start next time from channel 0
          pMilData->task_timeout_cnt = 0;
+      #ifdef CONFIG_READ_MIL_TIME_GAP
+         gapReadingTime = getSysTime() + INTERVAL_10MS;
+      #endif
          FSM_TRANSITION( ST_WAIT, color=green );
          break;
       } // end case ST_FETCH_DATA
@@ -2169,7 +2203,9 @@ int main( void )
            "Git revision: "TO_STRING(GIT_REVISION)"\n"
            "Found MsgBox at 0x%08x. MSI Path is 0x%08x\n",
            (uint32_t)pCpuMsiBox, (uint32_t)pMyMsi);
-
+#ifdef CONFIG_READ_MIL_TIME_GAP
+   mprintf( ESC_WARNING"CAUTION! Time gap reading activated!"ESC_NORMAL"\n" );
+#endif
    tellMailboxSlot();
    init_irq_table();
 
