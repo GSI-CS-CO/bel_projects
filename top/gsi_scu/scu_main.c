@@ -1071,20 +1071,20 @@ STATIC void disable_channel( const unsigned int channel )
    else if( (socket & DEV_MIL_EXT) != 0 )
    {  // disarm hardware
       if( (status = read_mil(g_pScu_mil_base, &data, FC_CNTRL_RD | dev)) != OKAY )
-         dev_failure(status, 0, "disarm hw");
+         dev_failure(status, 0, "disarm hw 1");
 
       if( (status = write_mil(g_pScu_mil_base, data & ~(0x2), FC_CNTRL_WR | dev)) != OKAY )
-         dev_failure(status, 0, "disarm hw");
+         dev_failure(status, 0, "disarm hw 2");
    }
    else if( (socket & DEV_SIO) != 0 )
    {  // disarm hardware
       if( (status = scub_read_mil(g_pScub_base, getFgSlotNumber( socket ),
            &data, FC_CNTRL_RD | dev)) != OKAY )
-         dev_failure(status, getFgSlotNumber( socket ), "disarm hw");
+         dev_failure(status, getFgSlotNumber( socket ), "disarm hw 3");
 
       if( (status = scub_write_mil(g_pScub_base, getFgSlotNumber( socket ),
            data & ~(0x2), FC_CNTRL_WR | dev)) != OKAY )
-         dev_failure(status, getFgSlotNumber( socket ), "disarm hw");
+         dev_failure(status, getFgSlotNumber( socket ), "disarm hw 4");
    }
 
    if( pFgRegs->state == STATE_ACTIVE )
@@ -1315,6 +1315,23 @@ STATIC MIL_TASK_DATA_T g_aMilTaskData[5] =
 
 STATIC_ASSERT( TASKMAX >= (ARRAY_SIZE( g_aMilTaskData ) + MAX_FG_CHANNELS-1 + TASKMIN));
 
+#ifdef CONFIG_READ_MIL_TIME_GAP
+/*! ---------------------------------------------------------------------------
+ * @ingroup MIL_FSM
+ * @brief Returns true, when the states of all MIL-FSMs are in the state
+ *        ST_WAIT.
+ */
+STATIC bool isMilFsmInST_WAIT( void )
+{
+   for( unsigned int i = 0; i < ARRAY_SIZE( g_aMilTaskData ); i++ )
+   {
+      if( g_aMilTaskData[i].state != ST_WAIT )
+         return false;
+   }
+   return true;
+}
+#endif
+
 /*! ---------------------------------------------------------------------------
  * @ingroup TASK
  * @brief Declaration of the task type
@@ -1538,6 +1555,11 @@ STATIC void sw_irq_handler( register TASK_T* pThis FG_UNUSED )
 
    if( !has_msg( &g_aMsg_buf[0], SWI ) )
       return; /* Nothing to do.. */
+
+#ifdef CONFIG_READ_MIL_TIME_GAP
+   if( !isMilFsmInST_WAIT() )
+      return;
+#endif
 
    const MSI_T m = remove_msg( &g_aMsg_buf[0], SWI );
    if( m.adr != 0x10 ) //TODO From where the fuck comes 0x10!!!
@@ -1964,7 +1986,11 @@ STATIC void milDeviceHandler( register TASK_T* pThis, const bool isScuBus )
          if( !has_msg( &g_aMsg_buf[0], isScuBus? DEVSIO : DEVBUS ) )
          { /* There is nothing to do. */
          #ifdef CONFIG_READ_MIL_TIME_GAP
-            if( (gapReadingTime != 0) && (getSysTime() >= gapReadingTime) )
+            /*
+             * Only a task which has already served a function generator
+             * can read a time-gap. That means its slave number has to be valid.
+             */
+            if( (pMilData->slave_nr != INVALID_SLAVE_NR) && (getSysTime() >= gapReadingTime) )
             {
                FSM_TRANSITION( ST_DATA_AQUISITION, label='Gap reading time\nexpired',
                                                    color=magenta );
@@ -2014,15 +2040,24 @@ STATIC void milDeviceHandler( register TASK_T* pThis, const bool isScuBus )
          if( pMilData->task_timeout_cnt > TASK_TIMEOUT )
          {
             printTimeoutMessage( pMilData, isScuBus );
-            pMilData->lastChannel++;
             pMilData->task_timeout_cnt = 0;
+         #ifdef CONFIG_GOTO_STWAIT_WHEN_TIMEOUT
+            FSM_TRANSITION( ST_WAIT, label='maximum timeout-count\nreached'
+                                     color=red );
+            break;
+         #else
+            /*
+             * skipping the faulty channel
+             */
+            pMilData->lastChannel++;
+         #endif
          }
          /* fetch status from dev bus controller; */
-         FOR_EACH_FG( channel )
+         FOR_EACH_FG_CONTINUING( channel, pMilData->lastChannel )
          {
             status = milGetStatus( pMilData, isScuBus, channel );
             if( status == RCV_TASK_BSY )
-               break; // break from FOR_EACH_FG loop
+               break; // break from FOR_EACH_FG_CONTINUING loop
             if( status != OKAY )
                mil_failure( status, pMilData->slave_nr );
          }
@@ -2043,7 +2078,9 @@ STATIC void milDeviceHandler( register TASK_T* pThis, const bool isScuBus )
       } // end case ST_FETCH_STATUS
 
       case ST_HANDLE_IRQS:
-      {  /* handle irqs for ifas with active pending regs; non blocking write */
+      {  /*
+          * handle irqs for ifas with active pending regs; non blocking write
+          */
          FOR_EACH_FG( channel )
          {
             if( isNoIrqPending( pMilData, channel ) )
@@ -2078,8 +2115,18 @@ STATIC void milDeviceHandler( register TASK_T* pThis, const bool isScuBus )
          if( pMilData->task_timeout_cnt > TASK_TIMEOUT )
          {
             printTimeoutMessage( pMilData, isScuBus );
-            pMilData->lastChannel++;
             pMilData->task_timeout_cnt = 0;
+         #ifdef CONFIG_GOTO_STWAIT_WHEN_TIMEOUT
+            pMilData->lastChannel = 0;
+            FSM_TRANSITION( ST_WAIT, label='maximum timeout-count\nreached'
+                                     color=red );
+            break;
+         #else
+            /*
+             * skipping the faulty channel
+             */
+            pMilData->lastChannel++;
+         #endif
          }
          /* fetch daq data */
          FOR_EACH_FG_CONTINUING( channel, pMilData->lastChannel )
