@@ -145,29 +145,16 @@ void DaqMilCompare::onReset( void )
  */
 void
 DaqMilCompare::addItem( uint64_t time, MIL_DAQ_T actValue, MIL_DAQ_T setValue,
-                        bool actValueValid )
+                        bool setValueValid )
 {
-#if 1
    m_aPlotList.push_back(
    {
      .m_time = static_cast<double>(time) /
                static_cast<double>(daq::NANOSECS_PER_SEC),
      .m_set  = daq::rawToVoltage( setValue ),
      .m_act  = daq::rawToVoltage( actValue ),
-     .m_actValid = actValueValid
+     .m_setValid = setValueValid
    } );
-#else
-   if( m_iterator == m_aPlotList.end() )
-      return;
-   *m_iterator =
-   {
-     .m_time = static_cast<double>(time) /
-               static_cast<double>(daq::NANOSECS_PER_SEC),
-     .m_set  = daq::rawToVoltage( setValue ),
-     .m_act  = daq::rawToVoltage( actValue )
-   };
-   m_iterator++;
-#endif
 }
 
 /*! ---------------------------------------------------------------------------

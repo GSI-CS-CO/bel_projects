@@ -81,7 +81,7 @@ class DaqMilCompare: public DaqCompare
       double  m_time;
       float   m_set;
       float   m_act;
-      bool    m_actValid;
+      bool    m_setValid;
    };
 
    enum STATE_T
@@ -159,7 +159,7 @@ private:
                                       MIL_DAQ_T setValue ) override;
 
    void addItem( uint64_t time, MIL_DAQ_T actValue, MIL_DAQ_T setValue,
-                 bool actValueValid );
+                 bool setValueValid );
 
    void onInit( void ) override;
    void onReset( void ) override;

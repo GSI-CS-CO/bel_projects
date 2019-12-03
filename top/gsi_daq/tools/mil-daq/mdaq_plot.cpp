@@ -82,19 +82,32 @@ void Plot::plot( void )
    bool isDeviationPlottingEnabled =
                   m_pParent->getCommandLine()->isDeviationPlottingEnabled();
 
+   bool validSetDataPresent = false;
+   for( auto& i: m_pParent->m_aPlotList )
+       if( i.m_setValid )
+          validSetDataPresent = true;
+
    const string& style = m_pParent->getCommandLine()->getLineStyle();
-   *this << "plot '-' title 'set value' with "    << style << " lc rgb 'red'"
-               ", '-' title 'actual value' with " << style << " lc rgb 'green'";
-   if( isDeviationPlottingEnabled )
+   *this << "plot ";
+   if( validSetDataPresent )
+      *this << "'-' title 'set value' with "    << style << " lc rgb 'red', ";
+
+   *this << "'-' title 'actual value' with " << style << " lc rgb 'green'";
+
+   if( isDeviationPlottingEnabled && validSetDataPresent )
       *this << ", '-' title 'deviation' with "    << style << " lc rgb 'blue'";
+
    *this << endl;
 
-   for( auto& i: m_pParent->m_aPlotList )
+   if( validSetDataPresent )
    {
-      if( i.m_actValid )
-         *this << i.m_time << ' ' << i.m_set << endl;
+      for( auto& i: m_pParent->m_aPlotList )
+      {
+         if( i.m_setValid )
+            *this << i.m_time << ' ' << i.m_set << endl;
+      }
+      *this << 'e' << endl;
    }
-   *this << 'e' << endl;
 
    for( auto& i: m_pParent->m_aPlotList )
    {
@@ -102,12 +115,12 @@ void Plot::plot( void )
    }
    *this << 'e' << endl;
 
-   if( !isDeviationPlottingEnabled )
+   if( !isDeviationPlottingEnabled || !validSetDataPresent )
       return;
 
    for( auto& i: m_pParent->m_aPlotList )
    {
-      if( i.m_actValid )
+      if( i.m_setValid )
          *this << i.m_time << ' ' << (i.m_set - i.m_act) << endl;
    }
    *this << 'e' << endl;
