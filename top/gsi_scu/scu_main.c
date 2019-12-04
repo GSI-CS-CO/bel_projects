@@ -273,41 +273,6 @@ STATIC inline uint8_t getDevice( const unsigned int channel )
 }
 
 /*! ---------------------------------------------------------------------------
- * @brief Returns "true" in the case the function generator belonging to the
- *        given socket is a "non MIL function generator".
- */
-ALWAYS_INLINE STATIC inline bool isNonMilFg( const uint8_t socket )
-{
-   return (socket & (DEV_MIL_EXT | DEV_SIO)) == 0;
-}
-
-/*! ---------------------------------------------------------------------------
- * @brief Returns "true" in the case the function generator belonging to the
- *        given socket is a MIL function generator connected via SCU-bus slave.
- */
-ALWAYS_INLINE STATIC inline bool isMilScuBusFg( const uint8_t socket )
-{
-   return (socket & DEV_SIO) != 0;
-}
-
-/*! ---------------------------------------------------------------------------
- * @brief Returns "true" in the case the function generator belonging to the
- *        given socket is connected via MIL extension.
- */
-ALWAYS_INLINE STATIC inline bool isMilExtentionFg( const uint8_t socket )
-{
-   return (socket & DEV_MIL_EXT) != 0;
-}
-
-/*! ---------------------------------------------------------------------------
- * @brief Returns the SCU bus slot number from the given socket.
- */
-ALWAYS_INLINE STATIC inline unsigned int getFgSlotNumber( const uint8_t socket )
-{
-   return socket & SCU_BUS_SLOT_MASK;
-}
-
-/*! ---------------------------------------------------------------------------
  * @brief Initializing of all global pointers accessing the hardware.
  */
 STATIC inline void initializeGlobalPointers( void )
@@ -403,7 +368,8 @@ STATIC void enable_scub_msis( const unsigned int channel )
    //FG_ASSERT( pMyMsi != NULL );
 
    const uint8_t socket = getSocket( channel );
-   if( isNonMilFg( socket ) || ((socket & DEV_SIO) != 0) )
+
+   if( isNonMilFg( socket ) || isMilScuBusFg( socket ) )
    {
       //SCU Bus Master
       FG_ASSERT( getFgSlotNumber( socket ) > 0 );
@@ -417,7 +383,7 @@ STATIC void enable_scub_msis( const unsigned int channel )
       return;
    }
 
-   if( (socket & DEV_MIL_EXT) == 0 )
+   if( !isMilExtentionFg( socket ) )
       return;
 
    g_pMil_irq_base[8]   = MIL_DRQ;
@@ -448,13 +414,13 @@ STATIC void disable_slave_irq( const unsigned int channel )
       else if (dev == 1)
         g_pScub_base[OFFS(socket) + SLAVE_INT_ENA] &= ~(0x4000); //disable fg2 irq
    }
-   else if( (socket & DEV_MIL_EXT) != 0 )
+   else if( isMilExtentionFg( socket ) )
    {
       //write_mil(g_pScu_mil_base, 0x0, FC_COEFF_A_WR | dev);            //ack drq
       if( (status = write_mil(g_pScu_mil_base, 0x0, FC_IRQ_MSK | dev) ) != OKAY)
          dev_failure( status, getFgSlotNumber( socket ), __func__);  //mask drq
    }
-   else if( (socket & DEV_SIO) != 0 )
+   else if( isMilScuBusFg( socket ) )
    {
       if( (status = scub_write_mil(g_pScub_base, getFgSlotNumber( socket ),
                                    0x0, FC_IRQ_MSK | dev)) != OKAY)
@@ -728,11 +694,11 @@ STATIC inline void dispatch( void )
 /*! ---------------------------------------------------------------------------
  * @brief helper function which clears the state of a dev bus after malfunction
  */
-STATIC void clear_handler_state( unsigned int socket )
+STATIC void clear_handler_state( const uint8_t socket )
 {
    MSI_T m;
 
-   if( socket & DEV_SIO )
+   if( isMilScuBusFg( socket ) )
    {
       // create swi
       FG_ASSERT( getFgSlotNumber( socket ) > 0 );
@@ -744,12 +710,12 @@ STATIC void clear_handler_state( unsigned int socket )
       return;
    }
 
-   if( socket & DEV_MIL_EXT )
+   if( isMilExtentionFg( socket ) )
    {
       m.msg = 0;
       m.adr = 0;
       irq_disable();
-      add_msg(&g_aMsg_buf[0], DEVBUS, m);
+      add_msg(&g_aMsg_buf[0], DEVBUS, m );
       irq_enable();
    }
 }
@@ -779,11 +745,11 @@ STATIC int configure_fg_macro( const unsigned int channel )
    uint16_t dreq_status = 0;
    const uint8_t socket = getSocket( channel );
    /* actions per slave card */
-   if( (socket & DEV_SIO) != 0 )
+   if( isMilScuBusFg( socket ) )
    {
       scub_status_mil( g_pScub_base, getFgSlotNumber( socket ), &dreq_status );
    }
-   else if( (socket & DEV_MIL_EXT) != 0 )
+   else if( isMilExtentionFg( socket ) )
    {
       status_mil( g_pScu_mil_base, &dreq_status );
    }
@@ -791,7 +757,7 @@ STATIC int configure_fg_macro( const unsigned int channel )
    // if dreq is active
    if( (dreq_status & MIL_DATA_REQ_INTR) != 0 )
    {
-      if( (socket & DEV_SIO) != 0 )
+      if( isMilScuBusFg( socket ) )
       {
          FG_ASSERT( getFgSlotNumber( socket ) > 0 );
          if( (s_clearIsActive & _SLOT_BIT_MASK()) == 0 )
@@ -800,11 +766,10 @@ STATIC int configure_fg_macro( const unsigned int channel )
             clear_handler_state( socket );
             hist_addx( HISTORY_XYZ_MODULE, "clear_handler_state", socket );
          }
-         // yield
          return -1;
       }
 
-      if( (socket & DEV_MIL_EXT) != 0 )
+      if( isMilExtentionFg( socket ) )
       {
          if( (s_clearIsActive & _MIL_BIT_MASK()) == 0 )
          {
@@ -812,18 +777,17 @@ STATIC int configure_fg_macro( const unsigned int channel )
             clear_handler_state( socket );
             hist_addx( HISTORY_XYZ_MODULE, "clear_handler_state", socket );
          }
-         // yield
          return -1;
       }
    }
    else
-   {  // reset clear flag
-      if( (socket & DEV_SIO) != 0)
+   {  // reset clear
+      if( isMilScuBusFg( socket ) )
       {
          FG_ASSERT( getFgSlotNumber( socket ) > 0 );
          s_clearIsActive &= ~_SLOT_BIT_MASK();
       }
-      else if( (socket & DEV_MIL_EXT) != 0 )
+      else if( isMilExtentionFg( socket ) )
       {
          s_clearIsActive &= ~_MIL_BIT_MASK();
       }
@@ -840,12 +804,12 @@ STATIC int configure_fg_macro( const unsigned int channel )
       g_pScub_base[OFFS(socket) + SLAVE_INT_ACT] =  (FG1_IRQ | FG2_IRQ); // clear all irqs
       g_pScub_base[OFFS(socket) + SLAVE_INT_ENA] |= (FG1_IRQ | FG2_IRQ); // enable fg1 and fg2 irq
    }
-   else if( (socket & DEV_MIL_EXT) != 0 )
+   else if( isMilExtentionFg( socket ) )
    {
       if( (status = write_mil(g_pScu_mil_base, 1 << 13, FC_IRQ_MSK | dev)) != OKAY)
          dev_failure( status, 0, "enable dreq" ); //enable Data-Request
    }
-   else if( (socket & DEV_SIO) != 0)
+   else if( isMilScuBusFg( socket ) )
    {
       FG_ASSERT( getFgSlotNumber( socket ) > 0 );
       g_pScub_base[SRQ_ENA] |= _SLOT_BIT_MASK();        // enable irqs for the slave
@@ -879,12 +843,12 @@ STATIC int configure_fg_macro( const unsigned int channel )
       g_pScub_base[OFFS(socket) + dac_base + DAC_CNTRL] = 0x10;   // set FG mode
       g_pScub_base[OFFS(socket) + fg_base + FG_RAMP_CNT_LO] = 0;  // reset ramp counter
    }
-   else if( (socket & DEV_MIL_EXT) != 0 )
+   else if( isMilExtentionFg( socket ) )
    {
       if( (status = write_mil(g_pScu_mil_base, 0x1, FC_IFAMODE_WR | dev)) != OKAY)
          dev_failure( status, 0, "set FG mode"); // set FG mode
    }
-   else if( (socket & DEV_SIO) != 0 )
+   else if( isMilScuBusFg( socket ) )
    {
       if( (status = scub_write_mil(g_pScub_base, getFgSlotNumber( socket ), 0x1, FC_IFAMODE_WR | dev)) != OKAY)
          dev_failure( status, getFgSlotNumber( socket ), "set FG mode"); // set FG mode
@@ -915,7 +879,7 @@ STATIC int configure_fg_macro( const unsigned int channel )
          g_pScub_base[OFFS(socket) + fg_base + FG_STARTL] = blk_data[4];
          g_pScub_base[OFFS(socket) + fg_base + FG_STARTH] = blk_data[5];
       }
-      else if( (socket & DEV_MIL_EXT) != 0 )
+      else if( isMilExtentionFg( socket ) )
       {
         // save the coeff_c for mil daq
          g_aFgChannels[channel].last_c_coeff = pset.coeff_c;
@@ -926,7 +890,7 @@ STATIC int configure_fg_macro( const unsigned int channel )
          if((status = write_mil(g_pScu_mil_base, cntrl_reg_wr, FC_CNTRL_WR | dev)) != OKAY)
             dev_failure( status, 0, "end blk trm");
       }
-      else if( (socket & DEV_SIO) != 0 )
+      else if( isMilScuBusFg( socket ) )
       {
          // save the coeff_c for mil daq
          g_aFgChannels[channel].last_c_coeff = pset.coeff_c;
@@ -938,7 +902,7 @@ STATIC int configure_fg_macro( const unsigned int channel )
             dev_failure( status, getFgSlotNumber( socket ), "end blk trm");
       }
       g_aFgChannels[0].param_sent++;
-  //!! }
+  //!! }CONFIG_GOTO_STWAIT_WHEN_TIMEOUT
 
    /* configure and enable macro */
    if( isNonMilFg( socket ) )
@@ -947,15 +911,15 @@ STATIC int configure_fg_macro( const unsigned int channel )
       g_pScub_base[OFFS(socket) + fg_base + FG_TAG_HIGH] = g_shared.fg_regs[channel].tag >> BIT_SIZEOF(uint16_t);
       g_pScub_base[OFFS(socket) + fg_base + FG_CNTRL] |= FG_ENABLED;
    }
-   else if( (socket & DEV_MIL_EXT) != 0 )
+   else if( isMilExtentionFg( socket ) )
    { // enable and end block mode
       if( (status = write_mil(g_pScu_mil_base, cntrl_reg_wr | FG_ENABLED, FC_CNTRL_WR | dev)) != OKAY)
          dev_failure( status, 0, "end blk mode");
    }
-   else if( (socket & DEV_SIO) != 0 )
+   else if( isMilScuBusFg( socket ) )
    { // enable and end block mode
-      if( (status = scub_write_mil(g_pScub_base, getFgSlotNumber( socket ),
-           cntrl_reg_wr | FG_ENABLED, FC_CNTRL_WR | dev)) != OKAY )
+      if( (status = scub_write_mil( g_pScub_base, getFgSlotNumber( socket ),
+           cntrl_reg_wr | FG_ENABLED, FC_CNTRL_WR | dev ) ) != OKAY )
          dev_failure( status, getFgSlotNumber( socket ), "end blk mode");
    }
    } //!!
@@ -1040,7 +1004,7 @@ STATIC void disable_channel( const unsigned int channel )
 
    int status;
    int16_t data;
-   const uint16_t socket = getSocket( channel );
+   const uint8_t socket = getSocket( channel );
    const uint16_t dev    = getDevice( channel );
    //mprintf("disarmed socket %d dev %d in channel[%d] state %d\n", socket, dev, channel, pFgRegs->state); //ONLY FOR TESTING
    if( isNonMilFg( socket ) )
@@ -1068,23 +1032,23 @@ STATIC void disable_channel( const unsigned int channel )
       g_pScub_base[OFFS(socket) + fg_base + FG_CNTRL] &= ~(0x2);
       g_pScub_base[OFFS(socket) + dac_base + DAC_CNTRL] &= ~(0x10); // unset FG mode
    }
-   else if( (socket & DEV_MIL_EXT) != 0 )
+   else if( isMilExtentionFg( socket ) )
    {  // disarm hardware
-      if( (status = read_mil(g_pScu_mil_base, &data, FC_CNTRL_RD | dev)) != OKAY )
-         dev_failure(status, 0, "disarm hw 1");
+      if( (status = read_mil( g_pScu_mil_base, &data, FC_CNTRL_RD | dev)) != OKAY )
+         dev_failure( status, 0, "disarm hw 1" );
 
-      if( (status = write_mil(g_pScu_mil_base, data & ~(0x2), FC_CNTRL_WR | dev)) != OKAY )
-         dev_failure(status, 0, "disarm hw 2");
+      if( (status = write_mil( g_pScu_mil_base, data & ~(0x2), FC_CNTRL_WR | dev)) != OKAY )
+         dev_failure( status, 0, "disarm hw 2" );
    }
-   else if( (socket & DEV_SIO) != 0 )
+   else if( isMilScuBusFg( socket ) )
    {  // disarm hardware
-      if( (status = scub_read_mil(g_pScub_base, getFgSlotNumber( socket ),
+      if( (status = scub_read_mil( g_pScub_base, getFgSlotNumber( socket ),
            &data, FC_CNTRL_RD | dev)) != OKAY )
-         dev_failure(status, getFgSlotNumber( socket ), "disarm hw 3");
+         dev_failure( status, getFgSlotNumber( socket ), "disarm hw 3" );
 
-      if( (status = scub_write_mil(g_pScub_base, getFgSlotNumber( socket ),
+      if( (status = scub_write_mil( g_pScub_base, getFgSlotNumber( socket ),
            data & ~(0x2), FC_CNTRL_WR | dev)) != OKAY )
-         dev_failure(status, getFgSlotNumber( socket ), "disarm hw 4");
+         dev_failure( status, getFgSlotNumber( socket ), "disarm hw 4" );
    }
 
    if( pFgRegs->state == STATE_ACTIVE )
@@ -1315,13 +1279,13 @@ STATIC MIL_TASK_DATA_T g_aMilTaskData[5] =
 
 STATIC_ASSERT( TASKMAX >= (ARRAY_SIZE( g_aMilTaskData ) + MAX_FG_CHANNELS-1 + TASKMIN));
 
-#ifdef CONFIG_READ_MIL_TIME_GAP
+#if defined( CONFIG_READ_MIL_TIME_GAP ) && !defined(__DOCFSM__)
 /*! ---------------------------------------------------------------------------
  * @ingroup MIL_FSM
  * @brief Returns true, when the states of all MIL-FSMs are in the state
  *        ST_WAIT.
  */
-STATIC bool isMilFsmInST_WAIT( void )
+STATIC inline bool isMilFsmInST_WAIT( void )
 {
    for( unsigned int i = 0; i < ARRAY_SIZE( g_aMilTaskData ); i++ )
    {
@@ -1338,9 +1302,9 @@ STATIC bool isMilFsmInST_WAIT( void )
  */
 typedef struct _TASK_T
 {
-   void*    pTaskData;            /*!<@brief Pointer to the memory-space of the current task */
-   uint64_t interval;             /*!<@brief interval of the task */
-   uint64_t lasttick;             /*!<@brief when was the task ran last */
+   const void*    pTaskData;  /*!<@brief Pointer to the memory-space of the current task */
+   const uint64_t interval;   /*!<@brief interval of the task */
+   uint64_t       lasttick;   /*!<@brief when was the task ran last */
    void (*func)(struct _TASK_T*); /*!<@brief pointer to the function of the task */
 } TASK_T;
 
@@ -1391,9 +1355,8 @@ STATIC TASK_T g_aTasks[] =
  */
 STATIC inline void schedule( void )
 {
-   uint64_t tick = getSysTime(); /* FIXME get the current system tick */
+   const uint64_t tick = getSysTime();
 
-   // loop through all task: if interval is 0, run every time, otherwise obey interval
    for( unsigned int i = 0; i < ARRAY_SIZE( g_aTasks ); i++ )
    {
       // call the dispatch task before every other task
@@ -1486,12 +1449,12 @@ STATIC void ecaHandler( register TASK_T* pThis FG_UNUSED )
       if( g_shared.fg_regs[i].state != STATE_ARMED )
          continue;
       const uint8_t socket = getSocket( i );
-      if( (socket & DEV_MIL_EXT) != 0 )
+      if( isMilExtentionFg( socket ) )
       {
          dev_mil_armed = true;
          continue;
       }
-      if( (socket & DEV_SIO) != 0 )
+      if( isMilScuBusFg( socket ) )
       {
          if( getFgSlotNumber( socket ) != 0 )
             active_sios |= (1 << (getFgSlotNumber( socket ) - 1));
@@ -1819,7 +1782,7 @@ int milReqestStatus( register MIL_TASK_DATA_T* pMilTaskData, const bool isScuBus
                                                   const unsigned int channel )
 {
    FG_ASSERT( pMilTaskData->slave_nr != INVALID_SLAVE_NR );
-   const unsigned int socket     = getSocket( channel );
+   const uint8_t      socket     = getSocket( channel );
    const unsigned int devAndMode = getDevice( channel ) | FC_IRQ_ACT_RD;
    const unsigned char milTaskNo = getMilTaskNumber( pMilTaskData, channel );
    pMilTaskData->aFgChannels[channel].irq_data = 0; // clear old irq data
@@ -1828,14 +1791,15 @@ int milReqestStatus( register MIL_TASK_DATA_T* pMilTaskData, const bool isScuBus
    {
       if( getFgSlotNumber( socket ) != pMilTaskData->slave_nr )
          return OKAY;
-      if( (socket & DEV_SIO) == 0 )
+
+      if( !isMilScuBusFg( socket ) )
          return OKAY;
 
       return scub_set_task_mil( g_pScub_base, pMilTaskData->slave_nr,
                                                     milTaskNo, devAndMode );
    }
 
-   if( (socket & DEV_MIL_EXT) == 0 )
+   if( !isMilExtentionFg( socket ) )
        return OKAY;
 
    return set_task_mil( g_pScu_mil_base, milTaskNo, devAndMode );
@@ -1855,21 +1819,21 @@ int milGetStatus( register MIL_TASK_DATA_T* pMilTaskData, const bool isScuBus,
                                                   const unsigned int channel )
 {
    FG_ASSERT( pMilTaskData->slave_nr != INVALID_SLAVE_NR );
-   const unsigned int socket = getSocket( channel );
+   const uint8_t socket = getSocket( channel );
    const unsigned char milTaskNo = getMilTaskNumber( pMilTaskData, channel );
     /* test only if as connected to sio */
    if( isScuBus )
    {
       if( getFgSlotNumber( socket ) != pMilTaskData->slave_nr )
          return OKAY;
-      if( (socket & DEV_SIO) == 0 )
+      if( !isMilScuBusFg( socket ) )
          return OKAY;
 
       return scub_get_task_mil( g_pScub_base, pMilTaskData->slave_nr,  milTaskNo,
                                 &pMilTaskData->aFgChannels[channel].irq_data );
    }
 
-   if( (socket & DEV_MIL_EXT) == 0 )
+   if( !isMilExtentionFg( socket ) )
       return OKAY;
 
    return get_task_mil( g_pScu_mil_base, milTaskNo,
@@ -1951,8 +1915,6 @@ int milGetTask( register MIL_TASK_DATA_T* pMilTaskData, const bool isScuBus,
    return get_task_mil( g_pScu_mil_base, milTaskNo, pActAdcValue );
 }
 
-
-
 /*! ---------------------------------------------------------------------------
  * @ingroup MIL_FSM
  * @brief Task-function for handling all MIL-FGs and MIL-DAQs via FSM.
@@ -1979,7 +1941,12 @@ STATIC void milDeviceHandler( register TASK_T* pThis, const bool isScuBus )
 
    MIL_TASK_DATA_T* pMilData = (MIL_TASK_DATA_T*) pThis->pTaskData;
 
-   switch( pMilData->state )
+   const FG_STATE_T lastState = pMilData->state;
+
+   /*
+    * Performing the FSM state-do activities.
+    */
+   switch( lastState )
    {
       case ST_WAIT:
       {
@@ -2002,12 +1969,6 @@ STATIC void milDeviceHandler( register TASK_T* pThis, const bool isScuBus )
          #endif
             break;
          }
-      #ifdef CONFIG_READ_MIL_TIME_GAP
-         gapReadingTime = 0;
-      #endif
-         const MSI_T m = remove_msg( &g_aMsg_buf[0], isScuBus? DEVSIO : DEVBUS );
-         pMilData->slave_nr = isScuBus? (m.msg + 1) : 0;
-         pMilData->timestamp1 = getSysTime() + INTERVAL_200US;
          FSM_TRANSITION( ST_PREPARE, label='Massage received', color=green );
          break;
       } // end case ST_WAIT
@@ -2029,7 +1990,6 @@ STATIC void milDeviceHandler( register TASK_T* pThis, const bool isScuBus )
             if( status != OKAY )
                dev_failure( status, 20, "dev_sio set task" );
          }
-         pMilData->lastChannel = 0;
          FSM_TRANSITION( ST_FETCH_STATUS, color=green );
          break;
       }
@@ -2040,7 +2000,6 @@ STATIC void milDeviceHandler( register TASK_T* pThis, const bool isScuBus )
          if( pMilData->task_timeout_cnt > TASK_TIMEOUT )
          {
             printTimeoutMessage( pMilData, isScuBus );
-            pMilData->task_timeout_cnt = 0;
          #ifdef CONFIG_GOTO_STWAIT_WHEN_TIMEOUT
             FSM_TRANSITION( ST_WAIT, label='maximum timeout-count\nreached'
                                      color=red );
@@ -2050,6 +2009,7 @@ STATIC void milDeviceHandler( register TASK_T* pThis, const bool isScuBus )
              * skipping the faulty channel
              */
             pMilData->lastChannel++;
+            pMilData->task_timeout_cnt = 0;
          #endif
          }
          /* fetch status from dev bus controller; */
@@ -2070,9 +2030,6 @@ STATIC void milDeviceHandler( register TASK_T* pThis, const bool isScuBus )
          #endif
             break;
          }
-
-         pMilData->lastChannel = 0; // start next time from channel 0
-         pMilData->task_timeout_cnt = 0;
          FSM_TRANSITION( ST_HANDLE_IRQS, color=green );
          break;
       } // end case ST_FETCH_STATUS
@@ -2115,9 +2072,7 @@ STATIC void milDeviceHandler( register TASK_T* pThis, const bool isScuBus )
          if( pMilData->task_timeout_cnt > TASK_TIMEOUT )
          {
             printTimeoutMessage( pMilData, isScuBus );
-            pMilData->task_timeout_cnt = 0;
          #ifdef CONFIG_GOTO_STWAIT_WHEN_TIMEOUT
-            pMilData->lastChannel = 0;
             FSM_TRANSITION( ST_WAIT, label='maximum timeout-count\nreached'
                                      color=red );
             break;
@@ -2126,6 +2081,7 @@ STATIC void milDeviceHandler( register TASK_T* pThis, const bool isScuBus )
              * skipping the faulty channel
              */
             pMilData->lastChannel++;
+            pMilData->task_timeout_cnt = 0;
          #endif
          }
          /* fetch daq data */
@@ -2166,11 +2122,6 @@ STATIC void milDeviceHandler( register TASK_T* pThis, const bool isScuBus )
          #endif
             break;
          }
-         pMilData->lastChannel = 0; // start next time from channel 0
-         pMilData->task_timeout_cnt = 0;
-      #ifdef CONFIG_READ_MIL_TIME_GAP
-         gapReadingTime = getSysTime() + INTERVAL_10MS;
-      #endif
          FSM_TRANSITION( ST_WAIT, color=green );
          break;
       } // end case ST_FETCH_DATA
@@ -2182,7 +2133,46 @@ STATIC void milDeviceHandler( register TASK_T* pThis, const bool isScuBus )
          FSM_INIT_FSM( ST_WAIT, color=blue );
          break;
       }
-   } // end switch
+   } /* End of state-do activities */
+
+   /*
+    * Has the FSM-state changed?
+    */
+   if( lastState == pMilData->state )
+      return; /* No, there is nothing more to do. */
+   /*
+    * Performing FSM-state-transition activities if necessary,
+    * respectively the state-entry activities.
+    */
+   switch( pMilData->state )
+   {
+   #ifdef CONFIG_READ_MIL_TIME_GAP
+      case ST_WAIT:
+      {
+         gapReadingTime = getSysTime() + INTERVAL_10MS;
+         break;
+      }
+   #endif
+      case ST_PREPARE:
+      {
+      #ifdef CONFIG_READ_MIL_TIME_GAP
+         gapReadingTime = 0;
+      #endif
+         const MSI_T m = remove_msg( &g_aMsg_buf[0], isScuBus? DEVSIO : DEVBUS );
+         pMilData->slave_nr = isScuBus? (m.msg + 1) : 0;
+         pMilData->timestamp1 = getSysTime() + INTERVAL_200US;
+         break;
+      }
+      case ST_FETCH_STATUS: /* go immediately to next state */
+      case ST_FETCH_DATA:
+      {
+         pMilData->lastChannel = 0; // start next time from channel 0
+         pMilData->task_timeout_cnt = 0;
+         break;
+      }
+      default: break;
+   } /* End of state entry activities */
+
 } // end function milDeviceHandler
 
 /*! ---------------------------------------------------------------------------

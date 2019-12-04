@@ -27,7 +27,7 @@
 #define _SCU_FUNCTION_GENERATOR_H
 
 #include <stdint.h>
-
+#include <stdbool.h>
 #include <helper_macros.h>
 // 12 SIOs with dev busses and 1 mil extension
 #ifdef __cplusplus
@@ -75,6 +75,8 @@ namespace Scu
 #define FC_IFAMODE_WR (0x60 << 8)
 #define FC_BLK_WR     (0x6b << 8)
 #define FC_ACT_RD     (0x81 << 8)
+
+#define SCU_BUS_SLOT_MASK  0x0F
 
 /*!
  * @brief Info type of a discovered function generator.
@@ -179,7 +181,7 @@ STATIC_ASSERT( sizeof( FG_CHANNEL_BUFFER_T ) == sizeof( FG_PARAM_SET_T ) * BUFFE
 
 //#pragma pack(pop)
 
-#ifdef __lm32__
+#if defined( __lm32__ ) || defined(__DOXYGEN__)
 void scan_all_fgs( volatile uint16_t *base_adr,
                    volatile unsigned int* mil_base,
                    FG_MACRO_T* fglist,
@@ -190,6 +192,41 @@ void init_buffers( FG_CHANNEL_REG_T* cr,
                    FG_MACRO_T* macro,
                    volatile uint16_t* scub_base,
                    volatile unsigned int* devb_base) ;
+
+/*! ---------------------------------------------------------------------------
+ * @brief Returns "true" in the case the function generator belonging to the
+ *        given socket is a "non MIL function generator".
+ */
+ALWAYS_INLINE static inline bool isNonMilFg( const uint8_t socket )
+{
+   return (socket & (DEV_MIL_EXT | DEV_SIO)) == 0;
+}
+
+/*! ---------------------------------------------------------------------------
+ * @brief Returns "true" in the case the function generator belonging to the
+ *        given socket is a MIL function generator connected via SCU-bus slave.
+ */
+ALWAYS_INLINE static inline bool isMilScuBusFg( const uint8_t socket )
+{
+   return (socket & DEV_SIO) != 0;
+}
+
+/*! ---------------------------------------------------------------------------
+ * @brief Returns "true" in the case the function generator belonging to the
+ *        given socket is connected via MIL extension.
+ */
+ALWAYS_INLINE static inline bool isMilExtentionFg( const uint8_t socket )
+{
+   return (socket & DEV_MIL_EXT) != 0;
+}
+
+/*! ---------------------------------------------------------------------------
+ * @brief Returns the SCU bus slot number from the given socket.
+ */
+ALWAYS_INLINE static inline unsigned int getFgSlotNumber( const uint8_t socket )
+{
+   return socket & SCU_BUS_SLOT_MASK;
+}
 #endif /* ifdef __lm32__ */
 
 #ifdef __cplusplus

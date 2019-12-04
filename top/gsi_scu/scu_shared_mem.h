@@ -285,8 +285,6 @@ STATIC_ASSERT( offsetof( SCU_SHARED_DATA_T, fg_buffer ) ==
 #define SCU_INVALID_VALUE -1
 #define FG_VERSION         0x03
 
-#define SCU_BUS_SLOT_MASK  0x0F
-
 #ifdef CONFIG_SCU_DAQ_INTEGRATION
   #define __DAQ_SHARAD_MEM_INITIALIZER_ITEM \
              , .sDaq = DAQ_SHARAD_MEM_INITIALIZER

@@ -272,7 +272,7 @@ void init_buffers( FG_CHANNEL_REG_T* cr, const unsigned int channel,
 
    //mprintf("reset fg %d in socked %d\n", device, socked);
    /* scub slave */
-   if( (socket & (DEV_MIL_EXT | DEV_SIO)) == 0 )
+   if( isNonMilFg( socket ) )
    {
       if( dev == 0 )
       {
@@ -287,15 +287,15 @@ void init_buffers( FG_CHANNEL_REG_T* cr, const unsigned int channel,
    }
 
    /* mil extension */
-   if (socket & DEV_MIL_EXT)
+   if( isMilExtentionFg( socket ) )
    {
       write_mil(devb_base, 0x1, FC_CNTRL_WR | dev); // reset fg
       return;
    }
 
-   if (socket & DEV_SIO)
+   if( isMilScuBusFg( socket ) )
    {
-      scub_write_mil(scub_base, socket & 0xf, 0x1, FC_CNTRL_WR | dev); // reset fg
+      scub_write_mil(scub_base, getFgSlotNumber( socket ), 0x1, FC_CNTRL_WR | dev); // reset fg
    }
 }
 
