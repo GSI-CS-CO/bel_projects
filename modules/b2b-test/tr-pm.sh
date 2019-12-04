@@ -12,12 +12,12 @@
 # tr0 as extraction machine
 ###########################################
 
-# IO1 generates TTL for B2B_START event
+# IO1 generates TTL for B2B_START event -> cbu
 # convenience for triggering scope
 
-saft-io-ctl tr0 -n IO1 -o 1 -t 0
-saft-io-ctl tr0 -n IO1 -c 0x1fa7800000000000 0xfffffff000000000 0 0x0 1 -u
-saft-io-ctl tr0 -n IO1 -c 0x1fa7800000000000 0xfffffff000000000 10000000 0x0 0 -u
+#saft-io-ctl tr0 -n IO1 -o 1 -t 0
+#saft-io-ctl tr0 -n IO1 -c 0x1fa7800000000000 0xfffffff000000000 0 0x0 1 -u
+#saft-io-ctl tr0 -n IO1 -c 0x1fa7800000000000 0xfffffff000000000 10000000 0x0 0 -u
 
 # IO3 configured as TLU input (from 'DDS')
 # configure TLU 
