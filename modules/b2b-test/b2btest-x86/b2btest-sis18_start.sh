@@ -30,9 +30,15 @@ saft-io-ctl tr1 -w
 ###########################################
 # load firmware to lm32
 ###########################################
-echo -e b2btest-sis18 - start: load firmware
+echo -e b2btest-sis18 - start: load firmware 
 eb-fwload dev/wbm0 u 0x0 b2bpm.bin
 eb-fwload dev/wbm1 u 0x0 b2bcbu.bin
+
+echo -e b2best-sis18 configure firmware
+b2btest-ctl dev/wbm0 configure
+b2btest-ctl dev/wbm0 startop
+b2btest-ctl dev/wbm1 configure
+b2btest-ctl dev/wbm1 startop
 
 echo -e b2btest-sis18 - start: configure tr0 for phase measurement (TlU)
 ################################################
