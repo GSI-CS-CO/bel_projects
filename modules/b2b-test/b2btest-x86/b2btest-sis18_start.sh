@@ -34,13 +34,17 @@ echo -e b2btest-sis18 - start: load firmware
 eb-fwload dev/wbm0 u 0x0 b2bpm.bin
 eb-fwload dev/wbm1 u 0x0 b2bcbu.bin
 
-echo -e b2best-sis18 configure firmware
+echo -e b2btest-sis18 configure firmware
+sleep 5
 b2btest-ctl dev/wbm0 configure
+sleep 5
 b2btest-ctl dev/wbm0 startop
+sleep 5
 b2btest-ctl dev/wbm1 configure
+sleep 5
 b2btest-ctl dev/wbm1 startop
 
-echo -e b2btest-sis18 - start: configure tr0 for phase measurement (TlU)
+echo -e b2btest-sis18 - start: configure tr0 for phase measurement TLU
 ################################################
 # configure phase measurement input (SIS18 DDS)
 ################################################
@@ -86,6 +90,4 @@ saft-ecpu-ctl tr1 -c 0x1fa7803000000000 0xfffffff000000000 0 0x803 -d
 
 # lm32 listens to B2B_PRINJ message from injection machine
 saft-ecpu-ctl tr1 -c 0x1fa7804000000000 0xfffffff000000000 0 0x804 -d
-
-
 
