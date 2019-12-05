@@ -30,6 +30,27 @@
 #include <stdbool.h>
 #include <helper_macros.h>
 // 12 SIOs with dev busses and 1 mil extension
+
+/*!
+ * Maybe a bug in the obsolete DOXYGEN 1.8.5 in the ASL-cluster,
+ * otherwise the local functions of this module will not
+ * documented by DOXYGEN. :-/
+ */
+#ifdef __DOXYGEN__
+  #define STATIC
+#else
+  #define STATIC static
+#endif
+
+#ifdef __lm32__
+  #define LINUX_CONST
+  #define LM32_CONST const
+#else
+  #define LINUX_CONST const
+  #define LM32_CONST
+#endif
+
+
 #ifdef __cplusplus
 extern "C"
 {
@@ -80,11 +101,19 @@ namespace Scu
 
 /*!
  * @brief Info type of a discovered function generator.
+ * @see SCU_SHARED_DATA_T::fg_macros
  */
 typedef struct PACKED_SIZE
 {
    /*!
     * @brief Contains the slot number and the MIL connection
+    * @see SCU_BUS_SLOT_MASK
+    * @see DEV_SIO
+    * @see DEV_MIL_EXT
+    * @see isNonMilFg
+    * @see isMilScuBusFg
+    * @see isMilExtentionFg
+    * @see getFgSlotNumber
     */
    uint8_t socket;
 
@@ -107,6 +136,13 @@ typedef struct PACKED_SIZE
    uint8_t outputBits;
 } FG_MACRO_T;
 
+#ifndef __DOXYGEN__
+STATIC_ASSERT( offsetof( FG_MACRO_T, socket ) == 0 );
+STATIC_ASSERT( offsetof( FG_MACRO_T, device ) == offsetof( FG_MACRO_T, socket ) + sizeof( uint8_t ) );
+STATIC_ASSERT( offsetof( FG_MACRO_T, outputBits ) == offsetof( FG_MACRO_T, version ) + sizeof( uint8_t ) );
+STATIC_ASSERT( sizeof( FG_MACRO_T ) == sizeof( uint32_t ) );
+#endif
+
 /*!
  * @brief Bit mask for "set-value not valid flag" which is integrated
  *        in the element outputBits of FG_MACRO_T.
@@ -123,22 +159,39 @@ typedef struct PACKED_SIZE
  */
 #define OUTPUT_BIT_MASK          ~SET_VALUE_NOT_VALID_MASK
 
-#ifndef __DOXYGEN__
-STATIC_ASSERT( offsetof( FG_MACRO_T, socket ) == 0 );
-STATIC_ASSERT( offsetof( FG_MACRO_T, device ) == offsetof( FG_MACRO_T, socket ) + sizeof( uint8_t ) );
-STATIC_ASSERT( offsetof( FG_MACRO_T, outputBits ) == offsetof( FG_MACRO_T, version ) + sizeof( uint8_t ) );
-STATIC_ASSERT( sizeof( FG_MACRO_T ) == sizeof( uint32_t ) );
-#endif
-
+/*!
+ * @brief Polynomial type for function generator.
+ * @see send_fg_param
+ * @see configure_fg_macro
+ */
 typedef struct PACKED_SIZE
 {
-  int16_t coeff_a;
-  int16_t coeff_b;
-  int32_t coeff_c;
-  uint32_t control; /* Bit 2..0   step
-                               5..3   freq
-                              11..6   shift_b
-                              17..12  shift_a */
+   /*!
+    * @brief Polynomial coefficient 'a'
+    */
+   int16_t coeff_a;
+
+   /*!
+    * @brief Polynomial coefficient 'b'
+    */
+   int16_t coeff_b;
+
+   /*!
+    * @brief Polynomial coefficient 'c'
+    * @note Its also the set-value for MIL-DAQs
+    */
+   int32_t coeff_c;
+
+   /*!
+    * @brief Control register \n
+    * Bit [0:2]   Step \n
+    * Bit [3:5]   Frequency \n
+    * Bit [6:11]  Shift 'b' \n
+    * Bit [12:17] Shift 'a'
+    * @todo Use a bit field structure in attention of the
+    *       endianes convention rather than uint32_t.
+    */
+   uint32_t control;
 } FG_PARAM_SET_T;
 
 
@@ -146,6 +199,10 @@ typedef struct PACKED_SIZE
 STATIC_ASSERT( sizeof( FG_PARAM_SET_T ) == 12 );
 #endif
 
+
+/*!
+ * @see FG_CHANNEL_REG_T::state
+ */
 typedef enum
 {
    STATE_STOPPED = 0,
@@ -153,15 +210,48 @@ typedef enum
    STATE_ARMED   = 2
 } FG_REG_STATE_T;
 
+/*!
+ * @see SCU_SHARED_DATA_T::fg_regs
+ */
 typedef struct PACKED_SIZE
 {
-  uint32_t       wr_ptr;
-  uint32_t       rd_ptr;
-  uint32_t       mbx_slot;
-  uint32_t       macro_number;
-  uint32_t       ramp_count;
-  uint32_t       tag;
-  FG_REG_STATE_T state; // meaning private to LM32
+   /*!
+    * @brief Write index
+    */
+   uint32_t       wr_ptr;
+
+   /*!
+    * @brief Read index
+    */
+   uint32_t       rd_ptr;
+
+   /*!
+    * @brief mbx slot
+    */
+   LM32_CONST uint32_t mbx_slot;
+
+   /*!
+    * @brief Link-index of found FG list
+    * @see FG_MACRO_T
+    */
+   uint32_t       macro_number;
+
+   /*!
+    * @brief Ramp counter
+    */
+   LINUX_CONST uint32_t ramp_count;
+
+   /*!
+    * @brief Tag for non-MIL- function generators
+    * @see configure_fg_macro
+    */
+   LM32_CONST uint32_t  tag;
+
+   /*!
+    * @brief Current function generator state
+    *        meaning private to LM32
+    */
+   LINUX_CONST FG_REG_STATE_T state;
 } FG_CHANNEL_REG_T;
 
 #ifndef __DOXYGEN__
@@ -182,6 +272,11 @@ STATIC_ASSERT( sizeof( FG_CHANNEL_BUFFER_T ) == sizeof( FG_PARAM_SET_T ) * BUFFE
 //#pragma pack(pop)
 
 #if defined( __lm32__ ) || defined(__DOXYGEN__)
+
+/*! --------------------------------------------------------------------------
+ * @brief Finding of all kinds of function generators connected to
+ *        this SCU.
+ */
 void scan_all_fgs( volatile uint16_t *base_adr,
                    volatile unsigned int* mil_base,
                    FG_MACRO_T* fglist,
@@ -197,7 +292,7 @@ void init_buffers( FG_CHANNEL_REG_T* cr,
  * @brief Returns "true" in the case the function generator belonging to the
  *        given socket is a "non MIL function generator".
  */
-ALWAYS_INLINE static inline bool isNonMilFg( const uint8_t socket )
+ALWAYS_INLINE STATIC inline bool isNonMilFg( const uint8_t socket )
 {
    return (socket & (DEV_MIL_EXT | DEV_SIO)) == 0;
 }
@@ -206,7 +301,7 @@ ALWAYS_INLINE static inline bool isNonMilFg( const uint8_t socket )
  * @brief Returns "true" in the case the function generator belonging to the
  *        given socket is a MIL function generator connected via SCU-bus slave.
  */
-ALWAYS_INLINE static inline bool isMilScuBusFg( const uint8_t socket )
+ALWAYS_INLINE STATIC inline bool isMilScuBusFg( const uint8_t socket )
 {
    return (socket & DEV_SIO) != 0;
 }
@@ -215,7 +310,7 @@ ALWAYS_INLINE static inline bool isMilScuBusFg( const uint8_t socket )
  * @brief Returns "true" in the case the function generator belonging to the
  *        given socket is connected via MIL extension.
  */
-ALWAYS_INLINE static inline bool isMilExtentionFg( const uint8_t socket )
+ALWAYS_INLINE STATIC inline bool isMilExtentionFg( const uint8_t socket )
 {
    return (socket & DEV_MIL_EXT) != 0;
 }
@@ -223,7 +318,7 @@ ALWAYS_INLINE static inline bool isMilExtentionFg( const uint8_t socket )
 /*! ---------------------------------------------------------------------------
  * @brief Returns the SCU bus slot number from the given socket.
  */
-ALWAYS_INLINE static inline unsigned int getFgSlotNumber( const uint8_t socket )
+ALWAYS_INLINE STATIC inline unsigned int getFgSlotNumber( const uint8_t socket )
 {
    return socket & SCU_BUS_SLOT_MASK;
 }

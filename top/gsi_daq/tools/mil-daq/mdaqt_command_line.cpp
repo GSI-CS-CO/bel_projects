@@ -57,11 +57,28 @@ vector<OPTION> CommandLine::c_optList =
                  "Esc: Program termination\n"
                  "\nCommandline options:\n";
          poParser->list( cout );
-         cout << endl;
-         cout << "Example:\n\t" << poParser->getProgramName() << " scuxl4711 -ac"
+         cout << "\n--------------------------------------------------" << endl;
+         cout << "Example a:\n\t" ESC_BOLD << poParser->getProgramName() << " scuxl4711 -ac" ESC_NORMAL
                  "\n\tor"
-                 "\n\t" << poParser->getProgramName() << " tcp/scuxl4711 -ac"
-                 "\n\n\tWill make a plot of all found MIL-function-generators.\n" << endl;
+                 "\n\t" ESC_BOLD << poParser->getProgramName() <<  " tcp/scuxl4711 -ac" ESC_NORMAL
+                 "\n\n\tWill make a plot of all found MIL-function-generators.\n\n"
+                 "Example b:\n"
+                 "\tStep 1: Scanning for connected MIL-function generators:\n"
+                 "\n\t\t" ESC_BOLD << poParser->getProgramName() << " scuxl4711 -S" ESC_NORMAL
+                 "\n\n\tResut (e.g.):\n"
+                 "\t\tfg-39-1\n"
+                 "\t\tfg-39-2\n"
+                 "\t\tfg-39-129\n"
+                 "\t\tfg-39-130\n"
+                 "\tIn this example four MIL- function generators was found.\n\n"
+                 "\tStep 2: Now we intend to see the plots of \"fg-39-2\" and \"fg-39-130\" only:\n"
+                 "\n\t\t" ESC_BOLD << poParser->getProgramName() << " scuxl4711 -c 39 2 39 130\n" ESC_NORMAL
+                 << endl;
+         cout << "NOTE:\n\tPrerequisite for this program is, that the port forwarder demon \"socat\" runs\n"
+                 "\tin the concerning SCU.\n"
+                 "\tIf not already running so you can accomplish that by invoking the"
+                 " shell script \"start-socat.sh\".\n" << endl;
+
          ::exit( EXIT_SUCCESS );
          return 0;
       }),
@@ -70,6 +87,42 @@ vector<OPTION> CommandLine::c_optList =
       .m_shortOpt = 'h',
       .m_longOpt  = "help",
       .m_helpText = "Print this help and exit"
+   },
+   {
+      OPT_LAMBDA( poParser,
+      {
+         if( static_cast<CommandLine*>(poParser)->m_verbose )
+         {
+            cout << "Version: " TO_STRING( VERSION )
+                    ", Git revision: " TO_STRING( GIT_REVISION ) << endl;
+         }
+         else
+         {
+            cout << TO_STRING( VERSION ) << endl;
+         }
+         ::exit( EXIT_SUCCESS );
+         return 0;
+      }),
+      .m_hasArg   = OPTION::NO_ARG,
+      .m_id       = 0,
+      .m_shortOpt = 'V',
+      .m_longOpt  = "version",
+      .m_helpText = "Print the software version and exit."
+   },
+   {
+      OPT_LAMBDA( poParser,
+      {
+         static_cast<CommandLine*>(poParser)->m_plotAlwaysSetValue = true;
+         return 0;
+      }),
+      .m_hasArg   = OPTION::NO_ARG,
+      .m_id       = 0,
+      .m_shortOpt = 'l',
+      .m_longOpt  = "always",
+      .m_helpText = "Plots always the set-value, even within a gap.\n"
+                    "Within a gab the last valid set-value will used.\n"
+                    "NOTE: In general, a gap-plotting needs a actual LM32 firmware,"
+                    " written by UB."
    },
    {
       OPT_LAMBDA( poParser,
@@ -355,6 +408,7 @@ CommandLine::CommandLine( int argc, char** ppArgv )
    ,m_autoBuilding( false )
    ,m_deviationEnable( false )
    ,m_continuePlotting( false )
+   ,m_plotAlwaysSetValue( false )
    ,m_zoomYAxis( false )
    ,m_xAxisLen( DEFAULT_X_AXIS_LEN )
    ,m_poAllDaq( nullptr )

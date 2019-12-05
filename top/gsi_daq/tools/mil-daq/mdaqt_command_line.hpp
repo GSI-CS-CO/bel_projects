@@ -77,6 +77,7 @@ class CommandLine: public PARSER
    bool                       m_autoBuilding;
    bool                       m_deviationEnable;
    bool                       m_continuePlotting;
+   bool                       m_plotAlwaysSetValue;
    bool                       m_zoomYAxis;
    float                      m_xAxisLen;
 
@@ -143,6 +144,11 @@ public:
    bool isContinuePlottingEnabled( void ) const
    {
       return m_continuePlotting && !isOutputFileDefined();
+   }
+
+   bool isPlotAlwaysSetValueEnabled( void ) const
+   {
+      return m_plotAlwaysSetValue;
    }
 
    bool isZoomYAxis( void ) const

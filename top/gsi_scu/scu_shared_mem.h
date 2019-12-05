@@ -126,7 +126,7 @@ typedef struct PACKED_SIZE
    uint32_t            fg_mb_slot;
    uint32_t            fg_num_channels;
    uint32_t            fg_buffer_size;
-   FG_MACRO_T          fg_macros[MAX_FG_MACROS]; // hi..lo bytes: slot, device, version, output-bits
+   FG_MACRO_T          fg_macros[MAX_FG_MACROS]; //!<@brief  hi..lo bytes: slot, device, version, output-bits
    FG_CHANNEL_REG_T    fg_regs[MAX_FG_CHANNELS];
    FG_CHANNEL_BUFFER_T fg_buffer[MAX_FG_CHANNELS];
 #ifdef CONFIG_MIL_DAQ_USE_RAM

@@ -9,7 +9,7 @@
 ## Date:     14.08.2019                                                      ##
 ###############################################################################
 REPOSITORY_DIR := $(shell git rev-parse --show-toplevel)
-DEFINES += VERSION=0.5
+DEFINES += VERSION=0.7
 
 MIAN_MODULE := mdaqt.cpp
 
@@ -87,7 +87,7 @@ HOST ?= tcp/$(SCU_URL)
 #CALL_ARGS = -c tcp/scuxl0107
 #CALL_ARGS = tcp/scuxl0107 39 130 -c
 #CALL_ARGS = tcp/scuxl0107 -avdc --time 25 -G /home/bel/ubecker/lnx/.local/bin/gnuplot
-CALL_ARGS = scuxl0107 -avdc
+CALL_ARGS = scuxl0107 -avcd
 #CALL_ARGS = -V
 #CALL_ARGS = scuxl0107 -vS
 #CALL_ARGS = tcp/scuxl0107 -h

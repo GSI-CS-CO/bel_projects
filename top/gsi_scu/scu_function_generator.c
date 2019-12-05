@@ -223,7 +223,7 @@ void scanExtMilFgs( volatile unsigned int *mil_addr,
 }
 
 /*! ---------------------------------------------------------------------------
- * @brief scans the whole SCU for connected function generators.
+ * @see scu_function_generator.h
  */
 void scan_all_fgs( volatile uint16_t *scub_adr,
                    volatile unsigned int *mil_addr,

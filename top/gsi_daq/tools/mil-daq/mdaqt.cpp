@@ -153,7 +153,7 @@ DaqMilCompare::addItem( uint64_t time, MIL_DAQ_T actValue, MIL_DAQ_T setValue,
                static_cast<double>(daq::NANOSECS_PER_SEC),
      .m_set  = daq::rawToVoltage( setValue ),
      .m_act  = daq::rawToVoltage( actValue ),
-     .m_setValid = setValueValid
+     .m_setValid = setValueValid || getCommandLine()->isPlotAlwaysSetValueEnabled()
    } );
 }
 

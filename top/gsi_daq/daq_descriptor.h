@@ -694,7 +694,7 @@ uint32_t daqDescriptorGetTimeStampSec( register DAQ_DESCRIPTOR_T* pThis )
 static inline
 uint64_t daqDescriptorGetTimeStamp( register DAQ_DESCRIPTOR_T* pThis )
 {
-   uint64_t ret;
+   //uint64_t ret;
 #if 0
    ((uint16_t*)&ret)[0] = convertByteEndian_uint16_t( pThis->name.wr.wordIndex[3] );
    ((uint16_t*)&ret)[1] = convertByteEndian_uint16_t( pThis->name.wr.wordIndex[2] );

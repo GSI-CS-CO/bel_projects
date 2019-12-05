@@ -260,6 +260,7 @@ STATIC_ASSERT( offsetof( DAQ_SHARED_IO_T, ramIndexes ) <
    }                                                                         \
 }
 
+
 /*!@} *//*defgroup DAQ_INTERFACE */
 #ifdef __cplusplus
 } /* nanespace Scu */

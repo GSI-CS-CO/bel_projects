@@ -81,6 +81,7 @@ void ramRingAddToReadIndex( RAM_RING_INDEXES_T* pThis, RAM_RING_INDEX_T toAdd )
  * @brief Prints the values of the members of RAM_RING_INDEXES_T
  */
 #ifndef __lm32__
+  #include  <stdio.h>
   #define mprintf printf
 #endif
 void ramRingDbgPrintIndexes( const RAM_RING_INDEXES_T* pThis,

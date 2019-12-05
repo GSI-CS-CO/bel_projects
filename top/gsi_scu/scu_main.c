@@ -5,8 +5,8 @@
  *  @date 10.07.2019
  *  @copyright (C) 2019 GSI Helmholtz Centre for Heavy Ion Research GmbH
  *
- *  @author Stefan Rauch perhaps...
- *  @revision Ulrich Becker <u.becker@gsi.de>
+ *  @author Ulrich Becker <u.becker@gsi.de>
+ *  Origin Stefan Rauch
  *  @todo File is going too huge, split it in several files.
  ******************************************************************************
  * This library is free software; you can redistribute it and/or
@@ -28,26 +28,27 @@
 #endif
 
 #ifndef __DOCFSM__ /* Headers will not need for FSM analysator "docfsm" */
-#include <stdint.h>
-#include <stack.h>
-#include "syscon.h"
-#include "eb_console_helper.h"
-#include "scu_lm32_macros.h"
-#include "irq.h"
-#include "scu_bus.h"
-#include "mini_sdb.h"
-#include "board.h"
-#include "uart.h"
-#include "w1.h"
-#include "scu_shared_mem.h"
-#include "scu_mil.h"
-#include "eca_queue_regs.h"
-#include "eca_flags.h"
-#include "history.h"
-#ifdef CONFIG_SCU_DAQ_INTEGRATION
- #include "daq_main.h"
-#endif
+ #include <stdint.h>
+ #include <stack.h>
+ #include "syscon.h"
+ #include "eb_console_helper.h"
+ #include "scu_lm32_macros.h"
+ #include "irq.h"
+ #include "scu_bus.h"
+ #include "mini_sdb.h"
+ #include "board.h"
+ #include "uart.h"
+ #include "w1.h"
+ #include "scu_shared_mem.h"
+ #include "scu_mil.h"
+ #include "eca_queue_regs.h"
+ #include "eca_flags.h"
+ #include "history.h"
+ #ifdef CONFIG_SCU_DAQ_INTEGRATION
+  #include "daq_main.h"
+ #endif
 #endif // ifndef __DOCFSM__
+
 #ifdef CONFIG_FG_PEDANTIC_CHECK
    /* CAUTION:
     * Assert-macros could be expensive in memory consuming and the
@@ -62,16 +63,6 @@
    #define FG_ASSERT(__e)
    #define FG_UNUSED UNUSED
 #endif
-/*
- * Maybe a bug in the obsolete DOXYGEN 1.8.5 in the ASL-cluster,
- * otherwise the local functions of this module will not
- * documented by DOXYGEN. :-/
- */
-#ifdef __DOXYGEN__
-  #define STATIC
-#else
-  #define STATIC static
-#endif
 
 /*!
  * @defgroup MIL_FSM Functions and macros which concerns the MIL-FSM
@@ -80,13 +71,6 @@
 /*!
  * @defgroup TASK Cooperative multitasking entry functions invoked by the scheduler.
  */
-
-typedef enum
-{
-   MIL_INL = 0x00,
-   MIL_DRY = 0x01,
-   MIL_DRQ = 0x02
-} MIL_T;
 
 #define CLK_PERIOD (1000000 / USRCPUCLK) // USRCPUCLK in KHz
 #define OFFS(SLOT) ((SLOT) * (1 << 16))
@@ -103,16 +87,23 @@ typedef enum
 #define INTERVAL_5MS    5000000ULL
 #define ALWAYS          0ULL
 
+typedef enum
+{
+   MIL_INL = 0x00,
+   MIL_DRY = 0x01,
+   MIL_DRQ = 0x02
+} MIL_T;
+
 /*!
  * @brief Type of message origin
  */
 typedef enum
 {
-   IRQ    = 0,
-   SCUBUS = 1,
-   DEVBUS = 2,
-   DEVSIO = 3,
-   SWI    = 4 /*!<@brief From Linux host */
+   IRQ    = 0, /*!<@brief From interrupt              */
+   SCUBUS = 1, /*!<@brief From non- MIL- device       */
+   DEVBUS = 2, /*!<@brief From MIL-device.            */
+   DEVSIO = 3, /*!<@brief From MIL-device via SCU-bus */
+   SWI    = 4  /*!<@brief From Linux host             */
 } MSG_T;
 
 /*====================== Begin of shared memory area ========================*/
@@ -131,13 +122,43 @@ typedef struct
    volatile ECA_T* pQueue; // WB address of ECA queue
 } ECA_OBJ_T;
 
-static ECA_OBJ_T       g_eca               = { 0, NULL };
-volatile uint16_t*     g_pScub_base        = NULL;
-volatile uint32_t*     g_pScub_irq_base    = NULL;
-volatile unsigned int* g_pScu_mil_base     = NULL;
-volatile uint32_t*     g_pMil_irq_base     = NULL;
-volatile uint32_t*     g_pWr_1wire_base    = NULL;
-volatile uint32_t*     g_pUser_1wire_base  = NULL;
+static ECA_OBJ_T       g_eca              = { 0, NULL };
+
+/*!
+ * @brief Base pointer of SCU bus.
+ * @see initializeGlobalPointers
+ */
+volatile uint16_t*     g_pScub_base       = NULL;
+
+/*!
+ * @brief Base pointer of irq controller for SCU bus
+ * @see initializeGlobalPointers
+ */
+volatile uint32_t*     g_pScub_irq_base   = NULL;
+
+/*!
+ * @brief Base pointer of MIL extension macro
+ * @see initializeGlobalPointers
+ */
+volatile unsigned int* g_pScu_mil_base    = NULL;
+
+/*!
+ * @brief Base pointer of IRQ controller for dev bus extension
+ * @see initializeGlobalPointers
+ */
+volatile uint32_t*     g_pMil_irq_base    = NULL;
+
+/*!
+ * @brief Base pointer of one-wire controller in the WRC
+ * @see initializeGlobalPointers
+ */
+volatile uint32_t*     g_pWr_1wire_base   = NULL;
+
+/*!
+ * @brief Base pointer of one-wire controller on dev crossbar
+ * @see initializeGlobalPointers
+ */
+volatile uint32_t*     g_pUser_1wire_base = NULL;
 
 /*!
  * @brief Message size of message queue.
@@ -220,39 +241,6 @@ STATIC inline bool isFgPresent( const unsigned int channel )
 }
 
 /*! ---------------------------------------------------------------------------
- * @ingroup MIL_FSM
- * @brief Loop control macro for all present function generator channels
- *        started form given channel in parameter "start"
- *
- * Helper-macro for function milDeviceHandler
- *
- * It works off the FG-list initialized by function scan_all_fgs() in file
- * scu_function_generator.c from the in parameter start given channel number.
- *
- * @see isFgPresent
- * @see milDeviceHandler
- * @param channel current channel number, shall be of type unsigned int.
- * @param start Channel number to start.
- */
-#define FOR_EACH_FG_CONTINUING( channel, start ) \
-   for( channel = start; isFgPresent( channel ); channel++ )
-
-/*! ---------------------------------------------------------------------------
- * @ingroup MIL_FSM
- * @brief Loop control macro for all present function generator channels.
- *
- * It works off the entire FG-list initialized by function scan_all_fgs() in
- * file scu_function_generator.c
- *
- * Helper-macro for function milDeviceHandler
- *
- * @see isFgPresent
- * @see milDeviceHandler
- * @param channel current channel number, shall be of type unsigned int.
- */
-#define FOR_EACH_FG( channel ) FOR_EACH_FG_CONTINUING( channel, 0 )
-
-/*! ---------------------------------------------------------------------------
  * @brief Returns the socked number of the given channel.
  * @note The lower 4 bits of the socket number contains the slot-number
  *       of the SCU-bus which can masked out by SCU_BUS_SLOT_MASK.
@@ -280,17 +268,23 @@ STATIC inline void initializeGlobalPointers( void )
    discoverPeriphery();
    uart_init_hw();
    /* additional periphery needed for scu */
-   g_pScub_base     = (volatile uint16_t*)find_device_adr(GSI, SCU_BUS_MASTER);
-   g_pScub_irq_base = (volatile uint32_t*)find_device_adr(GSI, SCU_IRQ_CTRL); // irq controller for scu bus
-   g_pScu_mil_base  = (unsigned int*)find_device_adr(GSI,SCU_MIL);            // mil extension macro
-   g_pMil_irq_base  = (volatile uint32_t*)find_device_adr(GSI, MIL_IRQ_CTRL); // irq controller for dev bus extension
-   g_pWr_1wire_base = (volatile uint32_t*)find_device_adr(CERN, WR_1Wire);    // 1Wire controller in the WRC
-   g_pUser_1wire_base = (volatile uint32_t*)find_device_adr(GSI, User_1Wire); // 1Wire controller on dev crossbar
+   g_pScub_base       = (volatile uint16_t*)find_device_adr(GSI, SCU_BUS_MASTER);
+   g_pScub_irq_base   = (volatile uint32_t*)find_device_adr(GSI, SCU_IRQ_CTRL);
+   g_pScu_mil_base    = (unsigned int*)find_device_adr(GSI,SCU_MIL);
+   g_pMil_irq_base    = (volatile uint32_t*)find_device_adr(GSI, MIL_IRQ_CTRL);
+   g_pWr_1wire_base   = (volatile uint32_t*)find_device_adr(CERN, WR_1Wire);
+   g_pUser_1wire_base = (volatile uint32_t*)find_device_adr(GSI, User_1Wire);
 }
 
 /*! ---------------------------------------------------------------------------
+ * @brief Prints a error message happened in the device-bus respectively
+ *        MIL bus.
+ * @param status return status of the MIL-driver module.
+ * @param slot Slot-number in the case the mil connection is established via
+ *             SCU-Bus
+ * @param msg String containing additional message text.
  */
-STATIC void dev_failure(const int status, const int slot, const char* msg)
+STATIC void dev_failure( const int status, const int slot, const char* msg )
 {
   static const char* pText = ESC_ERROR"dev bus access in slot ";
   char* pMessage;
@@ -1917,6 +1911,39 @@ int milGetTask( register MIL_TASK_DATA_T* pMilTaskData, const bool isScuBus,
 
 /*! ---------------------------------------------------------------------------
  * @ingroup MIL_FSM
+ * @brief Loop control macro for all present function generator channels
+ *        started form given channel in parameter "start"
+ *
+ * Helper-macro for function milDeviceHandler
+ *
+ * It works off the FG-list initialized by function scan_all_fgs() in file
+ * scu_function_generator.c from the in parameter start given channel number.
+ *
+ * @see isFgPresent
+ * @see milDeviceHandler
+ * @param channel current channel number, shall be of type unsigned int.
+ * @param start Channel number to start.
+ */
+#define FOR_EACH_FG_CONTINUING( channel, start ) \
+   for( channel = start; isFgPresent( channel ); channel++ )
+
+/*! ---------------------------------------------------------------------------
+ * @ingroup MIL_FSM
+ * @brief Loop control macro for all present function generator channels.
+ *
+ * It works off the entire FG-list initialized by function scan_all_fgs() in
+ * file scu_function_generator.c
+ *
+ * Helper-macro for function milDeviceHandler
+ *
+ * @see isFgPresent
+ * @see milDeviceHandler
+ * @param channel current channel number, shall be of type unsigned int.
+ */
+#define FOR_EACH_FG( channel ) FOR_EACH_FG_CONTINUING( channel, 0 )
+
+/*! ---------------------------------------------------------------------------
+ * @ingroup MIL_FSM
  * @brief Task-function for handling all MIL-FGs and MIL-DAQs via FSM.
  * @param pThis pointer to the current task object
  * @param isScuBus if true via SCU bus MIL adapter
@@ -1950,26 +1977,26 @@ STATIC void milDeviceHandler( register TASK_T* pThis, const bool isScuBus )
    {
       case ST_WAIT:
       {
-         if( !has_msg( &g_aMsg_buf[0], isScuBus? DEVSIO : DEVBUS ) )
-         { /* There is nothing to do. */
-         #ifdef CONFIG_READ_MIL_TIME_GAP
-            /*
-             * Only a task which has already served a function generator
-             * can read a time-gap. That means its slave number has to be valid.
-             */
-            if( (pMilData->slave_nr != INVALID_SLAVE_NR) && (getSysTime() >= gapReadingTime) )
-            {
-               FSM_TRANSITION( ST_DATA_AQUISITION, label='Gap reading time\nexpired',
-                                                   color=magenta );
-               break;
-            }
-         #endif
-         #ifdef __DOCFSM__
-            FSM_TRANSITION( ST_WAIT, label='No message', color=red );
-         #endif
+         if( has_msg( &g_aMsg_buf[0], isScuBus? DEVSIO : DEVBUS ) )
+         {
+            FSM_TRANSITION( ST_PREPARE, label='Massage received', color=green );
             break;
          }
-         FSM_TRANSITION( ST_PREPARE, label='Massage received', color=green );
+      #ifdef CONFIG_READ_MIL_TIME_GAP
+         /*
+          * Only a task which has already served a function generator
+          * can read a time-gap. That means its slave number has to be valid.
+          */
+         if( (pMilData->slave_nr != INVALID_SLAVE_NR) && (getSysTime() >= gapReadingTime) )
+         {
+            FSM_TRANSITION( ST_DATA_AQUISITION, label='Gap reading time\nexpired',
+                                                color=magenta );
+            break;
+         }
+      #endif
+      #ifdef __DOCFSM__
+         FSM_TRANSITION( ST_WAIT, label='No message', color=red );
+      #endif
          break;
       } // end case ST_WAIT
 
