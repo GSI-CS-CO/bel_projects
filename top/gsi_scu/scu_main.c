@@ -114,14 +114,25 @@ typedef enum
 SCU_SHARED_DATA_T SHARED g_shared = SCU_SHARED_DATA_INITIALIZER;
 /*====================== End of shared memory area ==========================*/
 
+/*!
+ * @brief Data type of ECA-tag.
+ */
 typedef uint32_t ECA_T;
 
+/*!
+ * @brief Type of Event Condition Action object (ECA)
+ */
 typedef struct
 {
-   ECA_T           tag;
-   volatile ECA_T* pQueue; // WB address of ECA queue
+   ECA_T           tag;    //!<@brief ECA-tag
+   volatile ECA_T* pQueue; //!<@brief WB address of ECA queue
 } ECA_OBJ_T;
 
+/*!
+ * @brief Global object for ECA (event condition action) handler.
+ * @see findECAQ
+ * @see ecaHandler
+ */
 static ECA_OBJ_T       g_eca              = { 0, NULL };
 
 /*!
@@ -1427,14 +1438,13 @@ STATIC void ecaHandler( register TASK_T* pThis FG_UNUSED )
       return;
 
    // pop action from channel
-   g_eca.pQueue[ECA_QUEUE_POP_OWR / sizeof(ECA_T)] = 0x1;
+   g_eca.pQueue[ECA_QUEUE_POP_OWR / sizeof(ECA_T)] = 0x1; //TODO Who the fuck is 0x1 documented!
 
    // here: do s.th. according to action; read data tag of action
    if( g_eca.pQueue[ECA_QUEUE_TAG_GET / sizeof(ECA_T)] != g_eca.tag )
       return;
 
    bool                 dev_mil_armed = false;
-   bool                 dev_sio_armed = false;
    SCUBUS_SLAVE_FLAGS_T active_sios   = 0; // bitmap with active sios
 
    /* check if there are armed fgs */
@@ -1442,25 +1452,23 @@ STATIC void ecaHandler( register TASK_T* pThis FG_UNUSED )
    { // only armed fgs
       if( g_shared.fg_regs[i].state != STATE_ARMED )
          continue;
+
       const uint8_t socket = getSocket( i );
       if( isMilExtentionFg( socket ) )
       {
          dev_mil_armed = true;
          continue;
       }
-      if( isMilScuBusFg( socket ) )
-      {
-         if( getFgSlotNumber( socket ) != 0 )
-            active_sios |= (1 << (getFgSlotNumber( socket ) - 1));
-         dev_sio_armed = true;
-      }
+
+      if( isMilScuBusFg( socket ) && (getFgSlotNumber( socket ) != 0) )
+         active_sios |= (1 << (getFgSlotNumber( socket ) - 1));
    }
 
    if( dev_mil_armed )
       g_pScu_mil_base[MIL_SIO3_TX_CMD] = MIL_BROADCAST;
 
    // send broadcast start to active sio slaves
-   if( dev_sio_armed )
+   if( active_sios != 0 )
    {  // select active sio slaves
       g_pScub_base[OFFS(0) + MULTI_SLAVE_SEL] = active_sios;
       // send broadcast
@@ -1884,6 +1892,8 @@ int milSetTask( register MIL_TASK_DATA_T* pMilTaskData, const bool isScuBus,
    }
    return set_task_mil( g_pScu_mil_base, milTaskNo, devAndMode );
 }
+
+STATIC_ASSERT( sizeof(short) == sizeof(int16_t) );
 
 /*! ---------------------------------------------------------------------------
  * @ingroup MIL_FSM

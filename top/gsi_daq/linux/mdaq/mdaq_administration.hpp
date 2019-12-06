@@ -83,26 +83,53 @@ public:
       return m_iterfaceAddress;
    }
 
+   /*!
+    * @brief Returns a pointer to the container of type DaqDevice
+    *        in which this object has been registered.
+    */
    DaqDevice* getParent( void )
    {
       assert( m_pParent != nullptr );
       return m_pParent;
    }
 
+protected:
    /*!
-    * @brief Returns "true" in the case of gap-reading when the last receives
+    * @brief Returns "true" in the case of gap-reading when the last received
     *        set-value was invalid.
+    * @note This function can be used within the the callback function "onData"
+    *       to distinguish the actual data item is within a gap or not.
+    * @retval false Set value is valid, data-item is outside of the gap.
+    * @retval true  Set value is the last valid received set value,
+    *               data item is inside of a gap
     */
    bool isSetValueInvalid( void ) const
    {
       return m_setValueInvalid;
    }
 
-protected:
-   virtual void onData( uint64_t wrTimeStampTAI, MIL_DAQ_T actlValue,
-                                              MIL_DAQ_T setValue ) = 0;
 
+   /*!
+    * @brief Callback function becomes invoked for each incoming data item which
+    *        belongs to this object.
+    * @param wrTimeStampTAI White rabbit time stamp TAI.
+    * @param actlValue Actual value from the DAQ.
+    * @param setValue Set value from function generator @see isSetValueInvalid
+    */
+   virtual void onData( uint64_t wrTimeStampTAI, MIL_DAQ_T actlValue,
+                                                   MIL_DAQ_T setValue ) = 0;
+
+   /*!
+    * @brief Optional callback function becomes invoked once this object
+    *        is registered in its container of type DaqDevice and this
+    *        container is again registered in the administrator
+    *        object of type DaqAdministration.
+    */
    virtual void onInit( void ) {}
+
+   /*!
+    * @brief Optional callback function becomes invoked by a reset event.
+    */
    virtual void onReset( void ) {}
 };
 
@@ -120,7 +147,7 @@ public:
    /*!
     * @brief Constructor
     * @see DaqAdministration::registerDevice
-    * @param slot Desired slot number in the range of 1 to 12.
+    * @param location Desired slot number in the range of 1 to 12.
     *        If the parameter equal 0 so the function
     *        DaqAdministration::registerDevice will set the slot number of
     *        next unregistered DAQ seen from the left side of the SCU slots.
@@ -171,6 +198,10 @@ public:
       return m_location;
    }
 
+   /*!
+    * @brief Returns a pointer to the container of type DaqAdministration
+    *        in which this object has been registered.
+    */
    DaqAdministration* getParent( void )
    {
       assert( m_pParent != nullptr );
@@ -202,6 +233,7 @@ public:
    /*!
     * @brief Returns the pointer of a registered DAQ compare object which
     *        has the given address.
+    * @param address Device address.
     * @retval !=nullptr Pointer to the DAQ compare object.
     * @retval ==nullptr Compare object not registered.
     */
@@ -210,9 +242,17 @@ public:
 protected:
    void initAll( void );
 
+   /*!
+    * @brief Optional callback function becomes invoked once this
+    *        object is registered in its container of base-type
+    *        DaqAdministration.
+    */
    virtual void onInit( void ) {}
-   virtual void onReset( void );
 
+   /*!
+    * @brief Optional callback function becomes invoked by a reset event.
+    */
+   virtual void onReset( void );
 };
 
 ///////////////////////////////////////////////////////////////////////////////
