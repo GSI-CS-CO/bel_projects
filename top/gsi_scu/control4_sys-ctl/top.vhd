@@ -4,22 +4,31 @@ use ieee.std_logic_unsigned.all;
 
 entity top is
   port (
-    clk_base_i        : in    std_logic;
-    --rst_n_i           : in    std_logic;  
+    clk_base_i        : in    std_logic; 
     scu_cb_revision   : in    std_logic_vector(3 downto 0); -- must be assigned with weak pull ups
     fpga_con_io       : inout std_logic_vector(7 downto 0); -- Connection to Arria 10
     --I2C to COMX
     i2c_scl           : in    std_logic;
     i2c_sda           : inout std_logic;
-    
+
+    pGood             : in    std_logic_vector (3 downto 0);  --Power good (0.95V, 1.8V, 3.3V, 5V)
+    nPfail            : in    std_logic;                    -- 12V Rail Powerfail 
+    --Reset In
     nCB_rst           : in    std_logic;                    -- Reset from COMX
     nSCUext_rst_in    : in    std_logic;                    -- Reset form SCU-Bus Extension
     nExt_rst_in       : in    std_logic;                    -- Reset form Extension Connector
     nPB_rst_in        : in    std_logic;                    -- Reset form Push Button
     nFPHA_rst_in      : in    std_logic;                    -- Reset from Arria10
-    nSYS_rst          : out   std_logic;                    -- Reset Out
-    nPCI_rst_out      : out   std_logic;                    -- PCI Reset Out
-    nExt_rst_out      : out    std_logic;                    -- Reset to Extension Connector
+    --Reset Out
+    nSYS_rst          : out   std_logic :='0';                    -- Reset Out
+    nPCI_rst_out      : out   std_logic :='0';                    -- PCI Reset Out
+    nExt_rst_out      : out   std_logic :='0';                    -- Reset to Extension Connector
+    --Power Enable
+    core_en           : out   std_logic :='0';                    -- Enable 0.95V Core voltage
+    volt_1_8_en       : out   std_logic :='0';                    -- Enable 1.8V Rail
+    volt_1_8_IO_en    : out   std_logic :='0';                    -- Enable IO 1.8V Rail (MOSFET)
+    volt_5_en         : out   std_logic :='0';                    -- Enable 5V Rail 
+
     led_status_o      : out   std_logic_vector(2 downto 0)
   );
 end top;
