@@ -50,8 +50,10 @@ entity scu_control is
     -----------------------------------------------------------------------
     -- ComExpress signals
     -----------------------------------------------------------------------     
-    ser0_rxd          : in  std_logic;
-    ser0_txd          : out std_logic;
+    ser0_rxd          : out std_logic;  -- RX/TX view from ComX
+    ser0_txd          : in  std_logic;  -- RX/TX view from ComX
+    ser1_rxd          : out std_logic;  -- RX/TX view from ComX
+    ser1_txd          : in  std_logic;  -- RX/TX view from ComX
     nTHRMTRIP         : in  std_logic;
     WDT               : in  std_logic;
     fpga_res_i        : in  std_logic;
@@ -260,8 +262,8 @@ begin
       wr_dac_sclk_o           => wr_dac_sclk_o,
       wr_dac_din_o            => wr_dac_din_o,
       wr_ndac_cs_o            => wr_ndac_cs_o,
-      wr_uart_o              => ser0_txd,
-      wr_uart_i              => ser0_rxd,
+      wr_uart_o              => ser0_rxd,
+      wr_uart_i              => ser0_txd,
       sfp_tx_disable_o        => open,
       sfp_tx_fault_i          => sfp_tx_fault_i,
       sfp_los_i               => sfp_los_i,

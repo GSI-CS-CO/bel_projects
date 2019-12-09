@@ -582,6 +582,7 @@ set_location_assignment PIN_AA3 -to lemo_led[2]
 set_location_assignment PIN_AA4 -to ext_ch[3]
 set_location_assignment PIN_AA6 -to lemo_led[0]
 set_location_assignment PIN_AA7 -to lemo_led[1]
+set_location_assignment PIN_AA8 -to ser1_txd
 set_location_assignment PIN_AA9 -to ext_ch[11]
 set_location_assignment PIN_AB11 -to nPCI_RESET_i
 set_location_assignment PIN_AB16 -to clk_125m_sfpref_alt_i
@@ -590,6 +591,7 @@ set_location_assignment PIN_AB19 -to nres_i
 set_location_assignment PIN_AB1 -to max10_connect[4]
 set_location_assignment PIN_AB21 -to pa[4]
 set_location_assignment PIN_AB23 -to ures
+set_location_assignment PIN_AB3 -to ser1_rxd
 set_location_assignment PIN_AB4 -to wr_ndac_cs_o[1]
 set_location_assignment PIN_AB5 -to ext_ch[9]
 set_location_assignment PIN_AB6 -to wr_dac_sclk_o
