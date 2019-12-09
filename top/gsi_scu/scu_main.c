@@ -1082,7 +1082,7 @@ STATIC void init_irq_table( void )
    mprintf("IRQ table configured. 0x%x\n", irq_get_mask());
 }
 
-static void scanFgs( void );
+STATIC void scanFgs( void );
 
 /*! ---------------------------------------------------------------------------
  * @brief initialize procedure at startup
@@ -1262,7 +1262,7 @@ STATIC MIL_TASK_DATA_T g_aMilTaskData[5] =
 
 STATIC_ASSERT( TASKMAX >= (ARRAY_SIZE( g_aMilTaskData ) + MAX_FG_CHANNELS-1 + TASKMIN));
 
-#if defined( CONFIG_READ_MIL_TIME_GAP ) && !defined(__DOCFSM__)
+#if defined( CONFIG_READ_MIL_TIME_GAP ) // && !defined(__DOCFSM__)
 /*! ---------------------------------------------------------------------------
  * @ingroup MIL_FSM
  * @brief Returns true, when the states of all MIL-FSMs are in the state
