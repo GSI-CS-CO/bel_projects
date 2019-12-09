@@ -133,7 +133,7 @@ typedef struct
  * @see findECAQ
  * @see ecaHandler
  */
-static ECA_OBJ_T       g_eca              = { 0, NULL };
+STATIC ECA_OBJ_T       g_eca              = { 0, NULL };
 
 /*!
  * @brief Base pointer of SCU bus.
@@ -953,30 +953,6 @@ STATIC inline void printFgs( void )
    }
 }
 
-/*! ---------------------------------------------------------------------------
- * @brief Scans for fgs on mil extension and scu bus.
- */
-STATIC void scanFgs( void )
-{
-#ifdef CONFIG_USE_RESCAN_FLAG
-   g_shared.fg_rescan_busy = 1; //signal busy to saftlib
-#endif
-#if __GNUC__ >= 9
-  #pragma GCC diagnostic push
-  #pragma GCC diagnostic ignored "-Waddress-of-packed-member"
-#endif
-   scan_all_fgs( g_pScub_base,
-                 g_pScu_mil_base,
-                 &g_shared.fg_macros[0],
-                 &g_shared.ext_id );
-#if __GNUC__ >= 9
-  #pragma GCC diagnostic pop
-#endif
-#ifdef CONFIG_USE_RESCAN_FLAG
-   g_shared.fg_rescan_busy = 0; //signal done to saftlib
-#endif
-   printFgs();
-}
 
 /*! ---------------------------------------------------------------------------
  * @brief Print the values and states of all channel registers.
@@ -1105,6 +1081,8 @@ STATIC void init_irq_table( void )
    irq_enable();
    mprintf("IRQ table configured. 0x%x\n", irq_get_mask());
 }
+
+static void scanFgs( void );
 
 /*! ---------------------------------------------------------------------------
  * @brief initialize procedure at startup
@@ -1299,7 +1277,47 @@ STATIC inline bool isMilFsmInST_WAIT( void )
    }
    return true;
 }
+
+/*! ---------------------------------------------------------------------------
+ * @ingroup MIL_FSM
+ * @brief Suspends the DAQ- gap reading. The gap reading becomes resumed once
+ *        the concerning function generator has been sent its first data.
+ */
+STATIC inline void suspendGapReading( void )
+{
+   for( unsigned int i = 0; i < ARRAY_SIZE( g_aMilTaskData ); i++ )
+      g_aMilTaskData[i].slave_nr = INVALID_SLAVE_NR;
+}
+#endif // if defined( CONFIG_READ_MIL_TIME_GAP ) && !defined(__DOCFSM__)
+
+/*! ---------------------------------------------------------------------------
+ * @brief Scans for fgs on mil extension and scu bus.
+ */
+STATIC void scanFgs( void )
+{
+#ifdef CONFIG_USE_RESCAN_FLAG
+   g_shared.fg_rescan_busy = 1; //signal busy to saftlib
 #endif
+#ifdef CONFIG_READ_MIL_TIME_GAP
+   suspendGapReading();
+#endif
+#if __GNUC__ >= 9
+  #pragma GCC diagnostic push
+  #pragma GCC diagnostic ignored "-Waddress-of-packed-member"
+#endif
+   scan_all_fgs( g_pScub_base,
+                 g_pScu_mil_base,
+                 &g_shared.fg_macros[0],
+                 &g_shared.ext_id );
+#if __GNUC__ >= 9
+  #pragma GCC diagnostic pop
+#endif
+#ifdef CONFIG_USE_RESCAN_FLAG
+   g_shared.fg_rescan_busy = 0; //signal done to saftlib
+#endif
+   printFgs();
+}
+
 
 /*! ---------------------------------------------------------------------------
  * @ingroup TASK
@@ -2177,9 +2195,12 @@ STATIC void milDeviceHandler( register TASK_T* pThis, const bool isScuBus )
     */
    if( lastState == pMilData->state )
       return; /* No, there is nothing more to do. */
+
    /*
+    *    *** The FSM-state has changed! ***
+    *
     * Performing FSM-state-transition activities if necessary,
-    * respectively the state-entry activities.
+    * respectively here the state-entry activities.
     */
    switch( pMilData->state )
    {
@@ -2209,7 +2230,6 @@ STATIC void milDeviceHandler( register TASK_T* pThis, const bool isScuBus )
       }
       default: break;
    } /* End of state entry activities */
-
 } // end function milDeviceHandler
 
 /*! ---------------------------------------------------------------------------
