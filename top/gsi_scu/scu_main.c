@@ -1742,7 +1742,11 @@ STATIC void pushDaqData( const FG_MACRO_T fgMacro, const uint64_t timestamp,
       d.fgMacro.outputBits |= SET_VALUE_NOT_VALID_MASK;
  #endif
    d.setvalue = setValue;
-   add_daq_msg(&g_shared.daq_buf, d);
+#if 1
+   if( isMilDaqBufferFull( &g_shared.daq_buf ) )
+      removeOldestItem( &g_shared.daq_buf );
+#endif
+   add_daq_msg( &g_shared.daq_buf, d );
 #endif
    hist_addx(HISTORY_XYZ_MODULE, "daq_high", actValue >> BIT_SIZEOF(uint8_t));
    hist_addx(HISTORY_XYZ_MODULE, "daq_low", actValue & 0xff);

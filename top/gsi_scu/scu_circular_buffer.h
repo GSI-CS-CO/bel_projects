@@ -153,25 +153,55 @@ namespace MiLdaq
 
 #ifndef CONFIG_MIL_DAQ_USE_RAM
 
+/*!
+ * @brief Definition if MIL_DAQ measurement unit.
+ */
 typedef struct PACKED_SIZE
 {
-   uint32_t   setvalue;
-   uint32_t   actvalue;
-   uint32_t   tmstmp_l;
-   uint32_t   tmstmp_h;
-   FG_MACRO_T fgMacro;
+   uint32_t   setvalue; /*!<@brief set value */
+   uint32_t   actvalue; /*!<@brief actual value */
+   uint32_t   tmstmp_l; /*!<@brief WR-timestamp [31:0] */
+   uint32_t   tmstmp_h; /*!<@brief WR-timestamp [63:32] */
+   FG_MACRO_T fgMacro;  /*!<@brief Channel info. @see FG_MACRO_T */
 } MIL_DAQ_OBJ_T;
 
+/*!
+ * @brief Definition of ring buffer object type for the
+ *        MIL-DAQ ringbuffer.
+ */
 typedef struct PACKED_SIZE
 {
-   RING_POS_T    ring_head;
-   RING_POS_T    ring_tail;
-   MIL_DAQ_OBJ_T ring_data[DAQ_RING_SIZE];
+   RING_POS_T    ring_head; /*!<@brief Write index */
+   RING_POS_T    ring_tail; /*!<@brief Read index */
+   MIL_DAQ_OBJ_T ring_data[DAQ_RING_SIZE]; /*!<@brief MIL-DAQ data buffer */
 } MIL_DAQ_BUFFER_T;
 
-#ifdef __lm32__
+#if defined(__lm32__) || defined(__DOXYGEN__)
+
+/*!
+ * @brief Adds a MIL-DAQ data item of type MIL_DAQ_OBJ_T
+ *        in the ring buffer.
+ */
 void add_daq_msg(volatile MIL_DAQ_BUFFER_T* db, MIL_DAQ_OBJ_T d );
-#endif
+
+/*!
+ * @brief Returns true when the MIL-DAQ-buffer is full.
+ */
+STATIC inline bool isMilDaqBufferFull( const MIL_DAQ_BUFFER_T* pDaqBuffer )
+{
+   return (pDaqBuffer->ring_tail + 1) % DAQ_RING_SIZE == pDaqBuffer->ring_head;
+}
+
+/*!
+ * @brief Removes the oldest item in the MIL-DAQ ring-buffer.
+ */
+STATIC inline void removeOldestItem( MIL_DAQ_BUFFER_T* pDaqBuffer )
+{
+   pDaqBuffer->ring_tail++;
+   pDaqBuffer->ring_tail %= DAQ_RING_SIZE;
+}
+
+#endif /* ifdef __lm32__ */
 
 #endif /* ifndef CONFIG_MIL_DAQ_USE_RAM */
 
