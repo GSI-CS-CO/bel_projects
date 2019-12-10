@@ -31,17 +31,6 @@
 #include <helper_macros.h>
 // 12 SIOs with dev busses and 1 mil extension
 
-/*!
- * Maybe a bug in the obsolete DOXYGEN 1.8.5 in the ASL-cluster,
- * otherwise the local functions of this module will not
- * documented by DOXYGEN. :-/
- */
-#ifdef __DOXYGEN__
-  #define STATIC
-#else
-  #define STATIC static
-#endif
-
 #ifdef __lm32__
   #define LINUX_CONST
   #define LM32_CONST const

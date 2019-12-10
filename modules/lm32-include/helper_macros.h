@@ -406,6 +406,20 @@ template <typename TYP> bool isInRange( const TYP v, const TYP minimum,
    })
 #endif
 
+/*!
+ * Maybe a bug in the obsolete DOXYGEN 1.8.5 in the ASL-cluster,
+ * otherwise the local functions of this module will not
+ * documented by DOXYGEN. :-/
+ * <b>Yes, even if EXTRACT_STATIC = "YES"</b>
+ * @see https://stackoverflow.com/questions/50334008/doxygen-document-a-static-c-function
+ */
+#ifdef __DOXYGEN__
+  #define STATIC
+#else
+  #define STATIC static
+#endif
+
+
 #endif /* ifndef __cplusplus */
 
 /*! @} */
