@@ -1262,7 +1262,7 @@ STATIC MIL_TASK_DATA_T g_aMilTaskData[5] =
 
 STATIC_ASSERT( TASKMAX >= (ARRAY_SIZE( g_aMilTaskData ) + MAX_FG_CHANNELS-1 + TASKMIN));
 
-#if defined( CONFIG_READ_MIL_TIME_GAP ) // && !defined(__DOCFSM__)
+#if defined( CONFIG_READ_MIL_TIME_GAP ) && !defined(__DOCFSM__)
 /*! ---------------------------------------------------------------------------
  * @ingroup MIL_FSM
  * @brief Returns true, when the states of all MIL-FSMs are in the state
@@ -1979,7 +1979,8 @@ int milGetTask( register MIL_TASK_DATA_T* pMilTaskData, const bool isScuBus,
  * @brief Task-function for handling all MIL-FGs and MIL-DAQs via FSM.
  * @param pThis pointer to the current task object
  * @param isScuBus if true via SCU bus MIL adapter
- * @dotfile scu_main.gv
+ *
+ * @dotfile scu_main.gv State graph for this function
  * @see https://github.com/UlrichBecker/DocFsm
  */
 STATIC void milDeviceHandler( register TASK_T* pThis, const bool isScuBus )
@@ -2027,7 +2028,7 @@ STATIC void milDeviceHandler( register TASK_T* pThis, const bool isScuBus )
          }
       #endif
       #ifdef __DOCFSM__
-         FSM_TRANSITION( ST_WAIT, label='No message', color=red );
+         FSM_TRANSITION( ST_WAIT, label='No message', color=blue );
       #endif
          break;
       } // end case ST_WAIT
@@ -2038,7 +2039,7 @@ STATIC void milDeviceHandler( register TASK_T* pThis, const bool isScuBus )
          if( getSysTime() < pMilData->timestamp1 )
          {
          #ifdef __DOCFSM__
-            FSM_TRANSITION( ST_PREPARE, label='200 us not expired', color=red );
+            FSM_TRANSITION( ST_PREPARE, label='200 us not expired', color=blue );
          #endif
             break;
          }
@@ -2085,7 +2086,7 @@ STATIC void milDeviceHandler( register TASK_T* pThis, const bool isScuBus )
             pMilData->lastChannel = channel; // start next time from channel
             pMilData->task_timeout_cnt++;
          #ifdef __DOCFSM__
-            FSM_TRANSITION( ST_FETCH_STATUS, label='Receiving busy', color=red );
+            FSM_TRANSITION( ST_FETCH_STATUS, label='Receiving busy', color=blue );
          #endif
             break;
          }
@@ -2133,7 +2134,7 @@ STATIC void milDeviceHandler( register TASK_T* pThis, const bool isScuBus )
             printTimeoutMessage( pMilData, isScuBus );
          #ifdef CONFIG_GOTO_STWAIT_WHEN_TIMEOUT
             FSM_TRANSITION( ST_WAIT, label='maximum timeout-count\nreached'
-                                     color=red );
+                                     color=blue );
             break;
          #else
             /*
@@ -2177,7 +2178,7 @@ STATIC void milDeviceHandler( register TASK_T* pThis, const bool isScuBus )
             pMilData->lastChannel = channel; // start next time from channel
             pMilData->task_timeout_cnt++;
          #ifdef __DOCFSM__
-            FSM_TRANSITION( ST_FETCH_DATA, label='Receiving busy', color=red );
+            FSM_TRANSITION( ST_FETCH_DATA, label='Receiving busy', color=blue );
          #endif
             break;
          }
@@ -2189,7 +2190,7 @@ STATIC void milDeviceHandler( register TASK_T* pThis, const bool isScuBus )
       {
          mprintf( ESC_ERROR"Unknown FSM-state of %s(): %d !"ESC_NORMAL"\n",
                   __func__, pMilData->state );
-         FSM_INIT_FSM( ST_WAIT, color=blue );
+         FSM_INIT_FSM( ST_WAIT, label='Initializing', color=blue );
          break;
       }
    } /* End of state-do activities */
