@@ -493,8 +493,6 @@ set_instance_assignment -name IO_STANDARD "1.8 V" -to wr_dac_sclk_o
 set_instance_assignment -name IO_STANDARD "1.8 V" -to wr_leds_o
 set_instance_assignment -name IO_STANDARD "1.8 V" -to wr_leds_o[0]
 set_instance_assignment -name IO_STANDARD "1.8 V" -to wr_leds_o[1]
-set_instance_assignment -name IO_STANDARD "1.8 V" -to wr_leds_o[2]
-set_instance_assignment -name IO_STANDARD "1.8 V" -to wr_leds_o[3]
 set_instance_assignment -name IO_STANDARD "1.8 V" -to wr_ndac_cs_o
 set_instance_assignment -name IO_STANDARD "1.8 V" -to wr_ndac_cs_o[1]
 set_instance_assignment -name IO_STANDARD "1.8 V" -to wr_ndac_cs_o[2]
@@ -685,8 +683,6 @@ set_location_assignment PIN_B4 -to A_nSRQ[11]
 set_location_assignment PIN_B5 -to psram_cen[2]
 set_location_assignment PIN_B6 -to psram_dq[4]
 set_location_assignment PIN_B8 -to psram_a[12]
-set_location_assignment PIN_B9 -to wr_leds_o[2]
-set_location_assignment PIN_C10 -to wr_leds_o[3]
 set_location_assignment PIN_C11 -to psram_wait
 set_location_assignment PIN_C12 -to ext_id[2]
 set_location_assignment PIN_C13 -to ext_id[3]

@@ -129,7 +129,7 @@ entity scu_control is
     -----------------------------------------------------------------------
     -- leds onboard
     -----------------------------------------------------------------------
-    wr_leds_o   : out std_logic_vector(3 downto 0) := (others => '1');
+    wr_leds_o   : out std_logic_vector(1 downto 0) := (others => '1');
     user_led_0  : out std_logic_vector(2 downto 0) := (others => '1');
     user_led_1  : out std_logic_vector(2 downto 0) := (others => '1');
     lemo_led    : out std_logic_vector(5 downto 0) := (others => '1');
@@ -325,12 +325,10 @@ begin
   sfp_tx_disable_o <= '0';
 
   -- LEDs
-  wr_leds_o(0)          <= not (s_led_link_act and s_led_link_up); -- red   = traffic/no-link
-  wr_leds_o(1)          <= not s_led_link_up;                      -- blue  = link
-  wr_leds_o(2)          <= not s_led_track;                        -- green = timing valid
-  wr_leds_o(3)          <= not s_led_pps;                          -- white = PPS
-  sfp_led_fpg_o         <= not s_led_link_up;
-  sfp_led_fpr_o         <= not s_led_link_act;
+  wr_leds_o(0)          <= not s_led_track;                        -- green = timing valid
+  wr_leds_o(1)          <= not s_led_pps;                          -- white = PPS
+  sfp_led_fpg_o         <= not s_led_link_up;                      -- Link-up
+  sfp_led_fpr_o         <= not s_led_link_act;                     
   user_led_0            <= not s_gpio_o(2 downto 0);
   user_led_1            <= not s_gpio_o(5 downto 3);
 
