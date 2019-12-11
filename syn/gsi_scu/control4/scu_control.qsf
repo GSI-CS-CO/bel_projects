@@ -640,6 +640,7 @@ set_location_assignment PIN_AF3 -to ext_ch[2]
 set_location_assignment PIN_AF4 -to max10_connect[3]
 set_location_assignment PIN_AF6 -to ext_ch[12]
 set_location_assignment PIN_AF8 -to altera_reserved_ntrst
+set_location_assignment PIN_AG10 -to OneWire_CB_splz
 set_location_assignment PIN_AG13 -to fd[3]
 set_location_assignment PIN_AG16 -to lemo_out[1]
 set_location_assignment PIN_AG19 -to pa[2]
@@ -655,6 +656,7 @@ set_location_assignment PIN_AG9 -to fd[6]
 set_location_assignment PIN_AH11 -to fd[5]
 set_location_assignment PIN_AH12 -to user_led_1[0]
 set_location_assignment PIN_AH13 -to fd[0]
+set_location_assignment PIN_AH15 -to onewire_ext_splz
 set_location_assignment PIN_AH17 -to fd[1]
 set_location_assignment PIN_AH18 -to fd[7]
 set_location_assignment PIN_AH20 -to sfp_led_fpg_o

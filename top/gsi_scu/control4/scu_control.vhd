@@ -46,6 +46,8 @@ entity scu_control is
     -----------------------------------------------------------------------
     OneWire_CB : inout std_logic;
     onewire_ext: inout std_logic;        -- to extension board
+    onewire_ext_splz: out std_logic;  --Strong Pull-Up for Onewire      
+    OneWire_CB_splz : out std_logic;  --Strong Pull-Up for Onewire
     
     -----------------------------------------------------------------------
     -- ComExpress signals
@@ -343,5 +345,8 @@ begin
   lemo_out <= not s_gpio_o(9 downto 6);
   
   IO_enable <= '1';  -- LS enable when FPGA ready
+
+  onewire_ext_splz  <= '1';  --Strong Pull-Up disabled      
+  OneWire_CB_splz   <= '1';  --Strong Pull-Up disabled
 
 end rtl;
