@@ -1982,6 +1982,12 @@ int milGetTask( register MIL_TASK_DATA_T* pMilTaskData, const bool isScuBus,
  *
  * @dotfile scu_main.gv State graph for this function
  * @see https://github.com/UlrichBecker/DocFsm
+ *
+ * @todo When gap-reading is activated (compiler switch CONFIG_READ_MIL_TIME_GAP
+ *       is defined) so the danger of jittering could be exist! \n
+ *       Solution proposal: Linux-host resp. SAFTLIB shall send a
+ *       "function-generator-announcement-signal", before the function generator
+ *       issued a new analog signal.
  */
 STATIC void milDeviceHandler( register TASK_T* pThis, const bool isScuBus )
 {
