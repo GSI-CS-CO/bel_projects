@@ -63,7 +63,7 @@ typedef struct
 #ifdef DEBUGLEVEL
 /*! ---------------------------------------------------------------------------
  */
-static void printFunctionName( const char* str )
+STATIC void printFunctionName( const char* str )
 {
    DBPRINT1( ESC_FG_CYAN ESC_BOLD
              "DBG: executing %s(),\tDevice: %d, Channel: %d\n"
@@ -89,7 +89,7 @@ int initBuffer( RAM_SCU_T* poRam )
 /*! ---------------------------------------------------------------------------
  * @brief Checking whether the selected DAQ device is present.
  */
-static DAQ_RETURN_CODE_T
+STATIC DAQ_RETURN_CODE_T
 verifyDeviceAccess( DAQ_BUS_T* pDaqBus,
                     volatile DAQ_CHANNEL_LOCATION_T* pLocation )
 {
@@ -111,7 +111,7 @@ verifyDeviceAccess( DAQ_BUS_T* pDaqBus,
 /*! ---------------------------------------------------------------------------
  * @brief Checking whether the selected DAQ device and channel is present.
  */
-static DAQ_RETURN_CODE_T
+STATIC DAQ_RETURN_CODE_T
 verifyChannelAccess( DAQ_BUS_T* pDaqBus,
                      volatile DAQ_CHANNEL_LOCATION_T* pLocation )
 {
@@ -143,7 +143,7 @@ verifyChannelAccess( DAQ_BUS_T* pDaqBus,
  *       Linux host directly in the shared memory.
  * @see executeIfRequested
  */
-static
+STATIC
 DAQ_RETURN_CODE_T opLock( DAQ_ADMIN_T* pDaqAdmin,
                                            volatile DAQ_OPERATION_IO_T* pData )
 {
@@ -154,7 +154,7 @@ DAQ_RETURN_CODE_T opLock( DAQ_ADMIN_T* pDaqAdmin,
 
 /*! ---------------------------------------------------------------------------
  */
-static
+STATIC
 DAQ_RETURN_CODE_T opReadErrorStatus( DAQ_ADMIN_T* pDaqAdmin,
                                            volatile DAQ_OPERATION_IO_T* pData )
 {
@@ -170,7 +170,7 @@ DAQ_RETURN_CODE_T opReadErrorStatus( DAQ_ADMIN_T* pDaqAdmin,
  * @brief Performs a reset of all DAQ devices residing in the SCU bus.
  * @see executeIfRequested
  */
-static
+STATIC
 DAQ_RETURN_CODE_T opReset( DAQ_ADMIN_T* pDaqAdmin,
                            volatile DAQ_OPERATION_IO_T* pData )
 {
@@ -186,7 +186,7 @@ DAQ_RETURN_CODE_T opReset( DAQ_ADMIN_T* pDaqAdmin,
  *        Linux host.
  * @see executeIfRequested
  */
-static
+STATIC
 DAQ_RETURN_CODE_T opGetMacroVersion( DAQ_ADMIN_T* pDaqAdmin,
                                      volatile DAQ_OPERATION_IO_T* pData )
 {
@@ -206,7 +206,7 @@ DAQ_RETURN_CODE_T opGetMacroVersion( DAQ_ADMIN_T* pDaqAdmin,
  * @brief Sending of the SCU bus slot flag field back to the Linux host.
  * @see executeIfRequested
  */
-static
+STATIC
 DAQ_RETURN_CODE_T opGetSlots( DAQ_ADMIN_T* pDaqAdmin,
                               volatile DAQ_OPERATION_IO_T* pData )
 {
@@ -224,7 +224,7 @@ DAQ_RETURN_CODE_T opGetSlots( DAQ_ADMIN_T* pDaqAdmin,
  *        Linux host.
  * @see executeIfRequested
  */
-static
+STATIC
 DAQ_RETURN_CODE_T opGetChannels( DAQ_ADMIN_T* pDaqAdmin,
                                  volatile DAQ_OPERATION_IO_T* pData )
 {
@@ -244,7 +244,7 @@ DAQ_RETURN_CODE_T opGetChannels( DAQ_ADMIN_T* pDaqAdmin,
  * @brief Performs a rescan of the whole SCU bus for SCU devices
  * @see executeIfRequested
  */
-static DAQ_RETURN_CODE_T opRescan( DAQ_ADMIN_T* pDaqAdmin,
+STATIC DAQ_RETURN_CODE_T opRescan( DAQ_ADMIN_T* pDaqAdmin,
                                    volatile DAQ_OPERATION_IO_T* pData )
 {
    DBG_FUNCTION_INFO();
@@ -255,7 +255,7 @@ static DAQ_RETURN_CODE_T opRescan( DAQ_ADMIN_T* pDaqAdmin,
 /*! ---------------------------------------------------------------------------
  * @brief Returns the pointer of the requested channel object
  */
-static inline
+STATIC inline
 DAQ_CANNEL_T* getChannel( DAQ_ADMIN_T* pDaqAdmin,
                           volatile DAQ_OPERATION_IO_T* pData )
 {
@@ -268,7 +268,7 @@ DAQ_CANNEL_T* getChannel( DAQ_ADMIN_T* pDaqAdmin,
  * @brief Switching post mortem mode on.
  * @see executeIfRequested
  */
-static
+STATIC
 DAQ_RETURN_CODE_T opPostMortemOn( DAQ_ADMIN_T* pDaqAdmin,
                                   volatile DAQ_OPERATION_IO_T* pData )
 {
@@ -296,7 +296,7 @@ DAQ_RETURN_CODE_T opPostMortemOn( DAQ_ADMIN_T* pDaqAdmin,
  * @brief switching high resolution mode on.
  * @see executeIfRequested
  */
-static DAQ_RETURN_CODE_T opHighResolutionOn( DAQ_ADMIN_T* pDaqAdmin,
+STATIC DAQ_RETURN_CODE_T opHighResolutionOn( DAQ_ADMIN_T* pDaqAdmin,
                                           volatile DAQ_OPERATION_IO_T* pData )
 {
    DBG_FUNCTION_INFO();
@@ -321,7 +321,7 @@ static DAQ_RETURN_CODE_T opHighResolutionOn( DAQ_ADMIN_T* pDaqAdmin,
  * @brief Switching post-mortem and high-resolution mode off.
  * @see executeIfRequested
  */
-static DAQ_RETURN_CODE_T opPmHighResOff( DAQ_ADMIN_T* pDaqAdmin,
+STATIC DAQ_RETURN_CODE_T opPmHighResOff( DAQ_ADMIN_T* pDaqAdmin,
                                          volatile DAQ_OPERATION_IO_T* pData )
 {
    DBG_FUNCTION_INFO();
@@ -347,7 +347,7 @@ static DAQ_RETURN_CODE_T opPmHighResOff( DAQ_ADMIN_T* pDaqAdmin,
  * @brief Switching continue mode on.
  * @see executeIfRequested
  */
-static DAQ_RETURN_CODE_T opContinueOn( DAQ_ADMIN_T* pDaqAdmin,
+STATIC DAQ_RETURN_CODE_T opContinueOn( DAQ_ADMIN_T* pDaqAdmin,
                                        volatile DAQ_OPERATION_IO_T* pData )
 {
    DBG_FUNCTION_INFO();
@@ -398,7 +398,7 @@ static DAQ_RETURN_CODE_T opContinueOn( DAQ_ADMIN_T* pDaqAdmin,
  * @brief Switching continuous mode off.
  * @see executeIfRequested
  */
-static DAQ_RETURN_CODE_T opContinueOff( DAQ_ADMIN_T* pDaqAdmin,
+STATIC DAQ_RETURN_CODE_T opContinueOff( DAQ_ADMIN_T* pDaqAdmin,
                                         volatile DAQ_OPERATION_IO_T* pData )
 {
    DBG_FUNCTION_INFO();
@@ -422,7 +422,7 @@ static DAQ_RETURN_CODE_T opContinueOff( DAQ_ADMIN_T* pDaqAdmin,
  * @brief Setting trigger condition.
  * @see executeIfRequested
  */
-static
+STATIC
 DAQ_RETURN_CODE_T opSetTriggerCondition( DAQ_ADMIN_T* pDaqAdmin,
                                          volatile DAQ_OPERATION_IO_T* pData )
 {
@@ -443,7 +443,7 @@ DAQ_RETURN_CODE_T opSetTriggerCondition( DAQ_ADMIN_T* pDaqAdmin,
  * @brief Send actual trigger condition back to Linux host.
  * @see executeIfRequested
  */
-static DAQ_RETURN_CODE_T opGetTriggerCondition( DAQ_ADMIN_T* pDaqAdmin,
+STATIC DAQ_RETURN_CODE_T opGetTriggerCondition( DAQ_ADMIN_T* pDaqAdmin,
                                          volatile DAQ_OPERATION_IO_T* pData )
 {
    DBG_FUNCTION_INFO();
@@ -463,7 +463,7 @@ static DAQ_RETURN_CODE_T opGetTriggerCondition( DAQ_ADMIN_T* pDaqAdmin,
  * @brief Setting trigger delay.
  * @see executeIfRequested
  */
-static DAQ_RETURN_CODE_T opSetTriggerDelay( DAQ_ADMIN_T* pDaqAdmin,
+STATIC DAQ_RETURN_CODE_T opSetTriggerDelay( DAQ_ADMIN_T* pDaqAdmin,
                                            volatile DAQ_OPERATION_IO_T* pData )
 {
    DBG_FUNCTION_INFO();
@@ -481,7 +481,7 @@ static DAQ_RETURN_CODE_T opSetTriggerDelay( DAQ_ADMIN_T* pDaqAdmin,
  * @brief Send actual trigger delay back to the Linux host.
  * @see executeIfRequested
  */
-static DAQ_RETURN_CODE_T opGetTriggerDelay( DAQ_ADMIN_T* pDaqAdmin,
+STATIC DAQ_RETURN_CODE_T opGetTriggerDelay( DAQ_ADMIN_T* pDaqAdmin,
                                           volatile DAQ_OPERATION_IO_T* pData )
 {
    DBG_FUNCTION_INFO();
@@ -499,7 +499,7 @@ static DAQ_RETURN_CODE_T opGetTriggerDelay( DAQ_ADMIN_T* pDaqAdmin,
  * @brief Enabling or disabling the trigger mode.
  * @see executeIfRequested
  */
-static DAQ_RETURN_CODE_T opSetTriggerMode( DAQ_ADMIN_T* pDaqAdmin,
+STATIC DAQ_RETURN_CODE_T opSetTriggerMode( DAQ_ADMIN_T* pDaqAdmin,
                                            volatile DAQ_OPERATION_IO_T* pData )
 {
    DBG_FUNCTION_INFO();
@@ -529,7 +529,7 @@ static DAQ_RETURN_CODE_T opSetTriggerMode( DAQ_ADMIN_T* pDaqAdmin,
  * @brief Send the actual state of the trigger mode back to the Linux host.
  * @see executeIfRequested
  */
-static DAQ_RETURN_CODE_T opGetTriggerMode( DAQ_ADMIN_T* pDaqAdmin,
+STATIC DAQ_RETURN_CODE_T opGetTriggerMode( DAQ_ADMIN_T* pDaqAdmin,
                                            volatile DAQ_OPERATION_IO_T* pData )
 {
    DBG_FUNCTION_INFO();
@@ -547,7 +547,7 @@ static DAQ_RETURN_CODE_T opGetTriggerMode( DAQ_ADMIN_T* pDaqAdmin,
  * @brief Setting of the trigger source for continuous mode.
  * @see executeIfRequested
  */
-static
+STATIC
 DAQ_RETURN_CODE_T opSetTriggerSourceCon( DAQ_ADMIN_T* pDaqAdmin,
                                          volatile DAQ_OPERATION_IO_T* pData )
 {
@@ -579,7 +579,7 @@ DAQ_RETURN_CODE_T opSetTriggerSourceCon( DAQ_ADMIN_T* pDaqAdmin,
  *        the Linux host.
  * @see executeIfRequested
  */
-static
+STATIC
 DAQ_RETURN_CODE_T opGetTriggerSourceCon( DAQ_ADMIN_T* pDaqAdmin,
                                          volatile DAQ_OPERATION_IO_T* pData )
 {
@@ -600,7 +600,7 @@ DAQ_RETURN_CODE_T opGetTriggerSourceCon( DAQ_ADMIN_T* pDaqAdmin,
  * @brief Setting of the trigger source for the high resolution mode.
  * @see executeIfRequested
  */
-static
+STATIC
 DAQ_RETURN_CODE_T opSetTriggerSourceHir( DAQ_ADMIN_T* pDaqAdmin,
                                          volatile DAQ_OPERATION_IO_T* pData )
 {
@@ -632,7 +632,7 @@ DAQ_RETURN_CODE_T opSetTriggerSourceHir( DAQ_ADMIN_T* pDaqAdmin,
  *        back to the Linux host.
  * @see executeIfRequested
  */
-static
+STATIC
 DAQ_RETURN_CODE_T opGetTriggerSourceHir( DAQ_ADMIN_T* pDaqAdmin,
                                          volatile DAQ_OPERATION_IO_T* pData )
 {
@@ -672,7 +672,7 @@ DAQ_RETURN_CODE_T opGetTriggerSourceHir( DAQ_ADMIN_T* pDaqAdmin,
  * @brief Operation match list respectively command function table.
  * @see executeIfRequested
  */
-static const DAQ_OPERATION_TAB_ITEM_T g_operationTab[] =
+STATIC const DAQ_OPERATION_TAB_ITEM_T g_operationTab[] =
 {
    OPERATION_ITEM( DAQ_OP_LOCK,                   opLock                ),
    OPERATION_ITEM( DAQ_OP_GET_ERROR_STATUS,       opReadErrorStatus     ),

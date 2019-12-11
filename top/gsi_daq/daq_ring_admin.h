@@ -188,7 +188,7 @@ STATIC_ASSERT( offsetof( RAM_RING_SHARED_OBJECT_T, ramAccessLock ) <
  * @brief Resets respectively clears the ring buffer
  * @param pThis Pointer to the ring index object
  */
-static inline void ramRingReset( register RAM_RING_INDEXES_T* pThis )
+STATIC inline void ramRingReset( register RAM_RING_INDEXES_T* pThis )
 {
    pThis->start = 0;
    pThis->end   = 0;
@@ -208,7 +208,7 @@ RAM_RING_INDEX_T ramRingGetSize( const RAM_RING_INDEXES_T* pThis );
  * @param pThis Pointer to the ring index object
  * @return Number of free memory items.
  */
-static inline
+STATIC inline
 RAM_RING_INDEX_T ramRingGetRemainingCapacity( const RAM_RING_INDEXES_T* pThis )
 {
    return pThis->capacity - ramRingGetSize( pThis );
@@ -234,7 +234,7 @@ void ramRingAddToReadIndex( RAM_RING_INDEXES_T* pThis, RAM_RING_INDEX_T toAdd );
  * @param pThis Pointer to the ring index object
  * @return Index value for read access.
  */
-static inline
+STATIC inline
 RAM_RING_INDEX_T ramRingGetReadIndex( register RAM_RING_INDEXES_T* pThis )
 {
    return pThis->start + pThis->offset;
@@ -246,7 +246,7 @@ RAM_RING_INDEX_T ramRingGetReadIndex( register RAM_RING_INDEXES_T* pThis )
  * @param pThis Pointer to the ring index object
  * @return Index value for write access.
  */
-static inline
+STATIC inline
 RAM_RING_INDEX_T ramRingGetWriteIndex( register RAM_RING_INDEXES_T* pThis )
 {
    if( pThis->end == pThis->capacity )

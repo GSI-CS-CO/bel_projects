@@ -67,9 +67,7 @@ int daqScanScuBus( DAQ_BUS_T* pDaqDevices );
  * @brief Finding and initializing of all non-MIL DAQs.
  * @param pDaqAdmin Pointer to the nom-MIL-DAQ administrating object
  */
-#ifndef __DOXYGEN__
-static // Doxygen 1.8.5 seems to have a problem...
-#endif
+STATIC // Doxygen 1.8.5 seems to have a problem...
 inline void scuDaqInitialize( DAQ_ADMIN_T* pDaqAdmin )
 {
    daqScanScuBus( &pDaqAdmin->oDaqDevs );

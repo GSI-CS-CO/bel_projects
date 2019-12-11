@@ -33,11 +33,11 @@ extern volatile uint16_t* g_pScub_base;
 #endif
 
 #ifdef CONFIG_DAQ_SINGLE_APP
-static
+STATIC
 #endif
 DAQ_ADMIN_T g_scuDaqAdmin;
 
-static inline uint32_t getInterruptPending( void )
+STATIC inline uint32_t getInterruptPending( void )
 {
    uint32_t ip;
    asm volatile ("rcsr %0, ip": "=r"(ip));
@@ -86,7 +86,7 @@ int daqScanScuBus( DAQ_BUS_T* pDaqDevices )
 
 /*! ---------------------------------------------------------------------------
  */
-static inline void handleContinuousMode( DAQ_CANNEL_T* pChannel )
+STATIC inline void handleContinuousMode( DAQ_CANNEL_T* pChannel )
 {
    if( !daqChannelTestAndClearDaqIntPending( pChannel ) )
       return;
@@ -112,7 +112,7 @@ static inline void handleContinuousMode( DAQ_CANNEL_T* pChannel )
 
 /*! ---------------------------------------------------------------------------
  */
-static inline bool forEachContinuousCahnnel( DAQ_DEVICE_T* pDevice )
+STATIC inline bool forEachContinuousCahnnel( DAQ_DEVICE_T* pDevice )
 {
    for( unsigned int channelNr = 0;
         channelNr < daqDeviceGetMaxChannels( pDevice ); channelNr++ )
@@ -126,7 +126,7 @@ static inline bool forEachContinuousCahnnel( DAQ_DEVICE_T* pDevice )
 
 /*! ---------------------------------------------------------------------------
  */
-static inline void handleHiresMode( DAQ_CANNEL_T* pChannel )
+STATIC inline void handleHiresMode( DAQ_CANNEL_T* pChannel )
 {
    if( !daqChannelTestAndClearHiResIntPending( pChannel ) )
       return;
@@ -140,7 +140,7 @@ static inline void handleHiresMode( DAQ_CANNEL_T* pChannel )
 
 /*! ---------------------------------------------------------------------------
  */
-static inline bool forEachHiresChannel( DAQ_DEVICE_T* pDevice )
+STATIC inline bool forEachHiresChannel( DAQ_DEVICE_T* pDevice )
 {
    for( unsigned int channelNr = 0;
         channelNr < daqDeviceGetMaxChannels( pDevice ); channelNr++ )
@@ -154,7 +154,7 @@ static inline bool forEachHiresChannel( DAQ_DEVICE_T* pDevice )
 
 /*! ---------------------------------------------------------------------------
  */
-static inline void handlePostMortemMode( DAQ_CANNEL_T* pChannel )
+STATIC inline void handlePostMortemMode( DAQ_CANNEL_T* pChannel )
 {
    if( !pChannel->properties.postMortemEvent )
       return;
@@ -171,7 +171,7 @@ static inline void handlePostMortemMode( DAQ_CANNEL_T* pChannel )
 
 /*! ---------------------------------------------------------------------------
  */
-static inline bool forEachPostMortemChennel( DAQ_DEVICE_T* pDevice )
+STATIC inline bool forEachPostMortemChennel( DAQ_DEVICE_T* pDevice )
 {
    for( unsigned int channelNr = 0;
         channelNr < daqDeviceGetMaxChannels( pDevice ); channelNr++ )
@@ -186,7 +186,7 @@ static inline bool forEachPostMortemChennel( DAQ_DEVICE_T* pDevice )
 /*! ---------------------------------------------------------------------------
  */
 #ifdef CONFIG_DAQ_SINGLE_APP
-static inline
+STATIC inline
 #endif
 void forEachScuDaqDevice( void )
 {

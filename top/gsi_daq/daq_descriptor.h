@@ -400,13 +400,13 @@ STATIC_ASSERT( sizeof( DAQ_LAST_STATUS_T ) == sizeof( DAQ_REGISTER_T ) );
  *              @see DAQ_DESCRIPTOR_WORD_SIZE
  * @return Slot number in the range of [1..12]
  */
-static inline int daqDescriptorGetSlot( register DAQ_DESCRIPTOR_T* pThis )
+STATIC inline int daqDescriptorGetSlot( register DAQ_DESCRIPTOR_T* pThis )
 {
    return pThis->name.slotDiob.slot;
 }
 
 #ifdef CONFIG_DAQ_SIMULATE_CHANNEL
-static inline void daqDescriptorSetSlot( register DAQ_DESCRIPTOR_T* pThis,
+STATIC inline void daqDescriptorSetSlot( register DAQ_DESCRIPTOR_T* pThis,
                                          unsigned int slot )
 {
    pThis->name.slotDiob.slot = slot;
@@ -420,13 +420,13 @@ static inline void daqDescriptorSetSlot( register DAQ_DESCRIPTOR_T* pThis,
  *              @see DAQ_DESCRIPTOR_WORD_SIZE
  * @return DIOB
  */
-static inline int daqDescriptorGetDiobId( register DAQ_DESCRIPTOR_T* pThis )
+STATIC inline int daqDescriptorGetDiobId( register DAQ_DESCRIPTOR_T* pThis )
 {
    return pThis->name.slotDiob.diobId;
 }
 
 #ifdef CONFIG_DAQ_SIMULATE_CHANNEL
-static inline void daqDescriptorSetDiobId( register DAQ_DESCRIPTOR_T* pThis,
+STATIC inline void daqDescriptorSetDiobId( register DAQ_DESCRIPTOR_T* pThis,
                                            unsigned int diobId )
 {
    pThis->name.slotDiob.diobId = diobId;
@@ -440,13 +440,13 @@ static inline void daqDescriptorSetDiobId( register DAQ_DESCRIPTOR_T* pThis,
  *              @see DAQ_DESCRIPTOR_WORD_SIZE
  * @return Channel number in the range of [0..15]
  */
-static inline int daqDescriptorGetChannel( register DAQ_DESCRIPTOR_T* pThis )
+STATIC inline int daqDescriptorGetChannel( register DAQ_DESCRIPTOR_T* pThis )
 {
    return pThis->name.cControl.channelNumber - 1;
 }
 
 #ifdef CONFIG_DAQ_SIMULATE_CHANNEL
-static inline void daqDescriptorSetChannel( register DAQ_DESCRIPTOR_T* pThis,
+STATIC inline void daqDescriptorSetChannel( register DAQ_DESCRIPTOR_T* pThis,
                                             unsigned int channel )
 {
    pThis->name.cControl.channelNumber = channel + 1;
@@ -460,13 +460,13 @@ static inline void daqDescriptorSetChannel( register DAQ_DESCRIPTOR_T* pThis,
  *              @see DAQ_DESCRIPTOR_WORD_SIZE
  * @retval ==true Post Mortem was active.
  */
-static inline bool daqDescriptorWasPM( register DAQ_DESCRIPTOR_T* pThis )
+STATIC inline bool daqDescriptorWasPM( register DAQ_DESCRIPTOR_T* pThis )
 {
    return pThis->name.cControl.pmMode;
 }
 
 #ifdef CONFIG_DAQ_SIMULATE_CHANNEL
-static inline void daqDescriptorSetPM( register DAQ_DESCRIPTOR_T* pThis,
+STATIC inline void daqDescriptorSetPM( register DAQ_DESCRIPTOR_T* pThis,
                                        bool pmMode )
 {
    pThis->name.cControl.pmMode = pmMode;
@@ -481,13 +481,13 @@ static inline void daqDescriptorSetPM( register DAQ_DESCRIPTOR_T* pThis,
  *              @see DAQ_DESCRIPTOR_WORD_SIZE
  * @retval ==true High Resolution mode was active.
  */
-static inline bool daqDescriptorWasHiRes( register DAQ_DESCRIPTOR_T* pThis )
+STATIC inline bool daqDescriptorWasHiRes( register DAQ_DESCRIPTOR_T* pThis )
 {
    return pThis->name.cControl.hiResMode;
 }
 
 #ifdef CONFIG_DAQ_SIMULATE_CHANNEL
-static inline void daqDescriptorSetHiRes( register DAQ_DESCRIPTOR_T* pThis,
+STATIC inline void daqDescriptorSetHiRes( register DAQ_DESCRIPTOR_T* pThis,
                                           bool hiResMode )
 {
    pThis->name.cControl.hiResMode = hiResMode;
@@ -501,13 +501,13 @@ static inline void daqDescriptorSetHiRes( register DAQ_DESCRIPTOR_T* pThis,
  *              @see DAQ_DESCRIPTOR_WORD_SIZE
  * @retval true DAQ- mode was active.
  */
-static inline bool daqDescriptorWasDaq( register DAQ_DESCRIPTOR_T* pThis )
+STATIC inline bool daqDescriptorWasDaq( register DAQ_DESCRIPTOR_T* pThis )
 {
    return pThis->name.cControl.daqMode;
 }
 
 #ifdef CONFIG_DAQ_SIMULATE_CHANNEL
-static inline void daqDescriptorSetDaq( register DAQ_DESCRIPTOR_T* pThis,
+STATIC inline void daqDescriptorSetDaq( register DAQ_DESCRIPTOR_T* pThis,
                                         bool daqMode )
 {
    pThis->name.cControl.daqMode = daqMode;
@@ -522,7 +522,7 @@ static inline void daqDescriptorSetDaq( register DAQ_DESCRIPTOR_T* pThis,
  * @retval true Set mote is OK.
  * @retval false Error in descriptor.
  */
-static inline bool daqDescriptorVerifyMode( register DAQ_DESCRIPTOR_T* pThis )
+STATIC inline bool daqDescriptorVerifyMode( register DAQ_DESCRIPTOR_T* pThis )
 {
    return ( ((int)daqDescriptorWasPM( pThis ))    +
             ((int)daqDescriptorWasHiRes( pThis )) +
@@ -536,7 +536,7 @@ static inline bool daqDescriptorVerifyMode( register DAQ_DESCRIPTOR_T* pThis )
  * @retval true Long block   (has DAQ_FIFO_PM_HIRES_WORD_SIZE_CRC words)
  * @retval false Short block (has DAQ_FIFO_DAQ_WORD_SIZE_CRC words)
  */
-static inline bool daqDescriptorIsLongBlock( register DAQ_DESCRIPTOR_T* pThis )
+STATIC inline bool daqDescriptorIsLongBlock( register DAQ_DESCRIPTOR_T* pThis )
 {
    return !daqDescriptorWasDaq( pThis );
 }
@@ -548,7 +548,7 @@ static inline bool daqDescriptorIsLongBlock( register DAQ_DESCRIPTOR_T* pThis )
  * @retval true Long block   (has DAQ_FIFO_PM_HIRES_WORD_SIZE_CRC words)
  * @retval false Short block (has DAQ_FIFO_DAQ_WORD_SIZE_CRC words)
  */
-static inline bool daqDescriptorIsShortBlock( register DAQ_DESCRIPTOR_T* pThis )
+STATIC inline bool daqDescriptorIsShortBlock( register DAQ_DESCRIPTOR_T* pThis )
 {
    return daqDescriptorWasDaq( pThis );
 }
@@ -559,7 +559,7 @@ static inline bool daqDescriptorIsShortBlock( register DAQ_DESCRIPTOR_T* pThis )
  *              10 received words (type DAQ_DATA_T) of the received record.
  * @return Number of data words of the block belonging to this descriptor.
  */
-static inline
+STATIC inline
 size_t daqDescriptorGetBlockLen( register DAQ_DESCRIPTOR_T* pThis )
 {
    return daqDescriptorIsLongBlock( pThis )?
@@ -574,7 +574,7 @@ size_t daqDescriptorGetBlockLen( register DAQ_DESCRIPTOR_T* pThis )
  * @return Number of payload data words of the block belonging to this
  *         descriptor.
  */
-static inline
+STATIC inline
 size_t daqDescriptorGetPayloadLen( register DAQ_DESCRIPTOR_T* pThis )
 {
    return daqDescriptorGetBlockLen( pThis ) - DAQ_DESCRIPTOR_WORD_SIZE;
@@ -589,14 +589,14 @@ size_t daqDescriptorGetPayloadLen( register DAQ_DESCRIPTOR_T* pThis )
  *              @see DAQ_DESCRIPTOR_WORD_SIZE
  * @return Least significant word of trigger condition.
  */
-static inline
+STATIC inline
 DAQ_DATA_T daqDescriptorGetTriggerConditionLW( register DAQ_DESCRIPTOR_T* pThis )
 {
    return pThis->name.trigger.low;
 }
 
 #ifdef CONFIG_DAQ_SIMULATE_CHANNEL
-static inline
+STATIC inline
 void daqDescriptorSetTriggerConditionLW( register DAQ_DESCRIPTOR_T* pThis,
                                          DAQ_DATA_T trLow )
 {
@@ -612,14 +612,14 @@ void daqDescriptorSetTriggerConditionLW( register DAQ_DESCRIPTOR_T* pThis,
  *              @see DAQ_DESCRIPTOR_WORD_SIZE
  * @return Most significant word of trigger condition.
  */
-static inline
+STATIC inline
 DAQ_DATA_T daqDescriptorGetTriggerConditionHW( register DAQ_DESCRIPTOR_T* pThis )
 {
    return pThis->name.trigger.high;
 }
 
 #ifdef CONFIG_DAQ_SIMULATE_CHANNEL
-static inline
+STATIC inline
 void daqDescriptorSetTriggerConditionHW( register DAQ_DESCRIPTOR_T* pThis,
                                          DAQ_DATA_T trHigh )
 {
@@ -629,7 +629,7 @@ void daqDescriptorSetTriggerConditionHW( register DAQ_DESCRIPTOR_T* pThis,
 
 /*! -------------------------------------------------------------------------
  */
-static inline
+STATIC inline
 uint32_t daqDescriptorGetTriggerCondition( register DAQ_DESCRIPTOR_T* pThis )
 {
    uint32_t condition;
@@ -650,14 +650,14 @@ uint32_t daqDescriptorGetTriggerCondition( register DAQ_DESCRIPTOR_T* pThis )
  *              @see DAQ_DESCRIPTOR_WORD_SIZE
  * @return Trigger delay
  */
-static inline
+STATIC inline
 DAQ_DATA_T daqDescriptorGetTriggerDelay( register DAQ_DESCRIPTOR_T* pThis )
 {
    return pThis->name.trigger.delay;
 }
 
 #ifdef CONFIG_DAQ_SIMULATE_CHANNEL
-static inline
+STATIC inline
 void daqDescriptorSetTriggerDelay( register DAQ_DESCRIPTOR_T* pThis,
                                    DAQ_DATA_T delay )
 {
@@ -671,7 +671,7 @@ void daqDescriptorSetTriggerDelay( register DAQ_DESCRIPTOR_T* pThis,
  *              10 received words (type uint16_t) of the received record.
  *              @see DAQ_DESCRIPTOR_WORD_SIZE
  */
-static inline 
+STATIC inline
 uint32_t daqDescriptorGetTimeStampNanoSec( register DAQ_DESCRIPTOR_T* pThis )
 {
    return pThis->name.wr.name.nSec;
@@ -682,16 +682,25 @@ uint32_t daqDescriptorGetTimeStampNanoSec( register DAQ_DESCRIPTOR_T* pThis )
  *              10 received words (type uint16_t) of the received record.
  *              @see DAQ_DESCRIPTOR_WORD_SIZE
  */
-static inline 
+STATIC inline
 uint32_t daqDescriptorGetTimeStampSec( register DAQ_DESCRIPTOR_T* pThis )
 {
    return pThis->name.wr.name.utSec;
 }
 
 
-//static inline IMPLEMENT_CONVERT_BYTE_ENDIAN( uint16_t )
+//STATIC inline IMPLEMENT_CONVERT_BYTE_ENDIAN( uint16_t )
 
-static inline
+/*! --------------------------------------------------------------------------
+ * @brief Returns the white rabbit time from the given descriptor.
+ * @param pThis Pointer to the DAQ- descriptor object, that means to the last
+ *              10 received words (type uint16_t) of the received record.
+ *
+ * @todo  Divisor 512 is a workaround!!! Because of a possible VHDL bug
+ *        copying the white rabbit tine in to the
+ *        Remove this ASAP!!!!!
+ */
+STATIC inline
 uint64_t daqDescriptorGetTimeStamp( register DAQ_DESCRIPTOR_T* pThis )
 {
    //uint64_t ret;
@@ -735,7 +744,7 @@ uint64_t daqDescriptorGetTimeStamp( register DAQ_DESCRIPTOR_T* pThis )
   // ret >>= 32;
   // ret *= 1000000000L;
 
-/*! !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+/* !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
  * @todo  Divisor 512 is a workaround!!! Because of a possible VHDL bug
  *        copying the white rabbit tine in to the
  *        Remove this ASAP!!!!!
@@ -766,14 +775,14 @@ uint64_t daqDescriptorGetTimeStamp( register DAQ_DESCRIPTOR_T* pThis )
  *              @see DAQ_DESCRIPTOR_WORD_SIZE
  * @return 8 bit CRC
  */
-static inline 
+STATIC inline
 uint8_t daqDescriptorGetCRC( register DAQ_DESCRIPTOR_T* pThis )
 {
    return pThis->name.crcReg.crc;
 }
 
 #ifdef CONFIG_DAQ_SIMULATE_CHANNEL
-static inline
+STATIC inline
 void daqDescriptorSetCRC( register DAQ_DESCRIPTOR_T* pThis, uint8_t crc )
 {
    pThis->name.crcReg.crc = crc;
@@ -787,7 +796,7 @@ void daqDescriptorSetCRC( register DAQ_DESCRIPTOR_T* pThis, uint8_t crc )
  *              @see DAQ_DESCRIPTOR_WORD_SIZE
  * @return Sequence number.
  */
-static inline
+STATIC inline
 uint8_t daqDescriptorGetSequence( register DAQ_DESCRIPTOR_T* pThis )
 {
    return pThis->name.crcReg.sequence;
@@ -800,7 +809,7 @@ uint8_t daqDescriptorGetSequence( register DAQ_DESCRIPTOR_T* pThis )
  *              @see DAQ_DESCRIPTOR_WORD_SIZE
  * @return Timebase in nanoseconds [ns]
  */
-static inline
+STATIC inline
 unsigned int daqDescriptorGetTimeBase( register DAQ_DESCRIPTOR_T* pThis )
 {
    if( daqDescriptorWasHiRes( pThis ) )
