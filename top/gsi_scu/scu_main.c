@@ -1232,6 +1232,9 @@ typedef struct
    unsigned int      lastChannel;      /*!<@brief loop index for channel */
    unsigned int      task_timeout_cnt; /*!<@brief timeout counter */
    uint64_t          timestamp1;       /*!<@brief timestamp */
+#ifdef CONFIG_READ_MIL_TIME_GAP
+   uint64_t          gapReadingTime; // Workaround!!! Move this in FG_CHANNEL_T resp. g_aFgChannels!!!
+#endif
    FG_CHANNEL_TASK_T aFgChannels[ARRAY_SIZE(g_aFgChannels)]; /*!<@see FG_CHANNEL_TASK_T */
 } MIL_TASK_DATA_T;
 
@@ -1244,9 +1247,13 @@ typedef struct
  * @ingroup MIL_FSM
  * @brief Initializer of a single MIL task
  */
-#define MIL_TASK_DATA_ITEM_INITIALIZER { ST_WAIT, INVALID_SLAVE_NR, \
-                                         0, 0, 0, {{0, 0, 0}} }
-
+#ifdef CONFIG_READ_MIL_TIME_GAP
+  #define MIL_TASK_DATA_ITEM_INITIALIZER { ST_WAIT, INVALID_SLAVE_NR, \
+                                           0, 0, 0, 0, {{0, 0, 0}} }
+#else
+  #define MIL_TASK_DATA_ITEM_INITIALIZER { ST_WAIT, INVALID_SLAVE_NR, \
+                                           0, 0, 0, {{0, 0, 0}} }
+#endif
 /*! ---------------------------------------------------------------------------
  * @ingroup MIL_FSM
  * @brief Memory space and pre-initializing of MIL-task data.
@@ -1283,7 +1290,7 @@ STATIC inline bool isMilFsmInST_WAIT( void )
  * @brief Suspends the DAQ- gap reading. The gap reading becomes resumed once
  *        the concerning function generator has been sent its first data.
  */
-STATIC inline void suspendGapReading( void )
+STATIC void suspendGapReading( void )
 {
    for( unsigned int i = 0; i < ARRAY_SIZE( g_aMilTaskData ); i++ )
       g_aMilTaskData[i].slave_nr = INVALID_SLAVE_NR;
@@ -1432,6 +1439,10 @@ STATIC void scuBusDaqTask( register TASK_T* pThis FG_UNUSED )
 }
 #endif /* ifdef CONFIG_SCU_DAQ_INTEGRATION */
 
+#ifdef DEBUG_SAFTLIB
+  #warning "DEBUG_SAFTLIB is defined! This could lead to timing problems!"
+#endif
+
 /*! ---------------------------------------------------------------------------
  * @ingroup TASK
  * @brief Event Condition Action (ECA) handler
@@ -1461,7 +1472,9 @@ STATIC void ecaHandler( register TASK_T* pThis FG_UNUSED )
    // here: do s.th. according to action; read data tag of action
    if( g_eca.pQueue[ECA_QUEUE_TAG_GET / sizeof(ECA_T)] != g_eca.tag )
       return;
-
+#ifdef DEBUG_SAFTLIB
+   mprintf( "* " );
+#endif
    bool                 dev_mil_armed = false;
    SCUBUS_SLAVE_FLAGS_T active_sios   = 0; // bitmap with active sios
 
@@ -1551,6 +1564,23 @@ STATIC void sw_irq_handler( register TASK_T* pThis FG_UNUSED )
    const unsigned int code  = m.msg >> BIT_SIZEOF( uint16_t );
    const unsigned int value = m.msg & 0xffff;
    printSwIrqCode( code, value );
+
+   switch( code )
+   {
+      case FG_OP_INITIALIZE:          /* Go immediately to next case. */
+      case FG_OP_CONFIGURE:           /* Go immediately to next case. */
+      case FG_OP_DISABLE_CHANNEL:     /* Go immediately to next case. */
+      case FG_OP_CLEAR_HANDLER_STATE:
+      {
+         if( value < ARRAY_SIZE( g_aFgChannels ) )
+            break;
+
+         mprintf( ESC_ERROR"Value %d out of range!"ESC_NORMAL"\n", value );
+         return;
+      }
+      default: break;
+   }
+
    switch( code )
    {
       case FG_OP_INITIALIZE:
@@ -1568,11 +1598,6 @@ STATIC void sw_irq_handler( register TASK_T* pThis FG_UNUSED )
         #if __GNUC__ >= 9
          #pragma GCC diagnostic pop
         #endif
-         if( value >= ARRAY_SIZE( g_aFgChannels ) )
-         {
-            mprintf( ESC_ERROR"Value %d out of range!"ESC_NORMAL"\n", value );
-            break;
-         }
          g_aFgChannels[value].param_sent = 0;
          break;
       }
@@ -1584,14 +1609,23 @@ STATIC void sw_irq_handler( register TASK_T* pThis FG_UNUSED )
 
       case FG_OP_CONFIGURE:
       {
-         enable_scub_msis(value);
-         configure_fg_macro(value);
+      #ifdef CONFIG_READ_MIL_TIME_GAP
+         suspendGapReading(); // TEST!!!
+      #endif
+         enable_scub_msis( value );
+         configure_fg_macro( value );
+      #ifdef DEBUG_SAFTLIB
+         mprintf( "+%d ", value );
+      #endif
          break;
       }
 
       case FG_OP_DISABLE_CHANNEL:
       {
-         disable_channel(value);
+         disable_channel( value );
+      #ifdef DEBUG_SAFTLIB
+         mprintf( "-%d ", value );
+      #endif
          break;
       }
 
@@ -1992,7 +2026,7 @@ int milGetTask( register MIL_TASK_DATA_T* pMilTaskData, const bool isScuBus,
 STATIC void milDeviceHandler( register TASK_T* pThis, const bool isScuBus )
 {
 #ifdef CONFIG_READ_MIL_TIME_GAP
-   static uint64_t gapReadingTime = 0;
+  // static uint64_t gapReadingTime = 0;
 #endif
    unsigned int channel;
    int status = OKAY;
@@ -2008,7 +2042,7 @@ STATIC void milDeviceHandler( register TASK_T* pThis, const bool isScuBus )
    MIL_TASK_DATA_T* pMilData = (MIL_TASK_DATA_T*) pThis->pTaskData;
 
    const FG_STATE_T lastState = pMilData->state;
-
+//mprintf( "%d ", getMilTaskId( pMilData ) );
    /*
     * Performing the FSM state-do activities.
     */
@@ -2026,7 +2060,7 @@ STATIC void milDeviceHandler( register TASK_T* pThis, const bool isScuBus )
           * Only a task which has already served a function generator
           * can read a time-gap. That means its slave number has to be valid.
           */
-         if( (pMilData->slave_nr != INVALID_SLAVE_NR) && (getSysTime() >= gapReadingTime) )
+         if( (pMilData->slave_nr != INVALID_SLAVE_NR) && (getSysTime() >= pMilData->gapReadingTime) )
          {
             FSM_TRANSITION( ST_DATA_AQUISITION, label='Gap reading time\nexpired',
                                                 color=magenta );
@@ -2104,6 +2138,7 @@ STATIC void milDeviceHandler( register TASK_T* pThis, const bool isScuBus )
       {  /*
           * handle irqs for ifas with active pending regs; non blocking write
           */
+        // mprintf( "%d ", getMilTaskId( pMilData ) );
          FOR_EACH_FG( channel )
          {
             if( isNoIrqPending( pMilData, channel ) )
@@ -2172,7 +2207,7 @@ STATIC void milDeviceHandler( register TASK_T* pThis, const bool isScuBus )
                          actAdcValue,
                          g_aFgChannels[channel].last_c_coeff
                       #ifdef CONFIG_READ_MIL_TIME_GAP
-                         , gapReadingTime != 0
+                         , pMilData->gapReadingTime != 0
                       #endif
                        );
             // save the setvalue from the tuple sent for the next drq handling
@@ -2218,21 +2253,21 @@ STATIC void milDeviceHandler( register TASK_T* pThis, const bool isScuBus )
    #ifdef CONFIG_READ_MIL_TIME_GAP
       case ST_WAIT:
       {
-         gapReadingTime = getSysTime() + INTERVAL_10MS;
+         pMilData->gapReadingTime = getSysTime() + INTERVAL_10MS;
          break;
       }
    #endif
       case ST_PREPARE:
       {
       #ifdef CONFIG_READ_MIL_TIME_GAP
-         gapReadingTime = 0;
+         pMilData->gapReadingTime = 0;
       #endif
          const MSI_T m = remove_msg( &g_aMsg_buf[0], isScuBus? DEVSIO : DEVBUS );
          pMilData->slave_nr = isScuBus? (m.msg + 1) : 0;
          pMilData->timestamp1 = getSysTime() + INTERVAL_200US;
          break;
       }
-      case ST_FETCH_STATUS: /* go immediately to next state */
+      case ST_FETCH_STATUS: /* Go immediately to next case. */
       case ST_FETCH_DATA:
       {
          pMilData->lastChannel = 0; // start next time from channel 0
