@@ -1178,11 +1178,11 @@ STATIC void findECAQ( void )
 typedef enum
 {
    FSM_DECLARE_STATE( ST_WAIT,            label='Wait for message', color=blue ),
-   FSM_DECLARE_STATE( ST_PREPARE,         label='Request MIL-status', color=cyan ),
-   FSM_DECLARE_STATE( ST_FETCH_STATUS,    label='Read MIL-status', color=green ),
-   FSM_DECLARE_STATE( ST_HANDLE_IRQS,     label='Send data to\nfunction generator', color=red ),
-   FSM_DECLARE_STATE( ST_DATA_AQUISITION, label='Request MIL-DAQ data', color=cyan ),
-   FSM_DECLARE_STATE( ST_FETCH_DATA,      label='Read MIL-DAQ data',color=green )
+   FSM_DECLARE_STATE( ST_PREPARE,         label='Request MIL-IRQ-flags\nclear old IRQ-flags', color=cyan ),
+   FSM_DECLARE_STATE( ST_FETCH_STATUS,    label='Read MIL-IRQ-flags', color=green ),
+   FSM_DECLARE_STATE( ST_HANDLE_IRQS,     label='Send data to\nfunction\nif IRQ-flag set', color=red ),
+   FSM_DECLARE_STATE( ST_DATA_AQUISITION, label='Request MIL-DAQ data\nif IRQ-flag set', color=cyan ),
+   FSM_DECLARE_STATE( ST_FETCH_DATA,      label='Read MIL-DAQ data\nif IRQ-flag set',color=green )
 } FG_STATE_T;
 
 /*! ---------------------------------------------------------------------------
@@ -1361,9 +1361,9 @@ STATIC TASK_T g_aTasks[] =
    { NULL,               ALWAYS, 0, scuBusDaqTask   },
 #endif
    { &g_aMilTaskData[0], ALWAYS, 0, dev_sio_handler }, // sio task 1
-   { &g_aMilTaskData[1], ALWAYS, 0, dev_sio_handler }, // sio task 2
-   { &g_aMilTaskData[2], ALWAYS, 0, dev_sio_handler }, // sio task 3
-   { &g_aMilTaskData[3], ALWAYS, 0, dev_sio_handler }, // sio task 4
+ //!!  { &g_aMilTaskData[1], ALWAYS, 0, dev_sio_handler }, // sio task 2
+ //!!  { &g_aMilTaskData[2], ALWAYS, 0, dev_sio_handler }, // sio task 3
+ //!!  { &g_aMilTaskData[3], ALWAYS, 0, dev_sio_handler }, // sio task 4
    { &g_aMilTaskData[4], ALWAYS, 0, dev_bus_handler },
    { NULL,               ALWAYS, 0, scu_bus_handler },
    { NULL,               ALWAYS, 0, ecaHandler      },
@@ -1776,7 +1776,10 @@ STATIC void pushDaqData( const FG_MACRO_T fgMacro, const uint64_t timestamp,
       d.fgMacro.outputBits |= SET_VALUE_NOT_VALID_MASK;
  #endif
    d.setvalue = setValue;
-#if 1
+#if 0
+   #ifdef CONFIG_READ_MIL_TIME_GAP
+   #warning This will make a race-condition in the currently MIL-DAQ-circular buffer!
+   #endif
    if( isMilDaqBufferFull( &g_shared.daq_buf ) )
       removeOldestItem( &g_shared.daq_buf );
 #endif
@@ -1817,6 +1820,7 @@ STATIC_ASSERT( MAX_FG_CHANNELS == ARRAY_SIZE( g_aFgChannels ));
  * @retval true No interrupt pending
  * @retval false Any interrupt pending
  * @see milDeviceHandler
+ * @see milReqestStatus milGetStatus
  */
 ALWAYS_INLINE STATIC inline
 bool isNoIrqPending( register const MIL_TASK_DATA_T* pMilTaskData,
@@ -2042,7 +2046,7 @@ STATIC void milDeviceHandler( register TASK_T* pThis, const bool isScuBus )
    MIL_TASK_DATA_T* pMilData = (MIL_TASK_DATA_T*) pThis->pTaskData;
 
    const FG_STATE_T lastState = pMilData->state;
-//mprintf( "%d ", getMilTaskId( pMilData ) );
+
    /*
     * Performing the FSM state-do activities.
     */
@@ -2138,11 +2142,11 @@ STATIC void milDeviceHandler( register TASK_T* pThis, const bool isScuBus )
       {  /*
           * handle irqs for ifas with active pending regs; non blocking write
           */
-        // mprintf( "%d ", getMilTaskId( pMilData ) );
          FOR_EACH_FG( channel )
          {
             if( isNoIrqPending( pMilData, channel ) )
                continue; // Handle next channel...
+
             status = milHandleAndWrite( pMilData, isScuBus, channel );
             if( status != OKAY )
                dev_failure(status, 22, "dev_sio end handle");
@@ -2201,7 +2205,6 @@ STATIC void milDeviceHandler( register TASK_T* pThis, const bool isScuBus )
                mil_failure( status, pMilData->slave_nr );
                continue; // Handle next channel...
             }
-
             pushDaqData( getFgMacroViaFgRegister( channel ),
                          pMilData->aFgChannels[channel].daq_timestamp,
                          actAdcValue,
@@ -2289,7 +2292,7 @@ STATIC void milDeviceHandler( register TASK_T* pThis, const bool isScuBus )
  */
 STATIC void dev_sio_handler( register TASK_T* pThis )
 {
-   milDeviceHandler( pThis, false );
+   milDeviceHandler( pThis, true ); //false );
 }
 
 /*! ---------------------------------------------------------------------------
@@ -2302,7 +2305,7 @@ STATIC void dev_sio_handler( register TASK_T* pThis )
  */
 STATIC void dev_bus_handler( register TASK_T* pThis )
 {
-   milDeviceHandler( pThis, true );
+   milDeviceHandler( pThis, false ); //true );
 }
 
 /*! ---------------------------------------------------------------------------
