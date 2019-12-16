@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 29-November-2019
+ *  version : 16-December-2019
  *
  *  firmware required for measuring the h=1 phase for ring machine
  *  
@@ -38,7 +38,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  ********************************************************************************************/
-#define B2BPM_FW_VERSION 0x000013                                       // make this consistent with makefile
+#define B2BPM_FW_VERSION 0x000014                                       // make this consistent with makefile
 
 /* standard includes */
 #include <stdio.h>
@@ -161,6 +161,9 @@ void extern_clearDiag()
 uint32_t extern_entryActionConfigured()
 {
   uint32_t status = COMMON_STATUS_OK;
+
+  // disable input gate 
+  fwlib_ioCtrlSetGate(0, 2);
 
   // configure EB master (SRC and DST MAC/IP are set from host)
   if ((status = fwlib_ebmInit(2000, 0xffffffffffff, 0xffffffff, EBM_NOREPLY)) != COMMON_STATUS_OK) {
