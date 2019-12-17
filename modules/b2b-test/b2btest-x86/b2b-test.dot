@@ -1,0 +1,15 @@
+digraph g {
+name="testv1";
+
+graph [rankdir=TB, nodesep=0.6, mindist=0.6, ranksep=0.6, overlap=false]
+node  [type="tmsg",   shape="rectangle", style="filled", fillcolor="white", color="black", cpu="3"]
+edge  [type="defdst", color="red"]
+
+// events mit block
+CMD_SEQ_START       [type="tmsg",      pattern="B2B_TEST", patentry="true",   toffs=         0, id="0x1fa7101000000001", par="0x123", shape="oval"];
+CMD_B2B_START       [type="tmsg",      pattern="B2B_TEST",                    toffs=  10000000, id="0x1fa7800000000001", par="0x456", shape="oval"];
+DMBlk_Simple        [type="block",     pattern="B2B_TEST",                  tperiod=1210000000];                                 
+
+// sequenz
+CMD_SEQ_START -> CMD_B2B_START -> DMBlk_Simple -> CMD_SEQ_START;
+}
