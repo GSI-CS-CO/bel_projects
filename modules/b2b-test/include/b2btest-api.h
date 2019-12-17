@@ -37,7 +37,8 @@
 #ifndef _B2B_TEST_API_H_
 #define _B2B_TEST_API_H_
 
-#define B2BTEST_X86_VERSION "0.0.12"
+#define B2BTEST_X86_VERSION "0.0.14"                   // version
+#define B2BTEST_F_CLK       200000000                  // clock for DDS, here: BuTiS 200 MHz
 
 #include <b2b-test.h>
 #include <etherbone.h>
@@ -56,6 +57,10 @@ void api_initShared(eb_address_t lm32_base,            // base address of lm32
                     eb_address_t sharedOffset          // offset of shared area
                     );
 
+// convert LSA frequency to DDS frequency
+double api_flsa2fdds(double flsa                       // LSA frequency [Hz]
+                     );
+
 // read (and print) diagnostic data, returns eb_status
 int api_readDiag(eb_device_t device,                   // Etherbone device
                  uint64_t    *statusArray,             // array with status bits
@@ -73,18 +78,18 @@ int api_readDiag(eb_device_t device,                   // Etherbone device
                  uint32_t    printFlag                 // '1' print information to stdout
                  );
 
-void api_printDiag(uint64_t  statusArray,            // array with status bits
-                   uint32_t  state,                  // state
-                   uint32_t  version,                // firmware version
-                   uint64_t  mac,                    // WR MAC
-                   uint32_t  ip,                     // WR IP
-                   uint32_t  nBadStatus,             // # of bad status incidents
-                   uint32_t  nBadState,              // # of bad state incidents
-                   uint64_t  tDiag,                  // time, when diag data was reset
-                   uint64_t  tS0,                    // time, when entering S0 state (firmware boot)
-                   uint32_t  nTransfer,              // # of transfers
-                   uint32_t  nInjection,             // # of injection within ongoing transfers
-                   uint32_t  statTrans               // status bits of transfer (application specific)
+void api_printDiag(uint64_t  statusArray,              // array with status bits
+                   uint32_t  state,                    // state
+                   uint32_t  version,                  // firmware version
+                   uint64_t  mac,                      // WR MAC
+                   uint32_t  ip,                       // WR IP
+                   uint32_t  nBadStatus,               // # of bad status incidents
+                   uint32_t  nBadState,                // # of bad state incidents
+                   uint64_t  tDiag,                    // time, when diag data was reset
+                   uint64_t  tS0,                      // time, when entering S0 state (firmware boot)
+                   uint32_t  nTransfer,                // # of transfers
+                   uint32_t  nInjection,               // # of injection within ongoing transfers
+                   uint32_t  statTrans                 // status bits of transfer (application specific)
                    );
 
 

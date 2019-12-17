@@ -14,6 +14,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
 #include <time.h>
 #include <sys/time.h>
 
@@ -119,6 +120,23 @@ void api_initShared(eb_address_t lm32_base, eb_address_t sharedOffset)
   b2btest_injections   = lm32_base + sharedOffset + COMMON_SHARED_NINJECT;
   b2btest_statTrans    = lm32_base + sharedOffset + COMMON_SHARED_TRANSSTAT;
 } // api_initShared
+
+
+double api_flsa2fdds(double flsa)
+{
+  double twoep32;
+  double twoem32;
+  double fclk;
+  double fdds;
+
+  twoep32 = pow(2,  32);
+  twoem32 = pow(2, -32);
+  fclk    = (double)B2BTEST_F_CLK;
+
+  fdds   = twoem32 * floor(twoep32 * flsa / fclk) * fclk;
+
+  return fdds;
+} // api_flsa2fdds
 
 
 void api_printDiag(uint64_t  statusArray, uint32_t  state, uint32_t  version, uint64_t  mac, uint32_t  ip, uint32_t  nBadStatus, uint32_t  nBadState, uint64_t  tDiag, uint64_t  tS0, uint32_t  nTransfer, uint32_t  nInjection, uint32_t  statTrans)

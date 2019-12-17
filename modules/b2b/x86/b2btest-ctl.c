@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 28-November-2019
+ *  version : 17-December-2019
  *
  * Command-line interface for b2btest
  *
@@ -318,8 +318,8 @@ int main(int argc, char** argv) {
   int32_t  pcVarInj;                           // phase correction, variable, injection
   int32_t  kcFixExt;                           // kicker correction, fixed, extraction
   int32_t  kcFixInj;                           // kicker correction, fixed, injection
-  uint32_t fH1Ext;                             // h=1 frequency [Hz] of extraction machine
-  uint32_t fH1Inj;                             // h=1 frequency [Hz] of injection machine
+  double   fH1Ext;                             // h=1 frequency [Hz] of extraction machine
+  double   fH1Inj;                             // h=1 frequency [Hz] of injection machine
   uint32_t actState = COMMON_STATE_UNKNOWN;    // actual state of gateway
   uint32_t actNTransfer;                       // actual number of transfers
   uint32_t sleepTime;                          // time to sleep [us]
@@ -469,9 +469,10 @@ int main(int argc, char** argv) {
     if (!strcasecmp(command, "seth1inj")) {
       if (optind+3  != argc) {printf("b2b-test: expecting exactly two arguments: seth1inj <freq> <h>\n"); return 1;}
 
-      fH1Inj = strtoul(argv[optind+1], &tail, 0);
+      fH1Inj = strtod(argv[optind+1], &tail);
       if (*tail != 0)        {printf("b2b-test: invalid frequency -- %s\n", argv[optind+2]); return 1;}
-      TH1Inj = (double)1000000000000000000.0 / (double)fH1Inj;  // period in attoseconds
+      printf("b2b-test: lsa %f [Hz], dds %f [Hz]\n", fH1Inj, api_flsa2fdds(fH1Inj));
+      TH1Inj = (double)1000000000000000000.0 / api_flsa2fdds(fH1Inj);  // period in attoseconds
 
       nHInj  = strtoul(argv[optind+2], &tail, 0);
       if (*tail != 0)        {printf("b2b-test: invalid harmonic number -- %s\n", argv[optind+3]); return 1;}
@@ -485,9 +486,10 @@ int main(int argc, char** argv) {
     if (!strcasecmp(command, "seth1ext")) {
       if (optind+3  != argc) {printf("b2b-test: expecting exactly two arguments: seth1ext <freq> <h> \n"); return 1;}
 
-      fH1Ext = strtoul(argv[optind+1], &tail, 0);
+      fH1Ext = strtod(argv[optind+1], &tail);
       if (*tail != 0)        {printf("b2b-test: invalid frequency -- %s\n", argv[optind+2]); return 1;}
-      TH1Ext = (double)1000000000000000000.0 / (double)fH1Ext;  // period in attoseconds
+      printf("b2b-test: lsa %f [Hz], dds %f [Hz]\n", fH1Ext, api_flsa2fdds(fH1Ext));
+      TH1Ext = (double)1000000000000000000.0 / api_flsa2fdds(fH1Ext);  // period in attoseconds
 
       nHExt  = strtoul(argv[optind+2], &tail, 0);
       if (*tail != 0)        {printf("b2b-test: invalid harmonic number -- %s\n", argv[optind+3]); return 1;}
