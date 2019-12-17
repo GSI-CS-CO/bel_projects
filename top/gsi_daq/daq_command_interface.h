@@ -108,6 +108,7 @@ typedef int32_t DAQ_RETURN_CODE_T;
 #endif
 
 /*! ---------------------------------------------------------------------------
+ * @ingroup SHARED_MEMORY
  * @brief Operation code to controlling the DAQs from host.
  */
 typedef enum
@@ -192,6 +193,7 @@ STATIC_ASSERT( offsetof( DAQ_OPERATION_IO_T, param3 ) <
 #endif
 
 /*! ---------------------------------------------------------------------------
+ * @ingroup SHARED_MEMORY
  * @brief Complete operation type which is necessary to perform a
  *        DAQ operation of the LM32 application from the Linux host.
  */
@@ -213,6 +215,7 @@ STATIC_ASSERT( offsetof( DAQ_OPERATION_T, retCode ) <
 #endif
 
 /*! ---------------------------------------------------------------------------
+ * @ingroup SHARED_MEMORY
  * @brief Final data type in <b>shared memory</b> for DAQ.
  */
 typedef struct PACKED_SIZE

@@ -36,6 +36,11 @@
 #ifndef _SCU_SHARED_MEM_H
 #define _SCU_SHARED_MEM_H
 
+/*!
+ * @defgroup SHARED_MEMORY Sheard memory for communication between
+ *                         LM32 and Linux.
+ */
+
 #include <helper_macros.h>
 #include <scu_function_generator.h>
 #include <scu_circular_buffer.h>
@@ -44,6 +49,9 @@
   #ifdef __cplusplus
      #define __DAQ_SHARED_IO_T Scu::daq::DAQ_SHARED_IO_T
   #else
+     /*
+      * @ingroup SHARED_MEMORY
+      */
      #define __DAQ_SHARED_IO_T DAQ_SHARED_IO_T
   #endif
 #else
@@ -110,34 +118,151 @@ typedef union PACKED_SIZE
 #define CONFIG_USE_RESCAN_FLAG /* A very bad idea!!! :-( */
 
 /*! ---------------------------------------------------------------------------
+ * @ingroup SHARED_MEMORY
  * @brief Definition of shared memory area for the communication between LM32
  *        and Linux.
+ * @see saftlib/drivers/fg_regs.h
  */
 typedef struct PACKED_SIZE
 {
-   uint64_t            board_id;       /*!<@brief 1Wire ID of the pcb temp sensor */
-   uint64_t            ext_id;         /*!<@brief 1Wire ID of the extension board temp sensor */
-   uint64_t            backplane_id;   /*!<@brief 1Wire ID of the backplane temp sensor */
-   uint32_t            board_temp;     /*!<@brief temperature value of the pcb sensor */
-   uint32_t            ext_temp;       /*!<@brief temperature value of the extension board sensor */
-   uint32_t            backplane_temp; /*!<@brief temperature value of the backplane sensor */
+   /*!
+    * @brief 1Wire ID of the pcb temp sensor
+    * @see BOARD_ID in saftlib/drivers/fg_regs.
+    * @todo Check if this variable is really necessary in the future.
+    */
+   uint64_t            board_id;
+
+   /*!
+    * @brief 1Wire ID of the extension board temp sensor
+    * @see EXT_ID in saftlib/drivers/fg_regs.h
+    * @todo Check if this variable is really necessary in the future.
+    */
+   uint64_t            ext_id;
+
+   /*!
+    * @brief 1Wire ID of the backplane temp sensor
+    * @see BACKPLANE_ID in saftlib/drivers/fg_regs.h
+    * @todo Check if this variable is really necessary in the future.
+    */
+   uint64_t            backplane_id;
+
+   /*!
+    * @brief temperature value of the pcb sensor
+    * @see BOARD_TEMP in saftlib/drivers/fg_regs.h
+    * @todo Check if this variable is really necessary in the future.
+    */
+   uint32_t            board_temp;
+
+   /*!
+    * @brief temperature value of the extension board sensor
+    * @see EXT_TEMP in saftlib/drivers/fg_regs.h
+    * @todo Check if this variable is really necessary in the future.
+    */
+   uint32_t            ext_temp;
+
+   /*!
+    * @brief temperature value of the backplane sensor
+    * @see BACKPLACE_TEMP in saftlib/drivers/fg_regs.h
+    * @todo Check if this variable is really necessary in the future.
+    */
+   uint32_t            backplane_temp;
+
+   /*!
+    * @brief Magic number for recognizing the LM32 firmware.
+    * @see FG_MAGIC_NUMBER in saftlib/drivers/fg_regs.h
+    */
    uint32_t            fg_magic_number;
-   uint32_t            fg_version;     /*!<@brief 0x2 saftlib, 0x3 new msi system with mailbox */
+
+   /*!
+    * @brief Version of this firmware
+    *        0x2 saftlib, 0x3 new msi system with
+    * @see FG_VERSION in saftlib/drivers/fg_regs.h
+    */
+   uint32_t            fg_version;
+
+   /*!
+    * @brief Mailbox-slot for host => LM32
+    * @see FG_MB_SLOT saftlib/drivers/fg_regs.h
+    * @see FunctionGeneratorFirmware::ScanFgChannels() in
+    *      saftlib/drivers/FunctionGeneratorFirmware.cpp
+    * @see FunctionGeneratorFirmware::ScanMasterFg() in
+    *      saftlib/drivers/FunctionGeneratorFirmware.cpp
+    */
    uint32_t            fg_mb_slot;
+
+   /*!
+    * @brief Maximum number of function generator channels which can
+    *        support this SCU.
+    * @see MAX_FG_CHANNELS
+    * @see FG_NUM_CHANNELS in saftlib/drivers/fg_regs.h
+    * @see FunctionGeneratorImpl::acquireChannel() in
+    *      saftlib/drivers/FunctionGeneratorImpl.cpp
+    * @todo Check if this variable is really necessary in the future,
+    *       this information can be obtained by macro ARRAY_SIZE(fg_macros)
+    *       or MAX_FG_CHANNELS. Once this file becomes included in the sources of
+    *       SAFTLIB as well.
+    */
    uint32_t            fg_num_channels;
+
+   /*!
+    * @brief Maximum size of the data buffer for a single function generator channel.
+    * @see FG_BUFFER_SIZE saftlib/drivers/fg_regs.h
+    * @see BUFFER_SIZE
+    * @todo Check if this variable is really necessary in the future,
+    *       this information can be obtained by macro BUFFER_SIZE
+    *       Once this file becomes included in the sources of
+    *       SAFTLIB as well.
+    */
    uint32_t            fg_buffer_size;
-   FG_MACRO_T          fg_macros[MAX_FG_MACROS]; //!<@brief  hi..lo bytes: slot, device, version, output-bits
+
+   /*!
+    * @brief  Array of found function generator channels of
+    *         this SCU. \n Bytes: slot, device, version, output-bits
+    *
+    * This array becomes initialized by scan_all_fgs
+    *
+    * @see scan_all_fgs
+    * @see FG_MACROS in saftlib/drivers/fg_regs.h
+    */
+   FG_MACRO_T          fg_macros[MAX_FG_MACROS];
+
+   /*!
+    * @see FG_REGS_BASE_ in saftlib/drivers/fg_regs.h
+    * @see FunctionGeneratorImpl::acquireChannel() in
+    *      saftlib/drivers/FunctionGeneratorImpl.cpp
+    */
    FG_CHANNEL_REG_T    fg_regs[MAX_FG_CHANNELS];
+
+   /*!
+    * @see FunctionGeneratorImpl::refill()
+    *      in saftlib/drivers/FunctionGeneratorImpl.cpp
+    */
    FG_CHANNEL_BUFFER_T fg_buffer[MAX_FG_CHANNELS];
+
 #ifdef CONFIG_MIL_DAQ_USE_RAM
+   /*!
+    * @brief MIL-DAQ ring-buffer administration indexes
+    *        for DDR3-RAM.
+    */
    RAM_RING_INDEXES_T  mdaqRing;
 #else
+   /*!
+    * @brief MIL-DAQ-ring-buffer object in LM32 shared memory
+    */
    _MIL_DAQ_BUFFER_T   daq_buf;
  #ifdef CONFIG_USE_RESCAN_FLAG
+   /*!
+    * @see FG_SCAN_DONE in saftlib/drivers/fg_regs.h
+    * @todo <b>Remove this f... flag ASAP!!!!</b>
+    */
    uint32_t            fg_rescan_busy;
  #endif
 #endif
+
 #ifdef CONFIG_SCU_DAQ_INTEGRATION
+   /*!
+    * @brief Shared memory objects of non-MIL-DAQs
+    */
    __DAQ_SHARED_IO_T sDaq;
 #endif
 } SCU_SHARED_DATA_T;

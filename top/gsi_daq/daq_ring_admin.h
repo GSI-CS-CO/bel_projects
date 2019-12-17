@@ -109,6 +109,7 @@ namespace daq
 typedef uint32_t RAM_RING_INDEX_T;
 
 /*! ---------------------------------------------------------------------------
+ * @ingroup SHARED_MEMORY
  * @brief Data type of ring buffer indexes.
  */
 typedef struct PACKED_SIZE
@@ -126,6 +127,7 @@ STATIC_ASSERT( offsetof( RAM_RING_INDEXES_T, start ) <
 #endif
 
 /*! ---------------------------------------------------------------------------
+ * @ingroup SHARED_MEMORY
  * @brief Initializer for object of data type RAM_RING_INDEXES_T
  */
 #define RAM_RING_INDEXES_SDAQ_INITIALIZER                                     \
@@ -147,6 +149,7 @@ STATIC_ASSERT( offsetof( RAM_RING_INDEXES_T, start ) <
 #endif
 
 /*! ---------------------------------------------------------------------------
+ * @ingroup SHARED_MEMORY
  * @brief Data type for data residing in the shared memory for the
  *        communication between uC server and Linux client.
  * @note The implementation has to be within the shared memory!
@@ -174,6 +177,7 @@ STATIC_ASSERT( offsetof( RAM_RING_SHARED_OBJECT_T, ramAccessLock ) <
 #endif
 
 /*! ---------------------------------------------------------------------------
+ * @ingroup SHARED_MEMORY
  * @brief Initializer of the shared object for the communication between
  *        server and Linux client.
  */

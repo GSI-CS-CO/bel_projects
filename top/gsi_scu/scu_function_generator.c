@@ -242,7 +242,7 @@ void scan_all_fgs( volatile uint16_t *scub_adr,
 }
 
 /*! ---------------------------------------------------------------------------
- * @brief  init the buffers for MAX_FG_CHANNELS
+ * @see scu_function_generator.h
  */
 void init_buffers( FG_CHANNEL_REG_T* cr, const unsigned int channel,
                    FG_MACRO_T* fg_macros,
@@ -257,10 +257,13 @@ void init_buffers( FG_CHANNEL_REG_T* cr, const unsigned int channel,
    cr[channel].state = 0;
    cr[channel].ramp_count = 0;
 
-      // Is a macro assigned to that channel?
+   /*
+    *  Is a macro assigned to that channel by SAFTLIB?
+    *  FunctionGeneratorImpl::acquireChannel
+    */
    const int32_t macro = cr[channel].macro_number;
    if( macro < 0 )
-      return; // No
+      return; /* No */
 
 
    const uint8_t socket = fg_macros[macro].socket;

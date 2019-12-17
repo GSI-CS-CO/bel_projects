@@ -47,9 +47,24 @@ namespace Scu
 {
 #endif
 
+/*!
+ * @ingroup SHARED_MEMORY
+ * @brief Maximum of function generator macros
+ */
 #define   MAX_FG_MACROS     256
+
+/*!
+ * @ingroup SHARED_MEMORY
+ * @brief Maximum of supported function generator channels
+ */
 #define   MAX_FG_CHANNELS   16
+
+/*!
+ * @brief Maximum number of function generator channels per SCU-bus slave
+ */
 #define   MAX_FG_PER_SLAVE  2
+
+
 #define   BUFFER_SIZE       121
 #define   THRESHOLD         BUFFER_SIZE * 40 / 100
 #define   OUTPUT_BITS       24
@@ -89,6 +104,7 @@ namespace Scu
 #define SCU_BUS_SLOT_MASK  0x0F
 
 /*!
+ * @ingroup SHARED_MEMORY
  * @brief Info type of a discovered function generator.
  * @see SCU_SHARED_DATA_T::fg_macros
  */
@@ -173,6 +189,7 @@ STATIC_ASSERT( sizeof(FG_CONTROL_REG_T) == sizeof(uint32_t) );
 
 
 /*!
+ * @ingroup SHARED_MEMORY
  * @brief Polynomial type for function generator.
  * @see send_fg_param
  * @see configure_fg_macro
@@ -365,45 +382,56 @@ typedef enum
 } FG_REG_STATE_T;
 
 /*!
+ * @ingroup SHARED_MEMORY
  * @see SCU_SHARED_DATA_T::fg_regs
+ * @see FG_REGS_BASE_ in saftlib/drivers/fg_regs.h
+ * @see FunctionGeneratorImpl::acquireChannel in
+ *      saftlib/drivers/FunctionGeneratorImpl.cpp
  */
 typedef struct PACKED_SIZE
 {
    /*!
     * @brief Write index
+    * @see FG_WPTR in saftlib/drivers/fg_regs.h
     */
    uint32_t       wr_ptr;
 
    /*!
     * @brief Read index
+    * @see FG_RPTR in saftlib/drivers/fg_regs.h
     */
    uint32_t       rd_ptr;
 
    /*!
     * @brief mbx slot
+    * @see FG_MBX_SLOT in saftlib/drivers/fg_regs.h
     */
    LM32_CONST uint32_t mbx_slot;
 
    /*!
     * @brief Link-index of found FG list
     * @see FG_MACRO_T
+    * @see FG_MACRO_NUM in saftlib/drivers/fg_regs.h
     */
    uint32_t       macro_number;
 
    /*!
     * @brief Ramp counter
+    * @see FG_RAMP_COUNT in saftlib/drivers/fg_regs.h
     */
    LINUX_CONST uint32_t ramp_count;
 
    /*!
     * @brief Tag for non-MIL- function generators
     * @see configure_fg_macro
+    * @see FG_TAG in saftlib/drivers/fg_regs.h
     */
    LM32_CONST uint32_t  tag;
 
    /*!
     * @brief Current function generator state
     *        meaning private to LM32
+    * @see FG_STATE in saftlib/drivers/fg_regs.h
     */
    LINUX_CONST FG_REG_STATE_T state;
 } FG_CHANNEL_REG_T;
@@ -435,7 +463,9 @@ void scan_all_fgs( volatile uint16_t *base_adr,
                    volatile unsigned int* mil_base,
                    FG_MACRO_T* fglist,
                    uint64_t *ext_id );
-
+/*! ---------------------------------------------------------------------------
+ * @brief  init the buffers for MAX_FG_CHANNELS
+ */
 void init_buffers( FG_CHANNEL_REG_T* cr,
                    const unsigned int channel,
                    FG_MACRO_T* macro,
