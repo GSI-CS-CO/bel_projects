@@ -230,7 +230,13 @@ $(DEPENDFILE): $(_SOURCE) $(ADDITIONAL_DEPENDENCES) $(WORK_DIR)
 dep: $(WORK_DIR) $(DEPENDFILE)
 	@cat $(DEPENDFILE)
 
--include $(DEPENDFILE)
+.PHONY: lsrc
+lsrc:
+	$(QUIET)echo $(_SOURCE) | tr ' ' '\n'
+
+.PHONY: ldep
+ldep: $(WORK_DIR) $(DEPENDFILE)
+	$(QUIET) cat $(DEPENDFILE) | grep -v ':' | grep -v '@' | tr -d '\\'
 
 .PHONY: clean
 clean:
@@ -243,6 +249,8 @@ clean:
 	rmdir $(DEPLOY_DIR); \
 	rmdir $(GENERATED_DIR); \
 	exit 0 ) 2>/dev/null
+
+-include $(DEPENDFILE)
 
 #-------------------------------- Doxygen -------------------------------------
 DOX_PROJECT_NAME          ?= "$(shell echo $(TARGET) | tr '_' ' ' )"

@@ -3,7 +3,7 @@
 ##          Makefile for building the commandline tool "mdaqt"               ##
 ##                                                                           ##
 ##---------------------------------------------------------------------------##
-## File:     gsi_daq/tools/mil_daqMakefile                                   ##
+## File:     gsi_daq/tools/mil_daq/Makefile                                  ##
 ## Author:   Ulrich Becker                                                   ##
 ## Company:  GSI Helmholtz Centre for Heavy Ion Research GmbH                ##
 ## Date:     14.08.2019                                                      ##
