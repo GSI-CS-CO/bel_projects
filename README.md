@@ -66,6 +66,9 @@ You need to have installed the following packages before you can configure and b
 * autotools-dev
 * autoconf
 * libtool (glibtoolize)
+* build-essential
+* automake
+* libreadline-dev 
 
 ## Common Errors and Warnings
 ### Error: quartus: error while loading shared libraries: libpng12-0.0: ... [Ubuntu/Mint/...]

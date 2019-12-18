@@ -3,7 +3,7 @@
 //
 //  created : 2015
 //  author  : Dietrich Beck, GSI-Darmstadt
-//  version : 17-Oct-2019
+//  version : 27-nov-2019
 //
 // Command-line interface for WR monitoring via Etherbone.
 //
@@ -34,7 +34,9 @@
 // For all questions and ideas contact: d.beck@gsi.de
 // Last update: 25-April-2015
 //////////////////////////////////////////////////////////////////////////////////////////////
-#define EBMON_VERSION "2.0.3"
+#define EBMON_VERSION "2.0.5"
+#define AHEADT       1000000     // data master works ahead of time [ns]
+#define EARLYDT   1000000000     // detection limit for early events [ns]
 
 // standard includes
 #include <unistd.h> // getopt
@@ -88,7 +90,7 @@ static void help(void)
   fprintf(stderr, "  -t<busIndex>     display temperature of sensor on the specified 1-wire bus\n");
   fprintf(stderr, "  -u<index>        user 1-wire: specify WB device in case multiple WB devices of the same type exist (default: u0)\n");
   fprintf(stderr, "  -v               display verbose information\n");
-  fprintf(stderr, "  -w<index>        WR 1-wire: specify WB device in case multiple WB devices of the same type exist (default: u0)\n");
+  fprintf(stderr, "  -w<index>        WR 1-wire: specify WB device in case multiple WB devices of the same type exist (default: w0)\n");
   fprintf(stderr, "  -y               display WR sync status\n");
   fprintf(stderr, "  -z               display FPGA uptime [h]\n");
   fprintf(stderr, "\n");
@@ -104,10 +106,9 @@ static void help(void)
   fprintf(stderr, "\n");
   fprintf(stderr, "When using option '-s<n>', the following information is displayed\n");
   fprintf(stderr, "eb-mon:    WR [ns]   | CPU stall[%%]|                      [n(Hz)]   ECA                 [us(us)]\n");
-  fprintf(stderr, "eb-mon:  lock +dt -dt|   max(  act)| nMessages( rate ) early late  min max avrge(act) ltncy(act)\n");
-  fprintf(stderr, "eb-mon:     1  16   0| 32.71(17.87)|      2501(  69.0)     0    0  879 986   935(935)    65( 65)\n");
-  fprintf(stderr, "            '   '   '      '     '           '      '      '    '    '   '     '   '      '   ' \n");
-  fprintf(stderr, "            '   '   '      '     '           '      '      '    '    '   '     '   '      '   '- actual latency\n");
+  fprintf(stderr, "eb-mon:  lock +dt -dt|   max(  act)| nMessages( rate ) early late  min max avrge(act) ltncy\n");
+  fprintf(stderr, "eb-mon:     1  16   0| 32.71(17.87)|      2501(  69.0)     0    0  879 986   935(935)   121\n");
+  fprintf(stderr, "            '   '   '      '     '           '      '      '    '    '   '     '   '      '\n");
   fprintf(stderr, "            '   '   '      '     '           '      '      '    '    '   '     '   '      '- latency\n");
   fprintf(stderr, "            '   '   '      '     '           '      '      '    '    '   '     '   '- actual average (dl - ts)\n");
   fprintf(stderr, "            '   '   '      '     '           '      '      '    '    '   '     '- average (dl - ts)\n");
@@ -130,29 +131,26 @@ static void help(void)
 
 void printSnoopHeader()
 { 
-  fprintf(stdout, "%s:    WR [ns]   | CPU stall[%%]|                      [n(Hz)]   ECA                 [us(us)]\n", program);
-  fprintf(stdout, "%s:  lock +dt -dt|   max(  act)| nMessages( rate ) early late  min max avrge(act) ltncy(act)\n", program);
+  fprintf(stdout, "%s:    WR [ns]   | CPU stall[%%]|                      [n(Hz)]   ECA               [us]\n", program);
+  fprintf(stdout, "%s:  lock +dt -dt|   max(  act)| nMessages( rate ) early late  min max avrge(act) ltncy\n", program);
 } // printSnoopHeader
 
 
 void printSnoopData(int snoopInterval, int snoopLockFlag, int64_t contMaxPosDT, int64_t contMaxNegDT, double snoopStallMax, double snoopStallAct, uint64_t ecaNMessage, int64_t ecaMin, int64_t ecaMax, int64_t ecaDtSum, int ecaLate, int ecaEarly)
 {
   int average;
-  int aheadT = 1000;    /* chk hack */
   int latency;
   uint64_t nMessageAct;
   int64_t  dtSumAct;
   int      averageAct;
-  int      latencyAct;
   static uint64_t nMessagePrev = 0;
   static uint64_t dtSumPrev    = 0;
 
   average      = (int)(ecaDtSum/(1000*ecaNMessage+1)); // ns -> us
-  latency      = aheadT - average;
+  latency      = (AHEADT - ecaMin) / 1000.0;           // ns -> us
   nMessageAct  = ecaNMessage - nMessagePrev;
   dtSumAct     = ecaDtSum - dtSumPrev; 
   averageAct   = (int)(dtSumAct/(1000*nMessageAct+1));
-  latencyAct   = aheadT - averageAct;
 
   nMessagePrev = ecaNMessage;
   dtSumPrev    = ecaDtSum;
@@ -162,8 +160,8 @@ void printSnoopData(int snoopInterval, int snoopLockFlag, int64_t contMaxPosDT, 
   fprintf(stdout, "%3d ", (int)contMaxPosDT);
   fprintf(stdout, "%3d|", (int)contMaxNegDT);
   fprintf(stdout, " %5.2f(%5.2f)|", snoopStallMax, snoopStallAct);
-  if (ecaNMessage == 0) fprintf(stdout, " %9"PRIu64"(%6.1f)   %3d  %3d  %3d %3d   %3d(%3d)   %3d(%3d)", (uint64_t)0, 0.0, 0, 0, 0, 0, 0, 0, 0, 0);
-  else                  fprintf(stdout, " %9"PRIu64"(%6.1f)   %3d  %3d  %3d %3d   %3d(%3d)   %3d(%3d)", ecaNMessage, (double)nMessageAct/(double)snoopInterval, ecaEarly, ecaLate, (int)(ecaMin/1000), (int)(ecaMax/1000), average, averageAct, latency, latencyAct);
+  if (ecaNMessage == 0) fprintf(stdout, " %9"PRIu64"(%6.1f)   %3d  %3d  %3d %3d   %3d(%3d)   %3d", (uint64_t)0, 0.0, 0, 0, 0, 0, 0, 0, 0);
+  else                  fprintf(stdout, " %9"PRIu64"(%6.1f)   %3d  %3d  %3d %3d   %3d(%3d)   %3d", ecaNMessage, (double)nMessageAct/(double)snoopInterval, ecaEarly, ecaLate, (int)(ecaMin/1000), (int)(ecaMax/1000), average, averageAct, latency);
   fprintf(stdout, "\n");
   fflush(stdout); 
 
@@ -219,8 +217,8 @@ int main(int argc, char** argv) {
   uint64_t    nsecsSum64, nsecsSumOther64;
   uint64_t    nsecsRound64, nsecsRoundOther64;
   uint64_t    tmpa64, tmpb64;
-  uint64_t    msecs64;
-  uint64_t    hostmsecs64;
+  uint64_t    usecs64;
+  uint64_t    hostusecs64;
   int64_t     offset;
   uint64_t    mac;
   uint64_t    lockLossTS;
@@ -541,15 +539,15 @@ int main(int argc, char** argv) {
   if (getWRDate || getWROffset) {
     if ((status = wb_wr_get_time(device, devIndex, &nsecs64)) != EB_OK) die("WR get time", status);
     secs     = (unsigned long)((double)nsecs64 / 1000000000.0);
-    msecs64  = nsecs64 / 1000000.0;
+    usecs64  = nsecs64 / 1000.0;
 
     if (getWROffset) {
       // get system time
       gettimeofday(&htm, NULL);
-      hostmsecs64 = htm.tv_sec*1000 + htm.tv_usec/1000;
-      offset      = msecs64 - hostmsecs64;
+      hostusecs64 = htm.tv_sec*1000000 + htm.tv_usec;
+      offset      = usecs64 - hostusecs64;
       if (verbose) fprintf(stdout, "WR_time - host_time [ms]: ");
-      fprintf(stdout, "%ld\n", (long)offset);
+      fprintf(stdout, "%9.3f\n", (double)offset/1000.0);
     }
 
     if (getWRDate) {
@@ -558,7 +556,7 @@ int main(int argc, char** argv) {
       strftime(timestr, sizeof(timestr), "%Y-%m-%d %H:%M:%S %Z", tm);
       
       if (verbose) fprintf(stdout, "Current TAI: ");
-      fprintf(stdout, "%s (%3lu ms)", timestr, msecs64 - secs * 1000);
+      fprintf(stdout, "%s (%3lu us)", timestr, usecs64 - secs * 1000000);
       fprintf(stdout, ", %"PRIu64" us\n", nsecs64 / 1000);
     }
   } // if getWRDate
@@ -687,14 +685,13 @@ int main(int argc, char** argv) {
   } // if getCPUStall
 
   if (getECATap) {
-    int32_t aheadt = 1000000;
     fprintf(stdout, "= ECA-Tap (input) [ns]\n");
     if ((status = wb_eca_stats_get(device, devIndex, &ecaNMessage, &ecaDtSum, &ecaDtMin, &ecaDtMax, &ecaNLate, &ecaLateOffset)) != EB_OK) fprintf(stdout, "warning: can't ECA-Tap statistics (can't find in gateware)\n");
     fprintf(stdout, "--- # of messages     : %"PRIu64"\n", ecaNMessage);
     fprintf(stdout, "--- ave (dl - ts)     : %d\n", (int32_t)((double)ecaDtSum/(double)ecaNMessage));
     fprintf(stdout, "--- min (dl - ts)     : %"PRId64"\n", ecaDtMin);
     fprintf(stdout, "--- max (dl - ts)     : %"PRId64"\n", ecaDtMax);
-    fprintf(stdout, "--- calc latency      : %d\n", aheadt - (int32_t)((double)ecaDtSum/(double)ecaNMessage));
+    fprintf(stdout, "--- calc latency      : %d\n", AHEADT - (int32_t)((double)ecaDtSum/(double)ecaNMessage));
     fprintf(stdout, "--- late offset       : %d\n", ecaLateOffset);
     fprintf(stdout, "--- # of late messages: %u\n", ecaNLate);
   } // getECATap

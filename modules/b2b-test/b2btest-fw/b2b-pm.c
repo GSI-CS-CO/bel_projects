@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 17-June-2019
+ *  version : 19-June-2019
  *
  *  firmware required for measuring the h=1 phase for ring machine
  *  
@@ -38,7 +38,7 @@ p *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 15-April-2019
  ********************************************************************************************/
-#define B2BPM_FW_VERSION 0x000009                                       // make this consistent with makefile
+#define B2BPM_FW_VERSION 0x000010                                       // make this consistent with makefile
 
 /* standard includes */
 #include <stdio.h>
@@ -55,6 +55,7 @@ p *  but WITHOUT ANY WARRANTY; without even the implied warranty of
 #include "syscon.h"                                                     // usleep et al
 #include "aux.h"                                                        // cpu and IRQ
 #include "uart.h"                                                       // WR console
+#include "stack.h"                                                      // stack check
 
 /* includes for this project */
 #include <b2b-common.h>                                                 // common stuff for b2b
@@ -378,6 +379,7 @@ int main(void) {
   uint32_t pubState;                            // value of published state
   uint32_t reqState;                            // requested FSM state
   uint32_t dummy1;                              // dummy parameter
+  uint32_t *buildID;                            // build ID of lm32 firmware
  
   // init local variables
   reqState       = COMMON_STATE_S0;
@@ -389,8 +391,10 @@ int main(void) {
   init();                                                                     // initialize stuff for lm32
   initSharedMem();                                                            // initialize shared memory
   common_init((uint32_t *)_startshared, B2BPM_FW_VERSION);                    // init common stuff
+  buildID        = (uint32_t *)(INT_BASE_ADR + BUILDID_OFFS);                 // required for 'stack check'  
   
   while (1) {
+    check_stack_fwid(buildID);                                                // check stack status
     common_cmdHandler(&reqState, &dummy1);                                    // check for commands and possibly request state changes
     status = COMMON_STATUS_OK;                                                // reset status for each iteration
 
