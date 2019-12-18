@@ -404,7 +404,9 @@ typedef struct PACKED_SIZE
 
    /*!
     * @brief mbx slot
-    * @see FG_MBX_SLOT in saftlib/drivers/fg_regs.h
+    * @see FG_MBX_SLOT in saftlib/drivers/fg_regs.
+    * @see FunctionGeneratorImpl::acquireChannel in
+    *      FunctionGeneratorImpl.cpp
     */
    LM32_CONST uint32_t mbx_slot;
 

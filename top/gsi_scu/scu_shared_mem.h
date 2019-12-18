@@ -253,6 +253,8 @@ typedef struct PACKED_SIZE
  #ifdef CONFIG_USE_RESCAN_FLAG
    /*!
     * @see FG_SCAN_DONE in saftlib/drivers/fg_regs.h
+    * @see FunctionGeneratorFirmware::firmware_rescan in
+    *      saftlib/drivers/FunctionGeneratorFirmware.cpp
     * @todo <b>Remove this f... flag ASAP!!!!</b>
     */
    uint32_t            fg_rescan_busy;
@@ -485,6 +487,12 @@ static inline const char* fgCommand2String( const FG_OP_CODE_T op )
    #undef __FG_COMMAND_CASE
 }
 
+/*!
+ * @brief Definition of signals to send from server (LM32) to client
+ * @see sendSignal
+ * @see saftlib/drivers/fg_regs.h
+ * @see FunctionGeneratorImpl::irq_handler in saftlib/drivers/FunctionGeneratorImpl.cpp
+ */
 typedef enum
 {
    IRQ_DAT_REFILL         = 0,

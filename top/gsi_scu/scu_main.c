@@ -241,6 +241,7 @@ STATIC inline FG_MACRO_T getFgMacroViaFgRegister( const unsigned int channel )
  * @brief Returns "true" if the function generator of the given channel
  *        present.
  * @see FOR_EACH_FG
+ * @see FOR_EACH_FG_CONTINUING
  */
 STATIC inline bool isFgPresent( const unsigned int channel )
 {
