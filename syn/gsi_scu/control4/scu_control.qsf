@@ -11,9 +11,11 @@ set_global_assignment -name EDA_BOARD_DESIGN_BOUNDARY_SCAN_TOOL "<None>"
 set_global_assignment -name EDA_OUTPUT_DATA_FORMAT NONE -section_id eda_board_design_boundary_scan
 set_global_assignment -name EDA_OUTPUT_DATA_FORMAT NONE -section_id eda_simulation
 set_global_assignment -name EDA_SIMULATION_TOOL "<None>"
-set_global_assignment -name ENABLE_BOOT_SEL_PIN ON
-set_global_assignment -name ENABLE_CONFIGURATION_PINS ON
-set_global_assignment -name ENABLE_NCE_PIN ON
+set_global_assignment -name ENABLE_BOOT_SEL_PIN OFF
+set_global_assignment -name ENABLE_CONFIGURATION_PINS OFF
+set_global_assignment -name ENABLE_INIT_DONE_OUTPUT ON
+set_global_assignment -name ENABLE_NCE_PIN OFF
+set_global_assignment -name ENABLE_OCT_DONE OFF
 set_global_assignment -name ENABLE_SIGNALTAP OFF
 set_global_assignment -name ERROR_CHECK_FREQUENCY_DIVISOR 2
 set_global_assignment -name FAMILY "Arria 10"
