@@ -11,8 +11,13 @@ entity top is
     i2c_scl           : in    std_logic;
     i2c_sda           : inout std_logic;
 
-    pGood             : in    std_logic_vector (3 downto 0);  --Power good (0.95V, 1.8V, 3.3V, 5V)
-    nPfail            : in    std_logic;                    -- 12V Rail Powerfail 
+    pGood             : in    std_logic_vector (3 downto 0);  -- Power good (0.95V, 1.8V, 3.3V, 5V)
+    nPfail            : in    std_logic;                      -- 12V Rail Powerfail 
+    --Arria 10 status
+    CONF_DONE         : in    std_logic;
+    INIT_DONE         : in    std_logic;
+    nSTATUS           : in    std_logic;
+
     --Reset In
     nCB_rst           : in    std_logic;                    -- Reset from COMX
     nSCUext_rst_in    : in    std_logic;                    -- Reset form SCU-Bus Extension
@@ -20,14 +25,16 @@ entity top is
     nPB_rst_in        : in    std_logic;                    -- Reset form Push Button
     nFPHA_rst_in      : in    std_logic;                    -- Reset from Arria10
     --Reset Out
-    nSYS_rst          : out   std_logic :='0';                    -- Reset Out
-    nPCI_rst_out      : out   std_logic :='0';                    -- PCI Reset Out
-    nExt_rst_out      : out   std_logic :='0';                    -- Reset to Extension Connector
-    --Power Enable
-    core_en           : out   std_logic :='0';                    -- Enable 0.95V Core voltage
-    volt_1_8_en       : out   std_logic :='0';                    -- Enable 1.8V Rail
-    volt_1_8_IO_en    : out   std_logic :='0';                    -- Enable IO 1.8V Rail (MOSFET)
-    volt_5_en         : out   std_logic :='0';                    -- Enable 5V Rail 
+    nSYS_rst          : out   std_logic :='0';              -- Reset Out
+    nPCI_rst_out      : out   std_logic :='0';              -- PCI Reset Out
+    nExt_rst_out      : out   std_logic :='0';              -- Reset to Extension Connector
+    --Power 
+    core_en           : out   std_logic :='0';              -- Enable 0.95V Core voltage
+    volt_1_8_en       : out   std_logic :='0';              -- Enable 1.8V Rail
+    volt_1_8_IO_en    : out   std_logic :='0';              -- Enable IO 1.8V Rail (MOSFET)
+    volt_5_en         : out   std_logic :='0';              -- Enable 5V Rail 
+
+    IO_enable         : out   std_logic;                    -- Enable Levelshifter 1.8V  ->  3.3V
 
     led_status_o      : out   std_logic_vector(2 downto 0)
   );
@@ -62,5 +69,7 @@ architecture rtl of top is
   nSYS_rst <= rst_n;
   nPCI_rst_out <= nCB_rst;
   nExt_rst_out <= nCB_rst;
+
+  IO_enable <= INIT_DONE;
 
 end;

@@ -804,7 +804,6 @@ set_location_assignment PIN_K9 -to psram_dq[0]
 set_location_assignment PIN_L1 -to A_A[12]
 set_location_assignment PIN_L2 -to lemo_n_o[0]
 set_location_assignment PIN_L3 -to "lemo_n_o[0](n)"
-set_location_assignment PIN_L4 -to IO_enable
 set_location_assignment PIN_L6 -to la_ch[1]
 set_location_assignment PIN_L7 -to A_nSEL[4]
 set_location_assignment PIN_L8 -to psram_dq[13]

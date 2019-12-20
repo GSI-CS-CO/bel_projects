@@ -85,7 +85,6 @@ entity scu_control is
     -----------------------------------------------------------------------
     nres_i        : in      std_logic;
     user_btn      : in      std_logic;  --User Button 
-    IO_enable     : out     std_logic;  --Enable Levelshifter 1.8V  ->  3.3V
     max10_connect : inout   std_logic_vector (7 downto 0);  -- Pins reserveriert tbd
     
     -----------------------------------------------------------------------
@@ -344,7 +343,6 @@ begin
   
   lemo_out <= not s_gpio_o(9 downto 6);
   
-  IO_enable <= '1';  -- LS enable when FPGA ready
 
   onewire_ext_splz  <= '1';  --Strong Pull-Up disabled      
   OneWire_CB_splz   <= '1';  --Strong Pull-Up disabled
