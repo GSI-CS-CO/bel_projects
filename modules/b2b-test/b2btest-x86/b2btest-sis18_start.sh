@@ -49,7 +49,8 @@ echo -e b2btest-sis18 - start: configure tr0 for phase measurement TLU
 # configure phase measurement input (SIS18 DDS)
 ################################################
 # IO3 configured as TLU input (from 'DDS')
-# configure TLU 
+# configure TLU
+saft-io-ctl tr0 -n IO3 -o 0 -t 1
 saft-io-ctl tr0 -n IO3 -b 0xffff100000000000
 #eb-write dev/wbm0 0x4012000/4 0x0004
 
@@ -63,7 +64,7 @@ saft-ecpu-ctl tr0 -c 0xffff100000000001 0xffffffffffffffff 0 0x2 -d
 saft-ecpu-ctl tr0 -c 0x1fa7801000000000 0xfffffff000000000 0 0x801 -d
 
 # testing pulse upon B2B_DIAGEXT message from CBU
-saft-io-ctl tr0 -n IO2 -o 1 -t 0
+saft-io-ctl tr0 -n IO2 -o 1 -t 1
 saft-io-ctl tr0 -n IO2 -c 0x1fa7805000000000 0xfffffff000000000 0 0x0 1 -u
 saft-io-ctl tr0 -n IO2 -c 0x1fa7805000000000 0xfffffff000000000 10000000 0x0 0 -u
 

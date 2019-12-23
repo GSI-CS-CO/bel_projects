@@ -43,6 +43,7 @@ echo -e b2btest-esr - start: configure tr0 for phase measurement, TLU
 ################################################
 # IO3 configured as TLU input (from 'DDS')
 # configure TLU
+saft-io-ctl tr0 -n IO3 -o 0 -t 1
 saft-io-ctl tr0 -n IO3 -b 0xffff100000000000
 
 # lm32 listens to TLU
