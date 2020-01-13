@@ -37,7 +37,7 @@ void init( void )
    uart_init_hw();        // init UART, required for printf...
 }
 
-void main( void )
+int main( void )
 {
    init();
    mprintf("\nFarewell, you cruel world!\n");
@@ -47,6 +47,7 @@ void main( void )
    SCU_ASSERT( false );
    mprintf("\nI survived!\n");
    while( true );
+   return 0;
 }
 
 /*================================== EOF ====================================*/

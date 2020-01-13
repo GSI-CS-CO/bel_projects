@@ -26,7 +26,7 @@
 #include "eb_console_helper.h"
 #include "wr_time.h"
 
-void main( void )
+int main( void )
 {
    discoverPeriphery();
    uart_init_hw();
@@ -39,7 +39,7 @@ void main( void )
    if( pWrt == NULL )
    {
       mprintf( ESC_FG_RED "Error could not initialize WR-pointer!\n" ESC_NORMAL );
-      return;
+      return 0;
    }
 
 #if 1
@@ -60,9 +60,12 @@ void main( void )
                tm.tm_min,
                tm.tm_sec,
                pWrt->tsv.tv_nsec );
+         gotoxy( 1, 3 );
+         mprintf( "high: %04x, low: %04x", pWrt->tsv.tv_secHi, pWrt->tsv.tv_secLo );
       }
    }
    while( 1 );
 #endif
+   return 0;
 }
 

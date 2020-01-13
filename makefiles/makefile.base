@@ -238,6 +238,14 @@ lsrc:
 ldep: $(WORK_DIR) $(DEPENDFILE)
 	$(QUIET) cat $(DEPENDFILE) | grep -v ':' | grep -v '@' | tr -d '\\'
 
+.PHONY: incdirs
+incdirs:
+	$(QUIET)echo $(INCLUDE_DIRS)
+
+.PHONY: incargs
+incargs:
+	$(QUIET)echo $(OPT_INCLUDE)
+
 .PHONY: clean
 clean:
 	$(QUIET)( rm $(ADDITIONAL_TO_CLEAN); \
