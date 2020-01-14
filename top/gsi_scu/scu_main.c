@@ -26,6 +26,9 @@
 #if !defined(__lm32__) && !defined(__DOXYGEN__) && !defined(__DOCFSM__)
   #error This module is for the target LM32 only!
 #endif
+#ifndef MICO32_FULL_CONTEXT_SAVE_RESTORE
+  #warning Macro MICO32_FULL_CONTEXT_SAVE_RESTORE is not defined in Makefile!
+#endif
 
 #ifndef __DOCFSM__ /* Headers will not need for FSM analysator "docfsm" */
  #include <stdint.h>
@@ -1113,8 +1116,8 @@ void _segfault( void )
  */
 STATIC void findECAQ( void )
 {
-#define ECAQMAX           4         //  max number of ECA queues
-#define ECACHANNELFORLM32 2         //  this is a hack! suggest to implement proper sdb-records with info for queues
+#define ECAQMAX           4 //!<@brief  max number of ECA queues
+#define ECACHANNELFORLM32 2 //!<@brief  this is a hack! suggest to implement proper sdb-records with info for queues
 
   // stuff below needed to get WB address of ECA queue 
   sdb_location ECAQ_base[ECAQMAX]; // base addresses of ECA queues
@@ -1129,15 +1132,16 @@ STATIC void findECAQ( void )
   // walk through all ECA Queues and find the one for the LM32
   for( uint32_t i = 0; i < ECAQidx; i++ )
   {
-     ECA_T* tmp = (ECA_T*)(getSdbAdr(&ECAQ_base[i]));
-     if( (tmp != NULL) && (tmp[ECA_QUEUE_QUEUE_ID_GET / sizeof(ECA_T)] == ECACHANNELFORLM32) )
-        g_eca.pQueue = tmp;
+     ECA_T* pTmp = (ECA_T*)(getSdbAdr(&ECAQ_base[i]));
+     if( (pTmp != NULL) && (pTmp[ECA_QUEUE_QUEUE_ID_GET / sizeof(ECA_T)] == ECACHANNELFORLM32) )
+        g_eca.pQueue = pTmp;
   }
 
   if( g_eca.pQueue == NULL )
   {
      mprintf(ESC_ERROR"\nFATAL: can't find ECA queue for lm32, good bye!"ESC_NORMAL"\n");
-     while(true) asm("nop");
+     while( true )
+        asm("nop");
   }
   g_eca.tag = g_eca.pQueue[ECA_QUEUE_TAG_GET / sizeof(ECA_T)];
   mprintf("\nECA queue found at: 0x%08x. Waiting for actions with tag 0x%08x ...\n\n",
