@@ -1,0 +1,36 @@
+###############################################################################
+##                                                                           ##
+##           Include makefile for freeRTOS LM32 projects in SCU              ##
+##                                                                           ##
+##---------------------------------------------------------------------------##
+## File:    makefile.rtos                                                    ##
+## (c):     GSI Helmholtz Centre for Heavy Ion Research GmbH                 ##
+## Author:  Ulrich Becker                                                    ##
+## Date:    14.01.2020                                                       ##
+###############################################################################
+ifndef REPOSITORY_DIR
+   $(error Variable REPOSITORY_DIR is not defined! )
+endif
+
+RTOS_BASE_DIR   ?= $(REPOSITORY_DIR)/modules/FreeRTOS
+RTOS_SRC_DIR    ?= $(RTOS_BASE_DIR)/Source
+RTOS_HEADER_DIR ?= $(RTOS_SRC_DIR)/include
+RTOS_PORT_DIR   ?= $(RTOS_SRC_DIR)/portable/GCC/SCU_LM32
+
+RTOS_INCLUDE_DIR += $(RTOS_HEADER_DIR)
+RTOS_INCLUDE_DIR += $(RTOS_PORT_DIR)
+
+RTOS_SOURCE += $(RTOS_SRC_DIR)/croutine.c
+RTOS_SOURCE += $(RTOS_SRC_DIR)/event_groups.c
+RTOS_SOURCE += $(RTOS_SRC_DIR)/list.c
+RTOS_SOURCE += $(RTOS_SRC_DIR)/queue.c
+RTOS_SOURCE += $(RTOS_SRC_DIR)/stream_buffer.c
+RTOS_SOURCE += $(RTOS_SRC_DIR)/tasks.c
+RTOS_SOURCE += $(RTOS_SRC_DIR)/timers.c
+RTOS_SOURCE += $(RTOS_PORT_DIR)/port.c
+
+SOURCE       += $(RTOS_SOURCE)
+INCLUDE_DIRS += $(RTOS_INCLUDE_DIR)
+
+DOX_INPUT += $(RTOS_INCLUDE_DIR)
+#===================================== EOF ====================================

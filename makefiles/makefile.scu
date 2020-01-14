@@ -42,6 +42,10 @@ endif
 
 include $(MAKEFILE_DIR)/scu_dirs.inc
 
+ifdef USE_RTOS
+  include $(MAKEFILE_DIR)/makefile.rtos
+endif
+
 INCLUDE_DIRS += $(WR_DIR)/include
 INCLUDE_DIRS += $(GENERATED_DIR)
 
