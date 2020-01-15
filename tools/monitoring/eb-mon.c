@@ -3,7 +3,7 @@
 //
 //  created : 2015
 //  author  : Dietrich Beck, GSI-Darmstadt
-//  version : 27-nov-2019
+//  version : 15-jan-2020
 //
 // Command-line interface for WR monitoring via Etherbone.
 //
@@ -34,7 +34,7 @@
 // For all questions and ideas contact: d.beck@gsi.de
 // Last update: 25-April-2015
 //////////////////////////////////////////////////////////////////////////////////////////////
-#define EBMON_VERSION "2.0.5"
+#define EBMON_VERSION "2.0.6"
 #define AHEADT       1000000     // data master works ahead of time [ns]
 #define EARLYDT   1000000000     // detection limit for early events [ns]
 
@@ -418,7 +418,7 @@ int main(int argc, char** argv) {
 
   // open Etherbone device and socket
   if ((status = wb_open(devName, &device, &socket)) != EB_OK) {
-    fprintf(stderr, "can't open connection to device %s \n", devName);
+    fprintf(stderr, "can't open connection to device %s (%s) \n", devName, eb_status(status));
     return (1);
   }
   
