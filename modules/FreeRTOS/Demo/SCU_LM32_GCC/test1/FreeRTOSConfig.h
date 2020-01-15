@@ -1,15 +1,45 @@
+/*!
+ * @file      FreeRTOSConfig.h
+ * @brief  Project specific definitions for using FreeRTOS in SCU
+ *
+ * @copyright GSI Helmholtz Centre for Heavy Ion Research GmbH
+ * @author    Ulrich Becker <u.becker@gsi.de>
+ * @date      14.01.2020
+ ******************************************************************************
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 3 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library. If not, see <http://www.gnu.org/licenses/>.
+ ******************************************************************************
+ */
 #ifndef FREERTOS_CONFIG_H
 #define FREERTOS_CONFIG_H
 
-/* Here is a good place to include header files that are required across
-your application. */
-//#include "something.h"
+/*
+ * Here is a good place to include header files that are required across
+ * your application.
+ */
+#include <scu_assert.h>
+#include <stdbool.h>
+
+#ifndef USRCPUCLK
+   #error Macro USRCPUCLK not defined in Makefile!
+#endif
 
 #define configUSE_PREEMPTION                    1
 #define configUSE_PORT_OPTIMISED_TASK_SELECTION 0
 #define configUSE_TICKLESS_IDLE                 0
-#define configCPU_CLOCK_HZ                      60000000
-#define configTICK_RATE_HZ                      250
+//#define configCPU_CLOCK_HZ                      60000000
+#define configCPU_CLOCK_HZ                      (USRCPUCLK * 1000)
+#define configTICK_RATE_HZ                      1000
 #define configMAX_PRIORITIES                    5
 #define configMINIMAL_STACK_SIZE                128
 #define configMAX_TASK_NAME_LEN                 16
@@ -32,7 +62,8 @@ your application. */
 /* Memory allocation related definitions. */
 #define configSUPPORT_STATIC_ALLOCATION         1
 #define configSUPPORT_DYNAMIC_ALLOCATION        1
-#define configTOTAL_HEAP_SIZE                   10240
+//#define configTOTAL_HEAP_SIZE                   10240
+#define configTOTAL_HEAP_SIZE                   1024
 #define configAPPLICATION_ALLOCATED_HEAP        1
 
 /* Hook function related definitions. */
@@ -63,7 +94,8 @@ your application. */
 #define configMAX_API_CALL_INTERRUPT_PRIORITY   [dependent on processor and application]
 
 /* Define to trap errors during development. */
-#define configASSERT( ( x ) ) if( ( x ) == 0 ) vAssertCalled( __FILE__, __LINE__ )
+//#define configASSERT( ( x ) ) if( ( x ) == 0 ) vAssertCalled( __FILE__, __LINE__ )
+#define configASSERT SCU_ASSERT
 
 /* FreeRTOS MPU specific definitions. */
 #define configINCLUDE_APPLICATION_DEFINED_PRIVILEGED_FUNCTIONS 0
@@ -90,3 +122,4 @@ your application. */
 /* A header file that defines trace macro can be included here. */
 
 #endif /* FREERTOS_CONFIG_H */
+/*================================== EOF ====================================*/

@@ -1,6 +1,6 @@
 ###############################################################################
 ##                                                                           ##
-##           Include makefile for freeRTOS LM32 projects in SCU              ##
+##           Include makefile for FreeRTOS LM32 projects in SCU              ##
 ##                                                                           ##
 ##---------------------------------------------------------------------------##
 ## File:    makefile.rtos                                                    ##
@@ -12,6 +12,8 @@ ifndef REPOSITORY_DIR
    $(error Variable REPOSITORY_DIR is not defined! )
 endif
 
+RTOS_USING_HEAP ?= 1
+
 RTOS_BASE_DIR   ?= $(REPOSITORY_DIR)/modules/FreeRTOS
 RTOS_SRC_DIR    ?= $(RTOS_BASE_DIR)/Source
 RTOS_HEADER_DIR ?= $(RTOS_SRC_DIR)/include
@@ -20,15 +22,21 @@ RTOS_PORT_DIR   ?= $(RTOS_SRC_DIR)/portable/GCC/SCU_LM32
 RTOS_INCLUDE_DIR += $(RTOS_HEADER_DIR)
 RTOS_INCLUDE_DIR += $(RTOS_PORT_DIR)
 
-RTOS_SOURCE += $(RTOS_SRC_DIR)/croutine.c
-RTOS_SOURCE += $(RTOS_SRC_DIR)/event_groups.c
 RTOS_SOURCE += $(RTOS_SRC_DIR)/list.c
 RTOS_SOURCE += $(RTOS_SRC_DIR)/queue.c
-RTOS_SOURCE += $(RTOS_SRC_DIR)/stream_buffer.c
 RTOS_SOURCE += $(RTOS_SRC_DIR)/tasks.c
-RTOS_SOURCE += $(RTOS_SRC_DIR)/timers.c
+RTOS_SOURCE += $(RTOS_SRC_DIR)/portable/MemMang/heap_$(RTOS_USING_HEAP).c
 RTOS_SOURCE += $(RTOS_PORT_DIR)/port.c
+RTOS_SOURCE += $(RTOS_SRC_DIR)/timers.c
 
+ifdef RTOS_ADDITIONAL_SOURCES
+  RTOS_SOURCE += $(RTOS_SRC_DIR)/croutine.c
+  RTOS_SOURCE += $(RTOS_SRC_DIR)/event_groups.c
+  RTOS_SOURCE += $(RTOS_SRC_DIR)/stream_buffer.c
+  # RTOS_SOURCE += $(RTOS_SRC_DIR)/timers.c
+endif
+
+SOURCE       += $(SCU_LIB_SRC_DIR)/irq.c
 SOURCE       += $(RTOS_SOURCE)
 INCLUDE_DIRS += $(RTOS_INCLUDE_DIR)
 

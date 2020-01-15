@@ -113,7 +113,7 @@ asm volatile ( "pop		__tmp_reg__" :: );				\
 /*-----------------------------------------------------------*/
 
 /* Kernel utilities. */
-extern void vPortYield( void ) __attribute__ ( ( naked ) );
+extern void vPortYield( void ); //  __attribute__ ( ( naked ) );
 #define portYIELD() vPortYield()
 /*-----------------------------------------------------------*/
 
