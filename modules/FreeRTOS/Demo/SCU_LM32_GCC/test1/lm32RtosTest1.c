@@ -55,11 +55,23 @@ static void vHelloTask( void* pvParameters )
 
 const int userTascData = 4711;
 
+int asmTest( int a )
+{
+   int ret;
+   asm volatile (
+      "addi %0, %0, 1\n\t"
+      : "=r" (a)
+      : "r" (userTascData)
+      :
+       );
+   return a;
+}
 
 int main( void )
 {
    init();
    mprintf( "freeRTOS-test\nCompiler: " COMPILER_VERSION_STRING "\n" );
+   mprintf( "ASM return: %d\n", asmTest(42) );
 #if 1
    BaseType_t xReturned = xTaskCreate(
                 vHelloTask,               /* Function that implements the task. */

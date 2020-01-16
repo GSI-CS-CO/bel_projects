@@ -84,23 +84,50 @@ typedef uint32_t       UBaseType_t;
 #endif
 /*-----------------------------------------------------------*/
 
-/* Critical section management. */
-#define portENTER_CRITICAL()
-#if 0
-asm volatile ( "in		__tmp_reg__, __SREG__" :: );	\
-									asm volatile ( "cli" :: );								\
-									asm volatile ( "push	__tmp_reg__" :: )
-#endif
-#define portEXIT_CRITICAL()
-#if 0
-asm volatile ( "pop		__tmp_reg__" :: );				\
-									asm volatile ( "out		__SREG__, __tmp_reg__" :: )
-#endif
-
+/*! ---------------------------------------------------------------------------
+ * @brief Enables all interrupts.
+ */
 #define portENABLE_INTERRUPTS()   irq_enable()
 
+/*! ---------------------------------------------------------------------------
+ * @brief Disables all interrupts.
+ */
 #define portDISABLE_INTERRUPTS()  irq_disable()
 
+/*! ---------------------------------------------------------------------------
+ * @brief Macro for the begin of a critical respectively atomic section.
+ *
+ * Disable interrupts before incrementing the count of critical section nesting.
+ * The nesting count is maintained so we know when interrupts should be
+ * re-enabled.  Once interrupts are disabled the nesting count can be accessed
+ * directly.  Each task maintains its own nesting count.
+ */
+#define portENTER_CRITICAL()                       \
+{                                                  \
+   extern volatile UBaseType_t g_criticalNesting;  \
+                                                   \
+   portDISABLE_INTERRUPTS();                       \
+   g_criticalNesting++;                            \
+}
+
+/*! ---------------------------------------------------------------------------
+ * @brief Macro for the end of a critical respectively atomic section.
+ *
+ * Interrupts are disabled so we can access the nesting count directly.  If the
+ * nesting is found to be 0 (no nesting) then we are leaving the critical
+ * section and interrupts can be re-enabled.
+ */
+#define portEXIT_CRITICAL()                        \
+{                                                  \
+   extern volatile UBaseType_t g_criticalNesting;  \
+                                                   \
+   configASSERT( g_criticalNesting != 0 );         \
+   g_criticalNesting--;                            \
+   if( g_criticalNesting == 0 )                    \
+   {                                               \
+      portENABLE_INTERRUPTS();                     \
+   }                                               \
+}
 
 /*-----------------------------------------------------------*/
 

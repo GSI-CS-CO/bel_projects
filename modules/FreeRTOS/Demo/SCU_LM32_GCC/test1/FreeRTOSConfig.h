@@ -27,12 +27,27 @@
  * Here is a good place to include header files that are required across
  * your application.
  */
-#include <scu_assert.h>
+
 #include <stdbool.h>
 
 #ifndef USRCPUCLK
    #error Macro USRCPUCLK not defined in Makefile!
 #endif
+
+/* Define to trap errors during development. */
+#ifdef CONFIG_RTOS_PEDANTIC_CHECK
+   /* CAUTION:
+    * Assert-macros could be expensive in memory consuming and the
+    * latency time can increase as well!
+    * Especially in embedded systems with small resources.
+    * Therefore use them for bug-fixing or developing purposes only!
+    */
+   #include <scu_assert.h>
+   #define configASSERT SCU_ASSERT
+#else
+   #define configASSERT(__e)
+#endif
+
 
 #define configUSE_PREEMPTION                    1
 #define configUSE_PORT_OPTIMISED_TASK_SELECTION 0
@@ -93,9 +108,6 @@
 #define configMAX_SYSCALL_INTERRUPT_PRIORITY    [dependent on processor and application]
 #define configMAX_API_CALL_INTERRUPT_PRIORITY   [dependent on processor and application]
 
-/* Define to trap errors during development. */
-//#define configASSERT( ( x ) ) if( ( x ) == 0 ) vAssertCalled( __FILE__, __LINE__ )
-#define configASSERT SCU_ASSERT
 
 /* FreeRTOS MPU specific definitions. */
 #define configINCLUDE_APPLICATION_DEFINED_PRIVILEGED_FUNCTIONS 0

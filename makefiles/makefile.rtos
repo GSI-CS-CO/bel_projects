@@ -40,5 +40,7 @@ SOURCE       += $(SCU_LIB_SRC_DIR)/irq.c
 SOURCE       += $(RTOS_SOURCE)
 INCLUDE_DIRS += $(RTOS_INCLUDE_DIR)
 
+DEFINES += MICO32_FULL_CONTEXT_SAVE_RESTORE
+
 DOX_INPUT += $(RTOS_INCLUDE_DIR)
 #===================================== EOF ====================================
