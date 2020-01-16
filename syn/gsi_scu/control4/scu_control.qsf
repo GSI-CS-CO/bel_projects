@@ -369,6 +369,8 @@ set_global_assignment -name VHDL_FILE ../../../modules/aux_functions/aux_functio
 set_global_assignment -name VHDL_FILE ../../../modules/aux_functions/Debounce.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/aux_functions/div_n.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/aux_functions/led_n.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/beam_dump/beam_dump_pkg.vhd -library work
+set_global_assignment -name VHDL_FILE ../../../modules/beam_dump/beam_dump.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/build_id/build_id_pkg.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/build_id/build_id.vhd -library work
 set_global_assignment -name VHDL_FILE ../../../modules/butis_t0/BuTis_T0_generator.vhd -library work
