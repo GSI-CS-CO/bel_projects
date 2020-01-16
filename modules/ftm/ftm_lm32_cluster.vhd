@@ -77,7 +77,7 @@ port(
 
   -- optional prioq interface
   dm_prioq_master_o : out t_wishbone_master_out;
-  dm_prioq_master_i : in  t_wishbone_master_in := ('0', '0', '0', '0', '0', x"00000000")
+  dm_prioq_master_i : in  t_wishbone_master_in := ('0', '0', '0', '0', x"00000000")
   -- no msi required
 
 
