@@ -9,9 +9,9 @@
 //            -- Wesley W. Terpstra <w.terpstra@gsi.de>
 //            -- Alessandro Rubini <rubini@gnudd.com>
 //            -- Tomasz Wlostowski <tomasz.wlostowski@cern.ch>
-//  version : 08-Oct-2019
+//  version : 16-Jan-2020
 //
-#define WB_API_VERSION "0.14.1"
+#define WB_API_VERSION "0.14.2"
 //
 // Api for wishbone devices for timing receiver nodes. This is not a timing receiver API.
 // 
