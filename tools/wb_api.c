@@ -156,10 +156,11 @@ eb_status_t wb_open(const char *dev, eb_device_t *device, eb_socket_t *socket)
   if ((status = eb_device_open(*socket, dev, EB_ADDRX|EB_DATAX, 2, device)) != EB_OK) return status;
 
   // if protocol is UDP, then wait for 100ms.
-  // eb_device_open will cause an ARP request
-  // after the return flies through the WRS, the WRS need many milliseconds to learn the nodes MAC address
-  // sleeping intends to give the WRS enough time for MAC address learning; this is a hack!
-  if (isUdp) usleep(100000);
+  // eb_device_open will (most of the time) cause an ARP request
+  // the answer from the node flies through the WRS, but the WRS need many milliseconds to learn the nodes MAC address
+  // sleeping intends to give the WRS enough time for MAC address learning before we start EB communication to the node
+  // this is a hack!
+  if (isUdp) usleep(200000);
 
   known_sock = *socket;
 
