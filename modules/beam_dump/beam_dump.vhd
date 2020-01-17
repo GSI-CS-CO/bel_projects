@@ -35,7 +35,6 @@ begin
   slave_o.stall <= '0';
 
   -- to be removed:
-  slave_o.int <= '0';
   slave_o.rty <= '0';
 
   main : process(clk_i, rst_n_i) is
