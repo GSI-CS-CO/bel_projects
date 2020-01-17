@@ -42,7 +42,6 @@ begin
   slave_o.ack        <= r_ack;
   slave_o.err        <= '0';
   slave_o.stall      <= '0';
-  slave_o.int        <= '0';
   slave_o.rty        <= '0';
 
   main : process(clk_i, rst_n_i) is
