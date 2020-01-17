@@ -422,10 +422,10 @@ begin
 
   -- Status LED index position on the front panel according to schematic and signal names
   --   ================================
-  --   | [   ] 4  1
-  --   | |SFP| 5  2  Lemos
-  --   | [   ] 6  3
-  --   --------------------------------
+  --   | [   ] 4  1               Labels on front panel: 4 -> Ac, 1 -> Li         1  2  [   ]
+  --   | |SFP| 5  2  Lemos                               5 -> Lo, 2 -> PS   Lemos PS Lo [SFP]
+  --   | [   ] 6  3                                      6 -> 2 , 3 -> 1          Li Ac [   ]
+  --   --------------------------------                                     =================
 
   led_status_o <= not s_led_status;
 
@@ -437,8 +437,8 @@ begin
                   x"FF"                       when ('1' & x"F"),   -- FPGA hex sw in position F, button     pressed, led test - leds on
                   ("000" &     con)           when ('0' & x"D"),   -- FPGA hex sw in position D, button not pressed, CPLD HEX SW and button test
                   ("000" & not con)           when ('1' & x"D"),   -- FPGA hex sw in position D, button     pressed, CPLD HEX SW and button test
-                  core_debug_out( 7 downto 0) when ('0' & x"C"),   -- FPGA hex sw in position D, button not pressed, xwb control signals for pmc master output
-                  core_debug_out(15 downto 8) when ('1' & x"C"),   -- FPGA hex sw in position D, button not pressed, xwb control signals for pmc master output
+                  core_debug_out( 7 downto 0) when ('0' & x"C"),   -- FPGA hex sw in position C, button not pressed, xwb control signals for pmc master output
+                  core_debug_out(15 downto 8) when ('1' & x"C"),   -- FPGA hex sw in position C, button     pressed, xwb control signals for pmc master output
                   s_gpio_out(7 downto 0)      when others;         -- driven by monster
 
   led_user_o <= not s_led_user;
@@ -495,7 +495,7 @@ begin
 
     s_load_shift_en <= '1' when s_test_sel = ('0' & x"A") else '0';
 
-    -- mega shift regitster to use up the rest of the resources not used by monster
+    -- mega shift register to use up the rest of the resources not used by monster
     -- to put additional load on FPGA
     -- and register to hold values for leds
     p_load_shift_reg: process(clk_200m)
