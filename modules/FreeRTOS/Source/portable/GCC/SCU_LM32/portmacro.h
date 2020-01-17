@@ -68,7 +68,7 @@ extern "C" {
 #define portDOUBLE      double
 #define portLONG        long
 #define portSHORT       short
-#define portSTACK_TYPE  uint32_t
+#define portSTACK_TYPE  void*
 #define portBASE_TYPE   int32_t
 
 typedef portSTACK_TYPE StackType_t;

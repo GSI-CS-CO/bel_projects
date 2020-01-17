@@ -131,7 +131,7 @@ extern volatile TCB_t * volatile pxCurrentTCB;
                   "sw   (sp+12),  r27            \n\t" \
                   "sw   (sp+8),   r28            \n\t" \
                   "sw   (sp+4),   ra             \n\t" \
-                  "and  r1, r0, r0               \n\t" \
+                  "xor  r1, r1, r1               \n\t" \
                   "mvhi r1, hi(pxCurrentTCB)     \n\t" \
                   "ori  r1, r1, lo(pxCurrentTCB) \n\t" \
                   "lw   r1, (r1+0)               \n\t" \
@@ -146,7 +146,7 @@ extern volatile TCB_t * volatile pxCurrentTCB;
  *  the context save so we can write to the stack pointer.
  */
 #define portRESTORE_CONTEXT()                              \
-   asm volatile (  "and    sp, r0, r0                \n\t" \
+   asm volatile (  "xor    sp, sp, sp                \n\t" \
                    "mvhi   sp, hi(pxCurrentTCB)      \n\t" \
                    "ori    sp, sp, lo(pxCurrentTCB)  \n\t" \
                    "lw     sp, (sp+0)                \n\t" \
