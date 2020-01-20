@@ -437,7 +437,7 @@ architecture rtl of monster is
   ----------------------------------------------------------------------------------
 
   -- required slaves
-  constant c_dev_slaves          : natural := 29;
+  constant c_dev_slaves          : natural := 28;
   constant c_devs_build_id       : natural := 0;
   constant c_devs_watchdog       : natural := 1;
   constant c_devs_flash          : natural := 2;
@@ -453,21 +453,21 @@ architecture rtl of monster is
   constant c_devs_ftm_cluster    : natural := 12;
 
   -- optional slaves:
-  constant c_devs_lcd            : natural := 14;
-  constant c_devs_oled           : natural := 15;
-  constant c_devs_scubirq        : natural := 16;
-  constant c_devs_mil_ctrl       : natural := 17;
-  constant c_devs_ow             : natural := 18;
-  constant c_devs_ssd1325        : natural := 19;
-  constant c_devs_vme_info       : natural := 20;
-  constant c_devs_CfiPFlash      : natural := 21;
-  constant c_devs_nau8811        : natural := 22;
-  constant c_devs_psram          : natural := 23;
-  constant c_devs_DDR3_if1       : natural := 24;
-  constant c_devs_DDR3_if2       : natural := 25;
-  constant c_devs_DDR3_ctrl      : natural := 26;
-  constant c_devs_tempsens       : natural := 27;
-  constant c_devs_a10_phy_reconf : natural := 28;
+  constant c_devs_lcd            : natural := 13;
+  constant c_devs_oled           : natural := 14;
+  constant c_devs_scubirq        : natural := 15;
+  constant c_devs_mil_ctrl       : natural := 16;
+  constant c_devs_ow             : natural := 17;
+  constant c_devs_ssd1325        : natural := 18;
+  constant c_devs_vme_info       : natural := 19;
+  constant c_devs_CfiPFlash      : natural := 20;
+  constant c_devs_nau8811        : natural := 21;
+  constant c_devs_psram          : natural := 22;
+  constant c_devs_DDR3_if1       : natural := 23;
+  constant c_devs_DDR3_if2       : natural := 24;
+  constant c_devs_DDR3_ctrl      : natural := 25;
+  constant c_devs_tempsens       : natural := 26;
+  constant c_devs_a10_phy_reconf : natural := 27;
 
   -- Cut off TLU
   constant c_use_tlu : boolean := (g_lm32_are_ftm and g_en_tlu) or (not(g_lm32_are_ftm) and g_en_tlu);
