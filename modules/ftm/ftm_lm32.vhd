@@ -56,13 +56,13 @@ port(
 
   -- wb world interface of the lm32
   world_master_o  : out t_wishbone_master_out;
-  world_master_i  : in  t_wishbone_master_in := ('0', '0', '0', '0', '0', x"00000000");
+  world_master_i  : in  t_wishbone_master_in := ('0', '0', '0', '0', x"00000000");
   msi_slave_o     : out t_wishbone_slave_out;
   msi_slave_i     : in  t_wishbone_slave_in;
 
   -- optional wb interface to prioq for DM
   prioq_master_o  : out t_wishbone_master_out;
-  prioq_master_i  : in  t_wishbone_master_in := ('0', '0', '0', '0', '0', x"00000000");
+  prioq_master_i  : in  t_wishbone_master_in := ('0', '0', '0', '0', x"00000000");
 
   -- port B of the LM32s DPRAM
   ram_slave_o    : out t_wishbone_slave_out;
