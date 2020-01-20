@@ -218,7 +218,7 @@ begin
     if rising_edge(clk_sys_i) then
       if(rst_n_i = '0') then
 
-        s_cpu_info <= ('0', '0', '0', '0', '0', (others => '0'));
+        s_cpu_info <= ('0', '0', '0', '0', (others => '0'));
       else
         -- rom is an easy solution for a device that never stalls:
         s_cpu_info.dat <= (others => '0');
@@ -251,7 +251,7 @@ begin
       vIdx := c_lm32_sys_time;
       if rising_edge(clk_sys_i) then
         if(rst_n_i = '0') then
-            s_sys_time <= ('0', '0', '0', '0', '0', (others => '0'));
+            s_sys_time <= ('0', '0', '0', '0', (others => '0'));
         else
            -- rom is an easy solution for a device that never stalls:
            s_sys_time.ack <= lm32_cb_master_out(vIdx).cyc and lm32_cb_master_out(vIdx).stb and not lm32_cb_master_out(vIdx).we;
@@ -285,7 +285,7 @@ begin
     if rising_edge(clk_sys_i) then
       if((rst_lm32_n and rst_n_i) = '0') then
          r_cyc_atomic <= '0';
-           s_atomic     <= ('0', '0', '0', '0', '0', (others => '0'));
+           s_atomic     <= ('0', '0', '0', '0', (others => '0'));
       else
          r_cyc <= s_ext_world_cyc or s_ext_clu_cyc; -- Nr. 6 ext if cycle line
          -- rom is an easy solution for a device that never stalls:
