@@ -1,6 +1,9 @@
 /*!
  *  @file portmacro.h
  *  @brief LM32 portmacro for FreeRtos LM32.
+ *         Port specific definitions. \n
+ *         The settings in this file configure FreeRTOS correctly \n
+ *         for the Gnu-compiler for Lattis Mocro32 (LM32)
  *
  *  @date 14.10.2020
  *  @copyright (C) 2019 GSI Helmholtz Centre for Heavy Ion Research GmbH
@@ -31,129 +34,81 @@
  *
  * http://www.FreeRTOS.org
  * http://aws.amazon.com/freertos
- *
- * 1 tab == 4 spaces!
  */
+
 #ifndef PORTMACRO_H
 #define PORTMACRO_H
 #if !defined(__lm32__) && !defined(__DOXYGEN__)
   #error This module is for the target LM32 only!
 #endif
-#include <irq.h>
-/*
-Changes from V1.2.3
-
-   + portCPU_CLOSK_HZ definition changed to 8MHz base 10, previously it
-      base 16.
-*/
-
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-/*-----------------------------------------------------------
- * Port specific definitions.
- *
- * The settings in this file configure FreeRTOS correctly for the
- * given hardware and compiler.
- *
- * These settings should not be altered.
- *-----------------------------------------------------------
- */
 
 /* Type definitions. */
 #define portCHAR        char
 #define portFLOAT       float
 #define portDOUBLE      double
 #define portLONG        long
-#define portSHORT       short
-#define portSTACK_TYPE  void*
+#define portSHORT       int16_t
+#define portSTACK_TYPE  uint32_t
 #define portBASE_TYPE   int32_t
 
 typedef portSTACK_TYPE StackType_t;
 typedef int32_t        BaseType_t;
 typedef uint32_t       UBaseType_t;
 
-#if ( configUSE_16_BIT_TICKS == 1 )
+#if (configUSE_16_BIT_TICKS == 1)
    typedef uint16_t TickType_t;
-   #define portMAX_DELAY ( TickType_t ) 0xffff
+   #define portMAX_DELAY (TickType_t) 0xffff
 #else
    typedef uint32_t TickType_t;
-   #define portMAX_DELAY ( TickType_t ) 0xffffffffUL
+   #define portMAX_DELAY (TickType_t) 0xffffffffUL
 #endif
+
 /*-----------------------------------------------------------*/
 
-/*! ---------------------------------------------------------------------------
- * @brief Enables all interrupts.
- */
-#define portENABLE_INTERRUPTS()   irq_enable()
+#define portDISABLE_INTERRUPTS() asm volatile ("wcsr   ie, r0");
 
-/*! ---------------------------------------------------------------------------
- * @brief Disables all interrupts.
- */
-#define portDISABLE_INTERRUPTS()  irq_disable()
-
-/*! ---------------------------------------------------------------------------
- * @brief Macro for the begin of a critical respectively atomic section.
- *
- * Disable interrupts before incrementing the count of critical section nesting.
- * The nesting count is maintained so we know when interrupts should be
- * re-enabled.  Once interrupts are disabled the nesting count can be accessed
- * directly.  Each task maintains its own nesting count.
- */
-#define portENTER_CRITICAL()                       \
-{                                                  \
-   extern volatile UBaseType_t g_criticalNesting;  \
-                                                   \
-   portDISABLE_INTERRUPTS();                       \
-   g_criticalNesting++;                            \
-}
-
-/*! ---------------------------------------------------------------------------
- * @brief Macro for the end of a critical respectively atomic section.
- *
- * Interrupts are disabled so we can access the nesting count directly.  If the
- * nesting is found to be 0 (no nesting) then we are leaving the critical
- * section and interrupts can be re-enabled.
- */
-#define portEXIT_CRITICAL()                        \
-{                                                  \
-   extern volatile UBaseType_t g_criticalNesting;  \
-                                                   \
-   configASSERT( g_criticalNesting != 0 );         \
-   g_criticalNesting--;                            \
-   if( g_criticalNesting == 0 )                    \
-   {                                               \
-      portENABLE_INTERRUPTS();                     \
-   }                                               \
+/* Port Enable Interrupts */
+#define portENABLE_INTERRUPTS()             \
+{                                           \
+   const uint32_t ie = 0x01;                \
+   asm volatile ( "wcsr ie, %0"::"r"(ie) ); \
 }
 
 /*-----------------------------------------------------------*/
 
 /* Architecture specifics. */
-#define portSTACK_GROWTH   ( -1 )
-#define portTICK_PERIOD_MS ( ( TickType_t ) 1000 / configTICK_RATE_HZ )
-#define portBYTE_ALIGNMENT 4
-#define portNOP()          asm volatile ( "nop" )
+#define portSTACK_GROWTH      ( -1 )
+#define portTICK_RATE_MS      ( ( portTickType ) 1000 / configTICK_RATE_HZ )
+#define portBYTE_ALIGNMENT    4
+#define portNOP()             asm volatile ( "nop" )
 
 /*-----------------------------------------------------------*/
 
-/* Kernel utilities. */
-extern void vPortYield( void ); //  __attribute__ ( ( naked ) );
-#define portYIELD() vPortYield()
+/* Critical section management. */
+#define portENTER_CRITICAL()   vPortEnterCritical()
+#define portEXIT_CRITICAL()    vPortExitCritical()
+
+#define portYIELD()            vPortYield()
+
+
 /*-----------------------------------------------------------*/
 
 /* Task function macros as described on the FreeRTOS.org WEB site. */
-#define portTASK_FUNCTION_PROTO( vFunction, pvParameters ) \
-   void vFunction( void* pvParameters )
+#define portTASK_FUNCTION_PROTO( vFunction, pvParameters ) void vFunction( void *pvParameters )
+#define portTASK_FUNCTION( vFunction, pvParameters ) void vFunction( void *pvParameters )
 
-#define portTASK_FUNCTION( vFunction, pvParameters ) \
-   void vFunction( void* pvParameters )
+void vStartFirstTask( void );
+void vPortEnterCritical( void );
+void vPortExitCritical( void );
+void vPortYield( void );
+
 
 #ifdef __cplusplus
 }
 #endif
 
 #endif /* PORTMACRO_H */
-/*================================== EOF ====================================*/

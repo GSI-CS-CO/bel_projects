@@ -22,25 +22,27 @@ RTOS_PORT_DIR   ?= $(RTOS_SRC_DIR)/portable/GCC/SCU_LM32
 RTOS_INCLUDE_DIR += $(RTOS_HEADER_DIR)
 RTOS_INCLUDE_DIR += $(RTOS_PORT_DIR)
 
+RTOS_SOURCE += $(RTOS_PORT_DIR)/crt0FreeRTOS.S
+RTOS_SOURCE += $(RTOS_PORT_DIR)/portasm.S
+RTOS_SOURCE += $(RTOS_PORT_DIR)/lm32Interrupts.c
+RTOS_SOURCE += $(RTOS_PORT_DIR)/port.c
+
 RTOS_SOURCE += $(RTOS_SRC_DIR)/list.c
 RTOS_SOURCE += $(RTOS_SRC_DIR)/queue.c
 RTOS_SOURCE += $(RTOS_SRC_DIR)/tasks.c
 RTOS_SOURCE += $(RTOS_SRC_DIR)/portable/MemMang/heap_$(RTOS_USING_HEAP).c
-RTOS_SOURCE += $(RTOS_PORT_DIR)/port.c
 RTOS_SOURCE += $(RTOS_SRC_DIR)/timers.c
 
 ifdef RTOS_ADDITIONAL_SOURCES
   RTOS_SOURCE += $(RTOS_SRC_DIR)/croutine.c
   RTOS_SOURCE += $(RTOS_SRC_DIR)/event_groups.c
   RTOS_SOURCE += $(RTOS_SRC_DIR)/stream_buffer.c
-  # RTOS_SOURCE += $(RTOS_SRC_DIR)/timers.c
 endif
 
-SOURCE       += $(SCU_LIB_SRC_DIR)/irq.c
 SOURCE       += $(RTOS_SOURCE)
 INCLUDE_DIRS += $(RTOS_INCLUDE_DIR)
 
-DEFINES += MICO32_FULL_CONTEXT_SAVE_RESTORE
+DEFINES += CONFIG_RTOS
 
 DOX_INPUT += $(RTOS_INCLUDE_DIR)
 #===================================== EOF ====================================

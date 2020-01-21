@@ -42,17 +42,19 @@ endif
 
 include $(MAKEFILE_DIR)/scu_dirs.inc
 
-ifdef USE_RTOS
-  include $(MAKEFILE_DIR)/makefile.rtos
-endif
-
 INCLUDE_DIRS += $(WR_DIR)/include
 INCLUDE_DIRS += $(GENERATED_DIR)
 
+ifdef USE_RTOS
+  include $(MAKEFILE_DIR)/makefile.rtos
+else
+  SOURCE += $(REPOSITORY_DIR)/modules/lm32_stub/crt0.S
+endif
+SOURCE += $(REPOSITORY_DIR)/modules/lm32_stub/stubs.c
+
+
 SOURCE += $(GENERATED_DIR)/$(BUILD_ID_FILE)
 
-SOURCE += $(REPOSITORY_DIR)/modules/lm32_stub/stubs.c
-SOURCE += $(REPOSITORY_DIR)/modules/lm32_stub/crt0.S
 SOURCE += $(SCU_LIB_SRC_DIR)/mini_sdb.c
 
 SOURCE += $(SCU_LIB_SRC_DIR)/mprintf.c
