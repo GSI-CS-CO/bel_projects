@@ -39,8 +39,8 @@ PKG += "package ramsize_pkg is\n"
 PKG += "  constant c_lm32_ramsizes : natural := $(CONFIG_RAMSIZE);\n"
 PKG += "end ramsize_pkg;\n"
 
-GCC_PATH  = $(shell which 'lm32-elf-gcc')
-GCC_BUILD = $(shell strings $(GCC_PATH) | grep /share/locale | grep -oP 'lm32-gcc-\K.*' | cut -d'/' -f1)
+GCC_PATH  = $($shell which 'lm32-elf-gcc')
+GCC_BUILD = $($shell strings $(GCC_PATH) | grep /share/locale | grep -oP 'lm32-gcc-\K.*' | cut -d'/' -f1)
 GCC_VER   := `lm32-elf-gcc --version | grep gcc`
 CBR_GCC   = "$(GCC_VER) " (build " $(GCC_BUILD)")""
 
