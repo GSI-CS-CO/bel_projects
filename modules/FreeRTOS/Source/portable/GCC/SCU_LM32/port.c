@@ -2,8 +2,8 @@
  *  @file port.c
  *  @brief LM32 port for FreeRtos LM32.
  *
- *  @date 14.10.2020
- *  @copyright (C) 2019 GSI Helmholtz Centre for Heavy Ion Research GmbH
+ *  @date 14.01.2020
+ *  @copyright (C) 2020 GSI Helmholtz Centre for Heavy Ion Research GmbH
  *
  *  @author Ulrich Becker <u.becker@gsi.de>
  *  Origin:  Richard Barry.(V4.7.0)
@@ -62,12 +62,10 @@ static void prvSetupTimer( void );
 
 /* We require the address of the pxCurrentTCB variable, but don't want to know
 any details of its type. */
-typedef void tskTCB;
-extern volatile tskTCB * volatile pxCurrentTCB;
+//typedef void tskTCB;
+//extern volatile tskTCB * volatile pxCurrentTCB;
 
-/* ------------------------ Static variables ------------------------------ */
 volatile unsigned portLONG              uxCriticalNesting;
-
 
 /* ----------------------------------------------------------------------------
  * See header file for description. 
