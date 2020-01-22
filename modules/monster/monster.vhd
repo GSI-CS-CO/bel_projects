@@ -1619,6 +1619,8 @@ end generate;
         rx_bitslide_o  => phy_rx_bitslide,
         pad_txp_o      => wr_sfp_tx_o,
         pad_rxp_i      => wr_sfp_rx_i);
+        
+        phy_tx_clk <= clk_ref;
   end generate;
 
   phy_a5 : if c_is_arria5 generate
