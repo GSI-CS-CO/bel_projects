@@ -39,6 +39,7 @@ CHECK_SCU4             = ./syn/gsi_scu/control4/scu_control
 CHECK_A10GX            = ./syn/gsi_a10gx_pcie/control/pci_control
 
 # Project paths
+PATH_VETAR2A_EE_BUTIS  = syn/gsi_vetar2a/ee_butis
 PATH_PEXARRIA5         = syn/gsi_pexarria5/control
 PATH_EXPLODER5         = syn/gsi_exploder5/exploder5_csco_tr
 PATH_PMC               = syn/gsi_pmc/control
@@ -229,8 +230,20 @@ vetar2a-check:
 vetar2a-clean::
 	$(MAKE) -C syn/gsi_vetar2a/wr_core_demo clean
 
+
+
+
+
+
+# #################################################################################################
+# Arria 2 devices
+# #################################################################################################
+
 vetar2a-ee-butis:	firmware
-	$(MAKE) -C syn/gsi_vetar2a/ee_butis all
+	$(MAKE) -C $(PATH_VETAR2A_EE_BUTIS) all
+
+vetar2a-ee-butis-clean::
+	$(MAKE) -C $(PATH_VETAR2A_EE_BUTIS) clean
 
 vetar2a-ee-butis-sort:
 	$(call sort_file, $(CHECK_VETAR2A_EE_BUTIS))
@@ -238,15 +251,9 @@ vetar2a-ee-butis-sort:
 vetar2a-ee-butis-check:
 	$(call check_timing, $(CHECK_VETAR2A_EE_BUTIS))
 
-vetar2a-ee-butis-clean::
-	$(MAKE) -C syn/gsi_vetar2a/ee_butis clean
-
-
-
-
-
-
-
+# #################################################################################################
+# Arria 5 devices
+# #################################################################################################
 
 pexarria5:	firmware
 	$(MAKE) -C $(PATH_PEXARRIA5) all
