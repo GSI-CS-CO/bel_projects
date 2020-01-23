@@ -39,6 +39,7 @@ CHECK_SCU4             = ./syn/gsi_scu/control4/scu_control
 CHECK_A10GX            = ./syn/gsi_a10gx_pcie/control/pci_control
 
 # Project paths
+PATH_SCU2              = syn/gsi_scu/control2
 PATH_VETAR2A           = syn/gsi_vetar2a/wr_core_demo
 PATH_VETAR2A_EE_BUTIS  = syn/gsi_vetar2a/ee_butis
 PATH_PEXARRIA5         = syn/gsi_pexarria5/control
@@ -178,17 +179,7 @@ avsoc:		firmware
 avsoc-clean::
 	$(MAKE) -C syn/gsi_avsoc/av_rocket_board clean
 
-scu2:		firmware
-	$(MAKE) -C syn/gsi_scu/control2 all
 
-scu2-sort:
-	$(call sort_file, $(CHECK_SCU2))
-
-scu2-check:
-	$(call check_timing, $(CHECK_SCU2))
-
-scu2-clean::
-	$(MAKE) -C syn/gsi_scu/control2 clean
 
 scu3:		firmware
 	$(MAKE) -C syn/gsi_scu/control3 all
@@ -215,6 +206,18 @@ scu3-clean::
 # #################################################################################################
 # Arria 2 devices
 # #################################################################################################
+
+scu2:		firmware
+	$(MAKE) -C $(PATH_SCU2) all
+
+scu2-clean::
+	$(MAKE) -C $(PATH_SCU2) clean
+
+scu2-sort:
+	$(call sort_file, $(CHECK_SCU2))
+
+scu2-check:
+	$(call check_timing, $(CHECK_SCU2))
 
 vetar2a:	firmware
 	$(MAKE) -C $(PATH_VETAR2A) all
