@@ -118,7 +118,7 @@
    lw        r1,  (sp+4)   /* Check Status */
 .endm
 
-
+#ifdef CONFIG_RTOS
 /*! ---------------------------------------------------------------------------
  * @brief Start first task and enable global interrupt
  */
@@ -134,7 +134,6 @@ vStartFirstTask:
    lw        r1, (sp+120) /* Load Register R1 back */
    addi      sp, sp, 120  /* Correct Stack pointer */
    eret                   /* Return-Address is stored in EA */
-
 
 /*! ---------------------------------------------------------------------------
  * @brief PortYield function for context switching
@@ -165,6 +164,7 @@ int_save:
 
    eret                         /* Return-address is stored in EA */
 
+#endif /* ifdef CONFIG_RTOS */
 
 /*! ---------------------------------------------------------------------------
  * @brief Interrupt Handler. Jump target from _interrupt_handler
