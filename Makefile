@@ -174,26 +174,6 @@ firmware:	sdbfs etherbone toolchain wrpc-sw-config
 firmware-clean:
 	$(MAKE) -C ip_cores/wrpc-sw SDBFS=$(PWD)/ip_cores/fpga-config-space/sdbfs/userspace clean
 
-avsoc:		firmware
-	$(MAKE) -C syn/gsi_avsoc/av_rocket_board all
-
-avsoc-clean::
-	$(MAKE) -C syn/gsi_avsoc/av_rocket_board clean
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 # #################################################################################################
 # Arria 2 devices
 # #################################################################################################
@@ -375,6 +355,12 @@ ifa8-clean::
 # #################################################################################################
 # Legacy and unmaintained devices
 # #################################################################################################
+
+avsoc:		firmware
+	$(MAKE) -C syn/gsi_avsoc/av_rocket_board all
+
+avsoc-clean::
+	$(MAKE) -C syn/gsi_avsoc/av_rocket_board clean
 
 vetar::		firmware
 	$(MAKE) -C syn/gsi_vetar/wr_core_demo PATH=$(PWD)/toolchain/bin:$(PATH) all
