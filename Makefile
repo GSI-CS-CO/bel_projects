@@ -38,6 +38,9 @@ CHECK_PEXP             = ./syn/gsi_pexp/control/pexp_control
 CHECK_SCU4             = ./syn/gsi_scu/control4/scu_control
 CHECK_A10GX            = ./syn/gsi_a10gx_pcie/control/pci_control
 
+# Project paths
+PATH_PEXP              = syn/gsi_pexp/control
+
 define sort_file
 	sort $(1).qsf >> temp_sorted
 	mv temp_sorted $(1).qsf
@@ -326,26 +329,26 @@ sio3-clean::
 pmc:	firmware
 	$(MAKE) -C syn/gsi_pmc/control all
 
+pmc-clean::
+	$(MAKE) -C syn/gsi_pmc/control clean
+
 pmc-sort:
 	$(call sort_file, $(CHECK_PMC))
 
 pmc-check:
 	$(call check_timing, $(CHECK_PMC))
 
-pmc-clean::
-	$(MAKE) -C syn/gsi_pmc/control clean
-
 pexp:	firmware
-	$(MAKE) -C syn/gsi_pexp/control all
+	$(MAKE) -C $(PATH_PEXP) all
+
+pexp-clean::
+	$(MAKE) -C $(PATH_PEXP) clean
 
 pexp-sort:
 	$(call sort_file, $(CHECK_PEXP))
 
 pexp-check:
 	$(call check_timing, $(CHECK_PEXP))
-
-pexp-clean::
-	$(MAKE) -C syn/gsi_pexp/control clean
 
 ifa8:		firmware
 	$(MAKE) -C syn/gsi_ifa8 all
