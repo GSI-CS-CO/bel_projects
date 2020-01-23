@@ -46,6 +46,7 @@ PATH_EXPLODER5         = syn/gsi_exploder5/exploder5_csco_tr
 PATH_PMC               = syn/gsi_pmc/control
 PATH_MICROTCA          = syn/gsi_microtca/control
 PATH_PEXP              = syn/gsi_pexp/control
+PATH_SCU4              = syn/gsi_scu/control4
 PATH_A10GX             = syn/gsi_a10gx_pcie/control
 
 define sort_file
@@ -201,23 +202,8 @@ scu3-check:
 scu3-clean::
 	$(MAKE) -C syn/gsi_scu/control3 clean
 
-scu4::
-	$(MAKE) -C syn/gsi_scu/control4 PATH=$(PWD)/toolchain/bin:$(PATH) all
 
-scu4-sort:
-	$(call sort_file, $(CHECK_SCU4))
 
-scu4-check:
-	$(call check_timing, $(CHECK_SCU4))
-
-scu4-clean::
-	$(MAKE) -C syn/gsi_scu/control4 PATH=$(PWD)/toolchain/bin:$(PATH) clean
-
-vetar::		firmware
-	$(MAKE) -C syn/gsi_vetar/wr_core_demo PATH=$(PWD)/toolchain/bin:$(PATH) all
-
-vetar-clean::
-	$(MAKE) -C syn/gsi_vetar/wr_core_demo clean
 
 
 
@@ -322,7 +308,29 @@ pexp-check:
 # Arria 10 devices
 # #################################################################################################
 
+scu4::
+	$(MAKE) -C $(PATH_SCU4) all
 
+scu4-sort:
+	$(call sort_file, $(CHECK_SCU4))
+
+scu4-check:
+	$(call check_timing, $(CHECK_SCU4))
+
+scu4-clean::
+	$(MAKE) -C $(PATH_SCU4) clean
+
+a10gx_pcie::	firmware
+	$(MAKE) -C $(PATH_A10GX) all
+
+a10gx_pcie-clean::
+	$(MAKE) -C $(PATH_A10GX) clean
+
+a10gx_pcie-sort:
+	$(call sort_file, $(CHECK_A10GX))
+
+a10gx_pcie-check:
+	$(call check_timing, $(CHECK_A10GX))
 
 # #################################################################################################
 # SCU slaves
@@ -362,6 +370,12 @@ ifa8-clean::
 # Legacy and unmaintained devices
 # #################################################################################################
 
+vetar::		firmware
+	$(MAKE) -C syn/gsi_vetar/wr_core_demo PATH=$(PWD)/toolchain/bin:$(PATH) all
+
+vetar-clean::
+	$(MAKE) -C syn/gsi_vetar/wr_core_demo clean
+
 exploder:	firmware
 	$(MAKE) -C syn/gsi_exploder/wr_core_demo all
 
@@ -379,18 +393,6 @@ pexarria10_soc::	firmware
 
 pexarria10_soc-clean::
 	$(MAKE) -C syn/gsi_pexarria10_soc/control PATH=$(PWD)/toolchain/bin:$(PATH) clean
-
-a10gx_pcie::	firmware
-	$(MAKE) -C $(PATH_A10GX) all
-
-a10gx_pcie-clean::
-	$(MAKE) -C $(PATH_A10GX) clean
-
-a10gx_pcie-sort:
-	$(call sort_file, $(CHECK_A10GX))
-
-a10gx_pcie-check:
-	$(call check_timing, $(CHECK_A10GX))
 
 ### We need to run ./fix-git.sh and ./install-hdlmake.sh: make them a prerequisite for Makefile
 Makefile: prereq-rule
