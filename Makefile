@@ -39,6 +39,7 @@ CHECK_SCU4             = ./syn/gsi_scu/control4/scu_control
 CHECK_A10GX            = ./syn/gsi_a10gx_pcie/control/pci_control
 
 # Project paths
+PATH_PEXARRIA5         = syn/gsi_pexarria5/control
 PATH_EXPLODER5         = syn/gsi_exploder5/exploder5_csco_tr
 PATH_PMC               = syn/gsi_pmc/control
 PATH_MICROTCA          = syn/gsi_microtca/control
@@ -240,45 +241,24 @@ vetar2a-ee-butis-check:
 vetar2a-ee-butis-clean::
 	$(MAKE) -C syn/gsi_vetar2a/ee_butis clean
 
-exploder:	firmware
-	$(MAKE) -C syn/gsi_exploder/wr_core_demo all
 
-exploder-clean::
-	$(MAKE) -C syn/gsi_exploder/wr_core_demo clean
+
+
+
+
+
 
 pexarria5:	firmware
-	$(MAKE) -C syn/gsi_pexarria5/control all
+	$(MAKE) -C $(PATH_PEXARRIA5) all
+
+pexarria5-clean::
+	$(MAKE) -C $(PATH_PEXARRIA5) clean
 
 pexarria5-sort:
 	$(call sort_file, $(CHECK_PEXARRIA5))
 
 pexarria5-check:
 	$(call check_timing, $(CHECK_PEXARRIA5))
-
-pexarria5-clean::
-	$(MAKE) -C syn/gsi_pexarria5/control clean
-
-pexarria10::	firmware
-	$(MAKE) -C syn/gsi_pexarria10/control PATH=$(PWD)/toolchain/bin:$(PATH) all
-
-pexarria10-clean::
-	$(MAKE) -C syn/gsi_pexarria10/control PATH=$(PWD)/toolchain/bin:$(PATH) clean
-
-pexarria10_soc::	firmware
-	$(MAKE) -C syn/gsi_pexarria10_soc/control PATH=$(PWD)/toolchain/bin:$(PATH) all
-
-pexarria10_soc-clean::
-	$(MAKE) -C syn/gsi_pexarria10_soc/control PATH=$(PWD)/toolchain/bin:$(PATH) clean
-
-
-
-
-
-
-
-
-
-
 
 microtca::	firmware
 	$(MAKE) -C $(PATH_MICROTCA) all
@@ -332,17 +312,7 @@ pexp-check:
 # Arria 10 devices
 # #################################################################################################
 
-a10gx_pcie::	firmware
-	$(MAKE) -C $(PATH_A10GX) all
 
-a10gx_pcie-clean::
-	$(MAKE) -C $(PATH_A10GX) clean
-
-a10gx_pcie-sort:
-	$(call sort_file, $(CHECK_A10GX))
-
-a10gx_pcie-check:
-	$(call check_timing, $(CHECK_A10GX))
 
 # #################################################################################################
 # SCU slaves
@@ -379,8 +349,38 @@ ifa8-clean::
 	$(MAKE) -C syn/gsi_ifa8 clean
 
 # #################################################################################################
-# Legacy devices
+# Legacy and unmaintained devices
 # #################################################################################################
+
+exploder:	firmware
+	$(MAKE) -C syn/gsi_exploder/wr_core_demo all
+
+exploder-clean::
+	$(MAKE) -C syn/gsi_exploder/wr_core_demo clean
+
+pexarria10::	firmware
+	$(MAKE) -C syn/gsi_pexarria10/control PATH=$(PWD)/toolchain/bin:$(PATH) all
+
+pexarria10-clean::
+	$(MAKE) -C syn/gsi_pexarria10/control PATH=$(PWD)/toolchain/bin:$(PATH) clean
+
+pexarria10_soc::	firmware
+	$(MAKE) -C syn/gsi_pexarria10_soc/control PATH=$(PWD)/toolchain/bin:$(PATH) all
+
+pexarria10_soc-clean::
+	$(MAKE) -C syn/gsi_pexarria10_soc/control PATH=$(PWD)/toolchain/bin:$(PATH) clean
+
+a10gx_pcie::	firmware
+	$(MAKE) -C $(PATH_A10GX) all
+
+a10gx_pcie-clean::
+	$(MAKE) -C $(PATH_A10GX) clean
+
+a10gx_pcie-sort:
+	$(call sort_file, $(CHECK_A10GX))
+
+a10gx_pcie-check:
+	$(call check_timing, $(CHECK_A10GX))
 
 ### We need to run ./fix-git.sh and ./install-hdlmake.sh: make them a prerequisite for Makefile
 Makefile: prereq-rule
