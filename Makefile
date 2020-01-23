@@ -39,6 +39,7 @@ CHECK_SCU4             = ./syn/gsi_scu/control4/scu_control
 CHECK_A10GX            = ./syn/gsi_a10gx_pcie/control/pci_control
 
 # Project paths
+PATH_PMC               = syn/gsi_pmc/control
 PATH_PEXP              = syn/gsi_pexp/control
 
 define sort_file
@@ -327,10 +328,10 @@ sio3-clean::
 	$(MAKE) -C syn/scu_sio3 clean
 
 pmc:	firmware
-	$(MAKE) -C syn/gsi_pmc/control all
+	$(MAKE) -C $(PATH_PMC) all
 
 pmc-clean::
-	$(MAKE) -C syn/gsi_pmc/control clean
+	$(MAKE) -C $(PATH_PMC) clean
 
 pmc-sort:
 	$(call sort_file, $(CHECK_PMC))
