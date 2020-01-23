@@ -33,7 +33,7 @@ CHECK_VETAR2A_EE_BUTIS = ./syn/gsi_vetar2a/ee_butis/vetar2a
 CHECK_PEXARRIA5        = ./syn/gsi_pexarria5/control/pci_control
 CHECK_EXPLODER5        = ./syn/gsi_exploder5/exploder5_csco_tr/exploder5_csco_tr
 CHECK_PMC              = ./syn/gsi_pmc/control/pci_pmc
-CHECK_MICROTCA         = ./syn/gsi_microtca/control
+CHECK_MICROTCA         = ./syn/gsi_microtca/control/microtca_control
 CHECK_PEXP             = ./syn/gsi_pexp/control/pexp_control
 CHECK_SCU4             = ./syn/gsi_scu/control4/scu_control
 CHECK_A10GX            = ./syn/gsi_a10gx_pcie/control/pci_control
@@ -41,6 +41,7 @@ CHECK_A10GX            = ./syn/gsi_a10gx_pcie/control/pci_control
 # Project paths
 PATH_EXPLODER5         = syn/gsi_exploder5/exploder5_csco_tr
 PATH_PMC               = syn/gsi_pmc/control
+PATH_MICROTCA          = syn/gsi_microtca/control
 PATH_PEXP              = syn/gsi_pexp/control
 
 define sort_file
@@ -281,16 +282,16 @@ a10gx_pcie-clean::
 	$(MAKE) -C syn/gsi_a10gx_pcie/control PATH=$(PWD)/toolchain/bin:$(PATH) clean
 
 microtca::	firmware
-	$(MAKE) -C syn/gsi_microtca/control PATH=$(PWD)/toolchain/bin:$(PATH) all
+	$(MAKE) -C $(PATH_MICROTCA) all
+	
+microtca-clean::
+	$(MAKE) -C $(PATH_MICROTCA) clean
 
 microtca-sort:
 	$(call sort_file, $(CHECK_MICROTCA))
 
 microtca-check:
 	$(call check_timing, $(CHECK_MICROTCA))
-
-microtca-clean::
-	$(MAKE) -C syn/gsi_microtca/control clean
 
 exploder5:	firmware
 	$(MAKE) -C $(PATH_EXPLODER5) all
@@ -303,30 +304,6 @@ exploder5-sort:
 
 exploder5-check:
 	$(call check_timing, $(CHECK_EXPLODER5))
-
-addac:		firmware
-	$(MAKE) -C syn/gsi_addac all
-
-addac-clean::
-	$(MAKE) -C syn/gsi_addac clean
-
-addac2:		firmware
-	$(MAKE) -C syn/gsi_addac2 all
-
-addac2-clean::
-	$(MAKE) -C syn/gsi_addac2 clean
-
-diob:		firmware
-	$(MAKE) -C syn/scu_diob all
-
-diob-clean::
-	$(MAKE) -C syn/scu_diob clean
-
-sio3:		firmware
-	$(MAKE) -C syn/scu_sio3 all
-
-sio3-clean::
-	$(MAKE) -C syn/scu_sio3 clean
 
 pmc:	firmware
 	$(MAKE) -C $(PATH_PMC) all
@@ -351,6 +328,30 @@ pexp-sort:
 
 pexp-check:
 	$(call check_timing, $(CHECK_PEXP))
+
+addac:		firmware
+	$(MAKE) -C syn/gsi_addac all
+
+addac-clean::
+	$(MAKE) -C syn/gsi_addac clean
+
+addac2:		firmware
+	$(MAKE) -C syn/gsi_addac2 all
+
+addac2-clean::
+	$(MAKE) -C syn/gsi_addac2 clean
+
+diob:		firmware
+	$(MAKE) -C syn/scu_diob all
+
+diob-clean::
+	$(MAKE) -C syn/scu_diob clean
+
+sio3:		firmware
+	$(MAKE) -C syn/scu_sio3 all
+
+sio3-clean::
+	$(MAKE) -C syn/scu_sio3 clean
 
 ifa8:		firmware
 	$(MAKE) -C syn/gsi_ifa8 all
