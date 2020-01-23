@@ -23,7 +23,7 @@ entity top is
     nSCUext_rst_in    : in    std_logic;                    -- Reset form SCU-Bus Extension
     nExt_rst_in       : in    std_logic;                    -- Reset form Extension Connector
     nPB_rst_in        : in    std_logic;                    -- Reset form Push Button
-    nFPHA_rst_in      : in    std_logic;                    -- Reset from Arria10
+    nFPGA_rst_in      : in    std_logic;                    -- Reset from Arria10
     --Reset Out
     nSYS_rst          : out   std_logic :='0';              -- Reset Out
     nPCI_rst_out      : out   std_logic :='0';              -- PCI Reset Out
@@ -64,7 +64,7 @@ architecture rtl of top is
   fpga_con_io <= (others => 'Z');
 
 
-  rst_n <= nSCUext_rst_in and nExt_rst_in and nPB_rst_in and nFPHA_rst_in;
+  rst_n <= nSCUext_rst_in and nExt_rst_in and nPB_rst_in and nFPGA_rst_in;
 
   nSYS_rst <= rst_n;
   nPCI_rst_out <= nCB_rst;

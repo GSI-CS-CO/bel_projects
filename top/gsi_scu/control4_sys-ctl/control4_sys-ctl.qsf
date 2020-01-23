@@ -54,4 +54,82 @@ set_global_assignment -name POWER_DEFAULT_INPUT_IO_TOGGLE_RATE "12.5 %"
 set_global_assignment -name PARTITION_NETLIST_TYPE SOURCE -section_id Top
 set_global_assignment -name PARTITION_FITTER_PRESERVATION_LEVEL PLACEMENT_AND_ROUTING -section_id Top
 set_global_assignment -name PARTITION_COLOR 16764057 -section_id Top
+set_location_assignment PIN_K11 -to core_en
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to fpga_con_io[7]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to core_en
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to fpga_con_io[6]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to fpga_con_io[5]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to fpga_con_io[4]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to fpga_con_io[3]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to fpga_con_io[2]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to fpga_con_io[1]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to fpga_con_io[0]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to clk_base_i
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to CONF_DONE
+set_location_assignment PIN_F10 -to fpga_con_io[7]
+set_location_assignment PIN_F9 -to fpga_con_io[6]
+set_location_assignment PIN_E12 -to fpga_con_io[5]
+set_location_assignment PIN_F12 -to fpga_con_io[4]
+set_location_assignment PIN_E13 -to fpga_con_io[3]
+set_location_assignment PIN_F13 -to fpga_con_io[2]
+set_location_assignment PIN_G10 -to fpga_con_io[1]
+set_location_assignment PIN_G9 -to fpga_con_io[0]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to i2c_scl
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to i2c_sda
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to INIT_DONE
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to IO_enable
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to led_status_o[2]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to led_status_o[1]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to led_status_o[0]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to nCB_rst
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to nExt_rst_in
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to nExt_rst_out
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to nPB_rst_in
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to nPCI_rst_out
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to nPfail
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to nSCUext_rst_in
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to nSTATUS
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to nSYS_rst
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to pGood[3]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to pGood[2]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to pGood[1]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to pGood[0]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to scu_cb_revision[3]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to scu_cb_revision[2]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to scu_cb_revision[1]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to scu_cb_revision[0]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to volt_1_8_en
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to volt_1_8_IO_en
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to volt_5_en
+set_location_assignment PIN_D11 -to scu_cb_revision[0]
+set_location_assignment PIN_D12 -to scu_cb_revision[1]
+set_location_assignment PIN_D9 -to scu_cb_revision[2]
+set_location_assignment PIN_E10 -to scu_cb_revision[3]
+set_location_assignment PIN_H6 -to clk_base_i
+set_location_assignment PIN_A2 -to i2c_scl
+set_location_assignment PIN_B2 -to i2c_sda
+set_location_assignment PIN_B5 -to IO_enable
+set_location_assignment PIN_C10 -to nSYS_rst
+set_location_assignment PIN_L4 -to nFPGA_rst_in
+set_location_assignment PIN_J6 -to nExt_rst_in
+set_location_assignment PIN_E8 -to nExt_rst_out
+set_location_assignment PIN_H13 -to led_status_o[0]
+set_location_assignment PIN_G12 -to led_status_o[1]
+set_location_assignment PIN_H8 -to led_status_o[2]
+set_location_assignment PIN_J10 -to volt_1_8_en
+set_location_assignment PIN_K10 -to volt_5_en
+set_location_assignment PIN_L12 -to volt_1_8_IO_en
+set_location_assignment PIN_L5 -to pGood[0]
+set_location_assignment PIN_M5 -to pGood[1]
+set_location_assignment PIN_M4 -to pGood[2]
+set_location_assignment PIN_J5 -to pGood[3]
+set_location_assignment PIN_M10 -to nPB_rst_in
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to nFPGA_rst_in
+set_location_assignment PIN_A8 -to nPfail
+set_location_assignment PIN_A6 -to nPCI_rst_out
+set_location_assignment PIN_K6 -to nSCUext_rst_in
+set_location_assignment PIN_M7 -to nCB_rst
+set_location_assignment PIN_L3 -to CONF_DONE
+set_location_assignment PIN_K2 -to INIT_DONE
+set_location_assignment PIN_M3 -to nSTATUS
 set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
