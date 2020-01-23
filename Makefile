@@ -43,6 +43,7 @@ PATH_EXPLODER5         = syn/gsi_exploder5/exploder5_csco_tr
 PATH_PMC               = syn/gsi_pmc/control
 PATH_MICROTCA          = syn/gsi_microtca/control
 PATH_PEXP              = syn/gsi_pexp/control
+PATH_A10GX             = syn/gsi_a10gx_pcie/control
 
 define sort_file
 	sort $(1).qsf >> temp_sorted
@@ -269,17 +270,15 @@ pexarria10_soc::	firmware
 pexarria10_soc-clean::
 	$(MAKE) -C syn/gsi_pexarria10_soc/control PATH=$(PWD)/toolchain/bin:$(PATH) clean
 
-a10gx_pcie::	firmware
-	$(MAKE) -C syn/gsi_a10gx_pcie/control PATH=$(PWD)/toolchain/bin:$(PATH) all
 
-a10gx_pcie-sort:
-	$(call sort_file, $(CHECK_A10GX))
 
-a10gx_pcie-check:
-	$(call check_timing, $(CHECK_A10GX))
 
-a10gx_pcie-clean::
-	$(MAKE) -C syn/gsi_a10gx_pcie/control PATH=$(PWD)/toolchain/bin:$(PATH) clean
+
+
+
+
+
+
 
 microtca::	firmware
 	$(MAKE) -C $(PATH_MICROTCA) all
@@ -329,6 +328,26 @@ pexp-sort:
 pexp-check:
 	$(call check_timing, $(CHECK_PEXP))
 
+# #################################################################################################
+# Arria 10 devices
+# #################################################################################################
+
+a10gx_pcie::	firmware
+	$(MAKE) -C $(PATH_A10GX) all
+
+a10gx_pcie-clean::
+	$(MAKE) -C $(PATH_A10GX) clean
+
+a10gx_pcie-sort:
+	$(call sort_file, $(CHECK_A10GX))
+
+a10gx_pcie-check:
+	$(call check_timing, $(CHECK_A10GX))
+
+# #################################################################################################
+# SCU slaves
+# #################################################################################################
+
 addac:		firmware
 	$(MAKE) -C syn/gsi_addac all
 
@@ -358,6 +377,10 @@ ifa8:		firmware
 
 ifa8-clean::
 	$(MAKE) -C syn/gsi_ifa8 clean
+
+# #################################################################################################
+# Legacy devices
+# #################################################################################################
 
 ### We need to run ./fix-git.sh and ./install-hdlmake.sh: make them a prerequisite for Makefile
 Makefile: prereq-rule
