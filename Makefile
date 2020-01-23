@@ -39,6 +39,7 @@ CHECK_SCU4             = ./syn/gsi_scu/control4/scu_control
 CHECK_A10GX            = ./syn/gsi_a10gx_pcie/control/pci_control
 
 # Project paths
+PATH_EXPLODER5         = syn/gsi_exploder5/exploder5_csco_tr
 PATH_PMC               = syn/gsi_pmc/control
 PATH_PEXP              = syn/gsi_pexp/control
 
@@ -292,16 +293,16 @@ microtca-clean::
 	$(MAKE) -C syn/gsi_microtca/control clean
 
 exploder5:	firmware
-	$(MAKE) -C syn/gsi_exploder5/exploder5_csco_tr all
+	$(MAKE) -C $(PATH_EXPLODER5) all
+
+exploder5-clean::
+	$(MAKE) -C $(PATH_EXPLODER5) clean
 
 exploder5-sort:
 	$(call sort_file, $(CHECK_EXPLODER5))
 
 exploder5-check:
 	$(call check_timing, $(CHECK_EXPLODER5))
-
-exploder5-clean::
-	$(MAKE) -C syn/gsi_exploder5/exploder5_csco_tr clean
 
 addac:		firmware
 	$(MAKE) -C syn/gsi_addac all
