@@ -47,9 +47,11 @@ INCLUDE_DIRS += $(GENERATED_DIR)
 
 ifdef USE_RTOS
   include $(MAKEFILE_DIR)/makefile.rtos
-else
-  SOURCE += $(REPOSITORY_DIR)/modules/lm32_stub/crt0.S
 endif
+
+STARTUP_CODE ?= $(REPOSITORY_DIR)/modules/lm32_stub/crt0.S
+
+SOURCE += $(STARTUP_CODE)
 SOURCE += $(REPOSITORY_DIR)/modules/lm32_stub/stubs.c
 
 
