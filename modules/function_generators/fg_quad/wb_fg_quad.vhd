@@ -144,7 +144,6 @@ begin
 
   end process;
   
-  fg_slave_o.int <= '0';
   fg_slave_o.err <= '0';
   fg_slave_o.rty <= '0';
   fg_slave_o.stall <= '0'; -- always ready
