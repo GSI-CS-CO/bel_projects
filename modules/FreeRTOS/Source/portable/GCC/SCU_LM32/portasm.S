@@ -29,7 +29,7 @@
  */
 .macro portSAVE_CONTEXT
    /* Make room for the context on the stack. */
-   addi      sp, sp, -120
+   addi      sp, sp, -120   /* r28 */
 
    /* Register R0 is always 0, so start with R1 */
    sw        (sp+120), r1
@@ -57,10 +57,10 @@
    sw        (sp+ 32), r23
    sw        (sp+ 28), r24
    sw        (sp+ 24), r25
-   sw        (sp+ 20), gp
-   sw        (sp+ 16), fp
-   sw        (sp+ 12), ra
-   sw        (sp+  8), ea
+   sw        (sp+ 20), gp   /* r26 */
+   sw        (sp+ 16), fp   /* r27 */
+   sw        (sp+ 12), ra   /* r29 */
+   sw        (sp+  8), ea   /* r30 */
 
    /* Save the top of stack value to the TCB. */
    and       r1, r0, r0
@@ -78,8 +78,8 @@
    /* Load last Stack value from TCB. */
    and       sp, r0, r0
    mvhi      sp, hi(pxCurrentTCB)
-   ori       sp, sp, lo(pxCurrentTCB) /* After access, SP holds address of pointer to actual TCB */
-   lw        sp,(sp+0)                /* After access, SP holds pointer to actual TCB */
+   ori       sp, sp, lo(pxCurrentTCB) /* After access, SP (r28) holds address of pointer to actual TCB */
+   lw        sp,(sp+0)                /* After access, SP (r28) holds pointer to actual TCB */
    mv        r2, sp                   /* Copy SP to R2 */
    lw        sp, (sp+0)               /* After access, SP hold stack pointer from actual TCB */
 
@@ -87,10 +87,10 @@
    sw        (r2+0), r1               /* Store new Stack pointer in actual TCB */
 
    /* Load all registers from Stack */
-   lw        ea,  (sp+  8)
-   lw        ra,  (sp+ 12)
-   lw        fp,  (sp+ 16)
-   lw        gp,  (sp+ 20)
+   lw        ea,  (sp+  8)   /* r30 */
+   lw        ra,  (sp+ 12)   /* r29 */
+   lw        fp,  (sp+ 16)   /* r27 */
+   lw        gp,  (sp+ 20)   /* r26 */
    lw        r25, (sp+ 24)
    lw        r24, (sp+ 28)
    lw        r23, (sp+ 32)

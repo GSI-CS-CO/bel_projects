@@ -86,7 +86,10 @@
 .extern _irq_entry
 .extern _segfault
 
-/* Exception handlers - Must be 32 bytes long. */
+/*
+ * Exception handlers - Must be 32 bytes long.
+ * @see LatticeMico32ProcessorReferenceManual39.pde page 22
+ */
 .section    .boot, "ax", @progbits
 
 .global _reset_handler
