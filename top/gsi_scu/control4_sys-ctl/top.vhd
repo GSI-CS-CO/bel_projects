@@ -13,6 +13,7 @@ entity top is
 
     pGood             : in    std_logic_vector (3 downto 0);  -- Power good (0.95V, 1.8V, 3.3V, 5V)
     nPfail            : in    std_logic;                      -- 12V Rail Powerfail 
+	 jtag_present		 : in		std_logic;							  -- JTAG TMS Signal
     --Arria 10 status
     CONF_DONE         : in    std_logic;
     INIT_DONE         : in    std_logic;
