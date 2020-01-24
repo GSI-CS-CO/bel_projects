@@ -47,15 +47,16 @@ static ISR_ENTRY_T ISREntryTable[MAX_LM32_INTERRUPTS] = {{NULL, NULL}};
 void ISRHandler( void )
 {
    uint32_t ip, im;
+   /* Read the Interrupt Mask register */
    asm volatile ( "rcsr %0, im" :"=r"(im) );
 
    while( true )
    {
-      /* read ip and calculate effective ip */
+      /* Read the Interrupt Pending register */
       asm volatile ( "rcsr %0, ip" :"=r"(ip) );
       ip &= im;
-      if( ip == 0 )
-         break;
+      if( ip == 0 ) /* No interrupt pending? */
+         break; /* Yes, life the function */
 
       for( unsigned int intNum = 0; intNum < ARRAY_SIZE( ISREntryTable ); intNum++ )
       {
@@ -73,6 +74,7 @@ void ISRHandler( void )
                im &= ~mask;
                asm volatile ( "wcsr im, %0" ::"r"(im) );
             }
+            /* Clear the corresponding Interrupt Pending bit by writing a one!. */
             asm volatile ( "wcsr ip, %0" ::"r"(mask) );
             break;
          }
