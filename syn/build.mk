@@ -82,7 +82,7 @@ prog:
 
 %.sof:	%.qsf %.mif $(PATHPKG)/ramsize_pkg.vhd
 	mv $*.qsf $*.qsf-tmp; sort $*.qsf-tmp > $*.qsf; rm $*.qsf-tmp
-	$(HDLMAKE) makefile -f hdlmake.mk ; make -f hdlmake.mk project
+	$(HDLMAKE) -a makefile -f hdlmake.mk ; make -f hdlmake.mk project
 	find $(TOP) -name Manifest.py > $*.dep
 	sed -n -e 's/"//g;s/quartus_sh://;s/set_global_assignment.*-name.*_FILE //p' < $< >> $*.dep
 	echo "$*.sof $@:	$< " `cat $*.dep` > $*.dep
