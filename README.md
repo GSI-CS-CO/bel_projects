@@ -80,3 +80,11 @@ Create a new symlink: sudo ln -s /usr/lib/x86_64-linux-gnu/libmpfr.so.6 /usr/lib
 ### Error: Executing qmegawiz: child process exited abnormally + Time value XXX,YYYMbps and time unit are illegal
 Change your LC_NUMERIC setting: export LC_NUMERIC="en_US.UTF-8"
 
+## JTAG and Programming
+### Altera/Intel USB Blaster
+
+See bel_projects/doc/usbblaster/readme.md
+
+### Xilinx Platform Cable II
+
+See bel_projects/doc/platform_cable/readme.md
