@@ -348,8 +348,6 @@ template <typename TYP> TYP min( TYP a, TYP b )
    return (a < b)? a : b;
 }
 
-// STATIC_ASSERT( false );
-
 //=============================================================================
 int main( void )
 {
@@ -371,7 +369,7 @@ int main( void )
    pBase->onSomething();
 
    // Checking whether a C++11 lambda-function is possible.
-   auto myLambda = [](int a, int b) { return a + b; };
+   auto myLambda = [](int a, int b) -> int { return a + b; };
 
    ov << "Return of lambda: " << myLambda( 30, 12 ) << '\n';
 

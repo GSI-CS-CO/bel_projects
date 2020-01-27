@@ -81,7 +81,7 @@
    ori       sp, sp, lo(pxCurrentTCB) /* After access, SP (r28) holds address of pointer to actual TCB */
    lw        sp,(sp+0)                /* After access, SP (r28) holds pointer to actual TCB */
    mv        r2, sp                   /* Copy SP to R2 */
-   lw        sp, (sp+0)               /* After access, SP hold stack pointer from actual TCB */
+   lw        sp, (sp+0)               /* After access, SP (r28) hold stack pointer from actual TCB */
 
    addi      r1, sp, +120             /* Calculate new stack pointer */
    sw        (r2+0), r1               /* Store new Stack pointer in actual TCB */

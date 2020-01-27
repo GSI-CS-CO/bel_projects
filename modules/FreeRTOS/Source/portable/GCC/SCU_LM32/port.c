@@ -180,25 +180,13 @@ void vPortEndScheduler( void )
  */
 static void onTimerInterrupt( const unsigned int intNum, const void* pContext )
 {
-   LM32_TIMER_T* pISRTimer = (LM32_TIMER_T*) pContext;
-
+   xTaskIncrementTick();
 #if configUSE_PREEMPTION == 1
-   /*
-    * Tick ISR for preemptive scheduler.
-    */
-   xTaskIncrementTick();
    vTaskSwitchContext();
-#else
-   /*
-    * Tick ISR for the cooperative scheduler.  All this does is increment the
-    * tick count.  We don't need to switch context, this can only be done by
-    * manual calls to taskYIELD();
-    */
-   xTaskIncrementTick();
 #endif
 
    /* Clear Timer Status */
-   pISRTimer->status = 0;
+   ((LM32_TIMER_T*)pContext)->status = 0;
 }
 
 /*! ---------------------------------------------------------------------------

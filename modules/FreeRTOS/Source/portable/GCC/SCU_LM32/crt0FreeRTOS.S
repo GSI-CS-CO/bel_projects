@@ -93,9 +93,9 @@
 .section    .boot, "ax", @progbits
 
 .global _reset_handler
-.type 	_reset_handler, @function
+.type   _reset_handler, @function
 _reset_handler:
-//init r0 from CSR to make sure it's got a valid state before XOR (simulation)    
+/* init r0 from CSR to make sure it's got a valid state before XOR (simulation) */
     rcsr    r0, CFG 
     xor r0, r0, r0
     wcsr    IE, r0
@@ -107,7 +107,7 @@ _reset_handler:
 .size	_reset_handler, .-_reset_handler
 
 .global _breakpoint_handler
-.type 	_breakpoint_handler, @function
+.type   _breakpoint_handler, @function
 _breakpoint_handler:
     nop
     nop
@@ -120,7 +120,7 @@ _breakpoint_handler:
 .size _breakpoint_handler, .-_breakpoint_handler
 
 .global _instruction_bus_error_handler
-.type 	_instruction_bus_error_handler, @function
+.type   _instruction_bus_error_handler, @function
 _instruction_bus_error_handler:
     nop
     nop
@@ -133,7 +133,7 @@ _instruction_bus_error_handler:
 .size _instruction_bus_error_handler, .-_instruction_bus_error_handler
 
 .global _watchpoint_handler
-.type 	_watchpoint_handler, @function
+.type   _watchpoint_handler, @function
 _watchpoint_handler:
     nop
     nop
@@ -146,7 +146,7 @@ _watchpoint_handler:
 .size _watchpoint_handler, .-_watchpoint_handler
 
 .global _data_bus_error_handler
-.type 	_data_bus_error_handler, @function
+.type   _data_bus_error_handler, @function
 _data_bus_error_handler:
     sw      (sp+0), ra
     calli   _save_all
@@ -159,7 +159,7 @@ _data_bus_error_handler:
 .size _data_bus_error_handler, .-_data_bus_error_handler
 
 .global _divide_by_zero_handler
-.type 	_divide_by_zero_handler, @function
+.type   _divide_by_zero_handler, @function
 _divide_by_zero_handler:
     nop
     nop
@@ -172,7 +172,7 @@ _divide_by_zero_handler:
 .size _divide_by_zero_handler, .-_divide_by_zero_handler
 
 .global _interrupt_handler
-.type 	_interrupt_handler, @function
+.type   _interrupt_handler, @function
 _interrupt_handler:
     bi          vPortInterruptHandler
     nop
@@ -182,9 +182,9 @@ _interrupt_handler:
     nop
     nop
     nop
-        .size     _interrupt_handler, .-_interrupt_handler
+.size     _interrupt_handler, .-_interrupt_handler
 .global _system_call_handler
-.type 	_system_call_handler, @function
+.type _system_call_handler, @function
 _system_call_handler:
     nop
     nop
@@ -196,16 +196,16 @@ _system_call_handler:
     nop
 .size _system_call_handler, .-_system_call_handler
 
-        .section    .text, "ax", @progbits
-        .global _crt0
-        .type 	_crt0, @function
+.section    .text, "ax", @progbits
+.global _crt0
+.type   _crt0, @function
 _crt0:
     /* Clear r0 */
     xor     r0, r0, r0
     /* Setup stack and global pointer */
     mvhi    sp, hi(_fstack)
     ori     sp, sp, lo(_fstack)
-	
+
     mvhi    r1, hi(_fbss)
     ori     r1, r1, lo(_fbss)
     mvi     r2, 0
@@ -219,10 +219,10 @@ _crt0:
     calli   main
 
 loopf:
-	bi loopf
+    bi loopf
 
-        .global _save_all
-        .type 	_save_all, @function
+.global _save_all
+.type   _save_all, @function
 _save_all:
 #ifdef MICO32_FULL_CONTEXT_SAVE_RESTORE
     addi    sp, sp, -128
@@ -278,10 +278,10 @@ _save_all:
 //    xor     r1, r1, r1
 //    wcsr    ie, r1
     ret
-        .size  	_save_all, .-_save_all
-	
-        .global _restore_all_and_return
-        .type 	_restore_all_and_return, @function
+.size   _save_all, .-_save_all
+
+.global _restore_all_and_return
+.type   _restore_all_and_return, @function
     /* Restore all registers and return from exception */
 _restore_all_and_return:
 //    addi    r1, r0, 2
@@ -328,5 +328,5 @@ _restore_all_and_return:
 #endif
     nop
     eret
-        .size   _restore_all_and_return, .-_restore_all_and_return
+.size   _restore_all_and_return, .-_restore_all_and_return
 
