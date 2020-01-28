@@ -347,6 +347,7 @@ GENRAMMIF ?= $(WR_DIR)/tools/genrammif
 EB_LOAD   ?= $(REPOSITORY_DIR)/tools/eb-fwload
 EB_RESET  ?= $(REPOSITORY_DIR)/tools/eb-reset
 EB_HALT   ?= $(EB_RESET)
+EB_INFO   ?= $(REPOSITORY_DIR)/tools/eb-info
 
 ifeq ($(V), 1)
    GENRAMMIF_F = $(GENRAMMIF)
@@ -403,14 +404,17 @@ CPU_OFFSET ?= 0
 reset:
 	$(EB_RESET_F) $(PROTOCOL)/$(SCU_URL) cpureset $(CPU_ID)
 
-.PHONNY: halt
+.PHONY: halt
 halt:
 	$(EB_HALT_F) $(PROTOCOL)/$(SCU_URL) cpuhalt $(CPU_ID)
 
 .PHONY: load
-load: $(BIN_FILE)
-	$(EB_HALT_F) $(PROTOCOL)/$(SCU_URL) cpuhalt $(CPU_ID)
-	$(EB_LOAD_F) $(PROTOCOL)/$(SCU_URL) u$(CPU_ID) $(CPU_OFFSET) $^
+load: $(BIN_FILE) halt
+	$(EB_LOAD_F) $(PROTOCOL)/$(SCU_URL) u$(CPU_ID) $(CPU_OFFSET) $(BIN_FILE)
+
+.PHONY: info
+info:
+	$(QUIET)$(EB_INFO) -w $(PROTOCOL)/$(SCU_URL)
 endif
 
 #=================================== EOF ======================================

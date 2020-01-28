@@ -124,44 +124,36 @@
  */
 vStartFirstTask:
    mvi       r1, 2
-   wcsr      ie, r1      /* Set EIE Bit */
-
+   wcsr      ie, r1             /* Set EIE Bit */
    and       r1, r0, r0
    mvhi      r1, hi(pxCurrentTCB)
    ori       r1, r1, lo(pxCurrentTCB)
    lw        r1, (r1+0)
    portRESTORE_CONTEXT
-   lw        r1, (sp+120) /* Load Register R1 back */
-   addi      sp, sp, 120  /* Correct Stack pointer */
-   eret                   /* Return-Address is stored in EA */
+   lw        r1, (sp+120)       /* Load Register R1 back */
+   addi      sp, sp, 120        /* Correct Stack pointer */
+   eret                         /* Return-Address is stored in EA */
 
 /*! ---------------------------------------------------------------------------
  * @brief PortYield function for context switching
  */
 vPortYield:
    wcsr      ie, r0             /* Disable interrupts */
-
    portSAVE_CONTEXT
    sw        (sp+  4), r0       /* Store flag "No Interrupt Save" */
-
    calli     vTaskSwitchContext /* Call this C-function implemented in task.c */
-
    and       r1, r0, r0
    mvhi      r1, hi(pxCurrentTCB)
    ori       r1, r1, lo(pxCurrentTCB)
    lw        r1, (r1+0)
    portRESTORE_CONTEXT
-
-   bne       r0, r1, int_save   /* Jump if flag "Interrupt Save"  */
+   bne       r0, r1, L_INT_SAVE /* Jump if flag "Interrupt Save"  */
    mv        ea, ra             /* Return-Address is stored in RA */
-
-int_save:
+L_INT_SAVE:
    mvi       r1, 2
-   wcsr      ie, r1              /* Set EIE Bit */
-
+   wcsr      ie, r1             /* Set EIE Bit */
    lw        r1, (sp+120)       /* Load register R1 back */
    addi      sp, sp, 120        /* Correct stack pointer */
-
    eret                         /* Return-address is stored in EA */
 
 #endif /* ifdef CONFIG_RTOS */
@@ -169,27 +161,24 @@ int_save:
 /*! ---------------------------------------------------------------------------
  * @brief Interrupt Handler. Jump target from _interrupt_handler
  *        implemented in crt0FreeRTOS.S
+ * @see crt0FreeRTOS.S
  */
 vPortInterruptHandler:
    portSAVE_CONTEXT
    ori       r1, r0, 1
    sw        (sp+  4), r1       /* Set flag "Interrupt Save" */
-
    calli     ISRHandler         /* Call this C-function implemented in Interrupts.c */
-
    and       r1, r0, r0
    mvhi      r1, hi(pxCurrentTCB)
    ori       r1, r1,lo(pxCurrentTCB)
    lw        r1, (r1+0)
    portRESTORE_CONTEXT
-
-   bne       r0, r1, exept_return /* Jump if flag "Interrupt Save" */
-   mv        ea, ra               /* Return-Address is stored in RA */
-exept_return:
-   lw        r1, (sp+120)         /* Load register R1 back */
-   addi      sp, sp, 120          /* Correct stack pointer */
-
-   eret                           /* Return-address is stored in EA */
+   bne       r0, r1, L_RETURN    /* Jump if flag "Interrupt Save" */
+   mv        ea, ra              /* Return-Address is stored in RA */
+L_RETURN:
+   lw        r1, (sp+120)        /* Load register R1 back */
+   addi      sp, sp, 120         /* Correct stack pointer */
+   eret                          /* Return-address is stored in EA */
 
 #endif /* ifndef __DOXYGEN__ */
 /*================================== EOF ====================================*/

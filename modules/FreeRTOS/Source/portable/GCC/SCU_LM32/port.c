@@ -44,28 +44,26 @@
 #include "FreeRTOS.h"
 #include "task.h"
 
-#if 0
-#include "GPIO.h"
+#ifndef CONFIG_NO_RTOS_TIMER
+ #include "lm32Timer.h"
+ #include "lm32Interrupts.h"
 #endif
-#include "lm32Timer.h"
-#include "lm32Interrupts.h"
+#include "eb_console_helper.h"
+#include "mini_sdb.h"
+
 
 /*-----------------------------------------------------------
  * Implementation of functions defined in portable.h for the MICO32 port.
  *----------------------------------------------------------*/
-
+#ifndef CONFIG_NO_RTOS_TIMER
 static void prvSetupTimer( void );
+#endif
 
 #if (configAPPLICATION_ALLOCATED_HEAP == 1)
   uint8_t ucHeap[ configTOTAL_HEAP_SIZE ];
 #endif
 
-/* We require the address of the pxCurrentTCB variable, but don't want to know
-any details of its type. */
-//typedef void tskTCB;
-//extern volatile tskTCB * volatile pxCurrentTCB;
-
-volatile unsigned portLONG              uxCriticalNesting;
+volatile unsigned portLONG              uxCriticalNesting = 0;
 
 /* ----------------------------------------------------------------------------
  * See header file for description. 
@@ -82,11 +80,15 @@ portSTACK_TYPE* pxPortInitialiseStack( portSTACK_TYPE* pxTopOfStack,
 
    /* The compiler expects R0 to be 0. */
 
-   /* Place the parameter on the stack in the expected location. */
+   /*
+    * Place the parameter on the stack in the expected location.
+    */
    *pxTopOfStack = (portSTACK_TYPE) pvParameters;  /* R1 */
    pxTopOfStack--;
 
-   /* Now the remaining registers. */
+   /*
+    * Now the remaining registers.
+    */
    *pxTopOfStack = (portSTACK_TYPE) 0x02; /* R2 */
    pxTopOfStack--;
    *pxTopOfStack = (portSTACK_TYPE) 0x03; /* R3 */
@@ -140,15 +142,22 @@ portSTACK_TYPE* pxPortInitialiseStack( portSTACK_TYPE* pxTopOfStack,
    *pxTopOfStack = (portSTACK_TYPE) 0x27; /* R27 */
    pxTopOfStack--;
 
-   /* The return address */
+   /*
+    * The return address
+    */
    *pxTopOfStack = (portSTACK_TYPE) pxCode;
    pxTopOfStack--;
 
-   /* The exception return address - which in this case is the start of the task. */
+   /*
+    * The exception (interrupt) return address
+    * - which in this case is the start of the task.
+    */
    *pxTopOfStack = (portSTACK_TYPE) pxCode;
    pxTopOfStack--;
 
-   /* Status information. */
+   /*
+    * Status information.
+    */
    *pxTopOfStack = (portSTACK_TYPE) 0x00;
    pxTopOfStack--;
 
@@ -159,13 +168,20 @@ portSTACK_TYPE* pxPortInitialiseStack( portSTACK_TYPE* pxTopOfStack,
  */
 portBASE_TYPE xPortStartScheduler( void )
 {
-   /* Setup the hardware to generate the tick. */
+#ifndef CONFIG_NO_RTOS_TIMER
+   /*
+    * Setup the hardware to generate the tick.
+    */
    prvSetupTimer();
-
-   /* Kick off the first task. */
+#endif
+   /*
+    * Kick off the first task.
+    */
    vStartFirstTask();
 
-   /* Should not get here as the tasks are now running! */
+   /*
+    * Should not get here as the tasks are now running!
+    */
    return pdTRUE;
 }
 
@@ -176,6 +192,7 @@ void vPortEndScheduler( void )
    /* It is unlikely that the MICO32 port will get stopped.  */
 }
 
+#ifndef CONFIG_NO_RTOS_TIMER
 /*! ---------------------------------------------------------------------------
  */
 static void onTimerInterrupt( const unsigned int intNum, const void* pContext )
@@ -194,7 +211,14 @@ static void onTimerInterrupt( const unsigned int intNum, const void* pContext )
  */
 static void prvSetupTimer( void )
 {
-   volatile LM32_TIMER_T* pTimer = (LM32_TIMER_T*)TIMER_BASE_ADDRESS;
+ //  LM32_TIMER_T* pTimer = (LM32_TIMER_T*)TIMER_BASE_ADDRESS;
+
+   volatile LM32_TIMER_T* pTimer = (LM32_TIMER_T*) find_device_adr( GSI, CPU_TIMER_CTRL_IF );
+   if( (unsigned int)pTimer == ERROR_NOT_FOUND )
+   {
+      mprintf( ESC_ERROR "ERROR: Timer not found!\n" ESC_NORMAL );
+      while( true );
+   }
 
    /* stop the timer first and ack any pending interrupts */
    pTimer->control = TIMER_CONTROL_STOP_BIT_MASK;
@@ -207,10 +231,15 @@ static void prvSetupTimer( void )
 
    /* start the timer                               */
    pTimer->control = TIMER_CONTROL_START_BIT_MASK |
-                     TIMER_CONTROL_INT_BIT_MASK |
+                     TIMER_CONTROL_INT_BIT_MASK   |
                      TIMER_CONTROL_CONT_BIT_MASK;
 }
-
+#else
+ #if configUSE_PREEMPTION == 1
+   #error In preemtion mode is the timer essential!
+ #endif
+ #warning Timer for FreeRTOS will not implenented! Some tick related functions will not work!
+#endif
 
 /* Critical section management. */
 /*! ---------------------------------------------------------------------------

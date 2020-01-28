@@ -26,6 +26,9 @@
 #include "FreeRTOS.h"
 #include "task.h"
 
+#ifndef CONFIG_RTOS
+   #error "This project provides FreeRTOS"
+#endif
 
 static inline void init( void )
 {
@@ -36,59 +39,78 @@ static inline void init( void )
 #define HELLO_TASK_PRIORITY    ( tskIDLE_PRIORITY + 1 )
 #define HELLO_DELAY            ( (TickType_t) 1000 / configTICK_RATE_HZ )
 
-static void vHelloTask( void* pvParameters )
+static void vTask( void* pvParameters )
 {
    /*
     * Initialise xLastExecutionTime so the first call to vTaskDelayUntil() works correctly
     */
+#ifndef CONFIG_NO_RTOS_TIMER
    TickType_t xLastExecutionTime = xTaskGetTickCount();
+#endif
 
+   mprintf( "*** Once! ***\n" );
+   unsigned int count = 0;
    while( true )
    {
-      mprintf( "Hello World! User data: %d\n", *((int*)pvParameters) );
+      mprintf( "Task main function, count: %d, user data: %d\n",
+               ++count,
+               *((int*)pvParameters) );
       /*
        * Delay mainCHECK_DELAY milliseconds.
        */
+   #ifdef CONFIG_NO_RTOS_TIMER
+      uint32_t d = configCPU_CLOCK_HZ / 4;
+      while( d-- != 0 );
+   #else
       vTaskDelayUntil( &xLastExecutionTime, HELLO_DELAY );
+   #endif
+   #if configUSE_PREEMPTION == 0
+      vPortYield();
+   #endif
+      mprintf( "after vPortYield(): %d\n\n", *((int*)pvParameters) );
    }
 }
 
-const int userTascData = 4711;
+const int userTaskData1 = 4711;
+const int userTaskData2 = 42;
 
-int asmTest( int a )
-{
-   int ret;
-   asm volatile (
-      "addi %0, %0, 1\n\t"
-      : "=r" (a)
-      : "r" (userTascData)
-      :
-       );
-   return a;
-}
 
 int main( void )
 {
    init();
    mprintf( "freeRTOS-test\nCompiler: " COMPILER_VERSION_STRING "\n" );
-   mprintf( "ASM return: %d\n", asmTest(42) );
+   BaseType_t xReturned;
 #if 1
-   BaseType_t xReturned = xTaskCreate(
-                vHelloTask,               /* Function that implements the task. */
-                "Hello",                  /* Text name for the task. */
+   xReturned = xTaskCreate(
+                vTask,               /* Function that implements the task. */
+                "Task 1",                  /* Text name for the task. */
                 configMINIMAL_STACK_SIZE, /* Stack size in words, not bytes. */
-                (void*)&userTascData,     /* Parameter passed into the task. */
+                (void*)&userTaskData1,     /* Parameter passed into the task. */
                 HELLO_TASK_PRIORITY,      /* Priority at which the task is created. */
                 NULL                      /* Used to pass out the created task's handle. */
               );
    if( xReturned != pdPASS )
    {
-      mprintf( "Error %d by creating task!\n", xReturned );
+      mprintf( ESC_ERROR "Error %d by creating task 1!\n"ESC_NORMAL, xReturned );
+      return 0;
+   }
+#endif
+   xReturned = xTaskCreate(
+                vTask,               /* Function that implements the task. */
+                "Task 2",                  /* Text name for the task. */
+                configMINIMAL_STACK_SIZE, /* Stack size in words, not bytes. */
+                (void*)&userTaskData2,     /* Parameter passed into the task. */
+                HELLO_TASK_PRIORITY,      /* Priority at which the task is created. */
+                NULL                      /* Used to pass out the created task's handle. */
+              );
+   if( xReturned != pdPASS )
+   {
+      mprintf( ESC_ERROR "Error %d by creating task 2!\n"ESC_NORMAL, xReturned );
       return 0;
    }
 
    vTaskStartScheduler();
-#endif
+
    while( true );
    return 0;
 }
