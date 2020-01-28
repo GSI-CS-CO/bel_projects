@@ -20,6 +20,10 @@
  * License along with this library. If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************
  */
+
+
+/* Due to the lack of a timer interrupt, this work cannot be completed. */
+
 #include <stdbool.h>
 #include "eb_console_helper.h"
 #include "mini_sdb.h"
@@ -28,6 +32,13 @@
 #include "lm32Interrupts.h"
 
 volatile uint32_t pxCurrentTCB = 0;
+
+/* Port Enable Interrupts */
+#define portENABLE_INTERRUPTS()             \
+{                                           \
+   const uint32_t ie = 0x01;                \
+   asm volatile ( "wcsr ie, %0"::"r"(ie) ); \
+}
 
 static inline void init( void )
 {
@@ -40,6 +51,7 @@ volatile static unsigned int g_count = 0;
 static void onTimerInterrupt( const unsigned int intNum, const void* pContext )
 {
    g_count++;
+   ((LM32_TIMER_T*)pContext)->status = 0;
 }
 
 #define TIMER_IRQ_ 0
@@ -50,7 +62,30 @@ int main( void )
    mprintf( "Timer IRQ test\nCompiler: " COMPILER_VERSION_STRING "\n" );
    unsigned int oldCount = g_count - 1;
 
-   registerISR( TIMER_IRQ_, NULL, onTimerInterrupt );
+   volatile LM32_TIMER_T* pTimer = (LM32_TIMER_T*) find_device_adr( GSI, CPU_TIMER_CTRL_IF );
+   if( (unsigned int)pTimer == ERROR_NOT_FOUND )
+   {
+      mprintf( ESC_ERROR "ERROR: Timer not found!\n" ESC_NORMAL );
+      while( true );
+   }
+
+   pTimer->control = TIMER_CONTROL_STOP_BIT_MASK;
+   pTimer->status  = 0;
+
+
+   mprintf( "pTimerCtrl = 0x%x\n", (unsigned int)pTimer );
+
+   registerISR( TIMER_IRQ_, (void*)pTimer, onTimerInterrupt );
+
+   pTimer->period = USRCPUCLK;
+
+   /* start the timer                               */
+   pTimer->control = TIMER_CONTROL_START_BIT_MASK |
+                     TIMER_CONTROL_INT_BIT_MASK   |
+                     TIMER_CONTROL_CONT_BIT_MASK;
+
+   enableSpecificInterrupt( TIMER_IRQ_ );
+   portENABLE_INTERRUPTS();
 
    while( true )
    {
