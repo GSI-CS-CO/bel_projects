@@ -345,13 +345,19 @@ _LD_FLAGS ?= $(LD_FLAGS) -T$(WORK_DIR)/$(LINKER_SCRIPT) $(ARG_LIBS)
 
 GENRAMMIF ?= $(WR_DIR)/tools/genrammif
 EB_LOAD   ?= $(REPOSITORY_DIR)/tools/eb-fwload
+EB_RESET  ?= $(REPOSITORY_DIR)/tools/eb-reset
+EB_HALT   ?= $(EB_RESET)
 
 ifeq ($(V), 1)
    GENRAMMIF_F = $(GENRAMMIF)
    EB_LOAD_F   = $(EB_LOAD)
+   EB_RESET_F  = $(EB_RESET)
+   EB_HALT_F   = $(EB_HALT)
 else
    GENRAMMIF_F = $(FORMAT_R) $(CPU) "MIF" $(@); $(GENRAMMIF)
-   EB_LOAD_F   = $(FORMAT_R) $(CPU) "EBL" "$(TARGET) -> $(SCU_URL) $(CPU_ID) $(CPU_OFFSET)"; $(EB_LOAD)
+   EB_LOAD_F   = $(FORMAT_R) $(CPU) "LOAD" "$(TARGET) -> $(SCU_URL) $(CPU_ID) $(CPU_OFFSET)"; $(EB_LOAD)
+   EB_RESET_F  = $(FORMAT_R) $(CPU) "RESET" "$(SCU_URL) $(CPU_ID)"; $(EB_RESET)
+   EB_HALT_F   = $(FORMAT_R) $(CPU) "HALT" "$(SCU_URL) $(CPU_ID)"; $(EB_HALT)
 endif
 
 # ------------ Additional defines for Doxygen ---------------------------------
@@ -390,12 +396,21 @@ $(RESULT_FILE): $(BIN_FILE)
 ifdef SCU_URL
 
 PROTOCOL   ?= tcp
-CPU_ID     ?= u0
+CPU_ID     ?= 0
 CPU_OFFSET ?= 0
+
+.PHONY: reset
+reset:
+	$(EB_RESET_F) $(PROTOCOL)/$(SCU_URL) cpureset $(CPU_ID)
+
+.PHONNY: halt
+halt:
+	$(EB_HALT_F) $(PROTOCOL)/$(SCU_URL) cpuhalt $(CPU_ID)
 
 .PHONY: load
 load: $(BIN_FILE)
-	$(EB_LOAD_F) $(PROTOCOL)/$(SCU_URL) $(CPU_ID) $(CPU_OFFSET) $^
+	$(EB_HALT_F) $(PROTOCOL)/$(SCU_URL) cpuhalt $(CPU_ID)
+	$(EB_LOAD_F) $(PROTOCOL)/$(SCU_URL) u$(CPU_ID) $(CPU_OFFSET) $^
 endif
 
 #=================================== EOF ======================================
