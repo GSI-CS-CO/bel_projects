@@ -481,7 +481,7 @@ architecture rtl of monster is
     c_devs_watchdog       => f_sdb_auto_device(c_watchdog_sdb,                   true),
     c_devs_flash          => f_sdb_auto_device(f_wb_spi_flash_sdb(g_flash_bits), true),
     c_devs_reset          => f_sdb_auto_device(c_arria_reset,                    true),
-    c_devs_tlu            => f_sdb_auto_device(c_tlu_sdb,                        not g_lm32_are_ftm or c_use_tlu),
+    c_devs_tlu            => f_sdb_auto_device(c_tlu_sdb,                        c_use_tlu),
     c_devs_eca_ctl        => f_sdb_auto_device(c_eca_slave_sdb,                  g_en_eca),
     c_devs_eca_aq         => f_sdb_auto_device(c_eca_queue_slave_sdb,            g_en_eca),
     c_devs_eca_tlu        => f_sdb_auto_device(c_eca_tlu_slave_sdb,              g_en_eca),
@@ -2014,6 +2014,11 @@ end generate;
 
    genEcaStuff : if g_en_eca generate
 
+
+      no_genTLUStuff : if not(c_use_tlu) generate
+        dev_bus_master_i(c_devs_tlu) <= cc_dummy_slave_out;
+        dev_msi_slave_i(c_devs_tlu) <= cc_dummy_master_out;
+      end generate no_genTLUStuff;
       genTLUStuff : if c_use_tlu generate
       tlu : wr_tlu
         generic map(
