@@ -59,8 +59,9 @@ static void vTask( void* pvParameters )
        * Delay mainCHECK_DELAY milliseconds.
        */
    #ifdef CONFIG_NO_RTOS_TIMER
-      uint32_t d = configCPU_CLOCK_HZ / 4;
-      while( d-- != 0 );
+      int d = configCPU_CLOCK_HZ / 4;
+      while( d-- != 0 )
+         portNOP();
    #else
       vTaskDelayUntil( &xLastExecutionTime, HELLO_DELAY );
    #endif

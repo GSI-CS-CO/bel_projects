@@ -283,6 +283,9 @@ CBR += "Build Date  : $(CBR_DATE)"'\\n\\'"\n"
 CBR += "Prepared by : $(USER) $(CBR_USR) <$(CBR_MAIL)>"'\\n\\'"\n"
 CBR += "Prepared on : $(CBR_HOST)"'\\n\\'"\n"
 CBR += "OS Version  : $(CBR_OS) $(CBR_KRNL)"'\\n\\'"\n"
+ifdef EMBEDDED_OS
+CBR += "Embedded OS : "$(EMBEDDED_OS) '\\n\\'"\n"
+endif
 CBR += "GCC Version : $(CBR_GCC)"'\\n\\'"\n"
 CBR += "IntAdrOffs  : $(INTADR_OFFS)"'\\n\\'"\n"
 CBR += "SharedOffs  : $(SHARED_START)"'\\n\\'"\n"

@@ -63,7 +63,7 @@ static void prvSetupTimer( void );
   uint8_t ucHeap[ configTOTAL_HEAP_SIZE ];
 #endif
 
-volatile unsigned portLONG              uxCriticalNesting = 0;
+volatile static unsigned int uxCriticalNesting = 0;
 
 /* ----------------------------------------------------------------------------
  * See header file for description. 
@@ -189,7 +189,7 @@ portBASE_TYPE xPortStartScheduler( void )
  */
 void vPortEndScheduler( void )
 {
-   /* It is unlikely that the MICO32 port will get stopped.  */
+   /* It is unlikely that the LM32 port will get stopped.  */
 }
 
 #ifndef CONFIG_NO_RTOS_TIMER
@@ -241,21 +241,24 @@ static void prvSetupTimer( void )
  #warning Timer for FreeRTOS will not implenented! Some tick related functions will not work!
 #endif
 
-/* Critical section management. */
+/*
+ * Critical section management.
+ * When the compiler and linker has LTO ability so the following inline
+ * declarations will be really inline.
+ */
 /*! ---------------------------------------------------------------------------
  */
-void vPortEnterCritical( void )
+inline void vPortEnterCritical( void )
 {
-   /* Port Disable Interrupts */
    portDISABLE_INTERRUPTS();
    uxCriticalNesting++;
 }
 
 /*! ---------------------------------------------------------------------------
  */
-void vPortExitCritical( void )
+inline void vPortExitCritical( void )
 {
-   configASSERT( uxCriticalNesting != 0 );
+   configASSERT( uxCriticalNesting > 0 );
    uxCriticalNesting--;
    if( uxCriticalNesting == 0 )
    {

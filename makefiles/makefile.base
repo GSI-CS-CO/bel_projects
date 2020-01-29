@@ -258,6 +258,10 @@ clean:
 	rmdir $(GENERATED_DIR); \
 	exit 0 ) 2>/dev/null
 
+.PHONY: rebuild
+rebuild: clean
+	$(MAKE) all
+
 -include $(DEPENDFILE)
 
 #-------------------------------- Doxygen -------------------------------------
