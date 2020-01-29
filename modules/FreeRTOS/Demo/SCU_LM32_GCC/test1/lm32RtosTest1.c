@@ -52,13 +52,16 @@ static void vTask( void* pvParameters )
    unsigned int count = 0;
    while( true )
    {
-      mprintf( "Task main function, count: %d, user data: %d\n",
+      mprintf( "Task main function, count: %d, user data: \"%s\"\n",
                ++count,
-               *((int*)pvParameters) );
+               (const char*)pvParameters );
       /*
        * Delay mainCHECK_DELAY milliseconds.
        */
    #ifdef CONFIG_NO_RTOS_TIMER
+      /*
+       * Very crude delay loop... not fine! I know...
+       */
       int d = configCPU_CLOCK_HZ / 4;
       while( d-- != 0 )
          portNOP();
@@ -68,12 +71,12 @@ static void vTask( void* pvParameters )
    #if configUSE_PREEMPTION == 0
       vPortYield();
    #endif
-      mprintf( "after vPortYield(): %d\n\n", *((int*)pvParameters) );
+      mprintf( "after vPortYield(): \"%s\"\n\n", (const char*)pvParameters );
    }
 }
 
-const int userTaskData1 = 4711;
-const int userTaskData2 = 42;
+const char* userTaskData1 = ESC_FG_CYAN"Donald"ESC_NORMAL;
+const char* userTaskData2 = ESC_FG_RED"Dagobert"ESC_NORMAL;
 
 
 int main( void )
@@ -84,34 +87,35 @@ int main( void )
 #if 1
    xReturned = xTaskCreate(
                 vTask,               /* Function that implements the task. */
-                "Task 1",                  /* Text name for the task. */
+                "Donald",                  /* Text name for the task. */
                 configMINIMAL_STACK_SIZE, /* Stack size in words, not bytes. */
-                (void*)&userTaskData1,     /* Parameter passed into the task. */
+                (void*)userTaskData1,     /* Parameter passed into the task. */
                 HELLO_TASK_PRIORITY,      /* Priority at which the task is created. */
                 NULL                      /* Used to pass out the created task's handle. */
               );
    if( xReturned != pdPASS )
    {
-      mprintf( ESC_ERROR "Error %d by creating task 1!\n"ESC_NORMAL, xReturned );
+      mprintf( ESC_ERROR "Error %d: by creating task 1!\n"ESC_NORMAL, xReturned );
       return 0;
    }
 #endif
    xReturned = xTaskCreate(
                 vTask,               /* Function that implements the task. */
-                "Task 2",                  /* Text name for the task. */
+                "Dagobert",                  /* Text name for the task. */
                 configMINIMAL_STACK_SIZE, /* Stack size in words, not bytes. */
-                (void*)&userTaskData2,     /* Parameter passed into the task. */
+                (void*)userTaskData2,     /* Parameter passed into the task. */
                 HELLO_TASK_PRIORITY,      /* Priority at which the task is created. */
                 NULL                      /* Used to pass out the created task's handle. */
               );
    if( xReturned != pdPASS )
    {
-      mprintf( ESC_ERROR "Error %d by creating task 2!\n"ESC_NORMAL, xReturned );
+      mprintf( ESC_ERROR "Error %d: by creating task 2!\n"ESC_NORMAL, xReturned );
       return 0;
    }
 
    vTaskStartScheduler();
 
+   mprintf( ESC_ERROR "Error: This point shall never be reached!\n" ESC_NORMAL );
    while( true );
    return 0;
 }

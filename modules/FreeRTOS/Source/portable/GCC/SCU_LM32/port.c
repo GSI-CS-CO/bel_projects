@@ -7,7 +7,9 @@
  *
  *  @author Ulrich Becker <u.becker@gsi.de>
  *  Origin:  Richard Barry.(V4.7.0)
- *  @todo A lot!
+ *
+ *  @todo Hardware implementation of a (V)HDL timer interrupt module
+ *        so that preemption mode becomes possible.
  */
 /*
  * FreeRTOS Kernel V10.1.1
@@ -193,6 +195,8 @@ void vPortEndScheduler( void )
 }
 
 #ifndef CONFIG_NO_RTOS_TIMER
+#warning "Unfortunately at the moment there isn't any hardware timer implemented yet!"
+
 /*! ---------------------------------------------------------------------------
  */
 static void onTimerInterrupt( const unsigned int intNum, const void* pContext )
@@ -208,15 +212,20 @@ static void onTimerInterrupt( const unsigned int intNum, const void* pContext )
 
 /*! ---------------------------------------------------------------------------
  * @brief Setup timer to generate a tick interrupt.
+ * @note At the moment it's unclear yet whether this timer initializing
+ *       routine is correct. It depends on the hardware timer (V)HDL module
+ *       which is not written respectively implemented yet.
+ *       As of January 29, 2020.\n
+ *       The current implementation is related to the Latice timer module
+ *       for LM32 and LM8 via wishbone bus.\n
+ *       Also the IRQ number defined in macro TIMER_IRQ is unclear yet!
  */
 static void prvSetupTimer( void )
 {
- //  LM32_TIMER_T* pTimer = (LM32_TIMER_T*)TIMER_BASE_ADDRESS;
-
    volatile LM32_TIMER_T* pTimer = (LM32_TIMER_T*) find_device_adr( GSI, CPU_TIMER_CTRL_IF );
-   if( (unsigned int)pTimer == ERROR_NOT_FOUND )
+   if( pTimer == (LM32_TIMER_T*)ERROR_NOT_FOUND )
    {
-      mprintf( ESC_ERROR "ERROR: Timer not found!\n" ESC_NORMAL );
+      mprintf( ESC_ERROR "ERROR: Timer not found or not implemented!\n" ESC_NORMAL );
       while( true );
    }
 
@@ -229,7 +238,7 @@ static void prvSetupTimer( void )
 
    pTimer->period = configCPU_CLOCK_HZ / configTICK_RATE_HZ;
 
-   /* start the timer                               */
+   /* start the timer */
    pTimer->control = TIMER_CONTROL_START_BIT_MASK |
                      TIMER_CONTROL_INT_BIT_MASK   |
                      TIMER_CONTROL_CONT_BIT_MASK;

@@ -50,7 +50,8 @@
 
 /* includes specific for bel_projects */
 #include "irq.h"
-#include "aux.h"
+//#include "aux.h"
+#include "auxillery.h"
 #include "dbg.h"
 #include "../../ip_cores/wr-cores/modules/wr_eca/eca_queue_regs.h"
 #include "../../ip_cores/saftlib/drivers/eca_flags.h"
@@ -151,6 +152,7 @@ void useSharedMem()
   // get pointer to shared memory; external perspective from host bridge
   idx = 0;
   find_device_multi(&found_clu, &idx, 1, GSI, LM32_CB_CLUSTER);	
+
   idx = 0;
   find_device_multi_in_subtree(&found_clu, &found_sdb[0], &idx, c_Max_Rams, GSI, LM32_RAM_USER);
   if(idx >= cpuId) {
@@ -162,7 +164,7 @@ void useSharedMem()
     pCpuRamExternal = (uint32_t*)ERROR_NOT_FOUND;
     mprintf("Could not find external WB address of my own RAM !\n");
   }
-  
+
   
   // initialize values of shared memory
   *pSharedCounter = 0x0;
@@ -182,6 +184,7 @@ void useSharedMem()
     // use 'eb-console' to see printed value
     mprintf("value of input register: 0d%08d\n", *pSharedInput);
   } // while
+//#endif
 } // useSharedMem
 
 
@@ -325,8 +328,8 @@ void main(void) {
   for (j = 0; j < (31000000); ++j) { asm("nop"); }     // wait 1 second
   mprintf("Hello World!\n");                           // print message to UART
 
-  getWishboneTAI();  // get TAI via WB and print to UART
-  useSharedMem();    // read/write to shared memory     
+  getWishboneTAI();  // get TAI via WB and print to
+  useSharedMem();    // read/write to shared memory
   findECAQ();        // find ECA channel for LM32
   initCmds();        // init for cmds from shared mem   
 

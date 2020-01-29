@@ -13,6 +13,10 @@ ifndef OBJCPY
 endif
 DOX_INPUT   += $(MAKEFILE_DIR)/makefile.uc
 
+# Main functions in microcontrollers do not necessarily have
+# to have a return value.
+CFLAGS += -Wno-main
+
 ELF_FILE    = $(WORK_DIR)/$(TARGET).elf
 BIN_FILE    = $(TARGET_DIR)/$(TARGET).bin
 

@@ -1,38 +1,28 @@
-# Two examples are provided
-# - miniExample: 'hello world' for lm32
-# - example: demo program including
-# -- shared memory for exchange of data via Wishbone
-# -- access to other Wishbone devices
-# -- receive commands via shared memory
-# -- get actions from the ECA by polling
-#
-# Example usage:
-#   make TARGET=example
-#   ... will compile the more complex example program
-TARGET		?= miniExample
-.DEFAULT_GOAL := fwbin
-DEVICE		= 5AGXMA3D4
-FLASH		= EPCQ256
-SPI_LANES	= ASx4
-RAM_SIZE	= 49152 
-SHARED_SIZE     = 8K
-USRCPUCLK       = 125000
-VERSION         = 0.0.1
+###############################################################################
+##                                                                           ##
+##        Simplified Makefile using LM32 build system make templates         ##
+##                                                                           ##
+##---------------------------------------------------------------------------##
+## File:     modules/lm32-example/Makefile                                   ##
+## Author:   Ulrich Becker <u.becker@gsi.de>                                 ##
+## (c):      GSI Helmholtz Centre for Heavy Ion Research GmbH                ##
+###############################################################################
+REPOSITORY_DIR := $(shell git rev-parse --show-toplevel)
 
-PATHFW 	= .
-PATHPKG	= $(shell python2.7 ../../ip_cores/hdl-make/hdlmake list-mods | grep -G '^[^\#]' | grep top | grep -o '^\S*')
-PREFIX 	?= /usr/local
-CFLAGS 	= -I$(PATHFW) 
+MIAN_MODULE := example.c
+SOURCE += $(SCU_DIR)/scu_mil.c
+SOURCE += $(SCU_LIB_SRC_DIR)/irq.c
+
+SHARED_SIZE     = 8000
+
+CODE_OPTIMIZATION = s
 
 
-include ../../syn/build.mk
+# TODO There is a bug in find_device_multi_in_subtree when LTO is activated
+#      therefore NO_LTO = 1
+NO_LTO = 1
 
+# TOOLCHAIN_DIR = $(INCLUDED_TOOLCHAIN_DIR)
 
-fwbin: $(TARGET).bin
-
-$(TARGET).elf: $(PATHFW)/$(TARGET).c $(PATHFW)/../../top/gsi_scu/scu_mil.c
-
-clean::
-	rm -f $(PATHFW)/*.o $(PATHFW)/*.a $(PATHFW)/*.elf $(PATHFW)/*.bin
-
-
+include $(REPOSITORY_DIR)/makefiles/makefile.scu
+#=================================== EOF ======================================
