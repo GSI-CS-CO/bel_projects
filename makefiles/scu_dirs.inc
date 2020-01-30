@@ -38,7 +38,8 @@ INCLUDE_DIRS += $(IP_CORE_DIR)/etherbone-core/hdl/eb_master_core
 INCLUDE_DIRS += $(IP_CORE_DIR)/wr-cores/modules/wr_eca
 INCLUDE_DIRS += $(IP_CORE_DIR)/saftlib/drivers
 
-DEFINES += CONFIG_SCU
+SCU_VERSION ?= 3
+DEFINES += CONFIG_SCU=$(SCU_VERSION)
 
 # ------------ Additional defines for Doxygen ---------------------------------
 DOX_OUTPUT_DIRECTORY ?= $(HOME)/Documents/scr_doc/$(TARGET)

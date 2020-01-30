@@ -1,12 +1,19 @@
 /*!
- *  @file portasm.S
- *  @brief Assembler part of LM32 port for FreeRtos.
+ * @file portasm.S
+ * @brief Assembler part of LM32 port for FreeRTOS.
  *
- *  @date 14.01.2020
- *  @copyright (C) 2020 GSI Helmholtz Centre for Heavy Ion Research GmbH
+ * @date 14.01.2020
+ * @copyright (C) 2020 GSI Helmholtz Centre for Heavy Ion Research GmbH
  *
- *  @author Ulrich Becker <u.becker@gsi.de>
- *  Origin:  Richard Barry.(V4.7.0)
+ * @author Ulrich Becker <u.becker@gsi.de>
+ * Origin:  Richard Barry.(V4.7.0)
+ *
+ * @note At stack offset (sp+4) will stored a flack which indicates the
+ *       reason of context saving.\n
+ *       * If its value equal one, than a real LM32 exception
+ *         - eg: a interrupt - was happened.\n
+ *       * If its value equal zero, so the context saving was caused from
+ *         the FreeRTOS scheduler.
  */
 
 /*!
@@ -15,9 +22,22 @@
  */
 .extern pxCurrentTCB
 
+
 .global vStartFirstTask
 .global vPortYield
 .global vPortInterruptHandler
+
+/*!
+ * Giving the opportunity to exchange the interrupt callback function by
+ * pre-defining the macro __ISRHandler in the makefile.\n
+ * E.g: DEFINES += __ISRHandler=myBetterISRHandler respectively
+ *      -D__ISRHandler=myBetterISRHandler.
+ * By default the interrupt callback function ISRHandler implemented in
+ * file lm32Interrupts.c will used.
+ */
+#ifndef __ISRHandler
+   #define __ISRHandler ISRHandler
+#endif
 
 #ifndef __DOXYGEN__
 
@@ -82,7 +102,6 @@
    lw        sp,(sp+0)                /* After access, SP (r28) holds pointer to actual TCB */
    mv        r2, sp                   /* Copy SP to R2 */
    lw        sp, (sp+0)               /* After access, SP (r28) hold stack pointer from actual TCB */
-
    addi      r1, sp, +120             /* Calculate new stack pointer */
    sw        (r2+0), r1               /* Store new Stack pointer in actual TCB */
 
@@ -115,7 +134,6 @@
    lw        r4,  (sp+108)
    lw        r3,  (sp+112)
    lw        r2,  (sp+116)
-   lw        r1,  (sp+4)   /* Check Status */
 .endm
 
 #ifdef CONFIG_RTOS
@@ -140,14 +158,15 @@ vStartFirstTask:
 vPortYield:
    wcsr      ie, r0             /* Disable interrupts */
    portSAVE_CONTEXT
-   sw        (sp+  4), r0       /* Store flag "No Interrupt Save" */
+   sw        (sp+4), r0         /* Set the context cause flag to zero */
    calli     vTaskSwitchContext /* Call this C-function implemented in task.c */
    and       r1, r0, r0
    mvhi      r1, hi(pxCurrentTCB)
    ori       r1, r1, lo(pxCurrentTCB)
    lw        r1, (r1+0)
    portRESTORE_CONTEXT
-   bne       r0, r1, L_INT_SAVE /* Jump if flag "Interrupt Save"  */
+   lw        r1, (sp+4)         /* Load context cause flag in r1 */
+   bne       r0, r1, L_INT_SAVE /* Jump if context change was caused from LM32 exception  */
    mv        ea, ra             /* Return-Address is stored in RA */
 L_INT_SAVE:
    mvi       r1, 2
@@ -165,20 +184,21 @@ L_INT_SAVE:
  */
 vPortInterruptHandler:
    portSAVE_CONTEXT
-   ori       r1, r0, 1
-   sw        (sp+  4), r1       /* Set flag "Interrupt Save" */
-   calli     ISRHandler         /* Call this C-function implemented in Interrupts.c */
+   ori       r1, r0, 1          /* Set the context cause flag to one */
+   sw        (sp+4), r1         /* and store it in stack. */
+   calli     __ISRHandler       /* Call this C- callback function */
    and       r1, r0, r0
    mvhi      r1, hi(pxCurrentTCB)
    ori       r1, r1,lo(pxCurrentTCB)
    lw        r1, (r1+0)
    portRESTORE_CONTEXT
-   bne       r0, r1, L_RETURN    /* Jump if flag "Interrupt Save" */
-   mv        ea, ra              /* Return-Address is stored in RA */
+   lw        r1, (sp+4)         /* Load context cause flag in r1 */
+   bne       r0, r1, L_RETURN   /* Jump if context change was caused from LM32 exception  */
+   mv        ea, ra             /* Return-Address is stored in RA */
 L_RETURN:
-   lw        r1, (sp+120)        /* Load register R1 back */
-   addi      sp, sp, 120         /* Correct stack pointer */
-   eret                          /* Return-address is stored in EA */
+   lw        r1, (sp+120)       /* Load register R1 back */
+   addi      sp, sp, 120        /* Correct stack pointer */
+   eret                         /* Return-address is stored in EA */
 
 #endif /* ifndef __DOXYGEN__ */
 /*================================== EOF ====================================*/

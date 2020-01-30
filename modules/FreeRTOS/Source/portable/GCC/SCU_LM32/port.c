@@ -51,8 +51,10 @@
  #include "lm32Interrupts.h"
 #endif
 #include "eb_console_helper.h"
-#include "mini_sdb.h"
 
+#ifdef CONFIG_SCU
+ #include "mini_sdb.h"
+#endif
 
 /*-----------------------------------------------------------
  * Implementation of functions defined in portable.h for the MICO32 port.
@@ -222,13 +224,19 @@ static void onTimerInterrupt( const unsigned int intNum, const void* pContext )
  */
 static void prvSetupTimer( void )
 {
+#ifdef CONFIG_SCU
    volatile LM32_TIMER_T* pTimer = (LM32_TIMER_T*) find_device_adr( GSI, CPU_TIMER_CTRL_IF );
    if( pTimer == (LM32_TIMER_T*)ERROR_NOT_FOUND )
    {
       mprintf( ESC_ERROR "ERROR: Timer not found or not implemented!\n" ESC_NORMAL );
       while( true );
    }
-
+#else
+   #ifndef LM32_TIMER_BASE_ADDR
+     #error Macro LM32_TIMER_BASE_ADDR is not defined!
+   #endif
+   volatile LM32_TIMER_T* pTimer = (LM32_TIMER_T*) LM32_TIMER_BASE_ADDR;
+#endif
    /* stop the timer first and ack any pending interrupts */
    pTimer->control = TIMER_CONTROL_STOP_BIT_MASK;
    pTimer->status  = 0;
@@ -243,6 +251,7 @@ static void prvSetupTimer( void )
                      TIMER_CONTROL_INT_BIT_MASK   |
                      TIMER_CONTROL_CONT_BIT_MASK;
 }
+
 #else
  #if configUSE_PREEMPTION == 1
    #error In preemtion mode is the timer essential!
