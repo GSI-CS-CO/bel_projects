@@ -9,7 +9,8 @@
 ###############################################################################
 REPOSITORY_DIR := $(shell git rev-parse --show-toplevel)
 
-MIAN_MODULE := example.c
+MIAN_MODULE := example_new.c
+SOURCE += $(SCU_LIB_SRC_DIR)/eca_queue_type.c
 SOURCE += $(SCU_DIR)/scu_mil.c
 SOURCE += $(SCU_LIB_SRC_DIR)/irq.c
 
@@ -20,7 +21,7 @@ CODE_OPTIMIZATION = s
 
 # TODO There is a bug in find_device_multi_in_subtree when LTO is activated
 #      therefore NO_LTO = 1
-NO_LTO = 1
+  NO_LTO = 1
 
 # TOOLCHAIN_DIR = $(INCLUDED_TOOLCHAIN_DIR)
 
