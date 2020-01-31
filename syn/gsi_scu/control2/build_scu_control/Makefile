@@ -63,6 +63,7 @@ SOURCE += $(SCU_LIB_SRC_DIR)/display.c
 SOURCE += $(SCU_LIB_SRC_DIR)/LM32assert.c
 SOURCE += $(SCU_LIB_SRC_DIR)/stack-check.c
 SOURCE += $(SCU_LIB_SRC_DIR)/eca_queue_type.c
+SOURCE += $(SCU_DIR)/scu_eca_handler.c
 # SOURCE += $(SCU_LIB_SRC_DIR)/wr_time.c
 SOURCE += $(WR_DIR)/pp_printf/div64.c
 SOURCE += $(SCU_DIR)/scu_bus.c

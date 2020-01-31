@@ -107,7 +107,7 @@ void init()
  * here: get White Rabbit time from WR PPS GEN
  *
  ***********************************************************/
-void getWishboneTAI()
+void getWishboneTAI( void )
 {
   uint32_t *pPPSGen;   // WB address of PPS_GEN
   uint32_t taiSecs;    // TAI full seconds     
@@ -132,7 +132,7 @@ void getWishboneTAI()
  * - try eb-read/eb-write from the host system
  *
  ***********************************************************/
-void useSharedMem()
+void useSharedMem( void )
 {
   uint32_t i,j;
   uint32_t idx;
@@ -197,7 +197,7 @@ void useSharedMem()
 **************************************************************/
 void findECAQ( void )
 {
-  pECAQ = getLM32ECAQueue();
+  pECAQ = ecaGetLM32Queue();
 
   mprintf("\n");
   if( pECAQ == NULL )
@@ -226,7 +226,7 @@ void findECAQ( void )
 void ecaHandler( void )
 {
   // read flag and check if there was an action
-   if( !ecaTestAndPop( pECAQ ) )
+   if( !ecaIsValid( pECAQ ) )
       return;
     // here: do s.th. according to action
    switch( pECAQ->tag )
@@ -248,6 +248,7 @@ void ecaHandler( void )
          break;
       }
    } // switch
+   ecaPop( pECAQ );
 } // ecaHandler
 
 /*************************************************************
@@ -256,7 +257,7 @@ void ecaHandler( void )
 * here: setup shared memory
 *
 **************************************************************/
-void initCmds()
+void initCmds( void )
 {
   pSharedCmd     = (uint32_t *)(pShared + (EXAMPLE_SHARED_CMD >> 2));   // get pointer to shared memory
 
@@ -279,7 +280,7 @@ void initCmds()
 * in the shared memory is reset to 0x0.
 *
 **************************************************************/
-void cmdHandler()
+void cmdHandler( void )
 {
   // check, if a command has been issued (no cmd: 0x0)
   if (*pSharedCmd) {

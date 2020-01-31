@@ -23,59 +23,15 @@
  * License along with this library. If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************
  */
-#if !defined(__lm32__) && !defined(__DOXYGEN__) && !defined(__DOCFSM__)
-  #error This module is for the target LM32 only!
-#endif
-#ifndef MICO32_FULL_CONTEXT_SAVE_RESTORE
-  #warning Macro MICO32_FULL_CONTEXT_SAVE_RESTORE is not defined in Makefile!
-#endif
 
 #ifndef __DOCFSM__ /* Headers will not need for FSM analysator "docfsm" */
- #include <stdint.h>
  #include <stack.h>
- #include "syscon.h"
- #include "eb_console_helper.h"
- #include "scu_lm32_macros.h"
- #include "irq.h"
- #include "scu_bus.h"
- #include "mini_sdb.h"
- #include "board.h"
- #include "uart.h"
- #include "w1.h"
- #include "scu_shared_mem.h"
- #include "scu_mil.h"
- #include "eca_queue_type.h"
- #include "history.h"
+ #include "scu_main.h"
+ #include "scu_eca_handler.h"
  #ifdef CONFIG_SCU_DAQ_INTEGRATION
   #include "daq_main.h"
  #endif
 #endif // ifndef __DOCFSM__
-
-#ifdef CONFIG_FG_PEDANTIC_CHECK
-   /* CAUTION:
-    * Assert-macros could be expensive in memory consuming and the
-    * latency time can increase as well!
-    * Especially in embedded systems with small resources.
-    * Therefore use them for bug-fixing or developing purposes only!
-    */
-   #include <scu_assert.h>
-   #define FG_ASSERT SCU_ASSERT
-   #define FG_UNUSED
-#else
-   #define FG_ASSERT(__e)
-   #define FG_UNUSED UNUSED
-#endif
-
-/*!
- * @defgroup MIL_FSM Functions and macros which concerns the MIL-FSM
- */
-
-/*!
- * @defgroup TASK Cooperative multitasking entry functions invoked by the scheduler.
- */
-
-#define CLK_PERIOD (1000000 / USRCPUCLK) // USRCPUCLK in KHz
-#define OFFS(SLOT) ((SLOT) * (1 << 16))
 
 #define INTERVAL_1000MS 1000000000ULL
 #define INTERVAL_2000MS 2000000000ULL
@@ -116,21 +72,7 @@ typedef enum
 SCU_SHARED_DATA_T SHARED g_shared = SCU_SHARED_DATA_INITIALIZER;
 /*====================== End of shared memory area ==========================*/
 
-/*!
- * @brief Type of Event Condition Action object (ECA)
- */
-typedef struct
-{
-   uint32_t                   tag;    //!<@brief ECA-tag
-   volatile ECA_QUEUE_ITEM_T* pQueue;
-} ECA_OBJ_T;
 
-/*!
- * @brief Global object for ECA (event condition action) handler.
- * @see initEcaQueue
- * @see ecaHandler
- */
-STATIC ECA_OBJ_T       g_eca              = { 0, NULL };
 
 /*!
  * @brief Base pointer of SCU bus.
@@ -211,62 +153,6 @@ STATIC inline void sendSignal( const SIGNAL_T sig, const unsigned int channel )
    mprintf( ESC_DEBUG"Signal: %s, channel: %d sent\n"ESC_NORMAL,
             signal2String( sig ), channel );
 #endif
-}
-
-/*! ---------------------------------------------------------------------------
- * @brief Returns the index number of a FG-macro in the FG-list by the
- *        channel number
- */
-STATIC inline
-int getFgMacroIndexFromFgRegister( const unsigned int channel )
-{
-   FG_ASSERT( channel < ARRAY_SIZE( g_shared.fg_regs ) );
-   return g_shared.fg_regs[channel].macro_number;
-}
-
-/*! ---------------------------------------------------------------------------
- * @brief Returns the Function Generator macro of the given channel.
- */
-STATIC inline FG_MACRO_T getFgMacroViaFgRegister( const unsigned int channel )
-{
-   FG_ASSERT( getFgMacroIndexFromFgRegister( channel ) >= 0 );
-   FG_ASSERT( getFgMacroIndexFromFgRegister( channel ) < ARRAY_SIZE( g_shared.fg_macros ));
-   return g_shared.fg_macros[getFgMacroIndexFromFgRegister( channel )];
-}
-
-/*! ---------------------------------------------------------------------------
- * @brief Returns "true" if the function generator of the given channel
- *        present.
- * @see FOR_EACH_FG
- * @see FOR_EACH_FG_CONTINUING
- */
-STATIC inline bool isFgPresent( const unsigned int channel )
-{
-   if( channel >= MAX_FG_CHANNELS )
-      return false;
-   if( getFgMacroIndexFromFgRegister( channel ) < 0 )
-      return false;
-   return getFgMacroViaFgRegister( channel ).outputBits != 0;
-}
-
-/*! ---------------------------------------------------------------------------
- * @brief Returns the socked number of the given channel.
- * @note The lower 4 bits of the socket number contains the slot-number
- *       of the SCU-bus which can masked out by SCU_BUS_SLOT_MASK.
- */
-STATIC inline uint8_t getSocket( const unsigned int channel )
-{
-   FG_ASSERT( isFgPresent( channel ) );
-   return getFgMacroViaFgRegister( channel ).socket;
-}
-
-/*! ---------------------------------------------------------------------------
- * @brief Returns the device number of the given channel.
- */
-STATIC inline uint8_t getDevice( const unsigned int channel )
-{
-   FG_ASSERT( isFgPresent( channel ) );
-   return getFgMacroViaFgRegister( channel ).device;
 }
 
 /*! ---------------------------------------------------------------------------
@@ -1087,24 +973,6 @@ void _segfault( void )
   //while (1) {}
 }
 
-/*! ---------------------------------------------------------------------------
- * @brief Find the ECA queue of LM32
- */
-STATIC void initEcaQueue( void )
-{
-   g_eca.pQueue = ecaGetLM32Queue();
-   if( g_eca.pQueue == NULL )
-   {
-      mprintf( ESC_ERROR"\nERROR: Can't find ECA queue for LM32,"
-                        " system stopped!"ESC_NORMAL"\n" );
-      while( true )
-         asm volatile ("nop");
-   }
-   g_eca.tag = g_eca.pQueue->tag;
-   mprintf("\nECA queue found at: 0x%08x."
-           " Waiting for actions with tag 0x%08x\n\n",
-            (unsigned int)g_eca.pQueue, g_eca.tag );
-} // initEcaQueue
 
 /*! ---------------------------------------------------------------------------
  * @ingroup MIL_FSM
@@ -1289,17 +1157,6 @@ STATIC void scanFgs( void )
 }
 
 
-/*! ---------------------------------------------------------------------------
- * @ingroup TASK
- * @brief Declaration of the task type
- */
-typedef struct _TASK_T
-{
-   const void*    pTaskData;  /*!<@brief Pointer to the memory-space of the current task */
-   const uint64_t interval;   /*!<@brief interval of the task */
-   uint64_t       lasttick;   /*!<@brief when was the task ran last */
-   void (*func)(struct _TASK_T*); /*!<@brief pointer to the function of the task */
-} TASK_T;
 
 /* task prototypes */
 #ifndef __DOXYGEN__
@@ -1307,7 +1164,7 @@ static void dev_sio_handler( register TASK_T* );
 static void dev_bus_handler( register TASK_T* );
 static void scu_bus_handler( register TASK_T* FG_UNUSED );
 static void sw_irq_handler( register TASK_T* FG_UNUSED  );
-static void ecaHandler( register TASK_T* FG_UNUSED );
+
 #ifdef CONFIG_SCU_DAQ_INTEGRATION
 static void scuBusDaqTask( register TASK_T* FG_UNUSED );
 #endif
@@ -1405,57 +1262,6 @@ STATIC void scuBusDaqTask( register TASK_T* pThis FG_UNUSED )
 #ifdef DEBUG_SAFTLIB
   #warning "DEBUG_SAFTLIB is defined! This could lead to timing problems!"
 #endif
-
-/*! ---------------------------------------------------------------------------
- * @ingroup TASK
- * @brief Event Condition Action (ECA) handler
- * @see schedule
- */
-#define MIL_BROADCAST 0x20ff //TODO Who the fuck is 0x20ff documented!
-STATIC void ecaHandler( register TASK_T* pThis FG_UNUSED )
-{
-   FG_ASSERT( pThis->pTaskData == NULL );
-   FG_ASSERT( g_eca.pQueue != NULL );
-
-   if( !ecaTestAndPop( g_eca.pQueue ) )
-      return;
-   if( g_eca.pQueue->tag != g_eca.tag )
-      return;
-
-#ifdef DEBUG_SAFTLIB
-   mprintf( "* " );
-#endif
-   bool isMilDevArmed = false;
-   SCUBUS_SLAVE_FLAGS_T active_sios   = 0; // bitmap with active sios
-
-   /* check if there are armed fgs */
-   for( unsigned int i = 0; i < ARRAY_SIZE(g_shared.fg_regs); i++ )
-   { // only armed fgs
-      if( g_shared.fg_regs[i].state != STATE_ARMED )
-         continue;
-
-      const uint8_t socket = getSocket( i );
-      if( isMilExtentionFg( socket ) )
-      {
-         isMilDevArmed = true;
-         continue;
-      }
-
-      if( isMilScuBusFg( socket ) && (getFgSlotNumber( socket ) != 0) )
-         active_sios |= (1 << (getFgSlotNumber( socket ) - 1));
-   }
-
-   if( isMilDevArmed )
-      g_pScu_mil_base[MIL_SIO3_TX_CMD] = MIL_BROADCAST;
-
-   // send broadcast start to active sio slaves
-   if( active_sios != 0 )
-   {  // select active sio slaves
-      g_pScub_base[OFFS(0) + MULTI_SLAVE_SEL] = active_sios;
-      // send broadcast
-      g_pScub_base[OFFS(13) + MIL_SIO3_TX_CMD] = MIL_BROADCAST;
-   }
-} // ecaHandler
 
 //#define CONFIG_DEBUG_SWI
 

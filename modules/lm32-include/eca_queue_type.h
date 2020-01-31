@@ -131,7 +131,7 @@ ECA_QUEUE_ITEM_T* ecaGetQueue( const unsigned int id );
  * @retval NULL Queue not found
  * @return Pointer on found ECA queue
  */
-static inline ECA_QUEUE_ITEM_T* ecaGetLM32Queue( void )
+STATIC inline ECA_QUEUE_ITEM_T* ecaGetLM32Queue( void )
 {
    return ecaGetQueue( ECA_CHANNEL_FOR_LM32 );
 }
@@ -140,7 +140,7 @@ static inline ECA_QUEUE_ITEM_T* ecaGetLM32Queue( void )
 /*! --------------------------------------------------------------------------
  * @brief Returns true if ECA object valid.
  */
-static inline bool ecaIsValid( volatile ECA_QUEUE_ITEM_T* pThis )
+STATIC inline bool ecaIsValid( volatile ECA_QUEUE_ITEM_T* pThis )
 {
    return (pThis->flags & (1 << ECA_VALID)) != 0;
 }
@@ -148,25 +148,28 @@ static inline bool ecaIsValid( volatile ECA_QUEUE_ITEM_T* pThis )
 /*! ---------------------------------------------------------------------------
  * @brief Pops the top action from ECA hardware channel
  */
-static inline void ecaPop( volatile ECA_QUEUE_ITEM_T* pThis )
+STATIC inline void ecaPop( volatile ECA_QUEUE_ITEM_T* pThis )
 {
    pThis->pop = 1;
 }
 
 /*! ---------------------------------------------------------------------------
- * @brief Testing whether top ECA object is valid and pop it from channel
- *        if was valid.
+ * @brief Testing whether top ECA object is valid to the given tag
+ *        and pop it from channel if was valid.
+ * @param pThis Pointer to ECA queue
+ * @param tag Tag to test.
  * @retval true is valid
  * @retval false is invalid
  */
-static inline bool ecaTestAndPop( volatile ECA_QUEUE_ITEM_T* pThis )
+STATIC inline bool ecaTestTagAndPop( volatile ECA_QUEUE_ITEM_T* pThis,
+                                     const uint32_t tag )
 {
-   if( ecaIsValid( pThis ) )
-   {
-      ecaPop( pThis );
-      return true;
-   }
-   return false;
+   if( !ecaIsValid( pThis ) )
+      return false;
+   if( pThis->tag != tag )
+      return false;
+   ecaPop( pThis );
+   return true;
 }
 
 #ifdef __cplusplus
