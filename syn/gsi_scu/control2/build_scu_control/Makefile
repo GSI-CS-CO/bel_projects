@@ -17,6 +17,7 @@ DEFINES += CONFIG_FG_PEDANTIC_CHECK
 DEFINES += MICO32_FULL_CONTEXT_SAVE_RESTORE
 # ORIGIN := 1
 
+
 ifdef ORIGIN
   USE_HISTORY=1
   MIAN_MODULE    = $(SCU_DIR)/main.c
@@ -61,7 +62,7 @@ SOURCE += $(SCU_LIB_SRC_DIR)/irq.c
 SOURCE += $(SCU_LIB_SRC_DIR)/display.c
 SOURCE += $(SCU_LIB_SRC_DIR)/LM32assert.c
 SOURCE += $(SCU_LIB_SRC_DIR)/stack-check.c
-
+SOURCE += $(SCU_LIB_SRC_DIR)/eca_queue_type.c
 # SOURCE += $(SCU_LIB_SRC_DIR)/wr_time.c
 SOURCE += $(WR_DIR)/pp_printf/div64.c
 SOURCE += $(SCU_DIR)/scu_bus.c

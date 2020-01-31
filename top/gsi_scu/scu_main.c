@@ -44,8 +44,7 @@
  #include "w1.h"
  #include "scu_shared_mem.h"
  #include "scu_mil.h"
- #include "eca_queue_regs.h"
- #include "eca_flags.h"
+ #include "eca_queue_type.h"
  #include "history.h"
  #ifdef CONFIG_SCU_DAQ_INTEGRATION
   #include "daq_main.h"
@@ -118,22 +117,17 @@ SCU_SHARED_DATA_T SHARED g_shared = SCU_SHARED_DATA_INITIALIZER;
 /*====================== End of shared memory area ==========================*/
 
 /*!
- * @brief Data type of ECA-tag.
- */
-typedef uint32_t ECA_T;
-
-/*!
  * @brief Type of Event Condition Action object (ECA)
  */
 typedef struct
 {
-   ECA_T           tag;    //!<@brief ECA-tag
-   volatile ECA_T* pQueue; //!<@brief WB address of ECA queue
+   uint32_t                   tag;    //!<@brief ECA-tag
+   volatile ECA_QUEUE_ITEM_T* pQueue;
 } ECA_OBJ_T;
 
 /*!
  * @brief Global object for ECA (event condition action) handler.
- * @see findECAQ
+ * @see initEcaQueue
  * @see ecaHandler
  */
 STATIC ECA_OBJ_T       g_eca              = { 0, NULL };
@@ -345,22 +339,6 @@ STATIC void mil_failure( const int status, const int slave_nr )
    }
 }
 
-#if 0
-/** debug method
- * prints the last received message signaled interrupt to the UART
- */
-STATIC void show_msi( void )
-{
-  mprintf(" Msg:\t%08x\nAdr:\t%08x\nSel:\t%01x\n", global_msi.msg, global_msi.adr, global_msi.sel);
-
-}
-
-STATIC void isr0( void )
-{
-   mprintf("ISR0\n");
-   show_msi();
-}
-#endif
 /*! ---------------------------------------------------------------------------
  * @brief enables msi generation for the specified channel. \n
  * Messages from the scu bus are send to the msi queue of this cpu with the offset 0x0. \n
@@ -990,7 +968,7 @@ STATIC void disable_channel( const unsigned int channel )
    int status;
    int16_t data;
    const uint8_t socket = getSocket( channel );
-   const uint16_t dev    = getDevice( channel );
+   const uint16_t dev   = getDevice( channel );
    //mprintf("disarmed socket %d dev %d in channel[%d] state %d\n", socket, dev, channel, pFgRegs->state); //ONLY FOR TESTING
    if( isNonMilFg( socket ) )
    {
@@ -1110,43 +1088,23 @@ void _segfault( void )
 }
 
 /*! ---------------------------------------------------------------------------
- * @brief demonstrate how to poll actions ("events") from ECA
- * HERE: get WB address of relevant ECA queue
- * code written by D.Beck, example.c
+ * @brief Find the ECA queue of LM32
  */
-STATIC void findECAQ( void )
+STATIC void initEcaQueue( void )
 {
-#define ECAQMAX           4 //!<@brief  max number of ECA queues
-#define ECACHANNELFORLM32 2 //!<@brief  this is a hack! suggest to implement proper sdb-records with info for queues
-
-  // stuff below needed to get WB address of ECA queue 
-  sdb_location ECAQ_base[ECAQMAX]; // base addresses of ECA queues
-  uint32_t ECAQidx = 0;            // max number of ECA queues in the SoC
-
-  g_eca.pQueue = NULL; // Pre-nitialize Wishbone address for LM32 ECA queue
-
-  // get Wishbone addresses of all ECA Queues
-  find_device_multi(ECAQ_base, &ECAQidx, ARRAY_SIZE(ECAQ_base),
-                    ECA_QUEUE_SDB_VENDOR_ID, ECA_QUEUE_SDB_DEVICE_ID);
-
-  // walk through all ECA Queues and find the one for the LM32
-  for( uint32_t i = 0; i < ECAQidx; i++ )
-  {
-     ECA_T* pTmp = (ECA_T*)(getSdbAdr(&ECAQ_base[i]));
-     if( (pTmp != NULL) && (pTmp[ECA_QUEUE_QUEUE_ID_GET / sizeof(ECA_T)] == ECACHANNELFORLM32) )
-        g_eca.pQueue = pTmp;
-  }
-
-  if( g_eca.pQueue == NULL )
-  {
-     mprintf(ESC_ERROR"\nFATAL: can't find ECA queue for lm32, good bye!"ESC_NORMAL"\n");
-     while( true )
-        asm("nop");
-  }
-  g_eca.tag = g_eca.pQueue[ECA_QUEUE_TAG_GET / sizeof(ECA_T)];
-  mprintf("\nECA queue found at: 0x%08x. Waiting for actions with tag 0x%08x ...\n\n",
-           g_eca.pQueue, g_eca.tag );
-} // findECAQ
+   g_eca.pQueue = ecaGetLM32Queue();
+   if( g_eca.pQueue == NULL )
+   {
+      mprintf( ESC_ERROR"\nERROR: Can't find ECA queue for LM32,"
+                        " system stopped!"ESC_NORMAL"\n" );
+      while( true )
+         asm volatile ("nop");
+   }
+   g_eca.tag = g_eca.pQueue->tag;
+   mprintf("\nECA queue found at: 0x%08x."
+           " Waiting for actions with tag 0x%08x\n\n",
+            (unsigned int)g_eca.pQueue, g_eca.tag );
+} // initEcaQueue
 
 /*! ---------------------------------------------------------------------------
  * @ingroup MIL_FSM
@@ -1451,36 +1409,23 @@ STATIC void scuBusDaqTask( register TASK_T* pThis FG_UNUSED )
 /*! ---------------------------------------------------------------------------
  * @ingroup TASK
  * @brief Event Condition Action (ECA) handler
- *        demonstrate how to poll actions ("events") from ECA
- *
- * HERE: poll ECA, get data of action and do something
- *
- * This example assumes that
- * - action for this lm32 are configured by using saft-ecpu-ctl
- *   from the host system
- * - a TAG with value 0x4 has been configure (see saft-ecpu-ctl -h
- *   for help
  * @see schedule
  */
 #define MIL_BROADCAST 0x20ff //TODO Who the fuck is 0x20ff documented!
 STATIC void ecaHandler( register TASK_T* pThis FG_UNUSED )
 {
    FG_ASSERT( pThis->pTaskData == NULL );
+   FG_ASSERT( g_eca.pQueue != NULL );
 
-   // read flag for the next action and check if there was an action
-   if( (g_eca.pQueue[ECA_QUEUE_FLAGS_GET / sizeof(ECA_T)] & (1 << ECA_VALID)) == 0 )
+   if( !ecaTestAndPop( g_eca.pQueue ) )
+      return;
+   if( g_eca.pQueue->tag != g_eca.tag )
       return;
 
-   // pop action from channel
-   g_eca.pQueue[ECA_QUEUE_POP_OWR / sizeof(ECA_T)] = 0x1; //TODO Who the fuck is 0x1 documented!
-
-   // here: do s.th. according to action; read data tag of action
-   if( g_eca.pQueue[ECA_QUEUE_TAG_GET / sizeof(ECA_T)] != g_eca.tag )
-      return;
 #ifdef DEBUG_SAFTLIB
    mprintf( "* " );
 #endif
-   bool                 dev_mil_armed = false;
+   bool isMilDevArmed = false;
    SCUBUS_SLAVE_FLAGS_T active_sios   = 0; // bitmap with active sios
 
    /* check if there are armed fgs */
@@ -1492,7 +1437,7 @@ STATIC void ecaHandler( register TASK_T* pThis FG_UNUSED )
       const uint8_t socket = getSocket( i );
       if( isMilExtentionFg( socket ) )
       {
-         dev_mil_armed = true;
+         isMilDevArmed = true;
          continue;
       }
 
@@ -1500,7 +1445,7 @@ STATIC void ecaHandler( register TASK_T* pThis FG_UNUSED )
          active_sios |= (1 << (getFgSlotNumber( socket ) - 1));
    }
 
-   if( dev_mil_armed )
+   if( isMilDevArmed )
       g_pScu_mil_base[MIL_SIO3_TX_CMD] = MIL_BROADCAST;
 
    // send broadcast start to active sio slaves
@@ -2372,7 +2317,7 @@ int main( void )
    mprintf("g_pUser_1wire_base is: 0x%08x\n", g_pUser_1wire_base);
    mprintf("g_pScub_irq_base is:   0x%08x\n", g_pScub_irq_base);
    mprintf("g_pMil_irq_base is:    0x%08x\n", g_pMil_irq_base);
-   findECAQ();
+   initEcaQueue();
 
    init(); // init and scan for fgs
 

@@ -5,8 +5,8 @@
  * @copyright   2020 GSI Helmholtz Centre for Heavy Ion Research GmbH
  * @date 30.01.2020
  */
-#ifndef _ECA_QUEUE_TYP_H
-#define _ECA_QUEUE_TYP_H
+#ifndef _ECA_QUEUE_TYPE_H
+#define _ECA_QUEUE_TYPE_H
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -117,30 +117,30 @@ STATIC_ASSERT( offsetof( ECA_QUEUE_ITEM_T, executedL ) == ECA_QUEUE_EXECUTED_LO_
 
 #define ECA_CHANNEL_FOR_LM32 2
 
-#ifdef __lm32__
+#if defined(__lm32__) || defined(__DOXYGEN__)
 /*! ---------------------------------------------------------------------------
  * @brief Returns the top pointer of the ECA queue
  * @param id ECA ID to find
  * @retval NULL Queue not found
- * @return Pointer of found ECA queue
+ * @return Pointer on found ECA queue
  */
-ECA_QUEUE_ITEM_T* getECAQueue( const unsigned int id );
+ECA_QUEUE_ITEM_T* ecaGetQueue( const unsigned int id );
 
 /*! ---------------------------------------------------------------------------
  * @brief Returns the top pointer of the ECA queue for LM32
  * @retval NULL Queue not found
- * @return Pointer of found ECA queue
+ * @return Pointer on found ECA queue
  */
-static inline ECA_QUEUE_ITEM_T* getLM32ECAQueue( void )
+static inline ECA_QUEUE_ITEM_T* ecaGetLM32Queue( void )
 {
-   return getECAQueue( ECA_CHANNEL_FOR_LM32 );
+   return ecaGetQueue( ECA_CHANNEL_FOR_LM32 );
 }
 #endif /* __lm32__ */
 
 /*! --------------------------------------------------------------------------
  * @brief Returns true if ECA object valid.
  */
-static inline bool isEcaValid( volatile ECA_QUEUE_ITEM_T* pThis )
+static inline bool ecaIsValid( volatile ECA_QUEUE_ITEM_T* pThis )
 {
    return (pThis->flags & (1 << ECA_VALID)) != 0;
 }
@@ -161,15 +161,16 @@ static inline void ecaPop( volatile ECA_QUEUE_ITEM_T* pThis )
  */
 static inline bool ecaTestAndPop( volatile ECA_QUEUE_ITEM_T* pThis )
 {
-   if( !isEcaValid( pThis ) )
-      return false;
-
-   ecaPop( pThis );
-   return true;
+   if( ecaIsValid( pThis ) )
+   {
+      ecaPop( pThis );
+      return true;
+   }
+   return false;
 }
 
 #ifdef __cplusplus
 }
 #endif
-#endif /* _ECA_QUEUE_TYP_H */
+#endif /* _ECA_QUEUE_TYPE_H */
 /*================================== EOF ====================================*/
