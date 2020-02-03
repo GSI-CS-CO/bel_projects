@@ -29,6 +29,7 @@
  #include "scu_main.h"
  #include "scu_eca_handler.h"
  #include "scu_command_handler.h"
+ #include "scu_temperature.h"
  #ifdef CONFIG_SCU_DAQ_INTEGRATION
   #include "daq_main.h"
  #endif
@@ -53,6 +54,7 @@ typedef enum
    MIL_DRQ = 0x02
 } MIL_T;
 
+extern ONE_WIRE_T g_oneWireBase;
 
 /*====================== Begin of shared memory area ========================*/
 /*!
@@ -87,19 +89,6 @@ volatile unsigned int* g_pScu_mil_base    = NULL;
  * @see initializeGlobalPointers
  */
 volatile uint32_t*     g_pMil_irq_base    = NULL;
-
-/*!
- * @brief Base pointer of one-wire controller in the WRC
- * @see initializeGlobalPointers
- */
-volatile uint32_t*     g_pWr_1wire_base   = NULL;
-
-/*!
- * @brief Base pointer of one-wire controller on dev crossbar
- * @see initializeGlobalPointers
- */
-volatile uint32_t*     g_pUser_1wire_base = NULL;
-
 
 /*!
  * @brief  Memory space of message queue.
@@ -137,13 +126,12 @@ STATIC inline void initializeGlobalPointers( void )
 {
    discoverPeriphery();
    uart_init_hw();
+   initOneWire();
    /* additional periphery needed for scu */
    g_pScub_base       = (volatile uint16_t*)find_device_adr(GSI, SCU_BUS_MASTER);
    g_pScub_irq_base   = (volatile uint32_t*)find_device_adr(GSI, SCU_IRQ_CTRL);
    g_pScu_mil_base    = (unsigned int*)find_device_adr(GSI,SCU_MIL);
    g_pMil_irq_base    = (volatile uint32_t*)find_device_adr(GSI, MIL_IRQ_CTRL);
-   g_pWr_1wire_base   = (volatile uint32_t*)find_device_adr(CERN, WR_1Wire);
-   g_pUser_1wire_base = (volatile uint32_t*)find_device_adr(GSI, User_1Wire);
 }
 
 /*! ---------------------------------------------------------------------------
@@ -878,31 +866,6 @@ void disable_channel( const unsigned int channel )
       pFgRegs->state = STATE_STOPPED;
       sendSignal( IRQ_DAT_DISARMED, channel );
    }
-}
-
-/*! ---------------------------------------------------------------------------
- * @brief updates the temperatur information in the shared section
- * @todo I think its not meaningful to have this function here.
- *       Check about the reason. UB
- */
-STATIC void updateTemperature( void )
-{
-   BASE_ONEWIRE = (uint8_t*)g_pWr_1wire_base;
-   wrpc_w1_init();
-#if __GNUC__ >= 9
-   #pragma GCC diagnostic push
-   #pragma GCC diagnostic ignored "-Waddress-of-packed-member"
-#endif
-   ReadTempDevices(0, &g_shared.board_id, &g_shared.board_temp);
-   BASE_ONEWIRE = (uint8_t*)g_pUser_1wire_base;
-   wrpc_w1_init();
-   ReadTempDevices(0, &g_shared.ext_id,       &g_shared.ext_temp);
-   ReadTempDevices(1, &g_shared.backplane_id, &g_shared.backplane_temp);
-#if __GNUC__ >= 9
-   #pragma GCC diagnostic pop
-#endif
-   BASE_ONEWIRE = (uint8_t*)g_pWr_1wire_base; // important for PTP deamon
-   wrpc_w1_init();
 }
 
 /*! ---------------------------------------------------------------------------
@@ -1918,10 +1881,10 @@ int main( void )
    usleep_init();
 
    printCpuId();
-   mprintf("g_pWr_1wire_base is:   0x%08x\n", g_pWr_1wire_base);
-   mprintf("g_pUser_1wire_base is: 0x%08x\n", g_pUser_1wire_base);
-   mprintf("g_pScub_irq_base is:   0x%08x\n", g_pScub_irq_base);
-   mprintf("g_pMil_irq_base is:    0x%08x\n", g_pMil_irq_base);
+   mprintf("g_oneWireBase.pWr is:   0x%08x\n", g_oneWireBase.pWr);
+   mprintf("g_oneWireBase.pUser is: 0x%08x\n", g_oneWireBase.pUser);
+   mprintf("g_pScub_irq_base is:    0x%08x\n", g_pScub_irq_base);
+   mprintf("g_pMil_irq_base is:     0x%08x\n", g_pMil_irq_base);
    initEcaQueue();
 
    init(); // init and scan for fgs
