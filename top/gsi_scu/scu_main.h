@@ -76,7 +76,17 @@ extern "C" {
 #define CLK_PERIOD (1000000 / USRCPUCLK) // USRCPUCLK in KHz
 #define OFFS(SLOT) ((SLOT) * (1 << 16))
 
-extern SCU_SHARED_DATA_T g_shared;
+/*!
+ * @brief Type of message origin
+ */
+typedef enum
+{
+   IRQ    = 0, /*!<@brief From interrupt              */
+   SCUBUS = 1, /*!<@brief From non- MIL- device       */
+   DEVBUS = 2, /*!<@brief From MIL-device.            */
+   DEVSIO = 3, /*!<@brief From MIL-device via SCU-bus */
+   SWI    = 4  /*!<@brief From Linux host             */
+} MSG_T;
 
 /*! ---------------------------------------------------------------------------
  * @ingroup TASK
@@ -89,6 +99,77 @@ typedef struct _TASK_T
    uint64_t       lasttick;   /*!<@brief when was the task ran last */
    void (*func)(struct _TASK_T*); /*!<@brief pointer to the function of the task */
 } TASK_T;
+
+/*! ---------------------------------------------------------------------------
+ * @brief Data type for remembering the last data sent to a function generator.
+ */
+typedef struct
+{
+  // uint64_t timeout;
+   uint32_t param_sent;   /*!<@brief Sent counter */
+   int32_t  last_c_coeff; /*!<@brief Value of last C-coefficient of polynomial */
+} FG_CHANNEL_T;
+
+
+extern SCU_SHARED_DATA_T g_shared;
+
+/*!
+ * @brief Message size of message queue.
+ */
+#define QUEUE_CNT 5
+
+#if defined( CONFIG_READ_MIL_TIME_GAP ) && !defined(__DOCFSM__)
+/*! ---------------------------------------------------------------------------
+ * @ingroup MIL_FSM
+ * @brief Returns true, when the states of all MIL-FSMs are in the state
+ *        ST_WAIT.
+ */
+bool isMilFsmInST_WAIT( void );
+
+/*! ---------------------------------------------------------------------------
+ * @ingroup MIL_FSM
+ * @brief Suspends the DAQ- gap reading. The gap reading becomes resumed once
+ *        the concerning function generator has been sent its first data.
+ */
+void suspendGapReading( void );
+#endif
+
+/*! ---------------------------------------------------------------------------
+ * @brief enables msi generation for the specified channel. \n
+ * Messages from the scu bus are send to the msi queue of this cpu with the offset 0x0. \n
+ * Messages from the MIL extension are send to the msi queue of this cpu with the offset 0x20. \n
+ * A hardware macro is used, which generates msis from legacy interrupts. \n
+ * @param channel number of the channel between 0 and MAX_FG_CHANNELS-1
+ * @see disable_slave_irq
+ */
+void enable_scub_msis( const unsigned int channel );
+
+/*! ---------------------------------------------------------------------------
+ * @brief disable function generator channel
+ * @param channel number of the function generator channel from 0 to MAX_FG_CHANNELS-1
+ */
+void disable_channel( const unsigned int channel );
+
+/*! ---------------------------------------------------------------------------
+ * @brief Scans for function generators on mil extension and scu bus.
+ */
+void scanFgs( void );
+
+/*! ---------------------------------------------------------------------------
+ * @brief helper function which clears the state of a dev bus after malfunction
+ */
+void clear_handler_state( const uint8_t socket );
+
+/*! ---------------------------------------------------------------------------
+ * @brief configures each function generator channel.
+ *
+ *  checks first, if the drq line is inactive, if not the line is cleared
+ *  then activate irqs and send the first tuple of data to the function generator
+ *  @param channel number of the specified function generator channel from
+ *         0 to MAX_FG_CHANNELS-1
+ */
+int configure_fg_macro( const unsigned int channel );
+
 
 /*! ---------------------------------------------------------------------------
  * @brief Returns the index number of a FG-macro in the FG-list by the

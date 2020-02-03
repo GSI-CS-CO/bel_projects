@@ -17,6 +17,7 @@ DEFINES += CONFIG_FG_PEDANTIC_CHECK
 DEFINES += MICO32_FULL_CONTEXT_SAVE_RESTORE
 # ORIGIN := 1
 
+VERSION_STR = "3.1.0"
 
 ifdef ORIGIN
   USE_HISTORY=1
@@ -51,9 +52,11 @@ ifdef SCU_DAQ
   DEFINES += CONFIG_SCU_DAQ_INTEGRATION
   DEFINES += CONFIG_DAQ_SW_SEQUENCE
   DEFINES += DAQ_MAX_CHANNELS=4
+  VERSION = $(VERSION_STR)" +DAQ"
 else
   # New functions will not compiled when the following switch is set.
  # DEFINES += CONFIG_OLD_SCU_SW
+  VERSION = $(VERSION_STR)
 endif
 
 
@@ -62,8 +65,6 @@ SOURCE += $(SCU_LIB_SRC_DIR)/irq.c
 SOURCE += $(SCU_LIB_SRC_DIR)/display.c
 SOURCE += $(SCU_LIB_SRC_DIR)/LM32assert.c
 SOURCE += $(SCU_LIB_SRC_DIR)/stack-check.c
-SOURCE += $(SCU_LIB_SRC_DIR)/eca_queue_type.c
-SOURCE += $(SCU_DIR)/scu_eca_handler.c
 # SOURCE += $(SCU_LIB_SRC_DIR)/wr_time.c
 SOURCE += $(WR_DIR)/pp_printf/div64.c
 SOURCE += $(SCU_DIR)/scu_bus.c
@@ -74,6 +75,9 @@ ifdef ORIGIN
 else
  SOURCE += $(SCU_DIR)/scu_function_generator.c
  SOURCE += $(SCU_DIR)/scu_circular_buffer.c
+ SOURCE += $(SCU_DIR)/scu_eca_handler.c
+ SOURCE += $(SCU_DIR)/scu_command_handler.c
+ SOURCE += $(SCU_LIB_SRC_DIR)/eca_queue_type.c
 endif
 SOURCE += $(SCU_DIR)/dow_crc.c
 ifdef USE_HISTORY

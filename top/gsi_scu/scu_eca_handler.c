@@ -2,9 +2,9 @@
  * @file scu_eca_handler.c
  * @brief Handler of Event Conditioned Action for SCU function-generators
  * @date 31.01.2020
- * @copyright (C) 2019 GSI Helmholtz Centre for Heavy Ion Research GmbH
+ * @copyright (C) 2020 GSI Helmholtz Centre for Heavy Ion Research GmbH
  * @author Ulrich Becker <u.becker@gsi.de>
- * Outsouced from scu_main.c
+ * Outsourced from scu_main.c
  */
 
 #include "scu_main.h"

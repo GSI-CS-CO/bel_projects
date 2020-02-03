@@ -28,6 +28,7 @@
  #include <stack.h>
  #include "scu_main.h"
  #include "scu_eca_handler.h"
+ #include "scu_command_handler.h"
  #ifdef CONFIG_SCU_DAQ_INTEGRATION
   #include "daq_main.h"
  #endif
@@ -52,17 +53,6 @@ typedef enum
    MIL_DRQ = 0x02
 } MIL_T;
 
-/*!
- * @brief Type of message origin
- */
-typedef enum
-{
-   IRQ    = 0, /*!<@brief From interrupt              */
-   SCUBUS = 1, /*!<@brief From non- MIL- device       */
-   DEVBUS = 2, /*!<@brief From MIL-device.            */
-   DEVSIO = 3, /*!<@brief From MIL-device via SCU-bus */
-   SWI    = 4  /*!<@brief From Linux host             */
-} MSG_T;
 
 /*====================== Begin of shared memory area ========================*/
 /*!
@@ -110,26 +100,11 @@ volatile uint32_t*     g_pWr_1wire_base   = NULL;
  */
 volatile uint32_t*     g_pUser_1wire_base = NULL;
 
-/*!
- * @brief Message size of message queue.
- */
-#define QUEUE_CNT 5
 
 /*!
  * @brief  Memory space of message queue.
  */
 volatile FG_MESSAGE_BUFFER_T g_aMsg_buf[QUEUE_CNT] = {{0, 0}};
-
-
-/*! ---------------------------------------------------------------------------
- * @brief Data type for remembering the last data sent to a function generator.
- */
-typedef struct
-{
-  // uint64_t timeout;
-   uint32_t param_sent;   /*!<@brief Sent counter */
-   int32_t  last_c_coeff; /*!<@brief Value of last C-coefficient of polynomial */
-} FG_CHANNEL_T;
 
 /*!
  * @brief Memory space of sent function generator data.
@@ -233,7 +208,7 @@ STATIC void mil_failure( const int status, const int slave_nr )
  * @param channel number of the channel between 0 and MAX_FG_CHANNELS-1
  * @see disable_slave_irq
  */
-STATIC void enable_scub_msis( const unsigned int channel )
+void enable_scub_msis( const unsigned int channel )
 {
    if( channel >= MAX_FG_CHANNELS )
       return;
@@ -563,11 +538,10 @@ STATIC inline void dispatch( void )
    }
 }
 
-
 /*! ---------------------------------------------------------------------------
- * @brief helper function which clears the state of a dev bus after malfunction
+ * @see scu_main.h
  */
-STATIC void clear_handler_state( const uint8_t socket )
+void clear_handler_state( const uint8_t socket )
 {
    MSI_T m;
 
@@ -594,14 +568,9 @@ STATIC void clear_handler_state( const uint8_t socket )
 }
 
 /*! ---------------------------------------------------------------------------
- * @brief configures each function generator channel.
- *
- *  checks first, if the drq line is inactive, if not the line is cleared
- *  then activate irqs and send the first tuple of data to the function generator
- *  @param channel number of the specified function generator channel from
- *         0 to MAX_FG_CHANNELS-1
+ * @see scu_main.h
  */
-STATIC int configure_fg_macro( const unsigned int channel )
+int configure_fg_macro( const unsigned int channel )
 {
    if( channel >= MAX_FG_CHANNELS )
       return -1;
@@ -841,10 +810,9 @@ inline STATIC void print_regs( void)
 }
 
 /*! ---------------------------------------------------------------------------
- * @brief disable function generator channel
- * @param channel number of the function generator channel from 0 to MAX_FG_CHANNELS-1
+ * @see scu_main.h
  */
-STATIC void disable_channel( const unsigned int channel )
+void disable_channel( const unsigned int channel )
 {
    FG_CHANNEL_REG_T* pFgRegs = &g_shared.fg_regs[channel];
 
@@ -949,8 +917,6 @@ STATIC void init_irq_table( void )
    irq_enable();
    mprintf("IRQ table configured. 0x%x\n", irq_get_mask());
 }
-
-STATIC void scanFgs( void );
 
 /*! ---------------------------------------------------------------------------
  * @brief initialize procedure at startup
@@ -1102,11 +1068,9 @@ STATIC_ASSERT( TASKMAX >= (ARRAY_SIZE( g_aMilTaskData ) + MAX_FG_CHANNELS-1 + TA
 
 #if defined( CONFIG_READ_MIL_TIME_GAP ) && !defined(__DOCFSM__)
 /*! ---------------------------------------------------------------------------
- * @ingroup MIL_FSM
- * @brief Returns true, when the states of all MIL-FSMs are in the state
- *        ST_WAIT.
+ * @see scu_main.h
  */
-STATIC inline bool isMilFsmInST_WAIT( void )
+bool isMilFsmInST_WAIT( void )
 {
    for( unsigned int i = 0; i < ARRAY_SIZE( g_aMilTaskData ); i++ )
    {
@@ -1117,11 +1081,9 @@ STATIC inline bool isMilFsmInST_WAIT( void )
 }
 
 /*! ---------------------------------------------------------------------------
- * @ingroup MIL_FSM
- * @brief Suspends the DAQ- gap reading. The gap reading becomes resumed once
- *        the concerning function generator has been sent its first data.
+ * @see scu_main.h
  */
-STATIC void suspendGapReading( void )
+void suspendGapReading( void )
 {
    for( unsigned int i = 0; i < ARRAY_SIZE( g_aMilTaskData ); i++ )
       g_aMilTaskData[i].slave_nr = INVALID_SLAVE_NR;
@@ -1131,7 +1093,7 @@ STATIC void suspendGapReading( void )
 /*! ---------------------------------------------------------------------------
  * @brief Scans for fgs on mil extension and scu bus.
  */
-STATIC void scanFgs( void )
+void scanFgs( void )
 {
 #ifdef CONFIG_USE_RESCAN_FLAG
    g_shared.fg_rescan_busy = 1; //signal busy to saftlib
@@ -1163,7 +1125,6 @@ STATIC void scanFgs( void )
 static void dev_sio_handler( register TASK_T* );
 static void dev_bus_handler( register TASK_T* );
 static void scu_bus_handler( register TASK_T* FG_UNUSED );
-static void sw_irq_handler( register TASK_T* FG_UNUSED  );
 
 #ifdef CONFIG_SCU_DAQ_INTEGRATION
 static void scuBusDaqTask( register TASK_T* FG_UNUSED );
@@ -1258,168 +1219,6 @@ STATIC void scuBusDaqTask( register TASK_T* pThis FG_UNUSED )
    forEachScuDaqDevice();
 }
 #endif /* ifdef CONFIG_SCU_DAQ_INTEGRATION */
-
-#ifdef DEBUG_SAFTLIB
-  #warning "DEBUG_SAFTLIB is defined! This could lead to timing problems!"
-#endif
-
-//#define CONFIG_DEBUG_SWI
-
-#ifdef CONFIG_DEBUG_SWI
-#warning Function printSwIrqCode() is activated! In this mode the software will not work!
-/*! ---------------------------------------------------------------------------
- * @brief For debug purposes only!
- */
-STATIC void printSwIrqCode( const unsigned int code, const unsigned int value )
-{
-   const char* str;
-   #define _SWI_CASE_ITEM( i ) case i: str = #i; break
-   switch( code )
-   {
-      _SWI_CASE_ITEM( FG_OP_INITIALIZE );
-      _SWI_CASE_ITEM( FG_OP_RFU );
-      _SWI_CASE_ITEM( FG_OP_CONFIGURE );
-      _SWI_CASE_ITEM( FG_OP_DISABLE_CHANNEL );
-      _SWI_CASE_ITEM( FG_OP_RESCAN );
-      _SWI_CASE_ITEM( FG_OP_CLEAR_HANDLER_STATE );
-      _SWI_CASE_ITEM( FG_OP_PRINT_HISTORY );
-      default: str = "unknown"; break;
-   }
-   #undef _SWI_CASE_ITEM
-   mprintf( ESC_DEBUG"SW-IRQ: %s\tValue: %d"ESC_NORMAL"\n", str, value );
-}
-#else
-#define printSwIrqCode( code, value )
-#endif
-
-/*! ---------------------------------------------------------------------------
- * @ingroup TASK
- * @brief Software irq handler
- *
- * dispatch the calls from linux to the helper functions
- * called via scheduler in main loop
- * @param pThis pointer to the current task object
- * @see schedule
- */
-STATIC void sw_irq_handler( register TASK_T* pThis FG_UNUSED )
-{
-   FG_ASSERT( pThis->pTaskData == NULL );
-
-   if( !has_msg( &g_aMsg_buf[0], SWI ) )
-      return; /* Nothing to do.. */
-
-#ifdef CONFIG_READ_MIL_TIME_GAP
-   if( !isMilFsmInST_WAIT() )
-      return;
-#endif
-
-   const MSI_T m = remove_msg( &g_aMsg_buf[0], SWI );
-   if( m.adr != 0x10 ) //TODO From where the fuck comes 0x10!!!
-      return;
-
-   const unsigned int code  = m.msg >> BIT_SIZEOF( uint16_t );
-   const unsigned int value = m.msg & 0xffff;
-   printSwIrqCode( code, value );
-
-   switch( code )
-   {
-      case FG_OP_INITIALIZE:          /* Go immediately to next case. */
-      case FG_OP_CONFIGURE:           /* Go immediately to next case. */
-      case FG_OP_DISABLE_CHANNEL:     /* Go immediately to next case. */
-      case FG_OP_CLEAR_HANDLER_STATE:
-      {
-         if( value < ARRAY_SIZE( g_aFgChannels ) )
-            break;
-
-         mprintf( ESC_ERROR"Value %d out of range!"ESC_NORMAL"\n", value );
-         return;
-      }
-      default: break;
-   }
-
-   switch( code )
-   {
-      case FG_OP_INITIALIZE:
-      {
-         hist_addx(HISTORY_XYZ_MODULE, "init_buffers", m.msg);
-        #if __GNUC__ >= 9
-         #pragma GCC diagnostic push
-         #pragma GCC diagnostic ignored "-Waddress-of-packed-member"
-        #endif
-         init_buffers( &g_shared.fg_regs[0],
-                       m.msg,
-                       &g_shared.fg_macros[0],
-                       g_pScub_base,
-                       g_pScu_mil_base );
-        #if __GNUC__ >= 9
-         #pragma GCC diagnostic pop
-        #endif
-         g_aFgChannels[value].param_sent = 0;
-         break;
-      }
-
-      case FG_OP_RFU:
-      {
-         break;
-      }
-
-      case FG_OP_CONFIGURE:
-      {
-      #ifdef CONFIG_READ_MIL_TIME_GAP
-         suspendGapReading(); // TEST!!!
-      #endif
-         enable_scub_msis( value );
-         configure_fg_macro( value );
-      #ifdef DEBUG_SAFTLIB
-         mprintf( "+%d ", value );
-      #endif
-         break;
-      }
-
-      case FG_OP_DISABLE_CHANNEL:
-      {
-         disable_channel( value );
-      #ifdef DEBUG_SAFTLIB
-         mprintf( "-%d ", value );
-      #endif
-         break;
-      }
-
-      case FG_OP_RESCAN:
-      { //rescan for fg macros
-         scanFgs();
-         break;
-      }
-
-      case FG_OP_CLEAR_HANDLER_STATE:
-      {
-         clear_handler_state(value);
-         break;
-      }
-
-      case FG_OP_PRINT_HISTORY:
-      {
-       #ifdef HISTORY
-         hist_print(1);
-       #else
-         mprintf( "No history!\n" );
-       #endif
-         break;
-      }
-
-      default:
-      {
-         mprintf("swi: 0x%x\n", m.adr);
-         mprintf("     0x%x\n", m.msg);
-         break;
-      }
-   }
-#ifdef CONFIG_DEBUG_FG
-   #warning When CONFIG_DEBUG_FG defined then the timing will destroy!
-   mprintf( ESC_FG_CYAN ESC_BOLD"FG-command: %s: %d\n"ESC_NORMAL,
-            fgCommand2String( code ), value );
-#endif
-}
 
 /*! ---------------------------------------------------------------------------
  * @ingroup TASK
