@@ -29,6 +29,7 @@
  #include "scu_main.h"
  #include "scu_eca_handler.h"
  #include "scu_command_handler.h"
+ #include "scu_mil_fg_handler.h"
  #include "scu_temperature.h"
  #ifdef CONFIG_SCU_DAQ_INTEGRATION
   #include "daq_main.h"
@@ -379,8 +380,8 @@ STATIC inline void send_fg_param( const unsigned int socket,
 
 /*! ---------------------------------------------------------------------------
  * @brief Send signal REFILL to the SAFTLIB when the fifo level has
- *        the threshold reached. Helper function of function handle().
- * @see handle
+ *        the threshold reached. Helper function of function handleMacros().
+ * @see handleMacros
  * @param channel Channel of concerning function generator.
  */
 STATIC void sendRefillSignalIfThreshold( const unsigned int channel )
@@ -393,8 +394,8 @@ STATIC void sendRefillSignalIfThreshold( const unsigned int channel )
 }
 
 /*! ---------------------------------------------------------------------------
- * @brief Helper function of function handle().
- * @see handle
+ * @brief Helper function of function handleMacros().
+ * @see handleMacros
  */
 STATIC inline void makeStop( const unsigned int channel )
 {
@@ -407,8 +408,8 @@ STATIC inline void makeStop( const unsigned int channel )
 }
 
 /*! ---------------------------------------------------------------------------
- * @brief Helper function of function handle().
- * @see handle
+ * @brief Helper function of function handleMacros().
+ * @see handleMacros
  */
 STATIC inline void makeStart( const unsigned int channel )
 {
@@ -417,17 +418,12 @@ STATIC inline void makeStart( const unsigned int channel )
 }
 
 /*! ---------------------------------------------------------------------------
- *  @brief Decide how to react to the interrupt request from the function
- *         generator macro.
- *  @param socket encoded slot number with the high bits for SIO / MIL_EXT
- *                distinction
- *  @param fg_base base address of the function generator macro
- *  @param irq_act_reg state of the irq act register, saves a read access
+ * @see scu_main.h
  */
-STATIC void handle( const unsigned int socket,
-                    const unsigned int fg_base,
-                    const uint16_t irq_act_reg,
-                    signed int* pSetvalue )
+void handleMacros( const unsigned int socket,
+                   const unsigned int fg_base,
+                   const uint16_t irq_act_reg,
+                   signed int* pSetvalue )
 {
    uint16_t cntrl_reg = 0;
    unsigned int channel;
@@ -1220,13 +1216,13 @@ STATIC void scu_bus_handler( register TASK_T* pThis FG_UNUSED )
    int dummy;
    if( (slv_int_act_reg & FG1_IRQ) != 0 )
    { //FG irq?
-      handle( slave_nr, FG1_BASE, 0, &dummy );
+      handleMacros( slave_nr, FG1_BASE, 0, &dummy );
       slave_acks |= FG1_IRQ;
    }
 
    if( (slv_int_act_reg & FG2_IRQ) != 0 )
    { //FG irq?
-      handle( slave_nr, FG2_BASE, 0, &dummy );
+      handleMacros( slave_nr, FG2_BASE, 0, &dummy );
       slave_acks |= FG2_IRQ;
    }
 
@@ -1435,7 +1431,7 @@ int milHandleAndWrite( register MIL_TASK_DATA_T* pMilTaskData, const bool isScuB
 {
    FG_ASSERT( pMilTaskData->slave_nr != INVALID_SLAVE_NR );
    const unsigned int dev = getDevice( channel );
-   handle( getSocket( channel ), dev, pMilTaskData->aFgChannels[channel].irq_data,
+   handleMacros( getSocket( channel ), dev, pMilTaskData->aFgChannels[channel].irq_data,
                                    &(pMilTaskData->aFgChannels[channel].setvalue) );
 
    //clear irq pending and end block transfer

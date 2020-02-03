@@ -170,6 +170,19 @@ void clear_handler_state( const uint8_t socket );
  */
 int configure_fg_macro( const unsigned int channel );
 
+/*! ---------------------------------------------------------------------------
+ *  @brief Decide how to react to the interrupt request from the function
+ *         generator macro.
+ *  @param socket encoded slot number with the high bits for SIO / MIL_EXT
+ *                distinction
+ *  @param fg_base base address of the function generator macro
+ *  @param irq_act_reg state of the irq act register, saves a read access
+ *  @param pSetvalue Pointer of target for set-value.
+ */
+void handleMacros( const unsigned int socket,
+                   const unsigned int fg_base,
+                   const uint16_t irq_act_reg,
+                   signed int* pSetvalue );
 
 /*! ---------------------------------------------------------------------------
  * @brief Returns the index number of a FG-macro in the FG-list by the
