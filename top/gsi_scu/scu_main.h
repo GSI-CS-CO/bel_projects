@@ -73,6 +73,18 @@ extern "C" {
    #define FG_UNUSED UNUSED
 #endif
 
+#define INTERVAL_1000MS 1000000000ULL
+#define INTERVAL_2000MS 2000000000ULL
+#define INTERVAL_100MS  100000000ULL
+#define INTERVAL_84MS   84000000ULL
+#define INTERVAL_10MS   10000000ULL
+#define INTERVAL_200US  200000ULL
+#define INTERVAL_150US  150000ULL
+#define INTERVAL_100US  100000ULL
+#define INTERVAL_10US   10000ULL
+#define INTERVAL_5MS    5000000ULL
+#define ALWAYS          0ULL
+
 #define CLK_PERIOD (1000000 / USRCPUCLK) // USRCPUCLK in KHz
 #define OFFS(SLOT) ((SLOT) * (1 << 16))
 
@@ -118,21 +130,15 @@ extern SCU_SHARED_DATA_T g_shared;
  */
 #define QUEUE_CNT 5
 
-#if defined( CONFIG_READ_MIL_TIME_GAP ) && !defined(__DOCFSM__)
 /*! ---------------------------------------------------------------------------
- * @ingroup MIL_FSM
- * @brief Returns true, when the states of all MIL-FSMs are in the state
- *        ST_WAIT.
+ * @brief Prints a error message happened in the device-bus respectively
+ *        MIL bus.
+ * @param status return status of the MIL-driver module.
+ * @param slot Slot-number in the case the mil connection is established via
+ *             SCU-Bus
+ * @param msg String containing additional message text.
  */
-bool isMilFsmInST_WAIT( void );
-
-/*! ---------------------------------------------------------------------------
- * @ingroup MIL_FSM
- * @brief Suspends the DAQ- gap reading. The gap reading becomes resumed once
- *        the concerning function generator has been sent its first data.
- */
-void suspendGapReading( void );
-#endif
+void printDeviceError( const int status, const int slot, const char* msg );
 
 /*! ---------------------------------------------------------------------------
  * @brief enables msi generation for the specified channel. \n
@@ -160,29 +166,24 @@ void scanFgs( void );
  */
 void clear_handler_state( const uint8_t socket );
 
-/*! ---------------------------------------------------------------------------
- * @brief configures each function generator channel.
- *
- *  checks first, if the drq line is inactive, if not the line is cleared
- *  then activate irqs and send the first tuple of data to the function generator
- *  @param channel number of the specified function generator channel from
- *         0 to MAX_FG_CHANNELS-1
- */
-int configure_fg_macro( const unsigned int channel );
 
+//#define CONFIG_DEBUG_FG_SIGNAL
 /*! ---------------------------------------------------------------------------
- *  @brief Decide how to react to the interrupt request from the function
- *         generator macro.
- *  @param socket encoded slot number with the high bits for SIO / MIL_EXT
- *                distinction
- *  @param fg_base base address of the function generator macro
- *  @param irq_act_reg state of the irq act register, saves a read access
- *  @param pSetvalue Pointer of target for set-value.
+ * @brief Send a signal back to the Linux-host (SAFTLIB)
+ * @param sig Signal
+ * @param channel Concerning channel number.
  */
-void handleMacros( const unsigned int socket,
-                   const unsigned int fg_base,
-                   const uint16_t irq_act_reg,
-                   signed int* pSetvalue );
+STATIC inline void sendSignal( const SIGNAL_T sig, const unsigned int channel )
+{
+   *(volatile uint32_t*)(char*)
+   (pCpuMsiBox + g_shared.fg_regs[channel].mbx_slot * sizeof(uint16_t)) = sig;
+   hist_addx( HISTORY_XYZ_MODULE, signal2String( sig ), channel );
+#ifdef CONFIG_DEBUG_FG_SIGNAL
+   #warning CONFIG_DEBUG_FG_SIGNAL is defined this will destroy the timing!
+   mprintf( ESC_DEBUG"Signal: %s, channel: %d sent\n"ESC_NORMAL,
+            signal2String( sig ), channel );
+#endif
+}
 
 /*! ---------------------------------------------------------------------------
  * @brief Returns the index number of a FG-macro in the FG-list by the

@@ -77,6 +77,7 @@ else
  SOURCE += $(SCU_DIR)/scu_circular_buffer.c
  SOURCE += $(SCU_DIR)/scu_eca_handler.c
  SOURCE += $(SCU_DIR)/scu_mil_fg_handler.c
+ SOURCE += $(SCU_DIR)/scu_fg_handler.c
  SOURCE += $(SCU_DIR)/scu_command_handler.c
  SOURCE += $(SCU_DIR)/scu_temperature.c
  SOURCE += $(SCU_LIB_SRC_DIR)/eca_queue_type.c
@@ -137,8 +138,8 @@ endif
 # NO_LTO=1
 
 
- SCU_URL = scuxl0107
-# SCU_URL = scuxl0035
+ # SCU_URL = scuxl0107
+ SCU_URL = scuxl0035
  DOX_EXTRACT_STATIC         = "YES"
 # DOX_EXTRACT_ALL            = "YES"
 DOX_MACRO_EXPANSION        = "YES"

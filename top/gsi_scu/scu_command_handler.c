@@ -1,11 +1,13 @@
 /*!
- * @file scu_command_handler.c Module for receiving of commands from SAFT-LIB
+ * @file scu_command_handler.c
+ * @brief  Module for receiving of commands from SAFT-LIB
  * @copyright GSI Helmholtz Centre for Heavy Ion Research GmbH
  * @author Ulrich Becker <u.becker@gsi.de>
  * @date 03.02.2020
  * Outsourced from scu_main.c
  */
-
+#include "scu_fg_macros.h"
+#include "scu_mil_fg_handler.h"
 #include "scu_command_handler.h"
 
 extern FG_MESSAGE_BUFFER_T    g_aMsg_buf[QUEUE_CNT];
@@ -56,7 +58,7 @@ STATIC void printSwIrqCode( const unsigned int code, const unsigned int value )
  * @param pThis pointer to the current task object
  * @see schedule
  */
-void sw_irq_handler( register TASK_T* pThis FG_UNUSED )
+void commandHandler( register TASK_T* pThis FG_UNUSED )
 {
    FG_ASSERT( pThis->pTaskData == NULL );
 

@@ -1,6 +1,6 @@
 /*!
- * @file scu_temperature.h Updates the temperatur information in the
- *                         shared section
+ * @file scu_temperature.h
+ * @file Updates the temperatur information in the shared section
  * @copyright GSI Helmholtz Centre for Heavy Ion Research GmbH
  * @author Ulrich Becker <u.becker@gsi.de>
  * @date 03.02.2020
