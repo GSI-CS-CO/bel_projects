@@ -8,24 +8,35 @@
  * @author Ulrich Becker <u.becker@gsi.de>
  * Origin:  Richard Barry.(V4.7.0)
  *
- * @note At stack offset (sp+4) will stored a flack which indicates the
- *       reason of context saving.\n
- *       * If its value equal one, than a real LM32 exception
- *         - eg: a interrupt - was happened.\n
- *       * If its value equal zero, so the context saving was caused from
- *         the FreeRTOS scheduler.
  */
 
 /*!
  * @brief Pointer to current Task Control Block.
  * @see task.c
  */
+#ifdef __DOXYGEN__
+volatile TCB_t* volatile pxCurrentTCB;
+#else
 .extern pxCurrentTCB
+#endif
 
-
+#ifdef __DOXYGEN__
+void vStartFirstTask( void );
+#else
 .global vStartFirstTask
+#endif
+
+#ifdef __DOXYGEN__
+void vPortYield( void );
+#else
 .global vPortYield
+#endif
+
+#ifdef __DOXYGEN__
+void vPortInterruptHandler( void );
+#else
 .global vPortInterruptHandler
+#endif
 
 /*!
  * Giving the opportunity to exchange the interrupt callback function by
@@ -39,49 +50,84 @@
    #define __ISRHandler ISRHandler
 #endif
 
-#ifndef __DOXYGEN__
+/*! ---------------------------------------------------------------------------
+ * Macros for storing all registers of LM32
+ */
+#define __R1  (sp+120) /*!<@brief Storage position of r1 */
+#define __R2  (sp+116) /*!<@brief Storage position of r2 */
+#define __R3  (sp+112) /*!<@brief Storage position of r3 */
+#define __R4  (sp+108) /*!<@brief Storage position of r4 */
+#define __R5  (sp+104) /*!<@brief Storage position of r5 */
+#define __R6  (sp+100) /*!<@brief Storage position of r6 */
+#define __R7  (sp+ 96) /*!<@brief Storage position of r7 */
+#define __R8  (sp+ 92) /*!<@brief Storage position of r8 */
+#define __R9  (sp+ 88) /*!<@brief Storage position of r9 */
+#define __R10 (sp+ 84) /*!<@brief Storage position of r10 */
+#define __R11 (sp+ 80) /*!<@brief Storage position of r11 */
+#define __R12 (sp+ 76) /*!<@brief Storage position of r12 */
+#define __R13 (sp+ 72) /*!<@brief Storage position of r13 */
+#define __R14 (sp+ 68) /*!<@brief Storage position of r14 */
+#define __R15 (sp+ 64) /*!<@brief Storage position of r15 */
+#define __R16 (sp+ 60) /*!<@brief Storage position of r16 */
+#define __R17 (sp+ 56) /*!<@brief Storage position of r17 */
+#define __R18 (sp+ 52) /*!<@brief Storage position of r18 */
+#define __R19 (sp+ 48) /*!<@brief Storage position of r19 */
+#define __R20 (sp+ 44) /*!<@brief Storage position of r20 */
+#define __R21 (sp+ 40) /*!<@brief Storage position of r21 */
+#define __R22 (sp+ 36) /*!<@brief Storage position of r22 */
+#define __R23 (sp+ 32) /*!<@brief Storage position of r23 */
+#define __R24 (sp+ 28) /*!<@brief Storage position of r24 */
+#define __R25 (sp+ 24) /*!<@brief Storage position of r25 */
+#define __GP  (sp+ 20) /*!<@brief Storage position of r26, alias gp */
+#define __FP  (sp+ 16) /*!<@brief Storage position of r27, alias fp */
+#define __RA  (sp+ 12) /*!<@brief Storage position of r29, alias ra */
+#define __EA  (sp+  8) /*!<@brief Storage position of r30, alias ea */
 
+#ifndef __DOXYGEN__
 .section .text
 .align 4
+#endif
 
 /*! ---------------------------------------------------------------------------
  * @brief Macro to save registers on the stack.
  */
+#ifdef __DOXYGEN__
+#define portSAVE_CONTEXT
+#else
 .macro portSAVE_CONTEXT
    /* Make room for the context on the stack. */
-   addi      sp, sp, -120   /* r28 */
+   addi        sp,  sp, -120   /* r28 */
 
    /* Register R0 is always 0, so start with R1 */
-   sw        (sp+120), r1
-   sw        (sp+116), r2
-   sw        (sp+112), r3
-   sw        (sp+108), r4
-   sw        (sp+104), r5
-   sw        (sp+100), r6
-   sw        (sp+ 96), r7
-   sw        (sp+ 92), r8
-   sw        (sp+ 88), r9
-   sw        (sp+ 84), r10
-   sw        (sp+ 80), r11
-   sw        (sp+ 76), r12
-   sw        (sp+ 72), r13
-   sw        (sp+ 68), r14
-   sw        (sp+ 64), r15
-   sw        (sp+ 60), r16
-   sw        (sp+ 56), r17
-   sw        (sp+ 52), r18
-   sw        (sp+ 48), r19
-   sw        (sp+ 44), r20
-   sw        (sp+ 40), r21
-   sw        (sp+ 36), r22
-   sw        (sp+ 32), r23
-   sw        (sp+ 28), r24
-   sw        (sp+ 24), r25
-   sw        (sp+ 20), gp   /* r26 */
-   sw        (sp+ 16), fp   /* r27 */
-   sw        (sp+ 12), ra   /* r29 */
-   sw        (sp+  8), ea   /* r30 */
-
+   sw        __R1,  r1
+   sw        __R2,  r2
+   sw        __R3,  r3
+   sw        __R4,  r4
+   sw        __R5,  r5
+   sw        __R6,  r6
+   sw        __R7,  r7
+   sw        __R8,  r8
+   sw        __R9,  r9
+   sw        __R10, r10
+   sw        __R11, r11
+   sw        __R12, r12
+   sw        __R13, r13
+   sw        __R14, r14
+   sw        __R15, r15
+   sw        __R16, r16
+   sw        __R17, r17
+   sw        __R18, r18
+   sw        __R19, r19
+   sw        __R20, r20
+   sw        __R21, r21
+   sw        __R22, r22
+   sw        __R23, r23
+   sw        __R24, r24
+   sw        __R25, r25
+   sw        __GP,  gp
+   sw        __FP,  fp
+   sw        __RA,  ra
+   sw        __EA,  ea
    /* Save the top of stack value to the TCB. */
    and       r1, r0, r0
    mvhi      r1, hi(pxCurrentTCB)
@@ -89,11 +135,14 @@
    lw        r1, (r1+0)
    sw        (r1+0), sp
 .endm
-
+#endif
 
 /*! ---------------------------------------------------------------------------
  * @brief Macro to restore registers from the stack.
  */
+#ifdef __DOXYGEN__
+#define portRESTORE_CONTEXT
+#else
 .macro portRESTORE_CONTEXT
    /* Load last Stack value from TCB. */
    and       sp, r0, r0
@@ -106,40 +155,44 @@
    sw        (r2+0), r1               /* Store new Stack pointer in actual TCB */
 
    /* Load all registers from Stack */
-   lw        ea,  (sp+  8)   /* r30 */
-   lw        ra,  (sp+ 12)   /* r29 */
-   lw        fp,  (sp+ 16)   /* r27 */
-   lw        gp,  (sp+ 20)   /* r26 */
-   lw        r25, (sp+ 24)
-   lw        r24, (sp+ 28)
-   lw        r23, (sp+ 32)
-   lw        r22, (sp+ 36)
-   lw        r21, (sp+ 40)
-   lw        r20, (sp+ 44)
-   lw        r19, (sp+ 48)
-   lw        r18, (sp+ 52)
-   lw        r17, (sp+ 56)
-   lw        r16, (sp+ 60)
-   lw        r15, (sp+ 64)
-   lw        r14, (sp+ 68)
-   lw        r13, (sp+ 72)
-   lw        r12, (sp+ 76)
-   lw        r11, (sp+ 80)
-   lw        r10, (sp+ 84)
-   lw        r9,  (sp+ 88)
-   lw        r8,  (sp+ 92)
-   lw        r7,  (sp+ 96)
-   lw        r6,  (sp+100)
-   lw        r5,  (sp+104)
-   lw        r4,  (sp+108)
-   lw        r3,  (sp+112)
-   lw        r2,  (sp+116)
+   lw        ea,  __EA
+   lw        ra,  __RA
+   lw        fp,  __FP
+   lw        gp,  __GP
+   lw        r25, __R25
+   lw        r24, __R24
+   lw        r23, __R23
+   lw        r22, __R22
+   lw        r21, __R21
+   lw        r20, __R20
+   lw        r19, __R19
+   lw        r18, __R18
+   lw        r17, __R17
+   lw        r16, __R16
+   lw        r15, __R15
+   lw        r14, __R14
+   lw        r13, __R13
+   lw        r12, __R12
+   lw        r11, __R11
+   lw        r10, __R10
+   lw        r9,  __R9
+   lw        r8,  __R8
+   lw        r7,  __R7
+   lw        r6,  __R6
+   lw        r5,  __R5
+   lw        r4,  __R4
+   lw        r3,  __R3
+   lw        r2,  __R2
 .endm
+#endif
 
 #ifdef CONFIG_RTOS
 /*! ---------------------------------------------------------------------------
  * @brief Start first task and enable global interrupt
  */
+#ifdef __DOXYGEN__
+void vStartFirstTask( void ) {}
+#else
 vStartFirstTask:
    mvi       r1, 2
    wcsr      ie, r1             /* Set EIE Bit */
@@ -151,22 +204,37 @@ vStartFirstTask:
    lw        r1, (sp+120)       /* Load Register R1 back */
    addi      sp, sp, 120        /* Correct Stack pointer */
    eret                         /* Return-Address is stored in EA */
+#endif
+
+/*! ---------------------------------------------------------------------------
+ * @brief Defining of memory place for the context switch cause flag.
+ * @note At stack offset (sp+4) will stored a flack which indicates the
+ *       reason of context saving.\n
+ *       * If its value equal one, than a real LM32 exception
+ *         - eg: a interrupt - was happened.\n
+ *       * If its value equal zero, so the context saving was caused by
+ *         the FreeRTOS scheduler.
+ */
+#define __cscf (sp+4)
 
 /*! ---------------------------------------------------------------------------
  * @brief PortYield function for context switching
  */
+#ifdef __DOXYGEN__
+void vPortYield( void ) {}
+#else
 vPortYield:
    wcsr      ie, r0             /* Disable interrupts */
    portSAVE_CONTEXT
-   sw        (sp+4), r0         /* Set the context cause flag to zero */
+   sw        __cscf, r0         /* Set the context switch cause flag to zero */
    calli     vTaskSwitchContext /* Call this C-function implemented in task.c */
    and       r1, r0, r0
    mvhi      r1, hi(pxCurrentTCB)
    ori       r1, r1, lo(pxCurrentTCB)
    lw        r1, (r1+0)
    portRESTORE_CONTEXT
-   lw        r1, (sp+4)         /* Load context cause flag in r1 */
-   bne       r0, r1, L_INT_SAVE /* Jump if context change was caused from LM32 exception  */
+   lw        r1, __cscf         /* Load context change cause flag in r1 */
+   bne       r0, r1, L_INT_SAVE /* Jump if context switch was caused from LM32 exception  */
    mv        ea, ra             /* Return-Address is stored in RA */
 L_INT_SAVE:
    mvi       r1, 2
@@ -174,6 +242,7 @@ L_INT_SAVE:
    lw        r1, (sp+120)       /* Load register R1 back */
    addi      sp, sp, 120        /* Correct stack pointer */
    eret                         /* Return-address is stored in EA */
+#endif
 
 #endif /* ifdef CONFIG_RTOS */
 
@@ -182,24 +251,26 @@ L_INT_SAVE:
  *        implemented in crt0FreeRTOS.S
  * @see crt0FreeRTOS.S
  */
+#ifdef __DOXYGEN__
+void vPortInterruptHandler( void ) {}
+#else
 vPortInterruptHandler:
    portSAVE_CONTEXT
-   ori       r1, r0, 1          /* Set the context cause flag to one */
-   sw        (sp+4), r1         /* and store it in stack. */
+   ori       r1, r0, 1          /* Set the context switch cause flag to one */
+   sw        __cscf, r1         /* and store it in stack. */
    calli     __ISRHandler       /* Call this C- callback function */
    and       r1, r0, r0
    mvhi      r1, hi(pxCurrentTCB)
    ori       r1, r1,lo(pxCurrentTCB)
    lw        r1, (r1+0)
    portRESTORE_CONTEXT
-   lw        r1, (sp+4)         /* Load context cause flag in r1 */
+   lw        r1, __cscf         /* Load context switch cause flag in r1 */
    bne       r0, r1, L_RETURN   /* Jump if context change was caused from LM32 exception  */
    mv        ea, ra             /* Return-Address is stored in RA */
 L_RETURN:
    lw        r1, (sp+120)       /* Load register R1 back */
    addi      sp, sp, 120        /* Correct stack pointer */
    eret                         /* Return-address is stored in EA */
+#endif
 
-#endif /* ifndef __DOXYGEN__ */
 /*================================== EOF ====================================*/
-

@@ -9,7 +9,6 @@
  *  @copyright (C) 2019 GSI Helmholtz Centre for Heavy Ion Research GmbH
  *
  *  @author Ulrich Becker <u.becker@gsi.de>
- *  @todo A lot!
  */
 /*
  * FreeRTOS Kernel V10.1.1
