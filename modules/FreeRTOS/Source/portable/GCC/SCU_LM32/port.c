@@ -91,60 +91,13 @@ portSTACK_TYPE* pxPortInitialiseStack( portSTACK_TYPE* pxTopOfStack,
    pxTopOfStack--;
 
    /*
-    * Now the remaining registers.
+    * Now the remaining registers from R2 to R27
     */
-   *pxTopOfStack = (portSTACK_TYPE) 0x02; /* R2 */
-   pxTopOfStack--;
-   *pxTopOfStack = (portSTACK_TYPE) 0x03; /* R3 */
-   pxTopOfStack--;
-   *pxTopOfStack = (portSTACK_TYPE) 0x04; /* R4 */
-   pxTopOfStack--;
-   *pxTopOfStack = (portSTACK_TYPE) 0x05; /* R5 */
-   pxTopOfStack--;
-   *pxTopOfStack = (portSTACK_TYPE) 0x06; /* R6 */
-   pxTopOfStack--;
-   *pxTopOfStack = (portSTACK_TYPE) 0x07; /* R7 */
-   pxTopOfStack--;
-   *pxTopOfStack = (portSTACK_TYPE) 0x08; /* R8 */
-   pxTopOfStack--;
-   *pxTopOfStack = (portSTACK_TYPE) 0x09; /* R9 */
-   pxTopOfStack--;
-   *pxTopOfStack = (portSTACK_TYPE) 0x10; /* R10 */
-   pxTopOfStack--;
-   *pxTopOfStack = (portSTACK_TYPE) 0x11; /* R11 */
-   pxTopOfStack--;
-   *pxTopOfStack = (portSTACK_TYPE) 0x12; /* R12 */
-   pxTopOfStack--;
-   *pxTopOfStack = (portSTACK_TYPE) 0x13; /* R13 */
-   pxTopOfStack--;
-   *pxTopOfStack = (portSTACK_TYPE) 0x14; /* R14 */
-   pxTopOfStack--;
-   *pxTopOfStack = (portSTACK_TYPE) 0x15; /* R15 */
-   pxTopOfStack--;
-   *pxTopOfStack = (portSTACK_TYPE) 0x16; /* R16 */
-   pxTopOfStack--;
-   *pxTopOfStack = (portSTACK_TYPE) 0x17; /* R17 */
-   pxTopOfStack--;
-   *pxTopOfStack = (portSTACK_TYPE) 0x18; /* R18 */
-   pxTopOfStack--;
-   *pxTopOfStack = (portSTACK_TYPE) 0x19; /* R19 */
-   pxTopOfStack--;
-   *pxTopOfStack = (portSTACK_TYPE) 0x20; /* R20 */
-   pxTopOfStack--;
-   *pxTopOfStack = (portSTACK_TYPE) 0x21; /* R21 */
-   pxTopOfStack--;
-   *pxTopOfStack = (portSTACK_TYPE) 0x22; /* R22 */
-   pxTopOfStack--;
-   *pxTopOfStack = (portSTACK_TYPE) 0x23; /* R23 */
-   pxTopOfStack--;
-   *pxTopOfStack = (portSTACK_TYPE) 0x24; /* R24 */
-   pxTopOfStack--;
-   *pxTopOfStack = (portSTACK_TYPE) 0x25; /* R25 */
-   pxTopOfStack--;
-   *pxTopOfStack = (portSTACK_TYPE) 0x26; /* R26 */
-   pxTopOfStack--;
-   *pxTopOfStack = (portSTACK_TYPE) 0x27; /* R27 */
-   pxTopOfStack--;
+   for( portSTACK_TYPE i = 2; i <= 27; i++ )
+   {
+      *pxTopOfStack = i;
+      pxTopOfStack--;
+   }
 
    /*
     * The return address
