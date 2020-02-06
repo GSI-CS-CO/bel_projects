@@ -80,6 +80,13 @@ Create a new symlink: sudo ln -s /usr/lib/x86_64-linux-gnu/libmpfr.so.6 /usr/lib
 ### Error: Executing qmegawiz: child process exited abnormally + Time value XXX,YYYMbps and time unit are illegal
 Change your LC_NUMERIC setting: export LC_NUMERIC="en_US.UTF-8"
 
+### Error: hdlmake: AttributeError: 'module' object has no attribute '_vendor' or hdlmake not found
+In case a simple "make" does not fix this:
+```
+apt-get install python-setuptools
+./install-hdlmake.sh
+```
+
 ## JTAG and Programming
 ### Altera/Intel USB Blaster
 
