@@ -47,7 +47,9 @@ DEFINES += SDBFS_BIG_ENDIAN
 DEFINES += CONFIG_WR_NODE
 
 # DEFINES += DEBUG_SAFTLIB
-
+ifdef SCU_MIL
+  DEFINES += CONFIG_SCU_MIL
+endif
 ifdef SCU_DAQ
   DEFINES += CONFIG_SCU_DAQ_INTEGRATION
   DEFINES += CONFIG_DAQ_SW_SEQUENCE
@@ -76,6 +78,7 @@ else
  SOURCE += $(SCU_DIR)/scu_function_generator.c
  SOURCE += $(SCU_DIR)/scu_circular_buffer.c
  SOURCE += $(SCU_DIR)/scu_eca_handler.c
+ SOURCE += $(SCU_DIR)/scu_fg_macros.c
  SOURCE += $(SCU_DIR)/scu_mil_fg_handler.c
  SOURCE += $(SCU_DIR)/scu_fg_handler.c
  SOURCE += $(SCU_DIR)/scu_command_handler.c
@@ -138,8 +141,8 @@ endif
 # NO_LTO=1
 
 
- # SCU_URL = scuxl0107
- SCU_URL = scuxl0035
+  SCU_URL = scuxl0107
+ # SCU_URL = scuxl0035
  DOX_EXTRACT_STATIC         = "YES"
 # DOX_EXTRACT_ALL            = "YES"
 DOX_MACRO_EXPANSION        = "YES"
