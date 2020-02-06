@@ -432,6 +432,10 @@ architecture rtl of monster is
   signal dev_msi_master_i : t_wishbone_master_in_array (c_dev_masters-1 downto 0);
   signal dev_msi_master_o : t_wishbone_master_out_array(c_dev_masters-1 downto 0);
 
+  signal sdb_dummy            : std_logic;
+  attribute keep              : boolean;
+  attribute keep of sdb_dummy : signal is true;
+
   ----------------------------------------------------------------------------------
   -- GSI Dev Crossbar Slaves -------------------------------------------------------
   ----------------------------------------------------------------------------------
@@ -533,7 +537,7 @@ architecture rtl of monster is
    (c_tops_eca_event    => f_sdb_embed_device(c_eca_event_sdb, x"7FFFFFF0",     g_en_eca), -- must be located at fixed address
     c_tops_scubus       => f_sdb_auto_device(c_scu_bus_master,                  g_en_scubus),
     c_tops_mbox         => f_sdb_auto_device(c_mbox_sdb,                        true),
-    c_tops_dev          => f_sdb_auto_bridge(c_dev_bridge_sdb),
+    c_tops_dev          => f_sdb_auto_bridge(c_dev_bridge_sdb,                  true),
     c_tops_mil          => f_sdb_auto_device(c_xwb_gsi_mil_scu,                 g_en_mil),
     c_tops_wr_fast_path => f_sdb_auto_bridge(c_wrcore_bridge_sdb,               true),
     c_tops_ebm          => f_sdb_auto_device(c_ebm_sdb,                         true),
@@ -1146,6 +1150,7 @@ begin
       g_num_slaves  => c_top_slaves,
       g_registered  => true,
       g_wraparound  => true,
+      g_verbose     => true,
       g_layout      => c_top_layout,
       g_sdb_addr    => c_top_sdb_address)
     port map(
@@ -1166,6 +1171,7 @@ begin
       g_num_slaves  => c_dev_slaves,
       g_registered  => true,
       g_wraparound  => true,
+      g_verbose     => true,
       g_layout      => c_dev_layout,
       g_sdb_addr    => c_dev_sdb_address)
     port map(
@@ -1472,6 +1478,8 @@ end generate;
         fd_oen_o  => s_usb_fd_oen);
   end generate;
 
+  sdb_dummy <= f_report_sdb(c_top_sdb_address);
+
   wr_uart_o <= uart_wrc;
   uart_mux <= uart_usb and wr_uart_i;
 
@@ -1619,7 +1627,7 @@ end generate;
         rx_bitslide_o  => phy_rx_bitslide,
         pad_txp_o      => wr_sfp_tx_o,
         pad_rxp_i      => wr_sfp_rx_i);
-        
+
         phy_tx_clk <= clk_ref;
   end generate;
 
