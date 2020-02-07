@@ -122,6 +122,7 @@ portSTACK_TYPE* pxPortInitialiseStack( portSTACK_TYPE* pxTopOfStack,
     * Status information.
     * Position of context switch cause flag.
     * @see portasm.S
+    * @see __cscf
     */
    *pxTopOfStack = (portSTACK_TYPE) 0;
    pxTopOfStack--;

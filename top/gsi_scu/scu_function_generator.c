@@ -28,7 +28,6 @@
 #endif
 
 #include <scu_function_generator.h>
-#include <scu_bus.h>
 #include <mprintf.h>
 #include <scu_mil.h>
 #include <mini_sdb.h>

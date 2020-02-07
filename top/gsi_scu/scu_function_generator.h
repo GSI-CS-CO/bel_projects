@@ -29,6 +29,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <helper_macros.h>
+#include <scu_bus.h>
 // 12 SIOs with dev busses and 1 mil extension
 
 #ifdef __lm32__
@@ -365,6 +366,14 @@ typedef struct PACKED_SIZE
 } FG_REGISTER_T;
 
 #ifndef __DOXYGEN__
+STATIC_ASSERT( offsetof( FG_REGISTER_T, cntrl_reg ) == FG_CNTRL * sizeof( uint16_t ) );
+STATIC_ASSERT( offsetof( FG_REGISTER_T, coeff_a_reg ) == FG_A * sizeof( uint16_t ) );
+STATIC_ASSERT( offsetof( FG_REGISTER_T, coeff_b_reg ) == FG_B * sizeof( uint16_t ) );
+STATIC_ASSERT( offsetof( FG_REGISTER_T, broadcast_start ) == FG_BROAD * sizeof( uint16_t ) );
+STATIC_ASSERT( offsetof( FG_REGISTER_T, shift_a_reg ) == FG_SHIFT * sizeof( uint16_t ) );
+STATIC_ASSERT( offsetof( FG_REGISTER_T, tag_low_reg ) == FG_TAG_LOW * sizeof( uint16_t ) );
+STATIC_ASSERT( offsetof( FG_REGISTER_T, tag_high_reg ) == FG_TAG_HIGH * sizeof( uint16_t ) );
+STATIC_ASSERT( offsetof( FG_REGISTER_T, fw_version ) == FG_VER * sizeof( uint16_t ) );
 STATIC_ASSERT( sizeof( FG_REGISTER_T ) == 12 * sizeof( uint16_t ));
 #endif
 
