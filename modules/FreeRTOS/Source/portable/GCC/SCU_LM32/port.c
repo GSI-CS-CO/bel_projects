@@ -78,20 +78,22 @@ portSTACK_TYPE* pxPortInitialiseStack( portSTACK_TYPE* pxTopOfStack,
 {  /*
     * Place a 4 bytes of known values on the bottom of the stack.
     * This is just useful for debugging.
+    * Position of "r0" this will not updated its always zero!
+    * The compiler expects "r0" to be always 0!
     */
-   *pxTopOfStack = 0x12345678;
+   *pxTopOfStack = 0xC0FEAD03;
    pxTopOfStack--;
-
-   /* The compiler expects R0 to be 0. */
 
    /*
     * Place the parameter on the stack in the expected location.
+    * Position of "r1"
     */
-   *pxTopOfStack = (portSTACK_TYPE) pvParameters;  /* R1 */
+   *pxTopOfStack = (portSTACK_TYPE) pvParameters;
    pxTopOfStack--;
 
    /*
-    * Now the remaining registers from R2 to R27
+    * The registers from "r2" to "r27" can have
+    * a arbitrary value.
     */
    for( portSTACK_TYPE i = 2; i <= 27; i++ )
    {
@@ -99,23 +101,29 @@ portSTACK_TYPE* pxPortInitialiseStack( portSTACK_TYPE* pxTopOfStack,
       pxTopOfStack--;
    }
 
-   /*
+   /*!
     * The return address
+    * Position of register "r29" alias "ra"
+    * @see portasm.S
     */
    *pxTopOfStack = (portSTACK_TYPE) pxCode;
    pxTopOfStack--;
 
-   /*
+   /*!
     * The exception (interrupt) return address
     * - which in this case is the start of the task.
+    * Position of register "r30" alias "ea"
+    * @see portasm.S
     */
    *pxTopOfStack = (portSTACK_TYPE) pxCode;
    pxTopOfStack--;
 
-   /*
+   /*!
     * Status information.
+    * Position of context switch cause flag.
+    * @see portasm.S
     */
-   *pxTopOfStack = (portSTACK_TYPE) 0x00;
+   *pxTopOfStack = (portSTACK_TYPE) 0;
    pxTopOfStack--;
 
    return pxTopOfStack;
