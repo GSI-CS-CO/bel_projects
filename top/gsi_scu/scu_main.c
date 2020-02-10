@@ -72,23 +72,18 @@ volatile uint32_t*     g_pScub_irq_base   = NULL;
  * @see initializeGlobalPointers
  */
 volatile unsigned int* g_pScu_mil_base    = NULL;
-#endif
 
 /*!
  * @brief Base pointer of IRQ controller for dev bus extension
  * @see initializeGlobalPointers
  */
 volatile uint32_t*     g_pMil_irq_base    = NULL;
+#endif /* CONFIG_MIL_FG */
 
 /*!
  * @brief  Memory space of message queue.
  */
 volatile FG_MESSAGE_BUFFER_T g_aMsg_buf[QUEUE_CNT] = {{0, 0}};
-
-/*!
- * @brief Memory space of sent function generator data.
- */
-FG_CHANNEL_T g_aFgChannels[MAX_FG_CHANNELS] = {{0,0}};//,0}};
 
 /*===========================================================================*/
 /*! ---------------------------------------------------------------------------
@@ -104,38 +99,8 @@ STATIC inline void initializeGlobalPointers( void )
    g_pScub_irq_base   = (volatile uint32_t*)find_device_adr(GSI, SCU_IRQ_CTRL);
 #ifdef CONFIG_MIL_FG
    g_pScu_mil_base    = (unsigned int*)find_device_adr(GSI, SCU_MIL);
-#endif
    g_pMil_irq_base    = (volatile uint32_t*)find_device_adr(GSI, MIL_IRQ_CTRL);
-}
-
-/*! ---------------------------------------------------------------------------
- * @brief Prints a error message happened in the device-bus respectively
- *        MIL bus.
- * @param status return status of the MIL-driver module.
- * @param slot Slot-number in the case the mil connection is established via
- *             SCU-Bus
- * @param msg String containing additional message text.
- */
-void printDeviceError( const int status, const int slot, const char* msg )
-{
-  static const char* pText = ESC_ERROR"dev bus access in slot ";
-  char* pMessage;
-  #define __MSG_ITEM( status ) case status: pMessage = #status; break
-  switch( status )
-  {
-     __MSG_ITEM( OKAY );
-     __MSG_ITEM( TRM_NOT_FREE );
-     __MSG_ITEM( RCV_ERROR );
-     __MSG_ITEM( RCV_TIMEOUT );
-     __MSG_ITEM( RCV_TASK_ERR );
-     default:
-     {
-        mprintf("%s%d failed with code %d"ESC_NORMAL"\n", pText, slot, status);
-        return;
-     }
-  }
-  #undef __MSG_ITEM
-  mprintf("%s%d failed with message %s, %s"ESC_NORMAL"\n", pText, slot, pMessage, msg);
+#endif
 }
 
 /*! ---------------------------------------------------------------------------
@@ -169,6 +134,7 @@ void enable_scub_msis( const unsigned int channel )
       return;
    }
 
+#ifdef CONFIG_MIL_FG
    if( !isMilExtentionFg( socket ) )
       return;
 
@@ -176,6 +142,7 @@ void enable_scub_msis( const unsigned int channel )
    g_pMil_irq_base[9]   = MIL_DRQ;
    g_pMil_irq_base[10]  = (uint32_t)pMyMsi + 0x20; //TODO Who the fuck is 0x20?!?
    g_pMil_irq_base[2]   = (1 << MIL_DRQ);
+#endif
 }
 
 /*! ---------------------------------------------------------------------------
@@ -258,81 +225,6 @@ inline STATIC void print_regs( void)
 }
 
 /*! ---------------------------------------------------------------------------
- * @see scu_main.h
- */
-void disable_channel( const unsigned int channel )
-{
-   FG_CHANNEL_REG_T* pFgRegs = &g_shared.fg_regs[channel];
-
-   if( pFgRegs->macro_number == SCU_INVALID_VALUE )
-      return;
-
-#ifdef CONFIG_MIL_FG
-   int status;
-   int16_t data;
-#endif
-   const uint8_t socket = getSocket( channel );
-   const uint16_t dev   = getDevice( channel );
-   //mprintf("disarmed socket %d dev %d in channel[%d] state %d\n", socket, dev, channel, pFgRegs->state); //ONLY FOR TESTING
-   if( isNonMilFg( socket ) )
-   {
-      unsigned int fg_base, dac_base;
-      /* which macro are we? */
-      switch( dev )
-      {
-         case 0:
-         {
-            fg_base = FG1_BASE;
-            dac_base = DAC1_BASE;
-            break;
-         }
-         case 1:
-         {
-            fg_base = FG2_BASE;
-            dac_base = DAC2_BASE;
-            break;
-         }
-         default: return;
-      }
-
-     // disarm hardware
-      g_pScub_base[OFFS(socket) + fg_base + FG_CNTRL] &= ~(0x2);
-      g_pScub_base[OFFS(socket) + dac_base + DAC_CNTRL] &= ~(0x10); // unset FG mode
-   }
-#ifdef CONFIG_MIL_FG
-   else if( isMilExtentionFg( socket ) )
-   {  // disarm hardware
-      if( (status = read_mil( g_pScu_mil_base, &data, FC_CNTRL_RD | dev)) != OKAY )
-         printDeviceError( status, 0, "disarm hw 1" );
-
-      if( (status = write_mil( g_pScu_mil_base, data & ~(0x2), FC_CNTRL_WR | dev)) != OKAY )
-         printDeviceError( status, 0, "disarm hw 2" );
-   }
-   else if( isMilScuBusFg( socket ) )
-   {  // disarm hardware
-      if( (status = scub_read_mil( g_pScub_base, getFgSlotNumber( socket ),
-           &data, FC_CNTRL_RD | dev)) != OKAY )
-         printDeviceError( status, getFgSlotNumber( socket ), "disarm hw 3" );
-
-      if( (status = scub_write_mil( g_pScub_base, getFgSlotNumber( socket ),
-           data & ~(0x2), FC_CNTRL_WR | dev)) != OKAY )
-         printDeviceError( status, getFgSlotNumber( socket ), "disarm hw 4" );
-   }
-#endif /* CONFIG_MIL_FG */
-
-   if( pFgRegs->state == STATE_ACTIVE )
-   {    // hw is running
-      hist_addx( HISTORY_XYZ_MODULE, "flush circular buffer", channel );
-      pFgRegs->rd_ptr =  pFgRegs->wr_ptr;
-   }
-   else
-   {
-      pFgRegs->state = STATE_STOPPED;
-      sendSignal( IRQ_DAT_DISARMED, channel );
-   }
-}
-
-/*! ---------------------------------------------------------------------------
  * @brief as short as possible, just pop the msi queue of the cpu and
  *         push it to the message queue of the main loop
  * @see init_irq_table
@@ -366,7 +258,7 @@ STATIC void init_irq_table( void )
 /*! ---------------------------------------------------------------------------
  * @brief initialize procedure at startup
  */
-STATIC void init( void )
+STATIC void initAndScan( void )
 {
    hist_init(HISTORY_XYZ_MODULE);
    for( int i = 0; i < ARRAY_SIZE(g_shared.fg_regs); i++ )
@@ -535,14 +427,14 @@ STATIC inline void tellMailboxSlot( void )
 }
 
 /*================================ MAIN =====================================*/
-int main( void )
+void main( void )
 {
    initializeGlobalPointers();
    mprintf("Compiler: "COMPILER_VERSION_STRING"\n"
            "Git revision: "TO_STRING(GIT_REVISION)"\n"
            "Found MsgBox at 0x%08x. MSI Path is 0x%08x\n",
            (uint32_t)pCpuMsiBox, (uint32_t)pMyMsi);
-#ifdef CONFIG_READ_MIL_TIME_GAP
+#if defined( CONFIG_MIL_FG ) && defined( CONFIG_READ_MIL_TIME_GAP )
    mprintf( ESC_WARNING"CAUTION! Time gap reading activated!"ESC_NORMAL"\n" );
 #endif
    tellMailboxSlot();
@@ -551,9 +443,9 @@ int main( void )
    msDelayBig(1500); //wait for wr deamon to read sdbfs
 
    if( (int)BASE_SYSCON == ERROR_NOT_FOUND )
-      mprintf(ESC_ERROR"no SYS_CON found!"ESC_NORMAL"\n");
+      mprintf( ESC_ERROR"no SYS_CON found!"ESC_NORMAL"\n" );
    else
-      mprintf("SYS_CON found on adr: 0x%x\n", BASE_SYSCON);
+      mprintf( "SYS_CON found on adr: 0x%x\n", BASE_SYSCON );
 
    timer_init(1); //needed by usleep_init()
    usleep_init();
@@ -562,10 +454,12 @@ int main( void )
    mprintf("g_oneWireBase.pWr is:   0x%08x\n", g_oneWireBase.pWr);
    mprintf("g_oneWireBase.pUser is: 0x%08x\n", g_oneWireBase.pUser);
    mprintf("g_pScub_irq_base is:    0x%08x\n", g_pScub_irq_base);
+#ifdef CONFIG_MIL_FG
    mprintf("g_pMil_irq_base is:     0x%08x\n", g_pMil_irq_base);
+#endif
    initEcaQueue();
 
-   init(); // init and scan for fgs
+   initAndScan(); // init and scan for fgs
 
 #ifdef CONFIG_SCU_DAQ_INTEGRATION
    scuDaqInitialize( &g_scuDaqAdmin ); // Init and scan for DAQs
@@ -577,7 +471,6 @@ int main( void )
       check_stack();
       schedule();
    }
-   return 0;
 }
 
 /*================================== EOF ====================================*/

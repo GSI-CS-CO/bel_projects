@@ -19,6 +19,8 @@
 extern "C" {
 #endif
 
+extern FG_CHANNEL_T g_aFgChannels[MAX_FG_CHANNELS]; //!!
+
 /*! ---------------------------------------------------------------------------
  * @ingroup MIL_FSM
  * @brief Mecro declares a state of a Finite-State-Machine. \n
@@ -53,8 +55,6 @@ typedef struct
    int       setvalue;      /*!<@brief setvalue from the tuple sent */
    uint64_t  daq_timestamp; /*!<@brief timestamp of daq sampling */
 } FG_CHANNEL_TASK_T;
-
-extern FG_CHANNEL_T g_aFgChannels[MAX_FG_CHANNELS]; //!!
 
 /*! --------------------------------------------------------------------------
  * @ingroup MIL_FSM

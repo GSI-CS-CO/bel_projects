@@ -13,8 +13,42 @@ extern volatile uint16_t*     g_pScub_base;
 #ifdef CONFIG_MIL_FG
 extern volatile unsigned int* g_pScu_mil_base;
 #endif
-extern FG_CHANNEL_T           g_aFgChannels[MAX_FG_CHANNELS];
 
+/*!
+ * @brief Memory space of sent function generator data.
+ *        Non shared memory part for each function generator channel.
+ */
+FG_CHANNEL_T g_aFgChannels[MAX_FG_CHANNELS] = {{0,0}};//,0}};
+
+/*! ---------------------------------------------------------------------------
+ * @brief Prints a error message happened in the device-bus respectively
+ *        MIL bus.
+ * @param status return status of the MIL-driver module.
+ * @param slot Slot-number in the case the mil connection is established via
+ *             SCU-Bus
+ * @param msg String containing additional message text.
+ */
+void printDeviceError( const int status, const int slot, const char* msg )
+{
+  static const char* pText = ESC_ERROR"dev bus access in slot ";
+  char* pMessage;
+  #define __MSG_ITEM( status ) case status: pMessage = #status; break
+  switch( status )
+  {
+     __MSG_ITEM( OKAY );
+     __MSG_ITEM( TRM_NOT_FREE );
+     __MSG_ITEM( RCV_ERROR );
+     __MSG_ITEM( RCV_TIMEOUT );
+     __MSG_ITEM( RCV_TASK_ERR );
+     default:
+     {
+        mprintf("%s%d failed with code %d"ESC_NORMAL"\n", pText, slot, status);
+        return;
+     }
+  }
+  #undef __MSG_ITEM
+  mprintf("%s%d failed with message %s, %s"ESC_NORMAL"\n", pText, slot, pMessage, msg);
+}
 
 /*! ---------------------------------------------------------------------------
  * @see scu_fg_macros.h
@@ -232,6 +266,80 @@ int configure_fg_macro( const unsigned int channel )
    return 0;
 }
 
+/*! ---------------------------------------------------------------------------
+ * @see scu_fg_macros.h
+ */
+void disable_channel( const unsigned int channel )
+{
+   FG_CHANNEL_REG_T* pFgRegs = &g_shared.fg_regs[channel];
+
+   if( pFgRegs->macro_number == SCU_INVALID_VALUE )
+      return;
+
+#ifdef CONFIG_MIL_FG
+   int status;
+   int16_t data;
+#endif
+   const uint8_t socket = getSocket( channel );
+   const uint16_t dev   = getDevice( channel );
+   //mprintf("disarmed socket %d dev %d in channel[%d] state %d\n", socket, dev, channel, pFgRegs->state); //ONLY FOR TESTING
+   if( isNonMilFg( socket ) )
+   {
+      unsigned int fg_base, dac_base;
+      /* which macro are we? */
+      switch( dev )
+      {
+         case 0:
+         {
+            fg_base = FG1_BASE;
+            dac_base = DAC1_BASE;
+            break;
+         }
+         case 1:
+         {
+            fg_base = FG2_BASE;
+            dac_base = DAC2_BASE;
+            break;
+         }
+         default: return;
+      }
+
+     // disarm hardware
+      g_pScub_base[OFFS(socket) + fg_base + FG_CNTRL] &= ~(0x2);
+      g_pScub_base[OFFS(socket) + dac_base + DAC_CNTRL] &= ~(0x10); // unset FG mode
+   }
+#ifdef CONFIG_MIL_FG
+   else if( isMilExtentionFg( socket ) )
+   {  // disarm hardware
+      if( (status = read_mil( g_pScu_mil_base, &data, FC_CNTRL_RD | dev)) != OKAY )
+         printDeviceError( status, 0, "disarm hw 1" );
+
+      if( (status = write_mil( g_pScu_mil_base, data & ~(0x2), FC_CNTRL_WR | dev)) != OKAY )
+         printDeviceError( status, 0, "disarm hw 2" );
+   }
+   else if( isMilScuBusFg( socket ) )
+   {  // disarm hardware
+      if( (status = scub_read_mil( g_pScub_base, getFgSlotNumber( socket ),
+           &data, FC_CNTRL_RD | dev)) != OKAY )
+         printDeviceError( status, getFgSlotNumber( socket ), "disarm hw 3" );
+
+      if( (status = scub_write_mil( g_pScub_base, getFgSlotNumber( socket ),
+           data & ~(0x2), FC_CNTRL_WR | dev)) != OKAY )
+         printDeviceError( status, getFgSlotNumber( socket ), "disarm hw 4" );
+   }
+#endif /* CONFIG_MIL_FG */
+
+   if( pFgRegs->state == STATE_ACTIVE )
+   {    // hw is running
+      hist_addx( HISTORY_XYZ_MODULE, "flush circular buffer", channel );
+      pFgRegs->rd_ptr =  pFgRegs->wr_ptr;
+   }
+   else
+   {
+      pFgRegs->state = STATE_STOPPED;
+      sendSignal( IRQ_DAT_DISARMED, channel );
+   }
+}
 /*! ---------------------------------------------------------------------------
  * @brief disables the generation of irqs for the specified channel
  *  SIO and MIL extension stop generating irqs

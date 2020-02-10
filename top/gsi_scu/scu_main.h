@@ -89,6 +89,12 @@ extern "C" {
 #define OFFS(SLOT) ((SLOT) * (1 << 16))
 
 /*!
+ * @see scu_shared_mem.h
+ */
+extern SCU_SHARED_DATA_T g_shared;
+
+
+/*!
  * @brief Type of message origin
  */
 typedef enum
@@ -112,33 +118,11 @@ typedef struct _TASK_T
    void (*func)(struct _TASK_T*); /*!<@brief pointer to the function of the task */
 } TASK_T;
 
-/*! ---------------------------------------------------------------------------
- * @brief Data type for remembering the last data sent to a function generator.
- */
-typedef struct
-{
-  // uint64_t timeout;
-   uint32_t param_sent;   /*!<@brief Sent counter */
-   int32_t  last_c_coeff; /*!<@brief Value of last C-coefficient of polynomial */
-} FG_CHANNEL_T;
-
-
-extern SCU_SHARED_DATA_T g_shared;
 
 /*!
  * @brief Message size of message queue.
  */
 #define QUEUE_CNT 5
-
-/*! ---------------------------------------------------------------------------
- * @brief Prints a error message happened in the device-bus respectively
- *        MIL bus.
- * @param status return status of the MIL-driver module.
- * @param slot Slot-number in the case the mil connection is established via
- *             SCU-Bus
- * @param msg String containing additional message text.
- */
-void printDeviceError( const int status, const int slot, const char* msg );
 
 /*! ---------------------------------------------------------------------------
  * @brief enables msi generation for the specified channel. \n
@@ -149,12 +133,6 @@ void printDeviceError( const int status, const int slot, const char* msg );
  * @see disable_slave_irq
  */
 void enable_scub_msis( const unsigned int channel );
-
-/*! ---------------------------------------------------------------------------
- * @brief disable function generator channel
- * @param channel number of the function generator channel from 0 to MAX_FG_CHANNELS-1
- */
-void disable_channel( const unsigned int channel );
 
 /*! ---------------------------------------------------------------------------
  * @brief Scans for function generators on mil extension and scu bus.
