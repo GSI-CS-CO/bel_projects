@@ -28,7 +28,9 @@
 #include "scu_eca_handler.h"
 #include "scu_command_handler.h"
 #include "scu_fg_macros.h"
+#ifdef CONFIG_MIL_FG
 #include "scu_mil_fg_handler.h"
+#endif
 #include "scu_fg_handler.h"
 #include "scu_temperature.h"
 #ifdef CONFIG_SCU_DAQ_INTEGRATION
@@ -64,11 +66,13 @@ volatile uint16_t*     g_pScub_base       = NULL;
  */
 volatile uint32_t*     g_pScub_irq_base   = NULL;
 
+#ifdef CONFIG_MIL_FG
 /*!
  * @brief Base pointer of MIL extension macro
  * @see initializeGlobalPointers
  */
 volatile unsigned int* g_pScu_mil_base    = NULL;
+#endif
 
 /*!
  * @brief Base pointer of IRQ controller for dev bus extension
@@ -98,7 +102,9 @@ STATIC inline void initializeGlobalPointers( void )
    /* additional periphery needed for scu */
    g_pScub_base       = (volatile uint16_t*)find_device_adr(GSI, SCU_BUS_MASTER);
    g_pScub_irq_base   = (volatile uint32_t*)find_device_adr(GSI, SCU_IRQ_CTRL);
-   g_pScu_mil_base    = (unsigned int*)find_device_adr(GSI,SCU_MIL);
+#ifdef CONFIG_MIL_FG
+   g_pScu_mil_base    = (unsigned int*)find_device_adr(GSI, SCU_MIL);
+#endif
    g_pMil_irq_base    = (volatile uint32_t*)find_device_adr(GSI, MIL_IRQ_CTRL);
 }
 
@@ -261,8 +267,10 @@ void disable_channel( const unsigned int channel )
    if( pFgRegs->macro_number == SCU_INVALID_VALUE )
       return;
 
+#ifdef CONFIG_MIL_FG
    int status;
    int16_t data;
+#endif
    const uint8_t socket = getSocket( channel );
    const uint16_t dev   = getDevice( channel );
    //mprintf("disarmed socket %d dev %d in channel[%d] state %d\n", socket, dev, channel, pFgRegs->state); //ONLY FOR TESTING
@@ -291,6 +299,7 @@ void disable_channel( const unsigned int channel )
       g_pScub_base[OFFS(socket) + fg_base + FG_CNTRL] &= ~(0x2);
       g_pScub_base[OFFS(socket) + dac_base + DAC_CNTRL] &= ~(0x10); // unset FG mode
    }
+#ifdef CONFIG_MIL_FG
    else if( isMilExtentionFg( socket ) )
    {  // disarm hardware
       if( (status = read_mil( g_pScu_mil_base, &data, FC_CNTRL_RD | dev)) != OKAY )
@@ -309,6 +318,7 @@ void disable_channel( const unsigned int channel )
            data & ~(0x2), FC_CNTRL_WR | dev)) != OKAY )
          printDeviceError( status, getFgSlotNumber( socket ), "disarm hw 4" );
    }
+#endif /* CONFIG_MIL_FG */
 
    if( pFgRegs->state == STATE_ACTIVE )
    {    // hw is running
@@ -382,7 +392,7 @@ void scanFgs( void )
 #ifdef CONFIG_USE_RESCAN_FLAG
    g_shared.fg_rescan_busy = 1; //signal busy to saftlib
 #endif
-#ifdef CONFIG_READ_MIL_TIME_GAP
+#if defined( CONFIG_READ_MIL_TIME_GAP ) && defined( CONFIG_MIL_FG )
    suspendGapReading();
 #endif
 #if __GNUC__ >= 9
@@ -390,7 +400,9 @@ void scanFgs( void )
   #pragma GCC diagnostic ignored "-Waddress-of-packed-member"
 #endif
    scan_all_fgs( g_pScub_base,
+              #ifdef CONFIG_MIL_FG
                  g_pScu_mil_base,
+              #endif
                  &g_shared.fg_macros[0],
                  &g_shared.ext_id );
 #if __GNUC__ >= 9
@@ -419,11 +431,13 @@ STATIC TASK_T g_aTasks[] =
 #ifdef CONFIG_SCU_DAQ_INTEGRATION
    { NULL,               ALWAYS, 0, scuBusDaqTask   },
 #endif
+#ifdef CONFIG_MIL_FG
    { &g_aMilTaskData[0], ALWAYS, 0, dev_sio_handler }, // sio task 1
  //!!  { &g_aMilTaskData[1], ALWAYS, 0, dev_sio_handler }, // sio task 2
  //!!  { &g_aMilTaskData[2], ALWAYS, 0, dev_sio_handler }, // sio task 3
  //!!  { &g_aMilTaskData[3], ALWAYS, 0, dev_sio_handler }, // sio task 4
    { &g_aMilTaskData[4], ALWAYS, 0, dev_bus_handler },
+#endif
    { NULL,               ALWAYS, 0, scu_bus_handler },
    { NULL,               ALWAYS, 0, ecaHandler      },
    { NULL,               ALWAYS, 0, commandHandler  }

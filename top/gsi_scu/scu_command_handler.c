@@ -7,14 +7,17 @@
  * Outsourced from scu_main.c
  */
 #include "scu_fg_macros.h"
-#include "scu_mil_fg_handler.h"
+#ifdef CONFIG_MIL_FG
+  #include "scu_mil_fg_handler.h"
+#endif
 #include "scu_command_handler.h"
 
 extern FG_MESSAGE_BUFFER_T    g_aMsg_buf[QUEUE_CNT];
 extern FG_CHANNEL_T           g_aFgChannels[MAX_FG_CHANNELS];
 extern volatile uint16_t*     g_pScub_base;
+#ifdef CONFIG_MIL_FG
 extern volatile unsigned int* g_pScu_mil_base;
-
+#endif
 #ifdef DEBUG_SAFTLIB
   #warning "DEBUG_SAFTLIB is defined! This could lead to timing problems!"
 #endif
@@ -65,7 +68,7 @@ void commandHandler( register TASK_T* pThis FG_UNUSED )
    if( !has_msg( &g_aMsg_buf[0], SWI ) )
       return; /* Nothing to do.. */
 
-#ifdef CONFIG_READ_MIL_TIME_GAP
+#if defined( CONFIG_MIL_FG ) && defined( CONFIG_READ_MIL_TIME_GAP )
    if( !isMilFsmInST_WAIT() )
       return;
 #endif
@@ -106,8 +109,11 @@ void commandHandler( register TASK_T* pThis FG_UNUSED )
          init_buffers( &g_shared.fg_regs[0],
                        m.msg,
                        &g_shared.fg_macros[0],
-                       g_pScub_base,
-                       g_pScu_mil_base );
+                       g_pScub_base
+                     #ifdef CONFIG_MIL_FG
+                       , g_pScu_mil_base
+                     #endif
+                     );
         #if __GNUC__ >= 9
          #pragma GCC diagnostic pop
         #endif
@@ -122,7 +128,7 @@ void commandHandler( register TASK_T* pThis FG_UNUSED )
 
       case FG_OP_CONFIGURE:
       {
-      #ifdef CONFIG_READ_MIL_TIME_GAP
+      #if defined( CONFIG_MIL_FG ) && defined( CONFIG_READ_MIL_TIME_GAP )
          suspendGapReading(); // TEST!!!
       #endif
          enable_scub_msis( value );

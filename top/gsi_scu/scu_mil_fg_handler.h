@@ -8,7 +8,9 @@
  */
 #ifndef _SCU_MIL_FG_HANDLER_H
 #define _SCU_MIL_FG_HANDLER_H
-
+#ifndef CONFIG_MIL_FG
+  #error Macro CONFIG_MIL_FG has to be defined!
+#endif
 #ifndef __DOCFSM__ /* Headers will not need for FSM analysator "docfsm" */
   #include "scu_main.h"
 #endif

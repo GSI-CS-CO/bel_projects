@@ -10,7 +10,9 @@
 #include "scu_fg_macros.h"
 
 extern volatile uint16_t*     g_pScub_base;
+#ifdef CONFIG_MIL_FG
 extern volatile unsigned int* g_pScu_mil_base;
+#endif
 extern FG_CHANNEL_T           g_aFgChannels[MAX_FG_CHANNELS];
 
 
@@ -29,11 +31,13 @@ int configure_fg_macro( const unsigned int channel )
    STATIC_ASSERT( BIT_SIZEOF( s_clearIsActive ) >= (MAX_SCU_SLAVES + 1) );
 
    #define _SLOT_BIT_MASK() (1 << (getFgSlotNumber( socket ) - 1))
-   #define _MIL_BIT_MASK()  (1 << MAX_SCU_SLAVES)
 
-   uint16_t dreq_status = 0;
    const uint8_t socket = getSocket( channel );
    /* actions per slave card */
+#ifdef CONFIG_MIL_FG
+   uint16_t dreq_status = 0;
+   #define _MIL_BIT_MASK()  (1 << MAX_SCU_SLAVES)
+
    if( isMilScuBusFg( socket ) )
    {
       scub_status_mil( g_pScub_base, getFgSlotNumber( socket ), &dreq_status );
@@ -42,6 +46,7 @@ int configure_fg_macro( const unsigned int channel )
    {
       status_mil( g_pScu_mil_base, &dreq_status );
    }
+
 
    // if dreq is active
    if( (dreq_status & MIL_DATA_REQ_INTR) != 0 )
@@ -83,8 +88,9 @@ int configure_fg_macro( const unsigned int channel )
    }
 
    #undef _MIL_BIT_MASK
-
    int status;
+#endif /* CONFIG_MIL_FG */
+
    const uint8_t dev  = getDevice( channel );
     /* enable irqs */
    if( isNonMilFg( socket ) )
@@ -93,6 +99,7 @@ int configure_fg_macro( const unsigned int channel )
       g_pScub_base[OFFS(socket) + SLAVE_INT_ACT] =  (FG1_IRQ | FG2_IRQ); // clear all irqs
       g_pScub_base[OFFS(socket) + SLAVE_INT_ENA] |= (FG1_IRQ | FG2_IRQ); // enable fg1 and fg2 irq
    }
+#ifdef CONFIG_MIL_FG
    else if( isMilExtentionFg( socket ) )
    {
       if( (status = write_mil(g_pScu_mil_base, 1 << 13, FC_IRQ_MSK | dev)) != OKAY)
@@ -106,6 +113,7 @@ int configure_fg_macro( const unsigned int channel )
       if( (status = scub_write_mil(g_pScub_base, getFgSlotNumber( socket ), 1 << 13, FC_IRQ_MSK | dev)) != OKAY)
          printDeviceError( status, getFgSlotNumber( socket ), "enable dreq"); //enable sending of drq
    }
+#endif /* CONFIG_MIL_FG */
    #undef _SLOT_BIT_MASK
 
    unsigned int fg_base = 0;
@@ -132,6 +140,7 @@ int configure_fg_macro( const unsigned int channel )
       g_pScub_base[OFFS(socket) + dac_base + DAC_CNTRL] = 0x10;   // set FG mode
       g_pScub_base[OFFS(socket) + fg_base + FG_RAMP_CNT_LO] = 0;  // reset ramp counter
    }
+#ifdef CONFIG_MIL_FG
    else if( isMilExtentionFg( socket ) )
    {
       if( (status = write_mil(g_pScu_mil_base, 0x1, FC_IFAMODE_WR | dev)) != OKAY)
@@ -142,7 +151,7 @@ int configure_fg_macro( const unsigned int channel )
       if( (status = scub_write_mil(g_pScub_base, getFgSlotNumber( socket ), 0x1, FC_IFAMODE_WR | dev)) != OKAY)
          printDeviceError( status, getFgSlotNumber( socket ), "set FG mode"); // set FG mode
    }
-
+#endif
    uint16_t cntrl_reg_wr;
    int16_t blk_data[MIL_BLOCK_SIZE];
    FG_PARAM_SET_T pset;
@@ -168,6 +177,7 @@ int configure_fg_macro( const unsigned int channel )
          g_pScub_base[OFFS(socket) + fg_base + FG_STARTL] = blk_data[4];
          g_pScub_base[OFFS(socket) + fg_base + FG_STARTH] = blk_data[5];
       }
+   #ifdef CONFIG_MIL_FG
       else if( isMilExtentionFg( socket ) )
       {
         // save the coeff_c for mil daq
@@ -190,6 +200,7 @@ int configure_fg_macro( const unsigned int channel )
          if( (status = scub_write_mil(g_pScub_base, getFgSlotNumber( socket ), cntrl_reg_wr, FC_CNTRL_WR | dev)) != OKAY)
             printDeviceError( status, getFgSlotNumber( socket ), "end blk trm");
       }
+   #endif /* CONFIG_MIL_FG */
       g_aFgChannels[0].param_sent++;
   //!! }CONFIG_GOTO_STWAIT_WHEN_TIMEOUT
 
@@ -200,6 +211,7 @@ int configure_fg_macro( const unsigned int channel )
       g_pScub_base[OFFS(socket) + fg_base + FG_TAG_HIGH] = g_shared.fg_regs[channel].tag >> BIT_SIZEOF(uint16_t);
       g_pScub_base[OFFS(socket) + fg_base + FG_CNTRL] |= FG_ENABLED;
    }
+#ifdef CONFIG_MIL_FG
    else if( isMilExtentionFg( socket ) )
    { // enable and end block mode
       if( (status = write_mil(g_pScu_mil_base, cntrl_reg_wr | FG_ENABLED, FC_CNTRL_WR | dev)) != OKAY)
@@ -211,6 +223,7 @@ int configure_fg_macro( const unsigned int channel )
            cntrl_reg_wr | FG_ENABLED, FC_CNTRL_WR | dev ) ) != OKAY )
          printDeviceError( status, getFgSlotNumber( socket ), "end blk mode");
    }
+#endif /* CONFIG_MIL_FG */
    } //!!
    // reset watchdog
  //  g_aFgChannels[channel].timeout = 0;
@@ -230,7 +243,9 @@ STATIC void disable_slave_irq( const unsigned int channel )
    if( channel >= MAX_FG_CHANNELS )
       return;
 
+#ifdef CONFIG_MIL_FG
    int status;
+#endif
    const uint8_t socket = getSocket( channel );
    const uint8_t dev    = getDevice( channel );
 
@@ -241,6 +256,7 @@ STATIC void disable_slave_irq( const unsigned int channel )
       else if( dev == 1 )
         g_pScub_base[OFFS(socket) + SLAVE_INT_ENA] &= ~(0x4000); //disable fg2 irq
    }
+#ifdef CONFIG_MIL_FG
    else if( isMilExtentionFg( socket ) )
    {
       //write_mil(g_pScu_mil_base, 0x0, FC_COEFF_A_WR | dev);            //ack drq
@@ -253,7 +269,7 @@ STATIC void disable_slave_irq( const unsigned int channel )
                                    0x0, FC_IRQ_MSK | dev)) != OKAY)
          printDeviceError( status, getFgSlotNumber( socket ), __func__);  //mask drq
    }
-
+#endif
    //mprintf("IRQs for slave %d disabled.\n", socket);
 }
 
@@ -287,7 +303,9 @@ STATIC void send_fg_param( const unsigned int socket,
 {
    FG_PARAM_SET_T pset;
    uint16_t       cntrl_reg_wr;
+#ifdef CONFIG_MIL_FG
    int            status;
+#endif
    int16_t        blk_data[MIL_BLOCK_SIZE];
 
    const unsigned int fg_num = getFgNumberFromRegister( cntrl_reg );
@@ -325,13 +343,14 @@ STATIC void send_fg_param( const unsigned int socket,
       // no setvalue for scu bus daq
       *pSetvalue = 0;
    }
+#ifdef CONFIG_MIL_FG
    else if( isMilExtentionFg( socket ) )
    {
       // save coeff_c as setvalue
       *pSetvalue = pset.coeff_c;
       // transmit in one block transfer over the dev bus
       if((status = write_mil_blk(g_pScu_mil_base, &blk_data[0], FC_BLK_WR | fg_base)) != OKAY)
-         printDeviceError(status, 0, __func__);
+         printDeviceError( status, 0, __func__);
       // still in block mode !
    }
    else if( isMilScuBusFg( socket ) )
@@ -343,10 +362,11 @@ STATIC void send_fg_param( const unsigned int socket,
                                        &blk_data[0],
                                        FC_BLK_WR | fg_base)) != OKAY)
       {
-         printDeviceError(status, getFgSlotNumber( socket ), __func__);
+         printDeviceError( status, getFgSlotNumber( socket ), __func__);
       }
       // still in block mode !
    }
+#endif /* CONFIG_MIL_FG */
    g_aFgChannels[fg_num].param_sent++;
 }
 

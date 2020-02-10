@@ -10,7 +10,9 @@
 #include "scu_main.h"
 #include "scu_eca_handler.h"
 
-extern volatile unsigned int* g_pScu_mil_base;
+#ifdef CONFIG_MIL_FG
+   extern volatile unsigned int* g_pScu_mil_base;
+#endif
 extern volatile uint16_t*     g_pScub_base;
 
 #define MIL_BROADCAST 0x20ff //TODO Who the fuck is 0x20ff documented!
@@ -39,7 +41,7 @@ void initEcaQueue( void )
    mprintf("\nECA queue found at: 0x%08x."
            " Waiting for actions with tag 0x%08x\n\n",
             (unsigned int)g_eca.pQueue, g_eca.tag );
-} // initEcaQueue
+}
 
 /*! ---------------------------------------------------------------------------
  * @ingroup TASK
@@ -57,8 +59,10 @@ void ecaHandler( register TASK_T* pThis FG_UNUSED )
 #ifdef DEBUG_SAFTLIB
    mprintf( "* " );
 #endif
+#ifdef CONFIG_MIL_FG
    bool isMilDevArmed = false;
-   SCUBUS_SLAVE_FLAGS_T active_sios   = 0; // bitmap with active sios
+#endif
+   SCUBUS_SLAVE_FLAGS_T active_sios   = 0; /* bitmap with active sios */
 
    /* check if there are armed fgs */
    for( unsigned int i = 0; i < ARRAY_SIZE(g_shared.fg_regs); i++ )
@@ -67,26 +71,31 @@ void ecaHandler( register TASK_T* pThis FG_UNUSED )
          continue;
 
       const uint8_t socket = getSocket( i );
+   #ifdef CONFIG_MIL_FG
       if( isMilExtentionFg( socket ) )
       {
          isMilDevArmed = true;
          continue;
       }
-
+   #endif
       if( isMilScuBusFg( socket ) && (getFgSlotNumber( socket ) != 0) )
          active_sios |= (1 << (getFgSlotNumber( socket ) - 1));
    }
 
+#ifdef CONFIG_MIL_FG
    if( isMilDevArmed )
       g_pScu_mil_base[MIL_SIO3_TX_CMD] = MIL_BROADCAST;
+#endif
 
    // send broadcast start to active sio slaves
    if( active_sios != 0 )
    {  // select active sio slaves
       g_pScub_base[OFFS(0) + MULTI_SLAVE_SEL] = active_sios;
       // send broadcast
+   #ifdef CONFIG_MIL_FG
       g_pScub_base[OFFS(13) + MIL_SIO3_TX_CMD] = MIL_BROADCAST;
+   #endif
    }
-} // ecaHandler
+}
 
 /* ================================= EOF ====================================*/

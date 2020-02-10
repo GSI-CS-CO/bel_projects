@@ -410,7 +410,14 @@ STATIC_ASSERT( offsetof( SCU_SHARED_DATA_T, fg_buffer ) ==
 #define FG_MAGIC_NUMBER ((uint32_t)0xdeadbeef)
 
 #define SCU_INVALID_VALUE -1
-#define FG_VERSION         0x03
+
+#ifndef FG_VERSION
+  #define FG_VERSION         3
+#endif
+
+#if (FG_VERSION != 3)
+  #warning "Could be incompatiple to SAFTLIB!"
+#endif
 
 #ifdef CONFIG_SCU_DAQ_INTEGRATION
   #define __DAQ_SHARAD_MEM_INITIALIZER_ITEM \

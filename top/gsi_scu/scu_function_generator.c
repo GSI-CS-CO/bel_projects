@@ -29,7 +29,9 @@
 
 #include <scu_function_generator.h>
 #include <mprintf.h>
+#ifdef CONFIG_MIL_FG
 #include <scu_mil.h>
+#endif
 #include <mini_sdb.h>
 
 #define OFFS(SLOT) ((SLOT) * (1 << 16))
@@ -114,6 +116,7 @@ STATIC int add_to_fglist( const uint8_t socked, const uint8_t dev,
    return count; //return number of found fgs
 }
 
+#ifdef CONFIG_MIL_FG
 /*! ---------------------------------------------------------------------------
  * @brief Scans the whole SCU-Bus for functions generators which are
  *        connected via SCU-bus-to-MIL-adapter
@@ -154,6 +157,7 @@ void scanScuBusFgsViaMil( volatile uint16_t *scub_adr, FG_MACRO_T* fglist )
       }
    }
 }
+#endif // ifdef CONFIG_MIL_FG
 
 /*! ---------------------------------------------------------------------------
  * @brief Scans the whole SCU-bus direct to the SCU-bus connected
@@ -182,9 +186,12 @@ STATIC inline
 void scanScuBusFgs( volatile uint16_t *scub_adr, FG_MACRO_T* fglist )
 {
    scanScuBusFgsDirect( scub_adr, fglist );
+#ifdef CONFIG_MIL_FG
    scanScuBusFgsViaMil( scub_adr, fglist );
+#endif
 }
 
+#ifdef CONFIG_MIL_FG
 /*! ---------------------------------------------------------------------------
  * @brief Scans the MIL extension for function generators
  */
@@ -221,11 +228,15 @@ void scanExtMilFgs( volatile unsigned int *mil_addr,
    }
 }
 
+#endif /* CONFIG_MIL_FG */
+
 /*! ---------------------------------------------------------------------------
  * @see scu_function_generator.h
  */
 void scan_all_fgs( volatile uint16_t *scub_adr,
+               #ifdef CONFIG_MIL_FG
                    volatile unsigned int *mil_addr,
+               #endif
                    FG_MACRO_T* fglist, uint64_t *ext_id )
 {
    for( unsigned int i = 0; i < MAX_FG_MACROS; i++ )
@@ -237,7 +248,9 @@ void scan_all_fgs( volatile uint16_t *scub_adr,
    }
 
    scanScuBusFgs( scub_adr, fglist );
+#ifdef CONFIG_MIL_FG
    scanExtMilFgs( mil_addr, fglist, ext_id );
+#endif
 }
 
 /*! ---------------------------------------------------------------------------
@@ -245,8 +258,11 @@ void scan_all_fgs( volatile uint16_t *scub_adr,
  */
 void init_buffers( FG_CHANNEL_REG_T* cr, const unsigned int channel,
                    FG_MACRO_T* fg_macros,
-                   volatile uint16_t* scub_base,
-                   volatile unsigned int* devb_base )
+                   volatile uint16_t* scub_base
+              #ifdef CONFIG_MIL_FG
+                   , volatile unsigned int* devb_base
+              #endif
+                 )
 {
    if( channel > MAX_FG_CHANNELS )
       return;
@@ -269,9 +285,10 @@ void init_buffers( FG_CHANNEL_REG_T* cr, const unsigned int channel,
    const uint8_t dev    = fg_macros[macro].device;
 
    //reset hardware
+#ifdef CONFIG_MIL_FG
    reset_mil( devb_base );
-   scub_reset_mil(scub_base, socket);
-
+   scub_reset_mil( scub_base, socket );
+#endif
    //mprintf("reset fg %d in socked %d\n", device, socked);
    /* scub slave */
    if( isNonMilFg( socket ) )
@@ -287,18 +304,20 @@ void init_buffers( FG_CHANNEL_REG_T* cr, const unsigned int channel,
       }
       return;
    }
-
+#ifdef CONFIG_MIL_FG
    /* mil extension */
    if( isMilExtentionFg( socket ) )
    {
-      write_mil(devb_base, 0x1, FC_CNTRL_WR | dev); // reset fg
+      write_mil( devb_base, 0x1, FC_CNTRL_WR | dev ); // reset fg
       return;
    }
 
    if( isMilScuBusFg( socket ) )
    {
-      scub_write_mil(scub_base, getFgSlotNumber( socket ), 0x1, FC_CNTRL_WR | dev); // reset fg
+      scub_write_mil( scub_base, getFgSlotNumber( socket ),
+                      0x1, FC_CNTRL_WR | dev); // reset fg
    }
+#endif
 }
 
 /*================================== EOF ====================================*/

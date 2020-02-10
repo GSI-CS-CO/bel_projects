@@ -471,7 +471,9 @@ STATIC_ASSERT( sizeof( FG_CHANNEL_BUFFER_T ) == sizeof( FG_PARAM_SET_T ) * BUFFE
  *        this SCU.
  */
 void scan_all_fgs( volatile uint16_t *base_adr,
+                #ifdef CONFIG_MIL_FG
                    volatile unsigned int* mil_base,
+                #endif
                    FG_MACRO_T* fglist,
                    uint64_t *ext_id );
 /*! ---------------------------------------------------------------------------
@@ -480,8 +482,11 @@ void scan_all_fgs( volatile uint16_t *base_adr,
 void init_buffers( FG_CHANNEL_REG_T* cr,
                    const unsigned int channel,
                    FG_MACRO_T* macro,
-                   volatile uint16_t* scub_base,
-                   volatile unsigned int* devb_base) ;
+                   volatile uint16_t* scub_base
+                 #ifdef CONFIG_MIL_FG
+                   , volatile unsigned int* devb_base
+                 #endif
+                 );
 
 /*! ---------------------------------------------------------------------------
  * @brief Returns "true" in the case the function generator belonging to the
