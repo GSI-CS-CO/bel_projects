@@ -16,8 +16,13 @@ TARGET         := scu_control
 DEFINES += CONFIG_FG_PEDANTIC_CHECK
 DEFINES += MICO32_FULL_CONTEXT_SAVE_RESTORE
 # ORIGIN := 1
+SCU_MIL := 1
+MIL_GAP := 1
+BASE_VERSION = 3
 
-VERSION_STR = "3.1.0"
+
+DEFINES += FG_VERSION=$(BASE_VERSION)
+VERSION_STR = $(BASE_VERSION)".1.0"
 
 ifdef ORIGIN
   USE_HISTORY=1
@@ -37,8 +42,10 @@ ifdef USE_HISTORY
    DEFINES += HISTORY
 endif
 
- DEFINES += CONFIG_READ_MIL_TIME_GAP
 
+ifdef MIL_GAP
+ DEFINES += CONFIG_READ_MIL_TIME_GAP
+endif
 DEFINES += CONFIG_NO_LM32_ASSERT
 DEFINES += CONFIG_PRINT_BUFSIZE=128
 DEFINES += CONFIG_PRINTF_64BIT
@@ -48,19 +55,23 @@ DEFINES += CONFIG_WR_NODE
 
 # DEFINES += DEBUG_SAFTLIB
 ifdef SCU_MIL
-  DEFINES += CONFIG_SCU_MIL
+  DEFINES += CONFIG_MIL_FG
+  VERSION_STR += "+MIL"
+ ifdef MIL_GAP
+  VERSION_STR += "+GAP"
+ endif
 endif
 ifdef SCU_DAQ
   DEFINES += CONFIG_SCU_DAQ_INTEGRATION
   DEFINES += CONFIG_DAQ_SW_SEQUENCE
   DEFINES += DAQ_MAX_CHANNELS=4
-  VERSION = $(VERSION_STR)" +DAQ"
+  VERSION_STR += "+DAQ"
 else
   # New functions will not compiled when the following switch is set.
  # DEFINES += CONFIG_OLD_SCU_SW
-  VERSION = $(VERSION_STR)
-endif
 
+endif
+VERSION = $(VERSION_STR)
 
 SOURCE += $(SCU_LIB_SRC_DIR)/aux.c
 SOURCE += $(SCU_LIB_SRC_DIR)/irq.c
@@ -79,7 +90,10 @@ else
  SOURCE += $(SCU_DIR)/scu_circular_buffer.c
  SOURCE += $(SCU_DIR)/scu_eca_handler.c
  SOURCE += $(SCU_DIR)/scu_fg_macros.c
+ifdef SCU_MIL
+ SOURCE += $(SCU_DIR)/scu_mil.c
  SOURCE += $(SCU_DIR)/scu_mil_fg_handler.c
+endif
  SOURCE += $(SCU_DIR)/scu_fg_handler.c
  SOURCE += $(SCU_DIR)/scu_command_handler.c
  SOURCE += $(SCU_DIR)/scu_temperature.c
@@ -89,7 +103,7 @@ SOURCE += $(SCU_DIR)/dow_crc.c
 ifdef USE_HISTORY
    SOURCE += $(SCU_DIR)/history.c
 endif
-SOURCE += $(SCU_DIR)/scu_mil.c
+
 SOURCE += $(WR_DIR)/dev/w1-temp.c
 
 ifdef SCU_DAQ
