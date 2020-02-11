@@ -533,11 +533,12 @@ void handleMacros( const unsigned int socket,
       cntrl_reg = g_pScub_base[OFFS(socket) + fg_base + FG_CNTRL];
       channel = getFgNumberFromRegister( cntrl_reg );
    }
+#ifdef CONFIG_MIL_FG
    else
    {
       channel = getFgNumberFromRegister( irq_act_reg );
    }
-
+#endif
    if( channel >= ARRAY_SIZE( g_shared.fg_regs ) )
    {
       mprintf( ESC_ERROR"%s: Channel out of range: %d\n"ESC_NORMAL, __func__, channel );
@@ -564,6 +565,7 @@ void handleMacros( const unsigned int socket,
          send_fg_param( socket, fg_base, cntrl_reg, pSetvalue );
       }
    }
+#ifdef CONFIG_MIL_FG
    else /* isNonMilFg( socket ) */
    {
       /* count in software only */
@@ -586,6 +588,7 @@ void handleMacros( const unsigned int socket,
          }
       }
    } /* else of if isNonMilFg( socket ) */
+#endif /* CONFIG_MIL_FG */
 }
 
 /*================================== EOF ====================================*/

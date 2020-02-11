@@ -163,15 +163,14 @@ typedef enum
 #define IO4x8             0x220
 #define ADC_BASE          0x230
 #define ADC_CNTRL         0x0
-#define ADC_CHN1          0x1   
-#define ADC_CHN2          0x2   
-#define ADC_CHN3          0x3   
-#define ADC_CHN4          0x4   
-#define ADC_CHN5          0x5   
-#define ADC_CHN6          0x6   
-#define ADC_CHN7          0x7   
-#define ADC_CHN8          0x8   
-
+#define ADC_CHN1          0x1
+#define ADC_CHN2          0x2
+#define ADC_CHN3          0x3
+#define ADC_CHN4          0x4
+#define ADC_CHN5          0x5
+#define ADC_CHN6          0x6
+#define ADC_CHN7          0x7
+#define ADC_CHN8          0x8
 
 #define FG1_BASE          0x300
 #define FG2_BASE          0x340
@@ -190,8 +189,7 @@ typedef enum
 
 #define FG1_IRQ           (1<<15)
 #define FG2_IRQ           (1<<14)
-#define DREQ              (1<<4) 
-
+#define DREQ              (1<<4)
 #define WB_FG_CNTRL       0x0
 #define WB_FG_A           0x1
 #define WB_FG_B           0x2
@@ -208,7 +206,7 @@ typedef enum
 #define TMR_VALUEL        0x2
 #define TMR_VALUEH        0x3
 #define TMR_REPEAT        0x4
- 
+
 #define GLOBAL_IRQ_ENA    0x2
 #define SRQ_ENA           0x6
 #define SRQ_ACT           0x8
@@ -226,7 +224,7 @@ typedef enum
 #define GRP_FIB_DDS 1
 #define GRP_MFU     2
 #define GRP_SIO3    69
-#define GRP_SIO2    23 
+#define GRP_SIO2    23
 
 
 extern struct w1_bus wrpc_w1_bus;

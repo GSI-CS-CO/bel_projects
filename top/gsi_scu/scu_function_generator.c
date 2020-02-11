@@ -70,8 +70,10 @@ STATIC int add_to_fglist( const uint8_t socked, const uint8_t dev,
 {
    int count = 0;
 
-   /* find first free slot */
-   while( (fglist[count].outputBits != 0) && (count < MAX_FG_MACROS) )
+   /*
+    * Climbing to the first free list item.
+    */
+   while( (count < MAX_FG_MACROS) && (fglist[count].outputBits != 0) )
       count++;
 
    if( !(cid_sys == SYS_CSCO || cid_sys == SYS_PBRF || cid_sys == SYS_LOEP) )
