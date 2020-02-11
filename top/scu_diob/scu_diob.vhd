@@ -1470,6 +1470,9 @@ end component;
   signal Out16_DAC_Strobe_o:     std_logic;                      -- Output "DAC-Strobe"
   signal Out16_DAC_Strobe_Expo:  integer range 0 to 7;           -- Anzahl der Counts
   signal Out16_Strobe:           std_logic;                      -- Output "DAC-Strobe"
+  signal awout_reg2_wr_pulse:    std_logic;                      -- pos edge of awout_reg2_wr
+  signal out_reg2_wr1:           std_logic;
+  signal out_reg2_wr2:           std_logic;
 
   signal Out16_LED_Lemo_In_i:    std_logic;  --  Input  "nLED_Lemo_In"
   signal Out16_nLED_Lemo_In_o:   std_logic;  --  Output "nLED_Lemo_In"
@@ -3756,6 +3759,18 @@ Out16_DAC_Strobe: outpuls port map(nReset   => rstn_sys,
                                    Mult_cnt => Wert_Strobe_2_Hoch_n(Out16_DAC_Strobe_Expo),
                                    Sign_Out => Out16_DAC_Strobe_o);
                
+aw2_wr_edge_detect: process(clk_sys, rstn_sys, AWOut_Reg2_wr)
+begin
+  if rstn_sys = '0' then
+    out_reg2_wr1 <= '0';
+    out_reg2_wr2 <= '0';
+  elsif rising_edge(clk_sys) then
+    out_reg2_wr1 <= AWOut_Reg2_wr;
+    out_reg2_wr2 <= out_reg2_wr1;
+  end if;
+  awout_reg2_wr_pulse <= out_reg2_wr1 and not out_reg2_wr2;
+end process;
+
   
 --  +============================================================================================================================+
 --  |   §§§                                    Anwender-IO: In16  -- FG901_020                                                   |
@@ -6660,7 +6675,7 @@ BEGIN
               Out16_Data_FG_Out(15 DOWNTO 0) <=  AW_Output_Reg(2)(15 DOWNTO 0);
     
               Out16_DAC_Strobe_Expo  <=  (to_integer(unsigned(AW_Config2)(4 downto 2)));  -- Multiplikationswert für 100ns aus Wertetabelle 2^n
-              Out16_DAC_Strobe_i     <=  (AWOut_Reg2_wr AND SCU_Ext_Wr_fin);              -- Software-Strobe   
+              Out16_DAC_Strobe_i     <=  awout_reg2_wr_pulse;
 
                 IF  (AW_Config2(5) = '0')  THEN  Out16_Strobe  <=      Out16_DAC_Strobe_o; -- Strobe positiv
                                            Else  Out16_Strobe  <=  not Out16_DAC_Strobe_o; -- Strobe negativ
