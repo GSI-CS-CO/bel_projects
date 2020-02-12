@@ -62,7 +62,7 @@ static void vTask( void* pvParameters )
       /*
        * Very crude delay loop... not fine! I know...
        */
-      int d = configCPU_CLOCK_HZ / 4;
+      unsigned int d = configCPU_CLOCK_HZ / 4;
       while( d-- != 0 )
          portNOP();
    #else

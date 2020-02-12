@@ -6,9 +6,12 @@
  * @copyright (C) 2020 GSI Helmholtz Centre for Heavy Ion Research GmbH
  *
  * @author Ulrich Becker <u.becker@gsi.de>
- * Origin:  Richard Barry (V4.7.0)
  *
  */
+
+#ifndef __lm32__
+  #error This assembler module is for the target Latice Micro32 (LM32) only!
+#endif
 
 /*!
  * @brief Pointer to current Task Control Block.
@@ -80,7 +83,6 @@ void vPortInterruptHandler( void );
  */
 #define spOfs( i ) (sp + (ALIGN * (ST_OFS + i)))
 
-
 /*! ---------------------------------------------------------------------------
  * Macros for storing all registers of LM32
  */
@@ -131,22 +133,13 @@ void vPortInterruptHandler( void );
 #endif
 
 /*! ---------------------------------------------------------------------------
- * @brief Macro to save registers on the stack.
+ * @brief Macro saves the content op all LM32 registers
+ *        (except R0, R1 and SP (R28)) on the stack.
  */
 #ifdef __DOXYGEN__
-#define portSAVE_CONTEXT
+#define SAVE_REGISTERS
 #else
-.macro portSAVE_CONTEXT
-   /*
-    * Making space for the context on the stack.
-    */
-   addi        sp,  sp, -SP_CORR   /* r28 */
-
-   /*
-    * Saving all register values of the current respectively old context.
-    * Register R0 is always 0, therefore start with R1.
-    */
-   sw        __R1,  r1
+.macro SAVE_REGISTERS
    sw        __R2,  r2
    sw        __R3,  r3
    sw        __R4,  r4
@@ -175,6 +168,67 @@ void vPortInterruptHandler( void );
    sw        __FP,  fp
    sw        __RA,  ra
    sw        __EA,  ea
+.endm
+#endif
+
+/*! ---------------------------------------------------------------------------
+ * @brief Macro restores all LM32 registers from stack
+ *        except R0, R1 and SP (R28)
+ */
+#ifdef __DOXYGEN__
+#define RESTORE_REGISTERS
+#else
+.macro RESTORE_REGISTERS
+   lw        ea,  __EA
+   lw        ra,  __RA
+   lw        fp,  __FP
+   lw        gp,  __GP
+   lw        r25, __R25
+   lw        r24, __R24
+   lw        r23, __R23
+   lw        r22, __R22
+   lw        r21, __R21
+   lw        r20, __R20
+   lw        r19, __R19
+   lw        r18, __R18
+   lw        r17, __R17
+   lw        r16, __R16
+   lw        r15, __R15
+   lw        r14, __R14
+   lw        r13, __R13
+   lw        r12, __R12
+   lw        r11, __R11
+   lw        r10, __R10
+   lw        r9,  __R9
+   lw        r8,  __R8
+   lw        r7,  __R7
+   lw        r6,  __R6
+   lw        r5,  __R5
+   lw        r4,  __R4
+   lw        r3,  __R3
+   lw        r2,  __R2
+.endm
+#endif
+
+/*! ---------------------------------------------------------------------------
+ * @brief Macro to save registers on the stack.
+ */
+#ifdef __DOXYGEN__
+#define portSAVE_CONTEXT
+#else
+.macro portSAVE_CONTEXT
+   /*
+    * Making space for the context on the stack.
+    */
+   addi        sp,  sp, -SP_CORR   /* r28 */
+
+   /*
+    * Saving all register values of the current respectively old context.
+    * Register R0 is always 0, therefore start with R1.
+    */
+   sw        __R1,  r1
+   SAVE_REGISTERS      /* Save all registers except r0 and r1 */
+
    /*
     * Save the top of stack value to the Task Control Block (TCB).
     */
@@ -206,36 +260,10 @@ void vPortInterruptHandler( void );
    sw        (r2+0), r1               /* Store new Stack pointer in actual TCB */
 
    /*
-    * Restoring all register values (except R1) for the new context.
+    * Restoring all register values (except R0, R1 and R28 (SP))
+    * for the new context.
     */
-   lw        ea,  __EA
-   lw        ra,  __RA
-   lw        fp,  __FP
-   lw        gp,  __GP
-   lw        r25, __R25
-   lw        r24, __R24
-   lw        r23, __R23
-   lw        r22, __R22
-   lw        r21, __R21
-   lw        r20, __R20
-   lw        r19, __R19
-   lw        r18, __R18
-   lw        r17, __R17
-   lw        r16, __R16
-   lw        r15, __R15
-   lw        r14, __R14
-   lw        r13, __R13
-   lw        r12, __R12
-   lw        r11, __R11
-   lw        r10, __R10
-   lw        r9,  __R9
-   lw        r8,  __R8
-   lw        r7,  __R7
-   lw        r6,  __R6
-   lw        r5,  __R5
-   lw        r4,  __R4
-   lw        r3,  __R3
-   lw        r2,  __R2
+   RESTORE_REGISTERS
 .endm
 #endif
 
