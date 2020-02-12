@@ -342,7 +342,9 @@ STATIC TASK_T g_aTasks[] =
  */
 STATIC inline void dispatch( void )
 {
+   irq_disable();
    const MSI_T m = remove_msg( &g_aMsg_buf[0], IRQ );
+   irq_enable();
    switch( m.adr & 0xFF )
    { //TODO remove these naked numbers asap!
       case 0x00: add_msg( &g_aMsg_buf[0], SCUBUS, m ); return; // message from scu bus
@@ -370,7 +372,6 @@ STATIC inline void schedule( void )
 
    for( unsigned int i = 0; i < ARRAY_SIZE( g_aTasks ); i++ )
    {
-      // call the dispatch task before every other task
       dispatch();
       TASK_T* pCurrent = &g_aTasks[i];
       if( (tick - pCurrent->lasttick) < pCurrent->interval )

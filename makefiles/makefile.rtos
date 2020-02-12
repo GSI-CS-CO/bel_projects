@@ -47,5 +47,6 @@ INCLUDE_DIRS += $(RTOS_INCLUDE_DIR)
 
 DEFINES += CONFIG_RTOS
 
+DOX_TAB_SIZE = 4
 DOX_INPUT += $(RTOS_INCLUDE_DIR)
 #===================================== EOF ====================================
