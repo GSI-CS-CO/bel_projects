@@ -48,6 +48,10 @@
   #define STATIC static
 #endif
 
+#define IFA_ID_VAL         0xfa00
+#define IFA_MIN_VERSION    0x1900
+#define FG_MIN_VERSION     2
+
 /*! ---------------------------------------------------------------------------
  * @brief Prints all found function generators.
  */
@@ -194,27 +198,27 @@ void scanScuBusFgsViaMil( volatile uint16_t *scub_adr, FG_MACRO_T* fglist )
       {
          uint16_t ifa_id, ifa_vers, fg_vers;
          STATIC_ASSERT( sizeof( short ) == sizeof( ifa_id ) );
-         if( scub_read_mil(scub_adr, slot, (short*)&ifa_id, IFA_ID << 8 | ifa_adr) != OKAY )
+         if( scub_read_mil( scub_adr, slot, (short*)&ifa_id, IFA_ID << 8 | ifa_adr ) != OKAY )
             continue;
-         if( ifa_id != 0xfa00 )
+         if( ifa_id != IFA_ID_VAL )
             continue;
 
          STATIC_ASSERT( sizeof( short ) == sizeof( ifa_vers ) );
-         if( scub_read_mil(scub_adr, slot, (short*)&ifa_vers, IFA_VERS << 8 | ifa_adr) != OKAY )
+         if( scub_read_mil( scub_adr, slot, (short*)&ifa_vers, IFA_VERS << 8 | ifa_adr ) != OKAY )
             continue;
-         if( ifa_vers < 0x1900 )
+         if( ifa_vers < IFA_MIN_VERSION )
             continue;
 
          STATIC_ASSERT( sizeof( short ) == sizeof( fg_vers ) );
-         if( scub_read_mil(scub_adr, slot, (short*)&fg_vers, 0xa6 << 8 | ifa_adr) != OKAY )
+         if( scub_read_mil( scub_adr, slot, (short*)&fg_vers, 0xa6 << 8 | ifa_adr ) != OKAY )
             continue;
-         if( (fg_vers < 2) || (fg_vers > 0x00FF) )
+         if( (fg_vers < FG_MIN_VERSION) || (fg_vers > 0x00FF) )
             continue;
 
          /*
           * All three proves has been passed, so we can add it to the FG-list.
           */
-         add_to_fglist( DEV_SIO | slot, ifa_adr, SYS_CSCO, GRP_IFA8, fg_vers, fglist);
+         add_to_fglist( DEV_SIO | slot, ifa_adr, SYS_CSCO, GRP_IFA8, fg_vers, fglist );
          //scub_write_mil(scub_adr, slot, 0x100, 0x12 << 8 | ifa_adr); // clear PUR
       }
    }
@@ -261,8 +265,6 @@ STATIC inline
 void scanExtMilFgs( volatile unsigned int *mil_addr,
                     FG_MACRO_T* fglist, uint64_t *ext_id )
 {
-   int16_t ifa_id, ifa_vers, fg_vers;
-   uint16_t ifa_adr;
    /* check only for ifks, if there is a macro found and a mil extension attached to the baseboard */
    /* mil extension is recognized by a valid 1wire id                                              */
    /* mil extension has a 1wire temp sensor with family if 0x42                                    */
@@ -270,23 +272,37 @@ void scanExtMilFgs( volatile unsigned int *mil_addr,
    if( !(((int)mil_addr != ERROR_NOT_FOUND) && (((int)*ext_id & 0xff) == 0x42)) )
       return;
 
-    // reset all taskslots by reading value back
+   /*
+    * reset all taskslots by reading value back
+    */
    reset_mil( mil_addr );
 
-   for( ifa_adr = 0; ifa_adr < IFK_MAX_ADR; ifa_adr++ )
+   for( uint32_t ifa_adr = 0; ifa_adr < IFK_MAX_ADR; ifa_adr++ )
    {
-      if( read_mil( mil_addr, &ifa_id, IFA_ID << 8 | ifa_adr) != OKAY )
+      uint16_t ifa_id, ifa_vers, fg_vers;
+
+      STATIC_ASSERT( sizeof( short ) == sizeof( ifa_id ) );
+      if( read_mil( mil_addr, (short*)&ifa_id, IFA_ID << 8 | ifa_adr ) != OKAY )
          continue;
-      if( read_mil( mil_addr, &ifa_vers, IFA_VERS << 8 | ifa_adr) != OKAY )
+      if( ifa_id != IFA_ID_VAL )
          continue;
-      if( read_mil(mil_addr, &fg_vers, 0xa6 << 8 | ifa_adr) != OKAY )
+
+      STATIC_ASSERT( sizeof( short ) == sizeof( ifa_vers ) );
+      if( read_mil( mil_addr, (short*)&ifa_vers, IFA_VERS << 8 | ifa_adr ) != OKAY )
          continue;
-      if( ((0xffff & fg_vers) >= 0x2) && ((0xffff & ifa_id) == 0xfa00) &&
-         ((0xffff & ifa_vers) >= 0x1900) )
-      {
-         add_to_fglist( DEV_MIL_EXT, ifa_adr, SYS_CSCO, GRP_IFA8, 0xffff & fg_vers, fglist);
-        //write_mil(mil_addr, 0x100, 0x12 << 8 | ifa_adr); // clear PUR
-      }
+      if( ifa_vers < IFA_MIN_VERSION )
+         continue;
+
+      STATIC_ASSERT( sizeof( short ) == sizeof( fg_vers ) );
+      if( read_mil( mil_addr, (short*)&fg_vers, 0xa6 << 8 | ifa_adr ) != OKAY )
+         continue;
+      if( (fg_vers < FG_MIN_VERSION) || (fg_vers > 0x00FF) )
+         continue;
+
+      /*
+       * All three proves has been passed, so we can add it to the FG-list.
+       */
+      add_to_fglist( DEV_MIL_EXT, ifa_adr, SYS_CSCO, GRP_IFA8, fg_vers, fglist );
    }
 }
 
