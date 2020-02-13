@@ -22,11 +22,58 @@
 #ifdef __lm32__
  #include <mini_sdb.h>
 #endif
-
+#include <stdint.h>
 #include <eb_console_helper.h>
+#include <helper_macros.h>
+
+/*!
+ * @see https://gcc.gnu.org/onlinedocs/gcc/Structure-Layout-Pragmas.html#Structure-Layout-Pragmas
+ */
+
+#pragma scalar_storage_order big-endian
+//#pragma scalar_storage_order little-endian
+typedef struct PACKED_SIZE //__attribute__ ((scalar_storage_order("big-endian")))
+{
+   uint32_t n1: 4;
+   uint32_t n2: 4;
+   uint32_t n3: 4;
+   uint32_t n4: 4;
+   uint32_t n5: 4;
+   uint32_t n6: 4;
+   uint32_t n7: 4;
+   uint32_t n8: 4;
+} BV_T;
+
+
+STATIC_ASSERT( sizeof( BV_T ) == sizeof( uint32_t ) );
+//#pragma scalar_storage_order default
+typedef union PACKED_SIZE
+{
+   uint32_t  n;
+   BV_T      bv;
+} A_T;
+//#pragma scalar_storage_order default
+STATIC_ASSERT( sizeof( A_T ) == sizeof( uint32_t ) );
+
+void printBin( const uint32_t n )
+{
+   char str[BIT_SIZEOF( uint32_t ) + 1 + BIT_SIZEOF( uint32_t ) / 4];
+   unsigned int i = 0;
+   for( uint32_t m = 1; m != 0; m <<= 1 )
+   {
+      if( ((i+1) % 5) == 0 )
+         str[i++] = ' ';
+      str[i++] = ((m & n) != 0)? '1' : '0';
+   }
+   str[i] = '\0';
+   mprintf( "%s", str );
+}
+
+
 
 int main( void )
 {
+   A_T a = {0};
 #ifdef __lm32__
    discoverPeriphery();
    uart_init_hw();
@@ -34,7 +81,17 @@ int main( void )
    gotoxy( 0, 0 );
    clrscr();
    mprintf( "Hello world!\n" );
+
+   a.bv.n5 = 1;
+   a.bv.n1 = 0xF;
+
+   mprintf( "Bitvector: " );
+   printBin( a.n );
+   mprintf( "\n" );
+#ifdef __lm32__
+   while( 1 );
+#endif
    return 0;
 }
-
+//#pragma scalar_storage_order default
 /*================================== EOF ====================================*/
