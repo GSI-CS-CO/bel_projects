@@ -432,10 +432,12 @@ architecture rtl of monster is
   signal dev_msi_master_i : t_wishbone_master_in_array (c_dev_masters-1 downto 0);
   signal dev_msi_master_o : t_wishbone_master_out_array(c_dev_masters-1 downto 0);
 
-  signal sdb_dummy            : std_logic;
-  attribute keep              : boolean;
-  attribute keep of sdb_dummy : signal is true;
-
+  attribute keep                  : boolean;
+  signal sdb_dummy_top            : std_logic;
+  signal sdb_dummy_dev            : std_logic;
+  attribute keep of sdb_dummy_top : signal is true;
+  attribute keep of sdb_dummy_dev : signal is true;
+ 
   ----------------------------------------------------------------------------------
   -- GSI Dev Crossbar Slaves -------------------------------------------------------
   ----------------------------------------------------------------------------------
@@ -1478,7 +1480,8 @@ end generate;
         fd_oen_o  => s_usb_fd_oen);
   end generate;
 
-  sdb_dummy <= f_report_sdb(c_top_sdb_address);
+  sdb_dummy_top <= f_report_wishbone_address(c_top_sdb_address, "SDB TOP");
+  sdb_dummy_dev <= f_report_wishbone_address(c_dev_sdb_address, "SDB DEV");
 
   wr_uart_o <= uart_wrc;
   uart_mux <= uart_usb and wr_uart_i;

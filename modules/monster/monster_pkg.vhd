@@ -76,7 +76,7 @@ package monster_pkg is
   function f_sub1(x : natural) return natural;
   function f_pick(x : boolean; y : integer; z : integer) return natural;
   function f_string_list_repeat(s : string; times : natural) return string;
-  function f_report_sdb(value : t_wishbone_address) return std_logic;
+  function f_report_wishbone_address(value : t_wishbone_address; msg : string) return std_logic;
 
   component monster is
     generic(
@@ -559,11 +559,12 @@ package body monster_pkg is
     return res;
   end f_string_list_repeat;
 
-  function f_report_sdb(value : t_wishbone_address)
+  function f_report_wishbone_address(value : t_wishbone_address; msg : string)
   return std_logic is
   begin
-    report "SDB TOP (dec) = " & integer'image(to_integer(unsigned(value)));
+    report "Debug: " & msg;
+    report "Debug: Wishbone address (dec) = " & integer'image(to_integer(unsigned(value)));
     return '0';
-  end f_report_sdb;
+  end f_report_wishbone_address;
 
 end monster_pkg;
