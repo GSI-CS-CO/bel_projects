@@ -19,6 +19,11 @@ clean:
 	$(MAKE) -C buildLm32 clean
 	$(MAKE) -C buildNative clean
 
+.PHONY: rebuild
+rebuild:
+	$(MAKE) -C buildLm32 rebuild
+	$(MAKE) -C buildNative rebuild
+
 # Uploads the LM32 application to SCU
 .PHONY: load
 load:

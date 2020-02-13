@@ -314,6 +314,16 @@ STATIC_ASSERT( sizeof( FG_CHANNEL_BUFFER_T ) == sizeof( FG_PARAM_SET_T ) * BUFFE
 
 #if defined( __lm32__ ) || defined(__DOXYGEN__)
 
+/*! ---------------------------------------------------------------------------
+ * @brief Prints all found function generators.
+ */
+void printFgs( void );
+
+/*! ---------------------------------------------------------------------------
+ * @brief Print the values and states of all channel registers.
+ */
+void print_regs( void );
+
 /*! --------------------------------------------------------------------------
  * @brief Finding of all kinds of function generators connected to
  *        this SCU.
@@ -324,6 +334,7 @@ void scan_all_fgs( volatile uint16_t *base_adr,
                 #endif
                    FG_MACRO_T* fglist,
                    uint64_t *ext_id );
+
 /*! ---------------------------------------------------------------------------
  * @brief  init the buffers for MAX_FG_CHANNELS
  */

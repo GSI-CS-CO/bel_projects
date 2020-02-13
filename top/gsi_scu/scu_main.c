@@ -189,42 +189,6 @@ void clear_handler_state( const uint8_t socket )
 }
 
 /*! ---------------------------------------------------------------------------
- * @brief Prints all found function generators.
- */
-STATIC inline void printFgs( void )
-{
-   for( unsigned int i = 0; i < ARRAY_SIZE( g_shared.fg_macros ); i++ )
-   {
-      if( g_shared.fg_macros[i].outputBits == 0 )
-         break;
-      mprintf( "fg-%d-%d\tver: %d output-bits: %d\n",
-               g_shared.fg_macros[i].socket,
-               g_shared.fg_macros[i].device,
-               g_shared.fg_macros[i].version,
-               g_shared.fg_macros[i].outputBits
-             );
-   }
-}
-
-/*! ---------------------------------------------------------------------------
- * @brief Print the values and states of all channel registers.
- */
-inline STATIC void print_regs( void)
-{
-   for( unsigned int i = 0; i < ARRAY_SIZE( g_shared.fg_regs ); i++ )
-   {
-      mprintf("channel[%d].wr_ptr %d\n", i, g_shared.fg_regs[i].wr_ptr);
-      mprintf("channel[%d].rd_ptr %d\n", i, g_shared.fg_regs[i].rd_ptr);
-      mprintf("channel[%d].mbx_slot 0x%x\n", i, g_shared.fg_regs[i].mbx_slot);
-      mprintf("channel[%d].macro_number %d\n", i, g_shared.fg_regs[i].macro_number);
-      mprintf("channel[%d].ramp_count %d\n", i, g_shared.fg_regs[i].ramp_count);
-      mprintf("channel[%d].tag 0x%x\n", i, g_shared.fg_regs[i].tag);
-      mprintf("channel[%d].state %d\n", i, g_shared.fg_regs[i].state);
-      mprintf("\n");
-   }
-}
-
-/*! ---------------------------------------------------------------------------
  * @brief as short as possible, just pop the msi queue of the cpu and
  *         push it to the message queue of the main loop
  * @see init_irq_table
@@ -404,7 +368,7 @@ STATIC void scuBusDaqTask( register TASK_T* pThis FG_UNUSED )
 STATIC inline void printCpuId( void )
 {
    unsigned int* cpu_info_base;
-   cpu_info_base = (unsigned int*)find_device_adr(GSI, CPU_INFO_ROM);
+   cpu_info_base = (unsigned int*)find_device_adr( GSI, CPU_INFO_ROM );
    if((int)cpu_info_base == ERROR_NOT_FOUND)
    {
       mprintf(ESC_ERROR"no CPU INFO ROM found!"ESC_NORMAL"\n");

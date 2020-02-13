@@ -28,6 +28,7 @@
 #endif
 
 #include <scu_function_generator.h>
+#include <scu_main.h>
 #include <mprintf.h>
 #ifdef CONFIG_MIL_FG
 #include <scu_mil.h>
@@ -46,6 +47,49 @@
 #else
   #define STATIC static
 #endif
+
+/*! ---------------------------------------------------------------------------
+ * @brief Prints all found function generators.
+ */
+void printFgs( void )
+{
+   for( unsigned int i = 0; i < ARRAY_SIZE( g_shared.fg_macros ); i++ )
+   {
+      FG_MACRO_T* pFgMacro = &g_shared.fg_macros[i];
+
+      /*
+       * Is the end of list been reached?
+       */
+      if( pFgMacro->outputBits == 0 )
+         break;
+
+      mprintf( "fg-%d-%d\tver: %d output-bits: %d\n",
+               pFgMacro->socket,
+               pFgMacro->device,
+               pFgMacro->version,
+               pFgMacro->outputBits
+             );
+   }
+}
+
+/*! ---------------------------------------------------------------------------
+ * @brief Print the values and states of all channel registers.
+ */
+void print_regs( void )
+{
+   for( unsigned int i = 0; i < ARRAY_SIZE( g_shared.fg_regs ); i++ )
+   {
+      FG_CHANNEL_REG_T* pFgReg = &g_shared.fg_regs[i];
+      mprintf("Registers of channel %d:\n", i );
+      mprintf("\twr_ptr:\t%d\n",       pFgReg->wr_ptr );
+      mprintf("\trd_ptr:\t%d\n",       pFgReg->rd_ptr );
+      mprintf("\tmbx_slot:\t0x%x\n",   pFgReg->mbx_slot );
+      mprintf("\tmacro_number:\t%d\n", pFgReg->macro_number );
+      mprintf("\tramp_count:\t%d\n",   pFgReg->ramp_count );
+      mprintf("\ttag:\t%d\n",          pFgReg->tag );
+      mprintf("\tstate:\t%d\n\n",      pFgReg->state );
+   }
+}
 
 /*! ---------------------------------------------------------------------------
  */
@@ -119,6 +163,7 @@ STATIC int add_to_fglist( const uint8_t socked, const uint8_t dev,
 }
 
 #ifdef CONFIG_MIL_FG
+
 /*! ---------------------------------------------------------------------------
  * @brief Scans the whole SCU-Bus for functions generators which are
  *        connected via SCU-bus-to-MIL-adapter
@@ -133,29 +178,44 @@ void scanScuBusFgsViaMil( volatile uint16_t *scub_adr, FG_MACRO_T* fglist )
    if( slotFlags == 0 )
       return;
 
+   /*
+    * At least one MIL-function-generator connected via SCU-bus was found.
+    */
    for( unsigned int slot = SCUBUS_START_SLOT; slot <= MAX_SCU_SLAVES; slot++ )
    {
       if( !scuBusIsSlavePresent( slotFlags, slot ) )
          continue;
+      /*
+       * MIL-bus adapter was in the current slot found.
+       * Proofing whether MIL function generators connected to this adapter.
+       */
       scub_reset_mil( scub_adr, slot );
-      for( uint16_t ifa_adr = 0; ifa_adr < IFK_MAX_ADR; ifa_adr++ )
+      for( uint32_t ifa_adr = 0; ifa_adr < IFK_MAX_ADR; ifa_adr++ )
       {
-         int16_t ifa_id, ifa_vers, fg_vers;
-         if( scub_read_mil(scub_adr, slot, &ifa_id, IFA_ID << 8 | ifa_adr) != OKAY )
+         uint16_t ifa_id, ifa_vers, fg_vers;
+         STATIC_ASSERT( sizeof( short ) == sizeof( ifa_id ) );
+         if( scub_read_mil(scub_adr, slot, (short*)&ifa_id, IFA_ID << 8 | ifa_adr) != OKAY )
             continue;
-         if( scub_read_mil(scub_adr, slot, &ifa_vers, IFA_VERS << 8 | ifa_adr) != OKAY )
-            continue;
-         if( scub_read_mil(scub_adr, slot, &fg_vers, 0xa6 << 8 | ifa_adr) != OKAY )
+         if( ifa_id != 0xfa00 )
             continue;
 
-         if( ((0xffff & fg_vers) >= 0x2) &&
-             ((0xffff & ifa_id) == 0xfa00) &&
-             ((0xffff & ifa_vers) >= 0x1900) )
-         {
-            add_to_fglist( DEV_SIO | slot, ifa_adr, SYS_CSCO, GRP_IFA8, 0xffff & fg_vers, fglist);
-           // mprintf( "M-slot: %d\n", slot );
-          //scub_write_mil(scub_adr, slot, 0x100, 0x12 << 8 | ifa_adr); // clear PUR
-         }
+         STATIC_ASSERT( sizeof( short ) == sizeof( ifa_vers ) );
+         if( scub_read_mil(scub_adr, slot, (short*)&ifa_vers, IFA_VERS << 8 | ifa_adr) != OKAY )
+            continue;
+         if( ifa_vers < 0x1900 )
+            continue;
+
+         STATIC_ASSERT( sizeof( short ) == sizeof( fg_vers ) );
+         if( scub_read_mil(scub_adr, slot, (short*)&fg_vers, 0xa6 << 8 | ifa_adr) != OKAY )
+            continue;
+         if( (fg_vers < 2) || (fg_vers > 0x00FF) )
+            continue;
+
+         /*
+          * All three proves has been passed, so we can add it to the FG-list.
+          */
+         add_to_fglist( DEV_SIO | slot, ifa_adr, SYS_CSCO, GRP_IFA8, fg_vers, fglist);
+         //scub_write_mil(scub_adr, slot, 0x100, 0x12 << 8 | ifa_adr); // clear PUR
       }
    }
 }
