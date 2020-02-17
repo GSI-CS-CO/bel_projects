@@ -30,7 +30,7 @@ entity scu_addac is
   port (
     -------------------------------------------------------------------------------------------------------------------
     CLK_FPGA: in std_logic;
-    
+
     --------- Parallel SCU-Bus-Signale --------------------------------------------------------------------------------
     A_A:                  in    std_logic_vector(15 downto 0);  -- SCU-Adressbus
     A_nADR_EN:            out   std_logic := '0';               -- '0' => externe Adresstreiber des Slaves aktiv
@@ -77,14 +77,14 @@ entity scu_addac is
     nDAC1_A0:         buffer  std_logic;      -- '0' enable shift of internal shift register of DAC1
     nDAC1_A1:         buffer  std_logic;      -- '0' copy shift register to output latch of DAC1
     DAC2_SDI:         buffer  std_logic;      -- is connected to DAC2-SDI
-    DAC2_SDO:         buffer  std_logic;      
+    DAC2_SDO:         buffer  std_logic;
     nDAC2_CLK:        buffer  std_logic;      -- spi-clock of DAC2
     nDAC2_CLR:        buffer  std_logic;      -- '0' set DAC2 to zero (pulse width min 200 ns)
     nDAC2_A0:         buffer  std_logic;      -- '0' enable shift of internal shift register of DAC2
     nDAC2_A1:         buffer  std_logic;      -- '0' copy shift register to output latch of DAC2
     EXT_TRIG_DAC:     in      std_logic;
     A_NLED_TRIG_DAC:  out     std_logic;
-    
+
     ------------ IO-Port-Signale --------------------------------------------------------------------------------------
     a_io_7_0_tx:        out   std_logic;                    -- '1' = external io(7..0)-buffer set to output.
     a_io_15_8_tx:       out   std_logic;                    -- '1' = external io(15..8)-buffer set to output
@@ -95,7 +95,7 @@ entity scu_addac is
     a_ext_io_23_16_dis: out   std_logic;                    -- '1' = disable external io(23..16)-buffer.
     a_ext_io_31_24_dis: out   std_logic;                    -- '1' = disable external io(31..24)-buffer.
     a_io:               inout std_logic_vector(31 downto 0);-- select and set direction only in 8-bit partitions
-    
+
     ------------ Logic analyser Signals -------------------------------------------------------------------------------
     A_SEL:            in    std_logic_vector(3 downto 0);   -- use to select sources for the logic analyser ports
     A_TA:             out   std_logic_vector(15 downto 0);  -- test port a
@@ -103,19 +103,19 @@ entity scu_addac is
     A_TB:             inout std_logic_vector(15 downto 0);  -- test port b
     A_CLK_TB:         out   std_logic;
     TP:               out   std_logic_vector(2 downto 1);   -- test points
-    
+
     A_nState_LED:     out   std_logic_vector(2 downto 0);   --..LED(2) = R/W, ..LED(1) = Dtack, ..LED(0) = Sel
     A_nLED:           out   std_logic_vector(15 downto 0);
     A_NLED_TRIG_ADC:  out   std_logic;
-    
+
     HW_REV:           in    std_logic_vector(3 downto 0);
     A_MODE_SEL:       in    std_logic_vector(1 downto 0);
     A_OneWire:        inout std_logic;
     A_OneWire_EEPROM: inout std_logic;
-    
+
     NDIFF_IN_EN: buffer std_logic -- enables diff driver for ADC channels 3-8
-    
-    
+
+
     );
 end entity;
 
@@ -165,34 +165,34 @@ component IO_4x8
     Dtack_to_SCUB:      out   std_logic                       -- connect Dtack to SCUB-Macro
     );
   end component IO_4x8;
-  
+
   signal clk_sys, clk_cal, locked : std_logic;
-  
+
   constant clk_in_hz: integer := 125_000_000;
-  
+
   signal SCUB_SRQ:    std_logic;
   signal SCUB_Dtack:  std_logic;
   signal convst:      std_logic;
   signal rst:         std_logic;
-  
+
   signal Dtack_to_SCUB: std_logic;
 
   signal  io_port_Dtack_to_SCUB: std_logic;
   signal  io_port_data_to_SCUB:  std_logic_vector(15 downto 0);
   signal  io_port_rd_active:     std_logic;
-    
+
   signal  dac1_Dtack:        std_logic;
   signal  dac1_data_to_SCUB: std_logic_vector(15 downto 0);
   signal  dac1_rd_active:    std_logic;
   signal  dac1_convert:      std_logic;
   signal  dac1_convert_led_n:  std_logic;
-    
+
   signal  dac2_Dtack:        std_logic;
   signal  dac2_data_to_SCUB: std_logic_vector(15 downto 0);
   signal  dac2_rd_active:    std_logic;
   signal  dac2_convert:      std_logic;
   signal  dac2_convert_led_n:  std_logic;
-    
+
   signal  ADR_from_SCUB_LA:   std_logic_vector(15 downto 0);
   signal  Data_from_SCUB_LA:  std_logic_vector(15 downto 0);
   signal  Timing_Pattern_LA:  std_logic_vector(31 downto 0);
@@ -202,48 +202,48 @@ component IO_4x8
   signal  Ext_Wr_active:      std_logic;
   signal  Ext_Wr_fin_ovl:     std_logic;
   signal  nPowerup_Res:       std_logic;
-    
+
   signal  adc_rd_active:     std_logic;
   signal  adc_data_to_SCUB:  std_logic_vector(15 downto 0);
   signal  adc_dtack:         std_logic;
-    
+
   signal  tmr_rd_active:     std_logic;
   signal  tmr_data_to_SCUB:  std_logic_vector(15 downto 0);
   signal  tmr_dtack:         std_logic;
-   
+
   signal  fg_1_dtack:        std_logic;
   signal  fg_1_data_to_SCUB: std_logic_vector(15 downto 0);
   signal  fg_1_rd_active:    std_logic;
   signal  fg_1_sw:           std_logic_vector(31 downto 0);
   signal  fg_1_strobe:       std_logic;
   signal  fg_1_dreq:         std_logic;
-  
+
   signal  fg_2_dtack:        std_logic;
   signal  fg_2_data_to_SCUB: std_logic_vector(15 downto 0);
   signal  fg_2_rd_active:    std_logic;
   signal  fg_2_sw:           std_logic_vector(31 downto 0);
   signal  fg_2_strobe:       std_logic;
   signal  fg_2_dreq:         std_logic;
-  
+
   signal  led_ena_cnt:       std_logic;
-  
+
   signal  ADC_channel_1, ADC_channel_2, ADC_channel_3, ADC_channel_4: std_logic_vector(15 downto 0);
   signal  ADC_channel_5, ADC_channel_6, ADC_channel_7, ADC_channel_8: std_logic_vector(15 downto 0);
 
   signal  Data_to_SCUB:      std_logic_vector(15 downto 0);
-  
+
   signal  reset_clks:        std_logic_vector(0 downto 0);
   signal  reset_rstn:        std_logic_vector(0 downto 0);
   signal  clk_sys_rstn:      std_logic;
-    
+
   signal  owr_pwren_o:   std_logic_vector(1 downto 0);
   signal  owr_en_o:      std_logic_vector(1 downto 0);
   signal  owr_i:         std_logic_vector(1 downto 0);
-    
+
   signal  wb_scu_rd_active:    std_logic;
   signal  wb_scu_dtack:        std_logic;
   signal  wb_scu_data_to_SCUB: std_logic_vector(15 downto 0);
-    
+
   signal  sys_clk_is_bad:         std_logic;
   signal  sys_clk_is_bad_led_n:   std_logic;
   signal  sys_clk_is_bad_la:      std_logic;
@@ -258,7 +258,7 @@ component IO_4x8
   signal  clk_switch_rd_active:   std_logic;
   signal  clk_switch_dtack:       std_logic;
   signal  clk_switch_intr:        std_logic;
-  
+
   signal  signal_tap_clk_250mhz: std_logic;
   signal  clk_update:            std_logic;
   signal  clk_flash:             std_logic;
@@ -270,35 +270,35 @@ component IO_4x8
   signal  rstn_stc:               std_logic;
 
   signal tmr_irq: std_logic;
-  
+
   signal dac_1_ext_trig, dac_2_ext_trig: std_logic;
   signal adc_trgd: std_logic;
-  
+
   constant c_led_cnt:       integer := integer(ceil(real(clk_sys_in_hz) / real(1_000_000_000) * real(125000000)));
   constant c_led_cnt_width: integer := integer(floor(log2(real(c_led_cnt)))) + 2;
   signal  s_led_cnt:        unsigned( c_led_cnt_width-1 downto 0) := (others => '0');
-  
+
   signal s_led_en:      std_logic;
   signal s_test_vector: std_logic_vector(15 downto 0) := x"8000";
-  
+
   constant c_is_arria5: boolean := false;
- 
+
   signal daq_dat_i              : t_daq_dat(1 to daq_ch_num);
   signal daq_ext_trig_i         : t_daq_ctl(1 to daq_ch_num);
 
   signal daq_rd_active          : std_logic;
   signal daq_rd_data_to_SCUB    : std_logic_vector(15 downto 0);
-  signal daq_dtack              : std_logic;  
+  signal daq_dtack              : std_logic;
   signal timestamp              : std_logic_vector(63 downto 0) := (others =>'0'); -- WR Timestamp
   signal diob_extension_id      : std_logic_vector(15 downto 0) := (others =>'0'); -- hard-coded ID Value
-      
+
   signal DAC_channel_1          : std_logic_vector(15 downto 0);
   signal DAC_channel_2          : std_logic_vector(15 downto 0);
-  
+
   signal daq_irq                : std_logic;
   signal HiRes_irq              : std_logic;
 
-  
+
   begin
 
 addac_clk_sw: slave_clk_switch
@@ -311,13 +311,13 @@ addac_clk_sw: slave_clk_switch
     sys_clk_i               => A_SysClock,            --12p5MHz SCU Bus
     nReset                  => nPowerup_Res,
     master_clk_o            => clk_sys,               --SysClk 125MHz
-    pll_locked              => pll_locked,             
-    sys_clk_is_bad          => sys_clk_is_bad,        
+    pll_locked              => pll_locked,
+    sys_clk_is_bad          => sys_clk_is_bad,
     sys_clk_is_bad_la       => sys_clk_is_bad_la,
     local_clk_is_bad        => open,                  --local_clk_is_bad,not used
-    local_clk_is_running    => local_clk_is_running, 
-    sys_clk_deviation       => sys_clk_deviation,     
-    sys_clk_deviation_la    => sys_clk_deviation_la, 
+    local_clk_is_running    => local_clk_is_running,
+    sys_clk_deviation       => sys_clk_deviation,
+    sys_clk_deviation_la    => sys_clk_deviation_la,
     Adr_from_SCUB_LA        => ADR_from_SCUB_LA,      -- in, latched address from SCU_Bus
     Data_from_SCUB_LA       => Data_from_SCUB_LA,     -- in, latched data from SCU_Bus
     Ext_Adr_Val             => Ext_Adr_Val,           -- in, '1' => "ADR_from_SCUB_LA" is valid
@@ -332,8 +332,8 @@ addac_clk_sw: slave_clk_switch
     clk_flash               => clk_flash,
     clk_encdec              => open
   );
-    
-  
+
+
   reset : altera_reset
     generic map(
       g_plls   => 1,
@@ -354,11 +354,11 @@ addac_clk_sw: slave_clk_switch
       rstn_o(2)     => rstn_update,
       rstn_o(3)     => rstn_flash);
 
-      
+
 
   daq_inst : daq
     generic map (
-      Base_addr       => c_daq_base,      
+      Base_addr       => c_daq_base,
       CLK_sys_in_Hz   => clk_sys_in_Hz,               -- needed to adjust sample rates
       ch_num          => daq_ch_num                       -- allowed in range of 1 to 16
       )
@@ -366,47 +366,47 @@ addac_clk_sw: slave_clk_switch
     port map    (
       -- SCUB interface
       Adr_from_SCUB_LA        => ADR_from_SCUB_LA,    -- latched address from SCU_Bus
-      Data_from_SCUB_LA       => Data_from_SCUB_LA,   -- latched data from SCU_Bus 
+      Data_from_SCUB_LA       => Data_from_SCUB_LA,   -- latched data from SCU_Bus
       Ext_Adr_Val             => Ext_Adr_Val,         -- '1' => "ADR_from_SCUB_LA" is valid
       Ext_Rd_active           => Ext_Rd_active,       -- '1' => Rd-Cycle is active
       Ext_Wr_active           => Ext_Wr_active,       -- '1' => Wr-Cycle is active
       clk_i                   => clk_sys,             -- should be the same sysclk as used by SCU_Bus_Slave Macro
       nReset                  => nPowerup_Res,
-      
+
 
       diob_extension_id       => (others => '0'),     -- hard-coded ID Value, used for Header in daq, here nulled for addac
-      
+
       user_rd_active          => daq_rd_active,
       Rd_Port                 => daq_rd_data_to_SCUB, -- Data to SCU Bus Macro
       Dtack                   => daq_dtack,           -- Dtack to SCU Bus Macro
       daq_srq                 => daq_irq,             -- consolidated irq lines from n daq channels for "channel fifo full"
       HiRes_srq               => hires_irq,           -- consolidated irq lines from n HiRes channels for "HiRes Daq finished"
-      Timing_Pattern_LA       => Timing_Pattern_LA,   -- latched data from SCU_Bus 
+      Timing_Pattern_LA       => Timing_Pattern_LA,   -- latched data from SCU_Bus
       Timing_Pattern_RCV      => Timing_Pattern_RCV,  -- timing pattern received
-      
+
       --daq input channels
       daq_dat_i               => daq_dat_i,           -- := (others => dummy_daq_dat_in);
-      daq_ext_trig            => daq_ext_trig_i       -- := (others => dummy_daq_ctl_in)  
+      daq_ext_trig            => daq_ext_trig_i       -- := (others => dummy_daq_ctl_in)
     );--daq_inst
 
 
 
       daq_dat_i    (1)   <= ADC_channel_1;
       daq_ext_trig_i (1) <= not EXT_TRIG_ADC;  --todo HPCL2400 liefert low bei Led-on
-      daq_dat_i    (2)   <= ADC_channel_2;    
-      daq_ext_trig_i (2) <= not EXT_TRIG_ADC;  --todo HPCL2400 liefert low bei Led-on 
+      daq_dat_i    (2)   <= ADC_channel_2;
+      daq_ext_trig_i (2) <= not EXT_TRIG_ADC;  --todo HPCL2400 liefert low bei Led-on
       daq_dat_i(3)       <= DAC_channel_1;
-      daq_ext_trig_i (3) <= not EXT_TRIG_DAC;  --todo HPCL2400 liefert low bei Led-on       
-      daq_dat_i(4)       <= DAC_channel_2;     
-      daq_ext_trig_i (4) <= not EXT_TRIG_DAC;  --todo HPCL2400 liefert low bei Led-on 
-      
-      
+      daq_ext_trig_i (3) <= not EXT_TRIG_DAC;  --todo HPCL2400 liefert low bei Led-on
+      daq_dat_i(4)       <= DAC_channel_2;
+      daq_ext_trig_i (4) <= not EXT_TRIG_DAC;  --todo HPCL2400 liefert low bei Led-on
+
+
   -- open drain buffer for one wire
     owr_i(0)         <= A_OneWire;
     A_OneWire        <= owr_pwren_o(0) when (owr_pwren_o(0) = '1' or owr_en_o(0) = '1') else 'Z';
     owr_i(1)         <= A_OneWire_EEPROM;
     A_OneWire_EEPROM <= owr_pwren_o(1) when (owr_pwren_o(1) = '1' or owr_en_o(1) = '1') else 'Z';
-  
+
 
     Dtack_to_SCUB    <= io_port_Dtack_to_SCUB or dac1_dtack or dac2_dtack or adc_dtack or daq_dtack
                         or wb_scu_dtack or fg_1_dtack or fg_2_dtack or tmr_dtack or clk_switch_dtack;
@@ -468,7 +468,7 @@ SCU_Slave: SCU_Bus_Slave
                                                 --        can be used to reset
                                                 --        external macros, when 'nSCUB_Reset_In' is '0'
     nPowerup_Res        => nPowerup_Res,        -- out,   this macro generated a power up reset
-    Powerup_Done        => open                 -- out    this memory is set to one if an Powerup is done. 
+    Powerup_Done        => open                 -- out    this memory is set to one if an Powerup is done.
                                                 --        Only the SCUB-Master can clear this bit.
     );
 
@@ -531,7 +531,7 @@ dac_1: dac714
     Dtack             => dac1_dtack
     );
 
-    
+
 dac_2: dac714
   generic map(
     Base_addr         => c_dac2_base,
@@ -587,7 +587,7 @@ io_port: IO_4x8
     Data_to_SCUB        => io_port_data_to_SCUB,  -- out, connect read sources to SCUB-Macro
     Dtack_to_SCUB       => io_port_Dtack_to_SCUB);-- out, connect Dtack to SCUB-Macro
 
-    
+
 adc: adc_scu_bus
   generic map (
     Base_addr     => c_adc_base,
@@ -598,7 +598,7 @@ adc: adc_scu_bus
     nrst          => rstn_sys,
     tag_i         => Timing_Pattern_LA,
     tag_valid     => Timing_Pattern_RCV,
-    
+
     db            => ADC_DB(13 downto 0),
     db14_hben     => ADC_DB(14),
     db15_byte_sel => ADC_DB(15),
@@ -615,7 +615,7 @@ adc: adc_scu_bus
     nDiff_In_En   => NDIFF_IN_EN,
     ext_trg_i     => EXT_TRIG_ADC,
     ext_trgd_o    => adc_trgd,
-    
+
     Adr_from_SCUB_LA  => ADR_from_SCUB_LA,
     Data_from_SCUB_LA => Data_from_SCUB_LA,
     Ext_Adr_Val       => Ext_Adr_Val,
@@ -701,7 +701,7 @@ fg_2: fg_quad_scu_bus
     clk           => clk_sys,
     nrst          => rstn_sys,
     tmr_irq       => tmr_irq,
-    
+
     Adr_from_SCUB_LA  => ADR_from_SCUB_LA,
     Data_from_SCUB_LA => Data_from_SCUB_LA,
     Ext_Adr_Val       => Ext_Adr_Val,
@@ -769,7 +769,7 @@ p_led_ena: div_n
       end if;
     end if;
   end process;
-  
+
   -------------------------------------------------------------------------------
   -- rotating bit as a test vector for led testing
   -------------------------------------------------------------------------------
@@ -792,14 +792,14 @@ p_led_mux: process (
     )
   begin
     if A_MODE_SEL = "11" then
-      A_nLED <= not nADC_PAR_SER_SEL 
+      A_nLED <= not nADC_PAR_SER_SEL
               & nADC_PAR_SER_SEL
-              & NDIFF_IN_EN 
-              & dac1_convert_led_n 
+              & NDIFF_IN_EN
+              & dac1_convert_led_n
               & dac2_convert_led_n
               & local_clk_runs_led_n
               & sys_clk_deviation_led_n
-              & sys_clk_is_bad_led_n 
+              & sys_clk_is_bad_led_n
               & x"FF";
     elsif A_MODE_SEL = "01" then
       case not A_ADC_DAC_SEL IS
@@ -820,7 +820,7 @@ p_led_mux: process (
       A_nLED <= (others => '1');
     end if;
   end process p_led_mux;
- 
+
 
 p_read_mux: process (
     io_port_rd_active,    io_port_data_to_SCUB,
@@ -836,15 +836,15 @@ p_read_mux: process (
     )
   variable sel: unsigned(9 downto 0);
   begin
-    sel := clk_switch_rd_active 
+    sel := clk_switch_rd_active
          & daq_rd_active
-         & wb_scu_rd_active 
-         & tmr_rd_active 
-         & fg_2_rd_active 
-         & fg_1_rd_active 
-         & adc_rd_active 
-         & dac2_rd_active 
-         & dac1_rd_active 
+         & wb_scu_rd_active
+         & tmr_rd_active
+         & fg_2_rd_active
+         & fg_1_rd_active
+         & adc_rd_active
+         & dac2_rd_active
+         & dac1_rd_active
          & io_port_rd_active;
     case sel IS
       when "0000000001" => Data_to_SCUB <= io_port_data_to_SCUB;
@@ -861,7 +861,7 @@ p_read_mux: process (
         Data_to_SCUB <= X"0000";
     end case;
   end process p_read_mux;
-  
+
 
 sel_led: led_n
   generic map (
@@ -873,7 +873,7 @@ sel_led: led_n
     nLED => open,
     nLED_opdrn => A_nState_LED(0));
 
-    
+
 dtack_led: led_n
   generic map (
     stretch_cnt => 5)
@@ -884,7 +884,7 @@ dtack_led: led_n
     Sig_in => SCUB_Dtack,
     nLED => open,
     nLED_opdrn => A_nState_LED(1));
-    
+
 
 rw_led: led_n
   generic map (
@@ -905,7 +905,7 @@ ext_trig_led: led_n
     Sig_in => dac_1_ext_trig or dac_2_ext_trig,
     nLED => open,
     nLED_opdrn => A_nLED_Trig_DAC);
-    
+
 adc_trig_led: led_n
   generic map (
     stretch_cnt => 3)
@@ -925,7 +925,7 @@ clk_deviation_led: led_n
     Sig_in => sys_clk_deviation,
     nLED => sys_clk_deviation_led_n,
     nLED_opdrn => open);
-    
+
 clk_failed_led: led_n
   generic map (
     stretch_cnt => 5)
@@ -935,7 +935,7 @@ clk_failed_led: led_n
     Sig_in => sys_clk_is_bad,
     nLED => sys_clk_is_bad_led_n,
     nLED_opdrn => open);
-    
+
 local_clk_led: led_n
   generic map (
     stretch_cnt => 5)
@@ -945,7 +945,7 @@ local_clk_led: led_n
     Sig_in => local_clk_is_running,
     nLED => local_clk_runs_led_n,
     nLED_opdrn => open);
-    
+
 dac1_led: led_n
   generic map (
     stretch_cnt => 5)
@@ -972,7 +972,7 @@ dac2_led: led_n
   --A_TA <= fg_1_sw(23 downto 8);
   --
   --A_TB <= fg_1_sw(7 downto 0) & fg_1_strobe & "0000000";
-  
+
   A_TA(2) <= '0'; -- signal_tap_clk_250mhz;
   A_TA(0) <= '0'; --clk_sys;
 

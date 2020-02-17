@@ -166,7 +166,7 @@ package dac714_pkg is
 --                                                                                                                  --
 --  Aenderung 1)                                                                                                    --
 --    Das Shift_Reg ist zu früh geschoben worden, deshalb ist das höchstwertige und niederwertigste Bit verloren    --
---    gegangen. Jetzt wird erst dem Schieben begonnen, wenn das erste bit in den DAC getakted wurde.                -- 
+--    gegangen. Jetzt wird erst dem Schieben begonnen, wenn das erste bit in den DAC getakted wurde.                --
 --                                                                                                                  --
 ----------------------------------------------------------------------------------------------------------------------
 
@@ -192,7 +192,7 @@ package dac714_pkg is
 --  Aenderung 1)                                                                                                    --
 --    Die Entity dac714 hat ein weiteres Output-Port (DAC_convert_o) bekommen. Es wird bei jeder DAC-Konversion     --
 --    fuer einen Takt aktiv Eins. Dabei spielt es keine Rolle ob die Konversion durch Software, den Funktions-      --
---    generator oder durch einen exteren Trigger ausgeloest wurde.                                                  -- 
+--    generator oder durch einen exteren Trigger ausgeloest wurde.                                                  --
 ----------------------------------------------------------------------------------------------------------------------
 
 component dac714 is
@@ -204,7 +204,7 @@ component dac714 is
   port
     (
     Adr_from_SCUB_LA:   in      std_logic_vector(15 downto 0);  -- latched address from SCU_Bus
-    Data_from_SCUB_LA:  in      std_logic_vector(15 downto 0);  -- latched data from SCU_Bus 
+    Data_from_SCUB_LA:  in      std_logic_vector(15 downto 0);  -- latched data from SCU_Bus
     Ext_Adr_Val:        in      std_logic;                      -- '1' => "ADR_from_SCUB_LA" is valid
     Ext_Rd_active:      in      std_logic;                      -- '1' => Rd-Cycle is active
     Ext_Wr_active:      in      std_logic;                      -- '1' => Wr-Cycle is active
