@@ -55,11 +55,32 @@ typedef struct PACKED_SIZE
 #else
    #error Big endian is requested for this bit- field structure!
 #endif
+} FG_CTRL_RG_T_BV;
+
+#ifndef __DOXYGEN__
+STATIC_ASSERT( sizeof(FG_CTRL_RG_T_BV) == sizeof(uint16_t));
+#endif
+
+/*!
+ * @brief Access wrapper avoiding suspicious cast operations.
+ */
+typedef union PACKED_SIZE
+{
+   /*!
+    * @brief Segmented access by bit vector.
+    */
+   FG_CTRL_RG_T_BV bv;
+
+   /*!
+    * @brief Total access by integer.
+    */
+   uint16_t        i16;
 } FG_CTRL_RG_T;
 
 #ifndef __DOXYGEN__
 STATIC_ASSERT( sizeof(FG_CTRL_RG_T) == sizeof(uint16_t));
 #endif
+
 
 /*!
  * @brief Image of the function generators hardware registers.

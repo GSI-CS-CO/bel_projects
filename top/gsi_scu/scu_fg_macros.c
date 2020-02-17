@@ -52,6 +52,7 @@ void printDeviceError( const int status, const int slot, const char* msg )
 
 /*! ---------------------------------------------------------------------------
  * @see scu_fg_macros.h
+ * @todo Split this in two separate functions: MIL and non-MIL.
  */
 int configure_fg_macro( const unsigned int channel )
 {
@@ -382,6 +383,8 @@ STATIC void disable_slave_irq( const unsigned int channel )
 }
 
 /*! ---------------------------------------------------------------------------
+ * @todo Replace this function by access via type FG_CTRL_RG_T
+ * @see FG_CTRL_RG_T
  */
 STATIC inline unsigned int getFgNumberFromRegister( const uint16_t reg )
 {
@@ -403,6 +406,7 @@ STATIC_ASSERT( sizeof( short ) == sizeof( int16_t ) );
  * @todo In the case of a periodical signal, check whether its really necessary to use
  *       a circular buffer respectively a FiFo in which the wishbone bus becomes to much traffic! \n
  *       May be its possible to store a full period in the DDR3 RAM.
+ * @todo Split this in two separate functions: MIL and non-MIL.
  */
 STATIC void send_fg_param( const unsigned int socket,
                                   const unsigned int fg_base,
@@ -423,12 +427,16 @@ STATIC void send_fg_param( const unsigned int socket,
       return;
    }
 
+   /*
+    * Reading circular buffer with new FG-data.
+    */
    if( !cbRead( &g_shared.fg_buffer[0], &g_shared.fg_regs[0], fg_num, &pset ) )
    {
       hist_addx(HISTORY_XYZ_MODULE, "buffer empty, no parameter sent", socket);
       return;
    }
 
+   //!@todo Replace the following hex numbers by meaningful defined bit-masks!!!
    cntrl_reg_wr = cntrl_reg & ~(0xfc07); // clear freq, step select, fg_running and fg_enabled
    cntrl_reg_wr |= ((pset.control & 0x38) << 10) | ((pset.control & 0x7) << 10);
    blk_data[0] = cntrl_reg_wr;
@@ -519,6 +527,7 @@ STATIC inline void makeStart( const unsigned int channel )
 
 /*! ---------------------------------------------------------------------------
  * @see scu_main.h
+ * @todo Split this in two separate functions: MIL and non-MIL.
  */
 void handleMacros( const unsigned int socket,
                    const unsigned int fg_base,
