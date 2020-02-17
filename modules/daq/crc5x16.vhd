@@ -4,7 +4,7 @@
 -- provided that this copyright statement is not removed from the file
 -- and that any derivative work contains the original copyright notice
 -- and the associated disclaimer.
--- 
+--
 -- THIS SOURCE FILE IS PROVIDED "AS IS" AND WITHOUT ANY EXPRESS
 -- OR IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
 -- WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
@@ -21,7 +21,7 @@ ENTITY crc5x16 IS
       clk_i            : IN std_logic;
   	   data_in          : IN std_logic_vector (15 DOWNTO 0);
 		crc_start_pulse  : IN std_logic;                       -- Set CRC to its Start value on transmission of a new packet
-		crc_en_pulse     : IN std_logic;                       -- Enables CRC calculation on stored previous CRC and data_in 
+		crc_en_pulse     : IN std_logic;                       -- Enables CRC calculation on stored previous CRC and data_in
 		crc_out          : OUT std_logic_vector (15 DOWNTO 0)
 	);
 END crc5x16;
@@ -39,8 +39,8 @@ BEGIN
 	lfsr_c(2) <= lfsr_q(3) XOR lfsr_q(4) XOR data_in(0) XOR data_in(2) XOR data_in(3) XOR data_in(6) XOR data_in(7) XOR data_in(8)  XOR data_in(9)  XOR data_in(10) XOR data_in(14) XOR data_in(15);
 	lfsr_c(3) <= lfsr_q(0) XOR lfsr_q(4) XOR data_in(1) XOR data_in(3) XOR data_in(4) XOR data_in(7) XOR data_in(8) XOR data_in(9)  XOR data_in(10) XOR data_in(11) XOR data_in(15);
 	lfsr_c(4) <= lfsr_q(0) XOR lfsr_q(1) XOR data_in(2) XOR data_in(4) XOR data_in(5) XOR data_in(8) XOR data_in(9) XOR data_in(10) XOR data_in(11) XOR data_in(12);
-	
-  result_latch: PROCESS (clk_i, nReset) 
+
+  result_latch: PROCESS (clk_i, nReset)
   BEGIN
 	  IF (nReset = '0') THEN
 		    lfsr_q <= b"11111";

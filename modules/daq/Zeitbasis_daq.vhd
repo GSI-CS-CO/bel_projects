@@ -7,7 +7,7 @@ use IEEE.STD_LOGIC_ARITH.ALL;
 USE IEEE.STD_LOGIC_unsigned.all;
 use IEEE.MATH_REAL.ALL;
 
-			
+
 entity zeitbasis_daq is
 	generic
     (
@@ -30,31 +30,31 @@ entity zeitbasis_daq is
 
     );
 end zeitbasis_daq;
-			
-			
+
+
 architecture arch_zeitbasis_daq of zeitbasis_daq is
 
   CONSTANT	CLK_in_ps			          : INTEGER	:= (1_000_000_000 / (CLK_in_Hz / 1000));       -- 8000ps bei 125MHz
 
 
-  CONSTANT	c_Ena_every_1us_cnt		  : INTEGER	:= 1000 	    * 1000 / CLK_in_ps;    --for real   
+  CONSTANT	c_Ena_every_1us_cnt		  : INTEGER	:= 1000 	    * 1000 / CLK_in_ps;    --for real
 
-  CONSTANT	c_Ena_every_250ns_cnt	  : INTEGER	:= 250        * 1000 / CLK_in_ps;    --for real  
+  CONSTANT	c_Ena_every_250ns_cnt	  : INTEGER	:= 250        * 1000 / CLK_in_ps;    --for real
 --CONSTANT	c_Ena_every_250ns_cnt	  : INTEGER	:= 40         * 1000 / CLK_in_ps;     --for simulation
-  CONSTANT	c_Ena_every_10us_cnt  	: INTEGER	:= 10_000     * 1000 / CLK_in_ps;    --for real 
-  CONSTANT	c_Ena_every_100us_cnt	  : INTEGER	:= 100_000    * 1000 / CLK_in_ps;    --for real 
-  CONSTANT	c_Ena_every_1ms_cnt	    : INTEGER	:= 1_000_000  * 1000 / CLK_in_ps;    --for real 
-  
-  
+  CONSTANT	c_Ena_every_10us_cnt  	: INTEGER	:= 10_000     * 1000 / CLK_in_ps;    --for real
+  CONSTANT	c_Ena_every_100us_cnt	  : INTEGER	:= 100_000    * 1000 / CLK_in_ps;    --for real
+  CONSTANT	c_Ena_every_1ms_cnt	    : INTEGER	:= 1_000_000  * 1000 / CLK_in_ps;    --for real
+
+
 
 
 	SIGNAL	s_every_1us		: STD_LOGIC;
   SIGNAL	s_every_250ns	: STD_LOGIC;
   SIGNAL	s_every_10us	: STD_LOGIC;
 	SIGNAL	s_every_100us	: STD_LOGIC;
- 	SIGNAL	s_every_1ms	  : STD_LOGIC; 
+ 	SIGNAL	s_every_1ms	  : STD_LOGIC;
 
-  
+
 
   component div_n
     generic
@@ -100,7 +100,7 @@ sel_every_10us: div_n
                 ena => '1',
                 div_o => s_every_10us
               );
-              
+
 sel_every_100us: div_n
   generic map (n => c_Ena_every_100us_cnt, diag_on => diag_on)
     port map  ( res => res,
@@ -108,7 +108,7 @@ sel_every_100us: div_n
                 ena => '1',
                 div_o => s_every_100us
               );
-              
+
 sel_every_1ms: div_n
   generic map (n => c_Ena_every_1ms_cnt, diag_on => diag_on)
     port map  ( res => res,
@@ -116,17 +116,17 @@ sel_every_1ms: div_n
                 ena => '1',
                 div_o => s_every_1ms
               );
-              
 
 
 
-Ena_every_1us	    <= 	s_every_1us;	
+
+Ena_every_1us	    <= 	s_every_1us;
 Ena_every_250ns   <=  s_every_250ns;
-Ena_every_10us	  <= 	s_every_10us;	
-Ena_every_100us   <= 	s_every_100us;	
+Ena_every_10us	  <= 	s_every_10us;
+Ena_every_100us   <= 	s_every_100us;
 Ena_every_1ms     <= 	s_every_1ms;
 
-	
+
 
 END arch_zeitbasis_daq;
 
