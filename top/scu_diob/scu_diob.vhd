@@ -4748,8 +4748,8 @@ BEGIN
     
               P25IO_DAC_DAC_Strobe_Expo  <=  (to_integer(unsigned(AW_Config1)(5 downto 3)));  -- Multiplikationswert für 100ns aus Wertetabelle 2^n
 
-              P25IO_Holec_Strobe_Start   <=  (AWOut_Reg2_wr AND SCU_Ext_Wr_fin);              -- Software-Strobe   
-              P25IO_DAC_DAC_Strobe_i     <=  (AWOut_Reg2_wr AND SCU_Ext_Wr_fin);              -- Software-Strobe   
+              P25IO_Holec_Strobe_Start   <=  (AWOut_Reg2_wr AND Ext_Wr_fin_ovl);              -- Software-Strobe   
+              P25IO_DAC_DAC_Strobe_i     <=  (AWOut_Reg2_wr AND Ext_Wr_fin_ovl);              -- Software-Strobe   
 
               IF  (AW_Config1(2) = '0')  THEN  P25IO_DAC_Strobe  <=  NOT P25IO_Holec_Strobe_Out; -- Strobe positiv
                                          Else  
@@ -4937,7 +4937,7 @@ BEGIN
    --################################  ECC Pulsbreite (Enable_Convert_Command)  ##################################
 
    IF  (AW_Config1(9) = '0')  THEN                                            -- 0 = Ecc-Intern
-        P25IO_ECC_Puls_i      <=  (AWOut_Reg1_wr AND AW_Output_Reg(1)(1) AND SCU_Ext_Wr_fin);    -- Software-Strobe   
+        P25IO_ECC_Puls_i      <=  (AWOut_Reg1_wr AND AW_Output_Reg(1)(1) AND Ext_Wr_fin_ovl);    -- Software-Strobe   
       ELSE    
         P25IO_ECC_Puls_i      <=  not PIO_SYNC(85);  -- input(Synch.)   "LemoBuchse-Ext_Timing" H-Aktiv, nach dem Optokoppler aber L-Aktiv 
    END IF;
@@ -5286,7 +5286,7 @@ BEGIN
               UIO_Data_FG_Out(23 DOWNTO 1)  <=  UIO_Reg_Out_o(23 DOWNTO 1);             --  Register-Daten zum Ausgang
     
               UIO_DAC_Strobe_Expo  <=  (to_integer(unsigned(AW_Config2)(4 downto 2)));  -- Multiplikationswert für 100ns aus Wertetabelle 2^n
-              UIO_DAC_Strobe_i     <=  (AWOut_Reg2_wr AND SCU_Ext_Wr_fin);              -- Software-Strobe   
+              UIO_DAC_Strobe_i     <=  (AWOut_Reg2_wr AND Ext_Wr_fin_ovl);              -- Software-Strobe   
 
               IF  (AW_Config2(5) = '0')  THEN  UIO_Data_FG_Out(0) <=      UIO_DAC_Strobe_o; -- Strobe positiv
                                          Else  UIO_Data_FG_Out(0) <=  not UIO_DAC_Strobe_o; -- Strobe negativ
@@ -5300,7 +5300,7 @@ BEGIN
               UIO_Data_FG_Out(23 DOWNTO 1)  <=  UIO_Reg_Out_o(23 DOWNTO 1);             --  Register-Daten zum Ausgang
     
               UIO_DAC_Strobe_Expo  <=  (to_integer(unsigned(AW_Config2)(4 downto 2)));  -- Multiplikationswert für 100ns aus Wertetabelle 2^n
-              UIO_DAC_Strobe_i     <=  (AWOut_Reg2_wr AND SCU_Ext_Wr_fin);              -- Software-Strobe   
+              UIO_DAC_Strobe_i     <=  (AWOut_Reg2_wr AND Ext_Wr_fin_ovl);              -- Software-Strobe   
 
               IF  (AW_Config2(5) = '0')  THEN  UIO_Data_FG_Out(0) <=      UIO_DAC_Strobe_o; -- Strobe positiv
                                          Else  UIO_Data_FG_Out(0) <=  not UIO_DAC_Strobe_o; -- Strobe negativ
@@ -6660,7 +6660,7 @@ BEGIN
               Out16_Data_FG_Out(15 DOWNTO 0) <=  AW_Output_Reg(2)(15 DOWNTO 0);
     
               Out16_DAC_Strobe_Expo  <=  (to_integer(unsigned(AW_Config2)(4 downto 2)));  -- Multiplikationswert für 100ns aus Wertetabelle 2^n
-              Out16_DAC_Strobe_i     <=  (AWOut_Reg2_wr AND SCU_Ext_Wr_fin);              -- Software-Strobe   
+              Out16_DAC_Strobe_i     <=  (AWOut_Reg2_wr AND Ext_Wr_fin_ovl);              -- Software-Strobe   
 
                 IF  (AW_Config2(5) = '0')  THEN  Out16_Strobe  <=      Out16_DAC_Strobe_o; -- Strobe positiv
                                            Else  Out16_Strobe  <=  not Out16_DAC_Strobe_o; -- Strobe negativ
