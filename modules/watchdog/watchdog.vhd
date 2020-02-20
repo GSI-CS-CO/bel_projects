@@ -67,6 +67,7 @@ begin
   slave_o.err   <= '0';
   slave_o.stall <= '0';
   slave_o.dat   <= std_logic_vector(r_owner) & std_logic_vector(r_timeout);
+  slave_o.rty   <= '0';
   
   s_owner <= unsigned(slave_i.dat(31 downto 16));
   s_tick  <= r_counter = 0;
