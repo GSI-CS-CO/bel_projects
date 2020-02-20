@@ -53,6 +53,7 @@ make pexarria5
 make exploder5
 make pmc
 make microtca
+make pexp
 ```
 
 ## FAQ
