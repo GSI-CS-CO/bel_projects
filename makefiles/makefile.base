@@ -191,12 +191,6 @@ check_src:
 		[ -f "$$i" ] || echo -e $(ESC_FG_RED)"ERROR: Sourcefile \"$$i\" not found!"$(ESC_NORMAL) 1>&2; \
 	done)
 
-.PHONY: print_src
-print_src:
-	$(QUIET)(for i in $(_SOURCE); do \
-		echo $$i; \
-	done)
-
 $(WORK_DIR):
 	$(QUIET)mkdir -p $(WORK_DIR)
 
@@ -243,7 +237,7 @@ ldep: $(WORK_DIR) $(DEPENDFILE)
 
 .PHONY: incdirs
 incdirs:
-	$(QUIET)echo $(INCLUDE_DIRS)
+	$(QUIET)echo $(INCLUDE_DIRS) | tr ' ' '\n'
 
 .PHONY: incargs
 incargs:
