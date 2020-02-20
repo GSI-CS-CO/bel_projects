@@ -1146,6 +1146,7 @@ begin
       g_num_slaves  => c_top_slaves,
       g_registered  => true,
       g_wraparound  => true,
+      g_sdb_wb_mode => PIPELINED,
       g_layout      => c_top_layout,
       g_sdb_addr    => c_top_sdb_address)
     port map(
@@ -1166,6 +1167,7 @@ begin
       g_num_slaves  => c_dev_slaves,
       g_registered  => true,
       g_wraparound  => true,
+      g_sdb_wb_mode => PIPELINED,
       g_layout      => c_dev_layout,
       g_sdb_addr    => c_dev_sdb_address)
     port map(
@@ -1181,6 +1183,8 @@ begin
       msi_slave_o   => dev_msi_slave_o);
 
   top2dev_bus : xwb_register_link
+    generic map(
+      g_wb_adapter  => false)
     port map(
       clk_sys_i     => clk_sys,
       rst_n_i       => rstn_sys,
@@ -1190,6 +1194,8 @@ begin
       master_o      => dev_bus_slave_i (c_devm_top));
 
   dev2top_msi : xwb_register_link
+    generic map(
+      g_wb_adapter  => false)
     port map(
       clk_sys_i     => clk_sys,
       rst_n_i       => rstn_sys,
@@ -1199,6 +1205,8 @@ begin
       master_o      => top_msi_slave_i (c_tops_dev));
 
   top2wrc_bus : xwb_register_link
+    generic map(
+      g_wb_adapter  => false)
     port map(
       clk_sys_i     => clk_sys,
       rst_n_i       => rstn_sys,
