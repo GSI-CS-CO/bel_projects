@@ -460,7 +460,8 @@ int milGetTask( register MIL_TASK_DATA_T* pMilTaskData, const bool isScuBus,
  * @ingroup MIL_FSM
  * @brief Task-function for handling all MIL-FGs and MIL-DAQs via FSM.
  * @param pThis pointer to the current task object
- * @param isScuBus if true via SCU bus MIL adapter
+ * @param isScuBus if true via SCU bus MIL adapter called SCU_SIO.
+ * @see https://www-acc.gsi.de/wiki/Hardware/Intern/ScuSio
  *
  * @dotfile scu_mil_fg_handler.gv State graph for this function
  * @see https://github.com/UlrichBecker/DocFsm
@@ -733,6 +734,7 @@ STATIC void milDeviceHandler( register TASK_T* pThis, const bool isScuBus )
  * a global structure
  * @param pThis pointer to the current task object
  * @see schedule
+ * @see https://www-acc.gsi.de/wiki/Hardware/Intern/ScuSio
  */
 void dev_sio_handler( register TASK_T* pThis )
 {

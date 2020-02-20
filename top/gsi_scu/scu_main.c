@@ -236,7 +236,7 @@ STATIC void initAndScan( void )
  */
 void _segfault( void )
 {
-   mprintf(ESC_ERROR"KABOOM!"ESC_NORMAL"\n");
+   mprintf( ESC_ERROR"PANIC: Segmentation fault!"ESC_NORMAL"\n" );
   //while (1) {}
 }
 

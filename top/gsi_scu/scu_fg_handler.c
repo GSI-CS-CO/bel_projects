@@ -6,6 +6,8 @@
  * @author Ulrich Becker <u.becker@gsi.de>
  * @date 04.02.2020
  * Outsourced from scu_main.c
+ * @see https://www-acc.gsi.de/wiki/Hardware/Intern/AdcDacScu
+ * @see https://www-acc.gsi.de/wiki/Hardware/Intern/AdcDac2Scu
  */
 #include "scu_fg_macros.h"
 #include "scu_fg_handler.h"

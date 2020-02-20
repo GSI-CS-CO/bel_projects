@@ -121,6 +121,7 @@ typedef union PACKED_SIZE
  * @ingroup SHARED_MEMORY
  * @brief Definition of shared memory area for the communication between LM32
  *        and Linux.
+ * @see https://www-acc.gsi.de/wiki/bin/viewauth/Hardware/Intern/ScuFgDoc#Memory_map_of_the_LM32_ram
  * @see saftlib/drivers/fg_regs.h
  */
 typedef struct PACKED_SIZE

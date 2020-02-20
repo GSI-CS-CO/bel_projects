@@ -16,49 +16,60 @@
 extern "C" {
 #endif
 /*!
+ * @brief Control register of function generator.
  * @see https://www-acc.gsi.de/wiki/Hardware/Intern/FunctionGeneratorQuadratic#cntrl_reg
+ * @see https://www-acc.gsi.de/wiki/bin/viewauth/Hardware/Intern/ScuFgDoc
  */
 typedef struct PACKED_SIZE
 {
 #if (__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__) || defined(__DOXYGEN__)
    /*!
-    * @brief  Add frequency select: bit [15:13]
+    * @brief  Add frequency select: (wo) bit [15:13]
     */
    uint16_t frequency_select: 3;
 
    /*!
-    * @brief step value M [w/r] bit [12:10]
+    * @brief step value M (wo) bit [12:10]
     */
    uint16_t step:             3;
 
    /*!
-    * @brief virtual function generator number [w/r] bit [9:4]
+    * @brief virtual function generator number (wr) bit [9:4]
     */
    uint16_t number:           6;
 
    /*!
-    * @brief stopped flag [r] bit [3]
+    * @brief Data request bit [3]
+    * @note Only in
+    * @see FG_DREQ
+    * @see https://github.com/GSI-CS-CO/bel_projects/blob/proposed_master/modules/function_generators/fg_quad/wb_fg_quad.vhd
     */
-   const uint16_t stopped:    1;
+   const bool dataRequest:    1;
 
    /*!
-    * @brief running flag [r] bit [2]
+    * @brief Indicator if function generator running. (ro) bit [2]
+    * @see FG_RUNNING
     */
-   const uint16_t running:    1;
-
-   uint16_t __not_used__:     1;
+   const bool isRunning:      1;
 
    /*!
-    * @brief Reset, 1 -> active bit [0]
+    * @brief Enable function generator (rw) bit
+    * @see FG_ENABLED
     */
-   uint16_t reset:            1;
+   bool enable:               1;
+
+   /*!
+    * @brief Reset, 1 -> active (rw) bit [0]
+    */
+   bool reset:                1;
 #else
    #error Big endian is requested for this bit- field structure!
 #endif
 } FG_CTRL_RG_T_BV;
 
 #ifndef __DOXYGEN__
-STATIC_ASSERT( sizeof(FG_CTRL_RG_T_BV) == sizeof(uint16_t));
+STATIC_ASSERT( sizeof(FG_CTRL_RG_T_BV) == sizeof(uint16_t) );
+STATIC_ASSERT( (int)true == 1 );
 #endif
 
 /*!
@@ -115,7 +126,7 @@ typedef struct PACKED_SIZE
     * At the same time the signal brdcst_o of the FG macro is raised.
     * This can be used to start a second FG.
     */
-   volatile uint16_t broadcast_start;
+   volatile uint16_t broad_start;
 
    /*!
     * @brief scale factor for value 'a' [r/w]
@@ -129,38 +140,38 @@ typedef struct PACKED_SIZE
     *
     * Bit [31:16] of the start value
     */
-   volatile uint16_t start_h_reg;
+   volatile uint16_t start_h;
 
    /*!
     * @brief start value (low)
     *
     * Bit [15:0] of the start value
     */
-   volatile uint16_t start_l_reg;
+   volatile uint16_t start_l;
 
    /*!
     * @brief ramp count register [r]
     *
     * Shows the count of interpolated ramp segments
     */
-   volatile const uint16_t ramp_cnt_l_reg;
+   volatile const uint16_t ramp_cnt_low;
 
    /*!
     * @brief ramp count register [r]
     *
     * Shows the count of interpolated ramp segments
     */
-   volatile const uint16_t ramp_cnt_h_reg;
+   volatile const uint16_t ramp_cnt_high;
 
    /*!
     * @brief tag low word [r/w]
     */
-   volatile uint16_t tag_low_reg;
+   volatile uint16_t tag_low;
 
    /*!
     * @brief tag high word [r/w]
     */
-   volatile uint16_t tag_high_reg;
+   volatile uint16_t tag_high;
 
    /*!
     * @brief firmware version of the fg macro [r]
@@ -176,14 +187,14 @@ typedef struct PACKED_SIZE
 STATIC_ASSERT( offsetof( FG_REGISTER_T, cntrl_reg ) == FG_CNTRL * sizeof( uint16_t ) );
 STATIC_ASSERT( offsetof( FG_REGISTER_T, coeff_a_reg ) == FG_A * sizeof( uint16_t ) );
 STATIC_ASSERT( offsetof( FG_REGISTER_T, coeff_b_reg ) == FG_B * sizeof( uint16_t ) );
-STATIC_ASSERT( offsetof( FG_REGISTER_T, broadcast_start ) == FG_BROAD * sizeof( uint16_t ) );
+STATIC_ASSERT( offsetof( FG_REGISTER_T, broad_start ) == FG_BROAD * sizeof( uint16_t ) );
 STATIC_ASSERT( offsetof( FG_REGISTER_T, shift_reg ) == FG_SHIFT * sizeof( uint16_t ) );
-STATIC_ASSERT( offsetof( FG_REGISTER_T, start_h_reg ) == FG_STARTH * sizeof( uint16_t ) );
-STATIC_ASSERT( offsetof( FG_REGISTER_T, start_l_reg ) == FG_STARTL * sizeof( uint16_t ) );
-STATIC_ASSERT( offsetof( FG_REGISTER_T, ramp_cnt_l_reg ) == FG_RAMP_CNT_LO * sizeof( uint16_t ) );
-STATIC_ASSERT( offsetof( FG_REGISTER_T, ramp_cnt_h_reg ) == FG_RAMP_CNT_HI * sizeof( uint16_t ) );
-STATIC_ASSERT( offsetof( FG_REGISTER_T, tag_low_reg ) == FG_TAG_LOW * sizeof( uint16_t ) );
-STATIC_ASSERT( offsetof( FG_REGISTER_T, tag_high_reg ) == FG_TAG_HIGH * sizeof( uint16_t ) );
+STATIC_ASSERT( offsetof( FG_REGISTER_T, start_h ) == FG_STARTH * sizeof( uint16_t ) );
+STATIC_ASSERT( offsetof( FG_REGISTER_T, start_l ) == FG_STARTL * sizeof( uint16_t ) );
+STATIC_ASSERT( offsetof( FG_REGISTER_T, ramp_cnt_low ) == FG_RAMP_CNT_LO * sizeof( uint16_t ) );
+STATIC_ASSERT( offsetof( FG_REGISTER_T, ramp_cnt_high ) == FG_RAMP_CNT_HI * sizeof( uint16_t ) );
+STATIC_ASSERT( offsetof( FG_REGISTER_T, tag_low ) == FG_TAG_LOW * sizeof( uint16_t ) );
+STATIC_ASSERT( offsetof( FG_REGISTER_T, tag_high ) == FG_TAG_HIGH * sizeof( uint16_t ) );
 STATIC_ASSERT( offsetof( FG_REGISTER_T, fw_version ) == FG_VER * sizeof( uint16_t ) );
 STATIC_ASSERT( sizeof( FG_REGISTER_T ) == 12 * sizeof( uint16_t ));
 /*
@@ -209,6 +220,22 @@ FG_REGISTER_T* getFgRegister( const void* pScuBusBase,
    return (FG_REGISTER_T*)
            &(((uint16_t*)scuBusGetAbsSlaveAddr( pScuBusBase, slot ))
               [(number == 0)? FG1_BASE : FG2_BASE]);
+}
+
+/*! ---------------------------------------------------------------------------
+ * @brief Returns the pointer of the SCU-function generators control register.
+ * @param pScuBusBase Base address of SCU bus.
+ *                    Obtained by find_device_adr(GSI, SCU_BUS_MASTER);
+ * @param slot Slot number, valid range 1 .. MAX_SCU_SLAVES (12)
+ * @param number Number of functions generator macro 0 or 1.
+ * @return Pointer to the control-register.
+ */
+static volatile inline
+FG_CTRL_RG_T* getFgCntrlRegPtr( const void* pScuBusBase,
+                                const unsigned int slot,
+                                const unsigned int number )
+{
+   return &getFgRegister( pScuBusBase, slot, number )->cntrl_reg;
 }
 
 

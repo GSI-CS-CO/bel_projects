@@ -6,6 +6,9 @@
  *  @copyright (C) 2019 GSI Helmholtz Centre for Heavy Ion Research GmbH
  *
  *  @author Ulrich Becker <u.becker@gsi.de>
+ *
+ *  For testing:
+ *  @see https://www-acc.gsi.de/wiki/Hardware/Intern/Saft_Fg_Ctl
  ******************************************************************************
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public

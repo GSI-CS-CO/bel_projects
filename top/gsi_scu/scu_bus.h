@@ -172,6 +172,9 @@ typedef enum
 #define ADC_CHN7          0x7
 #define ADC_CHN8          0x8
 
+/*!
+ * @see https://www-acc.gsi.de/wiki/Hardware/Intern/AdcDac2Scu
+ */
 #define FG1_BASE          0x300
 #define FG2_BASE          0x340
 #define FG_CNTRL          0x0

@@ -155,8 +155,8 @@ endif
 # NO_LTO=1
 
 
-  SCU_URL = scuxl0107
- # SCU_URL = scuxl0035
+#  SCU_URL = scuxl0107
+  SCU_URL = scuxl0035
  DOX_EXTRACT_STATIC         = "YES"
 # DOX_EXTRACT_ALL            = "YES"
 DOX_MACRO_EXPANSION        = "YES"
@@ -164,6 +164,31 @@ DOX_EXPAND_ONLY_PREDEF     = "YES"
 DOX_EXPAND_AS_DEFINED      = "FSM_DECLARE_STATE __DAQ_SHARED_IO_T"
 DOX_DOTFILE_DIRS           += $(SCU_DIR)
 
+
 # Including common makefile for arbitrary LM32 software for SCU
 include $(REPOSITORY_DIR)/makefiles/makefile.scu
+
+TESTFILE       ?= sinus-test.txt
+TARGETTEST_DIR ?= "/"
+SLOT           ?= 4
+FG_NUM         ?= 0
+
+FG_UT = fg-$(SLOT)-$(FG_NUM)
+
+.PHONY: cptest
+cptest:
+	scp $(SCU_DIR)/$(TESTFILE) root@$(SCU_URL):$(TARGETTEST_DIR)
+
+.PHONY: runfg
+runfg:
+	ssh root@$(SCU_URL) "saft-fg-ctl -r -f $(FG_UT) -g <$(TARGETTEST_DIR)$(TESTFILE)"
+
+.PHONY: stop
+stop:
+	ssh root@$(SCU_URL) "killall saft-fg-ctl"
+
+.PHONY: scan
+scan:
+	ssh root@$(SCU_URL) "saft-fg-ctl -si"
+
 #=================================== EOF ======================================
