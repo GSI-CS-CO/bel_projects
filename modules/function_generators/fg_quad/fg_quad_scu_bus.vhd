@@ -17,7 +17,7 @@ entity fg_quad_scu_bus is
   port (
     -- SCUB interface
     Adr_from_SCUB_LA:   in    std_logic_vector(15 downto 0);  -- latched address from SCU_Bus
-    Data_from_SCUB_LA:  in    std_logic_vector(15 downto 0);  -- latched data from SCU_Bus 
+    Data_from_SCUB_LA:  in    std_logic_vector(15 downto 0);  -- latched data from SCU_Bus
     Ext_Adr_Val:        in    std_logic;                      -- '1' => "ADR_from_SCUB_LA" is valid
     Ext_Rd_active:      in    std_logic;                      -- '1' => Rd-Cycle is active
     Ext_Wr_active:      in    std_logic;                      -- '1' => Wr-Cycle is active
@@ -25,14 +25,14 @@ entity fg_quad_scu_bus is
     clk:                in    std_logic;                      -- should be the same clk, used by SCU_Bus_Slave
     sysclk:             in    std_logic;                      -- 12.5 MHz Backplane clock
     nReset:             in    std_logic;
-    tag:                in    std_logic_vector(31 downto 0);  -- 32Bit tag from timing 
+    tag:                in    std_logic_vector(31 downto 0);  -- 32Bit tag from timing
     tag_valid:          in    std_logic;                      -- tag valid
     ext_trigger:        in    std_logic;                      -- external trigger for ramp start
     Rd_Port:            out   std_logic_vector(15 downto 0);  -- output for all read sources of this macro
     Dtack:              out   std_logic;                      -- connect Dtack to SCUB-Macro
     -- fg_quad
     irq:                out   std_logic;
-      
+
     sw_out:             out   std_logic_vector(31 downto 0);  -- function generator output
     sw_strobe:          out   std_logic
     );
@@ -53,8 +53,8 @@ architecture fg_quad_scu_bus_arch of fg_quad_scu_bus is
   constant tag_low_reg_adr:   unsigned(15 downto 0) := Base_addr + x"0009";
   constant tag_high_reg_adr:  unsigned(15 downto 0) := Base_addr + x"000a";
   constant fw_version_adr:    unsigned(15 downto 0) := Base_addr + x"000b";
- 
-  
+
+
   signal  fg_cntrl_reg:     std_logic_vector(15 downto 0);
   signal  fg_cntrl_rd_reg:  std_logic_vector(15 downto 0);
   signal  coeff_a_reg:      std_logic_vector(15 downto 0);
@@ -87,7 +87,7 @@ architecture fg_quad_scu_bus_arch of fg_quad_scu_bus is
   signal  rd_tag_low:       std_logic;
   signal  rd_tag_high:      std_logic;
   signal  rd_fw_version:    std_logic;
-  
+
   signal  fg_is_running:    std_logic;
   signal  ramp_sec_fin:     std_logic;
   signal  state_change_irq: std_logic;
@@ -98,7 +98,7 @@ architecture fg_quad_scu_bus_arch of fg_quad_scu_bus is
 	signal tag_state	:	tag_state_type;
 
 begin
-  quad_fg: fg_quad_datapath 
+  quad_fg: fg_quad_datapath
     generic map (
                  ClK_in_hz => clk_in_hz,
                        ACU => ACU
@@ -123,9 +123,9 @@ begin
       ramp_sec_fin        => ramp_sec_fin,
       sw_out              => sw_out,
       sw_strobe           => sw_strobe,
-      fg_is_running       => fg_is_running       
+      fg_is_running       => fg_is_running
     );
-    
+
 adr_decoder: process (clk, nReset)
   begin
     if nReset = '0' then
@@ -150,7 +150,7 @@ adr_decoder: process (clk, nReset)
       rd_tag_high       <= '0';
       rd_fw_version     <= '0';
       dtack             <= '0';
-      
+
     elsif rising_edge(clk) then
       wr_fg_cntrl       <= '0';
       rd_fg_cntrl       <= '0';
@@ -173,7 +173,7 @@ adr_decoder: process (clk, nReset)
       rd_tag_high       <= '0';
       rd_fw_version     <= '0';
       dtack             <= '0';
-    
+
       if Ext_Adr_Val = '1' then
 
         case unsigned(Adr_from_SCUB_LA) is
@@ -187,7 +187,7 @@ adr_decoder: process (clk, nReset)
               rd_fg_cntrl <= '1';
               dtack       <= '1';
             end if;
-          
+
           when coeff_a_reg_adr =>
             if Ext_Wr_active = '1' then
               wr_coeff_a  <= '1';
@@ -196,7 +196,7 @@ adr_decoder: process (clk, nReset)
               rd_coeff_a  <= '1';
               dtack       <= '1';
             end if;
-            
+
           when coeff_b_reg_adr =>
             if Ext_Wr_active = '1' then
               wr_coeff_b  <= '1';
@@ -205,7 +205,7 @@ adr_decoder: process (clk, nReset)
               rd_coeff_b  <= '1';
               dtack       <= '1';
             end if;
-            
+
           when start_hi_reg_adr =>
             if Ext_Wr_active = '1' then
               wr_start_value_h  <= '1';
@@ -214,7 +214,7 @@ adr_decoder: process (clk, nReset)
               rd_start_value_h  <= '1';
               dtack             <= '1';
             end if;
-            
+
           when start_lo_reg_adr =>
             if Ext_Wr_active = '1' then
               wr_start_value_l  <= '1';
@@ -223,7 +223,7 @@ adr_decoder: process (clk, nReset)
               rd_start_value_l  <= '1';
               dtack             <= '1';
             end if;
-          
+
           when shift_reg_adr =>
             if Ext_Wr_active = '1' then
               wr_shift  <= '1';
@@ -232,7 +232,7 @@ adr_decoder: process (clk, nReset)
               rd_shift  <= '1';
               dtack     <= '1';
             end if;
-            
+
           when ramp_cnt_lo_adr =>
             if Ext_Wr_active = '1' then
               wr_ramp_cnt_lo  <= '1';
@@ -241,13 +241,13 @@ adr_decoder: process (clk, nReset)
               rd_ramp_cnt_lo  <= '1';
               dtack       <= '1';
             end if;
-          
+
           when ramp_cnt_hi_adr =>
             if Ext_Rd_active = '1' then
               rd_ramp_cnt_hi  <= '1';
               dtack       <= '1';
             end if;
-            
+
           when tag_low_reg_adr =>
             if Ext_Wr_active = '1' then
               wr_tag_low  <= '1';
@@ -256,7 +256,7 @@ adr_decoder: process (clk, nReset)
               rd_tag_low  <= '1';
               dtack       <= '1';
             end if;
-          
+
           when tag_high_reg_adr =>
             if Ext_Wr_active = '1' then
               wr_tag_high   <= '1';
@@ -271,7 +271,7 @@ adr_decoder: process (clk, nReset)
               rd_fw_version <= '1';
               dtack         <= '1';
             end if;
-          
+
 
           when others =>
             wr_fg_cntrl       <= '0';
@@ -298,35 +298,35 @@ adr_decoder: process (clk, nReset)
       end if;
     end if;
   end process adr_decoder;
-  
-tag_comp: process (clk, nReset) 
+
+tag_comp: process (clk, nReset)
 begin
   if nReset = '0' then
     tag_start <= '0';
     tag_state <= IDLE;
-     
+
   elsif rising_edge(clk) then
     tag_start <= '0';
-    
+
     case tag_state is
       when IDLE =>
         if tag_valid = '1' then
           tag_state <= TAG_RECEIVED;
         end if;
-          
-      when TAG_RECEIVED =>       
+
+      when TAG_RECEIVED =>
         if (tag = tag_high_reg & tag_low_reg) then
           tag_start <= '1';
         end if;
         tag_state <= IDLE;
-                 
+
       when others	=>	null;
     end case;
-            
+
   end if;
 end process tag_comp;
 
--- fg_cntrl_reg(0)            : reset, 1 -> active 
+-- fg_cntrl_reg(0)            : reset, 1 -> active
 -- fg_cntrl_reg(1)            : 1 -> fg enabled, 0 -> fg disabled
 -- fg_cntrl_reg(2)            : 1 -> running, 0 -> stopped (ro)
 -- fg_cntrl_reg(3)            : 1 -> data request
@@ -358,31 +358,31 @@ begin
       tag_high_reg    <= x"feed";
       reset_cnt := "00";
     else
-  
+
       if wr_fg_cntrl = '1' then
         fg_cntrl_reg <= Data_from_SCUB_LA;
       end if;
-    
+
       if wr_coeff_a = '1' then
         coeff_a_reg <= Data_from_SCUB_LA;
       end if;
-    
+
       if wr_coeff_b = '1' then
         coeff_b_reg <= Data_from_SCUB_LA;
       end if;
-    
+
       if wr_shift = '1' then
         shift_reg <= Data_from_SCUB_LA;
       end if;
-    
+
       if wr_start_value_h = '1' then
         start_value_reg(31 downto 16) <= Data_from_SCUB_LA;
       end if;
-    
+
       if wr_start_value_l = '1' then
         start_value_reg(15 downto 0) <= Data_from_SCUB_LA;
       end if;
-    
+
       if  fg_cntrl_reg(0) = '1' then
         if reset_cnt < 3 then
           reset_cnt := reset_cnt + 1;
@@ -391,29 +391,29 @@ begin
           reset_cnt := "00";
         end if;
       end if;
-    
+
       if ramp_sec_fin = '1' and fg_is_running = '1' then -- increment with every finished ramp section
         ramp_cnt_reg <= ramp_cnt_reg + 1;
       end if;
-    
+
       if tag_start = '1' and fg_cntrl_reg(1) = '1' then -- disable after Started. Prevents unintended triggering by the next tag.
         fg_cntrl_reg(1) <= '0';
       end if;
-    
+
       if dreq = '1' then
         fg_cntrl_reg(3) <= '1';
       elsif wr_coeff_a = '1' then
         fg_cntrl_reg(3) <= '0';
       end if;
-      
+
       if wr_tag_high = '1' then
         tag_high_reg <= Data_from_SCUB_LA;
       end if;
-      
+
       if wr_tag_low = '1' then
         tag_low_reg <= Data_from_SCUB_LA;
       end if;
-      
+
       if rd_ramp_cnt_lo = '1' then -- save counter to shadow register
         ramp_cnt_shadow <= ramp_cnt_reg;
       end if;
@@ -421,9 +421,9 @@ begin
       if wr_ramp_cnt_lo = '1' then
         ramp_cnt_reg <= (others => '0');
       end if;
-      
+
     end if;
-    
+
   end if;
 end process;
 
@@ -448,5 +448,5 @@ Rd_Port <= fg_cntrl_rd_reg                  when rd_fg_cntrl = '1' else
             x"0000";
 
 irq <= state_change_irq or dreq;
-            
+
 end architecture;
