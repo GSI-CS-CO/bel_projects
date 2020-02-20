@@ -55,5 +55,8 @@ endif
 strings: $(BIN_FILE)
 	$(QUIET)$(STRINGS) $(BIN_FILE)
 
+.PHONY: objdump
+objdump: $(ELF_FILE)
+	$(OBJDUMP_F) -h $(ELF_FILE)
 
 #=================================== EOF ======================================

@@ -54,6 +54,7 @@ ifeq ($(V), 1)
    AS_F      = $(AS)
    AR_F      = $(AR)
    OBJCPY_F  = $(OBJCPY)
+   OBJDUMP_F = $(OBJDUMP)
 else
    CXX_MSG     := "CXX"
    CC_MSG      := "CC"
@@ -63,6 +64,7 @@ else
    AR_MSG      := "AR"
    AS_MSG      := "AS"
    OBJCPY_MSG  := "OBJCPY"
+   OBJDUMP_MSG := "OBJDUMP"
    STRIP_MSG   := "STRIP"
    FORMAT      := @printf "[ %s %s ]\t%s\n"
  ifdef NO_COLORED
@@ -72,14 +74,15 @@ else
    FORMAT_L    := @printf "[ %s %s ]\t$(ESC_FG_MAGNETA)%s$(ESC_NORMAL)\n"
    FORMAT_R    := @printf "[ %s %s ]\t$(ESC_FG_CYAN)$(ESC_BOLD)%s$(ESC_NORMAL)\n"
  endif
-   CC_F        = $(FORMAT)   $(CPU) $(CC_MSG)     $(@); $(CC)
-   CXX_F       = $(FORMAT)   $(CPU) $(CXX_MSG)    $(@); $(CXX)
-   CPP_F       = $(FORMAT)   $(CPU) $(CPP_MSG)    $(@); $(CPP)
-   CXXCPP_F    = $(FORMAT)   $(CPU) $(CPP_MSG)    $(@); $(CXXCPP)
-   LD_F        = $(FORMAT_L) $(CPU) $(LD_MSG)     $(@); $(LD)
-   AS_F        = $(FORMAT)   $(CPU) $(AS_MSG)     $(@); $(AS)
-   AR_F        = $(FORMAT_L) $(CPU) $(AR_MSG)     $(@); $(AR)
-   OBJCPY_F    = $(FORMAT_R) $(CPU) $(OBJCPY_MSG) $(@); $(OBJCPY)
+   CC_F        = $(FORMAT)   $(CPU) $(CC_MSG)      $(@); $(CC)
+   CXX_F       = $(FORMAT)   $(CPU) $(CXX_MSG)     $(@); $(CXX)
+   CPP_F       = $(FORMAT)   $(CPU) $(CPP_MSG)     $(@); $(CPP)
+   CXXCPP_F    = $(FORMAT)   $(CPU) $(CPP_MSG)     $(@); $(CXXCPP)
+   LD_F        = $(FORMAT_L) $(CPU) $(LD_MSG)      $(@); $(LD)
+   AS_F        = $(FORMAT)   $(CPU) $(AS_MSG)      $(@); $(AS)
+   AR_F        = $(FORMAT_L) $(CPU) $(AR_MSG)      $(@); $(AR)
+   OBJCPY_F    = $(FORMAT_R) $(CPU) $(OBJCPY_MSG)  $(@); $(OBJCPY)
+   OBJDUMP_F   = $(FORMAT)   $(CPU) $(OBJDUMP_MSG) $(@); $(OBJDUMP)
    QUIET       = @
 endif
 
