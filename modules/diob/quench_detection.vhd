@@ -29,7 +29,7 @@ signal combi : std_logic;
 begin
 
 
-combi <= '1' when (  not (QuDIn or mute ) = 0) else '0'; 
+combi <= '1' when (  not (QuDIn or mute ) = 0) else '0';
 
 ---Delay-Count-------------------------------------------
 process (clk, nReset)

@@ -9,10 +9,10 @@ ENTITY hw_interlock IS
 		(
 		Base_addr:	INTEGER := 16#0230#
 		);
-		
+
 	port(
 		Adr_from_SCUB_LA:		in		std_logic_vector(15 downto 0);	-- latched address from SCU_Bus
-		Data_from_SCUB_LA:	in		std_logic_vector(15 downto 0);	-- latched data from SCU_Bus 
+		Data_from_SCUB_LA:	in		std_logic_vector(15 downto 0);	-- latched data from SCU_Bus
 		Ext_Adr_Val:			in		std_logic;								-- '1' => "ADR_from_SCUB_LA" is valid
 		Ext_Rd_active:			in		std_logic;								-- '1' => Rd-Cycle is active
 		Ext_Rd_fin:				in		std_logic;								-- marks end of read cycle, active one for one clock period of sys_clk
@@ -27,10 +27,10 @@ ENTITY hw_interlock IS
 		Reg_rd_active:		out	std_logic;								-- read data available at 'Data_to_SCUB'-INL_Out
 		Data_to_SCUB:		out	std_logic_vector(15 downto 0);	-- connect read sources to SCUB-Macro
 		Dtack_to_SCUB:		out	std_logic								-- connect Dtack to SCUB-Macro
-		);	
+		);
 	end hw_interlock;
 
-	
+
 
 ARCHITECTURE Arch_hw_interlock OF hw_interlock IS
 
@@ -59,14 +59,14 @@ P_Adr_Deco:	process (nReset, clk)
 
 			S_Dtack <= '0';
 			Reg_rd_active <= '0';
-		
+
 		elsif rising_edge(clk) then
 			S_Reg_HW_IL_Rd <= '0';
 			S_Reg_HW_IL_Wr <= '0';
 
 			S_Dtack <= '0';
 			Reg_rd_active <= '0';
-			
+
 			if Ext_Adr_Val = '1' then
 
 				CASE unsigned(ADR_from_SCUB_LA) IS
@@ -82,26 +82,26 @@ P_Adr_Deco:	process (nReset, clk)
 							Reg_rd_active <= '1';
 						end if;
 
-						
-					when others => 
+
+					when others =>
 
 						S_Reg_HW_IL_Rd <= '0';
-						
+
 						S_Dtack <= '0';
 						Reg_rd_active <= '0';
 
 				end CASE;
 			end if;
 		end if;
-	
+
 	end process P_Adr_Deco;
 
-	
+
 P_Reg_IO:	process (nReset, clk)
 	begin
 		if nReset = '0' then
 			S_Reg_HW_IL <= (others => '0');
-		
+
 		elsif rising_edge(clk) then
 			if S_Reg_HW_IL_Wr = '1' then	S_Reg_HW_IL <= Data_from_SCUB_LA or HW_ILock_in;
 			else
@@ -109,7 +109,7 @@ P_Reg_IO:	process (nReset, clk)
 			end if;
 	end if;
 	end process P_Reg_IO;
-	
+
 
 	P_read_mux:	process (	S_Reg_HW_IL_Rd,  S_Reg_HW_IL)
 
@@ -120,7 +120,7 @@ P_Reg_IO:	process (nReset, clk)
 		end if;
 	end process P_read_mux;
 
-	
+
 Dtack_to_SCUB <= S_Dtack;
 
 Data_to_SCUB <= S_Read_Port;
