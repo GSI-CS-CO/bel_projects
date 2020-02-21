@@ -224,6 +224,8 @@ architecture scu_diob_arch of scu_diob is
 --
     CONSTANT c_IOBP_Masken_Base_Addr:            Integer := 16#0630#;  -- IO-Backplane Masken-Register
     CONSTANT c_IOBP_ID_Base_Addr:                Integer := 16#0638#;  -- IO-Backplane Modul-ID-Register
+    CONSTANT c_HW_Interlock_Base_Addr:           Integer := 16#0640#;  -- IO-Backplane Spill Abort HW Interlock
+    CONSTANT c_IOBP_QD_Base_Addr:                Integer := 16#0650#;  -- IO-Backplane Quench Detection
 
 
 
@@ -737,6 +739,47 @@ port  (
     AD_ext_Trigger_nLED:    Out std_logic
     );
 end component;
+
+component spill_abort is    -- Control Spill Abort
+    Port ( clk : in STD_LOGIC;
+           nReset : in STD_LOGIC;
+           time_pulse : in STD_LOGIC;
+           armed : in STD_LOGIC;
+           req : in STD_LOGIC;
+           abort : out STD_LOGIC;
+           abort_rst : out STD_LOGIC);
+end component;
+
+component quench_detection is
+    Port ( clk : in STD_LOGIC;
+           nReset : in STD_LOGIC;
+           time_pulse : in STD_LOGIC;
+           delay : in STD_LOGIC;
+           QuDIn: in STD_LOGIC_VECTOR (24 downto 0);
+           mute: in STD_LOGIC_VECTOR (24 downto 0);
+           QuDOut : out STD_LOGIC);
+end component;
+
+COMPONENT hw_interlock
+  GENERIC ( Base_addr : INTEGER );
+  PORT
+  (
+    Adr_from_SCUB_LA:    IN  STD_LOGIC_VECTOR(15 DOWNTO 0);
+    Data_from_SCUB_LA:   IN  STD_LOGIC_VECTOR(15 DOWNTO 0);
+    Ext_Adr_Val:         IN  STD_LOGIC;
+    Ext_Rd_active:       IN  STD_LOGIC;
+    Ext_Rd_fin:          IN  STD_LOGIC;
+    Ext_Wr_active:       IN  STD_LOGIC;
+    Ext_Wr_fin:          IN  STD_LOGIC;
+    clk:                 IN  STD_LOGIC;
+    nReset:              IN  STD_LOGIC;
+    HW_ILock_in:				 IN  STD_LOGIC_VECTOR(15 downto 0);
+		HW_ILock_out:				 OUT STD_LOGIC_VECTOR(15 downto 0);
+    Reg_rd_active:       OUT STD_LOGIC;
+    Data_to_SCUB:        OUT STD_LOGIC_VECTOR(15 DOWNTO 0);
+    Dtack_to_SCUB:       OUT STD_LOGIC
+  );
+END COMPONENT hw_interlock;
 
 
 
@@ -1422,6 +1465,22 @@ end component;
                                 led_str_gruen_h, led_str_gruen_l, iobp_led_dis, iobp_led_z, iobp_id_str_h, iobp_rd_id, iobp_id_str_l, iobp_end);
   signal IOBP_state:   IOBP_LED_state_t:= IOBP_idle;
 
+  signal spill_abort_command:     std_logic;
+  signal spill_abort_command_rst: std_logic;
+  signal spill_case_abort:        std_logic_vector (3 downto 0);
+  signal spill_case_rst:          std_logic_vector (3 downto 0);
+  signal spill_req:               std_logic_vector (3 downto 0);
+  signal spill_pause:             std_logic_vector (3 downto 0);
+  signal spill_armed:             std_logic_vector (3 downto 0);
+  signal spill_abort_HWInterlock: std_logic_vector (1 downto 0);
+  signal spill_abort_HWI_out:     std_logic_vector (15 downto 0);
+  signal FQ_abort:                std_logic;
+  signal FQ_rst:                  std_logic;
+  signal RF_abort:                std_logic;
+  signal KO_abort:                std_logic;
+  signal TS_abort:                std_logic;
+
+  signal quench_out:              std_logic_vector (4 downto 0);
 
   --------------------------- IO-Select ----------------------------------------------------------------------
 
@@ -1445,6 +1504,19 @@ end component;
   signal IOBP_id_rd_active:       std_logic;
   signal IOBP_id_Dtack:           std_logic;
   signal IOBP_id_data_to_SCUB:    std_logic_vector(15 downto 0);
+
+  signal IOBP_hw_il_rd_active:       std_logic;
+  signal IOBP_hw_il_Dtack:           std_logic;
+  signal IOBP_hw_il_data_to_SCUB:    std_logic_vector(15 downto 0);
+
+  TYPE   t_quench_array     is array (0 to 4) of std_logic_vector(24 downto 0);
+  signal quench_enable_signal: t_quench_array := (others=>(others=>'0'));
+  TYPE   t_quench_reg_array     is array (0 to 7) of std_logic_vector(15 downto 0);
+  signal quench_reg: t_quench_reg_array := (others=>(others=>'0'));
+
+  signal IOBP_qd_rd_active:       std_logic;
+  signal IOBP_qd_Dtack:           std_logic;
+  signal IOBP_qd_data_to_SCUB:    std_logic_vector(15 downto 0);
 
 
 --  +============================================================================================================================+
@@ -1498,8 +1570,10 @@ end component;
   signal In16_Deb_Strobe_out:    std_logic;                       -- Input Strobe
 
   signal In16_ADC_Strobe_i:      std_logic;                       -- input  "Strobe-Signal für den ADC"
-  signal In16_ADC_Strobe_o:      std_logic;                       -- Output "Strobe-Signal für den ADC (1 CLK breit)"
+  signal In16_ADC_Strobe_pulse:  std_logic;                       -- "Strobe-Signal für den ADC (1 CLK breit)"
+  signal In16_ADC_Strobe_o:      std_logic;                       -- Output "Strobe-Signal für den ADC"
   signal In16_ADC_shift:         std_logic_vector(2  downto 0);   -- Shift-Reg.
+  signal In16_ADC_Strobe_Expo:       integer range 0 to 7;        -- Anzahl der Counts
 
   signal In16_ADC_Data_FF_i:     std_logic_vector(15  downto 0);  -- input  "Daten ADC-Register"
   signal In16_ADC_Data_FF_o:     std_logic_vector(15  downto 0);  -- Output "Daten ADC-Register"
@@ -2132,6 +2206,58 @@ port map  (
       Data_to_SCUB       =>  IOBP_id_data_to_SCUB
     );
 
+    IOBP_Hardware_Interlock: hw_interlock
+    generic map(
+          Base_addr =>  c_HW_Interlock_Base_Addr
+          )
+    port map  (
+          Adr_from_SCUB_LA   =>  ADR_from_SCUB_LA,
+          Data_from_SCUB_LA  =>  Data_from_SCUB_LA,
+          Ext_Adr_Val        =>  Ext_Adr_Val,
+          Ext_Rd_active      =>  Ext_Rd_active,
+          Ext_Rd_fin         =>  Ext_Rd_fin,
+          Ext_Wr_active      =>  Ext_Wr_active,
+          Ext_Wr_fin         =>  SCU_Ext_Wr_fin,
+          clk                =>  clk_sys,
+          nReset             =>  rstn_sys,
+    --
+          HW_ILock_in		   	 => X"000" & "00" &spill_abort_HWInterlock,
+		      HW_ILock_out  		 => spill_abort_HWI_out,
+    --
+          Reg_rd_active      =>  IOBP_hw_il_rd_active,
+          Dtack_to_SCUB      =>  IOBP_hw_il_Dtack,
+          Data_to_SCUB       =>  IOBP_hw_il_data_to_SCUB
+        );
+
+    QUENCH_MATRIX_Reg: io_reg
+    generic map(
+          Base_addr =>  c_IOBP_QD_Base_Addr
+          )
+port map  (
+      Adr_from_SCUB_LA   =>  ADR_from_SCUB_LA,
+      Data_from_SCUB_LA  =>  Data_from_SCUB_LA,
+      Ext_Adr_Val        =>  Ext_Adr_Val,
+      Ext_Rd_active      =>  Ext_Rd_active,
+      Ext_Rd_fin         =>  Ext_Rd_fin,
+      Ext_Wr_active      =>  Ext_Wr_active,
+      Ext_Wr_fin         =>  SCU_Ext_Wr_fin,
+      clk                =>  clk_sys,
+      nReset             =>  rstn_sys,
+--
+      Reg_IO1            =>  quench_reg(0),
+      Reg_IO2            =>  quench_reg(1),
+      Reg_IO3            =>  quench_reg(2),
+      Reg_IO4            =>  quench_reg(3),
+      Reg_IO5            =>  quench_reg(4),
+      Reg_IO6            =>  quench_reg(5),
+      Reg_IO7            =>  quench_reg(6),
+      Reg_IO8            =>  quench_reg(7),
+    --
+      Reg_rd_active      =>  IOBP_qd_rd_active,
+      Dtack_to_SCUB      =>  IOBP_qd_Dtack,
+      Data_to_SCUB       =>  IOBP_qd_data_to_SCUB
+    );
+
 
 ATR_DAC1: io_spi_dac_8420
 generic map(
@@ -2626,31 +2752,33 @@ rd_port_mux:  process ( clk_switch_rd_active,     clk_switch_rd_data,
                       )
 
 
-  variable sel: unsigned(16 downto 0);
+  variable sel: unsigned(18 downto 0);
   begin
-    sel :=  tmr_rd_active             & INL_xor1_rd_active      & INL_msk1_rd_active      &  AW_Port1_rd_active       &
-            FG_1_rd_active            & FG_2_rd_active          & wb_scu_rd_active        & clk_switch_rd_active      &
+    sel :=  IOBP_hw_il_rd_active      & IOBP_qd_rd_active       & tmr_rd_active           & INL_xor1_rd_active        & INL_msk1_rd_active      &
+            AW_Port1_rd_active        & FG_1_rd_active          & FG_2_rd_active          & wb_scu_rd_active          & clk_switch_rd_active      &
             Conf_Sts1_rd_active       & Tag_Ctrl1_rd_active     & addac_rd_active         & io_port_rd_active         &
             IOBP_msk_rd_active        & IOBP_id_rd_active       & ATR_DAC_rd_active       & atr_comp_ctrl_rd_active   & atr_puls_ctrl_rd_active     ;
 
   case sel IS
-      when "10000000000000000" => Data_to_SCUB <= tmr_data_to_SCUB;
-      when "01000000000000000" => Data_to_SCUB <= INL_xor1_data_to_SCUB;
-      when "00100000000000000" => Data_to_SCUB <= INL_msk1_data_to_SCUB;
-      when "00010000000000000" => Data_to_SCUB <= AW_Port1_data_to_SCUB;
-      when "00001000000000000" => Data_to_SCUB <= FG_1_data_to_SCUB;
-      when "00000100000000000" => Data_to_SCUB <= FG_2_data_to_SCUB;
-      when "00000010000000000" => Data_to_SCUB <= wb_scu_data_to_SCUB;
-      when "00000001000000000" => Data_to_SCUB <= clk_switch_rd_data;
-      when "00000000100000000" => Data_to_SCUB <= Conf_Sts1_data_to_SCUB;
-      when "00000000010000000" => Data_to_SCUB <= Tag_Ctrl1_data_to_SCUB;
-      when "00000000001000000" => Data_to_SCUB <= addac_Data_to_SCUB;
-      when "00000000000100000" => Data_to_SCUB <= io_port_data_to_SCUB;
-      when "00000000000010000" => Data_to_SCUB <= IOBP_msk_data_to_SCUB;
-      when "00000000000001000" => Data_to_SCUB <= IOBP_id_data_to_SCUB;
-      when "00000000000000100" => Data_to_SCUB <= ATR_DAC_data_to_SCUB;
-      when "00000000000000010" => Data_to_SCUB <= atr_comp_ctrl_data_to_SCUB;
-      when "00000000000000001" => Data_to_SCUB <= atr_puls_ctrl_data_to_SCUB;
+      when "1000000000000000000" => Data_to_SCUB <= IOBP_hw_il_data_to_SCUB;
+      when "0100000000000000000" => Data_to_SCUB <= IOBP_qd_data_to_SCUB;
+      when "0010000000000000000" => Data_to_SCUB <= tmr_data_to_SCUB;
+      when "0001000000000000000" => Data_to_SCUB <= INL_xor1_data_to_SCUB;
+      when "0000100000000000000" => Data_to_SCUB <= INL_msk1_data_to_SCUB;
+      when "0000010000000000000" => Data_to_SCUB <= AW_Port1_data_to_SCUB;
+      when "0000001000000000000" => Data_to_SCUB <= FG_1_data_to_SCUB;
+      when "0000000100000000000" => Data_to_SCUB <= FG_2_data_to_SCUB;
+      when "0000000010000000000" => Data_to_SCUB <= wb_scu_data_to_SCUB;
+      when "0000000001000000000" => Data_to_SCUB <= clk_switch_rd_data;
+      when "0000000000100000000" => Data_to_SCUB <= Conf_Sts1_data_to_SCUB;
+      when "0000000000010000000" => Data_to_SCUB <= Tag_Ctrl1_data_to_SCUB;
+      when "0000000000001000000" => Data_to_SCUB <= addac_Data_to_SCUB;
+      when "0000000000000100000" => Data_to_SCUB <= io_port_data_to_SCUB;
+      when "0000000000000010000" => Data_to_SCUB <= IOBP_msk_data_to_SCUB;
+      when "0000000000000001000" => Data_to_SCUB <= IOBP_id_data_to_SCUB;
+      when "0000000000000000100" => Data_to_SCUB <= ATR_DAC_data_to_SCUB;
+      when "0000000000000000010" => Data_to_SCUB <= atr_comp_ctrl_data_to_SCUB;
+      when "0000000000000000001" => Data_to_SCUB <= atr_puls_ctrl_data_to_SCUB;
 
 
       when others      => Data_to_SCUB <= (others => '0');
@@ -2663,8 +2791,8 @@ rd_port_mux:  process ( clk_switch_rd_active,     clk_switch_rd_data,
 
     Dtack_to_SCUB <= ( tmr_dtack      or INL_xor1_Dtack       or INL_msk1_Dtack       or AW_Port1_Dtack   or FG_1_dtack       or
                        FG_2_dtack     or wb_scu_dtack         or clk_switch_dtack     or Conf_Sts1_Dtack  or Tag_Ctrl1_Dtack  or
-                       addac_Dtack    or io_port_Dtack        or IOBP_msk_Dtack       or IOBP_id_Dtack    or
-                       ATR_DAC_Dtack  or atr_comp_ctrl_Dtack  or atr_puls_ctrl_Dtack);
+                       addac_Dtack    or io_port_Dtack        or IOBP_msk_Dtack       or IOBP_id_Dtack    or  IOBP_qd_Dtack   or
+                       ATR_DAC_Dtack  or atr_comp_ctrl_Dtack  or atr_puls_ctrl_Dtack or IOBP_hw_il_Dtack);
 
 
     A_nDtack <= NOT(SCUB_Dtack);
@@ -3734,6 +3862,91 @@ P_IOBP_LED_ID_Loop:  process (clk_sys, Ena_Every_250ns, rstn_sys, IOBP_state)
     end if;
   end process P_IOBP_LED_ID_Loop;
 
+  Spill_Abort_Station_Gen:  for J in 0 to 3 generate
+  spill_userstations : spill_abort
+    Port map( clk => clk_sys,
+              nReset => rstn_sys,
+              time_pulse => Ena_Every_1us,
+              armed => spill_armed(J),
+              req => spill_req(J),
+              abort => spill_case_abort(J),
+              abort_rst => spill_case_rst(J));
+    end generate Spill_Abort_Station_Gen;
+
+    Userstation_select: process(AW_Output_Reg)
+      BEGIN
+      case AW_Output_Reg(1) is
+        --Cave A
+        when x"0001"    => FQ_abort <= spill_case_abort(0);
+                           spill_armed <= "0001";
+                           RF_abort <= spill_case_abort(0);
+                           spill_abort_HWInterlock <= (others => '0');
+                           if (spill_case_abort(0) = '0' or spill_pause(0) = '0') then
+                            KO_abort <= '0';
+                           else
+                            KO_abort <= '1';
+                           end if;
+        --Cave M
+        when x"0002"    => FQ_abort <= spill_case_abort(1);
+                           spill_armed <= "0010";
+                           RF_abort <= spill_case_abort(1);
+                           spill_abort_HWInterlock <= (others => '0');
+                           if (spill_case_abort(1) = '0' or spill_pause(1) = '0') then
+                            KO_abort <= '0';
+                           else
+                            KO_abort <= '1';
+                           end if;
+       --FRS
+        when x"0004"    => FQ_abort <= spill_case_abort(2);
+                           spill_armed <= "0100";
+                           RF_abort <= spill_case_abort(2);
+                           KO_abort <= spill_case_abort(2);
+                           spill_abort_HWInterlock(0) <= not spill_case_abort(2);
+                           spill_abort_HWInterlock(1) <= '0';
+
+      --HADES
+        when x"0008"    => FQ_abort <= spill_case_abort(3);
+                           spill_armed <= "1000";
+                           RF_abort <= spill_case_abort(3);
+                           KO_abort <= spill_case_abort(3);
+                           spill_abort_HWInterlock(0) <= '0';
+                           spill_abort_HWInterlock(1) <= not spill_case_abort(3);
+
+        when others     => FQ_abort <=  '1';
+                           spill_armed <= "0000";
+                           RF_abort <= '1';
+                           KO_abort <= '1';
+                           spill_abort_HWInterlock <= (others => '0');
+      end case;
+
+    end  process Userstation_select;
+
+    FQ_rst   <= spill_case_rst(0) or spill_case_rst(1) or spill_case_rst(2)  or spill_case_rst(3) ;
+
+    TS_abort <= '0' when ((spill_case_abort = "1111") or  (KO_abort = '1')) else '1';
+
+quench_test_all : quench_detection
+    Port map( clk => clk_sys,
+              nReset => rstn_sys,
+              time_pulse => Ena_Every_1us,
+              delay => AW_Config1(0),
+              QuDIn => Deb60_in(24 downto 0),
+              --mute => "1"&X"FFFFFC",
+              mute => IOBP_Masken_Reg2 (9 downto 0) & IOBP_Masken_Reg1 (14 downto 0) ,
+              QuDOut => quench_out(0));
+
+Quench_Matrix_Gen:  for J in 1 to 3 generate
+    quench_test : quench_detection
+        Port map( clk => clk_sys,
+                  nReset => rstn_sys,
+                  time_pulse => Ena_Every_1us,
+                  delay => AW_Config1(J),
+                  QuDIn => Deb60_in(24 downto 0),
+                  --mute => "1"&X"FFFFFC",
+                  mute => (IOBP_Masken_Reg2 (9 downto 0) & IOBP_Masken_Reg1 (14 downto 0)) or not (quench_enable_signal(J) ) ,
+                  QuDOut => quench_out(J));
+end generate Quench_Matrix_Gen;
+
 
 --  +============================================================================================================================+
 --  |                                          Anwender-IO: Out16  -- FG901_010                                                  |
@@ -3775,22 +3988,31 @@ In16_LED_Lemo_Out: led_n
 
 --------- Puls als Strobe (1 Clock breit) --------------------
 
-p_In16_ADC_Strobe_Start:  PROCESS (clk_sys, rstn_sys, In16_ADC_Strobe_i)
+p_In16_ADC_Strobe_Pulse:  PROCESS (clk_sys, rstn_sys, In16_ADC_Strobe_i)
   BEGin
     IF not rstn_sys  = '1' THEN
       In16_ADC_shift  <= (OTHERS => '0');
-      In16_ADC_Strobe_o    <= '0';
+      In16_ADC_Strobe_pulse    <= '0';
 
     ELSIF rising_edge(clk_sys) THEN
       In16_ADC_shift <= (In16_ADC_shift(In16_ADC_shift'high-1 downto 0) & (In16_ADC_Strobe_i));
 
       IF In16_ADC_shift(In16_ADC_shift'high) = '0' AND In16_ADC_shift(In16_ADC_shift'high-1) = '1' THEN
-        In16_ADC_Strobe_o <= '1';
+        In16_ADC_Strobe_pulse <= '1';
       ELSE
-        In16_ADC_Strobe_o <= '0';
+        In16_ADC_Strobe_pulse <= '0';
       END IF;
     END IF;
-  END PROCESS p_In16_ADC_Strobe_Start;
+  END PROCESS p_In16_ADC_Strobe_Pulse;
+
+
+  IN16_ADC_Strobe: outpuls port map(nReset   => rstn_sys,
+                                   CLK      => clk_sys,
+                                   Cnt_ena  => '1',
+                                   Start    => (In16_ADC_Strobe_pulse),
+                                   Base_cnt => C_Strobe_100ns,
+                                   Mult_cnt => Wert_Strobe_2_Hoch_n(In16_ADC_Strobe_Expo),
+                                   Sign_Out => In16_ADC_Strobe_o);
 
 
 p_In16_ADC_FF:
@@ -6512,20 +6734,71 @@ BEGIN
 
 --################################ Outputs AND Maske ##################################
 --
---                                                    MaskenBit=0 --> Enable
-    IOBP_Output(1)  <= (AW_Output_Reg(1)( 0) AND not IOBP_Masken_Reg5( 0));  -- Output von Slave 1
-    IOBP_Output(2)  <= (AW_Output_Reg(1)( 1) AND not IOBP_Masken_Reg5( 1));  -- Output von Slave 2
-    IOBP_Output(3)  <= (AW_Output_Reg(1)( 2) AND not IOBP_Masken_Reg5( 2));  -- Output von Slave 3
-    IOBP_Output(4)  <= (AW_Output_Reg(1)( 3) AND not IOBP_Masken_Reg5( 3));  -- Output von Slave 4
-    IOBP_Output(5)  <= (AW_Output_Reg(1)( 4) AND not IOBP_Masken_Reg5( 4));  -- Output von Slave 5
-    IOBP_Output(6)  <= (AW_Output_Reg(1)( 5) AND not IOBP_Masken_Reg5( 5));  -- Output von Slave 6
-    IOBP_Output(7)  <= (AW_Output_Reg(1)( 6) AND not IOBP_Masken_Reg5( 6));  -- Output von Slave 7
-    IOBP_Output(8)  <= (AW_Output_Reg(1)( 7) AND not IOBP_Masken_Reg5( 7));  -- Output von Slave 8
-    IOBP_Output(9)  <= (AW_Output_Reg(1)( 8) AND not IOBP_Masken_Reg5( 8));  -- Output von Slave 9
-    IOBP_Output(10) <= (AW_Output_Reg(1)( 9) AND not IOBP_Masken_Reg5( 9));  -- Output von Slave 10
-    IOBP_Output(11) <= (AW_Output_Reg(1)(10) AND not IOBP_Masken_Reg5(10));  -- Output von Slave 11
-    IOBP_Output(12) <= (AW_Output_Reg(1)(11) AND not IOBP_Masken_Reg5(11));  -- Output von Slave 12
+    case AW_Config2 is
 
+    when x"ABDE" => --SPILL ABORT Development
+    --Spill Abort Matrix
+     --+------+------------+------------+----------+----------+---+---+---+----------+-----------+-----------+----+----+
+     --| Slot |      1     |      2     |     3    |     4    | 5 | 6 | 7 |     8    |     9     |     10    | 11 | 12 |
+     --+------+------------+------------+----------+----------+---+---+---+----------+-----------+-----------+----+----+
+     --|      |            | DIOB       |          |          |   |   |   |          |           |           |         |
+     --+------+------------+------------+----------+----------+---+---+---+----------+ Interlock | Interlock |         |
+     --|      |                            DIOB Backplane                            | userpin 0 | userpin 1 |         |
+     --+------+------------+------------+----------+----------+---+---+---+----------+           |           |         |
+     --| IN1  | Cave A     | Cave M     |          |          |   |   |   |          |           |           |         |
+     --|      | abort req. | abort req. |          |          |   |   |   |          |           |           |         |
+     --|      | IN_Reg0.0  | IN_Reg0.5  |          |          |   |   |   |          |           |           |         |
+     --|      | In0        | In5        |          |          |   |   |   |          |           |           |         |
+     --+------+------------+------------+----------+----------+---+---+---+----------+           |           |         |
+     --| IN2  | Cave A     | Cave M     |          |          |   |   |   |          |           |           |         |
+     --|      | pause      | pause      |          |          |   |   |   |          |           |           |         |
+     --|      | IN_Reg0.1  | IN_Reg0.6  |          |          |   |   |   |          |           |           |         |
+     --|      | In1        | In6        |          |          |   |   |   |          |           |           |         |
+     --+------+------------+------------+----------+----------+---+---+---+----------+           |           |         |
+     --| IN3  | FRS        | HADES      |          |          |   |   |   |          |           |           |         |
+     --|      | abort req. | abort req. |          |          |   |   |   |          |           |           |         |
+     --|      | IN_Reg0.2  | In_Reg0.7  |          |          |   |   |   |          |           |           |         |
+     --|      | In2        | In7        |          |          |   |   |   |          |           |           |         |
+     --+------+------------+------------+----------+----------+---+---+---+----------+           |           |         |
+     --| IN4  |            |            |          |          |   |   |   |          |           |           |         |
+     --+------+------------+------------+----------+----------+---+---+---+----------+           |           |         |
+     --| IN5  |            |            |          |          |   |   |   |          |           |           |         |
+     --+------+------------+------------+----------+----------+---+---+---+----------+           |           |         |
+     --| OUT  | FQ_Abort   | FQ_Reset   | RF_Abort | KO_Abort |   |   |   | TS_Abort |           |           |         |
+     --+------+------------+------------+----------+----------+---+---+---+----------+-----------+-----------+---------+
+
+      spill_req <=  Deb60_in(7) & Deb60_in(2) & Deb60_in(5) & Deb60_in(0);
+      spill_pause <= "00" & Deb60_in(6) & Deb60_in(1);
+      IOBP_Output <= "0000" & TS_Abort & "000" & KO_abort & RF_abort  & FQ_rst & FQ_abort;
+
+      UIO_Out(0)    <= spill_abort_HWI_out(0);
+      UIO_Out(1)    <= spill_abort_HWI_out(1);
+      UIO_ENA(1 downto 0)    <=  (others => '1');                  -- Output-Enable
+
+    when x"DEDE" => --Quench Detection Development
+      IOBP_Output <= "0000000" & quench_out(3) & quench_out(0) & quench_out (2) & quench_out (1) & quench_out(0);
+      quench_enable_signal(1) <= quench_reg (1) (9 downto 0) &  quench_reg (0) (14 downto 0);
+      quench_enable_signal(2) <= quench_reg (3) (9 downto 0) &  quench_reg (2) (14 downto 0);
+      quench_enable_signal(3) <= quench_reg (5) (9 downto 0) &  quench_reg (4) (14 downto 0);
+      quench_enable_signal(4) <= quench_reg (7) (9 downto 0) &  quench_reg (6) (14 downto 0);
+
+
+    when OTHERS =>
+    --  STANDARD OUTPUT OUTREG
+--                                                    MaskenBit=0 --> Enable
+      IOBP_Output(1)  <= (AW_Output_Reg(1)( 0) AND not IOBP_Masken_Reg5( 0));  -- Output von Slave 1
+      IOBP_Output(2)  <= (AW_Output_Reg(1)( 1) AND not IOBP_Masken_Reg5( 1));  -- Output von Slave 2
+    IOBP_Output(3)  <= (AW_Output_Reg(1)( 2) AND not IOBP_Masken_Reg5( 2));  -- Output von Slave 3
+      IOBP_Output(4)  <= (AW_Output_Reg(1)( 3) AND not IOBP_Masken_Reg5( 3));  -- Output von Slave 4
+      IOBP_Output(5)  <= (AW_Output_Reg(1)( 4) AND not IOBP_Masken_Reg5( 4));  -- Output von Slave 5
+      IOBP_Output(6)  <= (AW_Output_Reg(1)( 5) AND not IOBP_Masken_Reg5( 5));  -- Output von Slave 6
+      IOBP_Output(7)  <= (AW_Output_Reg(1)( 6) AND not IOBP_Masken_Reg5( 6));  -- Output von Slave 7
+      IOBP_Output(8)  <= (AW_Output_Reg(1)( 7) AND not IOBP_Masken_Reg5( 7));  -- Output von Slave 8
+      IOBP_Output(9)  <= (AW_Output_Reg(1)( 8) AND not IOBP_Masken_Reg5( 8));  -- Output von Slave 9
+      IOBP_Output(10) <= (AW_Output_Reg(1)( 9) AND not IOBP_Masken_Reg5( 9));  -- Output von Slave 10
+      IOBP_Output(11) <= (AW_Output_Reg(1)(10) AND not IOBP_Masken_Reg5(10));  -- Output von Slave 11
+      IOBP_Output(12) <= (AW_Output_Reg(1)(11) AND not IOBP_Masken_Reg5(11));  -- Output von Slave 12
+    end case;
 
 
 --################################ Aktiv-Led's ##################################
@@ -6858,20 +7131,26 @@ BEGIN
 
     In16_ADC_Data_FF_i(15 DOWNTO 0)    <=  In16_Input(15 downto 0);  -- Input zum Daten-Input_FF
 
-    IF  (AW_Config1(1) = '0')  THEN  In16_ADC_Strobe_i <=  NOT In16_Strobe; -- pos. Flanke vom Strobe (Default)
-                               Else  In16_ADC_Strobe_i <=      In16_Strobe; -- neg. Flanke vom Strobe
+    IF  (AW_Config2(5) = '0')  THEN  In16_ADC_Strobe_i <=    NOT In16_Strobe; -- pos. Flanke vom Strobe (Default)
+                               Else  In16_ADC_Strobe_i <=        In16_Strobe; -- neg. Flanke vom Strobe
     END IF;
 
 
  --################################         Input-Mode     ##################################
 
-    IF  (AW_Config1(0) = '0')  THEN                                       -- 0 = Input-Mode
+    CASE (AW_Config2(6)) is
+        when '0' =>                                       -- 0 = Input-Mode
       AW_Input_Reg(2)(15 DOWNTO 0)  <=  In16_Input(15 DOWNTO 0);          -- Daten-Input  Deb/Syn
       AW_Input_Reg(1)(0)            <=  In16_Strobe;                      -- Strobe-Input Deb/Syn
-    ELSE
+        when '1' =>
       AW_Input_Reg(2)(15 DOWNTO 0)  <=  In16_ADC_Data_FF_o(15 DOWNTO 0);  -- Daten aus dem Input-Register
       AW_Input_Reg(1)(0)            <=  In16_ADC_Strobe_o;                -- Daten-Strobe für die Input-Daten
-    END IF;
+--        when OTHERS =>
+--      AW_Input_Reg(2)(15 DOWNTO 0)  <=  In16_Input(15 DOWNTO 0);          -- Daten-Input  Deb/Syn
+--      AW_Input_Reg(1)(0)            <=  In16_Strobe;                      -- Strobe-Input Deb/Syn
+    END CASE;
+
+    In16_ADC_Strobe_Expo  <=  (to_integer(unsigned(AW_Config2)(4 downto 2)));  -- Multiplikationswert für 100ns aus Wertetabelle 2^n
 
 
     --################################### Output-Enable ##################################
@@ -7209,12 +7488,3 @@ END PROCESS p_AW_MUX;
 
 
 end architecture;
-
-
-
-
-
-
-
-
-
