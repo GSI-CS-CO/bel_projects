@@ -13,6 +13,7 @@ Make will take care of all submodules and additional toolchains.
 ```
 make
 ```
+Important: Please don't mess around using the "git submodule --fancy option" command!
 
 # Kernel Drivers
 This will build VME and PCI(e) drivers.
@@ -86,6 +87,14 @@ In case a simple "make" does not fix this:
 ```
 apt-get install python-setuptools
 ./install-hdlmake.sh
+```
+
+### Error (23035): Tcl error: couldn't execute "qsys-generate": no such file or directory
+Adjust your PATH variable like this:
+```
+export QUARTUS=/opt/quartus/
+export QSYS_ROOTDIR=$QUARTUS/sopc_builder/bin
+export PATH=$PATH:$QUARTUS_ROOTDIR:$QSYS_ROOTDIR
 ```
 
 ## JTAG and Programming
