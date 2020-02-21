@@ -143,6 +143,7 @@ typedef enum
    SCUBUS_INVALID_INDEX16 = (SCUBUS_SLAVE_ADDR_SPACE / sizeof(uint16_t))
 } SCUBUS_ADDR_OFFSET_T;
 
+#define POWER_UP_IRQ      0x0001
 
 /* Deprecated defines */
 #define CID_SYS           0x4
@@ -307,6 +308,19 @@ void scuBusSetSlaveValue16( void* pAbsSlaveAddr, const unsigned int index,
    SCUBUS_ASSERT( ((unsigned int)pAbsSlaveAddr % sizeof(uint16_t)) == 0 ); // At least 2 bytes alignment assumed!
 
    ((uint16_t* volatile)pAbsSlaveAddr)[index] = value;
+}
+
+/*! ---------------------------------------------------------------------------
+ * @brief Returns the pointer of the interrupt active register of the given
+ *        SCU-bus slave.
+ * @param pScuBusBase Base-address of SU-bus.
+ * @param slot Slave- respectively slot- number of slave.
+ */
+static inline
+uint16_t* volatile scuBusGetInterruptActiveFlagRegPtr( const void* pScuBusBase,
+                                                     const unsigned int slot )
+{
+   return &((uint16_t*)scuBusGetAbsSlaveAddr( pScuBusBase, slot ))[Intr_Active];
 }
 
 /*! ---------------------------------------------------------------------------

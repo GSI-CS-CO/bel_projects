@@ -22,6 +22,63 @@ extern volatile uint16_t*           g_pScub_base;
  */
 extern volatile FG_MESSAGE_BUFFER_T g_aMsg_buf[QUEUE_CNT];
 
+STATIC void feedAdacFg( FG_REGISTER_T* pFgRegs )
+{
+   FG_PARAM_SET_T pset;
+
+   if( !cbRead( &g_shared.fg_buffer[0], &g_shared.fg_regs[0], pFgRegs->cntrl_reg.bv.number, &pset ) )
+   {
+      hist_addx(HISTORY_XYZ_MODULE, "buffer empty, no parameter sent", pFgRegs->cntrl_reg.bv.number);
+      return;
+   }
+   //TODO.....
+
+
+   
+}
+
+/*! ---------------------------------------------------------------------------
+ * @ingroup TASK
+ * @brief Handles a ADAC-FG
+ * @param slot SCU-bus slot number respectively slave number.
+ * @param fgAddrOffset Relative address offset of the concerning FG-macro
+ *                     till now FG1_BASE or FG2_BASE.
+ */
+STATIC void handleAdacFg( const unsigned int slot,
+                          const unsigned int fgAddrOffset )
+{
+#if 1
+   int dummy;
+   handleMacros( slot, fgAddrOffset, 0, &dummy );
+#else
+   FG_REGISTER_T* pFgRegs = getFgRegisterPtrByOffsetAddr( (void*)g_pScub_base,
+                                                          slot, fgAddrOffset );
+   const unsigned int channel = pFgRegs->cntrl_reg.bv.number;
+   if( channel >= ARRAY_SIZE( g_shared.fg_regs ) )
+   {
+      mprintf( ESC_ERROR"%s: Channel of ADAC FG out of range: %d\n"ESC_NORMAL,
+               __func__, channel );
+      return;
+   }
+
+   g_shared.fg_regs[channel].ramp_count =  pFgRegs->ramp_cnt_low;
+   g_shared.fg_regs[channel].ramp_count |= pFgRegs->ramp_cnt_high << BIT_SIZEOF( uint16_t );
+
+   if( pFgRegs->cntrl_reg.bv.isRunning )
+   {
+      if( pFgRegs->cntrl_reg.bv.dataRequest )
+         makeStart( channel );
+      sendRefillSignalIfThreshold( channel );
+      int dummy;
+      send_fg_param( slot, fgAddrOffset, pFgRegs->cntrl_reg.i16, &dummy );
+   }
+   else
+   {
+      makeStop( channel );
+   }
+#endif
+}
+
 /*! ---------------------------------------------------------------------------
  * @ingroup TASK
  * @brief task definition of scu_bus_handler
@@ -48,34 +105,36 @@ void scu_bus_handler( register TASK_T* pThis FG_UNUSED )
       return;
    }
 
-   const uint16_t slv_int_act_reg = g_pScub_base[OFFS(slave_nr) + SLAVE_INT_ACT];
-   uint16_t       slave_acks      = 0;
+   uint16_t* volatile  pIntActive =
+     scuBusGetInterruptActiveFlagRegPtr( (const void*)g_pScub_base, slave_nr );
+   uint16_t  flagsToReset = 0;
 
-   if( (slv_int_act_reg & 0x1) != 0 )
-   {// powerup interrupt
-      slave_acks |= 0x1;
+   if( (*pIntActive & POWER_UP_IRQ) != 0 )
+   {
+      flagsToReset |= POWER_UP_IRQ;
    }
 
-   int dummy;
-   if( (slv_int_act_reg & FG1_IRQ) != 0 )
-   { //FG irq?
-      handleMacros( slave_nr, FG1_BASE, 0, &dummy );
-      slave_acks |= FG1_IRQ;
+   //int dummy;
+   if( (*pIntActive & FG1_IRQ) != 0 )
+   {
+      handleAdacFg( slave_nr, FG1_BASE );
+      flagsToReset |= FG1_IRQ;
    }
 
-   if( (slv_int_act_reg & FG2_IRQ) != 0 )
-   { //FG irq?
-      handleMacros( slave_nr, FG2_BASE, 0, &dummy );
-      slave_acks |= FG2_IRQ;
+   if( (*pIntActive & FG2_IRQ) != 0 )
+   {
+      handleAdacFg( slave_nr, FG2_BASE );
+      flagsToReset |= FG2_IRQ;
    }
 
-   if( (slv_int_act_reg & DREQ) != 0 )
-   { //DRQ irq?
+#ifdef CONFIG_MIL_FG
+   if( (*pIntActive & DREQ) != 0 )
+   {
       add_msg( &g_aMsg_buf[0], DEVSIO, m );
-      slave_acks |= DREQ;
+      flagsToReset |= DREQ;
    }
-
-   g_pScub_base[OFFS(slave_nr) + SLAVE_INT_ACT] = slave_acks; // ack all pending irqs
+#endif
+   *pIntActive = flagsToReset;
 }
 
 

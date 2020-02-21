@@ -347,7 +347,7 @@ void disable_channel( const unsigned int channel )
  *  @param channel number of the channel from 0 to MAX_FG_CHANNELS-1
  * @see enable_scub_msis
  */
-STATIC void disable_slave_irq( const unsigned int channel )
+void disable_slave_irq( const unsigned int channel )
 {
    if( channel >= MAX_FG_CHANNELS )
       return;
@@ -492,7 +492,7 @@ STATIC void send_fg_param( const unsigned int socket,
  * @see handleMacros
  * @param channel Channel of concerning function generator.
  */
-STATIC void sendRefillSignalIfThreshold( const unsigned int channel )
+void sendRefillSignalIfThreshold( const unsigned int channel )
 {
    if( cbgetCount( &g_shared.fg_regs[0], channel ) == THRESHOLD )
    {
@@ -501,29 +501,6 @@ STATIC void sendRefillSignalIfThreshold( const unsigned int channel )
    }
 }
 
-/*! ---------------------------------------------------------------------------
- * @brief Helper function of function handleMacros().
- * @see handleMacros
- */
-STATIC inline void makeStop( const unsigned int channel )
-{
-   sendSignal( cbisEmpty( &g_shared.fg_regs[0], channel )?
-                                                      IRQ_DAT_STOP_EMPTY :
-                                                      IRQ_DAT_STOP_NOT_EMPTY,
-               channel );
-   disable_slave_irq( channel );
-   g_shared.fg_regs[channel].state = STATE_STOPPED;
-}
-
-/*! ---------------------------------------------------------------------------
- * @brief Helper function of function handleMacros().
- * @see handleMacros
- */
-STATIC inline void makeStart( const unsigned int channel )
-{
-   g_shared.fg_regs[channel].state = STATE_ACTIVE;
-   sendSignal( IRQ_DAT_START, channel ); // fg has received the tag or brc message
-}
 
 /*! ---------------------------------------------------------------------------
  * @see scu_main.h

@@ -202,6 +202,39 @@ STATIC_ASSERT( sizeof( FG_REGISTER_T ) == 12 * sizeof( uint16_t ));
  */
 #endif
 
+/*! --------------------------------------------------------------------------
+ * @brief Returns the relative offset address of the register set of a
+ *        function generator macro.
+ * @param number Number of functions generator macro till now 0 or 1.
+ * @return Relative offset address in uint16_t alignment.
+ */
+static inline
+unsigned int getFgOffsetAddress( const unsigned int number )
+{
+   static const unsigned int fgAddrTab[] = { FG1_BASE, FG2_BASE };
+   FG_ASSERT( number < ARRAY_SIZE( fgAddrTab ) );
+   return fgAddrTab[ number ];
+}
+
+/*! ---------------------------------------------------------------------------
+ * @brief Returns the pointer of the register structure of a
+ *        SCU-bus function generator by its relative offset address.
+ * @param pScuBusBase Base address of SCU bus.
+ *                    Obtained by find_device_adr(GSI, SCU_BUS_MASTER);
+ * @param slot Slot number, valid range 1 .. MAX_SCU_SLAVES (12)
+ * @param fgOffset Relative offset address of function generator macro
+ *        till now FG1_BASE and FG2_BASE only.
+ */
+static inline
+FG_REGISTER_T* getFgRegisterPtrByOffsetAddr( const void* pScuBusBase,
+                                             const unsigned int slot,
+                                             const unsigned int fgOffset )
+{
+   return (FG_REGISTER_T*)
+          &(((uint16_t*)scuBusGetAbsSlaveAddr( pScuBusBase, slot ))[fgOffset]);
+
+}
+
 /*! ---------------------------------------------------------------------------
  * @brief Returns the pointer of the register structure of a
  *        SCU-bus function generator.
@@ -213,13 +246,12 @@ STATIC_ASSERT( sizeof( FG_REGISTER_T ) == 12 * sizeof( uint16_t ));
  * @see FG_REGISTER_T
  */
 static inline
-FG_REGISTER_T* getFgRegister( const void* pScuBusBase,
-                              const unsigned int slot,
-                              const unsigned int number )
+FG_REGISTER_T* getFgRegisterPtr( const void* pScuBusBase,
+                                 const unsigned int slot,
+                                 const unsigned int number )
 {
-   return (FG_REGISTER_T*)
-           &(((uint16_t*)scuBusGetAbsSlaveAddr( pScuBusBase, slot ))
-              [(number == 0)? FG1_BASE : FG2_BASE]);
+   return getFgRegisterPtrByOffsetAddr( pScuBusBase, slot,
+                                                 getFgOffsetAddress( number ));
 }
 
 /*! ---------------------------------------------------------------------------
@@ -235,7 +267,7 @@ FG_CTRL_RG_T* getFgCntrlRegPtr( const void* pScuBusBase,
                                 const unsigned int slot,
                                 const unsigned int number )
 {
-   return &getFgRegister( pScuBusBase, slot, number )->cntrl_reg;
+   return &getFgRegisterPtr( pScuBusBase, slot, number )->cntrl_reg;
 }
 
 
@@ -299,6 +331,46 @@ typedef struct
    uint32_t param_sent;   /*!<@brief Sent counter */
    int32_t  last_c_coeff; /*!<@brief Value of last C-coefficient of polynomial */
 } FG_CHANNEL_T;
+
+/*! ---------------------------------------------------------------------------
+ * @brief disables the generation of irqs for the specified channel
+ *  SIO and MIL extension stop generating irqs
+ *  @param channel number of the channel from 0 to MAX_FG_CHANNELS-1
+ * @see enable_scub_msis
+ */
+void disable_slave_irq( const unsigned int channel );
+
+/*! ---------------------------------------------------------------------------
+ * @brief Send signal REFILL to the SAFTLIB when the fifo level has
+ *        the threshold reached. Helper function of function handleMacros().
+ * @see handleMacros
+ * @param channel Channel of concerning function generator.
+ */
+void sendRefillSignalIfThreshold( const unsigned int channel );
+
+/*! ---------------------------------------------------------------------------
+ * @brief Helper function of function handleMacros().
+ * @see handleMacros
+ */
+STATIC inline void makeStop( const unsigned int channel )
+{
+   sendSignal( cbisEmpty( &g_shared.fg_regs[0], channel )?
+                                                      IRQ_DAT_STOP_EMPTY :
+                                                      IRQ_DAT_STOP_NOT_EMPTY,
+               channel );
+   disable_slave_irq( channel );
+   g_shared.fg_regs[channel].state = STATE_STOPPED;
+}
+
+/*! ---------------------------------------------------------------------------
+ * @brief Helper function of function handleMacros().
+ * @see handleMacros
+ */
+STATIC inline void makeStart( const unsigned int channel )
+{
+   g_shared.fg_regs[channel].state = STATE_ACTIVE;
+   sendSignal( IRQ_DAT_START, channel ); // fg has received the tag or brc message
+}
 
 /*! ---------------------------------------------------------------------------
  * @brief Prints a error message happened in the device-bus respectively
