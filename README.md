@@ -13,6 +13,7 @@ Make will take care of all submodules and additional toolchains.
 ```
 make
 ```
+Important: Please don't mess around using the "git submodule --fancy option" command!
 
 # Kernel Drivers
 This will build VME and PCI(e) drivers.
