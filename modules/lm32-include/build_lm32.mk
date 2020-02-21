@@ -39,9 +39,9 @@ PKG += "package ramsize_pkg is\n"
 PKG += "  constant c_lm32_ramsizes : natural := $(CONFIG_RAMSIZE);\n"
 PKG += "end ramsize_pkg;\n"
 
-GCC_PATH  = $(shell which 'lm32-elf-gcc')
-GCC_BUILD = $(shell strings $(GCC_PATH) | grep /share/locale | grep -oP 'lm32-gcc-\K.*' | cut -d'/' -f1)
-GCC_VER   := `lm32-elf-gcc --version | grep gcc`
+GCC_PATH  = $(shell which $(CC))
+GCC_BUILD = $(shell strings $(GCC_PATH) /dev/null | grep /share/locale | grep -oP 'lm32-gcc-\K.*' | cut -d'/' -f1)
+GCC_VER   := `$(CC) --version | grep gcc`
 CBR_GCC   = "$(GCC_VER) " (build " $(GCC_BUILD)")""
 
 VERSION  ?= "1.0.0"
@@ -49,7 +49,6 @@ CBR_DATE := `date +"%a %b %d %H:%M:%S %Z %Y"`
 CBR_USR  := `git config user.name`
 CBR_MAIL := `git config user.email`
 CBR_HOST := `hostname`
-#CBR_GCC  := `lm32-elf-gcc --version | grep gcc`
 CBR_FLGS := $(CFLAGS)
 CBR_KRNL := `uname -mrs`
 CBR_OS   := `lsb_release -d -s | tr -d '"'` 
