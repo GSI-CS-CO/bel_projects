@@ -48,6 +48,7 @@ modules = {
     "stub_pll",
     "temp_sens",
     "beam_dump",
-    "daq"
+    "daq",
+    "diob"
   ]
 }
