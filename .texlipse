@@ -1,0 +1,14 @@
+#TeXlipse project settings
+#Mon Feb 17 15:55:20 CET 2020
+outputDir=ip_cores/etherbone-core/spec/
+markDer=true
+mainTexFile=spec.tex
+bibrefDir=
+builderNum=2
+outputFile=spec.pdf
+makeIndSty=
+srcDir=ip_cores/etherbone-core/spec/
+markTmpDer=true
+tempDir=ip_cores/etherbone-core/spec
+outputFormat=pdf
+langSpell=
