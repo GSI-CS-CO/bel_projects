@@ -88,6 +88,14 @@ apt-get install python-setuptools
 ./install-hdlmake.sh
 ```
 
+### Error (23035): Tcl error: couldn't execute "qsys-generate": no such file or directory
+Adjust your PATH variable like this:
+```
+export QUARTUS=/opt/quartus/
+export QSYS_ROOTDIR=$QUARTUS/sopc_builder/bin
+export PATH=$PATH:$QUARTUS_ROOTDIR:$QSYS_ROOTDIR
+```
+
 ## JTAG and Programming
 ### Altera/Intel USB Blaster
 
