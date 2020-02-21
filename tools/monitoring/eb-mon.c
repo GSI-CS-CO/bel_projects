@@ -27,7 +27,7 @@
 //  but WITHOUT ANY WARRANTY; without even the implied warranty of
 //  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 //  Lesser General Public License for more details.
-//  
+//
 //  You should have received a copy of the GNU Lesser General Public
 //  License along with this library. If not, see <http://www.gnu.org/licenses/>.
 //
@@ -556,7 +556,7 @@ int main(int argc, char** argv) {
       strftime(timestr, sizeof(timestr), "%Y-%m-%d %H:%M:%S %Z", tm);
       
       if (verbose) fprintf(stdout, "Current TAI: ");
-      fprintf(stdout, "%s (%3lu us)", timestr, usecs64 - secs * 1000000);
+      fprintf(stdout, "%s (%llu us)", timestr, usecs64 - secs * 1000000);
       fprintf(stdout, ", %"PRIu64" us\n", nsecs64 / 1000);
     }
   } // if getWRDate
