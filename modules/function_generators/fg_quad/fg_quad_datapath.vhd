@@ -85,14 +85,14 @@ constant c_freq_cnt: int_array := (
 
 
 constant c_freq_cnt_acu: int_array := (
-                                    (CLK_in_Hz / 2000000/4) - 2,
-                                    (CLK_in_Hz / 1000000/4) - 2,
-                                    (CLK_in_Hz /  500000/4)  -2,
-                                    (CLK_in_Hz /  250000/4) - 2,
-                                    (CLK_in_Hz /  125000/4) - 2,
-                                    (CLK_in_Hz /   64000/4) - 2,
-                                    (CLK_in_Hz /   32000/4) - 2,
-                                    (CLK_in_Hz /   16000/4) - 2
+                                    (CLK_in_Hz / 2000000/(CLK_in_Hz/25000000)) - 2,
+                                    (CLK_in_Hz / 1000000/(CLK_in_Hz/25000000)) - 2,
+                                    (CLK_in_Hz /  500000/(CLK_in_Hz/25000000))  -2,
+                                    (CLK_in_Hz /  250000/(CLK_in_Hz/25000000)) - 2,
+                                    (CLK_in_Hz /  125000/(CLK_in_Hz/25000000)) - 2,
+                                    (CLK_in_Hz /   64000/(CLK_in_Hz/25000000)) - 2,
+                                    (CLK_in_Hz /   32000/(CLK_in_Hz/25000000)) - 2,
+                                    (CLK_in_Hz /   16000/(CLK_in_Hz/25000000)) - 2
                                     );
 
 
