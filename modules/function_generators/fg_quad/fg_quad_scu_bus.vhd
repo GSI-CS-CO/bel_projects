@@ -12,7 +12,7 @@ entity fg_quad_scu_bus is
     clk_in_hz:            integer := 50_000_000;        -- 50Mhz
     diag_on_is_1:         integer range 0 to 1 := 0;    -- if 1 then diagnosic information is generated during compilation
     fw_version:           integer range 0 to 65535 := 4;
-    ACU:                  boolean := false
+    ACU:                  boolean := true
     );
   port (
     -- SCUB interface
