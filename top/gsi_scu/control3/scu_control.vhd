@@ -528,6 +528,8 @@ begin
   naux_sfp_grn    <= 'Z';
   naux_sfp_red    <= 'Z';
   s_leds(1)       <= s_led_pps;
+  s_leds(2)       <= 'Z';
+  s_leds(3)       <= 'Z';
 
 
   mil_extension_leds:PROCESS (
