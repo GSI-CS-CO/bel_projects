@@ -22,20 +22,79 @@ extern volatile uint16_t*           g_pScub_base;
  */
 extern volatile FG_MESSAGE_BUFFER_T g_aMsg_buf[QUEUE_CNT];
 
-STATIC void feedAdacFg( FG_REGISTER_T* pFgRegs )
+extern FG_CHANNEL_T           g_aFgChannels[MAX_FG_CHANNELS];
+
+//#pragma GCC push_options
+//#pragma GCC optimize("O0")
+/*! ---------------------------------------------------------------------------
+ * @brief Supplies an  ADAC- function generator with data.
+ * @param pThis Pointer to the concerning FG-macro register set.
+ * @todo Finding the cause why this function works only when macro "__I" is
+ *       defined and remove the access by index variant as soon as possible!
+ *       This really dirty!!!! I know.... :-(
+ */
+STATIC inline void feedAdacFg( FG_REGISTER_T* pThis )
 {
    FG_PARAM_SET_T pset;
 
-   if( !cbRead( &g_shared.fg_buffer[0], &g_shared.fg_regs[0], pFgRegs->cntrl_reg.bv.number, &pset ) )
+   if( !cbRead( &g_shared.fg_buffer[0], &g_shared.fg_regs[0],
+                pThis->cntrl_reg.bv.number, &pset ) )
    {
-      hist_addx(HISTORY_XYZ_MODULE, "buffer empty, no parameter sent", pFgRegs->cntrl_reg.bv.number);
+      hist_addx( HISTORY_XYZ_MODULE, "buffer empty, no parameter sent",
+                 pThis->cntrl_reg.bv.number );
       return;
    }
-   //TODO.....
 
+   FG_CTRL_RG_T controlReg;
+   controlReg.i16 = pThis->cntrl_reg.i16 & ~(0xfc07); // clear freq, step select, fg_running and fg_enabled
+   controlReg.i16 |= ((pset.control & 0x38) << 10) | ((pset.control & 0x7) << 10);
 
-   
+#define __I
+
+#ifdef __I
+   ((uint16_t volatile *) pThis)[FG_CNTRL]
+#else
+   pThis->cntrl_reg.i16
+#endif
+      = controlReg.i16;
+
+#ifdef __I
+   ((uint16_t volatile *) pThis)[FG_A]
+#else
+   pThis->coeff_a_reg
+#endif
+      = pset.coeff_a;
+
+#ifdef __I
+   ((uint16_t volatile *) pThis)[FG_B]
+#else
+   pThis->coeff_b_reg
+#endif
+      = pset.coeff_b;
+
+#ifdef __I
+   ((uint16_t volatile *) pThis)[FG_SHIFT]
+#else
+   pThis->shift_reg
+#endif
+      = (pset.control & 0x3ffc0) >> 6;
+
+#ifdef __I
+   ((uint16_t volatile *) pThis)[FG_STARTL]
+#else
+   pThis->start_l
+#endif
+      = pset.coeff_c & 0xffff;
+
+#ifdef __I
+   ((uint16_t volatile *) pThis)[FG_STARTH]
+#else
+   pThis->start_h
+#endif
+      = pset.coeff_c >> BIT_SIZEOF(int16_t);
+
 }
+//#pragma GCC pop_options
 
 /*! ---------------------------------------------------------------------------
  * @ingroup TASK
@@ -47,10 +106,6 @@ STATIC void feedAdacFg( FG_REGISTER_T* pFgRegs )
 STATIC void handleAdacFg( const unsigned int slot,
                           const unsigned int fgAddrOffset )
 {
-#if 1
-   int dummy;
-   handleMacros( slot, fgAddrOffset, 0, &dummy );
-#else
    FG_REGISTER_T* pFgRegs = getFgRegisterPtrByOffsetAddr( (void*)g_pScub_base,
                                                           slot, fgAddrOffset );
    const unsigned int channel = pFgRegs->cntrl_reg.bv.number;
@@ -69,14 +124,13 @@ STATIC void handleAdacFg( const unsigned int slot,
       if( pFgRegs->cntrl_reg.bv.dataRequest )
          makeStart( channel );
       sendRefillSignalIfThreshold( channel );
-      int dummy;
-      send_fg_param( slot, fgAddrOffset, pFgRegs->cntrl_reg.i16, &dummy );
+      feedAdacFg( pFgRegs );
+      g_aFgChannels[channel].param_sent++;
    }
    else
    {
       makeStop( channel );
    }
-#endif
 }
 
 /*! ---------------------------------------------------------------------------

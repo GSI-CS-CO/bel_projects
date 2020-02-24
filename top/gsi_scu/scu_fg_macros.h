@@ -26,17 +26,17 @@ typedef struct PACKED_SIZE
    /*!
     * @brief  Add frequency select: (wo) bit [15:13]
     */
-   uint16_t frequency_select: 3;
+   unsigned int frequency_select: 3;
 
    /*!
     * @brief step value M (wo) bit [12:10]
     */
-   uint16_t step:             3;
+   unsigned int step:             3;
 
    /*!
     * @brief virtual function generator number (wr) bit [9:4]
     */
-   uint16_t number:           6;
+   unsigned int number:           6;
 
    /*!
     * @brief Data request bit [3]

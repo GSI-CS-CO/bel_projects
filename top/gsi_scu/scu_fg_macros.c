@@ -408,7 +408,7 @@ STATIC_ASSERT( sizeof( short ) == sizeof( int16_t ) );
  *       May be its possible to store a full period in the DDR3 RAM.
  * @todo Split this in two separate functions: MIL and non-MIL.
  */
-STATIC void send_fg_param( const unsigned int socket,
+ void send_fg_param( const unsigned int socket,
                                   const unsigned int fg_base,
                                   const uint16_t cntrl_reg,
                                   signed int* pSetvalue )

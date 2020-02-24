@@ -8,6 +8,9 @@
  */
 
 #include "scu_temperature.h"
+#include "dow_crc.h"
+#include "w1.h"
+#include "dbg.h"
 
 /*!
  * @brief Object contains the base pointer of one wire connection
@@ -25,6 +28,52 @@ bool initOneWire( void )
    return false;
 }
 
+#define DEBUG
+
+/*! ---------------------------------------------------------------------------
+ * @todo for-loop is due to parameter pTemperature suspicious!
+ */
+void readTemperatureFromDevices( const int bus, uint64_t* pId, uint32_t* pTemperature )
+{
+   wrpc_w1_bus.detail = bus; // set the portnumber of the onewire controller
+   if( w1_scan_bus( &wrpc_w1_bus ) <= 0 )
+   {
+    #ifdef DEBUG
+      mprintf("no devices found on bus %d\n", wrpc_w1_bus.detail );
+    #endif
+      return;
+   }
+
+   for( unsigned int i = 0; i < W1_MAX_DEVICES; i++ )
+   {
+      struct w1_dev* pData = wrpc_w1_bus.devs + i;
+
+      if( pData->rom == 0 )
+         continue;
+      if(( calc_crc( (int)(pData->rom >> BIT_SIZEOF(uint32_t) ),
+                     (int)pData->rom)) != 0 )
+         continue;
+      #ifdef DEBUG
+      mprintf( "bus,device (%d,%d): 0x%08x%08x ",
+                wrpc_w1_bus.detail,
+                i, (int)(pData->rom >> BIT_SIZEOF(uint32_t)),
+                (int)pData->rom );
+      #endif
+      if( (char)pData->rom == 0x42 )
+      {
+         *pId = pData->rom;
+         int tvalue = w1_read_temp(pData, 0);
+         *pTemperature = (tvalue >> 12); //full precision with 1/16 degree C
+       #ifdef DEBUG
+         mprintf("temp: %dC", tvalue >> 16); //show only integer part for debug
+       #endif
+      }
+      #ifdef DEBUG
+      mprintf("\n");
+      #endif
+   }
+}
+
 /*! ---------------------------------------------------------------------------
  * @see scu_temperature.h
  */
@@ -36,11 +85,11 @@ void updateTemperature( void )
    #pragma GCC diagnostic push
    #pragma GCC diagnostic ignored "-Waddress-of-packed-member"
 #endif
-   ReadTempDevices( 0, &g_shared.board_id, &g_shared.board_temp );
+   readTemperatureFromDevices( 0, &g_shared.board_id, &g_shared.board_temp );
    BASE_ONEWIRE = g_oneWireBase.pUser;
    wrpc_w1_init();
-   ReadTempDevices( 0, &g_shared.ext_id,       &g_shared.ext_temp );
-   ReadTempDevices( 1, &g_shared.backplane_id, &g_shared.backplane_temp );
+   readTemperatureFromDevices( 0, &g_shared.ext_id,       &g_shared.ext_temp );
+   readTemperatureFromDevices( 1, &g_shared.backplane_id, &g_shared.backplane_temp );
 #if __GNUC__ >= 9
    #pragma GCC diagnostic pop
 #endif
