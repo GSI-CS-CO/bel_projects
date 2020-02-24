@@ -433,8 +433,8 @@ architecture rtl of monster is
   signal dev_msi_master_o : t_wishbone_master_out_array(c_dev_masters-1 downto 0);
 
   attribute keep                  : boolean;
-  signal sdb_dummy_top            : std_logic := 0;
-  signal sdb_dummy_dev            : std_logic := 0;
+  signal sdb_dummy_top            : std_logic := '0';
+  signal sdb_dummy_dev            : std_logic := '0';
   attribute keep of sdb_dummy_top : signal is true;
   attribute keep of sdb_dummy_dev : signal is true;
  
@@ -612,8 +612,8 @@ architecture rtl of monster is
   signal clk_dmtd         : std_logic;
 
   -- BuTiS T0 clocks
-  signal clk_butis_t0     : std_logic; -- 100KHz
-  signal clk_butis_t0_ts  : std_logic; -- 100KHz + timestamp
+  signal clk_butis_t0     : std_logic := '0'; -- 100KHz
+  signal clk_butis_t0_ts  : std_logic := '0'; -- 100KHz + timestamp
 
   signal pci_clk_global   : std_logic;
 
