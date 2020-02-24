@@ -1010,6 +1010,7 @@ begin
       phasestep          => phase_step,
       phaseupdown        => '1');
       clk_ref3 <= '0';
+      clk_ref4 <= '0';
   end generate;
 
   ref_a5 : if c_is_arria5 generate
