@@ -433,8 +433,8 @@ architecture rtl of monster is
   signal dev_msi_master_o : t_wishbone_master_out_array(c_dev_masters-1 downto 0);
 
   attribute keep                  : boolean;
-  signal sdb_dummy_top            : std_logic;
-  signal sdb_dummy_dev            : std_logic;
+  signal sdb_dummy_top            : std_logic := 0;
+  signal sdb_dummy_dev            : std_logic := 0;
   attribute keep of sdb_dummy_top : signal is true;
   attribute keep of sdb_dummy_dev : signal is true;
  
@@ -1009,6 +1009,7 @@ begin
       phasecounterselect => phase_sel(3 downto 0),
       phasestep          => phase_step,
       phaseupdown        => '1');
+      clk_ref3 <= '0';
   end generate;
 
   ref_a5 : if c_is_arria5 generate
@@ -1056,7 +1057,6 @@ begin
       outclk2       => clk_ref1,    -- 200 MHz
       outclk3       => clk_ref2);   --  25 MHz
       clk_ref3      <= '0';
-      clk_ref3      <=  '0';
   end generate;
 
   phase : altera_phase
