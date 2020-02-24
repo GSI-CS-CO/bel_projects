@@ -160,7 +160,7 @@ package monster_pkg is
       wr_uart_o              : out   std_logic;
       wr_uart_i              : in    std_logic := '1';
       -- SFP
-      sfp_tx_disable_o       : out   std_logic;
+      sfp_tx_disable_o       : out   std_logic := '0';
       sfp_tx_fault_i         : in    std_logic;
       sfp_los_i              : in    std_logic;
       phy_rx_ready_o         : out   std_logic;
