@@ -196,7 +196,7 @@ void main(void) {
     mprintf("#%02u: Priority Queue Debugmode ON, timestamps will be written to 0x%08x on receivers", cpuId, DEBUGPRIOQDST);
   #endif
   //mprintf("Found MsgBox at 0x%08x. MSI Path is 0x%08x\n", (uint32_t)pCpuMsiBox, (uint32_t)pMyMsi);
-  mprintf("#%02u: This is Doomsday DM FW %s \n", cpuId, DM_VERSION);
+  mprintf("#%02u: This is %s DM FW %s \n", cpuId, DM_RELEASE, DM_VERSION);
 
   atomic_off();
 
