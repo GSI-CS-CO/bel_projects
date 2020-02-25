@@ -276,10 +276,10 @@ std::pair<int, int> findRunningPattern(const std::string& sPattern); // get cpu 
 
 
             vEbwrs& startThr(vEbwrs& ew, uint8_t cpuIdx, uint8_t thrIdx); //Requests Thread to start
-            vEbwrs& startPattern(vEbwrs& ew, const std::string& sPattern, uint8_t thrIdx); //Requests Pattern to start
-            vEbwrs& startPattern(vEbwrs& ew, const std::string& sPattern); //Requests Pattern to start on first free thread
-            vEbwrs& startNodeOrigin(vEbwrs& ew, const std::string& sNode, uint8_t thrIdx); //Requests thread <thrIdx> to start at node <sNode>
-            vEbwrs& startNodeOrigin(vEbwrs& ew, const std::string& sNode); //Requests a start at node <sNode>
+            vEbwrs& startPattern(vEbwrs& ew, const std::string& sPattern, uint8_t thrIdx, uint64_t t=0ULL); //Requests Pattern to start
+            vEbwrs& startPattern(vEbwrs& ew, const std::string& sPattern, uint64_t t=0ULL); //Requests Pattern to start on first free thread
+            vEbwrs& startNodeOrigin(vEbwrs& ew, const std::string& sNode, uint8_t thrIdx, uint64_t t=0ULL); //Requests thread <thrIdx> to start at node <sNode>
+            vEbwrs& startNodeOrigin(vEbwrs& ew, const std::string& sNode, uint64_t t=0ULL); //Requests a start at node <sNode>
             vEbwrs& stopPattern(vEbwrs& ew, const std::string& sPattern); //Requests Pattern to stop
             vEbwrs& stopNodeOrigin(vEbwrs& ew, const std::string& sNode); //Requests stop at node <sNode> (vEbwrs& ew, flow to idle)
             vEbwrs& abortPattern(vEbwrs& ew, const std::string& sPattern); //Immediately aborts a Pattern

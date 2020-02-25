@@ -126,7 +126,7 @@ vEbwrs& CarpeDM::CarpeDMimpl::createCommand(vEbwrs& ew, const std::string& type,
 
     //Start is different to stop - start uses 'destination', stop uses target (entry node vs exit block)
     if (type == dnt::sCmdStart)   {
-      if (hm.lookup(destination)) {sLog << " Starting at <" << destination << ">" << std::endl; startNodeOrigin(ew, destination);  }
+      if (hm.lookup(destination)) {sLog << " Starting at <" << destination << ">" << std::endl; startNodeOrigin(ew, destination, cmdTvalid);  }
       else {throw std::runtime_error("Cannot execute command '" + type + "' No valid cpu/thr provided and '" + target + "' is not a valid node name\n");}
       return ew;
     }
@@ -724,9 +724,9 @@ int CarpeDM::CarpeDMimpl::getIdleThread(uint8_t cpuIdx) {
 }
 
 //Requests Pattern to start on thread <x>
-vEbwrs& CarpeDM::CarpeDMimpl::startPattern(vEbwrs& ew, const std::string& sPattern, uint8_t thrIdx) { return startNodeOrigin(ew, getPatternEntryNode(sPattern), thrIdx);}
+vEbwrs& CarpeDM::CarpeDMimpl::startPattern(vEbwrs& ew, const std::string& sPattern, uint8_t thrIdx, uint64_t t) { return startNodeOrigin(ew, getPatternEntryNode(sPattern), thrIdx, t);}
 //Requests Pattern to start
-vEbwrs& CarpeDM::CarpeDMimpl::startPattern(vEbwrs& ew, const std::string& sPattern) { return startNodeOrigin(ew, getPatternEntryNode(sPattern)); }
+vEbwrs& CarpeDM::CarpeDMimpl::startPattern(vEbwrs& ew, const std::string& sPattern, uint64_t t) { return startNodeOrigin(ew, getPatternEntryNode(sPattern), t); }
 
 //Requests Pattern to stop
 vEbwrs& CarpeDM::CarpeDMimpl::stopPattern(vEbwrs& ew, const std::string& sPattern) { return stopNodeOrigin(ew, getPatternExitNode(sPattern)); }
@@ -741,18 +741,21 @@ vEbwrs& CarpeDM::CarpeDMimpl::abortPattern(vEbwrs& ew, const std::string& sPatte
 
 
 //Requests thread <thrIdx> to start at node <sNode>
-vEbwrs& CarpeDM::CarpeDMimpl::startNodeOrigin(vEbwrs& ew, const std::string& sNode, uint8_t thrIdx) {
+vEbwrs& CarpeDM::CarpeDMimpl::startNodeOrigin(vEbwrs& ew, const std::string& sNode, uint8_t thrIdx, uint64_t t) {
   uint8_t cpuIdx    = getNodeCpu(sNode, TransferDir::DOWNLOAD);
   setThrOrigin(ew, cpuIdx, thrIdx, sNode); //configure thread and run it
+  setThrStartTime(ew, cpuIdx, thrIdx, t);
   startThr(ew, cpuIdx, thrIdx);
+  //sLog << "Started thread at cpuidx " << std::dec << cpuIdx << " thrIdx " << thrIdx << " @ 0x" << std::hex << cmdTvalid << std::endl;
   return ew;
 }
 //Requests a start at node <sNode>
-vEbwrs& CarpeDM::CarpeDMimpl::startNodeOrigin(vEbwrs& ew, const std::string& sNode) {
+vEbwrs& CarpeDM::CarpeDMimpl::startNodeOrigin(vEbwrs& ew, const std::string& sNode, uint64_t t) {
   uint8_t cpuIdx    = getNodeCpu(sNode, TransferDir::DOWNLOAD);
   int thrIdx = 0; //getIdleThread(cpuIdx); //find a free thread we can use to run our pattern
   if (thrIdx == _THR_QTY_) throw std::runtime_error( "Found no free thread on " + std::to_string(cpuIdx) + "'s hosting cpu");
   setThrOrigin(ew, cpuIdx, thrIdx, sNode); //configure thread and run it
+  setThrStartTime(ew, cpuIdx, thrIdx, t);
   startThr(ew, cpuIdx, (uint8_t)thrIdx);
   return ew;
 }
