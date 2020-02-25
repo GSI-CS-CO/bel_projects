@@ -16,7 +16,7 @@ TARGET         := scu_control
 DEFINES += CONFIG_FG_PEDANTIC_CHECK
 DEFINES += MICO32_FULL_CONTEXT_SAVE_RESTORE
 # ORIGIN := 1
-SCU_MIL := 1
+ SCU_MIL := 1
 MIL_GAP := 1
 BASE_VERSION = 3
 
@@ -30,7 +30,7 @@ ifdef ORIGIN
 else
   MIAN_MODULE    = $(SCU_DIR)/scu_main.c
   #MIAN_MODULE    = $(SCU_DIR)/scu_main_old_task.c
-  SCU_DAQ=1
+  # SCU_DAQ=1
   # MIL_DAQ_USE_DDR3=1
 endif
 
@@ -88,16 +88,16 @@ ifdef ORIGIN
 else
  SOURCE += $(SCU_DIR)/scu_function_generator.c
  SOURCE += $(SCU_DIR)/scu_circular_buffer.c
- SOURCE += $(SCU_DIR)/scu_eca_handler.c
  SOURCE += $(SCU_DIR)/scu_fg_macros.c
 ifdef SCU_MIL
+ SOURCE += $(SCU_LIB_SRC_DIR)/eca_queue_type.c
+ SOURCE += $(SCU_DIR)/scu_eca_handler.c
  SOURCE += $(SCU_DIR)/scu_mil.c
  SOURCE += $(SCU_DIR)/scu_mil_fg_handler.c
 endif
  SOURCE += $(SCU_DIR)/scu_fg_handler.c
  SOURCE += $(SCU_DIR)/scu_command_handler.c
  SOURCE += $(SCU_DIR)/scu_temperature.c
- SOURCE += $(SCU_LIB_SRC_DIR)/eca_queue_type.c
 endif
 SOURCE += $(SCU_DIR)/dow_crc.c
 ifdef USE_HISTORY
@@ -169,7 +169,7 @@ DOX_DOTFILE_DIRS           += $(SCU_DIR)
 include $(REPOSITORY_DIR)/makefiles/makefile.scu
 
 TESTFILE       ?= sinus-test.txt
-TARGETTEST_DIR ?= "/"
+TARGETTEST_DIR ?= /
 SLOT           ?= 4
 FG_NUM         ?= 0
 

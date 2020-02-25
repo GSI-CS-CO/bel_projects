@@ -34,6 +34,7 @@
 #include <scu_mil.h>
 #endif
 #include <mini_sdb.h>
+#include "scu_fg_macros.h"
 
 #define OFFS(SLOT) ((SLOT) * (1 << 16))
 
@@ -359,8 +360,8 @@ void init_buffers( FG_CHANNEL_REG_T* cr, const unsigned int channel,
       return; /* No */
 
 
-   const uint8_t socket = fg_macros[macro].socket;
-   const uint8_t dev    = fg_macros[macro].device;
+   const unsigned int socket = fg_macros[macro].socket;
+   const unsigned int dev    = fg_macros[macro].device;
 
    //reset hardware
 #ifdef CONFIG_MIL_FG
@@ -371,6 +372,7 @@ void init_buffers( FG_CHANNEL_REG_T* cr, const unsigned int channel,
    /* scub slave */
    if( isNonMilFg( socket ) )
    {
+#if 0
       if( dev == 0 )
       {
          scub_base[OFFS(socket) + FG1_BASE + FG_CNTRL] = 0x1; // reset fg
@@ -380,6 +382,9 @@ void init_buffers( FG_CHANNEL_REG_T* cr, const unsigned int channel,
       {
          scub_base[OFFS(socket) + FG2_BASE + FG_CNTRL] = 0x1; // reset fg
       }
+#else
+      getFgRegisterPtr( (void*)scub_base, socket, dev )->cntrl_reg.bv.reset = true;
+#endif
       return;
    }
 #ifdef CONFIG_MIL_FG

@@ -18,15 +18,17 @@
 extern "C" {
 #endif
 
+
 /*! ---------------------------------------------------------------------------
  * @ingroup TASK
- * @brief task definition of scu_bus_handler
- * called by the scheduler in the main loop
- * decides which action for a scu bus interrupt is suitable
- * @param pThis pointer to the current task object (not used)
- * @see schedule
+ * @brief Handles a ADAC-FG
+ * @param slot SCU-bus slot number respectively slave number.
+ * @param fgAddrOffset Relative address offset of the concerning FG-macro
+ *                     till now FG1_BASE or FG2_BASE.
  */
-void scu_bus_handler( register TASK_T* pThis FG_UNUSED );
+void handleAdacFg( const unsigned int slot,
+                   const unsigned int fgAddrOffset );
+
 
 #ifdef __cplusplus
 }

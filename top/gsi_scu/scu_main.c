@@ -25,11 +25,11 @@
 
 #include <stack.h>
 #include "scu_main.h"
-#include "scu_eca_handler.h"
 #include "scu_command_handler.h"
 #include "scu_fg_macros.h"
 #ifdef CONFIG_MIL_FG
-#include "scu_mil_fg_handler.h"
+ #include "scu_eca_handler.h"
+ #include "scu_mil_fg_handler.h"
 #endif
 #include "scu_fg_handler.h"
 #include "scu_temperature.h"
@@ -272,6 +272,7 @@ void scanFgs( void )
 
 /* task prototypes */
 #ifndef __DOXYGEN__
+static void scu_bus_handler( register TASK_T* pThis FG_UNUSED );
 #ifdef CONFIG_SCU_DAQ_INTEGRATION
 static void scuBusDaqTask( register TASK_T* FG_UNUSED );
 #endif
@@ -295,7 +296,9 @@ STATIC TASK_T g_aTasks[] =
    { &g_aMilTaskData[4], ALWAYS, 0, dev_bus_handler },
 #endif
    { NULL,               ALWAYS, 0, scu_bus_handler },
+#ifdef CONFIG_MIL_FG
    { NULL,               ALWAYS, 0, ecaHandler      },
+#endif
    { NULL,               ALWAYS, 0, commandHandler  }
 };
 
@@ -346,6 +349,64 @@ STATIC inline void schedule( void )
       pCurrent->lasttick = tick;
    }
 }
+
+/*! ---------------------------------------------------------------------------
+ * @ingroup TASK
+ * @brief task definition of scu_bus_handler
+ * called by the scheduler in the main loop
+ * decides which action for a scu bus interrupt is suitable
+ * @param pThis pointer to the current task object (not used)
+ * @see schedule
+ */
+STATIC void scu_bus_handler( register TASK_T* pThis FG_UNUSED )
+{
+   FG_ASSERT( pThis->pTaskData == NULL );
+
+   if( !has_msg( &g_aMsg_buf[0], SCUBUS ) )
+      return;
+
+   const MSI_T m = remove_msg( &g_aMsg_buf[0], SCUBUS );
+   if( m.adr != 0x0 )
+      return;
+
+   const uint32_t slave_nr = m.msg + 1;
+   if( slave_nr > MAX_SCU_SLAVES )
+   {
+      mprintf( ESC_ERROR"Slave nr %d unknown!\n"ESC_NORMAL, slave_nr );
+      return;
+   }
+
+   uint16_t* volatile  pIntActive =
+     scuBusGetInterruptActiveFlagRegPtr( (const void*)g_pScub_base, slave_nr );
+   uint16_t  flagsToReset = 0;
+
+   if( (*pIntActive & POWER_UP_IRQ) != 0 )
+   {
+      flagsToReset |= POWER_UP_IRQ;
+   }
+
+   if( (*pIntActive & FG1_IRQ) != 0 )
+   {
+      handleAdacFg( slave_nr, FG1_BASE );
+      flagsToReset |= FG1_IRQ;
+   }
+
+   if( (*pIntActive & FG2_IRQ) != 0 )
+   {
+      handleAdacFg( slave_nr, FG2_BASE );
+      flagsToReset |= FG2_IRQ;
+   }
+
+#ifdef CONFIG_MIL_FG
+   if( (*pIntActive & DREQ) != 0 )
+   {
+      add_msg( &g_aMsg_buf[0], DEVSIO, m );
+      flagsToReset |= DREQ;
+   }
+#endif
+   *pIntActive = flagsToReset;
+}
+
 
 #ifdef CONFIG_SCU_DAQ_INTEGRATION
 /*! ---------------------------------------------------------------------------
@@ -421,8 +482,8 @@ void main( void )
    mprintf("g_pScub_irq_base is:    0x%08x\n", g_pScub_irq_base);
 #ifdef CONFIG_MIL_FG
    mprintf("g_pMil_irq_base is:     0x%08x\n", g_pMil_irq_base);
-#endif
    initEcaQueue();
+#endif
 
    initAndScan(); // init and scan for fgs
 

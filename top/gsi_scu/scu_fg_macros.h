@@ -202,6 +202,39 @@ STATIC_ASSERT( sizeof( FG_REGISTER_T ) == 12 * sizeof( uint16_t ));
  */
 #endif
 
+/*!
+ * @ingroup PATCH
+ * @brief Base macro of macros ADAC_FG_ACCESS and MIL_FG_ACCESS:
+ * @note This is a patch! For still unknown reasons it's not possible making a
+ *       direct access via object member.\n
+ *       Doesn't matter which compiler version will used. (4.5.3 or 9.2.0)
+ * @todo Find the cause why this patch is necessary and remove it
+ *       if possible.
+ * @param TO Object type.
+ * @param TA Alignment type.
+ * @param p Pointer to the concerning object.
+ * @param m Name of member variable.
+ */
+#define __FG_ACCESS( TO, TA, p, m ) \
+   ((TA volatile *)p)[offsetof( TO, m ) / sizeof(TA)]
+
+/*!
+ * @ingroup PATCH
+ * @brief Patch macro which accomplishes the register access of a
+ *        ADAC function generator macro.
+ * @see __FG_ACCESS
+ * @param p Pointer to the concerning function generator register set.
+ * @param m Name of member variable.
+ * @code
+ * ADAC_FG_ACCESS( foo, bar ) = value;
+ * @endcode
+ * corresponds to
+ * @code
+ * foo->bar = value;
+ * @endcode
+ */
+#define ADAC_FG_ACCESS( p, m ) __FG_ACCESS( FG_REGISTER_T, uint16_t, p, m )
+
 /*! --------------------------------------------------------------------------
  * @brief Returns the relative offset address of the register set of a
  *        function generator macro.
