@@ -7,6 +7,7 @@ library work;
 use work.wishbone_pkg.all;
 use work.wb_irq_pkg.all;
 use work.dm_diag_auto_pkg.c_dm_diag_ctrl_sdb;
+use work.wb_timer_pkg.all;
 
 package ftm_pkg is
 
@@ -25,7 +26,7 @@ package ftm_pkg is
   function f_substr_start(s : string; idx : natural; p : character) return integer;
   function f_substr_end(s : string; idx : natural; p : character) return integer;
 
-  function f_lm32_slaves_req(g_size : natural; g_world_bridge_sdb : t_sdb_bridge; is_dm : boolean) return t_sdb_record_array;
+  function f_lm32_slaves_req(g_size : natural; g_world_bridge_sdb : t_sdb_bridge; is_dm : boolean; g_en_timer : boolean) return t_sdb_record_array;
   function f_lm32_masters_req return t_sdb_record_array;
 
   function f_lm32_masters_bridge_msis(cores : natural) return t_sdb_record_array;
@@ -68,6 +69,7 @@ package ftm_pkg is
     g_size                : natural := 65536;                 -- size of the dpram
     g_world_bridge_sdb    : t_sdb_bridge;                     -- record for superior bridge
     g_is_dm               : boolean := false;
+    g_en_timer            : boolean := false;
     g_profile             : string  := "medium_icache_debug"; -- lm32 profile
     g_init_file           : string);                    -- number of msi queues connected to the lm32
   port(
@@ -104,6 +106,7 @@ package ftm_pkg is
     g_ram_per_core      : natural := 32768/4;
     g_profiles          : string  := "medium_icache_debug";
     g_init_files        : string;
+    g_en_timer          : boolean := false;
     g_world_bridge_sdb  : t_sdb_bridge;   -- inferior sdb crossbar
     g_clu_msi_sdb       : t_sdb_msi    -- superior msi crossbar
   );
@@ -195,7 +198,7 @@ package ftm_pkg is
   end component;
 
    -- crossbar layout
-  constant c_lm32_slaves          : natural := 7;
+  constant c_lm32_slaves          : natural := 8;
   constant c_lm32_masters         : natural := 2;
 
   --indices
@@ -205,7 +208,8 @@ package ftm_pkg is
   constant c_lm32_sys_time        : natural := 3;
   constant c_lm32_atomic          : natural := 4;
   constant c_lm32_prioq           : natural := 5;
-  constant c_lm32_world_bridge    : natural := 6;
+  constant c_lm32_timer           : natural := 6;
+  constant c_lm32_world_bridge    : natural := 7;
 
   constant c_msi_lm32_real        : natural := 0; -- lm32 is no native MSI device, we have to hide its 2nd Master port
   constant c_msi_lm32_fake        : natural := 1;
@@ -496,7 +500,7 @@ package body ftm_pkg is
     return v_req;
   end f_lm32_masters_req;
 
-  function f_lm32_slaves_req(g_size : natural; g_world_bridge_sdb : t_sdb_bridge; is_dm : boolean)
+  function f_lm32_slaves_req(g_size : natural; g_world_bridge_sdb : t_sdb_bridge; is_dm : boolean; g_en_timer : boolean)
   return t_sdb_record_array is
     variable v_req :  t_sdb_record_array(c_lm32_slaves-1 downto 0);
   begin
@@ -506,6 +510,7 @@ package body ftm_pkg is
               c_lm32_sys_time           => f_sdb_auto_device(c_sys_time_sdb,        true),
               c_lm32_atomic             => f_sdb_auto_device(c_atomic_sdb,          true),
               c_lm32_prioq              => f_sdb_auto_device(c_pq_data_sdb,         is_dm),
+              c_lm32_timer              => f_sdb_auto_device(c_wb_timer_sdb,        g_en_timer),
               c_lm32_world_bridge       => f_sdb_embed_bridge(g_world_bridge_sdb,   x"80000000")
             );
     return v_req;

@@ -38,12 +38,14 @@ use ieee.numeric_std.all;
 use work.wishbone_pkg.all;
 use work.wb_irq_pkg.all;
 use work.ftm_pkg.all;
+use work.wb_timer_pkg.all;
 
 entity ftm_lm32 is
 generic(g_cpu_id              : t_wishbone_data := x"CAFEBABE";
         g_size                : natural := 65536;                 -- size of the dpram
         g_world_bridge_sdb    : t_sdb_bridge;                     -- record for superior bridge
         g_is_dm               : boolean := false;
+        g_en_timer            : boolean := false;
         g_profile             : string  := "medium_icache"; -- lm32 profile
         g_init_file           : string);                    -- number of msi queues connected to the lm32
 port(
@@ -79,7 +81,7 @@ architecture rtl of ftm_lm32 is
            s_sys_time,
            s_atomic            : t_wishbone_master_in;
 
-  constant c_lm32_req_slaves   : t_sdb_record_array(c_lm32_slaves-1 downto 0) 	:= f_lm32_slaves_req(g_size, g_world_bridge_sdb, g_is_dm);
+  constant c_lm32_req_slaves   : t_sdb_record_array(c_lm32_slaves-1 downto 0) 	:= f_lm32_slaves_req(g_size, g_world_bridge_sdb, g_is_dm, g_en_timer);
   constant c_lm32_req_masters  : t_sdb_record_array(c_lm32_masters-1 downto 0) 	:= f_lm32_masters_req;
 
   --FIXME: this is borderline and only works bevause this CB is the first in line. separate mastre and slave layout as done in the monster
@@ -185,6 +187,22 @@ begin
       slave1_o    => lm32_cb_master_in(c_lm32_ram),
       slave2_i    => ram_slave_i,
       slave2_o    => ram_slave_o);
+--******************************************************************************
+-- WB INTERVAL TIMER
+--******************************************************************************
+  timer_n : if not g_en_timer generate
+    lm32_cb_master_in(c_lm32_timer) <= cc_dummy_slave_out;
+  end generate;
+  timer_y : if g_en_timer generate
+     interval_tmr: wb_timer
+     generic map ( freq => 125_000_000)
+     port map (
+      clk_i  => clk_sys_i,
+      rst_n_i => rst_n_i,
+      slave_i => lm32_cb_master_out(c_lm32_timer),
+      slave_o => lm32_cb_master_in(c_lm32_timer),
+      irq_o   => s_irq(1));
+  end generate timer_y;
 
 --******************************************************************************
 -- MSI-IRQ -- reduce to 1 interface for now
@@ -203,7 +221,7 @@ begin
       ctrl_slave_o    => lm32_cb_master_in(c_lm32_msi_ctrl),
       ctrl_slave_i    => lm32_cb_master_out(c_lm32_msi_ctrl));
 
-   s_irq(31 downto 1) <= (others => '0');
+   s_irq(31 downto 2) <= (others => '0');
 
 
 --******************************************************************************

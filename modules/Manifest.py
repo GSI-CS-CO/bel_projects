@@ -47,6 +47,7 @@ modules = {
     "temp_sens",
     "beam_dump",
     "daq",
-    "diob"
+    "diob",
+    "wb_timer",
   ]
 }
