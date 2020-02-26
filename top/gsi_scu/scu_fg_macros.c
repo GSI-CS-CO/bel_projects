@@ -382,14 +382,6 @@ void disable_slave_irq( const unsigned int channel )
    //mprintf("IRQs for slave %d disabled.\n", socket);
 }
 
-/*! ---------------------------------------------------------------------------
- * @todo Replace this function by access via type FG_CTRL_RG_T
- * @see FG_CTRL_RG_T
- */
-STATIC inline unsigned int getFgNumberFromRegister( const uint16_t reg )
-{
-   return (reg >> 4) & 0x3F; // virtual fg number Bits 9..4
-}
 
 /*
  * Mil-library uses "short" rather than "uint16_t"! :-(
@@ -501,7 +493,7 @@ void sendRefillSignalIfThreshold( const unsigned int channel )
    }
 }
 
-
+#ifndef _CONFIG_NEW
 /*! ---------------------------------------------------------------------------
  * @see scu_main.h
  * @todo Split this in two separate functions: MIL and non-MIL.
@@ -576,5 +568,5 @@ void handleMacros( const unsigned int socket,
    } /* else of if isNonMilFg( socket ) */
 #endif /* CONFIG_MIL_FG */
 }
-
+#endif //_CONFIG_NEW
 /*================================== EOF ====================================*/

@@ -326,6 +326,125 @@ int milGetStatus( register MIL_TASK_DATA_T* pMilTaskData, const bool isScuBus,
                                 &pMilTaskData->aFgChannels[channel].irq_data );
 }
 
+#ifdef _CONFIG_NEW
+ void send_fg_param( const unsigned int socket,
+                                  const unsigned int fg_base,
+                                  const uint16_t cntrl_reg,
+                                  signed int* pSetvalue );
+/*! ---------------------------------------------------------------------------
+ * @brief Supplies the by "devNum" and "socket" addressed MIL function
+ *        generator with new data.
+ */
+STATIC inline void feedMilFg( const unsigned int socket,
+                              const unsigned int devNum,
+                              const FG_CTRL_RG_T cntrl_reg,
+                              signed int* pSetvalue )
+{
+#if 0
+   send_fg_param( socket, devNum, cntrl_reg.i16, pSetvalue );
+#else
+
+   const unsigned int channel = cntrl_reg.bv.number;
+   if( channel >= ARRAY_SIZE( g_aFgChannels ) )
+   {
+      mprintf( ESC_ERROR"FG-number %d out of range!"ESC_NORMAL"\n", channel );
+      return;
+   }
+
+   FG_PARAM_SET_T pset;
+   /*
+    * Reading circular buffer with new FG-data.
+    */
+   if( !cbRead( &g_shared.fg_buffer[0], &g_shared.fg_regs[0], channel, &pset ) )
+   {
+      hist_addx(HISTORY_XYZ_MODULE, "buffer empty, no parameter sent", socket);
+      return;
+   }
+
+   *pSetvalue = pset.coeff_c;
+
+   FG_MIL_REGISTER_T milFgRegs;
+   /*
+    * clear freq, step select, fg_running and fg_enabled
+    */
+   milFgRegs.cntrl_reg.i16    = (cntrl_reg.i16 & ~(0xfc07))   |
+                                ((pset.control & 0x38) << 10) |
+                                ((pset.control & 0x7)  << 10);
+   milFgRegs.coeff_a_reg      = pset.coeff_a;
+   milFgRegs.coeff_b_reg      = pset.coeff_b;
+   milFgRegs.shift_reg        = (pset.control & 0x3ffc0) >> 6;
+   milFgRegs.coeff_c_low_reg  = pset.coeff_c & 0xffff;
+   milFgRegs.coeff_c_high_reg = pset.coeff_c >> BIT_SIZEOF(int16_t);
+
+   int status;
+   #if __GNUC__ >= 9
+     #pragma GCC diagnostic push
+     #pragma GCC diagnostic ignored "-Waddress-of-packed-member"
+   #endif
+   if( isMilExtentionFg( socket ) )
+   {
+      status = write_mil_blk( g_pScu_mil_base, (short*)&milFgRegs,
+                              FC_BLK_WR | devNum );
+   }
+   else
+   {
+      status = scub_write_mil_blk( g_pScub_base, getFgSlotNumber( socket ),
+                                   (short*)&milFgRegs, FC_BLK_WR | devNum );
+   }
+   #if __GNUC__ >= 9
+     #pragma GCC diagnostic pop
+   #endif
+   if( status != OKAY )
+   {
+      printDeviceError( status, getFgSlotNumber( socket ), __func__ );
+      return;
+   }
+   g_aFgChannels[channel].param_sent++;
+
+#endif
+}
+
+/*! ---------------------------------------------------------------------------
+ * @brief Handling of a MIL function generator.
+ */
+STATIC inline
+void handleMilFg( const unsigned int socket,
+                  const unsigned int devNum,
+                  const uint16_t irq_act_reg,
+                  signed int* pSetvalue )
+{
+   FG_ASSERT( !isNonMilFg( socket ) );
+   const FG_CTRL_RG_T ctrlReg = { .i16 = irq_act_reg };
+   const unsigned int channel = ctrlReg.bv.number;
+   if( channel >= ARRAY_SIZE( g_shared.fg_regs ) )
+   {
+      mprintf( ESC_ERROR"%s: Channel out of range: %d\n"ESC_NORMAL, __func__, channel );
+      return;
+   }
+
+   if( !ctrlReg.bv.isRunning )
+   {
+      makeStop( channel );
+      return;
+   }
+
+   /*
+    * The hardware of the MIL function generators doesn't have a ramp-counter
+    * integrated, so this task will made by the software here.
+    */
+   g_shared.fg_regs[channel].ramp_count++;
+
+   if( ctrlReg.bv.devStateIrq )
+      makeStart( channel );
+
+   if( ctrlReg.bv.devStateIrq || ctrlReg.bv.devDrq )
+   {
+      sendRefillSignalIfThreshold( channel );
+      feedMilFg( socket, devNum, ctrlReg, pSetvalue );
+   }
+}
+#endif
+
 /*! ---------------------------------------------------------------------------
  * @ingroup MIL_FSM
  * @brief Writes data to the MIL function generator
@@ -341,8 +460,15 @@ int milHandleAndWrite( register MIL_TASK_DATA_T* pMilTaskData, const bool isScuB
 {
    FG_ASSERT( pMilTaskData->slave_nr != INVALID_SLAVE_NR );
    const unsigned int dev = getDevice( channel );
+#ifdef _CONFIG_NEW
+   handleMilFg( getSocket( channel ),
+                dev,
+                pMilTaskData->aFgChannels[channel].irq_data,
+                &(pMilTaskData->aFgChannels[channel].setvalue) );
+#else
    handleMacros( getSocket( channel ), dev, pMilTaskData->aFgChannels[channel].irq_data,
                                    &(pMilTaskData->aFgChannels[channel].setvalue) );
+#endif
 
    //clear irq pending and end block transfer
    if( isScuBus )

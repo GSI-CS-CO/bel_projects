@@ -72,6 +72,24 @@ STATIC_ASSERT( sizeof(FG_CTRL_RG_T_BV) == sizeof(uint16_t) );
 STATIC_ASSERT( (int)true == 1 );
 #endif
 
+#ifdef CONFIG_MIL_FG
+/*!
+ * @ingroup ALIAS
+ * @brief Alias name for member of control register in MIL-function generator
+ * @see FG_CTRL_RG_T_BV::reset
+ */
+
+#define devDrq      reset
+
+/*!
+ * @ingroup ALIAS
+ * @brief Alias name for member of control register in MIL-function generator
+ * @see FG_CTRL_RG_T_BV::enable
+ */
+#define devStateIrq enable
+
+#endif /* ifdef CONFIG_MIL_FG */
+
 /*!
  * @brief Access wrapper avoiding suspicious cast operations.
  */
@@ -235,6 +253,21 @@ STATIC_ASSERT( sizeof( FG_REGISTER_T ) == 12 * sizeof( uint16_t ));
  */
 #define ADAC_FG_ACCESS( p, m ) __FG_ACCESS( FG_REGISTER_T, uint16_t, p, m )
 
+/*! ---------------------------------------------------------------------------
+ * @todo Replace this function by access via type FG_CTRL_RG_T
+ * @see FG_CTRL_RG_T
+ */
+STATIC inline unsigned int getFgNumberFromRegister( const uint16_t reg )
+{
+#if 1
+   return (reg >> 4) & 0x3F; // virtual fg number Bits 9..4
+#else
+   const FG_CTRL_RG_T ctrlReg = { .i16 = reg };
+   return ctrlReg.bv.number;
+#endif
+}
+
+
 /*! --------------------------------------------------------------------------
  * @brief Returns the relative offset address of the register set of a
  *        function generator macro.
@@ -321,7 +354,7 @@ typedef struct PACKED_SIZE
     * A 16 bit value that needs to be written once after each data
     * request interrupt.
     */
-   volatile uint16_t coeff_a_reg;
+   volatile int16_t coeff_a_reg;
 
    /*!
     * @brief linear value 'b' [r/w]
@@ -329,7 +362,7 @@ typedef struct PACKED_SIZE
     * A 16 bit value that needs to be written once after each data
     * request interrupt.
     */
-   volatile uint16_t coeff_b_reg;
+   volatile int16_t coeff_b_reg;
 
    /*!
     * @brief scale factor for value 'a' [r/w]
@@ -346,13 +379,39 @@ typedef struct PACKED_SIZE
    /*!
     * @brief C coefficient high value
     */
-   volatile uint16_t coeff_c_high_reg;
+   volatile int16_t coeff_c_high_reg;
 
 } FG_MIL_REGISTER_T;
 
 #ifndef __DOXYGEN__
-STATIC_ASSERT( sizeof( FG_MIL_REGISTER_T ) == 6 * sizeof(uint16_t) );
+STATIC_ASSERT( offsetof( FG_MIL_REGISTER_T, cntrl_reg )        == 0 * sizeof(uint16_t) );
+STATIC_ASSERT( offsetof( FG_MIL_REGISTER_T, coeff_a_reg )      == 1 * sizeof(uint16_t) );
+STATIC_ASSERT( offsetof( FG_MIL_REGISTER_T, coeff_b_reg )      == 2 * sizeof(uint16_t) );
+STATIC_ASSERT( offsetof( FG_MIL_REGISTER_T, shift_reg )        == 3 * sizeof(uint16_t) );
+STATIC_ASSERT( offsetof( FG_MIL_REGISTER_T, coeff_c_low_reg )  == 4 * sizeof(uint16_t) );
+STATIC_ASSERT( offsetof( FG_MIL_REGISTER_T, coeff_c_high_reg ) == 5 * sizeof(uint16_t) );
+STATIC_ASSERT( sizeof( FG_MIL_REGISTER_T ) == MIL_BLOCK_SIZE * sizeof(short) );
 #endif
+
+/*!
+ * @ingroup PATCH
+ * @brief Patch macro which accomplishes the register access of a
+ *        ADAC function generator macro.
+ * @see __FG_ACCESS
+ * @param p Pointer to the concerning function generator register set.
+ * @param m Name of member variable.
+ * @code
+ * MIL_FG_ACCESS( foo, bar ) = value;
+ * @endcode
+ * corresponds to
+ * @code
+ * foo->bar = value;
+ * @endcode
+ */
+#define MIL_FG_ACCESS( p, m ) __FG_ACCESS( FG_MIL_REGISTER_T, uint16_t, p, m )
+
+
+
 #endif /* CONFIG_MIL_FG */
 
 /*! ---------------------------------------------------------------------------
@@ -431,6 +490,7 @@ int configure_fg_macro( const unsigned int channel );
  */
 void disable_channel( const unsigned int channel );
 
+#ifndef _CONFIG_NEW
 /*! ---------------------------------------------------------------------------
  *  @brief Decide how to react to the interrupt request from the function
  *         generator macro.
@@ -444,6 +504,7 @@ void handleMacros( const unsigned int socket,
                    const unsigned int fg_base,
                    const uint16_t irq_act_reg,
                    signed int* pSetvalue );
+#endif //_CONFIG_NEW
 
 #ifdef __cplusplus
 }
