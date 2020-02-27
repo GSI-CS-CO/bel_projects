@@ -40,5 +40,28 @@
  */
 #define SHARED __attribute__((section(".shared")))
 
+/*! ---------------------------------------------------------------------------
+ * @ingroup HELPER_MACROS
+ * @ingroup PATCH
+ * @brief Base macro for accessing to wishbone devices via member of device
+ *        objects.
+ * @note This is a patch! For still unknown reasons it's not possible making a
+ *       direct access via object member.\n
+ *       Doesn't matter which compiler version will used. (4.5.3 or 9.2.0)
+ * @todo Find the cause why this patch is necessary and remove it
+ *       if possible.
+ * @param TO Object type.
+ * @param TA Alignment type.
+ * @param p Pointer to the concerning object.
+ * @param m Name of member variable.
+ */
+#define __WB_ACCESS( TO, TA, p, m ) \
+   ((TA volatile *)p)[offsetof( TO, m ) / sizeof(TA)]
+
+/*! -------------------------------------------------------------------------
+ * @brief Performs no operation! Wasting of one clock cycle.
+ */
+#define NOP() asm volatile ( "nop" )
+
 #endif /* ifndef _SCU_LM32_MACROS_H */
 /*================================== EOF ====================================*/

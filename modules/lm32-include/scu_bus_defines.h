@@ -42,11 +42,15 @@
    #define SCUBUS_ASSERT(__e) ((void)0)
 #endif
 
+
+
 #ifdef __cplusplus
 extern "C" {
 namespace Scu
 {
 #endif
+
+
 
 /*!
  * @ingroup SCU_BUS
