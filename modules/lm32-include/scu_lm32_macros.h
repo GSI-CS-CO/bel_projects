@@ -43,7 +43,7 @@
 /*! ---------------------------------------------------------------------------
  * @ingroup HELPER_MACROS
  * @ingroup PATCH
- * @brief Base macro for accessing to wishbone devices via member of device
+ * @brief Base macro for accessing to wishbone devices via members of device
  *        objects.
  * @note This is a patch! For still unknown reasons it's not possible making a
  *       direct access via object member.\n
@@ -58,7 +58,19 @@
 #define __WB_ACCESS( TO, TA, p, m ) \
    ((TA volatile *)p)[offsetof( TO, m ) / sizeof(TA)]
 
-/*! -------------------------------------------------------------------------
+/*! ---------------------------------------------------------------------------
+ * @ingroup HELPER_MACROS
+ * @ingroup PATCH
+ * @brief Base Macro for accessing SCU-bus slaves via members of device
+ *        objects
+ * @see __WB_ACCESS
+ * @param TO Object type.
+ * @param p Pointer to the concerning object.
+ * @param m Name of member variable.
+ */
+#define __SCU_BUS_ACCESS( TO, p, m ) __WB_ACCESS( TO, uint16_t, p, m )
+
+/*! ---------------------------------------------------------------------------
  * @brief Performs no operation! Wasting of one clock cycle.
  */
 #define NOP() asm volatile ( "nop" )
