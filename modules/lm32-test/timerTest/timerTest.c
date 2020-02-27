@@ -20,15 +20,9 @@
  * License along with this library. If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************
  */
-
-
-/* Due to the lack of a timer interrupt, this work cannot be completed. */
-
 #include <stdbool.h>
 #include "eb_console_helper.h"
-#include "mini_sdb.h"
-#include "helper_macros.h"
-#include "lm32Timer.h"
+#include "scu_lm32Timer.h"
 #include "lm32Interrupts.h"
 
 volatile uint32_t pxCurrentTCB = 0;
@@ -40,6 +34,11 @@ volatile uint32_t pxCurrentTCB = 0;
    asm volatile ( "wcsr ie, %0"::"r"(ie) ); \
 }
 
+#define portDISABLE_INTERRUPTS() asm volatile ("wcsr   ie, r0");
+
+#define configCPU_CLOCK_HZ   (USRCPUCLK * 1000)
+
+
 static inline void init( void )
 {
    discoverPeriphery(); // mini-sdb: get info on important Wishbone infrastructure
@@ -50,41 +49,34 @@ volatile static unsigned int g_count = 0;
 
 static void onTimerInterrupt( const unsigned int intNum, const void* pContext )
 {
+   mprintf( "%s( %d, 0x%x ), count: %d\n", __func__, intNum, (unsigned int)pContext, g_count );
    g_count++;
-   ((LM32_TIMER_T*)pContext)->status = 0;
+   mprintf( "Period: %d\n", lm32TimerGetPeriod( (SCU_LM32_TIMER_T*)pContext ) );
+  // lm32TimerDisable( (SCU_LM32_TIMER_T*)pContext );
+   //lm32TimerSetPeriod( (SCU_LM32_TIMER_T*)pContext, configCPU_CLOCK_HZ );
 }
 
-#define TIMER_IRQ_ 0
+volatile uint32_t* wb_timer_base   = 0;
 
-int main( void )
+void main( void )
 {
    init();
    mprintf( "Timer IRQ test\nCompiler: " COMPILER_VERSION_STRING "\n" );
+   mprintf( "CPU frequency: %d Hz\n", configCPU_CLOCK_HZ );
    unsigned int oldCount = g_count - 1;
 
-   volatile LM32_TIMER_T* pTimer = (LM32_TIMER_T*) find_device_adr( GSI, CPU_TIMER_CTRL_IF );
+   SCU_LM32_TIMER_T* pTimer = lm32TimerGetWbAddress();
    if( (unsigned int)pTimer == ERROR_NOT_FOUND )
    {
       mprintf( ESC_ERROR "ERROR: Timer not found!\n" ESC_NORMAL );
       while( true );
    }
 
-   pTimer->control = TIMER_CONTROL_STOP_BIT_MASK;
-   pTimer->status  = 0;
+   mprintf( "Timer found at wishbone base address 0x%x\n", (unsigned int)pTimer );
 
-
-   mprintf( "pTimerCtrl = 0x%x\n", (unsigned int)pTimer );
-
-   registerISR( TIMER_IRQ_, (void*)pTimer, onTimerInterrupt );
-
-   pTimer->period = USRCPUCLK;
-
-   /* start the timer                               */
-   pTimer->control = TIMER_CONTROL_START_BIT_MASK |
-                     TIMER_CONTROL_INT_BIT_MASK   |
-                     TIMER_CONTROL_CONT_BIT_MASK;
-
-   enableSpecificInterrupt( TIMER_IRQ_ );
+   lm32TimerSetPeriod( pTimer, configCPU_CLOCK_HZ );
+   lm32TimerEnable( pTimer );
+   registerISR( TIMER_IRQ, (void*)pTimer, onTimerInterrupt );
    portENABLE_INTERRUPTS();
 
    while( true )
@@ -93,9 +85,13 @@ int main( void )
       {
          mprintf( "C: %d\n", g_count );
          oldCount = g_count;
+         if( oldCount == 10 )
+         {
+          //  portDISABLE_INTERRUPTS();
+            disableSpecificInterrupt( TIMER_IRQ );
+         }
       }
    }
-   return 0;
 }
 
 /*================================== EOF ====================================*/
