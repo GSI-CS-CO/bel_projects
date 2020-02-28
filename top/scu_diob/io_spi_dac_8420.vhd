@@ -342,8 +342,15 @@ P_Adr_Deco:	process (nReset, clk)
 P_DAC_IO:	process (nReset, clk)
 	begin
 		if nReset = '0' then
-			S_DAC_IO <= (others => (others => '0'));
-		
+    -- KK Default 2.5V um Fehlfunktion (Trigger auf Null Volt) zu unterdruecken
+		  S_DAC_IO(0) <=  "0000110000000000";
+		  S_DAC_IO(1) <=  "0000110000000000";
+		  S_DAC_IO(2) <=  "0000110000000000";
+		  S_DAC_IO(3) <=  "0000110000000000";
+		  S_DAC_IO(4) <=  "0000110000000000";
+		  S_DAC_IO(5) <=  "0000110000000000";
+		  S_DAC_IO(6) <=  "0000110000000000";
+		  S_DAC_IO(7) <=  "0000110000000000";
 		elsif rising_edge(clk) then
 			if S_DAC_IO_1_Wr = '1' then	S_DAC_IO(0) <= Data_from_SCUB_LA;
 			end if;
