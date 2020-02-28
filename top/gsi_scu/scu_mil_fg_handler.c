@@ -341,13 +341,15 @@ STATIC inline void feedMilFg( const unsigned int socket,
                               signed int* pSetvalue )
 {
 #if 0
+#warning "Function send_fg_param still used by MIL access"
    send_fg_param( socket, devNum, cntrl_reg.i16, pSetvalue );
 #else
 
    const unsigned int channel = cntrl_reg.bv.number;
    if( channel >= ARRAY_SIZE( g_aFgChannels ) )
    {
-      mprintf( ESC_ERROR"FG-number %d out of range!"ESC_NORMAL"\n", channel );
+      mprintf( ESC_ERROR"%s: FG-number %d out of range!"ESC_NORMAL"\n",
+               __func__, channel );
       return;
    }
 
@@ -387,7 +389,9 @@ STATIC inline void feedMilFg( const unsigned int socket,
                               FC_BLK_WR | devNum );
    }
    else
-   {
+   {  /*
+       * Send FG-data via SCU-bus-slave MIL adapter "SIO"
+       */
       status = scub_write_mil_blk( g_pScub_base, getFgSlotNumber( socket ),
                                    (short*)&milFgRegs, FC_BLK_WR | devNum );
    }
@@ -418,7 +422,8 @@ void handleMilFg( const unsigned int socket,
    const unsigned int channel = ctrlReg.bv.number;
    if( channel >= ARRAY_SIZE( g_shared.fg_regs ) )
    {
-      mprintf( ESC_ERROR"%s: Channel out of range: %d\n"ESC_NORMAL, __func__, channel );
+      mprintf( ESC_ERROR"%s: Channel out of range: %d\n"ESC_NORMAL,
+               __func__, channel );
       return;
    }
 
