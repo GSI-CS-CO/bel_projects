@@ -36,6 +36,8 @@ ENTITY tag_ctrl IS
     Max_AWOut_Reg_Nr:     in   integer range 0 to 7;           -- Maximale AWOut-Reg-Nummer der Anwendung
     Max_AWIn_Reg_Nr:      in   integer range 0 to 7;           -- Maximale AWIn-Reg-Nummer der Anwendung
     
+    Tag_matched_7_0:      out  std_logic_vector(7 downto 0);   -- Active on matched Tags for one clock period after match, one bit for each tag unit
+    
     Tag_Maske_Reg:        out  t_IO_Reg_1_to_7_Array;          -- Tag-Output-Maske für Register 1-7
     Tag_Outp_Reg:         out  t_IO_Reg_1_to_7_Array;          -- Tag-Output-Maske für Register 1-7
 
@@ -80,7 +82,9 @@ COMPONENT tag_n
     SCU_AW_Input_Reg:       in    t_IO_Reg_1_to_7_Array;            -- 
     Spare0_Strobe:          in    std_logic;                        -- 
     Spare1_Strobe:          in    std_logic;                        -- 
-      
+
+    Tag_matched:            out  std_logic;                         -- Tag_matched is high for one clock pulse on matching Tags 
+    
     Tag_n_Reg_Nr:           out   integer range 0 to 7;             -- AWOut-Reg-Pointer
     Tag_n_New_AWOut_Data:   out   boolean;                          -- AWOut-Reg. werden mit AWOut_Reg_Array-Daten überschrieben
     Tag_n_Maske_Hi_Bits:    out  std_logic_vector(15 downto 0);   -- Maske für "High-Aktive" Bits im Ausgangs-Register
@@ -600,6 +604,9 @@ Tag:  for N in 0 to 7 generate
         Max_AWIn_Reg_Nr       =>    Max_AWIn_Reg_Nr,          -- Maximale AWIn-Reg-Nummer der Anwendung
         Spare0_Strobe         =>    Spare0_Strobe,            -- 
         Spare1_Strobe         =>    Spare1_Strobe,            -- 
+          
+        Tag_matched           =>    Tag_matched_7_0(N),   
+          
           
         Tag_n_Reg_Nr          =>    Reg_Nr_Tag(N),            -- AWOut-Reg-Pointer 
         Tag_n_New_AWOut_Data  =>    New_AWOut_Data_Tag(N),    -- AWOut-Reg. werden mit AWOut_Reg_Array-Daten überschrieben

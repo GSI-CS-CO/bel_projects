@@ -1,5 +1,7 @@
 --TITLE "'tag_n' Autor: R.Hartmann, Stand: 19.06.2015, Vers: V01 ";
 
+-- KK: added tag_matched pulse for really fast response for ATR use
+
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
@@ -31,7 +33,9 @@ ENTITY tag_n IS
     Max_AWIn_Reg_Nr:       in   integer range 0 to 7;           -- Maximale AWIn-Reg-Nummer der Anwendung
     Spare0_Strobe:         in   std_logic;                        -- 
     Spare1_Strobe:         in   std_logic;                        -- 
-      
+
+    Tag_matched:           out  std_logic;                       -- Tag_matched is high for one clock pulse on matching Tags 
+    
     Tag_n_Reg_Nr:          out  integer range 0 to 7;            -- AWOut-Reg-Pointer
     Tag_n_New_AWOut_Data:  out  boolean;                         -- AWOut-Reg. werden mit AWOut_Reg_Array-Daten überschrieben
     Tag_n_Maske_Hi_Bits:   out  std_logic_vector(15 downto 0);   -- Maske für "High-Aktive" Bits im Ausgangs-Register
@@ -269,6 +273,8 @@ P_Tag_Deco:  process (clk, nReset,
 ---------------------------------------------------------- TAG 'n' ---------------------------------------------------------
       case sm_state is
         when sm_idle  =>      if ((Timing_Pattern_RCV = '1') and (Timing_Pattern_LA(31 downto 0) = (Tag_n_hw & Tag_n_lw))) then
+        
+                                  Tag_matched           <= '1';
 
                                   Tag_AWOut_Reg_Nr      <= to_integer(unsigned(Tag_n_Register)(2 downto 0));     -- Output-Reg. Nr. 0..7         
                                   Tag_FG_Start          <= Tag_n_Register(3);                                     -- Start-Flag für FG         
@@ -287,7 +293,9 @@ P_Tag_Deco:  process (clk, nReset,
                                 sm_state <= sm_idle;
                               end if;
 
-        when sm_trigger =>      CASE Tag_Trig_Mux is
+        when sm_trigger =>      
+                              Tag_matched                <= '0';  
+                              CASE Tag_Trig_Mux is
                                 WHEN "001"   =>  To_Start     <= '1';            -- Start Timeout-Counter
                                                  sm_state     <= sm_trig_S0;     -- Trigger mit Spare0   
                                 WHEN "010"   =>  To_Start     <= '1';            -- Start Timeout-Counter
