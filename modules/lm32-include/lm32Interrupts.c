@@ -24,6 +24,7 @@
 #include <helper_macros.h>
 
 /*!
+ * @ingroup INTERRUPT
  * @brief ISR entry type
  */
 typedef struct
@@ -33,51 +34,74 @@ typedef struct
 } ISR_ENTRY_T;
 
 /*!
+ * @ingroup INTERRUPT
  * @brief  ISREntry table
  */
 static ISR_ENTRY_T ISREntryTable[MAX_LM32_INTERRUPTS] = {{NULL, NULL}};
 
 /*! ---------------------------------------------------------------------------
+ * @ingroup INTERRUPT OVERWRITABLE
+ * @brief Returns the interrupt flag mask calculated by the given
+ *        interrupt number
+ * @note It's possible to overwrite this function for the case
+ *       that the standard interrupt priority will changed.
+ * @param intNum Interrupt number.
+ * @return Interrupt pending mask.
+ */
+__attribute__((weak))
+uint32_t _getInterruptPendingMask( const unsigned int intNum )
+{
+   return (1 << intNum);
+}
+
+/*! ---------------------------------------------------------------------------
+ * @ingroup INTERRUPT
  * @brief General Interrupt Handler (invoked by low-level routine in portasm.S)
  *
  * If an interrupt-handler exists for the relevant interrupt (as detected
  * from "ip" and "im" cpu registers), then invoke the handler else disable the
  * interrupt in the register "im".
  */
-void ISRHandler( void )
+void _irq_entry( void )
 {
    uint32_t ip, im;
-   /* Read the Interrupt Mask register */
+   /*
+    * Read the Interrupt Mask register
+    */
    asm volatile ( "rcsr %0, im" :"=r"(im) );
 
    while( true )
    {
-      /* Read the Interrupt Pending register */
+      /*
+       * Read the Interrupt Pending register
+       */
       asm volatile ( "rcsr %0, ip" :"=r"(ip) );
       ip &= im;
       if( ip == 0 ) /* No interrupt pending? */
-         break; /* Yes, life the function */
+         return; /* Yes, life the function */
 
       for( unsigned int intNum = 0; intNum < ARRAY_SIZE( ISREntryTable ); intNum++ )
       {
-         const uint32_t mask = (1 << intNum);
-         if( (mask & ip) != 0 )
+         const uint32_t mask = _getInterruptPendingMask( intNum );
+         if( (mask & ip) == 0 )
+            continue;
+
+         const ISR_ENTRY_T* pCurrentInt = &ISREntryTable[intNum];
+         if( pCurrentInt->Callback != NULL )
          {
-            const ISR_ENTRY_T* pCurrentInt = &ISREntryTable[intNum];
-            if( pCurrentInt->Callback != NULL )
-            {
-               pCurrentInt->Callback( intNum, pCurrentInt->pContext );
-            }
-            else
-            {
-               asm volatile ( "rcsr %0, im" :"=r"(im) );
-               im &= ~mask;
-               asm volatile ( "wcsr im, %0" ::"r"(im) );
-            }
-            /* Clear the corresponding Interrupt Pending bit by writing a one!. */
-            asm volatile ( "wcsr ip, %0" ::"r"(mask) );
-            break;
+            pCurrentInt->Callback( intNum, pCurrentInt->pContext );
          }
+         else
+         {
+            asm volatile ( "rcsr %0, im" :"=r"(im) );
+            im &= ~mask;
+            asm volatile ( "wcsr im, %0" ::"r"(im) );
+         }
+         /*
+          * Clear the corresponding Interrupt Pending bit by writing a one!
+          */
+         asm volatile ( "wcsr ip, %0" ::"r"(mask) );
+         break;
       }
    }
 }
@@ -93,7 +117,7 @@ bool registerISR( const unsigned int intNum, void* pContext, ISRCallback Callbac
    ISREntryTable[intNum].Callback = Callback;
    ISREntryTable[intNum].pContext = pContext;
 
-   const uint32_t mask = (1 << intNum);
+   const uint32_t mask = _getInterruptPendingMask( intNum );
    /* mask/unmask bit in the im */
    uint32_t im;
    asm volatile ("rcsr %0, im":"=r"(im));
@@ -111,7 +135,7 @@ bool disableSpecificInterrupt( const unsigned int intNum )
    if( intNum >= ARRAY_SIZE( ISREntryTable ) )
       return true;
 
-   const uint32_t invMask = ~(1 << intNum);
+   const uint32_t invMask = ~_getInterruptPendingMask( intNum );
    uint32_t im;
    /* disable mask-bit in im */
    asm volatile ("rcsr %0, im":"=r"(im));
@@ -129,7 +153,7 @@ bool enableSpecificInterrupt( const unsigned int intNum )
    if( intNum >= ARRAY_SIZE( ISREntryTable ) )
       return true;
 
-   const uint32_t mask = (0x1 << intNum);
+   const uint32_t mask = _getInterruptPendingMask( intNum );
    uint32_t im;
    /* enable mask-bit in im */
    asm volatile ("rcsr %0, im":"=r"(im));

@@ -48,9 +48,9 @@
    #define configASSERT(__e)
 #endif
 
-#define CONFIG_NO_RTOS_TIMER /* For test purposes only! */
+//#define CONFIG_NO_RTOS_TIMER /* For test purposes only! */
 
-#define configUSE_PREEMPTION                    0
+#define configUSE_PREEMPTION                    1
 #define configUSE_PORT_OPTIMISED_TASK_SELECTION 0
 #define configUSE_TICKLESS_IDLE                 0
 #define configCPU_CLOCK_HZ                      (USRCPUCLK * 1000)

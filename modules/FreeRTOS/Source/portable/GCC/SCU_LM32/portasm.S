@@ -328,7 +328,7 @@ vPortInterruptHandler:
    portSAVE_CONTEXT
    ori       r1, r0, 1          /* Set the context switch cause flag to one */
    sw        __cscf, r1         /* and store it in stack. */
-   calli     __ISRHandler       /* Call this C- callback function */
+   calli     _irq_entry         /* Call this C- callback function */
    and       r1, r0, r0
    mvhi      r1, hi(pxCurrentTCB)
    ori       r1, r1,lo(pxCurrentTCB)

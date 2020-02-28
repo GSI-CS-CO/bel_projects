@@ -47,7 +47,7 @@
 #include "task.h"
 
 #ifndef CONFIG_NO_RTOS_TIMER
- #include "lm32Timer.h"
+ #include "scu_lm32Timer.h"
  #include "lm32Interrupts.h"
 #endif
 #include "eb_console_helper.h"
@@ -59,9 +59,6 @@
 /*-----------------------------------------------------------
  * Implementation of functions defined in portable.h for the MICO32 port.
  *----------------------------------------------------------*/
-#ifndef CONFIG_NO_RTOS_TIMER
-static void prvSetupTimer( void );
-#endif
 
 #if (configAPPLICATION_ALLOCATED_HEAP == 1)
   uint8_t ucHeap[ configTOTAL_HEAP_SIZE ];
@@ -130,6 +127,49 @@ portSTACK_TYPE* pxPortInitialiseStack( portSTACK_TYPE* pxTopOfStack,
    return pxTopOfStack;
 }
 
+#ifndef CONFIG_NO_RTOS_TIMER
+/*! ---------------------------------------------------------------------------
+ */
+static void onTimerInterrupt( const unsigned int intNum, const void* pContext )
+{
+   xTaskIncrementTick();
+#if configUSE_PREEMPTION == 1
+   vTaskSwitchContext();
+#endif
+}
+
+/*! ---------------------------------------------------------------------------
+ * @brief Setup timer to generate a tick interrupt.
+ */
+inline static void prvSetupTimer( void )
+{
+#ifdef CONFIG_SCU
+   SCU_LM32_TIMER_T* pTimer = lm32TimerGetWbAddress();
+   if( pTimer == (SCU_LM32_TIMER_T*)ERROR_NOT_FOUND )
+   {
+      mprintf( ESC_ERROR "ERROR: Timer not found or not implemented!\n" ESC_NORMAL );
+      while( true );
+   }
+#else
+   #ifndef LM32_TIMER_BASE_ADDR
+     #error Macro LM32_TIMER_BASE_ADDR is not defined!
+   #endif
+   SCU_LM32_TIMER_T* pTimer = (SCU_LM32_TIMER_T*) LM32_TIMER_BASE_ADDR;
+#endif
+   lm32TimerSetPeriod( pTimer, configCPU_CLOCK_HZ / configTICK_RATE_HZ );
+   lm32TimerEnable( pTimer );
+   /* Register Interrupt Service Routine */
+   registerISR( TIMER_IRQ, (void*)pTimer, onTimerInterrupt );
+}
+
+#else
+ #if configUSE_PREEMPTION == 1
+   #error In preemtion mode is the timer essential!
+ #endif
+ #warning Timer for FreeRTOS will not implenented! Some tick related functions will not work!
+#endif
+
+
 /*! ---------------------------------------------------------------------------
  */
 portBASE_TYPE xPortStartScheduler( void )
@@ -157,69 +197,6 @@ void vPortEndScheduler( void )
 {
    /* It is unlikely that the LM32 port will get stopped.  */
 }
-
-#ifndef CONFIG_NO_RTOS_TIMER
-#warning "Unfortunately at the moment there isn't any hardware timer implemented yet!"
-
-/*! ---------------------------------------------------------------------------
- */
-static void onTimerInterrupt( const unsigned int intNum, const void* pContext )
-{
-   xTaskIncrementTick();
-#if configUSE_PREEMPTION == 1
-   vTaskSwitchContext();
-#endif
-
-   /* Clear Timer Status */
-   ((LM32_TIMER_T*)pContext)->status = 0;
-}
-
-/*! ---------------------------------------------------------------------------
- * @brief Setup timer to generate a tick interrupt.
- * @note At the moment it's unclear yet whether this timer initializing
- *       routine is correct. It depends on the hardware timer (V)HDL module
- *       which is not written respectively implemented yet.
- *       As of January 29, 2020.\n
- *       The current implementation is related to the Latice timer module
- *       for LM32 and LM8 via wishbone bus.\n
- *       Also the IRQ number defined in macro TIMER_IRQ is unclear yet!
- */
-static void prvSetupTimer( void )
-{
-#ifdef CONFIG_SCU
-   volatile LM32_TIMER_T* pTimer = (LM32_TIMER_T*) find_device_adr( GSI, CPU_TIMER_CTRL_IF );
-   if( pTimer == (LM32_TIMER_T*)ERROR_NOT_FOUND )
-   {
-      mprintf( ESC_ERROR "ERROR: Timer not found or not implemented!\n" ESC_NORMAL );
-      while( true );
-   }
-#else
-   #ifndef LM32_TIMER_BASE_ADDR
-     #error Macro LM32_TIMER_BASE_ADDR is not defined!
-   #endif
-   volatile LM32_TIMER_T* pTimer = (LM32_TIMER_T*) LM32_TIMER_BASE_ADDR;
-#endif
-   /* stop the timer first and ack any pending interrupts */
-   pTimer->control = TIMER_CONTROL_STOP_BIT_MASK;
-   pTimer->status  = 0;
-
-   /* Register Interrupt Service Routine */
-   registerISR( TIMER_IRQ, (void*)pTimer, onTimerInterrupt );
-
-   pTimer->period = configCPU_CLOCK_HZ / configTICK_RATE_HZ;
-
-   /* start the timer */
-   pTimer->control = TIMER_CONTROL_START_BIT_MASK |
-                     TIMER_CONTROL_INT_BIT_MASK   |
-                     TIMER_CONTROL_CONT_BIT_MASK;
-}
-
-#else
- #if configUSE_PREEMPTION == 1
-   #error In preemtion mode is the timer essential!
- #endif
- #warning Timer for FreeRTOS will not implenented! Some tick related functions will not work!
-#endif
 
 /*
  * Critical section management.

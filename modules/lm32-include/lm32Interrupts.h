@@ -23,21 +23,39 @@
 #ifndef INTERRUPTS_HEADER_FILE
 #define INTERRUPTS_HEADER_FILE
 
+#if !defined(__lm32__) && !defined(__DOXYGEN__)
+  #error This module is for the target LM32 only!
+#endif
+
 #include <stdbool.h>
 #include <stdint.h>
 
+/*!
+ * @defgroup INTERRUPT Interrupt administration of LM32
+ */
+
+/*!
+ * @ingroup INTERRUPT
+ * @brief Maximum number of possible interrupt sources.
+ */
 #define MAX_LM32_INTERRUPTS 32
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-/*!
+/*! ---------------------------------------------------------------------------
+ * @ingroup INTERRUPT
  * @brief Signature of interrupt callback function.
+ * @see registerISR
+ * @param intNum Number of interrupt from 0 to MAX_LM32_INTERRUPTS-1
+ *        first parameter of registerISR().
+ * @param pContext User context, second parameter of registerISR().
  */
-typedef void(*ISRCallback)( const unsigned int, const void* );
+typedef void(*ISRCallback)( const unsigned int intNum, const void* pContext );
 
 /*! ---------------------------------------------------------------------------
+ * @ingroup INTERRUPT
  * @brief Registers and de-registers interrupt-handler routine.
  *
  * To register, pass a valid function pointer to the Callback parameter.
@@ -57,6 +75,7 @@ bool registerISR( const unsigned int intNum, void* pContext,
                   ISRCallback Callback );
 
 /*! ---------------------------------------------------------------------------
+ * @ingroup INTERRUPT
  * @brief Disables a specific interrupt
  * 
  * @param intNum Interrupt line number that your component is
@@ -67,7 +86,8 @@ bool registerISR( const unsigned int intNum, void* pContext,
 bool disableSpecificInterrupt( const unsigned int intNum );
 
 
-/*! -----------------------------------------------------------------
+/*! ---------------------------------------------------------------------------
+ * @ingroup INTERRUPT
  * @brief Enables a specific interrupt
  *
  * @param intNum Interrupt line number that your component is

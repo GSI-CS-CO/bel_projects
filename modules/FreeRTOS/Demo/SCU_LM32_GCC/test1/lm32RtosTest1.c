@@ -37,12 +37,12 @@ static inline void init( void )
 }
 
 #define HELLO_TASK_PRIORITY    ( tskIDLE_PRIORITY + 1 )
-#define HELLO_DELAY            ( (TickType_t) 1000 / configTICK_RATE_HZ )
+#define HELLO_DELAY            ( (TickType_t) 1000  )
 
 static void vTask( void* pvParameters )
 {
    /*
-    * Initialise xLastExecutionTime so the first call to vTaskDelayUntil() works correctly
+    * Initialize xLastExecutionTime so the first call to vTaskDelayUntil() works correctly
     */
 #ifndef CONFIG_NO_RTOS_TIMER
    TickType_t xLastExecutionTime = xTaskGetTickCount();
@@ -52,9 +52,11 @@ static void vTask( void* pvParameters )
    unsigned int count = 0;
    while( true )
    {
+      taskENTER_CRITICAL();
       mprintf( "Task main function, count: %d, user data: \"%s\"\n",
                ++count,
                (const char*)pvParameters );
+      taskEXIT_CRITICAL();
       /*
        * Delay mainCHECK_DELAY milliseconds.
        */
@@ -62,7 +64,7 @@ static void vTask( void* pvParameters )
       /*
        * Very crude delay loop... not fine! I know...
        */
-      unsigned int d = configCPU_CLOCK_HZ / 4;
+      unsigned int d = configCPU_CLOCK_HZ / 8;
       while( d-- != 0 )
          portNOP();
    #else
@@ -70,8 +72,8 @@ static void vTask( void* pvParameters )
    #endif
    #if configUSE_PREEMPTION == 0
       vPortYield();
-   #endif
       mprintf( "after vPortYield(): \"%s\"\n\n", (const char*)pvParameters );
+   #endif
    }
 }
 
@@ -87,7 +89,7 @@ int main( void )
 #if 1
    xReturned = xTaskCreate(
                 vTask,               /* Function that implements the task. */
-                "Donald",                  /* Text name for the task. */
+                "TASK 1",                  /* Text name for the task. */
                 configMINIMAL_STACK_SIZE, /* Stack size in words, not bytes. */
                 (void*)userTaskData1,     /* Parameter passed into the task. */
                 HELLO_TASK_PRIORITY,      /* Priority at which the task is created. */
@@ -101,7 +103,7 @@ int main( void )
 #endif
    xReturned = xTaskCreate(
                 vTask,               /* Function that implements the task. */
-                "Dagobert",                  /* Text name for the task. */
+                "task 2",                  /* Text name for the task. */
                 configMINIMAL_STACK_SIZE, /* Stack size in words, not bytes. */
                 (void*)userTaskData2,     /* Parameter passed into the task. */
                 HELLO_TASK_PRIORITY,      /* Priority at which the task is created. */
@@ -113,7 +115,9 @@ int main( void )
       return 0;
    }
 
+   portENABLE_INTERRUPTS();
    vTaskStartScheduler();
+
 
    mprintf( ESC_ERROR "Error: This point shall never be reached!\n" ESC_NORMAL );
    while( true );
