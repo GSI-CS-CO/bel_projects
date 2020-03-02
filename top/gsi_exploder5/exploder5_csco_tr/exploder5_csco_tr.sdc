@@ -22,6 +22,8 @@ create_clock -name {monster:main|ref_pll5:\ref_a5:ref_inst|ref_pll5_0002:ref_pll
 # Cut the clock domains from each other
 set_clock_groups -asynchronous                           \
  -group { altera_reserved_tck                          } \
+ -group { wr_10Mhz                                     } \
+ -group { main|\nau8811_y:nau8811_audio|*              } \
  -group { clk_20m_vcxo_i    main|\dmtd_a5:dmtd_inst|*  } \
  -group { clk_125m_local_i  main|\sys_a5:sys_inst|*    } \
  -group { sfp234_ref_clk_i  main|\ref_a5:ref_inst|*      \
