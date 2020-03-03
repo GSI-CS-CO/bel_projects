@@ -7,9 +7,9 @@
 
 
 #include "carpeDM.h"
-#include "node.h"
-#include "block.h"
-#include "minicommand.h"
+//#include "node.h"
+//#include "block.h"
+//#include "minicommand.h"
 #include "dotstr.h"
 #include "strprintf.h"
 #include "filenames.h"
@@ -86,16 +86,6 @@ static void help(const char *program) {
   fprintf(stderr, "\n");
 
 }
-
-std::string nsTimeToDate(uint64_t t) {
-  char date[40];
-  uint64_t tAux = t / 1000000000ULL;
-  strftime(date, sizeof(date), "%Y-%m-%d %H:%M:%S", gmtime((time_t*)&tAux));
-  std::string ret(date);
-
-  return ret;
-}
-
 
 void showStatus(const char *netaddress, CarpeDM& cdm, bool verbose) {
   std::string show;
@@ -434,7 +424,7 @@ int main(int argc, char* argv[]) {
     if (optind+2 < argc) targetName      = argv[optind+2];
     if (optind+3 < argc) para            = argv[optind+3];
 
-  CarpeDM cdm = CarpeDM();
+  CarpeDM cdm;
 
   if(verbose) cdm.verboseOn();
   if(debug)   cdm.debugOn();

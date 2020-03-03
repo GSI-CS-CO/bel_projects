@@ -9,7 +9,8 @@
 /** @name Priority Queue - mode register
  *  Bit definitions for the Mode register of the Priority Queue 
  */
-//@{ 
+//@{
+//#define USE_SW_TX_CONTROL 1      ///< Use EBM software access instead of hardware priority queue module
 #define PRIO_BIT_ENABLE     (1<<0) ///< global enable bit
 #define PRIO_BIT_MSG_LIMIT  (1<<1) ///< message limit enable bit
 #define PRIO_BIT_TIME_LIMIT (1<<2) ///< time limit enable bit

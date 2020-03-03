@@ -11,7 +11,7 @@
 #include "common.h"
 #include "propwrite.h"
 #include "graph.h"
-#include "carpeDM.h"
+#include "carpeDMimpl.h"
 #include "visitoruploadcrawler.h"
 #include "visitordownloadcrawler.h"
 #include "dotstr.h"
@@ -21,7 +21,7 @@ namespace dnt = DotStr::Node::TypeVal;
 
 
   //Generate download Bmp addresses. For downloads, this has to be two pass: get bmps first, then use them to get the node locations to read
-  vEbrds CarpeDM::gatherDownloadBmpVector() {
+  vEbrds CarpeDM::CarpeDMimpl::gatherDownloadBmpVector() {
     //sLog << "Starting download bmp address vectors" << std::endl;
     AllocTable& at = atDown;
     vEbrds er;
@@ -39,7 +39,7 @@ namespace dnt = DotStr::Node::TypeVal;
 
 
 
-  vEbrds CarpeDM::gatherDownloadDataVector() {
+  vEbrds CarpeDM::CarpeDMimpl::gatherDownloadDataVector() {
     //sLog << "Starting download bmp data vectors" << std::endl;
     AllocTable& at = atDown;
     vEbrds er;
@@ -64,7 +64,7 @@ namespace dnt = DotStr::Node::TypeVal;
     return er;
   }
 
-   void CarpeDM::parseDownloadMgmt(const vBuf& downloadData) {
+   void CarpeDM::CarpeDMimpl::parseDownloadMgmt(const vBuf& downloadData) {
     AllocTable& at = atDown;
 
 
@@ -129,7 +129,7 @@ namespace dnt = DotStr::Node::TypeVal;
 
 
 
-  void CarpeDM::parseDownloadData(const vBuf& downloadData) {
+  void CarpeDM::CarpeDMimpl::parseDownloadData(const vBuf& downloadData) {
     Graph& g = gDown;
     AllocTable& at = atDown;
     std::stringstream stream;
@@ -200,8 +200,8 @@ namespace dnt = DotStr::Node::TypeVal;
             case NODE_TYPE_TMSG         : g[v].np = (node_ptr) new  TimingMsg(g[v].name, g[v].patName, g[v].bpName, x->hash, x->cpu, flags); g[v].type = dnt::sTMsg;       g[v].np->deserialise((uint8_t*)x->b); break;
             case NODE_TYPE_CNOOP        : g[v].np = (node_ptr) new       Noop(g[v].name, g[v].patName, g[v].bpName, x->hash, x->cpu, flags); g[v].type = dnt::sCmdNoop;    g[v].np->deserialise((uint8_t*)x->b); break;
             case NODE_TYPE_CFLOW        : g[v].np = (node_ptr) new       Flow(g[v].name, g[v].patName, g[v].bpName, x->hash, x->cpu, flags); g[v].type = dnt::sCmdFlow;    g[v].np->deserialise((uint8_t*)x->b); break;
-            case NODE_TYPE_CSWITCH      : g[v].np = (node_ptr) new     Switch(g[v].name, g[v].patName, g[v].bpName, x->hash, x->cpu, flags); g[v].type = dnt::sCmdFlow;    g[v].np->deserialise((uint8_t*)x->b); break;
-            case NODE_TYPE_CFLUSH       : g[v].np = (node_ptr) new      Flush(g[v].name, g[v].patName, g[v].bpName, x->hash, x->cpu, flags); g[v].type = dnt::sSwitch;     g[v].np->deserialise((uint8_t*)x->b); break;
+            case NODE_TYPE_CSWITCH      : g[v].np = (node_ptr) new     Switch(g[v].name, g[v].patName, g[v].bpName, x->hash, x->cpu, flags); g[v].type = dnt::sSwitch;     g[v].np->deserialise((uint8_t*)x->b); break;
+            case NODE_TYPE_CFLUSH       : g[v].np = (node_ptr) new      Flush(g[v].name, g[v].patName, g[v].bpName, x->hash, x->cpu, flags); g[v].type = dnt::sCmdFlush;   g[v].np->deserialise((uint8_t*)x->b); break;
             case NODE_TYPE_CWAIT        : g[v].np = (node_ptr) new       Wait(g[v].name, g[v].patName, g[v].bpName, x->hash, x->cpu, flags); g[v].type = dnt::sCmdWait;    g[v].np->deserialise((uint8_t*)x->b); break;
             case NODE_TYPE_BLOCK_FIXED  : g[v].np = (node_ptr) new BlockFixed(g[v].name, g[v].patName, g[v].bpName, x->hash, x->cpu, flags); g[v].type = dnt::sBlockFixed; g[v].np->deserialise((uint8_t*)x->b); break;
             case NODE_TYPE_BLOCK_ALIGN  : g[v].np = (node_ptr) new BlockAlign(g[v].name, g[v].patName, g[v].bpName, x->hash, x->cpu, flags); g[v].type = dnt::sBlockAlign; g[v].np->deserialise((uint8_t*)x->b); break;
@@ -246,7 +246,7 @@ namespace dnt = DotStr::Node::TypeVal;
 
     //TODO assign to CPUs/threads
 
-  void CarpeDM::readMgmtLLMeta() {
+  void CarpeDM::CarpeDMimpl::readMgmtLLMeta() {
     vEbrds er;
     vBuf vDl;
     uint32_t modAdrBase = atDown.getMemories()[0].extBaseAdr + atDown.getMemories()[0].sharedOffs + SHCTL_META;
@@ -269,7 +269,7 @@ namespace dnt = DotStr::Node::TypeVal;
 
   }
 
-  int CarpeDM::download() {
+  int CarpeDM::CarpeDMimpl::download() {
     vBuf vDlBmpD, vDlD;
     //FIXME get mgmt linked list meta data
 

@@ -4,76 +4,11 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
-#include <boost/shared_ptr.hpp>
-#include <boost/make_shared.hpp>
-#include <boost/container/vector.hpp>
-#include <boost/graph/adjacency_list.hpp>
-#include <boost/function.hpp>
-#include <boost/bind.hpp>
-#include <boost/graph/graphviz.hpp>
-#include <boost/optional.hpp>
+#include <algorithm>
+#include <vector>
+#include <stdexcept>
 #include "ftm_common.h"
 #include "dotstr.h"
-
-#if BOOST_VERSION >= 106200 //endian conversian was included in boost 1.62
-  #include <boost/endian/conversion.hpp>
-  using namespace boost::endian;
-#else
-   // avoiding boost 1.62+, stolen from boost/endian/conversion.hpp to  //////////
-  inline uint16_t endian_reverse(uint16_t x)
-  {
-    return (x << 8)
-      | (x >> 8);
-  }
-
-  inline uint32_t endian_reverse(uint32_t x)
-  {
-    uint32_t step16;
-    step16 = x << 16 | x >> 16;
-    return
-        ((step16 << 8) & 0xff00ff00)
-      | ((step16 >> 8) & 0x00ff00ff);
-  }
-
-  inline uint64_t endian_reverse(uint64_t x)
-  {
-    uint64_t step32, step16;
-    step32 = x << 32 | x >> 32;
-    step16 = (step32 & 0x0000FFFF0000FFFFULL) << 16
-           | (step32 & 0xFFFF0000FFFF0000ULL) >> 16;
-    return   (step16 & 0x00FF00FF00FF00FFULL) << 8
-           | (step16 & 0xFF00FF00FF00FF00ULL) >> 8;
-  }
-
- inline int16_t endian_reverse(int16_t x) BOOST_NOEXCEPT
-  {
-    return (static_cast<uint16_t>(x) << 8)
-      | (static_cast<uint16_t>(x) >> 8);
-  }
-
-  inline int32_t endian_reverse(int32_t x) BOOST_NOEXCEPT
-  {
-    uint32_t step16;
-    step16 = static_cast<uint32_t>(x) << 16 | static_cast<uint32_t>(x) >> 16;
-    return
-        ((static_cast<uint32_t>(step16) << 8) & 0xff00ff00)
-      | ((static_cast<uint32_t>(step16) >> 8) & 0x00ff00ff);
-  }
-
-  inline int64_t endian_reverse(int64_t x) BOOST_NOEXCEPT
-  {
-    uint64_t step32, step16;
-    step32 = static_cast<uint64_t>(x) << 32 | static_cast<uint64_t>(x) >> 32;
-    step16 = (step32 & 0x0000FFFF0000FFFFULL) << 16
-           | (step32 & 0xFFFF0000FFFF0000ULL) >> 16;
-    return static_cast<int64_t>((step16 & 0x00FF00FF00FF00FFULL) << 8
-           | (step16 & 0xFF00FF00FF00FF00ULL) >> 8);
-  }
-
-#endif
-
-
-
 
 /** @name Enums for communication with DM
  * Provides enums for the handling of firmware meta information, WB bus adress type conversion and upload/download buffers
@@ -310,18 +245,7 @@ typedef struct {
 } QueueReport;
 //@}
 
-/** @name Types for use of boost graph library
- * Additional typedefs used for the carpeDM version of boost graphs, tailored to represent accelerator schedules
- */
-//@{
-class Node;
-class MiniCommand;
 
-typedef boost::shared_ptr<Node> node_ptr;
-typedef boost::shared_ptr<MiniCommand> mc_ptr;
-typedef std::vector<node_ptr> npBuf;
-typedef std::vector<std::string> vStrC;
-//@}
 
 /** @name Etherbone external cycle staging
  * Etherbone lib does not allow cancellation of prepared cycles and icompleted cycles cannot be stored for later sending.
@@ -332,7 +256,7 @@ typedef std::vector<uint8_t> vBuf; ///< buffer for WB payload data
 typedef std::vector<uint32_t> vAdr; ///< buffer for WB addresses
 typedef std::vector<uint32_t> ebBuf; ///< total number of cpus on the DM
 typedef std::vector<bool> vBl; ///< buffer for cycle line control. 1 - close the ongoing cycle and start a new one, 0 - continue with current cycle
-
+typedef std::vector<std::string> vStrC; ///< vector of strings
 /// Struct for staging EB write operations
 /** Staging EB write ops requires a buffer of WB addresses, a buffer of WB payload data and a buffer of cycle line control bits
  * 
@@ -418,53 +342,7 @@ inline vEbrds& operator+=(vEbrds& A, const vEbrds &B)
 vBl leadingOne(size_t length);
 //@}
 
-/** @name Auxiliary templated type converters
- * Templated helper functions for easy conversion of types and endianess
- */
-//@{ 
-template<typename T>
-inline void writeLeNumberToBeBytes(uint8_t* pB, T val) {
-  T x = endian_reverse(val);
-  std::copy(static_cast<const uint8_t*>(static_cast<const void*>(&x)),
-            static_cast<const uint8_t*>(static_cast<const void*>(&x)) + sizeof x,
-            pB);
-}
 
-template<typename T>
-inline void writeLeNumberToBeBytes(vBuf& vB, T val) {
-  uint8_t b[sizeof(T)];
-
-  T x = endian_reverse(val);
-  std::copy(static_cast<const uint8_t*>(static_cast<const void*>(&x)),
-            static_cast<const uint8_t*>(static_cast<const void*>(&x)) + sizeof x,
-            b);
-
-  vB.insert( vB.end(), b, b + sizeof(T) );
-}
-
-template<typename T>
-inline T writeBeBytesToLeNumber(uint8_t* pB) {
-  return endian_reverse(*((T*)pB));
-}
-
-template<typename T>
-inline T writeBeBytesToLeNumber(vBuf& vB) {
-  uint8_t* pB = (uint8_t*)&vB[0];
-  return endian_reverse(*((T*)pB));
-}
-
-template<typename T>
-inline void writeBeNumberToLeBytes(uint8_t* pB, T val) {
-  T x = endian_reverse(val);
-  std::copy(static_cast<const uint8_t*>(static_cast<const void*>(&x)),
-            static_cast<const uint8_t*>(static_cast<const void*>(&x)) + sizeof x,
-            pB);
-}
-
-template<typename T>
-inline T writeLeBytesToBeNumber(uint8_t* pB) {
-  return endian_reverse(*((T*)pB));
-}
 
 /// Helper function to convert a string to a number or bool
 /** Convert a string to a number or bool. Helper to convert values found in dot files 
@@ -484,12 +362,7 @@ inline T s2u(const std::string& s) {
 
 
 
-/// Inserts a fixed archive version into a serialised boost data container
-/** Boost archive versions are forward compatible, and, by implementation, also backward compatible. 
-  * However, using a newer lib version to create (fully data compatible) archives and opening them with older lib versions fails.
-  * The workaround is to change the version tag inside the data container string to a known older version, so the old library accepts it.
-  */
-std::string fixArchiveVersion(const std::string& s);
+
 
 
 /// Hexdump to std::out
@@ -508,7 +381,10 @@ void hexDump (const char *desc, const char* addr, int len);
 void hexDump (const char *desc, vBuf vb);
 //@}
 
-
+/// Helper function to convert a nanosecond timestamp into a human readable string
+/** Convert a 64 bit nano second timestamp as can be obtained from getWrTime into a human readable string. If noSpaces is set, underscores will be used (useful for filename generation)
+  */
+std::string nsTimeToDate(uint64_t t, bool noSpaces=false);
 
 
 
