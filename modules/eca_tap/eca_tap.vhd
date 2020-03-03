@@ -47,7 +47,7 @@ port (
   ctrl_i      : in  t_wishbone_slave_in;
 
   tap_out_o   : out t_wishbone_master_out; 
-  tap_out_i   : in  t_wishbone_master_in := ('0', '0', '0', '0', '0', x"00000000");
+  tap_out_i   : in  t_wishbone_master_in := ('0', '0', '0', '0', x"00000000");
   tap_in_o    : out t_wishbone_slave_out;
   tap_in_i    : in  t_wishbone_slave_in
 
