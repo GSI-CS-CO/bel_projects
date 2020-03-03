@@ -52,11 +52,12 @@ static void vTask( void* pvParameters )
    unsigned int count = 0;
    while( true )
    {
-      taskENTER_CRITICAL();
-      mprintf( "Task main function, count: %d, user data: \"%s\"\n",
-               ++count,
-               (const char*)pvParameters );
-      taskEXIT_CRITICAL();
+      ATOMIC_SECTION()
+      {
+         mprintf( "Task main function, count: %d, user data: \"%s\"\n",
+                   ++count,
+                  (const char*)pvParameters );
+      }
       /*
        * Delay mainCHECK_DELAY milliseconds.
        */

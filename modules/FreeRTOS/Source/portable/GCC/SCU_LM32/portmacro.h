@@ -41,6 +41,8 @@
   #error This module is for the target LM32 only!
 #endif
 
+#include "lm32Interrupts.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -67,15 +69,15 @@ typedef uint32_t       UBaseType_t;
 #endif
 
 /*-----------------------------------------------------------*/
+/*!
+ * @brief Port Disable Interrupts
+ */
+#define portDISABLE_INTERRUPTS() irqDisable()
 
-#define portDISABLE_INTERRUPTS() asm volatile ("wcsr   ie, r0");
-
-/* Port Enable Interrupts */
-#define portENABLE_INTERRUPTS()             \
-{                                           \
-   const uint32_t ie = 0x01;                \
-   asm volatile ( "wcsr ie, %0"::"r"(ie) ); \
-}
+/*!
+ * @brief Port Enable Interrupts
+ */
+#define portENABLE_INTERRUPTS()  irqEnable()
 
 /*-----------------------------------------------------------*/
 
@@ -83,26 +85,26 @@ typedef uint32_t       UBaseType_t;
 #define portSTACK_GROWTH      ( -1 )
 #define portTICK_RATE_MS      ( ( portTickType ) 1000 / configTICK_RATE_HZ )
 #define portBYTE_ALIGNMENT    4
-#define portNOP()             asm volatile ( "nop" )
+#define portNOP()             NOP()
 
 /*-----------------------------------------------------------*/
 
 /* Critical section management. */
-#define portENTER_CRITICAL()   vPortEnterCritical()
-#define portEXIT_CRITICAL()    vPortExitCritical()
+#define portENTER_CRITICAL() criticalSectionEnter()
+#define portEXIT_CRITICAL()  criticalSectionExit()
 
-#define portYIELD()            vPortYield()
+#define portYIELD()          vPortYield()
 
 
 /*-----------------------------------------------------------*/
 
-/* Task function macros as described on the FreeRTOS.org WEB site. */
+/*!
+ * Task function macros as described on the FreeRTOS.org WEB site.
+ */
 #define portTASK_FUNCTION_PROTO( vFunction, pvParameters ) void vFunction( void *pvParameters )
 #define portTASK_FUNCTION( vFunction, pvParameters ) void vFunction( void *pvParameters )
 
 void vStartFirstTask( void );
-void vPortEnterCritical( void );
-void vPortExitCritical( void );
 void vPortYield( void );
 
 

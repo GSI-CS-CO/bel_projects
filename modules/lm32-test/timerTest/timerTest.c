@@ -25,16 +25,9 @@
 #include "scu_lm32Timer.h"
 #include "lm32Interrupts.h"
 
+#include "scu_msi.h"
+
 volatile uint32_t pxCurrentTCB = 0;
-
-/* Port Enable Interrupts */
-#define portENABLE_INTERRUPTS()             \
-{                                           \
-   const uint32_t ie = 0x01;                \
-   asm volatile ( "wcsr ie, %0"::"r"(ie) ); \
-}
-
-#define portDISABLE_INTERRUPTS() asm volatile ("wcsr   ie, r0");
 
 #define configCPU_CLOCK_HZ   (USRCPUCLK * 1000)
 
@@ -76,8 +69,8 @@ void main( void )
 
    lm32TimerSetPeriod( pTimer, configCPU_CLOCK_HZ );
    lm32TimerEnable( pTimer );
-   registerISR( TIMER_IRQ, (void*)pTimer, onTimerInterrupt );
-   portENABLE_INTERRUPTS();
+   irqRegisterISR( TIMER_IRQ, (void*)pTimer, onTimerInterrupt );
+   irqEnable();
 
    while( true )
    {
@@ -87,8 +80,8 @@ void main( void )
          oldCount = g_count;
          if( oldCount == 10 )
          {
-          //  portDISABLE_INTERRUPTS();
-            disableSpecificInterrupt( TIMER_IRQ );
+            irqDisable();
+           // irqDisableSpecific( TIMER_IRQ );
          }
       }
    }

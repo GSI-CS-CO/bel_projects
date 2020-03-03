@@ -21,7 +21,12 @@
  ******************************************************************************
  */
 #include "lm32Interrupts.h"
-#include <helper_macros.h>
+
+/*!
+ * @ingroup INTERRUPT
+ * @brief Nesting counter for critical sections.
+ */
+volatile static unsigned int mg_criticalSectionNestingCount = 0;
 
 /*!
  * @ingroup INTERRUPT
@@ -44,7 +49,7 @@ static ISR_ENTRY_T ISREntryTable[MAX_LM32_INTERRUPTS] = {{NULL, NULL}};
  * @brief Returns the interrupt flag mask calculated by the given
  *        interrupt number
  * @note It's possible to overwrite this function for the case
- *       that the standard interrupt priority will changed.
+ *       that the standard interrupt input line will changed.
  * @param intNum Interrupt number.
  * @return Interrupt pending mask.
  */
@@ -52,6 +57,72 @@ __attribute__((weak))
 uint32_t _getInterruptPendingMask( const unsigned int intNum )
 {
    return (1 << intNum);
+}
+
+/*! ---------------------------------------------------------------------------
+ * @ingroup INTERRUPT OVERWRITABLE
+ * @brief Reordering the interrupt priority.
+ *
+ * By default the interrupt number is equal to the interrupt priority.
+ * @note It's possible to overwrite this function for the case
+ *       that the interrupt number isn't equal to the interrupt priority.
+ * @param prio Interrupt priority.
+ * @return Interrupt number.
+ */
+__attribute__((weak))
+unsigned int _isrReorder( const unsigned int prio )
+{
+   return prio;
+}
+
+/*! ---------------------------------------------------------------------------
+ * @ingroup INTERRUPT
+ * @brief Returns the current value of the LM32 interrupt mask register
+ * @return Current value of the interrupt mask register.
+ */
+STATIC inline
+uint32_t irqGetMaskRegister( void )
+{
+   uint32_t im;
+   asm volatile ( "rcsr %0, im" :"=r"(im) );
+   return im;
+}
+
+/*! ---------------------------------------------------------------------------
+ * @ingroup INTERRUPT
+ * @brief Sets the interrupt mask register by the given value.
+ * @param im Value to set.
+ */
+STATIC inline
+void irqSetMaskRegister( const uint32_t im )
+{
+   asm volatile ( "wcsr im, %0" ::"r"(im) );
+}
+
+/*! ---------------------------------------------------------------------------
+ * @ingroup INTERRUPT
+ * @brief Returns the current value of the LM32 interrupt pending register.
+ * @return Value of the interrupt pending register.
+ */
+STATIC inline
+uint32_t irqGetPendingRegister( void )
+{
+   uint32_t ip;
+   asm volatile ( "rcsr %0, ip" :"=r"(ip) );
+   return ip;
+}
+
+/*! ---------------------------------------------------------------------------
+ * @ingroup INTERRUPT
+ * @brief Resets the bits in the LM32 interrupt pending register.
+ * @param ip Bit mast to reset the corresponding pending bit.
+ * @note The clearing of the bits in the pending register will accomplished
+ *       by writing a one in the concerning bit-position!
+ */
+STATIC inline
+void irqResetPendingRegister( const uint32_t ip )
+{
+   asm volatile ( "wcsr ip, %0" ::"r"(ip) );
 }
 
 /*! ---------------------------------------------------------------------------
@@ -64,24 +135,16 @@ uint32_t _getInterruptPendingMask( const unsigned int intNum )
  */
 void _irq_entry( void )
 {
-   uint32_t ip, im;
-   /*
-    * Read the Interrupt Mask register
-    */
-   asm volatile ( "rcsr %0, im" :"=r"(im) );
-
+   const uint32_t im = irqGetMaskRegister();
    while( true )
    {
-      /*
-       * Read the Interrupt Pending register
-       */
-      asm volatile ( "rcsr %0, ip" :"=r"(ip) );
-      ip &= im;
+      const uint32_t ip = irqGetPendingRegister() & im;
       if( ip == 0 ) /* No interrupt pending? */
          return; /* Yes, life the function */
 
-      for( unsigned int intNum = 0; intNum < ARRAY_SIZE( ISREntryTable ); intNum++ )
+      for( unsigned int prio = 0; prio < ARRAY_SIZE( ISREntryTable ); prio++ )
       {
+         const unsigned int intNum = _isrReorder( prio );
          const uint32_t mask = _getInterruptPendingMask( intNum );
          if( (mask & ip) == 0 )
             continue;
@@ -93,14 +156,10 @@ void _irq_entry( void )
          }
          else
          {
-            asm volatile ( "rcsr %0, im" :"=r"(im) );
-            im &= ~mask;
-            asm volatile ( "wcsr im, %0" ::"r"(im) );
+            irqSetMaskRegister( irqGetMaskRegister() & ~mask );
          }
-         /*
-          * Clear the corresponding Interrupt Pending bit by writing a one!
-          */
-         asm volatile ( "wcsr ip, %0" ::"r"(mask) );
+
+         irqResetPendingRegister( mask );
          break;
       }
    }
@@ -109,58 +168,61 @@ void _irq_entry( void )
 /*! ---------------------------------------------------------------------------
  * @see lm32Interrupts.h
  */
-bool registerISR( const unsigned int intNum, void* pContext, ISRCallback Callback )
+void irqRegisterISR( const unsigned int intNum, void* pContext, ISRCallback Callback )
 {
-   if( intNum >= ARRAY_SIZE( ISREntryTable ) )
-      return true;
+   IRQ_ASSERT( intNum < ARRAY_SIZE( ISREntryTable ) );
 
    ISREntryTable[intNum].Callback = Callback;
    ISREntryTable[intNum].pContext = pContext;
 
    const uint32_t mask = _getInterruptPendingMask( intNum );
-   /* mask/unmask bit in the im */
-   uint32_t im;
-   asm volatile ("rcsr %0, im":"=r"(im));
-   im = (Callback == NULL)? (im & ~mask) : (im | mask);
-   asm volatile ("wcsr im, %0"::"r"(im));
-
-   return false;
+   const uint32_t im = irqGetMaskRegister();
+   irqSetMaskRegister( (Callback == NULL)? (im & ~mask) : (im | mask) );
 }
 
 /*! ---------------------------------------------------------------------------
  * @see lm32Interrupts.h
  */
-bool disableSpecificInterrupt( const unsigned int intNum )
+void irqDisableSpecific( const unsigned int intNum )
 {
-   if( intNum >= ARRAY_SIZE( ISREntryTable ) )
-      return true;
-
-   const uint32_t invMask = ~_getInterruptPendingMask( intNum );
-   uint32_t im;
-   /* disable mask-bit in im */
-   asm volatile ("rcsr %0, im":"=r"(im));
-   im &= invMask;
-   asm volatile ("wcsr im, %0"::"r"(im));
-
-   return false;
+   IRQ_ASSERT( intNum < ARRAY_SIZE( ISREntryTable ) );
+   irqSetMaskRegister( irqGetMaskRegister() & ~_getInterruptPendingMask( intNum ) );
 }
 
 /*! ---------------------------------------------------------------------------
  * @see lm32Interrupts.h
  */
-bool enableSpecificInterrupt( const unsigned int intNum )
+void irqEnableSpecific( const unsigned int intNum )
 {
-   if( intNum >= ARRAY_SIZE( ISREntryTable ) )
-      return true;
-
-   const uint32_t mask = _getInterruptPendingMask( intNum );
-   uint32_t im;
-   /* enable mask-bit in im */
-   asm volatile ("rcsr %0, im":"=r"(im));
-   im |= mask;
-   asm volatile ("wcsr im, %0"::"r"(im));
-
-   return false;
+   IRQ_ASSERT( intNum < ARRAY_SIZE( ISREntryTable ) );
+   irqSetMaskRegister( irqGetMaskRegister() & _getInterruptPendingMask( intNum ) );
 }
+
+/*! ---------------------------------------------------------------------------
+ * @see lm32Interrupts.h
+ *
+ * When the compiler and linker has LTO ability so the following inline
+ * declarations will be really inline.
+ */
+inline void criticalSectionEnter( void )
+{
+   mg_criticalSectionNestingCount++;
+   irqDisable();
+}
+
+/*! ---------------------------------------------------------------------------
+ * @see lm32Interrupts.h
+ *
+ * When the compiler and linker has LTO ability so the following inline
+ * declarations will be really inline.
+ */
+inline void criticalSectionExit( void )
+{
+   IRQ_ASSERT( mg_criticalSectionNestingCount != 0 );
+   mg_criticalSectionNestingCount--;
+   if( mg_criticalSectionNestingCount == 0 )
+      irqEnable();
+}
+
 
 /*================================== EOF ====================================*/

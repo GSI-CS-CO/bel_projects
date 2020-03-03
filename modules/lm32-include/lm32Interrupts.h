@@ -29,6 +29,7 @@
 
 #include <stdbool.h>
 #include <stdint.h>
+#include <scu_lm32_macros.h>
 
 /*!
  * @defgroup INTERRUPT Interrupt administration of LM32
@@ -36,13 +37,38 @@
 
 /*!
  * @ingroup INTERRUPT
+ * @defgroup ATOMIC Helper functions and macros for critical
+ *                  uninterruptible code segments.
+ */
+
+#ifdef CONFIG_INTERRUPT_PEDANTIC_CHECK
+   /* CAUTION:
+    * Assert-macros could be expensive in memory consuming and the
+    * latency time can increase as well!
+    * Especially in embedded systems with small resources.
+    * Therefore use them for bug-fixing or developing purposes only!
+    */
+   #include <scu_assert.h>
+   #define IRQ_ASSERT SCU_ASSERT
+#else
+   #define IRQ_ASSERT(__e)
+#endif
+
+#ifndef MAX_LM32_INTERRUPTS
+/*!
+ * @ingroup INTERRUPT
  * @brief Maximum number of possible interrupt sources.
  */
 #define MAX_LM32_INTERRUPTS 32
+#endif
+#if ( MAX_LM32_INTERRUPTS > 32 )
+ #error Macro MAX_LM32_INTERRUPTS is to large! Allowed maximum are 32 !
+#endif
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
 
 /*! ---------------------------------------------------------------------------
  * @ingroup INTERRUPT
@@ -67,36 +93,111 @@ typedef void(*ISRCallback)( const unsigned int intNum, const void* pContext );
  *                 interrupt-handler callback.
  * @param ISRCallback User-provided interrupt-handler routine. If this
  *                    value NULL then the interrupt becomes de-registered.
- *
- * @retval false Success
- * @retval true Wrong interrupt number
  */ 
-bool registerISR( const unsigned int intNum, void* pContext,
-                  ISRCallback Callback );
-
-/*! ---------------------------------------------------------------------------
- * @ingroup INTERRUPT
- * @brief Disables a specific interrupt
- * 
- * @param intNum Interrupt line number that your component is
- *               connected to (0 to 31).
- * @retval false Success
- * @retval true Wrong interrupt number
- */
-bool disableSpecificInterrupt( const unsigned int intNum );
+void irqRegisterISR( const unsigned int intNum, void* pContext,
+                     ISRCallback Callback );
 
 
 /*! ---------------------------------------------------------------------------
  * @ingroup INTERRUPT
  * @brief Enables a specific interrupt
+ *        Counterpart of irqDisableSpecific
+ * @param intNum Interrupt line number that your component is
+ *               connected to (0 to 31).
+ * @see irqDisableSpecific
+ */
+void irqEnableSpecific( const unsigned int intNum );
+
+/*! ---------------------------------------------------------------------------
+ * @ingroup INTERRUPT
+ * @brief Disables a specific interrupt.
+ *        Counterpart of irqEnableSpecific
  *
  * @param intNum Interrupt line number that your component is
  *               connected to (0 to 31).
- * @retval false Success
- * @retval true Wrong interrupt number
+ * @see irqEnableSpecific
  */
-bool enableSpecificInterrupt( const unsigned int intNum );
+void irqDisableSpecific( const unsigned int intNum );
 
+/*! ---------------------------------------------------------------------------
+ * @ingroup INTERRUPT
+ * @brief Global enabling of all registered and activated interrupts.
+ *        Counterpart of irqDisable().
+ * @see irqDisable
+ */
+STATIC inline void irqEnable( void )
+{
+   const uint32_t ie = 0x00000001;
+   asm volatile ( "wcsr ie, %0"::"r"(ie) );
+}
+
+/*! ---------------------------------------------------------------------------
+ * @ingroup INTERRUPT
+ * @brief Global disabling of all interrupts.
+ *        Counterpart of irqEnable()
+ * @see irqEnable
+ */
+STATIC inline void irqDisable( void )
+{
+   asm volatile ( "wcsr ie, r0" );
+}
+
+/*! ---------------------------------------------------------------------------
+ * @ingroup ATOMIC
+ * @brief Function shall be invoked immediately before a critical respectively
+ *        atomic section begins.
+ *
+ * Counterpart to criticalSectionLeave.
+ * @see criticalSectionLeave
+ */
+void criticalSectionEnter( void );
+
+/*! ---------------------------------------------------------------------------
+ * @ingroup ATOMIC
+ * @brief Function shall be invoked immediately after the end of a critical
+ *        respectively atomic section.
+ *
+ * Counterpart to criticalSectionEnter
+ * @see criticalSectionEnter
+ */
+void criticalSectionExit( void );
+
+/*! ---------------------------------------------------------------------------
+ * @ingroup ATOMIC
+ * @brief Helper function for macro ATOMIC_SECTION feeding the pseudo for-loop
+ * @see ATOMIC_SECTION
+ */
+STATIC inline bool __criticalSectionEnter( void )
+{
+   criticalSectionEnter();
+   return true;
+}
+
+/*! ---------------------------------------------------------------------------
+ * @ingroup ATOMIC
+ * @brief Establishes a atomic respectively critical section between the
+ *        following enclosing curly braces.
+ *
+ * All interrupts within the body of the atomic section are locked.
+ * @note <b>CAUTION:</b> Do not use the keywords "brake" or "return" within
+ *       the atomic body! Its a for-loop!\n
+ * @note Nested atomic sections are possible.
+ * @note Keep atomic sections as short as possible, otherwise the danger of
+ *       jittering grows when using a real time OS.
+ *
+ * Example:
+ * @code
+ * ATOMIC_SECTION()
+ * { // Atomic body
+ *    foo();
+ *    bar();
+ * }
+ * @endcode
+ */
+#define ATOMIC_SECTION()                             \
+   for( bool __c__ = __criticalSectionEnter();       \
+        __c__;                                       \
+        __c__ = false, criticalSectionExit() )
 
 #ifdef __cplusplus
 }

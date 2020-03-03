@@ -13,10 +13,13 @@ REPOSITORY_DIR = $(shell git rev-parse --show-toplevel)
 
 MIAN_MODULE := lm32RtosTest1.c
 
+
+
 # The following flag is essential so that the build system adds the
 # FreeRTOS sources to this project.
 USE_RTOS = 1
 
+RTOS_USING_HEAP = 1
 
 # TOOLCHAIN_DIR = $(INCLUDED_TOOLCHAIN_DIR)
 
@@ -28,6 +31,9 @@ CODE_OPTIMIZATION = 2
 # Meaningful in debug mode.
  DEFINES += CONFIG_RTOS_PEDANTIC_CHECK
 
+ DEFINES += MAX_LM32_INTERRUPTS=2
+ DEFINES += CONFIG_INTERRUPT_PEDANTIC_CHECK
+ 
 # FreeRTOS will handle the stack defined in FreeRTOSConfig.h.
 # Therefore we can overwrite the default size of the base stack size (10k)
 # into a smaller size.

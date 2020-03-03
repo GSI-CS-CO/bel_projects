@@ -48,7 +48,6 @@
 
 #ifndef CONFIG_NO_RTOS_TIMER
  #include "scu_lm32Timer.h"
- #include "lm32Interrupts.h"
 #endif
 #include "eb_console_helper.h"
 
@@ -63,8 +62,6 @@
 #if (configAPPLICATION_ALLOCATED_HEAP == 1)
   uint8_t ucHeap[ configTOTAL_HEAP_SIZE ];
 #endif
-
-volatile static unsigned int uxCriticalNesting = 0;
 
 /* ----------------------------------------------------------------------------
  * See header file for description. 
@@ -159,7 +156,7 @@ inline static void prvSetupTimer( void )
    lm32TimerSetPeriod( pTimer, configCPU_CLOCK_HZ / configTICK_RATE_HZ );
    lm32TimerEnable( pTimer );
    /* Register Interrupt Service Routine */
-   registerISR( TIMER_IRQ, (void*)pTimer, onTimerInterrupt );
+   irqRegisterISR( TIMER_IRQ, (void*)pTimer, onTimerInterrupt );
 }
 
 #else
@@ -198,6 +195,7 @@ void vPortEndScheduler( void )
    /* It is unlikely that the LM32 port will get stopped.  */
 }
 
+#if 0
 /*
  * Critical section management.
  * When the compiler and linker has LTO ability so the following inline
@@ -222,7 +220,7 @@ inline void vPortExitCritical( void )
       portENABLE_INTERRUPTS();
    }
 }
-
+#endif
 #if (configSUPPORT_STATIC_ALLOCATION == 1)
 /*! ---------------------------------------------------------------------------
  * configSUPPORT_STATIC_ALLOCATION is set to 1, so the application must provide an
