@@ -37,6 +37,7 @@ CHECK_MICROTCA         = ./syn/gsi_microtca/control/microtca_control
 CHECK_PEXP             = ./syn/gsi_pexp/control/pexp_control
 CHECK_SCU4             = ./syn/gsi_scu/control4/scu_control
 CHECK_A10GX            = ./syn/gsi_a10gx_pcie/control/pci_control
+CHECK_FTM              = ./syn/gsi_pexarria5/ftm/ftm
 
 # Project paths
 PATH_SCU2              = syn/gsi_scu/control2
@@ -50,6 +51,7 @@ PATH_MICROTCA          = syn/gsi_microtca/control
 PATH_PEXP              = syn/gsi_pexp/control
 PATH_SCU4              = syn/gsi_scu/control4
 PATH_A10GX             = syn/gsi_a10gx_pcie/control
+PATH_FTM               = syn/gsi_pexarria5/ftm
 
 define sort_file
 	sort $(1).qsf >> temp_sorted
@@ -290,6 +292,18 @@ pexp-sort:
 
 pexp-check:
 	$(call check_timing, $(CHECK_PEXP))
+
+ftm:	firmware
+	$(MAKE) -C $(PATH_FTM) all
+
+ftm-clean::
+	$(MAKE) -C $(PATH_FTM) clean
+
+ftm-sort:
+	$(call sort_file, $(CHECK_FTM))
+
+ftm-check:
+	$(call check_timing, $(CHECK_FTM))
 
 # #################################################################################################
 # Arria 10 devices

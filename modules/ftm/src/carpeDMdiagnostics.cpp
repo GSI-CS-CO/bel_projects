@@ -11,7 +11,7 @@
 
 #include "common.h"
 
-#include "carpeDM.h"
+#include "carpeDMimpl.h"
 #include "minicommand.h"
 #include "propwrite.h"
 
@@ -59,7 +59,7 @@ namespace coverage {
 
 
   //check if all tables are in sync
-  bool CarpeDM::tableCheck(std::string& report) {
+  bool CarpeDM::CarpeDMimpl::tableCheck(std::string& report) {
     Graph& g        = gDown;
     AllocTable& at  = atDown;
     bool qtyIsOk  = true, allocIsOk = true, hashIsOk = true, groupsIsOk = true, isOk;
@@ -151,7 +151,7 @@ namespace coverage {
   }
 
 
-  std::string& CarpeDM::inspectQueues(const std::string& blockName, std::string& report) {
+  std::string& CarpeDM::CarpeDMimpl::inspectQueues(const std::string& blockName, std::string& report) {
 
     QueueReport qr;
     qr = getQReport(blockName, qr);
@@ -215,7 +215,7 @@ namespace coverage {
   }
 
 
-std::string& CarpeDM::getRawQReport(const std::string& blockName, std::string& report) {
+std::string& CarpeDM::CarpeDMimpl::getRawQReport(const std::string& blockName, std::string& report) {
 
     QueueReport qr;
     qr = getQReport(blockName, qr);
@@ -255,14 +255,14 @@ std::string& CarpeDM::getRawQReport(const std::string& blockName, std::string& r
 
 
 
-  QueueReport& CarpeDM::getQReport(const std::string& blockName, QueueReport& qr) {
+  QueueReport& CarpeDM::CarpeDMimpl::getQReport(const std::string& blockName, QueueReport& qr) {
     Graph& g = gDown;
     AllocTable& at = atDown;
     vStrC futureOrphan;
     return getQReport(g, at, blockName, qr, futureOrphan);
   }
 
-  QueueReport& CarpeDM::getQReport(Graph& g, AllocTable& at, const std::string& blockName, QueueReport& qr, const vStrC& futureOrphan) {
+  QueueReport& CarpeDM::CarpeDMimpl::getQReport(Graph& g, AllocTable& at, const std::string& blockName, QueueReport& qr, const vStrC& futureOrphan) {
 
     const std::string exIntro = " getQReport: ";
 
@@ -335,7 +335,7 @@ std::string& CarpeDM::getRawQReport(const std::string& blockName, std::string& r
     return qr;
   }
 
-  QueueElement& CarpeDM::getQelement(Graph& g, AllocTable& at, uint8_t idx, amI allocIt, QueueElement& qe, const vStrC& futureOrphan) {
+  QueueElement& CarpeDM::CarpeDMimpl::getQelement(Graph& g, AllocTable& at, uint8_t idx, amI allocIt, QueueElement& qe, const vStrC& futureOrphan) {
     //TODO might cleaner as deserialisers for MiniCommand Class
     uint8_t*  bAux  = (uint8_t*)&(allocIt->b);
     uint8_t*     b  = (uint8_t*)&bAux[(idx % 2) * _T_CMD_SIZE_];
@@ -440,7 +440,7 @@ std::string& CarpeDM::getRawQReport(const std::string& blockName, std::string& r
 
 
 
-void CarpeDM::dumpNode(const std::string& name) {
+void CarpeDM::CarpeDMimpl::dumpNode(const std::string& name) {
 
   Graph& g = gDown;
   if (hm.contains(name)) {
@@ -450,7 +450,7 @@ void CarpeDM::dumpNode(const std::string& name) {
   }
 }
 
-bool CarpeDM::isPainted(const std::string& name) {
+bool CarpeDM::CarpeDMimpl::isPainted(const std::string& name) {
   Graph& g = gDown;
   if (hm.contains(name)) {
     auto it = atDown.lookupHash(hm.lookup(name));
@@ -462,14 +462,14 @@ bool CarpeDM::isPainted(const std::string& name) {
 
 }
 
-void CarpeDM::showPaint() {
+void CarpeDM::CarpeDMimpl::showPaint() {
   Graph& g = gDown;
   BOOST_FOREACH( vertex_t v, vertices(g) ) {
     if (!g[v].np->isMeta()) std::cout << g[v].name << ":" << (int)(g[v].np->isPainted() ? 1 : 0) << std::endl;
   }  
 }
 
-void CarpeDM::inspectHeap(uint8_t cpuIdx) {
+void CarpeDM::CarpeDMimpl::inspectHeap(uint8_t cpuIdx) {
   vAdr vRa;
   vBuf heap;
 
@@ -498,13 +498,13 @@ void CarpeDM::inspectHeap(uint8_t cpuIdx) {
 
 
 
-vEbwrs& CarpeDM::clearHealth(vEbwrs& ew) {
+vEbwrs& CarpeDM::CarpeDMimpl::clearHealth(vEbwrs& ew) {
   for(int cpuIdx = 0; cpuIdx < ebd.getCpuQty(); cpuIdx++) { clearHealth(ew, cpuIdx); }
   return ew;
 }
 
 
-vEbwrs& CarpeDM::clearHealth(vEbwrs& ew, uint8_t cpuIdx) {
+vEbwrs& CarpeDM::CarpeDMimpl::clearHealth(vEbwrs& ew, uint8_t cpuIdx) {
  
   uint32_t const baseAdr = atDown.getMemories()[cpuIdx].extBaseAdr + atDown.getMemories()[cpuIdx].sharedOffs;
 
@@ -581,7 +581,7 @@ vEbwrs& CarpeDM::clearHealth(vEbwrs& ew, uint8_t cpuIdx) {
 }
 
 
-HealthReport& CarpeDM::getHealth(uint8_t cpuIdx, HealthReport &hr) {
+HealthReport& CarpeDM::CarpeDMimpl::getHealth(uint8_t cpuIdx, HealthReport &hr) {
   uint32_t const baseAdr = atDown.getMemories()[cpuIdx].extBaseAdr + atDown.getMemories()[cpuIdx].sharedOffs;
 
 
@@ -681,7 +681,7 @@ HealthReport& CarpeDM::getHealth(uint8_t cpuIdx, HealthReport &hr) {
 
 }
 
-void CarpeDM::show(const std::string& title, const std::string& logDictFile, TransferDir dir, bool filterMeta ) {
+void CarpeDM::CarpeDMimpl::show(const std::string& title, const std::string& logDictFile, TransferDir dir, bool filterMeta ) {
 
   Graph& g        = (dir == TransferDir::UPLOAD ? gUp  : gDown);
   AllocTable& at  = (dir == TransferDir::UPLOAD ? atUp : atDown);
@@ -733,7 +733,7 @@ void CarpeDM::show(const std::string& title, const std::string& logDictFile, Tra
 using namespace coverage;
 
 
-std::vector<std::vector<uint64_t>> CarpeDM::coverage3TestData(uint64_t seedStart, uint64_t cases, uint8_t parts, uint8_t percentage ) {
+std::vector<std::vector<uint64_t>> CarpeDM::CarpeDMimpl::coverage3TestData(uint64_t seedStart, uint64_t cases, uint8_t parts, uint8_t percentage ) {
 
   patName.clear();
   patName[0] = "A";
@@ -780,7 +780,7 @@ std::vector<std::vector<uint64_t>> CarpeDM::coverage3TestData(uint64_t seedStart
 
 
 
-void CarpeDM::coverage3Upload(uint64_t seed ) {
+void CarpeDM::CarpeDMimpl::coverage3Upload(uint64_t seed ) {
 
   //std::cout << "F 0x" << std::setfill('0') << std::setw(10) <<  std::hex << seed << std::endl;
 
@@ -811,7 +811,7 @@ void CarpeDM::coverage3Upload(uint64_t seed ) {
 
 
 
-bool CarpeDM::coverage3IsSeedValid(uint64_t seed) {
+bool CarpeDM::CarpeDMimpl::coverage3IsSeedValid(uint64_t seed) {
   uint32_t curInit  = (seed >> cursorPos) & cursorMsk;
   //uint32_t defInit  = (seed >> staticPos) & staticMsk;
   uint32_t qInit    = (seed >> dynPos)    & dynMsk;
@@ -846,7 +846,7 @@ bool CarpeDM::coverage3IsSeedValid(uint64_t seed) {
   return true;
 }
 
-std::string CarpeDM::coverage3GenerateCursor(Graph& g, uint64_t seed ) {
+std::string CarpeDM::CarpeDMimpl::coverage3GenerateCursor(Graph& g, uint64_t seed ) {
   //cursor position 3 bit
   uint32_t curInit  = (seed >> cursorPos) & cursorMsk;
   std::string cursor;
@@ -856,7 +856,7 @@ std::string CarpeDM::coverage3GenerateCursor(Graph& g, uint64_t seed ) {
   return cursor;
 }
 
-Graph& CarpeDM::coverage3GenerateBase(Graph& g) {
+Graph& CarpeDM::CarpeDMimpl::coverage3GenerateBase(Graph& g) {
   patEntry.clear();
   patExit.clear();
 
@@ -897,7 +897,7 @@ Graph& CarpeDM::coverage3GenerateBase(Graph& g) {
 
 
 
-Graph& CarpeDM::coverage3GenerateStatic(Graph& g, uint64_t seed ) {
+Graph& CarpeDM::CarpeDMimpl::coverage3GenerateStatic(Graph& g, uint64_t seed ) {
   //cursor position 3 bit (4b)
   //default Link onehot A -> x ( A | B | C | idle), B -> y, C -> z,   3 tri -> 6 bit (12b)
 
@@ -930,7 +930,7 @@ Graph& CarpeDM::coverage3GenerateStatic(Graph& g, uint64_t seed ) {
 }
 
 
-Graph& CarpeDM::coverage3GenerateDynamic(Graph& g, uint64_t seed) {
+Graph& CarpeDM::CarpeDMimpl::coverage3GenerateDynamic(Graph& g, uint64_t seed) {
   //cursor position 3 bit (4b)
   //queue Link   matrix ABC x ABC -> ABC0ABC1ABC2 9 tri -> 18 bit
   uint32_t qInit  = (seed >> dynPos) & dynMsk;

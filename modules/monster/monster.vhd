@@ -34,6 +34,7 @@ use work.wr_fabric_pkg.all;
 use work.wishbone_pkg.all;
 use work.eca_pkg.all;
 use work.eca_internals_pkg.eca_wr_time;
+use work.eca_tap_pkg.all;
 use work.tlu_pkg.all;
 use work.pcie_wb_pkg.all;
 use work.wr_altera_pkg.all;
@@ -115,7 +116,8 @@ entity monster is
     g_en_tempsens          : boolean;
     g_delay_diagnostics    : boolean;
     g_en_eca               : boolean;
-    g_en_wd_tmr            : boolean);
+    g_en_wd_tmr            : boolean;
+    g_en_eca_tap           : boolean);
   port(
     -- Required: core signals
     core_clk_20m_vcxo_i    : in    std_logic;
@@ -443,7 +445,7 @@ architecture rtl of monster is
   ----------------------------------------------------------------------------------
 
   -- required slaves
-  constant c_dev_slaves          : natural := 28;
+  constant c_dev_slaves          : natural := 29;
   constant c_devs_build_id       : natural := 0;
   constant c_devs_watchdog       : natural := 1;
   constant c_devs_flash          : natural := 2;
@@ -474,7 +476,8 @@ architecture rtl of monster is
   constant c_devs_DDR3_ctrl      : natural := 25;
   constant c_devs_tempsens       : natural := 26;
   constant c_devs_a10_phy_reconf : natural := 27;
-
+  constant c_devs_eca_tap        : natural := 28;
+  
   -- Cut off TLU
   constant c_use_tlu : boolean := (g_lm32_are_ftm and g_en_tlu) or (not(g_lm32_are_ftm) and g_en_tlu);
 
@@ -510,7 +513,8 @@ architecture rtl of monster is
     c_devs_ddr3_if2       => f_sdb_auto_device(c_wb_DDR3_if2_sdb,                g_en_ddr3),
     c_devs_ddr3_ctrl      => f_sdb_auto_device(c_irq_master_ctrl_sdb,            g_en_ddr3),
     c_devs_tempsens       => f_sdb_auto_device(c_temp_sense_sdb,                 g_en_tempsens),
-    c_devs_a10_phy_reconf => f_sdb_auto_device(c_cpri_phy_reconf_sdb,            g_a10_en_phy_reconf));
+    c_devs_a10_phy_reconf => f_sdb_auto_device(c_cpri_phy_reconf_sdb,            g_a10_en_phy_reconf),
+    c_devs_eca_tap        => f_sdb_auto_device(c_eca_tap_sdb,                    g_en_eca_tap));
   constant c_dev_layout      : t_sdb_record_array := f_sdb_auto_layout(c_dev_layout_req_masters, c_dev_layout_req_slaves);
   constant c_dev_sdb_address : t_wishbone_address := f_sdb_auto_sdb   (c_dev_layout_req_masters, c_dev_layout_req_slaves);
   constant c_dev_bridge_sdb  : t_sdb_bridge       := f_xwb_bridge_layout_sdb(true, c_dev_layout, c_dev_sdb_address);
@@ -638,6 +642,9 @@ architecture rtl of monster is
   signal wrc_slave_o   : t_wishbone_slave_out;
   signal wrc_master_i  : t_wishbone_master_in;
   signal wrc_master_o  : t_wishbone_master_out;
+  signal s_eca_evt_m_i  : t_wishbone_master_in;
+  signal s_eca_evt_m_o  : t_wishbone_master_out;
+
   signal eb_src_out    : t_wrf_source_out;
   signal eb_src_in     : t_wrf_source_in;
   signal eb_snk_out    : t_wrf_sink_out;
@@ -1502,7 +1509,8 @@ end generate;
   -- White Rabbit ------------------------------------------------------------------
   ----------------------------------------------------------------------------------
 
-  U_WR_CORE : xwr_core
+  wr_a2 : if c_is_arria2 generate
+    U_WR_CORE : xwr_core
 
     generic map (
       g_simulation                => 0,
@@ -1598,6 +1606,106 @@ end generate;
       --dio_o                => open,
       rst_aux_n_o          => open,
       link_ok_o            => s_link_ok);
+  end generate;
+
+  wr_a5 : if c_is_arria5 generate
+    U_WR_CORE : xwr_core
+
+    generic map (
+      g_simulation                => 0,
+      g_with_external_clock_input => FALSE,
+      g_phys_uart                 => TRUE,
+      g_virtual_uart              => TRUE,
+      g_aux_clks                  => 0,
+      g_ep_rxbuf_size             => 1024,
+      g_tx_runt_padding           => TRUE,
+      g_records_for_phy           => FALSE,
+      g_pcs_16bit                 => FALSE,
+      g_dpram_initf               => "../../../ip_cores/wrpc-sw/wrc.mif",
+      g_dpram_size                => 131072/4,
+      g_interface_mode            => PIPELINED,
+      g_address_granularity       => BYTE,
+      g_aux_sdb                   => c_etherbone_sdb,
+      g_softpll_enable_debugger   => FALSE)
+
+    port map (
+      clk_sys_i            => clk_sys,
+      clk_dmtd_i           => clk_dmtd,
+      clk_ref_i            => clk_ref,
+      clk_aux_i            => (others => '0'),
+      --clk_ext_i            => wr_ext_clk_i,
+      --clk_ext_mul_i        => clk_ext_mul_i,
+      --clk_ext_mul_locked_i => clk_ext_mul_locked_i,
+      --clk_ext_stopped_i    => '0,
+      --clk_ext_rst_o        => open,
+      pps_ext_i            => wr_ext_pps_i,
+      rst_n_i              => rstn_sys,
+      dac_hpll_load_p1_o   => dac_hpll_load_p1,
+      dac_hpll_data_o      => dac_hpll_data,
+      dac_dpll_load_p1_o   => dac_dpll_load_p1,
+      dac_dpll_data_o      => dac_dpll_data,
+      phy_rdy_i            => '1',
+      phy_loopen_vec_o     => open,
+      phy_tx_prbs_sel_o    => open,
+      phy_sfp_tx_fault_i   => '0',
+      phy_sfp_los_i        => '0',
+      phy_sfp_tx_disable_o => open,
+      phy_ref_clk_i        => phy_tx_clk,
+      phy_tx_data_o        => phy_tx_data,
+      phy_tx_k_o           => phy_tx_k,
+      phy_tx_disparity_i   => phy_tx_disparity,
+      phy_tx_enc_err_i     => phy_tx_enc_err,
+      phy_rx_data_i        => phy_rx_data,
+      phy_rx_rbclk_i       => phy_rx_rbclk,
+      phy_rx_k_i           => phy_rx_k,
+      phy_rx_enc_err_i     => phy_rx_enc_err,
+      phy_rx_bitslide_i    => phy_rx_bitslide,
+      phy_rst_o            => phy_rst,
+      phy_loopen_o         => phy_loopen,
+      phy8_o               => phy8_i,
+      phy8_i               => phy8_o,
+      phy16_o              => phy16_i,
+      phy16_i              => phy16_o,
+      led_act_o            => link_act,
+      led_link_o           => link_up,
+      scl_o                => open, -- Our ROM is on onewire, not i2c
+      scl_i                => '0',
+      sda_i                => '0',
+      sda_o                => open,
+      sfp_scl_i            => wr_sfp_scl_io,
+      sfp_sda_i            => wr_sfp_sda_io,
+      sfp_scl_o            => sfp_scl_o,
+      sfp_sda_o            => sfp_sda_o,
+      sfp_det_i            => wr_sfp_det_i,
+      btn1_i               => '0',
+      btn2_i               => '0',
+      uart_rxd_i           => uart_mux,
+      uart_txd_o           => uart_wrc,
+      owr_pwren_o          => owr_pwren,
+      owr_en_o             => owr_en,
+      owr_i(0)             => wr_onewire_io,
+      owr_i(1)             => '0',
+      slave_i              => wrc_slave_i,
+      slave_o              => wrc_slave_o,
+      aux_master_o         => wrc_master_o,
+      aux_master_i         => wrc_master_i,
+      wrf_src_o            => eb_snk_in,
+      wrf_src_i            => eb_snk_out,
+      wrf_snk_o            => eb_src_in,
+      wrf_snk_i            => eb_src_out,
+      tm_link_up_o         => open,
+      tm_dac_value_o       => open,
+      tm_dac_wr_o          => open,
+      tm_clk_aux_lock_en_i => (others => '0'),
+      tm_clk_aux_locked_o  => open,
+      tm_time_valid_o      => tm_valid,
+      tm_tai_o             => tm_tai,
+      tm_cycles_o          => tm_cycles,
+      pps_p_o              => pps,
+      --dio_o                => open,
+      rst_aux_n_o          => open,
+      link_ok_o            => s_link_ok);
+  end generate;
 
   U_DAC_ARB : spec_serial_dac_arb
     generic map (
@@ -1966,6 +2074,24 @@ end generate;
   end generate gen_lvds_dat;
   --FIXME not sure about those ... do they need initialising when there is no ECA/TLU? => YES!
 
+ -- transparent wire tap on eca events
+  ecatap : eca_tap
+  generic map(
+    g_build_tap => g_en_eca_tap
+  )
+  port map (
+    clk_sys_i    => clk_sys,
+    rst_sys_n_i  => rstn_sys,
+    clk_ref_i    => clk_ref,
+    rst_ref_n_i  => rstn_ref,
+    time_ref_i   => s_time,
+    ctrl_o       => dev_bus_master_i(c_devs_eca_tap),
+    ctrl_i       => dev_bus_master_o(c_devs_eca_tap),
+    tap_out_o    => s_eca_evt_m_o,
+    tap_out_i    => s_eca_evt_m_i,
+    tap_in_o     => top_bus_master_i(c_tops_eca_event),
+    tap_in_i     => top_bus_master_o(c_tops_eca_event)
+  );
 
 
   -- FTM - NO ECA --
@@ -2132,12 +2258,13 @@ end generate;
             end generate;
           end generate;
 
+
       ecawb : eca_wb_event
         port map(
           w_clk_i    => clk_sys,
           w_rst_n_i  => rstn_sys,
-          w_slave_i  => top_bus_master_o(c_tops_eca_event),
-          w_slave_o  => top_bus_master_i(c_tops_eca_event),
+          w_slave_i  => s_eca_evt_m_o,
+          w_slave_o  => s_eca_evt_m_i,
           e_clk_i    => clk_ref,
           e_rst_n_i  => rstn_ref,
           e_stream_o => s_stream_i(0),
