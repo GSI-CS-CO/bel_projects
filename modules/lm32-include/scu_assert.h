@@ -98,6 +98,9 @@ static inline void __scu_assert_func( const char* fileName,
                                       const char* functionName,
                                       const char* conditionStr )
 {
+#ifdef __lm32__
+   asm volatile ( "wcsr ie, r0" );
+#endif
    assertMprintf( __stderr __ESC_BOLD __ESC_RED "Assertion failed in file: \"%s\""
             " line: %d function: \"%s\" condition: \"%s\"\n"
 #ifndef CONFIG_SCU_ASSERT_CONTINUE
@@ -110,6 +113,11 @@ static inline void __scu_assert_func( const char* fileName,
    while( 1 );
  #else
    abort();
+ #endif
+#else
+ #ifdef __lm32__
+   const uint32_t ie = 0x00000001;
+   asm volatile ( "wcsr ie, %0"::"r"(ie) );
  #endif
 #endif
 }

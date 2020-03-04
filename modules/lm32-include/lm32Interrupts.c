@@ -54,7 +54,7 @@ static ISR_ENTRY_T ISREntryTable[MAX_LM32_INTERRUPTS] = {{NULL, NULL}};
  * @return Interrupt pending mask.
  */
 __attribute__((weak))
-uint32_t _getInterruptPendingMask( const unsigned int intNum )
+uint32_t _irqGetPendingMask( const unsigned int intNum )
 {
    return (1 << intNum);
 }
@@ -70,7 +70,7 @@ uint32_t _getInterruptPendingMask( const unsigned int intNum )
  * @return Interrupt number.
  */
 __attribute__((weak))
-unsigned int _isrReorder( const unsigned int prio )
+unsigned int _irqReorderPriority( const unsigned int prio )
 {
    return prio;
 }
@@ -144,8 +144,8 @@ void _irq_entry( void )
 
       for( unsigned int prio = 0; prio < ARRAY_SIZE( ISREntryTable ); prio++ )
       {
-         const unsigned int intNum = _isrReorder( prio );
-         const uint32_t mask = _getInterruptPendingMask( intNum );
+         const unsigned int intNum = _irqReorderPriority( prio );
+         const uint32_t mask = _irqGetPendingMask( intNum );
          if( (mask & ip) == 0 )
             continue;
 
@@ -175,7 +175,7 @@ void irqRegisterISR( const unsigned int intNum, void* pContext, ISRCallback Call
    ISREntryTable[intNum].Callback = Callback;
    ISREntryTable[intNum].pContext = pContext;
 
-   const uint32_t mask = _getInterruptPendingMask( intNum );
+   const uint32_t mask = _irqGetPendingMask( intNum );
    const uint32_t im = irqGetMaskRegister();
    irqSetMaskRegister( (Callback == NULL)? (im & ~mask) : (im | mask) );
 }
@@ -186,7 +186,7 @@ void irqRegisterISR( const unsigned int intNum, void* pContext, ISRCallback Call
 void irqDisableSpecific( const unsigned int intNum )
 {
    IRQ_ASSERT( intNum < ARRAY_SIZE( ISREntryTable ) );
-   irqSetMaskRegister( irqGetMaskRegister() & ~_getInterruptPendingMask( intNum ) );
+   irqSetMaskRegister( irqGetMaskRegister() & ~_irqGetPendingMask( intNum ) );
 }
 
 /*! ---------------------------------------------------------------------------
@@ -195,7 +195,7 @@ void irqDisableSpecific( const unsigned int intNum )
 void irqEnableSpecific( const unsigned int intNum )
 {
    IRQ_ASSERT( intNum < ARRAY_SIZE( ISREntryTable ) );
-   irqSetMaskRegister( irqGetMaskRegister() & _getInterruptPendingMask( intNum ) );
+   irqSetMaskRegister( irqGetMaskRegister() & _irqGetPendingMask( intNum ) );
 }
 
 /*! ---------------------------------------------------------------------------
