@@ -137,7 +137,7 @@
                     					
                     <sourceEntries>
                         						
-                        <entry excluding="ip_cores/wr-cores/ip_cores/general-cores|ip_cores/wr-cores/ip_cores/etherbone-core|ip_cores/etherbone-core/api/|ip_cores/saftlib/" flags="VALUE_WORKSPACE_PATH" kind="sourcePath" name=""/>
+                        <entry excluding="ip_cores/wr-cores/ip_cores/general-cores|ip_cores/wr-cores/ip_cores/etherbone-core|ip_cores/etherbone-core/api/" flags="VALUE_WORKSPACE_PATH" kind="sourcePath" name=""/>
                         					
                     </sourceEntries>
                     				
