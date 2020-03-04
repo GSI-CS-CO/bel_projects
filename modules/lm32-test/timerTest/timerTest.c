@@ -74,14 +74,16 @@ void main( void )
 
    while( true )
    {
-      if( oldCount != g_count )
+      volatile unsigned int currentCount;
+      ATOMIC_SECTION() currentCount = g_count;
+      if( oldCount != currentCount )
       {
-         mprintf( "C: %d\n", g_count );
-         oldCount = g_count;
+         mprintf( "C: %d\n", currentCount );
+         oldCount = currentCount;
          if( oldCount == 10 )
          {
-            irqDisable();
-           // irqDisableSpecific( TIMER_IRQ );
+           // irqDisable();
+            irqDisableSpecific( TIMER_IRQ );
          }
       }
    }

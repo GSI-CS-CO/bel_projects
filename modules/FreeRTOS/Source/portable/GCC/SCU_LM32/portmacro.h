@@ -1,14 +1,18 @@
 /*!
- *  @file portmacro.h
- *  @brief LM32 portmacro for FreeRtos LM32.
- *         Port specific definitions. \n
- *         The settings in this file configure FreeRTOS correctly \n
- *         for the Gnu-compiler for Lattis Mocro32 (LM32)
+ * @file portmacro.h FreeRTOS backed for Lattice Micro32 (LM32) within the SCU.
+ * @brief LM32 portmacro for FreeRtos LM32.
+ *        Port specific definitions. \n
+ *        The settings in this file configure FreeRTOS correctly \n
+ *        for the Gnu-compiler for Lattice Micro32 (LM32)
  *
- *  @date 14.10.2020
- *  @copyright (C) 2019 GSI Helmholtz Centre for Heavy Ion Research GmbH
+ * @date 14.10.2020
+ * @copyright (C) 2019 GSI Helmholtz Centre for Heavy Ion Research GmbH
  *
- *  @author Ulrich Becker <u.becker@gsi.de>
+ * @author Ulrich Becker <u.becker@gsi.de>
+ *
+ * @see port.c
+ * @see portasm.S
+ * @see crt0FreeRTOS.S
  */
 /*
  * FreeRTOS Kernel V10.1.1
@@ -40,7 +44,7 @@
 #if !defined(__lm32__) && !defined(__DOXYGEN__)
   #error This module is for the target LM32 only!
 #endif
-
+#include "generated/shared_mmap.h"
 #include "lm32Interrupts.h"
 
 #ifdef __cplusplus

@@ -48,7 +48,7 @@ static void vTask( void* pvParameters )
    TickType_t xLastExecutionTime = xTaskGetTickCount();
 #endif
 
-   mprintf( "*** Once! ***\n" );
+   ATOMIC_SECTION() mprintf( "*** Once! ***\n" );
    unsigned int count = 0;
    while( true )
    {

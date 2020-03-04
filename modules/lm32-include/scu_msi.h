@@ -50,6 +50,7 @@ typedef struct PACKED_SIZE
 STATIC_ASSERT( offsetof( MSI_CONTROL_T, reset )  == IRQ_REG_RST );
 STATIC_ASSERT( offsetof( MSI_CONTROL_T, status ) == IRQ_REG_STAT );
 STATIC_ASSERT( offsetof( MSI_CONTROL_T, pop )    == IRQ_REG_POP );
+STATIC_ASSERT( sizeof( MSI_CONTROL_T ) == 3 * sizeof( uint32_t ) );
 #endif
 
 typedef struct PACKED_SIZE
@@ -63,26 +64,42 @@ typedef struct PACKED_SIZE
 STATIC_ASSERT( offsetof( MSI_ITEM_T, msg ) == IRQ_OFFS_MSG );
 STATIC_ASSERT( offsetof( MSI_ITEM_T, adr ) == IRQ_OFFS_ADR );
 STATIC_ASSERT( offsetof( MSI_ITEM_T, sel ) == IRQ_OFFS_SEL );
+STATIC_ASSERT( sizeof( MSI_ITEM_T ) == 3 * sizeof( uint32_t ) );
 #endif
 
 typedef struct PACKED_SIZE
 {
    volatile MSI_CONTROL_T control;
-   uint8_t       _RFU_[IRQ_OFFS_QUE - sizeof( MSI_CONTROL_T )];
+   uint8_t                _RFU_[IRQ_OFFS_QUE - sizeof( MSI_CONTROL_T )];
    volatile MSI_ITEM_T    qeue[MAX_LM32_INTERRUPTS];
-} MSI_T;
+} MSI_IRQ_T;
 
 #ifndef __DOXYGEN__
-STATIC_ASSERT( offsetof( MSI_T, control ) == 0 );
-STATIC_ASSERT( offsetof( MSI_T, qeue ) == IRQ_OFFS_QUE );
-STATIC_ASSERT( sizeof( MSI_T ) == IRQ_OFFS_QUE + MAX_LM32_INTERRUPTS * sizeof( MSI_ITEM_T ) );
+STATIC_ASSERT( offsetof( MSI_IRQ_T, control ) == 0 );
+STATIC_ASSERT( offsetof( MSI_IRQ_T, qeue ) == IRQ_OFFS_QUE );
+STATIC_ASSERT( sizeof( MSI_IRQ_T ) == IRQ_OFFS_QUE + MAX_LM32_INTERRUPTS * sizeof( MSI_ITEM_T ) );
 #endif
+
+#define MSI_IRQ_ITEM_ACCESS( M, i ) \
+   __WB_ACCESS( MSI_IRQ_T, uint32_t, pCpuIrqSlave, qeue[i].M )
+
+#define MSI_IRQ_CONTROL_ACCESS( M ) \
+   __WB_ACCESS( MSI_IRQ_T, uint32_t, pCpuIrqSlave, control.M )
+
 
 int msiGetBoxCpuSlot( int32_t cpuIdx, uint32_t myOffs );
 
 int msiGetBoxSlot( uint32_t myOffs );
 
-void msiPop( MSI_ITEM_T* pItem, const unsigned int intNum );
+static inline void msiPop( MSI_ITEM_T* pItem, const unsigned int intNum )
+{
+   pItem->msg = MSI_IRQ_ITEM_ACCESS( msg, intNum );
+   pItem->adr = MSI_IRQ_ITEM_ACCESS( adr, intNum );
+   pItem->sel = MSI_IRQ_ITEM_ACCESS( sel, intNum );
+
+   MSI_IRQ_CONTROL_ACCESS( pop ) = _irqGetPendingMask( intNum );
+}
+
 
 #ifdef __cplusplus
 }

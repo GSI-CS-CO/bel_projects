@@ -1,15 +1,15 @@
 /*!
- *  @file port.c
- *  @brief LM32 port for FreeRtos LM32.
+ * @file port.c FreeRTOS backed for Lattice Micro32 (LM32) within the SCU.
+ * @brief LM32 port for FreeRtos LM32.
  *
- *  @date 14.01.2020
- *  @copyright (C) 2020 GSI Helmholtz Centre for Heavy Ion Research GmbH
+ * @date 14.01.2020
+ * @copyright (C) 2020 GSI Helmholtz Centre for Heavy Ion Research GmbH
  *
- *  @author Ulrich Becker <u.becker@gsi.de>
- *  Origin:  Richard Barry.(V4.7.0)
+ * @author Ulrich Becker <u.becker@gsi.de>
  *
- *  @todo Hardware implementation of a (V)HDL timer interrupt module
- *        so that preemption mode becomes possible.
+ * @see portmacro.h
+ * @see portasm.S
+ * @see crt0FreeRTOS.S
  */
 /*
  * FreeRTOS Kernel V10.1.1
@@ -54,10 +54,6 @@
 #ifdef CONFIG_SCU
  #include "mini_sdb.h"
 #endif
-
-/*-----------------------------------------------------------
- * Implementation of functions defined in portable.h for the MICO32 port.
- *----------------------------------------------------------*/
 
 #if (configAPPLICATION_ALLOCATED_HEAP == 1)
   uint8_t ucHeap[ configTOTAL_HEAP_SIZE ];
@@ -166,7 +162,6 @@ inline static void prvSetupTimer( void )
  #warning Timer for FreeRTOS will not implenented! Some tick related functions will not work!
 #endif
 
-
 /*! ---------------------------------------------------------------------------
  */
 portBASE_TYPE xPortStartScheduler( void )
@@ -195,32 +190,6 @@ void vPortEndScheduler( void )
    /* It is unlikely that the LM32 port will get stopped.  */
 }
 
-#if 0
-/*
- * Critical section management.
- * When the compiler and linker has LTO ability so the following inline
- * declarations will be really inline.
- */
-/*! ---------------------------------------------------------------------------
- */
-inline void vPortEnterCritical( void )
-{
-   portDISABLE_INTERRUPTS();
-   uxCriticalNesting++;
-}
-
-/*! ---------------------------------------------------------------------------
- */
-inline void vPortExitCritical( void )
-{
-   configASSERT( uxCriticalNesting > 0 );
-   uxCriticalNesting--;
-   if( uxCriticalNesting == 0 )
-   {
-      portENABLE_INTERRUPTS();
-   }
-}
-#endif
 #if (configSUPPORT_STATIC_ALLOCATION == 1)
 /*! ---------------------------------------------------------------------------
  * configSUPPORT_STATIC_ALLOCATION is set to 1, so the application must provide an
