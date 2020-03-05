@@ -3,7 +3,7 @@
  *
  *  created : 2018
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 30-August-2019
+ *  version : 04-March-2020
  *
  *  command-line interface for wrunipz
  *
@@ -45,22 +45,22 @@
 #include <time.h>
 
 // Etherbone
-#include <etherbone.h>
+/* #include <etherbone.h> */
 
 // wr-unipz
-#include <wrunipz-api.h>                 // API wrunipz
+/* #include <wrunipz-api.h>                 // API wrunipz */
+#include <wrunipzlib.h>                  // LIB wrunipz
 #include <b2btest-api.h>                 // API B2B
 #include <wr-unipz.h>                    // FW
 #include <wrunipz_shared_mmap.h>         // LM32
 
 const char* program;
 static int getInfo    = 0;
-static int getConfig  = 0;
 static int getVersion = 0;
 static int snoop      = 0;
 static int logLevel   = 0;
 
-eb_device_t  device;               // keep this and below global
+/*eb_device_t  device;               // keep this and below global
 eb_address_t lm32_base;            // base address of lm32
 eb_address_t wrunipz_iterations;   // # of iterations of main loop, read
 eb_address_t wrunipz_cycles;       // # of UNILAC cycles
@@ -81,16 +81,15 @@ eb_address_t wrunipz_confStat;     // status of config transaction, read
 eb_address_t wrunipz_confPz;       // bit field (indicates, which PZ is submitted), write
 eb_address_t wrunipz_confFlag;     // flags of config, write
 eb_address_t wrunipz_confData;     // data of config, write
+*/
 
-eb_data_t   data1;
- 
-static void die(const char* where, eb_status_t status) {
+static void die(const char* where, uint32_t status) {
   fprintf(stderr, "%s: %s failed: %s\n",
-          program, where, eb_status(status));
+          program, where, wrunipz_status_text(status));
   exit(1);
 } //die
 
-
+/*
 const char* wrunipz_statusText(uint32_t bit) {  
   static char message[256];
 
@@ -111,6 +110,7 @@ const char* wrunipz_statusText(uint32_t bit) {
 
   return message;
 } // dmunipz_statusText
+*/
 
 static void help(void) {
   fprintf(stderr, "Usage: %s [OPTION] <etherbone-device> [COMMAND]\n", program);
@@ -147,15 +147,14 @@ static void help(void) {
   fprintf(stderr, "Example1: '%s dev/wbm0 bla bla bla\n", program);
   fprintf(stderr, "\n");
   fprintf(stderr, "When using option '-s<n>' or '-i', the following information is displayed\n");
-  fprintf(stderr, "wr-unipz:        cycles      virtAcc        PZ   |         DIAGNOSIS      |                 INFO           \n");
-  fprintf(stderr, "wr-unipz: STATUS      n 0....5....A....F 0.....6 |     fUni  fMsg nLate T |   state      nchng stat   nchng\n");
-  fprintf(stderr, "wr-unipz: ST 0054834398 0010010111000011 1111111 |DG 49.972 02335 00000 0 | OpReady    (     0), status 0x00000001 (     0)\n");
-  fprintf(stderr, "                      '                '       ' |        '     '     ' ' |       '          '                   '       ' \n");
-  fprintf(stderr, "                      '                '       ' |        '     '     ' ' |       '          '                   '       '- # of 'bad status' incidents\n");
-  fprintf(stderr, "                      '                '       ' |        '     '     ' ' |       '          '                   '- status value ('1' is OK)\n");
-  fprintf(stderr, "                      '                '       ' |        '     '     ' ' |       '          '- # of state changes\n");
-  fprintf(stderr, "                      '                '       ' |        '     '     ' ' |       '- state\n");
-  fprintf(stderr, "                      '                '       ' |        '     '     ' '- '1': transaction in progress\n");
+  fprintf(stderr, "wr-unipz:        cycles      virtAcc        PZ   |         DIAGNOSIS    |                 INFO           \n");
+  fprintf(stderr, "wr-unipz: STATUS      n 0....5....A....F 0.....6 |     fUni  fMsg nLate |   state      nchng stat   nchng\n");
+  fprintf(stderr, "wr-unipz: ST 0054834398 0010010111000011 1111111 |DG 49.972 02335 00000 | OpReady    (     0), status 0x00000001 (     0)\n");
+  fprintf(stderr, "                      '                '       ' |        '     '     ' |       '          '                   '       ' \n");
+  fprintf(stderr, "                      '                '       ' |        '     '     ' |       '          '                   '       '- # of 'bad status' incidents\n");
+  fprintf(stderr, "                      '                '       ' |        '     '     ' |       '          '                   '- status value ('1' is OK)\n");
+  fprintf(stderr, "                      '                '       ' |        '     '     ' |       '          '- # of state changes\n");
+  fprintf(stderr, "                      '                '       ' |        '     '     ' |       '- state\n");
   fprintf(stderr, "                      '                '       ' |        '     '     '- # of late messages\n");
   fprintf(stderr, "                      '                '       ' |        '     '- average message rate [Hz]\n");
   fprintf(stderr, "                      '                '       ' |        '- average UNILAC cycle rate [Hz]\n");
@@ -163,10 +162,11 @@ static void help(void) {
   fprintf(stderr, "                      '                '- '1': vacc is played\n");
   fprintf(stderr, "                      '- # of UNILAC cycles\n");
   fprintf(stderr, "Report software bugs to <d.beck@gsi.de>\n");
-  fprintf(stderr, "Version %s. Licensed under the LGPL v3.\n", WRUNIPZ_X86_VERSION);
+  fprintf(stderr, "Version %s. Licensed under the LGPL v3.\n", wrunipz_version_library());
 } //help
 
 
+/*
 int readInfo(uint32_t *cycles, uint32_t *tCycleAvg, uint32_t *msgFreqAvg, uint32_t *confStat, uint32_t *nLate, uint32_t *vaccAvg, uint32_t *pzAvg)
 {
   eb_cycle_t  cycle;
@@ -193,8 +193,8 @@ int readInfo(uint32_t *cycles, uint32_t *tCycleAvg, uint32_t *msgFreqAvg, uint32
 
   return eb_status;
 } // readInfo
-
-
+*/
+/*
 int readDiags(uint32_t *nCycles, uint64_t *nMessages, int32_t *dtMax, int32_t *dtMin, int32_t *cycJmpMax, int32_t *cycJmpMin, uint32_t *nLate)
 {
   eb_cycle_t  cycle;
@@ -223,7 +223,7 @@ int readDiags(uint32_t *nCycles, uint64_t *nMessages, int32_t *dtMax, int32_t *d
  
   return eb_status;
 } // readDiags
-
+*/
 
 /*
 int readConfig(uint64_t *mac, uint32_t *ip)
@@ -256,12 +256,12 @@ int readConfig(uint64_t *mac, uint32_t *ip)
 
 void printCycleHeader()
 {
-  printf("wr-unipz:        cycles      virtAcc        PZ   |         DIAGNOSIS      |                 INFO           \n");
-  printf("wr-unipz: STATUS      n 0....5....A....F 0.....6 |     fUni  fMsg nLate T |   state      nchng stat   nchng\n");
+  printf("wr-unipz:        cycles      virtAcc        PZ   |         DIAGNOSIS    |                 INFO           \n");
+  printf("wr-unipz: STATUS      n 0....5....A....F 0.....6 |     fUni  fMsg nLate |   state      nchng stat   nchng\n");
 } // printCycleHeader
 
 
-void printCycle(uint32_t cycles, uint32_t tCycleAvg, uint32_t msgFreqAvg, uint32_t confStat, uint32_t nLate, uint32_t vaccAvg, uint32_t pzAvg)
+void printCycle(uint32_t cycles, uint32_t tCycleAvg, uint32_t msgFreqAvg, uint32_t nLate, uint32_t vaccAvg, uint32_t pzAvg)
 {
   int i;
   
@@ -273,7 +273,7 @@ void printCycle(uint32_t cycles, uint32_t tCycleAvg, uint32_t msgFreqAvg, uint32
   printf(" |");
 
   // diag
-  printf("DG %6.3f %05d %05d %1d |", 1000000000.0/(double)tCycleAvg, msgFreqAvg, nLate, confStat);
+  printf("DG %6.3f %05d %05d |", 1000000000.0/(double)tCycleAvg, msgFreqAvg, nLate);
 
 } // printCycle
 
@@ -294,19 +294,21 @@ void printDiags(uint32_t nCycles, uint64_t nMessages, int32_t dtMax, int32_t dtM
 
 
 int main(int argc, char** argv) {
+  /*
 #define GSI           0x00000651
 #define LM32_RAM_USER 0x54111351
-
+  
   
   eb_status_t         eb_status;
-  eb_socket_t         socket;
+  eb_socket_t         socket; 
   int                 i,j,k;
 
   struct sdb_device   sdbDevice;          // instantiated lm32 core
   int                 nDevices;           // number of instantiated cores
-
+  */
+  int         i;
   
-  const char* devName;
+  const char* devName; 
   const char* command;
 
   int opt, error = 0;
@@ -325,7 +327,7 @@ int main(int argc, char** argv) {
   uint64_t messages;
   uint32_t fMessages;
   uint32_t tCycle;
-  uint32_t version;
+  /* uint32_t version; */
   int32_t  dtMax;
   int32_t  dtMin;
   int32_t  cycJmpMax;
@@ -337,7 +339,6 @@ int main(int argc, char** argv) {
   uint64_t tDiag;
   uint64_t tS0;
 
-  //  uint32_t actCycles;                          // actual number of cycles
   uint32_t actState = COMMON_STATE_UNKNOWN;    // actual state of gateway
   uint64_t actStatusArray;                     // actual sum status of gateway
   uint32_t sleepTime;                          // time to sleep [us]
@@ -346,6 +347,7 @@ int main(int argc, char** argv) {
 
   uint64_t mac;                                // mac for config of EB master
   uint32_t ip;                                 // ip for config of EB master
+  uint32_t cpu;                                // lm32 address
 
   // command test
   uint32_t    dataChn0[WRUNIPZ_NEVT];
@@ -357,13 +359,10 @@ int main(int argc, char** argv) {
   uint32_t    offset;
   char        *filename;
 
-  program = argv[0];    
+  program = argv[0];
 
   while ((opt = getopt(argc, argv, "s:ceih")) != -1) {
     switch (opt) {
-    case 'c':
-      getConfig = 1;
-      break;
     case 'e':
       getVersion = 1;
       break;
@@ -389,8 +388,8 @@ int main(int argc, char** argv) {
     default:
       fprintf(stderr, "%s: bad getopt result\n", program);
       return 1;
-    } /* switch opt */
-  } /* while opt */
+    } // switch opt 
+  } // while opt 
 
   if (error) {
     help();
@@ -408,11 +407,15 @@ int main(int argc, char** argv) {
 
   if (optind+1 < argc)  command = argv[++optind];
   else command = NULL;
+
+  if ((status =  wrunipz_firmware_open(devName, 0, &cpu)) != COMMON_STATUS_OK) die("firmware open", status);
+
+  
   /* open Etherbone device and socket */
-  if ((eb_status = eb_socket_open(EB_ABI_CODE, 0, EB_ADDR32|EB_DATA32, &socket)) != EB_OK) die("eb_socket_open", eb_status);
+  /*  if ((eb_status = eb_socket_open(EB_ABI_CODE, 0, EB_ADDR32|EB_DATA32, &socket)) != EB_OK) die("eb_socket_open", eb_status);
   if ((eb_status = eb_device_open(socket, devName, EB_ADDR32|EB_DATA32, 3, &device)) != EB_OK) die("eb_device_open", eb_status);
 
-  /* get device Wishbone address of lm32 */
+  // get device Wishbone address of lm32 
   nDevices = 1; // quick and dirty, use only first core
   if ((eb_status = eb_sdb_find_by_identity(device, GSI, LM32_RAM_USER, &sdbDevice, &nDevices)) != EB_OK) die("find lm32", eb_status);
   lm32_base =  sdbDevice.sdb_component.addr_first;
@@ -436,75 +439,88 @@ int main(int argc, char** argv) {
   wrunipz_confPz       = lm32_base + SHARED_OFFS + WRUNIPZ_SHARED_CONF_PZ;
   wrunipz_confData     = lm32_base + SHARED_OFFS + WRUNIPZ_SHARED_CONF_DATA;
   wrunipz_confFlag     = lm32_base + SHARED_OFFS + WRUNIPZ_SHARED_CONF_FLAG;
-
+*/
   // printf("wr-unipz: lm32_base 0x%08x, 0x%08x\n", lm32_base, wrunipz_iterations);
-
+  /*
   if (getConfig) {
     api_readDiag(device, &statusArray, &state, &version, &mac, &ip, &nBadStatus, &nBadState, &tDiag, &tS0, &nDummyT, &nDummyI, &statDummy, 0);
     printf("wr-unipz: EB Master: mac 0x%012"PRIx64", ip %03d.%03d.%03d.%03d\n", mac, (ip & 0xff000000) >> 24, (ip & 0x00ff0000) >> 16, (ip & 0x0000ff00) >> 8, (ip & 0x000000ff));
   } // if getConfig
-
+  */
   if (getVersion) {
-    api_readDiag(device, &statusArray, &state, &version, &mac, &ip, &nBadStatus, &nBadState, &tDiag, &tS0, &nDummyT, &nDummyI, &statDummy, 0);
-    printf("wr-unipz: software (firmware) version %s (%06x)\n",  WRUNIPZ_X86_VERSION, version);     
+    printf("wr-unipz: library (firmware) version %s (%s)\n",  wrunipz_version_library(), wrunipz_version_firmware());     
   } // if getEBVersion
 
   if (getInfo) {
     // status
+    /*
     api_readDiag(device, &statusArray, &state, &version, &mac, &ip, &nBadStatus, &nBadState, &tDiag, &tS0, &nDummyT, &nDummyI, &statDummy, 0);
-    readInfo(&cycles, &tCycle, &fMessages, &confStat, &nLate, &vaccAvg, &pzAvg);
+    readInfo(&cycles, &tCycle, &fMessages, &confStat, &nLate, &vaccAvg, &pzAvg); */
+
+    wrunipz_info_read(&cycles, &tCycle, &fMessages, &nLate, &vaccAvg, &pzAvg, &messages, &dtMax, &dtMin, &cycJmpMax, &cycJmpMin);
+    wrunipz_status_read(&statusArray, &state, &nBadStatus, &nBadState);
+    
     printCycleHeader();
-    printCycle(cycles, tCycle, fMessages, confStat, nLate, vaccAvg, pzAvg);
+    printCycle(cycles, tCycle, fMessages, nLate, vaccAvg, pzAvg);
     /*    printf(" %s (%6u), status 0x%08x (%6u)\n", common_state_text(state), nBadState, statusArray, nBadStatus); */
-    printf(", %s (%6u), ",  api_stateText(state), nBadState);
+    printf(" %s (%6u), ",  wrunipz_state_text(state), nBadState);
     if ((statusArray >> COMMON_STATUS_OK) & 0x1) printf("OK   (%6u)\n", nBadStatus);
     else                                         printf("NOTOK(%6u)\n", nBadStatus);
     // print set status bits (except OK)
     for (i = COMMON_STATUS_OK + 1; i<(int)(sizeof(statusArray)*8); i++) {
-      if ((statusArray >> i) & 0x1)  printf("  ------ status bit is set : %s\n", wrunipz_statusText(i));
+      if ((statusArray >> i) & 0x1)  printf("  ------ status bit is set : %s\n", wrunipz_status_text(i));
     } // for i
   } // if getInfo
 
   if (command) {
     // state required to give proper warnings
-    readInfo(&cycles, &tCycle, &fMessages, &confStat, &nLate, &vaccAvg, &pzAvg);
+    wrunipz_status_read(&statusArray, &state, &nBadStatus, &nBadState);
+    /* readInfo(&cycles, &tCycle, &fMessages, &confStat, &nLate, &vaccAvg, &pzAvg); // chk, I believe this should be api_readDiag */
 
     // request state changes
     if (!strcasecmp(command, "configure")) {
-      eb_device_write(device, wrunipz_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)COMMON_CMD_CONFIGURE, 0, eb_block);
+      /* eb_device_write(device, wrunipz_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)COMMON_CMD_CONFIGURE, 0, eb_block);*/
+      wrunipz_cmd_configure();
       if ((state != COMMON_STATE_CONFIGURED) && (state != COMMON_STATE_IDLE)) printf("wr-unipz: WARNING command has no effect (not in state CONFIGURED or IDLE)\n");
     } // "configure"
     if (!strcasecmp(command, "startop")) {
-      eb_device_write(device, wrunipz_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)COMMON_CMD_STARTOP  , 0, eb_block);
+      /* eb_device_write(device, wrunipz_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)COMMON_CMD_STARTOP  , 0, eb_block); */
+      wrunipz_cmd_startop();
       if (state != COMMON_STATE_CONFIGURED) printf("wr-unipz: WARNING command has no effect (not in state CONFIGURED)\n");
     } // "startop"
     if (!strcasecmp(command, "stopop")) {
-      eb_device_write(device, wrunipz_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)COMMON_CMD_STOPOP   , 0, eb_block);
+      /* eb_device_write(device, wrunipz_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)COMMON_CMD_STOPOP   , 0, eb_block);*/
+      wrunipz_cmd_stopop();
       if (state != COMMON_STATE_OPREADY) printf("wr-unipz: WARNING command has no effect (not in state OPREADY)\n");
     } // "startop"
     if (!strcasecmp(command, "recover")) {
-      eb_device_write(device, wrunipz_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)COMMON_CMD_RECOVER  , 0, eb_block);
+      /* eb_device_write(device, wrunipz_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)COMMON_CMD_RECOVER  , 0, eb_block); */
+      wrunipz_cmd_recover();
       if (state != COMMON_STATE_ERROR) printf("wr-unipz: WARNING command has no effect (not in state ERROR)\n");
     } // "recover"
     if (!strcasecmp(command, "idle")) {
-      eb_device_write(device, wrunipz_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)COMMON_CMD_IDLE     , 0, eb_block);
+      /* eb_device_write(device, wrunipz_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)COMMON_CMD_IDLE     , 0, eb_block);*/
+      wrunipz_cmd_idle();
       if (state != COMMON_STATE_CONFIGURED) printf("wr-unipz: WARNING command has no effect (not in state CONFIGURED)\n");
     } // "idle"
     if (!strcasecmp(command, "cleardiag")) {
-      eb_device_write(device, wrunipz_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)COMMON_CMD_CLEARDIAG , 0, eb_block);
+      /* eb_device_write(device, wrunipz_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)COMMON_CMD_CLEARDIAG , 0, eb_block); */
+      wrunipz_cmd_cleardiag();
     } // "cleardiag"
     if (!strcasecmp(command, "diag")) {
-      api_readDiag(device, &statusArray, &state, &version, &mac, &ip, &nBadStatus, &nBadState, &tDiag, &tS0, &nDummyT, &nDummyI, &statDummy, 1);
+      /*api_readDiag(device, &statusArray, &state, &version, &mac, &ip, &nBadStatus, &nBadState, &tDiag, &tS0, &nDummyT, &nDummyI, &statDummy, 1);*/
+      wrunipz_status_read(&statusArray, &state, &nBadStatus, &nBadState);
       // print set status bits (except OK)
       for (i = COMMON_STATUS_OK + 1; i<(int)(sizeof(statusArray)*8); i++) {
-        if ((statusArray >> i) & 0x1)  printf("    status bit is set : %s\n", wrunipz_statusText(i));
+        if ((statusArray >> i) & 0x1)  printf("    status bit is set : %s\n", wrunipz_status_text(i));
       } // for i
-      readDiags(&cycles, &messages, &dtMax, &dtMin, &cycJmpMax, &cycJmpMin, &nLate);
+      /* readDiags(&cycles, &messages, &dtMax, &dtMin, &cycJmpMax, &cycJmpMin, &nLate);*/
+      wrunipz_info_read(&cycles, &tCycle, &fMessages, &nLate, &vaccAvg, &pzAvg, &messages, &dtMax, &dtMin, &cycJmpMax, &cycJmpMin);
       printDiags(cycles, messages, dtMax, dtMin, cycJmpMax, cycJmpMin, nLate);
     } // "diag"
 
     // test with data
-    if (!strcasecmp(command, "test")) {
+    /*if (!strcasecmp(command, "test")) { 
       if (state != COMMON_STATE_OPREADY) printf("wr-unipz: WARNING command has no effect (not in state OPREADY)\n");
       if (optind+4  != argc)                     {printf("wr-unipz: expecting exactly three arguments: test <offset> <vacc> <pz>\n"); return 1;}
       offset = strtoul(argv[optind+1], &tail, 0);
@@ -631,7 +647,7 @@ int main(int argc, char** argv) {
     if (!strcasecmp(command, "cleartables")) {
       eb_device_write(device, wrunipz_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)WRUNIPZ_CMD_CONFCLEAR, 0, eb_block);
       if (state != COMMON_STATE_OPREADY) printf("wr-unipz: WARNING command has no effect (not in state OPREADY)\n");
-    } // "cleartables"
+      } // "cleartables"*/
   } //if command
   
 
@@ -645,8 +661,10 @@ int main(int argc, char** argv) {
     printCycleHeader();
 
     while (1) {
-      api_readDiag(device, &statusArray, &state, &version, &mac, &ip, &nBadStatus, &nBadState, &tDiag, &tS0, &nDummyT, &nDummyI, &statDummy, 0);
-      readInfo(&cycles, &tCycle, &fMessages, &confStat, &nLate, &vaccAvg, &pzAvg); // read info from lm32
+      /* api_readDiag(device, &statusArray, &state, &version, &mac, &ip, &nBadStatus, &nBadState, &tDiag, &tS0, &nDummyT, &nDummyI, &statDummy, 0);
+         readInfo(&cycles, &tCycle, &fMessages, &confStat, &nLate, &vaccAvg, &pzAvg); // read info from lm32*/
+      wrunipz_info_read(&cycles, &tCycle, &fMessages, &nLate, &vaccAvg, &pzAvg, &messages, &dtMax, &dtMin, &cycJmpMax, &cycJmpMin);
+      wrunipz_status_read(&statusArray, &state, &nBadStatus, &nBadState);
       
       if (logLevel == 1) sleepTime = COMMON_DEFAULT_TIMEOUT * 100000;
       else               sleepTime = COMMON_DEFAULT_TIMEOUT * 10000;
@@ -663,8 +681,8 @@ int main(int argc, char** argv) {
       if ((actStatusArray != statusArray) && (logLevel <= COMMON_LOGLEVEL_STATUS))  {printFlag = 1; actStatusArray = actStatusArray;}
 
       if (printFlag) {
-        printCycle(cycles, tCycle, fMessages, confStat, nLate, vaccAvg, pzAvg);
-        printf(", %s (%6u), ",  api_stateText(state), nBadState);
+        printCycle(cycles, tCycle, fMessages, nLate, vaccAvg, pzAvg);
+        printf(", %s (%6u), ",  wrunipz_state_text(state), nBadState);
         if ((statusArray >> COMMON_STATUS_OK) & 0x1) printf("OK   (%6u)\n", nBadStatus);
         else printf("NOTOK(%6u)\n", nBadStatus);
         // print set status bits (except OK)
@@ -681,8 +699,9 @@ int main(int argc, char** argv) {
   } // if snoop
 
   // close Etherbone device and socket
-  if ((eb_status = eb_device_close(device)) != EB_OK) die("eb_device_close", eb_status);
-  if ((eb_status = eb_socket_close(socket)) != EB_OK) die("eb_socket_close", eb_status);
+  /* if ((eb_status = eb_device_close(device)) != EB_OK) die("eb_device_close", eb_status);
+     if ((eb_status = eb_socket_close(socket)) != EB_OK) die("eb_socket_close", eb_status);*/
+  if ((status = wrunipz_firmware_close()) != COMMON_STATUS_OK) die("device close", status);
 
   return exitCode;
 }
