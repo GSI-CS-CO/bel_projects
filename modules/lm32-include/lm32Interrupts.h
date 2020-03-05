@@ -81,6 +81,29 @@ extern "C" {
 typedef void(*ISRCallback)( const unsigned int intNum, const void* pContext );
 
 /*! ---------------------------------------------------------------------------
+ * @ingroup INTERRUPT OVERWRITABLE
+ * @brief Reordering the interrupt priority.
+ *
+ * By default the interrupt number is equal to the interrupt priority.
+ * @note It's possible to overwrite this function for the case
+ *       that the interrupt number isn't equal to the interrupt priority.
+ * @param prio Interrupt priority.
+ * @return Interrupt number.
+ */
+unsigned int _irqReorderPriority( const unsigned int prio );
+
+/*! ---------------------------------------------------------------------------
+ * @ingroup INTERRUPT OVERWRITABLE
+ * @brief Returns the interrupt flag mask calculated by the given
+ *        interrupt number
+ * @note It's possible to overwrite this function for the case
+ *       that the standard interrupt input line will changed.
+ * @param intNum Interrupt number.
+ * @return Interrupt pending mask.
+ */
+uint32_t _irqGetPendingMask( const unsigned int intNum );
+
+/*! ---------------------------------------------------------------------------
  * @ingroup INTERRUPT
  * @brief Registers and de-registers interrupt-handler routine.
  *
@@ -143,6 +166,19 @@ STATIC inline void irqDisable( void )
 }
 
 /*! ---------------------------------------------------------------------------
+ * @ingroup INTERRUPT
+ * @brief Returns the current value of the LM32 interrupt mask register
+ * @return Current value of the interrupt mask register.
+ */
+STATIC inline
+uint32_t irqGetMaskRegister( void )
+{
+   uint32_t im;
+   asm volatile ( "rcsr %0, im" :"=r"(im) );
+   return im;
+}
+
+/*! ---------------------------------------------------------------------------
  * @ingroup ATOMIC
  * @brief Function shall be invoked immediately before a critical respectively
  *        atomic section begins.
@@ -167,10 +203,23 @@ void criticalSectionExit( void );
  * @brief Helper function for macro ATOMIC_SECTION feeding the pseudo for-loop
  * @see ATOMIC_SECTION
  */
+ALWAYS_INLINE
 STATIC inline bool __criticalSectionEnter( void )
 {
    criticalSectionEnter();
    return true;
+}
+
+/*! ---------------------------------------------------------------------------
+ * @ingroup ATOMIC
+ * @brief Helper function for macro ATOMIC_SECTION feeding the pseudo for-loop
+ * @see ATOMIC_SECTION
+ */
+ALWAYS_INLINE
+STATIC inline bool __criticalSectionExit( void )
+{
+   criticalSectionExit();
+   return false;
 }
 
 /*! ---------------------------------------------------------------------------
@@ -197,7 +246,27 @@ STATIC inline bool __criticalSectionEnter( void )
 #define ATOMIC_SECTION()                             \
    for( bool __c__ = __criticalSectionEnter();       \
         __c__;                                       \
-        __c__ = false, criticalSectionExit() )
+        __c__ = __criticalSectionExit() )
+
+/*!
+ * @brief Backward compatibility
+ */
+#define atomic_on   criticalSectionEnter
+
+/*!
+ * @brief Backward compatibility
+ */
+#define atomic_off  criticalSectionExit
+
+/*!
+ * @brief Backward compatibility
+ */
+#define irq_enable  irqEnable
+
+/*!
+ * @brief Backward compatibility
+ */
+#define irq_disable irqDisable
 
 #ifdef __cplusplus
 }

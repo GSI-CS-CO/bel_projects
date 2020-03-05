@@ -1,5 +1,5 @@
 #include "scu_mil.h"
-#include "aux.h"
+//#include "aux.h"
 #include "scu_bus.h"
 
 

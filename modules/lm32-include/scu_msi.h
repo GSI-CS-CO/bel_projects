@@ -23,6 +23,7 @@
 #ifndef _SCU_MSI_H
 #define _SCU_MSI_H
 
+#include <mini_sdb.h>
 #include <lm32Interrupts.h>
 
 #ifdef __cplusplus

@@ -103,6 +103,40 @@ STATIC inline void initializeGlobalPointers( void )
 #endif
 }
 
+#ifndef _CONFIG_OLD_IRQ
+STATIC inline void cfgMsiBox( const unsigned int slot, const unsigned int myOffs )
+{
+   pCpuMsiBox[2 * slot + 1] = (uint32_t)&pMyMsi[myOffs / sizeof(uint32_t)];
+}
+
+#define MSI_MAX_SLOTS 128
+
+int getMsiBoxSlot( const unsigned int  myOffs )
+{
+   int slot = 0;
+   ATOMIC_SECTION()
+   {  /*
+       * Climbing to the first free slot.
+       */
+      while( (slot < MSI_MAX_SLOTS) && (pCpuMsiBox[2 * slot] != 0xffffffff)  )
+      {
+         slot++;
+      }
+
+      if (slot < MSI_MAX_SLOTS)
+      {
+         cfgMsiBox( slot, myOffs );
+      }
+      else
+      {
+         slot = -1;
+      }
+   }
+   return slot;
+}
+#endif /* ifndef _CONFIG_OLD_IRQ */
+
+
 /*! ---------------------------------------------------------------------------
  * @brief enables msi generation for the specified channel. \n
  * Messages from the scu bus are send to the msi queue of this cpu with the offset 0x0. \n
@@ -152,11 +186,19 @@ void enable_scub_msis( const unsigned int channel )
  */
 STATIC void msDelayBig( const uint64_t ms )
 {
+#ifdef _CONFIG_OLD_IRQ
    const uint64_t later = getSysTime() + ms * 1000000ULL / 8;
    while( getSysTime() < later )
    {
       asm volatile ("nop");
    }
+#else
+   const uint64_t later = getWrSysTime() + ms * 1000000ULL / 8;
+   while( getWrSysTime() < later )
+   {
+      NOP();
+   }
+#endif
 }
 
 /*! ---------------------------------------------------------------------------
@@ -189,6 +231,7 @@ void clear_handler_state( const uint8_t socket )
 }
 
 /*! ---------------------------------------------------------------------------
+ * @ingroup INTERRUPT
  * @brief as short as possible, just pop the msi queue of the cpu and
  *         push it to the message queue of the main loop
  * @see init_irq_table
@@ -196,6 +239,7 @@ void clear_handler_state( const uint8_t socket )
  * @see irq_pop_msi
  * @see dispatch
  */
+#ifdef _CONFIG_OLD_IRQ
 void irq_handler( void )
 {
    MSI_T m;
@@ -205,18 +249,44 @@ void irq_handler( void )
    m.adr = global_msi.adr;
    add_msg( &g_aMsg_buf[0], IRQ, m );
 }
+#else
+STATIC void onScuBusInterrupt( const unsigned int intNum,
+                               const void* pContext UNUSED )
+{
+   MSI_T m;
 
+   /*!
+    * @todo Use MSI_ITEM_T instead of MSI_T in future!
+    */
+   irqMsiCopyObjectAndRemove( (MSI_ITEM_T*)&m, intNum );
+
+   add_msg( &g_aMsg_buf[0], IRQ, m );
+}
+#endif
 /*! ---------------------------------------------------------------------------
+ * @ingroup INTERRUPT
  * @brief initialize the irq table and set the irq mask
  */
 STATIC void init_irq_table( void )
 {
+#ifdef _CONFIG_OLD_IRQ
    isr_table_clr();
    isr_ptr_table[0] = &irq_handler;
    irq_set_mask(0x01);
+#else
+   irqRegisterISR( 0, NULL, onScuBusInterrupt );
+#endif
+
    g_aMsg_buf[IRQ].ring_head = g_aMsg_buf[IRQ].ring_tail; // clear msg buffer
+
+#ifdef _CONFIG_OLD_IRQ
    irq_enable();
    mprintf("IRQ table configured. 0x%x\n", irq_get_mask());
+#else
+   irqEnable();
+   mprintf("IRQ table configured. 0x%08x\n", irqGetMaskRegister() );
+#endif
+
 }
 
 /*! ---------------------------------------------------------------------------
@@ -306,12 +376,19 @@ STATIC TASK_T g_aTasks[] =
  * @brief Move messages to the correct queue, depending on source
  * @see irq_handler
  * @see schedule
+ * @todo Remove this function and do this in the interrupt handler direct.
  */
 STATIC inline void dispatch( void )
 {
+#ifdef _CONFIG_OLD_IRQ
    irq_disable();
    const MSI_T m = remove_msg( &g_aMsg_buf[0], IRQ );
    irq_enable();
+#else
+   criticalSectionEnter();
+   const MSI_T m = remove_msg( &g_aMsg_buf[0], IRQ );
+   criticalSectionExit();
+#endif
    switch( m.adr & 0xFF )
    { //TODO remove these naked numbers asap!
       case 0x00: add_msg( &g_aMsg_buf[0], SCUBUS, m ); return; // message from scu bus
@@ -335,8 +412,11 @@ STATIC inline void dispatch( void )
  */
 STATIC inline void schedule( void )
 {
+#ifdef _CONFIG_OLD_IRQ
    const uint64_t tick = getSysTime();
-
+#else
+   const uint64_t tick = getWrSysTime();
+#endif
    for( unsigned int i = 0; i < ARRAY_SIZE( g_aTasks ); i++ )
    {
       dispatch();
@@ -463,8 +543,9 @@ void main( void )
 #if defined( CONFIG_MIL_FG ) && defined( CONFIG_READ_MIL_TIME_GAP )
    mprintf( ESC_WARNING"CAUTION! Time gap reading activated!"ESC_NORMAL"\n" );
 #endif
-   tellMailboxSlot();
    init_irq_table();
+   tellMailboxSlot();
+
 
    msDelayBig(1500); //wait for wr deamon to read sdbfs
 

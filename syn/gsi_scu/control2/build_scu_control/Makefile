@@ -18,6 +18,7 @@ DEFINES += MICO32_FULL_CONTEXT_SAVE_RESTORE
 # ORIGIN := 1
  SCU_MIL := 1
 MIL_GAP := 1
+# _OLD_IRQ :=1
 BASE_VERSION = 3
 
  DEFINES += _CONFIG_NEW
@@ -43,6 +44,9 @@ ifdef USE_HISTORY
    DEFINES += HISTORY
 endif
 
+ifdef _OLD_IRQ
+ DEFINES += _CONFIG_OLD_IRQ
+endif
 
 ifdef MIL_GAP
  DEFINES += CONFIG_READ_MIL_TIME_GAP
@@ -74,9 +78,14 @@ else
 endif
 VERSION = $(VERSION_STR)
 
-SOURCE += $(SCU_LIB_SRC_DIR)/aux.c
-SOURCE += $(SCU_LIB_SRC_DIR)/irq.c
-SOURCE += $(SCU_LIB_SRC_DIR)/display.c
+ifdef _OLD_IRQ
+ SOURCE += $(SCU_LIB_SRC_DIR)/aux.c
+ SOURCE += $(SCU_LIB_SRC_DIR)/irq.c
+# SOURCE += $(SCU_LIB_SRC_DIR)/display.c
+else
+ SOURCE += $(SCU_LIB_SRC_DIR)/lm32Interrupts.c
+endif
+
 SOURCE += $(SCU_LIB_SRC_DIR)/LM32assert.c
 SOURCE += $(SCU_LIB_SRC_DIR)/stack-check.c
 # SOURCE += $(SCU_LIB_SRC_DIR)/wr_time.c

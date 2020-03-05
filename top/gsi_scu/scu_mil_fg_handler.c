@@ -640,7 +640,11 @@ STATIC void milDeviceHandler( register TASK_T* pThis, const bool isScuBus )
           * Only a task which has already served a function generator
           * can read a time-gap. That means its slave number has to be valid.
           */
+       #ifdef _CONFIG_OLD_IRQ
          if( (pMilData->slave_nr != INVALID_SLAVE_NR) && (getSysTime() >= pMilData->gapReadingTime) )
+       #else
+         if( (pMilData->slave_nr != INVALID_SLAVE_NR) && (getWrSysTime() >= pMilData->gapReadingTime) )
+       #endif
          {
             FSM_TRANSITION( ST_DATA_AQUISITION, label='Gap reading time\nexpired',
                                                 color=magenta );
@@ -656,7 +660,11 @@ STATIC void milDeviceHandler( register TASK_T* pThis, const bool isScuBus )
       case ST_PREPARE:
       {
          // wait for 200 us
+       #ifdef _CONFIG_OLD_IRQ
          if( getSysTime() < pMilData->timestamp1 )
+       #else
+         if( getWrSysTime() < pMilData->timestamp1 )
+       #endif
          {
          #ifdef __DOCFSM__
             FSM_TRANSITION( ST_PREPARE, label='200 us not expired', color=blue );
@@ -737,8 +745,11 @@ STATIC void milDeviceHandler( register TASK_T* pThis, const bool isScuBus )
          {
             if( isNoIrqPending( pMilData, channel ) )
                continue; // Handle next channel...
-
+         #ifdef _CONFIG_OLD_IRQ
             pMilData->aFgChannels[channel].daq_timestamp = getSysTime(); // store the sample timestamp of daq
+         #else
+            pMilData->aFgChannels[channel].daq_timestamp = getWrSysTime(); // store the sample timestamp of daq
+         #endif
             status = milSetTask( pMilData, isScuBus, channel );
             if( status != OKAY )
                printDeviceError( status, 23, "dev_sio read daq" );
@@ -832,7 +843,11 @@ STATIC void milDeviceHandler( register TASK_T* pThis, const bool isScuBus )
    #ifdef CONFIG_READ_MIL_TIME_GAP
       case ST_WAIT:
       {
+       #ifdef _CONFIG_OLD_IRQ
          pMilData->gapReadingTime = getSysTime() + INTERVAL_10MS;
+       #else
+         pMilData->gapReadingTime = getWrSysTime() + INTERVAL_10MS;
+       #endif
          break;
       }
    #endif
@@ -843,7 +858,11 @@ STATIC void milDeviceHandler( register TASK_T* pThis, const bool isScuBus )
       #endif
          const MSI_T m = remove_msg( &g_aMsg_buf[0], isScuBus? DEVSIO : DEVBUS );
          pMilData->slave_nr = isScuBus? (m.msg + 1) : 0;
+      #ifdef _CONFIG_OLD_IRQ
          pMilData->timestamp1 = getSysTime() + INTERVAL_200US;
+      #else
+         pMilData->timestamp1 = getWrSysTime() + INTERVAL_200US;
+      #endif
          break;
       }
       case ST_FETCH_STATUS: /* Go immediately to next case. */

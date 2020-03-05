@@ -5,8 +5,11 @@
 #include <board.h>
 #include <mprintf.h>
 #include <syscon.h>
-#include <aux.h>
-
+#ifdef _CONFIG_OLD_IRQ
+ #include <aux.h>
+#else
+ #include <lm32Interrupts.h>
+#endif
 
 /*!***********************************************************
  * @file scu_mil.h MIL bus library

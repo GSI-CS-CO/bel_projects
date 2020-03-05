@@ -45,13 +45,7 @@ typedef struct
 static ISR_ENTRY_T ISREntryTable[MAX_LM32_INTERRUPTS] = {{NULL, NULL}};
 
 /*! ---------------------------------------------------------------------------
- * @ingroup INTERRUPT OVERWRITABLE
- * @brief Returns the interrupt flag mask calculated by the given
- *        interrupt number
- * @note It's possible to overwrite this function for the case
- *       that the standard interrupt input line will changed.
- * @param intNum Interrupt number.
- * @return Interrupt pending mask.
+ * @see lm32Interrupts.h
  */
 __attribute__((weak))
 uint32_t _irqGetPendingMask( const unsigned int intNum )
@@ -60,32 +54,12 @@ uint32_t _irqGetPendingMask( const unsigned int intNum )
 }
 
 /*! ---------------------------------------------------------------------------
- * @ingroup INTERRUPT OVERWRITABLE
- * @brief Reordering the interrupt priority.
- *
- * By default the interrupt number is equal to the interrupt priority.
- * @note It's possible to overwrite this function for the case
- *       that the interrupt number isn't equal to the interrupt priority.
- * @param prio Interrupt priority.
- * @return Interrupt number.
+ * @see lm32Interrupts.h
  */
 __attribute__((weak))
 unsigned int _irqReorderPriority( const unsigned int prio )
 {
    return prio;
-}
-
-/*! ---------------------------------------------------------------------------
- * @ingroup INTERRUPT
- * @brief Returns the current value of the LM32 interrupt mask register
- * @return Current value of the interrupt mask register.
- */
-STATIC inline
-uint32_t irqGetMaskRegister( void )
-{
-   uint32_t im;
-   asm volatile ( "rcsr %0, im" :"=r"(im) );
-   return im;
 }
 
 /*! ---------------------------------------------------------------------------

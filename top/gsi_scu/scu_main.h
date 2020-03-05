@@ -37,8 +37,15 @@
 #include <stdint.h>
 #include "syscon.h"
 #include "eb_console_helper.h"
-#include "scu_lm32_macros.h"
-#include "irq.h"
+
+#include "scu_wr_time.h"
+
+#ifdef _CONFIG_OLD_IRQ
+ #include "scu_lm32_macros.h"
+ #include "irq.h"
+#else
+ #include "scu_msi.h"
+#endif
 #include "scu_bus.h"
 #include "mini_sdb.h"
 #include "board.h"
