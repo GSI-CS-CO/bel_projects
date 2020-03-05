@@ -4,7 +4,7 @@
  *
  * @copyright GSI Helmholtz Centre for Heavy Ion Research GmbH
  * @author    Ulrich Becker <u.becker@gsi.de>
- * @date      21.01.2020
+ * @date      04.03.2020
  ******************************************************************************
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -22,6 +22,7 @@
  */
 #ifndef _SCU_MSI_H
 #define _SCU_MSI_H
+
 #include <lm32Interrupts.h>
 
 #ifdef __cplusplus
@@ -38,7 +39,11 @@ extern "C" {
 #define IRQ_OFFS_ADR 0x00000004
 #define IRQ_OFFS_SEL 0x00000008
 
-
+/*! ---------------------------------------------------------------------------
+ * @ingroup INTERRUPT
+ * @brief Control registers of Message-Signaled Interrupt (MSI)
+ *        wishbone object
+ */
 typedef struct PACKED_SIZE
 {
    uint32_t reset;
@@ -53,6 +58,11 @@ STATIC_ASSERT( offsetof( MSI_CONTROL_T, pop )    == IRQ_REG_POP );
 STATIC_ASSERT( sizeof( MSI_CONTROL_T ) == 3 * sizeof( uint32_t ) );
 #endif
 
+/*! ---------------------------------------------------------------------------
+ * @ingroup INTERRUPT
+ * @brief Message-Signaled Interrupt (MSI) message object type which
+ *        corresponds to the related interrupt.
+ */
 typedef struct PACKED_SIZE
 {
    uint32_t  msg;
@@ -67,37 +77,124 @@ STATIC_ASSERT( offsetof( MSI_ITEM_T, sel ) == IRQ_OFFS_SEL );
 STATIC_ASSERT( sizeof( MSI_ITEM_T ) == 3 * sizeof( uint32_t ) );
 #endif
 
+/*! --------------------------------------------------------------------------
+ * @ingroup INTERRUPT
+ * @brief Message-Signaled Interrupt (MSI) list item object containing
+ *        the message object.
+ */
 typedef struct PACKED_SIZE
 {
-   volatile MSI_CONTROL_T control;
-   uint8_t                _RFU_[IRQ_OFFS_QUE - sizeof( MSI_CONTROL_T )];
-   volatile MSI_ITEM_T    qeue[MAX_LM32_INTERRUPTS];
-} MSI_IRQ_T;
+   MSI_ITEM_T item;
+   uint32_t   _RFU_;
+} MSI_LIST_T;
 
 #ifndef __DOXYGEN__
-STATIC_ASSERT( offsetof( MSI_IRQ_T, control ) == 0 );
-STATIC_ASSERT( offsetof( MSI_IRQ_T, qeue ) == IRQ_OFFS_QUE );
-STATIC_ASSERT( sizeof( MSI_IRQ_T ) == IRQ_OFFS_QUE + MAX_LM32_INTERRUPTS * sizeof( MSI_ITEM_T ) );
+STATIC_ASSERT( offsetof( MSI_LIST_T, item ) == 0 );
+STATIC_ASSERT( sizeof( MSI_LIST_T ) == 4 * sizeof(uint32_t) );
 #endif
 
-#define MSI_IRQ_ITEM_ACCESS( M, i ) \
-   __WB_ACCESS( MSI_IRQ_T, uint32_t, pCpuIrqSlave, qeue[i].M )
-
-#define MSI_IRQ_CONTROL_ACCESS( M ) \
-   __WB_ACCESS( MSI_IRQ_T, uint32_t, pCpuIrqSlave, control.M )
-
-
-int msiGetBoxCpuSlot( int32_t cpuIdx, uint32_t myOffs );
-
-int msiGetBoxSlot( uint32_t myOffs );
-
-static inline void msiPop( MSI_ITEM_T* pItem, const unsigned int intNum )
+/*! ---------------------------------------------------------------------------
+ * @ingroup INTERRUPT
+ * @brief Complete hardware image of Message-Signaled Interrupts (MSI)
+ *
+ * The base address becomes obtained via:
+ * @code
+ * find_device_adr(GSI, CPU_MSI_CTRL_IF)
+ * @endcode
+ * @see find_device_adr
+ */
+typedef struct PACKED_SIZE
 {
-   pItem->msg = MSI_IRQ_ITEM_ACCESS( msg, intNum );
-   pItem->adr = MSI_IRQ_ITEM_ACCESS( adr, intNum );
-   pItem->sel = MSI_IRQ_ITEM_ACCESS( sel, intNum );
+   /*!
+    * @brief Control registers
+    */
+   volatile MSI_CONTROL_T    control;
 
-   MSI_IRQ_CONTROL_ACCESS( pop ) = _irqGetPendingMask( intNum );
+   /*!
+    * @brief May be reserved for future use or still unknown. (Placeholder)
+    */
+   uint8_t                   _RFU_[IRQ_OFFS_QUE - sizeof( MSI_CONTROL_T )];
+
+   /*!
+    * @brief List of message objects related to the corresponding
+    *        interrupt numbers.
+    */
+   const volatile MSI_LIST_T queue[MAX_LM32_INTERRUPTS];
+} IRQ_MSI_T;
+
+#ifndef __DOXYGEN__
+STATIC_ASSERT( offsetof( IRQ_MSI_T, control ) == 0 );
+STATIC_ASSERT( offsetof( IRQ_MSI_T, queue ) == IRQ_OFFS_QUE );
+STATIC_ASSERT( sizeof( IRQ_MSI_T ) == IRQ_OFFS_QUE + MAX_LM32_INTERRUPTS * sizeof( MSI_LIST_T ) );
+#endif
+
+#if 1
+/*! --------------------------------------------------------------------------
+ * @ingroup INTERRUPT
+ * @brief Macro accomplishes a wishbone access to a member of a MSI object.
+ *
+ * It has a logical corresponding to:
+ * @code
+ * ((IRQ_MSI_T*)pCpuIrqSlave)->queue[intNum].item.M
+ * @endcode
+ *
+ * @param M Register name
+ * @param intNum Interrupt number of the corresponding interrupt.
+ */
+#define IRQ_MSI_ITEM_ACCESS( M, intNum ) \
+   __WB_ACCESS( IRQ_MSI_T, uint32_t, pCpuIrqSlave, queue[intNum].item.M )
+
+/*! --------------------------------------------------------------------------
+ * @ingroup INTERRUPT
+ * @brief Macro accomplishes a wishbone access to a MSI control register.
+ *
+ * It has a logical corresponding to:
+ * @code
+ * ((IRQ_MSI_T*)pCpuIrqSlave)->control.M
+ * @endcode
+ * @param M Register name
+ */
+#define IRQ_MSI_CONTROL_ACCESS( M ) \
+   __WB_ACCESS( IRQ_MSI_T, uint32_t, pCpuIrqSlave, control.M )
+
+#else
+#warning Direct wishbone access will not work!
+#define IRQ_MSI_ITEM_ACCESS( M, i ) \
+   ((IRQ_MSI_T*)pCpuIrqSlave)->queue[i].item.M
+
+#define IRQ_MSI_CONTROL_ACCESS( M ) \
+   ((IRQ_MSI_T*)pCpuIrqSlave)->control.M
+#endif
+
+//int msiGetBoxCpuSlot( int32_t cpuIdx, uint32_t myOffs );
+
+//int msiGetBoxSlot( uint32_t myOffs );
+
+/*! ---------------------------------------------------------------------------
+ * @ingroup INTERRUPT
+ * @brief Removes the Message-Signaled Interrupt object (MSI) form the queue.
+ * @param intNum Interrupt number of the corresponding interrupt.
+ */
+STATIC inline void irqMsiPop( const unsigned int intNum )
+{
+   IRQ_MSI_CONTROL_ACCESS( pop ) = _irqGetPendingMask( intNum );
+}
+
+/*! ---------------------------------------------------------------------------
+ * @ingroup INTERRUPT
+ * @brief Copies the message object related to the given interrupt number and
+ *        removes it from the queue.
+ * @param pItem Pointer to target object where the data shall copied.
+ * @param intNum Interrupt number of the corresponding interrupt.
+ */
+STATIC inline void irqMsiCopyObjectAndRemove( MSI_ITEM_T* const pItem,
+                                              const unsigned int intNum )
+{
+   pItem->msg = IRQ_MSI_ITEM_ACCESS( msg, intNum );
+   pItem->adr = IRQ_MSI_ITEM_ACCESS( adr, intNum );
+   pItem->sel = IRQ_MSI_ITEM_ACCESS( sel, intNum );
+
+   irqMsiPop( intNum );
 }
 
 
