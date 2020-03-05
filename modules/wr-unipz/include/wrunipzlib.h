@@ -1,0 +1,106 @@
+/******************************************************************************
+ *  wrunipzlib.h
+ *
+ *  created : 2020
+ *  author  : Dietrich Beck, GSI-Darmstadt
+ *  version : 2020-mar-04
+ *
+ * library for wrunipz
+ *
+ * -------------------------------------------------------------------------------------------
+ * License Agreement for this software:
+ *
+ * Copyright (C) 2013  Dietrich Beck
+ * GSI Helmholtzzentrum für Schwerionenforschung GmbH
+ * Planckstraße 1
+ * D-64291 Darmstadt
+ * Germany
+ *
+ * Contact: d.beck@gsi.de
+ *
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Lesser General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 3 of the License, or (at your option) any later version.
+ *
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ *  
+ *  You should have received a copy of the GNU Lesser General Public
+ *  License along with this library. If not, see <http://www.gnu.org/licenses/>.
+ *
+ * For all questions and ideas contact: d.beck@gsi.de
+ * Last update: 17-May-2017
+ ********************************************************************************************/
+#ifndef _WR_UNIPZ_LIB_H_
+#define _WR_UNIPZ_LIB_H_
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#define WRUNIPZLIB_VERSION "0.01.00"
+
+  // convert status code to status text
+  const char* wrunipz_status_text(uint32_t code                // status code
+                                  );
+
+  // convert state code to state text
+  const char* wrunipz_state_text(uint32_t code                 // state code
+                                 );
+  
+  // open connection to firmware
+  uint32_t wrunipz_firmware_open(const char*    device,        // EB device such as 'dev/wbm0'
+                                 uint32_t       cpu,           // # of CPU, 0..0xff
+                                 uint32_t       *address       // address of firmware
+                                 );
+  
+  // close connection to firmware
+  uint32_t wrunipz_firmware_close();
+  
+  // get version of firmare
+  const char* wrunipz_version_firmware();
+
+  // get version of library
+  const char* wrunipz_version_library();
+  
+  // get info from firmware
+  uint32_t wrunipz_info_read(uint32_t *ncycles,                // # of cycles executed
+                             uint32_t *tCycleAvg,              // average time per cycle [ns]
+                             uint32_t *msgFreqAvg,             // average message rate [Hz]
+                             uint32_t *nLate,                  // # of late messages
+                             uint32_t *vaccAvg,                // virt accs used, bits 0..15 (normal), 16-31 (verkuerzt)
+                             uint32_t *pzAvg,                  // PZ used (past second) bits 0..6
+                             uint64_t *nMessages,              // # of messages sent
+                             int32_t  *dtMax,                  // delta T max (actTime - deadline)
+                             int32_t  *dtMin,                  // delta T min (actTime - deadline)
+                             int32_t  *cycJmpMax,              // delta T max (expected and actual start of UNILAC cycle)
+                             int32_t  *cycJmpMin               // delta T min (expected and actual start of UNILAC cycle)
+                             );
+  
+  // get status from firmware
+  uint32_t wrunipz_status_read(uint64_t    *statusArray,       // array with status bits
+                               uint32_t    *state,             // state
+                               uint32_t    *nBadStatus,        // # of bad status incidents
+                               uint32_t    *nBadState          // # of bad state incidents
+                               );
+  
+  // commands requesting state transitions
+  void wrunipz_cmd_configure();                            // to state 'configured'
+  void wrunipz_cmd_startop();                              // to state 'opready'
+  void wrunipz_cmd_stopop();                               // back to state 'configured'
+  void wrunipz_cmd_recover();                              // try error recovery
+  void wrunipz_cmd_idle();                                 // to state idle
+  
+  // commands for normal operation
+  void wrunipz_cmd_cleardiag();                            // clear diagnostic datat
+  void wrunipz_cmd_submit();                               // submit all pending event tables; useful for testing
+  
+#ifdef __cplusplus
+}
+#endif 
+
+
+#endif

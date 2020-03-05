@@ -6,30 +6,37 @@
 #   'make MASP=YES PRO=NO PREFIX= STAGING=/common/export/timing-rte/wrunipz-dev deploy' (hack: leave PREFIX empty for SCU path)
 PREFIX      ?= /usr/local
 STAGING     ?=
-ARCH        ?= x86_64
+ARCH        ?= /x86_64
 EB          ?= ../../../ip_cores/etherbone-core/api
-FW          ?=../wrunipz-fw
+FW          ?=../fw
 INCLUDE     ?=../include
-TARGETS     := wrunipz-ctl wrunipz-load 
+TARGETS     := wrunipz-ctl
+WRUNIPZLIB  := libwrunipzlib.so
 
 
 EXTRA_FLAGS ?=
 CFLAGS      ?= $(EXTRA_FLAGS) -Wall -O2 -g -I $(EB) -I $(INCLUDE) -I $(FW) -I../../b2b-test/include
-LIBS        ?= -L $(EB)/.libs -Wl,-rpath,$(PREFIX)/lib -letherbone -lm
+LIBS        ?= -L $(EB)/.libs -L . -Wl,-rpath,$(PREFIX)/lib -lm -lwrunipzlib
 
-all: $(TARGETS)
+all: lib $(TARGETS)
 
 wrunipz-ctl: wrunipz-ctl.c
-	$(CC) $(CFLAGS) wrunipz-api.c -o wrunipz-ctl wrunipz-ctl.c ../../b2b-test/b2btest-x86/b2btest-api.c $(LIBS)
+	$(CC) $(CFLAGS) -o wrunipz-ctl wrunipz-ctl.c $(LIBS)
 
-wrunipz-load: wrunipz-load.c
-	$(CC) $(CFLAGS) wrunipz-api.c -o wrunipz-load wrunipz-load.c ../../b2b-test/b2btest-x86/b2btest-api.c $(LIBS)
+lib: wrunipzlib.c
+	$(CC) $(CFLAGS) -fPIC -c wrunipzlib.c ../../b2b-test/b2btest-x86/b2btest-api.c $(LIBS)
+	$(CC) -shared -Wl,-soname,$(WRUNIPZLIB).1 -o $(WRUNIPZLIB).1.0 wrunipzlib.o b2btest-api.o -L $(EB)/.libs -letherbone
+	ln -sf $(WRUNIPZLIB).1.0 $(WRUNIPZLIB).1
+	ln -sf $(WRUNIPZLIB).1 $(WRUNIPZLIB)
 
 clean:
-	rm -f *.o $(TARGETS)
+	rm -f *.o $(TARGETS) $(WRUNIPZLIB)*
 
 deploy:
-	 mkdir -p $(STAGING)/$(ARCH)$(PREFIX)/bin
-	cp $(TARGETS) $(STAGING)/$(ARCH)$(PREFIX)/bin
+	mkdir -p $(STAGING)$(ARCH)$(PREFIX)/bin
+	cp $(TARGETS) $(STAGING)$(ARCH)$(PREFIX)/bin
+	cp $(WRUNIPZLIB).1.0 $(STAGING)$(ARCH)$(PREFIX)/lib
+	ln -sf $(STAGING)$(ARCH)$(PREFIX)/lib/$(WRUNIPZLIB).1.0 $(STAGING)$(ARCH)$(PREFIX)/lib/$(WRUNIPZLIB).1
+	ln -sf $(STAGING)$(ARCH)$(PREFIX)/lib/$(WRUNIPZLIB).1 $(STAGING)$(ARCH)$(PREFIX)/lib/$(WRUNIPZLIB) 
 
 .PHONY: all clean
