@@ -3,7 +3,7 @@
  *
  *  created : 2018
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 05-March-2020
+ *  version : 06-March-2020
  *
  *  lm32 program for gateway between UNILAC Pulszentrale and a White Rabbit network
  *  this basically serves a Data Master for UNILAC
@@ -332,11 +332,11 @@ void initSharedMem()
   pSharedNLate            = (uint32_t *)(pShared + (WRUNIPZ_SHARED_NLATE >> 2));
   pSharedVaccAvg          = (uint32_t *)(pShared + (WRUNIPZ_SHARED_VACCAVG >> 2));
   pSharedPzAvg            = (uint32_t *)(pShared + (WRUNIPZ_SHARED_PZAVG >> 2));
-  pSharedConfStat         = (uint32_t *)(pShared + (WRUNIPZ_SHARED_CONF_STAT >> 2));
-  pSharedConfVacc         = (uint32_t *)(pShared + (WRUNIPZ_SHARED_CONF_VACC >> 2));
-  pSharedConfData         = (uint32_t *)(pShared + (WRUNIPZ_SHARED_CONF_DATA >> 2));
-  pSharedConfFlag         = (uint32_t *)(pShared + (WRUNIPZ_SHARED_CONF_FLAG >> 2));
-  pSharedConfPz           = (uint32_t *)(pShared + (WRUNIPZ_SHARED_CONF_PZ >> 2));
+  /*pSharedConfStat         = (uint32_t *)(pShared + (WRUNIPZ_SHARED_CONF_STAT >> 2));
+    pSharedConfVacc         = (uint32_t *)(pShared + (WRUNIPZ_SHARED_CONF_VACC >> 2));*/
+  pSharedConfData         = (uint32_t *)(pShared + (WRUNIPZ_SHARED_EVT_DATA >> 2));
+  pSharedConfFlag         = (uint32_t *)(pShared + (WRUNIPZ_SHARED_EVT_FLAGS >> 2));
+  /*  pSharedConfPz           = (uint32_t *)(pShared + (WRUNIPZ_SHARED_CONF_PZ >> 2));*/
   
   // find address of CPU from external perspective
   idx = 0;
@@ -359,7 +359,7 @@ void initSharedMem()
   DBPRINT2("wr-unipz: used size of shared mem is %d words (uint32_t), begin %x, end %x\n", i, pShared, pSharedTemp-1);
   
   // set initial values;
-  *pSharedConfStat     = WRUNIPZ_CONFSTAT_IDLE;
+  /*  *pSharedConfStat     = WRUNIPZ_CONFSTAT_IDLE;*/
 } // initSharedMem 
 
 
@@ -416,7 +416,7 @@ void extern_clearDiag()
 
 
 // initializes transaction for config data
-uint32_t configTransactInit()
+/*uint32_t configTransactInit()
 {
   int i;
 
@@ -444,16 +444,16 @@ uint32_t configTransactInit()
 
   return COMMON_STATUS_OK;
 } // configTransactInit
-
+*/
 
 // submit transferred config data
-uint32_t configTransactSubmit() 
+uint32_t configTransactSubmit() /* chk */ 
 {
   int      i,j,k;
   int      vacc;
   uint32_t pzFlag;
 
-  if (*pSharedConfStat != WRUNIPZ_CONFSTAT_INIT) return WRUNIPZ_STATUS_TRANSACTION;
+  /* if (*pSharedConfStat != WRUNIPZ_CONFSTAT_INIT) return WRUNIPZ_STATUS_TRANSACTION; */
 
   // get vacc and submit flags
   vacc    = *pSharedConfVacc;
@@ -473,12 +473,12 @@ uint32_t configTransactSubmit()
       } // if submit flag
     } // for j
   } // for i
-  /* end hack */
+  // end hack 
 
   DBPRINT2("wr-unipz: submit completed\n");
   
-  /* *pSharedConfDataStat = WRUNIPZ_CONFSTAT_REQ | WRUNIPZ_CONFSTAT_SUBMIT; commented: this shall be used once code above is triggered by event */
-  *pSharedConfStat = WRUNIPZ_CONFSTAT_IDLE;
+// *pSharedConfDataStat = WRUNIPZ_CONFSTAT_REQ | WRUNIPZ_CONFSTAT_SUBMIT; commented: this shall be used once code above is triggered by event 
+  /* *pSharedConfStat = WRUNIPZ_CONFSTAT_IDLE; */
 
   return COMMON_STATUS_OK;
 } // configTransactSubmit
@@ -529,7 +529,7 @@ uint32_t extern_entryActionConfigured()
 
   configLemoOutputEvtMil(fwlib_getMilPiggy(), 2);    // used to see a blinking LED (and optionally connect a scope) for debugging
   
-  *pSharedConfStat = WRUNIPZ_CONFSTAT_IDLE; /* chk */
+  /*  *pSharedConfStat = WRUNIPZ_CONFSTAT_IDLE; /* chk */
 
   return status;
 } // entryActionConfigured
@@ -579,7 +579,7 @@ void cmdHandler(uint32_t *reqState, uint32_t cmd)
   // check, if the command is valid and request state change
   if (cmd) {                             // check, if cmd is valid
     switch (cmd) {                       // do action according to command
-      case WRUNIPZ_CMD_CONFINIT :
+      /*      case WRUNIPZ_CMD_CONFINIT :
         DBPRINT3("wr-unipz: received cmd %d\n", cmd);
         flagTransactionInit = 1;
         break;
@@ -591,7 +591,7 @@ void cmdHandler(uint32_t *reqState, uint32_t cmd)
       case WRUNIPZ_CMD_CONFKILL :
         DBPRINT3("wr-unipz: received cmd %d\n", cmd);
         *pSharedConfStat = WRUNIPZ_CONFSTAT_IDLE;
-        break;     
+        break;*/     
       case WRUNIPZ_CMD_CONFCLEAR :
         DBPRINT3("wr-unipz: received cmd %d\n", cmd);
         flagClearAllPZ = 1;
@@ -701,7 +701,7 @@ uint32_t doActionOperation(uint32_t *nCycle,                  // total number of
       syncPrevT4  = deadline;                                   // remember time of the previous cycle
       
       if (flagClearAllPZ)        {clearAllPZ();           flagClearAllPZ = 0;       }
-      if (flagTransactionInit)   {configTransactInit();   flagTransactionInit = 0;  }  /* chk: error handling */
+      /*if (flagTransactionInit)   {configTransactInit();   flagTransactionInit = 0;  }  /* chk: error handling */
       /* chk !!! bug: in the same cycle where data becomes commited the routine getVacclen will fail (fix after we know commit mechanism) !!! */ 
       
       // reset requested virt accs; flush ECA queue

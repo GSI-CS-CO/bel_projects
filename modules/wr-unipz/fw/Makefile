@@ -9,7 +9,7 @@ FLASH		:= $(shell cat 	$(PLATFMAKEFILE) | grep -m1 FLASH     | cut -d'=' -f2 | s
 SPI_LANES	:= $(shell cat 	$(PLATFMAKEFILE) | grep -m1 SPI_LANES | cut -d'=' -f2 | sed 's/[^a-zA-Z0-9]//g')
 RAM_SIZE        := $(shell cat 	$(PLATFMAKEFILE) | grep -m1 RAM_SIZE  | cut -d'=' -f2 | sed 's/[^a-zA-Z0-9]//g')
 
-SHARED_SIZE    	?= 8K
+SHARED_SIZE    	?= 22K
 USRCPUCLK      	?= 125000
 VERSION  	= 00.01.00
 
