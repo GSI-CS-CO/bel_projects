@@ -34,6 +34,7 @@ entity top is
     volt_1_8_en       : out   std_logic :='0';              -- Enable 1.8V Rail
     volt_1_8_IO_en    : out   std_logic :='0';              -- Enable IO 1.8V Rail (MOSFET)
     volt_5_en         : out   std_logic :='0';              -- Enable 5V Rail 
+	 pwr_ok				 : out	std_logic :='0';					-- Power Ok COMX
 
     IO_enable         : out   std_logic;                    -- Enable Levelshifter 1.8V  ->  3.3V
 

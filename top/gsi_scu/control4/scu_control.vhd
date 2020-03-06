@@ -86,6 +86,10 @@ entity scu_control is
     nres_i        : in      std_logic;
     user_btn      : in      std_logic;  --User Button 
     max10_connect : inout   std_logic_vector (7 downto 0);  -- Pins reserveriert tbd
+    serial_cb_out : out     std_logic_vector (1 downto 0);  -- Serial to Backplane
+    serial_cb_in  : in      std_logic_vector (1 downto 0);  -- Serial to Backplane
+    rear_in       : in      std_logic_vector (1 downto 0);  -- GPIO to Backplane
+    rear_out      : out     std_logic_vector (1 downto 0);  -- GPIO to Backplane
     
     -----------------------------------------------------------------------
     -- SCU-CB Version
