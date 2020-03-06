@@ -21,7 +21,7 @@ extern "C" {
 /*!
  * @brief Data type of Event Conditioned Action queue
  */
-typedef struct PACKED_SIZE
+typedef struct HW_IMAGE
 {
    /*!
     * @brief The index of a_channel_o from the ECA to which this queue is

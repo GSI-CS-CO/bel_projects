@@ -65,7 +65,7 @@ void readTemperatureFromDevices( const int bus, uint64_t* pId, uint32_t* pTemper
          int tvalue = w1_read_temp(pData, 0);
          *pTemperature = (tvalue >> 12); //full precision with 1/16 degree C
        #ifdef DEBUG
-         mprintf("temp: %dC", tvalue >> 16); //show only integer part for debug
+         mprintf("temperature: %d°C", tvalue >> 16); //show only integer part for debug
        #endif
       }
       #ifdef DEBUG

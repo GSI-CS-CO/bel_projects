@@ -119,6 +119,17 @@
 #define PACKED_SIZE __attribute__((packed))
 
 /*!
+ * @ingroup HARDWARE_ACCESS
+ * @brief Qualifier macro for structures which accomplishes a image of hardware
+ *        registers.
+ *
+ * The same like PACKED_SIZE but it simplifies the finding of such structures
+ * via "grep".
+ * @see PACKED_SIZE
+ */
+#define HW_IMAGE PACKED_SIZE
+
+/*!
  * @brief Modifier- macro for variables which are not used.
  *
  * In this case the compiler will suppress a appropriate warning. \n

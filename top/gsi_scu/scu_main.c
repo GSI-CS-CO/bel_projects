@@ -103,7 +103,6 @@ STATIC inline void initializeGlobalPointers( void )
 #endif
 }
 
-#ifndef _CONFIG_OLD_IRQ
 STATIC inline void cfgMsiBox( const unsigned int slot, const unsigned int myOffs )
 {
    pCpuMsiBox[2 * slot + 1] = (uint32_t)&pMyMsi[myOffs / sizeof(uint32_t)];
@@ -134,7 +133,6 @@ int getMsiBoxSlot( const unsigned int  myOffs )
    }
    return slot;
 }
-#endif /* ifndef _CONFIG_OLD_IRQ */
 
 
 /*! ---------------------------------------------------------------------------
@@ -186,19 +184,11 @@ void enable_scub_msis( const unsigned int channel )
  */
 STATIC void msDelayBig( const uint64_t ms )
 {
-#ifdef _CONFIG_OLD_IRQ
-   const uint64_t later = getSysTime() + ms * 1000000ULL / 8;
-   while( getSysTime() < later )
-   {
-      asm volatile ("nop");
-   }
-#else
    const uint64_t later = getWrSysTime() + ms * 1000000ULL / 8;
    while( getWrSysTime() < later )
    {
       NOP();
    }
-#endif
 }
 
 /*! ---------------------------------------------------------------------------
@@ -214,9 +204,7 @@ void clear_handler_state( const uint8_t socket )
       FG_ASSERT( getFgSlotNumber( socket ) > 0 );
       m.msg = getFgSlotNumber( socket ) - 1;
       m.adr = 0;
-      irq_disable();
-      add_msg( &g_aMsg_buf[0], DEVSIO, m );
-      irq_enable();
+      ATOMIC_SECTION() add_msg( &g_aMsg_buf[0], DEVSIO, m );
       return;
    }
 
@@ -224,9 +212,7 @@ void clear_handler_state( const uint8_t socket )
    {
       m.msg = 0;
       m.adr = 0;
-      irq_disable();
-      add_msg(&g_aMsg_buf[0], DEVBUS, m );
-      irq_enable();
+      ATOMIC_SECTION() add_msg(&g_aMsg_buf[0], DEVBUS, m );
    }
 }
 
@@ -239,17 +225,6 @@ void clear_handler_state( const uint8_t socket )
  * @see irq_pop_msi
  * @see dispatch
  */
-#ifdef _CONFIG_OLD_IRQ
-void irq_handler( void )
-{
-   MSI_T m;
-
-  // send msi threadsafe to main loop
-   m.msg = global_msi.msg;
-   m.adr = global_msi.adr;
-   add_msg( &g_aMsg_buf[0], IRQ, m );
-}
-#else
 STATIC void onScuBusInterrupt( const unsigned int intNum,
                                const void* pContext UNUSED )
 {
@@ -262,31 +237,17 @@ STATIC void onScuBusInterrupt( const unsigned int intNum,
 
    add_msg( &g_aMsg_buf[0], IRQ, m );
 }
-#endif
+
 /*! ---------------------------------------------------------------------------
  * @ingroup INTERRUPT
  * @brief initialize the irq table and set the irq mask
  */
 STATIC void init_irq_table( void )
 {
-#ifdef _CONFIG_OLD_IRQ
-   isr_table_clr();
-   isr_ptr_table[0] = &irq_handler;
-   irq_set_mask(0x01);
-#else
    irqRegisterISR( 0, NULL, onScuBusInterrupt );
-#endif
-
    g_aMsg_buf[IRQ].ring_head = g_aMsg_buf[IRQ].ring_tail; // clear msg buffer
-
-#ifdef _CONFIG_OLD_IRQ
-   irq_enable();
-   mprintf("IRQ table configured. 0x%x\n", irq_get_mask());
-#else
    irqEnable();
    mprintf("IRQ table configured. 0x%08x\n", irqGetMaskRegister() );
-#endif
-
 }
 
 /*! ---------------------------------------------------------------------------
@@ -380,15 +341,9 @@ STATIC TASK_T g_aTasks[] =
  */
 STATIC inline void dispatch( void )
 {
-#ifdef _CONFIG_OLD_IRQ
-   irq_disable();
-   const MSI_T m = remove_msg( &g_aMsg_buf[0], IRQ );
-   irq_enable();
-#else
    criticalSectionEnter();
    const MSI_T m = remove_msg( &g_aMsg_buf[0], IRQ );
    criticalSectionExit();
-#endif
    switch( m.adr & 0xFF )
    { //TODO remove these naked numbers asap!
       case 0x00: add_msg( &g_aMsg_buf[0], SCUBUS, m ); return; // message from scu bus
@@ -412,11 +367,7 @@ STATIC inline void dispatch( void )
  */
 STATIC inline void schedule( void )
 {
-#ifdef _CONFIG_OLD_IRQ
-   const uint64_t tick = getSysTime();
-#else
    const uint64_t tick = getWrSysTime();
-#endif
    for( unsigned int i = 0; i < ARRAY_SIZE( g_aTasks ); i++ )
    {
       dispatch();

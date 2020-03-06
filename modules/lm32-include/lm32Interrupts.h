@@ -184,6 +184,12 @@ uint32_t irqGetMaskRegister( void )
  *        atomic section begins.
  *
  * Counterpart to criticalSectionLeave.
+ *
+ * @note <b>CAUTION:</b> Don't use this function within interrupt routines
+ *       because in this case the danger of race condition exist!\n
+ * @note Keep atomic sections as short as possible, otherwise the danger of
+ *       jittering grows when using the real time OS FreeRTOS.
+ *
  * @see criticalSectionLeave
  */
 void criticalSectionEnter( void );
@@ -194,6 +200,12 @@ void criticalSectionEnter( void );
  *        respectively atomic section.
  *
  * Counterpart to criticalSectionEnter
+ *
+ * @note <b>CAUTION:</b> Don't use this function within interrupt routines
+ *       because in this case the danger of race condition exist!\n
+ * @note Keep atomic sections as short as possible, otherwise the danger of
+ *       jittering grows when using the real time OS FreeRTOS.
+ *
  * @see criticalSectionEnter
  */
 void criticalSectionExit( void );
@@ -227,12 +239,13 @@ STATIC inline bool __criticalSectionExit( void )
  * @brief Establishes a atomic respectively critical section between the
  *        following enclosing curly braces.
  *
- * All interrupts within the body of the atomic section are locked.
  * @note <b>CAUTION:</b> Do not use the keywords "brake" or "return" within
  *       the atomic body! Its a for-loop!\n
- * @note Nested atomic sections are possible.
+ * @note <b>CAUTION:</b> Don't use this macro within interrupt routines
+ *       because in this case the danger of race condition exist!\n
+ * @note Nested atomic sections are possible.\n
  * @note Keep atomic sections as short as possible, otherwise the danger of
- *       jittering grows when using a real time OS.
+ *       jittering grows when using the real time OS FreeRTOS.
  *
  * Example:
  * @code

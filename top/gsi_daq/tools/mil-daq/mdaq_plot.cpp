@@ -29,6 +29,14 @@
 using namespace Scu::MiLdaq::MiLdaqt;
 using namespace std;
 
+/*!
+ * @brief Establishing a upper and lower margin of Y axis, so that the
+ *        maximum voltages can be plot as well.
+ *
+ * The dimension is voltage.
+ */
+constexpr float Y_PADDING = 0.5;
+
 /*! ----------------------------------------------------------------------------
  */
 Plot::Plot( DaqMilCompare* pParent )
@@ -50,8 +58,8 @@ void Plot::init( void )
    *this << "set grid" << endl;
    *this << "set ylabel \"Voltage\"" << endl;
    if( !m_pParent->getCommandLine()->isZoomYAxis() )
-      *this << "set yrange [" << -DAQ_VPP_MAX/2 << ':'
-                              << DAQ_VPP_MAX/2 << ']' << endl;
+      *this << "set yrange [" << -(DAQ_VPP_MAX/2 + Y_PADDING) << ':'
+                              << (DAQ_VPP_MAX/2 + Y_PADDING) << ']' << endl;
    *this << "set xrange [0.0:"
          << m_pParent->getCommandLine()->getXAxisLen() << ']' << endl;
    //*this << "set style line 1 linecolor rgb \"red\"" << endl;

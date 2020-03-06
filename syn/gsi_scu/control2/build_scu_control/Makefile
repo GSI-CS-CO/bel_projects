@@ -14,6 +14,7 @@ TARGET_DIR     := ..
 DEPLOY_DIR     := .
 TARGET         := scu_control
 DEFINES += CONFIG_FG_PEDANTIC_CHECK
+DEFINES += CONFIG_INTERRUPT_PEDANTIC_CHECK
 DEFINES += MICO32_FULL_CONTEXT_SAVE_RESTORE
 # ORIGIN := 1
  SCU_MIL := 1
@@ -25,6 +26,8 @@ BASE_VERSION = 3
 
 DEFINES += FG_VERSION=$(BASE_VERSION)
 VERSION_STR = $(BASE_VERSION)".1.0"
+
+DEFINES += MAX_LM32_INTERRUPTS=1
 
 ifdef ORIGIN
   USE_HISTORY=1
@@ -78,14 +81,7 @@ else
 endif
 VERSION = $(VERSION_STR)
 
-ifdef _OLD_IRQ
- SOURCE += $(SCU_LIB_SRC_DIR)/aux.c
- SOURCE += $(SCU_LIB_SRC_DIR)/irq.c
-# SOURCE += $(SCU_LIB_SRC_DIR)/display.c
-else
- SOURCE += $(SCU_LIB_SRC_DIR)/lm32Interrupts.c
-endif
-
+SOURCE += $(SCU_LIB_SRC_DIR)/lm32Interrupts.c
 SOURCE += $(SCU_LIB_SRC_DIR)/LM32assert.c
 SOURCE += $(SCU_LIB_SRC_DIR)/stack-check.c
 # SOURCE += $(SCU_LIB_SRC_DIR)/wr_time.c
@@ -166,7 +162,7 @@ endif
 
 
 #  SCU_URL = scuxl0107
-  SCU_URL = scuxl0035
+ SCU_URL = scuxl0035
  DOX_EXTRACT_STATIC         = "YES"
 # DOX_EXTRACT_ALL            = "YES"
 DOX_MACRO_EXPANSION        = "YES"

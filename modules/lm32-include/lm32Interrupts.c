@@ -114,7 +114,7 @@ void _irq_entry( void )
    {
       const uint32_t ip = irqGetPendingRegister() & im;
       if( ip == 0 ) /* No interrupt pending? */
-         return; /* Yes, life the function */
+         break; /* Yes, life the function */
 
       for( unsigned int prio = 0; prio < ARRAY_SIZE( ISREntryTable ); prio++ )
       {

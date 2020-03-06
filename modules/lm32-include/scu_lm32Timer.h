@@ -57,7 +57,7 @@ extern "C" {
  * @ingroup SCU_LM32_TIMER
  * @brief Registers of the SCU_LM32_TIMER Timer.
  */
-typedef struct PACKED_SIZE
+typedef struct HW_IMAGE
 {
    /*!
     * @brief Control register, setting to 1 enables the timer.

@@ -45,7 +45,7 @@ extern "C" {
  * @brief Control registers of Message-Signaled Interrupt (MSI)
  *        wishbone object
  */
-typedef struct PACKED_SIZE
+typedef struct HW_IMAGE
 {
    uint32_t reset;
    uint32_t status;
@@ -64,7 +64,7 @@ STATIC_ASSERT( sizeof( MSI_CONTROL_T ) == 3 * sizeof( uint32_t ) );
  * @brief Message-Signaled Interrupt (MSI) message object type which
  *        corresponds to the related interrupt.
  */
-typedef struct PACKED_SIZE
+typedef struct HW_IMAGE
 {
    uint32_t  msg;
    uint32_t  adr;
@@ -83,7 +83,7 @@ STATIC_ASSERT( sizeof( MSI_ITEM_T ) == 3 * sizeof( uint32_t ) );
  * @brief Message-Signaled Interrupt (MSI) list item object containing
  *        the message object.
  */
-typedef struct PACKED_SIZE
+typedef struct HW_IMAGE
 {
    MSI_ITEM_T item;
    uint32_t   _RFU_;
@@ -104,7 +104,7 @@ STATIC_ASSERT( sizeof( MSI_LIST_T ) == 4 * sizeof(uint32_t) );
  * @endcode
  * @see find_device_adr
  */
-typedef struct PACKED_SIZE
+typedef struct HW_IMAGE
 {
    /*!
     * @brief Control registers

@@ -27,9 +27,6 @@
 #include <stdlib.h>
 #include <scu_function_generator.h>
 #include <scu_circular_buffer.h>
-#ifdef _CONFIG_OLD_IRQ
-#include <aux.h>
-#endif
 #include <eb_console_helper.h>
 
 /** @brief write parameter set to circular buffer
