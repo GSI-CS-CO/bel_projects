@@ -1,5 +1,5 @@
-#ifndef _B2B_COMMON_
-#define _B2B_COMMON_
+#ifndef _COMMON_DEFS_
+#define _COMMON_DEFS_
 
 // !!!!!
 // experimental: let's try to use common defines used by many lm32 projects

@@ -10,9 +10,9 @@ PREFIX      ?= /usr/local
 STAGING     ?=
 ARCH        ?= /x86_64
 # EB          ?= ../../ip_cores/etherbone-core/api
-FW          ?= wrunipz-fw
-SW          ?= wrunipz-x86
-ASL         ?= wrunipz-asl
+FW          ?= fw
+SW          ?= x86
+ASL         ?= asl
 #TARGETS     := firmware software
 
 #EXTRA_FLAGS ?=

@@ -1,11 +1,11 @@
 /********************************************************************************************
- *  b2b-fwlib.c
+ *  common-fwlib.c
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 10-July-2019
+ *  version : 05-March-2020
  *
- *  common functions used by various B2B firmware projects
+ *  common functions used by various irmware projects
  *  
  * -------------------------------------------------------------------------------------------
  * License Agreement for this software:
@@ -59,8 +59,8 @@
 #include "../../../tools/wb_slaves.h"                                   // Dietrichs hackish solution for defining register layout
 
 /* includes for this project */
-#include <b2b-common.h>                                                 // common stuff for b2b
-#include <b2b-fwlib.h>                                                  // fwlib
+#include <common-defs.h>                                                // common definitions
+#include <common-fwlib.h>                                               // fwlib
 
 // these routines are typically application specific
 extern void     extern_clearDiag();

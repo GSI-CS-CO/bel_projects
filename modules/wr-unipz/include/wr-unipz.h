@@ -1,7 +1,7 @@
 #ifndef _WR_UNIPZ_H_
 #define _WR_UNIPZ_H_
 
-#include <b2b-common.h>
+#include <common-defs.h>
 
 // !!!!!
 // experimental: let's try the same header and DP RAM layout for ALL B2B firmwares....

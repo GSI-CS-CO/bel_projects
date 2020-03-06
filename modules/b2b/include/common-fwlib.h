@@ -1,5 +1,5 @@
-#ifndef _B2B_FWLIB_
-#define _B2B_FWLIB_
+#ifndef _COMMON_FWLIB_
+#define _COMMON_FWLIB_
 
 // !!!!!
 // experimental: let's try to use common routines by my (DB) lm32 projects
