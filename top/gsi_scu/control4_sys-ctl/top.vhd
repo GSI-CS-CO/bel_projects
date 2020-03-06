@@ -4,7 +4,7 @@ use ieee.std_logic_unsigned.all;
 
 entity top is
   port (
-    clk_base_i        : in    std_logic; 
+    clk_base_i        : in    std_logic;
     scu_cb_revision   : in    std_logic_vector(3 downto 0); -- must be assigned with weak pull ups
     fpga_con_io       : inout std_logic_vector(7 downto 0); -- Connection to Arria 10
     --I2C to COMX
@@ -12,7 +12,7 @@ entity top is
     i2c_sda           : inout std_logic;
 
     pGood             : in    std_logic_vector (3 downto 0);  -- Power good (0.95V, 1.8V, 3.3V, 5V)
-    nPfail            : in    std_logic;                      -- 12V Rail Powerfail 
+    nPfail            : in    std_logic;                      -- 12V Rail Powerfail
 	 jtag_present		 : in		std_logic;							  -- JTAG TMS Signal
     --Arria 10 status
     CONF_DONE         : in    std_logic;
@@ -29,11 +29,11 @@ entity top is
     nSYS_rst          : out   std_logic :='0';              -- Reset Out
     nPCI_rst_out      : out   std_logic :='0';              -- PCI Reset Out
     nExt_rst_out      : out   std_logic :='0';              -- Reset to Extension Connector
-    --Power 
+    --Power
     core_en           : out   std_logic :='0';              -- Enable 0.95V Core voltage
     volt_1_8_en       : out   std_logic :='0';              -- Enable 1.8V Rail
     volt_1_8_IO_en    : out   std_logic :='0';              -- Enable IO 1.8V Rail (MOSFET)
-    volt_5_en         : out   std_logic :='0';              -- Enable 5V Rail 
+    volt_5_en         : out   std_logic :='0';              -- Enable 5V Rail
 	 pwr_ok				 : out	std_logic :='0';					-- Power Ok COMX
 
     IO_enable         : out   std_logic;                    -- Enable Levelshifter 1.8V  ->  3.3V
@@ -50,7 +50,7 @@ architecture rtl of top is
   begin
 
 
-  
+
 
   process(clk_base_i, rst_n) begin
     if (rst_n = '0') then

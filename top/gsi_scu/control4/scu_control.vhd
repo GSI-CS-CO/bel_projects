@@ -46,12 +46,12 @@ entity scu_control is
     -----------------------------------------------------------------------
     OneWire_CB : inout std_logic;
     onewire_ext: inout std_logic;        -- to extension board
-    onewire_ext_splz: out std_logic;  --Strong Pull-Up for Onewire      
+    onewire_ext_splz: out std_logic;  --Strong Pull-Up for Onewire
     OneWire_CB_splz : out std_logic;  --Strong Pull-Up for Onewire
-    
+
     -----------------------------------------------------------------------
     -- ComExpress signals
-    -----------------------------------------------------------------------     
+    -----------------------------------------------------------------------
     ser0_rxd          : out std_logic;  -- RX/TX view from ComX
     ser0_txd          : in  std_logic;  -- RX/TX view from ComX
     ser1_rxd          : out std_logic;  -- RX/TX view from ComX
@@ -84,13 +84,13 @@ entity scu_control is
     -- Misc.
     -----------------------------------------------------------------------
     nres_i        : in      std_logic;
-    user_btn      : in      std_logic;  --User Button 
+    user_btn      : in      std_logic;  --User Button
     max10_connect : inout   std_logic_vector (7 downto 0);  -- Pins reserveriert tbd
     serial_cb_out : out     std_logic_vector (1 downto 0);  -- Serial to Backplane
     serial_cb_in  : in      std_logic_vector (1 downto 0);  -- Serial to Backplane
     rear_in       : in      std_logic_vector (1 downto 0);  -- GPIO to Backplane
     rear_out      : out     std_logic_vector (1 downto 0);  -- GPIO to Backplane
-    
+
     -----------------------------------------------------------------------
     -- SCU-CB Version
     -----------------------------------------------------------------------
@@ -104,22 +104,22 @@ entity scu_control is
     lemo_n_i : in    std_logic_vector(1 downto 0);
     lemo_p_o : out   std_logic_vector(1 downto 0);
     lemo_n_o : out   std_logic_vector(1 downto 0);
-    
-	  lemo_out : out	 std_logic_vector(3 downto 0);  --Isolated Onboard TTL OUT 
+
+	  lemo_out : out	 std_logic_vector(3 downto 0);  --Isolated Onboard TTL OUT
     lemo_in  : in	   std_logic_vector(1 downto 0);  --Isolated OnBoard TTL IN
-    
+
     -----------------------------------------------------------------------
     -- LA port (Logic Analyzer HDMI Port)
     -----------------------------------------------------------------------
     la_ch           : out std_logic_vector(15 downto 0);
     la_clk          : out std_logic;
-    
+
     -----------------------------------------------------------------------
     -- Extension Connector
     -----------------------------------------------------------------------
     ext_ch           : inout std_logic_vector(21 downto 0);
     ext_id           : in std_logic_vector   (3 downto 0);
-    
+
     -----------------------------------------------------------------------
     -- usb
     -----------------------------------------------------------------------
@@ -138,7 +138,7 @@ entity scu_control is
     user_led_0  : out std_logic_vector(2 downto 0) := (others => '1');
     user_led_1  : out std_logic_vector(2 downto 0) := (others => '1');
     lemo_led    : out std_logic_vector(5 downto 0) := (others => '1');
-	 
+
 	 -----------------------------------------------------------------------
     -- Pseudo-SRAM (4x 256Mbit)
     -----------------------------------------------------------------------
@@ -153,7 +153,7 @@ entity scu_control is
     psram_be0          : out   std_logic := 'Z';
     psram_be1          : out   std_logic := 'Z';
     psram_wait         : in    std_logic; -- DDR magic
-    
+
     -----------------------------------------------------------------------
      -- Fast-SRAM (2x 16Mbit)
      -----------------------------------------------------------------------
@@ -312,7 +312,7 @@ begin
       usb_slwrn_o             => slwr,
       usb_pktendn_o           => pa(6),
       usb_fd_io               => fd,
-      --PSRAM TODO: Multi Chip 
+      --PSRAM TODO: Multi Chip
       ps_clk                 => psram_clk,
       ps_addr                => psram_a,
       ps_data                => psram_dq,
@@ -333,7 +333,7 @@ begin
   wr_leds_o(0)          <= not s_led_track;                        -- green = timing valid
   wr_leds_o(1)          <= not s_led_pps;                          -- white = PPS
   sfp_led_fpg_o         <= not s_led_link_up;                      -- Link-up
-  sfp_led_fpr_o         <= not s_led_link_act;                     
+  sfp_led_fpr_o         <= not s_led_link_act;
   user_led_0            <= not s_gpio_o(2 downto 0);
   user_led_1            <= not s_gpio_o(5 downto 3);
 
@@ -344,11 +344,11 @@ begin
     lemo_p_o(i)        <= s_lvds_p_o(i);
     lemo_n_o(i)        <= s_lvds_n_o(i);
   end generate;
-  
-  lemo_out <= not s_gpio_o(9 downto 6);
-  
 
-  onewire_ext_splz  <= '1';  --Strong Pull-Up disabled      
+  lemo_out <= not s_gpio_o(9 downto 6);
+
+
+  onewire_ext_splz  <= '1';  --Strong Pull-Up disabled
   OneWire_CB_splz   <= '1';  --Strong Pull-Up disabled
 
 end rtl;
