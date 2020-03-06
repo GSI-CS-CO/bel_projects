@@ -44,7 +44,8 @@ set_clock_groups -asynchronous \
                       main|\sys_a5:sys_inst|sys_pll5_inst|altera_pll_i|general[4].gpll~PLL_OUTPUT_COUNTER|divclk } ]    \
  -group [get_clocks { pcie_refclk_i                                                                                     \
                       main|\pcie_y:pcie|pcie_phy|* } ]                                                                  \
- -group [get_clocks { main|\phy_a5:phy|\gen_arria5_phy8:U_The_PHY|arria5_phy8_inst|A5|* } ]
+ -group [get_clocks { main|\phy_a5:phy|\gen_arria5_phy8:U_The_PHY|arria5_phy8_inst|A5|*                                 \
+                      main|\sys_a5:sys_inst|sys_pll5_inst|altera_pll_i|general[0].gpll~PLL_OUTPUT_COUNTER|divclk  } ]
 
 # cut: wr-ref <=> butis 200MHz
 set_false_path -from [get_clocks {main|\ref_a5:ref_inst|ref_pll5_inst|altera_pll_i|arriav_pll|counter[0].output_counter|divclk}] \
@@ -63,3 +64,9 @@ set_false_path -from [get_clocks {main|\sys_a5:sys_inst|sys_pll5_inst|altera_pll
                  -to [get_clocks {main|\sys_a5:sys_inst|sys_pll5_inst|altera_pll_i|general[4].gpll~PLL_OUTPUT_COUNTER|divclk}]
 set_false_path -from [get_clocks {main|\sys_a5:sys_inst|sys_pll5_inst|altera_pll_i|general[4].gpll~PLL_OUTPUT_COUNTER|divclk}] \
                  -to [get_clocks {main|\sys_a5:sys_inst|sys_pll5_inst|altera_pll_i|general[0].gpll~PLL_OUTPUT_COUNTER|divclk}]
+
+# cut: sys <=> wr-ref
+set_false_path -from [get_clocks {main|\sys_a5:sys_inst|sys_pll5_inst|altera_pll_i|general[0].gpll~PLL_OUTPUT_COUNTER|divclk}] \
+                 -to [get_clocks {main|\ref_a5:ref_inst|ref_pll5_inst|altera_pll_i|arriav_pll|counter[0].output_counter|divclk}]
+set_false_path -from [get_clocks {main|\sys_a5:sys_inst|sys_pll5_inst|altera_pll_i|general[4].gpll~PLL_OUTPUT_COUNTER|divclk}] \
+                 -to [get_clocks {main|\ref_a5:ref_inst|ref_pll5_inst|altera_pll_i|arriav_pll|counter[0].output_counter|divclk}]
