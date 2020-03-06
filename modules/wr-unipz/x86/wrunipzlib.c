@@ -3,7 +3,7 @@
  *
  *  created : 2020
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 2020-mar-04
+ *  version : 05-March-2020
  *
  * library for wrunipz
  *
@@ -45,8 +45,8 @@
 #include <etherbone.h>
 
 // wr-unipz
-#include <b2b-common.h>                  // B2B definitions, required by wr-unipz
-#include <b2btest-api.h>                 // chk, delete!
+#include <common-defs.h>                 // common definitions
+#include <common-lib.h>                  // common routines
 #include <wrunipz_shared_mmap.h>         // FW shared def
 #include <wr-unipz.h>                    // FW defs
 #include <wrunipzlib.h>                  // x86 library
@@ -60,12 +60,7 @@ eb_socket_t  eb_socket;                 // EB socket
 eb_device_t  eb_device;                 // EB device
 
 eb_address_t lm32_base;                 // lm32
-eb_address_t wrunipz_version;           // fw version
 eb_address_t wrunipz_cmd;               // command, write
-eb_address_t wrunipz_statusLo;          // status of wrunipz, read (low word)
-eb_address_t wrunipz_statusHi;          // status of b2btest, read (high word)
-eb_address_t wrunipz_nBadStatus;        // # of bad status incidents
-eb_address_t wrunipz_nBadState;         // # of bad state incidents
 eb_address_t wrunipz_state;             // state of state machine
 eb_address_t wrunipz_cycles;            // # of UNILAC cycles
 eb_address_t wrunipz_tCycleAvg;         // average cycle time
@@ -98,7 +93,7 @@ const char* wrunipz_status_text(uint32_t bit) {
     case WRUNIPZ_STATUS_NOTIMESTAMP      : sprintf(message, "error %d, %s",    bit, "received EVT_READY_TO_SIS in MIL FIFO but not via TLU -> ECA"); break;
     case WRUNIPZ_STATUS_BADTIMESTAMP     : sprintf(message, "error %d, %s",    bit, "TS from TLU->ECA does not coincide with MIL Event from FIFO"); break; 
     case WRUNIPZ_STATUS_ORDERTIMESTAMP   : sprintf(message, "error %d, %s",    bit, "TS from TLU->ECA and MIL Events are out of order"); break;
-    default                              : sprintf(message, "%s", api_statusText(bit)); break;
+    default                              : sprintf(message, "%s", comlib_statusText(bit)); break;
   } // switch bit
   
   return message;
@@ -106,7 +101,7 @@ const char* wrunipz_status_text(uint32_t bit) {
 
 
 const char* wrunipz_state_text(uint32_t code) {
-  return api_stateText(code);
+  return comlib_stateText(code);
 } // wrunipz_state_text
 
 
@@ -115,24 +110,20 @@ uint32_t wrunipz_firmware_open(const char* devName, uint32_t cpu, uint32_t *addr
   struct sdb_device   sdbDevice;                           // instantiated lm32 core
   int                 nDevices;                            // number of instantiated cores
   
-  if (cpu != 0) return COMMON_STATUS_OUTOFRANGE;           // chk, only support 1st core (hack)
+  if (cpu != 0) return COMMON_STATUS_OUTOFRANGE;           // chk, only support 1st core (this is a quick hack)
   nDevices = 1;
 
   // open Etherbone device and socket 
   if ((status = eb_socket_open(EB_ABI_CODE, 0, EB_ADDR32|EB_DATA32, &eb_socket)) != EB_OK) return COMMON_STATUS_EB;
   if ((status = eb_device_open(eb_socket, devName, EB_ADDR32|EB_DATA32, 3, &eb_device)) != EB_OK) return COMMON_STATUS_EB;
 
-  //  get device Wishbone address of lm32 
+  //  get Wishbone address of lm32 
   if ((status = eb_sdb_find_by_identity(eb_device, GSI, LM32_RAM_USER, &sdbDevice, &nDevices)) != EB_OK) return COMMON_STATUS_EB;
 
   lm32_base            = sdbDevice.sdb_component.addr_first;
+
+  comlib_initShared(lm32_base, SHARED_OFFS);
   wrunipz_cmd          = lm32_base + SHARED_OFFS + COMMON_SHARED_CMD;
-  wrunipz_version      = lm32_base + SHARED_OFFS + COMMON_SHARED_VERSION;
-  wrunipz_statusLo     = lm32_base + SHARED_OFFS + COMMON_SHARED_STATUSLO;
-  wrunipz_statusHi     = lm32_base + SHARED_OFFS + COMMON_SHARED_STATUSHI;
-  wrunipz_state        = lm32_base + SHARED_OFFS + COMMON_SHARED_STATE;
-  wrunipz_nBadStatus   = lm32_base + SHARED_OFFS + COMMON_SHARED_NBADSTATUS;
-  wrunipz_nBadState    = lm32_base + SHARED_OFFS + COMMON_SHARED_NBADSTATE;
   wrunipz_tCycleAvg    = lm32_base + SHARED_OFFS + WRUNIPZ_SHARED_TCYCLEAVG;
   wrunipz_cycles       = lm32_base + SHARED_OFFS + WRUNIPZ_SHARED_NCYCLE;
   wrunipz_nMessageHi   = lm32_base + SHARED_OFFS + WRUNIPZ_SHARED_NMESSAGEHI;
@@ -162,17 +153,16 @@ uint32_t wrunipz_firmware_close(){
 
 
 const char* wrunipz_version_firmware() {
-  eb_status_t    status;
-  eb_data_t      data;
-  eb_cycle_t     cycle;
-  
   static char    version[32];
-  
-  if ((status = eb_cycle_open(eb_device, 0, eb_block, &cycle)) != EB_OK) return "";    
-  eb_cycle_read(cycle, wrunipz_version,     EB_BIG_ENDIAN|EB_DATA32, &data);
-  if ((status = eb_cycle_close(cycle)) != EB_OK) return "";
+  uint32_t       ver;
 
-  sprintf(version, "%02x.%02x.%02x", ((uint32_t)data & 0x00ff0000) >> 16, ((uint32_t)data & 0x0000ff00) >> 8, (uint32_t)data & 0x000000ff);
+  uint64_t       dummy64a;
+  uint32_t       dummy32a, dummy32b, dummy32c;
+
+  ver = 0xffffffff;
+  
+  wrunipz_common_read(&dummy64a, &dummy32a, &dummy32b, &dummy32c, &ver, 0);
+  sprintf(version, "%02x.%02x.%02x", (ver & 0x00ff0000) >> 16, (ver & 0x0000ff00) >> 8, ver & 0x000000ff);
 
   return version;
 } // wrunipz_version_firmware
@@ -184,7 +174,7 @@ const char* wrunipz_version_library(){
 
 
 uint32_t wrunipz_info_read(uint32_t *ncycles, uint32_t *tCycleAvg, uint32_t *msgFreqAvg, uint32_t *nLate, uint32_t *vaccAvg, uint32_t *pzAvg,
-                           uint64_t *nMessages, int32_t  *dtMax, int32_t  *dtMin, int32_t  *cycJmpMax, int32_t  *cycJmpMin){
+                           uint64_t *nMessages, int32_t  *dtMax, int32_t  *dtMin, int32_t  *cycJmpMax, int32_t  *cycJmpMin) {
   eb_cycle_t  eb_cycle;
   eb_status_t eb_status;
   eb_data_t   data[30];
@@ -221,23 +211,14 @@ uint32_t wrunipz_info_read(uint32_t *ncycles, uint32_t *tCycleAvg, uint32_t *msg
 } // wrunipz_info_read
 
 
-uint32_t wrunipz_status_read(uint64_t *statusArray, uint32_t *state, uint32_t *nBadStatus, uint32_t *nBadState){
-  eb_cycle_t  cycle;
+uint32_t wrunipz_common_read(uint64_t *statusArray, uint32_t *state, uint32_t *nBadStatus, uint32_t *nBadState, uint32_t *version, uint32_t printDiag){
   eb_status_t eb_status;
-  eb_data_t   data[30];
-  
-  if ((eb_status = eb_cycle_open(eb_device, 0, eb_block, &cycle)) != COMMON_STATUS_OK) return COMMON_STATUS_EB;
-  eb_cycle_read(cycle, wrunipz_statusHi,    EB_BIG_ENDIAN|EB_DATA32, &(data[0]));
-  eb_cycle_read(cycle, wrunipz_statusLo,    EB_BIG_ENDIAN|EB_DATA32, &(data[1]));
-  eb_cycle_read(cycle, wrunipz_state,       EB_BIG_ENDIAN|EB_DATA32, &(data[2]));
-  eb_cycle_read(cycle, wrunipz_nBadStatus,  EB_BIG_ENDIAN|EB_DATA32, &(data[3]));
-  eb_cycle_read(cycle, wrunipz_nBadState,   EB_BIG_ENDIAN|EB_DATA32, &(data[4]));
-  if ((eb_status = eb_cycle_close(cycle)) != COMMON_STATUS_OK) return COMMON_STATUS_EB;
 
-  *statusArray   = ((uint64_t)(data[0]) << 32) | (uint64_t)(data[1]);
-  *state         = data[2];
-  *nBadStatus    = data[3];
-  *nBadState     = data[3];
+  uint64_t    dummy64a, dummy64b, dummy64c;
+  uint32_t    dummy32a, dummy32b, dummy32c, dummy32d;
+
+  if ((eb_status = comlib_readDiag(eb_device, statusArray, state, version, &dummy64a, &dummy32a, nBadStatus, nBadState, &dummy64b, &dummy64c,
+                                   &dummy32b, &dummy32c, &dummy32d, printDiag)) != COMMON_STATUS_OK) return COMMON_STATUS_EB;
 
   return COMMON_STATUS_OK;
 } // wrunipz_status_read

@@ -1,13 +1,13 @@
 /********************************************************************************************
- *  b2btest-api.c
+ *  common-lib.c
  *
  *  created : 2018
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 05-July-2019
+ *  version : 05-March-2020
  *
- *  implementation for b2btest
+ *  common x86 routines for firmware
  * 
- *  see b2btest-api.h for version, license and documentation 
+ *  see common-lib.h for version, license and documentation 
  *
  ********************************************************************************************/
 // standard includes
@@ -20,29 +20,29 @@
 // etherbone
 #include <etherbone.h>
 
-// API (x86) b2b-test
-#include <b2b-test.h>
-#include <b2b-common.h>
-#include <b2btest-api.h>
+// common stuff
+//#include <b2b-test.h>
+#include <common-defs.h>
+#include <common-lib.h>
 
 // public variables
-eb_address_t b2btest_statusLo;     // status of b2btest, read (low word)
-eb_address_t b2btest_statusHi;     // status of b2btest, read (high word)
-eb_address_t b2btest_state;        // state, read
-eb_address_t b2btest_transfers;    // # of transfers from UNILAC to SIS, read
-eb_address_t b2btest_injections;   // # of injections in ongoing transfer
-eb_address_t b2btest_statTrans;    // status of ongoing or last transfer, read
-eb_address_t b2btest_cmd;          // command, write
-eb_address_t b2btest_version;      // version, read
-eb_address_t b2btest_nBadStatus;   // # of bad status ("ERROR") incidents
-eb_address_t b2btest_nBadState;    // # of bad state ("not in operation") incidents
-eb_address_t b2btest_macHi;        // MAC address, high word
-eb_address_t b2btest_macLo;        // MAC address, low word
-eb_address_t b2btest_Ip;           // IP
-eb_address_t b2btest_tDiagHi;      // time when diagnostics was cleared, high bits
-eb_address_t b2btest_tDiagLo;      // time when diagnostics was cleared, low bits
-eb_address_t b2btest_tS0Hi;        // time when FW was in S0 state (start of FW), high bits
-eb_address_t b2btest_tS0Lo;        // time when FW was in S0 state (start of FW), low bits
+eb_address_t common_statusLo;     // common status, read (low word)
+eb_address_t common_statusHi;     // common status, read (high word)
+eb_address_t common_state;        // state, read
+eb_address_t common_transfers;    // # of transfers from UNILAC to SIS, read
+eb_address_t common_injections;   // # of injections in ongoing transfer
+eb_address_t common_statTrans;    // status of ongoing or last transfer, read
+eb_address_t common_cmd;          // command, write
+eb_address_t common_version;      // version, read
+eb_address_t common_nBadStatus;   // # of bad status ("ERROR") incidents
+eb_address_t common_nBadState;    // # of bad state ("not in operation") incidents
+eb_address_t common_macHi;        // MAC address, high word
+eb_address_t common_macLo;        // MAC address, low word
+eb_address_t common_Ip;           // IP
+eb_address_t common_tDiagHi;      // time when diagnostics was cleared, high bits
+eb_address_t common_tDiagLo;      // time when diagnostics was cleared, low bits
+eb_address_t common_tS0Hi;        // time when FW was in S0 state (start of FW), high bits
+eb_address_t common_tS0Lo;        // time when FW was in S0 state (start of FW), low bits
 
 
 static void die(const char* where, eb_status_t status)
@@ -52,7 +52,7 @@ static void die(const char* where, eb_status_t status)
 } //die
 
 
-uint64_t getSysTime()
+uint64_t comlib_getSysTime()
 {
   struct timeval tv;
   gettimeofday(&tv,NULL);
@@ -60,7 +60,7 @@ uint64_t getSysTime()
 } // small helper function
 
 
-const char* api_stateText(uint32_t code)
+const char* comlib_stateText(uint32_t code)
 {
   switch (code) {
   case COMMON_STATE_UNKNOWN      : return "UNKNOWN   ";
@@ -73,10 +73,10 @@ const char* api_stateText(uint32_t code)
   case COMMON_STATE_FATAL        : return "FATAL(RIP)";
   default                        : return "undefined ";
   }
-} // api_stateText
+} // comlib_stateText
 
 
-const char* api_statusText(uint32_t bit)
+const char* comlib_statusText(uint32_t bit)
 {  
   static char message[256];
 
@@ -95,40 +95,40 @@ const char* api_statusText(uint32_t bit)
   }
 
   return message;
-} // api_statusStext
+} // comlib_statusStext
 
 
 // init for communicaiton with shared mem
-void api_initShared(eb_address_t lm32_base, eb_address_t sharedOffset)
+void comlib_initShared(eb_address_t lm32_base, eb_address_t sharedOffset)
 {
-  b2btest_statusLo     = lm32_base + sharedOffset + COMMON_SHARED_STATUSLO;
-  b2btest_statusHi     = lm32_base + sharedOffset + COMMON_SHARED_STATUSHI;
-  b2btest_cmd          = lm32_base + sharedOffset + COMMON_SHARED_CMD;
-  b2btest_state        = lm32_base + sharedOffset + COMMON_SHARED_STATE;
-  b2btest_version      = lm32_base + sharedOffset + COMMON_SHARED_VERSION;
-  b2btest_macHi        = lm32_base + sharedOffset + COMMON_SHARED_MACHI;
-  b2btest_macLo        = lm32_base + sharedOffset + COMMON_SHARED_MACLO;
-  b2btest_Ip           = lm32_base + sharedOffset + COMMON_SHARED_IP;
-  b2btest_nBadStatus   = lm32_base + sharedOffset + COMMON_SHARED_NBADSTATUS;
-  b2btest_nBadState    = lm32_base + sharedOffset + COMMON_SHARED_NBADSTATE;
-  b2btest_tDiagHi      = lm32_base + sharedOffset + COMMON_SHARED_TDIAGHI;
-  b2btest_tDiagLo      = lm32_base + sharedOffset + COMMON_SHARED_TDIAGLO;
-  b2btest_tS0Hi        = lm32_base + sharedOffset + COMMON_SHARED_TS0HI;
-  b2btest_tS0Lo        = lm32_base + sharedOffset + COMMON_SHARED_TS0LO;
-  b2btest_transfers    = lm32_base + sharedOffset + COMMON_SHARED_NTRANSFER;
-  b2btest_injections   = lm32_base + sharedOffset + COMMON_SHARED_NINJECT;
-  b2btest_statTrans    = lm32_base + sharedOffset + COMMON_SHARED_TRANSSTAT;
-} // api_initShared
+  common_statusLo     = lm32_base + sharedOffset + COMMON_SHARED_STATUSLO;
+  common_statusHi     = lm32_base + sharedOffset + COMMON_SHARED_STATUSHI;
+  common_cmd          = lm32_base + sharedOffset + COMMON_SHARED_CMD;
+  common_state        = lm32_base + sharedOffset + COMMON_SHARED_STATE;
+  common_version      = lm32_base + sharedOffset + COMMON_SHARED_VERSION;
+  common_macHi        = lm32_base + sharedOffset + COMMON_SHARED_MACHI;
+  common_macLo        = lm32_base + sharedOffset + COMMON_SHARED_MACLO;
+  common_Ip           = lm32_base + sharedOffset + COMMON_SHARED_IP;
+  common_nBadStatus   = lm32_base + sharedOffset + COMMON_SHARED_NBADSTATUS;
+  common_nBadState    = lm32_base + sharedOffset + COMMON_SHARED_NBADSTATE;
+  common_tDiagHi      = lm32_base + sharedOffset + COMMON_SHARED_TDIAGHI;
+  common_tDiagLo      = lm32_base + sharedOffset + COMMON_SHARED_TDIAGLO;
+  common_tS0Hi        = lm32_base + sharedOffset + COMMON_SHARED_TS0HI;
+  common_tS0Lo        = lm32_base + sharedOffset + COMMON_SHARED_TS0LO;
+  common_transfers    = lm32_base + sharedOffset + COMMON_SHARED_NTRANSFER;
+  common_injections   = lm32_base + sharedOffset + COMMON_SHARED_NINJECT;
+  common_statTrans    = lm32_base + sharedOffset + COMMON_SHARED_TRANSSTAT;
+} // comlib_initShared
 
 
-void api_printDiag(uint64_t  statusArray, uint32_t  state, uint32_t  version, uint64_t  mac, uint32_t  ip, uint32_t  nBadStatus, uint32_t  nBadState, uint64_t  tDiag, uint64_t  tS0, uint32_t  nTransfer, uint32_t  nInjection, uint32_t  statTrans)
+void comlib_printDiag(uint64_t  statusArray, uint32_t  state, uint32_t  version, uint64_t  mac, uint32_t  ip, uint32_t  nBadStatus, uint32_t  nBadState, uint64_t  tDiag, uint64_t  tS0, uint32_t  nTransfer, uint32_t  nInjection, uint32_t  statTrans)
 {
   const struct tm* tm;
   char             timestr[60];
   time_t           secs;
   int              i;
 
-  printf("b2b-api: diags ...\n\n");
+  printf("common: diags ...\n");
 
   secs     = (unsigned long)((double)tS0 / 1000000000.0);
   tm = gmtime(&secs);
@@ -140,7 +140,7 @@ void api_printDiag(uint64_t  statusArray, uint32_t  state, uint32_t  version, ui
   strftime(timestr, sizeof(timestr), "%Y-%m-%d %H:%M:%S TAI", tm);
   printf("diagnostics reset at  : %s\n", timestr);
   
-  printf("state (# of changes)  : %s (%u)\n", api_stateText(state), nBadState);
+  printf("state (# of changes)  : %s (%u)\n", comlib_stateText(state), nBadState);
   printf("# of transfers        : %012u\n", nTransfer);
   printf("# of injections       : %012u\n", nInjection);  
   printf("status of act transfer: 0x%x\n", statTrans);
@@ -154,34 +154,34 @@ void api_printDiag(uint64_t  statusArray, uint32_t  state, uint32_t  version, ui
     printf("overall status        : NOT OK\n");  
   for (i= COMMON_STATUS_OK + 1; i<(int)(sizeof(statusArray)*8); i++) {
     if ((statusArray >> i) & 0x1)
-      printf("    status bit is set : %s\n", api_statusText(i));
+      printf("    status bit is set : %s\n", comlib_statusText(i));
   } // for i
-} // api_printDiag;
+} // comlib_printDiag;
 
 
-int api_readDiag(eb_device_t device, uint64_t  *statusArray, uint32_t  *state, uint32_t  *version, uint64_t  *mac, uint32_t  *ip, uint32_t  *nBadStatus, uint32_t  *nBadState, uint64_t  *tDiag, uint64_t  *tS0, uint32_t  *nTransfer, uint32_t  *nInjection, uint32_t  *statTrans, uint32_t  printFlag)
+int comlib_readDiag(eb_device_t device, uint64_t  *statusArray, uint32_t  *state, uint32_t  *version, uint64_t  *mac, uint32_t  *ip, uint32_t  *nBadStatus, uint32_t  *nBadState, uint64_t  *tDiag, uint64_t  *tS0, uint32_t  *nTransfer, uint32_t  *nInjection, uint32_t  *statTrans, uint32_t  printFlag)
 {
   eb_cycle_t  cycle;
   eb_status_t eb_status;
   eb_data_t   data[30];
   
-  if ((eb_status = eb_cycle_open(device, 0, eb_block, &cycle)) != EB_OK) die("b2btest-api: eb_cycle_open", eb_status);
-  eb_cycle_read(cycle, b2btest_statusHi,    EB_BIG_ENDIAN|EB_DATA32, &(data[0]));
-  eb_cycle_read(cycle, b2btest_statusLo,    EB_BIG_ENDIAN|EB_DATA32, &(data[1]));
-  eb_cycle_read(cycle, b2btest_state,       EB_BIG_ENDIAN|EB_DATA32, &(data[2]));
-  eb_cycle_read(cycle, b2btest_version,     EB_BIG_ENDIAN|EB_DATA32, &(data[3]));
-  eb_cycle_read(cycle, b2btest_macHi,       EB_BIG_ENDIAN|EB_DATA32, &(data[4]));
-  eb_cycle_read(cycle, b2btest_macLo,       EB_BIG_ENDIAN|EB_DATA32, &(data[5]));
-  eb_cycle_read(cycle, b2btest_Ip,          EB_BIG_ENDIAN|EB_DATA32, &(data[6]));
-  eb_cycle_read(cycle, b2btest_nBadStatus,  EB_BIG_ENDIAN|EB_DATA32, &(data[7]));
-  eb_cycle_read(cycle, b2btest_nBadState,   EB_BIG_ENDIAN|EB_DATA32, &(data[8]));
-  eb_cycle_read(cycle, b2btest_tDiagHi,     EB_BIG_ENDIAN|EB_DATA32, &(data[9]));
-  eb_cycle_read(cycle, b2btest_tDiagLo,     EB_BIG_ENDIAN|EB_DATA32, &(data[10]));
-  eb_cycle_read(cycle, b2btest_tS0Hi,       EB_BIG_ENDIAN|EB_DATA32, &(data[11]));
-  eb_cycle_read(cycle, b2btest_tS0Lo,       EB_BIG_ENDIAN|EB_DATA32, &(data[12]));
-  eb_cycle_read(cycle, b2btest_transfers,   EB_BIG_ENDIAN|EB_DATA32, &(data[13]));
-  eb_cycle_read(cycle, b2btest_injections,  EB_BIG_ENDIAN|EB_DATA32, &(data[14]));  
-  eb_cycle_read(cycle, b2btest_statTrans,   EB_BIG_ENDIAN|EB_DATA32, &(data[15]));
+  if ((eb_status = eb_cycle_open(device, 0, eb_block, &cycle)) != EB_OK) die("common-api: eb_cycle_open", eb_status);
+  eb_cycle_read(cycle, common_statusHi,    EB_BIG_ENDIAN|EB_DATA32, &(data[0]));
+  eb_cycle_read(cycle, common_statusLo,    EB_BIG_ENDIAN|EB_DATA32, &(data[1]));
+  eb_cycle_read(cycle, common_state,       EB_BIG_ENDIAN|EB_DATA32, &(data[2]));
+  eb_cycle_read(cycle, common_version,     EB_BIG_ENDIAN|EB_DATA32, &(data[3]));
+  eb_cycle_read(cycle, common_macHi,       EB_BIG_ENDIAN|EB_DATA32, &(data[4]));
+  eb_cycle_read(cycle, common_macLo,       EB_BIG_ENDIAN|EB_DATA32, &(data[5]));
+  eb_cycle_read(cycle, common_Ip,          EB_BIG_ENDIAN|EB_DATA32, &(data[6]));
+  eb_cycle_read(cycle, common_nBadStatus,  EB_BIG_ENDIAN|EB_DATA32, &(data[7]));
+  eb_cycle_read(cycle, common_nBadState,   EB_BIG_ENDIAN|EB_DATA32, &(data[8]));
+  eb_cycle_read(cycle, common_tDiagHi,     EB_BIG_ENDIAN|EB_DATA32, &(data[9]));
+  eb_cycle_read(cycle, common_tDiagLo,     EB_BIG_ENDIAN|EB_DATA32, &(data[10]));
+  eb_cycle_read(cycle, common_tS0Hi,       EB_BIG_ENDIAN|EB_DATA32, &(data[11]));
+  eb_cycle_read(cycle, common_tS0Lo,       EB_BIG_ENDIAN|EB_DATA32, &(data[12]));
+  eb_cycle_read(cycle, common_transfers,   EB_BIG_ENDIAN|EB_DATA32, &(data[13]));
+  eb_cycle_read(cycle, common_injections,  EB_BIG_ENDIAN|EB_DATA32, &(data[14]));  
+  eb_cycle_read(cycle, common_statTrans,   EB_BIG_ENDIAN|EB_DATA32, &(data[15]));
   if ((eb_status = eb_cycle_close(cycle)) != EB_OK) die("dm-unipz: eb_cycle_close", eb_status);
 
   *statusArray   = ((uint64_t)(data[0]) << 32) | (uint64_t)(data[1]);
@@ -197,7 +197,7 @@ int api_readDiag(eb_device_t device, uint64_t  *statusArray, uint32_t  *state, u
   *nInjection    = data[14];
   *statTrans     = data[15];
 
-  if (printFlag) api_printDiag(*statusArray, *state, *version, *mac, *ip, *nBadStatus, *nBadState, *tDiag, *tS0, *nTransfer, *nInjection, *statTrans);
+  if (printFlag) comlib_printDiag(*statusArray, *state, *version, *mac, *ip, *nBadStatus, *nBadState, *tDiag, *tS0, *nTransfer, *nInjection, *statTrans);
 
   return eb_status;
 } // 

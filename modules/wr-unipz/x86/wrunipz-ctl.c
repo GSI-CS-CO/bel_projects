@@ -3,7 +3,7 @@
  *
  *  created : 2018
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 04-March-2020
+ *  version : 05-March-2020
  *
  *  command-line interface for wrunipz
  *
@@ -50,7 +50,7 @@
 // wr-unipz
 /* #include <wrunipz-api.h>                 // API wrunipz */
 #include <wrunipzlib.h>                  // LIB wrunipz
-#include <b2btest-api.h>                 // API B2B
+//#include <common-lib.h>                  // common library chk
 #include <wr-unipz.h>                    // FW
 #include <wrunipz_shared_mmap.h>         // LM32
 
@@ -327,7 +327,7 @@ int main(int argc, char** argv) {
   uint64_t messages;
   uint32_t fMessages;
   uint32_t tCycle;
-  /* uint32_t version; */
+  uint32_t version;
   int32_t  dtMax;
   int32_t  dtMin;
   int32_t  cycJmpMax;
@@ -458,7 +458,7 @@ int main(int argc, char** argv) {
     readInfo(&cycles, &tCycle, &fMessages, &confStat, &nLate, &vaccAvg, &pzAvg); */
 
     wrunipz_info_read(&cycles, &tCycle, &fMessages, &nLate, &vaccAvg, &pzAvg, &messages, &dtMax, &dtMin, &cycJmpMax, &cycJmpMin);
-    wrunipz_status_read(&statusArray, &state, &nBadStatus, &nBadState);
+    wrunipz_common_read(&statusArray, &state, &nBadStatus, &nBadState, &version, 0);
     
     printCycleHeader();
     printCycle(cycles, tCycle, fMessages, nLate, vaccAvg, pzAvg);
@@ -474,7 +474,7 @@ int main(int argc, char** argv) {
 
   if (command) {
     // state required to give proper warnings
-    wrunipz_status_read(&statusArray, &state, &nBadStatus, &nBadState);
+    wrunipz_common_read(&statusArray, &state, &nBadStatus, &nBadState, &version, 0);
     /* readInfo(&cycles, &tCycle, &fMessages, &confStat, &nLate, &vaccAvg, &pzAvg); // chk, I believe this should be api_readDiag */
 
     // request state changes
@@ -509,7 +509,7 @@ int main(int argc, char** argv) {
     } // "cleardiag"
     if (!strcasecmp(command, "diag")) {
       /*api_readDiag(device, &statusArray, &state, &version, &mac, &ip, &nBadStatus, &nBadState, &tDiag, &tS0, &nDummyT, &nDummyI, &statDummy, 1);*/
-      wrunipz_status_read(&statusArray, &state, &nBadStatus, &nBadState);
+      wrunipz_common_read(&statusArray, &state, &nBadStatus, &nBadState, &version, 1);
       // print set status bits (except OK)
       for (i = COMMON_STATUS_OK + 1; i<(int)(sizeof(statusArray)*8); i++) {
         if ((statusArray >> i) & 0x1)  printf("    status bit is set : %s\n", wrunipz_status_text(i));
@@ -664,7 +664,7 @@ int main(int argc, char** argv) {
       /* api_readDiag(device, &statusArray, &state, &version, &mac, &ip, &nBadStatus, &nBadState, &tDiag, &tS0, &nDummyT, &nDummyI, &statDummy, 0);
          readInfo(&cycles, &tCycle, &fMessages, &confStat, &nLate, &vaccAvg, &pzAvg); // read info from lm32*/
       wrunipz_info_read(&cycles, &tCycle, &fMessages, &nLate, &vaccAvg, &pzAvg, &messages, &dtMax, &dtMin, &cycJmpMax, &cycJmpMin);
-      wrunipz_status_read(&statusArray, &state, &nBadStatus, &nBadState);
+      wrunipz_common_read(&statusArray, &state, &nBadStatus, &nBadState, &version, 0);
       
       if (logLevel == 1) sleepTime = COMMON_DEFAULT_TIMEOUT * 100000;
       else               sleepTime = COMMON_DEFAULT_TIMEOUT * 10000;

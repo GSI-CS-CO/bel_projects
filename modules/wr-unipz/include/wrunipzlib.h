@@ -3,7 +3,7 @@
  *
  *  created : 2020
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 2020-mar-04
+ *  version : 05-March-2020
  *
  * library for wrunipz
  *
@@ -80,23 +80,25 @@ extern "C" {
                              int32_t  *cycJmpMin               // delta T min (expected and actual start of UNILAC cycle)
                              );
   
-  // get status from firmware
-  uint32_t wrunipz_status_read(uint64_t    *statusArray,       // array with status bits
-                               uint32_t    *state,             // state
-                               uint32_t    *nBadStatus,        // # of bad status incidents
-                               uint32_t    *nBadState          // # of bad state incidents
+  // get common properties from firmware
+  uint32_t wrunipz_common_read(uint64_t *statusArray,          // array with status bits
+                               uint32_t *state,                // state
+                               uint32_t *nBadStatus,           // # of bad status incidents
+                               uint32_t *nBadState,            // # of bad state incidents
+                               uint32_t *version,              // FW version
+                               uint32_t printDiag              // prints info on common firmware properties to stdout
                                );
   
   // commands requesting state transitions
-  void wrunipz_cmd_configure();                            // to state 'configured'
-  void wrunipz_cmd_startop();                              // to state 'opready'
-  void wrunipz_cmd_stopop();                               // back to state 'configured'
-  void wrunipz_cmd_recover();                              // try error recovery
-  void wrunipz_cmd_idle();                                 // to state idle
+  void wrunipz_cmd_configure();                                // to state 'configured'
+  void wrunipz_cmd_startop();                                  // to state 'opready'
+  void wrunipz_cmd_stopop();                                   // back to state 'configured'
+  void wrunipz_cmd_recover();                                  // try error recovery
+  void wrunipz_cmd_idle();                                     // to state idle
   
   // commands for normal operation
-  void wrunipz_cmd_cleardiag();                            // clear diagnostic datat
-  void wrunipz_cmd_submit();                               // submit all pending event tables; useful for testing
+  void wrunipz_cmd_cleardiag();                                // clear diagnostic datat
+  void wrunipz_cmd_submit();                                   // submit all pending event tables; useful for testing
   
 #ifdef __cplusplus
 }
