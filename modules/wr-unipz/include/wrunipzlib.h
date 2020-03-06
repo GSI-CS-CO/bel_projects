@@ -3,7 +3,7 @@
  *
  *  created : 2020
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 05-March-2020
+ *  version : 06-March-2020
  *
  * library for wrunipz
  *
@@ -94,6 +94,15 @@ extern "C" {
                                uint32_t printDiag              // prints info on common firmware properties to stdout
                                );
   
+  // uploads (parts of) an event table to the firmware
+  uint32_t wrunipz_table_upload(uint64_t ebDevice,             // EB device
+                                uint32_t chn,                  // # of 'Kanal'; there are max two channels
+                                uint32_t pz,                   // # of PZ;
+                                uint32_t vacc,                 // # of vacc;
+                                uint32_t *data,                // event data;
+                                uint32_t nData                 // # of events in data
+                                );
+
   // commands requesting state transitions
   void wrunipz_cmd_configure(uint64_t ebDevice);               // to state 'configured'
   void wrunipz_cmd_startop(uint64_t ebDevice);                 // to state 'opready'
@@ -102,8 +111,10 @@ extern "C" {
   void wrunipz_cmd_idle(uint64_t ebDevice);                    // to state idle
   
   // commands for normal operation
-  void wrunipz_cmd_cleardiag(uint64_t ebDevice);               // clear diagnostic datat
+  void wrunipz_cmd_cleardiag(uint64_t ebDevice);               // clear diagnostic data
   void wrunipz_cmd_submit(uint64_t ebDevice);                  // submit all pending event tables; useful for testing
+  void wrunipz_cmd_clearTables(uint64_t ebDevice);             // clears all event tables; useful for testing
+
   
 #ifdef __cplusplus
 }

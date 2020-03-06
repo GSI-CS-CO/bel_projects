@@ -3,7 +3,7 @@
  *
  *  created : 2020
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 05-March-2020
+ *  version : 06-March-2020
  *
  * library for wrunipz
  *
@@ -76,6 +76,8 @@ eb_address_t wrunipz_cycJmpMin;         // delta T (min) between expected and ac
 eb_address_t wrunipz_nLate;             // # of late messages, read
 eb_address_t wrunipz_vaccAvg;           // virtual accelerators played over the past second, read
 eb_address_t wrunipz_pzAvg;             // PZs used over the past second, read
+eb_address_t wrunipz_evtData;           // event data
+eb_address_t wrunipz_evtFlags;          // event flags
 
 
 const char* wrunipz_status_text(uint32_t bit) {  
@@ -138,6 +140,8 @@ uint32_t wrunipz_firmware_open(uint64_t *ebDevice, const char* devName, uint32_t
   wrunipz_nLate        = lm32_base + SHARED_OFFS + WRUNIPZ_SHARED_NLATE;
   wrunipz_vaccAvg      = lm32_base + SHARED_OFFS + WRUNIPZ_SHARED_VACCAVG;
   wrunipz_pzAvg        = lm32_base + SHARED_OFFS + WRUNIPZ_SHARED_PZAVG;
+  wrunipz_evtData      = lm32_base + SHARED_OFFS + WRUNIPZ_SHARED_EVT_DATA;
+  wrunipz_evtFlags     = lm32_base + SHARED_OFFS + WRUNIPZ_SHARED_EVT_FLAGS;
   
   return COMMON_STATUS_OK;
 } // wrunipz_firmware_open
@@ -289,4 +293,86 @@ void wrunipz_cmd_submit(uint64_t ebDevice){
   eb_device = (eb_device_t)ebDevice;
   eb_device_write(eb_device, wrunipz_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)WRUNIPZ_CMD_CONFSUBMIT, 0, eb_block);
 } // wrunipz_cmd_submit
+
+
+void wrunipz_cmd_clearTables(uint64_t ebDevice){
+  eb_device_t eb_device;
+
+  eb_device = (eb_device_t)ebDevice;
+  eb_device_write(eb_device, wrunipz_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)WRUNIPZ_CMD_CONFCLEAR, 0, eb_block);
+} // wrunipz_cmd_submit
+
+
+uint32_t wrunipz_table_upload(uint64_t ebDevice, uint32_t chn, uint32_t pz, uint32_t vacc, uint32_t *data, uint32_t nData)
+{
+  int          i;
+  uint32_t     newFlag;        // flag: signals that new data are available
+  uint32_t     validFlag;      // flag: data[n] is valid
+  uint32_t     prepFlag;       // flag: data[n] is prep datum
+  uint32_t     evtFlag;        // flag: data[n] is evt
+  //uint32_t     *data;          // helper variable: pointer to arrays
+  //uint32_t     nData[NKANAL];  // helper variable: number of data for each channel
+  uint32_t     tOffset;        // helper variable: offset of duetime of an event within an UNILAC cycle [us]
+  uint32_t     addrOffset;     // helper variable: address offset for data     
+  /*eb_data_t    eb_data;*/
+  eb_cycle_t   cycle;
+
+  if (chn   > WRUNIPZ_NCHN)  return COMMON_STATUS_OUTOFRANGE;
+  if (pz    > WRUNIPZ_NPZ)   return COMMON_STATUS_OUTOFRANGE;
+  if (vacc  > WRUNIPZ_NVACC) return COMMON_STATUS_OUTOFRANGE;
+  if (nData > WRUNIPZ_NEVT)  return COMMON_STATUS_OUTOFRANGE;
+  
+  // required for looping over the two channels
+  /*  data[0]  = dataChn0;
+  data[1]  = dataChn1;
+  nData[0] = nDataChn0;
+  nData[1] = nDataChn1;*/
+  /*
+  // check if transaction has been initialized
+  if (eb_device_read(device, DPstat, EB_BIG_ENDIAN|EB_DATA32, &eb_data, 0, eb_block) != EB_OK) return COMMON_STATUS_EB;
+  if (eb_data != WRUNIPZ_CONFSTAT_INIT) return WRUNIPZ_STATUS_TRANSACTION;
+
+  // pz flag 
+  if (eb_device_read(device, DPpz, EB_BIG_ENDIAN|EB_DATA32, &eb_data, 0, eb_block) != EB_OK) return COMMON_STATUS_EB;
+  pzFlag = (uint32_t)eb_data | (1 << pz);
+  */
+  // EB cycle
+  if (eb_cycle_open(ebDevice, 0, eb_block, &cycle) != EB_OK) return COMMON_STATUS_EB;
+
+  //eb_cycle_write(cycle, DPpz, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)pzFlag);
+  newFlag   = 0x1;
+  validFlag = 0;
+  prepFlag  = 0;
+  evtFlag   = 0;
+    
+  // write data
+  for (i=0; i < nData; i++) {
+    validFlag = validFlag | (1 << i);
+    evtFlag   = evtFlag   | (1 << i);      // for now we assume all data are timing events
+    tOffset   = (uint32_t)(data[i] >> 16); // get offset of event within UNILAC cycle
+    if (tOffset < WRUNIPZ_MAXPREPOFFSET)  prepFlag  = prepFlag | (1 << i); // events early in the cycle are marked as 'prep events'
+
+    addrOffset  = vacc * WRUNIPZ_NEVT * WRUNIPZ_NCHN * WRUNIPZ_NPZ;  // offset for vacc
+    addrOffset += pz   * WRUNIPZ_NEVT * WRUNIPZ_NCHN;                // offset for pz
+    addrOffset += chn  * WRUNIPZ_NEVT;                               // offset for chn
+
+    eb_cycle_write(cycle, wrunipz_evtData + (eb_address_t)((addrOffset + i) << 2), EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)(data[i]));
+  } // for i
+    
+  // write flags
+  addrOffset  = vacc * WRUNIPZ_NFLAG * WRUNIPZ_NCHN * WRUNIPZ_NPZ;   // offset for vacc
+  addrOffset += pz   * WRUNIPZ_NFLAG * WRUNIPZ_NCHN;                 // offset for pz
+  addrOffset += chn  * WRUNIPZ_NFLAG;                                // offset of chn
+  
+  eb_cycle_write(cycle, wrunipz_evtFlags + (eb_address_t)((addrOffset + 1) << 2),  EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)validFlag);
+  eb_cycle_write(cycle, wrunipz_evtFlags + (eb_address_t)((addrOffset + 2) << 2),  EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)prepFlag);
+  eb_cycle_write(cycle, wrunipz_evtFlags + (eb_address_t)((addrOffset + 3) << 2),  EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)evtFlag);
+
+  if (eb_cycle_close(cycle) != EB_OK) return COMMON_STATUS_EB;
+
+  // after all data has been written, mark them as 'new' 
+  eb_device_write(ebDevice, wrunipz_evtFlags + (eb_address_t)((addrOffset + 0) << 2), EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)newFlag, 0, eb_block);
+  
+  return COMMON_STATUS_OK;
+} // wrunipz_table_upload
 
