@@ -57,7 +57,6 @@
 
 // public variables
 eb_socket_t  eb_socket;                 // EB socket
-eb_device_t  eb_device;                 // EB device
 
 eb_address_t lm32_base;                 // lm32
 eb_address_t wrunipz_cmd;               // command, write
@@ -105,17 +104,20 @@ const char* wrunipz_state_text(uint32_t code) {
 } // wrunipz_state_text
 
 
-uint32_t wrunipz_firmware_open(const char* devName, uint32_t cpu, uint32_t *address){
+uint32_t wrunipz_firmware_open(uint64_t *ebDevice, const char* devName, uint32_t cpu, uint32_t *address){
   eb_status_t         status;
+  eb_device_t         eb_device;  
   struct sdb_device   sdbDevice;                           // instantiated lm32 core
   int                 nDevices;                            // number of instantiated cores
-  
+
+  *ebDevice = 0x0;
   if (cpu != 0) return COMMON_STATUS_OUTOFRANGE;           // chk, only support 1st core (this is a quick hack)
   nDevices = 1;
 
   // open Etherbone device and socket 
   if ((status = eb_socket_open(EB_ABI_CODE, 0, EB_ADDR32|EB_DATA32, &eb_socket)) != EB_OK) return COMMON_STATUS_EB;
   if ((status = eb_device_open(eb_socket, devName, EB_ADDR32|EB_DATA32, 3, &eb_device)) != EB_OK) return COMMON_STATUS_EB;
+  *ebDevice = (uint64_t)eb_device;
 
   //  get Wishbone address of lm32 
   if ((status = eb_sdb_find_by_identity(eb_device, GSI, LM32_RAM_USER, &sdbDevice, &nDevices)) != EB_OK) return COMMON_STATUS_EB;
@@ -141,8 +143,11 @@ uint32_t wrunipz_firmware_open(const char* devName, uint32_t cpu, uint32_t *addr
 } // wrunipz_firmware_open
 
 
-uint32_t wrunipz_firmware_close(){
+uint32_t wrunipz_firmware_close(uint64_t ebDevice){
   eb_status_t status;
+  eb_device_t eb_device;
+
+  eb_device = (eb_device_t)ebDevice;
   
   // close Etherbone device and socket
   if ((status = eb_device_close(eb_device)) != EB_OK) return COMMON_STATUS_EB;
@@ -152,7 +157,7 @@ uint32_t wrunipz_firmware_close(){
 } // wrunipz_firmware_close
 
 
-const char* wrunipz_version_firmware() {
+const char* wrunipz_version_firmware(uint64_t ebDevice) {
   static char    version[32];
   uint32_t       ver;
 
@@ -161,7 +166,7 @@ const char* wrunipz_version_firmware() {
 
   ver = 0xffffffff;
   
-  wrunipz_common_read(&dummy64a, &dummy32a, &dummy32b, &dummy32c, &ver, 0);
+  wrunipz_common_read(ebDevice, &dummy64a, &dummy32a, &dummy32b, &dummy32c, &ver, 0);
   sprintf(version, "%02x.%02x.%02x", (ver & 0x00ff0000) >> 16, (ver & 0x0000ff00) >> 8, ver & 0x000000ff);
 
   return version;
@@ -173,11 +178,14 @@ const char* wrunipz_version_library(){
 } // wrunipz_version_library
 
 
-uint32_t wrunipz_info_read(uint32_t *ncycles, uint32_t *tCycleAvg, uint32_t *msgFreqAvg, uint32_t *nLate, uint32_t *vaccAvg, uint32_t *pzAvg,
-                           uint64_t *nMessages, int32_t  *dtMax, int32_t  *dtMin, int32_t  *cycJmpMax, int32_t  *cycJmpMin) {
+uint32_t wrunipz_info_read(uint64_t ebDevice, uint32_t *ncycles, uint32_t *tCycleAvg, uint32_t *msgFreqAvg, uint32_t *nLate, uint32_t *vaccAvg,
+                           uint32_t *pzAvg, uint64_t *nMessages, int32_t  *dtMax, int32_t  *dtMin, int32_t  *cycJmpMax, int32_t  *cycJmpMin) {
   eb_cycle_t  eb_cycle;
   eb_status_t eb_status;
+  eb_device_t eb_device;
   eb_data_t   data[30];
+
+  eb_device = (eb_device_t)ebDevice;
 
   if ((eb_status = eb_cycle_open(eb_device, 0, eb_block, &eb_cycle)) != EB_OK) return COMMON_STATUS_EB;
   eb_cycle_read(eb_cycle, wrunipz_cycles,        EB_BIG_ENDIAN|EB_DATA32, &(data[0]));
@@ -211,11 +219,14 @@ uint32_t wrunipz_info_read(uint32_t *ncycles, uint32_t *tCycleAvg, uint32_t *msg
 } // wrunipz_info_read
 
 
-uint32_t wrunipz_common_read(uint64_t *statusArray, uint32_t *state, uint32_t *nBadStatus, uint32_t *nBadState, uint32_t *version, uint32_t printDiag){
+uint32_t wrunipz_common_read(uint64_t ebDevice, uint64_t *statusArray, uint32_t *state, uint32_t *nBadStatus, uint32_t *nBadState, uint32_t *version, uint32_t printDiag){
   eb_status_t eb_status;
+  eb_device_t eb_device;
 
   uint64_t    dummy64a, dummy64b, dummy64c;
   uint32_t    dummy32a, dummy32b, dummy32c, dummy32d;
+
+  eb_device = (eb_device_t)ebDevice;
 
   if ((eb_status = comlib_readDiag(eb_device, statusArray, state, version, &dummy64a, &dummy32a, nBadStatus, nBadState, &dummy64b, &dummy64c,
                                    &dummy32b, &dummy32c, &dummy32d, printDiag)) != COMMON_STATUS_OK) return COMMON_STATUS_EB;
@@ -224,37 +235,58 @@ uint32_t wrunipz_common_read(uint64_t *statusArray, uint32_t *state, uint32_t *n
 } // wrunipz_status_read
   
 
-void wrunipz_cmd_configure(){
+void wrunipz_cmd_configure(uint64_t ebDevice){
+  eb_device_t eb_device;
+  
+  eb_device = (eb_device_t)ebDevice;
   eb_device_write(eb_device, wrunipz_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)COMMON_CMD_CONFIGURE, 0, eb_block);
 } // wrunipz_cmd_configure
 
 
-void wrunipz_cmd_startop(){
+void wrunipz_cmd_startop(uint64_t ebDevice){
+  eb_device_t eb_device;
+
+  eb_device = (eb_device_t)ebDevice;
   eb_device_write(eb_device, wrunipz_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)COMMON_CMD_STARTOP, 0, eb_block);
 } // wrunipz_cmd_startop
 
 
-void wrunipz_cmd_stopop(){
+void wrunipz_cmd_stopop(uint64_t ebDevice){
+  eb_device_t eb_device;
+
+  eb_device = (eb_device_t)ebDevice;
   eb_device_write(eb_device, wrunipz_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)COMMON_CMD_STOPOP, 0, eb_block);
 } // wrunipz_cmd_stopop
 
 
-void wrunipz_cmd_recover(){
+void wrunipz_cmd_recover(uint64_t ebDevice){
+  eb_device_t eb_device;
+
+  eb_device = (eb_device_t)ebDevice;
   eb_device_write(eb_device, wrunipz_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)COMMON_CMD_RECOVER, 0, eb_block);
 } // wrunipz_cmd_recover
 
 
-void wrunipz_cmd_idle(){
+void wrunipz_cmd_idle(uint64_t ebDevice){
+  eb_device_t eb_device;
+
+  eb_device = (eb_device_t)ebDevice;
   eb_device_write(eb_device, wrunipz_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)COMMON_CMD_IDLE, 0, eb_block);
 } // wrunipz_cmd_idle
 
 
-void wrunipz_cmd_cleardiag(){
+void wrunipz_cmd_cleardiag(uint64_t ebDevice){
+  eb_device_t eb_device;
+
+  eb_device = (eb_device_t)ebDevice;
   eb_device_write(eb_device, wrunipz_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)COMMON_CMD_CLEARDIAG, 0, eb_block);
 } // wrunipz_cmd_cleardiag
 
 
-void wrunipz_cmd_submit(){
+void wrunipz_cmd_submit(uint64_t ebDevice){
+  eb_device_t eb_device;
+
+  eb_device = (eb_device_t)ebDevice;
   eb_device_write(eb_device, wrunipz_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)WRUNIPZ_CMD_CONFSUBMIT, 0, eb_block);
 } // wrunipz_cmd_submit
 

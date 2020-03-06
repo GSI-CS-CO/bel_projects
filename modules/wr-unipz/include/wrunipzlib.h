@@ -52,22 +52,26 @@ extern "C" {
                                  );
   
   // open connection to firmware
-  uint32_t wrunipz_firmware_open(const char*    device,        // EB device such as 'dev/wbm0'
+  uint32_t wrunipz_firmware_open(uint64_t       *ebDevice,     // EB device
+                                 const char*    device,        // EB device such as 'dev/wbm0'
                                  uint32_t       cpu,           // # of CPU, 0..0xff
-                                 uint32_t       *address       // address of firmware
+                                 uint32_t       *wbAddr        // WB address of firmware
                                  );
   
   // close connection to firmware
-  uint32_t wrunipz_firmware_close();
+  uint32_t wrunipz_firmware_close(uint64_t ebDevice            // EB device
+                                  );
   
   // get version of firmare
-  const char* wrunipz_version_firmware();
+  const char* wrunipz_version_firmware(uint64_t ebDevice       // EB device
+                                       );
 
   // get version of library
   const char* wrunipz_version_library();
   
   // get info from firmware
-  uint32_t wrunipz_info_read(uint32_t *ncycles,                // # of cycles executed
+  uint32_t wrunipz_info_read(uint64_t ebDevice,                // EB device
+                             uint32_t *ncycles,                // # of cycles executed
                              uint32_t *tCycleAvg,              // average time per cycle [ns]
                              uint32_t *msgFreqAvg,             // average message rate [Hz]
                              uint32_t *nLate,                  // # of late messages
@@ -81,7 +85,8 @@ extern "C" {
                              );
   
   // get common properties from firmware
-  uint32_t wrunipz_common_read(uint64_t *statusArray,          // array with status bits
+  uint32_t wrunipz_common_read(uint64_t ebDevice,              // EB device
+                               uint64_t *statusArray,          // array with status bits
                                uint32_t *state,                // state
                                uint32_t *nBadStatus,           // # of bad status incidents
                                uint32_t *nBadState,            // # of bad state incidents
@@ -90,15 +95,15 @@ extern "C" {
                                );
   
   // commands requesting state transitions
-  void wrunipz_cmd_configure();                                // to state 'configured'
-  void wrunipz_cmd_startop();                                  // to state 'opready'
-  void wrunipz_cmd_stopop();                                   // back to state 'configured'
-  void wrunipz_cmd_recover();                                  // try error recovery
-  void wrunipz_cmd_idle();                                     // to state idle
+  void wrunipz_cmd_configure(uint64_t ebDevice);               // to state 'configured'
+  void wrunipz_cmd_startop(uint64_t ebDevice);                 // to state 'opready'
+  void wrunipz_cmd_stopop(uint64_t ebDevice);                  // back to state 'configured'
+  void wrunipz_cmd_recover(uint64_t ebDevice);                 // try error recovery
+  void wrunipz_cmd_idle(uint64_t ebDevice);                    // to state idle
   
   // commands for normal operation
-  void wrunipz_cmd_cleardiag();                                // clear diagnostic datat
-  void wrunipz_cmd_submit();                                   // submit all pending event tables; useful for testing
+  void wrunipz_cmd_cleardiag(uint64_t ebDevice);               // clear diagnostic datat
+  void wrunipz_cmd_submit(uint64_t ebDevice);                  // submit all pending event tables; useful for testing
   
 #ifdef __cplusplus
 }

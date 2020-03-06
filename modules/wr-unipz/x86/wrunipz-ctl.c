@@ -315,6 +315,7 @@ int main(int argc, char** argv) {
   int exitCode   = 0;
   char *tail;
 
+  uint64_t ebDevice;
   uint32_t status;
   uint64_t statusArray;
   uint32_t state;
@@ -408,7 +409,7 @@ int main(int argc, char** argv) {
   if (optind+1 < argc)  command = argv[++optind];
   else command = NULL;
 
-  if ((status =  wrunipz_firmware_open(devName, 0, &cpu)) != COMMON_STATUS_OK) die("firmware open", status);
+  if ((status =  wrunipz_firmware_open(&ebDevice, devName, 0, &cpu)) != COMMON_STATUS_OK) die("firmware open", status);
 
   
   /* open Etherbone device and socket */
@@ -448,7 +449,7 @@ int main(int argc, char** argv) {
   } // if getConfig
   */
   if (getVersion) {
-    printf("wr-unipz: library (firmware) version %s (%s)\n",  wrunipz_version_library(), wrunipz_version_firmware());     
+    printf("wr-unipz: library (firmware) version %s (%s)\n",  wrunipz_version_library(), wrunipz_version_firmware(ebDevice));     
   } // if getEBVersion
 
   if (getInfo) {
@@ -457,8 +458,8 @@ int main(int argc, char** argv) {
     api_readDiag(device, &statusArray, &state, &version, &mac, &ip, &nBadStatus, &nBadState, &tDiag, &tS0, &nDummyT, &nDummyI, &statDummy, 0);
     readInfo(&cycles, &tCycle, &fMessages, &confStat, &nLate, &vaccAvg, &pzAvg); */
 
-    wrunipz_info_read(&cycles, &tCycle, &fMessages, &nLate, &vaccAvg, &pzAvg, &messages, &dtMax, &dtMin, &cycJmpMax, &cycJmpMin);
-    wrunipz_common_read(&statusArray, &state, &nBadStatus, &nBadState, &version, 0);
+    wrunipz_info_read(ebDevice, &cycles, &tCycle, &fMessages, &nLate, &vaccAvg, &pzAvg, &messages, &dtMax, &dtMin, &cycJmpMax, &cycJmpMin);
+    wrunipz_common_read(ebDevice, &statusArray, &state, &nBadStatus, &nBadState, &version, 0);
     
     printCycleHeader();
     printCycle(cycles, tCycle, fMessages, nLate, vaccAvg, pzAvg);
@@ -474,48 +475,48 @@ int main(int argc, char** argv) {
 
   if (command) {
     // state required to give proper warnings
-    wrunipz_common_read(&statusArray, &state, &nBadStatus, &nBadState, &version, 0);
+    wrunipz_common_read(ebDevice, &statusArray, &state, &nBadStatus, &nBadState, &version, 0);
     /* readInfo(&cycles, &tCycle, &fMessages, &confStat, &nLate, &vaccAvg, &pzAvg); // chk, I believe this should be api_readDiag */
 
     // request state changes
     if (!strcasecmp(command, "configure")) {
       /* eb_device_write(device, wrunipz_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)COMMON_CMD_CONFIGURE, 0, eb_block);*/
-      wrunipz_cmd_configure();
+      wrunipz_cmd_configure(ebDevice);
       if ((state != COMMON_STATE_CONFIGURED) && (state != COMMON_STATE_IDLE)) printf("wr-unipz: WARNING command has no effect (not in state CONFIGURED or IDLE)\n");
     } // "configure"
     if (!strcasecmp(command, "startop")) {
       /* eb_device_write(device, wrunipz_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)COMMON_CMD_STARTOP  , 0, eb_block); */
-      wrunipz_cmd_startop();
+      wrunipz_cmd_startop(ebDevice);
       if (state != COMMON_STATE_CONFIGURED) printf("wr-unipz: WARNING command has no effect (not in state CONFIGURED)\n");
     } // "startop"
     if (!strcasecmp(command, "stopop")) {
       /* eb_device_write(device, wrunipz_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)COMMON_CMD_STOPOP   , 0, eb_block);*/
-      wrunipz_cmd_stopop();
+      wrunipz_cmd_stopop(ebDevice);
       if (state != COMMON_STATE_OPREADY) printf("wr-unipz: WARNING command has no effect (not in state OPREADY)\n");
     } // "startop"
     if (!strcasecmp(command, "recover")) {
       /* eb_device_write(device, wrunipz_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)COMMON_CMD_RECOVER  , 0, eb_block); */
-      wrunipz_cmd_recover();
+      wrunipz_cmd_recover(ebDevice);
       if (state != COMMON_STATE_ERROR) printf("wr-unipz: WARNING command has no effect (not in state ERROR)\n");
     } // "recover"
     if (!strcasecmp(command, "idle")) {
       /* eb_device_write(device, wrunipz_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)COMMON_CMD_IDLE     , 0, eb_block);*/
-      wrunipz_cmd_idle();
+      wrunipz_cmd_idle(ebDevice);
       if (state != COMMON_STATE_CONFIGURED) printf("wr-unipz: WARNING command has no effect (not in state CONFIGURED)\n");
     } // "idle"
     if (!strcasecmp(command, "cleardiag")) {
       /* eb_device_write(device, wrunipz_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)COMMON_CMD_CLEARDIAG , 0, eb_block); */
-      wrunipz_cmd_cleardiag();
+      wrunipz_cmd_cleardiag(ebDevice);
     } // "cleardiag"
     if (!strcasecmp(command, "diag")) {
       /*api_readDiag(device, &statusArray, &state, &version, &mac, &ip, &nBadStatus, &nBadState, &tDiag, &tS0, &nDummyT, &nDummyI, &statDummy, 1);*/
-      wrunipz_common_read(&statusArray, &state, &nBadStatus, &nBadState, &version, 1);
+      wrunipz_common_read(ebDevice, &statusArray, &state, &nBadStatus, &nBadState, &version, 1);
       // print set status bits (except OK)
       for (i = COMMON_STATUS_OK + 1; i<(int)(sizeof(statusArray)*8); i++) {
         if ((statusArray >> i) & 0x1)  printf("    status bit is set : %s\n", wrunipz_status_text(i));
       } // for i
       /* readDiags(&cycles, &messages, &dtMax, &dtMin, &cycJmpMax, &cycJmpMin, &nLate);*/
-      wrunipz_info_read(&cycles, &tCycle, &fMessages, &nLate, &vaccAvg, &pzAvg, &messages, &dtMax, &dtMin, &cycJmpMax, &cycJmpMin);
+      wrunipz_info_read(ebDevice, &cycles, &tCycle, &fMessages, &nLate, &vaccAvg, &pzAvg, &messages, &dtMax, &dtMin, &cycJmpMax, &cycJmpMin);
       printDiags(cycles, messages, dtMax, dtMin, cycJmpMax, cycJmpMin, nLate);
     } // "diag"
 
@@ -663,8 +664,8 @@ int main(int argc, char** argv) {
     while (1) {
       /* api_readDiag(device, &statusArray, &state, &version, &mac, &ip, &nBadStatus, &nBadState, &tDiag, &tS0, &nDummyT, &nDummyI, &statDummy, 0);
          readInfo(&cycles, &tCycle, &fMessages, &confStat, &nLate, &vaccAvg, &pzAvg); // read info from lm32*/
-      wrunipz_info_read(&cycles, &tCycle, &fMessages, &nLate, &vaccAvg, &pzAvg, &messages, &dtMax, &dtMin, &cycJmpMax, &cycJmpMin);
-      wrunipz_common_read(&statusArray, &state, &nBadStatus, &nBadState, &version, 0);
+      wrunipz_info_read(ebDevice, &cycles, &tCycle, &fMessages, &nLate, &vaccAvg, &pzAvg, &messages, &dtMax, &dtMin, &cycJmpMax, &cycJmpMin);
+      wrunipz_common_read(ebDevice, &statusArray, &state, &nBadStatus, &nBadState, &version, 0);
       
       if (logLevel == 1) sleepTime = COMMON_DEFAULT_TIMEOUT * 100000;
       else               sleepTime = COMMON_DEFAULT_TIMEOUT * 10000;
@@ -701,7 +702,7 @@ int main(int argc, char** argv) {
   // close Etherbone device and socket
   /* if ((eb_status = eb_device_close(device)) != EB_OK) die("eb_device_close", eb_status);
      if ((eb_status = eb_socket_close(socket)) != EB_OK) die("eb_socket_close", eb_status);*/
-  if ((status = wrunipz_firmware_close()) != COMMON_STATUS_OK) die("device close", status);
+  if ((status = wrunipz_firmware_close(ebDevice)) != COMMON_STATUS_OK) die("device close", status);
 
   return exitCode;
 }
