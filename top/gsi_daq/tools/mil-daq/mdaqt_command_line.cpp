@@ -332,7 +332,7 @@ vector<OPTION> CommandLine::c_optList =
             return -1;
          }
          const bool verbose = static_cast<CommandLine*>(poParser)->m_verbose;
-         for( auto& fg: pAllDaq->getFgList() )
+         for( const auto& fg: pAllDaq->getFgList() )
          {
             if( !fg.isMIL() && !verbose )
                continue;
@@ -341,7 +341,7 @@ vector<OPTION> CommandLine::c_optList =
                cout << "Slot: " << fg.getSlot() <<
                        ", Bits: " << fg.getOutputBits() <<
                        ", Version: " << fg.getVersion() << ",\t" <<
-                       (fg.isMIL()? "MIL":"non MIL") << " device\t";
+                       (fg.isMIL()? "MIL":"ADAC") << " device\t";
             }
             cout << "fg-" << fg.getSocket() << '-' << fg.getDevice() << endl;
          }

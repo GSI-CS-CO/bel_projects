@@ -20,15 +20,8 @@ extern "C" {
  */
 STATIC inline uint64_t getWrSysTime( void )
 {
-#if 0
-   uint64_t systime;
-   systime =  ((uint64_t)*(pCpuSysTime+0)) << BIT_SIZEOF(uint32_t);
-   systime |= ((uint64_t)*(pCpuSysTime+1)) & 0x00000000ffffffff;
-   return systime;
-#else
    return (((uint64_t)pCpuSysTime[0]) << BIT_SIZEOF(uint32_t)) |
           (pCpuSysTime[1] & 0xFFFFFFFF);
-#endif
 }
 
 #ifdef __cplusplus

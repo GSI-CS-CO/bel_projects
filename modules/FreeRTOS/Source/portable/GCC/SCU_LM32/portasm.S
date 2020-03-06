@@ -41,18 +41,6 @@ void vPortInterruptHandler( void );
 .global vPortInterruptHandler
 #endif
 
-/*!
- * Giving the opportunity to exchange the interrupt callback function by
- * pre-defining the macro __ISRHandler in the makefile.\n
- * E.g: DEFINES += __ISRHandler=myBetterISRHandler respectively
- *      -D__ISRHandler=myBetterISRHandler.
- * By default the interrupt callback function ISRHandler implemented in
- * file lm32Interrupts.c will used.
- */
-#ifndef __ISRHandler
-   #define __ISRHandler ISRHandler
-#endif
-
 
 /*!
  * @brief Interrupt enable storage flag of LM32 interrupt enable register.

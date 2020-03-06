@@ -218,15 +218,17 @@ void clear_handler_state( const uint8_t socket )
 
 /*! ---------------------------------------------------------------------------
  * @ingroup INTERRUPT
- * @brief as short as possible, just pop the msi queue of the cpu and
- *         push it to the message queue of the main loop
- * @see init_irq_table
- * @see _irq_entry
+ * @brief Interrupt callback function for each Message Signaled Interrupt
+ * @param intNum Interrupt number.
+ * @param pContext Value of second parameter from irqRegisterISR not used
+ *                 in this case.
+ * @see initInterrupt
+ * @see irqRegisterISR
  * @see irq_pop_msi
  * @see dispatch
  */
-STATIC void onScuBusInterrupt( const unsigned int intNum,
-                               const void* pContext UNUSED )
+STATIC void onScuMSInterrupt( const unsigned int intNum,
+                              const void* pContext UNUSED )
 {
    MSI_T m;
 
@@ -240,11 +242,13 @@ STATIC void onScuBusInterrupt( const unsigned int intNum,
 
 /*! ---------------------------------------------------------------------------
  * @ingroup INTERRUPT
- * @brief initialize the irq table and set the irq mask
+ * @brief Installs the interrupt callback function and clears the interrupt
+ *        message buffer.
+ * @see onScuMSInterrupt
  */
-STATIC void init_irq_table( void )
+STATIC inline void initInterrupt( void )
 {
-   irqRegisterISR( 0, NULL, onScuBusInterrupt );
+   irqRegisterISR( 0, NULL, onScuMSInterrupt );
    g_aMsg_buf[IRQ].ring_head = g_aMsg_buf[IRQ].ring_tail; // clear msg buffer
    irqEnable();
    mprintf("IRQ table configured. 0x%08x\n", irqGetMaskRegister() );
@@ -335,7 +339,7 @@ STATIC TASK_T g_aTasks[] =
 
 /*! ---------------------------------------------------------------------------
  * @brief Move messages to the correct queue, depending on source
- * @see irq_handler
+ * @see onScuMSInterrupt
  * @see schedule
  * @todo Remove this function and do this in the interrupt handler direct.
  */
@@ -348,7 +352,9 @@ STATIC inline void dispatch( void )
    { //TODO remove these naked numbers asap!
       case 0x00: add_msg( &g_aMsg_buf[0], SCUBUS, m ); return; // message from scu bus
       case 0x10: add_msg( &g_aMsg_buf[0], SWI,    m ); return; // software message from saftlib
+   #ifdef CONFIG_MIL_FG
       case 0x20: add_msg( &g_aMsg_buf[0], DEVBUS, m ); return; // message from dev bus
+   #endif
    }
 }
 
@@ -494,7 +500,7 @@ void main( void )
 #if defined( CONFIG_MIL_FG ) && defined( CONFIG_READ_MIL_TIME_GAP )
    mprintf( ESC_WARNING"CAUTION! Time gap reading activated!"ESC_NORMAL"\n" );
 #endif
-   init_irq_table();
+   initInterrupt();
    tellMailboxSlot();
 
 

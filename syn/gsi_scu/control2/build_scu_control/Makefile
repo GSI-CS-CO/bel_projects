@@ -19,7 +19,7 @@ DEFINES += MICO32_FULL_CONTEXT_SAVE_RESTORE
 # ORIGIN := 1
  SCU_MIL := 1
 MIL_GAP := 1
-# _OLD_IRQ :=1
+
 BASE_VERSION = 3
 
  DEFINES += _CONFIG_NEW
@@ -161,7 +161,7 @@ endif
 # NO_LTO=1
 
 
-#  SCU_URL = scuxl0107
+# SCU_URL = scuxl0107
  SCU_URL = scuxl0035
  DOX_EXTRACT_STATIC         = "YES"
 # DOX_EXTRACT_ALL            = "YES"

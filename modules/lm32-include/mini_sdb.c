@@ -86,8 +86,7 @@ sdb_location *find_sdb_deep(sdb_record_t *parent_sdb, sdb_location *found_sdb, u
   }
   
   return found_sdb;
-  }
-
+}
 
 uint32_t getMsiUpperRange() {
   sdb_record_t *record = (sdb_record_t *)((uint32_t)(sdb_add()));
@@ -139,6 +138,7 @@ uint32_t* find_device_adr(uint32_t venId, uint32_t devId)
 
 sdb_location* find_device_multi_in_subtree(sdb_location *loc, sdb_location *found_sdb, uint32_t *idx, uint32_t qty, uint32_t venId, uint32_t devId)
 {
+   //return find_sdb_deep(getChild(loc), found_sdb, getSdbAdr(loc), getMsiAdr(loc), getMsiUpperRange(), idx, qty, venId, devId);
    return find_sdb_deep(getChild(loc), found_sdb, getSdbAdr(loc), getMsiAdr(loc), getMsiUpperRange(), idx, qty, venId, devId);
 }
 
@@ -158,7 +158,7 @@ uint32_t getSdbAdr(sdb_location *loc)
 {
    if       (loc->sdb->empty.record_type == SDB_DEVICE ) return loc->adr + loc->sdb->device.sdb_component.addr_first.low;
    else if  (loc->sdb->empty.record_type == SDB_BRIDGE ) return loc->adr + loc->sdb->bridge.sdb_component.addr_first.low;
-   else return ERROR_NOT_FOUND; 
+   else return ERROR_NOT_FOUND;
 }
 
 uint32_t getMsiAdr(sdb_location *loc)
@@ -251,4 +251,3 @@ void discoverPeriphery(void)
   pPps            = find_device_adr(CERN, WR_PPS_GEN);
 
 }
-

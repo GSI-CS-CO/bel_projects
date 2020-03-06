@@ -271,16 +271,6 @@ STATIC inline bool __criticalSectionExit( void )
  */
 #define atomic_off  criticalSectionExit
 
-/*!
- * @brief Backward compatibility
- */
-#define irq_enable  irqEnable
-
-/*!
- * @brief Backward compatibility
- */
-#define irq_disable irqDisable
-
 #ifdef __cplusplus
 }
 #endif
