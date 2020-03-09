@@ -36,8 +36,7 @@ static inline void init( void )
    uart_init_hw();      // init UART, required for printf...
 }
 
-#define HELLO_TASK_PRIORITY    ( tskIDLE_PRIORITY + 1 )
-#define HELLO_DELAY            ( (TickType_t) 1000  )
+#define TEST_TASK_PRIORITY    ( tskIDLE_PRIORITY + 1 )
 
 static void vTask( void* pvParameters )
 {
@@ -69,7 +68,7 @@ static void vTask( void* pvParameters )
       while( d-- != 0 )
          portNOP();
    #else
-      vTaskDelayUntil( &xLastExecutionTime, HELLO_DELAY );
+      vTaskDelayUntil( &xLastExecutionTime, pdMS_TO_TICKS( 20 ) );
    #endif
    #if configUSE_PREEMPTION == 0
       vPortYield();
@@ -93,7 +92,7 @@ int main( void )
                 "TASK 1",                  /* Text name for the task. */
                 configMINIMAL_STACK_SIZE, /* Stack size in words, not bytes. */
                 (void*)userTaskData1,     /* Parameter passed into the task. */
-                HELLO_TASK_PRIORITY,      /* Priority at which the task is created. */
+                TEST_TASK_PRIORITY,      /* Priority at which the task is created. */
                 NULL                      /* Used to pass out the created task's handle. */
               );
    if( xReturned != pdPASS )
@@ -107,7 +106,7 @@ int main( void )
                 "task 2",                  /* Text name for the task. */
                 configMINIMAL_STACK_SIZE, /* Stack size in words, not bytes. */
                 (void*)userTaskData2,     /* Parameter passed into the task. */
-                HELLO_TASK_PRIORITY,      /* Priority at which the task is created. */
+                TEST_TASK_PRIORITY,      /* Priority at which the task is created. */
                 NULL                      /* Used to pass out the created task's handle. */
               );
    if( xReturned != pdPASS )

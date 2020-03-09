@@ -12,7 +12,7 @@ ifndef REPOSITORY_DIR
    $(error Variable REPOSITORY_DIR is not defined! )
 endif
 
-EMBEDDED_OS ?= 'FreeRTOS Kernel V10.1.1'
+EMBEDDED_OS ?= 'FreeRTOS Kernel V10.3.1'
 
 RTOS_USING_HEAP ?= 1
 

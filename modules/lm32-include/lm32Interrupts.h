@@ -105,6 +105,13 @@ uint32_t _irqGetPendingMask( const unsigned int intNum );
 
 /*! ---------------------------------------------------------------------------
  * @ingroup INTERRUPT
+ * @brief Returns true when this function is called within a interrupt service
+ *        routine.
+ */
+bool irqIsInInterrupt( void );
+
+/*! ---------------------------------------------------------------------------
+ * @ingroup INTERRUPT
  * @brief Registers and de-registers interrupt-handler routine.
  *
  * To register, pass a valid function pointer to the Callback parameter.
@@ -144,14 +151,47 @@ void irqDisableSpecific( const unsigned int intNum );
 
 /*! ---------------------------------------------------------------------------
  * @ingroup INTERRUPT
+ * @brief Returns the global interrupt enable register of the LM32.
+ */
+STATIC inline uint32_t irqGetEnableRegister( void )
+{
+   uint32_t ie;
+   asm volatile ( "rcsr %0, ie" :"=r"(ie) );
+   return ie;
+}
+
+/*! ---------------------------------------------------------------------------
+ * @ingroup INTERRUPT
+ * @brief Sets the global interrupt enable register of the LM32.
+ */
+STATIC inline void irqSetEnableRegister( const uint32_t ie )
+{
+   asm volatile ( "wcsr ie, %0" ::"r"(ie) );
+}
+
+/*! --------------------------------------------------------------------------
+ * @ingroup INTERRUPT
+ * @brief
+ */
+STATIC inline bool irqIsEnabled( void )
+{
+   return (irqGetEnableRegister() & 0x00000001) != 0;
+}
+
+/*! ---------------------------------------------------------------------------
+ * @ingroup INTERRUPT
  * @brief Global enabling of all registered and activated interrupts.
  *        Counterpart of irqDisable().
  * @see irqDisable
  */
 STATIC inline void irqEnable( void )
 {
+#if 1
    const uint32_t ie = 0x00000001;
    asm volatile ( "wcsr ie, %0"::"r"(ie) );
+#else
+   irqSetEnableRegister( irqGetEnableRegister() | 0x00000001 );
+#endif
 }
 
 /*! ---------------------------------------------------------------------------
@@ -162,8 +202,13 @@ STATIC inline void irqEnable( void )
  */
 STATIC inline void irqDisable( void )
 {
+#if 1
    asm volatile ( "wcsr ie, r0" );
+#else
+   irqSetEnableRegister( irqGetEnableRegister() & 0xFFFFFFFE );
+#endif
 }
+
 
 /*! ---------------------------------------------------------------------------
  * @ingroup INTERRUPT

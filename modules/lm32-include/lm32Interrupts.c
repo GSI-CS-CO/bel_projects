@@ -28,6 +28,8 @@
  */
 volatile static unsigned int mg_criticalSectionNestingCount = 0;
 
+volatile static bool mg_inInterruptContext = false;
+
 /*!
  * @ingroup INTERRUPT
  * @brief ISR entry type
@@ -43,6 +45,14 @@ typedef struct
  * @brief  ISREntry table
  */
 static ISR_ENTRY_T ISREntryTable[MAX_LM32_INTERRUPTS] = {{NULL, NULL}};
+
+/*! ---------------------------------------------------------------------------
+ * @see lm32Interrupts.h
+ */
+inline bool irqIsInInterrupt( void )
+{
+   return mg_inInterruptContext;
+}
 
 /*! ---------------------------------------------------------------------------
  * @see lm32Interrupts.h
@@ -109,6 +119,7 @@ void irqResetPendingRegister( const uint32_t ip )
  */
 void _irq_entry( void )
 {
+   mg_inInterruptContext = true;
    const uint32_t im = irqGetMaskRegister();
    while( true )
    {
@@ -137,6 +148,7 @@ void _irq_entry( void )
          break;
       }
    }
+   mg_inInterruptContext = false;
 }
 
 /*! ---------------------------------------------------------------------------
