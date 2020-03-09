@@ -39,7 +39,6 @@
 
 #define COMMON_LIB_VERSION "0.1.0"
 
-//#include <b2b-test.h> chk
 #include <etherbone.h>
 
 // small helper function
