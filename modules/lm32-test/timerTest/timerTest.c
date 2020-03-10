@@ -44,7 +44,7 @@ static void onTimerInterrupt( const unsigned int intNum, const void* pContext )
 {
    mprintf( "%s( %d, 0x%x ), count: %d\n", __func__, intNum, (unsigned int)pContext, g_count );
    g_count++;
-   mprintf( "Period: %d\n", lm32TimerGetPeriod( (SCU_LM32_TIMER_T*)pContext ) );
+  ATOMIC_SECTION() mprintf( "Period: %d\n", lm32TimerGetPeriod( (SCU_LM32_TIMER_T*)pContext ) );
   // lm32TimerDisable( (SCU_LM32_TIMER_T*)pContext );
    //lm32TimerSetPeriod( (SCU_LM32_TIMER_T*)pContext, configCPU_CLOCK_HZ );
 }
@@ -67,7 +67,7 @@ void main( void )
 
    mprintf( "Timer found at wishbone base address 0x%x\n", (unsigned int)pTimer );
 
-   lm32TimerSetPeriod( pTimer, configCPU_CLOCK_HZ );
+   lm32TimerSetPeriod( pTimer, configCPU_CLOCK_HZ / 100 );
    lm32TimerEnable( pTimer );
    irqRegisterISR( TIMER_IRQ, (void*)pTimer, onTimerInterrupt );
    irqEnable();
@@ -83,7 +83,7 @@ void main( void )
          if( oldCount == 10 )
          {
            // irqDisable();
-            irqDisableSpecific( TIMER_IRQ );
+           // irqDisableSpecific( TIMER_IRQ );
          }
       }
    }

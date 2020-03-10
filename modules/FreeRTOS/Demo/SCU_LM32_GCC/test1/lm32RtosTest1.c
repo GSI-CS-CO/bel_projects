@@ -51,12 +51,18 @@ static void vTask( void* pvParameters )
    unsigned int count = 0;
    while( true )
    {
-      ATOMIC_SECTION()
+     // ATOMIC_SECTION()
+     // irqDisable();
+      portENTER_CRITICAL();
       {
          mprintf( "Task main function, count: %d, user data: \"%s\"\n",
                    ++count,
                   (const char*)pvParameters );
+         mprintf( "IRQ: 0x%08x nesting: %d\n", irqGetEnableRegister(), irqGetAtomicNestingCount() );
       }
+      portEXIT_CRITICAL();
+     // irqEnable();
+      //SCU_ASSERT( irqIsEnabled() );
       /*
        * Delay mainCHECK_DELAY milliseconds.
        */

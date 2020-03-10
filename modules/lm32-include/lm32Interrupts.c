@@ -26,9 +26,7 @@
  * @ingroup INTERRUPT
  * @brief Nesting counter for critical sections.
  */
-volatile static unsigned int mg_criticalSectionNestingCount = 0;
-
-volatile static bool mg_inInterruptContext = false;
+volatile uint32_t mg_criticalSectionNestingCount = 0;
 
 /*!
  * @ingroup INTERRUPT
@@ -49,9 +47,9 @@ static ISR_ENTRY_T ISREntryTable[MAX_LM32_INTERRUPTS] = {{NULL, NULL}};
 /*! ---------------------------------------------------------------------------
  * @see lm32Interrupts.h
  */
-inline bool irqIsInInterrupt( void )
+inline unsigned int irqGetAtomicNestingCount( void )
 {
-   return mg_inInterruptContext;
+   return mg_criticalSectionNestingCount;
 }
 
 /*! ---------------------------------------------------------------------------
@@ -119,7 +117,7 @@ void irqResetPendingRegister( const uint32_t ip )
  */
 void _irq_entry( void )
 {
-   mg_inInterruptContext = true;
+   mg_criticalSectionNestingCount++;
    const uint32_t im = irqGetMaskRegister();
    while( true )
    {
@@ -148,7 +146,7 @@ void _irq_entry( void )
          break;
       }
    }
-   mg_inInterruptContext = false;
+   mg_criticalSectionNestingCount--;
 }
 
 /*! ---------------------------------------------------------------------------
@@ -192,8 +190,8 @@ void irqEnableSpecific( const unsigned int intNum )
  */
 inline void criticalSectionEnter( void )
 {
-   mg_criticalSectionNestingCount++;
    irqDisable();
+   mg_criticalSectionNestingCount++;
 }
 
 /*! ---------------------------------------------------------------------------

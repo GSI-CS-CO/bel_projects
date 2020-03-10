@@ -105,10 +105,12 @@ uint32_t _irqGetPendingMask( const unsigned int intNum );
 
 /*! ---------------------------------------------------------------------------
  * @ingroup INTERRUPT
- * @brief Returns true when this function is called within a interrupt service
- *        routine.
+ * @brief Returns the critical- respectively atomic- section nesting counter.
+ * @note Outside of a critical section the return value has to be always zero,
+ *       inside of a critical section greater or equal one depending on the
+ *       nesting depth.
  */
-bool irqIsInInterrupt( void );
+unsigned int irqGetAtomicNestingCount( void );
 
 /*! ---------------------------------------------------------------------------
  * @ingroup INTERRUPT
@@ -186,7 +188,7 @@ STATIC inline bool irqIsEnabled( void )
  */
 STATIC inline void irqEnable( void )
 {
-#if 1
+#if 0
    const uint32_t ie = 0x00000001;
    asm volatile ( "wcsr ie, %0"::"r"(ie) );
 #else
@@ -202,7 +204,7 @@ STATIC inline void irqEnable( void )
  */
 STATIC inline void irqDisable( void )
 {
-#if 1
+#if 0
    asm volatile ( "wcsr ie, r0" );
 #else
    irqSetEnableRegister( irqGetEnableRegister() & 0xFFFFFFFE );

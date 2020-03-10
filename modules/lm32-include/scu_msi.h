@@ -159,7 +159,7 @@ STATIC_ASSERT( sizeof( IRQ_MSI_T ) == IRQ_OFFS_QUE + MAX_LM32_INTERRUPTS * sizeo
    __WB_ACCESS( IRQ_MSI_T, uint32_t, pCpuIrqSlave, control.M )
 
 #else
-#warning Direct wishbone access will not work!
+#warning Direct wishbone access seems not always work!
 #define IRQ_MSI_ITEM_ACCESS( M, i ) \
    ((IRQ_MSI_T*)pCpuIrqSlave)->queue[i].item.M
 
