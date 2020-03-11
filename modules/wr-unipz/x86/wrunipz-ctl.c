@@ -3,7 +3,7 @@
  *
  *  created : 2018
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 05-March-2020
+ *  version : 09-March-2020
  *
  *  command-line interface for wrunipz
  *
@@ -116,7 +116,6 @@ static void help(void) {
   fprintf(stderr, "Usage: %s [OPTION] <etherbone-device> [COMMAND]\n", program);
   fprintf(stderr, "\n");
   fprintf(stderr, "  -h                  display this help and exit\n");
-  fprintf(stderr, "  -c                  display configuration of WR-UNIPZ\n");
   fprintf(stderr, "  -e                  display version\n");
   fprintf(stderr, "  -i                  display information on WR-UNIPZ\n");
   fprintf(stderr, "  -s<n>               snoop for information continuously\n");
@@ -291,6 +290,64 @@ void printDiags(uint32_t nCycles, uint64_t nMessages, int32_t dtMax, int32_t dtM
 } // printDiags
 
 
+void readDataFromFile(char *filename, uint32_t pz, uint32_t vAcc, uint32_t chn, uint32_t *data, uint32_t *nData)
+{
+#define  MAXLEN 4096
+
+  int     i,j,k;
+  char    charData[MAXLEN];
+  FILE    *fp;
+  char    *line = NULL;
+  size_t  len = 0;
+  ssize_t read;
+
+  char     *tmp;       
+  int      dataOffset;
+  uint32_t evt, offset, dummy;
+  
+  // init
+  for (i=0; i<WRUNIPZ_NEVT; i++) data[i]     = 0x0;
+  for (i=0; i<MAXLEN; i++)       charData[i] = '\0';
+  *nData = 0;
+
+  // read data from file
+  fp = fopen(filename, "r"); 
+  if (fp == NULL) {
+    printf("wr-unipz: can't open file with event table\n");
+    exit(1);
+  } // if fp
+
+  for (i=0; i<WRUNIPZ_NPZ; i++) {
+    for (j=0; j<WRUNIPZ_NVACC; j++) {
+      for (k=0; k<WRUNIPZ_NCHN; k++) {
+        if((read = getline(&line, &len, fp)) != -1) {
+          // printf("pz %d, vacc %d, ch %d, line %s\n", i, j, k, line);
+          if ((i==pz) && (j==vAcc) && (k == chn)) strcpy(charData, (line+1)); // ommit leading '['
+        } // while
+      } // for k
+    } // for j
+  } // for i
+        
+  fclose(fp);
+  if (line) free (line);
+
+  // printf("charData %s\n", charData);
+  
+  // extract data for pz, vacc, chn
+  tmp     = charData;
+  *nData  = 0;
+  while (sscanf(tmp, "%u%n", &evt, &dataOffset) == 1) {
+    tmp += dataOffset;
+    sscanf(tmp, ", %uL%n", &offset, &dataOffset);
+    tmp += dataOffset;
+    sscanf(tmp, ", %uL, %n", &dummy, &dataOffset);
+    tmp += dataOffset;
+
+    data[*nData] = (offset << 16) | evt;
+    // printf("data: offset %d, data 0d%d 0x%x\n", offset, evt, evt);
+    (*nData)++;
+  } // while
+} // readDataFromFile
 
 
 int main(int argc, char** argv) {
@@ -306,7 +363,7 @@ int main(int argc, char** argv) {
   struct sdb_device   sdbDevice;          // instantiated lm32 core
   int                 nDevices;           // number of instantiated cores
   */
-  int         i;
+  int         i, j, k, l;
   
   const char* devName; 
   const char* command;
@@ -351,10 +408,10 @@ int main(int argc, char** argv) {
   uint32_t cpu;                                // lm32 address
 
   // command test
-  uint32_t    dataChn0[WRUNIPZ_NEVT];
-  uint32_t    nDataChn0;
-  uint32_t    dataChn1[WRUNIPZ_NEVT];
-  uint32_t    nDataChn1;
+  uint32_t    evtData[WRUNIPZ_NEVT];
+  uint32_t    nEvtData;
+  /*  uint32_t    dataChn1[WRUNIPZ_NEVT];
+      uint32_t    nDataChn1;*/
   uint32_t    vacc;
   uint32_t    pz;
   uint32_t    offset;
@@ -550,7 +607,7 @@ int main(int argc, char** argv) {
         t2 = getSysTime();
         printf("wr-unipz: transaction took %u us\n", (uint32_t)(t2 -t1));
       }
-    } // "test"
+    } // "test" 
     if (!strcasecmp(command, "testfull")) {
       if (state != COMMON_STATE_OPREADY)  printf("wr-unipz: WARNING command has no effect (not in state OPREADY)\n");
       if (optind+2  != argc)              {printf("wr-unipz: expecting exactly one argument: testfull <offset>\n"); return 1;}
@@ -609,38 +666,31 @@ int main(int argc, char** argv) {
         t2 = getSysTime();
         printf("wr-unipz: transaction took %u us\n", (uint32_t)(t2 -t1));
       }
-    } // "ftest"
+      } // "ftest"*/
     if (!strcasecmp(command, "ftestfull")) {
       if (state != COMMON_STATE_OPREADY) printf("wr-unipz: WARNING command has no effect (not in state OPREADY)\n");
       if (optind+2  != argc)             {printf("wr-unipz: expecting exactly one argument: ftestfull <file>\n"); return 1;}
       filename = argv[optind+1];
 
-      t1 = getSysTime();
+      /*t1 = wrunipz_getSysTime();*/
 
-      for (j=0; j < WRUNIPZ_NVACC; j++) {  // only virt acc 0..14
-
-        if ((status = wrunipz_transaction_init(device, wrunipz_cmd, wrunipz_confVacc, wrunipz_confStat, j)) !=  COMMON_STATUS_OK) {
-          printf("wr-unipz: transaction init (virt acc %d) - %s\n", j, wrunipz_status_text(status));
-        } // if status
-        else {
-	  // load data and upload table
-          for (k=0; k < WRUNIPZ_NPZ; k++) {
-	    wrunipz_fill_channel_file(filename, k, j, dataChn0, &nDataChn0, dataChn1, &nDataChn1);
-            if ((status = wrunipz_transaction_upload(device, wrunipz_confStat, wrunipz_confPz, wrunipz_confData, wrunipz_confFlag, k, dataChn0, nDataChn0, dataChn1, nDataChn1)) != COMMON_STATUS_OK)
-              printf("wr-unipz: transaction upload (virt acc %d, pz %d) - %s\n", j, k, wrunipz_status_text(status));
-          } // for k
-        } // else
-
-        // submit
-        wrunipz_transaction_submit(device, wrunipz_cmd, wrunipz_confStat);
-
+      for (j=0; j < WRUNIPZ_NPZ; j++) {
+        for(k=0; k < WRUNIPZ_NVACC; k++) {
+          for (l=0; l < WRUNIPZ_NCHN; l++) {
+            readDataFromFile(filename, j, k, l, evtData, &nEvtData);
+            wrunipz_table_upload(ebDevice, j, k, l, evtData, nEvtData);
+          } // for l
+        } // for k
       } // for j
 
-      t2 = getSysTime();
+      wrunipz_cmd_submit(ebDevice);  // submit changes
+      
+      /*      t2 = getSysTime();*/
       
       printf("wr-unipz: transaction took %u us per virtAcc\n", (uint32_t)(t2 -t1) / (WRUNIPZ_NVACC - 1));
 
     } // "ftestfull"
+    /*
     if (!strcasecmp(command, "kill")) {
       eb_device_write(device, wrunipz_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)WRUNIPZ_CMD_CONFKILL, 0, eb_block);
       if (state != COMMON_STATE_OPREADY) printf("wr-unipz: WARNING command has no effect (not in state OPREADY)\n");

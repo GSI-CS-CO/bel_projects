@@ -228,12 +228,12 @@ uint32_t wrunipz_common_read(uint64_t ebDevice, uint64_t *statusArray, uint32_t 
   eb_device_t eb_device;
 
   uint64_t    dummy64a, dummy64b, dummy64c;
-  uint32_t    dummy32a, dummy32b, dummy32c, dummy32d;
+  uint32_t    dummy32a, dummy32b, dummy32c, dummy32d, dummy32e;
 
   eb_device = (eb_device_t)ebDevice;
 
   if ((eb_status = comlib_readDiag(eb_device, statusArray, state, version, &dummy64a, &dummy32a, nBadStatus, nBadState, &dummy64b, &dummy64c,
-                                   &dummy32b, &dummy32c, &dummy32d, printDiag)) != COMMON_STATUS_OK) return COMMON_STATUS_EB;
+                                   &dummy32b, &dummy32c, &dummy32d, &dummy32e, printDiag)) != COMMON_STATUS_OK) return COMMON_STATUS_EB;
 
   return COMMON_STATUS_OK;
 } // wrunipz_status_read
@@ -303,7 +303,7 @@ void wrunipz_cmd_clearTables(uint64_t ebDevice){
 } // wrunipz_cmd_submit
 
 
-uint32_t wrunipz_table_upload(uint64_t ebDevice, uint32_t chn, uint32_t pz, uint32_t vacc, uint32_t *data, uint32_t nData)
+uint32_t wrunipz_table_upload(uint64_t ebDevice, uint32_t pz, uint32_t vacc, uint32_t chn, uint32_t *data, uint32_t nData)
 {
   int          i;
   uint32_t     newFlag;        // flag: signals that new data are available

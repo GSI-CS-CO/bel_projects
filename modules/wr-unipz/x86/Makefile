@@ -15,7 +15,7 @@ WRUNIPZLIB  := libwrunipzlib.so
 
 
 EXTRA_FLAGS ?=
-CFLAGS      ?= $(EXTRA_FLAGS) -Wall -O2 -g -I $(EB) -I $(INCLUDE) -I $(FW) -I../../b2b/include
+CFLAGS      ?= $(EXTRA_FLAGS) -Wall -O2 -g -I $(EB) -I $(INCLUDE) -I $(FW) -I../../common-libs/include
 LIBS        ?= -L $(EB)/.libs -L . -Wl,-rpath,$(PREFIX)/lib -lm -lwrunipzlib
 
 all: lib $(TARGETS)
@@ -24,7 +24,7 @@ wrunipz-ctl: wrunipz-ctl.c
 	$(CC) $(CFLAGS) -o wrunipz-ctl wrunipz-ctl.c $(LIBS)
 
 lib: wrunipzlib.c
-	$(CC) $(CFLAGS) -fPIC -c wrunipzlib.c ../../b2b/x86/common-lib.c $(LIBS)
+	$(CC) $(CFLAGS) -fPIC -c wrunipzlib.c ../../common-libs/x86/common-lib.c $(LIBS)
 	$(CC) -shared -Wl,-soname,$(WRUNIPZLIB).1 -o $(WRUNIPZLIB).1.0 wrunipzlib.o common-lib.o -L $(EB)/.libs -letherbone
 	ln -sf $(WRUNIPZLIB).1.0 $(WRUNIPZLIB).1
 	ln -sf $(WRUNIPZLIB).1 $(WRUNIPZLIB)

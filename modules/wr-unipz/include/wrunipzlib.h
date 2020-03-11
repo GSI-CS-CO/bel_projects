@@ -96,9 +96,9 @@ extern "C" {
   
   // uploads (parts of) an event table to the firmware
   uint32_t wrunipz_table_upload(uint64_t ebDevice,             // EB device
-                                uint32_t chn,                  // # of 'Kanal'; there are max two channels
                                 uint32_t pz,                   // # of PZ;
                                 uint32_t vacc,                 // # of vacc;
+                                uint32_t chn,                  // # of 'Kanal'; there are max two channels
                                 uint32_t *data,                // event data;
                                 uint32_t nData                 // # of events in data
                                 );
