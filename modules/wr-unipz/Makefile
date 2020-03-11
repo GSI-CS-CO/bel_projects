@@ -1,11 +1,11 @@
 # PREFIX  controls where programs and libraries get installed
 # Note: during compile (all), PREFIX must be set to the final installation path
 # Example usage:
-#   'make MASP=YES PRO=NO PREFIX= all'                                                  (hack: leave PREFIX empty for SCU path)
-#   'make MASP=YES PRO=YES PREFIX= all'                                                 (hack: leave PREFIX empty for SCU path)
+#   'make MASP=NO PRO=NO PREFIX= all'                                                  (hack: leave PREFIX empty for SCU path)
+#   'make MASP=NO PRO=YES PREFIX= all'                                                 (hack: leave PREFIX empty for SCU path)
 # Example deploy:
-#   'make MASP=YES PRO=NO PREFIX= STAGING=/common/export/timing-rte/wrunipz-dev deploy' (hack: leave PREFIX empty for SCU path)
-#   'make MASP=YES PRO=YES PREFIX= STAGING=/common/export/timing-rte/wrunipz deploy'    (hack: leave PREFIX empty for SCU path)
+#   'make MASP=NO PRO=NO PREFIX= STAGING=/common/export/timing-rte/wrunipz-dev deploy' (hack: leave PREFIX empty for SCU path)
+#   'make MASP=NO PRO=YES PREFIX= STAGING=/common/export/timing-rte/wrunipz deploy'    (hack: leave PREFIX empty for SCU path)
 PREFIX      ?= /usr/local
 STAGING     ?=
 ARCH        ?= /x86_64
@@ -33,12 +33,15 @@ clean:
 
 deploy: 
 	mkdir -p $(STAGING)$(ARCH)$(PREFIX)/usr/bin # '/usr' is a hack
+	mkdir -p $(STAGING)$(ARCH)$(PREFIX)/usr/lib # '/usr' is a hack
 	mkdir -p $(STAGING)/firmware
 	cp ../../tools/eb-fwload $(STAGING)$(ARCH)$(PREFIX)/usr/bin # '/usr' is a hack
 	cp $(ASL)/wrunipz.sh $(STAGING)
 	cp $(SW)/wr-unipz_start.sh $(STAGING)$(ARCH)$(PREFIX)/usr/bin # '/usr' is a hack
 	cp $(SW)/wrunipz-ctl $(STAGING)$(ARCH)$(PREFIX)/usr/bin # '/usr' is a hack
 	cp $(FW)/wrunipz.bin $(STAGING)/firmware
+	cp $(SW)/libwrunipzlib.so.1.0 $(STAGING)$(ARCH)$(PREFIX)/usr/lib # '/usr' is a hack
+
 #	script /common/export/nfsinit/global/timing-rte-wrunipz-dev is _here_ in sub-folder wrunipz-asl 
 
 .PHONY: all clean

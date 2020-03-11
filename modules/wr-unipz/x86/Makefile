@@ -16,7 +16,7 @@ WRUNIPZLIB  := libwrunipzlib.so
 
 EXTRA_FLAGS ?=
 CFLAGS      ?= $(EXTRA_FLAGS) -Wall -O2 -g -I $(EB) -I $(INCLUDE) -I $(FW) -I../../common-libs/include
-LIBS        ?= -L $(EB)/.libs -L . -Wl,-rpath,$(PREFIX)/lib -lm -lwrunipzlib
+LIBS        ?= -L $(EB)/.libs -L . -Wl,-rpath,$(PREFIX)/lib -lm -lwrunipzlib -letherbone
 
 all: lib $(TARGETS)
 
