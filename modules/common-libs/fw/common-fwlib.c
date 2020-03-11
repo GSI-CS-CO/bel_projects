@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 09-March-2020
+ *  version : 11-March-2020
  *
  *  common functions used by various irmware projects
  *  
@@ -94,6 +94,7 @@ uint32_t *pSharedTS0Lo;                 // pointer to a "user defined" u32 regis
 uint32_t *pSharedNTransfer;             // pointer to a "user defined" u32 register; here: # of transfers
 uint32_t *pSharedNInject;               // pointer to a "user defined" u32 register; here: # of injections within current transfer
 uint32_t *pSharedTransStat;             // pointer to a "user defined" u32 register; here: status of transfer
+uint32_t *pSharedUsedSize;              // pointer to a "user defined" u32 register; here: size of (used) shared memory
 
 uint32_t *cpuRamExternalData4EB;        // external address (seen from host bridge) of this CPU's RAM: field for EB return values
 
@@ -365,6 +366,14 @@ uint32_t fwlib_wrCheckSyncState() //check status of White Rabbit (link up, track
 } //fwlib_wrCheckStatus
 
 
+void fwlib_publishSharedSize(uint32_t size)
+{
+  *pSharedUsedSize = size;
+  DBPRINT2("common-fwlib: %u bytes of shared mem are actually used\n", size);
+  
+} // fwlib_publishSharedInfo
+
+
 void fwlib_init(uint32_t *startShared, uint32_t *cpuRamExternal, uint32_t sharedOffs, char * name, uint32_t fwVersion) // determine address and clear shared mem
 {
   uint32_t *pSharedTemp;
@@ -401,6 +410,7 @@ void fwlib_init(uint32_t *startShared, uint32_t *cpuRamExternal, uint32_t shared
   pSharedNTransfer        = (uint32_t *)(pShared + (COMMON_SHARED_NTRANSFER >> 2));
   pSharedNInject          = (uint32_t *)(pShared + (COMMON_SHARED_NINJECT >> 2));  
   pSharedTransStat        = (uint32_t *)(pShared + (COMMON_SHARED_TRANSSTAT >> 2));
+  pSharedUsedSize         = (uint32_t *)(pShared + (COMMON_SHARED_USEDSIZE >> 2));
     
   // clear shared mem
   i = 0;
@@ -410,7 +420,8 @@ void fwlib_init(uint32_t *startShared, uint32_t *cpuRamExternal, uint32_t shared
     pSharedTemp++;
     i++;
   } // while pSharedTemp
-  DBPRINT2("common-fwlib: common part of shared mem is %d words (uint32_t), begin %x, end %x\n", i, (unsigned int)pShared, (unsigned int)pSharedTemp-1);
+
+  fwlib_publishSharedSize((uint32_t)(pSharedTemp - pShared));
   
   // set initial values;
   ebmClearSharedMem();

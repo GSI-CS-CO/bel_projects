@@ -43,6 +43,7 @@ eb_address_t common_tDiagHi;      // time when diagnostics was cleared, high bit
 eb_address_t common_tDiagLo;      // time when diagnostics was cleared, low bits
 eb_address_t common_tS0Hi;        // time when FW was in S0 state (start of FW), high bits
 eb_address_t common_tS0Lo;        // time when FW was in S0 state (start of FW), low bits
+eb_address_t common_usedSize;     // used size of DP RAM
 
 
 static void die(const char* where, eb_status_t status)
@@ -118,10 +119,11 @@ void comlib_initShared(eb_address_t lm32_base, eb_address_t sharedOffset)
   common_transfers    = lm32_base + sharedOffset + COMMON_SHARED_NTRANSFER;
   common_injections   = lm32_base + sharedOffset + COMMON_SHARED_NINJECT;
   common_statTrans    = lm32_base + sharedOffset + COMMON_SHARED_TRANSSTAT;
+  common_usedSize     = lm32_base + sharedOffset + COMMON_SHARED_USEDSIZE;
 } // comlib_initShared
 
 
-void comlib_printDiag(uint64_t  statusArray, uint32_t  state, uint32_t  version, uint64_t  mac, uint32_t  ip, uint32_t  nBadStatus, uint32_t  nBadState, uint64_t  tDiag, uint64_t  tS0, uint32_t  nTransfer, uint32_t  nInjection, uint32_t  statTrans)
+void comlib_printDiag(uint64_t statusArray, uint32_t state, uint32_t version, uint64_t mac, uint32_t ip, uint32_t nBadStatus, uint32_t nBadState, uint64_t tDiag, uint64_t tS0, uint32_t nTransfer, uint32_t nInjection, uint32_t statTrans, uint32_t usedSize)
 {
   const struct tm* tm;
   char             timestr[60];
@@ -139,14 +141,14 @@ void comlib_printDiag(uint64_t  statusArray, uint32_t  state, uint32_t  version,
   tm = gmtime(&secs);
   strftime(timestr, sizeof(timestr), "%Y-%m-%d %H:%M:%S TAI", tm);
   printf("diagnostics reset at  : %s\n", timestr);
-  
+  printf("version               : %06x\n", version);
+  printf("mac                   : 0x%012"PRIx64"\n", mac);
+  printf("ip                    : %03d.%03d.%03d.%03d\n", (ip & 0xff000000) >> 24, (ip & 0x00ff0000) >> 16, (ip & 0x0000ff00) >> 8, (ip & 0x000000ff));
+  printf("used shared mem [byte]: %u\n", usedSize);
   printf("state (# of changes)  : %s (%u)\n", comlib_stateText(state), nBadState);
   printf("# of transfers        : %012u\n", nTransfer);
   printf("# of injections       : %012u\n", nInjection);  
   printf("status of act transfer: 0x%x\n", statTrans);
-  printf("version               : %x\n", version);
-  printf("mac                   : 0x%012"PRIx64"\n", mac);
-  printf("ip                    : %03d.%03d.%03d.%03d\n", (ip & 0xff000000) >> 24, (ip & 0x00ff0000) >> 16, (ip & 0x0000ff00) >> 8, (ip & 0x000000ff));
   printf("sum status (# changes): 0x%"PRIx64" (%u)\n", statusArray, nBadStatus);
   if ((statusArray >> COMMON_STATUS_OK) & 0x1)
     printf("overall status        : OK\n");
@@ -159,7 +161,7 @@ void comlib_printDiag(uint64_t  statusArray, uint32_t  state, uint32_t  version,
 } // comlib_printDiag;
 
 
-int comlib_readDiag(eb_device_t device, uint64_t  *statusArray, uint32_t  *state, uint32_t  *version, uint64_t  *mac, uint32_t  *ip, uint32_t  *nBadStatus, uint32_t  *nBadState, uint64_t  *tDiag, uint64_t  *tS0, uint32_t  *nTransfer, uint32_t  *nInjection, uint32_t  *statTrans, uint32_t  printFlag)
+int comlib_readDiag(eb_device_t device, uint64_t  *statusArray, uint32_t  *state, uint32_t  *version, uint64_t  *mac, uint32_t  *ip, uint32_t  *nBadStatus, uint32_t  *nBadState, uint64_t  *tDiag, uint64_t  *tS0, uint32_t  *nTransfer, uint32_t  *nInjection, uint32_t  *statTrans, uint32_t *usedSize, uint32_t  printFlag)
 {
   eb_cycle_t  cycle;
   eb_status_t eb_status;
@@ -182,6 +184,7 @@ int comlib_readDiag(eb_device_t device, uint64_t  *statusArray, uint32_t  *state
   eb_cycle_read(cycle, common_transfers,   EB_BIG_ENDIAN|EB_DATA32, &(data[13]));
   eb_cycle_read(cycle, common_injections,  EB_BIG_ENDIAN|EB_DATA32, &(data[14]));  
   eb_cycle_read(cycle, common_statTrans,   EB_BIG_ENDIAN|EB_DATA32, &(data[15]));
+  eb_cycle_read(cycle, common_usedSize,    EB_BIG_ENDIAN|EB_DATA32, &(data[16]));
   if ((eb_status = eb_cycle_close(cycle)) != EB_OK) die("dm-unipz: eb_cycle_close", eb_status);
 
   *statusArray   = ((uint64_t)(data[0]) << 32) | (uint64_t)(data[1]);
@@ -196,8 +199,9 @@ int comlib_readDiag(eb_device_t device, uint64_t  *statusArray, uint32_t  *state
   *nTransfer     = data[13];
   *nInjection    = data[14];
   *statTrans     = data[15];
+  *usedSize      = data[16];
 
-  if (printFlag) comlib_printDiag(*statusArray, *state, *version, *mac, *ip, *nBadStatus, *nBadState, *tDiag, *tS0, *nTransfer, *nInjection, *statTrans);
+  if (printFlag) comlib_printDiag(*statusArray, *state, *version, *mac, *ip, *nBadStatus, *nBadState, *tDiag, *tS0, *nTransfer, *nInjection, *statTrans, *usedSize);
 
   return eb_status;
 } // 
