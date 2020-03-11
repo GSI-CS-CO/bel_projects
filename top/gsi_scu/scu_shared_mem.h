@@ -420,6 +420,11 @@ STATIC_ASSERT( offsetof( SCU_SHARED_DATA_T, fg_buffer ) ==
   #warning "Could be incompatiple to SAFTLIB!"
 #endif
 
+/*!
+ * @brief Maximum number of mailbox slots
+ */
+#define MSI_MAX_SLOTS 128
+
 #ifdef CONFIG_SCU_DAQ_INTEGRATION
   #define __DAQ_SHARAD_MEM_INITIALIZER_ITEM \
              , .sDaq = DAQ_SHARAD_MEM_INITIALIZER

@@ -111,6 +111,7 @@ class FgList
 
    using FG_LIST_T = vector<FgListItem>;
    FG_LIST_T         m_list;
+   uint              m_lm32SoftwareVersion;
 
 public:
    constexpr static uint c_maxFgMacros = MAX_FG_MACROS;
@@ -153,6 +154,11 @@ public:
    uint size( void ) const
    {
       return m_list.size();
+   }
+
+   uint getLm32SoftwareVersion( void ) const
+   {
+      return m_lm32SoftwareVersion;
    }
 
    /*!

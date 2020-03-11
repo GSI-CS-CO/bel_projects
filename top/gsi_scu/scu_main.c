@@ -103,13 +103,22 @@ STATIC inline void initializeGlobalPointers( void )
 #endif
 }
 
+/*! ----------------------------------------------------------------------------
+ * @brief Configures a mailbox slot.
+ * @param slot Mailbox slot number.
+ * @param myOffs Offset
+ */
 STATIC inline void cfgMsiBox( const unsigned int slot, const unsigned int myOffs )
 {
    pCpuMsiBox[2 * slot + 1] = (uint32_t)&pMyMsi[myOffs / sizeof(uint32_t)];
 }
 
-#define MSI_MAX_SLOTS 128
-
+/*! ----------------------------------------------------------------------------
+ * @brief Returns and configures the next free mailbox slot.
+ * @param myOffs Offset
+ * @retval >=0 Found mailbox slot.
+ * @retval -1 No free mailbox slot found.
+ */
 int getMsiBoxSlot( const unsigned int  myOffs )
 {
    int slot = 0;
@@ -134,12 +143,35 @@ int getMsiBoxSlot( const unsigned int  myOffs )
    return slot;
 }
 
+/*! ---------------------------------------------------------------------------
+ * @brief Tells SAFTLIB the mailbox slot for software interrupts.
+ * @see commandHandler
+ * @see FG_MB_SLOT saftlib/drivers/fg_regs.h
+ * @see FunctionGeneratorFirmware::ScanFgChannels() in
+ *      saftlib/drivers/FunctionGeneratorFirmware.cpp
+ * @see FunctionGeneratorFirmware::ScanMasterFg() in
+ *      saftlib/drivers/FunctionGeneratorFirmware.cpp
+ */
+STATIC inline void tellMailboxSlot( void )
+{
+   const int slot = getMsiBoxSlot(0x10); //TODO Where does 0x10 come from?
+   if( slot == -1 )
+      mprintf( ESC_ERROR"No free slots in MsgBox left!"ESC_NORMAL"\n" );
+   else
+      mprintf( "Configured slot %d in MsgBox\n", slot );
+   g_shared.fg_mb_slot = slot;
+}
+
 
 /*! ---------------------------------------------------------------------------
- * @brief enables msi generation for the specified channel. \n
- * Messages from the scu bus are send to the msi queue of this cpu with the offset 0x0. \n
- * Messages from the MIL extension are send to the msi queue of this cpu with the offset 0x20. \n
- * A hardware macro is used, which generates msis from legacy interrupts. \n
+ * @brief Enables Message-Signaled Interrupts (MSI) generation for the
+ * specified channel.
+ *
+ * Messages from the scu bus are send to the MSI queue of this CPU with
+ * the offset 0x0. \n
+ * Messages from the MIL extension are send to the msi queue of this cpu with
+ * the offset 0x20. \n
+ * A hardware macro is used, which generates MSIs from legacy interrupts.
  * @param channel number of the channel between 0 and MAX_FG_CHANNELS-1
  * @see disable_slave_irq
  */
@@ -172,7 +204,7 @@ void enable_scub_msis( const unsigned int channel )
 
    g_pMil_irq_base[8]   = MIL_DRQ;
    g_pMil_irq_base[9]   = MIL_DRQ;
-   g_pMil_irq_base[10]  = (uint32_t)pMyMsi + 0x20; //TODO Who the fuck is 0x20?!?
+   g_pMil_irq_base[10]  = (uint32_t)pMyMsi + 0x20;
    g_pMil_irq_base[2]   = (1 << MIL_DRQ);
 #endif
 }
@@ -474,19 +506,6 @@ STATIC inline void printCpuId( void )
    }
    mprintf("CPU ID: 0x%x\n", cpu_info_base[0]);
    mprintf("number MSI endpoints: %d\n", cpu_info_base[1]);
-}
-
-/*! ---------------------------------------------------------------------------
- * @brief Tells saftlib the mailbox slot for sw irqs
- */
-STATIC inline void tellMailboxSlot( void )
-{
-   const int slot = getMsiBoxSlot(0x10); //TODO Where does 0x10 come from?
-   if( slot == -1 )
-      mprintf( ESC_ERROR"No free slots in MsgBox left!"ESC_NORMAL"\n" );
-   else
-      mprintf( "Configured slot %d in MsgBox\n", slot );
-   g_shared.fg_mb_slot = slot;
 }
 
 /*================================ MAIN =====================================*/

@@ -58,7 +58,6 @@ DaqInterface::~DaqInterface( void )
 void DaqInterface::init( void )
 {
    uint32_t tmpMagicNumber;
-
    m_poEbAccess->readLM32( &tmpMagicNumber, sizeof( tmpMagicNumber ),
                            offsetof( FG::SCU_SHARED_DATA_T, fg_magic_number ) );
 
@@ -169,7 +168,7 @@ uint DaqInterface::readRingItems( RingItem* pItems, uint size )
     */
    if( toRead1 > 0 )
    {
-      readRingData( &beItems[0], toRead1, getTailRingIndex() );
+      readRingData( &beItems[0], toRead1, getTailRingIndex() ); // WB-access
    }
 
    /*
@@ -177,7 +176,7 @@ uint DaqInterface::readRingItems( RingItem* pItems, uint size )
     */
    if( toRead2 > 0 )
    {
-      readRingData( &beItems[toRead1], toRead2 );
+      readRingData( &beItems[toRead1], toRead2 ); // WB-access
    }
 
    #define __BYTE_SWAP_ITEM( member ) \
@@ -197,7 +196,7 @@ uint DaqInterface::readRingItems( RingItem* pItems, uint size )
       incrementRingTail();
    }
    #undef __BYTE_SWAP_ITEM
-   updateRingTail();
+   updateRingTail(); // WB-access
    return toRead;
 }
 

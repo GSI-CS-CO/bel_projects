@@ -23,6 +23,7 @@
  ******************************************************************************
  */
 #include <scu_fg_list.hpp>
+#include <daq_exception.hpp>
 #include <assert.h>
 using namespace Scu;
 
@@ -31,6 +32,7 @@ using namespace Scu;
 /*! ---------------------------------------------------------------------------
  */
 FgList::FgList( void )
+   :m_lm32SoftwareVersion( 0 )
 {
 }
 
@@ -44,8 +46,41 @@ FgList::~FgList( void )
  */
 void FgList::scan( daq::EbRamAccess* pEbAccess )
 {
+   /*
+    * Assuming the etherbone-connection has been already established.
+    */
+   assert( pEbAccess->isConnected() );
+
    //TODO Implement this function once a good rescan function call has
    //     been implemented in LM32.
+   uint32_t tmpLm32SwVersion;
+   pEbAccess->readLM32( &tmpLm32SwVersion, sizeof( tmpLm32SwVersion ),
+                           offsetof( FG::SCU_SHARED_DATA_T, fg_version ) );
+
+   m_lm32SoftwareVersion = gsi::convertByteEndian( tmpLm32SwVersion );
+   if( m_lm32SoftwareVersion != 3 )
+   {
+      std::string errorMessage =
+      "Expecting LM32 software major version 3 for now! But detected version is: ";
+      errorMessage += std::to_string( m_lm32SoftwareVersion );
+      errorMessage += "! Sorry!";
+      throw daq::Exception( errorMessage );
+   }
+
+   uint32_t tmpLm32MailboxSlot;
+   pEbAccess->readLM32( &tmpLm32MailboxSlot, sizeof( tmpLm32MailboxSlot ),
+                        offsetof( FG::SCU_SHARED_DATA_T, fg_mb_slot ) );
+
+   uint Lm32MailboxSlot =  gsi::convertByteEndian( tmpLm32MailboxSlot );
+   if( Lm32MailboxSlot >= MSI_MAX_SLOTS )
+   {
+      std::string errorMessage =
+      "Mailbox slot of LM32 is out of range: ";
+      errorMessage += std::to_string( Lm32MailboxSlot );
+      errorMessage += "!";
+      throw daq::Exception( errorMessage );
+   }
+   //TODO!!!
    sync( pEbAccess );
 }
 

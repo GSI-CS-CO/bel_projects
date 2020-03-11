@@ -231,7 +231,7 @@ DaqCompare* DaqAdministration::findDaqCompare( FG_MACRO_T macro )
  */
 uint DaqAdministration::distributeData( void )
 {
-   if( !readRingPosition() )
+   if( !readRingPosition() ) // WB-access
       return 0;
    uint size = getBufferSize();
    if( size <= 0 )
@@ -240,7 +240,7 @@ uint DaqAdministration::distributeData( void )
    size = std::min( size, static_cast<uint>(8) );
    RingItem sDaqData[size];
 
-   size = readRingItems( sDaqData, size );
+   size = readRingItems( sDaqData, size ); // WB-access
 
    for( uint i = 0; i < size; i++ )
    {

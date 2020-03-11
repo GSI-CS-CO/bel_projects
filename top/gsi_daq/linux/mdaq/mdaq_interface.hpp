@@ -144,6 +144,11 @@ public:
    DaqInterface( daq::EbRamAccess* poEbAccess );
    virtual ~DaqInterface( void );
 
+   uint getLm32SoftwareVersion( void ) const
+   {
+      return m_oFgList.getLm32SoftwareVersion();
+   }
+
    const std::string& getWbDevice( void )
    {
       return m_poEbAccess->getNetAddress();
