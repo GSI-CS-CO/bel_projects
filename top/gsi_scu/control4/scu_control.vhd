@@ -46,14 +46,20 @@ entity scu_control is
     -----------------------------------------------------------------------
     OneWire_CB : inout std_logic;
     onewire_ext: inout std_logic;        -- to extension board
-    
+    onewire_ext_splz: out std_logic;  --Strong Pull-Up for Onewire
+    OneWire_CB_splz : out std_logic;  --Strong Pull-Up for Onewire
+
     -----------------------------------------------------------------------
     -- ComExpress signals
-    -----------------------------------------------------------------------     
-    ser0_rxd          : in  std_logic;
-    ser0_txd          : out std_logic;
+    -----------------------------------------------------------------------
+    ser0_rxd          : out std_logic;  -- RX/TX view from ComX
+    ser0_txd          : in  std_logic;  -- RX/TX view from ComX
+    ser1_rxd          : out std_logic;  -- RX/TX view from ComX
+    ser1_txd          : in  std_logic;  -- RX/TX view from ComX
     nTHRMTRIP         : in  std_logic;
     WDT               : in  std_logic;
+    fpga_res_i        : in  std_logic;
+    nFPGA_Res_Out     : out std_logic;  --Reset  Output
 
     -----------------------------------------------------------------------
     -- SCU Bus
@@ -77,18 +83,19 @@ entity scu_control is
     -----------------------------------------------------------------------
     -- Misc.
     -----------------------------------------------------------------------
-    fpga_res_i    : in      std_logic;
     nres_i        : in      std_logic;
-    user_btn      : in      std_logic;  --User Button 
-    nPfail        : in      std_logic;  --Power fail input
-    IO_enable     : out     std_logic;  --Enable Levelshifter 1.8V  ->  3.3V 
+    user_btn      : in      std_logic;  --User Button
     max10_connect : inout   std_logic_vector (7 downto 0);  -- Pins reserveriert tbd
-    
+    serial_cb_out : out     std_logic_vector (1 downto 0);  -- Serial to Backplane
+    serial_cb_in  : in      std_logic_vector (1 downto 0);  -- Serial to Backplane
+    rear_in       : in      std_logic_vector (1 downto 0);  -- GPIO to Backplane
+    rear_out      : out     std_logic_vector (1 downto 0);  -- GPIO to Backplane
+
     -----------------------------------------------------------------------
     -- SCU-CB Version
     -----------------------------------------------------------------------
     scu_cb_version    : in  std_logic_vector(3 downto 0); -- must be assigned with weak pull ups
-    scu_cb_revision   : in  std_logic_vector(3 downto 0); -- must be assigned with weak pull ups
+
 
     -----------------------------------------------------------------------
     -- LVTTL IOs
@@ -97,22 +104,22 @@ entity scu_control is
     lemo_n_i : in    std_logic_vector(1 downto 0);
     lemo_p_o : out   std_logic_vector(1 downto 0);
     lemo_n_o : out   std_logic_vector(1 downto 0);
-    
-	  lemo_out : out	 std_logic_vector(3 downto 0);  --Isolated Onboard TTL OUT 
+
+	  lemo_out : out	 std_logic_vector(3 downto 0);  --Isolated Onboard TTL OUT
     lemo_in  : in	   std_logic_vector(1 downto 0);  --Isolated OnBoard TTL IN
-    
+
     -----------------------------------------------------------------------
     -- LA port (Logic Analyzer HDMI Port)
     -----------------------------------------------------------------------
     la_ch           : out std_logic_vector(15 downto 0);
     la_clk          : out std_logic;
-    
+
     -----------------------------------------------------------------------
     -- Extension Connector
     -----------------------------------------------------------------------
-    ext_ch           : inout std_logic_vector(25 downto 0);
+    ext_ch           : inout std_logic_vector(21 downto 0);
     ext_id           : in std_logic_vector   (3 downto 0);
-    
+
     -----------------------------------------------------------------------
     -- usb
     -----------------------------------------------------------------------
@@ -127,11 +134,11 @@ entity scu_control is
     -----------------------------------------------------------------------
     -- leds onboard
     -----------------------------------------------------------------------
-    wr_leds_o   : out std_logic_vector(3 downto 0) := (others => '1');
+    wr_leds_o   : out std_logic_vector(1 downto 0) := (others => '1');
     user_led_0  : out std_logic_vector(2 downto 0) := (others => '1');
     user_led_1  : out std_logic_vector(2 downto 0) := (others => '1');
     lemo_led    : out std_logic_vector(5 downto 0) := (others => '1');
-	 
+
 	 -----------------------------------------------------------------------
     -- Pseudo-SRAM (4x 256Mbit)
     -----------------------------------------------------------------------
@@ -146,7 +153,7 @@ entity scu_control is
     psram_be0          : out   std_logic := 'Z';
     psram_be1          : out   std_logic := 'Z';
     psram_wait         : in    std_logic; -- DDR magic
-    
+
     -----------------------------------------------------------------------
      -- Fast-SRAM (2x 16Mbit)
      -----------------------------------------------------------------------
@@ -260,8 +267,8 @@ begin
       wr_dac_sclk_o           => wr_dac_sclk_o,
       wr_dac_din_o            => wr_dac_din_o,
       wr_ndac_cs_o            => wr_ndac_cs_o,
-      wr_uart_o              => ser0_txd,
-      wr_uart_i              => ser0_rxd,
+      wr_uart_o              => ser0_rxd,
+      wr_uart_i              => ser0_txd,
       sfp_tx_disable_o        => open,
       sfp_tx_fault_i          => sfp_tx_fault_i,
       sfp_los_i               => sfp_los_i,
@@ -305,7 +312,7 @@ begin
       usb_slwrn_o             => slwr,
       usb_pktendn_o           => pa(6),
       usb_fd_io               => fd,
-      --PSRAM TODO: Multi Chip 
+      --PSRAM TODO: Multi Chip
       ps_clk                 => psram_clk,
       ps_addr                => psram_a,
       ps_data                => psram_dq,
@@ -323,11 +330,9 @@ begin
   sfp_tx_disable_o <= '0';
 
   -- LEDs
-  wr_leds_o(0)          <= not (s_led_link_act and s_led_link_up); -- red   = traffic/no-link
-  wr_leds_o(1)          <= not s_led_link_up;                      -- blue  = link
-  wr_leds_o(2)          <= not s_led_track;                        -- green = timing valid
-  wr_leds_o(3)          <= not s_led_pps;                          -- white = PPS
-  sfp_led_fpg_o         <= not s_led_link_up;
+  wr_leds_o(0)          <= not s_led_track;                        -- green = timing valid
+  wr_leds_o(1)          <= not s_led_pps;                          -- white = PPS
+  sfp_led_fpg_o         <= not s_led_link_up;                      -- Link-up
   sfp_led_fpr_o         <= not s_led_link_act;
   user_led_0            <= not s_gpio_o(2 downto 0);
   user_led_1            <= not s_gpio_o(5 downto 3);
@@ -339,9 +344,11 @@ begin
     lemo_p_o(i)        <= s_lvds_p_o(i);
     lemo_n_o(i)        <= s_lvds_n_o(i);
   end generate;
-  
+
   lemo_out <= not s_gpio_o(9 downto 6);
-  
-  IO_enable <= '1';  -- LS enable when FPGA ready
+
+
+  onewire_ext_splz  <= '1';  --Strong Pull-Up disabled
+  OneWire_CB_splz   <= '1';  --Strong Pull-Up disabled
 
 end rtl;
