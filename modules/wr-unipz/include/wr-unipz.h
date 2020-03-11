@@ -48,7 +48,7 @@
                               
 // commands from the outside
 /*#define WRUNIPZ_CMD_CONFINIT            11    // init transaction of table data*/
-  #define WRUNIPZ_CMD_CONFSUBMIT          12    // submit data written to DP RAM
+#define WRUNIPZ_CMD_CONFSUBMIT          12    // submit data written to DP RAM
 /*#define WRUNIPZ_CMD_CONFKILL            13    // this will kill an ongoing transaction*/
 #define WRUNIPZ_CMD_CONFCLEAR           14    // this will clear all event tables
 
@@ -103,8 +103,8 @@ typedef struct dataTable {                    // table with _one_ virtAcc for _o
 // ****************************************************************************************
 
 // sizes
-#define WRUNIPZ_NCONFDATA             (WRUNIPZ_NEVT  * WRUNIPZ_NCHN * WRUNIPZ_NPZ * WRUNIPZ_NVACC)   // # of config data words
-#define WRUNIPZ_NCONFFLAG             (WRUNIPZ_NFLAG * WRUNIPZ_NCHN * WRUNIPZ_NPZ * WRUNIPZ_NVACC)   // # of config flag words
+#define WRUNIPZ_NEVTDATA              (WRUNIPZ_NEVT  * WRUNIPZ_NCHN * WRUNIPZ_NPZ * WRUNIPZ_NVACC)   // # of config data words
+#define WRUNIPZ_NEVTFLAG              (WRUNIPZ_NFLAG * WRUNIPZ_NCHN * WRUNIPZ_NPZ * WRUNIPZ_NVACC)   // # of config flag words
 
 // offsets
 // simple values
@@ -133,9 +133,9 @@ typedef struct dataTable {                    // table with _one_ virtAcc for _o
 // (there are 4 words per virtual accelerator for each channel
 // [[[flags of PZ0-chn0-vacc0][flags of PZ0-chn1-vacc0]...PZ6]...vacc15]
 // flags[0] = 0x1: new data available; flags[1]: data is valid if bit is set; flags[2]: data is prep if bit is set; flags[3]: data is evt if bit is set 
-#define WRUNIPZ_SHARED_EVT_FLAGS      (WRUNIPZ_SHARED_EVT_DATA  + (WRUNIPZ_NCONFDATA << 2))  
+#define WRUNIPZ_SHARED_EVT_FLAGS      (WRUNIPZ_SHARED_EVT_DATA  + (WRUNIPZ_NEVTDATA << 2))  
 
 // diagnosis: end of used shared memory
-#define WRUNIPZ_SHARED_END            (WRUNIPZ_SHARED_EVT_FLAGS  + (WRUNIPZ_NCONFFLAG << 2)) // end of shared memory
+#define WRUNIPZ_SHARED_END            (WRUNIPZ_SHARED_EVT_FLAGS  + (WRUNIPZ_NEVTFLAG << 2)) // end of shared memory
 
 #endif
