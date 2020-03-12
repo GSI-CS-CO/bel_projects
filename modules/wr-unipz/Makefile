@@ -41,6 +41,7 @@ deploy:
 	cp $(SW)/wrunipz-ctl $(STAGING)$(ARCH)$(PREFIX)/usr/bin # '/usr' is a hack
 	cp $(FW)/wrunipz.bin $(STAGING)/firmware
 	cp -a $(SW)/libwrunipzlib.so* $(STAGING)$(ARCH)$(PREFIX)/usr/lib # '/usr' is a hack
+	cp $(SW)/../include/wrunipzlib.h $(STAGING)$(ARCH)$(PREFIX)/usr/include
 
 #	script /common/export/nfsinit/global/timing-rte-wrunipz-dev is _here_ in sub-folder wrunipz-asl 
 
