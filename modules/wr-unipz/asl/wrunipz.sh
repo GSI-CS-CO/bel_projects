@@ -19,8 +19,6 @@ ln -s /usr/lib/libetherbone.so.5 /lib/libetherbone.so.5
 log 'copying software, tools and startup script to ramdisk'
 cp -a /opt/$NAME/$ARCH/usr/bin/* /usr/bin/
 cp -a /opt/$NAME/$ARCH/usr/lib/* /usr/lib/
-ln -sf /opt/$NAME/$ARCH/usr/lib/libwrunipzlib.so.1.0 /opt/$NAME/$ARCH/usr/lib/libwrunipzlib.so.1
-ln -sf /opt/$NAME/$ARCH/usr/lib/libwrunipzlib.so.1  /opt/$NAME/$ARCH/usr/lib/libwrunipzlib.so
 
 ldconfig
 
