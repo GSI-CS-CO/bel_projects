@@ -24,9 +24,12 @@
  */
 #include <scu_fg_list.hpp>
 #include <daq_exception.hpp>
+#include <daq_calculations.hpp>
+#include <sdb_ids.h>
 #include <assert.h>
-using namespace Scu;
 
+using namespace Scu;
+using namespace daq;
 
 ///////////////////////////////////////////////////////////////////////////////
 /*! ---------------------------------------------------------------------------
@@ -64,23 +67,67 @@ void FgList::scan( daq::EbRamAccess* pEbAccess )
       "Expecting LM32 software major version 3 for now! But detected version is: ";
       errorMessage += std::to_string( m_lm32SoftwareVersion );
       errorMessage += "! Sorry!";
-      throw daq::Exception( errorMessage );
+      throw Exception( errorMessage );
    }
 
    uint32_t tmpLm32MailboxSlot;
    pEbAccess->readLM32( &tmpLm32MailboxSlot, sizeof( tmpLm32MailboxSlot ),
                         offsetof( FG::SCU_SHARED_DATA_T, fg_mb_slot ) );
 
-   uint Lm32MailboxSlot =  gsi::convertByteEndian( tmpLm32MailboxSlot );
-   if( Lm32MailboxSlot >= MSI_MAX_SLOTS )
+   /*!
+    * @todo Using of mailbox-slots respectively software interrupts
+    *       for the communication between host and LM32 are to complex
+    *       not synchronous and perhaps not necessary.\n
+    *       A better solution in the future will be the server-client
+    *       command algorithm already implemented for ADAC-DAQs.
+    */
+   const uint lm32MailboxSlot = gsi::convertByteEndian( tmpLm32MailboxSlot );
+   if( lm32MailboxSlot >= MSI_MAX_SLOTS )
    {
       std::string errorMessage =
       "Mailbox slot of LM32 is out of range: ";
-      errorMessage += std::to_string( Lm32MailboxSlot );
+      errorMessage += std::to_string( lm32MailboxSlot );
       errorMessage += "!";
-      throw daq::Exception( errorMessage );
+      throw Exception( errorMessage );
    }
-   //TODO!!!
+
+   uint mailBoxAddr = pEbAccess->getEbPtr()->findDeviceBaseAddress( DaqEb::gsiId,
+               static_cast<FeSupport::Scu::Etherbone::DeviceId>(MSI_MSG_BOX) );
+
+   mailBoxAddr += lm32MailboxSlot * 2 * sizeof( uint32_t );
+
+   /*!
+    * @todo Flag fg_rescan_busy is a very dirty hack obtaining a
+    *       synchronization!
+    *       Remove this technique for a better solution!
+    *       See comment above.
+    */
+   uint32_t scanBusy = 1;
+   pEbAccess->writeLM32( &scanBusy, sizeof( uint32_t ),
+                         offsetof( FG::SCU_SHARED_DATA_T, fg_rescan_busy ) );
+   /*!
+    * @todo Maybe using a struct is cleaner.
+    */
+   uint32_t cmd = FG::FG_OP_RESCAN << BIT_SIZEOF( uint16_t );
+   pEbAccess->getEbPtr()->write( mailBoxAddr,
+                                 static_cast<eb_user_data_t>(&cmd),
+                                 EB_BIG_ENDIAN | EB_DATA32 );
+
+   /*
+    * Timeout of 3 seconds.
+    */
+   const USEC_T timeout = getSysMicrosecs() + MICROSECS_PER_SEC * 3;
+   do
+   {
+      pEbAccess->readLM32( &scanBusy, sizeof( scanBusy ),
+                           offsetof( FG::SCU_SHARED_DATA_T, fg_rescan_busy ) );
+      if( getSysMicrosecs() > timeout )
+      {
+         throw Exception( "Timeout while FG scanning!" );
+      }
+   }
+   while( scanBusy != 0 );
+
    sync( pEbAccess );
 }
 

@@ -99,6 +99,11 @@ public:
 
    MilDaqAdministration* operator()( void );
 
+   MilDaqAdministration* getDaqAdminPtr( void )
+   {
+      return m_poAllDaq;
+   }
+
    int onArgument( void ) override;
 
    bool isVerbose( void ) const

@@ -144,6 +144,16 @@ public:
    DaqInterface( daq::EbRamAccess* poEbAccess );
    virtual ~DaqInterface( void );
 
+   void scan( void )
+   {
+      m_oFgList.scan( m_poEbAccess );
+   }
+
+   void sync( void )
+   {
+      m_oFgList.sync( m_poEbAccess );
+   }
+
    uint getLm32SoftwareVersion( void ) const
    {
       return m_oFgList.getLm32SoftwareVersion();

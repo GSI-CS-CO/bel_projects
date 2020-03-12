@@ -64,7 +64,11 @@ void DaqInterface::init( void )
    if( tmpMagicNumber != __bswap_constant_32( FG_MAGIC_NUMBER ) )
       throw Exception( "Wrong magic number respectively wrong LM32 app!" );
 
-   m_oFgList.scan( m_poEbAccess );
+   /*
+    * Synchronizing the FG -lit from lm32 shared memory only no active
+    * scanning!
+    */
+   m_oFgList.sync( m_poEbAccess );
    readRingPosition();
 }
 

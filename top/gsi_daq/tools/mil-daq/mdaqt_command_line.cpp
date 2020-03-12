@@ -41,6 +41,46 @@ using namespace std;
 #define FSM_INIT_FSM( state, attr... )      m_state( state )
 #define FSM_TRANSITION( newState, attr... ) m_state = newState
 
+/*! ---------------------------------------------------------------------------
+ * @brief Helper function for the options "-S" and "-L"
+ * @param pCmdLine Pointer to command line object.
+ * @param doScan If true so the LM32 performs a re-scan.
+ */
+static int listOrScanFGs( CommandLine* pCmdLine, bool doScan )
+{
+   MilDaqAdministration* pAllDaq = pCmdLine->getDaqAdminPtr();
+   if( pAllDaq == nullptr )
+   {
+      ERROR_MESSAGE( "SCU target has to be specified before!" );
+      return -1;
+   }
+   const bool verbose = pCmdLine->isVerbose();
+   if( doScan )
+   {
+      if( verbose )
+         cout << "scanning..." << endl;
+      pAllDaq->scan();
+   }
+   for( const auto& fg: pAllDaq->getFgList() )
+   {
+      if( !fg.isMIL() && !verbose )
+         continue;
+      if( verbose )
+      {
+         cout << "Slot: " << fg.getSlot() <<
+                 ", Bits: " << fg.getOutputBits() <<
+                 ", Version: " << fg.getVersion() << ",\t" <<
+                 (fg.isMIL()? "MIL":"ADAC") << " device\t";
+      }
+      cout << "fg-" << fg.getSocket() << '-' << fg.getDevice() << endl;
+   }
+   ::exit( EXIT_SUCCESS );
+   return 0;
+}
+
+/*! ---------------------------------------------------------------------------
+ * @brief Initializing the command line options.
+ */
 vector<OPTION> CommandLine::c_optList =
 {
    {
@@ -325,37 +365,35 @@ vector<OPTION> CommandLine::c_optList =
    {
       OPT_LAMBDA( poParser,
       {
-         MilDaqAdministration* pAllDaq = static_cast<CommandLine*>(poParser)->m_poAllDaq;
-         if( pAllDaq == nullptr )
-         {
-            ERROR_MESSAGE( "SCU target has to be specified before!" );
-            return -1;
-         }
-         const bool verbose = static_cast<CommandLine*>(poParser)->m_verbose;
-         for( const auto& fg: pAllDaq->getFgList() )
-         {
-            if( !fg.isMIL() && !verbose )
-               continue;
-            if( verbose )
-            {
-               cout << "Slot: " << fg.getSlot() <<
-                       ", Bits: " << fg.getOutputBits() <<
-                       ", Version: " << fg.getVersion() << ",\t" <<
-                       (fg.isMIL()? "MIL":"ADAC") << " device\t";
-            }
-            cout << "fg-" << fg.getSocket() << '-' << fg.getDevice() << endl;
-         }
-         ::exit( EXIT_SUCCESS );
-         return 0;
+         return listOrScanFGs( static_cast<CommandLine*>(poParser), true );
       }),
       .m_hasArg   = OPTION::NO_ARG,
       .m_id       = 0,
       .m_shortOpt = 'S',
       .m_longOpt  = "scan",
-      .m_helpText = "Shows all connected function generators.\n"
+      .m_helpText = "Scanning for all connected function generators.\n"
                     "NOTE: The verbosity mode (option -v has to be set before) "
                     "will show all function-generators,\notherwise only MIL- "
-                    "function-generators will shown."
+                    "function-generators will shown.\n"
+                    "CAUTION: Don't use this option during function-"
+                    "generators are running! Otherwise the timing becomes disturbed \n"
+                    "and the function-generators will stopped!\n"
+                    "If you will list the found function generators without scanning only,"
+                    " so use the option \"-L\" respectively \"--list\"."
+   },
+   {
+      OPT_LAMBDA( poParser,
+      {
+         return listOrScanFGs( static_cast<CommandLine*>(poParser), false );
+      }),
+      .m_hasArg   = OPTION::NO_ARG,
+      .m_id       = 0,
+      .m_shortOpt = 'L',
+      .m_longOpt  = "list",
+      .m_helpText = "Lists all connected function generators.\n"
+                    "NOTE: The verbosity mode (option -v has to be set before) "
+                    "will show all function-generators,\notherwise only MIL- "
+                    "function-generators will shown.\n"
    }
 };
 
