@@ -32,8 +32,9 @@ clean:
 	$(MAKE) -C $(FW) clean
 
 deploy: 
-	mkdir -p $(STAGING)$(ARCH)$(PREFIX)/usr/bin # '/usr' is a hack
-	mkdir -p $(STAGING)$(ARCH)$(PREFIX)/usr/lib # '/usr' is a hack
+	mkdir -p $(STAGING)$(ARCH)$(PREFIX)/usr/bin     # '/usr' is a hack
+	mkdir -p $(STAGING)$(ARCH)$(PREFIX)/usr/lib     # '/usr' is a hack
+	mkdir -p $(STAGING)$(ARCH)$(PREFIX)/usr/include # '/usr' is a hack
 	mkdir -p $(STAGING)/firmware
 	cp ../../tools/eb-fwload $(STAGING)$(ARCH)$(PREFIX)/usr/bin # '/usr' is a hack
 	cp $(ASL)/wrunipz.sh $(STAGING)
