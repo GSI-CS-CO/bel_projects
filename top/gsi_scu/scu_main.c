@@ -420,7 +420,7 @@ STATIC inline void schedule( void )
 }
 
 /*! ---------------------------------------------------------------------------
- * @ingroup TASK
+ * @ingroup TASK INTERRUPT
  * @brief task definition of scu_bus_handler
  * called by the scheduler in the main loop
  * decides which action for a scu bus interrupt is suitable

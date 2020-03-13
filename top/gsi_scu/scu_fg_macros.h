@@ -239,6 +239,21 @@ STATIC_ASSERT( sizeof( FG_REGISTER_T ) == 12 * sizeof( uint16_t ));
 #define ADAC_FG_ACCESS( p, m ) __SCU_BUS_ACCESS( FG_REGISTER_T, p, m )
 
 /*! ---------------------------------------------------------------------------
+ * @brief Sets the registers of a ADAC function generator.
+ */
+static inline void setAdacFgRegs( FG_REGISTER_T* pFgRegs,
+                                  const FG_PARAM_SET_T* pPset,
+                                  const uint16_t controlReg )
+{
+   ADAC_FG_ACCESS( pFgRegs, cntrl_reg.i16 ) = controlReg;
+   ADAC_FG_ACCESS( pFgRegs, coeff_a_reg )   = pPset->coeff_a;
+   ADAC_FG_ACCESS( pFgRegs, coeff_b_reg )   = pPset->coeff_b;
+   ADAC_FG_ACCESS( pFgRegs, shift_reg )     = (pPset->control & 0x3ffc0) >> 6;
+   ADAC_FG_ACCESS( pFgRegs, start_l )       = pPset->coeff_c & 0xffff;
+   ADAC_FG_ACCESS( pFgRegs, start_h )       = pPset->coeff_c >> BIT_SIZEOF(int16_t);
+}
+
+/*! ---------------------------------------------------------------------------
  * @todo Replace this function by access via type FG_CTRL_RG_T
  * @see FG_CTRL_RG_T
  */
@@ -474,22 +489,6 @@ int configure_fg_macro( const unsigned int channel );
  * @param channel number of the function generator channel from 0 to MAX_FG_CHANNELS-1
  */
 void disable_channel( const unsigned int channel );
-
-#ifndef _CONFIG_NEW
-/*! ---------------------------------------------------------------------------
- *  @brief Decide how to react to the interrupt request from the function
- *         generator macro.
- *  @param socket encoded slot number with the high bits for SIO / MIL_EXT
- *                distinction
- *  @param fg_base base address of the function generator macro
- *  @param irq_act_reg state of the irq act register, saves a read access
- *  @param pSetvalue Pointer of target for set-value.
- */
-void handleMacros( const unsigned int socket,
-                   const unsigned int fg_base,
-                   const uint16_t irq_act_reg,
-                   signed int* pSetvalue );
-#endif //_CONFIG_NEW
 
 #ifdef __cplusplus
 }

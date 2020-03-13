@@ -24,8 +24,6 @@ extern volatile FG_MESSAGE_BUFFER_T g_aMsg_buf[QUEUE_CNT];
 
 extern FG_CHANNEL_T           g_aFgChannels[MAX_FG_CHANNELS];
 
-//#pragma GCC push_options
-//#pragma GCC optimize("O0")
 /*! ---------------------------------------------------------------------------
  * @brief Supplies an  ADAC- function generator with data.
  * @param pThis Pointer to the concerning FG-macro register set.
@@ -44,21 +42,12 @@ STATIC inline void feedAdacFg( FG_REGISTER_T* pThis )
       return;
    }
 
-   FG_CTRL_RG_T controlReg;
    /*
     * clear freq, step select, fg_running and fg_enabled
     */
-   controlReg.i16 = pThis->cntrl_reg.i16 & ~(0xfc07);
-   controlReg.i16 |= ((pset.control & 0x38) << 10) | ((pset.control & 0x7) << 10);
-
-   ADAC_FG_ACCESS( pThis, cntrl_reg.i16 ) = controlReg.i16;
-   ADAC_FG_ACCESS( pThis, coeff_a_reg )   = pset.coeff_a;
-   ADAC_FG_ACCESS( pThis, coeff_b_reg )   = pset.coeff_b;
-   ADAC_FG_ACCESS( pThis, shift_reg )     = (pset.control & 0x3ffc0) >> 6;
-   ADAC_FG_ACCESS( pThis, start_l )       = pset.coeff_c & 0xffff;
-   ADAC_FG_ACCESS( pThis, start_h )       = pset.coeff_c >> BIT_SIZEOF(int16_t);
+   setAdacFgRegs( pThis, &pset, (pThis->cntrl_reg.i16 & ~(0xfc07)) |
+                                ((pset.control & 0x3F) << 10) );
 }
-//#pragma GCC pop_options
 
 /*! ---------------------------------------------------------------------------
  * @ingroup TASK

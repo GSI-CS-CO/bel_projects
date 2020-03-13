@@ -46,6 +46,11 @@ MIL_TASK_DATA_T g_aMilTaskData[5] =
 
 #ifndef __DOXYGEN__
 STATIC_ASSERT( TASKMAX >= (ARRAY_SIZE( g_aMilTaskData ) + MAX_FG_CHANNELS-1 + TASKMIN));
+
+/*
+ * Mil-library uses "short" rather than "uint16_t"! :-(
+ */
+STATIC_ASSERT( sizeof( short ) == sizeof( int16_t ) );
 #endif
 
 /*! ---------------------------------------------------------------------------
@@ -326,11 +331,6 @@ int milGetStatus( register MIL_TASK_DATA_T* pMilTaskData, const bool isScuBus,
                                 &pMilTaskData->aFgChannels[channel].irq_data );
 }
 
-#ifdef _CONFIG_NEW
- void send_fg_param( const unsigned int socket,
-                                  const unsigned int fg_base,
-                                  const uint16_t cntrl_reg,
-                                  signed int* pSetvalue );
 /*! ---------------------------------------------------------------------------
  * @brief Supplies the by "devNum" and "socket" addressed MIL function
  *        generator with new data.
@@ -340,12 +340,8 @@ STATIC inline void feedMilFg( const unsigned int socket,
                               const FG_CTRL_RG_T cntrl_reg,
                               signed int* pSetvalue )
 {
-#if 0
-#warning "Function send_fg_param still used by MIL access"
-   send_fg_param( socket, devNum, cntrl_reg.i16, pSetvalue );
-#else
-
    const unsigned int channel = cntrl_reg.bv.number;
+
    if( channel >= ARRAY_SIZE( g_aFgChannels ) )
    {
       mprintf( ESC_ERROR"%s: FG-number %d out of range!"ESC_NORMAL"\n",
@@ -363,6 +359,9 @@ STATIC inline void feedMilFg( const unsigned int socket,
       return;
    }
 
+   /*
+    * Setting the set value of MIL-DAQ
+    */
    *pSetvalue = pset.coeff_c;
 
    FG_MIL_REGISTER_T milFgRegs;
@@ -404,8 +403,6 @@ STATIC inline void feedMilFg( const unsigned int socket,
       return;
    }
    g_aFgChannels[channel].param_sent++;
-
-#endif
 }
 
 /*! ---------------------------------------------------------------------------
@@ -448,7 +445,6 @@ void handleMilFg( const unsigned int socket,
       feedMilFg( socket, devNum, ctrlReg, pSetvalue );
    }
 }
-#endif
 
 /*! ---------------------------------------------------------------------------
  * @ingroup MIL_FSM
@@ -460,22 +456,22 @@ void handleMilFg( const unsigned int socket,
  * @see milDeviceHandler
  */
 STATIC inline
-int milHandleAndWrite( register MIL_TASK_DATA_T* pMilTaskData, const bool isScuBus,
-                                                  const unsigned int channel )
+int milHandleAndWrite( register MIL_TASK_DATA_T* pMilTaskData,
+                       const bool isScuBus,
+                       const unsigned int channel )
 {
    FG_ASSERT( pMilTaskData->slave_nr != INVALID_SLAVE_NR );
+
    const unsigned int dev = getDevice( channel );
-#ifdef _CONFIG_NEW
+
    handleMilFg( getSocket( channel ),
                 dev,
                 pMilTaskData->aFgChannels[channel].irq_data,
                 &(pMilTaskData->aFgChannels[channel].setvalue) );
-#else
-   handleMacros( getSocket( channel ), dev, pMilTaskData->aFgChannels[channel].irq_data,
-                                   &(pMilTaskData->aFgChannels[channel].setvalue) );
-#endif
 
-   //clear irq pending and end block transfer
+   /*
+    * clear irq pending and end block transfer
+    */
    if( isScuBus )
    {
       return scub_write_mil( g_pScub_base, pMilTaskData->slave_nr,

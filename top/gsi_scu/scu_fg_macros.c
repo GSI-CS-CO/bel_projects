@@ -8,6 +8,7 @@
  * Outsourced from scu_main.c
  */
 #include "scu_fg_macros.h"
+#include "scu_fg_handler.h"
 
 extern volatile uint16_t*     g_pScub_base;
 #ifdef CONFIG_MIL_FG
@@ -71,7 +72,7 @@ int configure_fg_macro( const unsigned int channel )
    /* actions per slave card */
 #ifdef CONFIG_MIL_FG
    uint16_t dreq_status = 0;
-   #define _MIL_BIT_MASK()  (1 << MAX_SCU_SLAVES)
+   #define _MIL_BIT_MASK  (1 << MAX_SCU_SLAVES)
 
    if( isMilScuBusFg( socket ) )
    {
@@ -100,9 +101,9 @@ int configure_fg_macro( const unsigned int channel )
 
       if( isMilExtentionFg( socket ) )
       {
-         if( (s_clearIsActive & _MIL_BIT_MASK()) == 0 )
+         if( (s_clearIsActive & _MIL_BIT_MASK) == 0 )
          {
-            s_clearIsActive |= _MIL_BIT_MASK();
+            s_clearIsActive |= _MIL_BIT_MASK;
             clear_handler_state( socket );
             hist_addx( HISTORY_XYZ_MODULE, "clear_handler_state", socket );
          }
@@ -118,7 +119,7 @@ int configure_fg_macro( const unsigned int channel )
       }
       else if( isMilExtentionFg( socket ) )
       {
-         s_clearIsActive &= ~_MIL_BIT_MASK();
+         s_clearIsActive &= ~_MIL_BIT_MASK;
       }
    }
 
@@ -129,10 +130,16 @@ int configure_fg_macro( const unsigned int channel )
    const uint8_t dev  = getDevice( channel );
     /* enable irqs */
    if( isNonMilFg( socket ) )
-   {                                      //scu bus slave
+   {
+#if 0
       g_pScub_base[SRQ_ENA] |= (1 << (socket-1));           // enable irqs for the slave
       g_pScub_base[OFFS(socket) + SLAVE_INT_ACT] =  (FG1_IRQ | FG2_IRQ); // clear all irqs
       g_pScub_base[OFFS(socket) + SLAVE_INT_ENA] |= (FG1_IRQ | FG2_IRQ); // enable fg1 and fg2 irq
+#else
+     scuBusEnableSlaveInterrupt( (void*)g_pScub_base, socket );
+     *scuBusGetInterruptActiveFlagRegPtr( (void*)g_pScub_base, socket )  = (FG1_IRQ | FG2_IRQ);
+     *scuBusGetInterruptEnableFlagRegPtr( (void*)g_pScub_base, socket ) |= (FG1_IRQ | FG2_IRQ);
+#endif
    }
 #ifdef CONFIG_MIL_FG
    else if( isMilExtentionFg( socket ) )
@@ -142,11 +149,17 @@ int configure_fg_macro( const unsigned int channel )
    }
    else if( isMilScuBusFg( socket ) )
    {
-      FG_ASSERT( getFgSlotNumber( socket ) > 0 );
+      const unsigned int slot = getFgSlotNumber( socket );
+      FG_ASSERT( slot > 0 );
+#if 1
       g_pScub_base[SRQ_ENA] |= _SLOT_BIT_MASK();        // enable irqs for the slave
       g_pScub_base[OFFS(getFgSlotNumber( socket )) + SLAVE_INT_ENA] = DREQ; // enable receiving of drq
-      if( (status = scub_write_mil(g_pScub_base, getFgSlotNumber( socket ), 1 << 13, FC_IRQ_MSK | dev)) != OKAY)
-         printDeviceError( status, getFgSlotNumber( socket ), "enable dreq"); //enable sending of drq
+#else
+      scuBusEnableSlaveInterrupt( (void*)g_pScub_base, slot );
+      *scuBusGetInterruptEnableFlagRegPtr( (void*)g_pScub_base, slot ) |= DREQ;
+#endif
+      if( (status = scub_write_mil(g_pScub_base, slot, 1 << 13, FC_IRQ_MSK | dev)) != OKAY)
+         printDeviceError( status, slot, "enable dreq"); //enable sending of drq
    }
 #endif /* CONFIG_MIL_FG */
    #undef _SLOT_BIT_MASK
@@ -187,13 +200,13 @@ int configure_fg_macro( const unsigned int channel )
          printDeviceError( status, getFgSlotNumber( socket ), "set FG mode"); // set FG mode
    }
 #endif
-   uint16_t cntrl_reg_wr;
+
    int16_t blk_data[MIL_BLOCK_SIZE];
    FG_PARAM_SET_T pset;
     //fetch first parameter set from buffer
    if( cbRead(&g_shared.fg_buffer[0], &g_shared.fg_regs[0], channel, &pset) != 0 )
    {
-      cntrl_reg_wr = ((pset.control & 0x38) << 10) | ((pset.control & 0x7) << 10) | channel << 4;
+      const uint16_t cntrl_reg_wr = ((pset.control & 0x3F) << 10) | channel << 4;
       blk_data[0] = cntrl_reg_wr;
       blk_data[1] = pset.coeff_a;
       blk_data[2] = pset.coeff_b;
@@ -203,14 +216,10 @@ int configure_fg_macro( const unsigned int channel )
 
       if( isNonMilFg( socket ) )
       {
-        //set virtual fg number Bit 9..4
          FG_ASSERT( fg_base != 0 );
-         g_pScub_base[OFFS(socket) + fg_base + FG_CNTRL]  = blk_data[0];
-         g_pScub_base[OFFS(socket) + fg_base + FG_A]      = blk_data[1];
-         g_pScub_base[OFFS(socket) + fg_base + FG_B]      = blk_data[2];
-         g_pScub_base[OFFS(socket) + fg_base + FG_SHIFT]  = blk_data[3];
-         g_pScub_base[OFFS(socket) + fg_base + FG_STARTL] = blk_data[4];
-         g_pScub_base[OFFS(socket) + fg_base + FG_STARTH] = blk_data[5];
+         setAdacFgRegs( getFgRegisterPtrByOffsetAddr( (void*)g_pScub_base,
+                                                      socket, fg_base ),
+                        &pset, cntrl_reg_wr );
       }
    #ifdef CONFIG_MIL_FG
       else if( isMilExtentionFg( socket ) )
@@ -342,6 +351,7 @@ void disable_channel( const unsigned int channel )
    }
 }
 /*! ---------------------------------------------------------------------------
+ * @ingroup INTERRUPT
  * @brief disables the generation of irqs for the specified channel
  *  SIO and MIL extension stop generating irqs
  *  @param channel number of the channel from 0 to MAX_FG_CHANNELS-1
@@ -352,130 +362,41 @@ void disable_slave_irq( const unsigned int channel )
    if( channel >= MAX_FG_CHANNELS )
       return;
 
-#ifdef CONFIG_MIL_FG
-   int status;
-#endif
-   const uint8_t socket = getSocket( channel );
-   const uint8_t dev    = getDevice( channel );
+   const unsigned int socket = getSocket( channel );
+   const unsigned int dev    = getDevice( channel );
+
+   //mprintf("IRQs for slave %d disabled.\n", socket);
 
    if( isNonMilFg( socket ) )
    {
+#if 0
       if( dev == 0 )
-        g_pScub_base[OFFS(socket) + SLAVE_INT_ENA] &= ~(0x8000); //disable fg1 irq
+        g_pScub_base[OFFS(socket) + SLAVE_INT_ENA] &= ~FG1_IRQ; //disable fg1 irq
       else if( dev == 1 )
-        g_pScub_base[OFFS(socket) + SLAVE_INT_ENA] &= ~(0x4000); //disable fg2 irq
+        g_pScub_base[OFFS(socket) + SLAVE_INT_ENA] &= ~FG2_IRQ; //disable fg2 irq
+#else
+      *scuBusGetInterruptEnableFlagRegPtr( (void*)g_pScub_base, socket ) &=
+                                            ((dev == 0)? ~FG1_IRQ : ~FG2_IRQ);
+#endif
+      return;
    }
+
 #ifdef CONFIG_MIL_FG
-   else if( isMilExtentionFg( socket ) )
+   int status = OKAY;
+
+   if( isMilExtentionFg( socket ) )
    {
       //write_mil(g_pScu_mil_base, 0x0, FC_COEFF_A_WR | dev);            //ack drq
-      if( (status = write_mil(g_pScu_mil_base, 0x0, FC_IRQ_MSK | dev) ) != OKAY)
-         printDeviceError( status, getFgSlotNumber( socket ), __func__);  //mask drq
+      status = write_mil( g_pScu_mil_base, 0x0, FC_IRQ_MSK | dev);
    }
    else if( isMilScuBusFg( socket ) )
    {
-      if( (status = scub_write_mil(g_pScub_base, getFgSlotNumber( socket ),
-                                   0x0, FC_IRQ_MSK | dev)) != OKAY)
-         printDeviceError( status, getFgSlotNumber( socket ), __func__);  //mask drq
+      status = scub_write_mil( g_pScub_base, getFgSlotNumber( socket ),
+                                   0x0, FC_IRQ_MSK | dev);
    }
-#endif
-   //mprintf("IRQs for slave %d disabled.\n", socket);
-}
-
-
-/*
- * Mil-library uses "short" rather than "uint16_t"! :-(
- */
-STATIC_ASSERT( sizeof( short ) == sizeof( int16_t ) );
-
-/*! ---------------------------------------------------------------------------
- * @brief Sends the parameters for the next interpolation interval.
- * @param socket number of the slot, including the high bits with the information SIO or MIL_EXT
- * @param fg_base base address of the function generator macro
- * @param cntrl_reg state of the control register. saves one read access.
- * @param pSetvalue Pointer in which shall the set-value copied used for MIL-daq.
- * @todo Remove naked mask numbers by well named constants or inline get()-functions.
- * @todo In the case of a periodical signal, check whether its really necessary to use
- *       a circular buffer respectively a FiFo in which the wishbone bus becomes to much traffic! \n
- *       May be its possible to store a full period in the DDR3 RAM.
- * @todo Split this in two separate functions: MIL and non-MIL.
- */
- void send_fg_param( const unsigned int socket,
-                                  const unsigned int fg_base,
-                                  const uint16_t cntrl_reg,
-                                  signed int* pSetvalue )
-{
-   FG_PARAM_SET_T pset;
-   uint16_t       cntrl_reg_wr;
-#ifdef CONFIG_MIL_FG
-   int            status;
-#endif
-   int16_t        blk_data[MIL_BLOCK_SIZE];
-
-   const unsigned int fg_num = getFgNumberFromRegister( cntrl_reg );
-   if( fg_num >= ARRAY_SIZE( g_aFgChannels ) )
-   {
-      mprintf( ESC_ERROR"FG-number %d out of range!"ESC_NORMAL"\n", fg_num );
-      return;
-   }
-
-   /*
-    * Reading circular buffer with new FG-data.
-    */
-   if( !cbRead( &g_shared.fg_buffer[0], &g_shared.fg_regs[0], fg_num, &pset ) )
-   {
-      hist_addx(HISTORY_XYZ_MODULE, "buffer empty, no parameter sent", socket);
-      return;
-   }
-
-   //!@todo Replace the following hex numbers by meaningful defined bit-masks!!!
-   cntrl_reg_wr = cntrl_reg & ~(0xfc07); // clear freq, step select, fg_running and fg_enabled
-   cntrl_reg_wr |= ((pset.control & 0x38) << 10) | ((pset.control & 0x7) << 10);
-   blk_data[0] = cntrl_reg_wr;
-   blk_data[1] = pset.coeff_a;
-   blk_data[2] = pset.coeff_b;
-   blk_data[3] = (pset.control & 0x3ffc0) >> 6;     // shift a 17..12 shift b 11..6
-   blk_data[4] = pset.coeff_c & 0xffff;
-   blk_data[5] = (pset.coeff_c & 0xffff0000) >> BIT_SIZEOF(int16_t); // data written with high word
-
-   if( isNonMilFg( socket ) )
-   { /*
-      * In this case the socket value is equal to the scu-bus slot number.
-      */
-      g_pScub_base[OFFS(socket) + fg_base + FG_CNTRL]  = blk_data[0];
-      g_pScub_base[OFFS(socket) + fg_base + FG_A]      = blk_data[1];
-      g_pScub_base[OFFS(socket) + fg_base + FG_B]      = blk_data[2];
-      g_pScub_base[OFFS(socket) + fg_base + FG_SHIFT]  = blk_data[3];
-      g_pScub_base[OFFS(socket) + fg_base + FG_STARTL] = blk_data[4];
-      g_pScub_base[OFFS(socket) + fg_base + FG_STARTH] = blk_data[5];
-      // no setvalue for scu bus daq
-      *pSetvalue = 0;
-   }
-#ifdef CONFIG_MIL_FG
-   else if( isMilExtentionFg( socket ) )
-   {
-      // save coeff_c as setvalue
-      *pSetvalue = pset.coeff_c;
-      // transmit in one block transfer over the dev bus
-      if((status = write_mil_blk(g_pScu_mil_base, &blk_data[0], FC_BLK_WR | fg_base)) != OKAY)
-         printDeviceError( status, 0, __func__);
-      // still in block mode !
-   }
-   else if( isMilScuBusFg( socket ) )
-   {  // save coeff_c as setvalue
-      *pSetvalue = pset.coeff_c;
-      // transmit in one block transfer over the dev bus
-      if((status = scub_write_mil_blk( g_pScub_base,
-                                       getFgSlotNumber( socket ),
-                                       &blk_data[0],
-                                       FC_BLK_WR | fg_base)) != OKAY)
-      {
-         printDeviceError( status, getFgSlotNumber( socket ), __func__);
-      }
-      // still in block mode !
-   }
-#endif /* CONFIG_MIL_FG */
-   g_aFgChannels[fg_num].param_sent++;
+   if( status != OKAY )
+      printDeviceError( status, getFgSlotNumber( socket ), __func__);
+#endif /* ifdef CONFIG_MIL_FG */
 }
 
 /*! ---------------------------------------------------------------------------
@@ -493,80 +414,4 @@ void sendRefillSignalIfThreshold( const unsigned int channel )
    }
 }
 
-#ifndef _CONFIG_NEW
-/*! ---------------------------------------------------------------------------
- * @see scu_main.h
- * @todo Split this in two separate functions: MIL and non-MIL.
- */
-void handleMacros( const unsigned int socket,
-                   const unsigned int fg_base,
-                   const uint16_t irq_act_reg,
-                   signed int* pSetvalue )
-{
-   uint16_t cntrl_reg = 0;
-   unsigned int channel;
-
-   if( isNonMilFg( socket ) )
-   {
-      cntrl_reg = g_pScub_base[OFFS(socket) + fg_base + FG_CNTRL];
-      channel = getFgNumberFromRegister( cntrl_reg );
-   }
-#ifdef CONFIG_MIL_FG
-   else
-   {
-      channel = getFgNumberFromRegister( irq_act_reg );
-   }
-#endif
-   if( channel >= ARRAY_SIZE( g_shared.fg_regs ) )
-   {
-      mprintf( ESC_ERROR"%s: Channel out of range: %d\n"ESC_NORMAL, __func__, channel );
-      return;
-   }
-
-   if( isNonMilFg( socket ) )
-   {
-      /* last cnt from from fg macro, read from LO address copies hardware counter to shadow reg */
-      g_shared.fg_regs[channel].ramp_count = g_pScub_base[OFFS(socket) + fg_base + FG_RAMP_CNT_LO];
-      g_shared.fg_regs[channel].ramp_count |= g_pScub_base[OFFS(socket) + fg_base + FG_RAMP_CNT_HI] << BIT_SIZEOF( uint16_t );
-
-      if( (cntrl_reg & FG_RUNNING) == 0 )
-      { // fg stopped
-         makeStop( channel );
-      }
-      else
-      {
-         if( (cntrl_reg & FG_DREQ) == 0 )
-         {
-            makeStart( channel );
-         }
-         sendRefillSignalIfThreshold( channel );
-         send_fg_param( socket, fg_base, cntrl_reg, pSetvalue );
-      }
-   }
-#ifdef CONFIG_MIL_FG
-   else /* isNonMilFg( socket ) */
-   {
-      /* count in software only */
-      g_shared.fg_regs[channel].ramp_count++;
-      if( (irq_act_reg  & FG_RUNNING) == 0 )
-      {     // fg stopped
-         g_shared.fg_regs[channel].ramp_count--;
-         makeStop( channel );
-      }
-      else
-      {
-         if( (irq_act_reg & DEV_STATE_IRQ) != 0 )
-         {
-            makeStart( channel );
-         }
-         if( (irq_act_reg & (DEV_DRQ | DEV_STATE_IRQ)) != 0 )
-         {
-            sendRefillSignalIfThreshold( channel );
-            send_fg_param( socket, fg_base, irq_act_reg, pSetvalue );
-         }
-      }
-   } /* else of if isNonMilFg( socket ) */
-#endif /* CONFIG_MIL_FG */
-}
-#endif //_CONFIG_NEW
 /*================================== EOF ====================================*/

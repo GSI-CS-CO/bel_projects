@@ -311,6 +311,48 @@ void scuBusSetSlaveValue16( void* pAbsSlaveAddr, const unsigned int index,
 }
 
 /*! ---------------------------------------------------------------------------
+ * @ingroup SCU_BUS INTERRUPT
+ * @brief Returns the pointer to slave interrupt enable register.
+ * @param pScuBusBase Base-address of SCU-bus.
+ * @return Pointer to the slave interrupt enable register.
+ */
+static inline
+uint16_t* volatile scuBusGetMasterInterruptEnableRegPtr( const void* pScuBusBase )
+{
+   return &((uint16_t* volatile)pScuBusBase)[SRQ_ENA];
+}
+
+/*! ---------------------------------------------------------------------------
+ * @ingroup SCU_BUS INTERRUPT
+ * @brief Enables the SCU-bus slave interrupt of the given slot.
+ * @param pScuBusBase Base-address of SCU-bus.
+ * @param slot Slot number of the slave.
+ */
+static inline void scuBusEnableSlaveInterrupt( const void* pScuBusBase,
+                                               const unsigned int slot )
+{
+   SCUBUS_ASSERT( slot > 0 );
+   SCUBUS_ASSERT( slot <= MAX_SCU_SLAVES );
+   *scuBusGetMasterInterruptEnableRegPtr( pScuBusBase ) |= (1 << (slot-1));
+}
+
+/*! ---------------------------------------------------------------------------
+ * @ingroup SCU_BUS INTERRUPT
+ * @brief Disables the SCU-bus slave interrupt of the given slot.
+ * @param pScuBusBase Base-address of SCU-bus.
+ * @param slot Slot number of the slave.
+ */
+static inline void scuBusDisableSlaveInterrupt( const void* pScuBusBase,
+                                               const unsigned int slot )
+{
+   SCUBUS_ASSERT( slot > 0 );
+   SCUBUS_ASSERT( slot <= MAX_SCU_SLAVES );
+   *scuBusGetMasterInterruptEnableRegPtr( pScuBusBase ) &= ~(1 << (slot-1));
+}
+
+
+/*! ---------------------------------------------------------------------------
+ * @ingroup SCU_BUS INTERRUPT
  * @brief Returns the pointer of the interrupt active register of the given
  *        SCU-bus slave.
  * @param pScuBusBase Base-address of SU-bus.
@@ -321,6 +363,20 @@ uint16_t* volatile scuBusGetInterruptActiveFlagRegPtr( const void* pScuBusBase,
                                                      const unsigned int slot )
 {
    return &((uint16_t*)scuBusGetAbsSlaveAddr( pScuBusBase, slot ))[Intr_Active];
+}
+
+/*! ---------------------------------------------------------------------------
+ * @ingroup SCU_BUS INTERRUPT
+ * @brief Returns the pointer of the interrupt enable register of the given
+ *        SCU-bus slave.
+ * @param pScuBusBase Base-address of SU-bus.
+ * @param slot Slave- respectively slot- number of slave.
+ */
+static inline
+uint16_t* volatile scuBusGetInterruptEnableFlagRegPtr( const void* pScuBusBase,
+                                                     const unsigned int slot )
+{
+   return &((uint16_t*)scuBusGetAbsSlaveAddr( pScuBusBase, slot ))[Intr_Ena];
 }
 
 /*! ---------------------------------------------------------------------------
