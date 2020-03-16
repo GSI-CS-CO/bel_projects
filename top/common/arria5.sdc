@@ -19,11 +19,14 @@ set clk_dmtd_62_5_clk                  [get_clocks {main|\dmtd_a5:dmtd_inst|dmtd
 create_clock -name {monster:main|ref_pll5:\ref_a5:ref_inst|ref_pll5_0002:ref_pll5_inst|altera_pll:altera_pll_i|altera_arriav_pll:arriav_pll|altera_arriav_pll_base:fpll_0|PLL_RECONFIG~FMAX_CAP_FF} -period 8.000 [get_pins {main|phase|raw_trap|clk}]
 
 # Special device input clocks
-create_clock -period 10Mhz -name exploder5_ext_clk_in [get_ports {lvds_clk_p_i}]
-create_clock -period 10Mhz -name exploder5_sfp_clk_in [get_ports {clk_sfp_i}]
-create_clock -period 125Mhz -name pexarria5_sfp_clk_in [get_ports {sfp234_ref_clk_i}]
-create_clock -period 10Mhz -name pexp_ext_clk_in [get_ports {clk_lvtio_i}]
-create_clock -period 125Mhz -name pexp_sfp_clk_in [get_ports {clk_sfp_ref_i}]
+create_clock -period 10Mhz  -name exploder5_ext_clk_in  [get_ports {lvds_clk_p_i}]
+create_clock -period 10Mhz  -name exploder5_sfp_clk_in  [get_ports {clk_sfp_i}]
+create_clock -period 125Mhz -name pexarria5_sfp_clk_in  [get_ports {sfp234_ref_clk_i}]
+create_clock -period 10Mhz  -name pexp_ext_clk_in       [get_ports {clk_lvtio_i}]
+create_clock -period 125Mhz -name pexp_sfp_clk_in       [get_ports {clk_sfp_ref_i}]
+create_clock -period 125Mhz -name microtca_sfp_clk_in   [get_ports {clk_sfp_ref_i}]
+create_clock -period 10Mhz  -name microtca_ext_clk_p_in [get_ports {clk_lvtio_p_i}]
+create_clock -period 10Mhz  -name microtca_ext_clk_n_in [get_ports {clk_lvtio_n_i}]
 
 # Cut the clock domains from each other
 set_clock_groups -asynchronous \
@@ -33,6 +36,9 @@ set_clock_groups -asynchronous \
  -group [get_clocks { pexarria5_sfp_clk_in} ]                                                                                                                                                                                                             \
  -group [get_clocks { pexp_ext_clk_in} ]                                                                                                                                                                                                                  \
  -group [get_clocks { pexp_sfp_clk_in} ]                                                                                                                                                                                                                  \
+ -group [get_clocks { microtca_sfp_clk_in ]                                                                                                                                                                                                               \
+ -group [get_clocks { microtca_ext_clk_p_in ]                                                                                                                                                                                                             \
+ -group [get_clocks { microtca_ext_clk_n_in ]                                                                                                                                                                                                             \
  -group [get_clocks { altera_reserved_tck } ]                                                                                                                                                                                                             \
  -group [get_clocks { alt_cal_av_edge_detect_clk } ]                                                                                                                                                                                                      \
  -group [get_clocks { clk_20m_vcxo_i } ]                                                                                                                                                                                                                  \
