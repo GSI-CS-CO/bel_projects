@@ -12,11 +12,12 @@ void ECACtrl_getTAI(volatile uint32_t *eca, TAI_t *tai);
 //    eca     : valid pointer to ECA registers as obtained by EcaCtrl_init()
 //    stopTAI : the TAI value when the function should return
 //
+//    tai_now : current time 
 // return value: 0 if the function returns at the specified stopTAI. The jitter of the return time 
 //                 was measured and is < 120 ns
-//               1 if the specified stopTAI was too soon. In this case, the function
+//               delay[ns] if the specified stopTAI was too soon. In this case, the function
 //                 returns at a time after the specified stopTAI
-uint32_t wait_until_tai(volatile uint32_t *eca, uint64_t stopTAI);
+uint32_t wait_until_tai(volatile uint32_t *eca, uint64_t stopTAI, TAI_t tai_now);
 
 
 #endif
