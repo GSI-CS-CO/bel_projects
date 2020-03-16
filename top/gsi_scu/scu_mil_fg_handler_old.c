@@ -368,8 +368,15 @@ STATIC inline void feedMilFg( const unsigned int socket,
    /*
     * clear freq, step select, fg_running and fg_enabled
     */
-   setMilFgRegs( &milFgRegs, &pset, (cntrl_reg.i16 & ~(0xfc07)) |
-                                    (pset.control & 0x3F) << 10) ;
+   milFgRegs.cntrl_reg.i16    = (cntrl_reg.i16 & ~(0xfc07))   |
+                                ((pset.control & 0x38) << 10) |
+                                ((pset.control & 0x7)  << 10);
+   milFgRegs.coeff_a_reg      = pset.coeff_a;
+   milFgRegs.coeff_b_reg      = pset.coeff_b;
+   milFgRegs.shift_reg        = (pset.control & 0x3ffc0) >> 6;
+   milFgRegs.coeff_c_low_reg  = pset.coeff_c & 0xffff;
+   milFgRegs.coeff_c_high_reg = pset.coeff_c >> BIT_SIZEOF(int16_t);
+
    int status;
    #if __GNUC__ >= 9
      #pragma GCC diagnostic push

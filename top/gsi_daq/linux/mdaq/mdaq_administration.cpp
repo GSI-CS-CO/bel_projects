@@ -74,7 +74,7 @@ DaqDevice::~DaqDevice( void )
 bool DaqDevice::registerDaqCompare( DaqCompare* poCompare )
 {
    assert( poCompare != nullptr );
-   for( auto& i: m_channelPtrList )
+   for( const auto& i: m_channelPtrList )
    {
       if( poCompare->getAddress() == i->getAddress() )
       {
@@ -93,7 +93,7 @@ bool DaqDevice::registerDaqCompare( DaqCompare* poCompare )
  */
 bool DaqDevice::unregisterDaqCompare( DaqCompare* poCompare )
 {
-   for( auto& i: m_channelPtrList )
+   for( const auto& i: m_channelPtrList )
    {
       if( i == poCompare )
       {
@@ -110,7 +110,7 @@ bool DaqDevice::unregisterDaqCompare( DaqCompare* poCompare )
  */
 DaqCompare* DaqDevice::getDaqCompare( const uint address )
 {
-   for( auto& i: m_channelPtrList )
+   for( const auto& i: m_channelPtrList )
    {
       if( i->getAddress() == address )
          return i;
@@ -123,7 +123,7 @@ DaqCompare* DaqDevice::getDaqCompare( const uint address )
  */
 void DaqDevice::initAll( void )
 {
-   for( auto& i: m_channelPtrList )
+   for( const auto& i: m_channelPtrList )
       i->onInit();
 }
 
@@ -131,7 +131,7 @@ void DaqDevice::initAll( void )
  */
 void DaqDevice::onReset( void )
 {
-   for( auto& i: m_channelPtrList )
+   for( const auto& i: m_channelPtrList )
       i->onReset();
 }
 
@@ -152,7 +152,7 @@ DaqAdministration::DaqAdministration( daq::EbRamAccess* poEbAccess )
  */
 DaqAdministration::~DaqAdministration( void )
 {
-   for( auto& i: m_devicePtrList )
+   for( const auto& i: m_devicePtrList )
       i->m_pParent = nullptr;
 }
 
@@ -162,7 +162,7 @@ bool DaqAdministration::registerDevice( DaqDevice* pDevice )
 {
    assert( pDevice != nullptr );
 
-   for( auto& i: m_devicePtrList )
+   for( const auto& i: m_devicePtrList )
    {
       if( i->getLocation() == pDevice->getLocation() )
       {
@@ -182,7 +182,7 @@ bool DaqAdministration::unregisterDevice( DaqDevice* pDevice )
 {
    assert( pDevice != nullptr );
 
-   for( auto& i: m_devicePtrList )
+   for( const auto& i: m_devicePtrList )
    {
       if( i == pDevice )
       {
@@ -199,7 +199,7 @@ bool DaqAdministration::unregisterDevice( DaqDevice* pDevice )
  */
 void DaqAdministration::reset( void )
 {
-   for( auto& i: m_devicePtrList )
+   for( const auto& i: m_devicePtrList )
       i->onReset();
 }
 
@@ -207,7 +207,7 @@ void DaqAdministration::reset( void )
  */
 DaqDevice* DaqAdministration::getDevice( const uint location )
 {
-   for( auto& i: m_devicePtrList )
+   for( const auto& i: m_devicePtrList )
    {
       if( i->getLocation() == location )
          return i;

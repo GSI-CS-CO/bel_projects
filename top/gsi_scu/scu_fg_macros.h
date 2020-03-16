@@ -239,18 +239,49 @@ STATIC_ASSERT( sizeof( FG_REGISTER_T ) == 12 * sizeof( uint16_t ));
 #define ADAC_FG_ACCESS( p, m ) __SCU_BUS_ACCESS( FG_REGISTER_T, p, m )
 
 /*! ---------------------------------------------------------------------------
+ * @brief Returns the 16 bit shift register value
+ */
+STATIC inline
+uint16_t getFgShiftRegValue( const FG_PARAM_SET_T* pPset )
+{
+   return (pPset->control & 0x3FFC0) >> 6;
+}
+
+/*! ---------------------------------------------------------------------------
+ * @brief Returns the lower 16 bit value of the C- coefficient.
+ * @see getFgCoeffCHigh16
+ */
+STATIC inline
+uint16_t getFgCoeffCLow16( const FG_PARAM_SET_T* pPset )
+{
+   STATIC_ASSERT( sizeof( pPset->coeff_c ) == sizeof( uint32_t ) );
+   return pPset->coeff_c & 0xFFFF;
+}
+
+/*! ---------------------------------------------------------------------------
+ * @brief Returns the higher 16 bit value of the C- coefficient.
+ * @see getFgCoeffCLow16
+ */
+STATIC inline
+uint16_t getFgCoeffCHigh16( const FG_PARAM_SET_T* pPset )
+{
+   STATIC_ASSERT( sizeof( pPset->coeff_c ) == sizeof( uint32_t ) );
+   return pPset->coeff_c >> BIT_SIZEOF(int16_t);
+}
+
+/*! ---------------------------------------------------------------------------
  * @brief Sets the registers of a ADAC function generator.
  */
-static inline void setAdacFgRegs( FG_REGISTER_T* pFgRegs,
+STATIC inline void setAdacFgRegs( FG_REGISTER_T* pFgRegs,
                                   const FG_PARAM_SET_T* pPset,
                                   const uint16_t controlReg )
 {
    ADAC_FG_ACCESS( pFgRegs, cntrl_reg.i16 ) = controlReg;
    ADAC_FG_ACCESS( pFgRegs, coeff_a_reg )   = pPset->coeff_a;
    ADAC_FG_ACCESS( pFgRegs, coeff_b_reg )   = pPset->coeff_b;
-   ADAC_FG_ACCESS( pFgRegs, shift_reg )     = (pPset->control & 0x3ffc0) >> 6;
-   ADAC_FG_ACCESS( pFgRegs, start_l )       = pPset->coeff_c & 0xffff;
-   ADAC_FG_ACCESS( pFgRegs, start_h )       = pPset->coeff_c >> BIT_SIZEOF(int16_t);
+   ADAC_FG_ACCESS( pFgRegs, shift_reg )     = getFgShiftRegValue( pPset );
+   ADAC_FG_ACCESS( pFgRegs, start_l )       = getFgCoeffCLow16( pPset );
+   ADAC_FG_ACCESS( pFgRegs, start_h )       = getFgCoeffCHigh16( pPset );
 }
 
 /*! ---------------------------------------------------------------------------
@@ -259,7 +290,7 @@ static inline void setAdacFgRegs( FG_REGISTER_T* pFgRegs,
  */
 STATIC inline unsigned int getFgNumberFromRegister( const uint16_t reg )
 {
-#if 1
+#if 0
    return (reg >> 4) & 0x3F; // virtual fg number Bits 9..4
 #else
    const FG_CTRL_RG_T ctrlReg = { .i16 = reg };
@@ -274,7 +305,7 @@ STATIC inline unsigned int getFgNumberFromRegister( const uint16_t reg )
  * @param number Number of functions generator macro till now 0 or 1.
  * @return Relative offset address in uint16_t alignment.
  */
-static inline
+STATIC inline
 unsigned int getFgOffsetAddress( const unsigned int number )
 {
    static const unsigned int fgAddrTab[] = { FG1_BASE, FG2_BASE };
@@ -291,7 +322,7 @@ unsigned int getFgOffsetAddress( const unsigned int number )
  * @param fgOffset Relative offset address of function generator macro
  *        till now FG1_BASE and FG2_BASE only.
  */
-static inline
+STATIC inline
 FG_REGISTER_T* getFgRegisterPtrByOffsetAddr( const void* pScuBusBase,
                                              const unsigned int slot,
                                              const unsigned int fgOffset )
@@ -311,7 +342,7 @@ FG_REGISTER_T* getFgRegisterPtrByOffsetAddr( const void* pScuBusBase,
  * @return Pointer of register object.
  * @see FG_REGISTER_T
  */
-static inline
+STATIC inline
 FG_REGISTER_T* getFgRegisterPtr( const void* pScuBusBase,
                                  const unsigned int slot,
                                  const unsigned int number )
@@ -328,7 +359,7 @@ FG_REGISTER_T* getFgRegisterPtr( const void* pScuBusBase,
  * @param number Number of functions generator macro 0 or 1.
  * @return Pointer to the control-register.
  */
-static volatile inline
+STATIC volatile inline
 FG_CTRL_RG_T* getFgCntrlRegPtr( const void* pScuBusBase,
                                 const unsigned int slot,
                                 const unsigned int number )
@@ -410,7 +441,20 @@ STATIC_ASSERT( sizeof( FG_MIL_REGISTER_T ) == MIL_BLOCK_SIZE * sizeof(short) );
  */
 #define MIL_FG_ACCESS( p, m ) __FG_ACCESS( FG_MIL_REGISTER_T, uint16_t, p, m )
 
-
+/*! ---------------------------------------------------------------------------
+ * @brief Initializes the register set for MIL function generator.
+ */
+STATIC inline void setMilFgRegs( FG_MIL_REGISTER_T* pFgRegs,
+                                  const FG_PARAM_SET_T* pPset,
+                                  const uint16_t controlReg )
+{
+   pFgRegs->cntrl_reg.i16     = controlReg;
+   pFgRegs->coeff_a_reg       = pPset->coeff_a;
+   pFgRegs->coeff_b_reg       = pPset->coeff_b;
+   pFgRegs->shift_reg         = getFgShiftRegValue( pPset );
+   pFgRegs->coeff_c_low_reg   = getFgCoeffCLow16( pPset );
+   pFgRegs->coeff_c_high_reg  = getFgCoeffCHigh16( pPset );
+}
 
 #endif /* CONFIG_MIL_FG */
 
