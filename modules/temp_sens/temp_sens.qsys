@@ -7,7 +7,7 @@
    description=""
    tags="INTERNAL_COMPONENT=true"
    categories="System" />
- <parameter name="bonusData"><![CDATA[bonusData
+ <parameter name="bonusData"><![CDATA[bonusData 
 {
    element temp_sense_0
    {
@@ -20,9 +20,9 @@
 }
 ]]></parameter>
  <parameter name="clockCrossingAdapter" value="HANDSHAKE" />
- <parameter name="device" value="5AGXMA3D4F27C5" />
+ <parameter name="device" value="5AGXMA3D4F27I3" />
  <parameter name="deviceFamily" value="Arria V" />
- <parameter name="deviceSpeedGrade" value="5_H4" />
+ <parameter name="deviceSpeedGrade" value="3_H4" />
  <parameter name="fabricMode" value="QSYS" />
  <parameter name="generateLegacySim" value="false" />
  <parameter name="generationId" value="0" />
@@ -64,7 +64,7 @@
  <module
    name="temp_sense_0"
    kind="altera_temp_sense"
-   version="15.1"
+   version="18.1"
    enabled="1"
    autoexport="1">
   <parameter name="CBX_AUTO_BLACKBOX" value="ALL" />

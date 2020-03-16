@@ -208,7 +208,7 @@ begin
          r_rst       <= (others => '0');
          r_cfg       <= (others => '0');
          r_force_pop <= (others => '0');
-         r_ctrl_out  <= ('0', '0', '0', '0', '0', x"00000000");
+         r_ctrl_out  <= ('0', '0', '0', '0', x"00000000");
       else
          -- short names 
          v_dat_i   := ctrl_i.dat;

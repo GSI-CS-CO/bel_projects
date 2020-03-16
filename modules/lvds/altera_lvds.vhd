@@ -2,7 +2,7 @@
 --! @brief LVDS interface
 --! @author Wesley W. Terpstra <w.terpstra@gsi.de>
 --!
---! Copyright (C) 2013 GSI Helmholtz Centre for Heavy Ion Research GmbH 
+--! Copyright (C) 2013 GSI Helmholtz Centre for Heavy Ion Research GmbH
 --!
 --! This combines all the common GSI components together
 --!
@@ -16,7 +16,7 @@
 --! but WITHOUT ANY WARRANTY; without even the implied warranty of
 --! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 --! Lesser General Public License for more details.
---!  
+--!
 --! You should have received a copy of the GNU Lesser General Public
 --! License along with this library. If not, see <http://www.gnu.org/licenses/>.
 --------------------------------------------------------------------------------
@@ -29,6 +29,7 @@ library work;
 use work.eca_pkg.all;
 use work.altera_lvds_pkg.all;
 use work.arria5_lvds_pkg.all;
+use work.arria10_lvds_pkg.all;
 use work.gencores_pkg.all;
 
 entity altera_lvds is
@@ -53,14 +54,15 @@ entity altera_lvds is
 end altera_lvds;
 
 architecture rtl of altera_lvds is
-  function f_1(x : boolean) return std_logic is begin 
+  function f_1(x : boolean) return std_logic is begin
     if x then return '1'; else return '0'; end if;
   end function;
-  
+
   constant c_toggle : t_lvds_byte := (others => f_1(g_invert));
-  
+
   signal clk_lvds   : std_logic;
   signal clk_enable : std_logic;
+  signal clk_core   : std_logic;
   signal lvds_idat  : std_logic_vector(g_inputs-1  downto 0);
   signal lvds_odat  : std_logic_vector(g_outputs-1 downto 0);
   signal s_dat_i    : t_lvds_byte_array(g_outputs-1 downto 0);
@@ -68,10 +70,12 @@ architecture rtl of altera_lvds is
   signal s_led      : std_logic_vector(g_inputs-1 downto 0);
 begin
 
-  arria5_n : if g_family /= "Arria V" generate
+  arria2_y : if g_family = "Arria II" generate
     clk_lvds   <= clk_lvds_i;
     clk_enable <= clk_enable_i;
+    clk_core   <= clk_ref_i;
   end generate;
+
   arria5_y : if g_family = "Arria V" generate
     clk : arriav_pll_lvds_output
       port map(
@@ -79,8 +83,26 @@ begin
         ccout(0) => clk_lvds_i,
         loaden   => clk_enable,
         lvdsclk  => clk_lvds);
+    clk_core <= clk_ref_i;
   end generate;
-  
+
+  arria10_no_clock_tree_y : if g_family = "Arria 10 GX SCU4" generate
+    clk_lvds   <= clk_lvds_i;
+    clk_enable <= clk_enable_i;
+    clk_core   <= clk_ref_i;
+  end generate;
+
+  --arria10_y : if g_family = "Arria 10 GX SCU4" generate
+  --  pll : arria10_scu4_lvds_pll
+  --    port map(
+  --    rst         => not(rstn_ref_i),
+  --    refclk      => clk_ref_i,
+  --    locked      => open,
+  --    lvds_clk(0) => clk_lvds,
+  --    loaden(0)   => clk_enable,
+  --    outclk_2    => clk_core);
+  --end generate;
+
   tx : for i in 0 to g_outputs-1 generate
     led : gc_extend_pulse
       generic map(
@@ -90,19 +112,20 @@ begin
         rst_n_i    => rstn_ref_i,
         pulse_i    => dat_i(i)(0),
         extended_o => lvds_o_led_o(i));
-    
+
     s_dat_i(i) <= dat_i(i) xor c_toggle;
-    
+
     lvds : altera_lvds_tx
       generic map(
         g_family   => g_family)
       port map(
-        tx_core    => clk_ref_i,
+        tx_core    => clk_core,
         tx_inclock => clk_lvds,
         tx_enable  => clk_enable,
         tx_in      => s_dat_i(i),
         tx_out     => lvds_odat(i));
-    
+
+    arria5_arria2_obuf : if not(g_family = "Arria 10 GX SCU4") generate
     buf : altera_lvds_obuf
       generic map(
         g_family  => g_family)
@@ -110,8 +133,22 @@ begin
         datain    => lvds_odat(i),
         dataout   => lvds_p_o(i),
         dataout_b => lvds_n_o(i));
-  end generate;
+    end generate;
+
+    arria10_obuf : if g_family = "Arria 10 GX SCU4" generate
+     lvds_p_o <= lvds_odat;
+    end generate;
   
+    --buf : altera_lvds_obuf
+    --  generic map(
+    --    g_family  => g_family)
+    --  port map(
+    --    datain    => lvds_odat(i),
+    --    dataout   => lvds_p_o(i),
+     --   dataout_b => lvds_n_o(i));
+		  
+  end generate;
+
   rx : for i in 0 to g_inputs-1 generate
     buf : altera_lvds_ibuf
       generic map(
@@ -125,15 +162,15 @@ begin
       generic map(
         g_family   => g_family)
       port map(
-        rx_core    => clk_ref_i,
+        rx_core    => clk_core,
         rx_inclock => clk_lvds,
         rx_enable  => clk_enable,
         rx_in      => lvds_idat(i),
         rx_out     => s_dat_o(i));
-    
+
     dat_o(i) <= s_dat_o(i) xor c_toggle;
     s_led(i) <= s_dat_o(i)(0) xor c_toggle(0);
-	 
+
     led : gc_extend_pulse
       generic map(
         g_width => 125_000_000/20) -- 20 Hz
@@ -143,5 +180,5 @@ begin
         pulse_i    => s_led(i),
         extended_o => lvds_i_led_o(i));
   end generate;
-  
+
 end rtl;

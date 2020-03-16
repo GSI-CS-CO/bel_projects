@@ -1,4 +1,5 @@
 #include "blocklock.h"
+#include "aux_boost.h"
 
 vEbwrs& BlockLock::lock(vEbwrs& ew) {
   ew.va  += qflagsAdr;

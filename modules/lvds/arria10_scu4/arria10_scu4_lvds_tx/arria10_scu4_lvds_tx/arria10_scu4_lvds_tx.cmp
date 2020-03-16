@@ -1,0 +1,11 @@
+	component arria10_scu4_lvds_tx is
+		port (
+			ext_coreclock : in  std_logic                    := 'X';             -- export
+			ext_fclk      : in  std_logic                    := 'X';             -- export
+			ext_loaden    : in  std_logic                    := 'X';             -- export
+			tx_coreclock  : out std_logic;                                       -- export
+			tx_in         : in  std_logic_vector(7 downto 0) := (others => 'X'); -- export
+			tx_out        : out std_logic_vector(0 downto 0)                     -- export
+		);
+	end component arria10_scu4_lvds_tx;
+

@@ -1,0 +1,8 @@
+	component arria10_scu4_lvds_obuf is
+		port (
+			din       : in  std_logic_vector(0 downto 0) := (others => 'X'); -- export
+			pad_out   : out std_logic_vector(0 downto 0);                    -- export
+			pad_out_b : out std_logic_vector(0 downto 0)                     -- export
+		);
+	end component arria10_scu4_lvds_obuf;
+

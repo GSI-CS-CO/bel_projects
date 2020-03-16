@@ -160,7 +160,6 @@ begin
    
   end process;
   
-  slave_o.int <= '0';
   slave_o.rty <= '0';
   
   asmi_to_aru <= s_asmi_to_aru;

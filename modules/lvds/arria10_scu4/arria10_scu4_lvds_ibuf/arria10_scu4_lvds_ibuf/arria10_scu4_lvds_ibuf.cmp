@@ -1,0 +1,8 @@
+	component arria10_scu4_lvds_ibuf is
+		port (
+			dout     : out std_logic_vector(0 downto 0);                    -- export
+			pad_in   : in  std_logic_vector(0 downto 0) := (others => 'X'); -- export
+			pad_in_b : in  std_logic_vector(0 downto 0) := (others => 'X')  -- export
+		);
+	end component arria10_scu4_lvds_ibuf;
+

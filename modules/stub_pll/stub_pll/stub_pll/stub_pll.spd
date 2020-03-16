@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<simPackage>
+ <file
+   path="altera_iopll_181/sim/stub_pll_altera_iopll_181_arpnjwy.vo"
+   type="VERILOG"
+   library="stub_pll_altera_iopll_181" />
+ <file path="sim/stub_pll.v" type="VERILOG" hasInlineConfiguration="true" />
+ <topLevel name="stub_pll" />
+ <deviceFamily name="arria10" />
+</simPackage>

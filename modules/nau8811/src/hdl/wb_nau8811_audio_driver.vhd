@@ -26,7 +26,7 @@ entity wb_nau8811_audio_driver is
     g_iis_tx_fifo_size : natural := 1024; -- in g_iis_tx_fifo_size(s)
     g_iis_rx_fifo_size : natural := 1024; -- in g_iis_rx_fifo_size(s)
     g_iis_word_size    : natural := 32;   -- in bit(s)
-    g_use_external_pll : boolean := true  -- true for real synthesis or false for simulation purpose 
+    g_use_external_pll : boolean := true  -- true for real synthesis or false for simulation purpose
   );
   port (
     -- generic system interface
@@ -48,19 +48,19 @@ entity wb_nau8811_audio_driver is
     iis_bclk_o   : out std_logic; -- Clock
     iis_adcout_o : out std_logic; -- Data out
     iis_dacin_i  : in  std_logic  -- Data in
-  );    
+  );
 end wb_nau8811_audio_driver;
 
 -- architecture
 architecture rtl of wb_nau8811_audio_driver is
-  
+
   -- wb signals
   signal s_ack   : std_logic;
   signal s_stall : std_logic;
-  
+
   -- spi core
   signal s_spi_csb : std_logic;
-  
+
   -- iis core
   signal s_iis_clk           : std_logic;
   signal s_iis_reset         : std_logic;
@@ -68,17 +68,17 @@ architecture rtl of wb_nau8811_audio_driver is
   signal s_iis_adc_in        : std_logic;
   signal s_iis_tx_fill_level : std_logic_vector (9 downto 0);
   signal s_iis_rx_fill_level : std_logic_vector (9 downto 0);
-  
+
   -- pll management
   signal s_pll_reset  : std_logic;
   signal s_pll_locked : std_logic;
-  
+
   -- external trigger
   signal s_iis_trigger_sync : std_logic;
-  
+
   -- tx fifo signals (spi)
   signal s_spi_tx_fifo_data_in  : std_logic_vector (g_spi_data_size-1 downto 0);
-  signal s_spi_tx_fifo_data_out : std_logic_vector (g_spi_data_size-1 downto 0);  
+  signal s_spi_tx_fifo_data_out : std_logic_vector (g_spi_data_size-1 downto 0);
   signal s_spi_tx_fifo_write_en : std_logic;
   signal s_spi_tx_fifo_read_en  : std_logic;
   signal s_spi_tx_fifo_empty    : std_logic;
@@ -86,45 +86,45 @@ architecture rtl of wb_nau8811_audio_driver is
 
   -- tx fifo signals (iis)
   signal s_iis_tx_fifo_data_in  : std_logic_vector (g_iis_word_size-1 downto 0);
-  signal s_iis_tx_fifo_data_out : std_logic_vector (g_iis_word_size-1 downto 0);  
+  signal s_iis_tx_fifo_data_out : std_logic_vector (g_iis_word_size-1 downto 0);
   signal s_iis_tx_fifo_write_en : std_logic;
   signal s_iis_tx_fifo_read_en  : std_logic;
   signal s_iis_tx_fifo_empty    : std_logic;
   signal s_iis_tx_fifo_full     : std_logic;
   signal s_iis_tx_fifo_empty_m  : std_logic;
-  
+
   -- rx fifo signals (iis)
   signal s_iis_rx_fifo_data_in  : std_logic_vector (g_iis_word_size-1 downto 0);
-  signal s_iis_rx_fifo_data_out : std_logic_vector (g_iis_word_size-1 downto 0);  
+  signal s_iis_rx_fifo_data_out : std_logic_vector (g_iis_word_size-1 downto 0);
   signal s_iis_rx_fifo_write_en : std_logic;
   signal s_iis_rx_fifo_read_en  : std_logic;
   signal s_iis_rx_fifo_empty    : std_logic;
   signal s_iis_rx_fifo_full     : std_logic;
   signal s_iis_rx_fifo_full_m   : std_logic;
-  
+
   -- rx fifo signals (iis)
   type   t_iis_rx_fifo_read_state is (state_iis_rx_no_request_pending, state_iis_rx_request_pending, state_iis_rx_request_complete);
   signal s_iis_rx_fifo_read_state : t_iis_rx_fifo_read_state := state_iis_rx_no_request_pending;
-  
+
     -- stream tx fifo signals
   type   t_iis_tx_fifo_stream_state is (state_iis_tx_no_request_pending, state_iis_tx_request_pending, state_iis_tx_request_complete);
   signal s_iis_tx_fifo_stream_state : t_iis_tx_fifo_stream_state := state_iis_tx_no_request_pending;
-  signal s_iis_tx_fifo_stream_cache : std_logic_vector ((g_iis_word_size-1) downto 0);  
-  
+  signal s_iis_tx_fifo_stream_cache : std_logic_vector ((g_iis_word_size-1) downto 0);
+
   -- stream rx fifo signals
   type   t_iis_rx_fifo_stream_state is (state_iis_rx_no_request_pending, state_iis_rx_request_pending, state_iis_rx_request_complete);
   signal s_iis_rx_fifo_stream_state : t_iis_rx_fifo_stream_state := state_iis_rx_no_request_pending;
-  
+
   -- register mapping
-  constant c_address_status_reg         : std_logic_vector (2 downto 0):= "000"; -- 0(3 downto 2) - 0x00(31 downto 0) 
-  constant c_address_control_reg        : std_logic_vector (2 downto 0):= "001"; -- 1(3 downto 2) - 0x04(31 downto 0) 
-  constant c_address_tx_spi_data_reg    : std_logic_vector (2 downto 0):= "010"; -- 2(3 downto 2) - 0x08(31 downto 0) 
-  constant c_address_tx_iis_data_reg    : std_logic_vector (2 downto 0):= "011"; -- 3(3 downto 2) - 0x0C(31 downto 0) 
-  constant c_address_rx_iis_data_reg    : std_logic_vector (2 downto 0):= "100"; -- 4(3 downto 2) - 0x10(31 downto 0) 
-  constant c_address_tx_iis_stream_reg  : std_logic_vector (2 downto 0):= "101"; -- 5(3 downto 2) - 0x14(31 downto 0) 
-  constant c_address_rx_iis_stream_reg  : std_logic_vector (2 downto 0):= "110"; -- 6(3 downto 2) - 0x18(31 downto 0) 
-  constant c_address_iis_fill_level_reg : std_logic_vector (2 downto 0):= "111"; -- 7(3 downto 2) - 0x1c(31 downto 0) 
-  
+  constant c_address_status_reg         : std_logic_vector (2 downto 0):= "000"; -- 0(3 downto 2) - 0x00(31 downto 0)
+  constant c_address_control_reg        : std_logic_vector (2 downto 0):= "001"; -- 1(3 downto 2) - 0x04(31 downto 0)
+  constant c_address_tx_spi_data_reg    : std_logic_vector (2 downto 0):= "010"; -- 2(3 downto 2) - 0x08(31 downto 0)
+  constant c_address_tx_iis_data_reg    : std_logic_vector (2 downto 0):= "011"; -- 3(3 downto 2) - 0x0C(31 downto 0)
+  constant c_address_rx_iis_data_reg    : std_logic_vector (2 downto 0):= "100"; -- 4(3 downto 2) - 0x10(31 downto 0)
+  constant c_address_tx_iis_stream_reg  : std_logic_vector (2 downto 0):= "101"; -- 5(3 downto 2) - 0x14(31 downto 0)
+  constant c_address_rx_iis_stream_reg  : std_logic_vector (2 downto 0):= "110"; -- 6(3 downto 2) - 0x18(31 downto 0)
+  constant c_address_iis_fill_level_reg : std_logic_vector (2 downto 0):= "111"; -- 7(3 downto 2) - 0x1c(31 downto 0)
+
   -- register content
   signal s_control_reg              : std_logic_vector ((g_data_size-1) downto 0);
   signal s_iis_heartbeat_pol        : std_logic; -- 0 => Falling edge - 1 => Rising edge.
@@ -134,16 +134,16 @@ architecture rtl of wb_nau8811_audio_driver is
   signal s_iis_invert_fs            : std_logic; -- 0 => Don't invert FS - 1 => Invert FS.
   signal s_iis_mono_output          : std_logic; -- 0 => Clone left channel to right channel - 1 => Only send data for left channel.
   signal s_iis_transaction_mode     : std_logic; -- 0 => Only receive data when transmitting new data - 1 => Receive new data all the time.
-  signal s_iis_control_clock_enable : std_logic; -- 0 => Disable clockd and frame sync - 1 => Enable clock and frame sync 
+  signal s_iis_control_clock_enable : std_logic; -- 0 => Disable clockd and frame sync - 1 => Enable clock and frame sync
   signal s_spi_ss_state             : std_logic; -- X => Directly control SS if s_spi_ss_ctrl_config is set to '1'.
   signal s_spi_ss_ctrl_config       : std_logic; -- 0 => SPI controls SS - 1 => SS is controlled by control register.
   signal s_status_reg               : std_logic_vector ((g_data_size-1) downto 0);
   signal s_iis_fill_level_reg       : std_logic_vector ((g_data_size-1) downto 0);
-  
+
   -- sync
   signal s_wb_to_iis_stage1         : std_logic_vector (7 downto 0);
   signal s_wb_to_iis_stage2         : std_logic_vector (7 downto 0);
-  
+
   -- constant wishbone bus error (register is not readable or writable, ...)
   constant c_wb_bus_read_error : std_logic_vector (g_data_size-1 downto 0):= x"DEADBEEF";
 
@@ -182,8 +182,8 @@ begin
     sclk_o         => spi_sclk_o,
     ss_o           => s_spi_csb,
     rx_read_o      => s_spi_tx_fifo_read_en
-  );  
-  
+  );
+
   -- submodule iis master
   iis_master : generic_iis_master
   generic map (
@@ -210,32 +210,32 @@ begin
     iis_mono_output_i => s_wb_to_iis_stage2(2), -- s_iis_mono_output
     iis_invert_fs_i   => s_wb_to_iis_stage2(1), -- s_iis_invert_fs
     iis_padding_i     => s_wb_to_iis_stage2(0)  -- s_iis_padding
-  );  
-  
+  );
+
     iis_tx_fifo : generic_async_fifo
     generic map (
-      g_data_width => g_iis_word_size,  
+      g_data_width => g_iis_word_size,
       g_size       => g_iis_tx_fifo_size,
       g_show_ahead => true,
-      
+
       g_with_rd_empty        => true,
       g_with_rd_full         => true,
       g_with_rd_almost_empty => false,
       g_with_rd_almost_full  => false,
       g_with_rd_count        => false,
-      
+
       g_with_wr_empty        => true,
       g_with_wr_full         => true,
       g_with_wr_almost_empty => false,
       g_with_wr_almost_full  => false,
       g_with_wr_count        => true,
-    
+
       g_almost_empty_threshold => 0,
       g_almost_full_threshold  => 0
       )
     port map (
       rst_n_i           => rst_n_i,
-      
+
       clk_wr_i          => clk_sys_i,
       d_i               => s_iis_tx_fifo_data_in,
       we_i              => s_iis_tx_fifo_write_en,
@@ -244,7 +244,7 @@ begin
       wr_almost_empty_o => open,
       wr_almost_full_o  => open,
       wr_count_o        => s_iis_tx_fill_level,
-      
+
       clk_rd_i          => s_iis_clk,
       q_o               => s_iis_tx_fifo_data_out,
       rd_i              => s_iis_tx_fifo_read_en,
@@ -253,31 +253,31 @@ begin
       rd_almost_empty_o => open,
       rd_almost_full_o  => open,
       rd_count_o        => open);
-  
+
     iis_rx_fifo : generic_async_fifo
     generic map (
-      g_data_width => g_iis_word_size,  
+      g_data_width => g_iis_word_size,
       g_size       => g_iis_tx_fifo_size,
       g_show_ahead => true,
-    
+
       g_with_rd_empty        => true,
       g_with_rd_full         => true,
       g_with_rd_almost_empty => false,
       g_with_rd_almost_full  => false,
       g_with_rd_count        => true,
-    
+
       g_with_wr_empty        => true,
       g_with_wr_full         => true,
       g_with_wr_almost_empty => false,
       g_with_wr_almost_full  => false,
       g_with_wr_count        => false,
-    
+
       g_almost_empty_threshold => 0,
       g_almost_full_threshold  => 0
       )
     port map (
       rst_n_i           => rst_n_i,
-      
+
       clk_wr_i          => s_iis_clk,
       d_i               => s_iis_rx_fifo_data_in,
       we_i              => s_iis_rx_fifo_write_en,
@@ -286,7 +286,7 @@ begin
       wr_almost_empty_o => open,
       wr_almost_full_o  => open,
       wr_count_o        => open,
-      
+
       clk_rd_i          => clk_sys_i,
       q_o               => s_iis_rx_fifo_data_out,
       rd_i              => s_iis_rx_fifo_read_en,
@@ -295,7 +295,7 @@ begin
       rd_almost_empty_o => open,
       rd_almost_full_o  => open,
       rd_count_o        => s_iis_rx_fill_level);
-  
+
   -- pll/clock management simulation purpose
   audio_pll_n : if not g_use_external_pll generate
     -- simulate clock
@@ -304,10 +304,10 @@ begin
       s_iis_clk <= '0';
       wait for 20.25 ns;
       s_iis_clk <= '1';
-      wait for 20.25 ns; 
+      wait for 20.25 ns;
     end process;
     -- simulate locked signal
-    p_lock : process 
+    p_lock : process
     begin
       s_pll_locked <= '0';
       wait for 100 ns;
@@ -315,7 +315,7 @@ begin
       wait;
     end process;
   end generate;
-  
+
   -- pll/clock management real hardware
   audio_pll_y : if g_use_external_pll generate
     x : audio_pll
@@ -326,14 +326,14 @@ begin
         locked   => s_pll_locked
       );
   end generate;
-  
+
   -- process reset management
   p_reset : process(rst_n_i)
   begin
     -- invert the locked signal and use it as reset
     s_iis_reset <= rst_n_i;
   end process;
-  
+
   -- process pll reset management
   p_pll_reset : process(clk_sys_i, rst_n_i)
   begin
@@ -350,35 +350,35 @@ begin
       end if;
     end if;
   end process;
-  
+
   -- process wishbone acknowlegde
   p_wb_ack : process(s_ack)
   begin
     slave_o.ack <= s_ack;
   end process;
- 
-  -- process wishbone stall  
+
+  -- process wishbone stall
   p_wb_stall : process(s_stall)
   begin
     slave_o.stall <= s_stall;
   end process;
-  
+
   -- process iis adcout
   p_iis_adcout : process(s_iis_adc_out)
   begin
     iis_adcout_o <= s_iis_adc_out;
   end process;
-  
+
     -- process iis adcin
   p_iis_adin : process(iis_dacin_i, s_iis_adc_out, s_iis_internal_loop)
   begin
     if (s_iis_internal_loop = '0') then
-      s_iis_adc_in <= iis_dacin_i; 
+      s_iis_adc_in <= iis_dacin_i;
     else
       s_iis_adc_in <= s_iis_adc_out;
     end if;
   end process;
-  
+
   -- status register
    p_status_reg : process(s_iis_rx_fifo_empty, s_iis_rx_fifo_full, s_iis_tx_fifo_empty, s_iis_tx_fifo_full, s_spi_tx_fifo_empty, s_spi_tx_fifo_full)
   begin
@@ -390,8 +390,8 @@ begin
     s_status_reg(5)                        <= s_iis_rx_fifo_empty;
     s_status_reg((g_data_size-1) downto 6) <= (others => '0');
   end process;
-  
-  -- process slave select depending on slave select configuration 
+
+  -- process slave select depending on slave select configuration
   p_ss : process(s_spi_csb, s_spi_ss_state, s_spi_ss_ctrl_config)
   begin
     if (s_spi_ss_ctrl_config = '0') then
@@ -400,7 +400,7 @@ begin
       spi_csb_o <= s_spi_ss_state;
     end if;
   end process;
-  
+
   -- synchronize trigger in signal
   p_sync_trigger : process(clk_sys_i, rst_n_i)
   begin
@@ -411,7 +411,7 @@ begin
       s_iis_trigger_sync <= trigger_i;
     end if;
   end process;
-  
+
   -- control register
   p_control_reg : process(s_spi_ss_ctrl_config, s_spi_ss_state, s_iis_control_clock_enable, s_iis_transaction_mode, s_iis_mono_output, s_iis_invert_fs, s_iis_padding, s_iis_internal_loop, s_iis_heartbeat_mode, s_iis_heartbeat_pol)
   begin
@@ -427,7 +427,7 @@ begin
     s_control_reg(9)                         <= s_iis_heartbeat_pol;
     s_control_reg((g_data_size-1) downto 10) <= (others => '0');
   end process;
-  
+
   -- fifo fill level register
   p_fill_level_reg : process (s_iis_tx_fill_level, s_iis_tx_fifo_full, s_iis_rx_fill_level, s_iis_rx_fifo_full)
   begin
@@ -438,7 +438,7 @@ begin
     s_iis_fill_level_reg(26)           <= s_iis_rx_fifo_full;
     s_iis_fill_level_reg(31 downto 27) <= (others => '0');
   end process;
-  
+
   -- process handle wishbone requests
   p_wb_handle_requests : process(clk_sys_i, rst_n_i)
   begin
@@ -446,12 +446,11 @@ begin
     if (rst_n_i = '0') then
       s_ack                      <= '0';
       s_stall                    <= '0';
-      slave_o.int                <= '0';
       slave_o.err                <= '0';
       slave_o.rty                <= '0';
       slave_o.dat                <= (others => '0');
       s_spi_tx_fifo_data_in      <= (others => '0');
-      s_spi_tx_fifo_write_en     <= '0'; 
+      s_spi_tx_fifo_write_en     <= '0';
       s_spi_ss_ctrl_config       <= '0';
       s_spi_ss_state             <= '0';
       s_iis_control_clock_enable <= '0';
@@ -466,28 +465,27 @@ begin
       s_iis_rx_fifo_read_state   <= state_iis_rx_no_request_pending;
       s_iis_tx_fifo_stream_state <= state_iis_tx_no_request_pending;
       s_iis_rx_fifo_stream_state <= state_iis_rx_no_request_pending;
-      
-    -- process with normal flow 
+
+    -- process with normal flow
     elsif (rising_edge(clk_sys_i)) then
       -- generate ack and others wishbone signals
-      slave_o.int <= '0';
       slave_o.err <= '0';
       slave_o.rty <= '0';
-      
+
     ---- rx fifo state machine (stall management)
     --------------------------------------------------------------------------------------------------------------------
-    -- check if a request is incoming   
+    -- check if a request is incoming
     if (s_iis_rx_fifo_read_state = state_iis_rx_request_pending) then
       s_iis_rx_fifo_read_state       <= state_iis_rx_request_complete;
       s_iis_rx_fifo_read_en          <= '0';
-      
+
     -- finish the rx read request
     elsif (s_iis_rx_fifo_read_state = state_iis_rx_request_complete) then
       s_stall                              <= '0';
       s_ack                                <= '1';
       slave_o.dat                          <= s_iis_rx_fifo_data_out;
       s_iis_rx_fifo_read_state             <= state_iis_rx_no_request_pending;
-        
+
       -- tx fifo stream mode state machine
       ------------------------------------------------------------------------------------------------------------------
       -- write data to fifo is it is not full
@@ -497,14 +495,14 @@ begin
           s_iis_tx_fifo_write_en           <= '1';
           s_iis_tx_fifo_stream_state       <= state_iis_tx_request_complete;
         end if;
-      
+
       -- clear write request and accept next data
       elsif (s_iis_tx_fifo_stream_state = state_iis_tx_request_complete) then
         s_stall                            <= '0';
         s_ack                              <= '1';
         s_iis_tx_fifo_write_en             <= '0';
         s_iis_tx_fifo_stream_state         <= state_iis_tx_no_request_pending;
-        
+
       -- rx fifo stream mode state machine
       ------------------------------------------------------------------------------------------------------------------
       -- read data from fifo if it is not empty
@@ -513,30 +511,30 @@ begin
           s_iis_rx_fifo_read_en            <= '1';
           s_iis_rx_fifo_stream_state       <= state_iis_rx_request_complete;
         end if;
-      
+
       elsif (s_iis_rx_fifo_stream_state = state_iis_rx_request_complete) then
         if ( s_iis_rx_fifo_read_en = '1') then
           s_iis_rx_fifo_read_en            <= '0';
-        else       
+        else
           s_stall                          <= '0';
           s_ack                            <= '1';
           slave_o.dat                      <= s_iis_rx_fifo_data_out;
           s_iis_rx_fifo_stream_state       <= state_iis_rx_no_request_pending;
         end if;
-        
+
       -- handle all initial requests
       ------------------------------------------------------------------------------------------------------------------
       -- expect a valid request/strobe
       elsif (slave_i.stb='1' and slave_i.cyc='1') then
         -- evaluate address and write enable signals
         case slave_i.adr(4 downto 2) is
-        
+
           -- handle requests for generic status register
           when c_address_status_reg =>
             slave_o.dat                    <= s_status_reg;
             s_stall                        <= '0';
             s_ack                          <= '1';
-            
+
           -- handle requests for generic control register
           when c_address_control_reg =>
             if (slave_i.we='1') then
@@ -550,12 +548,12 @@ begin
               s_iis_internal_loop          <= slave_i.dat(7);
               s_iis_heartbeat_mode         <= slave_i.dat(8);
               s_iis_heartbeat_pol          <= slave_i.dat(9);
-            end if;  
+            end if;
             slave_o.dat                    <= s_control_reg;
             s_stall                        <= '0';
             s_ack                          <= '1';
-            
-          -- handle requests for spi tx data register 
+
+          -- handle requests for spi tx data register
           when c_address_tx_spi_data_reg =>
             if (slave_i.we='1') then
               s_spi_tx_fifo_data_in        <= slave_i.dat(g_spi_data_size-1 downto 0);
@@ -564,8 +562,8 @@ begin
             slave_o.dat                    <= c_wb_bus_read_error; -- this is no read address
             s_stall                        <= '0';
             s_ack                          <= '1';
-            
-          -- handle requests for iis tx data register 
+
+          -- handle requests for iis tx data register
           when c_address_tx_iis_data_reg =>
             if (slave_i.we='1') then
               s_iis_tx_fifo_data_in        <= slave_i.dat((g_iis_word_size)-1 downto 0);
@@ -574,8 +572,8 @@ begin
             slave_o.dat                    <= c_wb_bus_read_error; -- this is no read address
             s_stall                        <= '0';
             s_ack                          <= '1';
-            
-          -- handle requests for iis rx data register 
+
+          -- handle requests for iis rx data register
           when c_address_rx_iis_data_reg =>
             if (slave_i.we='1') then
               s_stall                      <= '0';
@@ -587,9 +585,9 @@ begin
               s_ack                        <= '1';
               slave_o.dat                  <= s_iis_rx_fifo_data_out;
             end if;
-        
-          
-          -- handle requests for iis tx stream register 
+
+
+          -- handle requests for iis tx stream register
           when c_address_tx_iis_stream_reg =>
             if (slave_i.we='1') then
               -- write date to fifo if it is not full
@@ -610,8 +608,8 @@ begin
               s_ack                        <= '1';
             end if;
             slave_o.dat                    <= c_wb_bus_read_error; -- this is no read address
-            
-          -- handle requests for iis rx stream register 
+
+          -- handle requests for iis rx stream register
           when c_address_rx_iis_stream_reg =>
             if (slave_i.we='1') then
               s_stall                        <= '0';
@@ -629,21 +627,21 @@ begin
               end if;
             end if;
             slave_o.dat                    <= c_wb_bus_read_error; -- this is no read address
-        
+
           -- handle requests for fifo fill level register
           when c_address_iis_fill_level_reg =>
             slave_o.dat                    <= s_iis_fill_level_reg;
             s_stall                        <= '0';
             s_ack                          <= '1';
-          
+
           -- unknown access
           when others =>
             slave_o.dat                    <= c_wb_bus_read_error; -- this is no write or read address
             s_stall                        <= '0';
             s_ack                          <= '1';
-            
+
         end case; -- end address based switching
-     
+
       -- no cycle or strobe
       else
         s_spi_tx_fifo_write_en             <= '0';
@@ -653,7 +651,7 @@ begin
         s_stall                            <= '0';
         s_ack                              <= '0';
       end if; -- check for cycle and strobe
-    
+
     end if; -- check reset
   end process;
 
@@ -675,5 +673,5 @@ begin
       s_wb_to_iis_stage2 <= s_wb_to_iis_stage1;
     end if;
   end process;
-  
+
 end rtl;

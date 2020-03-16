@@ -12,13 +12,14 @@
 
 
 
+
 typedef std::set<uint32_t> aPool; // contains all available addresses in LM32 memory area
 
 
 class MemPool {
   friend class AllocTable;
   friend class CarpeDM;
-
+  //friend class CarpeDM;
 
 
   const uint8_t cpu;

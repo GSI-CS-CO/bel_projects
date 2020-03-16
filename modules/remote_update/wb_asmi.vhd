@@ -372,7 +372,6 @@ begin
    
   end process;
   
-  slave_o.int <= '0';
   slave_o.rty <= '0';
   
 

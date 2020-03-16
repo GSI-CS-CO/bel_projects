@@ -106,6 +106,7 @@ begin
   -- Keep the PSRAM synchronous to the SoC bus for lower latency
   ps_clk        <= clk_i;
   slave_o.err   <= '0';
+  slave_o.rty   <= '0';
   slave_o.ack   <= r_ack;
   slave_o.stall <= not r_push;
   slave_o.dat(31 downto 16) <= r_dati_h;

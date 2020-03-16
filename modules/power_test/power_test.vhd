@@ -19,33 +19,32 @@ entity power_test is
     slave_i:        in    t_wishbone_slave_in;
     slave_o:        out   t_wishbone_slave_out;
     pwm_o:          out   std_logic;
-    or_o:           out   std_logic    
+    or_o:           out   std_logic
     );
   end power_test;
 
-  
+
 architecture arch_power_test of power_test is
 
 
 
   constant  rdwr_pwm_cnt_a:   integer := 16#00#;  -- read/write pwm counter:   wb_power_test_offset + 16#00#
-                                                  
+
   type   toggle_states is (init, to_one, to_zero);
   signal sm_toggle:     toggle_states;
   signal toggle_row:    unsigned(row_width-1 downto 0);
 
 
   signal  ex_stall, ex_ack, ex_err, intr: std_logic;
-  
+
   signal  rdwr_pwm_active_cnt:  std_logic;
   signal  pwm_active_cnt:       unsigned(pwm_width-1 downto 0);
   signal  s_pwm_o:              std_logic;
 
   begin
-  
+
   slave_o.stall    <= ex_stall;
   slave_o.ack      <= ex_ack;
-  slave_o.int      <= intr;
   slave_o.err      <= ex_err;
   slave_o.rty      <= '0';
   
@@ -72,27 +71,27 @@ architecture arch_power_test of power_test is
       row_i   => toggle_row,
       or_o    => or_o
       );
- 
+
   p_toggle_data: process (clk_i, nrst_i)
-    begin  
+    begin
       if nrst_i = '0' then           -- asynchronous reset
         sm_toggle <= init;
         toggle_row <= (others => '0');
-        
+
       elsif rising_edge(clk_i) then  -- rising clock edge
-  
+
         case sm_toggle is
-          
+
           when init =>
             toggle_row <= (others => '0');
             if s_pwm_o = '1' then
               sm_toggle <= to_one;
             end if;
-          
+
           when to_one =>
             toggle_row <= (others =>'1');
               sm_toggle <= to_zero;
-          
+
           when to_zero =>
             toggle_row <= (others =>'0');
             if s_pwm_o = '1' then
@@ -100,7 +99,7 @@ architecture arch_power_test of power_test is
             else
               sm_toggle <= init;
             end if;
-    
+
           when others =>
             sm_toggle <= init;
 
@@ -108,7 +107,7 @@ architecture arch_power_test of power_test is
       end if;
   end process p_toggle_data;
 
-  
+
   p_regs_acc: process (clk_i, nrst_i)
     begin
       if nrst_i = '0' then
@@ -116,13 +115,13 @@ architecture arch_power_test of power_test is
         ex_ack          <= '0';
         ex_err          <= '0';
         pwm_active_cnt  <= to_unsigned(0, pwm_active_cnt'length);
-        
+
       elsif rising_edge(clk_i) then
         ex_stall        <= '1';
         ex_ack          <= '0';
         ex_err          <= '0';
         slave_o.dat <= (others => '0');
-  
+
         if slave_i.cyc = '1' and slave_i.stb = '1' and ex_stall = '1' then
 
         -- begin of wishbone cycle
@@ -156,7 +155,7 @@ architecture arch_power_test of power_test is
         end if;
       end if;
     end process p_regs_acc;
-    
+
   pwm_o <= s_pwm_o;
-   
+
   end arch_power_test;

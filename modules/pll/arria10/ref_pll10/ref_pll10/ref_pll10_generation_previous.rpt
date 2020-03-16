@@ -1,0 +1,25 @@
+Info: Starting: Create HDL design files for synthesis
+Info: qsys-generate /home/alex/workspace/projects/r13/bel_projects/modules/pll/arria10/ref_pll10/ref_pll10.qsys --synthesis=VERILOG --output-directory=/home/alex/workspace/projects/r13/bel_projects/modules/pll/arria10/ref_pll10/ref_pll10 --family="Arria 10" --part=10AS066N3F40E2SG
+Progress: Loading ref_pll10/ref_pll10.qsys
+Progress: Reading input file
+Progress: Adding iopll_0 [altera_iopll 16.0]
+Progress: Parameterizing module iopll_0
+Progress: Building connections
+Progress: Parameterizing connections
+Progress: Validating
+Progress: Done reading input file
+Warning: ref_pll10.iopll_0: Able to implement PLL - Actual settings differ from Requested settings
+Info: ref_pll10: "Transforming system: ref_pll10"
+Info: ref_pll10: Running transform generation_view_transform
+Info: ref_pll10: Running transform generation_view_transform took 0.000s
+Info: iopll_0: Running transform generation_view_transform
+Info: iopll_0: Running transform generation_view_transform took 0.000s
+Info: ref_pll10: Running transform merlin_avalon_transform
+Info: ref_pll10: Running transform merlin_avalon_transform took 0.216s
+Info: ref_pll10: "Naming system components in system: ref_pll10"
+Info: ref_pll10: "Processing generation queue"
+Info: ref_pll10: "Generating: ref_pll10"
+Info: ref_pll10: "Generating: ref_pll10_altera_iopll_160_d3szf3y"
+Info: ref_pll10: Done "ref_pll10" with 2 modules, 3 files
+Info: qsys-generate succeeded.
+Info: Finished: Create HDL design files for synthesis
