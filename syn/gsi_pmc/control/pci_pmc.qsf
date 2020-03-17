@@ -104,6 +104,7 @@ set_global_assignment -name QIP_FILE ../../../modules/pll/arria5/sys_pll5.qip
 set_global_assignment -name QSYS_FILE ../../../modules/temp_sens/temp_sens.qsys
 set_global_assignment -name RELEASE_CLEARS_BEFORE_TRI_STATES ON
 set_global_assignment -name SDC_FILE ../../../top/common/arria5.sdc
+set_global_assignment -name SDC_FILE ../../../top/gsi_pmc/control/pci_pmc.sdc
 set_global_assignment -name SEED 190
 set_global_assignment -name SMART_RECOMPILE ON
 set_global_assignment -name STRATIX_DEVICE_IO_STANDARD "2.5 V"
@@ -193,8 +194,8 @@ set_global_assignment -name SYSTEMVERILOG_FILE ../../../modules/cfi_flash/cfi_ct
 set_global_assignment -name SYSTEMVERILOG_FILE ../../../modules/lpc_uart/serirq_defines.v -library work
 set_global_assignment -name SYSTEMVERILOG_FILE ../../../modules/lpc_uart/serirq_slave.v -library work
 set_global_assignment -name SYSTEMVERILOG_FILE ../../../modules/temp_sens/synthesis/submodules/temp_sens_temp_sense_0.v -library work
-set_global_assignment -name TIMEQUEST_DO_CCPP_REMOVAL ON
-set_global_assignment -name TIMEQUEST_MULTICORNER_ANALYSIS ON
+set_global_assignment -name TIMING_ANALYZER_DO_CCPP_REMOVAL ON
+set_global_assignment -name TIMING_ANALYZER_MULTICORNER_ANALYSIS ON
 set_global_assignment -name TOP_LEVEL_ENTITY pci_pmc
 set_global_assignment -name TRI_STATE_SPI_PINS ON
 set_global_assignment -name USE_CONFIGURATION_DEVICE ON
