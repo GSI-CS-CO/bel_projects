@@ -27,6 +27,7 @@ create_clock -period 125Mhz -name pexp_sfp_clk_in       [get_ports {clk_sfp_ref_
 create_clock -period 125Mhz -name microtca_sfp_clk_in   [get_ports {clk_sfp_ref_i}]
 create_clock -period 10Mhz  -name microtca_ext_clk_p_in [get_ports {clk_lvtio_p_i}]
 create_clock -period 10Mhz  -name microtca_ext_clk_n_in [get_ports {clk_lvtio_n_i}]
+create_clock -period 10MhZ  -name pmc_ext_clk_in        [get_ports {clk_lvtio_i}]
 
 # Cut the clock domains from each other
 set_clock_groups -asynchronous \
@@ -39,6 +40,7 @@ set_clock_groups -asynchronous \
  -group [get_clocks { microtca_sfp_clk_in ]                                                                                                                                                                                                               \
  -group [get_clocks { microtca_ext_clk_p_in ]                                                                                                                                                                                                             \
  -group [get_clocks { microtca_ext_clk_n_in ]                                                                                                                                                                                                             \
+ -group [get_clocks { pmc_ext_clk_in }                                                                                                                                                                                                                    \
  -group [get_clocks { altera_reserved_tck } ]                                                                                                                                                                                                             \
  -group [get_clocks { alt_cal_av_edge_detect_clk } ]                                                                                                                                                                                                      \
  -group [get_clocks { clk_20m_vcxo_i } ]                                                                                                                                                                                                                  \
