@@ -277,17 +277,17 @@ begin
       g_lm32_MSIs           => 1,
       g_delay_diagnostics   => true,
       g_lm32_init_files     => f_string_list_repeat(c_initf_name, c_cores),
-		  g_lm32_profiles       => f_string_list_repeat(c_profile_name, c_cores),
+      g_lm32_profiles       => f_string_list_repeat(c_profile_name, c_cores),
       g_en_eca              => false
-		)
+    )
     port map(
       core_clk_20m_vcxo_i    => clk_20m_vcxo_i,
       core_clk_125m_pllref_i => clk_125m_pllref_i,
       core_clk_125m_sfpref_i => sfp234_ref_clk_i,
       core_clk_125m_local_i  => clk_125m_local_i,
       core_rstn_i            => pbs2,
-      core_clk_butis_o       => butis_clk_200,
-      core_clk_butis_t0_o    => butis_t0_ts,
+      --core_clk_butis_o       => butis_clk_200,
+      --core_clk_butis_t0_o    => butis_t0_ts,
       wr_onewire_io          => rom_data,
       wr_sfp_sda_io          => sfp4_mod2,
       wr_sfp_scl_io          => sfp4_mod1,
@@ -369,12 +369,16 @@ begin
   n8     <= '0' when gpio_o(7)='1'  else 'Z';   -- white
 
   -- BuTiS/MDMHR Output
-  p19 <= butis_clk_200;
-  p24 <= butis_t0_ts;
+  --p19 <= butis_clk_200;
+  --p24 <= butis_t0_ts;
+  p19 <= '0';
+  p24 <= '0';
 
   -- BuTiS/MHDMR activity LEDs
-  p6  <= '0' when butis_clk_200='1' else 'Z'; -- LED3 (near HDMI = CK200 / LVDS3)
-  n6  <= '0' when butis_t0_ts='1'   else 'Z'; -- LED4 (near HDMI = SYOU  / LVDS4)
+  --p6  <= '0' when butis_clk_200='1' else 'Z'; -- LED3 (near HDMI = CK200 / LVDS3)
+  --n6  <= '0' when butis_t0_ts='1'   else 'Z'; -- LED4 (near HDMI = SYOU  / LVDS4)
+  p6 <= '0';
+  n6 <= '0';
 
   -- LVDS->LEMO output enable / termination
   n10 <= '0' when lvds_oen(0)='1' else 'Z'; -- TTLIO1 output enable
