@@ -966,7 +966,6 @@ set_instance_assignment -name MAX_FANOUT 64 -to "monster:main|eca_tlu:ecatlu"
 set_instance_assignment -name MAX_FANOUT 64 -to "monster:main|eca_wb_event:ecawb"
 set_instance_assignment -name MAX_FANOUT 64 -to "monster:main|ftm_lm32_cluster:lm32*"
 set_instance_assignment -name MAX_FANOUT 64 -to "monster:main|wr_eca:eca"
-set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
 set_instance_assignment -name REMOVE_DUPLICATE_REGISTERS OFF -to "monster:main|wb_pmc_host_bridge:\\pmc_y:pmc|pci_bridge32:pci_core_inst|*"
 set_instance_assignment -name SYNTH_CRITICAL_PIN ON -to pmc_c_be_io
 set_instance_assignment -name SYNTH_CRITICAL_PIN ON -to pmc_devsel_io
@@ -1193,3 +1192,5 @@ set_location_assignment PLLOUTPUTCOUNTER_X0_Y67_N1 -to "monster:main|sys_pll5:\\
 set_location_assignment PLLOUTPUTCOUNTER_X43_Y61_N1 -to "monster:main|ref_pll5:\\ref_a5:ref_inst|ref_pll5_0002:ref_pll5_inst|altera_pll:altera_pll_i|altera_arriav_pll:arriav_pll|cascade_wire[2]"
 set_location_assignment PLLOUTPUTCOUNTER_X43_Y62_N1 -to "monster:main|ref_pll5:\\ref_a5:ref_inst|ref_pll5_0002:ref_pll5_inst|altera_pll:altera_pll_i|altera_arriav_pll:arriav_pll|cascade_wire[1]"
 set_location_assignment PLLOUTPUTCOUNTER_X43_Y63_N1 -to "monster:main|ref_pll5:\\ref_a5:ref_inst|ref_pll5_0002:ref_pll5_inst|altera_pll:altera_pll_i|altera_arriav_pll:arriav_pll|cascade_wire[0]"
+
+set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
