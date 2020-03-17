@@ -1,6 +1,3 @@
-create_clock -name {clk_lvtio_i}        -period 10.000 [get_ports {clk_lvtio_i}       ]
-
-
 # PCI Clock Settings
 ##############################
 create_clock -period 30 -name PCI_CLOCK [get_ports {pmc_clk_i}]
