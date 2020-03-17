@@ -60,19 +60,10 @@ int configure_fg_macro( const unsigned int channel )
    if( channel >= MAX_FG_CHANNELS )
       return -1;
 
-   #if !defined( CONFIG_GSI ) && !defined( __DOCFSM__ )
-    #warning Maybe old Makefile is used, this could be erroneous in using local static variables!
-   #endif
-   static uint16_t s_clearIsActive = 0;
-   STATIC_ASSERT( BIT_SIZEOF( s_clearIsActive ) >= (MAX_SCU_SLAVES + 1) );
-
-   #define _SLOT_BIT_MASK() (1 << (getFgSlotNumber( socket ) - 1))
-
-   const uint8_t socket = getSocket( channel );
+   const unsigned int socket = getSocket( channel );
    /* actions per slave card */
 #ifdef CONFIG_MIL_FG
    uint16_t dreq_status = 0;
-   #define _MIL_BIT_MASK  (1 << MAX_SCU_SLAVES)
 
    if( isMilScuBusFg( socket ) )
    {
@@ -83,8 +74,18 @@ int configure_fg_macro( const unsigned int channel )
       status_mil( g_pScu_mil_base, &dreq_status );
    }
 
+   #if !defined( CONFIG_GSI ) && !defined( __DOCFSM__ )
+    #warning Maybe old Makefile is used, this could be erroneous in using local static variables!
+   #endif
+   static uint16_t s_clearIsActive = 0;
+   STATIC_ASSERT( BIT_SIZEOF( s_clearIsActive ) >= (MAX_SCU_SLAVES + 1) );
 
-   // if dreq is active
+   #define _MIL_BIT_MASK  (1 << MAX_SCU_SLAVES)
+   #define _SLOT_BIT_MASK() (1 << (getFgSlotNumber( socket ) - 1))
+
+   /*
+    * If data request (dreq) is active?
+    */
    if( (dreq_status & MIL_DATA_REQ_INTR) != 0 )
    {
       if( isMilScuBusFg( socket ) )
@@ -123,6 +124,7 @@ int configure_fg_macro( const unsigned int channel )
       }
    }
 
+   #undef _SLOT_BIT_MASK
    #undef _MIL_BIT_MASK
    int status;
 #endif /* CONFIG_MIL_FG */
@@ -154,7 +156,6 @@ int configure_fg_macro( const unsigned int channel )
          printDeviceError( status, slot, "enable dreq"); //enable sending of drq
    }
 #endif /* CONFIG_MIL_FG */
-   #undef _SLOT_BIT_MASK
 
    unsigned int fg_base = 0;
    /* fg mode and reset */
