@@ -1,6 +1,6 @@
 files = [
    "exploder5_csco_tr.vhd",
-   "exploder5_csco_tr.sdc",
+   "../../common/arria5.sdc",
    "ramsize_pkg.vhd",
 ]
 
