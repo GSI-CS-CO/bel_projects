@@ -1185,6 +1185,7 @@ set_location_assignment PIN_Y21 -to led_user_o[8]
 set_location_assignment PIN_Y4 -to dis_di_o[2]
 set_location_assignment PIN_Y5 -to dis_do_i
 set_location_assignment PIN_Y9 -to slwr
+
 set_location_assignment PLLOUTPUTCOUNTER_X0_Y20_N1 -to "monster:main|dmtd_pll5:\\dmtd_a5:dmtd_inst|dmtd_pll5_0002:dmtd_pll5_inst|altera_pll:altera_pll_i|outclk_wire[0]"
 set_location_assignment PLLOUTPUTCOUNTER_X0_Y64_N1 -to "monster:main|sys_pll5:\\sys_a5:sys_inst|sys_pll5_0002:sys_pll5_inst|altera_pll:altera_pll_i|outclk_wire[3]"
 set_location_assignment PLLOUTPUTCOUNTER_X0_Y65_N1 -to "monster:main|sys_pll5:\\sys_a5:sys_inst|sys_pll5_0002:sys_pll5_inst|altera_pll:altera_pll_i|outclk_wire[2]"
