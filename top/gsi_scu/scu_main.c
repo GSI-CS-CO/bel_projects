@@ -182,10 +182,11 @@ void enable_scub_msis( const unsigned int channel )
 
    //FG_ASSERT( pMyMsi != NULL );
 
-   const uint8_t socket = getSocket( channel );
-
+   const unsigned int socket = getSocket( channel );
+#ifdef CONFIG_MIL_FG
    if( isNonMilFg( socket ) || isMilScuBusFg( socket ) )
    {
+#endif
       //SCU Bus Master
       FG_ASSERT( getFgSlotNumber( socket ) > 0 );
       const uint16_t slot = getFgSlotNumber( socket ) - 1;
@@ -196,9 +197,9 @@ void enable_scub_msis( const unsigned int channel )
       g_pScub_irq_base[2]  = (1 << slot); // enable slave
       //mprintf("IRQs for slave %d enabled.\n", (socket & SCU_BUS_SLOT_MASK));
       return;
+#ifdef CONFIG_MIL_FG
    }
 
-#ifdef CONFIG_MIL_FG
    if( !isMilExtentionFg( socket ) )
       return;
 
