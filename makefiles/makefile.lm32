@@ -1,0 +1,37 @@
+###############################################################################
+##                                                                           ##
+##         Common include makefile for soft core processor LM32              ##
+##                                                                           ##
+##---------------------------------------------------------------------------##
+## File:    makefile.lm32                                                    ##
+## (c):     GSI Helmholtz Centre for Heavy Ion Research GmbH                 ##
+## Author:  Ulrich Becker                                                    ##
+## Date:    17.12.2018                                                       ##
+###############################################################################
+
+CPU           := lm32
+CROSS_COMPILE ?= $(CPU)-elf-
+MEM_ALIGN     := 4
+DEFINES       += __MEM_ALIGN=$(MEM_ALIGN)
+OUTPUT_FORMAT ?= binary
+
+CC      = $(TOOLCHAIN_DIR)$(CROSS_COMPILE)gcc -std=gnu99
+CXX     = $(TOOLCHAIN_DIR)$(CROSS_COMPILE)g++ -fno-exceptions -fno-rtti
+LD      = $(TOOLCHAIN_DIR)$(CROSS_COMPILE)gcc
+OBJCPY  = $(TOOLCHAIN_DIR)$(CROSS_COMPILE)objcopy
+OBJDUMP = $(TOOLCHAIN_DIR)$(CROSS_COMPILE)objdump
+SIZE    = $(TOOLCHAIN_DIR)$(CROSS_COMPILE)size
+AS      = $(TOOLCHAIN_DIR)$(CROSS_COMPILE)gcc
+AR      = $(TOOLCHAIN_DIR)$(CROSS_COMPILE)gcc-ar rcs
+CPP     = $(CC) -E
+NM      = $(TOOLCHAIN_DIR)$(CROSS_COMPILE)nm
+STRIP   = $(TOOLCHAIN_DIR)$(CROSS_COMPILE)strip
+STRINGS = $(TOOLCHAIN_DIR)$(CROSS_COMPILE)strings
+
+ADDITIONAL_TO_CLEAN += $(ELF_FILE)
+
+# For doxygen if used only.
+DOX_INPUT += $(MAKEFILE_DIR)/makefile.lm32
+
+include $(MAKEFILE_DIR)/makefile.uc
+#=================================== EOF ======================================

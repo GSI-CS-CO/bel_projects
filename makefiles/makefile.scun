@@ -1,0 +1,46 @@
+###############################################################################
+##                                                                           ##
+##   Common include makefile for SCU native applications resp. Linux apps    ##
+##                                                                           ##
+##---------------------------------------------------------------------------##
+## File:    makefile.scun                                                    ##
+## (c):     GSI Helmholtz Centre for Heavy Ion Research GmbH                 ##
+## Author:  Ulrich Becker                                                    ##
+## Date:    22.01.2019                                                       ##
+###############################################################################
+MAKEFILE_DIR ?= $(REPOSITORY_DIR)/makefiles
+
+include $(MAKEFILE_DIR)/scu_dirs.inc
+EB_API_DIR   = $(IP_CORE_DIR)/etherbone-core/api
+
+INCLUDE_DIRS += $(EB_API_DIR)
+LIB_DIRS     += $(EB_API_DIR)/.libs
+
+# ------------ Additional defines for Doxygen ---------------------------------
+DOX_INPUT    += $(SCU_DIR)/scu_bus.h
+DOX_INPUT    += $(EB_API_DIR)
+DOX_INPUT    += $(MAKEFILE_DIR)/makefile.scun
+# -------------- End of defines for Doxygen -----------------------------------
+
+include $(MAKEFILE_DIR)/makefile.native
+
+#-------------------- upload and/or running in target SCU ---------------------
+# For developing purposes only.
+ifdef SCU_URL
+
+SCU_USER       ?= root
+SCU_TARGET_DIR ?= /usr/bin
+SCP            ?= scp
+SSH            ?= ssh
+
+.PHONY: load
+load: $(BIN_FILE)
+	$(SCP) $(BIN_FILE) $(SCU_USER)@$(SCU_URL):$(SCU_TARGET_DIR)
+ifndef IS_LIBRARY
+.PHONY:
+lrun:
+	$(SSH) $(SCU_USER)@$(SCU_URL) $(SCU_TARGET_DIR)/$(notdir $(BIN_FILE)) $(REMOTE_CALL_ARGS)
+endif # ifndef IS_LIBRARY
+endif # ifdef SCU_URL
+
+#=================================== EOF ======================================
