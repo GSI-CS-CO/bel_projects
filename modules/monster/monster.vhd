@@ -439,13 +439,13 @@ architecture rtl of monster is
   signal sdb_dummy_dev            : std_logic := '0';
   attribute keep of sdb_dummy_top : signal is true;
   attribute keep of sdb_dummy_dev : signal is true;
- 
+
   ----------------------------------------------------------------------------------
   -- GSI Dev Crossbar Slaves -------------------------------------------------------
   ----------------------------------------------------------------------------------
 
   -- required slaves
-  constant c_dev_slaves          : natural := 29;
+  constant c_dev_slaves          : natural := 28;
   constant c_devs_build_id       : natural := 0;
   constant c_devs_watchdog       : natural := 1;
   constant c_devs_flash          : natural := 2;
@@ -474,10 +474,9 @@ architecture rtl of monster is
   constant c_devs_DDR3_if1       : natural := 23;
   constant c_devs_DDR3_if2       : natural := 24;
   constant c_devs_DDR3_ctrl      : natural := 25;
-  constant c_devs_tempsens       : natural := 26;
-  constant c_devs_a10_phy_reconf : natural := 27;
-  constant c_devs_eca_tap        : natural := 28;
-  
+  constant c_devs_a10_phy_reconf : natural := 26;
+  constant c_devs_eca_tap        : natural := 27;
+
   -- Cut off TLU
   constant c_use_tlu : boolean := (g_lm32_are_ftm and g_en_tlu) or (not(g_lm32_are_ftm) and g_en_tlu);
 
@@ -512,7 +511,6 @@ architecture rtl of monster is
     c_devs_ddr3_if1       => f_sdb_auto_device(c_wb_DDR3_if1_sdb,                g_en_ddr3),
     c_devs_ddr3_if2       => f_sdb_auto_device(c_wb_DDR3_if2_sdb,                g_en_ddr3),
     c_devs_ddr3_ctrl      => f_sdb_auto_device(c_irq_master_ctrl_sdb,            g_en_ddr3),
-    c_devs_tempsens       => f_sdb_auto_device(c_temp_sense_sdb,                 g_en_tempsens),
     c_devs_a10_phy_reconf => f_sdb_auto_device(c_cpri_phy_reconf_sdb,            g_a10_en_phy_reconf),
     c_devs_eca_tap        => f_sdb_auto_device(c_eca_tap_sdb,                    g_en_eca_tap));
   constant c_dev_layout      : t_sdb_record_array := f_sdb_auto_layout(c_dev_layout_req_masters, c_dev_layout_req_slaves);
@@ -525,11 +523,45 @@ architecture rtl of monster is
   signal dev_bus_master_o : t_wishbone_master_out_array(c_dev_slaves-1 downto 0);
 
   ----------------------------------------------------------------------------------
+  -- GSI Slow Dev Crossbar Masters ------------------------------------------------------
+  ----------------------------------------------------------------------------------
+  constant c_slow_dev_masters         : natural := 1;
+  constant c_slow_devm_top            : natural := 0;
+
+  constant c_slow_dev_layout_req_masters : t_sdb_record_array(c_slow_dev_masters-1 downto 0) :=
+    (c_slow_devm_top => f_sdb_auto_msi(c_top_bridge_msi, true));
+  constant c_slow_dev_layout_masters : t_sdb_record_array := f_sdb_auto_layout(c_slow_dev_layout_req_masters);
+  constant c_slow_dev_bridge_msi : t_sdb_msi := f_xwb_msi_layout_sdb(c_slow_dev_layout_masters);
+
+  signal slow_dev_bus_slave_i  : t_wishbone_slave_in_array  (c_slow_dev_masters-1 downto 0);
+  signal slow_dev_bus_slave_o  : t_wishbone_slave_out_array (c_slow_dev_masters-1 downto 0);
+  signal slow_dev_msi_master_i : t_wishbone_master_in_array (c_slow_dev_masters-1 downto 0);
+  signal slow_dev_msi_master_o : t_wishbone_master_out_array(c_slow_dev_masters-1 downto 0);
+
+  ----------------------------------------------------------------------------------
+  -- GSI Slow Dev Crossbar Slaves -------------------------------------------------------
+  ----------------------------------------------------------------------------------
+  -- required slaves
+  constant c_slow_dev_slaves          : natural := 1;
+  constant c_slow_devs_tempsens       : natural := 0;
+
+  constant c_slow_dev_layout_req_slaves : t_sdb_record_array(c_slow_dev_slaves-1 downto 0) :=
+   (c_slow_devs_tempsens       => f_sdb_auto_device(c_temp_sense_sdb,                 g_en_tempsens));
+  constant c_slow_dev_layout      : t_sdb_record_array := f_sdb_auto_layout(c_slow_dev_layout_req_masters, c_slow_dev_layout_req_slaves);
+  constant c_slow_dev_sdb_address : t_wishbone_address := f_sdb_auto_sdb   (c_slow_dev_layout_req_masters, c_slow_dev_layout_req_slaves);
+  constant c_slow_dev_bridge_sdb  : t_sdb_bridge       := f_xwb_bridge_layout_sdb(true, c_slow_dev_layout, c_slow_dev_sdb_address);
+
+  signal slow_dev_msi_slave_i  : t_wishbone_slave_in_array  (c_slow_dev_slaves-1 downto 0) := (others => c_zero_master);
+  signal slow_dev_msi_slave_o  : t_wishbone_slave_out_array (c_slow_dev_slaves-1 downto 0);
+  signal slow_dev_bus_master_i : t_wishbone_master_in_array (c_slow_dev_slaves-1 downto 0);
+  signal slow_dev_bus_master_o : t_wishbone_master_out_array(c_slow_dev_slaves-1 downto 0);
+
+  ----------------------------------------------------------------------------------
   -- GSI Top Crossbar Slaves -------------------------------------------------------
   ----------------------------------------------------------------------------------
 
   -- Only put a slave here if it has critical performance requirements!
-  constant c_top_slaves        : natural := 8;
+  constant c_top_slaves        : natural := 9;
   constant c_tops_eca_event    : natural := 0;
   constant c_tops_scubus       : natural := 1;
   constant c_tops_mbox         : natural := 2;
@@ -537,7 +569,8 @@ architecture rtl of monster is
   constant c_tops_mil          : natural := 4;
   constant c_tops_wr_fast_path : natural := 5;
   constant c_tops_ebm          : natural := 6;
-  constant c_tops_beam_dump    : natural := 7;
+  constant c_tops_slow_dev     : natural := 7;
+  constant c_tops_beam_dump    : natural := 8;
 
   constant c_top_layout_req_slaves : t_sdb_record_array(c_top_slaves-1 downto 0) :=
    (c_tops_eca_event    => f_sdb_embed_device(c_eca_event_sdb, x"7FFFFFF0",     g_en_eca), -- must be located at fixed address
@@ -547,6 +580,7 @@ architecture rtl of monster is
     c_tops_mil          => f_sdb_auto_device(c_xwb_gsi_mil_scu,                 g_en_mil),
     c_tops_wr_fast_path => f_sdb_auto_bridge(c_wrcore_bridge_sdb,               true),
     c_tops_ebm          => f_sdb_auto_device(c_ebm_sdb,                         true),
+    c_tops_slow_dev     => f_sdb_auto_bridge(c_slow_dev_bridge_sdb),
     c_tops_beam_dump    => f_sdb_embed_device(c_beam_dump_sdb, x"7FFF0000",     g_en_beam_dump));
 
   constant c_top_layout      : t_sdb_record_array := f_sdb_auto_layout(c_top_layout_req_masters, c_top_layout_req_slaves);
@@ -1219,6 +1253,44 @@ begin
       slave_o       => dev_msi_master_i(c_devm_top),
       master_i      => top_msi_slave_o (c_tops_dev),
       master_o      => top_msi_slave_i (c_tops_dev));
+
+  slow_dev_bar : xwb_sdb_crossbar
+        generic map(
+          g_num_masters => c_slow_dev_masters,
+          g_num_slaves  => c_slow_dev_slaves,
+          g_registered  => true,
+          g_wraparound  => true,
+          g_layout      => c_slow_dev_layout,
+          g_sdb_addr    => c_slow_dev_sdb_address)
+        port map(
+          clk_sys_i     => clk_sys,
+          rst_n_i       => rstn_sys,
+          slave_i       => slow_dev_bus_slave_i,
+          slave_o       => slow_dev_bus_slave_o,
+          msi_master_i  => slow_dev_msi_master_i,
+          msi_master_o  => slow_dev_msi_master_o,
+          master_i      => slow_dev_bus_master_i,
+          master_o      => slow_dev_bus_master_o,
+          msi_slave_i   => slow_dev_msi_slave_i,
+          msi_slave_o   => slow_dev_msi_slave_o);
+
+  top2slow_dev_bus : xwb_register_link
+    port map(
+      clk_sys_i     => clk_sys,
+      rst_n_i       => rstn_sys,
+      slave_i       => top_bus_master_o(c_tops_slow_dev),
+      slave_o       => top_bus_master_i(c_tops_slow_dev),
+      master_i      => slow_dev_bus_slave_o (c_slow_devm_top),
+      master_o      => slow_dev_bus_slave_i (c_slow_devm_top));
+
+  slow_dev2top_msi : xwb_register_link
+    port map(
+      clk_sys_i     => clk_sys,
+      rst_n_i       => rstn_sys,
+      slave_i       => slow_dev_msi_master_o(c_slow_devm_top),
+      slave_o       => slow_dev_msi_master_i(c_slow_devm_top),
+      master_i      => top_msi_slave_o (c_tops_slow_dev),
+      master_o      => top_msi_slave_i (c_tops_slow_dev));
 
   top2wrc_bus : xwb_register_link
     generic map(
@@ -2791,7 +2863,7 @@ end generate;
   end generate;
 
   tempsens_n : if not g_en_tempsens generate
-    dev_bus_master_i(c_devs_tempsens) <= cc_dummy_slave_out;
+    slow_dev_bus_master_i(c_slow_devs_tempsens) <= cc_dummy_slave_out;
   end generate;
 
   tempsens_y : if g_en_tempsens generate
@@ -2799,8 +2871,8 @@ end generate;
       port map (
         clk_sys_i  => clk_sys,
         rst_n_i    => rstn_sys,
-        slave_i    => dev_bus_master_o(c_devs_tempsens),
-        slave_o    => dev_bus_master_i(c_devs_tempsens),
+        slave_i    => slow_dev_bus_master_o(c_slow_devs_tempsens),
+        slave_o    => slow_dev_bus_master_i(c_slow_devs_tempsens),
         clr_o      => tempsens_clr_out);
   end generate;
 
