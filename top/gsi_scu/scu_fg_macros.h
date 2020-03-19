@@ -368,6 +368,27 @@ FG_CTRL_RG_T* getFgCntrlRegPtr( const void* pScuBusBase,
    return &getFgRegisterPtr( pScuBusBase, slot, number )->cntrl_reg;
 }
 
+/*! ---------------------------------------------------------------------------
+ * @brief Returns the firmware version of the ADAC function generator macro.
+ * @param pScuBusBase Base address of SCU bus
+ * @param slot Slot number, valid range 1 .. MAX_SCU_SLAVES (12)
+ * @return Firmware version number.
+ */
+STATIC inline
+uint16_t getFgFirmwareVersion( const void* pScuBusBase,
+                               const unsigned int slot )
+{  /*
+    * It will suppose that the FG macros in one SCU-bus slave are equal.
+    * Therefore it doesn't matter which FG offset address will used
+    * FG1_BASE or FG2_BASE.
+    */
+   return ADAC_FG_ACCESS( getFgRegisterPtrByOffsetAddr( pScuBusBase,
+                                                        slot,
+                                                        FG1_BASE ),
+                                                        fw_version
+                        );
+}
+
 
 #ifdef CONFIG_MIL_FG
 /*!
