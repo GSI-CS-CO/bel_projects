@@ -226,8 +226,9 @@ STATIC_ASSERT( sizeof( FG_REGISTER_T ) == 12 * sizeof( uint16_t ));
  *        ADAC function generator macro.
  * @see __SCU_BUS_ACCESS
  * @see __WB_ACCESS
- * @param p Pointer to the concerning function generator register set.
- * @param m Name of member variable.
+ * @param p Pointer of type FG_REGISTER_T to the concerning
+ *          function generator register set.
+ * @param m Name of member variable in FG_REGISTER_T.
  * @code
  * ADAC_FG_ACCESS( foo, bar ) = value;
  * @endcode

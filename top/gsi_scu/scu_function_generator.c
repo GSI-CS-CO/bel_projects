@@ -36,7 +36,7 @@
 #include <mini_sdb.h>
 #include "scu_fg_macros.h"
 
-#define OFFS(SLOT) ((SLOT) * (1 << 16))
+//#define OFFS(SLOT) ((SLOT) * (1 << 16))
 
 /*
  * Maybe a bug in the obsolete DOXYGEN 1.8.5 in the ASL-cluster,
@@ -240,8 +240,16 @@ void scanScuBusFgsDirect( volatile uint16_t *scub_adr, FG_MACRO_T* fglist )
    {
       if( !scuBusIsSlavePresent( slotFlags, slot ) )
          continue;
+#if 0
       add_to_fglist( slot, 0, SYS_CSCO, 38,
                      scub_adr[OFFS(slot) + FG1_BASE + FG_VER], fglist );
+#else
+      add_to_fglist( slot, 0, SYS_CSCO, 38,
+           ADAC_FG_ACCESS( getFgRegisterPtrByOffsetAddr( 
+                            (void*)scub_adr, slot, FG1_BASE ), fw_version ),
+     //      getFgRegisterPtrByOffsetAddr( (void*)scub_adr, slot, FG1_BASE )->fw_version,
+           fglist );
+#endif
      // mprintf( "S-slot: %d, group = %d\n", slot, 38 );
    }
 }
