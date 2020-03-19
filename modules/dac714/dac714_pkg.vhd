@@ -166,7 +166,7 @@ package dac714_pkg is
 --                                                                                                                  --
 --  Aenderung 1)                                                                                                    --
 --    Das Shift_Reg ist zu früh geschoben worden, deshalb ist das höchstwertige und niederwertigste Bit verloren    --
---    gegangen. Jetzt wird erst dem Schieben begonnen, wenn das erste bit in den DAC getakted wurde.                -- 
+--    gegangen. Jetzt wird erst dem Schieben begonnen, wenn das erste bit in den DAC getakted wurde.                --
 --                                                                                                                  --
 ----------------------------------------------------------------------------------------------------------------------
 
@@ -192,7 +192,7 @@ package dac714_pkg is
 --  Aenderung 1)                                                                                                    --
 --    Die Entity dac714 hat ein weiteres Output-Port (DAC_convert_o) bekommen. Es wird bei jeder DAC-Konversion     --
 --    fuer einen Takt aktiv Eins. Dabei spielt es keine Rolle ob die Konversion durch Software, den Funktions-      --
---    generator oder durch einen exteren Trigger ausgeloest wurde.                                                  -- 
+--    generator oder durch einen exteren Trigger ausgeloest wurde.                                                  --
 ----------------------------------------------------------------------------------------------------------------------
 
 component dac714 is
@@ -204,7 +204,7 @@ component dac714 is
   port
     (
     Adr_from_SCUB_LA:   in      std_logic_vector(15 downto 0);  -- latched address from SCU_Bus
-    Data_from_SCUB_LA:  in      std_logic_vector(15 downto 0);  -- latched data from SCU_Bus 
+    Data_from_SCUB_LA:  in      std_logic_vector(15 downto 0);  -- latched data from SCU_Bus
     Ext_Adr_Val:        in      std_logic;                      -- '1' => "ADR_from_SCUB_LA" is valid
     Ext_Rd_active:      in      std_logic;                      -- '1' => Rd-Cycle is active
     Ext_Wr_active:      in      std_logic;                      -- '1' => Wr-Cycle is active
@@ -220,6 +220,7 @@ component dac714 is
     nLD_DAC:            out     std_logic;                      -- '0' copy shift register to output latch of DAC
     nCLR_DAC:           buffer  std_logic;                      -- '0' resets the DAC, Clear Pulsewidth min 200ns
                                                                 -- resets both the input latch and the D/A latch to 0000H (midscale).
+    dac_data_o:         out     std_logic_vector(15 downto 0);  -- latched value of the data word for the dac714 converter
     ext_trig_valid:     out     std_logic;                      -- got an valid external trigger, during extern trigger mode.
     DAC_convert_o:      out     std_logic;                      -- '1' when DAC convert driven by software, functiongenerator or external trigger
     Rd_Port:            out     std_logic_vector(15 downto 0);  -- output for all read sources of this macro
