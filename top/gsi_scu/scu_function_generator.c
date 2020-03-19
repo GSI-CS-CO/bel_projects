@@ -36,19 +36,6 @@
 #include <mini_sdb.h>
 #include "scu_fg_macros.h"
 
-//#define OFFS(SLOT) ((SLOT) * (1 << 16))
-
-/*
- * Maybe a bug in the obsolete DOXYGEN 1.8.5 in the ASL-cluster,
- * otherwise the local functions of this module will not
- * documented by DOXYGEN. :-/
- */
-#ifdef __DOXYGEN__
-  #define STATIC
-#else
-  #define STATIC static
-#endif
-
 #define IFA_ID_VAL         0xfa00
 #define IFA_MIN_VERSION    0x1900
 #define FG_MIN_VERSION     2
@@ -229,37 +216,28 @@ void scanScuBusFgsViaMil( volatile uint16_t *scub_adr, FG_MACRO_T* fglist )
 /*! ---------------------------------------------------------------------------
  * @brief Scans the whole SCU-bus direct to the SCU-bus connected
  *        function generators
+ * @param pScuBusBase Base address of SCU bus
+ * @param pFGlist Start pointer of function generator list.
  */
 STATIC inline
-void scanScuBusFgsDirect( volatile uint16_t *scub_adr, FG_MACRO_T* fglist )
+void scanScuBusFgsDirect( const void* pScuBusBase, FG_MACRO_T* pFGlist )
 {
-   const  SCUBUS_SLAVE_FLAGS_T slotFlags = scuBusFindSpecificSlaves( (void*)scub_adr, SYS_CSCO, 38 );
+   const SCUBUS_SLAVE_FLAGS_T slotFlags = scuBusFindSpecificSlaves( pScuBusBase, SYS_CSCO, 38 );
+
    if( slotFlags == 0 )
       return;
+
    for( unsigned int slot = SCUBUS_START_SLOT; slot <= MAX_SCU_SLAVES; slot++ )
    {
       if( !scuBusIsSlavePresent( slotFlags, slot ) )
          continue;
-#if 0
-      add_to_fglist( slot, 0, SYS_CSCO, 38,
-                     scub_adr[OFFS(slot) + FG1_BASE + FG_VER], fglist );
-#else
+
       add_to_fglist( slot,
                      0,
                      SYS_CSCO,
                      38,
-#if 0
-                     ADAC_FG_ACCESS(getFgRegisterPtrByOffsetAddr((void*)scub_adr,
-                                                                 slot,
-                                                                 FG1_BASE ),
-                                    fw_version ),
-#else
-                     getFgFirmwareVersion( (void*)scub_adr, slot ),
-#endif
-     //      getFgRegisterPtrByOffsetAddr( (void*)scub_adr, slot, FG1_BASE )->fw_version,
-                     fglist );
-#endif
-     // mprintf( "S-slot: %d, group = %d\n", slot, 38 );
+                     getFgFirmwareVersion( pScuBusBase, slot ),
+                     pFGlist );
    }
 }
 
@@ -269,7 +247,7 @@ void scanScuBusFgsDirect( volatile uint16_t *scub_adr, FG_MACRO_T* fglist )
 STATIC inline
 void scanScuBusFgs( volatile uint16_t *scub_adr, FG_MACRO_T* fglist )
 {
-   scanScuBusFgsDirect( scub_adr, fglist );
+   scanScuBusFgsDirect( (void*)scub_adr, fglist );
 #ifdef CONFIG_MIL_FG
    scanScuBusFgsViaMil( scub_adr, fglist );
 #endif
