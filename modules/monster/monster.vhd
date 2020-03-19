@@ -1729,7 +1729,7 @@ end generate;
       port map (
         clk_reconf_i   => clk_reconf,
         clk_pll_i      => clk_ref0, -- PLL cascade
-        clk_cru_i      => core_clk_125m_sfpref_i,
+        clk_cru_i      => phy_clk,
         clk_free_i     => clk_free,
         rst_i          => pll_rst,
         locked_o       => phy_ready,
