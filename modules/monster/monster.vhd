@@ -567,22 +567,22 @@ architecture rtl of monster is
   constant c_tops_eca_event    : natural := 0;
   constant c_tops_scubus       : natural := 1;
   constant c_tops_mbox         : natural := 2;
-  constant c_tops_dev          : natural := 3;
-  constant c_tops_mil          : natural := 4;
-  constant c_tops_wr_fast_path : natural := 5;
-  constant c_tops_ebm          : natural := 6;
-  constant c_tops_slow_dev     : natural := 7;
+  constant c_tops_slow_dev     : natural := 3;
+  constant c_tops_dev          : natural := 4;
+  constant c_tops_mil          : natural := 5;
+  constant c_tops_wr_fast_path : natural := 6;
+  constant c_tops_ebm          : natural := 7;
   constant c_tops_beam_dump    : natural := 8;
 
   constant c_top_layout_req_slaves : t_sdb_record_array(c_top_slaves-1 downto 0) :=
    (c_tops_eca_event    => f_sdb_embed_device(c_eca_event_sdb, x"7FFFFFF0",     g_en_eca), -- must be located at fixed address
     c_tops_scubus       => f_sdb_auto_device(c_scu_bus_master,                  g_en_scubus),
     c_tops_mbox         => f_sdb_auto_device(c_mbox_sdb,                        true),
+    c_tops_slow_dev     => f_sdb_auto_bridge(c_slow_dev_bridge_sdb,             true),
     c_tops_dev          => f_sdb_auto_bridge(c_dev_bridge_sdb,                  true),
     c_tops_mil          => f_sdb_auto_device(c_xwb_gsi_mil_scu,                 g_en_mil),
     c_tops_wr_fast_path => f_sdb_auto_bridge(c_wrcore_bridge_sdb,               true),
     c_tops_ebm          => f_sdb_auto_device(c_ebm_sdb,                         true),
-    c_tops_slow_dev     => f_sdb_auto_bridge(c_slow_dev_bridge_sdb,             true),
     c_tops_beam_dump    => f_sdb_embed_device(c_beam_dump_sdb, x"7FFF0000",     g_en_beam_dump));
 
   constant c_top_layout      : t_sdb_record_array := f_sdb_auto_layout(c_top_layout_req_masters, c_top_layout_req_slaves);
