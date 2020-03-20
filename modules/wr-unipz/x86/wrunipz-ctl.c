@@ -3,7 +3,7 @@
  *
  *  created : 2018
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 09-March-2020
+ *  version : 20-March-2020
  *
  *  command-line interface for wrunipz
  *
@@ -694,11 +694,11 @@ int main(int argc, char** argv) {
     if (!strcasecmp(command, "kill")) {
       eb_device_write(device, wrunipz_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)WRUNIPZ_CMD_CONFKILL, 0, eb_block);
       if (state != COMMON_STATE_OPREADY) printf("wr-unipz: WARNING command has no effect (not in state OPREADY)\n");
-    } // "kill"
+      } // "kill" */
     if (!strcasecmp(command, "cleartables")) {
       eb_device_write(device, wrunipz_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)WRUNIPZ_CMD_CONFCLEAR, 0, eb_block);
       if (state != COMMON_STATE_OPREADY) printf("wr-unipz: WARNING command has no effect (not in state OPREADY)\n");
-      } // "cleartables"*/
+    } // "cleartables"
   } //if command
   
 
