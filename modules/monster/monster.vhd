@@ -1257,24 +1257,24 @@ begin
       master_o      => top_msi_slave_i (c_tops_dev));
 
   slow_dev_bar : xwb_sdb_crossbar
-        generic map(
-          g_num_masters => c_slow_dev_masters,
-          g_num_slaves  => c_slow_dev_slaves,
-          g_registered  => true,
-          g_wraparound  => true,
-          g_layout      => c_slow_dev_layout,
-          g_sdb_addr    => c_slow_dev_sdb_address)
-        port map(
-          clk_sys_i     => clk_sys,
-          rst_n_i       => rstn_sys,
-          slave_i       => slow_dev_bus_slave_i,
-          slave_o       => slow_dev_bus_slave_o,
-          msi_master_i  => slow_dev_msi_master_i,
-          msi_master_o  => slow_dev_msi_master_o,
-          master_i      => slow_dev_bus_master_i,
-          master_o      => slow_dev_bus_master_o,
-          msi_slave_i   => slow_dev_msi_slave_i,
-          msi_slave_o   => slow_dev_msi_slave_o);
+    generic map(
+      g_num_masters => c_slow_dev_masters,
+      g_num_slaves  => c_slow_dev_slaves,
+      g_registered  => true,
+      g_wraparound  => true,
+      g_layout      => c_slow_dev_layout,
+      g_sdb_addr    => c_slow_dev_sdb_address)
+    port map(
+      clk_sys_i     => clk_sys,
+      rst_n_i       => rstn_sys,
+      slave_i       => slow_dev_bus_slave_i,
+      slave_o       => slow_dev_bus_slave_o,
+      msi_master_i  => slow_dev_msi_master_i,
+      msi_master_o  => slow_dev_msi_master_o,
+      master_i      => slow_dev_bus_master_i,
+      master_o      => slow_dev_bus_master_o,
+      msi_slave_i   => slow_dev_msi_slave_i,
+      msi_slave_o   => slow_dev_msi_slave_o);
 
   top2slow_dev_bus : xwb_register_link
     port map(
