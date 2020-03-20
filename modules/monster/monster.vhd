@@ -462,7 +462,7 @@ architecture rtl of monster is
   constant c_devs_ftm_cluster    : natural := 11;
 
   -- optional slaves:
-  constant c_devs_lcd            : natural := 12
+  constant c_devs_lcd            : natural := 12;
   constant c_devs_oled           : natural := 13;
   constant c_devs_scubirq        : natural := 14;
   constant c_devs_mil_ctrl       : natural := 15;
