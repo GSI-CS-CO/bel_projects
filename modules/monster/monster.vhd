@@ -447,7 +447,7 @@ architecture rtl of monster is
   ----------------------------------------------------------------------------------
 
   -- required slaves
-  constant c_dev_slaves          : natural := 28;
+  constant c_dev_slaves          : natural := 27;
   constant c_devs_build_id       : natural := 0;
   constant c_devs_watchdog       : natural := 1;
   constant c_devs_flash          : natural := 2;
@@ -459,25 +459,24 @@ architecture rtl of monster is
   constant c_devs_eca_wbm        : natural := 8;
   constant c_devs_emb_cpu        : natural := 9;
   constant c_devs_serdes_clk_gen : natural := 10;
-  constant c_devs_control        : natural := 11;
-  constant c_devs_ftm_cluster    : natural := 12;
+  constant c_devs_ftm_cluster    : natural := 11;
 
   -- optional slaves:
-  constant c_devs_lcd            : natural := 13;
-  constant c_devs_oled           : natural := 14;
-  constant c_devs_scubirq        : natural := 15;
-  constant c_devs_mil_ctrl       : natural := 16;
-  constant c_devs_ow             : natural := 17;
-  constant c_devs_ssd1325        : natural := 18;
-  constant c_devs_vme_info       : natural := 19;
-  constant c_devs_CfiPFlash      : natural := 20;
-  constant c_devs_nau8811        : natural := 21;
-  constant c_devs_psram          : natural := 22;
-  constant c_devs_DDR3_if1       : natural := 23;
-  constant c_devs_DDR3_if2       : natural := 24;
-  constant c_devs_DDR3_ctrl      : natural := 25;
-  constant c_devs_a10_phy_reconf : natural := 26;
-  constant c_devs_eca_tap        : natural := 27;
+  constant c_devs_lcd            : natural := 12
+  constant c_devs_oled           : natural := 13;
+  constant c_devs_scubirq        : natural := 14;
+  constant c_devs_mil_ctrl       : natural := 15;
+  constant c_devs_ow             : natural := 16;
+  constant c_devs_ssd1325        : natural := 17;
+  constant c_devs_vme_info       : natural := 18;
+  constant c_devs_CfiPFlash      : natural := 19;
+  constant c_devs_nau8811        : natural := 20;
+  constant c_devs_psram          : natural := 21;
+  constant c_devs_DDR3_if1       : natural := 22;
+  constant c_devs_DDR3_if2       : natural := 23;
+  constant c_devs_DDR3_ctrl      : natural := 24;
+  constant c_devs_a10_phy_reconf : natural := 25;
+  constant c_devs_eca_tap        : natural := 26;
 
   -- Cut off TLU
   constant c_use_tlu : boolean := (g_lm32_are_ftm and g_en_tlu) or (not(g_lm32_are_ftm) and g_en_tlu);
@@ -498,7 +497,6 @@ architecture rtl of monster is
     c_devs_eca_wbm        => f_sdb_auto_device(c_eca_ac_wbm_slave_sdb,           g_en_eca),
     c_devs_emb_cpu        => f_sdb_auto_device(c_eca_queue_slave_sdb,            g_en_eca),
     c_devs_serdes_clk_gen => f_sdb_auto_device(c_wb_serdes_clk_gen_sdb,          not g_lm32_are_ftm),
-    c_devs_control        => f_sdb_auto_device(c_io_control_sdb,                 true),
     c_devs_ftm_cluster    => f_sdb_auto_bridge(c_ftm_slaves,                     true),
     c_devs_lcd            => f_sdb_auto_device(c_wb_serial_lcd_sdb,              g_en_lcd),
     c_devs_oled           => f_sdb_auto_device(c_oled_display,                   g_en_oled),
@@ -544,11 +542,13 @@ architecture rtl of monster is
   -- GSI Slow Dev Crossbar Slaves -------------------------------------------------------
   ----------------------------------------------------------------------------------
   -- required slaves
-  constant c_slow_dev_slaves          : natural := 1;
-  constant c_slow_devs_tempsens       : natural := 0;
+  constant c_slow_dev_slaves          : natural := 2;
+  constant c_slow_devs_control        : natural := 0;
+  constant c_slow_devs_tempsens       : natural := 1;
 
   constant c_slow_dev_layout_req_slaves : t_sdb_record_array(c_slow_dev_slaves-1 downto 0) :=
-   (c_slow_devs_tempsens       => f_sdb_auto_device(c_temp_sense_sdb,                 g_en_tempsens));
+    (c_slow_devs_control        => f_sdb_auto_device(c_io_control_sdb,                 true),
+     c_slow_devs_tempsens       => f_sdb_auto_device(c_temp_sense_sdb,                 g_en_tempsens));
   constant c_slow_dev_layout      : t_sdb_record_array := f_sdb_auto_layout(c_slow_dev_layout_req_masters, c_slow_dev_layout_req_slaves);
   constant c_slow_dev_sdb_address : t_wishbone_address := f_sdb_auto_sdb   (c_slow_dev_layout_req_masters, c_slow_dev_layout_req_slaves);
   constant c_slow_dev_bridge_sdb  : t_sdb_bridge       := f_xwb_bridge_layout_sdb(true, c_slow_dev_layout, c_slow_dev_sdb_address);
@@ -2049,8 +2049,8 @@ end generate;
       lvds_input_i    => s_lvds_vec_i(f_sub1(g_lvds_in+g_lvds_inout) downto 0),
       lvds_output_i   => lvds_dat,
       lvds_output_o   => lvds_dat_fr_ioc,
-      slave_i         => dev_bus_master_o(c_devs_control),
-      slave_o         => dev_bus_master_i(c_devs_control),
+      slave_i         => slow_dev_bus_master_o(c_devs_control),
+      slave_o         => slow_dev_bus_master_i(c_devs_control),
       gpio_oe_o       => gpio_oen_o,
       gpio_term_o     => gpio_term_o,
       gpio_spec_out_o => gpio_spec_out_o,
