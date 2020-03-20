@@ -582,7 +582,7 @@ architecture rtl of monster is
     c_tops_mil          => f_sdb_auto_device(c_xwb_gsi_mil_scu,                 g_en_mil),
     c_tops_wr_fast_path => f_sdb_auto_bridge(c_wrcore_bridge_sdb,               true),
     c_tops_ebm          => f_sdb_auto_device(c_ebm_sdb,                         true),
-    c_tops_slow_dev     => f_sdb_auto_bridge(c_slow_dev_bridge_sdb),
+    c_tops_slow_dev     => f_sdb_auto_bridge(c_slow_dev_bridge_sdb,             true),
     c_tops_beam_dump    => f_sdb_embed_device(c_beam_dump_sdb, x"7FFF0000",     g_en_beam_dump));
 
   constant c_top_layout      : t_sdb_record_array := f_sdb_auto_layout(c_top_layout_req_masters, c_top_layout_req_slaves);
