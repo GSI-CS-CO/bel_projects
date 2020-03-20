@@ -440,7 +440,7 @@ architecture rtl of monster is
   signal sdb_dummy_slow_dev            : std_logic := '0';
   attribute keep of sdb_dummy_top      : signal is true;
   attribute keep of sdb_dummy_dev      : signal is true;
-  atrribute keep of sdb_dummy_slow_dev : signal is true;
+  attribute keep of sdb_dummy_slow_dev : signal is true;
 
   ----------------------------------------------------------------------------------
   -- GSI Dev Crossbar Slaves -------------------------------------------------------
