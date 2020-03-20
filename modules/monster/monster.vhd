@@ -567,8 +567,8 @@ architecture rtl of monster is
   constant c_tops_eca_event    : natural := 0;
   constant c_tops_scubus       : natural := 1;
   constant c_tops_mbox         : natural := 2;
-  constant c_tops_slow_dev     : natural := 3;
-  constant c_tops_dev          : natural := 4;
+  constant c_tops_dev          : natural := 3;
+  constant c_tops_slow_dev     : natural := 4;
   constant c_tops_mil          : natural := 5;
   constant c_tops_wr_fast_path : natural := 6;
   constant c_tops_ebm          : natural := 7;
