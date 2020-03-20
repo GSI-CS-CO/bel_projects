@@ -696,7 +696,7 @@ int main(int argc, char** argv) {
       if (state != COMMON_STATE_OPREADY) printf("wr-unipz: WARNING command has no effect (not in state OPREADY)\n");
       } // "kill" */
     if (!strcasecmp(command, "cleartables")) {
-      eb_device_write(device, wrunipz_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)WRUNIPZ_CMD_CONFCLEAR, 0, eb_block);
+      wrunipz_cmd_clearTables(ebDevice);
       if (state != COMMON_STATE_OPREADY) printf("wr-unipz: WARNING command has no effect (not in state OPREADY)\n");
     } // "cleartables"
   } //if command
