@@ -1262,6 +1262,8 @@ begin
       g_num_slaves  => c_slow_dev_slaves,
       g_registered  => true,
       g_wraparound  => true,
+      g_sdb_wb_mode => PIPELINED,
+      g_verbose     => true,
       g_layout      => c_slow_dev_layout,
       g_sdb_addr    => c_slow_dev_sdb_address)
     port map(
