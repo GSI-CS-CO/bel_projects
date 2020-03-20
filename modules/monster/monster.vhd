@@ -1572,7 +1572,8 @@ end generate;
 
   sdb_dummy_top      <= f_report_wishbone_address(c_top_sdb_address, "SDB TOP");
   sdb_dummy_dev      <= f_report_wishbone_address(c_dev_sdb_address, "SDB DEV");
-  sdb_dummy_slow_dev <= f_report_wishbone_address(c_slow_dev_sdb_address, "SDB SLOW DEV")
+  sdb_dummy_slow_dev <= f_report_wishbone_address(c_slow_dev_sdb_address, "SDB SLOW DEV");
+
   wr_uart_o <= uart_wrc;
   uart_mux <= uart_usb and wr_uart_i;
 
