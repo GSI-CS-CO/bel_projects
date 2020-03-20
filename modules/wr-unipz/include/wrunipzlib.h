@@ -3,7 +3,7 @@
  *
  *  created : 2020
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 06-March-2020
+ *  version : 20-March-2020
  *
  * library for wrunipz
  *
@@ -41,7 +41,7 @@
 extern "C" {
 #endif
 
-#define WRUNIPZLIB_VERSION "0.01.00"
+#define WRUNIPZLIB_VERSION "0.01.01"
 
   // convert status code to status text
   const char* wrunipz_status_text(uint32_t code                // status code

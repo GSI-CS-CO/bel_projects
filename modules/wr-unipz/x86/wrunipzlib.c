@@ -3,7 +3,7 @@
  *
  *  created : 2020
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 06-March-2020
+ *  version : 20-March-2020
  *
  * library for wrunipz
  *
@@ -317,10 +317,10 @@ uint32_t wrunipz_table_upload(uint64_t ebDevice, uint32_t pz, uint32_t vacc, uin
   /*eb_data_t    eb_data;*/
   eb_cycle_t   cycle;
 
-  if (chn   > WRUNIPZ_NCHN)  return COMMON_STATUS_OUTOFRANGE;
-  if (pz    > WRUNIPZ_NPZ)   return COMMON_STATUS_OUTOFRANGE;
-  if (vacc  > WRUNIPZ_NVACC) return COMMON_STATUS_OUTOFRANGE;
-  if (nData > WRUNIPZ_NEVT)  return COMMON_STATUS_OUTOFRANGE;
+  if (chn   >= WRUNIPZ_NCHN)  return COMMON_STATUS_OUTOFRANGE;
+  if (pz    >= WRUNIPZ_NPZ)   return COMMON_STATUS_OUTOFRANGE;
+  if (vacc  >= WRUNIPZ_NVACC) return COMMON_STATUS_OUTOFRANGE;
+  if (nData >  WRUNIPZ_NEVT)  return COMMON_STATUS_OUTOFRANGE;
   
   // required for looping over the two channels
   /*  data[0]  = dataChn0;
