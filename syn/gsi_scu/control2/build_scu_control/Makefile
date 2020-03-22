@@ -151,6 +151,10 @@ FG_NUM         ?= 0
 
 FG_UT = fg-$(SLOT)-$(FG_NUM)
 
+.PHONY: key
+key:
+	ssh-copy-id -i $(HOME)/.ssh/id_rsa.pub root@$(SCU_URL)
+
 .PHONY: cptest
 cptest:
 	scp $(SCU_DIR)/$(TESTFILE) root@$(SCU_URL):$(TARGETTEST_DIR)
