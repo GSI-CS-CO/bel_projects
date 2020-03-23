@@ -87,7 +87,7 @@ const char* userTaskData1 = ESC_FG_CYAN"Donald"ESC_NORMAL;
 const char* userTaskData2 = ESC_FG_RED"Dagobert"ESC_NORMAL;
 
 
-int main( void )
+void main( void )
 {
    init();
    mprintf( "freeRTOS-test\nCompiler: " COMPILER_VERSION_STRING "\n" );
@@ -104,7 +104,7 @@ int main( void )
    if( xReturned != pdPASS )
    {
       mprintf( ESC_ERROR "Error %d: by creating task 1!\n"ESC_NORMAL, xReturned );
-      return 0;
+      while( true );
    }
 #endif
    xReturned = xTaskCreate(
@@ -118,7 +118,7 @@ int main( void )
    if( xReturned != pdPASS )
    {
       mprintf( ESC_ERROR "Error %d: by creating task 2!\n"ESC_NORMAL, xReturned );
-      return 0;
+      while( true );
    }
 
    portENABLE_INTERRUPTS();
@@ -127,7 +127,6 @@ int main( void )
 
    mprintf( ESC_ERROR "Error: This point shall never be reached!\n" ESC_NORMAL );
    while( true );
-   return 0;
 }
 
 /*================================== EOF ====================================*/
