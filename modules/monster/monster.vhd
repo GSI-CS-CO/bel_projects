@@ -1279,6 +1279,8 @@ begin
       msi_slave_o   => slow_dev_msi_slave_o);
 
   top2slow_dev_bus : xwb_register_link
+    generic map(
+      g_wb_adapter  => false)
     port map(
       clk_sys_i     => clk_sys,
       rst_n_i       => rstn_sys,
@@ -1288,6 +1290,8 @@ begin
       master_o      => slow_dev_bus_slave_i (c_slow_devm_top));
 
   slow_dev2top_msi : xwb_register_link
+    generic map(
+      g_wb_adapter  => false)
     port map(
       clk_sys_i     => clk_sys,
       rst_n_i       => rstn_sys,
