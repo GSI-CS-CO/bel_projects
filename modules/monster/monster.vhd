@@ -447,7 +447,7 @@ architecture rtl of monster is
   ----------------------------------------------------------------------------------
 
   -- required slaves
-  constant c_dev_slaves          : natural := 27;
+  constant c_dev_slaves          : natural := 21;
   constant c_devs_build_id       : natural := 0;
   constant c_devs_watchdog       : natural := 1;
   constant c_devs_flash          : natural := 2;
@@ -462,21 +462,15 @@ architecture rtl of monster is
   constant c_devs_ftm_cluster    : natural := 11;
 
   -- optional slaves:
-  constant c_devs_lcd            : natural := 12;
-  constant c_devs_oled           : natural := 13;
-  constant c_devs_scubirq        : natural := 14;
-  constant c_devs_mil_ctrl       : natural := 15;
-  constant c_devs_ow             : natural := 16;
-  constant c_devs_ssd1325        : natural := 17;
-  constant c_devs_vme_info       : natural := 18;
-  constant c_devs_CfiPFlash      : natural := 19;
-  constant c_devs_nau8811        : natural := 20;
-  constant c_devs_psram          : natural := 21;
-  constant c_devs_DDR3_if1       : natural := 22;
-  constant c_devs_DDR3_if2       : natural := 23;
-  constant c_devs_DDR3_ctrl      : natural := 24;
-  constant c_devs_a10_phy_reconf : natural := 25;
-  constant c_devs_eca_tap        : natural := 26;
+  constant c_devs_scubirq        : natural := 12;
+  constant c_devs_mil_ctrl       : natural := 13;
+  constant c_devs_CfiPFlash      : natural := 14;
+  constant c_devs_psram          : natural := 15;
+  constant c_devs_DDR3_if1       : natural := 16;
+  constant c_devs_DDR3_if2       : natural := 17;
+  constant c_devs_DDR3_ctrl      : natural := 18;
+  constant c_devs_eca_tap        : natural := 19;
+  constant c_devs_vme_info       : natural := 20;
 
   -- Cut off TLU
   constant c_use_tlu : boolean := (g_lm32_are_ftm and g_en_tlu) or (not(g_lm32_are_ftm) and g_en_tlu);
@@ -498,21 +492,15 @@ architecture rtl of monster is
     c_devs_emb_cpu        => f_sdb_auto_device(c_eca_queue_slave_sdb,            g_en_eca),
     c_devs_serdes_clk_gen => f_sdb_auto_device(c_wb_serdes_clk_gen_sdb,          not g_lm32_are_ftm),
     c_devs_ftm_cluster    => f_sdb_auto_bridge(c_ftm_slaves,                     true),
-    c_devs_lcd            => f_sdb_auto_device(c_wb_serial_lcd_sdb,              g_en_lcd),
-    c_devs_oled           => f_sdb_auto_device(c_oled_display,                   g_en_oled),
     c_devs_scubirq        => f_sdb_auto_device(c_scu_irq_ctrl_sdb,               g_en_scubus),
     c_devs_mil_ctrl       => f_sdb_auto_device(c_mil_irq_ctrl_sdb,               g_en_mil),
-    c_devs_ow             => f_sdb_auto_device(c_user_1wire_sdb,                 g_en_user_ow),
-    c_devs_nau8811        => f_sdb_auto_device(c_nau8811_sdb,                    g_en_nau8811),
-    c_devs_vme_info       => f_sdb_auto_device(c_vme_info_sdb,                   g_en_vme),
     c_devs_psram          => f_sdb_auto_device(f_psram_sdb(g_psram_bits),        g_en_psram),
     c_devs_CfiPFlash      => f_sdb_auto_device(c_wb_CfiPFlash_sdb,               g_en_cfi),
-    c_devs_ssd1325        => f_sdb_auto_device(c_ssd1325_sdb,                    g_en_ssd1325),
     c_devs_ddr3_if1       => f_sdb_auto_device(c_wb_DDR3_if1_sdb,                g_en_ddr3),
     c_devs_ddr3_if2       => f_sdb_auto_device(c_wb_DDR3_if2_sdb,                g_en_ddr3),
     c_devs_ddr3_ctrl      => f_sdb_auto_device(c_irq_master_ctrl_sdb,            g_en_ddr3),
-    c_devs_a10_phy_reconf => f_sdb_auto_device(c_cpri_phy_reconf_sdb,            g_a10_en_phy_reconf),
-    c_devs_eca_tap        => f_sdb_auto_device(c_eca_tap_sdb,                    g_en_eca_tap));
+    c_devs_eca_tap        => f_sdb_auto_device(c_eca_tap_sdb,                    g_en_eca_tap),
+    c_devs_vme_info       => f_sdb_auto_device(c_vme_info_sdb,                   g_en_vme));
   constant c_dev_layout      : t_sdb_record_array := f_sdb_auto_layout(c_dev_layout_req_masters, c_dev_layout_req_slaves);
   constant c_dev_sdb_address : t_wishbone_address := f_sdb_auto_sdb   (c_dev_layout_req_masters, c_dev_layout_req_slaves);
   constant c_dev_bridge_sdb  : t_sdb_bridge       := f_xwb_bridge_layout_sdb(true, c_dev_layout, c_dev_sdb_address);
@@ -542,13 +530,25 @@ architecture rtl of monster is
   -- GSI Slow Dev Crossbar Slaves -------------------------------------------------------
   ----------------------------------------------------------------------------------
   -- required slaves
-  constant c_slow_dev_slaves          : natural := 2;
+  constant c_slow_dev_slaves          : natural := 8;
   constant c_slow_devs_control        : natural := 0;
   constant c_slow_devs_tempsens       : natural := 1;
+  constant c_slow_devs_lcd            : natural := 2;
+  constant c_slow_devs_oled           : natural := 3;
+  constant c_slow_devs_ssd1325        : natural := 4;
+  constant c_slow_devs_a10_phy_reconf : natural := 5;
+  constant c_slow_devs_nau8811        : natural := 6;
+  constant c_slow_devs_ow             : natural := 7;
 
   constant c_slow_dev_layout_req_slaves : t_sdb_record_array(c_slow_dev_slaves-1 downto 0) :=
-    (c_slow_devs_control        => f_sdb_auto_device(c_io_control_sdb,                 true),
-     c_slow_devs_tempsens       => f_sdb_auto_device(c_temp_sense_sdb,                 g_en_tempsens));
+    (c_slow_devs_control        => f_sdb_auto_device(c_io_control_sdb,      true),
+     c_slow_devs_tempsens       => f_sdb_auto_device(c_temp_sense_sdb,      g_en_tempsens),
+     c_slow_devs_lcd            => f_sdb_auto_device(c_wb_serial_lcd_sdb,   g_en_lcd),
+     c_slow_devs_oled           => f_sdb_auto_device(c_oled_display,        g_en_oled),
+     c_slow_devs_ssd1325        => f_sdb_auto_device(c_ssd1325_sdb,         g_en_ssd1325),
+     c_slow_devs_a10_phy_reconf => f_sdb_auto_device(c_cpri_phy_reconf_sdb, g_a10_en_phy_reconf),
+     c_slow_devs_nau8811        => f_sdb_auto_device(c_nau8811_sdb,         g_en_nau8811),
+     c_slow_devs_ow             => f_sdb_auto_device(c_user_1wire_sdb,      g_en_user_ow));
   constant c_slow_dev_layout      : t_sdb_record_array := f_sdb_auto_layout(c_slow_dev_layout_req_masters, c_slow_dev_layout_req_slaves);
   constant c_slow_dev_sdb_address : t_wishbone_address := f_sdb_auto_sdb   (c_slow_dev_layout_req_masters, c_slow_dev_layout_req_slaves);
   constant c_slow_dev_bridge_sdb  : t_sdb_bridge       := f_xwb_bridge_layout_sdb(true, c_slow_dev_layout, c_slow_dev_sdb_address);
@@ -1907,20 +1907,19 @@ end generate;
   phy8_o <= c_dummy_phy8_to_wrc;
 
   a10_en_phy_reconf_n : if not g_a10_en_phy_reconf generate
-    dev_bus_master_i(c_devs_a10_phy_reconf) <= cc_dummy_slave_out;
-
-    reconfig_write(0)                       <= '0';
-    reconfig_read(0)                        <= '0';
-    reconfig_address                        <= (others => '0');
-    reconfig_writedata                      <= (others => '0');
+    slow_dev_bus_master_i(c_slow_devs_a10_phy_reconf) <= cc_dummy_slave_out;
+    reconfig_write(0)                                 <= '0';
+    reconfig_read(0)                                  <= '0';
+    reconfig_address                                  <= (others => '0');
+    reconfig_writedata                                <= (others => '0');
   end generate;
   a10_en_phy_reconf_y : if g_a10_en_phy_reconf generate
     cpri_phy_reconf_inst : cpri_phy_reconf
       port map (
         clk_i                            => clk_sys,
         rst_n_i                          => rstn_sys,
-        slave_i                          => dev_bus_master_o(c_devs_a10_phy_reconf),
-        slave_o                          => dev_bus_master_i(c_devs_a10_phy_reconf),
+        slave_i                          => slow_dev_bus_master_o(c_slow_devs_a10_phy_reconf),
+        slave_o                          => slow_dev_bus_master_i(c_slow_devs_a10_phy_reconf),
         reconfig_write_o                 => reconfig_write(0),
         reconfig_read_o                  => reconfig_read(0),
         reconfig_address_o(9 downto 0)   => reconfig_address,
@@ -2588,7 +2587,7 @@ end generate;
 
 
   lcd_n : if not g_en_lcd generate
-    dev_bus_master_i(c_devs_lcd) <= cc_dummy_slave_out;
+    slow_dev_bus_master_i(c_slow_devs_lcd) <= cc_dummy_slave_out;
   end generate;
   lcd_y : if g_en_lcd generate
     lcd : wb_serial_lcd
@@ -2598,8 +2597,8 @@ end generate;
       port map(
         slave_clk_i  => clk_sys,
         slave_rstn_i => rstn_sys,
-        slave_i      => dev_bus_master_o(c_devs_lcd),
-        slave_o      => dev_bus_master_i(c_devs_lcd),
+        slave_i      => slow_dev_bus_master_o(c_slow_devs_lcd),
+        slave_o      => slow_dev_bus_master_i(c_slow_devs_lcd),
         di_clk_i     => clk_20m,
         di_scp_o     => lcd_scp,
         di_lp_o      => lcd_lp,
@@ -2613,15 +2612,15 @@ end generate;
   end generate;
 
   oled_n : if not g_en_oled generate
-    dev_bus_master_i(c_devs_oled) <= cc_dummy_slave_out;
+    slow_dev_bus_master_i(c_slow_devs_oled) <= cc_dummy_slave_out;
   end generate;
   oled_y : if g_en_oled generate
     oled : display_console
       port map(
         clk_i      => clk_sys,
         nRst_i     => rstn_sys,
-        slave_i    => dev_bus_master_o(c_devs_oled),
-        slave_o    => dev_bus_master_i(c_devs_oled),
+        slave_i    => slow_dev_bus_master_o(c_slow_devs_oled),
+        slave_o    => slow_dev_bus_master_i(c_slow_devs_oled),
         RST_DISP_o => oled_rstn_o,
         DC_SPI_o   => oled_dc_o,
         SS_SPI_o   => oled_ss_o,
@@ -2631,15 +2630,15 @@ end generate;
   end generate;
 
   ssd1325_n : if not g_en_ssd1325 generate
-    dev_bus_master_i(c_devs_ssd1325) <= cc_dummy_slave_out;
+    slow_dev_bus_master_i(c_slow_devs_ssd1325) <= cc_dummy_slave_out;
   end generate;
   ssd1325_y : if g_en_ssd1325 generate
     ssd1325_display : wb_ssd1325_serial_driver
       port map (
         clk_sys_i  => clk_sys,
         rst_n_i    => rstn_sys,
-        slave_i    => dev_bus_master_o(c_devs_ssd1325),
-        slave_o    => dev_bus_master_i(c_devs_ssd1325),
+        slave_i    => slow_dev_bus_master_o(c_slow_devs_ssd1325),
+        slave_o    => slow_dev_bus_master_i(c_slow_devs_ssd1325),
         ssd_rst_o  => ssd1325_rst_o,
         ssd_dc_o   => ssd1325_dc_o,
         ssd_ss_o   => ssd1325_ss_o,
@@ -2648,7 +2647,7 @@ end generate;
   end generate;
 
   nau8811_n : if not g_en_nau8811 generate
-    dev_bus_master_i(c_devs_nau8811) <= cc_dummy_slave_out;
+    slow_dev_bus_master_i(c_slow_devs_nau8811) <= cc_dummy_slave_out;
   end generate;
   nau8811_y : if g_en_nau8811 generate
     nau8811_audio : wb_nau8811_audio_driver
@@ -2659,8 +2658,8 @@ end generate;
         rst_n_i      => rstn_sys,
         pll_ref_i    => core_clk_125m_local_i,
         trigger_i    => ext_pps,
-        slave_i      => dev_bus_master_o(c_devs_nau8811),
-        slave_o      => dev_bus_master_i(c_devs_nau8811),
+        slave_i      => slow_dev_bus_master_o(c_slow_devs_nau8811),
+        slave_o      => slow_dev_bus_master_i(c_slow_devs_nau8811),
         spi_csb_o    => nau8811_spi_csb_o,
         spi_sclk_o   => nau8811_spi_sclk_o,
         spi_sdio_o   => nau8811_spi_sdio_o,
@@ -2812,7 +2811,7 @@ end generate;
 
 
   ow_n : if not g_en_user_ow generate
-    dev_bus_master_i(c_devs_ow) <= cc_dummy_slave_out;
+    slow_dev_bus_master_i(c_slow_devs_ow) <= cc_dummy_slave_out;
   end generate;
   ow_y : if g_en_user_ow generate
     ow_io(0) <= user_ow_pwren(0) when (user_ow_pwren(0) = '1' or user_ow_en(0) = '1') else 'Z';
@@ -2827,8 +2826,8 @@ end generate;
       port map(
         clk_sys_i   => clk_sys,
         rst_n_i     => rstn_sys,
-        slave_i     => dev_bus_master_o(c_devs_ow),
-        slave_o     => dev_bus_master_i(c_devs_ow),
+        slave_i     => slow_dev_bus_master_o(c_slow_devs_ow),
+        slave_o     => slow_dev_bus_master_i(c_slow_devs_ow),
         desc_o      => open,
         owr_pwren_o => user_ow_pwren,
         owr_en_o    => user_ow_en,
