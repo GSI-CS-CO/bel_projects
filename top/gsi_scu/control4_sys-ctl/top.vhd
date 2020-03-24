@@ -5,6 +5,7 @@ use ieee.std_logic_unsigned.all;
 entity top is
   port (
     clk_base_i        : in    std_logic;
+    fx2_clk           : in    std_logic;                    -- Clock from FX2 USB Controller
     scu_cb_revision   : in    std_logic_vector(3 downto 0); -- must be assigned with weak pull ups
     fpga_con_io       : inout std_logic_vector(7 downto 0); -- Connection to Arria 10
     --I2C to COMX
