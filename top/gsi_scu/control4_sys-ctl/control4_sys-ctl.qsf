@@ -136,4 +136,6 @@ set_location_assignment PIN_H2 -to jtag_present
 set_location_assignment PIN_J12 -to pwr_ok
 set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to jtag_present
 set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to pwr_ok
+set_location_assignment PIN_K1 -to nPB_user_out
+set_location_assignment PIN_M11 -to nPB_user_in
 set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
