@@ -123,7 +123,7 @@ portSTACK_TYPE* pxPortInitialiseStack( portSTACK_TYPE* pxTopOfStack,
 #ifndef CONFIG_NO_RTOS_TIMER
 /*! ---------------------------------------------------------------------------
  */
-static void onTimerInterrupt( const unsigned int intNum, const void* pContext )
+STATIC void onTimerInterrupt( const unsigned int intNum, const void* pContext )
 {
    xTaskIncrementTick();
 #if configUSE_PREEMPTION == 1
@@ -134,7 +134,7 @@ static void onTimerInterrupt( const unsigned int intNum, const void* pContext )
 /*! ---------------------------------------------------------------------------
  * @brief Setup timer to generate a tick interrupt.
  */
-inline static void prvSetupTimer( void )
+inline STATIC void prvSetupTimer( void )
 {
 #ifdef CONFIG_SCU
    SCU_LM32_TIMER_T* pTimer = lm32TimerGetWbAddress();
@@ -149,6 +149,7 @@ inline static void prvSetupTimer( void )
    #endif
    SCU_LM32_TIMER_T* pTimer = (SCU_LM32_TIMER_T*) LM32_TIMER_BASE_ADDR;
 #endif
+   STATIC_ASSERT( (configCPU_CLOCK_HZ % configTICK_RATE_HZ) == 0 );
    lm32TimerSetPeriod( pTimer, configCPU_CLOCK_HZ / configTICK_RATE_HZ );
    lm32TimerEnable( pTimer );
    /* Register Interrupt Service Routine */

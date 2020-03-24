@@ -76,7 +76,7 @@ STATIC_ASSERT( offsetof( SCU_LM32_TIMER_T, period  ) == 1 * sizeof(uint32_t) );
 STATIC_ASSERT( sizeof( SCU_LM32_TIMER_T ) == 2 * sizeof( uint32_t ) );
 #endif
 
-/*!
+/*! ---------------------------------------------------------------------------
  * @ingroup PATCH
  * @ingroup SCU_LM32_TIMER
  * @brief Accomplishes a access to the timer registers.
@@ -87,11 +87,11 @@ STATIC_ASSERT( sizeof( SCU_LM32_TIMER_T ) == 2 * sizeof( uint32_t ) );
 
 /*! ---------------------------------------------------------------------------
  * @ingroup SCU_LM32_TIMER
- * @brief returns the wishbone address of the timer macro.
+ * @brief Returns the wishbone address of the timer macro.
  * @retval ERROR_NOT_FOUND Timer macro not found else pointer to the timers
  *         register set.
  */
-static inline SCU_LM32_TIMER_T* lm32TimerGetWbAddress( void )
+STATIC inline SCU_LM32_TIMER_T* lm32TimerGetWbAddress( void )
 {
    return (SCU_LM32_TIMER_T*) find_device_adr( GSI, WB_TIMER );
 }
@@ -101,7 +101,7 @@ static inline SCU_LM32_TIMER_T* lm32TimerGetWbAddress( void )
  * @brief Enables the countdown of the timer.
  * @param pTimer Wishbone start address of timer register set.
  */
-static inline void lm32TimerEnable( SCU_LM32_TIMER_T* pTimer )
+STATIC inline void lm32TimerEnable( SCU_LM32_TIMER_T* pTimer )
 {
    TIMER_ACCESS( pTimer, control ) = 1;
 }
@@ -111,7 +111,7 @@ static inline void lm32TimerEnable( SCU_LM32_TIMER_T* pTimer )
  * @brief Disables the timer.
  * @param pTimer Wishbone start address of timer register set.
  */
-static inline void lm32TimerDisable( SCU_LM32_TIMER_T* pTimer )
+STATIC inline void lm32TimerDisable( SCU_LM32_TIMER_T* pTimer )
 {
    TIMER_ACCESS( pTimer, control ) = 0;
 }
@@ -121,7 +121,7 @@ static inline void lm32TimerDisable( SCU_LM32_TIMER_T* pTimer )
  * @brief Returns true when the timer is enabled.
  * @param pTimer Wishbone start address of timer register set.
  */
-static inline bool lm32TimerIsEnabled( SCU_LM32_TIMER_T* pTimer )
+STATIC inline bool lm32TimerIsEnabled( SCU_LM32_TIMER_T* pTimer )
 {
    return TIMER_ACCESS( pTimer, control ) != 0;
 }
@@ -134,7 +134,7 @@ static inline bool lm32TimerIsEnabled( SCU_LM32_TIMER_T* pTimer )
  * @param period Initializing value for countdown, respectively
  *              duration of interrupt periods in CPU clock cycles.
  */
-static inline void lm32TimerSetPeriod( SCU_LM32_TIMER_T* pTimer,
+STATIC inline void lm32TimerSetPeriod( SCU_LM32_TIMER_T* pTimer,
                                        const uint32_t period )
 {
    lm32TimerDisable( pTimer );
@@ -147,7 +147,7 @@ static inline void lm32TimerSetPeriod( SCU_LM32_TIMER_T* pTimer,
  * @param pTimer Wishbone start address of timer register set.
  * @return Adjusted period.
  */
-static inline uint32_t lm32TimerGetPeriod( SCU_LM32_TIMER_T* pTimer )
+STATIC inline uint32_t lm32TimerGetPeriod( SCU_LM32_TIMER_T* pTimer )
 {
    return TIMER_ACCESS( pTimer, period );
 }

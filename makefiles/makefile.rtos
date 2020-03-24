@@ -49,4 +49,8 @@ DEFINES += CONFIG_RTOS
 
 DOX_TAB_SIZE = 4
 DOX_INPUT += $(RTOS_INCLUDE_DIR)
+DOX_INPUT += $(SCU_LIB_SRC_DIR)/scu_lm32Timer.h
+DOX_INPUT += $(SCU_LIB_SRC_DIR)/scu_lm32_macros.h
+DOX_INPUT += $(REPOSITORY_DIR)/makefiles/makefile.rtos
+
 #===================================== EOF ====================================
