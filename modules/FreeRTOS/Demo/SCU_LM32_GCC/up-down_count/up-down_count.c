@@ -48,7 +48,7 @@ STATIC inline void init( void )
 volatile uint32_t g_countUp   = 0;
 volatile uint32_t g_countDown = 0;
 
-#define MONITOR_RATE (uint32_t)4000000
+#define MONITOR_RATE (uint32_t)400000
 
 /*! ---------------------------------------------------------------------------
  * @brief Count up task function.
@@ -58,7 +58,7 @@ STATIC void vTaskCountUp( void* pvParameters UNUSED )
    while( true )
    {
       ATOMIC_SECTION() g_countUp++;
-      vPortYield();
+      //vPortYield();
    }
 }
 
@@ -70,7 +70,7 @@ STATIC void vTaskCuontDown( void* pvParameters UNUSED )
    while( true )
    {
       ATOMIC_SECTION() g_countDown--;
-      vPortYield();
+      //vPortYield();
    }
 }
 
@@ -90,14 +90,14 @@ STATIC void vTaskMonitor( void* pvParameters UNUSED )
       }
       if( (countUp - lastCountUp) >= MONITOR_RATE )
       {
-         gotoxy( 1, 6 );
-         mprintf( "Up counter:   %d", countUp );
+         gotoxy( 1, 7 );
+         mprintf( "Up counter:   %u", countUp );
          lastCountUp = countUp;
       }
       if( (lastCountDown - countDown) >= MONITOR_RATE )
       {
-         gotoxy( 1, 7 );
-         mprintf( "Down counter: %d", countDown );
+         gotoxy( 1, 8 );
+         mprintf( "Down counter: %u", countDown );
          lastCountDown = countDown;
       }
    }
@@ -155,7 +155,8 @@ void main( void )
 {
    init();
    clrscr();
-   mprintf( "freeRTOS count up/down test\nCompiler: " COMPILER_VERSION_STRING "\n" );
+   gotoxy( 1, 1 );
+   mprintf( "FreeRTOS count up/down test\nCompiler: " COMPILER_VERSION_STRING "\n" );
 
    const BaseType_t status = initAndStartRTOS();
    mprintf( ESC_ERROR "Error: This point shall never be reached!\n"
