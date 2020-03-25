@@ -119,6 +119,7 @@ typedef struct HW_IMAGE
    /*!
     * @brief List of message objects related to the corresponding
     *        interrupt numbers.
+    * @see MAX_LM32_INTERRUPTS
     */
    const volatile MSI_LIST_T queue[MAX_LM32_INTERRUPTS];
 } IRQ_MSI_T;

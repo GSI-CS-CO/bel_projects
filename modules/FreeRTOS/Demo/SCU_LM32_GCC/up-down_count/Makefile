@@ -35,6 +35,6 @@ DEFINES += MAX_LM32_INTERRUPTS=2
 # Therefore we can overwrite the default size of the base stack size (10k)
 # into a smaller size.
 STACK_SIZE := 256
-
+DOX_REFERENCES_RELATION = YES
 include $(REPOSITORY_DIR)/makefiles/makefile.scu
 #=================================== EOF ======================================

@@ -1,6 +1,9 @@
 /*!
  * @file   lm32Interrupts.c
- * @brief  Administration of the interrupt callback functions for LM32
+ * @brief  General administration of the interrupt handling and
+ *         critical resp. atomic sections for LM32
+ *
+ * @note This module is suitable for FreeRTOS-port.
  *
  * @copyright GSI Helmholtz Centre for Heavy Ion Research GmbH
  * @author    Ulrich Becker <u.becker@gsi.de>
@@ -28,21 +31,35 @@
  */
 volatile uint32_t mg_criticalSectionNestingCount = 0;
 
-/*!
+/*! ---------------------------------------------------------------------------
  * @ingroup INTERRUPT
  * @brief ISR entry type
  */
 typedef struct
 {
-   ISRCallback Callback;
+   /*!
+    * @brief Function pointer of the interrupt service routine of
+    *        the concerning interrupt number.
+    */
+   ISRCallback pfCallback;
+
+   /*!
+    * @brief User tunnel: second parameter of the interrupt service routine.
+    */
    void*       pContext;
 } ISR_ENTRY_T;
 
 /*!
  * @ingroup INTERRUPT
  * @brief  ISREntry table
+ *
+ * The maximum number of items of the table depends on the macro
+ * MAX_LM32_INTERRUPTS which can be overwritten by the makefile.
+ * The default and maximum value of MAX_LM32_INTERRUPTS is 32.
+ *
+ * @see MAX_LM32_INTERRUPTS
  */
-static ISR_ENTRY_T ISREntryTable[MAX_LM32_INTERRUPTS] = {{NULL, NULL}};
+STATIC ISR_ENTRY_T ISREntryTable[MAX_LM32_INTERRUPTS] = {{NULL, NULL}};
 
 /*! ---------------------------------------------------------------------------
  * @see lm32Interrupts.h
@@ -55,7 +72,9 @@ inline unsigned int irqGetAtomicNestingCount( void )
 /*! ---------------------------------------------------------------------------
  * @see lm32Interrupts.h
  */
+#ifndef __DOXYGEN__
 __attribute__((weak))
+#endif
 uint32_t _irqGetPendingMask( const unsigned int intNum )
 {
    return (1 << intNum);
@@ -64,7 +83,9 @@ uint32_t _irqGetPendingMask( const unsigned int intNum )
 /*! ---------------------------------------------------------------------------
  * @see lm32Interrupts.h
  */
+#ifndef __DOXYGEN__
 __attribute__((weak))
+#endif
 unsigned int _irqReorderPriority( const unsigned int prio )
 {
    return prio;
@@ -114,16 +135,23 @@ void irqResetPendingRegister( const uint32_t ip )
  * If an interrupt-handler exists for the relevant interrupt (as detected
  * from "ip" and "im" cpu registers), then invoke the handler else disable the
  * interrupt in the register "im".
+ *
+ * @todo Enhance via compiler-switch to the ability of nested interrupt
+ *       handling. E.g.: CONFIG_NESTED_IRQS
  */
 void _irq_entry( void )
 {
+   /*
+    * Allows using of atomic sections within interrupt routines.
+    */
    mg_criticalSectionNestingCount++;
+
    const uint32_t im = irqGetMaskRegister();
    while( true )
    {
       const uint32_t ip = irqGetPendingRegister() & im;
-      if( ip == 0 ) /* No interrupt pending? */
-         break; /* Yes, life the function */
+      if( ip == 0 ) /* No (further) interrupt pending? */
+         break; /* Yes, life the while-loop */
 
       for( unsigned int prio = 0; prio < ARRAY_SIZE( ISREntryTable ); prio++ )
       {
@@ -133,35 +161,43 @@ void _irq_entry( void )
             continue;
 
          const ISR_ENTRY_T* pCurrentInt = &ISREntryTable[intNum];
-         if( pCurrentInt->Callback != NULL )
+         if( pCurrentInt->pfCallback != NULL )
          {
-            pCurrentInt->Callback( intNum, pCurrentInt->pContext );
+            pCurrentInt->pfCallback( intNum, pCurrentInt->pContext );
          }
          else
          {
             irqSetMaskRegister( irqGetMaskRegister() & ~mask );
          }
 
+         /*
+          * Clearing of the concerning interrupt-pending bit.
+          */
          irqResetPendingRegister( mask );
          break;
       }
    }
+
+   /*
+    * Allows using of atomic sections within interrupt routines.
+    */
    mg_criticalSectionNestingCount--;
 }
 
 /*! ---------------------------------------------------------------------------
  * @see lm32Interrupts.h
  */
-void irqRegisterISR( const unsigned int intNum, void* pContext, ISRCallback Callback )
+void irqRegisterISR( const unsigned int intNum, void* pContext,
+                     ISRCallback pfCallback )
 {
    IRQ_ASSERT( intNum < ARRAY_SIZE( ISREntryTable ) );
 
-   ISREntryTable[intNum].Callback = Callback;
-   ISREntryTable[intNum].pContext = pContext;
+   ISREntryTable[intNum].pfCallback = pfCallback;
+   ISREntryTable[intNum].pContext   = pContext;
 
    const uint32_t mask = _irqGetPendingMask( intNum );
    const uint32_t im = irqGetMaskRegister();
-   irqSetMaskRegister( (Callback == NULL)? (im & ~mask) : (im | mask) );
+   irqSetMaskRegister( (pfCallback == NULL)? (im & ~mask) : (im | mask) );
 }
 
 /*! ---------------------------------------------------------------------------

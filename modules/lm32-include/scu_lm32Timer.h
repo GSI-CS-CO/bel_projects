@@ -4,6 +4,8 @@
  *
  * @see https://www-acc.gsi.de/wiki/bin/viewauth/Hardware/Intern/Lm32IRQTimer
  *
+ * @note This module is suitable for FreeRTOS-port.
+ *
  * @copyright GSI Helmholtz Centre for Heavy Ion Research GmbH
  * @author    Ulrich Becker <u.becker@gsi.de>
  * @date      27.02.2020
@@ -32,10 +34,13 @@
 
 #ifdef __cplusplus
 extern "C" {
+namespace gsi
+{
 #endif
 
 /*!
  * @defgroup SCU_LM32_TIMER Very simple timer for LM32 in the SCU.
+ * @note This module is suitable for FreeRTOS-port.
  */
 
 /*!
@@ -153,7 +158,8 @@ STATIC inline uint32_t lm32TimerGetPeriod( SCU_LM32_TIMER_T* pTimer )
 }
 
 #ifdef __cplusplus
-}
+} /* namespace gsi */
+} /* extern "C" */
 #endif
 
 #endif /* ifndef _SCU_LM32TIMER_H */

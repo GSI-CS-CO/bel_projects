@@ -1,6 +1,9 @@
 /*!
  * @file   lm32Interrupts.h
- * @brief  Administration of the interrupt callback functions for LM32
+ * @brief  General administration of the interrupt handling and
+ *         critical resp. atomic sections for LM32
+ *
+ * @note This module is suitable for FreeRTOS-port.
  *
  * @copyright GSI Helmholtz Centre for Heavy Ion Research GmbH
  * @author    Ulrich Becker <u.becker@gsi.de>
@@ -20,8 +23,8 @@
  * License along with this library. If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************
  */
-#ifndef INTERRUPTS_HEADER_FILE
-#define INTERRUPTS_HEADER_FILE
+#ifndef _LM32INTERRUPTS_H
+#define _LM32INTERRUPTS_H
 
 #if !defined(__lm32__) && !defined(__DOXYGEN__)
   #error This module is for the target LM32 only!
@@ -54,19 +57,27 @@
    #define IRQ_ASSERT(__e)
 #endif
 
-#ifndef MAX_LM32_INTERRUPTS
+#if !defined( MAX_LM32_INTERRUPTS ) || defined(__DOXYGEN__)
 /*!
  * @ingroup INTERRUPT
  * @brief Maximum number of possible interrupt sources.
+ *
+ * The maximum number of items of the table depends on this macro
+ * which can be overwritten by the makefile.
+ * The default and maximum value of MAX_LM32_INTERRUPTS is 32.
+ *
+ * @see ISREntryTable
  */
 #define MAX_LM32_INTERRUPTS 32
 #endif
 #if ( MAX_LM32_INTERRUPTS > 32 )
- #error Macro MAX_LM32_INTERRUPTS is to large! Allowed maximum are 32 !
+ #error Macro MAX_LM32_INTERRUPTS is to large! Allowed maximum is 32 !
 #endif
 
 #ifdef __cplusplus
 extern "C" {
+namespace gsi
+{
 #endif
 
 
@@ -106,15 +117,18 @@ uint32_t _irqGetPendingMask( const unsigned int intNum );
 /*! ---------------------------------------------------------------------------
  * @ingroup INTERRUPT
  * @brief Returns the critical- respectively atomic- section nesting counter.
- * @note Outside of a critical section the return value has to be always zero,
- *       inside of a critical section greater or equal one depending on the
+ *
+ * @note Usually for debug purposes only.
+ * @note Outside of a critical section and/or interrupt routine the return
+ *       value has to be always zero.\n
+ *       Inside of a critical section greater or equal one depending on the
  *       nesting depth.
  */
 unsigned int irqGetAtomicNestingCount( void );
 
 /*! ---------------------------------------------------------------------------
  * @ingroup INTERRUPT
- * @brief Registers and de-registers interrupt-handler routine.
+ * @brief Registers and un-registers interrupt-handler routine.
  *
  * To register, pass a valid function pointer to the Callback parameter.
  * To deregister, pass 0 as the callback parameter.
@@ -123,11 +137,11 @@ unsigned int irqGetAtomicNestingCount( void );
  *               connected to (0 to 31).
  * @param pContext Pointer provided by user that will be passed to the
  *                 interrupt-handler callback.
- * @param ISRCallback User-provided interrupt-handler routine. If this
- *                    value NULL then the interrupt becomes de-registered.
+ * @param pfCallback User-provided interrupt-handler routine. If this
+ *                   value NULL then the interrupt becomes de-registered.
  */ 
 void irqRegisterISR( const unsigned int intNum, void* pContext,
-                     ISRCallback Callback );
+                     ISRCallback pfCallback );
 
 
 /*! ---------------------------------------------------------------------------
@@ -232,8 +246,6 @@ uint32_t irqGetMaskRegister( void )
  *
  * Counterpart to criticalSectionLeave.
  *
- * @note <b>CAUTION:</b> Don't use this function within interrupt routines
- *       because in this case the danger of race condition exist!\n
  * @note Keep atomic sections as short as possible, otherwise the danger of
  *       jittering grows when using the real time OS FreeRTOS.
  *
@@ -248,8 +260,6 @@ void criticalSectionEnter( void );
  *
  * Counterpart to criticalSectionEnter
  *
- * @note <b>CAUTION:</b> Don't use this function within interrupt routines
- *       because in this case the danger of race condition exist!\n
  * @note Keep atomic sections as short as possible, otherwise the danger of
  *       jittering grows when using the real time OS FreeRTOS.
  *
@@ -318,9 +328,45 @@ STATIC inline bool __criticalSectionExit( void )
  */
 #define atomic_off  criticalSectionExit
 
-#ifdef __cplusplus
-}
-#endif
+#if defined(__cplusplus ) || defined(__DOXYGEN__)
+} /* namespace gsi */
+} /* extern "C" */
+namespace gsi
+{
 
-#endif
+/*! ---------------------------------------------------------------------------
+ * @ingroup ATOMIC
+ * @brief An object of this class preforms a automatic call of
+ *        criticalSectionExit() by the destructor when the scope of this
+ *        object will left.
+ *
+ * @note For C++ only!
+ * @see ATOMIC_SECTION
+ *
+ * Example:
+ * @code
+ * {
+ *    gsi::AtomicSection myAtomicSection;
+ *    foo();
+ *    bar();
+ * }
+ * @endcode
+ */
+class AtomicSection
+{
+public:
+   AtomicSection( void )
+   {
+      criticalSectionEnter();
+   }
+
+   ~AtomicSection( void )
+   {
+      criticalSectionExit();
+   }
+};
+
+} /* namespace gsi */
+#endif /* ifdef __cplusplus */
+#endif /* ifndef _LM32INTERRUPTS_H */
 /* ================================= EOF ====================================*/
