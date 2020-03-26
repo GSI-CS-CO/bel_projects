@@ -5,6 +5,7 @@ use ieee.numeric_std.all;
 
 library work;
 use work.fg_quad_pkg.all;
+use work.daq_pkg.all;
 
 entity fg_quad_scu_bus is
   generic (
@@ -51,8 +52,9 @@ architecture fg_quad_scu_bus_arch of fg_quad_scu_bus is
   constant tag_low_reg_adr:   unsigned(15 downto 0) := Base_addr + x"0009";
   constant tag_high_reg_adr:  unsigned(15 downto 0) := Base_addr + x"000a";
   constant fw_version_adr:    unsigned(15 downto 0) := Base_addr + x"000b";
- 
-  
+  constant crc_adr:           unsigned(15 downto 0) := Base_addr + x"000c";
+
+
   signal  fg_cntrl_reg:     std_logic_vector(15 downto 0);
   signal  fg_cntrl_rd_reg:  std_logic_vector(15 downto 0);
   signal  coeff_a_reg:      std_logic_vector(15 downto 0);
@@ -63,6 +65,7 @@ architecture fg_quad_scu_bus_arch of fg_quad_scu_bus is
   signal  ramp_cnt_shadow:  unsigned(31 downto 0);
   signal  tag_low_reg:      std_logic_vector(15 downto 0);
   signal  tag_high_reg:     std_logic_vector(15 downto 0);
+  signal  crc_out:          std_logic_vector(15 downto 0);
 
   signal  wr_fg_cntrl:      std_logic;
   signal  rd_fg_cntrl:      std_logic;
@@ -85,12 +88,14 @@ architecture fg_quad_scu_bus_arch of fg_quad_scu_bus is
   signal  rd_tag_low:       std_logic;
   signal  rd_tag_high:      std_logic;
   signal  rd_fw_version:    std_logic;
-  
+  signal  rd_crc:           std_logic;
+
   signal  fg_is_running:    std_logic;
   signal  ramp_sec_fin:     std_logic;
   signal  state_change_irq: std_logic;
   signal  dreq:             std_logic;
   signal  tag_start:        std_logic;
+  signal  s_en_pos:         std_logic;
 
   type tag_state_type is(IDLE, TAG_RECEIVED);
 	signal tag_state	:	tag_state_type;
@@ -120,7 +125,31 @@ begin
       sw_strobe           => sw_strobe,
       fg_is_running       => fg_is_running       
     );
-    
+
+  crc_edge: process(clk, Ext_Wr_active, nReset)
+    variable s_en_0, s_en_1: std_logic;
+  begin
+    if nReset = '0' then
+        s_en_0 := '0';
+        s_en_1 := '0';
+    elsif rising_edge(clk) then
+        s_en_1 := s_en_0;
+        s_en_0 := Ext_Wr_active;
+    end if;
+        s_en_pos <= s_en_0 and not s_en_1;
+        --s_en_neg <= not s_en_0 and  s_en_1;
+  end process;
+  crc: crc5x16
+    port map (
+      nreset          => nReset,
+      clk_i           => clk,
+      data_in         => Data_from_SCUB_LA,
+      crc_start_pulse => wr_fg_cntrl and not Data_from_SCUB_LA(1), -- begin of parameter set
+      crc_en_pulse    => s_en_pos,
+      crc_out         => crc_out
+    );
+
+
 adr_decoder: process (clk, nReset)
   begin
     if nReset = '0' then
@@ -144,6 +173,7 @@ adr_decoder: process (clk, nReset)
       rd_tag_low        <= '0';
       rd_tag_high       <= '0';
       rd_fw_version     <= '0';
+      rd_crc            <= '0';
       dtack             <= '0';
       
     elsif rising_edge(clk) then
@@ -167,6 +197,7 @@ adr_decoder: process (clk, nReset)
       rd_tag_low        <= '0';
       rd_tag_high       <= '0';
       rd_fw_version     <= '0';
+      rd_crc            <= '0';
       dtack             <= '0';
     
       if Ext_Adr_Val = '1' then
@@ -266,7 +297,12 @@ adr_decoder: process (clk, nReset)
               rd_fw_version <= '1';
               dtack         <= '1';
             end if;
-          
+
+          when crc_adr =>
+            if Ext_Rd_active = '1' then
+              rd_crc <= '1';
+              dtack  <= '1';
+            end if;
 
           when others =>
             wr_fg_cntrl       <= '0';
@@ -288,6 +324,7 @@ adr_decoder: process (clk, nReset)
             rd_tag_low        <= '0';
             rd_tag_high       <= '0';
             rd_fw_version     <= '0';
+            rd_crc            <= '0';
             dtack             <= '0';
         end case;
       end if;
@@ -427,7 +464,7 @@ fg_cntrl_rd_reg <= fg_cntrl_reg(15 downto 13) & fg_cntrl_reg(12 downto 10) &
 
 user_rd_active <= rd_fg_cntrl or rd_coeff_a or rd_coeff_b or rd_start_value_h
                   or rd_start_value_l or rd_shift or rd_ramp_cnt_lo or rd_ramp_cnt_hi
-                  or rd_tag_high or rd_tag_low or rd_fw_version;
+                  or rd_tag_high or rd_tag_low or rd_fw_version or rd_crc;
 
 Rd_Port <= fg_cntrl_rd_reg                  when rd_fg_cntrl = '1' else
             coeff_a_reg                     when rd_coeff_a = '1' else
@@ -440,6 +477,7 @@ Rd_Port <= fg_cntrl_rd_reg                  when rd_fg_cntrl = '1' else
             std_logic_vector(ramp_cnt_shadow(31 downto 16))   when rd_ramp_cnt_hi = '1' else
             std_logic_vector(ramp_cnt_shadow(15 downto 0))    when rd_ramp_cnt_lo = '1' else
             std_logic_vector(to_unsigned(fw_version, 16)) when rd_fw_version = '1' else
+            crc_out                         when rd_crc = '1' else
             x"0000";
 
 irq <= state_change_irq or dreq;
