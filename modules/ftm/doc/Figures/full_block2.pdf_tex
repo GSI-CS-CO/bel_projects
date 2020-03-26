@@ -1,0 +1,103 @@
+%% Creator: Inkscape 0.48.5, www.inkscape.org
+%% PDF/EPS/PS + LaTeX output extension by Johan Engelen, 2010
+%% Accompanies image file 'full_block2.pdf' (pdf, eps, ps)
+%%
+%% To include the image in your LaTeX document, write
+%%   \input{<filename>.pdf_tex}
+%%  instead of
+%%   \includegraphics{<filename>.pdf}
+%% To scale the image, write
+%%   \def\svgwidth{<desired width>}
+%%   \input{<filename>.pdf_tex}
+%%  instead of
+%%   \includegraphics[width=<desired width>]{<filename>.pdf}
+%%
+%% Images with a different path to the parent latex file can
+%% be accessed with the `import' package (which may need to be
+%% installed) using
+%%   \usepackage{import}
+%% in the preamble, and then including the image with
+%%   \import{<path to file>}{<filename>.pdf_tex}
+%% Alternatively, one can specify
+%%   \graphicspath{{<path to file>/}}
+%% 
+%% For more information, please see info/svg-inkscape on CTAN:
+%%   http://tug.ctan.org/tex-archive/info/svg-inkscape
+%%
+\begingroup%
+  \makeatletter%
+  \providecommand\color[2][]{%
+    \errmessage{(Inkscape) Color is used for the text in Inkscape, but the package 'color.sty' is not loaded}%
+    \renewcommand\color[2][]{}%
+  }%
+  \providecommand\transparent[1]{%
+    \errmessage{(Inkscape) Transparency is used (non-zero) for the text in Inkscape, but the package 'transparent.sty' is not loaded}%
+    \renewcommand\transparent[1]{}%
+  }%
+  \providecommand\rotatebox[2]{#2}%
+  \ifx\svgwidth\undefined%
+    \setlength{\unitlength}{841.88974609bp}%
+    \ifx\svgscale\undefined%
+      \relax%
+    \else%
+      \setlength{\unitlength}{\unitlength * \real{\svgscale}}%
+    \fi%
+  \else%
+    \setlength{\unitlength}{\svgwidth}%
+  \fi%
+  \global\let\svgwidth\undefined%
+  \global\let\svgscale\undefined%
+  \makeatother%
+  \begin{picture}(1,0.70707072)%
+    \put(0,0){\includegraphics[width=\unitlength]{Figures/full_block2.pdf}}%
+    \put(0.29217275,0.63117941){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$S_R$}}}%
+    \put(0.16433096,0.63122462){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$P_{M_1}$}}}%
+    \put(0.22605164,0.63122462){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$\delta_{p}$}}}%
+    \put(0.3549214,0.63122462){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$P_{P_1}$}}}%
+    \put(0.41772503,0.63117941){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$S_P$}}}%
+    \put(0.54478386,0.63122462){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$P_{P_2}$}}}%
+    \put(0.67159934,0.63117941){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$S_F$}}}%
+    \put(0.60547833,0.63122462){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$\delta_{e}$}}}%
+    \put(0.73434787,0.63122462){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$P_{P_3}$}}}%
+    \put(0.79556223,0.63122462){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$\delta_{cb}$}}}%
+    \put(0.47893382,0.63122462){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$\delta_{cb}$}}}%
+    \put(0.20773777,0.66925685){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{EBM Framer}}}%
+    \put(0.34758056,0.66910745){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{EBM TX}}}%
+    \put(0.62926967,0.66926305){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{FEC}}}%
+    \put(0.85942409,0.63122462){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$\beta_{N_1}$}}}%
+    \put(0.84414086,0.66926305){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{NIC TX}}}%
+    \put(0.15367797,0.12830812){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$\delta_{cb}$}}}%
+    \put(0.34286151,0.12830812){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$S^{-1}_F$}}}%
+    \put(0.28249972,0.12830812){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$\delta_{d}$}}}%
+    \put(0.53241394,0.12830812){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$S^{-1}_P$}}}%
+    \put(0.6575644,0.12830812){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$S^{-1}_R$}}}%
+    \put(0.72420937,0.12830812){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$\beta_{rx}$}}}%
+    \put(0.84872475,0.12830812){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$P_{M_2}$}}}%
+    \put(0.91281861,0.12830812){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$\beta_{eca}$}}}%
+    \put(0.4725378,0.12830812){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$\delta_{cb}$}}}%
+    \put(0.78800836,0.12830812){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$\delta_{cb}$}}}%
+    \put(0.87395439,0.08719195){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{ECA}}}%
+    \put(0.67065611,0.08718568){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{EBS Deframer}}}%
+    \put(0.56160364,0.08703628){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{EBS RX}}}%
+    \put(0.3061615,0.08719195){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{DFEC}}}%
+    \put(0.08832151,0.12830812){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$\beta_{N_2}$}}}%
+    \put(0.07254738,0.09029416){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{NIC RX}}}%
+    \put(0.35952307,0.40725379){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$\delta$}}}%
+    \put(0.51444829,0.40766842){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$\beta_{wr}$}}}%
+    \put(0.09605072,0.20456235){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{1}}}%
+    \put(0.84092579,0.5693208){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{1}}}%
+    \put(0.32046725,0.4275994){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{3}}}%
+    \put(0.48163813,0.42755045){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{2}}}%
+    \put(0.61816956,0.50202278){\color[rgb]{0,0,0}\makebox(0,0)[lt]{\small{\begin{minipage}{0.34460073\unitlength}The CPU-PQ sink tree is removed from the representation, as there is no scaling applied.\\ (\textbf{1, 2})  The WR node is not a concatenation 
+of its servers, but a symbol for the network to ease visualisation. The NICs of DM and TR have been included.\\ (\textbf{3}) All constant delays can also be combined into a symbolic node, as scaling does not influence them.\end{minipage}}}}%
+    \put(0.34291272,0.64683067){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$S_R$}}}%
+    \put(0.53249108,0.64687591){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$S_{R,P}$}}}%
+    \put(0.7217793,0.64687591){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$S_{R,P,F}$}}}%
+    \put(0.21585697,0.12815547){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$P_{P_4}$}}}%
+    \put(0.2032884,0.14442821){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$S_{R,P,F}$}}}%
+    \put(0.40623824,0.12862334){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$P_{P_5}$}}}%
+    \put(0.39394546,0.14442821){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$S_{R,P}$}}}%
+    \put(0.59555988,0.12873168){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$P_{P_6}$}}}%
+    \put(0.58355122,0.14438297){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$S_R$}}}%
+  \end{picture}%
+\endgroup%

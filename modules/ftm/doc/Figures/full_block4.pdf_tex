@@ -1,0 +1,112 @@
+%% Creator: Inkscape 0.48.5, www.inkscape.org
+%% PDF/EPS/PS + LaTeX output extension by Johan Engelen, 2010
+%% Accompanies image file 'full_block4.pdf' (pdf, eps, ps)
+%%
+%% To include the image in your LaTeX document, write
+%%   \input{<filename>.pdf_tex}
+%%  instead of
+%%   \includegraphics{<filename>.pdf}
+%% To scale the image, write
+%%   \def\svgwidth{<desired width>}
+%%   \input{<filename>.pdf_tex}
+%%  instead of
+%%   \includegraphics[width=<desired width>]{<filename>.pdf}
+%%
+%% Images with a different path to the parent latex file can
+%% be accessed with the `import' package (which may need to be
+%% installed) using
+%%   \usepackage{import}
+%% in the preamble, and then including the image with
+%%   \import{<path to file>}{<filename>.pdf_tex}
+%% Alternatively, one can specify
+%%   \graphicspath{{<path to file>/}}
+%% 
+%% For more information, please see info/svg-inkscape on CTAN:
+%%   http://tug.ctan.org/tex-archive/info/svg-inkscape
+%%
+\begingroup%
+  \makeatletter%
+  \providecommand\color[2][]{%
+    \errmessage{(Inkscape) Color is used for the text in Inkscape, but the package 'color.sty' is not loaded}%
+    \renewcommand\color[2][]{}%
+  }%
+  \providecommand\transparent[1]{%
+    \errmessage{(Inkscape) Transparency is used (non-zero) for the text in Inkscape, but the package 'transparent.sty' is not loaded}%
+    \renewcommand\transparent[1]{}%
+  }%
+  \providecommand\rotatebox[2]{#2}%
+  \ifx\svgwidth\undefined%
+    \setlength{\unitlength}{841.88974609bp}%
+    \ifx\svgscale\undefined%
+      \relax%
+    \else%
+      \setlength{\unitlength}{\unitlength * \real{\svgscale}}%
+    \fi%
+  \else%
+    \setlength{\unitlength}{\svgwidth}%
+  \fi%
+  \global\let\svgwidth\undefined%
+  \global\let\svgscale\undefined%
+  \makeatother%
+  \begin{picture}(1,0.70707072)%
+    \put(0,0){\includegraphics[width=\unitlength]{Figures/full_block4.pdf}}%
+    \put(0.30254777,0.57401724){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{10}}}%
+    \put(0.3225114,0.44817121){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{11}}}%
+    \put(0.13986952,0.35126461){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{12}}}%
+    \put(0.35868978,0.35132493){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{13}}}%
+    \put(0.24770573,0.27027036){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{14}}}%
+    \put(0.37719803,0.21044778){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{15}}}%
+    \put(0.47971639,0.26474742){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{16}}}%
+    \put(0.32360267,0.1418365){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{17}}}%
+    \put(0.06223312,0.6155697){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$P_{M_1}$}}}%
+    \put(0.51717142,0.61573941){\color[rgb]{0.58823529,0.58823529,0.58823529}\makebox(0,0)[lb]{\smash{$\beta_{wr}$}}}%
+    \put(0.13116447,0.6155697){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$P_{P_1}$}}}%
+    \put(0.11446113,0.60405517){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$S^{-1}_{R}$}}}%
+    \put(0.44097812,0.61552446){\color[rgb]{0.58823529,0.58823529,0.58823529}\makebox(0,0)[lb]{\smash{$S_F$}}}%
+    \put(0.19012401,0.61556973){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$P_{P_2}$}}}%
+    \put(0.17541159,0.60405517){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$S^{-1}_{P, R}$}}}%
+    \put(0.31531997,0.61552446){\color[rgb]{0.58823529,0.58823529,0.58823529}\makebox(0,0)[lb]{\smash{$S_R$}}}%
+    \put(0.37831496,0.61552446){\color[rgb]{0.58823529,0.58823529,0.58823529}\makebox(0,0)[lb]{\smash{$S_P$}}}%
+    \put(0.2414847,0.60439454){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$S^{-1}_{F,P,R}$}}}%
+    \put(0.25612398,0.61523033){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$P_{P_3}$}}}%
+    \put(0.5055201,0.53576856){\color[rgb]{0.58823529,0.58823529,0.58823529}\makebox(0,0)[lb]{\smash{$S_F$}}}%
+    \put(0.37986201,0.53576856){\color[rgb]{0.58823529,0.58823529,0.58823529}\makebox(0,0)[lb]{\smash{$S_R$}}}%
+    \put(0.44285703,0.53576856){\color[rgb]{0.58823529,0.58823529,0.58823529}\makebox(0,0)[lb]{\smash{$S_P$}}}%
+    \put(0.31719972,0.54181311){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$\beta_{wr}$}}}%
+    \put(0.30560987,0.52969449){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$S^{-1}_{F,P,R}$}}}%
+    \put(0.71736001,0.38871843){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$\beta_{rx}$}}}%
+    \put(0.77908151,0.38871843){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$P_{M_2}$}}}%
+    \put(0.84509511,0.38871843){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$\beta_{eca}$}}}%
+    \put(0.32803408,0.40477733){\color[rgb]{0.58823529,0.58823529,0.58823529}\makebox(0,0)[lb]{\smash{$S_{R,P,F}$}}}%
+    \put(0.34295575,0.38645116){\color[rgb]{0.58823529,0.58823529,0.58823529}\makebox(0,0)[lb]{\smash{$P_{P_4}$}}}%
+    \put(0.40642752,0.38932973){\color[rgb]{0.58823529,0.58823529,0.58823529}\makebox(0,0)[lb]{\smash{$S^{-1}_F$}}}%
+    \put(0.52878824,0.38805516){\color[rgb]{0.58823529,0.58823529,0.58823529}\makebox(0,0)[lb]{\smash{$S^{-1}_P$}}}%
+    \put(0.65333413,0.38841509){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$S^{-1}_R$}}}%
+    \put(0.45432943,0.40478684){\color[rgb]{0.58823529,0.58823529,0.58823529}\makebox(0,0)[lb]{\smash{$S_{R,P}$}}}%
+    \put(0.46925122,0.38646079){\color[rgb]{0.58823529,0.58823529,0.58823529}\makebox(0,0)[lb]{\smash{$P_{P_5}$}}}%
+    \put(0.57989722,0.40512624){\color[rgb]{0.58823529,0.58823529,0.58823529}\makebox(0,0)[lb]{\smash{$S_{R}$}}}%
+    \put(0.59481912,0.38680019){\color[rgb]{0.58823529,0.58823529,0.58823529}\makebox(0,0)[lb]{\smash{$P_{P_6}$}}}%
+    \put(0.27955025,0.38734961){\color[rgb]{0.58823529,0.58823529,0.58823529}\makebox(0,0)[lb]{\smash{$S_F$}}}%
+    \put(0.15389216,0.38734961){\color[rgb]{0.58823529,0.58823529,0.58823529}\makebox(0,0)[lb]{\smash{$S_R$}}}%
+    \put(0.21688718,0.38734961){\color[rgb]{0.58823529,0.58823529,0.58823529}\makebox(0,0)[lb]{\smash{$S_P$}}}%
+    \put(0.3392798,0.31743888){\color[rgb]{0.58823529,0.58823529,0.58823529}\makebox(0,0)[lb]{\smash{$S_F$}}}%
+    \put(0.21362173,0.31743888){\color[rgb]{0.58823529,0.58823529,0.58823529}\makebox(0,0)[lb]{\smash{$S_R$}}}%
+    \put(0.27661673,0.31743888){\color[rgb]{0.58823529,0.58823529,0.58823529}\makebox(0,0)[lb]{\smash{$S_P$}}}%
+    \put(0.34043773,0.24684933){\color[rgb]{0.58823529,0.58823529,0.58823529}\makebox(0,0)[lb]{\smash{$S_R$}}}%
+    \put(0.40343272,0.24684933){\color[rgb]{0.58823529,0.58823529,0.58823529}\makebox(0,0)[lb]{\smash{$S_P$}}}%
+    \put(0.40294644,0.10838537){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$S_R$}}}%
+    \put(0.46628081,0.17558115){\color[rgb]{0.58823529,0.58823529,0.58823529}\makebox(0,0)[lb]{\smash{$S_P$}}}%
+    \put(0.14063308,0.30579985){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$S^{-1}_{F,P,R}$}}}%
+    \put(0.15527236,0.3166356){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$P_{P_4}$}}}%
+    \put(0.26620094,0.23564918){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$S^{-1}_{F,P,R}$}}}%
+    \put(0.28084022,0.24672493){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$P_{P_4}$}}}%
+    \put(0.34442827,0.10724281){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$P_{P_5}$}}}%
+    \put(0.32971586,0.0957283){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$S^{-1}_{P, R}$}}}%
+    \put(0.40415788,0.17579603){\color[rgb]{0.58823529,0.58823529,0.58823529}\makebox(0,0)[lb]{\smash{$P_{P_5}$}}}%
+    \put(0.38944546,0.16428153){\color[rgb]{0.58823529,0.58823529,0.58823529}\makebox(0,0)[lb]{\smash{$S^{-1}_{P}$}}}%
+    \put(0.38882726,0.19259499){\color[rgb]{0.58823529,0.58823529,0.58823529}\makebox(0,0)[lb]{\smash{$S_{R}$}}}%
+    \put(0.91121078,0.38830385){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$\delta$}}}%
+    \put(0.61552352,0.56095242){\color[rgb]{0,0,0}\makebox(0,0)[lt]{\small{\begin{minipage}{0.34460073\unitlength}(\textbf{10})  All three scalers are moved past the WR network, each replacing the previous WR representation successively by a scaled equivalent system.\\ (\textbf{11}) The scalers are removed from the WR system and attached to the TR system\\ \end{minipage}}}}%
+    \put(0.61552352,0.34511146){\color[rgb]{0,0,0}\makebox(0,0)[lt]{\small{\begin{minipage}{0.34460073\unitlength}(\textbf{12})  The scalers are moved past the $P_{P_4}$ node, leaving it equivalently scaled to $P_{P_3}$. Once again, every move replaces a system by an equivalent circuit.\\ (\textbf{13,14}) The $S_F$ scaler is now adjacent to its inverse $S^{-1}_F$, they cancel each other out and are removed. \\ (\textbf{15})  $S_P$ is moved past the $P_{P_5}$ node.\\ (\textbf{16})  $S_P$ is adjacent to its inverse $S^{-1}_P$, both are removed.\\ (\textbf{17})  The result of the modified blocks is now the sequence $P_{P_4}$, $P_{P_5}$, $S_R$.\end{minipage}}}}%
+  \end{picture}%
+\endgroup%

@@ -1,0 +1,77 @@
+
+\newglossaryentry{cmd:target}{
+name={target},
+text={Target Block},
+description={Name of the destination node, equivalent to target of defdst edge in cmdule.},
+type=cmd}
+
+\newglossaryentry{cmd:pattern}{type=cmd,
+name={pattern},
+text={Target Pattern},
+description={See \gls{cmd:target}},
+}
+
+\newglossaryentry{cmd:dest}{
+name={dest},
+description={Name of the destination node, equivalent to target of defdst edge in cmdule.},
+type=cmd}
+
+\newglossaryentry{cmd:destpattern}{type=cmd,
+name={destpattern},
+text={Destination Pattern},
+description={Name of the destination pattern. Equivalent to \gls{cmd:dest} to the patterns eentry node. },
+}
+
+\newglossaryentry{cmd:destbeamproc}{
+name={destbeamproc},
+text={Dest. beamprocess},
+description={Name of the destination beamprocess. Equivalent to \gls{cmd:dest} to the beamproccess' entry node.},
+type=cmd}
+
+\newglossaryentry{cmd:permanent}{
+name={permanent},
+description={If true, the flow command will permanently change the default destination of the target block, else the change lasts only during the execution of the command.},
+type=cmd}
+
+\newglossaryentry{cmd:qil}{
+name={qil},
+description={Flush queue selection, flushes high priority queue if true},
+type=cmd}
+
+\newglossaryentry{cmd:qhi}{
+name={qhi},
+description={Flush queue selection, flushes mid priority queue if true},
+type=cmd}
+
+\newglossaryentry{cmd:qlo}{
+name={qlo},
+description={Flush queue selection, flushes low priority queue if true},
+type=cmd}
+
+
+\newglossaryentry{cmd:tvalid}{
+name={tvalid},
+text={Valid Time},
+description={Time after which this command will be valid (executable), can be absolute or relative depending on \gls{cmd:vabs} flag},
+type=cmd}
+
+\newglossaryentry{cmd:vabs}{
+name={vabs},
+description={Chooses whether tvalid is interpreted as absolute value or an offset to current time sum.},
+type=cmd}
+
+\newglossaryentry{cmd:prio}{
+name={prio},
+text={Queue Priority},
+description={Chooses the queue priority level this command will be written to at the target block (0 (lo), 1(mid), 2(hi))},
+type=cmd}
+
+\newglossaryentry{cmd:qty}{
+name={qty},
+description={Repetition quantity of a command. The sent command will be executed until qty reaches 0},
+type=cmd}
+
+\newglossaryentry{cmd:twait}{
+name={twait},
+description={Timespan a wait command is going to wait. Can absolute or relative to current time, depending on flag},
+type=cmd}
