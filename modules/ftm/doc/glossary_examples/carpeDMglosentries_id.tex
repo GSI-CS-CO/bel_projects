@@ -1,0 +1,69 @@
+%%%% ID Fields
+\newglossaryentry{id:id}{
+name={id},
+description={The whole ID field of a timing event. Can be used instead of the subid fields (evtno, gid, etc)},
+valtype={u64b},
+type=id}
+
+
+\newglossaryentry{id:fid}{
+name={fid},
+description={Format this timing event ID follows. Currently only format 1 is supported},
+valtype={u4b},
+type=id}
+
+\newglossaryentry{id:gid}{
+name={gid},
+description={Group ID this timing event belongs to},
+valtype={u12b},
+type=id}
+
+\newglossaryentry{id:evtno}{
+name={evtno},
+description={The event number this timing event belongs to},
+valtype={u12b},
+type=id}
+
+\newglossaryentry{id:sid}{
+name={sid},
+description={ID of the sequence this timing event belongs to},
+valtype={u12b},
+type=id}
+
+\newglossaryentry{id:bpid}{
+name={bpid},
+description={ID of the beamprocess this timing event belongs to},
+valtype={u14b},
+type=id}
+
+%\newglossaryentry{id:flags}{
+%name={flags},
+%description={Flag allowing requesting to run this event without beam. Part of the \gls{id:res}},
+%valtype={u1b},
+%type=id}
+
+\newglossaryentry{id:beamin}{
+name={beamin},
+description={Marks this node as an exit point to beamprocess \emph{X}. A node can belong to only one beamprocess, part of the ID field of a timing event.},
+valtype={u1b},
+type=id}
+
+%newglossaryentry{id:res}{
+%ame={res},
+%escription={Originally reserved, now hijacked to host \gls{id:vacc} and VAcc fields.},
+%altype={u6b},
+%ype=id}
+
+\newglossaryentry{id:reqnobeam}{
+name={reqnobeam},
+description={Flag allowing requesting to run this event without beam},
+valtype={u1b},
+type=id}
+
+\newglossaryentry{id:vacc}{
+name={vacc},
+description={Virtual accelerator descriptor field},
+valtype={u4b},
+type=id}
+
+

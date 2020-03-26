@@ -1,0 +1,427 @@
+\chapter{Memory Maps} % Main appendix title
+\sloppy
+\label{AppendixA} % For referencing this appendix elsewhere, use \ref{AppendixA}
+
+Lorem ipsum dolor sit amet... blabla
+
+%%%%%%%%%%%%%%%% Block %%%%%%%%%%%%%%%%
+\begin{figure}[H]
+  \begin{bytefield}{32}
+    \colorwordbox{lightgray}{1}{Reserved / Unused}\\
+    \colorwordbox{white}{1}{DM RW only}\\
+    \colorwordbox{lightblue}{1}{Host RW only}\\
+    \colorwordbox{lightgreen}{1}{DM RW, Host RO}\\
+    \colorwordbox{lightyellow}{1}{DM RO, Host RW}\\
+    \colorwordbox{lightred}{1}{DM RW, Host RW}
+  \end{bytefield}
+  \caption{Color Legend for Memory Layout}
+  \label{fig:adrtrn}
+\end{figure}
+\noindent
+
+
+\newpage
+%%%%%%%%%%%%%%%% Block %%%%%%%%%%%%%%%%
+\begin{figure}[H]
+  \begin{bytefield}{32}
+    \bitheader{31,24,16,8,0}\\
+    \colorwordbox{lightyellow}{2}{Block Period (\SI{}{\nano\second})}\\
+    \colorwordbox{lightblue}{1}{Ptr to Alternative Destination List}\\
+    \colorwordbox{lightyellow}{1}{Ptr to Low  PQ Buffer List }\\
+    \colorwordbox{lightyellow}{1}{Ptr to Mid  PQ Buffer List }\\
+    \colorwordbox{lightyellow}{1}{Ptr to High PQ Buffer List }\\
+    \begin{rightwordgroup}{Q Write Indices}
+      \colorbitbox{lightgray}{8}{}  & \colorbitbox{lightyellow}{8}{\tiny High Q WR Idx} & \colorbitbox{lightyellow}{8}{\tiny Mid Q WR Idx} & \colorbitbox{lightyellow}{8}{\tiny Low Q WR Idx}
+  \end{rightwordgroup}\\
+    \begin{rightwordgroup}{Q Read Indices}
+      \colorbitbox{lightgray}{8}{}  & \colorbitbox{lightred}{8}{\tiny High Q RD Idx} & \colorbitbox{lightred}{8}{\tiny Mid Q RD Idx} & \colorbitbox{lightred}{8}{\tiny Low Q RD Idx}
+    \end{rightwordgroup}\\
+    \begin{rightwordgroup}{Lock Flags}
+      \colorbitbox{lightgray}{30}{} & \colorbitbox{lightyellow}{1}{\tiny Lck RD} & \colorbitbox{lightyellow}{1}{\tiny Lck WR}
+    \end{rightwordgroup}\\
+    \colorwordbox{lightgray}{1}{}\\
+    \colorwordbox{lightblue}{1}{Hash of Node Name}\\
+    \bitheader{22,21,20,17,16,15,14,13,12,10,9,8,7,0} \\
+    \begin{rightwordgroup}{Node Flags}
+      \colorbitbox{lightgray}{9}{} & \colorbitbox{lightblue}{1}{\tiny Has Hi} & \colorbitbox{lightblue}{1}{\tiny Has Md} & \colorbitbox{lightblue}{1}{\tiny Has Lo} & \colorbitbox{lightgray}{2}{} & \colorbitbox{lightblue}{2}{\tiny Debug} & \colorbitbox{lightyellow}{1}{\tiny Pat Exit} & & \colorbitbox{lightyellow}{1}{\tiny BP out} \colorbitbox{lightyellow}{1}{\tiny Pat in} & \colorbitbox{lightyellow}{1}{\tiny BP in} & \colorbitbox{lightgray}{1}{} \bitbox{1}{\rotatebox{90}{\tiny Syn}} & \colorbitbox{lightgreen}{2}{\tiny Paint} & \colorbitbox{lightyellow}{8}{\tiny Type}
+  \end{rightwordgroup}\\
+    \colorwordbox{lightred}{1}{Next Ptr}\\
+\end{bytefield}
+  \caption{Block Memory Layout}
+  \label{fig:adrtrn}
+\end{figure}
+\noindent
+
+
+
+
+%%%%%%%%%%%%%%%% Timing Message %%%%%%%%%%%%%%%%
+\begin{figure}[H]
+  
+  \begin{bytefield}{32}
+    \bitheader{31,0}\\
+    \colorwordbox{lightyellow}{2}{Time Offset to Block Start (\SI{}{\nano\second})}\\
+    \colorwordbox{lightyellow}{2}{Event ID (ID)}\\
+    \colorwordbox{lightyellow}{2}{Event Parameters (PAR)}\\
+    \colorwordbox{lightyellow}{1}{Fractional Time Field (TEF)}\\
+    \colorwordbox{lightgray}{1}{}\\
+    \colorwordbox{lightgray}{1}{}\\
+    \colorwordbox{lightgray}{1}{}\\
+    \colorwordbox{lightblue}{1}{Hash of Node Name}\\
+    \bitheader{25,24,23,22,21,20,17,16,13,12,10,9,8,7,0} \\
+    \begin{rightwordgroup}{Node Flags}
+      \colorbitbox{lightgray}{6}{}  & \colorbitbox{lightyellow}{1}{\tiny Dyn RES} & \colorbitbox{lightyellow}{1}{\tiny Dyn TEF} & \colorbitbox{lightyellow}{1}{\tiny Dyn PA1} & \colorbitbox{lightyellow}{1}{\tiny Dyn PA0} & \colorbitbox{lightyellow}{1}{\tiny Dyn PAR} & \colorbitbox{lightyellow}{1}{\tiny Dyn ID} & \colorbitbox{lightgray}{2}{} & \colorbitbox{lightblue}{2}{\tiny Debug}  & \colorbitbox{lightgray}{2}{} & \colorbitbox{lightyellow}{1}{\tiny Pat in} & \colorbitbox{lightyellow}{1}{\tiny BP in} & \colorbitbox{lightgray}{1}{} & \bitbox{1}{\rotatebox{90}{\tiny Syn}} & \colorbitbox{lightgreen}{2}{\tiny Paint} & \colorbitbox{lightyellow}{8}{\tiny Type}
+  \end{rightwordgroup}\\
+    \colorwordbox{lightyellow}{1}{Next Ptr}\\
+\end{bytefield}
+  \caption{Timing Message Memory Layout}
+  \label{fig:adrtrn}
+\end{figure}
+\noindent
+
+
+%%%%%%%%%%%%%%%% Flow %%%%%%%%%%%%%%%%
+\begin{figure}[H]
+  \begin{bytefield}{32}
+    \bitheader{31,0}\\
+    \colorwordbox{lightyellow}{2}{Time Offset to Block Start (\SI{}{\nano\second})}\\
+    \colorwordbox{lightyellow}{1}{Ptr to Target Block}\\
+    \colorwordbox{lightyellow}{2}{Validity date (\SI{}{\nano\second})}\\
+    \bitheader{27,26,25,24,23,20,19,0} \\
+    \begin{rightwordgroup}{Cmd Action}
+      \colorbitbox{lightgray}{4}{} & \colorbitbox{lightyellow}{1}{\rotatebox{90}{\tiny Perma}} & \colorbitbox{lightyellow}{1}{\rotatebox{90}{\tiny VAbs}} & \colorbitbox{lightyellow}{2}{\tiny Prio} & \colorbitbox{lightyellow}{4}{\tiny Type} & \colorbitbox{lightred}{20}{\tiny Quantity}
+  \end{rightwordgroup}\\
+    \colorwordbox{lightyellow}{1}{Ptr to Flow Destination}\\
+    \colorwordbox{lightgray}{1}{}\\
+    \colorwordbox{lightgray}{1}{}\\
+    \colorwordbox{lightgray}{1}{}\\
+    \colorwordbox{lightblue}{1}{Hash of Node Name}\\
+    \bitheader{20,17,16,13,12,10,9,8,7,0} \\
+    \begin{rightwordgroup}{Node Flags}
+      \colorbitbox{lightgray}{11}{} & \colorbitbox{lightblue}{1}{\rotatebox{90}{\tiny Peer}} & \colorbitbox{lightgray}{2}{} & \colorbitbox{lightblue}{2}{\tiny Debug} & & \colorbitbox{lightgray}{2}{} & \colorbitbox{lightyellow}{1}{\tiny Pat in} & \colorbitbox{lightyellow}{1}{\tiny BP in} & \colorbitbox{lightgray}{1}{} & \bitbox{1}{\rotatebox{90}{\tiny Syn}} & \colorbitbox{lightgreen}{2}{\tiny Paint} & \colorbitbox{lightyellow}{8}{\tiny Type}
+  \end{rightwordgroup}\\
+    \colorwordbox{lightyellow}{1}{Next Ptr}\\
+\end{bytefield}
+  \caption{Flow Command Memory Layout}
+  \label{fig:adrtrn}
+\end{figure}
+\noindent
+
+%%%%%%%%%%%%%%%% Noop %%%%%%%%%%%%%%%%
+\begin{figure}[H]
+  \begin{bytefield}{32}
+    \bitheader{31,0}\\
+    \colorwordbox{lightyellow}{2}{Time Offset to Block Start (\SI{}{\nano\second})}\\
+    \colorwordbox{lightyellow}{1}{Ptr to Target Block}\\
+    \colorwordbox{lightyellow}{2}{Validity date (\SI{}{\nano\second})}\\
+    \bitheader{26,25,24,23,20,19,0} \\
+    \begin{rightwordgroup}{Cmd Action}
+      \colorbitbox{lightgray}{5}{}  & \colorbitbox{lightyellow}{1}{\rotatebox{90}{\tiny VAbs}} & \colorbitbox{lightyellow}{2}{\tiny Prio} & \colorbitbox{lightyellow}{4}{\tiny Type} & \colorbitbox{lightred}{20}{\tiny Quantity}
+  \end{rightwordgroup}\\
+    \colorwordbox{lightyellow}{1}{Ptr to Flow Destination}\\
+    \colorwordbox{lightgray}{1}{}\\
+    \colorwordbox{lightgray}{1}{}\\
+    \colorwordbox{lightgray}{1}{}\\
+    \colorwordbox{lightblue}{1}{Hash of Node Name}\\
+    \bitheader{20,17,16,13,12,10,9,8,7,0} \\
+    \begin{rightwordgroup}{Node Flags}
+      \colorbitbox{lightgray}{11}{} & \colorbitbox{lightblue}{1}{\rotatebox{90}{\tiny Peer}} & \colorbitbox{lightgray}{2}{} & \colorbitbox{lightblue}{2}{\tiny Debug} & & \colorbitbox{lightgray}{2}{} & \colorbitbox{lightyellow}{1}{\tiny Pat in} & \colorbitbox{lightyellow}{1}{\tiny BP in} & \colorbitbox{lightgray}{1}{} & \bitbox{1}{\rotatebox{90}{\tiny Syn}} & \colorbitbox{lightgreen}{2}{\tiny Paint} & \colorbitbox{lightyellow}{8}{\tiny Type}
+  \end{rightwordgroup}\\
+    \colorwordbox{lightyellow}{1}{Next Ptr}\\
+\end{bytefield}
+  \caption{No-Op Command Memory Layout}
+  \label{fig:adrtrn}
+\end{figure}
+\noindent
+
+%%%%%%%%%%%%%%%% Wait %%%%%%%%%%%%%%%%
+\begin{figure}[H]
+  \begin{bytefield}{32}
+    \bitheader{31,0}\\
+    \colorwordbox{lightyellow}{2}{Time Offset to Block Start (\SI{}{\nano\second})}\\
+    \colorwordbox{lightyellow}{1}{Ptr to Target Block}\\
+    \colorwordbox{lightyellow}{2}{Validity date (\SI{}{\nano\second})}\\
+    \bitheader{28,27,26,25,24,23,20} \\
+    \begin{rightwordgroup}{Cmd Action}
+      \colorbitbox{lightgray}{3}{} & \colorbitbox{lightyellow}{1}{\rotatebox{90}{\tiny Abs}} & \colorbitbox{lightyellow}{1}{\rotatebox{90}{\tiny Perma}} & \colorbitbox{lightyellow}{1}{\rotatebox{90}{\tiny VAbs}} & \colorbitbox{lightyellow}{2}{\tiny Prio} & \colorbitbox{lightyellow}{4}{\tiny Type} & \colorbitbox{lightgray}{20}{}
+  \end{rightwordgroup}\\
+    \colorwordbox{lightyellow}{2}{Wait Time Abs. or Rel. (\SI{}{\nano\second})}\\
+    \colorwordbox{lightgray}{1}{}\\
+    \colorwordbox{lightgray}{1}{}\\
+    \colorwordbox{lightblue}{1}{Hash of Node Name}\\
+    \bitheader{20,17,16,13,12,10,9,8,7,0} \\
+    \begin{rightwordgroup}{Node Flags}
+      \colorbitbox{lightgray}{11}{} & \colorbitbox{lightblue}{1}{\rotatebox{90}{\tiny Peer}} & \colorbitbox{lightgray}{2}{} & \colorbitbox{lightblue}{2}{\tiny Debug} & & \colorbitbox{lightgray}{2}{} & \colorbitbox{lightyellow}{1}{\tiny Pat in} & \colorbitbox{lightyellow}{1}{\tiny BP in} & \colorbitbox{lightgray}{1}{} & \bitbox{1}{\rotatebox{90}{\tiny Syn}} & \colorbitbox{lightgreen}{2}{\tiny Paint} & \colorbitbox{lightyellow}{8}{\tiny Type}
+    \end{rightwordgroup}\\
+    \colorwordbox{lightyellow}{1}{Next Ptr}\\
+\end{bytefield}
+  \caption{Wait Command Memory Layout}
+  \label{fig:adrtrn}
+\end{figure}
+\noindent
+%%%%%%%%%%%%%%%% Flush %%%%%%%%%%%%%%%%
+\begin{figure}[H]
+  \begin{bytefield}{32}
+    \bitheader{31,0}\\
+    \colorwordbox{lightyellow}{2}{Time Offset to Block Start (\SI{}{\nano\second})}\\
+    \colorwordbox{lightyellow}{1}{Ptr to Target Block}\\
+    \colorwordbox{lightyellow}{2}{Validity date (\SI{}{\nano\second})}\\
+    \bitheader{30,29,28,27,26,25,24,23,20} \\
+    \begin{rightwordgroup}{Cmd Action}
+      \colorbitbox{lightgray}{1}{} & \colorbitbox{lightyellow}{1}{\tiny Fl Hi} & \colorbitbox{lightyellow}{1}{\tiny Fl Md} & \colorbitbox{lightyellow}{1}{\tiny Fl Lo} & \colorbitbox{lightyellow}{1}{\rotatebox{90}{\tiny Perma}} & \colorbitbox{lightyellow}{1}{\rotatebox{90}{\tiny VAbs}} & \colorbitbox{lightyellow}{2}{\tiny Prio} & \colorbitbox{lightyellow}{4}{\tiny Type} & \colorbitbox{lightgray}{20}{}
+  \end{rightwordgroup}\\
+    \colorwordbox{lightyellow}{1}{Ptr to Destination Override}\\
+    \colorwordbox{lightgray}{1}{Flush Ranges (not yet implemented)}\\
+    \colorwordbox{lightgray}{1}{}\\
+    \colorwordbox{lightblue}{1}{Hash of Node Name}\\
+    \bitheader{20,17,16,13,12,10,9,8,7,0} \\
+    \begin{rightwordgroup}{Node Flags}
+      \colorbitbox{lightgray}{11}{} & \colorbitbox{lightblue}{1}{\rotatebox{90}{\tiny Peer}} & \colorbitbox{lightgray}{2}{} & \colorbitbox{lightblue}{2}{\tiny Debug} & & \colorbitbox{lightgray}{2}{} & \colorbitbox{lightyellow}{1}{\tiny Pat in} & \colorbitbox{lightyellow}{1}{\tiny BP in} & \colorbitbox{lightgray}{1}{} & \bitbox{1}{\rotatebox{90}{\tiny Syn}} & \colorbitbox{lightgreen}{2}{\tiny Paint} & \colorbitbox{lightyellow}{8}{\tiny Type}
+    \end{rightwordgroup}\\
+    \colorwordbox{lightyellow}{1}{Next Ptr}\\
+\end{bytefield}
+  \caption{Flush Command Memory Layout}
+  \label{fig:adrtrn}
+\end{figure}
+\noindent
+
+%%%%%%%%%%%%%%%% Alt. Destination List %%%%%%%%%%%%%%%%
+\begin{figure}[H]
+  \begin{bytefield}{32}
+    \bitheader{31,0}\\
+    \colorwordbox{lightblue}{1}{Ptr to Alternative Destination (10x)}\\
+    \colorwordbox{lightblue}{1}{\dots}\\
+    \colorwordbox{lightblue}{1}{\dots}\\
+    \colorwordbox{lightblue}{1}{\dots}\\
+    \colorwordbox{lightblue}{1}{\dots}\\
+    \colorwordbox{lightblue}{1}{\dots}\\
+    \colorwordbox{lightblue}{1}{\dots}\\
+    \colorwordbox{lightblue}{1}{\dots}\\
+    \colorwordbox{lightblue}{1}{\dots}\\
+    \colorwordbox{lightblue}{1}{\dots}\\
+    \colorwordbox{lightblue}{1}{Hash of Node Name}\\
+    \bitheader{17,16,7,0} \\
+    \begin{rightwordgroup}{Node Flags}
+      \colorbitbox{lightgray}{14}{} & \colorbitbox{lightblue}{2}{\tiny Debug} & \colorbitbox{lightgray}{8}{} & \colorbitbox{lightyellow}{8}{\tiny Type}
+  \end{rightwordgroup}\\
+    \colorwordbox{lightgray}{1}{Next Ptr}\\
+\end{bytefield}
+  \caption{Alternative Destination List Memory Layout}
+  \label{fig:adrtrn}
+\end{figure}
+\noindent
+
+%%%%%%%%%%%%%%%% Queue Buffer List %%%%%%%%%%%%%%%%
+\begin{figure}[H]
+  \begin{bytefield}{32}
+    \bitheader{31,0}\\
+    \colorwordbox{lightyellow}{1}{Ptr to Queue Buffer (2x)}\\
+    \colorwordbox{lightyellow}{1}{\dots}\\
+    \colorwordbox{lightgray}{1}{}\\
+    \colorwordbox{lightgray}{1}{}\\
+    \colorwordbox{lightgray}{1}{}\\
+    \colorwordbox{lightgray}{1}{}\\
+    \colorwordbox{lightgray}{1}{}\\
+    \colorwordbox{lightgray}{1}{}\\
+    \colorwordbox{lightgray}{1}{}\\
+    \colorwordbox{lightgray}{1}{}\\
+    \colorwordbox{lightblue}{1}{Hash of Node Name}\\
+    \bitheader{17,16,7,0} \\
+    \begin{rightwordgroup}{Node Flags}
+     \colorbitbox{lightgray}{14}{} & \colorbitbox{lightblue}{2}{\tiny Debug} & \colorbitbox{lightgray}{8}{} & \colorbitbox{lightyellow}{8}{\tiny Type}
+  \end{rightwordgroup}\\
+    \colorwordbox{lightyellow}{1}{Next Ptr}\\
+\end{bytefield}
+  \caption{Queue Buffer List Memory Layout}
+  \label{fig:adrtrn}
+\end{figure}
+\noindent
+
+%%%%%%%%%%%%%%%% Queue Buffer %%%%%%%%%%%%%%%%
+\begin{figure}[H]
+  \begin{bytefield}{32}
+    \bitheader{31,0}\\
+    \colorwordbox{lightred}{5}{Buffer Space for Command (2x)}\\
+    \colorwordbox{lightred}{5}{\dots}\\
+    \colorwordbox{lightblue}{1}{Hash of Node Name}\\
+    \bitheader{17,16,7,0} \\
+    \begin{rightwordgroup}{Node Flags}
+      \colorbitbox{lightgray}{14}{} & \colorbitbox{lightblue}{2}{\tiny Debug} & \colorbitbox{lightgray}{8}{} & \colorbitbox{lightyellow}{8}{\tiny Type}
+  \end{rightwordgroup}\\
+    \colorwordbox{lightgray}{1}{Next Ptr}\\
+\end{bytefield}
+  \caption{Queue Buffer Memory Layout}
+  \label{fig:adrtrn}
+\end{figure}
+\noindent
+
+%%%%%%%%%%%%%%%% Management Chunk %%%%%%%%%%%%%%%%
+\begin{figure}[H]
+  \begin{bytefield}{32}
+    \bitheader{31,8,7,0}\\
+    \colorwordbox[tlr]{lightblue}{11}{Compressed Payload} \\
+    \colorbitbox[blr]{lightblue}{24}{}
+    & \colorbitbox{lightblue}{8}{Type}\\
+    \colorwordbox{lightblue}{1}{Next Ptr}\\
+\end{bytefield}
+  \caption{Management Chunk Memory Layout}
+  \label{fig:adrtrn}
+\end{figure}
+\noindent
+
+
+
+
+\begin{figure}[H]
+
+\begin{bytefield}{36}
+\memsection{0x500}{0x51f}{3}{SHCTL$\_$HEAP\\EDF Scheduler Heap and Metadata}\\
+\memsection{0x520}{0x523}{3}{SHCTL$\_$STATUS\\Global Status Register}\\
+\memsection{0x524}{0x52f}{3}{SHCTL$\_$META\\Management LList Metadata}\\
+\memsection{0x530}{0x5a7}{3}{SHCTL$\_$DIAG\\Scheduler Diagnostics and Change Log, see fig.~\ref{fig:diag}} \\
+\memsection{0x5a8}{0x5ab}{3}{SHCTL$\_$CMD\\Global Command Register}\\
+\memsection{0x5ac}{0x5b3}{3}{SHCTL$\_$TGATHER\\Time the HW PQ gathers messages for a packet}\\
+\memsection{0x5b4}{0x5c3}{3}{SHCTL$\_$THR$\_$CTL\\Global Thread Control and Status, see fig.~\ref{fig:globthrctrl}}\\
+\bitbox[]{4}{\texttt{0x5c4}} & \bitbox[lrt]{32}{SHCTL$\_$THR$\_$STA} \\
+\bitbox[]{4}{\texttt{0x683} } & \bitbox[lr]{32}{n $\cdot$ thread staging data, see fig.~\ref{fig:thrstadat} } \\
+\bitbox[]{4}{} & \bitbox[]{32}{$\vdots$} \\[1ex]
+\bitbox[]{4}{\texttt{0x683} } & \bitbox[lrb]{32}{} \\
+\bitbox[]{4}{\texttt{0x684}} & \bitbox[lrt]{32}{SHCTL$\_$THR$\_$DAT} \\
+\bitbox[]{4}{} & \bitbox[lr]{32}{n $\cdot$ thread runtime data, see fig.~\ref{fig:thrrundat}} \\[1ex]
+\bitbox[]{4}{} & \bitbox[]{32}{$\vdots$} \\[1ex]
+\bitbox[]{4}{\texttt{0x783} } & \bitbox[lrb]{32}{} \\
+\bitbox[]{4}{\texttt{0x784}} & \bitbox[lrt]{32}{SHCTL$\_$INBOXES} \\
+\bitbox[]{4}{} & \bitbox[lr]{32}{n $\cdot$ thread inboxes} \\[1ex]
+\bitbox[]{4}{} & \bitbox[]{32}{$\vdots$} \\[1ex]
+\bitbox[]{4}{\texttt{0x7d7} } & \bitbox[lrb]{32}{} \\
+\end{bytefield}
+  \caption{Control Register Groups (space not to scale)}
+  \label{fig:ctrl}
+\end{figure}
+\noindent
+
+\begin{figure}[H]
+  \begin{bytefield}[endianness=big, bitheight=3ex, bitwidth=0.025\linewidth]{32}
+    \bitheader{31,0}\\
+    \colorwordbox{lightgreen}{1}{Core Global Message Count}\\
+    \colorwordbox{lightgreen}{2}{Core Boot Timestamp (\SI{}{\nano\second})}\\
+    \begin{rightwordgroup}{Schedule\\Change Log}
+      \colorwordbox{lightblue}{2}{Schedule Change Timestamp (\SI{}{\nano\second})}\\
+      \colorwordbox{lightblue}{2}{Schedule Issuer Username (ASCII)}\\
+      \colorwordbox{lightblue}{2}{Schedule Issuer Hostname (ASCII)}\\
+      \colorwordbox{lightblue}{1}{Schedule Change Type}\\
+      \colorwordbox{lightblue}{1}{Schedule Change Count}
+    \end{rightwordgroup}\\
+    \begin{rightwordgroup}{Command Log}
+      \colorwordbox{lightblue}{2}{Command Timestamp (\SI{}{\nano\second})}\\
+      \colorwordbox{lightblue}{2}{Command Issuer Username (ASCII)}\\
+      \colorwordbox{lightblue}{2}{Command Issuer Hostname (ASCII)}\\
+      \colorwordbox{lightblue}{1}{Command Type}\\
+      \colorwordbox{lightblue}{1}{Command Count}
+    \end{rightwordgroup}\\
+    \begin{rightwordgroup}{Scheduler\\Diagnostics}
+      \colorwordbox{lightgreen}{2}{Minimum Lead remaining (\SI{}{\nano\second})}\\
+      \colorwordbox{lightgreen}{2}{Maximum Lead remaining (\SI{}{\nano\second})}\\
+      \colorwordbox{lightgreen}{2}{Sum of Lead remaining (\SI{}{\nano\second})}\\
+      \colorwordbox{lightgreen}{2}{Lead Warning Threshold (\SI{}{\nano\second})}\\
+      \colorwordbox{lightgreen}{2}{Lead Warning Counter (\SI{}{\nano\second})}
+    \end{rightwordgroup}\\
+\end{bytefield}
+  \caption{Diagnostic and Log Subfields}
+  \label{fig:diag}
+\end{figure}
+\noindent
+
+
+\begin{figure}[H]
+  
+  \begin{bytefield}{32}
+    \bitheader{31,7,6,5,4,3,2,1,0}\\
+    \begin{rightwordgroup}{Start}
+      \colorbitbox{lightgray}{24}{} & \colorbitbox{lightred}{1}{\tiny T7} & \colorbitbox{lightred}{1}{\tiny T6}& \colorbitbox{lightred}{1}{\tiny T5}& \colorbitbox{lightred}{1}{\tiny T4}& \colorbitbox{lightred}{1}{\tiny T3}& \colorbitbox{lightred}{1}{\tiny T2}& \colorbitbox{lightred}{1}{\tiny T1}& \colorbitbox{lightred}{1}{\tiny T0}
+    \end{rightwordgroup}\\
+    \begin{rightwordgroup}{Cease}
+      \colorbitbox{lightgray}{24}{} & \colorbitbox{lightred}{1}{\tiny T7} & \colorbitbox{lightred}{1}{\tiny T6}& \colorbitbox{lightred}{1}{\tiny T5}& \colorbitbox{lightred}{1}{\tiny T4}& \colorbitbox{lightred}{1}{\tiny T3}& \colorbitbox{lightred}{1}{\tiny T2}& \colorbitbox{lightred}{1}{\tiny T1}& \colorbitbox{lightred}{1}{\tiny T0}
+    \end{rightwordgroup}\\
+    \begin{rightwordgroup}{Abort}
+      \colorbitbox{lightgray}{24}{} & \colorbitbox{lightred}{1}{\tiny T7} & \colorbitbox{lightred}{1}{\tiny T6}& \colorbitbox{lightred}{1}{\tiny T5}& \colorbitbox{lightred}{1}{\tiny T4}& \colorbitbox{lightred}{1}{\tiny T3}& \colorbitbox{lightred}{1}{\tiny T2}& \colorbitbox{lightred}{1}{\tiny T1}& \colorbitbox{lightred}{1}{\tiny T0}
+    \end{rightwordgroup}\\
+    \begin{rightwordgroup}{Running}
+      \colorbitbox{lightgray}{24}{} & \colorbitbox{lightred}{1}{\tiny T7} & \colorbitbox{lightred}{1}{\tiny T6}& \colorbitbox{lightred}{1}{\tiny T5}& \colorbitbox{lightred}{1}{\tiny T4}& \colorbitbox{lightred}{1}{\tiny T3}& \colorbitbox{lightred}{1}{\tiny T2}& \colorbitbox{lightred}{1}{\tiny T1}& \colorbitbox{lightred}{1}{\tiny T0}
+    \end{rightwordgroup}\\
+\end{bytefield}
+  \caption{Global Thread Control and Status Bits}
+  \label{fig:globthrctrl}
+\end{figure}
+\noindent
+
+\begin{figure}[H]
+  
+  \begin{bytefield}{32}
+    \bitheader{31,0}\\
+    \begin{rightwordgroup}{Flags (res.)}
+      \colorwordbox{lightgray}{1}{} 
+    \end{rightwordgroup}\\
+    \colorwordbox{lightyellow}{1}{Start Node Ptr (aka Origin)}\\
+    \colorwordbox{lightyellow}{2}{Starttime (\SI{}{\nano\second}, 0 eq. 'now')}\\
+    \colorwordbox{lightyellow}{2}{Preparation Time (\SI{}{\nano\second}, 'Lead')}
+  \end{bytefield}
+  \caption{Individual Thread Staging Data}
+  \label{fig:thrstadat}
+\end{figure}
+\noindent
+
+\begin{figure}[H]
+  
+  \begin{bytefield}{32}
+    \bitheader{31,0}\\
+    \begin{rightwordgroup}{Flags (res.)}
+      \colorwordbox{lightgray}{1}{} 
+    \end{rightwordgroup}\\
+    \colorwordbox{lightgreen}{2}{Thread Message Counter }\\
+    \colorwordbox{lightgreen}{1}{Current Node Ptr (aka Cursor)}\\
+    \colorwordbox{lightgreen}{2}{Deadline (\SI{}{\nano\second})}\\
+    \wordbox{2}{Block Time Sum (\SI{}{\nano\second})}
+  \end{bytefield}
+  \caption{Individual Thread Runtime Data}
+  \label{fig:thrrundat}
+\end{figure}
+\noindent
+
+
+
+\newcommand{\bitlabel}[2]{%
+\bitbox[]{#1}{%
+\raisebox{0pt}[4ex][0pt]{%
+\turnbox{45}{\fontsize{7}{7}\selectfont#2}%
+}%
+}%
+}
+
+\begin{bytefield}{32}
+\bitlabel{1}{Carry} & \bitlabel{1}{Reserved} &
+\bitlabel{1}{Parity} & \bitlabel{1}{Reserved} &
+\bitlabel{1}{Adjust} & \bitlabel{1}{Reserved} &
+\bitlabel{1}{Zero} & \bitlabel{1}{Sign} &
+\bitlabel{1}{Trap} & \bitlabel{1}{Interrupt enable} &
+\bitlabel{1}{Direction} & \bitlabel{1}{Overflow} &
+\bitlabel{2}{I/O privilege level (12--13)} &
+\bitlabel{1}{Nested task} & \bitlabel{1}{Reserved} &
+\bitlabel{1}{Carry} & \bitlabel{1}{Reserved} &
+\bitlabel{1}{Parity} & \bitlabel{1}{Reserved} &
+\bitlabel{1}{Adjust} & \bitlabel{1}{Reserved} &
+\bitlabel{1}{Zero} & \bitlabel{1}{Sign} &
+\bitlabel{1}{Node } & 
+\bitlabel{3}{} &
+\bitlabel{1}{BMP 3} & \bitlabel{1}{BMP 2} &
+\bitlabel{1}{BMP 1} & \bitlabel{1}{BMP 0} \\
+\bitheader{0-31} \\
+\bitbox{1}{0} & \bitbox{1}{1} & \bitbox{1}{0} & \bitbox{1}{0} &
+\bitbox{1}{0} & \bitbox{1}{0} & \bitbox{1}{0} & \bitbox{1}{1} &
+\bitbox{1}{0} & \bitbox{1}{0} & \bitbox{1}{0} & \bitbox{1}{0} &
+\bitbox{1}{0} & \bitbox{1}{0} & \bitbox{1}{0} & \bitbox{1}{0} &
+\bitbox{1}{0} & \bitbox{1}{0} & \bitbox{1}{0} & \bitbox{1}{0} &
+\bitbox{1}{0} & \bitbox{1}{0} & \bitbox{1}{0} & \bitbox{1}{0} &
+\bitbox{1}{1} & \bitbox{1}{0} & \bitbox{1}{0} & \bitbox{1}{0} &
+\bitbox{1}{1} & \bitbox{1}{1} & \bitbox{1}{1} & \bitbox{1}{1}
+\end{bytefield}

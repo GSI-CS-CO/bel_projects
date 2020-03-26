@@ -1,0 +1,30 @@
+digraph g {
+name="AltDefPatExample";
+graph []
+edge  [type="defdst"]
+node  [cpu="0"];
+
+  MSG_DEF   [type="tmsg",  pattern="DEF", patentry="true", toffs  = 0, fid=1, gid=4048, evtno=0, par="0"];
+  BLOCK_DEF [type="block", pattern="DEF", patexit="true", tperiod= 20000000, qlo="1", qhi="1"];
+  MSG_A0    [type="tmsg",  pattern="A", patentry="true", toffs  = 0, fid=1, gid=4048, evtno=1, par="0"];
+  CMD_A1     [type="flow",  pattern="A", toffs  = 0, tvalid=0, qty=1, prio="0"];
+  BLOCK_A  [type="block", pattern="A", patexit="true",  tperiod=100000000, qlo="1"];
+  MSG_B0    [type="tmsg",  pattern="B", patentry="true", toffs  = 0, fid=1, gid=4048, evtno=2, par="0"];
+  CMD_B1     [type="flow",  pattern="B", toffs  = 0, tvalid=0, qty=1, prio="0"];
+  BLOCK_B  [type="block", pattern="B", patexit="true",  tperiod=100000000, qlo="1"];
+  
+  MSG_DEF -> BLOCK_DEF -> MSG_DEF;
+  BLOCK_DEF -> MSG_A0 [type="altdst"];
+  BLOCK_DEF -> MSG_B0 [type="altdst"];
+  MSG_A0 -> CMD_A1 -> BLOCK_A -> MSG_DEF;
+  CMD_A1 -> BLOCK_DEF [type="target"];
+  CMD_A1 -> MSG_B0  [type="flowdst"];
+  BLOCK_A -> MSG_A0 [type="altdst"];
+  BLOCK_A -> MSG_B0 [type="altdst"];
+  MSG_B0 -> CMD_B1 -> BLOCK_B -> MSG_DEF;
+  CMD_B1 -> BLOCK_DEF [type="target"];
+  CMD_B1 -> MSG_A0  [type="flowdst"];
+  BLOCK_B -> MSG_A0 [type="altdst"];
+  BLOCK_B -> MSG_B0 [type="altdst"];
+
+}

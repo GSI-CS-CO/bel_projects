@@ -1,0 +1,75 @@
+\chapter{Offline Resource Analysis}
+
+\section{Memory Load}
+
+\subsection{Problem Definition}
+Memory is a sparse resource in the DM, as it completely resides within the FPGA. Each CPU is assigned its own dual port memory containing all schedules this CPU executes. CPUs can technically also execute schedules residing outside their own memory. However, shared bus access is severe a bottleneck and source of non determinism, so this approach should be avoided at all costs. The consequence is that the assignment of schedules to CPUs has to be carefully planned to maximise resource utilisation.
+
+
+\subsection{Graph Data}
+
+\subsection{Meta Data}
+The overhead data present can be divided into two categories. 
+\par
+The first is directly linked to the schedule on a local basis and will be called schedule meta data.
+Their meta data forms distinct entities per node and can be read just like any other schedule node. 
+These come in the following varieties:
+%
+\begin{itemize}
+  \begin{item} Alternative destination list \end{item}
+  \begin{item} Queue buffer list \end{item}
+  \begin{item} Queue buffer \end{item}
+\end{itemize}
+%
+\par
+The second type contains meta data important to all schedules as a whole and is referred to as management data.
+Contrary to schedule data, management data is compressed and the archive is spread across the linked list of all management nodes. It can therefore not be interpreted on a per node level.
+Management data follows the minimal structure of nodes(type field, next ptr), but is only ever read by the host, never by the DM embedded system.
+It contains the following overhead information:
+%
+\begin{itemize}
+  \begin{item} Node relationship table \end{item}
+  \begin{itemize}
+    \begin{item} Node name \end{item}
+    \begin{item} Pattern name \end{item}
+    \begin{item} Node is entry to pattern \end{item}
+    \begin{item} Node is exit of pattern \end{item}
+    \begin{item} Beamprocess name\end{item}
+    \begin{item} Node is entry to beam process \end{item}
+    \begin{item} Node is exit of beam process \end{item}
+  \end{itemize}  
+  \begin{item} Covenant table \end{item}
+\end{itemize}
+%
+\subsection{Load Balancing}
+carpeDM $\ge$ v0.16.0 does auto-balance management data, but not schedule meta data, over all CPU RAMs.
+The currently is no memory load balancing for schedule data, all nodes are directly assigned to a CPU/RAM via a tag in their definition.
+This will be subject to change, but requires an a priori analysis of schedules, guaranteeing processor load to stay $\le100\%$. Since this is not implemented yet, an automatic assignment to CPUs is not sensible at the moment. See section~\ref{sec:nettraffic} for details on network calculus based load analysis.
+
+\subsection{Summary}
+
+
+
+\section{Network Traffic}
+\label{sec:nettraffic}
+
+\subsection{Problem Definition}
+
+\paragraph{CPU Performance}
+
+\paragraph{Network Performance}
+
+\subsection{Introduction to NC}
+
+\subsection{Introduction to DISCO DNC}
+
+\subsection{DM to Endpoint Model}
+
+\subsection{Arrival Curves from Schedules}
+
+\subsection{Verification Process}
+
+\subsection{Load Balancing}
+\label{ssec:ncloadbalance}
+
+\subsection{Summary}

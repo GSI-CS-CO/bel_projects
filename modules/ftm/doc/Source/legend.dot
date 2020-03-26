@@ -1,0 +1,92 @@
+digraph g {
+name="Legend";
+
+graph [root="Demo",rankdir   = LR, nodesep           = 0.6, mindist     = 1.0, ranksep = 1.0, overlap = false]
+node [style     = "filled", fillcolor = "white", color = "black"]
+edge [style = "solid", color="white"]
+//B_PPS[ shape     = "rectangle", fillcolor = "white", penwidth=2, color = "purple"];
+//Evt_PPS0[label="    ", shape     = "oval", fillcolor = "white", penwidth=2, color = "darkorange3"];
+
+
+METAE0 [label="", color="white", fillcolor = "white"];
+METAE1 [label="", color="white", fillcolor = "white"];
+METAE_label [label="Meta Edge (hidden by default)", color="white", fillcolor = "white"];
+METAE0 -> METAE1 [color="grey"];
+METAE1 -> METAE_label;
+
+DYN0 [label="", color="white", fillcolor = "white"];
+DYN1 [label="", color="white", fillcolor = "white"];
+DYN_label [label="Dynamic Content Source Edge", color="white", fillcolor = "white"];
+DYN0 -> DYN1 [color="pink"];
+DYN1 -> DYN_label;
+
+DST0 [label="", color="white", fillcolor = "white"];
+DST1 [label="", color="white", fillcolor = "white"];
+DST_label [label="Flow Cmd Destination Edge", color="white", fillcolor = "white"];
+DST0 -> DST1 [color="pink"];
+DST1 -> DST_label;
+
+TGT0 [label="", color="white", fillcolor = "white"];
+TGT1 [label="", color="white", fillcolor = "white"];
+TGT_label [label="Cmd Target Edge", color="white", fillcolor = "white"];
+TGT0 -> TGT1 [color="blue"];
+TGT1 -> TGT_label;
+
+ALT0 [label="", color="white", fillcolor = "white"];
+ALT1 [label="", color="white", fillcolor = "white"];
+ALT_label [label="Alternative Edge", color="white", fillcolor = "white"];
+ALT0 -> ALT1 [color="black"];
+ALT1 -> ALT_label;
+
+DEF0 [label="", color="white", fillcolor = "white"];
+DEF1 [label="", color="white", fillcolor = "white"];
+DEF_label [label="Default Edge", color="white", fillcolor = "white"];
+DEF0 -> DEF1 [color="red"];
+DEF1 -> DEF_label;
+
+
+PAINT0 [label=" ", shape     = "rectangle",  fillcolor = "green"];
+PAINT1 [label=" ", shape     = "oval",       fillcolor = "green"];
+PAINT2 [label=" ", shape     = "hexagon",    fillcolor = "green"];
+PAINT_label [label="Processed by DM HW",  color="white", fillcolor = "white"];
+PAINT0 -> PAINT1 -> PAINT2 -> PAINT_label;
+
+PEXIT [label=" ", shape     = "rectangle", fillcolor = "white", penwidth=2, color = "purple"];
+PEXIT_label [label="Pattern Exit Point", color="white", fillcolor = "white"];
+PEXIT -> PEXIT_label;
+
+PENTRY0 [label=" ", shape     = "rectangle", fillcolor = "white", penwidth=2, color = "darkorange3"];
+PENTRY1 [label=" ", shape     = "oval", fillcolor = "white", penwidth=2, color = "darkorange3"];
+PENTRY2 [label=" ", shape     = "hexagon", fillcolor = "white", penwidth=2, color = "darkorange3"];
+PENTRY_label [label="Pattern Entry Point", color="white", fillcolor = "white"];
+PENTRY0 -> PENTRY1 -> PENTRY2 -> PENTRY_label;
+
+META [label="            ", shape     = "rectangle", color  = "gray", style  = "dashed"];
+META_label [label="Meta Node (hidden by default)", color="white", fillcolor = "white"];
+META -> META_label;
+
+BLK [label="            ", shape     = "rectangle", fillcolor = "white"];
+BLK_label [label="Block", color="white", fillcolor = "white"];
+BLK -> BLK_label;
+
+CMD [label="            ", shape     = "hexagon", fillcolor = "white"];
+CMD_label [label="Command", color="white", fillcolor = "white"];
+CMD -> CMD_label;
+
+MSG [label="            ", shape     = "oval", fillcolor = "white"];
+MSG_label [label="Timing Message", color="white", fillcolor = "white"];
+MSG -> MSG_label;
+
+
+
+
+
+
+
+
+
+
+
+
+
+}

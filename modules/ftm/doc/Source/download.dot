@@ -1,0 +1,35 @@
+digraph G {
+graph [root="Demo",rankdir   = TB, nodesep           = 0.6, mindist     = 1.0, ranksep = 1.0, overlap = false]
+node [style     = "filled", fillcolor = "white", color = "black"]
+BLOCK_A1[cpu="0", flags="0x00008007", type="block", tperiod="100000000", pattern="A", patentry="false", patexit="true", beamproc="undefined", bpentry="false", bpexit="false", qlo="false", qhi="false", qil="false", shape     = "rectangle", fillcolor = "white", penwidth=2, color = "purple"];
+BLOCK_B1[cpu="0", flags="0x00008007", type="block", tperiod="100000000", pattern="B", patentry="false", patexit="true", beamproc="undefined", bpentry="false", bpexit="false", qlo="false", qhi="false", qil="false", shape     = "rectangle", fillcolor = "white", penwidth=2, color = "purple"];
+BLOCK_BRANCH[cpu="0", flags="0x0070a007", type="block", tperiod="20000000", pattern="BRANCH", patentry="true", patexit="true", beamproc="undefined", bpentry="false", bpexit="false", qlo="true", qhi="true", qil="true", shape     = "rectangle", fillcolor = "white", penwidth=2, color = "darkorange3", penwidth=2, color = "purple"];
+MSG_A0[cpu="0", flags="0x00002002", type="tmsg", toffs="0", pattern="A", patentry="true", patexit="false", beamproc="undefined", bpentry="false", bpexit="false", fid="1", gid="4048", evtno="1", beamin="0", sid="0", bpid="0", reqnobeam="0", vacc="0", id="0x1fd0001000000000", par="0x0000000000000000", tef="0", shape     = "oval", fillcolor = "white", penwidth=2, color = "darkorange3"];
+MSG_B0[cpu="0", flags="0x00002002", type="tmsg", toffs="0", pattern="B", patentry="true", patexit="false", beamproc="undefined", bpentry="false", bpexit="false", fid="1", gid="4048", evtno="2", beamin="0", sid="0", bpid="0", reqnobeam="0", vacc="0", id="0x1fd0002000000000", par="0x0000000000000000", tef="0", shape     = "oval", fillcolor = "white", penwidth=2, color = "darkorange3"];
+BLOCK_BRANCH_QBl_Il[cpu="0", flags="0x00000009", type="qinfo", shape     = "rectangle", color  = "gray", style  = "dashed"];
+BLOCK_BRANCH_Qb_Il0[cpu="0", flags="0x0000000a", type="qbuf", shape     = "rectangle", color  = "gray", style  = "dashed"];
+BLOCK_BRANCH_Qb_Il1[cpu="0", flags="0x0000000a", type="qbuf", shape     = "rectangle", color  = "gray", style  = "dashed"];
+BLOCK_BRANCH_QBl_Hi[cpu="0", flags="0x00000009", type="qinfo", shape     = "rectangle", color  = "gray", style  = "dashed"];
+BLOCK_BRANCH_Qb_Hi0[cpu="0", flags="0x0000000a", type="qbuf", shape     = "rectangle", color  = "gray", style  = "dashed"];
+BLOCK_BRANCH_Qb_Hi1[cpu="0", flags="0x0000000a", type="qbuf", shape     = "rectangle", color  = "gray", style  = "dashed"];
+BLOCK_BRANCH_QBl_Lo[cpu="0", flags="0x00000009", type="qinfo", shape     = "rectangle", color  = "gray", style  = "dashed"];
+BLOCK_BRANCH_Qb_Lo0[cpu="0", flags="0x0000000a", type="qbuf", shape     = "rectangle", color  = "gray", style  = "dashed"];
+BLOCK_BRANCH_Qb_Lo1[cpu="0", flags="0x0000000a", type="qbuf", shape     = "rectangle", color  = "gray", style  = "dashed"];
+BLOCK_BRANCH_ListDst[cpu="0", flags="0x0000000c", type="listdst", shape     = "rectangle", color  = "gray", style  = "dashed"];
+MSG_B0->BLOCK_B1 [type="defdst", color     = "red"];
+BLOCK_BRANCH->BLOCK_BRANCH_ListDst [type="listdst", color     = "gray"];
+BLOCK_BRANCH->BLOCK_BRANCH_QBl_Il [type="prioil", color     = "gray"];
+BLOCK_BRANCH->BLOCK_BRANCH_QBl_Hi [type="priohi", color     = "gray"];
+BLOCK_BRANCH->BLOCK_BRANCH_QBl_Lo [type="priolo", color     = "gray"];
+MSG_A0->BLOCK_A1 [type="defdst", color     = "red"];
+BLOCK_B1->BLOCK_BRANCH [type="defdst", color     = "red"];
+BLOCK_A1->BLOCK_BRANCH [type="defdst", color     = "red"];
+BLOCK_BRANCH->MSG_A0 [type="defdst", color     = "red"];
+BLOCK_BRANCH->MSG_B0 [type="altdst", color     = "black"];
+BLOCK_BRANCH_QBl_Lo->BLOCK_BRANCH_Qb_Lo0 [type="meta", color     = "gray"];
+BLOCK_BRANCH_QBl_Lo->BLOCK_BRANCH_Qb_Lo1 [type="meta", color     = "gray"];
+BLOCK_BRANCH_QBl_Hi->BLOCK_BRANCH_Qb_Hi0 [type="meta", color     = "gray"];
+BLOCK_BRANCH_QBl_Hi->BLOCK_BRANCH_Qb_Hi1 [type="meta", color     = "gray"];
+BLOCK_BRANCH_QBl_Il->BLOCK_BRANCH_Qb_Il0 [type="meta", color     = "gray"];
+BLOCK_BRANCH_QBl_Il->BLOCK_BRANCH_Qb_Il1 [type="meta", color     = "gray"];
+}

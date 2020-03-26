@@ -1,0 +1,17 @@
+digraph g {
+name="Tut_0";
+
+graph []
+edge  [type="defdst"]
+node [style     = "filled", fillcolor = "white", color = "black"]
+
+subgraph s1 {
+  node  [cpu="0", pattern="P0"];
+
+  
+Block[type="block", tperiod="1000000000", pattern="P0", patentry="true", patexit="true", shape     = "rectangle", fillcolor = "white", penwidth=2, color = "purple", qlo="1", qhi="1", qil="1"];
+Block->Block [type="defdst", color     = "red"];
+
+}
+
+}

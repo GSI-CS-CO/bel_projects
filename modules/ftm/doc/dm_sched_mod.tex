@@ -1,0 +1,180 @@
+\chapter{Online Schedule Modification and Safeguards}
+\label{chap:online-sched-mod}
+\section{Overview}
+
+\subsection{Problem Definition}
+
+During runtime, schedules often need to be modified. A trim is a perfect example of a measuring loop, which will iteratively change schedule data.
+There two systems which simultaneously access the DM's memory -- the high level host side and the DM realtime system.
+Any schedule data which is currently in use by the realtime system cannot be modified by the host without causing undefined behaviour.
+It is therefore important to determine wether and when modifying a schedule is safe.
+\paragraph{Data basis}
+Knowing which schedule data is actively used in the DM is therefore of paramount importance in the decision wether a schedule can safely be modified.
+Since the host system can only ever be broadly aware what the DM RT system is executing at any given time, discerning between active and inactive schedule data is not as trivial as it might sound.
+We will refer to all objects (schedules, paths, edges, nodes) that must not be used during safe manipulation as \emph{critical}.
+\par
+The available data consists of the complete schedule graph, the content of all command queues and the cursor positions, which mark which nodes of which the schedules the DM was executing.
+Because a lot of this data in the DM RT system can change during processing time and even during the data acquisiton itself, the memory image obtained by the host is suffers from a sort of \enquote{motion blur}, which must be considered. A valid approach must divide the data into conditions proven to be present, conditions proven not to be present and use the worst possibly outcome for any ambiguous cases.
+\paragraph{Testing for Safety}
+Safety means guaranteed inactivity. In order to give a guarantee on the basis of an inconsistent data set, all time factors (execution times, race conditions, atomicity...) must be eliminated from the verification process.
+It is easy to see that a schedule is active if a cursor is currently pointing to one of its member nodes.
+Considering the \enquote{motion blur} and our own processing time, the cursors might also already have left the schedule in question - the case it ambiguous and the worst case to be used is the cursor still being inside.
+Likewise, seeing the cursor outside a schedule is no guarantee for its inactivity. A cursor might well have entered it again just after we had a look\dots
+
+\subsection{Possible Approaches}
+Several approaches to modifying a schedule safely were investigated, all of which have pros and cons in terms of the dimensions Safety -- Speed -- Low Memory Req..
+
+
+
+\begin{itemize}
+   \begin{item}
+    The first is the first write a new version of the schedule in question, command the DM tw switch over to it. After assertaining the DM has left the obsolete version, it can be removed. From a runtime perspective, this is the safest and fastest method. However, there are drawbacks: Because essentially a copy is created (albeit slightly modified), twice the space of the original is required. And because it is uncertain when the DM will have left the obsolete version (possibly hours), this requires an asynchronous garbage collector on the host side.
+  \end{item}
+  \begin{item}
+    The second method is as safe as the first, more memory efficient, but also often much slower. The DM is redirected to another (safe) schedule, and once it is certain the DM has left the obsolete schedule and has no possibility of re-entry, it is removed. The new version is then written and the DM is commanded to use the new version. This is very space efficient, but verifiying that the schedule to be removed cannot be entered again is very challenging. Waiting for the DM to leave areas that could reconnect to the obsolete schedule can take up a lot of time (in the case of ESR, this could take hours). The details are described in subsection
+    ~\ref{sec:esm}.
+  \end{item}
+  \begin{item}
+    The third method is a hybrid approach. Sacrificing some safety margins allows combining the speed of the first approach with the low memory requirement and simple management of the second.
+    By extrapolating future DM behaviour from command queue content, it is possible to eliminate certain static paths from considerations. This often allows safe removal of the schedule almost immedately,
+    but comes at a price. The prediction will only hold true if the content of the involved command queues is not changed. The requesting party therefore enters a covenant with carpeDM once it removes the schedule in question. The covenant contains a list of command queues and their priorities which must not be modified or preempted, otherwise there will be undefined behaviour. Once all critical queue content is processed, the covenant is fulfilled. Details are described in subsection~\ref{sec:eesm}.
+  \end{item}
+  \begin{item}
+    The fourth method is radically different to the other three, as it modifies queues within an active pattern. To do this, lock bits are set for the block, ordering the DM to refrain from reading or writing queues associated with this block.
+    This by far the the fastest method to communicate changes to the DM in a safe manner, but also the most invasive. The problem can be seen in the definition of \enquote{safety}. The approach will not cause undefined behaviour, but can suppress commands originating within the DM. ~\ref{sec:eesm}.
+  \end{item}
+
+
+\end{itemize}
+
+\newpage
+\section{Equivalent Static Model}
+\label{sec:esm}
+The possibility of future cursors positions being inside the critical schedule makes it necessary to inspect all possible paths leading into the schedule (that it, to its entry point).
+A time invariant representation of the schedule with all of its static and dynamic links must be created and checked against the cursor positions.
+If a cursor is within the schedule or if a path from a cursor to the entry point exists, the schedule must be seen as active which makes removal unsafe - it is not to be touched.
+Likewise, if there is no cursor inside and no path to the entry point can be found, the schedule is inactive and can thus be safely removed. To draw any kind of usable conclusions, the director must remain silent
+once the verfification is in progress, so no more commands are entering the system. Any asynchronous external devices issueing commands such as the UNIPZ gateway must only write to their own uncritical schedules or remain silent.
+
+\paragraph{Handling inconsistency in memory snapshots}
+Reading out the data from several processors will lead to an inconsistent image of the current DM state. Depending on the type of objects, there are different appropriate methods to deduce facts about the state from of the available data.
+
+\begin{itemize}
+  \begin{item}
+    \emph{Default Successor Edges} are definite if the edge's parent is not a block with commmand queues. However, if that is the case, then the default successor is ambiguous and queue content must be considered. If the default successor of the block can be changed temporarily or permantently by its queue content, both the old and the new edge must be used.
+  \end{item}
+  \begin{item}
+    \emph{Qeue Content} is handled by both the DM and the host. They use the read and write indices of the queues' ring buffers to synchronise their access. Only the host can write new elements and modifiying the indices is always the last action in any queue access for both sides. When reading the verification data, the first action of the host is always to get the current WR system time. All commands written by the host must bear a current valid time (the moment in time after which the command is valid). This means that we can tell by the indices which commands are definitely consumed already and by the valid times which commands are definitely not consumed yet. All others must be seen as \enquote{possibly consumed}, which means using their worst possibly impact.
+  \end{item}
+  \begin{item}
+    \emph{Cursors} are the most \enquote{blurry} data objects which are read during verification. A cursor therefore can be seen not as a single node, but as a subtree of nodes originating at the observed cursor location and spreading to all reachable nodes. If the entry point would be found within the set of nodes formed by the cursor subtrees, it follows that the schedule is active. This makes the approach independent of the progress of the cursors since observation.
+    \par
+    The used implementation is in fact the inversion of the cursor subtree approach just described: a single subtree is constructed from the entry point of the schedule backwards, intersection with any cursor node shows the schedule is active.
+  \end{item}
+\end{itemize}
+
+%the same However, because the WR system time is read before reading the cursors, which are in turn read before the valid times of comand queue elements, it is possibly to tell if a cursor would have been able to consume a command from a block in its predicted path.
+\subsection{Path Analyses}
+\label{ssec:path}
+\paragraph{Static}
+The most basic form of analysis considers only static (default successor) paths, all other forms of connections are removed to simplify the graph. The reverse tree originating at the entry of the critical schedule is itself critical. If a cursor is inside the tree, it can reach reach the entry, making the schedule active and thus unsafe to modify.
+
+\paragraph{Dynamic}
+Static path analysis would not yield correct results in the presence of commands changing the flow through the graph at runtime. To cover this, the queue content must be analysed for flow commands. This not only covers the dynamic commands actually present in queues at readout, but also those which can be generated by resident flow commands. Those are flow commands which are part of the schedule.
+
+\paragraph{Virtual paths}
+To still allow the use of graph algorithms, dynamic changes must be modeled in a way that can be handled by such methods, which means a static equivalent graph using virtual edges.
+These show all possible paths resulting from commands and can be analysed for intersection just as the static graph. However, there is a corner cases to consider, which is resident flow commands.
+ They also must be represented by a virtual edge, but only if the block the virtual edge would originate from is within the limits of nodes which can be reached by
+a cursor.
+
+\paragraph{Iterative construction of virtual paths}
+Dynamic links only become real if the block is actually ever visited by a cursor. Therefore, not all queue content is worthy of consideration, all dynamic commands and static command generation which cannot be reached by any cursor are of no consequence. To be considered as valid virtual path(s), the reverse tree originating at any block with generated commands must have a connection to at least one cursor.
+
+\paragraph{Reverse Tree and Intersection}
+After the removal of all non-path edges and the addition of all virtual paths, the result is a equivalent static graph model (ESM). Using the entry point of the schedule to be removed as the start,
+the reverse tree is then constructed, going against edge direction and mapping all nodes connected by default or virtual paths. Loops in the tree are detected. Furthermore all member nodes of the schedule to be removed are added. This forms the complete set of nodes which have a connection to the entry point. If there is an intersection of this set with the set of cursors, the schedule is not safe to remove.
+
+\subsection{Orphaned command handling}
+When removing a schedule, a severe side effect can occur in inactive schedules. The queued commands of inactive schedules are ignored in the safety assessment, as they do not have an impact on the outcome. It follows that all flow commands pointing from inactive schedules to the critical schedule would become orphans when the critical schedule is removed, as their destination suddenly ceases to exist. If the inactive schedule is ever reactivated and its queue processed, this will cause undefined behaviour. Simply removing orphaned commands from queue buffers is not an option though, because the ring buffers cannot contain gaps. While this problem could be overcome by moving all other elements, there is a more elegant solution available. By setting the repetition counter of orphaned commands to 0, the command is no longer invalid but instead acts as a Noop instruction. It will then be normally processed and popped from the queue without further consequences.
+
+
+\subsection{Visual Reports}
+The
+
+
+\section{Enhanced Equivalent Static Model\\(aka \enquote{crystal ball})}
+\label{sec:eesm}
+\subsection{Problem Definition}
+The observed trouble with the approach described in section~\ref{sec:esm} is the blocking nature of the process. The resulting wait times can encompass all schedule duration encountered before. In the case of long schedules ( $T \gg \SI{100}{\milli\second}$ ), this becomes a severe hindrance for trimming, not to mention the de facto freeze the ESR's schedules with a duration of hours or days would cause.
+This effect will always come into play if there are several long schedules preceding one that is used to redirect the DM away from the schedule to be removed. Before the command for redirection is not consumed, there is no possibility of guaranteeing safety. An approach to make this verification non-blocking had to be found.
+
+\subsection{Contextual inconsequence of default successors}
+If a default successor edge is a connection between a cursor and the entry point, it is tipping the scales toward the verdict \enquote{unsafe}.
+The main issue hinges on the fact that dynamic changes to default successors are executed at the time their block is visited by a cursor. This means the change can come into effect a long time after the corresponding command was issued, causing the aforesaid wait times. The crucial question is therefore if the change to the default successor edge can already be considered a fact at the time the command is present, thus skipping the wait time to command processing. Found optimisations are expressed in the resulting ESM by removing the corresponding default edges and replacing them with dashed auxiliary edges.
+%One of the resulting tasks is obtaining a consistent image of both the cursors and the queue state, ie. an answer to the question wether a given command will be consumed when the cursor reached the block.
+%For this purpose, the valid time of a written command is always set slightly into the future (so it is valid only after the current access). When it is compared with the current WR time taken before the cursors are read,
+%it is possible to tell wether the cursor will trigger the command when reaching the block. This is only relevant if the cursors is within the same schedule as the block.
+
+\paragraph{Continuous successor override}
+A default edge can be optimised away if the DM can never take that path. This is the case if the default successor is either permanently changed to a safe schedule or changed to idle. In the latter case, permanent or temporary change type is irrelevant, as a cursor cannot return from idle without outside intervention. We will thus also consider idle as a permanent change.
+\par
+However, there may be more than one command present in the queue(s), and each visit by a cursor will only consume one charge of the top element. If the default destination is never to be used, it means that it must be constantly overridden by queued commands until the permanent change is reached. Since only flow commands can override the default, it follows that the presence of any other command type before the permanent change forbids optimisation.
+
+\paragraph{Command order of precedence}
+The order in which commands are executed depends on the priorities of the queues they have been written to. Highest priority present is always emptied first, the maxmimum queue length is 12 elements (4 x High, 4 x Mid, 4 x Low). It follows that once an optimisation is found and deemed a contribution to a \enquote{safe} verdict, any preemption of the containing queue is forbidden. This includes filling higher priorities with non-flow commands
+and the static flush option, which allows the host to asynchronously clear a queue.
+
+
+\subsection{Finding contributing optimisations}
+To find the queues to be protected for a safe schedule removal, it is necessary find which of the optimisations contributed to the positive outcome.
+The basic assumtpion is that any path leading to the entry point containing optimised edges can be optimised, it depends on all commands causing the traversed optimised edges the corresponding queues must therefore be protected. However, if such a path can be circumvented by another, the corresponding queues is irrelevant and should not be protected. A scheme had to be found which not only maps the optimisation depencies,
+but also preferably works with the intersection set test introduced in~\ref{ssec:path}.
+
+\paragraph{Dependency Mapping}
+The dependencies are the traversed optimised edges in critical paths (as in leading to the entry point).
+This is ultimately equivalent to the queues to be protected, which means the identifier of the block at the origin of the optimised edge. Because critical paths can depend on one another or be mutually exclusive, it is necessary to analyse all paths in parallel and accumulate their dependencies. To achieve this, the crawler once again creates the reverse tree originating from the entry point and propagates an individual set of dependencies along each branch, the content depending on the encountered edges. This means each node is assigned a set of all depencies encountered on route from the entry point to itself.
+As long as a default or virtual edge is traversed, a null identifier is added and propagated. When an optimised edge is traversed, the identifier of its source block is added to the dependency set and the propagated value is changed to the block identifier. This means only paths which depend on at least one optimisation will not carry null identifiers. If a node is reachable over multiple paths, all propagated identifiers will accumulate there.
+
+\paragraph{Enhanced Intersection Test}
+After the dependencies are mapped, we can once again check for the intersection between the reverse tree and the cursors. This time, however, there is an added twist to the process: Only the tree nodes whose dependency set contains a null identifier are considered when testing for safety, as they represent the critical paths. For all other members of the intersection set, their individual dependency set will show which queues must be protected in order to exploit the optimisation.
+
+\subsection{Covenants}
+\label{ssec:cov}
+The union of all dependency sets of non-critical intersections form a set of important commands. It allows the user to immedately remove the schedule in question in exchange, provided he does not preempt or delete any of the listed commands. The list is employed as covenants with the user (LSA / Director).
+Removing (by \emph{remove} or \emph{keep} command) the schedule will call the safe removal verfication and seal all associated covenants on success. Requesting verfication on its own has no lasting consequences.
+\par
+Covenants contain the block identifier, the queue priority and a checksum of their command. They are written to the DM memory as part of the management data and are automatically checked with each download operation and updated with each upload. If the contained command has been consumed, a covenant has been fulfilled and is removed. carpeDM will reject requested operations which would break a covenant in order to prevent undefined behaviour of the DM. Override can be forced if deemed necessary at the user's own peril. Like with all forced operations, the circumstances of the incident will be reported for later review.
+
+\subsection{Handling cursor to queue race conditions}
+\paragraph{Validity of Commands}
+When interpreting the DM's memory image, we have talked in depth about the blurriness of observed cursors. Yet another side effect of this comes into play when using the enhanced safe2remove alogrithm,
+because before now, all that was considered were worst cases. When interpreting queue content, this meant every element could be valid and was therefore added as an edges. This was the worst case, as the possible maximum of edges which could lead into critical areas were considered, no matter the order of execution. Since incrementing a queues read index is atomic and always the last action executed by the DM firmware before proceeding,
+it is known for certain that all elements seen as popped are indeed consumed. There might be less unconsumed elements than obeserved, but certainly not more, thus erring on the safe side.
+\par Now, however, the enhanced approach goes in the other direction, trying to shave something off the conservative first assessment. The question is therefore: Under which circumstances can queue elements be ignored?
+
+\paragraph{When to ignore queue elements}
+There are some possible answers to this, one might be that everything on lower priority than a flush command can be treated as void, for example. This is something not currently used, but should be investigated in the scope of future work (as of 22.10.2018).
+\par
+Yet another (implemented) approach is comparing the valid-timestamp of an element to the time at which the cursors were read.
+If read time is lower than an encountered valid time, the corresponding element is not available now and might still not be when the cursor arrives at this block.
+A valid-timestamp $\le$ read-time is thus a necessary condition to readjust the conservative assessment by overriding a critical default destination.
+\par
+As an example, let us assume the element at the front of the queue is a flow command, changing the block's critical default destination to a safe alternative, so it would make removal of the schedule safe.
+But because it's valid time is not yet reached, the outcome is uncertain - the command might or might not override the default destination. Because the analysis is not to rely on execution times, this flow command cannot be used as justification for an optimisation at this point.
+
+
+\section{Summary}
+A verification algorithm able to tell if a schedule is inactive and therefore safe to remove was created. The second and third approach listed in~\ref{} were implemented.
+\paragraph{Equivalent static model} This approach creates a time-invariant equivalent model, the ESM, from the original graph. In combination with the cursor positions in the DM, a safety assessment for the schedule removal is possible. The ESM is obtained by stripping the original graph of all but the default successor edges and adding virtual paths representing all flow commands in queues. Further virtual paths are iteratively added for all resident flow commands reachable by the current iteration of the model. The virtual path scheme provides a representation of flow commands which is independent of the time the command queues were observed.
+In the resulting ESM, the reverse tree originating from critical schedule's entry point can be mapped. If an intersection with the set of cursors
+is found, the schedule is active and therefore unsafe to remove.
+This result is independent of the cursor's progress since their observation time.
+\par The approach was proven to be valid by simulation for 3 fully  connected patterns (full coverage). The drawback was, as estimated, the blocking behaviour of the algorithm, producing possible wait times for a positive result in the dimensions of the longest pattern involved.
+\paragraph{Enhanced Equivalent static model}
+The enhanced verification algorithm was based on the ESM, augmenting it by replacing critical static links in the ESM with safe dynamic overrides. This requires a dynamic, permanent override (flow command) to a safe alternative destination to be present at the front of the queue or preceded by an unbroken chain of safe temporary overrides. Either allows immediate removal of the schedule in question; the involded queues must not be preempted until the crucial override to safety is executed. These promises have been named \emph{covenants} and are automatically managed and enforced by carpeDM.
+\par The algorithm was also proven to be valid by simulation for 3 fully connected patterns (full coverage). Wait times from the first approach were eliminated in exchange for compliance of the user with all active covenants.
+This is the standard for carpeDM $\ge$ v0.18.0.
+
+
+

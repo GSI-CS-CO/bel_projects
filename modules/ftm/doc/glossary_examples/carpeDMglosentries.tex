@@ -1,0 +1,273 @@
+
+\newglossaryentry{n_type}{
+name={type},
+text={noname},
+description={blub},
+valtype={bla},
+type=foo}
+
+\newglossaryentry{n_node_id}{
+name={node\_id},
+text={noname},
+description={blub},
+valtype={bla},
+type=foo}
+
+\newglossaryentry{n_cpu}{
+name={cpu},
+text={CPU Idx},
+description={Index of the CPU core this Node will reside in. To be replaced by auto-balancer algorithm},
+valtype={u8b},
+type=foo}
+
+\newglossaryentry{n_fuck}{
+name={fuck},
+text={FUCK YOU},
+description={Index of the CPU core this Node will reside in. To be replaced by auto-balancer algorithm},
+valtype={u8b},
+type=foo}
+
+\newglossaryentry{n_thread}{
+name={thread},
+text={Thread Index},
+description={Index of the thread core this Node will be handled by. To be replaced by auto-balancer algorithm},
+valtype={str},
+type=foo}
+
+\newglossaryentry{n_flags}{
+name={flags},
+text={noname},
+description={blub},
+valtype={bla},
+type=foo}
+
+\newglossaryentry{n_patentry}{
+name={patentry},
+text={noname},
+description={blub},
+valtype={bla},
+type=foo}
+
+\newglossaryentry{n_patexit}{
+name={patexit},
+text={noname},
+description={blub},
+valtype={bla},
+type=foo}
+
+\newglossaryentry{n_pattern}{
+name={pattern},
+text={noname},
+description={blub},
+valtype={bla},
+type=foo}
+
+\newglossaryentry{n_bpentry}{
+name={bpentry},
+text={noname},
+description={blub},
+valtype={bla},
+type=foo}
+
+\newglossaryentry{n_bpexit}{
+name={bpexit},
+text={beamprocess exit},
+description={Marks this node as an exit point to beamprocess \emph{X}. A node can belong to only one beamprocess},
+valtype={str},
+type=foo}
+
+\newglossaryentry{n_beamproc}{
+name={beamproc},
+text={noname},
+description={blub},
+valtype={bla},
+type=foo}
+
+\newglossaryentry{n_tperiod}{
+name={tperiod},
+text={noname},
+description={blub},
+valtype={bla},
+type=foo}
+
+\newglossaryentry{n_qil}{
+name={qil},
+text={noname},
+description={blub},
+valtype={bla},
+type=foo}
+
+\newglossaryentry{n_qhi}{
+name={qhi},
+text={noname},
+description={blub},
+valtype={bla},
+type=foo}
+
+\newglossaryentry{n_qlo}{
+name={qlo},
+text={noname},
+description={blub},
+valtype={bla},
+type=foo}
+
+\newglossaryentry{n_toffs}{
+name={toffs},
+text={Time offset},
+description={The time offset relative to the block start at which this node is executed. Negative offsets can be used for debugging to force late events},
+valtype={s64b},
+type=foo}
+
+\newglossaryentry{n_id}{
+name={id},
+text={noname},
+description={The whole ID field of a timing event. Can be used instead of the subid fields (evtno, gid, etc)},
+valtype={u64b},
+type=foo}
+
+\newglossaryentry{n_fid}{
+name={fid},
+text={noname},
+description={The format this timing event follows. Currently only format 1 is supported, FID is  part of the ID field of a timing event.},
+valtype={bla},
+type=foo}
+
+\newglossaryentry{n_gid}{
+name={gid},
+text={noname},
+description={The group ID this timing event belongs to, part of the ID field of a timing event.},
+valtype={bla},
+type=foo}
+
+\newglossaryentry{n_evtno}{
+name={evtno},
+text={noname},
+description={The event number this timing event belongs to, part of the ID field of a timing event.},
+valtype={u64b},
+type=foo}
+
+\newglossaryentry{n_sid}{
+name={sid},
+text={noname},
+description={ID of the sequence this timing event belongs to, part of the ID field of a timing event.},
+valtype={bla},
+type=foo}
+
+\newglossaryentry{n_bpid}{
+name={bpid},
+text={Beamprocess ID},
+description={ID of the beamprocess this timing event belongs to, part of the ID field of a timing event.},
+valtype={u8b},
+type=foo}
+
+\newglossaryentry{n_beamin}{
+name={beamin},
+text={Beam In Flag},
+description={Marks this node as an exit point to beamprocess \emph{X}. A node can belong to only one beamprocess, part of the ID field of a timing event.},
+valtype={u8b},
+type=foo}
+
+\newglossaryentry{n_reqnobeam}{
+name={reqnobeam},
+text={noname},
+description={Flag allowing requesting to run this event without beam, part of the ID field of a timing event.},
+valtype={bla},
+type=foo}
+
+\newglossaryentry{n_vacc}{
+name={vacc},
+text={noname},
+description={blub},
+valtype={bla},
+type=foo}
+
+\newglossaryentry{n_res}{
+name={res},
+text={Reserved Field},
+description={Currently unused field of a timing event.},
+valtype={u32b},
+type=foo}
+
+\newglossaryentry{n_par}{
+name={par},
+text={Parameter Field},
+description={Transparent parameter field of a timing event which is passed through to a listening ECA channel},
+valtype={u64b},
+type=foo}
+
+\newglossaryentry{n_tef}{
+name={tef},
+text={Time Extension Field},
+description={The time extension field of a timing event is a fractional addition the timestamp (sub-nanosecond, currently not interpreted by ECA)},
+valtype={s8b},
+type=foo}
+
+\newglossaryentry{n_tvalid}{
+name={tvalid},
+text={Valid Time},
+description={Time after which this command will be valid, can be absolute or relative depending on vabs flag},
+valtype={s64b},
+type=foo}
+
+\newglossaryentry{n_vabs}{
+name={vabs},
+text={Valid Time Absolute},
+description={Chooses whether tvalid is interpreted as absolute value or an offset to current time sum.},
+valtype={bool},
+type=foo}
+
+\newglossaryentry{n_prio}{
+name={prio},
+text={Queue Priority},
+description={Chooses the command queue level this command will be written to at the target block. },
+valtype={u(0-2)},
+type=foo}
+
+\newglossaryentry{n_qty}{
+name={qty},
+text={noname},
+description={blub},
+valtype={bla},
+type=foo}
+
+\newglossaryentry{n_twait}{
+name={twait},
+text={noname},
+description={blub},
+valtype={bla},
+type=foo}
+
+\newglossaryentry{n_target}{
+name={target},
+text={noname},
+description={blub},
+valtype={bla},
+type=foo}
+
+\newglossaryentry{n_dest}{
+name={dest},
+text={Destination Node},
+description={Command Syntax (Director) only. Name of the destination node},
+valtype={str},
+type=bar}
+
+\newglossaryentry{n_destpattern}{type=bar,
+name={destpattern},
+text={noname},
+description={blub},
+valtype={bla},
+}
+
+\newglossaryentry{n_destbeamproc}{
+name={destbeamproc},
+text={Dest. beamprocess},
+description={Command Syntax (Director) only. Name of the destination beamprocess (not yet implemented), fuck fuck fuck fuck fuck},
+valtype={bla},
+type=bar}
+
+\newglossaryentry{n_permanent}{
+name={permanent},
+text={noname},
+description={blub},
+valtype={bla},
+type=foo}
