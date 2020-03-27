@@ -163,7 +163,8 @@ void main( void )
    init();
    gotoxy( 1, 1 );
    mprintf( ESC_CLR_SCR "FreeRTOS count up/down test\n"
-            "Compiler: " COMPILER_VERSION_STRING "\n" );
+            "Compiler: " COMPILER_VERSION_STRING "\n"
+            "TickRate: %d\n", configTICK_RATE_HZ );
 
    const BaseType_t status = initAndStartRTOS();
    mprintf( ESC_ERROR "Error: This point shall never be reached!\n"
