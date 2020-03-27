@@ -56,6 +56,8 @@
 #define ESC_NORMAL    "\e[0m"   /*!< @brief All attributes off */
 #define ESC_HIDDEN    "\e[8m"   /*!< @brief Hidden on */
 
+#define ESC_CLR_LINE  "\e[K"    /*!< @brief Clears the sctual line   */
+#define ESC_CLR_SCR   "\e[2J"   /*!< @brief Clears the terminal screen */
 
 #define ESC_ERROR   ESC_BOLD ESC_FG_RED    /*!< @brief Format for error messages */
 #define ESC_WARNING ESC_BOLD ESC_FG_YELLOW /*!< @brief Format for warning messages */
@@ -63,9 +65,10 @@
 
 #ifdef __cplusplus
 extern "C" {
+namespace gsi
+{
 #endif
 
-   
 /*!
  * @brief Set cursor position.
  * @param x Column position (horizontal)
@@ -81,7 +84,7 @@ static inline void gotoxy( int x, int y )
  */
 static inline void clrscr( void )
 {
-   mprintf( "\e[2J" );
+   mprintf( ESC_CLR_SCR );
 }
 
 /*!
@@ -90,11 +93,12 @@ static inline void clrscr( void )
  */
 static inline void clrline( void )
 {
-   mprintf( "\e[K" );
+   mprintf( ESC_CLR_LINE );
 }
 
 #ifdef __cplusplus
-}
+} /* namespace gsi */
+} /* extern "C" */
 #endif
 
 

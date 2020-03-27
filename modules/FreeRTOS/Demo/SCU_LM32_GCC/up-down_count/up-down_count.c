@@ -75,7 +75,10 @@ STATIC void vTaskCuontDown( void* pvParameters UNUSED )
 }
 
 /*! ---------------------------------------------------------------------------
- * @brief
+ * @brief Main function of monitor task.
+ *
+ * It's not necessary to put the slowly mprintf-function in a atomic section
+ * as long as mprintf is only in this single task like here.
  */
 STATIC void vTaskMonitor( void* pvParameters UNUSED )
 {
@@ -84,20 +87,24 @@ STATIC void vTaskMonitor( void* pvParameters UNUSED )
    while( true )
    {
       ATOMIC_SECTION()
-      {
+      { /*
+         * Keep atomic sections as short as possible.
+         */
          countUp   = g_countUp;
          countDown = g_countDown;
       }
+
       if( (countUp - lastCountUp) >= MONITOR_RATE )
       {
          gotoxy( 1, 7 );
-         mprintf( "Up counter:   %u", countUp );
+         mprintf( ESC_CLR_LINE "Up counter:   %u", countUp );
          lastCountUp = countUp;
       }
+
       if( (lastCountDown - countDown) >= MONITOR_RATE )
       {
          gotoxy( 1, 8 );
-         mprintf( "Down counter: %u", countDown );
+         mprintf( ESC_CLR_LINE "Down counter: %u", countDown );
          lastCountDown = countDown;
       }
    }
@@ -154,9 +161,9 @@ STATIC inline BaseType_t initAndStartRTOS( void )
 void main( void )
 {
    init();
-   clrscr();
    gotoxy( 1, 1 );
-   mprintf( "FreeRTOS count up/down test\nCompiler: " COMPILER_VERSION_STRING "\n" );
+   mprintf( ESC_CLR_SCR "FreeRTOS count up/down test\n"
+            "Compiler: " COMPILER_VERSION_STRING "\n" );
 
    const BaseType_t status = initAndStartRTOS();
    mprintf( ESC_ERROR "Error: This point shall never be reached!\n"
