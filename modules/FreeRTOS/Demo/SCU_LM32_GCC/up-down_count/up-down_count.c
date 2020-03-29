@@ -150,7 +150,7 @@ STATIC inline BaseType_t initAndStartRTOS( void )
    mprintf( "Creating task \"Monitor\"\n" );
    status = xTaskCreate( vTaskMonitor,
                          "Monitor",
-                         configMINIMAL_STACK_SIZE, // * 4,
+                         configMINIMAL_STACK_SIZE * 4,
                          NULL,
                          TEST_TASK_PRIORITY,
                          NULL
