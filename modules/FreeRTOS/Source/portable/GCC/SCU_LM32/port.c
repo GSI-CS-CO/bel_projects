@@ -152,7 +152,9 @@ inline STATIC void prvSetupTimer( void )
    STATIC_ASSERT( (configCPU_CLOCK_HZ % configTICK_RATE_HZ) == 0 );
    lm32TimerSetPeriod( pTimer, configCPU_CLOCK_HZ / configTICK_RATE_HZ );
    lm32TimerEnable( pTimer );
-   /* Register Interrupt Service Routine */
+   /*
+    * Register Interrupt Service Routine
+    */
    irqRegisterISR( TIMER_IRQ, (void*)pTimer, onTimerInterrupt );
 }
 
@@ -189,14 +191,19 @@ portBASE_TYPE xPortStartScheduler( void )
 void vPortEndScheduler( void )
 {
    /* It is unlikely that the LM32 port will get stopped.  */
+   configASSERT( false );
 }
 
 #if (configSUPPORT_STATIC_ALLOCATION == 1)
 /*! ---------------------------------------------------------------------------
+ * @ingroup OVERWRITABLE
  * configSUPPORT_STATIC_ALLOCATION is set to 1, so the application must provide an
  * implementation of vApplicationGetIdleTaskMemory() to provide the memory that is
  * used by the Idle task.
  */
+#ifndef __DOXYGEN__
+__attribute__((weak))
+#endif
 void vApplicationGetIdleTaskMemory( StaticTask_t** ppxIdleTaskTCBBuffer,
                                     StackType_t** ppxIdleTaskStackBuffer,
                                     uint32_t* pulIdleTaskStackSize )
@@ -207,7 +214,7 @@ void vApplicationGetIdleTaskMemory( StaticTask_t** ppxIdleTaskTCBBuffer,
     * the stack and so not exists after this function exits.
     */
    static StaticTask_t xIdleTaskTCB;
-   static StackType_t uxIdleTaskStack[ configMINIMAL_STACK_SIZE ];
+   static StackType_t uxIdleTaskStack[configMINIMAL_STACK_SIZE];
 
    /*
     * Pass out a pointer to the StaticTask_t structure in which the Idle task’s
@@ -229,11 +236,15 @@ void vApplicationGetIdleTaskMemory( StaticTask_t** ppxIdleTaskTCBBuffer,
 }
 
 #if (configUSE_TIMERS == 1)
-/*
+/*! ---------------------------------------------------------------------------
+ * @ingroup OVERWRITABLE
  * configSUPPORT_STATIC_ALLOCATION and configUSE_TIMERS are both set to 1, so the
  * application must provide an implementation of vApplicationGetTimerTaskMemory()
  * to provide the memory that is used by the Timer service task.
  */
+#ifndef __DOXYGEN__
+__attribute__((weak))
+#endif
 void vApplicationGetTimerTaskMemory( StaticTask_t** ppxTimerTaskTCBBuffer,
                                      StackType_t** ppxTimerTaskStackBuffer,
                                      uint32_t* pulTimerTaskStackSize )
@@ -244,7 +255,7 @@ void vApplicationGetTimerTaskMemory( StaticTask_t** ppxTimerTaskTCBBuffer,
     * the stack and so not exists after this function exits.
     */
    static StaticTask_t xTimerTaskTCB;
-   static StackType_t uxTimerTaskStack[ configTIMER_TASK_STACK_DEPTH ];
+   static StackType_t uxTimerTaskStack[configTIMER_TASK_STACK_DEPTH];
 
    /*
     * Pass out a pointer to the StaticTask_t structure in which the Timer
@@ -266,5 +277,27 @@ void vApplicationGetTimerTaskMemory( StaticTask_t** ppxTimerTaskTCBBuffer,
 }
 #endif /* #if (configUSE_TIMERS == 1) */
 #endif /* #if (configSUPPORT_STATIC_ALLOCATION == 1) */
+
+#if ( configCHECK_FOR_STACK_OVERFLOW != 0 )
+/*! ---------------------------------------------------------------------------
+ * @ingroup OVERWRITABLE
+ * @brief Becomes invoked in the case of a stack overflow.
+ * @note Use this function for develop and debug purposes only!
+ * @see https://www.freertos.org/Stacks-and-stack-overflow-checking.html
+ * @see FreeRTOSConfig.h
+ */
+#ifndef __DOXYGEN__
+__attribute__((weak))
+#endif
+void vApplicationStackOverflowHook( TaskHandle_t* pxTask, signed char* pcTaskName )
+{
+   mprintf( ESC_ERROR "Error: Stack overflow in task \"%s\"!\n"
+                      "Method: %d\n" ESC_NORMAL,
+                       pcTaskName,
+                       configCHECK_FOR_STACK_OVERFLOW
+          );
+}
+#endif /* #if ( configCHECK_FOR_STACK_OVERFLOW != 0 ) */
+
 
 /*================================== EOF ====================================*/

@@ -48,7 +48,13 @@ STATIC inline void init( void )
 volatile uint32_t g_countUp   = 0;
 volatile uint32_t g_countDown = 0;
 
-#define MONITOR_RATE (uint32_t)400000
+//#define CONFIG_YIELD
+
+#ifdef CONFIG_YIELD
+  #define MONITOR_RATE (uint32_t)4000
+#else
+  #define MONITOR_RATE (uint32_t)400000
+#endif
 
 /*! ---------------------------------------------------------------------------
  * @brief Count up task function.
@@ -58,7 +64,9 @@ STATIC void vTaskCountUp( void* pvParameters UNUSED )
    while( true )
    {
       ATOMIC_SECTION() g_countUp++;
-      //vPortYield();
+   #ifdef CONFIG_YIELD
+      vPortYield();
+   #endif
    }
 }
 
@@ -70,7 +78,9 @@ STATIC void vTaskCuontDown( void* pvParameters UNUSED )
    while( true )
    {
       ATOMIC_SECTION() g_countDown--;
-      //vPortYield();
+   #ifdef CONFIG_YIELD
+      vPortYield();
+   #endif
    }
 }
 
@@ -96,15 +106,13 @@ STATIC void vTaskMonitor( void* pvParameters UNUSED )
 
       if( (countUp - lastCountUp) >= MONITOR_RATE )
       {
-         gotoxy( 1, 7 );
-         mprintf( ESC_CLR_LINE "Up counter:   %u", countUp );
+         mprintf( ESC_XY( "1", "10" ) ESC_CLR_LINE "Up counter:   %u", countUp );
          lastCountUp = countUp;
       }
 
       if( (lastCountDown - countDown) >= MONITOR_RATE )
       {
-         gotoxy( 1, 8 );
-         mprintf( ESC_CLR_LINE "Down counter: %u", countDown );
+         mprintf( ESC_XY( "1", "11" ) ESC_CLR_LINE "Down counter: %u", countDown );
          lastCountDown = countDown;
       }
    }
@@ -142,7 +150,7 @@ STATIC inline BaseType_t initAndStartRTOS( void )
    mprintf( "Creating task \"Monitor\"\n" );
    status = xTaskCreate( vTaskMonitor,
                          "Monitor",
-                         configMINIMAL_STACK_SIZE,
+                         configMINIMAL_STACK_SIZE, // * 4,
                          NULL,
                          TEST_TASK_PRIORITY,
                          NULL
@@ -156,15 +164,24 @@ STATIC inline BaseType_t initAndStartRTOS( void )
    return status;
 }
 
+
 /*! ---------------------------------------------------------------------------
  */
 void main( void )
 {
    init();
-   gotoxy( 1, 1 );
-   mprintf( ESC_CLR_SCR "FreeRTOS count up/down test\n"
+   mprintf( ESC_XY( "1", "1" ) ESC_CLR_SCR "FreeRTOS count up/down test\n"
             "Compiler: " COMPILER_VERSION_STRING "\n"
-            "TickRate: %d\n", configTICK_RATE_HZ );
+          #ifdef CONFIG_YIELD
+            "Task yield enabled\n"
+          #endif
+            "Tick-rate:          %d Hz\n"
+            "Minimal stack size: %d bytes\n"
+            "Total heap size:    %d bytes\n",
+            configTICK_RATE_HZ,
+            configMINIMAL_STACK_SIZE * sizeof(StackType_t),
+            configTOTAL_HEAP_SIZE
+          );
 
    const BaseType_t status = initAndStartRTOS();
    mprintf( ESC_ERROR "Error: This point shall never be reached!\n"

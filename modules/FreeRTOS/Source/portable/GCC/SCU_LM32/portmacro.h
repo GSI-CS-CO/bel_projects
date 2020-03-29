@@ -90,6 +90,7 @@ typedef uint32_t       UBaseType_t;
 #define portTICK_RATE_MS      ( ( portTickType ) 1000 / configTICK_RATE_HZ )
 #define portBYTE_ALIGNMENT    4
 #define portNOP()             NOP()
+#define portFORCE_INLINE      ALWAYS_INLINE
 
 /*-----------------------------------------------------------*/
 
