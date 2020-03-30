@@ -5,7 +5,7 @@ use ieee.numeric_std.all;
 
 library work;
 use work.fg_quad_pkg.all;
-use work.daq_pkg.all;
+use work.aux_functions_pkg.all;
 
 entity fg_quad_scu_bus is
   generic (
@@ -89,6 +89,7 @@ architecture fg_quad_scu_bus_arch of fg_quad_scu_bus is
   signal  rd_tag_high:      std_logic;
   signal  rd_fw_version:    std_logic;
   signal  rd_crc:           std_logic;
+  signal  wr_crc:           std_logic;
 
   signal  fg_is_running:    std_logic;
   signal  ramp_sec_fin:     std_logic;
@@ -134,19 +135,21 @@ begin
         s_en_1 := '0';
     elsif rising_edge(clk) then
         s_en_1 := s_en_0;
-        s_en_0 := Ext_Wr_active;
+        s_en_0 := wr_fg_cntrl or wr_coeff_a or wr_coeff_b or wr_shift or wr_start_value_h or wr_start_value_l;
     end if;
         s_en_pos <= s_en_0 and not s_en_1;
         --s_en_neg <= not s_en_0 and  s_en_1;
   end process;
-  crc: crc5x16
+  crc: crc16_usb
     port map (
-      nreset          => nReset,
-      clk_i           => clk,
-      data_in         => Data_from_SCUB_LA,
-      crc_start_pulse => wr_fg_cntrl and not Data_from_SCUB_LA(1), -- begin of parameter set
-      crc_en_pulse    => s_en_pos,
-      crc_out         => crc_out
+      clk   => clk,
+      reset => nReset,
+      fd    => wr_fg_cntrl and not Data_from_SCUB_LA(1), -- begin of parameter set
+      nd    => s_en_pos,
+      rdy   => open,
+      d     => Data_from_SCUB_LA,
+      c     => crc_out,
+      o     => open
     );
 
 
@@ -174,6 +177,7 @@ adr_decoder: process (clk, nReset)
       rd_tag_high       <= '0';
       rd_fw_version     <= '0';
       rd_crc            <= '0';
+      wr_crc            <= '0';
       dtack             <= '0';
       
     elsif rising_edge(clk) then
@@ -198,6 +202,7 @@ adr_decoder: process (clk, nReset)
       rd_tag_high       <= '0';
       rd_fw_version     <= '0';
       rd_crc            <= '0';
+      wr_crc            <= '0';
       dtack             <= '0';
     
       if Ext_Adr_Val = '1' then
@@ -299,7 +304,10 @@ adr_decoder: process (clk, nReset)
             end if;
 
           when crc_adr =>
-            if Ext_Rd_active = '1' then
+            if Ext_Wr_active = '1' then
+              wr_crc <= '1';
+              dtack  <= '1';
+            elsif Ext_Rd_active = '1' then
               rd_crc <= '1';
               dtack  <= '1';
             end if;
@@ -325,6 +333,7 @@ adr_decoder: process (clk, nReset)
             rd_tag_high       <= '0';
             rd_fw_version     <= '0';
             rd_crc            <= '0';
+            wr_crc            <= '0';
             dtack             <= '0';
         end case;
       end if;
@@ -390,7 +399,6 @@ begin
       tag_high_reg    <= x"feed";
       reset_cnt := "00";
     else
-  
       if wr_fg_cntrl = '1' then
         fg_cntrl_reg <= Data_from_SCUB_LA;
       end if;

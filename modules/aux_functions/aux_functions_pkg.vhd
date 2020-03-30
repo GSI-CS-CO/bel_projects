@@ -234,6 +234,21 @@ component local_20_to_12p5 is
   );
 end component;
 
+component crc16_usb is generic (
+    SEED : in std_logic_vector( 15 downto 0) := b"1111111111111111");
+  port
+    (
+      clk   : in std_logic;
+      reset : in std_logic;
+      fd    : in std_logic; -- First data. 1: SEED is used (initialise and calculate), 0 : Previous CRC is used (continue and calculate)
+      nd    : in std_logic; -- New Data. d input has a valid data. Calculate new CRC
+      rdy   : out std_logic;
+      d     : in std_logic_vector( 15 downto 0);  -- Data in
+      c     : out std_logic_vector( 15 downto 0); -- CRC output
+      o     : out std_logic_vector( 15 downto 0) -- Data output
+    );
+end component;
+
 
 
 end package aux_functions_pkg;

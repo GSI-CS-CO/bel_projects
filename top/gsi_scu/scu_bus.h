@@ -67,6 +67,7 @@
 #define FG_TAG_LOW        0x9
 #define FG_TAG_HIGH       0xa
 #define FG_VER            0xb
+#define FG_CRC            0xc
 
 #define FG1_IRQ           (1<<15)
 #define FG2_IRQ           (1<<14)
