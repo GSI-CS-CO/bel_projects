@@ -27,7 +27,9 @@
 #include <mini_sdb.h>
 #include <eb_console_helper.h>
 #include <dbg.h>
-
+#ifdef CONFIG_DAQ_SINGLE_APP
+ #include <lm32Interrupts.h>
+#endif
 #ifndef CONFIG_DAQ_SINGLE_APP
 extern volatile uint16_t* g_pScub_base;
 #endif
@@ -36,14 +38,6 @@ extern volatile uint16_t* g_pScub_base;
 STATIC
 #endif
 DAQ_ADMIN_T g_scuDaqAdmin;
-
-STATIC inline uint32_t getInterruptPending( void )
-{
-   uint32_t ip;
-   asm volatile ("rcsr %0, ip": "=r"(ip));
-   return ip;
-}
-
 
 /*! ---------------------------------------------------------------------------
  */
@@ -198,11 +192,11 @@ void forEachScuDaqDevice( void )
    // TODO enable irq
 
    isIrq = true; //!!
-
-   uint32_t pending = getInterruptPending();
+#ifdef CONFIG_DAQ_SINGLE_APP
+   uint32_t pending = irqGetAndResetPendingRegister();
    if( pending != 0 )
       DBPRINT1( "DBG: pending: 0x%08x\n", pending );
-
+#endif
    for( unsigned int deviceNr = 0;
        deviceNr < daqBusGetFoundDevices( &g_scuDaqAdmin.oDaqDevs ); deviceNr++ )
    {

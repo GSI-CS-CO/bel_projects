@@ -167,6 +167,46 @@ void irqDisableSpecific( const unsigned int intNum );
 
 /*! ---------------------------------------------------------------------------
  * @ingroup INTERRUPT
+ * @brief Returns the current value of the LM32 interrupt pending register.
+ * @return Value of the interrupt pending register.
+ */
+STATIC inline
+uint32_t irqGetPendingRegister( void )
+{
+   uint32_t ip;
+   asm volatile ( "rcsr %0, ip" :"=r"(ip) );
+   return ip;
+}
+
+/*! ---------------------------------------------------------------------------
+ * @ingroup INTERRUPT
+ * @brief Resets the bits in the LM32 interrupt pending register.
+ * @param ip Bit must to reset the corresponding pending bit.
+ * @note The clearing of the bits in the pending register will accomplished
+ *       by writing a one in the concerning bit-position!
+ */
+STATIC inline
+void irqResetPendingRegister( const uint32_t ip )
+{
+   asm volatile ( "wcsr ip, %0" ::"r"(ip) );
+}
+
+/*! ---------------------------------------------------------------------------
+ * @ingroup INTERRUPT
+ * @brief Returns the current value of the LM32 interrupt pending register and
+ *        reset it.
+ * @return Value of the interrupt pending register before reset.
+ */
+STATIC inline
+uint32_t irqGetAndResetPendingRegister( void )
+{
+   const uint32_t pending = irqGetPendingRegister();
+   irqResetPendingRegister( pending );
+   return pending;
+}
+
+/*! ---------------------------------------------------------------------------
+ * @ingroup INTERRUPT
  * @brief Returns the global interrupt enable register of the LM32.
  */
 STATIC inline uint32_t irqGetEnableRegister( void )

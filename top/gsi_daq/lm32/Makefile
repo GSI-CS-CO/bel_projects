@@ -23,6 +23,7 @@ SOURCE += $(WR_DIR)/dev/w1-temp.c
 SOURCE += $(DAQ_LM32_DIR)/daq.c
 SOURCE += $(DAQ_LM32_DIR)/daq_command_interface_uc.c
 SOURCE += $(DAQ_LM32_DIR)/daq_ramBuffer.c
+SOURCE += $(SCU_LIB_SRC_DIR)/lm32Interrupts.c
 SOURCE += $(SCU_LIB_SRC_DIR)/scu_ddr3.c
 SOURCE += $(DAQ_DIR)/daq_ring_admin.c
 
