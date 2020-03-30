@@ -56,6 +56,22 @@
 #define ESC_NORMAL    "\e[0m"   /*!< @brief All attributes off */
 #define ESC_HIDDEN    "\e[8m"   /*!< @brief Hidden on */
 
+#define ESC_CLR_LINE  "\e[K"    /*!< @brief Clears the sctual line   */
+#define ESC_CLR_SCR   "\e[2J"   /*!< @brief Clears the terminal screen */
+
+/*!
+ * @brief Set the cursor to the position.
+ * @note This macro provides that the numbers of _X and _Y are strings,
+ *       therefore they has to put in quotes: "".
+ *
+ * E.g.:
+ * @code
+ * printf( ESC_XY( "2", "4" ) "Text begins at column 2 and line 4" );
+ * @endcode
+ * @param _X Column position in quotes.
+ * @param _y Line position in quotes.
+ */
+#define ESC_XY( _X, _Y ) "\e["_Y";"_X"H"
 
 #define ESC_ERROR   ESC_BOLD ESC_FG_RED    /*!< @brief Format for error messages */
 #define ESC_WARNING ESC_BOLD ESC_FG_YELLOW /*!< @brief Format for warning messages */
@@ -63,17 +79,18 @@
 
 #ifdef __cplusplus
 extern "C" {
+namespace gsi
+{
 #endif
 
-   
 /*!
  * @brief Set cursor position.
  * @param x Column position (horizontal)
  * @param y Line position (vertical)
  */
-static inline void gotoxy( int x, int y )
+static inline void gotoxy( const int x, const int y )
 {
-   mprintf( "\e[%d;%dH", y, x );
+   mprintf( ESC_XY( "%d", "%d" ), y, x );
 }
 
 /*!
@@ -81,7 +98,7 @@ static inline void gotoxy( int x, int y )
  */
 static inline void clrscr( void )
 {
-   mprintf( "\e[2J" );
+   mprintf( ESC_CLR_SCR );
 }
 
 /*!
@@ -90,11 +107,12 @@ static inline void clrscr( void )
  */
 static inline void clrline( void )
 {
-   mprintf( "\e[K" );
+   mprintf( ESC_CLR_LINE );
 }
 
 #ifdef __cplusplus
-}
+} /* namespace gsi */
+} /* extern "C" */
 #endif
 
 
