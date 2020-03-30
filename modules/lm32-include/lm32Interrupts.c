@@ -102,31 +102,6 @@ void irqSetMaskRegister( const uint32_t im )
    asm volatile ( "wcsr im, %0" ::"r"(im) );
 }
 
-/*! ---------------------------------------------------------------------------
- * @ingroup INTERRUPT
- * @brief Returns the current value of the LM32 interrupt pending register.
- * @return Value of the interrupt pending register.
- */
-STATIC inline
-uint32_t irqGetPendingRegister( void )
-{
-   uint32_t ip;
-   asm volatile ( "rcsr %0, ip" :"=r"(ip) );
-   return ip;
-}
-
-/*! ---------------------------------------------------------------------------
- * @ingroup INTERRUPT
- * @brief Resets the bits in the LM32 interrupt pending register.
- * @param ip Bit mast to reset the corresponding pending bit.
- * @note The clearing of the bits in the pending register will accomplished
- *       by writing a one in the concerning bit-position!
- */
-STATIC inline
-void irqResetPendingRegister( const uint32_t ip )
-{
-   asm volatile ( "wcsr ip, %0" ::"r"(ip) );
-}
 
 /*! ---------------------------------------------------------------------------
  * @ingroup INTERRUPT
