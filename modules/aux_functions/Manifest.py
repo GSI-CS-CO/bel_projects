@@ -10,5 +10,6 @@ files = [
   "Zeitbasis.vhd",
   "slave_clk_switch.vhd",
   "local_20_to_12p5.vhd",
-  "local_125_to_12p5.vhd"
+  "local_125_to_12p5.vhd",
+  "crc16_usb.vhd"
 ]

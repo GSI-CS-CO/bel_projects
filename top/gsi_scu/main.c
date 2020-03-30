@@ -23,6 +23,7 @@
 #include "../../../ip_cores/wr-cores/modules/wr_eca/eca_queue_regs.h"
 #include "../../../ip_cores/saftlib/drivers/eca_flags.h"
 #include "history.h"
+#include "crc16usb.h"
 
 #define MSI_SLAVE 0
 #define MSI_WB_FG 2
@@ -238,6 +239,10 @@ void msDelay(uint32_t msecs) {
   usleep(1000 * msecs);
 }
 
+inline unsigned short byteswap(unsigned short word) {
+  return (word >> 8 | word << 8) & 0xffff;
+}
+
 /** @brief sends the parameters for the next interpolation interval
  *  @param slot number of the slot, including the high bits with the information SIO or MIL_EXT
  *  @param fg_base base address of the function generator macro
@@ -249,6 +254,8 @@ inline void send_fg_param(int slot, int fg_base, unsigned short cntrl_reg, signe
   unsigned short cntrl_reg_wr;
   int status;
   short blk_data[6];
+  unsigned short crc16, crc16_hw;
+  unsigned short swapped;
 
   fg_num = (cntrl_reg & 0x3f0) >> 4; // virtual fg number Bits 9..4
   if (cbRead(&fg_buffer[0], &fg_regs[0], fg_num, &pset)) {
@@ -261,15 +268,30 @@ inline void send_fg_param(int slot, int fg_base, unsigned short cntrl_reg, signe
     blk_data[4] = pset.coeff_c & 0xffff;
     blk_data[5] = (pset.coeff_c & 0xffff0000) >> 16; // data written with high word
 
+
     if ((slot & 0xf0) == 0) {
-      scub_base[OFFS(slot) + fg_base + FG_CNTRL]  = blk_data[0];
-      scub_base[OFFS(slot) + fg_base + FG_A]      = blk_data[1];
-      scub_base[OFFS(slot) + fg_base + FG_B]      = blk_data[2];
-      scub_base[OFFS(slot) + fg_base + FG_SHIFT]  = blk_data[3];
-      scub_base[OFFS(slot) + fg_base + FG_STARTL] = blk_data[4];
-      scub_base[OFFS(slot) + fg_base + FG_STARTH] = blk_data[5];
-      // no setvalue for scu bus daq 
-      *setvalue = 0;
+      for (int i = 0; i < 10; i++) {
+        scub_base[OFFS(slot) + fg_base + FG_CNTRL]  = blk_data[0];
+        scub_base[OFFS(slot) + fg_base + FG_A]      = blk_data[1];
+        scub_base[OFFS(slot) + fg_base + FG_B]      = blk_data[2];
+        scub_base[OFFS(slot) + fg_base + FG_SHIFT]  = blk_data[3];
+        scub_base[OFFS(slot) + fg_base + FG_STARTL] = blk_data[4];
+        scub_base[OFFS(slot) + fg_base + FG_STARTH] = blk_data[5];
+        crc16_hw = scub_base[OFFS(slot) + fg_base + FG_CRC];
+        // no setvalue for scu bus daq
+        *setvalue = 0;
+        crc16 = 0;
+        // xor in, xor out (crc16usb)
+        for (int j = 0; j < 6; j++) {
+          swapped = byteswap(blk_data[j]);
+          crc16 = crc16usb_byte(crc16 ^ 0xffff, &swapped, 2);
+        }
+
+        if (crc16 == crc16_hw) {
+          break;
+        }
+          //mprintf("crc should be 0x%x but is 0x%x\n", crc16, crc16_hw);
+      }
     } else if (slot & DEV_MIL_EXT) {
       // save coeff_c as setvalue
       *setvalue = pset.coeff_c;
@@ -400,6 +422,8 @@ int configure_fg_macro(int channel) {
   struct param_set pset;
   short blk_data[6];
   int status;
+  unsigned short crc16, crc16_hw;
+  unsigned short swapped;
 
   if (channel >= 0 && channel < MAX_FG_CHANNELS) {
     /* actions per slave card */
@@ -502,12 +526,26 @@ int configure_fg_macro(int channel) {
 
       if ((slot & 0xf0) == 0) {
         //set virtual fg number Bit 9..4
-        scub_base[OFFS(slot) + fg_base + FG_CNTRL]  = blk_data[0];
-        scub_base[OFFS(slot) + fg_base + FG_A]      = blk_data[1];
-        scub_base[OFFS(slot) + fg_base + FG_B]      = blk_data[2];
-        scub_base[OFFS(slot) + fg_base + FG_SHIFT]  = blk_data[3];
-        scub_base[OFFS(slot) + fg_base + FG_STARTL] = blk_data[4];
-        scub_base[OFFS(slot) + fg_base + FG_STARTH] = blk_data[5];
+        for (int i = 0; i < 10; i++) {
+          scub_base[OFFS(slot) + fg_base + FG_CNTRL]  = blk_data[0];
+          scub_base[OFFS(slot) + fg_base + FG_A]      = blk_data[1];
+          scub_base[OFFS(slot) + fg_base + FG_B]      = blk_data[2];
+          scub_base[OFFS(slot) + fg_base + FG_SHIFT]  = blk_data[3];
+          scub_base[OFFS(slot) + fg_base + FG_STARTL] = blk_data[4];
+          scub_base[OFFS(slot) + fg_base + FG_STARTH] = blk_data[5];
+          crc16_hw = scub_base[OFFS(slot) + fg_base + FG_CRC];
+          crc16 = 0;
+          // xor in, xor out (crc16usb)
+          for (int j = 0; j < 6; j++) {
+            swapped = byteswap(blk_data[j]);
+            crc16 = crc16usb_byte(crc16 ^ 0xffff, &swapped, 2);
+          }
+
+          if (crc16 == crc16_hw) {
+            break;
+          }
+            //mprintf("crc should be 0x%x but is 0x%x\n", crc16, crc16_hw);
+        }
 
       } else if (slot & DEV_MIL_EXT) {
         // save the coeff_c for mil daq
