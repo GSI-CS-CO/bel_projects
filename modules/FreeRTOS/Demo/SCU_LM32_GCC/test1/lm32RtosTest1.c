@@ -22,7 +22,6 @@
  */
 #include "eb_console_helper.h"
 #include "mini_sdb.h"
-#include "helper_macros.h"
 #include "FreeRTOS.h"
 #include "task.h"
 
@@ -30,6 +29,9 @@
    #error "This project provides FreeRTOS"
 #endif
 
+/*! --------------------------------------------------------------------------
+ * @brief This function has to be invoked at first.
+ */
 static inline void init( void )
 {
    discoverPeriphery(); // mini-sdb: get info on important Wishbone infrastructure
@@ -38,67 +40,79 @@ static inline void init( void )
 
 #define TEST_TASK_PRIORITY    ( tskIDLE_PRIORITY + 1 )
 
+typedef struct
+{
+   const unsigned int number;
+   const char*        string;
+} TASK_DATA_T;
+
+
+/*! ---------------------------------------------------------------------------
+ * @brief Task function in this case for both tasks.
+ * @param pvParameters User tunnel, the forth parameter of function xTaskCreate.
+ */
 static void vTask( void* pvParameters )
 {
-   /*
-    * Initialize xLastExecutionTime so the first call to vTaskDelayUntil() works correctly
-    */
-#ifndef CONFIG_NO_RTOS_TIMER
-   TickType_t xLastExecutionTime = xTaskGetTickCount();
-#endif
+   TASK_DATA_T* pUserData = (TASK_DATA_T*)pvParameters;
 
+   /*
+    * Initialize xLastExecutionTime so the
+    * first call to vTaskDelayUntil() works correctly.
+    */
+   TickType_t xLastExecutionTime = xTaskGetTickCount();
+
+   const unsigned int y = 5 + pUserData->number;
    ATOMIC_SECTION() mprintf( "*** Once! ***\n" );
    unsigned int count = 0;
    while( true )
    {
-     // ATOMIC_SECTION()
-     // irqDisable();
-      portENTER_CRITICAL();
+      ATOMIC_SECTION()
       {
-         mprintf( "Task main function, count: %d, user data: \"%s\"\n",
+         mprintf( ESC_XY( "1", "%d" ) ESC_CLR_LINE
+                  "Task main function, count: %d, user data: \"%s\"",
+                   y,
                    ++count,
-                  (const char*)pvParameters );
-         mprintf( "IRQ: 0x%08x nesting: %d\n", irqGetEnableRegister(), irqGetAtomicNestingCount() );
+                  pUserData->string );
       }
-      portEXIT_CRITICAL();
-     // irqEnable();
-      //SCU_ASSERT( irqIsEnabled() );
-      /*
-       * Delay mainCHECK_DELAY milliseconds.
-       */
-   #ifdef CONFIG_NO_RTOS_TIMER
-      /*
-       * Very crude delay loop... not fine! I know...
-       */
-      unsigned int d = configCPU_CLOCK_HZ / 8;
-      while( d-- != 0 )
-         portNOP();
-   #else
+
       vTaskDelayUntil( &xLastExecutionTime, pdMS_TO_TICKS( 20 ) );
-   #endif
+
    #if configUSE_PREEMPTION == 0
       vPortYield();
-      mprintf( "after vPortYield(): \"%s\"\n\n", (const char*)pvParameters );
+      mprintf( "after vPortYield(): \"%s\"\n\n", pUserData->string );
    #endif
    }
 }
 
-const char* userTaskData1 = ESC_FG_CYAN"Donald"ESC_NORMAL;
-const char* userTaskData2 = ESC_FG_RED"Dagobert"ESC_NORMAL;
 
+TASK_DATA_T taskData1 =
+{
+   .number = 0,
+   .string = ESC_FG_CYAN"Donald"ESC_NORMAL
+};
 
+TASK_DATA_T taskData2 =
+{
+   .number = 1,
+   .string = ESC_FG_RED"Dagobert"ESC_NORMAL
+};
+
+/*! ---------------------------------------------------------------------------
+ * @brief Normal main function...
+ */
 void main( void )
 {
    init();
    mprintf( "freeRTOS-test\nCompiler: " COMPILER_VERSION_STRING "\n" );
+
    BaseType_t xReturned;
-#if 1
+
    xReturned = xTaskCreate(
-                vTask,               /* Function that implements the task. */
-                "TASK 1",                  /* Text name for the task. */
+                vTask,                    /* Function that implements the task. */
+                "TASK 1",                 /* Text name for the task. */
                 configMINIMAL_STACK_SIZE, /* Stack size in words, not bytes. */
-                (void*)userTaskData1,     /* Parameter passed into the task. */
-                TEST_TASK_PRIORITY,      /* Priority at which the task is created. */
+                (void*)&taskData1,        /* Parameter passed into the task. */
+                TEST_TASK_PRIORITY,       /* Priority at which the task is created. */
                 NULL                      /* Used to pass out the created task's handle. */
               );
    if( xReturned != pdPASS )
@@ -106,13 +120,13 @@ void main( void )
       mprintf( ESC_ERROR "Error %d: by creating task 1!\n"ESC_NORMAL, xReturned );
       while( true );
    }
-#endif
+
    xReturned = xTaskCreate(
-                vTask,               /* Function that implements the task. */
-                "task 2",                  /* Text name for the task. */
+                vTask,                    /* Function that implements the task. */
+                "task 2",                 /* Text name for the task. */
                 configMINIMAL_STACK_SIZE, /* Stack size in words, not bytes. */
-                (void*)userTaskData2,     /* Parameter passed into the task. */
-                TEST_TASK_PRIORITY,      /* Priority at which the task is created. */
+                (void*)&taskData2,        /* Parameter passed into the task. */
+                TEST_TASK_PRIORITY,       /* Priority at which the task is created. */
                 NULL                      /* Used to pass out the created task's handle. */
               );
    if( xReturned != pdPASS )
@@ -123,7 +137,6 @@ void main( void )
 
    portENABLE_INTERRUPTS();
    vTaskStartScheduler();
-
 
    mprintf( ESC_ERROR "Error: This point shall never be reached!\n" ESC_NORMAL );
    while( true );
