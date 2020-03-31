@@ -39,7 +39,7 @@ int main(int argc, char* argv[]) {
 
 //  char dirnameBuff[80];
 
-  bool update = true, verbose = false, strip=true, cmdValid = false, force = false, debug=false;
+  bool update = true, verbose = false, strip=true, cmdValid = false, force = false, debug=false, writefile=false;
   bool reqStatus = false;
 
   int opt;
@@ -55,6 +55,7 @@ int main(int argc, char* argv[]) {
 
          case 'o':
             outputFilename  = optarg;
+            writefile = true;
             if (outputFilename == NULL) {
               std::cerr << std::endl << program << ": option -o expects a filename" << std::endl;
               error = -1;
@@ -140,8 +141,8 @@ int main(int argc, char* argv[]) {
       if (cmd == "overwrite") { cdm.overwriteDotFile(inputFilename, force); cmdValid = true;}
       if (cmd == "remove")    { cdm.download(); cdm.removeDotFile(inputFilename, force); cmdValid = true;}
       if (cmd == "keep")      { cdm.download(); cdm.keepDotFile(inputFilename, force); cmdValid = true;}
-      if (cmd == "status")    { cdm.downloadDotFile(outputFilename, strip); cmdValid = true; reqStatus = true;}
-      if (cmd == "dump")      { cdm.download(); std::cout << cdm.downloadDot(strip) << std::endl; cmdValid = true; reqStatus = false; update=false;}
+      if (cmd == "status")    { cmdValid = true; reqStatus = true;}
+      if ((cmd == "status" && writefile) || cmd == "dump") { cdm.downloadDotFile(outputFilename, strip); cmdValid = true; reqStatus = false; update=false;}
       if (cmd == "rawvisited"){ cdm.download(); cdm.showPaint(); cmdValid = true; reqStatus = false; update=false;}
       if (cmd == "chkrem")    {
         /*
@@ -174,7 +175,7 @@ int main(int argc, char* argv[]) {
 
   if ( update ) {
     try {
-      cdm.downloadDotFile(outputFilename, strip);
+      cdm.download();
       if(verbose || reqStatus) cdm.showDown(false);
 
     } catch (std::runtime_error const& err) {
