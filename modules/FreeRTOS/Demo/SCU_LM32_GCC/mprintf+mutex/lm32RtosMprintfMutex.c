@@ -24,6 +24,7 @@
 #include "mini_sdb.h"
 #include "FreeRTOS.h"
 #include "task.h"
+#include "semphr.h"
 
 #ifndef CONFIG_RTOS
    #error "This project provides FreeRTOS"
@@ -39,6 +40,8 @@ static inline void init( void )
 }
 
 #define TEST_TASK_PRIORITY    ( tskIDLE_PRIORITY + 1 )
+
+SemaphoreHandle_t g_mutex = NULL;
 
 typedef struct
 {
@@ -62,12 +65,15 @@ STATIC void vTask( void* pvParameters )
    TickType_t xLastExecutionTime = xTaskGetTickCount();
 
    const unsigned int y = 7 + pUserData->number;
-   ATOMIC_SECTION() mprintf( ESC_XY( "55", "%d" )"*** Once! ***", y );
 
+   xSemaphoreTake( g_mutex, portMAX_DELAY );
+   mprintf( ESC_XY( "55", "%d" )"*** Once! ***", y );
+   xSemaphoreGive( g_mutex );
    unsigned int count = 0;
+
    while( true )
    {
-      ATOMIC_SECTION()
+      xSemaphoreTake( g_mutex, portMAX_DELAY );
       {
          mprintf( ESC_XY( "1", "%d" ) ESC_CLR_LINE
                   "Task main function %d, count: %d, user data: \"%s\"",
@@ -76,13 +82,9 @@ STATIC void vTask( void* pvParameters )
                   ++count,
                   pUserData->string );
       }
+      xSemaphoreGive( g_mutex );
 
-      vTaskDelayUntil( &xLastExecutionTime, pdMS_TO_TICKS( 1000 ) );
-
-   #if configUSE_PREEMPTION == 0
-      vPortYield();
-      mprintf( "after vPortYield(): \"%s\"\n\n", pUserData->string );
-   #endif
+      vTaskDelayUntil( &xLastExecutionTime, pdMS_TO_TICKS( 20 ) );
    }
 }
 
@@ -106,7 +108,7 @@ void main( void )
 {
    init();
    mprintf( ESC_XY( "1", "1" ) ESC_CLR_SCR
-            "FreeRTOS-test mprintf + ATOMIC_SECTION\n"
+            "FreeRTOS-test mprintf + MUTEX\n"
             "Compiler: " COMPILER_VERSION_STRING "\n"
             "Tick-rate:          %d Hz\n"
             "Minimal stack size: %d bytes\n"
@@ -114,6 +116,13 @@ void main( void )
             configTICK_RATE_HZ,
             configMINIMAL_STACK_SIZE * sizeof(StackType_t),
             configTOTAL_HEAP_SIZE );
+
+   g_mutex = xSemaphoreCreateMutex();
+   if( g_mutex == NULL )
+   {
+      mprintf( ESC_ERROR "Error: Can't create mutex!\n"ESC_NORMAL );
+      while( true );
+   }
 
    BaseType_t xReturned;
 
