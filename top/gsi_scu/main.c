@@ -186,15 +186,6 @@ void enable_scub_msis(int channel) {
       mil_irq_base[8]   = MIL_DRQ;
       mil_irq_base[9]   = MIL_DRQ;
       mil_irq_base[10]  = (uint32_t)pMyMsi + 0x20;
-
-      //mil_irq_base[8]   = MIL_DRY;
-      //mil_irq_base[9]   = MIL_DRY;
-      //mil_irq_base[10]  = (uint32_t)pMyMsi + 0x20;
-
-      //mil_irq_base[8]   = MIL_INL;
-      //mil_irq_base[9]   = MIL_INL;
-      //mil_irq_base[10]  = (uint32_t)pMyMsi + 0x20;
-      //mil_irq_base[2]   = (1 << MIL_INL) | (1 << MIL_DRY) | (1 << MIL_DRQ);
       mil_irq_base[2]   = (1 << MIL_DRQ);
     }
   }
@@ -222,7 +213,6 @@ void disable_slave_irq(int channel) {
         atomic_off();
        }
     } else if (slot & DEV_MIL_EXT) {
-      //write_mil(scu_mil_base, 0x0, FC_COEFF_A_WR | dev);            //ack drq
       if ((status = write_mil(scu_mil_base, 0x0, FC_IRQ_MSK | dev)) != OKAY) dev_failure(status, slot & 0xf, "disable_slave_irq");  //mask drq
     } else if (slot & DEV_SIO) {
       if ((status = scub_write_mil(scub_base, slot & 0xf, 0x0, FC_IRQ_MSK | dev)) != OKAY) dev_failure(status, slot & 0xf, "disable_slave_irq");  //mask drq
@@ -484,20 +474,8 @@ int configure_fg_macro(int channel) {
       scub_base[OFFS(slot) + SLAVE_INT_ENA] |= 0xc000; // enable fg1 and fg2 irq
       atomic_off();
     } else if (slot & DEV_MIL_EXT) {
-      // check for PUR
-      //if((status = read_mil(scu_mil_base, &data, FC_IRQ_STAT | dev)) != OKAY)          dev_failure(status, 0, "check PUR"); 
-      //if (!(data & 0x100)) {
-        //SEND_SIG(SIG_DISARMED);
-        //return 0;
-      //}
       if ((status = write_mil(scu_mil_base, 1 << 13, FC_IRQ_MSK | dev)) != OKAY) dev_failure(status, slot & 0xf, "enable dreq"); //enable Data-Request
     } else if (slot & DEV_SIO) {
-      // check for PUR
-      //if((status = scub_read_mil(scub_base, slot & 0xf, &data, FC_IRQ_STAT | dev)) != OKAY)          dev_failure(status, slot & 0xf, "check PUR"); 
-      //if (!(data & 0x100)) {
-        //SEND_SIG(SIG_DISARMED);
-        //return 0;
-      //}
       scub_base[SRQ_ENA] |= (1 << ((slot & 0xf)-1));        // enable irqs for the slave
       scub_base[OFFS(slot & 0xf) + SLAVE_INT_ENA] = 0x0010; // enable receiving of drq
       if ((status = scub_write_mil(scub_base, slot & 0xf, 1 << 13, FC_IRQ_MSK | dev)) != OKAY) dev_failure(status, slot & 0xf, "enable dreq"); //enable sending of drq
@@ -519,15 +497,12 @@ int configure_fg_macro(int channel) {
     if ((slot & 0xf0) == 0) {                                      //scu bus slave
       atomic_on();
       scub_base[OFFS(slot) + dac_base + DAC_CNTRL] = 0x10;        // set FG mode
-      //scub_base[OFFS(slot) + fg_base + FG_CNTRL] = 0x1;           // reset fg
       scub_base[OFFS(slot) + fg_base + FG_RAMP_CNT_LO] = 0;       // reset ramp counter
       atomic_off();
     } else if (slot & DEV_MIL_EXT) {
       if ((status = write_mil(scu_mil_base, 0x1, FC_IFAMODE_WR | dev)) != OKAY) dev_failure (status, 0, "set FG mode"); // set FG mode
-      //if ((status = write_mil(scu_mil_base, 0x1, FC_CNTRL_WR | dev)) != OKAY)   dev_failure (status, 0, "reset FG"); // reset fg
     } else if (slot & DEV_SIO) {
       if ((status = scub_write_mil(scub_base, slot & 0xf, 0x1, FC_IFAMODE_WR | dev)) != OKAY) dev_failure (status, slot & 0xf, "set FG mode"); // set FG mode
-      //if ((status = scub_write_mil(scub_base, slot & 0xf, 0x1, FC_CNTRL_WR | dev)) != OKAY)   dev_failure (status, slot & 0xf, "reset FG"); // reset fg
     }
 
     //fetch first parameter set from buffer
@@ -596,13 +571,11 @@ int configure_fg_macro(int channel) {
       atomic_off();
     } else if (slot & DEV_MIL_EXT) {
       short data;
-      //if ((status = read_mil(scu_mil_base, &data, FC_CNTRL_RD | dev)) != OKAY)                       dev_failure (status, 0);
       // enable and end block mode
       if ((status = write_mil(scu_mil_base, cntrl_reg_wr | FG_ENABLED, FC_CNTRL_WR | dev)) != OKAY) dev_failure (status, 0, "end blk mode");
 
     } else if (slot & DEV_SIO) {
       short data;
-      //if ((status = scub_read_mil(scub_base, slot & 0xf, &data, FC_CNTRL_RD | dev)) != OKAY)                       dev_failure (status, slot & 0xf);
       // enable and end block mode
       if ((status = scub_write_mil(scub_base, slot & 0xf, cntrl_reg_wr | FG_ENABLED, FC_CNTRL_WR | dev)) != OKAY) dev_failure (status, slot & 0xf, "end blk mode");
     }
@@ -900,10 +873,6 @@ void ecaHandler()
   flag         = *(pECAQ + (ECA_QUEUE_FLAGS_GET >> 2));
   if (flag & (0x0001 << ECA_VALID)) {
     // read data 
-    //evtIdHigh    = *(pECAQ + (ECA_QUEUE_EVENT_ID_HI_GET >> 2));
-    //evtIdLow     = *(pECAQ + (ECA_QUEUE_EVENT_ID_LO_GET >> 2));
-    //evtDeadlHigh = *(pECAQ + (ECA_QUEUE_DEADLINE_HI_GET >> 2));
-    //evtDeadlLow  = *(pECAQ + (ECA_QUEUE_DEADLINE_LO_GET >> 2));
     actTag       = *(pECAQ + (ECA_QUEUE_TAG_GET >> 2));
 
     // pop action from channel
