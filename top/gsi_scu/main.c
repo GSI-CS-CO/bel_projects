@@ -175,10 +175,12 @@ void enable_scub_msis(int channel) {
     if (((slot & 0xf0) == 0) || (slot & DEV_SIO)){
       //SCU Bus Master
       scub_base[GLOBAL_IRQ_ENA] = 0x20;              // enable slave irqs in scu bus master
+      atomic_on();
       scub_irq_base[8]  = (slot & 0xf)-1;            // channel select
       scub_irq_base[9]  = (slot & 0xf)-1;            // msg: slot number
       scub_irq_base[10] = (uint32_t)pMyMsi + 0x0;    // msi queue destination address of this cpu
       scub_irq_base[2]  = (1 << ((slot & 0xf) - 1)); // enable slave
+      atomic_off();
       //mprintf("IRQs for slave %d enabled.\n", (slot & 0xf));
     } else if (slot & DEV_MIL_EXT) {
       mil_irq_base[8]   = MIL_DRQ;
@@ -210,10 +212,15 @@ void disable_slave_irq(int channel) {
     dev = (fg_macros[fg_regs[channel].macro_number] >> 16) & 0xff;  //dev number
 
     if ((slot & 0xf0) == 0) {
-      if (dev == 0)
+      if (dev == 0) {
+        atomic_on();
         scub_base[OFFS(slot) + SLAVE_INT_ENA] &= ~(0x8000);       //disable fg1 irq
-      else if (dev == 1)
+        atomic_off();
+       } else if (dev == 1) {
+        atomic_on();
         scub_base[OFFS(slot) + SLAVE_INT_ENA] &= ~(0x4000);       //disable fg2 irq
+        atomic_off();
+       }
     } else if (slot & DEV_MIL_EXT) {
       //write_mil(scu_mil_base, 0x0, FC_COEFF_A_WR | dev);            //ack drq
       if ((status = write_mil(scu_mil_base, 0x0, FC_IRQ_MSK | dev)) != OKAY) dev_failure(status, slot & 0xf, "disable_slave_irq");  //mask drq
@@ -271,6 +278,7 @@ inline void send_fg_param(int slot, int fg_base, unsigned short cntrl_reg, signe
 
     if ((slot & 0xf0) == 0) {
       for (int i = 0; i < 10; i++) {
+        atomic_on();
         scub_base[OFFS(slot) + fg_base + FG_CNTRL]  = blk_data[0];
         scub_base[OFFS(slot) + fg_base + FG_A]      = blk_data[1];
         scub_base[OFFS(slot) + fg_base + FG_B]      = blk_data[2];
@@ -278,6 +286,7 @@ inline void send_fg_param(int slot, int fg_base, unsigned short cntrl_reg, signe
         scub_base[OFFS(slot) + fg_base + FG_STARTL] = blk_data[4];
         scub_base[OFFS(slot) + fg_base + FG_STARTH] = blk_data[5];
         crc16_hw = scub_base[OFFS(slot) + fg_base + FG_CRC];
+        atomic_off();
         // no setvalue for scu bus daq
         *setvalue = 0;
         crc16 = 0;
@@ -286,11 +295,12 @@ inline void send_fg_param(int slot, int fg_base, unsigned short cntrl_reg, signe
           swapped = byteswap(blk_data[j]);
           crc16 = crc16usb_byte(crc16 ^ 0xffff, &swapped, 2);
         }
+        if (i > 0)
+          hist_addx(HISTORY_XYZ_MODULE, "param crc failed ntimes", i);
 
         if (crc16 == crc16_hw) {
           break;
         }
-          //mprintf("crc should be 0x%x but is 0x%x\n", crc16, crc16_hw);
       }
     } else if (slot & DEV_MIL_EXT) {
       // save coeff_c as setvalue
@@ -333,8 +343,10 @@ inline void handle(int slot, unsigned fg_base, short irq_act_reg, signed int* se
 
     if ((slot & 0xf0) == 0) {
       /* last cnt from from fg macro, read from LO address copies hardware counter to shadow reg */
+      atomic_on();
       fg_regs[channel].ramp_count = scub_base[OFFS(slot) + fg_base + FG_RAMP_CNT_LO];
       fg_regs[channel].ramp_count |= scub_base[OFFS(slot) + fg_base + FG_RAMP_CNT_HI] << 16;
+      atomic_off();
     } else if ((slot & DEV_MIL_EXT) || (slot & DEV_SIO)) {
       /* count in software only */
       fg_regs[channel].ramp_count++;
@@ -466,9 +478,11 @@ int configure_fg_macro(int channel) {
 
     /* enable irqs */
     if ((slot & 0xf0) == 0) {                                      //scu bus slave
+      atomic_on();
       scub_base[SRQ_ENA] |= (1 << (slot-1));           // enable irqs for the slave
       scub_base[OFFS(slot) + SLAVE_INT_ACT] = 0xc000;  // clear all irqs
       scub_base[OFFS(slot) + SLAVE_INT_ENA] |= 0xc000; // enable fg1 and fg2 irq
+      atomic_off();
     } else if (slot & DEV_MIL_EXT) {
       // check for PUR
       //if((status = read_mil(scu_mil_base, &data, FC_IRQ_STAT | dev)) != OKAY)          dev_failure(status, 0, "check PUR"); 
@@ -503,9 +517,11 @@ int configure_fg_macro(int channel) {
 
     /* fg mode and reset */
     if ((slot & 0xf0) == 0) {                                      //scu bus slave
+      atomic_on();
       scub_base[OFFS(slot) + dac_base + DAC_CNTRL] = 0x10;        // set FG mode
       //scub_base[OFFS(slot) + fg_base + FG_CNTRL] = 0x1;           // reset fg
       scub_base[OFFS(slot) + fg_base + FG_RAMP_CNT_LO] = 0;       // reset ramp counter
+      atomic_off();
     } else if (slot & DEV_MIL_EXT) {
       if ((status = write_mil(scu_mil_base, 0x1, FC_IFAMODE_WR | dev)) != OKAY) dev_failure (status, 0, "set FG mode"); // set FG mode
       //if ((status = write_mil(scu_mil_base, 0x1, FC_CNTRL_WR | dev)) != OKAY)   dev_failure (status, 0, "reset FG"); // reset fg
@@ -516,6 +532,7 @@ int configure_fg_macro(int channel) {
 
     //fetch first parameter set from buffer
     if (cbRead(&fg_buffer[0], &fg_regs[0], channel, &pset)) {
+      //set virtual fg number Bit 9..4
       cntrl_reg_wr = ((pset.control & 0x38) << 10) | ((pset.control & 0x7) << 10) | channel << 4;
       blk_data[0] = cntrl_reg_wr;
       blk_data[1] = pset.coeff_a;
@@ -525,8 +542,8 @@ int configure_fg_macro(int channel) {
       blk_data[5] = (pset.coeff_c & 0xffff0000) >> 16; // data written with high word
 
       if ((slot & 0xf0) == 0) {
-        //set virtual fg number Bit 9..4
         for (int i = 0; i < 10; i++) {
+          atomic_on();
           scub_base[OFFS(slot) + fg_base + FG_CNTRL]  = blk_data[0];
           scub_base[OFFS(slot) + fg_base + FG_A]      = blk_data[1];
           scub_base[OFFS(slot) + fg_base + FG_B]      = blk_data[2];
@@ -534,17 +551,19 @@ int configure_fg_macro(int channel) {
           scub_base[OFFS(slot) + fg_base + FG_STARTL] = blk_data[4];
           scub_base[OFFS(slot) + fg_base + FG_STARTH] = blk_data[5];
           crc16_hw = scub_base[OFFS(slot) + fg_base + FG_CRC];
+          atomic_off();
           crc16 = 0;
           // xor in, xor out (crc16usb)
           for (int j = 0; j < 6; j++) {
             swapped = byteswap(blk_data[j]);
             crc16 = crc16usb_byte(crc16 ^ 0xffff, &swapped, 2);
           }
+          if (i > 0)
+            hist_addx(HISTORY_XYZ_MODULE, "conf crc failed ntimes", i);
 
           if (crc16 == crc16_hw) {
             break;
           }
-            //mprintf("crc should be 0x%x but is 0x%x\n", crc16, crc16_hw);
         }
 
       } else if (slot & DEV_MIL_EXT) {
@@ -570,10 +589,11 @@ int configure_fg_macro(int channel) {
 
     /* configure and enable macro */
     if ((slot & 0xf0) == 0) {
+      atomic_on();
       scub_base[OFFS(slot) + fg_base + FG_TAG_LOW] = fg_regs[channel].tag & 0xffff;
       scub_base[OFFS(slot) + fg_base + FG_TAG_HIGH] = fg_regs[channel].tag >> 16;
       scub_base[OFFS(slot) + fg_base + FG_CNTRL] |= FG_ENABLED;
-
+      atomic_off();
     } else if (slot & DEV_MIL_EXT) {
       short data;
       //if ((status = read_mil(scu_mil_base, &data, FC_CNTRL_RD | dev)) != OKAY)                       dev_failure (status, 0);
@@ -653,8 +673,10 @@ void disable_channel(unsigned int channel) {
       return;
 
     // disarm hardware
+    atomic_on();
     scub_base[OFFS(slot) + fg_base + FG_CNTRL] &= ~(0x2);
     scub_base[OFFS(slot) + dac_base + DAC_CNTRL] &= ~(0x10); // unset FG mode
+    atomic_off();
 
   } else if (slot & DEV_MIL_EXT) {
     // disarm hardware
