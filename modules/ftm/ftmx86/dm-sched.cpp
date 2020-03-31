@@ -37,15 +37,15 @@ static void help(const char *program) {
 
 int main(int argc, char* argv[]) {
 
-  char dirnameBuff[80];
+//  char dirnameBuff[80];
 
   bool update = true, verbose = false, strip=true, cmdValid = false, force = false, debug=false;
   bool reqStatus = false;
 
   int opt;
   const char *program = argv[0];
-  const char *netaddress, *inputFilename = NULL, *cmdName = NULL, *outputFilename = outfile;
-  const char *dirname = (const char *)getcwd(dirnameBuff, 80);
+  const char *netaddress, *inputFilename = NULL, *cmdName = "status", *outputFilename = outfile;
+//  const char *dirname = (const char *)getcwd(dirnameBuff, 80);
   int32_t error=0;
 
 
@@ -57,8 +57,8 @@ int main(int argc, char* argv[]) {
             outputFilename  = optarg;
             if (outputFilename == NULL) {
               std::cerr << std::endl << program << ": option -o expects a filename" << std::endl;
+              error = -1;
             }
-            error = -1;
             break;
          case 'd':
             debug = true;
@@ -111,8 +111,6 @@ int main(int argc, char* argv[]) {
 
    if (optind+1 < argc) cmdName        = argv[optind+1];
    if (optind+2 < argc) inputFilename  = argv[optind+2];
-
-
 
   CarpeDM cdm;
 
