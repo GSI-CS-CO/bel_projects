@@ -40,40 +40,64 @@ static inline void init( void )
 
 #define TEST_TASK_PRIORITY    ( tskIDLE_PRIORITY + 1 )
 
+typedef struct
+{
+   const unsigned int number;
+   const char*        string;
+} TASK_DATA_T;
+
+
 /*! ---------------------------------------------------------------------------
  * @brief Task function in this case for both tasks.
  * @param pvParameters User tunnel, the forth parameter of function xTaskCreate.
  */
-static void vTask( void* pvParameters )
+STATIC void vTask( void* pvParameters )
 {
+   TASK_DATA_T* pUserData = (TASK_DATA_T*)pvParameters;
+
    /*
     * Initialize xLastExecutionTime so the
     * first call to vTaskDelayUntil() works correctly.
     */
    TickType_t xLastExecutionTime = xTaskGetTickCount();
 
-   ATOMIC_SECTION() mprintf( "*** Once! ***\n" );
+   const unsigned int y = 7 + pUserData->number;
+   ATOMIC_SECTION() mprintf( ESC_XY( "55", "%d" )"*** Once! ***", y );
+
    unsigned int count = 0;
    while( true )
    {
       ATOMIC_SECTION()
       {
-         mprintf( "Task main function, count: %d, user data: \"%s\"\n",
-                   ++count,
-                  (const char*)pvParameters );
+         mprintf( ESC_XY( "1", "%d" ) ESC_CLR_LINE
+                  "Task main function %d, count: %d, user data: \"%s\"",
+                  y,
+                  pUserData->number,
+                  ++count,
+                  pUserData->string );
       }
 
-      vTaskDelayUntil( &xLastExecutionTime, pdMS_TO_TICKS( 20 ) );
+      vTaskDelayUntil( &xLastExecutionTime, pdMS_TO_TICKS( 1000 ) );
 
    #if configUSE_PREEMPTION == 0
       vPortYield();
-      mprintf( "after vPortYield(): \"%s\"\n\n", (const char*)pvParameters );
+      mprintf( "after vPortYield(): \"%s\"\n\n", pUserData->string );
    #endif
    }
 }
 
-const char* userTaskData1 = ESC_FG_CYAN"Donald"ESC_NORMAL;
-const char* userTaskData2 = ESC_FG_RED"Dagobert"ESC_NORMAL;
+
+TASK_DATA_T taskData1 =
+{
+   .number = 0,
+   .string = ESC_FG_CYAN"Donald"ESC_NORMAL
+};
+
+TASK_DATA_T taskData2 =
+{
+   .number = 1,
+   .string = ESC_FG_RED"Dagobert"ESC_NORMAL
+};
 
 /*! ---------------------------------------------------------------------------
  * @brief Normal main function...
@@ -81,7 +105,15 @@ const char* userTaskData2 = ESC_FG_RED"Dagobert"ESC_NORMAL;
 void main( void )
 {
    init();
-   mprintf( "freeRTOS-test\nCompiler: " COMPILER_VERSION_STRING "\n" );
+   mprintf( ESC_XY( "1", "1" ) ESC_CLR_SCR
+            "FreeRTOS-test mprintf + ATOMIC_SECTION\n"
+            "Compiler: " COMPILER_VERSION_STRING "\n"
+            "Tick-rate:          %d Hz\n"
+            "Minimal stack size: %d bytes\n"
+            "Total heap size:    %d bytes\n",
+            configTICK_RATE_HZ,
+            configMINIMAL_STACK_SIZE * sizeof(StackType_t),
+            configTOTAL_HEAP_SIZE );
 
    BaseType_t xReturned;
 
@@ -89,7 +121,7 @@ void main( void )
                 vTask,                    /* Function that implements the task. */
                 "TASK 1",                 /* Text name for the task. */
                 configMINIMAL_STACK_SIZE, /* Stack size in words, not bytes. */
-                (void*)userTaskData1,     /* Parameter passed into the task. */
+                (void*)&taskData1,        /* Parameter passed into the task. */
                 TEST_TASK_PRIORITY,       /* Priority at which the task is created. */
                 NULL                      /* Used to pass out the created task's handle. */
               );
@@ -103,7 +135,7 @@ void main( void )
                 vTask,                    /* Function that implements the task. */
                 "task 2",                 /* Text name for the task. */
                 configMINIMAL_STACK_SIZE, /* Stack size in words, not bytes. */
-                (void*)userTaskData2,     /* Parameter passed into the task. */
+                (void*)&taskData2,        /* Parameter passed into the task. */
                 TEST_TASK_PRIORITY,       /* Priority at which the task is created. */
                 NULL                      /* Used to pass out the created task's handle. */
               );
