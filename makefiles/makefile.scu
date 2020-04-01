@@ -264,7 +264,6 @@ CBR_GIT3 := $$(git log HEAD~2 --oneline --decorate=no -n 1 | cut -c1-100)
 CBR_GIT4 := $$(git log HEAD~3 --oneline --decorate=no -n 1 | cut -c1-100)
 CBR_GIT5 := $$(git log HEAD~4 --oneline --decorate=no -n 1 | cut -c1-100)
 
-# tskKERNEL_VERSION_NUMBER
 
 CBR  = "/*!\n"
 CBR += " * @defgroup $(DOX_GEN_GROUP_NAME)\n"
@@ -275,8 +274,10 @@ CBR += " * @date $(DATE)\n"
 CBR += " * @author $(AUTHOR)\n"
 CBR += " */\n\n"
 ifdef EMBEDDED_OS
+CBR += "\#include <helper_macros.h>\n"
 CBR += "\#include <FreeRTOS.h>\n"
 CBR += "\#include <task.h>\n\n"
+CBR += "\#define TASK_TICK_RATE_STR TO_STRING( configTICK_RATE_HZ ) \" Hz\"\n"
 endif
 CBR += "\#define BUILDID __attribute__((section(\".$(BUILDID_NAME)\"))) "'\\'"\n"
 CBR += "                __attribute__((used))\n\n"
@@ -291,6 +292,7 @@ CBR += "Prepared on : $(CBR_HOST)"'\\n\\'"\n"
 CBR += "OS Version  : $(CBR_OS) $(CBR_KRNL)"'\\n\\'"\n"
 ifdef EMBEDDED_OS
 CBR += "Embedded OS : $(EMBEDDED_OS) "\"tskKERNEL_VERSION_NUMBER\"'\\n\\'"\n"
+CBR += "Tick-frequ. : "\" TASK_TICK_RATE_STR \"'\\n\\'"\n"
 endif
 CBR += "GCC Version : $(CBR_GCC)"'\\n\\'"\n"
 CBR += "IntAdrOffs  : $(INTADR_OFFS)"'\\n\\'"\n"
