@@ -194,7 +194,7 @@ void vPortEndScheduler( void )
    configASSERT( false );
 }
 
-#if (configSUPPORT_STATIC_ALLOCATION == 1)
+#if (configSUPPORT_STATIC_ALLOCATION == 1) || defined(__DOXYGEN__)
 /*! ---------------------------------------------------------------------------
  * @ingroup OVERWRITABLE
  * configSUPPORT_STATIC_ALLOCATION is set to 1, so the application must provide an
@@ -235,7 +235,7 @@ void vApplicationGetIdleTaskMemory( StaticTask_t** ppxIdleTaskTCBBuffer,
    *pulIdleTaskStackSize = configMINIMAL_STACK_SIZE;
 }
 
-#if (configUSE_TIMERS == 1)
+#if (configUSE_TIMERS == 1) || defined(__DOXYGEN__)
 /*! ---------------------------------------------------------------------------
  * @ingroup OVERWRITABLE
  * configSUPPORT_STATIC_ALLOCATION and configUSE_TIMERS are both set to 1, so the
@@ -278,7 +278,7 @@ void vApplicationGetTimerTaskMemory( StaticTask_t** ppxTimerTaskTCBBuffer,
 #endif /* #if (configUSE_TIMERS == 1) */
 #endif /* #if (configSUPPORT_STATIC_ALLOCATION == 1) */
 
-#if ( configCHECK_FOR_STACK_OVERFLOW != 0 )
+#if ( configCHECK_FOR_STACK_OVERFLOW != 0 ) || defined(__DOXYGEN__)
 /*! ---------------------------------------------------------------------------
  * @ingroup OVERWRITABLE
  * @brief Becomes invoked in the case of a stack overflow.
@@ -296,6 +296,7 @@ void vApplicationStackOverflowHook( TaskHandle_t* pxTask, signed char* pcTaskNam
                        pcTaskName,
                        configCHECK_FOR_STACK_OVERFLOW
           );
+   configASSERT( false );
 }
 #endif /* #if ( configCHECK_FOR_STACK_OVERFLOW != 0 ) */
 

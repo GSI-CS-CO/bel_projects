@@ -54,12 +54,6 @@ SemaphoreHandle_t g_semaCountDown = NULL;
 
 //#define CONFIG_YIELD
 
-#ifdef CONFIG_YIELD
-  #define MONITOR_RATE (uint32_t)4000
-#else
-  #define MONITOR_RATE (uint32_t)400000
-#endif
-
 /*! ---------------------------------------------------------------------------
  * @brief Count up task function.
  */
@@ -102,6 +96,8 @@ STATIC void vTaskMonitor( void* pvParameters UNUSED )
 {
    uint32_t countUp, lastCountUp = 0, countDown, lastCountDown = 0;
 
+   TickType_t xLastExecutionTime = xTaskGetTickCount();
+
    while( true )
    {
       xSemaphoreTake( g_semaCountUp, portMAX_DELAY );
@@ -112,17 +108,24 @@ STATIC void vTaskMonitor( void* pvParameters UNUSED )
       countDown = g_countDown;
       xSemaphoreGive( g_semaCountDown );
 
-      if( (countUp - lastCountUp) >= MONITOR_RATE )
-      {
-         mprintf( ESC_XY( "1", "12" ) ESC_CLR_LINE "Up counter:   %u", countUp );
-         lastCountUp = countUp;
-      }
+      mprintf( ESC_XY( "1", "12" ) ESC_CLR_LINE
+               "Up counter:   %u"
+               ESC_XY( "30", "12" ) "Delta: %u",
+               countUp, countUp - lastCountUp
+             );
+      lastCountUp = countUp;
 
-      if( (lastCountDown - countDown) >= MONITOR_RATE )
-      {
-         mprintf( ESC_XY( "1", "13" ) ESC_CLR_LINE "Down counter: %u", countDown );
-         lastCountDown = countDown;
-      }
+      mprintf( ESC_XY( "1", "13" ) ESC_CLR_LINE
+               "Down counter: %u"
+               ESC_XY( "30", "13" ) "Delta: %u",
+               countDown, lastCountDown - countDown
+             );
+      lastCountDown = countDown;
+
+      /*
+       * Task will suspend for 1000 ms.
+       */
+      vTaskDelayUntil( &xLastExecutionTime, pdMS_TO_TICKS( 1000 ) );
    }
 }
 

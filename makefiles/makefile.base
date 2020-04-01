@@ -185,9 +185,11 @@ else
 	@echo "Compiler: $$($(CC) --version | head -n1)"
 endif
 
+CHECK_SOURCE += $(SOURCE)
+
 .PHONY: check_src
 check_src:
-	$(QUIET)(for i in $(SOURCE); do \
+	$(QUIET)(for i in $(CHECK_SOURCE); do \
 		[ -f "$$i" ] || echo -e $(ESC_FG_RED)"ERROR: Sourcefile \"$$i\" not found!"$(ESC_NORMAL) 1>&2; \
 	done)
 
@@ -196,6 +198,11 @@ $(WORK_DIR):
 
 $(TARGET_DIR):
 	$(QUIET)mkdir -p $(TARGET_DIR)
+
+ifdef FREE_RTOS_CONFIG_STANDARD_FILE
+$(FREE_RTOS_CONFIG_STANDARD_FILE):
+	ln -s $(FREE_RTOS_CONFIG_FILE) $(FREE_RTOS_CONFIG_STANDARD_FILE)
+endif
 
 #
 # TODO Following rule could be made a bit better...
