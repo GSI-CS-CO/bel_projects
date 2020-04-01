@@ -3,7 +3,7 @@
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 05-March-2020
+ *  version : 02-April-2020
  *
  * common x86 routines for firmware
  *
@@ -37,7 +37,7 @@
 #ifndef _COMMON_LIB_H_
 #define _COMMON_LIB_H_
 
-#define COMMON_LIB_VERSION "0.1.0"
+#define COMMON_LIB_VERSION "0.01.01"
 
 #include <etherbone.h>
 

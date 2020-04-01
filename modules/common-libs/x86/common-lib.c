@@ -3,7 +3,7 @@
  *
  *  created : 2018
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 05-March-2020
+ *  version : 02-Apr-2020
  *
  *  common x86 routines for firmware
  * 
@@ -45,13 +45,13 @@ eb_address_t common_tS0Hi;        // time when FW was in S0 state (start of FW),
 eb_address_t common_tS0Lo;        // time when FW was in S0 state (start of FW), low bits
 eb_address_t common_usedSize;     // used size of DP RAM
 
-
+/*
 static void die(const char* where, eb_status_t status)
 {
   fprintf(stderr, "%s failed: %s\n", where, eb_status(status));
   exit(1);
 } //die
-
+*/
 
 uint64_t comlib_getSysTime()
 {
@@ -167,7 +167,7 @@ int comlib_readDiag(eb_device_t device, uint64_t  *statusArray, uint32_t  *state
   eb_status_t eb_status;
   eb_data_t   data[30];
   
-  if ((eb_status = eb_cycle_open(device, 0, eb_block, &cycle)) != EB_OK) die("common-api: eb_cycle_open", eb_status);
+  if ((eb_status = eb_cycle_open(device, 0, eb_block, &cycle)) != EB_OK) return eb_status;
   eb_cycle_read(cycle, common_statusHi,    EB_BIG_ENDIAN|EB_DATA32, &(data[0]));
   eb_cycle_read(cycle, common_statusLo,    EB_BIG_ENDIAN|EB_DATA32, &(data[1]));
   eb_cycle_read(cycle, common_state,       EB_BIG_ENDIAN|EB_DATA32, &(data[2]));
@@ -185,7 +185,7 @@ int comlib_readDiag(eb_device_t device, uint64_t  *statusArray, uint32_t  *state
   eb_cycle_read(cycle, common_injections,  EB_BIG_ENDIAN|EB_DATA32, &(data[14]));  
   eb_cycle_read(cycle, common_statTrans,   EB_BIG_ENDIAN|EB_DATA32, &(data[15]));
   eb_cycle_read(cycle, common_usedSize,    EB_BIG_ENDIAN|EB_DATA32, &(data[16]));
-  if ((eb_status = eb_cycle_close(cycle)) != EB_OK) die("dm-unipz: eb_cycle_close", eb_status);
+  if ((eb_status = eb_cycle_close(cycle)) != EB_OK) return eb_status;
 
   *statusArray   = ((uint64_t)(data[0]) << 32) | (uint64_t)(data[1]);
   *state         = data[2];

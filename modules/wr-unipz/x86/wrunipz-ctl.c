@@ -515,7 +515,7 @@ int main(int argc, char** argv) {
     wrunipz_version_library(&verLib);
     printf("wr-unipz: library (firmware) version %s",  wrunipz_version_text(verLib));     
     wrunipz_version_firmware(ebDevice, &verFw);
-    printf("(%s)\n",  wrunipz_version_text(verFw));     
+    printf(" (%s)\n",  wrunipz_version_text(verFw));     
   } // if getEBVersion
 
   if (getInfo) {
