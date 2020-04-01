@@ -71,7 +71,7 @@
  * @param _X Column position in quotes.
  * @param _y Line position in quotes.
  */
-#define ESC_XY( _X, _Y ) "\e["_Y";"_X"H"
+#define ESC_XY( _X, _Y ) "\e[" _Y ";" _X "H"
 
 #define ESC_ERROR   ESC_BOLD ESC_FG_RED    /*!< @brief Format for error messages */
 #define ESC_WARNING ESC_BOLD ESC_FG_YELLOW /*!< @brief Format for warning messages */
