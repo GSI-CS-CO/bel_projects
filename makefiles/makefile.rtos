@@ -47,8 +47,16 @@ INCLUDE_DIRS += $(RTOS_INCLUDE_DIR)
 
 DEFINES += CONFIG_RTOS
 
+FREE_RTOS_CONFIG_FILE          ?= $(basename $(MIAN_MODULE))Config.h
+FREE_RTOS_CONFIG_STANDARD_FILE  = $(dir $(MIAN_MODULE))FreeRTOSConfig.h
+ADDITIONAL_DEPENDENCES         += $(FREE_RTOS_CONFIG_STANDARD_FILE)
+ADDITIONAL_TO_CLEAN            += $(FREE_RTOS_CONFIG_STANDARD_FILE)
+CHECK_SOURCE                   += $(FREE_RTOS_CONFIG_FILE)
+
+# ---------------------------- for Doxygen only -------------------------------
 DOX_TAB_SIZE = 4
 DOX_INPUT += $(RTOS_INCLUDE_DIR)
+DOX_INPUT += $(FREE_RTOS_CONFIG_FILE)
 DOX_INPUT += $(SCU_LIB_SRC_DIR)/scu_lm32Timer.h
 DOX_INPUT += $(SCU_LIB_SRC_DIR)/scu_lm32_macros.h
 DOX_INPUT += $(REPOSITORY_DIR)/makefiles/makefile.rtos
