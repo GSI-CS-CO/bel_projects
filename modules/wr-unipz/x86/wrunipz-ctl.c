@@ -3,7 +3,7 @@
  *
  *  created : 2018
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 20-March-2020
+ *  version : 02-April-2020
  *
  *  command-line interface for wrunipz
  *
@@ -112,7 +112,10 @@ const char* wrunipz_statusText(uint32_t bit) {
 } // dmunipz_statusText
 */
 
-static void help(void) {
+static void help(void)
+{
+  uint32_t version;
+  
   fprintf(stderr, "Usage: %s [OPTION] <etherbone-device> [COMMAND]\n", program);
   fprintf(stderr, "\n");
   fprintf(stderr, "  -h                  display this help and exit\n");
@@ -161,7 +164,10 @@ static void help(void) {
   fprintf(stderr, "                      '                '- '1': vacc is played\n");
   fprintf(stderr, "                      '- # of UNILAC cycles\n");
   fprintf(stderr, "Report software bugs to <d.beck@gsi.de>\n");
-  fprintf(stderr, "Version %s. Licensed under the LGPL v3.\n", wrunipz_version_library());
+
+  wrunipz_version_library(&version);
+
+  fprintf(stderr, "Version %s. Licensed under the LGPL v3.\n", wrunipz_version_text(version));
 } //help
 
 
@@ -378,9 +384,7 @@ int main(int argc, char** argv) {
   uint32_t state;
   uint32_t nBadStatus;
   uint32_t nBadState;
-  uint32_t nDummyT;
-  uint32_t nDummyI;
-  uint32_t statDummy;
+
   uint32_t cycles;
   uint64_t messages;
   uint32_t fMessages;
@@ -393,18 +397,20 @@ int main(int argc, char** argv) {
   uint32_t nLate;
   uint32_t vaccAvg;
   uint32_t pzAvg;
-  uint32_t confStat;
+  /*uint32_t confStat;
   uint64_t tDiag;
-  uint64_t tS0;
+  uint64_t tS0;*/
+  uint32_t verLib;
+  uint32_t verFw;
 
   uint32_t actState = COMMON_STATE_UNKNOWN;    // actual state of gateway
   uint64_t actStatusArray;                     // actual sum status of gateway
   uint32_t sleepTime;                          // time to sleep [us]
   uint32_t printFlag;                          // flag for printing
-  uint64_t t1, t2;
+  /*  uint64_t t1, t2;*/
 
-  uint64_t mac;                                // mac for config of EB master
-  uint32_t ip;                                 // ip for config of EB master
+  /*uint64_t mac;                                // mac for config of EB master
+    uint32_t ip;                                 // ip for config of EB master*/
   uint32_t cpu;                                // lm32 address
 
   // command test
@@ -412,9 +418,9 @@ int main(int argc, char** argv) {
   uint32_t    nEvtData;
   /*  uint32_t    dataChn1[WRUNIPZ_NEVT];
       uint32_t    nDataChn1;*/
-  uint32_t    vacc;
+  /*  uint32_t    vacc;
   uint32_t    pz;
-  uint32_t    offset;
+  uint32_t    offset;*/
   char        *filename;
 
   program = argv[0];
@@ -506,7 +512,9 @@ int main(int argc, char** argv) {
   } // if getConfig
   */
   if (getVersion) {
-    printf("wr-unipz: library (firmware) version %s (%s)\n",  wrunipz_version_library(), wrunipz_version_firmware(ebDevice));     
+    wrunipz_version_library(&verLib);
+    wrunipz_version_firmware(ebDevice, &verFw);
+    printf("wr-unipz: library (firmware) version %s (%s)\n",  wrunipz_version_text(verLib), wrunipz_version_text(verFw));     
   } // if getEBVersion
 
   if (getInfo) {
@@ -687,7 +695,7 @@ int main(int argc, char** argv) {
       
       /*      t2 = getSysTime();*/
       
-      printf("wr-unipz: transaction took %u us per virtAcc\n", (uint32_t)(t2 -t1) / (WRUNIPZ_NVACC - 1));
+      /* printf("wr-unipz: transaction took %u us per virtAcc\n", (uint32_t)(t2 -t1) / (WRUNIPZ_NVACC - 1));*/
 
     } // "ftestfull"
     /*

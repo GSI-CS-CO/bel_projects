@@ -3,7 +3,7 @@
  *
  *  created : 2020
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 20-March-2020
+ *  version :02-April-2020
  *
  * library for wrunipz
  *
@@ -80,7 +80,8 @@ eb_address_t wrunipz_evtData;           // event data
 eb_address_t wrunipz_evtFlags;          // event flags
 
 
-const char* wrunipz_status_text(uint32_t bit) {  
+const char* wrunipz_status_text(uint32_t bit)
+{  
   static char message[256];
   
   switch (bit) {
@@ -101,12 +102,24 @@ const char* wrunipz_status_text(uint32_t bit) {
 } // wrunipz_status_text
 
 
-const char* wrunipz_state_text(uint32_t code) {
+const char* wrunipz_state_text(uint32_t code)
+{
   return comlib_stateText(code);
 } // wrunipz_state_text
 
 
-uint32_t wrunipz_firmware_open(uint64_t *ebDevice, const char* devName, uint32_t cpu, uint32_t *address){
+const char* wrunipz_version_text(uint32_t number)
+{
+  static char    version[32];
+
+  sprintf(version, "%02x.%02x.%02x", (number & 0x00ff0000) >> 16, (number & 0x0000ff00) >> 8, number & 0x000000ff);
+
+  return version;
+} // wrunipz_version_text
+
+
+uint32_t wrunipz_firmware_open(uint64_t *ebDevice, const char* devName, uint32_t cpu, uint32_t *address)
+{
   eb_status_t         status;
   eb_device_t         eb_device;  
   struct sdb_device   sdbDevice;                           // instantiated lm32 core
@@ -147,7 +160,8 @@ uint32_t wrunipz_firmware_open(uint64_t *ebDevice, const char* devName, uint32_t
 } // wrunipz_firmware_open
 
 
-uint32_t wrunipz_firmware_close(uint64_t ebDevice){
+uint32_t wrunipz_firmware_close(uint64_t ebDevice)
+{
   eb_status_t status;
   eb_device_t eb_device;
 
@@ -161,29 +175,31 @@ uint32_t wrunipz_firmware_close(uint64_t ebDevice){
 } // wrunipz_firmware_close
 
 
-const char* wrunipz_version_firmware(uint64_t ebDevice) {
-  static char    version[32];
-  uint32_t       ver;
-
+uint32_t wrunipz_version_firmware(uint64_t ebDevice, uint32_t *version)
+{
   uint64_t       dummy64a;
   uint32_t       dummy32a, dummy32b, dummy32c;
+  uint32_t       errorCode;
 
-  ver = 0xffffffff;
+  *version = 0xffffffff;
   
-  wrunipz_common_read(ebDevice, &dummy64a, &dummy32a, &dummy32b, &dummy32c, &ver, 0);
-  sprintf(version, "%02x.%02x.%02x", (ver & 0x00ff0000) >> 16, (ver & 0x0000ff00) >> 8, ver & 0x000000ff);
+  errorCode = wrunipz_common_read(ebDevice, &dummy64a, &dummy32a, &dummy32b, &dummy32c, version, 0);
 
-  return version;
+  return errorCode;
 } // wrunipz_version_firmware
 
 
-const char* wrunipz_version_library(){
-  return WRUNIPZLIB_VERSION;
+uint32_t wrunipz_version_library(uint32_t *version)
+{
+  *version = (uint32_t)WRUNIPZLIB_VERSION;
+
+  return COMMON_STATUS_OK;
 } // wrunipz_version_library
 
 
 uint32_t wrunipz_info_read(uint64_t ebDevice, uint32_t *ncycles, uint32_t *tCycleAvg, uint32_t *msgFreqAvg, uint32_t *nLate, uint32_t *vaccAvg,
-                           uint32_t *pzAvg, uint64_t *nMessages, int32_t  *dtMax, int32_t  *dtMin, int32_t  *cycJmpMax, int32_t  *cycJmpMin) {
+                           uint32_t *pzAvg, uint64_t *nMessages, int32_t  *dtMax, int32_t  *dtMin, int32_t  *cycJmpMax, int32_t  *cycJmpMin)
+{
   eb_cycle_t  eb_cycle;
   eb_status_t eb_status;
   eb_device_t eb_device;
@@ -223,7 +239,8 @@ uint32_t wrunipz_info_read(uint64_t ebDevice, uint32_t *ncycles, uint32_t *tCycl
 } // wrunipz_info_read
 
 
-uint32_t wrunipz_common_read(uint64_t ebDevice, uint64_t *statusArray, uint32_t *state, uint32_t *nBadStatus, uint32_t *nBadState, uint32_t *version, uint32_t printDiag){
+uint32_t wrunipz_common_read(uint64_t ebDevice, uint64_t *statusArray, uint32_t *state, uint32_t *nBadStatus, uint32_t *nBadState, uint32_t *version, uint32_t printDiag)
+{
   eb_status_t eb_status;
   eb_device_t eb_device;
 
@@ -239,7 +256,8 @@ uint32_t wrunipz_common_read(uint64_t ebDevice, uint64_t *statusArray, uint32_t 
 } // wrunipz_status_read
   
 
-void wrunipz_cmd_configure(uint64_t ebDevice){
+void wrunipz_cmd_configure(uint64_t ebDevice)
+{
   eb_device_t eb_device;
   
   eb_device = (eb_device_t)ebDevice;
@@ -247,7 +265,8 @@ void wrunipz_cmd_configure(uint64_t ebDevice){
 } // wrunipz_cmd_configure
 
 
-void wrunipz_cmd_startop(uint64_t ebDevice){
+void wrunipz_cmd_startop(uint64_t ebDevice)
+{
   eb_device_t eb_device;
 
   eb_device = (eb_device_t)ebDevice;
@@ -255,7 +274,8 @@ void wrunipz_cmd_startop(uint64_t ebDevice){
 } // wrunipz_cmd_startop
 
 
-void wrunipz_cmd_stopop(uint64_t ebDevice){
+void wrunipz_cmd_stopop(uint64_t ebDevice)
+{
   eb_device_t eb_device;
 
   eb_device = (eb_device_t)ebDevice;
@@ -263,7 +283,8 @@ void wrunipz_cmd_stopop(uint64_t ebDevice){
 } // wrunipz_cmd_stopop
 
 
-void wrunipz_cmd_recover(uint64_t ebDevice){
+void wrunipz_cmd_recover(uint64_t ebDevice)
+{
   eb_device_t eb_device;
 
   eb_device = (eb_device_t)ebDevice;
@@ -271,7 +292,8 @@ void wrunipz_cmd_recover(uint64_t ebDevice){
 } // wrunipz_cmd_recover
 
 
-void wrunipz_cmd_idle(uint64_t ebDevice){
+void wrunipz_cmd_idle(uint64_t ebDevice)
+{
   eb_device_t eb_device;
 
   eb_device = (eb_device_t)ebDevice;
@@ -279,7 +301,8 @@ void wrunipz_cmd_idle(uint64_t ebDevice){
 } // wrunipz_cmd_idle
 
 
-void wrunipz_cmd_cleardiag(uint64_t ebDevice){
+void wrunipz_cmd_cleardiag(uint64_t ebDevice)
+{
   eb_device_t eb_device;
 
   eb_device = (eb_device_t)ebDevice;
@@ -287,7 +310,8 @@ void wrunipz_cmd_cleardiag(uint64_t ebDevice){
 } // wrunipz_cmd_cleardiag
 
 
-void wrunipz_cmd_submit(uint64_t ebDevice){
+void wrunipz_cmd_submit(uint64_t ebDevice)
+{
   eb_device_t eb_device;
 
   eb_device = (eb_device_t)ebDevice;
@@ -295,7 +319,8 @@ void wrunipz_cmd_submit(uint64_t ebDevice){
 } // wrunipz_cmd_submit
 
 
-void wrunipz_cmd_clearTables(uint64_t ebDevice){
+void wrunipz_cmd_clearTables(uint64_t ebDevice)
+{
   eb_device_t eb_device;
 
   eb_device = (eb_device_t)ebDevice;

@@ -3,7 +3,7 @@
  *
  *  created : 2020
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 20-March-2020
+ *  version : 02-April-2020
  *
  * library for wrunipz
  *
@@ -41,7 +41,31 @@
 extern "C" {
 #endif
 
-#define WRUNIPZLIB_VERSION "0.01.01"
+#define WRUNIPZLIB_VERSION 0x002000
+
+// (error) codes; duplicated to avoid the need of joining bel_projects and acc git repos
+#define  WRUNIPZLIB_STATUS_OK                 0    // OK
+#define  WRUNIPZLIB_STATUS_ERROR              1    // an error occured
+#define  WRUNIPZLIB_STATUS_TIMEDOUT           2    // a timeout occured
+#define  WRUNIPZLIB_STATUS_OUTOFRANGE         3    // some value is out of range
+#define  WRUNIPZLIB_STATUS_EB                 4    // an Etherbone error occured
+#define  WRUNIPZLIB_STATUS_NOIP               5    // DHCP request via WR network failed
+#define  WRUNIPZLIB_STATUS_WRONGIP            6    // IP received via DHCP does not match local config
+#define  WRUNIPZLIB_STATUS_EBREADTIMEDOUT     7    // EB read via WR network timed out
+#define  WRUNIPZLIB_STATUS_WRBADSYNC          8    // White Rabbit: not in 'TRACK_PHASE'
+#define  WRUNIPZLIB_STATUS_AUTORECOVERY       9    // trying auto-recovery from state ERROR
+#define  WRUNIPZLIB_STATUS_RESERVEDTILHERE   15    // 00..15 reserved for common error codes
+
+// states; duplicated to avoid the need of joining bel_projects and acc git repos
+#define  WRUNIPZLIB_STATE_UNKNOWN             0    // unknown state
+#define  WRUNIPZLIB_STATE_S0                  1    // initial state -> IDLE (automatic)
+#define  WRUNIPZLIB_STATE_IDLE                2    // idle state -> CONFIGURED (by command "configure")
+#define  WRUNIPZLIB_STATE_CONFIGURED          3    // configured state -> IDLE ("idle"), CONFIGURED ("configure"), OPREADY ("startop")
+#define  WRUNIPZLIB_STATE_OPREADY             4    // gateway in operation -> STOPPING ("stopop")
+#define  WRUNIPZLIB_STATE_STOPPING            5    // gateway in operation -> CONFIGURED (automatic)
+#define  WRUNIPZLIB_STATE_ERROR               6    // gateway in error -> IDLE ("recover")
+#define  WRUNIPZLIB_STATE_FATAL               7    // gateway in fatal error; RIP
+
 
   // convert status code to status text
   const char* wrunipz_status_text(uint32_t code                // status code
@@ -50,7 +74,10 @@ extern "C" {
   // convert state code to state text
   const char* wrunipz_state_text(uint32_t code                 // state code
                                  );
-  
+  // convert numeric version number to string
+  const char* wrunipz_version_text(uint32_t number             // version number
+                                   );
+                                 
   // open connection to firmware
   uint32_t wrunipz_firmware_open(uint64_t       *ebDevice,     // EB device
                                  const char*    device,        // EB device such as 'dev/wbm0'
@@ -58,18 +85,20 @@ extern "C" {
                                  uint32_t       *wbAddr        // WB address of firmware
                                  );
   
-  // close connection to firmware
+  // close connection to firmware, returns error code
   uint32_t wrunipz_firmware_close(uint64_t ebDevice            // EB device
                                   );
   
-  // get version of firmare
-  const char* wrunipz_version_firmware(uint64_t ebDevice       // EB device
-                                       );
+  // get version of firmware, returns error code
+  uint32_t wrunipz_version_firmware(uint64_t ebDevice,         // EB device
+                                    uint32_t *version          // version number
+                                    );
 
-  // get version of library
-  const char* wrunipz_version_library();
+  // get version of library, returns error code
+  uint32_t wrunipz_version_library(uint32_t *version           // version number
+                                   );
   
-  // get info from firmware
+  // get info from firmware, returns error code
   uint32_t wrunipz_info_read(uint64_t ebDevice,                // EB device
                              uint32_t *ncycles,                // # of cycles executed
                              uint32_t *tCycleAvg,              // average time per cycle [ns]
@@ -84,7 +113,7 @@ extern "C" {
                              int32_t  *cycJmpMin               // delta T min (expected and actual start of UNILAC cycle)
                              );
   
-  // get common properties from firmware
+  // get common properties from firmware, returns error code
   uint32_t wrunipz_common_read(uint64_t ebDevice,              // EB device
                                uint64_t *statusArray,          // array with status bits
                                uint32_t *state,                // state
@@ -94,7 +123,7 @@ extern "C" {
                                uint32_t printDiag              // prints info on common firmware properties to stdout
                                );
   
-  // uploads (parts of) an event table to the firmware
+  // uploads (parts of) an event table to the firmware, returns error code
   uint32_t wrunipz_table_upload(uint64_t ebDevice,             // EB device
                                 uint32_t pz,                   // # of PZ;
                                 uint32_t vacc,                 // # of vacc;
