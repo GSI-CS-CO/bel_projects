@@ -132,7 +132,6 @@ uint32_t wrunipz_firmware_open(uint64_t *ebDevice, const char* devName, uint32_t
   // open Etherbone device and socket 
   if ((status = eb_socket_open(EB_ABI_CODE, 0, EB_ADDR32|EB_DATA32, &eb_socket)) != EB_OK) return COMMON_STATUS_EB;
   if ((status = eb_device_open(eb_socket, devName, EB_ADDR32|EB_DATA32, 3, &eb_device)) != EB_OK) return COMMON_STATUS_EB;
-  *ebDevice = (uint64_t)eb_device;
 
   //  get Wishbone address of lm32 
   if ((status = eb_sdb_find_by_identity(eb_device, GSI, LM32_RAM_USER, &sdbDevice, &nDevices)) != EB_OK) return COMMON_STATUS_EB;
@@ -155,6 +154,9 @@ uint32_t wrunipz_firmware_open(uint64_t *ebDevice, const char* devName, uint32_t
   wrunipz_pzAvg        = lm32_base + SHARED_OFFS + WRUNIPZ_SHARED_PZAVG;
   wrunipz_evtData      = lm32_base + SHARED_OFFS + WRUNIPZ_SHARED_EVT_DATA;
   wrunipz_evtFlags     = lm32_base + SHARED_OFFS + WRUNIPZ_SHARED_EVT_FLAGS;
+
+  // do this just at the very end
+  *ebDevice = (uint64_t)eb_device;
   
   return COMMON_STATUS_OK;
 } // wrunipz_firmware_open
