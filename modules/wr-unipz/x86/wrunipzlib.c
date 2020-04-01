@@ -165,6 +165,7 @@ uint32_t wrunipz_firmware_close(uint64_t ebDevice)
   eb_status_t status;
   eb_device_t eb_device;
 
+  if (!ebDevice) return COMMON_STATUS_EB;
   eb_device = (eb_device_t)ebDevice;
   
   // close Etherbone device and socket
@@ -181,6 +182,7 @@ uint32_t wrunipz_version_firmware(uint64_t ebDevice, uint32_t *version)
   uint32_t       dummy32a, dummy32b, dummy32c;
   uint32_t       errorCode;
 
+  if (!ebDevice) return COMMON_STATUS_EB;
   *version = 0xffffffff;
   
   errorCode = wrunipz_common_read(ebDevice, &dummy64a, &dummy32a, &dummy32b, &dummy32c, version, 0);
@@ -205,6 +207,7 @@ uint32_t wrunipz_info_read(uint64_t ebDevice, uint32_t *ncycles, uint32_t *tCycl
   eb_device_t eb_device;
   eb_data_t   data[30];
 
+  if (!ebDevice) return COMMON_STATUS_EB;
   eb_device = (eb_device_t)ebDevice;
 
   if ((eb_status = eb_cycle_open(eb_device, 0, eb_block, &eb_cycle)) != EB_OK) return COMMON_STATUS_EB;
@@ -247,6 +250,7 @@ uint32_t wrunipz_common_read(uint64_t ebDevice, uint64_t *statusArray, uint32_t 
   uint64_t    dummy64a, dummy64b, dummy64c;
   uint32_t    dummy32a, dummy32b, dummy32c, dummy32d, dummy32e;
 
+  if (!ebDevice) return COMMON_STATUS_EB;
   eb_device = (eb_device_t)ebDevice;
 
   if ((eb_status = comlib_readDiag(eb_device, statusArray, state, version, &dummy64a, &dummy32a, nBadStatus, nBadState, &dummy64b, &dummy64c,
@@ -259,7 +263,8 @@ uint32_t wrunipz_common_read(uint64_t ebDevice, uint64_t *statusArray, uint32_t 
 void wrunipz_cmd_configure(uint64_t ebDevice)
 {
   eb_device_t eb_device;
-  
+
+  if (!ebDevice) return;
   eb_device = (eb_device_t)ebDevice;
   eb_device_write(eb_device, wrunipz_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)COMMON_CMD_CONFIGURE, 0, eb_block);
 } // wrunipz_cmd_configure
@@ -269,6 +274,7 @@ void wrunipz_cmd_startop(uint64_t ebDevice)
 {
   eb_device_t eb_device;
 
+  if (!ebDevice) return;
   eb_device = (eb_device_t)ebDevice;
   eb_device_write(eb_device, wrunipz_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)COMMON_CMD_STARTOP, 0, eb_block);
 } // wrunipz_cmd_startop
@@ -278,6 +284,7 @@ void wrunipz_cmd_stopop(uint64_t ebDevice)
 {
   eb_device_t eb_device;
 
+  if (!ebDevice) return;
   eb_device = (eb_device_t)ebDevice;
   eb_device_write(eb_device, wrunipz_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)COMMON_CMD_STOPOP, 0, eb_block);
 } // wrunipz_cmd_stopop
@@ -287,6 +294,7 @@ void wrunipz_cmd_recover(uint64_t ebDevice)
 {
   eb_device_t eb_device;
 
+  if (!ebDevice) return;
   eb_device = (eb_device_t)ebDevice;
   eb_device_write(eb_device, wrunipz_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)COMMON_CMD_RECOVER, 0, eb_block);
 } // wrunipz_cmd_recover
@@ -296,6 +304,7 @@ void wrunipz_cmd_idle(uint64_t ebDevice)
 {
   eb_device_t eb_device;
 
+  if (!ebDevice) return;
   eb_device = (eb_device_t)ebDevice;
   eb_device_write(eb_device, wrunipz_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)COMMON_CMD_IDLE, 0, eb_block);
 } // wrunipz_cmd_idle
@@ -305,6 +314,7 @@ void wrunipz_cmd_cleardiag(uint64_t ebDevice)
 {
   eb_device_t eb_device;
 
+  if (!ebDevice) return;
   eb_device = (eb_device_t)ebDevice;
   eb_device_write(eb_device, wrunipz_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)COMMON_CMD_CLEARDIAG, 0, eb_block);
 } // wrunipz_cmd_cleardiag
@@ -314,6 +324,7 @@ void wrunipz_cmd_submit(uint64_t ebDevice)
 {
   eb_device_t eb_device;
 
+  if (!ebDevice) return;
   eb_device = (eb_device_t)ebDevice;
   eb_device_write(eb_device, wrunipz_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)WRUNIPZ_CMD_CONFSUBMIT, 0, eb_block);
 } // wrunipz_cmd_submit
@@ -323,6 +334,7 @@ void wrunipz_cmd_clearTables(uint64_t ebDevice)
 {
   eb_device_t eb_device;
 
+  if (!ebDevice) return;
   eb_device = (eb_device_t)ebDevice;
   eb_device_write(eb_device, wrunipz_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)WRUNIPZ_CMD_CONFCLEAR, 0, eb_block);
 } // wrunipz_cmd_submit
@@ -341,6 +353,8 @@ uint32_t wrunipz_table_upload(uint64_t ebDevice, uint32_t pz, uint32_t vacc, uin
   uint32_t     addrOffset;     // helper variable: address offset for data     
   /*eb_data_t    eb_data;*/
   eb_cycle_t   cycle;
+  
+  if (!ebDevice) return COMMON_STATUS_EB;
 
   if (chn   >= WRUNIPZ_NCHN)  return COMMON_STATUS_OUTOFRANGE;
   if (pz    >= WRUNIPZ_NPZ)   return COMMON_STATUS_OUTOFRANGE;
