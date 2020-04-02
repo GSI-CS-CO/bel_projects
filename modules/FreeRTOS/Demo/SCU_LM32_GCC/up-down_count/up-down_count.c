@@ -26,7 +26,9 @@
  */
 #include "eb_console_helper.h"
 #include "mini_sdb.h"
-#include "helper_macros.h"
+#include "generated/shared_mmap.h"
+#include "scu_lm32_macros.h"
+#include "shared_memory_helper.h"
 #include "FreeRTOS.h"
 #include "task.h"
 
@@ -45,11 +47,57 @@ STATIC inline void init( void )
 
 #define TEST_TASK_PRIORITY    ( tskIDLE_PRIORITY + 1 )
 
-volatile uint32_t g_countUp   = 0;
-volatile uint32_t g_countDown = 0;
+typedef struct PACKED_SIZE
+{
+   volatile uint32_t countUp;
+   volatile uint32_t countDowm;
+   volatile uint32_t countTick;
+   volatile uint32_t countIdle;
+   volatile uint32_t countMonitor;
+} SHARED_DATA_T;
 
-//#define CONFIG_YIELD
+#ifndef __DOXYGEN__
+STATIC_ASSERT( offsetof( SHARED_DATA_T, countUp )    == 0 * sizeof(uint32_t));
+STATIC_ASSERT( offsetof( SHARED_DATA_T, countDowm )  == 1 * sizeof(uint32_t));
+STATIC_ASSERT( offsetof( SHARED_DATA_T, countTick )  == 2 * sizeof(uint32_t));
+STATIC_ASSERT( offsetof( SHARED_DATA_T, countIdle )  == 3 * sizeof(uint32_t));
+STATIC_ASSERT( offsetof( SHARED_DATA_T, countMonitor ) == 4 * sizeof(uint32_t));
+STATIC_ASSERT( sizeof( SHARED_DATA_T ) == SHARED_SIZE );
+#endif
 
+SHARED_DATA_T SHARED g_shared = { 0, 0, 0, 0, 0 };
+
+#define CONFIG_YIELD
+
+#if (configUSE_TICK_HOOK == 0)
+  #error configUSE_TICK_HOOK has to be enabled in this application!
+#endif
+#if (configUSE_IDLE_HOOK == 0)
+  #error configUSE_TICK_HOOK has to be enabled in this application!
+#endif
+
+/*! ---------------------------------------------------------------------------
+ * @brief Callback function becomes invoked by each timer interrupt.
+ *
+ * @note This Function is for debug purposes only.
+ *       In this case the macro configUSE_TICK_HOOK must be 1.
+ */
+void vApplicationTickHook( void )
+{
+   /*!
+    * To put this in a atomic section is only necessary when nested interrupts
+    * becomes supported.
+    */
+   ATOMIC_SECTION() g_shared.countTick++;
+}
+
+/*! ---------------------------------------------------------------------------
+ * @brief Callback function becomes invoked by each timer interrupt.
+ */
+void vApplicationIdleHook( void )
+{
+   ATOMIC_SECTION() g_shared.countIdle++;
+}
 
 /*! ---------------------------------------------------------------------------
  * @brief Count up task function.
@@ -58,7 +106,7 @@ STATIC void vTaskCountUp( void* pvParameters UNUSED )
 {
    while( true )
    {
-      ATOMIC_SECTION() g_countUp++;
+      ATOMIC_SECTION() g_shared.countUp++;
    #ifdef CONFIG_YIELD
       vPortYield();
    #endif
@@ -72,7 +120,7 @@ STATIC void vTaskCuontDown( void* pvParameters UNUSED )
 {
    while( true )
    {
-      ATOMIC_SECTION() g_countDown--;
+      ATOMIC_SECTION() g_shared.countDowm--;
    #ifdef CONFIG_YIELD
       vPortYield();
    #endif
@@ -87,8 +135,11 @@ STATIC void vTaskCuontDown( void* pvParameters UNUSED )
  */
 STATIC void vTaskMonitor( void* pvParameters UNUSED )
 {
-   uint32_t countUp, lastCountUp = 0, countDown, lastCountDown = 0;
-
+   uint32_t countUp,   lastCountUp;
+   uint32_t countDown, lastCountDown;
+   uint32_t countTick, lastCountTick;
+   uint32_t countIdle, lastCountIdle;
+   bool first = true;
    TickType_t xLastExecutionTime = xTaskGetTickCount();
 
    while( true )
@@ -98,24 +149,49 @@ STATIC void vTaskMonitor( void* pvParameters UNUSED )
       */
       ATOMIC_SECTION()
       {
-         countUp   = g_countUp;
-         countDown = g_countDown;
+         countUp   = g_shared.countUp;
+         countDown = g_shared.countDowm;
+         countTick = g_shared.countTick;
+         countIdle = g_shared.countIdle;
+      }
+      if( first )
+      {
+         first = false;
+         lastCountUp   = countUp;
+         lastCountDown = countDown;
+         lastCountTick = countTick;
+         lastCountIdle = countIdle;
       }
 
-      mprintf( ESC_XY( "1", "10" ) ESC_CLR_LINE
+      mprintf( ESC_XY( "1", "15" ) ESC_CLR_LINE
                "Up counter:   %u"
-               ESC_XY( "30", "10" ) "Delta: %u",
+               ESC_XY( "30", "15" ) "Delta: %u",
                countUp, countUp - lastCountUp
              );
       lastCountUp = countUp;
 
-      mprintf( ESC_XY( "1", "11" ) ESC_CLR_LINE
+      mprintf( ESC_XY( "1", "16" ) ESC_CLR_LINE
                "Down counter: %u"
-               ESC_XY( "30", "11" ) "Delta: %u",
+               ESC_XY( "30", "16" ) "Delta: %u",
                countDown, lastCountDown - countDown
              );
       lastCountDown = countDown;
 
+      mprintf( ESC_XY( "1", "17" ) ESC_CLR_LINE
+               "Tick counter: %u"
+               ESC_XY( "30", "17" ) "Delta: %u",
+               countTick, countTick - lastCountTick
+             );
+      lastCountTick = countTick;
+
+      mprintf( ESC_XY( "1", "18" ) ESC_CLR_LINE
+               "Idle counter: %u"
+               ESC_XY( "30", "18" ) "Delta: %u",
+               countIdle, countIdle - lastCountIdle
+             );
+
+      mprintf( ESC_XY( "1", "19" ) ESC_CLR_LINE
+               "Monitor:      %u", g_shared.countMonitor++ );
       /*
        * Task will suspend for 1000 ms.
        */
@@ -175,17 +251,35 @@ STATIC inline BaseType_t initAndStartRTOS( void )
 void main( void )
 {
    init();
+#if 0
+   uint32_t* pCpuRamExternal = shmGetRelatedEtherBoneAddress(SHARED_OFFS);
+   if( pCpuRamExternal == NULL )
+   {
+      mprintf( ESC_FG_RED "ERROR: Could not find external WB address of my own RAM !\n" ESC_NORMAL);
+      while( true );
+   }
+#endif
    mprintf( ESC_XY( "1", "1" ) ESC_CLR_SCR "FreeRTOS count up/down test\n"
             "Compiler: " COMPILER_VERSION_STRING "\n"
           #ifdef CONFIG_YIELD
             "Task yield enabled\n"
           #endif
-            "Tick-rate:          %d Hz\n"
-            "Minimal stack size: %d bytes\n"
-            "Total heap size:    %d bytes\n",
+            "Tick-rate:               %d Hz\n"
+            "Minimal stack size:      %d bytes\n"
+            "Total heap size:         %d bytes\n"
+            "Address of countUp:      0x%08x\n"
+            "Address of countDown:    0x%08x\n"
+            "Address of countTick:    0x%08x\n"
+            "Address of countIdle:    0x%08x\n"
+            "Address of countMonitor: 0x%08x\n",
             configTICK_RATE_HZ,
             configMINIMAL_STACK_SIZE * sizeof(StackType_t),
-            configTOTAL_HEAP_SIZE
+            configTOTAL_HEAP_SIZE,
+            (unsigned int) &g_shared.countUp,
+            (unsigned int) &g_shared.countDowm,
+            (unsigned int) &g_shared.countTick,
+            (unsigned int) &g_shared.countIdle,
+            (unsigned int) &g_shared.countMonitor
           );
 
    const BaseType_t status = initAndStartRTOS();

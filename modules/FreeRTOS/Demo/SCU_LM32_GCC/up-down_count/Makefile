@@ -11,6 +11,7 @@
 REPOSITORY_DIR = $(shell git rev-parse --show-toplevel)
 
 MIAN_MODULE := up-down_count.c
+SOURCE      += $(SCU_LIB_SRC_DIR)/shared_memory_helper.c
 
 # The following flag is essential so that the build system adds the
 # FreeRTOS sources to this project.
@@ -35,6 +36,9 @@ DEFINES += MAX_LM32_INTERRUPTS=2
 # Therefore we can overwrite the default size of the base stack size (10k)
 # into a smaller size.
 STACK_SIZE := 256
+
+SHARED_SIZE := 20
+
 DOX_REFERENCES_RELATION = YES
 include $(REPOSITORY_DIR)/makefiles/makefile.scu
 #=================================== EOF ======================================

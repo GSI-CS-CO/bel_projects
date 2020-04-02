@@ -284,12 +284,12 @@ uint32_t irqGetMaskRegister( void )
  * @brief Function shall be invoked immediately before a critical respectively
  *        atomic section begins.
  *
- * Counterpart to criticalSectionLeave.
+ * Counterpart to criticalSectionExit.
  *
  * @note Keep atomic sections as short as possible, otherwise the danger of
  *       jittering grows when using the real time OS FreeRTOS.
  *
- * @see criticalSectionLeave
+ * @see criticalSectionExit
  */
 void criticalSectionEnter( void );
 

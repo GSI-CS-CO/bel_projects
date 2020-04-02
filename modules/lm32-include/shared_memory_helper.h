@@ -23,12 +23,14 @@
 #ifndef _SHARED_MEMORY_HELPER_H
 #define _SHARED_MEMORY_HELPER_H
 #include "mini_sdb.h"
-#include "aux.h"
+//#include "aux.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+static inline uint32_t getCpuID( void )  { return *pCpuId; }
+static inline uint32_t getCpuIdx( void ) { return getCpuID() & 0xff; }
 
 #define LM32_INTERN_OFFSET 0x80000000
 

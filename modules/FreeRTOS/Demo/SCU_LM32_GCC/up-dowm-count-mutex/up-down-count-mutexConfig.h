@@ -10,29 +10,9 @@
 
 #include <stdbool.h>
 
-#ifndef USRCPUCLK
-   #error Macro USRCPUCLK not defined in Makefile!
-#endif
-
-/* Define to trap errors during development. */
-#ifdef CONFIG_RTOS_PEDANTIC_CHECK
-   /* CAUTION:
-    * Assert-macros could be expensive in memory consuming and the
-    * latency time can increase as well!
-    * Especially in embedded systems with small resources.
-    * Therefore use them for bug-fixing or developing purposes only!
-    */
-   #include <scu_assert.h>
-   #define configASSERT SCU_ASSERT
-#else
-   #define configASSERT(__e)
-#endif
-
-
 #define configUSE_PREEMPTION                    1
 #define configUSE_PORT_OPTIMISED_TASK_SELECTION 0
 #define configUSE_TICKLESS_IDLE                 0
-#define configCPU_CLOCK_HZ                      (USRCPUCLK * 1000)
 #define configTICK_RATE_HZ                      1000
 #define configMAX_PRIORITIES                    5
 #define configMINIMAL_STACK_SIZE                128

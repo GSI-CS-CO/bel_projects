@@ -13,32 +13,10 @@
  * your application.
  */
 
-#include <stdbool.h>
-
-#ifndef USRCPUCLK
-   #error Macro USRCPUCLK not defined in Makefile!
-#endif
-
-/* Define to trap errors during development. */
-#ifdef CONFIG_RTOS_PEDANTIC_CHECK
-   /* CAUTION:
-    * Assert-macros could be expensive in memory consuming and the
-    * latency time can increase as well!
-    * Especially in embedded systems with small resources.
-    * Therefore use them for bug-fixing or developing purposes only!
-    */
-   #include <scu_assert.h>
-   #define configASSERT SCU_ASSERT
-#else
-   #define configASSERT(__e)
-#endif
-
-
 #define configUSE_PREEMPTION                    1
 #define configUSE_PORT_OPTIMISED_TASK_SELECTION 0
 #define configUSE_TICKLESS_IDLE                 0
-#define configCPU_CLOCK_HZ                      (USRCPUCLK * 1000)
-#define configTICK_RATE_HZ                      10000
+#define configTICK_RATE_HZ                      2000
 #define configMAX_PRIORITIES                    5
 #define configMINIMAL_STACK_SIZE                128
 #define configMAX_TASK_NAME_LEN                 16
@@ -55,8 +33,6 @@
 #define configUSE_NEWLIB_REENTRANT              0
 #define configENABLE_BACKWARD_COMPATIBILITY     0
 #define configNUM_THREAD_LOCAL_STORAGE_POINTERS 5
-#define configSTACK_DEPTH_TYPE                  uint32_t
-#define configMESSAGE_BUFFER_LENGTH_TYPE        size_t
 
 /* Memory allocation related definitions. */
 #define configSUPPORT_STATIC_ALLOCATION         1
@@ -66,8 +42,8 @@
 #define configAPPLICATION_ALLOCATED_HEAP        1
 
 /* Hook function related definitions. */
-#define configUSE_IDLE_HOOK                     0
-#define configUSE_TICK_HOOK                     0
+#define configUSE_IDLE_HOOK                     1
+#define configUSE_TICK_HOOK                     1
 #define configCHECK_FOR_STACK_OVERFLOW          2
 #define configUSE_MALLOC_FAILED_HOOK            0
 #define configUSE_DAEMON_TASK_STARTUP_HOOK      0

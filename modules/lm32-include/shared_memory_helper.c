@@ -32,14 +32,14 @@ uint32_t* shmGetRelatedEtherBoneAddress( const uint32_t sharedOffset )
    uint32_t idx;
    sdb_location aFoundSdb[10]; //! @todo Check array size!
    sdb_location foundClu;
-   unsigned int cpuId = getCpuIdx();
+   const unsigned int cpuId = getCpuIdx();
 
    idx = 0;
    find_device_multi( &foundClu, &idx, 1, GSI, LM32_CB_CLUSTER );
    idx = 0;
    find_device_multi_in_subtree( &foundClu, aFoundSdb, &idx,
                                  ARRAY_SIZE(aFoundSdb), GSI, LM32_RAM_USER);
-   if(idx < cpuId)
+   if( idx < cpuId )
       return NULL;
 
    SCU_ASSERT( cpuId < ARRAY_SIZE(aFoundSdb) );
