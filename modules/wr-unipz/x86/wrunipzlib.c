@@ -427,8 +427,9 @@ uint32_t wrunipz_table_download(uint64_t ebDevice, uint32_t pz, uint32_t vacc, u
   //uint32_t     *data;          // helper variable: pointer to arrays
   //uint32_t     nData[NKANAL];  // helper variable: number of data for each channel
   uint32_t     tOffset;        // helper variable: offset of duetime of an event within an UNILAC cycle [us]
-  uint32_t     addrOffset;     // helper variable: address offset for data     
-  eb_data_t    eb_data;
+  uint32_t     addrOffset;     // helper variable: address offset for data
+  eb_data_t    ebData[WRUNIPZ_NEVT];
+  eb_data_t    ebValidFlag;
   eb_cycle_t   cycle;
   
   if (!ebDevice) return COMMON_STATUS_EB;
@@ -451,8 +452,7 @@ uint32_t wrunipz_table_download(uint64_t ebDevice, uint32_t pz, uint32_t vacc, u
     addrOffset += pz   * WRUNIPZ_NEVT * WRUNIPZ_NCHN;                // offset for pz
     addrOffset += chn  * WRUNIPZ_NEVT;                               // offset for chn
 
-    eb_cycle_read(cycle, wrunipz_evtData + (eb_address_t)((addrOffset + i) << 2), EB_BIG_ENDIAN|EB_DATA32, &eb_data);
-    data[i] = (uint32_t)eb_data;
+    eb_cycle_read(cycle, wrunipz_evtData + (eb_address_t)((addrOffset + i) << 2), EB_BIG_ENDIAN|EB_DATA32, &(ebData[i]));
   } // for i
     
   // read flags
@@ -460,17 +460,20 @@ uint32_t wrunipz_table_download(uint64_t ebDevice, uint32_t pz, uint32_t vacc, u
   addrOffset += pz   * WRUNIPZ_NFLAG * WRUNIPZ_NCHN;                 // offset for pz
   addrOffset += chn  * WRUNIPZ_NFLAG;                                // offset of chn
   
-  eb_cycle_read(cycle, wrunipz_evtFlags + (eb_address_t)((addrOffset + 1) << 2),  EB_BIG_ENDIAN|EB_DATA32, &eb_data);
-  validFlag = (uint32_t)eb_data;
+  eb_cycle_read(cycle, wrunipz_evtFlags + (eb_address_t)((addrOffset + 1) << 2),  EB_BIG_ENDIAN|EB_DATA32, &ebValidFlag);
 
   if (eb_cycle_close(cycle) != EB_OK) return COMMON_STATUS_EB;
 
+  for (i=0; i<WRUNIPZ_NEVT; i++) data[i] = (uint32_t)(ebData[i]);
+  validFlag                              = (uint32_t)ebValidFlag;
+  
   // check valid flags to determine the number of events
   *nData = 0;
   for (i=0; i < WRUNIPZ_NEVT; i++) {
     if (validFlag & (1 << i)) *nData = i+1;
   } // for i
-
+  printf("download table validflag %u, nData %u\n", validFlag, *nData);
+  
   return COMMON_STATUS_OK;
 } // wrunipz_table_download
 
