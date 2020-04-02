@@ -709,9 +709,9 @@ int main(int argc, char** argv) {
       for (j=0; j < WRUNIPZ_NPZ; j++) {
         for(k=0; k < WRUNIPZ_NVACC; k++) {
           for (l=0; l < WRUNIPZ_NCHN; l++) {
-            wrunipz_table_download(ebDevice, j, k, l, evtData, &nEvtData);
+            wrunipz_table_download(ebDevice, j, k, l, evtData, &nEvtData, j, k, l, nEvtData);
             if (nEvtData > 0) {
-              printf("          -- PZ %d, vacc %2d, chn %d: %2d events\n");
+              printf("          PZ %d, vacc %2d, chn %d: %2d events\n");
             } // if nEvtData
           } // for l
         } // for k

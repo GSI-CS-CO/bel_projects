@@ -3,7 +3,7 @@
  *
  *  created : 2018
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 09-March-2020
+ *  version : 02-April-2020
  *
  *  lm32 program for gateway between UNILAC Pulszentrale and a White Rabbit network
  *  this basically serves a Data Master for UNILAC
@@ -63,7 +63,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 22-November-2018
  ********************************************************************************************/
-#define WRUNIPZ_FW_VERSION 0x000101                                     // make this consistent with makefile
+#define WRUNIPZ_FW_VERSION 0x000102                                     // make this consistent with makefile
 
 // standard includes
 #include <stdio.h>
@@ -500,13 +500,19 @@ void clearAllPZ()
 {
   int i,j,k;
 
-  for (i=0; i < WRUNIPZ_NPZ; i++)
+  // clear bigData in 'user' RAM
+  for (i=0; i < WRUNIPZ_NPZ; i++) {
     for (j=0; j < (WRUNIPZ_NVACC * WRUNIPZ_NCHN); j++) {
       bigData[i][j].validFlags = 0x0;
       bigData[i][j].prepFlags  = 0x0;
       bigData[i][j].evtFlags   = 0x0;
       for (k=0; k < WRUNIPZ_NEVT; k++) bigData[i][j].data[k] = 0x0;
     } // for j
+  } // for i
+
+  // clear event data and flags in DP RAM
+  for (i=0; i<WRUNIPZ_NEVTDATA; i++) pSharedEvtData[i] = 0x0;
+  for (i=0; i<WRUNIPZ_NEVTFLAG; i++) pSharedEvtFlag[i] = 0x0;
 } // clear PZ
 
 
