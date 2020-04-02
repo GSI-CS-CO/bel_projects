@@ -3,7 +3,7 @@
  *
  *  created : 2020
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version :02-April-2020
+ *  version : 02-April-2020
  *
  * library for wrunipz
  *
@@ -416,4 +416,62 @@ uint32_t wrunipz_table_upload(uint64_t ebDevice, uint32_t pz, uint32_t vacc, uin
   
   return COMMON_STATUS_OK;
 } // wrunipz_table_upload
+
+uint32_t wrunipz_table_download(uint64_t ebDevice, uint32_t pz, uint32_t vacc, uint32_t chn, uint32_t *data, uint32_t *nData)
+{
+  int          i;
+  uint32_t     newFlag;        // flag: signals that new data are available
+  uint32_t     validFlag;      // flag: data[n] is valid
+  uint32_t     prepFlag;       // flag: data[n] is prep datum
+  uint32_t     evtFlag;        // flag: data[n] is evt
+  //uint32_t     *data;          // helper variable: pointer to arrays
+  //uint32_t     nData[NKANAL];  // helper variable: number of data for each channel
+  uint32_t     tOffset;        // helper variable: offset of duetime of an event within an UNILAC cycle [us]
+  uint32_t     addrOffset;     // helper variable: address offset for data     
+  eb_data_t    eb_data;
+  eb_cycle_t   cycle;
+  
+  if (!ebDevice) return COMMON_STATUS_EB;
+
+  if (chn   >= WRUNIPZ_NCHN)  return COMMON_STATUS_OUTOFRANGE;
+  if (pz    >= WRUNIPZ_NPZ)   return COMMON_STATUS_OUTOFRANGE;
+  if (vacc  >= WRUNIPZ_NVACC) return COMMON_STATUS_OUTOFRANGE;
+
+  // EB cycle 
+  if (eb_cycle_open(ebDevice, 0, eb_block, &cycle) != EB_OK) return COMMON_STATUS_EB;
+
+  //newFlag   = 0x1;
+  validFlag = 0;
+  // prepFlag  = 0;
+  // evtFlag   = 0;
+    
+  // read data
+  for (i=0; i < WRUNIPZ_NEVT; i++) {
+    addrOffset  = vacc * WRUNIPZ_NEVT * WRUNIPZ_NCHN * WRUNIPZ_NPZ;  // offset for vacc
+    addrOffset += pz   * WRUNIPZ_NEVT * WRUNIPZ_NCHN;                // offset for pz
+    addrOffset += chn  * WRUNIPZ_NEVT;                               // offset for chn
+
+    eb_cycle_read(cycle, wrunipz_evtData + (eb_address_t)((addrOffset + i) << 2), EB_BIG_ENDIAN|EB_DATA32, &eb_data);
+    data[i] = (uint32_t)eb_data;
+  } // for i
+    
+  // read flags
+  addrOffset  = vacc * WRUNIPZ_NFLAG * WRUNIPZ_NCHN * WRUNIPZ_NPZ;   // offset for vacc
+  addrOffset += pz   * WRUNIPZ_NFLAG * WRUNIPZ_NCHN;                 // offset for pz
+  addrOffset += chn  * WRUNIPZ_NFLAG;                                // offset of chn
+  
+  eb_cycle_read(cycle, wrunipz_evtFlags + (eb_address_t)((addrOffset + 1) << 2),  EB_BIG_ENDIAN|EB_DATA32, &eb_data);
+  validFlag = (uint32_t)eb_data;
+
+  if (eb_cycle_close(cycle) != EB_OK) return COMMON_STATUS_EB;
+
+  // check valid flags to determine the number of events
+  *nData = 0;
+  for (i=0; i < WRUNIPZ_NEVT; i++) {
+    if (validFlag & (1 << i)) *nData = i+1;
+  } // for i
+
+  return COMMON_STATUS_OK;
+} // wrunipz_table_download
+
 

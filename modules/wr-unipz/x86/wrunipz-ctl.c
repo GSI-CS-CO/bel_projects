@@ -139,6 +139,7 @@ static void help(void)
   fprintf(stderr, "  testfull  <offset>             loads dummy tables with starting at <offset> (us) for ALL virt accs (except 0xf) and all PZs\n");
   fprintf(stderr, "  ftest     <file> <vacc> <pz>   loads table from file for virt acc <vacc> to pulszentrale <pz> 0..6 from <file>\n");
   fprintf(stderr, "  ftestfull <file>               loads table from file for ALL virt accs and all PZs from <file>\n");
+  fprintf(stderr, "  readtables                     downloads all tables from PZs and prints some statistics\n");
   fprintf(stderr, "  cleartables                    clears all event tables of all PZs\n");
   fprintf(stderr, "  kill                           kills possibly ongoing transactions\n");  
   fprintf(stderr, "\n");
@@ -699,6 +700,31 @@ int main(int argc, char** argv) {
       /* printf("wr-unipz: transaction took %u us per virtAcc\n", (uint32_t)(t2 -t1) / (WRUNIPZ_NVACC - 1));*/
 
     } // "ftestfull"
+    if (!strcasecmp(command, "readtables")) {
+      if (state != COMMON_STATE_OPREADY) printf("wr-unipz: WARNING command has no effect (not in state OPREADY)\n");
+
+      /*t1 = wrunipz_getSysTime();*/
+
+      printf("wr-unipz: downloading event tables from firmware...\n");
+      for (j=0; j < WRUNIPZ_NPZ; j++) {
+        for(k=0; k < WRUNIPZ_NVACC; k++) {
+          for (l=0; l < WRUNIPZ_NCHN; l++) {
+            wrunipz_table_download(ebDevice, j, k, l, evtData, &nEvtData);
+            if (nEvtData > 0) {
+              printf("          -- PZ %d, vacc %2d, chn %d: %2d events\n");
+            } // if nEvtData
+          } // for l
+        } // for k
+      } // for j
+
+      wrunipz_cmd_submit(ebDevice);  // submit changes
+      
+      /*      t2 = getSysTime();*/
+      
+      /* printf("wr-unipz: transaction took %u us per virtAcc\n", (uint32_t)(t2 -t1) / (WRUNIPZ_NVACC - 1));*/
+
+    } // "readtables"
+
     /*
     if (!strcasecmp(command, "kill")) {
       eb_device_write(device, wrunipz_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)WRUNIPZ_CMD_CONFKILL, 0, eb_block);

@@ -41,7 +41,7 @@
 extern "C" {
 #endif
 
-#define WRUNIPZLIB_VERSION 0x002000
+#define WRUNIPZLIB_VERSION 0x002100
 
 // (error) codes; duplicated to avoid the need of joining bel_projects and acc git repos
 #define  WRUNIPZLIB_STATUS_OK                 0    // OK
@@ -125,12 +125,21 @@ extern "C" {
   
   // uploads (parts of) an event table to the firmware, returns error code
   uint32_t wrunipz_table_upload(uint64_t ebDevice,             // EB device
-                                uint32_t pz,                   // # of PZ;
-                                uint32_t vacc,                 // # of vacc;
+                                uint32_t pz,                   // # of PZ
+                                uint32_t vacc,                 // # of vacc
                                 uint32_t chn,                  // # of 'Kanal'; there are max two channels
-                                uint32_t *data,                // event data;
+                                uint32_t *data,                // event data
                                 uint32_t nData                 // # of events in data
                                 );
+
+  // downloads (parts of) an event table from the firmware, returns error code
+  uint32_t wrunipz_table_download(uint64_t ebDevice,           // EB device
+                                  uint32_t pz,                 // # of PZ
+                                  uint32_t vacc,               // # of vacc
+                                  uint32_t chn,                // # of 'Kanal'; there are max two channels
+                                  uint32_t *data,              // event data
+                                  uint32_t *nData              // # of events in data
+                                  );
 
   // commands requesting state transitions
   void wrunipz_cmd_configure(uint64_t ebDevice);               // to state 'configured'
@@ -148,6 +157,5 @@ extern "C" {
 #ifdef __cplusplus
 }
 #endif 
-
 
 #endif
