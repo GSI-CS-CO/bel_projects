@@ -1,17 +1,27 @@
 /*!
- * @file up-down-count-mutexConfig.h
- * @brief FreeRTOS configuration file for test program up-down-count-mutex
+ * @file   queueDemoConfig.h
+ * @brief  Configuration file of FreeRTOS queue test on LM32 in SCU
+ *
  * @copyright GSI Helmholtz Centre for Heavy Ion Research GmbH
  * @author    Ulrich Becker <u.becker@gsi.de>
- * @date      01.04.2020
+ * @date      03.04.2020
+ ******************************************************************************
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 3 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library. If not, see <http://www.gnu.org/licenses/>.
+ ******************************************************************************
  */
-#ifndef _UP_DOWN_COUNT_MUTEXCONFIG_H
-#define _UP_DOWN_COUNT_MUTEXCONFIG_H
-
-/*
- * Here is a good place to include header files that are required across
- * your application.
- */
+#ifndef _QUEUEDEMOCONFIG_H
+#define _QUEUEDEMOCONFIG_H
 
 #define configUSE_PREEMPTION                    1
 #define configUSE_PORT_OPTIMISED_TASK_SELECTION 0
@@ -29,10 +39,12 @@
 #define configUSE_ALTERNATIVE_API               0 /* Deprecated! */
 #define configQUEUE_REGISTRY_SIZE               10
 #define configUSE_QUEUE_SETS                    0
-#define configUSE_TIME_SLICING                  1
+#define configUSE_TIME_SLICING                  0
 #define configUSE_NEWLIB_REENTRANT              0
 #define configENABLE_BACKWARD_COMPATIBILITY     0
 #define configNUM_THREAD_LOCAL_STORAGE_POINTERS 5
+#define configSTACK_DEPTH_TYPE                  uint32_t
+#define configMESSAGE_BUFFER_LENGTH_TYPE        size_t
 
 /* Memory allocation related definitions. */
 #define configSUPPORT_STATIC_ALLOCATION         1
@@ -42,7 +54,7 @@
 #define configAPPLICATION_ALLOCATED_HEAP        1
 
 /* Hook function related definitions. */
-#define configUSE_IDLE_HOOK                     1
+#define configUSE_IDLE_HOOK                     0
 #define configUSE_TICK_HOOK                     1
 #define configCHECK_FOR_STACK_OVERFLOW          2
 #define configUSE_MALLOC_FAILED_HOOK            0
@@ -91,8 +103,5 @@
 #define INCLUDE_xTaskGetHandle                  0
 #define INCLUDE_xTaskResumeFromISR              1
 
-/* A header file that defines trace macro can be included here. */
-
-
-#endif /* ifndef _UP_DOWN_COUNT_MUTEXCONFIG_H */
+#endif /* ifndef _QUEUEDEMOCONFIG_H */
 /*================================== EOF ====================================*/

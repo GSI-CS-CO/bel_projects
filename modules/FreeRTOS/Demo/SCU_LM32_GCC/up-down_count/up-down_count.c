@@ -67,13 +67,30 @@ STATIC_ASSERT( sizeof( SHARED_DATA_T ) == SHARED_SIZE );
 
 SHARED_DATA_T SHARED g_shared = { 0, 0, 0, 0, 0 };
 
-#define CONFIG_YIELD
+//#define CONFIG_YIELD
 
 #if (configUSE_TICK_HOOK == 0)
   #error configUSE_TICK_HOOK has to be enabled in this application!
 #endif
 #if (configUSE_IDLE_HOOK == 0)
   #error configUSE_TICK_HOOK has to be enabled in this application!
+#endif
+
+#ifndef CONFIG_YIELD
+/*! ---------------------------------------------------------------------------
+ * @brief Simulating of any task activities. Prevents that the task main loop
+ *        with the atomic section will not be to tight.
+ *
+ * In other words:\n
+ * A task main loop shall not consist a atomic section only,
+ * which is the case in practice.\n
+ * Otherwise the time gap for enabled interrupts would be to small.
+ */
+STATIC void doSomething( void )
+{
+   for( unsigned int i = 0; i < 1000; i++ )
+      NOP();
+}
 #endif
 
 /*! ---------------------------------------------------------------------------
@@ -84,7 +101,7 @@ SHARED_DATA_T SHARED g_shared = { 0, 0, 0, 0, 0 };
  */
 void vApplicationTickHook( void )
 {
-   /*!
+   /*
     * To put this in a atomic section is only necessary when nested interrupts
     * becomes supported.
     */
@@ -107,9 +124,19 @@ STATIC void vTaskCountUp( void* pvParameters UNUSED )
    while( true )
    {
       ATOMIC_SECTION() g_shared.countUp++;
+     /*
+      * The loop has to be filled with further activities outside of the
+      * atomic section, otherwise the gap for the activated timer interrupt
+      * would be to tight.
+      * If the atomic section is the only activity in this task,
+      * then the vPortYield function must be used.
+      */
    #ifdef CONFIG_YIELD
       vPortYield();
+   #else
+      doSomething();
    #endif
+     // vTaskDelay(pdMS_TO_TICKS(1));
    }
 }
 
@@ -121,9 +148,19 @@ STATIC void vTaskCuontDown( void* pvParameters UNUSED )
    while( true )
    {
       ATOMIC_SECTION() g_shared.countDowm--;
+     /*
+      * The loop has to be filled with further activities outside of the
+      * atomic section, otherwise the gap for the activated timer interrupt
+      * would be to tight.
+      * If the atomic section is the only activity in this task,
+      * then the vPortYield function must be used.
+      */
    #ifdef CONFIG_YIELD
       vPortYield();
+   #else
+      doSomething();
    #endif
+     // vTaskDelay(pdMS_TO_TICKS(1));
    }
 }
 
@@ -189,6 +226,7 @@ STATIC void vTaskMonitor( void* pvParameters UNUSED )
                ESC_XY( "30", "18" ) "Delta: %u",
                countIdle, countIdle - lastCountIdle
              );
+      lastCountIdle = countIdle;
 
       mprintf( ESC_XY( "1", "19" ) ESC_CLR_LINE
                "Monitor:      %u", g_shared.countMonitor++ );
