@@ -190,7 +190,7 @@ void irqDisableSpecific( const unsigned int intNum )
 void irqEnableSpecific( const unsigned int intNum )
 {
    IRQ_ASSERT( intNum < ARRAY_SIZE( ISREntryTable ) );
-   irqSetMaskRegister( irqGetMaskRegister() & _irqGetPendingMask( intNum ) );
+   irqSetMaskRegister( irqGetMaskRegister() | _irqGetPendingMask( intNum ) );
 }
 
 /*! ---------------------------------------------------------------------------
