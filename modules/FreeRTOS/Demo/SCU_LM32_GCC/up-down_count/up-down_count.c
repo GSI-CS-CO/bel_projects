@@ -88,7 +88,7 @@ SHARED_DATA_T SHARED g_shared = { 0, 0, 0, 0, 0 };
  */
 STATIC void doSomething( void )
 {
-   for( unsigned int i = 0; i < 1000; i++ )
+   for( unsigned int i = 0; i < 10000; i++ )
       NOP();
 }
 #endif
@@ -176,6 +176,7 @@ STATIC void vTaskMonitor( void* pvParameters UNUSED )
    uint32_t countDown, lastCountDown;
    uint32_t countTick, lastCountTick;
    uint32_t countIdle, lastCountIdle;
+   uint32_t jitter = 0;
    bool first = true;
    TickType_t xLastExecutionTime = xTaskGetTickCount();
 
@@ -200,6 +201,10 @@ STATIC void vTaskMonitor( void* pvParameters UNUSED )
          lastCountIdle = countIdle;
       }
 
+      const uint32_t deltaTick = countTick - lastCountTick;
+      if( deltaTick != configTICK_RATE_HZ )
+         jitter++;
+
       mprintf( ESC_XY( "1", "15" ) ESC_CLR_LINE
                "Up counter:   %u"
                ESC_XY( "30", "15" ) "Delta: %u",
@@ -216,8 +221,9 @@ STATIC void vTaskMonitor( void* pvParameters UNUSED )
 
       mprintf( ESC_XY( "1", "17" ) ESC_CLR_LINE
                "Tick counter: %u"
-               ESC_XY( "30", "17" ) "Delta: %u",
-               countTick, countTick - lastCountTick
+               ESC_XY( "30", "17" ) "Delta: %u"
+               ESC_XY( "50", "17" ) "Jitter: %u",
+               countTick, deltaTick, jitter
              );
       lastCountTick = countTick;
 
