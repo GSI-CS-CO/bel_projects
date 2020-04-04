@@ -1,29 +1,59 @@
-###############################################################################
-##                                                                           ##
-##        Simplified Makefile using LM32 build system make templates         ##
-##                                                                           ##
-##---------------------------------------------------------------------------##
-## File:     modules/lm32-example/Makefile                                   ##
-## Author:   Ulrich Becker <u.becker@gsi.de>                                 ##
-## (c):      GSI Helmholtz Centre for Heavy Ion Research GmbH                ##
-###############################################################################
-REPOSITORY_DIR := $(shell git rev-parse --show-toplevel)
+# Two examples are provided
+# - miniExample: 'hello world' for lm32
+# - example: demo program including
+# -- shared memory for exchange of data via Wishbone
+# -- access to other Wishbone devices
+# -- receive commands via shared memory
+# -- get actions from the ECA by polling
+#
+# Example usage:
+#   make TARGET=example
+#   ... will compile the more complex example program
+TARGET		?= miniExample
+#PLATFPATH       = ../../../syn/gsi_exploder5/exploder5_csco_tr
+#PLATFPATH       = ../../../syn/gsi_scu/control3
+PLATFPATH	= ../../syn/gsi_pexarria5/control
+PLATFMAKEFILE   = $(PLATFPATH)/Makefile
 
-MIAN_MODULE := example_new.c
-SOURCE += $(SCU_LIB_SRC_DIR)/eca_queue_type.c
-SOURCE += $(SCU_DIR)/scu_mil.c
-SOURCE += $(SCU_LIB_SRC_DIR)/irq.c
+PLATFORM	:= $(shell cat 	$(PLATFMAKEFILE) | grep -m1 TARGET    | cut -d'=' -f2 | sed 's/[^a-zA-Z0-9]//g')
+DEVICE		:= $(shell cat 	$(PLATFMAKEFILE) | grep -m1 DEVICE    | cut -d'=' -f2 | sed 's/[^a-zA-Z0-9]//g')
+FLASH		:= $(shell cat 	$(PLATFMAKEFILE) | grep -m1 FLASH     | cut -d'=' -f2 | sed 's/[^a-zA-Z0-9]//g')
+SPI_LANES	:= $(shell cat 	$(PLATFMAKEFILE) | grep -m1 SPI_LANES | cut -d'=' -f2 | sed 's/[^a-zA-Z0-9]//g')
+RAM_SIZE        := $(shell cat 	$(PLATFMAKEFILE) | grep -m1 RAM_SIZE  | cut -d'=' -f2 | sed 's/[^a-zA-Z0-9]//g')
 
-SHARED_SIZE     = 8000
+SHARED_SIZE    	?= 8K
+USRCPUCLK      	?= 125000
+VERSION  	= 00.00.01
 
-CODE_OPTIMIZATION = s
+.DEFAULT_GOAL	:= fwbin
+
+PATHFW 	        = .
+DEBUGLVL    	= 1
+EXTRA_FLAGS	?=
+CFLAGS 	    	= -I../include -I$(PATHFW) -DDEBUGLEVEL=$(DEBUGLVL) $(EXTRA_FLAGS)
+
+$(info    >>>>)
+$(info    building is done by importing the following data from $(PLATFMAKEFILE):)
+$(info    PLATFORM    is $(PLATFORM))
+$(info    DEVICE      is $(DEVICE))
+$(info    FLASH       is $(FLASH))
+$(info    SPI_LANES   is $(SPI_LANES))
+$(info    RAM_SIZE    is $(RAM_SIZE))
+$(info    ----)
+$(info    building firmware using)
+$(info    SHARED_SIZE is $(SHARED_SIZE))
+$(info    USRCPUCLK   is $(USRCPUCLK))
+$(info    VERSION     is $(VERSION))
+$(info    <<<<)
 
 
-# TODO There is a bug in find_device_multi_in_subtree when LTO is activated
-#      therefore NO_LTO = 1
-  NO_LTO = 1
+include ../../syn/build.mk
 
-# TOOLCHAIN_DIR = $(INCLUDED_TOOLCHAIN_DIR)
+fwbin: $(TARGET).bin
 
-include $(REPOSITORY_DIR)/makefiles/makefile.scu
-#=================================== EOF ======================================
+$(TARGET).elf: $(PATHFW)/$(TARGET).c $(PATHFW)/../../top/gsi_scu/scu_mil.c
+
+clean::
+	rm -f $(PATHFW)/*.o $(PATHFW)/*.a $(PATHFW)/*.elf $(PATHFW)/*.bin
+
+
