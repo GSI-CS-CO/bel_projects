@@ -4,6 +4,7 @@
  * @author Ulrich Becker <u.becker@gsi.de>
  * @copyright   2020 GSI Helmholtz Centre for Heavy Ion Research GmbH
  * @date 30.01.2020
+ * @see https://www-acc.gsi.de/wiki/Timing/TimingSystemHowSoftCPUHandleECAMSIs
  */
 #ifndef _ECA_QUEUE_TYPE_H
 #define _ECA_QUEUE_TYPE_H
