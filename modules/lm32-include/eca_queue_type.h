@@ -14,6 +14,7 @@
 #include <helper_macros.h>
 #include "eca_queue_regs.h"
 #include "eca_flags.h"
+#include "eca_regs.h"
 
 #ifdef __cplusplus
 extern "C" {
