@@ -3,7 +3,7 @@
  *
  *  created : 2020
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 02-April-2020
+ *  version : 06-April-2020
  *
  * library for wrunipz
  *
@@ -41,7 +41,7 @@
 extern "C" {
 #endif
 
-#define WRUNIPZLIB_VERSION 0x002100
+#define WRUNIPZLIB_VERSION 0x002101
 
 // (error) codes; duplicated to avoid the need of joining bel_projects and acc git repos
 #define  WRUNIPZLIB_STATUS_OK                 0    // OK
@@ -66,6 +66,12 @@ extern "C" {
 #define  WRUNIPZLIB_STATE_ERROR               6    // gateway in error -> IDLE ("recover")
 #define  WRUNIPZLIB_STATE_FATAL               7    // gateway in fatal error; RIP
 
+  // ---------------------------------
+  // helper routines
+  // ---------------------------------
+  
+  // get host system time (us)
+  uint64_t wrunipz_getSysTime();
 
   // convert status code to status text
   const char* wrunipz_status_text(uint32_t code                // status code
@@ -77,8 +83,12 @@ extern "C" {
   // convert numeric version number to string
   const char* wrunipz_version_text(uint32_t number             // version number
                                    );
-                                 
-  // open connection to firmware
+
+  // ---------------------------------
+  // communication with lm32 firmware
+  // ---------------------------------
+
+  // open connection to firmware, returns error code
   uint32_t wrunipz_firmware_open(uint64_t       *ebDevice,     // EB device
                                  const char*    device,        // EB device such as 'dev/wbm0'
                                  uint32_t       cpu,           // # of CPU, 0..0xff

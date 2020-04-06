@@ -3,7 +3,7 @@
  *
  *  created : 2018
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 02-April-2020
+ *  version : 06-April-2020
  *
  *  lm32 program for gateway between UNILAC Pulszentrale and a White Rabbit network
  *  this basically serves a Data Master for UNILAC
@@ -63,7 +63,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 22-November-2018
  ********************************************************************************************/
-#define WRUNIPZ_FW_VERSION 0x000102                                     // make this consistent with makefile
+#define WRUNIPZ_FW_VERSION 0x000103                                     // make this consistent with makefile
 
 // standard includes
 #include <stdio.h>
@@ -109,13 +109,9 @@ uint32_t *pSharedCycJmpMin;             // pointer to a "user defined" u32 regis
 uint32_t *pSharedNLate;                 // pointer to a "user defined" u32 register; here: # late messages
 uint32_t *pSharedVaccAvg;               // pointer to a "user defined" u32 register; here: virt accs played during past second
 uint32_t *pSharedPzAvg;                 // pointer to a "user defined" u32 register; here: PZs used during the past second
-/*uint32_t *pSharedConfStat;              // pointer to a "user defined" u32 register; here: status of config data transaction
-  uint32_t *pSharedConfVacc;              // pointer to a "user defined" u32 register; here: virt acc of config data*/
 uint32_t *pSharedEvtData;               // pointer to a "user defined" u32 register; here: config data
 uint32_t *pSharedEvtFlag;               // pointer to a "user defined" u32 register; here: config flags
-/*uint32_t *pSharedConfPz;                // pointer to a "user defined" u32 register; here: PZ bit field (bit N is set: transsaction for PZ N)*/
 uint32_t *cpuRamExternal;               // external address (seen from host bridge) of this CPU's RAM            
-/*uint32_t *pCpuRamExternalData4EB;       // external address (seen from host bridge) of this CPU's RAM: field for EB return values*/
 
 // lots of stuff to remember
 uint32_t statusArray;                   // all status infos are ORed bit-wise into sum status, sum status is then published
@@ -137,9 +133,7 @@ uint64_t syncPrevT1;                    // timestamp of previous sync
 uint64_t syncPrevT0;                    // timestamp of previous sync
 
 // flags
-/*uint32_t flagTransactionInit;           // a transaction for uploading new event data shall be initialized
-  uint32_t flagTransactionSubmit;         // data uploaded during a transction shall be  commited */
-   uint32_t flagClearAllPZ;                // event tables of all PZs shall be cleared
+uint32_t flagClearAllPZ;                // event tables of all PZs shall be cleared
 
 // big data contains the event tables for all PZs, and for all virtual accelerators
 // there are two sets of 16 virtual accelerators ('Kanal0' and 'Kanal1')
@@ -332,11 +326,8 @@ void initSharedMem()
   pSharedNLate            = (uint32_t *)(pShared + (WRUNIPZ_SHARED_NLATE >> 2));
   pSharedVaccAvg          = (uint32_t *)(pShared + (WRUNIPZ_SHARED_VACCAVG >> 2));
   pSharedPzAvg            = (uint32_t *)(pShared + (WRUNIPZ_SHARED_PZAVG >> 2));
-  /*pSharedConfStat         = (uint32_t *)(pShared + (WRUNIPZ_SHARED_CONF_STAT >> 2));
-    pSharedConfVacc         = (uint32_t *)(pShared + (WRUNIPZ_SHARED_CONF_VACC >> 2));*/
   pSharedEvtData          = (uint32_t *)(pShared + (WRUNIPZ_SHARED_EVT_DATA >> 2));
   pSharedEvtFlag          = (uint32_t *)(pShared + (WRUNIPZ_SHARED_EVT_FLAGS >> 2));
-  /*  pSharedConfPz           = (uint32_t *)(pShared + (WRUNIPZ_SHARED_CONF_PZ >> 2));*/
   
   // find address of CPU from external perspective
   idx = 0;
@@ -360,7 +351,6 @@ void initSharedMem()
   fwlib_publishSharedSize((uint32_t)(pSharedTemp - pShared) << 2);
   
   // set initial values;
-  /*  *pSharedConfStat     = WRUNIPZ_CONFSTAT_IDLE;*/
 } // initSharedMem 
 
 
@@ -415,37 +405,6 @@ void extern_clearDiag()
   statusArray    = 0;
 } // clearDiag
 
-
-// initializes transaction for config data
-/*uint32_t configTransactInit()
-{
-  int i;
-
-  uint64_t t1, t2;
-  uint32_t dt;
-
-  DBPRINT2("wr-unipz: transaction init start\n");
-  
-  t1 = getSysTime();
-  
-  if (*pSharedConfStat != WRUNIPZ_CONFSTAT_IDLE) return WRUNIPZ_STATUS_TRANSACTION;
-
-  *pSharedConfPz    = 0;
-  *pSharedConfVacc  = 0;
-  for (i=0; i < (WRUNIPZ_NCONFFLAG); i++) *(pSharedConfFlag   + i) = 0;
-  for (i=0; i < (WRUNIPZ_NCONFDATA); i++) *(pSharedConfData   + i) = 0;
-
-  DBPRINT2("wr-unipz: transaction init completed\n");
-    
-  *pSharedConfStat = WRUNIPZ_CONFSTAT_INIT;
-
-  t2 = getSysTime();
-  dt = (uint32_t)(t2-t1);
-  //pp_printf("wr-unipz: confTransInit dt %u\n", dt);
-
-  return COMMON_STATUS_OK;
-} // configTransactInit
-*/
 
 // submit transferred config data
 uint32_t configTransactSubmit()
@@ -546,8 +505,6 @@ uint32_t extern_entryActionConfigured()
 
   configLemoOutputEvtMil(fwlib_getMilPiggy(), 2);    // used to see a blinking LED (and optionally connect a scope) for debugging
   
-  /*  *pSharedConfStat = WRUNIPZ_CONFSTAT_IDLE; /* chk */
-
   return status;
 } // entryActionConfigured
 
@@ -571,8 +528,8 @@ uint32_t extern_entryActionOperation()
   for (i=0; i < WRUNIPZ_NPZ; i++) nextVacc[i] = 0xffffffff;  // 0xffffffff: no virt acc
   for (i=0; i < WRUNIPZ_NPZ; i++) actVacc[i]  = 0xffffffff;  // 0xffffffff: no virt acc
   
-  enableFilterEvtMil(fwlib_getMilPiggy());                  // enable MIL event filter
-  clearFifoEvtMil(fwlib_getMilPiggy());                     // clear MIL event FIFO
+  enableFilterEvtMil(fwlib_getMilPiggy());                   // enable MIL event filter
+  clearFifoEvtMil(fwlib_getMilPiggy());                      // clear MIL event FIFO
 
   // flush ECA queue for lm32
   i = 0;
@@ -596,19 +553,11 @@ void cmdHandler(uint32_t *reqState, uint32_t cmd)
   // check, if the command is valid and request state change
   if (cmd) {                             // check, if cmd is valid
     switch (cmd) {                       // do action according to command
-      /*      case WRUNIPZ_CMD_CONFINIT :
-        DBPRINT3("wr-unipz: received cmd %d\n", cmd);
-        flagTransactionInit = 1;
-        break; */
       case WRUNIPZ_CMD_CONFSUBMIT :
         DBPRINT3("wr-unipz: received cmd %d\n", cmd);
         if (configTransactSubmit() != COMMON_STATUS_OK) DBPRINT1("wr-unipz: submission of config data failed\n");
         // takes about 51us, possibly just set a flag here and call routine after WRUNIPZ_EVT_50HZ_SYNCH
         break;
-        /*      case WRUNIPZ_CMD_CONFKILL :
-        DBPRINT3("wr-unipz: received cmd %d\n", cmd);
-        *pSharedConfStat = WRUNIPZ_CONFSTAT_IDLE;
-        break;*/     
       case WRUNIPZ_CMD_CONFCLEAR :
         DBPRINT3("wr-unipz: received cmd %d\n", cmd);
         flagClearAllPZ = 1;

@@ -3,7 +3,7 @@
  *
  *  created : 2020
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 02-April-2020
+ *  version : 06-April-2020
  *
  * library for wrunipz
  *
@@ -78,6 +78,14 @@ eb_address_t wrunipz_vaccAvg;           // virtual accelerators played over the 
 eb_address_t wrunipz_pzAvg;             // PZs used over the past second, read
 eb_address_t wrunipz_evtData;           // event data
 eb_address_t wrunipz_evtFlags;          // event flags
+
+
+uint64_t wrunipz_getSysTime()
+{
+  struct timeval tv;
+  gettimeofday(&tv,NULL);
+  return tv.tv_sec*(uint64_t)1000000+tv.tv_usec;
+} // wrunipz_getSysTime()
 
 
 const char* wrunipz_status_text(uint32_t bit)
@@ -349,11 +357,8 @@ uint32_t wrunipz_table_upload(uint64_t ebDevice, uint32_t pz, uint32_t vacc, uin
   uint32_t     validFlag;      // flag: data[n] is valid
   uint32_t     prepFlag;       // flag: data[n] is prep datum
   uint32_t     evtFlag;        // flag: data[n] is evt
-  //uint32_t     *data;          // helper variable: pointer to arrays
-  //uint32_t     nData[NKANAL];  // helper variable: number of data for each channel
   uint32_t     tOffset;        // helper variable: offset of duetime of an event within an UNILAC cycle [us]
   uint32_t     addrOffset;     // helper variable: address offset for data     
-  /*eb_data_t    eb_data;*/
   eb_cycle_t   cycle;
   
   if (!ebDevice) return COMMON_STATUS_EB;
@@ -363,24 +368,9 @@ uint32_t wrunipz_table_upload(uint64_t ebDevice, uint32_t pz, uint32_t vacc, uin
   if (vacc  >= WRUNIPZ_NVACC) return COMMON_STATUS_OUTOFRANGE;
   if (nData >  WRUNIPZ_NEVT)  return COMMON_STATUS_OUTOFRANGE;
   
-  // required for looping over the two channels
-  /*  data[0]  = dataChn0;
-  data[1]  = dataChn1;
-  nData[0] = nDataChn0;
-  nData[1] = nDataChn1;*/
-  /*
-  // check if transaction has been initialized
-  if (eb_device_read(device, DPstat, EB_BIG_ENDIAN|EB_DATA32, &eb_data, 0, eb_block) != EB_OK) return COMMON_STATUS_EB;
-  if (eb_data != WRUNIPZ_CONFSTAT_INIT) return WRUNIPZ_STATUS_TRANSACTION;
-
-  // pz flag 
-  if (eb_device_read(device, DPpz, EB_BIG_ENDIAN|EB_DATA32, &eb_data, 0, eb_block) != EB_OK) return COMMON_STATUS_EB;
-  pzFlag = (uint32_t)eb_data | (1 << pz);
-  */
   // EB cycle
   if (eb_cycle_open(ebDevice, 0, eb_block, &cycle) != EB_OK) return COMMON_STATUS_EB;
 
-  //eb_cycle_write(cycle, DPpz, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)pzFlag);
   newFlag   = 0x1;
   validFlag = 0;
   prepFlag  = 0;
@@ -420,13 +410,7 @@ uint32_t wrunipz_table_upload(uint64_t ebDevice, uint32_t pz, uint32_t vacc, uin
 uint32_t wrunipz_table_download(uint64_t ebDevice, uint32_t pz, uint32_t vacc, uint32_t chn, uint32_t *data, uint32_t *nData)
 {
   int          i;
-  uint32_t     newFlag;        // flag: signals that new data are available
   uint32_t     validFlag;      // flag: data[n] is valid
-  uint32_t     prepFlag;       // flag: data[n] is prep datum
-  uint32_t     evtFlag;        // flag: data[n] is evt
-  //uint32_t     *data;          // helper variable: pointer to arrays
-  //uint32_t     nData[NKANAL];  // helper variable: number of data for each channel
-  uint32_t     tOffset;        // helper variable: offset of duetime of an event within an UNILAC cycle [us]
   uint32_t     addrOffset;     // helper variable: address offset for data
   eb_data_t    ebData[WRUNIPZ_NEVT];
   eb_data_t    ebValidFlag;
@@ -438,14 +422,11 @@ uint32_t wrunipz_table_download(uint64_t ebDevice, uint32_t pz, uint32_t vacc, u
   if (pz    >= WRUNIPZ_NPZ)   return COMMON_STATUS_OUTOFRANGE;
   if (vacc  >= WRUNIPZ_NVACC) return COMMON_STATUS_OUTOFRANGE;
 
+  validFlag = 0;
+
   // EB cycle 
   if (eb_cycle_open(ebDevice, 0, eb_block, &cycle) != EB_OK) return COMMON_STATUS_EB;
 
-  //newFlag   = 0x1;
-  validFlag = 0;
-  // prepFlag  = 0;
-  // evtFlag   = 0;
-    
   // read data
   for (i=0; i < WRUNIPZ_NEVT; i++) {
     addrOffset  = vacc * WRUNIPZ_NEVT * WRUNIPZ_NCHN * WRUNIPZ_NPZ;  // offset for vacc
@@ -472,7 +453,6 @@ uint32_t wrunipz_table_download(uint64_t ebDevice, uint32_t pz, uint32_t vacc, u
   for (i=0; i < WRUNIPZ_NEVT; i++) {
     if (validFlag & (1 << i)) *nData = i+1;
   } // for i
-  printf("download table validflag %u, nData %u\n", validFlag, *nData);
   
   return COMMON_STATUS_OK;
 } // wrunipz_table_download
