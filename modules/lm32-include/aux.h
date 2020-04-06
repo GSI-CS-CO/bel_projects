@@ -53,14 +53,14 @@ inline  uint32_t  atomic_get(void)
 	 return *pCpuAtomic;	             	
 }
 
-inline void atomic_on()
+static inline void atomic_on()
 {
    ier = irq_get_enable();
    irq_disable();
    *pCpuAtomic = 1;
 }
 
-inline void atomic_off()
+static inline void atomic_off()
 {
 	*pCpuAtomic = 0;
 	uint32_t foo = 0; /* UB */
