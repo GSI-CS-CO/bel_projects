@@ -204,7 +204,7 @@ std::pair<int, int> findRunningPattern(const std::string& sPattern); // get cpu 
                void showGroupsDict();
                bool tableCheck(std::string& report);
                void coverage3Upload(uint64_t seed );
-               std::vector<std::vector<uint64_t>> coverage3TestData(uint64_t seedStart, uint64_t cases, uint8_t parts, uint8_t percentage );
+               //std::vector<std::vector<uint64_t>> coverage3TestData(uint64_t seedStart, uint64_t cases, uint8_t parts, uint8_t percentage );
                void dirtyCtShow();
                void showCpuList() ;
             uint8_t getCpuQty() ;

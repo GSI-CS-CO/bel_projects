@@ -56,11 +56,17 @@ EXECS           = dm-sched dm-cmd
 TOOLS           = $(addprefix $(TOOLPATH)/, $(EXECS))
 BINS            = $(addprefix $(BINPATH)/, $(EXECS))
 
+PY_LIB          = python3.6m
+PY_INCPATH      = /usr/include/python3.6m
+
 all: lib tools
+
 
 lib: libcarpedm.so
 
 tools: $(TOOLS)
+
+dmpy: libcarpedm.so _dm.so
 
 
 carpeDM.o: $(SRCPATH)/carpeDM.cpp
@@ -83,12 +89,21 @@ install: $(BINS)
 	cp $(LIBPATH)/libcarpedm.so $(PREFIX)/lib
 
 clean::
-	rm -f $(TOOLPATH)/*.o $(TOOLPATH)/*.a $(TOOLPATH)/*.so $(TOOLPATH)/*.elf $(BINPATH)/dm-sched $(BINPATH)/dm-cmd $(LIBPATH)/libcarpedm.so
+	rm -f $(TOOLPATH)/*.o $(TOOLPATH)/*.a $(TOOLPATH)/*.so $(TOOLPATH)/*.elf $(BINPATH)/dm-sched $(BINPATH)/dm-cmd $(LIBPATH)/libcarpedm.so dm_wrap.cxx dm.py dm.pyc __pycache__
 
 .SECONDEXPANSION:
 $(TOOLS): $$@.cpp libcarpedm.so
 	$(T_CXX) $(T_CXXFLAGS) $(T_CXXFLAGS_CDM) -o $@ $< -L$(LIBPATH) -lcarpedm
 	mkdir -p $(BINPATH)
 	cp $@ $(BINPATH)
+
+dm_wrap.cxx: $(FTMPATH)/include/carpeDM.h dm.i
+	swig -I$(FTMPATH)/include -Wall -c++ -python dm.i
+
+dm_wrap.o: dm_wrap.cxx
+	$(T_CXX) $(T_CXXFLAGS) -c $< -l$(PY_LIB) -I$(PY_INCPATH)
+
+_dm.so: $(T_OBJECTS) dm_wrap.o libcarpedm.so
+	$(T_CXX) $(T_CXXFLAGS) -shared -o $@ dm_wrap.o -L$(LIBPATH) -lcarpedm -l$(PY_LIB) -I$(PY_INCPATH) 
 
 

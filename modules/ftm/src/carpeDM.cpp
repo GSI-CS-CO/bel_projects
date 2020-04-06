@@ -215,7 +215,7 @@ vEbwrs& CarpeDM::createCommand(vEbwrs& ew, const std::string& type, const std::s
             void CarpeDM::lockManagerClear()                 { return impl_->lockManagerClear();}
             bool CarpeDM::lockManagerHasEntries()            { return impl_->lockManagerHasEntries();}
             void CarpeDM::softwareReset(bool clearStatistic) { return impl_->softwareReset(clearStatistic);}
-               std::vector<std::vector<uint64_t>> CarpeDM::coverage3TestData(uint64_t seedStart, uint64_t cases, uint8_t parts, uint8_t percentage ) {return impl_->coverage3TestData(seedStart, cases, parts, percentage );}
+          //     std::vector<std::vector<uint64_t>> CarpeDM::coverage3TestData(uint64_t seedStart, uint64_t cases, uint8_t parts, uint8_t percentage ) {return impl_->coverage3TestData(seedStart, cases, parts, percentage );}
 
 
 
