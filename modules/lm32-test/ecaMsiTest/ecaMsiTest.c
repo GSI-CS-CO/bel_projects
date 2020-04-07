@@ -1,13 +1,14 @@
 /*!
  * @file ecaMsiTest.c
- * @see https://www-acc.gsi.de/wiki/Timing/TimingSystemHowSoftCPUHandleECAMSIs
- */
-/*******************************************************************************
- *  ecaMsiExample.c
+ * @brief Test program for ECA -Interrupts
  *
- *  created : 2019, GSI Darmstadt
- *  author  : Dietrich Beck, Enkhbold Ochirsuren
- *  version : 15-Apr-2019
+ *        Prepared test for FreeRTOS outsourced from ecaMsiExample.c (D.Beck)
+ *
+ * @see https://www-acc.gsi.de/wiki/Timing/TimingSystemHowSoftCPUHandleECAMSIs
+ * @copyright 2020 GSI Helmholtz Centre for Heavy Ion Research GmbH
+ * @date 07.04.2020
+ * @author Ulrich Becker <u.becker@gsi.de>
+ *
  *
  *  This example demonstrates handling of message-signaled interrupts (MSI)
  *  caused by ECA channel.
@@ -22,38 +23,12 @@
  *
  *  To run example:
  *  - set ECA rules for eCPU action channel
- *	saft-ecpu-ctl tr0 -d -c 0x1122334455667788 0xFFFFFFFFFFFFFFFF 0 0x42
+ *  saft-ecpu-ctl tr0 -d -c 0x1122334455667788 0xFFFFFFFFFFFFFFFF 0 0x42
  *  - debug firmware output
- *	eb-console dev/wbm0
+ *  eb-console dev/wbm0
  *  - inject timing message (invoke on the second terminal)
- *	saft-ctl -p tr0 inject 0x1122334455667788 0x8877887766556642 0
+ *  saft-ctl -p tr0 inject 0x1122334455667788 0x8877887766556642 0
  *
- * -----------------------------------------------------------------------------
- * License Agreement for this software:
- *
- * Copyright (C) 2017  Dietrich Beck
- * GSI Helmholtzzentrum für Schwerionenforschung GmbH
- * Planckstraße 1
- * D-64291 Darmstadt
- * Germany
- *
- * Contact: d.beck@gsi.de
- *
- *  This library is free software; you can redistribute it and/or
- *  modify it under the terms of the GNU Lesser General Public
- *  License as published by the Free Software Foundation; either
- *  version 3 of the License, or (at your option) any later version.
- *
- *  This library is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- *  Lesser General Public License for more details.
- *
- *  You should have received a copy of the GNU Lesser General Public
- *  License along with this library. If not, see <http://www.gnu.org/licenses/>.
- *
- * For all questions and ideas contact: d.beck@gsi.de
- * Last update: 25-April-2015
  ******************************************************************************/
 
 /* standard includes */
@@ -64,60 +39,18 @@
 
 /* includes specific for bel_projects */
 #include "eb_console_helper.h"
-#include "mini_sdb.h"
-
-#include "aux.h"
-
-/* register maps for some selected Wishbone devices  */
-//#include "wb_slaves.h" /* this is a hack */
-//#include "eca_flags.h"
-//#include "eca_regs.h"
-//#include "eca_queue_regs.h"
-
+#include "scu_msi.h"
 #include "eca_queue_type.h"
 
-#define STATUS_OK         0UL
-#define STATUS_ERR        1UL
-
 /* ECA relevant definitions */
-#define ECAQMAX           4UL   // max number of ECA channels in the system
-#define ECACHANNELFORLM32 2UL   // the id of an ECA channel for embedded CPU
-#define ECA_VALID_ACTION  0x00040000UL // ECA valid action
-#define MY_ACT_TAG        0x42UL       // ECA actions tagged for this eCPU
+#define ECAQMAX           4   // max number of ECA channels in the system
+
+#define MY_ACT_TAG        0x42       // ECA actions tagged for this eCPU
 
 // global variables
 volatile uint32_t *pEcaCtl;         // WB address of ECA control
 //volatile uint32_t *pEca;            // WB address of ECA event input (discoverPeriphery())
-volatile uint32_t *pECAQ;           // WB address of ECA queue
-int gEcaChECPU = 0;                 // ECA channel for an embedded CPU (LM32), connected to ECA queue pointed by pECAQ
-
-/*******************************************************************************
- *
- * Clear ECA queue
- *
- * @param[in] cnt The number pending actions
- * \return        The number of cleared actions
- *
- ******************************************************************************/
-uint32_t clearEcaQueue( const uint32_t cnt)
-{
-  uint32_t flag;                // flag for the next action
-  uint32_t i, j = 0;
-
-  for ( i = 0; i < cnt; ++i)
-  {
-
-    flag = *(pECAQ + (ECA_QUEUE_FLAGS_GET >> 2)); // read flag and check if there was an action
-
-    if (flag & (0x0001 << ECA_VALID))
-    {
-      *(pECAQ + (ECA_QUEUE_POP_OWR >> 2)) = 0x1;  // pop action from channel
-      ++j;
-    }
-  }
-
-  return j;
-}
+ECA_QUEUE_ITEM_T* pECAQ;           // WB address of ECA queue
 
 /*******************************************************************************
  *
@@ -128,14 +61,14 @@ void clearActions( void )
 {
   uint32_t valCnt;
 
-  *(pEcaCtl + (ECA_CHANNEL_SELECT_RW >> 2)) = gEcaChECPU;    // select ECA channel for LM32
+  *(pEcaCtl + (ECA_CHANNEL_SELECT_RW >> 2)) = ECA_SELECT_LM32_CHANNEL;
   *(pEcaCtl + (ECA_CHANNEL_NUM_SELECT_RW >> 2)) = 0x00;      // set the sub channel index
   valCnt = *(pEcaCtl + (ECA_CHANNEL_VALID_COUNT_GET >> 2));  // get/clear valid count
 
   if( valCnt != 0 )
   {
     mprintf("pending actions: %d\n", valCnt);
-    valCnt = clearEcaQueue(valCnt);                          // pop pending actions
+    valCnt = ecaClearQueue( pECAQ, valCnt );                          // pop pending actions
     mprintf("cleared actions: %d\n", valCnt);
   }
 }
@@ -150,84 +83,64 @@ void clearActions( void )
  * @param[in] channel The index of the selected ECA action channel
  *
  ******************************************************************************/
-void configureEcaMsi( const int enable, const uint32_t channel)
+void configureEcaMsi( const bool enable, const uint32_t channel)
 {
-
-  if (enable != 0 && enable != 1)
+  if( channel > ECAQMAX )
   {
-    mprintf("Bad enable argument.\n");
-    return;
-  }
-
-  if (channel > ECAQMAX)
-  {
-    mprintf("Bad channel argument.\n");
-    return;
+     mprintf("Bad channel argument: %d\n", channel);
+     return;
   }
 
   clearActions();   // clean ECA queue and channel from pending actions
 
-  atomic_on();
   *(pEcaCtl + (ECA_CHANNEL_SELECT_RW >> 2)) = channel;            // select channel
   *(pEcaCtl + (ECA_CHANNEL_NUM_SELECT_RW >> 2)) = 0x00;           // set the sub channel index
   *(pEcaCtl + (ECA_CHANNEL_MSI_SET_ENABLE_OWR >> 2)) = 0;         // disable ECA MSI (required to set a target address)
   *(pEcaCtl + (ECA_CHANNEL_MSI_SET_TARGET_OWR >> 2)) = (uint32_t)pMyMsi;  // set MSI destination address as a target address
-  *(pEcaCtl + (ECA_CHANNEL_MSI_SET_ENABLE_OWR >> 2)) = enable;    // enable ECA MSI
-  atomic_off();
+  *(pEcaCtl + (ECA_CHANNEL_MSI_SET_ENABLE_OWR >> 2)) = (uint32_t)enable;    // enable ECA MSI
 
   mprintf("MSI path (ECA -> LM32)           : %s\n\tECA channel = %d\n\tdestination = 0x%08x\n",
-      enable == 1 ? "enabled" : "disabled", channel, (uint32_t)pMyMsi);
+      enable? "enabled" : "disabled", channel, (uint32_t)pMyMsi);
 }
 
-/*******************************************************************************
+/*! ---------------------------------------------------------------------------
  *
- * Pop pending embedded CPU actions from an ECA queue and handle them
+ * @brief Pop pending embedded CPU actions from an ECA queue and handle them
  *
- * @param[in] cnt The number of pending valid actions
+ * @param cnt The number of pending valid actions
  *
- *******************************************************************************/
-void ecaHandler( const uint32_t cnt )
+ */
+STATIC void ecaHandler( const unsigned int cnt )
 {
-  uint32_t flag;                // flag for the next action
-  uint32_t evtIdHigh;           // event id (high 32bit)
-  uint32_t evtIdLow;            // event id (low 32bit)
-  uint32_t evtDeadlHigh;        // deadline (high 32bit)
-  uint32_t evtDeadlLow;         // deadline (low 32bit)
-  uint32_t actTag;              // tag of action
-  uint32_t paramHigh;           // event parameter (high 32bit)
-  uint32_t paramLow;            // event parameter (low 32bit)
-  uint32_t i;
+   for( unsigned int i = 0; i < cnt; i++ )
+   {
+      if( !ecaIsValid( pECAQ ) )
+         continue;
 
-  for (i = 0; i < cnt; ++i)
-  {
-    // read flag and check if there was an action
-    flag         = *(pECAQ + (ECA_QUEUE_FLAGS_GET >> 2));
-    if( (flag & (0x0001 << ECA_VALID)) == 0 )
-       continue;
-    // read data
-    evtIdHigh    = *(pECAQ + (ECA_QUEUE_EVENT_ID_HI_GET >> 2));
-    evtIdLow     = *(pECAQ + (ECA_QUEUE_EVENT_ID_LO_GET >> 2));
-    evtDeadlHigh = *(pECAQ + (ECA_QUEUE_DEADLINE_HI_GET >> 2));
-    evtDeadlLow  = *(pECAQ + (ECA_QUEUE_DEADLINE_LO_GET >> 2));
-    actTag       = *(pECAQ + (ECA_QUEUE_TAG_GET >> 2));
-    paramHigh    = *(pECAQ + (ECA_QUEUE_PARAM_HI_GET >> 2));
-    paramLow     = *(pECAQ + (ECA_QUEUE_PARAM_LO_GET >> 2));
+      ECA_QUEUE_ITEM_T ecaItem = *pECAQ;
 
-      // pop action from channel
-    *(pECAQ + (ECA_QUEUE_POP_OWR >> 2)) = 0x1;
+      ecaPop( pECAQ );
 
-      // here: do s.th. according to action
-    switch (actTag)
-    {
-       case MY_ACT_TAG:
-          mprintf("ecaHandler: id: 0x%08x%08x; deadline: 0x%08x%08x; param: 0x%08x%08x; flag: 0x%08x\n",
-          evtIdHigh, evtIdLow, evtDeadlHigh, evtDeadlLow, paramHigh, paramLow, flag);
-       break;
-       default:
-          mprintf("ecaHandler: unknown tag\n");
-       break;
-    } // switch
-  }
+      /*
+       * here: do something according to action
+       */
+      if( ecaItem.tag == MY_ACT_TAG )
+      {
+         mprintf( "ecaHandler: id: 0x%08x%08x\n"
+                  "deadline:       0x%08x%08x\n"
+                  "param:          0x%08x%08x\n"
+                  "flag:           0x%08x\n",
+                  ecaItem.eventIdH,  ecaItem.eventIdL,
+                  ecaItem.deadlineH, ecaItem.deadlineL,
+                  ecaItem.paramH,    ecaItem.paramL,
+                  ecaItem.flags
+                );
+      }
+      else
+      {
+         mprintf( "ecaHandler: unknown tag: %d\n", ecaItem.tag );
+      }
+   }
 } // ecaHandler
 
 /*******************************************************************************
@@ -235,157 +148,108 @@ void ecaHandler( const uint32_t cnt )
  * Handle pending valid actions
  *
  ******************************************************************************/
-void handleValidActions( void )
+STATIC void handleValidActions( void )
 {
   uint32_t valCnt;
-  *(pEcaCtl + (ECA_CHANNEL_SELECT_RW >> 2)) = gEcaChECPU;    // select ECA channel for LM32
+  *(pEcaCtl + (ECA_CHANNEL_SELECT_RW >> 2)) = ECA_SELECT_LM32_CHANNEL;
   *(pEcaCtl + (ECA_CHANNEL_NUM_SELECT_RW >> 2)) = 0x00;      // set the sub channel index
   valCnt = *(pEcaCtl + (ECA_CHANNEL_VALID_COUNT_GET >> 2));  // read and clear valid counter
-  mprintf("valid:\t%d\n", valCnt);
+  mprintf( "valid:\t%d\n", valCnt );
 
   if( valCnt != 0 )
-    ecaHandler(valCnt);                             // pop pending valid actions
+    ecaHandler( valCnt );                             // pop pending valid actions
 }
 
-/*******************************************************************************
+/*! ---------------------------------------------------------------------------
+ * @brief Handle MSIs sent by ECA
  *
- * Handle MSIs sent by ECA
- *
- * If interrupt was caused by a valid action, then MSI has value of (4<<16|num).
- * Both ECA action channel and ECA queue connected to that channel must be handled:
- * - read and clear the valid counter value of ECA action channel for LM32 and,
+ * If interrupt was caused by a valid action, then MSI has value of (4<<16|num).\n
+ * Both ECA action channel and ECA queue connected to that channel must be handled:\n
+ * - read and clear the valid counter value of ECA action channel for LM32 and,\n
  * - pop pending actions from ECA queue connected to this action channel
- *
- ******************************************************************************/
-void irqHandler( void )
+ */
+STATIC void onEcaEvent( const unsigned int intNum,
+                        const void* pContext UNUSED )
 {
+   MSI_ITEM_T m;
 
-  mprintf("\nMSI:\t0x%08x\nAdr:\t0x%08x\nSel:\t0x%01x\n",
-          global_msi.msg,
-          global_msi.adr,
-          global_msi.sel );
+   irqMsiCopyObjectAndRemove( &m, intNum );
 
-  if( (global_msi.msg & ECA_VALID_ACTION) != 0 ) // valid actions are pending
-    handleValidActions();                                      // ECA MSI handling
+   mprintf("\nMSI:\t0x%08x\n"
+             "Adr:\t0x%08x\n"
+             "Sel:\t0x%01x\n",
+             m.msg,
+             m.adr,
+             m.sel );
+
+   if( (m.msg & ECA_VALID_ACTION) != 0 ) // valid actions are pending
+      handleValidActions();              // ECA MSI handling
+
 }
 
-/*******************************************************************************
- *
- * Initialize interrupt table
- * - set up an interrupt handler
- * - enable interrupt generation globally
- *
- ******************************************************************************/
-void initIrqTable( void )
+/*! ---------------------------------------------------------------------------
+ */
+STATIC void initIrqTable( void )
 {
-  isr_table_clr();
-  isr_ptr_table[0] = &irqHandler;
-  irq_set_mask(0x01);
-  irq_enable();
-  mprintf("Init IRQ table is done.\n");
+   irqRegisterISR( 0, NULL, onEcaEvent );
+   irqEnable();
+   mprintf("Init IRQ table is done.\n");
 }
 
-/*******************************************************************************
+/*! ---------------------------------------------------------------------------
  *
- * Find WB address of ECA queue connect to ECA channel for LM32
+ * @brief Initialization
  *
- * - ECA queue address is set to "pECAQ"
- * - index of ECA channel for LM32 is set to "gEcaChECPU"
- *
- * /return Return OK if a queue is found, otherwise return ERROR
- *
- ******************************************************************************/
-uint32_t findEcaQueue( void )
-{
-  sdb_location EcaQ_base[ECAQMAX];
-  uint32_t EcaQ_idx = 0;
-  uint32_t *tmp;
-
-  // get list of ECA queues
-  find_device_multi( EcaQ_base,
-                     &EcaQ_idx,
-                     ECAQMAX,
-                     ECA_QUEUE_SDB_VENDOR_ID,
-                     ECA_QUEUE_SDB_DEVICE_ID );
-  pECAQ = NULL;
-
-  // find ECA queue connected to ECA channel for LM32
-  for( unsigned int i = 0; i < EcaQ_idx; i++)
-  {
-    tmp = (uint32_t *)(getSdbAdr(&EcaQ_base[i]));
-    //mprintf("-- found ECA queue 0x%08x, idx %d\n", (uint32_t)tmp, i);
-    if ( *(tmp + (ECA_QUEUE_QUEUE_ID_GET >> 2)) == ECACHANNELFORLM32)
-    {
-      pECAQ = tmp;    // update global variables
-      gEcaChECPU = ECACHANNELFORLM32 +1; // refer to eca_queue_regs.h
-      //i = EcaQ_idx;   // break loop
-      break;
-    }
-  }
-
-  return ((pECAQ != NULL) ? STATUS_OK : STATUS_ERR);
-}
-
-/*******************************************************************************
- *
- * Initialization
  * - discover WB devices
  * - init UART
  * - detect ECA control unit
  * - detect ECA queues
- *
- ******************************************************************************/
-void init( void )
+ */
+STATIC void init( void )
 {
-  discoverPeriphery();    // mini-sdb: get info on important Wishbone infrastructure, such as (this) CPU, flash, ...
+   discoverPeriphery();    // mini-sdb: get info on important Wishbone infrastructure, such as (this) CPU, flash, ...
 
-  uart_init_hw();         // init UART, required for printf... . To view print message, you may use 'eb-console' from the host
+   uart_init_hw();         // init UART, required for printf... . To view print message, you may use 'eb-console' from the host
 
-  mprintf( ESC_CLR_SCR ESC_XY( "1", "1" ) "--- Demo for ECA MSI handling ---\n");
+   mprintf( ESC_CLR_SCR ESC_XY( "1", "1" ) "--- Demo for ECA MSI handling ---\n");
 
-  if( pEca != NULL )
-    mprintf("ECA event input                  @ 0x%08x\n", (uint32_t) pEca);
-  else
-  {
-    mprintf(ESC_ERROR"Could not find the ECA event input. Exit!\n");
-    return;
-  }
+   if( pEca != NULL )
+     mprintf("ECA event input                  @ 0x%08x\n", (uint32_t) pEca);
+   else
+   {
+     mprintf(ESC_ERROR"Could not find the ECA event input. Exit!\n");
+     return;
+   }
 
-  mprintf("MSI destination addr for LM32    : 0x%08x\n", (uint32_t)pMyMsi);
+   mprintf("MSI destination addr for LM32    : 0x%08x\n", (uint32_t)pMyMsi);
 
-  pEcaCtl = find_device_adr(ECA_SDB_VENDOR_ID, ECA_SDB_DEVICE_ID);
+   pEcaCtl = find_device_adr(ECA_SDB_VENDOR_ID, ECA_SDB_DEVICE_ID);
 
-  if( pEcaCtl != NULL )
-    mprintf("ECA channel control              @ 0x%08x\n", (uint32_t) pEcaCtl);
-  else
-  {
-    mprintf(ESC_ERROR "Could not find the ECA channel control. Exit!\n");
-    return;
-  }
+   if( pEcaCtl != NULL )
+      mprintf("ECA channel control              @ 0x%08x\n", (uint32_t) pEcaCtl);
+   else
+   {
+      mprintf(ESC_ERROR "Could not find the ECA channel control. Exit!\n");
+      return;
+   }
 
-  if (findEcaQueue() == STATUS_OK)
-    mprintf("ECA queue to eCPU action channel @ 0x%08x\n", (uint32_t) pECAQ);
-  else
-  {
-    mprintf(ESC_ERROR "Could not find the ECA queue connected to eCPU action channel. Exit!\n");
-    return;
-  }
-
- // timer_init(1);          // needed by usleep_init()
- // usleep_init();          // needed by scu_mil.c
-
-//  isr_table_clr();        // clear interrupt table
-//  irq_set_mask(0x01);
-//  irq_disable();          // disable interrupts
+   pECAQ = ecaGetLM32Queue();
+   if( pECAQ != NULL )
+   {
+       mprintf("ECA queue to LM32 action channel @ 0x%08x\n", (uint32_t) pECAQ);
+   }
+   else
+   {
+     mprintf(ESC_ERROR "Could not find the ECA queue connected to eCPU action channel. Exit!\n");
+     return;
+   }
 }
 
 void main( void )
 {
+  init(); // get own MSI target addr, ECA event input and ECA queue for LM32 channel
 
-  init();           // get own MSI target addr, ECA event input and ECA queue for LM32 channel
-
-  configureEcaMsi(1, gEcaChECPU); // configure ECA for generating MSIs
-
+  configureEcaMsi( true, ECA_SELECT_LM32_CHANNEL);
   initIrqTable();                 // set up MSI handler
 
   mprintf("waiting for MSI ...\n");
@@ -394,3 +258,5 @@ void main( void )
   while( true );
 
 }
+
+/* ================================= EOF ====================================*/

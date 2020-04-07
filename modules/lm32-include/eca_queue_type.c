@@ -11,7 +11,7 @@
 #endif
 
 #include <eca_queue_type.h>
-#include <mini_sdb.h>
+//#include <mini_sdb.h>
 
 #ifndef ECAQMAX
   #define ECAQMAX  4  /*!<@brief  max number of ECA queues */
@@ -38,6 +38,25 @@ ECA_QUEUE_ITEM_T* ecaGetQueue( const unsigned int id )
    }
 
    return pEcaQueue;
+}
+
+/*! ---------------------------------------------------------------------------
+ * @see eca_queue_type.h
+ */
+unsigned int ecaClearQueue( ECA_QUEUE_ITEM_T* pThis, const unsigned int cnt )
+{
+   unsigned int ret = 0;
+
+   for( unsigned int i = 0; i < cnt; i++ )
+   {
+      if( ecaIsValid( pThis ) )
+      {
+         ecaPop( pThis );
+         ret++;
+      }
+   }
+
+   return ret;
 }
 
 /*================================== EOF ====================================*/

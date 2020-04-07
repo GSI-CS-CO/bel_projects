@@ -41,6 +41,11 @@ extern "C" {
 #define IRQ_OFFS_ADR 0x00000004
 #define IRQ_OFFS_SEL 0x00000008
 
+/*!
+ * @brief ECA valid action flag-mask
+ */
+#define ECA_VALID_ACTION  0x00040000
+
 /*! ---------------------------------------------------------------------------
  * @ingroup INTERRUPT
  * @brief Control registers of Message-Signaled Interrupt (MSI)
