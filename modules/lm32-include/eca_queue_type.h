@@ -1,6 +1,7 @@
 /*!
  * @file eca_queue_type.h
- * @brief Definition ECA register object type for Wishbone interface of VHDL entity
+ * @brief Definition Event Conditioned Action (ECA) register object
+ *        type for Wishbone interface of VHDL entity
  * @author Ulrich Becker <u.becker@gsi.de>
  * @copyright   2020 GSI Helmholtz Centre for Heavy Ion Research GmbH
  * @date 30.01.2020
@@ -17,11 +18,17 @@
 #include "eca_flags.h"
 #include "eca_regs.h"
 
+/*!
+ * @defgroup ECA Event Conditioned Action
+ */
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 /*! ---------------------------------------------------------------------------
+ * @ingroup ECA
+ * @brief Event Conditioned Action (ECA) hardware control register.
  */
 typedef struct HW_IMAGE
 {
@@ -234,6 +241,10 @@ typedef struct HW_IMAGE
     */
    uint32_t channelCodeSelect;
 
+   /*!
+    * @brief Is necessary here to producing the correct offset for the folowing
+    *        member variables.
+    */
    uint32_t __padding1;
 
    /*!
@@ -286,59 +297,104 @@ typedef struct HW_IMAGE
    const uint32_t channelGetAck;
 
    /*!
-    * @brief
+    * @brief Read and clear the selected channel's fill status
+    *        (used_now<<16 | used_most), MSI=(6<<16) will be sent
+    *        if used_most changes (32 Bit)
     */
-
+   const uint32_t channelMostFullClear;
 
    /*!
-    * @brief
+    * @brief Read and clear the number of actions output by the selected
+    *        subchannel, MSI=(4<<16|num) will be sent when the count becomes
+    *        non-zero (32 Bit)
     */
-
+   const uint32_t channelValidCount;
 
    /*!
-    * @brief
+    * @brief Read and clear the number of actions which could not be enqueued
+    *        to the selected full channel which were destined for the selected
+    *        subchannel, MSI=(5<<16|num) will be sent when the count becomes
+    *        non-zero. (32 Bit)
     */
-
+   const uint32_t channelOverflowCount;
 
    /*!
-    * @brief
+    * @brief Read and clear the number of actions with the selected error code
+    *        which were destined for the selected subchannel,
+    *        MSI=(code<<16|num) will be sent when the count becomes non-zero.
+    *        (32 Bit)
     */
-
+   const uint32_t channelFailedCount;
 
    /*!
-    * @brief
+    * @brief The event ID of the first action with the selected error code on
+    *        the selected subchannel, cleared when channel_failed_count is read
+    *        (high word) (32 Bit)
     */
-
+   const uint32_t channelEventIdHigh;
 
    /*!
-    * @brief
+    * @brief The event ID of the first action with the selected error code on
+    *        the selected subchannel, cleared when channel_failed_count is read
+    *        (low word) (33 Bit)
     */
-
+   const uint32_t channelEventIdLow;
 
    /*!
-    * @brief
+    * @brief The parameter of the first action with the selected error code on
+    *        the selected subchannel, cleared when channel_failed_count
+    *        is read (high word) (32 Bit)
     */
-
+   const uint32_t channelParamHigh;
 
    /*!
-    * @brief
+    * @brief The parameter of the first action with the selected error code on
+    *        the selected subchannel, cleared when channel_failed_count is
+    *        read (low word) (32 Bit)
     */
-
+   const uint32_t channelParamLow;
 
    /*!
-    * @brief
+    * @brief The tag of the first action with the selected error code on the
+    *        selected subchannel, cleared when channel_failed_count is read.
+    *        (32 Bit)
     */
-
+   const uint32_t channelTag;
 
    /*!
-    * @brief
+    * @brief The TEF of the first action with the selected error code on the
+    *        selected subchannel, cleared when channel_failed_count is read.
+    *        (32 Bit)
     */
-
+   const uint32_t channelTef;
 
    /*!
-    * @brief
+    * @brief The deadline of the first action with the selected error code on
+    *        the selected subchannel, cleared when channel_failed_count is
+    *        read (high word) (32 Bit)
     */
+   const uint32_t channelDeadlineHigh;
 
+   /*!
+    * @brief The deadline of the first action with the selected error code on
+    *        the selected subchannel, cleared when channel_failed_count is
+    *        read (low word) (32 Bit)
+    */
+   const uint32_t channelDeadlineLow;
+
+   /*!
+    * @brief The actual execution time of the first action with the selected
+    *        error code on the selected subchannel, cleared when
+    *        channel_failed_count is read (high word) (32 Bit)
+    */
+   const uint32_t channelExecutedHigh;
+
+   /*!
+    * @brief The actual execution time of the first action with the selected
+    *        error code on the selected subchannel, cleared when
+    *        channel_failed_count is read (low word) (32 Bit)
+    */
+   const uint32_t channelExecutedLow;
 } ECA_CONTROL_T;
 
 #ifndef __DOXYGEN__
@@ -388,23 +444,25 @@ STATIC_ASSERT( offsetof( ECA_CONTROL_T, channelGetEnable ) == ECA_CHANNEL_MSI_GE
 STATIC_ASSERT( offsetof( ECA_CONTROL_T, channelSetTarget ) == ECA_CHANNEL_MSI_SET_TARGET_OWR );
 STATIC_ASSERT( offsetof( ECA_CONTROL_T, channelGetTarget ) == ECA_CHANNEL_MSI_GET_TARGET_GET );
 STATIC_ASSERT( offsetof( ECA_CONTROL_T, channelGetAck ) == ECA_CHANNEL_MOSTFULL_ACK_GET );
-//STATIC_ASSERT( offsetof( ECA_CONTROL_T,  ) == ECA_CHANNEL_MOSTFULL_CLEAR_GET );
-//STATIC_ASSERT( offsetof( ECA_CONTROL_T,  ) == ECA_CHANNEL_VALID_COUNT_GET );
-//STATIC_ASSERT( offsetof( ECA_CONTROL_T,  ) == ECA_CHANNEL_OVERFLOW_COUNT_GET );
-//STATIC_ASSERT( offsetof( ECA_CONTROL_T,  ) == ECA_CHANNEL_FAILED_COUNT_GET );
-//STATIC_ASSERT( offsetof( ECA_CONTROL_T,  ) == ECA_CHANNEL_EVENT_ID_HI_GET );
-//STATIC_ASSERT( offsetof( ECA_CONTROL_T,  ) == ECA_CHANNEL_EVENT_ID_LO_GET );
-//STATIC_ASSERT( offsetof( ECA_CONTROL_T,  ) == ECA_CHANNEL_PARAM_HI_GET );
-//STATIC_ASSERT( offsetof( ECA_CONTROL_T,  ) == ECA_CHANNEL_PARAM_LO_GET );
-//STATIC_ASSERT( offsetof( ECA_CONTROL_T,  ) == ECA_CHANNEL_TAG_GET );
-//STATIC_ASSERT( offsetof( ECA_CONTROL_T,  ) == ECA_CHANNEL_TEF_GET );
-//STATIC_ASSERT( offsetof( ECA_CONTROL_T,  ) == ECA_CHANNEL_DEADLINE_HI_GET );
-//STATIC_ASSERT( offsetof( ECA_CONTROL_T,  ) == ECA_CHANNEL_DEADLINE_LO_GET );
-//STATIC_ASSERT( offsetof( ECA_CONTROL_T,  ) == ECA_CHANNEL_EXECUTED_HI_GET );
-//STATIC_ASSERT( offsetof( ECA_CONTROL_T,  ) == ECA_CHANNEL_EXECUTED_LO_GET );
+STATIC_ASSERT( offsetof( ECA_CONTROL_T, channelMostFullClear ) == ECA_CHANNEL_MOSTFULL_CLEAR_GET );
+STATIC_ASSERT( offsetof( ECA_CONTROL_T, channelValidCount ) == ECA_CHANNEL_VALID_COUNT_GET );
+STATIC_ASSERT( offsetof( ECA_CONTROL_T, channelOverflowCount ) == ECA_CHANNEL_OVERFLOW_COUNT_GET );
+STATIC_ASSERT( offsetof( ECA_CONTROL_T, channelFailedCount ) == ECA_CHANNEL_FAILED_COUNT_GET );
+STATIC_ASSERT( offsetof( ECA_CONTROL_T, channelEventIdHigh ) == ECA_CHANNEL_EVENT_ID_HI_GET );
+STATIC_ASSERT( offsetof( ECA_CONTROL_T, channelEventIdLow ) == ECA_CHANNEL_EVENT_ID_LO_GET );
+STATIC_ASSERT( offsetof( ECA_CONTROL_T, channelParamHigh ) == ECA_CHANNEL_PARAM_HI_GET );
+STATIC_ASSERT( offsetof( ECA_CONTROL_T, channelParamLow ) == ECA_CHANNEL_PARAM_LO_GET );
+STATIC_ASSERT( offsetof( ECA_CONTROL_T, channelTag ) == ECA_CHANNEL_TAG_GET );
+STATIC_ASSERT( offsetof( ECA_CONTROL_T, channelTef ) == ECA_CHANNEL_TEF_GET );
+STATIC_ASSERT( offsetof( ECA_CONTROL_T, channelDeadlineHigh ) == ECA_CHANNEL_DEADLINE_HI_GET );
+STATIC_ASSERT( offsetof( ECA_CONTROL_T, channelDeadlineLow ) == ECA_CHANNEL_DEADLINE_LO_GET );
+STATIC_ASSERT( offsetof( ECA_CONTROL_T, channelExecutedHigh ) == ECA_CHANNEL_EXECUTED_HI_GET );
+STATIC_ASSERT( offsetof( ECA_CONTROL_T, channelExecutedLow ) == ECA_CHANNEL_EXECUTED_LO_GET );
+STATIC_ASSERT( sizeof( ECA_CONTROL_T ) == ECA_CHANNEL_EXECUTED_LO_GET + sizeof(uint32_t) );
 #endif
 
 /*! ---------------------------------------------------------------------------
+ * @ingroup ECA
  * @brief Data type of Event Conditioned Action queue
  */
 typedef struct HW_IMAGE
@@ -513,6 +571,7 @@ STATIC_ASSERT( offsetof( ECA_QUEUE_ITEM_T, executedL ) == ECA_QUEUE_EXECUTED_LO_
 
 #if defined(__lm32__) || defined(__DOXYGEN__)
 /*! ---------------------------------------------------------------------------
+ * @ingroup ECA
  * @brief Returns the top pointer of the ECA queue
  * @param id ECA ID to find
  * @retval NULL Queue not found
@@ -521,6 +580,7 @@ STATIC_ASSERT( offsetof( ECA_QUEUE_ITEM_T, executedL ) == ECA_QUEUE_EXECUTED_LO_
 ECA_QUEUE_ITEM_T* ecaGetQueue( const unsigned int id );
 
 /*! ---------------------------------------------------------------------------
+ * @ingroup ECA
  * @brief Clearing the ECA queue.
  * @param pThis Pointer to ECA queue.
  * @param cnt Number pending actions.
@@ -529,6 +589,7 @@ ECA_QUEUE_ITEM_T* ecaGetQueue( const unsigned int id );
 unsigned int ecaClearQueue( ECA_QUEUE_ITEM_T* pThis, const unsigned int cnt );
 
 /*! ---------------------------------------------------------------------------
+ * @ingroup ECA
  * @brief Returns the top pointer of the ECA queue for LM32
  * @retval NULL Queue not found
  * @return Pointer on found ECA queue
@@ -540,6 +601,7 @@ STATIC inline ECA_QUEUE_ITEM_T* ecaGetLM32Queue( void )
 #endif /* __lm32__ */
 
 /*! --------------------------------------------------------------------------
+ * @ingroup ECA
  * @brief Returns true if ECA object valid.
  */
 STATIC inline bool ecaIsValid( volatile ECA_QUEUE_ITEM_T* pThis )
@@ -548,6 +610,7 @@ STATIC inline bool ecaIsValid( volatile ECA_QUEUE_ITEM_T* pThis )
 }
 
 /*! ---------------------------------------------------------------------------
+ * @ingroup ECA
  * @brief Pops the top action from ECA hardware channel
  */
 STATIC inline void ecaPop( volatile ECA_QUEUE_ITEM_T* pThis )
@@ -556,6 +619,7 @@ STATIC inline void ecaPop( volatile ECA_QUEUE_ITEM_T* pThis )
 }
 
 /*! ---------------------------------------------------------------------------
+ * @ingroup ECA
  * @brief Testing whether top ECA object is valid to the given tag
  *        and pop it from channel if was valid.
  * @param pThis Pointer to ECA queue
@@ -575,7 +639,9 @@ STATIC inline bool ecaTestTagAndPop( volatile ECA_QUEUE_ITEM_T* pThis,
 }
 
 /*! ---------------------------------------------------------------------------
+ * @ingroup ECA
  * @brief Returns the pointer to the hardware ECA control registers.
+ * @see ECA_CONTROL_T
  * @retval !=NULL Valid pointer.
  * @retval ==NULL Error.
  */

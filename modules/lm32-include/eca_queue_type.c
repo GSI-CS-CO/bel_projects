@@ -11,13 +11,13 @@
 #endif
 
 #include <eca_queue_type.h>
-//#include <mini_sdb.h>
 
 #ifndef ECAQMAX
   #define ECAQMAX  4  /*!<@brief  max number of ECA queues */
 #endif
 
 /*! ---------------------------------------------------------------------------
+ * @ingroup ECA
  * @see eca_queue_type.h
  */
 ECA_QUEUE_ITEM_T* ecaGetQueue( const unsigned int id )
@@ -41,6 +41,7 @@ ECA_QUEUE_ITEM_T* ecaGetQueue( const unsigned int id )
 }
 
 /*! ---------------------------------------------------------------------------
+ * @ingroup ECA
  * @see eca_queue_type.h
  */
 unsigned int ecaClearQueue( ECA_QUEUE_ITEM_T* pThis, const unsigned int cnt )
