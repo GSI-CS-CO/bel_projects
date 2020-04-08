@@ -6,18 +6,12 @@ MIAN_MODULE := ecaMsiTest.c
 
 CODE_OPTIMIZATION = s
 
- NEW := 1
 
-ifdef NEW
- SOURCE += $(SCU_LIB_SRC_DIR)/lm32Interrupts.c
- SOURCE += $(SCU_LIB_SRC_DIR)/eca_queue_type.c
- DEFINES += _CONFIG_NEW_MSI
-else
- SOURCE          += $(SCU_LIB_SRC_DIR)/irq.c
-endif
+SOURCE += $(SCU_LIB_SRC_DIR)/lm32Interrupts.c
+SOURCE += $(SCU_LIB_SRC_DIR)/eca_queue_type.c
 
 DEFINES += CONFIG_INTERRUPT_PEDANTIC_CHECK
-#DEFINES += MAX_LM32_INTERRUPTS=4
+DEFINES += MAX_LM32_INTERRUPTS=1
 
 
 include $(REPOSITORY_DIR)/makefiles/makefile.scu

@@ -46,6 +46,11 @@ extern "C" {
  */
 #define ECA_VALID_ACTION  0x00040000
 
+/*!
+ * @brief Interrupt number of ECA event.
+ */
+#define ECA_INTERRUPT_NUMBER 0
+
 /*! ---------------------------------------------------------------------------
  * @ingroup INTERRUPT
  * @brief Control registers of Message-Signaled Interrupt (MSI)

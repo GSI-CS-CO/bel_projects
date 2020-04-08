@@ -12,7 +12,11 @@
 
 #include <stdint.h>
 #include <stdbool.h>
-#include <helper_macros.h>
+#ifdef __lm32__
+ #include <scu_lm32_macros.h>
+#else
+ #include <helper_macros.h>
+#endif
 #include "mini_sdb.h"
 #include "eca_queue_regs.h"
 #include "eca_flags.h"
@@ -25,6 +29,16 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+#define ECA_CHANNEL_FOR_LM32 2
+
+/*!
+ * @brief ECA channel for an embedded CPU (LM32),
+ *        connected to ECA queue pointed by pECAQ
+ *
+ * @see eca_queue_regs.h
+ */
+#define ECA_SELECT_LM32_CHANNEL (ECA_CHANNEL_FOR_LM32 + 1)
 
 /*! ---------------------------------------------------------------------------
  * @ingroup ECA
@@ -461,6 +475,96 @@ STATIC_ASSERT( offsetof( ECA_CONTROL_T, channelExecutedLow ) == ECA_CHANNEL_EXEC
 STATIC_ASSERT( sizeof( ECA_CONTROL_T ) == ECA_CHANNEL_EXECUTED_LO_GET + sizeof(uint32_t) );
 #endif
 
+#if defined(__lm32__) || defined(__DOXYGEN__)
+/*! ---------------------------------------------------------------------------
+ * @ingroup ECA
+ * @brief  Macro accomplishes a wishbone access to a ECA control register.
+ *
+ * It has a logical corresponding to:
+ * @code
+ * p->r
+ * @endcode
+ *
+ * @see ECA_CONTROL_T
+ * @see __WB_ACCESS
+ * @param p Pointer to the ECA control register set of type ECA_CONTROL_T*.
+ * @param r Name of the concerning control register.
+ */
+#define ECA_CONTROL_ACCESS( p, r ) __WB_ACCESS( ECA_CONTROL_T, uint32_t, p, r )
+
+/*! ---------------------------------------------------------------------------
+ * @ingroup ECA
+ * @brief Select the ECA channel for LM32
+ * @param pThis Pointer to ECA control register set.
+ */
+STATIC inline void ecaControlSelectLM32Channel( ECA_CONTROL_T* pThis )
+{
+   ECA_CONTROL_ACCESS( pThis, channelSelect ) = ECA_SELECT_LM32_CHANNEL;
+   ECA_CONTROL_ACCESS( pThis, channelNumberSelect ) = 0;
+}
+
+/*! ---------------------------------------------------------------------------
+ * @ingroup ECA
+ * @brief Read and clear the number of actions which could not be enqueued
+ *        to the selected full channel which were destined for the selected
+ *        subchannel, MSI=(5<<16|num) will be sent when the count becomes
+ *        non-zero.
+ * @param pThis Pointer to ECA control register set.
+ * @return Number of actions before reset.
+ */
+STATIC inline
+uint32_t ecaControlGetAndResetChannelValidCount( ECA_CONTROL_T* pThis )
+{
+   return ECA_CONTROL_ACCESS( pThis, channelValidCount );
+}
+
+/*! ---------------------------------------------------------------------------
+ * @ingroup ECA
+ * @brief Read and clear the number of actions of LM32 channel
+ * @param pThis Pointer to ECA control register set.
+ * @return Number of LM32-actions before reset.
+ */
+STATIC inline
+uint32_t ecaControlGetAndResetLM32ValidCount( ECA_CONTROL_T* pThis )
+{
+   ecaControlSelectLM32Channel( pThis );
+   return ecaControlGetAndResetChannelValidCount( pThis );
+}
+
+/*! ---------------------------------------------------------------------------
+ * @ingroup ECA
+ * @brief Set the destination MSI address for the selected channel.
+ * @param pThis Pointer to ECA control register set.
+ * @param ptr MSI target address.
+ * @param enable If true the selected channel is enabled after this function
+ *               call.
+ */
+STATIC inline
+void ecaControlSetMsiTargetAddress( ECA_CONTROL_T* pThis, const void* ptr,
+                                    const bool enable )
+{
+   ECA_CONTROL_ACCESS( pThis, channelSetEnable ) = 0;
+   ECA_CONTROL_ACCESS( pThis, channelSetTarget ) = (uint32_t) ptr;
+   ECA_CONTROL_ACCESS( pThis, channelSetEnable ) = (uint32_t) enable;
+}
+
+/*! ---------------------------------------------------------------------------
+ * @ingroup ECA
+ * @param pThis Pointer to ECA control register set.
+ * @param ptr MSI target address for LM32.
+ * @param enable If true the LM32- channel is enabled after this function
+ *               call.
+ */
+STATIC inline
+void ecaControlSetMsiLM32TargetAddress( ECA_CONTROL_T* pThis, const void* ptr,
+                                        const bool enable )
+{
+   ecaControlSelectLM32Channel( pThis );
+   ecaControlSetMsiTargetAddress( pThis, ptr, enable );
+}
+
+#endif /* #if defined(__lm32__) || defined(__DOXYGEN__) */
+
 /*! ---------------------------------------------------------------------------
  * @ingroup ECA
  * @brief Data type of Event Conditioned Action queue
@@ -559,15 +663,6 @@ STATIC_ASSERT( offsetof( ECA_QUEUE_ITEM_T, executedH ) == ECA_QUEUE_EXECUTED_HI_
 STATIC_ASSERT( offsetof( ECA_QUEUE_ITEM_T, executedL ) == ECA_QUEUE_EXECUTED_LO_GET );
 #endif
 
-#define ECA_CHANNEL_FOR_LM32 2
-
-/*!
- * @brief ECA channel for an embedded CPU (LM32),
- *        connected to ECA queue pointed by pECAQ
- *
- * @see eca_queue_regs.h
- */
-#define ECA_SELECT_LM32_CHANNEL (ECA_CHANNEL_FOR_LM32 + 1)
 
 #if defined(__lm32__) || defined(__DOXYGEN__)
 /*! ---------------------------------------------------------------------------
