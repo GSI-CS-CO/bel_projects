@@ -79,6 +79,7 @@ eb_address_t wrunipz_pzAvg;             // PZs used over the past second, read
 eb_address_t wrunipz_evtData;           // event data
 eb_address_t wrunipz_evtFlags;          // event flags
 
+#define WAITCMDDONE COMMON_DEFAULT_TIMEOUT * 1000 * 2 // use twice the default timeout and convert to us to be sure the command is processed
 
 uint64_t wrunipz_getSysTime()
 {
@@ -270,86 +271,6 @@ uint32_t wrunipz_common_read(uint64_t ebDevice, uint64_t *statusArray, uint32_t 
 } // wrunipz_status_read
   
 
-void wrunipz_cmd_configure(uint64_t ebDevice)
-{
-  eb_device_t eb_device;
-
-  if (!ebDevice) return;
-  eb_device = (eb_device_t)ebDevice;
-  eb_device_write(eb_device, wrunipz_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)COMMON_CMD_CONFIGURE, 0, eb_block);
-} // wrunipz_cmd_configure
-
-
-void wrunipz_cmd_startop(uint64_t ebDevice)
-{
-  eb_device_t eb_device;
-
-  if (!ebDevice) return;
-  eb_device = (eb_device_t)ebDevice;
-  eb_device_write(eb_device, wrunipz_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)COMMON_CMD_STARTOP, 0, eb_block);
-} // wrunipz_cmd_startop
-
-
-void wrunipz_cmd_stopop(uint64_t ebDevice)
-{
-  eb_device_t eb_device;
-
-  if (!ebDevice) return;
-  eb_device = (eb_device_t)ebDevice;
-  eb_device_write(eb_device, wrunipz_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)COMMON_CMD_STOPOP, 0, eb_block);
-} // wrunipz_cmd_stopop
-
-
-void wrunipz_cmd_recover(uint64_t ebDevice)
-{
-  eb_device_t eb_device;
-
-  if (!ebDevice) return;
-  eb_device = (eb_device_t)ebDevice;
-  eb_device_write(eb_device, wrunipz_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)COMMON_CMD_RECOVER, 0, eb_block);
-} // wrunipz_cmd_recover
-
-
-void wrunipz_cmd_idle(uint64_t ebDevice)
-{
-  eb_device_t eb_device;
-
-  if (!ebDevice) return;
-  eb_device = (eb_device_t)ebDevice;
-  eb_device_write(eb_device, wrunipz_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)COMMON_CMD_IDLE, 0, eb_block);
-} // wrunipz_cmd_idle
-
-
-void wrunipz_cmd_cleardiag(uint64_t ebDevice)
-{
-  eb_device_t eb_device;
-
-  if (!ebDevice) return;
-  eb_device = (eb_device_t)ebDevice;
-  eb_device_write(eb_device, wrunipz_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)COMMON_CMD_CLEARDIAG, 0, eb_block);
-} // wrunipz_cmd_cleardiag
-
-
-void wrunipz_cmd_submit(uint64_t ebDevice)
-{
-  eb_device_t eb_device;
-
-  if (!ebDevice) return;
-  eb_device = (eb_device_t)ebDevice;
-  eb_device_write(eb_device, wrunipz_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)WRUNIPZ_CMD_CONFSUBMIT, 0, eb_block);
-} // wrunipz_cmd_submit
-
-
-void wrunipz_cmd_clearTables(uint64_t ebDevice)
-{
-  eb_device_t eb_device;
-
-  if (!ebDevice) return;
-  eb_device = (eb_device_t)ebDevice;
-  eb_device_write(eb_device, wrunipz_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)WRUNIPZ_CMD_CONFCLEAR, 0, eb_block);
-} // wrunipz_cmd_submit
-
-
 uint32_t wrunipz_table_upload(uint64_t ebDevice, uint32_t pz, uint32_t vacc, uint32_t chn, uint32_t *data, uint32_t nData)
 {
   int          i;
@@ -458,3 +379,89 @@ uint32_t wrunipz_table_download(uint64_t ebDevice, uint32_t pz, uint32_t vacc, u
 } // wrunipz_table_download
 
 
+void wrunipz_cmd_configure(uint64_t ebDevice)
+{
+  eb_device_t eb_device;
+
+  if (!ebDevice) return;
+  eb_device = (eb_device_t)ebDevice;
+  eb_device_write(eb_device, wrunipz_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)COMMON_CMD_CONFIGURE, 0, eb_block);
+  usleep(WAITCMDDONE); // wait for command execution to complete
+} // wrunipz_cmd_configure
+
+
+void wrunipz_cmd_startop(uint64_t ebDevice)
+{
+  eb_device_t eb_device;
+
+  if (!ebDevice) return;
+  eb_device = (eb_device_t)ebDevice;
+  eb_device_write(eb_device, wrunipz_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)COMMON_CMD_STARTOP, 0, eb_block);
+  usleep(WAITCMDDONE); // wait for command execution to complete
+} // wrunipz_cmd_startop
+
+
+void wrunipz_cmd_stopop(uint64_t ebDevice)
+{
+  eb_device_t eb_device;
+
+  if (!ebDevice) return;
+  eb_device = (eb_device_t)ebDevice;
+  eb_device_write(eb_device, wrunipz_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)COMMON_CMD_STOPOP, 0, eb_block);
+  usleep(WAITCMDDONE); // wait for command execution to complete
+} // wrunipz_cmd_stopop
+
+
+void wrunipz_cmd_recover(uint64_t ebDevice)
+{
+  eb_device_t eb_device;
+
+  if (!ebDevice) return;
+  eb_device = (eb_device_t)ebDevice;
+  eb_device_write(eb_device, wrunipz_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)COMMON_CMD_RECOVER, 0, eb_block);
+  usleep(WAITCMDDONE); // wait for command execution to complete
+} // wrunipz_cmd_recover
+
+
+void wrunipz_cmd_idle(uint64_t ebDevice)
+{
+  eb_device_t eb_device;
+
+  if (!ebDevice) return;
+  eb_device = (eb_device_t)ebDevice;
+  eb_device_write(eb_device, wrunipz_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)COMMON_CMD_IDLE, 0, eb_block);
+  usleep(WAITCMDDONE); // wait for command execution to complete
+} // wrunipz_cmd_idle
+
+
+void wrunipz_cmd_cleardiag(uint64_t ebDevice)
+{
+  eb_device_t eb_device;
+
+  if (!ebDevice) return;
+  eb_device = (eb_device_t)ebDevice;
+  eb_device_write(eb_device, wrunipz_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)COMMON_CMD_CLEARDIAG, 0, eb_block);
+  usleep(WAITCMDDONE); // wait for command execution to complete
+} // wrunipz_cmd_cleardiag
+
+
+void wrunipz_cmd_submit(uint64_t ebDevice)
+{
+  eb_device_t eb_device;
+
+  if (!ebDevice) return;
+  eb_device = (eb_device_t)ebDevice;
+  eb_device_write(eb_device, wrunipz_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)WRUNIPZ_CMD_CONFSUBMIT, 0, eb_block);
+  usleep(WAITCMDDONE); // wait for command execution to complete
+} // wrunipz_cmd_submit
+
+
+void wrunipz_cmd_clearTables(uint64_t ebDevice)
+{
+  eb_device_t eb_device;
+
+  if (!ebDevice) return;
+  eb_device = (eb_device_t)ebDevice;
+  eb_device_write(eb_device, wrunipz_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)WRUNIPZ_CMD_CONFCLEAR, 0, eb_block);
+  usleep(WAITCMDDONE); // wait for command execution to complete
+} // wrunipz_cmd_submit

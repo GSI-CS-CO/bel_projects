@@ -41,7 +41,7 @@
 extern "C" {
 #endif
 
-#define WRUNIPZLIB_VERSION 0x002101
+#define WRUNIPZLIB_VERSION 0x002102
 
 // (error) codes; duplicated to avoid the need of joining bel_projects and acc git repos
 #define  WRUNIPZLIB_STATUS_OK                 0    // OK
