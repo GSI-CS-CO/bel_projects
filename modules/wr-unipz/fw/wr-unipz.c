@@ -3,7 +3,7 @@
  *
  *  created : 2018
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 06-April-2020
+ *  version : 09-April-2020
  *
  *  lm32 program for gateway between UNILAC Pulszentrale and a White Rabbit network
  *  this basically serves a Data Master for UNILAC
@@ -63,7 +63,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 22-November-2018
  ********************************************************************************************/
-#define WRUNIPZ_FW_VERSION 0x000103                                     // make this consistent with makefile
+#define WRUNIPZ_FW_VERSION 0x000104                                     // make this consistent with makefile
 
 // standard includes
 #include <stdio.h>
@@ -374,6 +374,7 @@ uint32_t configMILEvent()
   for (i=0; i < (0xf+1); i++) {
     // set filter for all possible virtual accelerators; set filter and LEMO for 50 Hz sync
     if (setFilterEvtMil(pMilPiggy, WRUNIPZ_EVT_50HZ_SYNCH, i, MIL_FILTER_EV_TO_FIFO | MIL_FILTER_EV_PULS1_S) != MIL_STAT_OK) return COMMON_STATUS_ERROR;
+    if (setFilterEvtMil(pMilPiggy, WRUNIPZ_EVT_SYNCH_DATA, i, MIL_FILTER_EV_TO_FIFO                        ) != MIL_STAT_OK) return COMMON_STATUS_ERROR;
     if (setFilterEvtMil(pMilPiggy, WRUNIPZ_EVT_PZ1       , i, MIL_FILTER_EV_TO_FIFO                        ) != MIL_STAT_OK) return COMMON_STATUS_ERROR;
     if (setFilterEvtMil(pMilPiggy, WRUNIPZ_EVT_PZ2       , i, MIL_FILTER_EV_TO_FIFO                        ) != MIL_STAT_OK) return COMMON_STATUS_ERROR;
     if (setFilterEvtMil(pMilPiggy, WRUNIPZ_EVT_PZ3       , i, MIL_FILTER_EV_TO_FIFO                        ) != MIL_STAT_OK) return COMMON_STATUS_ERROR;
@@ -603,7 +604,7 @@ uint32_t doActionOperation(uint32_t *nCycle,                  // total number of
   status = actStatus;
 
   // wait for MIL event
-  milStatus = fwlib_wait4MILEvent( COMMON_MILTIMEOUT, &evtData, &evtCode, &virtAcc, milEvts, sizeof(milEvts)/sizeof(int));
+  milStatus = fwlib_wait4MILEvent(COMMON_MILTIMEOUT, &evtData, &evtCode, &virtAcc, milEvts, sizeof(milEvts)/sizeof(int));
   if (milStatus == COMMON_STATUS_TIMEDOUT) return WRUNIPZ_STATUS_NOMILEVENTS; // error: no MIL event, maybe dead UNIPZ?
   if (milStatus != COMMON_STATUS_OK)       return WRUNIPZ_STATUS_MIL;         // some other MIL error
 
@@ -725,10 +726,7 @@ uint32_t doActionOperation(uint32_t *nCycle,                  // total number of
       break;
       
     case WRUNIPZ_EVT_SYNCH_DATA :                               // super PZ commits recently supplied virt acc -> replace active data by the new ones
-      /*if (flagTransactionSubmit) {
-        configTransactSubmit();                                 // this takes 51us, chk: error handling 
-        flagTransactionSubmit = 0;
-        }  // if transaction submit */
+      DBPRINT3("wr-unipz: synch data event\n");
       configTransactSubmit();
       
       break;
