@@ -111,9 +111,9 @@ sleep 5
 echo -e wr-unipz - start: start operation
 wrunipz-ctl dev/wbm0 startop
 
-sleep 5
-echo -e wr-unipz - loading dummy schedule for all PZs
-wrunipz-ctl dev/wbm0 testfull 0
+#sleep 5
+#echo -e wr-unipz - loading dummy schedule for all PZs
+#wrunipz-ctl dev/wbm0 testfull 0
 
 sleep 5
 echo -e wr-unipz - clear fw diagnostic data
