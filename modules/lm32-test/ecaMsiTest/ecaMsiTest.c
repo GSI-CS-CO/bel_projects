@@ -99,12 +99,14 @@ void configureEcaMsiForLM32( void )
 /*! ---------------------------------------------------------------------------
  * @brief Pop pending embedded CPU actions from an ECA queue and handle them
  *
- * @param cnt The number of pending valid actions
+ * @param pending The number of pending valid actions
  *
  */
-STATIC void ecaHandler( const unsigned int cnt )
+STATIC void ecaHandler( const unsigned int pending )
 {
-   for( unsigned int i = 0; i < cnt; i++ )
+   static unsigned int count = 0;
+
+   for( unsigned int i = 0; i < pending; i++ )
    {
       if( !ecaIsValid( g_pEcaQueue ) )
          continue;
@@ -121,11 +123,13 @@ STATIC void ecaHandler( const unsigned int cnt )
          mprintf( "ecaHandler: id: 0x%08x%08x\n"
                   "deadline:       0x%08x%08x\n"
                   "param:          0x%08x%08x\n"
-                  "flag:           0x%08x\n",
+                  "flag:           0x%08x\n"
+                  "count:          %d\n",
                   ecaItem.eventIdH,  ecaItem.eventIdL,
                   ecaItem.deadlineH, ecaItem.deadlineL,
                   ecaItem.paramH,    ecaItem.paramL,
-                  ecaItem.flags
+                  ecaItem.flags,
+                  ++count
                 );
       }
       else
