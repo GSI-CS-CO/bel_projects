@@ -3,7 +3,7 @@
  *
  *  created : 2018
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 06-April-2020
+ *  version : 09-April-2020
  *
  *  command-line interface for wrunipz
  *
@@ -85,7 +85,7 @@ static void help(void)
   fprintf(stderr, "  recover                        tries to recover from state ERROR and transit to state IDLE\n");
   fprintf(stderr, "  idle                           requests state change to IDLE\n");
   fprintf(stderr, "\n");
-  fprintf(stderr, "  ftestfull <file>               loads table from file for ALL virt accs and all PZs from <file>\n");
+  fprintf(stderr, "  ftestfull <file>               load (and submit) tables from <file> for ALL virt accs and all PZs\n");
   fprintf(stderr, "  readtables                     downloads all tables from PZs and prints some statistics\n");
   fprintf(stderr, "  cleartables                    clears all event tables of all PZs\n");
   fprintf(stderr, "  kill                           kills possibly ongoing transactions\n");  
@@ -277,7 +277,7 @@ int main(int argc, char** argv) {
       if (*tail != 0) {
         fprintf(stderr, "Specify a proper number, not '%s'!\n", optarg);
         exit(1);
-      } /* if *tail */
+      } // if *tail
       if ((logLevel < COMMON_LOGLEVEL_ALL) || (logLevel > COMMON_LOGLEVEL_STATE)) fprintf(stderr, "log level out of range\n");
       break;
     case 'h':
@@ -440,8 +440,6 @@ int main(int argc, char** argv) {
     printCycleHeader();
 
     while (1) {
-      /* api_readDiag(device, &statusArray, &state, &version, &mac, &ip, &nBadStatus, &nBadState, &tDiag, &tS0, &nDummyT, &nDummyI, &statDummy, 0);
-         readInfo(&cycles, &tCycle, &fMessages, &confStat, &nLate, &vaccAvg, &pzAvg); // read info from lm32*/
       wrunipz_info_read(ebDevice, &cycles, &tCycle, &fMessages, &nLate, &vaccAvg, &pzAvg, &messages, &dtMax, &dtMin, &cycJmpMax, &cycJmpMin);
       wrunipz_common_read(ebDevice, &statusArray, &state, &nBadStatus, &nBadState, &version, 0);
       
@@ -477,9 +475,7 @@ int main(int argc, char** argv) {
     } // while
   } // if snoop
 
-  // close Etherbone device and socket
-  /* if ((eb_status = eb_device_close(device)) != EB_OK) die("eb_device_close", eb_status);
-     if ((eb_status = eb_socket_close(socket)) != EB_OK) die("eb_socket_close", eb_status);*/
+  // close connection to firmware
   if ((status = wrunipz_firmware_close(ebDevice)) != COMMON_STATUS_OK) die("device close", status);
 
   return exitCode;
