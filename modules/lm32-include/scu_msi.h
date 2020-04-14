@@ -5,6 +5,7 @@
  * @copyright GSI Helmholtz Centre for Heavy Ion Research GmbH
  * @author    Ulrich Becker <u.becker@gsi.de>
  * @date      04.03.2020
+ * @see https://www-acc.gsi.de/wiki/Timing/TimingSystemHowSoftCPUHandleECAMSIs
  ******************************************************************************
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -39,6 +40,16 @@ extern "C" {
 #define IRQ_OFFS_MSG 0x00000000
 #define IRQ_OFFS_ADR 0x00000004
 #define IRQ_OFFS_SEL 0x00000008
+
+/*!
+ * @brief ECA valid action flag-mask
+ */
+#define ECA_VALID_ACTION  0x00040000
+
+/*!
+ * @brief Interrupt number of ECA event.
+ */
+#define ECA_INTERRUPT_NUMBER 0
 
 /*! ---------------------------------------------------------------------------
  * @ingroup INTERRUPT

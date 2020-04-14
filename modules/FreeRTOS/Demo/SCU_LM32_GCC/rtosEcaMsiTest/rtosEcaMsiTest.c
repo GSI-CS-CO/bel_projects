@@ -1,0 +1,299 @@
+/*!
+ * @file rtosEcaMsiTest.c
+ * @brief Test program for ECA -Interrupts associated with FreeRTOS
+ *
+ * @see https://www-acc.gsi.de/wiki/Timing/TimingSystemHowSoftCPUHandleECAMSIs
+ * @copyright 2020 GSI Helmholtz Centre for Heavy Ion Research GmbH
+ * @date 09.04.2020
+ * @author Ulrich Becker <u.becker@gsi.de>
+ *
+ * This example demonstrates handling of message-signaled interrupts (MSI)
+ * caused by ECA channel.\n
+ * ECA is capable to send MSIs on certain conditions such as producing actions
+ * on reception of timing messages.\n
+ *
+ * Chose SCU: export SCU_URL=scuxl4711
+ * build:     make \n
+ * load:      make load \n
+ * debug:     eb-console tcp/$SCU_URL
+ *
+ *  To run example:\n
+ *  - set ECA rules for eCPU action channel
+ * @code
+ *  saft-ecpu-ctl tr0 -d -c 0x1122334455667788 0xFFFFFFFFFFFFFFFF 0 0x42
+ * @endcode
+ *  - debug firmware output
+ * @code
+ *  eb-console dev/wbm0
+ * @endcode
+ *  - inject timing message (invoke on the second terminal)
+ * @code
+ *  saft-ctl -p tr0 inject 0x1122334455667788 0x8877887766556642 0
+ * @endcode
+ *
+ */
+#include "eb_console_helper.h"
+#include "mini_sdb.h"
+
+#include "scu_msi.h"
+#include "eca_queue_type.h"
+
+#include "FreeRTOS.h"
+#include "queue.h"
+
+#ifndef CONFIG_RTOS
+   #error "This project provides FreeRTOS"
+#endif
+
+/*!
+ * @brief ECA actions tagged for this LM32 CPU
+ *
+ * @code
+ * saft-ecpu-ctl tr0 -d -c 0x1122334455667788 0xFFFFFFFFFFFFFFFF 0 0x42
+ *                                                                 ====
+ * @endcode
+ */
+#define MY_ACT_TAG 0x42
+
+/*!
+ * @brief WB address of ECA control register set.
+ */
+ECA_CONTROL_T* g_pEcaCtl;
+
+/*!
+ * @brief WB address of ECA queue
+ */
+ECA_QUEUE_ITEM_T* g_pEcaQueue;
+
+/*! ---------------------------------------------------------------------------
+ */
+STATIC inline void init( void )
+{
+   discoverPeriphery(); // mini-sdb: get info on important Wishbone infrastructure
+   uart_init_hw();      // init UART, required for printf...
+}
+
+/*! ---------------------------------------------------------------------------
+ * @brief Clear pending valid actions for LM32
+ */
+STATIC inline void clearActions( void )
+{
+   uint32_t valCnt = ecaControlGetAndResetLM32ValidCount( g_pEcaCtl );
+   if( valCnt != 0 )
+   {
+      mprintf( "pending actions: %d\n", valCnt );
+      valCnt = ecaClearQueue( g_pEcaQueue, valCnt ); // pop pending actions
+      mprintf( "cleared actions: %d\n", valCnt );
+   }
+}
+
+/*! ---------------------------------------------------------------------------
+ * @brief Configure ECA to send MSI to embedded soft-core LM32.
+ *
+ * - ECA action channel for LM32 is selected and MSI target address of LM32 is
+ *   set in the ECA MSI target register
+ *
+ */
+STATIC inline void configureEcaMsiForLM32( void )
+{
+   clearActions();   // clean ECA queue and channel from pending actions
+   ecaControlSetMsiLM32TargetAddress( g_pEcaCtl, (void*)pMyMsi, true );
+   mprintf( "MSI path (ECA -> LM32)           : enabled\n"
+           "\tECA channel = %d\n\tdestination = 0x%08x\n",
+            ECA_SELECT_LM32_CHANNEL, (uint32_t)pMyMsi);
+}
+
+/*! ---------------------------------------------------------------------------
+ * @ingroup INTERRUPT
+ * @brief Interrupt function: Handle MSIs sent by ECA
+ *
+ * If interrupt was caused by a valid action, then MSI has value of (4<<16|num).\n
+ * Both ECA action channel and ECA queue connected to that channel must be handled:\n
+ * - read and clear the valid counter value of ECA action channel for LM32 and,\n
+ * - pop pending actions from ECA queue connected to this action channel
+ */
+STATIC void onIrqEcaEvent( const unsigned int intNum,
+                           const void* pContext )
+{
+   MSI_ITEM_T m;
+
+   irqMsiCopyObjectAndRemove( &m, intNum );
+   xQueueSendToFrontFromISR( (QueueHandle_t) pContext, &m, NULL );
+}
+
+/*! ---------------------------------------------------------------------------
+ * @brief Pop pending embedded CPU actions from an ECA queue and handle them
+ */
+STATIC inline void ecaHandler( void )
+{
+   static unsigned int count = 0;
+
+   const unsigned int pending = ecaControlGetAndResetLM32ValidCount( g_pEcaCtl );
+   mprintf( "valid:\t%d\n", pending );
+   if( pending == 0 )
+      return;
+
+   for( unsigned int i = 0; i < pending; i++ )
+   {
+      if( !ecaIsValid( g_pEcaQueue ) )
+         continue;
+
+      ECA_QUEUE_ITEM_T ecaItem = *g_pEcaQueue;
+
+      ecaPop( g_pEcaQueue );
+
+      /*
+       * here: do something according to action
+       */
+      if( ecaItem.tag != MY_ACT_TAG )
+      {
+         mprintf( "%s: unknown tag: %d\n", __func__, ecaItem.tag );
+         continue;
+      }
+
+      mprintf( ESC_FG_YELLOW ESC_BOLD
+               "%s: id: 0x%08x%08x\n"
+               "deadline:       0x%08x%08x\n"
+               "param:          0x%08x%08x\n"
+               "flag:           0x%08x\n"
+               "count:          %d\n"
+               ESC_NORMAL,
+               __func__,
+               ecaItem.eventIdH,  ecaItem.eventIdL,
+               ecaItem.deadlineH, ecaItem.deadlineL,
+               ecaItem.paramH,    ecaItem.paramL,
+               ecaItem.flags,
+               ++count
+             );
+    }
+}
+
+/*! ---------------------------------------------------------------------------
+ * @brief The task main function!
+ */
+STATIC void vTaskEcaMain( void* pvParameters UNUSED )
+{
+   mprintf( ESC_BOLD ESC_FG_CYAN "Task \"%s\" started\n" ESC_NORMAL, __func__ );
+
+   if( pEca != NULL )
+     mprintf("ECA event input                  @ 0x%08x\n", (uint32_t) pEca);
+   else
+   {
+      mprintf(ESC_ERROR"Could not find the ECA event input. Exit!\n");
+      vTaskEndScheduler();
+   }
+   mprintf("MSI destination addr for LM32    : 0x%08x\n", (uint32_t)pMyMsi);
+
+   g_pEcaCtl = ecaControlGetRegisters();
+   if( g_pEcaCtl != NULL )
+      mprintf( "ECA channel control              @ 0x%08x\n",
+               (uint32_t) g_pEcaCtl);
+   else
+   {
+      mprintf( ESC_ERROR "Could not find the ECA channel control. Exit!\n"
+               ESC_NORMAL );
+      vTaskEndScheduler();
+   }
+
+   g_pEcaQueue = ecaGetLM32Queue();
+   if( g_pEcaQueue != NULL )
+   {
+      mprintf( "ECA queue to LM32 action channel @ 0x%08x\n",
+               (uint32_t) g_pEcaQueue );
+   }
+   else
+   {
+      mprintf( ESC_ERROR "Could not find the ECA queue connected"
+                         " to eCPU action channel. Exit!\n" ESC_NORMAL );
+
+   }
+
+   mprintf( "Creating the MSI OS-message queue\n" );
+   QueueHandle_t xMsiQueue = xQueueCreate( 5, sizeof( MSI_ITEM_T ) );
+   if( xMsiQueue == NULL )
+   {
+      mprintf( ESC_ERROR "Could not create OS message queue!\n" ESC_NORMAL );
+      vTaskEndScheduler();
+   }
+
+   configureEcaMsiForLM32();
+
+   ATOMIC_SECTION() irqRegisterISR( ECA_INTERRUPT_NUMBER, xMsiQueue, onIrqEcaEvent );
+   mprintf( "Installing of ECA interrupt is done.\n" );
+
+   unsigned int i = 0;
+   const char fan[] = { '|', '/', '-', '\\' };
+   mprintf( ESC_BOLD "Entering task main loop and waiting for MSI ...\n" ESC_NORMAL );
+   while( true )
+   {
+      MSI_ITEM_T m;
+
+      /*!
+       * Waiting until a message is in the queue.
+       */
+      if( xQueueReceive( xMsiQueue, &m, pdMS_TO_TICKS( 500 ) ) == pdPASS )
+      { /*
+         * At least one message has been received...
+         */
+         mprintf( "\nMSI:\t0x%08x\n"
+                    "Adr:\t0x%08x\n"
+                    "Sel:\t0x%02x\n",
+                    m.msg,  m.adr,  m.sel );
+
+         /*!
+          * Are valid actions pending?
+          */
+         if( (m.msg & ECA_VALID_ACTION) != 0 )
+         { /*
+            * Yes, calling the ecaHandler.
+            */
+            ecaHandler();
+         }
+      }
+      else
+      { /*
+         * Receive timeout: Showing a software fan as still alive.
+         */
+         mprintf( ESC_BOLD "\r%c" ESC_NORMAL, fan[i++] );
+         i %= ARRAY_SIZE( fan );
+      }
+   }
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+STATIC inline BaseType_t initAndStartRTOS( void )
+{
+   BaseType_t status;
+   mprintf( "Creating task \"ECA-Handler\"\n" );
+   status = xTaskCreate( vTaskEcaMain,
+                         "ECA-Handler",
+                         configMINIMAL_STACK_SIZE * 4,
+                         NULL,
+                         tskIDLE_PRIORITY + 1,
+                         NULL
+                       );
+   if( status != pdPASS )
+      return status;
+
+
+   vTaskStartScheduler();
+   portENABLE_INTERRUPTS();
+
+   return pdPASS;
+}
+
+/*! ---------------------------------------------------------------------------
+ */
+void main( void )
+{
+   init();
+   mprintf( ESC_XY( "1", "1" ) ESC_CLR_SCR "FreeRTOS ECA-MSI test\n"
+            "Compiler: " COMPILER_VERSION_STRING "\n" );
+
+   const BaseType_t status = initAndStartRTOS();
+   mprintf( ESC_ERROR "Error: This point shall never be reached!\n"
+                      "Status: %d\n" ESC_NORMAL, status );
+   while( true );
+}
+/*================================== EOF ====================================*/
