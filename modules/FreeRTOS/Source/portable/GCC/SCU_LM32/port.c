@@ -122,6 +122,12 @@ portSTACK_TYPE* pxPortInitialiseStack( portSTACK_TYPE* pxTopOfStack,
 
 #ifndef CONFIG_NO_RTOS_TIMER
 /*! ---------------------------------------------------------------------------
+ * @ingroup INTERRUPT
+ * @ingroup SCU_LM32_TIMER
+ * @brief The timer interrupt function!
+ * @param intNum Interrupt number of this interrupt (not used in this case)
+ * @param pContext User tunnel  (start address of timer registers but
+ *                 not used in this case)
  */
 STATIC void onTimerInterrupt( const unsigned int intNum, const void* pContext )
 {
@@ -132,6 +138,8 @@ STATIC void onTimerInterrupt( const unsigned int intNum, const void* pContext )
 }
 
 /*! ---------------------------------------------------------------------------
+ * @ingroup INTERRUPT
+ * @ingroup SCU_LM32_TIMER
  * @brief Setup timer to generate a tick interrupt.
  */
 inline STATIC void prvSetupTimer( void )
