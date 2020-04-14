@@ -11,7 +11,7 @@
 REPOSITORY_DIR = $(shell git rev-parse --show-toplevel)
 
 MIAN_MODULE := rtosDdr3Test.c
-#SOURCE      += $(SCU_LIB_SRC_DIR)/shared_memory_helper.c
+SOURCE      += $(SCU_LIB_SRC_DIR)/scu_ddr3.c
 
 # The following flag is essential so that the build system adds the
 # FreeRTOS sources to this project.
@@ -29,6 +29,7 @@ CODE_OPTIMIZATION = s
 # Meaningful in debug mode.
  DEFINES += CONFIG_RTOS_PEDANTIC_CHECK
  DEFINES += CONFIG_INTERRUPT_PEDANTIC_CHECK
+ DEFINES += CONFIG_DDR_PEDANTIC_CHECK
 
 DEFINES += MAX_LM32_INTERRUPTS=2
 
