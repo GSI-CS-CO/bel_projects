@@ -64,8 +64,8 @@ STATIC void vTaskWriteDdr3( void* pvParameters )
     */
    DDR3_PAYLOAD_T pl =
    {
-      .ad32[0] = (pvParameters == DDR3_INDEX64_1)? 0: 1000,
-      .ad32[1] = (pvParameters == DDR3_INDEX64_1)? 0: 1000
+      .ad32[0] = (ddr3Index == DDR3_INDEX64_1)? 0: 1000,
+      .ad32[1] = (ddr3Index == DDR3_INDEX64_1)? 0: 1000
    };
 
    while( true )
