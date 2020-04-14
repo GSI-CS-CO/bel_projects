@@ -401,7 +401,7 @@ architecture rtl of monster is
     c_topm_pcie    => f_sdb_auto_msi(c_pcie_msi,    g_en_pcie),
     c_topm_vme     => f_sdb_auto_msi(c_vme_msi,     g_en_vme),
     c_topm_pmc     => f_sdb_auto_msi(c_pmc_msi,     g_en_pmc),
-    c_topm_usb     => f_sdb_auto_msi(c_usb_msi,     false), -- Need to add MSI support !!!
+    c_topm_usb     => f_sdb_auto_msi(c_usb_msi,     g_en_usb), 
     c_topm_prioq   => f_sdb_auto_msi(c_null_msi,    false));
 
   -- The FTM adds a bunch of masters to this crossbar
@@ -1459,7 +1459,6 @@ end generate;
 
   end generate;
 
-  top_msi_master_i(c_topm_usb) <= cc_dummy_slave_out; -- USB does not accept MSI !!!
   usb_n : if not g_en_usb generate
     top_bus_slave_i(c_topm_usb) <= cc_dummy_master_out;
     uart_usb <= '1';
@@ -1477,6 +1476,8 @@ end generate;
         rstn_i    => rstn_sys,
         master_i  => top_bus_slave_o(c_topm_usb),
         master_o  => top_bus_slave_i(c_topm_usb),
+        msi_slave_i => top_msi_master_o(c_topm_usb),
+        msi_slave_o => top_msi_master_i(c_topm_usb),
         uart_o    => uart_usb,
         uart_i    => uart_wrc,
         rstn_o    => usb_rstn_o,
