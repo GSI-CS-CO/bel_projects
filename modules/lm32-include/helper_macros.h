@@ -417,6 +417,8 @@ template <typename TYP> bool isInRange( const TYP v, const TYP minimum,
    })
 #endif
 
+#endif /* ifndef __cplusplus */
+
 /*!
  * Maybe a bug in the obsolete DOXYGEN 1.8.5 in the ASL-cluster,
  * otherwise the local functions of this module will not
@@ -430,8 +432,6 @@ template <typename TYP> bool isInRange( const TYP v, const TYP minimum,
   #define STATIC static
 #endif
 
-
-#endif /* ifndef __cplusplus */
 
 /*! @} */
 

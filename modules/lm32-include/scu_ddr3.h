@@ -34,6 +34,14 @@
 #include <stdbool.h>
 #include <helper_macros.h>
 
+#ifdef CONFIG_RTOS
+  /*
+   * Obtaining the functions ddr3Lock() and ddr3Unlock() in
+   * the project configuration file of FreeRTOS.
+   */
+  #include <FreeRTOS.h>
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 namespace Scu
@@ -58,7 +66,6 @@ namespace Scu
 #else
    #define DDR_ASSERT(__e) ((void)0)
 #endif
-
 
 /*!
  * @brief Maximum size of DDR3 RAM in bytes (1GiBit = GB/8) (134 MB)
@@ -150,6 +157,7 @@ typedef LM32_VOLATILE union
    uint16_t  ad16[sizeof(uint64_t)/sizeof(uint16_t)];
    uint8_t   ad8[sizeof(uint64_t)/sizeof(uint8_t)];
 } DDR3_PAYLOAD_T;
+
 #ifndef __DOXYGEN__
 STATIC_ASSERT( sizeof(DDR3_PAYLOAD_T) == sizeof(uint64_t) );
 #endif
@@ -166,6 +174,14 @@ typedef struct
    DDR3_ADDR_T pBurstModeBase;
 #endif
 } DDR3_T;
+
+#ifndef CONFIG_RTOS
+ /*
+  * Dummy functions when FreeRTOS will not used.
+  */
+ #define ddr3Lock()
+ #define ddr3Unlock()
+#endif
 
 /*! --------------------------------------------------------------------------
  */
@@ -229,12 +245,15 @@ void ddr3write64( register const  DDR3_T* pThis,
 
    register const unsigned int index32 =
                   index64 * (sizeof(DDR3_PAYLOAD_T)/sizeof(uint32_t));
+   ddr3Lock();
    /*
     * CAUTION: Don't change the order of the following both
     * code lines!
     */
    pThis->pTrModeBase[index32+1] = pData->ad32[1]; // DDR3 high word
    pThis->pTrModeBase[index32+0] = pData->ad32[0]; // DDR3 low word
+
+   ddr3Unlock();
 }
 
 /*! ---------------------------------------------------------------------------
@@ -255,12 +274,15 @@ void ddr3read64( register const DDR3_T* pThis, DDR3_PAYLOAD_T* pData,
 
    register const unsigned int index32 =
                   index64 * (sizeof(DDR3_PAYLOAD_T)/sizeof(uint32_t));
+   ddr3Lock();
    /*
     * CAUTION: Don't change the order of the following both
     * code lines!
     */
    pData->ad32[0] = pThis->pTrModeBase[index32+0]; // DDR3 low word
    pData->ad32[1] = pThis->pTrModeBase[index32+1]; // DDR3 high word
+
+   ddr3Unlock();
 }
 #endif /* ifdef __lm32__ */
 
@@ -280,9 +302,11 @@ uint32_t ddr3GetFifoStatus( register const DDR3_T* pThis )
    DDR_ASSERT( pThis != NULL );
    DDR_ASSERT( pThis->pBurstModeBase != DDR3_INVALID );
 
+   ddr3Lock();
+   const uint32_t ret = pThis->pBurstModeBase[DDR3_FIFO_STATUS_OFFSET_ADDR];
+   ddr3Unlock();
 
-
-   return pThis->pBurstModeBase[DDR3_FIFO_STATUS_OFFSET_ADDR];
+   return ret;
 }
 
 /*! ---------------------------------------------------------------------------
@@ -298,12 +322,15 @@ void ddr3PopFifo( register const DDR3_T* pThis,
    DDR_ASSERT( pThis != NULL );
    DDR_ASSERT( pThis->pBurstModeBase != DDR3_INVALID );
 
+   ddr3Lock();
    /*
     * CAUTION: Don't change the order of the following both
     * code lines!
     */
    pData->ad32[0] = pThis->pBurstModeBase[DDR3_FIFO_LOW_WORD_OFFSET_ADDR];
    pData->ad32[1] = pThis->pBurstModeBase[DDR3_FIFO_HIGH_WORD_OFFSET_ADDR];
+
+   ddr3Unlock();
 }
 
 /*! ---------------------------------------------------------------------------
@@ -323,12 +350,15 @@ void ddr3StartBurstTransfer( register const DDR3_T* pThis,
    DDR_ASSERT( pThis->pTrModeBase != DDR3_INVALID );
    DDR_ASSERT( burstLen <= DDR3_XFER_FIFO_SIZE );
 
+   ddr3Lock();
    /*
     * CAUTION: Don't change the order of the following both
     * code lines!
     */
    pThis->pTrModeBase[DDR3_BURST_START_ADDR_REG_OFFSET] = burstStartAddr;
    pThis->pTrModeBase[DDR3_BURST_XFER_CNT_REG_OFFSET]   = burstLen;
+
+   ddr3Unlock();
 }
 #endif /* ifdef __lm32__ */
 /*! ---------------------------------------------------------------------------

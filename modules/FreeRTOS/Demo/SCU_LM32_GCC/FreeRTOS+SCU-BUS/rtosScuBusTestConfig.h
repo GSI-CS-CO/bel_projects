@@ -1,20 +1,12 @@
 /*!
- * @file rtosDdr3TestConfig.h
- * @brief FreeRTOS configuration file for test program up-down-count-mutex
+ * @file rtosScuBusTestConfig.h
+ * @brief FreeRTOS configuration file for test program SCU bus access
  * @copyright GSI Helmholtz Centre for Heavy Ion Research GmbH
  * @author    Ulrich Becker <u.becker@gsi.de>
- * @date      14.04.2020
+ * @date      15.04.2020
  */
-#ifndef _UP_DOWN_COUNT_MUTEXCONFIG_H
-#define _UP_DOWN_COUNT_MUTEXCONFIG_H
-
-/*
- * Here is a good place to include header files that are required across
- * your application.
- */
-
-void ddr3Lock( void );
-void ddr3Unlock( void );
+#ifndef _RTOSSCUBUSTESTCONFIG_H
+#define _RTOSSCUBUSTESTCONFIG_H
 
 #define configUSE_PREEMPTION                    1
 #define configUSE_PORT_OPTIMISED_TASK_SELECTION 0
@@ -94,8 +86,5 @@ void ddr3Unlock( void );
 #define INCLUDE_xTaskGetHandle                  0
 #define INCLUDE_xTaskResumeFromISR              1
 
-/* A header file that defines trace macro can be included here. */
-
-
-#endif /* ifndef _UP_DOWN_COUNT_MUTEXCONFIG_H */
+#endif /* _RTOSSCUBUSTESTCONFIG_H */
 /*================================== EOF ====================================*/

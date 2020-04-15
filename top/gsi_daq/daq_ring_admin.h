@@ -30,6 +30,8 @@
 #ifndef _DAQ_RING_ADMIN_H
 #define _DAQ_RING_ADMIN_H
 
+#include <helper_macros.h>
+
 #ifdef CONFIG_SCU_USE_DDR3
 #include <scu_ddr3.h>
 #else
