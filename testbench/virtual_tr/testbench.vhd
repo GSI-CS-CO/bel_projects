@@ -8,6 +8,9 @@ use work.wishbone_pkg.all;
 use work.ez_usb_pkg.all;
 use work.mbox_pkg.all;
 
+use work.ftm_pkg.all;
+use work.eca_internals_pkg.all;
+
 
 -- use with socat pseudo terminals:
 --   socat -d -d pty,raw,echo=0 pty,raw,echo=0  # creates /dev/pts/40 and /dev/pts/39
@@ -54,6 +57,9 @@ architecture simulation of testbench is
 
   signal counter : integer := 0;
 
+  signal s_time : t_time := (others => '0');
+  signal tm_valid : std_logic := '1';
+
   -- SDB stuff
  constant c_minislave_sdb : t_sdb_device := (
     abi_class     => x"0000", -- undocumented device
@@ -79,17 +85,33 @@ architecture simulation of testbench is
     we  => '0',
     dat => (others => '0'));
 
+  ----------------------------------------------------------------------------------
+  -- FTM constants and signals -----------------------------------------------------
+  ----------------------------------------------------------------------------------
+  constant g_lm32_are_ftm      : boolean := false;
+  constant g_delay_diagnostics : boolean := false;
+  constant g_lm32_ramsizes     : natural := 32768/4;
+  constant g_lm32_profiles     : string  := "medium_icache_debug";
+  constant g_lm32_init_files   : string  := "virtual_tr_stub.mif;virtual_tr_stub.mif";
+  constant g_lm32_cores : integer := 2;
 
+  signal s_lm32_rstn : std_logic_vector(g_lm32_cores-1 downto 0) := (others => '0');
   ----------------------------------------------------------------------------------
   -- GSI Top Crossbar Masters ------------------------------------------------------
   ----------------------------------------------------------------------------------
 
-  constant c_top_masters : natural := 1;
+  constant c_top_my_masters : natural := 1;
   constant c_topm_usb    : natural := 0;
 
-
-  constant c_top_layout_req_masters : t_sdb_record_array(c_top_masters-1 downto 0) :=
+  constant c_top_layout_my_masters : t_sdb_record_array(c_top_my_masters-1 downto 0) :=
    (c_topm_usb     => f_sdb_auto_msi(c_usb_msi, true));
+
+
+  -- The FTM adds a bunch of masters to this crossbar
+  constant c_ftm_masters : t_sdb_record_array := f_lm32_masters_bridge_msis(g_lm32_cores);
+  constant c_top_masters : natural := c_ftm_masters'length + c_top_my_masters;
+  constant c_top_layout_req_masters : t_sdb_record_array(c_top_masters-1 downto 0) :=
+    c_ftm_masters & c_top_layout_my_masters;
 
   constant c_top_layout_masters : t_sdb_record_array := f_sdb_auto_layout(c_top_layout_req_masters);
   constant c_top_bridge_msi     : t_sdb_msi          := f_xwb_msi_layout_sdb(c_top_layout_masters);
@@ -104,13 +126,17 @@ architecture simulation of testbench is
   ----------------------------------------------------------------------------------
 
   -- Only put a slave here if it has critical performance requirements!
-  constant c_top_slaves        : natural := 2;
+  constant c_top_slaves        : natural := 3;
   constant c_tops_mbox         : natural := 0;
   constant c_tops_minislave    : natural := 1;
+  constant c_tops_ftm_cluster  : natural := 2;
+
+  constant c_ftm_slaves : t_sdb_bridge := f_cluster_bridge(c_top_bridge_msi, g_lm32_cores, g_lm32_ramsizes, g_lm32_are_ftm, g_delay_diagnostics);
 
   constant c_top_layout_req_slaves : t_sdb_record_array(c_top_slaves-1 downto 0) :=
    (c_tops_mbox         => f_sdb_auto_device(c_mbox_sdb,      true),
-    c_tops_minislave    => f_sdb_auto_device(c_minislave_sdb, true));
+    c_tops_minislave    => f_sdb_auto_device(c_minislave_sdb, true),
+    c_tops_ftm_cluster  => f_sdb_auto_bridge(c_ftm_slaves,    true));
 
   constant c_top_layout      : t_sdb_record_array := f_sdb_auto_layout(c_top_layout_req_masters, c_top_layout_req_slaves);
   constant c_top_sdb_address : t_wishbone_address := f_sdb_auto_sdb   (c_top_layout_req_masters, c_top_layout_req_slaves);
@@ -235,7 +261,44 @@ begin
     msi_master_i => top_msi_slave_o (c_tops_minislave)
   );
 
+  lm32 : ftm_lm32_cluster
+    generic map(
+      g_is_dm               => g_lm32_are_ftm,
+      g_delay_diagnostics   => g_delay_diagnostics,
+      g_cores               => g_lm32_cores,
+      g_ram_per_core        => g_lm32_ramsizes,
+      g_world_bridge_sdb    => c_ftm_slaves,
+      g_clu_msi_sdb         => c_top_bridge_msi,
+      g_init_files          => g_lm32_init_files,
+      g_profiles            => g_lm32_profiles)
+    port map(
+      clk_ref_i          => clk_sys,
+      rst_ref_n_i        => rst_n,
+      clk_sys_i          => clk_sys,
+      rst_sys_n_i        => rst_n,
+      rst_lm32_n_i       => s_lm32_rstn,
+      tm_tai8ns_i        => s_time,
+      wr_lock_i          => tm_valid,
+      lm32_masters_o     => top_bus_slave_i(top_bus_slave_i'high downto c_top_my_masters),
+      lm32_masters_i     => top_bus_slave_o(top_bus_slave_o'high downto c_top_my_masters),
+      lm32_msi_slaves_o  => top_msi_master_i(top_msi_master_i'high downto c_top_my_masters),
+      lm32_msi_slaves_i  => top_msi_master_o(top_msi_master_o'high downto c_top_my_masters),
+      clu_slave_o        => top_bus_master_i(c_tops_ftm_cluster),
+      clu_slave_i        => top_bus_master_o(c_tops_ftm_cluster),
+      clu_msi_master_o   => top_msi_slave_i(c_tops_ftm_cluster),
+      clu_msi_master_i   => top_msi_slave_o(c_tops_ftm_cluster),
+      dm_prioq_master_o  => open);
 
+  s_lm32_rstn <= (others => rst_n);
+
+  tai_counter: process
+  begin
+    wait until rising_edge(clk_125);
+    if rst_n = '0' then
+    else
+      s_time <= std_logic_vector(unsigned(s_time) + 1);
+    end if;
+  end process;
 
 end architecture;
 

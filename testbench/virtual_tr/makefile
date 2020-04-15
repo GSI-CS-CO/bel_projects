@@ -62,6 +62,16 @@ testbench: 	\
 			../../ip_cores/etherbone-core/hdl/eb_usb_core/ez_usb.vhd					\
 			../../modules/mbox/mbox_pkg.vhd	                                            \
 			../../modules/mbox/mbox.vhd    	                                            \
+			../../ip_cores/general-cores/modules/wishbone/wb_irq/wb_irq_pkg.vhd         \
+			../../ip_cores/general-cores/modules/wishbone/wbgenplus/wbgenplus_pkg.vhd   \
+			../../modules/dm_diag/dm_diag_auto_pkg.vhd                                  \
+			../../modules/ftm/ftm_pkg.vhd                                               \
+			../../ip_cores/general-cores/modules/common/matrix_pkg.vhd                  \
+			../../modules/prioq2/prio_pkg.vhd                                           \
+			../../modules/prioq2/prio_auto_pkg.vhd                                      \
+			../../modules/prioq2/prio.vhd                                               \
+			../../modules/ftm/ftm_lm32_cluster.vhd                                      \
+			../../ip_cores/wr-cores/modules/wr_eca/eca_internals_pkg.vhd                \
 			../common/file_access.vhd    \
 			../common/ez_usb_chip.vhd    \
 			wb_minislave.vhd   \
