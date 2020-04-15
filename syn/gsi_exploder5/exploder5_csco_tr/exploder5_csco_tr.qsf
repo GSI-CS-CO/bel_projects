@@ -110,7 +110,7 @@ set_global_assignment -name REPORT_SOURCE_ASSIGNMENTS ON
 set_global_assignment -name ROUTER_LCELL_INSERTION_AND_LOGIC_DUPLICATION AUTO
 set_global_assignment -name ROUTER_TIMING_OPTIMIZATION_LEVEL MAXIMUM
 set_global_assignment -name SDC_FILE ../../../top/gsi_exploder5/exploder5_csco_tr/exploder5_csco_tr.sdc
-set_global_assignment -name SEED 198
+set_global_assignment -name SEED 161
 set_global_assignment -name SMART_RECOMPILE ON
 set_global_assignment -name STRATIX_DEVICE_IO_STANDARD "2.5 V"
 set_global_assignment -name STRATIXII_CONFIGURATION_DEVICE EPCQ256
