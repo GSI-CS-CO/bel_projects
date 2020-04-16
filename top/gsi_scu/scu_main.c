@@ -37,6 +37,7 @@
  #include "daq_main.h"
 #endif
 
+
 typedef enum
 {
    MIL_INL = 0x00,
@@ -269,8 +270,18 @@ STATIC void onScuMSInterrupt( const unsigned int intNum,
     * @todo Use MSI_ITEM_T instead of MSI_T in future!
     */
    irqMsiCopyObjectAndRemove( (MSI_ITEM_T*)&m, intNum );
-
+#ifndef _CONFIG_NO_DISPATCHER
    add_msg( &g_aMsg_buf[0], IRQ, m );
+#else
+   switch( m.adr & 0xFF )
+   {
+      case ADDR_SCUBUS: add_msg( &g_aMsg_buf[0], SCUBUS, m ); break; // message from scu bus
+      case ADDR_SWI:    add_msg( &g_aMsg_buf[0], SWI,    m ); break; // software message from saftlib
+   #ifdef CONFIG_MIL_FG
+      case ADDR_DEVBUS: add_msg( &g_aMsg_buf[0], DEVBUS, m ); break; // message from dev bus
+   #endif
+   }
+#endif
 }
 
 /*! ---------------------------------------------------------------------------
@@ -282,7 +293,17 @@ STATIC void onScuMSInterrupt( const unsigned int intNum,
 STATIC inline void initInterrupt( void )
 {
    irqRegisterISR( 0, NULL, onScuMSInterrupt );
+#ifdef _CONFIG_NO_DISPATCHER
+
+   g_aMsg_buf[SCUBUS].ring_head = g_aMsg_buf[SCUBUS].ring_tail;
+   g_aMsg_buf[SWI].ring_head = g_aMsg_buf[SWI].ring_tail;
+ #ifdef CONFIG_MIL_FG
+   g_aMsg_buf[DEVSIO].ring_head = g_aMsg_buf[DEVSIO].ring_tail;
+   g_aMsg_buf[DEVBUS].ring_head = g_aMsg_buf[DEVBUS].ring_tail;
+ #endif
+#else
    g_aMsg_buf[IRQ].ring_head = g_aMsg_buf[IRQ].ring_tail; // clear msg buffer
+#endif
    irqEnable();
    mprintf("IRQ table configured. 0x%08x\n", irqGetMaskRegister() );
 }
@@ -370,6 +391,8 @@ STATIC TASK_T g_aTasks[] =
    { NULL,               ALWAYS, 0, commandHandler  }
 };
 
+#ifndef _CONFIG_NO_DISPATCHER
+
 /*! ---------------------------------------------------------------------------
  * @brief Move messages to the correct queue, depending on source
  * @see onScuMSInterrupt
@@ -382,14 +405,15 @@ STATIC inline void dispatch( void )
    const MSI_T m = remove_msg( &g_aMsg_buf[0], IRQ );
    criticalSectionExit();
    switch( m.adr & 0xFF )
-   { //TODO remove these naked numbers asap!
-      case 0x00: add_msg( &g_aMsg_buf[0], SCUBUS, m ); return; // message from scu bus
-      case 0x10: add_msg( &g_aMsg_buf[0], SWI,    m ); return; // software message from saftlib
+   {
+      case ADDR_SCUBUS: add_msg( &g_aMsg_buf[0], SCUBUS, m ); return; // message from scu bus
+      case ADDR_SWI:    add_msg( &g_aMsg_buf[0], SWI,    m ); return; // software message from saftlib
    #ifdef CONFIG_MIL_FG
-      case 0x20: add_msg( &g_aMsg_buf[0], DEVBUS, m ); return; // message from dev bus
+      case ADDR_DEVBUS: add_msg( &g_aMsg_buf[0], DEVBUS, m ); return; // message from dev bus
    #endif
    }
 }
+#endif
 
 /*! ---------------------------------------------------------------------------
  * @ingroup TASK
@@ -409,7 +433,9 @@ STATIC inline void schedule( void )
    const uint64_t tick = getWrSysTime();
    for( unsigned int i = 0; i < ARRAY_SIZE( g_aTasks ); i++ )
    {
+#ifndef _CONFIG_NO_DISPATCHER
       dispatch();
+#endif
       TASK_T* pCurrent = &g_aTasks[i];
       if( (tick - pCurrent->lasttick) < pCurrent->interval )
       {
@@ -432,12 +458,11 @@ STATIC void scu_bus_handler( register TASK_T* pThis FG_UNUSED )
 {
    FG_ASSERT( pThis->pTaskData == NULL );
 
-   if( !has_msg( &g_aMsg_buf[0], SCUBUS ) )
+   MSI_T m;
+   if( !getMessageSave( &m, &g_aMsg_buf[0], SCUBUS ) )
       return;
 
-   const MSI_T m = remove_msg( &g_aMsg_buf[0], SCUBUS );
-   if( m.adr != 0x0 )
-      return;
+   FG_ASSERT( m.adr == ADDR_SCUBUS );
 
    const uint32_t slave_nr = m.msg + 1;
    if( slave_nr > MAX_SCU_SLAVES )

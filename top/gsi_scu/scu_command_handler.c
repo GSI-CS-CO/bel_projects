@@ -64,20 +64,20 @@ void commandHandler( register TASK_T* pThis FG_UNUSED )
 {
    FG_ASSERT( pThis->pTaskData == NULL );
 
-   if( !has_msg( &g_aMsg_buf[0], SWI ) )
-      return; /* Nothing to do.. */
+   MSI_T m;
+   if( !getMessageSave( &m, &g_aMsg_buf[0], SWI ) )
+      return;
+
+   FG_ASSERT( m.adr == ADDR_SWI );
 
 #if defined( CONFIG_MIL_FG ) && defined( CONFIG_READ_MIL_TIME_GAP )
    if( !isMilFsmInST_WAIT() )
       return;
 #endif
 
-   const MSI_T m = remove_msg( &g_aMsg_buf[0], SWI );
-   if( m.adr != 0x10 ) //TODO From where the fuck comes 0x10!!!
-      return;
 
    const unsigned int code  = m.msg >> BIT_SIZEOF( uint16_t );
-   const unsigned int value = m.msg & 0xffff;
+   const unsigned int value = m.msg & 0xFFFF;
    printSwIrqCode( code, value );
 
    switch( code )

@@ -619,7 +619,7 @@ STATIC void milDeviceHandler( register TASK_T* pThis, const bool isScuBus )
    {
       case ST_WAIT:
       {
-         if( has_msg( &g_aMsg_buf[0], isScuBus? DEVSIO : DEVBUS ) )
+         if( hasMessageSave( &g_aMsg_buf[0], isScuBus? DEVSIO : DEVBUS ) )
          {
             FSM_TRANSITION( ST_PREPARE, label='Massage received', color=green );
             break;
@@ -829,7 +829,7 @@ STATIC void milDeviceHandler( register TASK_T* pThis, const bool isScuBus )
       #ifdef CONFIG_READ_MIL_TIME_GAP
          pMilData->gapReadingTime = 0;
       #endif
-         const MSI_T m = remove_msg( &g_aMsg_buf[0], isScuBus? DEVSIO : DEVBUS );
+         const MSI_T m = popMessageSave( &g_aMsg_buf[0], isScuBus? DEVSIO : DEVBUS );
          pMilData->slave_nr = isScuBus? (m.msg + 1) : 0;
          pMilData->timestamp1 = getWrSysTime() + INTERVAL_200US;
          break;

@@ -30,6 +30,10 @@
 #include <scu_function_generator.h>
 #include <stdbool.h>
 
+#ifdef _CONFIG_NO_DISPATCHER
+#include <lm32Interrupts.h>
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 namespace Scu
@@ -144,6 +148,55 @@ static inline bool has_msg(volatile FG_MESSAGE_BUFFER_T* mb, int queue)
 {
    return (mb[queue].ring_head != mb[queue].ring_tail);
 }
+
+/*!
+ * @brief test if a queue has any messages
+ * @param pMessage Target address of message to copy
+ * @param pMsgBuffer pointer to the first message buffer
+ * @param queue number of the queue
+ */
+static inline bool getMessage( MSI_T* pMessage, volatile FG_MESSAGE_BUFFER_T* pMsgBuffer, const unsigned int queue )
+{
+   if( !has_msg( pMsgBuffer, queue ) )
+      return false;
+   *pMessage = remove_msg( pMsgBuffer, queue );
+   return true;
+}
+
+#ifndef _CONFIG_NO_DISPATCHER
+ #define hasMessageSave has_msg
+ #define popMessageSave remove_msg
+ #define getMessageSave getMessage
+#else
+
+static inline
+bool hasMessageSave( volatile FG_MESSAGE_BUFFER_T* mb, int queue )
+{
+   criticalSectionEnter();
+   bool ret = has_msg( mb, queue );
+   criticalSectionExit();
+   return ret;
+}
+
+static inline
+MSI_T popMessageSave( volatile FG_MESSAGE_BUFFER_T* mb, int queue )
+{
+   criticalSectionEnter();
+   MSI_T ret = remove_msg( mb, queue );
+   criticalSectionExit();
+   return ret;
+}
+
+static inline
+bool getMessageSave( MSI_T* pMessage, volatile FG_MESSAGE_BUFFER_T* pMsgBuffer, const unsigned int queue )
+{
+   criticalSectionEnter();
+   bool ret = getMessage( pMessage, pMsgBuffer, queue );
+   criticalSectionExit();
+   return ret;
+}
+#endif
+
 
 #ifdef __cplusplus
 } /* namespace FG */

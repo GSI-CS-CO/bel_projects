@@ -103,6 +103,28 @@ extern "C" {
  */
 extern SCU_SHARED_DATA_T g_shared;
 
+#ifdef _CONFIG_NO_DISPATCHER
+/*!
+ * @brief Number of message queues.
+ */
+#define QUEUE_CNT 4
+
+/*!
+ * @brief Type of message origin
+ */
+typedef enum
+{
+   SCUBUS = 0, /*!<@brief From non- MIL- device       */
+   DEVBUS = 1, /*!<@brief From MIL-device.            */
+   DEVSIO = 2, /*!<@brief From MIL-device via SCU-bus */
+   SWI    = 3  /*!<@brief From Linux host             */
+} MSG_T;
+
+#else
+/*!
+ * @brief Message size of message queue.
+ */
+#define QUEUE_CNT 5
 
 /*!
  * @brief Type of message origin
@@ -115,6 +137,17 @@ typedef enum
    DEVSIO = 3, /*!<@brief From MIL-device via SCU-bus */
    SWI    = 4  /*!<@brief From Linux host             */
 } MSG_T;
+#endif
+
+/*!
+ * @todo find the related definitions in the source code of SAFTLIB and
+ *       replace it by a common header file!
+ */
+#define ADDR_SCUBUS 0x00
+#define ADDR_SWI    0x10
+#ifdef CONFIG_MIL_FG
+#define ADDR_DEVBUS 0x20
+#endif
 
 /*! ---------------------------------------------------------------------------
  * @ingroup TASK
@@ -128,11 +161,6 @@ typedef struct _TASK_T
    void (*func)(struct _TASK_T*); /*!<@brief pointer to the function of the task */
 } TASK_T;
 
-
-/*!
- * @brief Message size of message queue.
- */
-#define QUEUE_CNT 5
 
 /*! ---------------------------------------------------------------------------
  * @brief enables msi generation for the specified channel. \n

@@ -232,9 +232,8 @@ typedef enum
 
 
 extern struct w1_bus wrpc_w1_bus;
-//void ReadTemperatureDevices(int bus, uint64_t *id, uint16_t *temp);
+
 void probe_scu_bus(volatile unsigned short*, unsigned short, unsigned short, int*) GSI_DEPRECATED;
-void ReadTempDevices(int bus, uint64_t *id, uint32_t *temp);
 
 #ifndef CONFIG_OLD_SCU_SW
 
@@ -509,7 +508,7 @@ typedef enum
    ANY  //!< @brief Only one item of the match list has to be match
 } SCUBUS_FIND_MODE_T;
 
-/*!
+/*! ---------------------------------------------------------------------------
  * @ingroup SCU_BUS
  * @brief Finds all scu-bus slaves which match by one or all items of the
  *        given match-list depending on mode.
