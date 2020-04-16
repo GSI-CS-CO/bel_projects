@@ -92,8 +92,8 @@ architecture simulation of testbench is
   constant g_delay_diagnostics : boolean := false;
   constant g_lm32_ramsizes     : natural := 32768/4;
   constant g_lm32_profiles     : string  := "medium_icache_debug";
-  constant g_lm32_init_files   : string  := "";
-  constant g_lm32_cores : integer := 1;
+  constant g_lm32_init_files   : string  := ";";
+  constant g_lm32_cores : integer := 2;
 
   signal s_lm32_rstn : std_logic_vector(g_lm32_cores-1 downto 0) := (others => '0');
   ----------------------------------------------------------------------------------
