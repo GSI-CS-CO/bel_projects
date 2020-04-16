@@ -149,7 +149,7 @@ will find nodes of group \emph{300} and having an event number of \emph{258}.
 
 \subsection{Hello World!}
 
-We will assume that you have a freshly booted (or halted and cleared) DM available over an EB connection. If you encounter any error messages, especially during status check, please look at appendix\ref{}, Troubleshooting.
+We will assume that you have a freshly booted (or halted and cleared) DM available over an EB connection. If you encounter any error messages, especially during status check, please look at appendix \ref{apx:troubleshooting}, Troubleshooting.
 
 \paragraph{First encounter}
 
@@ -160,36 +160,33 @@ The following command will give you the detailed runtime status report.
 $ dm-cmd <eb-device> status -v
 \end{lstlisting}
 %
-The output will look something similar to . Note that none of the worker threads is running right now and none has assigned a pattern or node to it.
+The output will look something similar to the listing \ref{lst:dm-cmd-status}. Note that none of the worker threads is running right now and none has assigned a pattern or node to it.
 
-%\begin{lstlisting}[style = customshell]
-%╒══════════════════════════════════...═════════════...═══════════════════════════════╕
-%│ DataMaster: dev/ttyUSB0          ...             ... │ WR-Time: Tue Feb 6 17:50:44 │
-%├══════════════════════════════════...═════════════...═══════════════════════════════┤
-%│ Cpu │ Thr │ Running │  MsgCount │...    Pattern │...                          Node │
-%├══════════════════════════════════...═════════════...═══════════════════════════════┤
-%│  0  │  0  │    no   │         0 │...  undefined │...                          idle │
-%│  0  │  1  │    no   │         0 │...  undefined │...                          idle │
-%...
-%│  3  │  7  │    no   │         0 │...  undefined │...                          idle │
-%└──────────────────────────────────...─────────────...───────────────────────────────┘
-%...
-%\end{lstlisting}
-
-
+\begin{lstlisting}[style = utf8text,label={lst:dm-cmd-status},caption={Output of dm-cmd status}]
+beginUTF8╒══════════════════════════════════════════════════════════════╕endUTF8
+beginUTF8│endUTF8 DataMaster: dev/ttyUSB0        beginUTF8│endUTF8 WR-Time: Tue Feb 6 17:50:44 beginUTF8│endUTF8
+beginUTF8\pmboxdrawuni{255E}══════════════════════════════════════════════════════════════\pmboxdrawuni{2561}endUTF8
+beginUTF8│endUTF8 Cpu beginUTF8│endUTF8 Thr beginUTF8│endUTF8 Running beginUTF8│endUTF8 MsgCount beginUTF8│endUTF8    Pattern beginUTF8│endUTF8           Node beginUTF8│endUTF8
+beginUTF8\pmboxdrawuni{255E}══════════════════════════════════════════════════════════════\pmboxdrawuni{2561}endUTF8
+beginUTF8│endUTF8  0  beginUTF8│endUTF8  0  beginUTF8│endUTF8    no   beginUTF8│endUTF8        0 beginUTF8│endUTF8  undefined beginUTF8│endUTF8           idle beginUTF8│endUTF8
+beginUTF8│endUTF8  0  beginUTF8│endUTF8  1  beginUTF8│endUTF8    no   beginUTF8│endUTF8        0 beginUTF8│endUTF8  undefined beginUTF8│endUTF8           idle beginUTF8│endUTF8
+...
+beginUTF8│endUTF8  3  beginUTF8│endUTF8  7  beginUTF8│endUTF8    no   beginUTF8│endUTF8        0 beginUTF8│endUTF8  undefined beginUTF8│endUTF8           idle beginUTF8│endUTF8
+beginUTF8└──────────────────────────────────────────────────────────────┘endUTF8
+\end{lstlisting}
 
 \begin{lstlisting}[style = customshell]
 $ dm-sched <eb-device> add helloworld.dot
 \end{lstlisting}
 carpeDM will parse and validate the dotfile, create the graph and upload it to the DM. It then reads back the binary, transforms it into graph again, annotes it with visualisation tags and writes it to download.dot.
-The result should look similar to figure~\ref{fig:hello}.
+The result should look similar to figure~\ref{fig:helloworld}.
 %
 \begin{figure}[H]
    \centering
    \def\svgwidth{0.5\textwidth}
    \includegraphics*[width=0.8\textwidth,keepaspectratio]{Figures/helloworld}
    \caption{Visualisation of Hello World Schedule Graph }
-   \label{fig:hello}
+   \label{fig:helloworld}
 \end{figure}
 %
 The DM yet has to be told that we wish to play the Hello World Pattern. Dots are also used to describe runtime commands to the DM,
@@ -221,7 +218,7 @@ tDeadline: 2018-02-06 17:08:10.556667664 ... EVTNO:  273 ... !delayed (by 565680
 %
 Yep, there they are! Note that the second message has a comment saying it is \emph{delayed}.
 This is nothing to worry about. The the snooping action by the SCU is way slower than the TR hardware, unable to process another message only \SI{8}{\nano\second} after the first.
-All status reports by TR's are explained in detail in chapter~\ref{}.
+All status reports by TR's are explained in detail in chapter~\ref{xxx1}.
 \par
 \noindent
 Congratulations, you just ran your very first accelerator schedule with carpeDM and saw the result on real hardware!
@@ -281,7 +278,7 @@ To allow parrallel operation, there are as many command queues as there are poin
 \subsection{Blocks and Changes during Runtime}
 For blocks to be used dynamically, they need to act as a sink for commands. This is enabled by adding command queues to the block. Up to three priorities are supported, forming a single priority queue. When a block is processed, it will only ever execute a single command and will always choose the highest priority pending.
 \par
-Commands themselves are in fact command generators, each represents $0\dots n$ repetions of a command. Although only certain command type can be (sensibly) executed multiple times, all commands share the generator trait. This means they are functions which have an internal state (their repetition counter, aka quantity). Such a command generator will yield the same command every time it is executed until its quantity reaches zero. Generators with a quantity of zero are exhausted and popped from the queue. This behavior is required for the use of commands as loop initialisers, see~\ref{}.
+Commands themselves are in fact command generators, each represents $0\dots n$ repetions of a command. Although only certain command type can be (sensibly) executed multiple times, all commands share the generator trait. This means they are functions which have an internal state (their repetition counter, aka quantity). Such a command generator will yield the same command every time it is executed until its quantity reaches zero. Generators with a quantity of zero are exhausted and popped from the queue. This behavior is required for the use of commands as loop initialisers, see~\ref{xxx2}.
 
 \begin{figure}[H]
   \centering
@@ -357,7 +354,7 @@ Commands themselves are in fact command generators, each represents $0\dots n$ r
 
 \emph{TODO complete missing examples!}
 
-Using the \emph{flow} command, blocks can temporarily or permanently change their successor node. Figure~\ref{fig:exbranch0} (exbranch.dot) shows a minimal example containing two alternative branches. The default branch taken contains the 'A' nodes, and block B\_BRANCH features a single low level command queue (meta nodes shown for demonstration). Changing the flow from the 'A' to the 'B' branch can be achieved by sending a command to block B\_BRANCH.
+Using the \emph{flow} command, blocks can temporarily or permanently change their successor node. Figure~\ref{fig:exbranch0} (exbranch.dot) shows a minimal example containing two alternative branches. The default branch taken contains the 'A' nodes, and block BLOCK\_BRANCH features a single low level command queue (meta nodes shown for demonstration). Changing the flow from the 'A' to the 'B' branch can be achieved by sending a command to block BLOCK\_BRANCH.
 
 \begin{figure}[H]
    \centering
@@ -410,11 +407,11 @@ We can see now that the DM changed the default path towards the 'B' branch, the 
    \centering
    \def\svgwidth{1.0\textwidth}
    \includegraphics*[width=1.0\textwidth,keepaspectratio]{Figures/exwloop}
-   \caption{ Wait Loop }
+   \caption{Wait Loop}
    \label{fig:exwloop}
 \end{figure}
 
-\lstinputlisting[style=dotfiles, caption={Wait Loop}, label={lst:wloop}]{Source/exwloop.dot}
+\lstinputlisting[style=dotfiles, caption={Wait Loop}, label={lst:exwloop.dot}]{Source/exwloop.dot}
 
 The most basic example of command-controlled loop is an infinite loop. It is executed until an incoming flow command orders the DM to leave the loop.
 Figure~\ref{fig:exwloop} shows the setup. A Block with its default edge pointing at itself is forming an infinite loop. Note that only blocks are allowed to have themselves as a successor.
@@ -439,7 +436,7 @@ $ dm-sched <eb-device>
 
 \lstinputlisting[style=dotfiles, caption={Default pattern with two alternatives}, label={lst:defpat}]{Source/exdefpat.dot}
 
-Base on the examples of branches and simple wait loops, we can construct a scenario using a default pattern and alternative patterns which will only be played on request.
+Based on the examples of branches and simple wait loops, we can construct a scenario using a default pattern and alternative patterns which will only be played on request.
 The basic principle is the same as the wait loop, with the difference of the loop being a productive sequence. This is a common case for FAIR, where a default pattern is played whenever no
 beam requests are demanding other patterns (d-d-d-d-A-d-d-A-B \dots).
 \par You might have noted that we did not start the DM this time, but still issued the flow command. It will lie in wait inside the default patterns command queue until the block is evaluated.
@@ -542,10 +539,10 @@ The host sets a lock, and checks the queue indices in regular intervals until no
    \label{fig:excntloop}
 \end{figure}
 
-\lstinputlisting[style=dotfiles, caption={Wait Loop}, label={lst:wloop}]{Source/excntloop.dot}
+\lstinputlisting[style=dotfiles, caption={Counter Loop}, label={lst:excntloop.dot}]{Source/excntloop.dot}
 
 As described in~\ref{ssec:exdefpat} on page~\pageref{ssec:exdefpat}, commands come with a repetition quantity, specifiying how often they can be executed before they are popped from the queue.
-When the command is integrated into the schedule, this can used as a loop initiliaser, similar to the head of a for-loop. Since each block has its own
+When the command is integrated into the schedule, this can used as a loop initialiser, similar to the head of a for-loop. Since each block has its own
 counter, there is no need for a stack to keep track of the variables. This allows nesting of several loops. The example in figure~\ref{fig:excntloop} sets up a nested loop, where the whole pattern runs infinitely, the outer loop executes 3 times and the inner loop executes 2 times per iteration. Line~\ref{lst:excntloop:def} nicely shows that the whole schedule is actually very simple, stringed together by the red default destination arrows like beads on a chain.
 Only once the commands get executed, there are several loops to go through.
 \par It is obvious that the initialiser must only be called when there are not more repetitions of its command left, as it would otherwise flood the queue.
@@ -562,7 +559,7 @@ This also means that you must not jump into or out of loops without flushing the
    \label{fig:extoloop}
 \end{figure}
 
-\lstinputlisting[style=dotfiles, caption={Timeout Loop}, label={lst:wloop}]{Source/extoloop.dot}
+\lstinputlisting[style=dotfiles, caption={Timeout Loop}, label={lst:extoloop.dot}]{Source/extoloop.dot}
 
 A timeout loop is similar to the wait loop from~\ref{ssec:exwloop} on page~\pageref{ssec:exwloop}, it will exit on command, but it will also terminate after a given number of iterations (timeout).
 This can be achieved by using an initialiser to set up the time out, and then invert the exit logic: leaving the loop is now the default behaviour. Similarily, the command to exit is different: instead of issueing a flow command to leave the loop, we now issue a command to make the schedule stop staying inside the loop. Therefore, sending a flush command to the medium priority clearing the low priority (where the static flow went) will leave the loop before the timeout. The actual magic then happens in line~\ref{lst:extoloop:init}, setting the length of the timeout to \emph{qty} $\cdot$ \emph{period}.
@@ -575,14 +572,14 @@ This can be achieved by using an initialiser to set up the time out, and then in
    \centering
    \def\svgwidth{1.0\textwidth}
    \includegraphics*[width=1.0\textwidth,keepaspectratio]{Figures/excntloop}
-   \caption{ Counter Loop }
-   \label{fig:excntloop}
+   \caption{Alternating Counter Loop}
+   \label{fig:excntloop-alternate}
 \end{figure}
 
-\lstinputlisting[style=dotfiles, caption={Wait Loop}, label={lst:wloop}]{Source/excntloop.dot}
+\lstinputlisting[style=dotfiles, caption={Alternating Counter Loop}, label={lst:excntloop-alternate.dot}]{Source/excntloop-alternate.dot}
 While making two alternating patterns is a trival matter of setting their default destinations to each others entry points,
 alternating sequences mixed with the default pattern (d-A-d-B-d-A-d-B-\dots) are a more interesting case.
-Figure~\ref{fig:excntloop} shows how to achieve this with static flow commands inside the alternative patterns:
+Figure~\ref{fig:excntloop-alternate} shows how to achieve this with static flow commands inside the alternative patterns:
 The default pattern will run in a loop. If made to flow to pattern A, pattern A will then send a command to the default pattern to go to pattern B next.
 After one execution of the default pattern, B is executed, sending a command to the default pattern with pattern A as the successor, and so on.
 To leave this sequence, one would send a flush command to the default pattern at medium priority, after which the schedule would loop the default pattern.

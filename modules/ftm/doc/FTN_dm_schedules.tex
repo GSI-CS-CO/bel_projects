@@ -1,6 +1,7 @@
 \documentclass[12pt,a4paper]{report}
 
-\usepackage[utf8]{inputenc} % Required for inputting international characters \usepackage[T1]{fontenc} % Output
+\usepackage[T1]{fontenc} % Output
+\usepackage[utf8]{inputenc} % Required for inputting international characters 
 \usepackage[english]{babel}
 \usepackage{sectsty}
 \usepackage[binary-units = true]{siunitx}
@@ -45,6 +46,37 @@
 \usepackage[nogroupskip, nomain, acronym]{glossaries}              % use glossaries-package
 \usepackage[printwatermark]{xwatermark}
 
+\usepackage{pmboxdraw}
+
+\DeclareUnicodeCharacter{2550}{\pmboxdrawuni{2550}}
+\DeclareUnicodeCharacter{2552}{\pmboxdrawuni{2552}}
+\DeclareUnicodeCharacter{2555}{\pmboxdrawuni{2555}}
+\DeclareUnicodeCharacter{2502}{\pmboxdrawuni{2502}}
+\DeclareUnicodeCharacter{251C}{\pmboxdrawuni{251C}}
+\DeclareUnicodeCharacter{2524}{\pmboxdrawuni{2524}}
+\DeclareUnicodeCharacter{2514}{\pmboxdrawuni{2514}}
+\DeclareUnicodeCharacter{2500}{\pmboxdrawuni{2500}}
+\DeclareUnicodeCharacter{2518}{\pmboxdrawuni{2518}}
+\DeclareUnicodeCharacter{255E}{\pmboxdrawuni{255E}}
+
+\lstdefinestyle{utf8text}{
+  extendedchars=false,
+  escapeinside={beginUTF8}{endUTF8},
+  belowcaptionskip=1\baselineskip,
+  captionpos=b,
+  breaklines=false,
+  breakatwhitespace=false,
+  keepspaces=true,
+  columns=flexible,
+  xleftmargin=0pt,
+  language=bash,
+  showstringspaces=false,
+  basicstyle=\footnotesize\ttfamily,
+  keywordstyle=\color{black},
+  commentstyle=\itshape\color{purple!40!black},
+  tabsize=2
+}
+
 \newwatermark*[pagex={1, 2,3,4},color=red!50,angle=45,scale=3,xpos=0,ypos=-50]{DRAFT}
 
 
@@ -80,6 +112,7 @@
 \newcommand{\DocBib}{thesis.bib}
 \newcommand{\AppendixA}{dm_memmap}
 \newcommand{\AppendixB}{dm_language}
+\newcommand{\AppendixC}{dm_troubleshooting}
 \newcommand{\DocAuthor}{Mathias Kreider}
 \newcommand{\DocContact}{m.kreider@gsi.de}
 \newcommand{\DocTitle}{CarpeDM\\Programming language for the DataMaster}
@@ -384,6 +417,7 @@ Contact & \DocContact
 
 \include{\AppendixA}
 \include{\AppendixB}
+\include{\AppendixC}
 
 
 \appendix

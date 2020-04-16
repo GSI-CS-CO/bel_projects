@@ -40,13 +40,13 @@ This also results in a higher price per receiver unit than an event based approa
 \end{figure}
 \newpage
 \subsection{Responsibilities}
-The new \gls{cs} design splits responsibilities for machine control into three distinct systems (see ~\ref{fig:stack}).
+The new \gls{cs} design splits responsibilities for machine control into three distinct systems (see ~\ref{fig:cs_svs}).
 
 \begin{figure}[H]
    \centering
    \includegraphics*[width=0.8\textwidth,keepaspectratio]{Figures/cs_svs}
    \caption{\gls{gsi}/\gls{fair} \gls{cs} Design}
-   \label{fig:stack}
+   \label{fig:cs_svs}
 \end{figure}
 
 \paragraph{Settings Management} delivers sets of configuration values and curves to machines (frequency and phase settings for \gls{rf}, current ramps for magnets, etc). This requires large amounts of data and thus high bandwidth traffic, but the timeframe for delivery is relaxed. 
@@ -113,7 +113,7 @@ Another good example is the safe2remove module of carpeDM (see~\ref{chap:online-
    \includegraphics*[width=0.8\textwidth,keepaspectratio]{Figures/vis_debug}
    \caption{Visual style for validation of runtime subgraph changes %Color indicates the machine, red \gls{sis18}, green \gls{esr}.
     }
-   \label{fig:dot_vs_neato}
+   \label{fig:vis_debug}
 \end{figure} 
 \paragraph{}
 Visualised, however, the systems's actions and decision quickly become tangible: All dynamic activity is converted to edges of specific colours and pen styles. All nodes reachable from the subgraph via traversible edges are marked in red -- \emph{dangerous territory}.
