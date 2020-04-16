@@ -1,0 +1,20 @@
+digraph g {
+name="CounterLoopExample";
+graph []
+edge  [type="defdst"]
+node  [cpu="0"];
+  CMD_LOUT0   [type="flow",  pattern="OUTER", patentry="true", toffs  = 0, tvalid=0, qty=3, prio="0"];
+  MSG_LOUT1    [type="tmsg",  pattern="OUTER", toffs  = 0, fid=1, gid=4048, evtno=1, par="0"];
+  BLOCK_LOUT2  [type="block", pattern="OUTER", patexit="true",  tperiod=100000000, qlo="1"];
+  CMD_LIN0     [type="flow",  pattern="INNER", toffs  = 0, tvalid=0, qty=2, prio="0"];
+  MSG_LIN1     [type="tmsg",  pattern="INNER", toffs  = 0, fid=1, gid=4048, evtno=2, par="0"];
+  BLOCK_LIN2   [type="block", pattern="INNER", tperiod=100000000, qlo="1"];
+  
+  CMD_LOUT0 -> MSG_LOUT1 -> CMD_LIN0 -> MSG_LIN1 -> BLOCK_LIN2 -> BLOCK_LOUT2 -> CMD_LOUT0; //(*@\label{lst:excntloop-alt:def}@*)
+  BLOCK_LOUT2 -> MSG_LOUT1 [type="altdst"];
+  CMD_LOUT0 -> BLOCK_LOUT2 [type="target"];
+  CMD_LOUT0 -> MSG_LOUT1  [type="flowdst"];
+  BLOCK_LIN2 -> MSG_LIN1 [type="altdst"];
+  CMD_LIN0 -> BLOCK_LIN2 [type="target"];
+  CMD_LIN0 -> MSG_LIN1  [type="flowdst"];
+}
