@@ -14,8 +14,8 @@ all: simulation.ghw
 view: simulation.ghw 
 	gtkwave simulation.ghw --save=simulation.gtkw &
 
-notrace: 
-	ghdl -r testbench --ieee-asserts=disable
+notrace: compile_testbench 
+	ghdl -r testbench --ieee-asserts=disable --stop-time=1000000ns
 
 # start simulation (which regenerates wave file), then update viewer
 simulation.ghw: compile_testbench 
@@ -49,13 +49,13 @@ testbench: 	\
 			../../ip_cores/general-cores/modules/wishbone/wb_slave_adapter/wb_slave_adapter.vhd \
 			../../ip_cores/general-cores/modules/wishbone/wb_irq/wb_irq_pkg.vhd         \
 			../../ip_cores/general-cores/modules/wishbone/wbgenplus/wbgenplus_pkg.vhd   \
-			../../ip_cores/general-cores/modules/wishbone/wb_irq/wb_irq_slave.vhd       \
+			../common/wb_irq_slave.vhd       \
 			../../ip_cores/general-cores/modules/wishbone/wb_dpram/xwb_dpram.vhd        \
 			../../ip_cores/wr-cores/modules/fabric/wr_fabric_pkg.vhd                    \
 			../../ip_cores/wr-cores/modules/wr_eca/eca_internals_pkg.vhd                \
 			../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_hdr_pkg.vhd              \
 			../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_internals_pkg.vhd        \
-			../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_fifo.vhd                 \
+			../common/eb_fifo.vhd                 \
 			../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_slave_top.vhd            \
 			../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_slave_fsm.vhd            \
 			../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_tx_mux.vhd               \
@@ -116,8 +116,9 @@ file_access_c.o: ../common/file_access_c.c
 	gcc -c ../common/file_access_c.c
 
 # The 'main' target is a stand-alone application to run the "verilated" lm32 code.
-# It is needed to run the auto generated Vlm32_top.mk makefile to generate the 
-# lm32 library that is eventually linked to the GHDL object files
+# It is needed to run the auto generated Vlm32_top.mk makefile which generates the 
+# lm32 library that is linked together with the GHDL object files into the final
+# testbench executable.
 LM32_SRC=../../ip_cores/general-cores/modules/wishbone/wb_lm32/src
 LM32_MUL=../../ip_cores/general-cores/modules/wishbone/wb_lm32/platform/generic
 LM32_TOP=$(LM32_SRC)/lm32_top.v
