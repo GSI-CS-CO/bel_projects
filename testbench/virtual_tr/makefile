@@ -1,6 +1,6 @@
 GHDL_ALTERA=/home/michael/build/ghdl_vendor_scripts/altera
 
-GHDLFLAGS = --ieee=synopsys --std=93 \
+GHDLFLAGS = --ieee=synopsys --std=93c \
 	-fexplicit -frelaxed-rules --no-vital-checks --warn-binding --mb-comments \
 	-P$(GHDL_ALTERA)/altera/v93      \
 	-P$(GHDL_ALTERA)/altera_lnsim/v93\
@@ -29,7 +29,10 @@ testbench: 	\
 			../../ip_cores/general-cores/modules/common/gencores_pkg.vhd                 \
 			../../ip_cores/general-cores/modules/common/matrix_pkg.vhd                   \
 			../../ip_cores/general-cores/modules/genrams/generic/generic_async_fifo.vhd  \
+			../../ip_cores/general-cores/modules/genrams/generic/generic_async_fifo_dual_rst.vhd \
 			../../ip_cores/general-cores/modules/genrams/common/inferred_async_fifo.vhd  \
+			../../ip_cores/general-cores/modules/genrams/common/inferred_async_fifo_dual_rst.vhd  \
+			../common/inferred_sync_fifo.vhd   \
 			../../ip_cores/general-cores/modules/genrams/altera/generic_spram.vhd        \
 			../../ip_cores/general-cores/modules/genrams/altera/generic_simple_dpram.vhd \
 			../../ip_cores/general-cores/modules/genrams/altera/generic_dpram.vhd        \
@@ -37,8 +40,9 @@ testbench: 	\
 			../../ip_cores/general-cores/modules/wishbone/wishbone_pkg.vhd               \
 			../../ip_cores/general-cores/modules/wishbone/wb_crossbar/sdb_rom.vhd        \
 			../../ip_cores/general-cores/modules/wishbone/wb_crossbar/xwb_crossbar.vhd   \
+			../../ip_cores/general-cores/modules/wishbone/wb_crossbar/xwb_sdb_crossbar.vhd   \
 			../../ip_cores/general-cores/modules/wishbone/wb_clock_crossing/xwb_clock_crossing.vhd \
-			../../ip_cores/general-cores/modules/wishbone/wb_crossbar/wb_skidpad.vhd    \
+			../../ip_cores/general-cores/modules/wishbone/wb_register/wb_skidpad.vhd    \
 			../../ip_cores/general-cores/modules/wishbone/wb_slave_adapter/wb_slave_adapter.vhd \
 			../../ip_cores/general-cores/modules/wishbone/wb_irq/wb_irq_pkg.vhd         \
 			../../ip_cores/general-cores/modules/wishbone/wbgenplus/wbgenplus_pkg.vhd   \
@@ -72,7 +76,7 @@ testbench: 	\
 			../../modules/mbox/mbox_pkg.vhd	                                            \
 			../../modules/mbox/mbox.vhd    	                                            \
 			../../modules/dm_diag/dm_diag_auto_pkg.vhd                                  \
-			../../modules/dm_diag/dm_diag.vhd                                           \
+			../common/dm_diag.vhd  \
 			../../modules/dm_diag/dm_diag_auto.vhd                                      \
 			../../modules/ftm/ftm_pkg.vhd                                               \
 			../../modules/prioq2/prio_pkg.vhd                                           \
