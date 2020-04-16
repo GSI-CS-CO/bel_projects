@@ -14,9 +14,12 @@ all: simulation.ghw
 view: simulation.ghw 
 	gtkwave simulation.ghw --save=simulation.gtkw &
 
+notrace: 
+	ghdl -r testbench --ieee-asserts=disable
+
 # start simulation (which regenerates wave file), then update viewer
 simulation.ghw: compile_testbench 
-	ghdl -r testbench --stop-time=700000ns --wave=simulation.ghw --ieee-asserts=disable
+	ghdl -r testbench --stop-time=1000000ns --wave=simulation.ghw --ieee-asserts=disable
 	#vcd2fst simulation.vcd simulation.fst && rm simulation.vcd
 	gsettings set com.geda.gtkwave reload 0
 
@@ -33,9 +36,9 @@ testbench: 	\
 			../../ip_cores/general-cores/modules/genrams/common/inferred_async_fifo.vhd  \
 			../../ip_cores/general-cores/modules/genrams/common/inferred_async_fifo_dual_rst.vhd  \
 			../common/inferred_sync_fifo.vhd   \
-			../../ip_cores/general-cores/modules/genrams/altera/generic_spram.vhd        \
-			../../ip_cores/general-cores/modules/genrams/altera/generic_simple_dpram.vhd \
-			../../ip_cores/general-cores/modules/genrams/altera/generic_dpram.vhd        \
+			../common/generic_spram.vhd        \
+			../common/generic_simple_dpram.vhd \
+			../common/generic_dpram.vhd        \
 			../../ip_cores/general-cores/modules/genrams/generic/generic_sync_fifo.vhd   \
 			../../ip_cores/general-cores/modules/wishbone/wishbone_pkg.vhd               \
 			../../ip_cores/general-cores/modules/wishbone/wb_crossbar/sdb_rom.vhd        \
@@ -95,7 +98,7 @@ testbench: 	\
 			../common/ez_usb_chip.vhd    \
 			wb_minislave.vhd   \
 			testbench.vhd 
-	ghdl -a $(GHDLFLAGS) $?
+	ghdl -a -g $(GHDLFLAGS) $?
 	ghdl -m -Wl,interface_lm32_c.o \
 	        -Wl,obj_dir/verilated.o \
 	        -Wl,obj_dir/verilated_vcd_c.o \
