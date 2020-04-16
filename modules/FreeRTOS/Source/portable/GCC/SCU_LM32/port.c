@@ -308,5 +308,22 @@ void vApplicationStackOverflowHook( TaskHandle_t* pxTask, signed char* pcTaskNam
 }
 #endif /* #if ( configCHECK_FOR_STACK_OVERFLOW != 0 ) */
 
+#if ( configUSE_MALLOC_FAILED_HOOK != 0 ) || defined(__DOXYGEN__)
+/*! ---------------------------------------------------------------------------
+ * @ingroup OVERWRITABLE
+ * @brief Becomes invoked when a memory allocation was not successful.
+ * @note Use this function for develop and debug purposes only!
+ * @see https://www.freertos.org/a00016.html
+ * @see FreeRTOSConfig.h
+ */
+#ifndef __DOXYGEN__
+__attribute__((weak))
+#endif
+void vApplicationMallocFailedHook( void )
+{
+   mprintf( ESC_ERROR "Error: Memory allocation failed!\n" ESC_NORMAL );
+   configASSERT( false );
+}
+#endif /* #if ( configUSE_MALLOC_FAILED_HOOK != 0 ) */
 
 /*================================== EOF ====================================*/
