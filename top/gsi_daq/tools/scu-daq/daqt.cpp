@@ -718,17 +718,27 @@ void DaqContainer::onBlockReceiveError( void )
 ///////////////////////////////////////////////////////////////////////////////
 /*! ---------------------------------------------------------------------------
  */
-inline int daqtMain( int argc, char** ppArgv )
+inline int daqtMain( const int argc, char** ppArgv )
 {
+   DEBUG_MESSAGE( "Start" );
+#ifdef DEBUGLEVEL
+   for( int i = 0; i < argc; i++ )
+      DEBUG_MESSAGE( "Arg " << i << ": " << ppArgv[i] );
+#endif
+
    CommandLine cmdLine( argc, ppArgv );
    DaqContainer* pDaqContainer = cmdLine();
    if( pDaqContainer == nullptr )
+   {
+      DEBUG_MESSAGE( "Commandline parser returns nullptr!" );
       return EXIT_FAILURE;
+   }
 
    int key;
    Terminal oTerminal;
    pDaqContainer->start();
    bool doRead = true;
+   DEBUG_MESSAGE( "Enter main loop..." );
    while( (key = Terminal::readKey()) != '\e' )
    {
       switch( key )

@@ -598,9 +598,13 @@ int CommandLine::onArgument( void )
          SCU_ASSERT( m_poAllDaq == nullptr );
          if( arg.find( "tcp/" ) == string::npos )
             arg = "tcp/" + arg;
-#if 1
+#if 0
+         //TODO Doesn't works yet!
          if( daq::isConcurrentProcessRunning( getProgramName(), arg ) )
+         {
+            DEBUG_MESSAGE( "Exit due daq::isConcurrentProcessRunning()" );
             return -1;
+         }
 #endif
 
 #ifdef CONFIG_NO_FE_ETHERBONE_CONNECTION

@@ -30,8 +30,8 @@
 #include <scu_function_generator.h>
 #include <stdbool.h>
 
-#ifdef _CONFIG_NO_DISPATCHER
-#include <lm32Interrupts.h>
+#if defined( _CONFIG_NO_DISPATCHER ) && defined(__lm32__)
+  #include <lm32Interrupts.h>
 #endif
 
 #ifdef __cplusplus
@@ -51,6 +51,8 @@ namespace FG
 #define DAQ_RING_SIZE  2048
 //#define DAQ_RING_SIZE 512
 //#define DAQ_RING_SIZE  1024
+
+#ifdef __lm32__
 
 /** @brief check if a channel buffer is empty
  *  @param cr channel register
@@ -129,7 +131,7 @@ typedef struct PACKED_SIZE
 } FG_MESSAGE_BUFFER_T;
 
 //#pragma pack(pop)
-#ifdef __lm32__
+
 void cbWrite(volatile FG_CHANNEL_BUFFER_T* cb, volatile FG_CHANNEL_REG_T*, const int, FG_PARAM_SET_T*);
 
 void cbDump(volatile FG_CHANNEL_BUFFER_T* cb, volatile FG_CHANNEL_REG_T*, const int num );
@@ -138,7 +140,6 @@ int add_msg(volatile FG_MESSAGE_BUFFER_T* mb, int queue, MSI_T m);
 
 MSI_T remove_msg(volatile FG_MESSAGE_BUFFER_T* mb, int queue);
 
-#endif /* ifdef __lm32__ */
 
 /** @brief test if a queue has any messages
  *  @param mb pointer to the first message buffer
@@ -197,6 +198,7 @@ bool getMessageSave( MSI_T* pMessage, volatile FG_MESSAGE_BUFFER_T* pMsgBuffer, 
 }
 #endif
 
+#endif /* ifdef __lm32__ */
 
 #ifdef __cplusplus
 } /* namespace FG */

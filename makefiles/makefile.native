@@ -69,7 +69,7 @@ ifeq ($(DEBUG), 1)
 DEBUG_GUI ?= kdbg
 
 ifdef CALL_ARGS
-DBG_ARGS = "-a $(CALL_ARGS)"
+DBG_ARGS = -a "$(CALL_ARGS)"
 endif
 
 .PHONY: dbg
