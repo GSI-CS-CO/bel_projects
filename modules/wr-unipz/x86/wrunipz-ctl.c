@@ -3,7 +3,7 @@
  *
  *  created : 2018
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 09-April-2020
+ *  version : 17-April-2020
  *
  *  command-line interface for wrunipz
  *
@@ -88,7 +88,6 @@ static void help(void)
   fprintf(stderr, "  ftestfull <file>               load (and submit) tables from <file> for ALL virt accs and all PZs\n");
   fprintf(stderr, "  readtables                     downloads all tables from PZs and prints some statistics\n");
   fprintf(stderr, "  cleartables                    clears all event tables of all PZs\n");
-  fprintf(stderr, "  kill                           kills possibly ongoing transactions\n");  
   fprintf(stderr, "\n");
   fprintf(stderr, "  diag                           shows statistics and detailled information\n");
   fprintf(stderr, "  cleardiag                      clears FW statistics\n");
