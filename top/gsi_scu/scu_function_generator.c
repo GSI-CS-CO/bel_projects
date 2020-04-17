@@ -29,7 +29,7 @@
 
 #include <scu_function_generator.h>
 #include <scu_main.h>
-#include <mprintf.h>
+#include <eb_console_helper.h>
 #ifdef CONFIG_MIL_FG
 #include <scu_mil.h>
 #endif
@@ -55,7 +55,8 @@ void printFgs( void )
       if( pFgMacro->outputBits == 0 )
          break;
 
-      mprintf( "fg-%d-%d\tver: %d output-bits: %d\n",
+      mprintf( ESC_FG_CYAN ESC_BOLD
+               "fg-%d-%d\tver: %d output-bits: %d\n" ESC_NORMAL,
                pFgMacro->socket,
                pFgMacro->device,
                pFgMacro->version,

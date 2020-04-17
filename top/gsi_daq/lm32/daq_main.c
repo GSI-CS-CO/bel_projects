@@ -177,6 +177,25 @@ STATIC inline bool forEachPostMortemChennel( DAQ_DEVICE_T* pDevice )
    return false;
 }
 
+#if ( DEBUGLEVEL >= 1 )
+/*! ---------------------------------------------------------------------------
+ * @brief prints the flags of the interrupt pending register.
+ */
+STATIC inline void irqPrintDebugPending( void )
+{
+   static uint32_t lastPending = ~0;
+
+   uint32_t pending = irqGetAndResetPendingRegister();
+   if( pending != lastPending )
+   {
+      DBPRINT1( "DBG: pending: 0x%08x\n", pending );
+      lastPending = pending;
+   }
+}
+#else
+#define irqPrintDebugPending()
+#endif
+
 /*! ---------------------------------------------------------------------------
  */
 #ifdef CONFIG_DAQ_SINGLE_APP
@@ -193,9 +212,7 @@ void forEachScuDaqDevice( void )
 
    isIrq = true; //!!
 #ifdef CONFIG_DAQ_SINGLE_APP
-   uint32_t pending = irqGetAndResetPendingRegister();
-   if( pending != 0 )
-      DBPRINT1( "DBG: pending: 0x%08x\n", pending );
+   irqPrintDebugPending();
 #endif
    for( unsigned int deviceNr = 0;
        deviceNr < daqBusGetFoundDevices( &g_scuDaqAdmin.oDaqDevs ); deviceNr++ )
