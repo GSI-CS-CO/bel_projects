@@ -18,7 +18,14 @@
 #include "FreeRTOS.h"
 #include "task.h"
 
-#define MAX_TEST_SLAVES 2
+#define MAX_TEST_SLAVES MAX_SCU_SLAVES
+
+typedef struct
+{
+   unsigned int slot;
+   void*        pAddress;
+} SLAVE_T;
+
 
 /*! ---------------------------------------------------------------------------
  */
@@ -28,8 +35,11 @@ STATIC inline void init( void )
    uart_init_hw();      // init UART, required for printf...
 }
 
-STATIC void vTaskScuBusSlave( void* pSlaveAddress )
+/*! ---------------------------------------------------------------------------
+ */
+STATIC void vTaskScuBusSlave( void* pvParameters )
 {
+   SLAVE_T* pSlave = (SLAVE_T*) pvParameters;
    uint16_t count = 0;
    while( true )
    {
@@ -60,26 +70,45 @@ STATIC void vTaskMain( void* pvParameters UNUSED )
       vTaskEndScheduler();
    }
 
-   void* slaveAddresses[MAX_TEST_SLAVES];
+   SLAVE_T slaves[MAX_TEST_SLAVES];
    unsigned int m = 0;
    for( unsigned int i = SCUBUS_START_SLOT; i <= MAX_SCU_SLAVES; i++ )
    {
       if( !scuBusIsSlavePresent( slavePersentFlags, i ) )
          continue;
 
-      slaveAddresses[m] = scuBusGetAbsSlaveAddr( pScuBusBase, i );
+      slaves[m].slot = i;
+      slaves[m].pAddress = scuBusGetAbsSlaveAddr( pScuBusBase, i );
       mprintf( "Use slave in slot %u; address: 0x%08x\n",
-               i, (uint32_t)slaveAddresses[m] );
+               slaves[m].slot, slaves[m].pAddress );
       //TODO
       m++;
-      if( m >= ARRAY_SIZE( slaveAddresses ) )
+      if( m >= ARRAY_SIZE( slaves ) )
          break;
 
    }
 
+   TickType_t xLastExecutionTime = xTaskGetTickCount();
+   const unsigned int Y = 10;
+   unsigned int secs = 0;
+   mprintf( "Enter main loop...\n" );
    while( true )
    {
       //TODO
+      
+      unsigned int i;
+      for( i = 0; i < m; i++ )
+      {
+         mprintf( ESC_XY( "1", "%d" ) ESC_CLR_LINE
+                  "Slot: %02d: ",
+                  Y+i, slaves[i].slot );
+      }
+      mprintf( ESC_XY( "1", "%d" ) ESC_CLR_LINE
+               "Seconds: %u", Y+i+1, secs++ );
+      /*
+       * Task will suspend for 1000 ms.
+       */
+      vTaskDelayUntil( &xLastExecutionTime, pdMS_TO_TICKS( 1000 ) );
    }
 }
 
