@@ -20,12 +20,22 @@
 
 #define MAX_TEST_SLAVES MAX_SCU_SLAVES
 
+//#define CONFIG_SCU_ATOMIC_SECTION
+
 typedef struct
 {
    unsigned int slot;
    void*        pAddress;
+   TaskHandle_t xCreatedTask;
+   uint16_t     lastCount;
+   bool         decerment;
 } SLAVE_T;
 
+#ifdef CONFIG_SCU_ATOMIC_SECTION
+   #define SCU_ATOMIC_SECTION() ATOMIC_SECTION()
+#else
+   #define SCU_ATOMIC_SECTION()
+#endif
 
 /*! ---------------------------------------------------------------------------
  */
@@ -36,22 +46,52 @@ STATIC inline void init( void )
 }
 
 /*! ---------------------------------------------------------------------------
+ * @brief Task function which represents a single SCU-bus slave.
+ *
+ * It reads the slaves echo register, increment or decrement it and write it
+ * back.
  */
 STATIC void vTaskScuBusSlave( void* pvParameters )
 {
    SLAVE_T* pSlave = (SLAVE_T*) pvParameters;
-   uint16_t count = 0;
+   volatile  uint16_t count = 0;
+
+   /*
+    * The size of the slaves echo register is 16 bit only. Therefore
+    * a delay counter is used to throttle the up respectively down counting.
+    */
+   unsigned int delay = 0;
+
    while( true )
    {
-      count++;
+      SCU_ATOMIC_SECTION()
+         count = scuBusGetSlaveValue16( pSlave->pAddress, Echo_Register );
+
+      if( delay == 1000 )
+      {
+         delay = 0;
+         if( pSlave->decerment )
+            count--;
+         else
+            count++;
+      }
+      else
+         delay++;
+
+      SCU_ATOMIC_SECTION()
+         scuBusSetSlaveValue16( pSlave->pAddress, Echo_Register, count );
+      //portYIELD();
    }
 }
 
 /*! ---------------------------------------------------------------------------
+ * @brief The main task.
+ *
+ * Scans the whole SCU-bus end creates a task for each found slave.
  */
 STATIC void vTaskMain( void* pvParameters UNUSED )
 {
-   mprintf( "Task \"%s\" started\n", __func__ );
+   mprintf( ESC_FG_MAGNETA "Task \"%s\" started\n", __func__ );
 
    void* pScuBusBase = find_device_adr( GSI, SCU_BUS_MASTER );
    if( pScuBusBase == (void*)ERROR_NOT_FOUND )
@@ -64,11 +104,6 @@ STATIC void vTaskMain( void* pvParameters UNUSED )
    const SCUBUS_SLAVE_FLAGS_T slavePersentFlags = scuBusFindAllSlaves( pScuBusBase );
    const unsigned int numberOfSlaves = scuBusGetNumberOfSlaves( slavePersentFlags );
    mprintf( "%d slaves found.\n", numberOfSlaves );
-   if( numberOfSlaves < MAX_TEST_SLAVES )
-   {
-      mprintf( ESC_ERROR "This test needs at least two SCU bus slaves!" ESC_NORMAL);
-      vTaskEndScheduler();
-   }
 
    SLAVE_T slaves[MAX_TEST_SLAVES];
    unsigned int m = 0;
@@ -79,29 +114,56 @@ STATIC void vTaskMain( void* pvParameters UNUSED )
 
       slaves[m].slot = i;
       slaves[m].pAddress = scuBusGetAbsSlaveAddr( pScuBusBase, i );
-      mprintf( "Use slave in slot %u; address: 0x%08x\n",
-               slaves[m].slot, slaves[m].pAddress );
-      //TODO
+      slaves[m].decerment = (m % 2) != 0;
+      SCU_ATOMIC_SECTION()
+         scuBusSetSlaveValue16( slaves[m].pAddress, Echo_Register, 0 );
+      int status = xTaskCreate( vTaskScuBusSlave,
+                                "SCU-Slave",
+                                configMINIMAL_STACK_SIZE,
+                                (void*)&slaves[m],
+                                tskIDLE_PRIORITY + 1,
+                                &slaves[m].xCreatedTask );
+      if( status != pdPASS )
+      {
+         mprintf( ESC_ERROR
+                  "Unable to start child task for slot: %d, status: %d\n"
+                  ESC_NORMAL,
+                   slaves[m].slot, status );
+         vTaskEndScheduler();
+      }
+
+      mprintf( "Task for slave in slot %u; address: 0x%08x; ID: %u started.\n",
+               slaves[m].slot, slaves[m].pAddress, slaves[m].xCreatedTask );
+      slaves[m].lastCount = 0;
       m++;
       if( m >= ARRAY_SIZE( slaves ) )
          break;
-
    }
 
    TickType_t xLastExecutionTime = xTaskGetTickCount();
-   const unsigned int Y = 10;
+   const unsigned int Y = m + 10;
    unsigned int secs = 0;
-   mprintf( "Enter main loop...\n" );
+   mprintf( "Enter main loop...\n" ESC_NORMAL );
    while( true )
    {
-      //TODO
-      
       unsigned int i;
       for( i = 0; i < m; i++ )
       {
-         mprintf( ESC_XY( "1", "%d" ) ESC_CLR_LINE
-                  "Slot: %02d: ",
-                  Y+i, slaves[i].slot );
+         uint16_t counter;
+         SCU_ATOMIC_SECTION()
+            counter = scuBusGetSlaveValue16( slaves[i].pAddress, Echo_Register );
+
+         mprintf( ESC_XY( "1", "%d" ) ESC_CLR_LINE ESC_FG_CYAN ESC_BOLD
+                  "Slot: %02d: echo register: %05u, 0x%04x, %s delta: %u"
+                  ESC_NORMAL,
+                  Y+i, slaves[i].slot,
+                  counter, counter,
+                  slaves[i].decerment? "dec" : "inc",
+                  0xFFFF & (slaves[i].decerment?
+                             (slaves[i].lastCount - counter):
+                             (counter - slaves[i].lastCount) ) );
+
+         slaves[i].lastCount = counter;
       }
       mprintf( ESC_XY( "1", "%d" ) ESC_CLR_LINE
                "Seconds: %u", Y+i+1, secs++ );
@@ -118,27 +180,34 @@ STATIC void vTaskMain( void* pvParameters UNUSED )
 STATIC inline BaseType_t initAndStartRTOS( void )
 {
    BaseType_t status = xTaskCreate( vTaskMain,
-                         "Main task",
-                         configMINIMAL_STACK_SIZE * 4,
-                         NULL,
-                         tskIDLE_PRIORITY + 1,
-                         NULL
-                       );
+                                    "Main task",
+                                    configMINIMAL_STACK_SIZE * 4,
+                                    NULL,
+                                    tskIDLE_PRIORITY + 1,
+                                    NULL
+                                  );
    if( status != pdPASS )
       return status;
 
-   vTaskStartScheduler();
    portENABLE_INTERRUPTS();
+   vTaskStartScheduler();
 
    return pdPASS;
 }
 
-
+/*! ---------------------------------------------------------------------------
+ * @brief The main function, what else...
+ */
 void main( void )
 {
    init();
    mprintf( ESC_XY( "1", "1" ) ESC_CLR_SCR "FreeRTOS SCU-BUS test\n"
-            "Compiler: " COMPILER_VERSION_STRING "\n" );
+            "Compiler:  " COMPILER_VERSION_STRING "\n"
+            "Tick rate: " TO_STRING( configTICK_RATE_HZ ) " Hz\n"
+         #ifdef CONFIG_SCU_ATOMIC_SECTION
+            "Using atomic sections.\n"
+         #endif
+          );
 
    const BaseType_t status = initAndStartRTOS();
    mprintf( ESC_ERROR "Error: This point shall never be reached!\n"
