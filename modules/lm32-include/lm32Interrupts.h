@@ -242,7 +242,7 @@ STATIC inline bool irqIsEnabled( void )
  */
 STATIC inline void irqEnable( void )
 {
-#if 0
+#if 1
    const uint32_t ie = 0x00000001;
    asm volatile ( "wcsr ie, %0"::"r"(ie) );
 #else
@@ -258,7 +258,7 @@ STATIC inline void irqEnable( void )
  */
 STATIC inline void irqDisable( void )
 {
-#if 0
+#if 1
    asm volatile ( "wcsr ie, r0" );
 #else
    irqSetEnableRegister( irqGetEnableRegister() & 0xFFFFFFFE );
