@@ -1,9 +1,14 @@
 /*!
  * @file rtosScuBusTest.c
- * @brief FreeRtos test program on SCU making accesses ti SCU bus slaves
+ * @brief FreeRtos test program on SCU making accesses to SCU bus slaves
  * @copyright GSI Helmholtz Centre for Heavy Ion Research GmbH
  * @author    Ulrich Becker <u.becker@gsi.de>
  * @date      15.04.2020
+ *
+ * This test-program scans the SCU-bus and creates a task for each found
+ * SCU-bus slave.
+ * Each created task increments or decrements its echo register in a alternating
+ * manner depending of the slave position in the scu-bus slot.
  */
 #ifndef CONFIG_RTOS
    #error "This project provides FreeRTOS"
@@ -11,31 +16,33 @@
 
 #include "eb_console_helper.h"
 #include "mini_sdb.h"
-#include "generated/shared_mmap.h"
 #include "scu_lm32_macros.h"
 #include "scu_bus.h"
-#include "scu_bus_defines.h"
+
 #include "FreeRTOS.h"
 #include "task.h"
 
 #define MAX_TEST_SLAVES MAX_SCU_SLAVES
 
-//#define CONFIG_SCU_ATOMIC_SECTION
-
-typedef struct
-{
-   unsigned int slot;
-   void*        pAddress;
-   TaskHandle_t xCreatedTask;
-   uint16_t     lastCount;
-   bool         decerment;
-} SLAVE_T;
+#define CONFIG_SCU_ATOMIC_SECTION
 
 #ifdef CONFIG_SCU_ATOMIC_SECTION
    #define SCU_ATOMIC_SECTION() ATOMIC_SECTION()
 #else
    #define SCU_ATOMIC_SECTION()
 #endif
+
+/*! ---------------------------------------------------------------------------
+ * @brief Object type for each found SCU-bus slave.
+ */
+typedef struct
+{
+   unsigned int slot;         /*!<@brief Slot number                          */
+   void*        pAddress;     /*!<@brief Slave address                        */
+   TaskHandle_t xCreatedTask; /*!<@brief Task ID                              */
+   uint16_t     lastCount;    /*!<@brief Last counter value                   */
+   bool         decerment;    /*!<@brief Decrements or increments the counter */
+} SLAVE_T;
 
 /*! ---------------------------------------------------------------------------
  */
@@ -53,8 +60,8 @@ STATIC inline void init( void )
  */
 STATIC void vTaskScuBusSlave( void* pvParameters )
 {
-   SLAVE_T* pSlave = (SLAVE_T*) pvParameters;
-   volatile  uint16_t count = 0;
+   const SLAVE_T* pSlave = (SLAVE_T*) pvParameters;
+   volatile  uint16_t count;
 
    /*
     * The size of the slaves echo register is 16 bit only. Therefore
@@ -91,7 +98,8 @@ STATIC void vTaskScuBusSlave( void* pvParameters )
  */
 STATIC void vTaskMain( void* pvParameters UNUSED )
 {
-   mprintf( ESC_FG_MAGNETA "Task \"%s\" started\n", __func__ );
+   mprintf( ESC_FG_BLUE ESC_BOLD "Task \"%s\" started\n%d tasks running\n",
+            pcTaskGetName( NULL ), uxTaskGetNumberOfTasks() );
 
    void* pScuBusBase = find_device_adr( GSI, SCU_BUS_MASTER );
    if( pScuBusBase == (void*)ERROR_NOT_FOUND )
@@ -102,52 +110,67 @@ STATIC void vTaskMain( void* pvParameters UNUSED )
 
    mprintf( "Scanning SCU bus...\n" );
    const SCUBUS_SLAVE_FLAGS_T slavePersentFlags = scuBusFindAllSlaves( pScuBusBase );
-   const unsigned int numberOfSlaves = scuBusGetNumberOfSlaves( slavePersentFlags );
-   mprintf( "%d slaves found.\n", numberOfSlaves );
+   if( slavePersentFlags == 0 )
+   {
+      mprintf( ESC_ERROR
+               "No slave(s) found on SCU-bus so this test isn't meaningful!\n"
+               ESC_NORMAL );
+      vTaskEndScheduler();
+   }
+
+   mprintf( "%d slaves found.\n", scuBusGetNumberOfSlaves( slavePersentFlags ) );
 
    SLAVE_T slaves[MAX_TEST_SLAVES];
-   unsigned int m = 0;
-   for( unsigned int i = SCUBUS_START_SLOT; i <= MAX_SCU_SLAVES; i++ )
+   unsigned int dev = 0;
+   for( unsigned int slot = SCUBUS_START_SLOT; slot <= MAX_SCU_SLAVES; slot++ )
    {
-      if( !scuBusIsSlavePresent( slavePersentFlags, i ) )
+      if( !scuBusIsSlavePresent( slavePersentFlags, slot ) )
          continue;
 
-      slaves[m].slot = i;
-      slaves[m].pAddress = scuBusGetAbsSlaveAddr( pScuBusBase, i );
-      slaves[m].decerment = (m % 2) != 0;
+      slaves[dev].slot      = slot;
+      slaves[dev].pAddress  = scuBusGetAbsSlaveAddr( pScuBusBase, slot );
+      slaves[dev].decerment = (dev % 2) != 0;
+      slaves[dev].lastCount = 0;
+
       SCU_ATOMIC_SECTION()
-         scuBusSetSlaveValue16( slaves[m].pAddress, Echo_Register, 0 );
+         scuBusSetSlaveValue16( slaves[dev].pAddress, Echo_Register, 0 );
+
+      /*
+       * Creating a task for the current slave.
+       */
       int status = xTaskCreate( vTaskScuBusSlave,
                                 "SCU-Slave",
                                 configMINIMAL_STACK_SIZE,
-                                (void*)&slaves[m],
+                                (void*)&slaves[dev],
                                 tskIDLE_PRIORITY + 1,
-                                &slaves[m].xCreatedTask );
+                                &slaves[dev].xCreatedTask );
       if( status != pdPASS )
       {
          mprintf( ESC_ERROR
                   "Unable to start child task for slot: %d, status: %d\n"
                   ESC_NORMAL,
-                   slaves[m].slot, status );
+                   slaves[dev].slot, status );
          vTaskEndScheduler();
       }
 
-      mprintf( "Task for slave in slot %u; address: 0x%08x; ID: %u started.\n",
-               slaves[m].slot, slaves[m].pAddress, slaves[m].xCreatedTask );
-      slaves[m].lastCount = 0;
-      m++;
-      if( m >= ARRAY_SIZE( slaves ) )
+      mprintf( "Task \"%s\" for slave in slot %u; address: 0x%08x; ID: %u started.\n",
+               pcTaskGetName( slaves[dev].xCreatedTask ),
+               slaves[dev].slot, slaves[dev].pAddress, slaves[dev].xCreatedTask );
+
+      dev++;
+      if( dev >= ARRAY_SIZE( slaves ) )
          break;
    }
 
    TickType_t xLastExecutionTime = xTaskGetTickCount();
-   const unsigned int Y = m + 10;
+   const unsigned int Y = dev + 11;
    unsigned int secs = 0;
-   mprintf( "Enter main loop...\n" ESC_NORMAL );
+   mprintf( "%d tasks running.\nEnter main loop...\n" ESC_NORMAL,
+            uxTaskGetNumberOfTasks() );
    while( true )
    {
       unsigned int i;
-      for( i = 0; i < m; i++ )
+      for( i = 0; i < dev; i++ )
       {
          uint16_t counter;
          SCU_ATOMIC_SECTION()
@@ -189,7 +212,7 @@ STATIC inline BaseType_t initAndStartRTOS( void )
    if( status != pdPASS )
       return status;
 
-   portENABLE_INTERRUPTS();
+  // portENABLE_INTERRUPTS();
    vTaskStartScheduler();
 
    return pdPASS;
@@ -201,7 +224,7 @@ STATIC inline BaseType_t initAndStartRTOS( void )
 void main( void )
 {
    init();
-   mprintf( ESC_XY( "1", "1" ) ESC_CLR_SCR "FreeRTOS SCU-BUS test\n"
+   mprintf( ESC_XY( "1", "1" ) ESC_CLR_SCR ESC_NORMAL "FreeRTOS SCU-BUS test\n"
             "Compiler:  " COMPILER_VERSION_STRING "\n"
             "Tick rate: " TO_STRING( configTICK_RATE_HZ ) " Hz\n"
          #ifdef CONFIG_SCU_ATOMIC_SECTION

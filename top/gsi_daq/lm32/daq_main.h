@@ -75,6 +75,29 @@ inline void scuDaqInitialize( DAQ_ADMIN_T* pDaqAdmin )
 }
 
 #ifndef CONFIG_DAQ_SINGLE_APP
+
+/*! ---------------------------------------------------------------------------
+ * @brief Enables the feedback-channel for the given function generator number
+ *        in the given slot.
+ *
+ * Counterpart to daqDisableFgFeedBack
+ * @see daqDisableFgFeedBack
+ * @param slot SCU-bus slot number
+ * @param fgNum Function generator number 0 or 1
+ */
+void daqEnableFgFeedback( const unsigned int slot, const unsigned int fgNum );
+
+/*! ---------------------------------------------------------------------------
+ * @brief Disables the feedback-channel for the given function generator number
+ *        in the given slot.
+ *
+ * Counterpart to daqEnableFgFeedback
+ * @see daqEnableFgFeedback
+ * @param slot SCU-bus slot number
+ * @param fgNum Function generator number 0 or 1
+ */
+void daqDisableFgFeedback( const unsigned int slot, const unsigned int fgNum );
+
 /*! ---------------------------------------------------------------------------
  * @brief Asking all non-MIL-DAQs for received data.
  */

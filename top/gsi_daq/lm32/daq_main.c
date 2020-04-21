@@ -250,6 +250,38 @@ void forEachScuDaqDevice( void )
    executeIfRequested( &g_scuDaqAdmin );
 }
 
+#ifndef CONFIG_DAQ_SINGLE_APP
+
+STATIC inline unsigned int daqGetSetDaqNumber( const unsigned int fgNum )
+{
+   return fgNum + 2;
+}
+
+STATIC inline unsigned int daqGetCurrentDaqNumber( const unsigned int fgNum )
+{
+   return fgNum;
+}
+
+/*! ---------------------------------------------------------------------------
+ * @see daq_main.h
+ */
+void daqEnableFgFeedback( const unsigned int slot, const unsigned int fgNum )
+{
+   mprintf( "%s( %d, %d )\n", __func__, slot, fgNum );
+   //TODO
+}
+
+/*! ---------------------------------------------------------------------------
+ * @see daq_main.h
+ */
+void daqDisableFgFeedback( const unsigned int slot, const unsigned int fgNum )
+{
+   mprintf( "%s( %d, %d )\n", __func__, slot, fgNum );
+   //TODO
+}
+
+#endif /* ifndef CONFIG_DAQ_SINGLE_APP */
+
 /*================================= main ====================================*/
 #ifdef CONFIG_DAQ_SINGLE_APP
 extern uint32_t _endram;

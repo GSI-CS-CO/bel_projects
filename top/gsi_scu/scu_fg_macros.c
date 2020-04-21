@@ -10,6 +10,10 @@
 #include "scu_fg_macros.h"
 #include "scu_fg_handler.h"
 
+#ifdef CONFIG_SCU_DAQ_INTEGRATION
+  #include "daq_main.h"
+#endif
+
 extern volatile uint16_t*     g_pScub_base;
 #ifdef CONFIG_MIL_FG
 extern volatile unsigned int* g_pScu_mil_base;
@@ -138,6 +142,9 @@ int configure_fg_macro( const unsigned int channel )
      scuBusEnableSlaveInterrupt( (void*)g_pScub_base, socket );
      *scuBusGetInterruptActiveFlagRegPtr( (void*)g_pScub_base, socket )  = (FG1_IRQ | FG2_IRQ);
      *scuBusGetInterruptEnableFlagRegPtr( (void*)g_pScub_base, socket ) |= (FG1_IRQ | FG2_IRQ);
+   #ifdef CONFIG_SCU_DAQ_INTEGRATION
+     daqEnableFgFeedback( socket, dev );
+   #endif
    }
 #ifdef CONFIG_MIL_FG
    else if( isMilExtentionFg( socket ) )
@@ -306,7 +313,9 @@ void disable_channel( const unsigned int channel )
          }
          default: return;
       }
-
+   #ifdef CONFIG_SCU_DAQ_INTEGRATION
+      daqDisableFgFeedback( socket, dev );
+   #endif
      // disarm hardware
       g_pScub_base[OFFS(socket) + fg_base + FG_CNTRL] &= ~(0x2);
       g_pScub_base[OFFS(socket) + dac_base + DAC_CNTRL] &= ~(0x10); // unset FG mode
