@@ -16,6 +16,7 @@ entity top is
     nPfail            : in    std_logic;                      -- 12V Rail Powerfail
     jtag_present	  	: in		std_logic;							        -- JTAG TMS Signal
     nPB_user_in       : in    std_logic;                      -- User Push-Button In
+    wdt               : in    std_logic;                      -- Watchdog COMX
     --Arria 10 status
     CONF_DONE         : in    std_logic;
     INIT_DONE         : in    std_logic;
@@ -36,7 +37,7 @@ entity top is
     volt_1_8_en       : out   std_logic :='0';              -- Enable 1.8V Rail
     volt_1_8_IO_en    : out   std_logic :='0';              -- Enable IO 1.8V Rail (MOSFET)
     volt_5_en         : out   std_logic :='0';              -- Enable 5V Rail
-	  pwr_ok				    : out	std_logic   :='0';					    -- Power Ok COMX
+  	pwr_ok				    : out	  std_logic   :='0';				    -- Power Ok COMX
 
     IO_enable         : out   std_logic;                    -- Enable Levelshifter 1.8V  ->  3.3V
     nPB_user_out      : out   std_logic;                    -- User Push-Button Out
