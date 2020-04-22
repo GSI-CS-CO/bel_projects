@@ -132,7 +132,7 @@ set_location_assignment PIN_M7 -to nCB_rst
 set_location_assignment PIN_L3 -to CONF_DONE
 set_location_assignment PIN_K2 -to INIT_DONE
 set_location_assignment PIN_M3 -to nSTATUS
-set_location_assignment PIN_H2 -to jtag_present
+set_location_assignment PIN_J1 -to jtag_present
 set_location_assignment PIN_J12 -to pwr_ok
 set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to jtag_present
 set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to pwr_ok
@@ -144,4 +144,12 @@ set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to nPB_user_out
 set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to fx2_clk
 set_location_assignment PIN_N7 -to wdt
 set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to wdt
+set_global_assignment -name ENABLE_OCT_DONE OFF
+set_global_assignment -name ENABLE_CONFIGURATION_PINS OFF
+set_global_assignment -name USE_CONFIGURATION_DEVICE ON
+set_global_assignment -name CRC_ERROR_OPEN_DRAIN OFF
+set_global_assignment -name OUTPUT_IO_TIMING_NEAR_END_VMEAS "HALF VCCIO" -rise
+set_global_assignment -name OUTPUT_IO_TIMING_NEAR_END_VMEAS "HALF VCCIO" -fall
+set_global_assignment -name OUTPUT_IO_TIMING_FAR_END_VMEAS "HALF SIGNAL SWING" -rise
+set_global_assignment -name OUTPUT_IO_TIMING_FAR_END_VMEAS "HALF SIGNAL SWING" -fall
 set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
