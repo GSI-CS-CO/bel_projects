@@ -33,6 +33,13 @@ using namespace Scu;
 using namespace daq;
 using namespace daqt;
 
+/*!
+ * @brief Establishing a upper and lower margin of Y axis, so that the
+ *        maximum voltages can be plot as well.
+ *
+ * The dimension is voltage.
+ */
+constexpr float Y_PADDING = 0.5;
 
 /*-----------------------------------------------------------------------------
  */
@@ -229,7 +236,8 @@ void Channel::start( void )
 
    if( !m_oAttributes.m_zoomGnuPlot.m_value )
        m_oPlot << "set yrange ["
-               << -(DAQ_VPP_MAX/2) << ':' << (DAQ_VPP_MAX/2) << ']' << endl;
+               << -(DAQ_VPP_MAX/2 + Y_PADDING) << ':'
+               << (DAQ_VPP_MAX/2 + Y_PADDING) << ']' << endl;
 
    if( m_oAttributes.m_continueMode.m_valid )
    {

@@ -173,6 +173,8 @@ DaqAdministration::DaqAdministration( DaqEb::EtherboneConnection* poEtherbone,
    ,m_maxChannels( 0 )
    ,m_poCurrentDescriptor( nullptr )
    ,m_receiveCount( 0 )
+   ,m_maxEbCycleDataLen( c_defaultMaxEbCycleDataLen )
+   ,m_blockReadEbCycleGapTimeUs( c_defaultBlockReadEbCycleGapTimeUs )
 #ifdef CONFIG_DAQ_TIME_MEASUREMENT
    ,m_elapsedTime( 0 )
 #endif
@@ -186,6 +188,8 @@ DaqAdministration::DaqAdministration( EbRamAccess* poEbAccess, bool doReset )
    ,m_maxChannels( 0 )
    ,m_poCurrentDescriptor( nullptr )
    ,m_receiveCount( 0 )
+   ,m_maxEbCycleDataLen( c_defaultMaxEbCycleDataLen )
+   ,m_blockReadEbCycleGapTimeUs( c_defaultBlockReadEbCycleGapTimeUs )
 #ifdef CONFIG_DAQ_TIME_MEASUREMENT
    ,m_elapsedTime( 0 )
 #endif
@@ -384,6 +388,42 @@ inline bool DaqAdministration::dataBlocksPresent( void )
 }
 
 /*! ---------------------------------------------------------------------------
+ * @brief Function performs a block reading divided in smaller sub-blocks to
+ *        reduce the maximum EB-cycle open time.
+ *
+ * That makes time gaps for making occasions for other EB-access devices
+ * e.g.: SAFTLIB
+ */
+int DaqAdministration::readDaqDataBlock( RAM_DAQ_PAYLOAD_T* pData,
+                                         std::size_t len )
+{
+   int ret = EB_OK;
+   uint offset = 0;
+
+   assert( m_maxEbCycleDataLen > 0 );
+
+   while( len > 0 )
+   {
+      std::size_t partLen = std::min( len, m_maxEbCycleDataLen );
+      ret = m_poEbAccess->readDaqDataBlock( &pData[offset], partLen
+                                        #ifndef CONFIG_DDR3_NO_BURST_FUNCTIONS
+                                           , ::ramReadPoll
+                                        #endif
+                                          );
+      if( ret != EB_OK )
+         return ret;
+
+      len    -= partLen;
+      offset += partLen;
+
+      if( m_blockReadEbCycleGapTimeUs != 0 )
+         ::usleep( m_blockReadEbCycleGapTimeUs );
+   }
+
+   return ret;
+}
+
+/*! ---------------------------------------------------------------------------
  */
 int DaqAdministration::distributeData( void )
 {
@@ -455,11 +495,7 @@ int DaqAdministration::distributeData( void )
     * At first a short block is supposed. It's necessary to read this data
     * obtaining the device-descriptor.
     */
-   if( m_poEbAccess->readDaqDataBlock( &probe.ramItems[0], c_ramBlockShortLen
-                                  #ifndef CONFIG_DDR3_NO_BURST_FUNCTIONS
-                                     , ::ramReadPoll
-                                  #endif
-                                   ) != EB_OK )
+   if( readDaqDataBlock( &probe.ramItems[0], c_ramBlockShortLen ) != EB_OK )
    {
       sendUnlockRamAccess();
       throw EbException( "Unable to read SCU-Ram buffer first part" );
@@ -488,12 +524,9 @@ int DaqAdministration::distributeData( void )
    #ifdef CONFIG_DAQ_TIME_MEASUREMENT
       startTime = getSysMicrosecs();
    #endif
-      if( m_poEbAccess->readDaqDataBlock( &probe.ramItems[c_ramBlockShortLen],
-                                        c_ramBlockLongLen - c_ramBlockShortLen
-                                     #ifndef CONFIG_DDR3_NO_BURST_FUNCTIONS
-                                       , ::ramReadPoll
-                                     #endif
-                                      ) != EB_OK )
+      if( readDaqDataBlock( &probe.ramItems[c_ramBlockShortLen],
+                            c_ramBlockLongLen - c_ramBlockShortLen
+                          ) != EB_OK )
       {
          sendUnlockRamAccess();
          throw EbException( "Unable to read SCU-Ram buffer second part" );
