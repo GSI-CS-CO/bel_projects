@@ -172,7 +172,7 @@ int main(int argc, char** argv) {
     }
     
     // prior reset, probe device by gettings its IP
-    if ((status = wb_wr_get_ip(device, devIndex, &ip)) != EB_OK) die("eb-reset: can't to connect to device", status);
+    //if ((status = wb_wr_get_ip(device, devIndex, &ip)) != EB_OK) die("eb-reset: can't to connect to device", status);
 
     // FPGA reset
     if (!strcasecmp(command, "fpgareset")) {

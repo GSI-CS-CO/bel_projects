@@ -166,6 +166,7 @@ architecture verilator_interface of sockit_owm is
 begin
 
   process begin
+    --report "sockit_owm OWN = " & integer'image(OWN);
 
     wait until rising_edge(clk);
     interface_sockit_owm_rst(sockit_owm_idx, to_integer(rst));
@@ -174,8 +175,8 @@ begin
     -- transport outputs from verilator side to our vhdl interface
     bus_rdt <= std_logic_vector(to_signed(interface_sockit_owm_bus_rdt(sockit_owm_idx)-integer'low, 32));
     bus_irq <= to_std_logic(interface_sockit_owm_bus_irq(sockit_owm_idx));
-    owr_p   <= std_logic_vector(to_signed(interface_sockit_owm_owr_p(sockit_owm_idx), 1));
-    owr_e   <= std_logic_vector(to_signed(interface_sockit_owm_owr_e(sockit_owm_idx), 1));
+    owr_p   <= std_logic_vector(to_signed(interface_sockit_owm_owr_p(sockit_owm_idx), OWN));
+    owr_e   <= std_logic_vector(to_signed(interface_sockit_owm_owr_e(sockit_owm_idx), OWN));
 
     wait until falling_edge(clk);
     -- transport inputs from our vhdl interface to the verilator side

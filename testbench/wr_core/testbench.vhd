@@ -275,8 +275,8 @@ begin
     generic map (
       g_simulation                => 1,
       g_with_external_clock_input => false,
-      g_phys_uart                 => false,
-      g_virtual_uart              => false,
+      g_phys_uart                 => false, -- use either physical or virtual uart
+      g_virtual_uart              => true,  -- if none is used an assertion will fail
       g_aux_clks                  => 0,
       g_ep_rxbuf_size             => 1024,
       g_tx_runt_padding           => true,
@@ -320,7 +320,7 @@ begin
       phy_rx_rbclk_i       => '1',
       phy_rx_k_i           => "00",
       phy_rx_enc_err_i     => '0',
-      phy_rx_bitslide_i    => "00",
+      phy_rx_bitslide_i    => "00000",
       --phy_rst_o            => phy_rst,
       --phy_loopen_o         => phy_loopen,
       --phy8_o               => phy8_i,

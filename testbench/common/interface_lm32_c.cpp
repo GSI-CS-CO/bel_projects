@@ -47,9 +47,10 @@ extern "C" {
 	void interface_lm32_clk(int idx, int clk) {
 		top_instances[idx]->eval();
 		//std::cerr << "clk[" << idx << "] = " << clk << std::endl;
+		if (main_time%100000==0) std::cout << std::setprecision(4) << main_time/1000000.0 << " ms\n";
 		top_instances[idx]->clk_i = clk;
-	    if (tfp_instances[idx]) tfp_instances[idx]->dump (main_time); // Create waveform trace for this timestamp
-	    main_time += 4;
+	    //if (tfp_instances[idx]) tfp_instances[idx]->dump (main_time); // Create waveform trace for this timestamp
+	    main_time += 8;
 	}
 	void interface_lm32_rst(int idx, int rst) {
 		top_instances[idx]->rst_i = rst;
