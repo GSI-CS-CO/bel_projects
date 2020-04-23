@@ -43,6 +43,8 @@ DEFINES += BOOST_NO_CXX11_EXPLICIT_CONVERSION_OPERATORS
 
 DEFINES += _BSD_SOURCE
 DEFINES += _POSIX_C_SOURCE
+DEFINES += _DEFAULT_SOURCE
+
 DEFINES += CONFIG_SCU_USE_DDR3
 #DEFINES += DEBUGLEVEL=1
 DEFINES += CONFIG_DAQ_TEST
@@ -103,6 +105,9 @@ DEBUG = 1
 DOX_INPUT += $(DAQ_DIR)/daq_descriptor.h
 DOX_INPUT += $(DAQ_DIR)/daq_command_interface.h
 DOX_OPTIMIZE_OUTPUT_FOR_C = "NO"
+
+CXXFLAGS += -fstack-usage
+NO_LTO = 1
 
 include $(REPOSITORY_DIR)/makefiles/makefile.scun
 #=================================== EOF ======================================
