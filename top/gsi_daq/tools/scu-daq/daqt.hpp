@@ -79,19 +79,10 @@ class DaqContainer: public DaqAdministration
 
 public:
 #ifdef CONFIG_NO_FE_ETHERBONE_CONNECTION
-   DaqContainer( const std::string ebName, CommandLine* poCommandLine,
-                                                                bool noReset )
-      :DaqAdministration( ebName, noReset )
-      ,m_poCommandLine( poCommandLine )
-      {}
+   DaqContainer( const std::string ebName, CommandLine* poCommandLine );
 #else
    DaqContainer( DaqEb::EtherboneConnection* poEtherbone,
-                 CommandLine* poCommandLine,
-                                                                bool noReset )
-      :DaqAdministration( poEtherbone, noReset )
-      ,m_poCommandLine( poCommandLine )
-      {}
-
+                 CommandLine* poCommandLine );
 #endif
    ~DaqContainer( void );
 

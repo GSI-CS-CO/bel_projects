@@ -29,7 +29,13 @@
 #include <sys/select.h>
 #include <iostream>
 #include <daq_interface.hpp>
+#ifdef CONFIG_DAQ_TEST
+#include <daqt_messages.hpp>
+#endif
 
+#ifndef DEBUG_MESSAGE
+  #define DEBUG_MESSAGE( args... )
+#endif
 
 using namespace Scu;
 using namespace daq;
@@ -41,6 +47,45 @@ using namespace daq;
 }
 
 /*! ----------------------------------------------------------------------------
+ * @ingroup DEBUG
+ * @brief Converts a operation code for the LM32 into a string.
+ */
+const std::string command2String( daq::DAQ_OPERATION_CODE_T op )
+{
+   #define __OP_CODE_CASE_ITEM( name ) case name: return #name
+   switch( op )
+   {
+      __OP_CODE_CASE_ITEM( DAQ_OP_IDLE );
+      __OP_CODE_CASE_ITEM( DAQ_OP_LOCK );
+      __OP_CODE_CASE_ITEM( DAQ_OP_GET_ERROR_STATUS );
+      __OP_CODE_CASE_ITEM( DAQ_OP_RESET );
+      __OP_CODE_CASE_ITEM( DAQ_OP_GET_MACRO_VERSION );
+      __OP_CODE_CASE_ITEM( DAQ_OP_GET_SLOTS );
+      __OP_CODE_CASE_ITEM( DAQ_OP_GET_CHANNELS );
+      __OP_CODE_CASE_ITEM( DAQ_OP_RESCAN );
+      __OP_CODE_CASE_ITEM( DAQ_OP_PM_ON );
+      __OP_CODE_CASE_ITEM( DAQ_OP_HIRES_ON );
+      __OP_CODE_CASE_ITEM( DAQ_OP_PM_HIRES_OFF );
+      __OP_CODE_CASE_ITEM( DAQ_OP_CONTINUE_ON );
+      __OP_CODE_CASE_ITEM( DAQ_OP_CONTINUE_OFF );
+      __OP_CODE_CASE_ITEM( DAQ_OP_SET_TRIGGER_CONDITION );
+      __OP_CODE_CASE_ITEM( DAQ_OP_GET_TRIGGER_CONDITION );
+      __OP_CODE_CASE_ITEM( DAQ_OP_SET_TRIGGER_DELAY );
+      __OP_CODE_CASE_ITEM( DAQ_OP_GET_TRIGGER_DELAY );
+      __OP_CODE_CASE_ITEM( DAQ_OP_SET_TRIGGER_MODE );
+      __OP_CODE_CASE_ITEM( DAQ_OP_GET_TRIGGER_MODE );
+      __OP_CODE_CASE_ITEM( DAQ_OP_SET_TRIGGER_SOURCE_CON );
+      __OP_CODE_CASE_ITEM( DAQ_OP_GET_TRIGGER_SOURCE_CON );
+      __OP_CODE_CASE_ITEM( DAQ_OP_SET_TRIGGER_SOURCE_HIR );
+      __OP_CODE_CASE_ITEM( DAQ_OP_GET_TRIGGER_SOURCE_HIR );
+   }
+   return "unknown";
+   #undef  __OP_CODE_CASE_ITEM
+}
+
+/*! ----------------------------------------------------------------------------
+ * @ingroup DEBUG
+ * @brief Converts the command return code of LM32 into a string.
  */
 const std::string daq::status2String( DAQ_RETURN_CODE_T status )
 {
@@ -69,23 +114,30 @@ const std::string daq::status2String( DAQ_RETURN_CODE_T status )
  * @brief Constructor of class daq::DaqInterface
  */
 DaqInterface::DaqInterface( DaqEb::EtherboneConnection* poEtherbone,
-                            bool doReset )
+                            const bool doReset,
+                            const bool doSendCommand
+                          )
    :m_poEbAccess( new EbRamAccess( poEtherbone ) )
    ,m_ebAccessSelfCreated( true )
    ,m_slotFlags( 0 )
    ,m_maxDevices( 0 )
    ,m_doReset( doReset )
+   ,m_doSendCommand( doSendCommand )
    ,m_daqLM32Offset( INVALID_OFFSET )
 {
    init();
 }
 
-DaqInterface::DaqInterface( EbRamAccess* poEbAccess, bool doReset )
+DaqInterface::DaqInterface( EbRamAccess* poEbAccess,
+                            const bool doReset,
+                            const bool doSendCommand
+                          )
    :m_poEbAccess( poEbAccess )
    ,m_ebAccessSelfCreated( false )
    ,m_slotFlags( 0 )
    ,m_maxDevices( 0 )
    ,m_doReset( doReset )
+   ,m_doSendCommand( doSendCommand )
    ,m_daqLM32Offset( INVALID_OFFSET )
 {
    init();
@@ -102,8 +154,7 @@ void DaqInterface::init( void )
    m_poEbAccess->ramInit( &m_oScuRam, &m_oSharedData.ramIndexes );
    readSharedTotal();
    sendUnlockRamAccess();
-   if( m_doReset )
-      sendReset();
+   sendReset();
    readSlotStatus();
 }
 
@@ -252,6 +303,14 @@ bool DaqInterface::cmdReadyWait( void )
 DaqInterface::RETURN_CODE_T
 DaqInterface::sendCommand( DAQ_OPERATION_CODE_T cmd )
 {
+   if( !m_doSendCommand )
+   {
+      DEBUG_MESSAGE( "LM32 command: " << command2String( cmd ) << " disabled!" );
+      return DAQ_RET_OK;
+   }
+
+   DEBUG_MESSAGE( "Send command: " << command2String( cmd ) << " to LM32." );
+
    m_oSharedData.operation.code = cmd;
    DAQ_OPERATION_CODE_T temp =
                         gsi::convertByteEndian( m_oSharedData.operation.code );

@@ -40,10 +40,6 @@ namespace daq
 namespace daqt
 {
 
-
-
-
-
 #define FSM_DECLARE_STATE( state, attr... ) state
 #define FSM_INIT_FSM( state, attr... )      m_state( state )
 #define FSM_TRANSITION( newState, attr... ) m_state = newState
@@ -65,6 +61,7 @@ class CommandLine: public PARSER
    Channel*       m_poCurrentChannel;
    bool           m_verbose;
    bool           m_noReset;
+   bool           m_noCommand;
    std::string    m_gnuplotBin;
    std::string    m_gnuplotTerminal;
    std::string    m_gnuplotOutput;
@@ -74,6 +71,16 @@ class CommandLine: public PARSER
 public:
    static void specifiedBeforeErrorMessage( void );
    static DaqAdministration* getDaqAdmin( PARSER* poParser );
+
+   const bool isLM32CommandsEnabled( void ) const
+   {
+      return !m_noCommand;
+   }
+
+   const bool isNoReset( void ) const
+   {
+      return m_noReset;
+   }
 
    CommandLine( int argc, char** ppArgv );
    virtual ~CommandLine( void );

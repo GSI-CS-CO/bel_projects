@@ -139,6 +139,12 @@ vector<OPTION> CommandLine::c_optList =
          DaqAdministration* poAllDaq = getDaqAdmin( poParser );
          if( poAllDaq == nullptr )
             return -1;
+         if( static_cast<CommandLine*>(poParser)->m_noCommand )
+         {
+            ERROR_MESSAGE( "Function not available when LM32 commands deactivated!" );
+            ::exit( EXIT_FAILURE );
+            return -1;
+         }
          if( static_cast<CommandLine*>(poParser)->isVerbose() )
          {
             for( unsigned int i = 1; i <= poAllDaq->getMaxFoundDevices(); i++ )
@@ -188,6 +194,23 @@ vector<OPTION> CommandLine::c_optList =
                     " argument <proto/host/port>\nthen the reset command"
                     " becomes omitted on program start and end,\notherwise"
                     " only on program end the reset command becomes omitted."
+   },
+   {
+      OPT_LAMBDA( poParser,
+      {
+         static_cast<CommandLine*>(poParser)->m_noCommand = true;
+         return 0;
+      }),
+      .m_hasArg   = OPTION::NO_ARG,
+      .m_id       = 0,
+      .m_shortOpt = 'N',
+      .m_longOpt  = "nocommand",
+      .m_helpText = "Disables the command sending to LM32.\n"
+                    "That means the program runs in passive mode.\n"
+                    "In this case it will prerequisites that the GSI-SAFTLIB is the master.\n"
+                    "CAUTION: This option has to appear before the first argument"
+                    " <proto/host/port>,\nelse the initializing commands will send"
+                    " never the less!"
    },
    {
       OPT_LAMBDA( poParser,
@@ -489,6 +512,7 @@ CommandLine::CommandLine( int argc, char** ppArgv )
    ,m_poCurrentChannel( nullptr )
    ,m_verbose( false )
    ,m_noReset( false )
+   ,m_noCommand( false )
    ,m_gnuplotBin( GPSTR_DEFAULT_GNUPLOT_EXE )
    ,m_gnuplotTerminal( GNUPLOT_DEFAULT_TERMINAL )
 {
@@ -608,10 +632,10 @@ int CommandLine::onArgument( void )
 #endif
 
 #ifdef CONFIG_NO_FE_ETHERBONE_CONNECTION
-         m_poAllDaq = new DaqContainer( arg, this, !m_noReset );
+         m_poAllDaq = new DaqContainer( arg, this );
 #else
          m_poAllDaq = new DaqContainer( new DaqEb::EtherboneConnection( arg ),
-                                        this, !m_noReset );
+                                        this );
 #endif
          FSM_TRANSITION( READ_SLOT );
          break;
@@ -628,7 +652,7 @@ int CommandLine::onArgument( void )
                            DaqInterface::c_maxSlots << " !" );
             return -1;
          }
-         if( !m_poAllDaq->isDevicePresent( number ) )
+         if( !m_poAllDaq->isDevicePresent( number ) && m_poAllDaq->isLM32CommandEnabled() )
          {
             ERROR_MESSAGE( "In slot " << number << " isn't a DAQ!" );
             return -1;

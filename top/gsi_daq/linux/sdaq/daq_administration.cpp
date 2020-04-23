@@ -168,8 +168,10 @@ DaqChannel* DaqDevice::getChannel( const uint number )
 /*! ---------------------------------------------------------------------------
  */
 DaqAdministration::DaqAdministration( DaqEb::EtherboneConnection* poEtherbone,
-                                                                 bool doReset )
-   :DaqInterface( poEtherbone, doReset )
+                                      const bool doReset,
+                                      const bool doSendCommand
+                                    )
+   :DaqInterface( poEtherbone, doReset, doSendCommand )
    ,m_maxChannels( 0 )
    ,m_poCurrentDescriptor( nullptr )
    ,m_receiveCount( 0 )
@@ -183,8 +185,11 @@ DaqAdministration::DaqAdministration( DaqEb::EtherboneConnection* poEtherbone,
 
 /*! ---------------------------------------------------------------------------
  */
-DaqAdministration::DaqAdministration( EbRamAccess* poEbAccess, bool doReset )
-   :DaqInterface( poEbAccess, doReset )
+DaqAdministration::DaqAdministration( EbRamAccess* poEbAccess,
+                                      const bool doReset,
+                                      const bool doSendCommand
+                                    )
+   :DaqInterface( poEbAccess, doReset, doSendCommand )
    ,m_maxChannels( 0 )
    ,m_poCurrentDescriptor( nullptr )
    ,m_receiveCount( 0 )
@@ -218,21 +223,27 @@ bool DaqAdministration::registerDevice( DaqDevice* pDevice )
    // Is device number forced?
    if( pDevice->m_deviceNumber == 0 )
    { // No, allocation automatically.
-      if( pDevice->m_slot == 0 )
+      if( pDevice->m_slot == 0  || !isLM32CommandEnabled() )
          pDevice->m_deviceNumber = m_devicePtrList.size() + 1;
       else
          pDevice->m_deviceNumber = getDeviceNumber( pDevice->m_slot );
    }
 
-   if( pDevice->m_slot != 0 )
+   if( isLM32CommandEnabled() )
    {
-      if( pDevice->m_slot != getSlotNumber( pDevice->m_deviceNumber ) )
-         return true;
+      if( pDevice->m_slot != 0 )
+      {
+         if( pDevice->m_slot != getSlotNumber( pDevice->m_deviceNumber ) )
+            return true;
+      }
+      else
+         pDevice->m_slot = getSlotNumber( pDevice->m_deviceNumber );
+
+      pDevice->m_maxChannels = readMaxChannels( pDevice->m_deviceNumber );
    }
    else
-      pDevice->m_slot = getSlotNumber( pDevice->m_deviceNumber );
+      pDevice->m_maxChannels= 4; //TODO
 
-   pDevice->m_maxChannels = readMaxChannels( pDevice->m_deviceNumber );
    m_maxChannels          += pDevice->m_maxChannels;
    pDevice->m_pParent     = this;
    m_devicePtrList.push_back( pDevice );

@@ -130,6 +130,7 @@ private:
    uint                         m_maxDevices;
    DAQ_LAST_STATUS_T            m_lastStatus;
    const bool                   m_doReset;
+   const bool                   m_doSendCommand;
    uint                         m_daqLM32Offset;
 
 protected:
@@ -159,11 +160,27 @@ public:
    constexpr static std::size_t  c_pmHiresPayloadLen =
                                        c_hiresPmDataLen - c_discriptorWordSize;
 // --  --  --  --  --  --  --  --  --  --  --  --  --  --  --  --  --  --  --
-   DaqInterface( DaqEb::EtherboneConnection* poEtherbone, bool doReset = true );
+   DaqInterface( DaqEb::EtherboneConnection* poEtherbone,
+                 const bool doReset = true,
+                 const bool doSendCommand = true
+               );
 
-   DaqInterface( EbRamAccess* poEbAccess, bool doReset = true );
+   DaqInterface( EbRamAccess* poEbAccess,
+                 const bool doReset = true,
+                 const bool doSendCommand = true
+               );
 
    virtual ~DaqInterface( void );
+
+   /*!
+    * @brief Returns true when the command sending to LM32 is enabled.
+    *
+    * It's the value of the constructors third parameter.
+    */
+   const bool isLM32CommandEnabled( void ) const
+   {
+      return m_doSendCommand;
+   }
 
    const std::string& getWbDevice( void )
    {

@@ -504,6 +504,26 @@ void Channel::reset( void )
 ///////////////////////////////////////////////////////////////////////////////
 /*! ---------------------------------------------------------------------------
  */
+#ifdef CONFIG_NO_FE_ETHERBONE_CONNECTION
+DaqContainer::DaqContainer( const std::string ebName,
+                            CommandLine* poCommandLine )
+      :DaqAdministration( ebName,
+                          !poCommandLine->isNoReset(),
+                          poCommandLine->isLM32CommandsEnabled() )
+      ,m_poCommandLine( poCommandLine )
+      {}
+#else
+DaqContainer::DaqContainer( DaqEb::EtherboneConnection* poEtherbone,
+                            CommandLine* poCommandLine )
+      :DaqAdministration( poEtherbone,
+                          !poCommandLine->isNoReset(),
+                          poCommandLine->isLM32CommandsEnabled() )
+      ,m_poCommandLine( poCommandLine )
+      {}
+#endif
+
+/*! ---------------------------------------------------------------------------
+ */
 DaqContainer::~DaqContainer( void )
 {
    if( m_poCommandLine->isVerbose() )

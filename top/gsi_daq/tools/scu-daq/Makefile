@@ -50,7 +50,7 @@ DEFINES += CONFIG_SCU_USE_DDR3
 DEFINES += CONFIG_DAQ_TEST
 # DEFINES += NDEBUG
 DEFINES += CONFIG_DAQ_DEBUG
-DEFINES += VERSION=0.2
+DEFINES += VERSION=0.3
 DEFINES += GPSTR_DEFAULT_GNUPLOT_EXE=\"$(GNUPLOT_BIN)\"
 
  DEFINES += CONFIG_DDR3_NO_BURST_FUNCTIONS
@@ -106,8 +106,6 @@ DOX_INPUT += $(DAQ_DIR)/daq_descriptor.h
 DOX_INPUT += $(DAQ_DIR)/daq_command_interface.h
 DOX_OPTIMIZE_OUTPUT_FOR_C = "NO"
 
-CXXFLAGS += -fstack-usage
-NO_LTO = 1
 
 include $(REPOSITORY_DIR)/makefiles/makefile.scun
 #=================================== EOF ======================================

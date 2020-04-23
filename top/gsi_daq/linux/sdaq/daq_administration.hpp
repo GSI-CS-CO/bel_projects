@@ -762,9 +762,14 @@ protected:
 
 public:
    DaqAdministration( DaqEb::EtherboneConnection* poEtherbone,
-                                                         bool doReset = true );
+                      const bool doReset = true,
+                      const bool doSendCommand = true
+                    );
 
-   DaqAdministration( EbRamAccess* poEbAccess, bool doReset = true );
+   DaqAdministration( EbRamAccess* poEbAccess,
+                      const bool doReset = true,
+                      const bool doSendCommand = true
+                    );
 
    virtual ~DaqAdministration( void );
 
