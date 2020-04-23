@@ -18,15 +18,15 @@ view: simulation.ghw
 	gtkwave simulation.ghw --save=simulation.gtkw &
 
 notrace: compile_testbench 
-	ghdl -r testbench --ieee-asserts=disable 
+	ghdl -r testbench --ieee-asserts=disable --stop-time=50ms
 
 # start simulation (which regenerates wave file), then update viewer
 simulation.ghw: compile_testbench 
-	ghdl -r testbench --stop-time=3ms --wave=simulation.ghw --ieee-asserts=disable
+	ghdl -r testbench --stop-time=500us --wave=simulation.ghw --ieee-asserts=disable
 	#vcd2fst simulation.vcd simulation.fst && rm simulation.vcd
 	gsettings set com.geda.gtkwave reload 0
 
-compile_testbench: file_access_c.o interface_lm32_c.o testbench
+compile_testbench: file_access_c.o interface_lm32_c.o sockit_owm_c.o testbench
 
 testbench: 	\
 			../../ip_cores/general-cores/modules/genrams/genram_pkg.vhd                  \
@@ -188,13 +188,17 @@ testbench: 	\
 			../common/xwb_lm32.vhd                                                      \
 			../common/file_access.vhd    \
 			../common/ez_usb_chip.vhd    \
-			../common/wr_timing.vhd      \
+			../common/sockit_owm.vhd  \
+			../common/wr_timing.vhd \
 			testbench.vhd 
 	ghdl -a -g $(GHDLFLAGS) $?
-	ghdl -m -Wl,interface_lm32_c.o \
+	ghdl -m \
+	        -Wl,interface_lm32_c.o \
+	        -Wl,sockit_owm_c.o \
 	        -Wl,obj_dir/verilated.o \
 	        -Wl,obj_dir/verilated_vcd_c.o \
 	        -Wl,obj_dir/Vlm32_top__ALL.a  \
+	        -Wl,obj_dir/Vsockit_owm__ALL.a \
 	        -Wl,-lm -Wl,-lstdc++ \
 	        -Wl,file_access_c.o \
 	        $(GHDLFLAGS) testbench 
@@ -202,6 +206,9 @@ testbench: 	\
 # this is the C++-implementation (with C-linkage) of the VHDL foreign function interfaces
 interface_lm32_c.o: main ../common/interface_lm32_c.cpp ../common/interface_lm32.vhd
 	g++ -DVM_TRACE -Iobj_dir -I/usr/share/verilator/include -c ../common/interface_lm32_c.cpp
+
+sockit_owm_c.o: ../common/main_sockit_owm.cpp ../common/sockit_owm_c.cpp main_sockit_owm
+	g++ -DVM_TRACE -Iobj_dir -I/usr/share/verilator/include -c ../common/sockit_owm_c.cpp
 
 # file_access_c is for the usb chip simulation 
 file_access_c.o: ../common/file_access_c.c
@@ -222,6 +229,19 @@ lm32_top.v: $(LM32_TOP)
 	sed    '/input...LM32_INTERRUPT_RNG..interrupt.*/i \/\* verilator lint_off SYMRSVDWORD \*\/' $(LM32_TOP) > lm32_top.v
 	sed -i '/input...LM32_INTERRUPT_RNG..interrupt.*/a \/\* verilator lint_on  SYMRSVDWORD \*\/' lm32_top.v
 
+SOCKIT_OWM_SRC=../../ip_cores/general-cores/modules/wishbone/wb_onewire_master
+SOCKIT_OWM_TOP=$(SOCKIT_OWM_SRC)/sockit_owm.v
+main_sockit_owm: ../common/main_sockit_owm.cpp sockit_owm.v
+	verilator -Wno-lint --trace --cc -I. -I$(SOCKIT_OWM_SRC) sockit_owm.v --exe ../common/main_sockit_owm.cpp
+	make -C obj_dir -f Vsockit_owm.mk
+
+sockit_owm.v: $(SOCKIT_OWM_TOP)
+	sed    '/initial                    owr_sel <= /i \/\* verilator lint_off INITIALDLY \*\/' $(SOCKIT_OWM_TOP) > sockit_owm.v
+	sed -i '/initial                    owr_sel <= /a \/\* verilator lint_on  INITIALDLY \*\/'                     sockit_owm.v
+	sed -i 's/parameter BTP_O = "0.5"/parameter BTP_O = "1.0"/g'                                                   sockit_owm.v
+	sed -i 's/parameter OWN   =    1/parameter OWN   =    2/g'                                                     sockit_owm.v
+
+
 clean:
-	rm -f *.o testbench work-obj*.cf simulation.ghw -r obj_dir lm32_top.v
+	rm -f *.o testbench work-obj*.cf simulation.ghw -r obj_dir lm32_top.v sockit_owm.v
 

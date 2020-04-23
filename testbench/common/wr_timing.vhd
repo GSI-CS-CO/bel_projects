@@ -31,9 +31,9 @@ architecture simulation of wr_timing is
   signal clk_dmtd_20   : std_logic := '1';
 
 
-  constant period_ref  : integer :=  8000000; -- fs
-  constant period_sys  : integer := 16000000; -- fs
-  constant period_dmtd : integer := 50000000; -- fs
+  constant period_ref  : integer :=  8000000/2; -- fs
+  constant period_sys  : integer := 16000000/2; -- fs
+  constant period_dmtd : integer := 50000000/2; -- fs
 
   constant tau_max : integer := 1024;
   constant tau     : integer := 1;
@@ -43,11 +43,13 @@ begin
   process begin 
     wait until rising_edge(dac_hpll_load_p1_i);
     dac_hpll_set <= unsigned(dac_hpll_data_i);
+    report "wr_timing dac_hpll_set <= " & integer'image(to_integer(unsigned(dac_hpll_data_i)));
   end process;
 
   process begin
     wait until rising_edge(dac_dpll_load_p1_i);
     dac_dpll_set <= unsigned(dac_dpll_data_i);
+    report "wr_timing dac_dpll_set <= " & integer'image(to_integer(unsigned(dac_dpll_data_i)));
   end process;
 
   dynamics: process begin
