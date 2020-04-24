@@ -16,12 +16,13 @@ MIAN_MODULE := queueDemo.c
 # FreeRTOS sources to this project.
  USE_RTOS = 1
 
+ DEFINES += CONFIG_STATIC_TASK
+
 RTOS_USING_HEAP = 1
 
 # TOOLCHAIN_DIR = $(INCLUDED_TOOLCHAIN_DIR)
 
 CODE_OPTIMIZATION = s
-
 
 # When the following compiler switch is defined, then the assert-macros
 # within the FreeRTOS kernel will activated.
@@ -30,6 +31,8 @@ CODE_OPTIMIZATION = s
  DEFINES += CONFIG_INTERRUPT_PEDANTIC_CHECK
 
 DEFINES += MAX_LM32_INTERRUPTS=2
+
+
 
 # FreeRTOS will handle the stack defined in FreeRTOSConfig.h.
 # Therefore we can overwrite the default size of the base stack size (10k)

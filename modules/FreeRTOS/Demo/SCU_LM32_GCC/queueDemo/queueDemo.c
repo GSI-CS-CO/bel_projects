@@ -37,6 +37,20 @@
   #error configUSE_TICK_HOOK has to be enabled in this application!
 #endif
 
+#ifdef CONFIG_STATIC_TASK
+/*
+ * Structure that will hold the TCB of the task being created.
+ */
+StaticTask_t xPrintTaskBuffer1;
+StackType_t xStackPrintTask1[128];
+
+StaticTask_t xPrintTaskBuffer2;
+StackType_t xStackPrintTask2[128];
+
+StaticTask_t xUartGatekeeperTaskBuffer;
+StackType_t xStackUartGatekeeperTask[128];
+#endif
+
 /*!
  * Declare a variable of type QueueHandle_t. The queue is used to send messages
  * from the print tasks and the tick interrupt to the gatekeeper task.
@@ -169,6 +183,17 @@ STATIC inline BaseType_t initAndStartRTOS( void )
       return pdFAIL;
 
    mprintf( "Creating task \"prvUartGatekeeperTask\"\n" );
+#ifdef CONFIG_STATIC_TASK
+   if( xTaskCreateStatic( prvUartGatekeeperTask,
+                          "Gate-keeper",
+                          ARRAY_SIZE( xStackUartGatekeeperTask ),
+                          NULL,
+                          0,
+                          xStackUartGatekeeperTask,
+                          &xPrintTaskBuffer1
+     ) == NULL )
+      return pdFAIL;
+#else
    status = xTaskCreate( prvUartGatekeeperTask,
                          "Gate-keeper",
                          configMINIMAL_STACK_SIZE,
@@ -178,8 +203,20 @@ STATIC inline BaseType_t initAndStartRTOS( void )
                        );
    if( status != pdPASS )
       return status;
+#endif
 
    mprintf( "Creating task \"prvPrintTask 1\"\n" );
+#ifdef CONFIG_STATIC_TASK
+   if( xTaskCreateStatic( prvPrintTask,
+                          "prvPrintTask 1",
+                          ARRAY_SIZE( xStackPrintTask1 ),
+                          (void*) 0,
+                          1,
+                          xStackPrintTask1,
+                          &xPrintTaskBuffer1
+     ) == NULL )
+      return pdFAIL;
+#else
    status = xTaskCreate( prvPrintTask,
                          "prvPrintTask 1",
                          configMINIMAL_STACK_SIZE,
@@ -189,8 +226,20 @@ STATIC inline BaseType_t initAndStartRTOS( void )
                        );
    if( status != pdPASS )
       return status;
+#endif
 
    mprintf( "Creating task \"prvPrintTask 2\"\n" );
+#ifdef CONFIG_STATIC_TASK
+   if( xTaskCreateStatic( prvPrintTask,
+                          "prvPrintTask 2",
+                          ARRAY_SIZE( xStackPrintTask2 ),
+                          (void*) 1,
+                          2,
+                          xStackPrintTask2,
+                          &xPrintTaskBuffer2
+     ) == NULL )
+      return pdFAIL;
+#else
    status = xTaskCreate( prvPrintTask,
                          "prvPrintTask 2",
                          configMINIMAL_STACK_SIZE,
@@ -200,7 +249,7 @@ STATIC inline BaseType_t initAndStartRTOS( void )
                        );
    if( status != pdPASS )
       return status;
-
+#endif
    portENABLE_INTERRUPTS();
    vTaskStartScheduler();
 
