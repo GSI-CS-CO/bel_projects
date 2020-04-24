@@ -129,16 +129,16 @@ public:
    {
       ::discoverPeriphery(); // mini-sdb: get info on important Wishbone infrastructure
       ::uart_init_hw();      // init UART, required for printf...
-      ::clrscr();
-      ::gotoxy( 0, 0 );
-      ::mprintf( ESC_FG_MAGNETA 
+      gsi::clrscr();
+      gsi::gotoxy( 0, 0 );
+      ::mprintf( ESC_FG_MAGENTA
                  "Hello world in C++11, Compiler: " COMPILER_VERSION_STRING "\n"
                  ESC_NORMAL );
    }
 
    ~SysInit( void )
    {
-      ::mprintf( ESC_FG_MAGNETA "End...\n" ESC_NORMAL );
+      ::mprintf( ESC_FG_MAGENTA "End...\n" ESC_NORMAL );
    }
 };
 

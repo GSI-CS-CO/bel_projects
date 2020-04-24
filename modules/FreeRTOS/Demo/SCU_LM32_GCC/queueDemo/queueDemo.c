@@ -37,18 +37,31 @@
   #error configUSE_TICK_HOOK has to be enabled in this application!
 #endif
 
-#ifdef CONFIG_STATIC_TASK
+#define QUEUE_LENGTH 5
+#define ITEM_SIZE    sizeof( char* )
+
+#if ( configSUPPORT_DYNAMIC_ALLOCATION == 0 )
 /*
  * Structure that will hold the TCB of the task being created.
  */
-StaticTask_t xPrintTaskBuffer1;
-StackType_t xStackPrintTask1[128];
+STATIC StaticTask_t g_xPrintTaskBuffer1;
+STATIC StackType_t g_xStackPrintTask1[128];
 
-StaticTask_t xPrintTaskBuffer2;
-StackType_t xStackPrintTask2[128];
+STATIC StaticTask_t g_xPrintTaskBuffer2;
+STATIC StackType_t g_xStackPrintTask2[128];
 
-StaticTask_t xUartGatekeeperTaskBuffer;
-StackType_t xStackUartGatekeeperTask[128];
+STATIC StaticTask_t g_xUartGatekeeperTaskBuffer;
+STATIC StackType_t g_xStackUartGatekeeperTask[128];
+
+/*
+ * The variable used to hold the queue's data structure.
+ */
+STATIC StaticQueue_t g_xStaticQueue;
+/*
+ * The array to use as the queue's storage area.  This must be at least
+ * uxQueueLength * uxItemSize bytes.
+ */
+STATIC uint8_t g_ucQueueStorageArea[ QUEUE_LENGTH * ITEM_SIZE ];
 #endif
 
 /*!
@@ -64,7 +77,7 @@ QueueHandle_t g_xPrintQueue;
 STATIC char* g_pcStringsToPrint[] =
 {
    ESC_BOLD ESC_FG_YELLOW  "Task 1 ****************************************************\n" ESC_NORMAL,
-   ESC_BOLD ESC_FG_MAGNETA "Task 2 ----------------------------------------------------\n" ESC_NORMAL,
+   ESC_BOLD ESC_FG_MAGENTA "Task 2 ----------------------------------------------------\n" ESC_NORMAL,
    ESC_BOLD ESC_FG_CYAN    "Message printed from the tick hook interrupt ##############\n" ESC_NORMAL
 };
 
@@ -175,25 +188,31 @@ static void prvUartGatekeeperTask( void* pvParameters UNUSED )
  */
 STATIC inline BaseType_t initAndStartRTOS( void )
 {
-   BaseType_t status;
-
    mprintf( "Creating the print-queue\n" );
-   g_xPrintQueue =  xQueueCreate( 5, sizeof( char* ) );
+#if ( configSUPPORT_DYNAMIC_ALLOCATION == 0 )
+   g_xPrintQueue = xQueueCreateStatic( QUEUE_LENGTH,
+                                       ITEM_SIZE,
+                                       g_ucQueueStorageArea,
+                                       &g_xStaticQueue );
+#else
+   g_xPrintQueue = xQueueCreate( QUEUE_LENGTH, ITEM_SIZE );
+#endif
    if( g_xPrintQueue == NULL )
       return pdFAIL;
 
    mprintf( "Creating task \"prvUartGatekeeperTask\"\n" );
-#ifdef CONFIG_STATIC_TASK
+#if ( configSUPPORT_DYNAMIC_ALLOCATION == 0 )
    if( xTaskCreateStatic( prvUartGatekeeperTask,
                           "Gate-keeper",
-                          ARRAY_SIZE( xStackUartGatekeeperTask ),
+                          ARRAY_SIZE( g_xStackUartGatekeeperTask ),
                           NULL,
                           0,
-                          xStackUartGatekeeperTask,
-                          &xPrintTaskBuffer1
+                          g_xStackUartGatekeeperTask,
+                          &g_xUartGatekeeperTaskBuffer
      ) == NULL )
       return pdFAIL;
 #else
+   BaseType_t status;
    status = xTaskCreate( prvUartGatekeeperTask,
                          "Gate-keeper",
                          configMINIMAL_STACK_SIZE,
@@ -206,14 +225,14 @@ STATIC inline BaseType_t initAndStartRTOS( void )
 #endif
 
    mprintf( "Creating task \"prvPrintTask 1\"\n" );
-#ifdef CONFIG_STATIC_TASK
+#if ( configSUPPORT_DYNAMIC_ALLOCATION == 0 )
    if( xTaskCreateStatic( prvPrintTask,
                           "prvPrintTask 1",
-                          ARRAY_SIZE( xStackPrintTask1 ),
+                          ARRAY_SIZE( g_xStackPrintTask1 ),
                           (void*) 0,
                           1,
-                          xStackPrintTask1,
-                          &xPrintTaskBuffer1
+                          g_xStackPrintTask1,
+                          &g_xPrintTaskBuffer1
      ) == NULL )
       return pdFAIL;
 #else
@@ -229,14 +248,14 @@ STATIC inline BaseType_t initAndStartRTOS( void )
 #endif
 
    mprintf( "Creating task \"prvPrintTask 2\"\n" );
-#ifdef CONFIG_STATIC_TASK
+#if ( configSUPPORT_DYNAMIC_ALLOCATION == 0 )
    if( xTaskCreateStatic( prvPrintTask,
                           "prvPrintTask 2",
-                          ARRAY_SIZE( xStackPrintTask2 ),
+                          ARRAY_SIZE( g_xStackPrintTask2 ),
                           (void*) 1,
                           2,
-                          xStackPrintTask2,
-                          &xPrintTaskBuffer2
+                          g_xStackPrintTask2,
+                          &g_xPrintTaskBuffer2
      ) == NULL )
       return pdFAIL;
 #else
@@ -253,7 +272,7 @@ STATIC inline BaseType_t initAndStartRTOS( void )
    portENABLE_INTERRUPTS();
    vTaskStartScheduler();
 
-   return status;
+   return pdPASS;
 }
 
 /*! ===========================================================================

@@ -98,7 +98,7 @@ void main( void )
 
    gotoxy( 0, 0 );
    clrscr();
-   mprintf( ESC_FG_MAGNETA ESC_BOLD"Post Mortem Fifo test, compiler: "
+   mprintf( ESC_FG_MAGENTA ESC_BOLD"Post Mortem Fifo test, compiler: "
             COMPILER_VERSION_STRING ESC_NORMAL"\n");
 #if 1
    if( daqBusFindAndInitializeAll( &g_allDaq, find_device_adr(GSI, SCU_BUS_MASTER) ) <= 0 )
@@ -189,7 +189,7 @@ void main( void )
    DAQ_DESCRIPTOR_VERIFY_MY( &descriptor, pChannel );
    daqChannelPrintInfo( pChannel );
 #endif
-   mprintf( ESC_FG_MAGNETA ESC_BOLD"\nEnd...\n"ESC_NORMAL );
+   mprintf( ESC_FG_MAGENTA ESC_BOLD"\nEnd...\n"ESC_NORMAL );
 }
 
 /*================================== EOF ====================================*/

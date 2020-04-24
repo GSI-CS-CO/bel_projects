@@ -259,14 +259,14 @@ static inline void ramPollAccessLock( RAM_SCU_T* pThis )
    if( pThis->pSharedObj->ramAccessLock )
    {
       unsigned int pollCount = 0;
-      DBG_RAM_INFO( ESC_FG_MAGNETA ESC_BOLD
+      DBG_RAM_INFO( ESC_FG_MAGENTA ESC_BOLD
                     "DBG: Enter RAM-access polling\n"
                     ESC_NORMAL );
       while( pThis->pSharedObj->ramAccessLock )
       {
          pollCount++;
       }
-      DBG_RAM_INFO( ESC_FG_MAGNETA ESC_BOLD
+      DBG_RAM_INFO( ESC_FG_MAGENTA ESC_BOLD
                     "DBG: Leaving RAM-access polling. %d loops\n"
                     ESC_NORMAL, pollCount );
    }

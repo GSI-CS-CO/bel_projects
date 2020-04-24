@@ -16,9 +16,12 @@ MIAN_MODULE := queueDemo.c
 # FreeRTOS sources to this project.
  USE_RTOS = 1
 
- DEFINES += CONFIG_STATIC_TASK
-
-RTOS_USING_HEAP = 1
+# Select one of the heap modules 1 - 5.
+# If this value 0 so the static memory allocation will used. That means
+# the user have to allocate memory explicit. In this case the macro
+# configSUPPORT_DYNAMIC_ALLOCATION will defined with 0 in portmacro.h.
+# The default is 1.
+RTOS_USING_HEAP = 0
 
 # TOOLCHAIN_DIR = $(INCLUDED_TOOLCHAIN_DIR)
 
