@@ -104,7 +104,6 @@ STATIC inline void configureEcaMsiForLM32( void )
 }
 
 /*! ---------------------------------------------------------------------------
- * @ingroup INTERRUPT
  * @brief Interrupt function: Handle MSIs sent by ECA
  *
  * If interrupt was caused by a valid action, then MSI has value of (4<<16|num).\n

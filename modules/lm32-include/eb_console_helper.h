@@ -38,7 +38,7 @@
 #define ESC_FG_GREEN   "\e[32m" /*!< @brief Foreground color green   */
 #define ESC_FG_YELLOW  "\e[33m" /*!< @brief Foreground color yellow  */
 #define ESC_FG_BLUE    "\e[34m" /*!< @brief Foreground color blue    */
-#define ESC_FG_MAGNETA "\e[35m" /*!< @brief Foreground color magneta */
+#define ESC_FG_MAGENTA "\e[35m" /*!< @brief Foreground color magenta */
 #define ESC_FG_CYAN    "\e[36m" /*!< @brief Foreground color cyan    */
 #define ESC_FG_WHITE   "\e[37m" /*!< @brief Foreground color white   */
 
@@ -47,7 +47,7 @@
 #define ESC_BG_GREEN   "\e[42m" /*!< @brief Background color green   */
 #define ESC_BG_YELLOW  "\e[43m" /*!< @brief Background color yellow  */
 #define ESC_BG_BLUE    "\e[44m" /*!< @brief Background color blue    */
-#define ESC_BG_MAGNETA "\e[45m" /*!< @brief Background color magneta */
+#define ESC_BG_MAGENTA "\e[45m" /*!< @brief Background color magenta */
 #define ESC_BG_CYAN    "\e[46m" /*!< @brief Background color cyan    */
 #define ESC_BG_WHITE   "\e[47m" /*!< @brief Background color white   */
 

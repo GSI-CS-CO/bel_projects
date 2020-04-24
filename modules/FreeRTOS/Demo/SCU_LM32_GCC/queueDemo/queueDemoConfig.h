@@ -26,10 +26,6 @@
 #define configUSE_PREEMPTION                    1
 #define configUSE_PORT_OPTIMISED_TASK_SELECTION 0
 #define configUSE_TICKLESS_IDLE                 0
-#define configTICK_RATE_HZ                      1000
-#define configMAX_PRIORITIES                    5
-#define configMINIMAL_STACK_SIZE                128
-#define configMAX_TASK_NAME_LEN                 16
 #define configUSE_16_BIT_TICKS                  1
 #define configIDLE_SHOULD_YIELD                 1
 #define configUSE_TASK_NOTIFICATIONS            1
@@ -43,12 +39,9 @@
 #define configUSE_NEWLIB_REENTRANT              0
 #define configENABLE_BACKWARD_COMPATIBILITY     0
 #define configNUM_THREAD_LOCAL_STORAGE_POINTERS 5
-#define configSTACK_DEPTH_TYPE                  uint32_t
-#define configMESSAGE_BUFFER_LENGTH_TYPE        size_t
 
 /* Memory allocation related definitions. */
 #define configSUPPORT_STATIC_ALLOCATION         1
-#define configSUPPORT_DYNAMIC_ALLOCATION        1
 //#define configTOTAL_HEAP_SIZE                   10240
 #define configTOTAL_HEAP_SIZE                   (4 * 1024)
 #define configAPPLICATION_ALLOCATED_HEAP        1
@@ -70,7 +63,7 @@
 #define configMAX_CO_ROUTINE_PRIORITIES         1
 
 /* Software timer related definitions. */
-#define configUSE_TIMERS                        1
+#define configUSE_TIMERS                        0
 #define configTIMER_TASK_PRIORITY               3
 #define configTIMER_QUEUE_LENGTH                10
 #define configTIMER_TASK_STACK_DEPTH            configMINIMAL_STACK_SIZE

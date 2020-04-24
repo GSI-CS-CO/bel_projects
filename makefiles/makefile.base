@@ -38,7 +38,7 @@ DEFINES += CONFIG_GSI_FE
 
 ifndef NO_COLORED
    ESC_FG_CYAN    := "\\e[36m"
-   ESC_FG_MAGNETA := "\\e[35m"
+   ESC_FG_MAGENTA := "\\e[35m"
    ESC_FG_RED     := "\\e[31m"
    ESC_FG_GREEN   := "\\e[32m"
    ESC_BOLD       := "\\e[1m"
@@ -71,7 +71,7 @@ else
    FORMAT_L    := $(FORMAT)
    FORMAT_R    := $(FORMAT)
  else
-   FORMAT_L    := @printf "[ %s %s ]\t$(ESC_FG_MAGNETA)%s$(ESC_NORMAL)\n"
+   FORMAT_L    := @printf "[ %s %s ]\t$(ESC_FG_MAGENTA)%s$(ESC_NORMAL)\n"
    FORMAT_R    := @printf "[ %s %s ]\t$(ESC_FG_CYAN)$(ESC_BOLD)%s$(ESC_NORMAL)\n"
  endif
    CC_F        = $(FORMAT)   $(CPU) $(CC_MSG)      $(@); $(CC)

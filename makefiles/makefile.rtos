@@ -12,9 +12,16 @@ ifndef REPOSITORY_DIR
    $(error Variable REPOSITORY_DIR is not defined! )
 endif
 
-EMBEDDED_OS ?= FreeRTOS Kernel:
-
+# Select one of the heap modules 1 - 5.
+# If this value 0 so the static memory allocation will used. That means
+# the user have to allocate memory explicit. In this case the macro
+# configSUPPORT_DYNAMIC_ALLOCATION will defined with 0 in portmacro.h.
+# The default is 1.
+# See https://www.freertos.org/a00111.html
 RTOS_USING_HEAP ?= 1
+
+# Text for build-id item.
+EMBEDDED_OS ?= FreeRTOS Kernel:
 
 RTOS_BASE_DIR   ?= $(REPOSITORY_DIR)/modules/FreeRTOS
 RTOS_SRC_DIR    ?= $(RTOS_BASE_DIR)/Source
@@ -24,17 +31,22 @@ RTOS_PORT_DIR   ?= $(RTOS_SRC_DIR)/portable/GCC/SCU_LM32
 RTOS_INCLUDE_DIR += $(RTOS_HEADER_DIR)
 RTOS_INCLUDE_DIR += $(RTOS_PORT_DIR)
 
+# Replacing the SCU LM32 standard startup-code by this one.
 STARTUP_CODE ?= $(RTOS_PORT_DIR)/crt0FreeRTOS.S
-RTOS_SOURCE += $(RTOS_PORT_DIR)/portasm.S
 
+RTOS_SOURCE += $(RTOS_PORT_DIR)/portasm.S
 RTOS_SOURCE += $(SCU_LIB_SRC_DIR)/lm32Interrupts.c
 RTOS_SOURCE += $(RTOS_PORT_DIR)/port.c
 
 RTOS_SOURCE += $(RTOS_SRC_DIR)/list.c
 RTOS_SOURCE += $(RTOS_SRC_DIR)/queue.c
 RTOS_SOURCE += $(RTOS_SRC_DIR)/tasks.c
-RTOS_SOURCE += $(RTOS_SRC_DIR)/portable/MemMang/heap_$(RTOS_USING_HEAP).c
 RTOS_SOURCE += $(RTOS_SRC_DIR)/timers.c
+
+ifneq ($(RTOS_USING_HEAP), 0)
+  RTOS_SOURCE += $(RTOS_SRC_DIR)/portable/MemMang/heap_$(RTOS_USING_HEAP).c
+  DEFINES += CONFIG_RTOS_HEAP=$(RTOS_USING_HEAP)
+endif
 
 ifdef RTOS_ADDITIONAL_SOURCES
   RTOS_SOURCE += $(RTOS_SRC_DIR)/croutine.c
