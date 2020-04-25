@@ -54,6 +54,26 @@ typedef portSTACK_TYPE StackType_t;
 typedef int32_t        BaseType_t;
 typedef uint32_t       UBaseType_t;
 
+/*!
+ * Time is measured in ‘ticks’ – which is the number of times the tick
+ * interrupt has executed since the RTOS kernel was started.\n
+ * The tick count is held in a variable of type TickType_t.\n
+ * Defining configUSE_16_BIT_TICKS as 1 causes TickType_t to be defined
+ * (typedef’ed) as an unsigned 16bit type.\n
+ * Defining configUSE_16_BIT_TICKS as 0 causes TickType_t to be defined
+ * (typedef’ed) as an unsigned 32bit type.\n
+ * Using a 16 bit type will greatly improve performance on 8 and 16 bit
+ * architectures, but limits the maximum specifiable time period to
+ * 65535 ‘ticks’.\n Therefore, assuming a tick frequency of 250Hz,
+ * the maximum time a task can delay or block when a 16bit counter
+ * is used is 262 seconds, compared to 17179869 seconds when
+ * using a 32bit counter.\n
+ *
+ * The LM32 is a 32 bit architecture, therefore a 32 bit counter will
+ * used.
+ */
+#define configUSE_16_BIT_TICKS 0
+
 #if (configUSE_16_BIT_TICKS == 1)
    typedef uint16_t TickType_t;
    #define portMAX_DELAY (TickType_t) 0xFFFF
@@ -142,6 +162,7 @@ typedef uint32_t       UBaseType_t;
 #ifndef configMAX_PRIORITIES
   #define configMAX_PRIORITIES          3
 #endif
+
 
 /*! ---------------------------------------------------------------------------
  * @ingroup INTERRUPT

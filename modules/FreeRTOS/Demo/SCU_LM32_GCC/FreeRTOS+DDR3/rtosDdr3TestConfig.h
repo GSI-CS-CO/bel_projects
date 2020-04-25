@@ -20,7 +20,6 @@ void ddr3Unlock( void );
 #define configUSE_PORT_OPTIMISED_TASK_SELECTION 0
 #define configUSE_TICKLESS_IDLE                 0
 #define configTICK_RATE_HZ                      5000
-#define configUSE_16_BIT_TICKS                  1
 #define configIDLE_SHOULD_YIELD                 1
 #define configUSE_TASK_NOTIFICATIONS            1
 #define configUSE_MUTEXES                       1
