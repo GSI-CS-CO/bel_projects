@@ -3,8 +3,8 @@
  * @{
  * @file /common/home/bel/ubecker/lnx/src/gsi/readable/bel_projects/top/gsi_daq/lm32/generated/shared_mmap.h
  * @brief Location of Buildid and Shared Section in LM32 Memory, to be used by host
- * @note 'This file has been created automatically, do not modify it by hand!'
- * @date Wed Jul 17 09:42:21 CEST 2019
+ * @note This file has been created automatically, do not modify it by hand!
+ * @date Sun Apr 26 17:50:15 CEST 2020
  * @author makefile.scu
  */
 

@@ -38,6 +38,7 @@
   #error This module is for the target LM32 only!
 #endif
 
+#include <stdbool.h>
 #include <scu_bus.h>
 #include <daq_descriptor.h>
 #ifndef CONFIG_DAQ_SINGLE_APP

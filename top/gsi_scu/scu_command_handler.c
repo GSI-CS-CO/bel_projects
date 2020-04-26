@@ -6,11 +6,15 @@
  * @date 03.02.2020
  * Outsourced from scu_main.c
  */
-#include "scu_fg_macros.h"
+#include <scu_fg_macros.h>
 #ifdef CONFIG_MIL_FG
-  #include "scu_mil_fg_handler.h"
+  #include <scu_mil_fg_handler.h>
 #endif
-#include "scu_command_handler.h"
+#include <scu_command_handler.h>
+#ifdef CONFIG_SCU_DAQ_INTEGRATION
+  #include <daq_main.h>
+  #include <daq_command_interface_uc.h>
+#endif
 
 extern FG_MESSAGE_BUFFER_T    g_aMsg_buf[QUEUE_CNT];
 extern FG_CHANNEL_T           g_aFgChannels[MAX_FG_CHANNELS];
@@ -64,22 +68,43 @@ void commandHandler( register TASK_T* pThis FG_UNUSED )
 {
    FG_ASSERT( pThis->pTaskData == NULL );
 
-   MSI_T m;
-   if( !getMessageSave( &m, &g_aMsg_buf[0], SWI ) )
-      return;
+#ifdef CONFIG_SCU_DAQ_INTEGRATION
+   /*!
+    * Executing a possible ADDAC-DAQ command if requested...
+    */
+   executeIfRequested( &g_scuDaqAdmin );
+#endif
 
-   FG_ASSERT( m.adr == ADDR_SWI );
 
 #if defined( CONFIG_MIL_FG ) && defined( CONFIG_READ_MIL_TIME_GAP )
    if( !isMilFsmInST_WAIT() )
+   { /*
+      * Wait a round...
+      */
       return;
+   }
 #endif
 
+   MSI_T m;
+   /*
+    * Is a message from SATF-LIB for FG present?
+    */
+   if( !getMessageSave( &m, &g_aMsg_buf[0], SWI ) )
+   { /*
+      * No!
+      */
+      return;
+   }
+
+   FG_ASSERT( m.adr == ADDR_SWI );
 
    const unsigned int code  = m.msg >> BIT_SIZEOF( uint16_t );
    const unsigned int value = m.msg & 0xFFFF;
    printSwIrqCode( code, value );
 
+   /*!
+    * Verifying the command parameter for all commands with a parameter.
+    */
    switch( code )
    {
       case FG_OP_INITIALIZE:          /* Go immediately to next case. */
@@ -96,6 +121,9 @@ void commandHandler( register TASK_T* pThis FG_UNUSED )
       default: break;
    }
 
+   /*
+    * Executing the SAFT-LIB command if known.
+    */
    switch( code )
    {
       case FG_OP_INITIALIZE:

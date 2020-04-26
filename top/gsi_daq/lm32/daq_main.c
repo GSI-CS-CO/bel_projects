@@ -115,8 +115,10 @@ STATIC inline bool forEachContinuousCahnnel( DAQ_DEVICE_T* pDevice )
    for( unsigned int channelNr = 0;
         channelNr < daqDeviceGetMaxChannels( pDevice ); channelNr++ )
    {
+#ifdef CONFIG_DAQ_SINGLE_APP
       if( executeIfRequested( &g_scuDaqAdmin ) )
          return true;
+#endif
       handleContinuousMode( daqDeviceGetChannelObject( pDevice, channelNr ) );
    }
    return false;
@@ -174,8 +176,10 @@ STATIC inline bool forEachPostMortemChennel( DAQ_DEVICE_T* pDevice )
    for( unsigned int channelNr = 0;
         channelNr < daqDeviceGetMaxChannels( pDevice ); channelNr++ )
    {
+#ifdef CONFIG_DAQ_SINGLE_APP
       if( executeIfRequested( &g_scuDaqAdmin ) )
          return true;
+#endif
       handlePostMortemMode( daqDeviceGetChannelObject( pDevice, channelNr ) );
    }
    return false;
@@ -251,7 +255,9 @@ void forEachScuDaqDevice( void )
          return;
       }
    }
+#ifdef CONFIG_DAQ_SINGLE_APP
    executeIfRequested( &g_scuDaqAdmin );
+#endif
 }
 
 #ifndef CONFIG_DAQ_SINGLE_APP

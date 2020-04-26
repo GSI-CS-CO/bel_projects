@@ -568,12 +568,11 @@ void main( void )
    initEcaQueue();
 #endif
 
-   initAndScan(); // init and scan for fgs
+   /*!
+    * Scanning and initializing all FG's and DAQ's
+    */
+   initAndScan();
 
-#ifdef CONFIG_SCU_DAQ_INTEGRATION
- //  scuDaqInitialize( &g_scuDaqAdmin ); // Init and scan for DAQs
- //  mprintf( "SCU-DAQ initialized\n" );
-#endif
    //print_regs();
    while( true )
    {
