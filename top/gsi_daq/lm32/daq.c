@@ -521,8 +521,8 @@ int daqBusFindAndInitializeAll( register DAQ_BUS_T* pThis,
 
    // Find all DAQ- slaves
    pThis->slotDaqUsedFlags = scuBusFindSpecificSlaves( pScuBusBase,
-                                                       DAQ_CID_SYS,
-                                                       DAQ_CID_GROUP );
+                                                       SYS_CSCO,
+                                                       GRP_ADDAC2 );
    if( pThis->slotDaqUsedFlags == 0 )
    {
       DBPRINT( "DBG: No DAQ slaves found!\n" );

@@ -223,7 +223,9 @@ void scanScuBusFgsViaMil( volatile uint16_t *scub_adr, FG_MACRO_T* fglist )
 STATIC inline
 void scanScuBusFgsDirect( const void* pScuBusBase, FG_MACRO_T* pFGlist )
 {
-   const SCUBUS_SLAVE_FLAGS_T slotFlags = scuBusFindSpecificSlaves( pScuBusBase, SYS_CSCO, 38 );
+   const SCUBUS_SLAVE_FLAGS_T slotFlags = scuBusFindSpecificSlaves( pScuBusBase,
+                                                                    SYS_CSCO,
+                                                                    GRP_ADDAC2 );
 
    if( slotFlags == 0 )
       return;
@@ -236,7 +238,7 @@ void scanScuBusFgsDirect( const void* pScuBusBase, FG_MACRO_T* pFGlist )
       add_to_fglist( slot,
                      0,
                      SYS_CSCO,
-                     38,
+                     GRP_ADDAC2,
                      getFgFirmwareVersion( pScuBusBase, slot ),
                      pFGlist );
    }
