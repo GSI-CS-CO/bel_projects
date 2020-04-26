@@ -40,6 +40,9 @@
 
 #include <scu_bus.h>
 #include <daq_descriptor.h>
+#ifndef CONFIG_DAQ_SINGLE_APP
+ #include <scu_function_generator.h>
+#endif
 
 #ifdef CONFIG_DAQ_SIMULATE_CHANNEL
 #warning CAUTION: Module daq will compiled in simulation mode!!!
@@ -1744,7 +1747,11 @@ void daqDeviceReset( register DAQ_DEVICE_T* pThis );
  * @retval >0 Number of connected DAQ in SCU-bus.
  */
 int daqBusFindAndInitializeAll( register DAQ_BUS_T* pAllDAQ,
-                                const void* pScuBusBase );
+                                const void* pScuBusBase
+                             #ifndef CONFIG_DAQ_SINGLE_APP
+                                ,FG_MACRO_T* pFgList
+                             #endif
+                              );
 
 /*! ---------------------------------------------------------------------------
  * @ingroup DAQ_SCU_BUS

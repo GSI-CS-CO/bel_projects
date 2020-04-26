@@ -324,6 +324,14 @@ void printFgs( void );
  */
 void print_regs( void );
 
+/*! ---------------------------------------------------------------------------
+ */
+#ifdef CONFIG_SCU_DAQ_INTEGRATION
+void addAddacToFgList( const void* pScuBusBase,  
+                       const unsigned int slot,
+                       FG_MACRO_T* pFGlist );
+#endif
+
 /*! --------------------------------------------------------------------------
  * @brief Finding of all kinds of function generators connected to
  *        this SCU.

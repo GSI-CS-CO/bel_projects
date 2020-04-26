@@ -571,8 +571,8 @@ void main( void )
    initAndScan(); // init and scan for fgs
 
 #ifdef CONFIG_SCU_DAQ_INTEGRATION
-   scuDaqInitialize( &g_scuDaqAdmin ); // Init and scan for DAQs
-   mprintf( "SCU-DAQ initialized\n" );
+ //  scuDaqInitialize( &g_scuDaqAdmin ); // Init and scan for DAQs
+ //  mprintf( "SCU-DAQ initialized\n" );
 #endif
    //print_regs();
    while( true )

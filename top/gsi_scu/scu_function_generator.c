@@ -31,10 +31,13 @@
 #include <scu_main.h>
 #include <eb_console_helper.h>
 #ifdef CONFIG_MIL_FG
-#include <scu_mil.h>
+ #include <scu_mil.h>
 #endif
 #include <mini_sdb.h>
 #include "scu_fg_macros.h"
+#ifdef CONFIG_SCU_DAQ_INTEGRATION
+ #include <daq_main.h>
+#endif
 
 #define IFA_ID_VAL         0xfa00
 #define IFA_MIN_VERSION    0x1900
@@ -215,6 +218,26 @@ void scanScuBusFgsViaMil( volatile uint16_t *scub_adr, FG_MACRO_T* fglist )
 #endif // ifdef CONFIG_MIL_FG
 
 /*! ---------------------------------------------------------------------------
+ * @brief Adds a found function generator to the function generator list.
+ */
+#ifndef CONFIG_SCU_DAQ_INTEGRATION
+STATIC inline
+#endif
+void addAddacToFgList( const void* pScuBusBase,
+                       const unsigned int slot,
+                       FG_MACRO_T* pFGlist )
+{
+   FG_ASSERT( pFGlist != NULL );
+   add_to_fglist( slot,
+                  0,
+                  SYS_CSCO,
+                  GRP_ADDAC2,
+                  getFgFirmwareVersion( pScuBusBase, slot ),
+                  pFGlist );
+}
+
+#ifndef CONFIG_SCU_DAQ_INTEGRATION
+/*! ---------------------------------------------------------------------------
  * @brief Scans the whole SCU-bus direct to the SCU-bus connected
  *        function generators
  * @param pScuBusBase Base address of SCU bus
@@ -232,17 +255,11 @@ void scanScuBusFgsDirect( const void* pScuBusBase, FG_MACRO_T* pFGlist )
 
    for( unsigned int slot = SCUBUS_START_SLOT; slot <= MAX_SCU_SLAVES; slot++ )
    {
-      if( !scuBusIsSlavePresent( slotFlags, slot ) )
-         continue;
-
-      add_to_fglist( slot,
-                     0,
-                     SYS_CSCO,
-                     GRP_ADDAC2,
-                     getFgFirmwareVersion( pScuBusBase, slot ),
-                     pFGlist );
+      if( scuBusIsSlavePresent( slotFlags, slot ) )
+         addAddacToFgList( pScuBusBase, slot, pFGlist );
    }
 }
+#endif /* ifndef CONFIG_SCU_DAQ_INTEGRATION */
 
 /*! ---------------------------------------------------------------------------
  * @brief Scans the whole SCU-bus for all kinda of function generators.
@@ -250,7 +267,11 @@ void scanScuBusFgsDirect( const void* pScuBusBase, FG_MACRO_T* pFGlist )
 STATIC inline
 void scanScuBusFgs( volatile uint16_t *scub_adr, FG_MACRO_T* fglist )
 {
+#ifdef CONFIG_SCU_DAQ_INTEGRATION
+   scuDaqInitialize( &g_scuDaqAdmin, fglist );
+#else
    scanScuBusFgsDirect( (void*)scub_adr, fglist );
+#endif
 #ifdef CONFIG_MIL_FG
    scanScuBusFgsViaMil( scub_adr, fglist );
 #endif

@@ -31,8 +31,8 @@
 #include <mini_sdb.h> // necessary for ERROR_NOT_FOUND
 #include <dbg.h>
 #include <daq.h>
-#ifdef CONFIG_DAQ_DEBUG
- #include <eb_console_helper.h> //!@brief Will used for debug purposes only.
+#if defined( CONFIG_DAQ_DEBUG ) || !defined( CONFIG_DAQ_SINGLE_APP )
+ #include <eb_console_helper.h>
 #endif
 
 #if defined( CONFIG_DAQ_DEBUG ) || defined(__DOXYGEN__)
@@ -51,7 +51,7 @@ const char* g_pNo  = "no";
  * @param channel Channel number.
  * @param value Value for writing into register.
  */
-static inline void daqChannelSetReg( DAQ_REGISTER_ACCESS_T* volatile pReg,
+STATIC inline void daqChannelSetReg( DAQ_REGISTER_ACCESS_T* volatile pReg,
                                      const DAQ_REGISTER_INDEX_T index,
                                      const unsigned int channel,
                                      const DAQ_REGISTER_T value )
@@ -68,7 +68,7 @@ static inline void daqChannelSetReg( DAQ_REGISTER_ACCESS_T* volatile pReg,
  * @param channel Channel number.
  * @return Register value.
  */
-static inline
+STATIC inline
 DAQ_REGISTER_T daqChannelGetReg( DAQ_REGISTER_ACCESS_T* volatile pReg,
                                  const DAQ_REGISTER_INDEX_T index,
                                  const unsigned int channel )
@@ -178,7 +178,7 @@ unsigned int daqChannelGetDaqFifoWordsSimulate( register DAQ_CANNEL_T* pThis )
  *                becomes compiled if the compiler-switch
  *                CONFIG_DAQ_SIMULATE_CHANNEL defined!
  */
-static
+STATIC
 DAQ_DATA_T daqChannelPopFifoSimulate( register DAQ_CANNEL_T* pThis,
                                       unsigned int remaining,
                                       const unsigned int limit )
@@ -440,7 +440,7 @@ void daqDevicePrintInterruptStatus( register DAQ_DEVICE_T* pThis )
  * @param slot slot number
  * @return Number of real existing channels
  */
-inline static int daqDeviceFindChannels( DAQ_DEVICE_T* pThis, int slot )
+inline STATIC int daqDeviceFindChannels( DAQ_DEVICE_T* pThis, int slot )
 {
    DAQ_ASSERT( pThis != NULL );
    DAQ_ASSERT( pThis->pReg != NULL );
@@ -500,6 +500,12 @@ inline static int daqDeviceFindChannels( DAQ_DEVICE_T* pThis, int slot )
                 daqChannelGetSlot( pCurrentChannel ) );
 
       pThis->maxChannels++;
+    #ifndef CONFIG_DAQ_SINGLE_APP
+      mprintf( ESC_FG_CYAN
+               "ADDAC-DAQ channel %d in slot %d initialized.\n"
+               ESC_NORMAL,
+               channel, daqChannelGetSlot( pCurrentChannel ) );
+    #endif
    }
    return pThis->maxChannels;
 }
@@ -510,7 +516,11 @@ inline static int daqDeviceFindChannels( DAQ_DEVICE_T* pThis, int slot )
  * @see daq.h
  */
 int daqBusFindAndInitializeAll( register DAQ_BUS_T* pThis,
-                                const void* pScuBusBase )
+                                const void* pScuBusBase
+                            #ifndef CONFIG_DAQ_SINGLE_APP
+                                ,FG_MACRO_T* pFgList
+                            #endif
+                              )
 {
    // Paranoia...
    DAQ_ASSERT( pScuBusBase != (void*)ERROR_NOT_FOUND );
@@ -519,24 +529,35 @@ int daqBusFindAndInitializeAll( register DAQ_BUS_T* pThis,
    // Pre-initializing
    memset( pThis, 0, sizeof( DAQ_BUS_T ));
 
-   // Find all DAQ- slaves
+   /*
+    * Find all ADDAC-DAQ- slaves
+    */
    pThis->slotDaqUsedFlags = scuBusFindSpecificSlaves( pScuBusBase,
                                                        SYS_CSCO,
                                                        GRP_ADDAC2 );
    if( pThis->slotDaqUsedFlags == 0 )
    {
-      DBPRINT( "DBG: No DAQ slaves found!\n" );
+      DBPRINT( "DBG: No ADDAC slaves found!\n" );
       return 0;
    }
 
    for( int slot = SCUBUS_START_SLOT; slot <= MAX_SCU_SLAVES; slot++ )
    {
       if( !scuBusIsSlavePresent( pThis->slotDaqUsedFlags, slot ) )
-         continue; /* In this slot is not a DAQ! */
-
+         continue; /* In this slot is not a ADDAC! */
       /*
-       * For each found DAQ-device:
+       * For each found ADDAC-device:
        */
+
+   #ifndef CONFIG_DAQ_SINGLE_APP
+      if( pFgList != NULL )
+      {/*
+        * Making the ADDAC functiongenerator known for SAFT-LIB.
+        */
+         addAddacToFgList( pScuBusBase, slot, pFgList );
+      }
+   #endif
+
       DAQ_DEVICE_T* pCurrentDaqDevice = &pThis->aDaq[pThis->foundDevices];
       pCurrentDaqDevice->n = pThis->foundDevices;
      /*

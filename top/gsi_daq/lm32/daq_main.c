@@ -41,7 +41,11 @@ DAQ_ADMIN_T g_scuDaqAdmin;
 
 /*! ---------------------------------------------------------------------------
  */
-int daqScanScuBus( DAQ_BUS_T* pDaqDevices )
+int daqScanScuBus( DAQ_BUS_T* pDaqDevices
+                #ifndef CONFIG_DAQ_SINGLE_APP
+                   ,FG_MACRO_T* pFgList
+                #endif
+                 )
 {
 #ifdef CONFIG_DAQ_SINGLE_APP
    void* pScuBusBase = find_device_adr( GSI, SCU_BUS_MASTER );
@@ -56,7 +60,7 @@ int daqScanScuBus( DAQ_BUS_T* pDaqDevices )
    }
    int ret = daqBusFindAndInitializeAll( pDaqDevices, pScuBusBase );
 #else
-   int ret = daqBusFindAndInitializeAll( pDaqDevices, (void*)g_pScub_base );
+   int ret = daqBusFindAndInitializeAll( pDaqDevices, (void*)g_pScub_base, pFgList );
 #endif
    if( ret < 0 )
    {

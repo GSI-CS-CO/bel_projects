@@ -61,16 +61,29 @@ int initBuffer( RAM_SCU_T* poRam );
 /*! ---------------------------------------------------------------------------
  * @brief Scanning the SCU bus for non-MIL-DAQ slaves.
  */
-int daqScanScuBus( DAQ_BUS_T* pDaqDevices );
+int daqScanScuBus( DAQ_BUS_T* pDaqDevices
+                #ifndef CONFIG_DAQ_SINGLE_APP
+                  ,FG_MACRO_T* pFgList
+                #endif
+                 );
 
 /*! ---------------------------------------------------------------------------
  * @brief Finding and initializing of all non-MIL DAQs.
  * @param pDaqAdmin Pointer to the nom-MIL-DAQ administrating object
  */
 STATIC // Doxygen 1.8.5 seems to have a problem...
-inline void scuDaqInitialize( DAQ_ADMIN_T* pDaqAdmin )
+inline void scuDaqInitialize( DAQ_ADMIN_T* pDaqAdmin
+                            #ifndef CONFIG_DAQ_SINGLE_APP
+                             ,FG_MACRO_T* pFgList
+                            #endif
+                           )
+
 {
+#ifdef CONFIG_DAQ_SINGLE_APP
    daqScanScuBus( &pDaqAdmin->oDaqDevs );
+#else
+   daqScanScuBus( &pDaqAdmin->oDaqDevs, pFgList );
+#endif
    initBuffer( &pDaqAdmin->oRam );
 }
 
