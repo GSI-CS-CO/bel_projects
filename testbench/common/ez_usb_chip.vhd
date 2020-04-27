@@ -34,7 +34,7 @@ begin
 	main: process 
 		variable value_from_file : integer;
 		variable client_connected : boolean;
-		variable stop_until_client_connects : boolean := true;
+		variable stop_until_client_connects : boolean := false;
 	begin
 		-- initialization
 		wait until rising_edge(rstn_i);

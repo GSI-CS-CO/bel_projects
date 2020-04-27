@@ -182,9 +182,9 @@ package body interface_lm32 is
     wb_mosi.adr := std_logic_vector(to_signed(interface_lm32_i_adr_o(idx)-integer'low,32));
     wb_mosi.dat := std_logic_vector(to_signed(interface_lm32_i_dat_o(idx)-integer'low,32));
     wb_mosi.sel := std_logic_vector(to_signed(interface_lm32_i_sel_o(idx),4));
+    wb_mosi.we  :=                 to_std_logic(interface_lm32_i_we_o (idx));
     wb_mosi.cyc :=                 to_std_logic(interface_lm32_i_stb_o(idx));
     wb_mosi.stb :=                 to_std_logic(interface_lm32_i_stb_o(idx));
-    wb_mosi.we  :=                 to_std_logic(interface_lm32_i_we_o (idx));
     return wb_mosi;
   end function;
   procedure interface_lm32_i_wb_miso(idx: integer; wb_miso : t_wishbone_master_in) is
@@ -201,9 +201,9 @@ package body interface_lm32 is
     wb_mosi.adr := std_logic_vector(to_signed(interface_lm32_d_adr_o(idx)-integer'low,32));
     wb_mosi.dat := std_logic_vector(to_signed(interface_lm32_d_dat_o(idx)-integer'low,32));
     wb_mosi.sel := std_logic_vector(to_signed(interface_lm32_d_sel_o(idx),4));
+    wb_mosi.we  :=                 to_std_logic(interface_lm32_d_we_o (idx));
     wb_mosi.cyc :=                 to_std_logic(interface_lm32_d_stb_o(idx));
     wb_mosi.stb :=                 to_std_logic(interface_lm32_d_stb_o(idx));
-    wb_mosi.we  :=                 to_std_logic(interface_lm32_d_we_o (idx));
     return wb_mosi;
   end function;
   procedure interface_lm32_d_wb_miso(idx: integer; wb_miso : t_wishbone_master_in) is
