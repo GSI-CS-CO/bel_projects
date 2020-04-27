@@ -5,12 +5,14 @@ use ieee.std_logic_unsigned.all;
 entity top is
   port (
     clk_base_i        : in    std_logic;
-    fx2_clk           : in    std_logic;                    -- Clock from FX2 USB Controller
-    scu_cb_revision   : in    std_logic_vector(3 downto 0); -- must be assigned with weak pull ups
-    fpga_con_io       : inout std_logic_vector(7 downto 0); -- Connection to Arria 10
+    fx2_clk           : in    std_logic;                      -- Clock from FX2 USB Controller
+    scu_cb_revision   : in    std_logic_vector(3 downto 0);   -- must be assigned with weak pull ups
+    fpga_con_io       : inout std_logic_vector(7 downto 0);   -- Connection to Arria 10
     --I2C to COMX
     i2c_scl           : in    std_logic;
     i2c_sda           : inout std_logic;
+    smb_scl           : in    std_logic;                      --SMB clock
+    smb_sda           : inout std_logic :='Z';                --SMB data
 
     pGood             : in    std_logic_vector (3 downto 0);  -- Power good (0.95V, 1.8V, 3.3V, 5V)
     nPfail            : in    std_logic;                      -- 12V Rail Powerfail
@@ -37,7 +39,8 @@ entity top is
     volt_1_8_en       : out   std_logic :='0';              -- Enable 1.8V Rail
     volt_1_8_IO_en    : out   std_logic :='0';              -- Enable IO 1.8V Rail (MOSFET)
     volt_5_en         : out   std_logic :='0';              -- Enable 5V Rail
-  	pwr_ok				    : out	  std_logic   :='0';				    -- Power Ok COMX
+    pwr_ok				    : out	  std_logic :='0';				      -- Power Ok COMX
+    wake              : out   std_logic :='Z';              -- PCIe Wake 
 
     IO_enable         : out   std_logic;                    -- Enable Levelshifter 1.8V  ->  3.3V
     nPB_user_out      : out   std_logic;                    -- User Push-Button Out
