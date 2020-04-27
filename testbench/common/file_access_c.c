@@ -113,6 +113,8 @@ void file_access_write(int x) {
 }
 
 void file_access_flush() {
+	for (int i = 0; i < 79; ++i) printf("-");
+	printf("\n");
 	pfds[0].events = POLLOUT;
 	poll(pfds,1,-1);
 	int result = write(pfds[0].fd, write_buffer, write_buffer_length);

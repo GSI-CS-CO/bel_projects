@@ -7,6 +7,7 @@
 
 #include <iostream>
 #include <iomanip>
+#include <sstream>
 #include <vector>
 #include <memory>
 #include <cstdint>
@@ -19,6 +20,12 @@ extern int VARNAME;
 // Users will work with an index into this container.
 std::vector<Vlm32_top*> top_instances;
 std::vector<VerilatedVcdC*> tfp_instances;
+std::vector<bool> wbcyc;
+std::vector<bool> wbstb;
+std::vector<bool> wback;
+std::vector<std::ostringstream> wb_cycle_log;
+
+const bool print_data_wb_access = false;
 
 vluint64_t main_time = 0;       // Current simulation time
 // This is a 64-bit integer to reduce wrap over issues and
@@ -35,6 +42,10 @@ extern "C" {
 		top_instances.push_back(new Vlm32_top);
 	    Verilated::traceEverOn(true);   // Verilator must compute traced signals
 	    tfp_instances.push_back(new VerilatedVcdC);
+	    wbcyc.push_back(false);
+	    wbstb.push_back(false);
+	    wback.push_back(false);
+	    wb_cycle_log.push_back(std::ostringstream());
 	    top_instances[idx]->trace(tfp_instances[idx], 99);   // Trace 99 levels of hierarchy
 	    std::ostringstream filename;
 	    filename << "vlt_dump_" << std::setw(2) << std::setfill('0') << std::dec << idx << ".vcd";
@@ -108,12 +119,22 @@ extern "C" {
 		return (int)(top_instances[idx]->D_ADR_O+INT_MIN);
 	}
 	int interface_lm32_d_cyc_o(int idx) {
+		wbcyc[idx] = top_instances[idx]->D_CYC_O;
 		return top_instances[idx]->D_CYC_O;
 	}
 	int interface_lm32_d_stb_o(int idx) {
+		if (print_data_wb_access && !wbstb[idx] & top_instances[idx]->D_STB_O) { // rising edge of stb
+			wb_cycle_log[idx] << std::dec << std::setw(2) << idx 
+			                  << ":   d_we_o=" << std::hex << std::setfill('0') << std::setw(1) << (int)top_instances[idx]->D_WE_O << std::dec;
+			wb_cycle_log[idx] << "   d_adr_o=0x" << std::hex << std::setfill('0') << std::setw(8) << top_instances[idx]->D_ADR_O << std::dec;
+			wb_cycle_log[idx] << "   d_dat_o=0x" << std::hex << std::setfill('0') << std::setw(8) << top_instances[idx]->D_DAT_O << std::dec;
+		}
+		wbstb[idx] = top_instances[idx]->D_STB_O;
 		return top_instances[idx]->D_STB_O;
 	}
 	int interface_lm32_d_dat_o(int idx) {
+		if (wbstb[idx] && !top_instances[idx]->D_STB_O) {
+		}
 		return top_instances[idx]->D_DAT_O+INT_MIN;
 	}
 	int interface_lm32_d_sel_o(int idx) {
@@ -133,6 +154,12 @@ extern "C" {
 	}
 	// data wb interface input
 	void interface_lm32_d_ack_i(int idx, int ack) {
+		if (print_data_wb_access && !wback[idx] & ack) { // rising edge of ack
+			wb_cycle_log[idx] << "   d_dat_i=0x" << std::hex << std::setfill('0') << std::setw(8) << top_instances[idx]->D_DAT_I << std::dec;
+			std::cerr << wb_cycle_log[idx].str() << std::endl;
+			wb_cycle_log[idx].str("");
+		}
+		wback[idx] = ack;
 		top_instances[idx]->D_ACK_I = ack;
 	}
 	void interface_lm32_d_dat_i(int idx, int dat) {
