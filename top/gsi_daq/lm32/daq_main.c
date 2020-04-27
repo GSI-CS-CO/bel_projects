@@ -262,16 +262,6 @@ void forEachScuDaqDevice( void )
 
 #ifndef CONFIG_DAQ_SINGLE_APP
 
-STATIC inline unsigned int daqGetSetDaqNumber( const unsigned int fgNum )
-{
-   return fgNum + 2;
-}
-
-STATIC inline unsigned int daqGetCurrentDaqNumber( const unsigned int fgNum )
-{
-   return fgNum;
-}
-
 /*! ---------------------------------------------------------------------------
  * @see daq_main.h
  */
@@ -279,6 +269,9 @@ void daqEnableFgFeedback( const unsigned int slot, const unsigned int fgNum )
 {
    mprintf( "%s( %d, %d )\n", __func__, slot, fgNum );
    //TODO
+   DAQ_DEVICE_T* pDaqDevice  = &g_scuDaqAdmin.oDaqDevs.aDaq[slot-1];
+   DAQ_CANNEL_T* pSetChannel = &pDaqDevice->aChannel[daqGetSetDaqNumberOfFg(fgNum)];
+   DAQ_CANNEL_T* pActChannel = &pDaqDevice->aChannel[daqGetActualDaqNumberOfFg(fgNum)];
 }
 
 /*! ---------------------------------------------------------------------------
@@ -287,7 +280,10 @@ void daqEnableFgFeedback( const unsigned int slot, const unsigned int fgNum )
 void daqDisableFgFeedback( const unsigned int slot, const unsigned int fgNum )
 {
    mprintf( "%s( %d, %d )\n", __func__, slot, fgNum );
-   //TODO
+
+   DAQ_DEVICE_T* pDaqDevice = &g_scuDaqAdmin.oDaqDevs.aDaq[slot-1];
+   daqChannelSample1msOff( &pDaqDevice->aChannel[daqGetSetDaqNumberOfFg(fgNum)] );
+   daqChannelSample1msOff( &pDaqDevice->aChannel[daqGetActualDaqNumberOfFg(fgNum)] );
 }
 
 #endif /* ifndef CONFIG_DAQ_SINGLE_APP */
