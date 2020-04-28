@@ -166,7 +166,7 @@ int configure_fg_macro( const unsigned int channel )
 
    unsigned int fg_base = 0;
    /* fg mode and reset */
-   FG_REGISTER_T* pAdagFgRegs;
+   FG_REGISTER_T* pAdagFgRegs = NULL;
    if( isNonMilFg( socket ) )
    {   //scu bus slave
       unsigned int dac_base;
@@ -215,6 +215,7 @@ int configure_fg_macro( const unsigned int channel )
       if( isNonMilFg( socket ) )
       {
          FG_ASSERT( fg_base != 0 );
+         FG_ASSERT( pAdagFgRegs != NULL );
 
          setAdacFgRegs( pAdagFgRegs, &pset, cntrl_reg_wr );
          STATIC_ASSERT( sizeof( g_shared.fg_regs[channel].tag ) == sizeof( uint32_t ) );

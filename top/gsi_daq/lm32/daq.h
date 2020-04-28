@@ -37,6 +37,10 @@
 #ifndef __lm32__
   #error This module is for the target LM32 only!
 #endif
+#define CONFIG_DEBUG_DAQ_ENABLE
+#ifdef CONFIG_DEBUG_DAQ_ENABLE
+#include <mprintf.h>
+#endif
 
 #include <stdbool.h>
 #include <scu_bus.h>
@@ -701,6 +705,9 @@ static inline void daqChannelSample1msOn( register DAQ_CANNEL_T* pThis )
 #ifdef CONFIG_DAQ_SIMULATE_CHANNEL
    daqChannelSample10usOn( pThis );
 #else
+ #ifdef CONFIG_DEBUG_DAQ_ENABLE
+   mprintf( "%s( 0x%08x )\n", __func__, (unsigned int)pThis );
+ #endif
    DAQ_CTRL_REG_T* pCtrl = daqChannelGetCtrlRegPtr( pThis );
    pCtrl->Sample10us = OFF;
    pCtrl->Sample100us = OFF;
@@ -719,6 +726,9 @@ static inline void daqChannelSample1msOff( register DAQ_CANNEL_T* pThis )
 #ifdef CONFIG_DAQ_SIMULATE_CHANNEL
    daqChannelSample1msOff( pThis );
 #else
+ #ifdef CONFIG_DEBUG_DAQ_ENABLE
+   mprintf( "%s( 0x%08x )\n", __func__, (unsigned int)pThis );
+ #endif
    daqChannelGetCtrlRegPtr( pThis )->Sample1ms = OFF;
 #endif
 }
@@ -1817,7 +1827,7 @@ static inline DAQ_DEVICE_T* daqBusGetDeviceObject( register DAQ_BUS_T* pThis,
  * @retval !=NULL Pointer to the DAQ device connected in the given slot.
  */
 DAQ_DEVICE_T* daqBusGetDeviceBySlotNumber( register DAQ_BUS_T* pThis,
-                                           unsigned int slot );
+                                           const unsigned int slot );
 
 /*! ---------------------------------------------------------------------------
  * @ingroup DAQ_SCU_BUS

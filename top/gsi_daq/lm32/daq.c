@@ -502,9 +502,11 @@ inline STATIC int daqDeviceFindChannels( DAQ_DEVICE_T* pThis, int slot )
       pThis->maxChannels++;
     #ifndef CONFIG_DAQ_SINGLE_APP
       mprintf( ESC_FG_CYAN
-               "ADDAC-DAQ channel %d in slot %d initialized.\n"
+               "ADDAC-DAQ channel %d in slot %d initialized. Address: 0x%08x\n"
                ESC_NORMAL,
-               channel, daqChannelGetSlot( pCurrentChannel ) );
+               channel, daqChannelGetSlot( pCurrentChannel ),
+               (unsigned int)pCurrentChannel
+             );
     #endif
    }
    return pThis->maxChannels;
@@ -628,7 +630,7 @@ int daqBusGetNumberOfAllFoundChannels( register DAQ_BUS_T* pThis )
  * @see daq.h
  */
 DAQ_DEVICE_T* daqBusGetDeviceBySlotNumber( register DAQ_BUS_T* pThis,
-                                           unsigned int slot )
+                                           const unsigned int slot )
 {
    for( unsigned int i = 0; i < pThis->foundDevices; i++ )
    {

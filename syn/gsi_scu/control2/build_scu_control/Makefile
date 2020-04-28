@@ -128,7 +128,9 @@ else
    SHARED_SIZE = 81920
 endif
 
-# NO_LTO=1
+ NO_LTO=1
+STACK_SIZE  =  4096
+
 
 # SCU_URL = scuxl0107
 # SCU_URL = scuxl0035
@@ -161,7 +163,7 @@ cptest:
 
 .PHONY: runfg
 runfg:
-	ssh root@$(SCU_URL) "saft-fg-ctl -r -f $(FG_UT) -g <$(TARGETTEST_DIR)$(TESTFILE)"
+	ssh root@$(SCU_URL) "(saft-fg-ctl  -r -f $(FG_UT) -g  <$(TARGETTEST_DIR)$(TESTFILE))"
 
 .PHONY: stop
 stop:

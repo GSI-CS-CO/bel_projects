@@ -268,10 +268,19 @@ void forEachScuDaqDevice( void )
 void daqEnableFgFeedback( const unsigned int slot, const unsigned int fgNum )
 {
    mprintf( "%s( %d, %d )\n", __func__, slot, fgNum );
-   //TODO
-   DAQ_DEVICE_T* pDaqDevice  = &g_scuDaqAdmin.oDaqDevs.aDaq[slot-1];
+
+   DAQ_DEVICE_T* pDaqDevice = daqBusGetDeviceBySlotNumber( &g_scuDaqAdmin.oDaqDevs, slot );
+
+   DAQ_ASSERT( pDaqDevice != NULL );
+
    DAQ_CANNEL_T* pSetChannel = &pDaqDevice->aChannel[daqGetSetDaqNumberOfFg(fgNum)];
    DAQ_CANNEL_T* pActChannel = &pDaqDevice->aChannel[daqGetActualDaqNumberOfFg(fgNum)];
+
+    //TODO Start both channels time synchronized.
+
+   daqChannelSample1msOn( pSetChannel );
+
+   daqChannelSample1msOn( pActChannel );
 }
 
 /*! ---------------------------------------------------------------------------
@@ -281,7 +290,10 @@ void daqDisableFgFeedback( const unsigned int slot, const unsigned int fgNum )
 {
    mprintf( "%s( %d, %d )\n", __func__, slot, fgNum );
 
-   DAQ_DEVICE_T* pDaqDevice = &g_scuDaqAdmin.oDaqDevs.aDaq[slot-1];
+   DAQ_DEVICE_T* pDaqDevice = daqBusGetDeviceBySlotNumber( &g_scuDaqAdmin.oDaqDevs, slot );
+
+   DAQ_ASSERT( pDaqDevice != NULL );
+
    daqChannelSample1msOff( &pDaqDevice->aChannel[daqGetSetDaqNumberOfFg(fgNum)] );
    daqChannelSample1msOff( &pDaqDevice->aChannel[daqGetActualDaqNumberOfFg(fgNum)] );
 }
