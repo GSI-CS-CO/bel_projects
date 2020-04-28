@@ -83,9 +83,9 @@ entity scu_control is
     -----------------------------------------------------------------------
     -- Misc.
     -----------------------------------------------------------------------
-    nres_i        : in      std_logic;
+    nSys_Reset    : in      std_logic;  -- Reset From ComX
     user_btn      : in      std_logic;  --User Button
-    max10_connect : inout   std_logic_vector (7 downto 0);  -- Pins reserveriert tbd
+    f2f           : inout   std_logic_vector (7 downto 0);  -- Connection to MAX10 FPGA
     serial_cb_out : out     std_logic_vector (1 downto 0);  -- Serial to Backplane
     serial_cb_in  : in      std_logic_vector (1 downto 0);  -- Serial to Backplane
     rear_in       : in      std_logic_vector (1 downto 0);  -- GPIO to Backplane
@@ -150,8 +150,8 @@ entity scu_control is
     psram_cen          : out   std_logic_vector(3 downto 0) := (others => '1');
     psram_oen          : out   std_logic := 'Z';
     psram_wen          : out   std_logic := 'Z';
-    psram_be0          : out   std_logic := 'Z';
-    psram_be1          : out   std_logic := 'Z';
+    psram_ubn          : out   std_logic := 'Z';
+    psram_lbn          : out   std_logic := 'Z';
     psram_wait         : in    std_logic; -- DDR magic
 
     -----------------------------------------------------------------------
@@ -316,8 +316,8 @@ begin
       ps_clk                 => psram_clk,
       ps_addr                => psram_a,
       ps_data                => psram_dq,
-      ps_seln(0)             => psram_be0,
-      ps_seln(1)             => psram_be1,
+      ps_seln(0)             => psram_ubn,
+      ps_seln(1)             => psram_lbn,
       ps_cen                 => psram_cen (0),
       ps_oen                 => psram_oen,
       ps_wen                 => psram_wen,
