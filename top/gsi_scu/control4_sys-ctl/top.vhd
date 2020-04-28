@@ -19,6 +19,16 @@ entity top is
     jtag_present	  	: in		std_logic;							        -- JTAG TMS Signal
     nPB_user_in       : in    std_logic;                      -- User Push-Button In
     wdt               : in    std_logic;                      -- Watchdog COMX
+
+    -----------------------------------------------------------------------
+    -- LPC interface from ComExpress
+    -----------------------------------------------------------------------
+    LPC_AD         : inout std_logic_vector(3 downto 0);
+    LPC_FPGA_CLK   : in    std_logic;
+    LPC_SERIRQ     : inout std_logic;
+    --nLPC_DRQ0      : in    std_logic;
+    nLPC_FRAME     : in    std_logic;
+
     --Arria 10 status
     CONF_DONE         : in    std_logic;
     INIT_DONE         : in    std_logic;
