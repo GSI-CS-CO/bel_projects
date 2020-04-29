@@ -31,6 +31,7 @@
 #include <mini_sdb.h> // necessary for ERROR_NOT_FOUND
 #include <dbg.h>
 #include <daq.h>
+#include <scu_wr_time.h>
 #if defined( CONFIG_DAQ_DEBUG ) || !defined( CONFIG_DAQ_SINGLE_APP )
  #include <eb_console_helper.h>
 #endif
@@ -341,7 +342,11 @@ void daqDeviceSetTimeStampCounter( register DAQ_DEVICE_T* pThis, uint64_t ts )
    DAQ_ASSERT( pThis->pReg != NULL );
 
    for( unsigned int i = 0; i < (sizeof(uint64_t)/sizeof(uint16_t)); i++ )
+   //for( int i = (sizeof(uint64_t)/sizeof(uint16_t))-1; i >= 0; i--)
+   {
       pThis->pReg->i[TS_COUNTER_WD1+i] = ((uint16_t*)&ts)[i];
+      mprintf( "%d:, 0x%04x\n", i, pThis->pReg->i[TS_COUNTER_WD1+i]);
+   }
 }
 
 /*! ---------------------------------------------------------------------------
@@ -399,7 +404,7 @@ void daqDeviceReset( register DAQ_DEVICE_T* pThis )
    for( int i = daqDeviceGetMaxChannels( pThis )-1; i >= 0; i-- )
       daqChannelReset( daqDeviceGetChannelObject( pThis, i ) );
 
-   daqDeviceSetTimeStampCounter( pThis, 0L );
+   //!!daqDeviceSetTimeStampCounter( pThis, 0L );
    daqDeviceSetTimeStampTag( pThis, 0 );
 }
 
@@ -593,6 +598,7 @@ int daqBusFindAndInitializeAll( register DAQ_BUS_T* pThis,
       daqDeviceClearDaqChannelInterrupts( pCurrentDaqDevice );
       daqDeviceClearHiResChannelInterrupts( pCurrentDaqDevice );
 
+      daqDeviceSetTimeStampCounter( pCurrentDaqDevice, getWrSysTime() );
 #if DAQ_MAX < MAX_SCU_SLAVES
       if( pThis->foundDevices == ARRAY_SIZE( pThis->aDaq ) )
          break;

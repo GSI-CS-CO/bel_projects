@@ -27,6 +27,7 @@
 #include <mini_sdb.h>
 #include <eb_console_helper.h>
 #include <dbg.h>
+#include <scu_lm32_macros.h>
 #ifdef CONFIG_DAQ_SINGLE_APP
  #include <lm32Interrupts.h>
 #endif
@@ -279,7 +280,9 @@ void daqEnableFgFeedback( const unsigned int slot, const unsigned int fgNum )
     //TODO Start both channels time synchronized.
 
    daqChannelSample1msOn( pSetChannel );
-
+   //TODO find a more elegant solution...
+   for( unsigned int i = 0; i < 200000; i++ )
+      NOP();
    daqChannelSample1msOn( pActChannel );
 }
 

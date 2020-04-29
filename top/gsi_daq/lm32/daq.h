@@ -37,7 +37,9 @@
 #ifndef __lm32__
   #error This module is for the target LM32 only!
 #endif
-#define CONFIG_DEBUG_DAQ_ENABLE
+
+//#define CONFIG_DEBUG_DAQ_ENABLE
+
 #ifdef CONFIG_DEBUG_DAQ_ENABLE
 #include <mprintf.h>
 #endif
