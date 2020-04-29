@@ -201,7 +201,7 @@ architecture scu_diob_arch of scu_diob is
 --  CONSTANT c_Firmware_Release:    Integer := 25;     -- Firmware_release Stand 28.08.2017 ( + '760 (ATR1) + FG_901.040 AD1) + FG_901.050 8In8Out1) + Tri-State-Steuerung (PIO+UIO) )
 --  CONSTANT c_Firmware_Release:    Integer := 26;     -- Firmware_release Stand 10.10.2017 ( + 'FG_901.010 16Out, OutpReg1 'MF-Funktion' auf die Outputs umschaltbar)
 --  CONSTANT c_Firmware_Release:    Integer := 27;     -- Firmware_release Stand 21.11.2017 ( Error, '760 (ATR1): LED-Mux für FG902070_OptoDig_Out1
-    CONSTANT c_Firmware_Release:    Integer := 28;     -- Firmware_release Stand 20.06.2018 ( KK: Umbau ATR Trigger auf kanalweises Triggern und Largepulse Option)
+    CONSTANT c_Firmware_Release:    Integer := 28;     -- Firmware_release Stand 20.06.2018 ( KK: Umbau ATR Trigger auf kanalweises Triggern und Largepulse Option, KL: SPill-Abort,QD-Test Matrix)
 --  CONSTANT c_Firmware_Release:    Integer := 16#FF#; -- Test-Firmware_release
 
 
