@@ -513,6 +513,7 @@ STATIC void scu_bus_handler( register TASK_T* pThis FG_UNUSED )
 STATIC void scuBusDaqTask( register TASK_T* pThis FG_UNUSED )
 {
    FG_ASSERT( pThis->pTaskData == NULL );
+   for( unsigned int i = 0; i < 30000; i++ ) NOP();
    forEachScuDaqDevice();
 }
 #endif /* ifdef CONFIG_SCU_DAQ_INTEGRATION */
