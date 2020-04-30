@@ -13,6 +13,7 @@ Make will take care of all submodules and additional toolchains.
 ```
 make
 ```
+Important: Please don't mess around using the "git submodule --fancy option" command!
 
 # Kernel Drivers
 This will build VME and PCI(e) drivers.
@@ -53,6 +54,7 @@ make pexarria5
 make exploder5
 make pmc
 make microtca
+make pexp
 ```
 
 ## FAQ
@@ -80,3 +82,26 @@ Create a new symlink: sudo ln -s /usr/lib/x86_64-linux-gnu/libmpfr.so.6 /usr/lib
 ### Error: Executing qmegawiz: child process exited abnormally + Time value XXX,YYYMbps and time unit are illegal
 Change your LC_NUMERIC setting: export LC_NUMERIC="en_US.UTF-8"
 
+### Error: hdlmake: AttributeError: 'module' object has no attribute '_vendor' or hdlmake not found
+In case a simple "make" does not fix this:
+```
+apt-get install python-setuptools
+./install-hdlmake.sh
+```
+
+### Error (23035): Tcl error: couldn't execute "qsys-generate": no such file or directory
+Adjust your PATH variable like this:
+```
+export QUARTUS=/opt/quartus/
+export QSYS_ROOTDIR=$QUARTUS/sopc_builder/bin
+export PATH=$PATH:$QUARTUS_ROOTDIR:$QSYS_ROOTDIR
+```
+
+## JTAG and Programming
+### Altera/Intel USB Blaster
+
+See bel_projects/doc/usbblaster/readme.md
+
+### Xilinx Platform Cable II
+
+See bel_projects/doc/platform_cable/readme.md

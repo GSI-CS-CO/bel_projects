@@ -59,7 +59,7 @@ package ftm_pkg is
   name       => "DUMMYDUMMYDUMMYDUMM")));
 
   constant c_dummy_slave_in : t_wishbone_slave_in := ('0', '0', x"00000000", x"F", '0', x"00000000");
-  constant c_dummy_slave_out : t_wishbone_slave_out := ('0', '0', '0', '0', '0', x"00000000");
+  constant c_dummy_slave_out : t_wishbone_slave_out := ('0', '0', '0', '0', x"00000000");
 
 
 
@@ -83,11 +83,11 @@ package ftm_pkg is
 
     -- wb world interface of the lm32
     world_master_o  : out t_wishbone_master_out;
-    world_master_i  : in  t_wishbone_master_in := ('0', '0', '0', '0', '0', x"00000000");
+    world_master_i  : in  t_wishbone_master_in := ('0', '0', '0', '0', x"00000000");
 
     -- optional wb interface to prioq for DM
     prioq_master_o  : out t_wishbone_master_out;
-    prioq_master_i  : in  t_wishbone_master_in := ('0', '0', '0', '0', '0', x"00000000");
+    prioq_master_i  : in  t_wishbone_master_in := ('0', '0', '0', '0', x"00000000");
 
     -- msi interface
     msi_slave_o     : out t_wishbone_slave_out;
@@ -135,7 +135,7 @@ package ftm_pkg is
 
     -- optional prioq interface
     dm_prioq_master_o : out t_wishbone_master_out;
-    dm_prioq_master_i : in  t_wishbone_master_in := ('0', '0', '0', '0', '0', x"00000000")
+    dm_prioq_master_i : in  t_wishbone_master_in := ('0', '0', '0', '0', x"00000000")
   );
   end component;
 

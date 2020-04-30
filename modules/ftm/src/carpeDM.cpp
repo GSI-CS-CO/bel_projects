@@ -1,420 +1,231 @@
-#include <boost/shared_ptr.hpp>
-#include <algorithm>
-#include <stdio.h>
-#include <iostream>
-#include <string>
-#include <inttypes.h>
-#include <boost/graph/graphviz.hpp>
-//#include <boost/algorithm/string.hpp>
-#include <sys/time.h>
-
-#include "common.h"
-#include "propwrite.h"
-#include "graph.h"
 #include "carpeDM.h"
-#include "minicommand.h"
-#include "dotstr.h"
-#include "idformat.h"
-#include "lzmaCompression.h"
-#include "ebwrapper.h"
-
-
-  namespace dgp = DotStr::Graph::Prop;
-  namespace dnp = DotStr::Node::Prop;
-  namespace dep = DotStr::Edge::Prop;
-
-
-  Graph& CarpeDM::getUpGraph()   {return gUp;}   //Returns the Upload Graph for CPU <cpuIdx>
-  Graph& CarpeDM::getDownGraph() {return gDown;} //Returns the Download Graph for CPU <cpuIdx>
-
-vBuf CarpeDM::compress(const vBuf& in) {return lzmaCompress(in);}
-vBuf CarpeDM::decompress(const vBuf& in) {return lzmaDecompress(in);}
-
-
-
-
-  void CarpeDM::completeId(vertex_t v, Graph& g) { // deduce SubID fields from ID or vice versa, depending on whether ID is defined
-
-
-
-    std::stringstream ss;
-    uint64_t id;
-    uint8_t fid;
-    boost::dynamic_properties dp = createParser(g); //create current property map
-
-    if (g[v].id == DotStr::Misc::sUndefined64) { // from SubID fields to ID
-      //sLog << "Input Node  " << g[v].name;
-      fid = (s2u<uint8_t>(g[v].id_fid) & ID_FID_MSK); //get fid
-      if (fid >= idFormats.size()) throw std::runtime_error("bad format id (FID) field in Node '" + g[v].name + "'");
-      vPf& vTmp = idFormats[fid]; //choose conversion vector by fid
-      id = 0;
-      for(auto& it : vTmp) {  //for each format vector element
-        //use dot property tag string as key to dp map (map of tags to (maps of vertex_indices to values))
-        uint64_t val = s2u<uint64_t>(boost::get(it.s, dp, v)); // use vertex index v as key in this property map to obtain value
-        //sLog << ", " << std::dec << it.s << " = " << (val & ((1 << it.bits ) - 1) ) << ", (" << (int)it.pos << ",0x" << std::hex << ((1 << it.bits ) - 1) << ")";
-        id |= ((val & ((1 << it.bits ) - 1) ) << it.pos); // OR the masked and shifted value to id
-      }
-
-      ss.flush();
-      ss << "0x" << std::hex << id;
-      g[v].id = ss.str();
-      //sLog << "ID = " << g[v].id << std::endl;
-    } else { //from ID to SubID fields
-      id = s2u<uint8_t>(g[v].id);
-      fid = ((id >> ID_FID_POS) & ID_FID_MSK);
-      if (fid >= idFormats.size()) throw std::runtime_error("bad format id (FID) within ID field of Node '" + g[v].name + "'");
-      vPf& vTmp = idFormats[fid];
-
-      for(auto& it : vTmp) {
-        ss.flush();
-        ss << std::dec << ((id >> it.pos) &  ((1 << it.bits ) - 1) );
-        boost::put(it.s, dp, v, ss.str());
-      }
-    }
-
-  }
-
-  const std::string& CarpeDM::firstString(const vStrC& v) {return ((v.size() > 0) ? *(v.begin()) : DotStr::Misc::sUndefined);}
-
-
-  boost::dynamic_properties CarpeDM::createParser(Graph& g) {
-
-    boost::dynamic_properties dp(boost::ignore_other_properties);
-    boost::ref_property_map<Graph *, std::string> gname( boost::get_property(g, boost::graph_name));
-    dp.property(dgp::sName,     gname);
-    dp.property(dep::Base::sType,               boost::get(&myEdge::type,         g));
-    dp.property(dnp::Base::sName,               boost::get(&myVertex::name,       g));
-    dp.property(dnp::Base::sCpu,                boost::get(&myVertex::cpu,        g));
-
-    dp.property(dnp::Base::sType,               boost::get(&myVertex::type,       g));
-    dp.property(dnp::Base::sFlags,              boost::get(&myVertex::flags,      g));
-    dp.property(dnp::Base::sPatName,            boost::get(&myVertex::patName,    g));
-    dp.property(dnp::Base::sPatEntry,           boost::get(&myVertex::patEntry,   g));
-    dp.property(dnp::Base::sPatExit,            boost::get(&myVertex::patExit,    g));
-    dp.property(dnp::Base::sBpName,             boost::get(&myVertex::bpName,     g));
-    dp.property(dnp::Base::sBpEntry,            boost::get(&myVertex::bpEntry,    g));
-    dp.property(dnp::Base::sBpExit,             boost::get(&myVertex::bpExit,     g));
-    //Block
-    dp.property(dnp::Block::sTimePeriod,        boost::get(&myVertex::tPeriod,    g));
-    dp.property(dnp::Block::sGenQPrioHi,        boost::get(&myVertex::qIl,        g));
-    dp.property(dnp::Block::sGenQPrioMd,        boost::get(&myVertex::qHi,        g));
-    dp.property(dnp::Block::sGenQPrioLo,        boost::get(&myVertex::qLo,        g));
-    //Timing Message
-    dp.property(dnp::TMsg::sTimeOffs,           boost::get(&myVertex::tOffs,      g));
-    dp.property(dnp::TMsg::sId,                 boost::get(&myVertex::id,         g));
-      //ID sub fields
-    dp.property(dnp::TMsg::SubId::sFid,         boost::get(&myVertex::id_fid,     g));
-    dp.property(dnp::TMsg::SubId::sGid,         boost::get(&myVertex::id_gid,     g));
-    dp.property(dnp::TMsg::SubId::sEno,         boost::get(&myVertex::id_evtno,   g));
-    dp.property(dnp::TMsg::SubId::sSid,         boost::get(&myVertex::id_sid,     g));
-    dp.property(dnp::TMsg::SubId::sBpid,        boost::get(&myVertex::id_bpid,    g));
-    dp.property(dnp::TMsg::SubId::sBin,         boost::get(&myVertex::id_bin,     g));
-    dp.property(dnp::TMsg::SubId::sReqNoB,      boost::get(&myVertex::id_reqnob,  g));
-    dp.property(dnp::TMsg::SubId::sVacc,        boost::get(&myVertex::id_vacc,    g));
-    dp.property(dnp::TMsg::sPar,                boost::get(&myVertex::par,        g));
-    dp.property(dnp::TMsg::sTef,                boost::get(&myVertex::tef,        g));
-    //Command
-    dp.property(dnp::Cmd::sTimeValid,           boost::get(&myVertex::tValid,     g));
-    dp.property(dnp::Cmd::sVabs,                boost::get(&myVertex::vabs,       g));
-    dp.property(dnp::Cmd::sPrio,                boost::get(&myVertex::prio,       g));
-    dp.property(dnp::Cmd::sQty,                 boost::get(&myVertex::qty,        g));
-    dp.property(dnp::Cmd::sTimeWait,            boost::get(&myVertex::tWait,      g));
-    dp.property(dnp::Cmd::sPermanent,           boost::get(&myVertex::perma,      g));
+#include "carpeDMimpl.h"
+
+  CarpeDM::CarpeDM() : impl_(new CarpeDMimpl()) {}
+  CarpeDM::CarpeDM(std::ostream& sLog) : impl_(new CarpeDMimpl(sLog)) {}                    
+  CarpeDM::CarpeDM(std::ostream& sLog, std::ostream& sErr) : impl_(new CarpeDMimpl(sLog, sErr)) {}
+  CarpeDM::~CarpeDM() = default;
+
+// Etherbone interface
+  bool CarpeDM::connect(const std::string& en, bool simulation, bool test)             {return impl_->connect(en, simulation, test);} //Open connection to a DM via Etherbone
+  bool CarpeDM::disconnect()                                                           {return impl_->disconnect();} //Close connection
+               // SDB and DM HW detection Functions
+
+
+//Internal Hash and Groupstable ///////////////////////////////////////////////////////////////////////////////////////////////
+               // Name/Hash Dict
+  void CarpeDM::clearHashDict()                                                        { return impl_->clearHashDict();}                          //Clear hash table
+  std::string CarpeDM::storeHashDict()                                                 { return impl_->storeHashDict();}                          //save hash table to serialised string
+  void CarpeDM::loadHashDict(const std::string& s)                                     { return impl_->loadHashDict(s);}      //initiallise hash table from serialised string
+  void CarpeDM::storeHashDictFile(const std::string& fn)                               { return impl_->storeHashDictFile(fn);} //save hash table to file
+  void CarpeDM::loadHashDictFile(const std::string& fn)                                { return impl_->loadHashDictFile(fn);}  //load hash table from file
+  bool CarpeDM::isInHashDict(const uint32_t hash)                                      { return impl_->isInHashDict(hash);}
+  bool CarpeDM::isInHashDict(const std::string& name)                                  { return impl_->isInHashDict(name);}
+  bool CarpeDM::isHashDictEmpty()                                                      { return impl_->isHashDictEmpty();}
+  int CarpeDM::getHashDictSize()                                                       { return impl_->getHashDictSize();}
+
+               // Group/Entry/Exit Table
+        std::string CarpeDM::storeGroupsDict()                                         { return impl_->storeGroupsDict();}
+  void CarpeDM::loadGroupsDict(const std::string& s)                                   { return impl_->loadGroupsDict(s);}
+  void CarpeDM::storeGroupsDictFile(const std::string& fn)                             { return impl_->storeGroupsDictFile(fn);}
+  void CarpeDM::loadGroupsDictFile(const std::string& fn)                              { return impl_->loadGroupsDictFile(fn);}
+  void CarpeDM::clearGroupsDict()                                                      { return impl_->clearGroupsDict();} //Clear pattern table
+  int CarpeDM::getGroupsSize()                                                         { return impl_->getGroupsSize();}
+
+// Aux Infos from Table lookups and static computation  /////////////////////////////////////////////////////////////////////////////////////////////////////
+  uint8_t CarpeDM::getNodeCpu(const std::string& name, TransferDir dir)                { return impl_->getNodeCpu(name, dir);}               // shortcut to obtain a node's cpu by its name
+  uint32_t CarpeDM::getNodeAdr(const std::string& name, TransferDir dir, AdrType adrT) { return impl_->getNodeAdr(name, dir, adrT);} // shortcut to obtain a node's address by its name
+  const std::string CarpeDM::getNodePattern (const std::string& sNode)                 { return impl_->getNodePattern (sNode);}
+  const std::string CarpeDM::getNodeBeamproc(const std::string& sNode)                 { return impl_->getNodeBeamproc(sNode);}
+  vStrC CarpeDM::getPatternMembers (const std::string& sPattern)                       { return impl_->getPatternMembers(sPattern);}
+  const std::string CarpeDM::getPatternEntryNode(const std::string& sPattern)          { return impl_->getPatternEntryNode(sPattern);}
+  const std::string CarpeDM::getPatternExitNode(const std::string& sPattern)           { return impl_->getPatternExitNode(sPattern);}
+  vStrC CarpeDM::getBeamprocMembers(const std::string& sBeamproc)                      { return impl_->getBeamprocMembers(sBeamproc);}
+  const std::string CarpeDM::getBeamprocEntryNode(const std::string& sBeamproc)        { return impl_->getBeamprocEntryNode(sBeamproc);}
+  const std::string CarpeDM::getBeamprocExitNode(const std::string& sBeamproc)         { return impl_->getBeamprocExitNode(sBeamproc);}
+  uint64_t CarpeDM::getModTime()                                                       { return impl_->getModTime();}
+
+// Text File IO /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  void CarpeDM::writeTextFile(const std::string& fn, const std::string& s)             { return impl_->writeTextFile(fn, s);}
+  std::string CarpeDM::readTextFile(const std::string& fn)                             { return impl_->readTextFile(fn);}
+
+// Graphs to Dot
+  void CarpeDM::writeDownDotFile(const std::string& fn, bool filterMeta)               { return impl_->writeDownDotFile(fn, filterMeta);}
+  void CarpeDM::writeUpDotFile(const std::string& fn, bool filterMeta)                 { return impl_->writeUpDotFile(fn, filterMeta);}
+
+// Schedule Manipulation ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  int CarpeDM::assignNodesToCpus()                                                     { return impl_->assignNodesToCpus();}                            // NOT YET IMPLEMENTED // TODO assign a cpu to each node object. Currently taken from input .dot
+  int CarpeDM::download()                                                              { return impl_->download();}                                     // Download binary from LM32 SoC and create Graph
+  std::string CarpeDM::downloadDot(bool filterMeta)                                    { return impl_->downloadDot(filterMeta);}
+  void CarpeDM::downloadDotFile(const std::string& fn, bool filterMeta)                { return impl_->downloadDotFile(fn, filterMeta);}
+  int CarpeDM::addDot(const std::string& s, bool force)                                { return impl_->addDot(s, force);}                   // add all nodes and/or edges in dot file
+  int CarpeDM::addDotFile(const std::string& fn, bool force)                           { return impl_->addDotFile(fn, force);}
+  int CarpeDM::overwriteDot(const std::string& s, bool force)                          { return impl_->overwriteDot(s, force);} // add all nodes and/or edges in dot file
+  int CarpeDM::overwriteDotFile(const std::string& fn, bool force)                     { return impl_->overwriteDotFile(fn, force);}
+  int CarpeDM::keepDot(const std::string& s, bool force)                               { return impl_->keepDot(s, force);}      // removes all nodes NOT in input file
+  int CarpeDM::keepDotFile(const std::string& fn, bool force)                          { return impl_->keepDotFile(fn, force);}
+  int CarpeDM::removeDot(const std::string& s, bool force)                             { return impl_->removeDot(s, force);}    // removes all nodes in input file
+  int CarpeDM::removeDotFile(const std::string& fn, bool force)                        { return impl_->removeDotFile(fn, force);}
+  int CarpeDM::clear(bool force)                                                       { return impl_->clear(force);}                              // clears all nodes from DM
+
+// Command Generation and Dispatch ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+            
+vStrC CarpeDM::getLockedBlocks(bool checkReadLock, bool checkWriteLock)                                         { return impl_->getLockedBlocks(checkReadLock, checkWriteLock);}
+int CarpeDM::sendCommandsDot(const std::string& s)                                                              { return impl_->sendCommandsDot(s);} //Sends a dotfile of commands to the DM
+int CarpeDM::sendCommandsDotFile(const std::string& fn)                                                         { return impl_->sendCommandsDotFile(fn);}
+
+void CarpeDM::halt()                                                                                            { return impl_->halt();}
+int CarpeDM::staticFlushPattern(const std::string& sPattern, bool prioIl, bool prioHi, bool prioLo, bool force) { return impl_->staticFlushPattern(sPattern, prioIl, prioHi, prioLo, force);}
+int CarpeDM::staticFlushBlock(const std::string& sBlock, bool prioIl, bool prioHi, bool prioLo, bool force)     { return impl_->staticFlushBlock(sBlock, prioIl, prioHi, prioLo, force);}
+
+
+  // Short Live Infos from DM hardware reads /////////////////////////////////////////////////////////////////////////////////////////////////////////////
+const std::string CarpeDM::getThrOrigin(uint8_t cpuIdx, uint8_t thrIdx)                                         { return impl_->getThrOrigin(cpuIdx, thrIdx);}      // Returns the Node the Thread will start from
+const std::string CarpeDM::getThrCursor(uint8_t cpuIdx, uint8_t thrIdx)                                         { return impl_->getThrCursor(cpuIdx, thrIdx);}      // Returns the Node the Thread is currently processing
+uint64_t CarpeDM::getThrMsgCnt(uint8_t cpuIdx, uint8_t thrIdx)                                                  { return impl_->getThrMsgCnt(cpuIdx, thrIdx);}
+uint32_t CarpeDM::getThrRun(uint8_t cpuIdx)                                                                     { return impl_->getThrRun(cpuIdx);}                                  // Get bitfield showing running threads
+uint32_t CarpeDM::getStatus(uint8_t cpuIdx)                                                                     { return impl_->getStatus(cpuIdx);}
+uint64_t CarpeDM::getThrDeadline(uint8_t cpuIdx, uint8_t thrIdx)                                                { return impl_->getThrDeadline(cpuIdx, thrIdx);}
+uint64_t CarpeDM::getThrStartTime(uint8_t cpuIdx, uint8_t thrIdx)                                               { return impl_->getThrStartTime(cpuIdx, thrIdx);}
+uint32_t CarpeDM::getThrStart(uint8_t cpuIdx)                                                                   { return impl_->getThrStart(cpuIdx);}
+uint64_t CarpeDM::getThrPrepTime(uint8_t cpuIdx, uint8_t thrIdx)                                                { return impl_->getThrPrepTime(cpuIdx, thrIdx);}
+bool CarpeDM::isThrRunning(uint8_t cpuIdx, uint8_t thrIdx)                                                      { return impl_->isThrRunning(cpuIdx, thrIdx);}                   // true if thread <thrIdx> is running
+//bool CarpeDM::isSafeToRemove(const std::string& pattern, std::string& report, std::vector<QueueReport>& vQr)    { return impl_->isSafeToRemove(pattern, report, vQr);}
+bool CarpeDM::isSafeToRemove(const std::string& pattern, std::string& report)                                   { return impl_->isSafeToRemove(pattern, report);}
+std::pair<int, int> CarpeDM::findRunningPattern(const std::string& sPattern)                                    { return impl_->findRunningPattern(sPattern);} // get cpu and thread assignment of running pattern
+bool CarpeDM::isPatternRunning(const std::string& sPattern)                                                     { return impl_->isPatternRunning(sPattern);}                  // true if Pattern <x> is running
+void CarpeDM::updateModTime()                                                                                   { return impl_->updateModTime();}
+
+
+void CarpeDM::forceThrCursor(uint8_t cpuIdx, uint8_t thrIdx)                                                    { return impl_->forceThrCursor(cpuIdx, thrIdx);} //DEBUG ONLY !!!
+
+
+vEbwrs& CarpeDM::startThr(vEbwrs& ew, uint8_t cpuIdx, uint8_t thrIdx)                                           { return impl_->startThr(ew, cpuIdx, thrIdx);} //Requests Thread to start
+vEbwrs& CarpeDM::startPattern(vEbwrs& ew, const std::string& sPattern, uint8_t thrIdx)                          { return impl_->startPattern(ew, sPattern, thrIdx);} //Requests Pattern to start
+vEbwrs& CarpeDM::startPattern(vEbwrs& ew, const std::string& sPattern)                                          { return impl_->startPattern(ew, sPattern);} //Requests Pattern to start on first free thread
+vEbwrs& CarpeDM::startNodeOrigin(vEbwrs& ew, const std::string& sNode, uint8_t thrIdx)                          { return impl_->startNodeOrigin(ew, sNode, thrIdx);} //Requests thread <thrIdx> to start at node <sNode>
+vEbwrs& CarpeDM::startNodeOrigin(vEbwrs& ew, const std::string& sNode)                                          { return impl_->startNodeOrigin(ew, sNode);} //Requests a start at node <sNode>
+vEbwrs& CarpeDM::stopPattern(vEbwrs& ew, const std::string& sPattern)                                           { return impl_->stopPattern(ew, sPattern);} //Requests Pattern to stop
+vEbwrs& CarpeDM::stopNodeOrigin(vEbwrs& ew, const std::string& sNode)                                           { return impl_->stopNodeOrigin(ew, sNode);} //Requests stop at node <sNode> (vEbwrs& ew, flow to idle)
+vEbwrs& CarpeDM::abortPattern(vEbwrs& ew, const std::string& sPattern)                                          { return impl_->abortPattern(ew, sPattern);} //Immediately aborts a Pattern
+vEbwrs& CarpeDM::abortNodeOrigin(vEbwrs& ew, const std::string& sNode)                                          { return impl_->abortNodeOrigin(ew, sNode);} //Immediately aborts the thread whose pattern <sNode> belongs to
+vEbwrs& CarpeDM::abortThr(vEbwrs& ew, uint8_t cpuIdx, uint8_t thrIdx)                                           { return impl_->abortThr(ew, cpuIdx, thrIdx);} //Immediately aborts a Thread
+vEbwrs& CarpeDM::setThrStart(vEbwrs& ew, uint8_t cpuIdx, uint32_t bits)                                         { return impl_->setThrStart(ew, cpuIdx, bits);} //Requests Threads to start
+vEbwrs& CarpeDM::setThrAbort(vEbwrs& ew, uint8_t cpuIdx, uint32_t bits)                                         { return impl_->setThrAbort(ew, cpuIdx, bits);} //Immediately aborts Threads
+vEbwrs& CarpeDM::setThrOrigin(vEbwrs& ew, uint8_t cpuIdx, uint8_t thrIdx, const std::string& name)              { return impl_->setThrOrigin(ew, cpuIdx, thrIdx,  name);} //Sets the Node the Thread will start from
+vEbwrs& CarpeDM::setThrStartTime(vEbwrs& ew, uint8_t cpuIdx, uint8_t thrIdx, uint64_t t)                        { return impl_->setThrStartTime(ew, cpuIdx, thrIdx, t);}
+vEbwrs& CarpeDM::setThrPrepTime(vEbwrs& ew, uint8_t cpuIdx, uint8_t thrIdx, uint64_t t)                         { return impl_->setThrPrepTime(ew, cpuIdx, thrIdx, t);}
+vEbwrs& CarpeDM::deactivateOrphanedCommands(vEbwrs& ew, std::vector<QueueReport>& vQr)                          { return impl_->deactivateOrphanedCommands(ew, vQr);}
+vEbwrs& CarpeDM::clearHealth(vEbwrs& ew, uint8_t cpuIdx)                                                        { return impl_->clearHealth(ew, cpuIdx);}
+vEbwrs& CarpeDM::clearHealth(vEbwrs& ew)                                                                        { return impl_->clearHealth(ew);}
+vEbwrs& CarpeDM::resetThrMsgCnt(vEbwrs& ew, uint8_t cpuIdx, uint8_t thrIdx)                                     { return impl_->resetThrMsgCnt(ew, cpuIdx, thrIdx);}
+vEbwrs& CarpeDM::blockAsyncClearQueues(vEbwrs& ew, const std::string& sTarget)                                  { return impl_->blockAsyncClearQueues(ew, sTarget);}
+vEbwrs& CarpeDM::switching(vEbwrs& ew, const std::string& sTarget, const std::string& sDst)                     { return impl_->switching(ew, sTarget, sDst);}
+vEbwrs& CarpeDM::createNonQCommand(vEbwrs& ew, const std::string& type, const std::string& target)              { return impl_->createNonQCommand(ew, type,  target);}
+            
+
+
+vEbwrs& CarpeDM::createLockCtrlCommand(vEbwrs& ew, const std::string& type, const std::string& target, bool lockRd, bool lockWr )
+{ return impl_->createLockCtrlCommand(ew, type, target, lockRd, lockWr );}
+
+vEbwrs& CarpeDM::createQCommand(vEbwrs& ew, const std::string& type, const std::string& target, uint8_t cmdPrio, uint8_t cmdQty, bool vabs, uint64_t cmdTvalid)
+{ return impl_->createQCommand(ew, type, target, cmdPrio, cmdQty, vabs, cmdTvalid);}
+
+vEbwrs& CarpeDM::createWaitCommand(vEbwrs& ew, const std::string& type, const std::string& target, uint8_t cmdPrio, uint8_t cmdQty, bool vabs, uint64_t cmdTvalid, uint64_t cmdTwait, bool abswait )
+{ return impl_->createWaitCommand(ew, type, target, cmdPrio, cmdQty, vabs, cmdTvalid, cmdTwait, abswait );}
+
+vEbwrs& CarpeDM::createFlowCommand(vEbwrs& ew, const std::string& type, const std::string& target, const std::string& destination, uint8_t  cmdPrio, uint8_t cmdQty, bool vabs, uint64_t cmdTvalid, bool perma)
+{ return impl_->createFlowCommand(ew, type, target, destination, cmdPrio, cmdQty, vabs, cmdTvalid, perma);}
+
+vEbwrs& CarpeDM::createFlushCommand(vEbwrs& ew, const std::string& type, const std::string& target, const std::string& destination, uint8_t  cmdPrio, uint8_t cmdQty, bool vabs, uint64_t cmdTvalid, bool qIl, bool qHi, bool qLo)
+{ return impl_->createFlushCommand(ew, type, target, destination, cmdPrio, cmdQty, vabs, cmdTvalid, qIl, qHi, qLo);}
+
+vEbwrs& CarpeDM::createFullCommand(vEbwrs& ew, const std::string& type, const std::string& target, const std::string& destination, uint8_t  cmdPrio, uint8_t cmdQty, bool vabs, uint64_t cmdTvalid, bool perma, bool qIl, bool qHi, bool qLo, uint64_t cmdTwait, bool abswait, bool lockRd, bool lockWr)
+{ return impl_->createFullCommand(ew, type, target, destination, cmdPrio, cmdQty, vabs, cmdTvalid, perma, qIl, qHi, qLo, cmdTwait, abswait, lockRd, lockWr);}
+
+vEbwrs& CarpeDM::createCommand(vEbwrs& ew, const std::string& type, const std::string& target, const std::string& destination, uint8_t  cmdPrio, uint8_t cmdQty, bool vabs, uint64_t cmdTvalid, bool perma, bool qIl, bool qHi, bool qLo,  uint64_t cmdTwait, bool abswait, bool lockRd, bool lockWr )
+{ return impl_->createCommand(ew, type, target, destination, cmdPrio, cmdQty, vabs, cmdTvalid, perma,qIl, qHi, qLo, cmdTwait, abswait, lockRd, lockWr );}
+                
+
+                int CarpeDM::send(vEbwrs& ew) {return impl_->send(ew);}
+            //FIXME workaround for flawed template approach (disambiguation of member functin pointers failing). no time to figure it out right  now, get the job done first
+            //convenience wrappers without eb cycle control, send immediately
+            int CarpeDM::startThr(uint8_t cpuIdx, uint8_t thrIdx)                               {return impl_->startThr(cpuIdx, thrIdx);}
+            int CarpeDM::startPattern(const std::string& sPattern, uint8_t thrIdx)              {return impl_->startPattern(sPattern, thrIdx);}
+            int CarpeDM::startNodeOrigin(const std::string& sNode, uint8_t thrIdx)              {return impl_->startNodeOrigin(sNode, thrIdx);}
+            int CarpeDM::startNodeOrigin(const std::string& sNode)                              {return impl_->startNodeOrigin(sNode);}
+            int CarpeDM::stopPattern(const std::string& sPattern)                               {return impl_->stopPattern(sPattern);}
+            int CarpeDM::stopNodeOrigin(const std::string& sNode)                               {return impl_->stopNodeOrigin(sNode);}
+            int CarpeDM::abortPattern(const std::string& sPattern)                              {return impl_->abortPattern(sPattern);}
+            int CarpeDM::abortNodeOrigin(const std::string& sNode)                              {return impl_->abortNodeOrigin(sNode);}
+            int CarpeDM::abortThr(uint8_t cpuIdx, uint8_t thrIdx)                               {return impl_->abortThr(cpuIdx, thrIdx);}
+            int CarpeDM::setThrStart(uint8_t cpuIdx, uint32_t bits)                             {return impl_->setThrStart(cpuIdx, bits);}
+            int CarpeDM::setThrAbort(uint8_t cpuIdx, uint32_t bits)                             {return impl_->setThrAbort(cpuIdx, bits);}
+            int CarpeDM::setThrOrigin(uint8_t cpuIdx, uint8_t thrIdx, const std::string& name)  {return impl_->setThrOrigin(cpuIdx, thrIdx, name);}
+            int CarpeDM::setThrStartTime(uint8_t cpuIdx, uint8_t thrIdx, uint64_t t)            {return impl_->setThrStartTime(cpuIdx, thrIdx, t);}
+            int CarpeDM::setThrPrepTime(uint8_t cpuIdx, uint8_t thrIdx, uint64_t t)             {return impl_->setThrPrepTime(cpuIdx, thrIdx, t);}
+            int CarpeDM::deactivateOrphanedCommands(std::vector<QueueReport> & vQr)             {return impl_->deactivateOrphanedCommands(vQr);}
+            int CarpeDM::clearHealth()                                                          {return impl_->clearHealth();}
+            int CarpeDM::clearHealth(uint8_t cpuIdx)                                            {return impl_->clearHealth(cpuIdx);}
+            int CarpeDM::resetThrMsgCnt(uint8_t cpuIdx, uint8_t thrIdx)                         {return impl_->resetThrMsgCnt(cpuIdx, thrIdx);}
+            int CarpeDM::blockAsyncClearQueues(const std::string& sBlock)                       {return impl_->blockAsyncClearQueues(sBlock);}
+
+
+     void CarpeDM::verboseOn()                                                              { return impl_->verboseOn();}                             // Turn on Verbose Output
+     void CarpeDM::verboseOff()                                                             { return impl_->verboseOff();}                            // Turn off Verbose Output
+     bool CarpeDM::isVerbose()  const                                                       { return impl_->isVerbose();}                       // Tell if Output is set to Verbose
+     void CarpeDM::debugOn()                                                                { return impl_->debugOn();}                                 // Turn on Verbose Output
+     void CarpeDM::debugOff()                                                               { return impl_->debugOff();}                                // Turn off Verbose Output
+     bool CarpeDM::isDebug()  const                                                         { return impl_->isDebug();}                            // Tell if Output is set to Verbose
+     bool CarpeDM::isSim()  const                                                           { return impl_->isSim();}                               // Tell if this is a simulation. Cannot change while connected !!!
+     void CarpeDM::testOn()                                                                 { return impl_->testOn();}                               // Turn on Testmode
+     void CarpeDM::testOff()                                                                { return impl_->testOff();}                              // Turn off Testmode
+     bool CarpeDM::isTest() const                                                           { return impl_->isTest();}                          // Tell if Testmode is on
+     void CarpeDM::optimisedS2ROn()                                                         { return impl_->optimisedS2ROn();}                    // Optimised Safe2remove on
+     void CarpeDM::optimisedS2ROff()                                                        { return impl_->optimisedS2ROff();}                   // Optimised Safe2remove off
+     bool CarpeDM::isOptimisedS2R() const                                                   { return impl_->isOptimisedS2R();}                                     // tell if Safe2remove optimisation is on or off
+     bool CarpeDM::isValidDMCpu(uint8_t cpuIdx)                                             { return impl_->isValidDMCpu(cpuIdx);}                               // Check if CPU is registered as running a valid firmware
+     HealthReport& CarpeDM::getHealth(uint8_t cpuIdx, HealthReport &hr)                     { return impl_->getHealth(cpuIdx, hr);}                // FIXME why reference in, reference out ? its not like you can add to this report ...
+     QueueReport& CarpeDM::getQReport(const std::string& blockName, QueueReport& qr)        { return impl_->getQReport(blockName, qr);}  // FIXME why reference in, reference out ? its not like you can add to this report ...
+     std::string& CarpeDM::getRawQReport(const std::string& blockName, std::string& report) { return impl_->getRawQReport(blockName, report);}
+     uint64_t CarpeDM::getDmWrTime()                                                        { return impl_->getDmWrTime();}
+     HwDelayReport& CarpeDM::getHwDelayReport(HwDelayReport& hdr)                           { return impl_->getHwDelayReport(hdr);}
+     void CarpeDM::clearHwDiagnostics()                                                     { return impl_->clearHwDiagnostics();}
+     void CarpeDM::startStopHwDiagnostics(bool enable)                                      { return impl_->startStopHwDiagnostics(enable);}
+     void CarpeDM::configHwDiagnostics(uint64_t timeIntvl, uint32_t stallIntvl)             { return impl_->configHwDiagnostics(timeIntvl, stallIntvl);}
+     void CarpeDM::configFwDiagnostics(uint64_t warnThrshld)                                { return impl_->configFwDiagnostics(warnThrshld);}
+
+       std::string& CarpeDM::inspectQueues(const std::string& blockName, std::string& report) {return impl_->inspectQueues(blockName, report);}      // Show all command fields in Block Queue
+               void CarpeDM::show(const std::string& title, const std::string& logDictFile, TransferDir dir, bool filterMeta ) {return impl_->show(title, logDictFile, dir, filterMeta );}
+            void CarpeDM::showUp(bool filterMeta)            { return impl_->showUp(filterMeta);}                                               // show a CPU's Upload address table
+            void CarpeDM::showDown(bool filterMeta)          { return impl_->showDown(filterMeta);}
+            void CarpeDM::dumpNode(const std::string& name)  { return impl_->dumpNode(name);}                     // hex dump a node
+            void CarpeDM::showPaint()                        { return impl_->showPaint();}
+            bool CarpeDM::isPainted(const std::string& name) { return impl_->isPainted(name);}
+            void CarpeDM::inspectHeap(uint8_t cpuIdx)        { return impl_->inspectHeap(cpuIdx);}
+            void CarpeDM::showHashDict()                     { return impl_->showHashDict();}
+            void CarpeDM::showGroupsDict()                   { return impl_->showGroupsDict();}
+            bool CarpeDM::tableCheck(std::string& report)    { return impl_->tableCheck(report);}
+            void CarpeDM::coverage3Upload(uint64_t seed )    { return impl_->coverage3Upload(seed );}
+            void CarpeDM::dirtyCtShow()                      { return impl_->dirtyCtShow();}
+            void CarpeDM::showCpuList()                      { return impl_->showCpuList();}
+         uint8_t CarpeDM::getCpuQty()                        { return impl_->getCpuQty();}
+            bool CarpeDM::isCpuIdxValid(uint8_t cpuIdx)      { return impl_->isCpuIdxValid(cpuIdx);}
+            void CarpeDM::showMemSpace()                     { return impl_->showMemSpace();}
+            void CarpeDM::lockManagerClear()                 { return impl_->lockManagerClear();}
+            bool CarpeDM::lockManagerHasEntries()            { return impl_->lockManagerHasEntries();}
+            void CarpeDM::softwareReset(bool clearStatistic) { return impl_->softwareReset(clearStatistic);}
+               std::vector<std::vector<uint64_t>> CarpeDM::coverage3TestData(uint64_t seedStart, uint64_t cases, uint8_t parts, uint8_t percentage ) {return impl_->coverage3TestData(seedStart, cases, parts, percentage );}
+
+
+
+
+
+
+
+
+
+
+
+                             
 
-    //for .dot-cmd abuse
-    dp.property(dnp::Cmd::sTarget,              boost::get(&myVertex::cmdTarget,  g));
-    dp.property(dnp::Cmd::sDst,                 boost::get(&myVertex::cmdDest,    g));
-    dp.property(dnp::Cmd::sDstPattern,          boost::get(&myVertex::cmdDestPat, g));
-    dp.property(dnp::Cmd::sDstBeamproc,         boost::get(&myVertex::cmdDestBp,  g));
-    dp.property(dnp::Base::sThread,             boost::get(&myVertex::thread,     g));
-
-    return (const boost::dynamic_properties)dp;
-  }
-
-
-  std::string CarpeDM::readTextFile(const std::string& fn) {
-    std::string ret;
-    std::ifstream in(fn);
-    if(in.good()) {
-      std::stringstream buffer;
-      buffer << in.rdbuf();
-      ret = buffer.str();
-    }
-    else {throw std::runtime_error(" Could not read from file '" + fn + "'");}
-
-    return ret;
-  }
-
-  Graph& CarpeDM::parseDot(const std::string& s, Graph& g) {
-    boost::dynamic_properties dp = createParser(g);
-
-    try { boost::read_graphviz(s, g, dp, dnp::Base::sName); }
-    catch(...) { throw; }
-
-    BOOST_FOREACH( vertex_t v, vertices(g) ) { g[v].hash = hm.hash(g[v].name); } //generate hash to complete vertex information
-
-    return g;
-  }
-
-
-
-  void CarpeDM::showMemSpace() {
-    sLog << "Space" << std::setw(11) << "Free" << std::endl;
-    for (uint8_t x = 0; x < ebd.getCpuQty(); x++) {
-      sLog << std::dec << std::setfill(' ') << std::setw(11) << atDown.getTotalSpace(x) << std::setw(10) << atDown.getFreeSpace(x) * 100 / atDown.getTotalSpace(x) << "%";
-      sLog << std::endl;
-    }
-  }
-
-
-
-
-
-  uint8_t CarpeDM::getNodeCpu(const std::string& name, TransferDir dir) {
-
-    AllocTable& at = (dir == TransferDir::UPLOAD ? atUp : atDown );
-    uint32_t hash;
-    hash = hm.lookup(name); //just pass it on
-
-    auto x = at.lookupHash(hash);
-    return x->cpu;
-  }
-
-  uint32_t CarpeDM::getNodeAdr(const std::string& name, TransferDir dir, AdrType adrT) {
-    if (verbose) sLog << "Looking up Adr of " << name << std::endl;
-    if(name == DotStr::Node::Special::sIdle) return LM32_NULL_PTR; //idle node is resolved as a null ptr without comment
-
-    AllocTable& at = (dir == TransferDir::UPLOAD ? atUp : atDown );
-    uint32_t hash;
-
-    hash = hm.lookup(name); //just pass it on
-    auto x = at.lookupHash(hash);
-
-    switch (adrT) {
-      case AdrType::MGMT : return x->adr; break;
-      case AdrType::INT  : return at.adrConv(AdrType::MGMT, AdrType::INT, x->cpu, x->adr); break;
-      case AdrType::EXT  : return at.adrConv(AdrType::MGMT, AdrType::EXT, x->cpu, x->adr); break;
-      case AdrType::PEER : return at.adrConv(AdrType::MGMT, AdrType::PEER, x->cpu, x->adr); break;
-      default            : throw std::runtime_error( "Unknown Adr Type conversion"); return LM32_NULL_PTR;
-    }
-
-  }
-
-
-//Returns if a hash / nodename is present on DM
-  bool CarpeDM::isInHashDict(const uint32_t hash)  {
-
-    if (atDown.isOk(atDown.lookupHash(hash))) return true;
-    else return false;
-  }
-
-  bool CarpeDM::isInHashDict(const std::string& name) {
-    if (!(hm.contains(name))) return false;
-    return (atDown.isOk(atDown.lookupHash(hm.lookup(name))));
-  }
-
-  // Name/Hash Dict ///////////////////////////////////////////////////////////////////////////////
-  //Add all nodes in .dot file to name/hash dictionary
-  void CarpeDM::clearHashDict() {hm.clear();}; //Clear the dictionary
-  std::string CarpeDM::storeHashDict() {return hm.store();};
-  void CarpeDM::loadHashDict(const std::string& s) {hm.load(s);}
-  void CarpeDM::storeHashDictFile(const std::string& fn) {writeTextFile(fn, storeHashDict());};
-  void CarpeDM::loadHashDictFile(const std::string& fn) {loadHashDict(readTextFile(fn));};
-  bool CarpeDM::isHashDictEmpty() {return (bool)(hm.size() == 0);};
-  int  CarpeDM::getHashDictSize() {return hm.size();};
-  void CarpeDM::showHashDict() {hm.debug(sLog);};
-
-  // Group/Entry/Exit Table ///////////////////////////////////////////////////////////////////////////////
-  std::string CarpeDM::storeGroupsDict() {return gt.store();};
-  void CarpeDM::loadGroupsDict(const std::string& s) {gt.load(s);}
-  void CarpeDM::storeGroupsDictFile(const std::string& fn) {writeTextFile(fn, storeGroupsDict());};
-  void CarpeDM::loadGroupsDictFile(const std::string& fn) {loadGroupsDict(readTextFile(fn));};
-  void CarpeDM::clearGroupsDict() {gt.clear();}; //Clear pattern table
-   int CarpeDM::getGroupsSize() {return gt.getSize();};
-  void CarpeDM::showGroupsDict() {gt.debug(sLog);};
-
-
-  void CarpeDM::writeDotFile(const std::string& fn, Graph& g, bool filterMeta) { writeTextFile(fn, createDot(g, filterMeta)); }
-  void CarpeDM::writeDownDotFile(const std::string& fn, bool filterMeta)       { writeTextFile(fn, createDot(gDown, filterMeta)); }
-  void CarpeDM::writeUpDotFile(const std::string& fn, bool filterMeta)         { writeTextFile(fn, createDot(gUp, filterMeta)); }
-
-  // Schedule Manipulation and Dispatch ///////////////////////////////////////////////////////////
-  //TODO assign a cpu to each node object. Currently taken from input .dot
-  int CarpeDM::assignNodesToCpus() {return 0;};
-  //get all nodes from DM
-  std::string CarpeDM::downloadDot(bool filterMeta) {download(); return createDot( gDown, filterMeta);};
-  void CarpeDM::downloadDotFile(const std::string& fn, bool filterMeta) {download(); writeDownDotFile(fn, filterMeta);};
-  //add all nodes and/or edges in dot file
-  int CarpeDM::addDot(const std::string& s, bool force) {Graph gTmp; return safeguardTransaction(&CarpeDM::add, std::ref(parseDot(s, gTmp)), force);};
-  int CarpeDM::addDotFile(const std::string& fn, bool force) {return addDot(readTextFile(fn), force);};
-  //add all nodes and/or edges in dot file
-  int CarpeDM::overwriteDot(const std::string& s, bool force) {Graph gTmp; return safeguardTransaction(&CarpeDM::overwrite, std::ref(parseDot(s, gTmp)), force);};
-  int CarpeDM::overwriteDotFile(const std::string& fn, bool force) {return overwriteDot(readTextFile(fn), force);};
-  //removes all nodes NOT in input file
-  int CarpeDM::keepDot(const std::string& s, bool force) {Graph gTmp; return safeguardTransaction(&CarpeDM::keep, std::ref(parseDot(s, gTmp)), force);};
-  int CarpeDM::keepDotFile(const std::string& fn, bool force) {return keepDot(readTextFile(fn), force);};
-  //removes all nodes in input file
-  int CarpeDM::removeDot(const std::string& s, bool force) {Graph gTmp; return safeguardTransaction(&CarpeDM::remove, std::ref(parseDot(s, gTmp)), force);};
-  int CarpeDM::removeDotFile(const std::string& fn, bool force) {return removeDot(readTextFile(fn), force);};
-  // Safe removal check
-  //bool isSafe2RemoveDotFile(const std::string& fn) {Graph gTmp; return isSafeToRemove(parseDot(readTextFile(fn), gTmp));};
-  //clears all nodes from DM
-  int CarpeDM::clear(bool force) {return safeguardTransaction(&CarpeDM::clear_raw, force);};
-
-
-  // Command Generation and Dispatch //////////////////////////////////////////////////////////////
-  int CarpeDM::sendCommandsDot(const std::string& s) {Graph gTmp; vEbwrs ew; return send(createCommandBurst(ew, parseDot(s, gTmp)));}; //Sends a dotfile of commands to the DM
-  int CarpeDM::sendCommandsDotFile(const std::string& fn) {Graph gTmp; vEbwrs ew; return send(createCommandBurst(ew, parseDot(readTextFile(fn), gTmp)));};
-  //Send a command to Block <targetName> on CPU <cpuIdx> via Etherbone
-  //int CarpeDM::sendCommand(const std::string& targetName, uint8_t cmdPrio, mc_ptr mc) {vEbwrs ew; return send(createCommand(targetName, cmdPrio, mc, ew));};
-
-
-   //write out dotstringfrom download graph
-  std::string CarpeDM::createDot(Graph& g, bool filterMeta) {
-    std::ostringstream out;
-    typedef boost::property_map< Graph, node_ptr myVertex::* >::type NpMap;
-
-    boost::filtered_graph <Graph, boost::keep_all, non_meta<NpMap> > fg(g, boost::keep_all(), make_non_meta(boost::get(&myVertex::np, g)));
-    try {
-
-        if (filterMeta) {
-          boost::write_graphviz(out, fg, make_vertex_writer(boost::get(&myVertex::np, fg)),
-                      make_edge_writer(boost::get(&myEdge::type, fg)), sample_graph_writer{DotStr::Graph::sDefName},
-                      boost::get(&myVertex::name, fg));
-        }
-        else {
-
-          boost::write_graphviz(out, g, make_vertex_writer(boost::get(&myVertex::np, g)),
-                      make_edge_writer(boost::get(&myEdge::type, g)), sample_graph_writer{DotStr::Graph::sDefName},
-                      boost::get(&myVertex::name, g));
-        }
-      }
-      catch(...) {throw;}
-
-    return out.str();
-  }
-
-  //write out dotfile from download graph of a memunit
-  void CarpeDM::writeTextFile(const std::string& fn, const std::string& s) {
-    std::ofstream out(fn);
-
-    if (verbose) sLog << "Writing Output File " << fn << "... ";
-    if(out.good()) { out << s; }
-    else {throw std::runtime_error(" Could not write to .dot file '" + fn + "'"); return;}
-    if (verbose) sLog << "Done.";
-  }
-
-  bool CarpeDM::validate(Graph& g, AllocTable& at, bool force) {
-    try {
-          BOOST_FOREACH( vertex_t v, vertices(g) ) { Validation::neighbourhoodCheck(v, g);  }
-
-          BOOST_FOREACH( vertex_t v, vertices(g) ) {
-            if (g[v].np == nullptr) throw std::runtime_error("Validation of Sequence: Node '" + g[v].name + "' was not allocated" );
-            g[v].np->accept(VisitorValidation(g, v, at, force));
-          }
-    } catch (std::runtime_error const& err) { throw std::runtime_error("Validation of " + std::string(err.what()) ); }
-    return true;
-  }
-
-
-
-  //Transaction Management: If an upload preparation operation fails for any reason, we roll back the meta tables
-  
-  template <typename R, typename ... As1, typename ... As2>
-  R CarpeDM::safeguardTransaction(R(CarpeDM::*func)(As1...), As2 ... args)
-  { 
-    HashMap hmBak     = hm;
-    GroupTable gtBak  = gt;
-    CovenantTable ctBak = ct;
-    R ret;    
-
-    try {
-      ret = (*this.*func)(std::forward<As2>(args)...); 
-    } catch(...) {
-      hm = hmBak;
-      gt = gtBak;
-      ct = ctBak;
-      sLog << "Operation FAILED, executing roll back\n" << std::endl;
-      throw;
-    }
-
-    return ret;
-  }
-
-  template <typename R, typename ... As1, typename ... As2>
-  int CarpeDM::dSend(R(CarpeDM::*func)(As1...), As2 ... args) {
-    //R test;
-    //decltype(func)::foo = 1;
-    vEbwrs ew;
-    ew = (*this.*func)(ew, std::forward<As2>(args)...); 
-    send(ew);
-    return ew.va.size();
-  }
-
-
-  vEbwrs& CarpeDM::createModInfo(vEbwrs& ew, uint8_t cpu, uint32_t modCnt, uint8_t opType, uint32_t adrOffs) {
-    // modification time address (lo/hi)
-    uint32_t modAdrBase = atUp.getMemories()[cpu].extBaseAdr + atUp.getMemories()[cpu].sharedOffs + SHCTL_DIAG + adrOffs;
-    // save modification time, issuer
-
-    char username[LOGIN_NAME_MAX];
-    getlogin_r(username, LOGIN_NAME_MAX);
-    char machinename[HOST_NAME_MAX];
-    gethostname(machinename, HOST_NAME_MAX);
-
-
-    uint8_t b[8];
-
-
-    ew.vcs += leadingOne(8); // add 8 words
-    ew.va.push_back(modAdrBase + T_MOD_INFO_TS    + 0);
-    ew.va.push_back(modAdrBase + T_MOD_INFO_TS    + _32b_SIZE_);
-    ew.va.push_back(modAdrBase + T_MOD_INFO_IID   + 0);
-    ew.va.push_back(modAdrBase + T_MOD_INFO_IID   + _32b_SIZE_);
-    ew.va.push_back(modAdrBase + T_MOD_INFO_MID   + 0);
-    ew.va.push_back(modAdrBase + T_MOD_INFO_MID   + _32b_SIZE_);
-    ew.va.push_back(modAdrBase + T_MOD_INFO_TYPE  );
-    ew.va.push_back(modAdrBase + T_MOD_INFO_CNT   );
-    writeLeNumberToBeBytes<uint64_t>((uint8_t*)&b[0], modTime);
-    ew.vb.insert( ew.vb.end(), b, b +  _TS_SIZE_  );
-    ew.vb.insert( ew.vb.end(), username, username +  _64b_SIZE_  );
-    ew.vb.insert( ew.vb.end(), machinename, machinename +  _64b_SIZE_  );
-    writeLeNumberToBeBytes<uint32_t>((uint8_t*)&b[0], opType);
-    ew.vb.insert( ew.vb.end(), b, b +  _32b_SIZE_  );
-    writeLeNumberToBeBytes<uint32_t>((uint8_t*)&b[0], modCnt);
-    ew.vb.insert( ew.vb.end(), b, b +  _32b_SIZE_  );
-
-    return ew;
-  }
-
-  vEbwrs& CarpeDM::createSchedModInfo(vEbwrs& ew, uint8_t cpu, uint32_t modCnt, uint8_t opType) { return createModInfo(ew, cpu, modCnt, opType, T_DIAG_SCH_MOD); };
-  vEbwrs& CarpeDM::createCmdModInfo  (vEbwrs& ew, uint8_t cpu, uint32_t modCnt, uint8_t opType) { return createModInfo(ew, cpu, modCnt, opType, T_DIAG_CMD_MOD); };
-
-  void CarpeDM::showUp(bool filterMeta) {show("Upload Table", "upload_dict.txt", TransferDir::UPLOAD, false);} //show a CPU's Upload address table
-  void CarpeDM::showDown(bool filterMeta) {  //show a CPU's Download address table
-    show("Download Table" + (filterMeta ? std::string(" (noMeta)") : std::string("")), "download_dict.txt", TransferDir::DOWNLOAD, filterMeta);
-  }
-
-  void CarpeDM::updateModTime() { modTime = getDmWrTime(); }
-
-  bool CarpeDM::isValidDMCpu(uint8_t cpuIdx) {return ebd.isValidDMCpu(cpuIdx);}; //Check if CPU is registered as running a valid firmware
-
-  int CarpeDM::startThr(uint8_t cpuIdx, uint8_t thrIdx)                              { vEbwrs ew; startThr(ew, cpuIdx, thrIdx );           return send(ew);}
-  int CarpeDM::startPattern(const std::string& sPattern, uint8_t thrIdx)             { vEbwrs ew; startPattern(ew, sPattern, thrIdx);      return send(ew);}
-  int CarpeDM::startNodeOrigin(const std::string& sNode, uint8_t thrIdx)             { vEbwrs ew; startNodeOrigin(ew, sNode, thrIdx );     return send(ew);}
-  int CarpeDM::startNodeOrigin(const std::string& sNode)                             { vEbwrs ew; startNodeOrigin(ew, sNode);              return send(ew);}
-  int CarpeDM::stopPattern(const std::string& sPattern)                              { vEbwrs ew; stopPattern(ew, sPattern  );             return send(ew);}
-  int CarpeDM::stopNodeOrigin(const std::string& sNode)                              { vEbwrs ew; stopNodeOrigin(ew, sNode);               return send(ew);}
-  int CarpeDM::abortPattern(const std::string& sPattern)                             { vEbwrs ew; abortPattern(ew, sPattern);              return send(ew);}
-  int CarpeDM::abortNodeOrigin(const std::string& sNode)                             { vEbwrs ew; abortNodeOrigin(ew, sNode );             return send(ew);}
-  int CarpeDM::abortThr(uint8_t cpuIdx, uint8_t thrIdx)                              { vEbwrs ew; abortThr(ew, cpuIdx, thrIdx);            return send(ew);}
-  int CarpeDM::setThrStart(uint8_t cpuIdx, uint32_t bits)                            { vEbwrs ew; setThrStart(ew, cpuIdx,  bits );         return send(ew);}
-  int CarpeDM::setThrAbort(uint8_t cpuIdx, uint32_t bits)                            { vEbwrs ew; setThrAbort(ew, cpuIdx,  bits );         return send(ew);}
-  int CarpeDM::setThrOrigin(uint8_t cpuIdx, uint8_t thrIdx, const std::string& name) { vEbwrs ew; setThrOrigin(ew, cpuIdx, thrIdx, name);  return send(ew);}
-  int CarpeDM::setThrStartTime(uint8_t cpuIdx, uint8_t thrIdx, uint64_t t)           { vEbwrs ew; setThrStartTime(ew, cpuIdx, thrIdx, t ); return send(ew);}
-  int CarpeDM::setThrPrepTime(uint8_t cpuIdx, uint8_t thrIdx, uint64_t t)            { vEbwrs ew; setThrPrepTime(ew, cpuIdx, thrIdx, t);   return send(ew);}
-  int CarpeDM::deactivateOrphanedCommands(std::vector<QueueReport> & vQr)            { vEbwrs ew; deactivateOrphanedCommands(ew, vQr);     return send(ew);}
-  int CarpeDM::clearHealth()                                                         { vEbwrs ew; clearHealth(ew);                         return send(ew);}
-  int CarpeDM::clearHealth(uint8_t cpuIdx)                                           { vEbwrs ew; clearHealth(ew, cpuIdx);                 return send(ew);}
-  int CarpeDM::resetThrMsgCnt(uint8_t cpuIdx, uint8_t thrIdx)                        { vEbwrs ew; resetThrMsgCnt(ew, cpuIdx, thrIdx);      return send(ew);}
-  int CarpeDM::blockAsyncClearQueues(const std::string& sBlock)                      { vEbwrs ew; blockAsyncClearQueues(ew, sBlock);       return send(ew);}

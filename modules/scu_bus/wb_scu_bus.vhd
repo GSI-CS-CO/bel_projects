@@ -17,7 +17,7 @@
 -- Revisions  :
 -- Date        Version  Author          Description
 -- 2009-08-17  1.0      W.Panschow      Created
--- 2009-08-17  1.1      W.Panschow      
+-- 2009-08-17  1.1      W.Panschow
 -- 2009-08-17  2.0      W.Panschow
 -- 2012-07-19  2.1      S.Rauch         switched to numeric_std
 -- 2012-07-19  2.2      W.Panschow    a) address decoding of internal registers now 16 bit deep
@@ -48,16 +48,16 @@ ENTITY wb_scu_bus IS
       );
 
 PORT(
-  
+
   -- Wishbone
   slave_i                 : in  t_wishbone_slave_in;
   slave_o                 : out t_wishbone_slave_out;
-  
+
   srq_active              : out std_logic_vector(11 downto 0);    -- vector of slave service requests
-                    
+
   clk                     : in    std_logic;
   nrst                    : in    std_logic;
-  
+
   Timing_In               : in  std_logic_vector(31 downto 0) := (others => '0');
   Start_Timing_Cycle      : in  std_logic := '0';
 
@@ -72,7 +72,7 @@ PORT(
   nSCUB_Timing_Cycle  : OUT   STD_LOGIC;                          -- Strobe to signal a timing cycle on SCU_Bus, active low.
   nSel_Ext_Data_Drv   : OUT   STD_LOGIC                           -- select for external data transceiver to the SCU_Bus, active low.
   );
-    
+
 END wb_scu_bus;
 
 ARCHITECTURE Arch_SCU_Bus_Master OF wb_scu_bus IS
@@ -85,7 +85,7 @@ ARCHITECTURE Arch_SCU_Bus_Master OF wb_scu_bus IS
   signal Start_Cycle        : std_logic;                      -- IN start data access from/to SCU_Bus
   signal Wr                 : std_logic;                      -- IN direction of SCU_Bus data access, write is active high.
   signal Rd                 : std_logic;                      -- IN
-  
+
   signal SCU_Bus_Access_Active : std_logic;                   -- OUT active high signal: read or write access to SCUB is not finished
                                                               -- the access can be terminated bei an error, so look also to the
                                                               -- access error bis in the status register
@@ -114,7 +114,7 @@ ARCHITECTURE Arch_SCU_Bus_Master OF wb_scu_bus IS
 
   CONSTANT  C_SCUB_Version  : INTEGER RANGE 0 TO 255 := set_vers_or_revi(2, Test);    -- define the version of this macro
   CONSTANT  C_SCUB_Revision : INTEGER RANGE 0 TO 255 := set_vers_or_revi(2, Test);    -- define the revision of this macro
-  
+
   CONSTANT  Clk_in_ps     : INTEGER := 1000000000 / (Clk_in_Hz / 1000);
   CONSTANT  Clk_in_ns     : INTEGER := 1000000000 / Clk_in_Hz;
 
@@ -144,7 +144,7 @@ ARCHITECTURE Arch_SCU_Bus_Master OF wb_scu_bus IS
 
 
   CONSTANT  c_multicast_slave_acc : STD_LOGIC_VECTOR(slave_Nr'range)  := X"D";
-  
+
   CONSTANT  C_Sel_dly_cnt     : INTEGER := set_ge_1(Sel_dly_in_ns * 1000 / Clk_in_ps)-2;    --  -2 because counter needs two more clock for unerflow
   SIGNAL    S_Sel_dly_cnt     : unsigned(How_many_Bits(C_Sel_dly_cnt) DOWNTO 0);
 
@@ -159,10 +159,10 @@ ARCHITECTURE Arch_SCU_Bus_Master OF wb_scu_bus IS
 
   CONSTANT  C_time_out_cnt      : INTEGER := set_ge_1(time_out_in_ns * 1000 / Clk_in_ps)-2;   --  -2 because counter needs two more clock for unerflow
   SIGNAL    s_time_out_cnt      : unsigned(How_many_Bits(C_time_out_cnt) DOWNTO 0);
-  
+
   CONSTANT  c_dly_multicast_dt_cnt  : INTEGER := set_ge_1(dly_multicast_dt_in_ns * 1000 / Clk_in_ps)-2;   --  -2 because counter needs two more clock for unerflow
   SIGNAL    s_dly_multicast_dt_cnt  : unsigned(How_many_Bits(c_dly_multicast_dt_cnt) DOWNTO 0);
-  
+
   constant  c_adr_width                     : INTEGER := 16;          -- define how many address bits are used to decode the internal FPGA-register
   constant  C_Status_Adr                    : unsigned(c_adr_width-1 DOWNTO 0) := to_unsigned(16#0000#, c_adr_width);	-- real address is multiplied by two
   constant  C_Global_Intr_Ena_Adr           : unsigned(c_adr_width-1 DOWNTO 0) := to_unsigned(16#0002#, c_adr_width);	-- real address is multiplied by two
@@ -174,9 +174,9 @@ ARCHITECTURE Arch_SCU_Bus_Master OF wb_scu_bus IS
   constant  C_Bus_master_intern_Echo_1_Adr  : unsigned(c_adr_width-1 DOWNTO 0) := to_unsigned(16#000E#, c_adr_width);	-- real address is multiplied by two
   constant  C_Sw_Tag_Low_Adr                : unsigned(c_adr_width-1 DOWNTO 0) := to_unsigned(16#0010#, c_adr_width);	-- real address is multiplied by two
   constant  C_Sw_Tag_High_Adr               : unsigned(c_adr_width-1 DOWNTO 0) := to_unsigned(16#0012#, c_adr_width);	-- real address is multiplied by two
-  
-  
-  
+
+
+
   SIGNAL    s_reset         : STD_LOGIC;
   SIGNAL    S_First_Sync_Reset    : STD_LOGIC;
 
@@ -189,7 +189,7 @@ ARCHITECTURE Arch_SCU_Bus_Master OF wb_scu_bus IS
   SIGNAL    S_Slave_Sel       : STD_LOGIC_VECTOR(nSCUB_Slave_Sel'range);
   SIGNAL    S_Multi_Slave_Sel   : STD_LOGIC_VECTOR(nSCUB_Slave_Sel'range);
   SIGNAL    S_Multi_Wr_Flag     : STD_LOGIC;
-  
+
   SIGNAL    S_Start_Cycle     : STD_LOGIC;
 
   SIGNAL    S_Sel_Ext_Data_Drv    : STD_LOGIC;
@@ -225,36 +225,36 @@ ARCHITECTURE Arch_SCU_Bus_Master OF wb_scu_bus IS
 
   SIGNAL    S_SCUB_Version      : std_logic_vector(7 DOWNTO 0);
   SIGNAL    S_SCUB_Revision     : std_logic_vector(7 DOWNTO 0);
-  
+
   SIGNAL    S_SCU_Bus_Access_Active : STD_LOGIC;
   SIGNAL    s_stall     : STD_LOGIC;
 
   SIGNAL    S_Invalid_Slave_Nr    : STD_LOGIC;
   SIGNAL    S_Invalid_Intern_Acc  : STD_LOGIC;
-  
+
   SIGNAL    S_Intern_Echo_1     : STD_LOGIC_VECTOR(15 DOWNTO 0);
-  
+
   signal    s_global_intr_ena   : std_logic_vector(15 downto 0);
   signal    s_sw_tag_low        : std_logic_vector(15 downto 0);
   signal    s_sw_tag_high       : std_logic_vector(15 downto 0);
-  
+
   signal    s_int_ack           : std_logic;
   signal    s_ext_ack           : std_logic;
   signal    s_ext_read_err      : std_logic;
   signal    s_adr               : std_logic_vector(15 downto 0);
   signal    s_ack               : std_logic;
   signal    s_err               : std_logic;
-  
+
   signal    wr_acc              : std_logic;
   signal    rd_acc              : std_logic;
-  
+
   signal    tag_fifo_we         : std_logic;
   signal    tag_fifo_rd         : std_logic;
   signal    tag_fifo_empty      : std_logic;
   signal    tag_fifo_full       : std_logic;
   signal    tag_fifo_q          : std_logic_vector(31 downto 0);
   signal    tag_fifo_in         : std_logic_vector(31 downto 0);
-  
+
   signal    s_sw_tag            : std_logic;
 
   TYPE  T_SCUB_SM IS  (
@@ -276,9 +276,9 @@ ARCHITECTURE Arch_SCU_Bus_Master OF wb_scu_bus IS
               );
 
   SIGNAL  SCUB_SM : T_SCUB_SM;
-  
+
   type wb_ctrl_type is ( idle, cyc_wait, cyc_start, int_acc, ext_stall, ext_err, ext_acc, invalid_slave);
-  
+
   signal wb_state : wb_ctrl_type;
 
   CONSTANT  bit_scub_wr_err:    INTEGER := 0;
@@ -301,7 +301,6 @@ Wr                        <= slave_i.we;
 Rd                        <= not slave_i.we;
 slave_o.stall             <= s_stall;
 slave_o.ack               <= s_ack;
-slave_o.int               <= Intr;
 slave_o.err               <= s_err;
 slave_o.rty               <= '0';
 
@@ -385,7 +384,7 @@ tag_fifo: generic_sync_fifo
 generic map (
               g_data_width  => 32,
               g_size        => 10)
-                
+
 port map (
             rst_n_i => s_reset,
             clk_i   => clk,
@@ -393,11 +392,11 @@ port map (
             we_i    => tag_fifo_we,
             q_o     => tag_fifo_q,
             rd_i    => tag_fifo_rd,
-            
+
             empty_o => tag_fifo_empty,
             full_o  => tag_fifo_full);
 
-              
+
 
 
 p_wb_ctrl: process (clk, s_reset)
@@ -411,7 +410,7 @@ begin
     S_Multi_Wr_Flag         <= '0';
     S_Start_SCUB_Rd         <= '0';             -- reset start SCU_Bus read
     S_Start_SCUB_Wr         <= '0';             -- reset start SCU_Bus write
-    
+
   elsif rising_edge(clk) then
 
     s_ext_read_err          <= '0';
@@ -422,10 +421,10 @@ begin
     S_Start_SCUB_Rd         <= '0';             -- reset start SCU_Bus read
     S_Start_SCUB_Wr         <= '0';             -- reset start SCU_Bus write
 
-    
+
 
     case wb_state is
-    
+
       when idle =>
         S_Multi_Wr_Flag <= '0';                                     -- clear signal multicast write
         if slave_i.cyc = '1' and slave_i.stb = '1' then             -- begin of wishbone cycle
@@ -445,13 +444,13 @@ begin
             wb_state <= cyc_wait;
           end if;
         end if;
-        
+
       when cyc_wait =>
           s_stall <= '1';
           if tag_fifo_empty = '1' and SCUB_SM = idle then           -- no active or planned timing cycle
             wb_state <= cyc_start;
           end if;
-          
+
       when cyc_start =>
           s_stall <= '1';
           if s_slave_nr = x"0" then                               -- internal access
@@ -476,7 +475,7 @@ begin
           else                                                    -- slave number invalid
             wb_state <= invalid_slave;
           end if;
-          
+
       when int_acc =>                                             -- ack/err only for one clock cycle
         S_Multi_Wr_Flag <= '0';                                   -- clear signal multicast write
         if S_Invalid_Intern_Acc = '1' then
@@ -487,21 +486,21 @@ begin
           s_ack <= '1';
         end if;
         wb_state <= idle;
-        
+
       when ext_stall =>
-        s_stall <= '1';                                           -- no pipelining, stall until dtack or timeout                                           
+        s_stall <= '1';                                           -- no pipelining, stall until dtack or timeout
         if S_SCUB_Rd_Err_no_Dtack = '1' or S_SCUB_Wr_Err_no_Dtack = '1' then
           wb_state <= ext_err;
         elsif s_ext_ack = '1' then
           Rd_Data <= ext_rd_data;
           wb_state <= ext_acc;
         end if;
-      
+
       when ext_acc =>
         S_Multi_Wr_Flag <= '0';                                   -- clear signal multicast write
         s_ack <= '1';
         wb_state <= idle;
-      
+
       when ext_err =>
         S_Multi_Wr_Flag <= '0';                                   -- clear signal multicast write
         Rd_Data <= x"dead";
@@ -513,13 +512,13 @@ begin
         s_err <= '1';
         wb_state <= idle;
     end case;
-    
+
   end if;
 end process p_wb_ctrl;
 
 
 wr_acc <= '1' when Wr = '1' and wb_state = cyc_start else '0';
-rd_acc <= '1' when Rd = '1' and wb_state = cyc_start else '0'; 
+rd_acc <= '1' when Rd = '1' and wb_state = cyc_start else '0';
 
 int_regs: process (clk, s_reset)
 begin
@@ -531,45 +530,45 @@ begin
     S_Global_Intr_Ena   <= (others => '0');
     s_sw_tag_low        <= (others => '0');
     s_sw_tag_high       <= (others => '0');
-    
+
     S_SCUB_Rd_Err_no_Dtack  <= '0';             -- reset read timeout flag
     S_SCUB_Wr_Err_no_Dtack  <= '0';             -- reset write timeout flag
     S_Ti_Cyc_Err            <= '0';             -- reset timing error flag
     S_Start_Ti_Cy           <= '0';             -- reset start SCU_Bus timing cycle
     S_Ti_Cy(S_Ti_Cy'range)  <= (OTHERS => '0'); -- shift reg to generate pulse
-    
+
     s_Invalid_Intern_Acc    <= '0';
     S_Invalid_Slave_Nr      <= '0';
     s_int_ack               <= '0';
     tag_fifo_we             <= '0';
     s_sw_tag                <= '0';
-      
+
   elsif rising_edge(clk) then
     S_SCUB_Rd_Err_no_Dtack  <= '0';
     S_SCUB_Wr_Err_no_Dtack  <= '0';
     tag_fifo_we             <= '0';
-      
+
     if wb_state = idle then             -- clear ack and err for next cycle
       s_int_ack <= '0';
       S_Invalid_Intern_Acc <= '0';
     end if;
-    
-  
+
+
     if SCUB_SM = TO_Rd_Cyc then
       S_SCUB_Rd_Err_no_Dtack <= '1';    -- SCU_Bus read error no dtack
     end if;
-   
+
     if SCUB_SM = TO_Wr_Cyc then
       S_SCUB_Wr_Err_no_Dtack <= '1';    -- SCU_Bus write error no dtack
     end if;
 
-  
+
     case unsigned(s_adr(c_adr_width-1 downto 0)) is
       when C_Status_Adr =>
         if wr_acc = '1' then
           s_int_ack <= '1';
           if Wr_Data(bit_scub_wr_err) = '1' then          -- look to the bit position in status
-            S_SCUB_Wr_Err_no_Dtack <= '0';                -- reset SCU_Bus write error no dtack. 
+            S_SCUB_Wr_Err_no_Dtack <= '0';                -- reset SCU_Bus write error no dtack.
           end if;
           if Wr_Data(bit_scub_rd_err) = '1' then          -- look to the bit position in status!
             S_SCUB_Rd_Err_no_Dtack <= '0';                -- reset SCU_Bus read error no dtack
@@ -652,8 +651,8 @@ begin
               s_int_ack <= '1';
               int_rd_data <= S_Intern_Echo_1;
             end if;
-            
-      when C_Sw_Tag_Low_Adr => 
+
+      when C_Sw_Tag_Low_Adr =>
         if wr_acc = '1' then
               s_int_ack <= '1';
               s_sw_tag_low <= Wr_Data; -- store the low 16Bit of the software triggered SCUbus tag
@@ -661,7 +660,7 @@ begin
               s_int_ack <= '1';
               int_rd_data <= s_sw_tag_low;
             end if;
-            
+
       when C_Sw_Tag_High_Adr =>
         if wr_acc = '1' then
               s_int_ack <= '1';
@@ -679,17 +678,17 @@ begin
     end case;
 
     S_Ti_Cy(S_Ti_Cy'range) <= (S_Ti_Cy(S_Ti_Cy'high-1 DOWNTO 0) & Start_Timing_Cycle);    -- shift reg to generate pulse
-    
-    
+
+
     if S_Ti_Cy = "01" or (s_sw_tag = '1' and s_ack = '1') then     -- positive edge off start_timing_cycle
-      if tag_fifo_full = '1' then     
+      if tag_fifo_full = '1' then
         S_Ti_Cyc_Err <= '1';                     -- FIFO full
       else
         S_Start_Ti_Cy <= '1';                    -- store timing request
         tag_fifo_we <= '1';                      -- store tag in fifo
       end if;
     end if;
-    
+
     if SCUB_SM = E_Ti_Cyc then
          S_Start_Ti_Cy <= '0';
          s_sw_tag <= '0';
@@ -698,9 +697,9 @@ begin
 
   end if;
 end process;
-  
-  
-  
+
+
+
 
 
 P_SCUB_SM:  process (clk, s_reset)
@@ -723,15 +722,15 @@ begin
     ELSE
       S_nSync_Dtack(0) <= not S_SCUB_DS; -- during test mode S_nSync_dtack is gererated with the S_SCUB_DS signal
     END IF;
-    
+
     if S_nSync_Dtack(1) = '0' and s_nSync_Dtack(0) = '1' then -- ack pulse from Dtack
       s_ext_ack <= '1';
     else
       s_ext_ack <= '0';
     end if;
-    
+
     tag_fifo_rd <= '0';
-    
+
     case SCUB_SM is         -- = SCU_Bus State Machine
 
       when Idle =>
@@ -816,7 +815,7 @@ begin
           IF    (S_Multi_Wr_Flag = '0' and S_nSync_Dtack(0) = '0')                      -- wait for indivdual slave dtack
             OR  (S_Multi_Wr_Flag = '1'                                                  -- wait for first slave dtack during multicast wr and delay it for slowlier slaves
                   and s_dly_multicast_dt_cnt(s_dly_multicast_dt_cnt'high) = '1'
-                  and S_nSync_Dtack(0) = '0')                                           
+                  and S_nSync_Dtack(0) = '0')
             OR  (s_time_out_cnt(s_time_out_cnt'high) = '1')                             -- if no dtack wait for timeout
           THEN
             S_SCUB_DS <= '0';
@@ -845,9 +844,9 @@ begin
 
       WHEN S_Ti_Cyc =>                                    -- start Timing cycle
         S_Last_Cycle_Timing <= '1';                       -- last SCU_Bus cycle is a timing cycle
-        
+
         IF S_Sel_dly_cnt(S_Sel_dly_cnt'high) = '1' THEN
-          
+
           S_Sel_Ext_Data_Drv <= '1';
           S_SCUB_Slave_Sel <= (OTHERS => '1');            -- in this version select all slaves.
           S_Timing_str_cnt <= to_unsigned(C_Timing_str_cnt, S_Timing_str_cnt'length);
@@ -929,7 +928,7 @@ p_board_sel:  PROCESS (clk, s_reset)
     END IF;
   END PROCESS p_board_sel;
 
-  
+
 irq_deglitch: process(clk, s_reset)
   type cnt_array is array (0 to 11) of integer range 0 to 5;
   variable cnt : cnt_array;
@@ -937,7 +936,7 @@ irq_deglitch: process(clk, s_reset)
   variable shiftreg : regarray;
 begin
   if rising_edge(clk) then
-  
+
     if s_reset = '0' then
       for i in 0 to 11 loop
         cnt(i) := 0;
@@ -946,15 +945,15 @@ begin
     else
       for i in 0 to 11 loop
         shiftreg(i) := shiftreg(i)(3 downto 0) & S_SRQ_active(i);
-      
+
         if shiftreg(i)(0) = '1' then
           cnt(i) := cnt(i) + 1;
         end if;
         if shiftreg(i)(4) = '1' then
           cnt(i) := cnt(i) - 1;
         end if;
-      
-        if cnt(i) = 3 then 
+
+        if cnt(i) = 3 then
           srq_active(i) <= '1';
         elsif cnt(i) < 3 then
           srq_active(i) <= '0';
@@ -962,7 +961,7 @@ begin
       end loop;
     end if;
   end if;
-  
+
 end process;
 
 p_intr: PROCESS (clk, s_reset)

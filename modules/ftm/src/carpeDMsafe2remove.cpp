@@ -9,7 +9,7 @@
 #include <boost/algorithm/string.hpp>
 
 #include "common.h"
-#include "carpeDM.h"
+#include "carpeDMimpl.h"
 #include "propwrite.h"
 
 #include "node.h"
@@ -25,7 +25,7 @@ namespace isSafeToRemove {
 }
 
 
-bool CarpeDM::isSafeToRemove(Graph& gRem, std::string& report, std::vector<QueueReport>& vQr) {
+bool CarpeDM::CarpeDMimpl::isSafeToRemove(Graph& gRem, std::string& report, std::vector<QueueReport>& vQr, CovenantTable& ctAdditions ) {
   std::set<std::string> patterns;
   bool warnUndefined = false;
   //Find all patterns 2B removed
@@ -34,16 +34,16 @@ bool CarpeDM::isSafeToRemove(Graph& gRem, std::string& report, std::vector<Queue
     else patterns.insert(patternIt);
   }
   if (warnUndefined) sErr << "Warning: isSafeToRemove was handed a graph containing nodes claiming to belong to pattern '" << DotStr::Misc::sUndefined << "'." << std::endl << "These nodes will be ignored for analysis and removal!" << std::endl;
-  return isSafeToRemove(patterns, report, vQr);
+  return isSafeToRemove(patterns, report, vQr, ctAdditions);
 }
 
-bool CarpeDM::isSafeToRemove(const std::string& pattern, std::string& report, std::vector<QueueReport>& vQr) {
+bool CarpeDM::CarpeDMimpl::isSafeToRemove(const std::string& pattern, std::string& report, std::vector<QueueReport>& vQr, CovenantTable& ctAdditions) {
   std::set<std::string> p = {pattern};
-  return isSafeToRemove(p, report, vQr);
+  return isSafeToRemove(p, report, vQr, ctAdditions);
 }
 
 
-bool CarpeDM::isSafeToRemove(std::set<std::string> patterns, std::string& report, std::vector<QueueReport>& vQr ) {
+bool CarpeDM::CarpeDMimpl::isSafeToRemove(std::set<std::string> patterns, std::string& report, std::vector<QueueReport>& vQr, CovenantTable& ctAdditions ) {
   //std::cout << "verbose " << (int)verbose << " debug " << (int)debug << " sim " << (int)sim << " testmode " << (int)testmode << " optimisedS2R " << (int)optimisedS2R << std::endl;
 
 
@@ -55,6 +55,7 @@ bool CarpeDM::isSafeToRemove(std::set<std::string> patterns, std::string& report
   vertex_set_t blacklist, remlist, entries, cursors, covenants; //hashes of all covenants
   vertex_set_map_t covenantsPerVertex;
   std::string optmisedAnalysisReport, covenantReport;
+  uint64_t currentTime = getDmWrTime(); 
 
   //if(verbose) {sLog << "Pattern <" << pattern << "> (Entrypoint <" << sTmp << "> safe removal analysis" << std::endl;}
 
@@ -147,7 +148,7 @@ bool CarpeDM::isSafeToRemove(std::set<std::string> patterns, std::string& report
   for (auto& vRem : remlist) {
     if(verbose) { sLog << "Starting Crawler from " << gEq[vRem].name << std::endl; }
     vertex_set_t tmpTree;
-    getReverseNodeTree(vRem, tmpTree, gEq, covenantsPerVertex);
+    getReverseNodeTree(vRem, tmpTree, gEq, covenantsPerVertex, null_vertex, 1, 0); //start with non traversible limit of 1, count 0
     blacklist.insert(tmpTree.begin(), tmpTree.end());
   }
   if(verbose) { sLog << "Blacklist complete" << std::endl; }
@@ -222,24 +223,26 @@ bool CarpeDM::isSafeToRemove(std::set<std::string> patterns, std::string& report
 
   report += createDot(gEq, true);
   report += optmisedAnalysisReport;
+  
+
 
   if (optimisedS2R && isSafe) {
+    covenantReport += "//Covenants to honour:\n";
     for (auto& it : covenants)  {
       allCovenantsUncritical &= !isSafetyCritical(covenantsPerVertex[it]);
-      report += "//Covenants to honour:\n";
       //std::cout << "Was optimised" << std::endl;
-      if (it == null_vertex) {report += "//None\n"; continue;}
+      if (it == null_vertex) {covenantReport += "//Null\n"; continue;}
       std::string covName = gEq[it].name;
       //find covname in ctAux and copy found entry to ct watchlist
       auto x = ctAux.lookup(covName);
       if (!ctAux.isOk(x)) { throw std::runtime_error(isSafeToRemove::exIntro + ": Lookup of <" + covName + "> in covenantAuxTable failed\n");}
-      ct.insert(x);
+      ctAdditions.insert(x);
       //double check if item exists
-      auto y = ct.lookup(covName);
-      if (!ct.isOk(y)) { throw std::runtime_error(isSafeToRemove::exIntro + ": Lookup of <" + covName + "> in covenantTable failed\n");}
+      auto y = ctAdditions.lookup(covName);
+      if (!ctAdditions.isOk(y)) { throw std::runtime_error(isSafeToRemove::exIntro + ": Lookup of <" + covName + "> in covenantTable failed\n");}
 
       //and report
-      report += "//" + covName + " p " + std::to_string(y->prio) + " s " + std::to_string(y->slot) + " chk 0x" + std::to_string(y->chkSum) + "\n";
+      covenantReport += "//" + covName + " p " + std::to_string(y->prio) + " s " + std::to_string(y->slot) + " chk 0x" + std::to_string(y->chkSum) + "\n";
     }
     report += covenantReport;
 
@@ -255,11 +258,16 @@ bool CarpeDM::isSafeToRemove(std::set<std::string> patterns, std::string& report
   if (allCovenantsUncritical == false) {
     throw std::runtime_error(isSafeToRemove::exIntro + " ERROR in algorithm detected: a block listed as a covenant was safety critical itself\n\n" + report);
   }
+  report += "\n//Created: " + nsTimeToDate(currentTime);
+  report += "//Patterns to judge:\n";
+  for (auto s : patterns) {report += "//  " + s + "\n";};
+  report += "//Verdict: ";
+  report += isSafe ? "SAFE\n" : "FORBIDDEN\n";
 
   return isSafe;
 }
 
-bool CarpeDM::isOptimisableEdge(edge_t e, Graph& g) {
+bool CarpeDM::CarpeDMimpl::isOptimisableEdge(edge_t e, Graph& g) {
 
   vertex_t toBeChecked = target(e, g);
   Graph::in_edge_iterator in_begin, in_end, in_cur;
@@ -271,7 +279,7 @@ bool CarpeDM::isOptimisableEdge(edge_t e, Graph& g) {
   return true;
 }
 
-bool CarpeDM::isCovenantPending(const std::string& covName) {
+bool CarpeDM::CarpeDMimpl::isCovenantPending(const std::string& covName) {
 
   cmI x = ct.lookup(covName);
   if (!ct.isOk(x)) {
@@ -280,7 +288,7 @@ bool CarpeDM::isCovenantPending(const std::string& covName) {
   return isCovenantPending(x);
 }
 
-bool CarpeDM::isCovenantPending(cmI cov) {
+bool CarpeDM::CarpeDMimpl::isCovenantPending(cmI cov) {
   QueueReport qr;
   getQReport(cov->name, qr);
   QueueElement& qe = qr.aQ[cov->prio].aQe[cov->slot];
@@ -289,7 +297,7 @@ bool CarpeDM::isCovenantPending(cmI cov) {
   else                                    return false;
 }
 
-unsigned CarpeDM::updateCovenants() {
+unsigned CarpeDM::CarpeDMimpl::updateCovenants() {
 
   unsigned cnt = 0;
   vStrC toDelete;
@@ -306,15 +314,21 @@ unsigned CarpeDM::updateCovenants() {
   return cnt;
 }
 
+void CarpeDM::CarpeDMimpl::addCovenants(CovenantTable& ctAdditions) {
+  for (cmI it = ctAdditions.getTable().begin(); it != ctAdditions.getTable().end(); it++ ) {
+    ct.insert(it);
+  }  
+}
 
-bool CarpeDM::isSafetyCritical(vertex_set_t& c) {
+
+bool CarpeDM::CarpeDMimpl::isSafetyCritical(vertex_set_t& c) {
   if (c.find(null_vertex) != c.end()) return true;
   else return false;
 }
 
 
 //recursively inserts all vertex idxs of the tree reachable (via in edges) from start vertex into the referenced set
-void CarpeDM::getReverseNodeTree(vertex_t v, vertex_set_t& sV, Graph& g, vertex_set_map_t& covenantsPerVertex, vertex_t covenant) {
+void CarpeDM::CarpeDMimpl::getReverseNodeTree(vertex_t v, vertex_set_t& sV, Graph& g, vertex_set_map_t& covenantsPerVertex, vertex_t covenant, int32_t maxNtEdges, int32_t tNtEdges) {
   vertex_t nextCovenant;
   Graph::in_edge_iterator in_begin, in_end, in_cur;
   //Do the crawl
@@ -323,7 +337,16 @@ void CarpeDM::getReverseNodeTree(vertex_t v, vertex_set_t& sV, Graph& g, vertex_
     if (verbose) { sLog << g[target(*in_cur, g)].name << "<-- " << g[*in_cur].type << " --" << g[source(*in_cur, g)].name  << " propcov " << ((covenant == null_vertex) ? "NULL" : g[covenant].name) << std::endl; }
     vertex_set_t& cpvs = covenantsPerVertex[source(*in_cur, g)];
 
+    
+    if ( (g[*in_cur].type != det::sDefDst && g[*in_cur].type != det::sResFlowDst && g[*in_cur].type != det::sDynFlowDst) ) { // if its a non-traversiable edge and the traversal limit is reached, don't follow this trail
+      if ( (maxNtEdges > 0) && (tNtEdges >= maxNtEdges) ) {
+        if (verbose) sLog << "Non-Traversible edge limit reached, not crossing " << g[source(*in_cur, g)].name << " -> " << g[target(*in_cur, g)].name << std::endl;
+        continue;
+      } else {tNtEdges++;}
+    }
+   
     sV.insert(source(*in_cur, g));
+
     if (cpvs.find(covenant) != cpvs.end()) { continue; }
 
     if (isOptimisableEdge(*in_cur, g)) {
@@ -334,16 +357,18 @@ void CarpeDM::getReverseNodeTree(vertex_t v, vertex_set_t& sV, Graph& g, vertex_
     }
 
     cpvs.insert(nextCovenant);
-    getReverseNodeTree(source(*in_cur, g), sV, g, covenantsPerVertex, nextCovenant);
+    getReverseNodeTree(source(*in_cur, g), sV, g, covenantsPerVertex, nextCovenant, maxNtEdges, tNtEdges);
 
 
 
   }
 }
 
-bool CarpeDM::addResidentDestinations(Graph& gEq, Graph& gOrig, vertex_set_t cursors) {
+bool CarpeDM::CarpeDMimpl::addResidentDestinations(Graph& gEq, Graph& gOrig, vertex_set_t cursors) {
   vertex_set_t resCmds; // prepare the set of flow commands to speed things up
   vertex_set_map_t dummy; // this doesn't need to look out for covenant sets, ignore
+  
+  //FIXME what about flush with override ???
   BOOST_FOREACH( vertex_t vChkResCmd, vertices(gEq) ) {if ((gEq[vChkResCmd].type == dnt::sCmdFlow) || (gEq[vChkResCmd].type == dnt::sSwitch)) resCmds.insert(vChkResCmd);}
   bool addEdge = (resCmds.size() > 0);
   bool didWork = false;
@@ -362,14 +387,14 @@ bool CarpeDM::addResidentDestinations(Graph& gEq, Graph& gOrig, vertex_set_t cur
       if ( si.size() > 0 ) {
         //found a path. now check if there already is an equivalent edge between this command's target block and its destination
         //get block and dst
-
+        if(verbose) std::cout << "Path from cursor to command <" << gEq[vRc].name << "> found." << std::endl;
         //We now intentionally use the unfiltered graph again (to have target and dst edges). works cause vertex indices are equal.
         boost::tie(out_begin, out_end) = out_edges(vRc, gOrig);
         for (out_cur = out_begin; out_cur != out_end; ++out_cur) {
           if(gOrig[*out_cur].type == det::sCmdTarget || gOrig[*out_cur].type == det::sSwitchTarget)   {vBlock  = target(*out_cur, gOrig);}
           if(gOrig[*out_cur].type == det::sCmdFlowDst || gOrig[*out_cur].type == det::sSwitchDst)     {vDst    = target(*out_cur, gOrig);}
         }
-        if ((vBlock  == null_vertex) || (vDst == null_vertex)) {throw std::runtime_error(isSafeToRemove::exIntro + "Could not find block and dst for resident equivalents");}
+        if ((vBlock  == null_vertex) || (vDst == null_vertex)) {throw std::runtime_error(isSafeToRemove::exIntro + "Could not find block and dst for resident equivalents when scanning <" + gOrig[vRc].name + ">");}
 
          //check for equivalent resident edges
         boost::tie(out_begin, out_end) = out_edges(vBlock, gEq);
@@ -386,7 +411,7 @@ bool CarpeDM::addResidentDestinations(Graph& gEq, Graph& gOrig, vertex_set_t cur
   return didWork;
 }
 
-bool CarpeDM::updateStaleDefaultDestinations(Graph& g, AllocTable& at, CovenantTable& covTab, std::string& qAnalysis) {
+bool CarpeDM::CarpeDMimpl::updateStaleDefaultDestinations(Graph& g, AllocTable& at, CovenantTable& covTab, std::string& qAnalysis) {
   bool didWork = false;
   edge_t edgeToDelete;
 
@@ -418,10 +443,10 @@ bool CarpeDM::updateStaleDefaultDestinations(Graph& g, AllocTable& at, CovenantT
   return didWork;
 }
 
-vertex_set_t CarpeDM::getDominantFlowDst(vertex_t vQ, Graph& g, AllocTable& at, CovenantTable& covTab, std::string& qAnalysis) {
+vertex_set_t CarpeDM::CarpeDMimpl::getDominantFlowDst(vertex_t vQ, Graph& g, AllocTable& at, CovenantTable& covTab, std::string& qAnalysis) {
   vertex_set_t ret;
 
-
+  //FIXME what about flush with override ???
 
   qAnalysis += "//" + g[vQ].name;
 
@@ -477,7 +502,7 @@ vertex_set_t CarpeDM::getDominantFlowDst(vertex_t vQ, Graph& g, AllocTable& at, 
 
 
 
-bool CarpeDM::addDynamicDestinations(Graph& g, AllocTable& at) {
+bool CarpeDM::CarpeDMimpl::addDynamicDestinations(Graph& g, AllocTable& at) {
   bool didWork = false;
 
   BOOST_FOREACH( vertex_t vChkBlock, vertices(g) ) {
@@ -496,7 +521,7 @@ bool CarpeDM::addDynamicDestinations(Graph& g, AllocTable& at) {
 }
 
 
-vertex_set_t CarpeDM::getDynamicDestinations(vertex_t vQ, Graph& g, AllocTable& at) {
+vertex_set_t CarpeDM::CarpeDMimpl::getDynamicDestinations(vertex_t vQ, Graph& g, AllocTable& at) {
 
 
   vertex_set_t ret;

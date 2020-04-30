@@ -110,7 +110,6 @@ begin
     end if;  
   end process;
   
-  slave_o.int <= '0';
   slave_o.err <= '0';
   slave_o.rty <= '0';
   slave_o.stall <= '0'; -- always ready

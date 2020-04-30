@@ -55,7 +55,6 @@ begin
   slave_o.stall <= '0';
   
   -- to be removed:
-  slave_o.int <= '0';
   slave_o.rty <= '0';
   
   gpio_oen_o <= r_gpio;

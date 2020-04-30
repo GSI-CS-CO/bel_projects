@@ -1,188 +1,582 @@
-digraph g {
-name="Monster";
+digraph monster_graph {
+	name="Monster";
 
-// create svg using "dot -Tsvg FILE.dot -o FILE.svg"
+	// create svg using "dot -Tsvg monster.dot -o monster.svg"
+	// create pdf using "dot -Tpdf monster.dot -o monster.pdf"
 
-graph [root="top",  rankdir=LR, nodesep=0.6, mindist=0.6, ranksep=1, overlap=false]
+	// nodesep=0.6, mindist=0.6, ranksep=1, pagedir=TL, , splines=line
+	graph[ root="top", rankdir=LR, overlap=false, concentrate=false ]
+	// Attributes for all nodes
+	node[ fontsize=12 width=3.6 ]
 
-// crossbars
-top                 [type="crossbar", shape="oval", style="filled", fillcolor="yellow", color="black", fixedsize=true, width=2, height=1];
-ftm_cluster         [type="crossbar", shape="oval", style="filled", fillcolor="yellow", color="black", fixedsize=true, width=2, height=1];
-dev                 [type="crossbar", shape="oval", style="filled", fillcolor="yellow", color="black", fixedsize=true, width=2, height=1];
-wrcore              [type="crossbar", shape="oval", style="filled", fillcolor="yellow", color="black", fixedsize=true, width=2, height=1];
-wb_crossbar         [type="crossbar", shape="oval", style="filled", fillcolor="yellow", color="black", fixedsize=true, width=2, height=1];
+	// Define crossbars
+	node[ type="crossbar", shape="oval", style="filled", fillcolor="yellow", color="black", height=1 ]
 
-// wb slaves
-eca_event           [type="slave", shape="rectangle", style="filled", fillcolor="gray68", color="black", fixedsize=true, width=1.8, height=.4];
-scu_bus             [type="slave", shape="rectangle", style="filled", fillcolor="gray68", color="black", fixedsize=true, width=1.8, height=.4];
-mbox                [type="slave", shape="rectangle", style="filled", fillcolor="gray68", color="black", fixedsize=true, width=1.8, height=.4];
-mil                 [type="slave", shape="rectangle", style="filled", fillcolor="gray68", color="black", fixedsize=true, width=1.8, height=.4];
-build_id            [type="slave", shape="rectangle", style="filled", fillcolor="gray68", color="black", fixedsize=true, width=1.8, height=.4];
-watchdog            [type="slave", shape="rectangle", style="filled", fillcolor="gray68", color="black", fixedsize=true, width=1.8, height=.4];
-flash               [type="slave", shape="rectangle", style="filled", fillcolor="gray68", color="black", fixedsize=true, width=1.8, height=.4];
-reset               [type="slave", shape="rectangle", style="filled", fillcolor="gray68", color="black", fixedsize=true, width=1.8, height=.4];
-ebm                 [type="slave", shape="rectangle", style="filled", fillcolor="orange", color="black", fixedsize=true, width=1.8, height=.4, label="ebm, previously @ dev"];
-tlu                 [type="slave", shape="rectangle", style="filled", fillcolor="gray68", color="black", fixedsize=true, width=1.8, height=.4];
-eca_ctl             [type="slave", shape="rectangle", style="filled", fillcolor="gray68", color="black", fixedsize=true, width=1.8, height=.4];
-eca_aq              [type="slave", shape="rectangle", style="filled", fillcolor="gray68", color="black", fixedsize=true, width=1.8, height=.4];
-eca_tlu             [type="slave", shape="rectangle", style="filled", fillcolor="gray68", color="black", fixedsize=true, width=1.8, height=.4];
-eca_wbm_m           [type="slave", shape="rectangle", style="filled", fillcolor="gray68", color="black", fixedsize=true, width=1.8, height=.4];
-emb_cpu             [type="slave", shape="rectangle", style="filled", fillcolor="gray68", color="black", fixedsize=true, width=1.8, height=.4];
-serdes_clk_gen      [type="slave", shape="rectangle", style="filled", fillcolor="gray68", color="black", fixedsize=true, width=1.8, height=.4];
-control             [type="slave", shape="rectangle", style="filled", fillcolor="gray68", color="black", fixedsize=true, width=1.8, height=.4];
-lm32_ram_user_1     [type="slave", shape="rectangle", style="filled", fillcolor="gray68", color="black", fixedsize=true, width=1.8, height=.4];
-lm32_ram_user_N     [type="slave", shape="rectangle", style="filled", fillcolor="gray68", color="black", fixedsize=true, width=1.8, height=.4];  
-cluster_info        [type="slave", shape="rectangle", style="filled", fillcolor="gray68", color="black", fixedsize=true, width=1.8, height=.4];  
-eb_config           [type="slave", shape="rectangle", style="filled", fillcolor="gray68", color="black", fixedsize=true, width=1.8, height=.4];  
-diag                [type="slave", shape="rectangle", style="filled", fillcolor="gray68", color="black", fixedsize=true, width=1.8, height=.4];
-user_1wire          [type="slave", shape="rectangle", style="filled", fillcolor="gray68", color="black", fixedsize=true, width=1.8, height=.4];
-tempsens            [type="slave", shape="rectangle", style="filled", fillcolor="gray68", color="black", fixedsize=true, width=1.8, height=.4];
-prioq_ctl           [type="slave", shape="rectangle", style="filled", fillcolor="gray68", color="black", fixedsize=true, width=1.8, height=.4];
-wr_mini_nic         [type="slave", shape="rectangle", style="filled", fillcolor="gray68", color="black", fixedsize=true, width=1.8, height=.4];
-psram               [type="slave", shape="rectangle", style="filled", fillcolor="gray68", color="black", fixedsize=true, width=1.8, height=.4];
-wr_endpoint         [type="slave", shape="rectangle", style="filled", fillcolor="gray68", color="black", fixedsize=true, width=1.8, height=.4];
-wr_soft_pll         [type="slave", shape="rectangle", style="filled", fillcolor="gray68", color="black", fixedsize=true, width=1.8, height=.4];
-wr_pps_gen          [type="slave", shape="rectangle", style="filled", fillcolor="gray68", color="black", fixedsize=true, width=1.8, height=.4];
-wr_periph_syscon    [type="slave", shape="rectangle", style="filled", fillcolor="gray68", color="black", fixedsize=true, width=1.8, height=.4];
-wr_periph_1wire     [type="slave", shape="rectangle", style="filled", fillcolor="gray68", color="black", fixedsize=true, width=1.8, height=.4];
-wb_slave            [type="slave", shape="rectangle", style="filled", fillcolor="gray68", color="black", fixedsize=true, width=1.8, height=.4];
+	// top crossbar
+	top[ label= < 
+		<sup>
+			0
+		</sup>
+		 top 
+	> ]
 
-// wb masters
-ebs                 [type="master", shape="diamond", style="filled", fillcolor="greenyellow", color="black", fixedsize=true, width=2, height=1];
-eca_wbm_s           [type="master", shape="diamond", style="filled", fillcolor="greenyellow", color="black", fixedsize=true, width=2, height=1];
-pcie_vme_pmc        [type="master", shape="diamond", style="filled", fillcolor="greenyellow", color="black", fixedsize=true, width=2, height=1];
-usb                 [type="master", shape="diamond", style="filled", fillcolor="greenyellow", color="black", fixedsize=true, width=2, height=1];
-prioq               [type="master", shape="diamond", style="filled", fillcolor="greenyellow", color="black", fixedsize=true, width=2, height=1];
-lm32_core_1         [type="master", shape="diamond", style="filled", fillcolor="greenyellow", color="black", fixedsize=true, width=2, height=1];
-lm32_core_N         [type="master", shape="diamond", style="filled", fillcolor="greenyellow", color="black", fixedsize=true, width=2, height=1];
-wb_master           [type="master", shape="diamond", style="filled", fillcolor="greenyellow", color="black", fixedsize=true, width=2, height=1];
+	// dev crossbar
+	dev[ label= < 
+		<sup>
+			12
+		</sup>
+		 dev 
+	> ]
+	ftm_cluster[ label= < 
+		<sup>
+			12.14
+		</sup>
+		 ftm_cluster, lm32 
+	> ]
 
-// connect crossbars
-top               -> dev               [type="interconnect", color="red", arrowhead=normal, penwidth=2]; 
-dev               -> ftm_cluster       [type="interconnect", color="red", arrowhead=normal, penwidth=2];
-top               -> wrcore            [type="interconnect", color="red", arrowhead=normal, penwidth=2]; 
+	// WR crossbar
+	c_tops_wr_fast_path[ label= < 
+		<sup>
+			14
+		</sup>
+		 wrcore <BR/>
+		WB4-Bridge-GSI 
+	> ]
+	c_secbar_bridge[ label= < 
+		<sup>
+			14.2
+		</sup>
+		 2. WR Bridge <BR/>
+		WB4-Bridge-GSI 
+	> ]
+	wb_crossbar[ label= < 
+		Crossbar 
+	> ]
 
-// connect masters
-ebs               -> top              [type="masterconnect", color="black", arrowhead=normal]; 
-eca_wbm_s         -> top              [type="masterconnect", color="black", arrowhead=normal]; 
-pcie_vme_pmc      -> top              [type="masterconnect", color="black", arrowhead=normal]; 
-usb               -> top              [type="masterconnect", color="black", arrowhead=normal]; 
-prioq             -> top              [type="masterconnect", color="black", arrowhead=normal]; 
-lm32_core_1       -> top              [type="masterconnect", color="black", arrowhead=normal]; 
-lm32_core_N       -> top              [type="masterconnect", color="black", arrowhead=normal];     
+	// Define connections between crossbars
+	edge[ type="interconnect", color="red", arrowhead=normal, penwidth=2 ]
+	top -> dev
+	top -> c_tops_wr_fast_path
 
-// connect slaves
-top               -> eca_event        [type="slaveconnect", color="black", arrowhead=normal];      
-top               -> scu_bus          [type="slaveconnect", color="black", arrowhead=normal];      
-top               -> mbox             [type="slaveconnect", color="black", arrowhead=normal];      
-top               -> mil              [type="slaveconnect", color="black", arrowhead=normal];      
-dev               -> build_id         [type="slaveconnect", color="black", arrowhead=normal];      
-dev               -> watchdog         [type="slaveconnect", color="black", arrowhead=normal];      
-dev               -> flash            [type="slaveconnect", color="black", arrowhead=normal];      
-dev               -> reset            [type="slaveconnect", color="black", arrowhead=normal];      
-top               -> ebm              [type="slaveconnect", color="black", arrowhead=normal];      
-dev               -> tlu              [type="slaveconnect", color="black", arrowhead=normal];      
-dev               -> eca_ctl          [type="slaveconnect", color="black", arrowhead=normal];      
-dev               -> eca_aq           [type="slaveconnect", color="black", arrowhead=normal];      
-dev               -> eca_tlu          [type="slaveconnect", color="black", arrowhead=normal];      
-dev               -> eca_wbm_m        [type="slaveconnect", color="black", arrowhead=normal];      
-dev               -> emb_cpu          [type="slaveconnect", color="black", arrowhead=normal];
-dev               -> serdes_clk_gen   [type="slaveconnect", color="black", arrowhead=normal];      
-dev               -> control          [type="slaveconnect", color="black", arrowhead=normal];      
-dev               -> user_1wire       [type="slaveconnect", color="black", arrowhead=normal];      
-dev               -> tempsens         [type="slaveconnect", color="black", arrowhead=normal];      
-dev               -> psram            [type="slaveconnect", color="black", arrowhead=normal];      
-ftm_cluster       -> lm32_ram_user_1  [type="slaveconnect", color="black", arrowhead=normal];      
-ftm_cluster       -> lm32_ram_user_N  [type="slaveconnect", color="black", arrowhead=normal];      
-ftm_cluster       -> cluster_info     [type="slaveconnect", color="black", arrowhead=normal];      
-ftm_cluster       -> diag             [type="slaveconnect", color="black", arrowhead=normal];
-ftm_cluster       -> prioq_ctl        [type="slaveconnect", color="black", arrowhead=normal];
-wrcore            -> eb_config        [type="slaveconnect", color="black", arrowhead=normal];
-wrcore            -> wr_mini_nic      [type="slaveconnect", color="black", arrowhead=normal];
-wrcore            -> wr_endpoint      [type="slaveconnect", color="black", arrowhead=normal];
-wrcore            -> wr_soft_pll      [type="slaveconnect", color="black", arrowhead=normal];
-wrcore            -> wr_pps_gen       [type="slaveconnect", color="black", arrowhead=normal];
-wrcore            -> wr_periph_syscon [type="slaveconnect", color="black", arrowhead=normal];
-wrcore            -> wr_periph_1wire  [type="slaveconnect", color="black", arrowhead=normal];
+	// bridge to lm32 cluster
+	dev -> ftm_cluster
 
-// special connects
-lm32_ram_user_1  -> lm32_core_1       [type="specialconnect", color="red",  arrowhead=normal, style=dashed, label="dp ram", dir=back];      
-lm32_ram_user_N  -> lm32_core_N       [type="specialconnect", color="red",  arrowhead=normal, style=dashed, label="dp ram", dir=back];
+	// bridge inside wrcore
+	c_tops_wr_fast_path -> c_secbar_bridge
 
-rank=same;
+	// Define masters
+	node[ type="master", shape="diamond", style="filled", fillcolor="greenyellow", color="black", height=1.2 ]
+	wb_master[ label= < 
+		WB Master 
+	> ]
+	c_topm_ebs[ label= < 
+		<sup>
+			1
+		</sup>
+		 c_topm_ebs, <BR/>
+		Etherbone_Slave 
+	> ]
+	c_topm_eca_wbm[ label= < 
+		<sup>
+			2
+		</sup>
+		 c_topm_eca_wbm 
+	> ]
+	c_topm_form[ label= < 
+		<sup>
+			3
+		</sup>
+		 PCIe |  <sup>
+			4
+		</sup>
+		 VME |  <sup>
+			5
+		</sup>
+		 PCI  
+	> ]
+	c_topm_usb[ label= < 
+		<sup>
+			6
+		</sup>
+		 c_topm_usb, <BR/>
+		USB=&gt; WB bridge 
+	> ]
+	c_topm_prioq[ label= < 
+		<sup>
+			7
+		</sup>
+		 c_topm_prioq 
+	> ]
+	c_top_bridge_msi[ label= < 
+		<sup>
+			8
+		</sup>
+		 c_top_bridge_msi, <BR/>
+		WB4-MSI-Bridge-GSI 
+	> ]
 
-subgraph cluster_eb {
-        label="eb";
-        ebm;
-        ebs;
-        eb_config
-        fontcolor="blue"; color=blue;
+	// Define slaves
+	node[ type="slave", shape="rectangle", style="filled", fillcolor="gray80", color="black", height=.4 ]
+	wb_slave[ label= < 
+		WB Slave 
+	> ]
+	c_tops_eca_event[ label= < 
+		<sup>
+			9
+		</sup>
+		 c_tops_eca_event, ECA_UNIT:EVENTS_IN 
+	> ]
+	c_tops_scubus[ label= < 
+		<sup>
+			10
+		</sup>
+		 scu_bus, SCU-BUS-MASTER 
+	> ]
+	c_tops_mbox[ label= < 
+		<sup>
+			11
+		</sup>
+		 mbox, GSI:MSI_MAILBOX 
+	> ]
+	c_tops_mil[ label= < 
+		<sup>
+			13
+		</sup>
+		 mil, GSI_MIL_SCU 
+	> ]
+	c_tops_ebm[ label= < 
+		<sup>
+			15
+		</sup>
+		 ebm, Etherbone_Master 
+	> ]
+	c_tops_beam_dump[ label= < 
+		<sup>
+			16
+		</sup>
+		 beam_dump, GSI:BEAM_DUMP 
+	> ]
+
+	c_devs_eca_ctl[ label= < 
+		<sup>
+			12.7
+		</sup>
+		 eca_ctl, ECA_UNIT:CONTROL 
+	> ]
+	c_devs_eca_aq[ label= < 
+		<sup>
+			12.8
+		</sup>
+		 eca_aq, ECA_UNIT:QUEUE 
+	> ]
+	c_devs_eca_tlu[ label= < 
+		<sup>
+			12.9
+		</sup>
+		 eca_tlu, ECA_UNIT:TLU 
+	> ]
+	c_devs_eca_wbm[ label= < 
+		<sup>
+			12.10
+		</sup>
+		 eca_wbm, ECA ACTCHN WBM 
+	> ]
+	c_devs_emb_cpu[ label= < 
+		<sup>
+			12.11
+		</sup>
+		 emb_cpu, ECA_UNIT:QUEUE 
+	> ]
+
+	c_cluster_info_sdb[ label= < 
+		<sup>
+			12.14.1
+		</sup>
+		 Cluster-Info-ROM 
+	> ]
+	c_pq_ctrl_sdb[ label= < 
+		<sup>
+			12.14.2
+		</sup>
+		    DM-Prio-Queue-Ctrl 
+	> ]
+	c_dm_diag_ctrl_sdb[ label= < 
+		<sup>
+			12.14.3
+		</sup>
+		 DM-Diagnostics 
+	> ]
+	c_clu_time_sdb[ label= < 
+		<sup>
+			12.14.4
+		</sup>
+		   Cluster-TAI-Time 
+	> ]
+	f_xwb_dpram_userlm32[ label= < 
+		<sup>
+			12.14.5
+		</sup>
+		 LM32-RAM-User  
+	> ]
+	c_bridge_msi[ label= < 
+		<sup>
+			12.14.6
+		</sup>
+		     WB4-MSI-Bridge-GSI 
+	> ]
+
+	xwb_dpram[ label= < 
+		<sup>
+			14.1
+		</sup>
+		 WB4-BlockRAM  
+	> ]
+
+	c_xwr_mini_nic_sdb[ label= < 
+		<sup>
+			14.2.1
+		</sup>
+		 WR-Mini-NIC  
+	> ]
+	c_xwr_endpoint_sdb[ label= < 
+		<sup>
+			14.2.2
+		</sup>
+		 WR-Endpoint  
+	> ]
+	c_xwr_softpll_ng_sdb[ label= < 
+		<sup>
+			14.2.3
+		</sup>
+		 WR-Soft-PLL  
+	> ]
+	c_xwr_pps_gen_sdb[ label= < 
+		<sup>
+			14.2.4
+		</sup>
+		 WR-PPS-Generator  
+	> ]
+	c_wrc_periph0_sdb[ label= < 
+		<sup>
+			14.2.5
+		</sup>
+		 WR-Periph-Syscon  
+	> ]
+	c_wrc_periph1_sdb[ label= < 
+		<sup>
+			14.2.6
+		</sup>
+		 WR-Periph-UART  
+	> ]
+	c_wrc_periph2_sdb[ label= < 
+		<sup>
+			14.2.7
+		</sup>
+		 WR-Periph-1Wire  
+	> ]
+	c_etherbone_sdb[ label= < 
+		<sup>
+			14.2.8
+		</sup>
+		 Etherbone-Config  
+	> ]
+	c_wrc_periph4_sdb[ label= < 
+		<sup>
+			14.2.9
+		</sup>
+		 WR-Periph-WRPC-DIAG  
+	> ]
+
+	// Define connections to slaves
+	edge[ type="slaveconnect", color="black", arrowhead=normal, penwidth=1 ]
+	top -> c_tops_eca_event
+	top -> c_tops_ebm
+	c_topm_ebs -> top
+	c_topm_usb -> top
+	c_top_bridge_msi -> top
+	c_topm_eca_wbm -> top
+	c_topm_form -> top
+	c_topm_prioq -> top
+	ftm_cluster -> top
+	c_tops_scubus -> top[ dir=back ]
+	c_tops_mbox -> top[ dir=back ]
+	c_tops_mil -> top[ dir=back ]
+	c_tops_beam_dump -> top[ dir=back ]
+	c_secbar_bridge -> c_etherbone_sdb
+	c_secbar_bridge -> {
+		c_xwr_mini_nic_sdb
+		c_xwr_endpoint_sdb
+		c_xwr_softpll_ng_sdb
+		c_xwr_pps_gen_sdb
+		c_wrc_periph0_sdb
+		c_wrc_periph1_sdb
+		c_wrc_periph2_sdb
+		c_wrc_periph4_sdb
+	}
+	c_tops_wr_fast_path -> xwb_dpram
+
+	c_devs_DDR3_if1[ label= < 
+		<sup>
+			12.25
+		</sup>
+		 DDR3_if1, WB_DDR3_if1 
+	> ]
+	c_devs_DDR3_if2[ label= < 
+		<sup>
+			12.26
+		</sup>
+		 DDR3_if2, WB_DDR3_if2 
+	> ]
+	c_devs_DDR3_ctrl[ label= < 
+		<sup>
+			12.27
+		</sup>
+		 DDR_ctrl, IRQ_MASTER_CTRL 
+	> ]
+
+	subgraph cluster_ddr3 {
+		c_devs_DDR3_if1
+		c_devs_DDR3_if2
+		c_devs_DDR3_ctrl
+		label="DDR3"
+		color=blue
+	} -> dev[ dir=back weight=5 ]
+
+	subgraph cluster_dev {
+		style="invis"
+		edge[ color="black", arrowhead=normal ]
+
+		// required slaves at dev crossbar
+		c_devs_build_id[ label= < 
+		<sup>
+			12.2
+		</sup>
+		 build_id, GSI:BUILD_ID ROM 
+		> ]
+		c_devs_watchdog[ label= < 
+		<sup>
+			12.3
+		</sup>
+		 watchdog, GSI:WATCHDOG_MUTEX 
+		> ]
+		c_devs_flash[ label= < 
+		<sup>
+			12.4
+		</sup>
+		 flash, SPI-FLASH-16M-MMAP 
+		> ]
+		c_devs_reset[ label= < 
+		<sup>
+			12.5
+		</sup>
+		 reset, FPGA_RESET 
+		> ]
+		c_devs_tlu[ label= < 
+		<sup>
+			12.6
+		</sup>
+		 tlu, GSI_TM_LATCH_V2 
+		> ]
+		c_devs_serdes_clk_gen[ label= < 
+		<sup>
+			12.12
+		</sup>
+		 serdes_clk_gen, wb_serdes_clk_gen 
+		> ]
+		c_devs_control[ label= < 
+		<sup>
+			12.13
+		</sup>
+		 control, IO_CONTROL 
+		> ]
+
+		subgraph cluster_dev_required {
+			style="invis"
+			c_devs_build_id
+			c_devs_watchdog
+			c_devs_flash
+			c_devs_reset
+			c_devs_tlu
+			c_devs_serdes_clk_gen
+			c_devs_control
+		} -> dev[ dir="back"]
+
+		// optional slaves at dev crossbar
+		c_devs_lcd[ label= < 
+		<sup>
+			12.15
+		</sup>
+		 lcd, SERIAL-LCD-DISPLAY 
+		> ]
+		c_devs_oled[ label= < 
+		<sup>
+			12.16
+		</sup>
+		 oled, OLED_Display 
+		> ]
+		c_devs_scubirq[ label= < 
+		<sup>
+			12.17
+		</sup>
+		 scubirq, IRQ_MASTER_CTRL 
+		> ]
+		c_devs_mil_ctrl[ label= < 
+		<sup>
+			12.18
+		</sup>
+		 mil_ctrl, IRQ_MASTER_CTRL 
+		> ]
+		c_devs_ow[ label= < 
+		<sup>
+			12.19
+		</sup>
+		 ow, User-1Wire 
+		> ]
+		c_devs_nau8811[ label= < 
+		<sup>
+			12.20
+		</sup>
+		 nau8811, NAU8811_AUD_DRIVER 
+		> ]
+		c_devs_vme_info[ label= < 
+		<sup>
+			12.21
+		</sup>
+		 vme_info, INFO_VME 
+		> ]
+		c_devs_psram[ label= < 
+		<sup>
+			12.22
+		</sup>
+		 psram, Pseudo SRAM 
+		> ]
+		c_devs_CfiPFlash[ label= < 
+		<sup>
+			12.23
+		</sup>
+		 CfiPFlash, WR_CfiPFlash 
+		> ]
+		c_devs_ssd1325[ label= < 
+		<sup>
+			12.24
+		</sup>
+		 ssd1325, SSD1325_SER_DRIVER 
+		> ]
+		c_devs_tempsens[ label= < 
+		<sup>
+			12.28
+		</sup>
+		 tempsens, ALTERA_TEMP_SENSOR 
+		> ]
+		dev ->
+
+		subgraph cluster_dev_optional {
+			style="invis"
+			c_devs_lcd
+			c_devs_oled
+			c_devs_scubirq
+			c_devs_mil_ctrl
+			c_devs_ow
+			c_devs_ssd1325
+			c_devs_vme_info
+			c_devs_CfiPFlash
+			c_devs_nau8811
+			c_devs_psram
+			c_devs_tempsens
+		}
+	}
+
+	// x1 is a dummy node for the placement of the legend in the upper right corner.
+	// The edges connected to x1 are also invisible.
+	x1[ style=invis ]
+	c_devs_psram -> x1[ style=invis ]
+	x1 ->
+
+	subgraph cluster_legend {
+		wb_crossbar
+		wb_slave
+		wb_master
+		label= < 
+		Legend <BR/>
+		 Numbering from eb-ls with one LM32 
+		>
+		fontcolor="black"
+		color=black
+		node[ type="legend_node", shape="none", style="solid" width=0.0, height=0.0 ]
+		X[ label= < 
+		master &rarr; slave 
+		> ]
+		Y[ label="" ]
+		U[ label="crossbar connect" ]
+		V[ label="" ]
+		R[ label="MSI connect" ]
+		S[ label="" ]
+		edge[ type="slaveconnect" color="black" arrowhead=normal penwidth=1 ]
+		X -> Y[ constraint=false ]
+		edge[ type="interconnect", color="red", arrowhead=normal, penwidth=2 ]
+		U -> V[ constraint=false ]
+		edge[ type="msiconnect", color="blue", arrowhead=normal, penwidth=1 ]
+		R -> S[ constraint=false ]
+	}[ style=invis ]
+
+	ftm_cluster -> c_cluster_info_sdb
+	ftm_cluster -> c_pq_ctrl_sdb
+	ftm_cluster -> c_dm_diag_ctrl_sdb
+	ftm_cluster -> c_clu_time_sdb
+	ftm_cluster -> f_xwb_dpram_userlm32
+	ftm_cluster -> c_bridge_msi
+
+	subgraph cluster_lm32 {
+		label= < 
+		lm32 
+		>
+		color=blue
+		c_cluster_info_sdb
+		c_pq_ctrl_sdb
+		c_dm_diag_ctrl_sdb
+		c_clu_time_sdb
+		f_xwb_dpram_userlm32
+		c_bridge_msi
+		c_topm_prioq
+		c_top_bridge_msi
+	}
+
+	subgraph cluster_etherbone {
+		label="Etherbone"
+		color=blue
+		c_topm_ebs
+		c_tops_ebm
+		c_etherbone_sdb
+	}
+
+	subgraph cluster_eca {
+		label="ECA"
+		color=blue
+		c_topm_eca_wbm
+		c_tops_eca_event
+		c_devs_eca_ctl
+		c_devs_eca_aq
+		c_devs_eca_tlu
+		c_devs_eca_wbm
+		c_devs_emb_cpu
+
+		{
+			c_devs_eca_ctl
+			c_devs_eca_aq
+			c_devs_eca_tlu
+			c_devs_eca_wbm
+			c_devs_emb_cpu
+		} -> dev[ dir=back ]
+	}
+
+	// Define connections to MSI crossbars
+	edge[ type="msiconnect", color="blue", arrowhead=normal, penwidth=1 ]
+	ftm_cluster -> dev
+	top -> ftm_cluster
+	top -> c_topm_form
+	c_devs_scubirq -> dev
+	c_devs_eca_ctl -> dev
+	c_devs_mil_ctrl -> dev
+	dev -> top
+	c_tops_mbox -> top
 }
-
-subgraph cluster_prioq {
-        label="prioq"
-        prioq;
-        prioq_ctl;
-        fontcolor="blue"; color=blue;
-}
-
-subgraph cluster_ecawbm{
-        label="eca_wbm"
-        eca_wbm_m;
-        eca_wbm_s;
-        fontcolor="blue"; color=blue;
-}
-
-/*subgraph cluster_top {
-       top;
-       pcie_vme_pmc; 
-       usb;          
-       eca_event;
-       scu_bus;  
-       mbox;     
-       mil;
-       lm32_core_1
-       lm32_core_N
-
-       //fontcolor="deeppink4"; color=deeppink4;
-       style=invis;
-}*/
-
-subgraph cluster_dev {
-       dev;
-       build_id;       
-       watchdog;       
-       flash;          
-       reset;          
-       tlu;            
-       eca_ctl;        
-       eca_aq;         
-       eca_tlu;        
-       emb_cpu;        
-       serdes_clk_gen; 
-       control;        
-       user_1wire;
-       tempsens;
-       psram;
-
-       //fontcolor="deeppink4"; color=deeppink4;
-       style=invis;
-}
-
-subgraph cluster_legend {
-        wb_crossbar         
-        wb_slave            
-        wb_master           
-
-        label = "legend";
-        fontcolor="black"; color=black;
-}
-
-// very special connects to force placement inside graph
-usb       -> wb_master   [minlen=3, style=invis];
-//eca_wbm_s -> prioq_ctl   [style=invis];
-
-}
-
-
-

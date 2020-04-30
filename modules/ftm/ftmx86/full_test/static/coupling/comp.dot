@@ -1,0 +1,20 @@
+digraph G {
+graph [root="Demo",rankdir   = TB, nodesep           = 0.6, mindist     = 1.0, ranksep = 1.0, overlap = false]
+node [style     = "filled", fillcolor = "white", color = "black"]
+A_BLOCK[cpu="0", flags="0x00008007", type="block", tperiod="5000", pattern="A", patentry="false", patexit="true", beamproc="undefined", bpentry="false", bpexit="false", qlo="false", qhi="false", qil="false", shape     = "rectangle", fillcolor = "white", penwidth=2, color = "purple"];
+A_FL[cpu="0", flags="0x00002005", type="flush", toffs="0", pattern="A", patentry="true", patexit="false", beamproc="undefined", bpentry="false", bpexit="false", tvalid="0", vabs="true", prio="1", shape     = "hexagon", qlo="true", qhi="false", qil="false", fillcolor = "white", penwidth=2, color = "darkorange3"];
+A_M[cpu="0", flags="0x00000002", type="tmsg", toffs="500", pattern="A", patentry="false", patexit="false", beamproc="undefined", bpentry="false", bpexit="false", fid="1", gid="300", evtno="255", beamin="0", sid="5", bpid="32", reqnobeam="0", vacc="0", id="0x112c0ff000500800", par="0x0000140000000000", tef="0", shape     = "oval", fillcolor = "white"];
+B_BLOCK[cpu="1", flags="0x00008007", type="block", tperiod="5000", pattern="B", patentry="false", patexit="true", beamproc="undefined", bpentry="false", bpexit="false", qlo="false", qhi="false", qil="false", shape     = "rectangle", fillcolor = "white", penwidth=2, color = "purple"];
+B_M[cpu="1", flags="0x00000002", type="tmsg", toffs="500", pattern="B", patentry="false", patexit="false", beamproc="undefined", bpentry="false", bpexit="false", fid="1", gid="300", evtno="255", beamin="0", sid="5", bpid="32", reqnobeam="0", vacc="1", id="0x112c0ff000500801", par="0x0000140000000055", tef="0", shape     = "oval", fillcolor = "white"];
+B_SW[cpu="1", flags="0x00002011", type="switch", toffs="0", pattern="B", patentry="true", patexit="false", beamproc="undefined", bpentry="false", bpexit="false", shape     = "pentagon", fillcolor = "white", penwidth=2, color = "darkorange3"];
+A_BLOCK->A_FL [type="defdst", color     = "red"];
+A_FL->A_M [type="defdst", color     = "red"];
+A_FL->B_BLOCK [type="target", color     = "blue"];
+A_FL->B_SW [type="flushovr", color     = "pink"];
+A_M->A_BLOCK [type="defdst", color     = "red"];
+B_BLOCK->B_SW [type="defdst", color     = "red"];
+B_M->B_BLOCK [type="defdst", color     = "red"];
+B_SW->B_M [type="defdst", color     = "red"];
+B_SW->A_BLOCK [type="target", color     = "blue"];
+B_SW->A_FL [type="switchdst", color     = "pink"];
+}

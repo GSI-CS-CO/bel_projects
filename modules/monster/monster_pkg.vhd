@@ -76,6 +76,7 @@ package monster_pkg is
   function f_sub1(x : natural) return natural;
   function f_pick(x : boolean; y : integer; z : integer) return natural;
   function f_string_list_repeat(s : string; times : natural) return string;
+  function f_report_wishbone_address(value : t_wishbone_address; msg : string) return std_logic;
 
   component monster is
     generic(
@@ -93,6 +94,7 @@ package monster_pkg is
       g_lvds_out             : natural := 0;
       g_fixed                : natural := 0;
       g_lvds_invert          : boolean := false;
+      g_en_tlu               : boolean := true;
       g_en_pcie              : boolean := false;
       g_en_vme               : boolean := false;
       g_en_usb               : boolean := false;
@@ -109,6 +111,10 @@ package monster_pkg is
       g_en_beam_dump         : boolean := false;
       g_io_table             : t_io_mapping_table_arg_array(natural range <>);
       g_en_pmc               : boolean := false;
+      g_a10_use_sys_fpll     : boolean := false;
+      g_a10_use_ref_fpll     : boolean := false;
+      g_a10_en_phy_reconf    : boolean := false;
+      g_en_butis             : boolean := true;
       g_lm32_cores           : natural := 1;
       g_lm32_MSIs            : natural := 1;
       g_lm32_ramsizes        : natural := 131072/4; -- in 32b words
@@ -119,7 +125,8 @@ package monster_pkg is
       g_delay_diagnostics    : boolean := false;
       g_en_eca               : boolean := true;
       g_en_wd_tmr            : boolean := false;
-      g_en_timer             : boolean := false
+      g_en_timer             : boolean := false;
+      g_en_eca_tap           : boolean := false
     );
     port(
       -- Required: core signals
@@ -136,7 +143,9 @@ package monster_pkg is
       core_rstn_butis_o      : out   std_logic;
       core_clk_sys_o         : out   std_logic;
       core_clk_200m_o        : out   std_logic;
+      core_clk_20m_o         : out   std_logic;
       core_debug_o           : out   std_logic_vector(15 downto 0);
+      core_clk_debug_i       : in    std_logic := '0';
       -- Required: white rabbit pins
       wr_onewire_io          : inout std_logic;
       wr_sfp_sda_io          : inout std_logic;
@@ -153,9 +162,13 @@ package monster_pkg is
       wr_uart_o              : out   std_logic;
       wr_uart_i              : in    std_logic := '1';
       -- SFP
-      sfp_tx_disable_o       : out   std_logic;
+      sfp_tx_disable_o       : out   std_logic := '0';
       sfp_tx_fault_i         : in    std_logic;
       sfp_los_i              : in    std_logic;
+      phy_rx_ready_o         : out   std_logic;
+      phy_tx_ready_o         : out   std_logic;
+      phy_debug_o            : out   std_logic;
+      phy_debug_i            : in    std_logic_vector(7 downto 0) := (others => '0');
       -- GPIO for the board (inouts start at 0, dedicated in/outs come after)
       gpio_i                 : in    std_logic_vector(f_sub1(g_gpio_inout+g_gpio_in)  downto 0) := (others => '1');
       gpio_o                 : out   std_logic_vector(f_sub1(g_gpio_inout+g_gpio_out) downto 0);
@@ -547,5 +560,13 @@ package body monster_pkg is
     end loop;
     return res;
   end f_string_list_repeat;
+
+  function f_report_wishbone_address(value : t_wishbone_address; msg : string)
+  return std_logic is
+  begin
+    report "Debug: " & msg;
+    report "Debug: Wishbone address (dec) = " & integer'image(to_integer(unsigned(value)));
+    return '0';
+  end f_report_wishbone_address;
 
 end monster_pkg;

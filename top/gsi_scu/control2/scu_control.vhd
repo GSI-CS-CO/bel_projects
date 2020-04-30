@@ -539,7 +539,7 @@ begin
 
   -- Logic analyzer port (0,2,4,6,8,10 = OLED)
   -- Don't put debug clocks too close (makes display flicker)
-  -- hpla_clk <= 'Z';
+  hpla_clk <= '0';
 
   hpla_ch <= (others => 'Z');
 
@@ -570,5 +570,6 @@ begin
   nFPGA_Res_Out <= rstn_ref;
   nPWRBTN    <= '1'; -- never power off atom
   A_nCONFIG  <= '1'; -- altremote_update used instead
+  npci_pme   <= '1'; -- wake up pci system, not used
 
 end rtl;

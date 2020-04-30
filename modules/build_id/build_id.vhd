@@ -2,7 +2,7 @@
 --! @brief Build ID entity
 --! @author Wesley W. Terpstra <w.terpstra@gsi.de>
 --!
---! Copyright (C) 2013 GSI Helmholtz Centre for Heavy Ion Research GmbH 
+--! Copyright (C) 2013 GSI Helmholtz Centre for Heavy Ion Research GmbH
 --!
 --! This entity just wraps a MIF into a ROM using generic rams.
 --!
@@ -16,7 +16,7 @@
 --! but WITHOUT ANY WARRANTY; without even the implied warranty of
 --! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 --! Lesser General Public License for more details.
---!  
+--!
 --! You should have received a copy of the GNU Lesser General Public
 --! License along with this library. If not, see <http://www.gnu.org/licenses/>.
 ---------------------------------------------------------------------------------
@@ -61,15 +61,14 @@ begin
       clkb_i  => clk_i,
       ab_i    => slave_i.adr(9 downto 2),
       qb_o    => slave_o.dat);
-  
+
   slave_o.ack <= r_ack;
   slave_o.err <= '0';
   slave_o.stall <= '0';
-  
+
   -- to be removed:
   slave_o.rty <= '0';
-  slave_o.int <= '0';
-  
+
   main : process(clk_i, rst_n_i) is
   begin
     if rst_n_i = '0' then
@@ -78,5 +77,5 @@ begin
       r_ack <= slave_i.cyc and slave_i.stb;
     end if;
   end process;
-  
+
 end rtl;

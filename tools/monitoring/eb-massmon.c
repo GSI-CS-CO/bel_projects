@@ -27,14 +27,14 @@
 //  but WITHOUT ANY WARRANTY; without even the implied warranty of
 //  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 //  Lesser General Public License for more details.
-//  
+//
 //  You should have received a copy of the GNU Lesser General Public
 //  License along with this library. If not, see <http://www.gnu.org/licenses/>.
 //
 // For all questions and ideas contact: d.beck@gsi.de
 // Last update: 27-April-2018
 //////////////////////////////////////////////////////////////////////////////////////////////
-#define EBMASSMON_VERSION "0.2.0"
+#define EBMASSMON_VERSION "0.2.1"
 
 // standard includes
 #include <unistd.h> // getopt
@@ -354,14 +354,14 @@ static int networkOk(char* network, int networkType)
 static void printDate(uint64_t nsecs)
 {
   if (nsecs == ~0) fprintf(stdout, ", %10s", "---");
-  else             fprintf(stdout, ", %10lu", (nsecs / 1000000000));
+  else             fprintf(stdout, ", %10llu", (nsecs / 1000000000));
 } // printDate
 
 
 static void printOffset(uint64_t offset)
 {
   if (offset == ~0) fprintf(stdout, ", %13s", "---");
-  else              fprintf(stdout, ", %13lu", (offset));
+  else              fprintf(stdout, ", %13llu", (offset));
 } // printOffset
 
 
@@ -542,7 +542,7 @@ static void printHeader(int wrDate, int wrOffset, int wrSync, int wrMac, int wrL
 int main(int argc, char** argv) {
   eb_status_t  status;                 // EB status
   eb_socket_t  socket;                 // EB socket
-  char         devName[MAXLEN+1];      // full EB device name
+  char         devName[MAXLEN+3];      // full EB device name
   char*        ebProto;                // EB protocol 'udp' ...
   int          devIndex=0;             // always grab 1st device on the WB bus
 

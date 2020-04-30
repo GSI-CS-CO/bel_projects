@@ -115,6 +115,8 @@ architecture rtl of prio is
   signal r_is_late, 
          s_msg_cnt_clr,
          s_save_packet_ts       : std_logic;
+  signal r_ts_valid,
+         s_clear_ts_valid_reg   : std_logic;       
 
 begin
 
@@ -163,6 +165,19 @@ begin
     end if; --clk
   end process;
   
+  --save a high ts_valid flag in case fsm was not listening at that moment, clear on reset or if fsm started a new packet
+  reg_ts_valid : process(clk_i)
+  begin
+    if rising_edge(clk_i) then
+      if s_reset_n = '0' then
+          r_ts_valid <= '0';
+      else    
+        r_ts_valid <= (r_ts_valid OR s_ts_valid_o) AND NOT s_clear_ts_valid_reg;
+      end if;
+    end if;
+  end process;  
+            
+
   fsm_state : process(clk_i)
   begin
     if rising_edge(clk_i) then
@@ -184,9 +199,10 @@ begin
 
           when st_PACKET_EMPTY  =>  if(s_ctrl_mode_o(c_ENABLE) = '0') then
                                       r_state <= st_IDLE;  
-                                    elsif s_ts_valid_o = '1' then
+                                    elsif s_ts_valid_o = '1' OR r_ts_valid = '1' then
                                       r_state <= st_PACKET_START;
                                     end if;
+                                    
           
           when st_PACKET_START  =>  r_state <= st_PACKET_GATHER;
                                                                     
@@ -232,6 +248,7 @@ begin
     s_save_packet_ts  <= '0';
     s_allow_sending   <= '0';
     s_msg_cnt_clr     <= '0';
+    s_clear_ts_valid_reg <='0'; 
     
     case r_state is
 
@@ -248,7 +265,8 @@ begin
                                 s_msg_cnt_clr    <= '1'; 
 
       when st_PACKET_START  =>  s_allow_sending  <= '1';
-                                s_save_packet_ts <= '1';  
+                                s_save_packet_ts <= '1';
+                                s_clear_ts_valid_reg <='1';  
                                 
       when st_PACKET_GATHER =>  s_allow_sending  <= '1'; 
      
