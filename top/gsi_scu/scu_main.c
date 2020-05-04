@@ -363,7 +363,7 @@ void scanFgs( void )
 #ifndef __DOXYGEN__
 static void scu_bus_handler( register TASK_T* pThis FG_UNUSED );
 #ifdef CONFIG_SCU_DAQ_INTEGRATION
-static void scuBusDaqTask( register TASK_T* FG_UNUSED );
+static void scuBusDaqPostMortemTask( register TASK_T* FG_UNUSED );
 #endif
 #endif
 
@@ -375,7 +375,7 @@ static void scuBusDaqTask( register TASK_T* FG_UNUSED );
 STATIC TASK_T g_aTasks[] =
 {
 #ifdef CONFIG_SCU_DAQ_INTEGRATION
-   { NULL,               ALWAYS, 0, scuBusDaqTask   },
+   { NULL,               ALWAYS, 0, scuBusDaqPostMortemTask   },
 #endif
 #ifdef CONFIG_MIL_FG
    { &g_aMilTaskData[0], ALWAYS, 0, dev_sio_handler }, // sio task 1
@@ -499,6 +499,22 @@ STATIC void scu_bus_handler( register TASK_T* pThis FG_UNUSED )
       flagsToReset |= DREQ;
    }
 #endif
+
+
+#ifdef CONFIG_SCU_DAQ_INTEGRATION
+   if( (*pIntActive & (1 << DAQ_IRQ_DAQ_FIFO_FULL)) != 0 )
+   {
+      forEachScuDaqDevice(); //TODO
+      flagsToReset |= (1 << DAQ_IRQ_DAQ_FIFO_FULL);
+   }
+
+   if( (*pIntActive & (1 << DAQ_IRQ_HIRES_FINISHED)) != 0 )
+   {
+      //TODO
+      flagsToReset |=  (1 << DAQ_IRQ_HIRES_FINISHED);
+   }
+#endif
+
    *pIntActive = flagsToReset;
 }
 
@@ -507,14 +523,15 @@ STATIC void scu_bus_handler( register TASK_T* pThis FG_UNUSED )
 /*! ---------------------------------------------------------------------------
  * @ingroup DAQ
  * @ingroup TASK
- * @brief Handles all detected non-MIL DAQs
+ * @brief Handles all detected ADDAC-DAQs for possible post-mortem events
  * @see schedule
  */
-STATIC void scuBusDaqTask( register TASK_T* pThis FG_UNUSED )
+STATIC void scuBusDaqPostMortemTask( register TASK_T* pThis FG_UNUSED )
 {
    FG_ASSERT( pThis->pTaskData == NULL );
-   for( unsigned int i = 0; i < 30000; i++ ) NOP();
-   forEachScuDaqDevice();
+ //  for( unsigned int i = 0; i < 30000; i++ ) NOP();
+ // forEachScuDaqDevice();
+ //  daqExeNextDevice();
 }
 #endif /* ifdef CONFIG_SCU_DAQ_INTEGRATION */
 

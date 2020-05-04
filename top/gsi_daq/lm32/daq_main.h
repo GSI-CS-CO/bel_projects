@@ -90,6 +90,12 @@ inline void scuDaqInitialize( DAQ_ADMIN_T* pDaqAdmin
 #ifndef CONFIG_DAQ_SINGLE_APP
 
 /*! ---------------------------------------------------------------------------
+ * @brief Executes one DAQ channel for each call of this function if requested.
+ *
+ */
+void daqExeNextDevice( void );
+
+/*! ---------------------------------------------------------------------------
  * @brief Enables the feedback-channel for the given function generator number
  *        in the given slot.
  *

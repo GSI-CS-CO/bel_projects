@@ -187,24 +187,6 @@ STATIC inline bool forEachPostMortemChennel( DAQ_DEVICE_T* pDevice )
    return false;
 }
 
-/*! --------------------------------------------------------------------------
- * @retval false Not all channels of this device handled yet.
- * @retval true  All channels of this device has been handled.
- */
-STATIC inline bool daqExeNextChannel( DAQ_DEVICE_T* pDevice )
-{
-   static unsigned int s_channelNumber = 0;
-
-   DAQ_CANNEL_T* pChannel = daqDeviceGetChannelObject( pDevice, s_channelNumber );
-   handleContinuousMode( pChannel );
-   handleHiresMode( pChannel );
-   handlePostMortemMode( pChannel );
-   s_channelNumber++;
-   s_channelNumber %= daqDeviceGetMaxChannels( pDevice );
-   return (s_channelNumber == 0);
-}
-
-
 #if ( DEBUGLEVEL >= 1 )
 /*! ---------------------------------------------------------------------------
  * @brief prints the flags of the interrupt pending register.
@@ -282,6 +264,25 @@ void forEachScuDaqDevice( void )
 #endif
 }
 
+/*! --------------------------------------------------------------------------
+ * @retval false Not all channels of this device handled yet.
+ * @retval true  All channels of this device has been handled.
+ */
+STATIC inline bool daqExeNextChannel( DAQ_DEVICE_T* pDevice )
+{
+   static unsigned int s_channelNumber = 0;
+   DAQ_CANNEL_T* pChannel = daqDeviceGetChannelObject( pDevice, s_channelNumber );
+
+   handleContinuousMode( pChannel );
+ //  handleHiresMode( pChannel );
+ //   handlePostMortemMode( pChannel );
+   s_channelNumber++;
+   s_channelNumber %= daqDeviceGetMaxChannels( pDevice );
+
+   return (s_channelNumber == 0);
+}
+
+
 #ifdef CONFIG_DAQ_SINGLE_APP
 STATIC inline
 #endif
@@ -318,7 +319,7 @@ void daqEnableFgFeedback( const unsigned int slot, const unsigned int fgNum )
 
    daqChannelSample1msOn( pSetChannel );
    //TODO find a more elegant solution...
-#if 0
+#if 1
    for( unsigned int i = 0; i < 200000; i++ )
       NOP();
    daqChannelSample1msOn( pActChannel );
