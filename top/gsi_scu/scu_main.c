@@ -271,6 +271,7 @@ STATIC void onScuMSInterrupt( const unsigned int intNum,
     */
    irqMsiCopyObjectAndRemove( (MSI_ITEM_T*)&m, intNum );
 #ifndef _CONFIG_NO_DISPATCHER
+#warning with deispatcher...
    add_msg( &g_aMsg_buf[0], IRQ, m );
 #else
    switch( m.adr & 0xFF )
@@ -292,20 +293,23 @@ STATIC void onScuMSInterrupt( const unsigned int intNum,
  */
 STATIC inline void initInterrupt( void )
 {
-   irqRegisterISR( 0, NULL, onScuMSInterrupt );
 #ifdef _CONFIG_NO_DISPATCHER
-
-   g_aMsg_buf[SCUBUS].ring_head = g_aMsg_buf[SCUBUS].ring_tail;
-   g_aMsg_buf[SWI].ring_head = g_aMsg_buf[SWI].ring_tail;
+   cbReset( &g_aMsg_buf[0], SCUBUS );
+   cbReset( &g_aMsg_buf[0], SWI );
+ #ifdef CONFIG_SCU_DAQ_INTEGRATION
+   cbReset( &g_aMsg_buf[0], DAQ );
+ #endif
  #ifdef CONFIG_MIL_FG
-   g_aMsg_buf[DEVSIO].ring_head = g_aMsg_buf[DEVSIO].ring_tail;
-   g_aMsg_buf[DEVBUS].ring_head = g_aMsg_buf[DEVBUS].ring_tail;
+   cbReset( &g_aMsg_buf[0], DEVSIO );
+   cbReset( &g_aMsg_buf[0], DEVBUS );
  #endif
 #else
-   g_aMsg_buf[IRQ].ring_head = g_aMsg_buf[IRQ].ring_tail; // clear msg buffer
+   cbReset( &g_aMsg_buf[0], IRQ );
 #endif
+
+   irqRegisterISR( ECA_INTERRUPT_NUMBER, NULL, onScuMSInterrupt );
    irqEnable();
-   mprintf("IRQ table configured. 0x%08x\n", irqGetMaskRegister() );
+   mprintf( "IRQ table configured. 0x%08x\n", irqGetMaskRegister() );
 }
 
 /*! ---------------------------------------------------------------------------
@@ -361,10 +365,7 @@ void scanFgs( void )
 
 /* task prototypes */
 #ifndef __DOXYGEN__
-static void scu_bus_handler( register TASK_T* pThis FG_UNUSED );
-#ifdef CONFIG_SCU_DAQ_INTEGRATION
-static void scuBusDaqPostMortemTask( register TASK_T* FG_UNUSED );
-#endif
+STATIC void scu_bus_handler( register TASK_T* pThis FG_UNUSED );
 #endif
 
 /*! ---------------------------------------------------------------------------
@@ -375,7 +376,7 @@ static void scuBusDaqPostMortemTask( register TASK_T* FG_UNUSED );
 STATIC TASK_T g_aTasks[] =
 {
 #ifdef CONFIG_SCU_DAQ_INTEGRATION
-   { NULL,               ALWAYS, 0, scuBusDaqPostMortemTask   },
+   { NULL,               ALWAYS, 0, addacDaqTask   },
 #endif
 #ifdef CONFIG_MIL_FG
    { &g_aMilTaskData[0], ALWAYS, 0, dev_sio_handler }, // sio task 1
@@ -504,7 +505,7 @@ STATIC void scu_bus_handler( register TASK_T* pThis FG_UNUSED )
 #ifdef CONFIG_SCU_DAQ_INTEGRATION
    if( (*pIntActive & (1 << DAQ_IRQ_DAQ_FIFO_FULL)) != 0 )
    {
-      forEachScuDaqDevice(); //TODO
+      add_msg( &g_aMsg_buf[0], DAQ, m );
       flagsToReset |= (1 << DAQ_IRQ_DAQ_FIFO_FULL);
    }
 
@@ -517,23 +518,6 @@ STATIC void scu_bus_handler( register TASK_T* pThis FG_UNUSED )
 
    *pIntActive = flagsToReset;
 }
-
-
-#ifdef CONFIG_SCU_DAQ_INTEGRATION
-/*! ---------------------------------------------------------------------------
- * @ingroup DAQ
- * @ingroup TASK
- * @brief Handles all detected ADDAC-DAQs for possible post-mortem events
- * @see schedule
- */
-STATIC void scuBusDaqPostMortemTask( register TASK_T* pThis FG_UNUSED )
-{
-   FG_ASSERT( pThis->pTaskData == NULL );
- //  for( unsigned int i = 0; i < 30000; i++ ) NOP();
- // forEachScuDaqDevice();
- //  daqExeNextDevice();
-}
-#endif /* ifdef CONFIG_SCU_DAQ_INTEGRATION */
 
 /*! ---------------------------------------------------------------------------
  * @brief Helper function for printing the CPU-ID and the number of

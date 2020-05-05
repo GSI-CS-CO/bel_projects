@@ -32,7 +32,7 @@
  #include <lm32Interrupts.h>
 #endif
 #ifndef CONFIG_DAQ_SINGLE_APP
-extern volatile uint16_t* g_pScub_base;
+ extern volatile uint16_t* g_pScub_base;
 #endif
 
 #ifdef CONFIG_DAQ_SINGLE_APP
@@ -282,23 +282,6 @@ STATIC inline bool daqExeNextChannel( DAQ_DEVICE_T* pDevice )
    return (s_channelNumber == 0);
 }
 
-
-#ifdef CONFIG_DAQ_SINGLE_APP
-STATIC inline
-#endif
-void daqExeNextDevice( void )
-{
-   static unsigned int s_deviceNr = 0;
-
-   DAQ_DEVICE_T* pDevice = daqBusGetDeviceObject( &g_scuDaqAdmin.oDaqDevs,
-                                                  s_deviceNr );
-   if( daqExeNextChannel( pDevice ) )
-   {
-      s_deviceNr++;
-      s_deviceNr %= daqBusGetFoundDevices( &g_scuDaqAdmin.oDaqDevs );
-   }
-}
-
 #ifndef CONFIG_DAQ_SINGLE_APP
 
 /*! ---------------------------------------------------------------------------
@@ -339,6 +322,35 @@ void daqDisableFgFeedback( const unsigned int slot, const unsigned int fgNum )
 
    daqChannelSample1msOff( &pDaqDevice->aChannel[daqGetSetDaqNumberOfFg(fgNum)] );
    daqChannelSample1msOff( &pDaqDevice->aChannel[daqGetActualDaqNumberOfFg(fgNum)] );
+}
+
+/*! ---------------------------------------------------------------------------
+ * @ingroup DAQ
+ * @ingroup TASK
+ * @brief Handles all detected ADDAC-DAQs for possible post-mortem events
+ * @see schedule
+ */
+void addacDaqTask( register TASK_T* pThis FG_UNUSED )
+{
+   FG_ASSERT( pThis->pTaskData == NULL );
+
+   static DAQ_DEVICE_T* s_pDaqDevice = NULL;
+
+   if( s_pDaqDevice == NULL )
+   {
+      MSI_T m;
+      if( getMessage( &m, &g_aMsg_buf[0], DAQ ) )
+      {
+         s_pDaqDevice = daqBusGetDeviceBySlotNumber( &g_scuDaqAdmin.oDaqDevs,
+                                                     m.msg + 1 );
+      }
+   }
+
+   if( s_pDaqDevice != NULL )
+   {
+      if( daqExeNextChannel( s_pDaqDevice ) )
+         s_pDaqDevice = NULL;
+   }
 }
 
 #endif /* ifndef CONFIG_DAQ_SINGLE_APP */

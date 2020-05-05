@@ -12,7 +12,7 @@
 
 extern volatile uint16_t*     g_pScub_base;
 extern volatile unsigned int* g_pScu_mil_base;
-extern volatile FG_MESSAGE_BUFFER_T g_aMsg_buf[QUEUE_CNT];
+//extern volatile FG_MESSAGE_BUFFER_T g_aMsg_buf[QUEUE_CNT];
 
 /*!
  * @brief Slot-value when no slave selected yet.

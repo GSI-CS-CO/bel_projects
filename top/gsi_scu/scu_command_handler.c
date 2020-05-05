@@ -16,7 +16,7 @@
   #include <daq_command_interface_uc.h>
 #endif
 
-extern FG_MESSAGE_BUFFER_T    g_aMsg_buf[QUEUE_CNT];
+//extern FG_MESSAGE_BUFFER_T    g_aMsg_buf[QUEUE_CNT];
 extern FG_CHANNEL_T           g_aFgChannels[MAX_FG_CHANNELS];
 extern volatile uint16_t*     g_pScub_base;
 #ifdef CONFIG_MIL_FG

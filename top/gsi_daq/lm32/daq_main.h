@@ -38,9 +38,24 @@
 #include <daq.h>
 #include <daq_ramBuffer.h>
 
+#ifndef CONFIG_DAQ_SINGLE_APP
+ #include <scu_main.h>
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+#ifndef CONFIG_DAQ_SINGLE_APP
+/*! ---------------------------------------------------------------------------
+ * @ingroup DAQ
+ * @ingroup TASK
+ * @brief Handles all detected ADDAC-DAQs
+ * @see schedule
+ */
+void addacDaqTask( register TASK_T* FG_UNUSED );
+
+#endif /* ifndef CONFIG_DAQ_SINGLE_APP */
 
 /*! ---------------------------------------------------------------------------
  * @brief Type of data-object for administrating all non-MIL DAQs
@@ -116,12 +131,6 @@ void daqEnableFgFeedback( const unsigned int slot, const unsigned int fgNum );
  * @param fgNum Function generator number 0 or 1
  */
 void daqDisableFgFeedback( const unsigned int slot, const unsigned int fgNum );
-
-/*! ---------------------------------------------------------------------------
- * @brief Asking all non-MIL-DAQs for received data.
- */
-void forEachScuDaqDevice( void );
-
 
 extern DAQ_ADMIN_T g_scuDaqAdmin;
 #endif

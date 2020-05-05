@@ -55,6 +55,7 @@
 #include "scu_mil.h"
 #include "eca_queue_type.h"
 #include "history.h"
+#include "scu_circular_buffer.h"
 
 /*!
  * @defgroup MIL_FSM Functions and macros which concerns the MIL-FSM
@@ -107,8 +108,11 @@ extern SCU_SHARED_DATA_T g_shared;
 /*!
  * @brief Number of message queues.
  */
-#define QUEUE_CNT 4
-
+#ifdef CONFIG_SCU_DAQ_INTEGRATION
+  #define QUEUE_CNT 5
+#else
+  #define QUEUE_CNT 4
+#endif
 /*!
  * @brief Type of message origin
  */
@@ -118,13 +122,20 @@ typedef enum
    DEVBUS = 1, /*!<@brief From MIL-device.            */
    DEVSIO = 2, /*!<@brief From MIL-device via SCU-bus */
    SWI    = 3  /*!<@brief From Linux host             */
+#ifdef CONFIG_SCU_DAQ_INTEGRATION
+   ,DAQ   = 4
+#endif
 } MSG_T;
 
 #else
 /*!
- * @brief Message size of message queue.
+ * @brief Number of message queues.
  */
-#define QUEUE_CNT 5
+#ifdef CONFIG_SCU_DAQ_INTEGRATION
+ #define QUEUE_CNT 5
+#else
+ #define QUEUE_CNT 6
+#endif
 
 /*!
  * @brief Type of message origin
@@ -136,8 +147,14 @@ typedef enum
    DEVBUS = 2, /*!<@brief From MIL-device.            */
    DEVSIO = 3, /*!<@brief From MIL-device via SCU-bus */
    SWI    = 4  /*!<@brief From Linux host             */
-} MSG_T;
+#ifdef CONFIG_SCU_DAQ_INTEGRATION
+   ,DAQ   = 5
 #endif
+} MSG_T;
+
+#endif
+
+extern volatile FG_MESSAGE_BUFFER_T g_aMsg_buf[QUEUE_CNT];
 
 /*!
  * @todo find the related definitions in the source code of SAFTLIB and

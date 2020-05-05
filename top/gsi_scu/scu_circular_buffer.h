@@ -145,9 +145,18 @@ MSI_T remove_msg(volatile FG_MESSAGE_BUFFER_T* mb, int queue);
  *  @param mb pointer to the first message buffer
  *  @param queue number of the queue
  */
-static inline bool has_msg(volatile FG_MESSAGE_BUFFER_T* mb, int queue)
+static inline bool has_msg(volatile FG_MESSAGE_BUFFER_T* mb, const unsigned int queue)
 {
    return (mb[queue].ring_head != mb[queue].ring_tail);
+}
+
+/*!
+ * @brief Resets the message queue
+ */
+static inline void cbReset( volatile FG_MESSAGE_BUFFER_T* mb, const unsigned int queue )
+{
+   mb[queue].ring_head = 0;
+   mb[queue].ring_tail = 0;
 }
 
 /*!

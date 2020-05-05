@@ -74,7 +74,7 @@ void cbDump(volatile FG_CHANNEL_BUFFER_T* cb, volatile FG_CHANNEL_REG_T* cr, con
 
 void add_daq_msg(volatile MIL_DAQ_BUFFER_T* mb, MIL_DAQ_OBJ_T m )
 {
-  RING_POS_T next_head = (mb->ring_head + 1) % DAQ_RING_SIZE;
+  const RING_POS_T next_head = (mb->ring_head + 1) % DAQ_RING_SIZE;
 #ifdef CONFIG_PRINT_DAQ_BUFFER_OVERFLOW
   if( next_head == mb->ring_tail )
      mprintf( ESC_WARNING"DAQ buffer overflow!\n"ESC_NORMAL );
@@ -90,7 +90,7 @@ void add_daq_msg(volatile MIL_DAQ_BUFFER_T* mb, MIL_DAQ_OBJ_T m )
  */
 int add_msg(volatile FG_MESSAGE_BUFFER_T* mb, int queue, MSI_T m)
 {
-   RING_POS_T next_head = (mb[queue].ring_head + 1) % RING_SIZE;
+   const RING_POS_T next_head = (mb[queue].ring_head + 1) % RING_SIZE;
    if (next_head != mb[queue].ring_tail)
    {
       /* there is room */
