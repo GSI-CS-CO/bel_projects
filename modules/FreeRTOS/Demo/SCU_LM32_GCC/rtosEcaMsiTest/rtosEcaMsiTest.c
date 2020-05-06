@@ -28,7 +28,7 @@
  * @endcode
  *  - inject timing message (invoke on the second terminal)
  * @code
- *  saft-ctl -p tr0 inject 0x1122334455667788 0x8877887766556642 0
+ *  saft-ctl tr0 inject 0x1122334455667788 0x8877887766556642 0
  * @endcode
  *
  */
@@ -125,13 +125,10 @@ STATIC void onIrqEcaEvent( const unsigned int intNum,
  */
 STATIC inline void ecaHandler( void )
 {
-   static unsigned int count = 0;
+   static unsigned int s_count = 0;
 
    const unsigned int pending = ecaControlGetAndResetLM32ValidCount( g_pEcaCtl );
    mprintf( "valid:\t%d\n", pending );
-   if( pending == 0 )
-      return;
-
    for( unsigned int i = 0; i < pending; i++ )
    {
       if( !ecaIsValid( g_pEcaQueue ) )
@@ -155,14 +152,14 @@ STATIC inline void ecaHandler( void )
                "deadline:       0x%08x%08x\n"
                "param:          0x%08x%08x\n"
                "flag:           0x%08x\n"
-               "count:          %d\n"
-               ESC_NORMAL,
+               ESC_NORMAL
+               "count:          %d\n",
                __func__,
                ecaItem.eventIdH,  ecaItem.eventIdL,
                ecaItem.deadlineH, ecaItem.deadlineL,
                ecaItem.paramH,    ecaItem.paramL,
                ecaItem.flags,
-               ++count
+               ++s_count
              );
     }
 }
@@ -172,40 +169,37 @@ STATIC inline void ecaHandler( void )
  */
 STATIC void vTaskEcaMain( void* pvParameters UNUSED )
 {
-   mprintf( ESC_BOLD ESC_FG_CYAN "Task \"%s\" started\n" ESC_NORMAL, __func__ );
+   mprintf( ESC_BOLD ESC_FG_CYAN "Function \"%s()\" of task \"%s\" started\n"
+            ESC_NORMAL,
+            __func__, pcTaskGetName( NULL ) );
 
-   if( pEca != NULL )
-     mprintf("ECA event input                  @ 0x%08x\n", (uint32_t) pEca);
-   else
+   if( pEca == NULL )
    {
-      mprintf(ESC_ERROR"Could not find the ECA event input. Exit!\n");
+      mprintf( ESC_ERROR "Could not find the ECA event input. Exit!\n" ESC_NORMAL);
       vTaskEndScheduler();
    }
-   mprintf("MSI destination addr for LM32    : 0x%08x\n", (uint32_t)pMyMsi);
+   mprintf("ECA event input                  @ 0x%08x\n", (uint32_t)pEca );
+   mprintf("MSI destination addr for LM32    : 0x%08x\n", (uint32_t)pMyMsi );
 
    g_pEcaCtl = ecaControlGetRegisters();
-   if( g_pEcaCtl != NULL )
-      mprintf( "ECA channel control              @ 0x%08x\n",
-               (uint32_t) g_pEcaCtl);
-   else
+   if( g_pEcaCtl == NULL )
    {
       mprintf( ESC_ERROR "Could not find the ECA channel control. Exit!\n"
                ESC_NORMAL );
       vTaskEndScheduler();
    }
+   mprintf( "ECA channel control              @ 0x%08x\n",
+            (uint32_t) g_pEcaCtl);
 
    g_pEcaQueue = ecaGetLM32Queue();
-   if( g_pEcaQueue != NULL )
-   {
-      mprintf( "ECA queue to LM32 action channel @ 0x%08x\n",
-               (uint32_t) g_pEcaQueue );
-   }
-   else
+   if( g_pEcaQueue == NULL )
    {
       mprintf( ESC_ERROR "Could not find the ECA queue connected"
                          " to eCPU action channel. Exit!\n" ESC_NORMAL );
-
+      vTaskEndScheduler();
    }
+   mprintf( "ECA queue to LM32 action channel @ 0x%08x\n",
+            (uint32_t) g_pEcaQueue );
 
    mprintf( "Creating the MSI OS-message queue\n" );
    QueueHandle_t xMsiQueue = xQueueCreate( 5, sizeof( MSI_ITEM_T ) );
@@ -230,14 +224,16 @@ STATIC void vTaskEcaMain( void* pvParameters UNUSED )
       /*!
        * Waiting until a message is in the queue.
        */
-      if( xQueueReceive( xMsiQueue, &m, pdMS_TO_TICKS( 500 ) ) == pdPASS )
+      if( xQueueReceive( xMsiQueue, &m, pdMS_TO_TICKS( 250 ) ) == pdPASS )
       { /*
          * At least one message has been received...
          */
-         mprintf( "\nMSI:\t0x%08x\n"
-                    "Adr:\t0x%08x\n"
-                    "Sel:\t0x%02x\n",
-                    m.msg,  m.adr,  m.sel );
+         mprintf( ESC_FG_MAGENTA
+                  "\nMSI:\t0x%08x\n"
+                  "Adr:\t0x%08x\n"
+                  "Sel:\t0x%02x\n"
+                  ESC_NORMAL,
+                  m.msg,  m.adr,  m.sel );
 
          /*!
           * Are valid actions pending?
@@ -263,10 +259,11 @@ STATIC void vTaskEcaMain( void* pvParameters UNUSED )
  */
 STATIC inline BaseType_t initAndStartRTOS( void )
 {
+   static const char* taskName = "ECA-Handler";
    BaseType_t status;
-   mprintf( "Creating task \"ECA-Handler\"\n" );
+   mprintf( "Creating task \"%s\"\n", taskName );
    status = xTaskCreate( vTaskEcaMain,
-                         "ECA-Handler",
+                         taskName,
                          configMINIMAL_STACK_SIZE * 4,
                          NULL,
                          tskIDLE_PRIORITY + 1,

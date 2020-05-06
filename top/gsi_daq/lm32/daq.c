@@ -345,7 +345,7 @@ void daqDeviceSetTimeStampCounter( register DAQ_DEVICE_T* pThis, uint64_t ts )
    //for( int i = (sizeof(uint64_t)/sizeof(uint16_t))-1; i >= 0; i--)
    {
       pThis->pReg->i[TS_COUNTER_WD1+i] = ((uint16_t*)&ts)[i];
-      mprintf( "%d:, 0x%04x\n", i, pThis->pReg->i[TS_COUNTER_WD1+i]);
+     // mprintf( "%d: 0x%04x\n", i, pThis->pReg->i[TS_COUNTER_WD1+i]);
    }
 }
 
@@ -445,13 +445,14 @@ void daqDevicePrintInterruptStatus( register DAQ_DEVICE_T* pThis )
  * @param slot slot number
  * @return Number of real existing channels
  */
-inline STATIC int daqDeviceFindChannels( DAQ_DEVICE_T* pThis, int slot )
+STATIC inline
+int daqDeviceFindChannels( DAQ_DEVICE_T* pThis, const unsigned int slot )
 {
    DAQ_ASSERT( pThis != NULL );
    DAQ_ASSERT( pThis->pReg != NULL );
 
    for( unsigned int channel = 0; channel < ARRAY_SIZE(pThis->aChannel);
-       channel++ )
+        channel++ )
    {
       DBPRINT2( "DBG: Slot: %02d, Channel: %02d, ctrlReg: 0x%04x\n",
              slot, channel, daqChannelGetReg( pThis->pReg, CtrlReg, channel ));
@@ -548,10 +549,15 @@ int daqBusFindAndInitializeAll( register DAQ_BUS_T* pThis,
       return 0;
    }
 
-   for( int slot = SCUBUS_START_SLOT; slot <= MAX_SCU_SLAVES; slot++ )
+   for( unsigned int slot = SCUBUS_START_SLOT; slot <= MAX_SCU_SLAVES; slot++ )
    {
       if( !scuBusIsSlavePresent( pThis->slotDaqUsedFlags, slot ) )
-         continue; /* In this slot is not a ADDAC! */
+      { /*
+         * In this slot is not a ADDAC! So go to the next slot...
+         */
+         continue;
+      }
+
       /*
        * For each found ADDAC-device:
        */
@@ -559,7 +565,7 @@ int daqBusFindAndInitializeAll( register DAQ_BUS_T* pThis,
    #ifndef CONFIG_DAQ_SINGLE_APP
       if( pFgList != NULL )
       {/*
-        * Making the ADDAC functiongenerator known for SAFT-LIB.
+        * Making the ADDAC function-generator known for SAFT-LIB.
         */
          addAddacToFgList( pScuBusBase, slot, pFgList );
       }

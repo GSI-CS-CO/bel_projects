@@ -264,23 +264,6 @@ void forEachScuDaqDevice( void )
 #endif
 }
 
-/*! --------------------------------------------------------------------------
- * @retval false Not all channels of this device handled yet.
- * @retval true  All channels of this device has been handled.
- */
-STATIC inline bool daqExeNextChannel( DAQ_DEVICE_T* pDevice )
-{
-   static unsigned int s_channelNumber = 0;
-   DAQ_CANNEL_T* pChannel = daqDeviceGetChannelObject( pDevice, s_channelNumber );
-
-   handleContinuousMode( pChannel );
- //  handleHiresMode( pChannel );
- //   handlePostMortemMode( pChannel );
-   s_channelNumber++;
-   s_channelNumber %= daqDeviceGetMaxChannels( pDevice );
-
-   return (s_channelNumber == 0);
-}
 
 #ifndef CONFIG_DAQ_SINGLE_APP
 
@@ -324,10 +307,28 @@ void daqDisableFgFeedback( const unsigned int slot, const unsigned int fgNum )
    daqChannelSample1msOff( &pDaqDevice->aChannel[daqGetActualDaqNumberOfFg(fgNum)] );
 }
 
+/*! --------------------------------------------------------------------------
+ * @retval false Not all channels of this device handled yet.
+ * @retval true  All channels of this device has been handled.
+ */
+STATIC inline bool daqExeNextChannel( DAQ_DEVICE_T* pDevice )
+{
+   static unsigned int s_channelNumber = 0;
+   DAQ_CANNEL_T* pChannel = daqDeviceGetChannelObject( pDevice, s_channelNumber );
+
+   handleContinuousMode( pChannel );
+ //  handleHiresMode( pChannel );
+ //   handlePostMortemMode( pChannel );
+   s_channelNumber++;
+   s_channelNumber %= daqDeviceGetMaxChannels( pDevice );
+
+   return (s_channelNumber == 0);
+}
+
 /*! ---------------------------------------------------------------------------
  * @ingroup DAQ
  * @ingroup TASK
- * @brief Handles all detected ADDAC-DAQs for possible post-mortem events
+ * @brief Handles all detected ADDAC-DAQs. One DAQ-channel per function call.
  * @see schedule
  */
 void addacDaqTask( register TASK_T* pThis FG_UNUSED )
@@ -348,7 +349,11 @@ void addacDaqTask( register TASK_T* pThis FG_UNUSED )
 
    if( s_pDaqDevice != NULL )
    {
+#if 0
       if( daqExeNextChannel( s_pDaqDevice ) )
+#else
+      while( !daqExeNextChannel( s_pDaqDevice ) ) {}
+#endif
          s_pDaqDevice = NULL;
    }
 }
