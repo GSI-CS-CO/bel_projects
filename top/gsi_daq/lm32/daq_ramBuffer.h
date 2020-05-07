@@ -274,7 +274,7 @@ int ramInit( register RAM_SCU_T* pThis, RAM_RING_SHARED_OBJECT_T* pSharedObj
  */
 int ramPushDaqDataBlock( register RAM_SCU_T* pThis,
                          DAQ_CANNEL_T* pDaqChannel,
-                         bool isShort
+                         const bool isShort
                        );
 
 #endif /* if defined(__lm32__) || defined(__DOXYGEN__) */

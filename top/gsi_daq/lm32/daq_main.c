@@ -286,7 +286,7 @@ void daqEnableFgFeedback( const unsigned int slot, const unsigned int fgNum )
    daqChannelSample1msOn( pSetChannel );
    //TODO find a more elegant solution...
 #if 1
-   for( unsigned int i = 0; i < 200000; i++ )
+   for( unsigned int i = 0; i < 20000; i++ )
       NOP();
    daqChannelSample1msOn( pActChannel );
 #endif

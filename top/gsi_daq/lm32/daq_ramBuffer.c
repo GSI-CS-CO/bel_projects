@@ -55,7 +55,7 @@ int ramInit( register RAM_SCU_T* pThis, RAM_RING_SHARED_OBJECT_T* pSharedObj
 /*! ---------------------------------------------------------------------------
  * @brief Generalized function to read a item from the ring buffer.
  */
-static inline
+STATIC inline
 void ramRreadItem( register RAM_SCU_T* pThis, const RAM_RING_INDEX_T index,
                    RAM_DAQ_PAYLOAD_T* pItem )
 {
@@ -100,7 +100,7 @@ typedef enum
 /*! ---------------------------------------------------------------------------
  * @see RAM_DAQ_BLOCK_T
  */
-static inline
+STATIC inline
 RAM_DAQ_BLOCK_T ramRingGetTypeOfOldestBlock( register RAM_SCU_T* pThis )
 {
    unsigned int size = ramRingGetSize( &pThis->pSharedObj->ringIndexes );
@@ -151,7 +151,7 @@ RAM_DAQ_BLOCK_T ramRingGetTypeOfOldestBlock( register RAM_SCU_T* pThis )
 /*! ---------------------------------------------------------------------------
  * @brief Removes the oldest DAQ- block in the ring boffer
  */
-static inline
+STATIC inline
 void ramRemoveOldestBlock( register RAM_SCU_T* pThis )
 {
    switch( ramRingGetTypeOfOldestBlock( pThis ) )
@@ -180,7 +180,7 @@ void ramRemoveOldestBlock( register RAM_SCU_T* pThis )
 /*! ---------------------------------------------------------------------------
  * @brief Checks whether a additional DAQ-block can stored in the ring buffer.
  */
-inline static
+STATIC inline
 bool ramDoesBlockFit( register RAM_SCU_T* pThis, const bool isShort )
 {
    return (ramRingGetRemainingCapacity( &pThis->pSharedObj->ringIndexes ) >=
@@ -193,7 +193,7 @@ bool ramDoesBlockFit( register RAM_SCU_T* pThis, const bool isShort )
  * @note If the blocks are not correctly recognized so the entire ring buffer
  *       becomes deleted.
  */
-inline static
+STATIC inline
 void ramMakeSpaceIfNecessary( register RAM_SCU_T* pThis, const bool isShort )
 {
    while( !ramDoesBlockFit( pThis, isShort ) )
@@ -205,7 +205,7 @@ void ramMakeSpaceIfNecessary( register RAM_SCU_T* pThis, const bool isShort )
 
 /*! ---------------------------------------------------------------------------
  */
-static inline ALWAYS_INLINE
+STATIC inline ALWAYS_INLINE
 void ramWriteItem( register RAM_SCU_T* pThis, const RAM_RING_INDEX_T index,
                    RAM_DAQ_PAYLOAD_T* pItem )
 {
@@ -220,7 +220,7 @@ void ramWriteItem( register RAM_SCU_T* pThis, const RAM_RING_INDEX_T index,
 /*! ---------------------------------------------------------------------------
  * @brief Helper function for ramWriteDaqData
  */
-static inline ALWAYS_INLINE
+STATIC inline ALWAYS_INLINE
 void ramFillItem( RAM_DAQ_PAYLOAD_T* pItem, const unsigned int i,
                   const DAQ_DATA_T data )
 {
@@ -241,7 +241,7 @@ void ramFillItem( RAM_DAQ_PAYLOAD_T* pItem, const unsigned int i,
 /*! ---------------------------------------------------------------------------
  * @brief Publishing written data in shared memory.
  */
-static inline
+STATIC inline
 void publishWrittenData( register RAM_SCU_T* pThis,
                          RAM_RING_INDEXES_T* poIndexes )
 {
@@ -253,7 +253,7 @@ void publishWrittenData( register RAM_SCU_T* pThis,
 
 /*! ---------------------------------------------------------------------------
  */
-static inline void ramPollAccessLock( RAM_SCU_T* pThis )
+STATIC inline void ramPollAccessLock( RAM_SCU_T* pThis )
 {
 #ifdef CONFIG_DEBUG_RAM_WRITE_DATA
    if( pThis->pSharedObj->ramAccessLock )
@@ -285,9 +285,9 @@ static inline void ramPollAccessLock( RAM_SCU_T* pThis )
  * becomes copied in the ring buffer at the begin of the data block, following
  * by the payload data.
  */
-static inline
+STATIC inline
 void ramWriteDaqData( register RAM_SCU_T* pThis, DAQ_CANNEL_T* pDaqChannel,
-                      bool isShort )
+                      const bool isShort )
 {
    DAQ_REGISTER_T (*getRemaining)( register DAQ_CANNEL_T* );
    volatile DAQ_DATA_T (*pop)( register DAQ_CANNEL_T* );
@@ -553,7 +553,7 @@ void ramWriteDaqData( register RAM_SCU_T* pThis, DAQ_CANNEL_T* pDaqChannel,
  * @see scu_ramBuffer.h
  */
 int ramPushDaqDataBlock( register RAM_SCU_T* pThis, DAQ_CANNEL_T* pDaqChannel,
-                         bool isShort )
+                         const bool isShort )
 {
    RAM_ASSERT( pThis != NULL );
    RAM_ASSERT( pDaqChannel != NULL );
