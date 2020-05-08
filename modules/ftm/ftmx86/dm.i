@@ -8,6 +8,16 @@
 
 //%template(vEbwrs) vector< StringPair >;
 
+
+
+// Instantiate templates used by example
+namespace std {
+   %template(IntVector) vector<int>;
+   %template(DoubleVector) vector<double>;
+   %template(StringVector) vector<string>;
+   %template(ConstCharVector) vector<const char*>;
+}
+
 typedef struct {
   uint8_t   cpu;
   uint64_t  msgCnt;

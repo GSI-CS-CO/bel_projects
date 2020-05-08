@@ -33,7 +33,7 @@ private:
 
   int cpuQty = -1;
   HashMap hm;
-  GroupTable gt;
+//  GroupTable gt;
   CovenantTable ct;
   AllocTable atUp;
   Graph gUp;
@@ -174,6 +174,8 @@ public:
   CarpeDMimpl(std::ostream& sLog);
   CarpeDMimpl(std::ostream& sLog, std::ostream& sErr);
   ~CarpeDMimpl();
+
+  GroupTable gt;
 
 // Etherbone interface
                bool connect(const std::string& en, bool simulation=false, bool test=false);

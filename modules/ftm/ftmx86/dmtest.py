@@ -1,6 +1,8 @@
 import dm
 from datetime import datetime
 import pytz
+ 
+
 
 dmobj = dm.CarpeDM()
 dmobj.connect("dev/ttyUSB0")
@@ -8,7 +10,13 @@ dmobj.halt()
 dmobj.clear(False)
 dmobj.addDotFile("pps.dot", False);
 status = dmobj.downloadDot(False)
-print(status)
+result = dmobj.getAllPatterns()
+
+
+print (result)
+# blah blah lots of code ...
+
+
 
 
 #dmobj.startPattern("PPS_TEST", 0)
@@ -23,3 +31,4 @@ for i in range(0, 4):
 	hr = dm.HealthReport()
 	hr = dmobj.getHealth(i, hr)
 	print("%s#: %u" % (i, hr.msgCnt))
+
