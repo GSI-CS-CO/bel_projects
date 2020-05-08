@@ -882,6 +882,7 @@ set_location_assignment PIN_AF4 -to f2f[3]
 set_location_assignment PIN_AF6 -to ext_ch[12]
 set_location_assignment PIN_AF8 -to altera_reserved_ntrst
 set_location_assignment PIN_AG10 -to OneWire_CB_splz
+set_location_assignment PIN_AG11 -to UM_nCSO
 set_location_assignment PIN_AG13 -to fd[3]
 set_location_assignment PIN_AG16 -to lemo_out[1]
 set_location_assignment PIN_AG19 -to pa[2]
@@ -894,6 +895,7 @@ set_location_assignment PIN_AG28 -to sfp_txp_o
 set_location_assignment PIN_AG3 -to ext_ch[0]
 set_location_assignment PIN_AG4 -to onewire_ext
 set_location_assignment PIN_AG9 -to fd[6]
+set_location_assignment PIN_AH10 -to UM_AS_D[0]
 set_location_assignment PIN_AH11 -to fd[5]
 set_location_assignment PIN_AH12 -to user_led_1[0]
 set_location_assignment PIN_AH13 -to fd[0]
@@ -926,6 +928,8 @@ set_location_assignment PIN_B4 -to A_nSRQ[11]
 set_location_assignment PIN_B5 -to psram_cen[2]
 set_location_assignment PIN_B6 -to psram_dq[4]
 set_location_assignment PIN_B8 -to psram_a[12]
+set_location_assignment PIN_B9 -to UM_AS_D[3]
+set_location_assignment PIN_C10 -to UM_AS_D[2]
 set_location_assignment PIN_C11 -to psram_wait
 set_location_assignment PIN_C12 -to ext_id[2]
 set_location_assignment PIN_C13 -to ext_id[3]
@@ -1117,6 +1121,7 @@ set_location_assignment PIN_V7 -to A_A[11]
 set_location_assignment PIN_V8 -to A_D[2]
 set_location_assignment PIN_W10 -to altera_reserved_tdo
 set_location_assignment PIN_W20 -to ctl[1]
+set_location_assignment PIN_W21 -to UM_AS_D[1]
 set_location_assignment PIN_W23 -to "clk_125m_tcb_sfpref_i(n)"
 set_location_assignment PIN_W24 -to clk_125m_tcb_sfpref_i
 set_location_assignment PIN_W27 -to "pcie_tx_o[0](n)"
@@ -1127,6 +1132,7 @@ set_location_assignment PIN_W4 -to user_led_0[0]
 set_location_assignment PIN_W5 -to f2f[7]
 set_location_assignment PIN_W7 -to wr_dac_din_o
 set_location_assignment PIN_W8 -to f2f[0]
+set_location_assignment PIN_Y17 -to UM_DCLK
 set_location_assignment PIN_Y19 -to ctl[0]
 set_location_assignment PIN_Y1 -to lemo_led[4]
 set_location_assignment PIN_Y21 -to fd[4]
