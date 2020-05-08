@@ -213,6 +213,7 @@ std::pair<int, int> findRunningPattern(const std::string& sPattern); // get cpu 
                void lockManagerClear();
                bool lockManagerHasEntries();
                void softwareReset(bool clearStatistic); 
+               vStrC getAllPatterns();
 
 
 
