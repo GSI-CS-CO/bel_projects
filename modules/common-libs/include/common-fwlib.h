@@ -1,5 +1,5 @@
-#ifndef _B2B_FWLIB_
-#define _B2B_FWLIB_
+#ifndef _COMMON_FWLIB_
+#define _COMMON_FWLIB_
 
 // !!!!!
 // experimental: let's try to use common routines by my (DB) lm32 projects
@@ -40,9 +40,13 @@ void fwlib_milPulseLemo(uint32_t nLemo                // # of lemo output (start
 void fwlib_init(uint32_t *startShared,                // start of shared section (external view)
                 uint32_t *cpuRamExternal,             // lm32 RAM (external view)
                 uint32_t sharedOffs,                  // offset for shared section
-                char* name,                           // firmware name
+                char*    name,                        // firmware name
                 uint32_t fwVersion                    // firmware version
                 );
+
+// publish (used) size of shared memory
+void fwlib_publishSharedSize(uint32_t size            // used size of shared memory
+                             );
 
 // init stuff for handling commands, trivial for now, will be extended
 void fwlib_initCmds();

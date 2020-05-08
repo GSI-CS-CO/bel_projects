@@ -1,5 +1,5 @@
-#ifndef _B2B_COMMON_
-#define _B2B_COMMON_
+#ifndef _COMMON_DEFS_
+#define _COMMON_DEFS_
 
 // !!!!!
 // experimental: let's try to use common defines used by many lm32 projects
@@ -89,11 +89,10 @@
 #define COMMON_SHARED_TS0HI           (COMMON_SHARED_TDIAGLO      + _32b_SIZE_)         // time when FW was in S0 state (start of FW), high bits
 #define COMMON_SHARED_TS0LO           (COMMON_SHARED_TS0HI        + _32b_SIZE_)         // time when FW was in S0 state (start of FW), low bits
 #define COMMON_SHARED_NTRANSFER       (COMMON_SHARED_TS0LO        + _32b_SIZE_)         // # of transfers
-#define COMMON_SHARED_NINJECT         (COMMON_SHARED_NTRANSFER    + _32b_SIZE_)         // # of injections (within current transfer)*/
+#define COMMON_SHARED_NINJECT         (COMMON_SHARED_NTRANSFER    + _32b_SIZE_)         // # of injections (within current transfer)
 #define COMMON_SHARED_TRANSSTAT       (COMMON_SHARED_NINJECT      + _32b_SIZE_)         // bitwise state of ongoing transfer
-
-// shared memory for EB return values
 #define COMMON_SHARED_DATA_4EB        (COMMON_SHARED_TRANSSTAT    + _32b_SIZE_)         // shared area for EB return values
-#define COMMON_SHARED_END             (COMMON_SHARED_DATA_4EB     + (COMMON_DATA4EBSIZE << 2)) // here the common part of the shared memory ends
+#define COMMON_SHARED_USEDSIZE        (COMMON_SHARED_DATA_4EB     + (COMMON_DATA4EBSIZE << 2))  // used size of shared memory [bytes]
+#define COMMON_SHARED_END             (COMMON_SHARED_USEDSIZE     + _32b_SIZE_)         // here the common part of the shared memory ends
 
 #endif 

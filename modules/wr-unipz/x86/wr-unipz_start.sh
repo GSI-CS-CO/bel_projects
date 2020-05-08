@@ -28,8 +28,11 @@ eb-fwload dev/wbm0 u 0x0 wrunipz.bin
 ###########################################
 echo wr-unipz - start: kill monitoring process
 killall wrunipz-ctl
+
 echo wr-unipz - start: start  monitoring
-wrunipz-ctl -s1 dev/wbm0 | logger -t wrunipz-ctl -sp local0.info &
+/bin/daemon -NiU --name=wrunipz-daemon --pidfile=/var/run/wrunipz-ctl.pid --stdout=local0.info --stderr=local0.err -- wrunipz-ctl -s1 dev/wbm0
+
+#wrunipz-ctl -s1 dev/wbm0 | logger -t wrunipz-ctl -sp local0.info &
 
 ###########################################
 # configure firmware and make it operational 
@@ -108,9 +111,9 @@ sleep 5
 echo -e wr-unipz - start: start operation
 wrunipz-ctl dev/wbm0 startop
 
-sleep 5
-echo -e wr-unipz - loading dummy schedule for all PZs
-wrunipz-ctl dev/wbm0 testfull 0
+#sleep 5
+#echo -e wr-unipz - loading dummy schedule for all PZs
+#wrunipz-ctl dev/wbm0 testfull 0
 
 sleep 5
 echo -e wr-unipz - clear fw diagnostic data

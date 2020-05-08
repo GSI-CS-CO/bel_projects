@@ -1,11 +1,11 @@
 /********************************************************************************************
- *  b2b-fwlib.c
+ *  common-fwlib.c
  *
  *  created : 2019
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 10-July-2019
+ *  version : 11-March-2020
  *
- *  common functions used by various B2B firmware projects
+ *  common functions used by various irmware projects
  *  
  * -------------------------------------------------------------------------------------------
  * License Agreement for this software:
@@ -59,8 +59,8 @@
 #include "../../../tools/wb_slaves.h"                                   // Dietrichs hackish solution for defining register layout
 
 /* includes for this project */
-#include <b2b-common.h>                                                 // common stuff for b2b
-#include <b2b-fwlib.h>                                                  // fwlib
+#include <common-defs.h>                                                // common definitions
+#include <common-fwlib.h>                                               // fwlib
 
 // these routines are typically application specific
 extern void     extern_clearDiag();
@@ -94,6 +94,7 @@ uint32_t *pSharedTS0Lo;                 // pointer to a "user defined" u32 regis
 uint32_t *pSharedNTransfer;             // pointer to a "user defined" u32 register; here: # of transfers
 uint32_t *pSharedNInject;               // pointer to a "user defined" u32 register; here: # of injections within current transfer
 uint32_t *pSharedTransStat;             // pointer to a "user defined" u32 register; here: status of transfer
+uint32_t *pSharedUsedSize;              // pointer to a "user defined" u32 register; here: size of (used) shared memory
 
 uint32_t *cpuRamExternalData4EB;        // external address (seen from host bridge) of this CPU's RAM: field for EB return values
 
@@ -120,7 +121,7 @@ uint32_t findPPSGen() //find WB address of WR PPS Gen
   // get Wishbone address for PPS Gen
   pPPSGen = find_device_adr(CERN, WR_PPS_GEN);
 
-  if (!pPPSGen) {DBPRINT1("b2b-fwlib: can't find WR PPS Gen\n"); return COMMON_STATUS_ERROR;}
+  if (!pPPSGen) {DBPRINT1("common-fwlib: can't find WR PPS Gen\n"); return COMMON_STATUS_ERROR;}
   else                                                           return COMMON_STATUS_OK;
 } // findPPSGen
 
@@ -131,7 +132,7 @@ uint32_t findWREp() //find WB address of WR Endpoint
   
   pWREp = find_device_adr(WR_ENDPOINT_VENDOR, WR_ENDPOINT_PRODUCT);
 
-  if (!pWREp) {DBPRINT1("b2b-fwlib: can't find WR Endpoint\n"); return COMMON_STATUS_ERROR;}
+  if (!pWREp) {DBPRINT1("common-fwlib: can't find WR Endpoint\n"); return COMMON_STATUS_ERROR;}
   else                                                          return COMMON_STATUS_OK;
 } // findWREp
 
@@ -142,7 +143,7 @@ uint32_t findIOCtrl() // find WB address of IO Control
 
   pIOCtrl = find_device_adr(IO_CTRL_VENDOR, IO_CTRL_PRODUCT);
 
-  if (!pIOCtrl) {DBPRINT1("b2b-fwlib: can't find IO Control\n"); return COMMON_STATUS_ERROR;}
+  if (!pIOCtrl) {DBPRINT1("common-fwlib: can't find IO Control\n"); return COMMON_STATUS_ERROR;}
   else                                                           return COMMON_STATUS_OK;    
 } // findIOCtrol
 
@@ -169,7 +170,7 @@ uint32_t findECAQueue() // find WB address of ECA channel for LM32
     if ( *(tmp + (ECA_QUEUE_QUEUE_ID_GET >> 2)) == ECACHANNELFORLM32) pECAQ = tmp;
   }
 
-  if (!pECAQ) {DBPRINT1("b2b-fwlib: can't find ECA queue\n"); return COMMON_STATUS_ERROR;}
+  if (!pECAQ) {DBPRINT1("common-fwlib: can't find ECA queue\n"); return COMMON_STATUS_ERROR;}
   else                                                        return COMMON_STATUS_OK;
 } // findECAQueue
 
@@ -181,7 +182,7 @@ uint32_t findMILPiggy() //find WB address of MIL Piggy
   // get Wishbone address for MIL Piggy
   pMILPiggy = find_device_adr(GSI, SCU_MIL);
 
-  if (!pMILPiggy) {DBPRINT1("b2b-fwlib: can't find MIL piggy\n"); return COMMON_STATUS_ERROR;}
+  if (!pMILPiggy) {DBPRINT1("common-fwlib: can't find MIL piggy\n"); return COMMON_STATUS_ERROR;}
   else                                                            return COMMON_STATUS_OK;
 } // findMILPiggy
 
@@ -365,6 +366,14 @@ uint32_t fwlib_wrCheckSyncState() //check status of White Rabbit (link up, track
 } //fwlib_wrCheckStatus
 
 
+void fwlib_publishSharedSize(uint32_t size)
+{
+  *pSharedUsedSize = size;
+  DBPRINT2("common-fwlib: %u bytes of shared mem are actually used\n", size);
+  
+} // fwlib_publishSharedInfo
+
+
 void fwlib_init(uint32_t *startShared, uint32_t *cpuRamExternal, uint32_t sharedOffs, char * name, uint32_t fwVersion) // determine address and clear shared mem
 {
   uint32_t *pSharedTemp;
@@ -373,7 +382,7 @@ void fwlib_init(uint32_t *startShared, uint32_t *cpuRamExternal, uint32_t shared
 
   // basic info to wr console
   DBPRINT1("\n");
-  DBPRINT1("b2b-fwlib: ***** firmware %s v%06x started from scratch *****\n", name, (unsigned int)fwVersion);
+  DBPRINT1("common-fwlib: ***** firmware %s v%06x started from scratch *****\n", name, (unsigned int)fwVersion);
   DBPRINT1("\n");
   
   // set pointer to shared memory
@@ -401,6 +410,7 @@ void fwlib_init(uint32_t *startShared, uint32_t *cpuRamExternal, uint32_t shared
   pSharedNTransfer        = (uint32_t *)(pShared + (COMMON_SHARED_NTRANSFER >> 2));
   pSharedNInject          = (uint32_t *)(pShared + (COMMON_SHARED_NINJECT >> 2));  
   pSharedTransStat        = (uint32_t *)(pShared + (COMMON_SHARED_TRANSSTAT >> 2));
+  pSharedUsedSize         = (uint32_t *)(pShared + (COMMON_SHARED_USEDSIZE >> 2));
     
   // clear shared mem
   i = 0;
@@ -410,7 +420,8 @@ void fwlib_init(uint32_t *startShared, uint32_t *cpuRamExternal, uint32_t shared
     pSharedTemp++;
     i++;
   } // while pSharedTemp
-  DBPRINT2("b2b-fwlib: common part of shared mem is %d words (uint32_t), begin %x, end %x\n", i, (unsigned int)pShared, (unsigned int)pSharedTemp-1);
+
+  fwlib_publishSharedSize((uint32_t)(pSharedTemp - pShared));
   
   // set initial values;
   ebmClearSharedMem();
@@ -663,30 +674,30 @@ void fwlib_cmdHandler(uint32_t *reqState, uint32_t *cmd) // handle commands from
     switch (*cmd) {                          // request state changes according to cmd
       case COMMON_CMD_CONFIGURE :
         *reqState =  COMMON_STATE_CONFIGURED;
-        DBPRINT3("b2b-fwlib: received cmd %d\n", *cmd);
+        DBPRINT3("common-fwlib: received cmd %d\n", *cmd);
         break;
       case COMMON_CMD_STARTOP :
         *reqState = COMMON_STATE_OPREADY;
-        DBPRINT3("b2b-fwlib: received cmd %d\n", *cmd);
+        DBPRINT3("common-fwlib: received cmd %d\n", *cmd);
         break;
       case COMMON_CMD_STOPOP :
         *reqState = COMMON_STATE_STOPPING;
-        DBPRINT3("b2b-fwlib: received cmd %d\n", *cmd);
+        DBPRINT3("common-fwlib: received cmd %d\n", *cmd);
         break;
       case COMMON_CMD_IDLE :
         *reqState = COMMON_STATE_IDLE;
-        DBPRINT3("b2b-fwlib: received cmd %d\n", *cmd);
+        DBPRINT3("common-fwlib: received cmd %d\n", *cmd);
         break;
       case COMMON_CMD_RECOVER :
         *reqState = COMMON_STATE_IDLE;
-        DBPRINT3("b2b-fwlib: received cmd %d\n", *cmd);
+        DBPRINT3("common-fwlib: received cmd %d\n", *cmd);
         break;
       case COMMON_CMD_CLEARDIAG :
-        DBPRINT3("b2b-fwlib: received cmd %d\n", *cmd);
+        DBPRINT3("common-fwlib: received cmd %d\n", *cmd);
         fwlib_clearDiag();
         break;
       default:
-        DBPRINT3("b2b-fwlib: common_cmdHandler received unknown command '0x%08x'\n", *cmd);
+        DBPRINT3("common-fwlib: common_cmdHandler received unknown command '0x%08x'\n", *cmd);
         break;
     } // switch 
     *pSharedCmd = 0x0;                       // reset cmd value in shared memory 
@@ -694,7 +705,7 @@ void fwlib_cmdHandler(uint32_t *reqState, uint32_t *cmd) // handle commands from
 } // fwlib_cmdHandler
 
 
-uint32_t fwlib_changeState(uint32_t *actState, uint32_t *reqState, uint32_t actStatus)   //state machine; see b2b-common.h for possible states and transitions
+uint32_t fwlib_changeState(uint32_t *actState, uint32_t *reqState, uint32_t actStatus)   //state machine; see common-defs.h for possible states and transitions
 {
   uint64_t statusTransition = COMMON_STATUS_OK;
   uint32_t status;
@@ -737,7 +748,7 @@ uint32_t fwlib_changeState(uint32_t *actState, uint32_t *reqState, uint32_t actS
 
   // if the state changes
   if (*actState != nextState) {                   
-    pp_printf("b2b-fwlib: changed to state %u\n", (unsigned int)nextState);
+    pp_printf("common-fwlib: changed to state %u\n", (unsigned int)nextState);
     *actState = nextState;                      
     status = statusTransition;
   } // if state change
@@ -765,7 +776,7 @@ uint32_t fwlib_doActionState(uint32_t *reqState, uint32_t actState, uint32_t sta
       break; 
     case COMMON_STATE_FATAL :
       fwlib_publishState(actState);
-      pp_printf("b2b-fwlib: a FATAL error has occured. Good bye.\n");
+      pp_printf("common-fwlib: a FATAL error has occured. Good bye.\n");
       while (1) asm("nop"); // RIP!
         break;
     default :                                                             // avoid flooding WB bus with unnecessary activity
@@ -783,17 +794,17 @@ void fwlib_doAutoRecovery(uint32_t actState, uint32_t *reqState)
 {
   switch (actState) {
     case COMMON_STATE_ERROR :
-      DBPRINT3("b2b-fwlib: attempting autorecovery ERROR -> IDLE\n");
+      DBPRINT3("common-fwlib: attempting autorecovery ERROR -> IDLE\n");
       usleep(10000000);
       *reqState = COMMON_STATE_IDLE; 
       break;
     case COMMON_STATE_IDLE :
-      DBPRINT3("b2b-fwlib: attempting autorecovery IDLE -> CONFIGURED\n");
+      DBPRINT3("common-fwlib: attempting autorecovery IDLE -> CONFIGURED\n");
       usleep(5000000);
       *reqState = COMMON_STATE_CONFIGURED;
       break;
     case COMMON_STATE_CONFIGURED :
-      DBPRINT3("b2b-fwlib: attempting autorecovery CONFIGURED -> OPREADY\n");
+      DBPRINT3("common-fwlib: attempting autorecovery CONFIGURED -> OPREADY\n");
       usleep(5000000);
       *reqState = COMMON_STATE_OPREADY;
       flagRecover = 0;

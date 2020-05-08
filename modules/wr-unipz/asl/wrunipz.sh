@@ -18,6 +18,9 @@ ln -s /usr/lib/libetherbone.so.5 /lib/libetherbone.so.5
 
 log 'copying software, tools and startup script to ramdisk'
 cp -a /opt/$NAME/$ARCH/usr/bin/* /usr/bin/
+cp -a /opt/$NAME/$ARCH/usr/lib/* /usr/lib/
+
+ldconfig
 
 log 'copying firmware to ramdisk'
 cp -a /opt/$NAME/firmware/* /
@@ -26,4 +29,4 @@ cp -a /opt/$NAME/firmware/* /
 # wrunipz-ctl -s2 dev/wbm0 | logger -t wrunipz-ctl -sp local0.info &
 
 log 'starting the gateway'
-wr-unipz_start.sh | logger -t wrunipz-start -sp local0.info
+wr-unipz_start.sh
