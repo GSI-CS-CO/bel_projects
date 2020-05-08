@@ -117,7 +117,9 @@ entity monster is
     g_delay_diagnostics    : boolean;
     g_en_eca               : boolean;
     g_en_wd_tmr            : boolean;
+    g_en_timer             : boolean;
     g_en_eca_tap           : boolean);
+
   port(
     -- Required: core signals
     core_clk_20m_vcxo_i    : in    std_logic;
@@ -1266,6 +1268,7 @@ begin
       g_world_bridge_sdb    => c_top_bridge_sdb,
       g_clu_msi_sdb         => c_dev_bridge_msi,
       g_init_files          => g_lm32_init_files,
+      g_en_timer            => g_en_timer,
       g_profiles            => g_lm32_profiles)
     port map(
       clk_ref_i          => clk_ref,

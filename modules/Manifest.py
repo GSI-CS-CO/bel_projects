@@ -50,6 +50,7 @@ modules = {
     "eca_tap",	
     "beam_dump",
     "daq",
-    "diob"
+    "diob",
+    "wb_timer",
   ]
 }
