@@ -105,6 +105,30 @@ extern "C" {
 extern SCU_SHARED_DATA_T g_shared;
 
 #ifdef _CONFIG_NO_DISPATCHER
+#ifdef _CONFIG_ADDAC_FG_IN_INTERRUPT
+/*!
+ * @brief Number of message queues.
+ */
+#ifdef CONFIG_SCU_DAQ_INTEGRATION
+  #define QUEUE_CNT 4
+#else
+  #define QUEUE_CNT 3
+#endif
+/*!
+ * @brief Type of message origin
+ */
+typedef enum
+{
+   DEVBUS = 0, /*!<@brief From MIL-device.            */
+   DEVSIO = 1, /*!<@brief From MIL-device via SCU-bus */
+   SWI    = 2  /*!<@brief From Linux host             */
+#ifdef CONFIG_SCU_DAQ_INTEGRATION
+   ,DAQ   = 3
+#endif
+} MSG_T;
+
+
+#else // ifdef _CONFIG_ADDAC_FG_IN_INTERRUPT
 /*!
  * @brief Number of message queues.
  */
@@ -127,7 +151,8 @@ typedef enum
 #endif
 } MSG_T;
 
-#else
+#endif
+#else // ifdef _CONFIG_NO_DISPATCHER
 /*!
  * @brief Number of message queues.
  */

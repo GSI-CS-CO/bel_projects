@@ -251,6 +251,58 @@ void clear_handler_state( const uint8_t socket )
 }
 
 /*! ---------------------------------------------------------------------------
+ * @brief Handling of all SCU-bus MSI events.
+ */
+STATIC inline void onScuBusEvent( MSI_T* pMessage )
+{
+   const unsigned int slot = pMessage->msg + 1;
+   uint16_t* volatile  pIntActive =
+     scuBusGetInterruptActiveFlagRegPtr( (const void*)g_pScub_base, slot );
+   uint16_t  flagsToReset = 0;
+
+   if( (*pIntActive & POWER_UP_IRQ) != 0 )
+   {
+      flagsToReset |= POWER_UP_IRQ;
+   }
+
+   if( (*pIntActive & FG1_IRQ) != 0 )
+   {
+      handleAdacFg( slot, FG1_BASE );
+      flagsToReset |= FG1_IRQ;
+   }
+
+   if( (*pIntActive & FG2_IRQ) != 0 )
+   {
+      handleAdacFg( slot, FG2_BASE );
+      flagsToReset |= FG2_IRQ;
+   }
+
+#ifdef CONFIG_MIL_FG
+   if( (*pIntActive & DREQ) != 0 )
+   {
+      add_msg( &g_aMsg_buf[0], DEVSIO, *pMessage );
+      flagsToReset |= DREQ;
+   }
+#endif
+
+#ifdef CONFIG_SCU_DAQ_INTEGRATION
+   if( (*pIntActive & (1 << DAQ_IRQ_DAQ_FIFO_FULL)) != 0 )
+   {
+      add_msg( &g_aMsg_buf[0], DAQ, *pMessage );
+      flagsToReset |= (1 << DAQ_IRQ_DAQ_FIFO_FULL);
+   }
+
+   if( (*pIntActive & (1 << DAQ_IRQ_HIRES_FINISHED)) != 0 )
+   {
+      //TODO
+      flagsToReset |=  (1 << DAQ_IRQ_HIRES_FINISHED);
+   }
+#endif
+
+   *pIntActive = flagsToReset;
+}
+
+/*! ---------------------------------------------------------------------------
  * @ingroup INTERRUPT
  * @brief Interrupt callback function for each Message Signaled Interrupt
  * @param intNum Interrupt number.
@@ -276,13 +328,17 @@ STATIC void onScuMSInterrupt( const unsigned int intNum,
 #else
    switch( m.adr & 0xFF )
    {
+    #ifdef _CONFIG_ADDAC_FG_IN_INTERRUPT
+      case ADDR_SCUBUS: onScuBusEvent( &m ); break;
+    #else
       case ADDR_SCUBUS: add_msg( &g_aMsg_buf[0], SCUBUS, m ); break; // message from scu bus
+    #endif
       case ADDR_SWI:    add_msg( &g_aMsg_buf[0], SWI,    m ); break; // software message from saftlib
    #ifdef CONFIG_MIL_FG
       case ADDR_DEVBUS: add_msg( &g_aMsg_buf[0], DEVBUS, m ); break; // message from dev bus
    #endif
    }
-#endif
+#endif // ifndef _CONFIG_NO_DISPATCHER
 }
 
 /*! ---------------------------------------------------------------------------
@@ -294,7 +350,9 @@ STATIC void onScuMSInterrupt( const unsigned int intNum,
 STATIC inline void initInterrupt( void )
 {
 #ifdef _CONFIG_NO_DISPATCHER
+ #ifndef _CONFIG_ADDAC_FG_IN_INTERRUPT
    cbReset( &g_aMsg_buf[0], SCUBUS );
+ #endif
    cbReset( &g_aMsg_buf[0], SWI );
  #ifdef CONFIG_SCU_DAQ_INTEGRATION
    cbReset( &g_aMsg_buf[0], DAQ );
@@ -365,7 +423,9 @@ void scanFgs( void )
 
 /* task prototypes */
 #ifndef __DOXYGEN__
+#ifndef _CONFIG_ADDAC_FG_IN_INTERRUPT
 STATIC void scu_bus_handler( register TASK_T* pThis FG_UNUSED );
+#endif
 #endif
 
 /*! ---------------------------------------------------------------------------
@@ -385,7 +445,9 @@ STATIC TASK_T g_aTasks[] =
  //!!  { &g_aMilTaskData[3], ALWAYS, 0, dev_sio_handler }, // sio task 4
    { &g_aMilTaskData[4], ALWAYS, 0, dev_bus_handler },
 #endif
+#ifndef _CONFIG_ADDAC_FG_IN_INTERRUPT
    { NULL,               ALWAYS, 0, scu_bus_handler },
+#endif
 #ifdef CONFIG_MIL_FG
    { NULL,               ALWAYS, 0, ecaHandler      },
 #endif
@@ -447,6 +509,7 @@ STATIC inline void schedule( void )
    }
 }
 
+#ifndef _CONFIG_ADDAC_FG_IN_INTERRUPT
 /*! ---------------------------------------------------------------------------
  * @ingroup TASK INTERRUPT
  * @brief task definition of scu_bus_handler
@@ -460,64 +523,10 @@ STATIC void scu_bus_handler( register TASK_T* pThis FG_UNUSED )
    FG_ASSERT( pThis->pTaskData == NULL );
 
    MSI_T m;
-   if( !getMessageSave( &m, &g_aMsg_buf[0], SCUBUS ) )
-      return;
-
-   FG_ASSERT( m.adr == ADDR_SCUBUS );
-
-   const uint32_t slave_nr = m.msg + 1;
-   if( slave_nr > MAX_SCU_SLAVES )
-   {
-      mprintf( ESC_ERROR"Slave nr %d unknown!\n"ESC_NORMAL, slave_nr );
-      return;
-   }
-
-   uint16_t* volatile  pIntActive =
-     scuBusGetInterruptActiveFlagRegPtr( (const void*)g_pScub_base, slave_nr );
-   uint16_t  flagsToReset = 0;
-
-   if( (*pIntActive & POWER_UP_IRQ) != 0 )
-   {
-      flagsToReset |= POWER_UP_IRQ;
-   }
-
-   if( (*pIntActive & FG1_IRQ) != 0 )
-   {
-      handleAdacFg( slave_nr, FG1_BASE );
-      flagsToReset |= FG1_IRQ;
-   }
-
-   if( (*pIntActive & FG2_IRQ) != 0 )
-   {
-      handleAdacFg( slave_nr, FG2_BASE );
-      flagsToReset |= FG2_IRQ;
-   }
-
-#ifdef CONFIG_MIL_FG
-   if( (*pIntActive & DREQ) != 0 )
-   {
-      add_msg( &g_aMsg_buf[0], DEVSIO, m );
-      flagsToReset |= DREQ;
-   }
-#endif
-
-
-#ifdef CONFIG_SCU_DAQ_INTEGRATION
-   if( (*pIntActive & (1 << DAQ_IRQ_DAQ_FIFO_FULL)) != 0 )
-   {
-      add_msg( &g_aMsg_buf[0], DAQ, m );
-      flagsToReset |= (1 << DAQ_IRQ_DAQ_FIFO_FULL);
-   }
-
-   if( (*pIntActive & (1 << DAQ_IRQ_HIRES_FINISHED)) != 0 )
-   {
-      //TODO
-      flagsToReset |=  (1 << DAQ_IRQ_HIRES_FINISHED);
-   }
-#endif
-
-   *pIntActive = flagsToReset;
+   if( getMessageSave( &m, &g_aMsg_buf[0], SCUBUS ) )
+     onScuBusEvent( &m );
 }
+#endif /* ifndef _CONFIG_ADDAC_FG_IN_INTERRUPT */
 
 /*! ---------------------------------------------------------------------------
  * @brief Helper function for printing the CPU-ID and the number of

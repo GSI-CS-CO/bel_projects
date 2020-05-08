@@ -286,7 +286,7 @@ void daqEnableFgFeedback( const unsigned int slot, const unsigned int fgNum )
    daqChannelSample1msOn( pSetChannel );
    //TODO find a more elegant solution...
 #if 1
-   for( unsigned int i = 0; i < 20000; i++ )
+   for( unsigned int i = 0; i < 200000; i++ )
       NOP();
    daqChannelSample1msOn( pActChannel );
 #endif
@@ -340,7 +340,7 @@ void addacDaqTask( register TASK_T* pThis FG_UNUSED )
    if( s_pDaqDevice == NULL )
    {
       MSI_T m;
-      if( getMessage( &m, &g_aMsg_buf[0], DAQ ) )
+      if( getMessageSave( &m, &g_aMsg_buf[0], DAQ ) )
       {
          s_pDaqDevice = daqBusGetDeviceBySlotNumber( &g_scuDaqAdmin.oDaqDevs,
                                                      m.msg + 1 );

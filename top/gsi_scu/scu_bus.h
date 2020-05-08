@@ -231,9 +231,9 @@ typedef enum
 #define GRP_SIO2    23
 
 
-extern struct w1_bus wrpc_w1_bus;
+//extern struct w1_bus wrpc_w1_bus;
 
-void probe_scu_bus(volatile unsigned short*, unsigned short, unsigned short, int*) GSI_DEPRECATED;
+//void probe_scu_bus(volatile unsigned short*, unsigned short, unsigned short, int*) GSI_DEPRECATED;
 
 #ifndef CONFIG_OLD_SCU_SW
 

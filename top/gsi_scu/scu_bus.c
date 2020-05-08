@@ -31,6 +31,7 @@
 /*!  for every found slave the slotnumber is added to the slave array
      e.g. [2,3] means slaves in slot 2 and 3
 */
+#if 0
 void probe_scu_bus(volatile unsigned short* bus_addr, unsigned short system_addr,
                    unsigned short group_addr, int* slaves)
 {
@@ -44,7 +45,7 @@ void probe_scu_bus(volatile unsigned short* bus_addr, unsigned short system_addr
   }
   *slaves = 0; // end of device list 
 }
-
+#endif
 #ifndef CONFIG_OLD_SCU_SW
 
 /*! ---------------------------------------------------------------------------
