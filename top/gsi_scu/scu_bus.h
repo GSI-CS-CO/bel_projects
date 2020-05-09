@@ -1,9 +1,8 @@
-/** @file scu_bus.h
- *  
- *  @copyright (C) 2018 GSI Helmholtz Centre for Heavy Ion Research GmbH
- *
- *  @author Stefan Rauch <s.rauch@gsi.de>
- *  @author Ulrich Becker <u.becker@gsi.de>
+/*!
+ * @file scu_bus.h
+ * @brief Administration of SCU-Bus for LM32 applications.
+ * @copyright GSI Helmholtz Centre for Heavy Ion Research GmbH
+ * @author Ulrich Becker <u.becker@gsi.de>
  *
  * @see
  * <a href="https://www-acc.gsi.de/wiki/Hardware/Intern/StdRegScuBusSlave">
@@ -24,15 +23,14 @@
  *  License along with this library. If not, see <http://www.gnu.org/licenses/>.
  *******************************************************************************
  */
-#ifndef __SCU_H
-#define __SCU_H
+#ifndef _SCU_BUS_H
+#define _SCU_BUS_H
 #ifndef __lm32__
   #error Module is for target Lattice Micro 32 (LM32) only!
 #endif
 
 #include <stdbool.h>
-#include "inttypes.h"
-
+#include "scu_lm32_macros.h"
 #include "scu_bus_defines.h"
 
 #ifdef __cplusplus
@@ -59,6 +57,18 @@ extern "C" {
  * @brief Address space in bytes for each SCU bus slave 128k
  */
 #define SCUBUS_SLAVE_ADDR_SPACE  (1 << 17)
+
+/*! ---------------------------------------------------------------------------
+ * @ingroup SCU_BUS
+ * @ingroup PATCH
+ * @brief Base Macro for accessing SCU-bus slaves via members of device
+ *        objects
+ * @see __WB_ACCESS
+ * @param TO Object type.
+ * @param p Pointer to the concerning object.
+ * @param m Name of member variable.
+ */
+#define __SCU_BUS_ACCESS( TO, p, m ) __WB_ACCESS( TO, uint16_t, p, m )
 
 
 /*!
@@ -229,13 +239,6 @@ typedef enum
 #define GRP_MFU     2
 #define GRP_SIO3    69
 #define GRP_SIO2    23
-
-
-//extern struct w1_bus wrpc_w1_bus;
-
-//void probe_scu_bus(volatile unsigned short*, unsigned short, unsigned short, int*) GSI_DEPRECATED;
-
-#ifndef CONFIG_OLD_SCU_SW
 
 /*! ---------------------------------------------------------------------------
  * @ingroup SCU_BUS
@@ -563,11 +566,9 @@ SCUBUS_SLAVE_FLAGS_T scuBusFindSpecificSlaves( const void* pScuBusBase,
  */
 SCUBUS_SLAVE_FLAGS_T scuBusFindAllSlaves( const void* pScuBusBase );
 
-#endif /* #ifndef CONFIG_OLD_SCU_SW */
-
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* ifndef __SCU_H */
+#endif /* ifndef _SCU_BUS_H */
 /* ================================= EOF ====================================*/

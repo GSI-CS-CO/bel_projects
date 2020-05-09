@@ -24,7 +24,7 @@
 
 #define MAX_TEST_SLAVES MAX_SCU_SLAVES
 
-#define CONFIG_SCU_ATOMIC_SECTION
+// #define CONFIG_SCU_ATOMIC_SECTION
 
 #ifdef CONFIG_SCU_ATOMIC_SECTION
    #define SCU_ATOMIC_SECTION() ATOMIC_SECTION()
@@ -37,11 +37,11 @@
  */
 typedef struct
 {
-   unsigned int slot;         /*!<@brief Slot number                          */
-   void*        pAddress;     /*!<@brief Slave address                        */
-   TaskHandle_t xCreatedTask; /*!<@brief Task ID                              */
-   uint16_t     lastCount;    /*!<@brief Last counter value                   */
-   bool         decerment;    /*!<@brief Decrements or increments the counter */
+   unsigned int slot;         /*!<@brief Slot number                         */
+   void*        pAddress;     /*!<@brief Slave address                       */
+   TaskHandle_t xCreatedTask; /*!<@brief Task ID                             */
+   uint16_t     lastCount;    /*!<@brief Last counter value                  */
+   bool         decerment;    /*!<@brief Decrements or increments the counter*/
 } SLAVE_T;
 
 /*! ---------------------------------------------------------------------------

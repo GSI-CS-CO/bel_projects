@@ -1,9 +1,9 @@
-/** @file scu_bus.c
+/*!
+ * @file scu_bus.c
+ * @brief Administration of SCU-Bus for LM32 applications.
  *
- *  @copyright (C) 2011-2018 GSI Helmholtz Centre for Heavy Ion Research GmbH
- *
- *  @author Stefan Rauch <s.rauch@gsi.de> perhaps
- *  @author Ulrich Becker <u.becker@gsi.de>
+ * @copyright GSI Helmholtz Centre for Heavy Ion Research GmbH
+ * @author Ulrich Becker <u.becker@gsi.de>
  *
  * @see
  * <a href="https://www-acc.gsi.de/wiki/Hardware/Intern/StdRegScuBusSlave">
@@ -25,35 +25,13 @@
  *******************************************************************************
  */
 #include "scu_bus.h"
-#include "inttypes.h"
-#include "mprintf.h"
-
-/*!  for every found slave the slotnumber is added to the slave array
-     e.g. [2,3] means slaves in slot 2 and 3
-*/
-#if 0
-void probe_scu_bus(volatile unsigned short* bus_addr, unsigned short system_addr,
-                   unsigned short group_addr, int* slaves)
-{
-  int slot;
-  unsigned short cid_sys, cid_group;
-  for (slot = 1; slot <= MAX_SCU_SLAVES; slot++)  {
-    cid_sys = bus_addr[(slot<<16) + CID_SYS];     //CID system addr from slave
-    cid_group = bus_addr[(slot<<16) + CID_GROUP]; //CID group addr from slave
-    if (cid_sys == system_addr && cid_group == group_addr) 
-      *(slaves++) = slot;  
-  }
-  *slaves = 0; // end of device list 
-}
-#endif
-#ifndef CONFIG_OLD_SCU_SW
 
 /*! ---------------------------------------------------------------------------
  * @ingroup SCU_BUS
  * @brief Function will need in function scuBusFindSlavesByMatchList16
  * @see scuBusFindSlavesByMatchList16
  */
-static bool _or( const bool a, const bool b )
+STATIC bool _or( const bool a, const bool b )
 {
    return (a || b);
 }
@@ -63,7 +41,7 @@ static bool _or( const bool a, const bool b )
  * @brief Function will need in function scuBusFindSlavesByMatchList16
  * @see scuBusFindSlavesByMatchList16
  */
-static bool _and( const bool a, const bool b )
+STATIC bool _and( const bool a, const bool b )
 {
    return (a && b);
 }
@@ -176,8 +154,6 @@ unsigned int scuBusGetNumberOfSlaves( const SCUBUS_SLAVE_FLAGS_T slaveFlags )
          ret++;
    return ret;
 }
-
-#endif /* #ifndef CONFIG_OLD_SCU_SW */
 
 /*================================== EOF ====================================*/
 
