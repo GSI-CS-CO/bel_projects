@@ -389,7 +389,7 @@ void ramWriteDaqData( register RAM_SCU_T* pThis, DAQ_CANNEL_T* pDaqChannel,
          /*
           * Was the last data word of payload received?
           */
-         if( remainingDataWords == DAQ_DISCRIPTOR_WORD_SIZE )
+         if( remainingDataWords == DAQ_DESCRIPTOR_WORD_SIZE )
          { /*
             * Yes, possibly completion of the last RAM item if necessary.
             * This will be the case, by receiving a short block its
@@ -433,7 +433,7 @@ void ramWriteDaqData( register RAM_SCU_T* pThis, DAQ_CANNEL_T* pDaqChannel,
             /*
              * Is the next data word the first word of the device descriptor?
              */
-            if( remainingDataWords == DAQ_DISCRIPTOR_WORD_SIZE )
+            if( remainingDataWords == DAQ_DESCRIPTOR_WORD_SIZE )
             { /*
                * Yes, skipping back at the begin.
                */
@@ -482,7 +482,7 @@ int ramPushDaqDataBlock( register RAM_SCU_T* pThis, DAQ_CANNEL_T* pDaqChannel,
 {
    RAM_ASSERT( pThis != NULL );
    RAM_ASSERT( pDaqChannel != NULL );
-   RAM_ASSERT( daqChannelGetDaqFifoWords( pDaqChannel ) > DAQ_DISCRIPTOR_WORD_SIZE );
+   RAM_ASSERT( daqChannelGetDaqFifoWords( pDaqChannel ) > DAQ_DESCRIPTOR_WORD_SIZE );
 #ifdef CONFIG_DAQ_SIMULATE_CHANNEL
    if( isShort )
    {

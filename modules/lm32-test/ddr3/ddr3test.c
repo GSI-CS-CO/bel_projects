@@ -110,7 +110,7 @@ int main( int argc, char** ppArgv )
 
    gotoxy( 0, 0 );
    clrscr();
-   mprintf( ESC_FG_MAGNETA"DDR3 Test\n"ESC_NORMAL );
+   mprintf( ESC_FG_MAGENTA"DDR3 Test\n"ESC_NORMAL );
 
 #ifdef __linux__
    if( ebOpen( &g_ebHandle, ppArgv[1] ) != EB_OK )
@@ -161,7 +161,7 @@ int main( int argc, char** ppArgv )
 #ifdef __linux__
    ebClose( &g_ebHandle );
 #endif
-   mprintf( ESC_FG_MAGNETA"End of DDR3 test\n"ESC_NORMAL );
+   mprintf( ESC_FG_MAGENTA"End of DDR3 test\n"ESC_NORMAL );
    return 0;
 }
 

@@ -36,7 +36,7 @@
 
 #if 1
 
-RAM_RING_SHARED_OBJECT_T g_FifoAdmin = RAM_RING_SHARED_OBJECT_INITIALIZER;
+RAM_RING_SHARED_OBJECT_T g_FifoAdmin = RAM_RING_SHARED_SDAQ_OBJECT_INITIALIZER;
 
 #endif
 
@@ -148,17 +148,17 @@ void main( void )
    uart_init_hw();
    gotoxy( 0, 0 );
    clrscr();
-   mprintf( ESC_FG_MAGNETA"Ring-buffer test\n"ESC_NORMAL );
+   mprintf( ESC_FG_MAGENTA"Ring-buffer test\n"ESC_NORMAL );
    mprintf( "Offset: %d complement %d\n", RAM_DAQ_DATA_START_OFFSET, RAM_DAQ_DESCRIPTOR_COMPLETION );
    mprintf( "Long  block:      %d\n", RAM_DAQ_LONG_BLOCK_LEN );
    mprintf( "Long block rest:  %d\n", RAM_DAQ_LONG_BLOCK_REMAINDER );
    mprintf( "Short block:      %d\n", RAM_DAQ_SHORT_BLOCK_LEN );
    mprintf( "Short block rest: %d\n", RAM_DAQ_SHORT_BLOCK_REMAINDER );
-   mprintf( "Capacity64:       %d\n", RAM_DAQ_MAX_CAPACITY );
+   mprintf( "Capacity64:       %d\n", RAM_SDAQ_MAX_CAPACITY );
    mprintf( "Words per index:  %d\n", RAM_DAQ_DATA_WORDS_PER_RAM_INDEX );
    mprintf( "Offset of channel control: %d\n", RAM_DAQ_INDEX_OFFSET_OF_CHANNEL_CONTROL );
    mprintf( "Length of channel control: %d\n", RAM_DAQ_INDEX_LENGTH_OF_CHANNEL_CONTROL );
-   mprintf( "Word offset of channel control: %d\n", RAM_DAQ_DAQ_WORD_OFFSET_OF_CHANNEL_CONTROL );
+   mprintf( "Word offset of channel control: %d\n", RAM_DAQ_INDEX_OFFSET_OF_CHANNEL_CONTROL );
    mprintf( "access offset of channel control: %d\n",
             (RAM_DAQ_INDEX_OFFSET_OF_CHANNEL_CONTROL % offsetof(_DAQ_DISCRIPTOR_STRUCT_T, cControl )) / sizeof(DAQ_DATA_T) );
    //return;

@@ -17,7 +17,7 @@ TARGET         := daq_control
 
 MIAN_MODULE    = $(DAQ_LM32_DIR)/daq_main.c
 
-SOURCE += $(SCU_DIR)/scu_bus.c
+SOURCE += $(SCU_LIB_SRC_DIR)/scu_bus.c
 SOURCE += $(SCU_DIR)/dow_crc.c
 SOURCE += $(WR_DIR)/dev/w1-temp.c
 SOURCE += $(DAQ_LM32_DIR)/daq.c

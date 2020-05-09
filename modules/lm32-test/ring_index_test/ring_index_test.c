@@ -153,7 +153,7 @@ void main( void )
    uart_init_hw();
    gotoxy( 0, 0 );
    clrscr();
-   mprintf( ESC_FG_MAGNETA"Ring-index test\n"ESC_NORMAL );
+   mprintf( ESC_FG_MAGENTA"Ring-index test\n"ESC_NORMAL );
 
    if( ramInit( &oRam, &g_FifoAdmin ) < 0  )
    {
