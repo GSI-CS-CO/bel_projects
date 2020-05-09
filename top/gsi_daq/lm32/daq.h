@@ -95,7 +95,7 @@ extern "C" {
  * @brief Objects and functions for a single DAQ channel
  */
 /*!
- * @ingroup SCU_BUS
+ * @ingroup SCU_BUS INTERRUPT
  * @defgroup DAQ_INTERRUPT
  * @brief Interrupt functions concerning the DAQ.
  */
@@ -1040,7 +1040,7 @@ DAQ_REGISTER_T daqChannelGetTriggerConditionLW( register DAQ_CANNEL_T* pThis )
  */
 static inline
 void daqChannelSetTriggerConditionLW( register DAQ_CANNEL_T* pThis,
-                                      DAQ_REGISTER_T value )
+                                      const DAQ_REGISTER_T value )
 {
    DAQ_ASSERT( pThis != NULL );
    __DAQ_VERIFY_CHANNEL_REG_ACCESS(TRIG_LW);
@@ -1073,7 +1073,7 @@ DAQ_REGISTER_T daqChannelGetTriggerConditionHW( register DAQ_CANNEL_T* pThis )
  */
 static inline
 void daqChannelSetTriggerConditionHW( register DAQ_CANNEL_T* pThis,
-                                      DAQ_REGISTER_T value )
+                                      const DAQ_REGISTER_T value )
 {
    DAQ_ASSERT( pThis != NULL );
    __DAQ_VERIFY_CHANNEL_REG_ACCESS( TRIG_HW );
@@ -1104,7 +1104,7 @@ DAQ_REGISTER_T daqChannelGetTriggerDelay( register DAQ_CANNEL_T* pThis )
  */
 static inline
 void daqChannelSetTriggerDelay( register DAQ_CANNEL_T* pThis,
-                                DAQ_REGISTER_T value )
+                                const DAQ_REGISTER_T value )
 {
    DAQ_ASSERT( pThis != NULL );
    __DAQ_VERIFY_CHANNEL_REG_ACCESS( TRIG_DLY );
@@ -1744,10 +1744,10 @@ void daqDeviceReset( register DAQ_DEVICE_T* pThis );
 #endif
 
 /*============================ DAQ Bus Functions ============================*/
-/*! ------------------------------------------------------------------------
+/*! ---------------------------------------------------------------------------
  * @ingroup DAQ_SCU_BUS
  * @brief Preinitialized the DAQ_BUS_T by zero and try to find all
- *        existing DAQs connected to SCU-bus.
+ *        existing ADDAC-DAQ (and ADDAC-FG's) connected to SCU-bus.
  *
  * For each found DAQ the a element of DAQ_BUS_T::DAQ_DEVICE_T becomes
  * initialized.
@@ -1755,6 +1755,13 @@ void daqDeviceReset( register DAQ_DEVICE_T* pThis );
  * @param pAllDAQ Pointer object of DAQ_BUS_T including a list of all DAQ.
  * @param pScuBusBase Base address of SCU bus.
  *                    Obtained by find_device_adr(GSI, SCU_BUS_MASTER);
+ * @param pFgList Pointer to function generator list. When this module \n
+ *                is a part of the ADDAC function generators so the
+ *                function generators of this device will registered in \n
+ *                the function generator list as well.\n
+ *                This parameter isn't present when the compiler-switch
+ *                CONFIG_DAQ_SINGLE_APP has been defined.
+ *
  * @retval -1 Error occurred.
  * @retval  0 No DAQ found.
  * @retval >0 Number of connected DAQ in SCU-bus.

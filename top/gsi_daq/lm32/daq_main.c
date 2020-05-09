@@ -282,12 +282,12 @@ void daqEnableFgFeedback( const unsigned int slot, const unsigned int fgNum )
    DAQ_CANNEL_T* pActChannel = &pDaqDevice->aChannel[daqGetActualDaqNumberOfFg(fgNum)];
 
     //TODO Start both channels time synchronized.
-
+   daqChannelSetTriggerDelay( pSetChannel, 10000 );
+   daqChannelSetTriggerDelay( pActChannel, 10000 );
    daqChannelSample1msOn( pSetChannel );
    //TODO find a more elegant solution...
 #if 1
-   for( unsigned int i = 0; i < 200000; i++ )
-      NOP();
+   for( unsigned int i = 0; i < 200000; i++ ) NOP();
    daqChannelSample1msOn( pActChannel );
 #endif
 }
