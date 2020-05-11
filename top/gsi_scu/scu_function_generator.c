@@ -389,7 +389,7 @@ void init_buffers( FG_CHANNEL_REG_T* cr, const unsigned int channel,
 #endif
    //mprintf("reset fg %d in socked %d\n", device, socked);
    /* scub slave */
-   if( isNonMilFg( socket ) )
+   if( isAddacFg( socket ) )
    {
 #if 0
       if( dev == 0 )

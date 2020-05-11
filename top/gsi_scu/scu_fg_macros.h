@@ -230,14 +230,14 @@ STATIC_ASSERT( sizeof( FG_REGISTER_T ) == 12 * sizeof( uint16_t ));
  *          function generator register set.
  * @param m Name of member variable in FG_REGISTER_T.
  * @code
- * ADAC_FG_ACCESS( foo, bar ) = value;
+ * ADDAC_FG_ACCESS( foo, bar ) = value;
  * @endcode
  * corresponds to
  * @code
  * foo->bar = value;
  * @endcode
  */
-#define ADAC_FG_ACCESS( p, m ) __SCU_BUS_ACCESS( FG_REGISTER_T, p, m )
+#define ADDAC_FG_ACCESS( p, m ) __SCU_BUS_ACCESS( FG_REGISTER_T, p, m )
 
 /*! ---------------------------------------------------------------------------
  * @brief Returns the 16 bit shift register value
@@ -277,12 +277,12 @@ STATIC inline void setAdacFgRegs( FG_REGISTER_T* pFgRegs,
                                   const FG_PARAM_SET_T* pPset,
                                   const uint16_t controlReg )
 {
-   ADAC_FG_ACCESS( pFgRegs, cntrl_reg.i16 ) = controlReg;
-   ADAC_FG_ACCESS( pFgRegs, coeff_a_reg )   = pPset->coeff_a;
-   ADAC_FG_ACCESS( pFgRegs, coeff_b_reg )   = pPset->coeff_b;
-   ADAC_FG_ACCESS( pFgRegs, shift_reg )     = getFgShiftRegValue( pPset );
-   ADAC_FG_ACCESS( pFgRegs, start_l )       = getFgCoeffCLow16( pPset );
-   ADAC_FG_ACCESS( pFgRegs, start_h )       = getFgCoeffCHigh16( pPset );
+   ADDAC_FG_ACCESS( pFgRegs, cntrl_reg.i16 ) = controlReg;
+   ADDAC_FG_ACCESS( pFgRegs, coeff_a_reg )   = pPset->coeff_a;
+   ADDAC_FG_ACCESS( pFgRegs, coeff_b_reg )   = pPset->coeff_b;
+   ADDAC_FG_ACCESS( pFgRegs, shift_reg )     = getFgShiftRegValue( pPset );
+   ADDAC_FG_ACCESS( pFgRegs, start_l )       = getFgCoeffCLow16( pPset );
+   ADDAC_FG_ACCESS( pFgRegs, start_h )       = getFgCoeffCHigh16( pPset );
 }
 
 /*! ---------------------------------------------------------------------------
@@ -382,7 +382,7 @@ uint16_t getFgFirmwareVersion( const void* pScuBusBase,
     * Therefore it doesn't matter which FG offset address will used
     * FG1_BASE or FG2_BASE.
     */
-   return ADAC_FG_ACCESS( getFgRegisterPtrByOffsetAddr( pScuBusBase,
+   return ADDAC_FG_ACCESS( getFgRegisterPtrByOffsetAddr( pScuBusBase,
                                                         slot,
                                                         FG1_BASE ),
                                                         fw_version

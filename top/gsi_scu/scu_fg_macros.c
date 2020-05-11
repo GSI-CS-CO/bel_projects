@@ -133,9 +133,9 @@ int configure_fg_macro( const unsigned int channel )
    int status;
 #endif /* CONFIG_MIL_FG */
 
-   const unsigned int dev  = getDevice( channel );
+   const unsigned int dev = getDevice( channel );
     /* enable irqs */
-   if( isNonMilFg( socket ) )
+   if( isAddacFg( socket ) )
    { /*
       * enable irqs for the slave
       */
@@ -166,8 +166,8 @@ int configure_fg_macro( const unsigned int channel )
 
    unsigned int fg_base = 0;
    /* fg mode and reset */
-   FG_REGISTER_T* pAdagFgRegs = NULL;
-   if( isNonMilFg( socket ) )
+   FG_REGISTER_T* pAddagFgRegs = NULL;
+   if( isAddacFg( socket ) )
    {   //scu bus slave
       unsigned int dac_base;
       switch( dev )
@@ -186,10 +186,10 @@ int configure_fg_macro( const unsigned int channel )
          }
          default: return -1;
       }
-      pAdagFgRegs = getFgRegisterPtrByOffsetAddr( (void*)g_pScub_base, socket, fg_base );
+      pAddagFgRegs = getFgRegisterPtrByOffsetAddr( (void*)g_pScub_base, socket, fg_base );
       g_pScub_base[OFFS(socket) + dac_base + DAC_CNTRL] = 0x10;   // set FG mode
-      ADAC_FG_ACCESS( pAdagFgRegs, ramp_cnt_low ) = 0;
-      ADAC_FG_ACCESS( pAdagFgRegs, ramp_cnt_high ) = 0;
+      ADDAC_FG_ACCESS( pAddagFgRegs, ramp_cnt_low ) = 0;
+      ADDAC_FG_ACCESS( pAddagFgRegs, ramp_cnt_high ) = 0;
    }
 #ifdef CONFIG_MIL_FG
    else if( isMilExtentionFg( socket ) )
@@ -212,16 +212,16 @@ int configure_fg_macro( const unsigned int channel )
    if( cbRead(&g_shared.fg_buffer[0], &g_shared.fg_regs[0], channel, &pset) != 0 )
    {
       const uint16_t cntrl_reg_wr = ((pset.control & 0x3F) << 10) | channel << 4;
-      if( isNonMilFg( socket ) )
+      if( isAddacFg( socket ) )
       {
          FG_ASSERT( fg_base != 0 );
-         FG_ASSERT( pAdagFgRegs != NULL );
+         FG_ASSERT( pAddagFgRegs != NULL );
 
-         setAdacFgRegs( pAdagFgRegs, &pset, cntrl_reg_wr );
+         setAdacFgRegs( pAddagFgRegs, &pset, cntrl_reg_wr );
          STATIC_ASSERT( sizeof( g_shared.fg_regs[channel].tag ) == sizeof( uint32_t ) );
-         ADAC_FG_ACCESS( pAdagFgRegs, tag_low )  = g_shared.fg_regs[channel].tag & 0xFFFF;
-         ADAC_FG_ACCESS( pAdagFgRegs, tag_high ) = g_shared.fg_regs[channel].tag >> BIT_SIZEOF(uint16_t);
-         ADAC_FG_ACCESS( pAdagFgRegs, cntrl_reg.i16 ) |= FG_ENABLED;
+         ADDAC_FG_ACCESS( pAddagFgRegs, tag_low )  = g_shared.fg_regs[channel].tag & 0xFFFF;
+         ADDAC_FG_ACCESS( pAddagFgRegs, tag_high ) = g_shared.fg_regs[channel].tag >> BIT_SIZEOF(uint16_t);
+         ADDAC_FG_ACCESS( pAddagFgRegs, cntrl_reg.i16 ) |= FG_ENABLED;
       }
    #ifdef CONFIG_MIL_FG
       else
@@ -291,13 +291,12 @@ void disable_channel( const unsigned int channel )
    int status;
    int16_t data;
 #endif
-   const uint8_t socket = getSocket( channel );
-   const uint16_t dev   = getDevice( channel );
+   const unsigned int socket = getSocket( channel );
+   const unsigned int dev   = getDevice( channel );
    //mprintf("disarmed socket %d dev %d in channel[%d] state %d\n", socket, dev, channel, pFgRegs->state); //ONLY FOR TESTING
-   if( isNonMilFg( socket ) )
+   if( isAddacFg( socket ) )
    {
       unsigned int fg_base, dac_base;
-      /* which macro are we? */
       switch( dev )
       {
          case 0:
@@ -317,7 +316,9 @@ void disable_channel( const unsigned int channel )
    #ifdef CONFIG_SCU_DAQ_INTEGRATION
       daqDisableFgFeedback( socket, dev );
    #endif
-     // disarm hardware
+      /*
+       * Disarm hardware
+       */
       g_pScub_base[OFFS(socket) + fg_base + FG_CNTRL] &= ~(0x2);
       g_pScub_base[OFFS(socket) + dac_base + DAC_CNTRL] &= ~(0x10); // unset FG mode
    }
@@ -370,7 +371,7 @@ void disable_slave_irq( const unsigned int channel )
 
    //mprintf("IRQs for slave %d disabled.\n", socket);
 
-   if( isNonMilFg( socket ) )
+   if( isAddacFg( socket ) )
    {
 #if 0
       if( dev == 0 )

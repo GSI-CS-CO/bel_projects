@@ -359,10 +359,21 @@ void init_buffers( FG_CHANNEL_REG_T* cr,
  * @brief Returns "true" in the case the function generator belonging to the
  *        given socket is a "non MIL function generator".
  */
-ALWAYS_INLINE STATIC inline bool isNonMilFg( const uint8_t socket )
+GSI_DEPRECATED
+ALWAYS_INLINE STATIC inline bool isNonMilFg( const unsigned int socket )
 {
    return (socket & (DEV_MIL_EXT | DEV_SIO)) == 0;
 }
+
+/*! ---------------------------------------------------------------------------
+ * @brief Returns "true" in the case the function generator belonging to the
+ *        given socket is a "non MIL function generator".
+ */
+ALWAYS_INLINE STATIC inline bool isAddacFg( const unsigned int socket )
+{
+   return (socket & (DEV_MIL_EXT | DEV_SIO)) == 0;
+}
+
 
 /*! ---------------------------------------------------------------------------
  * @brief Returns "true" in the case the function generator belonging to the

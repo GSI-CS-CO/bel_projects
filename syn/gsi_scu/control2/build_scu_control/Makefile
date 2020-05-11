@@ -115,6 +115,7 @@ SOURCE += $(WR_DIR)/dev/w1-temp.c
 
 DOX_INPUT += $(SCU_DIR)/scu_shared_mem.h
 DOX_INPUT += $(SCU_LIB_SRC_DIR)/scu_bus_defines.h
+DOX_INPUT += $(SCU_LIB_SRC_DIR)/scu_msi.h
 
 CODE_OPTIMIZATION = s
 # TOOLCHAIN_DIR = $(INCLUDED_TOOLCHAIN_DIR)
@@ -131,7 +132,7 @@ else
    SHARED_SIZE = 81920
 endif
 
- #NO_LTO=1
+# NO_LTO=1
  STACK_SIZE  =  4096
 
 

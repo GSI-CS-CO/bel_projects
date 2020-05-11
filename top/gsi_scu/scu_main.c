@@ -111,7 +111,8 @@ STATIC inline void initializeGlobalPointers( void )
  */
 STATIC inline void cfgMsiBox( const unsigned int slot, const unsigned int myOffs )
 {
-   pCpuMsiBox[2 * slot + 1] = (uint32_t)&pMyMsi[myOffs / sizeof(uint32_t)];
+   STATIC_ASSERT( sizeof( pMyMsi[0] ) == sizeof( uint32_t ) );
+   MSI_BOX_SLOT_ACCESS( slot, address ) = (uint32_t)&pMyMsi[myOffs / sizeof(uint32_t)];
 }
 
 /*! ----------------------------------------------------------------------------
@@ -120,26 +121,23 @@ STATIC inline void cfgMsiBox( const unsigned int slot, const unsigned int myOffs
  * @retval >=0 Found mailbox slot.
  * @retval -1 No free mailbox slot found.
  */
-int getMsiBoxSlot( const unsigned int  myOffs )
+int getMsiBoxSlot( const unsigned int myOffs )
 {
    int slot = 0;
    ATOMIC_SECTION()
    {  /*
        * Climbing to the first free slot.
        */
-      while( (slot < MSI_MAX_SLOTS) && (pCpuMsiBox[2 * slot] != 0xffffffff)  )
+      for( ; slot < MSI_MAX_SLOTS; slot++ )
       {
-         slot++;
+         if( MSI_BOX_SLOT_ACCESS( slot, signal ) == 0xFFFFFFFF )
+         {
+            cfgMsiBox( slot, myOffs );
+            break;
+         }
       }
-
-      if (slot < MSI_MAX_SLOTS)
-      {
-         cfgMsiBox( slot, myOffs );
-      }
-      else
-      {
+      if( slot >= MSI_MAX_SLOTS )
          slot = -1;
-      }
    }
    return slot;
 }
@@ -185,7 +183,7 @@ void enable_scub_msis( const unsigned int channel )
 
    const unsigned int socket = getSocket( channel );
 #ifdef CONFIG_MIL_FG
-   if( isNonMilFg( socket ) || isMilScuBusFg( socket ) )
+   if( isAddacFg( socket ) || isMilScuBusFg( socket ) )
    {
 #endif
       //SCU Bus Master

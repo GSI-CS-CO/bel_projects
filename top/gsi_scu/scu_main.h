@@ -224,6 +224,28 @@ void scanFgs( void );
  */
 void clear_handler_state( const uint8_t socket );
 
+typedef struct HW_IMAGE
+{
+   volatile uint32_t signal;
+   volatile uint32_t address;
+} MSI_SLOT_T;
+
+#ifndef __DOXYGEN__
+STATIC_ASSERT( offsetof( MSI_SLOT_T, signal ) == 0 );
+STATIC_ASSERT( sizeof( MSI_SLOT_T ) == 2 * sizeof( uint32_t ) );
+#endif
+
+typedef struct HW_IMAGE
+{
+   MSI_SLOT_T slots[MSI_MAX_SLOTS];
+} MSI_BOX_T;
+
+#ifndef __DOXYGEN__
+STATIC_ASSERT( sizeof( MSI_BOX_T ) == MSI_MAX_SLOTS * sizeof( MSI_SLOT_T ) );
+#endif
+
+#define MSI_BOX_SLOT_ACCESS( S, M ) \
+   __WB_ACCESS( MSI_BOX_T, uint32_t, pCpuMsiBox, slots[S].M )
 
 //#define CONFIG_DEBUG_FG_SIGNAL
 /*! ---------------------------------------------------------------------------
@@ -233,8 +255,10 @@ void clear_handler_state( const uint8_t socket );
  */
 STATIC inline void sendSignal( const SIGNAL_T sig, const unsigned int channel )
 {
-   *(volatile uint32_t*)(char*)
-   (pCpuMsiBox + g_shared.fg_regs[channel].mbx_slot * sizeof(uint16_t)) = sig;
+   STATIC_ASSERT( sizeof( pCpuMsiBox[0] ) == sizeof( uint32_t ) );
+   //ATOMIC_SECTION()
+      MSI_BOX_SLOT_ACCESS( g_shared.fg_regs[channel].mbx_slot, signal ) = sig;
+
    hist_addx( HISTORY_XYZ_MODULE, signal2String( sig ), channel );
 #ifdef CONFIG_DEBUG_FG_SIGNAL
    #warning CONFIG_DEBUG_FG_SIGNAL is defined this will destroy the timing!
