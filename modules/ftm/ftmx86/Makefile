@@ -89,7 +89,7 @@ install: $(BINS)
 	cp $(LIBPATH)/libcarpedm.so $(PREFIX)/lib
 
 clean::
-	rm -f $(TOOLPATH)/*.o $(TOOLPATH)/*.a $(TOOLPATH)/*.so $(TOOLPATH)/*.elf $(BINPATH)/dm-sched $(BINPATH)/dm-cmd $(LIBPATH)/libcarpedm.so dm_wrap.cxx dm.py dm.pyc __pycache__
+	rm -rf $(TOOLPATH)/*.o $(TOOLPATH)/*.a $(TOOLPATH)/*.so $(TOOLPATH)/*.elf $(BINPATH)/dm-sched $(BINPATH)/dm-cmd $(LIBPATH)/libcarpedm.so dm_wrap.cxx dm.py dm.pyc __pycache__/
 
 .SECONDEXPANSION:
 $(TOOLS): $$@.cpp libcarpedm.so
