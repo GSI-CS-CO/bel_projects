@@ -135,7 +135,7 @@
  *        the given variable.
  *        The fitting of the variable size will made automatically.
  * @param v Variable
- * @return Value of the bits from the lower half.
+ * @return Value of the bits from the upper half.
  */
 #define GET_UPPER_HALF( v ) \
    (((v) >> (BIT_SIZEOF(TYPEOF(v))/2)) & LOWER_HALF_BIT_MASK(v))
