@@ -218,9 +218,11 @@ int configure_fg_macro( const unsigned int channel )
          FG_ASSERT( pAddagFgRegs != NULL );
 
          setAdacFgRegs( pAddagFgRegs, &pset, cntrl_reg_wr );
-         STATIC_ASSERT( sizeof( g_shared.fg_regs[channel].tag ) == sizeof( uint32_t ) );
-         ADDAC_FG_ACCESS( pAddagFgRegs, tag_low )  = g_shared.fg_regs[channel].tag & 0xFFFF;
-         ADDAC_FG_ACCESS( pAddagFgRegs, tag_high ) = g_shared.fg_regs[channel].tag >> BIT_SIZEOF(uint16_t);
+         STATIC_ASSERT( sizeof( g_shared.fg_regs[0].tag ) == sizeof( uint32_t ) );
+         STATIC_ASSERT( sizeof( pAddagFgRegs->tag_low ) == sizeof( g_shared.fg_regs[0].tag ) / 2 );
+         STATIC_ASSERT( sizeof( pAddagFgRegs->tag_high ) == sizeof( g_shared.fg_regs[0].tag ) / 2 );
+         ADDAC_FG_ACCESS( pAddagFgRegs, tag_low )  = GET_LOWER_HALF( g_shared.fg_regs[channel].tag );
+         ADDAC_FG_ACCESS( pAddagFgRegs, tag_high ) = GET_UPPER_HALF( g_shared.fg_regs[channel].tag );
          ADDAC_FG_ACCESS( pAddagFgRegs, cntrl_reg.i16 ) |= FG_ENABLED;
       }
    #ifdef CONFIG_MIL_FG

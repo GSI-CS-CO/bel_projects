@@ -257,7 +257,7 @@ STATIC inline
 uint16_t getFgCoeffCLow16( const FG_PARAM_SET_T* pPset )
 {
    STATIC_ASSERT( sizeof( pPset->coeff_c ) == sizeof( uint32_t ) );
-   return pPset->coeff_c & 0xFFFF;
+   return GET_LOWER_HALF( pPset->coeff_c );
 }
 
 /*! ---------------------------------------------------------------------------
@@ -268,7 +268,7 @@ STATIC inline
 uint16_t getFgCoeffCHigh16( const FG_PARAM_SET_T* pPset )
 {
    STATIC_ASSERT( sizeof( pPset->coeff_c ) == sizeof( uint32_t ) );
-   return pPset->coeff_c >> BIT_SIZEOF(int16_t);
+   return GET_UPPER_HALF( pPset->coeff_c );
 }
 
 /*! ---------------------------------------------------------------------------
