@@ -407,7 +407,7 @@ void handleMilFg( const unsigned int socket,
                   const uint16_t irq_act_reg,
                   signed int* pSetvalue )
 {
-   FG_ASSERT( !isNonMilFg( socket ) );
+   FG_ASSERT( !isAddacFg( socket ) );
    const FG_CTRL_RG_T ctrlReg = { .i16 = irq_act_reg };
    const unsigned int channel = ctrlReg.bv.number;
    if( channel >= ARRAY_SIZE( g_shared.fg_regs ) )
