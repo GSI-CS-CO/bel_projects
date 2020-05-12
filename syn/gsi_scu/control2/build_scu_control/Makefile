@@ -74,10 +74,11 @@ endif
 VERSION = $(VERSION_STR)
 
 SOURCE += $(SCU_LIB_SRC_DIR)/lm32Interrupts.c
+SOURCE += $(SCU_LIB_SRC_DIR)/scu_mailbox.c
 SOURCE += $(SCU_LIB_SRC_DIR)/LM32assert.c
 SOURCE += $(SCU_LIB_SRC_DIR)/stack-check.c
-SOURCE += $(WR_DIR)/pp_printf/div64.c
 SOURCE += $(SCU_LIB_SRC_DIR)/scu_bus.c
+SOURCE += $(WR_DIR)/pp_printf/div64.c
 # SOURCE += $(SCU_LIB_SRC_DIR)/dbg.c
 SOURCE += $(SCU_DIR)/scu_function_generator.c
 SOURCE += $(SCU_DIR)/scu_circular_buffer.c

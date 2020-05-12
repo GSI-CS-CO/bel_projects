@@ -57,25 +57,10 @@ STATIC void printSwIrqCode( const unsigned int code, const unsigned int value )
 
 /*! ---------------------------------------------------------------------------
  * @ingroup TASK
- * @brief Software irq handler
- *
- * dispatch the calls from linux to the helper functions
- * called via scheduler in main loop
- * @param pThis pointer to the current task object
- * @see schedule
+ * @brief Handles so called software interrupts (SWI) coming from SAFTLIB.
  */
-void commandHandler( register TASK_T* pThis FG_UNUSED )
+STATIC inline void saftlibCommandHandler( void )
 {
-   FG_ASSERT( pThis->pTaskData == NULL );
-
-#ifdef CONFIG_SCU_DAQ_INTEGRATION
-   /*!
-    * Executing a possible ADDAC-DAQ command if requested...
-    */
-   executeIfRequested( &g_scuDaqAdmin );
-#endif
-
-
 #if defined( CONFIG_MIL_FG ) && defined( CONFIG_READ_MIL_TIME_GAP )
    if( !isMilFsmInST_WAIT() )
    { /*
@@ -98,8 +83,9 @@ void commandHandler( register TASK_T* pThis FG_UNUSED )
 
    FG_ASSERT( m.adr == ADDR_SWI );
 
-   const unsigned int code  = m.msg >> BIT_SIZEOF( uint16_t );
-   const unsigned int value = m.msg & 0xFFFF;
+   const unsigned int code  = GET_UPPER_HALF( m.msg );
+   const unsigned int value = GET_LOWER_HALF( m.msg );
+
    printSwIrqCode( code, value );
 
    /*!
@@ -208,6 +194,29 @@ void commandHandler( register TASK_T* pThis FG_UNUSED )
    #warning When CONFIG_DEBUG_FG defined then the timing will destroy!
    mprintf( ESC_FG_CYAN ESC_BOLD"FG-command: %s: %d\n"ESC_NORMAL,
             fgCommand2String( code ), value );
+#endif
+}
+
+/*! ---------------------------------------------------------------------------
+ * @ingroup TASK
+ * @brief Software irq handler
+ *
+ * dispatch the calls from linux to the helper functions
+ * called via scheduler in main loop
+ * @param pThis pointer to the current task object
+ * @see schedule
+ */
+void commandHandler( register TASK_T* pThis FG_UNUSED )
+{
+   FG_ASSERT( pThis->pTaskData == NULL );
+
+   saftlibCommandHandler();
+
+#ifdef CONFIG_SCU_DAQ_INTEGRATION
+   /*!
+    * Executing a possible ADDAC-DAQ command if requested...
+    */
+   executeIfRequested( &g_scuDaqAdmin );
 #endif
 }
 

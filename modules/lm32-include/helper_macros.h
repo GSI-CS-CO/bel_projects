@@ -82,7 +82,7 @@
  * @brief Macro will be substituted by the number of elements of the given array.
  * @param a Name of the c-array variable
  * @return Number of array-elements
- * 
+ *
  * Example:
  * @code
  * int myArray[42], i;
@@ -103,6 +103,42 @@
  */
 #define BIT_SIZEOF( TYP ) (sizeof(TYP) * CHAR_BIT)
 
+/*!
+ * @brief Returns the upper half part of the given variable as mask in ones.
+ *        The fitting of the variable size will made automatically.
+ * @param v Variable
+ * @return Fitted bit-mask of the upper half of bits.
+ */
+#define UPPER_HALF_BIT_MASK( v ) \
+   (((TYPEOF(v))(~0) << (BIT_SIZEOF(TYPEOF(v))/2)))
+
+/*!
+ * @brief Returns the lower half part of the given variable as mask in ones.
+ *        The fitting of the variable size will made automatically.
+ * @param v Variable
+ * @return Fitted bit-mask of the lower half of bits.
+ */
+#define LOWER_HALF_BIT_MASK( v ) ~UPPER_HALF_BIT_MASK( v )
+
+/*!
+ * @brief Returns the value of the bits of the lower half part of
+ *        the given variable.
+ *        The fitting of the variable size will made automatically.
+ * @param v Variable
+ * @return Value of the bits from the lower half.
+ */
+#define GET_LOWER_HALF( v ) \
+   ( (v) & LOWER_HALF_BIT_MASK(v) )
+
+/*!
+ * @brief Returns the value of the bits of the upper half part of
+ *        the given variable.
+ *        The fitting of the variable size will made automatically.
+ * @param v Variable
+ * @return Value of the bits from the lower half.
+ */
+#define GET_UPPER_HALF( v ) \
+   (((v) >> (BIT_SIZEOF(TYPEOF(v))/2)) & LOWER_HALF_BIT_MASK(v))
 
 #ifndef __GNUC__
   #warning "Compiler isn't a GNU- compiler! Therefore it's not guaranteed that the following macro-definition PACKED_SIZE will work."
@@ -210,7 +246,7 @@
  * @endcode
  * @see PACKED_SIZE
  */
-  #define STATIC_ASSERT( condition ) __STATIC_ASSERT__( condition, __LINE__)
+  #define STATIC_ASSERT( condition ) __STATIC_ASSERT__( condition, __LINE__ )
 #endif // if (__cplusplus >  199711L) && !defined(__lm32__)
 #endif // ifndef STATIC_ASSERT
 

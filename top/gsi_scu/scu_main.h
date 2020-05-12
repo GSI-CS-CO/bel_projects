@@ -224,29 +224,6 @@ void scanFgs( void );
  */
 void clear_handler_state( const uint8_t socket );
 
-typedef struct HW_IMAGE
-{
-   volatile uint32_t signal;
-   volatile uint32_t address;
-} MSI_SLOT_T;
-
-#ifndef __DOXYGEN__
-STATIC_ASSERT( offsetof( MSI_SLOT_T, signal ) == 0 );
-STATIC_ASSERT( sizeof( MSI_SLOT_T ) == 2 * sizeof( uint32_t ) );
-#endif
-
-typedef struct HW_IMAGE
-{
-   MSI_SLOT_T slots[MSI_MAX_SLOTS];
-} MSI_BOX_T;
-
-#ifndef __DOXYGEN__
-STATIC_ASSERT( sizeof( MSI_BOX_T ) == MSI_MAX_SLOTS * sizeof( MSI_SLOT_T ) );
-#endif
-
-#define MSI_BOX_SLOT_ACCESS( S, M ) \
-   __WB_ACCESS( MSI_BOX_T, uint32_t, pCpuMsiBox, slots[S].M )
-
 //#define CONFIG_DEBUG_FG_SIGNAL
 /*! ---------------------------------------------------------------------------
  * @brief Send a signal back to the Linux-host (SAFTLIB)

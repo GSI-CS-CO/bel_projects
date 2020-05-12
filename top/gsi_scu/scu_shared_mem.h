@@ -42,6 +42,7 @@
  */
 
 #include <helper_macros.h>
+#include <scu_mailbox.h>
 #include <scu_function_generator.h>
 #include <scu_circular_buffer.h>
 #ifdef CONFIG_SCU_DAQ_INTEGRATION
@@ -419,11 +420,6 @@ STATIC_ASSERT( offsetof( SCU_SHARED_DATA_T, fg_buffer ) ==
 #if (FG_VERSION != 3)
   #warning "Could be incompatiple to SAFTLIB!"
 #endif
-
-/*!
- * @brief Maximum number of mailbox slots
- */
-#define MSI_MAX_SLOTS 128
 
 #ifdef CONFIG_SCU_DAQ_INTEGRATION
   #define __DAQ_SHARAD_MEM_INITIALIZER_ITEM \

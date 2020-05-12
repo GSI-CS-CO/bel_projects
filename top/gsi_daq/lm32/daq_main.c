@@ -303,8 +303,16 @@ void daqDisableFgFeedback( const unsigned int slot, const unsigned int fgNum )
 
    DAQ_ASSERT( pDaqDevice != NULL );
 
-   daqChannelSample1msOff( &pDaqDevice->aChannel[daqGetSetDaqNumberOfFg(fgNum)] );
-   daqChannelSample1msOff( &pDaqDevice->aChannel[daqGetActualDaqNumberOfFg(fgNum)] );
+   DAQ_CANNEL_T* pSetChannel = &pDaqDevice->aChannel[daqGetSetDaqNumberOfFg(fgNum)];
+   DAQ_CANNEL_T* pActChannel = &pDaqDevice->aChannel[daqGetActualDaqNumberOfFg(fgNum)];
+
+   ATOMIC_SECTION()
+   {
+      daqChannelSample1msOff( pSetChannel );
+      daqChannelTestAndClearDaqIntPending( pSetChannel );
+      daqChannelSample1msOff( pActChannel );
+      daqChannelTestAndClearDaqIntPending( pActChannel );
+   }
 }
 
 /*! --------------------------------------------------------------------------
@@ -349,7 +357,7 @@ void addacDaqTask( register TASK_T* pThis FG_UNUSED )
 
    if( s_pDaqDevice != NULL )
    {
-#if 0
+#if 1
       if( daqExeNextChannel( s_pDaqDevice ) )
 #else
       while( !daqExeNextChannel( s_pDaqDevice ) ) {}

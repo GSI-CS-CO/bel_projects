@@ -30,6 +30,7 @@
 
 using namespace Scu;
 using namespace daq;
+using namespace gsi;
 
 ///////////////////////////////////////////////////////////////////////////////
 /*! ---------------------------------------------------------------------------
@@ -82,19 +83,27 @@ void FgList::scan( daq::EbRamAccess* pEbAccess )
     *       command algorithm already implemented for ADAC-DAQs.
     */
    const uint lm32MailboxSlot = gsi::convertByteEndian( tmpLm32MailboxSlot );
-   if( lm32MailboxSlot >= MSI_MAX_SLOTS )
+   if( lm32MailboxSlot >= ARRAY_SIZE(MSI_BOX_T::slots) )
    {
       std::string errorMessage =
-      "Mailbox slot of LM32 is out of range: ";
+         "Mailbox slot of LM32 is out of range: ";
       errorMessage += std::to_string( lm32MailboxSlot );
       errorMessage += "!";
       throw Exception( errorMessage );
    }
 
-   uint mailBoxAddr = pEbAccess->getEbPtr()->findDeviceBaseAddress( DaqEb::gsiId,
-               static_cast<FeSupport::Scu::Etherbone::DeviceId>(MSI_MSG_BOX) );
+   /*
+    * CAUTION: pMailBox is a foreign pointer and only valid within LM32 scope!
+    *          It will use for address offset calculation only.
+    */
+   MSI_BOX_T* pMailBox = reinterpret_cast<MSI_BOX_T*>
+                         (
+                           pEbAccess->getEbPtr()->findDeviceBaseAddress( DaqEb::gsiId,
+                           static_cast<FeSupport::Scu::Etherbone::DeviceId>(MSI_MSG_BOX) )
+                         );
 
-   mailBoxAddr += lm32MailboxSlot * 2 * sizeof( uint32_t );
+   using SIGNAL_T = TYPEOF(MSI_SLOT_T::signal);
+   SIGNAL_T signal = FG::FG_OP_RESCAN << (BIT_SIZEOF( SIGNAL_T ) / 2);
 
    /*!
     * @todo Flag fg_rescan_busy is a very dirty hack obtaining a
@@ -105,12 +114,10 @@ void FgList::scan( daq::EbRamAccess* pEbAccess )
    uint32_t scanBusy = 1;
    pEbAccess->writeLM32( &scanBusy, sizeof( uint32_t ),
                          offsetof( FG::SCU_SHARED_DATA_T, fg_rescan_busy ) );
-   /*!
-    * @todo Maybe using a struct is cleaner.
-    */
-   uint32_t cmd = FG::FG_OP_RESCAN << BIT_SIZEOF( uint16_t );
-   pEbAccess->getEbPtr()->write( mailBoxAddr,
-                                 static_cast<eb_user_data_t>(&cmd),
+
+   pEbAccess->getEbPtr()->write( reinterpret_cast<etherbone::address_t>
+                                    (&pMailBox->slots[lm32MailboxSlot].signal),
+                                 reinterpret_cast<eb_user_data_t>(&signal),
                                  EB_BIG_ENDIAN | EB_DATA32 );
 
    /*

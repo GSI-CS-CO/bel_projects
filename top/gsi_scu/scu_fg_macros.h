@@ -11,6 +11,7 @@
 #define _SCU_FG_MACROS_H
 
 #include "scu_main.h"
+#include "scu_mailbox.h"
 
 #ifdef __cplusplus
 extern "C" {
