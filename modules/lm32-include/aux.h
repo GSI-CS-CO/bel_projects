@@ -13,7 +13,8 @@
 #define true  1
 //
 #define F_SYS          125000000ULL
-#define T_SYS          1000000000ULL / F_SYS
+#define T_SYS         (1000000000ULL / F_SYS)
+
 #define CYCSMICRO      1000ULL/16ULL  
 
 extern volatile uint32_t* pCpuId;
@@ -35,13 +36,18 @@ inline uint64_t getSysTime()
 
 inline void cycSleep(uint32_t cycs)
 {
-   uint32_t j;
-   for (j = 0; j < cycs; ++j) asm("# noop"); 
+  uint32_t j;
+
+  for (j = 0; j < cycs; ++j) asm("# noop"); 
 }
 
 inline void uSleep(uint64_t uSecs)
 {
-   cycSleep((uint32_t)(uSecs * 1000 / T_SYS));
+  uint64_t cycs;
+
+  cycs = uSecs * (uint64_t)1000 / (uint64_t)T_SYS;  // get number of CPU ticks
+  cycs = cycs / 3;                                  // cycSleep takes three CPU ticks
+  cycSleep((uint32_t)cycs);
 }
 
 inline uint32_t  getCpuID()  {return *pCpuId;}
