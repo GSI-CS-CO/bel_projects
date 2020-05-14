@@ -1,0 +1,143 @@
+[*]
+[*] GTKWave Analyzer v3.3.94 (w)1999-2018 BSI
+[*] Tue Sep  3 17:00:22 2019
+[*]
+[dumpfile] "/home/michael/work/MSIforUSB/bel_projects/testbench/ez_usb/simulation.ghw"
+[dumpfile_mtime] "Tue Sep  3 16:59:58 2019"
+[dumpfile_size] 855299
+[savefile] "/home/michael/work/MSIforUSB/bel_projects/testbench/ez_usb/simulation.gtkw"
+[timestart] 5880000000
+[size] 1915 957
+[pos] 23 102
+*-31.119087 6752000000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[treeopen] top.
+[treeopen] top.testbench.
+[treeopen] top.testbench.minislave.
+[treeopen] top.testbench.minislave.slave_i.
+[treeopen] top.testbench.minislave.slave_o.
+[treeopen] top.testbench.usb.eb.eb.
+[treeopen] top.testbench.usb.eb.eb.fsm.
+[treeopen] top.testbench.usb.eb.eb.pass.fifo.ram.
+[treeopen] top.testbench.usb.eb.snk_i.
+[treeopen] top.testbench.usb.ezusb.dat4wb.
+[treeopen] top.testbench.usb.ezusb.slave_o.
+[treeopen] top.testbench.usb.ezusb.slave_o.[0].
+[treeopen] top.testbench.usb.usb2eb_eb_i.
+[treeopen] top.testbench.usb.usb2eb_eb_i2.
+[treeopen] top.testbench.usb.usb2eb_usb_o.
+[treeopen] top.testbench.wb_mosi.
+[sst_width] 449
+[signals_width] 329
+[sst_expanded] 1
+[sst_vpaned_height] 548
+@28
+top.testbench.clk_sys
+top.testbench.rstn_sys
+@200
+-signals from EZ_USB-chip
+@28
+top.testbench.usb_emptyn_i
+top.testbench.usb_ebcyc_i
+top.testbench.usb_speed_i
+top.testbench.usb_shift_i
+top.testbench.usb_fulln_i
+top.testbench.usb_readyn_io
+@200
+-signals from FPGA component
+@420
+top.testbench.counter
+@28
+top.testbench.usb_pktendn_o
+top.testbench.usb_slwrn_o
+top.testbench.usb_slrdn_o
+top.testbench.usb_sloen_o
+top.testbench.usb_rstn_o
+@200
+-EZ_USB_FIFOs
+@28
+top.testbench.usb.ezusb.rstn_i
+@420
+top.testbench.usb.ezusb.state
+@28
+#{top.testbench.usb.ezusb.count[1:0]} top.testbench.usb.ezusb.count[1] top.testbench.usb.ezusb.count[0]
+@22
+#{top.testbench.usb.counter[18:0]} top.testbench.usb.counter[5] top.testbench.usb.counter[4] top.testbench.usb.counter[3] top.testbench.usb.counter[2] top.testbench.usb.counter[1] top.testbench.usb.counter[0]
+@28
+#{top.testbench.usb.ezusb.addr[1:0]} top.testbench.usb.ezusb.addr[1] top.testbench.usb.ezusb.addr[0]
+@22
+#{top.testbench.usb.ezusb.dat4wb[0][7:0]} top.testbench.usb.ezusb.dat4wb[0][7] top.testbench.usb.ezusb.dat4wb[0][6] top.testbench.usb.ezusb.dat4wb[0][5] top.testbench.usb.ezusb.dat4wb[0][4] top.testbench.usb.ezusb.dat4wb[0][3] top.testbench.usb.ezusb.dat4wb[0][2] top.testbench.usb.ezusb.dat4wb[0][1] top.testbench.usb.ezusb.dat4wb[0][0]
+@28
+top.testbench.usb.ezusb.slave_o[0].ack
+@200
+-EB_slave_fsm
+@420
+top.testbench.usb.eb.eb.fsm.r_state
+@28
+top.testbench.usb.eb.eb.fsm.r_tag_stb_o
+#{top.testbench.usb.eb.eb.fsm.r_tag_dat_o[2:0]} top.testbench.usb.eb.eb.fsm.r_tag_dat_o[2] top.testbench.usb.eb.eb.fsm.r_tag_dat_o[1] top.testbench.usb.eb.eb.fsm.r_tag_dat_o[0]
+@22
+#{top.testbench.usb.eb.eb.fsm.cfg_adr_o[31:0]} top.testbench.usb.eb.eb.fsm.cfg_adr_o[31] top.testbench.usb.eb.eb.fsm.cfg_adr_o[30] top.testbench.usb.eb.eb.fsm.cfg_adr_o[29] top.testbench.usb.eb.eb.fsm.cfg_adr_o[28] top.testbench.usb.eb.eb.fsm.cfg_adr_o[27] top.testbench.usb.eb.eb.fsm.cfg_adr_o[26] top.testbench.usb.eb.eb.fsm.cfg_adr_o[25] top.testbench.usb.eb.eb.fsm.cfg_adr_o[24] top.testbench.usb.eb.eb.fsm.cfg_adr_o[23] top.testbench.usb.eb.eb.fsm.cfg_adr_o[22] top.testbench.usb.eb.eb.fsm.cfg_adr_o[21] top.testbench.usb.eb.eb.fsm.cfg_adr_o[20] top.testbench.usb.eb.eb.fsm.cfg_adr_o[19] top.testbench.usb.eb.eb.fsm.cfg_adr_o[18] top.testbench.usb.eb.eb.fsm.cfg_adr_o[17] top.testbench.usb.eb.eb.fsm.cfg_adr_o[16] top.testbench.usb.eb.eb.fsm.cfg_adr_o[15] top.testbench.usb.eb.eb.fsm.cfg_adr_o[14] top.testbench.usb.eb.eb.fsm.cfg_adr_o[13] top.testbench.usb.eb.eb.fsm.cfg_adr_o[12] top.testbench.usb.eb.eb.fsm.cfg_adr_o[11] top.testbench.usb.eb.eb.fsm.cfg_adr_o[10] top.testbench.usb.eb.eb.fsm.cfg_adr_o[9] top.testbench.usb.eb.eb.fsm.cfg_adr_o[8] top.testbench.usb.eb.eb.fsm.cfg_adr_o[7] top.testbench.usb.eb.eb.fsm.cfg_adr_o[6] top.testbench.usb.eb.eb.fsm.cfg_adr_o[5] top.testbench.usb.eb.eb.fsm.cfg_adr_o[4] top.testbench.usb.eb.eb.fsm.cfg_adr_o[3] top.testbench.usb.eb.eb.fsm.cfg_adr_o[2] top.testbench.usb.eb.eb.fsm.cfg_adr_o[1] top.testbench.usb.eb.eb.fsm.cfg_adr_o[0]
+@c00022
+#{top.testbench.usb.eb.eb.fsm.s_rx_eb_hdr.magic[15:0]} top.testbench.usb.eb.eb.fsm.s_rx_eb_hdr.magic[15] top.testbench.usb.eb.eb.fsm.s_rx_eb_hdr.magic[14] top.testbench.usb.eb.eb.fsm.s_rx_eb_hdr.magic[13] top.testbench.usb.eb.eb.fsm.s_rx_eb_hdr.magic[12] top.testbench.usb.eb.eb.fsm.s_rx_eb_hdr.magic[11] top.testbench.usb.eb.eb.fsm.s_rx_eb_hdr.magic[10] top.testbench.usb.eb.eb.fsm.s_rx_eb_hdr.magic[9] top.testbench.usb.eb.eb.fsm.s_rx_eb_hdr.magic[8] top.testbench.usb.eb.eb.fsm.s_rx_eb_hdr.magic[7] top.testbench.usb.eb.eb.fsm.s_rx_eb_hdr.magic[6] top.testbench.usb.eb.eb.fsm.s_rx_eb_hdr.magic[5] top.testbench.usb.eb.eb.fsm.s_rx_eb_hdr.magic[4] top.testbench.usb.eb.eb.fsm.s_rx_eb_hdr.magic[3] top.testbench.usb.eb.eb.fsm.s_rx_eb_hdr.magic[2] top.testbench.usb.eb.eb.fsm.s_rx_eb_hdr.magic[1] top.testbench.usb.eb.eb.fsm.s_rx_eb_hdr.magic[0]
+@28
+top.testbench.usb.eb.eb.fsm.s_rx_eb_hdr.magic[15]
+top.testbench.usb.eb.eb.fsm.s_rx_eb_hdr.magic[14]
+top.testbench.usb.eb.eb.fsm.s_rx_eb_hdr.magic[13]
+top.testbench.usb.eb.eb.fsm.s_rx_eb_hdr.magic[12]
+top.testbench.usb.eb.eb.fsm.s_rx_eb_hdr.magic[11]
+top.testbench.usb.eb.eb.fsm.s_rx_eb_hdr.magic[10]
+top.testbench.usb.eb.eb.fsm.s_rx_eb_hdr.magic[9]
+top.testbench.usb.eb.eb.fsm.s_rx_eb_hdr.magic[8]
+top.testbench.usb.eb.eb.fsm.s_rx_eb_hdr.magic[7]
+top.testbench.usb.eb.eb.fsm.s_rx_eb_hdr.magic[6]
+top.testbench.usb.eb.eb.fsm.s_rx_eb_hdr.magic[5]
+top.testbench.usb.eb.eb.fsm.s_rx_eb_hdr.magic[4]
+top.testbench.usb.eb.eb.fsm.s_rx_eb_hdr.magic[3]
+top.testbench.usb.eb.eb.fsm.s_rx_eb_hdr.magic[2]
+top.testbench.usb.eb.eb.fsm.s_rx_eb_hdr.magic[1]
+top.testbench.usb.eb.eb.fsm.s_rx_eb_hdr.magic[0]
+@1401200
+-group_end
+@22
+>86000000
+#{top.testbench.usb.eb.eb.fsm.rx_dat_i[31:0]} top.testbench.usb.eb.eb.fsm.rx_dat_i[31] top.testbench.usb.eb.eb.fsm.rx_dat_i[30] top.testbench.usb.eb.eb.fsm.rx_dat_i[29] top.testbench.usb.eb.eb.fsm.rx_dat_i[28] top.testbench.usb.eb.eb.fsm.rx_dat_i[27] top.testbench.usb.eb.eb.fsm.rx_dat_i[26] top.testbench.usb.eb.eb.fsm.rx_dat_i[25] top.testbench.usb.eb.eb.fsm.rx_dat_i[24] top.testbench.usb.eb.eb.fsm.rx_dat_i[23] top.testbench.usb.eb.eb.fsm.rx_dat_i[22] top.testbench.usb.eb.eb.fsm.rx_dat_i[21] top.testbench.usb.eb.eb.fsm.rx_dat_i[20] top.testbench.usb.eb.eb.fsm.rx_dat_i[19] top.testbench.usb.eb.eb.fsm.rx_dat_i[18] top.testbench.usb.eb.eb.fsm.rx_dat_i[17] top.testbench.usb.eb.eb.fsm.rx_dat_i[16] top.testbench.usb.eb.eb.fsm.rx_dat_i[15] top.testbench.usb.eb.eb.fsm.rx_dat_i[14] top.testbench.usb.eb.eb.fsm.rx_dat_i[13] top.testbench.usb.eb.eb.fsm.rx_dat_i[12] top.testbench.usb.eb.eb.fsm.rx_dat_i[11] top.testbench.usb.eb.eb.fsm.rx_dat_i[10] top.testbench.usb.eb.eb.fsm.rx_dat_i[9] top.testbench.usb.eb.eb.fsm.rx_dat_i[8] top.testbench.usb.eb.eb.fsm.rx_dat_i[7] top.testbench.usb.eb.eb.fsm.rx_dat_i[6] top.testbench.usb.eb.eb.fsm.rx_dat_i[5] top.testbench.usb.eb.eb.fsm.rx_dat_i[4] top.testbench.usb.eb.eb.fsm.rx_dat_i[3] top.testbench.usb.eb.eb.fsm.rx_dat_i[2] top.testbench.usb.eb.eb.fsm.rx_dat_i[1] top.testbench.usb.eb.eb.fsm.rx_dat_i[0]
+@28
+>0
+top.testbench.wb_mosi.we
+top.testbench.wb_mosi.stb
+top.testbench.wb_mosi.cyc
+@22
+#{top.testbench.wb_mosi.dat[31:0]} top.testbench.wb_mosi.dat[31] top.testbench.wb_mosi.dat[30] top.testbench.wb_mosi.dat[29] top.testbench.wb_mosi.dat[28] top.testbench.wb_mosi.dat[27] top.testbench.wb_mosi.dat[26] top.testbench.wb_mosi.dat[25] top.testbench.wb_mosi.dat[24] top.testbench.wb_mosi.dat[23] top.testbench.wb_mosi.dat[22] top.testbench.wb_mosi.dat[21] top.testbench.wb_mosi.dat[20] top.testbench.wb_mosi.dat[19] top.testbench.wb_mosi.dat[18] top.testbench.wb_mosi.dat[17] top.testbench.wb_mosi.dat[16] top.testbench.wb_mosi.dat[15] top.testbench.wb_mosi.dat[14] top.testbench.wb_mosi.dat[13] top.testbench.wb_mosi.dat[12] top.testbench.wb_mosi.dat[11] top.testbench.wb_mosi.dat[10] top.testbench.wb_mosi.dat[9] top.testbench.wb_mosi.dat[8] top.testbench.wb_mosi.dat[7] top.testbench.wb_mosi.dat[6] top.testbench.wb_mosi.dat[5] top.testbench.wb_mosi.dat[4] top.testbench.wb_mosi.dat[3] top.testbench.wb_mosi.dat[2] top.testbench.wb_mosi.dat[1] top.testbench.wb_mosi.dat[0]
+@200
+-minislave
+@28
+top.testbench.minislave.slave_i.we
+top.testbench.minislave.slave_i.stb
+top.testbench.minislave.slave_i.cyc
+top.testbench.minislave.slave_o.stall
+top.testbench.minislave.slave_o.ack
+@22
+#{top.testbench.minislave.slave_i.dat[31:0]} top.testbench.minislave.slave_i.dat[31] top.testbench.minislave.slave_i.dat[30] top.testbench.minislave.slave_i.dat[29] top.testbench.minislave.slave_i.dat[28] top.testbench.minislave.slave_i.dat[27] top.testbench.minislave.slave_i.dat[26] top.testbench.minislave.slave_i.dat[25] top.testbench.minislave.slave_i.dat[24] top.testbench.minislave.slave_i.dat[23] top.testbench.minislave.slave_i.dat[22] top.testbench.minislave.slave_i.dat[21] top.testbench.minislave.slave_i.dat[20] top.testbench.minislave.slave_i.dat[19] top.testbench.minislave.slave_i.dat[18] top.testbench.minislave.slave_i.dat[17] top.testbench.minislave.slave_i.dat[16] top.testbench.minislave.slave_i.dat[15] top.testbench.minislave.slave_i.dat[14] top.testbench.minislave.slave_i.dat[13] top.testbench.minislave.slave_i.dat[12] top.testbench.minislave.slave_i.dat[11] top.testbench.minislave.slave_i.dat[10] top.testbench.minislave.slave_i.dat[9] top.testbench.minislave.slave_i.dat[8] top.testbench.minislave.slave_i.dat[7] top.testbench.minislave.slave_i.dat[6] top.testbench.minislave.slave_i.dat[5] top.testbench.minislave.slave_i.dat[4] top.testbench.minislave.slave_i.dat[3] top.testbench.minislave.slave_i.dat[2] top.testbench.minislave.slave_i.dat[1] top.testbench.minislave.slave_i.dat[0]
+#{top.testbench.minislave.wb_register[31:0]} top.testbench.minislave.wb_register[31] top.testbench.minislave.wb_register[30] top.testbench.minislave.wb_register[29] top.testbench.minislave.wb_register[28] top.testbench.minislave.wb_register[27] top.testbench.minislave.wb_register[26] top.testbench.minislave.wb_register[25] top.testbench.minislave.wb_register[24] top.testbench.minislave.wb_register[23] top.testbench.minislave.wb_register[22] top.testbench.minislave.wb_register[21] top.testbench.minislave.wb_register[20] top.testbench.minislave.wb_register[19] top.testbench.minislave.wb_register[18] top.testbench.minislave.wb_register[17] top.testbench.minislave.wb_register[16] top.testbench.minislave.wb_register[15] top.testbench.minislave.wb_register[14] top.testbench.minislave.wb_register[13] top.testbench.minislave.wb_register[12] top.testbench.minislave.wb_register[11] top.testbench.minislave.wb_register[10] top.testbench.minislave.wb_register[9] top.testbench.minislave.wb_register[8] top.testbench.minislave.wb_register[7] top.testbench.minislave.wb_register[6] top.testbench.minislave.wb_register[5] top.testbench.minislave.wb_register[4] top.testbench.minislave.wb_register[3] top.testbench.minislave.wb_register[2] top.testbench.minislave.wb_register[1] top.testbench.minislave.wb_register[0]
+#{top.testbench.usb_fd_io[7:0]} top.testbench.usb_fd_io[7] top.testbench.usb_fd_io[6] top.testbench.usb_fd_io[5] top.testbench.usb_fd_io[4] top.testbench.usb_fd_io[3] top.testbench.usb_fd_io[2] top.testbench.usb_fd_io[1] top.testbench.usb_fd_io[0]
+@200
+-EZ_USB-all
+@28
+top.testbench.usb_slwrn_o
+top.testbench.usb_slrdn_o
+top.testbench.usb_emptyn_i
+top.testbench.usb_sloen_o
+top.testbench.usb_fulln_i
+top.testbench.usb_readyn_io
+top.testbench.usb_shift_i
+top.testbench.usb_speed_i
+top.testbench.usb_ebcyc_i
+top.testbench.usb_rstn_o
+top.testbench.uart_wrc
+@22
+#{top.testbench.s_usb_fd_o[7:0]} top.testbench.s_usb_fd_o[7] top.testbench.s_usb_fd_o[6] top.testbench.s_usb_fd_o[5] top.testbench.s_usb_fd_o[4] top.testbench.s_usb_fd_o[3] top.testbench.s_usb_fd_o[2] top.testbench.s_usb_fd_o[1] top.testbench.s_usb_fd_o[0]
+@28
+top.testbench.s_usb_fd_oen
+top.testbench.uart_usb
+[pattern_trace] 1
+[pattern_trace] 0
