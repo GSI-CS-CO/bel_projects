@@ -24,7 +24,7 @@
 
 #define MAX_TEST_SLAVES MAX_SCU_SLAVES
 
-// #define CONFIG_SCU_ATOMIC_SECTION
+ #define CONFIG_SCU_ATOMIC_SECTION
 
 #ifdef CONFIG_SCU_ATOMIC_SECTION
    #define SCU_ATOMIC_SECTION() ATOMIC_SECTION()
@@ -122,11 +122,22 @@ STATIC void vTaskMain( void* pvParameters UNUSED )
 
    SLAVE_T slaves[MAX_TEST_SLAVES];
    unsigned int dev = 0;
+   /*
+    * For all slots.
+    */
    for( unsigned int slot = SCUBUS_START_SLOT; slot <= MAX_SCU_SLAVES; slot++ )
    {
       if( !scuBusIsSlavePresent( slavePersentFlags, slot ) )
+      { /*
+         * No slave in this slot.
+         * Jump to the next slot...
+         */
          continue;
+      }
 
+      /*
+       * In this slot is a slave.
+       */
       slaves[dev].slot      = slot;
       slaves[dev].pAddress  = scuBusGetAbsSlaveAddr( pScuBusBase, slot );
       slaves[dev].decerment = (dev % 2) != 0;
@@ -212,7 +223,6 @@ STATIC inline BaseType_t initAndStartRTOS( void )
    if( status != pdPASS )
       return status;
 
-  // portENABLE_INTERRUPTS();
    vTaskStartScheduler();
 
    return pdPASS;

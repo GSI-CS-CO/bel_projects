@@ -367,6 +367,28 @@ uint16_t* volatile scuBusGetInterruptActiveFlagRegPtr( const void* pScuBusBase,
    return &((uint16_t*)scuBusGetAbsSlaveAddr( pScuBusBase, slot ))[Intr_Active];
 }
 
+static inline
+uint16_t scuBusGetAndResetIterruptPendingFlags( const void* pScuBusBase,
+                                                const unsigned int slot )
+{
+  /*
+   * Note: Keep in mind that is a memory mapped i/o handling and the
+   *       following lines seems a bit confused, respectively
+   *       logical meaningless.
+   */
+
+   uint16_t* volatile pIntActive = scuBusGetInterruptActiveFlagRegPtr(
+                                                          pScuBusBase, slot );
+   volatile const uint16_t intActive = *pIntActive;
+   NOP();
+   /*
+    * The interrupt pending flags becomes deleted by writing a one in
+    * the concerning bit position(s).
+    */
+   *pIntActive = intActive;
+   return intActive;
+}
+
 /*! ---------------------------------------------------------------------------
  * @ingroup SCU_BUS INTERRUPT
  * @brief Returns the pointer of the interrupt enable register of the given

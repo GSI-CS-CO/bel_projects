@@ -245,7 +245,7 @@ STATIC inline void onScuBusEvent( MSI_T* pMessage )
    }
 #endif
 
-#ifdef CONFIG_SCU_DAQ_INTEGRATION
+#ifdef CONFIG_SCU_DAQ_INTEGRATION //!!
    if( (*pIntActive & (1 << DAQ_IRQ_DAQ_FIFO_FULL)) != 0 )
    {
       add_msg( &g_aMsg_buf[0], DAQ, *pMessage );

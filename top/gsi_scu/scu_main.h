@@ -233,7 +233,7 @@ void clear_handler_state( const uint8_t socket );
 STATIC inline void sendSignal( const SIGNAL_T sig, const unsigned int channel )
 {
    STATIC_ASSERT( sizeof( pCpuMsiBox[0] ) == sizeof( uint32_t ) );
-   //ATOMIC_SECTION()
+   ATOMIC_SECTION()
       MSI_BOX_SLOT_ACCESS( g_shared.fg_regs[channel].mbx_slot, signal ) = sig;
 
    hist_addx( HISTORY_XYZ_MODULE, signal2String( sig ), channel );
