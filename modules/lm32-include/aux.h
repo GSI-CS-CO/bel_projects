@@ -12,10 +12,11 @@
 #define false 0   //cant believe I'm doing this ...
 #define true  1
 //
-#define F_SYS          125000000ULL
-#define T_SYS         (1000000000ULL / F_SYS)
+#define F_SYS          125000000ULL                  // lm32 clock frequency [Hz]
+#define T_SYS         (1000000000ULL / F_SYS)        // duration of a lm32 clock cycle [ns]
+#define T_NOP         (T_SYS * 4ULL)                 // duration of a asm("nop") instruction within a for-loop [ns]
 
-#define CYCSMICRO      1000ULL/16ULL  
+#define CYCSMICRO     (1000ULL / 16ULL)
 
 extern volatile uint32_t* pCpuId;
 extern volatile uint32_t* pCpuAtomic;
@@ -38,16 +39,15 @@ inline void cycSleep(uint32_t cycs)
 {
   uint32_t j;
 
-  for (j = 0; j < cycs; ++j) asm("# noop"); 
+  for (j = 0; j < cycs; ++j) asm("nop"); 
 }
 
 inline void uSleep(uint64_t uSecs)
 {
-  uint64_t cycs;
+  uint32_t cycs;
 
-  cycs = uSecs * (uint64_t)1000 / (uint64_t)T_SYS;  // get number of CPU ticks
-  cycs = cycs / 3;                                  // cycSleep takes three CPU ticks
-  cycSleep((uint32_t)cycs);
+  cycs = (uint32_t)(uSecs * (uint64_t)1000 / T_NOP);
+  cycSleep(cycs);
 }
 
 inline uint32_t  getCpuID()  {return *pCpuId;}
