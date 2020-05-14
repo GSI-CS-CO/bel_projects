@@ -3,7 +3,7 @@
  *
  *  created : 2018
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 09-April-2020
+ *  version : 14-May-2020
  *
  *  lm32 program for gateway between UNILAC Pulszentrale and a White Rabbit network
  *  this basically serves a Data Master for UNILAC
@@ -63,7 +63,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 22-November-2018
  ********************************************************************************************/
-#define WRUNIPZ_FW_VERSION 0x000104                                     // make this consistent with makefile
+#define WRUNIPZ_FW_VERSION 0x000204                                     // make this consistent with makefile
 
 // standard includes
 #include <stdio.h>
@@ -73,11 +73,10 @@
 
 // includes specific for bel_projects 
 #include "dbg.h"                                                        // debug outputs
-#include <stack.h>
+#include <stack.h>                                                      // stack check ...
 #include "ebm.h"                                                        // EB master
 #include "pp-printf.h"                                                  // print statement
 #include "mini_sdb.h"                                                   // sdb stuff
-#include "syscon.h"                                                     // usleep et al
 #include "aux.h"                                                        // cpu and IRQ
 #include "uart.h"                                                       // WR console
 #include "../../../top/gsi_scu/scu_mil.h"                               // register layout of 'MIL macro'
@@ -294,9 +293,6 @@ void init()
   discoverPeriphery();        // mini-sdb ...
   uart_init_hw();             // needed by WR console   
   cpuId = getCpuIdx();
-
-  timer_init(1);              // needed by usleep_init() 
-  usleep_init();              // needed by scu_mil.c
 } // init
 
 

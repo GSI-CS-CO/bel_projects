@@ -3,7 +3,7 @@
  *
  *  created : 2020
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 09-March-2020
+ *  version : 14-May-2020
  *
  *  lm32 example program using common libraries
  *  
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 22-November-2018
  ********************************************************************************************/
-#define EXAMPLE_FW_VERSION 0x000001                                     // make this consistent with makefile
+#define EXAMPLE_FW_VERSION 0x000002                                     // make this consistent with makefile
 
 // standard includes
 #include <stdio.h>
@@ -47,7 +47,6 @@
 #include <stack.h>
 #include "pp-printf.h"                                                  // print statement
 #include "mini_sdb.h"                                                   // sdb stuff
-#include "syscon.h"                                                     // usleep et al
 #include "aux.h"                                                        // cpu and IRQ
 #include "uart.h"                                                       // WR console
 
@@ -76,9 +75,6 @@ void init()
   discoverPeriphery();        // mini-sdb ...
   uart_init_hw();             // needed by WR console   
   cpuId = getCpuIdx();
-
-  timer_init(1);              // needed by usleep_init() 
-  usleep_init();              // needed by scu_mil.c
 } // init
 
 
