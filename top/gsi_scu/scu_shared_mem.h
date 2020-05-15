@@ -497,6 +497,7 @@ static inline const char* fgCommand2String( const FG_OP_CODE_T op )
 }
 
 /*!
+ * @ingroup MAILBOX
  * @brief Definition of signals to send from server (LM32) to client
  * @see sendSignal
  * @see saftlib/drivers/fg_regs.h

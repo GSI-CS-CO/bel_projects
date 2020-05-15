@@ -1,6 +1,6 @@
 /*!
  * @file daq.h
- * @brief Control module for Data Acquisition Unit (DAQ)
+ * @brief Control module for ADDAC Data Acquisition Unit (DAQ)
  * @see
  * <a href="https://www-acc.gsi.de/wiki/Hardware/Intern/DataAquisitionMacrofürSCUSlaveBaugruppen">
  *    Data Aquisition Macro fuer SCU Slave Baugruppen</a>
@@ -480,7 +480,7 @@ unsigned int daqChannelGetDaqFifoWordsSimulate( register DAQ_CANNEL_T* pThis );
  * @param pThis Pointer to the channel object
  * @return Pointer to the control register.
  */
-static inline
+STATIC inline
 DAQ_REGISTER_ACCESS_T* volatile daqChannelGetRegPtr( register DAQ_CANNEL_T* pThis )
 {
    DAQ_ASSERT( pThis->n < DAQ_MAX_CHANNELS );
@@ -494,7 +494,7 @@ DAQ_REGISTER_ACCESS_T* volatile daqChannelGetRegPtr( register DAQ_CANNEL_T* pThi
  * @param pThis Pointer to the channel object
  * @return Slave base address of the DAQ device of this channel.
  */
-static inline
+STATIC inline
 void* daqChannelGetScuBusSlaveBaseAddress( register DAQ_CANNEL_T* pThis )
 {
    DAQ_ASSERT( (unsigned int)daqChannelGetRegPtr( pThis ) > DAQ_REGISTER_OFFSET );
@@ -545,7 +545,7 @@ void* daqChannelGetScuBusSlaveBaseAddress( register DAQ_CANNEL_T* pThis )
  * @return Pointer to control register bit field structure.
  */
 ALWAYS_INLINE
-static inline
+STATIC inline
 DAQ_CTRL_REG_T* daqChannelGetCtrlRegPtr( register DAQ_CANNEL_T* restrict pThis )
 {
    DAQ_ASSERT( pThis != NULL );
@@ -561,7 +561,7 @@ DAQ_CTRL_REG_T* daqChannelGetCtrlRegPtr( register DAQ_CANNEL_T* restrict pThis )
  * @return Slot number of the DAQ device where belonging this channel
  */
 ALWAYS_INLINE
-static inline int daqChannelGetSlot( register DAQ_CANNEL_T* pThis )
+STATIC inline int daqChannelGetSlot( register DAQ_CANNEL_T* pThis )
 {
    return daqChannelGetCtrlRegPtr( pThis )->slot;
 }
@@ -573,7 +573,7 @@ static inline int daqChannelGetSlot( register DAQ_CANNEL_T* pThis )
  * @return Channel number.
  */
 ALWAYS_INLINE
-static inline int daqChannelGetNumber( const register DAQ_CANNEL_T* pThis )
+STATIC inline int daqChannelGetNumber( const register DAQ_CANNEL_T* pThis )
 {
    return pThis->n;
 }
@@ -593,7 +593,7 @@ void daqChannelSetStatus( register DAQ_CANNEL_T* pThis, DAQ_REC_STAT_T state );
  * @see daqChannelGetRegPtr
  * @param pThis Pointer to the channel object
  */
-static inline void daqChannelSample10usOn( register DAQ_CANNEL_T* pThis )
+STATIC inline void daqChannelSample10usOn( register DAQ_CANNEL_T* pThis )
 {
 #ifdef CONFIG_DAQ_SIMULATE_CHANNEL
    pThis->callCount = 0;
@@ -615,7 +615,7 @@ static inline void daqChannelSample10usOn( register DAQ_CANNEL_T* pThis )
  * @param pThis Pointer to the channel object
  * @param channel Channel number.
  */
-static inline void daqChannelSample10usOff( register DAQ_CANNEL_T* pThis )
+STATIC inline void daqChannelSample10usOff( register DAQ_CANNEL_T* pThis )
 {
 #ifdef CONFIG_DAQ_SIMULATE_CHANNEL
    pThis->simulatedDescriptor.name.cControl.daqMode   = false;
@@ -634,7 +634,7 @@ static inline void daqChannelSample10usOff( register DAQ_CANNEL_T* pThis )
  * @retval true is active
  * @retval false is not active
  */
-static inline bool daqChannelIsSample10usActive( register DAQ_CANNEL_T* pThis )
+STATIC inline bool daqChannelIsSample10usActive( register DAQ_CANNEL_T* pThis )
 {
 #ifdef CONFIG_DAQ_SIMULATE_CHANNEL
    return pThis->simulatedDescriptor.name.cControl.daqMode;
@@ -650,7 +650,7 @@ static inline bool daqChannelIsSample10usActive( register DAQ_CANNEL_T* pThis )
  * @see daqChannelGetRegPtr
  * @param pThis Pointer to the channel object
  */
-static inline void daqChannelSample100usOn( register DAQ_CANNEL_T* pThis )
+STATIC inline void daqChannelSample100usOn( register DAQ_CANNEL_T* pThis )
 {
 #ifdef CONFIG_DAQ_SIMULATE_CHANNEL
    daqChannelSample10usOn( pThis );
@@ -668,7 +668,7 @@ static inline void daqChannelSample100usOn( register DAQ_CANNEL_T* pThis )
  * @see daqChannelGetRegPtr
  * @param pThis Pointer to the channel object
  */
-static inline
+STATIC inline
 void daqChannelSample100usOff( register DAQ_CANNEL_T* pThis )
 {
 #ifdef CONFIG_DAQ_SIMULATE_CHANNEL
@@ -686,7 +686,7 @@ void daqChannelSample100usOff( register DAQ_CANNEL_T* pThis )
  * @retval true is active
  * @retval false is not active
  */
-static inline
+STATIC inline
 bool daqChannelIsSample100usActive( register DAQ_CANNEL_T* pThis )
 {
 #ifdef CONFIG_DAQ_SIMULATE_CHANNEL
@@ -702,7 +702,7 @@ bool daqChannelIsSample100usActive( register DAQ_CANNEL_T* pThis )
  * @see daqChannelGetRegPtr
  * @param pThis Pointer to the channel object
  */
-static inline void daqChannelSample1msOn( register DAQ_CANNEL_T* pThis )
+STATIC inline void daqChannelSample1msOn( register DAQ_CANNEL_T* pThis )
 {
 #ifdef CONFIG_DAQ_SIMULATE_CHANNEL
    daqChannelSample10usOn( pThis );
@@ -723,7 +723,7 @@ static inline void daqChannelSample1msOn( register DAQ_CANNEL_T* pThis )
  * @see daqChannelGetRegPtr
  * @param pThis Pointer to the channel object
  */
-static inline void daqChannelSample1msOff( register DAQ_CANNEL_T* pThis )
+STATIC inline void daqChannelSample1msOff( register DAQ_CANNEL_T* pThis )
 {
 #ifdef CONFIG_DAQ_SIMULATE_CHANNEL
    daqChannelSample1msOff( pThis );
@@ -743,7 +743,7 @@ static inline void daqChannelSample1msOff( register DAQ_CANNEL_T* pThis )
  * @retval true is active
  * @retval false is not active
  */
-static inline bool daqChannelIsSample1msActive( register DAQ_CANNEL_T* pThis )
+STATIC inline bool daqChannelIsSample1msActive( register DAQ_CANNEL_T* pThis )
 {
 #ifdef CONFIG_DAQ_SIMULATE_CHANNEL
    return daqChannelIsSample100usActive( pThis );
@@ -758,7 +758,7 @@ static inline bool daqChannelIsSample1msActive( register DAQ_CANNEL_T* pThis )
  *        continue modes when the counter reaches zero.
  * @param pThis Pointer to the channel object
  */
-static inline
+STATIC inline
 bool daqChannelDecrementBlockCounter( register DAQ_CANNEL_T* pThis )
 {
    if( pThis->blockDownCounter == 0 )
@@ -781,7 +781,7 @@ bool daqChannelDecrementBlockCounter( register DAQ_CANNEL_T* pThis )
  * @see daqChannelGetRegPtr
  * @param pThis Pointer to the channel object
  */
-static inline void daqChannelEnableTriggerMode( register DAQ_CANNEL_T* pThis )
+STATIC inline void daqChannelEnableTriggerMode( register DAQ_CANNEL_T* pThis )
 {
    daqChannelGetCtrlRegPtr( pThis )->Ena_TrigMod = ON;
 }
@@ -792,7 +792,7 @@ static inline void daqChannelEnableTriggerMode( register DAQ_CANNEL_T* pThis )
  * @see daqChannelGetRegPtr
  * @param pThis Pointer to the channel object
  */
-static inline void daqChannelDisableTriggerMode( register DAQ_CANNEL_T* pThis )
+STATIC inline void daqChannelDisableTriggerMode( register DAQ_CANNEL_T* pThis )
 {
    daqChannelGetCtrlRegPtr( pThis )->Ena_TrigMod = OFF;
 }
@@ -805,7 +805,7 @@ static inline void daqChannelDisableTriggerMode( register DAQ_CANNEL_T* pThis )
  * @retval true is active
  * @retval false is not active
  */
-static inline
+STATIC inline
 bool daqChannelIsTriggerModeEnabled( register DAQ_CANNEL_T* pThis )
 {
    return (daqChannelGetCtrlRegPtr( pThis )->Ena_TrigMod == ON);
@@ -817,7 +817,7 @@ bool daqChannelIsTriggerModeEnabled( register DAQ_CANNEL_T* pThis )
  * @see daqChannelGetRegPtr
  * @param pThis Pointer to the channel object
  */
-static inline
+STATIC inline
 void daqChannelEnableExtrenTrigger( register DAQ_CANNEL_T* pThis )
 {
    daqChannelGetCtrlRegPtr( pThis )->ExtTrig_nEvTrig = ON;
@@ -829,7 +829,7 @@ void daqChannelEnableExtrenTrigger( register DAQ_CANNEL_T* pThis )
  * @see daqChannelGetRegPtr
  * @param pThis Pointer to the channel object
  */
-static inline void daqChannelEnableEventTrigger( register DAQ_CANNEL_T* pThis )
+STATIC inline void daqChannelEnableEventTrigger( register DAQ_CANNEL_T* pThis )
 {
    daqChannelGetCtrlRegPtr( pThis )->ExtTrig_nEvTrig = OFF;
 }
@@ -842,7 +842,7 @@ static inline void daqChannelEnableEventTrigger( register DAQ_CANNEL_T* pThis )
  * @retval true Channel is in external trigger mode
  * @retval false Channel in in event trigger mode
  */
-static inline bool daqChannelGetTriggerSource( register DAQ_CANNEL_T* pThis )
+STATIC inline bool daqChannelGetTriggerSource( register DAQ_CANNEL_T* pThis )
 {
    return (daqChannelGetCtrlRegPtr( pThis )->ExtTrig_nEvTrig == ON);
 }
@@ -853,7 +853,7 @@ static inline bool daqChannelGetTriggerSource( register DAQ_CANNEL_T* pThis )
  * @see daqChannelGetRegPtr
  * @param pThis Pointer to the channel object
  */
-static inline void daqChannelEnablePostMortem( register DAQ_CANNEL_T* pThis )
+STATIC inline void daqChannelEnablePostMortem( register DAQ_CANNEL_T* pThis )
 {
 #ifdef CONFIG_DAQ_SIMULATE_CHANNEL
    DAQ_ASSERT( pThis->simulatedDescriptor.name.cControl.hiResMode == false );
@@ -873,7 +873,7 @@ static inline void daqChannelEnablePostMortem( register DAQ_CANNEL_T* pThis )
  * @retval true PM is enabled
  * @retval false PM is disabled
  */
-static inline bool daqChannelIsPostMortemActive( register DAQ_CANNEL_T* pThis )
+STATIC inline bool daqChannelIsPostMortemActive( register DAQ_CANNEL_T* pThis )
 {
 #ifdef CONFIG_DAQ_SIMULATE_CHANNEL
    return pThis->simulatedDescriptor.name.cControl.pmMode;
@@ -888,7 +888,7 @@ static inline bool daqChannelIsPostMortemActive( register DAQ_CANNEL_T* pThis )
  * @see daqChannelGetRegPtr
  * @param pThis Pointer to the channel object
  */
-static inline void daqChannelDisablePostMortem( register DAQ_CANNEL_T* pThis )
+STATIC inline void daqChannelDisablePostMortem( register DAQ_CANNEL_T* pThis )
 {
    pThis->properties.postMortemEvent = daqChannelIsPostMortemActive( pThis );
 #ifdef CONFIG_DAQ_SIMULATE_CHANNEL
@@ -913,7 +913,7 @@ static inline void daqChannelDisablePostMortem( register DAQ_CANNEL_T* pThis )
  * @retval true Post-Mortem data ready to copy
  * @retval false No post mortem event
  */
-static inline bool daqWasPostMortemEvent( register DAQ_CANNEL_T* pThis )
+STATIC inline bool daqWasPostMortemEvent( register DAQ_CANNEL_T* pThis )
 {
    bool ret = pThis->properties.postMortemEvent;
    pThis->properties.postMortemEvent = false;
@@ -926,7 +926,7 @@ static inline bool daqWasPostMortemEvent( register DAQ_CANNEL_T* pThis )
  * @see daqChannelGetRegPtr
  * @param pThis Pointer to the channel object
  */
-static inline
+STATIC inline
 void daqChannelEnableHighResolution( register DAQ_CANNEL_T* pThis )
 {
 #ifdef CONFIG_DAQ_SIMULATE_CHANNEL
@@ -945,7 +945,7 @@ void daqChannelEnableHighResolution( register DAQ_CANNEL_T* pThis )
  * @see daqChannelGetRegPtr
  * @param pThis Pointer to the channel object
  */
-static inline
+STATIC inline
 void daqChannelDisableHighResolution( register DAQ_CANNEL_T* pThis )
 {
 #ifdef CONFIG_DAQ_SIMULATE_CHANNEL
@@ -963,7 +963,7 @@ void daqChannelDisableHighResolution( register DAQ_CANNEL_T* pThis )
  * @retval true high resolution mode is enabled
  * @retval false high resolution mode is disabled
  */
-static inline
+STATIC inline
 bool daqChannelIsHighResolutionEnabled( register DAQ_CANNEL_T* pThis )
 {
 #ifdef CONFIG_DAQ_SIMULATE_CHANNEL
@@ -980,7 +980,7 @@ bool daqChannelIsHighResolutionEnabled( register DAQ_CANNEL_T* pThis )
  * @see daqChannelGetRegPtr
  * @param pThis Pointer to the channel object
  */
-static inline
+STATIC inline
 void daqChannelEnableExternTriggerHighRes( register DAQ_CANNEL_T* pThis )
 {
    daqChannelGetCtrlRegPtr( pThis )->ExtTrig_nEvTrig_HiRes = ON;
@@ -992,7 +992,7 @@ void daqChannelEnableExternTriggerHighRes( register DAQ_CANNEL_T* pThis )
  * @see daqChannelGetRegPtr
  * @param pThis Pointer to the channel object
  */
-static inline
+STATIC inline
 void daqChannelEnableEventTriggerHighRes( register DAQ_CANNEL_T* pThis )
 {
    daqChannelGetCtrlRegPtr( pThis )->ExtTrig_nEvTrig_HiRes = OFF;
@@ -1007,7 +1007,7 @@ void daqChannelEnableEventTriggerHighRes( register DAQ_CANNEL_T* pThis )
  * @retval true Channel is in external trigger mode
  * @retval false Channel in in event trigger mode
  */
-static inline
+STATIC inline
 bool daqChannelGetTriggerSourceHighRes( register DAQ_CANNEL_T* pThis )
 {
    return (daqChannelGetCtrlRegPtr( pThis )->ExtTrig_nEvTrig_HiRes == ON);
@@ -1022,7 +1022,7 @@ bool daqChannelGetTriggerSourceHighRes( register DAQ_CANNEL_T* pThis )
  * @param pThis Pointer to the channel object
  * @return least significant wort of bus tag event condition
  */
-static inline
+STATIC inline
 DAQ_REGISTER_T daqChannelGetTriggerConditionLW( register DAQ_CANNEL_T* pThis )
 {
    DAQ_ASSERT( pThis != NULL );
@@ -1038,7 +1038,7 @@ DAQ_REGISTER_T daqChannelGetTriggerConditionLW( register DAQ_CANNEL_T* pThis )
  * @param pThis Pointer to the channel object
  * @param value least significant wort of bus tag event condition
  */
-static inline
+STATIC inline
 void daqChannelSetTriggerConditionLW( register DAQ_CANNEL_T* pThis,
                                       const DAQ_REGISTER_T value )
 {
@@ -1055,7 +1055,7 @@ void daqChannelSetTriggerConditionLW( register DAQ_CANNEL_T* pThis,
  * @param pThis Pointer to the channel object
  * @return most significant wort of bus tag event condition
  */
-static inline
+STATIC inline
 DAQ_REGISTER_T daqChannelGetTriggerConditionHW( register DAQ_CANNEL_T* pThis )
 {
    DAQ_ASSERT( pThis != NULL );
@@ -1065,13 +1065,13 @@ DAQ_REGISTER_T daqChannelGetTriggerConditionHW( register DAQ_CANNEL_T* pThis )
 
 /*! --------------------------------------------------------------------------
  * @ingroup DAQ_CHANNEL
- * @brief sets the most significant word of the bus tag event
+ * @brief Sets the most significant word of the bus tag event
  *        trigger condition.
  * @see daqChannelGetRegPtr
  * @param pThis Pointer to the channel object
  * @param value most significant wort of bus tag event condition
  */
-static inline
+STATIC inline
 void daqChannelSetTriggerConditionHW( register DAQ_CANNEL_T* pThis,
                                       const DAQ_REGISTER_T value )
 {
@@ -1087,7 +1087,7 @@ void daqChannelSetTriggerConditionHW( register DAQ_CANNEL_T* pThis,
  * @param pThis Pointer to the channel object
  * @return trigger delay
  */
-static inline
+STATIC inline
 DAQ_REGISTER_T daqChannelGetTriggerDelay( register DAQ_CANNEL_T* pThis )
 {
    DAQ_ASSERT( pThis != NULL );
@@ -1102,7 +1102,7 @@ DAQ_REGISTER_T daqChannelGetTriggerDelay( register DAQ_CANNEL_T* pThis )
  * @param pThis Pointer to the channel object
  * @param value trigger delay
  */
-static inline
+STATIC inline
 void daqChannelSetTriggerDelay( register DAQ_CANNEL_T* pThis,
                                 const DAQ_REGISTER_T value )
 {
@@ -1117,7 +1117,7 @@ void daqChannelSetTriggerDelay( register DAQ_CANNEL_T* pThis,
  * @param pThis Pointer to the channel object
  * @return Pointer to the 16 bit DAQ interrupt pending register
  */
-static inline volatile
+STATIC inline volatile
 DAQ_REGISTER_T* daqChannelGetDaqIntPendingPtr( register DAQ_CANNEL_T* pThis )
 {
    DAQ_ASSERT( pThis != NULL );
@@ -1131,7 +1131,7 @@ DAQ_REGISTER_T* daqChannelGetDaqIntPendingPtr( register DAQ_CANNEL_T* pThis )
  * @retval true DAQ Interrupt was pending.
  * @retval false No DAQ interrupt was pending.
  */
-static inline
+STATIC inline
 bool daqChannelTestAndClearDaqIntPending( register DAQ_CANNEL_T* pThis )
 {
    if( ((*daqChannelGetDaqIntPendingPtr( pThis )) & pThis->intMask) != 0 )
@@ -1151,7 +1151,7 @@ bool daqChannelTestAndClearDaqIntPending( register DAQ_CANNEL_T* pThis )
  * @param pThis Pointer to the channel object
  * @return Pointer to the 16 bit HiRes interrupt pending register
  */
-static inline volatile
+STATIC inline volatile
 DAQ_REGISTER_T* daqChannelGetHiResIntPendingPtr( register DAQ_CANNEL_T* pThis )
 {
    DAQ_ASSERT( pThis != NULL );
@@ -1165,7 +1165,7 @@ DAQ_REGISTER_T* daqChannelGetHiResIntPendingPtr( register DAQ_CANNEL_T* pThis )
  * @retval true HiRes Interrupt was pending.
  * @retval false No HiRes interrupt was pending.
  */
-static inline
+STATIC inline
 bool daqChannelTestAndClearHiResIntPending( register DAQ_CANNEL_T* pThis )
 {
    if( ((*daqChannelGetHiResIntPendingPtr( pThis )) & pThis->intMask) != 0 )
@@ -1186,7 +1186,7 @@ bool daqChannelTestAndClearHiResIntPending( register DAQ_CANNEL_T* pThis )
  * @see daqChannelGetRegPtr
  * @param pThis Pointer to the channel object
  */
-static inline
+STATIC inline
 DAQ_DATA_T volatile * daqChannelGetPmDatPtr( register DAQ_CANNEL_T* pThis )
 {
    DAQ_ASSERT( pThis != NULL );
@@ -1202,7 +1202,7 @@ DAQ_DATA_T volatile * daqChannelGetPmDatPtr( register DAQ_CANNEL_T* pThis )
  * @return 16 bit data word moved out from the Post Mortem / HiRes FiFo.
  */
 ALWAYS_INLINE
-static inline volatile
+STATIC inline volatile
 DAQ_DATA_T daqChannelPopPmFifo( register DAQ_CANNEL_T* pThis )
 {
 #ifdef CONFIG_DAQ_SIMULATE_CHANNEL
@@ -1218,7 +1218,7 @@ DAQ_DATA_T daqChannelPopPmFifo( register DAQ_CANNEL_T* pThis )
  * @see daqChannelGetRegPtr
  * @param pThis Pointer to the channel object
  */
-static inline
+STATIC inline
 DAQ_DATA_T volatile * daqChannelGetDaqDatPtr( register DAQ_CANNEL_T* pThis )
 {
    DAQ_ASSERT( pThis != NULL );
@@ -1234,7 +1234,7 @@ DAQ_DATA_T volatile * daqChannelGetDaqDatPtr( register DAQ_CANNEL_T* pThis )
  * @return 16 bit data word moved out from the DAQ FiFo.
  */
 ALWAYS_INLINE
-static inline volatile
+STATIC inline volatile
 DAQ_DATA_T daqChannelPopDaqFifo( register DAQ_CANNEL_T* pThis )
 {
 #ifdef CONFIG_DAQ_SIMULATE_CHANNEL
@@ -1250,7 +1250,7 @@ DAQ_DATA_T daqChannelPopDaqFifo( register DAQ_CANNEL_T* pThis )
  * @param pThis Pointer to the channel object
  * @return version number
  */
-static inline int daqChannelGetMacroVersion( register DAQ_CANNEL_T* pThis )
+STATIC inline int daqChannelGetMacroVersion( register DAQ_CANNEL_T* pThis )
 {
    DAQ_ASSERT( pThis != NULL );
    __DAQ_VERIFY_CHANNEL_REG_ACCESS( DAQ_FIFO_WORDS );
@@ -1265,7 +1265,7 @@ static inline int daqChannelGetMacroVersion( register DAQ_CANNEL_T* pThis )
  * @param pThis Pointer to the channel object
  * @return Remaining number of words during read out.
  */
-static inline
+STATIC inline
 DAQ_REGISTER_T daqChannelGetDaqFifoWords( register DAQ_CANNEL_T* pThis )
 {
    DAQ_ASSERT( pThis != NULL );
@@ -1285,7 +1285,7 @@ DAQ_REGISTER_T daqChannelGetDaqFifoWords( register DAQ_CANNEL_T* pThis )
  * @param pThis Pointer to the channel object
  * @return Number of used channels
  */
-static inline
+STATIC inline
 DAQ_REGISTER_T daqChannelGetMaxCannels( register DAQ_CANNEL_T* pThis )
 {
    DAQ_ASSERT( pThis != NULL );
@@ -1301,7 +1301,7 @@ DAQ_REGISTER_T daqChannelGetMaxCannels( register DAQ_CANNEL_T* pThis )
  * @param pThis Pointer to the channel object
  * @return Remaining number of words during read out.
  */
-static inline
+STATIC inline
 DAQ_REGISTER_T daqChannelGetPmFifoWords( register DAQ_CANNEL_T* pThis )
 {
    DAQ_ASSERT( pThis != NULL );
@@ -1376,7 +1376,7 @@ void daqChannelReset( register DAQ_CANNEL_T* pThis );
  * @param pThis Pointer to the DAQ-device object
  * @return Slave base address of this DAQ device
  */
-static inline
+STATIC inline
 void* daqDeviceGetScuBusSlaveBaseAddress( register DAQ_DEVICE_T* pThis )
 {
    DAQ_ASSERT( pThis != NULL );
@@ -1396,7 +1396,7 @@ void* daqDeviceGetScuBusSlaveBaseAddress( register DAQ_DEVICE_T* pThis )
  * @see daqDeviceDisableScuSlaveInterrupt
  * @param pThis Pointer to the DAQ-device objects
  */
-static inline
+STATIC inline
 void daqDeviceEnableScuSlaveInterrupt( register DAQ_DEVICE_T* pThis )
 {
    scuBusSetRegisterFalgs( daqDeviceGetScuBusSlaveBaseAddress( pThis ),
@@ -1412,7 +1412,7 @@ void daqDeviceEnableScuSlaveInterrupt( register DAQ_DEVICE_T* pThis )
  * @see daqDeviceEnableScuSlaveInterrupt
  * @param pThis Pointer to the DAQ-device objects
  */
-static inline
+STATIC inline
 void daqDeviceDisableScuSlaveInterrupt( register DAQ_DEVICE_T* pThis )
 {
    scuBusClearRegisterFalgs( daqDeviceGetScuBusSlaveBaseAddress( pThis ),
@@ -1429,7 +1429,7 @@ void daqDeviceDisableScuSlaveInterrupt( register DAQ_DEVICE_T* pThis )
  * @param pThis Pointer to the DAQ-device object.
  * @return Pointer to the interrupt active flag register.
  */
-static inline
+STATIC inline
 DAQ_REGISTER_T* volatile daqDeviceGetInterruptFlags
                                                ( register DAQ_DEVICE_T* pThis )
 {
@@ -1444,7 +1444,7 @@ DAQ_REGISTER_T* volatile daqDeviceGetInterruptFlags
  * @retval true DAQ Interrupt was pending.
  * @retval false No DAQ interrupt was pending.
  */
-static inline
+STATIC inline
 bool _daqDeviceTestAndClearDaqInt( DAQ_REGISTER_T* volatile pFlags )
 {
    if( (*pFlags & (1 << DAQ_IRQ_DAQ_FIFO_FULL)) != 0 )
@@ -1465,7 +1465,7 @@ bool _daqDeviceTestAndClearDaqInt( DAQ_REGISTER_T* volatile pFlags )
  * @retval true DAQ Interrupt was pending.
  * @retval false No DAQ interrupt was pending.
  */
-static inline
+STATIC inline
 bool daqDeviceTestAndClearDaqInt( register DAQ_DEVICE_T* pThis )
 {
    return _daqDeviceTestAndClearDaqInt( daqDeviceGetInterruptFlags( pThis ) );
@@ -1478,7 +1478,7 @@ bool daqDeviceTestAndClearDaqInt( register DAQ_DEVICE_T* pThis )
  * @retval true HiRes Interrupt was pending.
  * @retval false No HiRes interrupt was pending.
  */
-static inline
+STATIC inline
 bool _daqDeviceTestAndClearHiResInt( uint16_t* volatile pFlags )
 {
    if( (*pFlags & (1 << DAQ_IRQ_HIRES_FINISHED)) != 0 )
@@ -1499,7 +1499,7 @@ bool _daqDeviceTestAndClearHiResInt( uint16_t* volatile pFlags )
  * @retval true HiRes Interrupt was pending.
  * @retval false No HiRes interrupt was pending.
  */
-static inline
+STATIC inline
 bool daqDeviceTestAndClearHiResInt( register DAQ_DEVICE_T* pThis )
 {
    return _daqDeviceTestAndClearHiResInt( daqDeviceGetInterruptFlags( pThis ));
@@ -1513,7 +1513,7 @@ bool daqDeviceTestAndClearHiResInt( register DAQ_DEVICE_T* pThis )
  * @retval true  DAQ interrupt request is active.
  * @retval false No DAQ interrupt
  */
-static inline
+STATIC inline
 bool _daqDeviceIsInterrupt( uint16_t* volatile pFlags )
 {
    return ((*pFlags & ((1 << DAQ_IRQ_HIRES_FINISHED) |
@@ -1528,7 +1528,7 @@ bool _daqDeviceIsInterrupt( uint16_t* volatile pFlags )
  * @retval true  DAQ interrupt request is active.
  * @retval false No DAQ interrupt
  */
-static inline
+STATIC inline
 bool daqDeviceIsInterrupt( register DAQ_DEVICE_T* pThis )
 {
    return _daqDeviceIsInterrupt( daqDeviceGetInterruptFlags( pThis ));
@@ -1540,7 +1540,7 @@ bool daqDeviceIsInterrupt( register DAQ_DEVICE_T* pThis )
  * @param pThis Pointer to the DAQ-device object
  * @return Pointer to the DAQ interrupt pending Register.
  */
-static inline volatile
+STATIC inline volatile
 uint16_t* daqDeviceGetDaqIntPendingPtr( register DAQ_DEVICE_T* pThis )
 {
    DAQ_ASSERT( pThis != NULL );
@@ -1553,7 +1553,7 @@ uint16_t* daqDeviceGetDaqIntPendingPtr( register DAQ_DEVICE_T* pThis )
  * @brief Clears all possible pending  DAQ interrupt flags.
  * @param pThis Pointer to the DAQ-device objects
  */
-static inline
+STATIC inline
 void daqDeviceClearDaqChannelInterrupts( register DAQ_DEVICE_T* pThis )
 {
    *daqDeviceGetDaqIntPendingPtr( pThis ) = (uint16_t)~0;
@@ -1565,7 +1565,7 @@ void daqDeviceClearDaqChannelInterrupts( register DAQ_DEVICE_T* pThis )
  * @param pThis Pointer to the DAQ-device objects
  * @return Pointer to the HiRes interrupt pending Register.
  */
-static inline volatile
+STATIC inline volatile
 uint16_t* daqDeviceGetHiResIntPendingPtr( register DAQ_DEVICE_T* pThis )
 {
    DAQ_ASSERT( pThis != NULL );
@@ -1578,7 +1578,7 @@ uint16_t* daqDeviceGetHiResIntPendingPtr( register DAQ_DEVICE_T* pThis )
  * @brief Clears all possible pending HiRes interrupt flags.
  * @param pThis Pointer to the DAQ-device objects
  */
-static inline
+STATIC inline
 void daqDeviceClearHiResChannelInterrupts( register DAQ_DEVICE_T* pThis )
 {
    *daqDeviceGetHiResIntPendingPtr( pThis ) = (uint16_t)~0;
@@ -1592,7 +1592,7 @@ void daqDeviceClearHiResChannelInterrupts( register DAQ_DEVICE_T* pThis )
  * @param pThis Pointer to the DAQ-device object
  * @return Slot number.
  */
-static inline int daqDeviceGetSlot( register DAQ_DEVICE_T* pThis )
+STATIC inline int daqDeviceGetSlot( register DAQ_DEVICE_T* pThis )
 {
    DAQ_ASSERT( pThis != NULL );
    DAQ_ASSERT( pThis->pReg != NULL );
@@ -1609,7 +1609,7 @@ static inline int daqDeviceGetSlot( register DAQ_DEVICE_T* pThis )
  * @param pThis Pointer to the DAQ-device object
  * @return version number
  */
-static inline int daqDeviceGetMacroVersion( register DAQ_DEVICE_T* pThis )
+STATIC inline int daqDeviceGetMacroVersion( register DAQ_DEVICE_T* pThis )
 {
    DAQ_ASSERT( pThis != NULL );
    DAQ_ASSERT( pThis->pReg != NULL );
@@ -1626,7 +1626,7 @@ static inline int daqDeviceGetMacroVersion( register DAQ_DEVICE_T* pThis )
  * @param pThis Pointer to the DAQ-device objects
  * @return Number of existing channels of this device.
  */
-static inline
+STATIC inline
 unsigned int daqDeviceGetMaxChannels( register DAQ_DEVICE_T* pThis )
 {
    DAQ_ASSERT( pThis != NULL );
@@ -1664,7 +1664,7 @@ unsigned int daqDeviceGetUsedChannels( register DAQ_DEVICE_T* pThis );
  * @param n Channel number in a range of 0 to max found channels minus one.
  * @see daqDeviceGetMaxChannels
  */
-static inline
+STATIC inline
 DAQ_CANNEL_T* daqDeviceGetChannelObject( register DAQ_DEVICE_T* pThis,
                                          const unsigned int n )
 {
@@ -1790,7 +1790,7 @@ int daqBusGetNumberOfAllFoundChannels( register DAQ_BUS_T* pAllDAQ );
  * @return Number of found DAQ - devices
  */
 ALWAYS_INLINE
-static inline
+STATIC inline
 unsigned int daqBusGetFoundDevices( const register DAQ_BUS_T* pThis )
 {
    return pThis->foundDevices;
@@ -1819,7 +1819,7 @@ unsigned int daqBusGetUsedChannels( register DAQ_BUS_T* pThis );
  * @see daqBusGetFoundDevices
  * @return Pointer of type DAQ_DEVICE_T
  */
-static inline DAQ_DEVICE_T* daqBusGetDeviceObject( register DAQ_BUS_T* pThis,
+STATIC inline DAQ_DEVICE_T* daqBusGetDeviceObject( register DAQ_BUS_T* pThis,
                                                    const unsigned int n )
 {
    DAQ_ASSERT( n < ARRAY_SIZE(pThis->aDaq) );

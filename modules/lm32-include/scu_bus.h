@@ -248,7 +248,7 @@ typedef enum
  * @param slot Slot number, valid range 1 .. MAX_SCU_SLAVES (12)
  * @return Relative slot address
  */
-static inline uint32_t scuBusGetSlotOffset( const unsigned int slot )
+STATIC inline uint32_t scuBusGetSlotOffset( const unsigned int slot )
 {
    SCUBUS_ASSERT( slot >= SCUBUS_START_SLOT );
    SCUBUS_ASSERT( slot <= MAX_SCU_SLAVES );
@@ -266,7 +266,7 @@ static inline uint32_t scuBusGetSlotOffset( const unsigned int slot )
  * @param slot Slot number, valid range 1 .. MAX_SCU_SLAVES (12)
  * @return Absolute SCU bus slave address
  */
-static inline void* scuBusGetAbsSlaveAddr( const void* pScuBusBase,
+STATIC inline void* scuBusGetAbsSlaveAddr( const void* pScuBusBase,
                                            const unsigned int slot )
 {
    return &(((uint8_t*)pScuBusBase)[scuBusGetSlotOffset(slot)]);
@@ -281,13 +281,17 @@ static inline void* scuBusGetAbsSlaveAddr( const void* pScuBusBase,
  * @param index Location of relevant register to read, that means offset to pAbsSlaveAddr
  * @return Content of the addressed register
  */
-static inline volatile
+STATIC inline volatile
 uint16_t scuBusGetSlaveValue16( const void* pAbsSlaveAddr,
                                 const unsigned int index )
 {
    SCUBUS_ASSERT( index >= 0 );
    SCUBUS_ASSERT( index < (SCUBUS_SLAVE_ADDR_SPACE / sizeof(uint16_t)) );
-   SCUBUS_ASSERT( ((unsigned int)pAbsSlaveAddr % sizeof(uint16_t)) == 0 ); // At least 2 bytes alignment assumed!
+
+   /*
+    * At least 2 bytes alignment assumed!
+    */
+   SCUBUS_ASSERT( ((unsigned int)pAbsSlaveAddr % sizeof(uint16_t)) == 0 );
 
    return ((uint16_t* volatile)pAbsSlaveAddr)[index];
 }
@@ -301,13 +305,17 @@ uint16_t scuBusGetSlaveValue16( const void* pAbsSlaveAddr,
  * @param index Location of relevant register to read, that means offset to pAbsSlaveAddr
  * @param value 16 bit value to write
  */
-static inline
+STATIC inline
 void scuBusSetSlaveValue16( void* pAbsSlaveAddr, const unsigned int index,
                             const uint16_t value )
 {
    SCUBUS_ASSERT( index >= 0 );
    SCUBUS_ASSERT( index < (SCUBUS_SLAVE_ADDR_SPACE / sizeof(uint16_t)) );
-   SCUBUS_ASSERT( ((unsigned int)pAbsSlaveAddr % sizeof(uint16_t)) == 0 ); // At least 2 bytes alignment assumed!
+
+   /*
+    * At least 2 bytes alignment assumed!
+    */
+   SCUBUS_ASSERT( ((unsigned int)pAbsSlaveAddr % sizeof(uint16_t)) == 0 );
 
    ((uint16_t* volatile)pAbsSlaveAddr)[index] = value;
 }
@@ -318,7 +326,7 @@ void scuBusSetSlaveValue16( void* pAbsSlaveAddr, const unsigned int index,
  * @param pScuBusBase Base-address of SCU-bus.
  * @return Pointer to the slave interrupt enable register.
  */
-static inline
+STATIC inline
 uint16_t* volatile scuBusGetMasterInterruptEnableRegPtr( const void* pScuBusBase )
 {
    return &((uint16_t* volatile)pScuBusBase)[SRQ_ENA];
@@ -330,7 +338,7 @@ uint16_t* volatile scuBusGetMasterInterruptEnableRegPtr( const void* pScuBusBase
  * @param pScuBusBase Base-address of SCU-bus.
  * @param slot Slot number of the slave.
  */
-static inline void scuBusEnableSlaveInterrupt( const void* pScuBusBase,
+STATIC inline void scuBusEnableSlaveInterrupt( const void* pScuBusBase,
                                                const unsigned int slot )
 {
    SCUBUS_ASSERT( slot > 0 );
@@ -344,7 +352,7 @@ static inline void scuBusEnableSlaveInterrupt( const void* pScuBusBase,
  * @param pScuBusBase Base-address of SCU-bus.
  * @param slot Slot number of the slave.
  */
-static inline void scuBusDisableSlaveInterrupt( const void* pScuBusBase,
+STATIC inline void scuBusDisableSlaveInterrupt( const void* pScuBusBase,
                                                const unsigned int slot )
 {
    SCUBUS_ASSERT( slot > 0 );
@@ -360,18 +368,26 @@ static inline void scuBusDisableSlaveInterrupt( const void* pScuBusBase,
  * @param pScuBusBase Base-address of SU-bus.
  * @param slot Slave- respectively slot- number of slave.
  */
-static inline
+STATIC inline
 uint16_t* volatile scuBusGetInterruptActiveFlagRegPtr( const void* pScuBusBase,
                                                      const unsigned int slot )
 {
    return &((uint16_t*)scuBusGetAbsSlaveAddr( pScuBusBase, slot ))[Intr_Active];
 }
 
-static inline
+/*! ---------------------------------------------------------------------------
+ * @ingroup SCU_BUS INTERRUPT
+ * @brief Saves the current interrupt pending bits from the slaves interrupt
+ *        pending register as return value and resets this register.
+ * @param pScuBusBase Base-address of SU-bus.
+ * @param slot Slave- respectively slot- number of slave.
+ * @return Flag field of all pending interrupts of this slave before this
+ *         function call.
+ */
+volatile STATIC inline
 uint16_t scuBusGetAndResetIterruptPendingFlags( const void* pScuBusBase,
                                                 const unsigned int slot )
-{
-  /*
+{ /*
    * Note: Keep in mind that is a memory mapped i/o handling and the
    *       following lines seems a bit confused, respectively
    *       logical meaningless.
@@ -380,12 +396,13 @@ uint16_t scuBusGetAndResetIterruptPendingFlags( const void* pScuBusBase,
    uint16_t* volatile pIntActive = scuBusGetInterruptActiveFlagRegPtr(
                                                           pScuBusBase, slot );
    volatile const uint16_t intActive = *pIntActive;
-   NOP();
+
    /*
     * The interrupt pending flags becomes deleted by writing a one in
     * the concerning bit position(s).
     */
    *pIntActive = intActive;
+
    return intActive;
 }
 
@@ -396,7 +413,7 @@ uint16_t scuBusGetAndResetIterruptPendingFlags( const void* pScuBusBase,
  * @param pScuBusBase Base-address of SU-bus.
  * @param slot Slave- respectively slot- number of slave.
  */
-static inline
+STATIC inline
 uint16_t* volatile scuBusGetInterruptEnableFlagRegPtr( const void* pScuBusBase,
                                                      const unsigned int slot )
 {
@@ -410,7 +427,7 @@ uint16_t* volatile scuBusGetInterruptEnableFlagRegPtr( const void* pScuBusBase,
  * @param index Location of relevant register to read, that means offset to pAbsSlaveAddr
  * @param flags16 Bit field
  */
-static inline
+STATIC inline
 void scuBusSetRegisterFalgs( void* pAbsSlaveAddr, const unsigned int index,
                              const uint16_t flags16 )
 {
@@ -428,7 +445,7 @@ void scuBusSetRegisterFalgs( void* pAbsSlaveAddr, const unsigned int index,
  * @param index Location of relevant register to read, that means offset to pAbsSlaveAddr
  * @param flags16 Bit field
  */
-static inline
+STATIC inline
 void scuBusClearRegisterFalgs( void* pAbsSlaveAddr, const unsigned int index,
                                const uint16_t flags16 )
 {
@@ -449,7 +466,7 @@ void scuBusClearRegisterFalgs( void* pAbsSlaveAddr, const unsigned int index,
  * @param index Location of relevant register to read, that means offset to pAbsSlaveAddr
  * @return Content of the addressed register
  */
-static inline volatile
+STATIC inline volatile
 uint32_t scuBusGetSlaveValue32( const void* pAbsSlaveAddr, const unsigned int index )
 {
    SCUBUS_ASSERT( index >= 0 );
@@ -468,7 +485,7 @@ uint32_t scuBusGetSlaveValue32( const void* pAbsSlaveAddr, const unsigned int in
  * @param index Location of relevant register to read, that means offset to pAbsSlaveAddr
  * @param value 16 bit value to write
  */
-static inline
+STATIC inline
 void scuBusSetSlaveValue32( void* pAbsSlaveAddr, const unsigned int index,
                             const uint32_t value )
 {

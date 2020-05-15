@@ -226,6 +226,7 @@ void clear_handler_state( const uint8_t socket );
 
 //#define CONFIG_DEBUG_FG_SIGNAL
 /*! ---------------------------------------------------------------------------
+ * @ingroup MAILBOX
  * @brief Send a signal back to the Linux-host (SAFTLIB)
  * @param sig Signal
  * @param channel Concerning channel number.
@@ -233,8 +234,8 @@ void clear_handler_state( const uint8_t socket );
 STATIC inline void sendSignal( const SIGNAL_T sig, const unsigned int channel )
 {
    STATIC_ASSERT( sizeof( pCpuMsiBox[0] ) == sizeof( uint32_t ) );
-   ATOMIC_SECTION()
-      MSI_BOX_SLOT_ACCESS( g_shared.fg_regs[channel].mbx_slot, signal ) = sig;
+   //!!ATOMIC_SECTION()
+         MSI_BOX_SLOT_ACCESS( g_shared.fg_regs[channel].mbx_slot, signal ) = sig;
 
    hist_addx( HISTORY_XYZ_MODULE, signal2String( sig ), channel );
 #ifdef CONFIG_DEBUG_FG_SIGNAL

@@ -216,50 +216,25 @@ void clear_handler_state( const uint8_t socket )
 STATIC inline void onScuBusEvent( MSI_T* pMessage )
 {
    const unsigned int slot = pMessage->msg + 1;
-   uint16_t* volatile  pIntActive =
-     scuBusGetInterruptActiveFlagRegPtr( (const void*)g_pScub_base, slot );
-   uint16_t  flagsToReset = 0;
+   const uint16_t pendingIrqs =
+      scuBusGetAndResetIterruptPendingFlags((const void*)g_pScub_base, slot );
 
-   if( (*pIntActive & POWER_UP_IRQ) != 0 )
-   {
-      flagsToReset |= POWER_UP_IRQ;
-   }
-
-   if( (*pIntActive & FG1_IRQ) != 0 )
-   {
+   if( (pendingIrqs & FG1_IRQ) != 0 )
       handleAdacFg( slot, FG1_BASE );
-      flagsToReset |= FG1_IRQ;
-   }
 
-   if( (*pIntActive & FG2_IRQ) != 0 )
-   {
+   if( (pendingIrqs & FG2_IRQ) != 0 )
       handleAdacFg( slot, FG2_BASE );
-      flagsToReset |= FG2_IRQ;
-   }
 
 #ifdef CONFIG_MIL_FG
-   if( (*pIntActive & DREQ) != 0 )
-   {
+   if( (pendingIrqs & DREQ ) != 0 )
       add_msg( &g_aMsg_buf[0], DEVSIO, *pMessage );
-      flagsToReset |= DREQ;
-   }
 #endif
-
-#ifdef CONFIG_SCU_DAQ_INTEGRATION //!!
-   if( (*pIntActive & (1 << DAQ_IRQ_DAQ_FIFO_FULL)) != 0 )
-   {
+#ifdef CONFIG_SCU_DAQ_INTEGRATION
+   if( (pendingIrqs & (1 << DAQ_IRQ_DAQ_FIFO_FULL)) != 0 )
       add_msg( &g_aMsg_buf[0], DAQ, *pMessage );
-      flagsToReset |= (1 << DAQ_IRQ_DAQ_FIFO_FULL);
-   }
 
-   if( (*pIntActive & (1 << DAQ_IRQ_HIRES_FINISHED)) != 0 )
-   {
-      //TODO
-      flagsToReset |=  (1 << DAQ_IRQ_HIRES_FINISHED);
-   }
+   //TODO (1 << DAQ_IRQ_HIRES_FINISHED)
 #endif
-
-   *pIntActive = flagsToReset;
 }
 
 /*! ---------------------------------------------------------------------------

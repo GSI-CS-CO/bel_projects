@@ -1,6 +1,6 @@
 /*!
  *  @file daq.c
- *  @brief Control module for Data Acquisition Unit (DAQ)
+ *  @brief Control module for ADDAC Data Acquisition Unit (DAQ)
  *  @see
  *  <a href="https://www-acc.gsi.de/wiki/Hardware/Intern/DataAquisitionMacrof%C3%BCrSCUSlaveBaugruppen">
  *     Data Aquisition Macro fuer SCU Slave Baugruppen</a>

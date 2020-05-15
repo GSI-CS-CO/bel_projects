@@ -170,7 +170,7 @@ void irqDisableSpecific( const unsigned int intNum );
  * @brief Returns the current value of the LM32 interrupt pending register.
  * @return Value of the interrupt pending register.
  */
-STATIC inline
+STATIC inline ALWAYS_INLINE
 uint32_t irqGetPendingRegister( void )
 {
    uint32_t ip;
@@ -185,7 +185,7 @@ uint32_t irqGetPendingRegister( void )
  * @note The clearing of the bits in the pending register will accomplished
  *       by writing a one in the concerning bit-position!
  */
-STATIC inline
+STATIC inline ALWAYS_INLINE
 void irqResetPendingRegister( const uint32_t ip )
 {
    asm volatile ( "wcsr ip, %0" ::"r"(ip) );
@@ -209,7 +209,7 @@ uint32_t irqGetAndResetPendingRegister( void )
  * @ingroup INTERRUPT
  * @brief Returns the global interrupt enable register of the LM32.
  */
-STATIC inline uint32_t irqGetEnableRegister( void )
+STATIC inline ALWAYS_INLINE uint32_t irqGetEnableRegister( void )
 {
    uint32_t ie;
    asm volatile ( "rcsr %0, ie" :"=r"(ie) );
@@ -220,7 +220,7 @@ STATIC inline uint32_t irqGetEnableRegister( void )
  * @ingroup INTERRUPT
  * @brief Sets the global interrupt enable register of the LM32.
  */
-STATIC inline void irqSetEnableRegister( const uint32_t ie )
+STATIC inline ALWAYS_INLINE void irqSetEnableRegister( const uint32_t ie )
 {
    asm volatile ( "wcsr ie, %0" ::"r"(ie) );
 }
@@ -229,7 +229,7 @@ STATIC inline void irqSetEnableRegister( const uint32_t ie )
  * @ingroup INTERRUPT
  * @brief
  */
-STATIC inline bool irqIsEnabled( void )
+STATIC inline ALWAYS_INLINE bool irqIsEnabled( void )
 {
    return (irqGetEnableRegister() & 0x00000001) != 0;
 }
@@ -240,9 +240,9 @@ STATIC inline bool irqIsEnabled( void )
  *        Counterpart of irqDisable().
  * @see irqDisable
  */
-STATIC inline void irqEnable( void )
+STATIC inline ALWAYS_INLINE void irqEnable( void )
 {
-#if 1
+#ifdef CONFIG_RTOS
    const uint32_t ie = 0x00000001;
    asm volatile ( "wcsr ie, %0"::"r"(ie) );
 #else
@@ -256,22 +256,21 @@ STATIC inline void irqEnable( void )
  *        Counterpart of irqEnable()
  * @see irqEnable
  */
-STATIC inline void irqDisable( void )
+STATIC inline ALWAYS_INLINE void irqDisable( void )
 {
-#if 1
+#ifdef CONFIG_RTOS
    asm volatile ( "wcsr ie, r0" );
 #else
    irqSetEnableRegister( irqGetEnableRegister() & 0xFFFFFFFE );
 #endif
 }
 
-
 /*! ---------------------------------------------------------------------------
  * @ingroup INTERRUPT
  * @brief Returns the current value of the LM32 interrupt mask register
  * @return Current value of the interrupt mask register.
  */
-STATIC inline
+STATIC inline ALWAYS_INLINE
 uint32_t irqGetMaskRegister( void )
 {
    uint32_t im;
