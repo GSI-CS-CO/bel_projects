@@ -80,6 +80,11 @@ namespace gsi
 {
 #endif
 
+/*!
+ * @ingroup INTERRUPT
+ * @brief Interrupt enable bit mask of interrupt control register.
+ */
+#define IRQ_IE ((uint32_t)0x00000001)
 
 /*! ---------------------------------------------------------------------------
  * @ingroup INTERRUPT
@@ -220,7 +225,8 @@ STATIC inline ALWAYS_INLINE uint32_t irqGetEnableRegister( void )
  * @ingroup INTERRUPT
  * @brief Sets the global interrupt enable register of the LM32.
  */
-STATIC inline ALWAYS_INLINE void irqSetEnableRegister( const uint32_t ie )
+STATIC inline ALWAYS_INLINE
+void irqSetEnableRegister( register const uint32_t ie )
 {
    asm volatile ( "wcsr ie, %0" ::"r"(ie) );
 }
@@ -231,7 +237,7 @@ STATIC inline ALWAYS_INLINE void irqSetEnableRegister( const uint32_t ie )
  */
 STATIC inline ALWAYS_INLINE bool irqIsEnabled( void )
 {
-   return (irqGetEnableRegister() & 0x00000001) != 0;
+   return (irqGetEnableRegister() & IRQ_IE) != 0;
 }
 
 /*! ---------------------------------------------------------------------------
@@ -242,12 +248,11 @@ STATIC inline ALWAYS_INLINE bool irqIsEnabled( void )
  */
 STATIC inline ALWAYS_INLINE void irqEnable( void )
 {
-#ifdef CONFIG_RTOS
-   const uint32_t ie = 0x00000001;
-   asm volatile ( "wcsr ie, %0"::"r"(ie) );
-#else
-   irqSetEnableRegister( irqGetEnableRegister() | 0x00000001 );
-#endif
+//#ifdef CONFIG_RTOS
+//     irqSetEnableRegister( IRQ_IE );
+//#else
+   irqSetEnableRegister( irqGetEnableRegister() | IRQ_IE );
+//#endif
 }
 
 /*! ---------------------------------------------------------------------------
@@ -261,7 +266,7 @@ STATIC inline ALWAYS_INLINE void irqDisable( void )
 #ifdef CONFIG_RTOS
    asm volatile ( "wcsr ie, r0" );
 #else
-   irqSetEnableRegister( irqGetEnableRegister() & 0xFFFFFFFE );
+   irqSetEnableRegister( irqGetEnableRegister() & ~IRQ_IE );
 #endif
 }
 

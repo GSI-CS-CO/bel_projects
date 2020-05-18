@@ -223,13 +223,17 @@ typedef uint32_t       UBaseType_t;
    void vFunction( void *pvParameters )
 
 /*! ---------------------------------------------------------------------------
- * @brief Declaration of assembly function implemented in portasm.S
+ * @brief Start first task and enable global interrupt
+ *
+ * Declaration of assembly function implemented in portasm.S
  * @see portasm.S
  */
 void vStartFirstTask( void );
 
 /*! ---------------------------------------------------------------------------
- * @brief Declaration of assembly function implemented in portasm.S
+ * @brief Function for context switching it enables the IRQs as well.
+ *
+ * Declaration of assembly function implemented in portasm.S
  * @see portasm.S
  */
 void vPortYield( void );
