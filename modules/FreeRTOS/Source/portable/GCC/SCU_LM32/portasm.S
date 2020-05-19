@@ -12,6 +12,10 @@
 #ifndef __lm32__
   #error This assembler module is for the target Latice Micro32 (LM32) only!
 #endif
+#ifndef CONFIG_RTOS
+  #error Macro CONFIG_RTOS has to be defined in Makefile!
+#endif
+
 /*!
  * @brief Pointer to current Task Control Block.
  * @see task.c

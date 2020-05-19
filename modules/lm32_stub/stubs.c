@@ -19,12 +19,20 @@
  *  License along with this library. If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************
  */
+#include <stdint.h>
+#ifndef __lm32__
+  #error This module is for the target Latice micro32 (LM32) only!
+#endif
 
 int __attribute__((weak)) main(void)
 {
    return 0;
 }
 
+/*! --------------------------------------------------------------------------
+ * @ingroup OVERWRITABLE
+ * @brief Dummy function becomes invoked when a interrupt appears.
+ */
 void __attribute__((weak)) _irq_entry(void)
 {
 }
@@ -33,8 +41,22 @@ void __attribute__((weak)) _segfault(void)
 {
 }
 
+/*! --------------------------------------------------------------------------
+ * @ingroup OVERWRITABLE
+ * @brief Dummy function becomes invoked for all LM32 exceptions except the
+ *        interrupt.
+ */
+void __attribute__((weak)) _onException( const uint32_t sig )
+{
+}
+
+void __attribute__((weak)) _onSysCall( const uint32_t sp )
+{
+}
+
 #ifdef CONFIG_CPLUSPLUS_MODULE_PRESENT
 /*! ---------------------------------------------------------------------------
+ * @ingroup OVERWRITABLE
  * @brief Dummy function for the case a virtual function pointer is not filled.
  *
  * The linker expect this if abstract C++ classes will used. \n
@@ -47,15 +69,16 @@ void __attribute__((weak)) __cxa_pure_virtual( void ) {}
 #endif /* ifdef CONFIG_CPLUSPLUS_MODULE_PRESENT */
 
 #if defined(__SSP__) || defined(__SSP_ALL__) || defined(__SSP_STRONG__)
-#include <stdint.h> /* For uintptr_t */
 
 /*! ---------------------------------------------------------------------------
+ * @ingroup OVERWRITABLE
  * @brief Rewritable function becomes invoked in the case of stack overflow.
  *        "Stack Smashing Protector" (SSP)
  */
 void __attribute__((weak)) __stack_chk_fail( void ) {}
 
 /*!
+ * @ingroup OVERWRITABLE
  * @brief Will used for the stack smashing protector (SSP).
  */
 uintptr_t __attribute__((weak)) __stack_chk_guard;

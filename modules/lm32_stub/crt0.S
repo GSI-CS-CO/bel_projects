@@ -1,100 +1,40 @@
-/****************************************************************************
-**
-**  Name: crt0ram.S
-**
-**  Description:
-**        Implements boot-code that calls LatticeDDInit (that calls main())
-**        Implements exception handlers (actually, redirectors)
-**
-**  $Revision: $
-**
-** Disclaimer:
-**
-**   This source code is intended as a design reference which
-**   illustrates how these types of functions can be implemented.  It
-**   is the user's responsibility to verify their design for
-**   consistency and functionality through the use of formal
-**   verification methods.  Lattice Semiconductor provides no warranty
-**   regarding the use or functionality of this code.
-**
-** --------------------------------------------------------------------
-**
-**                     Lattice Semiconductor Corporation
-**                     5555 NE Moore Court
-**                     Hillsboro, OR 97214
-**                     U.S.A
-**
-**                     TEL: 1-800-Lattice (USA and Canada)
-**                          (503)268-8001 (other locations)
-**
-**                     web:   http://www.latticesemi.com
-**                     email: techsupport@latticesemi.com
-**
-** --------------------------------------------------------------------------
-**
-**  Change History (Latest changes on top)
-**
-**  Ver    Date        Description
-** --------------------------------------------------------------------------
-**  3.8   Apr-15-2011  Added __MICO_USER_<handler>_HANDLER__ preprocessor to 
-**                     allow customers to implement their own handlers for:
-**                     DATA_ABORT, INST_ABORT
-**  
-**  3.1   Jun-18-2008  Added __MICO_NO_INTERRUPTS__ preprocessor
-**                     option to exclude invoking MicoISRHandler
-**                     to reduce code-size in apps that don't use
-**                     interrupts
-**
-**  3.0   Mar-25-2008  Added Header
-**
-**---------------------------------------------------------------------------
-*****************************************************************************/
-
-/*
- * LatticeMico32 C startup code.
+/*!
+ * @file crt0.S
+ * @brief Startup code for Lattice Micro 32 LM32
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- * notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- * notice, this list of conditions and the following disclaimer in the
- * documentation and/or other materials provided with the distribution.
- *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
+ * @see https://www-acc.gsi.de/wiki/Timing/TimingSystemHowSoftCPUHandleECAMSIs
+ * @copyright 2020 GSI Helmholtz Centre for Heavy Ion Research GmbH
+ * @date 19.05.2020
+ * @author Ulrich Becker <u.becker@gsi.de>
  */
 
-/* From include/sys/signal.h */  
-#define SIGINT  2   /* interrupt */
-#define SIGTRAP 5   /* trace trap */
-#define SIGFPE  8   /* arithmetic exception */
-#define SIGSEGV 11  /* segmentation violation */
+#ifndef __lm32__
+  #error This module is for the target Lattice micro32 (LM32) only!
+#endif
 
-//#define MICO32_FULL_CONTEXT_SAVE_RESTORE
+#include <lm32signal.h>
+
+#ifndef MICO32_FULL_CONTEXT_SAVE_RESTORE
+ #define MICO32_FULL_CONTEXT_SAVE_RESTORE
+#endif
 
 .extern _irq_entry
-.extern _segfault
+.extern _onException
+.extern _onSysCall
 
-/* Exception handlers - Must be 32 bytes long. */
+/*
+ * Exception handlers - Must be 32 bytes long respectively 8 instructions
+ */
 .section    .boot, "ax", @progbits
 
 .global _reset_handler
 .type 	_reset_handler, @function
 _reset_handler:
-//init r0 from CSR to make sure it's got a valid state before XOR (simulation)    
+/*
+ * init r0 from CSR to make sure it's got a valid state before XOR (simulation)
+ */
     rcsr    r0, CFG 
-    xor r0, r0, r0
+    xor     r0, r0, r0
     wcsr    IE, r0
     wcsr    IM, r0
     mvhi    r1, hi(_reset_handler)
@@ -106,11 +46,11 @@ _reset_handler:
 .global _breakpoint_handler
 .type 	_breakpoint_handler, @function
 _breakpoint_handler:
-    nop
-    nop
-    nop
-    nop
-    nop
+    sw      (sp+0), ra
+    calli   _save_all
+    mvi     r1,  SIGTRAP
+    calli   _onException
+    bi      _restore_all_and_return
     nop
     nop
     nop
@@ -119,11 +59,11 @@ _breakpoint_handler:
 .global _instruction_bus_error_handler
 .type 	_instruction_bus_error_handler, @function
 _instruction_bus_error_handler:
-    nop
-    nop
-    nop
-    nop
-    nop
+    sw      (sp+0), ra
+    calli   _save_all
+    mvi     r1,  SIGSEGV
+    calli   _onException
+    bi      _restore_all_and_return
     nop
     nop
     nop
@@ -132,11 +72,11 @@ _instruction_bus_error_handler:
 .global _watchpoint_handler
 .type 	_watchpoint_handler, @function
 _watchpoint_handler:
-    nop
-    nop
-    nop
-    nop
-    nop
+    sw      (sp+0), ra
+    calli   _save_all
+    mvi     r1,  SIGTRAP
+    calli   _onException
+    bi      _restore_all_and_return
     nop
     nop
     nop
@@ -148,7 +88,7 @@ _data_bus_error_handler:
     sw      (sp+0), ra
     calli   _save_all
     mvi     r1, SIGSEGV
-    calli  _segfault
+    calli   _onException
     bi      _restore_all_and_return
     nop
     nop
@@ -158,11 +98,11 @@ _data_bus_error_handler:
 .global _divide_by_zero_handler
 .type 	_divide_by_zero_handler, @function
 _divide_by_zero_handler:
-    nop
-    nop
-    nop
-    nop
-    nop
+    sw      (sp+0), ra
+    calli   _save_all
+    mvi     r1,  SIGFPE
+    calli   _onException
+    bi      _restore_all_and_return
     nop
     nop
     nop
@@ -188,11 +128,11 @@ _interrupt_handler:
 .global _system_call_handler
 .type 	_system_call_handler, @function
 _system_call_handler:
-    nop
-    nop
-    nop
-    nop
-    nop
+    sw      (sp+0), ra
+    calli   _save_all
+    mv      r1, sp
+    calli   _onSysCall
+    bi      _restore_all_and_return
     nop
     nop
     nop
@@ -207,7 +147,7 @@ _crt0:
     /* Setup stack and global pointer */
     mvhi    sp, hi(_fstack)
     ori     sp, sp, lo(_fstack)
-	
+
     mvhi    r1, hi(_fbss)
     ori     r1, r1, lo(_fbss)
     mvi     r2, 0
@@ -332,3 +272,4 @@ _restore_all_and_return:
     eret
         .size   _restore_all_and_return, .-_restore_all_and_return
 
+/*================================== EOF ====================================*/

@@ -36,6 +36,7 @@
 #ifdef CONFIG_SCU_DAQ_INTEGRATION
  #include "daq_main.h"
 #endif
+#include "lm32signal.h"
 
 
 typedef enum
@@ -311,19 +312,44 @@ STATIC inline void initInterrupt( void )
 STATIC void initAndScan( void )
 {
    hist_init(HISTORY_XYZ_MODULE);
-   for( int i = 0; i < ARRAY_SIZE(g_shared.fg_regs); i++ )
-      g_shared.fg_regs[i].macro_number = SCU_INVALID_VALUE;     //no macros assigned to channels at startup
-   updateTemperature();                       //update 1Wire ID and temperatures
-   scanFgs();                        //scans for slave cards and fgs
+
+   /*
+    *  No function generator macros assigned to channels at startup!
+    */
+   for( unsigned int i = 0; i < ARRAY_SIZE(g_shared.fg_regs); i++ )
+      g_shared.fg_regs[i].macro_number = SCU_INVALID_VALUE;
+
+   /*
+    * Update one wire ID and temperatures.
+    */
+   updateTemperature();
+
+   /*
+    * Scans for SCU-bus slave cards and function generators.
+    */
+   scanFgs();
 }
 
 /*! ---------------------------------------------------------------------------
- * @brief segfault handler, not used at the moment
+ * @brief Callback function becomes invoked by LM32 when an exception has
+ *        been appeared.
  */
-void _segfault( void )
+void _onException( const uint32_t sig )
 {
-   mprintf( ESC_ERROR"PANIC: Segmentation fault!"ESC_NORMAL"\n" );
-  //while (1) {}
+   char* str;
+   #define _CASE_SIGNAL( S ) case S: str = #S; break;
+   switch( sig )
+   {
+      _CASE_SIGNAL( SIGINT )
+      _CASE_SIGNAL( SIGTRAP )
+      _CASE_SIGNAL( SIGFPE )
+      _CASE_SIGNAL( SIGSEGV )
+      default: str = "unknown"; break;
+   }
+   mprintf( ESC_ERROR "Exception occurred: %d -> %s\n"
+                      "System stopped!\n" ESC_NORMAL, sig, str );
+   irqDisable();
+   while( true );
 }
 
 /*! ---------------------------------------------------------------------------
