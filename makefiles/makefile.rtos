@@ -32,7 +32,7 @@ RTOS_INCLUDE_DIR += $(RTOS_HEADER_DIR)
 RTOS_INCLUDE_DIR += $(RTOS_PORT_DIR)
 
 # Replacing the SCU LM32 standard startup-code by this one.
-STARTUP_CODE ?= $(RTOS_PORT_DIR)/crt0FreeRTOS.S
+# STARTUP_CODE ?= $(RTOS_PORT_DIR)/crt0FreeRTOS.S
 
 RTOS_SOURCE += $(RTOS_PORT_DIR)/portasm.S
 RTOS_SOURCE += $(SCU_LIB_SRC_DIR)/lm32Interrupts.c

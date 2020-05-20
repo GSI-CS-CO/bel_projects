@@ -17,6 +17,7 @@ MIAN_MODULE := rtosEcaMsiTest.c
 USE_RTOS = 1
 
 # Additional module(s)
+SOURCE += $(SCU_LIB_SRC_DIR)/scu_std_init.c
 SOURCE += $(SCU_LIB_SRC_DIR)/eca_queue_type.c
 
 RTOS_USING_HEAP = 1

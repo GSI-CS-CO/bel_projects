@@ -21,6 +21,7 @@
  ******************************************************************************
  */
 #include <stdbool.h>
+#include "lm32signal.h"
 #include "eb_console_helper.h"
 #include "scu_lm32Timer.h"
 #include "lm32Interrupts.h"
@@ -31,11 +32,25 @@ volatile uint32_t pxCurrentTCB = 0;
 
 #define configCPU_CLOCK_HZ   (USRCPUCLK * 1000)
 
-
-static inline void init( void )
+void _onException( const uint32_t sig )
 {
-   discoverPeriphery(); // mini-sdb: get info on important Wishbone infrastructure
-   uart_init_hw();      // init UART, required for printf...
+   char* str;
+   #define _CASE_SIGNAL( S ) case S: str = #S; break;
+   switch( sig )
+   {
+      _CASE_SIGNAL( SIGINT )
+      _CASE_SIGNAL( SIGTRAP )
+      _CASE_SIGNAL( SIGFPE )
+      _CASE_SIGNAL( SIGSEGV )
+      default: str = "unknown"; break;
+   }
+   mprintf( ESC_ERROR "%s( %d ): %s\n" ESC_NORMAL, __func__, sig, str );
+   while( true );
+}
+
+void _onSysCall( const uint32_t sp )
+{
+   mprintf( "%s( 0x%08x )\n", __func__, sp );
 }
 
 volatile static unsigned int g_count = 0;
@@ -44,7 +59,8 @@ static void onTimerInterrupt( const unsigned int intNum, const void* pContext )
 {
    mprintf( "%s( %d, 0x%x ), count: %d\n", __func__, intNum, (unsigned int)pContext, g_count );
    g_count++;
-  ATOMIC_SECTION() mprintf( "Period: %d\n", lm32TimerGetPeriod( (SCU_LM32_TIMER_T*)pContext ) );
+  ATOMIC_SECTION()
+  mprintf( "Period: %d\n", lm32TimerGetPeriod( (SCU_LM32_TIMER_T*)pContext ) );
   // lm32TimerDisable( (SCU_LM32_TIMER_T*)pContext );
    //lm32TimerSetPeriod( (SCU_LM32_TIMER_T*)pContext, configCPU_CLOCK_HZ );
 }
@@ -53,7 +69,6 @@ volatile uint32_t* wb_timer_base   = 0;
 
 void main( void )
 {
-   init();
    mprintf( "Timer IRQ test\nCompiler: " COMPILER_VERSION_STRING "\n" );
    mprintf( "CPU frequency: %d Hz\n", configCPU_CLOCK_HZ );
    unsigned int oldCount = g_count - 1;
@@ -67,11 +82,12 @@ void main( void )
 
    mprintf( "Timer found at wishbone base address 0x%x\n", (unsigned int)pTimer );
 
-   lm32TimerSetPeriod( pTimer, configCPU_CLOCK_HZ / 100 );
+   lm32TimerSetPeriod( pTimer, configCPU_CLOCK_HZ );
    lm32TimerEnable( pTimer );
    irqRegisterISR( TIMER_IRQ, (void*)pTimer, onTimerInterrupt );
    irqEnable();
-
+   asm volatile ( "wcsr ie, r0" );
+   int x = 100;
    while( true )
    {
       volatile unsigned int currentCount;
@@ -80,11 +96,14 @@ void main( void )
       {
          mprintf( "C: %d\n", currentCount );
          oldCount = currentCount;
-         if( oldCount == 10 )
-         {
-           // irqDisable();
-           // irqDisableSpecific( TIMER_IRQ );
-         }
+         /*
+          * CAUTION: When oldCount the value 10 reached it will trigger
+          *          an LM32 exception (SIGFPE division by zero).
+          */
+         x = x / (10 - oldCount);
+         mprintf( "x = %d\n", x );
+         //ATOMIC_SECTION()
+        // while( true );
       }
    }
 }

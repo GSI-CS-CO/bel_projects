@@ -49,7 +49,7 @@ ifdef USE_RTOS
   include $(MAKEFILE_DIR)/makefile.rtos
 endif
 
-STARTUP_CODE ?= $(REPOSITORY_DIR)/modules/lm32_stub/crt0.S
+STARTUP_CODE ?= $(REPOSITORY_DIR)/modules/lm32_stub/crt0ScuLm32.S
 
 SOURCE += $(STARTUP_CODE)
 SOURCE += $(REPOSITORY_DIR)/modules/lm32_stub/stubs.c

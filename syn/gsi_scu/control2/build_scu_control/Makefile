@@ -73,6 +73,7 @@ ifdef SCU_DAQ
 endif
 VERSION = $(VERSION_STR)
 
+SOURCE += $(SCU_LIB_SRC_DIR)/scu_std_init.c
 SOURCE += $(SCU_LIB_SRC_DIR)/lm32Interrupts.c
 SOURCE += $(SCU_LIB_SRC_DIR)/scu_mailbox.c
 SOURCE += $(SCU_LIB_SRC_DIR)/LM32assert.c
@@ -118,7 +119,7 @@ DOX_INPUT += $(SCU_DIR)/scu_shared_mem.h
 DOX_INPUT += $(SCU_LIB_SRC_DIR)/scu_bus_defines.h
 DOX_INPUT += $(SCU_LIB_SRC_DIR)/scu_msi.h
 
-CODE_OPTIMIZATION = 2
+CODE_OPTIMIZATION = s
 # TOOLCHAIN_DIR = $(INCLUDED_TOOLCHAIN_DIR)
 
 # RAM_SIZE    = 147456

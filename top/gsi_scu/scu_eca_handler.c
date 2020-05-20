@@ -33,11 +33,13 @@ void initEcaQueue( void )
       mprintf( ESC_ERROR"\nERROR: Can't find ECA queue for LM32,"
                         " system stopped!"ESC_NORMAL"\n" );
       while( true )
-         asm volatile ("nop");
+         NOP();
    }
    g_eca.tag = g_eca.pQueue->tag;
-   mprintf("\nECA queue found at: 0x%08x."
-           " Waiting for actions with tag 0x%08x\n\n",
+   mprintf( ESC_FG_MAGENTA
+            "ECA queue found at: 0x%08x.\n"
+            "\tWaiting for actions with tag 0x%08x...\n"
+            ESC_NORMAL,
             (unsigned int)g_eca.pQueue, g_eca.tag );
 }
 

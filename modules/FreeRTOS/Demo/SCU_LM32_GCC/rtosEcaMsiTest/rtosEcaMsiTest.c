@@ -33,9 +33,7 @@
  *
  */
 #include "eb_console_helper.h"
-#include "mini_sdb.h"
 #include "lm32signal.h"
-
 #include "scu_msi.h"
 #include "eca_queue_type.h"
 
@@ -85,14 +83,6 @@ void _onException( const uint32_t sig )
       }
       mprintf( ESC_ERROR "%s( %d ): %s\n" ESC_NORMAL, __func__, sig, str );
    }
-}
-
-/*! ---------------------------------------------------------------------------
- */
-STATIC inline void init( void )
-{
-   discoverPeriphery(); // mini-sdb: get info on important Wishbone infrastructure
-   uart_init_hw();      // init UART, required for printf...
 }
 
 /*! ---------------------------------------------------------------------------
@@ -304,7 +294,6 @@ STATIC inline BaseType_t initAndStartRTOS( void )
  */
 void main( void )
 {
-   init();
    mprintf( ESC_XY( "1", "1" ) ESC_CLR_SCR "FreeRTOS ECA-MSI test\n"
             "Compiler: " COMPILER_VERSION_STRING "\n" );
 

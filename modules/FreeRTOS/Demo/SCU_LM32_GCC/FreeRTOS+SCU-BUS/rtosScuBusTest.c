@@ -45,14 +45,6 @@ typedef struct
 } SLAVE_T;
 
 /*! ---------------------------------------------------------------------------
- */
-STATIC inline void init( void )
-{
-   discoverPeriphery(); // mini-sdb: get info on important Wishbone infrastructure
-   uart_init_hw();      // init UART, required for printf...
-}
-
-/*! ---------------------------------------------------------------------------
  * @brief Task function which represents a single SCU-bus slave.
  *
  * It reads the slaves echo register, increment or decrement it and write it
@@ -233,7 +225,6 @@ STATIC inline BaseType_t initAndStartRTOS( void )
  */
 void main( void )
 {
-   init();
    mprintf( ESC_XY( "1", "1" ) ESC_CLR_SCR ESC_NORMAL "FreeRTOS SCU-BUS test\n"
             "Compiler:  " COMPILER_VERSION_STRING "\n"
             "Tick rate: " TO_STRING( configTICK_RATE_HZ ) " Hz\n"

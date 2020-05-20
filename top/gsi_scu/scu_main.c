@@ -93,8 +93,6 @@ volatile FG_MESSAGE_BUFFER_T g_aMsg_buf[QUEUE_CNT] = {{0, 0}};
  */
 STATIC inline void initializeGlobalPointers( void )
 {
-   discoverPeriphery();
-   uart_init_hw();
    initOneWire();
    /* additional periphery needed for scu */
    g_pScub_base       = (volatile uint16_t*)find_device_adr(GSI, SCU_BUS_MASTER);
@@ -121,29 +119,26 @@ STATIC inline void tellMailboxSlot( void )
    if( slot == -1 )
       mprintf( ESC_ERROR"No free slots in MsgBox left!"ESC_NORMAL"\n" );
    else
-      mprintf( "Configured slot %d in MsgBox\n", slot );
+      mprintf( ESC_FG_MAGENTA
+               "Configured slot %d in MsgBox\n"
+               ESC_NORMAL , slot );
    g_shared.fg_mb_slot = slot;
 }
 
 /*! ---------------------------------------------------------------------------
- * @brief Enables Message-Signaled Interrupts (MSI) generation for the
- * specified channel.
+ * @brief enables MSI generation for the specified channel.
  *
- * Messages from the scu bus are send to the MSI queue of this CPU with
- * the offset 0x0. \n
- * Messages from the MIL extension are send to the msi queue of this cpu with
+ * Messages from the SCU bus are send to the MSI queue of this CPU with the
+ * offset 0x0. \n
+ * Messages from the MIL extension are send to the MSI queue of this CPU with
  * the offset 0x20. \n
  * A hardware macro is used, which generates MSIs from legacy interrupts.
+ *
  * @param channel number of the channel between 0 and MAX_FG_CHANNELS-1
  * @see disable_slave_irq
  */
 void enable_scub_msis( const unsigned int channel )
 {
-   if( channel >= MAX_FG_CHANNELS )
-      return;
-
-   //FG_ASSERT( pMyMsi != NULL );
-
    const unsigned int socket = getSocket( channel );
 #ifdef CONFIG_MIL_FG
    if( isAddacFg( socket ) || isMilScuBusFg( socket ) )
@@ -509,14 +504,18 @@ STATIC inline void printCpuId( void )
 /*================================ MAIN =====================================*/
 void main( void )
 {
-   initializeGlobalPointers();
-   mprintf("Compiler: "COMPILER_VERSION_STRING"\n"
+   mprintf( ESC_BOLD "Start of \"" TO_STRING(TARGET_NAME) "\"\n" ESC_NORMAL
+           "Compiler: "COMPILER_VERSION_STRING"\n"
            "Git revision: "TO_STRING(GIT_REVISION)"\n"
-           "Found MsgBox at 0x%08x. MSI Path is 0x%08x\n",
-           (uint32_t)pCpuMsiBox, (uint32_t)pMyMsi);
+           "Found MsgBox at 0x%08x. MSI Path is 0x%08x\n"
 #if defined( CONFIG_MIL_FG ) && defined( CONFIG_READ_MIL_TIME_GAP )
-   mprintf( ESC_WARNING"CAUTION! Time gap reading activated!"ESC_NORMAL"\n" );
+            ESC_WARNING
+            "CAUTION! Time gap reading for MIL FGs activated!\n"
+            ESC_NORMAL
 #endif
+           , (uint32_t)pCpuMsiBox, (uint32_t)pMyMsi );
+
+   initializeGlobalPointers();
    initInterrupt();
    tellMailboxSlot();
 

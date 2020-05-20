@@ -42,6 +42,9 @@
  #ifndef __lm32__
    #error This module is for the target Latice micro32 (LM32) only!
  #endif
+ #ifndef CONFIG_RTOS
+   #error Compiler switch CONFIG_RTOS has to be define in Makefile!
+ #endif
 #endif
 #include "FreeRTOS.h"
 #include "task.h"

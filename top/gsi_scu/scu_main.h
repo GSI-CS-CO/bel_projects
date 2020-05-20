@@ -205,10 +205,14 @@ typedef struct _TASK_T
 
 
 /*! ---------------------------------------------------------------------------
- * @brief enables msi generation for the specified channel. \n
- * Messages from the scu bus are send to the msi queue of this cpu with the offset 0x0. \n
- * Messages from the MIL extension are send to the msi queue of this cpu with the offset 0x20. \n
- * A hardware macro is used, which generates msis from legacy interrupts. \n
+ * @brief enables MSI generation for the specified channel.
+ *
+ * Messages from the SCU bus are send to the MSI queue of this CPU with the
+ * offset 0x0. \n
+ * Messages from the MIL extension are send to the MSI queue of this CPU with
+ * the offset 0x20. \n
+ * A hardware macro is used, which generates MSIs from legacy interrupts.
+ *
  * @param channel number of the channel between 0 and MAX_FG_CHANNELS-1
  * @see disable_slave_irq
  */
