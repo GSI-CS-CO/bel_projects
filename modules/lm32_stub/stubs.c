@@ -2,7 +2,7 @@
  * @brief Weak function definitions for the case if they
  *        won't use in the project but the linker expect them. \n
  *        They could be overwritten if necessary.
- * @file      stups.c
+ * @file  stups.c
  * @copyright GSI Helmholtz Centre for Heavy Ion Research GmbH
  *******************************************************************************
  *  This library is free software; you can redistribute it and/or
@@ -24,32 +24,49 @@
   #error This module is for the target Latice micro32 (LM32) only!
 #endif
 
-int __attribute__((weak)) main(void)
+/*! --------------------------------------------------------------------------
+ * @ingroup OVERWRITABLE
+ * @brief Dummy function becomes invoked immediately before the function main().
+ * @see crt0ScuLm32.S
+ */
+void __attribute__((weak)) __init( void )
 {
-   return 0;
+}
+
+/*! --------------------------------------------------------------------------
+ * @ingroup OVERWRITABLE
+ * @brief Dummy function becomes invoked immediately after the function main().
+ * @see crt0ScuLm32.S
+ */
+void __attribute__((weak)) __exit( void )
+{
 }
 
 /*! --------------------------------------------------------------------------
  * @ingroup OVERWRITABLE
  * @brief Dummy function becomes invoked when a interrupt appears.
+ * @see crt0ScuLm32.S
  */
 void __attribute__((weak)) _irq_entry(void)
-{
-}
-
-void __attribute__((weak)) _segfault(void)
 {
 }
 
 /*! --------------------------------------------------------------------------
  * @ingroup OVERWRITABLE
  * @brief Dummy function becomes invoked for all LM32 exceptions except the
- *        interrupt.
+ *        interrupt and system-call.
+ * @see crt0ScuLm32.S
  */
 void __attribute__((weak)) _onException( const uint32_t sig )
 {
 }
 
+/*! --------------------------------------------------------------------------
+ * @ingroup OVERWRITABLE
+ * @brief Dummy function
+ * @param sp Actual value of stack-pointer.
+ * @see crt0ScuLm32.S
+ */
 void __attribute__((weak)) _onSysCall( const uint32_t sp )
 {
 }
@@ -64,7 +81,9 @@ void __attribute__((weak)) _onSysCall( const uint32_t sp )
  * @author Ulrich Becker <u.becker@gsi.de>
  * @date 24.01.2019
  */
-void __attribute__((weak)) __cxa_pure_virtual( void ) {}
+void __attribute__((weak)) __cxa_pure_virtual( void )
+{
+}
 
 #endif /* ifdef CONFIG_CPLUSPLUS_MODULE_PRESENT */
 
