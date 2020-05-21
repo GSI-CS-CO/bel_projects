@@ -209,6 +209,12 @@
  */
 #define ALWAYS_INLINE __attribute__((always_inline))
 
+/*!
+ * @brief Declares a symbol as weak that means the linker can this overwrite by \n
+ *        a strong symbol (is default) with the same name.
+ */
+#define OVERRIDE __attribute__((weak))
+
 #ifndef STATIC_ASSERT
 #if ((__cplusplus > 199711L) || (COMPILER_VERSION_NUMBER >= 40600))
   #ifndef __cplusplus

@@ -19,17 +19,18 @@
  *  License along with this library. If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************
  */
-#include <stdint.h>
 #ifndef __lm32__
   #error This module is for the target Latice micro32 (LM32) only!
 #endif
+#include <stdint.h>
+#include "helper_macros.h"
 
 /*! --------------------------------------------------------------------------
  * @ingroup OVERWRITABLE
  * @brief Dummy function becomes invoked immediately before the function main().
  * @see crt0ScuLm32.S
  */
-void __attribute__((weak)) __init( void )
+void OVERRIDE __init( void )
 {
 }
 
@@ -38,7 +39,7 @@ void __attribute__((weak)) __init( void )
  * @brief Dummy function becomes invoked immediately after the function main().
  * @see crt0ScuLm32.S
  */
-void __attribute__((weak)) __exit( void )
+void OVERRIDE __exit( void )
 {
 }
 
@@ -47,7 +48,7 @@ void __attribute__((weak)) __exit( void )
  * @brief Dummy function becomes invoked when a interrupt appears.
  * @see crt0ScuLm32.S
  */
-void __attribute__((weak)) _irq_entry(void)
+void OVERRIDE _irq_entry(void)
 {
 }
 
@@ -57,7 +58,7 @@ void __attribute__((weak)) _irq_entry(void)
  *        interrupt and system-call.
  * @see crt0ScuLm32.S
  */
-void __attribute__((weak)) _onException( const uint32_t sig )
+void OVERRIDE _onException( const uint32_t sig )
 {
 }
 
@@ -67,7 +68,7 @@ void __attribute__((weak)) _onException( const uint32_t sig )
  * @param sp Actual value of stack-pointer.
  * @see crt0ScuLm32.S
  */
-void __attribute__((weak)) _onSysCall( const uint32_t sp )
+void OVERRIDE _onSysCall( const uint32_t sp )
 {
 }
 
@@ -81,7 +82,7 @@ void __attribute__((weak)) _onSysCall( const uint32_t sp )
  * @author Ulrich Becker <u.becker@gsi.de>
  * @date 24.01.2019
  */
-void __attribute__((weak)) __cxa_pure_virtual( void )
+void OVERRIDE __cxa_pure_virtual( void )
 {
 }
 
@@ -94,13 +95,15 @@ void __attribute__((weak)) __cxa_pure_virtual( void )
  * @brief Rewritable function becomes invoked in the case of stack overflow.
  *        "Stack Smashing Protector" (SSP)
  */
-void __attribute__((weak)) __stack_chk_fail( void ) {}
+void OVERRIDE __stack_chk_fail( void )
+{
+}
 
 /*!
  * @ingroup OVERWRITABLE
  * @brief Will used for the stack smashing protector (SSP).
  */
-uintptr_t __attribute__((weak)) __stack_chk_guard;
+uintptr_t OVERRIDE __stack_chk_guard;
 
 #endif /* defined(__SSP__) || defined(__SSP_ALL__) */
 /*================================== EOF ====================================*/
