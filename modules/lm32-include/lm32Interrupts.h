@@ -225,8 +225,7 @@ STATIC inline ALWAYS_INLINE uint32_t irqGetEnableRegister( void )
  * @ingroup INTERRUPT
  * @brief Sets the global interrupt enable register of the LM32.
  */
-STATIC inline ALWAYS_INLINE
-void irqSetEnableRegister( register const uint32_t ie )
+STATIC inline ALWAYS_INLINE void irqSetEnableRegister( register const uint32_t ie )
 {
    asm volatile ( "wcsr ie, %0" ::"r"(ie) );
 }

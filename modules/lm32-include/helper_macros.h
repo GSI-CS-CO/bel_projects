@@ -210,11 +210,29 @@
 #define ALWAYS_INLINE __attribute__((always_inline))
 
 /*!
+ * @brief This function attribute prevents a function from being considered for
+ *        inlining.
+ *
+ * Counterpart to ALWAYS_INLINE.
+ */
+#define NO_INLINE __attribute__((noinline))
+
+/*!
  * @brief Declares a symbol as weak that means the linker can this overwrite by \n
  *        a strong symbol (is default) with the same name.
  */
 #define OVERRIDE __attribute__((weak))
 
+/*!
+ * @brief This function attribute tells the compiler that this function
+ *        doesn't left.
+ */
+#define NO_RETURN __attribute__((noreturn))
+
+/*
+ * Helper macro for STATIC_ASSERT making this available for old compilers which
+ * doesn't supported this yet.
+ */
 #ifndef STATIC_ASSERT
 #if ((__cplusplus > 199711L) || (COMPILER_VERSION_NUMBER >= 40600))
   #ifndef __cplusplus
