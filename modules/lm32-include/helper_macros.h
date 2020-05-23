@@ -82,7 +82,7 @@
  * @brief Macro will be substituted by the number of elements of the given array.
  * @param a Name of the c-array variable
  * @return Number of array-elements
- * 
+ *
  * Example:
  * @code
  * int myArray[42], i;
@@ -103,6 +103,42 @@
  */
 #define BIT_SIZEOF( TYP ) (sizeof(TYP) * CHAR_BIT)
 
+/*!
+ * @brief Returns the upper half part of the given variable as mask in ones.
+ *        The fitting of the variable size will made automatically.
+ * @param v Variable
+ * @return Fitted bit-mask of the upper half of bits.
+ */
+#define UPPER_HALF_BIT_MASK( v ) \
+   (((TYPEOF(v))(~0) << (BIT_SIZEOF(TYPEOF(v))/2)))
+
+/*!
+ * @brief Returns the lower half part of the given variable as mask in ones.
+ *        The fitting of the variable size will made automatically.
+ * @param v Variable
+ * @return Fitted bit-mask of the lower half of bits.
+ */
+#define LOWER_HALF_BIT_MASK( v ) ~UPPER_HALF_BIT_MASK( v )
+
+/*!
+ * @brief Returns the value of the bits of the lower half part of
+ *        the given variable.
+ *        The fitting of the variable size will made automatically.
+ * @param v Variable
+ * @return Value of the bits from the lower half.
+ */
+#define GET_LOWER_HALF( v ) \
+   ( (v) & LOWER_HALF_BIT_MASK(v) )
+
+/*!
+ * @brief Returns the value of the bits of the upper half part of
+ *        the given variable.
+ *        The fitting of the variable size will made automatically.
+ * @param v Variable
+ * @return Value of the bits from the upper half.
+ */
+#define GET_UPPER_HALF( v ) \
+   (((v) >> (BIT_SIZEOF(TYPEOF(v))/2)) & LOWER_HALF_BIT_MASK(v))
 
 #ifndef __GNUC__
   #warning "Compiler isn't a GNU- compiler! Therefore it's not guaranteed that the following macro-definition PACKED_SIZE will work."
@@ -173,6 +209,30 @@
  */
 #define ALWAYS_INLINE __attribute__((always_inline))
 
+/*!
+ * @brief This function attribute prevents a function from being considered for
+ *        inlining.
+ *
+ * Counterpart to ALWAYS_INLINE.
+ */
+#define NO_INLINE __attribute__((noinline))
+
+/*!
+ * @brief Declares a symbol as weak that means the linker can this overwrite by \n
+ *        a strong symbol (is default) with the same name.
+ */
+#define OVERRIDE __attribute__((weak))
+
+/*!
+ * @brief This function attribute tells the compiler that this function
+ *        doesn't left.
+ */
+#define NO_RETURN __attribute__((noreturn))
+
+/*
+ * Helper macro for STATIC_ASSERT making this available for old compilers which
+ * doesn't supported this yet.
+ */
 #ifndef STATIC_ASSERT
 #if ((__cplusplus > 199711L) || (COMPILER_VERSION_NUMBER >= 40600))
   #ifndef __cplusplus
@@ -210,7 +270,7 @@
  * @endcode
  * @see PACKED_SIZE
  */
-  #define STATIC_ASSERT( condition ) __STATIC_ASSERT__( condition, __LINE__)
+  #define STATIC_ASSERT( condition ) __STATIC_ASSERT__( condition, __LINE__ )
 #endif // if (__cplusplus >  199711L) && !defined(__lm32__)
 #endif // ifndef STATIC_ASSERT
 

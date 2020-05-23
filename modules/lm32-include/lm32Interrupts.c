@@ -102,6 +102,9 @@ void irqSetMaskRegister( const uint32_t im )
    asm volatile ( "wcsr im, %0" ::"r"(im) );
 }
 
+#if defined( CONFIG_RTOS ) && !defined( CONFIG_IRQ_ENABLING_IN_ATOMIC_SECTIONS )
+   #define CONFIG_IRQ_ENABLING_IN_ATOMIC_SECTIONS
+#endif
 
 /*! ---------------------------------------------------------------------------
  * @ingroup INTERRUPT
@@ -117,31 +120,47 @@ void irqSetMaskRegister( const uint32_t im )
 void _irq_entry( void )
 {
    /*
-    * Allows using of atomic sections within interrupt routines.
+    * Allows using of atomic sections within interrupt context.
     */
+#ifdef CONFIG_IRQ_ENABLING_IN_ATOMIC_SECTIONS
    mg_criticalSectionNestingCount++;
+ #ifdef CONFIG_INTERRUPT_PEDANTIC_CHECK
+   const volatile uint32_t tempNestingCount = mg_criticalSectionNestingCount;
+ #endif
+#else
+   IRQ_ASSERT( mg_criticalSectionNestingCount == 0 );
+   mg_criticalSectionNestingCount = 1;
+#endif
 
-   const uint32_t im = irqGetMaskRegister();
-   while( true )
-   {
-      const uint32_t ip = irqGetPendingRegister() & im;
-      if( ip == 0 ) /* No (further) interrupt pending? */
-         break; /* Yes, life the while-loop */
-
+   uint32_t ip;
+   /*
+    * As long as there is an interrupt pending...
+    */
+   while( (ip = irqGetPendingRegister() & irqGetMaskRegister()) != 0 )
+   { /*
+      * Zero has the highest priority.
+      */
       for( unsigned int prio = 0; prio < ARRAY_SIZE( ISREntryTable ); prio++ )
       {
          const unsigned int intNum = _irqReorderPriority( prio );
          const uint32_t mask = _irqGetPendingMask( intNum );
-         if( (mask & ip) == 0 )
-            continue;
+         if( (mask & ip) == 0 ) /* Is this interrupt pending? */
+            continue; /* No, go to next possible interrupt. */
 
+         IRQ_ASSERT( intNum < ARRAY_SIZE( ISREntryTable ) );
          const ISR_ENTRY_T* pCurrentInt = &ISREntryTable[intNum];
          if( pCurrentInt->pfCallback != NULL )
-         {
+         { /*
+            * Invoking the callback function of the current handled
+            * interrupt.
+            */
             pCurrentInt->pfCallback( intNum, pCurrentInt->pContext );
          }
          else
-         {
+         { /*
+            * Ridding of unregistered interrupt so it doesn't bothering
+            * any more...
+            */
             irqSetMaskRegister( irqGetMaskRegister() & ~mask );
          }
 
@@ -149,14 +168,25 @@ void _irq_entry( void )
           * Clearing of the concerning interrupt-pending bit.
           */
          irqResetPendingRegister( mask );
+
+         /*
+          * The inner for-loop will left here because meanwhile a higher
+          * prioritized interrupt may appear again.
+          */
          break;
       }
    }
 
    /*
-    * Allows using of atomic sections within interrupt routines.
+    * Allows using of atomic sections within interrupt context.
     */
+#ifdef CONFIG_IRQ_ENABLING_IN_ATOMIC_SECTIONS
+   IRQ_ASSERT( mg_criticalSectionNestingCount == tempNestingCount );
    mg_criticalSectionNestingCount--;
+#else
+   IRQ_ASSERT( mg_criticalSectionNestingCount == 1 );
+   mg_criticalSectionNestingCount = 0;
+#endif
 }
 
 /*! ---------------------------------------------------------------------------

@@ -32,7 +32,7 @@ ifndef CPP
   $(error No C-PreProcessor defined in variable CPP !)
 endif
 
-
+DEFINES += TARGET_NAME=$(TARGET)
 DEFINES += CONFIG_GSI
 DEFINES += CONFIG_GSI_FE
 

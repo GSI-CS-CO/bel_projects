@@ -33,8 +33,7 @@
  *
  */
 #include "eb_console_helper.h"
-#include "mini_sdb.h"
-
+#include "lm32signal.h"
 #include "scu_msi.h"
 #include "eca_queue_type.h"
 
@@ -66,11 +65,24 @@ ECA_CONTROL_T* g_pEcaCtl;
 ECA_QUEUE_ITEM_T* g_pEcaQueue;
 
 /*! ---------------------------------------------------------------------------
+ * @brief Callback function becomes invoked by LM32 when an exception appeared.
  */
-STATIC inline void init( void )
+void _onException( const uint32_t sig )
 {
-   discoverPeriphery(); // mini-sdb: get info on important Wishbone infrastructure
-   uart_init_hw();      // init UART, required for printf...
+   ATOMIC_SECTION()
+   {
+      char* str;
+      #define _CASE_SIGNAL( S ) case S: str = #S; break;
+      switch( sig )
+      {
+         _CASE_SIGNAL( SIGINT )
+         _CASE_SIGNAL( SIGTRAP )
+         _CASE_SIGNAL( SIGFPE )
+         _CASE_SIGNAL( SIGSEGV )
+         default: str = "unknown"; break;
+      }
+      mprintf( ESC_ERROR "%s( %d ): %s\n" ESC_NORMAL, __func__, sig, str );
+   }
 }
 
 /*! ---------------------------------------------------------------------------
@@ -152,8 +164,8 @@ STATIC inline void ecaHandler( void )
                "deadline:       0x%08x%08x\n"
                "param:          0x%08x%08x\n"
                "flag:           0x%08x\n"
-               ESC_NORMAL
-               "count:          %d\n",
+               ESC_FG_BLUE
+               "count:          %d\n" ESC_NORMAL,
                __func__,
                ecaItem.eventIdH,  ecaItem.eventIdL,
                ecaItem.deadlineH, ecaItem.deadlineL,
@@ -161,7 +173,7 @@ STATIC inline void ecaHandler( void )
                ecaItem.flags,
                ++s_count
              );
-    }
+   }
 }
 
 /*! ---------------------------------------------------------------------------
@@ -274,7 +286,6 @@ STATIC inline BaseType_t initAndStartRTOS( void )
 
 
    vTaskStartScheduler();
-   portENABLE_INTERRUPTS();
 
    return pdPASS;
 }
@@ -283,7 +294,6 @@ STATIC inline BaseType_t initAndStartRTOS( void )
  */
 void main( void )
 {
-   init();
    mprintf( ESC_XY( "1", "1" ) ESC_CLR_SCR "FreeRTOS ECA-MSI test\n"
             "Compiler: " COMPILER_VERSION_STRING "\n" );
 

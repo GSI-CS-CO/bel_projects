@@ -12,6 +12,9 @@
 #ifndef __lm32__
   #error This assembler module is for the target Latice Micro32 (LM32) only!
 #endif
+#ifndef CONFIG_RTOS
+  #error Macro CONFIG_RTOS has to be defined in Makefile!
+#endif
 
 /*!
  * @brief Pointer to current Task Control Block.
@@ -39,6 +42,10 @@ void vPortYield( void );
 void vPortInterruptHandler( void );
 #else
 .global vPortInterruptHandler
+#endif
+
+#ifndef SIGINT
+ #define SIGINT 2
 #endif
 
 
@@ -202,9 +209,9 @@ void vPortInterruptHandler( void );
  * @brief Macro to save registers on the stack.
  */
 #ifdef __DOXYGEN__
-#define portSAVE_CONTEXT
+#define SAVE_CONTEXT
 #else
-.macro portSAVE_CONTEXT
+.macro SAVE_CONTEXT
    /*
     * Making space for the context on the stack.
     */
@@ -232,9 +239,9 @@ void vPortInterruptHandler( void );
  * @brief Macro to restore registers from the stack.
  */
 #ifdef __DOXYGEN__
-#define portRESTORE_CONTEXT
+#define RESTORE_CONTEXT
 #else
-.macro portRESTORE_CONTEXT
+.macro RESTORE_CONTEXT
    /*
     * Loading last stack value from Task Control Block (TCB).
     */
@@ -264,39 +271,39 @@ void vStartFirstTask( void ) {}
 #else
 vStartFirstTask:
    mvi       r1, EIE
-   wcsr      ie, r1             /* Set EIE Bit */
+   wcsr      ie, r1           /* Setting EIE bit enabling the IRQs by "eret"*/
    and       r1, r0, r0
    mvhi      r1, hi(pxCurrentTCB)
    ori       r1, r1, lo(pxCurrentTCB)
    lw        r1, (r1+0)
-   portRESTORE_CONTEXT
+   RESTORE_CONTEXT
    lw        r1, __R1           /* Load Register R1 back */
    addi      sp, sp, SP_CORR    /* Correct Stack pointer */
    eret                         /* Return-Address is stored in EA */
 #endif
 
 /*! ---------------------------------------------------------------------------
- * @brief PortYield function for context switching
+ * @brief Function for context switching it enables the IRQs as well.
  */
 #ifdef __DOXYGEN__
 void vPortYield( void ) {}
 #else
 vPortYield:
    wcsr      ie, r0             /* Disable interrupts */
-   portSAVE_CONTEXT
+   SAVE_CONTEXT
    sw        __cscf, r0         /* Set the context switch cause flag to zero */
    calli     vTaskSwitchContext /* Call this C-function implemented in task.c */
    and       r1, r0, r0
    mvhi      r1, hi(pxCurrentTCB)
    ori       r1, r1, lo(pxCurrentTCB)
    lw        r1, (r1+0)
-   portRESTORE_CONTEXT
+   RESTORE_CONTEXT
    lw        r1, __cscf         /* Load context change cause flag in r1 */
-   bne       r0, r1, L_INT_SAVE /* Jump if context switch was caused from LM32 exception  */
+   bne       r0, r1, L_INT_SAVE /* Jump if context switch was caused by LM32 exception  */
    mv        ea, ra             /* Return-Address is stored in RA */
 L_INT_SAVE:
    mvi       r1, EIE
-   wcsr      ie, r1             /* Set EIE Bit */
+   wcsr      ie, r1             /* Setting EIE bit enabling the IRQs by "eret"*/
    lw        r1, __R1           /* Load register R1 back */
    addi      sp, sp, SP_CORR    /* Correct stack pointer */
    eret                         /* Return-address is stored in EA */
@@ -313,15 +320,16 @@ L_INT_SAVE:
 void vPortInterruptHandler( void ) {}
 #else
 vPortInterruptHandler:
-   portSAVE_CONTEXT
+   SAVE_CONTEXT
    ori       r1, r0, 1          /* Set the context switch cause flag to one */
    sw        __cscf, r1         /* and store it in stack. */
+   mvi       r1, SIGINT         /* Argument for C-function _irq_entry (will ignored)*/
    calli     _irq_entry         /* Call this C- callback function */
    and       r1, r0, r0
    mvhi      r1, hi(pxCurrentTCB)
    ori       r1, r1,lo(pxCurrentTCB)
    lw        r1, (r1+0)
-   portRESTORE_CONTEXT
+   RESTORE_CONTEXT
    lw        r1, __cscf         /* Load context switch cause flag in r1 */
    bne       r0, r1, L_RETURN   /* Jump if context change was caused from LM32 exception  */
    mv        ea, ra             /* Return-Address is stored in RA */

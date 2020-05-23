@@ -42,6 +42,9 @@
  #ifndef __lm32__
    #error This module is for the target Latice micro32 (LM32) only!
  #endif
+ #ifndef CONFIG_RTOS
+   #error Compiler switch CONFIG_RTOS has to be define in Makefile!
+ #endif
 #endif
 #include "FreeRTOS.h"
 #include "task.h"
@@ -209,9 +212,7 @@ void vPortEndScheduler( void )
  * implementation of vApplicationGetIdleTaskMemory() to provide the memory that is
  * used by the Idle task.
  */
-#ifndef __DOXYGEN__
-__attribute__((weak))
-#endif
+OVERRIDE
 void vApplicationGetIdleTaskMemory( StaticTask_t** ppxIdleTaskTCBBuffer,
                                     StackType_t** ppxIdleTaskStackBuffer,
                                     uint32_t* pulIdleTaskStackSize )
@@ -250,9 +251,7 @@ void vApplicationGetIdleTaskMemory( StaticTask_t** ppxIdleTaskTCBBuffer,
  * application must provide an implementation of vApplicationGetTimerTaskMemory()
  * to provide the memory that is used by the Timer service task.
  */
-#ifndef __DOXYGEN__
-__attribute__((weak))
-#endif
+OVERRIDE
 void vApplicationGetTimerTaskMemory( StaticTask_t** ppxTimerTaskTCBBuffer,
                                      StackType_t** ppxTimerTaskStackBuffer,
                                      uint32_t* pulTimerTaskStackSize )
@@ -294,9 +293,7 @@ void vApplicationGetTimerTaskMemory( StaticTask_t** ppxTimerTaskTCBBuffer,
  * @see https://www.freertos.org/Stacks-and-stack-overflow-checking.html
  * @see FreeRTOSConfig.h
  */
-#ifndef __DOXYGEN__
-__attribute__((weak))
-#endif
+OVERRIDE
 void vApplicationStackOverflowHook( TaskHandle_t* pxTask, signed char* pcTaskName )
 {
    mprintf( ESC_ERROR "Error: Stack overflow in task \"%s\"!\n"
@@ -316,9 +313,7 @@ void vApplicationStackOverflowHook( TaskHandle_t* pxTask, signed char* pcTaskNam
  * @see https://www.freertos.org/a00016.html
  * @see FreeRTOSConfig.h
  */
-#ifndef __DOXYGEN__
-__attribute__((weak))
-#endif
+OVERRIDE
 void vApplicationMallocFailedHook( void )
 {
    mprintf( ESC_ERROR "Error: Memory allocation failed!\n" ESC_NORMAL );

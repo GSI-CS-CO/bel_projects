@@ -31,7 +31,7 @@ sdb_location *find_sdb_deep(sdb_record_t *parent_sdb, sdb_location *found_sdb, u
   }
   if( msi_cnt > 1) {
   //This is an error, the CB layout is messed up
-    DBPRINT1("Found more than 1 MSI at 0x%08x par 0x%08x\n", (unsigned int)base, (unsigned int)(unsigned char*)parent_sdb);
+    DBPRINT1("Found more than 1 MSI at 0x%08x par 0x%08x\n", base, (uint32_t)(unsigned char*)parent_sdb);
     *idx = 0;      
     return found_sdb;
   }
@@ -86,8 +86,7 @@ sdb_location *find_sdb_deep(sdb_record_t *parent_sdb, sdb_location *found_sdb, u
   }
   
   return found_sdb;
-  }
-
+}
 
 uint32_t getMsiUpperRange() {
   sdb_record_t *record = (sdb_record_t *)((uint32_t)(sdb_add()));
@@ -139,6 +138,7 @@ uint32_t* find_device_adr(uint32_t venId, uint32_t devId)
 
 sdb_location* find_device_multi_in_subtree(sdb_location *loc, sdb_location *found_sdb, uint32_t *idx, uint32_t qty, uint32_t venId, uint32_t devId)
 {
+   //return find_sdb_deep(getChild(loc), found_sdb, getSdbAdr(loc), getMsiAdr(loc), getMsiUpperRange(), idx, qty, venId, devId);
    return find_sdb_deep(getChild(loc), found_sdb, getSdbAdr(loc), getMsiAdr(loc), getMsiUpperRange(), idx, qty, venId, devId);
 }
 
@@ -158,7 +158,7 @@ uint32_t getSdbAdr(sdb_location *loc)
 {
    if       (loc->sdb->empty.record_type == SDB_DEVICE ) return loc->adr + loc->sdb->device.sdb_component.addr_first.low;
    else if  (loc->sdb->empty.record_type == SDB_BRIDGE ) return loc->adr + loc->sdb->bridge.sdb_component.addr_first.low;
-   else return ERROR_NOT_FOUND; 
+   else return ERROR_NOT_FOUND;
 }
 
 uint32_t getMsiAdr(sdb_location *loc)
@@ -207,7 +207,7 @@ void discoverPeriphery(void)
 
   pUart           = find_device_adr(CERN, WR_UART);
   //pUart          = (uint32_t*)0x84060500;
-  BASE_UART       = (char *)pUart; //make WR happy ...
+  BASE_UART       = (unsigned char *)pUart; //make WR happy ...
   
  
   pCpuId          = find_device_adr(GSI, CPU_INFO_ROM);
@@ -247,8 +247,7 @@ void discoverPeriphery(void)
   find_device_multi(&found_sdb_w1[0], &idx_w1, 2, CERN, WR_1Wire);
   pOneWire        = (uint32_t*)getSdbAdr(&found_sdb_w1[1]);
 
-  BASE_SYSCON     = (char *)find_device_adr(CERN, WR_SYS_CON); //probably the same reason as BASE_UART is of type char*
-  pPps            = (uint32_t *)find_device_adr(CERN, WR_PPS_GEN);
+  BASE_SYSCON     = (unsigned char *)find_device_adr(CERN, WR_SYS_CON);
+  pPps            = find_device_adr(CERN, WR_PPS_GEN);
 
 }
-
