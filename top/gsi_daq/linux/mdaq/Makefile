@@ -24,6 +24,7 @@ SOURCE += $(DAQ_LINUX_DIR)/scu_fg_list.cpp
 
 DEFINES += _BSD_SOURCE
 DEFINES += _POSIX_C_SOURCE
+DEFINES += _DEFAULT_SOURCE
 #---- Necessary for backward compatibility if the compiler version greater or equal 5 ----
 DEFINES += _GLIBCXX_USE_CXX11_ABI=0
 DEFINES += BOOST_NO_CXX11_EXPLICIT_CONVERSION_OPERATORS

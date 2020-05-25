@@ -32,6 +32,8 @@ ifndef CPP
   $(error No C-PreProcessor defined in variable CPP !)
 endif
 
+GCC_VERSION := $(shell $(CC) --version | head -n1 | sed 's/^.* //g' | tr -d . | tr - ' ' | awk '{print $$1}' )
+
 DEFINES += TARGET_NAME=$(TARGET)
 DEFINES += CONFIG_GSI
 DEFINES += CONFIG_GSI_FE
@@ -86,7 +88,6 @@ else
    QUIET       = @
 endif
 
-GCC_VERSION := $(shell $(CC) --version | head -n1 | awk '{print $$3}' | tr -d . )
 
 LTO_ABILITY := $(shell [ "$(GCC_VERSION)" -gt "469" ] && echo "1" )
 ifeq ($(DEBUG), 1)
@@ -229,6 +230,10 @@ $(DEPENDFILE): $(_SOURCE) $(ADDITIONAL_DEPENDENCES) $(WORK_DIR)
 		esac; \
 	done) > $(DEPENDFILE);
 
+
+.PHONY: ver
+ver:
+	$(QUIET)echo $(GCC_VERSION)
 
 .PHONY: dep
 dep: $(WORK_DIR) $(DEPENDFILE)
