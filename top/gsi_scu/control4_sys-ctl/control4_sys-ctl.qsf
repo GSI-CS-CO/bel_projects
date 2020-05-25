@@ -86,7 +86,6 @@ set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to nExt_rst_in
 set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to nExt_rst_out
 set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to nPB_rst_in
 set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to nPCI_rst_out
-set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to nPfail
 set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to nSCUext_rst_in
 set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to nSTATUS
 set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to nSYS_rst
@@ -125,7 +124,6 @@ set_location_assignment PIN_M4 -to pGood[2]
 set_location_assignment PIN_J5 -to pGood[3]
 set_location_assignment PIN_M10 -to nPB_rst_in
 set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to nFPGA_rst_in
-set_location_assignment PIN_A8 -to nPfail
 set_location_assignment PIN_A6 -to nPCI_rst_out
 set_location_assignment PIN_K6 -to nSCUext_rst_in
 set_location_assignment PIN_M7 -to nCB_rst
