@@ -1,6 +1,7 @@
 ###############################################################################
 ##                                                                           ##
-##  Makefile to generate the static library daq.a for all DAQ applications   ##
+##  Makefile to generate the static library libfg_feedback.a for function-   ##
+##  Generator feedback applications.
 ##                                                                           ##
 ##---------------------------------------------------------------------------##
 ## File:    gsi_daq/linux/Makefile                                           ##
@@ -11,7 +12,7 @@
 REPOSITORY_DIR := $(shell git rev-parse --show-toplevel)
 STATIC_LIBRARY := 1
 
-TARGET         := daq
+TARGET         := fg_feedback
 
 EB_SRC= $(DAQ_DIR)/feSupport/scu/etherbone
 INCLUDE_DIRS += $(EB_SRC)
@@ -23,10 +24,13 @@ SOURCE += $(SDAQ_LINUX_DIR)/daq_interface.cpp
 SOURCE += $(MDAQ_LINUX_DIR)/mdaq_administration.cpp
 SOURCE += $(MDAQ_LINUX_DIR)/mdaq_interface.cpp
 SOURCE += $(DAQ_LINUX_DIR)/daq_eb_ram_buffer.cpp
+SOURCE += $(DAQ_LINUX_DIR)/scu_fg_feedback.cpp
+SOURCE += $(DAQ_LINUX_DIR)/scu_fg_list.cpp
 SOURCE += $(DAQ_DIR)/daq_ring_admin.c
 
 DEFINES += _BSD_SOURCE
 DEFINES += _POSIX_C_SOURCE
+DEFINES += _DEFAULT_SOURCE
 
 #---- Necessary for backward compatibility if the compiler version greater or equal 5 ----
 DEFINES += _GLIBCXX_USE_CXX11_ABI=0

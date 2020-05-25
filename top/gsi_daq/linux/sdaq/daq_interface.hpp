@@ -201,6 +201,11 @@ public:
       return m_poEbAccess->getEbPtr();
    }
 
+   EbRamAccess* getEbAccess( void )
+   {
+      return m_poEbAccess;
+   }
+
    RETURN_CODE_T getLastReturnCode( void ) const
    {
       return m_oSharedData.operation.retCode;

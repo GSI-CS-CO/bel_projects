@@ -101,11 +101,20 @@ class FgList
 
       /*!
        * @brief Returns true when the function generator is a MIL- device
-       *        otherwise it's a non MIL device.
+       *        otherwise it's a ADDAC device.
        */
       bool isMIL( void ) const
       {
          return getSocket() != getSlot();
+      }
+
+      /*!
+       * @brief Returns true when the function generator is a ADDAC-device
+       *        otherwhise it's a MIL device.
+       */
+      bool isAddac( void ) const
+      {
+         return getSocket() == getSlot();
       }
    };
 
