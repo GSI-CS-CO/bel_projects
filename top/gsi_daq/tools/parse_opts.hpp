@@ -270,7 +270,7 @@ public:
                      "Option type is not a class!" );
       static_assert( std::is_base_of<OPTION, O_T>::value,
                      "Option type has not the base CLOP::OPTION" );
-      assert( dynamic_cast<OPTION*>(&rOptionObj) != nullptr );
+      assert( static_cast<void*>(dynamic_cast<OPTION*>(&rOptionObj)) != nullptr );
       m_optPtrList.push_back( &rOptionObj );
       return *this;
    }
