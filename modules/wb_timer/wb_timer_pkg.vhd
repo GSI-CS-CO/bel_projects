@@ -38,11 +38,11 @@ package wb_timer_pkg is
     wbd_width     => x"4", -- 32-bit port granularity
     sdb_component => (
     addr_first    => x"0000000000000000",
-    addr_last     => x"000000000000000f",
+    addr_last     => x"00000000000000ff",
     product => (
     vendor_id     => x"0000000000000651",
     device_id     => x"d8baaa13",
-    version       => x"00000001",
+    version       => x"00000002",
     date          => x"20200224",
     name          => "GSI:WB_TIMER       ")));
     
