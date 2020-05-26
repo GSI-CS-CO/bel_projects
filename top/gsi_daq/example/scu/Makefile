@@ -10,7 +10,7 @@
 ###############################################################################
 REPOSITORY_DIR := $(shell git rev-parse --show-toplevel)
 
-USE_SHARED_LIB := 1
+# USE_SHARED_LIB := 1
 
 EB_SRC= $(DAQ_DIR)/feSupport/scu/etherbone
 
@@ -21,6 +21,7 @@ ifndef USE_SHARED_LIB
   SOURCE += $(DAQ_LINUX_DIR)/daq_eb_ram_buffer.cpp
   SOURCE += $(SDAQ_LINUX_DIR)/daq_interface.cpp
   SOURCE += $(SDAQ_LINUX_DIR)/daq_administration.cpp
+  SOURCE += $(DAQ_LINUX_DIR)/daq_base_interface.cpp
 endif
 
 SOURCE += $(EB_SRC)/EtherboneConnection.cpp
@@ -28,6 +29,7 @@ SOURCE += $(EB_SRC)/BusException.cpp
 
 DEFINES += _BSD_SOURCE
 DEFINES += _POSIX_C_SOURCE
+DEFINES += _DEFAULT_SOURCE
 #---- Necessary for backward compatibility if the compiler version greater or equal 5 ----
 DEFINES += _GLIBCXX_USE_CXX11_ABI=0
 DEFINES += BOOST_NO_CXX11_EXPLICIT_CONVERSION_OPERATORS
@@ -48,9 +50,10 @@ DEFINES += CONFIG_DDR3_NO_BURST_FUNCTIONS
 
 INCLUDE_DIRS += $(EB_SRC)
 INCLUDE_DIRS += $(SDAQ_LINUX_DIR)
+INCLUDE_DIRS += $(DAQ_DIR)/tools
 # LIBS += boost_system
 
- ADDITIONAL_OBJECTS += /opt/gsi/3rdparty/boost/1.54.0/lib/x86_64/libboost_system.a
+# ADDITIONAL_OBJECTS += /opt/gsi/3rdparty/boost/1.54.0/lib/x86_64/libboost_system.a
 ifdef USE_SHARED_LIB
   SDAQ_LIB = $(SDAQ_LINUX_DIR)/deploy_x86_64/result/libsdaq.a
   ADDITIONAL_OBJECTS += $(SDAQ_LIB)

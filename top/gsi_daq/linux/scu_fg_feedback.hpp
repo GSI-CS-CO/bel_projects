@@ -29,6 +29,9 @@
 #include <list>
 #include <daq_calculations.hpp>
 #include <daq_administration.hpp>
+#ifdef CONFIG_MIL_FG
+ #include <mdaq_administration.hpp>
+#endif
 #include <scu_fg_list.hpp>
 
 using namespace Scu;
@@ -55,7 +58,11 @@ class FgFeedbackAdministration
    /*!
     * @brief Object for ADDAC DAQ administration.
     */
-   daq::DaqAdministration  m_oAddacDaqAdmin;
+   daq::DaqAdministration     m_oAddacDaqAdmin;
+
+#ifdef CONFIG_MIL_FG
+   MiLdaq::DaqAdministration  m_oMilDaqAdmin;
+#endif
 
 protected:
    #define DEVICE_LIST_BASE std::list

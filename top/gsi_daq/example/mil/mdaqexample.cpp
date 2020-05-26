@@ -28,6 +28,8 @@
 using namespace Scu;
 using namespace std;
 
+namespace fgfb = MiLdaq;
+
 ///////////////////////////////////////////////////////////////////////////////
 /*
  * We need to specializing the class MiLdaq::DaqCompare obtaining
@@ -37,7 +39,7 @@ class MyCompare: public MiLdaq::DaqCompare
 {
 public:
    MyCompare( uint iterfaceAddress ):
-      MiLdaq::DaqCompare( iterfaceAddress )
+      fgfb::DaqCompare( iterfaceAddress )
       {}
 
    /*
@@ -168,12 +170,12 @@ int main( int argc, const char** ppArgv )
        * can be used. See in the following for-loop below.
        */
       cout << "Found function generators in: " << milDaqContainer.getScuDomainName() << endl;
-      for( auto& fg: milDaqContainer.getFgList() )
+      for( const auto& fg: milDaqContainer.getFgList() )
       {
          cout << "Slot " << fg.getSlot() << ": Version: " << fg.getVersion()
               << ", Bits: " << fg.getOutputBits()
               << ", fg-" << fg.getSocket() << '-' << fg.getDevice()
-              << "\tDAQ: " << (fg.isMIL()? "MIL" : "non MIL") << endl;
+              << "\tDAQ: " << (fg.isMIL()? "MIL" : "ADDAC") << endl;
       }
       cout << "Press any key + Enter" << endl;
       int x;

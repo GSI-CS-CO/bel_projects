@@ -28,7 +28,7 @@ SOURCE += $(DAQ_DIR)/daq_ring_admin.c
 SOURCE += $(DAQ_LINUX_DIR)/daq_eb_ram_buffer.cpp
 SOURCE += $(SDAQ_LINUX_DIR)/daq_interface.cpp
 SOURCE += $(SDAQ_LINUX_DIR)/daq_administration.cpp
-
+SOURCE += $(DAQ_LINUX_DIR)/daq_base_interface.cpp
 
 SOURCE += $(EB_SRC)/EtherboneConnection.cpp
 SOURCE += $(EB_SRC)/BusException.cpp

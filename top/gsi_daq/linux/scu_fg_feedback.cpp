@@ -25,4 +25,26 @@
  */
 #include <scu_fg_feedback.hpp>
 
+FgFeedbackAdministration::FgFeedbackAdministration( DaqEb::EtherboneConnection* poEtherbone )
+   :m_oAddacDaqAdmin( poEtherbone )
+#ifdef CONFIG_MIL_FG
+   ,m_oMilDaqAdmin( m_oAddacDaqAdmin.getEbAccess() )
+#endif
+{
+}
+
+FgFeedbackAdministration::FgFeedbackAdministration( daq::EbRamAccess* poEbAccess )
+   :m_oAddacDaqAdmin( poEbAccess )
+#ifdef CONFIG_MIL_FG
+   ,m_oMilDaqAdmin( poEbAccess )
+#endif
+{
+}
+
+FgFeedbackAdministration::~FgFeedbackAdministration( void )
+{
+}
+
+
+
 //================================== EOF ======================================

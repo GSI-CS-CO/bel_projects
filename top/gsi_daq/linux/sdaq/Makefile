@@ -20,6 +20,7 @@ INCLUDE_DIRS += $(SDAQ_LINUX_DIR)
 SOURCE =  $(SDAQ_LINUX_DIR)/daq_administration.cpp
 SOURCE += $(SDAQ_LINUX_DIR)/daq_interface.cpp
 SOURCE += $(DAQ_LINUX_DIR)/daq_eb_ram_buffer.cpp
+SOURCE += $(DAQ_LINUX_DIR)/daq_base_interface.cpp
 SOURCE += $(DAQ_DIR)/daq_ring_admin.c
 
 DEFINES += _BSD_SOURCE
