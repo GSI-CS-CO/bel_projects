@@ -30,6 +30,7 @@ SOURCE += $(DAQ_LINUX_DIR)/daq_eb_ram_buffer.cpp
 SOURCE += $(DAQ_LINUX_DIR)/scu_fg_list.cpp
 SOURCE += $(MDAQ_LINUX_DIR)/mdaq_interface.cpp
 SOURCE += $(MDAQ_LINUX_DIR)/mdaq_administration.cpp
+SOURCE += $(DAQ_LINUX_DIR)/daq_base_interface.cpp
 SOURCE += mdaq_plot.cpp
 
 
