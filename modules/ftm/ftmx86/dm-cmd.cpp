@@ -45,21 +45,23 @@ static void help(const char *program) {
   fprintf(stderr, "  cursor                    Show name of currently active node of selected thread\n");
   fprintf(stderr, "  hex <target>              Show hex dump of selected Node \n");
   fprintf(stderr, "  queue <target>            Show content of all queues\n");
+  fprintf(stderr, "  rawqueue <target>         Dump all meta information of the command queues of the block <target> including commands\n");
   fprintf(stderr, "  start                     Request start of selected thread. Requires a valid origin.\n");
   fprintf(stderr, "  stop                      Request stop of selected thread. Does reverse lookup of current pattern, prone to race condition\n");
   //fprintf(stderr, "  cease                   Cease thread at pattern end.\n");
   fprintf(stderr, "  abort                     Immediately abort selected thread.\n");
-  fprintf(stderr, "  halt                      Immediately aborts all threads on all cpus\n");
-  fprintf(stderr, "  lock <target>             Locks all queues of a block, making them invisible to the DM and allowing modification during active runtime\n");
-  fprintf(stderr, "  clear <target>            Clears all queues of a locked block allowing modification/refill during active runtime\n");
-  fprintf(stderr, "  unlock <target>           Unlocks all queues of a block, making them visible to the DM\n");
+  fprintf(stderr, "  halt                      Immediately aborts all threads on all CPUs.\n");
+  fprintf(stderr, "  lock <target>             Locks all queues of a block for asynchronous queue manipulation mode. This makes the queues invisible to the DM and allowing modification during active runtime.\n");
+  fprintf(stderr, "                            ACTIVE LOCK MEANS DM WILL NEITHER WRITE TO NOR READ FROM THIS BLOCK'S QUEUES!\n");
+  fprintf(stderr, "  clear <target>            Clears all queues of a locked block allowing modification/refill during active runtime.\n");
+  fprintf(stderr, "  unlock <target>           Unlocks all queues of a block, making them visible to the DM.\n");
   //fprintf(stderr, "  force                     Force cursor to match origin\n");
-  fprintf(stderr, "  lock <target>                                 Locks a block for asynchronous queue manipulation mode.\nACTIVE LOCK MEANS DM WILL NEITHER WRITE TO NOR READ FROM THIS BLOCK'S QUEUES!\n");
   fprintf(stderr, "  asyncflush <target>  <prios>                  Flushes all pending commands of given priorities (3b Hi-Md-Lo -> 0x0..0x7) in an locked block of the schedule\n");
   fprintf(stderr, "  unlock <target>                               Unlocks a block from asynchronous queue manipulation mode\n");
-  fprintf(stderr, "  showlocks <target>                            Lists all currently locked blocks\n");
+  fprintf(stderr, "  showlocks                                     Lists all currently locked blocks\n");
   fprintf(stderr, "  staticflush <target> <prios>                  Flushes all pending commands of given priorities (3b Hi-Md-Lo -> 0x0..0x7) in an inactive (static) block of the schedule\n");
   fprintf(stderr, "  staticflushpattern <pattern> <prios>          Flushes all pending commands of given priorities (3b Hi-Md-Lo -> 0x0..0x7) in an inactive (static) pattern of the schedule\n");
+  fprintf(stderr, "  rawvisited <target>       Show 1 for a visited node, 0 for not visited.\n");
   fprintf(stderr, "\nQueued commands (viable options in square brackets):\n");
   fprintf(stderr, "  stop <target>                        [laps]   Request stop at selected block (flow to idle)\n");
   fprintf(stderr, "  stoppattern  <pattern>               [laps]   Request stop of selected pattern\n");
@@ -304,13 +306,11 @@ void showHealth(const char *netaddress, CarpeDM& cdm, bool verbose) {
 
 }
 
-
 std::string get_working_path()
 {
    char temp[MAXPATHLEN];
    return ( getcwd(temp, sizeof(temp)) ? std::string( temp ) : std::string("") );
 }
-
 
 int main(int argc, char* argv[]) {
 
@@ -520,15 +520,32 @@ int main(int argc, char* argv[]) {
   uint64_t tvalidOffs = cdm.getModTime();
   if(!vabs) cmdTvalid += tvalidOffs; // already added modTime when !vabs, so when calling cdm.adjustValidTime, we'll always say tvalid is absolute
 
-
   if ((typeName != NULL ) && ( typeName != std::string(""))){
 
     if(verbose) std::cout << "Generating " << typeName << " command" << std::endl;
 
     std::string cmp(typeName);
+    // For commands with a target name: check that the target name is valid.
+    // Vector of all commands which need a target name.
+    std::vector<std::string> commands_with_targetName = {
+      dnt::sCmdNoop, dnt::sCmdFlow, dnt::sSwitch, "relwait", "abswait", dnt::sCmdFlush, 
+      "staticflush", "lock", "asyncclear", "unlock", "queue", "rawqueue"
+    };
+    for (std::string s : commands_with_targetName) {
+      // if the command needs a target name, check
+      if (cmp == s) {
+        if ((targetName == NULL) || (targetName == std::string(""))) {
+          std::cerr << program << ": Target node is NULL, target missing." << std::endl; 
+          return -1;
+        }
+        if(!(cdm.isInHashDict(targetName))) {
+          std::cerr << program << ": Target node '" << targetName << "' was not found on DM" << std::endl;
+          return -1;
+        }
+      }
+    }
 
     if      (cmp == dnt::sCmdNoop)  {
-      if(!(cdm.isInHashDict( targetName))) {std::cerr << program << ": Target node '" << targetName << "'' was not found on DM" << std::endl; return -1; }
       cdm.createQCommand(ew, cmp, targetName, cmdPrio, cmdQty, true, 0);
     }
     else if (cmp == "status")  {
@@ -555,10 +572,9 @@ int main(int argc, char* argv[]) {
       targetName = fromNode.c_str();
     }
     else if (cmp == dnt::sCmdFlow)  {
-      if(!(cdm.isInHashDict( targetName))) {std::cerr << program << ": Target node '" << targetName << "'' was not found on DM" << std::endl; return -1; }
       if (( ((para != NULL) && ( para != std::string("")))) && (((para == DotStr::Node::Special::sIdle ) || cdm.isInHashDict( para)))) {
         cdm.createFlowCommand(ew, dnt::sCmdFlow, targetName, para, cmdPrio, cmdQty, true, 0, permanent);
-      } else {std::cerr << program << ": Destination Node '" << para << "'' was not found on DM" << std::endl; return -1; }
+      } else {std::cerr << program << ": Destination Node '" << para << "' was not found on DM" << std::endl; return -1; }
     }
     else if (cmp == "switchpattern")  {
       if ((targetName == NULL) || ( targetName == std::string("")) || (para == NULL) || ( para == std::string(""))) {std::cerr << program << ": Need valid target and destination pattern names " << std::endl; return -1; }
@@ -568,33 +584,28 @@ int main(int argc, char* argv[]) {
 
       if ( cdm.isInHashDict( fromNode ) && ( (toNode == DotStr::Node::Special::sIdle ) || cdm.isInHashDict( toNode )  )) {
         cdm.createCommand(ew, dnt::sSwitch, fromNode, toNode, 0, 0, false, 0, false, false, false, false, false, false, false, false);
-      } else {std::cerr << program << ": Destination Node '" << toNode << "'' was not found on DM" << std::endl; return -1; }
+      } else {std::cerr << program << ": Destination Node '" << toNode << "' was not found on DM" << std::endl; return -1; }
       targetName = fromNode.c_str();
     }
     else if (cmp == dnt::sSwitch)  {
-      if(!(cdm.isInHashDict( targetName))) {std::cerr << program << ": Target node '" << targetName << "'' was not found on DM" << std::endl; return -1; }
       if (( ((para != NULL) && ( para != std::string("")))) && (((para == DotStr::Node::Special::sIdle ) || cdm.isInHashDict( para)))) {
         cdm.createCommand(ew, dnt::sSwitch, targetName,        para, 0,            0, false,        0, false, false, false, false, false, false, false, false);
-      } else {std::cerr << program << ": Destination Node '" << para << "'' was not found on DM" << std::endl; return -1; }
+      } else {std::cerr << program << ": Destination Node '" << para << "' was not found on DM" << std::endl; return -1; }
     }
     else if (cmp == "relwait")  {
-      if(!(cdm.isInHashDict( targetName))) {std::cerr << program << ": Target node '" << targetName << "'' was not found on DM" << std::endl; return -1; }
       if ((para == NULL) || (para == std::string(""))) {std::cerr << program << ": Wait time in ns is missing" << std::endl; return -1; }
       cdm.createWaitCommand(ew, dnt::sCmdWait, targetName, cmdPrio, cmdQty, true, 0, strtoll(para, NULL, 0), false);
     }
     else if (cmp == "abswait")  {
-      if(!(cdm.isInHashDict( targetName))) {std::cerr << program << ": Target node '" << targetName << "'' was not found on DM" << std::endl; return -1; }
       if ((para == NULL) || (para == std::string(""))) {std::cerr << program << ": Wait time in ns is missing" << std::endl; return -1; }
       cdm.createWaitCommand(ew, dnt::sCmdWait, targetName, cmdPrio, cmdQty, true, 0, strtoll(para, NULL, 0), true);
     }
     else if (cmp == dnt::sCmdFlush) {
-        if(!(cdm.isInHashDict( targetName))) {std::cerr << program << ": Target node '" << targetName << "'' was not found on DM" << std::endl; return -1; }
-        if ((para == NULL) || (para == std::string(""))) {std::cerr << program << ": Queues to be flushed are missing, require 3 bit as hex (IL HI LO 0x0 - 0x7)" << std::endl; return -1; }
-        uint32_t queuePrio = strtol(para, NULL, 0) & 0x7;
-        cdm.createFlushCommand(ew, dnt::sCmdFlush, targetName, "", cmdPrio, cmdQty, true, 0, (bool)(queuePrio >> PRIO_IL & 1), (bool)(queuePrio >> PRIO_HI & 1), (bool)(queuePrio >> PRIO_LO & 1));
+      if ((para == NULL) || (para == std::string(""))) {std::cerr << program << ": Queues to be flushed are missing, require 3 bit as hex (IL HI LO 0x0 - 0x7)" << std::endl; return -1; }
+      uint32_t queuePrio = strtol(para, NULL, 0) & 0x7;
+      cdm.createFlushCommand(ew, dnt::sCmdFlush, targetName, "", cmdPrio, cmdQty, true, 0, (bool)(queuePrio >> PRIO_IL & 1), (bool)(queuePrio >> PRIO_HI & 1), (bool)(queuePrio >> PRIO_LO & 1));
     }
     else if (cmp == "staticflush") {
-      if(!(cdm.isInHashDict( targetName))) {std::cerr << program << ": Target node '" << targetName << "'' was not found on DM" << std::endl; return -1; }
       if ((para == NULL) || (para == std::string(""))) {std::cerr << program << ": Queues to be flushed are missing, require 3 bit as hex (IL HI LO 0x0 - 0x7)" << std::endl; return -1; }
       uint32_t queuePrio = strtol(para, NULL, 0) & 0x7;
       try {
@@ -607,7 +618,6 @@ int main(int argc, char* argv[]) {
     }
     else if (cmp == "lock") {
       bool wr=true, rd=true;
-      if(!(cdm.isInHashDict( targetName))) {std::cerr << program << ": Target node '" << targetName << "'' was not found on DM" << std::endl; return -1; }
       if ((para != NULL) && (para != std::string(""))) {
         uint8_t tmp = strtol(para, NULL, 0) & 0x3;
         wr = (bool)(tmp & BLOCK_CMDQ_DNW_SMSK);
@@ -623,7 +633,6 @@ int main(int argc, char* argv[]) {
 
     }
     else if (cmp == "asyncclear") {
-      if(!(cdm.isInHashDict( targetName))) {std::cerr << program << ": Target node '" << targetName << "'' was not found on DM" << std::endl; return -1; }
       try {
           cdm.createNonQCommand(ew, dnt::sCmdAsyncClear, targetName);
         } catch (std::runtime_error const& err) {
@@ -632,8 +641,7 @@ int main(int argc, char* argv[]) {
 
     }
     else if (cmp == "unlock") {
-       bool wr=true, rd=true;
-      if(!(cdm.isInHashDict( targetName))) {std::cerr << program << ": Target node '" << targetName << "'' was not found on DM" << std::endl; return -1; }
+      bool wr=true, rd=true;
       if ((para != NULL) && (para != std::string(""))) {
         uint8_t tmp = strtol(para, NULL, 0) & 0x3;
         wr = (bool)(tmp & BLOCK_CMDQ_DNW_SMSK);
@@ -660,13 +668,11 @@ int main(int argc, char* argv[]) {
     }
     
     else if (cmp == "queue") {
-        if(!(cdm.isInHashDict( targetName))) {std::cerr << program << ": Target node '" << targetName << "'' was not found on DM" << std::endl; return -1; }
         std::string report;
         std::cout << cdm.inspectQueues(targetName, report) << std::endl;
         return 0;
     }
     else if (cmp == "rawqueue") {
-        if(!(cdm.isInHashDict( targetName))) {std::cerr << program << ": Target node '" << targetName << "'' was not found on DM" << std::endl; return -1; }
         std::string report;
         std::cout << cdm.getRawQReport(targetName, report) << std::endl;
         return 0;
@@ -713,12 +719,8 @@ int main(int argc, char* argv[]) {
       }
 
     }
-    else if (cmp == dnt::sCmdStop)  {
-      if (targetName == NULL) {std::cerr << program << ": expected name of target node" << std::endl; return -1; }
-      if(!(cdm.isInHashDict( targetName))) {std::cerr << program << ": Target node '" << targetName << "'' was not found on DM" << std::endl; return -1; }
-
-        cdm.stopNodeOrigin(targetName);
-
+    else if (cmp == dnt::sCmdStop) {
+      cdm.stopNodeOrigin(targetName);
     }
     else if (cmp == "startpattern")  {
       //check if a valid origin was assigned before executing
@@ -753,7 +755,6 @@ int main(int argc, char* argv[]) {
       return 0;
     }
     else if (cmp == "hex")  {
-      if(!(cdm.isInHashDict( targetName))) {std::cerr << program << ": Target node '" << targetName << "'' was not found on DM" << std::endl; return -1; }
       try {
         cdm.dumpNode(targetName);
       } catch (std::runtime_error const& err) {
@@ -762,10 +763,17 @@ int main(int argc, char* argv[]) {
       return 0;
     }
     else if (cmp == "rawvisited")  {
-      if(!(cdm.isInHashDict( targetName))) {std::cerr << program << ": Target node '" << targetName << "'' was not found on DM" << std::endl; return -1; }
       try {
-        bool isVisited = cdm.isPainted(targetName);
-        std::cout << targetName << ":" << (int)(isVisited ? 1 : 0) << std::endl;
+        if ((targetName == NULL) || (targetName == std::string(""))) {
+          cdm.showPaint();
+        } else {
+          if(!(cdm.isInHashDict(targetName))) {
+            std::cerr << program << ": Target node '" << targetName << "' was not found on DM" << std::endl;
+            return -1;
+          }
+          bool isVisited = cdm.isPainted(targetName);
+          std::cout << targetName << ":" << (int)(isVisited ? 1 : 0) << std::endl;
+        }
       } catch (std::runtime_error const& err) {
         std::cerr << program << ": Node not found. Cause: " << err.what() << std::endl; return -21;
       }
