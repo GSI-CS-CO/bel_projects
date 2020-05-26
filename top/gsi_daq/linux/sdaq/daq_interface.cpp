@@ -117,8 +117,7 @@ DaqInterface::DaqInterface( DaqEb::EtherboneConnection* poEtherbone,
                             const bool doReset,
                             const bool doSendCommand
                           )
-   :m_poEbAccess( new EbRamAccess( poEtherbone ) )
-   ,m_ebAccessSelfCreated( true )
+   :DaqBaseInterface( poEtherbone )
    ,m_slotFlags( 0 )
    ,m_maxDevices( 0 )
    ,m_doReset( doReset )
@@ -132,8 +131,7 @@ DaqInterface::DaqInterface( EbRamAccess* poEbAccess,
                             const bool doReset,
                             const bool doSendCommand
                           )
-   :m_poEbAccess( poEbAccess )
-   ,m_ebAccessSelfCreated( false )
+   :DaqBaseInterface( poEbAccess )
    ,m_slotFlags( 0 )
    ,m_maxDevices( 0 )
    ,m_doReset( doReset )
@@ -147,11 +145,11 @@ DaqInterface::DaqInterface( EbRamAccess* poEbAccess,
  */
 void DaqInterface::init( void )
 {
-   SCU_ASSERT( m_poEbAccess != nullptr );
+   SCU_ASSERT( getEbAccess() != nullptr );
 
    probe();
 
-   m_poEbAccess->ramInit( &m_oScuRam, &m_oSharedData.ramIndexes );
+   getEbAccess()->ramInit( &m_oScuRam, &m_oSharedData.ramIndexes );
    readSharedTotal();
    sendUnlockRamAccess();
    sendReset();
@@ -168,7 +166,7 @@ inline void DaqInterface::probe( void )
     * First step: Investigation whether the single DAQ LM32
     * application is loaded.
     */
-   m_poEbAccess->readLM32( &actMagicNumber, 1,
+   getEbAccess()->readLM32( &actMagicNumber, 1,
                            offsetof( DAQ_SHARED_IO_T, magicNumber ),
                            sizeof( actMagicNumber ) );
    if( actMagicNumber == DAQ_MAGIC_NUMBER )
@@ -182,7 +180,7 @@ inline void DaqInterface::probe( void )
     * Second step: Investigation whether the FG-LM32 application
     * is loaded.
     */
-   m_poEbAccess->readLM32( &actMagicNumber, 1,
+   getEbAccess()->readLM32( &actMagicNumber, 1,
                            offsetof( FG::SCU_SHARED_DATA_T, fg_magic_number ),
                            sizeof( actMagicNumber ) );
    if( m_daqLM32Offset != INVALID_OFFSET )
@@ -211,7 +209,7 @@ inline void DaqInterface::probe( void )
     * Third step: Investigation whether the FG+DAQ-LM32 application
     * is loaded.
     */
-   m_poEbAccess->readLM32( &actMagicNumber, 1,
+   getEbAccess()->readLM32( &actMagicNumber, 1,
                            offsetof( FG::SCU_SHARED_DATA_T, sDaq.magicNumber ),
                            sizeof( actMagicNumber ) );
    if( actMagicNumber == DAQ_MAGIC_NUMBER )
@@ -228,8 +226,6 @@ inline void DaqInterface::probe( void )
  */
 DaqInterface::~DaqInterface( void )
 {
-   if( m_ebAccessSelfCreated )
-      delete m_poEbAccess;
 }
 
 /*! ---------------------------------------------------------------------------

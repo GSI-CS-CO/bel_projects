@@ -32,15 +32,13 @@ using namespace std;
 /*! ---------------------------------------------------------------------------
  */
 DaqInterface::DaqInterface( DaqEb::EtherboneConnection* poEtherbone )
-   :m_ebAccessSelfCreated( true )
-   ,m_poEbAccess( new daq::EbRamAccess( poEtherbone ) )
+   :DaqBaseInterface( poEtherbone )
 {
    init();
 }
 
 DaqInterface::DaqInterface( daq::EbRamAccess* poEbAccess )
-   :m_ebAccessSelfCreated( false )
-   ,m_poEbAccess( poEbAccess )
+   :DaqBaseInterface( poEbAccess )
 {
    init();
 }
@@ -49,8 +47,6 @@ DaqInterface::DaqInterface( daq::EbRamAccess* poEbAccess )
  */
 DaqInterface::~DaqInterface( void )
 {
-   if( m_ebAccessSelfCreated )
-      delete m_poEbAccess;
 }
 
 /*! ---------------------------------------------------------------------------
@@ -58,7 +54,7 @@ DaqInterface::~DaqInterface( void )
 void DaqInterface::init( void )
 {
    uint32_t tmpMagicNumber;
-   m_poEbAccess->readLM32( &tmpMagicNumber, sizeof( tmpMagicNumber ),
+   getEbAccess()->readLM32( &tmpMagicNumber, sizeof( tmpMagicNumber ),
                            offsetof( FG::SCU_SHARED_DATA_T, fg_magic_number ) );
 
    if( tmpMagicNumber != __bswap_constant_32( FG_MAGIC_NUMBER ) )
@@ -68,7 +64,7 @@ void DaqInterface::init( void )
     * Synchronizing the FG -lit from lm32 shared memory only no active
     * scanning!
     */
-   m_oFgList.sync( m_poEbAccess );
+   m_oFgList.sync( getEbAccess() );
    readRingPosition();
 }
 
@@ -78,7 +74,7 @@ bool DaqInterface::readRingPosition( void )
 {
    DAQ_RING_T tmp;
 
-   m_poEbAccess->readLM32( &tmp, sizeof( tmp ),
+   getEbAccess()->readLM32( &tmp, sizeof( tmp ),
                                  offsetof( FG::SCU_SHARED_DATA_T, daq_buf ) );
 
    m_oRing.m_head = gsi::convertByteEndian( tmp.m_head );
@@ -97,7 +93,7 @@ bool DaqInterface::readRingPosition( void )
 void DaqInterface::updateRingTail( void )
 {
    RING_INDEX_T convTail = gsi::convertByteEndian( getTailRingIndex() );
-   m_poEbAccess->writeLM32( &convTail, sizeof( convTail ),
+   getEbAccess()->writeLM32( &convTail, sizeof( convTail ),
                             offsetof( FG::SCU_SHARED_DATA_T, daq_buf.ring_tail ) );
 }
 
@@ -146,7 +142,7 @@ bool DaqInterface::isSocketUsed( const uint socket )
 inline
 void DaqInterface::readRingData( RING_ITEM_T* ptr, uint len, uint offset )
 {
-   m_poEbAccess->readLM32( ptr,
+   getEbAccess()->readLM32( ptr,
                            len * sizeof( RING_ITEM_T ),
                            offsetof( FG::SCU_SHARED_DATA_T,
                                      daq_buf.ring_data ) +

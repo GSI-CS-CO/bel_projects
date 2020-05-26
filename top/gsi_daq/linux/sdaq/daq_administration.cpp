@@ -416,7 +416,7 @@ int DaqAdministration::readDaqDataBlock( RAM_DAQ_PAYLOAD_T* pData,
    while( len > 0 )
    {
       std::size_t partLen = std::min( len, m_maxEbCycleDataLen );
-      ret = m_poEbAccess->readDaqDataBlock( &pData[offset], partLen
+      ret = getEbAccess()->readDaqDataBlock( &pData[offset], partLen
                                         #ifndef CONFIG_DDR3_NO_BURST_FUNCTIONS
                                            , ::ramReadPoll
                                         #endif

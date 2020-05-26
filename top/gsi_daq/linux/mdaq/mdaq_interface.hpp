@@ -26,12 +26,8 @@
 #define _MDAQ_INTERFACE_HPP
 #include <stddef.h>
 #include <string>
-#include <daq_exception.hpp>
+#include <daq_base_interface.hpp>
 #include <scu_fg_list.hpp>
-
-#ifndef DAQ_DEFAULT_WB_DEVICE
-   #define DAQ_DEFAULT_WB_DEVICE "dev/wbm0"
-#endif
 
 namespace Scu
 {
@@ -50,7 +46,7 @@ public:
 };
 
 ///////////////////////////////////////////////////////////////////////////////
-class DaqInterface
+class DaqInterface: public DaqBaseInterface
 {
 public:
    // TODO Replace these naked numbers asap!!!
@@ -130,13 +126,11 @@ private:
    static_assert( offsetof( DAQ_RING_T, m_tail ) ==
                   offsetof( MIL_DAQ_BUFFER_T, ring_tail ), "Offset-error!" );
 
-   bool               m_ebAccessSelfCreated;
    DAQ_RING_T         m_oRing;
 
    void readRingData( RING_ITEM_T* ptr, uint len, uint offset = 0 );
 
 protected:
-   daq::EbRamAccess*  m_poEbAccess;
    FgList             m_oFgList;
 
 public:
@@ -146,32 +140,17 @@ public:
 
    void scan( void )
    {
-      m_oFgList.scan( m_poEbAccess );
+      m_oFgList.scan( getEbAccess() );
    }
 
    void sync( void )
    {
-      m_oFgList.sync( m_poEbAccess );
+      m_oFgList.sync( getEbAccess() );
    }
 
    uint getLm32SoftwareVersion( void ) const
    {
       return m_oFgList.getLm32SoftwareVersion();
-   }
-
-   const std::string& getWbDevice( void )
-   {
-      return m_poEbAccess->getNetAddress();
-   }
-
-   const std::string getScuDomainName( void )
-   {
-      return m_poEbAccess->getScuDomainName();
-   }
-
-   daq::EbRamAccess* getEbRamAccessObj( void )
-   {
-      return m_poEbAccess;
    }
 
    RING_INDEX_T getHeadRingIndex( void ) const

@@ -26,14 +26,13 @@
 #define _DAQ_INTERFACE_HPP
 
 #include <string.h>
-
+#include <daq_base_interface.hpp>
 #include <daq_command_interface.h>
 #include <scu_bus_defines.h>
 #include <daq_ramBuffer.h>
 #include <daq_descriptor.h>
 //#include <stddef.h>
 //#include <string>
-#include <daq_exception.hpp>
 #include <daq_eb_ram_buffer.hpp>
 #include <daq_calculations.hpp>
 
@@ -109,21 +108,15 @@ public:
 /*! @} */
 
 ///////////////////////////////////////////////////////////////////////////////
-class DaqInterface
+class DaqInterface: public DaqBaseInterface
 {
-   //typedef eb_status_t          EB_STATUS_T;
-   using EB_STATUS_T  = eb_status_t;
    constexpr static uint        INVALID_OFFSET = static_cast<uint>(~0);
 
 public:
    using SLOT_FLAGS_T  = SCUBUS_SLAVE_FLAGS_T;
    using RETURN_CODE_T = DAQ_RETURN_CODE_T;
 
-protected:
-   EbRamAccess*                 m_poEbAccess;
-
 private:
-   bool                         m_ebAccessSelfCreated;
    DAQ_SHARED_IO_T              m_oSharedData;
    SLOT_FLAGS_T                 m_slotFlags;
    uint                         m_maxDevices;
@@ -142,9 +135,13 @@ protected:
                                    = MICROSECS_PER_SEC / 10;
 
 public:
+#if 0
    constexpr static uint         c_maxDevices        = DAQ_MAX;
    constexpr static uint         c_maxSlots          = MAX_SCU_SLAVES;
    constexpr static uint         c_startSlot         = SCUBUS_START_SLOT;
+   constexpr static uint         c_maxChannels       = DAQ_MAX_CHANNELS;
+#endif
+   constexpr static uint         c_maxDevices        = DAQ_MAX;
    constexpr static uint         c_maxChannels       = DAQ_MAX_CHANNELS;
    constexpr static std::size_t  c_ramBlockShortLen  = RAM_DAQ_SHORT_BLOCK_LEN;
    constexpr static std::size_t  c_ramBlockLongLen   = RAM_DAQ_LONG_BLOCK_LEN;
@@ -181,6 +178,7 @@ public:
       return m_doSendCommand;
    }
 
+#if 0
    const std::string& getWbDevice( void )
    {
       return m_poEbAccess->getNetAddress();
@@ -190,12 +188,13 @@ public:
    {
       return m_poEbAccess->getScuDomainName();
    }
-
+#endif
    const std::string getEbStatusString( void ) const
    {
       return static_cast<const std::string>("Noch nix");
    }
 
+#if 0
    DaqEb::EtherboneConnection* getEbPtr( void )
    {
       return m_poEbAccess->getEbPtr();
@@ -205,7 +204,7 @@ public:
    {
       return m_poEbAccess;
    }
-
+#endif
    RETURN_CODE_T getLastReturnCode( void ) const
    {
       return m_oSharedData.operation.retCode;
@@ -340,7 +339,7 @@ protected:
                 )
    {
       assert( m_daqLM32Offset != INVALID_OFFSET );
-      m_poEbAccess->readLM32( pData, len, offset + m_daqLM32Offset, format );
+      getEbAccess()->readLM32( pData, len, offset + m_daqLM32Offset, format );
    }
 
    void writeLM32( const eb_user_data_t pData,
@@ -349,7 +348,7 @@ protected:
                    const etherbone::format_t format = EB_DATA8 )
    {
       assert( m_daqLM32Offset != INVALID_OFFSET );
-      m_poEbAccess->writeLM32( pData, len, offset + m_daqLM32Offset, format );
+      getEbAccess()->writeLM32( pData, len, offset + m_daqLM32Offset, format );
    }
 
 
