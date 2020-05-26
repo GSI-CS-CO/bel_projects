@@ -436,7 +436,7 @@ int DaqAdministration::readDaqDataBlock( RAM_DAQ_PAYLOAD_T* pData,
 
 /*! ---------------------------------------------------------------------------
  */
-int DaqAdministration::distributeData( void )
+uint DaqAdministration::distributeData( void )
 {
    union PROBE_BUFFER_T
    {

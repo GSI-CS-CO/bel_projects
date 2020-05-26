@@ -50,6 +50,7 @@ class FgFeedbackDevice
 ///////////////////////////////////////////////////////////////////////////////
 class FgFeedbackAdministration
 {
+   using DAQ_POLL_T = std::vector<DaqBaseInterface*>;
    /*!
     * @brief List of function generators found by the LM32 application.
     */
@@ -63,6 +64,8 @@ class FgFeedbackAdministration
 #ifdef CONFIG_MIL_FG
    MiLdaq::DaqAdministration  m_oMilDaqAdmin;
 #endif
+
+   DAQ_POLL_T                 m_vPollList;
 
 protected:
    #define DEVICE_LIST_BASE std::list
@@ -92,6 +95,8 @@ public:
    {
       m_oFoundFgs.sync( m_oAddacDaqAdmin.getEbAccess() );
    }
+
+   uint distributeData( void );
 };
 
 

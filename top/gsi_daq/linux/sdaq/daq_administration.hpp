@@ -475,7 +475,7 @@ private:
  * @brief Object of this type represents one of the 12 possible DAQ devices
  *        on the SCU bus. It's the container of the DAQ channels.
  */
-class DaqDevice
+class DaqDevice: public DaqBaseDevice
 {
    friend class DaqAdministration;
 
@@ -939,7 +939,7 @@ public:
     * DaqChannel::onDataBlock() becomes invoked by this.
     * @see DaqChannel::onDataBlock
     */
-   int distributeData( void );
+   uint distributeData( void ) override;
 
    /*!
     * @ingroup onDataBlock

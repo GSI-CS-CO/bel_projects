@@ -26,6 +26,8 @@ volatile TCB_t* volatile pxCurrentTCB;
 .extern pxCurrentTCB
 #endif
 
+.extern _irq_entry
+
 #ifdef __DOXYGEN__
 void vStartFirstTask( void );
 #else

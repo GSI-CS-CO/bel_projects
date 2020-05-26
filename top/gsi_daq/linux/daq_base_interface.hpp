@@ -36,6 +36,10 @@
 namespace Scu
 {
 
+class DaqBaseDevice
+{
+};
+
 ///////////////////////////////////////////////////////////////////////////////
 class DaqBaseInterface
 {
@@ -74,6 +78,7 @@ public:
       return m_poEbAccess->getScuDomainName();
    }
 
+   virtual uint distributeData( void ) = 0;
 };
 
 } // namespace Scu

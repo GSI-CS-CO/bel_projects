@@ -134,7 +134,7 @@ protected:
 };
 
 ///////////////////////////////////////////////////////////////////////////////
-class DaqDevice
+class DaqDevice: public DaqBaseDevice
 {
    friend class DaqAdministration;
    #define MIL_CHANNEL_LIST_T_BASE std::list
@@ -325,7 +325,7 @@ public:
     *
     * @return Number of unread ring buffer items.
     */
-   uint distributeData( void );
+   uint distributeData( void ) override;
 
    void reset( void );
 

@@ -50,7 +50,7 @@ typedef struct
  * It reads the slaves echo register, increment or decrement it and write it
  * back.
  */
-STATIC void vTaskScuBusSlave( void* pvParameters )
+NO_INLINE STATIC void vTaskScuBusSlave( void* pvParameters )
 {
    const SLAVE_T* pSlave = (SLAVE_T*) pvParameters;
    volatile  uint16_t count;

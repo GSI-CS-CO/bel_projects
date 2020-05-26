@@ -25,26 +25,39 @@
  */
 #include <scu_fg_feedback.hpp>
 
+/*! ---------------------------------------------------------------------------
+ */
 FgFeedbackAdministration::FgFeedbackAdministration( DaqEb::EtherboneConnection* poEtherbone )
-   :m_oAddacDaqAdmin( poEtherbone )
+   :m_oAddacDaqAdmin( poEtherbone, false, false )
 #ifdef CONFIG_MIL_FG
    ,m_oMilDaqAdmin( m_oAddacDaqAdmin.getEbAccess() )
 #endif
 {
 }
 
+/*! ---------------------------------------------------------------------------
+ */
 FgFeedbackAdministration::FgFeedbackAdministration( daq::EbRamAccess* poEbAccess )
-   :m_oAddacDaqAdmin( poEbAccess )
+   :m_oAddacDaqAdmin( poEbAccess, false, false )
 #ifdef CONFIG_MIL_FG
    ,m_oMilDaqAdmin( poEbAccess )
 #endif
 {
 }
 
+/*! ---------------------------------------------------------------------------
+ */
 FgFeedbackAdministration::~FgFeedbackAdministration( void )
 {
 }
 
-
+/*! ---------------------------------------------------------------------------
+ */
+uint FgFeedbackAdministration::distributeData( void )
+{
+   for( const auto& daqAdmin: m_vPollList )
+      daqAdmin->distributeData();
+   return 0;
+}
 
 //================================== EOF ======================================
