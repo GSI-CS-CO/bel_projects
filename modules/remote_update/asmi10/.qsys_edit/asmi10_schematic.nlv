@@ -1,0 +1,28 @@
+# # File gsaved with Nlview version 6.3.8  2013-12-19 bk=1.2992 VDI=34 GEI=35
+# 
+preplace inst asmi10.asmi_parallel_0 -pg 1 -lvl 1 -y 30
+preplace inst asmi10 -pg 1 -lvl 1 -y 40 -regy -20
+preplace netloc EXPORT<net_container>asmi10</net_container>(SLAVE)asmi10.clkin,(SLAVE)asmi_parallel_0.clkin) 1 0 1 NJ
+preplace netloc EXPORT<net_container>asmi10</net_container>(SLAVE)asmi_parallel_0.status_out,(SLAVE)asmi10.status_out) 1 0 1 NJ
+preplace netloc EXPORT<net_container>asmi10</net_container>(SLAVE)asmi10.illegal_write,(SLAVE)asmi_parallel_0.illegal_write) 1 0 1 NJ
+preplace netloc EXPORT<net_container>asmi10</net_container>(SLAVE)asmi10.dataout,(SLAVE)asmi_parallel_0.dataout) 1 0 1 NJ
+preplace netloc EXPORT<net_container>asmi10</net_container>(SLAVE)asmi_parallel_0.addr,(SLAVE)asmi10.addr) 1 0 1 NJ
+preplace netloc EXPORT<net_container>asmi10</net_container>(SLAVE)asmi_parallel_0.reset,(SLAVE)asmi10.reset) 1 0 1 NJ
+preplace netloc EXPORT<net_container>asmi10</net_container>(SLAVE)asmi10.read_status,(SLAVE)asmi_parallel_0.read_status) 1 0 1 NJ
+preplace netloc EXPORT<net_container>asmi10</net_container>(SLAVE)asmi10.busy,(SLAVE)asmi_parallel_0.busy) 1 0 1 NJ
+preplace netloc EXPORT<net_container>asmi10</net_container>(SLAVE)asmi_parallel_0.read_address,(SLAVE)asmi10.read_address) 1 0 1 NJ
+preplace netloc EXPORT<net_container>asmi10</net_container>(SLAVE)asmi_parallel_0.rden,(SLAVE)asmi10.rden) 1 0 1 NJ
+preplace netloc EXPORT<net_container>asmi10</net_container>(SLAVE)asmi10.fast_read,(SLAVE)asmi_parallel_0.fast_read) 1 0 1 NJ
+preplace netloc EXPORT<net_container>asmi10</net_container>(SLAVE)asmi_parallel_0.en4b_addr,(SLAVE)asmi10.en4b_addr) 1 0 1 NJ
+preplace netloc EXPORT<net_container>asmi10</net_container>(SLAVE)asmi10.data_valid,(SLAVE)asmi_parallel_0.data_valid) 1 0 1 NJ
+preplace netloc EXPORT<net_container>asmi10</net_container>(SLAVE)asmi10.sector_erase,(SLAVE)asmi_parallel_0.sector_erase) 1 0 1 NJ
+preplace netloc EXPORT<net_container>asmi10</net_container>(SLAVE)asmi_parallel_0.sce,(SLAVE)asmi10.sce) 1 0 1 NJ
+preplace netloc EXPORT<net_container>asmi10</net_container>(SLAVE)asmi10.read_rdid,(SLAVE)asmi_parallel_0.read_rdid) 1 0 1 NJ
+preplace netloc EXPORT<net_container>asmi10</net_container>(SLAVE)asmi10.write,(SLAVE)asmi_parallel_0.write) 1 0 1 NJ
+preplace netloc EXPORT<net_container>asmi10</net_container>(SLAVE)asmi_parallel_0.wren,(SLAVE)asmi10.wren) 1 0 1 NJ
+preplace netloc EXPORT<net_container>asmi10</net_container>(SLAVE)asmi10.datain,(SLAVE)asmi_parallel_0.datain) 1 0 1 NJ
+preplace netloc EXPORT<net_container>asmi10</net_container>(SLAVE)asmi_parallel_0.shift_bytes,(SLAVE)asmi10.shift_bytes) 1 0 1 NJ
+preplace netloc EXPORT<net_container>asmi10</net_container>(SLAVE)asmi10.rdid_out,(SLAVE)asmi_parallel_0.rdid_out) 1 0 1 NJ
+preplace netloc EXPORT<net_container>asmi10</net_container>(SLAVE)asmi_parallel_0.illegal_erase,(SLAVE)asmi10.illegal_erase) 1 0 1 NJ
+levelinfo -pg 1 0 90 270
+levelinfo -hier asmi10 100 130 260
