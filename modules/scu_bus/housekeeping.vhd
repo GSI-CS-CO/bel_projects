@@ -313,16 +313,8 @@ begin
       rst_n_i   => rstn_update,
       
       slave_i      =>  aru_i,
-      slave_o      =>  aru_o,
-      
-      -- asmi interface, needed for pof check
-      asmi_busy       => asmi_busy,
-      asmi_data_valid => asmi_data_valid,
-      asmi_dataout    => asmi_dataout,
-      asmi_addr       => asmi_addr_ext,
-      asmi_rden       => asmi_rden_ext,
-      asmi_read       => asmi_read_ext,
-      asmi_to_aru     => asmi_to_ext);
+      slave_o      =>  aru_o
+    );
       
   --------------------------------------------
   -- clock crossing from sys clk to clk_25Mhz
@@ -352,17 +344,8 @@ begin
       rst_n_i   => rstn_flash,
       
       slave_i      =>  asmi_i,
-      slave_o      =>  asmi_o,
-      
-      -- asmi interface, needed for pof check
-      asmi_busy         => asmi_busy,
-      asmi_data_valid   => asmi_data_valid,
-      asmi_dataout      => asmi_dataout,
-      asmi_addr_ext     => asmi_addr_ext,
-      asmi_rden_ext     => asmi_rden_ext,
-      asmi_read_ext     => asmi_read_ext,
-      -- needed for multiplexing
-      asmi_to_ext       => asmi_to_ext);  
+      slave_o      =>  asmi_o
+    );  
       
   
   Data_to_SCUB <= wb_reg_data when wb_reg_rd_active = '1' else

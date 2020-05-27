@@ -69,6 +69,7 @@ use work.ddr3_wrapper_pkg.all;
 use work.endpoint_pkg.all;
 use work.cpri_phy_reconf_pkg.all;
 use work.beam_dump_pkg.all;
+use work.remote_update_pkg.all;
 
 entity monster is
   generic(
@@ -118,8 +119,8 @@ entity monster is
     g_en_eca               : boolean;
     g_en_wd_tmr            : boolean;
     g_en_timer             : boolean;
-    g_en_eca_tap           : boolean);
-
+    g_en_eca_tap           : boolean;
+    g_en_asmi              : boolean);
   port(
     -- Required: core signals
     core_clk_20m_vcxo_i    : in    std_logic;
@@ -478,7 +479,8 @@ architecture rtl of monster is
     devs_DDR3_ctrl,
     devs_tempsens,
     devs_a10_phy_reconf,
-    devs_eca_tap
+    devs_eca_tap,
+    devs_asmi
   );
   constant c_dev_slaves          : natural := dev_slaves'pos(dev_slaves'right)+1;
   
@@ -518,7 +520,8 @@ architecture rtl of monster is
     dev_slaves'pos(devs_DDR3_ctrl)      => f_sdb_auto_device(c_irq_master_ctrl_sdb,            g_en_ddr3),
     dev_slaves'pos(devs_tempsens)       => f_sdb_auto_device(c_temp_sense_sdb,                 g_en_tempsens),
     dev_slaves'pos(devs_a10_phy_reconf) => f_sdb_auto_device(c_cpri_phy_reconf_sdb,            g_a10_en_phy_reconf),
-    dev_slaves'pos(devs_eca_tap)        => f_sdb_auto_device(c_eca_tap_sdb,                    g_en_eca_tap));
+    dev_slaves'pos(devs_eca_tap)        => f_sdb_auto_device(c_eca_tap_sdb,                    g_en_eca_tap),
+    dev_slaves'pos(devs_asmi)           => f_sdb_auto_device(c_wb_asmi_sdb,                    g_en_asmi));
   constant c_dev_layout      : t_sdb_record_array := f_sdb_auto_layout(c_dev_layout_req_masters, c_dev_layout_req_slaves);
   constant c_dev_sdb_address : t_wishbone_address := f_sdb_auto_sdb   (c_dev_layout_req_masters, c_dev_layout_req_slaves);
   constant c_dev_bridge_sdb  : t_sdb_bridge       := f_xwb_bridge_layout_sdb(true, c_dev_layout, c_dev_sdb_address);
@@ -868,6 +871,12 @@ architecture rtl of monster is
     end loop;
     return result;
   end f_lvds_array_to_trigger_array;
+
+  ----------------------------------------------------------------------------------
+  -- asmi signals ------------------------------------------------------------------
+  ----------------------------------------------------------------------------------
+  signal asmi_i : t_wishbone_slave_in;
+  signal asmi_o : t_wishbone_slave_out;
 
 begin
 
@@ -2910,6 +2919,47 @@ end generate;
         slave_o    => dev_bus_master_i(dev_slaves'pos(devs_tempsens)),
         clr_o      => tempsens_clr_out);
   end generate;
+
+  asmi_n : if not g_en_asmi generate
+    dev_bus_master_i(dev_slaves'pos(devs_asmi)) <= cc_dummy_slave_out;
+  end generate;
+
+  asmi_y : if g_en_asmi generate
+    --------------------------------------------
+    -- clock crossing from sys clk to clk_25Mhz
+    --------------------------------------------
+     cross_systoasmi : xwb_clock_crossing
+      generic map ( g_size => 16)
+      port map(
+        -- Slave control port
+        slave_clk_i    => clk_sys,
+        slave_rst_n_i  => rstn_sys,
+        slave_i        => dev_bus_master_o(dev_slaves'pos(devs_asmi)),
+        slave_o        => dev_bus_master_i(dev_slaves'pos(devs_asmi)),
+        -- Master reader port
+        master_clk_i   => clk_flash_ext,
+        master_rst_n_i => rstn_update,
+        master_i       => asmi_o,
+        master_o       => asmi_i);
+    
+    
+    -----------------------------------------
+    -- wb interface for altera remote update
+    -----------------------------------------
+    asmi: wb_asmi
+      generic map ( 
+        pagesize => 256,
+        g_family => "Arria 10"
+      )
+      port map (
+        clk_flash_i => clk_flash_ext,
+        rst_n_i   => rstn_update,
+        
+        slave_i      =>  asmi_i,
+        slave_o      =>  asmi_o
+      );  
+   end generate asmi_y;
+
 
   -- END OF Wishbone slaves
   ----------------------------------------------------------------------------------
