@@ -27,6 +27,7 @@
 
 #include <string.h>
 #include <daq_base_interface.hpp>
+
 #include <daq_command_interface.h>
 #include <scu_bus_defines.h>
 #include <daq_ramBuffer.h>
@@ -166,7 +167,7 @@ public:
                  const bool doSendCommand = true
                );
 
-   virtual ~DaqInterface( void );
+   ~DaqInterface( void ) override;
 
    /*!
     * @brief Returns true when the command sending to LM32 is enabled.

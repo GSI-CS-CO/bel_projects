@@ -33,6 +33,7 @@
  #include <mdaq_administration.hpp>
 #endif
 #include <scu_fg_list.hpp>
+#include <daq_base_interface.hpp>
 
 using namespace Scu;
 using namespace gsi;
@@ -43,9 +44,18 @@ class FgFeedbackChannel
 };
 
 ///////////////////////////////////////////////////////////////////////////////
+class FgFeedbackBaseDevice: public DaqBaseDevice
+{
+
+   ~FgFeedbackBaseDevice( void ) override {}
+};
+
 class FgFeedbackDevice
 {
+
+   ~FgFeedbackDevice( void ) {}
 };
+
 
 ///////////////////////////////////////////////////////////////////////////////
 class FgFeedbackAdministration

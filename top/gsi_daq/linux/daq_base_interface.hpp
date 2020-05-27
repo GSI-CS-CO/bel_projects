@@ -28,6 +28,7 @@
 #include <daq_exception.hpp>
 #include <daq_eb_ram_buffer.hpp>
 #include <scu_bus_defines.h>
+#include <scu_function_generator.h>
 
 #ifndef DAQ_DEFAULT_WB_DEVICE
    #define DAQ_DEFAULT_WB_DEVICE "dev/wbm0"
@@ -36,8 +37,71 @@
 namespace Scu
 {
 
+///////////////////////////////////////////////////////////////////////////////
+/*!
+ * @brief Administration of the socket number.
+ */
 class DaqBaseDevice
 {
+   const uint m_socket;
+
+public:
+   DaqBaseDevice( const uint socket )
+      :m_socket( socket )
+   {
+   }
+
+   virtual ~DaqBaseDevice( void )
+   {
+   }
+
+   uint getSocket( void ) const
+   {
+      return m_socket;
+   }
+
+   /*!
+    * @brief Returns the SCU bus slot number.
+    */
+   uint getSlot( void ) const
+   {
+      return getFgSlotNumber( m_socket );
+   }
+
+  /*!
+   * @brief Returns "true" in the case the device is a ADDAC.
+   */
+   bool isAddac( void ) const
+   {
+      return isAddacFg( m_socket );
+   }
+
+   /*!
+   * @brief Returns "true" in the case the function generator belonging to the
+   *        given socket is a MIL function generator connected via SCU-bus
+   *        slave.
+   */
+   bool isMilScuBus( void ) const
+   {
+      return isMilScuBusFg( m_socket );
+   }
+
+   /*!
+    * @brief Returns "true" in the case the function generator belonging to the
+    *        given socket is connected via MIL extension.
+    */
+   bool isMilExtention( void ) const
+   {
+      return isMilExtentionFg( m_socket );
+   }
+
+   /*!
+    * @brief Returns "true" in the case the function generator is a MIL device.
+    */
+   bool isMil( void )
+   {
+      return isMilFg( m_socket );
+   }
 };
 
 ///////////////////////////////////////////////////////////////////////////////

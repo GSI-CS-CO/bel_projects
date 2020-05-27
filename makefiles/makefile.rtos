@@ -67,6 +67,7 @@ CHECK_SOURCE                   += $(FREE_RTOS_CONFIG_FILE)
 
 # ---------------------------- for Doxygen only -------------------------------
 DOX_TAB_SIZE = 4
+
 DOX_INPUT += $(RTOS_INCLUDE_DIR)
 DOX_INPUT += $(FREE_RTOS_CONFIG_FILE)
 DOX_INPUT += $(SCU_LIB_SRC_DIR)/scu_lm32Timer.h

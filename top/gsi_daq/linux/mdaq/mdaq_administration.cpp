@@ -51,7 +51,8 @@ DaqCompare::~DaqCompare( void )
 /*-----------------------------------------------------------------------------
  */
 DaqDevice::DaqDevice( uint location )
-   :m_location( location )
+   :DaqBaseDevice( location )
+   ,m_location( location )
    ,m_pParent( nullptr )
 {
 }

@@ -771,7 +771,7 @@ public:
                       const bool doSendCommand = true
                     );
 
-   virtual ~DaqAdministration( void );
+   ~DaqAdministration( void ) override;
 
    /*!
     * @brief Returns the iterator to the begin of the pointer list of

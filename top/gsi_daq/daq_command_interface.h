@@ -36,7 +36,14 @@
 #include <scu_bus_defines.h>
 #include <daq_ramBuffer.h>
 #include <stdint.h>
+
+#ifdef CONFIG_SCU_DAQ_INTEGRATION
+  #include <scu_function_generator.h>
+#endif
+
 #ifdef __cplusplus
+extern "C"
+{
 namespace Scu
 {
 namespace daq
@@ -263,6 +270,15 @@ STATIC_ASSERT( offsetof( DAQ_SHARED_IO_T, ramIndexes ) <
    }                                                                         \
 }
 
+#ifdef CONFIG_SCU_DAQ_INTEGRATION
+
+#ifndef __DOXYGEN__
+/*
+ * Putting DAQ_MAX_CHANNELS and MAX_FG_PER_SLAVE in a strongly relation.
+ */
+STATIC_ASSERT( DAQ_MAX_CHANNELS / 2 == MAX_FG_PER_SLAVE );
+#endif
+
 /*! ---------------------------------------------------------------------------
  * @ingroup DAQ
  * @brief Returns the channel number for the set-value of the given function-
@@ -270,9 +286,10 @@ STATIC_ASSERT( offsetof( DAQ_SHARED_IO_T, ramIndexes ) <
  * @param fgNum ADDAC function generator number 0 or 1
  * @return Feedback DAQ-channel number for set value.
  */
-STATIC inline unsigned int daqGetSetDaqNumberOfFg( const unsigned int fgNum )
+STATIC inline
+unsigned int daqGetSetDaqNumberOfFg( const unsigned int fgNum )
 {
-   return fgNum + 2;
+   return fgNum + MAX_FG_PER_SLAVE;
 }
 
 /*! ---------------------------------------------------------------------------
@@ -282,15 +299,19 @@ STATIC inline unsigned int daqGetSetDaqNumberOfFg( const unsigned int fgNum )
  * @param fgNum ADDAC function generator number 0 or 1
  * @return Feedback DAQ-channel number for actual value.
  */
-STATIC inline unsigned int daqGetActualDaqNumberOfFg( const unsigned int fgNum )
+STATIC inline
+unsigned int daqGetActualDaqNumberOfFg( const unsigned int fgNum )
 {
    return fgNum;
 }
+
+#endif /* ifdef CONFIG_SCU_DAQ_INTEGRATION */
 
 /*!@} *//*defgroup DAQ_INTERFACE */
 #ifdef __cplusplus
 } /* nanespace Scu */
 } /* namespace Daq */
+} /* extern "C" */
 #endif
 #endif /* ifndef _DAQ_COMMAND_INTERFACE_H */
 /*================================== EOF ====================================*/

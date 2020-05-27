@@ -157,7 +157,7 @@ public:
    /*!
     * @brief Destructor
     */
-   virtual ~DaqDevice( void );
+   ~DaqDevice( void ) override;
 
    /*!
     * @brief Returns the iterator to the begin of the pointer list of
@@ -267,7 +267,7 @@ protected:
 public:
    DaqAdministration( DaqEb::EtherboneConnection* poEtherbone );
    DaqAdministration( daq::EbRamAccess* poEbAccess );
-   virtual ~DaqAdministration( void );
+   ~DaqAdministration( void ) override;
 
    /*!
     * @brief Returns the iterator to the begin of the pointer list of

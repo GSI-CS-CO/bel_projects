@@ -34,7 +34,7 @@ DEFINES += _DEFAULT_SOURCE
 DEFINES += _GLIBCXX_USE_CXX11_ABI=0
 DEFINES += BOOST_NO_CXX11_EXPLICIT_CONVERSION_OPERATORS
 #-----------------------------------------------------------------------------------------
-
+DEFINES += DAQ_MAX_CHANNELS=4
 
 DEFINES += DEBUGLEVEL=1
 DEFINES += CONFIG_DAQ_TEST

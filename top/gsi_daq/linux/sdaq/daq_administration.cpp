@@ -95,7 +95,8 @@ void DaqChannel::verifySequence( void )
 /*! ---------------------------------------------------------------------------
  */
 DaqDevice::DaqDevice( uint number )
-   :m_deviceNumber( 0 )
+   :DaqBaseDevice( number )
+   ,m_deviceNumber( 0 )
    ,m_slot( number )
    ,m_maxChannels( 0 )
    ,m_pParent(nullptr)
