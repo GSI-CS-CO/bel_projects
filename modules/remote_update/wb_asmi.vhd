@@ -82,7 +82,7 @@ architecture arch of wb_asmi is
   signal  s_sector_erase    : std_logic;
   signal  s_illegal_erase   : std_logic;
   
-  signal  s_read_addr       : std_logic_vector(31 downto 0);
+  signal  s_read_addr       : std_logic_vector(23 downto 0);
   signal  s_read10_addr     : std_logic_vector(31 downto 0);
   
   signal  illegal_erase     : std_logic;

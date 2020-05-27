@@ -484,6 +484,7 @@ architecture rtl of monster is
   );
   constant c_dev_slaves          : natural := dev_slaves'pos(dev_slaves'right)+1;
   
+
   -- Cut off TLU
   constant c_use_tlu : boolean := (g_lm32_are_ftm and g_en_tlu) or (not(g_lm32_are_ftm) and g_en_tlu);
 
@@ -2929,7 +2930,7 @@ end generate;
     -- clock crossing from sys clk to clk_25Mhz
     --------------------------------------------
      cross_systoasmi : xwb_clock_crossing
-      generic map ( g_size => 256)
+      generic map ( g_size => 16)
       port map(
         -- Slave control port
         slave_clk_i    => clk_sys,
@@ -2949,7 +2950,7 @@ end generate;
     asmi: wb_asmi
       generic map ( 
         pagesize => 256,
-        g_family => g_family 
+        g_family => "Arria 10"
       )
       port map (
         clk_flash_i => clk_flash_ext,
