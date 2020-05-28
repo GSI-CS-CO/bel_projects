@@ -484,10 +484,10 @@ int daqDeviceFindChannels( DAQ_DEVICE_T* pThis, const unsigned int slot )
        * Fortunately the highest slot number is 0xC (12). Therefore no further
        * probing is necessary.
        */
-      DBPRINT2( "DBG: ctrReg: 0x%04x\n",
+      DBPRINT2( "DBG: ctrReg: 0x%04X\n",
               *((DAQ_REGISTER_T*)daqChannelGetCtrlRegPtr( pCurrentChannel )) );
       daqChannelGetCtrlRegPtr( pCurrentChannel )->slot = slot;
-      DBPRINT2( "DBG: ctrReg: 0x%04x\n",
+      DBPRINT2( "DBG: ctrReg: 0x%04X\n",
               *((DAQ_REGISTER_T*)daqChannelGetCtrlRegPtr( pCurrentChannel )) );
       if( daqChannelGetSlot( pCurrentChannel ) != slot )
          break; /* Supposing this channel isn't present. */
@@ -508,7 +508,7 @@ int daqDeviceFindChannels( DAQ_DEVICE_T* pThis, const unsigned int slot )
       pThis->maxChannels++;
     #ifndef CONFIG_DAQ_SINGLE_APP
       mprintf( ESC_FG_CYAN
-               "ADDAC-DAQ channel %d in slot %d initialized. Address: 0x%08x\n"
+               "ADDAC-DAQ channel %d in slot %d initialized. Address: 0x%08p\n"
                ESC_NORMAL,
                channel, daqChannelGetSlot( pCurrentChannel ),
                (unsigned int)pCurrentChannel
@@ -581,7 +581,7 @@ int daqBusFindAndInitializeAll( register DAQ_BUS_T* pThis,
       pCurrentDaqDevice->pReg =
           scuBusGetAbsSlaveAddr( pScuBusBase, slot ) + DAQ_REGISTER_OFFSET;
 
-      DBPRINT2( "DBG: DAQ found in slot: %02d, address: 0x%08x\n", slot,
+      DBPRINT2( "DBG: DAQ found in slot: %02d, address: 0x%08X\n", slot,
                 pCurrentDaqDevice->pReg );
 
 

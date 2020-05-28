@@ -83,7 +83,7 @@ STATIC int vprintfBase( PUTCH_F __putch, char const *format, va_list ap )
    int ret = 0;
    while( true )
    {
-      unsigned char  scratch[16];
+      unsigned char  scratch[BIT_SIZEOF(unsigned int)+1];
       unsigned char  format_flag;
       unsigned int   u_val = 0;
       unsigned char  base;
@@ -133,6 +133,7 @@ STATIC int vprintfBase( PUTCH_F __putch, char const *format, va_list ap )
          width = 0;
       }
 
+      signum = false;
       switch( format_flag = *format++ )
       {
          case 'S':
@@ -149,9 +150,30 @@ STATIC int vprintfBase( PUTCH_F __putch, char const *format, va_list ap )
             break;
 
          case 'u':
-            signum = false;
             base = 10;
             break;
+
+         case 'o':
+            base = 8;
+            break;
+
+      #ifndef CONFIG_NO_BINARY_PRINTF_FORMAT
+         /*
+          * CAUTION! Binary output by format %b isn't a part of ANSI-C!
+          * ... But it simplifies the software developing. ;-)
+          */
+         case 'b':
+            base = 2;
+            /*
+             * Unfortunately the padding size is one decimal digit only.
+             * That isn't enough for binary output, which has a maximum of
+             * 32 characters.
+             * Therefore in the case of binary output the padding size
+             * becomes multiplicated by 4.
+             */
+            width *= 4;
+            break;
+      #endif
 
          case 'x':
             base = 16;

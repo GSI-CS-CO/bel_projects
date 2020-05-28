@@ -156,7 +156,7 @@ STATIC void vTaskMain( void* pvParameters UNUSED )
          vTaskEndScheduler();
       }
 
-      mprintf( "Task \"%s\" for slave in slot %u; address: 0x%08x; ID: %u started.\n",
+      mprintf( "Task \"%s\" for slave in slot %u; address: 0x%08p; ID: %u started.\n",
                pcTaskGetName( slaves[dev].xCreatedTask ),
                slaves[dev].slot, slaves[dev].pAddress, slaves[dev].xCreatedTask );
 
@@ -180,7 +180,7 @@ STATIC void vTaskMain( void* pvParameters UNUSED )
             counter = scuBusGetSlaveValue16( slaves[i].pAddress, Echo_Register );
 
          mprintf( ESC_XY( "1", "%d" ) ESC_CLR_LINE ESC_FG_CYAN ESC_BOLD
-                  "Slot: %02d: echo register: %05u, 0x%04x, %s delta: %u"
+                  "Slot: %02d: echo register: %05u, 0x%04X, %s delta: %u"
                   ESC_NORMAL,
                   Y+i, slaves[i].slot,
                   counter, counter,
@@ -192,7 +192,7 @@ STATIC void vTaskMain( void* pvParameters UNUSED )
          slaves[i].lastCount = counter;
       }
       mprintf( ESC_XY( "1", "%d" ) ESC_CLR_LINE
-               "Seconds: %u", Y+i+1, secs++ );
+               "Seconds: %d", Y+i+1, secs++ );
       /*
        * Task will suspend for 1000 ms.
        */

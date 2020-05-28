@@ -54,7 +54,7 @@ void readTemperatureFromDevices( const int bus, uint64_t* pId, uint32_t* pTemper
                      (int)pData->rom)) != 0 )
          continue;
       #ifdef DEBUG
-      mprintf( "bus,device (%d,%d): 0x%08x%08x ",
+      mprintf( "bus,device (%d,%d): 0x%08X%08X ",
                 wrpc_w1_bus.detail,
                 i, (int)(pData->rom >> BIT_SIZEOF(uint32_t)),
                 (int)pData->rom );

@@ -37,8 +37,8 @@ void initEcaQueue( void )
    }
    g_eca.tag = g_eca.pQueue->tag;
    mprintf( ESC_FG_MAGENTA
-            "ECA queue found at: 0x%08x.\n"
-            "\tWaiting for actions with tag 0x%08x...\n"
+            "ECA queue found at: 0x%08p.\n"
+            "\tWaiting for actions with tag 0x%08X...\n"
             ESC_NORMAL,
             (unsigned int)g_eca.pQueue, g_eca.tag );
 }

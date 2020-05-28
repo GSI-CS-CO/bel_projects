@@ -298,7 +298,7 @@ STATIC inline void initInterrupt( void )
 
    irqRegisterISR( ECA_INTERRUPT_NUMBER, NULL, onScuMSInterrupt );
    irqEnable();
-   mprintf( "IRQ table configured. 0x%08x\n", irqGetMaskRegister() );
+   mprintf( "IRQ table configured. 0x%08X\n", irqGetMaskRegister() );
 }
 
 /*! ---------------------------------------------------------------------------
@@ -497,7 +497,7 @@ STATIC inline void printCpuId( void )
       mprintf(ESC_ERROR"no CPU INFO ROM found!"ESC_NORMAL"\n");
       return;
    }
-   mprintf("CPU ID: 0x%x\n", cpu_info_base[0]);
+   mprintf("CPU ID: 0x%04X\n", cpu_info_base[0]);
    mprintf("number MSI endpoints: %d\n", cpu_info_base[1]);
 }
 
@@ -507,7 +507,7 @@ void main( void )
    mprintf( ESC_BOLD "Start of \"" TO_STRING(TARGET_NAME) "\"\n" ESC_NORMAL
            "Compiler: "COMPILER_VERSION_STRING"\n"
            "Git revision: "TO_STRING(GIT_REVISION)"\n"
-           "Found MsgBox at 0x%08x. MSI Path is 0x%08x\n"
+           "Found MsgBox at 0x%08p. MSI Path is 0x%08p\n"
 #if defined( CONFIG_MIL_FG ) && defined( CONFIG_READ_MIL_TIME_GAP )
             ESC_WARNING
             "CAUTION! Time gap reading for MIL FGs activated!\n"
@@ -525,17 +525,17 @@ void main( void )
    if( (int)BASE_SYSCON == ERROR_NOT_FOUND )
       mprintf( ESC_ERROR"no SYS_CON found!"ESC_NORMAL"\n" );
    else
-      mprintf( "SYS_CON found on adr: 0x%x\n", BASE_SYSCON );
+      mprintf( "SYS_CON found on adr: 0x%08p\n", BASE_SYSCON );
 
    timer_init(1); //needed by usleep_init()
    usleep_init();
 
    printCpuId();
-   mprintf("g_oneWireBase.pWr is:   0x%08x\n", g_oneWireBase.pWr);
-   mprintf("g_oneWireBase.pUser is: 0x%08x\n", g_oneWireBase.pUser);
-   mprintf("g_pScub_irq_base is:    0x%08x\n", g_pScub_irq_base);
+   mprintf("g_oneWireBase.pWr is:   0x%08p\n", g_oneWireBase.pWr);
+   mprintf("g_oneWireBase.pUser is: 0x%08p\n", g_oneWireBase.pUser);
+   mprintf("g_pScub_irq_base is:    0x%08p\n", g_pScub_irq_base);
 #ifdef CONFIG_MIL_FG
-   mprintf("g_pMil_irq_base is:     0x%08x\n", g_pMil_irq_base);
+   mprintf("g_pMil_irq_base is:     0x%08p\n", g_pMil_irq_base);
    initEcaQueue();
 #endif
 
