@@ -6,52 +6,75 @@
  * @copyright (C) 2020 GSI Helmholtz Centre for Heavy Ion Research GmbH
  * @author unknown (improved by Ulrich Becker <u.becker@gsi.de>)
  */
-
-#include <stdio.h>
-#include <stdarg.h>
-#include <stdlib.h>
 #include <stdbool.h>
 #include <helper_macros.h>
+#include <mprintf.h>
 
-#ifdef __lm32__
-  #include "uart.h"
-#else
+
+#ifndef __lm32__
   /*
    * Makes it possible to debug as normal PC- application.
    */
-  void uart_write_byte( int c )
+  STATIC inline ALWAYS_INLINE void uart_write_byte( const int c )
   {
      putch( c );
   }
 #endif
 
+
+struct _PRINTF_T;
+
 /*!
  * @brief Type declaration of the character output function.
  */
-typedef void (*PUTCH_F)(int x);
+typedef bool (*PUTCH_F)( struct _PRINTF_T*, const int );
+
 
 /*!
  * @brief Helper object for target string.
- *        Will used from sprintf and snprintf.
  */
-typedef struct
+typedef struct _PRINTF_T
 {
-   char*   pStart;
-   char*   pCurrent;
-   size_t  limit;
-} STRING_T;
-
-STRING_T g_target;
+   const char*   pStart;
+   char*         pCurrent;
+   const size_t  limit;
+   PUTCH_F       putch;
+} PRINTF_T;
 
 /*! --------------------------------------------------------------------------
  * @brief Adds a single character to the target string.
  *        Will used from sprintf and snprintf.
+ * @see sprintf
+ * @see snprintf
+ * @param pPrintfObj Pointer to the internal printf-object.
+ * @param c Character to put in the string.
+ * @retval true Limit has been reached, string has been terminated.
+ * @retval false Character in string copied.
  */
-STATIC void addToString( int c )
+STATIC bool addToString( PRINTF_T* pPrintfObj, const int c )
 {
-   *g_target.pCurrent++ = (char)c;
+   if( (pPrintfObj->pCurrent - pPrintfObj->pStart) >= pPrintfObj->limit )
+   {
+      *pPrintfObj->pCurrent = '\0';
+      return true;
+   }
+   *pPrintfObj->pCurrent++ = (char)c;
+   return false;
 }
 
+/*! --------------------------------------------------------------------------
+ * @brief Sends a single character to the UART in the case of LM32.
+ *        Will used from mprintf
+ * @see mprintf
+ * @param pPrintfObj Pointer to the internal printf-object (will not used).
+ * @param c Character to put in the string.
+ * @retval false Always
+ */
+STATIC bool sendToUart( PRINTF_T* pPrintfObj UNUSED, int c )
+{
+   uart_write_byte( c );
+   return false;
+}
 
 #ifndef DEFAULT_SPRINTF_LIMIT
  #define DEFAULT_SPRINTF_LIMIT 80
@@ -60,72 +83,64 @@ STATIC void addToString( int c )
 /*! ---------------------------------------------------------------------------
  * @brief Makes the output of a single character either via UART or string.
  *
- * In the case of string-output a limit will observed as well.
+ * @note This macro is only within function vprintfBase valid!
  */
-#define __PUT_CHAR( c )                                            \
-{                                                                  \
-   if( (__putch == addToString) &&                                 \
-       ((g_target.pCurrent - g_target.pStart) > g_target.limit ) ) \
-   {                                                               \
-      __putch( '\0' );                                             \
-      return ret;                                                  \
-   }                                                               \
-   ret++;                                                          \
-   __putch( c );                                                   \
+#define __PUT_CHAR( c )                                                      \
+{                                                                            \
+   if( pPrintfObj->putch( pPrintfObj, c ) )                                  \
+      return ret;                                                            \
+   ret++;                                                                    \
 }
 
 /*! ---------------------------------------------------------------------------
  * @brief Base function for all printf variants.
- * @param __putch Pointer to the character output function.
+ * @param pPrintfObj->putch Pointer to the character output function.
  */
-STATIC int vprintfBase( PUTCH_F __putch, char const *format, va_list ap )
+STATIC int vprintfBase( PRINTF_T* pPrintfObj, const char* format, va_list ap )
 {
+   /*
+    * Variable ret becomes incremented within macro __PUT_CHAR
+    */
    int ret = 0;
+
    while( true )
    {
-      unsigned char  scratch[BIT_SIZEOF(unsigned int)+1];
-      unsigned char  format_flag;
-      unsigned int   u_val = 0;
-      unsigned char  base;
-      unsigned char* ptr;
-      unsigned char  width = 0;
-      unsigned char  fill;
-      unsigned char  hexOffset;
-      bool           signum;
-
-      while( (format_flag = *format++) != '%' )
+      char currentChar;
+      while( (currentChar = *format++) != '%' )
       {
-         if( format_flag == '\0' )
+         if( currentChar == '\0' )
          {
             va_end( ap );
-            if( __putch == addToString )
-               __putch( '\0' );
+            if( pPrintfObj->putch == addToString )
+               pPrintfObj->putch( pPrintfObj, '\0' );
             return ret;
          }
-         __PUT_CHAR( format_flag );
+         __PUT_CHAR( currentChar );
       }
 
+      currentChar = *format;
       /*
        * check for zero padding
        */
-      format_flag = *format - '0';
-      if( format_flag == 0 )
+      unsigned char paddingChar;
+      if( currentChar == '0' )
       {
-         fill = '0';
+         paddingChar = '0';
          format++;
+         currentChar = *format;
       }
       else
       {
-         fill = ' ';
+         paddingChar = ' ';
       }
 
       /*
        * check for width spec
        */
-      format_flag = *format - '0';
-      if( format_flag > 0 && format_flag <= 9 )
+      unsigned int width;
+      if( currentChar > '0' && currentChar <= '9' )
       {
-         width = format_flag;
+         width = currentChar - '0';
          format++;
       }
       else
@@ -133,8 +148,11 @@ STATIC int vprintfBase( PUTCH_F __putch, char const *format, va_list ap )
          width = 0;
       }
 
-      signum = false;
-      switch( format_flag = *format++ )
+      unsigned char* ptr;
+      unsigned int hexOffset;
+      unsigned int base;
+      bool     signum = false;
+      switch( currentChar = *format++ )
       {
          case 'S':
          case 's':
@@ -170,6 +188,9 @@ STATIC int vprintfBase( PUTCH_F __putch, char const *format, va_list ap )
              * 32 characters.
              * Therefore in the case of binary output the padding size
              * becomes multiplicated by 4.
+             *
+             * Suppressing compiler warnings about %b put CFLAGS += -Wno-format
+             * in your makefile.
              */
             width *= 4;
             break;
@@ -187,21 +208,27 @@ STATIC int vprintfBase( PUTCH_F __putch, char const *format, va_list ap )
             break;
 
          case 'c':
-            format_flag = va_arg( ap, int );
+            currentChar = va_arg( ap, int );
             /* No break here! */
          default:
-            __PUT_CHAR( format_flag );
+            __PUT_CHAR( currentChar );
             continue;
       }
 
-      u_val = va_arg( ap, unsigned int );
-      if( signum && (u_val & (1 << (BIT_SIZEOF(u_val)-1)) ) != 0 )
+   #ifdef CONFIG_ENABLE_PRINTF64
+      uint64_t u_val;
+   #else
+      uint32_t u_val;
+   #endif
+      u_val = va_arg( ap, typeof( u_val ) );
+      if( signum && (u_val & (1LL << (BIT_SIZEOF(u_val)-1)) ) != 0 )
       {
          __PUT_CHAR('-');
          u_val = -u_val;
       }
 
-      ptr = scratch + ARRAY_SIZE(scratch);
+      unsigned char digitBuffer[BIT_SIZEOF(u_val)+1];
+      ptr = digitBuffer + ARRAY_SIZE(digitBuffer);
       *--ptr = '\0';
 
       do
@@ -219,7 +246,7 @@ STATIC int vprintfBase( PUTCH_F __putch, char const *format, va_list ap )
       while( u_val > 0 );
 
       while( width-- != 0 )
-         *--ptr = fill;
+         *--ptr = paddingChar;
 
       while( *ptr != '\0' )
          __PUT_CHAR( *ptr++ );
@@ -231,17 +258,28 @@ STATIC int vprintfBase( PUTCH_F __putch, char const *format, va_list ap )
  */
 int vprintf( char const *format, va_list ap )
 {
-   return vprintfBase( uart_write_byte, format, ap );
+   PRINTF_T printfObj =
+   {
+      .pStart   = NULL,
+      .pCurrent = NULL,
+      .limit    = 0,
+      .putch    = sendToUart
+   };
+   return vprintfBase( &printfObj, format, ap );
 }
 
 /*! ---------------------------------------------------------------------------
  */
-STATIC int _p_vsprintf( char const *format, va_list ap, char* dst, const size_t n )
+int vsnprintf( char* s, size_t n, const char* format, va_list arg )
 {
-   g_target.pCurrent = dst;
-   g_target.pStart   = dst;
-   g_target.limit    = n;
-   return vprintfBase( addToString, format, ap );
+   PRINTF_T printfObj =
+   {
+      .pStart   = s,
+      .pCurrent = s,
+      .limit    = n,
+      .putch    = addToString
+   };
+   return vprintfBase( &printfObj, format, arg );
 }
 
 /*! ---------------------------------------------------------------------------
@@ -258,11 +296,11 @@ int mprintf( char const *format, ... )
 
 /*! ---------------------------------------------------------------------------
  */
-int sprintf( char* dst, char const *format, ... )
+int sprintf( char* s, char const *format, ... )
 {
    va_list ap;
    va_start( ap, format );
-   const int r = _p_vsprintf( format, ap, dst, DEFAULT_SPRINTF_LIMIT );
+   const int r = vsnprintf( s, DEFAULT_SPRINTF_LIMIT, format, ap );
    va_end( ap );
    return r;
 }
@@ -273,14 +311,14 @@ int snprintf( char* s, size_t n, const char * format, ... )
 {
    va_list ap;
    va_start( ap, format );
-   const int r = _p_vsprintf( format, ap, s, n );
+   const int r = vsnprintf( s, n, format, ap );
    va_end( ap );
    return r;
 }
 
 /*! ---------------------------------------------------------------------------
  */
-#define C_DIM 0x80
+//#define C_DIM 0x80
 void m_cprintf( int color, const char *fmt, ... )
 {
    va_list ap;

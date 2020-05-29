@@ -180,7 +180,7 @@ STATIC void vTaskMain( void* pvParameters UNUSED )
             counter = scuBusGetSlaveValue16( slaves[i].pAddress, Echo_Register );
 
          mprintf( ESC_XY( "1", "%d" ) ESC_CLR_LINE ESC_FG_CYAN ESC_BOLD
-                  "Slot: %02d: echo register: %05u, 0x%04X, %s delta: %u"
+                  "Slot: %2d: echo register: %5u, 0x%04X, %s delta: %u"
                   ESC_NORMAL,
                   Y+i, slaves[i].slot,
                   counter, counter,

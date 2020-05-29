@@ -298,7 +298,7 @@ STATIC inline void initInterrupt( void )
 
    irqRegisterISR( ECA_INTERRUPT_NUMBER, NULL, onScuMSInterrupt );
    irqEnable();
-   mprintf( "IRQ table configured. 0x%08X\n", irqGetMaskRegister() );
+   mprintf( "IRQ table configured: 0b%08b\n", irqGetMaskRegister() );
 }
 
 /*! ---------------------------------------------------------------------------

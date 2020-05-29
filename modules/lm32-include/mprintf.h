@@ -1,18 +1,29 @@
-#ifndef  __MPRINTF_H
-#define __MPRINTF_H
+/*!
+ * @file mprintf.c
+ * @brief implementation of the mprintf- family.
+ *
+ * @date unknown (improved 28.05.2020)
+ * @copyright (C) 2020 GSI Helmholtz Centre for Heavy Ion Research GmbH
+ * @author unknown (improved by Ulrich Becker <u.becker@gsi.de>)
+ */
+#ifndef _MPRINTF_H
+#define _MPRINTF_H
 
 #include <stdio.h>
 #include <stdarg.h>
 #include <stdlib.h>
 
-#include "uart.h"
+#ifdef __lm32__
+  #include "uart.h"
+#endif
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-int vprintf( char const *format,va_list ap);
-int _p_vsprintf(char const *format,va_list ap, char* dst);
+int vprintf( char const *format, va_list ap );
+//int _p_vsprintf(char const *format,va_list ap, char* dst);
+int vsnprintf( char* s, size_t n, const char* format, va_list arg );
 int mprintf(char const *format, ...);
 int sprintf(char *dst, char const *format, ... );
 int snprintf ( char * s, size_t n, const char * format, ... );
@@ -25,4 +36,5 @@ void m_term_clear();
 }
 #endif
 
-#endif
+#endif /* ifndef _MPRINTF_H */
+/*================================== EOF ====================================*/
