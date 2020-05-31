@@ -7,11 +7,13 @@
  * @author unknown (improved by Ulrich Becker <u.becker@gsi.de>)
  */
 #include <stdbool.h>
+#include <stdint.h>
 #include <helper_macros.h>
 #include <mprintf.h>
 
 
 #ifndef __lm32__
+  #include <stdio.h>
   /*
    * Makes it possible to debug as normal PC- application.
    */
@@ -76,10 +78,6 @@ STATIC bool sendToUart( PRINTF_T* pPrintfObj UNUSED, int c )
    return false;
 }
 
-#ifndef DEFAULT_SPRINTF_LIMIT
- #define DEFAULT_SPRINTF_LIMIT 80
-#endif
-
 /*! ---------------------------------------------------------------------------
  * @brief Makes the output of a single character either via UART or string.
  *
@@ -106,11 +104,13 @@ STATIC int vprintfBase( PRINTF_T* pPrintfObj, const char* format, va_list ap )
    while( true )
    {
       char currentChar;
+      /*
+       * Forwarding currently character until the character "%" has found.
+       */
       while( (currentChar = *format++) != '%' )
       {
          if( currentChar == '\0' )
          {
-            va_end( ap );
             if( pPrintfObj->putch == addToString )
                pPrintfObj->putch( pPrintfObj, '\0' );
             return ret;
@@ -118,6 +118,9 @@ STATIC int vprintfBase( PRINTF_T* pPrintfObj, const char* format, va_list ap )
          __PUT_CHAR( currentChar );
       }
 
+      /*!
+       * First character after "%" character.
+       */
       currentChar = *format;
       /*
        * check for zero padding
@@ -127,6 +130,9 @@ STATIC int vprintfBase( PRINTF_T* pPrintfObj, const char* format, va_list ap )
       {
          paddingChar = '0';
          format++;
+         /*
+          * Second character after "%" character.
+          */
          currentChar = *format;
       }
       else
@@ -255,8 +261,9 @@ STATIC int vprintfBase( PRINTF_T* pPrintfObj, const char* format, va_list ap )
 }
 
 /*! ---------------------------------------------------------------------------
+ * @see mprintf.h
  */
-int vprintf( char const *format, va_list ap )
+int vprintf( const char* format, va_list ap )
 {
    PRINTF_T printfObj =
    {
@@ -269,6 +276,7 @@ int vprintf( char const *format, va_list ap )
 }
 
 /*! ---------------------------------------------------------------------------
+ * @see mprintf.h
  */
 int vsnprintf( char* s, size_t n, const char* format, va_list arg )
 {
@@ -283,8 +291,9 @@ int vsnprintf( char* s, size_t n, const char* format, va_list arg )
 }
 
 /*! ---------------------------------------------------------------------------
+ * @see mprintf.h
  */
-int mprintf( char const *format, ... )
+int mprintf( const char* format, ... )
 {
    int rval;
    va_list ap;
@@ -295,6 +304,7 @@ int mprintf( char const *format, ... )
 }
 
 /*! ---------------------------------------------------------------------------
+ * @see mprintf.h
  */
 int sprintf( char* s, char const *format, ... )
 {
@@ -306,8 +316,9 @@ int sprintf( char* s, char const *format, ... )
 }
 
 /*! ---------------------------------------------------------------------------
+ * @see mprintf.h
  */
-int snprintf( char* s, size_t n, const char * format, ... )
+int snprintf( char* s, size_t n, const char* format, ... )
 {
    va_list ap;
    va_start( ap, format );
@@ -318,7 +329,6 @@ int snprintf( char* s, size_t n, const char * format, ... )
 
 /*! ---------------------------------------------------------------------------
  */
-//#define C_DIM 0x80
 void m_cprintf( int color, const char *fmt, ... )
 {
    va_list ap;
