@@ -227,7 +227,7 @@ STATIC int vprintfBase( PRINTF_T* pPrintfObj, const char* format, va_list ap )
       uint32_t u_val;
    #endif
       u_val = va_arg( ap, typeof( u_val ) );
-      if( signum && (u_val & (1LL << (BIT_SIZEOF(u_val)-1)) ) != 0 )
+      if( signum && ((u_val & (1LL << (BIT_SIZEOF(u_val)-1)) ) != 0) )
       {
          __PUT_CHAR('-');
          u_val = -u_val;
