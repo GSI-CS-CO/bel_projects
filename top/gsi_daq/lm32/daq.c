@@ -508,10 +508,10 @@ int daqDeviceFindChannels( DAQ_DEVICE_T* pThis, const unsigned int slot )
       pThis->maxChannels++;
     #ifndef CONFIG_DAQ_SINGLE_APP
       mprintf( ESC_FG_CYAN
-               "ADDAC-DAQ channel %d in slot %d initialized. Address: 0x%08p\n"
+               "ADDAC-DAQ channel %d in slot %2d initialized. Address: 0x%p\n"
                ESC_NORMAL,
                channel, daqChannelGetSlot( pCurrentChannel ),
-               (unsigned int)pCurrentChannel
+               pCurrentChannel
              );
     #endif
    }
@@ -581,7 +581,7 @@ int daqBusFindAndInitializeAll( register DAQ_BUS_T* pThis,
       pCurrentDaqDevice->pReg =
           scuBusGetAbsSlaveAddr( pScuBusBase, slot ) + DAQ_REGISTER_OFFSET;
 
-      DBPRINT2( "DBG: DAQ found in slot: %02d, address: 0x%08X\n", slot,
+      DBPRINT2( "DBG: DAQ found in slot: %2d, address: 0x%08X\n", slot,
                 pCurrentDaqDevice->pReg );
 
 

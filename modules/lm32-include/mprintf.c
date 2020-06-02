@@ -141,17 +141,17 @@ STATIC int vprintfBase( PRINTF_T* pPrintfObj, const char* format, va_list ap )
       }
 
       /*
-       * check for width spec
+       * check for padding space
        */
-      unsigned int width;
+      unsigned int paddingWidth;
       if( currentChar > '0' && currentChar <= '9' )
       {
-         width = currentChar - '0';
+         paddingWidth = currentChar - '0';
          format++;
       }
       else
       {
-         width = 0;
+         paddingWidth = 0;
       }
 
       unsigned char* ptr;
@@ -198,7 +198,7 @@ STATIC int vprintfBase( PRINTF_T* pPrintfObj, const char* format, va_list ap )
              * Suppressing compiler warnings about %b put CFLAGS += -Wno-format
              * in your makefile.
              */
-            width *= 4;
+            paddingWidth *= 4;
             break;
       #endif
 
@@ -207,8 +207,16 @@ STATIC int vprintfBase( PRINTF_T* pPrintfObj, const char* format, va_list ap )
             hexOffset = 'a' - '9' - 1;
             break;
 
-         case 'X':
          case 'p':
+            if( paddingWidth == 0 )
+            { /*
+               * Set default format for pointer.
+               */
+               paddingWidth = sizeof( void* ) * 2;
+               paddingChar = '0';
+            }
+            /* No break here! */
+         case 'X':
             base = 16;
             hexOffset = 'A' - '9' - 1;
             break;
@@ -227,7 +235,7 @@ STATIC int vprintfBase( PRINTF_T* pPrintfObj, const char* format, va_list ap )
       uint32_t u_val;
    #endif
       u_val = va_arg( ap, typeof( u_val ) );
-      if( signum && ((u_val & (1LL << (BIT_SIZEOF(u_val)-1)) ) != 0) )
+      if( signum && ((u_val & (1LL << (BIT_SIZEOF(u_val)-1))) != 0) )
       {
          __PUT_CHAR('-');
          u_val = -u_val;
@@ -246,12 +254,12 @@ STATIC int vprintfBase( PRINTF_T* pPrintfObj, const char* format, va_list ap )
          *--ptr = ch;
          u_val /= base;
 
-         if( width != 0 )
-            width--;
+         if( paddingWidth != 0 )
+            paddingWidth--;
       }
       while( u_val > 0 );
 
-      while( width-- != 0 )
+      while( paddingWidth-- != 0 )
          *--ptr = paddingChar;
 
       while( *ptr != '\0' )

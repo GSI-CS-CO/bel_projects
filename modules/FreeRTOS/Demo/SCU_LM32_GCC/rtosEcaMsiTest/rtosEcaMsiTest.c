@@ -163,9 +163,9 @@ STATIC inline void ecaHandler( void )
                "%s: id: 0x%08x%08x\n"
                "deadline:       0x%08X%08X\n"
                "param:          0x%08X%08X\n"
-               "flag:           0x%08X\n"
+               "flag:           0b%08b\n"
                ESC_FG_BLUE
-               "count:          %d\n" ESC_NORMAL,
+               "count:          %u\n" ESC_NORMAL,
                __func__,
                ecaItem.eventIdH,  ecaItem.eventIdL,
                ecaItem.deadlineH, ecaItem.deadlineL,
@@ -190,8 +190,8 @@ STATIC void vTaskEcaMain( void* pvParameters UNUSED )
       mprintf( ESC_ERROR "Could not find the ECA event input. Exit!\n" ESC_NORMAL);
       vTaskEndScheduler();
    }
-   mprintf("ECA event input                  @ 0x%08p\n", pEca );
-   mprintf("MSI destination addr for LM32    : 0x%08p\n", pMyMsi );
+   mprintf("ECA event input                  @ 0x%p\n", pEca );
+   mprintf("MSI destination addr for LM32    : 0x%p\n", pMyMsi );
 
    g_pEcaCtl = ecaControlGetRegisters();
    if( g_pEcaCtl == NULL )
@@ -200,7 +200,7 @@ STATIC void vTaskEcaMain( void* pvParameters UNUSED )
                ESC_NORMAL );
       vTaskEndScheduler();
    }
-   mprintf( "ECA channel control              @ 0x%08p\n", g_pEcaCtl );
+   mprintf( "ECA channel control              @ 0x%p\n", g_pEcaCtl );
 
    g_pEcaQueue = ecaGetLM32Queue();
    if( g_pEcaQueue == NULL )

@@ -150,13 +150,13 @@ STATIC void vTaskMain( void* pvParameters UNUSED )
       if( status != pdPASS )
       {
          mprintf( ESC_ERROR
-                  "Unable to start child task for slot: %d, status: %d\n"
+                  "Unable to start child task for slot: %u, status: %d\n"
                   ESC_NORMAL,
                    slaves[dev].slot, status );
          vTaskEndScheduler();
       }
 
-      mprintf( "Task \"%s\" for slave in slot %u; address: 0x%08p; ID: %u started.\n",
+      mprintf( "Task \"%s\" for slave in slot %2u; address: 0x%p; ID: %u started.\n",
                pcTaskGetName( slaves[dev].xCreatedTask ),
                slaves[dev].slot, slaves[dev].pAddress, slaves[dev].xCreatedTask );
 
@@ -168,7 +168,7 @@ STATIC void vTaskMain( void* pvParameters UNUSED )
    TickType_t xLastExecutionTime = xTaskGetTickCount();
    const unsigned int Y = dev + 12;
    unsigned int secs = 0;
-   mprintf( "%d tasks running.\nEnter main loop...\n" ESC_NORMAL,
+   mprintf( "%u tasks running.\nEnter main loop...\n" ESC_NORMAL,
             uxTaskGetNumberOfTasks() );
    while( true )
    {
@@ -179,8 +179,8 @@ STATIC void vTaskMain( void* pvParameters UNUSED )
          SCU_ATOMIC_SECTION()
             counter = scuBusGetSlaveValue16( slaves[i].pAddress, Echo_Register );
 
-         mprintf( ESC_XY( "1", "%d" ) ESC_CLR_LINE ESC_FG_CYAN ESC_BOLD
-                  "Slot: %2d: echo register: %5u, 0x%04X, %s delta: %u"
+         mprintf( ESC_XY( "1", "%u" ) ESC_CLR_LINE ESC_FG_CYAN ESC_BOLD
+                  "Slot: %2u: echo register: %5u, 0x%04X, %s delta: %u"
                   ESC_NORMAL,
                   Y+i, slaves[i].slot,
                   counter, counter,
@@ -191,8 +191,8 @@ STATIC void vTaskMain( void* pvParameters UNUSED )
 
          slaves[i].lastCount = counter;
       }
-      mprintf( ESC_XY( "1", "%d" ) ESC_CLR_LINE
-               "Seconds: %d", Y+i+1, secs++ );
+      mprintf( ESC_XY( "1", "%u" ) ESC_CLR_LINE
+               "Seconds: %u", Y+i+1, secs++ );
       /*
        * Task will suspend for 1000 ms.
        */

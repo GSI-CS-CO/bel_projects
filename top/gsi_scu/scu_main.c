@@ -507,7 +507,7 @@ void main( void )
    mprintf( ESC_BOLD "Start of \"" TO_STRING(TARGET_NAME) "\"\n" ESC_NORMAL
            "Compiler: "COMPILER_VERSION_STRING"\n"
            "Git revision: "TO_STRING(GIT_REVISION)"\n"
-           "Found MsgBox at 0x%08p. MSI Path is 0x%08p\n"
+           "Found MsgBox at 0x%p. MSI Path is 0x%p\n"
 #if defined( CONFIG_MIL_FG ) && defined( CONFIG_READ_MIL_TIME_GAP )
             ESC_WARNING
             "CAUTION! Time gap reading for MIL FGs activated!\n"
@@ -531,11 +531,11 @@ void main( void )
    usleep_init();
 
    printCpuId();
-   mprintf("g_oneWireBase.pWr is:   0x%08p\n", g_oneWireBase.pWr);
-   mprintf("g_oneWireBase.pUser is: 0x%08p\n", g_oneWireBase.pUser);
-   mprintf("g_pScub_irq_base is:    0x%08p\n", g_pScub_irq_base);
+   mprintf("g_oneWireBase.pWr is:   0x%p\n", g_oneWireBase.pWr);
+   mprintf("g_oneWireBase.pUser is: 0x%p\n", g_oneWireBase.pUser);
+   mprintf("g_pScub_irq_base is:    0x%p\n", g_pScub_irq_base);
 #ifdef CONFIG_MIL_FG
-   mprintf("g_pMil_irq_base is:     0x%08p\n", g_pMil_irq_base);
+   mprintf("g_pMil_irq_base is:     0x%p\n", g_pMil_irq_base);
    initEcaQueue();
 #endif
 
