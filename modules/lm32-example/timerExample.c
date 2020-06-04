@@ -65,7 +65,7 @@ volatile unsigned int* wb_timer_base = 0;                 // Wishbone address of
 volatile unsigned int* wb_timer_preset;                   // preset register of timer
 volatile unsigned int* wb_timer_config;                   // config register of time
 volatile unsigned int* wb_timer_counter;
-volatile unsigned int* wb_timer_timestampTick;            // period of a timestamp tick
+volatile unsigned int* wb_timer_ticklen;                  // period of a counter tick
 volatile unsigned int* wb_timer_timestampLo;              // low word of a timestamp
 volatile unsigned int* wb_timer_timestampHi;              // high word of a timestamp
 
@@ -88,7 +88,7 @@ void timer_handler() {
   uint64_t ts;
   uint32_t irqDelay;
 
-  if (!len)    len    = *wb_timer_timestampTick;          // read tick length [ns] of timestamp upon first run
+  if (!len)    len    = *wb_timer_ticklen;                // read tick length [ns] of counter upon first run
   if (!preset) preset = *wb_timer_preset;                 // read timer preset [ticks]
 
   irqDelay = (preset - *wb_timer_counter) * len;          // read actual counter value, calculate delay for IRQ and convert to nanoseconds
@@ -129,12 +129,12 @@ void main(void) {
   wb_timer_config        = wb_timer_base + (WB_TIMER_CONFIG >> 2);
   wb_timer_preset        = wb_timer_base + (WB_TIMER_PRESET >> 2);
   wb_timer_counter       = wb_timer_base + (WB_TIMER_COUNTER >> 2);
-  wb_timer_timestampTick = wb_timer_base + (WB_TIMER_TIMESTAMP_TICK >> 2);
+  wb_timer_ticklen       = wb_timer_base + (WB_TIMER_TICKLEN >> 2);
   wb_timer_timestampLo   = wb_timer_base + (WB_TIMER_TIMESTAMP_LO >> 2);
   wb_timer_timestampHi   = wb_timer_base + (WB_TIMER_TIMESTAMP_HI >> 2);
 
   // set timer to 1 second
-  *wb_timer_preset = 1000000000UL / *wb_timer_timestampTick;  
+  *wb_timer_preset = 1000000000UL / *wb_timer_ticklen;  
 
   init_irq_table();                                       // init IRQ
   *wb_timer_config = 0x1;                                 // start timer
