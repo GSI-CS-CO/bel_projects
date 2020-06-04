@@ -111,7 +111,7 @@ STATIC inline void configureEcaMsiForLM32( void )
    clearActions();   // clean ECA queue and channel from pending actions
    ecaControlSetMsiLM32TargetAddress( g_pEcaCtl, (void*)pMyMsi, true );
    mprintf( "MSI path (ECA -> LM32)           : enabled\n"
-           "\tECA channel = %d\n\tdestination = 0x%08x\n",
+           "\tECA channel = %d\n\tdestination = 0x%08X\n",
             ECA_SELECT_LM32_CHANNEL, (uint32_t)pMyMsi);
 }
 
@@ -161,11 +161,11 @@ STATIC inline void ecaHandler( void )
 
       mprintf( ESC_FG_YELLOW ESC_BOLD
                "%s: id: 0x%08x%08x\n"
-               "deadline:       0x%08x%08x\n"
-               "param:          0x%08x%08x\n"
-               "flag:           0x%08x\n"
+               "deadline:       0x%08X%08X\n"
+               "param:          0x%08X%08X\n"
+               "flag:           0b%08b\n"
                ESC_FG_BLUE
-               "count:          %d\n" ESC_NORMAL,
+               "count:          %u\n" ESC_NORMAL,
                __func__,
                ecaItem.eventIdH,  ecaItem.eventIdL,
                ecaItem.deadlineH, ecaItem.deadlineL,
@@ -190,8 +190,8 @@ STATIC void vTaskEcaMain( void* pvParameters UNUSED )
       mprintf( ESC_ERROR "Could not find the ECA event input. Exit!\n" ESC_NORMAL);
       vTaskEndScheduler();
    }
-   mprintf("ECA event input                  @ 0x%08x\n", (uint32_t)pEca );
-   mprintf("MSI destination addr for LM32    : 0x%08x\n", (uint32_t)pMyMsi );
+   mprintf("ECA event input                  @ 0x%p\n", pEca );
+   mprintf("MSI destination addr for LM32    : 0x%p\n", pMyMsi );
 
    g_pEcaCtl = ecaControlGetRegisters();
    if( g_pEcaCtl == NULL )
@@ -200,8 +200,7 @@ STATIC void vTaskEcaMain( void* pvParameters UNUSED )
                ESC_NORMAL );
       vTaskEndScheduler();
    }
-   mprintf( "ECA channel control              @ 0x%08x\n",
-            (uint32_t) g_pEcaCtl);
+   mprintf( "ECA channel control              @ 0x%p\n", g_pEcaCtl );
 
    g_pEcaQueue = ecaGetLM32Queue();
    if( g_pEcaQueue == NULL )
@@ -210,8 +209,7 @@ STATIC void vTaskEcaMain( void* pvParameters UNUSED )
                          " to eCPU action channel. Exit!\n" ESC_NORMAL );
       vTaskEndScheduler();
    }
-   mprintf( "ECA queue to LM32 action channel @ 0x%08x\n",
-            (uint32_t) g_pEcaQueue );
+   mprintf( "ECA queue to LM32 action channel @ 0x%08p\n", g_pEcaQueue );
 
    mprintf( "Creating the MSI OS-message queue\n" );
    QueueHandle_t xMsiQueue = xQueueCreate( 5, sizeof( MSI_ITEM_T ) );
@@ -241,9 +239,9 @@ STATIC void vTaskEcaMain( void* pvParameters UNUSED )
          * At least one message has been received...
          */
          mprintf( ESC_FG_MAGENTA
-                  "\nMSI:\t0x%08x\n"
-                  "Adr:\t0x%08x\n"
-                  "Sel:\t0x%02x\n"
+                  "\nMSI:\t0x%08X\n"
+                  "Adr:\t0x%08X\n"
+                  "Sel:\t0x%02X\n"
                   ESC_NORMAL,
                   m.msg,  m.adr,  m.sel );
 

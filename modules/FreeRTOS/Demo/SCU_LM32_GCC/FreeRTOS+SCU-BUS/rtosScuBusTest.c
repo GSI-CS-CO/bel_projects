@@ -24,7 +24,7 @@
 
 #define MAX_TEST_SLAVES MAX_SCU_SLAVES
 
-#define CONFIG_SCU_ATOMIC_SECTION
+ #define CONFIG_SCU_ATOMIC_SECTION
 
 #ifdef CONFIG_SCU_ATOMIC_SECTION
    #define SCU_ATOMIC_SECTION() ATOMIC_SECTION()
@@ -37,20 +37,12 @@
  */
 typedef struct
 {
-   unsigned int slot;         /*!<@brief Slot number                          */
-   void*        pAddress;     /*!<@brief Slave address                        */
-   TaskHandle_t xCreatedTask; /*!<@brief Task ID                              */
-   uint16_t     lastCount;    /*!<@brief Last counter value                   */
-   bool         decerment;    /*!<@brief Decrements or increments the counter */
+   unsigned int slot;         /*!<@brief Slot number                         */
+   void*        pAddress;     /*!<@brief Slave address                       */
+   TaskHandle_t xCreatedTask; /*!<@brief Task ID                             */
+   uint16_t     lastCount;    /*!<@brief Last counter value                  */
+   bool         decerment;    /*!<@brief Decrements or increments the counter*/
 } SLAVE_T;
-
-/*! ---------------------------------------------------------------------------
- */
-STATIC inline void init( void )
-{
-   discoverPeriphery(); // mini-sdb: get info on important Wishbone infrastructure
-   uart_init_hw();      // init UART, required for printf...
-}
 
 /*! ---------------------------------------------------------------------------
  * @brief Task function which represents a single SCU-bus slave.
@@ -58,7 +50,7 @@ STATIC inline void init( void )
  * It reads the slaves echo register, increment or decrement it and write it
  * back.
  */
-STATIC void vTaskScuBusSlave( void* pvParameters )
+NO_INLINE STATIC void vTaskScuBusSlave( void* pvParameters )
 {
    const SLAVE_T* pSlave = (SLAVE_T*) pvParameters;
    volatile  uint16_t count;
@@ -122,11 +114,22 @@ STATIC void vTaskMain( void* pvParameters UNUSED )
 
    SLAVE_T slaves[MAX_TEST_SLAVES];
    unsigned int dev = 0;
+   /*
+    * For all slots.
+    */
    for( unsigned int slot = SCUBUS_START_SLOT; slot <= MAX_SCU_SLAVES; slot++ )
    {
       if( !scuBusIsSlavePresent( slavePersentFlags, slot ) )
+      { /*
+         * No slave in this slot.
+         * Jump to the next slot...
+         */
          continue;
+      }
 
+      /*
+       * In this slot is a slave.
+       */
       slaves[dev].slot      = slot;
       slaves[dev].pAddress  = scuBusGetAbsSlaveAddr( pScuBusBase, slot );
       slaves[dev].decerment = (dev % 2) != 0;
@@ -147,13 +150,13 @@ STATIC void vTaskMain( void* pvParameters UNUSED )
       if( status != pdPASS )
       {
          mprintf( ESC_ERROR
-                  "Unable to start child task for slot: %d, status: %d\n"
+                  "Unable to start child task for slot: %u, status: %d\n"
                   ESC_NORMAL,
                    slaves[dev].slot, status );
          vTaskEndScheduler();
       }
 
-      mprintf( "Task \"%s\" for slave in slot %u; address: 0x%08x; ID: %u started.\n",
+      mprintf( "Task \"%s\" for slave in slot %2u; address: 0x%p; ID: %u started.\n",
                pcTaskGetName( slaves[dev].xCreatedTask ),
                slaves[dev].slot, slaves[dev].pAddress, slaves[dev].xCreatedTask );
 
@@ -165,7 +168,7 @@ STATIC void vTaskMain( void* pvParameters UNUSED )
    TickType_t xLastExecutionTime = xTaskGetTickCount();
    const unsigned int Y = dev + 12;
    unsigned int secs = 0;
-   mprintf( "%d tasks running.\nEnter main loop...\n" ESC_NORMAL,
+   mprintf( "%u tasks running.\nEnter main loop...\n" ESC_NORMAL,
             uxTaskGetNumberOfTasks() );
    while( true )
    {
@@ -176,8 +179,8 @@ STATIC void vTaskMain( void* pvParameters UNUSED )
          SCU_ATOMIC_SECTION()
             counter = scuBusGetSlaveValue16( slaves[i].pAddress, Echo_Register );
 
-         mprintf( ESC_XY( "1", "%d" ) ESC_CLR_LINE ESC_FG_CYAN ESC_BOLD
-                  "Slot: %02d: echo register: %05u, 0x%04x, %s delta: %u"
+         mprintf( ESC_XY( "1", "%u" ) ESC_CLR_LINE ESC_FG_CYAN ESC_BOLD
+                  "Slot: %2u: echo register: %5u, 0x%04X, %s delta: %u"
                   ESC_NORMAL,
                   Y+i, slaves[i].slot,
                   counter, counter,
@@ -188,7 +191,7 @@ STATIC void vTaskMain( void* pvParameters UNUSED )
 
          slaves[i].lastCount = counter;
       }
-      mprintf( ESC_XY( "1", "%d" ) ESC_CLR_LINE
+      mprintf( ESC_XY( "1", "%u" ) ESC_CLR_LINE
                "Seconds: %u", Y+i+1, secs++ );
       /*
        * Task will suspend for 1000 ms.
@@ -212,7 +215,6 @@ STATIC inline BaseType_t initAndStartRTOS( void )
    if( status != pdPASS )
       return status;
 
-  // portENABLE_INTERRUPTS();
    vTaskStartScheduler();
 
    return pdPASS;
@@ -223,7 +225,6 @@ STATIC inline BaseType_t initAndStartRTOS( void )
  */
 void main( void )
 {
-   init();
    mprintf( ESC_XY( "1", "1" ) ESC_CLR_SCR ESC_NORMAL "FreeRTOS SCU-BUS test\n"
             "Compiler:  " COMPILER_VERSION_STRING "\n"
             "Tick rate: " TO_STRING( configTICK_RATE_HZ ) " Hz\n"
