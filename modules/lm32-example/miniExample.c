@@ -3,7 +3,7 @@
  *
  *  created : 2017
  *  author  : Mathias Kreider,  Dietrich Beck, GSI-Darmstadt
- *  version : 23-Mar-2017
+ *  version : 05-Jun-2020
  *
  *  very basic example program for lm32 softcore on GSI timing receivers
  * 
@@ -35,22 +35,23 @@
  * Last update: 25-April-2015
  ********************************************************************************************/
 
-/* standard includes */
+// standard includes
 #include <stdio.h>
 #include <string.h>
 #include <inttypes.h>
 #include <stdint.h>
+
+// includes specific for bel_projects 
 #include "pp-printf.h"
 #include "mini_sdb.h"
-
-/* includes specific for bel_projects */
 #include "aux.h"
 #include "dbg.h"
+#include "uart.h"
 
-/* shared memory map for communication via Wishbone  */
+// shared memory map for communication via Wishbone 
 #include "miniExample_shared_mmap.h"
 
-/* stuff required for environment */
+// stuff required for environment
 extern uint32_t*       _startshared[];
 unsigned int cpuId, cpuQty;
 #define SHARED __attribute__((section(".shared")))
@@ -69,11 +70,11 @@ void main(void) {
   
   // wait 1 second and print initial message to UART
   // pro tip: try 'eb-console' to view printed messages
-  for (j = 0; j < (31000000); ++j) { asm("nop"); } // 31.25 x 'asm("nop")' operations take 1 us.
+  for (j = 0; j < (31000000); ++j) { asm("nop"); } // 31.25 x 'asm("nop")' operations take 1 us; handmade sleep
   pp_printf("Hello World!\n");
 
   while (1) {
     pp_printf("boring...\n");
-    for (j = 0; j < (31000000); ++j) { asm("nop"); }
+    uwait(1000000);                                // alternative to handmade sleep using the wb_timer for lm32
   } // while
-} /* main */
+} // main

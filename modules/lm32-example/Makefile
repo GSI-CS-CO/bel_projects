@@ -10,8 +10,8 @@
 #   make TARGET=example
 #   ... will compile the more complex example program
 TARGET		?= miniExample
-PLATFPATH       = ../../syn/gsi_exploder5/exploder5_csco_tr
-#PLATFPATH       = ../../syn/gsi_scu/control3
+#PLATFPATH       = ../../syn/gsi_exploder5/exploder5_csco_tr
+PLATFPATH       = ../../syn/gsi_scu/control3
 #PLATFPATH	= ../../syn/gsi_pexarria5/control
 PLATFMAKEFILE   = $(PLATFPATH)/Makefile
 
