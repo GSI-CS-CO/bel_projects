@@ -51,8 +51,8 @@ class DaqInterface: public DaqBaseInterface
 public:
    // TODO Replace these naked numbers asap!!!
    constexpr static uint         c_maxDevices        = 40;
-   constexpr static uint         c_maxSlots          = 12;
-   constexpr static uint         c_startSlot         = 0;
+   //constexpr static uint         c_maxSlots          = 12;
+  // constexpr static uint         c_startSlot         = 0;
    constexpr static uint         c_maxChannels       = 254;
 
    using RING_INDEX_T = RING_POS_T;

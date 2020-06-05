@@ -142,6 +142,11 @@ public:
       return m_poEbAccess->getScuDomainName();
    }
 
+   const std::string getEbStatusString( void ) const
+   {
+      return static_cast<const std::string>("Noch nix");
+   }
+
    virtual uint distributeData( void ) = 0;
 };
 

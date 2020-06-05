@@ -136,12 +136,6 @@ protected:
                                    = MICROSECS_PER_SEC / 10;
 
 public:
-#if 0
-   constexpr static uint         c_maxDevices        = DAQ_MAX;
-   constexpr static uint         c_maxSlots          = MAX_SCU_SLAVES;
-   constexpr static uint         c_startSlot         = SCUBUS_START_SLOT;
-   constexpr static uint         c_maxChannels       = DAQ_MAX_CHANNELS;
-#endif
    constexpr static uint         c_maxDevices        = DAQ_MAX;
    constexpr static uint         c_maxChannels       = DAQ_MAX_CHANNELS;
    constexpr static std::size_t  c_ramBlockShortLen  = RAM_DAQ_SHORT_BLOCK_LEN;
@@ -179,33 +173,6 @@ public:
       return m_doSendCommand;
    }
 
-#if 0
-   const std::string& getWbDevice( void )
-   {
-      return m_poEbAccess->getNetAddress();
-   }
-
-   const std::string getScuDomainName( void )
-   {
-      return m_poEbAccess->getScuDomainName();
-   }
-#endif
-   const std::string getEbStatusString( void ) const
-   {
-      return static_cast<const std::string>("Noch nix");
-   }
-
-#if 0
-   DaqEb::EtherboneConnection* getEbPtr( void )
-   {
-      return m_poEbAccess->getEbPtr();
-   }
-
-   EbRamAccess* getEbAccess( void )
-   {
-      return m_poEbAccess;
-   }
-#endif
    RETURN_CODE_T getLastReturnCode( void ) const
    {
       return m_oSharedData.operation.retCode;
