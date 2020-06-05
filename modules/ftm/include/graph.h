@@ -59,18 +59,19 @@ public:
 
   //Timing Message
   std::string id = sUndefined64;
-  std::string id_fid    = sZero;
-  std::string id_gid    = sZero;
-  std::string id_evtno  = sZero;
-  std::string id_sid    = sZero;
-  std::string id_bpid   = sZero;
-  std::string id_res    = sZero;
-  std::string id_bin    = sZero;
-  std::string id_reqnob = sZero;
-  std::string id_vacc   = sZero;
-  std::string par = sUndefined64;
-  std::string tef = sZero;
-  std::string res = sZero;
+  std::string id_fid      = sZero;
+  std::string id_gid      = sZero;
+  std::string id_evtno    = sZero;
+  std::string id_sid      = sZero;
+  std::string id_bpid     = sZero;
+  std::string id_res      = sZero;
+  std::string id_bin      = sZero;
+  std::string id_bpcstart = sZero;
+  std::string id_reqnob   = sZero;
+  std::string id_vacc     = sZero;
+  std::string par         = sUndefined64;
+  std::string tef         = sZero;
+  std::string res         = sZero;
 
   //Command
 
