@@ -61,13 +61,10 @@ unsigned int cpuId, cpuQty;
 uint64_t SHARED dummy = 0;
 
 // variables for this program
-volatile unsigned int* wb_timer_base = 0;                 // Wishbone address of timer HDL
-volatile unsigned int* wb_timer_preset;                   // preset register of timer
-volatile unsigned int* wb_timer_config;                   // config register of time
-volatile unsigned int* wb_timer_counter;
-volatile unsigned int* wb_timer_ticklen;                  // period of a counter tick
-volatile unsigned int* wb_timer_timestampLo;              // low word of a timestamp
-volatile unsigned int* wb_timer_timestampHi;              // high word of a timestamp
+volatile uint32_t *wb_timer_preset;                       // preset register of timer
+volatile uint32_t *wb_timer_config;                       // config register of time
+volatile uint32_t *wb_timer_counter;                      // counter of timer
+volatile uint32_t *wb_timer_ticklen;                      // period of a counter tick
 
 // generic init used by lm32 programs
 void init()
@@ -93,11 +90,7 @@ void timer_handler() {
 
   irqDelay = (preset - *wb_timer_counter) * len;          // read actual counter value, calculate delay for IRQ and convert to nanoseconds
 
-  ts = *wb_timer_timestampLo;                             // read timestamp
-  ts = ts + ((uint64_t)(*wb_timer_timestampHi) << 32);
-  ts = ts * len;                                          // convert timestamp to nanoseconds
-  
-  pp_printf("timer_handler: ftm uptime %lu seconds, IRQ delay %lu [ns]\n", (uint32_t)(ts / 1000000000UL), irqDelay);
+  pp_printf("timer_handler: ftm uptime %lu seconds, IRQ delay %lu [ns]\n", (uint32_t)(getCpuTime() / 1000000000UL), irqDelay);
 } // timer_handler
 
 // init IRQ table; here we just configure the timer
@@ -111,35 +104,31 @@ void init_irq_table() {
 } // init_irq_table
 
 // main loop
-void main(void) {
+int main(void) {
 
   init();                                                 // basic init for a lm32 program
 
   pp_printf("Hello World!\n");
 
-  // get Wishbone address of timer
-  wb_timer_base = (unsigned int*)find_device_adr(WB_TIMER_SDB_VENDOR_ID, WB_TIMER_SDB_DEVICE_ID);
-  if((int)wb_timer_base == ERROR_NOT_FOUND) {
-    pp_printf("no wb_timer found!\n");
-  } else {
-    pp_printf("wb_timer_base: 0x%x\n", wb_timer_base);
-  } // if wb_timer ...
+  if ((uint32_t)pCpuWbTimer != ERROR_NOT_FOUND) {         // defined in mini_sdb.h
+    
+    // calculate register addresses for timer
+    wb_timer_config        = pCpuWbTimer + (WB_TIMER_CONFIG >> 2);
+    wb_timer_preset        = pCpuWbTimer + (WB_TIMER_PRESET >> 2);
+    wb_timer_counter       = pCpuWbTimer + (WB_TIMER_COUNTER >> 2);
+    wb_timer_ticklen       = pCpuWbTimer + (WB_TIMER_TICKLEN >> 2);
+    
+    // set timer to 1 second
+    *wb_timer_preset = 1000000000UL / *wb_timer_ticklen;  
+    
+    init_irq_table();                                     // init IRQ
+    *wb_timer_config = 0x1;                               // start timer
+  } // if pCpuWbTimer
+  else pp_printf("lm32 timer not found!\n");
 
-  // calculate register addresses for timer
-  wb_timer_config        = wb_timer_base + (WB_TIMER_CONFIG >> 2);
-  wb_timer_preset        = wb_timer_base + (WB_TIMER_PRESET >> 2);
-  wb_timer_counter       = wb_timer_base + (WB_TIMER_COUNTER >> 2);
-  wb_timer_ticklen       = wb_timer_base + (WB_TIMER_TICKLEN >> 2);
-  wb_timer_timestampLo   = wb_timer_base + (WB_TIMER_TIMESTAMP_LO >> 2);
-  wb_timer_timestampHi   = wb_timer_base + (WB_TIMER_TIMESTAMP_HI >> 2);
-
-  // set timer to 1 second
-  *wb_timer_preset = 1000000000UL / *wb_timer_ticklen;  
-
-  init_irq_table();                                       // init IRQ
-  *wb_timer_config = 0x1;                                 // start timer
+  pp_printf("timer started\n");
 
   while (1) {
-    ;
+    uwait(100000);                                        // uwait() is an alternative to usleep(); uwait() uses the timer of the lm32 user cluster
   } // while
 } /* main */
