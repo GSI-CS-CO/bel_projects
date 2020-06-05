@@ -9,7 +9,6 @@
 #ifndef _MPRINTF_H
 #define _MPRINTF_H
 
-//#include <stdio.h>
 #include <stdarg.h>
 #include <stdlib.h>
 
