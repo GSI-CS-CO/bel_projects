@@ -2930,7 +2930,7 @@ end generate;
     -- clock crossing from sys clk to clk_25Mhz
     --------------------------------------------
      cross_systoasmi : xwb_clock_crossing
-      generic map ( g_size => 16)
+      generic map ( g_size => 256)
       port map(
         -- Slave control port
         slave_clk_i    => clk_sys,
