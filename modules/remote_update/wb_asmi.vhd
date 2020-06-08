@@ -6,6 +6,7 @@ library work;
 use work.wishbone_pkg.all;
 use work.remote_update_pkg.all;
 use work.genram_pkg.all;
+use work.aux_functions_pkg.all;
 
 entity wb_asmi is
   generic (
@@ -85,13 +86,15 @@ architecture arch of wb_asmi is
   signal  busy              : std_logic;
   signal  data_valid        : std_logic;
   
-  signal read_fifo_in    : std_logic_vector(31 downto 0);
-  signal read_fifo_out   : std_logic_vector(31 downto 0);
+  signal read_fifo_in    : std_logic_vector(7 downto 0);
+  signal read_fifo_out   : std_logic_vector(7 downto 0);
   signal read_fifo_we    : std_logic;
   signal read_fifo_rd    : std_logic;
   signal read_fifo_empty : std_logic;
   signal read_fifo_full  : std_logic;
   signal fifo_word       : std_logic_vector(31 downto 0);
+  signal crc_out         : std_logic_vector(7 downto 0);
+  signal s_first_word    : std_logic;
 
 
   constant FLASH_ACCESS : std_logic_vector(7 downto 0) := x"00";
@@ -102,7 +105,21 @@ architecture arch of wb_asmi is
   constant WRITE_BUFFER : std_logic_vector(7 downto 0) := x"14";
   constant FIFO_READ    : std_logic_vector(7 downto 0) := x"18";
   constant BUSY_CHECK   : std_logic_vector(7 downto 0) := x"1c";
+  constant READ_CRC     : std_logic_vector(7 downto 0) := x"20";
   constant TIMEOUT      : integer                      := 70;
+
+  component crc8_data8 is
+    port (
+      clock      : in std_logic;
+      reset      : in std_logic;
+      soc        : in std_logic;
+      data       : in std_logic_vector(7 downto 0);
+      data_valid : in std_logic;
+      eoc        : in std_logic;
+      crc        : out std_logic_vector(7 downto 0);
+      crc_valid  : out std_logic
+    );
+  end component;
 
 begin
   
@@ -162,8 +179,8 @@ begin
   -- storage for flash data until read from wishbone interface
   read_fifo: generic_sync_fifo
   generic map (
-    g_data_width => 32,
-    g_size        => PAGESIZE)
+    g_data_width => 8,
+    g_size        => PAGESIZE+1)
   port map (
     rst_n_i => rst_n_i,
     clk_i   => clk_flash_i,
@@ -184,6 +201,18 @@ begin
     end if;
   end process;
 
+
+  crc: crc8_data8
+    port map (
+      clock      => clk_flash_i,
+      reset      => not rst_n_i,
+      soc        => read_fifo_we and s_first_word,
+      data       => read_fifo_in,
+      data_valid => read_fifo_we,
+      eoc        => '0',
+      crc        => crc_out,
+      crc_valid  => open
+    );
   input_mux: process(clk_flash_i, slave_i.sel(7 downto 0))
   begin
     if rising_edge(clk_flash_i) then
@@ -206,17 +235,19 @@ begin
   begin
     case slave_i.adr(7 downto 0) is
       when READ_STATUS =>
-        slave_o.dat <= s_status_out & s_status_out & s_status_out & s_status_out;
+        slave_o.dat <= s_status_out & x"000000";
       when READ_ID =>
-        slave_o.dat <= s_rdid_out & s_rdid_out & s_rdid_out & s_rdid_out;
+        slave_o.dat <= s_rdid_out & x"000000";
       when FLASH_ACCESS =>
-        slave_o.dat <= s_dataout & s_dataout & s_dataout & s_dataout;
+        slave_o.dat <= s_dataout & x"000000";
       when FIFO_READ =>
-        slave_o.dat <= read_fifo_out;
+        slave_o.dat <= read_fifo_out & x"000000";
       when BUSY_CHECK =>
         slave_o.dat <= "0000000" & s_busy & "0000000" & s_busy & "0000000" & s_busy & "0000000" & s_busy;
       when SET_ADDR =>
         slave_o.dat <= s_addr;
+      when READ_CRC =>
+        slave_o.dat <= crc_out & x"000000";
       when others =>
         slave_o.dat <= (others => '0');
     end case;
@@ -258,6 +289,7 @@ begin
         v_read_tmo      := 0;
         fifo_word       <= (others => '0');
         s_wren          <= '0';
+        s_first_word    <= '0';
       else
         s_write_strobe  <= '0';
         s_read_strobe   <= '0';
@@ -273,17 +305,30 @@ begin
         s_sector_erase  <= '0';
         read_fifo_we    <= '0';
         s_wren          <= '0';
+        s_first_word    <= '0';
       
         case wb_state is
           when idle =>
             if slave_i.cyc = '1' and slave_i.stb = '1' then
 
+              -- asmi core is still busy
+              if (s_busy = '1' and (slave_i.adr(7 downto 0) /= BUSY_CHECK)) then
+                slave_o.err <= '1';
+              
               -- read status from epcs
-              if (slave_i.adr(7 downto 0) = READ_STATUS) then
+              elsif (slave_i.adr(7 downto 0) = READ_STATUS) then
                 wb_state      <= stall;
                 slave_o.stall <= '1';
                 if slave_i.we = '0' then
                   s_read_status <= '1';
+                end if;
+
+              -- read back the crc value of a page read instruction
+              elsif (slave_i.adr(7 downto 0) = READ_CRC) then
+                if slave_i.we = '0' and slave_i.sel = x"8" then
+                  slave_o.ack <= '1';
+                else
+                  slave_o.err <= '1';
                 end if;
 
               -- check if asmi core is busy
@@ -318,12 +363,14 @@ begin
               -- read from fifo
               elsif (slave_i.adr(7 downto 0) = FIFO_READ) then
                 if slave_i.we = '0' then
-                  if (slave_i.sel(3 downto 0) = x"f") then
+                  if (slave_i.sel(3 downto 0) = x"8") then
                     if read_fifo_empty = '0' then
                       slave_o.ack <= '1';
                     else 
                       slave_o.err <= '1';
                     end if;
+                  else
+                    slave_o.err <= '1';
                   end if;
                 else
                   slave_o.err <= '1';
@@ -343,9 +390,9 @@ begin
 
               -- write buffer to the flash
               elsif (slave_i.adr(7 downto 0) = WRITE_BUFFER) then
-                if (slave_i.sel(3 downto 0) = x"f") then
+                slave_o.stall <= '1';
+                if (slave_i.sel(3 downto 0) = x"f") and slave_i.we = '1' then
                   s_addr <= slave_i.dat(31 downto 0);
-                  slave_o.stall <= '1';
                   wb_state <= write_addr_ready;    
                   s_byte_count := 0;
                 else
@@ -354,7 +401,6 @@ begin
                 
               -- access to flash          
               elsif (slave_i.adr(7 downto 0) = FLASH_ACCESS) then
-                -- set addr for read
                 if slave_i.we = '0' then
                   slave_o.stall <= '1';
                   wb_state <= read_addr_ready;
@@ -398,27 +444,16 @@ begin
               wb_state <= err;
               v_read_tmo := 0;
             -- valid data on the output
-            -- push 4 byte word into fifo
             elsif s_data_valid = '1' then
-              if s_read10_addr(1 downto 0) = "00" then
-                fifo_word(7 downto 0) <= s_dataout;
-              elsif s_read10_addr(1 downto 0) = "01" then
-                fifo_word(15 downto 8) <= s_dataout;
-              elsif s_read10_addr(1 downto 0) = "10" then
-                fifo_word(23 downto 16) <= s_dataout;
-              elsif s_read10_addr(1 downto 0) = "11" then
-                s_word_count := s_word_count + 1;
-                read_fifo_in <= s_dataout & fifo_word(23 downto 0);
-                -- only continue with reading, if the fifo has space left
-                if read_fifo_full = '0' then
-                  read_fifo_we <= '1';
-                else
-                  wb_state <= err;
-                end if;
+              if s_word_count = 0 then
+                s_first_word <= '1';
               end if;
+              s_word_count := s_word_count + 1;
+              read_fifo_in <= s_dataout;
+              read_fifo_we <= '1';
               v_read_tmo := 0;
-            -- the buffer is full, stop reading
-            elsif s_word_count = PAGESIZE/4 then
+            -- stop reading after one page
+            elsif s_word_count = PAGESIZE then
               slave_o.ack <= '1';
               v_read_tmo := 0;
               s_byte_count := 0;
@@ -449,8 +484,7 @@ begin
             slave_o.stall   <= '1';
             if s_illegal_write = '1' or s_illegal_erase = '1' then
               wb_state <= err;
-            end if;
-            if s_busy = '0' then
+            elsif s_busy = '0' then
               wb_state <= cycle_end;
             end if;
 
