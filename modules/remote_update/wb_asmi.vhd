@@ -123,7 +123,7 @@ architecture arch of wb_asmi is
 
 begin
   
-    a1: if g_family = "Arria II GX" generate
+    a1: if g_family = "Arria II" generate
       asmi: altasmi
         port map (
          addr          => s_addr,
@@ -148,7 +148,7 @@ begin
        );
   end generate;
 
-  a2: if g_family = "Arria 10" generate
+  a2: if g_family(1 to 8) = "Arria 10" generate
     asmi_10: asmi10
       port map (
         clkin         => not clk_flash_i,

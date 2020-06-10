@@ -2949,7 +2949,7 @@ end generate;
     asmi: wb_asmi
       generic map ( 
         pagesize => 256,
-        g_family => "Arria 10"
+        g_family => g_family 
       )
       port map (
         clk_flash_i => clk_flash_ext,
