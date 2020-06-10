@@ -59,10 +59,11 @@ library work;
 use work.wishbone_pkg.all;
 use work.wb_arria_reset_pkg.all;
 use work.aux_functions_pkg.all;
+use work.monster_pkg.all;
 
 entity wb_arria_reset is
   generic (
-    arria_family : string := "Arria II";
+    arria_family : string := "none";
     rst_channels : integer range 1 to 32 := 2;
     clk_in_hz    : integer;
     en_wd_tmr    : boolean
@@ -110,6 +111,19 @@ begin
 
   ruc_gen_a5 : if arria_family = "Arria V" generate
     arria5_reset_inst : arria5_reset PORT MAP (
+      clock       => clk_upd_i,
+      param       => "000",
+      read_param  => '0',
+      reconfig    => reset_reg(0) or trigger_reconfig,
+      reset       => reset,
+      reset_timer => '0',
+      busy        => open,
+      data_out    => open
+    );
+  end generate;
+
+  ruc_gen_a10 : if arria_family(1 to 8) = "Arria 10" generate
+    arria5_reset_inst : arria10_reset PORT MAP (
       clock       => clk_upd_i,
       param       => "000",
       read_param  => '0',
