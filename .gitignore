@@ -28,6 +28,9 @@ syn
 *.swp
 *.orig
 *.qicache
+*.html
+*.xml
+*.rpt
 *~
 greybox_tmp
 *_shared_mmap.h
