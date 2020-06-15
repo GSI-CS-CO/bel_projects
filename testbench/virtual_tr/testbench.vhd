@@ -183,7 +183,7 @@ begin
     --g_lm32_MSIs         => false,
     --g_lm32_are_ftm      => false,
     g_delay_diagnostics => false,
-    g_en_eca            => false,
+    g_en_eca            => true,
     g_en_wd_tmr         => false,
     g_en_eca_tap        => false,
 
@@ -200,8 +200,8 @@ begin
       g_en_usb          => true,
       g_en_lcd          => false,
       g_en_user_ow      => false,
-      g_en_tempsens     => false
-      --g_io_table        => io_mapping_table,
+      g_en_tempsens     => true,
+      g_io_table        => io_mapping_table
       --g_lm32_cores      => c_cores,
       --g_lm32_ramsizes   => c_lm32_ramsizes/4,
       --g_lm32_init_files => f_string_list_repeat(c_initf_name, c_cores),
@@ -227,7 +227,7 @@ begin
       sfp_tx_disable_o        => open,
       sfp_tx_fault_i          => sfp4_tx_fault,
       sfp_los_i               => sfp4_los,
-      --gpio_o                  => open,
+      --gpio_o                  => gpio_o,
       --lvds_p_i                => lvds_p_i,
       --lvds_n_i                => lvds_n_i,
       --lvds_i_led_o            => lvds_i_led,
@@ -269,7 +269,7 @@ begin
   --sfp3_tx_disable_o <= '1';
   --sfp4_tx_disable_o <= '0';
 
-  ---- Link LEDs
+  -- Link LEDs
   --wrdis <= '0';
   --dres  <= '1';
   --di(5) <= '0' when (not led_link_up)                   = '1' else 'Z'; -- red
@@ -317,17 +317,17 @@ begin
   --p26 <= '0' when lvds_oen(1)='1' else 'Z'; -- FPLED3/TTLIO2 red
   --p16 <= '0' when lvds_oen(2)='1' else 'Z'; -- FPLED5/TTLIO3 red
 
-  ---- LVDS inputs
-  --lvds_p_i(0) <= p21; -- TTLIO1
-  --lvds_p_i(1) <= p22; -- TTLIO2
-  --lvds_p_i(2) <= p23; -- TTLIO3
-  --lvds_p_i(3) <= p17; -- LVDS_1 / SYIN
-  --lvds_p_i(4) <= p18; -- LVDS_2 / TRIN
-  --lvds_n_i(0) <= n21; -- TTLIO1
-  --lvds_n_i(1) <= n22; -- TTLIO2
-  --lvds_n_i(2) <= n23; -- TTLIO3
-  --lvds_n_i(3) <= n17; -- LVDS_1 / SYIN
-  --lvds_n_i(4) <= n18; -- LVDS_2 / TRIN
+  -- LVDS inputs
+  lvds_p_i(0) <= '1';--p21; -- TTLIO1
+  lvds_p_i(1) <= '1';--p22; -- TTLIO2
+  lvds_p_i(2) <= '1';--p23; -- TTLIO3
+  lvds_p_i(3) <= '1';--p17; -- LVDS_1 / SYIN
+  lvds_p_i(4) <= '1';--p18; -- LVDS_2 / TRIN
+  lvds_n_i(0) <= '0';--n21; -- TTLIO1
+  lvds_n_i(1) <= '0';--n22; -- TTLIO2
+  lvds_n_i(2) <= '0';--n23; -- TTLIO3
+  lvds_n_i(3) <= '0';--n17; -- LVDS_1 / SYIN
+  lvds_n_i(4) <= '0';--n18; -- LVDS_2 / TRIN
 
   ---- LVDS outputs
   --n25 <= lvds_n_o(0); -- TTLIO1
