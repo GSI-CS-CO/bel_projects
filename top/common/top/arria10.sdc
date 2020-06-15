@@ -94,10 +94,12 @@ set_clock_groups -asynchronous \
 -group [get_clocks {main|\phy_a10:phy|\det_phy:scu4_phy:inst_phy|xcvr_native_a10_0|avmmclk \
                     main|\phy_a10:phy|\det_phy:scu4_phy:inst_phy|xcvr_native_a10_0|rx_clkout \
                     main|\phy_a10:phy|\det_phy:scu4_phy:inst_phy|xcvr_native_a10_0|rx_pma_clk \
+                    main|\phy_a10:phy|\det_phy:scu4_phy:inst_phy|xcvr_native_a10_0|tx_clkout \
                     main|\phy_a10:phy|\det_phy:scu4_phy:inst_phy|xcvr_native_a10_0|tx_pma_clk}] \
 -group [get_clocks {main|\phy_a10:phy|\det_phy:e3p1_phy:inst_phy|xcvr_native_a10_0|avmmclk \
                     main|\phy_a10:phy|\det_phy:e3p1_phy:inst_phy|xcvr_native_a10_0|rx_clkout \
                     main|\phy_a10:phy|\det_phy:e3p1_phy:inst_phy|xcvr_native_a10_0|rx_pma_clk \
+                    main|\phy_a10:phy|\det_phy:e3p1_phy:inst_phy|xcvr_native_a10_0|tx_clkout \
                     main|\phy_a10:phy|\det_phy:e3p1_phy:inst_phy|xcvr_native_a10_0|tx_pma_clk}] \
 -group [get_clocks {main|\dmtd_a10:dmtd_inst|iopll_0|outclk0}] \
 -group [get_clocks {main|\sys_a10:sys_inst|iopll_0|outclk0}] \
