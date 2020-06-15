@@ -206,11 +206,20 @@ void clear_handler_state( const uint8_t socket )
    }
 }
 
+#define __MURKS
+
 /*! ---------------------------------------------------------------------------
  * @brief Handling of all SCU-bus MSI events.
  */
 STATIC inline void onScuBusEvent( MSI_T* pMessage )
 {
+#ifdef __MURKS
+#warning MURKS!
+   static unsigned int X = 0;
+   X++;
+   if( (X % 1000) == 0 )
+      return;
+#endif
    const unsigned int slot = pMessage->msg + 1;
    const uint16_t pendingIrqs =
       scuBusGetAndResetIterruptPendingFlags((const void*)g_pScub_base, slot );
@@ -513,7 +522,7 @@ void main( void )
             "CAUTION! Time gap reading for MIL FGs activated!\n"
             ESC_NORMAL
 #endif
-           , (uint32_t)pCpuMsiBox, (uint32_t)pMyMsi );
+           , pCpuMsiBox, pMyMsi );
 
    initializeGlobalPointers();
    initInterrupt();
@@ -525,7 +534,7 @@ void main( void )
    if( (int)BASE_SYSCON == ERROR_NOT_FOUND )
       mprintf( ESC_ERROR"no SYS_CON found!"ESC_NORMAL"\n" );
    else
-      mprintf( "SYS_CON found on adr: 0x%08p\n", BASE_SYSCON );
+      mprintf( "SYS_CON found on addr: 0x%p\n", BASE_SYSCON );
 
    timer_init(1); //needed by usleep_init()
    usleep_init();

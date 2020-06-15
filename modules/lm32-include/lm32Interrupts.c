@@ -136,7 +136,8 @@ void _irq_entry( void )
    /*
     * As long as there is an interrupt pending...
     */
-   while( (ip = irqGetPendingRegister() & irqGetMaskRegister()) != 0 )
+  // while( (ip = irqGetPendingRegister() & irqGetMaskRegister()) != 0 )
+   while( (ip = irqGetAndResetPendingRegister() & irqGetMaskRegister()) != 0 )
    { /*
       * Zero has the highest priority.
       */
@@ -146,7 +147,7 @@ void _irq_entry( void )
          const uint32_t mask = _irqGetPendingMask( intNum );
          if( (mask & ip) == 0 ) /* Is this interrupt pending? */
             continue; /* No, go to next possible interrupt. */
-
+     // irqResetPendingRegister( mask );
          IRQ_ASSERT( intNum < ARRAY_SIZE( ISREntryTable ) );
          const ISR_ENTRY_T* pCurrentInt = &ISREntryTable[intNum];
          if( pCurrentInt->pfCallback != NULL )
@@ -167,13 +168,13 @@ void _irq_entry( void )
          /*
           * Clearing of the concerning interrupt-pending bit.
           */
-         irqResetPendingRegister( mask );
+       //  irqResetPendingRegister( mask );
 
          /*
           * The inner for-loop will left here because meanwhile a higher
           * prioritized interrupt may appear again.
           */
-         break;
+        // break;
       }
    }
 
