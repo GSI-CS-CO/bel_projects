@@ -109,7 +109,7 @@ package monster_pkg is
       g_en_user_ow           : boolean := false;
       g_en_psram             : boolean := false;
       g_en_beam_dump         : boolean := false;
-      --g_io_table             : t_io_mapping_table_arg_array;
+      g_io_table             : t_io_mapping_table_arg_array;
       g_en_pmc               : boolean := false;
       g_a10_use_sys_fpll     : boolean := false;
       g_a10_use_ref_fpll     : boolean := false;
