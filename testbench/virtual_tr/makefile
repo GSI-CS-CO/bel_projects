@@ -22,7 +22,7 @@ notrace: compile_testbench
 
 # start simulation (which regenerates wave file), then update viewer
 simulation.ghw: compile_testbench 
-	ghdl -r testbench --stop-time=60us --wave=simulation.ghw --ieee-asserts=disable
+	ghdl -r testbench --stop-time=1000us --wave=simulation.ghw --ieee-asserts=disable --read-wave-opt=all.wave_opt
 	#vcd2fst simulation.vcd simulation.fst && rm simulation.vcd
 	gsettings set com.geda.gtkwave reload 0
 
@@ -147,7 +147,7 @@ testbench: 	\
 			../../ip_cores/wr-cores/modules/wr_mini_nic/minic_wb_slave.vhd              \
 			../../ip_cores/wr-cores/modules/wrc_core/wrc_periph.vhd                     \
 			../../ip_cores/wr-cores/modules/fabric/xwrf_mux.vhd                         \
-			../common/wr_core.vhd                        \
+			../common/wr_core_stub.vhd                        \
 			../../ip_cores/wr-cores/modules/wrc_core/xwr_core.vhd                       \
 			../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_hdr_pkg.vhd              \
 			../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_internals_pkg.vhd        \

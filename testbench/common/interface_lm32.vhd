@@ -30,6 +30,7 @@ package interface_lm32 is
 
   procedure interface_lm32_sym_interrupt(idx : integer; interrupt : integer);
   attribute foreign of interface_lm32_sym_interrupt : procedure is "VHPIDIRECT interface_lm32_sym_interrupt";
+  procedure interface_lm32_interrupt(idx: integer; irq : std_logic_vector(31 downto 0));
 
 
 
@@ -212,6 +213,10 @@ package body interface_lm32 is
     interface_lm32_d_ack_i(idx, to_integer(wb_miso.ack));
     interface_lm32_d_err_i(idx, to_integer(wb_miso.err));
     interface_lm32_d_rty_i(idx, to_integer(wb_miso.rty));
+  end procedure;
+  procedure interface_lm32_interrupt(idx: integer; irq : std_logic_vector(31 downto 0)) is 
+  begin
+    interface_lm32_sym_interrupt(idx, to_integer(signed(irq))+integer'low);
   end procedure;
 
 
