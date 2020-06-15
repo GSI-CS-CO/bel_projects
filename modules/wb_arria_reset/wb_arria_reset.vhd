@@ -61,6 +61,9 @@ use work.wb_arria_reset_pkg.all;
 use work.aux_functions_pkg.all;
 use work.monster_pkg.all;
 
+library arria10_reset_altera_remote_update_181;
+use arria10_reset_altera_remote_update_181.arria10_reset_pkg.all;
+
 entity wb_arria_reset is
   generic (
     arria_family : string := "none";
