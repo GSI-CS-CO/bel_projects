@@ -7,6 +7,10 @@ use work.wishbone_pkg.all;
 use work.remote_update_pkg.all;
 use work.genram_pkg.all;
 use work.aux_functions_pkg.all;
+use work.monster_pkg.all;
+
+library altera_asmi_parallel_181;
+use altera_asmi_parallel_181.asmi10_pkg.all;
 
 entity wb_asmi is
   generic (
@@ -95,6 +99,7 @@ architecture arch of wb_asmi is
   signal fifo_word       : std_logic_vector(31 downto 0);
   signal crc_out         : std_logic_vector(7 downto 0);
   signal s_first_word    : std_logic;
+  signal s_read_number   : std_logic_vector(31 downto 0);
 
 
   constant FLASH_ACCESS : std_logic_vector(7 downto 0) := x"00";
@@ -106,6 +111,7 @@ architecture arch of wb_asmi is
   constant FIFO_READ    : std_logic_vector(7 downto 0) := x"18";
   constant BUSY_CHECK   : std_logic_vector(7 downto 0) := x"1c";
   constant READ_CRC     : std_logic_vector(7 downto 0) := x"20";
+  constant READ_NUM     : std_logic_vector(7 downto 0) := x"24";
   constant TIMEOUT      : integer                      := 70;
 
   component crc8_data8 is
@@ -248,6 +254,8 @@ begin
         slave_o.dat <= s_addr;
       when READ_CRC =>
         slave_o.dat <= crc_out & x"000000";
+      when READ_NUM =>
+        slave_o.dat <= s_read_number;
       when others =>
         slave_o.dat <= (others => '0');
     end case;
@@ -290,6 +298,7 @@ begin
         fifo_word       <= (others => '0');
         s_wren          <= '0';
         s_first_word    <= '0';
+        s_read_number   <= (others => '0');
       else
         s_write_strobe  <= '0';
         s_read_strobe   <= '0';
@@ -388,6 +397,18 @@ begin
                   wb_state <= err;
                 end if;
 
+              -- set number of bytes to read
+              elsif (slave_i.adr(7 downto 0) = READ_NUM) then
+                if (slave_i.sel(3 downto 0) = x"f") then
+                  if slave_i.we = '1' then
+                    s_read_number <= slave_i.dat(31 downto 0);
+                  end if;
+                  slave_o.ack <= '1';
+                  wb_state <= idle;
+                else
+                  wb_state <= err;
+                end if;
+
               -- write buffer to the flash
               elsif (slave_i.adr(7 downto 0) = WRITE_BUFFER) then
                 slave_o.stall <= '1';
@@ -453,7 +474,7 @@ begin
               read_fifo_we <= '1';
               v_read_tmo := 0;
             -- stop reading after one page
-            elsif s_word_count = PAGESIZE then
+            elsif s_word_count = to_integer(unsigned(s_read_number)) then
               slave_o.ack <= '1';
               v_read_tmo := 0;
               s_byte_count := 0;
