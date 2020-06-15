@@ -43,6 +43,8 @@ begin
     interface_lm32_i_wb_miso(lm32_idx, iwb_i); -- instruction bus
     interface_lm32_d_wb_miso(lm32_idx, dwb_i); -- data bus
 
+    interface_lm32_interrupt(lm32_idx, irq_i); -- interrupts
+
     interface_lm32_clock(lm32_idx, clk_sys_i);
   end process;
 	
