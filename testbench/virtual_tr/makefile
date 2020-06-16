@@ -22,7 +22,8 @@ notrace: compile_testbench
 
 # start simulation (which regenerates wave file), then update viewer
 simulation.ghw: compile_testbench 
-	ghdl -r testbench --stop-time=1000us --wave=simulation.ghw --ieee-asserts=disable --read-wave-opt=all.wave_opt
+	ghdl -r testbench --wave=simulation.ghw --ieee-asserts=disable --read-wave-opt=all.wave_opt
+	#ghdl -r testbench --stop-time=1000us --wave=simulation.ghw --ieee-asserts=disable --write-wave-opt=all.wave_opt
 	#vcd2fst simulation.vcd simulation.fst && rm simulation.vcd
 	gsettings set com.geda.gtkwave reload 0
 
@@ -312,7 +313,7 @@ testbench: 	\
 			../common/wr_arria2_phy.vhd     \
 			../../ip_cores/wr-cores/platform/altera/wr_arria5_phy/wr_arria5_phy.vhd     \
 			../../modules/build_id/build_id.vhd                                         \
-			../../modules/watchdog/watchdog.vhd                                         \
+			../common/watchdog.vhd                                         \
 			../../ip_cores/general-cores/platform/altera/flash/flash_top.vhd            \
 			../common/io_control.vhd                             \
 			../../modules/function_generators/serdes_clk_gen/xwb_serdes_clk_gen.vhd     \

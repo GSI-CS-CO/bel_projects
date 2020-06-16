@@ -27,7 +27,25 @@ end entity;
 
 architecture simulation of ez_usb_chip is
 	signal out_value : std_logic_vector(7 downto 0) := (others => '0');
+	signal clk_internal : std_logic := '1';
 begin
+
+	-- this will shutdown the simulation if usb is idle for too long
+	clk_internal <= not clk_internal after 10 ns;
+	process
+		variable count : integer := 0;
+	begin
+		wait until rising_edge(clk_internal);
+		count := count + 1;
+		--report "count = " & integer'image(count);
+		if count = 1000 then 
+			assert false report "QUIT" severity failure;
+		end if;
+		if sloen_i = '0' or slrdn_i = '0' or slwrn_i = '0' then
+			count := 0;
+		end if;
+	end process;
+
 
 	fd_io <= out_value when sloen_i = '0' else (others => 'Z');
 
