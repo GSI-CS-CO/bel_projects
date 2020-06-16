@@ -206,7 +206,7 @@ void clear_handler_state( const uint8_t socket )
    }
 }
 
-#define __MURKS
+//#define __MURKS
 
 /*! ---------------------------------------------------------------------------
  * @brief Handling of all SCU-bus MSI events.
