@@ -208,13 +208,8 @@ begin
                                                                     
                                     
           when st_PACKET_GATHER =>  if ((r_dhol  <= unsigned(time_i)) and s_ctrl_mode_o(c_TIME_LIMIT) = '1') or --time limit reached?  
-                                      (r_msg_cnt >= unsigned(s_ctrl_tx_max_msgs_o)) then  --message limit reached?
-                                      if(r_msg_cnt > 0) then
-                                        r_state <= st_PACKET_SEND;
-                                      else
-                                        --FIXME: this shouldnt happen. Goto empty packet, DO NOT SEND. EBM is currently not proofed against this weird behaviour
-                                        r_state <= st_PACKET_EMPTY;
-                                      end if;  
+                                       (r_msg_cnt >= unsigned(s_ctrl_tx_max_msgs_o)) then  --message limit reached?
+                                      r_state <= st_PACKET_SEND;
                                     end if;
                                    
            when st_PACKET_SEND  =>  if s_ebm_ctrl_i.stall = '0' then
