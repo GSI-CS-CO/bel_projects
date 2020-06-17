@@ -22,7 +22,7 @@ notrace: compile_testbench
 
 # start simulation (which regenerates wave file), then update viewer
 simulation.ghw: compile_testbench 
-	ghdl -r testbench --wave=simulation.ghw --ieee-asserts=disable --read-wave-opt=all.wave_opt
+	ghdl -r testbench --expect-failure --wave=simulation.ghw --ieee-asserts=disable --read-wave-opt=all.wave_opt
 	#ghdl -r testbench --stop-time=1000us --wave=simulation.ghw --ieee-asserts=disable --write-wave-opt=all.wave_opt
 	#vcd2fst simulation.vcd simulation.fst && rm simulation.vcd
 	gsettings set com.geda.gtkwave reload 0
@@ -288,6 +288,7 @@ testbench: 	\
 			../../modules/pll/altera_butis.vhd                                          \
 			../../modules/eca_tap/eca_tap_auto_pkg.vhd                                  \
 			../../modules/eca_tap/eca_tap_pkg.vhd                                       \
+			../../modules/eca_tap/eca_tap_auto.vhd                                      \
 			../common/ref_pll.vhd           \
 			../common/ref_pll_5_10.vhd      \
 			../common/dmtd_pll.vhd          \
@@ -337,6 +338,7 @@ testbench: 	\
 			../../modules/temp_sens/hdl/wb_temp_sense_pkg.vhd                           \
 			../../modules/temp_sens/hdl/temp_sensor_pkg.vhd                             \
 			../common/wb_temp_sense.vhd                               \
+			../../modules/eca_tap/eca_tap_auto_pkg.vhd                                  \
 			../common/monster.vhd     \
 			../common/wb_arria_reset.vhd \
 			../common/interface_lm32.vhd \

@@ -180,12 +180,12 @@ begin
     --g_a10_use_ref_fpll  => false,
     g_a10_en_phy_reconf => false,
     g_en_butis          => false,
-    --g_lm32_MSIs         => false,
-    --g_lm32_are_ftm      => false,
+    --g_lm32_MSIs         => 1,
+    g_lm32_are_ftm      => false,
     g_delay_diagnostics => false,
     g_en_eca            => true,
     g_en_wd_tmr         => false,
-    g_en_eca_tap        => false,
+    g_en_eca_tap        => true,
 
       g_family          => c_family,
       g_project         => c_project,
@@ -201,11 +201,11 @@ begin
       g_en_lcd          => false,
       g_en_user_ow      => false,
       g_en_tempsens     => true,
-      g_io_table        => io_mapping_table
-      --g_lm32_cores      => c_cores,
-      --g_lm32_ramsizes   => c_lm32_ramsizes/4,
-      --g_lm32_init_files => f_string_list_repeat(c_initf_name, c_cores),
-      --g_lm32_profiles   => f_string_list_repeat(c_profile_name, c_cores)
+      g_io_table        => io_mapping_table,
+      g_lm32_cores      => c_cores,
+      g_lm32_ramsizes   => c_lm32_ramsizes/4,
+      g_lm32_init_files => f_string_list_repeat(c_initf_name, c_cores),
+      g_lm32_profiles   => f_string_list_repeat(c_profile_name, c_cores)
     )
     port map(
       core_clk_20m_vcxo_i     => clk_dmtd,
