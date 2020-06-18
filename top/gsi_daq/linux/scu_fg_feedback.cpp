@@ -55,8 +55,8 @@ FgFeedbackAdministration::~FgFeedbackAdministration( void )
  */
 uint FgFeedbackAdministration::distributeData( void )
 {
-   for( const auto& daqAdmin: m_vPollList )
-      daqAdmin->distributeData();
+   for( const auto& poDaqAdmin: m_vPollList )
+      poDaqAdmin->distributeData();
    return 0;
 }
 

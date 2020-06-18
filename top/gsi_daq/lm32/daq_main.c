@@ -54,7 +54,7 @@ int daqScanScuBus( DAQ_BUS_T* pDaqDevices
    /* That's not fine, but it's not my idea. */
    if( pScuBusBase == (void*)ERROR_NOT_FOUND )
    {
-      DBPRINT1( ESC_BOLD ESC_FG_RED
+      mprintf( ESC_ERROR
                "ERROR: find_device_adr() didn't find it!\n"
                ESC_NORMAL );
       return DAQ_RET_ERR_DEVICE_ADDRESS_NOT_FOUND;
@@ -65,14 +65,15 @@ int daqScanScuBus( DAQ_BUS_T* pDaqDevices
 #endif
    if( ret < 0 )
    {
-      DBPRINT1(  ESC_BOLD ESC_FG_RED
-                 "ERROR: in daqBusFindAndInitializeAll()\n"
-                 ESC_NORMAL );
+      mprintf( ESC_ERROR
+               "ERROR: in daqBusFindAndInitializeAll()\n"
+               ESC_NORMAL );
       return DAQ_RET_ERR_DEVICE_ADDRESS_NOT_FOUND;
    }
-#ifdef DEBUGLEVEL
+
    if( ret == 0 )
-      DBPRINT1( "WARNING: No DAQ devices present!\n" );
+      mprintf( ESC_WARNING "WARNING: No DAQ devices found!\n" ESC_NORMAL );
+#ifdef DEBUGLEVEL
    else
    {
       DBPRINT1( "DBG: %d DAQ devices found.\n", ret );
@@ -198,7 +199,7 @@ STATIC inline void irqPrintDebugPending( void )
    uint32_t pending = irqGetAndResetPendingRegister();
    if( pending != lastPending )
    {
-      DBPRINT1( "DBG: pending: 0x%08x\n", pending );
+      DBPRINT1( "DBG: pending: 0b%08b\n", pending );
       lastPending = pending;
    }
 }
@@ -378,14 +379,12 @@ extern uint32_t _endram;
 int main( void )
 {
    _endram = STACK_MAGIC;
-#ifdef DEBUGLEVEL
    discoverPeriphery();
    uart_init_hw();
    gotoxy( 0, 0 );
    clrscr();
-   DBPRINT1( "DAQ control started; Compiler: "COMPILER_VERSION_STRING"\n" );
-   DBPRINT1( "DAQ End of RAM:  0x%08x [0x%08x]\n", &_endram, _endram );
-#endif
+   mprintf( "DAQ control started; Compiler: "COMPILER_VERSION_STRING"\n" );
+   DBPRINT1( "DAQ End of RAM:  0x%p [0x%08X]\n", &_endram, _endram );
 
    scuDaqInitialize( &g_scuDaqAdmin );
 

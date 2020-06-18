@@ -12,8 +12,14 @@ REPOSITORY_DIR := $(shell git rev-parse --show-toplevel)
 
 # TARGET_DIR     := ..
 # DEPLOY_DIR     := .
-TARGET         := daq_control
 
+# ACU := 1
+
+ifdef ACU
+  TARGET := daq_acu_control
+else
+  TARGET := daq_addac_control
+endif
 
 MIAN_MODULE    = $(DAQ_LM32_DIR)/daq_main.c
 
@@ -27,8 +33,14 @@ SOURCE += $(SCU_LIB_SRC_DIR)/lm32Interrupts.c
 SOURCE += $(SCU_LIB_SRC_DIR)/scu_ddr3.c
 SOURCE += $(DAQ_DIR)/daq_ring_admin.c
 
-
-DEFINES += DAQ_MAX_CHANNELS=4
+ifdef ACU
+   DEFINES += MAX_SCU_SLAVES=1
+   DEFINES += DAQ_MAX_CHANNELS=4
+   DEFINES += CONFIG_ACU
+else
+   DEFINES += MAX_SCU_SLAVES=12
+   DEFINES += DAQ_MAX_CHANNELS=4
+endif
 
 DEFINES += CONFIG_DAQ_SINGLE_APP
 DEFINES += CONFIG_SCU_USE_DDR3
@@ -38,7 +50,7 @@ DEFINES += CONFIG_DAQ_PEDANTIC_CHECK
 DEFINES += CONFIG_RAM_PEDANTIC_CHECK
 DEFINES += CONFIG_PATCH_DAQ_HW_BUG
 DEFINES += CONFIG_DEBUG_RAM_WRITE_DATA
-DEFINES += DEBUGLEVEL=1
+# DEFINES += DEBUGLEVEL=2
 #DEFINES += CONFIG_DAQ_DEBUG
 
 DOX_INPUT += $(DAQ_DIR)/daq_descriptor.h

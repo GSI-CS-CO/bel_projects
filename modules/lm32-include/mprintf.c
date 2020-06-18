@@ -72,7 +72,7 @@ STATIC bool addToString( PRINTF_T* pPrintfObj, const int c )
  * @param c Character to put in the string.
  * @retval false Always
  */
-STATIC bool sendToUart( PRINTF_T* pPrintfObj UNUSED, int c )
+STATIC bool sendToUart( PRINTF_T* pPrintfObj UNUSED, const int c )
 {
    uart_write_byte( c );
    return false;
