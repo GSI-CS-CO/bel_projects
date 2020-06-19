@@ -196,13 +196,8 @@ STATIC void initIrqTable( void )
  */
 STATIC void init( void )
 {
-   discoverPeriphery();    // mini-sdb: get info on important Wishbone infrastructure, such as (this) CPU, flash, ...
-   uart_init_hw();         // init UART, required for printf... . To view print message, you may use 'eb-console' from the host
-
-   mprintf( ESC_CLR_SCR ESC_XY( "1", "1" ) "--- Demo for ECA MSI handling ---\n");
-
    if( pEca != NULL )
-     mprintf("ECA event input                  @ 0x%08x\n", (uint32_t) pEca);
+      mprintf("ECA event input                  @ 0x%08x\n", (uint32_t) pEca);
    else
    {
       mprintf(ESC_ERROR"Could not find the ECA event input. Exit!\n");
@@ -238,16 +233,16 @@ STATIC void init( void )
 /* ==========================================================================*/
 void main( void )
 {
-  init(); // get own MSI target addr, ECA event input and ECA queue for LM32 channel
+   mprintf( ESC_CLR_SCR ESC_XY( "1", "1" ) "--- Demo for ECA MSI handling ---\n");
+   init(); // get own MSI target addr, ECA event input and ECA queue for LM32 channel
 
-  configureEcaMsiForLM32();
-  initIrqTable();                 // set up MSI handler
+   configureEcaMsiForLM32();
+   initIrqTable();                 // set up MSI handler
 
-  mprintf("waiting for MSI ...\n");
+   mprintf( "waiting for MSI ...\n" );
 
   /* main loop */
-  while( true );
-
+   while( true );
 }
 
 /* ================================= EOF ====================================*/

@@ -6,7 +6,7 @@ MIAN_MODULE := ecaMsiTest.c
 
 CODE_OPTIMIZATION = s
 
-
+SOURCE += $(SCU_LIB_SRC_DIR)/scu_std_init.c
 SOURCE += $(SCU_LIB_SRC_DIR)/lm32Interrupts.c
 SOURCE += $(SCU_LIB_SRC_DIR)/eca_queue_type.c
 
