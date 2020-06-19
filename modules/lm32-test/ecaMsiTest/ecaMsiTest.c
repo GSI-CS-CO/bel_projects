@@ -120,11 +120,11 @@ STATIC void ecaHandler( const unsigned int pending )
        */
       if( ecaItem.tag == MY_ACT_TAG )
       {
-         mprintf( "ecaHandler: id: 0x%08x%08x\n"
-                  "deadline:       0x%08x%08x\n"
-                  "param:          0x%08x%08x\n"
+         mprintf( "ecaHandler: id: 0x%08X%08X\n"
+                  "deadline:       0x%08X%08X\n"
+                  "param:          0x%08X%08X\n"
                   "flag:           0x%08x\n"
-                  "count:          %d\n",
+                  "count:          %u\n",
                   ecaItem.eventIdH,  ecaItem.eventIdL,
                   ecaItem.deadlineH, ecaItem.deadlineL,
                   ecaItem.paramH,    ecaItem.paramL,
@@ -165,9 +165,9 @@ STATIC void onIrqEcaEvent( const unsigned int intNum,
 
    irqMsiCopyObjectAndRemove( &m, intNum );
 
-   mprintf( "\nMSI:\t0x%08x\n"
-              "Adr:\t0x%08x\n"
-              "Sel:\t0x%02x\n",
+   mprintf( "\nMSI:\t0x%08X\n"
+              "Adr:\t0x%08X\n"
+              "Sel:\t0x%02X\n",
               m.msg,
               m.adr,
               m.sel );
@@ -197,19 +197,18 @@ STATIC void initIrqTable( void )
 STATIC void init( void )
 {
    if( pEca != NULL )
-      mprintf("ECA event input                  @ 0x%08x\n", (uint32_t) pEca);
+      mprintf("ECA event input                  @ 0x%p\n", pEca );
    else
    {
       mprintf(ESC_ERROR"Could not find the ECA event input. Exit!\n");
       return;
    }
 
-   mprintf("MSI destination addr for LM32    : 0x%08x\n", (uint32_t)pMyMsi);
+   mprintf("MSI destination addr for LM32    : 0x%p\n", pMyMsi );
 
    g_pEcaCtl = ecaControlGetRegisters();
    if( g_pEcaCtl != NULL )
-      mprintf( "ECA channel control              @ 0x%08x\n",
-               (uint32_t) g_pEcaCtl);
+      mprintf( "ECA channel control              @ 0x%p\n", g_pEcaCtl );
    else
    {
       mprintf(ESC_ERROR "Could not find the ECA channel control. Exit!\n");
@@ -219,8 +218,7 @@ STATIC void init( void )
    g_pEcaQueue = ecaGetLM32Queue();
    if( g_pEcaQueue != NULL )
    {
-      mprintf( "ECA queue to LM32 action channel @ 0x%08x\n",
-               (uint32_t) g_pEcaQueue );
+      mprintf( "ECA queue to LM32 action channel @ 0x%p\n", g_pEcaQueue );
    }
    else
    {

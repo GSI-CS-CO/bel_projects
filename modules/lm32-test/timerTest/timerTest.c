@@ -57,7 +57,7 @@ volatile static unsigned int g_count = 0;
 
 static void onTimerInterrupt( const unsigned int intNum, const void* pContext )
 {
-   mprintf( "%s( %d, 0x%x ), count: %d\n", __func__, intNum, (unsigned int)pContext, g_count );
+   mprintf( "%s( %d, 0x%p ), count: %d\n", __func__, intNum, pContext, g_count );
    g_count++;
   ATOMIC_SECTION()
   mprintf( "Period: %d\n", lm32TimerGetPeriod( (SCU_LM32_TIMER_T*)pContext ) );
@@ -80,7 +80,7 @@ void main( void )
       while( true );
    }
 
-   mprintf( "Timer found at wishbone base address 0x%x\n", (unsigned int)pTimer );
+   mprintf( "Timer found at wishbone base address 0x%p\n", pTimer );
 
    lm32TimerSetPeriod( pTimer, configCPU_CLOCK_HZ );
    lm32TimerEnable( pTimer );
