@@ -72,7 +72,10 @@ inline unsigned int irqGetAtomicNestingCount( void )
 /*! ---------------------------------------------------------------------------
  * @see lm32Interrupts.h
  */
-OVERRIDE uint32_t _irqGetPendingMask( const unsigned int intNum )
+#ifndef __DOXYGEN__
+__attribute__((weak))
+#endif
+uint32_t _irqGetPendingMask( const unsigned int intNum )
 {
    return (1 << intNum);
 }
@@ -80,7 +83,10 @@ OVERRIDE uint32_t _irqGetPendingMask( const unsigned int intNum )
 /*! ---------------------------------------------------------------------------
  * @see lm32Interrupts.h
  */
-OVERRIDE unsigned int _irqReorderPriority( const unsigned int prio )
+#ifndef __DOXYGEN__
+__attribute__((weak))
+#endif
+unsigned int _irqReorderPriority( const unsigned int prio )
 {
    return prio;
 }
@@ -126,15 +132,11 @@ void _irq_entry( void )
    mg_criticalSectionNestingCount = 1;
 #endif
 
-   /*!
-    * @brief Copy of the interrupt pending register before reset.
-    */
    uint32_t ip;
-
    /*
     * As long as there is an interrupt pending...
     */
-   while( (ip = irqGetAndResetPendingRegister() & irqGetMaskRegister()) != 0 )
+   while( (ip = irqGetPendingRegister() & irqGetMaskRegister()) != 0 )
    { /*
       * Zero has the highest priority.
       */
@@ -144,7 +146,7 @@ void _irq_entry( void )
          const uint32_t mask = _irqGetPendingMask( intNum );
          if( (mask & ip) == 0 ) /* Is this interrupt pending? */
             continue; /* No, go to next possible interrupt. */
-
+     // irqResetPendingRegister( mask );
          IRQ_ASSERT( intNum < ARRAY_SIZE( ISREntryTable ) );
          const ISR_ENTRY_T* pCurrentInt = &ISREntryTable[intNum];
          if( pCurrentInt->pfCallback != NULL )
@@ -161,6 +163,17 @@ void _irq_entry( void )
             */
             irqSetMaskRegister( irqGetMaskRegister() & ~mask );
          }
+
+         /*
+          * Clearing of the concerning interrupt-pending bit.
+          */
+         irqResetPendingRegister( mask );
+
+         /*
+          * The inner for-loop will left here because meanwhile a higher
+          * prioritized interrupt may appear again.
+          */
+         break;
       }
    }
 
