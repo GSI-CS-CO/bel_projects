@@ -210,6 +210,21 @@ STATIC inline void irqMsiCopyObjectAndRemove( MSI_ITEM_T* const pItem,
    irqMsiPop( intNum );
 }
 
+STATIC inline bool irqMsiCopyObjectAndRemoveIfActive( MSI_ITEM_T* const pItem,
+                                                      const unsigned int intNum )
+{
+   const uint32_t mask = _irqGetPendingMask( intNum );
+   if( (IRQ_MSI_CONTROL_ACCESS( status ) & mask) == 0 )
+      return false;
+
+   pItem->msg = IRQ_MSI_ITEM_ACCESS( msg, intNum );
+   pItem->adr = IRQ_MSI_ITEM_ACCESS( adr, intNum );
+   pItem->sel = IRQ_MSI_ITEM_ACCESS( sel, intNum );
+
+   IRQ_MSI_CONTROL_ACCESS( pop ) = mask;
+
+   return true;
+}
 
 #ifdef __cplusplus
 }

@@ -163,17 +163,22 @@ STATIC void onIrqEcaEvent( const unsigned int intNum,
 {
    MSI_ITEM_T m;
 
-   irqMsiCopyObjectAndRemove( &m, intNum );
+   mprintf( "\n\nMSI-Status: %08b\n", IRQ_MSI_CONTROL_ACCESS( status ) );
 
-   mprintf( "\nMSI:\t0x%08X\n"
-              "Adr:\t0x%08X\n"
-              "Sel:\t0x%02X\n",
-              m.msg,
-              m.adr,
-              m.sel );
+   while( irqMsiCopyObjectAndRemoveIfActive( &m, intNum ) )
+   {
+   //irqMsiCopyObjectAndRemove( &m, intNum );
 
-   if( (m.msg & ECA_VALID_ACTION) != 0 ) // valid actions are pending
-      handleValidActions();              // ECA MSI handling
+      mprintf( "\nMSI:\t0x%08X\n"
+                 "Adr:\t0x%08X\n"
+                 "Sel:\t0x%02X\n",
+                 m.msg,
+                 m.adr,
+                 m.sel );
+
+      if( (m.msg & ECA_VALID_ACTION) != 0 ) // valid actions are pending
+         handleValidActions();              // ECA MSI handling
+   }
 }
 
 /*! ---------------------------------------------------------------------------
