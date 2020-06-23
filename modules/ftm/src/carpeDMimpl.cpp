@@ -102,51 +102,52 @@ vBuf CarpeDM::CarpeDMimpl::decompress(const vBuf& in) {return lzmaDecompress(in)
     boost::dynamic_properties dp(boost::ignore_other_properties);
     boost::ref_property_map<Graph *, std::string> gname( boost::get_property(g, boost::graph_name));
     dp.property(dgp::sName,     gname);
-    dp.property(dep::Base::sType,               boost::get(&myEdge::type,         g));
-    dp.property(dnp::Base::sName,               boost::get(&myVertex::name,       g));
-    dp.property(dnp::Base::sCpu,                boost::get(&myVertex::cpu,        g));
+    dp.property(dep::Base::sType,               boost::get(&myEdge::type,          g));
+    dp.property(dnp::Base::sName,               boost::get(&myVertex::name,        g));
+    dp.property(dnp::Base::sCpu,                boost::get(&myVertex::cpu,         g));
 
-    dp.property(dnp::Base::sType,               boost::get(&myVertex::type,       g));
-    dp.property(dnp::Base::sFlags,              boost::get(&myVertex::flags,      g));
-    dp.property(dnp::Base::sPatName,            boost::get(&myVertex::patName,    g));
-    dp.property(dnp::Base::sPatEntry,           boost::get(&myVertex::patEntry,   g));
-    dp.property(dnp::Base::sPatExit,            boost::get(&myVertex::patExit,    g));
-    dp.property(dnp::Base::sBpName,             boost::get(&myVertex::bpName,     g));
-    dp.property(dnp::Base::sBpEntry,            boost::get(&myVertex::bpEntry,    g));
-    dp.property(dnp::Base::sBpExit,             boost::get(&myVertex::bpExit,     g));
+    dp.property(dnp::Base::sType,               boost::get(&myVertex::type,        g));
+    dp.property(dnp::Base::sFlags,              boost::get(&myVertex::flags,       g));
+    dp.property(dnp::Base::sPatName,            boost::get(&myVertex::patName,     g));
+    dp.property(dnp::Base::sPatEntry,           boost::get(&myVertex::patEntry,    g));
+    dp.property(dnp::Base::sPatExit,            boost::get(&myVertex::patExit,     g));
+    dp.property(dnp::Base::sBpName,             boost::get(&myVertex::bpName,      g));
+    dp.property(dnp::Base::sBpEntry,            boost::get(&myVertex::bpEntry,     g));
+    dp.property(dnp::Base::sBpExit,             boost::get(&myVertex::bpExit,      g));
     //Block
-    dp.property(dnp::Block::sTimePeriod,        boost::get(&myVertex::tPeriod,    g));
-    dp.property(dnp::Block::sGenQPrioHi,        boost::get(&myVertex::qIl,        g));
-    dp.property(dnp::Block::sGenQPrioMd,        boost::get(&myVertex::qHi,        g));
-    dp.property(dnp::Block::sGenQPrioLo,        boost::get(&myVertex::qLo,        g));
+    dp.property(dnp::Block::sTimePeriod,        boost::get(&myVertex::tPeriod,     g));
+    dp.property(dnp::Block::sGenQPrioHi,        boost::get(&myVertex::qIl,         g));
+    dp.property(dnp::Block::sGenQPrioMd,        boost::get(&myVertex::qHi,         g));
+    dp.property(dnp::Block::sGenQPrioLo,        boost::get(&myVertex::qLo,         g));
     //Timing Message
-    dp.property(dnp::TMsg::sTimeOffs,           boost::get(&myVertex::tOffs,      g));
-    dp.property(dnp::TMsg::sId,                 boost::get(&myVertex::id,         g));
+    dp.property(dnp::TMsg::sTimeOffs,           boost::get(&myVertex::tOffs,       g));
+    dp.property(dnp::TMsg::sId,                 boost::get(&myVertex::id,          g));
       //ID sub fields
-    dp.property(dnp::TMsg::SubId::sFid,         boost::get(&myVertex::id_fid,     g));
-    dp.property(dnp::TMsg::SubId::sGid,         boost::get(&myVertex::id_gid,     g));
-    dp.property(dnp::TMsg::SubId::sEno,         boost::get(&myVertex::id_evtno,   g));
-    dp.property(dnp::TMsg::SubId::sSid,         boost::get(&myVertex::id_sid,     g));
-    dp.property(dnp::TMsg::SubId::sBpid,        boost::get(&myVertex::id_bpid,    g));
-    dp.property(dnp::TMsg::SubId::sBin,         boost::get(&myVertex::id_bin,     g));
-    dp.property(dnp::TMsg::SubId::sReqNoB,      boost::get(&myVertex::id_reqnob,  g));
-    dp.property(dnp::TMsg::SubId::sVacc,        boost::get(&myVertex::id_vacc,    g));
-    dp.property(dnp::TMsg::sPar,                boost::get(&myVertex::par,        g));
-    dp.property(dnp::TMsg::sTef,                boost::get(&myVertex::tef,        g));
+    dp.property(dnp::TMsg::SubId::sFid,         boost::get(&myVertex::id_fid,      g));
+    dp.property(dnp::TMsg::SubId::sGid,         boost::get(&myVertex::id_gid,      g));
+    dp.property(dnp::TMsg::SubId::sEno,         boost::get(&myVertex::id_evtno,    g));
+    dp.property(dnp::TMsg::SubId::sSid,         boost::get(&myVertex::id_sid,      g));
+    dp.property(dnp::TMsg::SubId::sBpid,        boost::get(&myVertex::id_bpid,     g));
+    dp.property(dnp::TMsg::SubId::sBin,         boost::get(&myVertex::id_bin,      g));
+    dp.property(dnp::TMsg::SubId::sBPCstart,    boost::get(&myVertex::id_bpcstart, g));
+    dp.property(dnp::TMsg::SubId::sReqNoB,      boost::get(&myVertex::id_reqnob,   g));
+    dp.property(dnp::TMsg::SubId::sVacc,        boost::get(&myVertex::id_vacc,     g));
+    dp.property(dnp::TMsg::sPar,                boost::get(&myVertex::par,         g));
+    dp.property(dnp::TMsg::sTef,                boost::get(&myVertex::tef,         g));
     //Command
-    dp.property(dnp::Cmd::sTimeValid,           boost::get(&myVertex::tValid,     g));
-    dp.property(dnp::Cmd::sVabs,                boost::get(&myVertex::vabs,       g));
-    dp.property(dnp::Cmd::sPrio,                boost::get(&myVertex::prio,       g));
-    dp.property(dnp::Cmd::sQty,                 boost::get(&myVertex::qty,        g));
-    dp.property(dnp::Cmd::sTimeWait,            boost::get(&myVertex::tWait,      g));
-    dp.property(dnp::Cmd::sPermanent,           boost::get(&myVertex::perma,      g));
+    dp.property(dnp::Cmd::sTimeValid,           boost::get(&myVertex::tValid,      g));
+    dp.property(dnp::Cmd::sVabs,                boost::get(&myVertex::vabs,        g));
+    dp.property(dnp::Cmd::sPrio,                boost::get(&myVertex::prio,        g));
+    dp.property(dnp::Cmd::sQty,                 boost::get(&myVertex::qty,         g));
+    dp.property(dnp::Cmd::sTimeWait,            boost::get(&myVertex::tWait,       g));
+    dp.property(dnp::Cmd::sPermanent,           boost::get(&myVertex::perma,       g));
 
     //for .dot-cmd abuse
-    dp.property(dnp::Cmd::sTarget,              boost::get(&myVertex::cmdTarget,  g));
-    dp.property(dnp::Cmd::sDst,                 boost::get(&myVertex::cmdDest,    g));
-    dp.property(dnp::Cmd::sDstPattern,          boost::get(&myVertex::cmdDestPat, g));
-    dp.property(dnp::Cmd::sDstBeamproc,         boost::get(&myVertex::cmdDestBp,  g));
-    dp.property(dnp::Base::sThread,             boost::get(&myVertex::thread,     g));
+    dp.property(dnp::Cmd::sTarget,              boost::get(&myVertex::cmdTarget,   g));
+    dp.property(dnp::Cmd::sDst,                 boost::get(&myVertex::cmdDest,     g));
+    dp.property(dnp::Cmd::sDstPattern,          boost::get(&myVertex::cmdDestPat,  g));
+    dp.property(dnp::Cmd::sDstBeamproc,         boost::get(&myVertex::cmdDestBp,   g));
+    dp.property(dnp::Base::sThread,             boost::get(&myVertex::thread,      g));
 
     return (const boost::dynamic_properties)dp;
   }

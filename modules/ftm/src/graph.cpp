@@ -44,8 +44,9 @@ myVertex::myVertex(myVertex const &src) {
   this->id_bpid = src.id_bpid;
   this->id_res = src.id_res;
   this->id_bin = src.id_bin;
-  this->id_reqnob  = src.id_reqnob;
-  this->id_vacc    = src.id_vacc;
+  this->id_bpcstart = src.id_bpcstart;
+  this->id_reqnob = src.id_reqnob;
+  this->id_vacc = src.id_vacc;
   this->par = src.par;
   this->tef = src.tef;
   this->res = src.res;
