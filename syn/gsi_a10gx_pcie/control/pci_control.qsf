@@ -60,7 +60,7 @@ set_global_assignment -name QSYS_FILE ../../../modules/pll/arria10_e3p1/sys_fpll
 set_global_assignment -name QSYS_FILE ../../../modules/pll/arria10_e3p1/sys_pll10/sys_pll10.qsys
 set_global_assignment -name QSYS_FILE ../../../modules/stub_pll/stub_pll/stub_pll.qsys
 set_global_assignment -name ROUTER_TIMING_OPTIMIZATION_LEVEL MAXIMUM
-set_global_assignment -name SDC_FILE ../../../top/common/top/arria10.sdc
+set_global_assignment -name SDC_FILE ../../../top/common/arria10.sdc
 set_global_assignment -name SEED 123456
 set_global_assignment -name SMART_RECOMPILE OFF
 set_global_assignment -name STRATIX_DEVICE_IO_STANDARD "1.8 V"
