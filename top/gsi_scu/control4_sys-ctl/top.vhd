@@ -3,6 +3,9 @@ use ieee.std_logic_1164.all;
 use ieee.std_logic_unsigned.all;
 
 entity top is
+  generic (
+    CLK_sys_in_Hz:      integer := 100000000
+        );
   port (
     clk_base_i        : in    std_logic;
     fx2_clk           : in    std_logic;                      -- Clock from FX2 USB Controller
@@ -65,8 +68,32 @@ end top;
 --
 architecture rtl of top is
 
+  component zeitbasis
+    generic (
+        CLK_in_Hz:      integer;
+        diag_on:      integer
+        );
+    port  (
+        Res:        in  std_logic;
+        Clk:        in  std_logic;
+        Ena_every_100ns:  out std_logic;
+        Ena_every_166ns:  out std_logic;
+        Ena_every_250ns:  out std_logic;
+        Ena_every_500ns:  out std_logic;
+        Ena_every_1us:    out std_logic;
+        Ena_Every_20ms:   out std_logic
+        );
+    end component;
+
   signal countx  : std_logic_vector(15 downto 0);
   signal rst_n   : std_logic;
+
+  signal Ena_Every_100ns: std_logic;
+  signal Ena_Every_166ns: std_logic;
+  signal Ena_Every_250ns: std_logic;
+  signal Ena_Every_500ns: std_logic;
+  signal Ena_Every_20ms:  std_logic;
+  signal Ena_Every_1us:   std_logic;
 
   begin
 
@@ -95,5 +122,22 @@ architecture rtl of top is
 
   IO_enable <= INIT_DONE;
   nPB_user_out <= nPB_user_in;
+
+
+  zeit1 : zeitbasis
+    generic map (
+          CLK_in_Hz =>  clk_sys_in_Hz,
+          diag_on   =>  1
+          )
+    port map  (
+          Res               =>  not rst_n,
+          Clk               =>  clk_base_i,
+          Ena_every_100ns   =>  Ena_Every_100ns,
+          Ena_every_166ns   =>  Ena_Every_166ns,
+          Ena_every_250ns   =>  Ena_every_250ns,
+          Ena_every_500ns   =>  Ena_every_500ns,
+          Ena_every_1us     =>  Ena_every_1us,
+          Ena_Every_20ms    =>  Ena_Every_20ms
+          );
 
 end;
