@@ -19,6 +19,9 @@ struct pollfd pfds[1] = {0,};
 unsigned char write_buffer[32768] = {0,};
 int write_buffer_length = 0;
 
+int record_read_count = 0;
+int record_write_count = 0;
+
 
 void file_access_init(int stop_until_connected) {
 	if (stop_until_connected && pfds[0].fd != 0) {
@@ -85,7 +88,9 @@ void file_access_init(int stop_until_connected) {
 }
 
 int file_access_read(int timeout_value) {
+	record_write_count = 0;
 	//printf("file_access_read ");
+	static int count = 0;
 	unsigned char ch = 0;
 	pfds[0].events = POLLIN | POLLHUP;
 	if (poll(pfds,1,timeout_value) == 0) {
@@ -98,7 +103,14 @@ int file_access_read(int timeout_value) {
 	}
 	ssize_t result = read(pfds[0].fd, &ch, 1);
 	if (result == 1) { // successful read
-		printf("<< %02x\n", (int)ch);
+		if ((count%4)==0) {
+			printf("%6d << ", record_read_count++);
+		}
+		printf("%02x", (int)ch);
+		++count;
+		if ((count%4)==0) {
+			printf("\n");
+		}
 		return ch;
 	} else if (result == -1) { // error
 		printf("error while read %d %s\n", errno, strerror(errno));
@@ -107,9 +119,19 @@ int file_access_read(int timeout_value) {
 }
 
 void file_access_write(int x) {
+	record_read_count = 0;
+	static int count = 0;
 	unsigned char ch = x;
 	write_buffer[write_buffer_length++] = ch;
-	printf("        >> %02x\n", (int)x);
+	//printf("        >> %02x\n", (int)x);
+	if ((count%4)==0) {
+		printf("%6d  >> ", record_write_count++);
+	}
+	printf("%02x", (int)x);
+	++count;
+	if ((count%4)==0) {
+		printf("\n");
+	}
 }
 
 void file_access_flush() {

@@ -22,8 +22,8 @@ notrace: compile_testbench
 
 # start simulation (which regenerates wave file), then update viewer
 simulation.ghw: compile_testbench 
-	ghdl -r testbench --expect-failure --wave=simulation.ghw --ieee-asserts=disable --read-wave-opt=all.wave_opt
-	#ghdl -r testbench --stop-time=1000us --wave=simulation.ghw --ieee-asserts=disable --write-wave-opt=all.wave_opt
+	ghdl -r testbench --expect-failure --wave=simulation.ghw --ieee-asserts=disable --read-wave-opt=new_all.wave_opt
+	#ghdl -r testbench --stop-time=1000us --wave=simulation.ghw --ieee-asserts=disable --write-wave-opt=new_all.wave_opt
 	#vcd2fst simulation.vcd simulation.fst && rm simulation.vcd
 	gsettings set com.geda.gtkwave reload 0
 
@@ -40,6 +40,7 @@ testbench: 	\
 			../../ip_cores/general-cores/modules/genrams/common/inferred_async_fifo.vhd  \
 			../../ip_cores/general-cores/modules/genrams/common/inferred_async_fifo_dual_rst.vhd  \
 			../../ip_cores/general-cores/modules/genrams/common/generic_shiftreg_fifo.vhd \
+			../../ip_cores/general-cores/modules/genrams/altera/gc_shiftreg.vhd           \
 			../common/inferred_sync_fifo.vhd   \
 			../common/generic_spram.vhd        \
 			../common/generic_simple_dpram.vhd \
@@ -148,11 +149,11 @@ testbench: 	\
 			../../ip_cores/wr-cores/modules/wr_mini_nic/minic_wb_slave.vhd              \
 			../../ip_cores/wr-cores/modules/wrc_core/wrc_periph.vhd                     \
 			../../ip_cores/wr-cores/modules/fabric/xwrf_mux.vhd                         \
-			../common/wr_core_stub.vhd                        \
+			../common/wr_core.vhd                        \
 			../../ip_cores/wr-cores/modules/wrc_core/xwr_core.vhd                       \
 			../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_hdr_pkg.vhd              \
-			../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_internals_pkg.vhd        \
-			../common/eb_fifo.vhd                 \
+			../common/eb_internals_pkg.vhd        \
+			../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_fifo.vhd                 \
 			../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_slave_top.vhd            \
 			../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_slave_fsm.vhd            \
 			../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_tx_mux.vhd               \
@@ -270,7 +271,24 @@ testbench: 	\
 			../../modules/function_generators/fg_quad/fg_quad_pkg.vhd                   \
 			../../modules/cfi_flash/cfi_flash_pkg.vhd                                   \
 			../../modules/psram/psram_pkg.vhd                                           \
-			../../modules/lvds/altera_lvds_pkg.vhd                                      \
+            ../../modules/lvds/arria10_lvds_pkg.vhd                                     \
+            ../../modules/lvds/arria2_lvds_pkg.vhd                                      \
+            ../../modules/lvds/arria5_lvds_pkg.vhd                                      \
+            ../../modules/lvds/altera_lvds_pkg.vhd                                      \
+            ../../modules/lvds/altera_lvds.vhd                                          \
+            ../../modules/lvds/altera_lvds_ibuf.vhd                                     \
+            ../../modules/lvds/altera_lvds_obuf.vhd                                     \
+            ../../modules/lvds/altera_lvds_rx.vhd                                       \
+            ../../modules/lvds/altera_lvds_tx.vhd                                       \
+            ../../modules/lvds/eca_lvds_channel.vhd                                     \
+            ../../modules/lvds/arria2/arria2_lvds_ibuf.vhd                              \
+            ../../modules/lvds/arria2/arria2_lvds_obuf.vhd                              \
+            ../../modules/lvds/arria2/arria2_lvds_rx.vhd                                \
+            ../../modules/lvds/arria2/arria2_lvds_tx.vhd                                \
+            ../../modules/lvds/arria5/arria5_lvds_ibuf.vhd                              \
+            ../../modules/lvds/arria5/arria5_lvds_obuf.vhd                              \
+            ../../modules/lvds/arria5/arria5_lvds_rx.vhd                                \
+            ../../modules/lvds/arria5/arria5_lvds_tx.vhd                                \
 			../../modules/function_generators/serdes_clk_gen/wb_serdes_clk_gen_pkg.vhd  \
 			../common/monster_pkg.vhd     \
 			../common/io_control_pkg.vhd                         \

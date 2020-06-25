@@ -174,7 +174,7 @@ begin
             case to_integer(unsigned(slave_i.adr(3 downto 2))) is
               when 0 =>
                 if(slave_i.dat = x"DEADBEEF") then
-                  reset_reg(0) <= '1';
+                  --reset_reg(0) <= '1';
                 end if;
 
               when 1 =>

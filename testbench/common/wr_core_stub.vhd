@@ -846,24 +846,24 @@ begin
   -----------------------------------------------------------------------------
   -- Dual-port RAM
   -----------------------------------------------------------------------------
-  --DPRAM : xwb_dpram
-  --  generic map(
-  --    g_size                  => g_dpram_size,
-  --    g_init_file             => f_choose_lm32_firmware_file,
-  --    g_must_have_init_file   => f_check_if_lm32_firmware_necessary,
-  --    g_slave1_interface_mode => PIPELINED,
-  --    g_slave2_interface_mode => PIPELINED,
-  --    g_slave1_granularity    => BYTE,
-  --    g_slave2_granularity    => WORD)
-  --  port map(
-  --    clk_sys_i => clk_sys_i,
-  --    rst_n_i   => rst_n_i,
+  DPRAM : xwb_dpram
+    generic map(
+      g_size                  => g_dpram_size,
+      g_init_file             => f_choose_lm32_firmware_file,
+      g_must_have_init_file   => f_check_if_lm32_firmware_necessary,
+      g_slave1_interface_mode => PIPELINED,
+      g_slave2_interface_mode => PIPELINED,
+      g_slave1_granularity    => BYTE,
+      g_slave2_granularity    => WORD)
+    port map(
+      clk_sys_i => clk_sys_i,
+      rst_n_i   => rst_n_i,
 
-  --    slave1_i => cbar_master_o(0),
-  --    slave1_o => cbar_master_i(0),
-  --    slave2_i => dpram_wbb_i,
-  --    slave2_o => open
-  --    );
+      slave1_i => cbar_master_o(0),
+      slave1_o => cbar_master_i(0),
+      slave2_i => dpram_wbb_i,
+      slave2_o => open
+      );
 
   dpram_wbb_i.cyc <= '0';
   dpram_wbb_i.stb <= '0';

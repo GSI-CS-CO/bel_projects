@@ -164,7 +164,7 @@ begin
     --g_psram_bits        => false,
     --g_ram_size          => false,
     --g_tlu_fifo_size     => false,
-    g_en_tlu            => false,
+    g_en_tlu            => true,
     g_en_vme            => false,
     g_en_scubus         => false,
     g_en_mil            => false,
