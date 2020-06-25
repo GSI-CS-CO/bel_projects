@@ -10,6 +10,10 @@ use ieee.numeric_std.all;
 use work.file_access.all; 
 
 entity ez_usb_chip is
+	generic (
+		g_stop_until_client_connects : boolean := true;
+		g_stop_when_idle_for_too_long: integer := 100
+		);
 	port (
       rstn_i    : in  std_logic; 
       ebcyc_o   : out std_logic := '0'; -- not really a line of ez-usb-chip but this is needed by etherbone slave to work
@@ -28,31 +32,35 @@ end entity;
 architecture simulation of ez_usb_chip is
 	signal out_value : std_logic_vector(7 downto 0) := (others => '0');
 	signal clk_internal : std_logic := '1';
+	signal unlock_stop_mechanism : boolean := false;
 begin
 
 	-- this will shutdown the simulation if usb is idle for too long
-	clk_internal <= not clk_internal after 10 ns;
-	process
-		variable count : integer := 0;
-	begin
-		wait until rising_edge(clk_internal);
-		count := count + 1;
-		--report "count = " & integer'image(count);
-		if count = 1000 then 
-			assert false report "QUIT" severity failure;
-		end if;
-		if sloen_i = '0' or slrdn_i = '0' or slwrn_i = '0' then
-			count := 0;
-		end if;
-	end process;
-
+	abort_mechanism: if g_stop_when_idle_for_too_long > 0 generate
+		clk_internal <= not clk_internal after 10 ns;
+		process
+			variable count : integer := 0;
+		begin
+			wait until rising_edge(clk_internal);
+			if unlock_stop_mechanism then
+				count := count + 1;
+				--report "count = " & integer'image(count);
+				if count = g_stop_when_idle_for_too_long then 
+					assert false report "QUIT" severity failure;
+				end if;
+				if sloen_i = '0' or slrdn_i = '0' or slwrn_i = '0' then
+					count := 0;
+				end if;
+			end if;
+		end process;
+	end generate;
 
 	fd_io <= out_value when sloen_i = '0' else (others => 'Z');
 
 	main: process 
 		variable value_from_file : integer;
 		variable client_connected : boolean;
-		variable stop_until_client_connects : boolean := false;
+		variable stop_until_client_connects : boolean := true;
 	begin
 		-- initialization
 		wait until rising_edge(rstn_i);
@@ -63,6 +71,7 @@ begin
 			file_access_init(stop_until_client_connects);
 			stop_until_client_connects := false;
 			client_connected := true;
+			unlock_stop_mechanism <= true;
 
 			-- worker loop
 			while client_connected loop
