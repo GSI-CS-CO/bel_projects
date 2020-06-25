@@ -72,6 +72,31 @@ component asmi10 is
 		write         : in  std_logic                     := '0'              --         write.write
 	);
 end component asmi10;
+component asmi_arriaII is
+            port (
+              clkin         : in  std_logic                     := 'X';             -- clk
+              rden          : in  std_logic                     := 'X';             -- rden
+              addr          : in  std_logic_vector(31 downto 0) := (others => 'X'); -- addr
+              reset         : in  std_logic                     := 'X';             -- reset
+              dataout       : out std_logic_vector(7 downto 0);                     -- dataout
+              busy          : out std_logic;                                        -- busy
+              data_valid    : out std_logic;                                        -- data_valid
+              wren          : in  std_logic                     := 'X';             -- wren
+              en4b_addr     : in  std_logic                     := 'X';             -- en4b_addr
+              read_rdid     : in  std_logic                     := 'X';             -- read_rdid
+              rdid_out      : out std_logic_vector(7 downto 0);                     -- rdid_out
+              read_status   : in  std_logic                     := 'X';             -- read_status
+              status_out    : out std_logic_vector(7 downto 0);                     -- status_out
+              read_address  : out std_logic_vector(31 downto 0);                    -- read_address
+              fast_read     : in  std_logic                     := 'X';             -- fast_read
+              write         : in  std_logic                     := 'X';             -- write
+              datain        : in  std_logic_vector(7 downto 0)  := (others => 'X'); -- datain
+              illegal_write : out std_logic;                                        -- illegal_write
+              shift_bytes   : in  std_logic                     := 'X';             -- shift_bytes
+              sector_erase  : in  std_logic                     := 'X';             -- sector_erase
+              illegal_erase : out std_logic                                         -- illegal_erase
+            );
+end component asmi_arriaII;
 
 component wb_remote_update is
   port (
