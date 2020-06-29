@@ -156,7 +156,34 @@ begin
        );
   end generate;
 
-  a2: if g_family(1 to 8) = "Arria 10" generate
+  a5: if g_family(1 to 7) = "Arria V" generate
+    asmi_10: asmi5
+      port map (
+        clkin         => not clk_flash_i,
+        fast_read     => s_read,
+        rden          => s_rden,
+        addr          => s_addr,
+        read_status   => s_read_status,
+        write         => s_write,
+        datain        => s_datain,
+        shift_bytes   => s_shift_bytes,
+        sector_erase  => s_sector_erase,
+        wren          => s_wren,
+        read_rdid     => s_rdid,
+        en4b_addr     => '0',
+        reset         => not rst_n_i,
+        dataout       => s_dataout,
+        busy          => busy,
+        data_valid    => data_valid,
+        status_out    => s_status_out,
+        illegal_write => illegal_write,
+        illegal_erase => illegal_erase,
+        read_address  => s_read10_addr,
+        rdid_out      => s_rdid_out
+      );
+  end generate;
+
+  a2: if g_family(1 to 7) = "Arria 1" generate
     asmi_10: asmi10
       port map (
         clkin         => clk_flash_i,

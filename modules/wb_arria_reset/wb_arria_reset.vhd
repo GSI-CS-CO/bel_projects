@@ -125,7 +125,7 @@ begin
     );
   end generate;
 
-  ruc_gen_a10 : if arria_family(1 to 8) = "Arria 10" generate
+  ruc_gen_a10 : if arria_family(1 to 7) = "Arria 1" generate
     arria5_reset_inst : arria10_reset PORT MAP (
       clock       => clk_upd_i,
       param       => "000",
