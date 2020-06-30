@@ -12,7 +12,7 @@ use work.file_access.all;
 entity ez_usb_chip is
 	generic (
 		g_stop_until_client_connects : boolean := true;
-		g_stop_when_idle_for_too_long: integer := 100
+		g_stop_when_idle_for_too_long: integer := 0
 		);
 	port (
       rstn_i    : in  std_logic; 

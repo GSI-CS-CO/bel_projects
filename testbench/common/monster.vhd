@@ -389,21 +389,21 @@ architecture rtl of monster is
 
   type top_my_masters is (
       --topm_ebs,
-      --topm_eca_wbm,
+      topm_eca_wbm,
       --topm_pcie,
       --topm_vme,
       --topm_pmc,
       topm_usb
       --topm_prioq
     );
-  --constant c_top_my_masters : natural := top_my_masters'pos(top_my_masters'right)+1;
-  constant c_top_masters : natural := top_my_masters'pos(top_my_masters'right)+1;
+  --constant c_top_my_masters : natural := top_my_masters'pos(top_my_masters'right)+1; --withftm
+  constant c_top_masters : natural := top_my_masters'pos(top_my_masters'right)+1; -- noftm
 
-  --constant c_top_layout_my_masters : t_sdb_record_array(c_top_my_masters-1 downto 0) :=
-  constant c_top_layout_masters : t_sdb_record_array(c_top_masters-1 downto 0) :=
+  --constant c_top_layout_my_masters : t_sdb_record_array(c_top_my_masters-1 downto 0) := -- withftm
+  constant c_top_layout_masters : t_sdb_record_array(c_top_masters-1 downto 0) := -- noftm
    (
    --top_my_masters'pos(topm_ebs)     => f_sdb_auto_msi(c_ebs_msi,     false),   -- Need to add MSI support !!!
-   -- top_my_masters'pos(topm_eca_wbm) => f_sdb_auto_msi(c_null_msi,    false),   -- no MSIs for ECA=>WB macro player
+    top_my_masters'pos(topm_eca_wbm) => f_sdb_auto_msi(c_null_msi,    false),   -- no MSIs for ECA=>WB macro player
    -- top_my_masters'pos(topm_pcie)    => f_sdb_auto_msi(c_pcie_msi,    g_en_pcie),
    -- top_my_masters'pos(topm_vme)     => f_sdb_auto_msi(c_vme_msi,     g_en_vme),
    -- top_my_masters'pos(topm_pmc)     => f_sdb_auto_msi(c_pmc_msi,     g_en_pmc),
@@ -412,13 +412,13 @@ architecture rtl of monster is
     );
 
   -- The FTM adds a bunch of masters to this crossbar
-  --constant c_ftm_masters : t_sdb_record_array := f_lm32_masters_bridge_msis(g_lm32_cores);
-  --constant c_top_masters : natural := c_ftm_masters'length + c_top_my_masters;
-  --constant c_top_layout_req_masters : t_sdb_record_array(c_top_masters-1 downto 0) :=
-    --c_ftm_masters & c_top_layout_my_masters;
-  constant c_top_layout_req_masters : t_sdb_record_array(c_top_masters-1 downto 0) := c_top_layout_masters;
+  --constant c_ftm_masters : t_sdb_record_array := f_lm32_masters_bridge_msis(g_lm32_cores);    -- withftm
+  --constant c_top_masters : natural := c_ftm_masters'length + c_top_my_masters;                -- withftm
+  --constant c_top_layout_req_masters : t_sdb_record_array(c_top_masters-1 downto 0) :=         -- withftm
+  --  c_ftm_masters & c_top_layout_my_masters;                                                  -- withftm
+  constant c_top_layout_req_masters : t_sdb_record_array(c_top_masters-1 downto 0) := c_top_layout_masters; -- noftm
 
-  --constant c_top_layout_masters : t_sdb_record_array := f_sdb_auto_layout(c_top_layout_req_masters);
+  --constant c_top_layout_masters : t_sdb_record_array := f_sdb_auto_layout(c_top_layout_req_masters); -- withftm
   constant c_top_bridge_msi     : t_sdb_msi          := f_xwb_msi_layout_sdb(c_top_layout_masters);
 
   signal top_bus_slave_i  : t_wishbone_slave_in_array  (c_top_masters-1 downto 0);
@@ -462,7 +462,7 @@ architecture rtl of monster is
     devs_eca_ctl,
     devs_eca_aq,
     devs_eca_tlu,
-    --devs_eca_wbm,
+    devs_eca_wbm,
     devs_emb_cpu,
     --devs_serdes_clk_gen,
     devs_control,
@@ -503,7 +503,7 @@ architecture rtl of monster is
     dev_slaves'pos(devs_eca_ctl)        => f_sdb_auto_device(c_eca_slave_sdb,                  g_en_eca),
     dev_slaves'pos(devs_eca_aq)         => f_sdb_auto_device(c_eca_queue_slave_sdb,            g_en_eca),
     dev_slaves'pos(devs_eca_tlu)        => f_sdb_auto_device(c_eca_tlu_slave_sdb,              g_en_eca),
-    --dev_slaves'pos(devs_eca_wbm)        => f_sdb_auto_device(c_eca_ac_wbm_slave_sdb,           g_en_eca),
+    dev_slaves'pos(devs_eca_wbm)        => f_sdb_auto_device(c_eca_ac_wbm_slave_sdb,           g_en_eca),
     dev_slaves'pos(devs_emb_cpu)        => f_sdb_auto_device(c_eca_queue_slave_sdb,            g_en_eca),
     --dev_slaves'pos(devs_serdes_clk_gen) => f_sdb_auto_device(c_wb_serdes_clk_gen_sdb,          not g_lm32_are_ftm),
     dev_slaves'pos(devs_control)        => f_sdb_auto_device(c_io_control_sdb,                 true),
@@ -738,12 +738,12 @@ architecture rtl of monster is
   constant c_loc_scubus_tag   : natural := 3;
 
   function f_channel_types return t_nat_array is
-    constant c_scu_channel_types : t_nat_array(2 downto 0) := (
+    constant c_scu_channel_types : t_nat_array(3 downto 0) := (
       0 => c_loc_linux,
-      --1 => c_loc_wb_master,
-      1 => c_loc_embedded_cpu,
-      2 => c_loc_scubus_tag);
-    constant c_channel_types    : t_nat_array(1 downto 0) := c_scu_channel_types(1 downto 0);
+      1 => c_loc_wb_master,
+      2 => c_loc_embedded_cpu,
+      3 => c_loc_scubus_tag);
+    constant c_channel_types    : t_nat_array(2 downto 0) := c_scu_channel_types(2 downto 0);
   begin
     if g_en_scubus then
       return c_scu_channel_types;
@@ -1506,8 +1506,8 @@ begin
         master_o  => top_bus_slave_i(top_my_masters'pos(topm_usb)),
         msi_slave_i => top_msi_master_o(top_my_masters'pos(topm_usb)),
         msi_slave_o => top_msi_master_i(top_my_masters'pos(topm_usb)),
-        uart_o    => uart_usb,
-        uart_i    => uart_wrc,
+        --uart_o    => uart_usb,
+        --uart_i    => uart_wrc,
         rstn_o    => usb_rstn_o,
         ebcyc_i   => usb_ebcyc_i,
         speed_i   => usb_speed_i,
@@ -2406,22 +2406,22 @@ begin
           q_slave_o   => dev_bus_master_i(dev_slaves'pos(devs_eca_aq)));
 
 
-      --top_msi_master_i(top_my_masters'pos(topm_eca_wbm)) <= cc_dummy_slave_out; -- does not accept MSIs
+      top_msi_master_i(top_my_masters'pos(topm_eca_wbm)) <= cc_dummy_slave_out; -- does not accept MSIs
 
-      --c1: eca_ac_wbm
-      --  generic map(
-      --    g_entries  => 16,
-      --    g_ram_size => 128)
-      --  port map(
-      --    clk_ref_i   => clk_ref,
-      --    rst_ref_n_i => rstn_ref,
-      --    channel_i   => s_channel_o(1),
-      --    clk_sys_i   => clk_sys,
-      --    rst_sys_n_i => rstn_sys,
-      --    slave_i     => dev_bus_master_o(dev_slaves'pos(devs_eca_wbm)),
-      --    slave_o     => dev_bus_master_i(dev_slaves'pos(devs_eca_wbm)),
-      --    master_o    => open,--top_bus_slave_i(top_my_masters'pos(topm_eca_wbm)),
-      --    master_i    => cc_dummy_slave_out);--top_bus_slave_o(top_my_masters'pos(topm_eca_wbm)));
+      c1: eca_ac_wbm
+        generic map(
+          g_entries  => 16,
+          g_ram_size => 128)
+        port map(
+          clk_ref_i   => clk_ref,
+          rst_ref_n_i => rstn_ref,
+          channel_i   => s_channel_o(1),
+          clk_sys_i   => clk_sys,
+          rst_sys_n_i => rstn_sys,
+          slave_i     => dev_bus_master_o(dev_slaves'pos(devs_eca_wbm)),
+          slave_o     => dev_bus_master_i(dev_slaves'pos(devs_eca_wbm)),
+          master_o    => top_bus_slave_i(top_my_masters'pos(topm_eca_wbm)),
+          master_i    => top_bus_slave_o(top_my_masters'pos(topm_eca_wbm)));
 
 
 
