@@ -22,7 +22,7 @@ package eb_internals_pkg is
   constant c_tag_wbm_req : t_tag := "110";
   constant c_tag_wbm_ign : t_tag := "111";
   
-  constant c_queue_depth : natural := 128;
+  constant c_queue_depth : natural := 4096;
 
   component eb_slave_top is
     generic(
