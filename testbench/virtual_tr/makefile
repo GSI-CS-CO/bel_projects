@@ -22,7 +22,8 @@ notrace: compile_testbench
 
 # start simulation (which regenerates wave file), then update viewer
 simulation.ghw: compile_testbench 
-	ghdl -r testbench --expect-failure --wave=simulation.ghw --ieee-asserts=disable --read-wave-opt=new_all.wave_opt
+	ghdl -r testbench --expect-failure --wave=simulation.ghw --ieee-asserts=disable --read-wave-opt=all.wave_opt
+	#ghdl -r testbench --expect-failure --ieee-asserts=disable --write-wave-opt=all.wave_opt
 	#ghdl -r testbench --stop-time=1000us --wave=simulation.ghw --ieee-asserts=disable --write-wave-opt=new_all.wave_opt
 	#vcd2fst simulation.vcd simulation.fst && rm simulation.vcd
 	gsettings set com.geda.gtkwave reload 0

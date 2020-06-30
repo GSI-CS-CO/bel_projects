@@ -11,7 +11,7 @@ use work.file_access.all;
 
 entity ez_usb_chip is
 	generic (
-		g_stop_until_client_connects : boolean := true;
+		g_stop_until_client_connects : boolean := false;
 		g_stop_when_idle_for_too_long: integer := 0
 		);
 	port (
@@ -60,7 +60,7 @@ begin
 	main: process 
 		variable value_from_file : integer;
 		variable client_connected : boolean;
-		variable stop_until_client_connects : boolean := true;
+		variable stop_until_client_connects : boolean := g_stop_until_client_connects;
 	begin
 		-- initialization
 		wait until rising_edge(rstn_i);

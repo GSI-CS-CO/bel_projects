@@ -50,7 +50,7 @@ extern "C" {
 	    std::ostringstream filename;
 	    filename << "vlt_dump_" << std::setw(2) << std::setfill('0') << std::dec << idx << ".vcd";
     	tfp_instances[idx]->open(filename.str().c_str()); // Open the dump file
-		//std::cout << "interface_lm32_init in C++ called. returing index " << idx << std::endl;
+		std::cout << "interface_lm32_init in C++ called. returing index " << idx << std::endl;
 		return idx;
 	}
 
@@ -58,7 +58,7 @@ extern "C" {
 	void interface_lm32_clk(int idx, int clk) {
 		top_instances[idx]->eval();
 		//std::cerr << "clk[" << idx << "] = " << clk << std::endl;
-		//if (main_time%100000==0) std::cout << std::setprecision(4) << main_time/1000000.0 << " ms\n";
+		if (main_time%100000==0) std::cout << std::setprecision(4) << main_time/1000000.0 << " ms("<<idx<<")\n";
 		top_instances[idx]->clk_i = clk;
 	    //if (tfp_instances[idx]) tfp_instances[idx]->dump (main_time); // Create waveform trace for this timestamp
 	    main_time += 8;
