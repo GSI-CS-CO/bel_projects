@@ -396,11 +396,11 @@ architecture rtl of monster is
       topm_usb
       --topm_prioq
     );
-  --constant c_top_my_masters : natural := top_my_masters'pos(top_my_masters'right)+1; --withftm
-  constant c_top_masters : natural := top_my_masters'pos(top_my_masters'right)+1; -- noftm
+  constant c_top_my_masters : natural := top_my_masters'pos(top_my_masters'right)+1; --withftm
+  --constant c_top_masters : natural := top_my_masters'pos(top_my_masters'right)+1; -- noftm
 
-  --constant c_top_layout_my_masters : t_sdb_record_array(c_top_my_masters-1 downto 0) := -- withftm
-  constant c_top_layout_masters : t_sdb_record_array(c_top_masters-1 downto 0) := -- noftm
+  constant c_top_layout_my_masters : t_sdb_record_array(c_top_my_masters-1 downto 0) := -- withftm
+  --constant c_top_layout_masters : t_sdb_record_array(c_top_masters-1 downto 0) := -- noftm
    (
    --top_my_masters'pos(topm_ebs)     => f_sdb_auto_msi(c_ebs_msi,     false),   -- Need to add MSI support !!!
     top_my_masters'pos(topm_eca_wbm) => f_sdb_auto_msi(c_null_msi,    false),   -- no MSIs for ECA=>WB macro player
@@ -412,13 +412,13 @@ architecture rtl of monster is
     );
 
   -- The FTM adds a bunch of masters to this crossbar
-  --constant c_ftm_masters : t_sdb_record_array := f_lm32_masters_bridge_msis(g_lm32_cores);    -- withftm
-  --constant c_top_masters : natural := c_ftm_masters'length + c_top_my_masters;                -- withftm
-  --constant c_top_layout_req_masters : t_sdb_record_array(c_top_masters-1 downto 0) :=         -- withftm
-  --  c_ftm_masters & c_top_layout_my_masters;                                                  -- withftm
-  constant c_top_layout_req_masters : t_sdb_record_array(c_top_masters-1 downto 0) := c_top_layout_masters; -- noftm
+  constant c_ftm_masters : t_sdb_record_array := f_lm32_masters_bridge_msis(g_lm32_cores);    -- withftm
+  constant c_top_masters : natural := c_ftm_masters'length + c_top_my_masters;                -- withftm
+  constant c_top_layout_req_masters : t_sdb_record_array(c_top_masters-1 downto 0) :=         -- withftm
+    c_ftm_masters & c_top_layout_my_masters;                                                  -- withftm
+  --constant c_top_layout_req_masters : t_sdb_record_array(c_top_masters-1 downto 0) := c_top_layout_masters; -- noftm
 
-  --constant c_top_layout_masters : t_sdb_record_array := f_sdb_auto_layout(c_top_layout_req_masters); -- withftm
+  constant c_top_layout_masters : t_sdb_record_array := f_sdb_auto_layout(c_top_layout_req_masters); -- withftm
   constant c_top_bridge_msi     : t_sdb_msi          := f_xwb_msi_layout_sdb(c_top_layout_masters);
 
   signal top_bus_slave_i  : t_wishbone_slave_in_array  (c_top_masters-1 downto 0);
@@ -464,9 +464,9 @@ architecture rtl of monster is
     devs_eca_tlu,
     devs_eca_wbm,
     devs_emb_cpu,
-    --devs_serdes_clk_gen,
+    devs_serdes_clk_gen,
     devs_control,
-    --devs_ftm_cluster,
+    devs_ftm_cluster,
   -- optional slaves:
     --devs_lcd,
     --devs_oled,
@@ -505,9 +505,9 @@ architecture rtl of monster is
     dev_slaves'pos(devs_eca_tlu)        => f_sdb_auto_device(c_eca_tlu_slave_sdb,              g_en_eca),
     dev_slaves'pos(devs_eca_wbm)        => f_sdb_auto_device(c_eca_ac_wbm_slave_sdb,           g_en_eca),
     dev_slaves'pos(devs_emb_cpu)        => f_sdb_auto_device(c_eca_queue_slave_sdb,            g_en_eca),
-    --dev_slaves'pos(devs_serdes_clk_gen) => f_sdb_auto_device(c_wb_serdes_clk_gen_sdb,          not g_lm32_are_ftm),
+    dev_slaves'pos(devs_serdes_clk_gen) => f_sdb_auto_device(c_wb_serdes_clk_gen_sdb,          not g_lm32_are_ftm),
     dev_slaves'pos(devs_control)        => f_sdb_auto_device(c_io_control_sdb,                 true),
-    --dev_slaves'pos(devs_ftm_cluster)    => f_sdb_auto_bridge(c_ftm_slaves,                     true),
+    dev_slaves'pos(devs_ftm_cluster)    => f_sdb_auto_bridge(c_ftm_slaves,                     true),
     --dev_slaves'pos(devs_lcd)            => f_sdb_auto_device(c_wb_serial_lcd_sdb,              g_en_lcd),
     --dev_slaves'pos(devs_oled)           => f_sdb_auto_device(c_oled_display,                   g_en_oled),
     --dev_slaves'pos(devs_scubirq)        => f_sdb_auto_device(c_scu_irq_ctrl_sdb,               g_en_scubus),
@@ -1281,34 +1281,34 @@ begin
   --    ebm_wb_slave_o  => top_bus_master_i(top_slaves'pos(tops_ebm)));
 
 
-  --lm32 : ftm_lm32_cluster
-  --  generic map(
-  --    g_is_dm               => g_lm32_are_ftm,
-  --    g_delay_diagnostics   => g_delay_diagnostics,
-  --    g_cores               => g_lm32_cores,
-  --    g_ram_per_core        => g_lm32_ramsizes,
-  --    g_world_bridge_sdb    => c_top_bridge_sdb,
-  --    g_clu_msi_sdb         => c_dev_bridge_msi,
-  --    g_init_files          => g_lm32_init_files,
-  --    g_profiles            => g_lm32_profiles)
-  --  port map(
-  --    clk_ref_i          => clk_ref,
-  --    rst_ref_n_i        => rstn_ref,
-  --    clk_sys_i          => clk_sys,
-  --    rst_sys_n_i        => rstn_sys,
-  --    rst_lm32_n_i       => s_lm32_rstn,
-  --    tm_tai8ns_i        => s_time,
-  --    wr_lock_i          => tm_valid,
-  --    lm32_masters_o     => top_bus_slave_i(top_bus_slave_i'high downto c_top_my_masters),
-  --    lm32_masters_i     => top_bus_slave_o(top_bus_slave_o'high downto c_top_my_masters),
-  --    lm32_msi_slaves_o  => top_msi_master_i(top_msi_master_i'high downto c_top_my_masters),
-  --    lm32_msi_slaves_i  => top_msi_master_o(top_msi_master_o'high downto c_top_my_masters),
-  --    clu_slave_o        => dev_bus_master_i(dev_slaves'pos(devs_ftm_cluster)),
-  --    clu_slave_i        => dev_bus_master_o(dev_slaves'pos(devs_ftm_cluster)),
-  --    clu_msi_master_o   => dev_msi_slave_i(dev_slaves'pos(devs_ftm_cluster)),
-  --    clu_msi_master_i   => dev_msi_slave_o(dev_slaves'pos(devs_ftm_cluster)),
-  --    dm_prioq_master_o  => top_bus_slave_i(top_my_masters'pos(topm_prioq)),
-  --    dm_prioq_master_i  => top_bus_slave_o(top_my_masters'pos(topm_prioq)));
+  lm32 : ftm_lm32_cluster
+    generic map(
+      g_is_dm               => g_lm32_are_ftm,
+      g_delay_diagnostics   => g_delay_diagnostics,
+      g_cores               => g_lm32_cores,
+      g_ram_per_core        => g_lm32_ramsizes,
+      g_world_bridge_sdb    => c_top_bridge_sdb,
+      g_clu_msi_sdb         => c_dev_bridge_msi,
+      g_init_files          => g_lm32_init_files,
+      g_profiles            => g_lm32_profiles)
+    port map(
+      clk_ref_i          => clk_ref,
+      rst_ref_n_i        => rstn_ref,
+      clk_sys_i          => clk_sys,
+      rst_sys_n_i        => rstn_sys,
+      rst_lm32_n_i       => s_lm32_rstn,
+      tm_tai8ns_i        => s_time,
+      wr_lock_i          => tm_valid,
+      lm32_masters_o     => top_bus_slave_i(top_bus_slave_i'high downto c_top_my_masters),
+      lm32_masters_i     => top_bus_slave_o(top_bus_slave_o'high downto c_top_my_masters),
+      lm32_msi_slaves_o  => top_msi_master_i(top_msi_master_i'high downto c_top_my_masters),
+      lm32_msi_slaves_i  => top_msi_master_o(top_msi_master_o'high downto c_top_my_masters),
+      clu_slave_o        => dev_bus_master_i(dev_slaves'pos(devs_ftm_cluster)),
+      clu_slave_i        => dev_bus_master_o(dev_slaves'pos(devs_ftm_cluster)),
+      clu_msi_master_o   => dev_msi_slave_i(dev_slaves'pos(devs_ftm_cluster)),
+      clu_msi_master_i   => dev_msi_slave_o(dev_slaves'pos(devs_ftm_cluster)),
+      dm_prioq_master_o  => open,-- top_bus_slave_i(top_my_masters'pos(topm_prioq)),
+      dm_prioq_master_i  => cc_dummy_slave_out);-- top_bus_slave_o(top_my_masters'pos(topm_prioq)));
 
   --pcie_n : if not g_en_pcie generate
   --  top_bus_slave_i (top_my_masters'pos(topm_pcie)) <= cc_dummy_master_out;
@@ -1973,6 +1973,7 @@ begin
  --       clk_out_i => clk_flash_ext,
  --       clk_in_i  => clk_flash_ext);
  -- end generate;
+--------------------------------
 
   wb_reset : wb_arria_reset
     generic map(
@@ -2065,51 +2066,51 @@ begin
  --   lvds_dat_fr_wr_pps(i) <= (others => ext_pps and s_lvds_pps_mux(i));
  -- end generate;
 
- -- -- Instantiate SERDES clock generator
- -- genSerdes : if not g_lm32_are_ftm generate
- -- cmp_serdes_clk_gen : xwb_serdes_clk_gen
- --   generic map(
- --     g_num_serdes_bits       => 8,
- --     g_selectable_duty_cycle => true,
- --     g_with_frac_counter     => true,
- --     g_num_outputs           => f_sub1(c_eca_lvds)+1)
- --   port map(
- --     clk_sys_i    => clk_sys,
- --     rst_sys_n_i  => rstn_sys,
- --     wbs_i        => dev_bus_master_o(dev_slaves'pos(devs_serdes_clk_gen)),
- --     wbs_o        => dev_bus_master_i(dev_slaves'pos(devs_serdes_clk_gen)),
- --     clk_ref_i    => clk_ref,
- --     rst_ref_n_i  => rstn_ref,
- --     eca_time_i   => ref_tai8ns,
- --     serdes_dat_o => lvds_dat_fr_clk_gen);
- -- end generate;
+  -- Instantiate SERDES clock generator
+  genSerdes : if not g_lm32_are_ftm generate
+  cmp_serdes_clk_gen : xwb_serdes_clk_gen
+    generic map(
+      g_num_serdes_bits       => 8,
+      g_selectable_duty_cycle => true,
+      g_with_frac_counter     => true,
+      g_num_outputs           => f_sub1(c_eca_lvds)+1)
+    port map(
+      clk_sys_i    => clk_sys,
+      rst_sys_n_i  => rstn_sys,
+      wbs_i        => dev_bus_master_o(dev_slaves'pos(devs_serdes_clk_gen)),
+      wbs_o        => dev_bus_master_i(dev_slaves'pos(devs_serdes_clk_gen)),
+      clk_ref_i    => clk_ref,
+      rst_ref_n_i  => rstn_ref,
+      eca_time_i   => ref_tai8ns,
+      serdes_dat_o => lvds_dat_fr_clk_gen);
+  end generate;
 
- -- genNoSerdes : if g_lm32_are_ftm generate
- --   lvds_dat_fr_clk_gen <= (others => (others => '0'));
- -- end generate;
+  genNoSerdes : if g_lm32_are_ftm generate
+    lvds_dat_fr_clk_gen <= (others => (others => '0'));
+  end generate;
 
- -- -- LVDS component data input is OR between ECA chan output and SERDES clk. gen.
- -- gen_lvds_dat : for i in lvds_dat'range generate
- --   --lvds_dat(i) <= lvds_dat_fr_eca_chan(i) or lvds_dat_fr_clk_gen(i) or lvds_dat_fr_ioc(i) or lvds_dat_fr_butis_t0(i) or lvds_dat_fr_wr_pps(i);
- --   lvds_dat_combined(i) <= lvds_dat_fr_eca_chan(i) or lvds_dat_fr_clk_gen(i) or lvds_dat_fr_ioc(i) or lvds_dat_fr_butis_t0(i) or lvds_dat_fr_wr_pps(i);
- --   process(clk_ref, rstn_ref)
- --   begin
- --     if(rstn_ref = '0') then
- --       lvds_dat_gated(i) <= (others => '0');
- --     elsif rising_edge(clk_ref) then
- --       lvds_dat_gated(i)(0) <= lvds_dat_combined(i)(0) and s_lvds_out_gate_sync(i);
- --       lvds_dat_gated(i)(1) <= lvds_dat_combined(i)(1) and s_lvds_out_gate_sync(i);
- --       lvds_dat_gated(i)(2) <= lvds_dat_combined(i)(2) and s_lvds_out_gate_sync(i);
- --       lvds_dat_gated(i)(3) <= lvds_dat_combined(i)(3) and s_lvds_out_gate_sync(i);
- --       lvds_dat_gated(i)(4) <= lvds_dat_combined(i)(4) and s_lvds_out_gate_sync(i);
- --       lvds_dat_gated(i)(5) <= lvds_dat_combined(i)(5) and s_lvds_out_gate_sync(i);
- --       lvds_dat_gated(i)(6) <= lvds_dat_combined(i)(6) and s_lvds_out_gate_sync(i);
- --       lvds_dat_gated(i)(7) <= lvds_dat_combined(i)(7) and s_lvds_out_gate_sync(i);
- --     end if;
- --   end process;
- --   lvds_dat(i) <= lvds_dat_gated(i);
- -- end generate gen_lvds_dat;
- -- --FIXME not sure about those ... do they need initialising when there is no ECA/TLU? => YES!
+  -- LVDS component data input is OR between ECA chan output and SERDES clk. gen.
+  gen_lvds_dat : for i in lvds_dat'range generate
+    --lvds_dat(i) <= lvds_dat_fr_eca_chan(i) or lvds_dat_fr_clk_gen(i) or lvds_dat_fr_ioc(i) or lvds_dat_fr_butis_t0(i) or lvds_dat_fr_wr_pps(i);
+    lvds_dat_combined(i) <= lvds_dat_fr_eca_chan(i) or lvds_dat_fr_clk_gen(i) or lvds_dat_fr_ioc(i) or lvds_dat_fr_butis_t0(i) or lvds_dat_fr_wr_pps(i);
+    process(clk_ref, rstn_ref)
+    begin
+      if(rstn_ref = '0') then
+        lvds_dat_gated(i) <= (others => '0');
+      elsif rising_edge(clk_ref) then
+        lvds_dat_gated(i)(0) <= lvds_dat_combined(i)(0) and s_lvds_out_gate_sync(i);
+        lvds_dat_gated(i)(1) <= lvds_dat_combined(i)(1) and s_lvds_out_gate_sync(i);
+        lvds_dat_gated(i)(2) <= lvds_dat_combined(i)(2) and s_lvds_out_gate_sync(i);
+        lvds_dat_gated(i)(3) <= lvds_dat_combined(i)(3) and s_lvds_out_gate_sync(i);
+        lvds_dat_gated(i)(4) <= lvds_dat_combined(i)(4) and s_lvds_out_gate_sync(i);
+        lvds_dat_gated(i)(5) <= lvds_dat_combined(i)(5) and s_lvds_out_gate_sync(i);
+        lvds_dat_gated(i)(6) <= lvds_dat_combined(i)(6) and s_lvds_out_gate_sync(i);
+        lvds_dat_gated(i)(7) <= lvds_dat_combined(i)(7) and s_lvds_out_gate_sync(i);
+      end if;
+    end process;
+    lvds_dat(i) <= lvds_dat_gated(i);
+  end generate gen_lvds_dat;
+  --FIXME not sure about those ... do they need initialising when there is no ECA/TLU? => YES!
 
   --transparent wire tap on eca events
   ecatap : eca_tap
