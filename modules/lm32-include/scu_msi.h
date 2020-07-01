@@ -210,10 +210,24 @@ STATIC inline void irqMsiCopyObjectAndRemove( MSI_ITEM_T* const pItem,
    irqMsiPop( intNum );
 }
 
-STATIC inline bool irqMsiCopyObjectAndRemoveIfActive( MSI_ITEM_T* const pItem,
-                                                      const unsigned int intNum )
+/*! ---------------------------------------------------------------------------
+ * @ingroup INTERRUPT
+ * @brief Checks whether a message signaled interrupt was happened.
+ *
+ * If happened the message object becomes copied in the target pItem and
+ * removed from the queue and the return value will be "true", otherwise
+ * the return value will be "false".
+ * @param pItem Pointer to target object where the data shall copied if valid.
+ * @param intNum Interrupt number of the corresponding interrupt.
+ * @retval true MSI event was appeared, data in pItem are valid.
+ * @retval false No MSI appeared, no valid data in pItem.
+ */
+STATIC inline 
+bool irqMsiCopyObjectAndRemoveIfActive( MSI_ITEM_T* const pItem,
+                                                    const unsigned int intNum )
 {
    const uint32_t mask = _irqGetPendingMask( intNum );
+
    if( (IRQ_MSI_CONTROL_ACCESS( status ) & mask) == 0 )
       return false;
 
