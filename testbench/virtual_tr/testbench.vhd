@@ -67,7 +67,7 @@ architecture simulation of testbench is
 
   constant c_family       : string := "Arria V";
   constant c_project      : string := "pci_control";
-  constant c_cores        : natural:= 4;
+  constant c_cores        : natural:= 1;
   constant c_initf_name   : string := c_project & "_stub.mif";
   constant c_profile_name : string := "medium_icache_debug";
 

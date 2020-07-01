@@ -388,7 +388,7 @@ architecture rtl of monster is
   ----------------------------------------------------------------------------------
 
   type top_my_masters is (
-      --topm_ebs,
+      topm_ebs,
       topm_eca_wbm,
       --topm_pcie,
       --topm_vme,
@@ -402,7 +402,7 @@ architecture rtl of monster is
   constant c_top_layout_my_masters : t_sdb_record_array(c_top_my_masters-1 downto 0) := -- withftm
   --constant c_top_layout_masters : t_sdb_record_array(c_top_masters-1 downto 0) := -- noftm
    (
-   --top_my_masters'pos(topm_ebs)     => f_sdb_auto_msi(c_ebs_msi,     false),   -- Need to add MSI support !!!
+    top_my_masters'pos(topm_ebs)     => f_sdb_auto_msi(c_ebs_msi,     false),   -- Need to add MSI support !!!
     top_my_masters'pos(topm_eca_wbm) => f_sdb_auto_msi(c_null_msi,    false),   -- no MSIs for ECA=>WB macro player
    -- top_my_masters'pos(topm_pcie)    => f_sdb_auto_msi(c_pcie_msi,    g_en_pcie),
    -- top_my_masters'pos(topm_vme)     => f_sdb_auto_msi(c_vme_msi,     g_en_vme),
@@ -1261,24 +1261,24 @@ begin
   ----------------------------------------------------------------------------------
   -- Top Wishbone masters ----------------------------------------------------------
 
-  --top_msi_master_i(top_my_masters'pos(topm_ebs)) <= cc_dummy_slave_out; -- Etherbone does not accept MSI !!!
-  --eb : eb_master_slave_wrapper
-  --  generic map(
-  --    g_with_master     => true,
-  --    g_ebs_sdb_address => (x"00000000" & c_top_sdb_address))
-  --  port map(
-  --    clk_i           => clk_sys,
-  --    nRst_i          => rstn_sys,
-  --    snk_i           => eb_snk_in,
-  --    snk_o           => eb_snk_out,
-  --    src_o           => eb_src_out,
-  --    src_i           => eb_src_in,
-  --    ebs_cfg_slave_o => wrc_master_i,
-  --    ebs_cfg_slave_i => wrc_master_o,
-  --    ebs_wb_master_o => top_bus_slave_i (top_my_masters'pos(topm_ebs)),
-  --    ebs_wb_master_i => top_bus_slave_o (top_my_masters'pos(topm_ebs)),
-  --    ebm_wb_slave_i  => top_bus_master_o(top_slaves'pos(tops_ebm)),
-  --    ebm_wb_slave_o  => top_bus_master_i(top_slaves'pos(tops_ebm)));
+  top_msi_master_i(top_my_masters'pos(topm_ebs)) <= cc_dummy_slave_out; -- Etherbone does not accept MSI !!!
+  eb : eb_master_slave_wrapper
+    generic map(
+      g_with_master     => true,
+      g_ebs_sdb_address => (x"00000000" & c_top_sdb_address))
+    port map(
+      clk_i           => clk_sys,
+      nRst_i          => rstn_sys,
+      snk_i           => eb_snk_in,
+      snk_o           => eb_snk_out,
+      src_o           => eb_src_out,
+      src_i           => eb_src_in,
+      ebs_cfg_slave_o => wrc_master_i,
+      ebs_cfg_slave_i => wrc_master_o,
+      ebs_wb_master_o => top_bus_slave_i (top_my_masters'pos(topm_ebs)),
+      ebs_wb_master_i => top_bus_slave_o (top_my_masters'pos(topm_ebs)),
+      ebm_wb_slave_i  => top_bus_master_o(top_slaves'pos(tops_ebm)),
+      ebm_wb_slave_o  => top_bus_master_i(top_slaves'pos(tops_ebm)));
 
 
   lm32 : ftm_lm32_cluster
