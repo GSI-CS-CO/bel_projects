@@ -48,6 +48,7 @@ architecture arch of wb_timer is
   signal r_counter_preset : std_logic_vector(31 downto 0);
   signal r_cnt            : std_logic_vector(31 downto 0);
   signal r_timestamp_reg  : std_logic_vector(63 downto 0);
+  signal r_timestamp      : std_logic_vector(63 downto 0);
 
   constant c_timestamp_ticks : integer          := 1_000_000_000 / freq;
   constant CONFIG            : std_logic_vector := x"00";
@@ -97,7 +98,7 @@ begin
           elsif slave_i.adr(7 downto 0) = RDTICKS then
             slave_o.dat <= std_logic_vector(to_unsigned(c_timestamp_ticks, 32));
           elsif slave_i.adr(7 downto 0) = RDTMSTMPLO then
-            slave_o.dat <= r_timestamp_reg(31 downto 0);
+            slave_o.dat <= r_timestamp(31 downto 0);
           elsif slave_i.adr(7 downto 0) = RDTMSTMPHI then
             slave_o.dat <= r_timestamp_reg(63 downto 32);
           end if;
@@ -127,11 +128,13 @@ begin
       -- timestamp cnt is always active
       tmstmpcnt := tmstmpcnt + 1;
       -- latch the timestamp for readout
-      if slave_i.adr(7 downto 0) = RDTMSTMPLO then
+      if (slave_i.adr(7 downto 0) = RDTMSTMPLO) and slave_i.cyc = '1' and slave_i.stb = '1' and slave_i.we = '0' then
         r_timestamp_reg <= std_logic_vector(tmstmpcnt);
       end if;
 
     end if;
-    r_cnt <= std_logic_vector(cnt);
+    r_cnt       <= std_logic_vector(cnt);
+    r_timestamp <= std_logic_vector(tmstmpcnt);
+
   end process;
 end arch;
