@@ -4,6 +4,7 @@
 #include <inttypes.h>
 #include <stdint.h>
 #include "irq.h"
+#include "../wb_timer/wb_timer_regs.h"
 
 #ifndef __GNUC_STDC_INLINE__
 #error NEEDS gnu99 EXTENSIONS - ADD '-std=gnu99' TO THE CFGLAGS OF YOUR Makefile!
@@ -22,10 +23,25 @@ extern volatile uint32_t* pCpuId;
 extern volatile uint32_t* pCpuAtomic;
 extern volatile uint32_t* pCluInfo;
 extern volatile uint32_t* pCpuSysTime;
+extern volatile uint32_t* pCpuWbTimer;
 
 uint32_t irqState;
 
 volatile uint32_t ier;
+
+inline uint64_t getCpuTime()
+{
+   uint64_t        cputime;
+   uint32_t        ticklen;
+
+   ticklen  = *(pCpuWbTimer+(WB_TIMER_TICKLEN >> 2));
+
+   cputime  = ((uint64_t)*(pCpuWbTimer+(WB_TIMER_TIMESTAMP_LO >> 2))) & 0x00000000ffffffff;  // cpu tick counter lo word
+   cputime |= ((uint64_t)*(pCpuWbTimer+(WB_TIMER_TIMESTAMP_HI >> 2))) << 32;                 // cpu tick counter hi word
+   cputime *=  ticklen;                                                                      // convert to ns
+   
+   return cputime;  
+}
 
 inline uint64_t getSysTime()
 {
@@ -76,8 +92,9 @@ inline void atomic_off()
                 );        	
 }
 
-
-
+// uwait waits the specified number of microseconds; returns 0 on success, -1 on error.
+// using uwait requires to call discoverPeriphery() one during init
+int uwait(uint64_t usecs);
 char progressWheel();
 char* sprinthex(char* buffer, unsigned long val, unsigned char digits);
 char* mat_sprinthex(char* buffer, unsigned long val);
