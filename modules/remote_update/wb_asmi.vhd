@@ -99,7 +99,7 @@ architecture arch of wb_asmi is
   signal fifo_word       : std_logic_vector(31 downto 0);
   signal crc_out         : std_logic_vector(7 downto 0);
   signal s_first_word    : std_logic;
-  signal s_read_number   : std_logic_vector(31 downto 0);
+  signal s_read_number   : std_logic_vector(31 downto 0) :=  std_logic_vector(to_unsigned(PAGESIZE, 32));
 
 
   constant FLASH_ACCESS : std_logic_vector(7 downto 0) := x"00";
@@ -327,7 +327,7 @@ begin
         fifo_word       <= (others => '0');
         s_wren          <= '0';
         s_first_word    <= '0';
-        s_read_number   <= (others => '0');
+        s_read_number   <= std_logic_vector(to_unsigned(PAGESIZE, 32));
       else
         s_write_strobe  <= '0';
         s_read_strobe   <= '0';
@@ -504,11 +504,10 @@ begin
               v_read_tmo := 0;
             -- stop reading after one page
             elsif s_word_count = to_integer(unsigned(s_read_number)) then
-              slave_o.ack <= '1';
               v_read_tmo := 0;
               s_byte_count := 0;
               s_word_count := 0;
-              wb_state <= idle;
+              wb_state <= busy_wait;
             else
               v_read_tmo := v_read_tmo + 1;
             end if;
