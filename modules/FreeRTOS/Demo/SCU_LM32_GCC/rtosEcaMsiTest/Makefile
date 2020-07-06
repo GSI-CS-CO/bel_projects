@@ -42,5 +42,8 @@ DEFINES += MAX_LM32_INTERRUPTS=2
 # into a smaller size.
 STACK_SIZE := 256
 
+# For DOXYGEN only, header files which doesn't have a appropriate C-file.
+DOX_INPUT += $(SCU_LIB_SRC_DIR)/scu_msi.h
+
 include $(REPOSITORY_DIR)/makefiles/makefile.scu
 #=================================== EOF ======================================

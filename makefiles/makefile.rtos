@@ -1,6 +1,6 @@
 ###############################################################################
 ##                                                                           ##
-##           Include makefile for FreeRTOS LM32 projects in SCU              ##
+##           Include makefile for FreeRTOS LM32 projects on SCU              ##
 ##                                                                           ##
 ##---------------------------------------------------------------------------##
 ## File:    makefile.rtos                                                    ##
@@ -31,13 +31,14 @@ RTOS_PORT_DIR   ?= $(RTOS_SRC_DIR)/portable/GCC/SCU_LM32
 RTOS_INCLUDE_DIR += $(RTOS_HEADER_DIR)
 RTOS_INCLUDE_DIR += $(RTOS_PORT_DIR)
 
-# Replacing the SCU LM32 standard startup-code by this one.
-# STARTUP_CODE ?= $(RTOS_PORT_DIR)/crt0FreeRTOS.S
-
-RTOS_SOURCE += $(RTOS_PORT_DIR)/portasm.S
+# Will used at least for the timer-interrupt.
 RTOS_SOURCE += $(SCU_LIB_SRC_DIR)/lm32Interrupts.c
+
+# SCU specific files for FreeRTOS
+RTOS_SOURCE += $(RTOS_PORT_DIR)/portasm.S
 RTOS_SOURCE += $(RTOS_PORT_DIR)/port.c
 
+# Pure FreeRTOS base files
 RTOS_SOURCE += $(RTOS_SRC_DIR)/list.c
 RTOS_SOURCE += $(RTOS_SRC_DIR)/queue.c
 RTOS_SOURCE += $(RTOS_SRC_DIR)/tasks.c
@@ -57,6 +58,8 @@ endif
 SOURCE       += $(RTOS_SOURCE)
 INCLUDE_DIRS += $(RTOS_INCLUDE_DIR)
 
+# Compiler switch CONFIG_RTOS is extremely necessary when FreeRTOS is used!
+# Especially for the startup-code crt0ScuLm32.S.
 DEFINES += CONFIG_RTOS
 
 FREE_RTOS_CONFIG_FILE          ?= $(basename $(MIAN_MODULE))Config.h
@@ -68,6 +71,7 @@ CHECK_SOURCE                   += $(FREE_RTOS_CONFIG_FILE)
 # ---------------------------- for Doxygen only -------------------------------
 DOX_TAB_SIZE = 4
 
+# Header files which doesn't have a appropriate C-file.
 DOX_INPUT += $(RTOS_INCLUDE_DIR)
 DOX_INPUT += $(FREE_RTOS_CONFIG_FILE)
 DOX_INPUT += $(SCU_LIB_SRC_DIR)/scu_lm32Timer.h

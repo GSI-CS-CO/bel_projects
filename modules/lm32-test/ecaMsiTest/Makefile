@@ -13,5 +13,8 @@ SOURCE += $(SCU_LIB_SRC_DIR)/eca_queue_type.c
 DEFINES += CONFIG_INTERRUPT_PEDANTIC_CHECK
 DEFINES += MAX_LM32_INTERRUPTS=1
 
+# For DOXYGEN only, header files which doesn't have a appropriate C-file.
+DOX_INPUT += $(SCU_LIB_SRC_DIR)/scu_msi.h
+
 
 include $(REPOSITORY_DIR)/makefiles/makefile.scu

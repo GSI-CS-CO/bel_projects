@@ -114,7 +114,7 @@ endif
 SOURCE += $(SCU_DIR)/dow_crc.c
 SOURCE += $(WR_DIR)/dev/w1-temp.c
 
-
+# For DOXYGEN only, header files which doesn't have a appropriate C-file.
 DOX_INPUT += $(SCU_DIR)/scu_shared_mem.h
 DOX_INPUT += $(SCU_LIB_SRC_DIR)/scu_bus_defines.h
 DOX_INPUT += $(SCU_LIB_SRC_DIR)/scu_msi.h
