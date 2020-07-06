@@ -172,7 +172,7 @@ testbench: 	\
 			../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_stream_widen.vhd         \
 			../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_stream_narrow.vhd        \
 			../../ip_cores/etherbone-core/hdl/eb_master_core/ebm_auto_pkg.vhd           \
-			../../ip_cores/etherbone-core/hdl/eb_master_core/eb_commit_len_fifo.vhd     \
+			../common/eb_commit_len_fifo.vhd     \
 			../../ip_cores/etherbone-core/hdl/eb_master_core/eb_framer.vhd              \
 			../../ip_cores/etherbone-core/hdl/eb_master_core/eb_master_eth_tx.vhd       \
 			../../ip_cores/etherbone-core/hdl/eb_master_core/eb_master_slave_wrapper.vhd\
@@ -235,10 +235,10 @@ testbench: 	\
 			../../ip_cores/wr-cores/modules/wr_eca/eca_rmw.vhd                          \
 			../../ip_cores/wr-cores/modules/wr_eca/eca_scan.vhd                         \
 			../../ip_cores/wr-cores/modules/wr_eca/eca_scubus_channel.vhd               \
-			../../ip_cores/wr-cores/modules/wr_eca/eca_sdp.vhd                          \
+			../common/eca_sdp.vhd                          \
 			../../ip_cores/wr-cores/modules/wr_eca/eca_search.vhd                       \
 			../../ip_cores/wr-cores/modules/wr_eca/eca_tag_channel.vhd                  \
-			../../ip_cores/wr-cores/modules/wr_eca/eca_tdp.vhd                          \
+			../common/eca_tdp.vhd                          \
 			../../ip_cores/wr-cores/modules/wr_eca/eca_tlu.vhd                          \
 			../../ip_cores/wr-cores/modules/wr_eca/eca_tlu_auto.vhd                     \
 			../../ip_cores/wr-cores/modules/wr_eca/eca_tlu_fsm.vhd                      \
