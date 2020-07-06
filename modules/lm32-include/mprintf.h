@@ -1,6 +1,9 @@
 /*!
  * @file mprintf.c
- * @brief implementation of the mprintf- family.
+ * @brief Implementation of the mprintf- family.
+ *
+ * @note In contrast to the ANSI printf family the mprintf family
+ *       doesn't support floating point formats!
  *
  * @date unknown (improved 28.05.2020)
  * @copyright (C) 2020 GSI Helmholtz Centre for Heavy Ion Research GmbH
