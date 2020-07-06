@@ -188,7 +188,7 @@ testbench: 	\
 			../../ip_cores/etherbone-core/hdl/eb_usb_core/ez_usb_fifos.vhd              \
 			../../ip_cores/etherbone-core/hdl/eb_usb_core/ez_usb.vhd                    \
 			../../modules/mbox/mbox_pkg.vhd	                                            \
-			../../modules/mbox/mbox.vhd    	                                            \
+			../common/mbox.vhd    	                                            \
 			../../modules/dm_diag/dm_diag_auto_pkg.vhd                                  \
 			../common/dm_diag.vhd  \
 			../../modules/dm_diag/dm_diag_auto.vhd                                      \
