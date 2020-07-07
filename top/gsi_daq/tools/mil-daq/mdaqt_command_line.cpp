@@ -128,6 +128,57 @@ vector<OPTION> CommandLine::c_optList =
       .m_longOpt  = "help",
       .m_helpText = "Print this help and exit"
    },
+#ifdef CONFIG_AUTODOC_OPTION
+   {
+      OPT_LAMBDA( poParser,
+      {
+         cout <<
+            "<toolinfo>\n"
+               "\t<name>" << poParser->getProgramName() << "</name>\n"
+               "\t<topic>Development</topic>\n"
+               "\t<description>Displays actual- and set-values of MIL function generators via Gnuplot.</description>\n"
+               "\t<usage>" << poParser->getProgramName() << " {SCU- target IP-address}";
+               for( const auto& pOption: *poParser )
+               {
+                  if( pOption->m_id != 0 )
+                     continue;
+                  cout << " [";
+                  if( pOption->m_shortOpt != '\0' )
+                  {
+                     cout << '-' << pOption->m_shortOpt;
+                     if( pOption->m_hasArg == OPTION::REQUIRED_ARG )
+                        cout << " ARG";
+                     if( !pOption->m_longOpt.empty() )
+                        cout << ", ";
+                  }
+                  if( !pOption->m_longOpt.empty() )
+                  {
+                     cout << "--" << pOption->m_longOpt;
+                     if( pOption->m_hasArg == OPTION::REQUIRED_ARG )
+                        cout << " ARG";
+                  }
+                  cout << ']';
+               }
+               cout << "\n\t</usage>\n"
+               "\t<author>Ulrich Becker</author>\n"
+               "\t<tags>graphics,etherbone</tags>\n"
+               "\t<version>" TO_STRING( VERSION ) "</version>\n"
+               "\t<documentation>https://www-acc.gsi.de/wiki/Frontend/AutoDoc</documentation>\n"
+               "\t<environment></environment>\n"
+               "\t<requires>Gnuplot</requires>\n"
+               "\t<autodocversion>1.0</autodocversion>\n"
+            "</toolinfo>"
+         << endl;
+         ::exit( EXIT_SUCCESS );
+         return 0;
+      }),
+      .m_hasArg   = OPTION::NO_ARG,
+      .m_id       = 1, // will hide this option for autodoc
+      .m_shortOpt = '\0',
+      .m_longOpt  = "generate_doc_tagged",
+      .m_helpText = "Will need from autodoc."
+   },
+#endif // ifdef CONFIG_AUTODOC_OPTION
    {
       OPT_LAMBDA( poParser,
       {
@@ -176,6 +227,7 @@ vector<OPTION> CommandLine::c_optList =
       .m_longOpt  = "verbose",
       .m_helpText = "Be verbose"
    },
+#if 0
    {
       OPT_LAMBDA( poParser,
       {
@@ -197,6 +249,7 @@ vector<OPTION> CommandLine::c_optList =
       .m_longOpt  = "version",
       .m_helpText = "Print the software version and exit."
    },
+#endif
    {
       OPT_LAMBDA( poParser,
       {

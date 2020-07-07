@@ -9,7 +9,7 @@
 ## Date:     14.08.2019                                                      ##
 ###############################################################################
 REPOSITORY_DIR := $(shell git rev-parse --show-toplevel)
-DEFINES += VERSION=0.8
+DEFINES += VERSION=0.9
 
 MIAN_MODULE := mdaqt.cpp
 
@@ -39,6 +39,8 @@ SOURCE += $(EB_SRC)/BusException.cpp
 
 
 GNUPLOT_BIN ?= $(shell which gnuplot)
+
+DEFINES += CONFIG_AUTODOC_OPTION
 
 #---- Necessary for backward compatibility if the compiler version greater or equal 5 ----
 DEFINES += _GLIBCXX_USE_CXX11_ABI=0
@@ -91,11 +93,12 @@ HOST ?= tcp/$(SCU_URL)
 #CALL_ARGS = tcp/scuxl0107 -avdc --time 25 -G /home/bel/ubecker/lnx/.local/bin/gnuplot
 #CALL_ARGS = scuxl0107 -avcd
 #CALL_ARGS = -V
-CALL_ARGS = scuxl0035 -vS
+#CALL_ARGS = scuxl0035 -vS
 #CALL_ARGS = tcp/scuxl0107 -h
 REMOTE_CALL_ARGS  ?= "dev/wbm0"
 #CALL_ARGS = tcp/scuxl0107 -v
 
+CALL_ARGS = --generate_doc_tagged
 
 # DEBUG = 1
 
