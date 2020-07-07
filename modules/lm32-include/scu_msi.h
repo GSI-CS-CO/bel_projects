@@ -185,6 +185,18 @@ STATIC_ASSERT( sizeof( IRQ_MSI_T ) == IRQ_OFFS_QUE + MAX_LM32_INTERRUPTS * sizeo
 
 /*! ---------------------------------------------------------------------------
  * @ingroup INTERRUPT
+ * @brief Checks whether the message signaled interrupt is valid or not.
+ * @param intNum Interrupt number of the corresponding interrupt.
+ * @retval true  valid
+ * @retval false invalid
+ */
+STATIC inline bool irqMsiIsValid( const unsigned int intNum )
+{
+   return (IRQ_MSI_CONTROL_ACCESS( status ) & _irqGetPendingMask( intNum )) != 0;
+}
+
+/*! ---------------------------------------------------------------------------
+ * @ingroup INTERRUPT
  * @brief Removes the Message-Signaled Interrupt object (MSI) form the queue.
  * @param intNum Interrupt number of the corresponding interrupt.
  */
@@ -221,6 +233,19 @@ STATIC inline void irqMsiCopyObjectAndRemove( MSI_ITEM_T* const pItem,
  * @param intNum Interrupt number of the corresponding interrupt.
  * @retval true MSI event was appeared, data in pItem are valid.
  * @retval false No MSI appeared, no valid data in pItem.
+ *
+ * Example of implementing a interrupt function using
+ * Message Signaled Interrupt:
+ * @code
+ * void onMyInterrupt( const unsigned int intNum, const void* pContext )
+ * {
+ *    MSI_ITEM_T msg;
+ *    while( irqMsiCopyObjectAndRemoveIfActive( &msg, intNum ) )
+ *    {
+ *       // Do something with "msg" and maybe with "pContext" ...
+ *    }
+ * }
+ * @endcode
  */
 STATIC inline 
 bool irqMsiCopyObjectAndRemoveIfActive( MSI_ITEM_T* const pItem,
