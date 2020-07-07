@@ -112,8 +112,8 @@ set_clock_groups -asynchronous \
                       main|\pcie_y:pcie|pcie_phy|\arria5:hip|arria5_pcie_hip_inst|altpcie_av_hip_128bit_atom|g_pcie_xcvr.av_xcvr_pipe_native_hip|inst_av_xcvr_native|inst_av_pma|av_tx_pma|tx_pma_insts[3].av_tx_pma_ch_inst|tx_pma_ch.tx_cgb|pclk[2] } ] \
  -group [get_clocks { main|\ref_a5:ref_inst|ref_pll5_inst|altera_pll_i|arriav_pll|counter[0].output_counter|divclk \
                       main|\ref_a5:ref_inst|ref_pll5_inst|altera_pll_i|arriav_pll|counter[3].output_counter|divclk \
-                      main|\ref_a5:ref_inst|ref_pll5_inst|altera_pll_i|arriav_pll|counter[4].output_counter|divclk \
-                      main|\phy_a5:phy|\gen_arria5_phy8:U_The_PHY|arria5_phy8_inst|A5|transceiver_core|gen.av_xcvr_native_insts[0].gen_bonded_group.av_xcvr_native_inst|inst_av_pcs|ch[0].inst_av_pcs_ch|inst_av_hssi_8g_rx_pcs|wys|rcvdclkpma \
+                      main|\ref_a5:ref_inst|ref_pll5_inst|altera_pll_i|arriav_pll|counter[4].output_counter|divclk } ] \
+ -group [get_clocks { main|\phy_a5:phy|\gen_arria5_phy8:U_The_PHY|arria5_phy8_inst|A5|transceiver_core|gen.av_xcvr_native_insts[0].gen_bonded_group.av_xcvr_native_inst|inst_av_pcs|ch[0].inst_av_pcs_ch|inst_av_hssi_8g_rx_pcs|wys|rcvdclkpma \
                       main|\phy_a5:phy|\gen_arria5_phy8:U_The_PHY|arria5_phy8_inst|A5|transceiver_core|gen.av_xcvr_native_insts[0].gen_bonded_group.av_xcvr_native_inst|inst_av_pcs|ch[0].inst_av_pcs_ch|inst_av_hssi_8g_tx_pcs|wys|txpmalocalclk \
                       main|\phy_a5:phy|\gen_arria5_phy8:U_The_PHY|arria5_phy8_inst|A5|transceiver_core|gen.av_xcvr_native_insts[0].gen_bonded_group.av_xcvr_native_inst|inst_av_pma|av_rx_pma|rx_pmas[0].rx_pma.cdr_refclk_mux0|clkout \
                       main|\phy_a5:phy|\gen_arria5_phy8:U_The_PHY|arria5_phy8_inst|A5|transceiver_core|gen.av_xcvr_native_insts[0].gen_bonded_group.av_xcvr_native_inst|inst_av_pma|av_rx_pma|rx_pmas[0].rx_pma.rx_cdr|clk90bdes \
