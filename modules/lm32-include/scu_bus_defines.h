@@ -42,21 +42,26 @@
    #define SCUBUS_ASSERT(__e) ((void)0)
 #endif
 
-
-
 #ifdef __cplusplus
 extern "C" {
 namespace Scu
 {
 #endif
 
-
-
 /*!
  * @ingroup SCU_BUS
  * @brief Physical maximum number of SCU-Bus slots
  */
-#define MAX_SCU_SLAVES    12
+#ifndef MAX_SCU_SLAVES
+  #define MAX_SCU_SLAVES    12
+#endif
+
+#if (MAX_SCU_SLAVES > 12)
+  #error Maximum value of macro MAX_SCU_SLAVES has to be 12 !
+#endif
+#if (MAX_SCU_SLAVES < 1)
+  #error Minimum value of macro MAX_SCU_SLAVES has to be at least 1 !
+#endif
 
 /*!
  * @ingroup SCU_BUS
@@ -91,10 +96,8 @@ STATIC_ASSERT( BIT_SIZEOF( SCUBUS_SLAVE_FLAGS_T ) >= MAX_SCU_SLAVES );
  * @retval true slave present
  * @retval false slave not present
  */
-#ifndef __DOXYGEN__
-static // Doxygen 1.8.5 seems to have a problem...
-#endif
-inline bool scuBusIsSlavePresent( const SCUBUS_SLAVE_FLAGS_T flags,
+STATIC inline
+bool scuBusIsSlavePresent( const SCUBUS_SLAVE_FLAGS_T flags,
                                                      const unsigned int slot )
 {
    SCUBUS_ASSERT( slot >= SCUBUS_START_SLOT );

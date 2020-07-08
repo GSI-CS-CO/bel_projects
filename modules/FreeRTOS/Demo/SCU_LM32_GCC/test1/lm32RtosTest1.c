@@ -21,22 +21,34 @@
  ******************************************************************************
  */
 #include "eb_console_helper.h"
-#include "mini_sdb.h"
 #include "FreeRTOS.h"
+#include "lm32signal.h"
 #include "task.h"
 
 #ifndef CONFIG_RTOS
    #error "This project provides FreeRTOS"
 #endif
 
-/*! --------------------------------------------------------------------------
- * @brief This function has to be invoked at first.
+/*! ---------------------------------------------------------------------------
+ * @brief Callback function becomes invoked by LM32 when an exception appeared.
  */
-static inline void init( void )
+void _onException( const uint32_t sig )
 {
-   discoverPeriphery(); // mini-sdb: get info on important Wishbone infrastructure
-   uart_init_hw();      // init UART, required for printf...
+   irqDisable();
+   char* str;
+   #define _CASE_SIGNAL( S ) case S: str = #S; break;
+   switch( sig )
+   {
+      _CASE_SIGNAL( SIGINT )
+      _CASE_SIGNAL( SIGTRAP )
+      _CASE_SIGNAL( SIGFPE )
+      _CASE_SIGNAL( SIGSEGV )
+      default: str = "unknown"; break;
+   }
+   mprintf( ESC_ERROR "%s( %d ): %s\n" ESC_NORMAL, __func__, sig, str );
+   while( true );
 }
+
 
 #define TEST_TASK_PRIORITY    ( tskIDLE_PRIORITY + 1 )
 
@@ -104,7 +116,6 @@ TASK_DATA_T taskData2 =
  */
 void main( void )
 {
-   init();
    mprintf( ESC_XY( "1", "1" ) ESC_CLR_SCR
             "FreeRTOS-test mprintf + ATOMIC_SECTION\n"
             "Compiler: " COMPILER_VERSION_STRING "\n"

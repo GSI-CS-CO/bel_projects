@@ -72,10 +72,7 @@ inline unsigned int irqGetAtomicNestingCount( void )
 /*! ---------------------------------------------------------------------------
  * @see lm32Interrupts.h
  */
-#ifndef __DOXYGEN__
-__attribute__((weak))
-#endif
-uint32_t _irqGetPendingMask( const unsigned int intNum )
+OVERRIDE uint32_t _irqGetPendingMask( const unsigned int intNum )
 {
    return (1 << intNum);
 }
@@ -83,10 +80,7 @@ uint32_t _irqGetPendingMask( const unsigned int intNum )
 /*! ---------------------------------------------------------------------------
  * @see lm32Interrupts.h
  */
-#ifndef __DOXYGEN__
-__attribute__((weak))
-#endif
-unsigned int _irqReorderPriority( const unsigned int prio )
+OVERRIDE unsigned int _irqReorderPriority( const unsigned int prio )
 {
    return prio;
 }
@@ -132,11 +126,15 @@ void _irq_entry( void )
    mg_criticalSectionNestingCount = 1;
 #endif
 
+   /*!
+    * @brief Copy of the interrupt pending register before reset.
+    */
    uint32_t ip;
+
    /*
     * As long as there is an interrupt pending...
     */
-   while( (ip = irqGetPendingRegister() & irqGetMaskRegister()) != 0 )
+   while( (ip = irqGetAndResetPendingRegister() & irqGetMaskRegister()) != 0 )
    { /*
       * Zero has the highest priority.
       */
@@ -163,17 +161,6 @@ void _irq_entry( void )
             */
             irqSetMaskRegister( irqGetMaskRegister() & ~mask );
          }
-
-         /*
-          * Clearing of the concerning interrupt-pending bit.
-          */
-         irqResetPendingRegister( mask );
-
-         /*
-          * The inner for-loop will left here because meanwhile a higher
-          * prioritized interrupt may appear again.
-          */
-         break;
       }
    }
 

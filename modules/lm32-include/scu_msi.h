@@ -185,6 +185,18 @@ STATIC_ASSERT( sizeof( IRQ_MSI_T ) == IRQ_OFFS_QUE + MAX_LM32_INTERRUPTS * sizeo
 
 /*! ---------------------------------------------------------------------------
  * @ingroup INTERRUPT
+ * @brief Checks whether the message signaled interrupt is valid or not.
+ * @param intNum Interrupt number of the corresponding interrupt.
+ * @retval true  valid
+ * @retval false invalid
+ */
+STATIC inline bool irqMsiIsValid( const unsigned int intNum )
+{
+   return (IRQ_MSI_CONTROL_ACCESS( status ) & _irqGetPendingMask( intNum )) != 0;
+}
+
+/*! ---------------------------------------------------------------------------
+ * @ingroup INTERRUPT
  * @brief Removes the Message-Signaled Interrupt object (MSI) form the queue.
  * @param intNum Interrupt number of the corresponding interrupt.
  */
@@ -210,6 +222,48 @@ STATIC inline void irqMsiCopyObjectAndRemove( MSI_ITEM_T* const pItem,
    irqMsiPop( intNum );
 }
 
+/*! ---------------------------------------------------------------------------
+ * @ingroup INTERRUPT
+ * @brief Checks whether a message signaled interrupt was happened.
+ *
+ * If happened the message object becomes copied in the target pItem and
+ * removed from the queue and the return value will be "true", otherwise
+ * the return value will be "false".
+ * @param pItem Pointer to target object where the data shall copied if valid.
+ * @param intNum Interrupt number of the corresponding interrupt.
+ * @retval true MSI event was appeared, data in pItem are valid.
+ * @retval false No MSI appeared, no valid data in pItem.
+ *
+ * Example of implementing a interrupt function using
+ * Message Signaled Interrupt:
+ * @code
+ * void onMyInterrupt( const unsigned int intNum, const void* pContext )
+ * {
+ *    MSI_ITEM_T msg;
+ *    while( irqMsiCopyObjectAndRemoveIfActive( &msg, intNum ) )
+ *    {
+ *       // Do something with "msg" and maybe with "pContext" ...
+ *    }
+ * }
+ * @endcode
+ */
+STATIC inline 
+bool irqMsiCopyObjectAndRemoveIfActive( MSI_ITEM_T* const pItem,
+                                                    const unsigned int intNum )
+{
+   const uint32_t mask = _irqGetPendingMask( intNum );
+
+   if( (IRQ_MSI_CONTROL_ACCESS( status ) & mask) == 0 )
+      return false;
+
+   pItem->msg = IRQ_MSI_ITEM_ACCESS( msg, intNum );
+   pItem->adr = IRQ_MSI_ITEM_ACCESS( adr, intNum );
+   pItem->sel = IRQ_MSI_ITEM_ACCESS( sel, intNum );
+
+   IRQ_MSI_CONTROL_ACCESS( pop ) = mask;
+
+   return true;
+}
 
 #ifdef __cplusplus
 }

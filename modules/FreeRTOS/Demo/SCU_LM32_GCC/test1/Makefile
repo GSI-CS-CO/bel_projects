@@ -12,7 +12,7 @@ REPOSITORY_DIR = $(shell git rev-parse --show-toplevel)
 
 
 MIAN_MODULE := lm32RtosTest1.c
-
+SOURCE += $(SCU_LIB_SRC_DIR)/scu_std_init.c
 
 
 # The following flag is essential so that the build system adds the

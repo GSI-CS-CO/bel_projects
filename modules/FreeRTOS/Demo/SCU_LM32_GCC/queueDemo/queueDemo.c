@@ -23,8 +23,6 @@
  ******************************************************************************
  */
 #include "eb_console_helper.h"
-#include "mini_sdb.h"
-//#include "helper_macros.h"
 
 #include "FreeRTOS.h"
 #include "queue.h"
@@ -80,15 +78,6 @@ STATIC char* g_pcStringsToPrint[] =
    ESC_BOLD ESC_FG_MAGENTA "Task 2 ----------------------------------------------------\n" ESC_NORMAL,
    ESC_BOLD ESC_FG_CYAN    "Message printed from the tick hook interrupt ##############\n" ESC_NORMAL
 };
-
-
-/*! ---------------------------------------------------------------------------
- */
-STATIC inline void init( void )
-{
-   discoverPeriphery(); // mini-sdb: get info on important Wishbone infrastructure
-   uart_init_hw();      // init UART, required for printf...
-}
 
 /*! ---------------------------------------------------------------------------
  * @brief Callback function becomes invoked by each timer interrupt.
@@ -280,17 +269,16 @@ STATIC inline BaseType_t initAndStartRTOS( void )
  */
 void main( void )
 {
-  init();
-  mprintf( ESC_XY( "1", "1" ) ESC_CLR_SCR
-           "FreeRTOS message queue test\n"
-           "Compiler:  " COMPILER_VERSION_STRING "\n"
-           "Tick-rate: %d Hz\n", configTICK_RATE_HZ );
+   mprintf( ESC_XY( "1", "1" ) ESC_CLR_SCR
+            "FreeRTOS message queue test\n"
+            "Compiler:  " COMPILER_VERSION_STRING "\n"
+            "Tick-rate: %d Hz\n", configTICK_RATE_HZ );
 
 
-  const BaseType_t status = initAndStartRTOS();
-  mprintf( ESC_ERROR "Error: This point shall never be reached!\n"
+   const BaseType_t status = initAndStartRTOS();
+   mprintf( ESC_ERROR "Error: This point shall never be reached!\n"
                       "Status: %d\n" ESC_NORMAL, status );
-  while( true );
+   while( true );
 }
 
 /* ================================= EOF ====================================*/
