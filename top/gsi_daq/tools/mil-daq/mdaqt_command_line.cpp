@@ -132,12 +132,13 @@ vector<OPTION> CommandLine::c_optList =
    {
       OPT_LAMBDA( poParser,
       {
+         string name = poParser->getProgramName().substr(poParser->getProgramName().find_last_of('/')+1);
          cout <<
             "<toolinfo>\n"
-               "\t<name>" << poParser->getProgramName() << "</name>\n"
-               "\t<topic>Development</topic>\n"
-               "\t<description>Displays actual- and set-values of MIL function generators via Gnuplot.</description>\n"
-               "\t<usage>" << poParser->getProgramName() << " {SCU- target IP-address}";
+               "\t<name>" << name << "</name>\n"
+               "\t<topic>Development, Release, Rollout</topic>\n"
+               "\t<description>Display actual- and set-values of MIL function generators via Gnuplot.</description>\n"
+               "\t<usage>" << name << " {SCU- target IP-address}";
                for( const auto& pOption: *poParser )
                {
                   if( pOption->m_id != 0 )
@@ -163,9 +164,9 @@ vector<OPTION> CommandLine::c_optList =
                "\t<author>Ulrich Becker</author>\n"
                "\t<tags>graphics,etherbone</tags>\n"
                "\t<version>" TO_STRING( VERSION ) "</version>\n"
-               "\t<documentation>https://www-acc.gsi.de/wiki/Frontend/AutoDoc</documentation>\n"
+               "\t<documentation></documentation>\n"
                "\t<environment></environment>\n"
-               "\t<requires>Gnuplot</requires>\n"
+               "\t<requires>Gnuplot, socat, LM32-firmware scu_control</requires>\n"
                "\t<autodocversion>1.0</autodocversion>\n"
             "</toolinfo>"
          << endl;
@@ -227,29 +228,6 @@ vector<OPTION> CommandLine::c_optList =
       .m_longOpt  = "verbose",
       .m_helpText = "Be verbose"
    },
-#if 0
-   {
-      OPT_LAMBDA( poParser,
-      {
-         if( static_cast<CommandLine*>(poParser)->m_verbose )
-         {
-            cout << "Version: " TO_STRING( VERSION )
-                    ", Git revision: " TO_STRING( GIT_REVISION ) << endl;
-         }
-         else
-         {
-            cout << TO_STRING( VERSION ) << endl;
-         }
-         ::exit( EXIT_SUCCESS );
-         return 0;
-      }),
-      .m_hasArg   = OPTION::NO_ARG,
-      .m_id       = 0,
-      .m_shortOpt = 'V',
-      .m_longOpt  = "version",
-      .m_helpText = "Print the software version and exit."
-   },
-#endif
    {
       OPT_LAMBDA( poParser,
       {

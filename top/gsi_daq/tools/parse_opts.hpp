@@ -129,6 +129,11 @@ public:
    //!        but that's not a good idea. ;-)
    std::string   m_helpText;
 
+   //! @brief Optional text for options which requires an argument. \n
+   //!        If this string empty, "PARAM" as default will printed after the related option,
+   //!        else the content of this string.
+   std::string   m_argText;
+
    //! @brief Prints the short option (if present) and long option
    //!        (if present) of this object in the given output-stream.
    //! @param out Output stream e.g.: cout or cerr.

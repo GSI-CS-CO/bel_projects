@@ -7,7 +7,9 @@
  * Outsourced from scu_main.c
  */
 
-#include "scu_fg_macros.h"
+#ifndef __DOCFSM__
+  #include "scu_fg_macros.h"
+#endif
 #include "scu_mil_fg_handler.h"
 
 extern volatile uint16_t*     g_pScub_base;
