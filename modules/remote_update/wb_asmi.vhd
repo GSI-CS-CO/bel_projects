@@ -80,6 +80,7 @@ architecture arch of wb_asmi is
   signal  s_illegal_write : std_logic;
 
   signal  s_sector_erase    : std_logic;
+  signal  s_bulk_erase      : std_logic;
   signal  s_illegal_erase   : std_logic;
   
   signal  s_read_addr       : std_logic_vector(23 downto 0);
@@ -112,6 +113,7 @@ architecture arch of wb_asmi is
   constant BUSY_CHECK   : std_logic_vector(7 downto 0) := x"1c";
   constant READ_CRC     : std_logic_vector(7 downto 0) := x"20";
   constant READ_NUM     : std_logic_vector(7 downto 0) := x"24";
+  constant BULK_ERASE   : std_logic_vector(7 downto 0) := x"28";
   constant TIMEOUT      : integer                      := 70;
 
   component crc8_data8 is
@@ -168,6 +170,7 @@ begin
         datain        => s_datain,
         shift_bytes   => s_shift_bytes,
         sector_erase  => s_sector_erase,
+        bulk_erase    => s_bulk_erase,
         wren          => s_wren,
         read_rdid     => s_rdid,
         en4b_addr     => '0',
@@ -341,6 +344,7 @@ begin
         s_write         <= '0';
         s_shift_bytes   <= '0';
         s_sector_erase  <= '0';
+        s_bulk_erase    <= '0';
         read_fifo_we    <= '0';
         s_wren          <= '0';
         s_first_word    <= '0';
@@ -395,6 +399,19 @@ begin
                     s_addr <= slave_i.dat(31 downto 0);
                     s_wren         <= '1';
                     s_sector_erase <= '1';
+                   end if;
+                end if;
+
+              -- bulk erase
+              elsif (slave_i.adr(7 downto 0) = BULK_ERASE) then
+                wb_state      <= erase_stall;
+                slave_o.stall <= '1';
+
+                if slave_i.we = '1' then
+                  if (slave_i.sel(3 downto 0) = x"f") then
+                    s_addr <= slave_i.dat(31 downto 0);
+                    s_wren         <= '1';
+                    s_bulk_erase <= '1';
                    end if;
                 end if;
 
