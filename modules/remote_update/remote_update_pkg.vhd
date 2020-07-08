@@ -68,6 +68,7 @@ component asmi5 is
                 illegal_write : out std_logic;                                        -- illegal_write
                 shift_bytes   : in  std_logic                     := 'X';             -- shift_bytes
                 sector_erase  : in  std_logic                     := 'X';             -- sector_erase
+                bulk_erase    : in  std_logic                     := 'X';             -- bulk_erase
                 illegal_erase : out std_logic;                                        -- illegal_erase
                 ex4b_addr     : in  std_logic                     := 'X'              -- ex4b_addr
         );
