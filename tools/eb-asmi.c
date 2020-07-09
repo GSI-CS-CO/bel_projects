@@ -52,6 +52,7 @@
 #define BUSY_CHECK        0x1c
 #define READ_CRC          0x20
 #define SET_READ_NUMBER   0x24
+#define BULK_ERASE        0x28
 
 #define SDB_DEVICES       3
 #define SLAVENR           3
@@ -224,6 +225,21 @@ void erase_asmi_sector(int asmi_addr) {
       die("reading BUSY_CHECK failed", status);
   }
 }
+void erase_asmi_bulk() {
+  eb_status_t status;
+  eb_data_t cmd = 1;
+
+  if ((status = eb_cycle_open(device,0, eb_block, &cycle)) != EB_OK)
+    die("EP eb_cycle_open", status);
+  eb_cycle_write(cycle, wb_asmi_base + BULK_ERASE, EB_BIG_ENDIAN|EB_DATA32, 0);
+  if ((status = eb_cycle_close(cycle)) != EB_OK)
+    die("SECTOR_ERASE eb_cycle_close", status);
+
+  while (cmd != 0) {
+    if ((status = eb_device_read(device, wb_asmi_base + BUSY_CHECK, EB_BIG_ENDIAN|EB_DATA32, &cmd, 0, eb_block)) != EB_OK)
+      die("reading BUSY_CHECK failed", status);
+  }
+}
 
 void reconfig(int slave_nr, int asmi_addr) {
 
@@ -262,8 +278,10 @@ void show_help() {
   printf("\n");
   printf("-h          show the help for this program\n");
   printf("-b          blank check the flash\n");
+  printf("-e <size>   erase sectors up to size\n");
   printf("-w <file>   write programming file into flash\n");
   printf("-v <file>   verify flash against programming file\n");
+  printf("-n          no erase before writing; use with -w\n");
 }
 
 unsigned int how_many_sectors(unsigned int size) {
@@ -275,6 +293,20 @@ unsigned int how_many_sectors(unsigned int size) {
     if (pages_in_file % PAGES_PER_SECTOR)
       needed_sectors += 1;
     return needed_sectors;
+}
+
+void erase_flash(int epcsid, int needed_sectors) {
+  int i;
+  if ((int)epcsid != 0x19) {
+    //delete sector
+    for (i = 0; i < needed_sectors; i++) {
+      printf("erase epcs addr 0x%x\r", i * PAGE_SIZE * PAGES_PER_SECTOR);
+      fflush(stdout);
+      //erase_asmi_sector(i * PAGE_SIZE * PAGES_PER_SECTOR);
+      erase_asmi_sector(i * 0x10000);
+    }
+  } else
+    erase_asmi_bulk();
 }
 
 
@@ -292,6 +324,7 @@ int main(int argc, char * const* argv) {
   char *vvalue = NULL; 
   int bflag = 0;
   int eflag = 0;
+  int nflag = 0;
   int index;
   int c;
  
@@ -303,7 +336,7 @@ int main(int argc, char * const* argv) {
 
   opterr = 0;
 
-  while ((c = getopt (argc, argv, "w:rv:bhe")) != -1)
+  while ((c = getopt (argc, argv, "w:rv:bhen")) != -1)
     switch (c)
       {
         case 'e':
@@ -311,6 +344,9 @@ int main(int argc, char * const* argv) {
           break;
         case 'w':
           wvalue = optarg;
+          break;
+        case 'n':
+          nflag = 1;
           break;
         case 'r':
           rflag = 1;
@@ -425,12 +461,8 @@ int main(int argc, char * const* argv) {
     needed_sectors = how_many_sectors(size);
     printf("%d sector(s) will be erased.\n", needed_sectors);  
    
-    //delete sector
-    for (i = 0; i < needed_sectors; i++) {
-      printf("erase epcs addr 0x%x\r", i * PAGE_SIZE * PAGES_PER_SECTOR);
-      fflush(stdout);
-      erase_asmi_sector(i * PAGE_SIZE * PAGES_PER_SECTOR);
-    }
+    erase_flash(epcsid, needed_sectors);
+
     printf("%d sectors erased.                \n", needed_sectors);
   }
 
@@ -454,13 +486,10 @@ int main(int argc, char * const* argv) {
     needed_sectors = how_many_sectors(size);
     printf("%d sector(s) will be erased.\n", needed_sectors);  
    
-    //delete sector
-    for (i = 0; i < needed_sectors; i++) {
-      printf("erase epcs addr 0x%x\r", i * PAGE_SIZE * PAGES_PER_SECTOR);
-      fflush(stdout);
-      erase_asmi_sector(i * PAGE_SIZE * PAGES_PER_SECTOR);
+    if (nflag == 0) {
+      erase_flash(epcsid, needed_sectors);
+      printf("%d sectors erased.                \n", needed_sectors);
     }
-    printf("%d sectors erased.                \n", needed_sectors);
  
 
     //read in data from stdin
