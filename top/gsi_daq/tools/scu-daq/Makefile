@@ -15,6 +15,8 @@ MIAN_MODULE := daqt.cpp
 BASE_DIR := ..
 EB_SRC= $(DAQ_DIR)/feSupport/scu/etherbone
 
+DEFINES += CONFIG_AUTODOC_OPTION
+
 SOURCE += daqt_command_line.cpp
 SOURCE += daqt_attributes.cpp
 
@@ -62,7 +64,7 @@ INCLUDE_DIRS += $(EB_SRC)
 INCLUDE_DIRS += $(BASE_DIR)
 INCLUDE_DIRS += $(DAQ_LINUX_DIR)/sdaq
 
-# USE_STATIC_LIBS := 1
+ USE_STATIC_LIBS := 1
 
 ifdef USE_STATIC_LIBS
 # ADDITIONAL_OBJECTS += $(THIRD_PARTY_DIR)/boost/1.54.0/lib/x86_64/libboost_system.a

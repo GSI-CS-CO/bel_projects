@@ -112,6 +112,68 @@ vector<OPTION> CommandLine::c_optList =
       .m_longOpt  = "help",
       .m_helpText = "Print this help and exit"
    },
+#ifdef CONFIG_AUTODOC_OPTION
+   {
+      OPT_LAMBDA( poParser,
+      {
+         string name = poParser->getProgramName().substr(poParser->getProgramName().find_last_of('/')+1);
+         cout <<
+            "<toolinfo>\n"
+               "\t<name>" << name << "</name>\n"
+               "\t<topic>Development, Release, Rollout</topic>\n"
+               "\t<description>Test program for ADDAC DAQs display pf analog values via Gnuplot.</description>\n"
+               "\t<usage>" << name << " {SCU- target IP-address}";
+               for( const auto& pOption: *poParser )
+               {
+                  if( pOption->m_id != 0 )
+                     continue;
+                  cout << " [";
+                  if( pOption->m_shortOpt != '\0' )
+                  {
+                     cout << '-' << pOption->m_shortOpt;
+                     if( pOption->m_hasArg != OPTION::NO_ARG )
+                     {
+                        cout << ' ';
+                        if( pOption->m_hasArg == OPTION::OPTIONAL_ARG )
+                           cout << '=';
+                        cout << "ARG";
+                     }
+                     if( !pOption->m_longOpt.empty() )
+                        cout << ", ";
+                  }
+                  if( !pOption->m_longOpt.empty() )
+                  {
+                     cout << "--" << pOption->m_longOpt;
+                     if( pOption->m_hasArg != OPTION::NO_ARG )
+                     {
+                        cout << ' ';
+                        if( pOption->m_hasArg == OPTION::OPTIONAL_ARG )
+                           cout << '=';
+                        cout << "ARG";
+                     }
+                  }
+                  cout << ']';
+               }
+               cout << "\n\t</usage>\n"
+               "\t<author>Ulrich Becker</author>\n"
+               "\t<tags>graphics,etherbone</tags>\n"
+               "\t<version>" TO_STRING( VERSION ) "</version>\n"
+               "\t<documentation></documentation>\n"
+               "\t<environment></environment>\n"
+               "\t<requires>Gnuplot, socat, LM32-firmware scu_control or daq_control</requires>\n"
+               "\t<autodocversion>1.0</autodocversion>\n"
+            "</toolinfo>"
+         << endl;
+         ::exit( EXIT_SUCCESS );
+         return 0;
+      }),
+      .m_hasArg   = OPTION::NO_ARG,
+      .m_id       = 1, // will hide this option for autodoc
+      .m_shortOpt = '\0',
+      .m_longOpt  = "generate_doc_tagged",
+      .m_helpText = "Will need from autodoc."
+   },
+#endif // ifdef CONFIG_AUTODOC_OPTION
    {
       OPT_LAMBDA( poParser,
       {
