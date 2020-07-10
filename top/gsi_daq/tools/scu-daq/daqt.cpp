@@ -542,7 +542,7 @@ bool DaqContainer::checkCommandLineParameter( void )
       ERROR_MESSAGE( "No DAQ-device specified!" );
       return true;
    }
-   for( auto& iDev: *this )
+   for( const auto& iDev: *this )
    {
       if( iDev->empty() )
       {
@@ -558,10 +558,10 @@ bool DaqContainer::checkCommandLineParameter( void )
  */
 void DaqContainer::prioritizeAttributes( void )
 {
-   for( auto& iDev: *this )
+   for( const auto& iDev: *this )
    {
       static_cast<Device*>(iDev)->m_oAttributes.set( m_oAttributes );
-      for( auto& iCha: *iDev )
+      for( const auto& iCha: *iDev )
       {
          static_cast<Channel*>(iCha)->
             m_oAttributes.set( static_cast<Device*>(iDev)->m_oAttributes );
@@ -574,9 +574,9 @@ void DaqContainer::prioritizeAttributes( void )
 bool DaqContainer::checkForAttributeConflicts( void )
 {
    bool ret = false;
-   for( auto& iDev: *this )
+   for( const auto& iDev: *this )
    {
-      for( auto& iCha: *iDev )
+      for( const auto& iCha: *iDev )
       {
          Channel* pCha = static_cast<Channel*>(iCha);
          if( pCha->m_oAttributes.m_postMortem.m_valid &&
@@ -597,9 +597,9 @@ bool DaqContainer::checkForAttributeConflicts( void )
 bool DaqContainer::checkWhetherChannelsBecomesOperating( void )
 {
    bool ret = true;
-   for( auto& iDev: *this )
+   for( const auto& iDev: *this )
    {
-      for( auto& iCha: *iDev )
+      for( const auto& iCha: *iDev )
       {
          Channel* pCha = static_cast<Channel*>(iCha);
          if( !pCha->m_oAttributes.m_postMortem.m_valid &&
@@ -622,9 +622,9 @@ bool DaqContainer::checkWhetherChannelsBecomesOperating( void )
  */
 void DaqContainer::sendAttributes( void )
 {
-   for( auto& iDev: *this )
+   for( const auto& iDev: *this )
    {
-      for( auto& iCha: *iDev )
+      for( const auto& iCha: *iDev )
          static_cast<Channel*>(iCha)->sendAttributes();
    }
 }
@@ -633,9 +633,9 @@ void DaqContainer::sendAttributes( void )
  */
 void DaqContainer::start( void )
 {
-   for( auto& iDev: *this )
+   for( const auto& iDev: *this )
    {
-      for( auto& iCha: *iDev )
+      for( const auto& iCha: *iDev )
          static_cast<Channel*>(iCha)->start();
    }
 }
@@ -652,10 +652,10 @@ void DaqContainer::showRunState( void )
    cout << "Using terminal: \"" << m_poCommandLine->getTerminal() << '"' <<
        endl;
 
-   for( auto& iDev: *this )
+   for( const auto& iDev: *this )
    {
       cout << "Slot " << iDev->getSlot() << ':' << endl;
-      for( auto& iCha: *iDev )
+      for( const  auto& iCha: *iDev )
       {
          static_cast<Channel*>(iCha)->showRunState();
       }
@@ -671,9 +671,9 @@ void DaqContainer::doPostMortem( void )
 
    try
    {
-      for( auto& iDev: *this )
+      for( const auto& iDev: *this )
       {
-         for( auto& iCha: *iDev )
+         for( const auto& iCha: *iDev )
          {
             static_cast<Channel*>(iCha)->doPostMortem();
          }
@@ -694,9 +694,9 @@ void DaqContainer::doHighRes( void )
 
    try
    {
-      for( auto& iDev: *this )
+      for( const auto& iDev: *this )
       {
-         for( auto& iCha: *iDev )
+         for( const auto& iCha: *iDev )
          {
             static_cast<Channel*>(iCha)->doHighRes();
          }
@@ -718,9 +718,9 @@ void DaqContainer::doReset( void )
    try
    {
       sendReset();
-      for( auto& iDev: *this )
+      for( const auto& iDev: *this )
       {
-         for( auto& iCha: *iDev )
+         for( const auto& iCha: *iDev )
          {
             static_cast<Channel*>(iCha)->reset();
          }

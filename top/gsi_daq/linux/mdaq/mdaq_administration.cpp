@@ -61,7 +61,7 @@ DaqDevice::DaqDevice( uint location )
  */
 DaqDevice::~DaqDevice( void )
 {
-   for( auto& i: m_channelPtrList )
+   for( const auto& i: m_channelPtrList )
       i->m_pParent = nullptr;
 
    if( m_pParent != nullptr )

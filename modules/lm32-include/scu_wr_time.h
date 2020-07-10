@@ -1,6 +1,7 @@
 /*!
  * @file scu_wr_time.h
  * @brief Wishbone access to the White Rabbit timer
+ * @note Header only!
  * @copyright GSI Helmholtz Centre for Heavy Ion Research GmbH
  * @author    Ulrich Becker <u.becker@gsi.de>
  * @date      05.03.2020

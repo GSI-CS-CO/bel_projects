@@ -117,7 +117,7 @@ bool DaqDevice::registerChannel( DaqChannel* pChannel )
    SCU_ASSERT( dynamic_cast<DaqChannel*>(pChannel) != nullptr );
    SCU_ASSERT( m_channelPtrList.size() <= DaqInterface::c_maxChannels );
 
-   for( auto& i: m_channelPtrList )
+   for( const auto& i: m_channelPtrList )
    {
       if( pChannel->getNumber() == i->getNumber() )
          return true;
@@ -138,7 +138,7 @@ bool DaqDevice::unregisterChannel( DaqChannel* pChannel )
    if( pChannel->m_pParent != this )
       return true;
 
-   for( auto& i: m_channelPtrList )
+   for( const auto& i: m_channelPtrList )
    {
       if( i != pChannel )
          continue;
@@ -155,7 +155,7 @@ DaqChannel* DaqDevice::getChannel( const uint number )
    SCU_ASSERT( number > 0 );
    SCU_ASSERT( number <= DaqInterface::c_maxChannels );
 
-   for( auto& i: m_channelPtrList )
+   for( const auto& i: m_channelPtrList )
    {
       if( i->getNumber() == number )
          return i;
@@ -215,7 +215,7 @@ bool DaqAdministration::registerDevice( DaqDevice* pDevice )
    SCU_ASSERT( dynamic_cast<DaqDevice*>(pDevice) != nullptr );
    SCU_ASSERT( m_devicePtrList.size() <= DaqInterface::c_maxDevices );
 
-   for( auto& i: m_devicePtrList )
+   for( const auto& i: m_devicePtrList )
    {
       if( pDevice->getDeviceNumber() == i->getDeviceNumber() )
          return true;
@@ -265,14 +265,14 @@ int DaqAdministration::redistributeSlotNumbers( void )
 {
    if( readSlotStatus() != DAQ_RET_OK )
    {
-      for( auto& i: m_devicePtrList )
+      for( const auto& i: m_devicePtrList )
       {
          i->m_slot = 0; // Invalidate slot number
       }
       return getLastReturnCode();
    }
 
-   for( auto& i: m_devicePtrList )
+   for( const auto& i: m_devicePtrList )
    {
       i->m_slot = getSlotNumber( i->m_deviceNumber );
    }
@@ -287,7 +287,7 @@ DaqDevice* DaqAdministration::getDeviceByNumber( const uint number )
    SCU_ASSERT( number > 0 );
    SCU_ASSERT( number <= c_maxDevices );
 
-   for( auto& i: m_devicePtrList )
+   for( const auto& i: m_devicePtrList )
    {
       if( i->getDeviceNumber() == number )
          return i;
@@ -303,7 +303,7 @@ DaqDevice* DaqAdministration::getDeviceBySlot( const uint slot )
    SCU_ASSERT( slot > 0 );
    SCU_ASSERT( slot <= c_maxSlots );
 
-   for( auto& i: m_devicePtrList )
+   for( const auto& i: m_devicePtrList )
    {
       if( i->getSlot() == slot )
          return i;
@@ -320,7 +320,7 @@ DaqAdministration::getChannelByAbsoluteNumber( uint absChannelNumber )
    SCU_ASSERT( absChannelNumber > 0 );
    SCU_ASSERT( absChannelNumber <= (c_maxChannels * c_maxDevices) );
 
-   for( auto& i: m_devicePtrList )
+   for( const auto& i: m_devicePtrList )
    {
       if( absChannelNumber > i->getMaxChannels() )
       {

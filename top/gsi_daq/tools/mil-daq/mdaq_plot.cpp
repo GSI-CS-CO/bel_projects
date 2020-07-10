@@ -109,7 +109,7 @@ void Plot::plot( void )
 
    if( validSetDataPresent )
    {
-      for( auto& i: m_pParent->m_aPlotList )
+      for( const auto& i: m_pParent->m_aPlotList )
       {
          if( i.m_setValid )
             *this << i.m_time << ' ' << i.m_set << endl;
@@ -117,7 +117,7 @@ void Plot::plot( void )
       *this << 'e' << endl;
    }
 
-   for( auto& i: m_pParent->m_aPlotList )
+   for( const auto& i: m_pParent->m_aPlotList )
    {
       *this << i.m_time << ' ' << i.m_act << endl;
    }
@@ -126,7 +126,7 @@ void Plot::plot( void )
    if( !isDeviationPlottingEnabled || !validSetDataPresent )
       return;
 
-   for( auto& i: m_pParent->m_aPlotList )
+   for( const auto& i: m_pParent->m_aPlotList )
    {
       if( i.m_setValid )
          *this << i.m_time << ' ' << (i.m_set - i.m_act) << endl;

@@ -5,6 +5,7 @@
  * the SCU environment and for Linux applications.
  *
  * @file      scu_assert.h
+ * @note Header only!
  * @copyright GSI Helmholtz Centre for Heavy Ion Research GmbH
  * @author    Ulrich Becker <u.becker@gsi.de>
  * @date      05.11.2018

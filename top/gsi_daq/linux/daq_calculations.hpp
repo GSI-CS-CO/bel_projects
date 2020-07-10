@@ -1,7 +1,7 @@
 /*!
  *  @file daq_calculations.hpp
  *  @brief Some helper templates for DAQ calculations.
- *
+ *  @note Header only!
  *  @date 22.08.2019
  *  @copyright (C) 2019 GSI Helmholtz Centre for Heavy Ion Research GmbH
  *

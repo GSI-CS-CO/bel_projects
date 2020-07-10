@@ -121,7 +121,7 @@ vector<OPTION> CommandLine::c_optList =
             "<toolinfo>\n"
                "\t<name>" << name << "</name>\n"
                "\t<topic>Development, Release, Rollout</topic>\n"
-               "\t<description>Test program for ADDAC DAQs display of analog values via Gnuplot.</description>\n"
+               "\t<description>Display analog values of ADDAC DAQs via Gnuplot for testing.</description>\n"
                "\t<usage>" << name << " {SCU- target IP-address}";
                for( const auto& pOption: *poParser )
                {

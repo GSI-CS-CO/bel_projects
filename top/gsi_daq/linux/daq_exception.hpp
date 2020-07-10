@@ -1,7 +1,7 @@
 /*!
  *  @file daq_exception.hpp
  *  @brief Base-class of exception for all DAQ-applications
- *
+ *  @note Header only!
  *  @date 15.08.2019
  *  @copyright (C) 2019 GSI Helmholtz Centre for Heavy Ion Research GmbH
  *

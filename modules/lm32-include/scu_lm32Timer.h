@@ -4,6 +4,7 @@
  *
  * @see https://www-acc.gsi.de/wiki/bin/viewauth/Hardware/Intern/Lm32IRQTimer
  *
+ * @note Header only!
  * @note This module is suitable for FreeRTOS-port.
  *
  * @copyright GSI Helmholtz Centre for Heavy Ion Research GmbH

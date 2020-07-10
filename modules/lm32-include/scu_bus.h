@@ -29,34 +29,12 @@
   #error Module is for target Lattice Micro 32 (LM32) only!
 #endif
 
-#include <stdbool.h>
 #include "scu_lm32_macros.h"
 #include "scu_bus_defines.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-/*!
- * @defgroup SCU_BUS
- * @brief Register offset addresses and functions for the SCU bus-macro.
- */
-
-/*!
- * @ingroup SCU_BUS
- * @brief Invalid register content.
- *        Preinitialized value when no hardware connected.
- * @todo What shall we do when 0xdead is a real register content?!? \n
- *       That isn't 100% impossible! >:-/
- * @note In any case it's not usable to probing all registers with that.
- */
-#define SCUBUS_INVALID_VALUE     (uint16_t)0xdead
-
-/*!
- * @ingroup SCU_BUS
- * @brief Address space in bytes for each SCU bus slave 128k
- */
-#define SCUBUS_SLAVE_ADDR_SPACE  (1 << 17)
 
 /*! ---------------------------------------------------------------------------
  * @ingroup SCU_BUS
@@ -69,191 +47,6 @@ extern "C" {
  * @param m Name of member variable.
  */
 #define __SCU_BUS_ACCESS( TO, p, m ) __WB_ACCESS( TO, uint16_t, p, m )
-
-
-/*!
- * @ingroup SCU_BUS
- * @brief Definitions of SCU-bus slave (offset) addresses.
- * @see
- * <a href="https://www-acc.gsi.de/wiki/Hardware/Intern/StdRegScuBusSlave">
- *    Registersatz SCU-Bus-Slaves</a>
- */
-typedef enum
-{
-   ID                   = 0x0001, /*!< @brief Slave-ID */
-   FW_VERSION           = 0x0002, /*!< @brief FW Version of FPGA */
-   FW_RELEASE           = 0x0003, /*!< @brief FW Release of FPGA */
-   CID_SYSTEM           = 0x0004, /*!< @brief System Part of SCU Slave Component-ID */
-   CID_GROUP            = 0x0005, /*!< @brief Group Part of SCU Slave Component-ID */
-   VR_SCUBSL_Macro      = 0x0006, /*!< @brief Version/Revision of SCU Slave Macro */
-   Extension_CID_System = 0x0007, /*!< @brief System Part of Extension Component-ID */
-   Extension_CID_Group  = 0x0008, /*!< @brief Group Part of Extension Component-ID */
-   CLK_10kHz            = 0x0009, /*!< @brief Clock frequency (in 10Hz steps) */
-   __RFU__              = 0x000A, /*!< @brief Reserved for future use */
-   Echo_Register        = 0x0010, /*!< @brief Read echoes the word written before */
-   Status_Register      = 0x0011, /*!< @brief Bit 0= Power up done
-                                   *          Bit 1=User Ready
-                                   *          Bit 2..15=Reserved */
-   Intr_In              = 0x0020, /*!< @brief Interrupt Input Register (Bit
-                                   *          15:1=Actual Status, Bit 0 = 0)
-                                   *          Synchronized status as seen on
-                                   *          inputs of SCU Bus Slave macro */
-   Intr_Ena             = 0x0021, /*!< @brief Interrupt Enable Register
-                                   *          High-active Enable for Interrupt 15:1
-                                   *          Bit0 = Powerup IRQ = always enabled
-                                   *          Reset-value: 0x0001 */
-   Intr_pending         = 0x0022, /*!< @brief Interrupt pending. */
-   Intr_Active          = 0x0024, /*!< @brief Bit 15:1=interrupt, as seen after
-                                   *          passing interrupt mask.
-                                   *          Set to active when bits are
-                                   *          enabled and input shows an interrupt
-                                   *          “Active” bits are cleared when
-                                   *          interrupts are disabled.
-                                   *          “Active” bits are cleared \n
-                                   *          *) on writing a 1 to bit position. \n
-                                   *          *) when interrupt is still pending \n
-                                   *             and not masked, bit is set again. */
-   extern_clock         = 0x0030, /*!< @brief Extern clock */
-   Info_text            = 0x01C0, /*!< @brief Zero terminated info-string max. 512 byte */
-   mil_rd_wr_data       = 0x0400, /*!< @brief Reads received data from device bus.
-                                   *          writes data to dev. bus (do only when TX is not
-                                   *          busy,check mil_trm_rdy register bit) */
-   mil_wr_cmd           = 0x0401, /*!< @brief read a received command word from dev.bus
-                                   *          writes command to dev. bus ( do only when TX is not
-                                   *          busy,check mil_trm_rdy register bit) */
-   mil_wr_rd_status     = 0x0402, /*!< @brief read MIL Status bits 0...7 (for details see Table 14)
-                                   *          write MIL Control Register bits 8..15 */
-   rd_clr_no_vw_cnt     = 0x0403, /*!< @brief reads "no valid word" counters \n
-                                   *          writes (clears) "no valid word" counters */
-   rd_wr_not_eq_cnt     = 0x0404, /*!< @brief reads "not equal data/cmd" counters \n
-                                   *          writes (clears) "not equal data/cmd" counters */
-   rd_wr_ev_fifo        = 0x0405, /*!< @brief reads_event fifo only allowed when fifo
-                                   *          isn't empty writes (sw-clear) event fifo */
-   rd_clr_ev_timer      = 0x0406, /*!< @brief reads event timer upper word and stores LW in latch
-                                   *          writes (sw-clear) complete event timer */
-   rd_clr_dly_timer     = 0x0407, /*!< @brief reads delay timer upper word and stores LW in latch
-                                   *          write is used for handle preload and start see Ch5.4 */
-   rd_clr_wait_timer    = 0x0408, /*!< @brief reads wait timer upper word and store LW in latch \n
-                                   *          writes (sw-clear) complete wait timer */
-   mil_wr_rd_lemo_conf  = 0x0409, /*!< @brief Reads lemo config register (for details see Table 18) \n
-                                   *          Writes the lemo config register */
-   mil_wr_rd_lemo_dat   = 0x040A, /*!< @brief Reads lemo output data reg (details see Table 16) \n
-                                   *          Writes the lemo output data register */
-   mil_rd_lemo_inp      = 0x040B, /*!< @brief Reads lemo pin status (for details seeTable 17) \n
-                                   *          Write has no effect */
-   rd_ev_timer_lw       = 0x040C, /*!< @brief Reads LW ( bit 15..0) of event timer \n
-                                   *          Write has no effect */
-   rd_wait_timer_lw     = 0x040E, /*!< @brief Reads LW (bit 15..0) of wait timer \n
-                                   *          Write has no effect */
-   rd_wr_dly_timer_lw   = 0x0410, /*!< @brief Reads bit 15..0 of delay timer \n
-                                   *          Write preloads the LW buffer (see Delay Timer) */
-   rd_wr_dly_timer_hw   = 0x0411, /*!< @brief Reads bit 31..16 of delay timer \n
-                                              Write preloads the HW buffer (see Delay Timer) */
-   /*! @brief will used as list-terminator value */
-   SCUBUS_INVALID_INDEX16 = (SCUBUS_SLAVE_ADDR_SPACE / sizeof(uint16_t))
-} SCUBUS_ADDR_OFFSET_T;
-
-#define POWER_UP_IRQ      0x0001
-
-/* Deprecated defines */
-#define CID_SYS           0x4
-#define CID_GROUP         0x5
-#define SLAVE_VERSION     0x6
-#define SLAVE_INT_ENA     0x21
-#define SLAVE_INT_PEND    0x22
-#define SLAVE_INT_ACT     0x24
-#define SLAVE_EXT_CLK     0x30
-
-#define SLAVE_INFO_TEXT   0x01c0 //!< @brief Zero terminated info-string max. 512 byte
-
-#define DAC1_BASE         0x200
-#define DAC2_BASE         0x210
-#define DAC_CNTRL         0x0
-#define DAC_DATA          0x1
-
-#define IO4x8             0x220
-#define ADC_BASE          0x230
-#define ADC_CNTRL         0x0
-#define ADC_CHN1          0x1
-#define ADC_CHN2          0x2
-#define ADC_CHN3          0x3
-#define ADC_CHN4          0x4
-#define ADC_CHN5          0x5
-#define ADC_CHN6          0x6
-#define ADC_CHN7          0x7
-#define ADC_CHN8          0x8
-
-/*!
- * @see https://www-acc.gsi.de/wiki/Hardware/Intern/AdcDac2Scu
- */
-#define FG1_BASE          0x300
-#define FG2_BASE          0x340
-#define FG_CNTRL          0x0
-#define FG_A              0x1
-#define FG_B              0x2
-#define FG_BROAD          0x3
-#define FG_SHIFT          0x4
-#define FG_STARTH         0x5
-#define FG_STARTL         0x6
-#define FG_RAMP_CNT_LO    0x7
-#define FG_RAMP_CNT_HI    0x8
-#define FG_TAG_LOW        0x9
-#define FG_TAG_HIGH       0xa
-#define FG_VER            0xb
-
-#define FG1_IRQ           (1<<15)
-#define FG2_IRQ           (1<<14)
-#define DREQ              (1<<4)
-#define WB_FG_CNTRL       0x0
-#define WB_FG_A           0x1
-#define WB_FG_B           0x2
-#define WB_FG_BROAD       0x3
-#define WB_FG_SHIFTA      0x4
-#define WB_FG_SHIFTB      0x5
-#define WB_FG_START       0x6
-#define WB_RAMP_CNT       0x7
-#define WB_FG_SW_DST      0x8
-
-#define TMR_BASE          0x330
-#define TMR_CNTRL         0x0
-#define TMR_IRQ_CNT       0x1
-#define TMR_VALUEL        0x2
-#define TMR_VALUEH        0x3
-#define TMR_REPEAT        0x4
-
-#define GLOBAL_IRQ_ENA    0x2
-#define SRQ_ENA           0x6
-#define SRQ_ACT           0x8
-#define MULTI_SLAVE_SEL   0xc
-#define MULTICAST_ACC     0x8
-//#define MAX_SCU_SLAVES    12    /*!< @brief Maximum number of slots */
-
-#define SYS_LOEP    3
-#define SYS_CSCO    55
-#define SYS_PBRF    42
-
-#define GRP_ADDAC1  3
-#define GRP_ADDAC2  38
-#define GRP_DIOB    26
-#define GRP_FIB_DDS 1
-#define GRP_MFU     2
-#define GRP_SIO3    69
-#define GRP_SIO2    23
-
-/*! ---------------------------------------------------------------------------
- * @ingroup SCU_BUS
- * @brief Calculates the relative address offset in bytes of a SCU bus slave
- *        from the given slot number.
- * @see MAX_SCU_SLAVES
- * @param slot Slot number, valid range 1 .. MAX_SCU_SLAVES (12)
- * @return Relative slot address
- */
-STATIC inline uint32_t scuBusGetSlotOffset( const unsigned int slot )
-{
-   SCUBUS_ASSERT( slot >= SCUBUS_START_SLOT );
-   SCUBUS_ASSERT( slot <= MAX_SCU_SLAVES );
-   return slot * SCUBUS_SLAVE_ADDR_SPACE;
-}
 
 /*! ---------------------------------------------------------------------------
  * @ingroup SCU_BUS
@@ -277,8 +70,10 @@ STATIC inline void* scuBusGetAbsSlaveAddr( const void* pScuBusBase,
  * @brief Reads a 16 bit register value from a SCU bus slave
  * @see scuBusGetAbsSlaveAddr
  * @see scuBusSetSlaveValue16
- * @param pAbsSlaveAddr Absolute SCU bus slave address e.g. obtained by scuBusGetAbsSlaveAddr
- * @param index Location of relevant register to read, that means offset to pAbsSlaveAddr
+ * @param pAbsSlaveAddr Absolute SCU bus slave address e.g. obtained by
+ *                      scuBusGetAbsSlaveAddr
+ * @param index Location of relevant register to read, that means offset to
+ *              pAbsSlaveAddr
  * @return Content of the addressed register
  */
 STATIC inline volatile
