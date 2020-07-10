@@ -11,6 +11,7 @@
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
+
 use work.wr_fabric_pkg.all;
 use work.file_access.all; 
 
@@ -19,10 +20,10 @@ entity ez_eth_chip is
       rstn_i    : in  std_logic;
       clk_i     : in  std_logic;
       
-      rx_src_o : out t_wrf_source_out:
+      rx_src_o : out t_wrf_source_out;
       rx_src_i : in t_wrf_source_in;
-      tx_snk_i : out t_wrf_sink_in;
-      tx_snk_o : in t_wrf_sink_out
+      tx_snk_i : in t_wrf_sink_in;
+      tx_snk_o : out t_wrf_sink_out
     );
 end entity;
 
@@ -41,7 +42,7 @@ begin
 	rx_src_o.cyc    <= r_src_o_cyc;
 
 
-	tx: process(rstn_i, clk_i, s_link_up)
+	tx: process
 		variable result : integer := 0;
 	begin
 		tx_snk_o.ack <= '0';
@@ -52,8 +53,8 @@ begin
 	  	while tx_snk_i.cyc = '1' loop
 				wait until falling_edge(clk_i);
 				if tx_snk_i.adr = c_WRF_DATA then
-					if tx_snk_i.cyc = '1' AND tx_snk_i.stb = '1' AND tx_snk_i.we = '1 then
-						result = file_access_write(tx_snk_i.dat);
+					if tx_snk_i.cyc = '1' AND tx_snk_i.stb = '1' AND tx_snk_i.we = '1' then
+						result := file_access_write(to_integer(unsigned(tx_snk_i.dat)));
 						--snk ack/err
 						wait until rising_edge(clk_i);
 						if result = 0 then
@@ -66,22 +67,23 @@ begin
 					end if;	
 				end if;
 			end loop; -- cycle high loop			
-			file_access_flush();
+			file_access_flush;
 		end loop;	
 	end process;
 
 
 	-- fetch network packets from kernel in regular intervals so rx buffer cannot overflow.
-	process fetch_packets : process(rstn_i, clk_i, s_link_up)
+	fetch_packets : process
 		variable interval : integer := 10;
 		variable cnt : integer := 0;
+		variable result : integer := 0;
 	begin
 		cnt := 0;
-		while s_link_up = '1'loop
+		while s_link_up = 1 loop
 			while cnt < interval loop
 				if rstn_i = '1' then
 					wait until rising_edge(clk_i);
-					file_access_fetch_packet();
+					result := file_access_fetch_packet;
 					cnt := cnt +1;
 				end if;
 			end loop;
@@ -102,7 +104,7 @@ begin
 	end process;		 	
 
 
-	init_and_rx: process(clk_i, rstn_i, rx_src_i.stall)
+	init_and_rx: process
 		variable value_from_file : integer := 0;
 		variable stop_until_1st_packet : boolean := true;
 		variable stb_cnt : integer := 0;
@@ -114,14 +116,14 @@ begin
 				r_src_o_cyc <= '0';
 				wait until rstn_i = '1';
 			  if s_link_up = 0 then
-			  	s_link_up <= file_access_init(stop_until_1st_packet)
+			  	file_access_init(stop_until_1st_packet);
+			  	s_link_up <= 1;
 			  else
 					--rx code
-					if file_access_pending() >= 0 then
+					if file_access_pending >= 0 then
 						-- start packet cycle	
 						value_from_file   := 0;
 						stb_cnt := 0;
-						acc_cnt := 0;
 						wait until rising_edge(clk_i);
 						--start cycle and do the wrf status hocus pocus
 						r_src_o_cyc <= '1';
@@ -147,11 +149,11 @@ begin
 	
 						--pass on data in this packet
 						while value_from_file >= 0 loop --> stb loop
-							value_from_file := file_access_read(); 
+							value_from_file := file_access_read; 
 							if value_from_file >= 0 then 
 								wait until rising_edge(clk_i);
 									rx_src_o.adr <= c_WRF_DATA;
-									rx_src_o.stb <= '1'
+									rx_src_o.stb <= '1';
 									rx_src_o.dat <= std_logic_vector(to_unsigned(value_from_file, 16));
 									wait until falling_edge(clk_i); -- ensure minimum wait of half period for stall
 									wait until rx_src_i.stall = '0'; 	

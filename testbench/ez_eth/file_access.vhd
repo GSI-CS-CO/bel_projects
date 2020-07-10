@@ -7,16 +7,16 @@ package file_access is
   -- if the function returns a negative value it  is either
 
   function  file_access_pending return integer;
-  attribute foreign of file_access_read : function is "VHPIDIRECT file_access_read";
+  attribute foreign of file_access_pending : function is "VHPIDIRECT file_access_pending";
 
   function  file_access_fetch_packet return integer;
+  attribute foreign of file_access_fetch_packet : function is "VHPIDIRECT file_access_fetch_packet";
+
+  function file_access_read return integer;
   attribute foreign of file_access_read : function is "VHPIDIRECT file_access_read";
 
-  function file_access_read(timeout_value : integer) return integer;
-  attribute foreign of file_access_read : function is "VHPIDIRECT file_access_read";
-
-  procedure file_access_write(x : integer);
-  attribute foreign of file_access_write : procedure is "VHPIDIRECT file_access_write";
+  function file_access_write(x : integer) return integer;
+  attribute foreign of file_access_write : function is "VHPIDIRECT file_access_write";
 
   procedure file_access_flush;
   attribute foreign of file_access_flush : procedure is "VHPIDIRECT file_access_flush";
@@ -38,24 +38,25 @@ package body file_access is
   begin
     assert false report "VHPI" severity failure;
     return 0;
-  end procedure;
+  end function;
 
   function file_access_fetch_packet return integer is
   begin
     assert false report "VHPI" severity failure;
     return 0;
-  end procedure;
+  end function;
 
-  function file_access_read(timeout_value : integer) return integer is
+  function file_access_read return integer is
   begin
     assert false report "VHPI" severity failure;
     return 0;
   end function;
 
-  procedure file_access_write(x : integer) is
+  function file_access_write(x : integer) return integer is
   begin
     assert false report "VHPI" severity failure;
-  end procedure;
+    return 0;
+  end function;
 
   procedure file_access_flush is
   begin

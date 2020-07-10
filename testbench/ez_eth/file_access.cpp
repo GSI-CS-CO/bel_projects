@@ -8,6 +8,13 @@
 #include <iostream>
 
 
+std::queue<packet> fifoIn;
+int tun_fd;
+char tun_name[IFNAMSIZ];
+uint8_t* pWr;
+uint8_t bufWr[PACKET_BUF_SIZE];
+uint8_t bufRd[PACKET_BUF_SIZE];
+
 // BEGIN Public interface
 int file_access_init(int stop_until_1st_packet) {
 /* Connect to the device */
@@ -21,7 +28,7 @@ int file_access_init(int stop_until_1st_packet) {
   if(stop_until_1st_packet) {
   	//block until a packet is received
   	while(1) {
-    	int p = fetchPacket(tun_fd, fifoIn);
+    	int p = fetch_packet(tun_fd, fifoIn);
 			if(pending(fifoIn) >= 0) break;
 			sleep(1000);
   } 
@@ -31,11 +38,11 @@ int file_access_init(int stop_until_1st_packet) {
 
 int file_access_write(int x) {
 
-  return write(pWr, (uint8_t*)&bufWr[0], x) ;
+  return write(pWr, x) ;
 }
 
 void file_access_flush() {
-  flush(tun_fd, pWr, (uint8_t*)&bufWr[0], PACKET_BUF_SIZE);
+  flush(tun_fd, pWr, PACKET_BUF_SIZE);
 }
 
 
@@ -102,9 +109,9 @@ int read(std::queue<packet>& fifo) {
 }
 
 
-void enqueuePacket(std::queue<packet>& fifo, size_t n) {
+void enqueuePacket(std::queue<packet>& fifo, uint8_t *p, size_t n) {
   packet tmp;
-  for(int i=0;i<n;i++) tmp.push((int)bufRd[i]);
+  for(int i=0;i<n;i++) tmp.push((int)p[i]);
   fifo.push(tmp);
 }
 
@@ -124,18 +131,6 @@ void hexdump(void *ptr, int buflen) {
         printf("%c", isprint(buf[i+j]) ? buf[i+j] : '.');
     printf("\n");
   }
-}
-
-static inline void put16(uint8_t *p, uint16_t n)
-{
-  memcpy(p,&n,sizeof(n));
-}
-
-static inline uint16_t get16(uint8_t *p)
-{
-  uint16_t n;
-  memcpy(&n,p,sizeof(n));
-  return n;
 }
 
 
@@ -193,7 +188,7 @@ int fetch_packet(int tun_fd, std::queue<packet>& fifo) {
   int nread;
  
       /* Note that "buffer" should be at least the MTU size of the interface, eg 1500 bytes */
-  nread = read(tun_fd,bufRd, BUFFER_SIZE);
+  nread = read(tun_fd,bufRd, PACKET_BUF_SIZE);
   if(nread > 0) {
     /* Do whatever with the data */
     foundIncomingPacket = true;

@@ -10,6 +10,8 @@
 #include <string.h>
 #include <stdlib.h>
 #include <termios.h>
+#include <queue>
+#include <iostream>
 
 
 
@@ -52,12 +54,12 @@
 #define STRING(e) #e
 
 typedef std::queue<int> packet;
-std::queue<packet> fifoIn;
-int tun_fd;
-char tun_name[IFNAMSIZ];
-uint8_t* pWR;
-uint8_t bufWr[PACKET_BUF_SIZE];
-uint8_t bufRd[PACKET_BUF_SIZE];
+extern std::queue<packet> fifoIn;
+extern int tun_fd;
+extern char tun_name[IFNAMSIZ];
+extern uint8_t* pWr;
+extern uint8_t bufWr[PACKET_BUF_SIZE];
+extern uint8_t bufRd[PACKET_BUF_SIZE];
 
 
 
@@ -75,17 +77,19 @@ int file_access_fetch_packet();
 // END Public Interface
 
 
-int write(uint8_t* pWr, uint8_t* bufWr, int w);
+int write(uint8_t* pWr, int w);
 
 
 
-void flush(int tun_fd, uint8_t* pWr, uint8_t* bufWr, size_t n);
+void flush(int tun_fd, uint8_t* pWr, size_t n);
 
 
 int pending(std::queue<packet>& fifo);
 
 
-void enqueuePacket(std::queue<packet>& fifo, uint8_t* buf, size_t n);
+int read(std::queue<packet>& fifo);
+
+void enqueuePacket(std::queue<packet>& fifo, uint8_t *p, size_t n);
 
 static inline void put16(uint8_t *p, uint16_t n)
 {
