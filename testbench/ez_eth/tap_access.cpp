@@ -28,7 +28,7 @@ typedef std::queue<int> packet;
 
 
 
-bool writeWord(uint8_t* pWr, uint8_t* bufWr, int w) {
+int file_access_write(uint8_t* pWr, uint8_t* bufWr, int w) {
   bool ret = false;
   if (pWr < &bufWr[PACKET_BUF_SIZE]) { // buffer full?
     if ((w >= 0) && (w <= 255)) {ret = true; *pWr++ = (uint8_t)w;} // word has 8b value 0-255 ?
@@ -36,14 +36,19 @@ bool writeWord(uint8_t* pWr, uint8_t* bufWr, int w) {
   return ret;
 }
 
-bool flushPacket(int tun_fd, uint8_t* pWr, uint8_t* bufWr, size_t n) {
+void file_access_flush(int tun_fd, uint8_t* pWr, uint8_t* bufWr, size_t n) {
   ssize_t nwrite = write(tun_fd, bufWr, n);
   CHECK(n == nwrite);
   pWr = &bufWr[0];
 }
 
 
-int readWord(std::queue<packet>& fifo) {
+int file_access_pending(std::queue<packet>& fifo) {
+  if (fifo.empty()) return FIFO_EMPTY;
+  else return 0;
+}
+
+int file_access_read(std::queue<packet>& fifo) {
   int ret = FIFO_EMPTY;
   if (!fifo.empty()) 
   {
@@ -146,7 +151,7 @@ bool processtap(std::queue<packet>& fifo, uint8_t *p, size_t nbytes)
   return respond;
 }
 
-bool fetchPacket(int tun_fd, std::queue<packet>& fifo) {
+int file_access_fetch_packet(int tun_fd, std::queue<packet>& fifo) {
   bool foundIncomingPacket = false;
   int nread;
   unsigned char buffer[PACKET_BUF_SIZE] = {0,};

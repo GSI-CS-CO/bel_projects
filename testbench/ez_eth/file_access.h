@@ -23,7 +23,20 @@
 #include <linux/if.h>
 #include <linux/if_tun.h>
 
-#define TIMEOUT -1
+#define SRC_OFFSET4 12
+#define DST_OFFSET4 16
+#define SRC_OFFSET6 8
+#define DST_OFFSET6 24
+#define HLEN_OFFSET 0
+#define PROTO_OFFSET 9
+#define PROTO_ICMP 1
+#define PROTO_IGMP 2
+#define PROTO_TCP 6
+#define PROTO_UDP 17
+
+#define PACKET_BUF_SIZE 6000
+#define PACKET_EMPTY -1
+#define FIFO_EMPTY -2
 
 // Some handy macros to help with error checking
 #define CHECKAUX(e,s)                            \
@@ -38,17 +51,63 @@
 
 #define STRING(e) #e
 
-extern unsigned char write_buffer[32768];
-extern int write_buffer_length;
-extern unsigned char read_buffer[32768];
-extern int read_buffer_length;
+typedef std::queue<int> packet;
+std::queue<packet> fifoIn;
+int tun_fd;
+char tun_name[IFNAMSIZ];
+uint8_t write_buffer[PACKET_BUF_SIZE];
+uint8_t read_buffer[PACKET_BUF_SIZE];
 
-int file_access_init(char *dev, int devtype);
 
-int file_access_read(int fd, int retries);
 
-void file_access_write(int x);
 
+
+// BEGIN Public interface
+
+int file_access_init(int stop_until_1st_packet);
+int file_access_write();
 void file_access_flush();
+int file_access_pending();
+int file_access_read();
+int file_access_fetch_packet();
+
+// END Public Interface
+
+
+int write(uint8_t* pWr, uint8_t* bufWr, int w);
+
+
+
+void flush(int tun_fd, uint8_t* pWr, uint8_t* bufWr, size_t n);
+
+
+int pending(std::queue<packet>& fifo);
+
+
+void enqueuePacket(std::queue<packet>& fifo, uint8_t* buf, size_t n);
+
+static inline void put16(uint8_t *p, uint16_t n)
+{
+  memcpy(p,&n,sizeof(n));
+}
+
+static inline uint16_t get16(uint8_t *p)
+{
+  uint16_t n;
+  memcpy(&n,p,sizeof(n));
+  return n;
+}
+
+
+void swap(uint8_t *p, uint8_t *q, int nbytes);
+
+bool doarp(uint8_t *p, size_t nbytes);
+
+bool processtap(std::queue<packet>& fifo, uint8_t *p, size_t nbytes);
+
+int fetch_packet(int tun_fd, std::queue<packet>& fifo);
+
+int tun_alloc(char *dev, int flags);
+
 
 #endif

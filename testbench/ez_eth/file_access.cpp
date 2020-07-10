@@ -1,142 +1,302 @@
+
 //#define _GNU_SOURCE
 #include "file_access.h"
+#include <ctype.h>
+#include <stdio.h>
+
+#include <queue>
+#include <iostream>
 
 
-unsigned char write_buffer[32768] = {0,};
-int write_buffer_length = 0;
-unsigned char read_buffer[32768] = {0,};
-int read_buffer_length = 0;
+#define SRC_OFFSET4 12
+#define DST_OFFSET4 16
+#define SRC_OFFSET6 8
+#define DST_OFFSET6 24
+#define HLEN_OFFSET 0
+#define PROTO_OFFSET 9
+#define PROTO_ICMP 1
+#define PROTO_IGMP 2
+#define PROTO_TCP 6
+#define PROTO_UDP 17
+
+#define PACKET_BUF_SIZE 6000
+#define PACKET_EMPTY -1
+#define FIFO_EMPTY -2
+
+typedef std::queue<int> packet;
 
 
-int file_access_init(char *dev, int devtype = IFF_TUN)  {
-	/*
-	if (stop_until_connected && pfds[0].fd != 0) {
-		close(pfds[0].fd);
-		pfds[0].fd = 0;
-	}
-	if (pfds[0].fd == 0) {
-		int fd = open("/dev/ptmx", O_RDWR | O_NONBLOCK);
-		// print the name of the pseudo terminal in device tree
-		char name[256];
-		ptsname_r(fd, name, 256);
-		printf("eb-device : %s\n",name);
 
-		// put it in raw mode
-	   struct termios raw;
-		if (tcgetattr(fd, &raw) == 0)
-		{
-			// input modes - clear indicated ones giving: no break, no CR to NL, 
-			//   no parity check, no strip char, no start/stop output (sic) control 
-			raw.c_iflag &= ~(BRKINT | ICRNL | INPCK | ISTRIP | IXON);
+// BEGIN Public interface
 
-			// output modes - clear giving: no post processing such as NL to CR+NL 
-			raw.c_oflag &= ~(OPOST);
+int file_access_write() {
 
-			// control modes - set 8 bit chars 
-			raw.c_cflag |= (CS8);
-
-			// local modes - clear giving: echoing off, canonical off (no erase with 
-			//   backspace, ^U,...),  no extended functions, no signal chars (^Z,^C) 
-			raw.c_lflag &= ~(ECHO | ICANON | IEXTEN | ISIG);
-
-			// control chars - set return condition: min number of bytes and timer 
-			raw.c_cc[VMIN] = 5; raw.c_cc[VTIME] = 8; // after 5 bytes or .8 seconds
-			                                         //   after first byte seen   
-			raw.c_cc[VMIN] = 0; raw.c_cc[VTIME] = 0; // immediate - anything      
-			raw.c_cc[VMIN] = 2; raw.c_cc[VTIME] = 0; // after two bytes, no timer 
-			raw.c_cc[VMIN] = 0; raw.c_cc[VTIME] = 8; // after a byte or .8 seconds
-
-			// put terminal in raw mode after flushing 
-			if (tcsetattr(fd,TCSAFLUSH,&raw) < 0) 
-			{
-				int err = errno;
-				printf("Error, cant set raw mode: %s\n", strerror(err));
-				return;
-			}
-		}
-
-		if (stop_until_connected) {
-			printf("waiting for client, simulation stopped ...");
-		} else {
-			printf("device is ready, simulation is running\n");
-		}
-		fflush(stdout);
-		grantpt(fd);
-		unlockpt(fd);
-		pfds[0].fd = fd;
-	}
-	if (stop_until_connected)
-	{
-		pfds[0].events = POLLIN;
-		poll(pfds,1,-1);
-		printf(" connected, simulation continues\n");
-	}
-	*/
-	assert(dev != NULL);
-  	int fd = open("/dev/net/tun", O_RDWR | O_NONBLOCK);
-    CHECKFD(fd);
-  
-    struct ifreq ifr; 
-    memset(&ifr, 0, sizeof(ifr)); 
-    //ifr.ifr_flags = IFF_TUN | IFF_NO_PI;
-    ifr.ifr_flags = devtype | IFF_NO_PI;
-    strncpy(ifr.ifr_name, dev, IFNAMSIZ); 
-    CHECKSYS(ioctl(fd, TUNSETIFF, (void *) &ifr));
-    strncpy(dev, ifr.ifr_name, IFNAMSIZ); 
-    return fd;
-}
-
-int file_access_read(int fd, int retries) {
-	int todo = retries;
-	while(todo-- > 0) {
-		ssize_t nread = read(fd,read_buffer,sizeof(read_buffer));
-		printf("State was %ld\n", nread);
-		if(nread >= 0) {
-			printf("Bytes to Read for HDL: %ld\n", nread);
-			return nread;
-		}	
-	}	
-	//printf("file_access_read ");
-	/*
-	unsigned char ch = 0;
-	pfds[0].events = POLLIN | POLLHUP;
-	if (poll(pfds,1,timeout_value) == 0) {
-		//printf("timeout\n");
-		return TIMEOUT;
-	}
-	if (pfds[0].revents == POLLHUP) { // client disconnected
-		//printf("hangup\n");
-		return HANGUP;  
-	}
-	ssize_t result = read(pfds[0].fd, &ch, 1);
-	if (result == 1) { // successful read
-		printf("<< %x\n", (int)ch);
-		return ch;
-	} else if (result == -1) { // error
-		printf("error while read %d %s\n", errno, strerror(errno));
-	}
-	*/
-	return TIMEOUT;
-}
-
-void file_access_write(int x) {
-	/*
-	unsigned char ch = x;
-	write_buffer[write_buffer_length++] = ch;
-	printf("        >> %x\n", (int)x);
-	*/
+  return write(uint8_t* pWr, uint8_t* bufWr, int w) ;
 }
 
 void file_access_flush() {
-	/*
-	pfds[0].events = POLLOUT;
-	poll(pfds,1,-1);
-	int result = write(pfds[0].fd, write_buffer, write_buffer_length);
-	write_buffer_length = 0;
-	if (result == -1) {
-		printf("error while write %d %s\n", errno, strerror(errno));
-	}
-	//printf("all written %d\n", result);
-	*/
+  flush(int tun_fd, uint8_t* pWr, uint8_t* bufWr, size_t n);
 }
 
+
+int file_access_pending() {
+  return pending(std::queue<packet>& fifo);
+}
+
+int file_access_read() {
+  return read(std::queue<packet>& fifo);
+}
+
+int file_access_fetch_packet() {
+  return fetch_packet(int tun_fd, std::queue<packet>& fifo);
+}  
+
+// END Public Interface
+
+
+int write(uint8_t* pWr, uint8_t* bufWr, int w) {
+  bool ret = false;
+  if (pWr < &bufWr[PACKET_BUF_SIZE]) { // buffer full?
+    if ((w >= 0) && (w <= 255)) {ret = true; *pWr++ = (uint8_t)w;} // word has 8b value 0-255 ?
+  }
+  return ret;
+}
+
+
+
+void flush(int tun_fd, uint8_t* pWr, uint8_t* bufWr, size_t n) {
+  ssize_t nwrite = write(tun_fd, bufWr, n);
+  CHECK(n == nwrite);
+  pWr = &bufWr[0];
+}
+
+
+int pending(std::queue<packet>& fifo) {
+  if (fifo.empty()) return FIFO_EMPTY;
+  else return 0;
+}
+
+int read(std::queue<packet>& fifo) {
+  int ret = FIFO_EMPTY;
+  if (!fifo.empty()) 
+  {
+    if (!fifo.front().empty()) 
+    { 
+      ret = fifo.front().front();
+      fifo.front().pop(); 
+    } else {
+      ret = PACKET_EMPTY;
+      fifo.pop();
+    }
+  } 
+  return ret;
+}
+
+
+void enqueuePacket(std::queue<packet>& fifo, uint8_t* buf, size_t n) {
+  packet tmp;
+  for(int i=0;i<n;i++) tmp.push((int)buf[i]);
+  fifo.push(tmp);
+}
+
+void hexdump(void *ptr, int buflen) {
+  unsigned char *buf = (unsigned char*)ptr;
+  int i, j;
+  for (i=0; i<buflen; i+=16) {
+    printf("%06x: ", i);
+    for (j=0; j<16; j++) 
+      if (i+j < buflen)
+        printf("%02x ", buf[i+j]);
+      else
+        printf("   ");
+    printf(" ");
+    for (j=0; j<16; j++) 
+      if (i+j < buflen)
+        printf("%c", isprint(buf[i+j]) ? buf[i+j] : '.');
+    printf("\n");
+  }
+}
+
+static inline void put16(uint8_t *p, uint16_t n)
+{
+  memcpy(p,&n,sizeof(n));
+}
+
+static inline uint16_t get16(uint8_t *p)
+{
+  uint16_t n;
+  memcpy(&n,p,sizeof(n));
+  return n;
+}
+
+
+void swap(uint8_t *p, uint8_t *q, int nbytes)
+{
+  for (int i = 0; i < nbytes; i++) {
+    uint8_t t = *p; *p = *q; *q = t;
+    p++; q++;
+  }
+}
+
+bool doarp(uint8_t *p, size_t nbytes)
+{
+  (void)nbytes; 
+  uint16_t op = ntohs(get16(p+14+6));
+  char fromaddr[INET_ADDRSTRLEN];
+  char toaddr[INET_ADDRSTRLEN];
+  // Skip 14 bytes of ethernet header
+  inet_ntop(AF_INET, p+14+14, fromaddr, sizeof(fromaddr));
+  inet_ntop(AF_INET, p+14+24, toaddr, sizeof(toaddr));
+  // Assume ethernet and IPv4
+  printf("proto=ARP op=%u src=%s dst=%s\n",
+         op, fromaddr, toaddr);
+  // Now construct the ARP response
+  put16(p+14+6,htons(2)); // Operation
+  uint8_t *mac = p+14+18;
+  mac[0] = 0x02; mac[1] = 0x00;
+  memcpy(mac+2,p+14+24,4); // Use expected IP as top 4 bytes of MAC
+  memcpy(p,mac,6); // Copy to source (it will be swapped later).
+  swap(p+14+8,p+14+18,10);
+  return true;
+}
+
+bool processtap(std::queue<packet>& fifo, uint8_t *p, size_t nbytes)
+{
+  uint16_t etype;
+  memcpy(&etype,p+12,2);
+  etype = ntohs(etype);
+  printf("Frame etype=%04x nbytes=%zu\n", etype, nbytes);
+  //hexdump(p, nbytes);
+  bool respond = false;
+  if (etype == 0x0806) {
+    //handle ARP
+    respond = doarp(p,nbytes);
+    printf("Answering ARP\n");
+  } else if (etype == 0x0800) {
+    enqueuePacket(fifo, p, nbytes);
+  }
+  if (respond) swap(p,p+6,6);
+  return respond;
+}
+
+int fetch_packet(int tun_fd, std::queue<packet>& fifo) {
+  bool foundIncomingPacket = false;
+  int nread;
+  unsigned char buffer[PACKET_BUF_SIZE] = {0,};
+      /* Note that "buffer" should be at least the MTU size of the interface, eg 1500 bytes */
+  nread = read(tun_fd,buffer,sizeof(buffer));
+  if(nread > 0) {
+    /* Do whatever with the data */
+    foundIncomingPacket = true;
+    bool respond = processtap(fifo, buffer, nread);
+    if (respond) {
+      ssize_t nwrite = write(tun_fd,buffer,nread);
+      CHECK(nwrite == nread);
+    }
+  }
+  return foundIncomingPacket;
+}
+
+int tun_alloc(char *dev, int flags) {
+
+  struct ifreq ifr;
+  int fd, err;
+  char *clonedev = "/dev/net/tun";
+
+  /* Arguments taken by the function:
+   *
+   * char *dev: the name of an interface (or '\0'). MUST have enough
+   *   space to hold the interface name if '\0' is passed
+   * int flags: interface flags (eg, IFF_TUN etc.)
+   */
+
+   /* open the clone device */
+   if( (fd = open(clonedev, O_RDWR | O_NONBLOCK )) < 0 ) {
+     return fd;
+   }
+
+   /* preparation of the struct ifr, of type "struct ifreq" */
+   memset(&ifr, 0, sizeof(ifr));
+
+   ifr.ifr_flags = flags | IFF_NO_PI;   /* IFF_TUN or IFF_TAP, plus maybe IFF_NO_PI */
+
+   if (*dev) {
+     /* if a device name was specified, put it in the structure; otherwise,
+      * the kernel will try to allocate the "next" device of the
+      * specified type */
+     strncpy(ifr.ifr_name, dev, IFNAMSIZ);
+   }
+
+   /* try to create the device */
+   if( (err = ioctl(fd, TUNSETIFF, (void *) &ifr)) < 0 ) {
+     close(fd);
+     return err;
+   }
+
+  /* if the operation was successful, write back the name of the
+   * interface to the variable "dev", so the caller can know
+   * it. Note that the caller MUST reserve space in *dev (see calling
+   * code below) */
+  strcpy(dev, ifr.ifr_name);
+
+  /* this is the special file descriptor that the caller will use to talk
+   * with the virtual interface */
+  return fd;
+}
+
+int main(int argc, char *argv[])
+{
+  
+/*
+  char *progname = argv[0];
+  char *devname = NULL;
+  const char *usage = "Usage: %s [--v] [--tap] <prefix> [<devname>]\n";
+  int devtype = IFF_TUN;
+  int verbosity = 0;
+
+  argc--; argv++;
+  while (argc > 0 && argv[0][0] == '-') {
+    if (strcmp(argv[0],"--v") == 0) {
+      verbosity++;
+    } else if (strcmp(argv[0],"--tap") == 0) {
+      devtype = IFF_TAP;
+    } else {
+      fprintf(stderr, usage, progname);
+      exit(0);
+    }
+    argc--; argv++;
+  }
+  if (argc > 1) {
+      fprintf(stderr, usage, progname);
+      exit(0);
+  }
+  if (argc > 0) {printf("argc > 0, %s\n", argv[0]); devname = argv[0];}
+
+  
+  */
+ 
+  char tun_name[IFNAMSIZ];
+  
+  
+  /* Connect to the device */
+  strcpy(tun_name, "tap2");
+  int tun_fd = tun_alloc(tun_name, IFF_TAP);  /* tun interface */
+
+  if(tun_fd < 0){
+    perror("Allocating interface");
+    exit(1);
+  }
+
+  std::queue<packet> fifoIn;
+  int wrBuf[PACKET_BUF_SIZE] = {0,};
+
+  /* Now read data coming from the kernel */
+  while(1) {
+    int p = fetchPacket(tun_fd, fifoIn);
+
+    int w = readWord(fifoIn);
+    if(w >= 0) {std::cout << '\t' << w; }
+    else if(w == PACKET_EMPTY) {std::cout << std::endl;}
+  }  
+
+}  
