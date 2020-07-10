@@ -8,63 +8,67 @@
 #include <iostream>
 
 
-#define SRC_OFFSET4 12
-#define DST_OFFSET4 16
-#define SRC_OFFSET6 8
-#define DST_OFFSET6 24
-#define HLEN_OFFSET 0
-#define PROTO_OFFSET 9
-#define PROTO_ICMP 1
-#define PROTO_IGMP 2
-#define PROTO_TCP 6
-#define PROTO_UDP 17
-
-#define PACKET_BUF_SIZE 6000
-#define PACKET_EMPTY -1
-#define FIFO_EMPTY -2
-
-typedef std::queue<int> packet;
-
-
-
 // BEGIN Public interface
+int file_access_init(int stop_until_1st_packet) {
+/* Connect to the device */
+  strcpy(tun_name, "tap2");
+  tun_fd = tun_alloc(tun_name, IFF_TAP);  /* tun interface */
 
-int file_access_write() {
+  if(tun_fd < 0){
+    perror("Allocating interface");
+    exit(1);
+  }
+  if(stop_until_1st_packet) {
+  	//block until a packet is received
+  	while(1) {
+    	int p = fetchPacket(tun_fd, fifoIn);
+			if(pending(fifoIn) >= 0) break;
+			sleep(1000);
+  } 
+  }
+  return tun_fd;
+}
 
-  return write(uint8_t* pWr, uint8_t* bufWr, int w) ;
+int file_access_write(int x) {
+
+  return write(pWr, (uint8_t*)&bufWr[0], x) ;
 }
 
 void file_access_flush() {
-  flush(int tun_fd, uint8_t* pWr, uint8_t* bufWr, size_t n);
+  flush(tun_fd, pWr, (uint8_t*)&bufWr[0], PACKET_BUF_SIZE);
 }
 
 
 int file_access_pending() {
-  return pending(std::queue<packet>& fifo);
+  return pending(fifoIn);
 }
 
 int file_access_read() {
-  return read(std::queue<packet>& fifo);
+  return read(fifoIn);
 }
 
 int file_access_fetch_packet() {
-  return fetch_packet(int tun_fd, std::queue<packet>& fifo);
+  return fetch_packet(tun_fd, fifoIn);
 }  
 
 // END Public Interface
 
 
-int write(uint8_t* pWr, uint8_t* bufWr, int w) {
+int write(uint8_t* pWr, int x) {
   bool ret = false;
   if (pWr < &bufWr[PACKET_BUF_SIZE]) { // buffer full?
-    if ((w >= 0) && (w <= 255)) {ret = true; *pWr++ = (uint8_t)w;} // word has 8b value 0-255 ?
+    if ((x >= 0) && (x <= 65535)) {
+      uint xHi = (uint8_t)(x >> 8), xLo = (uint8_t)x;
+      *pWr++ = xHi; *pWr++ = xLo;
+      ret = true; // word has 8b value 0-255 ?
+    }  
   }
   return ret;
 }
 
 
 
-void flush(int tun_fd, uint8_t* pWr, uint8_t* bufWr, size_t n) {
+void flush(int tun_fd, uint8_t* pWr, size_t n) {
   ssize_t nwrite = write(tun_fd, bufWr, n);
   CHECK(n == nwrite);
   pWr = &bufWr[0];
@@ -72,8 +76,11 @@ void flush(int tun_fd, uint8_t* pWr, uint8_t* bufWr, size_t n) {
 
 
 int pending(std::queue<packet>& fifo) {
-  if (fifo.empty()) return FIFO_EMPTY;
-  else return 0;
+  int ret = 0;
+  if      (fifo.empty())         ret = FIFO_EMPTY;
+  else if (fifo.front().empty()) ret = PACKET_EMPTY;
+  
+  return ret;
 }
 
 int read(std::queue<packet>& fifo) {
@@ -82,8 +89,10 @@ int read(std::queue<packet>& fifo) {
   {
     if (!fifo.front().empty()) 
     { 
-      ret = fifo.front().front();
-      fifo.front().pop(); 
+      ret = fifo.front().front() << 8;
+      fifo.front().pop();
+      // look for low word. if packet not empty, OR it into return value and pop again. If empty, do nothing (OR with 0)
+      if (!fifo.front().empty()) { ret |= fifo.front().front(); fifo.front().pop(); }
     } else {
       ret = PACKET_EMPTY;
       fifo.pop();
@@ -93,9 +102,9 @@ int read(std::queue<packet>& fifo) {
 }
 
 
-void enqueuePacket(std::queue<packet>& fifo, uint8_t* buf, size_t n) {
+void enqueuePacket(std::queue<packet>& fifo, size_t n) {
   packet tmp;
-  for(int i=0;i<n;i++) tmp.push((int)buf[i]);
+  for(int i=0;i<n;i++) tmp.push((int)bufRd[i]);
   fifo.push(tmp);
 }
 
@@ -182,15 +191,15 @@ bool processtap(std::queue<packet>& fifo, uint8_t *p, size_t nbytes)
 int fetch_packet(int tun_fd, std::queue<packet>& fifo) {
   bool foundIncomingPacket = false;
   int nread;
-  unsigned char buffer[PACKET_BUF_SIZE] = {0,};
+ 
       /* Note that "buffer" should be at least the MTU size of the interface, eg 1500 bytes */
-  nread = read(tun_fd,buffer,sizeof(buffer));
+  nread = read(tun_fd,bufRd, BUFFER_SIZE);
   if(nread > 0) {
     /* Do whatever with the data */
     foundIncomingPacket = true;
-    bool respond = processtap(fifo, buffer, nread);
+    bool respond = processtap(fifo, bufRd, nread);
     if (respond) {
-      ssize_t nwrite = write(tun_fd,buffer,nread);
+      ssize_t nwrite = write(tun_fd,bufRd, nread);
       CHECK(nwrite == nread);
     }
   }
@@ -244,59 +253,4 @@ int tun_alloc(char *dev, int flags) {
   return fd;
 }
 
-int main(int argc, char *argv[])
-{
   
-/*
-  char *progname = argv[0];
-  char *devname = NULL;
-  const char *usage = "Usage: %s [--v] [--tap] <prefix> [<devname>]\n";
-  int devtype = IFF_TUN;
-  int verbosity = 0;
-
-  argc--; argv++;
-  while (argc > 0 && argv[0][0] == '-') {
-    if (strcmp(argv[0],"--v") == 0) {
-      verbosity++;
-    } else if (strcmp(argv[0],"--tap") == 0) {
-      devtype = IFF_TAP;
-    } else {
-      fprintf(stderr, usage, progname);
-      exit(0);
-    }
-    argc--; argv++;
-  }
-  if (argc > 1) {
-      fprintf(stderr, usage, progname);
-      exit(0);
-  }
-  if (argc > 0) {printf("argc > 0, %s\n", argv[0]); devname = argv[0];}
-
-  
-  */
- 
-  char tun_name[IFNAMSIZ];
-  
-  
-  /* Connect to the device */
-  strcpy(tun_name, "tap2");
-  int tun_fd = tun_alloc(tun_name, IFF_TAP);  /* tun interface */
-
-  if(tun_fd < 0){
-    perror("Allocating interface");
-    exit(1);
-  }
-
-  std::queue<packet> fifoIn;
-  int wrBuf[PACKET_BUF_SIZE] = {0,};
-
-  /* Now read data coming from the kernel */
-  while(1) {
-    int p = fetchPacket(tun_fd, fifoIn);
-
-    int w = readWord(fifoIn);
-    if(w >= 0) {std::cout << '\t' << w; }
-    else if(w == PACKET_EMPTY) {std::cout << std::endl;}
-  }  
-
-}  

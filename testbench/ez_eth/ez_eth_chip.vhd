@@ -117,7 +117,7 @@ begin
 			  	s_link_up <= file_access_init(stop_until_1st_packet)
 			  else
 					--rx code
-					if file_access_pending() = 1 then
+					if file_access_pending() >= 0 then
 						-- start packet cycle	
 						value_from_file   := 0;
 						stb_cnt := 0;

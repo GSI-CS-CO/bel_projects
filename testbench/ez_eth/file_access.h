@@ -55,8 +55,9 @@ typedef std::queue<int> packet;
 std::queue<packet> fifoIn;
 int tun_fd;
 char tun_name[IFNAMSIZ];
-uint8_t write_buffer[PACKET_BUF_SIZE];
-uint8_t read_buffer[PACKET_BUF_SIZE];
+uint8_t* pWR;
+uint8_t bufWr[PACKET_BUF_SIZE];
+uint8_t bufRd[PACKET_BUF_SIZE];
 
 
 
@@ -98,6 +99,7 @@ static inline uint16_t get16(uint8_t *p)
   return n;
 }
 
+void hexdump(void *ptr, int buflen);
 
 void swap(uint8_t *p, uint8_t *q, int nbytes);
 
