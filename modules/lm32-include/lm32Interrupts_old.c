@@ -146,7 +146,7 @@ void _irq_entry( void )
          const uint32_t mask = _irqGetPendingMask( intNum );
          if( (mask & ip) == 0 ) /* Is this interrupt pending? */
             continue; /* No, go to next possible interrupt. */
-     // irqResetPendingRegister( mask );
+      //irqResetPendingRegister( mask );
          IRQ_ASSERT( intNum < ARRAY_SIZE( ISREntryTable ) );
          const ISR_ENTRY_T* pCurrentInt = &ISREntryTable[intNum];
          if( pCurrentInt->pfCallback != NULL )

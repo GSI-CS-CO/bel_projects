@@ -1,8 +1,7 @@
 /*!
- *
- * @brief     Some helpful macro definitions
- *
  * @file      helper_macros.h
+ * @brief     Some helpful macro definitions
+ * @note      Header only!
  * @copyright GSI Helmholtz Centre for Heavy Ion Research GmbH
  * @author    Ulrich Becker <u.becker@gsi.de>
  * @date      30.10.2018
