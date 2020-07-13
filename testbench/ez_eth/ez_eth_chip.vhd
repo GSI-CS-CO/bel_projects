@@ -30,7 +30,9 @@ end entity;
 architecture simulation of ez_eth_chip is
 	signal s_link_up : integer := 0; -- cross process tracking TAP link status
 	signal r_acc_err_cnt : integer := 0;	-- cross process tracking of incoming acks/errors at src
+	signal r_stb_cnt : integer := 0;	-- cross process tracking of valid strobessrc
 	signal r_src_o_cyc : std_logic := '0'; -- to allow readback of src cycle line
+	signal r_src_o_stb : std_logic := '0'; -- to allow readback of src stb line
 begin
 
 
@@ -40,35 +42,54 @@ begin
 	rx_src_o.we 	  <= '1'; -- sources always write.
 	rx_src_o.sel 	  <= "11"; -- always use both bytes. unaligned packets are padded and length field is used.
 	rx_src_o.cyc    <= r_src_o_cyc;
+	rx_src_o.stb    <= r_src_o_stb;
+
 
 
 	tx: process
 		variable result : integer := 0;
+		variable ack : std_logic := '0';
+		variable err : std_logic := '0';
 	begin
 		tx_snk_o.ack <= '0';
 		tx_snk_o.err <=	'0';
 		wait until rstn_i = '1';
+		report "TX: coming out of reset" severity warning;
+	  while true loop
+	  	wait until falling_edge(clk_i);
+	  	if tx_snk_i.cyc = '1' and s_link_up = 1  then
+	  		report "TX: cycle started" severity warning;
+	  		while tx_snk_i.cyc = '1' loop
 
-	  while s_link_up = 1 loop
-	  	while tx_snk_i.cyc = '1' loop
-				wait until falling_edge(clk_i);
-				if tx_snk_i.adr = c_WRF_DATA then
+	  			ack := '0';
+	  			err := '0';
 					if tx_snk_i.cyc = '1' AND tx_snk_i.stb = '1' AND tx_snk_i.we = '1' then
-						result := file_access_write(to_integer(unsigned(tx_snk_i.dat)));
-						--snk ack/err
-						wait until rising_edge(clk_i);
-						if result = 0 then
-							tx_snk_o.ack <= '1';
-							tx_snk_o.err <= '0';
+					  if tx_snk_i.adr = c_WRF_DATA then
+						  --report "TX: writing to SW" severity warning;
+							result := file_access_write(to_integer(unsigned(tx_snk_i.dat)));
+							--snk ack/err
+							
+							if result = 1 then
+								ack := '1';
+							else
+								err := '0';
+							end if;
 						else
-							tx_snk_o.ack <= '0';
-							tx_snk_o.err <=	'1';
-						end if;
-					end if;	
-				end if;
-			end loop; -- cycle high loop			
-			file_access_flush;
-		end loop;	
+							ack := '1';	
+						end if;	
+					end if;
+					wait until rising_edge(clk_i);
+					tx_snk_o.ack <= ack;
+					tx_snk_o.err <= err;
+					wait until falling_edge(clk_i);
+				end loop; -- cycle high loop
+				tx_snk_o.ack <= '0';
+				tx_snk_o.err <=	'0';
+				wait until rising_edge(clk_i);
+				report "TX: Packet written to buffer. Flushing" severity warning;
+				file_access_flush;
+			end if;
+		end loop;		
 	end process;
 
 
@@ -79,27 +100,34 @@ begin
 		variable result : integer := 0;
 	begin
 		cnt := 0;
-		while s_link_up = 1 loop
+		wait until rising_edge(clk_i);
+		while s_link_up = 1 and rstn_i = '1' loop
+			wait until rising_edge(clk_i);
 			while cnt < interval loop
-				if rstn_i = '1' then
-					wait until rising_edge(clk_i);
 					result := file_access_fetch_packet;
 					cnt := cnt +1;
-				end if;
 			end loop;
+--			report "Polling packet fetch" severity warning;
 			cnt := 0;	
 		end loop;
+		cnt := 0;	
 	end process;	
 
 
-	rx_src_acc_counter : process(clk_i)
+	rx_src_accerr_stb_counter : process(clk_i)
 	begin
-		if falling_edge(clk_i) then
+		if rising_edge(clk_i) then
 			if r_src_o_cyc = '0' or rstn_i = '0' then
 				r_acc_err_cnt <= 0;
-			elsif rx_src_i.ack = '1' or rx_src_i.err = '1'then
-				r_acc_err_cnt <= r_acc_err_cnt + 1;
-			end if;
+				r_stb_cnt  <= 0;
+			else
+				if rx_src_i.ack = '1' or rx_src_i.err = '1' then
+					r_acc_err_cnt <= r_acc_err_cnt + 1;
+				end if;
+				if r_src_o_stb = '1' and rx_src_i.stall = '0' then
+					r_stb_cnt  <= r_stb_cnt  + 1;
+				end if;
+			end if;		
 		end if;
 	end process;		 	
 
@@ -111,23 +139,36 @@ begin
 	begin
 		
 
+				s_link_up <= 0;
+				rx_src_o.adr <= c_WRF_DATA;
+				r_src_o_cyc  <= '0';
+				r_src_o_stb <= '0';
+				rx_src_o.dat <= (others => '0');
+				wait until rstn_i = '1';
+				report "RX: Coming out of reset" severity warning;
 			while true loop --> main rx loop
 				-- reset and init code
 				r_src_o_cyc <= '0';
-				wait until rstn_i = '1';
+				wait until falling_edge(clk_i);
 			  if s_link_up = 0 then
+			  	report "RX: Initialising network interface..." severity warning;
 			  	file_access_init(stop_until_1st_packet);
+			  	wait until rising_edge(clk_i);
 			  	s_link_up <= 1;
+			  	wait until rising_edge(clk_i);
+			  	report "RX: Init done" severity warning;
 			  else
 					--rx code
+					wait until rising_edge(clk_i);
+					--report "RX:  polling" severity warning;
 					if file_access_pending >= 0 then
+						report "RX:  got a packet. Processing..." severity warning;
 						-- start packet cycle	
 						value_from_file   := 0;
-						stb_cnt := 0;
-						wait until rising_edge(clk_i);
 						--start cycle and do the wrf status hocus pocus
+						
 						r_src_o_cyc <= '1';
-						rx_src_o.stb <= '1';
+						r_src_o_stb <= '1';
 						rx_src_o.adr <= c_WRF_STATUS;
 
 --TODO: x"8004" as WRF_STATUS could be wrong, depending if incoming packet has a CRC!
@@ -142,30 +183,38 @@ begin
 --  end record;
 
 						rx_src_o.dat <= x"8004"; 
-						wait until falling_edge(clk_i);
-						wait until rx_src_i.stall = '0'; 	
-						stb_cnt := stb_cnt + 1;	--wait until there's no stall before inc stb count
-
-	
-						--pass on data in this packet
+						wait until rising_edge(clk_i);
+						report "RX:  Set WRF status" severity warning;
+						
+									--pass on data in this packet
+						
 						while value_from_file >= 0 loop --> stb loop
 							value_from_file := file_access_read; 
-							if value_from_file >= 0 then 
-								wait until rising_edge(clk_i);
+							--report "RX:  Sread value" severity warning;
+							
+							if value_from_file >= 0 then
+									while rx_src_i.stall = '1' loop
+										report "RX:  waiting to be unstalled" severity warning;
+										wait until rising_edge(clk_i);
+									end loop; 
 									rx_src_o.adr <= c_WRF_DATA;
-									rx_src_o.stb <= '1';
+									r_src_o_stb <= '1';
 									rx_src_o.dat <= std_logic_vector(to_unsigned(value_from_file, 16));
-									wait until falling_edge(clk_i); -- ensure minimum wait of half period for stall
-									wait until rx_src_i.stall = '0'; 	
-									stb_cnt := stb_cnt + 1;	--wait until there's no stall before inc stb count
-							end if;	
+							else
+								r_src_o_stb <= '0';
+							end if;
+							wait until rising_edge(clk_i);
 						end loop;	--< stb loop	
 						wait until rising_edge(clk_i); 
-						rx_src_o.stb <= '0';
-						-- we're done with this packet. deassert stb and wait for all acks	
-						wait until r_acc_err_cnt = stb_cnt;
-						wait until rising_edge(clk_i);	
+						r_src_o_stb <= '0';
+						-- we're done with this packet. deassert stb and wait for all acks
+						report "RX:  Done. Waiting for ACKERR/STB counters" severity warning;		
+						while r_acc_err_cnt /= r_stb_cnt loop
+							wait until rising_edge(clk_i);
+						end loop;
+						report "RX: Packet complete." severity warning;		
 						r_src_o_cyc <= '0';
+						wait until rising_edge(clk_i);
 						-- end packet cycle	
 					end if;
 

@@ -55,9 +55,9 @@
 
 typedef std::queue<int> packet;
 extern std::queue<packet> fifoIn;
-extern int tun_fd;
+int tun_fd;
 extern char tun_name[IFNAMSIZ];
-extern uint8_t* pWr;
+uint8_t* pWr;
 extern uint8_t bufWr[PACKET_BUF_SIZE];
 extern uint8_t bufRd[PACKET_BUF_SIZE];
 
@@ -78,11 +78,11 @@ int file_access_fetch_packet();
 // END Public Interface
 
 
-int write_eth(uint8_t* pWr, int w);
+int write_eth(int w);
 
 
 
-void flush(int tun_fd, uint8_t* pWr, size_t n);
+void flush(int tun_fd);
 
 
 int pending(std::queue<packet>& fifo);

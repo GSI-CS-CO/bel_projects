@@ -1,5 +1,5 @@
 #GHDL_ALTERA=/home/mkreider/projects/ghdl_sims
-GHDL_ALTERA=/home/michael/build/ghdl_vendor_scripts/altera
+GHDL_ALTERA=/home/mkreider/projects/ghdl_sims
 
 GHDLFLAGS = --ieee=synopsys --std=93c \
 	-fexplicit -frelaxed-rules --no-vital-checks --warn-binding --mb-comments \

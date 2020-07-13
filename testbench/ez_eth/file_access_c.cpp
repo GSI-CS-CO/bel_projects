@@ -9,9 +9,7 @@
 
 
 std::queue<packet> fifoIn;
-int tun_fd;
 char tun_name[IFNAMSIZ];
-uint8_t* pWr;
 uint8_t bufWr[PACKET_BUF_SIZE];
 uint8_t bufRd[PACKET_BUF_SIZE];
 
@@ -19,6 +17,8 @@ extern "C" {
 
 // BEGIN Public interface
 int file_access_init(int stop_until_1st_packet) {
+  printf("Init code\n");
+  pWr = &bufWr[0];
 /* Connect to the device */
   strcpy(tun_name, "tap2");
   tun_fd = tun_alloc(tun_name, IFF_TAP);  /* tun interface */
@@ -27,24 +27,28 @@ int file_access_init(int stop_until_1st_packet) {
     perror("Allocating interface");
     exit(1);
   }
+
   if(stop_until_1st_packet) {
   	//block until a packet is received
+    printf("Sim stopped until packet is received\n");
   	while(1) {
     	int p = fetch_packet(tun_fd, fifoIn);
-			if(pending(fifoIn) >= 0) break;
-			sleep(1000);
-  } 
+			if(file_access_pending() >= 0) break;
+			usleep(10000);
+    }
+    printf("Packet received, resuming Sim\n");
+
   }
   return tun_fd;
 }
 
 int file_access_write(int x) {
 
-  return write_eth(pWr, x) ;
+  return write_eth(x) ;
 }
 
 void file_access_flush() {
-  flush(tun_fd, pWr, PACKET_BUF_SIZE);
+  flush(tun_fd);
 }
 
 
@@ -63,23 +67,31 @@ int file_access_fetch_packet() {
 // END Public Interface
 
 
-int write_eth(uint8_t* pWr, int x) {
+int write_eth(int x) {
   bool ret = false;
+  ptrdiff_t m = pWr - &bufWr[0];
   if (pWr < &bufWr[PACKET_BUF_SIZE]) { // buffer full?
     if ((x >= 0) && (x <= 65535)) {
+      //printf("TX: writing %d to buffer, ptr at %x\n", x, m);
       uint xHi = (uint8_t)(x >> 8), xLo = (uint8_t)x;
       *pWr++ = xHi; *pWr++ = xLo;
       ret = true; // word has 8b value 0-255 ?
-    }  
-  }
+    } else printf("TX: word is out of range: %d\n", x); 
+  } else printf("TX: buffer full\n");
+  ptrdiff_t n = pWr - &bufWr[0];
+ // printf("TX: ptr now at %x\n", n);
   return ret;
 }
 
 
 
-void flush(int tun_fd, uint8_t* pWr, size_t n) {
-  ssize_t nwrite = write(tun_fd, bufWr, n);
-  CHECK(n == nwrite);
+void flush(int tun_fd) {
+  
+  ptrdiff_t m = pWr - &bufWr[0];
+  printf("TX: Flushing %u bytes written to packet buffer\n", m);
+  hexdump((uint8_t*)&bufWr[0], m);
+  ssize_t nwrite = write(tun_fd, bufWr, m);
+  CHECK(m == nwrite);
   pWr = &bufWr[0];
 }
 
@@ -113,6 +125,7 @@ int read_eth(std::queue<packet>& fifo) {
 
 void enqueuePacket(std::queue<packet>& fifo, uint8_t *p, size_t n) {
   packet tmp;
+  hexdump(p, n);
   for(int i=0;i<n;i++) tmp.push((int)p[i]);
   fifo.push(tmp);
 }
@@ -244,6 +257,7 @@ int tun_alloc(char *dev, int flags) {
    * it. Note that the caller MUST reserve space in *dev (see calling
    * code below) */
   strcpy(dev, ifr.ifr_name);
+  printf("eb-device : %s\n",dev);
 
   /* this is the special file descriptor that the caller will use to talk
    * with the virtual interface */
