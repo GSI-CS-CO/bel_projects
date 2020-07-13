@@ -257,29 +257,10 @@ STATIC void onScuMSInterrupt( const unsigned int intNum,
                               const void* pContext UNUSED )
 {
    MSI_T m;
-#if 0
    /*!
     * @todo Use MSI_ITEM_T instead of MSI_T in future!
     */
-   irqMsiCopyObjectAndRemove( (MSI_ITEM_T*)&m, intNum );
-#ifndef _CONFIG_NO_DISPATCHER
-#warning with deispatcher...
-   add_msg( &g_aMsg_buf[0], IRQ, m );
-#else
-   switch( m.adr & 0xFF )
-   {
-    #ifdef _CONFIG_ADDAC_FG_IN_INTERRUPT
-      case ADDR_SCUBUS: onScuBusEvent( &m ); break;
-    #else
-      case ADDR_SCUBUS: add_msg( &g_aMsg_buf[0], SCUBUS, m ); break; // message from scu bus
-    #endif
-      case ADDR_SWI:    add_msg( &g_aMsg_buf[0], SWI,    m ); break; // software message from saftlib
-   #ifdef CONFIG_MIL_FG
-      case ADDR_DEVBUS: add_msg( &g_aMsg_buf[0], DEVBUS, m ); break; // message from dev bus
-   #endif
-   }
-#endif // ifndef _CONFIG_NO_DISPATCHER
-#else
+
    while( irqMsiCopyObjectAndRemoveIfActive( (MSI_ITEM_T*)&m, intNum ) )
    {
    #ifndef _CONFIG_NO_DISPATCHER
@@ -300,7 +281,6 @@ STATIC void onScuMSInterrupt( const unsigned int intNum,
       }
    #endif // ifndef _CONFIG_NO_DISPATCHER
    }
-#endif
 }
 
 /*! ---------------------------------------------------------------------------
