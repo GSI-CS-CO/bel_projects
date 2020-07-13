@@ -1,4 +1,5 @@
-GHDL_ALTERA=/home/mkreider/projects/ghdl_sims
+#GHDL_ALTERA=/home/mkreider/projects/ghdl_sims
+GHDL_ALTERA=/home/michael/build/ghdl_vendor_scripts/altera
 
 GHDLFLAGS = --ieee=synopsys --std=93c \
 	-fexplicit -frelaxed-rules --no-vital-checks --warn-binding --mb-comments \
@@ -21,7 +22,7 @@ simulation.ghw: compile_testbench
 #	gsettings set com.geda.gtkwave reload 0
 	gconftool-2 --type string --set /com.geda.gtkwave/0/reload 0
 
-compile_testbench: file_access.o testbench
+compile_testbench: file_access_c.o testbench
 
 testbench: 	\
 			../../ip_cores/general-cores/modules/genrams/genram_pkg.vhd                  \
@@ -86,10 +87,10 @@ testbench: 	\
 			ez_eth_chip.vhd    \
 			testbench.vhd
 	ghdl -a $(GHDLFLAGS) $?
-	ghdl -m -Wl,file_access.o  $(GHDLFLAGS) testbench 
+	ghdl -m -Wl,file_access_c.o -Wl,-lstdc++  $(GHDLFLAGS) testbench 
 
-file_access.o: file_access.cpp
-	gcc -c file_access.cpp
+file_access_c.o: file_access_c.cpp
+	gcc -c file_access_c.cpp
 
 clean:
 	rm -f *.o testbench work-obj*.cf simulation.ghw 

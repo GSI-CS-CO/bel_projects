@@ -62,13 +62,14 @@ extern uint8_t bufWr[PACKET_BUF_SIZE];
 extern uint8_t bufRd[PACKET_BUF_SIZE];
 
 
+extern "C" {
 
 
 
 // BEGIN Public interface
 
 int file_access_init(int stop_until_1st_packet);
-int file_access_write();
+int file_access_write(int x);
 void file_access_flush();
 int file_access_pending();
 int file_access_read();
@@ -77,7 +78,7 @@ int file_access_fetch_packet();
 // END Public Interface
 
 
-int write(uint8_t* pWr, int w);
+int write_eth(uint8_t* pWr, int w);
 
 
 
@@ -87,7 +88,7 @@ void flush(int tun_fd, uint8_t* pWr, size_t n);
 int pending(std::queue<packet>& fifo);
 
 
-int read(std::queue<packet>& fifo);
+int read_eth(std::queue<packet>& fifo);
 
 void enqueuePacket(std::queue<packet>& fifo, uint8_t *p, size_t n);
 
@@ -115,5 +116,6 @@ int fetch_packet(int tun_fd, std::queue<packet>& fifo);
 
 int tun_alloc(char *dev, int flags);
 
+}
 
 #endif
