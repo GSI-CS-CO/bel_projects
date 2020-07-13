@@ -4,6 +4,8 @@
  *
  *            Extension of file helper_macros.h
  *
+ * @note Header only!
+ *
  * @file      scu_lm32_macros.h
  * @copyright GSI Helmholtz Centre for Heavy Ion Research GmbH
  * @author    Ulrich Becker <u.becker@gsi.de>

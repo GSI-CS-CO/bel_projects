@@ -1,6 +1,7 @@
 /*!
  * @file scu_msi.h
  * @brief Message-Signaled Interrupts (MSI)
+ * @note Header only!
  *
  * @copyright GSI Helmholtz Centre for Heavy Ion Research GmbH
  * @author    Ulrich Becker <u.becker@gsi.de>
