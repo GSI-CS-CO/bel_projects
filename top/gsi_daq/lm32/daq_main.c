@@ -286,10 +286,14 @@ void daqEnableFgFeedback( const unsigned int slot, const unsigned int fgNum )
    daqChannelSetTriggerDelay( pSetChannel, 10000 );
    daqChannelSetTriggerDelay( pActChannel, 10000 );
    daqChannelSample1msOn( pSetChannel );
+
+ //  daqChannelSample1msOn( &daqBusGetDeviceBySlotNumber( &g_scuDaqAdmin.oDaqDevs, 8 )->aChannel[daqGetSetDaqNumberOfFg(fgNum)] );
    //TODO find a more elegant solution...
 #if 1
    for( unsigned int i = 0; i < 200000; i++ ) NOP();
    daqChannelSample1msOn( pActChannel );
+
+  // daqChannelSample1msOn( &daqBusGetDeviceBySlotNumber( &g_scuDaqAdmin.oDaqDevs, 8 )->aChannel[daqGetActualDaqNumberOfFg(fgNum)] );
 #endif
 }
 

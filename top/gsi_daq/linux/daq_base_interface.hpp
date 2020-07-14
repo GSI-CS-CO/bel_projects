@@ -29,6 +29,7 @@
 #include <daq_eb_ram_buffer.hpp>
 #include <scu_bus_defines.h>
 #include <scu_function_generator.h>
+#include <daq_ring_admin.h>
 
 #ifndef DAQ_DEFAULT_WB_DEVICE
    #define DAQ_DEFAULT_WB_DEVICE "dev/wbm0"
@@ -146,6 +147,22 @@ public:
    {
       return static_cast<const std::string>("Noch nix");
    }
+
+   /*!
+    * @brief Returns the number of items which are currently in the
+    *        data buffer.
+    * @param update If true the indexes in the LM32 shared memory
+    *               will read before.
+    */
+   virtual daq::RAM_RING_INDEX_T getCurrentRamSize( bool update = true ) = 0;
+
+   /*!
+    * @brief Makes the data buffer empty.
+    * @param update If true the indexes in the LM32 shared memory
+    *               becomes updated.
+    */
+   virtual void clearBuffer( bool update = true ) = 0;
+
 
    virtual uint distributeData( void ) = 0;
 };

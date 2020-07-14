@@ -791,6 +791,11 @@ inline int daqtMain( const int argc, char** ppArgv )
             pDaqContainer->doReset();
             break;
          }
+         case HOT_KEY_CLEAR_BUFFER:
+         {
+            pDaqContainer->clearBuffer();
+            break;
+         }
          case HOT_KEY_RECEIVE:
          {
             doRead = !doRead;

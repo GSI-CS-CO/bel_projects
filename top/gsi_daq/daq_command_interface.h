@@ -2,6 +2,7 @@
  *  @file daq_command_interface.h
  *  @brief Definition of DAQ-commandos and data object for shared memory
  *
+ *  @note Header only.
  *  @note This file is suitable for LM32-apps within the SCU environment and
  *        for Linux applications. \n
  *        CAUTION:

@@ -5,6 +5,7 @@
  *  This file is suitable for LM32-apps within the SCU environment and
  *  for Linux applications.
  *
+ *  @note Header only
  *  @note Different endianes conventions of bit fields becomes considered!
  *  @see
  *  <a href="https://www-acc.gsi.de/wiki/Hardware/Intern/DataAquisitionMacrof%C3%BCrSCUSlaveBaugruppen">

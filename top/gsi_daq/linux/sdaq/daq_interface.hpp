@@ -297,6 +297,8 @@ public:
 
    RAM_RING_INDEX_T getCurrentRamSize( bool update = true );
 
+   void clearBuffer( bool update = true );
+
 protected:
    virtual bool onCommandReadyPoll( USEC_T pollCount );
 
@@ -344,7 +346,7 @@ protected:
    }
 
    void sendUnlockRamAccess( void );
-   void clearBuffer( bool update = true );
+
    void writeRamIndexesAndUnlock( void );
 
    virtual void onBlockReceiveError( void );

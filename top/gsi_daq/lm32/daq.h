@@ -371,6 +371,20 @@ typedef struct
    uint16_t* volatile pHiRes; //!< @brief Pointer to 16 bit interrupt HiRes pending register
 } DAQ_INT_PENDING_T;
 #endif
+
+#ifndef CONFIG_DAQ_SINGLE_APP
+/*!
+ * @ingroup DAQ_DEVICE
+ * @brief Task type for the DAQ channels for the ADDAC function generator
+ *        feedback of set- and actual values.
+ */
+typedef enum
+{
+   FB_ON, /*!<@brief Switch DAQ channels for FG-feedback on */
+   FB_OFF /*!<@brief Switch DAQ channels for FG-feedback off */
+} DAQ_FEEDBACK_TASK_T;
+#endif
+
 /*! ---------------------------------------------------------------------------
  * @ingroup DAQ_DEVICE
  * @brief Object represents a single SCU-Bus slave including a DAQ
@@ -1723,6 +1737,16 @@ uint32_t daqDeviceGetTimeStampTag( register DAQ_DEVICE_T* pThis );
  * @param pThis Pointer to the DAQ-device object
  */
 void daqDeviceReset( register DAQ_DEVICE_T* pThis );
+
+#ifndef CONFIG_DAQ_SINGLE_APP
+
+void daqDeviceSetFeedbackTask( register DAQ_DEVICE_T* pThis,
+                               const DAQ_FEEDBACK_TASK_T what,
+                               const unsigned int fgNumber
+                             );
+
+void daqDeviceDoFeedbackTask( register DAQ_DEVICE_T* pThis );
+#endif
 
 /*! ---------------------------------------------------------------------------
  * @ingroup DAQ_DEVICE

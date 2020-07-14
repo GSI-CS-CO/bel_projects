@@ -29,17 +29,22 @@ extern FG_CHANNEL_T           g_aFgChannels[MAX_FG_CHANNELS];
  * @param pThis Pointer to the concerning FG-macro register set.
  * @todo Replace this hideous bit-masking and bit-shifting by bit fields
  *       as far as possible!
+ * @retval true Polynom successful sent.
+ * @retval false Buffer was empty no data sent.
  */
-STATIC inline void feedAdacFg( FG_REGISTER_T* pThis )
+STATIC inline bool feedAdacFg( FG_REGISTER_T* pThis )
 {
    FG_PARAM_SET_T pset;
 
+   /*!
+    * @todo Move the FG-buffer into the DDR3-RAM!
+    */
    if( !cbRead( &g_shared.fg_buffer[0], &g_shared.fg_regs[0],
                 pThis->cntrl_reg.bv.number, &pset ) )
    {
       hist_addx( HISTORY_XYZ_MODULE, "buffer empty, no parameter sent",
                  pThis->cntrl_reg.bv.number );
-      return;
+      return false;
    }
 
    /*
@@ -47,6 +52,7 @@ STATIC inline void feedAdacFg( FG_REGISTER_T* pThis )
     */
    setAdacFgRegs( pThis, &pset, (pThis->cntrl_reg.i16 & ~(0xfc07)) |
                                 ((pset.control & 0x3F) << 10) );
+   return true;
 }
 
 /*! ---------------------------------------------------------------------------
@@ -77,8 +83,8 @@ void handleAdacFg( const unsigned int slot,
       if( pFgRegs->cntrl_reg.bv.dataRequest )
          makeStart( channel );
       sendRefillSignalIfThreshold( channel );
-      feedAdacFg( pFgRegs );
-      g_aFgChannels[channel].param_sent++;
+      if( feedAdacFg( pFgRegs ) )
+         g_aFgChannels[channel].param_sent++;
    }
    else
    {

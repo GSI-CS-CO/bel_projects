@@ -33,7 +33,7 @@
  */
 RAM_RING_INDEX_T ramRingGetSize( const RAM_RING_INDEXES_T* pThis )
 {
-   if( pThis->end == pThis->capacity) /* Is ring-buffer full? */
+   if( pThis->end == pThis->capacity ) /* Is ring-buffer full? */
       return pThis->capacity;
 
    if( pThis->end >= pThis->start )

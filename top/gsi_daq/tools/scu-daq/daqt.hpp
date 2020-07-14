@@ -54,6 +54,9 @@ constexpr int INVALID_LIMIT = -1;
 #ifndef HOT_KEY_RESET
   #define HOT_KEY_RESET           'r'
 #endif
+#ifndef HOT_KEY_CLEAR_BUFFER
+  #define HOT_KEY_CLEAR_BUFFER    'c'
+#endif
 #ifndef HOT_KEY_RECEIVE
   #define HOT_KEY_RECEIVE         'i'
 #endif

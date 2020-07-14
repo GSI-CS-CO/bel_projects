@@ -32,7 +32,7 @@
 #include <dbg.h>
 #include <daq.h>
 #include <scu_wr_time.h>
-#if defined( CONFIG_DAQ_DEBUG ) || !defined( CONFIG_DAQ_SINGLE_APP )
+#if defined( CONFIG_DAQ_DEBUG ) || !defined( CONFIG_NO_DAQ_INFO_PRINT )
  #include <eb_console_helper.h>
 #endif
 
@@ -408,6 +408,14 @@ void daqDeviceReset( register DAQ_DEVICE_T* pThis )
    daqDeviceSetTimeStampTag( pThis, 0 );
 }
 
+#ifndef CONFIG_DAQ_SINGLE_APP
+void daqDeviceDoFeedbackTask( register DAQ_DEVICE_T* pThis )
+{
+   //TODO
+}
+
+#endif /* ifndef CONFIG_DAQ_SINGLE_APP */
+
 #if defined( CONFIG_DAQ_DEBUG ) || defined(__DOXYGEN__)
 /*! ---------------------------------------------------------------------------
  * @see daq.h
@@ -484,10 +492,10 @@ int daqDeviceFindChannels( DAQ_DEVICE_T* pThis, const unsigned int slot )
        * Fortunately the highest slot number is 0xC (12). Therefore no further
        * probing is necessary.
        */
-      DBPRINT2( "DBG: ctrReg: 0x%04X\n",
+      DBPRINT2( "DBG: ctrReg: 0b%04b\n",
               *((DAQ_REGISTER_T*)daqChannelGetCtrlRegPtr( pCurrentChannel )) );
       daqChannelGetCtrlRegPtr( pCurrentChannel )->slot = slot;
-      DBPRINT2( "DBG: ctrReg: 0x%04X\n",
+      DBPRINT2( "DBG: ctrReg: 0b%04b\n",
               *((DAQ_REGISTER_T*)daqChannelGetCtrlRegPtr( pCurrentChannel )) );
       if( daqChannelGetSlot( pCurrentChannel ) != slot )
          break; /* Supposing this channel isn't present. */
@@ -506,9 +514,9 @@ int daqDeviceFindChannels( DAQ_DEVICE_T* pThis, const unsigned int slot )
                 daqChannelGetSlot( pCurrentChannel ) );
 
       pThis->maxChannels++;
-    #ifndef CONFIG_DAQ_SINGLE_APP
+    #ifndef CONFIG_NO_DAQ_INFO_PRINT
       mprintf( ESC_FG_CYAN
-               "ADDAC-DAQ channel %d in slot %2d initialized. Address: 0x%p\n"
+               "ADDAC-DAQ channel %2u in slot %2u initialized. Address: 0x%p\n"
                ESC_NORMAL,
                channel, daqChannelGetSlot( pCurrentChannel ),
                pCurrentChannel
