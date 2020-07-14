@@ -56,4 +56,4 @@ eb-reset: eb-reset.c
 	$(CC) $(CFLAGS) -I$(WBDIR) -I$(WRPC)/include -I$(WRPC)/pp_printf $(WBDIR)/wb_api.c  $(WRPC)/dev/w1.c $(WRPC)/dev/w1-temp.c $(WRPC)/dev/w1-eeprom.c $(WRPC)/tools/eb-w1.c -o eb-reset eb-reset.c $(LIBS)	
 
 eb-asmi: eb-asmi.c
-	$(CC) $(CFLAGS) -I$(WBDIR) -o eb-asmi eb-asmi.c crc8.c $(LIBS)
+	$(CC) $(CFLAGS) -I$(WBDIR) -o eb-asmi eb-asmi.c crc8.c crc32.c $(LIBS)

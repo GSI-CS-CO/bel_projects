@@ -17,6 +17,7 @@
 //Etherbone
 #include <etherbone.h>
 #include "crc8.h"
+#include "crc32.h"
 
 
 #define GSI_ID      0x651
@@ -58,6 +59,7 @@
 #define SLAVENR           3
 #define PAGE_SIZE         256
 #define PAGES_PER_SECTOR  256 
+#define SECTOR_SIZE       PAGE_SIZE * PAGES_PER_SECTOR
 #define EPCS128ID         0x18
 #define EPCS1024ID        0x21
 #define MAX_EPCS128_ADDR  0xffff00
@@ -74,7 +76,9 @@ static eb_socket_t socket;
 eb_data_t flash_page[PAGE_SIZE];
 eb_data_t flash_page1[PAGE_SIZE];
 unsigned char file_page[PAGE_SIZE];
+unsigned char file_sector[SECTOR_SIZE];
 unsigned int waddr;
+unsigned char *sectors_to_erase;
 
 
 void itoa(unsigned int n,char s[], int base){
@@ -148,6 +152,7 @@ void read_asmi_status(int slave_nr, eb_data_t* epcs_status) {
 void read_asmi_crc(unsigned int asmi_addr, unsigned int bytes_to_read, eb_data_t* crc) {
   eb_status_t status;
   eb_data_t data;
+  eb_data_t cmd = 1;
 
   if ((status = eb_cycle_open(device,0, eb_block, &cycle)) != EB_OK)
     die("EP eb_cycle_open", status);
@@ -155,10 +160,17 @@ void read_asmi_crc(unsigned int asmi_addr, unsigned int bytes_to_read, eb_data_t
   eb_cycle_write(cycle, wb_asmi_base + SET_READ_NUMBER, EB_BIG_ENDIAN|EB_DATA32, bytes_to_read);
   eb_cycle_write(cycle, wb_asmi_base + SET_ADDR, EB_BIG_ENDIAN|EB_DATA32, asmi_addr);
   eb_cycle_read(cycle, wb_asmi_base + FLASH_ACCESS, EB_BIG_ENDIAN|EB_DATA32, &data);
-  eb_cycle_read(cycle, wb_asmi_base + READ_CRC, EB_BIG_ENDIAN|EB_DATA8, crc);
     
   if ((status = eb_cycle_close(cycle)) != EB_OK)
     die("read data eb_cycle_close", status);
+
+  while (cmd != 0) {
+    if ((status = eb_device_read(device, wb_asmi_base + BUSY_CHECK, EB_BIG_ENDIAN|EB_DATA32, &cmd, 0, eb_block)) != EB_OK)
+      die("reading BUSY_CHECK failed", status);
+  }
+
+  if ((status = eb_device_read(device, wb_asmi_base + READ_CRC, EB_BIG_ENDIAN|EB_DATA32, crc, 0, eb_block)) != EB_OK)
+    die("read crc failed", status);
 }
 
 void read_asmi_page(eb_data_t* page_buffer, int asmi_addr, eb_data_t* crc) {
@@ -171,7 +183,7 @@ void read_asmi_page(eb_data_t* page_buffer, int asmi_addr, eb_data_t* crc) {
   eb_cycle_write(cycle, wb_asmi_base + SET_READ_NUMBER, EB_BIG_ENDIAN|EB_DATA32, PAGE_SIZE);
   eb_cycle_write(cycle, wb_asmi_base + SET_ADDR, EB_BIG_ENDIAN|EB_DATA32, asmi_addr);
   eb_cycle_read(cycle, wb_asmi_base + FLASH_ACCESS, EB_BIG_ENDIAN|EB_DATA32, &data);
-  eb_cycle_read(cycle, wb_asmi_base + READ_CRC, EB_BIG_ENDIAN|EB_DATA8, crc);
+  eb_cycle_read(cycle, wb_asmi_base + READ_CRC, EB_BIG_ENDIAN|EB_DATA32, crc);
 
   if ((status = eb_cycle_close(cycle)) != EB_OK)
     die("read data eb_cycle_close", status);
@@ -297,16 +309,15 @@ unsigned int how_many_sectors(unsigned int size) {
 
 void erase_flash(int epcsid, int needed_sectors) {
   int i;
-  if ((int)epcsid != 0x19) {
-    //delete sector
-    for (i = 0; i < needed_sectors; i++) {
+  //delete sector
+  for (i = 0; i < needed_sectors; i++) {
+    //erase_asmi_sector(i * PAGE_SIZE * PAGES_PER_SECTOR);
+    if (sectors_to_erase[i]) {
       printf("erase epcs addr 0x%x\r", i * PAGE_SIZE * PAGES_PER_SECTOR);
       fflush(stdout);
-      //erase_asmi_sector(i * PAGE_SIZE * PAGES_PER_SECTOR);
       erase_asmi_sector(i * 0x10000);
     }
-  } else
-    erase_asmi_bulk();
+  }
 }
 
 
@@ -460,6 +471,9 @@ int main(int argc, char * const* argv) {
 
     needed_sectors = how_many_sectors(size);
     printf("%d sector(s) will be erased.\n", needed_sectors);  
+    sectors_to_erase = (unsigned char*)calloc(needed_sectors, sizeof(unsigned char));
+    for(i = 0; i<needed_sectors; i++)
+      sectors_to_erase[i] = 1;
    
     erase_flash(epcsid, needed_sectors);
 
@@ -477,30 +491,67 @@ int main(int argc, char * const* argv) {
     stat(wvalue, &buf);
     int size = buf.st_size;
     int needed_sectors;
+    int blank_page;
+    int j;
     if (size % PAGE_SIZE) {
       printf("size of programming file is not a multiple of %d\n", PAGE_SIZE);
       exit(1);
     }
     printf("filesize: %d bytes\n", size);
-
     needed_sectors = how_many_sectors(size);
-    printf("%d sector(s) will be erased.\n", needed_sectors);  
-   
+
+    //analyse sectors
+    waddr      = 0;
+    j          = 0;
+    blank_page = 0;
+    sectors_to_erase = (unsigned char*)calloc(needed_sectors, sizeof(unsigned char));
+    if (sectors_to_erase == NULL) {
+      printf("calloc failed!\n");
+      exit(1);
+    }
+    for(i = 0; i < needed_sectors; i++) {
+      if (i % 5 == 0)
+        printf(" ");
+      printf("%d",sectors_to_erase[i]);
+    }
+    
+    while( fread(&file_sector, 1,  SECTOR_SIZE, fp) == SECTOR_SIZE) {
+      //reverse bits before writing
+      for(i = 0; i < SECTOR_SIZE; i++)
+        file_sector[i] = reverse(file_sector[i]);
+      crc = 0;
+      crc = crc32_byte(crc, &file_sector, SECTOR_SIZE);
+      printf("epcs addr 0x%x checked\r", waddr);
+      //check crc of written data
+      read_asmi_crc(waddr, SECTOR_SIZE, &crc_hw);
+      if (crc != (crc_hw)) {
+        //sector needs to be erased
+        sectors_to_erase[j++] = 1;
+        blank_page++;
+      }
+      waddr += SECTOR_SIZE;
+    }
+    printf("Number of sectors to be erased: %d\n", blank_page);
+    for(i = 0; i < needed_sectors; i++) {
+      if (i % 5 == 0)
+        printf(" ");
+      printf("%d",sectors_to_erase[i]);
+    }
+
     if (nflag == 0) {
       erase_flash(epcsid, needed_sectors);
-      printf("%d sectors erased.                \n", needed_sectors);
     }
- 
+
 
     //read in data from stdin
     waddr = 0;
+    fseek(fp, 0, SEEK_SET);
     while( fread(&file_page, 1,  PAGE_SIZE, fp) == PAGE_SIZE) {
-
       //reverse bits before writing
       for(i = 0; i < PAGE_SIZE; i++)
         file_page[i] = reverse(file_page[i]);
       crc = 0;
-      crc = crc8_byte(crc, &file_page, PAGE_SIZE);
+      crc = crc32_byte(crc, &file_page, PAGE_SIZE);
 
       for(i = 0; i < PAGE_SIZE; i++)
         flash_page[i] = file_page[i];
@@ -510,13 +561,14 @@ int main(int argc, char * const* argv) {
 
       //check crc of written data
       read_asmi_crc(waddr, PAGE_SIZE, &crc_hw);
-      if (crc != (crc_hw & 0xff)) {
+      if (crc != (crc_hw)) {
           printf("\ncrc wrong in page 0x%x: 0x%x != 0x%"EB_DATA_FMT"\n", waddr, crc, crc_hw);
           exit(1);
       }
         
       waddr += PAGE_SIZE;
     }
+    free(sectors_to_erase);
     fclose(fp);
     printf("New image written to epcs.\n");
   }
@@ -557,14 +609,16 @@ int main(int argc, char * const* argv) {
       for(i = 0; i < PAGE_SIZE; i++)
         file_page[i] = reverse(file_page[i]);
       crc = 0;
-      crc = crc8_byte(crc, &file_page, PAGE_SIZE);
+      //unsigned char dummy[5] = { 0xff, 0xff, 0xff, 0xff, 0xff};
+      crc = crc32_byte(crc, &file_page, PAGE_SIZE);
+      //crc = crc32_word(crc, &dummy, 5);
 
       for(i = 0; i < PAGE_SIZE; i++)
         flash_page[i] = file_page[i];
 
       //check crc of written data
       read_asmi_crc(waddr, PAGE_SIZE, &crc_hw);
-      if (crc != (crc_hw & 0xff)) {
+      if (crc != (crc_hw)) {
           printf("\ncrc wrong in page 0x%x: 0x%x != 0x%"EB_DATA_FMT"\n", waddr, crc, crc_hw);
           exit(1);
       }
@@ -584,7 +638,7 @@ int main(int argc, char * const* argv) {
 
       //check crc of written data
       read_asmi_crc(waddr, PAGE_SIZE, &crc_hw);
-      if (BLANK_CRC != (crc_hw & 0xff)) {
+      if (BLANK_CRC != (crc_hw)) {
           printf("\ncrc wrong in page 0x%x: 0x%x != 0x%"EB_DATA_FMT"\n", waddr, BLANK_CRC, crc_hw);
           exit(1);
       }
