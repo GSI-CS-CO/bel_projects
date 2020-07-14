@@ -1,3 +1,5 @@
+REPO = ../..
+
 #GHDL_ALTERA=/home/mkreider/projects/ghdl_sims
 GHDL_ALTERA=/home/mkreider/projects/ghdl_sims
 
@@ -17,7 +19,7 @@ view: simulation.ghw
 
 # start simulation (which regenerates wave file), then update viewer
 simulation.ghw: compile_testbench 
-	ghdl -r testbench --stop-time=200000ns --wave=simulation.ghw --ieee-asserts=disable
+	ghdl -r testbench --stop-time=2000000ns --wave=simulation.ghw --ieee-asserts=disable
 	#vcd2fst simulation.vcd simulation.fst && rm simulation.vcd
 #	gsettings set com.geda.gtkwave reload 0
 	gconftool-2 --type string --set /com.geda.gtkwave/0/reload 0
@@ -25,66 +27,67 @@ simulation.ghw: compile_testbench
 compile_testbench: file_access_c.o testbench
 
 testbench: 	\
-			../../ip_cores/general-cores/modules/genrams/genram_pkg.vhd                  \
-			../../ip_cores/general-cores/modules/common/gc_sync_register.vhd             \
-			../../ip_cores/general-cores/modules/common/gc_sync_ffs.vhd                  \
-			../../ip_cores/general-cores/modules/common/gencores_pkg.vhd                 \
-			../../ip_cores/general-cores/modules/common/matrix_pkg.vhd                   \
-			../../ip_cores/general-cores/modules/genrams/generic/generic_async_fifo.vhd  \
-			../../ip_cores/general-cores/modules/genrams/common/inferred_async_fifo.vhd  \
-			../../ip_cores/general-cores/modules/genrams/altera/generic_spram.vhd        \
-			../../ip_cores/general-cores/modules/genrams/altera/generic_simple_dpram.vhd \
-			../../ip_cores/general-cores/modules/genrams/generic/generic_sync_fifo.vhd   \
+			$(REPO)/ip_cores/general-cores/modules/genrams/genram_pkg.vhd                  \
+			$(REPO)/ip_cores/general-cores/modules/common/gc_sync_register.vhd             \
+			$(REPO)/ip_cores/general-cores/modules/common/gc_sync_ffs.vhd                  \
+			$(REPO)/ip_cores/general-cores/modules/common/gencores_pkg.vhd                 \
+			$(REPO)/ip_cores/general-cores/modules/common/matrix_pkg.vhd                   \
+			$(REPO)/ip_cores/general-cores/modules/genrams/generic/generic_async_fifo.vhd  \
+			$(REPO)/ip_cores/general-cores/modules/genrams/common/inferred_async_fifo.vhd  \
+			$(REPO)/ip_cores/general-cores/modules/genrams/altera/generic_spram.vhd        \
+			$(REPO)/ip_cores/general-cores/modules/genrams/altera/generic_simple_dpram.vhd \
+			$(REPO)/ip_cores/general-cores/modules/genrams/generic/generic_sync_fifo.vhd   \
 			../common/inferred_sync_fifo.vhd   \
 			../common/generic_dpram.vhd        \
-			../../ip_cores/general-cores/modules/wishbone/wishbone_pkg.vhd               \
-			../../ip_cores/general-cores/modules/wishbone/wb_crossbar/sdb_rom.vhd        \
-			../../ip_cores/general-cores/modules/wishbone/wb_crossbar/xwb_crossbar.vhd   \
-			../../ip_cores/general-cores/modules/wishbone/wb_crossbar/xwb_sdb_crossbar.vhd \
-			../../ip_cores/general-cores/modules/wishbone/wb_clock_crossing/xwb_clock_crossing.vhd \
-			../../ip_cores/wr-cores/modules/fabric/wr_fabric_pkg.vhd                    \
-			../../ip_cores/wr-cores/modules/fabric/xwrf_mux.vhd                         \
-			../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_hdr_pkg.vhd              \
-			../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_internals_pkg.vhd        \
+			$(REPO)/ip_cores/general-cores/modules/wishbone/wishbone_pkg.vhd               \
+			$(REPO)/ip_cores/general-cores/modules/wishbone/wb_crossbar/sdb_rom.vhd        \
+			$(REPO)/ip_cores/general-cores/modules/wishbone/wb_crossbar/xwb_crossbar.vhd   \
+			$(REPO)/ip_cores/general-cores/modules/wishbone/wb_crossbar/xwb_sdb_crossbar.vhd \
+			$(REPO)/ip_cores/general-cores/modules/wishbone/wb_clock_crossing/xwb_clock_crossing.vhd \
+			$(REPO)/ip_cores/wr-cores/modules/fabric/wr_fabric_pkg.vhd                    \
+			$(REPO)/ip_cores/wr-cores/modules/fabric/xwrf_mux.vhd                         \
+			$(REPO)/ip_cores/etherbone-core/hdl/eb_slave_core/eb_hdr_pkg.vhd              \
+			$(REPO)/ip_cores/etherbone-core/hdl/eb_slave_core/eb_internals_pkg.vhd        \
 			../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_fifo.vhd                 \
-			../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_slave_top.vhd            \
-			../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_slave_fsm.vhd            \
-			../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_tx_mux.vhd               \
-			../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_tag_fifo.vhd             \
-			../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_pass_fifo.vhd            \
-			../../ip_cores/etherbone-core/hdl/eb_slave_core/etherbone_pkg.vhd           \
-			../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_cfg_fifo.vhd             \
-			../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_wbm_fifo.vhd             \
-			../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_raw_slave.vhd			\
-			../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_raw_slave.vhd			\
-			../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_stream_widen.vhd   		\
-			../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_stream_narrow.vhd  		\
-			../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_ethernet_slave.vhd       \
-			../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_checksum.vhd             \
-			../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_eth_tx.vhd               \
-			../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_eth_rx.vhd               \
+			$(REPO)/ip_cores/etherbone-core/hdl/eb_slave_core/eb_slave_top.vhd            \
+			$(REPO)/ip_cores/etherbone-core/hdl/eb_slave_core/eb_slave_fsm.vhd            \
+			$(REPO)/ip_cores/etherbone-core/hdl/eb_slave_core/eb_tx_mux.vhd               \
+			$(REPO)/ip_cores/etherbone-core/hdl/eb_slave_core/eb_tag_fifo.vhd             \
+			$(REPO)/ip_cores/etherbone-core/hdl/eb_slave_core/eb_pass_fifo.vhd            \
+			$(REPO)/ip_cores/etherbone-core/hdl/eb_slave_core/etherbone_pkg.vhd           \
+			$(REPO)/ip_cores/etherbone-core/hdl/eb_slave_core/eb_cfg_fifo.vhd             \
+			$(REPO)/ip_cores/etherbone-core/hdl/eb_slave_core/eb_wbm_fifo.vhd             \
+			$(REPO)/ip_cores/etherbone-core/hdl/eb_slave_core/eb_raw_slave.vhd			\
+			$(REPO)/ip_cores/etherbone-core/hdl/eb_slave_core/eb_raw_slave.vhd			\
+			$(REPO)/ip_cores/etherbone-core/hdl/eb_slave_core/eb_stream_widen.vhd   		\
+			$(REPO)/ip_cores/etherbone-core/hdl/eb_slave_core/eb_stream_narrow.vhd  		\
+			$(REPO)/ip_cores/etherbone-core/hdl/eb_slave_core/eb_ethernet_slave.vhd       \
+			$(REPO)/ip_cores/etherbone-core/hdl/eb_slave_core/eb_checksum.vhd             \
+			$(REPO)/ip_cores/etherbone-core/hdl/eb_slave_core/eb_eth_tx.vhd               \
+			$(REPO)/ip_cores/etherbone-core/hdl/eb_slave_core/eb_eth_rx.vhd               \
 			../common/eb_commit_fifo.vhd          \
-			../../ip_cores/etherbone-core/hdl/eb_master_core/ebm_auto_pkg.vhd           \
+			$(REPO)/ip_cores/etherbone-core/hdl/eb_master_core/ebm_auto_pkg.vhd           \
 			../common/eb_commit_len_fifo.vhd     \
-			../../ip_cores/etherbone-core/hdl/eb_master_core/eb_framer.vhd              \
-			../../ip_cores/etherbone-core/hdl/eb_master_core/eb_master_eth_tx.vhd       \
-			../../ip_cores/etherbone-core/hdl/eb_master_core/eb_master_slave_wrapper.vhd\
-			../../ip_cores/etherbone-core/hdl/eb_master_core/eb_master_top.vhd          \
-			../../ip_cores/etherbone-core/hdl/eb_master_core/eb_record_gen.vhd          \
-			../../ip_cores/etherbone-core/hdl/eb_master_core/ebm_auto.vhd               \
-			../../ip_cores/general-cores/modules/wishbone/wb_uart/uart_async_rx.vhd     \
-			../../ip_cores/general-cores/modules/wishbone/wb_uart/uart_async_tx.vhd     \
-			../../ip_cores/general-cores/modules/wishbone/wb_dma/xwb_streamer.vhd       \
-			../../ip_cores/general-cores/modules/wishbone/wb_dma/xwb_dma.vhd        	\
-			../../ip_cores/general-cores/modules/wishbone/wb_uart/uart_baud_gen.vhd 	\
-			../../ip_cores/etherbone-core/hdl/eb_usb_core/ez_usb_pkg.vhd				\
-			../../ip_cores/etherbone-core/hdl/eb_usb_core/ez_usb_fifos.vhd				\
-			../../ip_cores/etherbone-core/hdl/eb_usb_core/ez_usb.vhd					\
-			../../modules/mbox/mbox_pkg.vhd	                                            \
-			../../modules/mbox/mbox.vhd    	                                            \
+			$(REPO)/ip_cores/etherbone-core/hdl/eb_master_core/eb_framer.vhd              \
+			$(REPO)/ip_cores/etherbone-core/hdl/eb_master_core/eb_master_eth_tx.vhd       \
+			$(REPO)/ip_cores/etherbone-core/hdl/eb_master_core/eb_master_slave_wrapper.vhd\
+			$(REPO)/ip_cores/etherbone-core/hdl/eb_master_core/eb_master_top.vhd          \
+			$(REPO)/ip_cores/etherbone-core/hdl/eb_master_core/eb_record_gen.vhd          \
+			$(REPO)/ip_cores/etherbone-core/hdl/eb_master_core/ebm_auto.vhd               \
+			$(REPO)/ip_cores/general-cores/modules/wishbone/wb_uart/uart_async_rx.vhd     \
+			$(REPO)/ip_cores/general-cores/modules/wishbone/wb_uart/uart_async_tx.vhd     \
+			$(REPO)/ip_cores/general-cores/modules/wishbone/wb_dma/xwb_streamer.vhd       \
+			$(REPO)/ip_cores/general-cores/modules/wishbone/wb_dma/xwb_dma.vhd        	\
+			$(REPO)/ip_cores/general-cores/modules/wishbone/wb_uart/uart_baud_gen.vhd 	\
+			$(REPO)/ip_cores/etherbone-core/hdl/eb_usb_core/ez_usb_pkg.vhd				\
+			$(REPO)/ip_cores/etherbone-core/hdl/eb_usb_core/ez_usb_fifos.vhd				\
+			$(REPO)/ip_cores/etherbone-core/hdl/eb_usb_core/ez_usb.vhd					\
+			$(REPO)/modules/mbox/mbox_pkg.vhd	                                            \
+			$(REPO)/modules/mbox/mbox.vhd    	                                            \
 			ez_eth_pkg.vhd    \
 			file_access.vhd    \
 			ez_eth_chip.vhd    \
+			../ez_usb/wb_minislave.vhd   \
 			testbench.vhd
 	ghdl -a $(GHDLFLAGS) $?
 	ghdl -m -Wl,file_access_c.o -Wl,-lstdc++  $(GHDLFLAGS) testbench 

@@ -88,8 +88,8 @@ int write_eth(int x) {
 void flush(int tun_fd) {
   
   ptrdiff_t m = pWr - &bufWr[0];
-  printf("TX: Flushing %u bytes written to packet buffer\n", m);
-  hexdump((uint8_t*)&bufWr[0], m);
+  //printf("TX: Flushing %u bytes written to packet buffer\n", m);
+  //hexdump((uint8_t*)&bufWr[0], m);
   ssize_t nwrite = write(tun_fd, bufWr, m);
   CHECK(m == nwrite);
   pWr = &bufWr[0];
@@ -125,7 +125,7 @@ int read_eth(std::queue<packet>& fifo) {
 
 void enqueuePacket(std::queue<packet>& fifo, uint8_t *p, size_t n) {
   packet tmp;
-  hexdump(p, n);
+  //hexdump(p, n);
   for(int i=0;i<n;i++) tmp.push((int)p[i]);
   fifo.push(tmp);
 }
@@ -184,7 +184,7 @@ bool processtap(std::queue<packet>& fifo, uint8_t *p, size_t nbytes)
   uint16_t etype;
   memcpy(&etype,p+12,2);
   etype = ntohs(etype);
-  printf("Frame etype=%04x nbytes=%zu\n", etype, nbytes);
+  //printf("Frame etype=%04x nbytes=%zu\n", etype, nbytes);
   //hexdump(p, nbytes);
   bool respond = false;
   if (etype == 0x0806) {
@@ -238,6 +238,7 @@ int tun_alloc(char *dev, int flags) {
    memset(&ifr, 0, sizeof(ifr));
 
    ifr.ifr_flags = flags | IFF_NO_PI;   /* IFF_TUN or IFF_TAP, plus maybe IFF_NO_PI */
+   //ifr.ifr_flags = flags | IFF_NO_PI;   /* IFF_TUN or IFF_TAP, plus maybe IFF_NO_PI */
 
    if (*dev) {
      /* if a device name was specified, put it in the structure; otherwise,
